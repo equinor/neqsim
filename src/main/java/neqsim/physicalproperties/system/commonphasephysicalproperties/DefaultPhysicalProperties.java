@@ -7,9 +7,7 @@ import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * DefaultPhysicalProperties class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -19,9 +17,7 @@ public class DefaultPhysicalProperties extends PhysicalProperties {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for DefaultPhysicalProperties.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param binaryDiffusionCoefficientMethod a int

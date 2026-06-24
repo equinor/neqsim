@@ -7,9 +7,7 @@ import neqsim.util.exception.IsNaNException;
 import neqsim.util.exception.TooManyIterationsException;
 
 /**
- * <p>
  * PhaseGEWilson class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -21,18 +19,14 @@ public class PhaseGEWilson extends PhaseGE {
   double GE = 0;
 
   /**
-   * <p>
    * Constructor for PhaseGEWilson.
-   * </p>
    */
   public PhaseGEWilson() {
     componentArray = new ComponentGEWilson[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   }
 
   /**
-   * <p>
    * Constructor for PhaseGEWilson.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param alpha an array of type double

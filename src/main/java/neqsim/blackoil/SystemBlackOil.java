@@ -23,9 +23,7 @@ public class SystemBlackOil implements Serializable {
   private BlackOilFlashResult last;
 
   /**
-   * <p>
    * Constructor for SystemBlackOil.
-   * </p>
    *
    * @param pvt a {@link neqsim.blackoil.BlackOilPVTTable} object
    * @param rho_o_sc a double
@@ -38,9 +36,7 @@ public class SystemBlackOil implements Serializable {
   }
 
   /**
-   * <p>
    * copyShallow.
-   * </p>
    *
    * @return a {@link neqsim.blackoil.SystemBlackOil} object
    */
@@ -56,9 +52,7 @@ public class SystemBlackOil implements Serializable {
   }
 
   /**
-   * <p>
    * setPressure.
-   * </p>
    *
    * @param P a double
    */
@@ -68,9 +62,7 @@ public class SystemBlackOil implements Serializable {
   }
 
   /**
-   * <p>
    * setTemperature.
-   * </p>
    *
    * @param T a double
    */
@@ -80,9 +72,7 @@ public class SystemBlackOil implements Serializable {
   }
 
   /**
-   * <p>
    * setStdTotals.
-   * </p>
    *
    * @param Otot_std a double
    * @param Gtot_std a double
@@ -96,9 +86,7 @@ public class SystemBlackOil implements Serializable {
   }
 
   /**
-   * <p>
    * getPressure.
-   * </p>
    *
    * @return a double
    */
@@ -107,9 +95,7 @@ public class SystemBlackOil implements Serializable {
   }
 
   /**
-   * <p>
    * getTemperature.
-   * </p>
    *
    * @return a double
    */
@@ -118,9 +104,7 @@ public class SystemBlackOil implements Serializable {
   }
 
   /**
-   * <p>
    * getOilStdTotal.
-   * </p>
    *
    * @return a double
    */
@@ -129,9 +113,7 @@ public class SystemBlackOil implements Serializable {
   }
 
   /**
-   * <p>
    * getGasStdTotal.
-   * </p>
    *
    * @return a double
    */
@@ -140,9 +122,7 @@ public class SystemBlackOil implements Serializable {
   }
 
   /**
-   * <p>
    * getWaterStd.
-   * </p>
    *
    * @return a double
    */
@@ -151,9 +131,7 @@ public class SystemBlackOil implements Serializable {
   }
 
   /**
-   * <p>
    * flash.
-   * </p>
    *
    * @return a {@link neqsim.blackoil.BlackOilFlashResult} object
    */
@@ -165,9 +143,7 @@ public class SystemBlackOil implements Serializable {
   }
 
   /**
-   * <p>
    * getBo.
-   * </p>
    *
    * @return a double
    */
@@ -176,9 +152,7 @@ public class SystemBlackOil implements Serializable {
   }
 
   /**
-   * <p>
    * getBg.
-   * </p>
    *
    * @return a double
    */
@@ -187,9 +161,7 @@ public class SystemBlackOil implements Serializable {
   }
 
   /**
-   * <p>
    * getBw.
-   * </p>
    *
    * @return a double
    */
@@ -198,9 +170,7 @@ public class SystemBlackOil implements Serializable {
   }
 
   /**
-   * <p>
    * getRs.
-   * </p>
    *
    * @return a double
    */
@@ -209,9 +179,7 @@ public class SystemBlackOil implements Serializable {
   }
 
   /**
-   * <p>
    * getRv.
-   * </p>
    *
    * @return a double
    */
@@ -220,9 +188,7 @@ public class SystemBlackOil implements Serializable {
   }
 
   /**
-   * <p>
    * getOilDensity.
-   * </p>
    *
    * @return a double
    */
@@ -231,9 +197,7 @@ public class SystemBlackOil implements Serializable {
   }
 
   /**
-   * <p>
    * getGasDensity.
-   * </p>
    *
    * @return a double
    */
@@ -242,9 +206,7 @@ public class SystemBlackOil implements Serializable {
   }
 
   /**
-   * <p>
    * getWaterDensity.
-   * </p>
    *
    * @return a double
    */
@@ -253,9 +215,7 @@ public class SystemBlackOil implements Serializable {
   }
 
   /**
-   * <p>
    * getOilViscosity.
-   * </p>
    *
    * @return a double
    */
@@ -264,9 +224,7 @@ public class SystemBlackOil implements Serializable {
   }
 
   /**
-   * <p>
    * getGasViscosity.
-   * </p>
    *
    * @return a double
    */
@@ -275,9 +233,7 @@ public class SystemBlackOil implements Serializable {
   }
 
   /**
-   * <p>
    * getWaterViscosity.
-   * </p>
    *
    * @return a double
    */
@@ -286,9 +242,7 @@ public class SystemBlackOil implements Serializable {
   }
 
   /**
-   * <p>
    * getOilReservoirVolume.
-   * </p>
    *
    * @return a double
    */
@@ -297,9 +251,7 @@ public class SystemBlackOil implements Serializable {
   }
 
   /**
-   * <p>
    * getGasReservoirVolume.
-   * </p>
    *
    * @return a double
    */
@@ -308,9 +260,7 @@ public class SystemBlackOil implements Serializable {
   }
 
   /**
-   * <p>
    * getWaterReservoirVolume.
-   * </p>
    *
    * @return a double
    */

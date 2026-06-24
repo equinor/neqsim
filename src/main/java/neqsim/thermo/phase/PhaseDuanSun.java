@@ -6,9 +6,7 @@ import neqsim.util.exception.IsNaNException;
 import neqsim.util.exception.TooManyIterationsException;
 
 /**
- * <p>
  * PhaseDuanSun class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -24,9 +22,7 @@ public class PhaseDuanSun extends PhaseGE {
   double GE = 0.0;
 
   /**
-   * <p>
    * Constructor for PhaseDuanSun.
-   * </p>
    */
   public PhaseDuanSun() {
   }

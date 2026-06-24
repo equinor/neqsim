@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * <p>
  * AmineDiffusivity class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -19,9 +17,7 @@ public class AmineDiffusivity extends SiddiqiLucasMethod {
   static Logger logger = LogManager.getLogger(AmineDiffusivity.class);
 
   /**
-   * <p>
    * Constructor for AmineDiffusivity.
-   * </p>
    *
    * @param liquidPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

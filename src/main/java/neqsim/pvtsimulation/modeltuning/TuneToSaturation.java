@@ -3,18 +3,14 @@ package neqsim.pvtsimulation.modeltuning;
 import neqsim.pvtsimulation.simulation.SimulationInterface;
 
 /**
- * <p>
  * TuneToSaturation class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class TuneToSaturation extends BaseTuningClass {
   /**
-   * <p>
    * Constructor for TuneToSaturation.
-   * </p>
    *
    * @param simulation a {@link neqsim.pvtsimulation.simulation.SimulationInterface} object
    */

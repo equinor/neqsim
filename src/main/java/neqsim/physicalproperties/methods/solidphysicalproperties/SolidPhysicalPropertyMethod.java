@@ -4,9 +4,7 @@ import neqsim.physicalproperties.methods.PhysicalPropertyMethod;
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * <p>
  * SolidPhysicalPropertyMethod class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -18,9 +16,7 @@ public abstract class SolidPhysicalPropertyMethod extends PhysicalPropertyMethod
   protected PhysicalProperties solidPhase;
 
   /**
-   * <p>
    * Constructor for SolidPhysicalPropertyMethod.
-   * </p>
    *
    * @param solidPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

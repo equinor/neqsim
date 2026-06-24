@@ -13,9 +13,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * OLGApropertyTableGeneratorWaterKeywordFormat class.
- * </p>
  *
  * @author Kjetil Raul
  * @version $Id: $Id
@@ -76,9 +74,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
   String[] namesKeyword;
 
   /**
-   * <p>
    * Constructor for OLGApropertyTableGeneratorWaterKeywordFormat.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -88,9 +84,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
   }
 
   /**
-   * <p>
    * setPressureRange.
-   * </p>
    *
    * @param minPressure a double
    * @param maxPressure a double
@@ -107,9 +101,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
   }
 
   /**
-   * <p>
    * setTemperatureRange.
-   * </p>
    *
    * @param minTemperature a double
    * @param maxTemperature a double
@@ -126,9 +118,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
   }
 
   /**
-   * <p>
    * calcPhaseEnvelope.
-   * </p>
    */
   public void calcPhaseEnvelope() {
     try {
@@ -145,9 +135,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
   }
 
   /**
-   * <p>
    * calcBubP.
-   * </p>
    *
    * @param temperatures an array of type double
    * @return an array of type double
@@ -170,9 +158,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
   }
 
   /**
-   * <p>
    * calcDewP.
-   * </p>
    *
    * @param temperatures an array of type double
    * @return an array of type double
@@ -195,9 +181,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
   }
 
   /**
-   * <p>
    * calcBubT.
-   * </p>
    *
    * @param pressures an array of type double
    * @return an array of type double
@@ -220,9 +204,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
   }
 
   /**
-   * <p>
    * initCalc.
-   * </p>
    */
   public void initCalc() {
     molfracs = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
@@ -252,9 +234,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
   }
 
   /**
-   * <p>
    * calcRSWTOB.
-   * </p>
    */
   public void calcRSWTOB() {
     thermoSystem.init(0);

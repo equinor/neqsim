@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * PSFlashVega class.
- * </p>
  *
  * @author victorigi99
  * @version $Id: $Id
@@ -25,9 +23,7 @@ public class PSFlashVega extends QfuncFlash {
   double cP_Vega = 0.0;
 
   /**
-   * <p>
    * Constructor for PSFlashVega.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Sspec a double

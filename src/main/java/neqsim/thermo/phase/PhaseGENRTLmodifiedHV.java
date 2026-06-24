@@ -11,9 +11,7 @@ import neqsim.thermo.component.ComponentGENRTLmodifiedHV;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
 /**
- * <p>
  * PhaseGENRTLmodifiedHV class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -26,18 +24,14 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
   int type = 0;
 
   /**
-   * <p>
    * Constructor for PhaseGENRTLmodifiedHV.
-   * </p>
    */
   public PhaseGENRTLmodifiedHV() {
     mixRule = mixSelect.getMixingRule(1);
   }
 
   /**
-   * <p>
    * Constructor for PhaseGENRTLmodifiedHV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param alpha an array of type double
@@ -58,9 +52,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
   }
 
   /**
-   * <p>
    * Constructor for PhaseGENRTLmodifiedHV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param alpha an array of type double

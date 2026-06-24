@@ -15,18 +15,14 @@ public class SystemPrCPA extends SystemPrEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for SystemPrCPA.
-   * </p>
    */
   public SystemPrCPA() {
     this(298.15, 1.0, false);
   }
 
   /**
-   * <p>
    * Constructor for SystemPrCPA.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -36,9 +32,7 @@ public class SystemPrCPA extends SystemPrEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemPrCPA.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)

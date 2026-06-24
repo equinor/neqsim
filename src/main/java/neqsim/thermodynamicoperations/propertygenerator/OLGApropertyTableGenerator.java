@@ -13,9 +13,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * OLGApropertyTableGenerator class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -54,9 +52,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicoperations.B
   double PC;
 
   /**
-   * <p>
    * Constructor for OLGApropertyTableGenerator.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -66,9 +62,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicoperations.B
   }
 
   /**
-   * <p>
    * setPressureRange.
-   * </p>
    *
    * @param minPressure a double
    * @param maxPressure a double
@@ -85,9 +79,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicoperations.B
   }
 
   /**
-   * <p>
    * setTemperatureRange.
-   * </p>
    *
    * @param minTemperature a double
    * @param maxTemperature a double
@@ -104,9 +96,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicoperations.B
   }
 
   /**
-   * <p>
    * calcPhaseEnvelope.
-   * </p>
    */
   public void calcPhaseEnvelope() {
     try {
@@ -231,9 +221,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicoperations.B
   }
 
   /**
-   * <p>
    * writeOLGAinpFile.
-   * </p>
    *
    * @param filename a {@link java.lang.String} object
    */

@@ -6,9 +6,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * PlusCharacterize class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -38,17 +36,13 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
   SystemInterface system = null;
 
   /**
-   * <p>
    * Constructor for PlusCharacterize.
-   * </p>
    */
   public PlusCharacterize() {
   }
 
   /**
-   * <p>
    * Constructor for PlusCharacterize.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -68,9 +62,7 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
   }
 
   /**
-   * <p>
    * setHeavyTBPtoPlus.
-   * </p>
    */
   public void setHeavyTBPtoPlus() {
     int plusCompNumber = 0;
@@ -279,9 +271,7 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
   }
 
   /**
-   * <p>
    * addPseudoTBPfraction.
-   * </p>
    *
    * @param start a int
    * @param end a int
@@ -467,9 +457,7 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
   }
 
   /**
-   * <p>
    * characterizePlusFraction.
-   * </p>
    */
   public void characterizePlusFraction() {
     system.init(0);

@@ -15,9 +15,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.exception.InvalidInputException;
 
 /**
- * <p>
  * IronIonSaturationStream class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -50,9 +48,7 @@ public class IronIonSaturationStream extends Stream {
   }
 
   /**
-   * <p>
    * Constructor for IronIonSaturationStream.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object

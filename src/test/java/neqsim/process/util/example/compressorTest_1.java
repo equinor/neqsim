@@ -7,9 +7,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * compressorTest_1 class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id

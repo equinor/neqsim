@@ -7,9 +7,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * CricondenbarFlash class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -24,9 +22,7 @@ public class CricondenbarFlash extends ConstantDutyPressureFlash {
   Matrix fvec;
 
   /**
-   * <p>
    * Constructor for CricondenbarFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -37,9 +33,7 @@ public class CricondenbarFlash extends ConstantDutyPressureFlash {
   }
 
   /**
-   * <p>
    * calcx.
-   * </p>
    *
    * @return a double
    */
@@ -63,9 +57,7 @@ public class CricondenbarFlash extends ConstantDutyPressureFlash {
   }
 
   /**
-   * <p>
    * initMoleFraction.
-   * </p>
    *
    * @return a double
    */
@@ -86,9 +78,7 @@ public class CricondenbarFlash extends ConstantDutyPressureFlash {
   }
 
   /**
-   * <p>
    * run2.
-   * </p>
    */
   public void run2() {
     ThermodynamicOperations localOperation = new ThermodynamicOperations(system);
@@ -235,9 +225,7 @@ public class CricondenbarFlash extends ConstantDutyPressureFlash {
   }
 
   /**
-   * <p>
    * Setter for the field <code>fvec</code>.
-   * </p>
    */
   public void setfvec() {
     double sumxx = 0;
@@ -254,9 +242,7 @@ public class CricondenbarFlash extends ConstantDutyPressureFlash {
   }
 
   /**
-   * <p>
    * setJac.
-   * </p>
    */
   public void setJac() {
     Jac.timesEquals(0.0);

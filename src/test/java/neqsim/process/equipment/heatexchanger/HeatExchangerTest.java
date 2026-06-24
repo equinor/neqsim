@@ -10,9 +10,7 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * HeatExchanger Test class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id

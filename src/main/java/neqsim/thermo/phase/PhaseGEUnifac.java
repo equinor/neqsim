@@ -11,9 +11,7 @@ import neqsim.thermo.component.ComponentGEUniquac;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
 /**
- * <p>
  * PhaseGEUnifac class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -30,18 +28,14 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
   boolean checkedGroups = false;
 
   /**
-   * <p>
    * Constructor for PhaseGEUnifac.
-   * </p>
    */
   public PhaseGEUnifac() {
     componentArray = new ComponentGEUnifac[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   }
 
   /**
-   * <p>
    * Constructor for PhaseGEUnifac.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param alpha an array of type double
@@ -94,9 +88,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
   }
 
   /**
-   * <p>
    * calcaij.
-   * </p>
    */
   public void calcaij() {
     aij = new double[((ComponentGEUnifac) getComponent(0))
@@ -134,9 +126,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
   }
 
   /**
-   * <p>
    * checkGroups.
-   * </p>
    */
   public void checkGroups() {
     ArrayList<neqsim.thermo.atomelement.UNIFACgroup> unifacGroups = new ArrayList<UNIFACgroup>();
@@ -205,9 +195,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
   }
 
   /**
-   * <p>
    * Getter for the field <code>aij</code>.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -218,9 +206,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
   }
 
   /**
-   * <p>
    * Setter for the field <code>aij</code>.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -231,9 +217,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
   }
 
   /**
-   * <p>
    * Getter for the field <code>bij</code>.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -244,9 +228,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
   }
 
   /**
-   * <p>
    * Setter for the field <code>bij</code>.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -257,9 +239,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
   }
 
   /**
-   * <p>
    * Getter for the field <code>cij</code>.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -270,9 +250,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
   }
 
   /**
-   * <p>
    * Setter for the field <code>cij</code>.
-   * </p>
    *
    * @param i a int
    * @param j a int

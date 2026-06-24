@@ -292,9 +292,7 @@ public class ProcessModule extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * runAsThread.
-   * </p>
    *
    * @return a {@link java.lang.Thread} object
    * @deprecated Use {@link #runAsTask()} instead for better resource management. This method creates a new unmanaged
@@ -354,9 +352,7 @@ public class ProcessModule extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * Create deep copy.
-   * </p>
    *
    * @return a {@link neqsim.process.processmodel.ProcessModule} object
    */
@@ -375,9 +371,7 @@ public class ProcessModule extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * getReport.
-   * </p>
    *
    * @return a {@link java.util.ArrayList} object
    */

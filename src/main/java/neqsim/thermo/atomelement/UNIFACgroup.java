@@ -10,9 +10,7 @@ import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifac;
 
 /**
- * <p>
  * UNIFACgroup class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -43,9 +41,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   int subGroup = 0;
 
   /**
-   * <p>
    * getQMixdN.
-   * </p>
    *
    * @return the QMixdN
    */
@@ -54,9 +50,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
 
   /**
-   * <p>
    * setQMixdN.
-   * </p>
    *
    * @param QMixdN the QMixdN to set
    */
@@ -65,17 +59,13 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
 
   /**
-   * <p>
    * Constructor for UNIFACgroup.
-   * </p>
    */
   public UNIFACgroup() {
   }
 
   /**
-   * <p>
    * Constructor for UNIFACgroup.
-   * </p>
    *
    * @param groupNumber a int
    * @param temp a int
@@ -292,9 +282,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
    */
 
   /**
-   * <p>
    * calcQComp.
-   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentGEUnifac} object
    * @return a double
@@ -313,9 +301,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
 
   /**
-   * <p>
    * calcQMix.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseGEUnifac} object
    * @return a double
@@ -347,9 +333,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
 
   /**
-   * <p>
    * calcQMixdN.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseGEUnifac} object
    * @return an array of type double
@@ -395,9 +379,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
 
   /**
-   * <p>
    * getQMixdN.
-   * </p>
    *
    * @param comp a int
    * @return a double
@@ -412,9 +394,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
    */
 
   /**
-   * <p>
    * Getter for the field <code>xComp</code>.
-   * </p>
    *
    * @return a double
    */
@@ -513,9 +493,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
 
   /**
-   * <p>
    * Getter for the field <code>lnGammaMixdn</code>.
-   * </p>
    *
    * @param compNumb a int
    * @return a double
@@ -525,9 +503,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
 
   /**
-   * <p>
    * Setter for the field <code>lnGammaMixdn</code>.
-   * </p>
    *
    * @param lnGammaMixdn1 a double
    * @param compNumb a int
@@ -582,9 +558,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
 
   /**
-   * <p>
    * Getter for the field <code>lnGammaCompdTdT</code>.
-   * </p>
    *
    * @return the lnGammaCompdTdT
    */
@@ -593,9 +567,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
 
   /**
-   * <p>
    * Setter for the field <code>lnGammaCompdTdT</code>.
-   * </p>
    *
    * @param lnGammaCompdTdT the lnGammaCompdTdT to set
    */
@@ -604,9 +576,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
 
   /**
-   * <p>
    * Getter for the field <code>lnGammaMixdTdT</code>.
-   * </p>
    *
    * @return the lnGammaMixdTdT
    */
@@ -615,9 +585,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
 
   /**
-   * <p>
    * Setter for the field <code>lnGammaMixdTdT</code>.
-   * </p>
    *
    * @param lnGammaMixdTdT the lnGammaMixdTdT to set
    */

@@ -49,9 +49,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * Separator class.
- * </p>
  *
  * <h2>Capacity Utilization Calculations</h2>
  *
@@ -377,9 +375,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * setInletStream.
-   * </p>
    *
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -395,9 +391,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * addStream.
-   * </p>
    *
    * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -411,9 +405,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>liquidOutStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -428,9 +420,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>gasOutStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -445,9 +435,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * getGas.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -456,9 +444,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * getLiquid.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -513,9 +499,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * setEntrainment.
-   * </p>
    *
    * @param val a double specifying the entrainment amount
    * @param specType a {@link java.lang.String} object describing the specification unit
@@ -1043,9 +1027,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * setTempPres.
-   * </p>
    *
    * @param temp a double
    * @param pres a double
@@ -1080,9 +1062,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>efficiency</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1091,9 +1071,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Setter for the field <code>efficiency</code>.
-   * </p>
    *
    * @param efficiency a double
    */
@@ -1102,9 +1080,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>liquidCarryoverFraction</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1113,9 +1089,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Setter for the field <code>liquidCarryoverFraction</code>.
-   * </p>
    *
    * @param liquidCarryoverFraction a double
    */
@@ -1124,9 +1098,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>gasCarryunderFraction</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1135,9 +1107,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Setter for the field <code>gasCarryunderFraction</code>.
-   * </p>
    *
    * @param gasCarryunderFraction a double
    */
@@ -1300,9 +1270,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>liquidLevel</code> in percentage.
-   * </p>
    *
    * @return a double
    */
@@ -1315,9 +1283,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>pressureDrop</code>.
-   * </p>
    *
    * @return the pressureDrop
    */
@@ -1326,9 +1292,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Setter for the field <code>pressureDrop</code>.
-   * </p>
    *
    * @param pressureDrop the pressureDrop to set
    */
@@ -1396,10 +1360,8 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * getGasSuperficialVelocity. Uses design liquid level fraction to determine available gas area, independent of
    * operating liquid level.
-   * </p>
    *
    * @return gas superficial velocity [m/s]
    */
@@ -1419,9 +1381,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * getGasLoadFactor.
-   * </p>
    *
    * @return a double
    */
@@ -1441,9 +1401,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * getGasLoadFactor.
-   * </p>
    *
    * @param phaseNumber a int
    * @return a double
@@ -1467,9 +1425,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * getDeRatedGasLoadFactor.
-   * </p>
    *
    * @return a double
    */
@@ -1495,9 +1451,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * getDeRatedGasLoadFactor.
-   * </p>
    *
    * @param phaseNum a int
    * @return a double
@@ -2115,9 +2069,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>orientation</code>.
-   * </p>
    *
    * @return the orientation
    */
@@ -2126,9 +2078,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Setter for the field <code>orientation</code>.
-   * </p>
    *
    * @param orientation the orientation to set
    */
@@ -2142,10 +2092,8 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Calculates both gas and liquid fluid section areas for horizontal separators. Results can be used for volume
    * calculation, gas superficial velocity, and settling time.
-   * </p>
    *
    * @param level current liquid level inside the separator [m]
    * @return separator liquid area.
@@ -2193,9 +2141,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * calculates liquid volume based on separator type.
-   * </p>
    *
    * @return liquid level in the separator
    */
@@ -2377,10 +2323,8 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Estimates liquid level based on volume for horizontal separators using bisection method. Vertical separators too.
    * tol and maxIter are bisection loop parameters.
-   * </p>
    *
    * @param volumeTarget desired liquid volume to be held in the separator [m3]
    * @return liquid level in the separator
@@ -2613,9 +2557,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>separatorSection</code>.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection} object
@@ -2625,9 +2567,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>separatorSection</code>.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection} object
@@ -2643,9 +2583,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * getSeparatorSections.
-   * </p>
    *
    * @return a {@link java.util.ArrayList} object
    */
@@ -2654,9 +2592,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * addSeparatorSection.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param type a {@link java.lang.String} object
@@ -2678,9 +2614,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>designLiquidLevelFraction</code>.
-   * </p>
    *
    * @return the designGasLevelFraction
    */
@@ -2689,9 +2623,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Setter for the field <code>designLiquidLevelFraction</code>.
-   * </p>
    *
    * @param designLiquidLevelFraction a double
    */
@@ -2847,9 +2779,7 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * getFeedStream.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */

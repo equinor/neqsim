@@ -5,9 +5,7 @@ import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.BubbleFl
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.DropletFlowNode;
 
 /**
- * <p>
  * InterphaseDropletFlow class for droplet/mist and bubble flow regimes.
- * </p>
  *
  * <p>
  * Implements transport coefficient correlations specific to dispersed flow regimes where one phase exists as discrete
@@ -44,17 +42,13 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
   private double spaldingMassTransferNumber = 0.0;
 
   /**
-   * <p>
    * Constructor for InterphaseDropletFlow.
-   * </p>
    */
   public InterphaseDropletFlow() {
   }
 
   /**
-   * <p>
    * Constructor for InterphaseDropletFlow.
-   * </p>
    *
    * @param node a {@link neqsim.fluidmechanics.flownode.FlowNodeInterface} object
    */
@@ -160,10 +154,8 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
   }
 
   /**
-   * <p>
    * Calculates the Nusselt number for droplet/bubble heat transfer using Ranz-Marshall correlation. Nu = 2 + 0.6 *
    * Re^0.5 * Pr^0.33
-   * </p>
    */
   @Override
   public double calcNusseltNumber(int phaseNum, double reynoldsNumber, double prandtlNumber, FlowNodeInterface node) {

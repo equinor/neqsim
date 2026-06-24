@@ -96,9 +96,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
   private Map<String, Double> emissionsKgPerHr = new HashMap<>();
 
   /**
-   * <p>
    * Constructor for FlareStack.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -108,9 +106,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
 
   // --- Connections ---
   /**
-   * <p>
    * Setter for the field <code>reliefInlet</code>.
-   * </p>
    *
    * @param s a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -119,9 +115,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>reliefInlet</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -130,9 +124,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>airAssist</code>.
-   * </p>
    *
    * @param s a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -141,9 +133,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>airAssist</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -152,9 +142,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>steamAssist</code>.
-   * </p>
    *
    * @param s a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -163,9 +151,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>steamAssist</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -175,9 +161,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
 
   // --- Config setters ---
   /**
-   * <p>
    * setTipDiameter.
-   * </p>
    *
    * @param m a double
    */
@@ -186,9 +170,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * setTipElevation.
-   * </p>
    *
    * @param m a double
    */
@@ -197,9 +179,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>burningEfficiency</code>.
-   * </p>
    *
    * @param eff a double
    */
@@ -208,9 +188,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>radiantFraction</code>.
-   * </p>
    *
    * @param f a double
    */
@@ -219,9 +197,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * setSO2Conversion.
-   * </p>
    *
    * @param f a double
    */
@@ -230,9 +206,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>unburnedTHCFraction</code>.
-   * </p>
    *
    * @param f a double
    */
@@ -241,9 +215,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * setCOFraction.
-   * </p>
    *
    * @param f a double
    */
@@ -252,9 +224,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>excessAirFrac</code>.
-   * </p>
    *
    * @param f a double
    */
@@ -263,9 +233,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * setAmbient.
-   * </p>
    *
    * @param tempK a double
    * @param pressBar a double
@@ -276,9 +244,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>windSpeed10m</code>.
-   * </p>
    *
    * @param u a double
    */
@@ -287,9 +253,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>tipLossK</code>.
-   * </p>
    *
    * @param k a double
    */
@@ -298,9 +262,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>radiationModel</code>.
-   * </p>
    *
    * @param m a {@link neqsim.process.equipment.flare.FlareStack.RadiationModel} object
    */
@@ -310,9 +272,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
 
   // Chamberlain tuners
   /**
-   * <p>
    * setChamberlainEmissivePower.
-   * </p>
    *
    * @param epC_kWm2 a double
    * @param epA a double
@@ -323,9 +283,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * setChamberlainFlameLength.
-   * </p>
    *
    * @param lfC a double
    * @param lfA a double
@@ -338,9 +296,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * setChamberlainTilt.
-   * </p>
    *
    * @param kTilt a double
    */
@@ -349,9 +305,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * setChamberlainAttenuation.
-   * </p>
    *
    * @param kAtten_1_per_m a double
    */
@@ -360,9 +314,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * setChamberlainSegments.
-   * </p>
    *
    * @param n a int
    */
@@ -372,9 +324,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
 
   // --- Public results ---
   /**
-   * <p>
    * Getter for the field <code>heatReleaseMW</code>.
-   * </p>
    *
    * @return a double
    */
@@ -383,9 +333,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>emissionsKgPerHr</code>.
-   * </p>
    *
    * @return a {@link java.util.Map} object
    */
@@ -394,9 +342,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>tipBackpressureBar</code>.
-   * </p>
    *
    * @return a double
    */

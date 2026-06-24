@@ -7,9 +7,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * GOR class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -23,9 +21,7 @@ public class GOR extends BasePVTsimulation {
   double oilVolumeStdCond = 0;
 
   /**
-   * <p>
    * Constructor for GOR.
-   * </p>
    *
    * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -38,9 +34,7 @@ public class GOR extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * setTemperaturesAndPressures.
-   * </p>
    *
    * @param temperature an array of type double
    * @param pressure an array of type double
@@ -51,9 +45,7 @@ public class GOR extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * runCalc.
-   * </p>
    */
   public void runCalc() {
     Sm3gas = new double[pressure.length];
@@ -93,9 +85,7 @@ public class GOR extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -138,9 +128,7 @@ public class GOR extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * getGOR.
-   * </p>
    *
    * @return the GOR
    */
@@ -149,9 +137,7 @@ public class GOR extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * getBofactor.
-   * </p>
    *
    * @return the Bofactor
    */

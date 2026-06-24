@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * QfuncFlash class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -23,17 +21,13 @@ public class QfuncFlash extends Flash {
   int type = 0;
 
   /**
-   * <p>
    * Constructor for QfuncFlash.
-   * </p>
    */
   public QfuncFlash() {
   }
 
   /**
-   * <p>
    * Constructor for QfuncFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Hspec a double
@@ -47,9 +41,7 @@ public class QfuncFlash extends Flash {
   }
 
   /**
-   * <p>
    * calcdQdTT.
-   * </p>
    *
    * @return a double
    */
@@ -59,9 +51,7 @@ public class QfuncFlash extends Flash {
   }
 
   /**
-   * <p>
    * calcdQdT.
-   * </p>
    *
    * @return a double
    */
@@ -71,9 +61,7 @@ public class QfuncFlash extends Flash {
   }
 
   /**
-   * <p>
    * solveQ.
-   * </p>
    *
    * @return a double
    */

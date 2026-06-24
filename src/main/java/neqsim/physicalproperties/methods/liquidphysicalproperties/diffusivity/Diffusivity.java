@@ -21,9 +21,7 @@ abstract class Diffusivity extends LiquidPhysicalPropertyMethod implements Diffu
   double[] effectiveDiffusionCoefficient;
 
   /**
-   * <p>
    * Constructor for Diffusivity.
-   * </p>
    *
    * @param liquidPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

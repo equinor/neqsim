@@ -28,18 +28,14 @@ public class SystemUMRCPAEoS extends SystemPrEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for SystemUMRCPAEoS.
-   * </p>
    */
   public SystemUMRCPAEoS() {
     this(298.15, 1.0);
   }
 
   /**
-   * <p>
    * Constructor for SystemUMRCPAEoS.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)

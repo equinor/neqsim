@@ -31,9 +31,7 @@ import neqsim.process.util.report.Report;
 import neqsim.util.validation.ValidationResult;
 
 /**
- * <p>
  * ProcessModel class. Manages a collection of processes that can be run in steps or continuously.
- * </p>
  *
  * <p>
  * This class supports serialization via {@link #saveToNeqsim(String)} and {@link #loadFromNeqsim(String)} for full
@@ -2802,9 +2800,7 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
-   * <p>
    * getReport_json.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */

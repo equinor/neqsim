@@ -6,9 +6,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * ComponentWonWax class.
- * </p>
  *
  * @author rahmat
  * @version $Id: $Id
@@ -20,9 +18,7 @@ public class ComponentWonWax extends ComponentSolid {
   static Logger logger = LogManager.getLogger(ComponentWonWax.class);
 
   /**
-   * <p>
    * Constructor for ComponentWonWax.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -80,9 +76,7 @@ public class ComponentWonWax extends ComponentSolid {
   }
 
   /**
-   * <p>
    * getWonActivityCoefficient.
-   * </p>
    *
    * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double

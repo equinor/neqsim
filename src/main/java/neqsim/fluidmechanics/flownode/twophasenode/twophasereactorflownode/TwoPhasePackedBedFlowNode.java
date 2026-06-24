@@ -14,9 +14,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TwoPhasePackedBedFlowNode class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -28,18 +26,14 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
   static Logger logger = LogManager.getLogger(TwoPhasePackedBedFlowNode.class);
 
   /**
-   * <p>
    * Constructor for TwoPhasePackedBedFlowNode.
-   * </p>
    */
   public TwoPhasePackedBedFlowNode() {
     this.flowNodeType = "packed bed";
   }
 
   /**
-   * <p>
    * Constructor for TwoPhasePackedBedFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
@@ -53,9 +47,7 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Constructor for TwoPhasePackedBedFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
@@ -201,9 +193,7 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

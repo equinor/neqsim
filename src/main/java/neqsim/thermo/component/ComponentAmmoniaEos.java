@@ -15,9 +15,7 @@ public class ComponentAmmoniaEos extends ComponentEos {
   private static final long serialVersionUID = 1000L;
 
   /**
-   * <p>
    * Constructor for ComponentAmmoniaEos.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param moles a double
@@ -29,9 +27,7 @@ public class ComponentAmmoniaEos extends ComponentEos {
   }
 
   /**
-   * <p>
    * Constructor for ComponentAmmoniaEos.
-   * </p>
    *
    * @param number a int
    * @param TC a double

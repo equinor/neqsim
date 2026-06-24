@@ -4,9 +4,7 @@ import neqsim.physicalproperties.methods.PhysicalPropertyMethod;
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * <p>
  * GasPhysicalPropertyMethod class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -21,9 +19,7 @@ public abstract class GasPhysicalPropertyMethod extends PhysicalPropertyMethod {
   public double[][] binaryMolecularMass;
 
   /**
-   * <p>
    * Constructor for GasPhysicalPropertyMethod.
-   * </p>
    *
    * @param gasPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

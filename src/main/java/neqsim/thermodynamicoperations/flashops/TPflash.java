@@ -10,9 +10,7 @@ import neqsim.util.exception.IsNaNException;
 import neqsim.util.exception.TooManyIterationsException;
 
 /**
- * <p>
  * TPflash class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -71,17 +69,13 @@ public class TPflash extends Flash {
   private PhaseType referenceSinglePhaseType = null;
 
   /**
-   * <p>
    * Constructor for TPflash.
-   * </p>
    */
   public TPflash() {
   }
 
   /**
-   * <p>
    * Constructor for TPflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -97,9 +91,7 @@ public class TPflash extends Flash {
   }
 
   /**
-   * <p>
    * Constructor for TPflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param checkForSolids Set true to do solid phase check and calculations
@@ -110,9 +102,7 @@ public class TPflash extends Flash {
   }
 
   /**
-   * <p>
    * sucsSubs. Successive substitutions.
-   * </p>
    */
   public void sucsSubs() {
     deviation = 0;
@@ -164,11 +154,9 @@ public class TPflash extends Flash {
   }
 
   /**
-   * <p>
    * accselerateSucsSubs. GDEM with 2-eigenvalue acceleration when sufficient history is available, falling back to
    * standard DEM (Michelsen 1982b, Risnes et al. 1981). The GDEM formulation follows Risnes &amp; Dalen (1984) and
    * Michelsen &amp; Mollerup (2007, section 9.5).
-   * </p>
    */
   public void accselerateSucsSubs() {
     int nc = system.getPhase(0).getNumberOfComponents();
@@ -253,9 +241,7 @@ public class TPflash extends Flash {
   }
 
   /**
-   * <p>
    * setNewK.
-   * </p>
    */
   public void setNewK() {
     neqsim.thermo.phase.PhaseInterface phase0 = system.getPhase(0);
@@ -275,9 +261,7 @@ public class TPflash extends Flash {
   }
 
   /**
-   * <p>
    * resetK.
-   * </p>
    */
   public void resetK() {
     neqsim.thermo.phase.PhaseInterface phase0 = system.getPhase(0);

@@ -127,18 +127,14 @@ public class SystemBnsEos extends SystemEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemBnsEos.
-   * </p>
    */
   public SystemBnsEos() {
     this(288.15, 1.0);
   }
 
   /**
-   * <p>
    * Constructor for SystemBnsEos.
-   * </p>
    *
    * @param T a double
    * @param P a double
@@ -236,9 +232,7 @@ public class SystemBnsEos extends SystemEos {
   }
 
   /**
-   * <p>
    * Setter for the field <code>relativeDensity</code>.
-   * </p>
    *
    * @param sg a double (relative density, must be positive)
    * @throws java.lang.IllegalArgumentException if relative density is not positive
@@ -254,9 +248,7 @@ public class SystemBnsEos extends SystemEos {
   }
 
   /**
-   * <p>
    * Setter for the field <code>associatedGas</code>.
-   * </p>
    *
    * @param ag a boolean
    */

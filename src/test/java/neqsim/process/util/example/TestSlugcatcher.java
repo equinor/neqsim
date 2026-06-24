@@ -13,9 +13,7 @@ import neqsim.process.measurementdevice.VolumeFlowTransmitter;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TestSlugcatcher class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -23,9 +21,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class TestSlugcatcher {
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

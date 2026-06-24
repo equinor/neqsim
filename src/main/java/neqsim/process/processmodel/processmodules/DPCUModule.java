@@ -20,9 +20,7 @@ import neqsim.process.processmodel.ProcessModuleBaseClass;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * DPCUModule class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -63,9 +61,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
   DistillationColumn distColumn;
 
   /**
-   * <p>
    * Constructor for DPCUModule.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -271,9 +267,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

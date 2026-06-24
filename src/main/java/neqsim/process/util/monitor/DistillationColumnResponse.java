@@ -3,9 +3,7 @@ package neqsim.process.util.monitor;
 import neqsim.process.equipment.distillation.DistillationColumn;
 
 /**
- * <p>
  * PumpResponse class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -21,9 +19,7 @@ public class DistillationColumnResponse extends BaseResponse {
   public Double[] trayMassBalance;
 
   /**
-   * <p>
    * Constructor for DistillationColumnResponse.
-   * </p>
    *
    * @param column a {@link neqsim.process.equipment.distillation.DistillationColumn} object
    */

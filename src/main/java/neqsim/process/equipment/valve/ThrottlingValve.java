@@ -20,9 +20,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * ThrottlingValve class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -113,9 +111,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * <p>
    * Constructor for ThrottlingValve.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -127,9 +123,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * <p>
    * getDeltaPressure.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -201,9 +195,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * <p>
    * Setter for the field <code>pressure</code>.
-   * </p>
    *
    * @param pressure a double
    * @param unit a {@link java.lang.String} object
@@ -220,9 +212,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * <p>
    * setOutletPressure.
-   * </p>
    *
    * @param pressure a double
    * @param unit a {@link java.lang.String} object
@@ -611,9 +601,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * <p>
    * runController.
-   * </p>
    *
    * @param dt a double
    * @param id Calculation identifier
@@ -723,9 +711,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * <p>
    * setMinimumValveOpening.
-   * </p>
    *
    * @param minopen a double
    */
@@ -982,9 +968,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * <p>
    * isValveKvSet.
-   * </p>
    *
    * @return a boolean
    */
@@ -993,9 +977,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * <p>
    * Setter for the field <code>valveKvSet</code>.
-   * </p>
    *
    * @param valveKvSet a boolean
    */
@@ -1033,9 +1015,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * <p>
    * isAcceptNegativeDP.
-   * </p>
    *
    * @return a boolean
    */
@@ -1044,9 +1024,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * <p>
    * Setter for the field <code>acceptNegativeDP</code>.
-   * </p>
    *
    * @param acceptNegativeDP a boolean
    */
@@ -1067,9 +1045,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * <p>
    * setIsCalcOutPressure.
-   * </p>
    *
    * @param isSetPres a boolean
    */
@@ -1095,9 +1071,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * <p>
    * isGasValve.
-   * </p>
    *
    * @return a boolean
    */
@@ -1106,9 +1080,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * <p>
    * Setter for the field <code>gasValve</code>.
-   * </p>
    *
    * @param gasValve a boolean
    */
@@ -1117,9 +1089,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * <p>
    * getFp.
-   * </p>
    *
    * @return a double
    */
@@ -1128,9 +1098,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * <p>
    * setFp.
-   * </p>
    *
    * @param fp a double
    */
@@ -1139,9 +1107,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * <p>
    * Getter for the field <code>deltaPressure</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1150,9 +1116,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * <p>
    * Setter for the field <code>deltaPressure</code>.
-   * </p>
    *
    * @param deltaPressure a double
    * @param unit a {@link java.lang.String} object
@@ -1163,9 +1127,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * <p>
    * isAllowChoked.
-   * </p>
    *
    * @return a boolean
    */
@@ -1174,9 +1136,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * <p>
    * Setter for the field <code>allowChoked</code>.
-   * </p>
    *
    * @param allowChoked a boolean
    */
@@ -1185,9 +1145,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * <p>
    * isAllowLaminar.
-   * </p>
    *
    * @return a boolean
    */
@@ -1196,9 +1154,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * <p>
    * Setter for the field <code>allowLaminar</code>.
-   * </p>
    *
    * @param allowLaminar a boolean
    */

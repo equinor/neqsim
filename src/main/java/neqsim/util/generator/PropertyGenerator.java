@@ -5,9 +5,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * PropertyGenerator class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -18,9 +16,7 @@ public class PropertyGenerator {
   HashMap<String, double[]> properties = new HashMap<String, double[]>();
 
   /**
-   * <p>
    * Constructor for PropertyGenerator.
-   * </p>
    *
    * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
    * @param temperatures an array of type double
@@ -33,9 +29,7 @@ public class PropertyGenerator {
   }
 
   /**
-   * <p>
    * calculate.
-   * </p>
    *
    * @return a {@link java.util.HashMap} object
    */
@@ -333,9 +327,7 @@ public class PropertyGenerator {
    */
 
   /**
-   * <p>
    * getValue.
-   * </p>
    *
    * @param propertyName a {@link java.lang.String} object
    * @return a double

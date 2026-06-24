@@ -11,18 +11,14 @@ public class SystemSrkTwuCoonStatoilEos extends SystemSrkEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for SystemSrkTwuCoonStatoilEos.
-   * </p>
    */
   public SystemSrkTwuCoonStatoilEos() {
     this(298.15, 1.0, false);
   }
 
   /**
-   * <p>
    * Constructor for SystemSrkTwuCoonStatoilEos.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -32,9 +28,7 @@ public class SystemSrkTwuCoonStatoilEos extends SystemSrkEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemSrkTwuCoonStatoilEos.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)

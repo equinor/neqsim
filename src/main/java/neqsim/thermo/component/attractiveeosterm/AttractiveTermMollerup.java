@@ -3,9 +3,7 @@ package neqsim.thermo.component.attractiveeosterm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * <p>
  * AttractiveTermMollerup class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -15,9 +13,7 @@ public class AttractiveTermMollerup extends AttractiveTermBaseClass {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for AttractiveTermMollerup.
-   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
    */
@@ -26,9 +22,7 @@ public class AttractiveTermMollerup extends AttractiveTermBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for AttractiveTermMollerup.
-   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
    * @param params an array of type double

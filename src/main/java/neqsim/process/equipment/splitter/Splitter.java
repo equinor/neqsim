@@ -22,9 +22,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * Splitter class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -101,9 +99,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   }
 
   /**
-   * <p>
    * Getter for the field <code>inletStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -112,9 +108,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   }
 
   /**
-   * <p>
    * Constructor for Splitter.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -138,9 +132,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   }
 
   /**
-   * <p>
    * setSplitFactors.
-   * </p>
    *
    * @param splitFact an array of type double
    */
@@ -162,9 +154,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   }
 
   /**
-   * <p>
    * setFlowRates.
-   * </p>
    *
    * @param flowRates an array of type double
    * @param flowUnit a {@link java.lang.String} object
@@ -201,9 +191,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   }
 
   /**
-   * <p>
    * calcSplitFactors.
-   * </p>
    */
   public void calcSplitFactors() {
     double sum = 0.0;
@@ -383,9 +371,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   }
 
   /**
-   * <p>
    * Getter for the field <code>splitFactor</code>.
-   * </p>
    *
    * @param i a int
    * @return a double
@@ -395,9 +381,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   }
 
   /**
-   * <p>
    * getSplitFactors.
-   * </p>
    *
    * @return an array of type double
    */
@@ -406,9 +390,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   }
 
   /**
-   * <p>
    * getSplitNumber.
-   * </p>
    *
    * @return number of split outlets
    */

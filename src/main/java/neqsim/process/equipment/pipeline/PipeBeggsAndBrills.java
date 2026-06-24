@@ -660,9 +660,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * Setter for the field <code>pipeSpecification</code>.
-   * </p>
    *
    * @param nominalDiameter a double in inch
    * @param pipeSec a {@link java.lang.String} object
@@ -715,9 +713,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * setThickness.
-   * </p>
    *
    * @param pipeThickness the thickness to set
    */
@@ -726,9 +722,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * getThickness.
-   * </p>
    *
    * @return a double
    */
@@ -737,9 +731,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * Setter for the field <code>angle</code>.
-   * </p>
    *
    * @param angle a double
    */
@@ -749,9 +741,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * Setter for the field <code>pipeWallRoughness</code>.
-   * </p>
    *
    * @param pipeWallRoughness the pipeWallRoughness to set
    */
@@ -761,9 +751,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * Setter for the field <code>numberOfIncrements</code>.
-   * </p>
    *
    * @param numberOfIncrements a int
    */
@@ -787,9 +775,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * Setter for the field <code>constantSurfaceTemperature</code>.
-   * </p>
    *
    * @param temperature a double
    * @param unit a {@link java.lang.String} object
@@ -1082,9 +1068,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * calculateMissingValue.
-   * </p>
    */
   public void calculateMissingValue() {
     if (!Double.isNaN(totalLength) && Double.isNaN(totalElevation) && Double.isNaN(angle)) {
@@ -1137,9 +1121,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * calcFlowRegime.
-   * </p>
    *
    * @return the determined flow regime
    */
@@ -1218,9 +1200,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * calcHydrostaticPressureDifference.
-   * </p>
    *
    * @return a double
    */
@@ -1328,9 +1308,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * calcFrictionPressureLoss.
-   * </p>
    *
    * @return a double
    */
@@ -1418,9 +1396,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * calcPressureDrop.
-   * </p>
    *
    * @return a double
    */
@@ -2575,9 +2551,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * getInletSuperficialVelocity.
-   * </p>
    *
    * @return a double
    */
@@ -2597,9 +2571,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * getOutletSuperficialVelocity.
-   * </p>
    *
    * @return a double
    */
@@ -2608,9 +2580,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * getNumberOfIncrements.
-   * </p>
    *
    * @return a double
    */
@@ -2620,9 +2590,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * Getter for the field <code>angle</code>.
-   * </p>
    *
    * @return angle in degrees
    */
@@ -2694,9 +2662,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * Getter for the field <code>LastSegmentPressureDrop</code>.
-   * </p>
    *
    * @return pressure drop last segment
    */
@@ -2733,9 +2699,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * getSegmentPressure.
-   * </p>
    *
    * @param index segment number
    * @return segment pressure as double
@@ -2758,9 +2722,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * getSegmentPressureDrop.
-   * </p>
    *
    * @param index segment number
    * @return Double
@@ -2796,9 +2758,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * getSegmentTemperature.
-   * </p>
    *
    * @param index segment number
    * @return Double
@@ -2812,9 +2772,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * Getter for the field <code>flowRegimeProfile</code>.
-   * </p>
    *
    * @return list of flow regime names
    */
@@ -2823,9 +2781,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * getSegmentFlowRegime.
-   * </p>
    *
    * @param index segment number
    * @return String
@@ -2839,9 +2795,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * Getter for the field <code>liquidSuperficialVelocityProfile</code>.
-   * </p>
    *
    * @return list of liquid superficial velocity profile
    */
@@ -2850,9 +2804,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * Getter for the field <code>gasSuperficialVelocityProfile</code>.
-   * </p>
    *
    * @return list of gas superficial velocities
    */
@@ -2861,9 +2813,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * Getter for the field <code>mixtureSuperficialVelocityProfile</code>.
-   * </p>
    *
    * @return list of mixture superficial velocity profile
    */
@@ -2872,9 +2822,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * Getter for the field <code>mixtureViscosityProfile</code>.
-   * </p>
    *
    * @return list of mixture viscosity
    */
@@ -2883,9 +2831,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * Getter for the field <code>mixtureDensityProfile</code>.
-   * </p>
    *
    * @return list of density profile
    */
@@ -2894,9 +2840,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * Getter for the field <code>liquidDensityProfile</code>.
-   * </p>
    *
    * @return a {@link java.util.List} object
    */
@@ -2927,9 +2871,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * Getter for the field <code>mixtureReynoldsNumber</code>.
-   * </p>
    *
    * @return list of reynold numbers
    */
@@ -2938,9 +2880,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * Getter for the field <code>lengthProfile</code>.
-   * </p>
    *
    * @return list of length profile
    */
@@ -2949,9 +2889,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * Getter for the field <code>incrementsProfile</code>.
-   * </p>
    *
    * @return list of increments profile
    */
@@ -2960,9 +2898,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * Getter for the field <code>elevationProfile</code>.
-   * </p>
    *
    * @return list of elevation profile
    */
@@ -2971,9 +2907,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * getSegmentLiquidSuperficialVelocity.
-   * </p>
    *
    * @param index segment number
    * @return Double
@@ -2987,9 +2921,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * getSegmentGasSuperficialVelocity.
-   * </p>
    *
    * @param index segment number
    * @return Double
@@ -3003,9 +2935,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * getSegmentMixtureSuperficialVelocity.
-   * </p>
    *
    * @param index segment number
    * @return Double
@@ -3019,9 +2949,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * getSegmentMixtureViscosity.
-   * </p>
    *
    * @param index segment number
    * @return Double
@@ -3035,9 +2963,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * getSegmentMixtureDensity.
-   * </p>
    *
    * @param index segment number
    * @return Double
@@ -3051,9 +2977,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * getSegmentLiquidDensity.
-   * </p>
    *
    * @param index segment number
    * @return Double
@@ -3067,9 +2991,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * getSegmentLiquidHoldup.
-   * </p>
    *
    * @param index segment number
    * @return Double
@@ -3083,9 +3005,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * getSegmentMixtureReynoldsNumber.
-   * </p>
    *
    * @param index segment number
    * @return Double
@@ -3099,9 +3019,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * getSegmentLength.
-   * </p>
    *
    * @param index segment number
    * @return Double
@@ -3115,9 +3033,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * <p>
    * getSegmentElevation.
-   * </p>
    *
    * @param index segment number
    * @return Double

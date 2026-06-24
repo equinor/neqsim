@@ -73,9 +73,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   private neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignation = new neqsim.process.equipment.iec81346.ReferenceDesignation();
 
   /**
-   * <p>
    * Constructor for ControllerDeviceBaseClass.
-   * </p>
    */
   public ControllerDeviceBaseClass() {
     this("controller");
@@ -94,9 +92,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   }
 
   /**
-   * <p>
    * Constructor for ControllerDeviceBaseClass.
-   * </p>
    *
    * @param name Name of PID controller object
    */
@@ -355,9 +351,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   }
 
   /**
-   * <p>
    * Get proportional gain of PID controller.
-   * </p>
    *
    * @return Proportional gain of PID controller
    */
@@ -366,9 +360,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   }
 
   /**
-   * <p>
    * Set proportional gain of PID controller.
-   * </p>
    *
    * @param Kp Proportional gain of PID controller
    */
@@ -389,9 +381,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   }
 
   /**
-   * <p>
    * Get integral time of PID controller.
-   * </p>
    *
    * @return Integral time in seconds
    */
@@ -400,9 +390,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   }
 
   /**
-   * <p>
    * Set integral time of PID controller.
-   * </p>
    *
    * @param Ti Integral time in seconds
    */
@@ -415,9 +403,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   }
 
   /**
-   * <p>
    * Get derivative time of PID controller.
-   * </p>
    *
    * @return Derivative time of controller
    */
@@ -426,9 +412,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   }
 
   /**
-   * <p>
    * Set derivative time of PID controller.
-   * </p>
    *
    * @param Td Derivative time in seconds
    */

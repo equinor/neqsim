@@ -4,9 +4,7 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * PHflashSingleComp class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -18,9 +16,7 @@ public class PHflashSingleComp extends Flash {
   double Hspec = 0;
 
   /**
-   * <p>
    * Constructor for PHflashSingleComp.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Hspec a double

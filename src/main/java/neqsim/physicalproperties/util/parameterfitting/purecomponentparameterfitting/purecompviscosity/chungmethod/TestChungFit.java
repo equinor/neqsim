@@ -13,9 +13,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>
  * TestChungFit class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -25,9 +23,7 @@ public class TestChungFit {
   static Logger logger = LogManager.getLogger(TestChungFit.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

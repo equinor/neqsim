@@ -25,9 +25,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * TEGdehydrationProcessDistillationGFA class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -162,9 +160,7 @@ public class TEGdehydrationProcessDistillationGFA {
   public double coldTEGpumpIsentropicEfficiency = 0.75;
 
   /**
-   * <p>
    * getProcess.
-   * </p>
    *
    * @return a {@link neqsim.process.processmodel.ProcessSystem} object
    */
@@ -385,9 +381,7 @@ public class TEGdehydrationProcessDistillationGFA {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

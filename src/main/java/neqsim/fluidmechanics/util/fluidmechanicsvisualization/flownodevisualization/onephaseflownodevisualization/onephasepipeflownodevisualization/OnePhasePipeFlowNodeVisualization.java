@@ -10,18 +10,14 @@ import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.util.fluidmechanicsvisualization.flownodevisualization.onephaseflownodevisualization.OnePhaseFlowNodeVisualization;
 
 /**
- * <p>
  * OnePhasePipeFlowNodeVisualization class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class OnePhasePipeFlowNodeVisualization extends OnePhaseFlowNodeVisualization {
   /**
-   * <p>
    * Constructor for OnePhasePipeFlowNodeVisualization.
-   * </p>
    */
   public OnePhasePipeFlowNodeVisualization() {
   }

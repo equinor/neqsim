@@ -25,9 +25,7 @@ class FlashWaterTest {
   static double[] errS = new double[P_bar.length];
 
   /**
-   * <p>
    * setUp.
-   * </p>
    */
   @BeforeAll
   public static void setUp() {
@@ -50,9 +48,7 @@ class FlashWaterTest {
   }
 
   /**
-   * <p>
    * testPHflash.
-   * </p>
    */
   @Test
   public void testPHflash() {
@@ -66,9 +62,7 @@ class FlashWaterTest {
   }
 
   /**
-   * <p>
    * testPSflash.
-   * </p>
    */
   @Test
   public void testPSflash() {

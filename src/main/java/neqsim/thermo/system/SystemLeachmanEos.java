@@ -16,18 +16,14 @@ public class SystemLeachmanEos extends SystemEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for SystemLeachmanEos.
-   * </p>
    */
   public SystemLeachmanEos() {
     this(298.15, 1.0, false);
   }
 
   /**
-   * <p>
    * Constructor for SystemLeachmanEos.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -37,9 +33,7 @@ public class SystemLeachmanEos extends SystemEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemLeachmanEos.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -93,9 +87,7 @@ public class SystemLeachmanEos extends SystemEos {
   }
 
   /**
-   * <p>
    * commonInitialization.
-   * </p>
    */
   public void commonInitialization() {
     setImplementedCompositionDeriativesofFugacity(false);

@@ -5,9 +5,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * VolumeFlowTransmitter class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -19,9 +17,7 @@ public class VolumeFlowTransmitter extends StreamMeasurementDeviceBaseClass {
   private int measuredPhaseNumber = 0;
 
   /**
-   * <p>
    * Constructor for VolumeFlowTransmitter.
-   * </p>
    *
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -30,9 +26,7 @@ public class VolumeFlowTransmitter extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for VolumeFlowTransmitter.
-   * </p>
    *
    * @param name Name of VolumeFlowTransmitter
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -84,9 +78,7 @@ public class VolumeFlowTransmitter extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>measuredPhaseNumber</code>.
-   * </p>
    *
    * @return a int
    */
@@ -95,9 +87,7 @@ public class VolumeFlowTransmitter extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>measuredPhaseNumber</code>.
-   * </p>
    *
    * @param measuredPhase a int
    */

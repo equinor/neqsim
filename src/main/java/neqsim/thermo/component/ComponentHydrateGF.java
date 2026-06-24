@@ -6,9 +6,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * ComponentHydrateGF class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -23,9 +21,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
   double[][] Bk = new double[2][2]; // [structure][cavitytype]
 
   /**
-   * <p>
    * Constructor for ComponentHydrateGF.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -156,9 +152,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
   }
 
   /**
-   * <p>
    * fugcoef2.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComps a int

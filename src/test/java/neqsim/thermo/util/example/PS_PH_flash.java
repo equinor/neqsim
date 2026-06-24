@@ -8,9 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * PS_PH_flash class.
- * </p>
  *
  * @author esol
  * @since 2.2.3
@@ -20,9 +18,7 @@ public class PS_PH_flash {
   private static final Logger logger = LogManager.getLogger(PS_PH_flash.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

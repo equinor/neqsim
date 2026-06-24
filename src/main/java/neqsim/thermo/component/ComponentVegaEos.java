@@ -3,9 +3,7 @@ package neqsim.thermo.component;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * ComponentVega class.
- * </p>
  *
  * @author victorigi
  * @version $Id: $Id
@@ -15,9 +13,7 @@ public class ComponentVegaEos extends ComponentEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for ComponentGERG2004.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -29,9 +25,7 @@ public class ComponentVegaEos extends ComponentEos {
   }
 
   /**
-   * <p>
    * Constructor for ComponentGERG2004.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]

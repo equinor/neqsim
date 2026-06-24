@@ -16,9 +16,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * ExpanderOld class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -44,9 +42,7 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
   }
 
   /**
-   * <p>
    * Constructor for ExpanderOld.
-   * </p>
    *
    * @param name name of expander
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object

@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * ComponentHydrateStatoil class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -24,9 +22,7 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
   double[][] cavprwat = new double[2][2];
 
   /**
-   * <p>
    * Constructor for ComponentHydrateStatoil.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -181,9 +177,7 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
   }
 
   /**
-   * <p>
    * delt.
-   * </p>
    *
    * @param n a double
    * @param radius a double

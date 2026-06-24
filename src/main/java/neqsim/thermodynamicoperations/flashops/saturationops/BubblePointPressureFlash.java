@@ -6,9 +6,7 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * bubblePointPressureFlash class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -20,9 +18,7 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
   static Logger logger = LogManager.getLogger(BubblePointPressureFlash.class);
 
   /**
-   * <p>
    * Constructor for bubblePointPressureFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

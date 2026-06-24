@@ -5,9 +5,7 @@ import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentVegaEos;
 
 /**
- * <p>
  * PhaseVegaEos class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -37,9 +35,7 @@ public class PhaseVegaEos extends PhaseEos {
   private transient boolean propertiesCalculated = false;
 
   /**
-   * <p>
    * Constructor for PhaseVegaEos.
-   * </p>
    */
   public PhaseVegaEos() {
     thermoPropertyModelName = "Vega Eos";

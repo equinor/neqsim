@@ -9,9 +9,7 @@ package neqsim.thermo.util.jni;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * GERG2004EOS class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -21,9 +19,7 @@ public class GERG2004EOS {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * POTDX.
-   * </p>
    *
    * @param c1 a double
    * @param c2 a double
@@ -52,9 +48,7 @@ public class GERG2004EOS {
       double c17, double c18, double c19, double c20);
 
   /**
-   * <p>
    * ZOTPX.
-   * </p>
    *
    * @param c1 a double
    * @param c2 a double
@@ -84,9 +78,7 @@ public class GERG2004EOS {
       double c17, double c18, double c19, double c20, int IPHASE);
 
   /**
-   * <p>
    * HOTPX.
-   * </p>
    *
    * @param c1 a double
    * @param c2 a double
@@ -116,9 +108,7 @@ public class GERG2004EOS {
       double c17, double c18, double c19, double c20, int IPHASE);
 
   /**
-   * <p>
    * SOTPX.
-   * </p>
    *
    * @param c1 a double
    * @param c2 a double
@@ -148,9 +138,7 @@ public class GERG2004EOS {
       double c17, double c18, double c19, double c20, int IPHASE);
 
   /**
-   * <p>
    * CPOTPX.
-   * </p>
    *
    * @param c1 a double
    * @param c2 a double
@@ -180,9 +168,7 @@ public class GERG2004EOS {
       double c17, double c18, double c19, double c20, int IPHASE);
 
   /**
-   * <p>
    * WOTPX.
-   * </p>
    *
    * @param c1 a double
    * @param c2 a double
@@ -212,9 +198,7 @@ public class GERG2004EOS {
       double c17, double c18, double c19, double c20, int IPHASE);
 
   /**
-   * <p>
    * RJTOTPX.
-   * </p>
    *
    * @param c1 a double
    * @param c2 a double
@@ -244,9 +228,7 @@ public class GERG2004EOS {
       double c17, double c18, double c19, double c20, int IPHASE);
 
   /**
-   * <p>
    * GOTPX.
-   * </p>
    *
    * @param c1 a double
    * @param c2 a double
@@ -276,9 +258,7 @@ public class GERG2004EOS {
       double c17, double c18, double c19, double c20, int IPHASE);
 
   /**
-   * <p>
    * UOTPX.
-   * </p>
    *
    * @param c1 a double
    * @param c2 a double
@@ -308,9 +288,7 @@ public class GERG2004EOS {
       double c17, double c18, double c19, double c20, int IPHASE);
 
   /**
-   * <p>
    * AOTPX.
-   * </p>
    *
    * @param c1 a double
    * @param c2 a double
@@ -340,9 +318,7 @@ public class GERG2004EOS {
       double c17, double c18, double c19, double c20, int IPHASE);
 
   /**
-   * <p>
    * SFUGOTPX.
-   * </p>
    *
    * @param c1 a double
    * @param c2 a double
@@ -372,9 +348,7 @@ public class GERG2004EOS {
       double c17, double c18, double c19, double c20, int IPHASE);
 
   /**
-   * <p>
    * SPHIOTPX.
-   * </p>
    *
    * @param c1 a double
    * @param c2 a double
@@ -404,9 +378,7 @@ public class GERG2004EOS {
       double c17, double c18, double c19, double c20, int IPHASE);
 
   /**
-   * <p>
    * CVOTPX.
-   * </p>
    *
    * @param c1 a double
    * @param c2 a double
@@ -436,9 +408,7 @@ public class GERG2004EOS {
       double c17, double c18, double c19, double c20, int IPHASE);
 
   /**
-   * <p>
    * SALLOTPX.
-   * </p>
    *
    * @param c1 a double
    * @param c2 a double
@@ -471,9 +441,7 @@ public class GERG2004EOS {
       "i-pentane", "n-hexane", "n-heptane", "n-octane", "hydrogen", "oxygen", "CO", "water", "helium", "argon" };
 
   /**
-   * <p>
    * Constructor for GERG2004EOS.
-   * </p>
    */
   public GERG2004EOS() {
     // TODO: does not work
@@ -481,9 +449,7 @@ public class GERG2004EOS {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -506,9 +472,7 @@ public class GERG2004EOS {
   }
 
   /**
-   * <p>
    * Getter for the field <code>nameList</code>.
-   * </p>
    *
    * @return an array of {@link java.lang.String} objects
    */

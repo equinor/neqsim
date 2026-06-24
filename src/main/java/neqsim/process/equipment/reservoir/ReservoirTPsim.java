@@ -8,9 +8,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * ReservoirTPsim class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: ReservoirTPsim.java 1234 2024-05-31 10:00:00Z esolbraa $
@@ -32,9 +30,7 @@ public class ReservoirTPsim extends ProcessEquipmentBaseClass {
   private String prodPhaseName = "gas";
 
   /**
-   * <p>
    * getReserervourFluid.
-   * </p>
    *
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -43,9 +39,7 @@ public class ReservoirTPsim extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for ReservoirTPsim.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param reservoirFluid a {@link neqsim.thermo.system.SystemInterface} object
@@ -77,9 +71,7 @@ public class ReservoirTPsim extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>outStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -88,9 +80,7 @@ public class ReservoirTPsim extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>pressure</code>.
-   * </p>
    *
    * @param reservoirPressure a double
    * @param pUnit a {@link java.lang.String} object
@@ -101,9 +91,7 @@ public class ReservoirTPsim extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>temperature</code>.
-   * </p>
    *
    * @param reservoirTemperature a double
    * @param tUnit a {@link java.lang.String} object
@@ -114,9 +102,7 @@ public class ReservoirTPsim extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>prodPhaseName</code>.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -125,9 +111,7 @@ public class ReservoirTPsim extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>prodPhaseName</code>.
-   * </p>
    *
    * @param prodPhaseName a {@link java.lang.String} object
    */
@@ -136,9 +120,7 @@ public class ReservoirTPsim extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>flowRate</code>.
-   * </p>
    *
    * @param flowRate a double
    * @param flowUnit a {@link java.lang.String} object

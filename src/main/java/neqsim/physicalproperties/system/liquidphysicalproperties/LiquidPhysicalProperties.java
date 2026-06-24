@@ -21,9 +21,7 @@ import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * LiquidPhysicalProperties class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -35,9 +33,7 @@ public class LiquidPhysicalProperties extends PhysicalProperties {
   static Logger logger = LogManager.getLogger(LiquidPhysicalProperties.class);
 
   /**
-   * <p>
    * Constructor for LiquidPhysicalProperties.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param binaryDiffusionCoefficientMethod a int

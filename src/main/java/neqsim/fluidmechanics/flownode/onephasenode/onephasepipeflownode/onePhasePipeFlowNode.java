@@ -13,9 +13,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * onePhasePipeFlowNode class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -27,17 +25,13 @@ public class onePhasePipeFlowNode extends onePhaseFlowNode {
   static Logger logger = LogManager.getLogger(onePhasePipeFlowNode.class);
 
   /**
-   * <p>
    * Constructor for onePhasePipeFlowNode.
-   * </p>
    */
   public onePhasePipeFlowNode() {
   }
 
   /**
-   * <p>
    * Constructor for onePhasePipeFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
@@ -71,9 +65,7 @@ public class onePhasePipeFlowNode extends onePhaseFlowNode {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

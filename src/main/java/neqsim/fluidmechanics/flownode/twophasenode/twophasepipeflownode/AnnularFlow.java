@@ -16,9 +16,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * AnnularFlow class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -32,18 +30,14 @@ public class AnnularFlow extends TwoPhaseFlowNode {
   // double liquidFilmThickness=0;
 
   /**
-   * <p>
    * Constructor for AnnularFlow.
-   * </p>
    */
   public AnnularFlow() {
     this.flowNodeType = "annular";
   }
 
   /**
-   * <p>
    * Constructor for AnnularFlow.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
@@ -57,9 +51,7 @@ public class AnnularFlow extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Constructor for AnnularFlow.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
@@ -169,9 +161,7 @@ public class AnnularFlow extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

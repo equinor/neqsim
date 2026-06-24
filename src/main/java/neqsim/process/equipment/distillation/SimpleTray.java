@@ -11,9 +11,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * SimpleTray class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -54,9 +52,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   private double liquidPumparoundDrawFraction = 0.0;
 
   /**
-   * <p>
    * Constructor for SimpleTray.
-   * </p>
    *
    * @param name name of tray
    */
@@ -65,9 +61,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * <p>
    * init.
-   * </p>
    */
   public void init() {
     int pp = 0;
@@ -102,9 +96,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * <p>
    * calcMixStreamEnthalpy0.
-   * </p>
    *
    * @return a double
    */
@@ -147,9 +139,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * <p>
    * run2.
-   * </p>
    */
   public void run2() {
     invalidateOutStreamCache();
@@ -158,9 +148,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * <p>
    * TPflash.
-   * </p>
    */
   public void TPflash() {
   }
@@ -314,9 +302,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * <p>
    * getGasOutStream.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
@@ -328,9 +314,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * <p>
    * getLiquidOutStream.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
@@ -682,9 +666,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * <p>
    * getVaporFlowRate.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -698,9 +680,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * <p>
    * getLiquidFlowRate.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -714,9 +694,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * <p>
    * getFeedRate.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -730,10 +708,9 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * <p>
    * massBalance.
-   * </p>
    *
+   * <p>
    * Calculates the mass balance by comparing the total mass input and output.
    *
    * @return the difference between mass input and mass output

@@ -11,18 +11,14 @@ public class SystemIdealGas extends SystemThermo {
   private static final long serialVersionUID = 1000L;
 
   /**
-   * <p>
    * Constructor for SystemIdealGas.
-   * </p>
    */
   public SystemIdealGas() {
     this(298.15, 1.0, false);
   }
 
   /**
-   * <p>
    * Constructor for SystemIdealGas.
-   * </p>
    *
    * @param T a double
    * @param P a double
@@ -32,9 +28,7 @@ public class SystemIdealGas extends SystemThermo {
   }
 
   /**
-   * <p>
    * Constructor for SystemIdealGas.
-   * </p>
    *
    * @param T a double
    * @param P a double

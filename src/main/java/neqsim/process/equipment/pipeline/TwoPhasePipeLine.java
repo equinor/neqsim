@@ -11,9 +11,7 @@ import neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsyste
 import neqsim.process.equipment.stream.StreamInterface;
 
 /**
- * <p>
  * TwoPhasePipeLine class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -32,9 +30,7 @@ public class TwoPhasePipeLine extends Pipeline {
   }
 
   /**
-   * <p>
    * Constructor for TwoPhasePipeLine.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inStream a {@link neqsim.process.equipment.stream.Stream} object
@@ -45,9 +41,7 @@ public class TwoPhasePipeLine extends Pipeline {
   }
 
   /**
-   * <p>
    * createSystem.
-   * </p>
    */
   public void createSystem() {
   }

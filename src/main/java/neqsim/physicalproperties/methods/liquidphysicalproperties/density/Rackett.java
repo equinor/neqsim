@@ -13,9 +13,7 @@ import neqsim.physicalproperties.methods.methodinterface.DensityInterface;
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * <p>
  * Spencer-Danner modified Rackett equation for saturated liquid density.
- * </p>
  *
  * <p>
  * The Rackett equation relates saturated liquid molar volume to reduced temperature using a single substance-specific
@@ -54,9 +52,7 @@ public class Rackett extends LiquidPhysicalPropertyMethod implements DensityInte
   private static final double R_CM3_BAR = 83.14;
 
   /**
-   * <p>
    * Constructor for Rackett.
-   * </p>
    *
    * @param liquidPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

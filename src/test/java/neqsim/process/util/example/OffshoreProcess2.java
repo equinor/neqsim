@@ -11,9 +11,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * OffshoreProcess2 class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id

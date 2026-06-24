@@ -6,9 +6,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * ComponentHydrateBallard class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -20,9 +18,7 @@ public class ComponentHydrateBallard extends ComponentHydrate {
   static Logger logger = LogManager.getLogger(ComponentHydrateBallard.class);
 
   /**
-   * <p>
    * Constructor for ComponentHydrateBallard.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -177,9 +173,7 @@ public class ComponentHydrateBallard extends ComponentHydrate {
   }
 
   /**
-   * <p>
    * delt.
-   * </p>
    *
    * @param n a double
    * @param radius a double

@@ -3,18 +3,14 @@ package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequ
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface;
 
 /**
- * <p>
  * EnhancementFactorAlg class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class EnhancementFactorAlg extends EnhancementFactor {
   /**
-   * <p>
    * Constructor for EnhancementFactorAlg.
-   * </p>
    *
    * @param fluidBoundary a
    * {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface} object

@@ -146,9 +146,7 @@ public abstract class SystemThermo implements SystemInterface {
   protected transient OilAssayCharacterisation oilAssayCharacterisation = null;
 
   /**
-   * <p>
    * Constructor for SystemThermo.
-   * </p>
    */
   public SystemThermo() {
     characterization = new Characterise(this);
@@ -158,9 +156,7 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * <p>
    * Constructor for SystemThermo.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -522,9 +518,7 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * <p>
    * addHydratePhase.
-   * </p>
    */
   public void addHydratePhase() {
     if (!multiPhaseCheck) {
@@ -569,9 +563,7 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * <p>
    * addHydratePhase2.
-   * </p>
    */
   public void addHydratePhase2() {
     if (!multiPhaseCheck) {
@@ -820,9 +812,7 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * <p>
    * addSolidPhase.
-   * </p>
    */
   public void addSolidPhase() {
     if (!multiPhaseCheck) {
@@ -1884,9 +1874,7 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * <p>
    * getAntoineVaporPressure.
-   * </p>
    *
    * @param temp a double
    * @return a double
@@ -3555,9 +3543,7 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * <p>
    * hasTBPFraction.
-   * </p>
    *
    * @return a boolean
    */
@@ -3613,9 +3599,7 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * <p>
    * initAnalytic.
-   * </p>
    *
    * @param type a int. 0 to initialize and 1 to reset, 2 to calculate T and P derivatives, 3 to calculate all
    * derivatives and 4 to calculate all derivatives numerically
@@ -3702,9 +3686,7 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * <p>
    * initAnalytic.
-   * </p>
    *
    * @param type a int
    * @param phaseNum a int
@@ -3876,9 +3858,7 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * <p>
    * initNumeric.
-   * </p>
    *
    * @param type a int
    */
@@ -3887,9 +3867,7 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * <p>
    * initNumeric.
-   * </p>
    *
    * @param initType a int
    * @param phasen a int
@@ -4866,9 +4844,7 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * <p>
    * setLastTBPasPlus.
-   * </p>
    *
    * @return a boolean
    */
@@ -4911,9 +4887,7 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * <p>
    * setMixingRuleGEmodel.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -5563,9 +5537,7 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * <p>
    * useTVasIndependentVariables.
-   * </p>
    *
    * @return a boolean
    */
@@ -5584,9 +5556,7 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * <p>
    * write.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -5684,9 +5654,7 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * <p>
    * setMixingRuleParametersForComponent.
-   * </p>
    *
    * @param compName a {@link java.lang.String} object
    */

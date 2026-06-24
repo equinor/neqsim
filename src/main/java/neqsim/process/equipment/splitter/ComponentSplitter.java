@@ -18,9 +18,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * Splitter class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -47,9 +45,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for Splitter.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -60,9 +56,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>inletStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -71,9 +65,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * setSplitFactors.
-   * </p>
    *
    * @param factors an array of type double
    */
@@ -91,9 +83,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>inletStream</code>.
-   * </p>
    *
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -111,9 +101,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>splitStream</code>.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -123,9 +111,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>splitNumber</code>.
-   * </p>
    *
    * @return number of split outlets
    */

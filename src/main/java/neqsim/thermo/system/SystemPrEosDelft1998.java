@@ -15,18 +15,14 @@ public class SystemPrEosDelft1998 extends SystemPrEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for SystemPrEosDelft1998.
-   * </p>
    */
   public SystemPrEosDelft1998() {
     this(298.15, 1.0, false);
   }
 
   /**
-   * <p>
    * Constructor for SystemPrEosDelft1998.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -36,9 +32,7 @@ public class SystemPrEosDelft1998 extends SystemPrEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemPrEosDelft1998.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)

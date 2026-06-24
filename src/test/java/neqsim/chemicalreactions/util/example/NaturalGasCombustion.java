@@ -6,9 +6,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * NaturalGasCombustion class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -16,9 +14,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class NaturalGasCombustion extends neqsim.NeqSimTest {
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

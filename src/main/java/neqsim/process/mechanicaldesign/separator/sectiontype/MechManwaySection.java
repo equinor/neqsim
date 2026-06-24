@@ -3,18 +3,14 @@ package neqsim.process.mechanicaldesign.separator.sectiontype;
 import neqsim.process.equipment.separator.sectiontype.SeparatorSection;
 
 /**
- * <p>
  * MechManwaySection class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class MechManwaySection extends SepDesignSection {
   /**
-   * <p>
    * Constructor for MechManwaySection.
-   * </p>
    *
    * @param separatorSection a {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection} object
    */

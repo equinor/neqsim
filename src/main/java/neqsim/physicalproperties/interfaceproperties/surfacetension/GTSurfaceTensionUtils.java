@@ -4,9 +4,9 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * GTSurfaceTensionUtils class.
  *
+ * <p>
  * Collection of general utility functions used by the gradient theory classes.
  * </p>
  *

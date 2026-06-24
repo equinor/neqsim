@@ -79,9 +79,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.exception.IsNaNException;
 
 /**
- * <p>
  * ThermodynamicOperations class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -102,17 +100,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   protected String[][] resultTable = null;
 
   /**
-   * <p>
    * Constructor for ThermodynamicOperations.
-   * </p>
    */
   public ThermodynamicOperations() {
   }
 
   /**
-   * <p>
    * Constructor for ThermodynamicOperations.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -121,9 +115,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * Getter for the field <code>system</code>.
-   * </p>
    *
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -132,9 +124,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * Setter for the field <code>system</code>.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -143,9 +133,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * TPSolidflash.
-   * </p>
    */
   public void TPSolidflash() {
     operation = new SolidFlash1(system);
@@ -168,9 +156,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * TPflash.
-   * </p>
    */
   public void TPflash() {
     // Check if system is Soreide-Whitson and use the special flash if so
@@ -210,9 +196,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * TPflashSoreideWhitson.
-   * </p>
    */
   public void TPflashSoreideWhitson() {
     double flowRate = system.getTotalNumberOfMoles();
@@ -253,9 +237,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * TPflash.
-   * </p>
    *
    * @param checkForSolids Set true to do solid phase check and calculations
    */
@@ -354,9 +336,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * TPgradientFlash.
-   * </p>
    *
    * @param height a double
    * @param temperature a double
@@ -369,9 +349,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * dTPflash.
-   * </p>
    *
    * @param comps an array of {@link java.lang.String} objects
    */
@@ -381,9 +359,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * saturateWithWater.
-   * </p>
    */
   public void saturateWithWater() {
     operation = new SaturateWithWater(system);
@@ -391,9 +367,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * chemicalEquilibrium.
-   * </p>
    */
   public void chemicalEquilibrium() {
     if (system.isChemicalSystem()) {
@@ -457,9 +431,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * PHflash.
-   * </p>
    *
    * @param Hspec a double
    * @param type a int
@@ -573,9 +545,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * PUflash.
-   * </p>
    *
    * @param Uspec a double
    */
@@ -585,9 +555,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * PUflash.
-   * </p>
    *
    * @param Pspec a double
    * @param Uspec a double
@@ -600,9 +568,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * PUflash.
-   * </p>
    *
    * @param Uspec a double
    * @param unitEnergy a {@link java.lang.String} object
@@ -629,9 +595,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * PHflash2.
-   * </p>
    *
    * @param Hspec a double
    * @param type a int
@@ -670,9 +634,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * criticalPointFlash.
-   * </p>
    */
   public void criticalPointFlash() {
     operation = new CriticalPointFlash(system);
@@ -680,9 +642,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * PHsolidFlash.
-   * </p>
    *
    * @param Hspec a double
    */
@@ -692,9 +652,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * PSflash.
-   * </p>
    *
    * @param Sspec a double
    */
@@ -734,9 +692,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * TSflash.
-   * </p>
    *
    * @param Sspec a double
    */
@@ -773,10 +729,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
-   * PSflashGERG2008.
-   * </p>
-   * Run a flash at constant pressure and entropy using the GERG2008 EoS
+   * PSflashGERG2008. Run a flash at constant pressure and entropy using the GERG2008 EoS
    *
    * @param Sspec is the specidfied entropy
    */
@@ -786,10 +739,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
-   * PSflashLeachman.
-   * </p>
-   * Run a flash at constant pressure and entropy using the Leachman EoS
+   * PSflashLeachman. Run a flash at constant pressure and entropy using the Leachman EoS
    *
    * @param Sspec is the specidfied entropy
    */
@@ -799,10 +749,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
-   * PSflashVega.
-   * </p>
-   * Run a flash at constant pressure and entropy using the Vega EoS
+   * PSflashVega. Run a flash at constant pressure and entropy using the Vega EoS
    *
    * @param Sspec is the specidfied entropy
    */
@@ -812,9 +759,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * PSflash2.
-   * </p>
    *
    * @param Sspec a double
    */
@@ -824,9 +769,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * VSflash.
-   * </p>
    *
    * @param volume a double
    * @param entropy a double
@@ -865,9 +808,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * VSflash.
-   * </p>
    *
    * @param volume a double
    * @param entropy a double
@@ -878,9 +819,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * TVflash.
-   * </p>
    *
    * @param Vspec a double
    * @param unit a {@link java.lang.String} object
@@ -898,9 +837,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * TVflash.
-   * </p>
    *
    * @param Vspec a double
    */
@@ -1027,9 +964,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * TVfractionFlash.
-   * </p>
    *
    * @param Vspec a double volume fraction of first/lightest phase
    */
@@ -1043,9 +978,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * PVrefluxFlash.
-   * </p>
    *
    * @param refluxspec a double
    * @param refluxPhase a int
@@ -1056,9 +989,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * VHflash.
-   * </p>
    *
    * @param Vspec a double
    * @param Hspec a double
@@ -1069,9 +1000,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * VHflash.
-   * </p>
    *
    * @param volume a double
    * @param enthalpy a double
@@ -1110,9 +1039,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * VUflash.
-   * </p>
    *
    * @param volume a double
    * @param energy a double
@@ -1151,9 +1078,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * VUflash.
-   * </p>
    *
    * @param Vspec a double
    * @param Uspec a double
@@ -1199,9 +1124,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * bubblePointTemperatureFlash.
-   * </p>
    *
    * @throws neqsim.util.exception.IsNaNException if any.
    */
@@ -1215,9 +1138,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * freezingPointTemperatureFlash.
-   * </p>
    *
    * @throws neqsim.util.exception.IsNaNException if any.
    */
@@ -1231,9 +1152,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * freezingPointTemperatureFlash.
-   * </p>
    *
    * @param phaseName a {@link java.lang.String} object
    * @throws neqsim.util.exception.IsNaNException if any.
@@ -1248,9 +1167,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * waterDewPointTemperatureFlash.
-   * </p>
    *
    * @throws neqsim.util.exception.IsNaNException if any.
    */
@@ -1264,9 +1181,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * waterDewPointTemperatureMultiphaseFlash.
-   * </p>
    *
    * @throws neqsim.util.exception.IsNaNException if any.
    */
@@ -1276,9 +1191,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * waterPrecipitationTemperature.
-   * </p>
    *
    * @throws neqsim.util.exception.IsNaNException if any.
    */
@@ -1315,9 +1228,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * calcSaltSaturation.
-   * </p>
    *
    * @param saltName a {@link java.lang.String} object
    * @throws neqsim.util.exception.IsNaNException if any.
@@ -1332,9 +1243,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * checkScalePotential.
-   * </p>
    *
    * @param phaseNumber a int
    * @throws neqsim.util.exception.IsNaNException if any.
@@ -1350,9 +1259,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * addIonToScaleSaturation.
-   * </p>
    *
    * @param phaseNumber a int
    * @param scaleSaltName a {@link java.lang.String} object
@@ -1371,9 +1278,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * hydrateFormationPressure.
-   * </p>
    *
    * @throws neqsim.util.exception.IsNaNException if any.
    */
@@ -1387,9 +1292,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * calcWAT.
-   * </p>
    *
    * @throws neqsim.util.exception.IsNaNException if any.
    */
@@ -1403,9 +1306,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * run.
-   * </p>
    */
   public void run() {
     setThermoOperationThread(new Thread(operation));
@@ -1413,9 +1314,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * waitAndCheckForFinishedCalculation.
-   * </p>
    *
    * @param maxTime a int
    * @return a boolean
@@ -1433,9 +1332,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * waitToFinishCalculation.
-   * </p>
    */
   public void waitToFinishCalculation() {
     try {
@@ -1446,9 +1343,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * calcSolidComlexTemperature.
-   * </p>
    *
    * @throws neqsim.util.exception.IsNaNException if any.
    */
@@ -1462,9 +1357,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * calcSolidComlexTemperature.
-   * </p>
    *
    * @param comp1 a {@link java.lang.String} object
    * @param comp2 a {@link java.lang.String} object
@@ -1482,9 +1375,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * calcImobilePhaseHydrateTemperature.
-   * </p>
    *
    * @param temperature an array of type double
    * @param pressure an array of type double
@@ -1527,9 +1418,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * calcTOLHydrateFormationTemperature.
-   * </p>
    *
    * @return a double
    */
@@ -1550,9 +1439,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * hydrateInhibitorConcentration.
-   * </p>
    *
    * @param inhibitorName a {@link java.lang.String} object
    * @param hydEqTemperature a double
@@ -1563,9 +1450,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * hydrateInhibitorConcentrationSet.
-   * </p>
    *
    * @param inhibitorName a {@link java.lang.String} object
    * @param wtfrac a double
@@ -1576,9 +1461,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * hydrateFormationTemperature.
-   * </p>
    *
    * @param initialTemperatureGuess a double
    */
@@ -1596,9 +1479,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * hydrateFormationTemperature.
-   * </p>
    *
    * @throws neqsim.util.exception.IsNaNException if any.
    */
@@ -1640,9 +1521,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * hydrateFormationTemperature.
-   * </p>
    *
    * @param structure a int
    * @throws neqsim.util.exception.IsNaNException if any.
@@ -1673,9 +1552,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * hydrateEquilibriumLine.
-   * </p>
    *
    * @param minimumPressure a double
    * @param maximumPressure a double
@@ -1690,9 +1567,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * calcCricoP.
-   * </p>
    *
    * @param cricondenBar an array of type double
    * @param cricondenBarX an array of type double
@@ -1707,9 +1582,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * calcCricoT.
-   * </p>
    *
    * @param cricondenTherm an array of type double
    * @param cricondenThermX an array of type double
@@ -1725,9 +1598,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * waterDewPointLine.
-   * </p>
    *
    * @param minimumPressure a double
    * @param maximumPressure a double
@@ -1742,9 +1613,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * Calculate the cricondenbar pressure for the system.
-   * </p>
    *
    * @return The cricondenbar pressure in unit bara.
    */
@@ -1756,9 +1625,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * bubblePointPressureFlash.
-   * </p>
    *
    * @throws neqsim.util.exception.IsNaNException if any.
    */
@@ -1775,9 +1642,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * bubblePointPressureFlash.
-   * </p>
    *
    * @param derivatives a boolean
    * @throws neqsim.util.exception.IsNaNException if any.
@@ -1801,9 +1666,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * constantPhaseFractionPressureFlash.
-   * </p>
    *
    * @param fraction a double
    * @throws neqsim.util.exception.IsNaNException if any.
@@ -1827,9 +1690,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * constantPhaseFractionTemperatureFlash.
-   * </p>
    *
    * @param fraction a double
    * @throws neqsim.util.exception.IsNaNException if any.
@@ -1855,9 +1716,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * dewPointMach.
-   * </p>
    *
    * @param componentName a {@link java.lang.String} object
    * @param specification a {@link java.lang.String} object
@@ -1909,9 +1768,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * dewPointTemperatureFlash.
-   * </p>
    *
    * @throws neqsim.util.exception.IsNaNException if any.
    */
@@ -1926,9 +1783,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * dewPointTemperatureFlash.
-   * </p>
    *
    * @param derivatives a boolean
    * @throws neqsim.util.exception.IsNaNException if any.
@@ -1985,9 +1840,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * dewPointPressureFlashHC.
-   * </p>
    *
    * @throws neqsim.util.exception.IsNaNException if any.
    */
@@ -2004,9 +1857,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * dewPointPressureFlash.
-   * </p>
    *
    * @throws neqsim.util.exception.IsNaNException if any.
    */
@@ -2023,9 +1874,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * getJfreeChart.
-   * </p>
    *
    * @return a {@link org.jfree.chart.JFreeChart} object
    */
@@ -2039,9 +1888,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   // operation.run();
   // }
   /**
-   * <p>
    * calcPTphaseEnvelope.
-   * </p>
    */
   public void calcPTphaseEnvelope() {
     operation = new PTPhaseEnvelopeMichelsen(system, fileName, (1.0 - 1e-10), 1.0, false);
@@ -2049,9 +1896,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * calcPTphaseEnvelope.
-   * </p>
    *
    * @param bubfirst a boolean
    * @param lowPres a double
@@ -2070,9 +1915,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * calcPTphaseEnvelope.
-   * </p>
    *
    * @param lowPres a double
    */
@@ -2082,9 +1925,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * calcPTphaseEnvelope.
-   * </p>
    *
    * @param bubfirst a boolean
    */
@@ -2102,9 +1943,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * calcPTphaseEnvelope.
-   * </p>
    *
    * @param lowPres a double
    * @param phasefraction a double
@@ -2209,9 +2048,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * OLGApropTable.
-   * </p>
    *
    * @param minTemp a double
    * @param maxTemp a double
@@ -2243,9 +2080,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * OLGApropTablePH.
-   * </p>
    *
    * @param minEnthalpy a double
    * @param maxEnthalpy a double
@@ -2266,9 +2101,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * calcPloadingCurve.
-   * </p>
    */
   public void calcPloadingCurve() {
     operation = new PloadingCurve2(system);
@@ -2278,9 +2111,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * calcHPTphaseEnvelope.
-   * </p>
    */
   public void calcHPTphaseEnvelope() {
     operation = new HPTphaseEnvelope(system);
@@ -2290,9 +2121,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * printToFile.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -2304,9 +2133,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   // return operation.get(name);
   // }
   /**
-   * <p>
    * getData.
-   * </p>
    *
    * @return an array of type double
    */
@@ -2315,9 +2142,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * getDataPoints.
-   * </p>
    *
    * @return an array of {@link java.lang.String} objects
    */
@@ -2332,9 +2157,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * Getter for the field <code>resultTable</code>.
-   * </p>
    *
    * @return an array of {@link java.lang.String} objects
    */
@@ -2343,9 +2166,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * dewPointTemperatureCondensationRate.
-   * </p>
    *
    * @return a double
    */
@@ -2368,9 +2189,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * displayResult.
-   * </p>
    */
   @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
@@ -2383,9 +2202,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * Setter for the field <code>resultTable</code>.
-   * </p>
    *
    * @param resultTable an array of {@link java.lang.String} objects
    */
@@ -2394,9 +2211,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * display.
-   * </p>
    */
   @ExcludeFromJacocoGeneratedReport
   public void display() {
@@ -2420,9 +2235,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * get.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return an array of type double
@@ -2466,9 +2279,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * Getter for the field <code>operation</code>.
-   * </p>
    *
    * @return the operation
    */
@@ -2477,9 +2288,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * isRunAsThread.
-   * </p>
    *
    * @return the runAsThread
    */
@@ -2488,9 +2297,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * Setter for the field <code>runAsThread</code>.
-   * </p>
    *
    * @param runAsThread the runAsThread to set
    */
@@ -2499,9 +2306,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * Getter for the field <code>thermoOperationThread</code>.
-   * </p>
    *
    * @return the thermoOperationThread
    */
@@ -2510,9 +2315,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * Setter for the field <code>thermoOperationThread</code>.
-   * </p>
    *
    * @param thermoOperationThread the thermoOperationThread to set
    */
@@ -2521,9 +2324,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * addData.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param data an array of type double
@@ -2533,9 +2334,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * calcIonComposition.
-   * </p>
    *
    * @param phaseNumber a int
    */
@@ -2546,9 +2345,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>
    * Wrapper for flash calculations.
-   * </p>
    *
    * @param flashType Type of flash.
    * @param spec1 Value of spec1

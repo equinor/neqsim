@@ -3,9 +3,7 @@ package neqsim.fluidmechanics.util;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * FlowRegimeDetector class.
- * </p>
  *
  * <p>
  * Determines the two-phase flow regime in horizontal and inclined pipes based on fluid properties and flow conditions.
@@ -71,9 +69,7 @@ public class FlowRegimeDetector {
   }
 
   /**
-   * <p>
    * Detects the flow regime for horizontal two-phase flow using Taitel-Dukler criteria.
-   * </p>
    *
    * @param system the thermodynamic system with gas (phase 0) and liquid (phase 1)
    * @param gasVelocity superficial gas velocity in m/s
@@ -100,9 +96,7 @@ public class FlowRegimeDetector {
   }
 
   /**
-   * <p>
    * Detects the flow regime for horizontal two-phase flow using Taitel-Dukler criteria.
-   * </p>
    *
    * @param gasVelocity superficial gas velocity in m/s
    * @param liquidVelocity superficial liquid velocity in m/s
@@ -299,9 +293,7 @@ public class FlowRegimeDetector {
   }
 
   /**
-   * <p>
    * Gets the flow node type name for the detected regime.
-   * </p>
    *
    * @param system the thermodynamic system
    * @param gasVelocity superficial gas velocity in m/s

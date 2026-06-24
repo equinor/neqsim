@@ -35,17 +35,13 @@ public class ControlValveSizing_simple extends ControlValveSizing {
   private double Cd = 0.85;
 
   /**
-   * <p>
    * Constructor for ControlValveSizing_simple.
-   * </p>
    */
   public ControlValveSizing_simple() {
   }
 
   /**
-   * <p>
    * Constructor for ControlValveSizing_simple.
-   * </p>
    *
    * @param valveMechanicalDesign a {@link neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign} object
    */

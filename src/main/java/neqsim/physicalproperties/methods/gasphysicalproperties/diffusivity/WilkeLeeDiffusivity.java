@@ -3,9 +3,7 @@ package neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity;
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * <p>
  * WilkeLeeDiffusivity class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -19,9 +17,7 @@ public class WilkeLeeDiffusivity extends Diffusivity {
   double[][] binaryLennardJonesOmega;
 
   /**
-   * <p>
    * Constructor for WilkeLeeDiffusivity.
-   * </p>
    *
    * @param gasPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

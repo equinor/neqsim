@@ -13,9 +13,7 @@ import neqsim.physicalproperties.methods.methodinterface.ConductivityInterface;
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * <p>
  * Conductivity class for liquids.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -30,9 +28,7 @@ public class Conductivity extends LiquidPhysicalPropertyMethod implements Conduc
   public double[] pureComponentConductivity;
 
   /**
-   * <p>
    * Constructor for Conductivity.
-   * </p>
    *
    * @param liquidPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */
@@ -83,9 +79,7 @@ public class Conductivity extends LiquidPhysicalPropertyMethod implements Conduc
   }
 
   /**
-   * <p>
    * calcPureComponentConductivity.
-   * </p>
    */
   public void calcPureComponentConductivity() {
     for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {

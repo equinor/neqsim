@@ -14,9 +14,7 @@ import neqsim.util.exception.IsNaNException;
 import neqsim.util.exception.TooManyIterationsException;
 
 /**
- * <p>
  * PhaseGENRTL class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -32,17 +30,13 @@ public class PhaseGENRTL extends PhaseGE {
   double GE = 0.0;
 
   /**
-   * <p>
    * Constructor for PhaseGENRTL.
-   * </p>
    */
   public PhaseGENRTL() {
   }
 
   /**
-   * <p>
    * Constructor for PhaseGENRTL.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param alpha an array of type double

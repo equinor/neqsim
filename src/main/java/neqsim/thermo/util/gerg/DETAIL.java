@@ -6,9 +6,7 @@ import org.netlib.util.intW;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * DETAIL class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -81,9 +79,7 @@ public class DETAIL {
   double dPdDsave;
 
   /**
-   * <p>
    * sq.
-   * </p>
    *
    * @param x a double
    * @return a double
@@ -93,9 +89,7 @@ public class DETAIL {
   }
 
   /**
-   * <p>
    * MolarMassDetail.
-   * </p>
    *
    * @param x an array of type double
    * @param Mm a {@link org.netlib.util.doubleW} object
@@ -121,9 +115,7 @@ public class DETAIL {
   }
 
   /**
-   * <p>
    * PressureDetail.
-   * </p>
    *
    * @param T a double
    * @param D a double
@@ -170,9 +162,7 @@ public class DETAIL {
   }
 
   /**
-   * <p>
    * DensityDetail.
-   * </p>
    *
    * @param T a double
    * @param P a double
@@ -255,9 +245,7 @@ public class DETAIL {
   }
 
   /**
-   * <p>
    * PropertiesDetail.
-   * </p>
    *
    * @param T a double
    * @param D a double
@@ -660,9 +648,7 @@ public class DETAIL {
 
   // The following routine must be called once before any other routine.
   /**
-   * <p>
    * SetupDetail.
-   * </p>
    */
   public void SetupDetail() {
     // Initialize all the constants and parameters in the DETAIL model.
@@ -1503,9 +1489,7 @@ public class DETAIL {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

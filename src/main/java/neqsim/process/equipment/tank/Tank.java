@@ -19,9 +19,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * Tank class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -100,9 +98,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
   }
 
   /**
-   * <p>
    * Constructor for Tank.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -125,9 +121,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
   }
 
   /**
-   * <p>
    * setInletStream.
-   * </p>
    *
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -143,9 +137,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
   }
 
   /**
-   * <p>
    * addStream.
-   * </p>
    *
    * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -159,9 +151,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
   }
 
   /**
-   * <p>
    * Getter for the field <code>liquidOutStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
@@ -170,9 +160,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
   }
 
   /**
-   * <p>
    * Getter for the field <code>gasOutStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
@@ -181,9 +169,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
   }
 
   /**
-   * <p>
    * getGas.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
@@ -192,9 +178,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
   }
 
   /**
-   * <p>
    * getLiquid.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
@@ -355,9 +339,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
   }
 
   /**
-   * <p>
    * setOutComposition.
-   * </p>
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -375,9 +357,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
   }
 
   /**
-   * <p>
    * setTempPres.
-   * </p>
    *
    * @param temp a double
    * @param pres a double
@@ -397,9 +377,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
   }
 
   /**
-   * <p>
    * Getter for the field <code>efficiency</code>.
-   * </p>
    *
    * @return a double
    */
@@ -408,9 +386,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
   }
 
   /**
-   * <p>
    * Setter for the field <code>efficiency</code>.
-   * </p>
    *
    * @param efficiency a double
    */
@@ -419,9 +395,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
   }
 
   /**
-   * <p>
    * Getter for the field <code>liquidCarryoverFraction</code>.
-   * </p>
    *
    * @return a double
    */
@@ -430,9 +404,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
   }
 
   /**
-   * <p>
    * Setter for the field <code>liquidCarryoverFraction</code>.
-   * </p>
    *
    * @param liquidCarryoverFraction a double
    */
@@ -441,9 +413,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
   }
 
   /**
-   * <p>
    * Getter for the field <code>gasCarryunderFraction</code>.
-   * </p>
    *
    * @return a double
    */
@@ -452,9 +422,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
   }
 
   /**
-   * <p>
    * Setter for the field <code>gasCarryunderFraction</code>.
-   * </p>
    *
    * @param gasCarryunderFraction a double
    */
@@ -463,9 +431,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
   }
 
   /**
-   * <p>
    * Getter for the field <code>liquidLevel</code>.
-   * </p>
    *
    * @return a double
    */
@@ -474,9 +440,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
   }
 
   /**
-   * <p>
    * Getter for the field <code>volume</code>.
-   * </p>
    *
    * @return a double
    */
@@ -485,9 +449,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
   }
 
   /**
-   * <p>
    * Setter for the field <code>volume</code>.
-   * </p>
    *
    * @param volume a double
    */

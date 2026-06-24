@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * LumpingModel class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -28,9 +26,7 @@ public class LumpingModel implements java.io.Serializable {
   int[] customBoundaries = null;
 
   /**
-   * <p>
    * Constructor for LumpingModel.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -479,9 +475,7 @@ public class LumpingModel implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * getModel.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.characterization.LumpingModelInterface} object

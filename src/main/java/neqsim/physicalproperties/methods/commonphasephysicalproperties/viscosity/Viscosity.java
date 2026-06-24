@@ -20,9 +20,7 @@ public abstract class Viscosity extends CommonPhysicalPropertyMethod implements 
   public double[] pureComponentViscosity;
 
   /**
-   * <p>
    * Constructor for Viscosity.
-   * </p>
    *
    * @param phase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */
@@ -32,9 +30,7 @@ public abstract class Viscosity extends CommonPhysicalPropertyMethod implements 
   }
 
   /**
-   * <p>
    * calcPureComponentViscosity.
-   * </p>
    */
   public void calcPureComponentViscosity() {
     pureComponentViscosity = new double[phase.getPhase().getNumberOfComponents()];
@@ -72,9 +68,7 @@ public abstract class Viscosity extends CommonPhysicalPropertyMethod implements 
   }
 
   /**
-   * <p>
    * getViscosityPressureCorrection.
-   * </p>
    *
    * @param i a int
    * @return a double

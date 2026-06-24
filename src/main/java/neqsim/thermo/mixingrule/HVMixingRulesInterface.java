@@ -7,18 +7,14 @@
 package neqsim.thermo.mixingrule;
 
 /**
- * <p>
  * HVmixingRuleInterface interface.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public interface HVMixingRulesInterface extends EosMixingRulesInterface {
   /**
-   * <p>
    * setHVDijParameter.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -27,9 +23,7 @@ public interface HVMixingRulesInterface extends EosMixingRulesInterface {
   public void setHVDijParameter(int i, int j, double value);
 
   /**
-   * <p>
    * setHVDijTParameter.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -38,9 +32,7 @@ public interface HVMixingRulesInterface extends EosMixingRulesInterface {
   public void setHVDijTParameter(int i, int j, double value);
 
   /**
-   * <p>
    * getHVDijParameter.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -49,9 +41,7 @@ public interface HVMixingRulesInterface extends EosMixingRulesInterface {
   public double getHVDijParameter(int i, int j);
 
   /**
-   * <p>
    * getHVDijTParameter.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -60,9 +50,7 @@ public interface HVMixingRulesInterface extends EosMixingRulesInterface {
   public double getHVDijTParameter(int i, int j);
 
   /**
-   * <p>
    * getKijWongSandler.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -71,9 +59,7 @@ public interface HVMixingRulesInterface extends EosMixingRulesInterface {
   public double getKijWongSandler(int i, int j);
 
   /**
-   * <p>
    * setKijWongSandler.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -82,9 +68,7 @@ public interface HVMixingRulesInterface extends EosMixingRulesInterface {
   public void setKijWongSandler(int i, int j, double value);
 
   /**
-   * <p>
    * setHValphaParameter.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -93,9 +77,7 @@ public interface HVMixingRulesInterface extends EosMixingRulesInterface {
   public void setHValphaParameter(int i, int j, double value);
 
   /**
-   * <p>
    * getHValphaParameter.
-   * </p>
    *
    * @param i a int
    * @param j a int

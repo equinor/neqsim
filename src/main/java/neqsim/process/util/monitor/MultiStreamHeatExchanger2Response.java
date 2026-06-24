@@ -4,9 +4,7 @@ import java.util.HashMap;
 import neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger2;
 
 /**
- * <p>
  * HXResponse class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -18,17 +16,13 @@ public class MultiStreamHeatExchanger2Response extends BaseResponse {
   public java.util.Map<String, java.util.List<java.util.Map<String, Object>>> compositeCurveResults;
 
   /**
-   * <p>
    * Constructor for HXResponse.
-   * </p>
    */
   public MultiStreamHeatExchanger2Response() {
   }
 
   /**
-   * <p>
    * Constructor for HXResponse.
-   * </p>
    *
    * @param inputHeatExchanger a {@link neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger2} object
    */

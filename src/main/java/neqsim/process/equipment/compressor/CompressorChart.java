@@ -12,9 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * CompressorChart class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -158,9 +156,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   double[][] redpolytropicEfficiency;
 
   /**
-   * <p>
    * Constructor for CompressorChart.
-   * </p>
    */
   public CompressorChart() {
   }
@@ -293,9 +289,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   }
 
   /**
-   * <p>
    * fitReducedCurve.
-   * </p>
    */
   public void fitReducedCurve() {
   }
@@ -494,9 +488,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   }
 
   /**
-   * <p>
    * addSurgeCurve.
-   * </p>
    *
    * @param flow an array of type double
    * @param head an array of type double
@@ -507,9 +499,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   }
 
   /**
-   * <p>
    * polytropicEfficiency.
-   * </p>
    *
    * @param flow a double
    * @param speed a double
@@ -520,9 +510,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   }
 
   /**
-   * <p>
    * checkSurge1.
-   * </p>
    *
    * @param flow a double
    * @param head a double
@@ -533,9 +521,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   }
 
   /**
-   * <p>
    * checkSurge2.
-   * </p>
    *
    * @param flow a double
    * @param speed a double
@@ -546,9 +532,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   }
 
   /**
-   * <p>
    * checkStoneWall.
-   * </p>
    *
    * @param flow a double
    * @param speed a double
@@ -714,9 +698,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   }
 
   /**
-   * <p>
    * Getter for the field <code>maxSpeedCurve</code>.
-   * </p>
    *
    * @return a double
    */
@@ -726,9 +708,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   }
 
   /**
-   * <p>
    * Setter for the field <code>maxSpeedCurve</code>.
-   * </p>
    *
    * @param maxSpeedCurve a double
    */
@@ -743,9 +723,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   }
 
   /**
-   * <p>
    * Setter for the field <code>minSpeedCurve</code>.
-   * </p>
    *
    * @param minSpeedCurve a double
    */
@@ -754,9 +732,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   }
 
   /**
-   * <p>
    * Get the surge flow (minimum flow) at a specific speed.
-   * </p>
    * <p>
    * This method finds the compressor curve closest to the specified speed and returns the minimum flow on that curve.
    * This is useful for single speed compressors where the surge curve is not active, as well as for multi-speed
@@ -795,9 +771,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   }
 
   /**
-   * <p>
    * Get the surge head (polytropic head at minimum flow) at a specific speed.
-   * </p>
    * <p>
    * This method finds the compressor curve closest to the specified speed and returns the polytropic head at the
    * minimum flow point (surge point) on that curve.
@@ -838,9 +812,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   }
 
   /**
-   * <p>
    * Get the stone wall flow (maximum flow) at a specific speed.
-   * </p>
    * <p>
    * This method finds the compressor curve closest to the specified speed and returns the maximum flow on that curve
    * (choke limit). This is useful for single speed compressors where the stone wall curve is not active.
@@ -878,9 +850,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   }
 
   /**
-   * <p>
    * Get the stone wall head (polytropic head at maximum flow) at a specific speed.
-   * </p>
    * <p>
    * This method finds the compressor curve closest to the specified speed and returns the polytropic head at the
    * maximum flow point (choke limit) on that curve.

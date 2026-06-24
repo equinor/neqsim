@@ -4,9 +4,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * FluidSevereSlug class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -60,9 +58,7 @@ public class FluidSevereSlug {
   }
 
   /**
-   * <p>
    * Setter for the field <code>liqDensity</code>.
-   * </p>
    *
    * @param liqDensity a double
    */
@@ -71,9 +67,7 @@ public class FluidSevereSlug {
   }
 
   /**
-   * <p>
    * Getter for the field <code>liqDensity</code>.
-   * </p>
    *
    * @return a double
    */
@@ -82,9 +76,7 @@ public class FluidSevereSlug {
   }
 
   /**
-   * <p>
    * Setter for the field <code>liqVisc</code>.
-   * </p>
    *
    * @param liqVisc a double
    */
@@ -93,9 +85,7 @@ public class FluidSevereSlug {
   }
 
   /**
-   * <p>
    * Getter for the field <code>liqVisc</code>.
-   * </p>
    *
    * @return a double
    */
@@ -104,9 +94,7 @@ public class FluidSevereSlug {
   }
 
   /**
-   * <p>
    * Setter for the field <code>molecularWeight</code>.
-   * </p>
    *
    * @param molecularWeight a double
    */
@@ -115,9 +103,7 @@ public class FluidSevereSlug {
   }
 
   /**
-   * <p>
    * Getter for the field <code>molecularWeight</code>.
-   * </p>
    *
    * @return a double
    */
@@ -126,9 +112,7 @@ public class FluidSevereSlug {
   }
 
   /**
-   * <p>
    * Getter for the field <code>gasConstant</code>.
-   * </p>
    *
    * @return a double
    */

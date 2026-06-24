@@ -4,9 +4,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * HydrateEquilibriumLine class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -20,9 +18,7 @@ public class HydrateEquilibriumLine extends ConstantDutyTemperatureFlash {
   int numberOfPoints = 10;
 
   /**
-   * <p>
    * Constructor for HydrateEquilibriumLine.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param minPres a double

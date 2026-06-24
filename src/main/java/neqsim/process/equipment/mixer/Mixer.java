@@ -30,9 +30,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * Mixer class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -78,9 +76,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
   private double lastOutTemperature = Double.NaN;
 
   /**
-   * <p>
    * Setter for the field <code>doMultiPhaseCheck</code>.
-   * </p>
    *
    * @param doMultiPhaseCheck a boolean
    */
@@ -89,9 +85,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
   }
 
   /**
-   * <p>
    * Getter for the field <code>doMultiPhaseCheck</code>.
-   * </p>
    *
    * @return a boolean
    */
@@ -100,9 +94,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
   }
 
   /**
-   * <p>
    * Constructor for Mixer.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -162,9 +154,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
   }
 
   /**
-   * <p>
    * getStream.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -174,9 +164,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
   }
 
   /**
-   * <p>
    * mixStream.
-   * </p>
    */
   public void mixStream() {
     int index = 0;
@@ -266,9 +254,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
   }
 
   /**
-   * <p>
    * guessTemperature.
-   * </p>
    *
    * @return a double
    */
@@ -282,9 +268,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
   }
 
   /**
-   * <p>
    * calcMixStreamEnthalpy.
-   * </p>
    *
    * @return a double
    */
@@ -601,9 +585,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
   }
 
   /**
-   * <p>
    * Getter for the outlet temperature.
-   * </p>
    *
    * @return outlet temperature in Kelvin
    */
@@ -612,9 +594,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
   }
 
   /**
-   * <p>
    * Getter for the field <code>outTemperature</code>.
-   * </p>
    *
    * @return outlet temperature in Kelvin
    * @deprecated use {@link #getOutletTemperature()} instead
@@ -625,9 +605,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
   }
 
   /**
-   * <p>
    * Set the outlet temperature of the mixer.
-   * </p>
    *
    * @param outTemperature outlet temperature in Kelvin
    */
@@ -637,9 +615,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
   }
 
   /**
-   * <p>
    * Setter for the field <code>outTemperature</code>.
-   * </p>
    *
    * @param outTemperature outlet temperature in Kelvin
    * @deprecated use {@link #setOutletTemperature(double)} instead
@@ -650,9 +626,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
   }
 
   /**
-   * <p>
    * isSetOutTemperature.
-   * </p>
    *
    * @return a boolean
    */
@@ -661,9 +635,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
   }
 
   /**
-   * <p>
    * isSetOutTemperature.
-   * </p>
    *
    * @param isSetOutTemperature a boolean
    */
@@ -672,9 +644,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
   }
 
   /**
-   * <p>
    * Getter for the field <code>numberOfInputStreams</code>.
-   * </p>
    *
    * @return a int
    */

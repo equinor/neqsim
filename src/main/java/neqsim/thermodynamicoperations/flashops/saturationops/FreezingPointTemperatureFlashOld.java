@@ -7,9 +7,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * freezingPointTemperatureFlashOld class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -21,9 +19,7 @@ public class FreezingPointTemperatureFlashOld extends ConstantDutyTemperatureFla
   static Logger logger = LogManager.getLogger(FreezingPointTemperatureFlashOld.class);
 
   /**
-   * <p>
    * Constructor for freezingPointTemperatureFlashOld.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

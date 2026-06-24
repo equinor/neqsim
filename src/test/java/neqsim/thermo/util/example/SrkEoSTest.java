@@ -10,9 +10,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * SrkEoSTest class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -22,9 +20,7 @@ public class SrkEoSTest {
   static SystemInterface thermoSystem = null;
 
   /**
-   * <p>
    * setUp.
-   * </p>
    */
   @BeforeAll
   public static void setUp() {
@@ -38,9 +34,7 @@ public class SrkEoSTest {
   }
 
   /**
-   * <p>
    * testTPflash.
-   * </p>
    */
   @Test
   @Disabled
@@ -51,9 +45,7 @@ public class SrkEoSTest {
   }
 
   /**
-   * <p>
    * testSaturateWIthWater.
-   * </p>
    */
   @Test
   @Disabled
@@ -64,9 +56,7 @@ public class SrkEoSTest {
   }
 
   /**
-   * <p>
    * testinitPhysicalProperties.
-   * </p>
    */
   @Test
   public void testinitPhysicalProperties() {
@@ -76,9 +66,7 @@ public class SrkEoSTest {
   }
 
   /**
-   * <p>
    * testPHflash.
-   * </p>
    */
   @Test
   public void testPHflash() {
@@ -93,9 +81,7 @@ public class SrkEoSTest {
   }
 
   /**
-   * <p>
    * testPSflash.
-   * </p>
    */
   @Test
   public void testPSflash() {

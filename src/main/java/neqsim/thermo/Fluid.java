@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * Fluid class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -23,17 +21,13 @@ public class Fluid {
   private String thermoMixingRule = "classic";
 
   /**
-   * <p>
    * Constructor for Fluid.
-   * </p>
    */
   public Fluid() {
   }
 
   /**
-   * <p>
    * Getter for the field <code>fluid</code>.
-   * </p>
    *
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -42,9 +36,7 @@ public class Fluid {
   }
 
   /**
-   * <p>
    * create2.
-   * </p>
    *
    * @param componentNames an array of {@link java.lang.String} objects
    * @return a {@link neqsim.thermo.system.SystemInterface} object
@@ -58,9 +50,7 @@ public class Fluid {
   }
 
   /**
-   * <p>
    * create2.
-   * </p>
    *
    * @param componentNames an array of {@link java.lang.String} objects
    * @param flowrate an array of type double
@@ -86,9 +76,7 @@ public class Fluid {
   }
 
   /**
-   * <p>
    * create.
-   * </p>
    *
    * @param fluidType a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.system.SystemInterface} object
@@ -202,9 +190,7 @@ public class Fluid {
   }
 
   /**
-   * <p>
    * createFluid.
-   * </p>
    *
    * @param componentNames an array of {@link java.lang.String} objects
    * @param flowrate an array of type double
@@ -225,9 +211,7 @@ public class Fluid {
   }
 
   /**
-   * <p>
    * addComponment.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -242,9 +226,7 @@ public class Fluid {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -265,9 +247,7 @@ public class Fluid {
   }
 
   /**
-   * <p>
    * isHasWater.
-   * </p>
    *
    * @return a boolean
    */
@@ -276,9 +256,7 @@ public class Fluid {
   }
 
   /**
-   * <p>
    * Setter for the field <code>hasWater</code>.
-   * </p>
    *
    * @param hasWater a boolean
    */
@@ -287,9 +265,7 @@ public class Fluid {
   }
 
   /**
-   * <p>
    * isAutoSelectModel.
-   * </p>
    *
    * @return a boolean
    */
@@ -298,9 +274,7 @@ public class Fluid {
   }
 
   /**
-   * <p>
    * Setter for the field <code>autoSelectModel</code>.
-   * </p>
    *
    * @param autoSelectModel a boolean
    */
@@ -309,9 +283,7 @@ public class Fluid {
   }
 
   /**
-   * <p>
    * Getter for the field <code>thermoModel</code>.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -335,9 +307,7 @@ public class Fluid {
   }
 
   /**
-   * <p>
    * Setter for the field <code>thermoModel</code>.
-   * </p>
    *
    * @param thermoModel a {@link java.lang.String} object
    */
@@ -346,9 +316,7 @@ public class Fluid {
   }
 
   /**
-   * <p>
    * Getter for the field <code>thermoMixingRule</code>.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -357,9 +325,7 @@ public class Fluid {
   }
 
   /**
-   * <p>
    * Setter for the field <code>thermoMixingRule</code>.
-   * </p>
    *
    * @param thermoMixingRule a {@link java.lang.String} object
    */

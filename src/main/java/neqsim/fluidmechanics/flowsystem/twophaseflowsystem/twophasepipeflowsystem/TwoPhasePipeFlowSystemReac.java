@@ -7,9 +7,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TwoPhasePipeFlowSystemReac class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -19,17 +17,13 @@ public class TwoPhasePipeFlowSystemReac extends TwoPhasePipeFlowSystem {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for TwoPhasePipeFlowSystemReac.
-   * </p>
    */
   public TwoPhasePipeFlowSystemReac() {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

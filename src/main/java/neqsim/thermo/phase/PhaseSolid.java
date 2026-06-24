@@ -9,9 +9,7 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentSolid;
 
 /**
- * <p>
  * Abstract PhaseSolid class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -37,9 +35,7 @@ public abstract class PhaseSolid extends PhaseSrkEos {
   private boolean useEosProperties = false;
 
   /**
-   * <p>
    * Constructor for PhaseSolid.
-   * </p>
    */
   public PhaseSolid() {
     setType(PhaseType.SOLID);
@@ -94,9 +90,7 @@ public abstract class PhaseSolid extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * setSolidRefFluidPhase.
-   * </p>
    *
    * @param refPhase a {@link neqsim.thermo.phase.PhaseInterface} object
    */

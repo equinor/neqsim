@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * Characterise class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -29,17 +27,13 @@ public class Characterise implements java.io.Serializable, Cloneable {
   protected TBPfractionModel TBPfractionModelSelector;
 
   /**
-   * <p>
    * Constructor for Characterise.
-   * </p>
    */
   public Characterise() {
   }
 
   /**
-   * <p>
    * Constructor for Characterise.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -59,9 +53,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * <p>
    * setThermoSystem.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -84,9 +76,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * <p>
    * getTBPModel.
-   * </p>
    *
    * @return a {@link neqsim.thermo.characterization.TBPModelInterface} object
    */
@@ -95,9 +85,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * <p>
    * setTBPModel.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -106,9 +94,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>lumpingModel</code>.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -117,9 +103,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>plusFractionModel</code>.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -128,9 +112,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>plusFractionModel</code>.
-   * </p>
    *
    * @return a {@link neqsim.thermo.characterization.PlusFractionModelInterface} object
    */
@@ -214,9 +196,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>lumpingModel</code>.
-   * </p>
    *
    * @return a {@link neqsim.thermo.characterization.LumpingModelInterface} object
    */
@@ -254,9 +234,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * <p>
    * characterisePlusFraction.
-   * </p>
    */
   public void characterisePlusFraction() {
     system.init(0);

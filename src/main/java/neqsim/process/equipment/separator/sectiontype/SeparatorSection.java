@@ -5,9 +5,7 @@ import neqsim.process.mechanicaldesign.separator.sectiontype.SepDesignSection;
 import neqsim.util.NamedBaseClass;
 
 /**
- * <p>
  * SeparatorSection class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -24,9 +22,7 @@ public class SeparatorSection extends NamedBaseClass {
   public double outerDiameter = 1.0;
 
   /**
-   * <p>
    * Constructor for SeparatorSection.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param type a {@link java.lang.String} object
@@ -39,9 +35,7 @@ public class SeparatorSection extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * calcEfficiency.
-   * </p>
    *
    * @return a double
    */
@@ -50,9 +44,7 @@ public class SeparatorSection extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>efficiency</code>.
-   * </p>
    *
    * @return the efficiency
    */
@@ -64,9 +56,7 @@ public class SeparatorSection extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>efficiency</code>.
-   * </p>
    *
    * @param efficiency the efficiency to set
    */
@@ -75,9 +65,7 @@ public class SeparatorSection extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * isCalcEfficiency.
-   * </p>
    *
    * @return the calcEfficiency
    */
@@ -86,9 +74,7 @@ public class SeparatorSection extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>calcEfficiency</code>.
-   * </p>
    *
    * @param calcEfficiency the calcEfficiency to set
    */
@@ -97,9 +83,7 @@ public class SeparatorSection extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * getMinimumLiquidSealHeight.
-   * </p>
    *
    * @return a double
    */
@@ -110,9 +94,7 @@ public class SeparatorSection extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * getPressureDrop.
-   * </p>
    *
    * @return the pressureDrop
    */
@@ -121,9 +103,7 @@ public class SeparatorSection extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * setPressureDrop.
-   * </p>
    *
    * @param pressureDrop the pressureDrop to set
    */
@@ -132,9 +112,7 @@ public class SeparatorSection extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>mechanicalDesign</code>.
-   * </p>
    *
    * @return the mechanicalDesign
    */
@@ -143,9 +121,7 @@ public class SeparatorSection extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>separator</code>.
-   * </p>
    *
    * @return the separator
    */
@@ -154,9 +130,7 @@ public class SeparatorSection extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>separator</code>.
-   * </p>
    *
    * @param separator the separator to set
    */
@@ -165,9 +139,7 @@ public class SeparatorSection extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>outerDiameter</code>.
-   * </p>
    *
    * @return the outerDiameter
    */
@@ -176,9 +148,7 @@ public class SeparatorSection extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>outerDiameter</code>.
-   * </p>
    *
    * @param outerDiameter the outerDiameter to set
    */

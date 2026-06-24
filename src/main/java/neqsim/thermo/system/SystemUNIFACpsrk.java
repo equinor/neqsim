@@ -15,18 +15,14 @@ public class SystemUNIFACpsrk extends SystemEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for SystemUNIFACpsrk.
-   * </p>
    */
   public SystemUNIFACpsrk() {
     this(298.15, 1.0, false);
   }
 
   /**
-   * <p>
    * Constructor for SystemUNIFACpsrk.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -36,9 +32,7 @@ public class SystemUNIFACpsrk extends SystemEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemUNIFACpsrk.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)

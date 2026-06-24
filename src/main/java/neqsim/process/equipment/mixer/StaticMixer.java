@@ -15,9 +15,7 @@ import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
 
 /**
- * <p>
  * StaticMixer class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -27,9 +25,7 @@ public class StaticMixer extends Mixer {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for StaticMixer.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */

@@ -8,9 +8,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * MEGwaterComplexFlash class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -22,9 +20,7 @@ public class MEGwaterComplexFlash {
   /** Logger object for class. */
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

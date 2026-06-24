@@ -332,9 +332,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Constructor for SystemMechanicalDesign.
-   * </p>
    *
    * @param processSystem a {@link neqsim.process.processmodel.ProcessSystem} object
    */
@@ -343,9 +341,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * getProcess.
-   * </p>
    *
    * @return a {@link neqsim.process.processmodel.ProcessSystem} object
    */
@@ -354,9 +350,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * setCompanySpecificDesignStandards.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -599,9 +593,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * setDesign.
-   * </p>
    */
   public void setDesign() {
     for (int i = 0; i < this.processSystem.getUnitOperations().size(); i++) {
@@ -610,9 +602,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>totalPlotSpace</code>.
-   * </p>
    *
    * @return a double
    */
@@ -621,9 +611,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>totalVolume</code>.
-   * </p>
    *
    * @return a double
    */
@@ -632,9 +620,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>totalWeight</code>.
-   * </p>
    *
    * @return a double
    */
@@ -965,9 +951,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * getMechanicalWeight.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double

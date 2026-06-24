@@ -10,9 +10,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEosMod2004;
 
 /**
- * <p>
  * ComponentModifiedFurstElectrolyteEosMod2004 class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -66,9 +64,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   double bornOn = 1.0;
 
   /**
-   * <p>
    * Constructor for ComponentModifiedFurstElectrolyteEosMod2004.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -93,9 +89,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Constructor for ComponentModifiedFurstElectrolyteEosMod2004.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]
@@ -110,9 +104,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * initFurstParam.
-   * </p>
    */
   public void initFurstParam() {
     b = ionicCharge != 0
@@ -196,9 +188,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * dAlphaLRdndn.
-   * </p>
    *
    * @param j a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -270,9 +260,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
 
   // Long Range term equations and derivatives
   /**
-   * <p>
    * dFLRdN.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -287,9 +275,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * dFLRdNdT.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -304,9 +290,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * dFLRdNdV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -321,9 +305,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * dFLRdNdN.
-   * </p>
    *
    * @param j a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -344,9 +326,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * calcXLRdN.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -361,9 +341,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * FLRN.
-   * </p>
    *
    * @return a double
    */
@@ -372,9 +350,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * calcSolventdiElectricdn.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -397,9 +373,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * calcSolventdiElectricdndn.
-   * </p>
    *
    * @param j a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -426,9 +400,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * calcSolventdiElectricdndT.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -451,9 +423,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * calcdiElectricdn.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -472,9 +442,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * calcdiElectricdndV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -495,9 +463,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * calcdiElectricdndn.
-   * </p>
    *
    * @param j a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -531,9 +497,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * calcdiElectricdndT.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -553,9 +517,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
 
   // a little simplified
   /**
-   * <p>
    * calcGammaLRdn.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -593,9 +555,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
 
   // Short Range term equations and derivatives
   /**
-   * <p>
    * dFSR2dN.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -609,9 +569,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * dFSR2dNdT.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -626,9 +584,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * dFSR2dNdV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -647,9 +603,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * dFSR2dNdN.
-   * </p>
    *
    * @param j a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -673,9 +627,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * dEpsdNi.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -689,9 +641,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * dEpsdNidV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -705,9 +655,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * dEpsIonicdNi.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -725,9 +673,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * dEpsIonicdNidV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -745,9 +691,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
 
   // Born term equations and derivatives
   /**
-   * <p>
    * dFBorndN.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -761,9 +705,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * dFBorndNdT.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -776,9 +718,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * dFBorndNdN.
-   * </p>
    *
    * @param j a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -792,9 +732,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Getter for the field <code>ionicCoVolume</code>.
-   * </p>
    *
    * @return a double
    */
@@ -803,9 +741,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * getDielectricConstantdn.
-   * </p>
    *
    * @return a double
    */
@@ -814,9 +750,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * getSolventDiElectricConstantdn.
-   * </p>
    *
    * @return a double
    */
@@ -825,9 +759,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * getBornVal.
-   * </p>
    *
    * @return a double
    */
@@ -836,9 +768,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Getter for the field <code>epsi</code>.
-   * </p>
    *
    * @return a double
    */
@@ -847,9 +777,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Getter for the field <code>epsIonici</code>.
-   * </p>
    *
    * @return a double
    */
@@ -858,9 +786,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Getter for the field <code>alphai</code>.
-   * </p>
    *
    * @return a double
    */
@@ -869,9 +795,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * getXLRi.
-   * </p>
    *
    * @return a double
    */
@@ -880,9 +804,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   }
 
   /**
-   * <p>
    * getXBorni.
-   * </p>
    *
    * @return a double
    */

@@ -8,9 +8,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * ReBoiler class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -24,9 +22,7 @@ public class ReBoiler extends TwoPortEquipment {
   private double reboilerDuty = 0.0;
 
   /**
-   * <p>
    * Constructor for ReBoiler.
-   * </p>
    *
    * @param name name of reboiler
    * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -69,9 +65,7 @@ public class ReBoiler extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Getter for the field <code>reboilerDuty</code>.
-   * </p>
    *
    * @return a double
    */
@@ -80,9 +74,7 @@ public class ReBoiler extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Setter for the field <code>reboilerDuty</code>.
-   * </p>
    *
    * @param reboilerDuty a double
    */

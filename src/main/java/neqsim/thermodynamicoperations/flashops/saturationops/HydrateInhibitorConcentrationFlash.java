@@ -8,9 +8,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * HydrateInhibitorConcentrationFlash class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -25,9 +23,7 @@ public class HydrateInhibitorConcentrationFlash extends ConstantDutyTemperatureF
   String inhibitor = "MEG";
 
   /**
-   * <p>
    * Constructor for HydrateInhibitorConcentrationFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param inhibitor a {@link java.lang.String} object
@@ -40,9 +36,7 @@ public class HydrateInhibitorConcentrationFlash extends ConstantDutyTemperatureF
   }
 
   /**
-   * <p>
    * stop.
-   * </p>
    */
   public void stop() {
     system = null;
@@ -91,9 +85,7 @@ public class HydrateInhibitorConcentrationFlash extends ConstantDutyTemperatureF
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

@@ -3,9 +3,7 @@ package neqsim.thermo.component;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * ComponentSrkCPAs class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -15,9 +13,7 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for ComponentSrkCPAs.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -30,9 +26,7 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
   }
 
   /**
-   * <p>
    * Constructor for ComponentSrkCPAs.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]

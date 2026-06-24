@@ -14,9 +14,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TwoPhaseTrayTowerFlowNode class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -28,18 +26,14 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
   static Logger logger = LogManager.getLogger(TwoPhaseTrayTowerFlowNode.class);
 
   /**
-   * <p>
    * Constructor for TwoPhaseTrayTowerFlowNode.
-   * </p>
    */
   public TwoPhaseTrayTowerFlowNode() {
     this.flowNodeType = "stratified";
   }
 
   /**
-   * <p>
    * Constructor for TwoPhaseTrayTowerFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
@@ -53,9 +47,7 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Constructor for TwoPhaseTrayTowerFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
@@ -121,9 +113,7 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

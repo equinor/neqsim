@@ -3,9 +3,7 @@ package neqsim.physicalproperties.methods.gasphysicalproperties.conductivity;
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * <p>
  * ChungConductivityMethod class for dilute-gas thermal conductivity using the Chung et al. correlation (1984, 1988).
- * </p>
  *
  * <p>
  * The method computes its own Chung dilute-gas viscosity internally so that it is independent of whatever viscosity
@@ -41,9 +39,7 @@ public class ChungConductivityMethod extends Conductivity {
   private static final double NF_F = 2.43787;
 
   /**
-   * <p>
    * Constructor for ChungConductivityMethod.
-   * </p>
    *
    * @param gasPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */
@@ -110,10 +106,8 @@ public class ChungConductivityMethod extends Conductivity {
   }
 
   /**
-   * <p>
    * Calculates pure-component dilute-gas thermal conductivity using the Chung et al. method (eq. 10-3.14 through
    * 10-3.17 in TPoLG 5th ed).
-   * </p>
    *
    * <p>
    * λ = 3.75 · (R/M) · η₀ · Ψ

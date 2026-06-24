@@ -18,9 +18,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
   ValveMechanicalDesign valveMechanicalDesign = null;
 
   /**
-   * <p>
    * Getter for the field <code>valveMechanicalDesign</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign} object
    */
@@ -41,17 +39,13 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
   boolean allowChoked = true;
 
   /**
-   * <p>
    * Constructor for ControlValveSizing.
-   * </p>
    */
   public ControlValveSizing() {
   }
 
   /**
-   * <p>
    * Constructor for ControlValveSizing.
-   * </p>
    *
    * @param valveMechanicalDesign a {@link neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign} object
    */
@@ -61,9 +55,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
 
   // === Getters and Setters for Valve Parameters ===
   /**
-   * <p>
    * Getter for the field <code>xT</code>.
-   * </p>
    *
    * @return a double
    */
@@ -79,9 +71,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
   }
 
   /**
-   * <p>
    * isAllowChoked.
-   * </p>
    *
    * @return a boolean
    */
@@ -122,9 +112,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
   }
 
   /**
-   * <p>
    * calcKv.
-   * </p>
    *
    * <p>
    * Calculates valve flow coefficient Kv using simplified formulas:
@@ -214,9 +202,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
   }
 
   /**
-   * <p>
    * calculateMolarFlow.
-   * </p>
    *
    * <p>
    * Calculates flow rate from valve Kv using IEC 60534 formulas.
@@ -345,9 +331,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
   }
 
   /**
-   * <p>
    * calculateOutletPressure.
-   * </p>
    *
    * <p>
    * Calculates outlet pressure for a given Kv and inlet conditions using IEC 60534 formulas. Uses bisection search for

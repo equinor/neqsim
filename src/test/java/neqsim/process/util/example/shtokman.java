@@ -8,9 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * shtokman class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id

@@ -16,9 +16,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * Abstract ProcessModuleBaseClass class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -35,9 +33,7 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass impleme
   private neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
 
   /**
-   * <p>
    * Constructor for ProcessModuleBaseClass.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -87,16 +83,12 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass impleme
   }
 
   /**
-   * <p>
    * calcDesign.
-   * </p>
    */
   public abstract void calcDesign();
 
   /**
-   * <p>
    * setDesign.
-   * </p>
    */
   public abstract void setDesign();
 
@@ -150,9 +142,7 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass impleme
   }
 
   /**
-   * <p>
    * setSpecification.
-   * </p>
    *
    * @param specificationName a {@link java.lang.String} object
    * @param value a double
@@ -178,9 +168,7 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass impleme
   }
 
   /**
-   * <p>
    * setProperty.
-   * </p>
    *
    * @param propertyName a {@link java.lang.String} object
    * @param value a double

@@ -12,9 +12,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TSFlash class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -27,9 +25,7 @@ public class TSFlash extends QfuncFlash {
   Flash tpFlash;
 
   /**
-   * <p>
    * Constructor for TSFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Sspec a double
@@ -154,9 +150,7 @@ public class TSFlash extends QfuncFlash {
   }
 
   /**
-   * <p>
    * onPhaseSolve.
-   * </p>
    */
   public void onPhaseSolve() {
   }
@@ -180,9 +174,7 @@ public class TSFlash extends QfuncFlash {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

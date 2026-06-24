@@ -8,9 +8,7 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * VapourPressureTTest class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -20,9 +18,7 @@ public class VapourPressureTTest {
   static SystemInterface thermoSystem = null;
 
   /**
-   * <p>
    * setUp.
-   * </p>
    */
   @BeforeAll
   public static void setUp() {
@@ -32,9 +28,7 @@ public class VapourPressureTTest {
   }
 
   /**
-   * <p>
    * testDewBubblePointT.
-   * </p>
    */
   @Test
   public void testDewBubblePointT() {

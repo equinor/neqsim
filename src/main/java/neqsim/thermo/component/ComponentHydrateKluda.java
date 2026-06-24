@@ -6,9 +6,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * ComponentHydrateKluda class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -31,9 +29,7 @@ public class ComponentHydrateKluda extends Component {
   double[] reffug = new double[20];
 
   /**
-   * <p>
    * Constructor for ComponentHydrateKluda.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -70,9 +66,7 @@ public class ComponentHydrateKluda extends Component {
   }
 
   /**
-   * <p>
    * Calculate, set and return fugacity coefficient.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object to get fugacity coefficient of.
    * @param numberOfComps a int
@@ -119,9 +113,7 @@ public class ComponentHydrateKluda extends Component {
   }
 
   /**
-   * <p>
    * dfugdt.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComps a int
@@ -141,9 +133,7 @@ public class ComponentHydrateKluda extends Component {
   }
 
   /**
-   * <p>
    * setStructure.
-   * </p>
    *
    * @param structure a int
    */
@@ -152,9 +142,7 @@ public class ComponentHydrateKluda extends Component {
   }
 
   /**
-   * <p>
    * getEmptyHydrateStructureVapourPressure.
-   * </p>
    *
    * @param type a int
    * @param temperature a double
@@ -178,9 +166,7 @@ public class ComponentHydrateKluda extends Component {
   }
 
   /**
-   * <p>
    * getEmptyHydrateStructureVapourPressuredT.
-   * </p>
    *
    * @param type a int
    * @param temperature a double
@@ -198,9 +184,7 @@ public class ComponentHydrateKluda extends Component {
   }
 
   /**
-   * <p>
    * calcYKI.
-   * </p>
    *
    * @param stucture a int
    * @param cavityType a int
@@ -223,9 +207,7 @@ public class ComponentHydrateKluda extends Component {
   }
 
   /**
-   * <p>
    * calcCKI.
-   * </p>
    *
    * @param stucture a int
    * @param cavityType a int
@@ -241,9 +223,7 @@ public class ComponentHydrateKluda extends Component {
   }
 
   /**
-   * <p>
    * setRefFug.
-   * </p>
    *
    * @param compNumbm a int
    * @param val a double
@@ -253,9 +233,7 @@ public class ComponentHydrateKluda extends Component {
   }
 
   /**
-   * <p>
    * potIntegral.
-   * </p>
    *
    * @param intnumb a int
    * @param stucture a int
@@ -281,9 +259,7 @@ public class ComponentHydrateKluda extends Component {
   }
 
   /**
-   * <p>
    * getPot.
-   * </p>
    *
    * @param intnumb a int
    * @param radius a double
@@ -340,9 +316,7 @@ public class ComponentHydrateKluda extends Component {
   }
 
   /**
-   * <p>
    * delt.
-   * </p>
    *
    * @param intnumb a int
    * @param n a double

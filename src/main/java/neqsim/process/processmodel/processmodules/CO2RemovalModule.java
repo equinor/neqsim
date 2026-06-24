@@ -8,9 +8,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessModuleBaseClass;
 
 /**
- * <p>
  * CO2RemovalModule class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -26,9 +24,7 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
   protected Separator inletSeparator = null;
 
   /**
-   * <p>
    * Constructor for CO2RemovalModule.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */

@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * HCdewPointPressureFlash class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -19,9 +17,7 @@ public class HCdewPointPressureFlash extends ConstantDutyTemperatureFlash {
   static Logger logger = LogManager.getLogger(HCdewPointPressureFlash.class);
 
   /**
-   * <p>
    * Constructor for HCdewPointPressureFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

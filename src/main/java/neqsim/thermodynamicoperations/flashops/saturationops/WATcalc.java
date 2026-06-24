@@ -6,9 +6,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * WATcalc class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -20,9 +18,7 @@ public class WATcalc extends ConstantDutyTemperatureFlash {
   static Logger logger = LogManager.getLogger(WATcalc.class);
 
   /**
-   * <p>
    * Constructor for WATcalc.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

@@ -63,17 +63,13 @@ public class Ammonia2023 {
   private double rhoMolar; // mol/m3
 
   /**
-   * <p>
    * Constructor for Ammonia2023.
-   * </p>
    */
   public Ammonia2023() {
   }
 
   /**
-   * <p>
    * Constructor for Ammonia2023.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
@@ -82,9 +78,7 @@ public class Ammonia2023 {
   }
 
   /**
-   * <p>
    * Setter for the field <code>phase</code>.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */

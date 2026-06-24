@@ -7,9 +7,7 @@
 package neqsim.thermo.phase;
 
 /**
- * <p>
  * PhaseGEUniquacmodifiedHV class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -19,9 +17,7 @@ public class PhaseGEUniquacmodifiedHV extends PhaseGEUniquac {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for PhaseGEUniquacmodifiedHV.
-   * </p>
    */
   public PhaseGEUniquacmodifiedHV() {
   }

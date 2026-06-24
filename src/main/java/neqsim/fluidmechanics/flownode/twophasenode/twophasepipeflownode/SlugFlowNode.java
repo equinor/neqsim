@@ -12,9 +12,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * SlugFlowNode class.
- * </p>
  *
  * <p>
  * Represents a flow node for slug flow regime in two-phase pipe flow. Slug flow is characterized by alternating liquid
@@ -50,18 +48,14 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
   private double slugTranslationalVelocity = 0.0;
 
   /**
-   * <p>
    * Constructor for SlugFlowNode.
-   * </p>
    */
   public SlugFlowNode() {
     this.flowNodeType = "slug";
   }
 
   /**
-   * <p>
    * Constructor for SlugFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
@@ -75,9 +69,7 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Constructor for SlugFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
@@ -114,9 +106,7 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Calculates slug flow characteristics including frequency and translational velocity.
-   * </p>
    *
    * <p>
    * Uses correlations from Gregory and Scott (1969) and Bendiksen (1984).
@@ -264,9 +254,7 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Getter for slug frequency.
-   * </p>
    *
    * @return slug frequency in Hz
    */
@@ -275,9 +263,7 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Setter for slug frequency.
-   * </p>
    *
    * @param frequency slug frequency in Hz
    */
@@ -286,9 +272,7 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Getter for slug length ratio.
-   * </p>
    *
    * @return slug length to diameter ratio
    */
@@ -297,9 +281,7 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Setter for slug length ratio.
-   * </p>
    *
    * @param ratio slug length to diameter ratio
    */
@@ -308,9 +290,7 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Getter for slug translational velocity.
-   * </p>
    *
    * @return slug translational velocity in m/s
    */
@@ -319,9 +299,7 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

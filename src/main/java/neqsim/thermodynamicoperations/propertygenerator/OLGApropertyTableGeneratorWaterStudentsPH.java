@@ -17,9 +17,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * OLGApropertyTableGeneratorWaterStudentsPH class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -77,9 +75,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodyna
   String fileName = "c:/Appl/OLGAneqsim.tab";
 
   /**
-   * <p>
    * Constructor for OLGApropertyTableGeneratorWaterStudentsPH.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -111,9 +107,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodyna
   }
 
   /**
-   * <p>
    * Setter for the field <code>fileName</code>.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -122,9 +116,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodyna
   }
 
   /**
-   * <p>
    * setPressureRange.
-   * </p>
    *
    * @param minPressure a double
    * @param maxPressure a double
@@ -141,9 +133,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodyna
   }
 
   /**
-   * <p>
    * setEnthalpyRange.
-   * </p>
    *
    * @param minEnthalpy a double
    * @param maxEnthalpy a double
@@ -160,9 +150,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodyna
   }
 
   /**
-   * <p>
    * calcPhaseEnvelope.
-   * </p>
    */
   public void calcPhaseEnvelope() {
     try {
@@ -175,9 +163,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodyna
   }
 
   /**
-   * <p>
    * calcBubP.
-   * </p>
    *
    * @param enthalpies an array of type double
    * @return an array of type double
@@ -201,9 +187,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodyna
   }
 
   /**
-   * <p>
    * calcDewP.
-   * </p>
    *
    * @param enthalpies an array of type double
    * @return an array of type double
@@ -228,9 +212,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodyna
   }
 
   /**
-   * <p>
    * calcBubT.
-   * </p>
    *
    * @param pressures an array of type double
    * @return an array of type double
@@ -251,9 +233,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodyna
   }
 
   /**
-   * <p>
    * initCalc.
-   * </p>
    */
   public void initCalc() {
     double stdTemp = 288.15;
@@ -283,9 +263,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodyna
   }
 
   /**
-   * <p>
    * calcRSWTOB.
-   * </p>
    */
   public void calcRSWTOB() {
     thermoSystem.init(0);
@@ -1271,9 +1249,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodyna
   }
 
   /**
-   * <p>
    * writeOLGAinpFile2.
-   * </p>
    *
    * @param filename a {@link java.lang.String} object
    */
@@ -1361,9 +1337,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodyna
   }
 
   /**
-   * <p>
    * writeOLGAinpFile.
-   * </p>
    *
    * @param filename a {@link java.lang.String} object
    */
@@ -1843,9 +1817,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodyna
   }
 
   /**
-   * <p>
    * extrapolateTable.
-   * </p>
    */
   public void extrapolateTable() {
     for (int j = 0; j < enthalpies.length; j++) {

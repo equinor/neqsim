@@ -4,9 +4,7 @@ import java.util.HashMap;
 import neqsim.process.equipment.flare.Flare;
 
 /**
- * <p>
  * FlareResponse class for JSON serialization of Flare equipment.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -16,9 +14,7 @@ public class FlareResponse extends BaseResponse {
   public HashMap<String, Value> data = new HashMap<String, Value>();
 
   /**
-   * <p>
    * Constructor for FlareResponse.
-   * </p>
    *
    * @param flare a {@link neqsim.process.equipment.flare.Flare} object
    */

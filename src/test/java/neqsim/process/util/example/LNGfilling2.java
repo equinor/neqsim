@@ -6,9 +6,7 @@ import neqsim.process.equipment.tank.Tank;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * LNGfilling2 class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -16,9 +14,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class LNGfilling2 {
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

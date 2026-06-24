@@ -7,18 +7,14 @@
 package neqsim.statistics.parameterfitting.nonlinearparameterfitting;
 
 /**
- * <p>
  * LevenbergMarquardtBiasDev class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class LevenbergMarquardtBiasDev extends LevenbergMarquardt {
   /**
-   * <p>
    * Constructor for LevenbergMarquardtBiasDev.
-   * </p>
    */
   public LevenbergMarquardtBiasDev() {
   }

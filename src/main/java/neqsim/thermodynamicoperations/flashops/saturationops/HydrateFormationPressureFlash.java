@@ -7,9 +7,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * HydrateFormationPressureFlash class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -21,9 +19,7 @@ public class HydrateFormationPressureFlash extends ConstantDutyTemperatureFlash 
   static Logger logger = LogManager.getLogger(HydrateFormationPressureFlash.class);
 
   /**
-   * <p>
    * Constructor for HydrateFormationPressureFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -61,9 +57,7 @@ public class HydrateFormationPressureFlash extends ConstantDutyTemperatureFlash 
   }
 
   /**
-   * <p>
    * setFug.
-   * </p>
    */
   public void setFug() {
     for (int j = 0; j < system.getPhase(0).getNumberOfComponents(); j++) {

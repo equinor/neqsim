@@ -14,9 +14,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * ConstantVolumeDepletion class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -38,9 +36,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   double[] pressure = null;
 
   /**
-   * <p>
    * Constructor for ConstantVolumeDepletion.
-   * </p>
    *
    * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -49,9 +45,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * setTemperaturesAndPressures.
-   * </p>
    *
    * @param temperature an array of type double
    * @param pressure an array of type double
@@ -63,9 +57,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * calcSaturationConditions.
-   * </p>
    */
   public void calcSaturationConditions() {
     getThermoSystem().setPressure(1.0);
@@ -98,9 +90,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * runCalc.
-   * </p>
    */
   public void runCalc() {
     saturationConditionFound = false;
@@ -191,9 +181,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * runTuning.
-   * </p>
    */
   public void runTuning() {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
@@ -236,9 +224,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -300,9 +286,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>relativeVolume</code>.
-   * </p>
    *
    * @return the relativeVolume
    */
@@ -317,9 +301,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * getZmix.
-   * </p>
    *
    * @return the Zmix
    */
@@ -328,9 +310,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * getZgas.
-   * </p>
    *
    * @return the Zgas
    */
@@ -339,9 +319,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>liquidRelativeVolume</code>.
-   * </p>
    *
    * @return the liquidRelativeVolume
    */
@@ -350,9 +328,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>cummulativeMolePercDepleted</code>.
-   * </p>
    *
    * @return the cummulativeMolePercDepleted
    */

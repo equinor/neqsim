@@ -4,9 +4,7 @@ import java.util.UUID;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * StaticPhaseMixer class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -16,9 +14,7 @@ public class StaticPhaseMixer extends StaticMixer {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for StaticPhaseMixer.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */

@@ -65,18 +65,14 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
   private final Map<String, CapacityConstraint> capacityConstraints = new LinkedHashMap<String, CapacityConstraint>();
 
   /**
-   * <p>
    * Constructor for GasTurbine.
-   * </p>
    */
   public GasTurbine() {
     this("GasTurbine");
   }
 
   /**
-   * <p>
    * Constructor for GasTurbine.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -93,9 +89,7 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
   }
 
   /**
-   * <p>
    * Constructor for GasTurbine.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -112,9 +106,7 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
   }
 
   /**
-   * <p>
    * Getter for the field <code>heat</code>.
-   * </p>
    *
    * <p>
    * Returns the exhaust heat rejected by the turbine cooler (the energy a HRSG or bottoming cycle could recover).
@@ -127,9 +119,7 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
   }
 
   /**
-   * <p>
    * Getter for the field <code>power</code>.
-   * </p>
    *
    * <p>
    * Returns the net shaft power available to the load, computed as the expander work minus the internal air-compressor
@@ -327,9 +317,7 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
   }
 
   /**
-   * <p>
    * Calculates ideal air fuel ratio [kg air/kg fuel].
-   * </p>
    *
    * @return ideal air fuel ratio [kg air/kg fuel]
    */

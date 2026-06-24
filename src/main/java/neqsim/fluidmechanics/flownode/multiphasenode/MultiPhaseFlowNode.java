@@ -8,9 +8,7 @@ import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * Abstract MultiPhaseFlowNode class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -22,17 +20,13 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
   static Logger logger = LogManager.getLogger(MultiPhaseFlowNode.class);
 
   /**
-   * <p>
    * Constructor for MultiPhaseFlowNode.
-   * </p>
    */
   public MultiPhaseFlowNode() {
   }
 
   /**
-   * <p>
    * Constructor for MultiPhaseFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
@@ -58,9 +52,7 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * initVelocity.
-   * </p>
    *
    * @return a double
    */
@@ -140,9 +132,7 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * calcHydraulicDiameter.
-   * </p>
    *
    * @return a double
    */
@@ -154,9 +144,7 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * calcReynoldNumber.
-   * </p>
    *
    * @return a double
    */
@@ -171,9 +159,7 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * calcWallFrictionFactor.
-   * </p>
    *
    * @return a double
    */
@@ -211,9 +197,7 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * calcContactLength.
-   * </p>
    *
    * @return a double
    */
@@ -249,9 +233,7 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * calcGasLiquidContactArea.
-   * </p>
    *
    * @return a double
    */

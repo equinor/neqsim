@@ -1,9 +1,7 @@
 package neqsim.process.equipment.pump;
 
 /**
- * <p>
  * PumpChartInterface interface.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -101,9 +99,7 @@ public interface PumpChartInterface extends Cloneable {
   public void setUseRealKappa(boolean useRealKappa);
 
   /**
-   * <p>
    * getSpeed.
-   * </p>
    *
    * @param flow a double
    * @param head a double
@@ -112,9 +108,7 @@ public interface PumpChartInterface extends Cloneable {
   public int getSpeed(double flow, double head);
 
   /**
-   * <p>
    * plot.
-   * </p>
    */
   public void plot();
 

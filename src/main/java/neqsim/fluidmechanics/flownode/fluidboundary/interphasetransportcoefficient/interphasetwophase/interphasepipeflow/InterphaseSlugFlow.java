@@ -3,9 +3,7 @@ package neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoeffici
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 
 /**
- * <p>
  * InterphaseSlugFlow class.
- * </p>
  *
  * <p>
  * Calculates interphase transport coefficients for slug flow regime. Slug flow is characterized by alternating liquid
@@ -35,17 +33,13 @@ public class InterphaseSlugFlow extends InterphaseTwoPhasePipeFlow
   private double liquidHoldupInSlug = 0.85;
 
   /**
-   * <p>
    * Constructor for InterphaseSlugFlow.
-   * </p>
    */
   public InterphaseSlugFlow() {
   }
 
   /**
-   * <p>
    * Constructor for InterphaseSlugFlow.
-   * </p>
    *
    * @param node a {@link neqsim.fluidmechanics.flownode.FlowNodeInterface} object
    */
@@ -54,9 +48,7 @@ public class InterphaseSlugFlow extends InterphaseTwoPhasePipeFlow
   }
 
   /**
-   * <p>
    * Getter for slug length to diameter ratio.
-   * </p>
    *
    * @return slug length to diameter ratio
    */
@@ -65,9 +57,7 @@ public class InterphaseSlugFlow extends InterphaseTwoPhasePipeFlow
   }
 
   /**
-   * <p>
    * Setter for slug length to diameter ratio.
-   * </p>
    *
    * @param ratio slug length to diameter ratio (typically 15-40)
    */
@@ -76,9 +66,7 @@ public class InterphaseSlugFlow extends InterphaseTwoPhasePipeFlow
   }
 
   /**
-   * <p>
    * Getter for liquid holdup in slug body.
-   * </p>
    *
    * @return liquid holdup in slug body (0-1)
    */
@@ -87,9 +75,7 @@ public class InterphaseSlugFlow extends InterphaseTwoPhasePipeFlow
   }
 
   /**
-   * <p>
    * Setter for liquid holdup in slug body.
-   * </p>
    *
    * @param holdup liquid holdup in slug body (typically 0.7-1.0)
    */

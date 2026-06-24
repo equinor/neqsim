@@ -4,9 +4,7 @@ import java.util.HashMap;
 import neqsim.process.equipment.tank.Tank;
 
 /**
- * <p>
  * TankResponse class provides a simple example of how to report information from a tank unit operation.
- * </p>
  *
  * @author esol
  */

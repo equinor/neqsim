@@ -19,9 +19,7 @@ public final class BlackOilFlash implements Serializable {
   private final double rho_w_sc;
 
   /**
-   * <p>
    * Constructor for BlackOilFlash.
-   * </p>
    *
    * @param pvt a {@link neqsim.blackoil.BlackOilPVTTable} object
    * @param rho_o_sc a double
@@ -36,9 +34,7 @@ public final class BlackOilFlash implements Serializable {
   }
 
   /**
-   * <p>
    * flash.
-   * </p>
    *
    * @param P a double
    * @param T a double

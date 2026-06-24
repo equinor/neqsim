@@ -66,9 +66,7 @@ public class BlackOilPVTTable implements Serializable {
   private final double bubblePointP;
 
   /**
-   * <p>
    * Constructor for BlackOilPVTTable.
-   * </p>
    *
    * @param records a {@link java.util.List} object
    * @param bubblePointP a double
@@ -83,9 +81,7 @@ public class BlackOilPVTTable implements Serializable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>bubblePointP</code>.
-   * </p>
    *
    * @return a double
    */
@@ -112,9 +108,7 @@ public class BlackOilPVTTable implements Serializable {
   }
 
   /**
-   * <p>
    * Rs.
-   * </p>
    *
    * @param p a double
    * @return a double
@@ -124,9 +118,7 @@ public class BlackOilPVTTable implements Serializable {
   }
 
   /**
-   * <p>
    * Bo.
-   * </p>
    *
    * @param p a double
    * @return a double
@@ -136,9 +128,7 @@ public class BlackOilPVTTable implements Serializable {
   }
 
   /**
-   * <p>
    * mu_o.
-   * </p>
    *
    * @param p a double
    * @return a double
@@ -148,9 +138,7 @@ public class BlackOilPVTTable implements Serializable {
   }
 
   /**
-   * <p>
    * Bg.
-   * </p>
    *
    * @param p a double
    * @return a double
@@ -160,9 +148,7 @@ public class BlackOilPVTTable implements Serializable {
   }
 
   /**
-   * <p>
    * mu_g.
-   * </p>
    *
    * @param p a double
    * @return a double
@@ -172,9 +158,7 @@ public class BlackOilPVTTable implements Serializable {
   }
 
   /**
-   * <p>
    * Rv.
-   * </p>
    *
    * @param p a double
    * @return a double
@@ -184,9 +168,7 @@ public class BlackOilPVTTable implements Serializable {
   }
 
   /**
-   * <p>
    * Bw.
-   * </p>
    *
    * @param p a double
    * @return a double
@@ -196,9 +178,7 @@ public class BlackOilPVTTable implements Serializable {
   }
 
   /**
-   * <p>
    * mu_w.
-   * </p>
    *
    * @param p a double
    * @return a double

@@ -16,9 +16,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * Adjuster class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -58,9 +56,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   private transient BiConsumer<ProcessEquipmentInterface, Double> adjustedValueSetter;
 
   /**
-   * <p>
    * Constructor for Adjuster.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -98,9 +94,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * setAdjustedVariable.
-   * </p>
    *
    * @param adjustedEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @param adjstedVariable a {@link java.lang.String} object
@@ -113,9 +107,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * setAdjustedVariable.
-   * </p>
    *
    * @param adjustedEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @param adjstedVariable a {@link java.lang.String} object
@@ -126,9 +118,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * setAdjustedVariable.
-   * </p>
    *
    * @param adjustedEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
@@ -137,9 +127,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>targetVariable</code>.
-   * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
@@ -148,9 +136,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>targetVariable</code>.
-   * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @param targetVariable a {@link java.lang.String} object
@@ -161,9 +147,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>targetVariable</code>.
-   * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @param targetVariable a {@link java.lang.String} object
@@ -179,9 +163,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>targetVariable</code>.
-   * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @param targetVariable a {@link java.lang.String} object
@@ -199,9 +181,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>targetVariable</code>.
-   * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @param targetVariable a {@link java.lang.String} object
@@ -221,9 +201,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>targetValue</code>.
-   * </p>
    *
    * @param targetValue a double
    */
@@ -232,9 +210,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>adjustedEquipment</code>.
-   * </p>
    *
    * @param adjustedEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
@@ -243,9 +219,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>targetEquipment</code>.
-   * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
@@ -460,9 +434,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>tolerance</code>.
-   * </p>
    *
    * @return a double
    */
@@ -471,9 +443,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>tolerance</code>.
-   * </p>
    *
    * @param tolerance the tolerance to set
    */
@@ -482,9 +452,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>error</code>.
-   * </p>
    *
    * @return the error
    */
@@ -493,9 +461,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>error</code>.
-   * </p>
    *
    * @param error the error to set
    */
@@ -504,9 +470,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -531,9 +495,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * isActivateWhenLess.
-   * </p>
    *
    * @return a boolean
    */
@@ -542,9 +504,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>activateWhenLess</code>.
-   * </p>
    *
    * @param activateWhenLess a boolean
    */
@@ -553,9 +513,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>maxAdjustedValue</code>.
-   * </p>
    *
    * @param maxVal a double
    */
@@ -567,9 +525,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>minAdjustedValue</code>.
-   * </p>
    *
    * @param minVal a double
    */
@@ -581,9 +537,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>maxAdjustedValue</code>.
-   * </p>
    *
    * @return a double
    */
@@ -592,9 +546,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>minAdjustedValue</code>.
-   * </p>
    *
    * @return a double
    */
@@ -648,9 +600,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>targetValueCalculator</code>.
-   * </p>
    *
    * @param targetValueCalculator a {@link java.util.function.Function} object
    */
@@ -659,9 +609,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>targetValueCalculator</code>.
-   * </p>
    *
    * @param targetValueCalculator a {@link java.util.function.Supplier} object
    */
@@ -670,9 +618,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>adjustedValueGetter</code>.
-   * </p>
    *
    * @param adjustedValueGetter a {@link java.util.function.Function} object
    */
@@ -681,9 +627,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>adjustedValueGetter</code>.
-   * </p>
    *
    * @param adjustedValueGetter a {@link java.util.function.Supplier} object
    */
@@ -692,9 +636,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>adjustedValueSetter</code>.
-   * </p>
    *
    * @param adjustedValueSetter a {@link java.util.function.BiConsumer} object
    */
@@ -703,9 +645,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>adjustedValueSetter</code>.
-   * </p>
    *
    * @param adjustedValueSetter a {@link java.util.function.Consumer} object
    */

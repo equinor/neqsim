@@ -21,9 +21,7 @@ import org.jfree.data.xy.XYSeriesCollection;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * graph2b class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -40,9 +38,7 @@ public class Graph2b extends javax.swing.JFrame {
   String yaxtitle;
 
   /**
-   * <p>
    * Constructor for graph2b.
-   * </p>
    */
   public Graph2b() {
     initComponents();
@@ -50,9 +46,7 @@ public class Graph2b extends javax.swing.JFrame {
   }
 
   /**
-   * <p>
    * Constructor for graph2b.
-   * </p>
    *
    * @param points an array of type double
    */
@@ -95,9 +89,7 @@ public class Graph2b extends javax.swing.JFrame {
   }
 
   /**
-   * <p>
    * Constructor for graph2b.
-   * </p>
    *
    * @param points an array of type double
    * @param seriesNames an array of {@link java.lang.String} objects
@@ -136,9 +128,7 @@ public class Graph2b extends javax.swing.JFrame {
   }
 
   /**
-   * <p>
    * Constructor for graph2b.
-   * </p>
    *
    * @param xpoints an array of type double
    * @param points an array of type double
@@ -178,9 +168,7 @@ public class Graph2b extends javax.swing.JFrame {
   }
 
   /**
-   * <p>
    * saveFigure.
-   * </p>
    *
    * @param fileName a {@link java.lang.String} object
    */
@@ -196,9 +184,7 @@ public class Graph2b extends javax.swing.JFrame {
   }
 
   /**
-   * <p>
    * getBufferedImage.
-   * </p>
    *
    * @return a {@link java.awt.image.BufferedImage} object
    */
@@ -251,9 +237,7 @@ public class Graph2b extends javax.swing.JFrame {
   } // GEN-LAST:event_buttonclick
 
   /**
-   * <p>
    * createCategoryDataSource.
-   * </p>
    *
    * @return a {@link org.jfree.data.category.CategoryDataset} object
    */
@@ -281,9 +265,7 @@ public class Graph2b extends javax.swing.JFrame {
   } // GEN-LAST:event_exitForm
 
   /**
-   * <p>
    * getChartPanel.
-   * </p>
    *
    * @return a {@link org.jfree.chart.ChartPanel} object
    */
@@ -292,9 +274,7 @@ public class Graph2b extends javax.swing.JFrame {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args the command line arguments
    */

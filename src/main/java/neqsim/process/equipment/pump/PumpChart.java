@@ -146,9 +146,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
   private double lastViscosity = -1.0; // Last viscosity used for calculation
 
   /**
-   * <p>
    * Constructor for PumpChart.
-   * </p>
    */
   public PumpChart() {
   }
@@ -342,9 +340,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
   }
 
   /**
-   * <p>
    * fitReducedCurve.
-   * </p>
    */
   public void fitReducedCurve() {
     PolynomialCurveFitter fitter = PolynomialCurveFitter.create(2);
@@ -442,9 +438,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
   }
 
   /**
-   * <p>
    * efficiency.
-   * </p>
    *
    * @param flow a double
    * @param speed a double
@@ -455,9 +449,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
   }
 
   /**
-   * <p>
    * checkSurge1.
-   * </p>
    *
    * @param flow a double
    * @param head a double
@@ -476,9 +468,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
   }
 
   /**
-   * <p>
    * checkSurge2.
-   * </p>
    *
    * @param flow a double
    * @param speed a double
@@ -489,9 +479,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
   }
 
   /**
-   * <p>
    * checkStoneWall.
-   * </p>
    *
    * @param flow a double
    * @param speed a double
@@ -602,9 +590,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

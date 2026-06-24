@@ -14,18 +14,14 @@ public class SystemElectrolyteCPA extends SystemFurstElectrolyteEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for SystemElectrolyteCPA.
-   * </p>
    */
   public SystemElectrolyteCPA() {
     this(298.15, 1.0);
   }
 
   /**
-   * <p>
    * Constructor for SystemElectrolyteCPA.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)

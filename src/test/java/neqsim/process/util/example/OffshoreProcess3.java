@@ -18,9 +18,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * OffshoreProcess3 class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -30,9 +28,7 @@ public class OffshoreProcess3 {
   private static final Logger logger = LogManager.getLogger(OffshoreProcess3.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

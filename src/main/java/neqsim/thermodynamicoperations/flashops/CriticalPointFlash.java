@@ -10,9 +10,7 @@ import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * CriticalPointFlash class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -31,9 +29,7 @@ public class CriticalPointFlash extends Flash {
   double Tc0;
 
   /**
-   * <p>
    * Constructor for CriticalPointFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -47,9 +43,7 @@ public class CriticalPointFlash extends Flash {
   }
 
   /**
-   * <p>
    * Builds the scaled Q matrix used in the Heidemann &amp; Khalil (1980) critical-point criterion.
-   * </p>
    *
    * <p>
    * The element \(Q_{ij} = \sqrt{z_i z_j}\, \partial \ln f_i / \partial n_j\) is the Hessian of the reduced Helmholtz
@@ -80,9 +74,7 @@ public class CriticalPointFlash extends Flash {
   }
 
   /**
-   * <p>
    * Returns the eigenvector associated with the eigenvalue of {@link #Mmatrix} that is closest to zero.
-   * </p>
    *
    * <p>
    * At a mixture critical point the smallest eigenvalue of the Q matrix vanishes, and the corresponding eigenvector
@@ -123,9 +115,7 @@ public class CriticalPointFlash extends Flash {
   }
 
   /**
-   * <p>
    * calcdpd.
-   * </p>
    *
    * @return a double
    */

@@ -10,9 +10,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * NeqSimAGA8Detail class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -24,17 +22,13 @@ public class NeqSimAGA8Detail {
   DETAIL DETAIL = new DETAIL();
 
   /**
-   * <p>
    * Constructor for NeqSimAGA8Detail.
-   * </p>
    */
   public NeqSimAGA8Detail() {
   }
 
   /**
-   * <p>
    * Constructor for NeqSimAGA8Detail.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
@@ -46,9 +40,7 @@ public class NeqSimAGA8Detail {
   }
 
   /**
-   * <p>
    * getMolarDensity.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -59,9 +51,7 @@ public class NeqSimAGA8Detail {
   }
 
   /**
-   * <p>
    * getDensity.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -73,9 +63,7 @@ public class NeqSimAGA8Detail {
   }
 
   /**
-   * <p>
    * getDensity.
-   * </p>
    *
    * @return a double
    */
@@ -85,9 +73,7 @@ public class NeqSimAGA8Detail {
   }
 
   /**
-   * <p>
    * getPressure.
-   * </p>
    *
    * @return a double
    */
@@ -100,9 +86,7 @@ public class NeqSimAGA8Detail {
   }
 
   /**
-   * <p>
    * getMolarMass.
-   * </p>
    *
    * @return a double
    */
@@ -113,9 +97,7 @@ public class NeqSimAGA8Detail {
   }
 
   /**
-   * <p>
    * getMolarDensity.
-   * </p>
    *
    * @return a double
    */
@@ -129,9 +111,7 @@ public class NeqSimAGA8Detail {
   }
 
   /**
-   * <p>
    * propertiesDetail.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return an array of type double
@@ -142,9 +122,7 @@ public class NeqSimAGA8Detail {
   }
 
   /**
-   * <p>
    * getProperties.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param properties an array of {@link java.lang.String} objects
@@ -175,9 +153,7 @@ public class NeqSimAGA8Detail {
   }
 
   /**
-   * <p>
    * propertiesDetail.
-   * </p>
    *
    * @return an array of type double
    */
@@ -210,9 +186,7 @@ public class NeqSimAGA8Detail {
   }
 
   /**
-   * <p>
    * Setter for the field <code>phase</code>.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
@@ -309,9 +283,7 @@ public class NeqSimAGA8Detail {
   }
 
   /**
-   * <p>
    * normalizeComposition.
-   * </p>
    */
   public void normalizeComposition() {
     double result = 0;
@@ -324,9 +296,7 @@ public class NeqSimAGA8Detail {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

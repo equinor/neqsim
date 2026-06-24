@@ -19,9 +19,7 @@ import neqsim.process.measurementdevice.HydrateEquilibriumTemperatureAnalyser;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TEGdehydrationProcessDistillationJS class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -154,17 +152,13 @@ public class TEGdehydrationProcessDistillationJS {
   public double coldTEGpumpIsentropicEfficiency = 0.75;
 
   /**
-   * <p>
    * Constructor for TEGdehydrationProcessDistillationJS.
-   * </p>
    */
   public TEGdehydrationProcessDistillationJS() {
   }
 
   /**
-   * <p>
    * getProcess.
-   * </p>
    *
    * @return a {@link neqsim.process.processmodel.ProcessSystem} object
    */
@@ -391,9 +385,7 @@ public class TEGdehydrationProcessDistillationJS {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

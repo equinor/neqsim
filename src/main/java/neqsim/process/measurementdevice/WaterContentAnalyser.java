@@ -4,9 +4,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * WaterContentAnalyser class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -16,9 +14,7 @@ public class WaterContentAnalyser extends StreamMeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for WaterContentAnalyser.
-   * </p>
    *
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -27,9 +23,7 @@ public class WaterContentAnalyser extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for WaterContentAnalyser.
-   * </p>
    *
    * @param name Name of WaterContentAnalyser
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object

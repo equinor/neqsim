@@ -31,9 +31,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>
  * EosMixingRuleHandler class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -81,18 +79,14 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
   private int bmixType = 0;
 
   /**
-   * <p>
    * Constructor for EosMixingRules.
-   * </p>
    */
   public EosMixingRuleHandler() {
     this.mixingRuleName = "no (kij=0)";
   }
 
   /**
-   * <p>
    * getMixingRule.
-   * </p>
    *
    * @param mr a int
    * @return a {@link neqsim.thermo.mixingrule.EosMixingRulesInterface} object
@@ -132,9 +126,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
   }
 
   /**
-   * <p>
    * getMixingRule.
-   * </p>
    *
    * @param mr a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -510,9 +502,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
   }
 
   /**
-   * <p>
    * resetMixingRule.
-   * </p>
    *
    * @param i a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -3492,9 +3482,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
   }
 
   /**
-   * <p>
    * getElectrolyteMixingRule.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a {@link neqsim.thermo.mixingrule.ElectrolyteMixingRulesInterface} object
@@ -3513,9 +3501,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
   }
 
   /**
-   * <p>
    * Setter for the field <code>calcEOSInteractionParameters</code>.
-   * </p>
    *
    * @param CalcEOSInteractionParameters2 a boolean
    */
@@ -3542,9 +3528,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
   }
 
   /**
-   * <p>
    * Setter for the field <code>mixingRuleGEModel</code>.
-   * </p>
    *
    * @param GEmodel a {@link java.lang.String} object
    */
@@ -3553,9 +3537,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
   }
 
   /**
-   * <p>
    * getSRKbinaryInteractionParameters.
-   * </p>
    *
    * @return an array of type double
    */
@@ -3645,9 +3627,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
   }
 
   /**
-   * <p>
    * displayInteractionCoefficients.
-   * </p>
    *
    * @param intType a {@link java.lang.String} object
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object

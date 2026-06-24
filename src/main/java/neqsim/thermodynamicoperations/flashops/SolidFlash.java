@@ -8,9 +8,7 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * SolidFlash class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -32,9 +30,7 @@ public class SolidFlash extends TPflash {
   boolean secondTime = false;
 
   /**
-   * <p>
    * Constructor for SolidFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -43,9 +39,7 @@ public class SolidFlash extends TPflash {
   }
 
   /**
-   * <p>
    * Setter for the field <code>solidComponent</code>.
-   * </p>
    *
    * @param i a int
    */
@@ -54,9 +48,7 @@ public class SolidFlash extends TPflash {
   }
 
   /**
-   * <p>
    * Constructor for SolidFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param checkForSolids Set true to do solid phase check and calculations
@@ -66,17 +58,13 @@ public class SolidFlash extends TPflash {
   }
 
   /**
-   * <p>
    * calcMultiPhaseBeta.
-   * </p>
    */
   public void calcMultiPhaseBeta() {
   }
 
   /**
-   * <p>
    * setXY.
-   * </p>
    */
   public void setXY() {
     for (int k = 0; k < system.getNumberOfPhases() - 1; k++) {
@@ -93,9 +81,7 @@ public class SolidFlash extends TPflash {
   }
 
   /**
-   * <p>
    * checkX.
-   * </p>
    */
   public void checkX() {
     for (int k = 0; k < system.getNumberOfPhases() - 1; k++) {
@@ -119,9 +105,7 @@ public class SolidFlash extends TPflash {
   }
 
   /**
-   * <p>
    * calcE.
-   * </p>
    */
   public void calcE() {
     E = new double[system.getPhases()[0].getNumberOfComponents()];
@@ -146,9 +130,7 @@ public class SolidFlash extends TPflash {
   }
 
   /**
-   * <p>
    * calcQ.
-   * </p>
    *
    * @return a double
    */
@@ -197,9 +179,7 @@ public class SolidFlash extends TPflash {
   }
 
   /**
-   * <p>
    * solveBeta.
-   * </p>
    *
    * @param ideal a boolean
    */
@@ -281,9 +261,7 @@ public class SolidFlash extends TPflash {
   }
 
   /**
-   * <p>
    * checkGibbs.
-   * </p>
    */
   public void checkGibbs() {
     double gibbs1 = 0;
@@ -305,9 +283,7 @@ public class SolidFlash extends TPflash {
   }
 
   /**
-   * <p>
    * calcSolidBeta.
-   * </p>
    */
   public void calcSolidBeta() {
     double tempVar = system.getPhase(0).getComponents()[solidComponent].getz();

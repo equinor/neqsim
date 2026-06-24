@@ -4,9 +4,7 @@ import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * cricondenBarTemp class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -44,9 +42,7 @@ public class CricondenBarTemp implements java.io.Serializable {
   Matrix xcoef;
 
   /**
-   * <p>
    * Constructor for cricondenBarTemp.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param numberOfPhases a int
@@ -66,9 +62,7 @@ public class CricondenBarTemp implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>fvec</code>.
-   * </p>
    */
   public void setfvec() {
     for (int i = 0; i < numberOfComponents; i++) {
@@ -81,9 +75,7 @@ public class CricondenBarTemp implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * setJac.
-   * </p>
    */
   public void setJac() {
     Jac.timesEquals(0.0);
@@ -104,9 +96,7 @@ public class CricondenBarTemp implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>u</code>.
-   * </p>
    */
   public void setu() {
     for (int i = 0; i < numberOfComponents; i++) {
@@ -115,9 +105,7 @@ public class CricondenBarTemp implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * init.
-   * </p>
    */
   public void init() {
     double temp = 0;
@@ -140,9 +128,7 @@ public class CricondenBarTemp implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * solve.
-   * </p>
    *
    * @return a double
    */

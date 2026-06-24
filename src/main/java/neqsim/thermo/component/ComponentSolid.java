@@ -11,9 +11,7 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>
  * ComponentSolid class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -36,9 +34,7 @@ public class ComponentSolid extends ComponentSrk {
   PhaseInterface refPhase = null;
 
   /**
-   * <p>
    * Constructor for ComponentSolid.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -74,9 +70,7 @@ public class ComponentSolid extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Calculate, set and return fugacity coefficient.
-   * </p>
    *
    * @param temp a double
    * @param pres a double
@@ -132,9 +126,7 @@ public class ComponentSolid extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Calculate, set and return fugacity coefficient.
-   * </p>
    *
    * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object to get fugacity coefficient of.
    * @return Fugacity coefficient
@@ -216,9 +208,7 @@ public class ComponentSolid extends ComponentSrk {
   // return dpdt;
   // }
   /**
-   * <p>
    * getMolarVolumeSolid.
-   * </p>
    *
    * @return a double
    */
@@ -227,9 +217,7 @@ public class ComponentSolid extends ComponentSrk {
   }
 
   /**
-   * <p>
    * setSolidRefFluidPhase.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
@@ -263,9 +251,7 @@ public class ComponentSolid extends ComponentSrk {
   }
 
   /**
-   * <p>
    * getVolumeCorrection2.
-   * </p>
    *
    * @return a double
    */

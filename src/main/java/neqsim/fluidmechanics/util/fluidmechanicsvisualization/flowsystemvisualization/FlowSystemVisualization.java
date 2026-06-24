@@ -6,9 +6,7 @@ import neqsim.fluidmechanics.util.fluidmechanicsvisualization.flownodevisualizat
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * FlowSystemVisualization class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -20,17 +18,13 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
   protected double[] absTime;
 
   /**
-   * <p>
    * Constructor for FlowSystemVisualization.
-   * </p>
    */
   public FlowSystemVisualization() {
   }
 
   /**
-   * <p>
    * Constructor for FlowSystemVisualization.
-   * </p>
    *
    * @param nodes a int
    * @param timeSteps a int

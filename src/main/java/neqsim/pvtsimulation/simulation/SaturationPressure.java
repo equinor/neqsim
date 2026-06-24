@@ -5,9 +5,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * SaturationPressure class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -25,9 +23,7 @@ public class SaturationPressure extends BasePVTsimulation {
   private static final int MAXIMUM_BISECTION_ITERATIONS = 500;
 
   /**
-   * <p>
    * Constructor for SaturationPressure.
-   * </p>
    *
    * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -36,9 +32,7 @@ public class SaturationPressure extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * calcSaturationPressure.
-   * </p>
    *
    * @return a double
    */
@@ -137,9 +131,7 @@ public class SaturationPressure extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

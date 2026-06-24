@@ -13,9 +13,7 @@ import neqsim.thermodynamicoperations.BaseOperation;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * ChemicalEquilibrium class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -29,9 +27,7 @@ public class ChemicalEquilibrium extends BaseOperation {
   SystemInterface system;
 
   /**
-   * <p>
    * Constructor for ChemicalEquilibrium.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

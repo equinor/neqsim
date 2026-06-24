@@ -6,9 +6,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * ConsistencyTest class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id

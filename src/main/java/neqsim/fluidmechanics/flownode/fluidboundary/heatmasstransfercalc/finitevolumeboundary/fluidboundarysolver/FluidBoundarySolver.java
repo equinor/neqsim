@@ -11,9 +11,7 @@ import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitev
 import neqsim.mathlib.generalmath.TDMAsolve;
 
 /**
- * <p>
  * FluidBoundarySolver class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -30,17 +28,13 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
   boolean reactive = false;
 
   /**
-   * <p>
    * Constructor for FluidBoundarySolver.
-   * </p>
    */
   public FluidBoundarySolver() {
   }
 
   /**
-   * <p>
    * Constructor for FluidBoundarySolver.
-   * </p>
    *
    * @param boundary a
    * {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysystem.FluidBoundarySystemInterface}
@@ -63,9 +57,7 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
   }
 
   /**
-   * <p>
    * Constructor for FluidBoundarySolver.
-   * </p>
    *
    * @param boundary a
    * {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysystem.FluidBoundarySystemInterface}
@@ -78,9 +70,7 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
   }
 
   /**
-   * <p>
    * initProfiles.
-   * </p>
    */
   public void initProfiles() {
     Matrix reacRates = new Matrix(1, 1);
@@ -114,9 +104,7 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
   }
 
   /**
-   * <p>
    * initMatrix.
-   * </p>
    */
   public void initMatrix() {
     for (int j = 0; j < boundary.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents(); j++) {
@@ -128,9 +116,7 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
   }
 
   /**
-   * <p>
    * initComposition.
-   * </p>
    *
    * @param iter a int
    */
@@ -145,9 +131,7 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
   }
 
   /**
-   * <p>
    * setComponentConservationMatrix.
-   * </p>
    *
    * @param componentNumber a int
    */

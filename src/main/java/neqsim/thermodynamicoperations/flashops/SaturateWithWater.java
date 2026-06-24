@@ -9,9 +9,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * SaturateWithWater class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -25,9 +23,7 @@ public class SaturateWithWater extends QfuncFlash {
   Flash tpFlash;
 
   /**
-   * <p>
    * Constructor for SaturateWithWater.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -191,9 +187,7 @@ public class SaturateWithWater extends QfuncFlash {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

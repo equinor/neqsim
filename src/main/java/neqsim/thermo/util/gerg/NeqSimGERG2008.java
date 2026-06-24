@@ -12,9 +12,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * NeqSimGERG2008 class.
- * </p>
  *
  * <p>
  * This class provides a wrapper around the GERG-2008 equation of state for calculating thermodynamic properties of
@@ -40,18 +38,14 @@ public class NeqSimGERG2008 {
   private GERG2008Type modelType = GERG2008Type.STANDARD;
 
   /**
-   * <p>
    * Constructor for NeqSimGERG2008.
-   * </p>
    */
   public NeqSimGERG2008() {
     this.GERG2008 = getCachedModel(GERG2008Type.STANDARD);
   }
 
   /**
-   * <p>
    * Constructor for NeqSimGERG2008.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
@@ -60,9 +54,7 @@ public class NeqSimGERG2008 {
   }
 
   /**
-   * <p>
    * Constructor for NeqSimGERG2008 with specified model type.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param modelType the GERG-2008 model variant to use (STANDARD or HYDROGEN_ENHANCED)
@@ -143,9 +135,7 @@ public class NeqSimGERG2008 {
   }
 
   /**
-   * <p>
    * getMolarDensity.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -156,9 +146,7 @@ public class NeqSimGERG2008 {
   }
 
   /**
-   * <p>
    * getDensity.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -170,9 +158,7 @@ public class NeqSimGERG2008 {
   }
 
   /**
-   * <p>
    * getDensity.
-   * </p>
    *
    * @return a double
    */
@@ -182,9 +168,7 @@ public class NeqSimGERG2008 {
   }
 
   /**
-   * <p>
    * getPressure.
-   * </p>
    *
    * @return a double
    */
@@ -197,9 +181,7 @@ public class NeqSimGERG2008 {
   }
 
   /**
-   * <p>
    * getMolarMass.
-   * </p>
    *
    * @return a double
    */
@@ -210,9 +192,7 @@ public class NeqSimGERG2008 {
   }
 
   /**
-   * <p>
    * getMolarDensity.
-   * </p>
    *
    * @return a double
    */
@@ -233,9 +213,7 @@ public class NeqSimGERG2008 {
   }
 
   /**
-   * <p>
    * propertiesGERG.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return an array of type double
@@ -246,9 +224,7 @@ public class NeqSimGERG2008 {
   }
 
   /**
-   * <p>
    * getProperties.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param properties an array of {@link java.lang.String} objects
@@ -280,9 +256,7 @@ public class NeqSimGERG2008 {
   }
 
   /**
-   * <p>
    * propertiesGERG.
-   * </p>
    *
    * @return an array of type double
    */
@@ -314,9 +288,7 @@ public class NeqSimGERG2008 {
   }
 
   /**
-   * <p>
    * Setter for the field <code>phase</code>.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
@@ -423,9 +395,7 @@ public class NeqSimGERG2008 {
   }
 
   /**
-   * <p>
    * normalizeComposition.
-   * </p>
    */
   public void normalizeComposition() {
     double result = 0;
@@ -446,9 +416,7 @@ public class NeqSimGERG2008 {
   }
 
   /**
-   * <p>
    * getAlpha0_GERG2008.
-   * </p>
    *
    * @return an array of {@link org.netlib.util.doubleW} objects
    */
@@ -519,9 +487,7 @@ public class NeqSimGERG2008 {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

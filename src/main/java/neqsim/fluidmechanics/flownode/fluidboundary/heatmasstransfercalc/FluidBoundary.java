@@ -21,9 +21,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * Abstract FluidBoundary class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -65,9 +63,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   protected int solverType = 0;
 
   /**
-   * <p>
    * Constructor for FluidBoundary.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -98,9 +94,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   }
 
   /**
-   * <p>
    * initInterphaseSystem.
-   * </p>
    */
   public void initInterphaseSystem() {
     interphaseSystem = bulkSystem.clone();
@@ -131,9 +125,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   }
 
   /**
-   * <p>
    * Constructor for FluidBoundary.
-   * </p>
    *
    * @param flowNode a {@link neqsim.fluidmechanics.flownode.FlowNodeInterface} object
    */
@@ -170,25 +162,19 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   }
 
   /**
-   * <p>
    * initMassTransferCalc.
-   * </p>
    */
   public void initMassTransferCalc() {
   }
 
   /**
-   * <p>
    * initHeatTransferCalc.
-   * </p>
    */
   public void initHeatTransferCalc() {
   }
 
   /**
-   * <p>
    * init. Calls interphaseSystem.init(3)
-   * </p>
    */
   public void init() {
     // if(this.bulkSystem.isChemicalSystem()) this.bulkSystem.initNumeric();
@@ -216,9 +202,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   }
 
   /**
-   * <p>
    * Setter for the field <code>bulkSystem</code>.
-   * </p>
    *
    * @param bulkSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -239,9 +223,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   }
 
   /**
-   * <p>
    * getInterphaseOpertions.
-   * </p>
    *
    * @return a {@link neqsim.thermodynamicoperations.ThermodynamicOperations} object
    */
@@ -256,9 +238,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   }
 
   /**
-   * <p>
    * calcFluxTypeCorrectionMatrix.
-   * </p>
    *
    * @param phaseNum a int
    * @param k a int
@@ -288,9 +268,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   }
 
   /**
-   * <p>
    * calcNonIdealCorrections.
-   * </p>
    *
    * @param phaseNum a int
    */
@@ -430,9 +408,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   }
 
   /**
-   * <p>
    * createTable.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return an array of {@link java.lang.String} objects

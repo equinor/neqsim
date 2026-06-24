@@ -17,9 +17,7 @@ import neqsim.process.processmodel.ProcessModuleBaseClass;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * GlycolDehydrationlModule class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -64,9 +62,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
   double regenerationPressure = 1.4;
 
   /**
-   * <p>
    * Constructor for GlycolDehydrationlModule.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -109,9 +105,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
   }
 
   /**
-   * <p>
    * solveAbsorptionFactor.
-   * </p>
    *
    * @param Ea a double
    * @return a double
@@ -287,9 +281,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
   }
 
   /**
-   * <p>
    * calcGlycolConcentration.
-   * </p>
    *
    * @param y0 a double
    * @return a double
@@ -331,9 +323,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
   }
 
   /**
-   * <p>
    * calcKglycol.
-   * </p>
    *
    * @return a double
    */
@@ -431,9 +421,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -519,9 +507,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>flashPressure</code>.
-   * </p>
    *
    * @return a double
    */
@@ -530,9 +516,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>flashPressure</code>.
-   * </p>
    *
    * @param flashPressure a double
    */

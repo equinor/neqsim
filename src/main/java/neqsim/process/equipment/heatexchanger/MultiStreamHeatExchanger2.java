@@ -27,9 +27,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 // ================================================================
 
 /**
- * <p>
  * MultiStreamHeatExchanger2 class.
- * </p>
  *
  * @author esol
  */
@@ -133,9 +131,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   }
 
   /**
-   * <p>
    * setTemperatureApproach.
-   * </p>
    *
    * @param temperatureApproach a double
    */
@@ -877,9 +873,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   }
 
   /**
-   * <p>
    * getUA.
-   * </p>
    *
    * @return a double
    */
@@ -888,9 +882,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   }
 
   /**
-   * <p>
    * getTemperatureApproach.
-   * </p>
    *
    * @return a double
    */

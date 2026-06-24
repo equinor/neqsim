@@ -12,9 +12,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
- * <p>
  * Element class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -30,9 +28,7 @@ public class Element implements ThermodynamicConstantsInterface {
   private double[] coefArray;
 
   /**
-   * <p>
    * Constructor for Element.
-   * </p>
    *
    * @param name Name of component.
    */

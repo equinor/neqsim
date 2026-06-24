@@ -7,9 +7,7 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>
  * ComponentHydratePVTsim class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -24,9 +22,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
   double[][] Bk = new double[2][2]; // [structure][cavitytype]
 
   /**
-   * <p>
    * Constructor for ComponentHydratePVTsim.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -197,9 +193,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
   }
 
   /**
-   * <p>
    * calcDeltaChemPot.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComps a int

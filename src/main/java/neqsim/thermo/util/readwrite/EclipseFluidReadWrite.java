@@ -22,9 +22,7 @@ import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * EclipseFluidReadWrite class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -168,9 +166,7 @@ public class EclipseFluidReadWrite {
   }
 
   /**
-   * <p>
    * setComposition.
-   * </p>
    *
    * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
    * @param inputFile a {@link java.lang.String} object
@@ -182,9 +178,7 @@ public class EclipseFluidReadWrite {
   }
 
   /**
-   * <p>
    * setComposition.
-   * </p>
    *
    * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
    * @param inputFile a {@link java.lang.String} object
@@ -224,9 +218,7 @@ public class EclipseFluidReadWrite {
   }
 
   /**
-   * <p>
    * read.
-   * </p>
    *
    * @param inputFile a {@link java.lang.String} object
    * @param pseudoNameIn a {@link java.lang.String} object
@@ -261,9 +253,7 @@ public class EclipseFluidReadWrite {
   }
 
   /**
-   * <p>
    * read.
-   * </p>
    *
    * @param inputFile a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.system.SystemInterface} object
@@ -856,9 +846,7 @@ public class EclipseFluidReadWrite {
   }
 
   /**
-   * <p>
    * read.
-   * </p>
    *
    * @param inputFile a {@link java.lang.String} object representing the path to the input file
    * @param fluidNames an array of {@link java.lang.String} objects representing the names of the fluids
@@ -1236,9 +1224,7 @@ public class EclipseFluidReadWrite {
   }
 
   /**
-   * <p>
    * readE300File.
-   * </p>
    *
    * @param inputFile a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.system.SystemInterface} object

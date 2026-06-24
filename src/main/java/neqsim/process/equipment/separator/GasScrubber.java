@@ -10,9 +10,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.separator.GasScrubberMechanicalDesign;
 
 /**
- * <p>
  * GasScrubber class.
- * </p>
  *
  * <p>
  * A gas scrubber is a vertical separator designed primarily for removing liquid droplets from gas streams. Unlike
@@ -69,9 +67,7 @@ public class GasScrubber extends Separator {
   }
 
   /**
-   * <p>
    * Constructor for GasScrubber.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.Stream} object

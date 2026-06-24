@@ -8,9 +8,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * Fluid class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -22,9 +20,7 @@ public class FluidComponentResponse {
   public HashMap<String, HashMap<String, Value>> properties = new HashMap<String, HashMap<String, Value>>();
 
   /**
-   * <p>
    * Constructor for FluidComponentResponse. Sets name of inputFluid as name.
-   * </p>
    *
    * @param inputFluid a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -96,9 +92,7 @@ public class FluidComponentResponse {
   }
 
   /**
-   * <p>
    * print.
-   * </p>
    */
   public void print() {
   }

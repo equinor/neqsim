@@ -8,9 +8,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TemperatureUnitTest extends neqsim.NeqSimTest {
   /**
-   * <p>
    * testSetPressure
-   * </p>
    */
   @Test
   public void testSetTemperature() {

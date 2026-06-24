@@ -8,9 +8,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * UKspecifications_ICF_SI class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -27,9 +25,7 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
   double propaneNumber = 0.0;
 
   /**
-   * <p>
    * Constructor for UKspecifications_ICF_SI.
-   * </p>
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -81,9 +77,7 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
   }
 
   /**
-   * <p>
    * calcPropaneNumber.
-   * </p>
    *
    * @return a double
    */
@@ -116,9 +110,7 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
   }
 
   /**
-   * <p>
    * calcWithNitrogenAsInert.
-   * </p>
    *
    * @return a double
    */

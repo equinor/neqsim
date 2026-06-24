@@ -8,9 +8,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * FreezeMEGwater class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -22,9 +20,7 @@ public class FreezeMEGwater {
   /** Logger object for class. */
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

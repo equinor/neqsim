@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * waterDewPointTemperatureFlash class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -19,9 +17,7 @@ public class WaterDewPointTemperatureFlash extends ConstantDutyTemperatureFlash 
   static Logger logger = LogManager.getLogger(WaterDewPointTemperatureFlash.class);
 
   /**
-   * <p>
    * Constructor for waterDewPointTemperatureFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

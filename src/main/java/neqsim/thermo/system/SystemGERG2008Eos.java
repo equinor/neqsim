@@ -30,18 +30,14 @@ public class SystemGERG2008Eos extends SystemEos {
   private GERG2008Type gergModelType = GERG2008Type.STANDARD;
 
   /**
-   * <p>
    * Constructor for SystemGERG2008Eos.
-   * </p>
    */
   public SystemGERG2008Eos() {
     this(298.15, 1.0, false);
   }
 
   /**
-   * <p>
    * Constructor for SystemGERG2008Eos.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -51,9 +47,7 @@ public class SystemGERG2008Eos extends SystemEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemGERG2008Eos.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -102,9 +96,7 @@ public class SystemGERG2008Eos extends SystemEos {
   }
 
   /**
-   * <p>
    * commonInitialization.
-   * </p>
    */
   public void commonInitialization() {
     setImplementedCompositionDeriativesofFugacity(false);

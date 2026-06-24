@@ -3,9 +3,7 @@ package neqsim.thermo.component;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermTwu;
 
 /**
- * <p>
  * ComponentTST class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -15,9 +13,7 @@ public class ComponentTST extends ComponentEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for ComponentTST.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -38,9 +34,7 @@ public class ComponentTST extends ComponentEos {
   }
 
   /**
-   * <p>
    * Constructor for ComponentTST.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]
@@ -92,9 +86,7 @@ public class ComponentTST extends ComponentEos {
   }
 
   /**
-   * <p>
    * getQpure.
-   * </p>
    *
    * @param temperature a double
    * @return a double
@@ -104,9 +96,7 @@ public class ComponentTST extends ComponentEos {
   }
 
   /**
-   * <p>
    * getdQpuredT.
-   * </p>
    *
    * @param temperature a double
    * @return a double
@@ -116,9 +106,7 @@ public class ComponentTST extends ComponentEos {
   }
 
   /**
-   * <p>
    * getdQpuredTdT.
-   * </p>
    *
    * @param temperature a double
    * @return a double

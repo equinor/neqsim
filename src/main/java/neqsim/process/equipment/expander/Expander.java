@@ -8,9 +8,7 @@ import neqsim.process.mechanicaldesign.expander.ExpanderMechanicalDesign;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * Expander class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -39,9 +37,7 @@ public class Expander extends Compressor implements ExpanderInterface {
   }
 
   /**
-   * <p>
    * Constructor for Expander.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object

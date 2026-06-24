@@ -8,9 +8,7 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>
  * ComponentHydrate class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -45,9 +43,7 @@ public class ComponentHydrate extends Component {
   PhaseInterface refPhase = null;
 
   /**
-   * <p>
    * Constructor for ComponentHydrate.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -112,9 +108,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * readHydrateParameters.
-   * </p>
    */
   public void readHydrateParameters() {
   }
@@ -126,9 +120,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * Calculate, set and return fugacity coefficient.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object to get fugacity coefficient of.
    * @param numberOfComps a int
@@ -186,9 +178,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * Setter for the field <code>hydrateStructure</code>.
-   * </p>
    *
    * @param structure a int
    */
@@ -197,9 +187,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * Getter for the field <code>hydrateStructure</code>.
-   * </p>
    *
    * @return a int
    */
@@ -208,9 +196,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * getEmptyHydrateStructureVapourPressure.
-   * </p>
    *
    * @param type a int
    * @param temperature a double
@@ -227,9 +213,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * Setter for the field <code>emptyHydrateVapourPressureConstant</code>.
-   * </p>
    *
    * @param hydrateStructure a int
    * @param parameterNumber a int
@@ -240,9 +224,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * Getter for the field <code>emptyHydrateVapourPressureConstant</code>.
-   * </p>
    *
    * @param hydrateStructure a int
    * @param parameterNumber a int
@@ -253,9 +235,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * calcChemPotEmpty.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComps a int
@@ -291,9 +271,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * calcChemPotIdealWater.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComps a int
@@ -320,9 +298,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * calcYKI.
-   * </p>
    *
    * @param stucture a int
    * @param cavityType a int
@@ -349,9 +325,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * calcCKI.
-   * </p>
    *
    * @param stucture a int
    * @param cavityType a int
@@ -365,9 +339,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * setRefFug.
-   * </p>
    *
    * @param compNumbm a int
    * @param val a double
@@ -378,9 +350,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * potIntegral.
-   * </p>
    *
    * @param stucture a int
    * @param cavityType a int
@@ -404,9 +374,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * getPot.
-   * </p>
    *
    * @param radius a double
    * @param struccture a int
@@ -433,9 +401,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * delt.
-   * </p>
    *
    * @param n a double
    * @param radius a double
@@ -459,9 +425,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * Getter for the field <code>dGfHydrate</code>.
-   * </p>
    *
    * @return an array of type double
    */
@@ -470,9 +434,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * Setter for the field <code>dGfHydrate</code>.
-   * </p>
    *
    * @param dGfHydrate an array of type double
    */
@@ -481,9 +443,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * Setter for the field <code>dGfHydrate</code>.
-   * </p>
    *
    * @param dGfHydrate a double
    * @param i a int
@@ -493,9 +453,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * Getter for the field <code>dHfHydrate</code>.
-   * </p>
    *
    * @return an array of type double
    */
@@ -504,9 +462,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * Setter for the field <code>dHfHydrate</code>.
-   * </p>
    *
    * @param dHfHydrate a double
    * @param i a int
@@ -516,9 +472,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * Setter for the field <code>dHfHydrate</code>.
-   * </p>
    *
    * @param dHfHydrate an array of type double
    */
@@ -527,9 +481,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * getMolarVolumeHydrate.
-   * </p>
    *
    * @param structure a int
    * @param temperature a double
@@ -565,9 +517,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * Getter for the field <code>sphericalCoreRadiusHydrate</code>.
-   * </p>
    *
    * @return a double
    */
@@ -576,9 +526,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * Setter for the field <code>sphericalCoreRadiusHydrate</code>.
-   * </p>
    *
    * @param sphericalCoreRadiusHydrate a double
    */
@@ -587,9 +535,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * Getter for the field <code>lennardJonesEnergyParameterHydrate</code>.
-   * </p>
    *
    * @return a double
    */
@@ -598,9 +544,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * Setter for the field <code>lennardJonesEnergyParameterHydrate</code>.
-   * </p>
    *
    * @param lennardJonesEnergyParameterHydrate a double
    */
@@ -609,9 +553,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * Getter for the field <code>lennardJonesMolecularDiameterHydrate</code>.
-   * </p>
    *
    * @return a double
    */
@@ -620,9 +562,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * Setter for the field <code>lennardJonesMolecularDiameterHydrate</code>.
-   * </p>
    *
    * @param lennardJonesMolecularDiameterHydrate a double
    */
@@ -631,9 +571,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * setSolidRefFluidPhase.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
@@ -701,9 +639,7 @@ public class ComponentHydrate extends Component {
   // }
 
   /**
-   * <p>
    * Getter for the field <code>cavprwat</code>.
-   * </p>
    *
    * @param structure a int
    * @param cavityType a int
@@ -714,9 +650,7 @@ public class ComponentHydrate extends Component {
   }
 
   /**
-   * <p>
    * Getter for the field <code>cavprwat</code>.
-   * </p>
    *
    * @return an array of type double
    */

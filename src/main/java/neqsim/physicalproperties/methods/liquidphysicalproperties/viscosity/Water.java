@@ -53,9 +53,7 @@ public class Water extends Viscosity {
   }
 
   /**
-   * <p>
    * Constructor for Water.
-   * </p>
    *
    * @param liquidPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

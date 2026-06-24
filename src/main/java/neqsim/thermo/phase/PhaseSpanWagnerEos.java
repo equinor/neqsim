@@ -27,9 +27,7 @@ public class PhaseSpanWagnerEos extends PhaseEos {
   private transient boolean propertiesCalculated = false;
 
   /**
-   * <p>
    * Constructor for PhaseSpanWagnerEos.
-   * </p>
    */
   public PhaseSpanWagnerEos() {
     thermoPropertyModelName = "Span-Wagner";

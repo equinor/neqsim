@@ -9,9 +9,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * shtokman_MEG class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id

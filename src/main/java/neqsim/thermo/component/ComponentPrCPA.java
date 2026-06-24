@@ -16,9 +16,7 @@ public abstract class ComponentPrCPA extends ComponentPR implements ComponentCPA
   double[] xsite;
 
   /**
-   * <p>
    * Constructor for ComponentPrCPA.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -42,9 +40,7 @@ public abstract class ComponentPrCPA extends ComponentPR implements ComponentCPA
   }
 
   /**
-   * <p>
    * Constructor for ComponentPrCPA.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]
@@ -146,9 +142,7 @@ public abstract class ComponentPrCPA extends ComponentPR implements ComponentCPA
   }
 
   /**
-   * <p>
    * dFCPAdN.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -165,9 +159,7 @@ public abstract class ComponentPrCPA extends ComponentPR implements ComponentCPA
   }
 
   /**
-   * <p>
    * calc_lngi.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -177,9 +169,7 @@ public abstract class ComponentPrCPA extends ComponentPR implements ComponentCPA
   }
 
   /**
-   * <p>
    * calc_lngi2.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double

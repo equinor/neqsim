@@ -6,9 +6,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * simpleGasScrubber class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id

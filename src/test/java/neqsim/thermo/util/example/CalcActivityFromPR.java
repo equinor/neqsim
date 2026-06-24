@@ -7,9 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * CalcActivityFromPR class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -19,9 +17,7 @@ public class CalcActivityFromPR {
   private static final Logger logger = LogManager.getLogger(CalcActivityFromPR.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

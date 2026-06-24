@@ -34,9 +34,7 @@ public class SampleXYDataSource {
   String[] seriesName;
 
   /**
-   * <p>
    * Constructor for SampleXYDataSource.
-   * </p>
    *
    * @param p an array of type double
    * @param name an array of {@link java.lang.String} objects

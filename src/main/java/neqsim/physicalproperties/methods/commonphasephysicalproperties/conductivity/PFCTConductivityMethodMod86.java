@@ -6,9 +6,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * <p>
  * PFCTConductivityMethodMod86 class extending conductivity for commonphase.
- * </p>
  *
  * @author esol
  * @version Method was revised by Even Solbraa 21.01.2019
@@ -83,9 +81,7 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
   double Mmix = 0.0;
 
   /**
-   * <p>
    * Constructor for PFCTConductivityMethodMod86.
-   * </p>
    *
    * @param phase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */
@@ -210,9 +206,7 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
   }
 
   /**
-   * <p>
    * getRefComponentConductivity.
-   * </p>
    *
    * @param temp a double
    * @param pres a double
@@ -275,9 +269,7 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
   }
 
   /**
-   * <p>
    * getRefComponentViscosity.
-   * </p>
    *
    * @param temp a double
    * @param pres a double
@@ -317,9 +309,7 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
   }
 
   /**
-   * <p>
    * calcMixLPViscosity.
-   * </p>
    *
    * @return a double
    */

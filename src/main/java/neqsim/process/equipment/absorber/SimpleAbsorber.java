@@ -9,9 +9,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * SimpleAbsorber class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -35,9 +33,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   private double fsFactor = 0.0;
 
   /**
-   * <p>
    * Constructor for SimpleAbsorber.
-   * </p>
    *
    * @param name name of absorber
    */
@@ -46,9 +42,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * <p>
    * Constructor for SimpleAbsorber.
-   * </p>
    *
    * @param name name of absorber
    * @param inStream1 a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -86,9 +80,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * <p>
    * Setter for the field <code>dT</code>.
-   * </p>
    *
    * @param dT a double
    */
@@ -97,9 +89,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>outStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
@@ -108,9 +98,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>outStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    * @deprecated use {@link #getOutletStream()} instead
@@ -121,9 +109,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>outStream</code>.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.process.equipment.stream.Stream} object
@@ -133,9 +119,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>outStream</code>.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.process.equipment.stream.Stream} object
@@ -147,9 +131,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * <p>
    * getSolventInStream.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
@@ -158,9 +140,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>inStream</code>.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.process.equipment.stream.Stream} object
@@ -170,9 +150,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * <p>
    * Set the outlet temperature.
-   * </p>
    *
    * @param temperature Temperature in Kelvin
    */
@@ -181,9 +159,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * <p>
    * Setter for property <code>temperatureOut</code>.
-   * </p>
    *
    * @param temperature Temperature in Kelvin
    * @deprecated use {@link #setOutletTemperature(double)} instead
@@ -194,9 +170,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * <p>
    * Get temperature of outstream i.
-   * </p>
    *
    * @param i a int
    * @return Temperature of outstream i in Kelvin
@@ -206,9 +180,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * <p>
    * Get temperature of outstream i.
-   * </p>
    *
    * @param i a int
    * @return Temperature of outstream i in Kelvin
@@ -220,9 +192,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * <p>
    * * Get temperature of instream i.
-   * </p>
    *
    * @param i a int
    * @return Temperature of instream i in Kelvin
@@ -282,9 +252,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>numberOfTheoreticalStages</code>.
-   * </p>
    *
    * @return a double
    */
@@ -293,9 +261,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * <p>
    * Setter for the field <code>numberOfTheoreticalStages</code>.
-   * </p>
    *
    * @param numberOfTheoreticalStages a double
    */
@@ -304,9 +270,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>numberOfStages</code>.
-   * </p>
    *
    * @return a int
    */
@@ -315,9 +279,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * <p>
    * Setter for the field <code>numberOfStages</code>.
-   * </p>
    *
    * @param numberOfStages a int
    */
@@ -326,9 +288,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>stageEfficiency</code>.
-   * </p>
    *
    * @return a double
    */
@@ -337,9 +297,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * <p>
    * Setter for the field <code>stageEfficiency</code>.
-   * </p>
    *
    * @param stageEfficiency a double
    */
@@ -348,9 +306,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * <p>
    * getHTU.
-   * </p>
    *
    * @return a double
    */
@@ -359,9 +315,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * <p>
    * setHTU.
-   * </p>
    *
    * @param HTU a double
    */
@@ -370,9 +324,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * <p>
    * getNTU.
-   * </p>
    *
    * @return a double
    */
@@ -381,9 +333,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * <p>
    * setNTU.
-   * </p>
    *
    * @param NTU a double
    */
@@ -392,9 +342,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>fsFactor</code>.
-   * </p>
    *
    * @return a double
    */
@@ -411,9 +359,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * <p>
    * getWettingRate.
-   * </p>
    *
    * @return a double
    */

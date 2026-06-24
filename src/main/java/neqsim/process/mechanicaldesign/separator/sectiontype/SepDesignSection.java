@@ -3,9 +3,7 @@ package neqsim.process.mechanicaldesign.separator.sectiontype;
 import neqsim.process.equipment.separator.sectiontype.SeparatorSection;
 
 /**
- * <p>
  * SepDesignSection class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -18,9 +16,7 @@ public class SepDesignSection {
   public String nominalSize = "";
 
   /**
-   * <p>
    * Constructor for SepDesignSection.
-   * </p>
    *
    * @param separatorSection a {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection} object
    */
@@ -29,9 +25,7 @@ public class SepDesignSection {
   }
 
   /**
-   * <p>
    * calcDesign.
-   * </p>
    */
   public void calcDesign() {
     totalWeight = 1.0;
@@ -39,9 +33,7 @@ public class SepDesignSection {
   }
 
   /**
-   * <p>
    * Getter for the field <code>totalWeight</code>.
-   * </p>
    *
    * @return the totalWeight
    */
@@ -50,9 +42,7 @@ public class SepDesignSection {
   }
 
   /**
-   * <p>
    * Setter for the field <code>totalWeight</code>.
-   * </p>
    *
    * @param totalWeight the totalWeight to set
    */
@@ -61,9 +51,7 @@ public class SepDesignSection {
   }
 
   /**
-   * <p>
    * Getter for the field <code>totalHeight</code>.
-   * </p>
    *
    * @return the totalHeight
    */
@@ -72,9 +60,7 @@ public class SepDesignSection {
   }
 
   /**
-   * <p>
    * Setter for the field <code>totalHeight</code>.
-   * </p>
    *
    * @param totalHeight the totalHeight to set
    */
@@ -83,9 +69,7 @@ public class SepDesignSection {
   }
 
   /**
-   * <p>
    * getANSIclass.
-   * </p>
    *
    * @return the ANSIclass
    */
@@ -94,9 +78,7 @@ public class SepDesignSection {
   }
 
   /**
-   * <p>
    * setANSIclass.
-   * </p>
    *
    * @param ANSIclass the ANSIclass to set
    */
@@ -105,9 +87,7 @@ public class SepDesignSection {
   }
 
   /**
-   * <p>
    * Getter for the field <code>nominalSize</code>.
-   * </p>
    *
    * @return the nominalSize
    */
@@ -116,9 +96,7 @@ public class SepDesignSection {
   }
 
   /**
-   * <p>
    * Setter for the field <code>nominalSize</code>.
-   * </p>
    *
    * @param nominalSize the nominalSize to set
    */

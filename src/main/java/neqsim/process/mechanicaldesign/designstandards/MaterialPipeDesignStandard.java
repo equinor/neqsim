@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 
 /**
- * <p>
  * MaterialPipeDesignStandard class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -19,17 +17,13 @@ public class MaterialPipeDesignStandard extends DesignStandard {
   static Logger logger = LogManager.getLogger(MaterialPipeDesignStandard.class);
 
   /**
-   * <p>
    * Constructor for MaterialPipeDesignStandard.
-   * </p>
    */
   public MaterialPipeDesignStandard() {
   }
 
   /**
-   * <p>
    * Constructor for MaterialPipeDesignStandard.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
@@ -40,9 +34,7 @@ public class MaterialPipeDesignStandard extends DesignStandard {
   }
 
   /**
-   * <p>
    * Getter for the field <code>designFactor</code>.
-   * </p>
    *
    * @return the designFactor
    */
@@ -51,9 +43,7 @@ public class MaterialPipeDesignStandard extends DesignStandard {
   }
 
   /**
-   * <p>
    * Setter for the field <code>designFactor</code>.
-   * </p>
    *
    * @param designFactor the designFactor to set
    */
@@ -62,9 +52,7 @@ public class MaterialPipeDesignStandard extends DesignStandard {
   }
 
   /**
-   * <p>
    * getEfactor.
-   * </p>
    *
    * @return the Efactor
    */
@@ -73,9 +61,7 @@ public class MaterialPipeDesignStandard extends DesignStandard {
   }
 
   /**
-   * <p>
    * setEfactor.
-   * </p>
    *
    * @param Efactor the Efactor to set
    */
@@ -84,9 +70,7 @@ public class MaterialPipeDesignStandard extends DesignStandard {
   }
 
   /**
-   * <p>
    * Getter for the field <code>temperatureDeratingFactor</code>.
-   * </p>
    *
    * @return the temperatureDeratingFactor
    */
@@ -95,9 +79,7 @@ public class MaterialPipeDesignStandard extends DesignStandard {
   }
 
   /**
-   * <p>
    * Setter for the field <code>temperatureDeratingFactor</code>.
-   * </p>
    *
    * @param temperatureDeratingFactor the temperatureDeratingFactor to set
    */
@@ -106,9 +88,7 @@ public class MaterialPipeDesignStandard extends DesignStandard {
   }
 
   /**
-   * <p>
    * Getter for the field <code>minimumYeildStrength</code>.
-   * </p>
    *
    * @return the minimumYeildStrength
    */
@@ -117,9 +97,7 @@ public class MaterialPipeDesignStandard extends DesignStandard {
   }
 
   /**
-   * <p>
    * Setter for the field <code>minimumYeildStrength</code>.
-   * </p>
    *
    * @param minimumYeildStrength the minimumYeildStrength to set
    */
@@ -136,9 +114,7 @@ public class MaterialPipeDesignStandard extends DesignStandard {
   private double temperatureDeratingFactor = 1.0;
 
   /**
-   * <p>
    * readMaterialDesignStandard.
-   * </p>
    *
    * @param specNo a {@link java.lang.String} object
    * @param grade a {@link java.lang.String} object

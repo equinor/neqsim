@@ -12,9 +12,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * BubbleFlowNode class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -27,18 +25,14 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
   private double averageBubbleDiameter = 0.001;
 
   /**
-   * <p>
    * Constructor for BubbleFlowNode.
-   * </p>
    */
   public BubbleFlowNode() {
     this.flowNodeType = "bubble";
   }
 
   /**
-   * <p>
    * Constructor for BubbleFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
@@ -52,9 +46,7 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Constructor for BubbleFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
@@ -187,9 +179,7 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -251,9 +241,7 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Getter for the field <code>averageBubbleDiameter</code>.
-   * </p>
    *
    * @return a double
    */
@@ -262,9 +250,7 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Setter for the field <code>averageBubbleDiameter</code>.
-   * </p>
    *
    * @param averageBubbleDiameter a double
    */

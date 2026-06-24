@@ -6,9 +6,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * addIonToScaleSaturation class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -26,9 +24,7 @@ public class AddIonToScaleSaturation extends ConstantDutyTemperatureFlash {
   String[][] resultTable = null;
 
   /**
-   * <p>
    * Constructor for addIonToScaleSaturation.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param phaseNumber a int

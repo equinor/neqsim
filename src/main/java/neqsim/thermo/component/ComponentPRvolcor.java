@@ -11,9 +11,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePrEosvolcor;
 
 /**
- * <p>
  * ComponentPRvolcor class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -29,9 +27,7 @@ public class ComponentPRvolcor extends ComponentPR {
   private double CiT = 0;
 
   /**
-   * <p>
    * Constructor for ComponentPRvolcor.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]
@@ -45,9 +41,7 @@ public class ComponentPRvolcor extends ComponentPR {
   }
 
   /**
-   * <p>
    * calcc.
-   * </p>
    *
    * @return a double
    */
@@ -57,9 +51,7 @@ public class ComponentPRvolcor extends ComponentPR {
 
   // derivative of translation with regards to temperature
   /**
-   * <p>
    * calccT.
-   * </p>
    *
    * @return a double
    */
@@ -69,9 +61,7 @@ public class ComponentPRvolcor extends ComponentPR {
 
   // second derivative of translation with regards to temperature*temperature
   /**
-   * <p>
    * calccTT.
-   * </p>
    *
    * @return a double
    */
@@ -80,9 +70,7 @@ public class ComponentPRvolcor extends ComponentPR {
   }
 
   /**
-   * <p>
    * Constructor for ComponentPRvolcor.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -111,9 +99,7 @@ public class ComponentPRvolcor extends ComponentPR {
 
   /** {@inheritDoc} */
   /**
-   * <p>
    * getc.
-   * </p>
    *
    * @return a double
    */
@@ -122,9 +108,7 @@ public class ComponentPRvolcor extends ComponentPR {
   }
 
   /**
-   * <p>
    * getcT.
-   * </p>
    *
    * @return a double
    */
@@ -151,9 +135,7 @@ public class ComponentPRvolcor extends ComponentPR {
   }
 
   /**
-   * <p>
    * getCi.
-   * </p>
    *
    * @return a double
    */
@@ -162,9 +144,7 @@ public class ComponentPRvolcor extends ComponentPR {
   }
 
   /**
-   * <p>
    * getCiT.
-   * </p>
    *
    * @return a double
    */
@@ -177,9 +157,7 @@ public class ComponentPRvolcor extends ComponentPR {
   }
 
   /**
-   * <p>
    * getCij.
-   * </p>
    *
    * @param j a int
    * @return a double
@@ -193,9 +171,7 @@ public class ComponentPRvolcor extends ComponentPR {
 
   // second derivative of C with regards to mole fraction and temperature
   /**
-   * <p>
    * getCiT.
-   * </p>
    *
    * @return a double
    */
@@ -210,9 +186,7 @@ public class ComponentPRvolcor extends ComponentPR {
   }
 
   /**
-   * <p>
    * getFC.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int

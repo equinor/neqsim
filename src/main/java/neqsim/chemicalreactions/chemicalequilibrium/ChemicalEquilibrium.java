@@ -8,9 +8,7 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * ChemicalEquilibrium class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -121,9 +119,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   int phasenumb = 1;
 
   /**
-   * <p>
    * Constructor for ChemicalEquilibrium.
-   * </p>
    *
    * @param A_matrix an array of type double
    * @param b_element an array of type double
@@ -172,9 +168,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * calcRefPot.
-   * </p>
    */
   public void calcRefPot() {
     for (int i = 0; i < components.length; i++) {
@@ -191,9 +185,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * chemSolve.
-   * </p>
    */
   public void chemSolve() {
     // Protect against n_t = 0 which would cause division by zero in chem_pot calculation
@@ -387,9 +379,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * updateMoles.
-   * </p>
    *
    * <p>
    * Updates the moles in the reactive phase based on the calculated n_mol values from the Newton solver. Uses
@@ -443,9 +433,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * solve.
-   * </p>
    *
    * @return a boolean
    */
@@ -883,9 +871,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * printComp.
-   * </p>
    */
   public void printComp() {
     for (int j = 0; j < NSPEC; j++) {
@@ -897,9 +883,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * getMoles.
-   * </p>
    *
    * @return an array of type double
    */
@@ -908,9 +892,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * step.
-   * </p>
    *
    * @return a double
    */
@@ -1017,9 +999,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * innerStep.
-   * </p>
    *
    * @param i a int
    * @param n_omega an array of type double

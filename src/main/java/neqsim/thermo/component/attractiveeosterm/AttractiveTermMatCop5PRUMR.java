@@ -3,9 +3,7 @@ package neqsim.thermo.component.attractiveeosterm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * <p>
  * AttractiveTermMatCop5PRUMR class.
- * </p>
  *
  * <p>
  * Five-parameter Mathias-Copeman alpha function for the Peng-Robinson based UMR-CPA equation of state. The alpha
@@ -40,9 +38,7 @@ public class AttractiveTermMatCop5PRUMR extends AttractiveTermPr {
   private boolean useStandardAlphaForSupercritical = false;
 
   /**
-   * <p>
    * Constructor for AttractiveTermMatCop5PRUMR.
-   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
    */
@@ -53,9 +49,7 @@ public class AttractiveTermMatCop5PRUMR extends AttractiveTermPr {
   }
 
   /**
-   * <p>
    * Constructor for AttractiveTermMatCop5PRUMR.
-   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
    * @param params an array of type double with up to five Mathias-Copeman coefficients
@@ -81,10 +75,8 @@ public class AttractiveTermMatCop5PRUMR extends AttractiveTermPr {
   }
 
   /**
-   * <p>
    * Returns true when the standard PR alpha function should be used instead of the Mathias-Copeman form (supercritical
    * temperatures or unset coefficients).
-   * </p>
    *
    * @param temperature temperature in Kelvin
    * @return true if the standard PR alpha should be used
@@ -94,9 +86,7 @@ public class AttractiveTermMatCop5PRUMR extends AttractiveTermPr {
   }
 
   /**
-   * <p>
    * Checks whether all five Mathias-Copeman coefficients are effectively zero.
-   * </p>
    *
    * @return true if every coefficient has an absolute value below 1e-20
    */
@@ -110,10 +100,8 @@ public class AttractiveTermMatCop5PRUMR extends AttractiveTermPr {
   }
 
   /**
-   * <p>
    * Computes the inner Mathias-Copeman polynomial S = 1 + sum c_k (1 - sqrt(Tr))^k and its first two temperature
    * derivatives.
-   * </p>
    *
    * @param temperature temperature in Kelvin
    * @return an array {S, dS/dT, d2S/dT2}

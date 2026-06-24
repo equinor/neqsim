@@ -9,25 +9,19 @@ package neqsim.thermodynamicoperations;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * OperationInterface interface.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public interface OperationInterface extends Runnable, java.io.Serializable {
   /**
-   * <p>
    * displayResult.
-   * </p>
    */
   public void displayResult();
 
   /**
-   * <p>
    * getPoints.
-   * </p>
    *
    * @param i a int
    * @return an array of type double
@@ -35,9 +29,7 @@ public interface OperationInterface extends Runnable, java.io.Serializable {
   public double[][] getPoints(int i);
 
   /**
-   * <p>
    * addData.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param data an array of type double
@@ -45,27 +37,21 @@ public interface OperationInterface extends Runnable, java.io.Serializable {
   public void addData(String name, double[][] data);
 
   /**
-   * <p>
    * getResultTable.
-   * </p>
    *
    * @return an array of {@link java.lang.String} objects
    */
   public String[][] getResultTable();
 
   /**
-   * <p>
    * printToFile.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
   public void printToFile(String name);
 
   /**
-   * <p>
    * get.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return an array of type double
@@ -87,9 +73,7 @@ public interface OperationInterface extends Runnable, java.io.Serializable {
   }
 
   /**
-   * <p>
    * getJFreeChart.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a {@link org.jfree.chart.JFreeChart} object
@@ -97,9 +81,7 @@ public interface OperationInterface extends Runnable, java.io.Serializable {
   public org.jfree.chart.JFreeChart getJFreeChart(String name);
 
   /**
-   * <p>
    * getThermoSystem.
-   * </p>
    *
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */

@@ -3,9 +3,7 @@ package neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosit
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * <p>
  * MethaneViscosityMethod class.
- * </p>
  *
  * @author esol
  */
@@ -14,9 +12,7 @@ public class MethaneViscosityMethod extends Viscosity {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for MethaneViscosityMethod.
-   * </p>
    *
    * @param phase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

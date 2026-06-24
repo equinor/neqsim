@@ -7,9 +7,7 @@ import neqsim.thermo.util.gerg.GERG2008Type;
 import neqsim.thermo.util.gerg.NeqSimGERG2008;
 
 /**
- * <p>
  * PhaseGERG2008Eos class.
- * </p>
  *
  * @author victorigi
  * @version $Id: $Id
@@ -48,9 +46,7 @@ public class PhaseGERG2008Eos extends PhaseEos {
   private transient boolean propertiesCalculated = false;
 
   /**
-   * <p>
    * Constructor for PhaseGERG2008Eos.
-   * </p>
    */
   public PhaseGERG2008Eos() {
     thermoPropertyModelName = "GERG2008 Eos";

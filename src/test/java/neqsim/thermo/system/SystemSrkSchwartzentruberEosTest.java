@@ -4,9 +4,7 @@ import org.junit.jupiter.api.BeforeAll;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
- * <p>
  * ScrkEosTest class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -14,9 +12,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
  */
 public class SystemSrkSchwartzentruberEosTest extends ModelBaseTest {
   /**
-   * <p>
    * setUp.
-   * </p>
    */
   @BeforeAll
   public static void setUp() {

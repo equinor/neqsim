@@ -9,9 +9,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * SimpleAdsorber class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -36,9 +34,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   private double stageEfficiency = 0.25;
 
   /**
-   * <p>
    * Constructor for SimpleAdsorber.
-   * </p>
    *
    * @param name name of the unit operation
    */
@@ -47,9 +43,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for SimpleAdsorber.
-   * </p>
    *
    * @param name name of the unit operation
    * @param inStream1 a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -87,9 +81,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>dT</code>.
-   * </p>
    *
    * @param dT a double
    */
@@ -98,9 +90,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>outStream</code>.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -110,9 +100,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>outStream</code>.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -124,9 +112,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>inStream</code>.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -136,9 +122,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Set the outlet temperature.
-   * </p>
    *
    * @param temperature outlet temperature in Kelvin
    */
@@ -147,9 +131,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * setOutTemperature.
-   * </p>
    *
    * @param temperature outlet temperature in Kelvin
    * @deprecated use {@link #setOutletTemperature(double)} instead
@@ -160,9 +142,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Get temperature of outstream i.
-   * </p>
    *
    * @param i a int
    * @return outlet temperature in Kelvin
@@ -172,9 +152,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Get temperature of outstream i.
-   * </p>
    *
    * @param i a int
    * @return outlet temperature in Kelvin
@@ -186,9 +164,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Get temperature of instream i.
-   * </p>
    *
    * @param i a int
    * @return inlet temperature in Kelvin
@@ -242,9 +218,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * setAproachToEquilibrium.
-   * </p>
    *
    * @param eff a double
    */
@@ -253,9 +227,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>numberOfTheoreticalStages</code>.
-   * </p>
    *
    * @return a double
    */
@@ -264,9 +236,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>numberOfTheoreticalStages</code>.
-   * </p>
    *
    * @param numberOfTheoreticalStages a double
    */
@@ -275,9 +245,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>numberOfStages</code>.
-   * </p>
    *
    * @return a int
    */
@@ -286,9 +254,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>numberOfStages</code>.
-   * </p>
    *
    * @param numberOfStages a int
    */
@@ -297,9 +263,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>stageEfficiency</code>.
-   * </p>
    *
    * @return a double
    */
@@ -308,9 +272,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>stageEfficiency</code>.
-   * </p>
    *
    * @param stageEfficiency a double
    */
@@ -319,9 +281,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * getHTU.
-   * </p>
    *
    * @return a double
    */
@@ -330,9 +290,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * setHTU.
-   * </p>
    *
    * @param HTU a double
    */
@@ -341,9 +299,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * getNTU.
-   * </p>
    *
    * @return a double
    */
@@ -352,9 +308,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * setNTU.
-   * </p>
    *
    * @param NTU a double
    */

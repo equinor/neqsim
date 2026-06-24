@@ -24,9 +24,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.util.DoubleCloneable;
 
 /**
- * <p>
  * Abstract FlowNode class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -70,9 +68,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
   protected ThermodynamicOperations phaseOps;
 
   /**
-   * <p>
    * Constructor for FlowNode.
-   * </p>
    */
   public FlowNode() {
     this.bulkSystem = null;
@@ -82,9 +78,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
   }
 
   /**
-   * <p>
    * Constructor for FlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -122,9 +116,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
   }
 
   /**
-   * <p>
    * Constructor for FlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
@@ -135,9 +127,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
   }
 
   /**
-   * <p>
    * Constructor for FlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
@@ -632,9 +622,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
   }
 
   /**
-   * <p>
    * createTable.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return an array of {@link java.lang.String} objects

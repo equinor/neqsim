@@ -15,18 +15,14 @@ public class SystemSrkCPAs extends SystemSrkCPA {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for SystemSrkCPAs.
-   * </p>
    */
   public SystemSrkCPAs() {
     this(298.15, 1.0, false);
   }
 
   /**
-   * <p>
    * Constructor for SystemSrkCPAs.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -36,9 +32,7 @@ public class SystemSrkCPAs extends SystemSrkCPA {
   }
 
   /**
-   * <p>
    * Constructor for SystemSrkCPAs.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)

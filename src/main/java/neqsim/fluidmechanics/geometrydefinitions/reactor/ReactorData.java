@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinition;
 
 /**
- * <p>
  * ReactorData class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -19,17 +17,13 @@ public class ReactorData extends GeometryDefinition {
   static Logger logger = LogManager.getLogger(ReactorData.class);
 
   /**
-   * <p>
    * Constructor for ReactorData.
-   * </p>
    */
   public ReactorData() {
   }
 
   /**
-   * <p>
    * Constructor for ReactorData.
-   * </p>
    *
    * @param diameter a double
    */
@@ -38,9 +32,7 @@ public class ReactorData extends GeometryDefinition {
   }
 
   /**
-   * <p>
    * Constructor for ReactorData.
-   * </p>
    *
    * @param diameter a double
    * @param roughness a double
@@ -51,9 +43,7 @@ public class ReactorData extends GeometryDefinition {
   }
 
   /**
-   * <p>
    * Constructor for ReactorData.
-   * </p>
    *
    * @param diameter a double
    * @param packingType a int
@@ -72,9 +62,7 @@ public class ReactorData extends GeometryDefinition {
   }
 
   /**
-   * <p>
    * setPackingType.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */

@@ -20,52 +20,40 @@ import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
 
 /**
- * <p>
  * ProcessEquipmentInterface interface.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public interface ProcessEquipmentInterface extends ProcessElementInterface, SimulationInterface {
   /**
-   * <p>
    * reportResults.
-   * </p>
    *
    * @return an array of {@link java.lang.String} objects
    */
   public String[][] reportResults();
 
   /**
-   * <p>
    * Initialize a <code>initMechanicalDesign</code> for the equipment.
-   * </p>
    */
   default void initMechanicalDesign() {
   }
 
   /**
-   * <p>
    * Get a <code>mechanicalDesign</code> for the equipment.
-   * </p>
    *
    * @return a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
    */
   public MechanicalDesign getMechanicalDesign();
 
   /**
-   * <p>
    * Initialize an <code>electricalDesign</code> for the equipment.
-   * </p>
    */
   default void initElectricalDesign() {
   }
 
   /**
-   * <p>
    * Get an <code>electricalDesign</code> for the equipment.
-   * </p>
    *
    * @return a {@link neqsim.process.electricaldesign.ElectricalDesign} object
    */
@@ -89,9 +77,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   }
 
   /**
-   * <p>
    * Check if process equipment needs recalculating.
-   * </p>
    *
    * @return true or false
    */
@@ -100,52 +86,40 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   }
 
   /**
-   * <p>
    * getSpecification.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
   public String getSpecification();
 
   /**
-   * <p>
    * setSpecification.
-   * </p>
    *
    * @param specification a {@link java.lang.String} object
    */
   public void setSpecification(String specification);
 
   /**
-   * <p>
    * displayResult.
-   * </p>
    */
   public void displayResult();
 
   /**
-   * <p>
    * setRegulatorOutSignal.
-   * </p>
    *
    * @param signal a double
    */
   public void setRegulatorOutSignal(double signal);
 
   /**
-   * <p>
    * setController.
-   * </p>
    *
    * @param controller a {@link neqsim.process.controllerdevice.ControllerDeviceInterface} object
    */
   public void setController(ControllerDeviceInterface controller);
 
   /**
-   * <p>
    * getController.
-   * </p>
    *
    * @return a {@link neqsim.process.controllerdevice.ControllerDeviceInterface} object
    */
@@ -205,9 +179,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   }
 
   /**
-   * <p>
    * getFluid.
-   * </p>
    *
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -216,36 +188,28 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   }
 
   /**
-   * <p>
    * getThermoSystem.
-   * </p>
    *
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
   public SystemInterface getThermoSystem();
 
   /**
-   * <p>
    * getMassBalance in kg/sec.
-   * </p>
    *
    * @return The mass balance of the process equipment in kg/sec.
    */
   public double getMassBalance();
 
   /**
-   * <p>
    * Getter for the field <code>pressure</code>.
-   * </p>
    *
    * @return Pressure in bara
    */
   public double getPressure();
 
   /**
-   * <p>
    * Getter for the field <code>pressure</code> converted to specified unit.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -253,9 +217,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   public double getPressure(String unit);
 
   /**
-   * <p>
    * Getter for the field <code>temperature</code> converted to specified unit.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -263,45 +225,35 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   public double getTemperature(String unit);
 
   /**
-   * <p>
    * Getter for the field <code>temperature</code>.
-   * </p>
    *
    * @return a double
    */
   public double getTemperature();
 
   /**
-   * <p>
    * Setter for the field <code>pressure</code>.
-   * </p>
    *
    * @param pressure a double
    */
   public void setPressure(double pressure);
 
   /**
-   * <p>
    * Setter for the field <code>temperature</code>.
-   * </p>
    *
    * @param temperature Temperature in Kelvin
    */
   public void setTemperature(double temperature);
 
   /**
-   * <p>
    * runConditionAnalysis.
-   * </p>
    *
    * @param refExchanger a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public void runConditionAnalysis(ProcessEquipmentInterface refExchanger);
 
   /**
-   * <p>
    * getConditionAnalysisMessage.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -317,9 +269,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   public double getExergyChange(String unit, double surroundingTemperature);
 
   /**
-   * <p>
    * getResultTable.
-   * </p>
    *
    * @return an array of {@link java.lang.String} objects
    */
@@ -334,9 +284,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   public int hashCode();
 
   /**
-   * <p>
    * Serializes the Process Equipment along with its state to a JSON string.
-   * </p>
    *
    * @return json string.
    */
@@ -360,9 +308,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   public String getReport_json();
 
   /**
-   * <p>
    * getEntropyProduction.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -372,9 +318,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   }
 
   /**
-   * <p>
    * getMassBalance.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -384,9 +328,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   }
 
   /**
-   * <p>
    * getExergyChange.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -438,9 +380,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   }
 
   /**
-   * <p>
    * getCapacityDuty.
-   * </p>
    *
    * @return a double
    */
@@ -449,9 +389,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   }
 
   /**
-   * <p>
    * getCapacityMax.
-   * </p>
    *
    * @return a double
    */
@@ -460,9 +398,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   }
 
   /**
-   * <p>
    * getRestCapacity.
-   * </p>
    *
    * @return a double
    */

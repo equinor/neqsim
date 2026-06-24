@@ -8,9 +8,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TVPexample class.
- * </p>
  *
  * @author MLLU
  * @version $Id: $Id
@@ -22,9 +20,7 @@ public class TVPexample {
   /** Logger object for class. */
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

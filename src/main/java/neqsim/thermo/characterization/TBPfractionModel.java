@@ -220,9 +220,7 @@ public class TBPfractionModel implements java.io.Serializable {
   String name = "";
 
   /**
-   * <p>
    * Constructor for TBPfractionModel.
-   * </p>
    */
   public TBPfractionModel() {
   }

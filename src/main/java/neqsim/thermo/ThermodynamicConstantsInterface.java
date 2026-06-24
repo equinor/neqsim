@@ -1,9 +1,7 @@
 package neqsim.thermo;
 
 /**
- * <p>
  * ThermodynamicConstantsInterface interface.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id

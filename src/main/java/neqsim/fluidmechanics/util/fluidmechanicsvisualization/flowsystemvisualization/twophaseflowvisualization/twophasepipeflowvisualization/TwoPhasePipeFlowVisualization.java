@@ -5,9 +5,7 @@ import neqsim.fluidmechanics.util.fluidmechanicsvisualization.flownodevisualizat
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TwoPhasePipeFlowVisualization class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -32,17 +30,13 @@ public class TwoPhasePipeFlowVisualization extends
   double[] timeArray = new double[10];
 
   /**
-   * <p>
    * Constructor for TwoPhasePipeFlowVisualization.
-   * </p>
    */
   public TwoPhasePipeFlowVisualization() {
   }
 
   /**
-   * <p>
    * Constructor for TwoPhasePipeFlowVisualization.
-   * </p>
    *
    * @param nodes a int
    * @param timeSteps a int

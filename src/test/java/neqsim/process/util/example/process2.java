@@ -12,9 +12,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * process2 class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id

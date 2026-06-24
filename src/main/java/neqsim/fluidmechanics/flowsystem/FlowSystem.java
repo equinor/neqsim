@@ -12,9 +12,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * Abstract FlowSystem class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -73,17 +71,13 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   protected AdvectionScheme advectionScheme = AdvectionScheme.FIRST_ORDER_UPWIND;
 
   /**
-   * <p>
    * Constructor for FlowSystem.
-   * </p>
    */
   public FlowSystem() {
   }
 
   /**
-   * <p>
    * Constructor for FlowSystem.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -116,9 +110,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   }
 
   /**
-   * <p>
    * flowLegInit.
-   * </p>
    */
   public void flowLegInit() {
     // TODO: add checks that input arguments have correct size to avoid generic
@@ -181,9 +173,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   }
 
   /**
-   * <p>
    * calcTotalNumberOfNodes.
-   * </p>
    *
    * @return a int
    */
@@ -376,9 +366,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   }
 
   /**
-   * <p>
    * setEquilibriumMassTransferModel.
-   * </p>
    *
    * @param startNode a int
    * @param endNode a int
@@ -395,9 +383,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   }
 
   /**
-   * <p>
    * setNonEquilibriumMassTransferModel.
-   * </p>
    *
    * @param startNode a int
    * @param endNode a int
@@ -414,9 +400,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   }
 
   /**
-   * <p>
    * setNonEquilibriumHeatTransferModel.
-   * </p>
    *
    * @param startNode a int
    * @param endNode a int
@@ -428,9 +412,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   }
 
   /**
-   * <p>
    * setEquilibriumHeatTransferModel.
-   * </p>
    *
    * @param startNode a int
    * @param endNode a int

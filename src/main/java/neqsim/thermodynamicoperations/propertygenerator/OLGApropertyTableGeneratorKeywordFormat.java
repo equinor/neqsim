@@ -13,9 +13,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * OLGApropertyTableGeneratorKeywordFormat class.
- * </p>
  *
  * @author Kjetil Raul
  * @version $Id: $Id
@@ -74,9 +72,7 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
   String[] namesKeyword;
 
   /**
-   * <p>
    * Constructor for OLGApropertyTableGeneratorKeywordFormat.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -86,9 +82,7 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
   }
 
   /**
-   * <p>
    * setPressureRange.
-   * </p>
    *
    * @param minPressure a double
    * @param maxPressure a double
@@ -105,9 +99,7 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
   }
 
   /**
-   * <p>
    * setTemperatureRange.
-   * </p>
    *
    * @param minTemperature a double
    * @param maxTemperature a double
@@ -124,9 +116,7 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
   }
 
   /**
-   * <p>
    * calcPhaseEnvelope.
-   * </p>
    */
   public void calcPhaseEnvelope() {
     try {
@@ -143,9 +133,7 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
   }
 
   /**
-   * <p>
    * calcBubP.
-   * </p>
    *
    * @param temperatures an array of type double
    * @return an array of type double
@@ -168,9 +156,7 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
   }
 
   /**
-   * <p>
    * calcDewP.
-   * </p>
    *
    * @param temperatures an array of type double
    * @return an array of type double
@@ -193,9 +179,7 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
   }
 
   /**
-   * <p>
    * calcBubT.
-   * </p>
    *
    * @param pressures an array of type double
    * @return an array of type double
@@ -218,9 +202,7 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
   }
 
   /**
-   * <p>
    * initCalc.
-   * </p>
    */
   public void initCalc() {
     molfracs = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
@@ -423,9 +405,7 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
   }
 
   /**
-   * <p>
    * writeOLGAinpFile.
-   * </p>
    *
    * @param filename a {@link java.lang.String} object
    */

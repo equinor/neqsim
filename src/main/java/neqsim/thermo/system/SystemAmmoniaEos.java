@@ -12,18 +12,14 @@ public class SystemAmmoniaEos extends SystemEos {
   private static final long serialVersionUID = 1000L;
 
   /**
-   * <p>
    * Constructor for SystemAmmoniaEos.
-   * </p>
    */
   public SystemAmmoniaEos() {
     this(298.15, 1.0, false);
   }
 
   /**
-   * <p>
    * Constructor for SystemAmmoniaEos.
-   * </p>
    *
    * @param T a double
    * @param P a double
@@ -33,9 +29,7 @@ public class SystemAmmoniaEos extends SystemEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemAmmoniaEos.
-   * </p>
    *
    * @param T a double
    * @param P a double

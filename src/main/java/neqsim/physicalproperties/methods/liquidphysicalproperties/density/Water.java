@@ -16,9 +16,7 @@ import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.thermo.component.ComponentInterface;
 
 /**
- * <p>
  * Water Density Calculation class for aqueous salt solutions using Labiberte/Cooper partial specific volumes.
- * </p>
  *
  * @author esol
  */

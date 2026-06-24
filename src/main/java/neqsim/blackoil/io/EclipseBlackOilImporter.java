@@ -36,9 +36,7 @@ public class EclipseBlackOilImporter {
   }
 
   /**
-   * <p>
    * fromFile.
-   * </p>
    *
    * @param deckPath a {@link java.nio.file.Path} object
    * @return a {@link neqsim.blackoil.io.EclipseBlackOilImporter.Result} object
@@ -51,9 +49,7 @@ public class EclipseBlackOilImporter {
   }
 
   /**
-   * <p>
    * fromReader.
-   * </p>
    *
    * @param reader a {@link java.io.Reader} object
    * @return a {@link neqsim.blackoil.io.EclipseBlackOilImporter.Result} object

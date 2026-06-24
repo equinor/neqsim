@@ -3,9 +3,7 @@ package neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoeffici
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 
 /**
- * <p>
  * InterphaseAnnularFlow class for annular two-phase pipe flow.
- * </p>
  *
  * <p>
  * Implements transport coefficient correlations specific to annular flow regime, where a liquid film flows along the
@@ -21,17 +19,13 @@ public class InterphaseAnnularFlow extends InterphaseStratifiedFlow {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for InterphaseAnnularFlow.
-   * </p>
    */
   public InterphaseAnnularFlow() {
   }
 
   /**
-   * <p>
    * Constructor for InterphaseAnnularFlow.
-   * </p>
    *
    * @param node a {@link neqsim.fluidmechanics.flownode.FlowNodeInterface} object
    */

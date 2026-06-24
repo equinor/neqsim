@@ -10,9 +10,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * WettedWall_CO2_water class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id

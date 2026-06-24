@@ -9,9 +9,7 @@ package neqsim.physicalproperties.methods.gasphysicalproperties.viscosity;
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * <p>
  * ChungViscosityMethod class.
- * </p>
  *
  * @author esol
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
@@ -35,9 +33,7 @@ public class ChungViscosityMethod extends Viscosity {
       { -0.2382, 0.06770, -0.8163, 4.025 }, { 0.06863, 0.3479, 0.5926, -0.727 } };
 
   /**
-   * <p>
    * Constructor for ChungViscosityMethod.
-   * </p>
    *
    * @param gasPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */
@@ -83,9 +79,7 @@ public class ChungViscosityMethod extends Viscosity {
   }
 
   /**
-   * <p>
    * initChungPureComponentViscosity.
-   * </p>
    */
   public void initChungPureComponentViscosity() {
     double tempVar = 0;

@@ -11,9 +11,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TestFlash class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -25,9 +23,7 @@ public class TestFlash {
   /** Logger object for class. */
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

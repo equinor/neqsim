@@ -5,9 +5,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * ComponentGEUnifacPSRK class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -20,9 +18,7 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
   double[][] cij = new double[1][1];
 
   /**
-   * <p>
    * Constructor for ComponentGEUnifacPSRK.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -34,9 +30,7 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
   }
 
   /**
-   * <p>
    * calcaij.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param i a int
@@ -49,9 +43,7 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
   }
 
   /**
-   * <p>
    * calcaijdT.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param i a int
@@ -95,9 +87,7 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
   }
 
   /**
-   * <p>
    * calclnGammakdT.
-   * </p>
    *
    * @param k a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object

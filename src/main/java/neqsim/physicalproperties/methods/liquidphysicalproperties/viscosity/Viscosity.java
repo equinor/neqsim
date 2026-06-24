@@ -7,9 +7,7 @@ import neqsim.physicalproperties.methods.methodinterface.ViscosityInterface;
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * <p>
  * Viscosity class.
- * </p>
  *
  * @author Even Solbraa
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
@@ -23,9 +21,7 @@ public class Viscosity extends LiquidPhysicalPropertyMethod implements Viscosity
   public double[] pureComponentViscosity;
 
   /**
-   * <p>
    * Constructor for Viscosity.
-   * </p>
    *
    * @param liquidPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */
@@ -81,9 +77,7 @@ public class Viscosity extends LiquidPhysicalPropertyMethod implements Viscosity
   }
 
   /**
-   * <p>
    * calcPureComponentViscosity.
-   * </p>
    */
   public void calcPureComponentViscosity() {
     pureComponentViscosity = new double[liquidPhase.getPhase().getNumberOfComponents()];
@@ -129,9 +123,7 @@ public class Viscosity extends LiquidPhysicalPropertyMethod implements Viscosity
   }
 
   /**
-   * <p>
    * getViscosityPressureCorrection.
-   * </p>
    *
    * @param i a int
    * @return a double

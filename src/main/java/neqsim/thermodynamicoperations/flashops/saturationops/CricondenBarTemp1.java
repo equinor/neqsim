@@ -5,9 +5,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * cricondenBarTemp1 class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -47,9 +45,7 @@ public class CricondenBarTemp1 implements java.io.Serializable {
   Matrix xcoef;
 
   /**
-   * <p>
    * Constructor for cricondenBarTemp1.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -67,9 +63,7 @@ public class CricondenBarTemp1 implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>fvec</code>.
-   * </p>
    */
   public void setfvec() {
     double xtot = 0.0;
@@ -89,9 +83,7 @@ public class CricondenBarTemp1 implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * setJac.
-   * </p>
    */
   public void setJac() {
     Jac.timesEquals(0.0);
@@ -115,9 +107,7 @@ public class CricondenBarTemp1 implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>u</code>.
-   * </p>
    */
   public void setu() {
     for (int i = 0; i < numberOfComponents; i++) {
@@ -126,9 +116,7 @@ public class CricondenBarTemp1 implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * init.
-   * </p>
    */
   public void init() {
     double temp = 0;
@@ -151,9 +139,7 @@ public class CricondenBarTemp1 implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * solve.
-   * </p>
    *
    * @return a double
    */
@@ -169,18 +155,14 @@ public class CricondenBarTemp1 implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * run.
-   * </p>
    */
   public void run() {
     solve();
   }
 
   /**
-   * <p>
    * getJFreeChart.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a {@link org.jfree.chart.JFreeChart} object
@@ -190,9 +172,7 @@ public class CricondenBarTemp1 implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * get.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return an array of type double
@@ -202,9 +182,7 @@ public class CricondenBarTemp1 implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * printToFile.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -216,9 +194,7 @@ public class CricondenBarTemp1 implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * getPoints.
-   * </p>
    *
    * @param i a int
    * @return an array of type double
@@ -228,9 +204,7 @@ public class CricondenBarTemp1 implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * getResultTable.
-   * </p>
    *
    * @return an array of {@link java.lang.String} objects
    */
@@ -239,9 +213,7 @@ public class CricondenBarTemp1 implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * getThermoSystem.
-   * </p>
    *
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */

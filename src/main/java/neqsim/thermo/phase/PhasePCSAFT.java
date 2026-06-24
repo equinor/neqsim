@@ -6,9 +6,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentPCSAFT;
 
 /**
- * <p>
  * PhasePCSAFT class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -92,9 +90,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   protected double F1dispI1dVdV = 0.0;
 
   /**
-   * <p>
    * Constructor for PhasePCSAFT.
-   * </p>
    */
   public PhasePCSAFT() {
   }
@@ -137,9 +133,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * volInit.
-   * </p>
    */
   public void volInit() {
     volumeSAFT = getVolume() * 1.0e-5;
@@ -221,9 +215,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcF2dispZHC.
-   * </p>
    *
    * @return a double
    */
@@ -236,9 +228,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcF2dispZHCdm.
-   * </p>
    *
    * @return a double
    */
@@ -250,9 +240,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcF2dispZHCdN.
-   * </p>
    *
    * @return a double
    */
@@ -274,9 +262,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcF2dispZHCdNdN.
-   * </p>
    *
    * @return a double
    */
@@ -321,9 +307,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcmSAFT.
-   * </p>
    *
    * @return a double
    */
@@ -337,9 +321,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcF1dispSumTerm.
-   * </p>
    *
    * @return a double
    */
@@ -358,9 +340,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcdF1dispSumTermdT.
-   * </p>
    *
    * @return a double
    */
@@ -380,9 +360,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcF2dispSumTerm.
-   * </p>
    *
    * @return a double
    */
@@ -401,9 +379,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcdF2dispSumTermdT.
-   * </p>
    *
    * @return a double
    */
@@ -423,9 +399,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcF1dispI1dN.
-   * </p>
    *
    * @return a double
    */
@@ -438,9 +412,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcdF2dispZHCdT.
-   * </p>
    *
    * @return a double
    */
@@ -459,9 +431,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcdF2dispZHCdTdV.
-   * </p>
    *
    * @return a double
    */
@@ -487,9 +457,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcdF2dispZHCdTdT.
-   * </p>
    *
    * @return a double
    */
@@ -513,9 +481,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcF1dispI1dNdN.
-   * </p>
    *
    * @return a double
    */
@@ -528,9 +494,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcF1dispI1dm.
-   * </p>
    *
    * @return a double
    */
@@ -543,9 +507,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcF2dispI2dN.
-   * </p>
    *
    * @return a double
    */
@@ -558,9 +520,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcF2dispI2dNdN.
-   * </p>
    *
    * @return a double
    */
@@ -573,9 +533,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcF2dispI2dm.
-   * </p>
    *
    * @return a double
    */
@@ -588,9 +546,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcF1dispI1.
-   * </p>
    *
    * @return a double
    */
@@ -603,9 +559,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcdF1dispI1dT.
-   * </p>
    *
    * @return a double
    */
@@ -618,9 +572,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcdF1dispSumTermdTdT.
-   * </p>
    *
    * @return a double
    */
@@ -629,9 +581,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcdF1dispI1dTdV.
-   * </p>
    *
    * @return a double
    */
@@ -646,9 +596,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcdF1dispI1dTdT.
-   * </p>
    *
    * @return a double
    */
@@ -663,9 +611,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcF2dispI2.
-   * </p>
    *
    * @return a double
    */
@@ -678,9 +624,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcdF2dispI2dT.
-   * </p>
    *
    * @return a double
    */
@@ -693,9 +637,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcdF2dispSumTermdTdT.
-   * </p>
    *
    * @return a double
    */
@@ -704,9 +646,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcdF2dispI2dTdV.
-   * </p>
    *
    * @return a double
    */
@@ -721,9 +661,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcdF2dispI2dTdT.
-   * </p>
    *
    * @return a double
    */
@@ -738,9 +676,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getaSAFT.
-   * </p>
    *
    * @param i a int
    * @param m a double
@@ -752,9 +688,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getaSAFTdm.
-   * </p>
    *
    * @param i a int
    * @param m a double
@@ -767,9 +701,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcmdSAFT.
-   * </p>
    *
    * @return a double
    */
@@ -784,9 +716,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcmmin1SAFT.
-   * </p>
    *
    * @return a double
    */
@@ -801,9 +731,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcdmeanSAFT.
-   * </p>
    *
    * @return a double
    */
@@ -819,9 +747,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcdSAFT.
-   * </p>
    *
    * @return a double
    */
@@ -836,9 +762,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getdDSAFTdT.
-   * </p>
    *
    * @return a double
    */
@@ -855,9 +779,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getd2DSAFTdTdT.
-   * </p>
    *
    * @return a double
    */
@@ -880,9 +802,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * Getter for the field <code>nSAFT</code>.
-   * </p>
    *
    * @return a double
    */
@@ -891,9 +811,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * Setter for the field <code>nSAFT</code>.
-   * </p>
    *
    * @param nSAFT a double
    */
@@ -902,9 +820,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * Getter for the field <code>dSAFT</code>.
-   * </p>
    *
    * @return a double
    */
@@ -913,9 +829,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * Setter for the field <code>dSAFT</code>.
-   * </p>
    *
    * @param dSAFT a double
    */
@@ -924,9 +838,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * Getter for the field <code>ghsSAFT</code>.
-   * </p>
    *
    * @return a double
    */
@@ -935,9 +847,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * Setter for the field <code>ghsSAFT</code>.
-   * </p>
    *
    * @param ghsSAFT a double
    */
@@ -946,9 +856,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * F_HC_SAFT.
-   * </p>
    *
    * @return a double
    */
@@ -958,9 +866,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * dF_HC_SAFTdT.
-   * </p>
    *
    * @return a double
    */
@@ -970,9 +876,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * dF_HC_SAFTdV.
-   * </p>
    *
    * @return a double
    */
@@ -983,9 +887,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * dF_HC_SAFTdVdV.
-   * </p>
    *
    * @return a double
    */
@@ -999,9 +901,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * dF_HC_SAFTdVdVdV.
-   * </p>
    *
    * @return a double
    */
@@ -1010,9 +910,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * dF_HC_SAFTdTdV.
-   * </p>
    *
    * @return a double
    */
@@ -1025,9 +923,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * dF_HC_SAFTdTdT.
-   * </p>
    *
    * @return a double
    */
@@ -1040,9 +936,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * F_DISP1_SAFT.
-   * </p>
    *
    * @return a double
    */
@@ -1052,9 +946,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * dF_DISP1_SAFTdT.
-   * </p>
    *
    * @return a double
    */
@@ -1065,9 +957,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * dF_DISP1_SAFTdV.
-   * </p>
    *
    * @return a double
    */
@@ -1078,9 +968,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * dF_DISP1_SAFTdVdV.
-   * </p>
    *
    * @return a double
    */
@@ -1093,9 +981,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * dF_DISP1_SAFTdTdV.
-   * </p>
    *
    * @return a double
    */
@@ -1106,9 +992,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * dF_DISP1_SAFTdTdT.
-   * </p>
    *
    * @return a double
    */
@@ -1120,9 +1004,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * F_DISP2_SAFT.
-   * </p>
    *
    * @return a double
    */
@@ -1133,9 +1015,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * dF_DISP2_SAFTdT.
-   * </p>
    *
    * @return a double
    */
@@ -1146,9 +1026,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * dF_DISP2_SAFTdV.
-   * </p>
    *
    * @return a double
    */
@@ -1162,9 +1040,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * dF_DISP2_SAFTdVdV.
-   * </p>
    *
    * @return a double
    */
@@ -1190,9 +1066,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * dF_DISP2_SAFTdTdV.
-   * </p>
    *
    * @return a double
    */
@@ -1208,9 +1082,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * dF_DISP2_SAFTdTdT.
-   * </p>
    *
    * @return a double
    */
@@ -1271,9 +1143,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * Getter for the field <code>mdSAFT</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1282,9 +1152,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * Setter for the field <code>mdSAFT</code>.
-   * </p>
    *
    * @param mdSAFT a double
    */
@@ -1293,9 +1161,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * Getter for the field <code>mSAFT</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1304,9 +1170,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * Setter for the field <code>mSAFT</code>.
-   * </p>
    *
    * @param mSAFT a double
    */
@@ -1315,9 +1179,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * Getter for the field <code>aHSSAFT</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1326,9 +1188,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * Setter for the field <code>aHSSAFT</code>.
-   * </p>
    *
    * @param aHSSAFT a double
    */
@@ -1337,9 +1197,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * Getter for the field <code>mmin1SAFT</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1348,9 +1206,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * Setter for the field <code>mmin1SAFT</code>.
-   * </p>
    *
    * @param mmin1SAFT a double
    */
@@ -1359,9 +1215,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * Getter for the field <code>volumeSAFT</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1370,9 +1224,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * Setter for the field <code>volumeSAFT</code>.
-   * </p>
    *
    * @param volumeSAFT a double
    */
@@ -1381,9 +1233,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * Getter for the field <code>dgHSSAFTdN</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1392,9 +1242,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * Setter for the field <code>dgHSSAFTdN</code>.
-   * </p>
    *
    * @param dgHSSAFTdN a double
    */
@@ -1403,9 +1251,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * Getter for the field <code>dnSAFTdV</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1414,9 +1260,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * Setter for the field <code>dnSAFTdV</code>.
-   * </p>
    *
    * @param dnSAFTdV a double
    */
@@ -1425,9 +1269,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getF1dispVolTerm.
-   * </p>
    *
    * @return a double
    */
@@ -1436,9 +1278,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * setF1dispVolTerm.
-   * </p>
    *
    * @param F1dispVolTerm a double
    */
@@ -1447,9 +1287,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getF1dispSumTerm.
-   * </p>
    *
    * @return a double
    */
@@ -1458,9 +1296,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getF1dispI1.
-   * </p>
    *
    * @return a double
    */
@@ -1469,9 +1305,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getF2dispI2.
-   * </p>
    *
    * @return a double
    */
@@ -1480,9 +1314,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * setF2dispI2.
-   * </p>
    *
    * @param F2dispI2 a double
    */
@@ -1491,9 +1323,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getF2dispZHC.
-   * </p>
    *
    * @return a double
    */
@@ -1502,9 +1332,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * setF2dispZHC.
-   * </p>
    *
    * @param F2dispZHC a double
    */
@@ -1513,9 +1341,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getF2dispZHCdN.
-   * </p>
    *
    * @return a double
    */
@@ -1524,9 +1350,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getF2dispZHCdm.
-   * </p>
    *
    * @return a double
    */
@@ -1535,9 +1359,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * molarVolume22.
-   * </p>
    *
    * @param pressure a double
    * @param temperature a double
@@ -1640,9 +1462,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * Getter for the field <code>dmeanSAFT</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1651,9 +1471,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * Setter for the field <code>dmeanSAFT</code>.
-   * </p>
    *
    * @param dmeanSAFT a double
    */
@@ -1662,9 +1480,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * Getter for the field <code>nmSAFT</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1673,9 +1489,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * Setter for the field <code>nmSAFT</code>.
-   * </p>
    *
    * @param nmSAFT a double
    */
@@ -1684,9 +1498,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getF2dispSumTerm.
-   * </p>
    *
    * @return a double
    */
@@ -1695,9 +1507,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * setF2dispSumTerm.
-   * </p>
    *
    * @param F2dispSumTerm a double
    */
@@ -1706,9 +1516,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * setF2dispZHCdm.
-   * </p>
    *
    * @param F2dispZHCdm a double
    */

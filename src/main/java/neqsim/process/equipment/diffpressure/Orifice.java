@@ -5,9 +5,7 @@ import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * Orifice class for flow restriction and measurement using ISO 5167 orifice plate calculations.
- * </p>
  *
  * <p>
  * This class supports both steady-state and transient/dynamic simulations. In transient mode, the orifice calculates
@@ -41,9 +39,7 @@ public class Orifice extends TwoPortEquipment {
   private double dischargeCoefficient;
 
   /**
-   * <p>
    * Constructor for Orifice.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */

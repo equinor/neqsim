@@ -97,9 +97,7 @@ public abstract class Phase implements PhaseInterface {
   protected PhaseType pt = PhaseType.GAS;
 
   /**
-   * <p>
    * Constructor for Phase.
-   * </p>
    */
   public Phase() {
     componentArray = new ComponentInterface[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
@@ -131,9 +129,9 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * <p>
    * Increase number of components and add moles to phase.
    *
+   * <p>
    * NB! Does not actually add component to componentarray.
    * </p>
    *
@@ -572,9 +570,7 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * <p>
    * calcA.
-   * </p>
    *
    * @param comp a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -697,9 +693,7 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * <p>
    * getBi.
-   * </p>
    *
    * @return a double
    */
@@ -720,9 +714,7 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * <p>
    * getAiT.
-   * </p>
    *
    * @return a double
    */
@@ -955,9 +947,7 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * <p>
    * getCvres.
-   * </p>
    *
    * @return a double
    */
@@ -972,9 +962,7 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * <p>
    * getHresdP.
-   * </p>
    *
    * @return a double
    */
@@ -989,9 +977,7 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * <p>
    * getSresTV.
-   * </p>
    *
    * @return a double
    */
@@ -1017,9 +1003,7 @@ public abstract class Phase implements PhaseInterface {
 
   // Integral av Cp0 mhp T
   /**
-   * <p>
    * getHID.
-   * </p>
    *
    * @return a double
    */
@@ -1509,9 +1493,7 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * <p>
    * initRefPhases.
-   * </p>
    *
    * @param onlyPure a boolean
    * @param name a {@link java.lang.String} object
@@ -1563,9 +1545,7 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * <p>
    * getLogPureComponentFugacity.
-   * </p>
    *
    * @param k a int
    * @param pure a boolean
@@ -1631,9 +1611,7 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * <p>
    * getInfiniteDiluteFugacity.
-   * </p>
    *
    * @param k a int
    * @return a double
@@ -2091,9 +2069,7 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * <p>
    * calcDiElectricConstant.
-   * </p>
    *
    * @param temperature a double
    * @return a double
@@ -2107,9 +2083,7 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * <p>
    * calcDiElectricConstantdT.
-   * </p>
    *
    * @param temperature a double
    * @return a double
@@ -2123,9 +2097,7 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * <p>
    * calcDiElectricConstantdTdT.
-   * </p>
    *
    * @param temperature a double
    * @return a double
@@ -2139,9 +2111,7 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>diElectricConstant</code>.
-   * </p>
    *
    * @return a double
    */
@@ -2414,9 +2384,7 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * <p>
    * groupTBPfractions.
-   * </p>
    *
    * @return an array of type double
    */
@@ -3000,9 +2968,7 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>thermoPropertyModelName</code>.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */

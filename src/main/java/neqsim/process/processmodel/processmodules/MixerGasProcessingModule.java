@@ -14,9 +14,7 @@ import neqsim.process.processmodel.ProcessModuleBaseClass;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * MixerGasProcessingModule class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -47,9 +45,7 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
   Cooler secondStageAfterCooler;
 
   /**
-   * <p>
    * Constructor for MixerGasProcessingModule.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -203,9 +199,7 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

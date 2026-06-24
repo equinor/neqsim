@@ -3,9 +3,7 @@ package neqsim.pvtsimulation.util.parameterfitting;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtFunction;
 
 /**
- * <p>
  * DensityFunction class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -14,9 +12,7 @@ public class DensityFunction extends LevenbergMarquardtFunction {
   double molarMass = 0.0;
 
   /**
-   * <p>
    * Constructor for DensityFunction.
-   * </p>
    */
   public DensityFunction() {
     params = new double[1];

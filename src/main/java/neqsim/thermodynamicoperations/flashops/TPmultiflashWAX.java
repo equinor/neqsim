@@ -8,9 +8,7 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * TPmultiflashWAX class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -30,9 +28,7 @@ public class TPmultiflashWAX extends TPflash {
   boolean doStabilityAnalysis = true;
 
   /**
-   * <p>
    * Constructor for TPmultiflashWAX.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -41,9 +37,7 @@ public class TPmultiflashWAX extends TPflash {
   }
 
   /**
-   * <p>
    * Constructor for TPmultiflashWAX.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param checkForSolids Set true to do solid phase check and calculations
@@ -53,17 +47,13 @@ public class TPmultiflashWAX extends TPflash {
   }
 
   /**
-   * <p>
    * calcMultiPhaseBeta.
-   * </p>
    */
   public void calcMultiPhaseBeta() {
   }
 
   /**
-   * <p>
    * setXY.
-   * </p>
    */
   public void setXY() {
     for (int k = 0; k < system.getNumberOfPhases(); k++) {
@@ -90,9 +80,7 @@ public class TPmultiflashWAX extends TPflash {
   }
 
   /**
-   * <p>
    * calcE.
-   * </p>
    */
   public void calcE() {
     E = new double[system.getPhase(0).getNumberOfComponents()];
@@ -105,9 +93,7 @@ public class TPmultiflashWAX extends TPflash {
   }
 
   /**
-   * <p>
    * calcQ.
-   * </p>
    *
    * @return a double
    */
@@ -153,9 +139,7 @@ public class TPmultiflashWAX extends TPflash {
   }
 
   /**
-   * <p>
    * solveBeta.
-   * </p>
    *
    * @param updateFugacities a boolean
    */

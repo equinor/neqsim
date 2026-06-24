@@ -3,9 +3,7 @@ package neqsim.process.measurementdevice.online;
 import java.util.Date;
 
 /**
- * <p>
  * OnlineSignal class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -15,9 +13,7 @@ public class OnlineSignal implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Getter for the field <code>unit</code>.
-   * </p>
    *
    * @return the unit
    */
@@ -26,9 +22,7 @@ public class OnlineSignal implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>unit</code>.
-   * </p>
    *
    * @param unit the unit to set
    */
@@ -46,9 +40,7 @@ public class OnlineSignal implements java.io.Serializable {
   transient neqsim.util.database.AspenIP21Database database = null;
 
   /**
-   * <p>
    * Constructor for OnlineSignal.
-   * </p>
    *
    * @param plantName a {@link java.lang.String} object
    * @param transmitterName a {@link java.lang.String} object
@@ -61,9 +53,7 @@ public class OnlineSignal implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * connect.
-   * </p>
    *
    * @return a boolean
    */
@@ -85,9 +75,7 @@ public class OnlineSignal implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * getTimeStamp.
-   * </p>
    *
    * @return a {@link java.util.Date} object
    */
@@ -96,9 +84,7 @@ public class OnlineSignal implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>value</code>.
-   * </p>
    *
    * @return a double
    */

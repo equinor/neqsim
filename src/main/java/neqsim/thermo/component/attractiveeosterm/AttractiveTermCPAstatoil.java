@@ -3,9 +3,7 @@ package neqsim.thermo.component.attractiveeosterm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * <p>
  * AttractiveTermCPAstatoil class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -17,9 +15,7 @@ public class AttractiveTermCPAstatoil extends AttractiveTermSrk {
   double orgpar = 0.0;
 
   /**
-   * <p>
    * Constructor for AttractiveTermCPAstatoil.
-   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
    */

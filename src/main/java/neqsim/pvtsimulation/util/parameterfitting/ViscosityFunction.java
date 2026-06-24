@@ -4,9 +4,7 @@ import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtFunction;
 
 /**
- * <p>
  * ViscosityFunction class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -16,18 +14,14 @@ public class ViscosityFunction extends LevenbergMarquardtFunction {
   boolean includeWaxEmulsionViscosity = true;
 
   /**
-   * <p>
    * Constructor for ViscosityFunction.
-   * </p>
    */
   public ViscosityFunction() {
     params = new double[1];
   }
 
   /**
-   * <p>
    * Constructor for ViscosityFunction.
-   * </p>
    *
    * @param includeWax a boolean
    */

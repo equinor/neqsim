@@ -9,9 +9,7 @@ package neqsim.thermo.mixingrule;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * CPAMixingRulesInterface interface.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -21,9 +19,7 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
   // double temperature, double pressure, int numbcomp);
 
   /**
-   * <p>
    * calcDeltadT.
-   * </p>
    *
    * @param siteNumber1 a int
    * @param siteNumber2 a int
@@ -39,9 +35,7 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
       double temperature, double pressure, int numbcomp);
 
   /**
-   * <p>
    * calcDeltadTdV.
-   * </p>
    *
    * @param siteNumber1 a int
    * @param siteNumber2 a int
@@ -57,9 +51,7 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
       double temperature, double pressure, int numbcomp);
 
   /**
-   * <p>
    * calcDeltadTdT.
-   * </p>
    *
    * @param siteNumber1 a int
    * @param siteNumber2 a int
@@ -75,9 +67,7 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
       double temperature, double pressure, int numbcomp);
 
   /**
-   * <p>
    * calcXi.
-   * </p>
    *
    * @param assosScheme an array of int objects
    * @param assosScheme2 an array of int objects
@@ -93,9 +83,7 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
       PhaseInterface phase, double temperature, double pressure, int numbcomp);
 
   /**
-   * <p>
    * calcDelta.
-   * </p>
    *
    * @param siteNumber1 a int
    * @param siteNumber2 a int
@@ -111,9 +99,7 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
       double temperature, double pressure, int numbcomp);
 
   /**
-   * <p>
    * calcDeltadN.
-   * </p>
    *
    * @param derivativeComp a int
    * @param siteNumber1 a int
@@ -130,9 +116,7 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
       PhaseInterface phase, double temperature, double pressure, int numbcomp);
 
   /**
-   * <p>
    * calcDeltadV.
-   * </p>
    *
    * @param siteNumber1 a int
    * @param siteNumber2 a int
@@ -148,9 +132,7 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
       double temperature, double pressure, int numbcomp);
 
   /**
-   * <p>
    * calcDeltaNog.
-   * </p>
    *
    * @param siteNumber1 a int
    * @param siteNumber2 a int

@@ -3,9 +3,7 @@ package neqsim.process.util.monitor;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 
 /**
- * <p>
  * HXResponse class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -23,17 +21,13 @@ public class HXResponse extends BaseResponse {
   public Double UAvalue;
 
   /**
-   * <p>
    * Constructor for HXResponse.
-   * </p>
    */
   public HXResponse() {
   }
 
   /**
-   * <p>
    * Constructor for HXResponse.
-   * </p>
    *
    * @param inputHeatExchanger a {@link neqsim.process.equipment.heatexchanger.HeatExchanger} object
    */

@@ -4,9 +4,7 @@ import java.util.HashMap;
 import neqsim.process.measurementdevice.WellAllocator;
 
 /**
- * <p>
  * WellAllocatorResponse class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -16,9 +14,7 @@ public class WellAllocatorResponse {
   public HashMap<String, Value> data = new HashMap<String, Value>();
 
   /**
-   * <p>
    * Constructor for WellAllocatorResponse.
-   * </p>
    *
    * @param inputAllocator a {@link neqsim.process.measurementdevice.WellAllocator} object
    */

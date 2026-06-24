@@ -9,9 +9,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * ComponentGEUnifacUMRPRU class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -37,9 +35,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
   double[] sum2MixdTdT = null;
 
   /**
-   * <p>
    * Constructor for ComponentGEUnifacUMRPRU.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -122,9 +118,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
   }
 
   /**
-   * <p>
    * calcTempExpaij.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
@@ -150,9 +144,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
   }
 
   /**
-   * <p>
    * calcSum2Comp.
-   * </p>
    */
   public void calcSum2Comp() {
     UNIFACgroup[] unifacGroupsLocal = getUnifacGroups();
@@ -167,9 +159,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
   }
 
   /**
-   * <p>
    * calcSum2CompdTdT.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
@@ -229,9 +219,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
   }
 
   /**
-   * <p>
    * calclnGammakdn.
-   * </p>
    *
    * @param k a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -259,9 +247,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
   }
 
   /**
-   * <p>
    * calclnGammakdTdT.
-   * </p>
    *
    * @param k a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -481,9 +467,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
   }
 
   /**
-   * <p>
    * calcUnifacGroupParams.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
@@ -499,9 +483,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
   }
 
   /**
-   * <p>
    * calcUnifacGroupParamsdT.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
@@ -519,9 +501,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
   }
 
   /**
-   * <p>
    * calcGammaNumericalDerivatives.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -551,9 +531,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
   }
 
   /**
-   * <p>
    * Getter for the field <code>aij</code>.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -564,9 +542,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
   }
 
   /**
-   * <p>
    * Getter for the field <code>aijdT</code>.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -577,9 +553,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
   }
 
   /**
-   * <p>
    * Getter for the field <code>aijdTdT</code>.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -590,9 +564,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
   }
 
   /**
-   * <p>
    * calcaij.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param i a int
@@ -606,9 +578,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
   }
 
   /**
-   * <p>
    * calcaijdT.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param i a int
@@ -621,9 +591,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
   }
 
   /**
-   * <p>
    * calcaijdTdT.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param i a int

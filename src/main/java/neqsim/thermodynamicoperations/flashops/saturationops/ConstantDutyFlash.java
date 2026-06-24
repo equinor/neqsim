@@ -6,9 +6,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * Abstract constantDutyFlash class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -41,17 +39,13 @@ public abstract class ConstantDutyFlash implements ConstantDutyFlashInterface {
   int lowestGibbsEnergyPhase = 0; // lowestGibbsEnergyPhase
 
   /**
-   * <p>
    * Constructor for constantDutyFlash.
-   * </p>
    */
   public ConstantDutyFlash() {
   }
 
   /**
-   * <p>
    * Constructor for constantDutyFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

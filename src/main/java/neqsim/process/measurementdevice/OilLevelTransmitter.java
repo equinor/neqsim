@@ -4,9 +4,7 @@ import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * OilLevelTransmitter class for measuring oil level in three-phase separators.
- * </p>
  *
  * <p>
  * This transmitter measures the total liquid level (water + oil) from the bottom of the separator. In a three-phase
@@ -28,9 +26,7 @@ public class OilLevelTransmitter extends MeasurementDeviceBaseClass {
   protected ThreePhaseSeparator separator = null;
 
   /**
-   * <p>
    * Constructor for OilLevelTransmitter.
-   * </p>
    *
    * @param separator a {@link neqsim.process.equipment.separator.ThreePhaseSeparator} object
    */
@@ -39,9 +35,7 @@ public class OilLevelTransmitter extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for OilLevelTransmitter.
-   * </p>
    *
    * @param name Name of OilLevelTransmitter
    * @param separator a {@link neqsim.process.equipment.separator.ThreePhaseSeparator} object
@@ -71,9 +65,7 @@ public class OilLevelTransmitter extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Get the thickness of the oil layer.
-   * </p>
    *
    * @return oil layer thickness in meters (oilLevel - waterLevel)
    */

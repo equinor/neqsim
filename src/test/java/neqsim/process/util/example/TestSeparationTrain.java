@@ -12,9 +12,7 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TestSeparationTrain class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -22,9 +20,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class TestSeparationTrain {
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

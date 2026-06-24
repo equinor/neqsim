@@ -11,9 +11,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * ThermodynamicModelTest class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -28,17 +26,13 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
   private double maxError = 1e-10;
 
   /**
-   * <p>
    * Constructor for ThermodynamicModelTest.
-   * </p>
    */
   public ThermodynamicModelTest() {
   }
 
   /**
-   * <p>
    * Constructor for ThermodynamicModelTest.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -47,9 +41,7 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * <p>
    * runTest.
-   * </p>
    */
   public void runTest() {
     // system.init(0);
@@ -74,9 +66,7 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * <p>
    * checkFugacityCoefficients.
-   * </p>
    *
    * @return a boolean
    */
@@ -112,9 +102,7 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * <p>
    * checkFugacityCoefficientsDn.
-   * </p>
    *
    * @return a boolean
    */
@@ -154,9 +142,7 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * <p>
    * checkFugacityCoefficientsDn2.
-   * </p>
    *
    * @return a boolean
    */
@@ -197,9 +183,7 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * <p>
    * checkFugacityCoefficientsDP.
-   * </p>
    *
    * @return a boolean
    */
@@ -228,9 +212,7 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * <p>
    * checkFugacityCoefficientsDT.
-   * </p>
    *
    * @return a boolean
    */
@@ -261,9 +243,7 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * <p>
    * checkNumerically.
-   * </p>
    *
    * @return a boolean
    */

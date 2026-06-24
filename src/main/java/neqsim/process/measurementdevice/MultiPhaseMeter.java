@@ -9,9 +9,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * MultiPhaseMeter class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -28,9 +26,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
   String unitP;
 
   /**
-   * <p>
    * Constructor for MultiPhaseMeter.
-   * </p>
    *
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -39,9 +35,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for MultiPhaseMeter.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -51,9 +45,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>pressure</code>.
-   * </p>
    *
    * @return a double
    */
@@ -62,9 +54,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>pressure</code>.
-   * </p>
    *
    * @param pressure a double
    * @param unitP a {@link java.lang.String} object
@@ -75,9 +65,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * getTemperature.
-   * </p>
    *
    * @return a double
    */
@@ -86,9 +74,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>temperature</code>.
-   * </p>
    *
    * @param temperature a double
    * @param unitT a {@link java.lang.String} object

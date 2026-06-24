@@ -7,9 +7,7 @@ import neqsim.physicalproperties.methods.methodinterface.DiffusivityInterface;
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * <p>
  * Diffusivity class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -25,9 +23,7 @@ public class Diffusivity extends CommonPhysicalPropertyMethod implements Diffusi
   double[] effectiveDiffusionCoefficient;
 
   /**
-   * <p>
    * Constructor for Diffusivity.
-   * </p>
    *
    * @param phase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

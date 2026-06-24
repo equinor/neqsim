@@ -19,9 +19,7 @@ import neqsim.process.measurementdevice.WaterContentAnalyser;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * OnshoreProcess1 class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id

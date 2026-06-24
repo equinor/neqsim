@@ -26,9 +26,7 @@ public abstract class Conductivity extends GasPhysicalPropertyMethod implements 
   double conductivity = 0;
 
   /**
-   * <p>
    * Constructor for Conductivity.
-   * </p>
    *
    * @param gasPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

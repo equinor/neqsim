@@ -3,9 +3,7 @@ package neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity;
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * <p>
  * CO2water class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -15,9 +13,7 @@ public class CO2water extends Diffusivity {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for CO2water.
-   * </p>
    *
    * @param liquidPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

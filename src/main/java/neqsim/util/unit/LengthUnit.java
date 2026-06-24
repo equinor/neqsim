@@ -9,9 +9,7 @@ package neqsim.util.unit;
 import neqsim.util.exception.InvalidInputException;
 
 /**
- * <p>
  * LengthUnit class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -21,9 +19,7 @@ public class LengthUnit extends neqsim.util.unit.BaseUnit {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for LengthUnit.
-   * </p>
    *
    * @param value Numeric value
    * @param name Name of unit

@@ -17,9 +17,7 @@ import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
 /**
- * <p>
  * Abstract class PhaseGE.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -34,9 +32,7 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
   EosMixingRulesInterface mixRule;
 
   /**
-   * <p>
    * Constructor for PhaseGE.
-   * </p>
    */
   public PhaseGE() {
     setType(PhaseType.LIQUID);
@@ -45,9 +41,7 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
   }
 
   /**
-   * <p>
    * init.
-   * </p>
    *
    * @param temperature a double
    * @param pressure a double
@@ -172,9 +166,7 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
   }
 
   /**
-   * <p>
    * getActivityCoefficientInfDilWater.
-   * </p>
    *
    * @param k a int
    * @param p a int
@@ -193,9 +185,7 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
   }
 
   /**
-   * <p>
    * getActivityCoefficientInfDil.
-   * </p>
    *
    * @param k a int
    * @return a double

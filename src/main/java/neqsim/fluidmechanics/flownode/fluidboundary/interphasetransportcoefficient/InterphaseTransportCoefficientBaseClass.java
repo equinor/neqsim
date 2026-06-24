@@ -3,26 +3,20 @@ package neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoeffici
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 
 /**
- * <p>
  * InterphaseTransportCoefficientBaseClass class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class InterphaseTransportCoefficientBaseClass implements InterphaseTransportCoefficientInterface {
   /**
-   * <p>
    * Constructor for InterphaseTransportCoefficientBaseClass.
-   * </p>
    */
   public InterphaseTransportCoefficientBaseClass() {
   }
 
   /**
-   * <p>
    * Constructor for InterphaseTransportCoefficientBaseClass.
-   * </p>
    *
    * @param node a {@link neqsim.fluidmechanics.flownode.FlowNodeInterface} object
    */

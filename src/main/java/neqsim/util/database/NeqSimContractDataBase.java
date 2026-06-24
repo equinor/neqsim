@@ -6,9 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * NeqSimProcessDesignDataBase class.
- * </p>
  *
  * @author Even Solbraa
  * @version June 2023
@@ -37,9 +35,7 @@ public class NeqSimContractDataBase extends NeqSimDataBase {
   protected transient Connection databaseConnection = null;
 
   /**
-   * <p>
    * Constructor for NeqSimDataBase.
-   * </p>
    */
   public NeqSimContractDataBase() {
     // Fill tables from csv-files if not initialized and not currently being initialized.
@@ -64,9 +60,7 @@ public class NeqSimContractDataBase extends NeqSimDataBase {
   }
 
   /**
-   * <p>
    * initH2DatabaseFromCSVfiles.
-   * </p>
    */
   public static void initH2DatabaseFromCSVfiles() {
     h2IsInitalizing = true;

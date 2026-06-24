@@ -4,9 +4,7 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * VUflashSingleComp class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -19,9 +17,7 @@ public class VUflashSingleComp extends Flash {
   double Vspec = 0;
 
   /**
-   * <p>
    * Constructor for VUflashSingleComp.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Vspec a double

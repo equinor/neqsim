@@ -6,9 +6,7 @@ import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.component.ComponentSrkCPAs;
 
 /**
- * <p>
  * PhaseSrkCPAs class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -18,9 +16,7 @@ public class PhaseSrkCPAs extends PhaseSrkCPA {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for PhaseSrkCPAs.
-   * </p>
    */
   public PhaseSrkCPAs() {
   }

@@ -11,9 +11,7 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.stream.StreamInterface;
 
 /**
- * <p>
  * MapTurboExpanderCompressor class.
- * </p>
  *
  * <p>
  * An alternative single-shaft turboexpander-compressor (companding machine) model that couples a real {@link Expander}

@@ -12,9 +12,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * SevereSlugAnalyser class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -260,9 +258,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * setSuperficialLiquidVelocity.
-   * </p>
    *
    * @param usl a double
    */
@@ -271,9 +267,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * getSuperficialLiquidVelocity.
-   * </p>
    *
    * @return a double
    */
@@ -282,9 +276,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * setSuperficialGasVelocity.
-   * </p>
    *
    * @param usg a double
    */
@@ -293,9 +285,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * getSuperficialGasVelocity.
-   * </p>
    *
    * @return a double
    */
@@ -304,9 +294,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>flowPattern</code>.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -315,9 +303,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>slugValue</code>.
-   * </p>
    *
    * @return a double
    */
@@ -327,9 +313,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
 
   // 3. Pipe Outlet Pressure Encapsulation
   /**
-   * <p>
    * Setter for the field <code>outletPressure</code>.
-   * </p>
    *
    * @param outletPressure Value in engineering unit Pa
    */
@@ -338,9 +322,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>outletPressure</code>.
-   * </p>
    *
    * @return Get pressure in Pa
    */
@@ -349,9 +331,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>temperature</code>.
-   * </p>
    *
    * @param temperature a double
    */
@@ -360,9 +340,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>temperature</code>.
-   * </p>
    *
    * @return a double
    */
@@ -371,9 +349,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>numberOfTimeSteps</code>.
-   * </p>
    *
    * @param numberOfTimeSteps a int
    */
@@ -382,9 +358,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>numberOfTimeSteps</code>.
-   * </p>
    *
    * @return a int
    */
@@ -393,9 +367,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>simulationTime</code>.
-   * </p>
    *
    * @param simulationTime a double
    */
@@ -404,9 +376,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>simulationTime</code>.
-   * </p>
    *
    * @return a double
    */
@@ -415,9 +385,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Calculating the universal gas constant.
-   * </p>
    *
    * @param fluid a {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug} object
    * @return a double
@@ -430,9 +398,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   // steps.
 
   /**
-   * <p>
    * slugHoldUp.
-   * </p>
    *
    * @param pipe a {@link neqsim.process.measurementdevice.simpleflowregime.Pipe} object
    * @param severeSlug a {@link neqsim.process.measurementdevice.simpleflowregime.SevereSlugAnalyser} object
@@ -450,9 +416,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * stratifiedHoldUp.
-   * </p>
    *
    * @param fluid a {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug} object
    * @param pipe a {@link neqsim.process.measurementdevice.simpleflowregime.Pipe} object
@@ -512,9 +476,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
 
   // Passing 3 objects as input parameters (fluid, pipe, severeSlug)
   /**
-   * <p>
    * runSevereSlug.
-   * </p>
    *
    * @param fluid a {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug} object
    * @param pipe a {@link neqsim.process.measurementdevice.simpleflowregime.Pipe} object
@@ -614,9 +576,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * checkFlowRegime.
-   * </p>
    *
    * @param fluid a {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug} object
    * @param pipe a {@link neqsim.process.measurementdevice.simpleflowregime.Pipe} object
@@ -690,9 +650,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * getMeasuredValue.
-   * </p>
    *
    * @param fluid a {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug} object
    * @param pipe a {@link neqsim.process.measurementdevice.simpleflowregime.Pipe} object
@@ -705,9 +663,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * getPredictedFlowRegime.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -737,9 +693,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * getPredictedFlowRegime.
-   * </p>
    *
    * @param fluid a {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug} object
    * @param pipe a {@link neqsim.process.measurementdevice.simpleflowregime.Pipe} object
@@ -752,9 +706,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

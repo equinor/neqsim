@@ -4,9 +4,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * <p>
  * CompressorCurve class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -21,9 +19,7 @@ public class CompressorCurve implements java.io.Serializable {
   public double speed = 1000.0;
 
   /**
-   * <p>
    * Constructor for CompressorCurve.
-   * </p>
    */
   public CompressorCurve() {
     flow = new double[] { 453.2, 600.0, 750.0 };
@@ -33,9 +29,7 @@ public class CompressorCurve implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Constructor for CompressorCurve.
-   * </p>
    *
    * @param speed a double
    * @param flow an array of type double
@@ -51,9 +45,7 @@ public class CompressorCurve implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Constructor for CompressorCurve.
-   * </p>
    *
    * @param speed a double
    * @param flow an array of type double

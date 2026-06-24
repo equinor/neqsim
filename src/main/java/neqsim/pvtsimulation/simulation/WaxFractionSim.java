@@ -12,9 +12,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>
  * WaxFractionSim class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -35,9 +33,7 @@ public class WaxFractionSim extends BasePVTsimulation {
   double oilVolumeStdCond = 0;
 
   /**
-   * <p>
    * Constructor for WaxFractionSim.
-   * </p>
    *
    * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -50,9 +46,7 @@ public class WaxFractionSim extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * setTemperaturesAndPressures.
-   * </p>
    *
    * @param temperature an array of type double
    * @param pressure an array of type double
@@ -64,9 +58,7 @@ public class WaxFractionSim extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * runTuning.
-   * </p>
    */
   public void runTuning() {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
@@ -119,9 +111,7 @@ public class WaxFractionSim extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * runCalc.
-   * </p>
    */
   public void runCalc() {
     Sm3gas = new double[pressure.length];
@@ -143,9 +133,7 @@ public class WaxFractionSim extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -191,9 +179,7 @@ public class WaxFractionSim extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * getGOR.
-   * </p>
    *
    * @return the GOR
    */
@@ -202,9 +188,7 @@ public class WaxFractionSim extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * getBofactor.
-   * </p>
    *
    * @return the Bofactor
    */
@@ -213,9 +197,7 @@ public class WaxFractionSim extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>waxFraction</code>.
-   * </p>
    *
    * @return the waxFraction
    */

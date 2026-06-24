@@ -4,9 +4,7 @@ import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
 
 /**
- * <p>
  * PhaseCPAInterface interface.
- * </p>
  *
  * <p>
  * This interface defines the contract for CPA (Cubic Plus Association) phase implementations. It provides default
@@ -19,18 +17,14 @@ import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
  */
 public interface PhaseCPAInterface extends PhaseEosInterface {
   /**
-   * <p>
    * Getter for property hcpatot.
-   * </p>
    *
    * @return a double
    */
   double getHcpatot();
 
   /**
-   * <p>
    * getCrossAssosiationScheme.
-   * </p>
    *
    * @param comp1 a int
    * @param comp2 a int
@@ -41,45 +35,35 @@ public interface PhaseCPAInterface extends PhaseEosInterface {
   int getCrossAssosiationScheme(int comp1, int comp2, int site1, int site2);
 
   /**
-   * <p>
    * getGcpa.
-   * </p>
    *
    * @return a double
    */
   public double getGcpa();
 
   /**
-   * <p>
    * getGcpav.
-   * </p>
    *
    * @return a double
    */
   public double getGcpav();
 
   /**
-   * <p>
    * getTotalNumberOfAccociationSites.
-   * </p>
    *
    * @return a int
    */
   public int getTotalNumberOfAccociationSites();
 
   /**
-   * <p>
    * setTotalNumberOfAccociationSites.
-   * </p>
    *
    * @param totalNumberOfAccociationSites a int
    */
   public void setTotalNumberOfAccociationSites(int totalNumberOfAccociationSites);
 
   /**
-   * <p>
    * getCpaMixingRule.
-   * </p>
    *
    * @return a {@link neqsim.thermo.mixingrule.CPAMixingRulesInterface} object
    */

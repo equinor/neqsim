@@ -22,9 +22,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * OnshoreMEGprocess class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -34,9 +32,7 @@ public class OnshoreMEGprocess {
   private static final Logger logger = LogManager.getLogger(OnshoreMEGprocess.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

@@ -6,9 +6,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * compressorTest12 class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id

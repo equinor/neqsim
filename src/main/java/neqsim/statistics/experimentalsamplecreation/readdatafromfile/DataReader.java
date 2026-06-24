@@ -14,9 +14,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * DataReader class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -29,17 +27,13 @@ public class DataReader implements DataReaderInterface {
   protected ArrayList<DataObject> sampleObjectList = new ArrayList<DataObject>();
 
   /**
-   * <p>
    * Constructor for DataReader.
-   * </p>
    */
   public DataReader() {
   }
 
   /**
-   * <p>
    * Constructor for DataReader.
-   * </p>
    *
    * @param fileName a {@link java.lang.String} object
    */
@@ -76,9 +70,7 @@ public class DataReader implements DataReaderInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>sampleObjectList</code>.
-   * </p>
    *
    * @return a {@link java.util.ArrayList} of
    * {@link neqsim.statistics.experimentalsamplecreation.readdatafromfile.DataObject}
@@ -88,9 +80,7 @@ public class DataReader implements DataReaderInterface {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

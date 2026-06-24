@@ -15,9 +15,7 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * SetPoint class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -43,9 +41,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
   private transient Function<ProcessEquipmentInterface, Double> sourceValueCalculator;
 
   /**
-   * <p>
    * Constructor for SetPoint.
-   * </p>
    */
   @Deprecated
   public SetPoint() {
@@ -53,9 +49,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for SetPoint.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -64,9 +58,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for SetPoint.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
@@ -83,9 +75,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * setSourceVariable.
-   * </p>
    *
    * @param adjustedEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @param adjstedVariable a {@link java.lang.String} object
@@ -97,9 +87,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * setSourceVariable.
-   * </p>
    *
    * @param adjustedEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
@@ -108,9 +96,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>targetVariable</code>.
-   * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @param targetVariable a {@link java.lang.String} object
@@ -126,9 +112,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>targetVariable</code>.
-   * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @param targetVariable a {@link java.lang.String} object
@@ -139,9 +123,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>targetVariable</code>.
-   * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
@@ -150,9 +132,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>targetVariable</code>.
-   * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @param targetVariable a {@link java.lang.String} object
@@ -170,9 +150,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>targetVariable</code>.
-   * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @param targetVariable a {@link java.lang.String} object
@@ -272,9 +250,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -299,9 +275,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>sourceValueCalculator</code>.
-   * </p>
    *
    * @param sourceValueCalculator a {@link java.util.function.Function} object
    */

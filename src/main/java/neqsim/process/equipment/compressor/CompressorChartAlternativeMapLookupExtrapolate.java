@@ -7,9 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * CompressorChartAlternativeMapLookupExtrapolate class.
- * </p>
  *
  * @author ESOL
  */

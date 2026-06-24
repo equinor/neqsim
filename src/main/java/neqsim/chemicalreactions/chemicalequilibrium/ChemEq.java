@@ -6,9 +6,7 @@ import Jama.Matrix;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
- * <p>
  * ChemEq class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -52,9 +50,7 @@ public class ChemEq implements java.io.Serializable {
   double[][] matrix;
 
   /**
-   * <p>
    * Constructor for ChemEq.
-   * </p>
    *
    * @deprecated This constructor is incomplete and may cause NPE. Use
    * {@link #ChemEq(double, double, double[][], double[], double[], double[])} instead.
@@ -87,9 +83,7 @@ public class ChemEq implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Constructor for ChemEq.
-   * </p>
    *
    * @param T a double
    * @param P a double
@@ -139,9 +133,7 @@ public class ChemEq implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Constructor for ChemEq.
-   * </p>
    *
    * @param A_matrix an array of type double
    */
@@ -150,9 +142,7 @@ public class ChemEq implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Constructor for ChemEq.
-   * </p>
    *
    * @param T a double
    * @param P a double
@@ -165,9 +155,7 @@ public class ChemEq implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * chemSolve.
-   * </p>
    */
   public void chemSolve() {
     n_t = 0;
@@ -258,9 +246,7 @@ public class ChemEq implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * step.
-   * </p>
    *
    * @return a double
    */
@@ -319,9 +305,7 @@ public class ChemEq implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * innerStep.
-   * </p>
    *
    * @param startIndex starting index for loop (fixes bug where instance field was used)
    * @param n_omega an array of type double
@@ -354,9 +338,7 @@ public class ChemEq implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * solve.
-   * </p>
    *
    * @param T a double
    * @param P a double
@@ -422,9 +404,7 @@ public class ChemEq implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * solve.
-   * </p>
    *
    * <p>
    * Iteratively solves the chemical equilibrium using Newton-Raphson method. Continues until relative change in moles

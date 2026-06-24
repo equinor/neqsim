@@ -12,9 +12,7 @@ import Jama.Matrix;
 import neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.PipeFlowSystem;
 
 /**
- * <p>
  * OnePhasePipeFlowSolver class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -38,17 +36,13 @@ public class OnePhasePipeFlowSolver extends neqsim.fluidmechanics.flowsolver.one
   protected PipeFlowSystem pipe;
 
   /**
-   * <p>
    * Constructor for OnePhasePipeFlowSolver.
-   * </p>
    */
   public OnePhasePipeFlowSolver() {
   }
 
   /**
-   * <p>
    * Constructor for OnePhasePipeFlowSolver.
-   * </p>
    *
    * @param pipe a {@link neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.PipeFlowSystem} object
    * @param length a double

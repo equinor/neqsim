@@ -9,26 +9,20 @@ package neqsim.statistics.experimentalequipmentdata.wettedwallcolumndata;
 import neqsim.statistics.experimentalequipmentdata.ExperimentalEquipmentData;
 
 /**
- * <p>
  * WettedWallColumnData class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
  */
 public class WettedWallColumnData extends ExperimentalEquipmentData {
   /**
-   * <p>
    * Constructor for WettedWallColumnData.
-   * </p>
    */
   public WettedWallColumnData() {
   }
 
   /**
-   * <p>
    * Constructor for WettedWallColumnData.
-   * </p>
    *
    * @param diameter a double
    * @param length a double
@@ -41,9 +35,7 @@ public class WettedWallColumnData extends ExperimentalEquipmentData {
   }
 
   /**
-   * <p>
    * setDiameter.
-   * </p>
    *
    * @param diameter a double
    */
@@ -52,9 +44,7 @@ public class WettedWallColumnData extends ExperimentalEquipmentData {
   }
 
   /**
-   * <p>
    * getDiameter.
-   * </p>
    *
    * @return a double
    */
@@ -63,9 +53,7 @@ public class WettedWallColumnData extends ExperimentalEquipmentData {
   }
 
   /**
-   * <p>
    * setLength.
-   * </p>
    *
    * @param length a double
    */
@@ -74,9 +62,7 @@ public class WettedWallColumnData extends ExperimentalEquipmentData {
   }
 
   /**
-   * <p>
    * getLength.
-   * </p>
    *
    * @return a double
    */
@@ -85,9 +71,7 @@ public class WettedWallColumnData extends ExperimentalEquipmentData {
   }
 
   /**
-   * <p>
    * setVolume.
-   * </p>
    *
    * @param volume a double
    */
@@ -96,9 +80,7 @@ public class WettedWallColumnData extends ExperimentalEquipmentData {
   }
 
   /**
-   * <p>
    * getVolume.
-   * </p>
    *
    * @return a double
    */

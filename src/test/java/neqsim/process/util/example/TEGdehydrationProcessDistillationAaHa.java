@@ -23,9 +23,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * TEGdehydrationProcessDistillationAaHa class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -35,9 +33,7 @@ public class TEGdehydrationProcessDistillationAaHa {
   private static final Logger logger = LogManager.getLogger(TEGdehydrationProcessDistillationAaHa.class);
 
   /**
-   * <p>
    * getProcess.
-   * </p>
    *
    * @return a {@link neqsim.process.processmodel.ProcessSystem} object
    */
@@ -271,9 +267,7 @@ public class TEGdehydrationProcessDistillationAaHa {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

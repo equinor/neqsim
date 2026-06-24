@@ -9,9 +9,7 @@ package neqsim.fluidmechanics.util.fluidmechanicsvisualization.flownodevisualiza
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 
 /**
- * <p>
  * FlowNodeVisualization class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -31,9 +29,7 @@ public class FlowNodeVisualization implements FlowNodeVisualizationInterface {
   public int numberOfComponents = 0;
 
   /**
-   * <p>
    * Constructor for FlowNodeVisualization.
-   * </p>
    */
   public FlowNodeVisualization() {
   }

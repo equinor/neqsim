@@ -4,9 +4,7 @@ import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 
 /**
- * <p>
  * SeparatorResponse class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -62,9 +60,7 @@ public class SeparatorResponse extends BaseResponse {
   }
 
   /**
-   * <p>
    * Constructor for SeparatorResponse.
-   * </p>
    *
    * @param inputSeparator a {@link neqsim.process.equipment.separator.ThreePhaseSeparator} object
    */
@@ -89,9 +85,7 @@ public class SeparatorResponse extends BaseResponse {
   }
 
   /**
-   * <p>
    * Constructor for SeparatorResponse.
-   * </p>
    *
    * @param inputSeparator a {@link neqsim.process.equipment.separator.Separator} object
    */

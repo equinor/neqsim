@@ -4,9 +4,7 @@ import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.InterphaseTwoPhase;
 
 /**
- * <p>
  * InterphaseTwoPhasePipeFlow class.
- * </p>
  *
  * <p>
  * Base class for interphase transport coefficients in two-phase pipe flow. Provides methods for calculating Sherwood
@@ -18,17 +16,13 @@ import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficie
  */
 public class InterphaseTwoPhasePipeFlow extends InterphaseTwoPhase {
   /**
-   * <p>
    * Constructor for InterphaseTwoPhasePipeFlow.
-   * </p>
    */
   public InterphaseTwoPhasePipeFlow() {
   }
 
   /**
-   * <p>
    * Constructor for InterphaseTwoPhasePipeFlow.
-   * </p>
    *
    * @param node a {@link neqsim.fluidmechanics.flownode.FlowNodeInterface} object
    */
@@ -37,11 +31,9 @@ public class InterphaseTwoPhasePipeFlow extends InterphaseTwoPhase {
   }
 
   /**
-   * <p>
    * Calculates the Sherwood number for interphase mass transfer. The Sherwood number is the dimensionless mass transfer
    * coefficient: Sh = k_L * L / D where k_L is the mass transfer coefficient, L is the characteristic length, and D is
    * the diffusivity.
-   * </p>
    *
    * @param phaseNum the phase number (0 for gas, 1 for liquid)
    * @param reynoldsNumber the Reynolds number
@@ -62,9 +54,7 @@ public class InterphaseTwoPhasePipeFlow extends InterphaseTwoPhase {
   }
 
   /**
-   * <p>
    * Calculates the wall Sherwood number for mass transfer to the pipe wall.
-   * </p>
    *
    * @param phaseNum the phase number (0 for gas, 1 for liquid)
    * @param reynoldsNumber the Reynolds number
@@ -88,11 +78,9 @@ public class InterphaseTwoPhasePipeFlow extends InterphaseTwoPhase {
   }
 
   /**
-   * <p>
    * Calculates the Nusselt number for interphase heat transfer. The Nusselt number is the dimensionless heat transfer
    * coefficient: Nu = h * L / k where h is the heat transfer coefficient, L is the characteristic length, and k is
    * thermal conductivity.
-   * </p>
    *
    * @param phaseNum the phase number (0 for gas, 1 for liquid)
    * @param reynoldsNumber the Reynolds number
@@ -112,9 +100,7 @@ public class InterphaseTwoPhasePipeFlow extends InterphaseTwoPhase {
   }
 
   /**
-   * <p>
    * Calculates the mass transfer coefficient from Sherwood number.
-   * </p>
    *
    * @param sherwoodNumber the Sherwood number
    * @param characteristicLength the characteristic length in meters
@@ -127,9 +113,7 @@ public class InterphaseTwoPhasePipeFlow extends InterphaseTwoPhase {
   }
 
   /**
-   * <p>
    * Calculates the heat transfer coefficient from Nusselt number.
-   * </p>
    *
    * @param nusseltNumber the Nusselt number
    * @param characteristicLength the characteristic length in meters

@@ -13,9 +13,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * CalcIonicComposition class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -29,9 +27,7 @@ public class CalcIonicComposition extends Flash {
   String[][] resultTable = null;
 
   /**
-   * <p>
    * Constructor for CalcIonicComposition.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param phaseNum a int

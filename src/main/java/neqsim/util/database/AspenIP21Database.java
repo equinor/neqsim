@@ -9,9 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * AspenIP21Database class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -27,9 +25,7 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
   private transient Statement statement = null;
 
   /**
-   * <p>
    * Constructor for AspenIP21Database.
-   * </p>
    */
   public AspenIP21Database() {
     try {
@@ -50,9 +46,7 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
   }
 
   /**
-   * <p>
    * openConnection.
-   * </p>
    *
    * @param database a {@link java.lang.String} object
    * @return a Connection object
@@ -80,9 +74,7 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
   }
 
   /**
-   * <p>
    * Setter for the field <code>statement</code>.
-   * </p>
    *
    * @param statement a Statement object
    */
@@ -91,9 +83,7 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
   }
 
   /**
-   * <p>
    * getResultSet.
-   * </p>
    *
    * @param sqlString a {@link java.lang.String} object
    * @return a ResultSet object
@@ -103,9 +93,7 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
   }
 
   /**
-   * <p>
    * getResultSet.
-   * </p>
    *
    * @param database a {@link java.lang.String} object
    * @param sqlString a {@link java.lang.String} object
@@ -123,9 +111,7 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
   }
 
   /**
-   * <p>
    * Getter for the field <code>statement</code>.
-   * </p>
    *
    * @return a Statement object
    */

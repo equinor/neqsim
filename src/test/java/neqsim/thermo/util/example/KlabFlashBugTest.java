@@ -31,9 +31,7 @@ class KlabFlashBugTest {
   static double[] errS = new double[P_bar.length];
 
   /**
-   * <p>
    * setUp.
-   * </p>
    */
   @BeforeAll
   public static void setUp() {
@@ -58,9 +56,7 @@ class KlabFlashBugTest {
   }
 
   /**
-   * <p>
    * testPHflash.
-   * </p>
    */
   @Test
   public void testPHflash() {
@@ -74,9 +70,7 @@ class KlabFlashBugTest {
   }
 
   /**
-   * <p>
    * testPSflash.
-   * </p>
    */
   @Test
   public void testPSflash() {

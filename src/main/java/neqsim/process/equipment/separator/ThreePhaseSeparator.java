@@ -21,9 +21,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * ThreePhaseSeparator class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -85,9 +83,7 @@ public class ThreePhaseSeparator extends Separator {
   }
 
   /**
-   * <p>
    * Constructor for ThreePhaseSeparator.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -97,9 +93,7 @@ public class ThreePhaseSeparator extends Separator {
   }
 
   /**
-   * <p>
    * setEntrainment.
-   * </p>
    *
    * @param val a double
    * @param specType a {@link java.lang.String} object
@@ -238,9 +232,7 @@ public class ThreePhaseSeparator extends Separator {
   }
 
   /**
-   * <p>
    * Getter for the field <code>waterOutStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -249,9 +241,7 @@ public class ThreePhaseSeparator extends Separator {
   }
 
   /**
-   * <p>
    * getOilOutStream.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -866,9 +856,7 @@ public class ThreePhaseSeparator extends Separator {
   }
 
   /**
-   * <p>
    * setTempPres.
-   * </p>
    *
    * @param temp a double
    * @param pres a double

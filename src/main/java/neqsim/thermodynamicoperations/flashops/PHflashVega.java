@@ -3,9 +3,7 @@ package neqsim.thermodynamicoperations.flashops;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * PHflashVega class.
- * </p>
  *
  * @author victorigi99
  * @version $Id: $Id
@@ -20,9 +18,7 @@ public class PHflashVega extends Flash {
   double cP_Vega = 0.0;
 
   /**
-   * <p>
    * Constructor for PHflashVega.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Hspec a double
@@ -34,9 +30,7 @@ public class PHflashVega extends Flash {
   }
 
   /**
-   * <p>
    * calcdQdTT.
-   * </p>
    *
    * @return a double
    */
@@ -46,9 +40,7 @@ public class PHflashVega extends Flash {
   }
 
   /**
-   * <p>
    * calcdQdT.
-   * </p>
    *
    * @return a double
    */
@@ -58,9 +50,7 @@ public class PHflashVega extends Flash {
   }
 
   /**
-   * <p>
    * solveQ.
-   * </p>
    *
    * @return a double
    */

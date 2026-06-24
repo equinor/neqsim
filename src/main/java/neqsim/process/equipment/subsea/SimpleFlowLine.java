@@ -7,9 +7,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * SimpleFlowLine class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -36,9 +34,7 @@ public class SimpleFlowLine extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Getter for the field <code>pipeline</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.pipeline.AdiabaticTwoPhasePipe} object
    */
@@ -79,9 +75,7 @@ public class SimpleFlowLine extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Getter for the field <code>height</code>.
-   * </p>
    *
    * @return a double
    */
@@ -90,9 +84,7 @@ public class SimpleFlowLine extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Setter for the field <code>height</code>.
-   * </p>
    *
    * @param height a double
    */

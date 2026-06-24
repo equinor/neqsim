@@ -13,18 +13,14 @@ public class SystemFurstElectrolyteEosMod2004 extends SystemSrkEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for SystemFurstElectrolyteEosMod2004.
-   * </p>
    */
   public SystemFurstElectrolyteEosMod2004() {
     this(298.15, 1.0);
   }
 
   /**
-   * <p>
    * Constructor for SystemFurstElectrolyteEosMod2004.
-   * </p>
    *
    * @param T a double
    * @param P a double

@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 
 /**
- * <p>
  * AbsorptionColumnDesignStandard class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -21,9 +19,7 @@ public class AbsorptionColumnDesignStandard extends DesignStandard {
   private double molecularSieveWaterCapacity = 20;
 
   /**
-   * <p>
    * Constructor for AbsorptionColumnDesignStandard.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
@@ -48,9 +44,7 @@ public class AbsorptionColumnDesignStandard extends DesignStandard {
   }
 
   /**
-   * <p>
    * Getter for the field <code>molecularSieveWaterCapacity</code>.
-   * </p>
    *
    * @return the molecularSieveWaterCapacity
    */
@@ -59,9 +53,7 @@ public class AbsorptionColumnDesignStandard extends DesignStandard {
   }
 
   /**
-   * <p>
    * Setter for the field <code>molecularSieveWaterCapacity</code>.
-   * </p>
    *
    * @param molecularSieveWaterCapacity the molecularSieveWaterCapacity to set
    */

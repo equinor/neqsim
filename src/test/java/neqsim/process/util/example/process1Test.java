@@ -9,9 +9,7 @@ class process1Test extends neqsim.NeqSimTest {
   static neqsim.process.processmodel.ProcessSystem operations;
 
   /**
-   * <p>
    * setUp.
-   * </p>
    */
   @BeforeAll
   public static void setUp() {

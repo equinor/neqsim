@@ -16,9 +16,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * GasScrubberSimple class.
- * </p>
  *
  * <p>
  * A simplified gas scrubber model that is a vertical separator designed primarily for removing liquid droplets from gas
@@ -73,9 +71,7 @@ public class GasScrubberSimple extends Separator {
   }
 
   /**
-   * <p>
    * Constructor for GasScrubberSimple.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.Stream} object
@@ -165,9 +161,7 @@ public class GasScrubberSimple extends Separator {
   }
 
   /**
-   * <p>
    * calcLiquidCarryoverFraction.
-   * </p>
    *
    * @return a double
    */

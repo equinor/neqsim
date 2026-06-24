@@ -5,9 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * EnergyStream class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -22,17 +20,13 @@ public class EnergyStream implements java.io.Serializable, Cloneable {
   private double duty = 0.0;
 
   /**
-   * <p>
    * Constructor for EnergyStream.
-   * </p>
    */
   public EnergyStream() {
   }
 
   /**
-   * <p>
    * Constructor for EnergyStream.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -53,9 +47,7 @@ public class EnergyStream implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>duty</code>.
-   * </p>
    *
    * @return a double
    */
@@ -64,9 +56,7 @@ public class EnergyStream implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>duty</code>.
-   * </p>
    *
    * @param duty a double
    */
@@ -97,9 +87,7 @@ public class EnergyStream implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>name</code>.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -108,9 +96,7 @@ public class EnergyStream implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>name</code>.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */

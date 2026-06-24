@@ -4,9 +4,7 @@ import java.util.HashMap;
 import neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger;
 
 /**
- * <p>
  * HeaterResponse class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -19,9 +17,7 @@ public class MultiStreamHeatExchangerResponse extends BaseResponse {
   public Double[] flowRate;
 
   /**
-   * <p>
    * Constructor for MultiStreamHeatExchangerResponse.
-   * </p>
    *
    * @param inputHX a {@link neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger} object
    */

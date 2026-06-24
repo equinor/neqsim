@@ -13,9 +13,7 @@ public class CO2ViscosityMethod extends Viscosity {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for CO2ViscosityMethod.
-   * </p>
    *
    * @param phase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

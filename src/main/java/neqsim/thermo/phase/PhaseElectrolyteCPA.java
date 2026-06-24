@@ -15,9 +15,7 @@ import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
 /**
- * <p>
  * PhaseElectrolyteCPA class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -83,9 +81,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
   private double[] lngi;
 
   /**
-   * <p>
    * Constructor for PhaseElectrolyteCPA.
-   * </p>
    */
   public PhaseElectrolyteCPA() {
   }
@@ -211,9 +207,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
   }
 
   /**
-   * <p>
    * calcDelta.
-   * </p>
    */
   public void calcDelta() {
     for (int i = 0; i < getTotalNumberOfAccociationSites(); i++) {
@@ -226,9 +220,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
   }
 
   /**
-   * <p>
    * initCPAMatrix.
-   * </p>
    *
    * @param type a int
    */
@@ -519,9 +511,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
   }
 
   /**
-   * <p>
    * FCPA.
-   * </p>
    *
    * @return a double
    */
@@ -536,9 +526,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
   }
 
   /**
-   * <p>
    * dFCPAdV.
-   * </p>
    *
    * @return a double
    */
@@ -549,9 +537,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
   }
 
   /**
-   * <p>
    * dFCPAdVdV.
-   * </p>
    *
    * @return a double
    */
@@ -562,9 +548,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
   }
 
   /**
-   * <p>
    * dFCPAdVdVdV.
-   * </p>
    *
    * @return a double
    */
@@ -578,9 +562,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
   }
 
   /**
-   * <p>
    * dFCPAdT.
-   * </p>
    *
    * @return a double
    */
@@ -596,9 +578,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
   }
 
   /**
-   * <p>
    * dFCPAdTdT.
-   * </p>
    *
    * @return a double
    */
@@ -607,9 +587,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
   }
 
   /**
-   * <p>
    * dFCPAdTdV.
-   * </p>
    *
    * @return a double
    */
@@ -624,9 +602,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
   }
 
   /**
-   * <p>
    * calcXsitedV.
-   * </p>
    */
   public void calcXsitedV() {
     if (totalNumberOfAccociationSites > 0) {
@@ -655,9 +631,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
   }
 
   /**
-   * <p>
    * solveX.
-   * </p>
    *
    * @return a boolean
    */
@@ -765,9 +739,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
   }
 
   /**
-   * <p>
    * solveX2.
-   * </p>
    *
    * @param maxIter a int
    * @return a boolean
@@ -818,9 +790,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
   }
 
   /**
-   * <p>
    * calcRootVolFinder.
-   * </p>
    *
    * @param pt the PhaseType of the phase
    * @return a double
@@ -1195,9 +1165,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
   }
 
   /**
-   * <p>
    * molarVolumeChangePhase.
-   * </p>
    *
    * @param pressure a double
    * @param temperature a double
@@ -1370,9 +1338,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
   }
 
   /**
-   * <p>
    * Setter for the field <code>gcpav</code>.
-   * </p>
    *
    * @param gcpav a double
    */
@@ -1413,9 +1379,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
   }
 
   /**
-   * <p>
    * croeneckerProduct.
-   * </p>
    *
    * @param a an array of type double
    * @param b an array of type double

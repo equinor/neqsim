@@ -11,9 +11,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * PHsolidFlash class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -29,9 +27,7 @@ public class PHsolidFlash extends Flash {
   double enthalpyspec = 0.5;
 
   /**
-   * <p>
    * Constructor for PHsolidFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param ent a double

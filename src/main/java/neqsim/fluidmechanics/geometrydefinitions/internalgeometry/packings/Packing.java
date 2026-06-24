@@ -11,9 +11,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.util.NamedBaseClass;
 
 /**
- * <p>
  * Packing class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -29,9 +27,7 @@ public abstract class Packing extends NamedBaseClass implements PackingInterface
   double surfaceAreaPrVolume = 112.6;
 
   /**
-   * <p>
    * Constructor for Packing.
-   * </p>
    *
    * @param name Name of packing
    */
@@ -52,9 +48,7 @@ public abstract class Packing extends NamedBaseClass implements PackingInterface
   }
 
   /**
-   * <p>
    * Constructor for Packing.
-   * </p>
    *
    * @param name Name of packing
    * @param material Name of material

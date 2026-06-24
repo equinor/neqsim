@@ -560,9 +560,7 @@ public class Leachman {
   }
 
   /**
-   * <p>
    * PropertiesGERG.
-   * </p>
    *
    * @param T a double
    * @param D a double
@@ -698,9 +696,7 @@ public class Leachman {
 
   // The following routine must be called once before any other routine.
   /**
-   * <p>
    * SetupGERG.
-   * </p>
    *
    * @param hydrogenType String
    */
@@ -832,9 +828,7 @@ public class Leachman {
    */
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

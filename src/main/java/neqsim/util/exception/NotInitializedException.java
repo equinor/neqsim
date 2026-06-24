@@ -1,9 +1,7 @@
 package neqsim.util.exception;
 
 /**
- * <p>
  * NotInitializedException class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id

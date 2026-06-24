@@ -11,9 +11,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * SampleCreator class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -24,17 +22,13 @@ public class SampleCreator {
   ExperimentalEquipmentData equipment;
 
   /**
-   * <p>
    * Constructor for SampleCreator.
-   * </p>
    */
   public SampleCreator() {
   }
 
   /**
-   * <p>
    * Constructor for SampleCreator.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param thermoOps a {@link neqsim.thermodynamicoperations.ThermodynamicOperations} object
@@ -45,9 +39,7 @@ public class SampleCreator {
   }
 
   /**
-   * <p>
    * setThermoSystem.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -56,9 +48,7 @@ public class SampleCreator {
   }
 
   /**
-   * <p>
    * setExperimentalEquipment.
-   * </p>
    *
    * @param equipment a {@link neqsim.statistics.experimentalequipmentdata.ExperimentalEquipmentData} object
    */

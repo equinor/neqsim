@@ -3,9 +3,7 @@ package neqsim.process.equipment.valve;
 import neqsim.process.equipment.stream.StreamInterface;
 
 /**
- * <p>
  * RuptureDisk class - represents a rupture disk (bursting disc) safety device.
- * </p>
  *
  * <p>
  * A rupture disk is a non-reclosing pressure relief device that bursts at a set pressure and remains fully open. Unlike
@@ -43,9 +41,7 @@ public class RuptureDisk extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Constructor for RuptureDisk.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.Stream} object
@@ -55,9 +51,7 @@ public class RuptureDisk extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>burstPressure</code>.
-   * </p>
    *
    * @return the burstPressure in bara
    */
@@ -66,9 +60,7 @@ public class RuptureDisk extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>burstPressure</code>.
-   * </p>
    *
    * @param burstPressure the burstPressure to set in bara
    */
@@ -81,9 +73,7 @@ public class RuptureDisk extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>fullOpenPressure</code>.
-   * </p>
    *
    * @return the fullOpenPressure in bara
    */
@@ -92,9 +82,7 @@ public class RuptureDisk extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>fullOpenPressure</code>.
-   * </p>
    *
    * @param fullOpenPressure the fullOpenPressure to set in bara
    */

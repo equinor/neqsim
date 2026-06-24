@@ -13,9 +13,7 @@ import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequi
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * ReactiveKrishnaStandartFilmModel class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -27,9 +25,7 @@ public class ReactiveKrishnaStandartFilmModel extends KrishnaStandartFilmModel {
   int enhancementType = 1;
 
   /**
-   * <p>
    * Constructor for ReactiveKrishnaStandartFilmModel.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -39,9 +35,7 @@ public class ReactiveKrishnaStandartFilmModel extends KrishnaStandartFilmModel {
   }
 
   /**
-   * <p>
    * Constructor for ReactiveKrishnaStandartFilmModel.
-   * </p>
    *
    * @param flowNode a {@link neqsim.fluidmechanics.flownode.FlowNodeInterface} object
    */

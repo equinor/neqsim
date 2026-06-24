@@ -7,9 +7,7 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * TPflash1 class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -21,9 +19,7 @@ public class TPflash1 {
   /** Logger object for class. */
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

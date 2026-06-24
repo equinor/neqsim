@@ -11,9 +11,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * OptimizedVUflash class with enhanced performance for transient separator simulations. Key optimizations:
- * </p>
  * <ul>
  * <li>Adaptive convergence criteria based on system state</li>
  * <li>Smart initial guessing using previous state</li>

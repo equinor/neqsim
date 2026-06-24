@@ -9,9 +9,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * EquilibriumFluidBoundary class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -22,9 +20,7 @@ public class EquilibriumFluidBoundary
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for EquilibriumFluidBoundary.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -35,9 +31,7 @@ public class EquilibriumFluidBoundary
   }
 
   /**
-   * <p>
    * Constructor for EquilibriumFluidBoundary.
-   * </p>
    *
    * @param flowNode a {@link neqsim.fluidmechanics.flownode.FlowNodeInterface} object
    */
@@ -64,9 +58,7 @@ public class EquilibriumFluidBoundary
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

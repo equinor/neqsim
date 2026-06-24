@@ -4,9 +4,7 @@ import java.util.HashMap;
 import neqsim.process.equipment.pipeline.Pipeline;
 
 /**
- * <p>
  * PipelineResponse class for JSON serialization of Pipeline equipment.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -16,9 +14,7 @@ public class PipelineResponse extends BaseResponse {
   public HashMap<String, Value> data = new HashMap<String, Value>();
 
   /**
-   * <p>
    * Constructor for PipelineResponse.
-   * </p>
    *
    * @param pipeline a {@link neqsim.process.equipment.pipeline.Pipeline} object
    */

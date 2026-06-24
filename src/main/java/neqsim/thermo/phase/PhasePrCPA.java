@@ -6,9 +6,7 @@ import neqsim.thermo.mixingrule.CPAMixingRuleHandler;
 import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
 
 /**
- * <p>
  * PhasePrCPA class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -35,9 +33,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
   int[][][][] crossAccociationScheme = null;
 
   /**
-   * <p>
    * Constructor for PhasePrCPA.
-   * </p>
    */
   public PhasePrCPA() {
     cpamix = cpaSelect.getMixingRule(1);
@@ -151,9 +147,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * FCPA.
-   * </p>
    *
    * @return a double
    */
@@ -172,9 +166,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * dFCPAdV.
-   * </p>
    *
    * @return a double
    */
@@ -183,9 +175,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * dFCPAdVdV.
-   * </p>
    *
    * @return a double
    */
@@ -195,9 +185,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * dFCPAdVdVdV.
-   * </p>
    *
    * @return a double
    */
@@ -208,9 +196,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * dFCPAdT.
-   * </p>
    *
    * @return a double
    */
@@ -219,9 +205,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * dFCPAdTdT.
-   * </p>
    *
    * @return a double
    */
@@ -230,9 +214,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * calc_hCPA.
-   * </p>
    *
    * @return a double
    */
@@ -252,9 +234,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * calc_hCPAdT.
-   * </p>
    *
    * @return a double
    */
@@ -280,9 +260,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * calc_hCPAdTdT.
-   * </p>
    *
    * @return a double
    */
@@ -308,9 +286,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * calc_g.
-   * </p>
    *
    * @return a double
    */
@@ -321,9 +297,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * calc_lngni.
-   * </p>
    *
    * @param comp a int
    * @return a double
@@ -333,9 +307,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * calc_lngV.
-   * </p>
    *
    * @return a double
    */
@@ -358,9 +330,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * calc_lngVV.
-   * </p>
    *
    * @return a double
    */
@@ -376,9 +346,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * calc_lngVVV.
-   * </p>
    *
    * @return a double
    */
@@ -396,9 +364,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * solveX.
-   * </p>
    *
    * @return a boolean
    */

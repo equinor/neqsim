@@ -10,9 +10,7 @@ import neqsim.thermo.mixingrule.EosMixingRuleType;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
 /**
- * <p>
  * PhaseGEUnifacUMRPRU class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -30,18 +28,14 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   double FCommontemp = 0.0;
 
   /**
-   * <p>
    * Constructor for PhaseGEUnifacUMRPRU.
-   * </p>
    */
   public PhaseGEUnifacUMRPRU() {
     componentArray = new ComponentGEUnifacUMRPRU[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   }
 
   /**
-   * <p>
    * Constructor for PhaseGEUnifacUMRPRU.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param alpha an array of type double
@@ -89,9 +83,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   }
 
   /**
-   * <p>
    * getVCommontemp.
-   * </p>
    *
    * @return a double
    */
@@ -100,9 +92,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   }
 
   /**
-   * <p>
    * getFCommontemp.
-   * </p>
    *
    * @return a double
    */
@@ -149,9 +139,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   }
 
   /**
-   * <p>
    * initQmix.
-   * </p>
    */
   public void initQmix() {
     int numberOfGroups = ((ComponentGEUnifac) componentArray[0]).getUnifacGroups().length;
@@ -164,9 +152,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   }
 
   /**
-   * <p>
    * initQmixdN.
-   * </p>
    */
   public void initQmixdN() {
     int numberOfGroups = ((ComponentGEUnifac) componentArray[0]).getUnifacGroups().length;
@@ -179,9 +165,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   }
 
   /**
-   * <p>
    * getQmix.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a double
@@ -197,9 +181,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   }
 
   /**
-   * <p>
    * getQmixdN.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return an array of type double
@@ -215,10 +197,8 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   }
 
   /**
-   * <p>
    * Returns whether this phase should use the Mathias-Copeman UMR group-interaction parameter tables (suffix
    * {@code _umrmc}) instead of the original UMR-PRU tables (suffix {@code _umr}).
-   * </p>
    *
    * <p>
    * The temperature-dependent group-interaction parameters <i>A<sub>nm</sub>(T) = a<sub>nm</sub> + b<sub>nm</sub>T +
@@ -277,9 +257,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   }
 
   /**
-   * <p>
    * calcbij.
-   * </p>
    */
   public void calcbij() {
     java.sql.ResultSet dataSet = null;
@@ -311,9 +289,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   }
 
   /**
-   * <p>
    * calccij.
-   * </p>
    */
   public void calccij() {
     java.sql.ResultSet dataSet = null;

@@ -7,9 +7,7 @@
 package neqsim.statistics.experimentalsamplecreation.readdatafromfile;
 
 /**
- * <p>
  * DataObjectInterface interface.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id

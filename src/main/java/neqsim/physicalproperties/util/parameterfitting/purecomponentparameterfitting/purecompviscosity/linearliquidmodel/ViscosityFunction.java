@@ -9,18 +9,14 @@ package neqsim.physicalproperties.util.parameterfitting.purecomponentparameterfi
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtFunction;
 
 /**
- * <p>
  * ViscosityFunction class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class ViscosityFunction extends LevenbergMarquardtFunction {
   /**
-   * <p>
    * Constructor for ViscosityFunction.
-   * </p>
    */
   public ViscosityFunction() {
   }

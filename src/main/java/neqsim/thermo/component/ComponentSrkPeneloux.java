@@ -3,9 +3,7 @@ package neqsim.thermo.component;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermSrk;
 
 /**
- * <p>
  * ComponentSrkPeneloux class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -17,9 +15,7 @@ public class ComponentSrkPeneloux extends ComponentSrk {
   private double factTemp = Math.pow(2.0, 1.0 / 3.0);
 
   /**
-   * <p>
    * Constructor for ComponentSrkPeneloux.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -45,9 +41,7 @@ public class ComponentSrkPeneloux extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Constructor for ComponentSrkPeneloux.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]

@@ -8,9 +8,7 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.designstandards.PressureVesselDesignStandard;
 
 /**
- * <p>
  * AdsorberMechanicalDesign class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -25,9 +23,7 @@ public class AdsorberMechanicalDesign extends MechanicalDesign {
   double molecularSieveWaterCapacity = 10.0;
 
   /**
-   * <p>
    * Constructor for AdsorberMechanicalDesign.
-   * </p>
    *
    * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */

@@ -4,9 +4,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * BukacekWaterInGas class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -16,9 +14,7 @@ public class BukacekWaterInGas {
    * Calculates the ppm(mol) water content of a gas at its water dew point
    */
   /**
-   * <p>
    * getWaterInGas.
-   * </p>
    *
    * @param temperature a double
    * @param pressure a double
@@ -46,9 +42,7 @@ public class BukacekWaterInGas {
   }
 
   /**
-   * <p>
    * waterDewPointTemperature.
-   * </p>
    *
    * @param moleFractionWaterInGas a double
    * @param pressure a double
@@ -67,9 +61,7 @@ public class BukacekWaterInGas {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

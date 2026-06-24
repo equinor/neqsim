@@ -4,9 +4,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermSrk;
 
 /**
- * <p>
  * ComponentSrk class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -18,9 +16,7 @@ public class ComponentSrk extends ComponentEos {
   private double factTemp = Math.pow(2.0, 1.0 / 3.0);
 
   /**
-   * <p>
    * Constructor for ComponentSrk.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -44,9 +40,7 @@ public class ComponentSrk extends ComponentEos {
   }
 
   /**
-   * <p>
    * Constructor for ComponentSrk.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]
@@ -108,9 +102,7 @@ public class ComponentSrk extends ComponentEos {
   }
 
   /**
-   * <p>
    * getQpure.
-   * </p>
    *
    * @param temperature a double
    * @return a double
@@ -120,9 +112,7 @@ public class ComponentSrk extends ComponentEos {
   }
 
   /**
-   * <p>
    * getdQpuredT.
-   * </p>
    *
    * @param temperature a double
    * @return a double
@@ -132,9 +122,7 @@ public class ComponentSrk extends ComponentEos {
   }
 
   /**
-   * <p>
    * getdQpuredTdT.
-   * </p>
    *
    * @param temperature a double
    * @return a double

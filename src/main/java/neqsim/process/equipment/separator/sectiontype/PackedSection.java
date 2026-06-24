@@ -3,9 +3,7 @@ package neqsim.process.equipment.separator.sectiontype;
 import neqsim.process.equipment.separator.Separator;
 
 /**
- * <p>
  * PackedSection class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -15,9 +13,7 @@ public class PackedSection extends SeparatorSection {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for PackedSection.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param type a {@link java.lang.String} object

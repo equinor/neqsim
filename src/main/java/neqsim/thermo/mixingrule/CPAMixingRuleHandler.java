@@ -15,9 +15,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>
  * CPAMixingRules class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -37,18 +35,14 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
   final int[] charge2B = { 1, -1 };
 
   /**
-   * <p>
    * Constructor for CPAMixingRules.
-   * </p>
    */
   public CPAMixingRuleHandler() {
     this.mixingRuleName = "CPA_Radoch";
   }
 
   /**
-   * <p>
    * getMixingRule.
-   * </p>
    *
    * @param mr a int
    * @return a {@link neqsim.thermo.mixingrule.CPAMixingRulesInterface} object
@@ -71,9 +65,7 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
   }
 
   /**
-   * <p>
    * getMixingRule.
-   * </p>
    *
    * @param mr a int
    * @return a {@link neqsim.thermo.mixingrule.CPAMixingRulesInterface} object
@@ -90,9 +82,7 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
   }
 
   /**
-   * <p>
    * getMixingRule.
-   * </p>
    *
    * @param mr a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -145,9 +135,7 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
   }
 
   /**
-   * <p>
    * resetMixingRule.
-   * </p>
    *
    * @param i a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -663,9 +651,7 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
   }
 
   /**
-   * <p>
    * setAssociationScheme.
-   * </p>
    *
    * @param compnumb a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -686,9 +672,7 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
   }
 
   /**
-   * <p>
    * setCrossAssociationScheme.
-   * </p>
    *
    * @param compnumb a int
    * @param compnumb2 a int
@@ -732,9 +716,7 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
   }
 
   /**
-   * <p>
    * getInteractionMatrix.
-   * </p>
    *
    * @param comp1Scheme an array of int objects
    * @param comp2Scheme an array of int objects

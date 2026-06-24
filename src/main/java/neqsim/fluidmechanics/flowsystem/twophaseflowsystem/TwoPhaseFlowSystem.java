@@ -5,9 +5,7 @@ import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * Abstract TwoPhaseFlowSystem class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -20,17 +18,13 @@ public abstract class TwoPhaseFlowSystem extends FlowSystem {
   public PipeData pipe;
 
   /**
-   * <p>
    * Constructor for TwoPhaseFlowSystem.
-   * </p>
    */
   public TwoPhaseFlowSystem() {
   }
 
   /**
-   * <p>
    * Constructor for TwoPhaseFlowSystem.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

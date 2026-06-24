@@ -10,10 +10,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * SolutionGasWaterRatio class. Calculates the Solution Gas-Water Ratio (Rsw), which represents the amount of gas
  * dissolved in water at reservoir conditions that will be released when pressure is reduced to standard conditions.
- * </p>
  *
  * <p>
  * Rsw is typically expressed in Sm³ gas/Sm³ water at standard conditions (15°C, 1.01325 bara).
@@ -63,9 +61,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
   private CalculationMethod method = CalculationMethod.ELECTROLYTE_CPA;
 
   /**
-   * <p>
    * Constructor for SolutionGasWaterRatio.
-   * </p>
    *
    * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object representing the reservoir gas/fluid
    */
@@ -78,9 +74,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Set the calculation method.
-   * </p>
    *
    * @param method the calculation method to use
    */
@@ -89,9 +83,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Set the calculation method using a string.
-   * </p>
    *
    * @param methodName the name of the calculation method ("McCain", "Soreide-Whitson", or "Electrolyte-CPA")
    */
@@ -113,9 +105,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Get the current calculation method.
-   * </p>
    *
    * @return the calculation method
    */
@@ -124,9 +114,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Set the salinity of the water.
-   * </p>
    *
    * @param salinity salinity in mol NaCl per kg water (molality)
    */
@@ -135,9 +123,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Set the salinity of the water with unit specification.
-   * </p>
    *
    * @param salinity the salinity value
    * @param unit the unit: "molal" (mol/kg water), "wt%" (weight percent NaCl), or "ppm" (mg/L)
@@ -164,9 +150,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Get the salinity in molality (mol NaCl / kg water).
-   * </p>
    *
    * @return the salinity in molality
    */
@@ -175,9 +159,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Set the temperatures and pressures for the calculation.
-   * </p>
    *
    * @param temperatures array of temperatures in Kelvin
    * @param pressures array of pressures in bara
@@ -191,9 +173,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Run the Rsw calculation.
-   * </p>
    */
   public void runCalc() {
     rsw = new double[pressures.length];
@@ -203,9 +183,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Calculate Rsw at a single temperature and pressure.
-   * </p>
    *
    * @param temperatureK temperature in Kelvin
    * @param pressureBara pressure in bara
@@ -224,9 +202,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Calculate Rsw using McCain (Culberson-McKetta) correlation.
-   * </p>
    *
    * <p>
    * The correlation calculates gas solubility in pure water, then applies a salinity correction factor. Valid for
@@ -276,9 +252,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Calculate salinity coefficient for McCain correlation.
-   * </p>
    *
    * @param temperatureF temperature in Fahrenheit
    * @param pressurePsia pressure in psia
@@ -295,9 +269,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Get salinity in weight percent NaCl.
-   * </p>
    *
    * @return salinity in wt% NaCl
    */
@@ -310,9 +282,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Calculate Rsw using Søreide-Whitson method.
-   * </p>
    *
    * <p>
    * Uses the modified Peng-Robinson EoS with Søreide-Whitson alpha function and mixing rules that account for salinity
@@ -383,9 +353,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Calculate Rsw using Electrolyte CPA method.
-   * </p>
    *
    * <p>
    * Uses the CPA equation of state with electrolyte extensions for accurate modeling of hydrocarbon-water-salt systems.
@@ -434,9 +402,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Add gas components from the base system to a new system.
-   * </p>
    *
    * @param targetSystem the system to add components to
    */
@@ -465,9 +431,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Calculate Rsw from flash calculation results.
-   * </p>
    *
    * <p>
    * Rsw = (moles of dissolved gas in aqueous phase at reservoir conditions) converted to standard conditions volume /
@@ -556,9 +520,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Get the calculated Rsw values.
-   * </p>
    *
    * @return array of Rsw values in Sm³ gas / Sm³ water
    */
@@ -567,9 +529,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Get Rsw at a specific index.
-   * </p>
    *
    * @param index the index
    * @return Rsw value
@@ -582,9 +542,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Print results to console.
-   * </p>
    */
   public void printResults() {
     System.out.println("Solution Gas-Water Ratio (Rsw) Calculation Results");
@@ -599,9 +557,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Example main method demonstrating usage.
-   * </p>
    *
    * @param args command line arguments (not used)
    */

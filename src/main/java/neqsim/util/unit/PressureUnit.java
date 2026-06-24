@@ -4,9 +4,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.util.exception.InvalidInputException;
 
 /**
- * <p>
  * PressureUnit class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -16,9 +14,7 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for PressureUnit.
-   * </p>
    *
    * @param value Pressure value
    * @param unit Engineering unit of value
@@ -28,9 +24,7 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
   }
 
   /**
-   * <p>
    * getConversionFactor.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a double

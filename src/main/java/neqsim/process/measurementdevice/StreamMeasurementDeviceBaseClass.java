@@ -3,9 +3,7 @@ package neqsim.process.measurementdevice;
 import neqsim.process.equipment.stream.StreamInterface;
 
 /**
- * <p>
  * Abstract MeasurementDeviceBaseClass class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id

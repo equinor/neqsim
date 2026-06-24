@@ -5,9 +5,7 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.MechanicalDesignMarginResult;
 
 /**
- * <p>
  * PressureVesselDesignStandard class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -18,9 +16,7 @@ public class PressureVesselDesignStandard extends DesignStandard {
   private final MechanicalDesignMarginResult safetyMargins;
 
   /**
-   * <p>
    * Constructor for PressureVesselDesignStandard.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
@@ -31,9 +27,7 @@ public class PressureVesselDesignStandard extends DesignStandard {
   }
 
   /**
-   * <p>
    * calcWallThickness.
-   * </p>
    *
    * @return a double
    */

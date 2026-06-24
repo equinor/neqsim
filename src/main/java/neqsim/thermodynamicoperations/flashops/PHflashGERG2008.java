@@ -9,9 +9,7 @@ package neqsim.thermodynamicoperations.flashops;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * PHflashGERG2008 class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -26,9 +24,7 @@ public class PHflashGERG2008 extends Flash {
   double cP_GERG2008 = 0.0;
 
   /**
-   * <p>
    * Constructor for PHflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Hspec a double
@@ -40,9 +36,7 @@ public class PHflashGERG2008 extends Flash {
   }
 
   /**
-   * <p>
    * calcdQdTT.
-   * </p>
    *
    * @return a double
    */
@@ -52,9 +46,7 @@ public class PHflashGERG2008 extends Flash {
   }
 
   /**
-   * <p>
    * calcdQdT.
-   * </p>
    *
    * @return a double
    */
@@ -64,9 +56,7 @@ public class PHflashGERG2008 extends Flash {
   }
 
   /**
-   * <p>
    * solveQ.
-   * </p>
    *
    * @return a double
    */
@@ -138,9 +128,7 @@ public class PHflashGERG2008 extends Flash {
   }
 
   /**
-   * <p>
    * solveQ2.
-   * </p>
    *
    * @return a double
    */

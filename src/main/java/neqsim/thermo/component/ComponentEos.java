@@ -36,9 +36,7 @@ import neqsim.thermo.component.attractiveeosterm.AttractiveTermUMRPRU;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * Abstract ComponentEos class.
- * </p>
  *
  * @author Even Solbraa
  */
@@ -99,9 +97,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   static Logger logger = LogManager.getLogger(ComponentEos.class);
 
   /**
-   * <p>
    * Constructor for ComponentEos.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -113,9 +109,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
-   * <p>
    * Constructor for ComponentEos.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]
@@ -468,9 +462,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
-   * <p>
    * getdAdTdT.
-   * </p>
    *
    * @return a double
    */
@@ -532,9 +524,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
-   * <p>
    * alpha.
-   * </p>
    *
    * @param temperature a double
    * @return a double
@@ -550,9 +540,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
-   * <p>
    * diffalphaT.
-   * </p>
    *
    * @param temperature a double
    * @return a double
@@ -562,9 +550,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
-   * <p>
    * diffdiffalphaT.
-   * </p>
    *
    * @param temperature a double
    * @return a double
@@ -680,9 +666,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
-   * <p>
    * getAresnTV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -715,9 +699,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
-   * <p>
    * getdUdnSV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -727,9 +709,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
-   * <p>
    * getdUdSdnV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -740,9 +720,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
-   * <p>
    * getdUdVdnS.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -753,9 +731,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
-   * <p>
    * getdUdndnSV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param compNumb1 a int
@@ -769,9 +745,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
-   * <p>
    * Getter for the field <code>attractiveParameter</code>.
-   * </p>
    *
    * @return a {@link neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface} object
    */
@@ -780,9 +754,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
-   * <p>
    * Setter for the field <code>attractiveParameter</code>.
-   * </p>
    *
    * @param attractiveParameter a {@link neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface} object
    */

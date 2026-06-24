@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * PotentialTheoryAdsorption class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -36,17 +34,13 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
   private boolean calculated = false;
 
   /**
-   * <p>
    * Constructor for PotentialTheoryAdsorption.
-   * </p>
    */
   public PotentialTheoryAdsorption() {
   }
 
   /**
-   * <p>
    * Constructor for PotentialTheoryAdsorption.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -181,9 +175,7 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
   }
 
   /**
-   * <p>
    * readDBParameters.
-   * </p>
    */
   public void readDBParameters() {
     for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {

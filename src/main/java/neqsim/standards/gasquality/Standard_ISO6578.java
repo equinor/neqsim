@@ -7,9 +7,7 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * Standard_ISO6578 class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -77,9 +75,7 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
   double[] Vinitrogen = { 0.038408, 0.039949, 0.041788, 0.0440143, 0.047019, 0.051022, 0.055897, 0.061767, 0.069064 };
 
   /**
-   * <p>
    * Constructor for Standard_ISO6578.
-   * </p>
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -89,9 +85,7 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
   }
 
   /**
-   * <p>
    * useISO6578VolumeCorrectionFacotrs.
-   * </p>
    *
    * @param useFactors a boolean
    */
@@ -101,9 +95,7 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
   }
 
   /**
-   * <p>
    * setCorrectionFactors.
-   * </p>
    */
   public void setCorrectionFactors() {
     BicubicInterpolator tempInterp = new BicubicInterpolator();
@@ -241,9 +233,7 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
   }
 
   /**
-   * <p>
    * getCorrFactor1.
-   * </p>
    *
    * @return a double
    */
@@ -252,9 +242,7 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
   }
 
   /**
-   * <p>
    * getCorrFactor2.
-   * </p>
    *
    * @return a double
    */

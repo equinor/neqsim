@@ -5,9 +5,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * destillation2 class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id

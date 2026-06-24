@@ -7,9 +7,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * VLSolidTray class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -22,9 +20,7 @@ public class VLSolidTray extends SimpleTray {
   private double temperature = 273.15;
 
   /**
-   * <p>
    * Constructor for VLSolidTray.
-   * </p>
    *
    * @param name name of tray
    */

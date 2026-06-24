@@ -5,9 +5,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * Reboiler class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -21,9 +19,7 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
   double duty = 0.0;
 
   /**
-   * <p>
    * Constructor for Reboiler.
-   * </p>
    *
    * @param name name of unit operation
    */
@@ -32,9 +28,7 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
   }
 
   /**
-   * <p>
    * Getter for the field <code>refluxRatio</code>.
-   * </p>
    *
    * @return the refluxRatio
    */
@@ -43,9 +37,7 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
   }
 
   /**
-   * <p>
    * Setter for the field <code>refluxRatio</code>.
-   * </p>
    *
    * @param refluxRatio the refluxRatio to set
    */
@@ -71,9 +63,7 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
   }
 
   /**
-   * <p>
    * Getter for the field <code>duty</code>.
-   * </p>
    *
    * @return a double
    */
@@ -83,9 +73,7 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
   }
 
   /**
-   * <p>
    * getDuty.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double

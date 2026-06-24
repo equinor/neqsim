@@ -6,9 +6,7 @@ import neqsim.process.measurementdevice.TemperatureTransmitter;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TestOnlineProcess class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -16,9 +14,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class TestOnlineProcess {
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

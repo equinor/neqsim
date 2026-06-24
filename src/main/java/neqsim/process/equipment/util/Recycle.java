@@ -76,9 +76,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   private transient BroydenAccelerator broydenAccelerator = null;
 
   /**
-   * <p>
    * Constructor for Recycle.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -87,9 +85,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * Setter for the field <code>compositionTolerance</code>.
-   * </p>
    *
    * @param compositionTolerance a double
    */
@@ -98,9 +94,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * Getter for the field <code>compositionTolerance</code>.
-   * </p>
    *
    * @return a double
    */
@@ -109,9 +103,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * Setter for the field <code>temperatureTolerance</code>.
-   * </p>
    *
    * @param temperatureTolerance a double in % error
    */
@@ -120,9 +112,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * Getter for the field <code>temperatureTolerance</code>.
-   * </p>
    *
    * @return a double
    */
@@ -131,9 +121,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * Setter for the field <code>flowTolerance</code>.
-   * </p>
    *
    * @param flowTolerance a double
    */
@@ -142,9 +130,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * Getter for the field <code>flowTolerance</code>.
-   * </p>
    *
    * @return a double
    */
@@ -189,9 +175,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * resetIterations.
-   * </p>
    */
   public void resetIterations() {
     iterations = 0;
@@ -214,9 +198,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * Setter for the field <code>downstreamProperty</code>.
-   * </p>
    *
    * @param property a {@link java.util.ArrayList} object
    */
@@ -225,9 +207,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * Setter for the field <code>downstreamProperty</code>.
-   * </p>
    *
    * @param property a {@link java.lang.String} object
    */
@@ -258,9 +238,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * getStream.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -270,9 +248,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * mixStream.
-   * </p>
    */
   public void mixStream() {
     int index = 0;
@@ -309,9 +285,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * guessTemperature.
-   * </p>
    *
    * @return a double
    */
@@ -325,9 +299,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * calcMixStreamEnthalpy.
-   * </p>
    *
    * @return a double
    */
@@ -351,9 +323,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * initiateDownstreamProperties.
-   * </p>
    *
    * @param outstream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -362,9 +332,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * setDownstreamProperties.
-   * </p>
    */
   public void setDownstreamProperties() {
     if (downstreamProperty.size() > 0) {
@@ -463,9 +431,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * massBalanceCheck.
-   * </p>
    *
    * @return a double
    */
@@ -481,9 +447,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * compositionBalanceCheck.
-   * </p>
    *
    * @return a double
    */
@@ -502,9 +466,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * temperatureBalanceCheck.
-   * </p>
    *
    * @return a double
    */
@@ -519,9 +481,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * pressureBalanceCheck.
-   * </p>
    *
    * @return a double
    */
@@ -560,10 +520,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
-   * Setter for the tolerance fields.
-   * </p>
-   * Set tolerances to tolerance input.
+   * Setter for the tolerance fields. Set tolerances to tolerance input.
    *
    * @param tolerance the tolerance to set
    */
@@ -839,9 +796,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * Setter for the field <code>errorTemperature</code>.
-   * </p>
    *
    * @param errorTemperature the errorTemperature to set
    */
@@ -850,9 +805,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * Setter for the field <code>errorPressure</code>.
-   * </p>
    *
    * @param errorPressure the errorPressure to set
    */
@@ -861,9 +814,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * Setter for the field <code>errorFlow</code>.
-   * </p>
    *
    * @param errorFlow the error to set
    */
@@ -872,9 +823,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * Getter for the field <code>errorFlow</code>.
-   * </p>
    *
    * @return a double
    */
@@ -883,9 +832,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * Getter for the field <code>errorTemperature</code>.
-   * </p>
    *
    * @return a double
    */
@@ -894,9 +841,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * Getter for the field <code>errorPressure</code>.
-   * </p>
    *
    * @return a double
    */
@@ -905,9 +850,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * Setter for the field <code>errorComposition</code>.
-   * </p>
    *
    * @param errorComposition the error to set
    */
@@ -916,9 +859,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * Getter for the field <code>errorComposition</code>.
-   * </p>
    *
    * @return a double
    */
@@ -927,9 +868,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * Getter for the field <code>priority</code>.
-   * </p>
    *
    * @return a int
    */
@@ -938,9 +877,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * Setter for the field <code>priority</code>.
-   * </p>
    *
    * @param priority a int
    */
@@ -966,9 +903,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * Getter for the field <code>downstreamProperty</code>.
-   * </p>
    *
    * @return a {@link java.util.ArrayList} object
    */
@@ -1017,9 +952,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>
    * Setter for the field <code>outletStream</code>.
-   * </p>
    *
    * @param outletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */

@@ -3,9 +3,7 @@ package neqsim.thermodynamicoperations.flashops.saturationops;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * constantDutyTemperatureFlash class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -15,17 +13,13 @@ public class ConstantDutyTemperatureFlash extends ConstantDutyFlash {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for constantDutyTemperatureFlash.
-   * </p>
    */
   public ConstantDutyTemperatureFlash() {
   }
 
   /**
-   * <p>
    * Constructor for constantDutyTemperatureFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

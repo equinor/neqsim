@@ -9,9 +9,7 @@ import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.standards.gasquality.Standard_ISO6976;
 
 /**
- * <p>
  * StreamResponse class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -24,9 +22,7 @@ public class StreamResponse extends BaseResponse {
   public HashMap<String, HashMap<String, Value>> composition = new HashMap<String, HashMap<String, Value>>();
 
   /**
-   * <p>
    * Constructor for StreamResponse.
-   * </p>
    *
    * @param inputStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -247,9 +243,7 @@ public class StreamResponse extends BaseResponse {
   }
 
   /**
-   * <p>
    * print.
-   * </p>
    */
   public void print() {
   }

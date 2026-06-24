@@ -5,9 +5,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * BasePVTsimulation class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -28,9 +26,7 @@ public class BasePVTsimulation implements SimulationInterface {
   public LevenbergMarquardt optimizer = new LevenbergMarquardt();
 
   /**
-   * <p>
    * Constructor for BasePVTsimulation.
-   * </p>
    *
    * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -41,9 +37,7 @@ public class BasePVTsimulation implements SimulationInterface {
   }
 
   /**
-   * <p>
    * Setter for the field <code>experimentalData</code>.
-   * </p>
    *
    * @param expData an array of type double
    */
@@ -52,9 +46,7 @@ public class BasePVTsimulation implements SimulationInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>saturationPressure</code>.
-   * </p>
    *
    * @return a double
    */
@@ -87,9 +79,7 @@ public class BasePVTsimulation implements SimulationInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>pressure</code>.
-   * </p>
    *
    * @return the pressure
    */
@@ -98,9 +88,7 @@ public class BasePVTsimulation implements SimulationInterface {
   }
 
   /**
-   * <p>
    * Setter for the field <code>pressure</code>.
-   * </p>
    *
    * @param pressure the pressure to set
    */
@@ -109,9 +97,7 @@ public class BasePVTsimulation implements SimulationInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>temperature</code>.
-   * </p>
    *
    * @return the temperature
    */
@@ -120,9 +106,7 @@ public class BasePVTsimulation implements SimulationInterface {
   }
 
   /**
-   * <p>
    * Setter for the field <code>temperature</code>. NB! Verify unit is correct.
-   * </p>
    *
    * @param temperature the temperature to set
    */
@@ -138,9 +122,7 @@ public class BasePVTsimulation implements SimulationInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>pressures</code>.
-   * </p>
    *
    * @return the pressures
    */
@@ -149,9 +131,7 @@ public class BasePVTsimulation implements SimulationInterface {
   }
 
   /**
-   * <p>
    * Setter for the field <code>pressures</code>.
-   * </p>
    *
    * @param pressures the pressures to set
    */
@@ -166,9 +146,7 @@ public class BasePVTsimulation implements SimulationInterface {
   }
 
   /**
-   * <p>
    * getZsaturation.
-   * </p>
    *
    * @return the Zsaturation
    */
@@ -177,9 +155,7 @@ public class BasePVTsimulation implements SimulationInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>saturationTemperature</code>.
-   * </p>
    *
    * @return the saturationTemperature
    */

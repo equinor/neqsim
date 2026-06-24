@@ -5,9 +5,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * ComponentGEWilson class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -17,9 +15,7 @@ public class ComponentGEWilson extends ComponentGE {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for ComponentGEWilson.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -31,9 +27,7 @@ public class ComponentGEWilson extends ComponentGE {
   }
 
   /**
-   * <p>
    * Calculate, set and return fugacity coefficient.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object to get fugacity coefficient of.
    * @param numberOfComponents a int
@@ -50,9 +44,7 @@ public class ComponentGEWilson extends ComponentGE {
   }
 
   /**
-   * <p>
    * getGamma.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -74,9 +66,7 @@ public class ComponentGEWilson extends ComponentGE {
   }
 
   /**
-   * <p>
    * getWilsonActivityCoefficient.
-   * </p>
    *
    * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -101,9 +91,7 @@ public class ComponentGEWilson extends ComponentGE {
   }
 
   /**
-   * <p>
    * getCharEnergyParamter.
-   * </p>
    *
    * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param comp1 a int
@@ -141,9 +129,7 @@ public class ComponentGEWilson extends ComponentGE {
   }
 
   /**
-   * <p>
    * getWilsonInteractionEnergy.
-   * </p>
    *
    * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double

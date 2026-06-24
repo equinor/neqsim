@@ -20,9 +20,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * ChemicalReactionOperations class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -138,9 +136,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   }
 
   /**
-   * <p>
    * Constructor for ChemicalReactionOperations.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -197,9 +193,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   }
 
   /**
-   * <p>
    * Setter for the field <code>system</code>.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -220,9 +214,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   }
 
   /**
-   * <p>
    * Setter for the field <code>components</code>.
-   * </p>
    */
   public void setComponents() {
     int reactivePhase = getReactivePhaseIndex();
@@ -236,9 +228,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   }
 
   /**
-   * <p>
    * Setter for the field <code>components</code>.
-   * </p>
    *
    * @param phaseNum a int
    */
@@ -249,9 +239,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   }
 
   /**
-   * <p>
    * setReactiveComponents.
-   * </p>
    *
    * @param phaseNum a int
    */
@@ -263,9 +251,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   }
 
   /**
-   * <p>
    * setReactiveComponents.
-   * </p>
    */
   public void setReactiveComponents() {
     int reactivePhase = getReactivePhaseIndex();
@@ -289,9 +275,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   }
 
   /**
-   * <p>
    * calcInertMoles.
-   * </p>
    *
    * @param phaseNum a int
    * @return a double
@@ -310,9 +294,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   }
 
   /**
-   * <p>
    * sortReactiveComponents.
-   * </p>
    */
   public void sortReactiveComponents() {
     ComponentInterface tempComp;
@@ -329,9 +311,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   }
 
   /**
-   * <p>
    * addNewComponents.
-   * </p>
    *
    * <p>
    * Adds new reactive components (typically ionic species from chemical reactions) to the system. Components are
@@ -365,9 +345,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   }
 
   /**
-   * <p>
    * getAllElements.
-   * </p>
    *
    * @return an array of {@link java.lang.String} objects
    */
@@ -394,9 +372,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   }
 
   /**
-   * <p>
    * hasRections.
-   * </p>
    *
    * @return a boolean
    */
@@ -405,9 +381,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   }
 
   /**
-   * <p>
    * calcNVector.
-   * </p>
    *
    * <p>
    * Calculate the mole vector for reactive species in the reactive phase. This reads from the current phase state to
@@ -430,9 +404,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   }
 
   /**
-   * <p>
    * calcBVector.
-   * </p>
    *
    * @return an array of type double
    */
@@ -448,9 +420,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   }
 
   /**
-   * <p>
    * calcAmatrix.
-   * </p>
    *
    * <p>
    * Calculates the stoichiometry matrix (A) based on the components and elements in the system. This matrix includes an
@@ -488,9 +458,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   }
 
   /**
-   * <p>
    * calcChemRefPot.
-   * </p>
    *
    * <p>
    * Calculates reference potentials for the chemical equilibrium solver. The reference potentials are derived from
@@ -523,9 +491,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   }
 
   /**
-   * <p>
    * updateMoles.
-   * </p>
    *
    * <p>
    * Updates moles in the reactive phase based on the LP solver solution. Uses Phase.addMolesChemReac with totdn=0 to
@@ -566,9 +532,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   }
 
   /**
-   * <p>
    * solveChemEq.
-   * </p>
    *
    * @param type a int
    * @return a boolean
@@ -583,9 +547,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   }
 
   /**
-   * <p>
    * solveChemEq.
-   * </p>
    *
    * @param phaseNum a int
    * @param type a int
@@ -655,9 +617,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   }
 
   /**
-   * <p>
    * solveKinetics.
-   * </p>
    *
    * @param phaseNum a int
    * @param interPhase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -669,9 +629,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   }
 
   /**
-   * <p>
    * getKinetics.
-   * </p>
    *
    * @return a {@link neqsim.chemicalreactions.kinetics.Kinetics} object
    */
@@ -680,9 +638,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   }
 
   /**
-   * <p>
    * Getter for the field <code>reactionList</code>.
-   * </p>
    *
    * @return a {@link neqsim.chemicalreactions.chemicalreaction.ChemicalReactionList} object
    */
@@ -691,9 +647,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   }
 
   /**
-   * <p>
    * getComponents.
-   * </p>
    *
    * @return an array of {@link neqsim.thermo.component.ComponentInterface} objects
    */
@@ -702,9 +656,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   }
 
   /**
-   * <p>
    * getAmatrix.
-   * </p>
    *
    * <p>
    * Returns the stoichiometry matrix (A) that relates components to elements. The matrix has dimensions
@@ -719,9 +671,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   }
 
   /**
-   * <p>
    * reacHeat.
-   * </p>
    *
    * @param phaseNum a int
    * @param component a {@link java.lang.String} object

@@ -9,9 +9,7 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentElectrolyteCPAstatoil;
 
 /**
- * <p>
  * PhaseElectrolyteCPAstatoil class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -21,9 +19,7 @@ public class PhaseElectrolyteCPAstatoil extends PhaseElectrolyteCPA {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for PhaseElectrolyteCPAstatoil.
-   * </p>
    */
   public PhaseElectrolyteCPAstatoil() {
   }

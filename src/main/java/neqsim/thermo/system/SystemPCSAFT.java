@@ -19,18 +19,14 @@ public class SystemPCSAFT extends SystemSrkEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for SystemPCSAFT.
-   * </p>
    */
   public SystemPCSAFT() {
     this(298.15, 1.0, false);
   }
 
   /**
-   * <p>
    * Constructor for SystemPCSAFT.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -40,9 +36,7 @@ public class SystemPCSAFT extends SystemSrkEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemPCSAFT.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -123,9 +117,7 @@ public class SystemPCSAFT extends SystemSrkEos {
   }
 
   /**
-   * <p>
    * commonInitialization.
-   * </p>
    */
   public void commonInitialization() {
     setImplementedCompositionDeriativesofFugacity(true);
