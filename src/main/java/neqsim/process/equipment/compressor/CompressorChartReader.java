@@ -105,8 +105,9 @@ public class CompressorChartReader {
   private int minIndex(double[] array) {
     int minIdx = 0;
     for (int i = 1; i < array.length; i++) {
-      if (array[i] < array[minIdx])
+      if (array[i] < array[minIdx]) {
         minIdx = i;
+      }
     }
     return minIdx;
   }
@@ -114,8 +115,9 @@ public class CompressorChartReader {
   private int maxIndex(double[] array) {
     int maxIdx = 0;
     for (int i = 1; i < array.length; i++) {
-      if (array[i] > array[maxIdx])
+      if (array[i] > array[maxIdx]) {
         maxIdx = i;
+      }
     }
     return maxIdx;
   }

@@ -1206,7 +1206,8 @@ public class NaphtaliSandholmSolver {
       // For tray initialization, use feed composition
       double psi = feedBeta;
       for (int rrIter = 0; rrIter < 20; rrIter++) {
-        double f = 0, df = 0;
+        double f = 0;
+        double df = 0;
         for (int i = 0; i < C; i++) {
           double denom = 1.0 + psi * (Kw[i] - 1.0);
           f += feedComp[i] * (Kw[i] - 1.0) / denom;
@@ -3633,10 +3634,12 @@ public class NaphtaliSandholmSolver {
         break;
       }
       double dt = -f / dfdt;
-      if (dt > 30.0)
+      if (dt > 30.0) {
         dt = 30.0;
-      if (dt < -30.0)
+      }
+      if (dt < -30.0) {
         dt = -30.0;
+      }
       t += dt;
       t = Math.max(100.0, Math.min(1000.0, t));
     }
@@ -3672,10 +3675,12 @@ public class NaphtaliSandholmSolver {
         break;
       }
       double dt = -f / dfdt;
-      if (dt > 30.0)
+      if (dt > 30.0) {
         dt = 30.0;
-      if (dt < -30.0)
+      }
+      if (dt < -30.0) {
         dt = -30.0;
+      }
       t += dt;
       t = Math.max(100.0, Math.min(1000.0, t));
     }
