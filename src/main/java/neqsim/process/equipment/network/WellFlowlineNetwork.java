@@ -533,11 +533,38 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
     double manifoldGuess = targetEndpointPressure;
     double achievedPressure = runWithEndpointPressure(manifoldGuess, id);
 
+    double prevGuess = manifoldGuess;
+    double prevAchieved = achievedPressure;
+    boolean haveSecantPoint = false;
+
     for (int i = 0; i < maxIterations
 	&& Math.abs(achievedPressure - targetEndpointPressure) > iterationTolerance; i++) {
       double error = achievedPressure - targetEndpointPressure;
-      manifoldGuess = Math.max(0.1, manifoldGuess - error);
+
+      double nextGuess;
+      if (haveSecantPoint) {
+	// Estimate the local endpoint sensitivity dP_endpoint/dP_manifold from the last two
+	// evaluations and take a secant (Newton-like) step. This converges far faster and more
+	// robustly than the unity-slope assumption when a facility pipeline with a flow-dependent
+	// pressure drop sits between the terminal manifold and the endpoint, where the true slope
+	// is not 1.0.
+	double slope = (achievedPressure - prevAchieved) / (manifoldGuess - prevGuess);
+	if (Double.isFinite(slope) && Math.abs(slope) > 1.0e-6) {
+	  nextGuess = manifoldGuess - error / slope;
+	} else {
+	  nextGuess = manifoldGuess - error;
+	}
+      } else {
+	// First correction: only one evaluation available, fall back to the unity-slope step.
+	nextGuess = manifoldGuess - error;
+      }
+      nextGuess = Math.max(0.1, nextGuess);
+
+      prevGuess = manifoldGuess;
+      prevAchieved = achievedPressure;
+      manifoldGuess = nextGuess;
       achievedPressure = runWithEndpointPressure(manifoldGuess, id);
+      haveSecantPoint = true;
     }
 
     // Harmonize pressures after the final iteration to keep branch and manifold streams aligned

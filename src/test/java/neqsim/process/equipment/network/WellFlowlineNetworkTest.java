@@ -203,6 +203,59 @@ class WellFlowlineNetworkTest {
   }
 
   @Test
+  void facilityPipelineEndpointConvergesToTargetPressure() {
+    ProcessSystem process = new ProcessSystem();
+    SimpleReservoir reservoir = createGasReservoir(process, "endpoint gas reservoir");
+    StreamInterface producer1 = addGasProducer(reservoir, "endpoint branch 1", 1.2);
+    StreamInterface producer2 = addGasProducer(reservoir, "endpoint branch 2", 1.0);
+
+    WellFlowlineNetwork network = new WellFlowlineNetwork("endpoint convergence network");
+
+    WellFlow well1 = new WellFlow("endpoint well 1");
+    well1.setInletStream(producer1);
+    well1.setWellProductionIndex(5.5e-4);
+    PipeBeggsAndBrills pipe1 = new PipeBeggsAndBrills("endpoint pipe 1", well1.getOutletStream());
+    pipe1.setLength(500.0);
+    pipe1.setElevation(0.0);
+    pipe1.setDiameter(0.34);
+    pipe1.setPipeWallRoughness(4.5e-5);
+    network.addBranch("endpoint branch 1", well1, pipe1, null, network.getManifolds().get(0));
+
+    WellFlow well2 = new WellFlow("endpoint well 2");
+    well2.setInletStream(producer2);
+    well2.setWellProductionIndex(5.0e-4);
+    PipeBeggsAndBrills pipe2 = new PipeBeggsAndBrills("endpoint pipe 2", well2.getOutletStream());
+    pipe2.setLength(520.0);
+    pipe2.setElevation(0.0);
+    pipe2.setDiameter(0.32);
+    pipe2.setPipeWallRoughness(4.5e-5);
+    network.addBranch("endpoint branch 2", well2, pipe2, null, network.getManifolds().get(0));
+
+    // A facility pipeline with a flow-dependent pressure drop sits between the terminal manifold
+    // and the endpoint, so the endpoint sensitivity to manifold pressure is not 1.0. The secant
+    // solver should still drive the facility outlet to the target.
+    PipeBeggsAndBrills facilityLine = new PipeBeggsAndBrills("endpoint facility line",
+	network.getArrivalMixer().getOutletStream());
+    facilityLine.setLength(1500.0);
+    facilityLine.setElevation(0.0);
+    facilityLine.setDiameter(0.5);
+    facilityLine.setPipeWallRoughness(4.5e-5);
+    network.setFacilityPipeline(facilityLine);
+
+    network.setTargetEndpointPressure(50.0, "bara");
+    network.setIterationTolerance(1.0e-3);
+
+    process.add(network);
+    process.run();
+
+    double endpointPressure = facilityLine.getOutletStream().getPressure("bara");
+    assertEquals(50.0, endpointPressure, 1.0e-2);
+    // With a facility pipeline present the terminal manifold pressure must exceed the endpoint
+    // target to overcome the line pressure drop.
+    assertTrue(network.getTerminalManifoldPressure("bara") > 50.0);
+  }
+
+  @Test
   void chokeValvePositionChangesBranchFlow() {
     ProcessSystem process = new ProcessSystem();
     SimpleReservoir reservoir = createGasReservoir(process, "gas reservoir");
