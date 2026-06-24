@@ -7,16 +7,17 @@ import neqsim.process.safety.rupture.PipeFireRuptureResult.ReleaseEstimate;
  * Blowdown pipe fire-rupture strain-rate study.
  *
  * <p>
- * The study implements the calculation structure used by the legacy Equinor fire-rupture spreadsheet for pipes exposed
- * to fire while a blowdown pressure profile is supplied externally. It couples pipe heat-up, pressure stress,
- * temperature-dependent material properties, a Sellars-Tegart strain-rate law, accumulated strain, and
- * spreadsheet-style release estimates.
+ * The study implements the calculation structure used by legacy fire-rupture spreadsheets for pipes
+ * exposed to fire while a blowdown pressure profile is supplied externally. It couples pipe
+ * heat-up, pressure stress, temperature-dependent material properties, a Sellars-Tegart strain-rate
+ * law, accumulated strain, and spreadsheet-style release estimates.
  * </p>
  *
  * <p>
- * This model is intended for screening and agent workflows where pipe data may be gathered from TR2000/STID and then
- * reviewed by an engineer before the calculation is run. Formal safety studies should verify the material basis,
- * pressure profile, segment inventory, and release modelling.
+ * This model is intended for screening and agent workflows where pipe data may be gathered from
+ * source documents and piping specifications, then reviewed by an engineer before the calculation
+ * is run. Formal safety studies should verify the material basis, pressure profile, segment
+ * inventory, and release modelling.
  * </p>
  *
  * @author ESOL
@@ -79,7 +80,8 @@ public class PipeFireRuptureStudy implements Serializable {
    * @return calculation result with time series and release estimate
    */
   public PipeFireRuptureResult run() {
-    PipeFireRuptureResult.Builder result = PipeFireRuptureResult.builder(input, material, scenario, pressureProfile);
+    PipeFireRuptureResult.Builder result =
+        PipeFireRuptureResult.builder(input, material, scenario, pressureProfile);
     addInputWarnings(result);
 
     double meanWallTemperatureC = input.getInitialTemperatureC();
@@ -92,40 +94,42 @@ public class PipeFireRuptureStudy implements Serializable {
       double timeSeconds = Math.min(step * timeStepSeconds, maxTimeSeconds);
       PipeState pipeState = pipeState(accumulatedStrain);
       if (step > 0) {
-	double currentPressureBarg = Math.max(0.0, pressureProfile.pressureBargAt(timeSeconds));
-	double previousMeanWallTemperatureC = meanWallTemperatureC;
-	double previousHeatFluxKWPerM2 = heatFluxKWPerM2;
-	double previousThermalConductivityWPerMK = material.thermalConductivityAt(previousMeanWallTemperatureC);
-	double previousHeatCapacityJPerKgK = material.heatCapacityAt(previousMeanWallTemperatureC);
-	double thermalMassJPerK = thermalMassJPerK(currentPressureBarg, previousMeanWallTemperatureC,
-	    previousHeatCapacityJPerKgK);
-	meanWallTemperatureC += previousHeatFluxKWPerM2 * 1000.0 * input.getExposedAreaM2() * timeStepSeconds
-	    / thermalMassJPerK;
-	outerSurfaceTemperatureC = meanWallTemperatureC
-	    + 0.5 * previousHeatFluxKWPerM2 * 1000.0 * pipeState.wallThicknessM / previousThermalConductivityWPerMK;
-	heatFluxKWPerM2 = scenario.heatFluxKWPerM2(outerSurfaceTemperatureC);
+        double currentPressureBarg = Math.max(0.0, pressureProfile.pressureBargAt(timeSeconds));
+        double previousMeanWallTemperatureC = meanWallTemperatureC;
+        double previousHeatFluxKWPerM2 = heatFluxKWPerM2;
+        double previousThermalConductivityWPerMK =
+            material.thermalConductivityAt(previousMeanWallTemperatureC);
+        double previousHeatCapacityJPerKgK = material.heatCapacityAt(previousMeanWallTemperatureC);
+        double thermalMassJPerK = thermalMassJPerK(currentPressureBarg,
+            previousMeanWallTemperatureC, previousHeatCapacityJPerKgK);
+        meanWallTemperatureC += previousHeatFluxKWPerM2 * 1000.0 * input.getExposedAreaM2()
+            * timeStepSeconds / thermalMassJPerK;
+        outerSurfaceTemperatureC = meanWallTemperatureC + 0.5 * previousHeatFluxKWPerM2 * 1000.0
+            * pipeState.wallThicknessM / previousThermalConductivityWPerMK;
+        heatFluxKWPerM2 = scenario.heatFluxKWPerM2(outerSurfaceTemperatureC);
       }
 
       double pressureBarg = Math.max(0.0, pressureProfile.pressureBargAt(timeSeconds));
-      double stressMPa = vonMisesStressMPa(pressureBarg, pipeState.outsideDiameterM, pipeState.insideDiameterM,
-	  input.getWeightStressMPa());
+      double stressMPa = vonMisesStressMPa(pressureBarg, pipeState.outsideDiameterM,
+          pipeState.insideDiameterM, input.getWeightStressMPa());
       double strainRatePerMinute = material.strainRatePerMinute(stressMPa, meanWallTemperatureC);
       if (step > 0) {
-	accumulatedStrain = Math.min(2.0, accumulatedStrain + timeStepSeconds * strainRatePerMinute / 60.0);
+        accumulatedStrain =
+            Math.min(2.0, accumulatedStrain + timeStepSeconds * strainRatePerMinute / 60.0);
       }
       double strainLimit = material.ruptureStrainLimitAt(meanWallTemperatureC);
 
-      result.addPoint(timeSeconds, pressureBarg, meanWallTemperatureC, outerSurfaceTemperatureC, heatFluxKWPerM2,
-	  stressMPa, strainRatePerMinute, accumulatedStrain, strainLimit);
+      result.addPoint(timeSeconds, pressureBarg, meanWallTemperatureC, outerSurfaceTemperatureC,
+          heatFluxKWPerM2, stressMPa, strainRatePerMinute, accumulatedStrain, strainLimit);
       if (accumulatedStrain > strainLimit) {
-	result.recordRupture(timeSeconds, pressureBarg, meanWallTemperatureC, outerSurfaceTemperatureC,
-	    accumulatedStrain, strainLimit);
-	result.releaseEstimate(releaseEstimate(pressureBarg));
-	addRecommendations(result, true);
-	return result.build();
+        result.recordRupture(timeSeconds, pressureBarg, meanWallTemperatureC,
+            outerSurfaceTemperatureC, accumulatedStrain, strainLimit);
+        result.releaseEstimate(releaseEstimate(pressureBarg));
+        addRecommendations(result, true);
+        return result.build();
       }
       if (step == steps) {
-	break;
+        break;
       }
     }
 
@@ -141,10 +145,11 @@ public class PipeFireRuptureStudy implements Serializable {
    */
   private void addInputWarnings(PipeFireRuptureResult.Builder result) {
     if (input.getFluidDensityKgPerM3() < GAS_LIQUID_DENSITY_SWITCH_KG_PER_M3) {
-      result.addWarning("Fluid density below 500 kg/m3: gas heat capacity and gas release screening are used.");
+      result.addWarning(
+          "Fluid density below 500 kg/m3: gas heat capacity and gas release screening are used.");
     } else {
       result.addWarning(
-	  "Fluid density at or above 500 kg/m3: liquid heat capacity and liquid release screening are used.");
+          "Fluid density at or above 500 kg/m3: liquid heat capacity and liquid release screening are used.");
     }
     if (input.getExposedLengthM() <= 0.0) {
       result.addWarning("Exposed length is not positive; verify pipe geometry before use.");
@@ -159,17 +164,17 @@ public class PipeFireRuptureStudy implements Serializable {
    */
   private void addRecommendations(PipeFireRuptureResult.Builder result, boolean rupturePredicted) {
     result.addRecommendation(
-	"Verify pipe class, OD, wall thickness, undertolerance, corrosion allowance, weld factor, and material against TR2000 or certified project data.");
+        "Verify pipe class, OD, wall thickness, undertolerance, corrosion allowance, weld factor, and material against the applicable piping specification or certified project data.");
     result.addRecommendation(
-	"Verify the blowdown pressure profile with a governed depressurization calculation before using the rupture time for design decisions.");
+        "Verify the blowdown pressure profile with a governed depressurization calculation before using the rupture time for design decisions.");
     result.addRecommendation(
-	"Use the spreadsheet-style release estimates as screening values and hand off the rupture state to NeqSim source-term/consequence tools for formal reporting.");
+        "Use the spreadsheet-style release estimates as screening values and hand off the rupture state to NeqSim source-term/consequence tools for formal reporting.");
     if (rupturePredicted) {
       result.addRecommendation(
-	  "Rupture is predicted for this fire scenario; review passive fire protection, segment isolation, depressurization time, and leak-rate consequences.");
+          "Rupture is predicted for this fire scenario; review passive fire protection, segment isolation, depressurization time, and leak-rate consequences.");
     } else {
       result.addRecommendation(
-	  "No rupture is predicted within the simulated time; check whether the maximum time covers the relevant fire exposure duration.");
+          "No rupture is predicted within the simulated time; check whether the maximum time covers the relevant fire exposure duration.");
     }
   }
 
@@ -181,19 +186,22 @@ public class PipeFireRuptureStudy implements Serializable {
    * @param wallHeatCapacityJPerKgK wall heat capacity in J/kg-K
    * @return thermal mass in J/K
    */
-  private double thermalMassJPerK(double pressureBarg, double meanWallTemperatureC, double wallHeatCapacityJPerKgK) {
-    double metalMassKg = material.getDensityKgPerM3() * input.getExposedAreaM2() * input.getEffectiveWallThicknessM();
+  private double thermalMassJPerK(double pressureBarg, double meanWallTemperatureC,
+      double wallHeatCapacityJPerKgK) {
+    double metalMassKg = material.getDensityKgPerM3() * input.getExposedAreaM2()
+        * input.getEffectiveWallThicknessM();
     double metalThermalMass = metalMassKg * wallHeatCapacityJPerKgK;
     if (input.getFluidDensityKgPerM3() >= GAS_LIQUID_DENSITY_SWITCH_KG_PER_M3) {
-      return metalThermalMass
-	  + input.getInternalVolumeM3() * input.getFluidDensityKgPerM3() * input.getFluidHeatCapacityJPerKgK();
+      return metalThermalMass + input.getInternalVolumeM3() * input.getFluidDensityKgPerM3()
+          * input.getFluidHeatCapacityJPerKgK();
     }
     if (!spreadsheetGasThermalMass) {
       return metalThermalMass;
     }
     double absolutePressurePa = Math.max(0.0, pressureBarg) * PA_PER_BAR;
     double gasMassKg = absolutePressurePa * input.getGasMolecularWeightKgPerKmol()
-	/ (UNIVERSAL_GAS_CONSTANT_J_PER_KMOLK * (meanWallTemperatureC + 273.0)) * input.getInternalVolumeM3();
+        / (UNIVERSAL_GAS_CONSTANT_J_PER_KMOLK * (meanWallTemperatureC + 273.0))
+        * input.getInternalVolumeM3();
     return metalThermalMass + gasMassKg * input.getFluidHeatCapacityJPerKgK();
   }
 
@@ -220,19 +228,22 @@ public class PipeFireRuptureStudy implements Serializable {
    * @param weightStressMPa axial weight stress in MPa
    * @return von Mises stress in MPa
    */
-  private static double vonMisesStressMPa(double pressureBarg, double outsideDiameterM, double insideDiameterM,
-      double weightStressMPa) {
+  private static double vonMisesStressMPa(double pressureBarg, double outsideDiameterM,
+      double insideDiameterM, double weightStressMPa) {
     double pressureMPa = 0.1 * Math.max(0.0, pressureBarg);
     double denominator = outsideDiameterM * outsideDiameterM - insideDiameterM * insideDiameterM;
     double meanDiameterM = (outsideDiameterM + insideDiameterM) / 2.0;
-    double innerOuterProduct = insideDiameterM * insideDiameterM * outsideDiameterM * outsideDiameterM
-	/ (meanDiameterM * meanDiameterM);
-    double radialStressMPa = pressureMPa * (insideDiameterM * insideDiameterM - innerOuterProduct) / denominator;
-    double hoopStressMPa = pressureMPa * (insideDiameterM * insideDiameterM + innerOuterProduct) / denominator;
-    double longitudinalStressMPa = pressureMPa * insideDiameterM * insideDiameterM / denominator + weightStressMPa;
+    double innerOuterProduct = insideDiameterM * insideDiameterM * outsideDiameterM
+        * outsideDiameterM / (meanDiameterM * meanDiameterM);
+    double radialStressMPa =
+        pressureMPa * (insideDiameterM * insideDiameterM - innerOuterProduct) / denominator;
+    double hoopStressMPa =
+        pressureMPa * (insideDiameterM * insideDiameterM + innerOuterProduct) / denominator;
+    double longitudinalStressMPa =
+        pressureMPa * insideDiameterM * insideDiameterM / denominator + weightStressMPa;
     return Math.sqrt(radialStressMPa * radialStressMPa + hoopStressMPa * hoopStressMPa
-	+ longitudinalStressMPa * longitudinalStressMPa - radialStressMPa * hoopStressMPa
-	- radialStressMPa * longitudinalStressMPa - hoopStressMPa * longitudinalStressMPa);
+        + longitudinalStressMPa * longitudinalStressMPa - radialStressMPa * hoopStressMPa
+        - radialStressMPa * longitudinalStressMPa - hoopStressMPa * longitudinalStressMPa);
   }
 
   /**
@@ -244,7 +255,7 @@ public class PipeFireRuptureStudy implements Serializable {
   private ReleaseEstimate releaseEstimate(Double pressureBarg) {
     if (pressureBarg == null || pressureBarg.doubleValue() <= 0.0) {
       return new ReleaseEstimate(0.0, 0.0, 0.0, 0.0, input.getInitialTemperatureC(),
-	  "No rupture predicted; release estimate set to zero.");
+          "No rupture predicted; release estimate set to zero.");
     }
     double insideAreaM2 = Math.PI / 4.0 * Math.pow(input.getInitialInsideDiameterM(), 2.0);
     double longPipeGasTwoSides = 0.0;
@@ -252,18 +263,21 @@ public class PipeFireRuptureStudy implements Serializable {
     double shortPipeGasOneSide = 0.0;
     double liquidOneSide = 0.0;
     if (input.getFluidDensityKgPerM3() < GAS_LIQUID_DENSITY_SWITCH_KG_PER_M3) {
-      longPipeGasTwoSides = GAS_RELEASE_COEFFICIENT * insideAreaM2 * pressureBarg.doubleValue() * PA_PER_BAR
-	  * Math.sqrt(input.getGasMolecularWeightKgPerKmol() / Math.max(1.0, input.getInitialTemperatureC() + 273.0));
+      longPipeGasTwoSides = GAS_RELEASE_COEFFICIENT * insideAreaM2 * pressureBarg.doubleValue()
+          * PA_PER_BAR * Math.sqrt(input.getGasMolecularWeightKgPerKmol()
+              / Math.max(1.0, input.getInitialTemperatureC() + 273.0));
       longPipeGasOneSide = longPipeGasTwoSides / 2.0;
       shortPipeGasOneSide = longPipeGasOneSide * SHORT_PIPE_GAS_MULTIPLIER;
     } else {
       double specificGravity = input.getFluidDensityKgPerM3() / 1000.0;
-      liquidOneSide = ((insideAreaM2 * 1000000.0) * LIQUID_DISCHARGE_COEFFICIENT / LIQUID_FLOW_CONSTANT
-	  / Math.sqrt(specificGravity / (Math.max(pressureBarg.doubleValue(), 1.0) * 100.0))) / 60.0 * specificGravity;
+      liquidOneSide =
+          ((insideAreaM2 * 1000000.0) * LIQUID_DISCHARGE_COEFFICIENT / LIQUID_FLOW_CONSTANT
+              / Math.sqrt(specificGravity / (Math.max(pressureBarg.doubleValue(), 1.0) * 100.0)))
+              / 60.0 * specificGravity;
     }
-    return new ReleaseEstimate(longPipeGasTwoSides, longPipeGasOneSide, shortPipeGasOneSide, liquidOneSide,
-	input.getInitialTemperatureC(),
-	"Spreadsheet-style screening release estimate based on rupture pressure, pipe bore, gas MW or liquid density.");
+    return new ReleaseEstimate(longPipeGasTwoSides, longPipeGasOneSide, shortPipeGasOneSide,
+        liquidOneSide, input.getInitialTemperatureC(),
+        "Spreadsheet-style screening release estimate based on rupture pressure, pipe bore, gas MW or liquid density.");
   }
 
   /** Builder for {@link PipeFireRuptureStudy}. */
@@ -284,8 +298,8 @@ public class PipeFireRuptureStudy implements Serializable {
      * @param scenario fire scenario
      * @param pressureProfile pressure profile
      */
-    private Builder(PipeFireRuptureInput input, PipeFireRuptureMaterial material, PipeFireRuptureScenario scenario,
-	BlowdownPressureProfile pressureProfile) {
+    private Builder(PipeFireRuptureInput input, PipeFireRuptureMaterial material,
+        PipeFireRuptureScenario scenario, BlowdownPressureProfile pressureProfile) {
       this.input = input;
       this.material = material;
       this.scenario = scenario;
@@ -343,21 +357,21 @@ public class PipeFireRuptureStudy implements Serializable {
      */
     private void validate() {
       if (input == null) {
-	throw new IllegalArgumentException("input must not be null");
+        throw new IllegalArgumentException("input must not be null");
       }
       if (material == null) {
-	throw new IllegalArgumentException("material must not be null");
+        throw new IllegalArgumentException("material must not be null");
       }
       if (scenario == null) {
-	throw new IllegalArgumentException("scenario must not be null");
+        throw new IllegalArgumentException("scenario must not be null");
       }
       if (pressureProfile == null) {
-	throw new IllegalArgumentException("pressureProfile must not be null");
+        throw new IllegalArgumentException("pressureProfile must not be null");
       }
       validatePositive(timeStepSeconds, "timeStepSeconds");
       validatePositive(maxTimeSeconds, "maxTimeSeconds");
       if (maxTimeSeconds < timeStepSeconds) {
-	throw new IllegalArgumentException("maxTimeSeconds must be at least timeStepSeconds");
+        throw new IllegalArgumentException("maxTimeSeconds must be at least timeStepSeconds");
       }
     }
   }

@@ -9,9 +9,10 @@ import java.util.Map;
  * Source-traceable evidence reference for process-safety calculations.
  *
  * <p>
- * The reference is intentionally compact and JSON-friendly so STID, TR2000, Docmap, PIMS, plant-data, and material
- * certificate agents can attach the source of each important input without moving the source document itself into the
- * NeqSim result. Values are stored as text to avoid serializing arbitrary external objects.
+ * The reference is intentionally compact and JSON-friendly so document-management,
+ * piping-specification, plant-data, and material-certificate agents can attach the source of each
+ * important input without moving the source document itself into the NeqSim result. Values are
+ * stored as text to avoid serializing arbitrary external objects.
  * </p>
  *
  * @author ESOL
@@ -55,7 +56,8 @@ public final class SafetyEvidenceReference implements Serializable {
   /**
    * Creates a builder.
    *
-   * @param sourceSystem source system such as STID, TR2000, Docmap, PIMS, or NeqSim
+   * @param sourceSystem source system such as a document register, piping specification, historian,
+   *        or NeqSim
    * @param fieldName model input or evidence field name
    * @return evidence reference builder
    */
@@ -270,13 +272,14 @@ public final class SafetyEvidenceReference implements Serializable {
      */
     private void validate() {
       if (clean(sourceSystem).isEmpty()) {
-	throw new IllegalArgumentException("sourceSystem must not be empty");
+        throw new IllegalArgumentException("sourceSystem must not be empty");
       }
       if (clean(fieldName).isEmpty()) {
-	throw new IllegalArgumentException("fieldName must not be empty");
+        throw new IllegalArgumentException("fieldName must not be empty");
       }
-      if (confidence < 0.0 || confidence > 1.0 || Double.isNaN(confidence) || Double.isInfinite(confidence)) {
-	throw new IllegalArgumentException("confidence must be between 0 and 1");
+      if (confidence < 0.0 || confidence > 1.0 || Double.isNaN(confidence)
+          || Double.isInfinite(confidence)) {
+        throw new IllegalArgumentException("confidence must be between 0 and 1");
       }
     }
   }

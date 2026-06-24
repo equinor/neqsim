@@ -38,8 +38,8 @@ class DynamicBlowdownFlareStudyTest {
   void governedDynamicBlowdownRunnerBuildsFlareHandoff() {
     DynamicBlowdownFlareStudyDataSource dataSource = reviewedDataSource();
 
-    DynamicBlowdownFlareStudyHandoff handoff = DynamicBlowdownFlareStudyRunner.builder().timeStepSeconds(5.0)
-	.maxTimeSeconds(120.0).build().run(dataSource);
+    DynamicBlowdownFlareStudyHandoff handoff = DynamicBlowdownFlareStudyRunner.builder()
+        .timeStepSeconds(5.0).maxTimeSeconds(120.0).build().run(dataSource);
 
     assertTrue(handoff.getCalculationReadiness().isReadyForCalculation());
     assertTrue(handoff.getStandardsReadiness().isReadyForCalculation());
@@ -61,10 +61,11 @@ class DynamicBlowdownFlareStudyTest {
    */
   @Test
   void missingSourcesBlockCalculation() {
-    DynamicBlowdownFlareStudyDataSource dataSource = DynamicBlowdownFlareStudyDataSource.builder("blocked")
-	.addGap("No protected equipment list supplied.").build();
+    DynamicBlowdownFlareStudyDataSource dataSource = DynamicBlowdownFlareStudyDataSource
+        .builder("blocked").addGap("No protected equipment list supplied.").build();
 
-    DynamicBlowdownFlareStudyHandoff handoff = DynamicBlowdownFlareStudyRunner.builder().build().run(dataSource);
+    DynamicBlowdownFlareStudyHandoff handoff =
+        DynamicBlowdownFlareStudyRunner.builder().build().run(dataSource);
 
     assertTrue(!handoff.getCalculationReadiness().isReadyForCalculation());
     assertNull(handoff.getResult());
@@ -77,24 +78,29 @@ class DynamicBlowdownFlareStudyTest {
    * @return dynamic blowdown/flare data source
    */
   private DynamicBlowdownFlareStudyDataSource reviewedDataSource() {
-    SafetyEvidenceReference stid = SafetyEvidenceReference.builder("STID", "equipment_tag").documentId("P-ID-001")
-	.valueText("V-100").status("diagram_reviewed").confidence(0.95).build();
-    SafetyEvidenceReference tr2000 = SafetyEvidenceReference.builder("TR2000", "bdv_orifice_diameter_m")
-	.documentId("PCS-FLARE-001").valueText("0.012").unit("m").status("fetched_joined").confidence(0.90).build();
+    SafetyEvidenceReference sourceDrawing =
+        SafetyEvidenceReference.builder("P_ID", "equipment_tag").documentId("P-ID-001")
+            .valueText("V-100").status("diagram_reviewed").confidence(0.95).build();
+    SafetyEvidenceReference pipingSpec = SafetyEvidenceReference
+        .builder("PIPING_SPEC", "bdv_orifice_diameter_m").documentId("PCS-FLARE-001")
+        .valueText("0.012").unit("m").status("fetched_joined").confidence(0.90).build();
 
-    BlowdownSource source = BlowdownSource.builder("V-100", gasFluid()).equipmentTag("V-100").vesselVolumeM3(2.0)
-	.orificeDiameterM(0.012).dischargeCoefficient(0.72).backPressureBara(1.5).stopPressureBara(1.5)
-	.api521FireCase(8.0, true, true).wallModel(300.0, 8.0, 470.0, 50.0).psvBasis(75.0, 0.21, false, false)
-	.evidenceReference(stid).evidenceReference(tr2000).build();
+    BlowdownSource source = BlowdownSource.builder("V-100", gasFluid()).equipmentTag("V-100")
+        .vesselVolumeM3(2.0).orificeDiameterM(0.012).dischargeCoefficient(0.72)
+        .backPressureBara(1.5).stopPressureBara(1.5).api521FireCase(8.0, true, true)
+        .wallModel(300.0, 8.0, 470.0, 50.0).psvBasis(75.0, 0.21, false, false)
+        .evidenceReference(sourceDrawing).evidenceReference(pipingSpec).build();
 
     return DynamicBlowdownFlareStudyDataSource.builder("dyn-1").addSource(source)
-	.pidTopologyEvidence(reviewedTopology()).lineEquipmentListEvidence(reviewedLineEquipmentEvidence())
-	.addStidEvidence(stid).addTr2000Evidence(tr2000).flareHeader(0.3, 1.5, 288.15, 0.020, 1.30)
-	.flareGeometry(0.5, 35.0, 0.20).flareDesignCapacity(5.0e8, 500.0, 30000.0).stidDiagramReviewed(true)
-	.pidTopologyVerified(true).lineEquipmentListsReviewed(true).tr2000RowsFetched(true)
-	.vesselInventoryReviewed(true).valveSizingBasisReviewed(true).psvBasisReviewed(true)
-	.flareSystemBasisReviewed(true).fireCaseReviewed(true).standardsReviewed(true).humanReviewRequired(false)
-	.build();
+        .pidTopologyEvidence(reviewedTopology())
+        .lineEquipmentListEvidence(reviewedLineEquipmentEvidence())
+        .addSourceDocumentEvidence(sourceDrawing).addPipingSpecificationEvidence(pipingSpec)
+        .flareHeader(0.3, 1.5, 288.15, 0.020, 1.30).flareGeometry(0.5, 35.0, 0.20)
+        .flareDesignCapacity(5.0e8, 500.0, 30000.0).sourceDiagramsReviewed(true)
+        .pidTopologyVerified(true).lineEquipmentListsReviewed(true)
+        .pipingSpecificationRowsReviewed(true).vesselInventoryReviewed(true)
+        .valveSizingBasisReviewed(true).psvBasisReviewed(true).flareSystemBasisReviewed(true)
+        .fireCaseReviewed(true).standardsReviewed(true).humanReviewRequired(false).build();
   }
 
   /**
@@ -103,11 +109,13 @@ class DynamicBlowdownFlareStudyTest {
    * @return topology evidence
    */
   private PidTopologyEvidence reviewedTopology() {
-    return PidTopologyEvidence.builder("P-ID-001").revision("A").embeddedTextRead(true).overlayGenerated(true)
-	.boundaryVerified(true).addInScopeTag("V-100").addInScopeTag("BDV-100").addBoundaryTag("FLARE-HDR")
-	.addNode("n1", "V-100", "equipment", "source").addNode("n2", "BDV-100", "valve", "blowdown")
-	.addNode("n3", "FLARE-HDR", "boundary", "flare_header").addEdge("e1", "n1", "n2", "BD-100", "gas")
-	.addEdge("e2", "n2", "n3", "FL-100", "gas").build();
+    return PidTopologyEvidence.builder("P-ID-001").revision("A").embeddedTextRead(true)
+        .overlayGenerated(true).boundaryVerified(true).addInScopeTag("V-100")
+        .addInScopeTag("BDV-100").addBoundaryTag("FLARE-HDR")
+        .addNode("n1", "V-100", "equipment", "source").addNode("n2", "BDV-100", "valve", "blowdown")
+        .addNode("n3", "FLARE-HDR", "boundary", "flare_header")
+        .addEdge("e1", "n1", "n2", "BD-100", "gas").addEdge("e2", "n2", "n3", "FL-100", "gas")
+        .build();
   }
 
   /**
@@ -117,8 +125,9 @@ class DynamicBlowdownFlareStudyTest {
    */
   private LineEquipmentListEvidence reviewedLineEquipmentEvidence() {
     return LineEquipmentListEvidence.builder("line-eq-001").revision("A").lineListReviewed(true)
-	.equipmentListReviewed(true).addEquipment("V-100", "separator", 2.0, 80.0, 60.0, 313.15)
-	.addLine("FL-100", "BDV-100", "FLARE-HDR", 4.0, 0.102, 0.006, 30.0, "DD100", "API 5L X52").build();
+        .equipmentListReviewed(true).addEquipment("V-100", "separator", 2.0, 80.0, 60.0, 313.15)
+        .addLine("FL-100", "BDV-100", "FLARE-HDR", 4.0, 0.102, 0.006, 30.0, "DD100", "API 5L X52")
+        .build();
   }
 
   /**

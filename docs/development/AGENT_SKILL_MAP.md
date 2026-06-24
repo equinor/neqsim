@@ -41,7 +41,6 @@ loaded with `read_file` at the start of an agent invocation.
 | `solve.process.agent.md` | solve process simulation task | `neqsim-process-modeling`, `neqsim-notebook-patterns`, `neqsim-api-patterns`, `neqsim-input-validation`, `neqsim-troubleshooting` |
 | `solve.task.agent.md` | solve engineering task | `neqsim-api-patterns`, `neqsim-notebook-patterns`, `neqsim-professional-reporting`, `neqsim-troubleshooting`, `neqsim-input-validation`, `neqsim-capability-map`, `neqsim-platform-modeling`, `neqsim-stid-retriever`, `neqsim-technical-document-reading`, `neqsim-trapped-liquid-fire-rupture`, `neqsim-pid-process-operations`, `neqsim-water-hammer` |
 | `standards.review.agent.md` | review technical standards compliance | `neqsim-standards-lookup`, `neqsim-process-safety`, `neqsim-technical-document-reading`, `neqsim-stid-retriever`, `neqsim-professional-reporting` |
-| `stid.tr2000.safety.agent.md` | stid-tr2000-safety | `neqsim-trapped-liquid-fire-rupture`, `neqsim-process-safety`, `neqsim-depressurization-mdmt`, `neqsim-technical-document-reading`, `neqsim-pid-process-operations`, `neqsim-standards-lookup`, `neqsim-professional-reporting` |
 | `technical.reader.agent.md` | read technical documents | `neqsim-technical-document-reading`, `neqsim-trapped-liquid-fire-rupture`, `neqsim-pid-process-operations`, `neqsim-water-hammer` |
 | `thermo.fluid.agent.md` | create a neqsim thermodynamic fluid | _(none declared)_ |
 | `unisim.reader.agent.md` | read unisim to neqsim | _(none declared)_ |

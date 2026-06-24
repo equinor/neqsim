@@ -13,9 +13,10 @@ import neqsim.process.safety.rupture.SafetyStudyReadiness;
  * Source-traceable line and equipment list evidence for dynamic blowdown and flare studies.
  *
  * <p>
- * The class records the structured line-list and equipment-list rows extracted from STID, P&amp;ID, E3D, or technical
- * database evidence. It does not perform document extraction itself; it gives document-reading agents a stable handoff
- * contract before NeqSim builds a transient depressurization and flare-load model.
+ * The class records the structured line-list and equipment-list rows extracted from P&amp;ID, E3D,
+ * or technical database evidence. It does not perform document extraction itself; it gives
+ * document-reading agents a stable handoff contract before NeqSim builds a transient
+ * depressurization and flare-load model.
  * </p>
  *
  * @author ESOL
@@ -44,7 +45,8 @@ public final class LineEquipmentListEvidence implements Serializable {
     this.lineListReviewed = builder.lineListReviewed;
     this.equipmentListReviewed = builder.equipmentListReviewed;
     this.lineItems = Collections.unmodifiableList(new ArrayList<LineItem>(builder.lineItems));
-    this.equipmentItems = Collections.unmodifiableList(new ArrayList<EquipmentItem>(builder.equipmentItems));
+    this.equipmentItems =
+        Collections.unmodifiableList(new ArrayList<EquipmentItem>(builder.equipmentItems));
     this.missingFields = immutableText(builder.missingFields);
   }
 
@@ -61,11 +63,12 @@ public final class LineEquipmentListEvidence implements Serializable {
   /**
    * Checks if the evidence is ready to support model construction.
    *
-   * @return true when line and equipment rows are present, reviewed, and have no missing required fields
+   * @return true when line and equipment rows are present, reviewed, and have no missing required
+   *         fields
    */
   public boolean isSimulationReady() {
-    return lineListReviewed && equipmentListReviewed && !lineItems.isEmpty() && !equipmentItems.isEmpty()
-	&& missingFields.isEmpty();
+    return lineListReviewed && equipmentListReviewed && !lineItems.isEmpty()
+        && !equipmentItems.isEmpty() && missingFields.isEmpty();
   }
 
   /**
@@ -95,23 +98,25 @@ public final class LineEquipmentListEvidence implements Serializable {
     SafetyStudyReadiness.Builder readiness = SafetyStudyReadiness.builder();
     if (!lineListReviewed) {
       readiness.addWarning("line_list", "Line-list evidence has not been marked reviewed.",
-	  "Review STID/E3D/TR2000 line rows before design-grade dynamic blowdown modelling.");
+          "Review source drawing, E3D, and piping-specification line rows before design-grade dynamic blowdown modelling.");
     }
     if (!equipmentListReviewed) {
-      readiness.addWarning("equipment_list", "Equipment-list evidence has not been marked reviewed.",
-	  "Review vessel/equipment inventory, protected equipment tags, and design conditions.");
+      readiness.addWarning("equipment_list",
+          "Equipment-list evidence has not been marked reviewed.",
+          "Review vessel/equipment inventory, protected equipment tags, and design conditions.");
     }
     if (lineItems.isEmpty()) {
       readiness.addWarning("line_list", "No line-list rows are present.",
-	  "Extract line ids, from/to nodes, sizes, wall thicknesses, and flare/blowdown connections.");
+          "Extract line ids, from/to nodes, sizes, wall thicknesses, and flare/blowdown connections.");
     }
     if (equipmentItems.isEmpty()) {
       readiness.addWarning("equipment_list", "No equipment-list rows are present.",
-	  "Extract protected vessel/equipment tags, volumes, design pressure, and operating state.");
+          "Extract protected vessel/equipment tags, volumes, design pressure, and operating state.");
     }
     if (!missingFields.isEmpty()) {
-      readiness.addWarning("line_equipment_list", "Required extracted fields are missing: " + missingFields,
-	  "Close missing rows or keep them as explicit dynamic study gaps.");
+      readiness.addWarning("line_equipment_list",
+          "Required extracted fields are missing: " + missingFields,
+          "Close missing rows or keep them as explicit dynamic study gaps.");
     }
     return readiness.build();
   }
@@ -210,10 +215,11 @@ public final class LineEquipmentListEvidence implements Serializable {
      * @param pipeClass piping class or PCS id
      * @param material material grade or MDS basis
      */
-    public LineItem(String lineId, String fromTag, String toTag, double nominalDiameterInches, double internalDiameterM,
-	double wallThicknessM, double lengthM, String pipeClass, String material) {
+    public LineItem(String lineId, String fromTag, String toTag, double nominalDiameterInches,
+        double internalDiameterM, double wallThicknessM, double lengthM, String pipeClass,
+        String material) {
       if (clean(lineId).isEmpty()) {
-	throw new IllegalArgumentException("lineId must not be empty");
+        throw new IllegalArgumentException("lineId must not be empty");
       }
       this.lineId = clean(lineId);
       this.fromTag = clean(fromTag);
@@ -276,10 +282,10 @@ public final class LineEquipmentListEvidence implements Serializable {
      * @param operatingPressureBara operating pressure in bara
      * @param operatingTemperatureK operating temperature in K
      */
-    public EquipmentItem(String equipmentTag, String equipmentType, double volumeM3, double designPressureBara,
-	double operatingPressureBara, double operatingTemperatureK) {
+    public EquipmentItem(String equipmentTag, String equipmentType, double volumeM3,
+        double designPressureBara, double operatingPressureBara, double operatingTemperatureK) {
       if (clean(equipmentTag).isEmpty()) {
-	throw new IllegalArgumentException("equipmentTag must not be empty");
+        throw new IllegalArgumentException("equipmentTag must not be empty");
       }
       this.equipmentTag = clean(equipmentTag);
       this.equipmentType = clean(equipmentType);
@@ -381,10 +387,11 @@ public final class LineEquipmentListEvidence implements Serializable {
      * @param material material text
      * @return this builder
      */
-    public Builder addLine(String lineId, String fromTag, String toTag, double nominalDiameterInches,
-	double internalDiameterM, double wallThicknessM, double lengthM, String pipeClass, String material) {
-      lineItems.add(new LineItem(lineId, fromTag, toTag, nominalDiameterInches, internalDiameterM, wallThicknessM,
-	  lengthM, pipeClass, material));
+    public Builder addLine(String lineId, String fromTag, String toTag,
+        double nominalDiameterInches, double internalDiameterM, double wallThicknessM,
+        double lengthM, String pipeClass, String material) {
+      lineItems.add(new LineItem(lineId, fromTag, toTag, nominalDiameterInches, internalDiameterM,
+          wallThicknessM, lengthM, pipeClass, material));
       return this;
     }
 
@@ -399,10 +406,10 @@ public final class LineEquipmentListEvidence implements Serializable {
      * @param operatingTemperatureK operating temperature in K
      * @return this builder
      */
-    public Builder addEquipment(String equipmentTag, String equipmentType, double volumeM3, double designPressureBara,
-	double operatingPressureBara, double operatingTemperatureK) {
-      equipmentItems.add(new EquipmentItem(equipmentTag, equipmentType, volumeM3, designPressureBara,
-	  operatingPressureBara, operatingTemperatureK));
+    public Builder addEquipment(String equipmentTag, String equipmentType, double volumeM3,
+        double designPressureBara, double operatingPressureBara, double operatingTemperatureK) {
+      equipmentItems.add(new EquipmentItem(equipmentTag, equipmentType, volumeM3,
+          designPressureBara, operatingPressureBara, operatingTemperatureK));
       return this;
     }
 
@@ -414,7 +421,7 @@ public final class LineEquipmentListEvidence implements Serializable {
      */
     public Builder addMissingField(String field) {
       if (!clean(field).isEmpty()) {
-	missingFields.add(clean(field));
+        missingFields.add(clean(field));
       }
       return this;
     }
@@ -435,7 +442,7 @@ public final class LineEquipmentListEvidence implements Serializable {
      */
     private void validate() {
       if (clean(sourceId).isEmpty()) {
-	throw new IllegalArgumentException("sourceId must not be empty");
+        throw new IllegalArgumentException("sourceId must not be empty");
       }
     }
   }

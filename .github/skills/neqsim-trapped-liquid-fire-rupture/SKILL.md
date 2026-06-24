@@ -1,7 +1,7 @@
 ---
 name: neqsim-trapped-liquid-fire-rupture
 version: "1.0.0"
-description: "Fire rupture study workflow for blocked-in liquid-filled pipe segments and blowdown pipe fire heat-up / time-to-rupture strain-rate screening. USE WHEN: a task asks for trapped liquid, blocked-in liquid, thermal expansion rupture, fire exposure without relief, PFP demand, flange/pipe rupture screening, supplied blowdown pressure profile, pipe wall heat-up, strain-rate rupture time, or generating a Word/HTML safety study from P&IDs, STID, line lists, TR2000/piping specs, material certificates, and fire documents. Anchors on neqsim.process.safety.rupture plus trapped inventory, document retrieval, pressure-profile handoff, and source-term handoff."
+description: "Fire rupture study workflow for blocked-in liquid-filled pipe segments and blowdown pipe fire heat-up / time-to-rupture strain-rate screening. USE WHEN: a task asks for trapped liquid, blocked-in liquid, thermal expansion rupture, fire exposure without relief, PFP demand, flange/pipe rupture screening, supplied blowdown pressure profile, pipe wall heat-up, strain-rate rupture time, or generating a Word/HTML safety study from P&IDs, line lists, piping specifications, material certificates, and fire documents. Anchors on neqsim.process.safety.rupture plus trapped inventory, document retrieval, pressure-profile handoff, and source-term handoff."
 last_verified: "2026-06-23"
 requires:
   java_packages:
@@ -25,7 +25,7 @@ For both workflows, gather evidence, preserve assumptions and gaps, run the
 appropriate NeqSim safety.rupture calculation, hand off any rupture source term,
 and produce a professional report output.
 
-For STID/TR2000-driven blowdown pipe-fire studies, use the governed handoff
+For source-document-driven blowdown pipe-fire studies, use the governed handoff
 layer instead of calling the low-level solver directly: build
 `SafetyEvidenceReference` entries, assemble a `PipeFireRuptureDataSource`, run
 `PipeFireRuptureStudyRunner`, and report the returned
@@ -54,12 +54,12 @@ inside the task folder and cite the private basis only in that task deliverable.
   matrix showing missing project data.
 - A blowdown/depressurization pressure profile already exists and must be used
   to screen pipe wall heat-up, accumulated strain, rupture time, and release rate.
-- TR2000/STID/line-list data must be assembled into pipe cases and reviewed by
+- P&ID, line-list, and piping-specification data must be assembled into pipe cases and reviewed by
   an engineer before calculation.
 
 ## Skills to Load Together
 
-- `neqsim-stid-retriever` for P&IDs/STIDs, line lists, piping specs, material
+- Document-retrieval tools for P&IDs, line lists, piping specs, material
   certificates, fire-zone/PFP documents, relief studies, and design basis documents.
 - `neqsim-technical-document-reading` for structured extraction from Word, PDF,
   Excel, P&ID images, line lists, and material certificates.
@@ -77,7 +77,7 @@ configured document backend for:
 
 | Evidence | Purpose in calculation |
 |----------|------------------------|
-| P&ID / STID / isometric | Isolation boundary, valves, vents, drains, relief paths, line numbers |
+| P&ID / isometric | Isolation boundary, valves, vents, drains, relief paths, line numbers |
 | Line list / route table | NPS, internal diameter, wall thickness, length, design pressure/temperature |
 | Piping specification | Material class, corrosion allowance, flange class, gasket/bolt family |
 | Material certificate or material class sheet | SMYS, SMTS, grade, temperature limits, toughness notes |
@@ -128,7 +128,7 @@ Technical document readers should return a block like this to the solver:
 Every numeric field should preserve original value, original unit, converted SI
 value, source document, page/sheet, and confidence when available.
 
-For blowdown pipe fire rupture, technical document readers or TR2000/STID agents
+For blowdown pipe fire rupture, technical document readers or source-document agents
 should return a block like this:
 
 ```json
@@ -157,7 +157,7 @@ should return a block like this:
       "gas_molecular_weight_kg_kmol": 18.2,
       "initial_temperature_C": 20.0,
       "exposed_length_m": 1.0,
-      "source": "TR2000 / reviewed workbook input"
+      "source": "reviewed piping specification / workbook input"
     }
   ],
   "fire_scenarios": ["Small jet fire 250 kW/m2", "Pool fire 250 kW/m2", "Large jet fire 350 kW/m2"],
@@ -165,9 +165,9 @@ should return a block like this:
 }
 ```
 
-### Governed STID/TR2000 Handoff Schema
+### Governed Source-Document Handoff Schema
 
-When pipe data comes from STID diagrams and TR2000 PCS rows, normalize it into a
+When pipe data comes from source drawings and piping-specification rows, normalize it into a
 source-traceable package before NeqSim calculation:
 
 ```json
@@ -188,13 +188,13 @@ source-traceable package before NeqSim calculation:
     "edges": [],
     "missingTags": []
   },
-  "stidEvidence": [],
-  "tr2000Evidence": [],
+  "sourceDocumentEvidence": [],
+  "pipingSpecificationEvidence": [],
   "processEvidence": [],
   "fireScenarioEvidence": [],
-  "stidDiagramReviewed": true,
+  "sourceDiagramsReviewed": true,
   "pidTopologyVerified": false,
-  "tr2000PipeRowsFetched": true,
+  "pipingSpecificationRowsReviewed": true,
   "materialCertificateReviewed": false,
   "blowdownProfileVerified": true,
   "fireScenarioReviewed": true,
@@ -210,7 +210,7 @@ Readiness semantics:
   or pressure profile). Do not run the calculation.
 - `SCREENING`: calculation may run, but evidence gaps or unreviewed assumptions
   prevent design-grade use.
-- `DESIGN_GRADE`: controlled STID/TR2000/material/fire/depressurization evidence
+- `DESIGN_GRADE`: controlled source drawing, piping-specification, material, fire, and depressurization evidence
   has been reviewed and the package is ready for formal engineering review.
 
 ## Java Calculation Pattern
@@ -282,9 +282,9 @@ PipeFireRuptureResult pipeResult = PipeFireRuptureStudy
 For governed agentic studies, prefer the runner pattern:
 
 ```java
-SafetyEvidenceReference tr2000Wall = SafetyEvidenceReference
-  .builder("TR2000", "nominal_wall_thickness_mm")
-  .documentId("plant=10;pcs=DD100;rev=D")
+SafetyEvidenceReference pipingSpecWall = SafetyEvidenceReference
+  .builder("PIPING_SPEC", "nominal_wall_thickness_mm")
+  .documentId("pipe-class=DD100;rev=D")
   .valueText("3.7")
   .unit("mm")
   .status("fetched_joined")
@@ -292,7 +292,7 @@ SafetyEvidenceReference tr2000Wall = SafetyEvidenceReference
   .build();
 
 PipeFireRuptureInput governedPipe = pipe.toBuilder()
-  .evidenceReference(tr2000Wall)
+  .evidenceReference(pipingSpecWall)
   .build();
 
 PipeFireRuptureDataSource dataSource = PipeFireRuptureDataSource.builder("BD-001")
@@ -300,10 +300,10 @@ PipeFireRuptureDataSource dataSource = PipeFireRuptureDataSource.builder("BD-001
   .material(PipeFireRuptureMaterial.fromSpreadsheetMaterialName("22Cr duplex"))
   .scenario(PipeFireRuptureScenario.spreadsheetLargeJetFire())
   .pressureProfile(profile)
-  .addTr2000Evidence(tr2000Wall)
-  .stidDiagramReviewed(true)
+  .addPipingSpecificationEvidence(pipingSpecWall)
+  .sourceDiagramsReviewed(true)
   .pidTopologyVerified(false)
-  .tr2000PipeRowsFetched(true)
+  .pipingSpecificationRowsReviewed(true)
   .materialCertificateReviewed(false)
   .blowdownProfileVerified(true)
   .fireScenarioReviewed(true)
@@ -326,13 +326,13 @@ Key pipe-fire classes:
 - `PipeFireRuptureScenario`: small jet, pool fire, large jet, and custom radiative plus convective fire exposure.
 - `PipeFireRuptureStudy`: heat-up, thick-wall stress, Sellars-Tegart strain rate, accumulated strain, rupture event, and screening release estimate.
 - `PipeFireRuptureResult`: time series, rupture summary, warnings, recommendations, release estimate, and JSON map.
-- `SafetyEvidenceReference`: compact source reference for STID, TR2000, process, fire, and material inputs.
+- `SafetyEvidenceReference`: compact source reference for source drawings, piping specifications, process, fire, and material inputs.
 - `SafetyStudyReadiness`: `NOT_READY` / `SCREENING` / `DESIGN_GRADE` verdict with findings and actions.
-- `PidTopologyEvidence`: typed P&ID/STID topology graph, boundary status, missing-tag register, and drawing-overlay readiness.
+- `PidTopologyEvidence`: typed P&ID topology graph, boundary status, missing-tag register, and drawing-overlay readiness.
 - `PipeFireRuptureDataSource`: governed data-source package binding inputs to evidence and review flags.
 - `PipeFireRuptureStudyRunner`: readiness-gated orchestration of solver, standards check, uncertainty, and source-term handoff.
 - `PipeFireRuptureStudyHandoff`: versioned package containing data source, readiness, result, uncertainty, and source term.
-- `PipeFireRuptureStandardsValidator`: API 521 / ISO 23251 / NORSOK S-001 / TR2000 evidence-quality gate.
+- `PipeFireRuptureStandardsValidator`: API 521 / ISO 23251 / NORSOK S-001 / piping-specification evidence-quality gate.
 - `PipeFireRuptureUncertaintyRunner`: deterministic one-at-a-time perturbation screening of wall, corrosion, heat-flux, and initial-temperature assumptions.
 - `LineEquipmentListEvidence`, `DynamicBlowdownFlareStudyDataSource`, `DynamicBlowdownFlareStudyRunner`, and
   `DynamicBlowdownFlareStudyHandoff`: governed dynamic depressurization, PSV, and flare-load setup used to create a
@@ -340,21 +340,21 @@ Key pipe-fire classes:
 
 ## Reusable Safety Report Template
 
-For governed STID/TR2000 pipe-fire studies, the Word/HTML report should use a
+For governed source-document pipe-fire studies, the Word/HTML report should use a
 repeatable evidence-first structure. At minimum include:
 
 1. **Executive verdict** with `NOT_READY`, `SCREENING`, or `DESIGN_GRADE`, plus
   the human-review status.
 2. **Evidence matrix** with source system, document id, revision, page/sheet,
   field, extracted value, unit, status, confidence, and notes.
-3. **STID/P&ID drawing table** with drawing id, revision, embedded-text/OCR
+3. **Source drawing table** with drawing id, revision, embedded-text/OCR
   status, topology nodes/edges count, missing tags, and overlay/annotation link.
-4. **TR2000 table** with latest Issue revision, PCS, MDS/VDS references, NPS,
+4. **Piping specification table** with applicable revision, class/material references, NPS,
   outside diameter, wall thickness, corrosion allowance, undertolerance, and
-  row-fetch status.
+  row-review status.
 5. **NeqSim input lineage** mapping each solver input to its `SafetyEvidenceReference`.
 6. **Standards-applied table** covering API 521 / ISO 23251, NORSOK S-001,
-  TR2000 pipe/material basis, and consequence/source-term handoff status.
+  piping/material basis, and consequence/source-term handoff status.
 7. **Assumptions and gaps register** with severity, effect on result, and required
   action before design use.
 8. **Calculation results and uncertainty** including rupture time, rupture pressure,
@@ -377,7 +377,7 @@ Before the report is considered complete, apply these hard QA gates:
   notebooks to not required; do not create false notebook execution warnings.
 - `analysis.md` and `neqsim_improvements.md` must be filled for safety-critical
   workflow/code gaps, including reporting, evidence-readiness, pressure-profile
-  export, historian/tagreader evidence, and governed handoff gaps.
+  export, plant-data evidence, and governed handoff gaps.
 - The evidence gaps/design blockers and recommendations must appear before or
   alongside the conclusions, not only in appendix-style detail.
 
@@ -485,7 +485,7 @@ For governed studies, also persist the runner handoff:
 | Reporting only rupture time | Also report assumptions, evidence gaps, PFP margin, and source-term consequence handoff |
 | Treating pressure-profile units casually | Record whether the profile is bara or barg and convert explicitly |
 | Letting superduplex map to 22Cr duplex | Use `PipeFireRuptureMaterial.fromSpreadsheetMaterialName` or a reviewed material curve |
-| Running plant-wide pipe-fire cases without review | Ask the engineer to verify TR2000/STID/user overrides before calculation |
+| Running plant-wide pipe-fire cases without review | Ask the engineer to verify source-document, piping-specification, and user overrides before calculation |
 
 ## Related Documentation
 

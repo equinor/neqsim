@@ -24,7 +24,6 @@ Analyze the request and match it to one or more agents:
 | ISO 6976, Wobbe index, calorific value, gas spec, AGA, H2 blending gas quality | `@gas.quality` | `@process.model` for upstream conditions |
 | Wall thickness, ASME, API, DNV, mechanical sizing, cost | `@mechanical.design` | `@process.model` for operating conditions |
 | Standards compliance, TR1965, STS0131, TR2237, NORSOK P-002, NORSOK S-001, technical requirements review | `@standards.review` | `@technical.reader` for document extraction; `@process.model` for calculated evidence |
-| STID/P&ID + TR2000 + safety study, pipe-fire rupture with pipe specs/materials, governed source-traceable safety package | `@stid-tr2000-safety` | `@safety.depressuring`, `@technical.reader`, `@standards.review` |
 | Blowdown, depressurization, PSV, relief valve, fire case, source term, HAZOP, SIL | `@safety.depressuring` | `@process.model` for steady-state base |
 | Root cause, failure analysis, trip diagnosis, vibration diagnosis, equipment anomaly, RCA | `@root.cause` | `@plant.data` for historian data; `@process.model` for simulation base |
 | Emissions, CO2 tax, flaring, venting, carbon intensity, GHG, EU ETS | `@emissions.environmental` | `@process.model` for process conditions |
@@ -121,10 +120,6 @@ Some requests need multiple agents in sequence. Detect these patterns:
 ### Pattern 3: Process + Safety
 **Trigger:** "blowdown" or "depressurization" + equipment description
 **Pipeline:** `@process.model` (establish steady-state) then `@safety.depressuring` (run transient)
-
-### Pattern 3a: STID/TR2000 + Safety Evidence Package
-**Trigger:** "STID" or "P&ID" plus "TR2000", "PCS", "MDS", "pipe spec", "pipe-fire", "rupture", "blowdown", or "source-traceable safety study"
-**Pipeline:** `@stid-tr2000-safety` coordinates STID/P&ID evidence, TR2000 latest-Issue/PCS fetch/join, NeqSim `PipeFireRuptureDataSource`, readiness gates, uncertainty, and report handoff
 
 ### Pattern 3b: Process + Plant Data (Digital Twin)
 **Trigger:** "plant data", "historian", "tagreader", "PI", "IP.21", "digital twin", "live model", "compare to plant"

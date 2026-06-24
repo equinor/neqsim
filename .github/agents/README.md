@@ -162,14 +162,12 @@ In VS Code Copilot Chat, type `@<agent-name>` followed by your request:
 | Agent | Command | Purpose |
 |-------|---------|---------|
 | **safety.depressuring** | `@safety.depressuring <description>` | Blowdown, relief valve sizing, fire case, source terms |
-| **stid-tr2000-safety** | `@stid-tr2000-safety <description>` | Governed STID/P&ID + TR2000 + NeqSim safety studies with evidence readiness, pipe-fire data-source handoff, uncertainty, source-term handoff, and report template |
 
 **Examples:**
 ```
 @safety.depressuring Fire-case blowdown for HP separator at 85 bara
 @safety.depressuring Size PSV for blocked outlet on gas cooler
 @safety.depressuring Generate source term for 2-inch gas leak at 120 bara
-@stid-tr2000-safety Read STID/P&ID and TR2000 PCS rows, then run a governed blowdown pipe-fire rupture study
 ```
 
 ---

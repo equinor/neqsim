@@ -12,9 +12,9 @@ import java.util.Map;
  * Governed input package for a blowdown pipe fire-rupture study.
  *
  * <p>
- * A data source binds the numerical NeqSim inputs to the evidence trail that produced them. It lets STID, TR2000,
- * process simulation, depressurization, and fire/PFP agents hand one auditable object to the rupture solver and report
- * generator.
+ * A data source binds the numerical NeqSim inputs to the evidence trail that produced them. It lets
+ * document, piping-specification, process simulation, depressurization, and fire/PFP agents hand
+ * one auditable object to the rupture solver and report generator.
  * </p>
  *
  * @author ESOL
@@ -29,15 +29,15 @@ public final class PipeFireRuptureDataSource implements Serializable {
   private final PipeFireRuptureScenario scenario;
   private final BlowdownPressureProfile pressureProfile;
   private final PidTopologyEvidence pidTopologyEvidence;
-  private final List<SafetyEvidenceReference> stidEvidence;
-  private final List<SafetyEvidenceReference> tr2000Evidence;
+  private final List<SafetyEvidenceReference> sourceDocumentEvidence;
+  private final List<SafetyEvidenceReference> pipingSpecificationEvidence;
   private final List<SafetyEvidenceReference> processEvidence;
   private final List<SafetyEvidenceReference> fireScenarioEvidence;
   private final List<String> assumptions;
   private final List<String> gaps;
-  private final boolean stidDiagramReviewed;
+  private final boolean sourceDiagramsReviewed;
   private final boolean pidTopologyVerified;
-  private final boolean tr2000PipeRowsFetched;
+  private final boolean pipingSpecificationRowsReviewed;
   private final boolean materialCertificateReviewed;
   private final boolean blowdownProfileVerified;
   private final boolean fireScenarioReviewed;
@@ -56,15 +56,15 @@ public final class PipeFireRuptureDataSource implements Serializable {
     this.scenario = builder.scenario;
     this.pressureProfile = builder.pressureProfile;
     this.pidTopologyEvidence = builder.pidTopologyEvidence;
-    this.stidEvidence = immutableEvidence(builder.stidEvidence);
-    this.tr2000Evidence = immutableEvidence(builder.tr2000Evidence);
+    this.sourceDocumentEvidence = immutableEvidence(builder.sourceDocumentEvidence);
+    this.pipingSpecificationEvidence = immutableEvidence(builder.pipingSpecificationEvidence);
     this.processEvidence = immutableEvidence(builder.processEvidence);
     this.fireScenarioEvidence = immutableEvidence(builder.fireScenarioEvidence);
     this.assumptions = immutableText(builder.assumptions);
     this.gaps = immutableText(builder.gaps);
-    this.stidDiagramReviewed = builder.stidDiagramReviewed;
+    this.sourceDiagramsReviewed = builder.sourceDiagramsReviewed;
     this.pidTopologyVerified = builder.pidTopologyVerified;
-    this.tr2000PipeRowsFetched = builder.tr2000PipeRowsFetched;
+    this.pipingSpecificationRowsReviewed = builder.pipingSpecificationRowsReviewed;
     this.materialCertificateReviewed = builder.materialCertificateReviewed;
     this.blowdownProfileVerified = builder.blowdownProfileVerified;
     this.fireScenarioReviewed = builder.fireScenarioReviewed;
@@ -137,12 +137,12 @@ public final class PipeFireRuptureDataSource implements Serializable {
   }
 
   /**
-   * Checks if detailed STID diagram evidence was reviewed.
+   * Checks if detailed source diagram evidence was reviewed.
    *
-   * @return true if STID diagram evidence was reviewed
+   * @return true if source diagram evidence was reviewed
    */
-  public boolean isStidDiagramReviewed() {
-    return stidDiagramReviewed;
+  public boolean isSourceDiagramsReviewed() {
+    return sourceDiagramsReviewed;
   }
 
   /**
@@ -155,12 +155,12 @@ public final class PipeFireRuptureDataSource implements Serializable {
   }
 
   /**
-   * Checks if TR2000 pipe rows were fetched.
+   * Checks if piping-specification rows were reviewed.
    *
-   * @return true if TR2000 pipe rows were fetched and joined
+   * @return true if piping-specification rows were reviewed and joined
    */
-  public boolean isTr2000PipeRowsFetched() {
-    return tr2000PipeRowsFetched;
+  public boolean isPipingSpecificationRowsReviewed() {
+    return pipingSpecificationRowsReviewed;
   }
 
   /**
@@ -206,8 +206,8 @@ public final class PipeFireRuptureDataSource implements Serializable {
    */
   public List<SafetyEvidenceReference> getAllEvidenceReferences() {
     List<SafetyEvidenceReference> references = new ArrayList<SafetyEvidenceReference>();
-    references.addAll(stidEvidence);
-    references.addAll(tr2000Evidence);
+    references.addAll(sourceDocumentEvidence);
+    references.addAll(pipingSpecificationEvidence);
     references.addAll(processEvidence);
     references.addAll(fireScenarioEvidence);
     if (input != null) {
@@ -231,54 +231,59 @@ public final class PipeFireRuptureDataSource implements Serializable {
     }
     if (input == null) {
       readiness.addBlocker("pipe_input", "Pipe geometry and fluid input are missing.",
-	  "Build PipeFireRuptureInput from STID/TR2000/process evidence before running the study.");
+          "Build PipeFireRuptureInput from source documents, piping specifications, and process evidence before running the study.");
     }
     if (material == null) {
       readiness.addBlocker("material", "Pipe material curve is missing.",
-	  "Select a governed material curve from MDS/material certificate evidence.");
+          "Select a governed material curve from MDS/material certificate evidence.");
     }
     if (scenario == null) {
       readiness.addBlocker("fire_scenario", "Fire exposure scenario is missing.",
-	  "Define jet/pool fire or PFP-reduced heat flux basis before running the study.");
+          "Define jet/pool fire or PFP-reduced heat flux basis before running the study.");
     }
     if (pressureProfile == null) {
       readiness.addBlocker("pressure_profile", "Blowdown pressure profile is missing.",
-	  "Run or import a governed depressurization profile before running the study.");
+          "Run or import a governed depressurization profile before running the study.");
     }
-    if (!stidDiagramReviewed) {
-      readiness.addWarning("stid", "Detailed STID diagram evidence has not been marked reviewed.",
-	  "Download/read the relevant P&ID/isometric pages and record reviewed tag/line evidence.");
+    if (!sourceDiagramsReviewed) {
+      readiness.addWarning("source_diagrams",
+          "Detailed source diagram evidence has not been marked reviewed.",
+          "Download/read the relevant P&ID/isometric pages and record reviewed tag/line evidence.");
     }
-    if (!pidTopologyVerified && (pidTopologyEvidence == null || !pidTopologyEvidence.isSimulationReady())) {
+    if (!pidTopologyVerified
+        && (pidTopologyEvidence == null || !pidTopologyEvidence.isSimulationReady())) {
       readiness.addWarning("pid_topology", "P&ID topology or isolation boundary is not verified.",
-	  "Trace the segment, valves, nozzles, blowdown/relief path, and battery limits before design use.");
+          "Trace the segment, valves, nozzles, blowdown/relief path, and battery limits before design use.");
     }
-    if (!tr2000PipeRowsFetched) {
-      readiness.addWarning("tr2000", "TR2000 pipe size and element rows are not fetched/joined.",
-	  "Resolve latest plant Issue revision, fetch PCS rows, and map OD/wall/allowance/material.");
+    if (!pipingSpecificationRowsReviewed) {
+      readiness.addWarning("piping_specification",
+          "Piping specification rows are not reviewed and joined.",
+          "Resolve the applicable piping specification revision and map OD/wall/allowance/material.");
     }
     if (!materialCertificateReviewed) {
       readiness.addWarning("material", "Material certificate or MDS basis has not been reviewed.",
-	  "Confirm material grade and high-temperature properties before design-grade conclusions.");
+          "Confirm material grade and high-temperature properties before design-grade conclusions.");
     }
     if (!blowdownProfileVerified) {
       readiness.addWarning("depressurization", "Blowdown pressure profile is not marked verified.",
-	  "Verify the pressure profile against a governed NeqSim/API 521 depressurization model.");
+          "Verify the pressure profile against a governed NeqSim/API 521 depressurization model.");
     }
     if (!fireScenarioReviewed) {
       readiness.addWarning("fire_scenario", "Fire scenario and PFP basis are not marked reviewed.",
-	  "Confirm fire type, heat flux, exposed length, and passive fire protection assumptions.");
+          "Confirm fire type, heat flux, exposed length, and passive fire protection assumptions.");
     }
     if (!standardsReviewed) {
       readiness.addWarning("standards", "Standards basis has not been marked reviewed.",
-	  "Review API 521/ISO 23251/NORSOK S-001/TR2000 applicability before formal use.");
+          "Review API 521, ISO 23251, NORSOK S-001, and applicable piping-design requirements before formal use.");
     }
     for (String gap : gaps) {
-      readiness.addWarning("gap", gap, "Close or explicitly accept this gap before design-grade use.");
+      readiness.addWarning("gap", gap,
+          "Close or explicitly accept this gap before design-grade use.");
     }
     if (humanReviewRequired) {
-      readiness.addInfo("human_review", "Qualified engineering review is required for final acceptance.",
-	  "Use this calculation as an auditable handoff into formal process-safety verification.");
+      readiness.addInfo("human_review",
+          "Qualified engineering review is required for final acceptance.",
+          "Use this calculation as an auditable handoff into formal process-safety verification.");
     }
     return readiness.build();
   }
@@ -296,16 +301,17 @@ public final class PipeFireRuptureDataSource implements Serializable {
     map.put("material", material == null ? null : material.toMap());
     map.put("scenario", scenario == null ? null : scenario.toMap());
     map.put("pressureProfile", pressureProfile == null ? null : pressureProfile.toMap());
-    map.put("pidTopologyEvidence", pidTopologyEvidence == null ? null : pidTopologyEvidence.toMap());
-    map.put("stidEvidence", evidenceMaps(stidEvidence));
-    map.put("tr2000Evidence", evidenceMaps(tr2000Evidence));
+    map.put("pidTopologyEvidence",
+        pidTopologyEvidence == null ? null : pidTopologyEvidence.toMap());
+    map.put("sourceDocumentEvidence", evidenceMaps(sourceDocumentEvidence));
+    map.put("pipingSpecificationEvidence", evidenceMaps(pipingSpecificationEvidence));
     map.put("processEvidence", evidenceMaps(processEvidence));
     map.put("fireScenarioEvidence", evidenceMaps(fireScenarioEvidence));
     map.put("assumptions", assumptions);
     map.put("gaps", gaps);
-    map.put("stidDiagramReviewed", Boolean.valueOf(stidDiagramReviewed));
+    map.put("sourceDiagramsReviewed", Boolean.valueOf(sourceDiagramsReviewed));
     map.put("pidTopologyVerified", Boolean.valueOf(pidTopologyVerified));
-    map.put("tr2000PipeRowsFetched", Boolean.valueOf(tr2000PipeRowsFetched));
+    map.put("pipingSpecificationRowsReviewed", Boolean.valueOf(pipingSpecificationRowsReviewed));
     map.put("materialCertificateReviewed", Boolean.valueOf(materialCertificateReviewed));
     map.put("blowdownProfileVerified", Boolean.valueOf(blowdownProfileVerified));
     map.put("fireScenarioReviewed", Boolean.valueOf(fireScenarioReviewed));
@@ -340,7 +346,8 @@ public final class PipeFireRuptureDataSource implements Serializable {
    * @param references references to copy
    * @return immutable copy
    */
-  private static List<SafetyEvidenceReference> immutableEvidence(List<SafetyEvidenceReference> references) {
+  private static List<SafetyEvidenceReference> immutableEvidence(
+      List<SafetyEvidenceReference> references) {
     return Collections.unmodifiableList(new ArrayList<SafetyEvidenceReference>(references));
   }
 
@@ -376,15 +383,19 @@ public final class PipeFireRuptureDataSource implements Serializable {
     private PipeFireRuptureScenario scenario;
     private BlowdownPressureProfile pressureProfile;
     private PidTopologyEvidence pidTopologyEvidence;
-    private final List<SafetyEvidenceReference> stidEvidence = new ArrayList<SafetyEvidenceReference>();
-    private final List<SafetyEvidenceReference> tr2000Evidence = new ArrayList<SafetyEvidenceReference>();
-    private final List<SafetyEvidenceReference> processEvidence = new ArrayList<SafetyEvidenceReference>();
-    private final List<SafetyEvidenceReference> fireScenarioEvidence = new ArrayList<SafetyEvidenceReference>();
+    private final List<SafetyEvidenceReference> sourceDocumentEvidence =
+        new ArrayList<SafetyEvidenceReference>();
+    private final List<SafetyEvidenceReference> pipingSpecificationEvidence =
+        new ArrayList<SafetyEvidenceReference>();
+    private final List<SafetyEvidenceReference> processEvidence =
+        new ArrayList<SafetyEvidenceReference>();
+    private final List<SafetyEvidenceReference> fireScenarioEvidence =
+        new ArrayList<SafetyEvidenceReference>();
     private final List<String> assumptions = new ArrayList<String>();
     private final List<String> gaps = new ArrayList<String>();
-    private boolean stidDiagramReviewed;
+    private boolean sourceDiagramsReviewed;
     private boolean pidTopologyVerified;
-    private boolean tr2000PipeRowsFetched;
+    private boolean pipingSpecificationRowsReviewed;
     private boolean materialCertificateReviewed;
     private boolean blowdownProfileVerified;
     private boolean fireScenarioReviewed;
@@ -398,7 +409,7 @@ public final class PipeFireRuptureDataSource implements Serializable {
      */
     private Builder(String studyId) {
       if (clean(studyId).isEmpty()) {
-	throw new IllegalArgumentException("studyId must not be empty");
+        throw new IllegalArgumentException("studyId must not be empty");
       }
       this.studyId = studyId;
     }
@@ -459,24 +470,24 @@ public final class PipeFireRuptureDataSource implements Serializable {
     }
 
     /**
-     * Adds STID evidence.
+     * Adds source-document evidence.
      *
      * @param reference evidence reference
      * @return this builder
      */
-    public Builder addStidEvidence(SafetyEvidenceReference reference) {
-      addEvidence(stidEvidence, reference);
+    public Builder addSourceDocumentEvidence(SafetyEvidenceReference reference) {
+      addEvidence(sourceDocumentEvidence, reference);
       return this;
     }
 
     /**
-     * Adds TR2000 evidence.
+     * Adds piping-specification evidence.
      *
      * @param reference evidence reference
      * @return this builder
      */
-    public Builder addTr2000Evidence(SafetyEvidenceReference reference) {
-      addEvidence(tr2000Evidence, reference);
+    public Builder addPipingSpecificationEvidence(SafetyEvidenceReference reference) {
+      addEvidence(pipingSpecificationEvidence, reference);
       return this;
     }
 
@@ -510,7 +521,7 @@ public final class PipeFireRuptureDataSource implements Serializable {
      */
     public Builder addAssumption(String assumption) {
       if (!clean(assumption).isEmpty()) {
-	assumptions.add(clean(assumption));
+        assumptions.add(clean(assumption));
       }
       return this;
     }
@@ -523,19 +534,19 @@ public final class PipeFireRuptureDataSource implements Serializable {
      */
     public Builder addGap(String gap) {
       if (!clean(gap).isEmpty()) {
-	gaps.add(clean(gap));
+        gaps.add(clean(gap));
       }
       return this;
     }
 
     /**
-     * Marks detailed STID diagram evidence reviewed.
+     * Marks detailed source diagram evidence reviewed.
      *
-     * @param stidDiagramReviewed true if reviewed
+     * @param sourceDiagramsReviewed true if reviewed
      * @return this builder
      */
-    public Builder stidDiagramReviewed(boolean stidDiagramReviewed) {
-      this.stidDiagramReviewed = stidDiagramReviewed;
+    public Builder sourceDiagramsReviewed(boolean sourceDiagramsReviewed) {
+      this.sourceDiagramsReviewed = sourceDiagramsReviewed;
       return this;
     }
 
@@ -551,13 +562,13 @@ public final class PipeFireRuptureDataSource implements Serializable {
     }
 
     /**
-     * Marks TR2000 pipe rows fetched and joined.
+     * Marks piping-specification rows reviewed and joined.
      *
-     * @param tr2000PipeRowsFetched true if fetched
+     * @param pipingSpecificationRowsReviewed true if reviewed
      * @return this builder
      */
-    public Builder tr2000PipeRowsFetched(boolean tr2000PipeRowsFetched) {
-      this.tr2000PipeRowsFetched = tr2000PipeRowsFetched;
+    public Builder pipingSpecificationRowsReviewed(boolean pipingSpecificationRowsReviewed) {
+      this.pipingSpecificationRowsReviewed = pipingSpecificationRowsReviewed;
       return this;
     }
 
@@ -631,9 +642,10 @@ public final class PipeFireRuptureDataSource implements Serializable {
      * @param target target list
      * @param reference evidence reference; ignored when null
      */
-    private static void addEvidence(List<SafetyEvidenceReference> target, SafetyEvidenceReference reference) {
+    private static void addEvidence(List<SafetyEvidenceReference> target,
+        SafetyEvidenceReference reference) {
       if (reference != null) {
-	target.add(reference);
+        target.add(reference);
       }
     }
   }

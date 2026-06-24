@@ -26,7 +26,8 @@ class PipeFireRuptureStudyTest {
   }
 
   /**
-   * Verifies that a dynamic depressurization time series can feed the rupture pressure profile directly.
+   * Verifies that a dynamic depressurization time series can feed the rupture pressure profile
+   * directly.
    */
   @Test
   void pressureProfileCanBeBuiltFromDepressurizationResult() {
@@ -39,7 +40,7 @@ class PipeFireRuptureStudyTest {
     result.pressureBara.add(Double.valueOf(74.0));
 
     BlowdownPressureProfile profile = BlowdownPressureProfile.fromDepressurizationResult(result,
-	BlowdownPressureProfile.InterpolationMode.LINEAR);
+        BlowdownPressureProfile.InterpolationMode.LINEAR);
 
     assertEquals(87.0, profile.pressureBaraAt(0.0), 1.0e-12);
     assertEquals(77.0, profile.pressureBaraAt(7.5), 1.0e-12);
@@ -51,14 +52,19 @@ class PipeFireRuptureStudyTest {
    */
   @Test
   void workbookMaterialLabelsAndSmallJetFireResolve() {
-    assertEquals("22Cr duplex", PipeFireRuptureMaterial.fromSpreadsheetMaterialName("22Cr duplex").getMaterialName());
-    assertEquals("Superduplex", PipeFireRuptureMaterial.fromSpreadsheetMaterialName("SUPERDUPLEX").getMaterialName());
+    assertEquals("22Cr duplex",
+        PipeFireRuptureMaterial.fromSpreadsheetMaterialName("22Cr duplex").getMaterialName());
+    assertEquals("Superduplex",
+        PipeFireRuptureMaterial.fromSpreadsheetMaterialName("SUPERDUPLEX").getMaterialName());
     assertEquals("CS 360 API 5L-X52",
-	PipeFireRuptureMaterial.fromSpreadsheetMaterialName("API 5L-X52").getMaterialName());
-    assertEquals("6Mo", PipeFireRuptureMaterial.fromSpreadsheetMaterialName("6 Mo").getMaterialName());
+        PipeFireRuptureMaterial.fromSpreadsheetMaterialName("API 5L-X52").getMaterialName());
+    assertEquals("6Mo",
+        PipeFireRuptureMaterial.fromSpreadsheetMaterialName("6 Mo").getMaterialName());
 
-    double smallJetHeatFlux = PipeFireRuptureScenario.spreadsheetSmallJetFire().heatFluxKWPerM2(20.0);
-    double largeJetHeatFlux = PipeFireRuptureScenario.spreadsheetLargeJetFire().heatFluxKWPerM2(20.0);
+    double smallJetHeatFlux =
+        PipeFireRuptureScenario.spreadsheetSmallJetFire().heatFluxKWPerM2(20.0);
+    double largeJetHeatFlux =
+        PipeFireRuptureScenario.spreadsheetLargeJetFire().heatFluxKWPerM2(20.0);
     assertTrue(smallJetHeatFlux > 220.0);
     assertTrue(smallJetHeatFlux < 250.0);
     assertTrue(smallJetHeatFlux < largeJetHeatFlux);
@@ -70,9 +76,9 @@ class PipeFireRuptureStudyTest {
   @Test
   void largeJetFirePredictsWorkbookPipeOneRuptureTime() {
     PipeFireRuptureResult result = PipeFireRuptureStudy
-	.builder(benchmarkPipeOne(), PipeFireRuptureMaterial.spreadsheetDuplex22Cr(),
-	    PipeFireRuptureScenario.spreadsheetLargeJetFire(), benchmarkPressureProfile())
-	.timeStepSeconds(5.0).maxTimeSeconds(200.0).build().run();
+        .builder(benchmarkPipeOne(), PipeFireRuptureMaterial.spreadsheetDuplex22Cr(),
+            PipeFireRuptureScenario.spreadsheetLargeJetFire(), benchmarkPressureProfile())
+        .timeStepSeconds(5.0).maxTimeSeconds(200.0).build().run();
 
     assertTrue(result.isRupturePredicted());
     assertEquals(110.0, result.getRuptureTimeSeconds(), 5.0);
@@ -87,26 +93,32 @@ class PipeFireRuptureStudyTest {
    */
   @Test
   void governedDataSourceRunnerBuildsHandoffAndUncertainty() {
-    SafetyEvidenceReference tr2000Evidence = SafetyEvidenceReference.builder("TR2000", "wall_thickness_mm")
-	.documentId("PCS-DD100").revision("D").valueText("3.7").unit("mm").status("fetched_joined").confidence(0.95)
-	.build();
-    SafetyEvidenceReference stidEvidence = SafetyEvidenceReference.builder("STID", "line_tag").documentId("P-ID-001")
-	.valueText("3DD100").status("diagram_reviewed").confidence(0.90).build();
-    PipeFireRuptureInput input = benchmarkPipeOne().toBuilder().evidenceReference(tr2000Evidence).build();
+    SafetyEvidenceReference pipingSpecEvidence = SafetyEvidenceReference
+        .builder("PIPING_SPEC", "wall_thickness_mm").documentId("PCS-DD100").revision("D")
+        .valueText("3.7").unit("mm").status("fetched_joined").confidence(0.95).build();
+    SafetyEvidenceReference sourceDrawingEvidence =
+        SafetyEvidenceReference.builder("P_ID", "line_tag").documentId("P-ID-001")
+            .valueText("3DD100").status("diagram_reviewed").confidence(0.90).build();
+    PipeFireRuptureInput input =
+        benchmarkPipeOne().toBuilder().evidenceReference(pipingSpecEvidence).build();
     PipeFireRuptureDataSource dataSource = PipeFireRuptureDataSource.builder("study-1").input(input)
-	.material(PipeFireRuptureMaterial.spreadsheetDuplex22Cr())
-	.scenario(PipeFireRuptureScenario.spreadsheetLargeJetFire()).pressureProfile(benchmarkPressureProfile())
-	.addTr2000Evidence(tr2000Evidence).addStidEvidence(stidEvidence)
-	.addAssumption("Representative workbook material curve used until MDS is confirmed.").stidDiagramReviewed(true)
-	.pidTopologyVerified(true).tr2000PipeRowsFetched(true).materialCertificateReviewed(false)
-	.blowdownProfileVerified(true).fireScenarioReviewed(true).standardsReviewed(false).build();
+        .material(PipeFireRuptureMaterial.spreadsheetDuplex22Cr())
+        .scenario(PipeFireRuptureScenario.spreadsheetLargeJetFire())
+        .pressureProfile(benchmarkPressureProfile())
+        .addPipingSpecificationEvidence(pipingSpecEvidence)
+        .addSourceDocumentEvidence(sourceDrawingEvidence)
+        .addAssumption(
+            "Representative workbook material curve used until material basis is confirmed.")
+        .sourceDiagramsReviewed(true).pidTopologyVerified(true)
+        .pipingSpecificationRowsReviewed(true).materialCertificateReviewed(false)
+        .blowdownProfileVerified(true).fireScenarioReviewed(true).standardsReviewed(false).build();
 
     SafetyStudyReadiness readiness = dataSource.readiness();
     assertTrue(readiness.isReadyForCalculation());
     assertTrue(!readiness.isDesignGrade());
 
     PipeFireRuptureStudyHandoff handoff = PipeFireRuptureStudyRunner.builder().timeStepSeconds(5.0)
-	.maxTimeSeconds(200.0).runUncertainty(true).build().run(dataSource);
+        .maxTimeSeconds(200.0).runUncertainty(true).build().run(dataSource);
 
     assertTrue(handoff.getResult().isRupturePredicted());
     assertEquals(110.0, handoff.getResult().getRuptureTimeSeconds(), 5.0);
@@ -122,16 +134,20 @@ class PipeFireRuptureStudyTest {
    */
   @Test
   void pidTopologyEvidenceCarriesGraphAndReadiness() {
-    PidTopologyEvidence topology = PidTopologyEvidence.builder("P-ID-001").revision("A").embeddedTextRead(true)
-	.overlayGenerated(true).boundaryVerified(true).addInScopeTag("3DD100").addBoundaryTag("XV-001")
-	.addNode("n1", "20VA001", "equipment", "source").addNode("n2", "XV-001", "valve", "boundary")
-	.addEdge("e1", "n1", "n2", "3DD100", "gas").build();
+    PidTopologyEvidence topology =
+        PidTopologyEvidence.builder("P-ID-001").revision("A").embeddedTextRead(true)
+            .overlayGenerated(true).boundaryVerified(true).addInScopeTag("3DD100")
+            .addBoundaryTag("XV-001").addNode("n1", "20VA001", "equipment", "source")
+            .addNode("n2", "XV-001", "valve", "boundary").addEdge("e1", "n1", "n2", "3DD100", "gas")
+            .build();
     PipeFireRuptureDataSource dataSource = PipeFireRuptureDataSource.builder("study-with-topology")
-	.input(benchmarkPipeOne()).material(PipeFireRuptureMaterial.spreadsheetDuplex22Cr())
-	.scenario(PipeFireRuptureScenario.spreadsheetLargeJetFire()).pressureProfile(benchmarkPressureProfile())
-	.pidTopologyEvidence(topology).stidDiagramReviewed(true).pidTopologyVerified(true).tr2000PipeRowsFetched(true)
-	.materialCertificateReviewed(true).blowdownProfileVerified(true).fireScenarioReviewed(true)
-	.standardsReviewed(true).humanReviewRequired(false).build();
+        .input(benchmarkPipeOne()).material(PipeFireRuptureMaterial.spreadsheetDuplex22Cr())
+        .scenario(PipeFireRuptureScenario.spreadsheetLargeJetFire())
+        .pressureProfile(benchmarkPressureProfile()).pidTopologyEvidence(topology)
+        .sourceDiagramsReviewed(true).pidTopologyVerified(true)
+        .pipingSpecificationRowsReviewed(true).materialCertificateReviewed(true)
+        .blowdownProfileVerified(true).fireScenarioReviewed(true).standardsReviewed(true)
+        .humanReviewRequired(false).build();
 
     assertTrue(topology.isSimulationReady());
     assertTrue(dataSource.readiness().isDesignGrade());
@@ -144,9 +160,10 @@ class PipeFireRuptureStudyTest {
   @Test
   void missingDataSourceInputsAreBlockedBeforeCalculation() {
     PipeFireRuptureDataSource dataSource = PipeFireRuptureDataSource.builder("blocked-study")
-	.addGap("TR2000 pipe row missing.").build();
+        .addGap("Piping specification row missing.").build();
 
-    PipeFireRuptureStudyHandoff handoff = PipeFireRuptureStudyRunner.builder().build().run(dataSource);
+    PipeFireRuptureStudyHandoff handoff =
+        PipeFireRuptureStudyRunner.builder().build().run(dataSource);
 
     assertTrue(!handoff.getCalculationReadiness().isReadyForCalculation());
     assertNull(handoff.getResult());
@@ -160,10 +177,11 @@ class PipeFireRuptureStudyTest {
    */
   private PipeFireRuptureInput benchmarkPipeOne() {
     return PipeFireRuptureInput.builder("3DD100").pipeClass("DD100").nominalDiameterInches(3.0)
-	.outsideDiameter(88.9, "mm").nominalWallThickness(3.7, "mm").corrosionAllowance(0.0, "mm")
-	.wallThicknessUndertoleranceFraction(0.10).weldFactor(1.0).weightStressMPa(0.0)
-	.fluidDensityKgPerM3(23.7487037155012).fluidHeatCapacityJPerKgK(2283.35469905934)
-	.gasMolecularWeightKgPerKmol(18.2).initialTemperatureC(20.0).exposedLength(1.0, "m").build();
+        .outsideDiameter(88.9, "mm").nominalWallThickness(3.7, "mm").corrosionAllowance(0.0, "mm")
+        .wallThicknessUndertoleranceFraction(0.10).weldFactor(1.0).weightStressMPa(0.0)
+        .fluidDensityKgPerM3(23.7487037155012).fluidHeatCapacityJPerKgK(2283.35469905934)
+        .gasMolecularWeightKgPerKmol(18.2).initialTemperatureC(20.0).exposedLength(1.0, "m")
+        .build();
   }
 
   /**
@@ -173,11 +191,12 @@ class PipeFireRuptureStudyTest {
    */
   private BlowdownPressureProfile benchmarkPressureProfile() {
     return BlowdownPressureProfile.fromMinutesAndBara(
-	new double[] { 0.0, 0.083333333, 0.166666667, 0.25, 0.333333333, 0.416666667, 0.5, 0.583333333, 0.666666667,
-	    0.75, 0.833333333, 0.916666667, 1.0, 1.083333333, 1.166666667, 1.25, 1.333333333, 1.416666667, 1.5,
-	    1.583333333, 1.666666667, 1.75, 1.833333333, 1.916666667, 2.0 },
-	new double[] { 61.3, 59.7053, 58.6349, 57.3483, 55.9731, 54.5583, 53.1249, 51.6842, 50.2472, 48.8145, 47.3977,
-	    46.004, 44.6383, 43.3046, 42.0058, 40.7442, 39.5206, 38.3367, 37.1941, 36.0922, 35.0302, 34.0082, 33.0255,
-	    32.0817, 31.1758 });
+        new double[] {0.0, 0.083333333, 0.166666667, 0.25, 0.333333333, 0.416666667, 0.5,
+            0.583333333, 0.666666667, 0.75, 0.833333333, 0.916666667, 1.0, 1.083333333, 1.166666667,
+            1.25, 1.333333333, 1.416666667, 1.5, 1.583333333, 1.666666667, 1.75, 1.833333333,
+            1.916666667, 2.0},
+        new double[] {61.3, 59.7053, 58.6349, 57.3483, 55.9731, 54.5583, 53.1249, 51.6842, 50.2472,
+            48.8145, 47.3977, 46.004, 44.6383, 43.3046, 42.0058, 40.7442, 39.5206, 38.3367, 37.1941,
+            36.0922, 35.0302, 34.0082, 33.0255, 32.0817, 31.1758});
   }
 }
