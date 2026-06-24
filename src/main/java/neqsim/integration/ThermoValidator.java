@@ -1,7 +1,10 @@
 package neqsim.integration;
 
+import neqsim.integration.ValidationFramework.CommonErrors;
+import neqsim.integration.ValidationFramework.ValidationBuilder;
+import neqsim.integration.ValidationFramework.ValidationError;
+import neqsim.integration.ValidationFramework.ValidationResult;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.integration.ValidationFramework.*;
 
 /**
  * Validators for thermodynamic systems (SystemInterface implementations).

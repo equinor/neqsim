@@ -7,12 +7,12 @@ import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.GsonBuilder;
 import neqsim.process.design.AutoSizeable;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.stream.StreamInterface;
-import com.google.gson.GsonBuilder;
 
 /**
  * Combined-cycle power system integrating a gas turbine, HRSG, and steam turbine.

@@ -3,7 +3,6 @@ package neqsim.process.safety.api14c;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.util.EnumSet;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.separator.Separator;

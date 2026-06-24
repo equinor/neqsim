@@ -4,9 +4,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorChartGenerator;
 import neqsim.process.equipment.compressor.CompressorChartInterface;
@@ -22,18 +25,15 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.util.optimizer.ProductionOptimizer.IterationRecord;
 import neqsim.process.util.optimizer.ProductionOptimizer.ManipulatedVariable;
 import neqsim.process.util.optimizer.ProductionOptimizer.ObjectiveType;
 import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConfig;
 import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationObjective;
 import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult;
 import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
-import neqsim.process.util.optimizer.ProductionOptimizer.IterationRecord;
-import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Integration tests for bottleneck analysis with multi-train compressor systems.

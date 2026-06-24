@@ -1,10 +1,9 @@
 package neqsim.thermo.system;
 
-import org.junit.jupiter.api.Test;
-
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Test;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Diagnostic test to measure current CPA CO2-water predictions at multiple conditions against published experimental

@@ -10,8 +10,8 @@ import java.util.Map;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.heatexchanger.Cooler;
-import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
+import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**

@@ -6,8 +6,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import neqsim.process.safety.risk.sis.SafetyInstrumentedFunction;
 import neqsim.process.safety.risk.sis.SILVerificationResult;
+import neqsim.process.safety.risk.sis.SafetyInstrumentedFunction;
 
 /**
  * MCP runner for SIL (Safety Integrity Level) verification per IEC 61508 / IEC 61511.

@@ -5,8 +5,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.util.fire.ReliefValveSizing;
-import neqsim.process.util.fire.ReliefValveSizing.PSVSizingResult;
 import neqsim.process.util.fire.ReliefValveSizing.LiquidPSVSizingResult;
+import neqsim.process.util.fire.ReliefValveSizing.PSVSizingResult;
 
 /**
  * MCP runner for Pressure Safety Valve (PSV) sizing per API 520 / API 521.

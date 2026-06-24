@@ -8,13 +8,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  * Computes auto-layout positions for DEXPI XML export.

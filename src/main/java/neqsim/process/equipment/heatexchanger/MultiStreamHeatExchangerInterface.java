@@ -1,9 +1,9 @@
 package neqsim.process.equipment.heatexchanger;
 
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
-import neqsim.process.equipment.stream.StreamInterface;
 
 /**
  * MultiStreamHeatExchangerInterface interface.

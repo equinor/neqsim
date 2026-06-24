@@ -1,14 +1,17 @@
 package neqsim.util.agentic;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.util.agentic.AgentBenchmarkSuite.BenchmarkProblem;
 import neqsim.util.agentic.AgentBenchmarkSuite.BenchmarkReport;
+import neqsim.util.agentic.AgentBenchmarkSuite.Difficulty;
 import neqsim.util.agentic.AgentBenchmarkSuite.ProblemCategory;
 import neqsim.util.agentic.AgentBenchmarkSuite.ProblemResult;
-import neqsim.util.agentic.AgentBenchmarkSuite.Difficulty;
 
 /**
  * Tests for {@link AgentBenchmarkSuite}.

@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import neqsim.process.equipment.ProcessEquipmentInterface;
-import neqsim.process.processmodel.ProcessSystem;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.processmodel.ProcessSystem;
 
 /**
  * Main orchestrator for root cause analysis of equipment issues.

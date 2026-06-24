@@ -1,26 +1,26 @@
 package neqsim.process.util.optimizer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.util.optimizer.ProductionOptimizer.ConstraintDirection;
+import neqsim.process.util.optimizer.ProductionOptimizer.ConstraintSeverity;
+import neqsim.process.util.optimizer.ProductionOptimizer.ManipulatedVariable;
+import neqsim.process.util.optimizer.ProductionOptimizer.ObjectiveType;
 import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConfig;
 import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConstraint;
 import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationObjective;
-import neqsim.process.util.optimizer.ProductionOptimizer.ObjectiveType;
 import neqsim.process.util.optimizer.ProductionOptimizer.ScenarioRequest;
-import neqsim.process.util.optimizer.ProductionOptimizer.ManipulatedVariable;
-import neqsim.process.util.optimizer.ProductionOptimizer.ConstraintSeverity;
-import neqsim.process.util.optimizer.ProductionOptimizer.ConstraintDirection;
 import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
-import neqsim.process.equipment.stream.StreamInterface;
 
 /**
  * Loader for YAML/JSON optimization specification files.

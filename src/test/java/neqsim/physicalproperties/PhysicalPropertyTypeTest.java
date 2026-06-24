@@ -3,10 +3,10 @@ package neqsim.physicalproperties;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
-import neqsim.util.exception.InvalidInputException;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
+import neqsim.util.exception.InvalidInputException;
 
 public class PhysicalPropertyTypeTest {
   @Test

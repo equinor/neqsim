@@ -3,6 +3,8 @@ package neqsim.process.util.example;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
@@ -28,8 +30,6 @@ import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult;
 import neqsim.process.util.optimizer.ProductionOptimizer.ParetoResult;
 import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
 import neqsim.thermo.system.SystemPrEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class testTr {
   private static final Logger logger = LogManager.getLogger(testTr.class);

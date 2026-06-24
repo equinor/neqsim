@@ -13,6 +13,7 @@ import neqsim.process.equipment.compressor.CompressorChart;
 import neqsim.process.equipment.compressor.CompressorChartInterface;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.util.optimizer.ProductionOptimizer.ConstraintSeverity;
 import neqsim.process.util.optimizer.ProductionOptimizer.ManipulatedVariable;
 import neqsim.process.util.optimizer.ProductionOptimizer.ObjectiveType;
 import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConfig;
@@ -20,7 +21,6 @@ import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConstraint;
 import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationObjective;
 import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult;
 import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
-import neqsim.process.util.optimizer.ProductionOptimizer.ConstraintSeverity;
 
 /**
  * Helper class for compressor-specific production optimization.

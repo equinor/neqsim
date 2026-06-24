@@ -5,14 +5,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.designstandards.DesignStandard;
 import neqsim.process.mechanicaldesign.designstandards.StandardRegistry;
 import neqsim.process.mechanicaldesign.designstandards.StandardType;
 import neqsim.process.processmodel.ProcessSystem;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Manager class for applying Technical Requirements Documents (TORG) to process systems.

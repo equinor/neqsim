@@ -1,4 +1,4 @@
-package neqsim.process.safety;
+hpackage neqsim.process.safety;
 
 /**
  * Enumeration of initiating events for safety scenarios.

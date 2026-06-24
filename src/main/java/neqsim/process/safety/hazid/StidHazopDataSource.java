@@ -1,12 +1,12 @@
 package neqsim.process.safety.hazid;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
 
 /**
  * Normalized STID and P&amp;ID-to-HAZOP JSON bridge that builds {@link HAZOPTemplate} nodes from externally normalized

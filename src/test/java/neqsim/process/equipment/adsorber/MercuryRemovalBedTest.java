@@ -9,10 +9,10 @@ import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.process.costestimation.adsorber.MercuryRemovalCostEstimate;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.adsorber.MercuryRemovalMechanicalDesign;
-import neqsim.process.costestimation.adsorber.MercuryRemovalCostEstimate;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 

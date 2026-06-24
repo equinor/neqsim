@@ -1,10 +1,10 @@
 package neqsim.process.safety.compliance;
 
-import com.google.gson.GsonBuilder;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import com.google.gson.GsonBuilder;
 
 /**
  * NORSOK P-002 ("Process system design") compliance checker.

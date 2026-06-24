@@ -1,5 +1,7 @@
 package neqsim.process.processmodel;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
 import neqsim.process.equipment.absorber.WaterStripperColumn;
@@ -19,8 +21,6 @@ import neqsim.process.measurementdevice.HydrateEquilibriumTemperatureAnalyser;
 import neqsim.process.measurementdevice.WaterDewPointAnalyser;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class GlycolModulesTest extends neqsim.NeqSimTest {
   private static final Logger logger = LogManager.getLogger(GlycolModulesTest.class);

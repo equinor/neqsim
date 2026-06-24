@@ -10,8 +10,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.mcp.model.ResultProvenance;
 import neqsim.process.fielddevelopment.economics.CashFlowEngine;
-import neqsim.process.fielddevelopment.economics.CashFlowEngine.CashFlowResult;
 import neqsim.process.fielddevelopment.economics.CashFlowEngine.AnnualCashFlow;
+import neqsim.process.fielddevelopment.economics.CashFlowEngine.CashFlowResult;
 import neqsim.process.fielddevelopment.economics.ProductionProfileGenerator;
 import neqsim.process.fielddevelopment.economics.ProductionProfileGenerator.DeclineType;
 

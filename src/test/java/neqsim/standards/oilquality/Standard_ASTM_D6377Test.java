@@ -2,8 +2,8 @@ package neqsim.standards.oilquality;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 

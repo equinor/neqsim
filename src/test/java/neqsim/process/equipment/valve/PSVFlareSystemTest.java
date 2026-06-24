@@ -1,17 +1,17 @@
 package neqsim.process.equipment.valve;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.flare.Flare;
+import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.mixer.Mixer;
-import neqsim.process.equipment.flare.Flare;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Test class for simulating a complete PSV relief scenario with flare system.

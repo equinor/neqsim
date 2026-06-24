@@ -1,10 +1,10 @@
 package neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import org.junit.jupiter.api.Test;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Test;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class KTAViscosityMethodModTest {
   private static final Logger logger = LogManager.getLogger(KTAViscosityMethodModTest.class);

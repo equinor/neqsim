@@ -6,11 +6,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import neqsim.process.equipment.TwoPortEquipment;
-import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.flare.dto.FlareCapacityDTO;
 import neqsim.process.equipment.flare.dto.FlareDispersionSurrogateDTO;
 import neqsim.process.equipment.flare.dto.FlarePerformanceDTO;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.unit.PowerUnit;
 

@@ -2,8 +2,8 @@ package neqsim.process.safety.dispersion;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import neqsim.process.safety.dispersion.HazardousAreaCalculator.ReleaseGrade;
 import org.junit.jupiter.api.Test;
+import neqsim.process.safety.dispersion.HazardousAreaCalculator.ReleaseGrade;
 
 /**
  * Unit tests for {@link HazardousAreaCalculator}.

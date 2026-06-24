@@ -1,7 +1,7 @@
 package neqsim.process.operations.envelope;
 
-import com.google.gson.JsonObject;
 import java.io.Serializable;
+import com.google.gson.JsonObject;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 
 /**

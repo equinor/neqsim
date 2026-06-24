@@ -1,6 +1,8 @@
 package neqsim.process.util.scenario;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.flare.Flare;
@@ -19,8 +21,6 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.safety.ProcessSafetyScenario;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Test to verify that ESD scenario actually reduces separator pressure and routes gas to flare.

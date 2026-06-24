@@ -1,9 +1,9 @@
 package neqsim.process.safety.rupture;
 
-import com.google.gson.GsonBuilder;
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import com.google.gson.GsonBuilder;
 import neqsim.process.util.fire.FireHeatLoadCalculator;
 
 /**

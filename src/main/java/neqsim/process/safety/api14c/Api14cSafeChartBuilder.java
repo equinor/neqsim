@@ -1,6 +1,5 @@
 package neqsim.process.safety.api14c;
 
-import com.google.gson.GsonBuilder;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.processmodel.ProcessSystem;
 

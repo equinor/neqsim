@@ -3,13 +3,13 @@ package neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosit
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.lang.reflect.Method;
-import org.junit.jupiter.api.Test;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Test;
 import neqsim.physicalproperties.system.PhysicalProperties;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class LBCViscosityMethodTest {
   private static final Logger logger = LogManager.getLogger(LBCViscosityMethodTest.class);

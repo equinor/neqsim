@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.fielddevelopment.concept.FieldConcept;
 import neqsim.process.fielddevelopment.concept.InfrastructureInput;
 import neqsim.process.fielddevelopment.concept.ReservoirInput;
@@ -18,7 +19,6 @@ import neqsim.process.fielddevelopment.network.MultiphaseFlowIntegrator.Pipeline
 import neqsim.process.fielddevelopment.network.TiebackRouteNetwork;
 import neqsim.process.fielddevelopment.screening.FlowAssuranceReport;
 import neqsim.process.fielddevelopment.screening.FlowAssuranceScreener;
-import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;

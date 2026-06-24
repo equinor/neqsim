@@ -1,13 +1,13 @@
 package neqsim.process.equipment.network;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.data.DMatrixSparseCSC;
 import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
 import org.ejml.interfaces.linsol.LinearSolverDense;
-import org.ejml.sparse.csc.factory.LinearSolverFactory_DSCC;
 import org.ejml.interfaces.linsol.LinearSolverSparse;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.ejml.sparse.csc.factory.LinearSolverFactory_DSCC;
 
 /**
  * Sparse and dense linear system solvers for pipeline network equations.

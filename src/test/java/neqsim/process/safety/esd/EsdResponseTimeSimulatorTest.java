@@ -3,8 +3,8 @@ package neqsim.process.safety.esd;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import neqsim.process.safety.esd.EsdResponseTimeSimulator.EsdResponseTimeResult;
 import org.junit.jupiter.api.Test;
+import neqsim.process.safety.esd.EsdResponseTimeSimulator.EsdResponseTimeResult;
 
 /**
  * Unit tests for {@link EsdResponseTimeSimulator}.

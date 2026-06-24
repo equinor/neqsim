@@ -1,4 +1,4 @@
-package neqsim.pvtsimulation.modeltuning;
+opackage neqsim.pvtsimulation.modeltuning;
 
 import neqsim.pvtsimulation.simulation.SimulationInterface;
 

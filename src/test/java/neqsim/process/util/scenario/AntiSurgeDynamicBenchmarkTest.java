@@ -2,6 +2,7 @@ package neqsim.process.util.scenario;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import neqsim.process.controllerdevice.AntiSurgeController;
 
 /**
  * Dynamic validation benchmark test for the anti-surge recycle loop. Verifies that the {@link AntiSurgeController}

@@ -1,10 +1,10 @@
 package neqsim.process.safety.barrier;
 
+import java.util.Locale;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import java.util.Locale;
 
 /**
  * Normalized STID tag-and-document JSON bridge that builds a {@link BarrierRegister} from externally normalized

@@ -2,6 +2,8 @@ package neqsim.process.processmodel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,8 +23,6 @@ import neqsim.process.measurementdevice.LevelTransmitter;
 import neqsim.process.measurementdevice.PressureTransmitter;
 import neqsim.process.measurementdevice.VolumeFlowTransmitter;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
   private static final Logger logger = LogManager.getLogger(ProcessSystemRunTransientTest.class);

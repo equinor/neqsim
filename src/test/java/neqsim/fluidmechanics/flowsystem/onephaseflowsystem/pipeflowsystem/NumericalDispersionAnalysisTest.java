@@ -3,9 +3,9 @@ package neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.jupiter.api.Test;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Test;
 
 /**
  * Numerical Dispersion Analysis for Compositional Tracking in Pipeline Transient Simulations.

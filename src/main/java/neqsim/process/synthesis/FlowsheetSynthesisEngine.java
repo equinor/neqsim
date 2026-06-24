@@ -1,4 +1,4 @@
-package neqsim.process.synthesis;
+opackage neqsim.process.synthesis;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

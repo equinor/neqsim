@@ -5,13 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import org.junit.jupiter.api.Test;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.mcp.catalog.ExampleCatalog;
 import neqsim.mcp.catalog.SchemaCatalog;
-import org.junit.jupiter.api.Test;
 
 /**
  * Tests for the CapabilitiesRunner.

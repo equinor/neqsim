@@ -6,10 +6,10 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import neqsim.process.equipment.ProcessEquipmentInterface;
-import neqsim.process.processmodel.ProcessSystem;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.processmodel.ProcessSystem;
 
 /**
  * Detects trip events during dynamic or steady-state simulation by monitoring process parameters against configured

@@ -1,7 +1,7 @@
 package neqsim.process.safety.risk.sis.nog070;
 
-import com.google.gson.GsonBuilder;
 import java.io.Serializable;
+import com.google.gson.GsonBuilder;
 
 /**
  * Result of a NOG 070 SIL determination for a Safety Instrumented Function.

@@ -1,4 +1,4 @@
-package neqsim.process.research;
+wpackage neqsim.process.research;
 
 import java.util.ArrayList;
 import java.util.Collections;

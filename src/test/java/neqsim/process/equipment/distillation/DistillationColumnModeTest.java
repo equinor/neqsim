@@ -7,8 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
-import neqsim.util.validation.ValidationResult;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.util.validation.ValidationResult;
 
 /**
  * Tests explicit condenser and reboiler mode configuration on distillation columns.

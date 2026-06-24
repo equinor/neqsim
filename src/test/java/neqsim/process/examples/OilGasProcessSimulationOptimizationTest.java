@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -12,8 +14,6 @@ import neqsim.process.examples.OilGasProcessSimulationOptimization.ProcessInputP
 import neqsim.process.examples.OilGasProcessSimulationOptimization.ProcessOutputResults;
 import neqsim.process.measurementdevice.FlowInducedVibrationAnalyser;
 import neqsim.process.processmodel.ProcessSystem;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Test class for OilGasProcessSimulationOptimization.

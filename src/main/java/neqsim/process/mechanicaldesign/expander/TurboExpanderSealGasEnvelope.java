@@ -3,9 +3,9 @@ package neqsim.process.mechanicaldesign.expander;
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import com.google.gson.GsonBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.expander.TurboExpanderCompressor;
 
 /**

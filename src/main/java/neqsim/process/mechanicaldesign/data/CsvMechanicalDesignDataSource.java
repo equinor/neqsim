@@ -6,9 +6,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Optional;
-import neqsim.process.mechanicaldesign.DesignLimitData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.mechanicaldesign.DesignLimitData;
 
 /**
  * Loads mechanical design limits from a CSV file. The file is expected to contain the columns {@code EQUIPMENTTYPE},

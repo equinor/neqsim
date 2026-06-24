@@ -1,10 +1,10 @@
 package neqsim.process.mechanicaldesign.motor;
 
-import com.google.gson.GsonBuilder;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import com.google.gson.GsonBuilder;
 import neqsim.process.electricaldesign.ElectricalDesign;
 import neqsim.process.electricaldesign.components.ElectricalMotor;
 

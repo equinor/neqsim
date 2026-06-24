@@ -1,9 +1,9 @@
 package neqsim.process.chemistry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import org.junit.jupiter.api.Test;
 import neqsim.process.chemistry.corrosion.LangmuirInhibitorIsotherm;
 import neqsim.process.chemistry.corrosion.MechanisticCorrosionModel;

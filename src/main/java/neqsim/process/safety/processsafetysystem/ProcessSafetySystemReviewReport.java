@@ -1,12 +1,12 @@
 package neqsim.process.safety.processsafetysystem;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 /**
  * Aggregated report for a NORSOK S-001 Clause 10 process safety system review.

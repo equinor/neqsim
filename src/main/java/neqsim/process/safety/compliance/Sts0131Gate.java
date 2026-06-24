@@ -1,9 +1,9 @@
 package neqsim.process.safety.compliance;
 
-import com.google.gson.GsonBuilder;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import com.google.gson.GsonBuilder;
 import neqsim.process.safety.depressurization.STS0131AcceptanceResult;
 import neqsim.process.safety.risk.sis.nog070.Nog070SilDetermination;
 import neqsim.process.safety.rupture.TrappedLiquidFireRuptureResult;

@@ -2,12 +2,12 @@ package neqsim.process.equipment.distillation;
 
 import java.util.Arrays;
 import java.util.Locale;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Temporary warm-JVM A/B benchmark for the phase-split out-stream init level change. NOT part of the committed test

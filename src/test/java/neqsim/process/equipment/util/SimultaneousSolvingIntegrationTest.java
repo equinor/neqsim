@@ -1,6 +1,8 @@
 package neqsim.process.equipment.util;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,8 +19,6 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.graph.ProcessGraph;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Integration tests for simultaneous modular solving and sensitivity-based tear stream selection using large, realistic

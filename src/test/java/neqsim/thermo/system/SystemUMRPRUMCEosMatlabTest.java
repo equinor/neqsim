@@ -3,10 +3,10 @@ package neqsim.thermo.system;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.Test;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Test;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Test reproducing MATLAB scrubber carry-over calculation with UMR-PRU EOS. Based on scr_test23VG01.m which uses

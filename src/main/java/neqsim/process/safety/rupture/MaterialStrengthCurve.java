@@ -1,6 +1,5 @@
 package neqsim.process.safety.rupture;
 
-import com.google.gson.GsonBuilder;
 import java.io.Serializable;
 import java.sql.ResultSet;
 import java.util.Arrays;
@@ -8,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.GsonBuilder;
 import neqsim.util.database.NeqSimProcessDesignDataBase;
 
 /**

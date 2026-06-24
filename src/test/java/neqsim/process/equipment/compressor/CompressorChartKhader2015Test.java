@@ -1,9 +1,9 @@
 package neqsim.process.equipment.compressor;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.CompressorChartKhader2015.RealCurve;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;

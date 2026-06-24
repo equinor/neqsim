@@ -5,11 +5,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.processmodel.ProcessSystem;
 
 /**
  * Scenario analyzer for production scheduling and what-if analysis.

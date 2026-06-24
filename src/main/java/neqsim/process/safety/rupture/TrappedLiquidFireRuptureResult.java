@@ -1,12 +1,12 @@
 package neqsim.process.safety.rupture;
 
-import com.google.gson.GsonBuilder;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import com.google.gson.GsonBuilder;
 import neqsim.process.safety.barrier.SafetySystemCategory;
 import neqsim.process.safety.barrier.SafetySystemDemand;
 import neqsim.process.safety.release.LeakModel;

@@ -1,5 +1,7 @@
 package neqsim.process.equipment.util;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
@@ -7,8 +9,6 @@ import neqsim.process.measurementdevice.MultiPhaseMeter;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class GORfitterTest {
   private static final Logger logger = LogManager.getLogger(GORfitterTest.class);

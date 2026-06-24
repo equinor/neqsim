@@ -1,6 +1,8 @@
 package neqsim.process.examples;
 
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.separator.Separator;
@@ -8,8 +10,6 @@ import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.examples.OilGasProcessSimulationOptimization.MaxProductionResult;
 import neqsim.process.examples.OilGasProcessSimulationOptimization.ProcessOutputResults;
 import neqsim.process.processmodel.ProcessSystem;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Test to run production optimization with separator and scrubber design checks

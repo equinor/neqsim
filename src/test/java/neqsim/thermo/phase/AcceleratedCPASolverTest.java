@@ -2,6 +2,8 @@ package neqsim.thermo.phase;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -20,8 +22,6 @@ import neqsim.thermo.system.SystemSrkCPAstatoilFullyImplicit;
 import neqsim.thermo.system.SystemSrkCPAstatoilFullyImplicitReduced;
 import neqsim.thermo.system.SystemSrkCPAstatoilReduced;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for the accelerated CPA solver variants: Broyden quasi-Newton implicit and Anderson-accelerated nested.

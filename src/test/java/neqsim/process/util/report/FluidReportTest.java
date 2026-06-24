@@ -1,10 +1,10 @@
 package neqsim.process.util.report;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class FluidReportTest {
   private static final Logger logger = LogManager.getLogger(FluidReportTest.class);

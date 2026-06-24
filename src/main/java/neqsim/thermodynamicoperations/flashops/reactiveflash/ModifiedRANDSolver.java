@@ -3,8 +3,8 @@ package neqsim.thermodynamicoperations.flashops.reactiveflash;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseInterface;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
+import neqsim.thermo.system.SystemInterface;
 
 /**
  * Core solver for the Modified RAND method for simultaneous chemical and phase equilibrium.

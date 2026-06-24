@@ -12,19 +12,19 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Test;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.util.FlowRateAdjuster;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
   private static final Logger logger = LogManager.getLogger(JcaFrmsWorkflowTest.class);

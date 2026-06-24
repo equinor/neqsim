@@ -1,14 +1,14 @@
 package neqsim.process.instrumentdesign.system;
 
-import com.google.gson.GsonBuilder;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import com.google.gson.GsonBuilder;
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.instrumentdesign.InstrumentDesign;
 import neqsim.process.instrumentdesign.InstrumentList;
 import neqsim.process.instrumentdesign.InstrumentSpecification;
-import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**

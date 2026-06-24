@@ -1,20 +1,20 @@
 package neqsim.process.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.diffpressure.Orifice;
+import neqsim.process.equipment.flare.Flare;
+import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.separator.Separator;
-import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.splitter.Splitter;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.BlowdownValve;
 import neqsim.process.equipment.valve.ControlValve;
 import neqsim.process.equipment.valve.ESDValve;
-import neqsim.process.equipment.diffpressure.Orifice;
-import neqsim.process.equipment.mixer.Mixer;
-import neqsim.process.equipment.flare.Flare;
 import neqsim.process.measurementdevice.PushButton;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Example demonstrating Emergency Shutdown (ESD) system with Control Valve, ESD Valve, Blowdown Valve and Push Button.

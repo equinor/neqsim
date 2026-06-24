@@ -1,5 +1,7 @@
 package neqsim.process.mechanicaldesign;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.process.costestimation.CostEstimateBaseClass;
@@ -18,8 +20,6 @@ import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
 import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class SystemMechanicalDesignTest {
   private static final Logger logger = LogManager.getLogger(SystemMechanicalDesignTest.class);

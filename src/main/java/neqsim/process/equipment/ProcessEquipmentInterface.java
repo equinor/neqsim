@@ -15,9 +15,9 @@ import neqsim.process.equipment.iec81346.ReferenceDesignation;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.instrumentdesign.InstrumentDesign;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
+import neqsim.thermo.system.SystemInterface;
 
 /**
  * ProcessEquipmentInterface interface.

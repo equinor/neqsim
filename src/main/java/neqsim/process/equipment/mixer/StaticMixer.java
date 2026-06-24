@@ -8,11 +8,11 @@ package neqsim.process.equipment.mixer;
 
 import java.util.UUID;
 import com.google.gson.GsonBuilder;
-import neqsim.thermo.system.SystemSoreideWhitson;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.process.util.monitor.MixerResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
+import neqsim.thermo.system.SystemSoreideWhitson;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * StaticMixer class.

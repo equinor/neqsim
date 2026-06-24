@@ -11,10 +11,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import neqsim.process.equipment.flare.Flare;
-import neqsim.process.safety.dto.DisposalNetworkSummaryDTO;
-import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.flare.Flare;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.safety.dto.DisposalNetworkSummaryDTO;
 
 /**
  * High level helper coordinating load case evaluation for disposal networks.

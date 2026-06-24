@@ -1,8 +1,8 @@
 package neqsim.thermodynamicoperations.flashops;
 
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Diagnostic for TPFlashTestHighTemp — NOT a JUnit test, just a main() to run. Investigates whether gas fraction

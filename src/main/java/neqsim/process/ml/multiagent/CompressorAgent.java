@@ -1,8 +1,8 @@
 package neqsim.process.ml.multiagent;
 
+import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.ml.Constraint;
 import neqsim.process.ml.StateVector;
-import neqsim.process.equipment.compressor.Compressor;
 
 /**
  * RL agent for compressor control with anti-surge protection.

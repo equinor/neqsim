@@ -1,5 +1,7 @@
 package neqsim.process.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.diffpressure.Orifice;
 import neqsim.process.equipment.flare.Flare;
 import neqsim.process.equipment.separator.Separator;
@@ -10,8 +12,6 @@ import neqsim.process.util.fire.SeparatorFireExposure.FireScenarioConfig;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Example combining separator depressurization to a flare with fire heat load and integrity checks.

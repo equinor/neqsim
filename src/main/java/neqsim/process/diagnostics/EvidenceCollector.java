@@ -10,10 +10,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import neqsim.process.diagnostics.Hypothesis.ExpectedBehavior;
-import neqsim.process.diagnostics.Hypothesis.ExpectedSignal;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.diagnostics.Hypothesis.ExpectedBehavior;
+import neqsim.process.diagnostics.Hypothesis.ExpectedSignal;
 
 /**
  * Analyzes historian and STID data to collect evidence for or against each hypothesis.

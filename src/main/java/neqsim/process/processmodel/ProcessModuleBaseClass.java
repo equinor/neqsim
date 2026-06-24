@@ -1,4 +1,4 @@
-/*
+i/*
  * ProcessModuleBaseClass.java
  *
  * Created on 1. november 2006, 22:07

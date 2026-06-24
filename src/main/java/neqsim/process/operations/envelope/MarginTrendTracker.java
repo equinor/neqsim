@@ -1,11 +1,11 @@
 package neqsim.process.operations.envelope;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 /**
  * Tracks margin history and estimates time to zero margin with a linear trend.

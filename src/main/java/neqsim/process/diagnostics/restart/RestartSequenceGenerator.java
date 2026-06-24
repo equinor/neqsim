@@ -6,13 +6,13 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.diagnostics.FailurePropagationTracer;
 import neqsim.process.diagnostics.TripEvent;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.topology.ProcessTopologyAnalyzer;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Generates an optimised restart sequence after a trip or shutdown.

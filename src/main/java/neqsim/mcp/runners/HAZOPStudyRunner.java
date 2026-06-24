@@ -18,11 +18,11 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.SimulationResult;
 import neqsim.process.safety.ProcessSafetyScenario;
+import neqsim.process.safety.hazid.HAZOPTemplate;
 import neqsim.process.safety.scenario.AutomaticScenarioGenerator;
 import neqsim.process.safety.scenario.AutomaticScenarioGenerator.EquipmentFailure;
 import neqsim.process.safety.scenario.AutomaticScenarioGenerator.FailureMode;
 import neqsim.process.safety.scenario.AutomaticScenarioGenerator.HazopDeviation;
-import neqsim.process.safety.hazid.HAZOPTemplate;
 
 /**
  * MCP runner for simulation-backed HAZOP study generation.

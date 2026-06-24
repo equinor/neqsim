@@ -3,6 +3,8 @@ package neqsim.process.util.optimizer;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
@@ -15,8 +17,6 @@ import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConfig;
 import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConstraint;
 import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Test cases for multi-objective optimization.

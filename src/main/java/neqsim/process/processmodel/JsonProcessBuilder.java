@@ -36,13 +36,13 @@ import neqsim.process.equipment.util.Calculator;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.thermo.component.ComponentEos;
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkCPAstatoil;
-import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermo.system.SystemPCSAFT;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemPrLeeKeslerEos;
-import neqsim.thermo.system.SystemGERG2008Eos;
-import neqsim.thermo.system.SystemPCSAFT;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
+import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemUMRPRUMCEos;
 import neqsim.thermo.util.readwrite.EclipseFluidReadWrite;
 

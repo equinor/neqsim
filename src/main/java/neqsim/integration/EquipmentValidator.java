@@ -1,13 +1,15 @@
 package neqsim.integration;
 
+import neqsim.integration.ValidationFramework.CommonErrors;
+import neqsim.integration.ValidationFramework.ValidationBuilder;
+import neqsim.integration.ValidationFramework.ValidationResult;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.TwoPortEquipment;
-import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.StreamInterface;
-import neqsim.integration.ValidationFramework.*;
 
 /**
  * Validators for process equipment (Separator, DistillationColumn, Heater, Cooler, etc.).

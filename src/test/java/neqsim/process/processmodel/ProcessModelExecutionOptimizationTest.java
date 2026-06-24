@@ -16,9 +16,9 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.AccelerationMethod;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.processmodel.lifecycle.ProcessModelState;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermo.ThermodynamicModelSettings;
 
 /**
  * Tests for ProcessModel large-model execution optimizations.

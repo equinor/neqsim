@@ -3,7 +3,6 @@ package neqsim.process.chemistry.scale;
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
 import neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator;
 
 /**

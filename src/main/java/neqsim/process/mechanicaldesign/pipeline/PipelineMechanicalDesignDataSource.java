@@ -3,9 +3,9 @@ package neqsim.process.mechanicaldesign.pipeline;
 import java.sql.ResultSet;
 import java.util.Locale;
 import java.util.Optional;
-import neqsim.util.database.NeqSimProcessDesignDataBase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.util.database.NeqSimProcessDesignDataBase;
 
 /**
  * Data source for loading pipeline mechanical design parameters from the NeqSim database.

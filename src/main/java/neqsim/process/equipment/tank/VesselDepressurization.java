@@ -5,12 +5,12 @@ import java.util.List;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.util.fire.TransientWallHeatTransfer;
 import neqsim.process.util.fire.VesselHeatTransferCalculator;
-import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 

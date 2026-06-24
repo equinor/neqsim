@@ -2,11 +2,10 @@ package neqsim.process.safety.depressurization;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
+import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.junit.jupiter.api.Test;
 
 /**
  * Regression tests for {@link DepressurizationSimulator}.

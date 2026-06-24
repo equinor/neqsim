@@ -244,9 +244,9 @@
     <module name="VariableDeclarationUsageDistance" />
     <module name="CustomImportOrder">
       <property name="sortImportsInGroupAlphabetically" value="true" />
-      <property name="separateLineBetweenGroups" value="true" />
+      <property name="separateLineBetweenGroups" value="false" />
       <property name="specialImportsRegExp" value="neqsim.*"/>
-      <property name="customImportOrderRules" value="STATIC###SPECIAL_IMPORTS###STANDARD_JAVA_PACKAGE###THIRD_PARTY_PACKAGE" />
+      <property name="customImportOrderRules" value="STATIC###STANDARD_JAVA_PACKAGE###THIRD_PARTY_PACKAGE###SPECIAL_IMPORTS" />
       <property name="tokens" value="IMPORT, STATIC_IMPORT, PACKAGE_DEF" />
     </module>
     <module name="MethodParamPad">

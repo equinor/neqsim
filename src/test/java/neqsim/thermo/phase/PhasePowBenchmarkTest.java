@@ -1,9 +1,9 @@
 package neqsim.thermo.phase;
 
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import org.junit.jupiter.api.Test;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Test;
 
 /**
  * Simple benchmark comparing Math.pow implementations with explicit multiplications for selected expressions.

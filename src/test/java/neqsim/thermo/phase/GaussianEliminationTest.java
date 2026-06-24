@@ -1,10 +1,10 @@
 package neqsim.thermo.phase;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.ejml.simple.SimpleMatrix;
-import org.junit.jupiter.api.Test;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.ejml.simple.SimpleMatrix;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test Gaussian elimination solver against EJML for matrix inversion.

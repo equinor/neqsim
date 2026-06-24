@@ -1,8 +1,8 @@
 package neqsim.process.instrumentdesign.heatexchanger;
 
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.instrumentdesign.InstrumentDesign;
 import neqsim.process.instrumentdesign.InstrumentSpecification;
-import neqsim.process.equipment.ProcessEquipmentInterface;
 
 /**
  * Instrument design for heat exchangers.

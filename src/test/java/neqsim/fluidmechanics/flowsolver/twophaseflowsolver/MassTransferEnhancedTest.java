@@ -1,10 +1,12 @@
 package neqsim.fluidmechanics.flowsolver.twophaseflowsolver;
 
-import static org.junit.jupiter.api.Assertions.*;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.flownode.FlowPattern;
 import neqsim.fluidmechanics.flownode.InterfacialAreaCalculator;
 import neqsim.fluidmechanics.flownode.MassTransferCoefficientCalculator;

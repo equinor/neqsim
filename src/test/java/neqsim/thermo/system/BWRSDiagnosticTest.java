@@ -1,9 +1,9 @@
 package neqsim.thermo.system;
 
-import org.junit.jupiter.api.Test;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Test;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class BWRSDiagnosticTest {
   private static final Logger logger = LogManager.getLogger(BWRSDiagnosticTest.class);

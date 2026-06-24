@@ -1,8 +1,8 @@
 package neqsim.process.electricaldesign.components;
 
-import com.google.gson.GsonBuilder;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import com.google.gson.GsonBuilder;
 
 /**
  * Model of a power transformer for process electrical systems.
