@@ -1,4 +1,4 @@
-asdfpackage neqsim.process.research;
+package neqsim.process.research;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;

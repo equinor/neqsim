@@ -1,4 +1,4 @@
-in package neqsim.process.processmodel;
+package neqsim.process.processmodel;
 
 import java.util.ArrayList;
 import java.util.Collections;

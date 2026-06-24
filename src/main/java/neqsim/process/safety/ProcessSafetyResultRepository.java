@@ -1,4 +1,4 @@
-thpackage neqsim.process.safety;
+package neqsim.process.safety;
 
 import java.util.List;
 

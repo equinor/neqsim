@@ -1,4 +1,4 @@
-tpackage neqsim.pvtsimulation.flowassurance;
+package neqsim.pvtsimulation.flowassurance;
 
 import java.io.Serializable;
 import java.util.LinkedHashMap;
