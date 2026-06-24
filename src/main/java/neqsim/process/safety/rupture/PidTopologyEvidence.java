@@ -12,10 +12,9 @@ import java.util.Map;
  * Source-traceable P&amp;ID topology evidence for pipe-fire rupture studies.
  *
  * <p>
- * The class records the deterministic graph extracted by P&amp;ID/OCR agents: equipment, nozzles,
- * valves, and line edges plus isolation-boundary and annotation-overlay status. It does not perform
- * image recognition itself; it provides the contract that drawing readers hand to the NeqSim safety
- * readiness gate.
+ * The class records the deterministic graph extracted by P&amp;ID/OCR agents: equipment, nozzles, valves, and line
+ * edges plus isolation-boundary and annotation-overlay status. It does not perform image recognition itself; it
+ * provides the contract that drawing readers hand to the NeqSim safety readiness gate.
  * </p>
  *
  * @author ESOL
@@ -84,28 +83,27 @@ public final class PidTopologyEvidence implements Serializable {
     SafetyStudyReadiness.Builder readiness = SafetyStudyReadiness.builder();
     if (nodes.isEmpty()) {
       readiness.addWarning("pid_topology", "No topology nodes were extracted from the drawing.",
-          "Extract equipment, nozzles, valves, and boundary nodes from source drawing evidence.");
+	  "Extract equipment, nozzles, valves, and boundary nodes from source drawing evidence.");
     }
     if (edges.isEmpty()) {
       readiness.addWarning("pid_topology", "No process-line edges were extracted from the drawing.",
-          "Trace line segments between equipment, valves, nozzles, and battery limits.");
+	  "Trace line segments between equipment, valves, nozzles, and battery limits.");
     }
     if (!boundaryVerified) {
       readiness.addWarning("pid_topology", "Isolation or blowdown boundary is not marked verified.",
-          "Verify upstream/downstream valves, nozzles, vents, drains, relief/blowdown paths, and battery limits.");
+	  "Verify upstream/downstream valves, nozzles, vents, drains, relief/blowdown paths, and battery limits.");
     }
     if (!missingTags.isEmpty()) {
       readiness.addWarning("pid_topology", "Topology extraction has missing tags: " + missingTags,
-          "Close missing drawing tags or keep them as explicit study gaps.");
+	  "Close missing drawing tags or keep them as explicit study gaps.");
     }
     if (!embeddedTextRead && !ocrFallbackUsed) {
-      readiness.addWarning("pid_topology",
-          "Neither embedded text nor OCR fallback is marked complete.",
-          "Run embedded-text extraction or OCR fallback before relying on the topology.");
+      readiness.addWarning("pid_topology", "Neither embedded text nor OCR fallback is marked complete.",
+	  "Run embedded-text extraction or OCR fallback before relying on the topology.");
     }
     if (!overlayGenerated) {
       readiness.addInfo("pid_annotation", "No deterministic drawing overlay is recorded.",
-          "Generate an SVG/PNG overlay for review when the drawing is safety-critical.");
+	  "Generate an SVG/PNG overlay for review when the drawing is safety-critical.");
     }
     return readiness.build();
   }
@@ -190,7 +188,7 @@ public final class PidTopologyEvidence implements Serializable {
      */
     public TopologyNode(String id, String tag, String type, String role) {
       if (clean(id).isEmpty()) {
-        throw new IllegalArgumentException("node id must not be empty");
+	throw new IllegalArgumentException("node id must not be empty");
       }
       this.id = clean(id);
       this.tag = clean(tag);
@@ -232,10 +230,9 @@ public final class PidTopologyEvidence implements Serializable {
      * @param lineTag line tag or line number
      * @param medium process medium description
      */
-    public TopologyEdge(String id, String fromNodeId, String toNodeId, String lineTag,
-        String medium) {
+    public TopologyEdge(String id, String fromNodeId, String toNodeId, String lineTag, String medium) {
       if (clean(id).isEmpty()) {
-        throw new IllegalArgumentException("edge id must not be empty");
+	throw new IllegalArgumentException("edge id must not be empty");
       }
       this.id = clean(id);
       this.fromNodeId = clean(fromNodeId);
@@ -395,8 +392,7 @@ public final class PidTopologyEvidence implements Serializable {
      * @param medium process medium
      * @return this builder
      */
-    public Builder addEdge(String id, String fromNodeId, String toNodeId, String lineTag,
-        String medium) {
+    public Builder addEdge(String id, String fromNodeId, String toNodeId, String lineTag, String medium) {
       edges.add(new TopologyEdge(id, fromNodeId, toNodeId, lineTag, medium));
       return this;
     }
@@ -417,7 +413,7 @@ public final class PidTopologyEvidence implements Serializable {
      */
     private void validate() {
       if (clean(drawingId).isEmpty()) {
-        throw new IllegalArgumentException("drawingId must not be empty");
+	throw new IllegalArgumentException("drawingId must not be empty");
       }
     }
 
@@ -429,7 +425,7 @@ public final class PidTopologyEvidence implements Serializable {
      */
     private static void addText(List<String> target, String value) {
       if (!clean(value).isEmpty()) {
-        target.add(clean(value));
+	target.add(clean(value));
       }
     }
   }

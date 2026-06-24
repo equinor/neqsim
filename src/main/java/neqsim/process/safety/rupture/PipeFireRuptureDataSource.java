@@ -12,9 +12,9 @@ import java.util.Map;
  * Governed input package for a blowdown pipe fire-rupture study.
  *
  * <p>
- * A data source binds the numerical NeqSim inputs to the evidence trail that produced them. It lets
- * document, piping-specification, process simulation, depressurization, and fire/PFP agents hand
- * one auditable object to the rupture solver and report generator.
+ * A data source binds the numerical NeqSim inputs to the evidence trail that produced them. It lets document,
+ * piping-specification, process simulation, depressurization, and fire/PFP agents hand one auditable object to the
+ * rupture solver and report generator.
  * </p>
  *
  * @author ESOL
@@ -231,59 +231,54 @@ public final class PipeFireRuptureDataSource implements Serializable {
     }
     if (input == null) {
       readiness.addBlocker("pipe_input", "Pipe geometry and fluid input are missing.",
-          "Build PipeFireRuptureInput from source documents, piping specifications, and process evidence before running the study.");
+	  "Build PipeFireRuptureInput from source documents, piping specifications, and process evidence before running the study.");
     }
     if (material == null) {
       readiness.addBlocker("material", "Pipe material curve is missing.",
-          "Select a governed material curve from MDS/material certificate evidence.");
+	  "Select a governed material curve from MDS/material certificate evidence.");
     }
     if (scenario == null) {
       readiness.addBlocker("fire_scenario", "Fire exposure scenario is missing.",
-          "Define jet/pool fire or PFP-reduced heat flux basis before running the study.");
+	  "Define jet/pool fire or PFP-reduced heat flux basis before running the study.");
     }
     if (pressureProfile == null) {
       readiness.addBlocker("pressure_profile", "Blowdown pressure profile is missing.",
-          "Run or import a governed depressurization profile before running the study.");
+	  "Run or import a governed depressurization profile before running the study.");
     }
     if (!sourceDiagramsReviewed) {
-      readiness.addWarning("source_diagrams",
-          "Detailed source diagram evidence has not been marked reviewed.",
-          "Download/read the relevant P&ID/isometric pages and record reviewed tag/line evidence.");
+      readiness.addWarning("source_diagrams", "Detailed source diagram evidence has not been marked reviewed.",
+	  "Download/read the relevant P&ID/isometric pages and record reviewed tag/line evidence.");
     }
-    if (!pidTopologyVerified
-        && (pidTopologyEvidence == null || !pidTopologyEvidence.isSimulationReady())) {
+    if (!pidTopologyVerified && (pidTopologyEvidence == null || !pidTopologyEvidence.isSimulationReady())) {
       readiness.addWarning("pid_topology", "P&ID topology or isolation boundary is not verified.",
-          "Trace the segment, valves, nozzles, blowdown/relief path, and battery limits before design use.");
+	  "Trace the segment, valves, nozzles, blowdown/relief path, and battery limits before design use.");
     }
     if (!pipingSpecificationRowsReviewed) {
-      readiness.addWarning("piping_specification",
-          "Piping specification rows are not reviewed and joined.",
-          "Resolve the applicable piping specification revision and map OD/wall/allowance/material.");
+      readiness.addWarning("piping_specification", "Piping specification rows are not reviewed and joined.",
+	  "Resolve the applicable piping specification revision and map OD/wall/allowance/material.");
     }
     if (!materialCertificateReviewed) {
       readiness.addWarning("material", "Material certificate or MDS basis has not been reviewed.",
-          "Confirm material grade and high-temperature properties before design-grade conclusions.");
+	  "Confirm material grade and high-temperature properties before design-grade conclusions.");
     }
     if (!blowdownProfileVerified) {
       readiness.addWarning("depressurization", "Blowdown pressure profile is not marked verified.",
-          "Verify the pressure profile against a governed NeqSim/API 521 depressurization model.");
+	  "Verify the pressure profile against a governed NeqSim/API 521 depressurization model.");
     }
     if (!fireScenarioReviewed) {
       readiness.addWarning("fire_scenario", "Fire scenario and PFP basis are not marked reviewed.",
-          "Confirm fire type, heat flux, exposed length, and passive fire protection assumptions.");
+	  "Confirm fire type, heat flux, exposed length, and passive fire protection assumptions.");
     }
     if (!standardsReviewed) {
       readiness.addWarning("standards", "Standards basis has not been marked reviewed.",
-          "Review API 521, ISO 23251, NORSOK S-001, and applicable piping-design requirements before formal use.");
+	  "Review API 521, ISO 23251, NORSOK S-001, and applicable piping-design requirements before formal use.");
     }
     for (String gap : gaps) {
-      readiness.addWarning("gap", gap,
-          "Close or explicitly accept this gap before design-grade use.");
+      readiness.addWarning("gap", gap, "Close or explicitly accept this gap before design-grade use.");
     }
     if (humanReviewRequired) {
-      readiness.addInfo("human_review",
-          "Qualified engineering review is required for final acceptance.",
-          "Use this calculation as an auditable handoff into formal process-safety verification.");
+      readiness.addInfo("human_review", "Qualified engineering review is required for final acceptance.",
+	  "Use this calculation as an auditable handoff into formal process-safety verification.");
     }
     return readiness.build();
   }
@@ -301,8 +296,7 @@ public final class PipeFireRuptureDataSource implements Serializable {
     map.put("material", material == null ? null : material.toMap());
     map.put("scenario", scenario == null ? null : scenario.toMap());
     map.put("pressureProfile", pressureProfile == null ? null : pressureProfile.toMap());
-    map.put("pidTopologyEvidence",
-        pidTopologyEvidence == null ? null : pidTopologyEvidence.toMap());
+    map.put("pidTopologyEvidence", pidTopologyEvidence == null ? null : pidTopologyEvidence.toMap());
     map.put("sourceDocumentEvidence", evidenceMaps(sourceDocumentEvidence));
     map.put("pipingSpecificationEvidence", evidenceMaps(pipingSpecificationEvidence));
     map.put("processEvidence", evidenceMaps(processEvidence));
@@ -346,8 +340,7 @@ public final class PipeFireRuptureDataSource implements Serializable {
    * @param references references to copy
    * @return immutable copy
    */
-  private static List<SafetyEvidenceReference> immutableEvidence(
-      List<SafetyEvidenceReference> references) {
+  private static List<SafetyEvidenceReference> immutableEvidence(List<SafetyEvidenceReference> references) {
     return Collections.unmodifiableList(new ArrayList<SafetyEvidenceReference>(references));
   }
 
@@ -383,14 +376,10 @@ public final class PipeFireRuptureDataSource implements Serializable {
     private PipeFireRuptureScenario scenario;
     private BlowdownPressureProfile pressureProfile;
     private PidTopologyEvidence pidTopologyEvidence;
-    private final List<SafetyEvidenceReference> sourceDocumentEvidence =
-        new ArrayList<SafetyEvidenceReference>();
-    private final List<SafetyEvidenceReference> pipingSpecificationEvidence =
-        new ArrayList<SafetyEvidenceReference>();
-    private final List<SafetyEvidenceReference> processEvidence =
-        new ArrayList<SafetyEvidenceReference>();
-    private final List<SafetyEvidenceReference> fireScenarioEvidence =
-        new ArrayList<SafetyEvidenceReference>();
+    private final List<SafetyEvidenceReference> sourceDocumentEvidence = new ArrayList<SafetyEvidenceReference>();
+    private final List<SafetyEvidenceReference> pipingSpecificationEvidence = new ArrayList<SafetyEvidenceReference>();
+    private final List<SafetyEvidenceReference> processEvidence = new ArrayList<SafetyEvidenceReference>();
+    private final List<SafetyEvidenceReference> fireScenarioEvidence = new ArrayList<SafetyEvidenceReference>();
     private final List<String> assumptions = new ArrayList<String>();
     private final List<String> gaps = new ArrayList<String>();
     private boolean sourceDiagramsReviewed;
@@ -409,7 +398,7 @@ public final class PipeFireRuptureDataSource implements Serializable {
      */
     private Builder(String studyId) {
       if (clean(studyId).isEmpty()) {
-        throw new IllegalArgumentException("studyId must not be empty");
+	throw new IllegalArgumentException("studyId must not be empty");
       }
       this.studyId = studyId;
     }
@@ -521,7 +510,7 @@ public final class PipeFireRuptureDataSource implements Serializable {
      */
     public Builder addAssumption(String assumption) {
       if (!clean(assumption).isEmpty()) {
-        assumptions.add(clean(assumption));
+	assumptions.add(clean(assumption));
       }
       return this;
     }
@@ -534,7 +523,7 @@ public final class PipeFireRuptureDataSource implements Serializable {
      */
     public Builder addGap(String gap) {
       if (!clean(gap).isEmpty()) {
-        gaps.add(clean(gap));
+	gaps.add(clean(gap));
       }
       return this;
     }
@@ -642,10 +631,9 @@ public final class PipeFireRuptureDataSource implements Serializable {
      * @param target target list
      * @param reference evidence reference; ignored when null
      */
-    private static void addEvidence(List<SafetyEvidenceReference> target,
-        SafetyEvidenceReference reference) {
+    private static void addEvidence(List<SafetyEvidenceReference> target, SafetyEvidenceReference reference) {
       if (reference != null) {
-        target.add(reference);
+	target.add(reference);
       }
     }
   }

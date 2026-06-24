@@ -16,10 +16,9 @@ import neqsim.thermo.system.SystemInterface;
  * Governed input package for dynamic blowdown, PSV sizing, and flare-load studies.
  *
  * <p>
- * A data source binds NeqSim transient depressurization inputs to source diagrams, line/equipment
- * lists, piping specifications, PSV, fire, and flare evidence that produced them. Agents should
- * assemble this object before running the dynamic study runner so calculation readiness and
- * provenance remain attached to the result.
+ * A data source binds NeqSim transient depressurization inputs to source diagrams, line/equipment lists, piping
+ * specifications, PSV, fire, and flare evidence that produced them. Agents should assemble this object before running
+ * the dynamic study runner so calculation readiness and provenance remain attached to the result.
  * </p>
  *
  * @author ESOL
@@ -189,67 +188,59 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
       readiness.merge(lineEquipmentListEvidence.readiness());
     }
     if (sources.isEmpty()) {
-      readiness.addBlocker("blowdown_sources",
-          "No protected equipment or blowdown source is defined.",
-          "Build BlowdownSource entries from reviewed equipment list, inventory, BDV/orifice, and fluid evidence.");
+      readiness.addBlocker("blowdown_sources", "No protected equipment or blowdown source is defined.",
+	  "Build BlowdownSource entries from reviewed equipment list, inventory, BDV/orifice, and fluid evidence.");
     }
     for (BlowdownSource source : sources) {
       source.addReadinessFindings(readiness);
     }
     if (!sourceDiagramsReviewed) {
-      readiness.addWarning("source_diagrams",
-          "Detailed source diagram evidence has not been marked reviewed.",
-          "Read the relevant drawing pages and record the reviewed equipment, line, PSV, BDV, and flare-path tags.");
+      readiness.addWarning("source_diagrams", "Detailed source diagram evidence has not been marked reviewed.",
+	  "Read the relevant drawing pages and record the reviewed equipment, line, PSV, BDV, and flare-path tags.");
     }
-    if (!pidTopologyVerified
-        && (pidTopologyEvidence == null || !pidTopologyEvidence.isSimulationReady())) {
-      readiness.addWarning("pid_topology",
-          "P&ID topology is not verified for the blowdown/flare boundary.",
-          "Trace protected equipment, BDVs, PSVs, flare header tie-ins, isolation valves, and battery limits.");
+    if (!pidTopologyVerified && (pidTopologyEvidence == null || !pidTopologyEvidence.isSimulationReady())) {
+      readiness.addWarning("pid_topology", "P&ID topology is not verified for the blowdown/flare boundary.",
+	  "Trace protected equipment, BDVs, PSVs, flare header tie-ins, isolation valves, and battery limits.");
     }
     if (!lineEquipmentListsReviewed
-        && (lineEquipmentListEvidence == null || !lineEquipmentListEvidence.isSimulationReady())) {
-      readiness.addWarning("line_equipment_list",
-          "Line and equipment lists are not reviewed for model construction.",
-          "Review line-list and equipment-list rows before treating the dynamic model as design grade.");
+	&& (lineEquipmentListEvidence == null || !lineEquipmentListEvidence.isSimulationReady())) {
+      readiness.addWarning("line_equipment_list", "Line and equipment lists are not reviewed for model construction.",
+	  "Review line-list and equipment-list rows before treating the dynamic model as design grade.");
     }
     if (!pipingSpecificationRowsReviewed) {
-      readiness.addWarning("piping_specification",
-          "Piping and valve specification rows are not reviewed and joined.",
-          "Resolve the applicable piping/valve specification revision and map pipe, valve, and material rows before design-grade use.");
+      readiness.addWarning("piping_specification", "Piping and valve specification rows are not reviewed and joined.",
+	  "Resolve the applicable piping/valve specification revision and map pipe, valve, and material rows before design-grade use.");
     }
     if (!vesselInventoryReviewed) {
       readiness.addWarning("inventory", "Protected-equipment inventory is not marked reviewed.",
-          "Confirm vessel/line volumes, operating fill, fluid basis, and connected inventory.");
+	  "Confirm vessel/line volumes, operating fill, fluid basis, and connected inventory.");
     }
     if (!valveSizingBasisReviewed) {
       readiness.addWarning("bdv", "BDV/orifice sizing basis is not marked reviewed.",
-          "Confirm BDV equivalent diameter/Cd/Cv, opening philosophy, and flare-backpressure assumptions.");
+	  "Confirm BDV equivalent diameter/Cd/Cv, opening philosophy, and flare-backpressure assumptions.");
     }
     if (!psvBasisReviewed) {
       readiness.addWarning("psv", "PSV sizing basis is not marked reviewed.",
-          "Confirm PSV set pressure, overpressure basis, backpressure correction, and rupture-disk/bellows status.");
+	  "Confirm PSV set pressure, overpressure basis, backpressure correction, and rupture-disk/bellows status.");
     }
     if (!flareSystemBasisReviewed) {
       readiness.addWarning("flare", "Flare system geometry/capacity basis is not marked reviewed.",
-          "Confirm header diameter/pressure, flare-tip size, capacity, radiation model, and disposal-system limits.");
+	  "Confirm header diameter/pressure, flare-tip size, capacity, radiation model, and disposal-system limits.");
     }
     if (!fireCaseReviewed) {
       readiness.addWarning("fire_case", "Fire-case heat input basis is not marked reviewed.",
-          "Confirm wetted area, drainage/firefighting status, PFP, and API 521/ISO 23251 fire assumptions.");
+	  "Confirm wetted area, drainage/firefighting status, PFP, and API 521/ISO 23251 fire assumptions.");
     }
     if (!standardsReviewed) {
       readiness.addWarning("standards", "Standards basis has not been marked reviewed.",
-          "Review API 520/521, ISO 23251, NORSOK S-001/P-002, and applicable piping-design requirements.");
+	  "Review API 520/521, ISO 23251, NORSOK S-001/P-002, and applicable piping-design requirements.");
     }
     for (String gap : gaps) {
-      readiness.addWarning("gap", gap,
-          "Close or explicitly accept this gap before design-grade use.");
+      readiness.addWarning("gap", gap, "Close or explicitly accept this gap before design-grade use.");
     }
     if (humanReviewRequired) {
-      readiness.addInfo("human_review",
-          "Qualified engineering review is required for final acceptance.",
-          "Use the runner output as an auditable handoff into formal process-safety verification.");
+      readiness.addInfo("human_review", "Qualified engineering review is required for final acceptance.",
+	  "Use the runner output as an auditable handoff into formal process-safety verification.");
     }
     return readiness.build();
   }
@@ -385,10 +376,8 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
       sourceMaps.add(source.toMap());
     }
     map.put("sources", sourceMaps);
-    map.put("pidTopologyEvidence",
-        pidTopologyEvidence == null ? null : pidTopologyEvidence.toMap());
-    map.put("lineEquipmentListEvidence",
-        lineEquipmentListEvidence == null ? null : lineEquipmentListEvidence.toMap());
+    map.put("pidTopologyEvidence", pidTopologyEvidence == null ? null : pidTopologyEvidence.toMap());
+    map.put("lineEquipmentListEvidence", lineEquipmentListEvidence == null ? null : lineEquipmentListEvidence.toMap());
     map.put("sourceDocumentEvidence", evidenceMaps(sourceDocumentEvidence));
     map.put("pipingSpecificationEvidence", evidenceMaps(pipingSpecificationEvidence));
     map.put("processEvidence", evidenceMaps(processEvidence));
@@ -475,8 +464,7 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
    * @param references references to copy
    * @return immutable copy
    */
-  private static List<SafetyEvidenceReference> immutableEvidence(
-      List<SafetyEvidenceReference> references) {
+  private static List<SafetyEvidenceReference> immutableEvidence(List<SafetyEvidenceReference> references) {
     return Collections.unmodifiableList(new ArrayList<SafetyEvidenceReference>(references));
   }
 
@@ -655,11 +643,11 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
      */
     public double getEffectiveFireHeatInputW() {
       if (Double.isFinite(fireHeatInputW) && fireHeatInputW >= 0.0) {
-        return fireHeatInputW;
+	return fireHeatInputW;
       }
       if (Double.isFinite(wettedAreaM2) && wettedAreaM2 > 0.0) {
-        return neqsim.process.util.fire.ReliefValveSizing.calculateAPI521FireHeatInput(wettedAreaM2,
-            adequateDrainage, fireFightingAvailable);
+	return neqsim.process.util.fire.ReliefValveSizing.calculateAPI521FireHeatInput(wettedAreaM2, adequateDrainage,
+	    fireFightingAvailable);
       }
       return 0.0;
     }
@@ -671,7 +659,7 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
      */
     public boolean hasWallModel() {
       return wallMassKg > 0.0 && wallAreaM2 > 0.0 && wallSpecificHeatJPerKgK > 0.0
-          && wallHeatTransferCoeffWPerM2K > 0.0;
+	  && wallHeatTransferCoeffWPerM2K > 0.0;
     }
 
     /**
@@ -772,40 +760,36 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
     private void addReadinessFindings(SafetyStudyReadiness.Builder readiness) {
       String category = "source:" + sourceId;
       if (fluid == null) {
-        readiness.addBlocker(category, "Initial fluid is missing.",
-            "Build a NeqSim fluid from reviewed composition and operating state evidence.");
+	readiness.addBlocker(category, "Initial fluid is missing.",
+	    "Build a NeqSim fluid from reviewed composition and operating state evidence.");
       }
       if (vesselVolumeM3 <= 0.0 || !Double.isFinite(vesselVolumeM3)) {
-        readiness.addBlocker(category,
-            "Vessel or protected inventory volume is missing or invalid.",
-            "Provide internal volume from equipment list, datasheet, or governed inventory calculation.");
+	readiness.addBlocker(category, "Vessel or protected inventory volume is missing or invalid.",
+	    "Provide internal volume from equipment list, datasheet, or governed inventory calculation.");
       }
       if (orificeDiameterM <= 0.0 || !Double.isFinite(orificeDiameterM)) {
-        readiness.addBlocker(category, "BDV/orifice equivalent diameter is missing or invalid.",
-            "Provide BDV/orifice diameter, area, or equivalent Cv/Cd basis.");
+	readiness.addBlocker(category, "BDV/orifice equivalent diameter is missing or invalid.",
+	    "Provide BDV/orifice diameter, area, or equivalent Cv/Cd basis.");
       }
       if (dischargeCoefficient <= 0.0 || !Double.isFinite(dischargeCoefficient)) {
-        readiness.addBlocker(category, "Discharge coefficient is missing or invalid.",
-            "Provide a governed Cd value or valve/orifice sizing basis.");
+	readiness.addBlocker(category, "Discharge coefficient is missing or invalid.",
+	    "Provide a governed Cd value or valve/orifice sizing basis.");
       }
       if (backPressureBara <= 0.0 || !Double.isFinite(backPressureBara)) {
-        readiness.addBlocker(category, "Flare/disposal backpressure is missing or invalid.",
-            "Provide flare header or disposal-system pressure basis.");
+	readiness.addBlocker(category, "Flare/disposal backpressure is missing or invalid.",
+	    "Provide flare header or disposal-system pressure basis.");
       }
       if (!hasPsvSizingBasis()) {
-        readiness.addWarning(category,
-            "PSV set pressure is not configured; PSV orifice sizing will be skipped.",
-            "Provide PSV set pressure and correction basis to include API 520/521 PSV sizing.");
+	readiness.addWarning(category, "PSV set pressure is not configured; PSV orifice sizing will be skipped.",
+	    "Provide PSV set pressure and correction basis to include API 520/521 PSV sizing.");
       }
-      if (!Double.isFinite(fireHeatInputW)
-          && !(Double.isFinite(wettedAreaM2) && wettedAreaM2 > 0.0)) {
-        readiness.addWarning(category,
-            "Fire heat input is not configured; adiabatic blowdown will be used.",
-            "Provide API 521 wetted area/drainage/firefighting evidence or a reviewed fire heat input.");
+      if (!Double.isFinite(fireHeatInputW) && !(Double.isFinite(wettedAreaM2) && wettedAreaM2 > 0.0)) {
+	readiness.addWarning(category, "Fire heat input is not configured; adiabatic blowdown will be used.",
+	    "Provide API 521 wetted area/drainage/firefighting evidence or a reviewed fire heat input.");
       }
       if (!hasWallModel()) {
-        readiness.addInfo(category, "Wall thermal model is not fully configured.",
-            "Add wall mass, area, specific heat, and heat-transfer coefficient when MDMT or wall temperature matters.");
+	readiness.addInfo(category, "Wall thermal model is not fully configured.",
+	    "Add wall mass, area, specific heat, and heat-transfer coefficient when MDMT or wall temperature matters.");
       }
     }
 
@@ -850,7 +834,7 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
      */
     private static Map<String, Object> fluidSummary(SystemInterface fluid) {
       if (fluid == null) {
-        return null;
+	return null;
       }
       Map<String, Object> map = new LinkedHashMap<String, Object>();
       map.put("temperatureK", Double.valueOf(fluid.getTemperature()));
@@ -883,8 +867,7 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
     private double psvOverpressureFraction = 0.21;
     private boolean balancedBellowsPsv;
     private boolean ruptureDiskInstalled;
-    private final List<SafetyEvidenceReference> evidenceReferences =
-        new ArrayList<SafetyEvidenceReference>();
+    private final List<SafetyEvidenceReference> evidenceReferences = new ArrayList<SafetyEvidenceReference>();
 
     /**
      * Creates a builder.
@@ -982,8 +965,7 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
      * @param fireFightingAvailable true when firefighting systems are available
      * @return this builder
      */
-    public SourceBuilder api521FireCase(double wettedAreaM2, boolean adequateDrainage,
-        boolean fireFightingAvailable) {
+    public SourceBuilder api521FireCase(double wettedAreaM2, boolean adequateDrainage, boolean fireFightingAvailable) {
       this.wettedAreaM2 = wettedAreaM2;
       this.adequateDrainage = adequateDrainage;
       this.fireFightingAvailable = fireFightingAvailable;
@@ -999,8 +981,8 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
      * @param wallHeatTransferCoeffWPerM2K heat-transfer coefficient in W/m2/K
      * @return this builder
      */
-    public SourceBuilder wallModel(double wallMassKg, double wallAreaM2,
-        double wallSpecificHeatJPerKgK, double wallHeatTransferCoeffWPerM2K) {
+    public SourceBuilder wallModel(double wallMassKg, double wallAreaM2, double wallSpecificHeatJPerKgK,
+	double wallHeatTransferCoeffWPerM2K) {
       this.wallMassKg = wallMassKg;
       this.wallAreaM2 = wallAreaM2;
       this.wallSpecificHeatJPerKgK = wallSpecificHeatJPerKgK;
@@ -1017,8 +999,8 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
      * @param ruptureDisk true when rupture disk is installed upstream
      * @return this builder
      */
-    public SourceBuilder psvBasis(double setPressureBara, double overpressureFraction,
-        boolean balancedBellows, boolean ruptureDisk) {
+    public SourceBuilder psvBasis(double setPressureBara, double overpressureFraction, boolean balancedBellows,
+	boolean ruptureDisk) {
       this.psvSetPressureBara = setPressureBara;
       this.psvOverpressureFraction = overpressureFraction;
       this.balancedBellowsPsv = balancedBellows;
@@ -1034,7 +1016,7 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
      */
     public SourceBuilder evidenceReference(SafetyEvidenceReference reference) {
       if (reference != null) {
-        evidenceReferences.add(reference);
+	evidenceReferences.add(reference);
       }
       return this;
     }
@@ -1046,7 +1028,7 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
      */
     public BlowdownSource build() {
       if (clean(sourceId).isEmpty()) {
-        throw new IllegalArgumentException("sourceId must not be empty");
+	throw new IllegalArgumentException("sourceId must not be empty");
       }
       return new BlowdownSource(this);
     }
@@ -1058,18 +1040,12 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
     private final List<BlowdownSource> sources = new ArrayList<BlowdownSource>();
     private PidTopologyEvidence pidTopologyEvidence;
     private LineEquipmentListEvidence lineEquipmentListEvidence;
-    private final List<SafetyEvidenceReference> sourceDocumentEvidence =
-        new ArrayList<SafetyEvidenceReference>();
-    private final List<SafetyEvidenceReference> pipingSpecificationEvidence =
-        new ArrayList<SafetyEvidenceReference>();
-    private final List<SafetyEvidenceReference> processEvidence =
-        new ArrayList<SafetyEvidenceReference>();
-    private final List<SafetyEvidenceReference> reliefValveEvidence =
-        new ArrayList<SafetyEvidenceReference>();
-    private final List<SafetyEvidenceReference> flareEvidence =
-        new ArrayList<SafetyEvidenceReference>();
-    private final List<SafetyEvidenceReference> fireScenarioEvidence =
-        new ArrayList<SafetyEvidenceReference>();
+    private final List<SafetyEvidenceReference> sourceDocumentEvidence = new ArrayList<SafetyEvidenceReference>();
+    private final List<SafetyEvidenceReference> pipingSpecificationEvidence = new ArrayList<SafetyEvidenceReference>();
+    private final List<SafetyEvidenceReference> processEvidence = new ArrayList<SafetyEvidenceReference>();
+    private final List<SafetyEvidenceReference> reliefValveEvidence = new ArrayList<SafetyEvidenceReference>();
+    private final List<SafetyEvidenceReference> flareEvidence = new ArrayList<SafetyEvidenceReference>();
+    private final List<SafetyEvidenceReference> fireScenarioEvidence = new ArrayList<SafetyEvidenceReference>();
     private final List<String> assumptions = new ArrayList<String>();
     private final List<String> gaps = new ArrayList<String>();
     private double headerDiameterM = Double.NaN;
@@ -1113,7 +1089,7 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
      */
     public Builder addSource(BlowdownSource source) {
       if (source != null) {
-        sources.add(source);
+	sources.add(source);
       }
       return this;
     }
@@ -1238,8 +1214,8 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
      * @param gamma isentropic exponent
      * @return this builder
      */
-    public Builder flareHeader(double diameterM, double pressureBara, double temperatureK,
-        double molarMassKgPerMol, double gamma) {
+    public Builder flareHeader(double diameterM, double pressureBara, double temperatureK, double molarMassKgPerMol,
+	double gamma) {
       this.headerDiameterM = diameterM;
       this.headerPressureBara = pressureBara;
       this.headerTemperatureK = temperatureK;
@@ -1282,8 +1258,7 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
      * @param molarFlowMolePerS molar-flow capacity in mole/s
      * @return this builder
      */
-    public Builder flareDesignCapacity(double heatDutyW, double massFlowKgPerS,
-        double molarFlowMolePerS) {
+    public Builder flareDesignCapacity(double heatDutyW, double massFlowKgPerS, double molarFlowMolePerS) {
       this.flareDesignHeatDutyW = heatDutyW;
       this.flareDesignMassFlowKgPerS = massFlowKgPerS;
       this.flareDesignMolarFlowMolePerS = molarFlowMolePerS;
@@ -1418,7 +1393,7 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
      */
     public DynamicBlowdownFlareStudyDataSource build() {
       if (clean(studyId).isEmpty()) {
-        throw new IllegalArgumentException("studyId must not be empty");
+	throw new IllegalArgumentException("studyId must not be empty");
       }
       return new DynamicBlowdownFlareStudyDataSource(this);
     }
@@ -1429,10 +1404,9 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
      * @param target target list
      * @param reference evidence reference
      */
-    private static void addEvidence(List<SafetyEvidenceReference> target,
-        SafetyEvidenceReference reference) {
+    private static void addEvidence(List<SafetyEvidenceReference> target, SafetyEvidenceReference reference) {
       if (reference != null) {
-        target.add(reference);
+	target.add(reference);
       }
     }
 
@@ -1444,7 +1418,7 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
      */
     private static void addText(List<String> target, String value) {
       if (!clean(value).isEmpty()) {
-        target.add(clean(value));
+	target.add(clean(value));
       }
     }
   }
