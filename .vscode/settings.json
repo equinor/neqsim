@@ -3,14 +3,17 @@
   "java.configuration.updateBuildConfiguration": "automatic",
   "java.compile.nullAnalysis.mode": "automatic",
   "[java]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    },
     "editor.defaultFormatter": "redhat.java",
     "editor.formatOnSave": true,
     "editor.tabSize": 2,
     "editor.insertSpaces": true,
     "editor.detectIndentation": false
   },
-  "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
-  "java.saveActions.organizeImports": true,
+  "java.format.settings.url": "${workspaceFolder}/.config/neqsim_formatter.xml",
+  "java.format.settings.profile": "neqsim_formatter",
   "java.checkstyle.version": "10.18.1",
   "java.checkstyle.configuration": "${workspaceFolder}/.config/checkstyle_neqsim.xml",
   "java.test.defaultConfig": "default",
