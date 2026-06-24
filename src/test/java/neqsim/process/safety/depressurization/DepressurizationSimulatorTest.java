@@ -87,5 +87,54 @@ public class DepressurizationSimulatorTest {
 
     // The 50% depressurisation criterion should be reachable for this orifice/volume.
     assertTrue(res.halfPressureCriterionMet, "50% depressurisation should be met");
+    assertTrue(res.pressureMonotonicNonIncreasing, "pressure quality flag should stay true");
+    assertTrue(res.massMonotonicNonIncreasing, "mass quality flag should stay true");
+  }
+
+  /**
+   * A fire case with wall-first heat transfer must heat the wall, keep finite state variables, and still depressurise
+   * through the configured restriction.
+   */
+  @Test
+  public void wallRoutedFireHeatRaisesWallTemperature() {
+    double vesselVolumeM3 = 30.0;
+    double orificeM = 0.030;
+    double backPressurePa = 2.0e5;
+    SystemInterface gas = buildGas(90.0, 40.0);
+
+    DepressurizationSimulator sim = new DepressurizationSimulator(gas, vesselVolumeM3, orificeM, 0.85, backPressurePa);
+    sim.setFireHeatInput(5.0e5);
+    sim.setFireHeatInputToWall(true);
+    sim.setWall(20000.0, 50.0, 470.0, 60.0);
+    sim.setTimeStep(1.0);
+    sim.setMaxTime(300.0);
+    sim.setStopPressure(1.5e5);
+    DepressurizationSimulator.DepressurizationResult res = sim.run();
+
+    double firstPressure = res.pressureBara.get(0);
+    double lastPressure = res.pressureBara.get(res.pressureBara.size() - 1);
+    double firstWallTemperature = res.wallTempK.get(0);
+    double lastWallTemperature = res.wallTempK.get(res.wallTempK.size() - 1);
+    assertTrue(lastPressure < firstPressure, "pressure must drop during wall-routed fire blowdown");
+    assertTrue(lastWallTemperature > firstWallTemperature, "external fire should heat the wall metal");
+    assertTrue(Double.isFinite(res.minFluidTemperatureK), "minimum fluid temperature must be finite");
+    assertTrue(Double.isFinite(lastWallTemperature), "wall temperature must remain finite");
+    assertTrue(res.fireHeatInputRoutedToWall, "result should record wall-routed fire heat");
+    assertTrue(res.maxWallTemperatureK > res.minWallTemperatureK, "result should track wall-temperature range");
+  }
+
+  /**
+   * API 521 target-pressure times should be interpolated between transient steps rather than rounded to the next
+   * sample.
+   */
+  @Test
+  public void targetPressureTimesAreInterpolated() {
+    DepressurizationSimulator.DepressurizationResult result = new DepressurizationSimulator.DepressurizationResult();
+    result.append(0.0, 100.0, 300.0, 10.0, 300.0, 0.0);
+    result.append(10.0, 40.0, 290.0, 8.0, 295.0, 0.1);
+
+    result.evaluate(100.0e5);
+
+    assertEquals(8.333333333, result.timeToHalfPressure, 1.0e-6);
   }
 }

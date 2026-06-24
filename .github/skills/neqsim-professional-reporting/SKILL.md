@@ -58,6 +58,12 @@ Every report opens with a 1-page executive summary built from these blocks (in o
 4. **Conclusion** — one sentence with the engineering decision
 5. **Limitations** — 1–2 bullets on key caveats
 
+The executive summary and problem description are report-blocking sections. Do
+not leave template text such as "[Replace with ...]" or "[Auto-populated ...]"
+in a final HTML/Word report. If `results.json` and `task_spec.md` contain enough
+information, generate these sections automatically from those sources; otherwise
+pause and fill the missing source material before finalizing.
+
 ## Principle 3 — Units & Significant Figures
 
 - **State units everywhere** — `bara`, `°C`, `kg/h`, `MJ/Sm³`, never bare numbers
@@ -167,6 +173,24 @@ assumptions/gaps register in both `results.json` and the report:
 Do not hide missing material certificates, flange/gasket/bolt ratings, fire-study
 heat fluxes, or acceptance criteria. A study may still provide screening results,
 but the executive summary must state when final design is blocked by evidence gaps.
+
+Safety-critical reports must include a front-page readiness badge or equivalent
+plain-text label: `NOT_READY`, `SCREENING`, or `DESIGN_GRADE`. The label must be
+backed by visible blockers/findings and must not imply sign-off when any
+controlled-document, historian/tagreader, pressure-profile, or material basis is
+missing or unreviewed.
+
+For script-backed studies, `study_config.yaml` is the source of truth for whether
+notebooks are required. A report generator should not warn about missing planned
+notebooks when the configuration explicitly says `notebooks.required: false`,
+`execution_required: false`, and `execution_engine: script`.
+
+Before report generation, check consistency between `task_spec.md`, analysis
+scripts/notebooks, `results.json`, and the report narrative. Method changes such
+as replacing a reconstructed depressurization profile with a directly exported
+dynamic NeqSim profile must be reflected everywhere, including
+`capability_assessment.md`, `analysis.md`, and `neqsim_improvements.md` when
+workflow gaps were found.
 
 ## Principle 10 — `results.json` Master Schema
 

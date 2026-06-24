@@ -119,14 +119,29 @@ class ConsistencyChecker:
 
     def _find_sources(self):
         """Find all analysis sources in the task folder."""
-        self.notebooks = list(self.task_dir.glob("**/*.ipynb"))
+        all_notebooks = list(self.task_dir.glob("**/*.ipynb"))
+        self.skipped_notebooks = [nb for nb in all_notebooks if self._is_starter_notebook(nb)]
+        self.notebooks = [nb for nb in all_notebooks if nb not in self.skipped_notebooks]
         self.results_json = self.task_dir / "results.json"
 
         print(f"Found {len(self.notebooks)} notebooks:")
         for nb in self.notebooks:
             print(f"  - {nb.relative_to(self.task_dir)}")
+        if self.skipped_notebooks:
+            print(f"Skipped {len(self.skipped_notebooks)} starter/reference notebooks:")
+            for nb in self.skipped_notebooks:
+                print(f"  - {nb.relative_to(self.task_dir)}")
         print(f"Results JSON: {'[OK]' if self.results_json.exists() else '[X]'}")
         print()
+
+    def _is_starter_notebook(self, notebook_path: Path) -> bool:
+        """Return true for notebooks that are templates, starters, or checkpoints."""
+        relative_parts = [part.lower() for part in notebook_path.relative_to(self.task_dir).parts]
+        starter_markers = {"starters", "templates", ".ipynb_checkpoints"}
+        if any(part in starter_markers for part in relative_parts):
+            return True
+        name = notebook_path.name.lower()
+        return name.startswith("starter_") or name.endswith("_starter.ipynb")
 
     def _extract_from_notebooks(self):
         """Extract values from Jupyter notebooks."""
@@ -429,6 +444,7 @@ class ConsistencyChecker:
                 "critical": len(critical),
                 "warnings": len(warnings),
                 "notebooks_checked": len(self.notebooks),
+                "starter_notebooks_skipped": len(getattr(self, "skipped_notebooks", [])),
                 "values_extracted": sum(len(v) for v in self.extracted_values.values()),
             },
             "status": "PASS" if len(critical) == 0 else "FAIL",

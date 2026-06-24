@@ -182,6 +182,72 @@ String report  = res.summary();
 Use `addSourceResult(...)` with a pre-computed `DepressurizationResult` to avoid
 re-running the (slow) VU-flash transient for vessels already simulated.
 
+## Method 5b — Governed STID/TR2000 Dynamic Blowdown + Flare Handoff
+
+For agentic engineering studies that start from STID/P&ID drawings, line lists,
+equipment lists, and TR2000 pipe/valve/material evidence, use the governed data
+source and runner instead of stitching transient notebooks together by hand.
+
+Key classes:
+
+- `LineEquipmentListEvidence` — reviewed line-list and equipment-list rows used
+  to build the dynamic model.
+- `DynamicBlowdownFlareStudyDataSource` — source-traceable package with one
+  `BlowdownSource` per protected equipment item plus header, flare, PSV, fire,
+  topology, and evidence status.
+- `DynamicBlowdownFlareStudyRunner` — runs `DepressurizationSimulator`, aggregates
+  loads with `MultiVesselBlowdownStudy`, sizes PSV orifices through
+  `ReliefValveSizing`, and estimates peak/cumulative flare heat, emissions,
+  radiation distance, and capacity utilization.
+- `DynamicBlowdownFlareStudyHandoff` — versioned JSON package containing
+  `dynamic_blowdown_flare_result.v1` and `dynamic_blowdown_flare_load_handoff.v1`.
+
+```java
+LineEquipmentListEvidence lineEq = LineEquipmentListEvidence.builder("line-eq-001")
+    .lineListReviewed(true)
+    .equipmentListReviewed(true)
+    .addEquipment("V-100", "separator", 50.0, 85.0, 70.0, 313.15)
+    .addLine("BD-100", "V-100", "FLARE-HDR", 6.0, 0.154, 0.007, 45.0, "DD100", "API 5L X52")
+    .build();
+
+DynamicBlowdownFlareStudyDataSource.BlowdownSource source =
+    DynamicBlowdownFlareStudyDataSource.BlowdownSource.builder("V-100", gas)
+        .equipmentTag("V-100")
+        .vesselVolumeM3(50.0)
+        .orificeDiameterM(0.035)
+        .dischargeCoefficient(0.72)
+        .backPressureBara(1.5)
+        .api521FireCase(120.0, true, true)
+        .psvBasis(85.0, 0.21, false, false)
+        .build();
+
+DynamicBlowdownFlareStudyDataSource data = DynamicBlowdownFlareStudyDataSource.builder("BD-FLARE-001")
+    .lineEquipmentListEvidence(lineEq)
+    .addSource(source)
+    .flareHeader(0.6, 1.5, 288.15, 0.020, 1.30)
+    .flareGeometry(0.8, 50.0, 0.20)
+    .stidDiagramReviewed(true)
+    .lineEquipmentListsReviewed(true)
+    .vesselInventoryReviewed(true)
+    .valveSizingBasisReviewed(true)
+    .psvBasisReviewed(true)
+    .flareSystemBasisReviewed(true)
+    .fireCaseReviewed(true)
+    .standardsReviewed(false)
+    .build();
+
+DynamicBlowdownFlareStudyHandoff handoff = DynamicBlowdownFlareStudyRunner.builder()
+    .timeStepSeconds(1.0)
+    .maxTimeSeconds(900.0)
+    .build()
+    .run(data);
+```
+
+Readiness semantics mirror the pipe-fire runner: missing source fluid, volume,
+BDV/orifice diameter, discharge coefficient, or flare backpressure blocks the
+calculation; missing reviewed topology, TR2000, PSV, fire, or flare capacity
+evidence keeps the result at screening level.
+
 ## Method 6 — ESD Response-Time Budget (NOG 070 / IEC 61511)
 
 The blowdown / isolation only mitigates the relief load if the ESD valve actually

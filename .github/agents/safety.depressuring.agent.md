@@ -25,11 +25,31 @@ pump trip, or check-valve slam, first screen hydraulic surge with
 into the safety assumptions and risk register.
 
 For trapped-liquid fire rupture studies, retrieve and extract the evidence package
-before calculation: P&ID/STID isolation boundaries, line lists, piping specs,
+before calculation: P&ID isolation boundaries, line lists, piping specs,
 material certificates, flange/bolt/gasket data, fire-zone/PFP documents, relief
 basis, and acceptance criteria. Then use `neqsim.process.safety.rupture` through
 the `neqsim-trapped-liquid-fire-rupture` skill and keep missing evidence visible
 as assumptions/gaps in the report.
+
+For source-document-driven blowdown pipe-fire rupture studies, do not call
+`PipeFireRuptureStudy` as a naked solver unless the user explicitly requests a
+raw screening calculation. Build `SafetyEvidenceReference` records for source
+drawings, piping specifications, process/depressurization, material, and fire/PFP
+inputs; assemble a `PipeFireRuptureDataSource`; run `PipeFireRuptureStudyRunner`;
+and report the returned `PipeFireRuptureStudyHandoff`. Gate outputs on
+`SafetyStudyReadiness`: `NOT_READY` blocks calculation, `SCREENING` permits a
+clearly labelled screening result, and `DESIGN_GRADE` requires reviewed
+controlled evidence. When rupture is predicted, carry the
+`pipe_fire_rupture_source_term_handoff.v1` map into consequence analysis.
+
+For source-document-driven dynamic flare and blowdown network studies, do not wire
+ad hoc transient notebooks directly from extracted tags. Build `LineEquipmentListEvidence`,
+`PidTopologyEvidence`, and `DynamicBlowdownFlareStudyDataSource` with one
+`BlowdownSource` per protected equipment item. Run `DynamicBlowdownFlareStudyRunner`
+to execute NeqSim `DepressurizationSimulator` cases, aggregate simultaneous loads
+with `MultiVesselBlowdownStudy`, size PSV orifices where set-pressure evidence is
+available, and generate `dynamic_blowdown_flare_load_handoff.v1` for flare-network,
+consequence, and report consumers.
 
 ## Applicable Standards (MANDATORY)
 
