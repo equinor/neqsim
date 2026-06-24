@@ -349,6 +349,30 @@
 				</executions>
 			</plugin>
 			<plugin>
+				<groupId>com.sap.oss.smart-test-picker</groupId>
+				<artifactId>smart-test-picker-maven</artifactId>
+				<version>0.1.0</version>
+				<executions>
+					<execution>
+						<id>smart-test-select</id>
+						<phase>process-test-classes</phase>
+						<goals>
+							<goal>select-tests</goal>
+						</goals>
+						<configuration>
+							<baseBranch>master</baseBranch>
+						</configuration>
+					</execution>
+					<execution>
+						<id>smart-test-generate-map</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>generate-coverage-map</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.5.6</version>
 				<configuration>
