@@ -18,9 +18,7 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * Report class.
- * </p>
  *
  * @author even
  * @version $Id: $Id
@@ -34,9 +32,7 @@ public class Report {
   SystemInterface fluid = null;
 
   /**
-   * <p>
    * Constructor for Report.
-   * </p>
    *
    * @param process a {@link neqsim.process.processmodel.ProcessSystem} object
    */
@@ -45,9 +41,7 @@ public class Report {
   }
 
   /**
-   * <p>
    * Constructor for Report.
-   * </p>
    *
    * @param processmodel a {@link neqsim.process.processmodel.ProcessModel} object
    */
@@ -56,9 +50,7 @@ public class Report {
   }
 
   /**
-   * <p>
    * Constructor for Report.
-   * </p>
    *
    * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -67,9 +59,7 @@ public class Report {
   }
 
   /**
-   * <p>
    * Constructor for Report.
-   * </p>
    *
    * @param processEquipmentBaseClass a {@link neqsim.process.equipment.ProcessEquipmentBaseClass} object
    */
@@ -78,9 +68,7 @@ public class Report {
   }
 
   /**
-   * <p>
    * Constructor for Report.
-   * </p>
    *
    * @param processModule a {@link neqsim.process.processmodel.ProcessModule} object
    */
@@ -89,9 +77,7 @@ public class Report {
   }
 
   /**
-   * <p>
    * Constructor for Report.
-   * </p>
    *
    * @param processModuleBaseClass a {@link neqsim.process.processmodel.ProcessModuleBaseClass} object
    */
@@ -100,9 +86,7 @@ public class Report {
   }
 
   /**
-   * <p>
    * generateJsonReport.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */

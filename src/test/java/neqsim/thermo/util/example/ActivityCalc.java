@@ -15,9 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * ActivityCalc class.
- * </p>
  *
  * @author esol
  * @since 2.2.3
@@ -27,9 +25,7 @@ public class ActivityCalc {
   private static final Logger logger = LogManager.getLogger(ActivityCalc.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

@@ -12,9 +12,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * ViscositySim class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -32,9 +30,7 @@ public class ViscositySim extends BasePVTsimulation {
   ViscosityFunction function;
 
   /**
-   * <p>
    * Constructor for ViscositySim.
-   * </p>
    *
    * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -47,9 +43,7 @@ public class ViscositySim extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * setTemperaturesAndPressures.
-   * </p>
    *
    * @param temperature an array of type double
    * @param pressure an array of type double
@@ -61,9 +55,7 @@ public class ViscositySim extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * runTuning.
-   * </p>
    */
   public void runTuning() {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
@@ -106,9 +98,7 @@ public class ViscositySim extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * runCalc.
-   * </p>
    */
   public void runCalc() {
     gasViscosity = new double[pressure.length];
@@ -135,9 +125,7 @@ public class ViscositySim extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -179,9 +167,7 @@ public class ViscositySim extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>gasViscosity</code>.
-   * </p>
    *
    * @return the gasViscosity
    */
@@ -190,9 +176,7 @@ public class ViscositySim extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>oilViscosity</code>.
-   * </p>
    *
    * @return the oilViscosity
    */
@@ -201,9 +185,7 @@ public class ViscositySim extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>aqueousViscosity</code>.
-   * </p>
    *
    * @return the aqueousViscosity
    */

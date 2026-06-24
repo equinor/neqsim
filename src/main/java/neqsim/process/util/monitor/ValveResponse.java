@@ -4,9 +4,7 @@ import java.util.HashMap;
 import neqsim.process.equipment.valve.ValveInterface;
 
 /**
- * <p>
  * StreamResponse class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -15,9 +13,7 @@ public class ValveResponse extends BaseResponse {
   public HashMap<String, Value> data = new HashMap<String, Value>();
 
   /**
-   * <p>
    * Constructor for StreamResponse.
-   * </p>
    *
    * @param valve a {@link neqsim.process.equipment.valve.ValveInterface} object
    */
@@ -43,9 +39,7 @@ public class ValveResponse extends BaseResponse {
   }
 
   /**
-   * <p>
    * print.
-   * </p>
    */
   public void print() {
   }

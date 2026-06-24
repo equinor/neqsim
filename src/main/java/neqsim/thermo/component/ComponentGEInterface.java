@@ -10,18 +10,14 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * ComponentGEInterface interface.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public interface ComponentGEInterface extends ComponentInterface {
   /**
-   * <p>
    * getGamma.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -38,54 +34,42 @@ public interface ComponentGEInterface extends ComponentInterface {
       PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule);
 
   /**
-   * <p>
    * getGamma.
-   * </p>
    *
    * @return a double
    */
   public double getGamma();
 
   /**
-   * <p>
    * getLnGamma.
-   * </p>
    *
    * @return a double
    */
   public double getLnGamma();
 
   /**
-   * <p>
    * getGammaRefCor.
-   * </p>
    *
    * @return a double
    */
   public double getGammaRefCor();
 
   /**
-   * <p>
    * getLnGammadt.
-   * </p>
    *
    * @return a double
    */
   public double getLnGammadt();
 
   /**
-   * <p>
    * getLnGammadtdt.
-   * </p>
    *
    * @return a double
    */
   public double getLnGammadtdt();
 
   /**
-   * <p>
    * getLnGammadn.
-   * </p>
    *
    * @param k a int
    * @return a double
@@ -93,9 +77,7 @@ public interface ComponentGEInterface extends ComponentInterface {
   public double getLnGammadn(int k);
 
   /**
-   * <p>
    * setLnGammadn.
-   * </p>
    *
    * @param k a int
    * @param val a double

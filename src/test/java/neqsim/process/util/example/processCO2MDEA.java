@@ -10,9 +10,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * processCO2MDEA class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id

@@ -6,9 +6,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * SolidComplexTemperatureCalc class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -29,9 +27,7 @@ public class SolidComplexTemperatureCalc extends ConstantDutyTemperatureFlash {
   public double TrefComplex = 244.19;
 
   /**
-   * <p>
    * Constructor for SolidComplexTemperatureCalc.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -40,9 +36,7 @@ public class SolidComplexTemperatureCalc extends ConstantDutyTemperatureFlash {
   }
 
   /**
-   * <p>
    * Constructor for SolidComplexTemperatureCalc.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param comp1 a {@link java.lang.String} object
@@ -75,9 +69,7 @@ public class SolidComplexTemperatureCalc extends ConstantDutyTemperatureFlash {
   }
 
   /**
-   * <p>
    * runOld.
-   * </p>
    */
   public void runOld() {
     double sumx = 0.0;
@@ -201,9 +193,7 @@ public class SolidComplexTemperatureCalc extends ConstantDutyTemperatureFlash {
   }
 
   /**
-   * <p>
    * getKcomplex.
-   * </p>
    *
    * @return the Kcomplex
    */
@@ -212,9 +202,7 @@ public class SolidComplexTemperatureCalc extends ConstantDutyTemperatureFlash {
   }
 
   /**
-   * <p>
    * setKcomplex.
-   * </p>
    *
    * @param Kcomplex the Kcomplex to set
    */
@@ -223,9 +211,7 @@ public class SolidComplexTemperatureCalc extends ConstantDutyTemperatureFlash {
   }
 
   /**
-   * <p>
    * getHrefComplex.
-   * </p>
    *
    * @return the HrefComplex
    */
@@ -234,9 +220,7 @@ public class SolidComplexTemperatureCalc extends ConstantDutyTemperatureFlash {
   }
 
   /**
-   * <p>
    * setHrefComplex.
-   * </p>
    *
    * @param HrefComplex the HrefComplex to set
    */
@@ -245,9 +229,7 @@ public class SolidComplexTemperatureCalc extends ConstantDutyTemperatureFlash {
   }
 
   /**
-   * <p>
    * getTrefComplex.
-   * </p>
    *
    * @return the TrefComplex
    */
@@ -256,9 +238,7 @@ public class SolidComplexTemperatureCalc extends ConstantDutyTemperatureFlash {
   }
 
   /**
-   * <p>
    * setTrefComplex.
-   * </p>
    *
    * @param TrefComplex the TrefComplex to set
    */

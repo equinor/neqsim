@@ -19,9 +19,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * pTphaseEnvelope class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -117,17 +115,13 @@ public class PTphaseEnvelope extends BaseOperation {
   double[] cricondenBarYfirst = new double[100];
 
   /**
-   * <p>
    * Constructor for pTphaseEnvelope.
-   * </p>
    */
   public PTphaseEnvelope() {
   }
 
   /**
-   * <p>
    * Constructor for pTphaseEnvelope.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param name a {@link java.lang.String} object
@@ -635,9 +629,7 @@ public class PTphaseEnvelope extends BaseOperation {
   }
 
   /**
-   * <p>
    * calcHydrateLine.
-   * </p>
    */
   public void calcHydrateLine() {
     ThermodynamicOperations opsHyd = new ThermodynamicOperations(system);

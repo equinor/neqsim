@@ -5,9 +5,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * StirredCellSystem class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -17,9 +15,7 @@ public class StirredCellSystem extends neqsim.fluidmechanics.flowsystem.twophase
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for StirredCellSystem.
-   * </p>
    */
   public StirredCellSystem() {
   }
@@ -97,9 +93,7 @@ public class StirredCellSystem extends neqsim.fluidmechanics.flowsystem.twophase
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

@@ -18,9 +18,7 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * TPmultiflash class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -50,9 +48,7 @@ public class TPmultiflash extends TPflash {
   double[] multTerm2;
 
   /**
-   * <p>
    * Constructor for TPmultiflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -62,9 +58,7 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * <p>
    * Constructor for TPmultiflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param checkForSolids Set true to do solid phase check and calculations
@@ -77,17 +71,13 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * <p>
    * calcMultiPhaseBeta.
-   * </p>
    */
   public void calcMultiPhaseBeta() {
   }
 
   /**
-   * <p>
    * setDoubleArrays.
-   * </p>
    */
   public void setDoubleArrays() {
     dQdbeta = new double[system.getNumberOfPhases()][1];
@@ -95,9 +85,7 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * <p>
    * setXY.
-   * </p>
    */
   public void setXY() {
     // Check for ions directly - ions must be handled specially regardless of whether
@@ -142,9 +130,7 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * <p>
    * calcE.
-   * </p>
    */
   public void calcE() {
     // E = new double[system.getPhase(0).getNumberOfComponents()];
@@ -164,9 +150,7 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * <p>
    * calcQ.
-   * </p>
    *
    * @return a double
    */
@@ -219,9 +203,7 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * <p>
    * solveBeta.
-   * </p>
    *
    * @return a double
    */
@@ -1165,9 +1147,7 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * <p>
    * stabilityAnalysis3.
-   * </p>
    */
   public void stabilityAnalysis3() {
     double[] logWi = new double[system.getPhase(0).getNumberOfComponents()];
@@ -1544,9 +1524,7 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * <p>
    * stabilityAnalysis2.
-   * </p>
    */
   public void stabilityAnalysis2() {
     double[] logWi = new double[system.getPhase(0).getNumberOfComponents()];

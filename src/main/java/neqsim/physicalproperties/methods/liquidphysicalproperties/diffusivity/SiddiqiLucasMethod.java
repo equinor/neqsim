@@ -3,9 +3,7 @@ package neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity;
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * <p>
  * SiddiqiLucasMethod class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -22,9 +20,7 @@ public class SiddiqiLucasMethod extends Diffusivity {
   private boolean autoSelectCorrelation = false;
 
   /**
-   * <p>
    * Constructor for SiddiqiLucasMethod.
-   * </p>
    *
    * @param liquidPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

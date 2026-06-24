@@ -14,9 +14,7 @@ import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMar
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * LevenbergMarquardt class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -43,9 +41,7 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
   private LevenbergMarquardtResult result = LevenbergMarquardtResult.notRun();
 
   /**
-   * <p>
    * Constructor for LevenbergMarquardt.
-   * </p>
    */
   public LevenbergMarquardt() {
     result = LevenbergMarquardtResult.notRun();
@@ -171,9 +167,7 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -193,9 +187,7 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>maxNumberOfIterations</code>.
-   * </p>
    *
    * @return the maxNumberOfIterations
    */
@@ -204,9 +196,7 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>maxNumberOfIterations</code>.
-   * </p>
    *
    * @param maxNumberOfIterations the maxNumberOfIterations to set
    */

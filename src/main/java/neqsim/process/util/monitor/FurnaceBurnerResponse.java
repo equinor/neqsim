@@ -6,9 +6,7 @@ import neqsim.process.equipment.reactor.FurnaceBurner;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * FurnaceBurnerResponse class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -17,9 +15,7 @@ public class FurnaceBurnerResponse extends BaseResponse {
   public HashMap<String, Value> data = new HashMap<String, Value>();
 
   /**
-   * <p>
    * Constructor for FurnaceBurnerResponse.
-   * </p>
    *
    * @param burner a {@link neqsim.process.equipment.reactor.FurnaceBurner} object
    */

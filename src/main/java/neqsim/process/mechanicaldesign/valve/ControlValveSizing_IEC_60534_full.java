@@ -42,17 +42,13 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
   private boolean isFullTrim = true;
 
   /**
-   * <p>
    * Constructor for ControlValveSizing_IEC_60534_full.
-   * </p>
    */
   public ControlValveSizing_IEC_60534_full() {
   }
 
   /**
-   * <p>
    * Constructor for ControlValveSizing_IEC_60534_full.
-   * </p>
    *
    * @param valveMechanicalDesign a {@link neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign} object
    */
@@ -61,9 +57,7 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
   }
 
   /**
-   * <p>
    * isFullTrim.
-   * </p>
    *
    * @return a boolean
    */
@@ -72,9 +66,7 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
   }
 
   /**
-   * <p>
    * setFullTrim.
-   * </p>
    *
    * @param isFullTrim a boolean
    */

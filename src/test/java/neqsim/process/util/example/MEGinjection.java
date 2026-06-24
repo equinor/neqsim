@@ -10,9 +10,7 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * MEGinjection class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -20,9 +18,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class MEGinjection {
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

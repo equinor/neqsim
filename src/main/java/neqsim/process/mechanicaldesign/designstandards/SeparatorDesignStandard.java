@@ -7,9 +7,7 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.MechanicalDesignMarginResult;
 
 /**
- * <p>
  * SeparatorDesignStandard class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -21,9 +19,7 @@ public class SeparatorDesignStandard extends DesignStandard {
   static Logger logger = LogManager.getLogger(SeparatorDesignStandard.class);
 
   /**
-   * <p>
    * getFg.
-   * </p>
    *
    * @return the Fg
    */
@@ -32,9 +28,7 @@ public class SeparatorDesignStandard extends DesignStandard {
   }
 
   /**
-   * <p>
    * setFg.
-   * </p>
    *
    * @param Fg the Fg to set
    */
@@ -48,9 +42,7 @@ public class SeparatorDesignStandard extends DesignStandard {
   private final MechanicalDesignMarginResult safetyMargins;
 
   /**
-   * <p>
    * Constructor for SeparatorDesignStandard.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
@@ -84,9 +76,7 @@ public class SeparatorDesignStandard extends DesignStandard {
   }
 
   /**
-   * <p>
    * Getter for the field <code>gasLoadFactor</code>.
-   * </p>
    *
    * @return a double
    */
@@ -99,9 +89,7 @@ public class SeparatorDesignStandard extends DesignStandard {
   }
 
   /**
-   * <p>
    * Getter for the field <code>volumetricDesignFactor</code>.
-   * </p>
    *
    * @return a double
    */
@@ -114,9 +102,7 @@ public class SeparatorDesignStandard extends DesignStandard {
   }
 
   /**
-   * <p>
    * Setter for the field <code>volumetricDesignFactor</code>.
-   * </p>
    *
    * @param volumetricDesignFactor the volumetricDesignFactor to set
    */
@@ -125,9 +111,7 @@ public class SeparatorDesignStandard extends DesignStandard {
   }
 
   /**
-   * <p>
    * getLiquidRetentionTime.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object

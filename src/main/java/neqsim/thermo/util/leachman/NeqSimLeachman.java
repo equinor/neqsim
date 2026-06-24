@@ -10,9 +10,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * NeqSimLeachman class.
- * </p>
  *
  * @author victorigi99
  */
@@ -202,9 +200,7 @@ public class NeqSimLeachman {
   }
 
   /**
-   * <p>
    * getAlpha0_Leachman.
-   * </p>
    *
    * @return an array of {@link org.netlib.util.doubleW} objects
    */

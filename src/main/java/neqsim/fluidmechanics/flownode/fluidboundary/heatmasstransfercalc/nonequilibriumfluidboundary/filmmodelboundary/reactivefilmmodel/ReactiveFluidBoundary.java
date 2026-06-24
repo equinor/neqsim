@@ -8,9 +8,7 @@ import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequi
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * Abstract ReactiveFluidBoundary class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -32,9 +30,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
   public double[][] molFractionDifference;
 
   /**
-   * <p>
    * Constructor for ReactiveFluidBoundary.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -57,9 +53,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
   }
 
   /**
-   * <p>
    * Constructor for ReactiveFluidBoundary.
-   * </p>
    *
    * @param flowNode a {@link neqsim.fluidmechanics.flownode.FlowNodeInterface} object
    */
@@ -512,9 +506,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
   }
 
   /**
-   * <p>
    * calcFluxes2.
-   * </p>
    *
    * @return an array of type double
    */

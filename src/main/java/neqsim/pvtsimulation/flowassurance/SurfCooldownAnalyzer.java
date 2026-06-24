@@ -14,39 +14,35 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * SURF (Subsea Umbilicals, Risers, Flowlines) cooldown and no-touch-time analyzer.
  *
  * <p>
- * This class bridges a live NeqSim fluid to the lumped-parameter {@link PipelineCooldownCalculator}
- * thermal engine and produces the single most important flow-assurance metric for subsea operation
- * support and field-development design: the <b>no-touch time</b> &mdash; the time available after
- * an unplanned shutdown before the stagnant fluid cools to the hydrate formation temperature (plus
- * an operating margin).
+ * This class bridges a live NeqSim fluid to the lumped-parameter {@link PipelineCooldownCalculator} thermal engine and
+ * produces the single most important flow-assurance metric for subsea operation support and field-development design:
+ * the <b>no-touch time</b> &mdash; the time available after an unplanned shutdown before the stagnant fluid cools to
+ * the hydrate formation temperature (plus an operating margin).
  * </p>
  *
  * <p>
- * Unlike {@link PipelineCooldownCalculator}, which requires the fluid density and specific heat to
- * be supplied manually, this analyzer extracts those properties directly from a NeqSim
- * {@link neqsim.thermo.system.SystemInterface} and computes the hydrate equilibrium temperature
- * from the same fluid, so the no-touch time is consistent with the actual produced composition and
- * operating point.
+ * Unlike {@link PipelineCooldownCalculator}, which requires the fluid density and specific heat to be supplied
+ * manually, this analyzer extracts those properties directly from a NeqSim {@link neqsim.thermo.system.SystemInterface}
+ * and computes the hydrate equilibrium temperature from the same fluid, so the no-touch time is consistent with the
+ * actual produced composition and operating point.
  * </p>
  *
  * <p>
  * The analyzer supports two complementary use cases:
  * </p>
  * <ul>
- * <li><b>Operation support</b> &mdash; given the current operating temperature, flowline geometry
- * and insulation, report the no-touch time and a screening verdict so operators know how long they
- * have to restart, depressurise, or inject inhibitor.</li>
- * <li><b>Field development</b> &mdash; given a target no-touch time, compare candidate insulation
- * U-values (via {@link #setOverallUValue(double)} or layer properties) to select a flowline thermal
- * design.</li>
+ * <li><b>Operation support</b> &mdash; given the current operating temperature, flowline geometry and insulation,
+ * report the no-touch time and a screening verdict so operators know how long they have to restart, depressurise, or
+ * inject inhibitor.</li>
+ * <li><b>Field development</b> &mdash; given a target no-touch time, compare candidate insulation U-values (via
+ * {@link #setOverallUValue(double)} or layer properties) to select a flowline thermal design.</li>
  * </ul>
  *
  * <p>
- * The cooldown physics is a lumped radial heat-transfer model (nested cylindrical shells: fluid,
- * steel wall, insulation, coating) with an overall heat transfer coefficient referenced to the
- * outer diameter. The model is screening-level and does not resolve axial temperature gradients,
- * multiphase holdup redistribution, or transient wall conduction; for detailed design use a
- * dedicated transient thermal-hydraulic tool.
+ * The cooldown physics is a lumped radial heat-transfer model (nested cylindrical shells: fluid, steel wall,
+ * insulation, coating) with an overall heat transfer coefficient referenced to the outer diameter. The model is
+ * screening-level and does not resolve axial temperature gradients, multiphase holdup redistribution, or transient wall
+ * conduction; for detailed design use a dedicated transient thermal-hydraulic tool.
  * </p>
  *
  * <p>
@@ -143,8 +139,7 @@ public class SurfCooldownAnalyzer implements Serializable {
   private double hydrateMarginK = 3.0;
 
   /**
-   * Required no-touch time in hours for verdict evaluation, or NaN for absolute-band
-   * classification.
+   * Required no-touch time in hours for verdict evaluation, or NaN for absolute-band classification.
    */
   private double requiredNoTouchTimeHours = Double.NaN;
 
@@ -183,8 +178,8 @@ public class SurfCooldownAnalyzer implements Serializable {
   /**
    * Creates a new analyzer for the supplied produced fluid.
    *
-   * @param fluid the produced fluid; its current temperature and pressure define the operating
-   *        point unless {@link #setOperatingTemperature(double)} is used. Must not be null.
+   * @param fluid the produced fluid; its current temperature and pressure define the operating point unless
+   * {@link #setOperatingTemperature(double)} is used. Must not be null.
    * @throws IllegalArgumentException if {@code fluid} is null
    */
   public SurfCooldownAnalyzer(SystemInterface fluid) {
@@ -276,8 +271,8 @@ public class SurfCooldownAnalyzer implements Serializable {
   }
 
   /**
-   * Sets the hydrate safety margin added above the hydrate equilibrium temperature when defining
-   * the no-touch target temperature.
+   * Sets the hydrate safety margin added above the hydrate equilibrium temperature when defining the no-touch target
+   * temperature.
    *
    * @param marginK margin in Kelvin (typically 2 to 4 K)
    */
@@ -286,9 +281,8 @@ public class SurfCooldownAnalyzer implements Serializable {
   }
 
   /**
-   * Sets the required no-touch time used for the verdict. When set, the verdict compares the
-   * computed no-touch time against this requirement; when left unset (NaN), an absolute-band
-   * classification is used instead.
+   * Sets the required no-touch time used for the verdict. When set, the verdict compares the computed no-touch time
+   * against this requirement; when left unset (NaN), an absolute-band classification is used instead.
    *
    * @param hours required no-touch time in hours
    */
@@ -318,10 +312,9 @@ public class SurfCooldownAnalyzer implements Serializable {
    * Runs the cooldown analysis.
    *
    * <p>
-   * The method (1) extracts the fluid density and specific heat at the operating point, (2)
-   * computes the hydrate equilibrium temperature at the operating pressure, (3) configures and runs
-   * the {@link PipelineCooldownCalculator}, and (4) evaluates the no-touch time and screening
-   * verdict.
+   * The method (1) extracts the fluid density and specific heat at the operating point, (2) computes the hydrate
+   * equilibrium temperature at the operating pressure, (3) configures and runs the {@link PipelineCooldownCalculator},
+   * and (4) evaluates the no-touch time and screening verdict.
    * </p>
    */
   public void calculate() {
@@ -353,8 +346,7 @@ public class SurfCooldownAnalyzer implements Serializable {
   }
 
   /**
-   * Extracts fluid density, specific heat and operating temperature from a flashed clone of the
-   * fluid.
+   * Extracts fluid density, specific heat and operating temperature from a flashed clone of the fluid.
    */
   private void extractFluidProperties() {
     SystemInterface work = fluid.clone();
@@ -364,8 +356,7 @@ public class SurfCooldownAnalyzer implements Serializable {
     fluidDensity = work.getDensity("kg/m3");
     // getCp("J/kgK") returns the mass-specific heat capacity directly.
     fluidSpecificHeat = work.getCp("J/kgK");
-    initialFluidTemperatureK =
-        Double.isNaN(operatingTemperatureK) ? work.getTemperature() : operatingTemperatureK;
+    initialFluidTemperatureK = Double.isNaN(operatingTemperatureK) ? work.getTemperature() : operatingTemperatureK;
   }
 
   /**
@@ -388,8 +379,7 @@ public class SurfCooldownAnalyzer implements Serializable {
    * Evaluates the no-touch time and screening verdict from the cooldown profile.
    */
   private void evaluateNoTouchTime() {
-    if (Double.isNaN(hydrateEquilibriumTemperatureK)
-        || hydrateEquilibriumTemperatureK <= seabedTemperatureK) {
+    if (Double.isNaN(hydrateEquilibriumTemperatureK) || hydrateEquilibriumTemperatureK <= seabedTemperatureK) {
       noTouchTimeHours = Double.POSITIVE_INFINITY;
       verdict = VERDICT_NO_HYDRATE_RISK;
       return;
@@ -415,10 +405,10 @@ public class SurfCooldownAnalyzer implements Serializable {
     }
     if (!Double.isNaN(requiredNoTouchTimeHours) && requiredNoTouchTimeHours > 0.0) {
       if (noTouchTimeHours >= requiredNoTouchTimeHours) {
-        return VERDICT_OK;
+	return VERDICT_OK;
       }
       if (noTouchTimeHours >= 0.75 * requiredNoTouchTimeHours) {
-        return VERDICT_MARGINAL;
+	return VERDICT_MARGINAL;
       }
       return VERDICT_CRITICAL;
     }
@@ -541,24 +531,21 @@ public class SurfCooldownAnalyzer implements Serializable {
     result.put("verdict", verdict);
     result.put("noTouchTime_hours", round2(noTouchTimeHours));
     result.put("requiredNoTouchTime_hours",
-        Double.isNaN(requiredNoTouchTimeHours) ? null : round2(requiredNoTouchTimeHours));
+	Double.isNaN(requiredNoTouchTimeHours) ? null : round2(requiredNoTouchTimeHours));
     result.put("initialFluidTemperature_C", round2(initialFluidTemperatureK - 273.15));
     result.put("hydrateEquilibriumTemperature_C",
-        Double.isNaN(hydrateEquilibriumTemperatureK) ? null
-            : round2(hydrateEquilibriumTemperatureK - 273.15));
+	Double.isNaN(hydrateEquilibriumTemperatureK) ? null : round2(hydrateEquilibriumTemperatureK - 273.15));
     result.put("hydrateMargin_K", round2(hydrateMarginK));
     result.put("seabedTemperature_C", round2(seabedTemperatureK - 273.15));
     result.put("overallUValue_Wm2K",
-        Double.isNaN(overallUValue) ? round2(cooldown.getCalculatedUValue())
-            : round2(overallUValue));
+	Double.isNaN(overallUValue) ? round2(cooldown.getCalculatedUValue()) : round2(overallUValue));
     result.put("timeConstant_hours", round2(cooldown.getTimeConstantHours()));
     result.put("fluidDensity_kgm3", round2(fluidDensity));
     result.put("fluidSpecificHeat_JkgK", round2(fluidSpecificHeat));
     result.put("internalDiameter_m", internalDiameter);
     result.put("insulationThickness_mm", round2(insulationThickness * 1000.0));
 
-    Gson gson =
-        new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
+    Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
     return gson.toJson(result);
   }
 

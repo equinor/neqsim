@@ -14,9 +14,7 @@ import neqsim.statistics.experimentalsamplecreation.readdatafromfile.DataReader;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * WettedWallDataReader class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -26,17 +24,13 @@ public class WettedWallDataReader extends DataReader {
   static Logger logger = LogManager.getLogger(WettedWallDataReader.class);
 
   /**
-   * <p>
    * Constructor for WettedWallDataReader.
-   * </p>
    */
   public WettedWallDataReader() {
   }
 
   /**
-   * <p>
    * Constructor for WettedWallDataReader.
-   * </p>
    *
    * @param fileName a {@link java.lang.String} object
    */
@@ -95,9 +89,7 @@ public class WettedWallDataReader extends DataReader {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

@@ -17,9 +17,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 
 /**
- * <p>
  * Setter class.
- * </p>
  *
  * @author esol
  */
@@ -36,9 +34,7 @@ public class Setter extends ProcessEquipmentBaseClass {
   private List<Map<String, Object>> parameters = new ArrayList<>();
 
   /**
-   * <p>
    * Constructor for Setter.
-   * </p>
    */
   @Deprecated
   public Setter() {
@@ -46,9 +42,7 @@ public class Setter extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for Setter.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -191,9 +185,7 @@ public class Setter extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

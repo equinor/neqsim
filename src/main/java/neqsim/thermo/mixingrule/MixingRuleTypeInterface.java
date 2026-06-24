@@ -7,9 +7,7 @@ package neqsim.thermo.mixingrule;
  */
 public interface MixingRuleTypeInterface {
   /**
-   * <p>
    * Getter for property value.
-   * </p>
    *
    * @return a int
    */

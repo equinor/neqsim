@@ -19,9 +19,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * WettedWallColumnSampleCreator class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -52,17 +50,13 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
   double[] smoothedColumnWallTemperature;
 
   /**
-   * <p>
    * Constructor for WettedWallColumnSampleCreator.
-   * </p>
    */
   public WettedWallColumnSampleCreator() {
   }
 
   /**
-   * <p>
    * Constructor for WettedWallColumnSampleCreator.
-   * </p>
    *
    * @param file a {@link java.lang.String} object
    */
@@ -71,9 +65,7 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
   }
 
   /**
-   * <p>
    * setSampleValues.
-   * </p>
    */
   public void setSampleValues() {
     time = new double[reader.getSampleObjectList().size() - 1];
@@ -105,9 +97,7 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
   }
 
   /**
-   * <p>
    * smoothData.
-   * </p>
    */
   public void smoothData() {
     Matrix data = new Matrix(pressure, 1);
@@ -148,9 +138,7 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
   }
 
   /**
-   * <p>
    * calcdPdt.
-   * </p>
    */
   public void calcdPdt() {
     system.init(0);
@@ -197,9 +185,7 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

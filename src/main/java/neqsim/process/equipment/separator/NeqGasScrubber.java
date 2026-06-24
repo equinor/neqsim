@@ -10,9 +10,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * NeqGasScrubber class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -45,9 +43,7 @@ public class NeqGasScrubber extends Separator {
   }
 
   /**
-   * <p>
    * Constructor for NeqGasScrubber.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -84,9 +80,7 @@ public class NeqGasScrubber extends Separator {
   }
 
   /**
-   * <p>
    * addScrubberSection.
-   * </p>
    *
    * @param type a {@link java.lang.String} object
    */

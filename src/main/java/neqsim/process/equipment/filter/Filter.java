@@ -8,9 +8,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * Filter class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -23,9 +21,7 @@ public class Filter extends TwoPortEquipment {
   private double Cv = 0.0;
 
   /**
-   * <p>
    * Constructor for Filter.
-   * </p>
    *
    * @param name name of filter
    * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -50,9 +46,7 @@ public class Filter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Getter for the field <code>deltaP</code>.
-   * </p>
    *
    * @return a double
    */
@@ -61,9 +55,7 @@ public class Filter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Setter for the field <code>deltaP</code>.
-   * </p>
    *
    * @param deltaP a double
    */
@@ -73,9 +65,7 @@ public class Filter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Setter for the field <code>deltaP</code>.
-   * </p>
    *
    * @param deltaP a double
    * @param unit a {@link java.lang.String} object
@@ -93,9 +83,7 @@ public class Filter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * getCvFactor.
-   * </p>
    *
    * @return a double
    */
@@ -104,9 +92,7 @@ public class Filter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * setCvFactor.
-   * </p>
    *
    * @param pressureCoef a double
    */

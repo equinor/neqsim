@@ -9,9 +9,7 @@ package neqsim.statistics.dataanalysis.datasmoothing;
 import Jama.Matrix;
 
 /**
- * <p>
  * DataSmoothor class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -34,9 +32,7 @@ public class DataSmoother {
   double fac = 0;
 
   /**
-   * <p>
    * Constructor for DataSmoothor.
-   * </p>
    *
    * @param nonSmoothedNumbers an array of type double
    * @param nl a int
@@ -57,9 +53,7 @@ public class DataSmoother {
   }
 
   /**
-   * <p>
    * runSmoothing.
-   * </p>
    */
   public void runSmoothing() {
     findCoefs();
@@ -67,9 +61,7 @@ public class DataSmoother {
   }
 
   /**
-   * <p>
    * findCoefs.
-   * </p>
    */
   public void findCoefs() {
     if (nonSmoothedNumbers.length < (nl + nr + 1) || nl < 0 || nr < 0 || ld > m || nl + nr < m) {
@@ -131,9 +123,7 @@ public class DataSmoother {
   }
 
   /**
-   * <p>
    * Setter for the field <code>smoothedNumbers</code>.
-   * </p>
    */
   public void setSmoothedNumbers() {
     for (int i = nl; i < nonSmoothedNumbers.length - nr; i++) {
@@ -149,9 +139,7 @@ public class DataSmoother {
   }
 
   /**
-   * <p>
    * Getter for the field <code>smoothedNumbers</code>.
-   * </p>
    *
    * @return an array of type double
    */

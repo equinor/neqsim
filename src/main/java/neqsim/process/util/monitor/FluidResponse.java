@@ -6,9 +6,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * Fluid class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -24,9 +22,7 @@ public class FluidResponse {
   public HashMap<String, HashMap<String, Value>> conditions = new HashMap<String, HashMap<String, Value>>();
 
   /**
-   * <p>
    * Constructor for Fluid. Sets name of inputFluid as name.
-   * </p>
    *
    * @param inputFluid a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -182,9 +178,7 @@ public class FluidResponse {
   }
 
   /**
-   * <p>
    * print.
-   * </p>
    */
   public void print() {
   }

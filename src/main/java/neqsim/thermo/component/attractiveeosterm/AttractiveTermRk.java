@@ -3,9 +3,7 @@ package neqsim.thermo.component.attractiveeosterm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * <p>
  * AttractiveTermRk class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -15,9 +13,7 @@ public class AttractiveTermRk extends AttractiveTermBaseClass {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for AttractiveTermRk.
-   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
    */

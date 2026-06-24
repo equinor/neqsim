@@ -17,18 +17,14 @@ public class SystemBWRSEos extends SystemEos {
       { 0.7431, 0.004812, 0.009671, -3.7e-6, 0.0 } };
 
   /**
-   * <p>
    * Constructor for SystemBWRSEos.
-   * </p>
    */
   public SystemBWRSEos() {
     this(298.15, 1.0, false);
   }
 
   /**
-   * <p>
    * Constructor for SystemBWRSEos.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -38,9 +34,7 @@ public class SystemBWRSEos extends SystemEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemBWRSEos.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)

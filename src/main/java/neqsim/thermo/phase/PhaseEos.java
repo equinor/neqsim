@@ -67,9 +67,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * <p>
    * Constructor for PhaseEos.
-   * </p>
    */
   public PhaseEos() {
     componentArray = new ComponentEosInterface[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
@@ -224,9 +222,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * <p>
    * molarVolume2.
-   * </p>
    *
    * @param pressure a double
    * @param temperature a double
@@ -537,9 +533,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * <p>
    * calcAT.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
@@ -553,9 +547,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * <p>
    * calcATT.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
@@ -755,9 +747,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * <p>
    * getdVdrho.
-   * </p>
    *
    * @return a double
    */
@@ -772,9 +762,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>f_loc</code>.
-   * </p>
    *
    * @return a double
    */
@@ -783,9 +771,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * <p>
    * calcg.
-   * </p>
    *
    * @return a double
    */
@@ -794,9 +780,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * <p>
    * calcf.
-   * </p>
    *
    * @return a double
    */
@@ -806,9 +790,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * <p>
    * getF.
-   * </p>
    *
    * @return a double
    */
@@ -947,9 +929,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * <p>
    * FVVV.
-   * </p>
    *
    * @return a double
    */
@@ -966,9 +946,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * <p>
    * gVVV.
-   * </p>
    *
    * @return a double
    */
@@ -1001,9 +979,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * <p>
    * fVVV.
-   * </p>
    *
    * @return a double
    */
@@ -1050,9 +1026,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * <p>
    * dFdVdVdV.
-   * </p>
    *
    * @return a double
    */
@@ -1087,9 +1061,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * <p>
    * getdUdSVn.
-   * </p>
    *
    * @return a double
    */
@@ -1098,9 +1070,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * <p>
    * getdUdVSn.
-   * </p>
    *
    * @return a double
    */
@@ -1109,9 +1079,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * <p>
    * getdUdSdSVn.
-   * </p>
    *
    * @return a double
    */
@@ -1120,9 +1088,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * <p>
    * getdUdVdVSn.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -1132,9 +1098,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * <p>
    * getdUdSdVn.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -1145,9 +1109,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
   // getdTVndSVn() needs to be implemented
   /**
-   * <p>
    * getdTVndSVnJaobiMatrix.
-   * </p>
    *
    * @return an array of type double
    */
@@ -1168,9 +1130,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * <p>
    * getGradientVector.
-   * </p>
    *
    * @return an array of type double
    */
@@ -1182,9 +1142,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   // getdTVndSVn() needs to be implemented
   // symetrisk matrise
   /**
-   * <p>
    * getUSVHessianMatrix.
-   * </p>
    *
    * @return an array of type double
    */
@@ -1205,9 +1163,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * <p>
    * dFdxMatrixSimple.
-   * </p>
    *
    * @return an array of type double
    */
@@ -1236,9 +1192,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * <p>
    * dFdxMatrix.
-   * </p>
    *
    * @return an array of type double
    */
@@ -1255,9 +1209,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * <p>
    * dFdxdxMatrixSimple.
-   * </p>
    *
    * @return an array of type double
    */
@@ -1303,9 +1255,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * <p>
    * dFdxdxMatrix.
-   * </p>
    *
    * @return an array of type double
    */

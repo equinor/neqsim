@@ -8,9 +8,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * FuelCell class representing a simple hydrogen fuel cell.
- * </p>
  *
  * @author OpenAI
  */
@@ -26,18 +24,14 @@ public class FuelCell extends TwoPortEquipment {
   private double heatLoss = 0.0;
 
   /**
-   * <p>
    * Constructor for FuelCell.
-   * </p>
    */
   public FuelCell() {
     this("FuelCell");
   }
 
   /**
-   * <p>
    * Constructor for FuelCell.
-   * </p>
    *
    * @param name name of unit operation
    */
@@ -46,9 +40,7 @@ public class FuelCell extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Constructor for FuelCell.
-   * </p>
    *
    * @param name name of unit operation
    * @param fuelStream inlet fuel stream
@@ -60,9 +52,7 @@ public class FuelCell extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Setter for the field <code>oxidantStream</code>.
-   * </p>
    *
    * @param stream oxidant stream
    */
@@ -71,9 +61,7 @@ public class FuelCell extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Getter for the field <code>oxidantStream</code>.
-   * </p>
    *
    * @return oxidant stream
    */
@@ -96,9 +84,7 @@ public class FuelCell extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Setter for the field <code>efficiency</code>.
-   * </p>
    *
    * @param efficiency electrical efficiency of the cell
    */
@@ -107,9 +93,7 @@ public class FuelCell extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Getter for the field <code>efficiency</code>.
-   * </p>
    *
    * @return efficiency of the cell
    */
@@ -118,9 +102,7 @@ public class FuelCell extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Getter for the field <code>power</code>.
-   * </p>
    *
    * @return electrical power produced [W]
    */
@@ -129,9 +111,7 @@ public class FuelCell extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Getter for the field <code>heatLoss</code>.
-   * </p>
    *
    * @return heat lost from the cell [W]
    */

@@ -11,9 +11,7 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.splitter.Splitter;
 
 /**
- * <p>
  * Calculator class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -34,9 +32,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
   private static final double ANTI_SURGE_STUCK_THRESHOLD = 0.98;
 
   /**
-   * <p>
    * Constructor for Calculator.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -45,9 +41,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * addInputVariable.
-   * </p>
    *
    * @param unit a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
@@ -56,9 +50,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * addInputVariable.
-   * </p>
    *
    * @param units a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
@@ -69,9 +61,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>inputVariable</code>.
-   * </p>
    *
    * @return a {@link java.util.ArrayList} object
    */
@@ -80,9 +70,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>outputVariable</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
@@ -91,9 +79,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * runAntiSurgeCalc.
-   * </p>
    *
    * @param id a {@link java.util.UUID} object
    */
@@ -207,9 +193,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>outputVariable</code>.
-   * </p>
    *
    * @param outputVariable a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
@@ -218,9 +202,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>calculationMethod</code>.
-   * </p>
    *
    * @param calculationMethod a {@link java.util.function.BiConsumer} object
    */
@@ -230,9 +212,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>calculationMethod</code>.
-   * </p>
    *
    * @param calculationMethod a {@link java.lang.Runnable} object
    */

@@ -11,9 +11,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * dTPflash class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -27,9 +25,7 @@ public class dTPflash extends TPflash {
   String[] flashComp = null;
 
   /**
-   * <p>
    * Constructor for dTPflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param comps an array of {@link java.lang.String} objects

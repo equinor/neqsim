@@ -9,9 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * NeqSimFluidDataBase class.
- * </p>
  *
  * @author esol
  * @version The database is used for storing fluid info and recreating a fluid it uses the database neqsimfluiddatabase
@@ -31,9 +29,7 @@ public class NeqSimFluidDataBase implements neqsim.util.util.FileSystemSettings,
   transient Statement statement = null;
 
   /**
-   * <p>
    * Constructor for NeqSimFluidDataBase.
-   * </p>
    */
   public NeqSimFluidDataBase() {
     try {
@@ -54,9 +50,7 @@ public class NeqSimFluidDataBase implements neqsim.util.util.FileSystemSettings,
   }
 
   /**
-   * <p>
    * openConnection.
-   * </p>
    *
    * @param database a {@link java.lang.String} object
    * @return a Connection object
@@ -81,9 +75,7 @@ public class NeqSimFluidDataBase implements neqsim.util.util.FileSystemSettings,
   }
 
   /**
-   * <p>
    * getConnection.
-   * </p>
    *
    * @return a Connection object
    */
@@ -92,9 +84,7 @@ public class NeqSimFluidDataBase implements neqsim.util.util.FileSystemSettings,
   }
 
   /**
-   * <p>
    * getResultSet.
-   * </p>
    *
    * @param database a {@link java.lang.String} object
    * @param sqlString a {@link java.lang.String} object
@@ -112,9 +102,7 @@ public class NeqSimFluidDataBase implements neqsim.util.util.FileSystemSettings,
   }
 
   /**
-   * <p>
    * getResultSet.
-   * </p>
    *
    * @param sqlString a {@link java.lang.String} object
    * @return a ResultSet object
@@ -124,9 +112,7 @@ public class NeqSimFluidDataBase implements neqsim.util.util.FileSystemSettings,
   }
 
   /**
-   * <p>
    * execute.
-   * </p>
    *
    * @param sqlString a {@link java.lang.String} object
    */

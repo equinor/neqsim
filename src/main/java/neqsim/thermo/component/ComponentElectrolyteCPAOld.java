@@ -6,9 +6,7 @@ import neqsim.thermo.phase.PhaseCPAInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * ComponentElectrolyteCPAOld class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -28,9 +26,7 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
   double[] xsitedT = new double[0];
 
   /**
-   * <p>
    * Constructor for ComponentElectrolyteCPAOld.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -62,9 +58,7 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
   }
 
   /**
-   * <p>
    * Constructor for ComponentElectrolyteCPAOld.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]
@@ -197,9 +191,7 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
   }
 
   /**
-   * <p>
    * dFCPAdN.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -216,9 +208,7 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
   }
 
   /**
-   * <p>
    * dFCPAdNdV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -233,9 +223,7 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
   }
 
   /**
-   * <p>
    * dFCPAdNdT.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -252,9 +240,7 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
   }
 
   /**
-   * <p>
    * calc_lngidV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -298,9 +284,7 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
   }
 
   /**
-   * <p>
    * dFCPAdNdXidXdV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -314,9 +298,7 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
   }
 
   /**
-   * <p>
    * calc_lngi.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double

@@ -13,9 +13,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * AdsorptionDehydrationlModule class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -40,9 +38,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
   double adsorbentFillingHeight = 3.0;
 
   /**
-   * <p>
    * Constructor for AdsorptionDehydrationlModule.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -197,9 +193,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

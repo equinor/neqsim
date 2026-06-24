@@ -13,9 +13,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * LNGfilling class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -25,9 +23,7 @@ public class LNGfilling {
   private static final Logger logger = LogManager.getLogger(LNGfilling.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

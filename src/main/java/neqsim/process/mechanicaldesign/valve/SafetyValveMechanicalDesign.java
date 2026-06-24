@@ -28,9 +28,7 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
   private transient Map<String, SafetyValveScenarioResult> scenarioResults = new LinkedHashMap<>();
 
   /**
-   * <p>
    * Constructor for SafetyValveMechanicalDesign.
-   * </p>
    *
    * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */

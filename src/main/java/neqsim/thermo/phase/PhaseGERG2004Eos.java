@@ -5,9 +5,7 @@ import neqsim.thermo.component.ComponentGERG2004;
 import neqsim.thermo.util.jni.GERG2004EOS;
 
 /**
- * <p>
  * PhaseGERG2004Eos class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -36,9 +34,7 @@ public class PhaseGERG2004Eos extends PhaseEos {
   double JTcoef = 0.0;
 
   /**
-   * <p>
    * Constructor for PhaseGERG2004Eos.
-   * </p>
    */
   public PhaseGERG2004Eos() {
     thermoPropertyModelName = "GERG-EoS 2008";
@@ -65,9 +61,7 @@ public class PhaseGERG2004Eos extends PhaseEos {
   }
 
   /**
-   * <p>
    * Setter for the field <code>xFracGERG</code>.
-   * </p>
    */
   public void setxFracGERG() {
     for (int j = 0; j < gergEOS.getNameList().length; j++) {

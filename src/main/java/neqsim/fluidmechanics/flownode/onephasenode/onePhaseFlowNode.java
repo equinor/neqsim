@@ -7,9 +7,7 @@ import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * Abstract onePhaseFlowNode class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -21,17 +19,13 @@ public abstract class onePhaseFlowNode extends FlowNode {
   static Logger logger = LogManager.getLogger(onePhaseFlowNode.class);
 
   /**
-   * <p>
    * Constructor for onePhaseFlowNode.
-   * </p>
    */
   public onePhaseFlowNode() {
   }
 
   /**
-   * <p>
    * Constructor for onePhaseFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -39,9 +33,7 @@ public abstract class onePhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * Constructor for onePhaseFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
@@ -112,9 +104,7 @@ public abstract class onePhaseFlowNode extends FlowNode {
   // }
 
   /**
-   * <p>
    * calcReynoldsNumber.
-   * </p>
    *
    * @return a double
    */

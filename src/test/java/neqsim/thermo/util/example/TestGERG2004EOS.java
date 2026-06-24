@@ -8,9 +8,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TestGERG2004EOS class.
- * </p>
  *
  * @author esol
  * @since 2.2.3
@@ -22,9 +20,7 @@ public class TestGERG2004EOS {
   /** Logger object for class. */
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

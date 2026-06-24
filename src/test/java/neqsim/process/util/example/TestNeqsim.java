@@ -9,9 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * TestNeqsim class.
- * </p>
  *
  * @author Administrator
  * @version $Id: $Id
@@ -21,9 +19,7 @@ public class TestNeqsim {
   private static final Logger logger = LogManager.getLogger(TestNeqsim.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args the command line arguments
    */

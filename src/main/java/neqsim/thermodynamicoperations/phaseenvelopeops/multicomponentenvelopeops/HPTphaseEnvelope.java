@@ -18,9 +18,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * HPTphaseEnvelope class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -43,9 +41,7 @@ public class HPTphaseEnvelope extends BaseOperation {
   double endTemperature = 0;
 
   /**
-   * <p>
    * Constructor for HPTphaseEnvelope.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

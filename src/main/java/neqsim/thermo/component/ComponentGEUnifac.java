@@ -15,9 +15,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * ComponentGEUnifac class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -37,9 +35,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
   int numberOfUnifacSubGroups = 133;
 
   /**
-   * <p>
    * Constructor for ComponentGEUnifac.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -100,9 +96,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
   }
 
   /**
-   * <p>
    * addUNIFACgroup.
-   * </p>
    *
    * @param p a int
    * @param n a int
@@ -113,9 +107,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
   }
 
   /**
-   * <p>
    * getQ.
-   * </p>
    *
    * @return a double
    */
@@ -154,9 +146,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
   }
 
   /**
-   * <p>
    * calclnGammak.
-   * </p>
    *
    * @param k a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -288,9 +278,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
   }
 
   /**
-   * <p>
    * Getter for the field <code>unifacGroups</code>.
-   * </p>
    *
    * @return an array of {@link neqsim.thermo.atomelement.UNIFACgroup} objects
    */
@@ -299,9 +287,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
   }
 
   /**
-   * <p>
    * getUnifacGroup2.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.thermo.atomelement.UNIFACgroup} object
@@ -311,9 +297,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
   }
 
   /**
-   * <p>
    * getUnifacGroup.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.thermo.atomelement.UNIFACgroup} object
@@ -333,9 +317,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
   }
 
   /**
-   * <p>
    * getNumberOfUNIFACgroups.
-   * </p>
    *
    * @return a int
    */

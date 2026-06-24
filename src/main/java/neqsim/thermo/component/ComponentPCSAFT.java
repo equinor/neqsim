@@ -6,9 +6,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePCSAFT;
 
 /**
- * <p>
  * ComponentPCSAFT class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -35,9 +33,7 @@ public class ComponentPCSAFT extends ComponentSrk {
   int useDISP2 = 1;
 
   /**
-   * <p>
    * Constructor for ComponentPCSAFT.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -49,9 +45,7 @@ public class ComponentPCSAFT extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Constructor for ComponentPCSAFT.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]
@@ -175,9 +169,7 @@ public class ComponentPCSAFT extends ComponentSrk {
   }
 
   /**
-   * <p>
    * dF_HC_SAFTdN.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -196,9 +188,7 @@ public class ComponentPCSAFT extends ComponentSrk {
   }
 
   /**
-   * <p>
    * dF_DISP1_SAFTdN.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -218,9 +208,7 @@ public class ComponentPCSAFT extends ComponentSrk {
   }
 
   /**
-   * <p>
    * calcdmSAFTdi.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param nuberOfComponents a int
@@ -234,9 +222,7 @@ public class ComponentPCSAFT extends ComponentSrk {
   }
 
   /**
-   * <p>
    * dF_DISP2_SAFTdN.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -363,9 +349,7 @@ public class ComponentPCSAFT extends ComponentSrk {
   }
 
   /**
-   * <p>
    * calcF1dispSumTermdn.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -386,9 +370,7 @@ public class ComponentPCSAFT extends ComponentSrk {
   }
 
   /**
-   * <p>
    * calcF2dispSumTermdn.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -414,9 +396,7 @@ public class ComponentPCSAFT extends ComponentSrk {
   }
 
   /**
-   * <p>
    * calcdghsSAFTdi.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param nuberOfComponents a int
@@ -430,9 +410,7 @@ public class ComponentPCSAFT extends ComponentSrk {
   }
 
   /**
-   * <p>
    * calcdahsSAFTdi.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param nuberOfComponents a int
@@ -449,9 +427,7 @@ public class ComponentPCSAFT extends ComponentSrk {
   }
 
   /**
-   * <p>
    * calcdnSAFTdi.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param nuberOfComponents a int
@@ -469,9 +445,7 @@ public class ComponentPCSAFT extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Getter for the field <code>dSAFTi</code>.
-   * </p>
    *
    * @return a double
    */
@@ -480,9 +454,7 @@ public class ComponentPCSAFT extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Setter for the field <code>dSAFTi</code>.
-   * </p>
    *
    * @param di a double
    */
@@ -491,9 +463,7 @@ public class ComponentPCSAFT extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Getter for the field <code>dghsSAFTdi</code>.
-   * </p>
    *
    * @return a double
    */
@@ -502,9 +472,7 @@ public class ComponentPCSAFT extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Setter for the field <code>dghsSAFTdi</code>.
-   * </p>
    *
    * @param dghsSAFTdi a double
    */
@@ -513,9 +481,7 @@ public class ComponentPCSAFT extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Getter for the field <code>dnSAFTdi</code>.
-   * </p>
    *
    * @return a double
    */
@@ -524,9 +490,7 @@ public class ComponentPCSAFT extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Setter for the field <code>dnSAFTdi</code>.
-   * </p>
    *
    * @param dnSAFTdi a double
    */
@@ -535,9 +499,7 @@ public class ComponentPCSAFT extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Getter for the field <code>dahsSAFTdi</code>.
-   * </p>
    *
    * @return a double
    */
@@ -546,9 +508,7 @@ public class ComponentPCSAFT extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Setter for the field <code>dahsSAFTdi</code>.
-   * </p>
    *
    * @param dahsSAFTdi a double
    */
@@ -557,9 +517,7 @@ public class ComponentPCSAFT extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Getter for the field <code>dmSAFTdi</code>.
-   * </p>
    *
    * @return a double
    */
@@ -568,9 +526,7 @@ public class ComponentPCSAFT extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Setter for the field <code>dmSAFTdi</code>.
-   * </p>
    *
    * @param dmSAFTdi a double
    */
@@ -579,9 +535,7 @@ public class ComponentPCSAFT extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Getter for the field <code>dlogghsSAFTdi</code>.
-   * </p>
    *
    * @return a double
    */
@@ -590,9 +544,7 @@ public class ComponentPCSAFT extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Setter for the field <code>dlogghsSAFTdi</code>.
-   * </p>
    *
    * @param dlogghsSAFTdi a double
    */

@@ -67,9 +67,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   private transient LinearSolverDense<DMatrixRMaj> linearSolver;
 
   /**
-   * <p>
    * Constructor for sysNewtonRhapsonTPflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param numberOfPhases a int
@@ -123,9 +121,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>fvec</code>.
-   * </p>
    */
   public void setfvec() {
     for (int i = 0; i < numberOfComponents; i++) {
@@ -137,9 +133,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * setJac.
-   * </p>
    */
   public void setJac() {
     double dij;
@@ -159,9 +153,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>u</code>.
-   * </p>
    */
   public void setu() {
     for (int i = 0; i < numberOfComponents; i++) {
@@ -170,9 +162,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * init.
-   * </p>
    */
   public void init() {
     double betaSum = 0;
@@ -261,9 +251,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * solve.
-   * </p>
    *
    * @return a double
    */

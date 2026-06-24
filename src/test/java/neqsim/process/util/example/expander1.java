@@ -4,9 +4,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * expander1 class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id

@@ -3,9 +3,7 @@ package neqsim.thermodynamicoperations.flashops;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * PUflash class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -18,17 +16,13 @@ public class PUflash extends Flash {
   Flash tpFlash;
 
   /**
-   * <p>
    * Constructor for PUflash.
-   * </p>
    */
   public PUflash() {
   }
 
   /**
-   * <p>
    * Constructor for PUflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Uspec a double
@@ -40,9 +34,7 @@ public class PUflash extends Flash {
   }
 
   /**
-   * <p>
    * calcdQdTT.
-   * </p>
    *
    * @return a double
    */
@@ -52,9 +44,7 @@ public class PUflash extends Flash {
   }
 
   /**
-   * <p>
    * calcdQdT.
-   * </p>
    *
    * @return a double
    */
@@ -64,9 +54,7 @@ public class PUflash extends Flash {
   }
 
   /**
-   * <p>
    * solveQ.
-   * </p>
    *
    * @return a double
    */

@@ -371,9 +371,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for ProcessSystem.
-   * </p>
    */
   public ProcessSystem() {
     this("Process system");
@@ -389,9 +387,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * Add to end.
-   * </p>
    *
    * @param operation a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
@@ -401,9 +397,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * Add to specific position.
-   * </p>
    *
    * @param position 0-based position
    * @param operation a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
@@ -433,9 +427,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * Add measurementdevice.
-   * </p>
    *
    * @param measurementDevice a {@link neqsim.process.measurementdevice.MeasurementDeviceInterface} object
    */
@@ -523,9 +515,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * Add multiple process equipment to end.
-   * </p>
    *
    * @param operations an array of {@link neqsim.process.equipment.ProcessEquipmentInterface} objects
    */
@@ -535,9 +525,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * Replace a unitoperation.
-   * </p>
    *
    * @param name Name of the object to replace
    * @param newObject the object to replace it with
@@ -561,9 +549,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * Get process equipmen by name.
-   * </p>
    *
    * @param name Name of
    * @return a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
@@ -630,9 +616,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * hasUnitName.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a boolean
@@ -646,9 +630,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * Get MeasureDevice by name.
-   * </p>
    *
    * @param name Name of measurement device
    * @return a {@link neqsim.process.measurementdevice.MeasurementDeviceInterface} object
@@ -746,9 +728,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * getUnitNumber.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a int
@@ -771,9 +751,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * replaceObject.
-   * </p>
    *
    * @param unitName a {@link java.lang.String} object
    * @param operation a {@link neqsim.process.equipment.ProcessEquipmentBaseClass} object
@@ -793,9 +771,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * getAllUnitNames.
-   * </p>
    *
    * @return a {@link java.util.ArrayList} object
    */
@@ -815,9 +791,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * Gets the list of unit operations.
-   * </p>
    *
    * @return the list of unit operations
    */
@@ -1000,9 +974,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * removeUnit.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -1016,9 +988,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * clearAll.
-   * </p>
    */
   public synchronized void clearAll() {
     unitOperations.clear();
@@ -1026,9 +996,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * clear.
-   * </p>
    */
   public synchronized void clear() {
     unitOperations = new ArrayList<ProcessEquipmentInterface>(0);
@@ -1036,9 +1004,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * setFluid.
-   * </p>
    *
    * @param fluid1 a {@link neqsim.thermo.system.SystemInterface} object
    * @param fluid2 a {@link neqsim.thermo.system.SystemInterface} object
@@ -1071,9 +1037,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * setFluid.
-   * </p>
    *
    * @param fluid1 a {@link neqsim.thermo.system.SystemInterface} object
    * @param fluid2 a {@link neqsim.thermo.system.SystemInterface} object
@@ -2396,9 +2360,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * runAsThread.
-   * </p>
    *
    * @return a {@link java.lang.Thread} object
    * @deprecated Use {@link #runAsTask()} instead for better resource management. This method creates a new unmanaged
@@ -3691,9 +3653,7 @@ public class ProcessSystem extends SimulationBaseClass {
    */
 
   /**
-   * <p>
    * runTransient.
-   * </p>
    */
   public void runTransient() {
     runTransient(getTimeStep(), UUID.randomUUID());
@@ -3991,9 +3951,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>time</code>.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -4247,9 +4205,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * size.
-   * </p>
    *
    * @return a int
    */
@@ -4258,18 +4214,14 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * view.
-   * </p>
    */
   public void view() {
     this.displayResult();
   }
 
   /**
-   * <p>
    * displayResult.
-   * </p>
    */
   @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
@@ -4290,9 +4242,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * reportMeasuredValues.
-   * </p>
    */
   public void reportMeasuredValues() {
     try {
@@ -4312,9 +4262,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * save.
-   * </p>
    *
    * @param filePath a {@link java.lang.String} object
    */
@@ -4328,9 +4276,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * open.
-   * </p>
    *
    * @param filePath a {@link java.lang.String} object
    * @return a {@link neqsim.process.processmodel.ProcessSystem} object
@@ -4346,9 +4292,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * reportResults.
-   * </p>
    *
    * @return an array of {@link java.lang.String} objects
    */
@@ -4552,9 +4496,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * printLogFile.
-   * </p>
    *
    * @param filename a {@link java.lang.String} object
    */
@@ -4691,9 +4633,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>timeStep</code>.
-   * </p>
    *
    * @return a double
    */
@@ -4702,9 +4642,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>timeStep</code>.
-   * </p>
    *
    * @param timeStep a double
    */
@@ -4920,9 +4858,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * getPower.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -4947,9 +4883,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * getCoolerDuty.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -4972,9 +4906,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * getHeaterDuty.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -4997,9 +4929,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>surroundingTemperature</code>.
-   * </p>
    *
    * @return a double
    */
@@ -5008,9 +4938,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>surroundingTemperature</code>.
-   * </p>
    *
    * @param surroundingTemperature a double
    */
@@ -5019,9 +4947,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * Create deep copy.
-   * </p>
    *
    * @return a {@link neqsim.process.processmodel.ProcessSystem} object
    */
@@ -5051,9 +4977,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * getConditionMonitor.
-   * </p>
    *
    * @return a {@link neqsim.process.conditionmonitor.ConditionMonitor} object
    */
@@ -5498,9 +5422,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * addUnit.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param equipmentType a {@link java.lang.String} object
@@ -5528,9 +5450,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * addUnit.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param equipmentEnum a {@link neqsim.process.equipment.EquipmentEnum} object
@@ -5544,9 +5464,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   // New overload: addUnit only with equipmentType String
   /**
-   * <p>
    * addUnit.
-   * </p>
    *
    * @param equipmentType a {@link java.lang.String} object
    * @param <T> a T class
@@ -5559,9 +5477,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   // New overload: addUnit only with EquipmentEnum
   /**
-   * <p>
    * addUnit.
-   * </p>
    *
    * @param equipmentEnum a {@link neqsim.process.equipment.EquipmentEnum} object
    * @param <T> a T class
@@ -5607,9 +5523,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * addUnit.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
@@ -5624,9 +5538,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * addUnit.
-   * </p>
    *
    * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @return a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
@@ -5742,9 +5654,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * exportToGraphviz.
-   * </p>
    *
    * @param filename a {@link java.lang.String} object
    */
@@ -6027,9 +5937,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * getBottleneck.
-   * </p>
    *
    * <p>
    * Identifies the equipment with the highest capacity utilization. This method checks both:
@@ -8306,10 +8214,8 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * Get a system-wide instrument design summary that aggregates instrument lists, I/O counts, DCS and SIS cabinet
    * sizing, and cost estimates across all equipment in this process system.
-   * </p>
    *
    * @return the system instrument design with aggregated results
    */

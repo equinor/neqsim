@@ -6,9 +6,7 @@ import Jama.Matrix;
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
 
 /**
- * <p>
  * TwoPhasePipeFlowSolver class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -36,17 +34,13 @@ public class TwoPhasePipeFlowSolver extends neqsim.fluidmechanics.flowsolver.one
   protected int numberOfNodes;
 
   /**
-   * <p>
    * Constructor for TwoPhasePipeFlowSolver.
-   * </p>
    */
   public TwoPhasePipeFlowSolver() {
   }
 
   /**
-   * <p>
    * Constructor for TwoPhasePipeFlowSolver.
-   * </p>
    *
    * @param pipe a {@link neqsim.fluidmechanics.flowsystem.FlowSystemInterface} object
    * @param length a double

@@ -5,9 +5,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TEGstripperProcess class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -15,9 +13,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class TEGstripperProcess {
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

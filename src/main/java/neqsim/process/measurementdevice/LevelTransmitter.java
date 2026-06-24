@@ -4,9 +4,7 @@ import neqsim.process.equipment.separator.Separator;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * LevelTransmitter class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -18,9 +16,7 @@ public class LevelTransmitter extends MeasurementDeviceBaseClass {
   protected Separator separator = null;
 
   /**
-   * <p>
    * Constructor for LevelTransmitter.
-   * </p>
    *
    * @param separator a {@link neqsim.process.equipment.separator.Separator} object
    */
@@ -29,9 +25,7 @@ public class LevelTransmitter extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for LevelTransmitter.
-   * </p>
    *
    * @param name Name of LevelTransmitter
    * @param separator a {@link neqsim.process.equipment.separator.Separator} object
@@ -44,9 +38,7 @@ public class LevelTransmitter extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Returns the separator whose liquid level this transmitter measures.
-   * </p>
    *
    * @return the associated {@link neqsim.process.equipment.separator.Separator}, or {@code null} if none was set
    */

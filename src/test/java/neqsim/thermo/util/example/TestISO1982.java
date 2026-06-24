@@ -14,9 +14,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TestISO1982 class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -28,9 +26,7 @@ public class TestISO1982 {
   /** Logger object for class. */
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

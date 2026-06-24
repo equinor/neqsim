@@ -3,9 +3,7 @@ package neqsim.physicalproperties.interfaceproperties.surfacetension;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * FirozabadiRamleyInterfaceTension class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -15,17 +13,13 @@ public class FirozabadiRamleyInterfaceTension extends SurfaceTension {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for FirozabadiRamleyInterfaceTension.
-   * </p>
    */
   public FirozabadiRamleyInterfaceTension() {
   }
 
   /**
-   * <p>
    * Constructor for FirozabadiRamleyInterfaceTension.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

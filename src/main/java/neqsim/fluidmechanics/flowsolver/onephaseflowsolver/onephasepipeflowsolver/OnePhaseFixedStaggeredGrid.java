@@ -12,9 +12,7 @@ import Jama.Matrix;
 import neqsim.mathlib.generalmath.TDMAsolve;
 
 /**
- * <p>
  * OnePhaseFixedStaggeredGrid class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -40,17 +38,13 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   protected double[] oldEnergy;
 
   /**
-   * <p>
    * Constructor for OnePhaseFixedStaggeredGrid.
-   * </p>
    */
   public OnePhaseFixedStaggeredGrid() {
   }
 
   /**
-   * <p>
    * Constructor for OnePhaseFixedStaggeredGrid.
-   * </p>
    *
    * @param pipe a {@link neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.PipeFlowSystem} object
    * @param length a double
@@ -88,9 +82,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   }
 
   /**
-   * <p>
    * initProfiles.
-   * </p>
    */
   public void initProfiles() {
     double err = 0;
@@ -163,9 +155,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   }
 
   /**
-   * <p>
    * initMatrix.
-   * </p>
    */
   public void initMatrix() {
     for (int i = 0; i < numberOfNodes; i++) {
@@ -186,9 +176,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   }
 
   /**
-   * <p>
    * initPressure.
-   * </p>
    *
    * @param iteration a int
    */
@@ -208,9 +196,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   }
 
   /**
-   * <p>
    * initVelocity.
-   * </p>
    *
    * @param iteration a int
    */
@@ -242,9 +228,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   }
 
   /**
-   * <p>
    * initTemperature.
-   * </p>
    *
    * @param iteration a int
    */
@@ -266,9 +250,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   }
 
   /**
-   * <p>
    * initComposition.
-   * </p>
    *
    * @param iter a int
    */
@@ -288,9 +270,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   }
 
   /**
-   * <p>
    * setMassConservationMatrixTDMA.
-   * </p>
    */
   public void setMassConservationMatrixTDMA() {
     if (!dynamic) {
@@ -365,9 +345,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   }
 
   /**
-   * <p>
    * setImpulsMatrixTDMA.
-   * </p>
    */
   public void setImpulsMatrixTDMA() {
     double SU = 0.0;
@@ -471,9 +449,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   }
 
   /**
-   * <p>
    * setEnergyMatrixTDMA.
-   * </p>
    */
   public void setEnergyMatrixTDMA() {
     a[0] = 0;
@@ -568,9 +544,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   }
 
   /**
-   * <p>
    * setComponentConservationMatrix.
-   * </p>
    *
    * @param componentNumber a int
    */
@@ -951,9 +925,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   }
 
   /**
-   * <p>
    * initFinalResults.
-   * </p>
    */
   public void initFinalResults() {
     for (int i = 0; i < numberOfNodes; i++) {

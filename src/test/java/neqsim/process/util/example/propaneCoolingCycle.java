@@ -11,9 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * propaneCoolingCycle class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -23,9 +21,7 @@ public class propaneCoolingCycle {
   private static final Logger logger = LogManager.getLogger(propaneCoolingCycle.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

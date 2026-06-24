@@ -22,9 +22,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.NamedBaseClass;
 
 /**
- * <p>
  * Abstract Standard class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -184,9 +182,7 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
   }
 
   /**
-   * <p>
    * Getter for the field <code>referenceState</code>.
-   * </p>
    *
    * @return the referenceState
    */
@@ -195,9 +191,7 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
   }
 
   /**
-   * <p>
    * Setter for the field <code>referenceState</code>.
-   * </p>
    *
    * @param referenceState the referenceState to set
    */

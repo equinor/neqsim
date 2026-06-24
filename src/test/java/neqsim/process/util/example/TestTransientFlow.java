@@ -18,9 +18,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * TestTransientFlow class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -30,9 +28,7 @@ public class TestTransientFlow {
   private static final Logger logger = LogManager.getLogger(TestTransientFlow.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

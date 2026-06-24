@@ -12,9 +12,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.util.exception.InvalidInputException;
 
 /**
- * <p>
  * RateUnit class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -30,9 +28,7 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
   double boilp = 0.0;
 
   /**
-   * <p>
    * Constructor for RateUnit.
-   * </p>
    *
    * @param value a double
    * @param name a {@link java.lang.String} object
@@ -48,9 +44,7 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
   }
 
   /**
-   * <p>
    * getConversionFactor.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a double

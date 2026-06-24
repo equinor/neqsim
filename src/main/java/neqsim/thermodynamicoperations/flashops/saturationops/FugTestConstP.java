@@ -10,9 +10,7 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * FugTestConstP class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -34,9 +32,7 @@ public class FugTestConstP extends ConstantDutyTemperatureFlash implements Therm
   public boolean compNameGiven = false;
 
   /**
-   * <p>
    * Constructor for FugTestConstP.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -47,9 +43,7 @@ public class FugTestConstP extends ConstantDutyTemperatureFlash implements Therm
   }
 
   /**
-   * <p>
    * Constructor for FugTestConstP.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param pres a double
@@ -62,9 +56,7 @@ public class FugTestConstP extends ConstantDutyTemperatureFlash implements Therm
 
   // initializing reference system for pure vapor fugacity
   /**
-   * <p>
    * initTestSystem2.
-   * </p>
    *
    * @param K a int
    */
@@ -161,9 +153,7 @@ public class FugTestConstP extends ConstantDutyTemperatureFlash implements Therm
   } // end run
 
   /**
-   * <p>
    * printToFile.
-   * </p>
    *
    * @param FileName a {@link java.lang.String} object
    */

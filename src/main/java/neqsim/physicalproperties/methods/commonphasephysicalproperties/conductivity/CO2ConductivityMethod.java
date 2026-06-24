@@ -14,9 +14,7 @@ public class CO2ConductivityMethod extends Conductivity {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for CO2ConductivityMethod.
-   * </p>
    *
    * @param phase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

@@ -10,9 +10,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.exception.IsNaNException;
 
 /**
- * <p>
  * Standard_ASTM_D6377 class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -300,9 +298,7 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   }
 
   /**
-   * <p>
    * Constructor for Standard_ASTM_D6377.
-   * </p>
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -419,9 +415,7 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   }
 
   /**
-   * <p>
    * setReferenceTemperature.
-   * </p>
    *
    * @param refTemp a double
    * @param refTempUnit a {@link java.lang.String} object
@@ -432,9 +426,7 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

@@ -13,9 +13,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * KrishnaStandartFilmModel class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -33,9 +31,7 @@ public class KrishnaStandartFilmModel extends
   Matrix betaMatrix;
 
   /**
-   * <p>
    * Constructor for KrishnaStandartFilmModel.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -52,9 +48,7 @@ public class KrishnaStandartFilmModel extends
   }
 
   /**
-   * <p>
    * Constructor for KrishnaStandartFilmModel.
-   * </p>
    *
    * @param flowNode a {@link neqsim.fluidmechanics.flownode.FlowNodeInterface} object
    */
@@ -88,9 +82,7 @@ public class KrishnaStandartFilmModel extends
   }
 
   /**
-   * <p>
    * calcBinarySchmidtNumbers.
-   * </p>
    *
    * @param phaseNum a int
    * @return a double
@@ -115,9 +107,7 @@ public class KrishnaStandartFilmModel extends
   }
 
   /**
-   * <p>
    * calcBinaryMassTransferCoefficients.
-   * </p>
    *
    * @param phaseNum a int
    * @return a double
@@ -133,9 +123,7 @@ public class KrishnaStandartFilmModel extends
   }
 
   /**
-   * <p>
    * calcMassTransferCoefficients.
-   * </p>
    *
    * @param phaseNum a int
    * @return a double
@@ -169,9 +157,7 @@ public class KrishnaStandartFilmModel extends
   }
 
   /**
-   * <p>
    * calcPhiMatrix.
-   * </p>
    *
    * @param phaseNum a int
    */
@@ -201,9 +187,7 @@ public class KrishnaStandartFilmModel extends
   }
 
   /**
-   * <p>
    * calcRedPhiMatrix.
-   * </p>
    *
    * @param phase a int
    */
@@ -212,9 +196,7 @@ public class KrishnaStandartFilmModel extends
   }
 
   /**
-   * <p>
    * calcRedCorrectionMatrix.
-   * </p>
    *
    * @param phaseNum a int
    */
@@ -226,9 +208,7 @@ public class KrishnaStandartFilmModel extends
   }
 
   /**
-   * <p>
    * calcCorrectionMatrix.
-   * </p>
    *
    * @param phaseNum a int
    */
@@ -243,9 +223,7 @@ public class KrishnaStandartFilmModel extends
   }
 
   /**
-   * <p>
    * calcTotalMassTransferCoefficientMatrix.
-   * </p>
    *
    * @param phase a int
    */
@@ -276,9 +254,7 @@ public class KrishnaStandartFilmModel extends
   }
 
   /**
-   * <p>
    * initCorrections.
-   * </p>
    *
    * @param phase a int
    */
@@ -355,9 +331,7 @@ public class KrishnaStandartFilmModel extends
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

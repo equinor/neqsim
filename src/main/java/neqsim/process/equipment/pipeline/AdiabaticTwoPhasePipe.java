@@ -7,9 +7,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * AdiabaticTwoPhasePipe class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -61,9 +59,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
   }
 
   /**
-   * <p>
    * Setter for the field <code>pipeSpecification</code>.
-   * </p>
    *
    * @param nominalDiameter a double
    * @param pipeSec a {@link java.lang.String} object
@@ -81,9 +77,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
   }
 
   /**
-   * <p>
    * Set outlet temperature.
-   * </p>
    *
    * @param temperature outlet temperature in Kelvin
    */
@@ -94,9 +88,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
   }
 
   /**
-   * <p>
    * Set outlet pressure.
-   * </p>
    *
    * @param pressure outlet pressure in bara
    */
@@ -107,9 +99,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
   }
 
   /**
-   * <p>
    * calcWallFrictionFactor.
-   * </p>
    *
    * @param reynoldsNumber a double
    * @return a double
@@ -137,9 +127,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
   }
 
   /**
-   * <p>
    * calcPressureOut.
-   * </p>
    *
    * @return a double
    */
@@ -167,9 +155,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
   }
 
   /**
-   * <p>
    * calcFlow.
-   * </p>
    *
    * <p>
    * Calculates the flow rate required to achieve the specified outlet pressure using bisection iteration. This method
@@ -363,9 +349,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
   }
 
   /**
-   * <p>
    * getSuperficialVelocity.
-   * </p>
    *
    * @return a double
    */
@@ -386,9 +370,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
   }
 
   /**
-   * <p>
    * Getter for the field <code>length</code>.
-   * </p>
    *
    * @return the length
    */
@@ -398,9 +380,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
   }
 
   /**
-   * <p>
    * Setter for the field <code>length</code>.
-   * </p>
    *
    * @param length the length to set
    */
@@ -410,9 +390,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
   }
 
   /**
-   * <p>
    * getDiameter.
-   * </p>
    *
    * @return the diameter
    */
@@ -422,9 +400,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
   }
 
   /**
-   * <p>
    * setDiameter.
-   * </p>
    *
    * @param diameter the diameter to set
    */
@@ -434,9 +410,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
   }
 
   /**
-   * <p>
    * Getter for the field <code>pipeWallRoughness</code>.
-   * </p>
    *
    * @return the pipeWallRoughness
    */
@@ -446,9 +420,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
   }
 
   /**
-   * <p>
    * Setter for the field <code>pipeWallRoughness</code>.
-   * </p>
    *
    * @param pipeWallRoughness the pipeWallRoughness to set
    */
@@ -458,9 +430,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
   }
 
   /**
-   * <p>
    * Getter for the field <code>pressureOutLimit</code>.
-   * </p>
    *
    * @return a double
    */
@@ -469,9 +439,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
   }
 
   /**
-   * <p>
    * Setter for the field <code>pressureOutLimit</code>.
-   * </p>
    *
    * @param pressureOutLimit a double
    */
@@ -480,9 +448,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
   }
 
   /**
-   * <p>
    * Setter for the field <code>flowLimit</code>.
-   * </p>
    *
    * @param flowLimit a double
    * @param unit a {@link java.lang.String} object

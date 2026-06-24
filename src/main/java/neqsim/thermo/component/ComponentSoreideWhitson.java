@@ -11,9 +11,7 @@ public class ComponentSoreideWhitson extends ComponentPR {
   private static final long serialVersionUID = 1L;
 
   /**
-   * <p>
    * Constructor for ComponentSoreideWhitson.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param moles a double

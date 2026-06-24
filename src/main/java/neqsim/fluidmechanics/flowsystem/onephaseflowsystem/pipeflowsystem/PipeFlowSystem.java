@@ -5,9 +5,7 @@ import neqsim.fluidmechanics.util.fluidmechanicsvisualization.flowsystemvisualiz
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * PipeFlowSystem class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -17,9 +15,7 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for PipeFlowSystem.
-   * </p>
    */
   public PipeFlowSystem() {
   }

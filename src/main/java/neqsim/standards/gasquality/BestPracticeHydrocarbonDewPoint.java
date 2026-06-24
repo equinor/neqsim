@@ -7,9 +7,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * BestPracticeHydrocarbonDewPoint class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -30,9 +28,7 @@ public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
   ThermodynamicOperations thermoOps;
 
   /**
-   * <p>
    * Constructor for BestPracticeHydrocarbonDewPoint.
-   * </p>
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */

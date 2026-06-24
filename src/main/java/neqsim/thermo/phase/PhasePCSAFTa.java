@@ -9,9 +9,7 @@ import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
 /**
- * <p>
  * PhasePCSAFTa class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -39,9 +37,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
   int[][][][] crossAccociationScheme = null;
 
   /**
-   * <p>
    * Constructor for PhasePCSAFTa.
-   * </p>
    */
   public PhasePCSAFTa() {
   }
@@ -189,9 +185,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * FCPA.
-   * </p>
    *
    * @return a double
    */
@@ -210,9 +204,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * dFCPAdV.
-   * </p>
    *
    * @return a double
    */
@@ -221,9 +213,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * dFCPAdVdV.
-   * </p>
    *
    * @return a double
    */
@@ -233,9 +223,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * dFCPAdVdVdV.
-   * </p>
    *
    * @return a double
    */
@@ -247,9 +235,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * dFCPAdT.
-   * </p>
    *
    * @return a double
    */
@@ -258,9 +244,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * dFCPAdTdT.
-   * </p>
    *
    * @return a double
    */
@@ -269,9 +253,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * calc_hCPA.
-   * </p>
    *
    * @return a double
    */
@@ -291,9 +273,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * calc_hCPAdT.
-   * </p>
    *
    * @return a double
    */
@@ -319,9 +299,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * calc_hCPAdTdT.
-   * </p>
    *
    * @return a double
    */
@@ -347,9 +325,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * solveX.
-   * </p>
    *
    * @return a boolean
    */
@@ -397,9 +373,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * calc_lngni.
-   * </p>
    *
    * @param comp a int
    * @return a double

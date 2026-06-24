@@ -14,9 +14,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * pLoadingCurve2 class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -62,9 +60,7 @@ public class PloadingCurve2 extends BaseOperation {
   int speceq = 0;
 
   /**
-   * <p>
    * Constructor for pLoadingCurve2.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

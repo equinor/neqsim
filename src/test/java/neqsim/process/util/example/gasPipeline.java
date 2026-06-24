@@ -7,9 +7,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * gasPipeline class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id

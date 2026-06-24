@@ -22,9 +22,7 @@ public class PhaseBNS extends PhasePrEos {
   private final double[] vshift;
 
   /**
-   * <p>
    * Constructor for PhaseBNS.
-   * </p>
    *
    * @param tcs an array of double objects
    * @param pcs an array of double objects
@@ -50,9 +48,7 @@ public class PhaseBNS extends PhasePrEos {
   }
 
   /**
-   * <p>
    * setBnsBips.
-   * </p>
    *
    * @param temperature a double
    */

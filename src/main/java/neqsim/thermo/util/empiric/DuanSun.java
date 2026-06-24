@@ -9,9 +9,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * DuanSun class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -24,17 +22,13 @@ public class DuanSun {
   double[] d = new double[] { 0.1, 0.2, 0.3, 0.4, 0.5 };
 
   /**
-   * <p>
    * Constructor for DuanSun.
-   * </p>
    */
   public DuanSun() {
   }
 
   /**
-   * <p>
    * bublePointPressure.
-   * </p>
    *
    * @param temperature a double
    * @param x_CO2 a double
@@ -375,9 +369,7 @@ public class DuanSun {
   }
 
   /**
-   * <p>
    * calcCO2solubility.
-   * </p>
    *
    * @param temperature a double
    * @param pressure a double
@@ -628,9 +620,7 @@ public class DuanSun {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

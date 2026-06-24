@@ -9,9 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * PumpTest class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id

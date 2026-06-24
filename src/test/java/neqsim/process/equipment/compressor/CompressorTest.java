@@ -36,9 +36,7 @@ class CompressorTest extends neqsim.NeqSimTest {
   String unitName = "Compressor1";
 
   /**
-   * <p>
    * setUp.
-   * </p>
    *
    * @throws java.lang.Exception if any.
    */
@@ -88,9 +86,7 @@ class CompressorTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testCompressorSchultzMethod.
-   * </p>
    */
   @Test
   public void testCompressorSchultzMethod() {
@@ -107,9 +103,7 @@ class CompressorTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testCompressorRigorousMethod.
-   * </p>
    */
   @Test
   public void testCompressorRigorousMethod() {
@@ -125,9 +119,7 @@ class CompressorTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testIsentropicCalcMethod.
-   * </p>
    */
   @Test
   public void testIsentropicCalcMethod() {
@@ -140,9 +132,7 @@ class CompressorTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testCompressorWithSrk.
-   * </p>
    */
   @Test
   public void testCompressorWithSrk() {
@@ -168,9 +158,7 @@ class CompressorTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testCompressorWithGERG2008.
-   * </p>
    */
   @Test
   public void testCompressorWithGERG2008() {
@@ -198,9 +186,7 @@ class CompressorTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testCompressorWithGERG2008-2.
-   * </p>
    */
   @Test
   public void testCompressorWithGERG2008_2() {
@@ -227,9 +213,7 @@ class CompressorTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * test Multi Phase Compression.
-   * </p>
    */
   @Test
   public void testMultiPhaseCompression() {
@@ -259,9 +243,7 @@ class CompressorTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * test Multi Phase Compression.
-   * </p>
    */
   @Test
   public void testPowerEffSpec() {
@@ -299,9 +281,7 @@ class CompressorTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * test run with energy stream input.
-   * </p>
    */
   @Test
   public void testRunWithEnergyStreamInput() {
@@ -348,9 +328,7 @@ class CompressorTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testCompressorWithLeachman.
-   * </p>
    */
   @Test
   public void testCompressorWithLeachman() {
@@ -382,9 +360,7 @@ class CompressorTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testCompressorWithLeachman.
-   * </p>
    */
   @Test
   public void testCompressorWithLeachman_2() {
@@ -412,9 +388,7 @@ class CompressorTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testCompressorWithVega.
-   * </p>
    */
   @Test
   public void testCompressorWithVega() {
@@ -446,9 +420,7 @@ class CompressorTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testCompressorWithVega_2.
-   * </p>
    */
   @Test
   public void testCompressorWithVega_2() {

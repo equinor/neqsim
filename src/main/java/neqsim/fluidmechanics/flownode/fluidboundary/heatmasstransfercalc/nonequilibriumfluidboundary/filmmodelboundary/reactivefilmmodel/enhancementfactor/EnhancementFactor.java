@@ -10,9 +10,7 @@ import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBo
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysystem.FluidBoundarySystemInterface;
 
 /**
- * <p>
  * EnhancementFactor class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -24,17 +22,13 @@ public class EnhancementFactor implements EnhancementFactorInterface {
   protected FluidBoundarySystemInterface nonReactiveInterface, reactiveInterface;
 
   /**
-   * <p>
    * Constructor for EnhancementFactor.
-   * </p>
    */
   public EnhancementFactor() {
   }
 
   /**
-   * <p>
    * Constructor for EnhancementFactor.
-   * </p>
    *
    * @param fluidBoundary a
    * {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface} object
@@ -47,9 +41,7 @@ public class EnhancementFactor implements EnhancementFactorInterface {
   }
 
   /**
-   * <p>
    * calcEnhancementVec.
-   * </p>
    *
    * @param phase a int
    * @param enhancementType a int
@@ -103,9 +95,7 @@ public class EnhancementFactor implements EnhancementFactorInterface {
   }
 
   /**
-   * <p>
    * setOnesVec.
-   * </p>
    *
    * @param phaseNum a int
    */

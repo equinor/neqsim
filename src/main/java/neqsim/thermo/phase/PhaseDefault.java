@@ -5,9 +5,7 @@ import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
 /**
- * <p>
  * PhaseDefault class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -19,17 +17,13 @@ public class PhaseDefault extends Phase {
   protected ComponentInterface defComponent = null;
 
   /**
-   * <p>
    * Constructor for PhaseDefault.
-   * </p>
    */
   public PhaseDefault() {
   }
 
   /**
-   * <p>
    * Constructor for PhaseDefault.
-   * </p>
    *
    * @param comp a {@link neqsim.thermo.component.ComponentInterface} object
    */
@@ -38,9 +32,7 @@ public class PhaseDefault extends Phase {
   }
 
   /**
-   * <p>
    * setComponentType.
-   * </p>
    *
    * @param comp a {@link neqsim.thermo.component.ComponentInterface} object
    */

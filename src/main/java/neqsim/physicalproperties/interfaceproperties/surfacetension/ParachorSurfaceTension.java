@@ -3,9 +3,7 @@ package neqsim.physicalproperties.interfaceproperties.surfacetension;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * ParachorSurfaceTension class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -15,17 +13,13 @@ public class ParachorSurfaceTension extends SurfaceTension {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for ParachorSurfaceTension.
-   * </p>
    */
   public ParachorSurfaceTension() {
   }
 
   /**
-   * <p>
    * Constructor for ParachorSurfaceTension.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

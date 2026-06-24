@@ -9,9 +9,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 // https://nvlpubs.nist.gov/nistpubs/ir/2023/NIST.IR.8474.pdf
 
 /**
- * <p>
  * Vega class.
- * </p>
  *
  * @author victorigi99
  */
@@ -41,9 +39,7 @@ public class Vega {
   double epsilon = 1e-15;
 
   /**
-   * <p>
    * DensityVega.
-   * </p>
    *
    * @param iFlag a int
    * @param T a double
@@ -219,9 +215,7 @@ public class Vega {
   }
 
   /**
-   * <p>
    * PressureVega.
-   * </p>
    *
    * @param T a double
    * @param D a double
@@ -421,9 +415,7 @@ public class Vega {
   }
 
   /**
-   * <p>
    * propertiesVega.
-   * </p>
    *
    * @param T a double
    * @param D a double
@@ -553,9 +545,7 @@ public class Vega {
 
   // The following routine must be called once before any other routine.
   /**
-   * <p>
    * SetupVega.
-   * </p>
    */
   public void SetupVega() {
     // Initialize all the constants and parameters in the GERG-2008 model.
@@ -588,9 +578,7 @@ public class Vega {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String}objects
    */

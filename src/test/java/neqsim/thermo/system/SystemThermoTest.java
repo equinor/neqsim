@@ -16,9 +16,7 @@ class SystemThermoTest extends neqsim.NeqSimTest {
   static neqsim.thermo.system.SystemInterface testSystem = null;
 
   /**
-   * <p>
    * setUp.
-   * </p>
    */
   @BeforeAll
   public static void setUp() {
@@ -33,9 +31,7 @@ class SystemThermoTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * setUp.
-   * </p>
    */
   @Test
   public void testCp() {
@@ -50,9 +46,7 @@ class SystemThermoTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * test setPressure
-   * </p>
    */
   @Test
   @DisplayName("test setPressure")
@@ -63,9 +57,7 @@ class SystemThermoTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testAddFluids_Flash
-   * </p>
    */
   @Test
   @DisplayName("test addFluids input order")
@@ -87,9 +79,7 @@ class SystemThermoTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testAddFluids
-   * </p>
    */
   @Test
   @DisplayName("test addFluids with pseudo component")
@@ -122,9 +112,7 @@ class SystemThermoTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testSetPressure
-   * </p>
    */
   @Test
   public void testSetPressure() {

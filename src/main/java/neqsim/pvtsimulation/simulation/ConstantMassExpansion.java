@@ -14,9 +14,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * ConstantMassExpansion class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -44,9 +42,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   double[] temperatures = null;
 
   /**
-   * <p>
    * Constructor for ConstantMassExpansion.
-   * </p>
    *
    * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -55,9 +51,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * calcSaturationConditions.
-   * </p>
    */
   public void calcSaturationConditions() {
     getThermoSystem().setPressure(1.0);
@@ -104,9 +98,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * runCalc.
-   * </p>
    */
   public void runCalc() {
     saturationConditionFound = false;
@@ -191,9 +183,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * runTuning.
-   * </p>
    */
   public void runTuning() {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
@@ -237,9 +227,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -292,9 +280,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>relativeVolume</code>.
-   * </p>
    *
    * @return the relativeVolume
    */
@@ -303,9 +289,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>liquidRelativeVolume</code>.
-   * </p>
    *
    * @return the liquidRelativeVolume
    */
@@ -314,9 +298,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * getZgas.
-   * </p>
    *
    * @return the Zgas
    */
@@ -325,9 +307,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * getYfactor.
-   * </p>
    *
    * @return the Yfactor
    */
@@ -336,9 +316,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>density</code>.
-   * </p>
    *
    * @return the density
    */
@@ -347,9 +325,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>viscosity</code>.
-   * </p>
    *
    * @return the gas viscosity
    */
@@ -358,9 +334,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * getBg.
-   * </p>
    *
    * @return the gas volume formation factor
    */
@@ -369,9 +343,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>isoThermalCompressibility</code>.
-   * </p>
    *
    * @return the isoThermalCompressibility
    */
@@ -380,9 +352,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>saturationIsoThermalCompressibility</code>.
-   * </p>
    *
    * @return the saturationIsoThermalCompressibility
    */
@@ -391,9 +361,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * setTemperaturesAndPressures.
-   * </p>
    *
    * @param temperature an array of type double
    * @param pressure an array of type double

@@ -6,9 +6,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentPCSAFT;
 
 /**
- * <p>
  * PhasePCSAFTRahmat class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -40,9 +38,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   protected double F1dispVolTermdVdVdV = 1.0;
 
   /**
-   * <p>
    * Constructor for PhasePCSAFTRahmat.
-   * </p>
    */
   public PhasePCSAFTRahmat() {
   }
@@ -286,9 +282,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   }
 
   /**
-   * <p>
    * calcF2dispZHCdNdNdN.
-   * </p>
    *
    * @return a double
    */
@@ -396,9 +390,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
 
   // added by rahmat
   /**
-   * <p>
    * calcdF2dispZHCdT.
-   * </p>
    *
    * @return a double
    */
@@ -449,9 +441,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
 
   // added by rahmat
   /**
-   * <p>
    * calcdF1dispSumTermdT.
-   * </p>
    *
    * @return a double
    */
@@ -472,9 +462,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   }
 
   /**
-   * <p>
    * calcdF2dispSumTermdT.
-   * </p>
    *
    * @return a double
    */
@@ -532,9 +520,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
 
   // added by Rahmat
   /**
-   * <p>
    * calcF1dispI1dNdNdN.
-   * </p>
    *
    * @return a double
    */
@@ -577,9 +563,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   }
 
   /**
-   * <p>
    * calcF2dispI2dNdNdN.
-   * </p>
    *
    * @return a double
    */
@@ -613,9 +597,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
 
   // added by rahmat
   /**
-   * <p>
    * calcdF1dispI1dT.
-   * </p>
    *
    * @return a double
    */
@@ -629,9 +611,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   }
 
   /**
-   * <p>
    * calcdF2dispI2dT.
-   * </p>
    *
    * @return a double
    */
@@ -740,9 +720,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   }
 
   /**
-   * <p>
    * dF_HC_SAFTdT.
-   * </p>
    *
    * @return a double
    */
@@ -813,9 +791,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
 
   // added by Rahmat
   /**
-   * <p>
    * dF_DISP1_SAFTdVdVdV.
-   * </p>
    *
    * @return a double
    */
@@ -833,9 +809,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
 
   // added by Rahmat
   /**
-   * <p>
    * dF_DISP1_SAFTdT.
-   * </p>
    *
    * @return a double
    */
@@ -847,9 +821,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   }
 
   /**
-   * <p>
    * dF_DISP2_SAFTdT.
-   * </p>
    *
    * @return a double
    */
@@ -903,9 +875,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   }
 
   /**
-   * <p>
    * dF_DISP2_SAFTdVdVdV.
-   * </p>
    *
    * @return a double
    */
@@ -1021,9 +991,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
 
   // added by rahmat
   /**
-   * <p>
    * getdDSAFTdT.
-   * </p>
    *
    * @return a double
    */

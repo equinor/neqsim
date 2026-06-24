@@ -26,9 +26,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * HeatExchanger class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -178,9 +176,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   }
 
   /**
-   * <p>
    * Add inlet stream.
-   * </p>
    *
    * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -192,9 +188,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   }
 
   /**
-   * <p>
    * setFeedStream. Will also set name of outstreams.
-   * </p>
    *
    * @param number a int
    * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -291,9 +285,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   }
 
   /**
-   * <p>
    * Getter for the field <code>inStream</code>.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -309,9 +301,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   }
 
   /**
-   * <p>
    * Get temperature of outstream i.
-   * </p>
    *
    * @param i a int
    * @return a double
@@ -321,9 +311,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   }
 
   /**
-   * <p>
    * Get temperature of instream i.
-   * </p>
    *
    * @param i a int
    * @return a double
@@ -333,9 +321,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   }
 
   /**
-   * <p>
    * Setter for the field <code>outStream</code>.
-   * </p>
    *
    * @param outStream the outStream to set
    * @param streamNumber a int
@@ -346,9 +332,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   }
 
   /**
-   * <p>
    * runSpecifiedStream.
-   * </p>
    *
    * @param id UUID of run
    */
@@ -382,9 +366,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   }
 
   /**
-   * <p>
    * runDeltaT.
-   * </p>
    *
    * @param id UUID of run
    */
@@ -682,9 +664,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   }
 
   /**
-   * <p>
    * getUAvalue.
-   * </p>
    *
    * @return the UAvalue
    */
@@ -693,9 +673,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   }
 
   /**
-   * <p>
    * setUAvalue.
-   * </p>
    *
    * @param UAvalue the UAvalue to set
    */
@@ -704,9 +682,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   }
 
   /**
-   * <p>
    * Getter for the field <code>guessOutTemperature</code>.
-   * </p>
    *
    * @return a double
    */
@@ -715,9 +691,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   }
 
   /**
-   * <p>
    * Setter for the field <code>guessOutTemperature</code>.
-   * </p>
    *
    * @param guessOutTemperature a double
    */
@@ -727,9 +701,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   }
 
   /**
-   * <p>
    * Setter for the field <code>guessOutTemperature</code>.
-   * </p>
    *
    * @param guessOutTemperature a double
    * @param unit a String
@@ -821,18 +793,14 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   }
 
   /**
-   * <p>
    * runConditionAnalysis.
-   * </p>
    */
   public void runConditionAnalysis() {
     runConditionAnalysis(this);
   }
 
   /**
-   * <p>
    * Getter for the field <code>thermalEffectiveness</code>.
-   * </p>
    *
    * @return a double
    */
@@ -841,9 +809,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   }
 
   /**
-   * <p>
    * Setter for the field <code>thermalEffectiveness</code>.
-   * </p>
    *
    * @param thermalEffectiveness a double
    */
@@ -852,9 +818,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   }
 
   /**
-   * <p>
    * Getter for the field <code>flowArrangement</code>.
-   * </p>
    *
    * @return String
    */
@@ -863,9 +827,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   }
 
   /**
-   * <p>
    * Setter for the field <code>flowArrangement</code>.
-   * </p>
    *
    * @param flowArrangement name of flow arrangement
    */
@@ -997,9 +959,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   }
 
   /**
-   * <p>
    * calcThermalEffectivenes.
-   * </p>
    *
    * @param NTU a double
    * @param Cr a double
@@ -1025,9 +985,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   }
 
   /**
-   * <p>
    * Getter for the field <code>hotColdDutyBalance</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1036,9 +994,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   }
 
   /**
-   * <p>
    * Setter for the field <code>hotColdDutyBalance</code>.
-   * </p>
    *
    * @param hotColdDutyBalance a double
    */
@@ -1176,9 +1132,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   }
 
   /**
-   * <p>
    * Setter for the field <code>useDeltaT</code>.
-   * </p>
    *
    * @param useDeltaT a boolean
    */
@@ -1187,9 +1141,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   }
 
   /**
-   * <p>
    * Getter for the field <code>deltaT</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1198,9 +1150,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   }
 
   /**
-   * <p>
    * Setter for the field <code>deltaT</code>.
-   * </p>
    *
    * @param deltaT a double
    */

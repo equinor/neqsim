@@ -15,18 +15,14 @@ public class SystemGEWilson extends SystemEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for SystemGEWilson.
-   * </p>
    */
   public SystemGEWilson() {
     this(298.15, 1.0, false);
   }
 
   /**
-   * <p>
    * Constructor for SystemGEWilson.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -36,9 +32,7 @@ public class SystemGEWilson extends SystemEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemGEWilson.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)

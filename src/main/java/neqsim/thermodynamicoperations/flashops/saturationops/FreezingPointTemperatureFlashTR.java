@@ -11,9 +11,7 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * freezingPointTemperatureFlashTR class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -34,9 +32,7 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
   public boolean CCequation = true;
 
   /**
-   * <p>
    * Constructor for freezingPointTemperatureFlashTR.
-   * </p>
    *
    * @param Freeze a boolean
    */
@@ -45,9 +41,7 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
   }
 
   /**
-   * <p>
    * Constructor for freezingPointTemperatureFlashTR.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -56,9 +50,7 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
   }
 
   /**
-   * <p>
    * Constructor for freezingPointTemperatureFlashTR.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Freeze a boolean
@@ -250,9 +242,7 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
   }
 
   /**
-   * <p>
    * getNiterations.
-   * </p>
    *
    * @return a int
    */

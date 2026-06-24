@@ -11,9 +11,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * StaticNeqMixer class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -23,9 +21,7 @@ public class StaticNeqMixer extends StaticMixer {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for StaticNeqMixer.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */

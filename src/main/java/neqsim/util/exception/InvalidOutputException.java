@@ -1,9 +1,7 @@
 package neqsim.util.exception;
 
 /**
- * <p>
  * InvalidOutputException class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id

@@ -28,9 +28,7 @@ public class BlackOilConverter {
   }
 
   /**
-   * <p>
    * convert.
-   * </p>
    *
    * @param eosFluid a {@link neqsim.thermo.system.SystemInterface} object
    * @param Tref a double

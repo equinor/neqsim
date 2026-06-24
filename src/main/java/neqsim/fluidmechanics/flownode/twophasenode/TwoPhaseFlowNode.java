@@ -9,9 +9,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.nucleation.ClassicalNucleationTheory;
 
 /**
- * <p>
  * Abstract TwoPhaseFlowNode class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -35,17 +33,13 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   // public double[] molarMassTransfer;
 
   /**
-   * <p>
    * Constructor for TwoPhaseFlowNode.
-   * </p>
    */
   public TwoPhaseFlowNode() {
   }
 
   /**
-   * <p>
    * Constructor for TwoPhaseFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
@@ -84,9 +78,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * initVelocity.
-   * </p>
    *
    * @return a double
    */
@@ -262,9 +254,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * calcHydraulicDiameter.
-   * </p>
    *
    * @return a double
    */
@@ -279,9 +269,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * calcReynoldNumber.
-   * </p>
    *
    * @return a double
    */
@@ -298,9 +286,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * calcWallFrictionFactor.
-   * </p>
    *
    * @return a double
    */
@@ -363,9 +349,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * calcContactLength.
-   * </p>
    *
    * @return a double
    */
@@ -402,9 +386,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * calcGasLiquidContactArea.
-   * </p>
    *
    * @return a double
    */
@@ -414,9 +396,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * Calculates the interfacial area per unit volume (a) based on the selected model.
-   * </p>
    *
    * <p>
    * The interfacial area per unit volume is critical for mass transfer calculations: N_i = k_L * a * ΔC_i
@@ -442,9 +422,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * Calculates the interfacial area per unit volume using geometric model.
-   * </p>
    *
    * <p>
    * For stratified flow: a = S_i / A (interface chord length / cross-sectional area)
@@ -461,9 +439,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * Calculates the interfacial area per unit volume using empirical correlations.
-   * </p>
    *
    * <p>
    * This method should be overridden by specific flow pattern classes.
@@ -477,9 +453,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * Gets the current interfacial area per unit volume.
-   * </p>
    *
    * @return the interfacial area per unit volume in 1/m
    */
@@ -488,9 +462,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * Sets the interfacial area model.
-   * </p>
    *
    * @param model the interfacial area model to use
    */
@@ -499,9 +471,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * Gets the current interfacial area model.
-   * </p>
    *
    * @return the current interfacial area model
    */
@@ -510,9 +480,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * Sets the user-defined interfacial area per unit volume for USER_DEFINED model.
-   * </p>
    *
    * @param areaPerVolume the interfacial area per unit volume in 1/m
    */
@@ -535,9 +503,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   public static final double NUCLEATION_PHASE_FRACTION = 1.0e-6;
 
   /**
-   * <p>
    * Checks if the system is effectively single-phase gas (no liquid present).
-   * </p>
    *
    * @return true if gas fraction is greater than (1 - MIN_PHASE_FRACTION)
    */
@@ -546,9 +512,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * Checks if the system is effectively single-phase liquid (no gas present).
-   * </p>
    *
    * @return true if liquid fraction is greater than (1 - MIN_PHASE_FRACTION)
    */
@@ -557,10 +521,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * Checks if the conditions are favorable for condensation (droplet formation from gas phase). This occurs when the
    * gas is supersaturated - temperature is below dew point.
-   * </p>
    *
    * @return true if condensation initiation is expected
    */
@@ -584,10 +546,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * Checks if the conditions are favorable for bubble nucleation (gas formation from liquid phase). This occurs when
    * the liquid is superheated - temperature is above bubble point.
-   * </p>
    *
    * @return true if bubble nucleation is expected
    */
@@ -611,10 +571,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * Initiates condensation by setting up the liquid phase with nucleation phase fraction. This is used when
    * transitioning from single-phase gas to two-phase flow.
-   * </p>
    *
    * <p>
    * The initial droplet size is calculated based on homogeneous nucleation theory or set to a default value.
@@ -646,10 +604,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * Initiates bubble nucleation by setting up the gas phase with nucleation phase fraction. This is used when
    * transitioning from single-phase liquid to two-phase flow.
-   * </p>
    */
   public void initiateBubbleNucleation() {
     // Set minimum gas fraction to enable two-phase calculations
@@ -677,10 +633,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * Enforces minimum phase fraction limits to avoid numerical singularities in two-phase calculations. This is called
    * during initialization to ensure stable calculations.
-   * </p>
    */
   public void enforceMinimumPhaseFractions() {
     // Enforce minimum gas phase fraction
@@ -696,10 +650,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * Checks phase equilibrium and initiates phase transitions if necessary. This method should be called at each node to
    * handle condensation or bubble nucleation.
-   * </p>
    *
    * @return true if a phase transition was initiated
    */
@@ -716,9 +668,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * Gets the initial droplet/bubble diameter for nucleation using Classical Nucleation Theory (CNT).
-   * </p>
    *
    * <p>
    * For droplet formation (condensation), uses heterogeneous CNT with a default pipe wall contact angle of 60 degrees.
@@ -999,9 +949,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * <p>
    * update.
-   * </p>
    *
    * @param deltaTime a double
    */

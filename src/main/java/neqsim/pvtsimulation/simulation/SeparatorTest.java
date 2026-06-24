@@ -9,9 +9,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * SeparatorTest class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -28,9 +26,7 @@ public class SeparatorTest extends BasePVTsimulation {
   double oilVolumeStdCond = 0;
 
   /**
-   * <p>
    * Constructor for SeparatorTest.
-   * </p>
    *
    * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -39,9 +35,7 @@ public class SeparatorTest extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * setSeparatorConditions.
-   * </p>
    *
    * @param temperature an array of type double
    * @param pressure an array of type double
@@ -52,9 +46,7 @@ public class SeparatorTest extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * runCalc.
-   * </p>
    */
   public void runCalc() {
     Sm3gas = new double[pressure.length];
@@ -94,9 +86,7 @@ public class SeparatorTest extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -139,9 +129,7 @@ public class SeparatorTest extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * getGOR.
-   * </p>
    *
    * @return the GOR
    */
@@ -150,9 +138,7 @@ public class SeparatorTest extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * getBofactor.
-   * </p>
    *
    * @return the Bofactor
    */

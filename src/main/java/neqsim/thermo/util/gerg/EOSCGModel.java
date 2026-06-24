@@ -6,9 +6,7 @@ import org.netlib.util.intW;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * GERG2008 class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -73,9 +71,7 @@ public class EOSCGModel {
   double dPdDsave;
 
   /**
-   * <p>
    * MolarMassGERG.
-   * </p>
    *
    * @param x an array of type double
    * @param Mm a {@link org.netlib.util.doubleW} object
@@ -103,9 +99,7 @@ public class EOSCGModel {
   }
 
   /**
-   * <p>
    * PressureGERG.
-   * </p>
    *
    * @param T a double
    * @param D a double
@@ -150,9 +144,7 @@ public class EOSCGModel {
   }
 
   /**
-   * <p>
    * DensityGERG.
-   * </p>
    *
    * @param iFlag a int
    * @param T a double
@@ -331,9 +323,7 @@ public class EOSCGModel {
   }
 
   /**
-   * <p>
    * PropertiesGERG.
-   * </p>
    *
    * @param T a double
    * @param D a double
@@ -877,9 +867,7 @@ public class EOSCGModel {
 
   // The following routine must be called once before any other routine.
   /**
-   * <p>
    * SetupGERG.
-   * </p>
    */
   public void SetupEOSCG() {
     // Initialize all the constants and parameters in the GERG-2008 model.
@@ -4191,9 +4179,7 @@ public class EOSCGModel {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

@@ -14,9 +14,7 @@ import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * Conductivity class for solids.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -30,9 +28,7 @@ public class Conductivity extends SolidPhysicalPropertyMethod implements Conduct
   double conductivity = 0;
 
   /**
-   * <p>
    * Constructor for Conductivity.
-   * </p>
    *
    * @param solidPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

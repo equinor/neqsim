@@ -20,9 +20,7 @@ public abstract class Conductivity extends CommonPhysicalPropertyMethod implemen
   double conductivity = 0;
 
   /**
-   * <p>
    * Constructor for Conductivity.
-   * </p>
    *
    * @param phase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

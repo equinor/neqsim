@@ -5,9 +5,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseUMRCPAvolcor;
 
 /**
- * <p>
  * ComponentUMRCPAvolcor class.
- * </p>
  *
  * <p>
  * Volume-translated UMR-CPA component. It combines the UMR-CPA physical and association term (inherited from
@@ -45,9 +43,7 @@ public class ComponentUMRCPAvolcor extends ComponentUMRCPA {
   private double CiT = 0;
 
   /**
-   * <p>
    * Constructor for ComponentUMRCPAvolcor.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -61,9 +57,7 @@ public class ComponentUMRCPAvolcor extends ComponentUMRCPA {
   }
 
   /**
-   * <p>
    * Constructor for ComponentUMRCPAvolcor.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]
@@ -79,9 +73,7 @@ public class ComponentUMRCPAvolcor extends ComponentUMRCPA {
   }
 
   /**
-   * <p>
    * Calculate the per-component volume translation parameter c.
-   * </p>
    *
    * @return the volume translation parameter c [m^3/mol]
    */
@@ -90,9 +82,7 @@ public class ComponentUMRCPAvolcor extends ComponentUMRCPA {
   }
 
   /**
-   * <p>
    * Calculate the temperature derivative of the volume translation parameter.
-   * </p>
    *
    * @return dc/dT
    */
@@ -109,9 +99,7 @@ public class ComponentUMRCPAvolcor extends ComponentUMRCPA {
   }
 
   /**
-   * <p>
    * Getter for the volume translation parameter c.
-   * </p>
    *
    * @return c [m^3/mol]
    */
@@ -120,9 +108,7 @@ public class ComponentUMRCPAvolcor extends ComponentUMRCPA {
   }
 
   /**
-   * <p>
    * Getter for the temperature derivative of the volume translation parameter.
-   * </p>
    *
    * @return dc/dT
    */
@@ -147,9 +133,7 @@ public class ComponentUMRCPAvolcor extends ComponentUMRCPA {
   }
 
   /**
-   * <p>
    * Getter for the first mole-number derivative of C.
-   * </p>
    *
    * @return C_i
    */
@@ -158,9 +142,7 @@ public class ComponentUMRCPAvolcor extends ComponentUMRCPA {
   }
 
   /**
-   * <p>
    * Getter for the cross temperature/mole-number derivative of C.
-   * </p>
    *
    * @return C_iT
    */
@@ -169,9 +151,7 @@ public class ComponentUMRCPAvolcor extends ComponentUMRCPA {
   }
 
   /**
-   * <p>
    * Getter for the second mole-number derivative of C with respect to component j.
-   * </p>
    *
    * @param j component index
    * @return C_ij

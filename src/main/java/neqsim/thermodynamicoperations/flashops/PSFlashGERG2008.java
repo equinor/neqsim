@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * PSFlashGERG2008 class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -25,9 +23,7 @@ public class PSFlashGERG2008 extends QfuncFlash {
   double cP_GERG2008 = 0.0;
 
   /**
-   * <p>
    * Constructor for PSFlashGERG2008.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Sspec a double

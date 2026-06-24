@@ -3,9 +3,7 @@ package neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoeffici
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 
 /**
- * <p>
  * InterphaseStratifiedFlow class for stratified two-phase pipe flow.
- * </p>
  *
  * <p>
  * Implements transport coefficient correlations specific to stratified flow regime, where gas flows above a liquid
@@ -22,17 +20,13 @@ public class InterphaseStratifiedFlow extends InterphaseTwoPhasePipeFlow
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for InterphaseStratifiedFlow.
-   * </p>
    */
   public InterphaseStratifiedFlow() {
   }
 
   /**
-   * <p>
    * Constructor for InterphaseStratifiedFlow.
-   * </p>
    *
    * @param node a {@link neqsim.fluidmechanics.flownode.FlowNodeInterface} object
    */

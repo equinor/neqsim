@@ -3,9 +3,7 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentSrkPeneloux;
 
 /**
- * <p>
  * PhaseSrkPenelouxEos class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -15,9 +13,7 @@ public class PhaseSrkPenelouxEos extends PhaseSrkEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for PhaseSrkPenelouxEos.
-   * </p>
    */
   public PhaseSrkPenelouxEos() {
   }

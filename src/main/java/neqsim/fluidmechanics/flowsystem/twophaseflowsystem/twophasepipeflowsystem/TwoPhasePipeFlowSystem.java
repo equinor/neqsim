@@ -221,17 +221,13 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   private neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.SolverType solverTypeEnum = neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.SolverType.DEFAULT;
 
   /**
-   * <p>
    * Constructor for TwoPhasePipeFlowSystem.
-   * </p>
    */
   public TwoPhasePipeFlowSystem() {
   }
 
   /**
-   * <p>
    * Creates a new builder for configuring a TwoPhasePipeFlowSystem.
-   * </p>
    *
    * <p>
    * Example usage:
@@ -504,9 +500,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Solve steady state using the configured solver type enum.
-   * </p>
    *
    * @param id a {@link java.util.UUID} object
    */
@@ -643,9 +637,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Solve transient using the configured solver type enum.
-   * </p>
    *
    * @param id a {@link java.util.UUID} object
    */
@@ -654,9 +646,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Sets the time step for transient simulations.
-   * </p>
    *
    * @param timeStep the time step in seconds
    */
@@ -665,9 +655,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the time step for transient simulations.
-   * </p>
    *
    * @return the time step in seconds
    */
@@ -676,9 +664,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Sets the total simulation time for transient simulations.
-   * </p>
    *
    * @param simulationTime the total simulation time in seconds
    */
@@ -687,9 +673,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the total simulation time for transient simulations.
-   * </p>
    *
    * @return the total simulation time in seconds
    */
@@ -698,9 +682,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the number of time steps completed.
-   * </p>
    *
    * @return the number of time steps
    */
@@ -709,9 +691,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the current simulation time.
-   * </p>
    *
    * @return the current time in seconds
    */
@@ -720,30 +700,24 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Enables non-equilibrium mass transfer calculation using the Krishna-Standart film model. When enabled, mass
    * transfer fluxes are calculated based on driving forces (chemical potential differences) and mass transfer
    * coefficients.
-   * </p>
    */
   public void enableNonEquilibriumMassTransfer() {
     setEquilibriumMassTransfer(false);
   }
 
   /**
-   * <p>
    * Enables non-equilibrium heat transfer calculation. When enabled, heat transfer between phases is calculated using
    * heat transfer coefficients and temperature differences.
-   * </p>
    */
   public void enableNonEquilibriumHeatTransfer() {
     setEquilibriumHeatTransfer(false);
   }
 
   /**
-   * <p>
    * Calculates the total mass transfer rate for a component along the pipe.
-   * </p>
    *
    * @param componentIndex the component index
    * @return the total molar mass transfer rate in mol/s
@@ -753,9 +727,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Calculates the total heat transfer rate from the pipe to surroundings.
-   * </p>
    *
    * @return the total heat transfer rate in W
    */
@@ -777,9 +749,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   // ==================== PROFILE OUTPUT METHODS ====================
 
   /**
-   * <p>
    * Gets the temperature profile along the pipe.
-   * </p>
    *
    * @return an array of temperatures in Kelvin at each node
    */
@@ -792,9 +762,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the pressure profile along the pipe.
-   * </p>
    *
    * @return an array of pressures in bar at each node
    */
@@ -807,9 +775,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the position profile along the pipe.
-   * </p>
    *
    * @return an array of positions in meters from the inlet
    */
@@ -824,9 +790,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the void fraction (gas volume fraction) profile along the pipe.
-   * </p>
    *
    * @return an array of void fractions at each node
    */
@@ -839,9 +803,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the liquid holdup profile along the pipe.
-   * </p>
    *
    * @return an array of liquid holdups at each node
    */
@@ -854,9 +816,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the velocity profile for a specific phase along the pipe.
-   * </p>
    *
    * @param phaseIndex 0 for gas phase, 1 for liquid phase
    * @return an array of velocities in m/s at each node
@@ -870,9 +830,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the superficial velocity profile for a specific phase along the pipe.
-   * </p>
    *
    * @param phaseIndex 0 for gas phase, 1 for liquid phase
    * @return an array of superficial velocities in m/s at each node
@@ -886,9 +844,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the gas phase composition profile for all components.
-   * </p>
    *
    * @return a 2D array [componentIndex][nodeIndex] of mole fractions
    */
@@ -904,9 +860,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the liquid phase composition profile for all components.
-   * </p>
    *
    * @return a 2D array [componentIndex][nodeIndex] of mole fractions
    */
@@ -922,9 +876,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the interfacial area profile along the pipe.
-   * </p>
    *
    * @return an array of interfacial areas in m² at each node
    */
@@ -937,9 +889,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the density profile for a specific phase along the pipe.
-   * </p>
    *
    * @param phaseIndex 0 for gas phase, 1 for liquid phase
    * @return an array of densities in kg/m³ at each node
@@ -953,9 +903,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the viscosity profile for a specific phase along the pipe.
-   * </p>
    *
    * @param phaseIndex 0 for gas phase, 1 for liquid phase
    * @return an array of dynamic viscosities in Pa·s at each node
@@ -969,9 +917,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the mass transfer profile for a specific component.
-   * </p>
    *
    * @param componentName the name of the component
    * @return an array of cumulative mass transfer rates in mol/s at each node
@@ -982,9 +928,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the mass transfer profile for a specific component.
-   * </p>
    *
    * @param componentIndex the component index
    * @return an array of cumulative mass transfer rates in mol/s at each node
@@ -1002,9 +946,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Calculates the component mass balance error.
-   * </p>
    *
    * @param componentName the name of the component
    * @return the relative mass balance error (0 = perfect balance)
@@ -1032,9 +974,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the Reynolds number profile for a specific phase.
-   * </p>
    *
    * @param phaseIndex 0 for gas phase, 1 for liquid phase
    * @return an array of Reynolds numbers at each node
@@ -1048,9 +988,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the enthalpy profile for a specific phase along the pipe.
-   * </p>
    *
    * @param phaseIndex 0 for gas phase, 1 for liquid phase
    * @return an array of specific enthalpies in J/kg at each node
@@ -1071,9 +1009,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the total mixture enthalpy profile along the pipe.
-   * </p>
    *
    * @return an array of total enthalpies in J at each node
    */
@@ -1086,9 +1022,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the heat capacity (Cp) profile for a specific phase along the pipe.
-   * </p>
    *
    * @param phaseIndex 0 for gas phase, 1 for liquid phase
    * @return an array of heat capacities in J/(mol·K) at each node
@@ -1102,9 +1036,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the flow pattern at each node along the pipe.
-   * </p>
    *
    * @return an array of FlowPattern enums at each node
    */
@@ -1117,9 +1049,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the flow pattern names at each node along the pipe.
-   * </p>
    *
    * @return an array of flow pattern names at each node
    */
@@ -1134,9 +1064,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   // ==================== FLOW PATTERN DETECTION METHODS ====================
 
   /**
-   * <p>
    * Enables automatic flow pattern detection using the specified model.
-   * </p>
    *
    * @param enabled true to enable automatic detection, false to use manual specification
    */
@@ -1148,9 +1076,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Sets the flow pattern prediction model.
-   * </p>
    *
    * @param model the flow pattern model to use
    */
@@ -1162,9 +1088,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the current flow pattern model.
-   * </p>
    *
    * @return the flow pattern model
    */
@@ -1173,9 +1097,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Detects and updates flow patterns at all nodes.
-   * </p>
    */
   public void detectFlowPatterns() {
     if (nodeFlowPatterns == null) {
@@ -1188,9 +1110,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Detects the flow pattern at a specific node.
-   * </p>
    *
    * @param nodeIndex the node index
    * @return the detected flow pattern
@@ -1217,9 +1137,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the flow pattern at a specific node.
-   * </p>
    *
    * @param nodeIndex the node index
    * @return the flow pattern at the node
@@ -1234,9 +1152,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   // ==================== WALL HEAT TRANSFER METHODS ====================
 
   /**
-   * <p>
    * Sets the wall heat transfer model.
-   * </p>
    *
    * @param model the wall heat transfer model
    */
@@ -1245,9 +1161,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the wall heat transfer model.
-   * </p>
    *
    * @return the wall heat transfer model
    */
@@ -1256,9 +1170,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Sets the constant wall temperature for CONSTANT_WALL_TEMPERATURE model.
-   * </p>
    *
    * @param temperature the wall temperature in Kelvin
    */
@@ -1267,9 +1179,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Sets the constant wall temperature with unit.
-   * </p>
    *
    * @param temperature the wall temperature
    * @param unit the temperature unit ("K", "C", or "F")
@@ -1290,9 +1200,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the constant wall temperature.
-   * </p>
    *
    * @return the wall temperature in Kelvin
    */
@@ -1301,9 +1209,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Sets the constant heat flux for CONSTANT_HEAT_FLUX model.
-   * </p>
    *
    * @param heatFlux the heat flux in W/m² (positive = heat into fluid)
    */
@@ -1312,9 +1218,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the constant heat flux.
-   * </p>
    *
    * @return the heat flux in W/m²
    */
@@ -1323,9 +1227,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Sets the overall heat transfer coefficient for CONVECTIVE_BOUNDARY model.
-   * </p>
    *
    * @param coefficient the overall U-value in W/(m²·K)
    */
@@ -1334,9 +1236,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the overall heat transfer coefficient.
-   * </p>
    *
    * @return the U-value in W/(m²·K)
    */
@@ -1345,9 +1245,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Sets the ambient temperature for CONVECTIVE_BOUNDARY model.
-   * </p>
    *
    * @param temperature the ambient temperature in Kelvin
    */
@@ -1356,9 +1254,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Sets the ambient temperature with unit.
-   * </p>
    *
    * @param temperature the ambient temperature
    * @param unit the temperature unit ("K", "C", or "F")
@@ -1379,9 +1275,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the ambient temperature.
-   * </p>
    *
    * @return the ambient temperature in Kelvin
    */
@@ -1390,9 +1284,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Sets the mass transfer mode for non-equilibrium calculations.
-   * </p>
    *
    * @param mode the mass transfer mode to use
    */
@@ -1402,9 +1294,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the current mass transfer mode.
-   * </p>
    *
    * @return the current mass transfer mode
    */
@@ -1413,9 +1303,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Sets the solver type using the SolverType enum.
-   * </p>
    *
    * <p>
    * Available solver types:
@@ -1434,9 +1322,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the current solver type enum.
-   * </p>
    *
    * @return the current solver type
    */
@@ -1445,9 +1331,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Calculates the wall heat flux at a specific node based on the heat transfer model.
-   * </p>
    *
    * @param nodeIndex the node index
    * @return the heat flux in W/m² (positive = heat into fluid)
@@ -1474,9 +1358,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Estimates the internal heat transfer coefficient at a node using Nusselt correlations.
-   * </p>
    *
    * @param nodeIndex the node index
    * @return the heat transfer coefficient in W/(m²·K)
@@ -1517,10 +1399,8 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   // ==================== INTERFACIAL AREA AND MASS TRANSFER ====================
 
   /**
-   * <p>
    * Calculates the specific interfacial area (per unit volume) at a specific node using flow-pattern-specific
    * correlations.
-   * </p>
    *
    * <p>
    * This differs from {@link #getInterfacialAreaProfile()} which returns the absolute interfacial area in m². This
@@ -1558,9 +1438,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the specific interfacial area (per unit volume) profile along the pipe.
-   * </p>
    *
    * <p>
    * This differs from {@link #getInterfacialAreaProfile()} which returns absolute areas in m². This method returns
@@ -1578,9 +1456,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Calculates the liquid-side mass transfer coefficient at a specific node.
-   * </p>
    *
    * @param nodeNumber the node index
    * @param diffusivity liquid diffusivity in m²/s
@@ -1610,9 +1486,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Calculates the gas-side mass transfer coefficient at a specific node.
-   * </p>
    *
    * @param nodeNumber the node index
    * @param diffusivity gas diffusivity in m²/s
@@ -1641,9 +1515,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the liquid-side mass transfer coefficient profile along the pipe.
-   * </p>
    *
    * @param diffusivity liquid diffusivity in m²/s
    * @return an array of k_L values (m/s) at each node
@@ -1657,9 +1529,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the gas-side mass transfer coefficient profile along the pipe.
-   * </p>
    *
    * @param diffusivity gas diffusivity in m²/s
    * @return an array of k_G values (m/s) at each node
@@ -1673,9 +1543,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Calculates the overall volumetric mass transfer coefficient k_L·a at a node.
-   * </p>
    *
    * <p>
    * This is the product of the liquid-side mass transfer coefficient and the interfacial area per unit volume, commonly
@@ -1697,9 +1565,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the volumetric mass transfer coefficient (k_L·a) profile along the pipe.
-   * </p>
    *
    * @param diffusivity liquid diffusivity in m²/s
    * @return an array of k_L·a values (1/s) at each node
@@ -1713,9 +1579,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the wall heat flux profile along the pipe.
-   * </p>
    *
    * @return an array of heat fluxes in W/m² at each node
    */
@@ -1730,9 +1594,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   // ==================== INTERPHASE HEAT TRANSFER ====================
 
   /**
-   * <p>
    * Calculates the liquid-side interphase heat transfer coefficient at a specific node.
-   * </p>
    *
    * @param nodeNumber the node index
    * @return liquid-side heat transfer coefficient h_L (W/(m²·K))
@@ -1765,9 +1627,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Calculates the gas-side interphase heat transfer coefficient at a specific node.
-   * </p>
    *
    * @param nodeNumber the node index
    * @return gas-side heat transfer coefficient h_G (W/(m²·K))
@@ -1799,9 +1659,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Calculates the overall interphase heat transfer coefficient at a specific node.
-   * </p>
    *
    * <p>
    * Uses the resistance in series model: 1/U = 1/h_L + 1/h_G
@@ -1817,9 +1675,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the liquid-side heat transfer coefficient profile along the pipe.
-   * </p>
    *
    * @return an array of h_L values (W/(m²·K)) at each node
    */
@@ -1832,9 +1688,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the gas-side heat transfer coefficient profile along the pipe.
-   * </p>
    *
    * @return an array of h_G values (W/(m²·K)) at each node
    */
@@ -1847,9 +1701,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the overall interphase heat transfer coefficient profile.
-   * </p>
    *
    * @return an array of overall U values (W/(m²·K)) at each node
    */
@@ -1862,9 +1714,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Calculates the interphase heat flux at a specific node.
-   * </p>
    *
    * <p>
    * q = U_interphase * (T_gas - T_liquid) in W/m²
@@ -1886,9 +1736,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the interphase heat flux profile along the pipe.
-   * </p>
    *
    * @return an array of interphase heat fluxes in W/m² at each node
    */
@@ -1901,9 +1749,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Calculates the volumetric interphase heat transfer coefficient (U·a) at a node.
-   * </p>
    *
    * <p>
    * This is the product of the interphase heat transfer coefficient and the interfacial area per unit volume: U·a in
@@ -1920,9 +1766,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the volumetric heat transfer coefficient (U·a) profile along the pipe.
-   * </p>
    *
    * @return an array of U·a values (W/(m³·K)) at each node
    */
@@ -1937,9 +1781,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   // ==================== DIMENSIONLESS NUMBERS ====================
 
   /**
-   * <p>
    * Gets the Prandtl number profile for a specific phase.
-   * </p>
    *
    * <p>
    * Pr = μ·Cp / k = ν / α (momentum diffusivity / thermal diffusivity)
@@ -1964,9 +1806,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the Nusselt number profile for a specific phase.
-   * </p>
    *
    * <p>
    * Nu = h·L / k (convective / conductive heat transfer)
@@ -1989,9 +1829,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the Schmidt number profile for a specific phase.
-   * </p>
    *
    * <p>
    * Sc = μ / (ρ·D) = ν / D (momentum diffusivity / mass diffusivity)
@@ -2014,9 +1852,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the Sherwood number profile for a specific phase.
-   * </p>
    *
    * <p>
    * Sh = k·L / D (convective / diffusive mass transfer)
@@ -2040,9 +1876,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the Stanton number (heat) profile for a specific phase.
-   * </p>
    *
    * <p>
    * St = Nu / (Re·Pr) = h / (ρ·u·Cp)
@@ -2067,9 +1901,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the Lewis number profile for a specific phase.
-   * </p>
    *
    * <p>
    * Le = Sc / Pr = α / D (thermal diffusivity / mass diffusivity)
@@ -2094,9 +1926,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   // ==================== ENERGY BALANCE AND PHASE CHANGE ====================
 
   /**
-   * <p>
    * Calculates the total interphase heat transfer rate along the pipe.
-   * </p>
    *
    * @return total interphase heat transfer rate in W
    */
@@ -2111,9 +1941,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Calculates the overall energy balance for the pipe system.
-   * </p>
    *
    * <p>
    * Returns the relative energy imbalance: (H_in - H_out - Q_wall) / H_in
@@ -2139,9 +1967,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the cumulative energy loss profile along the pipe.
-   * </p>
    *
    * @return an array of cumulative energy losses in J at each node
    */
@@ -2158,9 +1984,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Estimates the condensation rate at a specific node.
-   * </p>
    *
    * <p>
    * Condensation rate = Q_interphase / h_fg (kg/s per unit area)
@@ -2194,9 +2018,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the condensation rate profile along the pipe.
-   * </p>
    *
    * @return an array of condensation rates in kg/(m²·s) at each node
    */
@@ -2209,9 +2031,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Calculates the total condensation rate along the entire pipe.
-   * </p>
    *
    * @return total condensation rate in kg/s
    */
@@ -2226,9 +2046,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the thermal conductivity profile for a specific phase.
-   * </p>
    *
    * @param phaseIndex 0 for gas phase, 1 for liquid phase
    * @return an array of thermal conductivities in W/(m·K) at each node
@@ -2242,9 +2060,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the surface tension profile along the pipe.
-   * </p>
    *
    * @return an array of surface tensions in N/m at each node
    */
@@ -2259,9 +2075,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   // ==================== MASS BALANCE ====================
 
   /**
-   * <p>
    * Calculates the overall mass balance error for the pipe system.
-   * </p>
    *
    * @return relative mass balance error (0 = perfect balance)
    */
@@ -2286,9 +2100,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the mass flow rate profile for a specific phase.
-   * </p>
    *
    * @param phaseIndex 0 for gas phase, 1 for liquid phase
    * @return an array of mass flow rates in kg/s at each node
@@ -2302,9 +2114,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the total (gas + liquid) mass flow rate profile.
-   * </p>
    *
    * @return an array of total mass flow rates in kg/s at each node
    */
@@ -2317,9 +2127,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the gas quality (vapor mass fraction) profile along the pipe.
-   * </p>
    *
    * @return an array of gas quality values (0-1) at each node
    */
@@ -2337,9 +2145,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the mixture density profile along the pipe.
-   * </p>
    *
    * <p>
    * ρ_mix = α·ρ_G + (1-α)·ρ_L
@@ -2359,9 +2165,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the mixture velocity profile along the pipe.
-   * </p>
    *
    * @return an array of mixture velocities in m/s at each node
    */
@@ -2374,9 +2178,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the slip ratio profile along the pipe.
-   * </p>
    *
    * <p>
    * Slip ratio S = u_G / u_L
@@ -2401,9 +2203,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   // ==================== FRICTION AND PRESSURE DROP ====================
 
   /**
-   * <p>
    * Gets the wall friction factor profile for a specific phase.
-   * </p>
    *
    * @param phaseIndex 0 for gas phase, 1 for liquid phase
    * @return an array of friction factors at each node
@@ -2417,9 +2217,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the interphase friction factor profile.
-   * </p>
    *
    * @return an array of interphase friction factors at each node
    */
@@ -2432,9 +2230,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the pressure gradient profile along the pipe.
-   * </p>
    *
    * @return an array of pressure gradients in Pa/m at each node
    */
@@ -2455,9 +2251,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   // ==================== FLOW PATTERN TRANSITION LOGIC ====================
 
   /**
-   * <p>
    * Updates flow patterns at all nodes based on current conditions.
-   * </p>
    *
    * <p>
    * When automatic flow pattern detection is enabled, this method:
@@ -2486,9 +2280,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Transitions a flow node to a new flow pattern type.
-   * </p>
    *
    * <p>
    * This method creates a new flow node of the appropriate type and transfers all relevant state including temperature,
@@ -2528,9 +2320,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Creates a flow node of the specified flow pattern type.
-   * </p>
    *
    * @param pattern the flow pattern
    * @param system the thermodynamic system
@@ -2559,9 +2349,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the count of flow pattern transitions along the pipe.
-   * </p>
    *
    * @return the number of transitions
    */
@@ -2580,9 +2368,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the positions where flow pattern transitions occur.
-   * </p>
    *
    * @return an array of node indices where transitions occur
    */
@@ -2603,9 +2389,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   // ==================== PRESSURE DROP CORRELATIONS ====================
 
   /**
-   * <p>
    * Calculates the total pressure drop along the pipe.
-   * </p>
    *
    * @return the total pressure drop in bar
    */
@@ -2617,9 +2401,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Calculates the frictional pressure drop component.
-   * </p>
    *
    * @return the frictional pressure drop in bar
    */
@@ -2651,9 +2433,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Calculates the gravitational pressure drop component.
-   * </p>
    *
    * @return the gravitational pressure drop in bar
    */
@@ -2680,9 +2460,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Calculates the acceleration pressure drop component.
-   * </p>
    *
    * @return the acceleration pressure drop in bar
    */
@@ -2709,9 +2487,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the pressure drop breakdown as a formatted string.
-   * </p>
    *
    * @return a string describing the pressure drop components
    */
@@ -2726,9 +2502,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Calculates the two-phase pressure drop using Lockhart-Martinelli correlation.
-   * </p>
    *
    * <p>
    * Reference: Lockhart, R.W. and Martinelli, R.C. (1949). "Proposed Correlation of Data for Isothermal Two-Phase,
@@ -2770,9 +2544,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * Gets the Lockhart-Martinelli pressure gradient profile.
-   * </p>
    *
    * @return an array of pressure gradients in Pa/m at each node
    */
@@ -3152,9 +2924,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

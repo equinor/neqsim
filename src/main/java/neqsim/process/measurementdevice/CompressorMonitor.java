@@ -4,9 +4,7 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * CompressorMonitor class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -17,9 +15,7 @@ public class CompressorMonitor extends MeasurementDeviceBaseClass {
   protected Compressor compressor = null;
 
   /**
-   * <p>
    * Constructor for CompressorMonitor.
-   * </p>
    *
    * @param compressor a {@link neqsim.process.equipment.compressor.Compressor} object
    */
@@ -28,9 +24,7 @@ public class CompressorMonitor extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for CompressorMonitor.
-   * </p>
    *
    * @param name Name of Compressor
    * @param compressor a {@link neqsim.process.equipment.compressor.Compressor}

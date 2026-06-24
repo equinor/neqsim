@@ -10,9 +10,7 @@ import neqsim.thermo.mixingrule.EosMixingRuleType;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
 /**
- * <p>
  * PhaseGEUnifacPSRK class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -24,18 +22,14 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
   static Logger logger = LogManager.getLogger(PhaseGEUnifacPSRK.class);
 
   /**
-   * <p>
    * Constructor for PhaseGEUnifacPSRK.
-   * </p>
    */
   public PhaseGEUnifacPSRK() {
     componentArray = new ComponentGEUnifacPSRK[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   }
 
   /**
-   * <p>
    * Constructor for PhaseGEUnifacPSRK.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param alpha an array of type double
@@ -86,9 +80,7 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
   }
 
   /**
-   * <p>
    * calcbij.
-   * </p>
    */
   public void calcbij() {
     bij = new double[((ComponentGEUnifac) getComponent(0))
@@ -123,9 +115,7 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
   }
 
   /**
-   * <p>
    * calccij.
-   * </p>
    */
   public void calccij() {
     cij = new double[((ComponentGEUnifac) getComponent(0))

@@ -9,9 +9,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * Standard_ISO6976 class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -183,9 +181,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   }
 
   /**
-   * <p>
    * Constructor for Standard_ISO6976.
-   * </p>
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    * @param volumetricReferenceTemperaturedegC a double (valid are 0, 15, 15.55 and 20)
@@ -373,9 +369,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   }
 
   /**
-   * <p>
    * checkReferenceCondition.
-   * </p>
    */
   public void checkReferenceCondition() {
     Double[] validvalues = { 0.0, 15.0, 15.55, 20.0, 25.0 };
@@ -524,9 +518,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   }
 
   /**
-   * <p>
    * Getter for the field <code>energyRefT</code>. // combustion conditions
-   * </p>
    *
    * @return the energyRefT
    */
@@ -535,9 +527,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   }
 
   /**
-   * <p>
    * Setter for the field <code>energyRefT</code>.
-   * </p>
    *
    * @param energyRefT the energyRefT to set
    */
@@ -546,9 +536,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   }
 
   /**
-   * <p>
    * Getter for the field <code>energyRefP</code>.
-   * </p>
    *
    * @return the energyRefP
    */
@@ -557,9 +545,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   }
 
   /**
-   * <p>
    * Setter for the field <code>energyRefP</code>.
-   * </p>
    *
    * @param energyRefP the energyRefP to set
    */
@@ -568,9 +554,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   }
 
   /**
-   * <p>
    * Getter for the field <code>volRefT</code>. metering conditions
-   * </p>
    *
    * @return the volRefT
    */
@@ -579,9 +563,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   }
 
   /**
-   * <p>
    * Setter for the field <code>volRefT</code>.
-   * </p>
    *
    * @param volRefT the volRefT to set
    */
@@ -590,9 +572,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   }
 
   /**
-   * <p>
    * Getter for the field <code>componentsNotDefinedByStandard</code>.
-   * </p>
    *
    * @return the componentsNotDefinedByStandard
    */
@@ -601,9 +581,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   }
 
   /**
-   * <p>
    * getTotalMolesOfInerts.
-   * </p>
    *
    * @return a double
    */
@@ -619,9 +597,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   }
 
   /**
-   * <p>
    * removeInertsButNitrogen.
-   * </p>
    */
   public void removeInertsButNitrogen() {
     for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
@@ -634,9 +610,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   }
 
   /**
-   * <p>
    * Getter for the field <code>averageCarbonNumber</code>.
-   * </p>
    *
    * @return the averageCarbonNumber
    */
@@ -652,9 +626,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   }
 
   /**
-   * <p>
    * Getter for the field <code>referenceType</code>.
-   * </p>
    *
    * @return the referenceType
    */
@@ -663,9 +635,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   }
 
   /**
-   * <p>
    * Setter for the field <code>referenceType</code>.
-   * </p>
    *
    * @param referenceType the referenceType to set
    */

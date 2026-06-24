@@ -6,9 +6,7 @@ import neqsim.thermo.phase.PhaseBWRSEos;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * ComponentBWRS class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -44,9 +42,7 @@ public class ComponentBWRS extends ComponentSrk {
   PhaseBWRSEos refPhaseBWRS = null;
 
   /**
-   * <p>
    * Constructor for ComponentBWRS.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -107,9 +103,7 @@ public class ComponentBWRS extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Constructor for ComponentBWRS.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]
@@ -211,9 +205,7 @@ public class ComponentBWRS extends ComponentSrk {
   }
 
   /**
-   * <p>
    * getFpoldn.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponentphases a int
@@ -232,9 +224,7 @@ public class ComponentBWRS extends ComponentSrk {
   }
 
   /**
-   * <p>
    * getdRhodn.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponentphases a int
@@ -247,9 +237,7 @@ public class ComponentBWRS extends ComponentSrk {
   }
 
   /**
-   * <p>
    * getELdn.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponentphases a int
@@ -264,9 +252,7 @@ public class ComponentBWRS extends ComponentSrk {
   }
 
   /**
-   * <p>
    * getFexpdn.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponentphases a int
@@ -306,9 +292,7 @@ public class ComponentBWRS extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Getter for the field <code>aBWRS</code>.
-   * </p>
    *
    * @param i a int
    * @return a double
@@ -355,9 +339,7 @@ public class ComponentBWRS extends ComponentSrk {
   }
 
   /**
-   * <p>
    * getBE.
-   * </p>
    *
    * @param i a int
    * @return a double
@@ -376,9 +358,7 @@ public class ComponentBWRS extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Setter for the field <code>refPhaseBWRS</code>.
-   * </p>
    *
    * @param refPhaseBWRS a {@link neqsim.thermo.phase.PhaseBWRSEos} object
    */
@@ -414,9 +394,7 @@ public class ComponentBWRS extends ComponentSrk {
   }
 
   /**
-   * <p>
    * getBPdT.
-   * </p>
    *
    * @param i a int
    * @return a double
@@ -444,9 +422,7 @@ public class ComponentBWRS extends ComponentSrk {
   }
 
   /**
-   * <p>
    * getBEdT.
-   * </p>
    *
    * @param i a int
    * @return a double

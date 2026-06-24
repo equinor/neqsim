@@ -8,9 +8,7 @@ import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentUMRCPAvolcor;
 
 /**
- * <p>
  * PhaseUMRCPAvolcor class.
- * </p>
  *
  * <p>
  * Volume-translated UMR-CPA phase. It keeps the full UMR-CPA solve pipeline (PR physical term with UMR/UNIFAC mixing,
@@ -108,9 +106,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * getCT.
-   * </p>
    *
    * @return dC/dT
    */
@@ -119,9 +115,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * getCTT.
-   * </p>
    *
    * @return d2C/dT2 (zero for a linear, temperature-independent translation mixing rule)
    */
@@ -143,9 +137,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * getcij - linear translation mixing rule c_ij = (c_i + c_j)/2.
-   * </p>
    *
    * @param compArray a {@link neqsim.thermo.component.ComponentEosInterface} object
    * @param compArray2 a {@link neqsim.thermo.component.ComponentEosInterface} object
@@ -156,9 +148,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * getcijT - temperature derivative of the translation mixing rule.
-   * </p>
    *
    * @param compArray a {@link neqsim.thermo.component.ComponentEosInterface} object
    * @param compArray2 a {@link neqsim.thermo.component.ComponentEosInterface} object
@@ -169,9 +159,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * calcCi.
-   * </p>
    *
    * @param compNumb a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -186,9 +174,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * calcCij.
-   * </p>
    *
    * @param compNumb a int
    * @param compNumbj a int
@@ -205,9 +191,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * calcCiT.
-   * </p>
    *
    * @param compNumb a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -222,9 +206,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * calcCT.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
@@ -293,9 +275,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * calcC.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
@@ -323,9 +303,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * getc - intensive (molar) volume translation parameter.
-   * </p>
    *
    * @return a double
    */
@@ -334,9 +312,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * getC - extensive volume translation parameter.
-   * </p>
    *
    * @return a double
    */
@@ -396,9 +372,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * gc - derivative of small g with respect to the translation parameter c.
-   * </p>
    *
    * @return a double
    */
@@ -407,9 +381,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * fc - derivative of small f with respect to the translation parameter c.
-   * </p>
    *
    * @return a double
    */
@@ -425,9 +397,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * fcc - second derivative of small f with respect to c.
-   * </p>
    *
    * @return a double
    */
@@ -436,9 +406,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * fbc - second cross derivative of small f with respect to b and c.
-   * </p>
    *
    * @return a double
    */
@@ -447,9 +415,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * fcv - second cross derivative of small f with respect to c and V.
-   * </p>
    *
    * @return a double
    */
@@ -484,9 +450,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * gBC - second cross derivative of small g with respect to b and c.
-   * </p>
    *
    * @return a double
    */
@@ -496,9 +460,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * gCV - second cross derivative of small g with respect to c and V.
-   * </p>
    *
    * @return a double
    */
@@ -508,9 +470,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * gCC - second derivative of small g with respect to c.
-   * </p>
    *
    * @return a double
    */
@@ -520,9 +480,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * FC - derivative of the reduced residual Helmholtz energy F with respect to C.
-   * </p>
    *
    * @return a double
    */
@@ -531,9 +489,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * FnC.
-   * </p>
    *
    * @return a double
    */
@@ -542,9 +498,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * FTC.
-   * </p>
    *
    * @return a double
    */
@@ -553,9 +507,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * FBC.
-   * </p>
    *
    * @return a double
    */
@@ -564,9 +516,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * FCV.
-   * </p>
    *
    * @return a double
    */
@@ -575,9 +525,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * FCC.
-   * </p>
    *
    * @return a double
    */
@@ -586,9 +534,7 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   }
 
   /**
-   * <p>
    * FCD.
-   * </p>
    *
    * @return a double
    */

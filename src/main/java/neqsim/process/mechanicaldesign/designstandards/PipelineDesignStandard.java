@@ -6,9 +6,7 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.MechanicalDesignMarginResult;
 
 /**
- * <p>
  * PipelineDesignStandard class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -23,9 +21,7 @@ public class PipelineDesignStandard extends DesignStandard {
   private final MechanicalDesignMarginResult safetyMargins;
 
   /**
-   * <p>
    * Constructor for PipelineDesignStandard.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
@@ -60,9 +56,7 @@ public class PipelineDesignStandard extends DesignStandard {
   }
 
   /**
-   * <p>
    * calcPipelineWallThickness.
-   * </p>
    *
    * @return a double
    */

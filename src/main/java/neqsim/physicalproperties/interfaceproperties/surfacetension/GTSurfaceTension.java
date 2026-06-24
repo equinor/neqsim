@@ -10,11 +10,11 @@ import org.apache.commons.math3.ode.nonstiff.DormandPrince54Integrator;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * GTSurfaceTension class. Calculates the surfacetension using the Gradient Theory for mixtures. The method assumes the
  * number of components to be two or more, and that the species set is equal and in the same component order for both
  * phases.
  *
+ * <p>
  * Near a fluid-fluid interface, we consider the variation of densities of chemical species, \f$\boldsymbol{n}(z)\f$, as
  * function of position, \f$z\f$, where element \f$k\f$ of the vector \f$\boldsymbol{n}(z)\f$ is the number density of
  * chemical species \f$k\f$ in the mixture. The surface tension is a functional of these densities as explained below.
@@ -70,17 +70,13 @@ public class GTSurfaceTension extends SurfaceTension {
 		     // assumed linear
 
   /**
-   * <p>
    * Constructor for GTSurfaceTension.
-   * </p>
    */
   public GTSurfaceTension() {
   }
 
   /**
-   * <p>
    * Constructor for GTSurfaceTension.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -108,10 +104,10 @@ public class GTSurfaceTension extends SurfaceTension {
   }
 
   /**
-   * <p>
    * solveWithRefcomp. Solve for the surface tension by integration in a reference component density for cases with no
    * binary interaction parameter in the influcence parameter.
    *
+   * <p>
    * The pertinent equations for calculating the interfacial tension according to Gradient Theory can be represented by
    * the system of equations below, providing that the reference component number density varies monotonically through
    * the interface, and that the joint influence parameter \f$c_{ij}\f$ can be described by a quadratic mixing rule,
@@ -192,10 +188,10 @@ public class GTSurfaceTension extends SurfaceTension {
   }
 
   /**
-   * <p>
    * solveFullDensityProfile. Calculate the surface tension for the general case by integration of the component density
    * profiles.
    *
+   * <p>
    * This method can be used in the general case, including when binary interaction influence parameters
    * \f$\beta_{ij}\f$ are nonzero.
    *

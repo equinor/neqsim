@@ -4,9 +4,7 @@ import java.util.HashMap;
 import neqsim.process.equipment.filter.Filter;
 
 /**
- * <p>
  * FilterResponse class for JSON serialization of Filter equipment.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -16,9 +14,7 @@ public class FilterResponse extends BaseResponse {
   public HashMap<String, Value> data = new HashMap<String, Value>();
 
   /**
-   * <p>
    * Constructor for FilterResponse.
-   * </p>
    *
    * @param filter a {@link neqsim.process.equipment.filter.Filter} object
    */

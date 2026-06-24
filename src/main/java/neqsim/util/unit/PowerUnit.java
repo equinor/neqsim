@@ -3,9 +3,7 @@ package neqsim.util.unit;
 import neqsim.util.exception.InvalidInputException;
 
 /**
- * <p>
  * PowerUnit class for converting between different power units.
- * </p>
  *
  * @author esol
  * @version $Id: $Id

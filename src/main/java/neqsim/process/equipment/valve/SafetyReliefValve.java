@@ -59,18 +59,14 @@ public class SafetyReliefValve extends ThrottlingValve {
   private double maxLiftRatePerSec = 3.0; // |d(lift)/dt| limit [1/s]
 
   /**
-   * <p>
    * Constructor for SafetyReliefValve.
-   * </p>
    */
   public SafetyReliefValve() {
     super("SafetyReliefValve");
   }
 
   /**
-   * <p>
    * Constructor for SafetyReliefValve.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -88,9 +84,7 @@ public class SafetyReliefValve extends ThrottlingValve {
 
   // ---------------- Getters / Setters ----------------
   /**
-   * <p>
    * Getter for the field <code>setPressureBar</code>.
-   * </p>
    *
    * @return a double
    */
@@ -99,9 +93,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>setPressureBar</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -110,9 +102,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>overpressureFrac</code>.
-   * </p>
    *
    * @return a double
    */
@@ -121,9 +111,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>overpressureFrac</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -132,9 +120,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>blowdownFrac</code>.
-   * </p>
    *
    * @return a double
    */
@@ -143,9 +129,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>blowdownFrac</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -154,9 +138,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>ratedCv</code>.
-   * </p>
    *
    * @return a double
    */
@@ -165,9 +147,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>ratedCv</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -176,9 +156,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>kd</code>.
-   * </p>
    *
    * @return a double
    */
@@ -187,9 +165,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>kd</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -198,9 +174,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>kbMax</code>.
-   * </p>
    *
    * @return a double
    */
@@ -209,9 +183,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>kbMax</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -220,9 +192,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>backpressureSensitivity</code>.
-   * </p>
    *
    * @return a double
    */
@@ -231,9 +201,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>backpressureSensitivity</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -242,9 +210,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>minStableOpenFrac</code>.
-   * </p>
    *
    * @return a double
    */
@@ -253,9 +219,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>minStableOpenFrac</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -264,9 +228,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>valveType</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.valve.SafetyReliefValve.ValveType} object
    */
@@ -275,9 +237,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>valveType</code>.
-   * </p>
    *
    * @param t a {@link neqsim.process.equipment.valve.SafetyReliefValve.ValveType} object
    */
@@ -286,9 +246,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>openingLaw</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.valve.SafetyReliefValve.OpeningLaw} object
    */
@@ -297,9 +255,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>openingLaw</code>.
-   * </p>
    *
    * @param law a {@link neqsim.process.equipment.valve.SafetyReliefValve.OpeningLaw} object
    */
@@ -308,9 +264,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>openFraction</code>.
-   * </p>
    *
    * @return a double
    */
@@ -319,9 +273,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>tauOpenSec</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -330,9 +282,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>tauCloseSec</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -341,9 +291,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>minOpenTimeSec</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -352,9 +300,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>minCloseTimeSec</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -363,9 +309,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>maxLiftRatePerSec</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -549,9 +493,7 @@ public class SafetyReliefValve extends ThrottlingValve {
 
   // ---------------- Quick configurators ----------------
   /**
-   * <p>
    * configureConventionalSnap.
-   * </p>
    *
    * @param psetBar a double
    * @param overFrac a double
@@ -572,9 +514,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * configureBalancedModulating.
-   * </p>
    *
    * @param psetBar a double
    * @param overFrac a double
@@ -598,9 +538,7 @@ public class SafetyReliefValve extends ThrottlingValve {
 
   // Handy monitors
   /**
-   * <p>
    * getRelievingPressureBar.
-   * </p>
    *
    * @return a double
    */
@@ -609,9 +547,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * getReseatPressureBar.
-   * </p>
    *
    * @return a double
    */

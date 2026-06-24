@@ -3,9 +3,7 @@ package neqsim.thermo.component;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * ComponentLeachman class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -15,9 +13,7 @@ public class ComponentLeachmanEos extends ComponentEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for ComponentLeachman.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -29,9 +25,7 @@ public class ComponentLeachmanEos extends ComponentEos {
   }
 
   /**
-   * <p>
    * Constructor for ComponentLeachman.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]

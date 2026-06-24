@@ -11,9 +11,7 @@ import java.io.Serializable;
 public interface ValveCharacteristic extends Serializable {
 
   /**
-   * <p>
    * getActualKv.
-   * </p>
    *
    * @param Kv a double
    * @param percentOpening a double
@@ -22,9 +20,7 @@ public interface ValveCharacteristic extends Serializable {
   public double getActualKv(double Kv, double percentOpening);
 
   /**
-   * <p>
    * getOpeningFactor.
-   * </p>
    *
    * @param percentOpening a double
    * @return a double

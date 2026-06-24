@@ -5,9 +5,7 @@ import neqsim.thermo.phase.PhaseGERG2008Eos;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * ComponentGERG2008 class.
- * </p>
  *
  * @author victorigi
  * @version $Id: $Id
@@ -17,9 +15,7 @@ public class ComponentGERG2008Eos extends ComponentEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for ComponentGERG2008.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -37,9 +33,7 @@ public class ComponentGERG2008Eos extends ComponentEos {
   }
 
   /**
-   * <p>
    * Constructor for ComponentGERG2008.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]

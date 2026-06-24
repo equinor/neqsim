@@ -8,9 +8,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TestUMRPRUMC class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -22,9 +20,7 @@ public class TestUMRPRUMC {
   /** Logger object for class. */
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

@@ -4,18 +4,14 @@ import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.util.fluidmechanicsvisualization.flownodevisualization.FlowNodeVisualization;
 
 /**
- * <p>
  * TwoPhaseFlowNodeVisualization class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class TwoPhaseFlowNodeVisualization extends FlowNodeVisualization {
   /**
-   * <p>
    * Constructor for TwoPhaseFlowNodeVisualization.
-   * </p>
    */
   public TwoPhaseFlowNodeVisualization() {
   }

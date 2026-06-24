@@ -13,9 +13,7 @@ import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 import neqsim.thermo.mixingrule.MixingRulesInterface;
 
 /**
- * <p>
  * PhaseHydrate class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -26,18 +24,14 @@ public class PhaseHydrate extends Phase {
   String hydrateModel = "PVTsimHydrateModel";
 
   /**
-   * <p>
    * Constructor for PhaseHydrate.
-   * </p>
    */
   public PhaseHydrate() {
     setType(PhaseType.HYDRATE);
   }
 
   /**
-   * <p>
    * Constructor for PhaseHydrate.
-   * </p>
    *
    * @param fluidModel a {@link java.lang.String} object
    */
@@ -141,9 +135,7 @@ public class PhaseHydrate extends Phase {
   }
 
   /**
-   * <p>
    * setSolidRefFluidPhase.
-   * </p>
    *
    * @param refPhase a {@link neqsim.thermo.phase.PhaseInterface} object
    */

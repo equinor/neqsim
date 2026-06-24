@@ -5,9 +5,7 @@ import neqsim.thermo.component.ComponentGENRTLmodifiedWS;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
 /**
- * <p>
  * PhaseGENRTLmodifiedWS class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -17,17 +15,13 @@ public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for PhaseGENRTLmodifiedWS.
-   * </p>
    */
   public PhaseGENRTLmodifiedWS() {
   }
 
   /**
-   * <p>
    * Constructor for PhaseGENRTLmodifiedWS.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param alpha an array of type double
@@ -48,9 +42,7 @@ public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
   }
 
   /**
-   * <p>
    * Constructor for PhaseGENRTLmodifiedWS.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param alpha an array of type double

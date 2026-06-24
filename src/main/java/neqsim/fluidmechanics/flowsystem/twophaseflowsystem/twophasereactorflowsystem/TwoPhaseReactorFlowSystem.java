@@ -5,9 +5,7 @@ import neqsim.fluidmechanics.util.fluidmechanicsvisualization.flowsystemvisualiz
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TwoPhaseReactorFlowSystem class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -17,9 +15,7 @@ public class TwoPhaseReactorFlowSystem extends neqsim.fluidmechanics.flowsystem.
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for TwoPhaseReactorFlowSystem.
-   * </p>
    */
   public TwoPhaseReactorFlowSystem() {
   }
@@ -96,9 +92,7 @@ public class TwoPhaseReactorFlowSystem extends neqsim.fluidmechanics.flowsystem.
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

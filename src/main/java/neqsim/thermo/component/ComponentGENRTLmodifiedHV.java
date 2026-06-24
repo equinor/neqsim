@@ -10,9 +10,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * ComponentGENRTLmodifiedHV class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -22,9 +20,7 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for ComponentGENRTLmodifiedHV.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -44,9 +40,7 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
   }
 
   /**
-   * <p>
    * getGamma.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int

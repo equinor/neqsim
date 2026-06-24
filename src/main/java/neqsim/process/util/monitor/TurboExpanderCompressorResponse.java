@@ -3,9 +3,7 @@ package neqsim.process.util.monitor;
 import neqsim.process.equipment.expander.TurboExpanderCompressor;
 
 /**
- * <p>
  * TurboExpanderCompressorResponse class.
- * </p>
  *
  * @author esol
  */

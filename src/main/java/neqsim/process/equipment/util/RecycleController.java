@@ -70,18 +70,14 @@ public class RecycleController implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * resetPriorityLevel.
-   * </p>
    */
   public void resetPriorityLevel() {
     currentPriorityLevel = minimumPriorityLevel;
   }
 
   /**
-   * <p>
    * addRecycle.
-   * </p>
    *
    * @param recycle a {@link neqsim.process.equipment.util.Recycle} object
    */
@@ -91,9 +87,7 @@ public class RecycleController implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * doSolveRecycle.
-   * </p>
    *
    * @param recycle a {@link neqsim.process.equipment.util.Recycle} object
    * @return a boolean
@@ -107,9 +101,7 @@ public class RecycleController implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * isHighestPriority.
-   * </p>
    *
    * @param recycle a {@link neqsim.process.equipment.util.Recycle} object
    * @return a boolean
@@ -123,9 +115,7 @@ public class RecycleController implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * solvedCurrentPriorityLevel.
-   * </p>
    *
    * @return a boolean
    */
@@ -141,18 +131,14 @@ public class RecycleController implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * nextPriorityLevel.
-   * </p>
    */
   public void nextPriorityLevel() {
     currentPriorityLevel = maximumPriorityLevel;
   }
 
   /**
-   * <p>
    * hasLoverPriorityLevel.
-   * </p>
    *
    * @return a boolean
    */
@@ -165,9 +151,7 @@ public class RecycleController implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * hasHigherPriorityLevel.
-   * </p>
    *
    * @return a boolean
    */
@@ -180,9 +164,7 @@ public class RecycleController implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * solvedAll.
-   * </p>
    *
    * @return a boolean
    */
@@ -199,9 +181,7 @@ public class RecycleController implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * clear.
-   * </p>
    */
   public void clear() {
     recycleArray.clear();
@@ -212,9 +192,7 @@ public class RecycleController implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>currentPriorityLevel</code>.
-   * </p>
    *
    * @return a int
    */
@@ -223,9 +201,7 @@ public class RecycleController implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>currentPriorityLevel</code>.
-   * </p>
    *
    * @param currentPriorityLevel a int
    */

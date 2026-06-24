@@ -40,9 +40,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * Compressor class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -207,9 +205,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Constructor for Compressor.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -220,9 +216,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Constructor for Compressor.
-   * </p>
    *
    * @param name Name of compressor
    * @param interpolateMapLookup a boolean
@@ -390,9 +384,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * solveAntiSurge.
-   * </p>
    */
   public void solveAntiSurge() {
     if (getAntiSurge().isActive()) {
@@ -407,9 +399,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * setOutletPressure.
-   * </p>
    *
    * @param pressure a double
    * @param unit a {@link java.lang.String} object
@@ -433,9 +423,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * getPower.
-   * </p>
    *
    * @return a double
    */
@@ -444,9 +432,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * getPower.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -478,9 +464,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * setPower.
-   * </p>
    *
    * @param p a double
    */
@@ -538,9 +522,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * findOutPressure.
-   * </p>
    *
    * @param hinn a double
    * @param hout a double
@@ -1677,9 +1659,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * generateCompressorCurves.
-   * </p>
    */
   public void generateCompressorCurves() {
     double flowRef = getThermoSystem().getFlowRate("m3/hr");
@@ -1839,9 +1819,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * getTotalWork.
-   * </p>
    *
    * @return a double
    */
@@ -1883,9 +1861,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * usePolytropicCalc.
-   * </p>
    *
    * @return the usePolytropicCalc
    */
@@ -1894,9 +1870,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>usePolytropicCalc</code>.
-   * </p>
    *
    * @param usePolytropicCalc the usePolytropicCalc to set
    */
@@ -1943,9 +1917,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Getter for the field <code>compressorChart</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.compressor.CompressorChartInterface} object
    */
@@ -1954,9 +1926,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>compressorChart</code>.
-   * </p>
    *
    * @param compressorChart a {@link neqsim.process.equipment.compressor.CompressorChartInterface} object
    */
@@ -2240,9 +2210,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * isSurge.
-   * </p>
    *
    * @param flow a double
    * @param head a double
@@ -2338,9 +2306,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * isStoneWall.
-   * </p>
    *
    * @param flow a double
    * @param head a double
@@ -2528,9 +2494,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>antiSurge</code>.
-   * </p>
    *
    * @param antiSurge a {@link neqsim.process.equipment.compressor.AntiSurge} object
    */
@@ -2539,9 +2503,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Get the safety-factor-corrected surge flow and head at the current compressor speed.
-   * </p>
    * <p>
    * This method returns the safe minimum operating point by applying the surge control factor (typically 1.05 for 5%
    * margin) to the surge flow at the current speed. The head is calculated at this safe flow rate using the compressor
@@ -2567,9 +2529,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Getter for the field <code>speed</code>.
-   * </p>
    *
    * @return a double
    */
@@ -2721,9 +2681,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>speed</code>.
-   * </p>
    *
    * @param speed a int
    */
@@ -2738,9 +2696,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Getter for the field <code>polytropicHead</code>.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -2756,9 +2712,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Getter for the field <code>polytropicHead</code>.
-   * </p>
    *
    * @return a double
    */
@@ -2767,9 +2721,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Getter for the field <code>polytropicFluidHead</code>.
-   * </p>
    *
    * @return a double
    */
@@ -2778,9 +2730,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Getter for the field <code>polytropicExponent</code>.
-   * </p>
    *
    * @return a double
    */
@@ -2789,9 +2739,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Getter for the field <code>polytropicHeadMeter</code>.
-   * </p>
    *
    * @return a double
    */
@@ -2800,9 +2748,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>polytropicHeadMeter</code>.
-   * </p>
    *
    * @param polytropicHeadMeter a double
    */
@@ -2811,9 +2757,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Getter for the field <code>outTemperature</code>.
-   * </p>
    *
    * @return outlet temperature in Kelvin
    */
@@ -2826,9 +2770,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Set the outlet temperature of the compressor.
-   * </p>
    *
    * @param outTemperature outlet temperature in Kelvin
    */
@@ -2839,9 +2781,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Set the outlet temperature of the compressor with unit specification.
-   * </p>
    *
    * @param temperature outlet temperature value
    * @param unit temperature unit (e.g., "K", "C", "R", "F")
@@ -2863,9 +2803,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>outTemperature</code>.
-   * </p>
    *
    * @param outTemperature outlet temperature in Kelvin
    * @deprecated use {@link #setOutletTemperature(double)} instead
@@ -2877,9 +2815,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * useOutTemperature.
-   * </p>
    *
    * @param useOutTemperature a boolean
    */
@@ -2888,9 +2824,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Getter for the field <code>numberOfCompressorCalcSteps</code>.
-   * </p>
    *
    * @return the number of calculation steps in compressor
    */
@@ -2899,9 +2833,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>numberOfCompressorCalcSteps</code>.
-   * </p>
    *
    * @param numberOfCompressorCalcSteps a int
    */
@@ -2910,9 +2842,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * isUseRigorousPolytropicMethod.
-   * </p>
    *
    * @return a boolean
    */
@@ -2921,9 +2851,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>useRigorousPolytropicMethod</code>.
-   * </p>
    *
    * @param useRigorousPolytropicMethod a boolean
    */
@@ -2938,9 +2866,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>pressure</code>.
-   * </p>
    *
    * @param pressure a double
    * @param unit a {@link java.lang.String} object
@@ -2964,9 +2890,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Getter for the field <code>polytropicMethod</code>.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -2975,9 +2899,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>polytropicMethod</code>.
-   * </p>
    *
    * @param polytropicMethod a {@link java.lang.String} object
    */
@@ -3040,9 +2962,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Getter for the field <code>propertyProfile</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.compressor.CompressorPropertyProfile} object
    */
@@ -3051,9 +2971,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>propertyProfile</code>.
-   * </p>
    *
    * @param propertyProfile a {@link neqsim.process.equipment.compressor.CompressorPropertyProfile} object
    */
@@ -3062,9 +2980,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * runController.
-   * </p>
    *
    * @param dt a double
    * @param id Calculation identifier
@@ -3157,9 +3073,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>compressionRatio</code>.
-   * </p>
    *
    * @param compRatio a double
    */
@@ -3169,9 +3083,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Getter for the field <code>compressionRatio</code>.
-   * </p>
    *
    * @return a double
    */
@@ -3197,9 +3109,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Getter for the field <code>maxOutletPressure</code>.
-   * </p>
    *
    * @return a double
    */
@@ -3208,9 +3118,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>maxOutletPressure</code>.
-   * </p>
    *
    * @param maxOutletPressure a double
    */
@@ -3220,9 +3128,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * isSetMaxOutletPressure.
-   * </p>
    *
    * @return a boolean
    */
@@ -3231,9 +3137,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>isSetMaxOutletPressure</code>.
-   * </p>
    *
    * @param isSetMaxOutletPressure a boolean
    */
@@ -3307,9 +3211,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Getter for the field <code>actualCompressionRatio</code>.
-   * </p>
    *
    * @return a double
    */
@@ -3484,9 +3386,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * isSolveSpeed.
-   * </p>
    *
    * @return a boolean
    */
@@ -3495,9 +3395,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>solveSpeed</code>.
-   * </p>
    *
    * @param solveSpeed a boolean
    */
@@ -3506,9 +3404,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * isCalcPressureOut.
-   * </p>
    *
    * @return a boolean
    */
@@ -3517,9 +3413,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>calcPressureOut</code>.
-   * </p>
    *
    * @param calcPressureOut a boolean
    */

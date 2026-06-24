@@ -26,18 +26,14 @@ public class SystemUMRPRUMCEos extends SystemUMRPRUEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for SystemUMRPRUMCEos.
-   * </p>
    */
   public SystemUMRPRUMCEos() {
     this(298.15, 1.0, false);
   }
 
   /**
-   * <p>
    * Constructor for SystemUMRPRUMCEos.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -47,9 +43,7 @@ public class SystemUMRPRUMCEos extends SystemUMRPRUEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemUMRPRUMCEos.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)

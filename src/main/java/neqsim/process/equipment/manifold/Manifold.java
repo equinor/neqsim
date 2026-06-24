@@ -20,11 +20,8 @@ import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
 
 /**
- * <p>
- * Manifold class.
- * </p>
- * A manifold is a process unit that can take in any number of streams and distribute them into a number of output
- * streams. In NeqSim it is created as a combination of a mixer and a splitter.
+ * Manifold class. A manifold is a process unit that can take in any number of streams and distribute them into a number
+ * of output streams. In NeqSim it is created as a combination of a mixer and a splitter.
  *
  * <p>
  * The manifold supports mechanical design calculations including:
@@ -80,9 +77,7 @@ public class Manifold extends ProcessEquipmentBaseClass
   private String supportArrangement = "Stiff";
 
   /**
-   * <p>
    * Constructor for Manifold with name as input.
-   * </p>
    *
    * @param name name of manifold
    */
@@ -92,9 +87,7 @@ public class Manifold extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * addStream.
-   * </p>
    *
    * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -115,9 +108,7 @@ public class Manifold extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * setSplitFactors.
-   * </p>
    *
    * @param splitFact an array of type double
    */
@@ -136,9 +127,7 @@ public class Manifold extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * getSplitStream.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -153,9 +142,7 @@ public class Manifold extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * getMixedStream.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface}
    */

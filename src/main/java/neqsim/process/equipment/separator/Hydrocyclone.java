@@ -7,9 +7,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * Hydrocyclone class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -36,9 +34,7 @@ public class Hydrocyclone extends Separator {
   }
 
   /**
-   * <p>
    * Constructor for Hydrocyclone.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -58,9 +54,7 @@ public class Hydrocyclone extends Separator {
   }
 
   /**
-   * <p>
    * Getter for the field <code>waterOutStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -69,9 +63,7 @@ public class Hydrocyclone extends Separator {
   }
 
   /**
-   * <p>
    * getOilOutStream.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */

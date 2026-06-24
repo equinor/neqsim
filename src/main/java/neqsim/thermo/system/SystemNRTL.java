@@ -15,18 +15,14 @@ public class SystemNRTL extends SystemEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for SystemNRTL.
-   * </p>
    */
   public SystemNRTL() {
     this(298.15, 1.0, false);
   }
 
   /**
-   * <p>
    * Constructor for SystemNRTL.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -36,9 +32,7 @@ public class SystemNRTL extends SystemEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemNRTL.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)

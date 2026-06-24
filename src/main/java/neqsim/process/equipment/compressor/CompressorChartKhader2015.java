@@ -364,9 +364,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   }
 
   /**
-   * <p>
    * getReferenceFluid.
-   * </p>
    *
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -375,9 +373,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   }
 
   /**
-   * <p>
    * setReferenceFluid.
-   * </p>
    *
    * @param ref_fluid a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -521,9 +517,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   }
 
   /**
-   * <p>
    * Getter for the field <code>realCurves</code>.
-   * </p>
    *
    * @return a {@link java.util.List} object
    */

@@ -4,9 +4,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * <p>
  * Units class.
- * </p>
  *
  * @author even
  * @version $Id: $Id
@@ -39,9 +37,7 @@ public class Units {
   private static String[] molarVolumeUnits = new String[] { "mol/m3", "litre/m3", "ft3/lbmole" };
 
   /**
-   * <p>
    * Constructor for Units.
-   * </p>
    */
   public Units() {
     if (activeUnits.size() == 0) {
@@ -104,9 +100,7 @@ public class Units {
   }
 
   /**
-   * <p>
    * activateSIUnits.
-   * </p>
    */
   public static synchronized void activateSIUnits() {
     if (activeUnits.size() == 0) {
@@ -116,9 +110,7 @@ public class Units {
   }
 
   /**
-   * <p>
    * activateFieldUnits.
-   * </p>
    */
   public static synchronized void activateFieldUnits() {
     if (activeUnits.size() == 0) {
@@ -128,9 +120,7 @@ public class Units {
   }
 
   /**
-   * <p>
    * activateMetricUnits.
-   * </p>
    */
   public static synchronized void activateMetricUnits() {
     if (activeUnits.size() == 0) {
@@ -140,9 +130,7 @@ public class Units {
   }
 
   /**
-   * <p>
    * activateDefaultUnits.
-   * </p>
    */
   public static synchronized void activateDefaultUnits() {
     if (activeUnits.size() == 0) {
@@ -152,9 +140,7 @@ public class Units {
   }
 
   /**
-   * <p>
    * getSymbol.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a {@link java.lang.String} object
@@ -167,9 +153,7 @@ public class Units {
   }
 
   /**
-   * <p>
    * getSymbolName.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a {@link java.lang.String} object
@@ -182,9 +166,7 @@ public class Units {
   }
 
   /**
-   * <p>
    * setUnit.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param symbol a {@link java.lang.String} object
@@ -202,9 +184,7 @@ public class Units {
   }
 
   /**
-   * <p>
    * Getter for the field <code>temperatureUnits</code>.
-   * </p>
    *
    * @return an array of {@link java.lang.String} objects
    */
@@ -213,9 +193,7 @@ public class Units {
   }
 
   /**
-   * <p>
    * Getter for the field <code>pressureUnits</code>.
-   * </p>
    *
    * @return an array of {@link java.lang.String} objects
    */
@@ -224,9 +202,7 @@ public class Units {
   }
 
   /**
-   * <p>
    * Getter for the field <code>molarVolumeUnits</code>.
-   * </p>
    *
    * @return an array of {@link java.lang.String} objects
    */

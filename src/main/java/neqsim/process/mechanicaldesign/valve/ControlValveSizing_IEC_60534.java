@@ -9,9 +9,7 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * ControlValveSizing_IEC_60534 class.
- * </p>
  *
  * @author esol
  */
@@ -46,9 +44,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   boolean fullOutput = true;
 
   /**
-   * <p>
    * isAllowChoked.
-   * </p>
    *
    * @return a boolean
    */
@@ -64,9 +60,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * isAllowLaminar.
-   * </p>
    *
    * @return a boolean
    */
@@ -75,9 +69,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * Setter for the field <code>allowLaminar</code>.
-   * </p>
    *
    * @param allowLaminar a boolean
    */
@@ -86,9 +78,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * isFullOutput.
-   * </p>
    *
    * @return a boolean
    */
@@ -97,9 +87,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * Setter for the field <code>fullOutput</code>.
-   * </p>
    *
    * @param fullOutput a boolean
    */
@@ -112,17 +100,13 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * Constructor for ControlValveSizing_IEC_60534.
-   * </p>
    */
   public ControlValveSizing_IEC_60534() {
   }
 
   /**
-   * <p>
    * Constructor for ControlValveSizing_IEC_60534.
-   * </p>
    *
    * @param valveMechanicalDesign a {@link neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign} object
    */
@@ -131,9 +115,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * getFL.
-   * </p>
    *
    * @return a double
    */
@@ -142,9 +124,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * setFL.
-   * </p>
    *
    * @param FL a double
    */
@@ -153,9 +133,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * getFd.
-   * </p>
    *
    * @return a double
    */
@@ -164,9 +142,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * setFd.
-   * </p>
    *
    * @param Fd a double
    */
@@ -175,9 +151,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * getD1.
-   * </p>
    *
    * @return a double
    */
@@ -186,9 +160,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * setD1.
-   * </p>
    *
    * @param D1 a double
    */
@@ -197,9 +169,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * getD2.
-   * </p>
    *
    * @return a double
    */
@@ -208,9 +178,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * setD2.
-   * </p>
    *
    * @param D2 a double
    */
@@ -219,9 +187,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * Getter for the field <code>d</code>.
-   * </p>
    *
    * @return a double
    */
@@ -230,9 +196,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * Setter for the field <code>d</code>.
-   * </p>
    *
    * @param d a double
    */
@@ -258,9 +222,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * getValve.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.valve.ValveInterface} object
    */
@@ -371,9 +333,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * calculateFlowRateFromValveOpeningGas.
-   * </p>
    *
    * @param adjustedKv a double
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -424,9 +384,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * calculateFlowRateFromValveOpeningLiquid.
-   * </p>
    *
    * @param adjustedKv a double
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -479,9 +437,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * calculateValveOpeningFromFlowRateLiquid.
-   * </p>
    *
    * @param Q a double
    * @param Kv a double
@@ -560,9 +516,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   // add a general method to find outlet pressure for fixed Kv that work for both gas and liquid
 
   /**
-   * <p>
    * findOutletPressureForFixedKvLiquid.
-   * </p>
    *
    * @param actualKv a double
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -684,9 +638,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * calculateFlowRateFromKvAndValveOpeningGas.
-   * </p>
    *
    * @param adjustedKv a double
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -762,9 +714,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * calculateValveOpeningFromFlowRateGas.
-   * </p>
    *
    * @param Q a double
    * @param Kv a double
@@ -842,9 +792,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * findOutletPressureForFixedKvGas.
-   * </p>
    *
    * @param actualKv a double
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object

@@ -10,9 +10,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * LNGtankfilling class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -20,9 +18,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class LNGtankfilling {
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

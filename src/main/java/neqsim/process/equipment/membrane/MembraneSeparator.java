@@ -29,9 +29,7 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
   private double membraneArea = 0.0; // m2
 
   /**
-   * <p>
    * Constructor for MembraneSeparator.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -40,9 +38,7 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for MembraneSeparator.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -53,9 +49,7 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>inletStream</code>.
-   * </p>
    *
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -66,9 +60,7 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>permeateStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -86,9 +78,7 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>retentateStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */

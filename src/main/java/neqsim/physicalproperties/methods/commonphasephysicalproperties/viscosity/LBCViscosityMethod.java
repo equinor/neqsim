@@ -8,9 +8,7 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * LBCViscosityMethod class.
- * </p>
  *
  * @author esol
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
@@ -27,9 +25,7 @@ public class LBCViscosityMethod extends Viscosity {
   double[] denseContributionParameters = DEFAULT_DENSE_CONTRIBUTION_PARAMETERS.clone();
 
   /**
-   * <p>
    * Constructor for LBCViscosityMethod.
-   * </p>
    *
    * @param phase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

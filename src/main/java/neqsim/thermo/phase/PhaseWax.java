@@ -6,9 +6,7 @@ import neqsim.thermo.component.ComponentWaxWilson;
 import neqsim.thermo.component.ComponentWonWax;
 
 /**
- * <p>
  * PhaseWax class.
- * </p>
  *
  * <p>
  * Supports multiple wax thermodynamic models selectable via {@link #setWaxComponentModel(String)}. Available models:
@@ -31,9 +29,7 @@ public class PhaseWax extends PhaseSolid {
   private String waxComponentModelName = "Pedersen";
 
   /**
-   * <p>
    * Constructor for PhaseWax.
-   * </p>
    */
   public PhaseWax() {
     setType(PhaseType.WAX);

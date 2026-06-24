@@ -16,9 +16,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.exception.InvalidInputException;
 
 /**
- * <p>
  * FlowSetter class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -42,9 +40,7 @@ public class FlowSetter extends TwoPortEquipment {
   ProcessSystem referenceProcess = null;
 
   /**
-   * <p>
    * Constructor for FlowSetter.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -71,9 +67,7 @@ public class FlowSetter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Get setGasFlowRate
-   * </p>
    *
    * @param flowRate flow rate
    * @param flowUnit Supported units are Sm3/sec, Sm3/hr, Sm3/day, MSm3/day
@@ -100,9 +94,7 @@ public class FlowSetter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Get getGasFlowRate
-   * </p>
    *
    * @param flowUnit Supported units are Sm3/sec, Sm3/hr, Sm3/day, MSm3/day
    * @return gas flow rate in unit sm3/sec
@@ -129,9 +121,7 @@ public class FlowSetter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Get setOilFlowRate
-   * </p>
    *
    * @param flowRate flow rate
    * @param flowUnit Supported units are m3/sec, m3/hr, m3/day
@@ -155,9 +145,7 @@ public class FlowSetter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Get getOilFlowRate
-   * </p>
    *
    * @param flowUnit Supported units are m3/sec, m3/hr, m3/day
    * @return oil flow rate in unit m3/sec
@@ -181,9 +169,7 @@ public class FlowSetter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Get setWaterFlowRate
-   * </p>
    *
    * @param flowRate flow rate
    * @param flowUnit Supported units are m3/sec, m3/hr, m3/day
@@ -207,9 +193,7 @@ public class FlowSetter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Get getWaterFlowRate
-   * </p>
    *
    * @param flowUnit Supported units are m3/sec, m3/hr, m3/day
    * @return water flow rate in unit m3/sec
@@ -291,9 +275,7 @@ public class FlowSetter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * createReferenceProcess.
-   * </p>
    *
    * @param feedStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @return a {@link neqsim.process.processmodel.ProcessSystem} object
@@ -364,9 +346,7 @@ public class FlowSetter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Getter for the field <code>referenceProcess</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.processmodel.ProcessSystem} object
    */
@@ -375,9 +355,7 @@ public class FlowSetter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * setSeparationPT.
-   * </p>
    *
    * @param pressure an array of type double
    * @param unitP a {@link java.lang.String} object

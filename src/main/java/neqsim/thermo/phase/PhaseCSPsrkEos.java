@@ -4,9 +4,7 @@ import neqsim.thermo.component.ComponentCSPsrk;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * <p>
  * PhaseCSPsrkEos class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -23,9 +21,7 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
   double mrefBWRSPhase = 0;
 
   /**
-   * <p>
    * Constructor for PhaseCSPsrkEos.
-   * </p>
    */
   public PhaseCSPsrkEos() {
     refBWRSPhase = new PhaseBWRSEos();

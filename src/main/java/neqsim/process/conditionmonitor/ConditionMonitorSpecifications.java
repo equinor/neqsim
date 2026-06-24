@@ -1,9 +1,7 @@
 package neqsim.process.conditionmonitor;
 
 /**
- * <p>
  * ConditionMonitorSpecifications interface.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id

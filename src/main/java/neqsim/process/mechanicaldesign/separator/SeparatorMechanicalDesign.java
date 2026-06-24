@@ -20,9 +20,7 @@ import neqsim.process.mechanicaldesign.designstandards.PressureVesselDesignStand
 import neqsim.process.mechanicaldesign.designstandards.SeparatorDesignStandard;
 
 /**
- * <p>
  * SeparatorMechanicalDesign class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -186,9 +184,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   private transient String entrainmentDetailJson = null;
 
   /**
-   * <p>
    * Constructor for SeparatorMechanicalDesign.
-   * </p>
    *
    * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */

@@ -13,9 +13,7 @@ import neqsim.physicalproperties.methods.methodinterface.DensityInterface;
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * <p>
  * Density class foir liquids.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -27,9 +25,7 @@ public class Density extends LiquidPhysicalPropertyMethod implements DensityInte
   static Logger logger = LogManager.getLogger(Density.class);
 
   /**
-   * <p>
    * Constructor for Density.
-   * </p>
    *
    * @param liquidPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

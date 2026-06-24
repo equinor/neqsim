@@ -139,9 +139,7 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart {
   double gearRatio = 1.0;
 
   /**
-   * <p>
    * Constructor for CompressorChartAlternativeMapLookup.
-   * </p>
    */
   public CompressorChartAlternativeMapLookup() {
   }
@@ -208,9 +206,7 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart {
   }
 
   /**
-   * <p>
    * getClosestRefSpeeds.
-   * </p>
    *
    * <p>
    * Retrieves the closest reference speeds to the given speed from the compressor chart values. The method returns a
@@ -316,9 +312,7 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart {
   }
 
   /**
-   * <p>
    * addSurgeCurve.
-   * </p>
    *
    * @param flow an array of type double
    * @param head an array of type double
@@ -329,9 +323,7 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart {
   }
 
   /**
-   * <p>
    * getCurveAtRefSpeed.
-   * </p>
    *
    * @param refSpeed a double
    * @return a {@link neqsim.process.equipment.compressor.CompressorCurve} object
@@ -349,9 +341,7 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart {
   }
 
   /**
-   * <p>
    * Getter for the field <code>gearRatio</code>.
-   * </p>
    *
    * @return a double
    */
@@ -360,9 +350,7 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart {
   }
 
   /**
-   * <p>
    * Setter for the field <code>gearRatio</code>.
-   * </p>
    *
    * @param GR a double
    */
@@ -571,9 +559,7 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -729,9 +715,7 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart {
   }
 
   /**
-   * <p>
    * bisect_left.
-   * </p>
    *
    * @param A an array of {@link java.lang.Double} objects
    * @param x a double
@@ -742,9 +726,7 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart {
   }
 
   /**
-   * <p>
    * bisect_left.
-   * </p>
    *
    * @param A an array of {@link java.lang.Double} objects
    * @param x a double
@@ -873,9 +855,7 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart {
   }
 
   /**
-   * <p>
    * getChartValues.
-   * </p>
    *
    * @return a {@link java.util.ArrayList} object
    */

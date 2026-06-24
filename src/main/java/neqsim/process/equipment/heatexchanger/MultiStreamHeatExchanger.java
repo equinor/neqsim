@@ -23,9 +23,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * MultiStreamHeatExchanger class.
- * </p>
  *
  * <p>
  * Extends the Heater class to support multiple input and output streams, enabling the simulation of complex heat
@@ -691,9 +689,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   }
 
   /**
-   * <p>
    * Getter for the field <code>temperatureApproach</code>.
-   * </p>
    *
    * @return a double
    */
@@ -702,9 +698,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   }
 
   /**
-   * <p>
    * Setter for the field <code>temperatureApproach</code>.
-   * </p>
    *
    * @param temperatureApproach a double
    */

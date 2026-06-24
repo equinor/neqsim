@@ -23,17 +23,13 @@ public abstract class BoundaryCurve implements BoundaryCurveInterface {
   protected PolynomialFunction flowFitterFunc = null;
 
   /**
-   * <p>
    * Constructor for BoundaryCurve.
-   * </p>
    */
   protected BoundaryCurve() {
   }
 
   /**
-   * <p>
    * Constructor for BoundaryCurve.
-   * </p>
    *
    * @param flow an array of double objects
    * @param head an array of double objects

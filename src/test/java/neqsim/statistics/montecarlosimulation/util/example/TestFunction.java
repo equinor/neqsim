@@ -3,9 +3,7 @@ package neqsim.statistics.montecarlosimulation.util.example;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtFunction;
 
 /**
- * <p>
  * TestFunction class.
- * </p>
  *
  * @author Even Solbraa
  * @since 2.2.3

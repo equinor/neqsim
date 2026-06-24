@@ -9,9 +9,7 @@ package neqsim.thermo.characterization;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * TBPCharacterize class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -29,17 +27,13 @@ public class TBPCharacterize extends PlusCharacterize {
   double[] TBP_M = null;
 
   /**
-   * <p>
    * Constructor for TBPCharacterize.
-   * </p>
    */
   public TBPCharacterize() {
   }
 
   /**
-   * <p>
    * Constructor for TBPCharacterize.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -132,9 +126,7 @@ public class TBPCharacterize extends PlusCharacterize {
   }
 
   /**
-   * <p>
    * saveCharacterizedFluid.
-   * </p>
    *
    * @return a boolean
    */
@@ -162,9 +154,7 @@ public class TBPCharacterize extends PlusCharacterize {
   }
 
   /**
-   * <p>
    * getTBPfractions.
-   * </p>
    *
    * @param i a int
    * @return a double
@@ -190,9 +180,7 @@ public class TBPCharacterize extends PlusCharacterize {
   }
 
   /**
-   * <p>
    * solveAB.
-   * </p>
    */
   public void solveAB() {
     NewtonSolveAB solver = new NewtonSolveAB(system, this);
@@ -215,9 +203,7 @@ public class TBPCharacterize extends PlusCharacterize {
   }
 
   /**
-   * <p>
    * getTBPdens.
-   * </p>
    *
    * @param i a int
    * @return a double
@@ -326,9 +312,7 @@ public class TBPCharacterize extends PlusCharacterize {
   }
 
   /**
-   * <p>
    * addPlusFraction.
-   * </p>
    */
   public void addPlusFraction() {
   }

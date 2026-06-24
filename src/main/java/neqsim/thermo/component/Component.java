@@ -18,9 +18,7 @@ import neqsim.util.unit.PressureUnit;
 import neqsim.util.unit.TemperatureUnit;
 
 /**
- * <p>
  * Abstract Component class.
- * </p>
  *
  * @author Even Solbraa
  */
@@ -216,9 +214,7 @@ public abstract class Component implements ComponentInterface {
   private double associationVolumeSAFTVRMie = 0;
 
   /**
-   * <p>
    * Constructor for Component.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]
@@ -236,9 +232,7 @@ public abstract class Component implements ComponentInterface {
   }
 
   /**
-   * <p>
    * Constructor for Component.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -1377,9 +1371,7 @@ public abstract class Component implements ComponentInterface {
   }
 
   /**
-   * <p>
    * getFugacitydN.
-   * </p>
    *
    * @param i a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -1412,9 +1404,7 @@ public abstract class Component implements ComponentInterface {
   }
 
   /**
-   * <p>
    * getChemicalPotentialdP.
-   * </p>
    *
    * @param i a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -1694,9 +1684,7 @@ public abstract class Component implements ComponentInterface {
   }
 
   /**
-   * <p>
    * getIonicDiameter.
-   * </p>
    *
    * @return a double
    */
@@ -1750,9 +1738,7 @@ public abstract class Component implements ComponentInterface {
   }
 
   /**
-   * <p>
    * Setter for the field <code>voli</code>.
-   * </p>
    *
    * @param molarVol a double
    */
@@ -1777,9 +1763,7 @@ public abstract class Component implements ComponentInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>matiascopemanParamsPR</code>.
-   * </p>
    *
    * @return an array of type double
    */
@@ -1788,9 +1772,7 @@ public abstract class Component implements ComponentInterface {
   }
 
   /**
-   * <p>
    * Setter for the field <code>matiascopemanParamsPR</code>.
-   * </p>
    *
    * @param index a int
    * @param matiascopemanParams a double
@@ -2017,9 +1999,7 @@ public abstract class Component implements ComponentInterface {
   }
 
   /**
-   * <p>
    * setIsAllTypesFalse.
-   * </p>
    */
   protected void setIsAllTypesFalse() {
     this.isTBPfraction = false;
@@ -2473,9 +2453,7 @@ public abstract class Component implements ComponentInterface {
   }
 
   /**
-   * <p>
    * isIsHydrateFormer.
-   * </p>
    *
    * @return the isHydrateFormer
    */
@@ -2484,9 +2462,7 @@ public abstract class Component implements ComponentInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>referenceEnthalpy</code>.
-   * </p>
    *
    * @return the referenceEnthalpy
    */
@@ -2495,9 +2471,7 @@ public abstract class Component implements ComponentInterface {
   }
 
   /**
-   * <p>
    * Setter for the field <code>referenceEnthalpy</code>.
-   * </p>
    *
    * @param referenceEnthalpy the referenceEnthalpy to set
    */

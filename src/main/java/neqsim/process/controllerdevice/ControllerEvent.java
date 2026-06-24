@@ -35,9 +35,7 @@ public class ControllerEvent implements Serializable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>time</code>.
-   * </p>
    *
    * @return simulation time of the event
    */
@@ -46,9 +44,7 @@ public class ControllerEvent implements Serializable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>measuredValue</code>.
-   * </p>
    *
    * @return measured process value
    */
@@ -57,9 +53,7 @@ public class ControllerEvent implements Serializable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>setPoint</code>.
-   * </p>
    *
    * @return controller set-point
    */
@@ -68,9 +62,7 @@ public class ControllerEvent implements Serializable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>error</code>.
-   * </p>
    *
    * @return control error
    */
@@ -79,9 +71,7 @@ public class ControllerEvent implements Serializable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>response</code>.
-   * </p>
    *
    * @return controller output
    */

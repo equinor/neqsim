@@ -9,9 +9,7 @@ import neqsim.util.exception.IsNaNException;
 import neqsim.util.exception.TooManyIterationsException;
 
 /**
- * <p>
  * PhaseDesmukhMather class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -27,9 +25,7 @@ public class PhaseDesmukhMather extends PhaseGE {
   double[][] bij;
 
   /**
-   * <p>
    * Constructor for PhaseDesmukhMather.
-   * </p>
    */
   public PhaseDesmukhMather() {
   }
@@ -103,9 +99,7 @@ public class PhaseDesmukhMather extends PhaseGE {
   }
 
   /**
-   * <p>
    * Getter for the field <code>aij</code>.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -116,9 +110,7 @@ public class PhaseDesmukhMather extends PhaseGE {
   }
 
   /**
-   * <p>
    * Setter for the field <code>aij</code>.
-   * </p>
    *
    * @param alpha an array of type double
    */
@@ -129,9 +121,7 @@ public class PhaseDesmukhMather extends PhaseGE {
   }
 
   /**
-   * <p>
    * Setter for the field <code>bij</code>.
-   * </p>
    *
    * @param Bij an array of type double
    */
@@ -154,9 +144,7 @@ public class PhaseDesmukhMather extends PhaseGE {
   }
 
   /**
-   * <p>
    * getBetaDesMatij.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -167,9 +155,7 @@ public class PhaseDesmukhMather extends PhaseGE {
   }
 
   /**
-   * <p>
    * Getter for the field <code>bij</code>.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -218,9 +204,7 @@ public class PhaseDesmukhMather extends PhaseGE {
   }
 
   /**
-   * <p>
    * getIonicStrength.
-   * </p>
    *
    * @return a double
    */
@@ -234,9 +218,7 @@ public class PhaseDesmukhMather extends PhaseGE {
   }
 
   /**
-   * <p>
    * getSolventWeight.
-   * </p>
    *
    * @return a double
    */
@@ -251,9 +233,7 @@ public class PhaseDesmukhMather extends PhaseGE {
   }
 
   /**
-   * <p>
    * getSolventDensity.
-   * </p>
    *
    * @return a double
    */
@@ -262,9 +242,7 @@ public class PhaseDesmukhMather extends PhaseGE {
   }
 
   /**
-   * <p>
    * getSolventMolarMass.
-   * </p>
    *
    * @return a double
    */

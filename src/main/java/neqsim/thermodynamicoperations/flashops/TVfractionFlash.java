@@ -13,9 +13,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * TVflash class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -40,9 +38,7 @@ public class TVfractionFlash extends Flash {
   private boolean useVolumeCorrection = true;
 
   /**
-   * <p>
    * Constructor for TVflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Vfractionspec a double
@@ -72,9 +68,7 @@ public class TVfractionFlash extends Flash {
   }
 
   /**
-   * <p>
    * calcdQdVP.
-   * </p>
    *
    * @return a double
    */
@@ -85,9 +79,7 @@ public class TVfractionFlash extends Flash {
   }
 
   /**
-   * <p>
    * calcdQdV.
-   * </p>
    *
    * @return a double
    */
@@ -105,9 +97,7 @@ public class TVfractionFlash extends Flash {
   }
 
   /**
-   * <p>
    * solveQ.
-   * </p>
    *
    * @return a double
    */

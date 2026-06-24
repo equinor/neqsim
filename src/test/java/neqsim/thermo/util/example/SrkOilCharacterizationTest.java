@@ -9,9 +9,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * SrkOilCharacterizationTest class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -21,9 +19,7 @@ public class SrkOilCharacterizationTest {
   static SystemInterface thermoSystem = null;
 
   /**
-   * <p>
    * setUp.
-   * </p>
    */
   @BeforeAll
   public static void setUp() {
@@ -44,9 +40,7 @@ public class SrkOilCharacterizationTest {
   }
 
   /**
-   * <p>
    * testTPflash.
-   * </p>
    */
   @Test
   public void testTPflash() {
@@ -56,9 +50,7 @@ public class SrkOilCharacterizationTest {
   }
 
   /**
-   * <p>
    * testinitPhysicalProperties.
-   * </p>
    */
   @Test
   public void testinitPhysicalProperties() {
@@ -68,9 +60,7 @@ public class SrkOilCharacterizationTest {
   }
 
   /**
-   * <p>
    * testPHflash.
-   * </p>
    */
   @Test
   public void testPHflash() {
@@ -85,9 +75,7 @@ public class SrkOilCharacterizationTest {
   }
 
   /**
-   * <p>
    * testPSflash.
-   * </p>
    */
   @Test
   public void testPSflash() {

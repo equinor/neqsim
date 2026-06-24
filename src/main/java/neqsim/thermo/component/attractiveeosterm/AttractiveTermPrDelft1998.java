@@ -3,9 +3,7 @@ package neqsim.thermo.component.attractiveeosterm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * <p>
  * AttractiveTermPrDelft1998 class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -17,9 +15,7 @@ public class AttractiveTermPrDelft1998 extends AttractiveTermPr1978 {
   boolean isMethane = false;
 
   /**
-   * <p>
    * Constructor for AttractiveTermPrDelft1998.
-   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
    */

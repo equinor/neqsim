@@ -43,9 +43,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * <p>
  * PipeDesign class.
- * </p>
  *
  * @author ESOL
  */
@@ -610,9 +608,7 @@ public class PipeDesign {
   // main method to demonstrate usage
   // ------------------------------------------------------------------------
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

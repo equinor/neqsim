@@ -10,9 +10,7 @@ import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
 /**
- * <p>
  * PhaseElectrolyteCPAOld class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -45,9 +43,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
   double dFCPAdTdT = 0.0;
 
   /**
-   * <p>
    * Constructor for PhaseElectrolyteCPAOld.
-   * </p>
    */
   public PhaseElectrolyteCPAOld() {
   }
@@ -158,9 +154,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
   }
 
   /**
-   * <p>
    * FCPA.
-   * </p>
    *
    * @return a double
    */
@@ -179,9 +173,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
   }
 
   /**
-   * <p>
    * dFCPAdV.
-   * </p>
    *
    * @return a double
    */
@@ -190,9 +182,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
   }
 
   /**
-   * <p>
    * dFCPAdVdV.
-   * </p>
    *
    * @return a double
    */
@@ -202,9 +192,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
   }
 
   /**
-   * <p>
    * dFCPAdVdVdV.
-   * </p>
    *
    * @return a double
    */
@@ -215,9 +203,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
   }
 
   /**
-   * <p>
    * dFCPAdT.
-   * </p>
    *
    * @return a double
    */
@@ -228,9 +214,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
   }
 
   /**
-   * <p>
    * dFCPAdTdT.
-   * </p>
    *
    * @return a double
    */
@@ -239,9 +223,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
   }
 
   /**
-   * <p>
    * calc_hCPA.
-   * </p>
    *
    * @return a double
    */
@@ -261,9 +243,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
   }
 
   /**
-   * <p>
    * calc_hCPAdT.
-   * </p>
    *
    * @return a double
    */
@@ -289,9 +269,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
   }
 
   /**
-   * <p>
    * calc_hCPAdTdT.
-   * </p>
    *
    * @return a double
    */
@@ -317,9 +295,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
   }
 
   /**
-   * <p>
    * calc_g.
-   * </p>
    *
    * @return a double
    */
@@ -332,9 +308,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
   }
 
   /**
-   * <p>
    * calc_lngni.
-   * </p>
    *
    * @param comp a int
    * @return a double
@@ -347,9 +321,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
   }
 
   /**
-   * <p>
    * calc_lngV.
-   * </p>
    *
    * @return a double
    */
@@ -361,9 +333,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
   }
 
   /**
-   * <p>
    * calc_lngVV.
-   * </p>
    *
    * @return a double
    */
@@ -384,9 +354,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
   }
 
   /**
-   * <p>
    * calc_lngVVV.
-   * </p>
    *
    * @return a double
    */
@@ -401,9 +369,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
   }
 
   /**
-   * <p>
    * setXsiteOld.
-   * </p>
    */
   public void setXsiteOld() {
     for (int i = 0; i < numberOfComponents; i++) {
@@ -415,9 +381,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
   }
 
   /**
-   * <p>
    * setXsitedV.
-   * </p>
    *
    * @param dV a double
    */
@@ -435,9 +399,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
   }
 
   /**
-   * <p>
    * calcXsitedT.
-   * </p>
    */
   public void calcXsitedT() {
     double dt = 0.01;
@@ -471,9 +433,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
   }
 
   /**
-   * <p>
    * Getter for the field <code>dFdVdXdXdVtotal</code>.
-   * </p>
    *
    * @return a double
    */
@@ -482,9 +442,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
   }
 
   /**
-   * <p>
    * solveX.
-   * </p>
    *
    * @return a boolean
    */
@@ -532,9 +490,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
   }
 
   /**
-   * <p>
    * molarVolume3.
-   * </p>
    *
    * @param pressure a double
    * @param temperature a double
@@ -785,9 +741,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
   }
 
   /**
-   * <p>
    * Setter for the field <code>gcpav</code>.
-   * </p>
    *
    * @param gcpav a double
    */

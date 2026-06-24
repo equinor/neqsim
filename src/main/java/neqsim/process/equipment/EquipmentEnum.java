@@ -1,9 +1,7 @@
 package neqsim.process.equipment;
 
 /**
- * <p>
  * EquipmentEnum class.
- * </p>
  *
  * @author esol
  */

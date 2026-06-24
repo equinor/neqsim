@@ -6,9 +6,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * threePhaseSeparation_1 class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id

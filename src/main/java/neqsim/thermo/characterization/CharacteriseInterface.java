@@ -1,9 +1,7 @@
 package neqsim.thermo.characterization;
 
 /**
- * <p>
  * CharacteriseInterface interface.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -16,16 +14,12 @@ public interface CharacteriseInterface {
       948, 962, 976, 990, 1004, 1018, 1032, 1046, 1060, 1074, 1088, 1102, 1116 };
 
   /**
-   * <p>
    * solve.
-   * </p>
    */
   public void solve();
 
   /**
-   * <p>
    * generatePlusFractions.
-   * </p>
    *
    * @param start a int
    * @param end a int
@@ -35,98 +29,74 @@ public interface CharacteriseInterface {
   public void generatePlusFractions(int start, int end, double zplus, double Mplus);
 
   /**
-   * <p>
    * generateTBPFractions.
-   * </p>
    */
   public void generateTBPFractions();
 
   /**
-   * <p>
    * groupTBPfractions.
-   * </p>
    *
    * @return a boolean
    */
   public boolean groupTBPfractions();
 
   /**
-   * <p>
    * hasPlusFraction.
-   * </p>
    *
    * @return a boolean
    */
   public boolean hasPlusFraction();
 
   /**
-   * <p>
    * isPseudocomponents.
-   * </p>
    *
    * @return a boolean
    */
   public boolean isPseudocomponents();
 
   /**
-   * <p>
    * setPseudocomponents.
-   * </p>
    *
    * @param pseudocomponents a boolean
    */
   public void setPseudocomponents(boolean pseudocomponents);
 
   /**
-   * <p>
    * setNumberOfPseudocomponents.
-   * </p>
    *
    * @param numberOfPseudocomponents a int
    */
   public void setNumberOfPseudocomponents(int numberOfPseudocomponents);
 
   /**
-   * <p>
    * addCharacterizedPlusFraction.
-   * </p>
    */
   public void addCharacterizedPlusFraction();
 
   /**
-   * <p>
    * removeTBPfraction.
-   * </p>
    */
   public void removeTBPfraction();
 
   /**
-   * <p>
    * addHeavyEnd.
-   * </p>
    */
   public void addHeavyEnd();
 
   /**
-   * <p>
    * addTBPFractions.
-   * </p>
    */
   public void addTBPFractions();
 
   /**
-   * <p>
    * getCoefs.
-   * </p>
    *
    * @return an array of type double
    */
   public double[] getCoefs();
 
   /**
-   * <p>
    * getCoef.
-   * </p>
    *
    * @param i a int
    * @return a double
@@ -134,45 +104,35 @@ public interface CharacteriseInterface {
   public double getCoef(int i);
 
   /**
-   * <p>
    * getFirstPlusFractionNumber.
-   * </p>
    *
    * @return a int
    */
   public int getFirstPlusFractionNumber();
 
   /**
-   * <p>
    * getLastPlusFractionNumber.
-   * </p>
    *
    * @return a int
    */
   public int getLastPlusFractionNumber();
 
   /**
-   * <p>
    * setZPlus.
-   * </p>
    *
    * @param zPlus a double
    */
   public void setZPlus(double zPlus);
 
   /**
-   * <p>
    * getPlusCoefs.
-   * </p>
    *
    * @return an array of type double
    */
   public double[] getPlusCoefs();
 
   /**
-   * <p>
    * getPlusCoefs.
-   * </p>
    *
    * @param i a int
    * @return a double
@@ -180,72 +140,56 @@ public interface CharacteriseInterface {
   public double getPlusCoefs(int i);
 
   /**
-   * <p>
    * setPlusCoefs.
-   * </p>
    *
    * @param plusCoefs an array of type double
    */
   public void setPlusCoefs(double[] plusCoefs);
 
   /**
-   * <p>
    * getDensPlus.
-   * </p>
    *
    * @return a double
    */
   public double getDensPlus();
 
   /**
-   * <p>
    * getZPlus.
-   * </p>
    *
    * @return a double
    */
   public double getZPlus();
 
   /**
-   * <p>
    * getMPlus.
-   * </p>
    *
    * @return a double
    */
   public double getMPlus();
 
   /**
-   * <p>
    * setMPlus.
-   * </p>
    *
    * @param MPlus a double
    */
   public void setMPlus(double MPlus);
 
   /**
-   * <p>
    * getDensLastTBP.
-   * </p>
    *
    * @return a double
    */
   public double getDensLastTBP();
 
   /**
-   * <p>
    * setCoefs.
-   * </p>
    *
    * @param coefs an array of type double
    */
   public void setCoefs(double[] coefs);
 
   /**
-   * <p>
    * setCoefs.
-   * </p>
    *
    * @param coef a double
    * @param i a int
@@ -253,9 +197,7 @@ public interface CharacteriseInterface {
   public void setCoefs(double coef, int i);
 
   /**
-   * <p>
    * setDensLastTBP.
-   * </p>
    *
    * @param densLastTBP a double
    */

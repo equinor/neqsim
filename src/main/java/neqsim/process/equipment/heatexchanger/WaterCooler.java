@@ -19,9 +19,7 @@ public class WaterCooler extends Cooler {
   private double coolingWaterFlowRate = 0.0; // kg/s
 
   /**
-   * <p>
    * Constructor for WaterCooler.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -30,9 +28,7 @@ public class WaterCooler extends Cooler {
   }
 
   /**
-   * <p>
    * Constructor for WaterCooler.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -73,9 +69,7 @@ public class WaterCooler extends Cooler {
   }
 
   /**
-   * <p>
    * Getter for the field <code>coolingWaterFlowRate</code>.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double

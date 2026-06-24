@@ -18,9 +18,7 @@ class CompressorPropertyProfileTest extends neqsim.NeqSimTest {
   neqsim.process.equipment.compressor.Compressor compressor1 = null;
 
   /**
-   * <p>
    * setUp.
-   * </p>
    *
    * @throws java.lang.Exception if any.
    */

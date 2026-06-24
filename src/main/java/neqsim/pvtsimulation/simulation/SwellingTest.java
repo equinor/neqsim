@@ -7,9 +7,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * SwellingTest class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -24,9 +22,7 @@ public class SwellingTest extends BasePVTsimulation {
   SystemInterface injectionGas;
 
   /**
-   * <p>
    * Constructor for SwellingTest.
-   * </p>
    *
    * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -35,9 +31,7 @@ public class SwellingTest extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Setter for the field <code>injectionGas</code>.
-   * </p>
    *
    * @param injectionGas a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -46,9 +40,7 @@ public class SwellingTest extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * setCummulativeMolePercentGasInjected.
-   * </p>
    *
    * @param gasInjected an array of type double
    */
@@ -59,9 +51,7 @@ public class SwellingTest extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * runCalc.
-   * </p>
    */
   public void runCalc() {
     double oldInjected = 0.0;
@@ -104,9 +94,7 @@ public class SwellingTest extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -137,9 +125,7 @@ public class SwellingTest extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>relativeOilVolume</code>.
-   * </p>
    *
    * @return the relativeOilVolume
    */
@@ -148,9 +134,7 @@ public class SwellingTest extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Setter for the field <code>relativeOilVolume</code>.
-   * </p>
    *
    * @param relativeOilVolume the relativeOilVolume to set
    */

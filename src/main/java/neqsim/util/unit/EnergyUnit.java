@@ -3,9 +3,7 @@ package neqsim.util.unit;
 import neqsim.util.exception.InvalidInputException;
 
 /**
- * <p>
  * EnergyUnit class for converting between different energy units.
- * </p>
  *
  * @author esol
  * @version $Id: $Id

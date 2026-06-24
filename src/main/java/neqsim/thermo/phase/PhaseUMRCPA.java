@@ -16,9 +16,7 @@ import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
 /**
- * <p>
  * PhaseSrkCPA class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -86,9 +84,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   private DMatrixRMaj corr4Matrix = null;
 
   /**
-   * <p>
    * Constructor for PhaseUMRCPA.
-   * </p>
    */
   public PhaseUMRCPA() {
     thermoPropertyModelName = "UMR-CPA-EoS";
@@ -238,9 +234,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * initCPAMatrix.
-   * </p>
    *
    * @param type a int
    */
@@ -490,9 +484,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * calcDelta.
-   * </p>
    */
   public void calcDelta() {
     for (int i = 0; i < getTotalNumberOfAccociationSites(); i++) {
@@ -556,9 +548,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * FCPA.
-   * </p>
    *
    * @return a double
    */
@@ -573,9 +563,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * dFCPAdV.
-   * </p>
    *
    * @return a double
    */
@@ -586,9 +574,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * dFCPAdVdV.
-   * </p>
    *
    * @return a double
    */
@@ -599,9 +585,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * dFCPAdVdVdV.
-   * </p>
    *
    * @return a double
    */
@@ -615,9 +599,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * dFCPAdT.
-   * </p>
    *
    * @return a double
    */
@@ -634,9 +616,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * dFCPAdTdT.
-   * </p>
    *
    * @return a double
    */
@@ -645,9 +625,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * dFCPAdTdV.
-   * </p>
    *
    * @return a double
    */
@@ -792,9 +770,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>dFdNtemp</code>. Set value by calling function molarVolume.
-   * </p>
    *
    * @return the dFdNtemp
    */
@@ -829,9 +805,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * calcXsitedV.
-   * </p>
    */
   public void calcXsitedV() {
     if (getTotalNumberOfAccociationSites() > 0) {
@@ -860,9 +834,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * solveX.
-   * </p>
    *
    * @return a boolean
    */
@@ -996,9 +968,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * solveX2.
-   * </p>
    *
    * @param maxIter a int
    * @return a boolean
@@ -1059,9 +1029,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * calcRootVolFinder.
-   * </p>
    *
    * @param pt the PhaseType of the phase
    * @return a double
@@ -1143,9 +1111,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * molarVolumeChangePhase.
-   * </p>
    *
    * @param pressure a double
    * @param temperature a double
@@ -1288,9 +1254,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * Setter for the field <code>gcpav</code>.
-   * </p>
    *
    * @param gcpav a double
    */
@@ -1331,9 +1295,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * croeneckerProduct.
-   * </p>
    *
    * @param a an array of type double
    * @param b an array of type double
@@ -1370,9 +1332,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * initOld2.
-   * </p>
    *
    * @param totalNumberOfMoles a double
    * @param numberOfComponents a int
@@ -1514,9 +1474,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * initCPAMatrixOld.
-   * </p>
    *
    * @param type a int
    */
@@ -1749,9 +1707,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * solveXOld.
-   * </p>
    *
    * @return a boolean
    */
@@ -1862,9 +1818,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * solveX2Old.
-   * </p>
    *
    * @param maxIter a int
    * @return a boolean
@@ -1904,9 +1858,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * <p>
    * molarVolumeOld.
-   * </p>
    *
    * @param pressure a double
    * @param temperature a double

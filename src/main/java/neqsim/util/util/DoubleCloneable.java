@@ -10,9 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * DoubleCloneable class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -23,17 +21,13 @@ public class DoubleCloneable implements Cloneable {
   double doubleValue;
 
   /**
-   * <p>
    * Constructor for DoubleCloneable.
-   * </p>
    */
   public DoubleCloneable() {
   }
 
   /**
-   * <p>
    * Constructor for DoubleCloneable.
-   * </p>
    *
    * @param val a double
    */
@@ -54,9 +48,7 @@ public class DoubleCloneable implements Cloneable {
   }
 
   /**
-   * <p>
    * doubleValue.
-   * </p>
    *
    * @return a double
    */
@@ -65,9 +57,7 @@ public class DoubleCloneable implements Cloneable {
   }
 
   /**
-   * <p>
    * set.
-   * </p>
    *
    * @param val a double
    */

@@ -12,9 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * SampleSet class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -25,17 +23,13 @@ public class SampleSet implements Cloneable {
   private ArrayList<SampleValue> samples = new ArrayList<SampleValue>(1);
 
   /**
-   * <p>
    * Constructor for SampleSet.
-   * </p>
    */
   public SampleSet() {
   }
 
   /**
-   * <p>
    * Constructor for SampleSet.
-   * </p>
    *
    * @param samplesIn an array of {@link neqsim.statistics.parameterfitting.SampleValue} objects
    */
@@ -44,9 +38,7 @@ public class SampleSet implements Cloneable {
   }
 
   /**
-   * <p>
    * Constructor for SampleSet.
-   * </p>
    *
    * @param samplesIn a {@link java.util.ArrayList} object
    */
@@ -75,9 +67,7 @@ public class SampleSet implements Cloneable {
   }
 
   /**
-   * <p>
    * add.
-   * </p>
    *
    * @param sampleIn a {@link neqsim.statistics.parameterfitting.SampleValue} object
    */
@@ -86,9 +76,7 @@ public class SampleSet implements Cloneable {
   }
 
   /**
-   * <p>
    * addSampleSet.
-   * </p>
    *
    * @param sampleSet a {@link neqsim.statistics.parameterfitting.SampleSet} object
    */
@@ -99,9 +87,7 @@ public class SampleSet implements Cloneable {
   }
 
   /**
-   * <p>
    * getSample.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.statistics.parameterfitting.SampleValue} object
@@ -119,9 +105,7 @@ public class SampleSet implements Cloneable {
   // }
 
   /**
-   * <p>
    * getLength.
-   * </p>
    *
    * @return a int
    */
@@ -130,9 +114,7 @@ public class SampleSet implements Cloneable {
   }
 
   /**
-   * <p>
    * createNewNormalDistributedSet.
-   * </p>
    *
    * @return a {@link neqsim.statistics.parameterfitting.SampleSet} object
    */

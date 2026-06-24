@@ -9,9 +9,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * Draft_GERG2004 class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -26,9 +24,7 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
   double initTemperature = 273.15;
 
   /**
-   * <p>
    * Constructor for Draft_GERG2004.
-   * </p>
    *
    * @param thermoSystemMet a {@link neqsim.thermo.system.SystemInterface} object
    */

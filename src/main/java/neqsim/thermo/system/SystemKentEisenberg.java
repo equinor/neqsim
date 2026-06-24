@@ -15,18 +15,14 @@ public class SystemKentEisenberg extends SystemEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for SystemKentEisenberg.
-   * </p>
    */
   public SystemKentEisenberg() {
     this(298.15, 1.0, false);
   }
 
   /**
-   * <p>
    * Constructor for SystemKentEisenberg.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -36,9 +32,7 @@ public class SystemKentEisenberg extends SystemEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemKentEisenberg.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)

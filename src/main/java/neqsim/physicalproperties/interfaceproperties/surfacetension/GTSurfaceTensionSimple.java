@@ -9,9 +9,7 @@ import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * GTSurfaceTensionSimple class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -32,17 +30,13 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
   private double[][][] dmudn2 = null;
 
   /**
-   * <p>
    * Constructor for GTSurfaceTensionSimple.
-   * </p>
    */
   public GTSurfaceTensionSimple() {
   }
 
   /**
-   * <p>
    * Constructor for GTSurfaceTensionSimple.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -51,9 +45,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
   }
 
   /**
-   * <p>
    * calcInfluenceParameters.
-   * </p>
    */
   public void calcInfluenceParameters() {
     influenceParam = new double[localSystem.getPhase(0).getNumberOfComponents()];
@@ -313,9 +305,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
   }
 
   /**
-   * <p>
    * getMolarDensity.
-   * </p>
    *
    * @param compnum a int
    * @return an array of type double
@@ -329,9 +319,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
   }
 
   /**
-   * <p>
    * getMolarDensityTotal.
-   * </p>
    *
    * @return an array of type double
    */
@@ -346,9 +334,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
   }
 
   /**
-   * <p>
    * getz.
-   * </p>
    *
    * @return an array of type double
    */
@@ -357,9 +343,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
   }
 
   /**
-   * <p>
    * getPressure.
-   * </p>
    *
    * @return an array of type double
    */
@@ -368,9 +352,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
   }
 
   /**
-   * <p>
    * getInfluenceParameter.
-   * </p>
    *
    * @param interfaceTension a double
    * @param componentNumber a int
@@ -406,9 +388,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
   }
 
   /**
-   * <p>
    * Getter for the field <code>dmudn2</code>.
-   * </p>
    *
    * @return the dmudn2
    */
@@ -417,9 +397,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
   }
 
   /**
-   * <p>
    * Setter for the field <code>dmudn2</code>.
-   * </p>
    *
    * @param dmudn2 the dmudn2 to set
    */

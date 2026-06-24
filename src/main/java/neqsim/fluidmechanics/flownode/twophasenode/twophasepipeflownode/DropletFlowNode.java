@@ -11,9 +11,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * DropletFlowNode class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -24,18 +22,14 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
   private double averageDropletDiameter = 100.0e-6;
 
   /**
-   * <p>
    * Constructor for DropletFlowNode.
-   * </p>
    */
   public DropletFlowNode() {
     this.flowNodeType = "droplet";
   }
 
   /**
-   * <p>
    * Constructor for DropletFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
@@ -49,9 +43,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Constructor for DropletFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
@@ -185,9 +177,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * mainOld.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -269,9 +259,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -348,9 +336,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Getter for the field <code>averageDropletDiameter</code>.
-   * </p>
    *
    * @return a double
    */
@@ -359,9 +345,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Setter for the field <code>averageDropletDiameter</code>.
-   * </p>
    *
    * @param averageDropletDiameter a double
    */

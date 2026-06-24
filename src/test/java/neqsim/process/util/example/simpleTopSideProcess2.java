@@ -9,9 +9,7 @@ import neqsim.process.equipment.util.Recycle;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * simpleTopSideProcess2 class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id

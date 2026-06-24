@@ -4,9 +4,7 @@ import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * WaterLevelTransmitter class for measuring water level in three-phase separators.
- * </p>
  *
  * <p>
  * This transmitter measures the water level from the bottom of the separator. In a three-phase separator, water is the
@@ -23,9 +21,7 @@ public class WaterLevelTransmitter extends MeasurementDeviceBaseClass {
   protected ThreePhaseSeparator separator = null;
 
   /**
-   * <p>
    * Constructor for WaterLevelTransmitter.
-   * </p>
    *
    * @param separator a {@link neqsim.process.equipment.separator.ThreePhaseSeparator} object
    */
@@ -34,9 +30,7 @@ public class WaterLevelTransmitter extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for WaterLevelTransmitter.
-   * </p>
    *
    * @param name Name of WaterLevelTransmitter
    * @param separator a {@link neqsim.process.equipment.separator.ThreePhaseSeparator} object

@@ -20,9 +20,7 @@ import Jama.Matrix;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * Abstract StatisticsBaseClass class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -59,9 +57,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   protected double incompleteGammaComplemented = 0.0;
 
   /**
-   * <p>
    * Constructor for StatisticsBaseClass.
-   * </p>
    */
   public StatisticsBaseClass() {
   }
@@ -82,9 +78,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   }
 
   /**
-   * <p>
    * Setter for the field <code>sampleSet</code>.
-   * </p>
    *
    * @param sampleSet a {@link neqsim.statistics.parameterfitting.SampleSet} object
    */
@@ -93,9 +87,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   }
 
   /**
-   * <p>
    * addSampleSet.
-   * </p>
    *
    * @param sampleSet a {@link neqsim.statistics.parameterfitting.SampleSet} object
    */
@@ -112,9 +104,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   }
 
   /**
-   * <p>
    * calcValue.
-   * </p>
    *
    * @param sample a {@link neqsim.statistics.parameterfitting.SampleValue} object
    * @return a double
@@ -124,9 +114,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   }
 
   /**
-   * <p>
    * checkBounds.
-   * </p>
    *
    * @param newParameters a {@link Jama.Matrix} object
    */
@@ -151,9 +139,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   }
 
   /**
-   * <p>
    * calcTrueValue.
-   * </p>
    *
    * @param sample a {@link neqsim.statistics.parameterfitting.SampleValue} object
    * @return a double
@@ -163,9 +149,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   }
 
   /**
-   * <p>
    * calcTrueValue.
-   * </p>
    *
    * @param val a double
    * @param sample a {@link neqsim.statistics.parameterfitting.SampleValue} object
@@ -176,9 +160,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   }
 
   /**
-   * <p>
    * setFittingParameters.
-   * </p>
    *
    * @param parameterVals an array of type double
    */
@@ -191,9 +173,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   }
 
   /**
-   * <p>
    * setFittingParameter.
-   * </p>
    *
    * @param parameterNumber a int
    * @param parameterVal a double
@@ -205,9 +185,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   }
 
   /**
-   * <p>
    * getSample.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.statistics.parameterfitting.SampleValue} object
@@ -223,9 +201,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   }
 
   /**
-   * <p>
    * calcChiSquare.
-   * </p>
    *
    * @return a double
    */
@@ -241,9 +217,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   }
 
   /**
-   * <p>
    * calcAlphaMatrix.
-   * </p>
    *
    * @return an array of type double
    */
@@ -265,9 +239,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   }
 
   /**
-   * <p>
    * calcBetaMatrix.
-   * </p>
    *
    * @return an array of type double
    */
@@ -284,9 +256,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   }
 
   /**
-   * <p>
    * calcDerivatives.
-   * </p>
    *
    * @return an array of type double
    */
@@ -315,9 +285,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   // }
   // }
   /**
-   * <p>
    * calcParameterStandardDeviation.
-   * </p>
    */
   public void calcParameterStandardDeviation() {
     parameterStandardDeviation = new double[sampleSet.getSample(0).getFunction().getNumberOfFittingParams()];
@@ -337,9 +305,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   }
 
   /**
-   * <p>
    * calcCoVarianceMatrix.
-   * </p>
    */
   public void calcCoVarianceMatrix() {
     double old = multiFactor;
@@ -350,9 +316,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   }
 
   /**
-   * <p>
    * calcCorrelationMatrix.
-   * </p>
    */
   public void calcCorrelationMatrix() {
     parameterCorrelationMatrix = new Matrix(sampleSet.getSample(0).getFunction().getNumberOfFittingParams(),
@@ -374,9 +338,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   public abstract void solve();
 
   /**
-   * <p>
    * runMonteCarloSimulation.
-   * </p>
    */
   public void runMonteCarloSimulation() {
     neqsim.statistics.montecarlosimulation.MonteCarloSimulation montCarlSim = new neqsim.statistics.montecarlosimulation.MonteCarloSimulation(
@@ -393,9 +355,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   }
 
   /**
-   * <p>
    * calcAbsDev.
-   * </p>
    */
   public void calcAbsDev() {
     setFittingParameters(sampleSet.getSample(0).getFunction().getFittingParams());
@@ -440,9 +400,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   }
 
   /**
-   * <p>
    * displayValues.
-   * </p>
    */
   @ExcludeFromJacocoGeneratedReport
   public void displayValues() {
@@ -543,9 +501,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   }
 
   /**
-   * <p>
    * displayResultWithDeviation.
-   * </p>
    */
   @ExcludeFromJacocoGeneratedReport
   public void displayResultWithDeviation() {
@@ -615,9 +571,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   }
 
   /**
-   * <p>
    * displayMatrix.
-   * </p>
    *
    * @param coVarianceMatrix a {@link Jama.Matrix} object
    * @param name a {@link java.lang.String} object
@@ -656,9 +610,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   }
 
   /**
-   * <p>
    * calcDeviation.
-   * </p>
    */
   public void calcDeviation() {
     setFittingParameters(sampleSet.getSample(0).getFunction().getFittingParams());
@@ -695,9 +647,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   }
 
   /**
-   * <p>
    * displaySimple.
-   * </p>
    */
   @ExcludeFromJacocoGeneratedReport
   public void displaySimple() {

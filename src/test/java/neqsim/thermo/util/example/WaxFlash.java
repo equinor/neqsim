@@ -9,9 +9,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>
  * WaxFlash class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -23,9 +21,7 @@ public class WaxFlash {
   /** Logger object for class. */
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * bubblePointTemperatureFlash class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -19,9 +17,7 @@ public class BubblePointTemperatureFlash extends ConstantDutyTemperatureFlash {
   static Logger logger = LogManager.getLogger(BubblePointTemperatureFlash.class);
 
   /**
-   * <p>
    * Constructor for bubblePointTemperatureFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

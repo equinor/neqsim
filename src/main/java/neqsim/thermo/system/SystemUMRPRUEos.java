@@ -64,18 +64,14 @@ public class SystemUMRPRUEos extends SystemPrEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for SystemUMRPRUEos.
-   * </p>
    */
   public SystemUMRPRUEos() {
     this(298.15, 1.0, false);
   }
 
   /**
-   * <p>
    * Constructor for SystemUMRPRUEos.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -85,9 +81,7 @@ public class SystemUMRPRUEos extends SystemPrEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemUMRPRUEos.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -120,9 +114,7 @@ public class SystemUMRPRUEos extends SystemPrEos {
   }
 
   /**
-   * <p>
    * commonInitialization.
-   * </p>
    */
   public void commonInitialization() {
     setImplementedCompositionDeriativesofFugacity(true);

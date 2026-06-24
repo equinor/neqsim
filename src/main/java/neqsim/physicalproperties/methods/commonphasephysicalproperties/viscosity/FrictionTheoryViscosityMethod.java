@@ -59,9 +59,7 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
   private static final double MIN_VISCOSITY_PA_S = 1.0e-6;
 
   /**
-   * <p>
    * Constructor for FrictionTheoryViscosityMethod.
-   * </p>
    *
    * @param phase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */
@@ -256,9 +254,7 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
   }
 
   /**
-   * <p>
    * initChungPureComponentViscosity.
-   * </p>
    */
   public void initChungPureComponentViscosity() {
     PhaseInterface localPhase = phase.getPhase();
@@ -326,9 +322,7 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
   }
 
   /**
-   * <p>
    * setTBPviscosityCorrection.
-   * </p>
    *
    * @param correction a double
    */
@@ -337,9 +331,7 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
   }
 
   /**
-   * <p>
    * getTBPviscosityCorrection.
-   * </p>
    *
    * @return a double
    */

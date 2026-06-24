@@ -9,9 +9,7 @@ package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finite
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * FluidBoundaryNode class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -20,17 +18,13 @@ public class FluidBoundaryNode implements FluidBoundaryNodeInterface {
   protected SystemInterface system;
 
   /**
-   * <p>
    * Constructor for FluidBoundaryNode.
-   * </p>
    */
   public FluidBoundaryNode() {
   }
 
   /**
-   * <p>
    * Constructor for FluidBoundaryNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

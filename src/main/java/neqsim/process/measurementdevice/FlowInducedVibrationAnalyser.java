@@ -6,9 +6,7 @@ import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * FlowInducedVibrationAnalyser class.
- * </p>
  *
  * @author SEROS
  * @version $Id: $Id
@@ -56,9 +54,7 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
   private double FRMSConstant = 6.7;
 
   /**
-   * <p>
    * Constructor for WaterDewPointAnalyser.
-   * </p>
    *
    * @param pipe a {@link neqsim.process.equipment.pipeline.PipeBeggsAndBrills} object
    */
@@ -67,9 +63,7 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for FlowInducedVibrationAnalyser.
-   * </p>
    *
    * @param name Name of FlowInducedVibrationAnalyser
    * @param pipe a {@link neqsim.process.equipment.pipeline.PipeBeggsAndBrills} object
@@ -147,9 +141,7 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>method</code>.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -158,9 +150,7 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>method</code>.
-   * </p>
    *
    * @param method a {@link java.lang.String} object
    */
@@ -169,9 +159,7 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>segment</code>.
-   * </p>
    *
    * @param segment a {@link java.lang.Double} object
    */
@@ -181,9 +169,7 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * setFRMSConstant.
-   * </p>
    *
    * @param frms a double
    */
@@ -192,9 +178,7 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the <code>supportArrangement</code>.
-   * </p>
    *
    * <p>
    * The Energy Institute LOF model selects its coefficients from a qualitative support-arrangement category, not from a
@@ -239,9 +223,7 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>supportArrangement</code>.
-   * </p>
    *
    * @return the qualitative support-arrangement category used by the LOF correlation
    */
@@ -250,9 +232,7 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the <code>supportDistance</code>.
-   * </p>
    *
    * <p>
    * <b>Informational only.</b> This value is not used by the LOF or FRMS correlations; the LOF model uses the
@@ -267,9 +247,7 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>supportDistance</code>.
-   * </p>
    *
    * @return the informational support spacing in metres (not used by the LOF/FRMS correlations)
    */

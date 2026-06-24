@@ -5,9 +5,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * ComponentGeDuanSun class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -21,9 +19,7 @@ public class ComponentGeDuanSun extends ComponentGE {
   double q = 0;
 
   /**
-   * <p>
    * Constructor for ComponentGeDuanSun.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -35,9 +31,7 @@ public class ComponentGeDuanSun extends ComponentGE {
   }
 
   /**
-   * <p>
    * getGamma.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -67,9 +61,7 @@ public class ComponentGeDuanSun extends ComponentGE {
   }
 
   /**
-   * <p>
    * getGammaNRTL.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -430,9 +422,7 @@ public class ComponentGeDuanSun extends ComponentGE {
 
   /////////////////////////////////////////////////////
   /**
-   * <p>
    * getGammaPitzer.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -507,9 +497,7 @@ public class ComponentGeDuanSun extends ComponentGE {
    */
 
   /**
-   * <p>
    * Getter for the field <code>r</code>.
-   * </p>
    *
    * @return a double
    */
@@ -518,9 +506,7 @@ public class ComponentGeDuanSun extends ComponentGE {
   }
 
   /**
-   * <p>
    * Getter for the field <code>q</code>.
-   * </p>
    *
    * @return a double
    */

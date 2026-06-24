@@ -13,9 +13,9 @@ import org.ejml.interfaces.decomposition.SingularValueDecomposition_F64;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * GTSurfaceTensionODE class.
  *
+ * <p>
  * ODE-system for integrating the surface tension in cases where the a reference component number mole density can be
  * used as integration variable.
  *
@@ -52,9 +52,7 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
   public int maxit = 40;
 
   /**
-   * <p>
    * Constructor for GTSurfaceTensionODE.
-   * </p>
    *
    * @param flashedSystem a {@link neqsim.thermo.system.SystemInterface} object
    * @param phase1 a int

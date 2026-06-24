@@ -10,9 +10,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * NeqSimVega class.
- * </p>
  *
  * @author [author]
  */
@@ -21,17 +19,13 @@ public class NeqSimVega {
   Vega Vega = new Vega();
 
   /**
-   * <p>
    * Constructor for NeqSimGERG2008.
-   * </p>
    */
   public NeqSimVega() {
   }
 
   /**
-   * <p>
    * Constructor for NeqSimGERG2008.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
@@ -43,9 +37,7 @@ public class NeqSimVega {
   }
 
   /**
-   * <p>
    * getMolarDensity.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -56,9 +48,7 @@ public class NeqSimVega {
   }
 
   /**
-   * <p>
    * getDensity.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -70,9 +60,7 @@ public class NeqSimVega {
   }
 
   /**
-   * <p>
    * getDensity.
-   * </p>
    *
    * @return a double
    */
@@ -82,9 +70,7 @@ public class NeqSimVega {
   }
 
   /**
-   * <p>
    * getPressure.
-   * </p>
    *
    * @return a double
    */
@@ -97,9 +83,7 @@ public class NeqSimVega {
   }
 
   /**
-   * <p>
    * getMolarMass.
-   * </p>
    *
    * @return a double
    */
@@ -110,9 +94,7 @@ public class NeqSimVega {
   // }
 
   /**
-   * <p>
    * getMolarDensity.
-   * </p>
    *
    * @return a double
    */
@@ -127,9 +109,7 @@ public class NeqSimVega {
   }
 
   /**
-   * <p>
    * getAlpha0_Vega.
-   * </p>
    *
    * @return an array of {@link org.netlib.util.doubleW} objects
    */
@@ -196,9 +176,7 @@ public class NeqSimVega {
   }
 
   /**
-   * <p>
    * propertiesGERG.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return an array of type double
@@ -209,9 +187,7 @@ public class NeqSimVega {
   }
 
   /**
-   * <p>
    * getProperties.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param properties an array of {@link java.lang.String} objects
@@ -243,9 +219,7 @@ public class NeqSimVega {
   }
 
   /**
-   * <p>
    * propertiesGERG.
-   * </p>
    *
    * @return an array of type double
    */
@@ -277,9 +251,7 @@ public class NeqSimVega {
   }
 
   /**
-   * <p>
    * Setter for the field <code>phase</code>.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
@@ -301,9 +273,7 @@ public class NeqSimVega {
   }
 
   /**
-   * <p>
    * normalizeComposition.
-   * </p>
    */
   /*
    * public void normalizeComposition() { double result = 0; for (double value : notNormalizedGERGComposition) { result
@@ -312,9 +282,7 @@ public class NeqSimVega {
    */
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

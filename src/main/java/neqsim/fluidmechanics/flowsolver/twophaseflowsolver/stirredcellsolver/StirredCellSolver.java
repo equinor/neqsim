@@ -10,9 +10,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * StirredCellSolver class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -37,17 +35,13 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
   protected double[][] oldEnergy;
 
   /**
-   * <p>
    * Constructor for StirredCellSolver.
-   * </p>
    */
   public StirredCellSolver() {
   }
 
   /**
-   * <p>
    * Constructor for StirredCellSolver.
-   * </p>
    *
    * @param pipe a {@link neqsim.fluidmechanics.flowsystem.FlowSystemInterface} object
    * @param length a double
@@ -58,9 +52,7 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
   }
 
   /**
-   * <p>
    * Constructor for StirredCellSolver.
-   * </p>
    *
    * @param pipe a {@link neqsim.fluidmechanics.flowsystem.FlowSystemInterface} object
    * @param length a double
@@ -95,9 +87,7 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
   }
 
   /**
-   * <p>
    * initProfiles.
-   * </p>
    */
   public void initProfiles() {
     SystemInterface tempSyst = pipe.getNode(0).getBulkSystem().clone();
@@ -156,9 +146,7 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
   }
 
   /**
-   * <p>
    * initMatrix.
-   * </p>
    */
   public void initMatrix() {
     for (int i = 0; i < numberOfNodes; i++) {
@@ -192,9 +180,7 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
   }
 
   /**
-   * <p>
    * initPressure.
-   * </p>
    *
    * @param phaseNum a int
    */
@@ -209,9 +195,7 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
   }
 
   /**
-   * <p>
    * initVelocity.
-   * </p>
    *
    * @param phase a int
    */
@@ -229,9 +213,7 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
   }
 
   /**
-   * <p>
    * initTemperature.
-   * </p>
    *
    * @param phaseNum a int
    */
@@ -249,9 +231,7 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
   }
 
   /**
-   * <p>
    * initPhaseFraction.
-   * </p>
    *
    * @param phaseNum a int
    */
@@ -265,9 +245,7 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
   }
 
   /**
-   * <p>
    * initComposition.
-   * </p>
    *
    * @param phaseNum a int
    * @param comp a int
@@ -304,9 +282,7 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
   }
 
   /**
-   * <p>
    * initFinalResults.
-   * </p>
    *
    * @param phase a int
    */
@@ -325,9 +301,7 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
   }
 
   /**
-   * <p>
    * calcFluxes.
-   * </p>
    */
   public void calcFluxes() {
     for (int i = 0; i < numberOfNodes; i++) {
@@ -336,9 +310,7 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
   }
 
   /**
-   * <p>
    * initNodes.
-   * </p>
    */
   public void initNodes() {
     for (int i = 0; i < numberOfNodes; i++) {

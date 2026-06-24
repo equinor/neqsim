@@ -3,9 +3,7 @@ package neqsim.thermo.component.attractiveeosterm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * <p>
  * AttractiveTermTwuCoon class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -22,9 +20,7 @@ public class AttractiveTermTwuCoon extends AttractiveTermBaseClass {
   private double f = 2.63165;
 
   /**
-   * <p>
    * Constructor for AttractiveTermTwuCoon.
-   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
    */

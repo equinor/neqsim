@@ -31,9 +31,7 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
   static Logger logger = LogManager.getLogger(ComponentGE.class);
 
   /**
-   * <p>
    * Constructor for ComponentGE.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -74,9 +72,7 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
   }
 
   /**
-   * <p>
    * fugcoefDiffPres.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -93,9 +89,7 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
   }
 
   /**
-   * <p>
    * fugcoefDiffTemp.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double

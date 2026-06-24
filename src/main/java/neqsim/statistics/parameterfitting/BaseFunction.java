@@ -6,9 +6,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * Abstract BaseFunction class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -23,9 +21,7 @@ public abstract class BaseFunction implements FunctionInterface {
   public ThermodynamicOperations thermoOps;
 
   /**
-   * <p>
    * Constructor for BaseFunction.
-   * </p>
    */
   public BaseFunction() {
   }

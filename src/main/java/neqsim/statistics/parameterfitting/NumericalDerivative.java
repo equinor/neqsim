@@ -7,9 +7,7 @@
 package neqsim.statistics.parameterfitting;
 
 /**
- * <p>
  * NumericalDerivative class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -31,9 +29,7 @@ public final class NumericalDerivative implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * calcDerivative.
-   * </p>
    *
    * @param system a {@link neqsim.statistics.parameterfitting.StatisticsBaseClass} object
    * @param sampleNumber a int

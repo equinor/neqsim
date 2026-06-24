@@ -4,9 +4,7 @@ import java.util.HashMap;
 import neqsim.process.equipment.heatexchanger.Heater;
 
 /**
- * <p>
  * HeaterResponse class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -15,9 +13,7 @@ public class HeaterResponse extends BaseResponse {
   public HashMap<String, Value> data = new HashMap<String, Value>();
 
   /**
-   * <p>
    * Constructor for HeaterResponse.
-   * </p>
    *
    * @param inputHeater a {@link neqsim.process.equipment.heatexchanger.Heater} object
    */

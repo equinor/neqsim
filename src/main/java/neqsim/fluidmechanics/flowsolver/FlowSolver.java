@@ -7,9 +7,7 @@
 package neqsim.fluidmechanics.flowsolver;
 
 /**
- * <p>
  * Abstract FlowSolver class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -25,9 +23,7 @@ public abstract class FlowSolver implements FlowSolverInterface, java.io.Seriali
   protected int solverType = 0;
 
   /**
-   * <p>
    * Constructor for FlowSolver.
-   * </p>
    */
   public FlowSolver() {
   }

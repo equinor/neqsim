@@ -3,9 +3,7 @@ package neqsim.physicalproperties.interfaceproperties.surfacetension;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * LGTSurfaceTension class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -21,17 +19,13 @@ public class LGTSurfaceTension extends SurfaceTension {
   double[] pressure_interface = null;
 
   /**
-   * <p>
    * Constructor for LGTSurfaceTension.
-   * </p>
    */
   public LGTSurfaceTension() {
   }
 
   /**
-   * <p>
    * Constructor for LGTSurfaceTension.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -195,9 +189,7 @@ public class LGTSurfaceTension extends SurfaceTension {
   }
 
   /**
-   * <p>
    * getMolarDensity.
-   * </p>
    *
    * @param compnum a int
    * @return an array of type double
@@ -211,9 +203,7 @@ public class LGTSurfaceTension extends SurfaceTension {
   }
 
   /**
-   * <p>
    * getMolarDensityTotal.
-   * </p>
    *
    * @return an array of type double
    */
@@ -228,9 +218,7 @@ public class LGTSurfaceTension extends SurfaceTension {
   }
 
   /**
-   * <p>
    * getz.
-   * </p>
    *
    * @return an array of type double
    */
@@ -239,9 +227,7 @@ public class LGTSurfaceTension extends SurfaceTension {
   }
 
   /**
-   * <p>
    * getPressure.
-   * </p>
    *
    * @return an array of type double
    */

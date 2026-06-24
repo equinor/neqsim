@@ -12,9 +12,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * PhysicalPropertyMixingRule class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -29,9 +27,7 @@ public class PhysicalPropertyMixingRule
   public double[][] Gij;
 
   /**
-   * <p>
    * Constructor for PhysicalPropertyMixingRule.
-   * </p>
    */
   public PhysicalPropertyMixingRule() {
   }
@@ -68,9 +64,7 @@ public class PhysicalPropertyMixingRule
   }
 
   /**
-   * <p>
    * getPhysicalPropertyMixingRule.
-   * </p>
    *
    * @return a {@link neqsim.physicalproperties.mixingrule.PhysicalPropertyMixingRuleInterface} object
    */

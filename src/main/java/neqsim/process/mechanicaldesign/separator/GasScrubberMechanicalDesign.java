@@ -16,9 +16,7 @@ import neqsim.process.mechanicaldesign.separator.conformity.ConformityRuleSet;
 import neqsim.process.mechanicaldesign.separator.sectiontype.SepDesignSection;
 
 /**
- * <p>
  * GasScrubberMechanicalDesign class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -112,9 +110,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   private transient ConformityRuleSet conformityRuleSet = null;
 
   /**
-   * <p>
    * Constructor for GasScrubberMechanicalDesign.
-   * </p>
    *
    * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */

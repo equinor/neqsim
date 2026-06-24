@@ -18,9 +18,7 @@ public abstract class Viscosity extends GasPhysicalPropertyMethod implements Vis
   static Logger logger = LogManager.getLogger(Viscosity.class);
 
   /**
-   * <p>
    * Constructor for Viscosity.
-   * </p>
    *
    * @param gasPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

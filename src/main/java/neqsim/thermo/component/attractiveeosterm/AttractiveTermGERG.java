@@ -3,9 +3,7 @@ package neqsim.thermo.component.attractiveeosterm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * <p>
  * AttractiveTermGERG class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -17,9 +15,7 @@ public class AttractiveTermGERG extends AttractiveTermPr {
   protected double[] parametersSolidGERG = { 0.106025, 2.683845, -4.75638 };
 
   /**
-   * <p>
    * Constructor for AttractiveTermGERG.
-   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
    */
@@ -34,9 +30,7 @@ public class AttractiveTermGERG extends AttractiveTermPr {
   }
 
   /**
-   * <p>
    * AttractiveTermGERG.
-   * </p>
    *
    * @return a {@link java.lang.Object} object
    */
@@ -80,9 +74,7 @@ public class AttractiveTermGERG extends AttractiveTermPr {
   }
 
   /**
-   * <p>
    * diffalphaTGERG.
-   * </p>
    *
    * @param temperature a double
    * @return a double
@@ -105,9 +97,7 @@ public class AttractiveTermGERG extends AttractiveTermPr {
   }
 
   /**
-   * <p>
    * diffdiffalphaTGERG.
-   * </p>
    *
    * @param temperature a double
    * @return a double

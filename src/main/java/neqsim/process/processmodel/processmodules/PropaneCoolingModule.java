@@ -12,18 +12,14 @@ import neqsim.process.processmodel.ProcessModuleBaseClass;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * PropaneCoolingModule class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class PropaneCoolingModule extends ProcessModuleBaseClass {
   /**
-   * <p>
    * Constructor for PropaneCoolingModule.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -32,9 +28,7 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>condenserTemperature</code>.
-   * </p>
    *
    * @param condenserTemperature the condenserTemperature to set
    */
@@ -43,9 +37,7 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>vaporizerTemperature</code>.
-   * </p>
    *
    * @param vaporizerTemperature the vaporizerTemperature to set
    */
@@ -169,9 +161,7 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

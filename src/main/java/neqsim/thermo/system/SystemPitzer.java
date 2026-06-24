@@ -26,9 +26,7 @@ public class SystemPitzer extends SystemEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemPitzer.
-   * </p>
    *
    * @param T temperature in K
    * @param P pressure in bara
@@ -38,9 +36,7 @@ public class SystemPitzer extends SystemEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemPitzer.
-   * </p>
    *
    * @param T temperature in K
    * @param P pressure in bara

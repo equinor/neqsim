@@ -7,9 +7,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * Draft_ISO18453 class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -28,9 +26,7 @@ public class Draft_ISO18453 extends neqsim.standards.Standard {
   ThermodynamicOperations thermoOps;
 
   /**
-   * <p>
    * Constructor for Draft_ISO18453.
-   * </p>
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */

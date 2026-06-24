@@ -7,9 +7,7 @@ import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * Abstract NonEquilibriumFluidBoundary class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -32,9 +30,7 @@ public abstract class NonEquilibriumFluidBoundary
   public double[][] molFractionDifference;
 
   /**
-   * <p>
    * Constructor for NonEquilibriumFluidBoundary.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -59,9 +55,7 @@ public abstract class NonEquilibriumFluidBoundary
   }
 
   /**
-   * <p>
    * Constructor for NonEquilibriumFluidBoundary.
-   * </p>
    *
    * @param flowNode a {@link neqsim.fluidmechanics.flownode.FlowNodeInterface} object
    */
@@ -100,9 +94,7 @@ public abstract class NonEquilibriumFluidBoundary
   }
 
   /**
-   * <p>
    * setfvecMassTrans.
-   * </p>
    */
   public void setfvecMassTrans() {
     double sumx = 0;
@@ -140,9 +132,7 @@ public abstract class NonEquilibriumFluidBoundary
   }
 
   /**
-   * <p>
    * setfvecMassTrans2.
-   * </p>
    */
   public void setfvecMassTrans2() {
     double sumx = 0.0;
@@ -200,9 +190,7 @@ public abstract class NonEquilibriumFluidBoundary
   }
 
   /**
-   * <p>
    * setJacMassTrans.
-   * </p>
    */
   public void setJacMassTrans() {
     double dij = 0;
@@ -267,9 +255,7 @@ public abstract class NonEquilibriumFluidBoundary
   }
 
   /**
-   * <p>
    * setJacMassTrans2.
-   * </p>
    */
   public void setJacMassTrans2() {
     double dij = 0;
@@ -358,9 +344,7 @@ public abstract class NonEquilibriumFluidBoundary
   }
 
   /**
-   * <p>
    * Setter for the field <code>uMassTrans</code>.
-   * </p>
    */
   public void setuMassTrans() {
     for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfComponents(); i++) {
@@ -376,9 +360,7 @@ public abstract class NonEquilibriumFluidBoundary
   }
 
   /**
-   * <p>
    * updateMassTrans.
-   * </p>
    */
   public void updateMassTrans() {
     for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfComponents(); i++) {
@@ -394,9 +376,7 @@ public abstract class NonEquilibriumFluidBoundary
   }
 
   /**
-   * <p>
    * calcMolFractionDifference.
-   * </p>
    */
   public void calcMolFractionDifference() {
     for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents() - 1; i++) {
@@ -408,9 +388,7 @@ public abstract class NonEquilibriumFluidBoundary
   }
 
   /**
-   * <p>
    * calcHeatTransferCoefficients.
-   * </p>
    *
    * @param phaseNum a int
    */
@@ -429,9 +407,7 @@ public abstract class NonEquilibriumFluidBoundary
   }
 
   /**
-   * <p>
    * calcHeatTransferCorrection.
-   * </p>
    *
    * @param phaseNum a int
    */

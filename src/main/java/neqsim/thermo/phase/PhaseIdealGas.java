@@ -21,9 +21,7 @@ public class PhaseIdealGas extends Phase {
   }
 
   /**
-   * <p>
    * Constructor for PhaseIdealGas.
-   * </p>
    */
   public PhaseIdealGas() {
     thermoPropertyModelName = "ideal gas";
@@ -50,9 +48,7 @@ public class PhaseIdealGas extends Phase {
   }
 
   /**
-   * <p>
    * getMixingRule.
-   * </p>
    *
    * @return a {@link neqsim.thermo.mixingrule.EosMixingRulesInterface} object
    */
@@ -75,9 +71,7 @@ public class PhaseIdealGas extends Phase {
   }
 
   /**
-   * <p>
    * setMixingRule.
-   * </p>
    *
    * @param mr a {@link neqsim.thermo.mixingrule.MixingRuleTypeInterface} object
    */

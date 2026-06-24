@@ -16,9 +16,7 @@ import neqsim.process.mechanicaldesign.designstandards.ValveDesignStandard;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * ValveMechanicalDesign class provides mechanical design calculations for control valves.
- * </p>
  *
  * <p>
  * This class calculates valve sizing, weight, dimensions, and actuator requirements based on industry standards
@@ -132,9 +130,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   private String flangeType = "RF"; // Raised Face
 
   /**
-   * <p>
    * Getter for the field <code>valveCharacterization</code>.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -143,9 +139,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * <p>
    * Getter for the field <code>valveCharacterizationMethod</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.mechanicaldesign.valve.ValveCharacteristic} object
    */
@@ -154,9 +148,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * <p>
    * Setter for the field <code>valveCharacterizationMethod</code>.
-   * </p>
    *
    * @param valveCharacterizationMethod a {@link neqsim.process.mechanicaldesign.valve.ValveCharacteristic} object
    */
@@ -165,9 +157,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * <p>
    * Getter for the field <code>valveSizingStandard</code>.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -176,9 +166,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * <p>
    * Setter for the field <code>valveSizingStandard</code>.
-   * </p>
    *
    * <p>
    * Available sizing standards:
@@ -299,9 +287,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   ControlValveSizingInterface valveSizingMethod = null;
 
   /**
-   * <p>
    * Constructor for ValveMechanicalDesign.
-   * </p>
    *
    * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
@@ -313,9 +299,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * <p>
    * getValveSizingMethod.
-   * </p>
    *
    * @return a {@link neqsim.process.mechanicaldesign.valve.ControlValveSizingInterface} object
    */

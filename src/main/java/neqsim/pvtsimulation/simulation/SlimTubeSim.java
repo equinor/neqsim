@@ -9,9 +9,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * SlimTubeSim class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -24,9 +22,7 @@ public class SlimTubeSim extends BasePVTsimulation {
   SystemInterface[] slimTubeNodeSystem = null;
 
   /**
-   * <p>
    * Constructor for SlimTubeSim.
-   * </p>
    *
    * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
    * @param injectionGas a {@link neqsim.thermo.system.SystemInterface} object
@@ -199,9 +195,7 @@ public class SlimTubeSim extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -243,9 +237,7 @@ public class SlimTubeSim extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>numberOfSlimTubeNodes</code>.
-   * </p>
    *
    * @return the numberOfSlimTubeNodes
    */
@@ -254,9 +246,7 @@ public class SlimTubeSim extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Setter for the field <code>numberOfSlimTubeNodes</code>.
-   * </p>
    *
    * @param numberOfSlimTubeNodes the numberOfSlimTubeNodes to set
    */

@@ -3,9 +3,7 @@ package neqsim.pvtsimulation.util.parameterfitting;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtFunction;
 
 /**
- * <p>
  * WaxFunction class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -14,9 +12,7 @@ public class WaxFunction extends LevenbergMarquardtFunction {
   double molarMass = 0.0;
 
   /**
-   * <p>
    * Constructor for WaxFunction.
-   * </p>
    */
   public WaxFunction() {
     params = new double[3];

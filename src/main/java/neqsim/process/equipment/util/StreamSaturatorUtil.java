@@ -10,9 +10,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * StreamSaturatorUtil class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -123,9 +121,7 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * isMultiPhase.
-   * </p>
    *
    * @return a boolean
    */
@@ -134,9 +130,7 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Setter for the field <code>multiPhase</code>.
-   * </p>
    *
    * @param multiPhase a boolean
    */
@@ -145,9 +139,7 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * setApprachToSaturation.
-   * </p>
    *
    * @param approachToSaturation a double
    */

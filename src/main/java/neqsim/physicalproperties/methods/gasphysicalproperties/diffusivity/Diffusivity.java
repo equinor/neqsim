@@ -9,9 +9,7 @@ import neqsim.physicalproperties.methods.methodinterface.DiffusivityInterface;
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * <p>
  * Diffusivity class for gas phase diffusion coefficient calculations.
- * </p>
  *
  * <p>
  * Uses Chapman-Enskog kinetic theory with Lennard-Jones parameters. The LJ parameters used here are the standard values
@@ -109,9 +107,7 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
   }
 
   /**
-   * <p>
    * Constructor for Diffusivity.
-   * </p>
    *
    * @param gasPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

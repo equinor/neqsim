@@ -41,9 +41,7 @@ class FlashOilTest {
   static double[] errS = new double[P_bar.length];
 
   /**
-   * <p>
    * setUp.
-   * </p>
    */
   @BeforeAll
   public static void setUp() {
@@ -73,9 +71,7 @@ class FlashOilTest {
   }
 
   /**
-   * <p>
    * testPHflash.
-   * </p>
    */
   @Test
   public void testPHflash() {
@@ -89,9 +85,7 @@ class FlashOilTest {
   }
 
   /**
-   * <p>
    * testPSflash.
-   * </p>
    */
   @Test
   public void testPSflash() {

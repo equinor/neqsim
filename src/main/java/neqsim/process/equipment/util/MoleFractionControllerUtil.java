@@ -9,9 +9,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * MoleFractionControllerUtil class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -29,9 +27,7 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
   boolean moleFractionReduction = false;
 
   /**
-   * <p>
    * Constructor for MoleFractionControllerUtil.
-   * </p>
    *
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -56,9 +52,7 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Getter for the field <code>molesChange</code>.
-   * </p>
    *
    * @return a double
    */
@@ -67,9 +61,7 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * setMoleFraction.
-   * </p>
    *
    * @param compName a {@link java.lang.String} object
    * @param moleFrac a double
@@ -81,9 +73,7 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * setComponentRate.
-   * </p>
    *
    * @param compName a {@link java.lang.String} object
    * @param rate a double
@@ -104,9 +94,7 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * setRelativeMoleFractionReduction.
-   * </p>
    *
    * @param compName a {@link java.lang.String} object
    * @param moleFracRatio a double

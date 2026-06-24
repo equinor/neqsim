@@ -4,9 +4,7 @@ import java.util.HashMap;
 import neqsim.process.equipment.pump.Pump;
 
 /**
- * <p>
  * PumpResponse class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -31,9 +29,7 @@ public class PumpResponse extends BaseResponse {
   public Integer speed;
 
   /**
-   * <p>
    * Constructor for PumpResponse.
-   * </p>
    *
    * @param inputPump a {@link neqsim.process.equipment.pump.Pump} object
    */

@@ -3,9 +3,7 @@ package neqsim.thermodynamicoperations.flashops;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * PSFlash class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -25,9 +23,7 @@ public class PSFlash extends QfuncFlash {
   int type = 0;
 
   /**
-   * <p>
    * Constructor for PSFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Sspec a double
@@ -133,9 +129,7 @@ public class PSFlash extends QfuncFlash {
   }
 
   /**
-   * <p>
    * onPhaseSolve.
-   * </p>
    */
   public void onPhaseSolve() {
   }

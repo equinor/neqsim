@@ -14,9 +14,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * TubingPerformance class - Vertical Lift Performance (VLP) model for wellbore tubing.
- * </p>
  *
  * <p>
  * This class calculates the pressure drop through wellbore tubing using various multiphase flow correlations. It can

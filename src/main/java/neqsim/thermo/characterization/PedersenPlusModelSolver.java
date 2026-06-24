@@ -6,9 +6,7 @@ import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * PedersenPlusModelSolver class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -32,17 +30,13 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
   SystemInterface system = null;
 
   /**
-   * <p>
    * Constructor for PedersenPlusModelSolver.
-   * </p>
    */
   public PedersenPlusModelSolver() {
   }
 
   /**
-   * <p>
    * Constructor for PedersenPlusModelSolver.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param characterizeClass a {@link neqsim.thermo.characterization.PlusFractionModel.PedersenPlusModel} object
@@ -66,9 +60,7 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>fvecAB</code>.
-   * </p>
    */
   public void setfvecAB() {
     double zSum = 0.0;
@@ -89,9 +81,7 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * setJacAB.
-   * </p>
    */
   public void setJacAB() {
     JacAB.timesEquals(0.0);
@@ -140,9 +130,7 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>fvecCD</code>.
-   * </p>
    */
   public void setfvecCD() {
     double densTBO = characterizeClass.PVTsimDensities[characterizeClass.getFirstPlusFractionNumber() - 6];
@@ -167,9 +155,7 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * setJacCD.
-   * </p>
    */
   public void setJacCD() {
     JacCD.timesEquals(0.0);
@@ -209,9 +195,7 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * solve.
-   * </p>
    */
   public void solve() {
     iter = 0;

@@ -9,9 +9,7 @@ package neqsim.thermodynamicoperations.flashops;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * VUflash class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -25,9 +23,7 @@ public class VUflash extends Flash {
   Flash pHFlash;
 
   /**
-   * <p>
    * Constructor for VUflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Vspec a double

@@ -4,9 +4,7 @@ import neqsim.thermo.phase.PhaseCPAInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * ComponentPCSAFTa class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -23,9 +21,7 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
   double[] xsitedT = new double[0];
 
   /**
-   * <p>
    * Constructor for ComponentPCSAFTa.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -50,9 +46,7 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
   }
 
   /**
-   * <p>
    * Constructor for ComponentPCSAFTa.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]
@@ -129,9 +123,7 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
   }
 
   /**
-   * <p>
    * dFCPAdN.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -148,9 +140,7 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
   }
 
   /**
-   * <p>
    * dFCPAdNdV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -165,9 +155,7 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
   }
 
   /**
-   * <p>
    * calc_lngidV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -205,9 +193,7 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
   }
 
   /**
-   * <p>
    * calc_lngi.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -217,9 +203,7 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
   }
 
   /**
-   * <p>
    * dFCPAdNdXidXdV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double

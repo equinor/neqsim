@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 
 /**
- * <p>
  * GasScrubberDesignStandard class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -25,9 +23,7 @@ public class GasScrubberDesignStandard extends DesignStandard {
   double lengthMeshPadToDemistingCyclone = 550.0; // unit: mm
 
   /**
-   * <p>
    * Constructor for GasScrubberDesignStandard.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
@@ -58,9 +54,7 @@ public class GasScrubberDesignStandard extends DesignStandard {
   }
 
   /**
-   * <p>
    * Getter for the field <code>gasLoadFactor</code>.
-   * </p>
    *
    * @return a double
    */
@@ -69,9 +63,7 @@ public class GasScrubberDesignStandard extends DesignStandard {
   }
 
   /**
-   * <p>
    * getVolumetricDesignFactor.
-   * </p>
    *
    * @return a double
    */

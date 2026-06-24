@@ -14,9 +14,7 @@ import org.apache.logging.log4j.Logger;
 import org.h2.jdbc.JdbcSQLSyntaxErrorException;
 
 /**
- * <p>
  * NeqSimDataBase class.
- * </p>
  *
  * @author Even Solbraa
  * @version Dec 2018
@@ -51,9 +49,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   protected transient Connection databaseConnection = null;
 
   /**
-   * <p>
    * Constructor for NeqSimDataBase.
-   * </p>
    */
   public NeqSimDataBase() {
     setDataBaseType(dataBaseType);
@@ -68,9 +64,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   }
 
   /**
-   * <p>
    * openConnection.
-   * </p>
    *
    * @return a Connection object
    * @throws java.sql.SQLException if any.
@@ -123,9 +117,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   }
 
   /**
-   * <p>
    * getConnection.
-   * </p>
    *
    * @return a Connection object
    */
@@ -134,9 +126,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   }
 
   /**
-   * <p>
    * Getter for the field <code>statement</code>.
-   * </p>
    *
    * @return a Statement object
    */
@@ -145,9 +135,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   }
 
   /**
-   * <p>
    * Setter for the field <code>statement</code>.
-   * </p>
    *
    * @param statement a Statement object
    */
@@ -156,9 +144,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   }
 
   /**
-   * <p>
    * Execute query using execute.
-   * </p>
    *
    * @param sqlString Query to execute.
    * @return True if the first result is a ResultSet object; false if it is an update count or there are no results
@@ -179,9 +165,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   }
 
   /**
-   * <p>
    * Execute query using executeQuery but do not return anything.
-   * </p>
    *
    * @param sqlString Query to execute.
    */
@@ -201,9 +185,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   }
 
   /**
-   * <p>
    * Execute query using executeQuery and return ResultSet.
-   * </p>
    *
    * @param sqlString Query to execute.
    * @return a ResultSet object
@@ -241,9 +223,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   }
 
   /**
-   * <p>
    * createTemporaryTables.
-   * </p>
    *
    * @return the createTemporaryTables
    */
@@ -252,9 +232,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   }
 
   /**
-   * <p>
    * Setter for the field <code>createTemporaryTables</code>.
-   * </p>
    *
    * @param createTemporaryTables the createTemporaryTables to set
    */
@@ -263,9 +241,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   }
 
   /**
-   * <p>
    * Getter for the field <code>dataBaseType</code>.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -274,9 +250,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   }
 
   /**
-   * <p>
    * Setter for the field <code>dataBaseType</code>.
-   * </p>
    *
    * @param aDataBaseType a {@link java.lang.String} object
    */
@@ -285,9 +259,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   }
 
   /**
-   * <p>
    * Setter for the field <code>dataBaseType</code>.
-   * </p>
    *
    * @param aDataBaseType a {@link java.lang.String} object
    * @param connectionString a {@link java.lang.String} object
@@ -334,9 +306,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   }
 
   /**
-   * <p>
    * Setter for the field <code>username</code>.
-   * </p>
    *
    * @param aUsername the username to set
    */
@@ -345,9 +315,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   }
 
   /**
-   * <p>
    * Setter for the field <code>password</code>.
-   * </p>
    *
    * @param aPassword the password to set
    */
@@ -356,9 +324,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   }
 
   /**
-   * <p>
    * Getter for the field <code>connectionString</code>.
-   * </p>
    *
    * @return the connectionString
    */
@@ -367,9 +333,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   }
 
   /**
-   * <p>
    * Setter for the field <code>connectionString</code>.
-   * </p>
    *
    * @param aConnectionString the connectionString to set
    */
@@ -378,9 +342,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   }
 
   /**
-   * <p>
    * getComponentNames.
-   * </p>
    *
    * @return an array of {@link java.lang.String} objects
    */
@@ -502,9 +464,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   }
 
   /**
-   * <p>
    * initH2DatabaseFromCSVfiles.
-   * </p>
    */
   public static void initH2DatabaseFromCSVfiles() {
     h2IsInitalizing = true;

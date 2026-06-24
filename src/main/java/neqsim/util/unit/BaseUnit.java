@@ -1,9 +1,7 @@
 package neqsim.util.unit;
 
 /**
- * <p>
  * BaseUnit class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -24,9 +22,7 @@ public abstract class BaseUnit implements Unit, neqsim.thermo.ThermodynamicConst
   protected double factor = 1.0;
 
   /**
-   * <p>
    * Constructor for BaseUnit.
-   * </p>
    *
    * @param value a double
    * @param name a {@link java.lang.String} object

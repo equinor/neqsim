@@ -19,9 +19,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.unit.PressureUnit;
 
 /**
- * <p>
  * SimpleReservoir class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -53,9 +51,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   double lowPressureLimit = 50.0;
 
   /**
-   * <p>
    * Constructor for SimpleReservoir.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -64,9 +60,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * getReservoirFluid.
-   * </p>
    *
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -81,9 +75,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
    */
 
   /**
-   * <p>
    * addGasProducer.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -99,9 +91,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * addOilProducer.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -117,9 +107,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * addWaterInjector.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -136,9 +124,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * addWaterProducer.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -154,9 +140,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * addGasInjector.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -172,9 +156,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * getGasInPlace.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -197,9 +179,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * getOilInPlace.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -222,9 +202,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>gasProducer</code>.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.process.equipment.reservoir.Well} object
@@ -234,9 +212,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>oilProducer</code>.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.process.equipment.reservoir.Well} object
@@ -246,9 +222,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>oilProducer</code>.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a {@link neqsim.process.equipment.reservoir.Well} object
@@ -263,9 +237,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>waterProducer</code>.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.process.equipment.reservoir.Well} object
@@ -275,9 +247,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>waterInjector</code>.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.process.equipment.reservoir.Well} object
@@ -287,9 +257,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>gasInjector</code>.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.process.equipment.reservoir.Well} object
@@ -299,9 +267,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * setReservoirFluid.
-   * </p>
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    * @param gasVolume a double
@@ -382,9 +348,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * GORprodution.
-   * </p>
    *
    * @return a double
    */
@@ -403,9 +367,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * getGasProdution.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -426,9 +388,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * getOilProdution.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -449,9 +409,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * getWaterProdution.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -596,9 +554,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -726,9 +682,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>gasProductionTotal</code>.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -744,9 +698,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>oilProductionTotal</code>.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -759,9 +711,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * getProductionTotal.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -775,9 +725,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * getOOIP.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -790,9 +738,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * getOGIP.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -811,9 +757,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>lowPressureLimit</code>.
-   * </p>
    *
    * @param value a double
    * @param unit a {@link java.lang.String} object
@@ -824,9 +768,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>lowPressureLimit</code>.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double

@@ -23,9 +23,7 @@ public class SteamHeater extends Heater {
   private double steamFlowRate = 0.0; // kg/s
 
   /**
-   * <p>
    * Constructor for SteamHeater.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -34,9 +32,7 @@ public class SteamHeater extends Heater {
   }
 
   /**
-   * <p>
    * Constructor for SteamHeater.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object

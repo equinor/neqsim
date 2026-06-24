@@ -8,9 +8,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * Condenser class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -61,9 +59,7 @@ public class Condenser extends SimpleTray {
   }
 
   /**
-   * <p>
    * Setter for the field <code>totalCondenser</code>.
-   * </p>
    *
    * @param isTotalCondenser a boolean
    */
@@ -81,9 +77,7 @@ public class Condenser extends SimpleTray {
   }
 
   /**
-   * <p>
    * Getter for the field <code>refluxRatio</code>.
-   * </p>
    *
    * @return the refluxRatio
    */
@@ -92,9 +86,7 @@ public class Condenser extends SimpleTray {
   }
 
   /**
-   * <p>
    * Setter for the field <code>refluxRatio</code>.
-   * </p>
    *
    * @param refluxRatio the refluxRatio to set
    */
@@ -104,9 +96,7 @@ public class Condenser extends SimpleTray {
   }
 
   /**
-   * <p>
    * Getter for the field <code>duty</code>.
-   * </p>
    *
    * @return a double
    */
@@ -116,9 +106,7 @@ public class Condenser extends SimpleTray {
   }
 
   /**
-   * <p>
    * getDuty.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -139,9 +127,7 @@ public class Condenser extends SimpleTray {
   }
 
   /**
-   * <p>
    * getProductOutStream.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */

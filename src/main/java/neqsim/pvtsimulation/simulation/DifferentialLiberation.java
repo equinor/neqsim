@@ -10,9 +10,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * DifferentialLiberation class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -41,9 +39,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
   double[] gasVolume;
 
   /**
-   * <p>
    * Constructor for DifferentialLiberation.
-   * </p>
    *
    * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -52,9 +48,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * calcSaturationConditions.
-   * </p>
    */
   public void calcSaturationConditions() {
     getThermoSystem().setPressure(1.0);
@@ -87,9 +81,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * runCalc.
-   * </p>
    */
   public void runCalc() {
     saturationConditionFound = false;
@@ -196,9 +188,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -229,9 +219,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>relativeVolume</code>.
-   * </p>
    *
    * @return the relativeVolume
    */
@@ -246,9 +234,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * getBo.
-   * </p>
    *
    * @return the Bo
    */
@@ -257,9 +243,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * getBg.
-   * </p>
    *
    * @return the Bg
    */
@@ -268,9 +252,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * getRs.
-   * </p>
    *
    * @return the Rs
    */
@@ -279,9 +261,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * getZgas.
-   * </p>
    *
    * @return the Zgas
    */
@@ -290,9 +270,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>relGasGravity</code>.
-   * </p>
    *
    * @return the relGasGravity
    */
@@ -301,9 +279,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>gasStandardVolume</code>.
-   * </p>
    *
    * @return the gasStandardVolume
    */
@@ -312,9 +288,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>oilDensity</code>.
-   * </p>
    *
    * @return the oilDensity
    */

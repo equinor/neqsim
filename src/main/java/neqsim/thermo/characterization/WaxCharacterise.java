@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * WaxCharacterise class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -23,9 +21,7 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
   protected WaxModelInterface model = new PedersenWaxModel();
 
   /**
-   * <p>
    * Constructor for WaxCharacterise.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -252,9 +248,7 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>model</code>.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.characterization.WaxModelInterface} object
@@ -267,9 +261,7 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>model</code>.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -282,9 +274,7 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>model</code>.
-   * </p>
    *
    * @return a {@link neqsim.thermo.characterization.WaxModelInterface} object
    */
@@ -293,9 +283,7 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * <p>
    * setModelName.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */

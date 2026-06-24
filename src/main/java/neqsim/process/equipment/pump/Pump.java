@@ -141,9 +141,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
   }
 
   /**
-   * <p>
    * Constructor for Pump.
-   * </p>
    *
    * @param name name of pump
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -202,9 +200,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
   }
 
   /**
-   * <p>
    * getPower.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -231,9 +227,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
   }
 
   /**
-   * <p>
    * getDuty.
-   * </p>
    *
    * @return a double
    */
@@ -242,9 +236,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
   }
 
   /**
-   * <p>
    * calculateAsCompressor.
-   * </p>
    *
    * @param setPumpCalcType a boolean
    */
@@ -557,9 +549,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
   }
 
   /**
-   * <p>
    * Getter for the field <code>molarFlow</code>.
-   * </p>
    *
    * @return a double
    */
@@ -568,9 +558,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
   }
 
   /**
-   * <p>
    * Setter for the field <code>molarFlow</code>.
-   * </p>
    *
    * @param molarFlow a double
    */
@@ -585,9 +573,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
   }
 
   /**
-   * <p>
    * Getter for the field <code>isentropicEfficiency</code>.
-   * </p>
    *
    * @return the isentropicEfficiency
    */
@@ -596,9 +582,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
   }
 
   /**
-   * <p>
    * Setter for the field <code>isentropicEfficiency</code>.
-   * </p>
    *
    * @param isentropicEfficiency the isentropicEfficiency to set
    */
@@ -607,9 +591,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
   }
 
   /**
-   * <p>
    * Getter for the field <code>outTemperature</code>.
-   * </p>
    *
    * @return a double
    */
@@ -667,9 +649,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
   }
 
   /**
-   * <p>
    * Setter for the field <code>outTemperature</code>.
-   * </p>
    *
    * @param outTemperature outlet temperature in Kelvin
    * @deprecated use {@link #setOutletTemperature(double)} instead
@@ -693,9 +673,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
   }
 
   /**
-   * <p>
    * Setter for the field <code>pressure</code>.
-   * </p>
    *
    * @param pressure a double
    * @param unit a {@link java.lang.String} object
@@ -712,9 +690,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
   }
 
   /**
-   * <p>
    * Setter for the field <code>pressure</code>.
-   * </p>
    *
    * @param pressure a double
    * @param unit a {@link java.lang.String} object
@@ -726,9 +702,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
   }
 
   /**
-   * <p>
    * Setter for the field <code>speed</code>.
-   * </p>
    *
    * @param speed a double
    */
@@ -737,9 +711,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
   }
 
   /**
-   * <p>
    * Getter for the field <code>speed</code>.
-   * </p>
    *
    * @return a double
    */
@@ -748,9 +720,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
   }
 
   /**
-   * <p>
    * Getter for the field <code>pumpChart</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.pump.PumpChart} object
    */

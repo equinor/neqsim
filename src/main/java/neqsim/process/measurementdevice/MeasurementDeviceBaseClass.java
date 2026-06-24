@@ -79,9 +79,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
   }
 
   /**
-   * <p>
    * Setter for the field <code>onlineSignal</code>.
-   * </p>
    *
    * @param onlineSignal the onlineSignal to set
    */
@@ -96,9 +94,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
   }
 
   /**
-   * <p>
    * Setter for the field <code>isOnlineSignal</code>.
-   * </p>
    *
    * @param isOnlineSignal the isOnlineSignal to set
    * @param plantName a {@link java.lang.String} object
@@ -391,9 +387,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
   }
 
   /**
-   * <p>
    * Setter for the field <code>onlineMeasurementValue</code>.
-   * </p>
    *
    * @param value a double
    * @param unit a {@link java.lang.String} object
@@ -404,9 +398,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
   }
 
   /**
-   * <p>
    * Getter for the field <code>onlineMeasurementValue</code>.
-   * </p>
    *
    * @return a double
    */
@@ -415,9 +407,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
   }
 
   /**
-   * <p>
    * doConditionAnalysis.
-   * </p>
    *
    * @return a boolean
    */
@@ -501,9 +491,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
   }
 
   /**
-   * <p>
    * Setter for the field <code>conditionAnalysis</code>.
-   * </p>
    *
    * @param conditionMonitor a boolean
    */
@@ -512,9 +500,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
   }
 
   /**
-   * <p>
    * runConditionAnalysis.
-   * </p>
    */
   public void runConditionAnalysis() {
     if (Math.abs(
@@ -526,9 +512,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
   }
 
   /**
-   * <p>
    * Getter for the field <code>conditionAnalysisMessage</code>.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -537,9 +521,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
   }
 
   /**
-   * <p>
    * setQualityCheckMessage.
-   * </p>
    *
    * @param conditionAnalysisMessage a {@link java.lang.String} object
    */
@@ -548,9 +530,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
   }
 
   /**
-   * <p>
    * Getter for the field <code>conditionAnalysisMaxDeviation</code>.
-   * </p>
    *
    * @return a double
    */
@@ -559,9 +539,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
   }
 
   /**
-   * <p>
    * Setter for the field <code>conditionAnalysisMaxDeviation</code>.
-   * </p>
    *
    * @param conditionAnalysisMaxDeviation a double
    */

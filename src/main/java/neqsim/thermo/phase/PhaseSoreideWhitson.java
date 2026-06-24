@@ -40,9 +40,7 @@ public class PhaseSoreideWhitson extends PhasePrEos {
 
   // Set salinity for the phase (mol/kg or as used in Soreide-Whitson)
   /**
-   * <p>
    * Setter for the field <code>salinityConcentration</code>.
-   * </p>
    *
    * @param salinityConcentration a double
    */
@@ -51,9 +49,7 @@ public class PhaseSoreideWhitson extends PhasePrEos {
   }
 
   /**
-   * <p>
    * Getter for the field <code>salinityConcentration</code>.
-   * </p>
    *
    * @return a double
    */
@@ -62,9 +58,7 @@ public class PhaseSoreideWhitson extends PhasePrEos {
   }
 
   /**
-   * <p>
    * addSalinity.
-   * </p>
    *
    * @param salinity a double
    */
@@ -73,9 +67,7 @@ public class PhaseSoreideWhitson extends PhasePrEos {
   }
 
   /**
-   * <p>
    * Getter for the field <code>salinity</code>.
-   * </p>
    *
    * @param salinity a double
    * @return a double

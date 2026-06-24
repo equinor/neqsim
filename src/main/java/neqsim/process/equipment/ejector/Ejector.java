@@ -132,9 +132,7 @@ public class Ejector extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Setter for the field <code>dischargePressure</code>.
-   * </p>
    *
    * @param dischargePressure a double
    */
@@ -143,9 +141,7 @@ public class Ejector extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Setter for the field <code>efficiencyIsentropic</code>.
-   * </p>
    *
    * @param efficiencyIsentropic a double
    */
@@ -154,9 +150,7 @@ public class Ejector extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Setter for the field <code>diffuserEfficiency</code>.
-   * </p>
    *
    * @param diffuserEfficiency a double
    */
@@ -204,9 +198,7 @@ public class Ejector extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Setter for the field <code>throatArea</code>.
-   * </p>
    *
    * @param throatArea a double
    */
@@ -464,9 +456,7 @@ public class Ejector extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * getOutStream.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -475,9 +465,7 @@ public class Ejector extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * getEntrainmentRatio.
-   * </p>
    *
    * @return a double
    */
@@ -838,9 +826,7 @@ public class Ejector extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>motiveStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -849,9 +835,7 @@ public class Ejector extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>suctionStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -860,9 +844,7 @@ public class Ejector extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>mixedStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -871,9 +853,7 @@ public class Ejector extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>efficiencyIsentropic</code>.
-   * </p>
    *
    * @return a double
    */
@@ -882,9 +862,7 @@ public class Ejector extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>diffuserEfficiency</code>.
-   * </p>
    *
    * @return a double
    */

@@ -6,9 +6,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * CPAEosTest class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -18,9 +16,7 @@ public class SystemSrkCPAstatoilTest extends neqsim.NeqSimTest {
   static SystemInterface thermoSystem = null;
 
   /**
-   * <p>
    * setUp.
-   * </p>
    */
   @BeforeAll
   public static void setUp() {
@@ -34,9 +30,7 @@ public class SystemSrkCPAstatoilTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testTPflash.
-   * </p>
    */
   @Test
   public void testTPflash() {
@@ -46,9 +40,7 @@ public class SystemSrkCPAstatoilTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testinitPhysicalProperties.
-   * </p>
    */
   @Test
   public void testinitPhysicalProperties() {
@@ -58,9 +50,7 @@ public class SystemSrkCPAstatoilTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testPHflash.
-   * </p>
    */
   @Test
   public void testPHflash() {
@@ -75,9 +65,7 @@ public class SystemSrkCPAstatoilTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testPSflash.
-   * </p>
    */
   @Test
   public void testPSflash() {

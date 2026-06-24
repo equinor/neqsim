@@ -6,9 +6,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 
 /**
- * <p>
  * VirtualStream class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -35,9 +33,7 @@ public class VirtualStream extends ProcessEquipmentBaseClass {
   protected boolean setComposition = false;
 
   /**
-   * <p>
    * Constructor for VirtualStream.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -48,9 +44,7 @@ public class VirtualStream extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for VirtualStream.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -59,9 +53,7 @@ public class VirtualStream extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * setReferenceStream.
-   * </p>
    *
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -70,9 +62,7 @@ public class VirtualStream extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>flowRate</code>.
-   * </p>
    *
    * @param rate a double
    * @param unit a {@link java.lang.String} object
@@ -84,9 +74,7 @@ public class VirtualStream extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>composition</code>.
-   * </p>
    *
    * @param comps an array of type double
    * @param unit a {@link java.lang.String} object
@@ -98,9 +86,7 @@ public class VirtualStream extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>temperature</code>.
-   * </p>
    *
    * @param temp a double
    * @param unit a {@link java.lang.String} object
@@ -112,9 +98,7 @@ public class VirtualStream extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>pressure</code>.
-   * </p>
    *
    * @param pres a double
    * @param unit a {@link java.lang.String} object
@@ -148,9 +132,7 @@ public class VirtualStream extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>outStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */

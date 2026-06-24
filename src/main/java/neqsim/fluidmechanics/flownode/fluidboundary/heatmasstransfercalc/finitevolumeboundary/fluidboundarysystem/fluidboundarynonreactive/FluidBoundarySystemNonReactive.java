@@ -12,26 +12,20 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * FluidBoundarySystemNonReactive class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class FluidBoundarySystemNonReactive extends FluidBoundarySystem {
   /**
-   * <p>
    * Constructor for FluidBoundarySystemNonReactive.
-   * </p>
    */
   public FluidBoundarySystemNonReactive() {
   }
 
   /**
-   * <p>
    * Constructor for FluidBoundarySystemNonReactive.
-   * </p>
    *
    * @param boundary a {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface}
    * object
@@ -53,9 +47,7 @@ public class FluidBoundarySystemNonReactive extends FluidBoundarySystem {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

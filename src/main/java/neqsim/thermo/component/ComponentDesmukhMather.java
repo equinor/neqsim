@@ -7,9 +7,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * ComponentDesmukhMather class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -23,9 +21,7 @@ public class ComponentDesmukhMather extends ComponentGE {
   static Logger logger = LogManager.getLogger(ComponentDesmukhMather.class);
 
   /**
-   * <p>
    * Constructor for ComponentDesmukhMather.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -64,9 +60,7 @@ public class ComponentDesmukhMather extends ComponentGE {
   }
 
   /**
-   * <p>
    * getGamma.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int

@@ -3,9 +3,7 @@ package neqsim.thermo.component.attractiveeosterm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * <p>
  * AttractiveTermPrGassem2001 class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -21,9 +19,7 @@ public class AttractiveTermPrGassem2001 extends AttractiveTermPr {
   protected double E = -0.0467;
 
   /**
-   * <p>
    * Constructor for AttractiveTermPrGassem2001.
-   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
    */

@@ -1,9 +1,7 @@
 package neqsim.util.exception;
 
 /**
- * <p>
  * IsNaNException class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id

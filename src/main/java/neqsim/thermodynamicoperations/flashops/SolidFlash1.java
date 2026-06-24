@@ -9,9 +9,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * SolidFlash1 class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -34,9 +32,7 @@ public class SolidFlash1 extends TPflash {
   int[] FluidPhaseActiveDescriptors; // 1 = active; 0 = inactive
 
   /**
-   * <p>
    * Constructor for SolidFlash1.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -45,17 +41,13 @@ public class SolidFlash1 extends TPflash {
   }
 
   /**
-   * <p>
    * calcMultiPhaseBeta.
-   * </p>
    */
   public void calcMultiPhaseBeta() {
   }
 
   /**
-   * <p>
    * setXY.
-   * </p>
    */
   public void setXY() {
     for (int k = 0; k < system.getNumberOfPhases() - solidsNumber; k++) {
@@ -73,9 +65,7 @@ public class SolidFlash1 extends TPflash {
   }
 
   /**
-   * <p>
    * checkX.
-   * </p>
    */
   public void checkX() {
     for (int k = 0; k < system.getNumberOfPhases() - 1; k++) {
@@ -99,9 +89,7 @@ public class SolidFlash1 extends TPflash {
   }
 
   /**
-   * <p>
    * calcE.
-   * </p>
    */
   public void calcE() {
     E = new double[system.getPhases()[0].getNumberOfComponents()];
@@ -115,9 +103,7 @@ public class SolidFlash1 extends TPflash {
   }
 
   /**
-   * <p>
    * calcQ.
-   * </p>
    *
    * @return a double
    */
@@ -150,9 +136,7 @@ public class SolidFlash1 extends TPflash {
   }
 
   /**
-   * <p>
    * calcQbeta.
-   * </p>
    */
   public void calcQbeta() {
     for (int k = 0; k < system.getNumberOfPhases() - solidsNumber; k++) {
@@ -170,9 +154,7 @@ public class SolidFlash1 extends TPflash {
   }
 
   /**
-   * <p>
    * calcGradientAndHesian.
-   * </p>
    */
   public void calcGradientAndHesian() {
     Qmatrix = new double[system.getNumberOfPhases() - solidsNumber][system.getNumberOfPhases() - solidsNumber];
@@ -221,9 +203,7 @@ public class SolidFlash1 extends TPflash {
   }
 
   /**
-   * <p>
    * solveBeta.
-   * </p>
    */
   public void solveBeta() {
     double[] oldBeta = new double[system.getNumberOfPhases() - solidsNumber];
@@ -332,9 +312,7 @@ public class SolidFlash1 extends TPflash {
   }
 
   /**
-   * <p>
    * checkGibbs.
-   * </p>
    */
   public void checkGibbs() {
     double gibbs1 = 0;
@@ -356,9 +334,7 @@ public class SolidFlash1 extends TPflash {
   }
 
   /**
-   * <p>
    * calcSolidBeta.
-   * </p>
    *
    * @return a double
    */
@@ -440,9 +416,7 @@ public class SolidFlash1 extends TPflash {
   }
 
   /**
-   * <p>
    * checkAndAddSolidPhase.
-   * </p>
    *
    * @return a int
    */
@@ -488,9 +462,7 @@ public class SolidFlash1 extends TPflash {
   }
 
   /**
-   * <p>
    * solvebeta1.
-   * </p>
    *
    * @return a double
    */

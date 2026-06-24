@@ -10,9 +10,7 @@ import neqsim.process.mechanicaldesign.designstandards.SeparatorDesignStandard;
 import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
 
 /**
- * <p>
  * AbsorberMechanicalDesign class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -31,9 +29,7 @@ public class AbsorberMechanicalDesign extends SeparatorMechanicalDesign {
   double volumeSafetyFactor = 1.0;
 
   /**
-   * <p>
    * Constructor for AbsorberMechanicalDesign.
-   * </p>
    *
    * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */

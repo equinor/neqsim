@@ -1,9 +1,7 @@
 package neqsim.process.equipment.compressor;
 
 /**
- * <p>
  * CompressorChartInterface interface.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -126,45 +124,35 @@ public interface CompressorChartInterface extends Cloneable {
   public void setUseRealKappa(boolean useRealKappa);
 
   /**
-   * <p>
    * getSurgeCurve.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.compressor.SafeSplineSurgeCurve} object
    */
   public SafeSplineSurgeCurve getSurgeCurve();
 
   /**
-   * <p>
    * setSurgeCurve.
-   * </p>
    *
    * @param surgeCurve a {@link neqsim.process.equipment.compressor.SafeSplineSurgeCurve} object
    */
   public void setSurgeCurve(SafeSplineSurgeCurve surgeCurve);
 
   /**
-   * <p>
    * getStoneWallCurve.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.compressor.StoneWallCurve} object
    */
   public StoneWallCurve getStoneWallCurve();
 
   /**
-   * <p>
    * setStoneWallCurve.
-   * </p>
    *
    * @param stoneWallCurve a {@link neqsim.process.equipment.compressor.StoneWallCurve} object
    */
   public void setStoneWallCurve(StoneWallCurve stoneWallCurve);
 
   /**
-   * <p>
    * getSpeed.
-   * </p>
    *
    * @param flow a double
    * @param head a double
@@ -198,9 +186,7 @@ public interface CompressorChartInterface extends Cloneable {
   }
 
   /**
-   * <p>
    * plot.
-   * </p>
    */
   public void plot();
 
@@ -213,9 +199,7 @@ public interface CompressorChartInterface extends Cloneable {
   public int hashCode();
 
   /**
-   * <p>
    * getFlow.
-   * </p>
    *
    * @param head a double
    * @param speed a double
@@ -225,18 +209,14 @@ public interface CompressorChartInterface extends Cloneable {
   public double getFlow(double head, double speed, double guessFlow);
 
   /**
-   * <p>
    * Getter for the field <code>minSpeedCurve</code>.
-   * </p>
    *
    * @return the minimum speed curve value in RPM
    */
   public double getMinSpeedCurve();
 
   /**
-   * <p>
    * Getter for the field <code>maxSpeedCurve</code>.
-   * </p>
    *
    * @return the maximum speed curve value in RPM
    */
@@ -326,23 +306,17 @@ public interface CompressorChartInterface extends Cloneable {
   }
 
   /**
-   * <p>
    * generateSurgeCurve.
-   * </p>
    */
   public void generateSurgeCurve();
 
   /**
-   * <p>
    * generateStoneWallCurve.
-   * </p>
    */
   public void generateStoneWallCurve();
 
   /**
-   * <p>
    * Get the surge flow (minimum flow) at a specific speed.
-   * </p>
    *
    * @param speed The compressor speed in RPM
    * @return The surge flow (minimum flow) at the specified speed in m3/hr, or Double.NaN if no curves exist
@@ -350,9 +324,7 @@ public interface CompressorChartInterface extends Cloneable {
   public double getSurgeFlowAtSpeed(double speed);
 
   /**
-   * <p>
    * Get the surge head (polytropic head at minimum flow) at a specific speed.
-   * </p>
    *
    * @param speed The compressor speed in RPM
    * @return The surge head at the specified speed in kJ/kg or meter (depending on headUnit), or Double.NaN if no curves
@@ -361,9 +333,7 @@ public interface CompressorChartInterface extends Cloneable {
   public double getSurgeHeadAtSpeed(double speed);
 
   /**
-   * <p>
    * Get the stone wall flow (maximum flow) at a specific speed.
-   * </p>
    *
    * @param speed The compressor speed in RPM
    * @return The stone wall flow (maximum flow) at the specified speed in m3/hr, or Double.NaN if no curves exist
@@ -371,9 +341,7 @@ public interface CompressorChartInterface extends Cloneable {
   public double getStoneWallFlowAtSpeed(double speed);
 
   /**
-   * <p>
    * Get the stone wall head (polytropic head at maximum flow) at a specific speed.
-   * </p>
    *
    * @param speed The compressor speed in RPM
    * @return The stone wall head at the specified speed in kJ/kg or meter (depending on headUnit), or Double.NaN if no

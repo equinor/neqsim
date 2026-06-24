@@ -14,9 +14,7 @@ import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * Density class for solids.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -28,9 +26,7 @@ public class Density extends SolidPhysicalPropertyMethod implements DensityInter
   static Logger logger = LogManager.getLogger(Density.class);
 
   /**
-   * <p>
    * Constructor for Density.
-   * </p>
    *
    * @param liquidPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

@@ -11,9 +11,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * <p>
  * Abstract PhysicalPropertyMethod class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -25,9 +23,7 @@ public abstract class PhysicalPropertyMethod implements PhysicalPropertyMethodIn
   static Logger logger = LogManager.getLogger(PhysicalPropertyMethod.class);
 
   /**
-   * <p>
    * Constructor for PhysicalPropertyMethod.
-   * </p>
    *
    * @param phase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

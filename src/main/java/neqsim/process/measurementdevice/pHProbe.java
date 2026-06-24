@@ -5,9 +5,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * pHProbe class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -27,9 +25,7 @@ public class pHProbe extends StreamMeasurementDeviceBaseClass {
   private boolean hasCachedPH = false;
 
   /**
-   * <p>
    * Constructor for pHProbe.
-   * </p>
    *
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -38,9 +34,7 @@ public class pHProbe extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for pHProbe.
-   * </p>
    *
    * @param name Name of pHProbe
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -50,9 +44,7 @@ public class pHProbe extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * run.
-   * </p>
    */
   public void run() {
     hasCachedPH = false;
@@ -106,9 +98,7 @@ public class pHProbe extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>alkalinity</code>.
-   * </p>
    *
    * @return the alkalinity
    */
@@ -117,9 +107,7 @@ public class pHProbe extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>alkalinity</code>.
-   * </p>
    *
    * @param alkalinity the alkalinity to set
    */

@@ -9,9 +9,7 @@ package neqsim.fluidmechanics.util.fluidmechanicsvisualization.flowsystemvisuali
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * PipeFlowVisualization class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -26,17 +24,13 @@ public class PipeFlowVisualization extends
   double[] timeArray = new double[10];
 
   /**
-   * <p>
    * Constructor for PipeFlowVisualization.
-   * </p>
    */
   public PipeFlowVisualization() {
   }
 
   /**
-   * <p>
    * Constructor for PipeFlowVisualization.
-   * </p>
    *
    * @param nodes a int
    * @param timeSteps a int
@@ -79,9 +73,7 @@ public class PipeFlowVisualization extends
   }
 
   /**
-   * <p>
    * calcPoints.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */

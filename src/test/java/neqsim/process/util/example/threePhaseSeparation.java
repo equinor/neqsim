@@ -7,9 +7,7 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * threePhaseSeparation class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id

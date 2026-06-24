@@ -11,9 +11,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * freezingPointTemperatureFlash class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -31,9 +29,7 @@ public class FreezingPointTemperatureFlash extends ConstantDutyTemperatureFlash
   public String phaseName = "oil";
 
   /**
-   * <p>
    * Constructor for freezingPointTemperatureFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -42,9 +38,7 @@ public class FreezingPointTemperatureFlash extends ConstantDutyTemperatureFlash
   }
 
   /**
-   * <p>
    * Constructor for freezingPointTemperatureFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Freeze a boolean
@@ -55,9 +49,7 @@ public class FreezingPointTemperatureFlash extends ConstantDutyTemperatureFlash
   }
 
   /**
-   * <p>
    * calcFunc.
-   * </p>
    *
    * @return a double
    */
@@ -165,9 +157,7 @@ public class FreezingPointTemperatureFlash extends ConstantDutyTemperatureFlash
   }
 
   /**
-   * <p>
    * printToFile.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param FCompNames an array of {@link java.lang.String} objects

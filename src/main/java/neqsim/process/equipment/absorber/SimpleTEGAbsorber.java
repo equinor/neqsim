@@ -19,9 +19,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * SimpleTEGAbsorber class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -47,9 +45,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   private double waterInDryGas = 30e-6;
 
   /**
-   * <p>
    * Constructor for SimpleTEGAbsorber.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -72,9 +68,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * addGasInStream.
-   * </p>
    *
    * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -86,9 +80,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * addSolventInStream.
-   * </p>
    *
    * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -101,9 +93,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * replaceSolventInStream.
-   * </p>
    *
    * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -120,9 +110,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * mixStream.
-   * </p>
    */
   public void mixStream() {
     String compName = new String();
@@ -160,9 +148,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * guessTemperature.
-   * </p>
    *
    * @return a double
    */
@@ -176,9 +162,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * calcMixStreamEnthalpy.
-   * </p>
    *
    * @return a double
    */
@@ -201,9 +185,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * getInStream.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
@@ -218,9 +200,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * Getter for the field <code>gasInStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
@@ -241,9 +221,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * calcEa.
-   * </p>
    *
    * @return a double
    */
@@ -256,9 +234,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * calcY0.
-   * </p>
    *
    * @return a double
    */
@@ -276,9 +252,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * calcNumberOfTheoreticalStages.
-   * </p>
    *
    * @return a double
    */
@@ -288,9 +262,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * calcNTU.
-   * </p>
    *
    * @param y0 a double
    * @param y1 a double
@@ -508,9 +480,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * Setter for the field <code>gasOutStream</code>.
-   * </p>
    *
    * @param gasOutStream a {@link neqsim.process.equipment.stream.Stream} object
    */
@@ -519,9 +489,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * Getter for the field <code>solventOutStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
@@ -530,9 +498,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * Setter for the field <code>solventOutStream</code>.
-   * </p>
    *
    * @param solventOutStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -553,9 +519,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * Setter for the field <code>waterInDryGas</code>.
-   * </p>
    *
    * @param waterInDryGasInput water in dry gas
    */
@@ -565,9 +529,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * isSetWaterInDryGas.
-   * </p>
    *
    * @param isSetwaterInDryGas a boolean
    */

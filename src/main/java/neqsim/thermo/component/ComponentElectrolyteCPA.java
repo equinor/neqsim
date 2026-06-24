@@ -4,9 +4,7 @@ import neqsim.thermo.phase.PhaseCPAInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * ComponentElectrolyteCPA class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -24,9 +22,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
   double[] xsitedTdT = new double[0];
 
   /**
-   * <p>
    * Constructor for ComponentElectrolyteCPA.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -63,9 +59,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
   }
 
   /**
-   * <p>
    * Constructor for ComponentElectrolyteCPA.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]
@@ -235,9 +229,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
   }
 
   /**
-   * <p>
    * dFCPAdNdN.
-   * </p>
    *
    * @param j a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -273,9 +265,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
   }
 
   /**
-   * <p>
    * dFCPAdN.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -294,9 +284,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
   }
 
   /**
-   * <p>
    * dFCPAdNdV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -334,9 +322,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
   }
 
   /**
-   * <p>
    * dFCPAdNdT.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -366,9 +352,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
   }
 
   /**
-   * <p>
    * calc_hCPAdn.
-   * </p>
    *
    * @return a double
    */
@@ -387,9 +371,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
   }
 
   /**
-   * <p>
    * dFCPAdXidni.
-   * </p>
    *
    * @param site a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -429,9 +411,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
   }
 
   /**
-   * <p>
    * dFCPAdNdXidXdV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -445,9 +425,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
   }
 
   /**
-   * <p>
    * calc_lngi.
-   * </p>
    *
    * <p>
    * Uses standard Carnahan-Starling formula to match PhaseCPAInterface.calc_g() and ComponentSrkCPA.calc_lngi().
@@ -462,9 +440,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
   }
 
   /**
-   * <p>
    * calc_lngidV.
-   * </p>
    *
    * <p>
    * Uses standard Carnahan-Starling formula to match ComponentSrkCPA.calc_lngidV().
@@ -482,9 +458,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
   }
 
   /**
-   * <p>
    * calc_lngij.
-   * </p>
    *
    * <p>
    * Uses standard Carnahan-Starling formula to match ComponentSrkCPA.calc_lngij().
@@ -587,9 +561,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
   }
 
   /**
-   * <p>
    * Getter for the field <code>xsitedni</code>.
-   * </p>
    *
    * @return the xsitedni
    */
@@ -598,9 +570,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
   }
 
   /**
-   * <p>
    * Getter for the field <code>xsitedni</code>.
-   * </p>
    *
    * @param xNumb a int
    * @param compNumbi a int
@@ -611,9 +581,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
   }
 
   /**
-   * <p>
    * Setter for the field <code>xsitedni</code>.
-   * </p>
    *
    * @param xsitedni the xsitedni to set
    */

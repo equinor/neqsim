@@ -9,9 +9,7 @@ package neqsim.mathlib.nonlinearsolver;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * newtonRhapson class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -39,17 +37,13 @@ public class NewtonRhapson implements java.io.Serializable {
   double x = 0;
 
   /**
-   * <p>
    * Constructor for newtonRhapson.
-   * </p>
    */
   public NewtonRhapson() {
   }
 
   /**
-   * <p>
    * Setter for the field <code>order</code>.
-   * </p>
    *
    * @param o a int
    */
@@ -59,9 +53,7 @@ public class NewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * setConstants.
-   * </p>
    *
    * @param constants an array of type double
    */
@@ -70,9 +62,7 @@ public class NewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * funkValue.
-   * </p>
    *
    * @param x a double
    * @return a double
@@ -87,9 +77,7 @@ public class NewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * derivValue.
-   * </p>
    *
    * @param x a double
    * @return a double
@@ -114,9 +102,7 @@ public class NewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * dubDerivValue.
-   * </p>
    *
    * @param x a double
    * @return a double
@@ -132,9 +118,7 @@ public class NewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * solve.
-   * </p>
    *
    * @param xin a double
    * @return a double
@@ -186,9 +170,7 @@ public class NewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * solve1order.
-   * </p>
    *
    * @param xin a double
    * @return a double
@@ -216,9 +198,7 @@ public class NewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

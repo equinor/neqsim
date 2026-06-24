@@ -3,9 +3,7 @@ package neqsim.process.equipment.filter;
 import neqsim.process.equipment.stream.StreamInterface;
 
 /**
- * <p>
  * CharCoalFilter class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id

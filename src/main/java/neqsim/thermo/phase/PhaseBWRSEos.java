@@ -6,9 +6,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentBWRS;
 
 /**
- * <p>
  * PhaseBWRSEos class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -46,9 +44,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   private double mixGamma;
 
   /**
-   * <p>
    * Constructor for PhaseBWRSEos.
-   * </p>
    */
   public PhaseBWRSEos() {
   }
@@ -144,9 +140,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getMolarDensity.
-   * </p>
    *
    * @return a double
    */
@@ -155,9 +149,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getdRhodV.
-   * </p>
    *
    * @return a double
    */
@@ -166,9 +158,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getdRhodVdV.
-   * </p>
    *
    * @return a double
    */
@@ -177,9 +167,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getdRhodVdVdV.
-   * </p>
    *
    * @return a double
    */
@@ -188,9 +176,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getGammadRho.
-   * </p>
    *
    * @return a double
    */
@@ -200,9 +186,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getFpol.
-   * </p>
    *
    * @return a double
    */
@@ -215,9 +199,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getFpoldV.
-   * </p>
    *
    * @return a double
    */
@@ -243,9 +225,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getFpoldVdV.
-   * </p>
    *
    * @return a double
    */
@@ -261,9 +241,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getFpoldVdVdV.
-   * </p>
    *
    * @return a double
    */
@@ -283,9 +261,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getFpoldT.
-   * </p>
    *
    * @return a double
    */
@@ -355,9 +331,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getEL.
-   * </p>
    *
    * @return a double
    */
@@ -366,9 +340,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getELdRho.
-   * </p>
    *
    * @return a double
    */
@@ -399,9 +371,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getFexp.
-   * </p>
    *
    * @return a double
    */
@@ -546,9 +516,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getFexpdT.
-   * </p>
    *
    * @return a double
    */
@@ -638,9 +606,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcPressure2.
-   * </p>
    *
    * @return a double
    */
@@ -659,9 +625,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcPVT.
-   * </p>
    */
   public void calcPVT() {
     double[] moldens = new double[300];

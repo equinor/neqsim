@@ -10,9 +10,7 @@ import java.util.Comparator;
 import neqsim.thermo.component.ComponentInterface;
 
 /**
- * <p>
  * ReferencePotComparator class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id

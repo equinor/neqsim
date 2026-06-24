@@ -3,18 +3,14 @@ package neqsim.statistics.parameterfitting.nonlinearparameterfitting;
 import neqsim.statistics.parameterfitting.BaseFunction;
 
 /**
- * <p>
  * LevenbergMarquardtFunction class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class LevenbergMarquardtFunction extends BaseFunction {
   /**
-   * <p>
    * Constructor for LevenbergMarquardtFunction.
-   * </p>
    */
   public LevenbergMarquardtFunction() {
   }
@@ -50,9 +46,7 @@ public class LevenbergMarquardtFunction extends BaseFunction {
   }
 
   /**
-   * <p>
    * setFittingParams.
-   * </p>
    *
    * @param value an array of type double
    */
@@ -61,9 +55,7 @@ public class LevenbergMarquardtFunction extends BaseFunction {
   }
 
   /**
-   * <p>
    * setFittingParam.
-   * </p>
    *
    * @param parameterNumber a int
    * @param parameterVal a double

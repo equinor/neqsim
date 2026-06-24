@@ -13,9 +13,7 @@ import neqsim.physicalproperties.methods.methodinterface.DensityInterface;
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * <p>
  * COSTALD (Corresponding States Liquid Density) calculation for liquids.
- * </p>
  *
  * <p>
  * Implements the Hankinson-Thomson (1979) method for saturated liquid molar volume and the Aalto et al. (1996)
@@ -52,9 +50,7 @@ public class Costald extends LiquidPhysicalPropertyMethod implements DensityInte
   private boolean usePolarCorrection = false;
 
   /**
-   * <p>
    * Constructor for Costald.
-   * </p>
    *
    * @param liquidPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

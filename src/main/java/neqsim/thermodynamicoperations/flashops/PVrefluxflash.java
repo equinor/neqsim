@@ -3,9 +3,7 @@ package neqsim.thermodynamicoperations.flashops;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * PVrefluxflash class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -19,9 +17,7 @@ public class PVrefluxflash extends Flash {
   double refluxSpec = 0.5;
 
   /**
-   * <p>
    * Constructor for PVrefluxflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param refluxSpec a double

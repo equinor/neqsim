@@ -15,9 +15,7 @@ import neqsim.process.processmodel.ProcessModuleBaseClass;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * SeparationTrainModule class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -43,9 +41,7 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
   double exportOilTemperature = 273.15 + 30;
 
   /**
-   * <p>
    * Constructor for SeparationTrainModule.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -216,9 +212,7 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

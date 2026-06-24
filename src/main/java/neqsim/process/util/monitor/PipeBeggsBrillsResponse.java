@@ -3,9 +3,7 @@ package neqsim.process.util.monitor;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 
 /**
- * <p>
  * PumpResponse class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -23,9 +21,7 @@ public class PipeBeggsBrillsResponse extends BaseResponse {
   public Double outletMassFlow;
 
   /**
-   * <p>
    * Constructor for PumpResponse.
-   * </p>
    *
    * @param pipe the pipe to set for the response.
    */

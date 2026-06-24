@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * checkScalePotential class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -23,9 +21,7 @@ public class CheckScalePotential extends ConstantDutyTemperatureFlash {
   String[][] resultTable = null;
 
   /**
-   * <p>
    * Constructor for checkScalePotential.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param phaseNumber a int

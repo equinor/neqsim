@@ -3,9 +3,7 @@ package neqsim.thermo.component.attractiveeosterm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * <p>
  * AttractiveTermSchwartzentruber class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -18,9 +16,7 @@ public class AttractiveTermSchwartzentruber extends AttractiveTermBaseClass {
   private double d = 0.0;
 
   /**
-   * <p>
    * Constructor for AttractiveTermSchwartzentruber.
-   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
    */
@@ -31,9 +27,7 @@ public class AttractiveTermSchwartzentruber extends AttractiveTermBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for AttractiveTermSchwartzentruber.
-   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
    * @param params an array of type double

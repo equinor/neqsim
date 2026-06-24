@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * calcSaltSatauration class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -21,9 +19,7 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
   String saltName;
 
   /**
-   * <p>
    * Constructor for calcSaltSatauration.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param name a {@link java.lang.String} object

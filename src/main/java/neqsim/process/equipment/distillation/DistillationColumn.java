@@ -757,9 +757,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private transient boolean columnTearVariablesChanged = false;
 
   /**
-   * <p>
    * Setter for the field <code>doMultiPhaseCheck</code>.
-   * </p>
    *
    * @param doMultiPhaseCheck a boolean
    */
@@ -772,9 +770,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * <p>
    * Getter for the field <code>doMultiPhaseCheck</code>.
-   * </p>
    *
    * @return a boolean
    */
@@ -823,9 +819,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private boolean dynamicEnergyEnabled = false;
 
   /**
-   * <p>
    * Constructor for DistillationColumn.
-   * </p>
    *
    * @param name Name of distillation column
    * @param numberOfTraysLocal Number of SimpleTrays to add (excluding reboiler/condenser)
@@ -864,9 +858,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * <p>
    * Add a feed stream to the specified tray. (Now allows multiple streams on the same trayNumber, using a list.)
-   * </p>
    *
    * @param inputStream the feed stream
    * @param feedTrayNumber the tray number (0-based in the code) to which this feed goes
@@ -7142,9 +7134,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * <p>
    * getTray.
-   * </p>
    *
    * @param trayNumber a int
    * @return a {@link neqsim.process.equipment.distillation.SimpleTray} object
@@ -7341,9 +7331,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * <p>
    * setTopCondenserDuty.
-   * </p>
    *
    * @param duty a double
    */
@@ -7352,9 +7340,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * <p>
    * setTopPressure.
-   * </p>
    *
    * @param topPressure a double
    */
@@ -7372,9 +7358,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * <p>
    * setBottomPressure.
-   * </p>
    *
    * @param bottomPressure a double
    */
@@ -8198,9 +8182,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * <p>
    * Setter for the field <code>maxNumberOfIterations</code>.
-   * </p>
    *
    * @param maxIter a int
    */
@@ -8209,9 +8191,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * <p>
    * Setter for the field <code>internalDiameter</code>.
-   * </p>
    *
    * @param internalDiameter a double
    */
@@ -8220,9 +8200,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * <p>
    * Getter for the field <code>internalDiameter</code>.
-   * </p>
    *
    * @return a double
    */
@@ -8725,9 +8703,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * <p>
    * Getter for the field <code>gasOutStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -8736,9 +8712,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * <p>
    * Getter for the field <code>liquidOutStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -9057,9 +9031,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * <p>
    * getReboiler.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.distillation.Reboiler} object
    */
@@ -9068,9 +9040,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * <p>
    * getCondenser.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.distillation.Condenser} object
    */
@@ -9201,9 +9171,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * <p>
    * Getter for the field <code>reboilerTemperature</code>.
-   * </p>
    *
    * @return a double
    */
@@ -9212,9 +9180,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * <p>
    * Setter for the field <code>reboilerTemperature</code>.
-   * </p>
    *
    * @param reboilerTemperature a double
    */
@@ -9237,9 +9203,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * <p>
    * Getter for the field <code>condenserTemperature</code>.
-   * </p>
    *
    * @return a double
    */
@@ -9248,9 +9212,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * <p>
    * Setter for the field <code>condenserTemperature</code>.
-   * </p>
    *
    * @param condenserTemperature a double
    */
@@ -9273,9 +9235,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * <p>
    * isDoInitializion.
-   * </p>
    *
    * @return a boolean
    */
@@ -9284,9 +9244,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * <p>
    * Setter for the field <code>doInitializion</code>.
-   * </p>
    *
    * @param doInitializion a boolean
    */
@@ -11513,9 +11471,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * <p>
    * getNumerOfTrays.
-   * </p>
    *
    * @return a int
    */

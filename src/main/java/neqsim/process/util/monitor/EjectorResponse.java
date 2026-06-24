@@ -4,9 +4,7 @@ import java.util.HashMap;
 import neqsim.process.equipment.ejector.Ejector;
 
 /**
- * <p>
  * EjectorResponse class for JSON serialization of Ejector equipment.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -16,9 +14,7 @@ public class EjectorResponse extends BaseResponse {
   public HashMap<String, Value> data = new HashMap<String, Value>();
 
   /**
-   * <p>
    * Constructor for EjectorResponse.
-   * </p>
    *
    * @param ejector a {@link neqsim.process.equipment.ejector.Ejector} object
    */

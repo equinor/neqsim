@@ -26,9 +26,7 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * InterfaceProperties class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -49,17 +47,13 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
   private int interfacialTensionModel = 0;
 
   /**
-   * <p>
    * Constructor for InterfaceProperties.
-   * </p>
    */
   public InterfaceProperties() {
   }
 
   /**
-   * <p>
    * Constructor for InterfaceProperties.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

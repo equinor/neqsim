@@ -4,9 +4,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * ComponentGeNRTL class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -20,9 +18,7 @@ public class ComponentGeNRTL extends ComponentGE {
   double q = 0;
 
   /**
-   * <p>
    * Constructor for ComponentGeNRTL.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -238,9 +234,7 @@ public class ComponentGeNRTL extends ComponentGE {
    */
 
   /**
-   * <p>
    * Getter for the field <code>r</code>.
-   * </p>
    *
    * @return a double
    */
@@ -249,9 +243,7 @@ public class ComponentGeNRTL extends ComponentGE {
   }
 
   /**
-   * <p>
    * Getter for the field <code>q</code>.
-   * </p>
    *
    * @return a double
    */

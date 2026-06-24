@@ -8,9 +8,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * StreamTransition class.
- * </p>
  *
  * <p>
  * This class provides functionality for transferring fluid properties between streams with potentially different
@@ -35,9 +33,7 @@ public class StreamTransition extends TwoPortEquipment {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for StreamTransition.
-   * </p>
    *
    * @param name name of unit operation
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -97,9 +93,7 @@ public class StreamTransition extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

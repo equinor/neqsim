@@ -3,9 +3,7 @@ package neqsim.thermo.util.referenceequations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * methaneBWR32 class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -18,9 +16,7 @@ public class methaneBWR32 {
       3.15E-09, -2.17E-06, 2.40E-05 };
 
   /**
-   * <p>
    * calcPressure.
-   * </p>
    *
    * @param molDens a double
    * @param temp a double
@@ -52,9 +48,7 @@ public class methaneBWR32 {
   }
 
   /**
-   * <p>
    * molDens.
-   * </p>
    *
    * @param temp a double
    * @param pres a double
@@ -92,9 +86,7 @@ public class methaneBWR32 {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

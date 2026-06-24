@@ -23,9 +23,7 @@ public abstract class SimulationBaseClass extends NamedBaseClass implements Simu
   private boolean runInSteps = false;
 
   /**
-   * <p>
    * Constructor for SimulationBaseClass.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */

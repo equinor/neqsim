@@ -4,26 +4,20 @@ import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.AnnularF
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode;
 
 /**
- * <p>
  * FlowNodeSelector class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
  */
 public class FlowNodeSelector {
   /**
-   * <p>
    * Constructor for FlowNodeSelector.
-   * </p>
    */
   public FlowNodeSelector() {
   }
 
   /**
-   * <p>
    * getFlowNodeType.
-   * </p>
    *
    * @param flowNode an array of {@link neqsim.fluidmechanics.flownode.FlowNodeInterface} objects
    */
@@ -46,9 +40,7 @@ public class FlowNodeSelector {
   }
 
   /**
-   * <p>
    * setFlowPattern.
-   * </p>
    *
    * @param flowNode an array of {@link neqsim.fluidmechanics.flownode.FlowNodeInterface} objects
    * @param flowPattern a {@link java.lang.String} object

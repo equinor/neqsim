@@ -17,9 +17,7 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * WellFlow class - Inflow Performance Relationship (IPR) model for reservoir-to-wellbore flow.
- * </p>
  *
  * <p>
  * This class models the reservoir inflow into the wellbore using various IPR correlations. It calculates either the
@@ -290,9 +288,7 @@ public class WellFlow extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Constructor for WellFlow.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -692,9 +688,7 @@ public class WellFlow extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Getter for the field <code>wellProductionIndex</code>.
-   * </p>
    *
    * @return a double
    */
@@ -874,9 +868,7 @@ public class WellFlow extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Setter for the field <code>wellProductionIndex</code>.
-   * </p>
    *
    * @param wellProductionIndex a double
    */

@@ -3,9 +3,7 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentRK;
 
 /**
- * <p>
  * PhaseRK class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -15,9 +13,7 @@ public class PhaseRK extends PhaseEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for PhaseRK.
-   * </p>
    */
   public PhaseRK() {
     // mixRule = mixSelect.getMixingRule(2);

@@ -6,9 +6,7 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * bubblePointTemperatureNoDer class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -20,9 +18,7 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
   static Logger logger = LogManager.getLogger(BubblePointTemperatureNoDer.class);
 
   /**
-   * <p>
    * Constructor for bubblePointTemperatureNoDer.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

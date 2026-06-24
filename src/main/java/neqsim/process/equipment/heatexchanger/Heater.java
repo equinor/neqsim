@@ -29,9 +29,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * Heater class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -97,9 +95,7 @@ public class Heater extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Constructor for Heater.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -243,9 +239,7 @@ public class Heater extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Set the outlet pressure of the heater.
-   * </p>
    *
    * @param pressure Pressure in bara
    */
@@ -292,9 +286,7 @@ public class Heater extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Set the outlet temperature of the heater.
-   * </p>
    *
    * @param temperature Temperature in Kelvin
    */
@@ -307,9 +299,7 @@ public class Heater extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Set the outlet temperature of the heater.
-   * </p>
    *
    * @param temperature Temperature in Kelvin
    * @deprecated use {@link #setOutletTemperature(double)} instead
@@ -467,9 +457,7 @@ public class Heater extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Getter for the field <code>energyInput</code>.
-   * </p>
    *
    * @return a double
    */
@@ -478,9 +466,7 @@ public class Heater extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * getDuty.
-   * </p>
    *
    * @return a double
    */
@@ -489,9 +475,7 @@ public class Heater extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * getDuty.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -519,9 +503,7 @@ public class Heater extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>energyInput</code>.
-   * </p>
    *
    * @param energyInput a double
    */
@@ -532,9 +514,7 @@ public class Heater extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * setDuty.
-   * </p>
    *
    * @param energyInput a double
    */
@@ -717,9 +697,7 @@ public class Heater extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * isSetEnergyInput.
-   * </p>
    *
    * @return a boolean
    */
@@ -728,9 +706,7 @@ public class Heater extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>setEnergyInput</code>.
-   * </p>
    *
    * @param setEnergyInput a boolean
    */
@@ -739,9 +715,7 @@ public class Heater extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Getter for the field <code>pressureDrop</code>.
-   * </p>
    *
    * @return the pressureDrop
    */
@@ -750,9 +724,7 @@ public class Heater extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>pressureDrop</code>.
-   * </p>
    *
    * @param pressureDrop the pressureDrop to set
    */
@@ -761,9 +733,7 @@ public class Heater extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>outStream</code>.
-   * </p>
    *
    * @param outStream the outStream to set
    */

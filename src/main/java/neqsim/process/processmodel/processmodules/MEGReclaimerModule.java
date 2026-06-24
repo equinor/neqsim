@@ -14,9 +14,7 @@ import neqsim.process.processmodel.ProcessModuleBaseClass;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * MEGReclaimerModule class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -42,9 +40,7 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
   double reclaimerPressure = 0.17;
 
   /**
-   * <p>
    * Constructor for MEGReclaimerModule.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -143,9 +139,7 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
   }
 
   /**
-   * <p>
    * setOperationPressure.
-   * </p>
    *
    * @param pressure a double
    */
@@ -154,9 +148,7 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

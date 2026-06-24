@@ -11,9 +11,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TestFitToOilFieldFluid class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -23,9 +21,7 @@ public class TestFitToOilFieldFluid {
   static Logger logger = LogManager.getLogger(TestFitToOilFieldFluid.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

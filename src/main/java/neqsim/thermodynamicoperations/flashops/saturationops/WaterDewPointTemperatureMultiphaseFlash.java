@@ -6,9 +6,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * waterDewPointTemperatureMultiphaseFlash class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -20,9 +18,7 @@ public class WaterDewPointTemperatureMultiphaseFlash extends ConstantDutyTempera
   static Logger logger = LogManager.getLogger(WaterDewPointTemperatureMultiphaseFlash.class);
 
   /**
-   * <p>
    * Constructor for waterDewPointTemperatureMultiphaseFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

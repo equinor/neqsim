@@ -14,9 +14,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * WaxDepositionFlowNode class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -28,18 +26,14 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
   static Logger logger = LogManager.getLogger(WaxDepositionFlowNode.class);
 
   /**
-   * <p>
    * Constructor for WaxDepositionFlowNode.
-   * </p>
    */
   public WaxDepositionFlowNode() {
     this.flowNodeType = "wax deposition node";
   }
 
   /**
-   * <p>
    * Constructor for WaxDepositionFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
@@ -53,9 +47,7 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Constructor for WaxDepositionFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
@@ -114,9 +106,7 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

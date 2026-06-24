@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * bubblePointPressureFlashDer class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -19,9 +17,7 @@ public class BubblePointPressureFlashDer extends ConstantDutyPressureFlash {
   static Logger logger = LogManager.getLogger(BubblePointPressureFlashDer.class);
 
   /**
-   * <p>
    * Constructor for bubblePointPressureFlashDer.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

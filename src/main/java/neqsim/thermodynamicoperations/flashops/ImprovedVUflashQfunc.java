@@ -11,10 +11,9 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * ImprovedVUflashQfunc class with enhanced numerical stability.
- * </p>
  *
+ * <p>
  * Improvements: - Bounds checking for pressure and temperature - Better damping and convergence criteria - Validation
  * of inputs and outputs - Fallback mechanisms for problematic cases
  *

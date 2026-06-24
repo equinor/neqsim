@@ -12,9 +12,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * NeqSimUnit class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -33,9 +31,7 @@ public class NeqSimUnit extends TwoPortEquipment {
   public double interfacialArea = 0.0;
 
   /**
-   * <p>
    * Constructor for NeqSimUnit.
-   * </p>
    *
    * @param inletStream a {@link neqsim.process.equipment.stream.Stream} object
    * @param equipment a {@link java.lang.String} object
@@ -82,9 +78,7 @@ public class NeqSimUnit extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * runDroplet.
-   * </p>
    */
   public void runDroplet() {
     PipeData pipe1 = new PipeData(getID(), 0.00025);
@@ -134,9 +128,7 @@ public class NeqSimUnit extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * runStratified.
-   * </p>
    */
   public void runStratified() {
     PipeData pipe1 = new PipeData(getID(), 0.00025);
@@ -186,9 +178,7 @@ public class NeqSimUnit extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * runAnnular.
-   * </p>
    */
   public void runAnnular() {
     PipeData pipe1 = new PipeData(getID(), 0.00025);
@@ -238,9 +228,7 @@ public class NeqSimUnit extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Getter for the field <code>length</code>.
-   * </p>
    *
    * @return a double
    */
@@ -249,9 +237,7 @@ public class NeqSimUnit extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Setter for the field <code>length</code>.
-   * </p>
    *
    * @param length a double
    */
@@ -260,9 +246,7 @@ public class NeqSimUnit extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * getID.
-   * </p>
    *
    * @return a double
    */
@@ -271,9 +255,7 @@ public class NeqSimUnit extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * setID.
-   * </p>
    *
    * @param iD a double
    */
@@ -282,9 +264,7 @@ public class NeqSimUnit extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Getter for the field <code>outerTemperature</code>.
-   * </p>
    *
    * @return a double
    */
@@ -293,9 +273,7 @@ public class NeqSimUnit extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Setter for the field <code>outerTemperature</code>.
-   * </p>
    *
    * @param outerTemperature a double
    */
@@ -304,9 +282,7 @@ public class NeqSimUnit extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Getter for the field <code>equipment</code>.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -315,9 +291,7 @@ public class NeqSimUnit extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Setter for the field <code>equipment</code>.
-   * </p>
    *
    * @param equipment a {@link java.lang.String} object
    */
@@ -326,9 +300,7 @@ public class NeqSimUnit extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Getter for the field <code>interfacialArea</code>.
-   * </p>
    *
    * @return a double
    */
@@ -337,9 +309,7 @@ public class NeqSimUnit extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Getter for the field <code>numberOfNodes</code>.
-   * </p>
    *
    * @return a int
    */
@@ -348,9 +318,7 @@ public class NeqSimUnit extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Setter for the field <code>numberOfNodes</code>.
-   * </p>
    *
    * @param numberOfNodes a int
    */

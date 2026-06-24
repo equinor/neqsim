@@ -30,9 +30,7 @@ public class PhaseAmmoniaEos extends PhaseEos {
   private transient doubleW[][] ar;
 
   /**
-   * <p>
    * Constructor for PhaseAmmoniaEos.
-   * </p>
    */
   public PhaseAmmoniaEos() {
     thermoPropertyModelName = "Ammonia Reference Eos";
@@ -194,9 +192,7 @@ public class PhaseAmmoniaEos extends PhaseEos {
   }
 
   /**
-   * <p>
    * getAlpha0.
-   * </p>
    *
    * @return an array of {@link org.netlib.util.doubleW} objects
    */
@@ -205,9 +201,7 @@ public class PhaseAmmoniaEos extends PhaseEos {
   }
 
   /**
-   * <p>
    * getAlphares.
-   * </p>
    *
    * @return an array of {@link org.netlib.util.doubleW} objects
    */
@@ -216,9 +210,7 @@ public class PhaseAmmoniaEos extends PhaseEos {
   }
 
   /**
-   * <p>
    * getHresTP.
-   * </p>
    *
    * @return a double
    */

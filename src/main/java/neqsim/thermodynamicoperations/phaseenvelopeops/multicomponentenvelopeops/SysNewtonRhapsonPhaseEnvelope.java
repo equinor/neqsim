@@ -7,9 +7,7 @@ import neqsim.mathlib.nonlinearsolver.NewtonRhapson;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * sysNewtonRhapsonPhaseEnvelope class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -72,17 +70,13 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   double volold2 = Math.pow(10, 5);
 
   /**
-   * <p>
    * Constructor for sysNewtonRhapsonPhaseEnvelope.
-   * </p>
    */
   public SysNewtonRhapsonPhaseEnvelope() {
   }
 
   /**
-   * <p>
    * Constructor for sysNewtonRhapsonPhaseEnvelope.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param numberOfPhases a int
@@ -104,9 +98,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * setfvec22.
-   * </p>
    */
   public void setfvec22() {
     for (int i = 0; i < numberOfComponents; i++) {
@@ -125,9 +117,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>fvec</code>.
-   * </p>
    */
   public void setfvec() {
     for (int i = 0; i < numberOfComponents; i++) {
@@ -139,9 +129,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * findSpecEqInit.
-   * </p>
    */
   public void findSpecEqInit() {
     speceq = 0;
@@ -168,9 +156,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * findSpecEq.
-   * </p>
    */
   public void findSpecEq() {
     double max = 0;
@@ -208,9 +194,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * useAsSpecEq.
-   * </p>
    *
    * @param i a int
    */
@@ -221,9 +205,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * calc_x_y.
-   * </p>
    */
   public final void calc_x_y() {
     sumx = 0;
@@ -243,9 +225,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * setJac2.
-   * </p>
    */
   public void setJac2() {
     Jac.timesEquals(0.0);
@@ -281,9 +261,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * setJac.
-   * </p>
    */
   public void setJac() {
     Jac.timesEquals(0.0);
@@ -322,9 +300,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>u</code>.
-   * </p>
    */
   public void setu() {
     for (int i = 0; i < numberOfComponents; i++) {
@@ -335,9 +311,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * init.
-   * </p>
    */
   public void init() {
     for (int i = 0; i < numberOfComponents; i++) {
@@ -353,9 +327,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * calcInc.
-   * </p>
    *
    * @param np a int
    */
@@ -456,9 +428,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * calcInc2.
-   * </p>
    *
    * @param np a int
    */
@@ -655,9 +625,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>npCrit</code>.
-   * </p>
    *
    * @return a int
    */
@@ -666,9 +634,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * sign.
-   * </p>
    *
    * @param a a double
    * @param b a double

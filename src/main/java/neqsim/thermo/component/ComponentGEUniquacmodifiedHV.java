@@ -19,9 +19,7 @@ public abstract class ComponentGEUniquacmodifiedHV extends ComponentGEUniquac {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for ComponentGEUniquacmodifiedHV.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.

@@ -11,18 +11,14 @@ public class SystemSrkSchwartzentruberEos extends SystemSrkEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for SystemSrkSchwartzentruberEos.
-   * </p>
    */
   public SystemSrkSchwartzentruberEos() {
     this(298.15, 1.0, false);
   }
 
   /**
-   * <p>
    * Constructor for SystemSrkSchwartzentruberEos.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -32,9 +28,7 @@ public class SystemSrkSchwartzentruberEos extends SystemSrkEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemSrkSchwartzentruberEos.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)

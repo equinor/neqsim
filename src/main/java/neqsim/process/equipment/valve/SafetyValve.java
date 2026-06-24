@@ -9,9 +9,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.valve.SafetyValveMechanicalDesign;
 
 /**
- * <p>
  * SafetyValve class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -37,9 +35,7 @@ public class SafetyValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Constructor for SafetyValve.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.Stream} object
@@ -149,9 +145,7 @@ public class SafetyValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>pressureSpec</code>.
-   * </p>
    *
    * @return the pressureSpec
    */
@@ -160,9 +154,7 @@ public class SafetyValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>pressureSpec</code>.
-   * </p>
    *
    * @param pressureSpec the pressureSpec to set
    */
@@ -175,9 +167,7 @@ public class SafetyValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>fullOpenPressure</code>.
-   * </p>
    *
    * @return the fullOpenPressure
    */
@@ -186,9 +176,7 @@ public class SafetyValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>fullOpenPressure</code>.
-   * </p>
    *
    * @param fullOpenPressure the fullOpenPressure to set
    */
@@ -197,9 +185,7 @@ public class SafetyValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>blowdownPressure</code>.
-   * </p>
    *
    * @return the blowdownPressure
    */
@@ -208,9 +194,7 @@ public class SafetyValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>blowdownPressure</code>.
-   * </p>
    *
    * @param blowdownPressure the blowdownPressure to set (pressure at which PSV reseats)
    */

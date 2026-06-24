@@ -10,9 +10,7 @@ import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * CO2waterPhysicalProperties class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -24,9 +22,7 @@ public class CO2waterPhysicalProperties extends PhysicalProperties {
   static Logger logger = LogManager.getLogger(CO2waterPhysicalProperties.class);
 
   /**
-   * <p>
    * Constructor for CO2waterPhysicalProperties.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param binaryDiffusionCoefficientMethod a int

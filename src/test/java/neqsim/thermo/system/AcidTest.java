@@ -15,9 +15,7 @@ public class AcidTest extends neqsim.NeqSimTest {
   /** Logger object for class. */
 
   /**
-   * <p>
    * testAcid.
-   * </p>
    */
   @Test
   @DisplayName("test equilibrium of formic acid")
@@ -32,9 +30,7 @@ public class AcidTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testtestBubpAcid.
-   * </p>
    */
   @Test
   @DisplayName("test bublepoint of formic acid")
@@ -81,9 +77,7 @@ public class AcidTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testtestBubpAcid.
-   * </p>
    */
   @Test
   @DisplayName("test bublepoint of acetic acid")
@@ -128,9 +122,7 @@ public class AcidTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testtestBubpAcid.
-   * </p>
    */
   @Test
   @DisplayName("test bublepoint of water")
@@ -161,9 +153,7 @@ public class AcidTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testtestBubpAcid.
-   * </p>
    */
   @Test
   @DisplayName("test bublepoint of MEG")

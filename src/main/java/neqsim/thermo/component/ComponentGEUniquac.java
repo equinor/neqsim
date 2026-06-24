@@ -12,9 +12,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * ComponentGEUniquac class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -29,9 +27,7 @@ public class ComponentGEUniquac extends ComponentGE {
   double q = 0;
 
   /**
-   * <p>
    * Constructor for ComponentGEUniquac.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -69,9 +65,7 @@ public class ComponentGEUniquac extends ComponentGE {
   }
 
   /**
-   * <p>
    * Calculate, set and return fugacity coefficient.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object to get fugacity coefficient of.
    * @param numberOfComponents a int
@@ -95,9 +89,7 @@ public class ComponentGEUniquac extends ComponentGE {
   }
 
   /**
-   * <p>
    * getGamma.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -153,9 +145,7 @@ public class ComponentGEUniquac extends ComponentGE {
   }
 
   /**
-   * <p>
    * fugcoefDiffPres.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -172,9 +162,7 @@ public class ComponentGEUniquac extends ComponentGE {
   }
 
   /**
-   * <p>
    * fugcoefDiffTemp.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -202,9 +190,7 @@ public class ComponentGEUniquac extends ComponentGE {
    */
 
   /**
-   * <p>
    * Getter for the field <code>r</code>.
-   * </p>
    *
    * @return a double
    */
@@ -213,9 +199,7 @@ public class ComponentGEUniquac extends ComponentGE {
   }
 
   /**
-   * <p>
    * Getter for the field <code>q</code>.
-   * </p>
    *
    * @return a double
    */

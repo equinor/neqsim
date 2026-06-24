@@ -27,9 +27,7 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * LinearProgrammingChemicalEquilibrium class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -56,9 +54,7 @@ public class LinearProgrammingChemicalEquilibrium implements neqsim.thermo.Therm
   ChemicalReactionOperations operations;
 
   /**
-   * <p>
    * Constructor for LinearProgrammingChemicalEquilibrium.
-   * </p>
    *
    * @param chemRefPot an array of type double
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
@@ -113,9 +109,7 @@ public class LinearProgrammingChemicalEquilibrium implements neqsim.thermo.Therm
 
   // Modified method by Procede
   /**
-   * <p>
    * calcA.
-   * </p>
    *
    * @return an array of type double
    */
@@ -150,9 +144,7 @@ public class LinearProgrammingChemicalEquilibrium implements neqsim.thermo.Therm
   }
 
   /**
-   * <p>
    * getA.
-   * </p>
    *
    * @return an array of type double
    */
@@ -161,9 +153,7 @@ public class LinearProgrammingChemicalEquilibrium implements neqsim.thermo.Therm
   }
 
   /**
-   * <p>
    * getRefPot.
-   * </p>
    *
    * @return an array of type double
    */
@@ -172,9 +162,7 @@ public class LinearProgrammingChemicalEquilibrium implements neqsim.thermo.Therm
   }
 
   /**
-   * <p>
    * changePrimaryComponents.
-   * </p>
    */
   public void changePrimaryComponents() {
     if (changes == maxChanges && minChanges >= 0) {
@@ -277,9 +265,7 @@ public class LinearProgrammingChemicalEquilibrium implements neqsim.thermo.Therm
    */
 
   /**
-   * <p>
    * calcx.
-   * </p>
    *
    * @param atemp a {@link Jama.Matrix} object
    * @param lagrangeTemp a {@link Jama.Matrix} object
@@ -307,9 +293,7 @@ public class LinearProgrammingChemicalEquilibrium implements neqsim.thermo.Therm
 
   // Method updated to use Apache Commons Math 3 by Marlene 07.12.18
   /**
-   * <p>
    * generateInitialEstimates.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param bVector an array of type double

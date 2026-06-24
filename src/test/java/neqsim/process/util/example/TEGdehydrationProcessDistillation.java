@@ -21,9 +21,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * TEGdehydrationProcessDistillation class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -33,9 +31,7 @@ public class TEGdehydrationProcessDistillation {
   private static final Logger logger = LogManager.getLogger(TEGdehydrationProcessDistillation.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

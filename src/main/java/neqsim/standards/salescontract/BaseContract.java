@@ -26,9 +26,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * BaseContract class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -45,17 +43,13 @@ public class BaseContract implements ContractInterface {
   private int specificationsNumber = 0;
 
   /**
-   * <p>
    * Constructor for BaseContract.
-   * </p>
    */
   public BaseContract() {
   }
 
   /**
-   * <p>
    * Constructor for BaseContract.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -66,9 +60,7 @@ public class BaseContract implements ContractInterface {
   }
 
   /**
-   * <p>
    * Constructor for BaseContract.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param terminal a {@link java.lang.String} object
@@ -101,9 +93,7 @@ public class BaseContract implements ContractInterface {
   }
 
   /**
-   * <p>
    * getMethod.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param methodName a {@link java.lang.String} object
@@ -140,9 +130,7 @@ public class BaseContract implements ContractInterface {
   }
 
   /**
-   * <p>
    * getSpecification.
-   * </p>
    *
    * @param method a {@link neqsim.standards.StandardInterface} object
    * @param specificationName a {@link java.lang.String} object

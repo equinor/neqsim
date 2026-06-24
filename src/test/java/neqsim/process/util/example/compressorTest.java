@@ -10,9 +10,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * compressorTest class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id

@@ -8,9 +8,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * WaterDewPointAnalyser class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -25,9 +23,7 @@ public class HydrocarbonDewPointAnalyser extends StreamMeasurementDeviceBaseClas
   private String method = "EOS";
 
   /**
-   * <p>
    * Constructor for WaterDewPointAnalyser.
-   * </p>
    *
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -36,9 +32,7 @@ public class HydrocarbonDewPointAnalyser extends StreamMeasurementDeviceBaseClas
   }
 
   /**
-   * <p>
    * Constructor for WaterDewPointAnalyser.
-   * </p>
    *
    * @param name Name of WaterDewPointAnalyser
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -81,9 +75,7 @@ public class HydrocarbonDewPointAnalyser extends StreamMeasurementDeviceBaseClas
   }
 
   /**
-   * <p>
    * Getter for the field <code>referencePressure</code>.
-   * </p>
    *
    * @return Reference pressure in bara
    */
@@ -92,9 +84,7 @@ public class HydrocarbonDewPointAnalyser extends StreamMeasurementDeviceBaseClas
   }
 
   /**
-   * <p>
    * Setter for the field <code>referencePressure</code>.
-   * </p>
    *
    * @param referencePressure Reference pressure to set in in bara
    */
@@ -103,9 +93,7 @@ public class HydrocarbonDewPointAnalyser extends StreamMeasurementDeviceBaseClas
   }
 
   /**
-   * <p>
    * Getter for the field <code>method</code>.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -114,9 +102,7 @@ public class HydrocarbonDewPointAnalyser extends StreamMeasurementDeviceBaseClas
   }
 
   /**
-   * <p>
    * Setter for the field <code>method</code>.
-   * </p>
    *
    * @param method a {@link java.lang.String} object
    */

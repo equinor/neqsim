@@ -7,9 +7,7 @@ import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMar
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TestLevenbergMarquardt class.
- * </p>
  *
  * @author Even Solbraa
  * @since 2.2.3
@@ -17,9 +15,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class TestLevenbergMarquardt extends neqsim.NeqSimTest {
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

@@ -45,9 +45,7 @@ class SaturationTemperatureTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * checkSaturationTemperatureToPhaseEnvelope.
-   * </p>
    *
    * @throws Exception
    */

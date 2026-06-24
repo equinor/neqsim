@@ -8,9 +8,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * sysNewtonRhapsonPHflash class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -59,9 +57,7 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
   double dPdT = 0;
 
   /**
-   * <p>
    * Constructor for sysNewtonRhapsonPHflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param numberOfPhases a int
@@ -85,9 +81,7 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
   }
 
   /**
-   * <p>
    * Constructor for sysNewtonRhapsonPHflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param numberOfPhases a int
@@ -100,9 +94,7 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
   }
 
   /**
-   * <p>
    * setSpec.
-   * </p>
    *
    * @param spec a double
    */
@@ -111,9 +103,7 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
   }
 
   /**
-   * <p>
    * Setter for the field <code>fvec</code>.
-   * </p>
    */
   public void setfvec() {
     for (int i = 0; i < numberOfComponents; i++) {
@@ -139,9 +129,7 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
   }
 
   /**
-   * <p>
    * setJac.
-   * </p>
    */
   public void setJac() {
     Jac.timesEquals(0.0);
@@ -192,9 +180,7 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
   }
 
   /**
-   * <p>
    * Setter for the field <code>u</code>.
-   * </p>
    */
   public void setu() {
     for (int i = 0; i < numberOfComponents; i++) {
@@ -205,9 +191,7 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
   }
 
   /**
-   * <p>
    * init.
-   * </p>
    */
   public void init() {
     double oldBeta = system.getBeta();
@@ -272,9 +256,7 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
   }
 
   /**
-   * <p>
    * solve.
-   * </p>
    *
    * @param np a int
    * @return a int

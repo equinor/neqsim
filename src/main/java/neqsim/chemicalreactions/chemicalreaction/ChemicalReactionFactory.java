@@ -11,9 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * ChemicalReactionFactory class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -29,9 +27,7 @@ public final class ChemicalReactionFactory {
   }
 
   /**
-   * <p>
    * getChemicalReaction.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a {@link neqsim.chemicalreactions.chemicalreaction.ChemicalReaction} object

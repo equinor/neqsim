@@ -14,18 +14,14 @@ public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for SystemElectrolyteCPAstatoil.
-   * </p>
    */
   public SystemElectrolyteCPAstatoil() {
     this(298.15, 1.0);
   }
 
   /**
-   * <p>
    * Constructor for SystemElectrolyteCPAstatoil.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)

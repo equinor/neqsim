@@ -4,9 +4,7 @@ import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseStratifiedFlow;
 
 /**
- * <p>
  * InterphaseStirredCellFlow class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -16,17 +14,13 @@ public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for InterphaseStirredCellFlow.
-   * </p>
    */
   public InterphaseStirredCellFlow() {
   }
 
   /**
-   * <p>
    * Constructor for InterphaseStirredCellFlow.
-   * </p>
    *
    * @param node a {@link neqsim.fluidmechanics.flownode.FlowNodeInterface} object
    */

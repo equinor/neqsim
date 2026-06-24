@@ -7,18 +7,14 @@
 package neqsim.mathlib.nonlinearsolver;
 
 /**
- * <p>
  * NumericalIntegration class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class NumericalIntegration {
   /**
-   * <p>
    * Constructor for NumericalIntegration.
-   * </p>
    */
   public NumericalIntegration() {
   }

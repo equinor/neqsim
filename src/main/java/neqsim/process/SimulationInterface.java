@@ -61,27 +61,21 @@ public interface SimulationInterface extends NamedInterface, Runnable, Serializa
   public void increaseTime(double dt);
 
   /**
-   * <p>
    * setRunInSteps.
-   * </p>
    *
    * @param setRunSteps boolean set true to run in steps
    */
   public void setRunInSteps(boolean setRunSteps);
 
   /**
-   * <p>
    * isRunInSteps.
-   * </p>
    *
    * @return boolean
    */
   public boolean isRunInSteps();
 
   /**
-   * <p>
    * In this method all thermodynamic and unit operations will be calculated in a steady state calculation.
-   * </p>
    *
    * @param id UUID
    */
@@ -98,31 +92,23 @@ public interface SimulationInterface extends NamedInterface, Runnable, Serializa
   }
 
   /**
-   * <p>
    * In this method all thermodynamic and unit operations will be calculated in a steady state calculation. It does not
    * solve recycles - only calculates one step.
-   * </p>
    */
   public default void run_step() {
     run_step(UUID.randomUUID());
   }
 
   /**
-   * <p>
-   * run_step
-   * </p>
-   * In this method all thermodynamic and unit operations will be calculated in a steady state calculation. Sets calc
-   * identifier UUID. It does not solve recycles - only calculates one step
+   * run_step In this method all thermodynamic and unit operations will be calculated in a steady state calculation.
+   * Sets calc identifier UUID. It does not solve recycles - only calculates one step
    *
    * @param value Calc identifier UUID to set.
    */
   public void run_step(UUID value);
 
   /**
-   * <p>
-   * runTransient
-   * </p>
-   * This method calculates thermodynamic and unit operations using difference equations if available and
+   * runTransient This method calculates thermodynamic and unit operations using difference equations if available and
    * calculateSteadyState is true. Use setCalculateSteadyState to set the parameter. Sets calc identifier UUID.
    *
    * @param dt Delta time [s]
@@ -132,10 +118,7 @@ public interface SimulationInterface extends NamedInterface, Runnable, Serializa
   }
 
   /**
-   * <p>
-   * runTransient
-   * </p>
-   * This method calculates thermodynamic and unit operations using difference equations if available and
+   * runTransient This method calculates thermodynamic and unit operations using difference equations if available and
    * calculateSteadyState is true. Use setCalculateSteadyState to set the parameter. Sets calc identifier UUID.
    *
    * @param dt Delta time [s]
@@ -152,19 +135,14 @@ public interface SimulationInterface extends NamedInterface, Runnable, Serializa
   }
 
   /**
-   * <p>
    * Returns whether or not the module has been solved.
-   * </p>
    *
    * @return a boolean
    */
   public boolean solved();
 
   /**
-   * <p>
-   * getReport_json.
-   * </p>
-   * Return results of simulation in json format
+   * getReport_json. Return results of simulation in json format
    *
    * @return a String
    */

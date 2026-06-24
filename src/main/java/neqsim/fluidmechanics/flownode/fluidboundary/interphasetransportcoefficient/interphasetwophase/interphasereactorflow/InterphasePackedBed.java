@@ -4,9 +4,7 @@ import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * InterphasePackedBed class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -17,17 +15,13 @@ public class InterphasePackedBed extends InterphaseReactorFlow
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for InterphasePackedBed.
-   * </p>
    */
   public InterphasePackedBed() {
   }
 
   /**
-   * <p>
    * Constructor for InterphasePackedBed.
-   * </p>
    *
    * @param node a {@link neqsim.fluidmechanics.flownode.FlowNodeInterface} object
    */

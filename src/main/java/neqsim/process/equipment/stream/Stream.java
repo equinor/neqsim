@@ -25,9 +25,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.exception.InvalidInputException;
 
 /**
- * <p>
  * Stream class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -67,9 +65,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   }
 
   /**
-   * <p>
    * Constructor for Stream.
-   * </p>
    *
    * <p>
    * NB! This construct uses the input stream object internally, i.e., it is not cloned. Use
@@ -87,9 +83,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   }
 
   /**
-   * <p>
    * Constructor for Stream.
-   * </p>
    *
    * <p>
    * NB! This construct uses the input thermoSystem object internally, i.e., it is not cloned.
@@ -106,9 +100,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   }
 
   /**
-   * <p>
    * Getter for the field <code>gasQuality</code>.
-   * </p>
    *
    * @return the gasQuality
    */
@@ -117,9 +109,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   }
 
   /**
-   * <p>
    * Setter for the field <code>gasQuality</code>.
-   * </p>
    *
    * @param gasQuality the gasQuality to set
    */
@@ -147,9 +137,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   }
 
   /**
-   * <p>
    * getSolidFormationTemperature.
-   * </p>
    *
    * @param solidName a {@link java.lang.String} object
    * @return a double
@@ -483,9 +471,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   }
 
   /**
-   * <p>
    * runController.
-   * </p>
    *
    * @param dt a double
    * @param id UUID of run
@@ -504,9 +490,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   }
 
   /**
-   * <p>
    * phaseEnvelope.
-   * </p>
    */
   public void phaseEnvelope() {
     SystemInterface localSyst = getFluid().clone();
@@ -628,9 +612,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   }
 
   /**
-   * <p>
    * getProperty.
-   * </p>
    *
    * @param propertyName a {@link java.lang.String} object
    * @param unit a {@link java.lang.String} object
@@ -701,9 +683,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   }
 
   /**
-   * <p>
    * Setter for the field <code>stream</code>.
-   * </p>
    *
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -712,9 +692,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   }
 
   /**
-   * <p>
    * Setter for the field <code>stream</code>.
-   * </p>
    *
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -742,9 +720,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   }
 
   /**
-   * <p>
    * getReport.
-   * </p>
    *
    * @return a String object
    */

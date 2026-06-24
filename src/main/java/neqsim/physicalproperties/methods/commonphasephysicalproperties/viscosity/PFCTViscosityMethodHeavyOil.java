@@ -6,9 +6,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * <p>
  * PFCTViscosityMethodHeavyOil class.
- * </p>
  *
  * @author esol
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
@@ -48,9 +46,7 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
   private double[] cspViscosityCorrectionFactors = { 1.0, 1.0, 1.0, 1.0 };
 
   /**
-   * <p>
    * Constructor for PFCTViscosityMethodHeavyOil.
-   * </p>
    *
    * @param phase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */
@@ -257,9 +253,7 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
   }
 
   /**
-   * <p>
    * getRefComponentViscosity.
-   * </p>
    *
    * @param temp a double
    * @param pres a double

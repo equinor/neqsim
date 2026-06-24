@@ -3,9 +3,7 @@ package neqsim.standards.gasquality;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * Standard_ISO15403 class.
- * </p>
  *
  * @author ESOL
  */
@@ -17,9 +15,7 @@ public class Standard_ISO15403 extends neqsim.standards.Standard {
   private double MON;
 
   /**
-   * <p>
    * Constructor for Standard_ISO15403.
-   * </p>
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */

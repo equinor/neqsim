@@ -154,9 +154,7 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
   }
 
   /**
-   * <p>
    * calcSalinity.
-   * </p>
    *
    * @return a boolean
    */

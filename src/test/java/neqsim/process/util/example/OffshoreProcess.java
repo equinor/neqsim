@@ -12,9 +12,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * OffshoreProcess class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id

@@ -4,9 +4,7 @@ import neqsim.process.equipment.separator.Separator;
 import neqsim.process.mechanicaldesign.separator.sectiontype.MecMeshSection;
 
 /**
- * <p>
  * MeshSection class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -16,9 +14,7 @@ public class MeshSection extends SeparatorSection {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for MeshSection.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param type a {@link java.lang.String} object

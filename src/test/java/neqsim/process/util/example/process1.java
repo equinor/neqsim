@@ -7,9 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * process1 class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id

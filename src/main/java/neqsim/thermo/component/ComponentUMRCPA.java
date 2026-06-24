@@ -5,9 +5,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseUMRCPA;
 
 /**
- * <p>
  * ComponentSrkCPA class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -25,9 +23,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   double[] xsitedTdT = new double[0];
 
   /**
-   * <p>
    * Constructor for ComponentSrkCPA.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -64,9 +60,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   }
 
   /**
-   * <p>
    * Constructor for ComponentSrkCPA.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]
@@ -303,9 +297,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   }
 
   /**
-   * <p>
    * dFCPAdNdN.
-   * </p>
    *
    * @param j a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -341,9 +333,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   }
 
   /**
-   * <p>
    * dFCPAdN.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -362,9 +352,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   }
 
   /**
-   * <p>
    * dFCPAdNdV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -395,9 +383,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   }
 
   /**
-   * <p>
    * dFCPAdNdT.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -427,9 +413,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   }
 
   /**
-   * <p>
    * calc_hCPAdn.
-   * </p>
    *
    * @return a double
    */
@@ -448,9 +432,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   }
 
   /**
-   * <p>
    * dFCPAdXidni.
-   * </p>
    *
    * @param site a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -490,9 +472,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   }
 
   /**
-   * <p>
    * dFCPAdNdXidXdV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -506,9 +486,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   }
 
   /**
-   * <p>
    * calc_lngi.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -519,9 +497,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   }
 
   /**
-   * <p>
    * calc_lngidV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -535,9 +511,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   }
 
   /**
-   * <p>
    * calc_lngij.
-   * </p>
    *
    * @param j a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -629,9 +603,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   }
 
   /**
-   * <p>
    * Getter for the field <code>xsitedni</code>.
-   * </p>
    *
    * @return the xsitedni
    */
@@ -640,9 +612,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   }
 
   /**
-   * <p>
    * Getter for the field <code>xsitedni</code>.
-   * </p>
    *
    * @param xNumb a int
    * @param compNumbi a int
@@ -653,9 +623,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   }
 
   /**
-   * <p>
    * Setter for the field <code>xsitedni</code>.
-   * </p>
    *
    * @param xsitedni the xsitedni to set
    */

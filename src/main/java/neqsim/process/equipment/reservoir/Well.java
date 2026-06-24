@@ -7,9 +7,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.NamedBaseClass;
 
 /**
- * <p>
  * Well class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -24,9 +22,7 @@ public class Well extends NamedBaseClass {
   double z;
 
   /**
-   * <p>
    * Constructor for Well.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -35,9 +31,7 @@ public class Well extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>stream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -46,9 +40,7 @@ public class Well extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>stream</code>.
-   * </p>
    *
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -57,9 +49,7 @@ public class Well extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * getGOR.
-   * </p>
    *
    * @return a double
    */
@@ -77,9 +67,7 @@ public class Well extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * getStdGasProduction.
-   * </p>
    *
    * @return a double
    */
@@ -97,9 +85,7 @@ public class Well extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * getStdOilProduction.
-   * </p>
    *
    * @return a double
    */
@@ -117,9 +103,7 @@ public class Well extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * getStdWaterProduction.
-   * </p>
    *
    * @return a double
    */

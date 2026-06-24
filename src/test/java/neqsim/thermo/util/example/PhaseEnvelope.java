@@ -10,9 +10,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * PhaseEnvelope class.
- * </p>
  *
  * @author esol
  * @since 2.2.3
@@ -24,9 +22,7 @@ public class PhaseEnvelope {
   /** Logger object for class. */
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

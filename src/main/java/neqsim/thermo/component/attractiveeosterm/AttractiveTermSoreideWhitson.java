@@ -3,9 +3,7 @@ package neqsim.thermo.component.attractiveeosterm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * <p>
  * AttractiveTermSoreideWhitson class.
- * </p>
  *
  * <p>
  * Implements the modified alpha function for the Søreide-Whitson method specifically tailored for water in systems
@@ -37,9 +35,7 @@ public class AttractiveTermSoreideWhitson extends AttractiveTermPr1978 {
   private double salinityFromPhase = 0.0;
 
   /**
-   * <p>
    * Constructor for AttractiveTermSoreideWhitson.
-   * </p>
    *
    * @param component The component to which this attractive term is associated.
    */

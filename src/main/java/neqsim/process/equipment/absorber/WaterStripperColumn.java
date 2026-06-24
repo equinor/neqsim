@@ -19,9 +19,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * WaterStripperColumn class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -49,9 +47,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
   int solventStreamNumber = 0;
 
   /**
-   * <p>
    * Constructor for WaterStripperColumn.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -74,9 +70,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * addGasInStream.
-   * </p>
    *
    * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -87,9 +81,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * addSolventInStream.
-   * </p>
    *
    * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -101,9 +93,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * replaceSolventInStream.
-   * </p>
    *
    * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -119,9 +109,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * mixStream.
-   * </p>
    */
   public void mixStream() {
     String compName = new String();
@@ -160,9 +148,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * guessTemperature.
-   * </p>
    *
    * @return a double
    */
@@ -176,9 +162,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * calcMixStreamEnthalpy.
-   * </p>
    *
    * @return a double
    */
@@ -201,9 +185,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * getInStream.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
@@ -230,9 +212,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * calcEa.
-   * </p>
    *
    * @return a double
    */
@@ -245,9 +225,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * calcX0.
-   * </p>
    *
    * @return a double
    */
@@ -256,9 +234,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * calcNumberOfTheoreticalStages.
-   * </p>
    *
    * @return a double
    */
@@ -268,9 +244,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * calcNTU.
-   * </p>
    *
    * @param y0 a double
    * @param y1 a double
@@ -466,9 +440,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * Getter for the field <code>waterDewPointTemperature</code>.
-   * </p>
    *
    * @return a double
    */
@@ -477,9 +449,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * Setter for the field <code>waterDewPointTemperature</code>.
-   * </p>
    *
    * @param waterDewPointTemperature a double
    * @param dewPressure a double
@@ -490,9 +460,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * Setter for the field <code>gasOutStream</code>.
-   * </p>
    *
    * @param gasOutStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -501,9 +469,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * Getter for the field <code>solventOutStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
@@ -512,9 +478,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
   }
 
   /**
-   * <p>
    * Setter for the field <code>solventOutStream</code>.
-   * </p>
    *
    * @param solventOutStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */

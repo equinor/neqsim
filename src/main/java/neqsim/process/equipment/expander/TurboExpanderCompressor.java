@@ -393,9 +393,7 @@ public class TurboExpanderCompressor extends Expander {
 
   // --- Getters and Setters for all configuration and result fields ---
   /**
-   * <p>
    * Getter for the field <code>compressorPolytropicHead</code>.
-   * </p>
    *
    * @return a double
    */
@@ -440,9 +438,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * getQn.
-   * </p>
    *
    * @return a double
    */
@@ -451,9 +447,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * setQn.
-   * </p>
    *
    * @param qn a double
    */
@@ -462,9 +456,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>powerExpander</code>.
-   * </p>
    *
    * @return a double
    */
@@ -473,9 +465,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>powerExpander</code> with unit conversion.
-   * </p>
    *
    * @param unit the desired unit ("W", "kW" or "MW")
    * @return expander power in the requested unit
@@ -491,9 +481,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>powerCompressor</code>.
-   * </p>
    *
    * @return a double
    */
@@ -502,9 +490,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>powerCompressor</code> with unit conversion.
-   * </p>
    *
    * @param unit the desired unit ("W", "kW" or "MW")
    * @return compressor power in the requested unit
@@ -520,9 +506,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>expanderIsentropicEfficiency</code>.
-   * </p>
    *
    * @return a double
    */
@@ -531,9 +515,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Setter for the field <code>expanderIsentropicEfficiency</code>.
-   * </p>
    *
    * @param expanderIsentropicEfficiency a double
    */
@@ -542,9 +524,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * getDesignCompressorPolytropicEfficiency.
-   * </p>
    *
    * @return a double
    */
@@ -553,9 +533,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Setter for the field <code>compressorDesignPolytropicEfficiency</code>.
-   * </p>
    *
    * @param compressorPolytropicEfficiency a double
    */
@@ -564,9 +542,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>compressorDesignPolytropicHead</code>.
-   * </p>
    *
    * @return a double
    */
@@ -575,9 +551,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Setter for the field <code>compressorDesignPolytropicHead</code>.
-   * </p>
    *
    * @param compressorDesignPolytropicHead a double
    */
@@ -1026,9 +1000,7 @@ public class TurboExpanderCompressor extends Expander {
 
   // --- Setters ---
   /**
-   * <p>
    * Setter for the field <code>impellerDiameter</code>.
-   * </p>
    *
    * @param impellerDiameter a double
    */
@@ -1037,9 +1009,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Setter for the field <code>designSpeed</code>.
-   * </p>
    *
    * @param designSpeed a double
    */
@@ -1048,9 +1018,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Setter for the field <code>designUC</code>.
-   * </p>
    *
    * @param designUC a double
    */
@@ -1059,9 +1027,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Setter for the field <code>designQn</code>.
-   * </p>
    *
    * @param designQn a double
    */
@@ -1082,9 +1048,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Setter for the field <code>maximumIGVArea</code>.
-   * </p>
    *
    * @param maximumIGVArea a double
    */
@@ -1107,9 +1071,7 @@ public class TurboExpanderCompressor extends Expander {
 
   // --- Getters ---
   /**
-   * <p>
    * Getter for the field <code>impellerDiameter</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1118,9 +1080,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>designSpeed</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1129,9 +1089,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>designUC</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1140,9 +1098,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>designQn</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1151,9 +1107,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>maximumIGVArea</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1162,9 +1116,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * getCompressorPolytropicEfficieny.
-   * </p>
    *
    * @return a double
    */
@@ -1173,9 +1125,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * getCompressorDesingPolytropicHead.
-   * </p>
    *
    * @return a double
    */
@@ -1184,9 +1134,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * getIGVopening.
-   * </p>
    *
    * @return a double
    */
@@ -1195,9 +1143,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * setIGVopening.
-   * </p>
    *
    * @param iGVopening a double
    */
@@ -1255,9 +1201,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * setUCratioexpander.
-   * </p>
    *
    * @param UCratioexpander a double
    */
@@ -1266,9 +1210,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * setUCratiocompressor.
-   * </p>
    *
    * @param UCratiocompressor a double
    */
@@ -1277,9 +1219,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * setQNratioexpander.
-   * </p>
    *
    * @param QNratioexpander a double
    */
@@ -1288,9 +1228,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * setQNratiocompressor.
-   * </p>
    *
    * @param QNratiocompressor a double
    */
@@ -1299,9 +1237,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * getSerialversionuid.
-   * </p>
    *
    * @return a long
    */
@@ -1310,9 +1246,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>expanderOutPressure</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1321,9 +1255,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>bearingLossPower</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1332,9 +1264,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>expanderSpeed</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1343,9 +1273,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>compressorSpeed</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1354,9 +1282,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>gearRatio</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1365,9 +1291,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>compressorFeedStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -1376,9 +1300,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>expanderFeedStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -1387,9 +1309,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>expanderOutletStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -1398,9 +1318,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>ucCurveA</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1409,9 +1327,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>ucCurveH</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1420,9 +1336,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>ucCurveK</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1431,9 +1345,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>qnCurveA</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1442,9 +1354,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>qnCurveH</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1453,9 +1363,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>qnCurveK</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1464,9 +1372,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>qnHeadCurveA</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1475,9 +1381,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>qnHeadCurveH</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1486,9 +1390,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>qnHeadCurveK</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1515,9 +1417,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>compressorDesignPolytropicEfficiency</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1526,9 +1426,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>compressorPolytropicEfficiency</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1537,9 +1435,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Getter for the field <code>expanderDesignIsentropicEfficiency</code>.
-   * </p>
    *
    * @return a double
    */
@@ -1548,9 +1444,7 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * <p>
    * Setter for the field <code>expanderDesignIsentropicEfficiency</code>.
-   * </p>
    *
    * @param expanderDesignIsentropicEfficiency a double
    */

@@ -8,9 +8,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * ElectrolyteScrkEosTest class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -22,9 +20,7 @@ public class SystemFurstElectrolyteEosTest extends neqsim.NeqSimTest {
   static neqsim.thermo.ThermodynamicModelTest testModel = null;
 
   /**
-   * <p>
    * setUp.
-   * </p>
    */
   @BeforeAll
   public static void setUp() {
@@ -41,9 +37,7 @@ public class SystemFurstElectrolyteEosTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testTPflash.
-   * </p>
    */
   @Test
   public void testTPflash() {
@@ -51,9 +45,7 @@ public class SystemFurstElectrolyteEosTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testinitPhysicalProperties.
-   * </p>
    */
   @Test
   public void testinitPhysicalProperties() {
@@ -62,9 +54,7 @@ public class SystemFurstElectrolyteEosTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testFugacityCoefficients.
-   * </p>
    */
   @Test
   @DisplayName("test the fugacity coefficients calculated")
@@ -73,9 +63,7 @@ public class SystemFurstElectrolyteEosTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * checkFugacityCoefficientsDP.
-   * </p>
    */
   @Test
   @DisplayName("test derivative of fugacity coefficients with respect to pressure")
@@ -84,9 +72,7 @@ public class SystemFurstElectrolyteEosTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * checkFugacityCoefficientsDT.
-   * </p>
    */
   @Test
   @DisplayName("test derivative of fugacity coefficients with respect to temperature")
@@ -95,9 +81,7 @@ public class SystemFurstElectrolyteEosTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * checkFugacityCoefficientsDn.
-   * </p>
    */
   @Test
   @DisplayName("test derivative of fugacity coefficients with respect to composition")
@@ -106,9 +90,7 @@ public class SystemFurstElectrolyteEosTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * checkFugacityCoefficientsDn2.
-   * </p>
    */
   @Test
   @DisplayName("test derivative of fugacity coefficients with respect to composition (2nd method)")

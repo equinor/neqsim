@@ -9,9 +9,7 @@ import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
 
 /**
- * <p>
  * Cooler class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -30,9 +28,7 @@ public class Cooler extends Heater {
   }
 
   /**
-   * <p>
    * Constructor for Cooler.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object

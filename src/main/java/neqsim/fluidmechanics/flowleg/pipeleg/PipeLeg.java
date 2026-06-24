@@ -10,9 +10,7 @@ import neqsim.fluidmechanics.flowleg.FlowLeg;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 
 /**
- * <p>
  * PipeLeg class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -24,9 +22,7 @@ public class PipeLeg extends FlowLeg {
   // FlowNodeInterface[] node;
 
   /**
-   * <p>
    * Constructor for PipeLeg.
-   * </p>
    */
   public PipeLeg() {
   }

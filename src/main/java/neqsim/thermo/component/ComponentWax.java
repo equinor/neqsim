@@ -6,9 +6,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * ComponentWax class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -20,9 +18,7 @@ public class ComponentWax extends ComponentSolid {
   static Logger logger = LogManager.getLogger(ComponentWax.class);
 
   /**
-   * <p>
    * Constructor for ComponentWax.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.

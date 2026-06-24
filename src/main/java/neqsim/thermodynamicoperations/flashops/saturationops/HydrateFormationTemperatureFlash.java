@@ -7,9 +7,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * HydrateFormationTemperatureFlash class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -21,9 +19,7 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
   static Logger logger = LogManager.getLogger(HydrateFormationTemperatureFlash.class);
 
   /**
-   * <p>
    * Constructor for HydrateFormationTemperatureFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -32,9 +28,7 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
   }
 
   /**
-   * <p>
    * stop.
-   * </p>
    */
   public void stop() {
     system = null;
@@ -211,9 +205,7 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
   }
 
   /**
-   * <p>
    * run2.
-   * </p>
    */
   public void run2() {
     double olfFug = 0.0;
@@ -276,9 +268,7 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
   }
 
   /**
-   * <p>
    * setFug.
-   * </p>
    */
   public void setFug() {
     system.getPhase(4).getComponent("water").setx(1.0);

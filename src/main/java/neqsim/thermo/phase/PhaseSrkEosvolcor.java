@@ -10,9 +10,7 @@ import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentSrkvolcor;
 
 /**
- * <p>
  * PhasePrEosvolcor class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -56,9 +54,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getCT.
-   * </p>
    *
    * @return a double
    */
@@ -67,9 +63,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getCTT.
-   * </p>
    *
    * @return a double
    */
@@ -101,9 +95,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   // the translation
 
   /**
-   * <p>
    * getcij.
-   * </p>
    *
    * @param compArray a {@link neqsim.thermo.component.ComponentEosInterface} object
    * @param compArray2 a {@link neqsim.thermo.component.ComponentEosInterface} object
@@ -114,9 +106,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getcijT.
-   * </p>
    *
    * @param compArray a {@link neqsim.thermo.component.ComponentEosInterface} object
    * @param compArray2 a {@link neqsim.thermo.component.ComponentEosInterface} object
@@ -127,9 +117,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getcijTT.
-   * </p>
    *
    * @param compi a {@link neqsim.thermo.component.ComponentSrkvolcor} object
    * @param compj a {@link neqsim.thermo.component.ComponentSrkvolcor} object
@@ -142,9 +130,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
 
   // @Override
   /**
-   * <p>
    * calcCi.
-   * </p>
    *
    * @param compNumb a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -159,9 +145,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcCij.
-   * </p>
    *
    * @param compNumb a int
    * @param compNumbj a int
@@ -178,9 +162,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcCiT.
-   * </p>
    *
    * @param compNumb a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -246,9 +228,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcCT.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
@@ -271,9 +251,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcC.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
@@ -302,9 +280,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getc.
-   * </p>
    *
    * @return a double
    */
@@ -313,9 +289,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getC.
-   * </p>
    *
    * @return a double
    */
@@ -403,9 +377,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
 
   // derivative of small g with regards to c
   /**
-   * <p>
    * gc.
-   * </p>
    *
    * @return a double
    */
@@ -416,9 +388,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
 
   // derivative of small f with regards to c-->equal to fv
   /**
-   * <p>
    * fc.
-   * </p>
    *
    * @return a double
    */
@@ -435,9 +405,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
 
   // second derivative of small f with regards to cc-->equal to fvv
   /**
-   * <p>
    * fcc.
-   * </p>
    *
    * @return a double
    */
@@ -447,9 +415,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
 
   // second derivative of small f with regards to bc-->equal to fvv
   /**
-   * <p>
    * fbc.
-   * </p>
    *
    * @return a double
    */
@@ -459,9 +425,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
 
   // second derivative of small f with regards to cv-->equal to fvv
   /**
-   * <p>
    * fcv.
-   * </p>
    *
    * @return a double
    */
@@ -501,9 +465,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
 
   // second derivative of small g with regards to bc-->
   /**
-   * <p>
    * gBC.
-   * </p>
    *
    * @return a double
    */
@@ -514,9 +476,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
 
   // second derivative of small g with regards to cv-->
   /**
-   * <p>
    * gCV.
-   * </p>
    *
    * @return a double
    */
@@ -527,9 +487,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
 
   // second derivative of small g with regards to cc-->
   /**
-   * <p>
    * gCC.
-   * </p>
    *
    * @return a double
    */
@@ -549,9 +507,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   // derivative of big F with regards to C
   // @Override
   /**
-   * <p>
    * FC.
-   * </p>
    *
    * @return a double
    */
@@ -560,9 +516,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * FnC.
-   * </p>
    *
    * @return a double
    */
@@ -571,9 +525,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * FTC.
-   * </p>
    *
    * @return a double
    */
@@ -582,9 +534,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * FBC.
-   * </p>
    *
    * @return a double
    */
@@ -593,9 +543,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * FCV.
-   * </p>
    *
    * @return a double
    */
@@ -604,9 +552,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * FCC.
-   * </p>
    *
    * @return a double
    */
@@ -615,9 +561,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * FCD.
-   * </p>
    *
    * @return a double
    */

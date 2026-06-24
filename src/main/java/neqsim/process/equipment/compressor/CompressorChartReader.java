@@ -9,9 +9,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * <p>
  * CompressorChartReader class.
- * </p>
  *
  * @author esol
  */
@@ -31,9 +29,7 @@ public class CompressorChartReader {
   private String headUnit = "kJ/kg";
 
   /**
-   * <p>
    * Constructor for CompressorChartReader.
-   * </p>
    *
    * @param csvFilePath a {@link java.lang.String} object
    * @throws java.lang.Exception if any.
@@ -125,9 +121,7 @@ public class CompressorChartReader {
   }
 
   /**
-   * <p>
    * setCurvesToCompressor.
-   * </p>
    *
    * @param compressor a {@link neqsim.process.equipment.compressor.Compressor} object
    */
@@ -140,9 +134,7 @@ public class CompressorChartReader {
   }
 
   /**
-   * <p>
    * Setter for the field <code>headUnit</code>.
-   * </p>
    *
    * @param headUnit a {@link java.lang.String} object
    */
@@ -151,9 +143,7 @@ public class CompressorChartReader {
   }
 
   /**
-   * <p>
    * Getter for the field <code>surgeFlow</code>.
-   * </p>
    *
    * @return an array of double objects
    */
@@ -162,9 +152,7 @@ public class CompressorChartReader {
   }
 
   /**
-   * <p>
    * Getter for the field <code>surgeHead</code>.
-   * </p>
    *
    * @return an array of double objects
    */
@@ -173,9 +161,7 @@ public class CompressorChartReader {
   }
 
   /**
-   * <p>
    * Getter for the field <code>chokeFlow</code>.
-   * </p>
    *
    * @return an array of double objects
    */
@@ -184,9 +170,7 @@ public class CompressorChartReader {
   }
 
   /**
-   * <p>
    * Getter for the field <code>chokeHead</code>.
-   * </p>
    *
    * @return an array of double objects
    */
@@ -195,9 +179,7 @@ public class CompressorChartReader {
   }
 
   /**
-   * <p>
    * Getter for the field <code>speeds</code>.
-   * </p>
    *
    * @return an array of double objects
    */
@@ -206,9 +188,7 @@ public class CompressorChartReader {
   }
 
   /**
-   * <p>
    * Getter for the field <code>flowLines</code>.
-   * </p>
    *
    * @return an array of double objects
    */
@@ -217,9 +197,7 @@ public class CompressorChartReader {
   }
 
   /**
-   * <p>
    * Getter for the field <code>headLines</code>.
-   * </p>
    *
    * @return an array of double objects
    */
@@ -228,9 +206,7 @@ public class CompressorChartReader {
   }
 
   /**
-   * <p>
    * Getter for the field <code>polyEffLines</code>.
-   * </p>
    *
    * @return an array of double objects
    */
@@ -239,9 +215,7 @@ public class CompressorChartReader {
   }
 
   /**
-   * <p>
    * Getter for the field <code>stonewallCurve</code>.
-   * </p>
    *
    * @return an array of double objects
    */
@@ -250,9 +224,7 @@ public class CompressorChartReader {
   }
 
   /**
-   * <p>
    * Getter for the field <code>surgeCurve</code>.
-   * </p>
    *
    * @return an array of double objects
    */

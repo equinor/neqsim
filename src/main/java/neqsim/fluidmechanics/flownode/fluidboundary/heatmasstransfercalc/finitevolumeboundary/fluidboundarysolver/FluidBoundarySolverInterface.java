@@ -7,25 +7,19 @@
 package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysolver;
 
 /**
- * <p>
  * FluidBoundarySolverInterface interface.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public interface FluidBoundarySolverInterface {
   /**
-   * <p>
    * solve.
-   * </p>
    */
   public void solve();
 
   /**
-   * <p>
    * getMolarFlux.
-   * </p>
    *
    * @param componentNumber a int
    * @return a double

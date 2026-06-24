@@ -8,9 +8,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * VHflashQfunc class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -26,9 +24,7 @@ public class VHflashQfunc extends Flash {
   Flash tpFlash;
 
   /**
-   * <p>
    * Constructor for VHflashQfunc.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Vspec a double
@@ -42,9 +38,7 @@ public class VHflashQfunc extends Flash {
   }
 
   /**
-   * <p>
    * calcdQdPP.
-   * </p>
    *
    * @return a double
    */
@@ -57,9 +51,7 @@ public class VHflashQfunc extends Flash {
   }
 
   /**
-   * <p>
    * calcdQdTT.
-   * </p>
    *
    * @return a double
    */
@@ -70,9 +62,7 @@ public class VHflashQfunc extends Flash {
   }
 
   /**
-   * <p>
    * calcdQdT.
-   * </p>
    *
    * @return a double
    */
@@ -83,9 +73,7 @@ public class VHflashQfunc extends Flash {
   }
 
   /**
-   * <p>
    * calcdQdP.
-   * </p>
    *
    * @return a double
    */
@@ -112,9 +100,7 @@ public class VHflashQfunc extends Flash {
   }
 
   /**
-   * <p>
    * solveQ.
-   * </p>
    *
    * @return a double
    */
@@ -216,9 +202,7 @@ public class VHflashQfunc extends Flash {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

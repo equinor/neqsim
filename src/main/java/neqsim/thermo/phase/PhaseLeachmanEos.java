@@ -5,9 +5,7 @@ import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentLeachmanEos;
 
 /**
- * <p>
  * PhaseLeachmanEos class.
- * </p>
  *
  * @version $Id: $Id
  * @author vscode
@@ -37,9 +35,7 @@ public class PhaseLeachmanEos extends PhaseEos {
   private transient boolean propertiesCalculated = false;
 
   /**
-   * <p>
    * Constructor for PhaseLeachmanEos.
-   * </p>
    */
   public PhaseLeachmanEos() {
     thermoPropertyModelName = "Leachman Eos";

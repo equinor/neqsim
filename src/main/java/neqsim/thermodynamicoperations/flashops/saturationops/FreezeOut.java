@@ -12,9 +12,7 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * FreezeOut class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -30,9 +28,7 @@ public class FreezeOut extends ConstantDutyTemperatureFlash implements Thermodyn
   public boolean noFreezeFlash = true;
 
   /**
-   * <p>
    * Constructor for FreezeOut.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

@@ -47,9 +47,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * Abstract PhysicalProperties class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -75,9 +73,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   private double[] waxViscosityParameter = { 37.82, 83.96, 8.559e6 };
 
   /**
-   * <p>
    * Constructor for PhysicalProperties.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
@@ -86,9 +82,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * Constructor for PhysicalProperties.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param binaryDiffusionCoefficientMethod a int
@@ -122,9 +116,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * Getter for property <code>phase</code>.
-   * </p>
    *
    * @return a {@link neqsim.thermo.phase.PhaseInterface} object
    */
@@ -133,9 +125,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * getMixingRule.
-   * </p>
    *
    * @return a {@link neqsim.physicalproperties.mixingrule.PhysicalPropertyMixingRuleInterface} object
    */
@@ -144,9 +134,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * setMixingRule.
-   * </p>
    *
    * @param mixingRule a {@link neqsim.physicalproperties.mixingrule.PhysicalPropertyMixingRuleInterface} object
    */
@@ -155,18 +143,14 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * setMixingRuleNull.
-   * </p>
    */
   public void setMixingRuleNull() {
     setMixingRule(null);
   }
 
   /**
-   * <p>
    * getViscosityModel.
-   * </p>
    *
    * @return a {@link neqsim.physicalproperties.methods.methodinterface.ViscosityInterface} object
    */
@@ -175,9 +159,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * setDensityModel.
-   * </p>
    *
    * @param model a {@link java.lang.String} object
    */
@@ -196,9 +178,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * setConductivityModel.
-   * </p>
    *
    * @param model a {@link java.lang.String} object
    */
@@ -227,9 +207,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * setViscosityModel.
-   * </p>
    *
    * @param model a {@link java.lang.String} object
    */
@@ -407,9 +385,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * setDiffusionCoefficientModel.
-   * </p>
    *
    * @param model a {@link java.lang.String} object
    */
@@ -445,9 +421,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * getConductivityModel.
-   * </p>
    *
    * @return a {@link neqsim.physicalproperties.methods.methodinterface.ConductivityInterface} object
    */
@@ -456,9 +430,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * setBinaryDiffusionCoefficientMethod.
-   * </p>
    *
    * @param i a int
    */
@@ -467,9 +439,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * setMulticomponentDiffusionMethod.
-   * </p>
    *
    * @param i a int
    */
@@ -478,9 +448,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * calcKinematicViscosity.
-   * </p>
    *
    * @return a double
    */
@@ -490,10 +458,8 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * Set phase information for all physical property calc methods, i.e., subclasses of physicalpropertymethods using
    * setPhase(this). NB! Safe even if calc methods are null, e.g., from constructors.
-   * </p>
    */
   public void setPhases() {
     // Check for null to make it safe to call this function from subclass constructors.
@@ -512,10 +478,8 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * Setter for property <code>phase</code>. Will also set the phase for all physicalpropertymethods using setPhases.
    * Safe to call from constructor.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
@@ -525,9 +489,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * Initialize / calculate all physical properties of phase.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
@@ -549,9 +511,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * Initialize / calculate a specific physical property of phase.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param ppt PhysicalPropertyType enum object.
@@ -580,9 +540,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * Initialize / calculate a specific physical property of phase.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param name Name of physical property.
@@ -592,9 +550,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * getViscosityOfWaxyOil.
-   * </p>
    *
    * @param waxVolumeFraction a double
    * @param shareRate a double
@@ -607,9 +563,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * getViscosity.
-   * </p>
    *
    * @return a double
    */
@@ -621,9 +575,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * getPureComponentViscosity.
-   * </p>
    *
    * @param i a int
    * @return a double
@@ -633,9 +585,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * getConductivity.
-   * </p>
    *
    * @return a double
    */
@@ -647,9 +597,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * calcDensity.
-   * </p>
    *
    * @return a double
    */
@@ -658,9 +606,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * getDensity.
-   * </p>
    *
    * @return a double
    */
@@ -669,9 +615,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * getKinematicViscosity.
-   * </p>
    *
    * @return a double
    */
@@ -683,9 +627,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * getDiffusionCoefficient.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -696,9 +638,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * getDiffusionCoefficient.
-   * </p>
    *
    * @param comp1 a {@link java.lang.String} object
    * @param comp2 a {@link java.lang.String} object
@@ -710,9 +650,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * getFickDiffusionCoefficient.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -723,9 +661,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * calcEffectiveDiffusionCoefficients.
-   * </p>
    */
   public void calcEffectiveDiffusionCoefficients() {
     this.init(phase);
@@ -733,9 +669,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * getEffectiveDiffusionCoefficient.
-   * </p>
    *
    * @param i a int
    * @return a double
@@ -745,9 +679,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * getEffectiveDiffusionCoefficient.
-   * </p>
    *
    * @param compName a {@link java.lang.String} object
    * @return a double
@@ -757,9 +689,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * getEffectiveSchmidtNumber.
-   * </p>
    *
    * @param i a int
    * @return a double
@@ -769,9 +699,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * Getter for the field <code>waxViscosityParameter</code>.
-   * </p>
    *
    * @return the waxViscosityParameter
    */
@@ -780,9 +708,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * Setter for the field <code>waxViscosityParameter</code>.
-   * </p>
    *
    * @param waxViscosityParameter the waxViscosityParameter to set
    */
@@ -791,9 +717,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * <p>
    * Setter for the field <code>waxViscosityParameter</code>.
-   * </p>
    *
    * @param paramNumber a int
    * @param waxViscosityParameter a double

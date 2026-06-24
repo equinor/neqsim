@@ -6,9 +6,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TestSurfaceTension2 class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -18,9 +16,7 @@ public class TestSurfaceTension2 {
   // John debug
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

@@ -7,9 +7,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * ComponentWaxWilson class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -21,9 +19,7 @@ public class ComponentWaxWilson extends ComponentSolid {
   static Logger logger = LogManager.getLogger(ComponentWaxWilson.class);
 
   /**
-   * <p>
    * Constructor for ComponentWaxWilson.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -87,9 +83,7 @@ public class ComponentWaxWilson extends ComponentSolid {
   }
 
   /**
-   * <p>
    * getWilsonActivityCoefficient.
-   * </p>
    *
    * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -116,9 +110,7 @@ public class ComponentWaxWilson extends ComponentSolid {
   }
 
   /**
-   * <p>
    * getCharEnergyParamter.
-   * </p>
    *
    * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param comp1 a int

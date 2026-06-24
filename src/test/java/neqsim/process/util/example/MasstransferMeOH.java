@@ -11,9 +11,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * MasstransferMeOH class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -23,9 +21,7 @@ public class MasstransferMeOH {
   private static final Logger logger = LogManager.getLogger(MasstransferMeOH.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

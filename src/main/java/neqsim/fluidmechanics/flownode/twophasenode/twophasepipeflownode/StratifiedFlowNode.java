@@ -12,9 +12,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * StratifiedFlowNode class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -26,18 +24,14 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
   static Logger logger = LogManager.getLogger(StratifiedFlowNode.class);
 
   /**
-   * <p>
    * Constructor for StratifiedFlowNode.
-   * </p>
    */
   public StratifiedFlowNode() {
     this.flowNodeType = "stratified";
   }
 
   /**
-   * <p>
    * Constructor for StratifiedFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
@@ -51,9 +45,7 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Constructor for StratifiedFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
@@ -158,9 +150,7 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

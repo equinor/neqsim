@@ -14,9 +14,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * LNGship class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -73,9 +71,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
   public double endVolume = 0.0;
 
   /**
-   * <p>
    * Constructor for LNGship.
-   * </p>
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    * @param totalTankVolume a double
@@ -90,9 +86,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
   }
 
   /**
-   * <p>
    * useStandardVersion.
-   * </p>
    *
    * @param isoName a {@link java.lang.String} object
    * @param version a {@link java.lang.String} object
@@ -322,9 +316,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
   }
 
   /**
-   * <p>
    * Getter for the field <code>resultTable</code>.
-   * </p>
    *
    * @return an array of {@link java.lang.String} objects
    */
@@ -333,9 +325,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
   }
 
   /**
-   * <p>
    * getResults.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return an array of {@link java.lang.String} objects
@@ -396,9 +386,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -440,9 +428,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
   }
 
   /**
-   * <p>
    * Setter for the field <code>resultTable</code>.
-   * </p>
    *
    * @param resultTable the resultTable to set
    */
@@ -451,9 +437,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
   }
 
   /**
-   * <p>
    * Getter for the field <code>liquidDensity</code>.
-   * </p>
    *
    * @return the liquidDensity
    */
@@ -462,9 +446,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
   }
 
   /**
-   * <p>
    * Setter for the field <code>liquidDensity</code>.
-   * </p>
    *
    * @param liquidDensity the liquidDensity to set
    */
@@ -473,9 +455,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
   }
 
   /**
-   * <p>
    * Getter for the field <code>endTime</code>.
-   * </p>
    *
    * @return the endTime
    */
@@ -484,9 +464,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
   }
 
   /**
-   * <p>
    * Setter for the field <code>endTime</code>.
-   * </p>
    *
    * @param endTime the endTime to set
    */
@@ -495,9 +473,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
   }
 
   /**
-   * <p>
    * Getter for the field <code>standardISO6976</code>.
-   * </p>
    *
    * @return the standardISO6976
    */
@@ -506,9 +482,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
   }
 
   /**
-   * <p>
    * Setter for the field <code>standardISO6976</code>.
-   * </p>
    *
    * @param standardISO6976 the standardISO6976 to set
    */
@@ -517,9 +491,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
   }
 
   /**
-   * <p>
    * isBackCalculate.
-   * </p>
    *
    * @return the backCalculate
    */
@@ -528,9 +500,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
   }
 
   /**
-   * <p>
    * Setter for the field <code>backCalculate</code>.
-   * </p>
    *
    * @param backCalculate the backCalculate to set
    */
@@ -539,9 +509,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
   }
 
   /**
-   * <p>
    * Getter for the field <code>thermoSystem</code>.
-   * </p>
    *
    * @return the thermoSystem
    */
@@ -550,9 +518,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
   }
 
   /**
-   * <p>
    * Setter for the field <code>thermoSystem</code>.
-   * </p>
    *
    * @param thermoSystem the thermoSystem to set
    */
@@ -561,9 +527,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
   }
 
   /**
-   * <p>
    * isSetInitialTemperature.
-   * </p>
    *
    * @return the setInitialTemperature
    */
@@ -572,9 +536,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
   }
 
   /**
-   * <p>
    * Getter for the field <code>initialTemperature</code>.
-   * </p>
    *
    * @return the initialTemperature
    */
@@ -583,9 +545,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
   }
 
   /**
-   * <p>
    * Setter for the field <code>initialTemperature</code>.
-   * </p>
    *
    * @param initialTemperature the initialTemperature to set
    */
@@ -595,9 +555,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
   }
 
   /**
-   * <p>
    * Setter for the field <code>initialTemperature</code>.
-   * </p>
    *
    * @param setInitialTemperature the setInitialTemperature to set
    */

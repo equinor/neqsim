@@ -4,9 +4,7 @@ import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * CorrespondingStatesDiffusivity class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -19,9 +17,7 @@ public class CorrespondingStatesDiffusivity extends Diffusivity {
   double[][] binaryLennardJonesOmega;
 
   /**
-   * <p>
    * Constructor for CorrespondingStatesDiffusivity.
-   * </p>
    *
    * @param phase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

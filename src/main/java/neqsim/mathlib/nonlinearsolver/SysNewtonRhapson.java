@@ -6,9 +6,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * sysNewtonRhapson class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -48,17 +46,13 @@ public class SysNewtonRhapson implements java.io.Serializable {
   boolean etterCP2 = false;
 
   /**
-   * <p>
    * Constructor for sysNewtonRhapson.
-   * </p>
    */
   public SysNewtonRhapson() {
   }
 
   /**
-   * <p>
    * Constructor for sysNewtonRhapson.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param numberOfPhases a int
@@ -81,9 +75,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>fvec</code>.
-   * </p>
    */
   public void setfvec() {
     for (int i = 0; i < numberOfComponents; i++) {
@@ -100,9 +92,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * findSpecEqInit.
-   * </p>
    */
   public void findSpecEqInit() {
     speceq = 0;
@@ -126,9 +116,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * findSpecEq.
-   * </p>
    */
   public void findSpecEq() {
     double max = 0;
@@ -140,9 +128,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * setJac.
-   * </p>
    */
   public void setJac() {
     Jac.timesEquals(0.0);
@@ -178,9 +164,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>u</code>.
-   * </p>
    */
   public void setu() {
     for (int i = 0; i < numberOfComponents; i++) {
@@ -191,9 +175,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * init.
-   * </p>
    */
   public void init() {
     for (int i = 0; i < numberOfComponents; i++) {
@@ -207,9 +189,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * calcInc.
-   * </p>
    *
    * @param np a int
    */
@@ -282,9 +262,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * calcInc2.
-   * </p>
    *
    * @param np a int
    */
@@ -404,9 +382,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>npCrit</code>.
-   * </p>
    *
    * @return a int
    */
@@ -415,9 +391,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * sign.
-   * </p>
    *
    * @param a a double
    * @param b a double
@@ -430,9 +404,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * solve.
-   * </p>
    *
    * @param np a int
    */
@@ -459,9 +431,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

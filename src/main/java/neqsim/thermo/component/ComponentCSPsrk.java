@@ -4,9 +4,7 @@ import neqsim.thermo.phase.PhaseCSPsrkEos;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * ComponentCSPsrk class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -20,9 +18,7 @@ public class ComponentCSPsrk extends ComponentSrk {
   PhaseCSPsrkEos refPhaseBWRS = null;
 
   /**
-   * <p>
    * Constructor for ComponentCSPsrk.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -34,9 +30,7 @@ public class ComponentCSPsrk extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Constructor for ComponentCSPsrk.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]

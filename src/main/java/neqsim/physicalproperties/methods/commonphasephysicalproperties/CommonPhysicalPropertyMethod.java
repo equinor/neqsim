@@ -4,9 +4,7 @@ import neqsim.physicalproperties.methods.PhysicalPropertyMethod;
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * <p>
  * CommonPhysicalPropertyMethod class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -18,9 +16,7 @@ public abstract class CommonPhysicalPropertyMethod extends PhysicalPropertyMetho
   protected PhysicalProperties phase;
 
   /**
-   * <p>
    * Constructor for CommonPhysicalPropertyMethod.
-   * </p>
    *
    * @param phase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

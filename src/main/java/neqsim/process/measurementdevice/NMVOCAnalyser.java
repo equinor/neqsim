@@ -3,9 +3,7 @@ package neqsim.process.measurementdevice;
 import neqsim.process.equipment.stream.StreamInterface;
 
 /**
- * <p>
  * NMVOCAnalyser class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -15,9 +13,7 @@ public class NMVOCAnalyser extends StreamMeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for NMVOCAnalyser.
-   * </p>
    *
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -26,9 +22,7 @@ public class NMVOCAnalyser extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for NMVOCAnalyser.
-   * </p>
    *
    * @param name Name of NMVOCAnalyser
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -44,9 +38,7 @@ public class NMVOCAnalyser extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Calculates the mass flow rate of non-methane volatile organic compounds (nmVOCs).
-   * </p>
    *
    * @param unit Unit to get measurement in
    * @return the flow rate of nmVOCs in the flow unit set setUnit method (e.g. "kg/hr", "tonnes/year")

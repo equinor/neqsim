@@ -7,11 +7,9 @@ import no.uib.cipr.matrix.BandMatrix;
 import no.uib.cipr.matrix.DenseMatrix;
 
 /**
- * <p>
  * GTSurfaceTensionFullGT class. Solving for the surface tension by direct Newton method. <br>
  * TODO: Make use of binary interaction parameter for the influence parameter \f$\beta_{ij}\f$ when this becomes
  * available in NeqSIM API.
- * </p>
  *
  * @author Olaf Trygve Berglihn olaf.trygve.berglihn@sintef.no
  * @author John C. Morud john.c.morud@sintef.no
@@ -39,9 +37,7 @@ public class GTSurfaceTensionFullGT {
   private static final boolean DEBUGPLOT = false; // Set to true for profile plot.
 
   /**
-   * <p>
    * Constructor for GTSurfaceTensionFullGT.
-   * </p>
    *
    * @param flashedSystem a {@link neqsim.thermo.system.SystemInterface} object
    * @param phase1 a int
@@ -256,9 +252,9 @@ public class GTSurfaceTensionFullGT {
   }
 
   /**
-   * <p>
    * Newton. Calculate surface tension by full gradient method and Newtons method
    *
+   * <p>
    * The routine solves the Finite Difference equations for the full Gradient Theory by Newtons method. Note that the
    * length coordinate is in nm-units. Method: 1. Calculate delta_mu and its Jacobian 2. Call routine "directsolve" for
    * Newton step 3. Dampen the step if relative step too large 4. Iterate until convergence or max #iterations
@@ -423,9 +419,7 @@ public class GTSurfaceTensionFullGT {
   }
 
   /**
-   * <p>
    * directsolve. Solve linear system for Full Gradient method
-   * </p>
    *
    * @param rres an array of type double
    * @param JJ an array of type double
@@ -514,9 +508,9 @@ public class GTSurfaceTensionFullGT {
   }
 
   /**
-   * <p>
    * sigmaCalc. Calculates the interface tension
    *
+   * <p>
    * The following integral is solved with the trapezoidal method: \f{equation}{ \sigma = \int_{-\infty}^{\infty}
    * \boldsymbol{n_z}^T \boldsymbol{C} \boldsymbol{n_z} \, dz \f}
    * </p>
@@ -561,9 +555,9 @@ public class GTSurfaceTensionFullGT {
   }
 
   /**
-   * <p>
    * calc_std_integral. Calculate width of interface region (length scale)
    *
+   * <p>
    * Estimate the width of interface by calculating the second moment of the surface tension integrand. Used to adjust
    * the domain size
    * </p>
@@ -603,9 +597,7 @@ public class GTSurfaceTensionFullGT {
   }
 
   /**
-   * <p>
    * delta_mu. Calculate \f$\Delta\mu=\mu-\mu_0\f$ and its number density derivative.
-   * </p>
    *
    * @param sys a {@link neqsim.thermo.system.SystemInterface} object
    * @param ncomp a int
@@ -629,9 +621,7 @@ public class GTSurfaceTensionFullGT {
   }
 
   /**
-   * <p>
    * linspace. Make an array of double with N values linearly spaced between a and b.
-   * </p>
    *
    * @param a start of range
    * @param b end of range
@@ -650,9 +640,7 @@ public class GTSurfaceTensionFullGT {
   }
 
   /**
-   * <p>
    * debugPlot. Plotting of density profiles y over the domain x.
-   * </p>
    *
    * @param x abscissa values
    * @param y array of ordinate value arrays.
@@ -677,9 +665,7 @@ public class GTSurfaceTensionFullGT {
   }
 
   /**
-   * <p>
    * initmu. Initialize equilibrium chemical potential, and derivative and test that the bulk equilibrium is satisfied.
-   * </p>
    *
    * @param sys a {@link neqsim.thermo.system.SystemInterface} object
    * @param ncomp a int

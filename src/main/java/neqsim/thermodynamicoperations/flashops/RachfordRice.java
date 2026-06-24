@@ -31,9 +31,7 @@ public class RachfordRice implements Serializable {
   private double[] d = new double[0];
 
   /**
-   * <p>
    * Getter for the field <code>method</code>.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -42,9 +40,7 @@ public class RachfordRice implements Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>method</code>.
-   * </p>
    *
    * @param method a {@link java.lang.String} object
    */
@@ -53,9 +49,7 @@ public class RachfordRice implements Serializable {
   }
 
   /**
-   * <p>
    * calcBeta. For gas liquid systems. Method used is defined in method String variable
-   * </p>
    *
    * @param K an array of type double
    * @param z an array of type double
@@ -75,9 +69,7 @@ public class RachfordRice implements Serializable {
   }
 
   /**
-   * <p>
    * calcBeta. For gas liquid systems. Method based on Michelsen Mollerup, 2001
-   * </p>
    *
    * @param K an array of type double
    * @param z an array of type double
@@ -231,10 +223,8 @@ public class RachfordRice implements Serializable {
   }
 
   /**
-   * <p>
    * calcBetaNielsen2023. For gas liquid systems. Method based on Avoiding round-off error in the Rachford–Rice
    * equation, Nielsen, Lia, 2023
-   * </p>
    *
    * @param K an array of type double
    * @param z an array of type double
@@ -419,9 +409,7 @@ public class RachfordRice implements Serializable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>beta</code>.
-   * </p>
    *
    * @return an array of type double
    */
@@ -430,9 +418,7 @@ public class RachfordRice implements Serializable {
   }
 
   /**
-   * <p>
    * calcBetaS.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @return a double

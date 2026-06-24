@@ -10,9 +10,7 @@ public class Value {
   public String unit;
 
   /**
-   * <p>
    * Constructor for Value.
-   * </p>
    *
    * @param value a {@link java.lang.String} object
    * @param unit a {@link java.lang.String} object

@@ -35,9 +35,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * Abstract ProcessEquipmentBaseClass class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -97,9 +95,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   private transient Map<String, CapacityConstraint> capacityConstraints;
 
   /**
-   * <p>
    * Constructor for ProcessEquipmentBaseClass.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -139,9 +135,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   }
 
   /**
-   * <p>
    * getProperty.
-   * </p>
    *
    * @param propertyName a {@link java.lang.String} object
    * @return a {@link java.lang.Object} object
@@ -170,9 +164,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   }
 
   /**
-   * <p>
    * Setter for the field <code>flowValveController</code>.
-   * </p>
    *
    * @param controller a {@link neqsim.process.controllerdevice.ControllerDeviceInterface} object
    */
@@ -261,9 +253,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   }
 
   /**
-   * <p>
    * Getter for the field <code>energyStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.EnergyStream} object
    */
@@ -272,9 +262,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   }
 
   /**
-   * <p>
    * Setter for the field <code>energyStream</code>.
-   * </p>
    *
    * @param energyStream a {@link neqsim.process.equipment.stream.EnergyStream} object
    */
@@ -284,9 +272,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   }
 
   /**
-   * <p>
    * Setter for the field <code>energyStream</code>.
-   * </p>
    *
    * @param isSetEnergyStream a boolean
    */
@@ -295,9 +281,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   }
 
   /**
-   * <p>
    * isSetEnergyStream.
-   * </p>
    *
    * @return a boolean
    */
@@ -444,9 +428,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   }
 
   /**
-   * <p>
    * Getter for the field <code>minimumFlow</code>, e.g., the minimum flow rate for the pump.
-   * </p>
    *
    * @return a double
    */
@@ -456,9 +438,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   }
 
   /**
-   * <p>
    * Setter for the field <code>minimumFlow</code>, e.g., the minimum flow rate for the pump.
-   * </p>
    *
    * @param minimumFlow a double
    */
@@ -468,9 +448,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   }
 
   /**
-   * <p>
    * Getter for the field <code>isActive</code>.
-   * </p>
    *
    * @return a boolean
    */
@@ -480,9 +458,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   }
 
   /**
-   * <p>
    * Setter for the field <code>isActive</code>.
-   * </p>
    *
    * @param isActive a boolean
    */

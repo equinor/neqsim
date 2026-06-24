@@ -12,9 +12,7 @@ import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * Abstract FlowLeg class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -35,9 +33,7 @@ public abstract class FlowLeg implements FlowLegInterface, java.io.Serializable 
   protected FlowNodeSelector nodeSelector = new FlowNodeSelector();
 
   /**
-   * <p>
    * Constructor for FlowLeg.
-   * </p>
    */
   public FlowLeg() {
     flowNode = new FlowNodeInterface[this.getNumberOfNodes()];
@@ -77,9 +73,7 @@ public abstract class FlowLeg implements FlowLegInterface, java.io.Serializable 
   }
 
   /**
-   * <p>
    * setFlowNodeTypes.
-   * </p>
    */
   public void setFlowNodeTypes() {
     nodeSelector.getFlowNodeType(flowNode);
