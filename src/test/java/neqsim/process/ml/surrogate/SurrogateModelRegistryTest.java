@@ -172,17 +172,17 @@ public class SurrogateModelRegistryTest {
     SurrogateModelRegistry.SurrogateModel model = new SurrogateModelRegistry.SurrogateModel() {
       @Override
       public double[] predict(double[] input) {
-	return new double[] { input[0] + input[1] };
+        return new double[] { input[0] + input[1] };
       }
 
       @Override
       public int getInputDimension() {
-	return 2;
+        return 2;
       }
 
       @Override
       public int getOutputDimension() {
-	return 1;
+        return 1;
       }
     };
 

@@ -125,8 +125,8 @@ public class SubseaBoosterMechanicalDesign extends MechanicalDesign {
     double[] standardSizes = { 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 15.0 };
     for (double size : standardSizes) {
       if (size >= requiredMotorPower) {
-	requiredMotorPower = size;
-	break;
+        requiredMotorPower = size;
+        break;
       }
     }
 
@@ -243,7 +243,7 @@ public class SubseaBoosterMechanicalDesign extends MechanicalDesign {
     boolean hasRedundancy = booster.hasRedundantMotor();
 
     costEstimator.calculateBoosterCost(requiredMotorPower / 1000.0, isCompressor, booster.getWaterDepth(),
-	hasRedundancy);
+        hasRedundancy);
 
     totalCostUSD = costEstimator.getTotalCost();
     equipmentCostUSD = costEstimator.getEquipmentCost();

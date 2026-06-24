@@ -32,7 +32,7 @@ public class ActivityCalc {
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 42,
-	ThermodynamicConstantsInterface.referencePressure);
+        ThermodynamicConstantsInterface.referencePressure);
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 

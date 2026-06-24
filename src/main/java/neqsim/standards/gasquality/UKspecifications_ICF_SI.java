@@ -52,7 +52,7 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
     }
     if (returnParameter.equals("SootIndex")) {
       return 0.896 * Math.atan(0.0255 * thermoSystem.getPhase(0).getComponent("propane").getz()
-	  - 0.0233 * thermoSystem.getPhase(0).getComponent("nitrogen").getz() + 0.617);
+          - 0.0233 * thermoSystem.getPhase(0).getComponent("nitrogen").getz() + 0.617);
     } else {
       return thermoSystem.getPhase(0).getComponent(componentName).getz();
     }
@@ -88,7 +88,7 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
     // {thermoSystem.getNumberOfMoles(), //
     // thermoSystem.getNumberOfMoles()*iso6976.getAverageCarbonNumber()}};
     double[] bmatrix = { (thermoSystem.getTotalNumberOfMoles() - iso6976.getTotalMolesOfInerts()),
-	avgCarbon * (thermoSystem.getTotalNumberOfMoles() - iso6976.getTotalMolesOfInerts()) };
+        avgCarbon * (thermoSystem.getTotalNumberOfMoles() - iso6976.getTotalMolesOfInerts()) };
 
     RealMatrix fmatrixJama = new Array2DRowRealMatrix(Amatrix);
     DecompositionSolver solver1 = new org.apache.commons.math3.linear.LUDecomposition(fmatrixJama).getSolver();
@@ -101,7 +101,7 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
     System.out.println("propane content pn " + ans2.getEntry(1, 0));
     try {
       System.out.println(
-	  "propane number " + (nitrogenCalc + ans2.getEntry(1, 0)) / thermoSystem.getTotalNumberOfMoles() * 100.0);
+          "propane number " + (nitrogenCalc + ans2.getEntry(1, 0)) / thermoSystem.getTotalNumberOfMoles() * 100.0);
       return nitrogenCalc + ans2.getEntry(1, 0);
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
@@ -122,7 +122,7 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
     double targetWI = localIso6976.getValue("SuperiorWobbeIndex");
     if (!localIso6976.getThermoSystem().getPhase(0).hasComponent("nitrogen")) {
       localIso6976.getThermoSystem().addComponent("nitrogen",
-	  localIso6976.getThermoSystem().getNumberOfMoles() * 1e-50);
+          localIso6976.getThermoSystem().getNumberOfMoles() * 1e-50);
       localIso6976 = new Standard_ISO6976(tempThermo);
     }
     localIso6976.removeInertsButNitrogen();
@@ -136,9 +136,9 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
       iter++;
       double olddn2 = dn2;
       if (iter > 1) {
-	dn2 = -(newWI - targetWI) / ((newWI - oldWI) / olddn2);
+        dn2 = -(newWI - targetWI) / ((newWI - oldWI) / olddn2);
       } else {
-	dn2 = 0.1;
+        dn2 = 0.1;
       }
       oldWI = newWI;
 

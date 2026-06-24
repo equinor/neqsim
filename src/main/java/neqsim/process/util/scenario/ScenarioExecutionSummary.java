@@ -190,14 +190,14 @@ public class ScenarioExecutionSummary {
     if (!errors.isEmpty()) {
       System.out.println("Errors:");
       for (String error : errors) {
-	System.out.println("  - " + error);
+        System.out.println("  - " + error);
       }
     }
 
     if (!warnings.isEmpty()) {
       System.out.println("Warnings:");
       for (String warning : warnings) {
-	System.out.println("  - " + warning);
+        System.out.println("  - " + warning);
       }
     }
 
@@ -205,7 +205,7 @@ public class ScenarioExecutionSummary {
     for (Map.Entry<String, LogicResult> entry : logicResults.entrySet()) {
       LogicResult result = entry.getValue();
       System.out
-	  .println("  " + entry.getKey() + ": " + result.getFinalState() + " (" + result.getStatusDescription() + ")");
+          .println("  " + entry.getKey() + ": " + result.getFinalState() + " (" + result.getStatusDescription() + ")");
     }
     System.out.println();
   }

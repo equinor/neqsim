@@ -32,7 +32,7 @@ public interface ThermodynamicModelSettings extends java.io.Serializable {
     private static final ThreadLocal<Boolean> useWarmStartKValues = new ThreadLocal<Boolean>() {
       @Override
       protected Boolean initialValue() {
-	return DEFAULT_USE_WARM_START_K;
+        return DEFAULT_USE_WARM_START_K;
       }
     };
 

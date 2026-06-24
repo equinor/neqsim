@@ -43,7 +43,7 @@ public final class FluxLimiter {
     // Avoid division by zero
     if (Math.abs(denominator) < 1e-15) {
       if (Math.abs(numerator) < 1e-15) {
-	return 1.0; // Uniform field
+        return 1.0; // Uniform field
       }
       return numerator > 0 ? 1e10 : -1e10;
     }

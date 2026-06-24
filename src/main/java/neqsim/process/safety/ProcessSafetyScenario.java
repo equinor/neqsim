@@ -43,7 +43,7 @@ public final class ProcessSafetyScenario implements Serializable {
     this.blockedOutletUnits = Collections.unmodifiableList(new ArrayList<>(builder.blockedOutletUnits));
     this.utilityLossUnits = Collections.unmodifiableList(new ArrayList<>(builder.utilityLossUnits));
     this.controllerSetPointOverrides = Collections
-	.unmodifiableMap(new LinkedHashMap<>(builder.controllerSetPointOverrides));
+        .unmodifiableMap(new LinkedHashMap<>(builder.controllerSetPointOverrides));
     this.customManipulators = Collections.unmodifiableMap(new LinkedHashMap<>(builder.customManipulators));
   }
 
@@ -78,8 +78,8 @@ public final class ProcessSafetyScenario implements Serializable {
     for (String unitName : blockedOutletUnits) {
       ProcessEquipmentInterface unit = processSystem.getUnit(unitName);
       if (unit == null) {
-	logger.warn("Unable to block outlet for unit '{}' because it was not found in scenario '{}'.", unitName, name);
-	continue;
+        logger.warn("Unable to block outlet for unit '{}' because it was not found in scenario '{}'.", unitName, name);
+        continue;
       }
       unit.setSpecification("BLOCKED_OUTLET");
       unit.setRegulatorOutSignal(0.0);
@@ -90,9 +90,9 @@ public final class ProcessSafetyScenario implements Serializable {
     for (String unitName : utilityLossUnits) {
       ProcessEquipmentInterface unit = processSystem.getUnit(unitName);
       if (unit == null) {
-	logger.warn("Unable to mark utility loss for unit '{}' because it was not found in scenario '{}'.", unitName,
-	    name);
-	continue;
+        logger.warn("Unable to mark utility loss for unit '{}' because it was not found in scenario '{}'.", unitName,
+            name);
+        continue;
       }
       unit.setSpecification("UTILITY_LOSS");
       unit.setRegulatorOutSignal(0.0);
@@ -103,14 +103,14 @@ public final class ProcessSafetyScenario implements Serializable {
     controllerSetPointOverrides.forEach((unitName, setPoint) -> {
       ProcessEquipmentInterface unit = processSystem.getUnit(unitName);
       if (unit == null) {
-	logger.warn("Unable to override controller set point for unit '{}' in scenario '{}' because the"
-	    + " unit was not found.", unitName, name);
-	return;
+        logger.warn("Unable to override controller set point for unit '{}' in scenario '{}' because the"
+            + " unit was not found.", unitName, name);
+        return;
       }
       ControllerDeviceInterface controller = unit.getController();
       if (controller == null) {
-	logger.warn("Unit '{}' in scenario '{}' has no controller to override.", unitName, name);
-	return;
+        logger.warn("Unit '{}' in scenario '{}' has no controller to override.", unitName, name);
+        return;
       }
       controller.setControllerSetPoint(setPoint);
     });
@@ -118,10 +118,10 @@ public final class ProcessSafetyScenario implements Serializable {
     customManipulators.forEach((unitName, manipulator) -> {
       ProcessEquipmentInterface unit = processSystem.getUnit(unitName);
       if (unit == null) {
-	logger.warn(
-	    "Unable to apply custom manipulator for unit '{}' in scenario '{}' because the unit" + " was not found.",
-	    unitName, name);
-	return;
+        logger.warn(
+            "Unable to apply custom manipulator for unit '{}' in scenario '{}' because the unit" + " was not found.",
+            unitName, name);
+        return;
       }
       manipulator.accept(unit);
     });
@@ -181,22 +181,22 @@ public final class ProcessSafetyScenario implements Serializable {
     List<ProcessSafetyScenario> scenarios = new ArrayList<>();
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       if (unit == null) {
-	continue;
+        continue;
       }
       String name = unit.getName();
       if (name == null || name.trim().isEmpty()) {
-	continue;
+        continue;
       }
       String t = unit.getClass().getSimpleName().toLowerCase(Locale.ROOT);
       if (t.contains("separator") || t.contains("scrubber") || t.contains("vessel") || t.contains("tank")) {
-	scenarios.add(builder("Blocked outlet / overpressure: " + name).blockOutlet(name).build());
+        scenarios.add(builder("Blocked outlet / overpressure: " + name).blockOutlet(name).build());
       } else if (t.contains("compressor") || t.contains("pump") || t.contains("expander")) {
-	scenarios.add(builder("Trip / loss of drive: " + name).utilityLoss(name).build());
+        scenarios.add(builder("Trip / loss of drive: " + name).utilityLoss(name).build());
       } else if (t.contains("cooler") || t.contains("heater") || t.contains("heatexchanger") || t.contains("reboiler")
-	  || t.contains("condenser")) {
-	scenarios.add(builder("Loss of utility duty: " + name).utilityLoss(name).build());
+          || t.contains("condenser")) {
+        scenarios.add(builder("Loss of utility duty: " + name).utilityLoss(name).build());
       } else if (t.contains("valve")) {
-	scenarios.add(builder("Stuck closed / blocked flow: " + name).blockOutlet(name).build());
+        scenarios.add(builder("Stuck closed / blocked flow: " + name).blockOutlet(name).build());
       }
     }
     return scenarios;

@@ -98,7 +98,7 @@ public class TripEventDetector implements Serializable {
      * @param severity trip severity
      */
     TripCondition(String equipmentName, String parameterName, double threshold, boolean highTrip,
-	TripEvent.Severity severity) {
+        TripEvent.Severity severity) {
       this.equipmentName = equipmentName;
       this.parameterName = parameterName;
       this.threshold = threshold;
@@ -161,19 +161,19 @@ public class TripEventDetector implements Serializable {
       double[] limits = entry.getValue();
       int dotIndex = key.indexOf('.');
       if (dotIndex < 0 || dotIndex >= key.length() - 1) {
-	logger.warn("Invalid design limit key '{}': expected 'equipment.parameter'", key);
-	continue;
+        logger.warn("Invalid design limit key '{}': expected 'equipment.parameter'", key);
+        continue;
       }
       String equipmentName = key.substring(0, dotIndex);
       String parameterName = key.substring(dotIndex + 1);
 
       if (limits.length >= 2) {
-	if (!Double.isNaN(limits[0])) {
-	  addTripCondition(equipmentName, parameterName, limits[0], false, TripEvent.Severity.HIGH);
-	}
-	if (!Double.isNaN(limits[1])) {
-	  addTripCondition(equipmentName, parameterName, limits[1], true, TripEvent.Severity.HIGH);
-	}
+        if (!Double.isNaN(limits[0])) {
+          addTripCondition(equipmentName, parameterName, limits[0], false, TripEvent.Severity.HIGH);
+        }
+        if (!Double.isNaN(limits[1])) {
+          addTripCondition(equipmentName, parameterName, limits[1], true, TripEvent.Severity.HIGH);
+        }
       }
     }
   }
@@ -222,38 +222,38 @@ public class TripEventDetector implements Serializable {
     for (Map.Entry<String, List<TripCondition>> entry : tripConditions.entrySet()) {
       String eqName = entry.getKey();
       if (firstTripOnly && trippedEquipment.contains(eqName)) {
-	continue;
+        continue;
       }
 
       for (TripCondition cond : entry.getValue()) {
-	double value = readParameter(cond.equipmentName, cond.parameterName);
-	if (Double.isNaN(value)) {
-	  continue;
-	}
+        double value = readParameter(cond.equipmentName, cond.parameterName);
+        if (Double.isNaN(value)) {
+          continue;
+        }
 
-	double effectiveThreshold = cond.threshold;
-	if (deadbandFraction > 0.0 && cond.threshold != 0.0) {
-	  if (cond.highTrip) {
-	    effectiveThreshold = cond.threshold * (1.0 + deadbandFraction);
-	  } else {
-	    effectiveThreshold = cond.threshold * (1.0 - deadbandFraction);
-	  }
-	}
+        double effectiveThreshold = cond.threshold;
+        if (deadbandFraction > 0.0 && cond.threshold != 0.0) {
+          if (cond.highTrip) {
+            effectiveThreshold = cond.threshold * (1.0 + deadbandFraction);
+          } else {
+            effectiveThreshold = cond.threshold * (1.0 - deadbandFraction);
+          }
+        }
 
-	boolean tripped = cond.highTrip ? value > effectiveThreshold : value < effectiveThreshold;
+        boolean tripped = cond.highTrip ? value > effectiveThreshold : value < effectiveThreshold;
 
-	if (tripped) {
-	  TripEvent event = new TripEvent(cond.equipmentName, cond.parameterName, cond.threshold, value, cond.highTrip,
-	      simulationTimeSeconds, cond.severity);
-	  newTrips.add(event);
-	  detectedTrips.add(event);
-	  trippedEquipment.add(eqName);
-	  logger.info("Trip detected: {}", event);
+        if (tripped) {
+          TripEvent event = new TripEvent(cond.equipmentName, cond.parameterName, cond.threshold, value, cond.highTrip,
+              simulationTimeSeconds, cond.severity);
+          newTrips.add(event);
+          detectedTrips.add(event);
+          trippedEquipment.add(eqName);
+          logger.info("Trip detected: {}", event);
 
-	  if (firstTripOnly) {
-	    break;
-	  }
-	}
+          if (firstTripOnly) {
+            break;
+          }
+        }
       }
     }
     return newTrips;
@@ -328,23 +328,23 @@ public class TripEventDetector implements Serializable {
     try {
       ProcessEquipmentInterface equipment = null;
       for (ProcessEquipmentInterface eq : processSystem.getUnitOperations()) {
-	if (eq.getName().equals(equipmentName)) {
-	  equipment = eq;
-	  break;
-	}
+        if (eq.getName().equals(equipmentName)) {
+          equipment = eq;
+          break;
+        }
       }
       if (equipment == null) {
-	return Double.NaN;
+        return Double.NaN;
       }
 
       // Try common parameter names via unified outlet property access
       String lowerParam = parameterName.toLowerCase();
       if (lowerParam.contains("pressure")) {
-	return equipment.getOutletPressure("bara");
+        return equipment.getOutletPressure("bara");
       } else if (lowerParam.contains("temperature")) {
-	return equipment.getOutletTemperature("C");
+        return equipment.getOutletTemperature("C");
       } else if (lowerParam.contains("flow")) {
-	return equipment.getOutletFlowRate("kg/hr");
+        return equipment.getOutletFlowRate("kg/hr");
       }
 
       return Double.NaN;
@@ -364,7 +364,7 @@ public class TripEventDetector implements Serializable {
     sb.append("{\"tripCount\": ").append(detectedTrips.size()).append(", \"trips\": [");
     for (int i = 0; i < detectedTrips.size(); i++) {
       if (i > 0) {
-	sb.append(", ");
+        sb.append(", ");
       }
       sb.append(detectedTrips.get(i).toJson());
     }

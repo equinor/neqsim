@@ -143,7 +143,7 @@ class GasPipelinePressureDropComparisonTest {
     }
     logger.info("    ...");
     logger.info("    [" + (pressureProfile.length - 1) + "]: "
-	+ String.format("%.4f", pressureProfile[pressureProfile.length - 1] / 1e5));
+        + String.format("%.4f", pressureProfile[pressureProfile.length - 1] / 1e5));
 
     assertTrue(dp > 0, "Pressure drop should be positive");
     assertTrue(dp < inletP * 0.5, "Pressure drop should be less than 50% of inlet");

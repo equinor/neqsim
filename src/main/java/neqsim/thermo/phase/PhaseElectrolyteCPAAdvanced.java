@@ -121,14 +121,14 @@ public class PhaseElectrolyteCPAAdvanced extends PhaseElectrolyteCPAstatoil {
     for (int i = 0; i < numberOfComponents; i++) {
       double z = componentArray[i].getIonicCharge();
       if (z != 0) {
-	String name = componentArray[i].getComponentName();
-	if (IonParametersAdvanced.hasIonData(name)) {
-	  double rBorn = IonParametersAdvanced.calcBornRadius(name, temperature);
-	  ans += componentArray[i].getNumberOfMolesInPhase() * z * z / (2.0 * rBorn * 1e-10);
-	} else if (componentArray[i].getLennardJonesMolecularDiameter() > 0) {
-	  ans += componentArray[i].getNumberOfMolesInPhase() * z * z
-	      / (componentArray[i].getLennardJonesMolecularDiameter() * 1e-10);
-	}
+        String name = componentArray[i].getComponentName();
+        if (IonParametersAdvanced.hasIonData(name)) {
+          double rBorn = IonParametersAdvanced.calcBornRadius(name, temperature);
+          ans += componentArray[i].getNumberOfMolesInPhase() * z * z / (2.0 * rBorn * 1e-10);
+        } else if (componentArray[i].getLennardJonesMolecularDiameter() > 0) {
+          ans += componentArray[i].getNumberOfMolesInPhase() * z * z
+              / (componentArray[i].getLennardJonesMolecularDiameter() * 1e-10);
+        }
       }
     }
     return ans;
@@ -159,11 +159,11 @@ public class PhaseElectrolyteCPAAdvanced extends PhaseElectrolyteCPAstatoil {
       double wAdvanced = IonParametersAdvanced.calcW(ionName, temperature);
       double Wi = 0.0;
       for (int j = 0; j < numbcomp; j++) {
-	if (componentArray[j].getComponentName().equals("water")) {
-	  Wi += componentArray[j].getNumberOfMolesInPhase() * wAdvanced;
-	} else {
-	  Wi += componentArray[j].getNumberOfMolesInPhase() * electrolyteMixingRule.getWij(compNumb, j, temperature);
-	}
+        if (componentArray[j].getComponentName().equals("water")) {
+          Wi += componentArray[j].getNumberOfMolesInPhase() * wAdvanced;
+        } else {
+          Wi += componentArray[j].getNumberOfMolesInPhase() * electrolyteMixingRule.getWij(compNumb, j, temperature);
+        }
       }
       return -2.0 * Wi;
     }
@@ -190,11 +190,11 @@ public class PhaseElectrolyteCPAAdvanced extends PhaseElectrolyteCPAstatoil {
       double wAdvancedT = IonParametersAdvanced.calcWdT(ionName, temperature);
       double WiT = 0.0;
       for (int j = 0; j < numbcomp; j++) {
-	if (componentArray[j].getComponentName().equals("water")) {
-	  WiT += componentArray[j].getNumberOfMolesInPhase() * wAdvancedT;
-	} else {
-	  WiT += componentArray[j].getNumberOfMolesInPhase() * electrolyteMixingRule.getWijT(compNumb, j, temperature);
-	}
+        if (componentArray[j].getComponentName().equals("water")) {
+          WiT += componentArray[j].getNumberOfMolesInPhase() * wAdvancedT;
+        } else {
+          WiT += componentArray[j].getNumberOfMolesInPhase() * electrolyteMixingRule.getWijT(compNumb, j, temperature);
+        }
       }
       return -2.0 * WiT;
     }
@@ -255,33 +255,33 @@ public class PhaseElectrolyteCPAAdvanced extends PhaseElectrolyteCPAstatoil {
     // Sum over all ion-solvent pairs
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	continue; // skip solvents in ion loop
+        continue; // skip solvents in ion loop
       }
 
       String ionName = componentArray[i].getComponentName();
       IonParametersAdvanced.AdvancedIonData ionData = IonParametersAdvanced.getIonData(ionName);
 
       if (ionData == null) {
-	continue; // No advanced parameters for this ion
+        continue; // No advanced parameters for this ion
       }
 
       double ni = componentArray[i].getNumberOfMolesInPhase();
 
       // W_ij(T) for this ion
       double wij = ionData.w0 + ionData.wT * (temperature - IonParametersAdvanced.T_REF)
-	  + ionData.wTT * Math.pow(temperature - IonParametersAdvanced.T_REF, 2.0);
+          + ionData.wTT * Math.pow(temperature - IonParametersAdvanced.T_REF, 2.0);
       double wijdT = ionData.wT + 2.0 * ionData.wTT * (temperature - IonParametersAdvanced.T_REF);
       double wijdTdT = 2.0 * ionData.wTT;
 
       // Sum over solvent molecules
       for (int j = 0; j < numberOfComponents; j++) {
-	if (componentArray[j].getIonicCharge() != 0) {
-	  continue; // only solvent partners
-	}
-	double nj = componentArray[j].getNumberOfMolesInPhase();
-	sumW += ni * nj * wij;
-	sumWdT += ni * nj * wijdT;
-	sumWdTdT += ni * nj * wijdTdT;
+        if (componentArray[j].getIonicCharge() != 0) {
+          continue; // only solvent partners
+        }
+        double nj = componentArray[j].getNumberOfMolesInPhase();
+        sumW += ni * nj * wij;
+        sumWdT += ni * nj * wijdT;
+        sumWdTdT += ni * nj * wijdTdT;
       }
     }
 
@@ -358,7 +358,7 @@ public class PhaseElectrolyteCPAAdvanced extends PhaseElectrolyteCPAstatoil {
 
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	continue;
+        continue;
       }
 
       String ionName = componentArray[i].getComponentName();
@@ -370,27 +370,27 @@ public class PhaseElectrolyteCPAAdvanced extends PhaseElectrolyteCPAstatoil {
       double rBorn;
       double rBorndT;
       if (ionData != null) {
-	rBorn = (ionData.rBorn0 + ionData.rBornT * (temperature - IonParametersAdvanced.T_REF)) * 1e-10; // convert
-													 // Angstrom
-													 // to
-													 // m
-	rBorndT = ionData.rBornT * 1e-10;
+        rBorn = (ionData.rBorn0 + ionData.rBornT * (temperature - IonParametersAdvanced.T_REF)) * 1e-10; // convert
+        // Angstrom
+        // to
+        // m
+        rBorndT = ionData.rBornT * 1e-10;
       } else {
-	// Fallback to standard Born radius from LJ diameter
-	double sigma = componentArray[i].getLennardJonesMolecularDiameter() * 1e-10;
-	if (componentArray[i].getIonicCharge() > 0) {
-	  rBorn = 0.5 * sigma + 0.1e-10;
-	} else {
-	  rBorn = 0.5 * sigma + 0.85e-10;
-	}
-	rBorndT = 0.0;
+        // Fallback to standard Born radius from LJ diameter
+        double sigma = componentArray[i].getLennardJonesMolecularDiameter() * 1e-10;
+        if (componentArray[i].getIonicCharge() > 0) {
+          rBorn = 0.5 * sigma + 0.1e-10;
+        } else {
+          rBorn = 0.5 * sigma + 0.85e-10;
+        }
+        rBorndT = 0.0;
       }
 
       if (rBorn > 0) {
-	sumBorn += ni * zi2 / rBorn;
-	// d(1/R)/dT = -R'/R^2
-	sumBorndT_rpart += ni * zi2 * (-rBorndT / (rBorn * rBorn));
-	sumBorndTdT_rpart += ni * zi2 * (2.0 * rBorndT * rBorndT / (rBorn * rBorn * rBorn));
+        sumBorn += ni * zi2 / rBorn;
+        // d(1/R)/dT = -R'/R^2
+        sumBorndT_rpart += ni * zi2 * (-rBorndT / (rBorn * rBorn));
+        sumBorndTdT_rpart += ni * zi2 * (2.0 * rBorndT * rBorndT / (rBorn * rBorn * rBorn));
       }
     }
 
@@ -407,14 +407,14 @@ public class PhaseElectrolyteCPAAdvanced extends PhaseElectrolyteCPAstatoil {
 
     // d2F/dT2 (including all cross terms and second derivatives)
     double dsolvdTdT = depsdTdT / (diElectricConstant * diElectricConstant)
-	- 2.0 * depsdT * depsdT / (diElectricConstant * diElectricConstant * diElectricConstant);
+        - 2.0 * depsdT * depsdT / (diElectricConstant * diElectricConstant * diElectricConstant);
 
     // Second derivative of prefactor wrt T: d²(1/T)/dT² = 2/T³
     // So d²F/dT² = 2F/T² - (2/T) * [terms from first derivative excluding -F/T]
     // + prefactor * [second derivative terms]
     double termsFirstOrder = prefactor * (sumBorn * dsolvdT + sumBorndT_rpart * solvationFactor);
     fAdvBorndTdT = 2.0 * fAdvBorn / (temperature * temperature) - 2.0 * termsFirstOrder / temperature
-	+ prefactor * (sumBorn * dsolvdTdT + 2.0 * sumBorndT_rpart * dsolvdT + sumBorndTdT_rpart * solvationFactor);
+        + prefactor * (sumBorn * dsolvdTdT + 2.0 * sumBorndT_rpart * dsolvdT + sumBorndTdT_rpart * solvationFactor);
   }
 
   /**
@@ -436,37 +436,37 @@ public class PhaseElectrolyteCPAAdvanced extends PhaseElectrolyteCPAstatoil {
     // Find all cation-anion pairs that have ion-pair data
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() <= 0) {
-	continue; // only cations
+        continue; // only cations
       }
       for (int j = 0; j < numberOfComponents; j++) {
-	if (componentArray[j].getIonicCharge() >= 0) {
-	  continue; // only anions
-	}
+        if (componentArray[j].getIonicCharge() >= 0) {
+          continue; // only anions
+        }
 
-	String catName = componentArray[i].getComponentName();
-	String anName = componentArray[j].getComponentName();
+        String catName = componentArray[i].getComponentName();
+        String anName = componentArray[j].getComponentName();
 
-	IonParametersAdvanced.IonPairData ipData = IonParametersAdvanced.getIonPairData(catName, anName);
-	if (ipData == null) {
-	  continue;
-	}
+        IonParametersAdvanced.IonPairData ipData = IonParametersAdvanced.getIonPairData(catName, anName);
+        if (ipData == null) {
+          continue;
+        }
 
-	double kIP = IonParametersAdvanced.calcIonPairConstant(catName, anName, temperature);
-	if (kIP < 1e-10) {
-	  continue;
-	}
+        double kIP = IonParametersAdvanced.calcIonPairConstant(catName, anName, temperature);
+        if (kIP < 1e-10) {
+          continue;
+        }
 
-	// Simple Bjerrum-type correction:
-	// alpha_IP = 1 - 1/(1 + K_IP * c_counter)
-	// where c_counter is the concentration of the counter-ion
-	double volume = getMolarVolume() * numberOfMolesInPhase * 1e-5; // m3
-	if (volume > 1e-50) {
-	  double cAnion = componentArray[j].getNumberOfMolesInPhase() / (volume * 1000.0); // mol/L
-	  double alpha = kIP * cAnion / (1.0 + kIP * cAnion);
-	  // Limit alpha to avoid instability
-	  alpha = Math.min(alpha, 0.95);
-	  ionPairFractionReduction = Math.max(ionPairFractionReduction, alpha);
-	}
+        // Simple Bjerrum-type correction:
+        // alpha_IP = 1 - 1/(1 + K_IP * c_counter)
+        // where c_counter is the concentration of the counter-ion
+        double volume = getMolarVolume() * numberOfMolesInPhase * 1e-5; // m3
+        if (volume > 1e-50) {
+          double cAnion = componentArray[j].getNumberOfMolesInPhase() / (volume * 1000.0); // mol/L
+          double alpha = kIP * cAnion / (1.0 + kIP * cAnion);
+          // Limit alpha to avoid instability
+          alpha = Math.min(alpha, 0.95);
+          ionPairFractionReduction = Math.max(ionPairFractionReduction, alpha);
+        }
       }
     }
   }

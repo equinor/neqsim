@@ -65,7 +65,7 @@ class LeakModelTest {
   @DisplayName("Test BoundaryConditions builder")
   void testBoundaryConditions() {
     BoundaryConditions conditions = BoundaryConditions.builder().ambientTemperature(278.15) // 5°C
-	.windSpeed(10.0).relativeHumidity(0.80).pasquillStabilityClass('D').isOffshore(true).build();
+        .windSpeed(10.0).relativeHumidity(0.80).pasquillStabilityClass('D').isOffshore(true).build();
 
     assertEquals(278.15, conditions.getAmbientTemperature(), 0.01);
     assertEquals(5.0, conditions.getAmbientTemperature("C"), 0.01);
@@ -109,9 +109,9 @@ class LeakModelTest {
   @DisplayName("Test LeakModel mass flow calculation")
   void testLeakModelMassFlow() {
     LeakModel leak = LeakModel.builder().fluid(methaneGas).holeDiameter(0.01) // 10mm
-	.vesselVolume(1.0) // 1 m³
-	.dischargeCoefficient(0.62).backPressure(101325.0) // Atmospheric
-	.scenarioName("Test Leak").build();
+        .vesselVolume(1.0) // 1 m³
+        .dischargeCoefficient(0.62).backPressure(101325.0) // Atmospheric
+        .scenarioName("Test Leak").build();
 
     double massFlow = leak.calculateMassFlowRate(methaneGas);
 
@@ -156,7 +156,7 @@ class LeakModelTest {
   @DisplayName("Test LeakModel source term calculation")
   void testLeakModelSourceTerm() {
     LeakModel leak = LeakModel.builder().fluid(methaneGas).holeDiameter(0.01).vesselVolume(1.0)
-	.scenarioName("Methane Blowdown").build();
+        .scenarioName("Methane Blowdown").build();
 
     SourceTermResult result = leak.calculateSourceTerm(60.0, 1.0); // 60 seconds
 
@@ -183,7 +183,7 @@ class LeakModelTest {
   @DisplayName("Test SourceTermResult export methods")
   void testSourceTermExport() {
     LeakModel leak = LeakModel.builder().fluid(methaneGas).holeDiameter(0.02).vesselVolume(5.0)
-	.scenarioName("Export Test").build();
+        .scenarioName("Export Test").build();
 
     SourceTermResult result = leak.calculateSourceTerm(30.0, 1.0);
 
@@ -201,10 +201,10 @@ class LeakModelTest {
   @DisplayName("Test hole diameter unit conversion")
   void testHoleDiameterUnits() {
     LeakModel leakMM = LeakModel.builder().fluid(methaneGas).holeDiameter(25.4, "mm") // 1 inch
-	.vesselVolume(1.0).build();
+        .vesselVolume(1.0).build();
 
     LeakModel leakIN = LeakModel.builder().fluid(methaneGas).holeDiameter(1.0, "in") // 1 inch
-	.vesselVolume(1.0).build();
+        .vesselVolume(1.0).build();
 
     // Both should give same mass flow
     double flowMM = leakMM.calculateMassFlowRate(methaneGas);

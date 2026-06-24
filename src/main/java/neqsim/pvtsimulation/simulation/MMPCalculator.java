@@ -226,24 +226,24 @@ public class MMPCalculator extends BasePVTsimulation {
       // Mix and check if single phase
       SystemInterface mixture = oil.clone();
       for (int i = 0; i < gas.getPhase(0).getNumberOfComponents(); i++) {
-	String compName = gas.getPhase(0).getComponent(i).getComponentName();
-	double moles = gas.getPhase(0).getComponent(i).getNumberOfMolesInPhase();
-	if (mixture.getPhase(0).hasComponent(compName)) {
-	  mixture.addComponent(compName, moles);
-	}
+        String compName = gas.getPhase(0).getComponent(i).getComponentName();
+        double moles = gas.getPhase(0).getComponent(i).getNumberOfMolesInPhase();
+        if (mixture.getPhase(0).hasComponent(compName)) {
+          mixture.addComponent(compName, moles);
+        }
       }
 
       mixture.setPressure(pressure);
       mixture.setTemperature(temperature);
       ThermodynamicOperations mixOps = new ThermodynamicOperations(mixture);
       try {
-	mixOps.TPflash();
+        mixOps.TPflash();
       } catch (Exception e) {
-	logger.error("Mixture flash failed", e);
+        logger.error("Mixture flash failed", e);
       }
 
       if (mixture.getNumberOfPhases() == 1) {
-	return 1.0; // First-contact miscible
+        return 1.0; // First-contact miscible
       }
     }
 
@@ -264,46 +264,46 @@ public class MMPCalculator extends BasePVTsimulation {
     for (int step = 0; step < injectionSteps; step++) {
       // Inject into first cell
       for (int i = 0; i < gas.getPhase(0).getNumberOfComponents(); i++) {
-	String compName = gas.getPhase(0).getComponent(i).getComponentName();
-	double moles = gasPerStep * gas.getPhase(0).getComponent(i).getx();
-	if (cells[0].getPhase(0).hasComponent(compName)) {
-	  cells[0].addComponent(compName, moles);
-	}
+        String compName = gas.getPhase(0).getComponent(i).getComponentName();
+        double moles = gasPerStep * gas.getPhase(0).getComponent(i).getx();
+        if (cells[0].getPhase(0).hasComponent(compName)) {
+          cells[0].addComponent(compName, moles);
+        }
       }
 
       // Flash each cell and transfer excess
       for (int c = 0; c < slimTubeNodes; c++) {
-	cells[c].setPressure(pressure);
-	cells[c].setTemperature(temperature);
-	ThermodynamicOperations cellOps = new ThermodynamicOperations(cells[c]);
-	try {
-	  cellOps.TPflash();
-	} catch (Exception e) {
-	  // Continue
-	}
+        cells[c].setPressure(pressure);
+        cells[c].setTemperature(temperature);
+        ThermodynamicOperations cellOps = new ThermodynamicOperations(cells[c]);
+        try {
+          cellOps.TPflash();
+        } catch (Exception e) {
+          // Continue
+        }
 
-	// Calculate equilibrium K-values and check miscibility
-	if (cells[c].getNumberOfPhases() > 1) {
-	  // Produce gas from cell
-	  if (c < slimTubeNodes - 1 && cells[c].hasPhaseType("gas")) {
-	    SystemInterface gasPhase = cells[c].phaseToSystem("gas");
-	    // Add gas to next cell
-	    for (int i = 0; i < gasPhase.getPhase(0).getNumberOfComponents(); i++) {
-	      String compName = gasPhase.getPhase(0).getComponent(i).getComponentName();
-	      double moles = gasPhase.getPhase(0).getComponent(i).getNumberOfMolesInPhase() * 0.5;
-	      if (cells[c + 1].getPhase(0).hasComponent(compName)) {
-		cells[c + 1].addComponent(compName, moles);
-	      }
-	    }
-	    // Remove gas from current cell
-	    cells[c] = cells[c].phaseToSystem("oil");
-	  }
-	}
+        // Calculate equilibrium K-values and check miscibility
+        if (cells[c].getNumberOfPhases() > 1) {
+          // Produce gas from cell
+          if (c < slimTubeNodes - 1 && cells[c].hasPhaseType("gas")) {
+            SystemInterface gasPhase = cells[c].phaseToSystem("gas");
+            // Add gas to next cell
+            for (int i = 0; i < gasPhase.getPhase(0).getNumberOfComponents(); i++) {
+              String compName = gasPhase.getPhase(0).getComponent(i).getComponentName();
+              double moles = gasPhase.getPhase(0).getComponent(i).getNumberOfMolesInPhase() * 0.5;
+              if (cells[c + 1].getPhase(0).hasComponent(compName)) {
+                cells[c + 1].addComponent(compName, moles);
+              }
+            }
+            // Remove gas from current cell
+            cells[c] = cells[c].phaseToSystem("oil");
+          }
+        }
       }
 
       // Produce from last cell
       if (cells[slimTubeNodes - 1].hasPhaseType("oil")) {
-	oilRecovered += cells[slimTubeNodes - 1].getPhase("oil").getNumberOfMolesInPhase() * 0.1;
+        oilRecovered += cells[slimTubeNodes - 1].getPhase("oil").getNumberOfMolesInPhase() * 0.1;
       }
     }
 
@@ -317,9 +317,9 @@ public class MMPCalculator extends BasePVTsimulation {
   private double interpolateMMP(double[] p, double[] rec, double threshold) {
     for (int i = 1; i < p.length; i++) {
       if (rec[i] >= threshold && rec[i - 1] < threshold) {
-	// Linear interpolation
-	double slope = (p[i] - p[i - 1]) / (rec[i] - rec[i - 1]);
-	return p[i - 1] + slope * (threshold - rec[i - 1]);
+        // Linear interpolation
+        double slope = (p[i] - p[i - 1]) / (rec[i] - rec[i - 1]);
+        return p[i - 1] + slope * (threshold - rec[i - 1]);
       }
     }
 
@@ -349,9 +349,9 @@ public class MMPCalculator extends BasePVTsimulation {
     double recoveryAtMMP = 0;
     for (int i = 0; i < pressures.length - 1; i++) {
       if (pressures[i] <= mmp && pressures[i + 1] >= mmp) {
-	double frac = (mmp - pressures[i]) / (pressures[i + 1] - pressures[i]);
-	recoveryAtMMP = recoveries[i] + frac * (recoveries[i + 1] - recoveries[i]);
-	break;
+        double frac = (mmp - pressures[i]) / (pressures[i + 1] - pressures[i]);
+        recoveryAtMMP = recoveries[i] + frac * (recoveries[i + 1] - recoveries[i]);
+        break;
       }
     }
 
@@ -392,9 +392,9 @@ public class MMPCalculator extends BasePVTsimulation {
       double tieLineLength = calculateKeyTieLineLength(pMid);
 
       if (tieLineLength < 0.01) {
-	pHigh = pMid;
+        pHigh = pMid;
       } else {
-	pLow = pMid;
+        pLow = pMid;
       }
     }
 
@@ -416,7 +416,7 @@ public class MMPCalculator extends BasePVTsimulation {
       String compName = injectionGas.getPhase(0).getComponent(i).getComponentName();
       double moles = injectionGas.getPhase(0).getComponent(i).getNumberOfMolesInPhase();
       if (mixture.getPhase(0).hasComponent(compName)) {
-	mixture.addComponent(compName, moles);
+        mixture.addComponent(compName, moles);
       }
     }
 
@@ -513,7 +513,7 @@ public class MMPCalculator extends BasePVTsimulation {
       sb.append(String.format("%-12s %-12s\n", "P (bara)", "Recovery (%)"));
       sb.append(StringUtils.repeat("-", 25) + "\n");
       for (int i = 0; i < pressures.length; i++) {
-	sb.append(String.format("%-12.1f %-12.1f\n", pressures[i], recoveries[i] * 100));
+        sb.append(String.format("%-12.1f %-12.1f\n", pressures[i], recoveries[i] * 100));
       }
     }
 

@@ -154,7 +154,7 @@ public class PropertyGradient implements Serializable {
   public double getDerivativeWrtComponent(int componentIndex) {
     if (componentIndex < 0 || componentIndex >= dz.length) {
       throw new IndexOutOfBoundsException(
-	  "Component index " + componentIndex + " out of bounds [0, " + dz.length + ")");
+          "Component index " + componentIndex + " out of bounds [0, " + dz.length + ")");
     }
     return dz[componentIndex];
   }
@@ -189,7 +189,7 @@ public class PropertyGradient implements Serializable {
     double result = dT * deltaT + dP * deltaP;
     if (deltaZ != null) {
       for (int i = 0; i < Math.min(dz.length, deltaZ.length); i++) {
-	result += dz[i] * deltaZ[i];
+        result += dz[i] * deltaZ[i];
       }
     }
     return result;
@@ -231,10 +231,10 @@ public class PropertyGradient implements Serializable {
     sb.append("  d/dz = [");
     for (int i = 0; i < dz.length; i++) {
       if (i > 0) {
-	sb.append(", ");
+        sb.append(", ");
       }
       if (componentNames.length > i) {
-	sb.append(componentNames[i]).append(":");
+        sb.append(componentNames[i]).append(":");
       }
       sb.append(String.format("%.6e", dz[i]));
     }

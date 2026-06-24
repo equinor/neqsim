@@ -59,8 +59,8 @@ public final class DevelopmentCaseTemplate implements Serializable {
       double powerMw, double annualEmissionsTonnes, int firstProductionYear, int developmentDurationMonths,
       CashFlowEngine.CashFlowResult economics, String assumptionsSummary) {
     this(name, caseType, concept, facilityConfig, capexBreakdownMusd, productionProfile, annualOpexMusd, powerMw,
-	annualEmissionsTonnes, firstProductionYear, developmentDurationMonths, economics, assumptionsSummary,
-	DevelopmentCaseUncertainty.empty(), LifecycleEmissionsProfile.empty());
+        annualEmissionsTonnes, firstProductionYear, developmentDurationMonths, economics, assumptionsSummary,
+        DevelopmentCaseUncertainty.empty(), LifecycleEmissionsProfile.empty());
   }
 
   /**
@@ -102,7 +102,7 @@ public final class DevelopmentCaseTemplate implements Serializable {
     this.assumptionsSummary = assumptionsSummary;
     this.uncertainty = uncertainty == null ? DevelopmentCaseUncertainty.empty() : uncertainty;
     this.lifecycleEmissionsProfile = lifecycleEmissionsProfile == null ? LifecycleEmissionsProfile.empty()
-	: lifecycleEmissionsProfile;
+        : lifecycleEmissionsProfile;
   }
 
   /**
@@ -271,7 +271,7 @@ public final class DevelopmentCaseTemplate implements Serializable {
     double npv = economics != null ? economics.getNpv() : Double.NaN;
     double irr = economics != null ? economics.getIrr() : Double.NaN;
     return String.format("%s [%s]: CAPEX %.0f MUSD, OPEX %.1f MUSD/y, power %.1f MW, " + "NPV %.0f MUSD, IRR %.1f%%",
-	name, caseType, getTotalCapexMusd(), annualOpexMusd, powerMw, npv, irr * 100.0);
+        name, caseType, getTotalCapexMusd(), annualOpexMusd, powerMw, npv, irr * 100.0);
   }
 
   @Override

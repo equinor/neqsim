@@ -41,7 +41,7 @@ class NorsokS001Clause10ReviewRunnerTest {
 
     assertEquals("error", output.get("status").getAsString());
     assertEquals("MISSING_PROCESS_SAFETY_DATA",
-	output.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+        output.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
   }
 
   /**
@@ -52,21 +52,21 @@ class NorsokS001Clause10ReviewRunnerTest {
     JsonObject input = new JsonObject();
     input.addProperty("projectName", "dynamic clause 10 evidence");
     input.add("processSafetyFunctions",
-	JsonParser.parseString("[{" + "\"functionId\":\"PSD-DYN-001\",\"functionType\":\"PSD\","
-	    + "\"sourceReferences\":[\"C&E\",\"SRS\"]," + "\"hazidHazopLopaCompleted\":true,"
-	    + "\"srsDefinesRequiredFunctions\":true," + "\"sisEsdFgsDesignImplemented\":true,"
-	    + "\"verificationTestingOperationConfirmed\":true,"
-	    + "\"processSafetyRoleDefined\":true,\"interfacesDefined\":true,"
-	    + "\"protectionLayersDocumented\":true,\"designBasisDocumented\":true,"
-	    + "\"processSafetyPrinciplesDocumented\":true,\"bypassManagementDocumented\":true,"
-	    + "\"shutdownActionDefined\":true,\"psdValveFailsSafe\":true,"
-	    + "\"psdValveIsolationAdequate\":true,\"requiredResponseTimeSeconds\":30.0,"
-	    + "\"actualResponseTimeSeconds\":18.0,\"logicSolverCertified\":true,"
-	    + "\"logicSolverIndependent\":true,\"causeAndEffectTested\":true,"
-	    + "\"requiredUtilitiesIdentified\":true,\"utilityDependent\":true,"
-	    + "\"failSafeOnUtilityLoss\":true,\"psdIndependentFromControl\":true,"
-	    + "\"manualShutdownAvailable\":true,\"survivabilityRequirementDocumented\":true,"
-	    + "\"requiredSurvivabilityTimeMin\":30.0,\"survivabilityTimeMin\":60.0" + "}]").getAsJsonArray());
+        JsonParser.parseString("[{" + "\"functionId\":\"PSD-DYN-001\",\"functionType\":\"PSD\","
+            + "\"sourceReferences\":[\"C&E\",\"SRS\"]," + "\"hazidHazopLopaCompleted\":true,"
+            + "\"srsDefinesRequiredFunctions\":true," + "\"sisEsdFgsDesignImplemented\":true,"
+            + "\"verificationTestingOperationConfirmed\":true,"
+            + "\"processSafetyRoleDefined\":true,\"interfacesDefined\":true,"
+            + "\"protectionLayersDocumented\":true,\"designBasisDocumented\":true,"
+            + "\"processSafetyPrinciplesDocumented\":true,\"bypassManagementDocumented\":true,"
+            + "\"shutdownActionDefined\":true,\"psdValveFailsSafe\":true,"
+            + "\"psdValveIsolationAdequate\":true,\"requiredResponseTimeSeconds\":30.0,"
+            + "\"actualResponseTimeSeconds\":18.0,\"logicSolverCertified\":true,"
+            + "\"logicSolverIndependent\":true,\"causeAndEffectTested\":true,"
+            + "\"requiredUtilitiesIdentified\":true,\"utilityDependent\":true,"
+            + "\"failSafeOnUtilityLoss\":true,\"psdIndependentFromControl\":true,"
+            + "\"manualShutdownAvailable\":true,\"survivabilityRequirementDocumented\":true,"
+            + "\"requiredSurvivabilityTimeMin\":30.0,\"survivabilityTimeMin\":60.0" + "}]").getAsJsonArray());
 
     JsonObject dynamicInput = new JsonObject();
     dynamicInput.addProperty("processJson", minimalDynamicProcessJson());
@@ -75,7 +75,7 @@ class NorsokS001Clause10ReviewRunnerTest {
     input.add("dynamicSimulationInput", dynamicInput);
 
     JsonObject output = JsonParser.parseString(NorsokS001Clause10ReviewRunner.run(GSON.toJson(input)))
-	.getAsJsonObject();
+        .getAsJsonObject();
 
     assertEquals("success", output.get("status").getAsString());
     JsonObject dynamic = output.getAsJsonObject("embeddedAnalyses").getAsJsonObject("dynamicSimulation");
@@ -89,8 +89,8 @@ class NorsokS001Clause10ReviewRunnerTest {
    */
   private static String minimalDynamicProcessJson() {
     return "{" + "\"fluid\": {\"model\": \"SRK\", \"temperature\": 298.15, \"pressure\": 50.0,"
-	+ "  \"mixingRule\": \"classic\"," + "  \"components\": {\"methane\": 0.9, \"nC10\": 0.1}}," + "\"process\": ["
-	+ "  {\"type\": \"Stream\", \"name\": \"feed\"," + "   \"properties\": {\"flowRate\": [1000.0, \"kg/hr\"]}},"
-	+ "  {\"type\": \"Separator\", \"name\": \"HP Sep\", \"inlet\": \"feed\"}" + "]}";
+        + "  \"mixingRule\": \"classic\"," + "  \"components\": {\"methane\": 0.9, \"nC10\": 0.1}}," + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"feed\"," + "   \"properties\": {\"flowRate\": [1000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"Separator\", \"name\": \"HP Sep\", \"inlet\": \"feed\"}" + "]}";
   }
 }

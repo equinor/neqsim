@@ -561,18 +561,18 @@ public class OilGasProcessSimulationOptimization {
       sb.append(String.format("Any Compressor Overspeed: %s\n", anyCompressorOverspeed));
       sb.append("\n--- Separator Capacity Utilization ---\n");
       for (Map.Entry<String, Double> entry : separatorCapacityUtilization.entrySet()) {
-	sb.append(String.format("  %s: %.1f %%\n", entry.getKey(), entry.getValue() * 100.0));
+        sb.append(String.format("  %s: %.1f %%\n", entry.getKey(), entry.getValue() * 100.0));
       }
       sb.append("\n--- Compressor Powers ---\n");
       for (Map.Entry<String, Double> entry : compressorPowers.entrySet()) {
-	sb.append(String.format("  %s: %.2f kW\n", entry.getKey(), entry.getValue()));
+        sb.append(String.format("  %s: %.2f kW\n", entry.getKey(), entry.getValue()));
       }
       sb.append("\n--- Compressor Speed Utilization ---\n");
       for (Map.Entry<String, Double> entry : compressorSpeedUtilization.entrySet()) {
-	String status = entry.getValue() > 1.0 ? " <-- OVERSPEED" : (entry.getValue() > 0.95 ? " <-- NEAR LIMIT" : "");
-	sb.append(String.format("  %s: %.1f%% (%.0f / %.0f RPM)%s\n", entry.getKey(), entry.getValue() * 100.0,
-	    compressorSpeeds.getOrDefault(entry.getKey(), 0.0), compressorMaxSpeeds.getOrDefault(entry.getKey(), 0.0),
-	    status));
+        String status = entry.getValue() > 1.0 ? " <-- OVERSPEED" : (entry.getValue() > 0.95 ? " <-- NEAR LIMIT" : "");
+        sb.append(String.format("  %s: %.1f%% (%.0f / %.0f RPM)%s\n", entry.getKey(), entry.getValue() * 100.0,
+            compressorSpeeds.getOrDefault(entry.getKey(), 0.0), compressorMaxSpeeds.getOrDefault(entry.getKey(), 0.0),
+            status));
       }
       return sb.toString();
     }
@@ -685,7 +685,7 @@ public class OilGasProcessSimulationOptimization {
 
     // Second-stage separator - MP separator
     ThreePhaseSeparator secondStageSeparator = new ThreePhaseSeparator("20-VA-02",
-	oilHeaterFromFirstStage.getOutletStream());
+        oilHeaterFromFirstStage.getOutletStream());
     // Set design parameters for MP separator
     secondStageSeparator.setDesignGasLoadFactor(0.10);
     secondStageSeparator.setInternalDiameter(2.0);
@@ -709,7 +709,7 @@ public class OilGasProcessSimulationOptimization {
 
     // Third-stage separator - LP separator
     ThreePhaseSeparator thirdStageSeparator = new ThreePhaseSeparator("20-VA-03",
-	oilHeaterFromSecondStage.getOutletStream());
+        oilHeaterFromSecondStage.getOutletStream());
     // Set design parameters for LP separator
     thirdStageSeparator.setDesignGasLoadFactor(0.09);
     thirdStageSeparator.setInternalDiameter(2.2);
@@ -925,7 +925,7 @@ public class OilGasProcessSimulationOptimization {
       // Set minimum speed from the chart's minimum speed curve
       double chartMinSpeed = chart.getMinSpeedCurve();
       if (!Double.isNaN(chartMinSpeed) && chartMinSpeed > 0) {
-	comp27KA01.setMinimumSpeed(chartMinSpeed);
+        comp27KA01.setMinimumSpeed(chartMinSpeed);
       }
 
       // Enable speed calculation from compressor chart during simulation
@@ -939,8 +939,8 @@ public class OilGasProcessSimulationOptimization {
       // Note: maxDesignPower should be in Watts (same units as getPower())
       double currentPowerWatts = comp27KA01.getPower(); // Returns Watts
       if (currentPowerWatts > 0 && !Double.isNaN(currentPowerWatts)) {
-	// Set design power to 120% of current power to allow for flow variations
-	comp27KA01.getMechanicalDesign().maxDesignPower = currentPowerWatts * 1.2;
+        // Set design power to 120% of current power to allow for flow variations
+        comp27KA01.getMechanicalDesign().maxDesignPower = currentPowerWatts * 1.2;
       }
 
       // Reinitialize capacity constraints now that chart is configured
@@ -948,9 +948,9 @@ public class OilGasProcessSimulationOptimization {
       comp27KA01.reinitializeCapacityConstraints();
 
       logger.info(String.format("Configured compressor 27-KA-01: design speed=%.0f RPM, max speed=%.0f RPM",
-	  designSpeed, maxSpeed));
+          designSpeed, maxSpeed));
       logger.info(String.format("Compressor chart generated with %d speed curves, surge and stonewall curves enabled",
-	  chart.getSpeeds().length));
+          chart.getSpeeds().length));
     } catch (Exception e) {
       logger.warn("Failed to configure compressor 27-KA-01: " + e.getMessage());
     }
@@ -1072,7 +1072,7 @@ public class OilGasProcessSimulationOptimization {
       double fuelFlow = ((Stream) oilProcess.getUnit("fuel gas")).getFlowRate("kg/hr");
       double exportGasFlow = ((Compressor) oilProcess.getUnit("27-KA-01")).getOutletStream().getFlowRate("kg/hr");
       double exportOilFlow = ((ThreePhaseSeparator) oilProcess.getUnit("20-VA-03")).getOilOutStream()
-	  .getFlowRate("kg/hr");
+          .getFlowRate("kg/hr");
 
       // Calculate mass balance
       double massBalance = (feedFlow - fuelFlow - exportGasFlow - exportOilFlow) / feedFlow * 100;
@@ -1107,56 +1107,56 @@ public class OilGasProcessSimulationOptimization {
       // Speed ratio ≈ (Flow ratio)^1 for centrifugal compressors at constant head
       boolean anyOverspeed = false;
       try {
-	// Use the stored design parameters from configureCompressorCharts()
-	// If not configured, fall back to reading from compressor object
-	double designSpeed = this.compressor27KA01DesignSpeed;
-	double maxSpeed27KA01 = this.compressor27KA01MaxSpeed;
+        // Use the stored design parameters from configureCompressorCharts()
+        // If not configured, fall back to reading from compressor object
+        double designSpeed = this.compressor27KA01DesignSpeed;
+        double maxSpeed27KA01 = this.compressor27KA01MaxSpeed;
 
-	// If not configured yet, use default values
-	if (designSpeed <= 0 || maxSpeed27KA01 <= 0) {
-	  Compressor comp27KA01 = (Compressor) oilProcess.getUnit("27-KA-01");
-	  if (designSpeed <= 0) {
-	    designSpeed = 10000.0; // default design speed
-	  }
-	  if (maxSpeed27KA01 <= 0) {
-	    maxSpeed27KA01 = comp27KA01.getMaximumSpeed();
-	    if (maxSpeed27KA01 <= 0) {
-	      maxSpeed27KA01 = 11000.0; // default max speed
-	    }
-	  }
-	}
+        // If not configured yet, use default values
+        if (designSpeed <= 0 || maxSpeed27KA01 <= 0) {
+          Compressor comp27KA01 = (Compressor) oilProcess.getUnit("27-KA-01");
+          if (designSpeed <= 0) {
+            designSpeed = 10000.0; // default design speed
+          }
+          if (maxSpeed27KA01 <= 0) {
+            maxSpeed27KA01 = comp27KA01.getMaximumSpeed();
+            if (maxSpeed27KA01 <= 0) {
+              maxSpeed27KA01 = 11000.0; // default max speed
+            }
+          }
+        }
 
-	// Calculate speed using affinity law: n2/n1 = (Q2/Q1) for constant head
-	// Reference: at 8000 kmol/hr, speed = designSpeed
-	// Get the feed rate in mole/hr for a stable reference
-	Stream wellStream = (Stream) oilProcess.getUnit("well stream");
-	double currentFeedMoleHr = wellStream.getFlowRate("mole/hr");
-	// Convert to kmol/hr: mole/hr / 1000 = kmol/hr
-	double currentFeedKmolHr = currentFeedMoleHr / 1000.0;
+        // Calculate speed using affinity law: n2/n1 = (Q2/Q1) for constant head
+        // Reference: at 8000 kmol/hr, speed = designSpeed
+        // Get the feed rate in mole/hr for a stable reference
+        Stream wellStream = (Stream) oilProcess.getUnit("well stream");
+        double currentFeedMoleHr = wellStream.getFlowRate("mole/hr");
+        // Convert to kmol/hr: mole/hr / 1000 = kmol/hr
+        double currentFeedKmolHr = currentFeedMoleHr / 1000.0;
 
-	// Reference: at 8000 kmol/hr, speed = designSpeed
-	double referenceFeedKmolHr = 8000.0;
-	double flowRatio = currentFeedKmolHr / referenceFeedKmolHr;
+        // Reference: at 8000 kmol/hr, speed = designSpeed
+        double referenceFeedKmolHr = 8000.0;
+        double flowRatio = currentFeedKmolHr / referenceFeedKmolHr;
 
-	// Apply affinity law: n2/n1 = (Q2/Q1) for constant head
-	double calculatedSpeed = designSpeed * flowRatio;
+        // Apply affinity law: n2/n1 = (Q2/Q1) for constant head
+        double calculatedSpeed = designSpeed * flowRatio;
 
-	double speedUtil27KA01 = calculatedSpeed / maxSpeed27KA01;
+        double speedUtil27KA01 = calculatedSpeed / maxSpeed27KA01;
 
-	results.getCompressorSpeeds().put("27-KA-01", calculatedSpeed);
-	results.getCompressorMaxSpeeds().put("27-KA-01", maxSpeed27KA01);
-	results.getCompressorSpeedUtilization().put("27-KA-01", speedUtil27KA01);
+        results.getCompressorSpeeds().put("27-KA-01", calculatedSpeed);
+        results.getCompressorMaxSpeeds().put("27-KA-01", maxSpeed27KA01);
+        results.getCompressorSpeedUtilization().put("27-KA-01", speedUtil27KA01);
 
-	if (speedUtil27KA01 > 1.0) {
-	  anyOverspeed = true;
-	  logger.info(String.format("27-KA-01 overspeed: %.0f RPM (max %.0f RPM), feed %.0f kmol/hr", calculatedSpeed,
-	      maxSpeed27KA01, currentFeedKmolHr));
-	} else {
-	  logger.debug(String.format("27-KA-01 speed: %.0f RPM (max %.0f RPM, util %.1f%%), feed %.0f kmol/hr",
-	      calculatedSpeed, maxSpeed27KA01, speedUtil27KA01 * 100, currentFeedKmolHr));
-	}
+        if (speedUtil27KA01 > 1.0) {
+          anyOverspeed = true;
+          logger.info(String.format("27-KA-01 overspeed: %.0f RPM (max %.0f RPM), feed %.0f kmol/hr", calculatedSpeed,
+              maxSpeed27KA01, currentFeedKmolHr));
+        } else {
+          logger.debug(String.format("27-KA-01 speed: %.0f RPM (max %.0f RPM, util %.1f%%), feed %.0f kmol/hr",
+              calculatedSpeed, maxSpeed27KA01, speedUtil27KA01 * 100, currentFeedKmolHr));
+        }
       } catch (Exception ex) {
-	logger.warn("Could not get 27-KA-01 speed: " + ex.getMessage());
+        logger.warn("Could not get 27-KA-01 speed: " + ex.getMessage());
       }
       results.setAnyCompressorOverspeed(anyOverspeed);
 
@@ -1167,74 +1167,74 @@ public class OilGasProcessSimulationOptimization {
 
       // First stage separator (20-VA-01)
       try {
-	Separator sep1 = (Separator) oilProcess.getUnit("20-VA-01");
-	double lf1 = sep1.getGasLoadFactor();
-	double cu1 = sep1.getCapacityUtilization();
-	if (!Double.isNaN(lf1) && !Double.isInfinite(lf1)) {
-	  loadFactors.put("20-VA-01", lf1);
-	}
-	if (!Double.isNaN(cu1) && !Double.isInfinite(cu1)) {
-	  capacityUtil.put("20-VA-01", cu1);
-	  if (cu1 > 1.0) {
-	    anyOverloaded = true;
-	  }
-	}
+        Separator sep1 = (Separator) oilProcess.getUnit("20-VA-01");
+        double lf1 = sep1.getGasLoadFactor();
+        double cu1 = sep1.getCapacityUtilization();
+        if (!Double.isNaN(lf1) && !Double.isInfinite(lf1)) {
+          loadFactors.put("20-VA-01", lf1);
+        }
+        if (!Double.isNaN(cu1) && !Double.isInfinite(cu1)) {
+          capacityUtil.put("20-VA-01", cu1);
+          if (cu1 > 1.0) {
+            anyOverloaded = true;
+          }
+        }
       } catch (Exception ex) {
-	logger.debug("Could not get 20-VA-01 capacity: " + ex.getMessage());
+        logger.debug("Could not get 20-VA-01 capacity: " + ex.getMessage());
       }
 
       // Second stage separator (20-VA-02)
       try {
-	Separator sep2 = (Separator) oilProcess.getUnit("20-VA-02");
-	double lf2 = sep2.getGasLoadFactor();
-	double cu2 = sep2.getCapacityUtilization();
-	if (!Double.isNaN(lf2) && !Double.isInfinite(lf2)) {
-	  loadFactors.put("20-VA-02", lf2);
-	}
-	if (!Double.isNaN(cu2) && !Double.isInfinite(cu2)) {
-	  capacityUtil.put("20-VA-02", cu2);
-	  if (cu2 > 1.0) {
-	    anyOverloaded = true;
-	  }
-	}
+        Separator sep2 = (Separator) oilProcess.getUnit("20-VA-02");
+        double lf2 = sep2.getGasLoadFactor();
+        double cu2 = sep2.getCapacityUtilization();
+        if (!Double.isNaN(lf2) && !Double.isInfinite(lf2)) {
+          loadFactors.put("20-VA-02", lf2);
+        }
+        if (!Double.isNaN(cu2) && !Double.isInfinite(cu2)) {
+          capacityUtil.put("20-VA-02", cu2);
+          if (cu2 > 1.0) {
+            anyOverloaded = true;
+          }
+        }
       } catch (Exception ex) {
-	logger.debug("Could not get 20-VA-02 capacity: " + ex.getMessage());
+        logger.debug("Could not get 20-VA-02 capacity: " + ex.getMessage());
       }
 
       // Third stage separator (20-VA-03)
       try {
-	Separator sep3 = (Separator) oilProcess.getUnit("20-VA-03");
-	double lf3 = sep3.getGasLoadFactor();
-	double cu3 = sep3.getCapacityUtilization();
-	if (!Double.isNaN(lf3) && !Double.isInfinite(lf3)) {
-	  loadFactors.put("20-VA-03", lf3);
-	}
-	if (!Double.isNaN(cu3) && !Double.isInfinite(cu3)) {
-	  capacityUtil.put("20-VA-03", cu3);
-	  if (cu3 > 1.0) {
-	    anyOverloaded = true;
-	  }
-	}
+        Separator sep3 = (Separator) oilProcess.getUnit("20-VA-03");
+        double lf3 = sep3.getGasLoadFactor();
+        double cu3 = sep3.getCapacityUtilization();
+        if (!Double.isNaN(lf3) && !Double.isInfinite(lf3)) {
+          loadFactors.put("20-VA-03", lf3);
+        }
+        if (!Double.isNaN(cu3) && !Double.isInfinite(cu3)) {
+          capacityUtil.put("20-VA-03", cu3);
+          if (cu3 > 1.0) {
+            anyOverloaded = true;
+          }
+        }
       } catch (Exception ex) {
-	logger.debug("Could not get 20-VA-03 capacity: " + ex.getMessage());
+        logger.debug("Could not get 20-VA-03 capacity: " + ex.getMessage());
       }
 
       // First scrubber (23-VG-03)
       try {
-	Separator scrub1 = (Separator) oilProcess.getUnit("23-VG-03");
-	double lfs = scrub1.getGasLoadFactor();
-	double cus = scrub1.getCapacityUtilization();
-	if (!Double.isNaN(lfs) && !Double.isInfinite(lfs)) {
-	  loadFactors.put("23-VG-03", lfs);
-	}
-	if (!Double.isNaN(cus) && !Double.isInfinite(cus)) {
-	  capacityUtil.put("23-VG-03", cus);
-	  if (cus > 1.0) {
-	    anyOverloaded = true;
-	  }
-	}
+        Separator scrub1 = (Separator) oilProcess.getUnit("23-VG-03");
+        double lfs = scrub1.getGasLoadFactor();
+        double cus = scrub1.getCapacityUtilization();
+        if (!Double.isNaN(lfs) && !Double.isInfinite(lfs)) {
+          loadFactors.put("23-VG-03", lfs);
+        }
+        if (!Double.isNaN(cus) && !Double.isInfinite(cus)) {
+          capacityUtil.put("23-VG-03", cus);
+          if (cus > 1.0) {
+            anyOverloaded = true;
+          }
+        }
       } catch (Exception ex) {
-	logger.debug("Could not get 23-VG-03 capacity: " + ex.getMessage());
+        logger.debug("Could not get 23-VG-03 capacity: " + ex.getMessage());
       }
 
       results.setSeparatorLoadFactors(loadFactors);
@@ -1303,68 +1303,68 @@ public class OilGasProcessSimulationOptimization {
 
     outerLoop: for (double feedRate : feedRateRange) {
       for (double tsep1 : tsep1Range) {
-	for (double tsep2 : tsep2Range) {
-	  // Constraint: Tsep1 >= Tsep2
-	  if (tsep1 < tsep2) {
-	    continue;
-	  }
+        for (double tsep2 : tsep2Range) {
+          // Constraint: Tsep1 >= Tsep2
+          if (tsep1 < tsep2) {
+            continue;
+          }
 
-	  for (double psep1 : psep1Range) {
-	    // Check if we should stop due to too many failures
-	    if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
-	      logger.warn(String.format("Stopping optimization: %d consecutive failures. Total failures: %d",
-		  consecutiveFailures, totalFailures));
-	      break outerLoop;
-	    }
-	    if (totalFailures >= MAX_TOTAL_FAILURES) {
-	      logger.warn(String.format("Stopping optimization: reached max total failures (%d)", totalFailures));
-	      break outerLoop;
-	    }
+          for (double psep1 : psep1Range) {
+            // Check if we should stop due to too many failures
+            if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+              logger.warn(String.format("Stopping optimization: %d consecutive failures. Total failures: %d",
+                  consecutiveFailures, totalFailures));
+              break outerLoop;
+            }
+            if (totalFailures >= MAX_TOTAL_FAILURES) {
+              logger.warn(String.format("Stopping optimization: reached max total failures (%d)", totalFailures));
+              break outerLoop;
+            }
 
-	    iterations++;
+            iterations++;
 
-	    ProcessInputParameters testParams = new ProcessInputParameters();
-	    testParams.copyFrom(baseParams);
-	    // Override optimization variables
-	    testParams.setFeedRate(feedRate);
-	    testParams.setTsep1(tsep1);
-	    testParams.setTsep2(tsep2);
-	    testParams.setPsep1(psep1);
+            ProcessInputParameters testParams = new ProcessInputParameters();
+            testParams.copyFrom(baseParams);
+            // Override optimization variables
+            testParams.setFeedRate(feedRate);
+            testParams.setTsep1(tsep1);
+            testParams.setTsep2(tsep2);
+            testParams.setPsep1(psep1);
 
-	    try {
-	      ProcessOutputResults results = runSimulation(testParams);
-	      double totalPower = results.getTotalPowerConsumption();
+            try {
+              ProcessOutputResults results = runSimulation(testParams);
+              double totalPower = results.getTotalPowerConsumption();
 
-	      // Reset consecutive failures on success
-	      consecutiveFailures = 0;
-	      successfulIterations++;
+              // Reset consecutive failures on success
+              consecutiveFailures = 0;
+              successfulIterations++;
 
-	      // Check separator capacity constraints
-	      if (results.isAnySeparatorOverloaded()) {
-		logger.debug(String.format("Iteration %d/%d: Skipped - separator capacity exceeded at feedRate=%.0f",
-		    iterations, totalIterations, feedRate));
-		continue;
-	      }
+              // Check separator capacity constraints
+              if (results.isAnySeparatorOverloaded()) {
+                logger.debug(String.format("Iteration %d/%d: Skipped - separator capacity exceeded at feedRate=%.0f",
+                    iterations, totalIterations, feedRate));
+                continue;
+              }
 
-	      if (totalPower < bestPower && Math.abs(results.getMassBalance()) < 1.0) {
-		bestPower = totalPower;
-		bestParams = testParams;
-		logger.info(String.format("Iteration %d/%d: Found better solution with feedRate=%.0f, power = %.2f kW",
-		    iterations, totalIterations, feedRate, totalPower));
-	      }
-	    } catch (Exception e) {
-	      consecutiveFailures++;
-	      totalFailures++;
-	      logger.debug("Simulation failed for iteration " + iterations + ": " + e.getMessage());
-	    }
-	  }
-	}
+              if (totalPower < bestPower && Math.abs(results.getMassBalance()) < 1.0) {
+                bestPower = totalPower;
+                bestParams = testParams;
+                logger.info(String.format("Iteration %d/%d: Found better solution with feedRate=%.0f, power = %.2f kW",
+                    iterations, totalIterations, feedRate, totalPower));
+              }
+            } catch (Exception e) {
+              consecutiveFailures++;
+              totalFailures++;
+              logger.debug("Simulation failed for iteration " + iterations + ": " + e.getMessage());
+            }
+          }
+        }
       }
     }
 
     logger.info(String.format(
-	"Optimization complete. Successful: %d, Failed: %d. Best feed rate: %.0f kgmole/hr, Best power: %.2f kW",
-	successfulIterations, totalFailures, bestParams.getFeedRate(), bestPower));
+        "Optimization complete. Successful: %d, Failed: %d. Best feed rate: %.0f kgmole/hr, Best power: %.2f kW",
+        successfulIterations, totalFailures, bestParams.getFeedRate(), bestPower));
     return bestParams;
   }
 
@@ -1394,7 +1394,7 @@ public class OilGasProcessSimulationOptimization {
 
     // Define parameter ranges - focus on feed rate, use fixed operating conditions
     double[] feedRateRange = { 5000.0, 6000.0, 7000.0, 8000.0, 9000.0, 10000.0, 11000.0, 12000.0, 13000.0, 14000.0,
-	15000.0 };
+        15000.0 };
 
     int successfulIterations = 0;
     int consecutiveFailures = 0;
@@ -1403,8 +1403,8 @@ public class OilGasProcessSimulationOptimization {
 
     for (double feedRate : feedRateRange) {
       if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
-	logger.warn("Stopping: " + consecutiveFailures + " consecutive failures");
-	break;
+        logger.warn("Stopping: " + consecutiveFailures + " consecutive failures");
+        break;
       }
 
       ProcessInputParameters testParams = new ProcessInputParameters();
@@ -1412,77 +1412,77 @@ public class OilGasProcessSimulationOptimization {
       testParams.setFeedRate(feedRate);
 
       try {
-	ProcessOutputResults simResults = runSimulation(testParams);
-	consecutiveFailures = 0;
-	successfulIterations++;
+        ProcessOutputResults simResults = runSimulation(testParams);
+        consecutiveFailures = 0;
+        successfulIterations++;
 
-	// Find bottleneck equipment (highest utilization from separators AND compressor speed)
-	String bottleneckEquip = null;
-	double maxUtil = 0.0;
-	boolean isCompressorBottleneck = false;
+        // Find bottleneck equipment (highest utilization from separators AND compressor speed)
+        String bottleneckEquip = null;
+        double maxUtil = 0.0;
+        boolean isCompressorBottleneck = false;
 
-	// Check separator utilization
-	for (Map.Entry<String, Double> entry : simResults.getSeparatorCapacityUtilization().entrySet()) {
-	  if (entry.getValue() != null && entry.getValue() > maxUtil) {
-	    maxUtil = entry.getValue();
-	    bottleneckEquip = entry.getKey();
-	    isCompressorBottleneck = false;
-	  }
-	}
+        // Check separator utilization
+        for (Map.Entry<String, Double> entry : simResults.getSeparatorCapacityUtilization().entrySet()) {
+          if (entry.getValue() != null && entry.getValue() > maxUtil) {
+            maxUtil = entry.getValue();
+            bottleneckEquip = entry.getKey();
+            isCompressorBottleneck = false;
+          }
+        }
 
-	// Check compressor speed utilization
-	for (Map.Entry<String, Double> entry : simResults.getCompressorSpeedUtilization().entrySet()) {
-	  if (entry.getValue() != null && entry.getValue() > maxUtil) {
-	    maxUtil = entry.getValue();
-	    bottleneckEquip = entry.getKey();
-	    isCompressorBottleneck = true;
-	  }
-	}
+        // Check compressor speed utilization
+        for (Map.Entry<String, Double> entry : simResults.getCompressorSpeedUtilization().entrySet()) {
+          if (entry.getValue() != null && entry.getValue() > maxUtil) {
+            maxUtil = entry.getValue();
+            bottleneckEquip = entry.getKey();
+            isCompressorBottleneck = true;
+          }
+        }
 
-	// Log compressor speed status
-	for (Map.Entry<String, Double> entry : simResults.getCompressorSpeedUtilization().entrySet()) {
-	  double speedUtil = entry.getValue() != null ? entry.getValue() : 0.0;
-	  double speed = simResults.getCompressorSpeeds().getOrDefault(entry.getKey(), 0.0);
-	  double maxSpeed = simResults.getCompressorMaxSpeeds().getOrDefault(entry.getKey(), 0.0);
-	  logger.debug(String.format("  Compressor %s: %.0f / %.0f RPM (%.1f%%)", entry.getKey(), speed, maxSpeed,
-	      speedUtil * 100));
-	}
+        // Log compressor speed status
+        for (Map.Entry<String, Double> entry : simResults.getCompressorSpeedUtilization().entrySet()) {
+          double speedUtil = entry.getValue() != null ? entry.getValue() : 0.0;
+          double speed = simResults.getCompressorSpeeds().getOrDefault(entry.getKey(), 0.0);
+          double maxSpeed = simResults.getCompressorMaxSpeeds().getOrDefault(entry.getKey(), 0.0);
+          logger.debug(String.format("  Compressor %s: %.0f / %.0f RPM (%.1f%%)", entry.getKey(), speed, maxSpeed,
+              speedUtil * 100));
+        }
 
-	String bottleneckType = isCompressorBottleneck ? "compressor speed" : "separator";
-	logger.info(String.format("Feed rate %.0f kgmole/hr: Bottleneck=%s (%s) at %.1f%%, Overloaded=%s, Overspeed=%s",
-	    feedRate, bottleneckEquip, bottleneckType, maxUtil * 100, simResults.isAnySeparatorOverloaded(),
-	    simResults.isAnyCompressorOverspeed()));
+        String bottleneckType = isCompressorBottleneck ? "compressor speed" : "separator";
+        logger.info(String.format("Feed rate %.0f kgmole/hr: Bottleneck=%s (%s) at %.1f%%, Overloaded=%s, Overspeed=%s",
+            feedRate, bottleneckEquip, bottleneckType, maxUtil * 100, simResults.isAnySeparatorOverloaded(),
+            simResults.isAnyCompressorOverspeed()));
 
-	// Check if this is a valid solution (no separator overload, no compressor overspeed,
-	// reasonable mass balance)
-	boolean isValidSolution = !simResults.isAnySeparatorOverloaded() && !simResults.isAnyCompressorOverspeed()
-	    && Math.abs(simResults.getMassBalance()) < 5.0;
+        // Check if this is a valid solution (no separator overload, no compressor overspeed,
+        // reasonable mass balance)
+        boolean isValidSolution = !simResults.isAnySeparatorOverloaded() && !simResults.isAnyCompressorOverspeed()
+            && Math.abs(simResults.getMassBalance()) < 5.0;
 
-	if (isValidSolution) {
-	  if (feedRate > bestFeedRate) {
-	    bestFeedRate = feedRate;
-	    bestParams = testParams;
-	    bestOilExportRate = simResults.getOilExportRate();
-	    bestGasExportRate = simResults.getGasExportRate();
-	    result.setBottleneckSeparator(bottleneckEquip);
-	    result.setBottleneckUtilization(maxUtil);
-	    result.setSeparatorCapacities(new java.util.HashMap<>(simResults.getSeparatorCapacityUtilization()));
-	    result.setCompressorSpeedUtilization(new java.util.HashMap<>(simResults.getCompressorSpeedUtilization()));
-	  }
-	} else if (simResults.isAnySeparatorOverloaded() || simResults.isAnyCompressorOverspeed()) {
-	  // Found the limit - the previous feed rate was maximum
-	  String reason = simResults.isAnySeparatorOverloaded() ? "separator capacity" : "compressor speed";
-	  logger.info(String.format("Feed rate %.0f kgmole/hr exceeds %s. Maximum production found at %.0f kgmole/hr",
-	      feedRate, reason, bestFeedRate));
-	  result.setLimitingFeedRate(feedRate);
-	  result.setLimitingSeparator(bottleneckEquip);
-	  result.setLimitingUtilization(maxUtil);
-	  break;
-	}
+        if (isValidSolution) {
+          if (feedRate > bestFeedRate) {
+            bestFeedRate = feedRate;
+            bestParams = testParams;
+            bestOilExportRate = simResults.getOilExportRate();
+            bestGasExportRate = simResults.getGasExportRate();
+            result.setBottleneckSeparator(bottleneckEquip);
+            result.setBottleneckUtilization(maxUtil);
+            result.setSeparatorCapacities(new java.util.HashMap<>(simResults.getSeparatorCapacityUtilization()));
+            result.setCompressorSpeedUtilization(new java.util.HashMap<>(simResults.getCompressorSpeedUtilization()));
+          }
+        } else if (simResults.isAnySeparatorOverloaded() || simResults.isAnyCompressorOverspeed()) {
+          // Found the limit - the previous feed rate was maximum
+          String reason = simResults.isAnySeparatorOverloaded() ? "separator capacity" : "compressor speed";
+          logger.info(String.format("Feed rate %.0f kgmole/hr exceeds %s. Maximum production found at %.0f kgmole/hr",
+              feedRate, reason, bestFeedRate));
+          result.setLimitingFeedRate(feedRate);
+          result.setLimitingSeparator(bottleneckEquip);
+          result.setLimitingUtilization(maxUtil);
+          break;
+        }
       } catch (Exception e) {
-	consecutiveFailures++;
-	totalFailures++;
-	logger.debug("Simulation failed at feed rate " + feedRate + ": " + e.getMessage());
+        consecutiveFailures++;
+        totalFailures++;
+        logger.debug("Simulation failed at feed rate " + feedRate + ": " + e.getMessage());
       }
     }
 
@@ -1630,39 +1630,39 @@ public class OilGasProcessSimulationOptimization {
       sb.append(String.format("\nBottleneck Separator: %s\n", bottleneckSeparator));
       sb.append(String.format("Bottleneck Utilization: %.1f%%\n", bottleneckUtilization * 100));
       if (limitingSeparator != null) {
-	sb.append(String.format("\nLimiting Separator: %s\n", limitingSeparator));
-	sb.append(String.format("Limiting Feed Rate (would exceed capacity): %.0f kgmole/hr\n", limitingFeedRate));
-	sb.append(String.format("Utilization at Limit: %.1f%%\n", limitingUtilization * 100));
+        sb.append(String.format("\nLimiting Separator: %s\n", limitingSeparator));
+        sb.append(String.format("Limiting Feed Rate (would exceed capacity): %.0f kgmole/hr\n", limitingFeedRate));
+        sb.append(String.format("Utilization at Limit: %.1f%%\n", limitingUtilization * 100));
       }
       sb.append("\n--- Separator Capacities at Max Production ---\n");
       if (separatorCapacities != null) {
-	for (Map.Entry<String, Double> entry : separatorCapacities.entrySet()) {
-	  String status = "";
-	  if (entry.getValue() != null) {
-	    if (entry.getValue() > 0.9) {
-	      status = " <-- NEAR LIMIT";
-	    } else if (entry.getValue() > 0.8) {
-	      status = " <-- HIGH";
-	    }
-	    sb.append(String.format("  %s: %.1f%%%s\n", entry.getKey(), entry.getValue() * 100, status));
-	  }
-	}
+        for (Map.Entry<String, Double> entry : separatorCapacities.entrySet()) {
+          String status = "";
+          if (entry.getValue() != null) {
+            if (entry.getValue() > 0.9) {
+              status = " <-- NEAR LIMIT";
+            } else if (entry.getValue() > 0.8) {
+              status = " <-- HIGH";
+            }
+            sb.append(String.format("  %s: %.1f%%%s\n", entry.getKey(), entry.getValue() * 100, status));
+          }
+        }
       }
       sb.append("\n--- Compressor Speed Utilization at Max Production ---\n");
       if (compressorSpeedUtilization != null) {
-	for (Map.Entry<String, Double> entry : compressorSpeedUtilization.entrySet()) {
-	  String status = "";
-	  if (entry.getValue() != null) {
-	    if (entry.getValue() > 1.0) {
-	      status = " <-- OVERSPEED";
-	    } else if (entry.getValue() > 0.95) {
-	      status = " <-- NEAR LIMIT";
-	    } else if (entry.getValue() > 0.9) {
-	      status = " <-- HIGH";
-	    }
-	    sb.append(String.format("  %s: %.1f%%%s\n", entry.getKey(), entry.getValue() * 100, status));
-	  }
-	}
+        for (Map.Entry<String, Double> entry : compressorSpeedUtilization.entrySet()) {
+          String status = "";
+          if (entry.getValue() != null) {
+            if (entry.getValue() > 1.0) {
+              status = " <-- OVERSPEED";
+            } else if (entry.getValue() > 0.95) {
+              status = " <-- NEAR LIMIT";
+            } else if (entry.getValue() > 0.9) {
+              status = " <-- HIGH";
+            }
+            sb.append(String.format("  %s: %.1f%%%s\n", entry.getKey(), entry.getValue() * 100, status));
+          }
+        }
       }
       sb.append(String.format("\nIterations: %d successful, %d failed\n", successfulIterations, totalFailures));
       return sb.toString();

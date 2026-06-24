@@ -88,30 +88,30 @@ public class Standard_BSW extends neqsim.standards.Standard {
       double oilVolume = 0.0;
 
       for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-	String phaseType = fluid.getPhase(i).getType().toString();
-	double phaseMoles = fluid.getPhase(i).getNumberOfMolesInPhase();
-	double phaseMolarMass = fluid.getPhase(i).getMolarMass(); // kg/mol
-	double phaseDensity = fluid.getPhase(i).getDensity("kg/m3");
+        String phaseType = fluid.getPhase(i).getType().toString();
+        double phaseMoles = fluid.getPhase(i).getNumberOfMolesInPhase();
+        double phaseMolarMass = fluid.getPhase(i).getMolarMass(); // kg/mol
+        double phaseDensity = fluid.getPhase(i).getDensity("kg/m3");
 
-	if (phaseDensity > 0) {
-	  double phaseVolume = phaseMoles * phaseMolarMass / phaseDensity;
+        if (phaseDensity > 0) {
+          double phaseVolume = phaseMoles * phaseMolarMass / phaseDensity;
 
-	  if ("aqueous".equals(phaseType) || "water".equals(phaseType)) {
-	    waterVolume += phaseVolume;
-	  } else if ("oil".equals(phaseType) || "liquid".equals(phaseType)) {
-	    oilVolume += phaseVolume;
-	  }
-	}
+          if ("aqueous".equals(phaseType) || "water".equals(phaseType)) {
+            waterVolume += phaseVolume;
+          } else if ("oil".equals(phaseType) || "liquid".equals(phaseType)) {
+            oilVolume += phaseVolume;
+          }
+        }
       }
 
       double totalLiquidVolume = waterVolume + oilVolume;
       if (totalLiquidVolume > 0) {
-	waterCutVolPct = (waterVolume / totalLiquidVolume) * 100.0;
-	// BS&W approximates water cut for thermodynamic calculation (no sediment model)
-	bswVolPct = waterCutVolPct;
+        waterCutVolPct = (waterVolume / totalLiquidVolume) * 100.0;
+        // BS&W approximates water cut for thermodynamic calculation (no sediment model)
+        bswVolPct = waterCutVolPct;
       } else {
-	bswVolPct = 0.0;
-	waterCutVolPct = 0.0;
+        bswVolPct = 0.0;
+        waterCutVolPct = 0.0;
       }
     } catch (Exception ex) {
       logger.error("BS&W calculation failed: {}", ex.getMessage());

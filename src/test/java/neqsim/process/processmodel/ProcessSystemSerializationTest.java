@@ -50,13 +50,13 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
     dryFeedGasSmorbukk.setPressure(40.0, "bara");
 
     StreamSaturatorUtil saturatedFeedGasSmorbukk = new StreamSaturatorUtil("water saturator Smorbukk",
-	dryFeedGasSmorbukk);
+        dryFeedGasSmorbukk);
 
     Stream waterSaturatedFeedGasSmorbukk = new Stream("water saturated feed gas Smorbukk",
-	saturatedFeedGasSmorbukk.getOutletStream());
+        saturatedFeedGasSmorbukk.getOutletStream());
 
     HydrateEquilibriumTemperatureAnalyser hydrateTAnalyserSmorbukk = new HydrateEquilibriumTemperatureAnalyser(
-	"hydrate temperature analyser Smorbukk", waterSaturatedFeedGasSmorbukk);
+        "hydrate temperature analyser Smorbukk", waterSaturatedFeedGasSmorbukk);
 
     Splitter SmorbukkSplit = new Splitter("Smorbukk Splitter", waterSaturatedFeedGasSmorbukk);
     double[] splitSmorbukk = { 1.0 - 1e-10, 1e-10 };
@@ -70,10 +70,10 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
     StreamSaturatorUtil saturatedFeedGasMidgard = new StreamSaturatorUtil("water saturator Midgard", dryFeedGasMidgard);
 
     Stream waterSaturatedFeedGasMidgard = new Stream("water saturated feed gas Midgard",
-	saturatedFeedGasMidgard.getOutletStream());
+        saturatedFeedGasMidgard.getOutletStream());
 
     HydrateEquilibriumTemperatureAnalyser hydrateTAnalyserMidgard = new HydrateEquilibriumTemperatureAnalyser(
-	"hydrate temperature analyser Midgard", waterSaturatedFeedGasMidgard);
+        "hydrate temperature analyser Midgard", waterSaturatedFeedGasMidgard);
 
     Splitter MidgardSplit = new Splitter("Midgard Splitter", waterSaturatedFeedGasMidgard);
     double[] splitMidgard = { 1e-10, 1 - 1e-10 };
@@ -90,10 +90,10 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
     Stream feedToAbsorber = new Stream("feed to TEG absorber", feedTPsetterToAbsorber.getOutletStream());
 
     HydrateEquilibriumTemperatureAnalyser hydrateTAnalyser2 = new HydrateEquilibriumTemperatureAnalyser(
-	"hydrate temperature gas to absorber", feedToAbsorber);
+        "hydrate temperature gas to absorber", feedToAbsorber);
 
     WaterDewPointAnalyser waterDewPointAnalyserToAbsorber = new WaterDewPointAnalyser("water dew point gas to absorber",
-	feedToAbsorber);
+        feedToAbsorber);
     waterDewPointAnalyserToAbsorber.setMethod("multiphase");
     waterDewPointAnalyserToAbsorber.setReferencePressure(40.0);
 
@@ -117,7 +117,7 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
     Stream richTEG = new Stream("rich TEG from absorber", absorber.getLiquidOutStream());
 
     HydrateEquilibriumTemperatureAnalyser waterDewPointAnalyser = new HydrateEquilibriumTemperatureAnalyser(
-	"hydrate dew point analyser", dehydratedGas);
+        "hydrate dew point analyser", dehydratedGas);
     waterDewPointAnalyser.setReferencePressure(70.0);
 
     WaterDewPointAnalyser waterDewPointAnalyser2 = new WaterDewPointAnalyser("water dew point analyser", dehydratedGas);
@@ -161,9 +161,9 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
     double reboilerPressure = 1.4;
     double condenserPressure = 1.2;
     double feedPressureGLycol = (reboilerPressure + condenserPressure) / 2.0; // enters middle of
-									      // column
+    // column
     double feedPressureStripGas = (reboilerPressure + condenserPressure) / 2.0; // enters middle of
-										// column
+    // column
 
     ThrottlingValve glycol_flash_valve2 = new ThrottlingValve("Rich TEG LP flash valve", heatEx.getOutStream(0));
     glycol_flash_valve2.setOutletPressure(feedPressureGLycol);
@@ -317,7 +317,7 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
 
     // Deserialize from xml
     neqsim.process.processmodel.ProcessSystem operationsCopy = (neqsim.process.processmodel.ProcessSystem) xstream
-	.fromXML(xml);
+        .fromXML(xml);
     operationsCopy.run();
   }
 }

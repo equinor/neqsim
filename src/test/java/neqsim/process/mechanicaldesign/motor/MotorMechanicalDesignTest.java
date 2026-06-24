@@ -54,7 +54,7 @@ public class MotorMechanicalDesignTest {
     // Foundation loads
     assertTrue(design.getTotalFoundationLoadKN() > 0, "Total foundation load should be positive");
     assertTrue(design.getRequiredFoundationMassKg() > 0,
-	"Foundation mass should be positive: " + design.getRequiredFoundationMassKg());
+        "Foundation mass should be positive: " + design.getRequiredFoundationMassKg());
 
     // Cooling
     assertNotNull(design.getCoolingCode(), "IC code should be assigned");
@@ -62,7 +62,7 @@ public class MotorMechanicalDesignTest {
     // Bearings
     assertNotNull(design.getBearingType(), "Bearing type should be specified");
     assertTrue(design.getBearingL10LifeHours() > 0,
-	"Bearing L10 life should be positive: " + design.getBearingL10LifeHours());
+        "Bearing L10 life should be positive: " + design.getBearingL10LifeHours());
 
     // Vibration
     assertNotNull(design.getVibrationZone(), "Vibration zone should be classified");
@@ -118,11 +118,11 @@ public class MotorMechanicalDesignTest {
     highAlt.calcDesign();
 
     assertTrue(highAlt.getCombinedDeratingFactor() < seaLevel.getCombinedDeratingFactor(),
-	"Higher altitude should produce greater derating");
+        "Higher altitude should produce greater derating");
 
     // 3000 m: (3000-1000)/100 * 1% = 20% derating from altitude
     assertTrue(highAlt.getCombinedDeratingFactor() < 0.85,
-	"3000m altitude should derate significantly: " + highAlt.getCombinedDeratingFactor());
+        "3000m altitude should derate significantly: " + highAlt.getCombinedDeratingFactor());
   }
 
   @Test
@@ -138,7 +138,7 @@ public class MotorMechanicalDesignTest {
     hot.calcDesign();
 
     assertTrue(hot.getCombinedDeratingFactor() < normal.getCombinedDeratingFactor(),
-	"Higher temperature should produce greater derating");
+        "Higher temperature should produce greater derating");
   }
 
   @Test
@@ -162,7 +162,7 @@ public class MotorMechanicalDesignTest {
     zone0.setHazardousZone(0);
     zone0.calcDesign();
     assertTrue(zone0.getIpRating().equals("IP66") || zone0.getIpRating().equals("IP67"),
-	"Zone 0 should have high IP rating: " + zone0.getIpRating());
+        "Zone 0 should have high IP rating: " + zone0.getIpRating());
   }
 
   @Test
@@ -220,8 +220,8 @@ public class MotorMechanicalDesignTest {
     boolean hasVFDNote = false;
     for (String note : design.getDesignNotes()) {
       if (note.contains("VFD")) {
-	hasVFDNote = true;
-	break;
+        hasVFDNote = true;
+        break;
       }
     }
     assertTrue(hasVFDNote, "VFD should generate design notes about noise");
@@ -313,9 +313,9 @@ public class MotorMechanicalDesignTest {
 
     assertNotNull(report.getVerdict(), "Verdict should be set");
     assertTrue(
-	report.getVerdict().equals("FEASIBLE") || report.getVerdict().equals("FEASIBLE_WITH_WARNINGS")
-	    || report.getVerdict().equals("NOT_FEASIBLE"),
-	"Verdict should be one of the valid values: " + report.getVerdict());
+        report.getVerdict().equals("FEASIBLE") || report.getVerdict().equals("FEASIBLE_WITH_WARNINGS")
+            || report.getVerdict().equals("NOT_FEASIBLE"),
+        "Verdict should be one of the valid values: " + report.getVerdict());
 
     // Check that sub-designs are present
     assertNotNull(report.getMechanicalDesign(), "Mechanical design should be present");

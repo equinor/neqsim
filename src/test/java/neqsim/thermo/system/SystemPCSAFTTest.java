@@ -63,7 +63,7 @@ public class SystemPCSAFTTest {
     fluid2.initProperties();
 
     assertEquals(fluid.getTemperature(), fluid2.getTemperature(), 0.5,
-	"PHflash should recover the original temperature");
+        "PHflash should recover the original temperature");
   }
 
   @Test
@@ -84,11 +84,11 @@ public class SystemPCSAFTTest {
     fluid.setMixingRule(1);
 
     assertTrue(fluid.isImplementedCompositionDeriativesofFugacity(),
-	"Composition derivatives should be enabled for PC-SAFTa");
+        "Composition derivatives should be enabled for PC-SAFTa");
     assertTrue(fluid.isImplementedPressureDeriativesofFugacity(),
-	"Pressure derivatives should be enabled for PC-SAFTa");
+        "Pressure derivatives should be enabled for PC-SAFTa");
     assertTrue(fluid.isImplementedTemperatureDeriativesofFugacity(),
-	"Temperature derivatives should be enabled for PC-SAFTa");
+        "Temperature derivatives should be enabled for PC-SAFTa");
   }
 
   @Test
@@ -296,7 +296,7 @@ public class SystemPCSAFTTest {
     assertTrue(srkDensity > 0, "SRK density should be positive");
     double ratio = saftDensity / srkDensity;
     assertTrue(ratio > 0.5 && ratio < 2.0,
-	"SAFT and SRK gas densities should be same order of magnitude. Ratio=" + ratio);
+        "SAFT and SRK gas densities should be same order of magnitude. Ratio=" + ratio);
   }
 
   @Test

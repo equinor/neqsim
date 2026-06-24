@@ -247,8 +247,8 @@ public class ProcessNode implements Serializable {
 
     try {
       if (equipment.getThermoSystem() != null) {
-	double flow = equipment.getThermoSystem().getFlowRate("kg/hr");
-	features[numTypes + 4] = Math.min(1.0, flow / 100000.0); // Normalize to ~100 t/hr
+        double flow = equipment.getThermoSystem().getFlowRate("kg/hr");
+        features[numTypes + 4] = Math.min(1.0, flow / 100000.0); // Normalize to ~100 t/hr
       }
     } catch (Exception e) {
       features[numTypes + 4] = 0.0;
@@ -304,7 +304,7 @@ public class ProcessNode implements Serializable {
   @Override
   public String toString() {
     return String.format("ProcessNode[%d: %s (%s), in=%d, out=%d]", index, getName(), getEquipmentType(), getInDegree(),
-	getOutDegree());
+        getOutDegree());
   }
 
   @Override

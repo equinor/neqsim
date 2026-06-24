@@ -171,7 +171,7 @@ public class PedersenAsphalteneCharacterization {
     calculateAcentricFactor();
     isCharacterized = true;
     logger.info("Asphaltene characterized: Tc={} K, Pc={} bar, omega={}", criticalTemperature, criticalPressure,
-	acentricFactor);
+        acentricFactor);
   }
 
   /**
@@ -190,7 +190,7 @@ public class PedersenAsphalteneCharacterization {
     double rho = asphalteneDensity;
 
     boilingPoint = (1928.3 - 1.695e5 * Math.pow(M, -0.03522) * Math.pow(rho, 3.266)
-	* Math.exp(-4.922e-3 * M - 4.7685 * rho + 3.462e-3 * M * rho)) / 1.8;
+        * Math.exp(-4.922e-3 * M - 4.7685 * rho + 3.462e-3 * M * rho)) / 1.8;
 
     // Ensure boiling point is reasonable for heavy components
     if (boilingPoint < 500.0) {
@@ -292,14 +292,14 @@ public class PedersenAsphalteneCharacterization {
       double lnPbr = Math.log(ThermodynamicConstantsInterface.referencePressure / criticalPressure);
 
       if (Tbr > 0.0 && Tbr < 1.0) {
-	if (Tbr < 0.8) {
-	  acentricFactor = (lnPbr - 5.92714 + 6.09649 / Tbr + 1.28862 * Math.log(Tbr) - 0.169347 * Math.pow(Tbr, 6.0))
-	      / (15.2518 - 15.6875 / Tbr - 13.4721 * Math.log(Tbr) + 0.43577 * Math.pow(Tbr, 6.0));
-	} else {
-	  // Edmister correlation for high Tbr
-	  acentricFactor = (3.0 / 7.0)
-	      * (Math.log(criticalPressure / 1.01325) / (criticalTemperature / boilingPoint - 1.0)) - 1.0;
-	}
+        if (Tbr < 0.8) {
+          acentricFactor = (lnPbr - 5.92714 + 6.09649 / Tbr + 1.28862 * Math.log(Tbr) - 0.169347 * Math.pow(Tbr, 6.0))
+              / (15.2518 - 15.6875 / Tbr - 13.4721 * Math.log(Tbr) + 0.43577 * Math.pow(Tbr, 6.0));
+        } else {
+          // Edmister correlation for high Tbr
+          acentricFactor = (3.0 / 7.0)
+              * (Math.log(criticalPressure / 1.01325) / (criticalTemperature / boilingPoint - 1.0)) - 1.0;
+        }
       }
     }
 
@@ -385,8 +385,8 @@ public class PedersenAsphalteneCharacterization {
     for (int i = 0; i < nComp; i++) {
       String name = system.getPhase(0).getComponent(i).getComponentName().toLowerCase();
       if (name.contains("asphaltene")) {
-	aspIndex = i;
-	break;
+        aspIndex = i;
+        break;
       }
     }
 
@@ -400,23 +400,23 @@ public class PedersenAsphalteneCharacterization {
     for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
       neqsim.thermo.phase.PhaseInterface phaseObj = system.getPhase(phase);
       if (phaseObj instanceof neqsim.thermo.phase.PhaseEosInterface) {
-	neqsim.thermo.phase.PhaseEosInterface eosPhase = (neqsim.thermo.phase.PhaseEosInterface) phaseObj;
-	for (int j = 0; j < nComp; j++) {
-	  if (j != aspIndex) {
-	    double mwJ = system.getPhase(0).getComponent(j).getMolarMass() * 1000.0;
-	    // Scale kij: larger for light components, smaller for heavy
-	    double kijVal = totalKijAdj;
-	    if (mwJ < 50.0) {
-	      kijVal = totalKijAdj * 1.5; // Methane-asphaltene
-	    } else if (mwJ < 100.0) {
-	      kijVal = totalKijAdj * 1.2; // Ethane/propane-asphaltene
-	    } else if (mwJ > 200.0) {
-	      kijVal = totalKijAdj * 0.5; // Heavy-asphaltene
-	    }
-	    eosPhase.getEosMixingRule().setBinaryInteractionParameter(aspIndex, j, kijVal);
-	    eosPhase.getEosMixingRule().setBinaryInteractionParameter(j, aspIndex, kijVal);
-	  }
-	}
+        neqsim.thermo.phase.PhaseEosInterface eosPhase = (neqsim.thermo.phase.PhaseEosInterface) phaseObj;
+        for (int j = 0; j < nComp; j++) {
+          if (j != aspIndex) {
+            double mwJ = system.getPhase(0).getComponent(j).getMolarMass() * 1000.0;
+            // Scale kij: larger for light components, smaller for heavy
+            double kijVal = totalKijAdj;
+            if (mwJ < 50.0) {
+              kijVal = totalKijAdj * 1.5; // Methane-asphaltene
+            } else if (mwJ < 100.0) {
+              kijVal = totalKijAdj * 1.2; // Ethane/propane-asphaltene
+            } else if (mwJ > 200.0) {
+              kijVal = totalKijAdj * 0.5; // Heavy-asphaltene
+            }
+            eosPhase.getEosMixingRule().setBinaryInteractionParameter(aspIndex, j, kijVal);
+            eosPhase.getEosMixingRule().setBinaryInteractionParameter(j, aspIndex, kijVal);
+          }
+        }
       }
     }
     logger.info("Applied asphaltene kij={} (base) to {} components", totalKijAdj, nComp - 1);
@@ -485,9 +485,9 @@ public class PedersenAsphalteneCharacterization {
       // Set characterized properties (component was just added, so it's the last one)
       int compIndex = system.getPhase(0).getNumberOfComponents() - 1;
       for (int j = 0; j < system.getNumberOfPhases(); j++) {
-	system.getPhase(j).getComponent(compIndex).setTC(compChar.getCriticalTemperature());
-	system.getPhase(j).getComponent(compIndex).setPC(compChar.getCriticalPressure());
-	system.getPhase(j).getComponent(compIndex).setAcentricFactor(compChar.getAcentricFactor());
+        system.getPhase(j).getComponent(compIndex).setTC(compChar.getCriticalTemperature());
+        system.getPhase(j).getComponent(compIndex).setPC(compChar.getCriticalPressure());
+        system.getPhase(j).getComponent(compIndex).setAcentricFactor(compChar.getAcentricFactor());
       }
     }
 
@@ -518,21 +518,21 @@ public class PedersenAsphalteneCharacterization {
     while (currentPressure > endPressure) {
       system.setPressure(currentPressure);
       try {
-	ops.TPflash();
+        ops.TPflash();
 
-	// Check for two liquid phases (not just gas-liquid)
-	int liquidPhases = countLiquidPhases(system);
+        // Check for two liquid phases (not just gas-liquid)
+        int liquidPhases = countLiquidPhases(system);
 
-	if (liquidPhases >= 2 && wasOnePhase) {
-	  // Found onset - refine with bisection
-	  // Cap upper bound at startPressure to prevent reporting onset above P_res
-	  double upperBound = Math.min(currentPressure + pressureStep, startPressure);
-	  return refineOnsetPressure(system, ops, upperBound, currentPressure);
-	}
+        if (liquidPhases >= 2 && wasOnePhase) {
+          // Found onset - refine with bisection
+          // Cap upper bound at startPressure to prevent reporting onset above P_res
+          double upperBound = Math.min(currentPressure + pressureStep, startPressure);
+          return refineOnsetPressure(system, ops, upperBound, currentPressure);
+        }
 
-	wasOnePhase = (liquidPhases <= 1);
+        wasOnePhase = (liquidPhases <= 1);
       } catch (Exception e) {
-	logger.debug("Flash failed at P={} bar: {}", currentPressure, e.getMessage());
+        logger.debug("Flash failed at P={} bar: {}", currentPressure, e.getMessage());
       }
 
       currentPressure -= pressureStep;
@@ -553,8 +553,8 @@ public class PedersenAsphalteneCharacterization {
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       String phaseType = system.getPhase(i).getPhaseTypeName();
       if (phaseType.contains("oil") || phaseType.contains("liquid") || phaseType.contains("aqueous")
-	  || phaseType.contains("Asphaltene")) {
-	liquidPhases++;
+          || phaseType.contains("Asphaltene")) {
+        liquidPhases++;
       }
     }
     return liquidPhases;
@@ -635,13 +635,13 @@ public class PedersenAsphalteneCharacterization {
       PhaseInterface phase = system.getPhase(i);
       // Skip solid phases - those use PhaseType.ASPHALTENE
       if (phase instanceof PhaseSolid) {
-	continue;
+        continue;
       }
       // Check if this liquid phase is asphaltene-rich
       if (phase.isAsphalteneRich()) {
-	phase.setType(PhaseType.LIQUID_ASPHALTENE);
-	foundAsphaltene = true;
-	logger.info("Marked phase {} as LIQUID_ASPHALTENE", i);
+        phase.setType(PhaseType.LIQUID_ASPHALTENE);
+        foundAsphaltene = true;
+        logger.info("Marked phase {} as LIQUID_ASPHALTENE", i);
       }
     }
     return foundAsphaltene;
@@ -663,23 +663,23 @@ public class PedersenAsphalteneCharacterization {
 
     for (int i = 0; i < maxIterations; i++) {
       if (upperP - lowerP < tolerance) {
-	break;
+        break;
       }
 
       double midP = (upperP + lowerP) / 2.0;
       system.setPressure(midP);
 
       try {
-	ops.TPflash();
-	int liquidPhases = countLiquidPhases(system);
+        ops.TPflash();
+        int liquidPhases = countLiquidPhases(system);
 
-	if (liquidPhases >= 2) {
-	  lowerP = midP;
-	} else {
-	  upperP = midP;
-	}
+        if (liquidPhases >= 2) {
+          lowerP = midP;
+        } else {
+          upperP = midP;
+        }
       } catch (Exception e) {
-	upperP = midP;
+        upperP = midP;
       }
     }
 
@@ -1048,7 +1048,7 @@ public class PedersenAsphalteneCharacterization {
     sb.append(String.format("  Molecular Weight: %.1f g/mol%n", asphalteneMW));
     sb.append(String.format("  Density: %.3f g/cm³%n", asphalteneDensity));
     sb.append(
-	String.format("  Critical Temperature: %.1f K (%.1f °C)%n", criticalTemperature, criticalTemperature - 273.15));
+        String.format("  Critical Temperature: %.1f K (%.1f °C)%n", criticalTemperature, criticalTemperature - 273.15));
     sb.append(String.format("  Critical Pressure: %.2f bar%n", criticalPressure));
     sb.append(String.format("  Acentric Factor: %.4f%n", acentricFactor));
     sb.append(String.format("  Boiling Point: %.1f K (%.1f °C)%n", boilingPoint, boilingPoint - 273.15));
@@ -1072,7 +1072,9 @@ public class PedersenAsphalteneCharacterization {
    */
   public static void main(String[] args) {
     // Create SRK system - liquid conditions (high pressure, moderate temp)
-    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(323.15, 200.0); // 50°C, 200 bar
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(323.15, 200.0); // 50°C,
+                                                                                                       // 200
+                                                                                                       // bar
 
     // Add light oil and precipitant components
     fluid.addComponent("methane", 0.30); // Gas dissolved in oil
@@ -1114,11 +1116,11 @@ public class PedersenAsphalteneCharacterization {
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
       double asphMoleFrac = 0.0;
       if (fluid.getPhase(i).hasComponent("Asphaltene_PC")) {
-	asphMoleFrac = fluid.getPhase(i).getComponent("Asphaltene_PC").getx();
+        asphMoleFrac = fluid.getPhase(i).getComponent("Asphaltene_PC").getx();
       }
       System.out.println("Phase " + i + ": " + fluid.getPhase(i).getType().getDesc().toUpperCase() + " (beta="
-	  + String.format("%.4f", fluid.getPhase(i).getBeta()) + ", asph.x=" + String.format("%.4f", asphMoleFrac)
-	  + ", density=" + String.format("%.1f", fluid.getPhase(i).getDensity("kg/m3")) + " kg/m3)");
+          + String.format("%.4f", fluid.getPhase(i).getBeta()) + ", asph.x=" + String.format("%.4f", asphMoleFrac)
+          + ", density=" + String.format("%.1f", fluid.getPhase(i).getDensity("kg/m3")) + " kg/m3)");
     }
 
     System.out.println("\n=== Detailed Results ===");

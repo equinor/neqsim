@@ -25,23 +25,23 @@ public class EnhancementFactorAlg extends EnhancementFactor {
     double hatta = 0.0;
     for (int j = 0; j < fluidBoundary.getBulkSystem().getPhase(phaseNum).getNumberOfComponents(); j++) {
       if (fluidBoundary.getBulkSystem().getPhase(phaseNum).getComponent(j).getName().equals("CO2") && phaseNum == 1) {
-	enhancementVec[j] = fluidBoundary.getBulkSystem().getChemicalReactionOperations().solveKinetics(phaseNum,
-	    fluidBoundary.getInterphaseSystem().getPhase(phaseNum), j);
-	// System.out.println("enh " + enhancementVec[j]);
-	hatta = Math.sqrt(enhancementVec[j] * fluidBoundary.getBulkSystem().getPhase(phaseNum).getPhysicalProperties()
-	    .getEffectiveDiffusionCoefficient(j)) / fluidBoundary.getEffectiveMassTransferCoefficient(phaseNum, j);
-	hattaNumber[j] = hatta;
-	// System.out.println("hatta " + hatta);
-	double phi = fluidBoundary.getBulkSystem().getChemicalReactionOperations().getKinetics().getPhiInfinite();
-	// System.out.println("phi " + phi);
-	if (hatta > 2.0) {
-	  enhancementVec[j] = 1.0 + (phi - 1.0) * (1.0 - Math.exp(-(hatta - 1.0) / (phi - 1.0)));
-	} else {
-	  enhancementVec[j] = 1.0 + (phi - 1.0) * (1.0 - Math.exp(-1.0 / (phi - 1.0))) * Math.exp(1.0 - 2.0 / hatta);
-	}
-	// System.out.println("enh " +enhancementVec[j] );
+        enhancementVec[j] = fluidBoundary.getBulkSystem().getChemicalReactionOperations().solveKinetics(phaseNum,
+            fluidBoundary.getInterphaseSystem().getPhase(phaseNum), j);
+        // System.out.println("enh " + enhancementVec[j]);
+        hatta = Math.sqrt(enhancementVec[j] * fluidBoundary.getBulkSystem().getPhase(phaseNum).getPhysicalProperties()
+            .getEffectiveDiffusionCoefficient(j)) / fluidBoundary.getEffectiveMassTransferCoefficient(phaseNum, j);
+        hattaNumber[j] = hatta;
+        // System.out.println("hatta " + hatta);
+        double phi = fluidBoundary.getBulkSystem().getChemicalReactionOperations().getKinetics().getPhiInfinite();
+        // System.out.println("phi " + phi);
+        if (hatta > 2.0) {
+          enhancementVec[j] = 1.0 + (phi - 1.0) * (1.0 - Math.exp(-(hatta - 1.0) / (phi - 1.0)));
+        } else {
+          enhancementVec[j] = 1.0 + (phi - 1.0) * (1.0 - Math.exp(-1.0 / (phi - 1.0))) * Math.exp(1.0 - 2.0 / hatta);
+        }
+        // System.out.println("enh " +enhancementVec[j] );
       } else {
-	enhancementVec[j] = 1.0;
+        enhancementVec[j] = 1.0;
       }
     }
   }

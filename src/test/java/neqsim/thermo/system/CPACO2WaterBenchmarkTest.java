@@ -51,11 +51,11 @@ class CPACO2WaterBenchmarkTest extends neqsim.NeqSimTest {
     double co2InLiquid = 0.0;
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       if (system.getPhase(i).getType().toString().toLowerCase().contains("aqueous")
-	  || system.getPhase(i).getType().toString().toLowerCase().contains("liquid")) {
-	if (system.getPhase(i).hasComponent("CO2")) {
-	  co2InLiquid = system.getPhase(i).getComponent("CO2").getx();
-	}
-	break;
+          || system.getPhase(i).getType().toString().toLowerCase().contains("liquid")) {
+        if (system.getPhase(i).hasComponent("CO2")) {
+          co2InLiquid = system.getPhase(i).getComponent("CO2").getx();
+        }
+        break;
       }
     }
 
@@ -92,10 +92,10 @@ class CPACO2WaterBenchmarkTest extends neqsim.NeqSimTest {
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       String phaseType = system.getPhase(i).getType().toString().toLowerCase();
       if (phaseType.contains("aqueous") || phaseType.contains("liquid")) {
-	if (system.getPhase(i).hasComponent("CO2")) {
-	  co2InLiquid = system.getPhase(i).getComponent("CO2").getx();
-	}
-	break;
+        if (system.getPhase(i).hasComponent("CO2")) {
+          co2InLiquid = system.getPhase(i).getComponent("CO2").getx();
+        }
+        break;
       }
     }
 
@@ -132,10 +132,10 @@ class CPACO2WaterBenchmarkTest extends neqsim.NeqSimTest {
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       String phaseType = system.getPhase(i).getType().toString().toLowerCase();
       if (phaseType.contains("gas") || phaseType.contains("oil")) {
-	if (system.getPhase(i).hasComponent("water")) {
-	  waterInCO2 = system.getPhase(i).getComponent("water").getx();
-	}
-	break;
+        if (system.getPhase(i).hasComponent("water")) {
+          waterInCO2 = system.getPhase(i).getComponent("water").getx();
+        }
+        break;
       }
     }
 

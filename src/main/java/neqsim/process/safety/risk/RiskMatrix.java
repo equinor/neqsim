@@ -131,9 +131,9 @@ public class RiskMatrix implements Serializable {
      */
     public static ProbabilityCategory fromFrequency(double failuresPerYear) {
       for (ProbabilityCategory cat : values()) {
-	if (failuresPerYear >= cat.minFreq && failuresPerYear < cat.maxFreq) {
-	  return cat;
-	}
+        if (failuresPerYear >= cat.minFreq && failuresPerYear < cat.maxFreq) {
+          return cat;
+        }
       }
       return VERY_HIGH;
     }
@@ -182,9 +182,9 @@ public class RiskMatrix implements Serializable {
      */
     public static ConsequenceCategory fromProductionLoss(double lossPercent) {
       for (ConsequenceCategory cat : values()) {
-	if (lossPercent >= cat.minLoss && lossPercent < cat.maxLoss) {
-	  return cat;
-	}
+        if (lossPercent >= cat.minLoss && lossPercent < cat.maxLoss) {
+          return cat;
+        }
       }
       return CATASTROPHIC;
     }
@@ -231,9 +231,9 @@ public class RiskMatrix implements Serializable {
      */
     public static RiskLevel fromScore(int score) {
       for (RiskLevel level : values()) {
-	if (score >= level.minScore && score <= level.maxScore) {
-	  return level;
-	}
+        if (score >= level.minScore && score <= level.maxScore) {
+          return level;
+        }
       }
       return CRITICAL;
     }
@@ -414,7 +414,7 @@ public class RiskMatrix implements Serializable {
     @Override
     public String toString() {
       return String.format("%s: P=%s, C=%s, Risk=%s (score=%d), Annual Cost=$%.0f", equipmentName,
-	  probabilityCategory.getName(), consequenceCategory.getName(), riskLevel.getName(), riskScore, annualRiskCost);
+          probabilityCategory.getName(), consequenceCategory.getName(), riskLevel.getName(), riskScore, annualRiskCost);
     }
   }
 
@@ -434,10 +434,10 @@ public class RiskMatrix implements Serializable {
     List<ProcessEquipmentInterface> units = processSystem.getUnitOperations();
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof neqsim.process.equipment.stream.StreamInterface) {
-	if (feedStreamName == null) {
-	  feedStreamName = unit.getName();
-	}
-	productStreamName = unit.getName();
+        if (feedStreamName == null) {
+          feedStreamName = unit.getName();
+        }
+        productStreamName = unit.getName();
       }
     }
   }
@@ -545,7 +545,7 @@ public class RiskMatrix implements Serializable {
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       // Skip streams
       if (unit instanceof neqsim.process.equipment.stream.StreamInterface) {
-	continue;
+        continue;
       }
 
       String name = unit.getName();
@@ -571,10 +571,10 @@ public class RiskMatrix implements Serializable {
     if (assessment.getMtbf() == 0) {
       ReliabilityDataSource.ReliabilityData relData = reliabilitySource.getReliabilityData(equipmentType, "General");
       if (relData != null) {
-	assessment.setProbabilityData(relData.getFailuresPerYear(), relData.getMtbf(), relData.getMttr());
+        assessment.setProbabilityData(relData.getFailuresPerYear(), relData.getMtbf(), relData.getMttr());
       } else {
-	// Default values
-	assessment.setProbabilityData(0.5, 17520, 48);
+        // Default values
+        assessment.setProbabilityData(0.5, 17520, 48);
       }
     }
 
@@ -679,7 +679,7 @@ public class RiskMatrix implements Serializable {
     List<String> result = new ArrayList<String>();
     for (RiskAssessment assessment : riskAssessments.values()) {
       if (assessment.getRiskLevel() == level) {
-	result.add(assessment.getEquipmentName());
+        result.add(assessment.getEquipmentName());
       }
     }
     return result;
@@ -789,8 +789,8 @@ public class RiskMatrix implements Serializable {
     sb.append("╠══════════════════════════════════════════════════════════════════╣\n");
     sb.append(String.format("║ Total Annual Risk Cost: $%,.0f%n", getTotalAnnualRiskCost()));
     sb.append(String.format("║ Critical Risk: %d  High: %d  Medium: %d  Low: %d%n",
-	getEquipmentByRiskLevel(RiskLevel.CRITICAL).size(), getEquipmentByRiskLevel(RiskLevel.HIGH).size(),
-	getEquipmentByRiskLevel(RiskLevel.MEDIUM).size(), getEquipmentByRiskLevel(RiskLevel.LOW).size()));
+        getEquipmentByRiskLevel(RiskLevel.CRITICAL).size(), getEquipmentByRiskLevel(RiskLevel.HIGH).size(),
+        getEquipmentByRiskLevel(RiskLevel.MEDIUM).size(), getEquipmentByRiskLevel(RiskLevel.LOW).size()));
     sb.append("╠══════════════════════════════════════════════════════════════════╣\n");
     sb.append("║ Equipment Risk Ranking (by score):                              ║\n");
     sb.append("╟──────────────────────────────────────────────────────────────────╢\n");
@@ -799,20 +799,20 @@ public class RiskMatrix implements Serializable {
       String marker;
       switch (assessment.getRiskLevel()) {
       case CRITICAL:
-	marker = "🔴";
-	break;
+        marker = "🔴";
+        break;
       case HIGH:
-	marker = "🟠";
-	break;
+        marker = "🟠";
+        break;
       case MEDIUM:
-	marker = "🟡";
-	break;
+        marker = "🟡";
+        break;
       default:
-	marker = "🟢";
+        marker = "🟢";
       }
       sb.append(String.format("║ %s %-25s P:%d C:%d Score:%-2d Cost:$%,.0f%n", marker, assessment.getEquipmentName(),
-	  assessment.getProbabilityCategory().getLevel(), assessment.getConsequenceCategory().getLevel(),
-	  assessment.getRiskScore(), assessment.getAnnualRiskCost()));
+          assessment.getProbabilityCategory().getLevel(), assessment.getConsequenceCategory().getLevel(),
+          assessment.getRiskScore(), assessment.getAnnualRiskCost()));
     }
     sb.append("╚══════════════════════════════════════════════════════════════════╝\n");
     return sb.toString();

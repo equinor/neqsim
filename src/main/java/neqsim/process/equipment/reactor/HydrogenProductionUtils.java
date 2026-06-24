@@ -98,7 +98,7 @@ final class HydrogenProductionUtils {
   static double getComponentMoles(SystemInterface system, String componentName) {
     try {
       if (system.hasComponent(componentName)) {
-	return Math.max(0.0, system.getComponent(componentName).getNumberOfmoles());
+        return Math.max(0.0, system.getComponent(componentName).getNumberOfmoles());
       }
     } catch (Exception ex) {
       return 0.0;
@@ -116,7 +116,7 @@ final class HydrogenProductionUtils {
   static double getMoleFraction(SystemInterface system, String componentName) {
     try {
       if (system.hasComponent(componentName)) {
-	return Math.max(0.0, system.getPhase(0).getComponent(componentName).getz());
+        return Math.max(0.0, system.getPhase(0).getComponent(componentName).getz());
       }
     } catch (Exception ex) {
       return 0.0;
@@ -194,7 +194,7 @@ final class HydrogenProductionUtils {
     for (String componentName : SYNGAS_COMPONENTS) {
       double fraction = getMoleFraction(system, componentName);
       if (fraction > 1.0e-10) {
-	composition.put(componentName, fraction);
+        composition.put(componentName, fraction);
       }
     }
     return composition;

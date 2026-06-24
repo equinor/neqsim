@@ -157,7 +157,7 @@ public class PredictionResult implements Serializable {
 
     StringBuilder sb = new StringBuilder();
     sb.append(violations.size()).append(" potential violation(s) within ").append(formatDuration(horizon))
-	.append(":\n");
+        .append(":\n");
 
     for (ConstraintViolation v : violations) {
       sb.append("  - ").append(v.getDescription()).append("\n");
@@ -184,7 +184,7 @@ public class PredictionResult implements Serializable {
       sb.append("  Expected: ").append(formatDuration(v.timeToViolation)).append(" from now\n");
       sb.append("  Severity: ").append(v.severity).append("\n");
       if (v.suggestedAction != null) {
-	sb.append("  Suggested action: ").append(v.suggestedAction).append("\n");
+        sb.append("  Suggested action: ").append(v.suggestedAction).append("\n");
       }
       sb.append("\n");
     }
@@ -337,7 +337,7 @@ public class PredictionResult implements Serializable {
     @Override
     public String toString() {
       if (standardDeviation < 1e-10) {
-	return String.format("%.4f %s", mean, unit);
+        return String.format("%.4f %s", mean, unit);
       }
       return String.format("%.4f ± %.4f %s (95%% CI: [%.4f, %.4f])", mean, standardDeviation, unit, lower95, upper95);
     }
@@ -384,7 +384,7 @@ public class PredictionResult implements Serializable {
      * @param severity severity level
      */
     public ConstraintViolation(String constraintName, String variableName, double predictedValue, double limitValue,
-	String unit, Duration timeToViolation, Severity severity) {
+        String unit, Duration timeToViolation, Severity severity) {
       this.constraintName = constraintName;
       this.variableName = variableName;
       this.predictedValue = predictedValue;
@@ -401,16 +401,16 @@ public class PredictionResult implements Serializable {
      */
     public String getDescription() {
       return String.format("%s: %s expected to reach %.2f %s (limit: %.2f) in %s", constraintName, variableName,
-	  predictedValue, unit, limitValue, formatDurationShort(timeToViolation));
+          predictedValue, unit, limitValue, formatDurationShort(timeToViolation));
     }
 
     private String formatDurationShort(Duration d) {
       if (d.toMinutes() < 60) {
-	return d.toMinutes() + " min";
+        return d.toMinutes() + " min";
       } else if (d.toHours() < 24) {
-	return d.toHours() + " hr";
+        return d.toHours() + " hr";
       } else {
-	return d.toDays() + " days";
+        return d.toDays() + " days";
       }
     }
 

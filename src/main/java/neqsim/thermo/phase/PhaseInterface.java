@@ -1257,7 +1257,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public default boolean hasIons() {
     for (int i = 0; i < getNumberOfComponents(); i++) {
       if (getComponent(i).getIonicCharge() != 0 || getComponent(i).isIsIon()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -1911,7 +1911,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
       ComponentInterface comp = getComponent(i);
       String compName = comp.getComponentName();
       if (compName != null && compName.toLowerCase().contains("asphaltene")) {
-	asphalteneFraction += comp.getx();
+        asphalteneFraction += comp.getx();
       }
     }
 

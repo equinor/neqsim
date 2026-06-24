@@ -35,7 +35,7 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
     absTime = new double[timeSteps];
     for (int i = 0; i < timeSteps; i++) {
       for (int j = 0; j < nodes; j++) {
-	flowNodes[i][j] = new FlowNodeVisualization();
+        flowNodes[i][j] = new FlowNodeVisualization();
       }
     }
     // System.out.println("nodes " + nodes);

@@ -305,18 +305,18 @@ public class FlowAssuranceScreener {
 
       // Classify result
       if (margin > HYDRATE_SAFE_MARGIN_C) {
-	builder.hydrateResult(FlowAssuranceResult.PASS);
+        builder.hydrateResult(FlowAssuranceResult.PASS);
       } else if (margin > HYDRATE_MARGINAL_MARGIN_C) {
-	builder.hydrateResult(FlowAssuranceResult.MARGINAL);
-	builder.addRecommendation("hydrate", "Consider MEG injection or insulation for shutdown scenarios");
-	builder.addMitigationOption("hydrate_meg", "MEG injection (continuous or intermittent)");
-	builder.addMitigationOption("hydrate_insulation", "Pipe insulation");
+        builder.hydrateResult(FlowAssuranceResult.MARGINAL);
+        builder.addRecommendation("hydrate", "Consider MEG injection or insulation for shutdown scenarios");
+        builder.addMitigationOption("hydrate_meg", "MEG injection (continuous or intermittent)");
+        builder.addMitigationOption("hydrate_insulation", "Pipe insulation");
       } else {
-	builder.hydrateResult(FlowAssuranceResult.FAIL);
-	builder.addRecommendation("hydrate", "Hydrate mitigation mandatory - MEG injection or electrical heating");
-	builder.addMitigationOption("hydrate_meg", "Continuous MEG injection");
-	builder.addMitigationOption("hydrate_heating", "Electrical heating (DEH/ETH)");
-	builder.addMitigationOption("hydrate_ldhi", "Low dosage hydrate inhibitor (LDHI)");
+        builder.hydrateResult(FlowAssuranceResult.FAIL);
+        builder.addRecommendation("hydrate", "Hydrate mitigation mandatory - MEG injection or electrical heating");
+        builder.addMitigationOption("hydrate_meg", "Continuous MEG injection");
+        builder.addMitigationOption("hydrate_heating", "Electrical heating (DEH/ETH)");
+        builder.addMitigationOption("hydrate_ldhi", "Low dosage hydrate inhibitor (LDHI)");
       }
     } catch (Exception e) {
       // If calculation fails, use conservative estimate based on pressure
@@ -389,10 +389,10 @@ public class FlowAssuranceScreener {
     case HEAVY_OIL:
       // Heavy oils with high asphaltene content
       if (reservoir.getGor() < 50) {
-	builder.asphalteneResult(FlowAssuranceResult.MARGINAL);
-	builder.addRecommendation("asphaltene", "Low GOR heavy oil - evaluate asphaltene stability");
+        builder.asphalteneResult(FlowAssuranceResult.MARGINAL);
+        builder.addRecommendation("asphaltene", "Low GOR heavy oil - evaluate asphaltene stability");
       } else {
-	builder.asphalteneResult(FlowAssuranceResult.PASS);
+        builder.asphalteneResult(FlowAssuranceResult.PASS);
       }
       break;
     default:
@@ -458,12 +458,12 @@ public class FlowAssuranceScreener {
     if (concept.getWells() != null) {
       double rate = concept.getWells().getRatePerWellSm3d();
       if (rate > 5.0e6) {
-	// Very high rate
-	builder.erosionResult(FlowAssuranceResult.MARGINAL);
-	builder.addRecommendation("erosion", "High flow rates - verify erosional velocity limits");
-	builder.addMitigationOption("erosion_velocity", "Velocity control via pipe sizing");
+        // Very high rate
+        builder.erosionResult(FlowAssuranceResult.MARGINAL);
+        builder.addRecommendation("erosion", "High flow rates - verify erosional velocity limits");
+        builder.addMitigationOption("erosion_velocity", "Velocity control via pipe sizing");
       } else {
-	builder.erosionResult(FlowAssuranceResult.PASS);
+        builder.erosionResult(FlowAssuranceResult.PASS);
       }
     } else {
       builder.erosionResult(FlowAssuranceResult.PASS);

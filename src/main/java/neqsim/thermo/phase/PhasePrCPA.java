@@ -61,14 +61,14 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
       // if(getPhaseType()==1) cpaon=0;
       totiter++;
       if (cpaon == 1) {
-	Xsolved = solveX();
-	hcpatot = calc_hCPA();
-	gcpa = calc_g();
-	lngcpa = Math.log(gcpa);
+        Xsolved = solveX();
+        hcpatot = calc_hCPA();
+        gcpa = calc_g();
+        lngcpa = Math.log(gcpa);
 
-	gcpav = calc_lngV();
-	gcpavv = calc_lngVV();
-	gcpavvv = calc_lngVVV();
+        gcpav = calc_lngV();
+        gcpavv = calc_lngVV();
+        gcpavvv = calc_lngVVV();
       }
     } while (!Xsolved && totiter < 5);
 
@@ -81,10 +81,10 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
       selfAccociationScheme = new int[numberOfComponents][0][0];
       crossAccociationScheme = new int[numberOfComponents][numberOfComponents][0][0];
       for (int i = 0; i < numberOfComponents; i++) {
-	selfAccociationScheme[i] = cpaSelect.setAssociationScheme(i, this);
-	for (int j = 0; j < numberOfComponents; j++) {
-	  crossAccociationScheme[i][j] = cpaSelect.setCrossAssociationScheme(i, j, this);
-	}
+        selfAccociationScheme[i] = cpaSelect.setAssociationScheme(i, this);
+        for (int j = 0; j < numberOfComponents; j++) {
+          crossAccociationScheme[i][j] = cpaSelect.setCrossAssociationScheme(i, j, this);
+        }
       }
     }
   }
@@ -96,7 +96,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
     componentArray[compNumber] = new ComponentSrkCPA(name, moles, molesInPhase, compNumber, this);
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i] instanceof ComponentSrkCPA) {
-	((ComponentSrkCPA) componentArray[i]).resizeXsitedni(numberOfComponents);
+        ((ComponentSrkCPA) componentArray[i]).resizeXsitedni(numberOfComponents);
       }
     }
   }
@@ -157,8 +157,8 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
     for (int i = 0; i < numberOfComponents; i++) {
       tot = 0.0;
       for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
-	double xai = ((ComponentSrkCPA) getComponent(i)).getXsite()[j];
-	tot += (Math.log(xai) - 1.0 / 2.0 * xai + 1.0 / 2.0);
+        double xai = ((ComponentSrkCPA) getComponent(i)).getXsite()[j];
+        tot += (Math.log(xai) - 1.0 / 2.0 * xai + 1.0 / 2.0);
       }
       ans += getComponent(i).getNumberOfMolesInPhase() * tot;
     }
@@ -181,7 +181,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
    */
   public double dFCPAdVdV() {
     return -1.0 / getTotalVolume() * dFCPAdV()
-	+ hcpatot / (2.0 * getTotalVolume()) * (-gcpav - getTotalVolume() * gcpavv);
+        + hcpatot / (2.0 * getTotalVolume()) * (-gcpav - getTotalVolume() * gcpavv);
   }
 
   /**
@@ -191,8 +191,8 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
    */
   public double dFCPAdVdVdV() {
     return -1.0 / getTotalVolume() * dFCPAdVdV() + 1.0 / Math.pow(getTotalVolume(), 2.0) * dFCPAdV()
-	- hcpatot / (2.0 * Math.pow(getTotalVolume(), 2.0)) * (-gcpav - getTotalVolume() * gcpavv)
-	+ hcpatot / (2.0 * getTotalVolume()) * (-2.0 * gcpavv - getTotalVolume() * gcpavvv);
+        - hcpatot / (2.0 * Math.pow(getTotalVolume(), 2.0)) * (-gcpav - getTotalVolume() * gcpavv)
+        + hcpatot / (2.0 * getTotalVolume()) * (-2.0 * gcpavv - getTotalVolume() * gcpavvv);
   }
 
   /**
@@ -225,7 +225,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
     for (int i = 0; i < numberOfComponents; i++) {
       htot = 0.0;
       for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
-	htot += (1.0 - ((ComponentSrkCPA) getComponent(i)).getXsite()[j]);
+        htot += (1.0 - ((ComponentSrkCPA) getComponent(i)).getXsite()[j]);
       }
       tot += getComponent(i).getNumberOfMolesInPhase() * htot;
     }
@@ -243,16 +243,16 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
     double tot = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       for (int k = 0; k < numberOfComponents; k++) {
-	htot = 0.0;
-	for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
-	  for (int l = 0; l < getComponent(k).getNumberOfAssociationSites(); l++) {
-	    htot += ((ComponentSrkCPA) getComponent(i)).getXsite()[j]
-		* ((ComponentSrkCPA) getComponent(k)).getXsite()[l]
-		* cpamix.calcDeltadT(j, l, i, k, this, temperature, pressure, numberOfComponents);
-	  }
-	}
+        htot = 0.0;
+        for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
+          for (int l = 0; l < getComponent(k).getNumberOfAssociationSites(); l++) {
+            htot += ((ComponentSrkCPA) getComponent(i)).getXsite()[j]
+                * ((ComponentSrkCPA) getComponent(k)).getXsite()[l]
+                * cpamix.calcDeltadT(j, l, i, k, this, temperature, pressure, numberOfComponents);
+          }
+        }
 
-	tot += getComponent(i).getNumberOfMolesInPhase() * getComponent(k).getNumberOfMolesInPhase() * htot;
+        tot += getComponent(i).getNumberOfMolesInPhase() * getComponent(k).getNumberOfMolesInPhase() * htot;
       }
     }
     // System.out.println("tot " +tot );
@@ -269,16 +269,16 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
     double tot = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       for (int k = 0; k < numberOfComponents; k++) {
-	htot = 0.0;
-	for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
-	  for (int l = 0; l < getComponent(k).getNumberOfAssociationSites(); l++) {
-	    htot += ((ComponentSrkCPA) getComponent(i)).getXsite()[j]
-		* ((ComponentSrkCPA) getComponent(k)).getXsite()[l]
-		* cpamix.calcDeltadTdT(j, l, i, k, this, temperature, pressure, numberOfComponents);
-	  }
-	}
+        htot = 0.0;
+        for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
+          for (int l = 0; l < getComponent(k).getNumberOfAssociationSites(); l++) {
+            htot += ((ComponentSrkCPA) getComponent(i)).getXsite()[j]
+                * ((ComponentSrkCPA) getComponent(k)).getXsite()[l]
+                * cpamix.calcDeltadTdT(j, l, i, k, this, temperature, pressure, numberOfComponents);
+          }
+        }
 
-	tot += getComponent(i).getNumberOfMolesInPhase() * getComponent(k).getNumberOfMolesInPhase() * htot;
+        tot += getComponent(i).getNumberOfMolesInPhase() * getComponent(k).getNumberOfMolesInPhase() * htot;
       }
     }
     // System.out.println("tot " +tot );
@@ -315,7 +315,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
   public double calc_lngV() {
     double gv = 0.0;
     gv = -2.0 * getB() * (10.0 * getTotalVolume() - getB()) / getTotalVolume()
-	/ ((8.0 * getTotalVolume() - getB()) * (4.0 * getTotalVolume() - getB()));
+        / ((8.0 * getTotalVolume() - getB()) * (4.0 * getTotalVolume() - getB()));
 
     // double gv2 =
     // 1.0/(2.0-getB()/(4.0*getTotalVolume()))*getB()/(4.0*Math.pow(getTotalVolume()
@@ -338,10 +338,10 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
   public double calc_lngVV() {
     double gvv = 0.0;
     gvv = 2.0
-	* (640.0 * Math.pow(getTotalVolume(), 3.0) - 216.0 * getB() * getTotalVolume() * getTotalVolume()
-	    + 24.0 * Math.pow(getB(), 2.0) * getTotalVolume() - Math.pow(getB(), 3.0))
-	* getB() / (getTotalVolume() * getTotalVolume()) / Math.pow(8.0 * getTotalVolume() - getB(), 2.0)
-	/ Math.pow(4.0 * getTotalVolume() - getB(), 2.0);
+        * (640.0 * Math.pow(getTotalVolume(), 3.0) - 216.0 * getB() * getTotalVolume() * getTotalVolume()
+            + 24.0 * Math.pow(getB(), 2.0) * getTotalVolume() - Math.pow(getB(), 3.0))
+        * getB() / (getTotalVolume() * getTotalVolume()) / Math.pow(8.0 * getTotalVolume() - getB(), 2.0)
+        / Math.pow(4.0 * getTotalVolume() - getB(), 2.0);
     return gvv;
   }
 
@@ -354,12 +354,12 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
   public double calc_lngVVV() {
     double gvvv = 0.0;
     gvvv = 4.0
-	* (Math.pow(getB(), 5.0) + 17664.0 * Math.pow(getTotalVolume(), 4.0) * getB()
-	    - 4192.0 * Math.pow(getTotalVolume(), 3.0) * Math.pow(getB(), 2.0)
-	    + 528.0 * Math.pow(getB(), 3.0) * getTotalVolume() * getTotalVolume()
-	    - 36.0 * getTotalVolume() * Math.pow(getB(), 4.0) - 30720.0 * Math.pow(getTotalVolume(), 5.0))
-	* getB() / (Math.pow(getTotalVolume(), 3.0)) / Math.pow(-8.0 * getTotalVolume() + getB(), 3.0)
-	/ Math.pow(-4.0 * getTotalVolume() + getB(), 3.0);
+        * (Math.pow(getB(), 5.0) + 17664.0 * Math.pow(getTotalVolume(), 4.0) * getB()
+            - 4192.0 * Math.pow(getTotalVolume(), 3.0) * Math.pow(getB(), 2.0)
+            + 528.0 * Math.pow(getB(), 3.0) * getTotalVolume() * getTotalVolume()
+            - 36.0 * getTotalVolume() * Math.pow(getB(), 4.0) - 30720.0 * Math.pow(getTotalVolume(), 5.0))
+        * getB() / (Math.pow(getTotalVolume(), 3.0)) / Math.pow(-8.0 * getTotalVolume() + getB(), 3.0)
+        / Math.pow(-4.0 * getTotalVolume() + getB(), 3.0);
     return gvvv;
   }
 
@@ -380,14 +380,14 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
       iter++;
       err = 0.0;
       for (int i = 0; i < numberOfComponents; i++) {
-	for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
-	  double old = ((ComponentSrkCPA) getComponent(i)).getXsite()[j];
-	  double neeval = cpamix.calcXi(selfAccociationScheme, crossAccociationScheme, j, i, this, temperature,
-	      pressure, numberOfComponents);
+        for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
+          double old = ((ComponentSrkCPA) getComponent(i)).getXsite()[j];
+          double neeval = cpamix.calcXi(selfAccociationScheme, crossAccociationScheme, j, i, this, temperature,
+              pressure, numberOfComponents);
 
-	  ((ComponentCPAInterface) getComponent(i)).setXsite(j, neeval);
-	  err += Math.abs((old - neeval) / neeval);
-	}
+          ((ComponentCPAInterface) getComponent(i)).setXsite(j, neeval);
+          err += Math.abs((old - neeval) / neeval);
+        }
       }
       // System.out.println("err " + err);
     } while (Math.abs(err) > 1e-10 && iter < 100);

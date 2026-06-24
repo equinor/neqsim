@@ -251,8 +251,8 @@ public class PressureSwingAdsorptionBed extends AdsorptionBed {
       double targetProductH2 = Math.min(recoveredH2, currentProductH2);
       double h2ToVent = currentProductH2 - targetProductH2;
       if (h2ToVent > 1e-15) {
-	product.addComponent(hydrogenComponentIndex, -h2ToVent);
-	productMoles[hydrogenComponentIndex] = targetProductH2;
+        product.addComponent(hydrogenComponentIndex, -h2ToVent);
+        productMoles[hydrogenComponentIndex] = targetProductH2;
       }
     }
 
@@ -262,8 +262,8 @@ public class PressureSwingAdsorptionBed extends AdsorptionBed {
     for (int i = 0; i < numComp; i++) {
       double tail = feedMoles[i] - productMoles[i];
       if (tail < 0.0) {
-	// Numerical noise; clip to zero.
-	tail = 0.0;
+        // Numerical noise; clip to zero.
+        tail = 0.0;
       }
       tailGasMoleFlow[i] = tail;
       tailGasTotal += tail;
@@ -276,10 +276,10 @@ public class PressureSwingAdsorptionBed extends AdsorptionBed {
     }
 
     h2Purity = productTotal > 0.0 && hydrogenComponentIndex >= 0 ? productMoles[hydrogenComponentIndex] / productTotal
-	: 0.0;
+        : 0.0;
     h2Recovery = feedH2MoleFlow > 0.0 && hydrogenComponentIndex >= 0
-	? productMoles[hydrogenComponentIndex] / feedH2MoleFlow
-	: 0.0;
+        ? productMoles[hydrogenComponentIndex] / feedH2MoleFlow
+        : 0.0;
 
     if (tailGasTotal <= 0.0) {
       logger.debug("PSA tail-gas total flow is zero — feed may contain only H2.");
@@ -353,11 +353,11 @@ public class PressureSwingAdsorptionBed extends AdsorptionBed {
     for (int i = 0; i < n; i++) {
       String name = system.getPhase(0).getComponent(i).getComponentName();
       if (name == null) {
-	continue;
+        continue;
       }
       String lower = name.toLowerCase();
       if (lower.equals("hydrogen") || lower.equals("h2")) {
-	return i;
+        return i;
       }
     }
     return -1;

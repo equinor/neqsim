@@ -180,7 +180,7 @@ class DynamicImprovementsTest {
     override.setControllerParameters(2.0, 300.0, 0.0);
 
     OverrideControllerStructure os = new OverrideControllerStructure(primary, override,
-	OverrideControllerStructure.SelectionType.HIGH_SELECT);
+        OverrideControllerStructure.SelectionType.HIGH_SELECT);
     Assertions.assertEquals(OverrideControllerStructure.SelectionType.HIGH_SELECT, os.getSelectionType());
   }
 
@@ -196,7 +196,7 @@ class DynamicImprovementsTest {
     override.setControllerSetPoint(50.0, "C");
 
     OverrideControllerStructure os = new OverrideControllerStructure(primary, override,
-	OverrideControllerStructure.SelectionType.LOW_SELECT);
+        OverrideControllerStructure.SelectionType.LOW_SELECT);
     os.runTransient(1.0);
     Assertions.assertFalse(os.isOverrideActive() && os.getOutput() == 0.0, "Output should be valid after runTransient");
   }

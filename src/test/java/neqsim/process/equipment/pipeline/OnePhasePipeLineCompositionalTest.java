@@ -262,7 +262,7 @@ public class OnePhasePipeLineCompositionalTest {
 
     for (AdvectionScheme scheme : AdvectionScheme.values()) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-23s | %5d | %7.1f | %dx%n", scheme.getDisplayName(),
-	  scheme.getOrder(), scheme.getMaxCFL(), Math.round(1.0 / scheme.getDispersionReductionFactor()));
+          scheme.getOrder(), scheme.getMaxCFL(), Math.round(1.0 / scheme.getDispersionReductionFactor()));
     }
 
     logger.info("RECOMMENDATION for gas switching:");

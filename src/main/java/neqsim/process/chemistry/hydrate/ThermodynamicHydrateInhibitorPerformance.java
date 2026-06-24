@@ -160,7 +160,7 @@ public class ThermodynamicHydrateInhibitorPerformance implements Serializable {
     requiredInhibitorWtPctInWater = w;
     if (w > 60.0) {
       warnings
-	  .add("Required inhibitor wt% > 60 — Hammerschmidt accuracy degraded; use rigorous" + " NeqSim hydrate flash");
+          .add("Required inhibitor wt% > 60 — Hammerschmidt accuracy degraded; use rigorous" + " NeqSim hydrate flash");
     }
     if (w <= leanInhibitorWtPctInWater) {
       warnings.add("Lean carry-over already meets target — no make-up required");
@@ -169,7 +169,7 @@ public class ThermodynamicHydrateInhibitorPerformance implements Serializable {
     // Mass balance: w*M_total = leanW*M_water + 100*M_pure
     // M_pure = (w - leanW) * M_water / (100 - w)
     double makeupPureKgHr = Math.max(0.0,
-	(w - leanInhibitorWtPctInWater) * waterFlowKgPerHour / Math.max(1.0e-3, 100.0 - w));
+        (w - leanInhibitorWtPctInWater) * waterFlowKgPerHour / Math.max(1.0e-3, 100.0 - w));
     requiredInjectionKgPerHour = makeupPureKgHr / Math.max(1.0e-3, inhibitorPurityWtPct / 100.0);
     evaluated = true;
   }
@@ -217,7 +217,7 @@ public class ThermodynamicHydrateInhibitorPerformance implements Serializable {
    */
   public List<Map<String, Object>> getStandardsApplied() {
     return StandardsRegistry.toMapList(StandardsRegistry.GPSA_DB, new StandardReference("Hammerschmidt 1934",
-	"Industrial", "Original empirical hydrate suppression correlation"));
+        "Industrial", "Original empirical hydrate suppression correlation"));
   }
 
   /**

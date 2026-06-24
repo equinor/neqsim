@@ -71,7 +71,7 @@ public final class FacilityConfig implements Serializable {
     List<BlockConfig> result = new ArrayList<>();
     for (BlockConfig block : blocks) {
       if (block.getType() == type) {
-	result.add(block);
+        result.add(block);
       }
     }
     return Collections.unmodifiableList(result);
@@ -86,7 +86,7 @@ public final class FacilityConfig implements Serializable {
   public boolean hasBlock(BlockType type) {
     for (BlockConfig block : blocks) {
       if (block.getType() == type) {
-	return true;
+        return true;
       }
     }
     return false;

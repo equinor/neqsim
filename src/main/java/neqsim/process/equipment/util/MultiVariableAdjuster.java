@@ -223,7 +223,7 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
   public void setVariableBounds(int index, double lower, double upper) {
     if (index < 0 || index >= adjustedVariables.size()) {
       throw new IndexOutOfBoundsException(
-	  "Variable index " + index + " out of range [0, " + adjustedVariables.size() + ")");
+          "Variable index " + index + " out of range [0, " + adjustedVariables.size() + ")");
     }
     AdjustedVariable av = adjustedVariables.get(index);
     av.lowerBound = lower;
@@ -306,7 +306,7 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
     }
     if (n != targetSpecifications.size()) {
       throw new RuntimeException("MultiVariableAdjuster " + getName() + ": number of adjusted variables (" + n
-	  + ") must equal number of target specifications (" + targetSpecifications.size() + ")");
+          + ") must equal number of target specifications (" + targetSpecifications.size() + ")");
     }
 
     // Read current adjusted variable values
@@ -482,7 +482,7 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
     for (double v : arr) {
       double abs = Math.abs(v);
       if (abs > maxVal) {
-	maxVal = abs;
+        maxVal = abs;
       }
     }
     return maxVal;

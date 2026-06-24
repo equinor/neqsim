@@ -41,7 +41,7 @@ public class AntiSurgeControllerTest {
 
       @Override
       public double getDistanceToSurge() {
-	return marginHolder[0];
+        return marginHolder[0];
       }
     };
     ThrottlingValve recycle = new ThrottlingValve("recycle", feed);
@@ -87,7 +87,7 @@ public class AntiSurgeControllerTest {
 
       @Override
       public double getDistanceToSurge() {
-	return marginHolder[0];
+        return marginHolder[0];
       }
     };
     controller.setCompressor(comp);

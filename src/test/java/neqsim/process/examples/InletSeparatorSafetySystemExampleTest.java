@@ -66,7 +66,7 @@ public class InletSeparatorSafetySystemExampleTest {
     assertTrue(report.getWaterMassFlow() > 0.0, "Water outlet must have non-zero flow");
     double totalOut = report.getGasMassFlow() + report.getOilMassFlow() + report.getWaterMassFlow();
     double imbalance = Math.abs(totalOut - InletSeparatorSafetySystemExample.FEED_FLOW_KGHR)
-	/ InletSeparatorSafetySystemExample.FEED_FLOW_KGHR;
+        / InletSeparatorSafetySystemExample.FEED_FLOW_KGHR;
     assertTrue(imbalance < 0.02, "Steady-state mass balance closure within 2 percent, got " + imbalance);
   }
 
@@ -103,7 +103,7 @@ public class InletSeparatorSafetySystemExampleTest {
     assertTrue(lopa.getInitiatingEventFrequency() > 0.0);
     assertTrue(lopa.getMitigatedFrequency() > 0.0);
     assertTrue(lopa.getMitigatedFrequency() < lopa.getInitiatingEventFrequency(),
-	"LOPA layers must reduce frequency below the initiating event rate");
+        "LOPA layers must reduce frequency below the initiating event rate");
     assertTrue(lopa.getTotalRRF() >= 1.0e4, "Combined IPLs (BPCS + PSH + SIL 2 SIF + PSV) must deliver RRF >= 1e4");
   }
 

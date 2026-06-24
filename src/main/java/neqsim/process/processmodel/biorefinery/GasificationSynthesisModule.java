@@ -287,11 +287,11 @@ public class GasificationSynthesisModule extends ProcessModule {
       coConverted = coMoles * ftConversion;
       double h2Required = coConverted * 2.0;
       if (h2Required > h2Moles) {
-	// H2-limited
-	h2Converted = h2Moles;
-	coConverted = h2Moles / 2.0;
+        // H2-limited
+        h2Converted = h2Moles;
+        coConverted = h2Moles / 2.0;
       } else {
-	h2Converted = h2Required;
+        h2Converted = h2Required;
       }
     }
 

@@ -86,9 +86,9 @@ class Standard_ISO6976Test extends neqsim.NeqSimTest {
     // ISO 6976:2016 reference values for pure methane:
     // GCV ~ 39 840 kJ/Sm3, Superior Wobbe Index ~ 53 450 kJ/Sm3
     Assertions.assertEquals(39840.0, gcv, 250.0,
-	"Pure methane GCV should match ISO 6976 reference within 0.6 %, got " + gcv);
+        "Pure methane GCV should match ISO 6976 reference within 0.6 %, got " + gcv);
     Assertions.assertEquals(53450.0, wi, 250.0,
-	"Pure methane WI should match ISO 6976 reference within 0.5 %, got " + wi);
+        "Pure methane WI should match ISO 6976 reference within 0.5 %, got " + wi);
   }
 
   /**
@@ -129,15 +129,15 @@ class Standard_ISO6976Test extends neqsim.NeqSimTest {
 
     // Sanity: the values must differ - the original bug returned a constant ~44.6.
     Assertions.assertTrue(Math.abs(leanWI - richWI) > 1000.0,
-	"WI should differ between lean and rich gas, got lean=" + leanWI + " rich=" + richWI);
+        "WI should differ between lean and rich gas, got lean=" + leanWI + " rich=" + richWI);
     Assertions.assertTrue(richWI > leanWI, "Rich gas should have higher WI, got lean=" + leanWI + " rich=" + richWI);
 
     // Lean gas matches pure-methane reference (53.45 MJ/Sm3 +/- ethane offset).
     Assertions.assertEquals(53860.0, leanWI, 200.0,
-	"Lean (98/2) WI should match literature ~ 53.86 MJ/Sm3, got " + leanWI);
+        "Lean (98/2) WI should match literature ~ 53.86 MJ/Sm3, got " + leanWI);
     // Rich gas exceeds EU H-gas upper limit (56.5 MJ/Sm3) - physically expected for 10 % C3.
     Assertions.assertEquals(58380.0, richWI, 200.0,
-	"Rich (80/10/10) WI should match literature ~ 58.38 MJ/Sm3, got " + richWI);
+        "Rich (80/10/10) WI should match literature ~ 58.38 MJ/Sm3, got " + richWI);
   }
 
   /**

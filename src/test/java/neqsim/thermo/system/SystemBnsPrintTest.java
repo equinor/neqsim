@@ -33,7 +33,7 @@ public class SystemBnsPrintTest {
     logger.info("jt = " + sys.getPhase(0).getJouleThomsonCoefficient() * 10.0);
     double gamma = sys.getPhase(0).getCp("J/molK") / sys.getPhase(0).getCv("J/molK");
     double speed = Math.sqrt(gamma * sys.getPhase(0).getZ() * neqsim.thermo.ThermodynamicConstantsInterface.R
-	* sys.getTemperature() / sys.getMolarMass());
+        * sys.getTemperature() / sys.getMolarMass());
     logger.info("speed = " + speed);
     logger.info("MW = " + sys.getMolarMass());
 

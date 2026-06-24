@@ -99,7 +99,7 @@ class TemperatureDropComparisonTest {
     double inletTemp = tempProfile[0];
     double outletTemp = tempProfile[tempProfile.length - 1];
     assertEquals(inletTemp, outletTemp, 1.0,
-	"Adiabatic pipe should have minimal temperature change. Inlet=" + inletTemp + ", Outlet=" + outletTemp);
+        "Adiabatic pipe should have minimal temperature change. Inlet=" + inletTemp + ", Outlet=" + outletTemp);
   }
 
   /**
@@ -129,7 +129,7 @@ class TemperatureDropComparisonTest {
     for (int i = 1; i < tempProfile.length; i++) {
       double temp = tempProfile[i];
       assertTrue(temp <= maxTemp + 1.0, // Allow small numerical tolerance
-	  "Temperature should not spike at section " + i);
+          "Temperature should not spike at section " + i);
       maxTemp = Math.max(maxTemp, temp);
       minTemp = Math.min(minTemp, temp);
     }
@@ -364,7 +364,7 @@ class TemperatureDropComparisonTest {
     // Outlet should be reasonable (not lower than absolute zero, not higher than inlet + margin)
     double outletTemp = tempProfile[tempProfile.length - 1];
     assertTrue(outletTemp <= inletTemp + 5.0, // Allow small margin for numerical effects
-	"Outlet temp should not be much higher than inlet (adiabatic conditions)");
+        "Outlet temp should not be much higher than inlet (adiabatic conditions)");
   }
 
   /**
@@ -628,11 +628,11 @@ class TemperatureDropComparisonTest {
     double[] htcProfile = new double[30];
     for (int i = 0; i < 30; i++) {
       if (i < 10) {
-	htcProfile[i] = 5.0; // Good insulation (first 1 km)
+        htcProfile[i] = 5.0; // Good insulation (first 1 km)
       } else if (i < 20) {
-	htcProfile[i] = 50.0; // Poor insulation (middle 1 km)
+        htcProfile[i] = 50.0; // Poor insulation (middle 1 km)
       } else {
-	htcProfile[i] = 5.0; // Good insulation (last 1 km)
+        htcProfile[i] = 5.0; // Good insulation (last 1 km)
       }
     }
     pipe.setHeatTransferProfile(htcProfile);
@@ -694,9 +694,9 @@ class TemperatureDropComparisonTest {
     pipeBuried.run();
 
     double dropNoSoil = pipeNoSoil.getTemperatureProfile()[0]
-	- pipeNoSoil.getTemperatureProfile()[pipeNoSoil.getTemperatureProfile().length - 1];
+        - pipeNoSoil.getTemperatureProfile()[pipeNoSoil.getTemperatureProfile().length - 1];
     double dropBuried = pipeBuried.getTemperatureProfile()[0]
-	- pipeBuried.getTemperatureProfile()[pipeBuried.getTemperatureProfile().length - 1];
+        - pipeBuried.getTemperatureProfile()[pipeBuried.getTemperatureProfile().length - 1];
 
     logger.info("Temperature drop without soil resistance: " + dropNoSoil + " K");
     logger.info("Temperature drop with soil resistance: " + dropBuried + " K");

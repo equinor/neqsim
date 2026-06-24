@@ -57,8 +57,8 @@ class UnifiedConstraintTest {
   @Test
   void testOptimizationConstraintImplementsProcessConstraint() {
     OptimizationConstraint oc = OptimizationConstraint.lessThan("maxPower",
-	proc -> Math.abs(((Compressor) proc.getUnit("compressor")).getPower()), 1e12,
-	ProductionOptimizer.ConstraintSeverity.HARD, 100.0, "Max power limit");
+        proc -> Math.abs(((Compressor) proc.getUnit("compressor")).getPower()), 1e12,
+        ProductionOptimizer.ConstraintSeverity.HARD, 100.0, "Max power limit");
 
     // Verify it's a ProcessConstraint
     ProcessConstraint pc = oc;
@@ -77,7 +77,7 @@ class UnifiedConstraintTest {
   @Test
   void testConstraintDefinitionImplementsProcessConstraint() {
     ConstraintDefinition cd = new ConstraintDefinition("pressure",
-	proc -> ((StreamInterface) proc.getUnit("feed")).getPressure(), 10.0);
+        proc -> ((StreamInterface) proc.getUnit("feed")).getPressure(), 10.0);
     cd.setHard(false);
     cd.setPenaltyWeight(50.0);
 
@@ -97,12 +97,12 @@ class UnifiedConstraintTest {
   void testProcessConstraintPenaltyDefault() {
     // Satisfied constraint -> zero penalty
     OptimizationConstraint satisfied = OptimizationConstraint.lessThan("ok", proc -> 5.0, 100.0,
-	ProductionOptimizer.ConstraintSeverity.HARD, 200.0, "OK");
+        ProductionOptimizer.ConstraintSeverity.HARD, 200.0, "OK");
     Assertions.assertEquals(0.0, satisfied.penalty(process), 1e-10);
 
     // Violated constraint -> positive penalty
     OptimizationConstraint violated = OptimizationConstraint.lessThan("violated", proc -> 150.0, 100.0,
-	ProductionOptimizer.ConstraintSeverity.HARD, 200.0, "Bad");
+        ProductionOptimizer.ConstraintSeverity.HARD, 200.0, "Bad");
     double penalty = violated.penalty(process);
     Assertions.assertTrue(penalty > 0, "Violated constraint should have positive penalty");
   }
@@ -214,7 +214,7 @@ class UnifiedConstraintTest {
   @Test
   void testOptimizationConstraintToDefinition() {
     OptimizationConstraint oc = OptimizationConstraint.lessThan("maxTemp", proc -> 350.0, 400.0,
-	ProductionOptimizer.ConstraintSeverity.HARD, 50.0, "Temp limit");
+        ProductionOptimizer.ConstraintSeverity.HARD, 50.0, "Temp limit");
 
     ConstraintDefinition cd = oc.toConstraintDefinition();
     Assertions.assertEquals("maxTemp", cd.getName());
@@ -232,7 +232,7 @@ class UnifiedConstraintTest {
   @Test
   void testConstraintDefinitionToOptimizationConstraint() {
     ConstraintDefinition cd = new ConstraintDefinition("minFlow",
-	proc -> ((StreamInterface) proc.getUnit("feed")).getFlowRate("kg/hr"), 50.0);
+        proc -> ((StreamInterface) proc.getUnit("feed")).getFlowRate("kg/hr"), 50.0);
     cd.setHard(true);
     cd.setPenaltyWeight(75.0);
 
@@ -252,7 +252,7 @@ class UnifiedConstraintTest {
     cd.setName("orphan");
     // No evaluator set - simulates deserialization
     Assertions.assertThrows(IllegalStateException.class, () -> cd.toOptimizationConstraint(),
-	"Should throw when evaluator is null");
+        "Should throw when evaluator is null");
   }
 
   // ============================================================================
@@ -268,7 +268,7 @@ class UnifiedConstraintTest {
 
     // Add a satisfied constraint
     OptimizationConstraint satisfied = OptimizationConstraint.lessThan("ok", proc -> 5.0, 100.0,
-	ProductionOptimizer.ConstraintSeverity.HARD, 100.0, "OK");
+        ProductionOptimizer.ConstraintSeverity.HARD, 100.0, "OK");
     calc.addConstraint(satisfied);
 
     Assertions.assertTrue(calc.isFeasible(process));
@@ -287,7 +287,7 @@ class UnifiedConstraintTest {
     ConstraintPenaltyCalculator calc = new ConstraintPenaltyCalculator();
 
     OptimizationConstraint violated = OptimizationConstraint.lessThan("bad", proc -> 200.0, 100.0,
-	ProductionOptimizer.ConstraintSeverity.HARD, 100.0, "Bad");
+        ProductionOptimizer.ConstraintSeverity.HARD, 100.0, "Bad");
     calc.addConstraint(violated);
 
     Assertions.assertFalse(calc.isFeasible(process));
@@ -327,9 +327,9 @@ class UnifiedConstraintTest {
   void testMarginVector() {
     ConstraintPenaltyCalculator calc = new ConstraintPenaltyCalculator();
     calc.addConstraint(OptimizationConstraint.lessThan("a", proc -> 50.0, 100.0,
-	ProductionOptimizer.ConstraintSeverity.HARD, 100.0, ""));
+        ProductionOptimizer.ConstraintSeverity.HARD, 100.0, ""));
     calc.addConstraint(OptimizationConstraint.lessThan("b", proc -> 150.0, 100.0,
-	ProductionOptimizer.ConstraintSeverity.SOFT, 100.0, ""));
+        ProductionOptimizer.ConstraintSeverity.SOFT, 100.0, ""));
 
     double[] margins = calc.evaluateMargins(process);
     Assertions.assertEquals(2, margins.length);
@@ -344,7 +344,7 @@ class UnifiedConstraintTest {
   void testPenaltyCalculatorEvaluateReport() {
     ConstraintPenaltyCalculator calc = new ConstraintPenaltyCalculator();
     calc.addConstraint(OptimizationConstraint.lessThan("temp", proc -> 300.0, 400.0,
-	ProductionOptimizer.ConstraintSeverity.HARD, 100.0, "Temp OK"));
+        ProductionOptimizer.ConstraintSeverity.HARD, 100.0, "Temp OK"));
 
     List<ConstraintPenaltyCalculator.ConstraintEvaluation> report = calc.evaluate(process);
     Assertions.assertEquals(1, report.size());
@@ -402,7 +402,7 @@ class UnifiedConstraintTest {
 
     // Source 1: OptimizationConstraint (internal optimizer)
     calc.addConstraint(OptimizationConstraint.lessThan("funcLimit", proc -> 50.0, 200.0,
-	ProductionOptimizer.ConstraintSeverity.HARD, 100.0, "Func"));
+        ProductionOptimizer.ConstraintSeverity.HARD, 100.0, "Func"));
 
     // Source 2: ConstraintDefinition (external optimizer)
     ConstraintDefinition cd = new ConstraintDefinition("nlpLimit", proc -> 80.0, 10.0);
@@ -431,7 +431,7 @@ class UnifiedConstraintTest {
   void testAdaptivePenaltyScaling() {
     ConstraintPenaltyCalculator calc = new ConstraintPenaltyCalculator();
     OptimizationConstraint violated = OptimizationConstraint.lessThan("v", proc -> 200.0, 100.0,
-	ProductionOptimizer.ConstraintSeverity.HARD, 1.0, "");
+        ProductionOptimizer.ConstraintSeverity.HARD, 1.0, "");
     calc.addConstraint(violated);
 
     // Small objective
@@ -445,6 +445,6 @@ class UnifiedConstraintTest {
 
     // The large-objective penalty should be absolutely larger
     Assertions.assertTrue(Math.abs(penalizedLarge) > Math.abs(penalizedSmall),
-	"Penalty should scale with objective magnitude");
+        "Penalty should scale with objective magnitude");
   }
 }

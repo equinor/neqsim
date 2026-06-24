@@ -89,22 +89,22 @@ final class ColumnMeshState implements Serializable {
       vaporFlows[trayIndex] = flowRate(vapor, "mol/hr");
       liquidFlows[trayIndex] = flowRate(liquid, "mol/hr");
       for (int compIndex = 0; compIndex < componentCount; compIndex++) {
-	String componentName = componentNames[compIndex];
-	vaporComponentFlows[trayIndex][compIndex] = componentFlow(vapor, componentName);
-	liquidComponentFlows[trayIndex][compIndex] = componentFlow(liquid, componentName);
-	vaporFractions[trayIndex][compIndex] = componentFraction(vapor, componentName);
-	liquidFractions[trayIndex][compIndex] = componentFraction(liquid, componentName);
+        String componentName = componentNames[compIndex];
+        vaporComponentFlows[trayIndex][compIndex] = componentFlow(vapor, componentName);
+        liquidComponentFlows[trayIndex][compIndex] = componentFlow(liquid, componentName);
+        vaporFractions[trayIndex][compIndex] = componentFraction(vapor, componentName);
+        liquidFractions[trayIndex][compIndex] = componentFraction(liquid, componentName);
       }
       List<StreamInterface> feeds = column.getExternalFeedStreams(trayIndex);
       for (StreamInterface feed : feeds) {
-	for (int compIndex = 0; compIndex < componentCount; compIndex++) {
-	  feedComponentFlows[trayIndex][compIndex] += componentFlow(feed, componentNames[compIndex]);
-	}
+        for (int compIndex = 0; compIndex < componentCount; compIndex++) {
+          feedComponentFlows[trayIndex][compIndex] += componentFlow(feed, componentNames[compIndex]);
+        }
       }
     }
 
     return new ColumnMeshState(componentNames, trayTemperatures, vaporFlows, liquidFlows, vaporComponentFlows,
-	liquidComponentFlows, feedComponentFlows, vaporFractions, liquidFractions);
+        liquidComponentFlows, feedComponentFlows, vaporFractions, liquidFractions);
   }
 
   /**
@@ -125,11 +125,11 @@ final class ColumnMeshState implements Serializable {
     for (SimpleTray tray : column.getTrays()) {
       String[] trayNames = componentNames(tray.getGasOutStream());
       if (trayNames.length > 0) {
-	return trayNames;
+        return trayNames;
       }
       trayNames = componentNames(tray.getLiquidOutStream());
       if (trayNames.length > 0) {
-	return trayNames;
+        return trayNames;
       }
     }
     return new String[0];
@@ -145,7 +145,7 @@ final class ColumnMeshState implements Serializable {
     try {
       SystemInterface system = stream.getThermoSystem();
       if (system == null || system.getNumberOfComponents() == 0) {
-	return new String[0];
+        return new String[0];
       }
       return system.getCompNames();
     } catch (Exception ex) {

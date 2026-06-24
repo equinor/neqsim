@@ -37,10 +37,10 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
 
     private void updatePipelineInlet() {
       if (choke != null) {
-	choke.setInletStream(well.getOutletStream());
-	pipeline.setInletStream(choke.getOutletStream());
+        choke.setInletStream(well.getOutletStream());
+        pipeline.setInletStream(choke.getOutletStream());
       } else {
-	pipeline.setInletStream(well.getOutletStream());
+        pipeline.setInletStream(well.getOutletStream());
       }
     }
 
@@ -52,12 +52,12 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
     void run(UUID id) {
       well.run(id);
       if (choke != null) {
-	choke.run(id);
+        choke.run(id);
       }
       try {
-	pipeline.run(id);
+        pipeline.run(id);
       } catch (RuntimeException ex) {
-	pipeline.getOutletStream().setPressure(1.0, "bara");
+        pipeline.getOutletStream().setPressure(1.0, "bara");
       }
     }
 
@@ -70,7 +70,7 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
     void runTransient(double dt, UUID id) {
       well.runTransient(dt, id);
       if (choke != null) {
-	choke.runTransient(dt, id);
+        choke.runTransient(dt, id);
       }
       pipeline.runTransient(dt, id);
     }
@@ -132,8 +132,8 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
 
     void addInboundPipeline(PipeBeggsAndBrills pipeline) {
       if (pipeline != null) {
-	inboundPipelines.add(pipeline);
-	// Note: Stream is added to mixer in runManifold() after pipeline has been wired and run
+        inboundPipelines.add(pipeline);
+        // Note: Stream is added to mixer in runManifold() after pipeline has been wired and run
       }
     }
 
@@ -435,8 +435,8 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
     } else {
       runManifolds(id, false, null);
       if (facilityPipeline != null) {
-	facilityPipeline.setInletStream(getTailManifold().getMixer().getOutletStream());
-	facilityPipeline.run(id);
+        facilityPipeline.setInletStream(getTailManifold().getMixer().getOutletStream());
+        facilityPipeline.run(id);
       }
       enforceManifoldPressures(id);
     }
@@ -451,19 +451,20 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
       iterateForEndpointPressure(id);
     } else {
       for (ManifoldNode manifold : getReachableManifoldsInFlowOrder()) {
-	for (Branch branch : manifold.getBranches()) {
-	  branch.runTransient(dt, id);
-	}
-	// Mixer has no dedicated transient API; recompute arrival conditions after transient steps.
-	manifold.getMixer().run(id);
-	if (manifold.getPipelineToNext() != null) {
-	  manifold.getPipelineToNext().setInletStream(manifold.getMixer().getOutletStream());
-	  manifold.getPipelineToNext().runTransient(dt, id);
-	}
+        for (Branch branch : manifold.getBranches()) {
+          branch.runTransient(dt, id);
+        }
+        // Mixer has no dedicated transient API; recompute arrival conditions after transient
+        // steps.
+        manifold.getMixer().run(id);
+        if (manifold.getPipelineToNext() != null) {
+          manifold.getPipelineToNext().setInletStream(manifold.getMixer().getOutletStream());
+          manifold.getPipelineToNext().runTransient(dt, id);
+        }
       }
       if (facilityPipeline != null) {
-	facilityPipeline.setInletStream(getTailManifold().getMixer().getOutletStream());
-	facilityPipeline.runTransient(dt, id);
+        facilityPipeline.setInletStream(getTailManifold().getMixer().getOutletStream());
+        facilityPipeline.runTransient(dt, id);
       }
       enforceManifoldPressures(id);
     }
@@ -501,17 +502,17 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
       double manifoldPressure = manifold.getMixer().getOutletStream().getPressure("bara");
 
       for (Branch branch : manifold.getBranches()) {
-	branch.getPipeline().getOutletStream().setPressure(manifoldPressure, "bara");
-	if (branch.getChoke() != null) {
-	  branch.getChoke().getOutletStream().setPressure(manifoldPressure, "bara");
-	}
-	if (propagateArrivalPressureToWells && !branch.getWell().isCalculatingOutletPressure()) {
-	  branch.getWell().setOutletPressure(manifoldPressure, "bara");
-	}
+        branch.getPipeline().getOutletStream().setPressure(manifoldPressure, "bara");
+        if (branch.getChoke() != null) {
+          branch.getChoke().getOutletStream().setPressure(manifoldPressure, "bara");
+        }
+        if (propagateArrivalPressureToWells && !branch.getWell().isCalculatingOutletPressure()) {
+          branch.getWell().setOutletPressure(manifoldPressure, "bara");
+        }
       }
 
       for (PipeBeggsAndBrills inbound : manifold.getInboundPipelines()) {
-	inbound.getOutletStream().setPressure(manifoldPressure, "bara");
+        inbound.getOutletStream().setPressure(manifoldPressure, "bara");
       }
 
       // Recompute combined arrival with harmonized pressures.
@@ -538,7 +539,7 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
     boolean haveSecantPoint = false;
 
     for (int i = 0; i < maxIterations
-	&& Math.abs(achievedPressure - targetEndpointPressure) > iterationTolerance; i++) {
+        && Math.abs(achievedPressure - targetEndpointPressure) > iterationTolerance; i++) {
       double error = achievedPressure - targetEndpointPressure;
 
       double nextGuess;
@@ -613,58 +614,58 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
     for (PipeBeggsAndBrills inbound : manifold.getInboundPipelines()) {
       // Wire inlet stream if it's a pipelineToNext from an upstream manifold
       if (inbound.getInletStream() == null) {
-	// Find the upstream manifold that has this pipeline as its pipelineToNext
-	for (ManifoldNode upstream : manifolds) {
-	  if (upstream.getPipelineToNext() == inbound) {
-	    inbound.setInletStream(upstream.getMixer().getOutletStream());
-	    break;
-	  }
-	}
+        // Find the upstream manifold that has this pipeline as its pipelineToNext
+        for (ManifoldNode upstream : manifolds) {
+          if (upstream.getPipelineToNext() == inbound) {
+            inbound.setInletStream(upstream.getMixer().getOutletStream());
+            break;
+          }
+        }
       }
       try {
-	inbound.run(id);
+        inbound.run(id);
       } catch (RuntimeException ex) {
-	inbound.getOutletStream().setPressure(1.0, "bara");
+        inbound.getOutletStream().setPressure(1.0, "bara");
       }
 
       // Add outlet stream to mixer if not already added
       StreamInterface inboundStream = inbound.getOutletStream();
       if (inboundStream != null) {
-	boolean alreadyAdded = false;
-	for (int i = 0; i < manifold.getMixer().getNumberOfInputStreams(); i++) {
-	  if (manifold.getMixer().getStream(i) == inboundStream) {
-	    alreadyAdded = true;
-	    break;
-	  }
-	}
-	if (!alreadyAdded) {
-	  manifold.getMixer().addStream(inboundStream);
-	}
+        boolean alreadyAdded = false;
+        for (int i = 0; i < manifold.getMixer().getNumberOfInputStreams(); i++) {
+          if (manifold.getMixer().getStream(i) == inboundStream) {
+            alreadyAdded = true;
+            break;
+          }
+        }
+        if (!alreadyAdded) {
+          manifold.getMixer().addStream(inboundStream);
+        }
       }
     }
 
     // Step 2: Run all branches
     for (Branch branch : manifold.getBranches()) {
       if (forceFlowFromPressureSolve && branch.getWell().isCalculatingOutletPressure()) {
-	branch.getWell().solveFlowFromOutletPressure(true);
+        branch.getWell().solveFlowFromOutletPressure(true);
       }
       if (overridePressure && forcedPressure != null) {
-	if (branch.getChoke() != null) {
-	  branch.getChoke().setOutletPressure(forcedPressure, "bara");
-	}
+        if (branch.getChoke() != null) {
+          branch.getChoke().setOutletPressure(forcedPressure, "bara");
+        }
       }
       branch.run(id);
 
       double outletPressure = branch.getPipeline().getOutletStream().getPressure("bara");
       double safePressure = forcedPressure != null ? forcedPressure : 1.0;
       if (Double.isNaN(outletPressure) || outletPressure < 0.1) {
-	branch.getPipeline().getOutletStream().setPressure(safePressure, "bara");
-	if (branch.getChoke() != null) {
-	  branch.getChoke().getOutletStream().setPressure(safePressure, "bara");
-	}
-	if (propagateArrivalPressureToWells && !branch.getWell().isCalculatingOutletPressure()) {
-	  branch.getWell().setOutletPressure(safePressure, "bara");
-	}
+        branch.getPipeline().getOutletStream().setPressure(safePressure, "bara");
+        if (branch.getChoke() != null) {
+          branch.getChoke().getOutletStream().setPressure(safePressure, "bara");
+        }
+        if (propagateArrivalPressureToWells && !branch.getWell().isCalculatingOutletPressure()) {
+          branch.getWell().setOutletPressure(safePressure, "bara");
+        }
       }
     }
 
@@ -688,11 +689,11 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
     for (Branch branch : manifold.getBranches()) {
       branch.getPipeline().getOutletStream().setPressure(manifoldPressure, "bara");
       if (branch.getChoke() != null) {
-	branch.getChoke().getOutletStream().setPressure(manifoldPressure, "bara");
+        branch.getChoke().getOutletStream().setPressure(manifoldPressure, "bara");
       }
       if (propagateArrivalPressureToWells && !branch.getWell().isCalculatingOutletPressure()
-	  && branch.getChoke() == null) {
-	branch.getWell().setOutletPressure(manifoldPressure, "bara");
+          && branch.getChoke() == null) {
+        branch.getWell().setOutletPressure(manifoldPressure, "bara");
       }
     }
 
@@ -709,9 +710,9 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
     if (manifold.getPipelineToNext() != null) {
       manifold.getPipelineToNext().setInletStream(manifold.getMixer().getOutletStream());
       try {
-	manifold.getPipelineToNext().run(id);
+        manifold.getPipelineToNext().run(id);
       } catch (RuntimeException ex) {
-	manifold.getPipelineToNext().getOutletStream().setPressure(1.0, "bara");
+        manifold.getPipelineToNext().getOutletStream().setPressure(1.0, "bara");
       }
     }
   }
@@ -727,7 +728,7 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
     ManifoldNode tail = getTailManifold();
     for (ManifoldNode manifold : manifolds) {
       if (!manifold.getBranches().isEmpty() || !manifold.getInboundPipelines().isEmpty() || manifold == tail) {
-	ordered.add(manifold);
+        ordered.add(manifold);
       }
     }
     return ordered;

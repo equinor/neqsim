@@ -188,14 +188,14 @@ public class CapillaryCondensationModel implements Serializable, ThermodynamicCo
 
     for (int comp = 0; comp < numComp; comp++) {
       double partialPressure = system.getPhase(phaseNum).getComponent(comp).getx()
-	  * system.getPhase(phaseNum).getPressure();
+          * system.getPhase(phaseNum).getPressure();
 
       double relativePressure = partialPressure / pSat[comp];
 
       if (relativePressure >= 1.0 || relativePressure <= 0) {
-	kelvinRadius[comp] = Double.MAX_VALUE;
-	condensateAmount[comp] = 0.0;
-	continue;
+        kelvinRadius[comp] = Double.MAX_VALUE;
+        condensateAmount[comp] = 0.0;
+        continue;
       }
 
       // Calculate Kelvin radius using modified Kelvin equation
@@ -234,10 +234,10 @@ public class CapillaryCondensationModel implements Serializable, ThermodynamicCo
       double r = minPoreRadius + (i + 0.5) * dr;
 
       if (r < criticalRadius) {
-	// This pore is filled with condensate
-	double poreVolumeFraction = getPoreVolumeFraction(r) * dr;
-	double poreVolumePerGram = totalPoreVolume * poreVolumeFraction;
-	totalCondensate += poreVolumePerGram;
+        // This pore is filled with condensate
+        double poreVolumeFraction = getPoreVolumeFraction(r) * dr;
+        double poreVolumePerGram = totalPoreVolume * poreVolumeFraction;
+        totalCondensate += poreVolumePerGram;
       }
     }
 

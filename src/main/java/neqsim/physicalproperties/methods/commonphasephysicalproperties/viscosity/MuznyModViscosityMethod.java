@@ -25,7 +25,7 @@ public class MuznyModViscosityMethod extends Viscosity {
   public double calcViscosity() {
     // Check if there are other components than helium
     if (phase.getPhase().getNumberOfComponents() > 1
-	|| !phase.getPhase().getComponent(0).getName().equalsIgnoreCase("hydrogen")) {
+        || !phase.getPhase().getComponent(0).getName().equalsIgnoreCase("hydrogen")) {
       throw new Error("Muzny viscosity model only supports PURE HYDROGEN.");
     }
 
@@ -63,16 +63,16 @@ public class MuznyModViscosityMethod extends Viscosity {
     double eta_1 = B_eta * eta_0;
 
     double eta = eta_0 + eta_1 * rho + c[1] * Math.pow(rho_r, 2)
-	* Math.exp(c[2] * Tr + c[3] / Tr + (c[4] * Math.pow(rho_r, 2)) / (c[5] + Tr) + c[6] * Math.pow(rho_r, 6));
+        * Math.exp(c[2] * Tr + c[3] / Tr + (c[4] * Math.pow(rho_r, 2)) / (c[5] + Tr) + c[6] * Math.pow(rho_r, 6));
 
     double A = 0.002 * P * Math.pow(405.0 / T, 4.6) + 0.173 * (1 + 0.05 / (1 + Math.exp(-0.5 * (P - 20))));
 
     double B = 0.13 * (1 / (1 + Math.exp(0.5 * (T - 405))))
-	+ 0.1 * (1 / (1 + Math.exp(-0.05 * (T - 390)))) * (1 + 2 / (1 + Math.exp(0.9 * (P - 17))));
+        + 0.1 * (1 / (1 + Math.exp(-0.05 * (T - 390)))) * (1 + 2 / (1 + Math.exp(0.9 * (P - 17))));
 
     double C = 0.5 * (1 - 1 / (1 + Math.exp(1.0 * (T - 355)))) * (1 - 1 / (1 + Math.exp(-0.3 * (P - 10))))
-	* Math.pow(T / 600.0, 2.5)
-	- 0.15 * (1 - 1 / (1 + Math.exp(0.8 * (P - 19)))) * (420.0 / T) * (1 - 1 / (1 + Math.exp(1.0 * (T - 415))));
+        * Math.pow(T / 600.0, 2.5)
+        - 0.15 * (1 - 1 / (1 + Math.exp(0.8 * (P - 19)))) * (420.0 / T) * (1 - 1 / (1 + Math.exp(1.0 * (T - 415))));
 
     return (eta - A + B - C) * Math.pow(10, -6); // [Pa*s]
   }

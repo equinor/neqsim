@@ -119,9 +119,9 @@ public class MaterialsReviewReport implements Serializable {
     Set<String> standards = new LinkedHashSet<String>();
     for (MaterialReviewResult result : results) {
       if ("FAIL".equals(result.getVerdict())) {
-	failed++;
+        failed++;
       } else if ("PASS_WITH_WARNINGS".equals(result.getVerdict())) {
-	warnings++;
+        warnings++;
       }
       standards.addAll(result.getStandardsApplied());
       resultMaps.add(result.toMap());

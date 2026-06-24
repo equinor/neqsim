@@ -164,7 +164,7 @@ final class DexpiLayoutEngine {
 
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof Stream || unit instanceof DexpiStream) {
-	continue;
+        continue;
       }
       unitByName.put(unit.getName(), unit);
       adjacency.put(unit.getName(), new ArrayList<String>());
@@ -174,44 +174,44 @@ final class DexpiLayoutEngine {
     Map<Integer, String> outletStreamToEquipment = new HashMap<>();
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof Stream || unit instanceof DexpiStream) {
-	continue;
+        continue;
       }
       StreamInterface gasOut = DexpiStreamUtils.getGasOutletStream(unit);
       if (gasOut != null) {
-	outletStreamToEquipment.put(System.identityHashCode(gasOut), unit.getName());
+        outletStreamToEquipment.put(System.identityHashCode(gasOut), unit.getName());
       }
       StreamInterface liqOut = DexpiStreamUtils.getLiquidOutletStream(unit);
       if (liqOut != null) {
-	outletStreamToEquipment.put(System.identityHashCode(liqOut), unit.getName());
+        outletStreamToEquipment.put(System.identityHashCode(liqOut), unit.getName());
       }
       StreamInterface waterOut = DexpiStreamUtils.getWaterOutletStream(unit);
       if (waterOut != null) {
-	outletStreamToEquipment.put(System.identityHashCode(waterOut), unit.getName());
+        outletStreamToEquipment.put(System.identityHashCode(waterOut), unit.getName());
       }
     }
 
     // Also register pass-through streams (Stream wrapping separator outlets)
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof Stream && !(unit instanceof DexpiStream)) {
-	Stream stream = (Stream) unit;
-	if (stream.getFluid() != null) {
-	  int fluidHash = System.identityHashCode(stream.getFluid());
-	  for (Map.Entry<Integer, String> entry : new HashMap<>(outletStreamToEquipment).entrySet()) {
-	    ProcessEquipmentInterface src = unitByName.get(entry.getValue());
-	    if (src != null) {
-	      StreamInterface srcGas = DexpiStreamUtils.getGasOutletStream(src);
-	      if (srcGas != null && srcGas.getFluid() != null
-		  && System.identityHashCode(srcGas.getFluid()) == fluidHash) {
-		outletStreamToEquipment.put(System.identityHashCode(stream), entry.getValue());
-	      }
-	      StreamInterface srcLiq = DexpiStreamUtils.getLiquidOutletStream(src);
-	      if (srcLiq != null && srcLiq.getFluid() != null
-		  && System.identityHashCode(srcLiq.getFluid()) == fluidHash) {
-		outletStreamToEquipment.put(System.identityHashCode(stream), entry.getValue());
-	      }
-	    }
-	  }
-	}
+        Stream stream = (Stream) unit;
+        if (stream.getFluid() != null) {
+          int fluidHash = System.identityHashCode(stream.getFluid());
+          for (Map.Entry<Integer, String> entry : new HashMap<>(outletStreamToEquipment).entrySet()) {
+            ProcessEquipmentInterface src = unitByName.get(entry.getValue());
+            if (src != null) {
+              StreamInterface srcGas = DexpiStreamUtils.getGasOutletStream(src);
+              if (srcGas != null && srcGas.getFluid() != null
+                  && System.identityHashCode(srcGas.getFluid()) == fluidHash) {
+                outletStreamToEquipment.put(System.identityHashCode(stream), entry.getValue());
+              }
+              StreamInterface srcLiq = DexpiStreamUtils.getLiquidOutletStream(src);
+              if (srcLiq != null && srcLiq.getFluid() != null
+                  && System.identityHashCode(srcLiq.getFluid()) == fluidHash) {
+                outletStreamToEquipment.put(System.identityHashCode(stream), entry.getValue());
+              }
+            }
+          }
+        }
       }
     }
 
@@ -228,44 +228,44 @@ final class DexpiLayoutEngine {
     Map<Integer, Boolean> outletIsGasFork = new HashMap<>();
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof Stream || unit instanceof DexpiStream) {
-	continue;
+        continue;
       }
       StreamInterface liqOut = DexpiStreamUtils.getLiquidOutletStream(unit);
       StreamInterface waterOut = DexpiStreamUtils.getWaterOutletStream(unit);
       if (liqOut != null) {
-	outletIsLiquid.put(System.identityHashCode(liqOut), Boolean.TRUE);
+        outletIsLiquid.put(System.identityHashCode(liqOut), Boolean.TRUE);
       }
       if (waterOut != null) {
-	outletIsLiquid.put(System.identityHashCode(waterOut), Boolean.TRUE);
+        outletIsLiquid.put(System.identityHashCode(waterOut), Boolean.TRUE);
       }
       // A vessel that produces a liquid or water outlet is a phase-splitting separator;
       // its gas outlet is the overhead branch and is routed to the upper part of the sheet.
       if (liqOut != null || waterOut != null) {
-	StreamInterface gasOut = DexpiStreamUtils.getGasOutletStream(unit);
-	if (gasOut != null) {
-	  outletIsGasFork.put(System.identityHashCode(gasOut), Boolean.TRUE);
-	}
+        StreamInterface gasOut = DexpiStreamUtils.getGasOutletStream(unit);
+        if (gasOut != null) {
+          outletIsGasFork.put(System.identityHashCode(gasOut), Boolean.TRUE);
+        }
       }
     }
 
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof Stream || unit instanceof DexpiStream) {
-	continue;
+        continue;
       }
       List<StreamInterface> inletStreams = resolveInletStreams(unit);
       for (StreamInterface inletStream : inletStreams) {
-	String upstream = outletStreamToEquipment.get(System.identityHashCode(inletStream));
-	if (upstream != null && adjacency.containsKey(upstream)) {
-	  adjacency.get(upstream).add(unit.getName());
-	}
-	// If this inlet is a liquid/water outlet from its source, mark as liquid branch
-	if (outletIsLiquid.containsKey(System.identityHashCode(inletStream))) {
-	  liquidBranchEquipment.add(unit.getName());
-	}
-	// If this inlet is the gas (overhead) outlet of a separator, mark as gas branch
-	if (outletIsGasFork.containsKey(System.identityHashCode(inletStream))) {
-	  gasBranchEquipment.add(unit.getName());
-	}
+        String upstream = outletStreamToEquipment.get(System.identityHashCode(inletStream));
+        if (upstream != null && adjacency.containsKey(upstream)) {
+          adjacency.get(upstream).add(unit.getName());
+        }
+        // If this inlet is a liquid/water outlet from its source, mark as liquid branch
+        if (outletIsLiquid.containsKey(System.identityHashCode(inletStream))) {
+          liquidBranchEquipment.add(unit.getName());
+        }
+        // If this inlet is the gas (overhead) outlet of a separator, mark as gas branch
+        if (outletIsGasFork.containsKey(System.identityHashCode(inletStream))) {
+          gasBranchEquipment.add(unit.getName());
+        }
       }
     }
 
@@ -276,17 +276,17 @@ final class DexpiLayoutEngine {
     }
     for (List<String> neighbors : adjacency.values()) {
       for (String neighbor : neighbors) {
-	Integer current = inDegree.get(neighbor);
-	if (current != null) {
-	  inDegree.put(neighbor, current + 1);
-	}
+        Integer current = inDegree.get(neighbor);
+        if (current != null) {
+          inDegree.put(neighbor, current + 1);
+        }
       }
     }
 
     List<String> queue = new ArrayList<>();
     for (Map.Entry<String, Integer> entry : inDegree.entrySet()) {
       if (entry.getValue() == 0) {
-	queue.add(entry.getKey());
+        queue.add(entry.getKey());
       }
     }
 
@@ -296,15 +296,15 @@ final class DexpiLayoutEngine {
       topoOrder.add(current);
       List<String> neighbors = adjacency.get(current);
       if (neighbors != null) {
-	for (String neighbor : neighbors) {
-	  Integer deg = inDegree.get(neighbor);
-	  if (deg != null) {
-	    inDegree.put(neighbor, deg - 1);
-	    if (deg - 1 == 0) {
-	      queue.add(neighbor);
-	    }
-	  }
-	}
+        for (String neighbor : neighbors) {
+          Integer deg = inDegree.get(neighbor);
+          if (deg != null) {
+            inDegree.put(neighbor, deg - 1);
+            if (deg - 1 == 0) {
+              queue.add(neighbor);
+            }
+          }
+        }
       }
     }
 
@@ -312,7 +312,7 @@ final class DexpiLayoutEngine {
     Set<String> placed = new HashSet<>(topoOrder);
     for (String name : unitByName.keySet()) {
       if (!placed.contains(name)) {
-	topoOrder.add(name);
+        topoOrder.add(name);
       }
     }
 
@@ -323,24 +323,24 @@ final class DexpiLayoutEngine {
     while (changed) {
       changed = false;
       for (String name : liquidBranchEquipment.toArray(new String[0])) {
-	List<String> downstream = adjacency.get(name);
-	if (downstream != null) {
-	  for (String ds : downstream) {
-	    if (liquidBranchEquipment.add(ds)) {
-	      changed = true;
-	    }
-	  }
-	}
+        List<String> downstream = adjacency.get(name);
+        if (downstream != null) {
+          for (String ds : downstream) {
+            if (liquidBranchEquipment.add(ds)) {
+              changed = true;
+            }
+          }
+        }
       }
       for (String name : gasBranchEquipment.toArray(new String[0])) {
-	List<String> downstream = adjacency.get(name);
-	if (downstream != null) {
-	  for (String ds : downstream) {
-	    if (gasBranchEquipment.add(ds)) {
-	      changed = true;
-	    }
-	  }
-	}
+        List<String> downstream = adjacency.get(name);
+        if (downstream != null) {
+          for (String ds : downstream) {
+            if (gasBranchEquipment.add(ds)) {
+              changed = true;
+            }
+          }
+        }
       }
     }
 
@@ -355,9 +355,9 @@ final class DexpiLayoutEngine {
       boolean onLiquid = liquidBranchEquipment.contains(name);
       boolean onGas = gasBranchEquipment.contains(name);
       if (onLiquid && !onGas) {
-	y = Y_BASE - Y_BRANCH_OFFSET;
+        y = Y_BASE - Y_BRANCH_OFFSET;
       } else if (onGas && !onLiquid) {
-	y = Y_BASE + Y_BRANCH_OFFSET;
+        y = Y_BASE + Y_BRANCH_OFFSET;
       }
       positions.put(name, new EquipmentPosition(x, y, DEFAULT_SCALE, DEFAULT_SCALE));
       col++;
@@ -654,7 +654,7 @@ final class DexpiLayoutEngine {
   static void appendEquipmentBarLabel(Document document, Element element, String tagName, EquipmentPosition pos,
       String labelId, String equipmentId, double pressure, double temperature, double flowRate) {
     appendEquipmentBarLabel(document, element, tagName, pos, labelId, equipmentId, pressure, temperature, flowRate,
-	null);
+        null);
   }
 
   /**
@@ -841,13 +841,13 @@ final class DexpiLayoutEngine {
     if (unit instanceof TwoPortEquipment) {
       StreamInterface inlet = ((TwoPortEquipment) unit).getInletStream();
       if (inlet != null) {
-	result.add(inlet);
+        result.add(inlet);
       }
     } else {
       // Separator, Mixer, Splitter, etc. — use getInletStreams()
       List<StreamInterface> inlets = unit.getInletStreams();
       if (inlets != null) {
-	result.addAll(inlets);
+        result.addAll(inlets);
       }
     }
     return result;
@@ -1184,14 +1184,14 @@ final class DexpiLayoutEngine {
       // Controller bubbles may extend INSTRUMENT_X_SPACING beyond the rightmost transmitter
       double instrumentRight = pos.x + INSTRUMENT_X_SPACING + INSTRUMENT_BUBBLE_RADIUS;
       if (instrumentRight > rightEdge) {
-	rightEdge = instrumentRight;
+        rightEdge = instrumentRight;
       }
       double topEdge = pos.y + INSTRUMENT_OFFSET_Y + INSTRUMENT_BUBBLE_RADIUS;
       if (rightEdge > maxX) {
-	maxX = rightEdge;
+        maxX = rightEdge;
       }
       if (topEdge > maxY) {
-	maxY = topEdge;
+        maxY = topEdge;
       }
     }
     // Add right-side padding for nozzles, arrows, and border margin
@@ -1384,7 +1384,7 @@ final class DexpiLayoutEngine {
     appendBorderRect(document, border, 1.0, 1.0, sheetWidth - 1.0, sheetHeight - 1.0, 0.3);
     // Inner thick border
     appendBorderRect(document, border, BORDER_MARGIN, BORDER_MARGIN, sheetWidth - BORDER_MARGIN,
-	sheetHeight - BORDER_MARGIN, 0.6);
+        sheetHeight - BORDER_MARGIN, 0.6);
   }
 
   /**
@@ -1445,9 +1445,9 @@ final class DexpiLayoutEngine {
       appendBorderText(document, border, num, cx, 2.5);
       // Tick marks
       if (i > 0) {
-	double tickX = innerLeft + i * colWidth;
-	appendBorderTick(document, border, tickX, 1.0, tickX, innerBottom);
-	appendBorderTick(document, border, tickX, sheetHeight - 1.0, tickX, innerTop);
+        double tickX = innerLeft + i * colWidth;
+        appendBorderTick(document, border, tickX, 1.0, tickX, innerBottom);
+        appendBorderTick(document, border, tickX, sheetHeight - 1.0, tickX, innerTop);
       }
     }
 
@@ -1463,9 +1463,9 @@ final class DexpiLayoutEngine {
       appendBorderText(document, border, letter, sheetWidth - 2.5, cy);
       // Tick marks
       if (i > 0) {
-	double tickY = innerBottom + i * rowHeight;
-	appendBorderTick(document, border, 1.0, tickY, innerLeft, tickY);
-	appendBorderTick(document, border, sheetWidth - 1.0, tickY, innerRight, tickY);
+        double tickY = innerBottom + i * rowHeight;
+        appendBorderTick(document, border, 1.0, tickY, innerLeft, tickY);
+        appendBorderTick(document, border, sheetWidth - 1.0, tickY, innerRight, tickY);
       }
     }
   }
@@ -1596,13 +1596,13 @@ final class DexpiLayoutEngine {
     double titleCenterX = (blockLeft + blockRight) / 2.0;
     double titleCenterY = (titleBottom + blockTop) / 2.0 + 4.0;
     appendTitleText(document, label, drawingName != null ? drawingName : "Process & Instrument Diagram", titleCenterX,
-	titleCenterY, TITLE_MAIN_FONT_HEIGHT, "CenterCenter");
+        titleCenterY, TITLE_MAIN_FONT_HEIGHT, "CenterCenter");
     // ISO 7200 legal owner / originator line
     appendTitleText(document, label, "Owner: NeqSim  |  Originator: NeqSim DEXPI Export", titleCenterX,
-	titleCenterY - 4.5, TITLE_FONT_HEIGHT, "CenterCenter");
+        titleCenterY - 4.5, TITLE_FONT_HEIGHT, "CenterCenter");
     // ISO 7200 document-type / scale / sheet line
     appendTitleText(document, label, "Type: P&ID   Scale: NTS   Sheet: 1 of 1   Lang: EN", titleCenterX,
-	titleCenterY - 8.5, TITLE_FONT_HEIGHT, "CenterCenter");
+        titleCenterY - 8.5, TITLE_FONT_HEIGHT, "CenterCenter");
 
     drawing.appendChild(label);
   }
@@ -1825,11 +1825,11 @@ final class DexpiLayoutEngine {
       String[] values = { entry.name, entry.temperatureC, entry.pressureBara, entry.flowKgHr, entry.phase };
 
       for (int r = 0; r < numRows; r++) {
-	double rowTop = tableTop - r * TABLE_ROW_HEIGHT;
-	double rowBottom = rowTop - TABLE_ROW_HEIGHT;
-	appendBorderRect(document, label, colLeft, rowBottom, colRight, rowTop, 0.15);
-	appendTableText(document, label, values[r], (colLeft + colRight) / 2.0, (rowTop + rowBottom) / 2.0 - 0.5,
-	    "CenterCenter");
+        double rowTop = tableTop - r * TABLE_ROW_HEIGHT;
+        double rowBottom = rowTop - TABLE_ROW_HEIGHT;
+        appendBorderRect(document, label, colLeft, rowBottom, colRight, rowTop, 0.15);
+        appendTableText(document, label, values[r], (colLeft + colRight) / 2.0, (rowTop + rowBottom) / 2.0 - 0.5,
+            "CenterCenter");
       }
     }
 
@@ -1938,16 +1938,16 @@ final class DexpiLayoutEngine {
     double maxY = -Double.MAX_VALUE;
     for (EquipmentPosition pos : positions.values()) {
       if (pos.x < minX) {
-	minX = pos.x;
+        minX = pos.x;
       }
       if (pos.x > maxX) {
-	maxX = pos.x;
+        maxX = pos.x;
       }
       if (pos.y < minY) {
-	minY = pos.y;
+        minY = pos.y;
       }
       if (pos.y > maxY) {
-	maxY = pos.y;
+        maxY = pos.y;
       }
     }
 
@@ -2255,7 +2255,7 @@ final class DexpiLayoutEngine {
     }
     if (operatingWeightKg > 0) {
       if (sb.length() > 0) {
-	sb.append(" / ");
+        sb.append(" / ");
       }
       sb.append("Op: ").append(String.format(Locale.ROOT, "%.0f", operatingWeightKg)).append(" kg");
     }
@@ -2519,13 +2519,13 @@ final class DexpiLayoutEngine {
       tickPres.setAttribute("B", LINE_COLOR_B);
       tick.appendChild(tickPres);
       if (Math.abs(fromY - toY) < 0.5) {
-	// Horizontal line: tick is vertical
-	appendCoordinate(document, tick, mx, my - 2.5);
-	appendCoordinate(document, tick, mx, my + 2.5);
+        // Horizontal line: tick is vertical
+        appendCoordinate(document, tick, mx, my - 2.5);
+        appendCoordinate(document, tick, mx, my + 2.5);
       } else {
-	// Vertical line: tick is horizontal
-	appendCoordinate(document, tick, mx - 2.5, my);
-	appendCoordinate(document, tick, mx + 2.5, my);
+        // Vertical line: tick is horizontal
+        appendCoordinate(document, tick, mx - 2.5, my);
+        appendCoordinate(document, tick, mx + 2.5, my);
       }
       parent.appendChild(tick);
     }
@@ -2801,7 +2801,7 @@ final class DexpiLayoutEngine {
   static void appendStyledConnectionLine(Document document, Element parent, double fromX, double fromY, double toX,
       double toY, int lineType, String colorR, String colorG, String colorB) {
     appendStyledConnectionLine(document, parent, fromX, fromY, toX, toY, lineType, PROCESS_LINE_WEIGHT, colorR, colorG,
-	colorB);
+        colorB);
   }
 
   /**
@@ -2887,7 +2887,7 @@ final class DexpiLayoutEngine {
       return;
     }
     appendStyledConnectionLine(document, parent, fromX, fromY, toX, toY, service.getLineType(), service.getLineWeight(),
-	service.getColorR(), service.getColorG(), service.getColorB());
+        service.getColorR(), service.getColorG(), service.getColorB());
   }
 
   // ==== Utility supply connection points (ISO 10628) ====
@@ -2974,19 +2974,19 @@ final class DexpiLayoutEngine {
     }
     if (fluidCode != null && !fluidCode.trim().isEmpty()) {
       if (sb.length() > 0) {
-	sb.append("-");
+        sb.append("-");
       }
       sb.append(fluidCode.trim());
     }
     if (lineNumber != null && !lineNumber.trim().isEmpty()) {
       if (sb.length() > 0) {
-	sb.append("-");
+        sb.append("-");
       }
       sb.append(lineNumber.trim());
     }
     if (pipingClass != null && !pipingClass.trim().isEmpty()) {
       if (sb.length() > 0) {
-	sb.append("-");
+        sb.append("-");
       }
       sb.append(pipingClass.trim());
     }
@@ -3218,7 +3218,7 @@ final class DexpiLayoutEngine {
     double headerBottom = legendTop - LEGEND_ROW_HEIGHT;
     appendBorderRect(document, label, legendLeft, headerBottom, legendLeft + LEGEND_WIDTH, legendTop, 0.2);
     appendLegendText(document, label, "SYMBOL LEGEND", legendLeft + LEGEND_WIDTH / 2.0,
-	headerBottom + LEGEND_ROW_HEIGHT / 2.0, "CenterCenter", "2.5");
+        headerBottom + LEGEND_ROW_HEIGHT / 2.0, "CenterCenter", "2.5");
 
     // Entry rows
     double sampleLeft = legendLeft + 2.0;
@@ -3236,9 +3236,9 @@ final class DexpiLayoutEngine {
       // Sample line
       int lineType = 0;
       try {
-	lineType = entry.length > 2 ? Integer.parseInt(entry[2]) : 0;
+        lineType = entry.length > 2 ? Integer.parseInt(entry[2]) : 0;
       } catch (NumberFormatException ignored) {
-	// Default to solid
+        // Default to solid
       }
       Element sampleLine = document.createElement("PolyLine");
       sampleLine.setAttribute("NumPoints", "2");
@@ -3256,7 +3256,7 @@ final class DexpiLayoutEngine {
       // Description text
       String desc = entry.length > 1 ? entry[1] : entry[0];
       appendLegendText(document, label, desc, descLeft, rowMidY - 0.5, "LeftCenter",
-	  String.valueOf(LEGEND_FONT_HEIGHT));
+          String.valueOf(LEGEND_FONT_HEIGHT));
     }
 
     parent.appendChild(label);

@@ -159,45 +159,45 @@ public class WaxCurveCalculator {
     for (int i = 0; i < nPoints; i++) {
       double tempC = tempEndC - i * tempStepC;
       if (tempC < tempStartC) {
-	tempC = tempStartC;
+        tempC = tempStartC;
       }
       temperaturesC[i] = tempC;
 
       try {
-	SystemInterface tempFluid = fluid.clone();
-	tempFluid.setTemperature(tempC + 273.15);
-	tempFluid.setPressure(pressureBara);
-	tempFluid.setMultiPhaseCheck(true);
+        SystemInterface tempFluid = fluid.clone();
+        tempFluid.setTemperature(tempC + 273.15);
+        tempFluid.setPressure(pressureBara);
+        tempFluid.setMultiPhaseCheck(true);
 
-	ThermodynamicOperations ops = new ThermodynamicOperations(tempFluid);
-	ops.TPflash();
-	tempFluid.initPhysicalProperties();
+        ThermodynamicOperations ops = new ThermodynamicOperations(tempFluid);
+        ops.TPflash();
+        tempFluid.initPhysicalProperties();
 
-	// Check for wax phase
-	double waxFraction = 0.0;
-	for (int p = 0; p < tempFluid.getNumberOfPhases(); p++) {
-	  String phaseType = tempFluid.getPhase(p).getPhaseTypeName();
-	  if ("wax".equalsIgnoreCase(phaseType)) {
-	    // Wax weight fraction of total system
-	    double waxMoles = tempFluid.getPhase(p).getNumberOfMolesInPhase();
-	    double waxMW = tempFluid.getPhase(p).getMolarMass();
-	    double totalMass = 0.0;
-	    for (int q = 0; q < tempFluid.getNumberOfPhases(); q++) {
-	      totalMass += tempFluid.getPhase(q).getNumberOfMolesInPhase() * tempFluid.getPhase(q).getMolarMass();
-	    }
-	    if (totalMass > 0) {
-	      waxFraction = (waxMoles * waxMW) / totalMass;
-	    }
-	    break;
-	  }
-	}
+        // Check for wax phase
+        double waxFraction = 0.0;
+        for (int p = 0; p < tempFluid.getNumberOfPhases(); p++) {
+          String phaseType = tempFluid.getPhase(p).getPhaseTypeName();
+          if ("wax".equalsIgnoreCase(phaseType)) {
+            // Wax weight fraction of total system
+            double waxMoles = tempFluid.getPhase(p).getNumberOfMolesInPhase();
+            double waxMW = tempFluid.getPhase(p).getMolarMass();
+            double totalMass = 0.0;
+            for (int q = 0; q < tempFluid.getNumberOfPhases(); q++) {
+              totalMass += tempFluid.getPhase(q).getNumberOfMolesInPhase() * tempFluid.getPhase(q).getMolarMass();
+            }
+            if (totalMass > 0) {
+              waxFraction = (waxMoles * waxMW) / totalMass;
+            }
+            break;
+          }
+        }
 
-	rawWaxFractions[i] = waxFraction;
-	successCount++;
+        rawWaxFractions[i] = waxFraction;
+        successCount++;
       } catch (Exception e) {
-	logger.debug("Wax flash failed at T={}C, P={}bara: {}", tempC, pressureBara, e.getMessage());
-	rawWaxFractions[i] = i > 0 ? rawWaxFractions[i - 1] : 0.0;
-	failCount++;
+        logger.debug("Wax flash failed at T={}C, P={}bara: {}", tempC, pressureBara, e.getMessage());
+        rawWaxFractions[i] = i > 0 ? rawWaxFractions[i - 1] : 0.0;
+        failCount++;
       }
     }
 
@@ -211,21 +211,21 @@ public class WaxCurveCalculator {
     watC = Double.NaN;
     for (int i = 0; i < nPoints; i++) {
       if (waxFractions[i] > 1e-8) {
-	// Interpolate WAT between this point and the previous
-	if (i > 0 && waxFractions[i - 1] <= 1e-8) {
-	  double t1 = temperaturesC[i - 1];
-	  double t2 = temperaturesC[i];
-	  double f1 = waxFractions[i - 1];
-	  double f2 = waxFractions[i];
-	  if (f2 > f1) {
-	    watC = t1 + (t2 - t1) * (1e-8 - f1) / (f2 - f1);
-	  } else {
-	    watC = t2;
-	  }
-	} else {
-	  watC = temperaturesC[i];
-	}
-	break;
+        // Interpolate WAT between this point and the previous
+        if (i > 0 && waxFractions[i - 1] <= 1e-8) {
+          double t1 = temperaturesC[i - 1];
+          double t2 = temperaturesC[i];
+          double f1 = waxFractions[i - 1];
+          double f2 = waxFractions[i];
+          if (f2 > f1) {
+            watC = t1 + (t2 - t1) * (1e-8 - f1) / (f2 - f1);
+          } else {
+            watC = t2;
+          }
+        } else {
+          watC = temperaturesC[i];
+        }
+        break;
       }
     }
   }
@@ -246,10 +246,10 @@ public class WaxCurveCalculator {
 
     for (int i = 0; i < fractions.length; i++) {
       if (fractions[i] < maxSoFar) {
-	fractions[i] = maxSoFar;
-	monotonicityCorrections++;
+        fractions[i] = maxSoFar;
+        monotonicityCorrections++;
       } else {
-	maxSoFar = fractions[i];
+        maxSoFar = fractions[i];
       }
     }
 
@@ -289,33 +289,33 @@ public class WaxCurveCalculator {
 
     for (double pressure : pressuresBara) {
       try {
-	SystemInterface tempFluid = fluid.clone();
-	tempFluid.setTemperature(temperatureC + 273.15);
-	tempFluid.setPressure(pressure);
-	tempFluid.setMultiPhaseCheck(true);
+        SystemInterface tempFluid = fluid.clone();
+        tempFluid.setTemperature(temperatureC + 273.15);
+        tempFluid.setPressure(pressure);
+        tempFluid.setMultiPhaseCheck(true);
 
-	ThermodynamicOperations ops = new ThermodynamicOperations(tempFluid);
-	ops.TPflash();
+        ThermodynamicOperations ops = new ThermodynamicOperations(tempFluid);
+        ops.TPflash();
 
-	double waxFraction = 0.0;
-	for (int p = 0; p < tempFluid.getNumberOfPhases(); p++) {
-	  String phaseType = tempFluid.getPhase(p).getPhaseTypeName();
-	  if ("wax".equalsIgnoreCase(phaseType)) {
-	    double waxMoles = tempFluid.getPhase(p).getNumberOfMolesInPhase();
-	    double waxMW = tempFluid.getPhase(p).getMolarMass();
-	    double totalMass = 0.0;
-	    for (int q = 0; q < tempFluid.getNumberOfPhases(); q++) {
-	      totalMass += tempFluid.getPhase(q).getNumberOfMolesInPhase() * tempFluid.getPhase(q).getMolarMass();
-	    }
-	    if (totalMass > 0) {
-	      waxFraction = (waxMoles * waxMW) / totalMass;
-	    }
-	    break;
-	  }
-	}
-	results.put(pressure, waxFraction);
+        double waxFraction = 0.0;
+        for (int p = 0; p < tempFluid.getNumberOfPhases(); p++) {
+          String phaseType = tempFluid.getPhase(p).getPhaseTypeName();
+          if ("wax".equalsIgnoreCase(phaseType)) {
+            double waxMoles = tempFluid.getPhase(p).getNumberOfMolesInPhase();
+            double waxMW = tempFluid.getPhase(p).getMolarMass();
+            double totalMass = 0.0;
+            for (int q = 0; q < tempFluid.getNumberOfPhases(); q++) {
+              totalMass += tempFluid.getPhase(q).getNumberOfMolesInPhase() * tempFluid.getPhase(q).getMolarMass();
+            }
+            if (totalMass > 0) {
+              waxFraction = (waxMoles * waxMW) / totalMass;
+            }
+            break;
+          }
+        }
+        results.put(pressure, waxFraction);
       } catch (Exception e) {
-	results.put(pressure, Double.NaN);
+        results.put(pressure, Double.NaN);
       }
     }
 
@@ -343,10 +343,10 @@ public class WaxCurveCalculator {
 
     for (int i = 1; i < values.length; i++) {
       if (values[i] < maxSoFar) {
-	values[i] = maxSoFar;
-	corrections++;
+        values[i] = maxSoFar;
+        corrections++;
       } else {
-	maxSoFar = values[i];
+        maxSoFar = values[i];
       }
     }
     return corrections;
@@ -369,10 +369,10 @@ public class WaxCurveCalculator {
 
     for (int i = 1; i < values.length; i++) {
       if (values[i] > minSoFar) {
-	values[i] = minSoFar;
-	corrections++;
+        values[i] = minSoFar;
+        corrections++;
       } else {
-	minSoFar = values[i];
+        minSoFar = values[i];
       }
     }
     return corrections;
@@ -389,9 +389,9 @@ public class WaxCurveCalculator {
     int violations = 0;
     for (int i = 1; i < values.length; i++) {
       if (nonDecreasing && values[i] < values[i - 1]) {
-	violations++;
+        violations++;
       } else if (!nonDecreasing && values[i] > values[i - 1]) {
-	violations++;
+        violations++;
       }
     }
     return violations;

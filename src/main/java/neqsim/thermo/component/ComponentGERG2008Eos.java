@@ -128,7 +128,7 @@ public class ComponentGERG2008Eos extends ComponentEos {
     if (getComponentNumber() == i) {
       double n = getNumberOfMolesInPhase();
       if (n > 0.0) {
-	term += 1.0 / n;
+        term += 1.0 / n;
       }
     }
     PhaseGERG2008Eos ph = (PhaseGERG2008Eos) phase;
@@ -161,7 +161,7 @@ public class ComponentGERG2008Eos extends ComponentEos {
     double temperature = phase.getTemperature();
     double pressure = phase.getPressure();
     double logFugacityCoefficient = dFdN(phase, phase.getNumberOfComponents(), temperature, pressure)
-	- Math.log(phase.getZ());
+        - Math.log(phase.getZ());
     double fugacityCoefficient = Math.exp(logFugacityCoefficient);
     return fugacityCoefficient;
   }
@@ -199,10 +199,10 @@ public class ComponentGERG2008Eos extends ComponentEos {
     for (int i = 0; i < numberOfComponents; i++) {
       double ideal = -1.0 / nTot;
       if (getComponentNumber() == i) {
-	double n = getNumberOfMolesInPhase();
-	if (n > 0.0) {
-	  ideal += 1.0 / n;
-	}
+        double n = getNumberOfMolesInPhase();
+        if (n > 0.0) {
+          ideal += 1.0 / n;
+        }
       }
       double total = dFdNdN(i, phase, numberOfComponents, temperature, pressure);
       residual[i] = total - ideal;

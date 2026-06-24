@@ -172,11 +172,11 @@ public class WellRoutingEstimationExample {
   public void setRouting(int[] routing) {
     for (int i = 0; i < NUM_WELLS; i++) {
       if (routing[i] == 0) {
-	// Route to HP manifold
-	splitters[i].setSplitFactors(new double[] { 1.0, 0.0 });
+        // Route to HP manifold
+        splitters[i].setSplitFactors(new double[] { 1.0, 0.0 });
       } else {
-	// Route to LP manifold
-	splitters[i].setSplitFactors(new double[] { 0.0, 1.0 });
+        // Route to LP manifold
+        splitters[i].setSplitFactors(new double[] { 0.0, 1.0 });
       }
       currentRouting[i] = routing[i];
     }
@@ -216,10 +216,10 @@ public class WellRoutingEstimationExample {
     // Add all pipe heat transfer coefficients as tunable parameters
     for (int i = 0; i < NUM_WELLS; i++) {
       estimator.addTunableParameter("Pipe" + (i + 1) + ".heatTransferCoefficient", // path
-	  "W/(m2·K)", // unit
-	  1.0, // minimum bound
-	  100.0, // maximum bound
-	  15.0 // initial guess (biased away from true values)
+          "W/(m2·K)", // unit
+          1.0, // minimum bound
+          100.0, // maximum bound
+          15.0 // initial guess (biased away from true values)
       );
     }
 
@@ -271,26 +271,26 @@ public class WellRoutingEstimationExample {
    */
   public int[][] getRoutingSchedule() {
     return new int[][] {
-	// Block patterns
-	{ 0, 0, 0, 0, 1, 1, 1, 1 }, // Wells 1-4 HP, 5-8 LP
-	{ 1, 1, 1, 1, 0, 0, 0, 0 }, // Inverse
+        // Block patterns
+        { 0, 0, 0, 0, 1, 1, 1, 1 }, // Wells 1-4 HP, 5-8 LP
+        { 1, 1, 1, 1, 0, 0, 0, 0 }, // Inverse
 
-	// Alternating patterns
-	{ 0, 1, 0, 1, 0, 1, 0, 1 }, // Odd to HP, even to LP
-	{ 1, 0, 1, 0, 1, 0, 1, 0 }, // Inverse
+        // Alternating patterns
+        { 0, 1, 0, 1, 0, 1, 0, 1 }, // Odd to HP, even to LP
+        { 1, 0, 1, 0, 1, 0, 1, 0 }, // Inverse
 
-	// Pairs patterns
-	{ 0, 0, 1, 1, 0, 0, 1, 1 }, { 1, 1, 0, 0, 1, 1, 0, 0 },
+        // Pairs patterns
+        { 0, 0, 1, 1, 0, 0, 1, 1 }, { 1, 1, 0, 0, 1, 1, 0, 0 },
 
-	// Single-well isolation (most informative)
-	{ 0, 1, 1, 1, 1, 1, 1, 1 }, // Only Well 1 at HP
-	{ 1, 0, 1, 1, 1, 1, 1, 1 }, // Only Well 2 at HP
-	{ 1, 1, 0, 1, 1, 1, 1, 1 }, // Only Well 3 at HP
-	{ 1, 1, 1, 0, 1, 1, 1, 1 }, // Only Well 4 at HP
-	{ 1, 1, 1, 1, 0, 1, 1, 1 }, // Only Well 5 at HP
-	{ 1, 1, 1, 1, 1, 0, 1, 1 }, // Only Well 6 at HP
-	{ 1, 1, 1, 1, 1, 1, 0, 1 }, // Only Well 7 at HP
-	{ 1, 1, 1, 1, 1, 1, 1, 0 }, // Only Well 8 at HP
+        // Single-well isolation (most informative)
+        { 0, 1, 1, 1, 1, 1, 1, 1 }, // Only Well 1 at HP
+        { 1, 0, 1, 1, 1, 1, 1, 1 }, // Only Well 2 at HP
+        { 1, 1, 0, 1, 1, 1, 1, 1 }, // Only Well 3 at HP
+        { 1, 1, 1, 0, 1, 1, 1, 1 }, // Only Well 4 at HP
+        { 1, 1, 1, 1, 0, 1, 1, 1 }, // Only Well 5 at HP
+        { 1, 1, 1, 1, 1, 0, 1, 1 }, // Only Well 6 at HP
+        { 1, 1, 1, 1, 1, 1, 0, 1 }, // Only Well 7 at HP
+        { 1, 1, 1, 1, 1, 1, 1, 0 }, // Only Well 8 at HP
     };
   }
 
@@ -317,8 +317,8 @@ public class WellRoutingEstimationExample {
     for (int step = 0; step < totalSteps; step++) {
       // Change routing
       if (step % stepsPerRouting == 0) {
-	int routeIdx = (step / stepsPerRouting) % schedule.length;
-	setRouting(schedule[routeIdx]);
+        int routeIdx = (step / stepsPerRouting) % schedule.length;
+        setRouting(schedule[routeIdx]);
       }
 
       // Generate measurement and update
@@ -335,7 +335,7 @@ public class WellRoutingEstimationExample {
 
     System.out.println();
     System.out.printf("%-15s %10s %10s %10s %10s %10s%n", "Parameter", "True", "Estimate", "Error%", "Std Dev",
-	"In 95%CI?");
+        "In 95%CI?");
     System.out.println(createSeparator(70));
 
     for (int i = 0; i < NUM_WELLS; i++) {
@@ -346,11 +346,11 @@ public class WellRoutingEstimationExample {
       double ci95 = 1.96 * uncertainties[i];
       boolean withinCI = error <= ci95;
       if (withinCI) {
-	inCI++;
+        inCI++;
       }
 
       System.out.printf("Pipe%d HTC      %10.2f %10.2f %9.1f%% %10.2f %10s%n", i + 1, TRUE_HEAT_TRANSFER_COEFFS[i],
-	  estimates[i], errorPct, uncertainties[i], withinCI ? "Yes" : "No");
+          estimates[i], errorPct, uncertainties[i], withinCI ? "Yes" : "No");
     }
 
     double rmse = Math.sqrt(sumSqError / NUM_WELLS);
@@ -371,7 +371,7 @@ public class WellRoutingEstimationExample {
       System.out.println("✗ VALIDATION FAILED - Needs tuning");
       System.out.printf("  RMSE: %.2f (max: %.2f) %s%n", rmse, maxRMSE, rmse <= maxRMSE ? "✓" : "✗");
       System.out.printf("  Coverage: %.1f%% (min: %.1f%%) %s%n", coverage * 100, minCoverage * 100,
-	  coverage >= minCoverage ? "✓" : "✗");
+          coverage >= minCoverage ? "✓" : "✗");
     }
 
     return passes;
@@ -400,12 +400,12 @@ public class WellRoutingEstimationExample {
     for (int step = 0; step < totalSteps; step++) {
       // Change routing periodically
       if (step % stepsPerRouting == 0) {
-	int routeIdx = (step / stepsPerRouting) % schedule.length;
-	setRouting(schedule[routeIdx]);
+        int routeIdx = (step / stepsPerRouting) % schedule.length;
+        setRouting(schedule[routeIdx]);
 
-	if (step % 20 == 0) {
-	  System.out.printf("Step %3d: Routing = %s%n", step, Arrays.toString(currentRouting));
-	}
+        if (step % 20 == 0) {
+          System.out.printf("Step %3d: Routing = %s%n", step, Arrays.toString(currentRouting));
+        }
       }
 
       // Get measurements with noise
@@ -416,13 +416,13 @@ public class WellRoutingEstimationExample {
 
       // Print progress every 20 steps
       if ((step + 1) % 20 == 0) {
-	System.out.printf("Step %3d: RMSE=%.4f%n", step + 1, result.getRMSE());
-	printEstimates(result.getEstimates(), result.getUncertainties(), "  ");
+        System.out.printf("Step %3d: RMSE=%.4f%n", step + 1, result.getRMSE());
+        printEstimates(result.getEstimates(), result.getUncertainties(), "  ");
       }
 
       // Check for anomalies
       if (result.isAnomalyDetected()) {
-	System.out.printf("  ⚠ Step %d: Anomaly detected!%n", step + 1);
+        System.out.printf("  ⚠ Step %d: Anomaly detected!%n", step + 1);
       }
     }
 
@@ -442,7 +442,7 @@ public class WellRoutingEstimationExample {
     for (int i = 0; i < estimates.length; i++) {
       sb.append(String.format("%.1f±%.1f", estimates[i], uncertainties[i]));
       if (i < estimates.length - 1) {
-	sb.append(", ");
+        sb.append(", ");
       }
     }
     sb.append("]");
@@ -485,11 +485,11 @@ public class WellRoutingEstimationExample {
       double ciUpper = estimate + 1.96 * uncertainty;
       boolean withinCI = trueVal >= ciLower && trueVal <= ciUpper;
       if (withinCI) {
-	inCI++;
+        inCI++;
       }
 
       System.out.printf("Well %-5d %12.2f %12.2f %9.1f%% %7.1f - %-7.1f%n", i + 1, trueVal, estimate, errorPct, ciLower,
-	  ciUpper);
+          ciUpper);
     }
 
     System.out.println(createSeparator(65));

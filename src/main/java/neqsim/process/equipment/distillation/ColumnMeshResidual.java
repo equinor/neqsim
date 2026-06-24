@@ -37,7 +37,7 @@ final class ColumnMeshResidual implements Serializable {
   ColumnMeshResidual(double[] values, ColumnMeshEquationType[] equationTypes, int[] trayIndices,
       String[] componentNames) {
     if (values.length != equationTypes.length || values.length != trayIndices.length
-	|| values.length != componentNames.length) {
+        || values.length != componentNames.length) {
       throw new IllegalArgumentException("Residual metadata arrays must have equal length");
     }
     this.values = values.clone();
@@ -99,7 +99,7 @@ final class ColumnMeshResidual implements Serializable {
   boolean isFinite() {
     for (int i = 0; i < values.length; i++) {
       if (!Double.isFinite(values[i])) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -128,7 +128,7 @@ final class ColumnMeshResidual implements Serializable {
     double max = 0.0;
     for (int i = 0; i < values.length; i++) {
       if (equationTypes[i] == type) {
-	max = Math.max(max, Math.abs(values[i]));
+        max = Math.max(max, Math.abs(values[i]));
       }
     }
     return max;
@@ -157,7 +157,7 @@ final class ColumnMeshResidual implements Serializable {
     int count = 0;
     for (int i = 0; i < equationTypes.length; i++) {
       if (equationTypes[i] == type) {
-	count++;
+        count++;
       }
     }
     return count;
@@ -167,6 +167,6 @@ final class ColumnMeshResidual implements Serializable {
   @Override
   public String toString() {
     return "ColumnMeshResidual[size=" + values.length + ", infinityNorm=" + getInfinityNorm() + ", values="
-	+ Arrays.toString(values) + "]";
+        + Arrays.toString(values) + "]";
   }
 }

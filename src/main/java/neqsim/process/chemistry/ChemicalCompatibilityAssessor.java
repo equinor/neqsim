@@ -121,7 +121,7 @@ public class ChemicalCompatibilityAssessor implements Serializable {
   public static ChemicalCompatibilityAssessor fromStream(neqsim.process.equipment.stream.StreamInterface stream) {
     ChemicalCompatibilityAssessor a = new ChemicalCompatibilityAssessor();
     neqsim.process.chemistry.util.StreamChemistryAdapter ad = new neqsim.process.chemistry.util.StreamChemistryAdapter(
-	stream);
+        stream);
     a.setTemperatureCelsius(ad.getTemperatureCelsius());
     a.setPressureBara(ad.getPressureBara());
     a.setCalciumMgL(ad.getCalciumMgL());
@@ -227,16 +227,16 @@ public class ChemicalCompatibilityAssessor implements Serializable {
       ProductionChemical a = chemicals.get(i);
       Map<String, String> row = new LinkedHashMap<String, String>();
       for (int j = 0; j < chemicals.size(); j++) {
-	ProductionChemical b = chemicals.get(j);
-	row.put(b.getName(), i == j ? "SELF" : "OK");
+        ProductionChemical b = chemicals.get(j);
+        row.put(b.getName(), i == j ? "SELF" : "OK");
       }
       matrix.put(a.getName(), row);
       thermalStability.put(a.getName(), a.isStableAt(temperatureC));
       if (!a.isStableAt(temperatureC)) {
-	addIssue(a, null, "Thermal stability exceeded",
-	    "Chemical " + a.getName() + " has stability range [" + a.getMinTemperatureC() + ", "
-		+ a.getMaxTemperatureC() + "] C; operating temperature is " + temperatureC + " C",
-	    "Switch to a chemistry rated for the operating temperature", ChemicalInteractionRule.Severity.HIGH);
+        addIssue(a, null, "Thermal stability exceeded",
+            "Chemical " + a.getName() + " has stability range [" + a.getMinTemperatureC() + ", "
+                + a.getMaxTemperatureC() + "] C; operating temperature is " + temperatureC + " C",
+            "Switch to a chemistry rated for the operating temperature", ChemicalInteractionRule.Severity.HIGH);
       }
     }
 
@@ -244,34 +244,34 @@ public class ChemicalCompatibilityAssessor implements Serializable {
     for (int i = 0; i < chemicals.size(); i++) {
       ProductionChemical a = chemicals.get(i);
       for (int j = i + 1; j < chemicals.size(); j++) {
-	ProductionChemical b = chemicals.get(j);
-	for (ChemicalInteractionRule rule : rules) {
-	  if (rule.isEnvironmentRule()) {
-	    continue;
-	  }
-	  if (rule.matches(a, b)) {
-	    addIssue(a, b, "Chemical-chemical interaction (" + rule.getCondition() + ")", rule.getMechanism(),
-		rule.getMitigation(), rule.getSeverity());
-	    String label = rule.getSeverity().name();
-	    updateMatrix(a.getName(), b.getName(), label);
-	  }
-	}
+        ProductionChemical b = chemicals.get(j);
+        for (ChemicalInteractionRule rule : rules) {
+          if (rule.isEnvironmentRule()) {
+            continue;
+          }
+          if (rule.matches(a, b)) {
+            addIssue(a, b, "Chemical-chemical interaction (" + rule.getCondition() + ")", rule.getMechanism(),
+                rule.getMitigation(), rule.getSeverity());
+            String label = rule.getSeverity().name();
+            updateMatrix(a.getName(), b.getName(), label);
+          }
+        }
       }
     }
 
     // Environment rules (chemical vs water/material/temperature)
     for (ProductionChemical a : chemicals) {
       for (ChemicalInteractionRule rule : rules) {
-	if (!rule.isEnvironmentRule()) {
-	  continue;
-	}
-	if (!rule.matches(a, null)) {
-	  continue;
-	}
-	if (rule.environmentMatches(temperatureC, calciumMgL, ironMgL, bicarbonateMgL, material)) {
-	  addIssue(a, null, "Chemical-environment interaction (" + rule.getCondition() + ")", rule.getMechanism(),
-	      rule.getMitigation(), rule.getSeverity());
-	}
+        if (!rule.isEnvironmentRule()) {
+          continue;
+        }
+        if (!rule.matches(a, null)) {
+          continue;
+        }
+        if (rule.environmentMatches(temperatureC, calciumMgL, ironMgL, bicarbonateMgL, material)) {
+          addIssue(a, null, "Chemical-environment interaction (" + rule.getCondition() + ")", rule.getMechanism(),
+              rule.getMitigation(), rule.getSeverity());
+        }
       }
     }
 
@@ -471,8 +471,8 @@ public class ChemicalCompatibilityAssessor implements Serializable {
    */
   public java.util.List<java.util.Map<String, Object>> getStandardsApplied() {
     return neqsim.process.chemistry.util.StandardsRegistry.toMapList(
-	neqsim.process.chemistry.util.StandardsRegistry.NACE_MR0175,
-	neqsim.process.chemistry.util.StandardsRegistry.NORSOK_M001);
+        neqsim.process.chemistry.util.StandardsRegistry.NACE_MR0175,
+        neqsim.process.chemistry.util.StandardsRegistry.NORSOK_M001);
   }
 
   /**

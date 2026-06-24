@@ -60,7 +60,7 @@ public abstract class onePhaseFlowNode extends FlowNode {
   public void increaseMolarRate(double moles) {
     for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
       double diff = (getBulkSystem().getPhases()[0].getComponent(i).getx()
-	  * (molarFlowRate[0] - getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()));
+          * (molarFlowRate[0] - getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()));
       getBulkSystem().addComponent(getBulkSystem().getPhase(0).getComponent(i).getComponentName(), diff);
     }
     getBulkSystem().init_x_y();
@@ -84,7 +84,7 @@ public abstract class onePhaseFlowNode extends FlowNode {
   public void updateMolarFlow() {
     for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
       double diff = (getBulkSystem().getPhases()[0].getComponent(i).getx()
-	  * (molarFlowRate[0] - getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()));
+          * (molarFlowRate[0] - getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()));
       getBulkSystem().addComponent(getBulkSystem().getPhase(0).getComponent(i).getComponentName(), diff);
     }
     getBulkSystem().init_x_y();
@@ -110,7 +110,7 @@ public abstract class onePhaseFlowNode extends FlowNode {
    */
   public double calcReynoldsNumber() {
     reynoldsNumber[0] = getVelocity() * pipe.getDiameter()
-	/ getBulkSystem().getPhases()[0].getPhysicalProperties().getKinematicViscosity();
+        / getBulkSystem().getPhases()[0].getPhysicalProperties().getKinematicViscosity();
     return reynoldsNumber[0];
   }
 
@@ -119,7 +119,7 @@ public abstract class onePhaseFlowNode extends FlowNode {
   public void init() {
     super.init();
     massFlowRate[0] = velocity[0] * getBulkSystem().getPhases()[0].getPhysicalProperties().getDensity()
-	* pipe.getArea();
+        * pipe.getArea();
     superficialVelocity[0] = velocity[0];
     molarFlowRate[0] = massFlowRate[0] / getBulkSystem().getPhases()[0].getMolarMass();
     volumetricFlowRate[0] = superficialVelocity[0] * pipe.getArea();

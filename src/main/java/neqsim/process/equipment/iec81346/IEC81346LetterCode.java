@@ -272,7 +272,7 @@ public enum IEC81346LetterCode implements Serializable {
       EquipmentEnum enumVal = EquipmentEnum.valueOf(className);
       IEC81346LetterCode code = EQUIPMENT_MAP.get(enumVal);
       if (code != null) {
-	return code;
+        return code;
       }
     } catch (IllegalArgumentException ignored) {
       // Class name does not match any EquipmentEnum — fall through to instanceof
@@ -283,8 +283,8 @@ public enum IEC81346LetterCode implements Serializable {
       return B;
     }
     if (equipment instanceof neqsim.process.equipment.heatexchanger.HeatExchanger
-	|| equipment instanceof neqsim.process.equipment.heatexchanger.Heater
-	|| equipment instanceof neqsim.process.equipment.heatexchanger.Cooler) {
+        || equipment instanceof neqsim.process.equipment.heatexchanger.Heater
+        || equipment instanceof neqsim.process.equipment.heatexchanger.Cooler) {
       return B;
     }
     if (equipment instanceof neqsim.process.equipment.compressor.Compressor) {

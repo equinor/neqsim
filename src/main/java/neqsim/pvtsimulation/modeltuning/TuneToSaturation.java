@@ -30,8 +30,8 @@ public class TuneToSaturation extends BaseTuningClass {
     // getSimulation().getThermoSystem().display();
     for (int i = 0; i < getSimulation().getThermoSystem().getPhase(0).getNumberOfComponents(); i++) {
       if (getSimulation().getThermoSystem().getPhase(0).getComponent(i).isIsPlusFraction()) {
-	plusNumber = i;
-	plusMolarMass = getSimulation().getThermoSystem().getPhase(0).getComponent(plusNumber).getMolarMass();
+        plusNumber = i;
+        plusMolarMass = getSimulation().getThermoSystem().getPhase(0).getComponent(plusNumber).getMolarMass();
       }
     }
     getSimulation().getThermoSystem().getCharacterization().characterisePlusFraction();
@@ -62,7 +62,7 @@ public class TuneToSaturation extends BaseTuningClass {
       getSimulation().getThermoSystem().setPressure(saturationPressure);
       // getSimulation().getThermoSystem().display();
       for (int i = 0; i < getSimulation().getThermoSystem().getMaxNumberOfPhases(); i++) {
-	getSimulation().getThermoSystem().getPhase(i).getComponent(plusNumber).setMolarMass(plusMolarMass);
+        getSimulation().getThermoSystem().getPhase(i).getComponent(plusNumber).setMolarMass(plusMolarMass);
       }
       // getSimulation().getThermoSystem().display();
       getSimulation().getThermoSystem().getCharacterization().characterisePlusFraction();
@@ -72,12 +72,12 @@ public class TuneToSaturation extends BaseTuningClass {
       // getSimulation().getThermoSystem().init(1);
       getSimulation().run();
       if (Math.abs(dpOld) < Math.abs(dp)) {
-	sign *= -1.0;
+        sign *= -1.0;
       }
       dpOld = dp;
 
       System.out.println(
-	  "pressure " + getSimulation().getThermoSystem().getPressure() + "dp " + dp + " molarmass" + plusMolarMass);
+          "pressure " + getSimulation().getThermoSystem().getPressure() + "dp " + dp + " molarmass" + plusMolarMass);
     }
   }
 }

@@ -228,13 +228,13 @@ public class WorkflowResult implements Serializable {
       sb.append("| Parameter | Value |\n");
       sb.append("|-----------|-------|\n");
       if (totalEquipmentWeightTonnes > 0) {
-	sb.append(String.format("| Equipment Weight | %.0f tonnes |\n", totalEquipmentWeightTonnes));
+        sb.append(String.format("| Equipment Weight | %.0f tonnes |\n", totalEquipmentWeightTonnes));
       }
       if (totalFootprintM2 > 0) {
-	sb.append(String.format("| Module Footprint | %.0f m² |\n", totalFootprintM2));
+        sb.append(String.format("| Module Footprint | %.0f m² |\n", totalFootprintM2));
       }
       if (totalPowerMW > 0) {
-	sb.append(String.format("| Total Power | %.1f MW |\n", totalPowerMW));
+        sb.append(String.format("| Total Power | %.1f MW |\n", totalPowerMW));
       }
       sb.append("\n");
     }
@@ -257,32 +257,32 @@ public class WorkflowResult implements Serializable {
       sb.append("|-----------|-------|\n");
 
       if (subseaSystemResult != null) {
-	sb.append(String.format("| Architecture | %s |\n", subseaSystemResult.getClass().getSimpleName()));
-	sb.append(String.format("| Arrival Pressure | %.1f bara |\n", subseaSystemResult.getArrivalPressureBara()));
-	sb.append(String.format("| Arrival Temperature | %.1f °C |\n", subseaSystemResult.getArrivalTemperatureC()));
-	sb.append(String.format("| Subsea CAPEX | %.0f MUSD |\n", subseaSystemResult.getTotalSubseaCapexMusd()));
+        sb.append(String.format("| Architecture | %s |\n", subseaSystemResult.getClass().getSimpleName()));
+        sb.append(String.format("| Arrival Pressure | %.1f bara |\n", subseaSystemResult.getArrivalPressureBara()));
+        sb.append(String.format("| Arrival Temperature | %.1f °C |\n", subseaSystemResult.getArrivalTemperatureC()));
+        sb.append(String.format("| Subsea CAPEX | %.0f MUSD |\n", subseaSystemResult.getTotalSubseaCapexMusd()));
       } else {
-	if (arrivalPressureBara > 0) {
-	  sb.append(String.format("| Arrival Pressure | %.1f bara |\n", arrivalPressureBara));
-	}
-	if (arrivalTemperatureC > 0) {
-	  sb.append(String.format("| Arrival Temperature | %.1f °C |\n", arrivalTemperatureC));
-	}
-	if (subseaCapexMusd > 0) {
-	  sb.append(String.format("| Subsea CAPEX | %.0f MUSD |\n", subseaCapexMusd));
-	}
+        if (arrivalPressureBara > 0) {
+          sb.append(String.format("| Arrival Pressure | %.1f bara |\n", arrivalPressureBara));
+        }
+        if (arrivalTemperatureC > 0) {
+          sb.append(String.format("| Arrival Temperature | %.1f °C |\n", arrivalTemperatureC));
+        }
+        if (subseaCapexMusd > 0) {
+          sb.append(String.format("| Subsea CAPEX | %.0f MUSD |\n", subseaCapexMusd));
+        }
       }
 
       if (selectedTiebackOption != null) {
-	sb.append(String.format("| Selected Host | %s |\n", selectedTiebackOption.getHostName()));
-	sb.append(String.format("| Tieback Distance | %.1f km |\n", selectedTiebackOption.getDistanceKm()));
+        sb.append(String.format("| Selected Host | %s |\n", selectedTiebackOption.getHostName()));
+        sb.append(String.format("| Tieback Distance | %.1f km |\n", selectedTiebackOption.getDistanceKm()));
       }
 
       sb.append("\n");
 
       if (subseaSimulationError != null) {
-	sb.append("**Note:** Subsea simulation encountered an error: ");
-	sb.append(subseaSimulationError).append("\n\n");
+        sb.append("**Note:** Subsea simulation encountered an error: ");
+        sb.append(subseaSimulationError).append("\n\n");
       }
     }
 
@@ -293,8 +293,8 @@ public class WorkflowResult implements Serializable {
       sb.append("|------|---------------|------------|----------|\n");
 
       for (TiebackOption opt : tiebackReport.getOptions()) {
-	sb.append(String.format("| %s | %.1f | %.0f | %s |\n", opt.getHostName(), opt.getDistanceKm(), opt.getNpvMusd(),
-	    opt.isFeasible() ? "✓" : "✗"));
+        sb.append(String.format("| %s | %.1f | %.0f | %s |\n", opt.getHostName(), opt.getDistanceKm(), opt.getNpvMusd(),
+            opt.isFeasible() ? "✓" : "✗"));
       }
       sb.append("\n");
     }
@@ -363,6 +363,6 @@ public class WorkflowResult implements Serializable {
   @Override
   public String toString() {
     return String.format("WorkflowResult[%s, NPV=%.0f MUSD, IRR=%.1f%%, Viable=%s]", projectName, npv, irr * 100,
-	isViable());
+        isViable());
   }
 }

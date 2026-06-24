@@ -97,15 +97,15 @@ public class ReactiveDistillationTest {
     // Tray 0 = Reboiler, Trays 1-5 = middle, Tray 6 = Condenser
     // Middle tray indices: 0=Tray1, 1=Tray2, 2=Tray3, 3=Tray4, 4=Tray5
     assertFalse(column.getTray(1).isUseReactiveFlash(),
-	"Middle tray 0 (before reactive section) should not have reactive flash");
+        "Middle tray 0 (before reactive section) should not have reactive flash");
     assertTrue(column.getTray(2).isUseReactiveFlash(),
-	"Middle tray 1 (in reactive section) should have reactive flash");
+        "Middle tray 1 (in reactive section) should have reactive flash");
     assertTrue(column.getTray(3).isUseReactiveFlash(),
-	"Middle tray 2 (in reactive section) should have reactive flash");
+        "Middle tray 2 (in reactive section) should have reactive flash");
     assertTrue(column.getTray(4).isUseReactiveFlash(),
-	"Middle tray 3 (in reactive section) should have reactive flash");
+        "Middle tray 3 (in reactive section) should have reactive flash");
     assertFalse(column.getTray(5).isUseReactiveFlash(),
-	"Middle tray 4 (after reactive section) should not have reactive flash");
+        "Middle tray 4 (after reactive section) should not have reactive flash");
   }
 
   /**
@@ -160,7 +160,7 @@ public class ReactiveDistillationTest {
 
     double massBalanceError = Math.abs(totalOut - 1000.0) / 1000.0;
     assertTrue(massBalanceError < 0.05,
-	"Mass balance error should be < 5% for NR=0 system, got " + (massBalanceError * 100) + "%");
+        "Mass balance error should be < 5% for NR=0 system, got " + (massBalanceError * 100) + "%");
 
     // For NR=0, reactive column should produce results identical to the standard column
     // because the PHflash delegation bypasses the reactive solver entirely
@@ -369,7 +369,7 @@ public class ReactiveDistillationTest {
     // Compositions should match within 5% relative (tray PH flash vs standalone TP flash
     // may have slightly different convergence since PH flash iterates on T)
     assertEquals(flashCO2, trayCO2, flashCO2 * 0.05,
-	"CO2 from reactive tray should match standalone reactive TP flash");
+        "CO2 from reactive tray should match standalone reactive TP flash");
     assertEquals(flashH2, trayH2, flashH2 * 0.05, "H2 from reactive tray should match standalone reactive TP flash");
   }
 

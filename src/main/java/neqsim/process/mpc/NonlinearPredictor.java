@@ -204,35 +204,35 @@ public class NonlinearPredictor implements Serializable {
 
       // Simulate each step
       for (int k = 0; k < predictionHorizon; k++) {
-	time[k] = k * sampleTimeSeconds;
+        time[k] = k * sampleTimeSeconds;
 
-	// Apply MV values for this step
-	for (int j = 0; j < numMV; j++) {
-	  ManipulatedVariable mv = manipulatedVariables.get(j);
-	  double value = trajectory.getValue(mv.getName(), k);
-	  if (!Double.isNaN(value)) {
-	    mv.writeValue(value);
-	  }
-	  mvTrajectories[j][k] = mv.getCurrentValue();
-	}
+        // Apply MV values for this step
+        for (int j = 0; j < numMV; j++) {
+          ManipulatedVariable mv = manipulatedVariables.get(j);
+          double value = trajectory.getValue(mv.getName(), k);
+          if (!Double.isNaN(value)) {
+            mv.writeValue(value);
+          }
+          mvTrajectories[j][k] = mv.getCurrentValue();
+        }
 
-	// Run simulation
-	processSystem.run();
+        // Run simulation
+        processSystem.run();
 
-	// Record CV values
-	for (int i = 0; i < numCV; i++) {
-	  cvTrajectories[i][k] = controlledVariables.get(i).readValue();
-	}
+        // Record CV values
+        for (int i = 0; i < numCV; i++) {
+          cvTrajectories[i][k] = controlledVariables.get(i).readValue();
+        }
       }
     } finally {
       // Restore original MV values
       for (int j = 0; j < numMV; j++) {
-	manipulatedVariables.get(j).writeValue(originalMV[j]);
+        manipulatedVariables.get(j).writeValue(originalMV[j]);
       }
       try {
-	processSystem.run();
+        processSystem.run();
       } catch (Exception e) {
-	// Ignore restore errors
+        // Ignore restore errors
       }
     }
 
@@ -260,7 +260,7 @@ public class NonlinearPredictor implements Serializable {
     for (int j = 0; j < manipulatedVariables.size() && j < mvValues.length; j++) {
       String name = manipulatedVariables.get(j).getName();
       for (int k = 0; k < predictionHorizon; k++) {
-	trajectory.addMove(name, mvValues[j]);
+        trajectory.addMove(name, mvValues[j]);
       }
     }
     return predict(trajectory);
@@ -296,9 +296,9 @@ public class NonlinearPredictor implements Serializable {
     public MVTrajectory addMove(String mvName, double value) {
       int index = mvNames.indexOf(mvName);
       if (index < 0) {
-	mvNames.add(mvName);
-	mvMoves.add(new ArrayList<>());
-	index = mvNames.size() - 1;
+        mvNames.add(mvName);
+        mvMoves.add(new ArrayList<>());
+        index = mvNames.size() - 1;
       }
       mvMoves.get(index).add(value);
       return this;
@@ -314,14 +314,14 @@ public class NonlinearPredictor implements Serializable {
     public MVTrajectory setMoves(String mvName, double[] values) {
       int index = mvNames.indexOf(mvName);
       if (index < 0) {
-	mvNames.add(mvName);
-	mvMoves.add(new ArrayList<>());
-	index = mvNames.size() - 1;
+        mvNames.add(mvName);
+        mvMoves.add(new ArrayList<>());
+        index = mvNames.size() - 1;
       } else {
-	mvMoves.get(index).clear();
+        mvMoves.get(index).clear();
       }
       for (double v : values) {
-	mvMoves.get(index).add(v);
+        mvMoves.get(index).add(v);
       }
       return this;
     }
@@ -336,18 +336,18 @@ public class NonlinearPredictor implements Serializable {
     public double getValue(String mvName, int step) {
       int index = mvNames.indexOf(mvName);
       if (index < 0) {
-	return Double.NaN;
+        return Double.NaN;
       }
       List<Double> moves = mvMoves.get(index);
       if (step < 0) {
-	return Double.NaN;
+        return Double.NaN;
       }
       if (step < moves.size()) {
-	return moves.get(step);
+        return moves.get(step);
       }
       // Hold last value
       if (!moves.isEmpty()) {
-	return moves.get(moves.size() - 1);
+        return moves.get(moves.size() - 1);
       }
       return Double.NaN;
     }
@@ -361,7 +361,7 @@ public class NonlinearPredictor implements Serializable {
     public int getLength(String mvName) {
       int index = mvNames.indexOf(mvName);
       if (index < 0) {
-	return 0;
+        return 0;
       }
       return mvMoves.get(index).size();
     }
@@ -402,7 +402,7 @@ public class NonlinearPredictor implements Serializable {
      * @param sampleTime sample interval
      */
     public PredictionResult(double[][] cvTrajectories, double[][] mvTrajectories, double[] time, String[] cvNames,
-	String[] mvNames, double sampleTime) {
+        String[] mvNames, double sampleTime) {
       this.cvTrajectories = cvTrajectories;
       this.mvTrajectories = mvTrajectories;
       this.time = time != null ? time.clone() : new double[0];
@@ -419,9 +419,9 @@ public class NonlinearPredictor implements Serializable {
      */
     public double[] getTrajectory(String cvName) {
       for (int i = 0; i < cvNames.length; i++) {
-	if (cvName.equals(cvNames[i])) {
-	  return cvTrajectories[i].clone();
-	}
+        if (cvName.equals(cvNames[i])) {
+          return cvTrajectories[i].clone();
+        }
       }
       return new double[0];
     }
@@ -434,7 +434,7 @@ public class NonlinearPredictor implements Serializable {
      */
     public double[] getTrajectory(int index) {
       if (index >= 0 && index < cvTrajectories.length) {
-	return cvTrajectories[index].clone();
+        return cvTrajectories[index].clone();
       }
       return new double[0];
     }
@@ -447,9 +447,9 @@ public class NonlinearPredictor implements Serializable {
      */
     public double[] getMVTrajectory(String mvName) {
       for (int j = 0; j < mvNames.length; j++) {
-	if (mvName.equals(mvNames[j])) {
-	  return mvTrajectories[j].clone();
-	}
+        if (mvName.equals(mvNames[j])) {
+          return mvTrajectories[j].clone();
+        }
       }
       return new double[0];
     }
@@ -521,8 +521,8 @@ public class NonlinearPredictor implements Serializable {
       double[] traj = getTrajectory(cvName);
       double ise = 0.0;
       for (double value : traj) {
-	double error = value - setpoint;
-	ise += error * error * sampleTime;
+        double error = value - setpoint;
+        ise += error * error * sampleTime;
       }
       return ise;
     }
@@ -535,10 +535,10 @@ public class NonlinearPredictor implements Serializable {
       sb.append("  sampleTime: ").append(sampleTime).append(" s\n");
       sb.append("  CVs:\n");
       for (int i = 0; i < cvNames.length; i++) {
-	double[] traj = cvTrajectories[i];
-	sb.append("    ").append(cvNames[i]).append(": ");
-	sb.append(String.format("%.4f", traj[0])).append(" -> ");
-	sb.append(String.format("%.4f", traj[traj.length - 1])).append("\n");
+        double[] traj = cvTrajectories[i];
+        sb.append("    ").append(cvNames[i]).append(": ");
+        sb.append(String.format("%.4f", traj[0])).append(" -> ");
+        sb.append(String.format("%.4f", traj[traj.length - 1])).append("\n");
       }
       sb.append("}");
       return sb.toString();

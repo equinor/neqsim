@@ -65,7 +65,7 @@ public class PhaseVegaEos extends PhaseEos {
 
     for (int i = 0; i < numberOfComponents; i++) {
       if (Math.abs(cachedMoleFractions[i] - getComponent(i).getx()) > 1e-10) {
-	return true;
+        return true;
       }
     }
 
@@ -137,8 +137,8 @@ public class PhaseVegaEos extends PhaseEos {
     if (initType >= 1) {
       // Check if we can skip Vega calculations (state unchanged)
       if (propertiesCalculated && !hasStateChanged()) {
-	// State unchanged - skip expensive Vega calculations
-	return;
+        // State unchanged - skip expensive Vega calculations
+        return;
       }
 
       double[] temp = new double[18];
@@ -230,7 +230,7 @@ public class PhaseVegaEos extends PhaseEos {
   @Override
   public double calcPressuredV() {
     return -Math.pow(getDensity() / getMolarMass(), 2) * R * temperature * (1 + 2 * ar[0][1].val + ar[0][2].val)
-	/ numberOfMolesInPhase;
+        / numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */
@@ -243,7 +243,7 @@ public class PhaseVegaEos extends PhaseEos {
   @Override
   public double dFdNdN(int i, int j) {
     return ((ComponentEosInterface) getComponent(i)).dFdNdN(j, this, this.getNumberOfComponents(), temperature,
-	pressure);
+        pressure);
   }
 
   /** {@inheritDoc} */
@@ -274,7 +274,7 @@ public class PhaseVegaEos extends PhaseEos {
   @Override
   public double getdPdVTn() {
     return -Math.pow(getNumberOfMolesInPhase() / getVolume(), 2) * R * temperature
-	* (1 + 2 * ar[0][1].val + ar[0][2].val) / numberOfMolesInPhase;
+        * (1 + 2 * ar[0][1].val + ar[0][2].val) / numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */

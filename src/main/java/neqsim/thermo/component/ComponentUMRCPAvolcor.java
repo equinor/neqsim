@@ -127,7 +127,7 @@ public class ComponentUMRCPAvolcor extends ComponentUMRCPA {
     }
     if (initType >= 3) {
       for (int j = 0; j < numberOfComponents; j++) {
-	Cij[j] = ((PhaseUMRCPAvolcor) phase).calcCij(componentNumber, j, phase, temp, pres, numberOfComponents);
+        Cij[j] = ((PhaseUMRCPAvolcor) phase).calcCij(componentNumber, j, phase, temp, pres, numberOfComponents);
       }
     }
   }
@@ -186,7 +186,7 @@ public class ComponentUMRCPAvolcor extends ComponentUMRCPA {
     double locFCT = pv.FTC();
     double locFCC = pv.FCC();
     double deltaC = locFnC * locCT + locFBC * locCT * getBi() + locFCD * locCT * getAi()
-	+ (locFCT + locFCC * locCT + locFCD * phase.getAT()) * getCi() + locFC * getCiT();
+        + (locFCT + locFCC * locCT + locFCD * phase.getAT()) * getCi() + locFC * getCiT();
     return super.dFdNdT(phase, numberOfComponents, temperature, pressure) + deltaC;
   }
 
@@ -202,8 +202,8 @@ public class ComponentUMRCPAvolcor extends ComponentUMRCPA {
     ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
     double locCj = ((ComponentUMRCPAvolcor) compArray[j]).getCi();
     double deltaC = locFnC * locCj + locFBC * locCj * getBi()
-	+ (locFnC + locFCC * locCj + locFBC * compArray[j].getBi() + locFCD * compArray[j].getAi()) * getCi()
-	+ locFC * getCij(j) + locFCD * locCj * getAi();
+        + (locFnC + locFCC * locCj + locFBC * compArray[j].getBi() + locFCD * compArray[j].getAi()) * getCi()
+        + locFC * getCij(j) + locFCD * locCj * getAi();
     return super.dFdNdN(j, phase, numberOfComponents, temperature, pressure) + deltaC;
   }
 }

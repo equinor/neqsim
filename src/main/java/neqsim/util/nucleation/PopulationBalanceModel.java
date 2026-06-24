@@ -280,7 +280,7 @@ public class PopulationBalanceModel {
 
     for (int i = 0; i < numberOfBins; i++) {
       if (diameter >= binEdges[i] && diameter < binEdges[i + 1]) {
-	return i;
+        return i;
       }
     }
     return numberOfBins - 1;
@@ -297,7 +297,7 @@ public class PopulationBalanceModel {
     if (rate > 0.0 && nucleationBin >= 0 && nucleationBin < numberOfBins) {
       double newParticles = rate * dt;
       if (newParticles > 1e30) {
-	newParticles = 1e30; // Physical cap
+        newParticles = 1e30; // Physical cap
       }
       numberDensity[nucleationBin] += newParticles;
     }
@@ -324,7 +324,7 @@ public class PopulationBalanceModel {
 
     for (int i = 0; i < numberOfBins - 1; i++) {
       if (numberDensity[i] <= 0.0) {
-	continue;
+        continue;
       }
 
       // Growth velocity in diameter space: dD/dt = 2 * dr/dt
@@ -334,7 +334,7 @@ public class PopulationBalanceModel {
 
       // Cap at 1.0 (CFL condition)
       if (fractionOut > 1.0) {
-	fractionOut = 1.0;
+        fractionOut = 1.0;
       }
 
       double nTransfer = numberDensity[i] * fractionOut;
@@ -381,20 +381,20 @@ public class PopulationBalanceModel {
     // For efficiency, use only the self-coagulation (i=j) and near-neighbor terms
     for (int i = 0; i < numberOfBins; i++) {
       if (numberDensity[i] < 1.0) {
-	continue;
+        continue;
       }
 
       // Self-coagulation: rate = 0.5 * K * N_i^2
       double selfRate = 0.5 * kernel * numberDensity[i] * numberDensity[i] * dt;
       if (selfRate > numberDensity[i] * 0.5) {
-	selfRate = numberDensity[i] * 0.5; // Don't remove more than half
+        selfRate = numberDensity[i] * 0.5; // Don't remove more than half
       }
 
       // Two particles of size i merge to form one particle of size 2^(1/3)*d_i
       // This roughly goes to bin i+1 (since bins are geometrically spaced)
       newDensity[i] -= 2.0 * selfRate;
       if (i + 1 < numberOfBins) {
-	newDensity[i + 1] += selfRate;
+        newDensity[i + 1] += selfRate;
       }
     }
 
@@ -424,9 +424,9 @@ public class PopulationBalanceModel {
       meanDiameter += n * d;
 
       if (n > 0.0 && d > 0.0) {
-	double logD = Math.log(d);
-	sumNlogD += n * logD;
-	sumNlogD2 += n * logD * logD;
+        double logD = Math.log(d);
+        sumNlogD += n * logD;
+        sumNlogD2 += n * logD * logD;
       }
     }
 
@@ -439,9 +439,9 @@ public class PopulationBalanceModel {
       // Geometric standard deviation
       double logDVar = sumNlogD2 / totalNumberDensity - logDMean * logDMean;
       if (logDVar > 0.0) {
-	geometricStdDev = Math.exp(Math.sqrt(logDVar));
+        geometricStdDev = Math.exp(Math.sqrt(logDVar));
       } else {
-	geometricStdDev = 1.0;
+        geometricStdDev = 1.0;
       }
     }
 
@@ -467,8 +467,8 @@ public class PopulationBalanceModel {
     for (int i = 0; i < numberOfBins; i++) {
       cumulative += numberDensity[i];
       if (cumulative >= halfN) {
-	medianDiameter = binDiameters[i];
-	return;
+        medianDiameter = binDiameters[i];
+        return;
       }
     }
     medianDiameter = binDiameters[numberOfBins - 1];
@@ -643,7 +643,7 @@ public class PopulationBalanceModel {
       Map<String, Object> bins = new LinkedHashMap<String, Object>();
       double[] dUm = new double[numberOfBins];
       for (int i = 0; i < numberOfBins; i++) {
-	dUm[i] = binDiameters[i] * 1e6;
+        dUm[i] = binDiameters[i] * 1e6;
       }
       bins.put("diameters_um", dUm);
       bins.put("numberDensity_per_m3", Arrays.copyOf(numberDensity, numberOfBins));
@@ -669,6 +669,6 @@ public class PopulationBalanceModel {
       return "PopulationBalanceModel [not solved]";
     }
     return String.format("PBM: N=%.2e/m3, d_mean=%.2f um, d_50=%.2f um, sigma_g=%.2f, mass=%.3f mg/m3",
-	totalNumberDensity, meanDiameter * 1e6, medianDiameter * 1e6, geometricStdDev, totalMassConcentration * 1e6);
+        totalNumberDensity, meanDiameter * 1e6, medianDiameter * 1e6, geometricStdDev, totalMassConcentration * 1e6);
   }
 }

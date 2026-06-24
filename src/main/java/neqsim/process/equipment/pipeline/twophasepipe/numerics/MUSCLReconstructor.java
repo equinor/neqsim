@@ -171,7 +171,7 @@ public class MUSCLReconstructor implements Serializable {
     double r;
     if (Math.abs(deltaRight) < EPSILON) {
       if (Math.abs(deltaLeft) < EPSILON) {
-	return 0; // Both gradients zero
+        return 0; // Both gradients zero
       }
       r = deltaLeft > 0 ? 1e10 : -1e10; // Large ratio
     } else {

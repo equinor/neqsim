@@ -112,7 +112,7 @@ public class AgentFeedbackCollector implements Serializable {
     int successes = 0;
     for (SessionSummary s : sessions) {
       if (s.outcome == AgentSession.Outcome.SUCCESS || s.outcome == AgentSession.Outcome.PARTIAL) {
-	successes++;
+        successes++;
       }
     }
     return (double) successes / sessions.size();
@@ -129,10 +129,10 @@ public class AgentFeedbackCollector implements Serializable {
     int successes = 0;
     for (SessionSummary s : sessions) {
       if (s.agentName.equals(agentName)) {
-	total++;
-	if (s.outcome == AgentSession.Outcome.SUCCESS || s.outcome == AgentSession.Outcome.PARTIAL) {
-	  successes++;
-	}
+        total++;
+        if (s.outcome == AgentSession.Outcome.SUCCESS || s.outcome == AgentSession.Outcome.PARTIAL) {
+          successes++;
+        }
       }
     }
     return total > 0 ? (double) successes / total : 0.0;
@@ -165,9 +165,9 @@ public class AgentFeedbackCollector implements Serializable {
     Map<String, Integer> counts = new LinkedHashMap<String, Integer>();
     for (SessionSummary s : sessions) {
       if (s.outcome == AgentSession.Outcome.FAILED && s.failureCategory != null) {
-	String cat = s.failureCategory;
-	Integer prev = counts.get(cat);
-	counts.put(cat, prev != null ? prev + 1 : 1);
+        String cat = s.failureCategory;
+        Integer prev = counts.get(cat);
+        counts.put(cat, prev != null ? prev + 1 : 1);
       }
     }
     return counts;
@@ -186,8 +186,8 @@ public class AgentFeedbackCollector implements Serializable {
     int count = 0;
     for (SessionSummary s : sessions) {
       if (s.totalSimulations > 0) {
-	totalRate += (double) s.successfulSimulations / s.totalSimulations;
-	count++;
+        totalRate += (double) s.successfulSimulations / s.totalSimulations;
+        count++;
       }
     }
     return count > 0 ? totalRate / count : 0.0;
@@ -212,15 +212,15 @@ public class AgentFeedbackCollector implements Serializable {
     Map<String, Map<String, Object>> agentBreakdown = new LinkedHashMap<String, Map<String, Object>>();
     for (SessionSummary s : sessions) {
       if (!agentBreakdown.containsKey(s.agentName)) {
-	Map<String, Object> agentInfo = new LinkedHashMap<String, Object>();
-	agentInfo.put("sessions", 0);
-	agentInfo.put("successes", 0);
-	agentBreakdown.put(s.agentName, agentInfo);
+        Map<String, Object> agentInfo = new LinkedHashMap<String, Object>();
+        agentInfo.put("sessions", 0);
+        agentInfo.put("successes", 0);
+        agentBreakdown.put(s.agentName, agentInfo);
       }
       Map<String, Object> agentInfo = agentBreakdown.get(s.agentName);
       agentInfo.put("sessions", ((Integer) agentInfo.get("sessions")) + 1);
       if (s.outcome == AgentSession.Outcome.SUCCESS || s.outcome == AgentSession.Outcome.PARTIAL) {
-	agentInfo.put("successes", ((Integer) agentInfo.get("successes")) + 1);
+        agentInfo.put("successes", ((Integer) agentInfo.get("successes")) + 1);
       }
     }
     report.put("agentBreakdown", agentBreakdown);
@@ -252,13 +252,13 @@ public class AgentFeedbackCollector implements Serializable {
     Map<String, Map<String, Integer>> agentFailures = new LinkedHashMap<String, Map<String, Integer>>();
     for (SessionSummary s : sessions) {
       if (s.outcome == AgentSession.Outcome.FAILED && s.failureCategory != null) {
-	Map<String, Integer> catMap = agentFailures.get(s.agentName);
-	if (catMap == null) {
-	  catMap = new LinkedHashMap<String, Integer>();
-	  agentFailures.put(s.agentName, catMap);
-	}
-	Integer prev = catMap.get(s.failureCategory);
-	catMap.put(s.failureCategory, prev != null ? prev + 1 : 1);
+        Map<String, Integer> catMap = agentFailures.get(s.agentName);
+        if (catMap == null) {
+          catMap = new LinkedHashMap<String, Integer>();
+          agentFailures.put(s.agentName, catMap);
+        }
+        Integer prev = catMap.get(s.failureCategory);
+        catMap.put(s.failureCategory, prev != null ? prev + 1 : 1);
       }
     }
 
@@ -266,21 +266,21 @@ public class AgentFeedbackCollector implements Serializable {
     for (Map.Entry<String, Map<String, Integer>> agentEntry : agentFailures.entrySet()) {
       String agent = agentEntry.getKey();
       for (Map.Entry<String, Integer> catEntry : agentEntry.getValue().entrySet()) {
-	String category = catEntry.getKey();
-	int count = catEntry.getValue();
+        String category = catEntry.getKey();
+        int count = catEntry.getValue();
 
-	// Only recommend for patterns that occur more than once
-	if (count < 2) {
-	  continue;
-	}
+        // Only recommend for patterns that occur more than once
+        if (count < 2) {
+          continue;
+        }
 
-	Map<String, Object> rec = new LinkedHashMap<String, Object>();
-	rec.put("affectedAgent", agent);
-	rec.put("category", category);
-	rec.put("frequency", count);
-	rec.put("priority", count >= 5 ? "critical" : count >= 3 ? "high" : "medium");
-	rec.put("recommendation", getRemediationText(category, agent, count));
-	remediations.add(rec);
+        Map<String, Object> rec = new LinkedHashMap<String, Object>();
+        rec.put("affectedAgent", agent);
+        rec.put("category", category);
+        rec.put("frequency", count);
+        rec.put("priority", count >= 5 ? "critical" : count >= 3 ? "high" : "medium");
+        rec.put("recommendation", getRemediationText(category, agent, count));
+        remediations.add(rec);
       }
     }
 
@@ -288,7 +288,7 @@ public class AgentFeedbackCollector implements Serializable {
     Collections.sort(remediations, new java.util.Comparator<Map<String, Object>>() {
       @Override
       public int compare(Map<String, Object> a, Map<String, Object> b) {
-	return ((Integer) b.get("frequency")).compareTo((Integer) a.get("frequency"));
+        return ((Integer) b.get("frequency")).compareTo((Integer) a.get("frequency"));
       }
     });
 
@@ -313,11 +313,11 @@ public class AgentFeedbackCollector implements Serializable {
     if (sessions.size() < windowSize) {
       // Not enough data for trend analysis — return single window
       if (!sessions.isEmpty()) {
-	Map<String, Object> window = new LinkedHashMap<String, Object>();
-	window.put("window", 1);
-	window.put("sessions", sessions.size());
-	window.put("successRate", getOverallSuccessRate());
-	trend.add(window);
+        Map<String, Object> window = new LinkedHashMap<String, Object>();
+        window.put("window", 1);
+        window.put("sessions", sessions.size());
+        window.put("successRate", getOverallSuccessRate());
+        trend.add(window);
       }
       return trend;
     }
@@ -329,10 +329,10 @@ public class AgentFeedbackCollector implements Serializable {
       int total = end - start;
 
       for (int i = start; i < end; i++) {
-	SessionSummary s = sessions.get(i);
-	if (s.outcome == AgentSession.Outcome.SUCCESS || s.outcome == AgentSession.Outcome.PARTIAL) {
-	  successes++;
-	}
+        SessionSummary s = sessions.get(i);
+        if (s.outcome == AgentSession.Outcome.SUCCESS || s.outcome == AgentSession.Outcome.PARTIAL) {
+          successes++;
+        }
       }
 
       windowCount++;
@@ -366,7 +366,7 @@ public class AgentFeedbackCollector implements Serializable {
     int missingApiCount = 0;
     for (SessionSummary s : sessions) {
       if (s.failureCategory != null && s.failureCategory.equals("MISSING_API")) {
-	missingApiCount++;
+        missingApiCount++;
       }
     }
 
@@ -374,12 +374,12 @@ public class AgentFeedbackCollector implements Serializable {
     if (missingApiCount == 0) {
       APIGap best = discoveredGaps.get(0);
       for (APIGap gap : discoveredGaps) {
-	if ("critical".equals(gap.priority)) {
-	  return gap;
-	}
-	if ("important".equals(gap.priority) && !"critical".equals(best.priority)) {
-	  best = gap;
-	}
+        if ("critical".equals(gap.priority)) {
+          return gap;
+        }
+        if ("important".equals(gap.priority) && !"critical".equals(best.priority)) {
+          best = gap;
+        }
       }
       return best;
     }
@@ -388,9 +388,9 @@ public class AgentFeedbackCollector implements Serializable {
     APIGap best = null;
     for (APIGap gap : discoveredGaps) {
       if ("critical".equals(gap.priority)) {
-	if (best == null || gap.discoveredAt > best.discoveredAt) {
-	  best = gap;
-	}
+        if (best == null || gap.discoveredAt > best.discoveredAt) {
+          best = gap;
+        }
       }
     }
     return best != null ? best : discoveredGaps.get(discoveredGaps.size() - 1);
@@ -407,30 +407,30 @@ public class AgentFeedbackCollector implements Serializable {
   private String getRemediationText(String category, String agent, int count) {
     if ("CONVERGENCE".equals(category)) {
       return "Agent '" + agent + "' has " + count + " convergence failures. Load the troubleshooting skill and apply "
-	  + "ranked recovery strategies: (1) tighten recycle tolerance, (2) adjust "
-	  + "initial estimates, (3) switch solver type, (4) simplify fluid model.";
+          + "ranked recovery strategies: (1) tighten recycle tolerance, (2) adjust "
+          + "initial estimates, (3) switch solver type, (4) simplify fluid model.";
     }
     if ("MISSING_API".equals(category)) {
       return "Agent '" + agent + "' encountered " + count
-	  + " missing API errors. Review discovered API gaps and implement "
-	  + "the missing classes/methods. Check CHANGELOG_AGENT_NOTES.md for recent changes.";
+          + " missing API errors. Review discovered API gaps and implement "
+          + "the missing classes/methods. Check CHANGELOG_AGENT_NOTES.md for recent changes.";
     }
     if ("INVALID_INPUT".equals(category)) {
       return "Agent '" + agent + "' received " + count
-	  + " invalid inputs. Add stricter input validation in the agent's "
-	  + "scope phase. Load the input-validation skill for pre-simulation checks.";
+          + " invalid inputs. Add stricter input validation in the agent's "
+          + "scope phase. Load the input-validation skill for pre-simulation checks.";
     }
     if ("CODE_ERROR".equals(category)) {
       return "Agent '" + agent + "' has " + count + " code errors. Review Java 8 compatibility rules and ensure all "
-	  + "generated code compiles. Check for null pointer issues in fluid initialization.";
+          + "generated code compiles. Check for null pointer issues in fluid initialization.";
     }
     if ("TIMEOUT".equals(category)) {
       return "Agent '" + agent + "' has " + count
-	  + " timeouts. Reduce simulation complexity, use simpler EOS for initial "
-	  + "estimates, or increase time limits for complex multi-recycle flowsheets.";
+          + " timeouts. Reduce simulation complexity, use simpler EOS for initial "
+          + "estimates, or increase time limits for complex multi-recycle flowsheets.";
     }
     return "Agent '" + agent + "' has " + count + " failures in category " + category
-	+ ". Review session logs for root cause.";
+        + ". Review session logs for root cause.";
   }
 
   /**
@@ -445,19 +445,19 @@ public class AgentFeedbackCollector implements Serializable {
     }
     String lower = failureReason.toLowerCase();
     if (lower.contains("convergence") || lower.contains("converge") || lower.contains("iteration")
-	|| lower.contains("diverge")) {
+        || lower.contains("diverge")) {
       return FailureCategory.CONVERGENCE;
     }
     if (lower.contains("missing") || lower.contains("not found") || lower.contains("no such method")
-	|| lower.contains("not implemented")) {
+        || lower.contains("not implemented")) {
       return FailureCategory.MISSING_API;
     }
     if (lower.contains("invalid") || lower.contains("negative pressure") || lower.contains("negative temperature")
-	|| lower.contains("out of range")) {
+        || lower.contains("out of range")) {
       return FailureCategory.INVALID_INPUT;
     }
     if (lower.contains("compile") || lower.contains("classnotfound") || lower.contains("nullpointer")
-	|| lower.contains("exception")) {
+        || lower.contains("exception")) {
       return FailureCategory.CODE_ERROR;
     }
     if (lower.contains("timeout") || lower.contains("memory") || lower.contains("oom")) {
@@ -503,9 +503,9 @@ public class AgentFeedbackCollector implements Serializable {
       this.totalSimulations = session.getSimulationRunCount();
       this.successfulSimulations = session.getSuccessfulSimulationCount();
       if (session.getFailureReason() != null) {
-	this.failureCategory = classifyFailure(session.getFailureReason()).name();
+        this.failureCategory = classifyFailure(session.getFailureReason()).name();
       } else {
-	this.failureCategory = null;
+        this.failureCategory = null;
       }
     }
   }

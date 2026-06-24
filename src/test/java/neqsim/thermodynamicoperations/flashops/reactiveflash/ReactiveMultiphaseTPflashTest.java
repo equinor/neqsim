@@ -60,7 +60,7 @@ public class ReactiveMultiphaseTPflashTest {
     int rank = fm.getRank();
     assertTrue(rank > 0, "Rank should be positive");
     assertTrue(rank <= Math.min(fm.getNumberOfElements(), fm.getNumberOfComponents()),
-	"Rank should not exceed min(NE, NC)");
+        "Rank should not exceed min(NE, NC)");
 
     // Number of independent reactions = NC - rank(A)
     int nReactions = fm.getNumberOfIndependentReactions();
@@ -374,7 +374,7 @@ public class ReactiveMultiphaseTPflashTest {
 
     // Should have elements (at least C, H, O, N)
     assertTrue(fm.getNumberOfElements() >= 3,
-	"Should have at least 3 elements (C, H, O or N). Got: " + fm.getNumberOfElements());
+        "Should have at least 3 elements (C, H, O or N). Got: " + fm.getNumberOfElements());
 
     // The rank should be at least 3
     int rank = fm.getRank();
@@ -415,7 +415,7 @@ public class ReactiveMultiphaseTPflashTest {
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       double xi = system.getPhase(0).getComponent(i).getx();
       if (xi > 1e-30) {
-	G0 += xi * (Math.log(xi) + system.getPhase(0).getComponent(i).getLogFugacityCoefficient());
+        G0 += xi * (Math.log(xi) + system.getPhase(0).getComponent(i).getLogFugacityCoefficient());
       }
     }
 

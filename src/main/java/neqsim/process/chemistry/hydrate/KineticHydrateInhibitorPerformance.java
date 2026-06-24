@@ -119,11 +119,11 @@ public class KineticHydrateInhibitorPerformance implements Serializable {
     requiredDoseWtPct = (Math.log10(Math.max(1.0e-3, targetInductionTimeHours)) - a + c * subcoolingC) / b;
     if (subcoolingC > maxAllowedSubcoolingC) {
       warnings.add("Subcooling " + subcoolingC + " C exceeds typical KHI envelope (" + maxAllowedSubcoolingC
-	  + " C) — switch to THI or AA-LDHI");
+          + " C) — switch to THI or AA-LDHI");
     }
     if (requiredDoseWtPct > maxDoseWtPct) {
       warnings.add("Required dose " + String.format("%.2f", requiredDoseWtPct) + " wt% exceeds typical maximum "
-	  + maxDoseWtPct + " wt%");
+          + maxDoseWtPct + " wt%");
     }
     if (requiredDoseWtPct < minDoseWtPct) {
       warnings.add("Required dose below typical minimum effective " + minDoseWtPct + " wt%");
@@ -174,7 +174,7 @@ public class KineticHydrateInhibitorPerformance implements Serializable {
    */
   public List<Map<String, Object>> getStandardsApplied() {
     return StandardsRegistry.toMapList(new StandardReference("Sloan & Koh 2008", "Industrial",
-	"Clathrate Hydrates of Natural Gases — LDHI screening"));
+        "Clathrate Hydrates of Natural Gases — LDHI screening"));
   }
 
   /**

@@ -62,9 +62,9 @@ public final class OperationalEvidencePackage {
     requireProcess(process);
     OperationalTagMap effectiveTagMap = tagMap == null ? new OperationalTagMap() : tagMap;
     Map<String, Double> effectiveFieldData = fieldData == null ? new LinkedHashMap<String, Double>()
-	: new LinkedHashMap<String, Double>(fieldData);
+        : new LinkedHashMap<String, Double>(fieldData);
     List<OperationalScenario> effectiveScenarios = scenarios == null ? new ArrayList<OperationalScenario>()
-	: new ArrayList<OperationalScenario>(scenarios);
+        : new ArrayList<OperationalScenario>(scenarios);
     double tolerance = normalizeTolerance(benchmarkToleranceFraction);
 
     Map<String, Double> applied = new LinkedHashMap<String, Double>();
@@ -75,11 +75,11 @@ public final class OperationalEvidencePackage {
 
     Map<String, Double> modelValues = effectiveTagMap.readValues(process);
     JsonObject benchmarkComparison = buildBenchmarkComparison(effectiveTagMap, effectiveFieldData, modelValues,
-	tolerance);
+        tolerance);
     JsonObject baseCapacity = buildCapacityReport(process);
     JsonArray scenarioReports = buildScenarioReports(process, effectiveScenarios);
     JsonObject qualityGates = buildQualityGates(baseCapacity, benchmarkComparison, scenarioReports,
-	!effectiveTagMap.getBindings().isEmpty());
+        !effectiveTagMap.getBindings().isEmpty());
 
     JsonObject report = new JsonObject();
     report.addProperty("studyName", cleanStudyName(studyName));
@@ -141,14 +141,14 @@ public final class OperationalEvidencePackage {
 
     for (OperationalTagBinding binding : tagMap.getBindings()) {
       if (binding.getRole() != InstrumentTagRole.BENCHMARK) {
-	continue;
+        continue;
       }
       benchmarkCount++;
       Double fieldValue = findFieldValue(binding, fieldData);
       Double modelValue = modelValues.get(binding.getLogicalTag());
       JsonObject entry = buildBenchmarkEntry(binding, fieldValue, modelValue, toleranceFraction);
       if (entry.get("withinTolerance").getAsBoolean()) {
-	withinToleranceCount++;
+        withinToleranceCount++;
       }
       comparisons.add(entry);
     }
@@ -256,7 +256,7 @@ public final class OperationalEvidencePackage {
     gates.addProperty("capacityWithinDesign", noEquipmentOverloaded);
     gates.addProperty("scenariosSuccessful", scenariosSuccessful);
     gates.addProperty("acceptableForOperationScreening",
-	benchmarksWithinTolerance && noHardLimitExceeded && noEquipmentOverloaded && scenariosSuccessful);
+        benchmarksWithinTolerance && noHardLimitExceeded && noEquipmentOverloaded && scenariosSuccessful);
     return gates;
   }
 
@@ -269,7 +269,7 @@ public final class OperationalEvidencePackage {
   private static boolean areScenariosSuccessful(JsonArray scenarioReports) {
     for (int i = 0; i < scenarioReports.size(); i++) {
       if (!scenarioReports.get(i).getAsJsonObject().get("successful").getAsBoolean()) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -290,17 +290,17 @@ public final class OperationalEvidencePackage {
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       EquipmentCapacityStrategy strategy = registry.findStrategy(unit);
       if (strategy == null) {
-	continue;
+        continue;
       }
       CapacityConstraint constraint = strategy.getBottleneckConstraint(unit);
       if (constraint == null || !constraint.isEnabled()) {
-	continue;
+        continue;
       }
       double utilization = constraint.getUtilization();
       if (!Double.isNaN(utilization) && !Double.isInfinite(utilization) && utilization > maxUtilization) {
-	maxUtilization = utilization;
-	bottleneckEquipment = unit;
-	limitingConstraint = constraint;
+        maxUtilization = utilization;
+        bottleneckEquipment = unit;
+        limitingConstraint = constraint;
       }
     }
 
@@ -351,11 +351,11 @@ public final class OperationalEvidencePackage {
       String source = "ProcessEquipmentInterface";
       EquipmentCapacityStrategy strategy = registry.findStrategy(unit);
       if ((constraints == null || constraints.isEmpty()) && strategy != null) {
-	constraints = strategy.getConstraints(unit);
-	source = strategy.getName();
+        constraints = strategy.getConstraints(unit);
+        source = strategy.getName();
       }
       if (constraints == null || constraints.isEmpty()) {
-	continue;
+        continue;
       }
 
       JsonArray constraintArray = new JsonArray();
@@ -364,18 +364,18 @@ public final class OperationalEvidencePackage {
       boolean hardLimitExceeded = false;
       boolean nearLimit = false;
       for (CapacityConstraint constraint : constraints.values()) {
-	if (!constraint.isEnabled()) {
-	  continue;
-	}
-	double utilization = constraint.getUtilization();
-	maxUtilization = Math.max(maxUtilization, utilization);
-	exceeded = exceeded || constraint.isViolated();
-	hardLimitExceeded = hardLimitExceeded || constraint.isHardLimitExceeded();
-	nearLimit = nearLimit || constraint.isNearLimit();
-	constraintArray.add(constraintToJson(constraint));
+        if (!constraint.isEnabled()) {
+          continue;
+        }
+        double utilization = constraint.getUtilization();
+        maxUtilization = Math.max(maxUtilization, utilization);
+        exceeded = exceeded || constraint.isViolated();
+        hardLimitExceeded = hardLimitExceeded || constraint.isHardLimitExceeded();
+        nearLimit = nearLimit || constraint.isNearLimit();
+        constraintArray.add(constraintToJson(constraint));
       }
       if (constraintArray.size() == 0) {
-	continue;
+        continue;
       }
 
       JsonObject equipment = new JsonObject();
@@ -432,7 +432,7 @@ public final class OperationalEvidencePackage {
   private static boolean hasStrategyHardLimitExceeded(JsonArray equipmentDetails) {
     for (int i = 0; i < equipmentDetails.size(); i++) {
       if (equipmentDetails.get(i).getAsJsonObject().get("hardLimitExceeded").getAsBoolean()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -447,7 +447,7 @@ public final class OperationalEvidencePackage {
   private static boolean hasStrategyCapacityExceeded(JsonArray equipmentDetails) {
     for (int i = 0; i < equipmentDetails.size(); i++) {
       if (equipmentDetails.get(i).getAsJsonObject().get("capacityExceeded").getAsBoolean()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -465,7 +465,7 @@ public final class OperationalEvidencePackage {
     for (int i = 0; i < equipmentDetails.size(); i++) {
       JsonObject detail = equipmentDetails.get(i).getAsJsonObject();
       if (detail.get("nearLimit").getAsBoolean()) {
-	names.add(detail.get("equipmentName").getAsString());
+        names.add(detail.get("equipmentName").getAsString());
       }
     }
     JsonArray array = new JsonArray();

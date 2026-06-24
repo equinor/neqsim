@@ -53,17 +53,17 @@ public class TPflashGR {
     // 0.923400044441223,0.939900040626526,0.979299962520599};
 
     String[] components = new String[] { "water", "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane",
-	"n-butane", "i-pentane", "n-pentane", "C6", "C7", "C8", "C9", "C10" }; // ,"CHCmp_6","CHCmp_7","CHCmp_8"};
-									       // //,"CHCmp_9","CHCmp_10","CHCmp_11","CHCmp_12","CHCmp_13"};
+        "n-butane", "i-pentane", "n-pentane", "C6", "C7", "C8", "C9", "C10" }; // ,"CHCmp_6","CHCmp_7","CHCmp_8"};
+    // //,"CHCmp_9","CHCmp_10","CHCmp_11","CHCmp_12","CHCmp_13"};
     double[] fractions1 = new double[] { 0.691986417509639, 0.001518413245518, 0.004876419074493, 0.177034951950947,
-	0.016102566295901, 0.008162056735947, 0.002489557955828, 0.008657117478144, 0.006116331881632,
-	0.007300146475110, 0.008772462741648, 0.012794973584387, 0.012834050157103, 0.007273111871068,
-	0.014261799565032 + 0.010199184799741 + 0.005722681071876 + 0.003897757605989 };
+        0.016102566295901, 0.008162056735947, 0.002489557955828, 0.008657117478144, 0.006116331881632,
+        0.007300146475110, 0.008772462741648, 0.012794973584387, 0.012834050157103, 0.007273111871068,
+        0.014261799565032 + 0.010199184799741 + 0.005722681071876 + 0.003897757605989 };
     double[] molarmass = new double[] { 18.0153, 28.0135, 44.0098, 16.0429, 30.0698, 44.0968, 58.1239, 58.1239, 72.1510,
-	72.1510, 86.1776 / 1000.0, 90.1140 / 1000.0, 102.0386 / 1000.0, 117.4548 / 1000.0, 205.5306 / 1000.0 };
+        72.1510, 86.1776 / 1000.0, 90.1140 / 1000.0, 102.0386 / 1000.0, 117.4548 / 1000.0, 205.5306 / 1000.0 };
     double[] density = new double[] { 1.0, -1.0000e+19, -1.0000e+19, -1.0000e+19, -1.0000e+19, -1.0000e+19, -1.0000e+19,
-	-1.0000e+19, -1.0000e+19, -1.0000e+19, 667.4991 / 1000.0, 746.5672 / 1000.0, 787.1960 / 1000.0,
-	776.5150 / 1000.0, 849.9863 / 1000.0, };
+        -1.0000e+19, -1.0000e+19, -1.0000e+19, 667.4991 / 1000.0, 746.5672 / 1000.0, 787.1960 / 1000.0,
+        776.5150 / 1000.0, 849.9863 / 1000.0, };
 
     double[] P_bar = new double[] { 43.991, 1, 1, 1, 10, 10, 10, 10, 100, 100, 100, 100 };
     double[] T_C = new double[] { 330.54 - 273.15, 0, 15, 30, 100, 0, 15, 30, 100, 0, 15, 30, 100 };
@@ -77,9 +77,9 @@ public class TPflashGR {
     fluid1.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(8);
     for (int i = 0; i < components.length; i++) {
       if (components[i].startsWith("C") && !components[i].startsWith("CO2")) {
-	fluid1.addTBPfraction(components[i], fractions1[i], molarmass[i], density[i]);
+        fluid1.addTBPfraction(components[i], fractions1[i], molarmass[i], density[i]);
       } else {
-	fluid1.addComponent(components[i], fractions1[i]);
+        fluid1.addComponent(components[i], fractions1[i]);
       }
     }
     fluid1.setHeavyTBPfractionAsPlusFraction();

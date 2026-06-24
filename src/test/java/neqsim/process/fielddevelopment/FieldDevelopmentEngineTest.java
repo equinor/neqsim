@@ -44,29 +44,29 @@ class FieldDevelopmentEngineTest extends neqsim.NeqSimTest {
   void setUp() {
     // Simple gas tieback concept
     gasTiebackConcept = FieldConcept.builder("Lean Gas Tieback")
-	.reservoir(ReservoirInput.leanGas().gor(10000).co2Percent(1.5).h2sPercent(0.0).build())
-	.wells(WellsInput.builder().producerCount(3).tubeheadPressure(100).ratePerWell(1.0e6, "Sm3/d").build())
-	.infrastructure(
-	    InfrastructureInput.subseaTieback().tiebackLength(25).waterDepth(300).exportPressure(180).build())
-	.build();
+        .reservoir(ReservoirInput.leanGas().gor(10000).co2Percent(1.5).h2sPercent(0.0).build())
+        .wells(WellsInput.builder().producerCount(3).tubeheadPressure(100).ratePerWell(1.0e6, "Sm3/d").build())
+        .infrastructure(
+            InfrastructureInput.subseaTieback().tiebackLength(25).waterDepth(300).exportPressure(180).build())
+        .build();
 
     // Oil development concept
     oilDevelopmentConcept = FieldConcept.builder("Black Oil Development")
-	.reservoir(ReservoirInput.blackOil().gor(150).waterCut(0.15).build())
-	.wells(WellsInput.builder().producerCount(8).injectorCount(4).tubeheadPressure(50).ratePerWell(5000, "Sm3/d")
-	    .build())
-	.infrastructure(InfrastructureInput.builder().processingLocation(InfrastructureInput.ProcessingLocation.FPSO)
-	    .waterDepth(800).exportType(InfrastructureInput.ExportType.STABILIZED_OIL).build())
-	.build();
+        .reservoir(ReservoirInput.blackOil().gor(150).waterCut(0.15).build())
+        .wells(WellsInput.builder().producerCount(8).injectorCount(4).tubeheadPressure(50).ratePerWell(5000, "Sm3/d")
+            .build())
+        .infrastructure(InfrastructureInput.builder().processingLocation(InfrastructureInput.ProcessingLocation.FPSO)
+            .waterDepth(800).exportType(InfrastructureInput.ExportType.STABILIZED_OIL).build())
+        .build();
 
     // High CO2 concept
     highCO2Concept = FieldConcept.builder("High CO2 Gas Field")
-	.reservoir(ReservoirInput.richGas().gor(3000).co2Percent(15).h2sPercent(0.05).build())
-	.wells(WellsInput.builder().producerCount(6).tubeheadPressure(120).ratePerWell(2.0e6, "Sm3/d").build())
-	.infrastructure(
-	    InfrastructureInput.builder().processingLocation(InfrastructureInput.ProcessingLocation.PLATFORM)
-		.powerSupply(InfrastructureInput.PowerSupply.POWER_FROM_SHORE).waterDepth(150).build())
-	.build();
+        .reservoir(ReservoirInput.richGas().gor(3000).co2Percent(15).h2sPercent(0.05).build())
+        .wells(WellsInput.builder().producerCount(6).tubeheadPressure(120).ratePerWell(2.0e6, "Sm3/d").build())
+        .infrastructure(
+            InfrastructureInput.builder().processingLocation(InfrastructureInput.ProcessingLocation.PLATFORM)
+                .powerSupply(InfrastructureInput.PowerSupply.POWER_FROM_SHORE).waterDepth(150).build())
+        .build();
   }
 
   // ============ Concept Tests ============
@@ -99,7 +99,7 @@ class FieldDevelopmentEngineTest extends neqsim.NeqSimTest {
   @DisplayName("ReservoirInput stores resource uncertainty assumptions")
   void testReservoirInputResourceUncertainty() {
     ReservoirInput reservoir = ReservoirInput.richGas().resourceUncertainty(8.0, 10.0, 14.0, "GSm3")
-	.recoveryFactor(0.70).build();
+        .recoveryFactor(0.70).build();
 
     assertTrue(reservoir.hasResourceUncertainty());
     assertEquals(10.0, reservoir.getResourceEstimate(), 0.001);
@@ -142,7 +142,7 @@ class FieldDevelopmentEngineTest extends neqsim.NeqSimTest {
   @DisplayName("FacilityBuilder creates correct block sequence")
   void testFacilityBuilderBlockSequence() {
     FacilityConfig config = FacilityBuilder.forConcept(gasTiebackConcept).addBlock(BlockConfig.inletSeparation(80, 25))
-	.addCompression(2, 180).addTegDehydration(50).build();
+        .addCompression(2, 180).addTegDehydration(50).build();
 
     assertEquals(4, config.getBlockCount()); // 3 added + flare (default)
     assertTrue(config.hasCompression());
@@ -221,7 +221,7 @@ class FieldDevelopmentEngineTest extends neqsim.NeqSimTest {
 
     assertTrue(report.isH2sPresent());
     assertTrue(
-	report.getRequirements().containsKey("h2s_detection") || report.getRequirements().containsKey("h2s_ppe"));
+        report.getRequirements().containsKey("h2s_detection") || report.getRequirements().containsKey("h2s_ppe"));
   }
 
   // ============ Concept Evaluator Tests ============
@@ -376,11 +376,11 @@ class FieldDevelopmentEngineTest extends neqsim.NeqSimTest {
   void testEndToEndWorkflow() {
     // 1. Define concept - low CO2 to minimize vented emissions
     FieldConcept concept = FieldConcept.builder("Integration Test Concept")
-	.reservoir(ReservoirInput.leanGas().gor(10000).co2Percent(0.5).build())
-	.wells(WellsInput.builder().producerCount(4).tubeheadPressure(90).ratePerWell(1.5e6, "Sm3/d").build())
-	.infrastructure(InfrastructureInput.subseaTieback().tiebackLength(40).waterDepth(400)
-	    .powerSupply(InfrastructureInput.PowerSupply.POWER_FROM_SHORE).build())
-	.build();
+        .reservoir(ReservoirInput.leanGas().gor(10000).co2Percent(0.5).build())
+        .wells(WellsInput.builder().producerCount(4).tubeheadPressure(90).ratePerWell(1.5e6, "Sm3/d").build())
+        .infrastructure(InfrastructureInput.subseaTieback().tiebackLength(40).waterDepth(400)
+            .powerSupply(InfrastructureInput.PowerSupply.POWER_FROM_SHORE).build())
+        .build();
 
     // 2. Build facility
     FacilityConfig facility = FacilityBuilder.autoGenerate(concept).withRedundancy("compression", 1).build();
@@ -400,7 +400,7 @@ class FieldDevelopmentEngineTest extends neqsim.NeqSimTest {
     // Power from shore with low CO2 should have lower emissions than gas turbines
     // Typical offshore with gas turbines is 60-100 kg/boe, power from shore should be <50
     assertTrue(kpis.getCo2IntensityKgPerBoe() < 50,
-	"CO2 intensity should be <50 for power from shore: " + kpis.getCo2IntensityKgPerBoe());
+        "CO2 intensity should be <50 for power from shore: " + kpis.getCo2IntensityKgPerBoe());
   }
 
   @Test

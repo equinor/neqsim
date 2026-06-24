@@ -31,7 +31,7 @@ public enum StateOfMatter {
       return StateOfMatter.SOLID;
     default:
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(StateOfMatter.class, "fromPhaseType",
-	  "pt", "Conversion not configured for"));
+          "pt", "Conversion not configured for"));
     }
   }
 

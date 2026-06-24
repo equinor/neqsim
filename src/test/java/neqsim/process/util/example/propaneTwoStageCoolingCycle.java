@@ -127,7 +127,7 @@ public class propaneTwoStageCoolingCycle {
     logger.info("cooler3 mass flow " + cooler3.getOutletStream().getFluid().getFlowRate("kg/hr") + " kg/hr");
 
     logger.info(
-	"delta enthalpy " + (stream_3.getFluid().getEnthalpy() - JTvalve2.getOutletStream().getFluid().getEnthalpy()));
+        "delta enthalpy " + (stream_3.getFluid().getEnthalpy() - JTvalve2.getOutletStream().getFluid().getEnthalpy()));
 
     logger.info("cooler2 duty " + cooler2.getEnergyInput() / 1.0e3 + " kW");
     logger.info("cooler3 duty " + cooler3.getEnergyInput() / 1.0e3 + " kW");

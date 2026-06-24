@@ -232,7 +232,7 @@ public class FireDetector extends MeasurementDeviceBaseClass {
       return getMeasuredValue();
     }
     throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getMeasuredValue", "unit",
-	"FireDetector only supports 'binary' unit"));
+        "FireDetector only supports 'binary' unit"));
   }
 
   /**

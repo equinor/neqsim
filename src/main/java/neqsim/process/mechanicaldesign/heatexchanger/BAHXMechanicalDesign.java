@@ -178,7 +178,7 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
       LNGHeatExchanger lngHX = (LNGHeatExchanger) equipment;
       LNGHeatExchanger.FinGeometry fin = lngHX.getStreamFinGeometry(0);
       if (fin != null) {
-	finHeight = fin.getFinHeight();
+        finHeight = fin.getFinHeight();
       }
     }
     double rMm = finHeight * 1000.0 / 2.0; // half passage width in mm
@@ -205,24 +205,24 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
       LNGHeatExchanger lngHX = (LNGHeatExchanger) equipment;
       LNGHeatExchanger.CoreGeometry core = lngHX.getCoreGeometry();
       if (core != null && core.getLength() > 0) {
-	coreLengthM = core.getLength();
-	coreWidthM = core.getWidth();
-	coreHeightM = core.getHeight();
-	coreWeightKg = core.getWeight();
-	// If weight not set, estimate from core volume
-	if (coreWeightKg <= 0) {
-	  double vol = coreLengthM * coreWidthM * coreHeightM;
-	  coreWeightKg = vol * METAL_FRACTION * AL_DENSITY;
-	}
+        coreLengthM = core.getLength();
+        coreWidthM = core.getWidth();
+        coreHeightM = core.getHeight();
+        coreWeightKg = core.getWeight();
+        // If weight not set, estimate from core volume
+        if (coreWeightKg <= 0) {
+          double vol = coreLengthM * coreWidthM * coreHeightM;
+          coreWeightKg = vol * METAL_FRACTION * AL_DENSITY;
+        }
       }
       // Estimate area from UA if available
       double[] uaPerZone = lngHX.getUAPerZone();
       double totalUA = 0;
       for (double ua : uaPerZone) {
-	totalUA += ua;
+        totalUA += ua;
       }
       if (totalUA > 0) {
-	heatTransferAreaM2 = totalUA / 400.0; // typical h for BAHX
+        heatTransferAreaM2 = totalUA / 400.0; // typical h for BAHX
       }
     }
 
@@ -231,14 +231,14 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
       double duty = Math.abs(getDuty()); // W
       // If base class duty not set, try to get from equipment
       if (duty <= 0 && equipment instanceof LNGHeatExchanger) {
-	duty = Math.abs(((LNGHeatExchanger) equipment).getDuty());
+        duty = Math.abs(((LNGHeatExchanger) equipment).getDuty());
       }
       double lmtd = 10.0; // conservative LMTD estimate for LNG
       double uValue = 600.0; // W/(m2 K) typical BAHX
       if (duty > 0 && lmtd > 0) {
-	heatTransferAreaM2 = duty / (uValue * lmtd);
+        heatTransferAreaM2 = duty / (uValue * lmtd);
       } else {
-	heatTransferAreaM2 = 1000.0; // default 1000 m2
+        heatTransferAreaM2 = 1000.0; // default 1000 m2
       }
       double beta = 1000.0; // m2/m3 surface area density
       double coreVolume = heatTransferAreaM2 / beta;
@@ -255,7 +255,7 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
 
     double nozzleLength = 0.3; // m, typical nozzle length
     double nozzleVolume = numberOfNozzles * Math.PI * (nozzleODMm / 1000.0) * nozzleLength
-	* (requiredNozzleThicknessMm / 1000.0);
+        * (requiredNozzleThicknessMm / 1000.0);
     nozzleWeightKg = nozzleVolume * AL_DENSITY;
 
     // Total weight
@@ -289,9 +289,9 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
       LNGHeatExchanger lngHX = (LNGHeatExchanger) equipment;
       double[] gradients = lngHX.getThermalGradientPerZone();
       for (double g : gradients) {
-	if (Math.abs(g) > maxThermalGradient) {
-	  maxThermalGradient = Math.abs(g);
-	}
+        if (Math.abs(g) > maxThermalGradient) {
+          maxThermalGradient = Math.abs(g);
+        }
       }
     }
 
@@ -301,7 +301,7 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
       double coldTempC = -162.0; // LNG temperature
       double deltaT = Math.abs(hotTempC - coldTempC);
       if (coreLengthM > 0) {
-	maxThermalGradient = deltaT / coreLengthM;
+        maxThermalGradient = deltaT / coreLengthM;
       }
     }
 

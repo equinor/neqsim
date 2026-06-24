@@ -72,12 +72,12 @@ public class Api14cSafeChartBuilder implements Serializable {
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       Api14cEquipmentCategory cat = classify(unit);
       if (cat == null) {
-	continue;
+        continue;
       }
       Set<Api14cDeviceType> required = Api14cSafetyAnalysisTable.getRequiredDevices(cat);
       Set<Api14cDeviceType> present = presentByEquipment.get(unit.getName());
       if (present == null) {
-	present = EnumSet.noneOf(Api14cDeviceType.class);
+        present = EnumSet.noneOf(Api14cDeviceType.class);
       }
       items.add(new Api14cSafeChartItem(unit.getName(), cat, required, present));
     }
@@ -99,7 +99,7 @@ public class Api14cSafeChartBuilder implements Serializable {
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       Api14cEquipmentCategory cat = classify(unit);
       if (cat == null) {
-	continue;
+        continue;
       }
       Set<Api14cDeviceType> required = Api14cSafetyAnalysisTable.getRequiredDevices(cat);
       items.add(new Api14cSafeChartItem(unit.getName(), cat, required, required));
@@ -119,7 +119,7 @@ public class Api14cSafeChartBuilder implements Serializable {
     }
     String name = unit.getClass().getSimpleName().toLowerCase(java.util.Locale.ROOT);
     if (name.contains("scrubber") || name.contains("separator") || name.contains("flashdrum")
-	|| name.contains("knockout") || name.contains("flash") && name.contains("drum")) {
+        || name.contains("knockout") || name.contains("flash") && name.contains("drum")) {
       return Api14cEquipmentCategory.PRESSURE_VESSEL;
     }
     if (name.contains("tank")) {
@@ -138,7 +138,7 @@ public class Api14cSafeChartBuilder implements Serializable {
       return Api14cEquipmentCategory.PUMP;
     }
     if (name.contains("heatexchanger") || name.contains("cooler") || name.contains("condenser")
-	|| name.contains("reboiler") || name.contains("aircooler")) {
+        || name.contains("reboiler") || name.contains("aircooler")) {
       return Api14cEquipmentCategory.HEAT_EXCHANGER;
     }
     if (name.contains("well")) {
@@ -161,9 +161,9 @@ public class Api14cSafeChartBuilder implements Serializable {
     List<String> gaps = new ArrayList<String>();
     for (Api14cSafeChartItem it : items) {
       if (!it.isComplete()) {
-	for (Api14cDeviceType d : it.getMissing()) {
-	  gaps.add(it.getEquipmentName() + ": missing " + d.name() + " (" + d.getDescription() + ")");
-	}
+        for (Api14cDeviceType d : it.getMissing()) {
+          gaps.add(it.getEquipmentName() + ": missing " + d.name() + " (" + d.getDescription() + ")");
+        }
       }
     }
     return gaps;
@@ -175,7 +175,7 @@ public class Api14cSafeChartBuilder implements Serializable {
   public boolean isComplete() {
     for (Api14cSafeChartItem it : items) {
       if (!it.isComplete()) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -193,7 +193,7 @@ public class Api14cSafeChartBuilder implements Serializable {
     for (Api14cSafeChartItem it : items) {
       List<String> row = it.toRow();
       sb.append("| ").append(row.get(0)).append(" | ").append(row.get(1)).append(" | ").append(row.get(2)).append(" | ")
-	  .append(row.get(3)).append(" | ").append(row.get(4)).append(" |\n");
+          .append(row.get(3)).append(" | ").append(row.get(4)).append(" |\n");
     }
     return sb.toString();
   }

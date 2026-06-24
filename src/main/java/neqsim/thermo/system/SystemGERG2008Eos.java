@@ -135,7 +135,7 @@ public class SystemGERG2008Eos extends SystemEos {
     // Update all phases to use the new model type
     for (int i = 0; i < numberOfPhases; i++) {
       if (phaseArray[i] instanceof PhaseGERG2008Eos) {
-	((PhaseGERG2008Eos) phaseArray[i]).setGergModelType(modelType);
+        ((PhaseGERG2008Eos) phaseArray[i]).setGergModelType(modelType);
       }
     }
   }

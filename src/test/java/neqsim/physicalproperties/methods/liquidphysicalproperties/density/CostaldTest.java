@@ -76,7 +76,7 @@ public class CostaldTest extends neqsim.NeqSimTest {
 
     // At 689 bar, the compressed liquid correction matters significantly
     assertTrue(density > 400.0 && density < 900.0,
-	"Binary ethane/nC10 density at 689 bar should be physically reasonable");
+        "Binary ethane/nC10 density at 689 bar should be physically reasonable");
   }
 
   /**
@@ -151,7 +151,7 @@ public class CostaldTest extends neqsim.NeqSimTest {
     // Densities should differ due to different V*
     assertTrue(Math.abs(densityWithVc - densityWithVstar) > 0.1, "Custom V* should change the calculated density");
     assertTrue(densityWithVstar > 500.0 && densityWithVstar < 800.0,
-	"Density with custom V* should still be physically reasonable");
+        "Density with custom V* should still be physically reasonable");
   }
 
   /**
@@ -194,7 +194,7 @@ public class CostaldTest extends neqsim.NeqSimTest {
       fluid.setLiquidDensityModel("COSTALD");
       double density = fluid.getPhase("oil").getPhysicalProperties().getDensity();
       assertTrue(density > 400.0 && density < 800.0,
-	  "Multi-component condensate density should be physically reasonable");
+          "Multi-component condensate density should be physically reasonable");
     }
   }
 
@@ -218,7 +218,7 @@ public class CostaldTest extends neqsim.NeqSimTest {
       fluid.setLiquidDensityModel("COSTALD");
       double density = fluid.getPhase("oil").getPhysicalProperties().calcDensity();
       assertTrue(density > 500.0 && density < 900.0,
-	  "TBP fraction COSTALD density should be physically reasonable, got: " + density);
+          "TBP fraction COSTALD density should be physically reasonable, got: " + density);
     }
   }
 
@@ -254,14 +254,14 @@ public class CostaldTest extends neqsim.NeqSimTest {
       double costaldDensity = fluid.getPhase("oil").getPhysicalProperties().calcDensity();
 
       assertTrue(costaldDensity > 500.0 && costaldDensity < 900.0,
-	  "Multi-TBP COSTALD density should be physically reasonable, got: " + costaldDensity);
+          "Multi-TBP COSTALD density should be physically reasonable, got: " + costaldDensity);
       assertTrue(eosDensity > 500.0 && eosDensity < 900.0,
-	  "Multi-TBP EOS density should be physically reasonable, got: " + eosDensity);
+          "Multi-TBP EOS density should be physically reasonable, got: " + eosDensity);
 
       // Both methods should give reasonably similar values (within 10% of each other)
       double relDiff = Math.abs(costaldDensity - eosDensity) / eosDensity;
       assertTrue(relDiff < 0.15, "COSTALD and EOS densities should be within 15% for oil with TBP fractions, "
-	  + "COSTALD=" + costaldDensity + ", EOS=" + eosDensity);
+          + "COSTALD=" + costaldDensity + ", EOS=" + eosDensity);
     }
   }
 
@@ -291,7 +291,7 @@ public class CostaldTest extends neqsim.NeqSimTest {
       fluid.setLiquidDensityModel("COSTALD");
       double density = fluid.getPhase("oil").getPhysicalProperties().calcDensity();
       assertTrue(density > 500.0 && density < 1100.0,
-	  "Heavy oil COSTALD density should be physically reasonable, got: " + density);
+          "Heavy oil COSTALD density should be physically reasonable, got: " + density);
     }
   }
 
@@ -317,7 +317,7 @@ public class CostaldTest extends neqsim.NeqSimTest {
       // The input density was 0.792 g/cm3 = 792 kg/m3 at standard conditions
       // COSTALD with V* back-calculated from this density should reproduce it closely
       assertEquals(792.0, costaldDensity, 792.0 * 0.05,
-	  "COSTALD at standard conditions should reproduce input density within 5%, got: " + costaldDensity);
+          "COSTALD at standard conditions should reproduce input density within 5%, got: " + costaldDensity);
     }
   }
 
@@ -343,7 +343,7 @@ public class CostaldTest extends neqsim.NeqSimTest {
 
       // NIST: water at 293.15 K, 10 bar = ~998 kg/m3
       assertEquals(998.0, density, 998.0 * 0.05,
-	  "Water COSTALD density should be within 5% of NIST value, got: " + density);
+          "Water COSTALD density should be within 5% of NIST value, got: " + density);
       assertTrue(density > 900.0 && density < 1100.0, "Water density should be physically reasonable, got: " + density);
     }
   }
@@ -389,7 +389,7 @@ public class CostaldTest extends neqsim.NeqSimTest {
 
     // MEG at 20°C = ~1113 kg/m3
     assertEquals(1113.0, density, 1113.0 * 0.05,
-	"MEG COSTALD density should be within 5% of reference, got: " + density);
+        "MEG COSTALD density should be within 5% of reference, got: " + density);
     assertTrue(density > 1000.0 && density < 1250.0, "MEG density should be physically reasonable, got: " + density);
   }
 
@@ -418,14 +418,14 @@ public class CostaldTest extends neqsim.NeqSimTest {
     if (fluid.hasPhaseType("oil")) {
       double oilDensity = fluid.getPhase("oil").getPhysicalProperties().calcDensity();
       assertTrue(oilDensity > 500.0 && oilDensity < 900.0,
-	  "Oil phase COSTALD density should be reasonable, got: " + oilDensity);
+          "Oil phase COSTALD density should be reasonable, got: " + oilDensity);
     }
 
     // Check aqueous phase
     if (fluid.hasPhaseType("aqueous")) {
       double waterDensity = fluid.getPhase("aqueous").getPhysicalProperties().calcDensity();
       assertTrue(waterDensity > 900.0 && waterDensity < 1100.0,
-	  "Aqueous phase COSTALD density should be reasonable, got: " + waterDensity);
+          "Aqueous phase COSTALD density should be reasonable, got: " + waterDensity);
     }
   }
 
@@ -455,7 +455,7 @@ public class CostaldTest extends neqsim.NeqSimTest {
       double aqueousDensity = fluid.getPhase("aqueous").getPhysicalProperties().calcDensity();
       // Water+MEG mixture density should be between pure water (~998) and pure MEG (~1113)
       assertTrue(aqueousDensity > 900.0 && aqueousDensity < 1200.0,
-	  "Water+MEG aqueous COSTALD density should be reasonable, got: " + aqueousDensity);
+          "Water+MEG aqueous COSTALD density should be reasonable, got: " + aqueousDensity);
     }
   }
 
@@ -482,7 +482,7 @@ public class CostaldTest extends neqsim.NeqSimTest {
       double density = fluid.getPhase("aqueous").getPhysicalProperties().calcDensity();
       // Water+methanol density should be somewhat less than pure water
       assertTrue(density > 700.0 && density < 1100.0,
-	  "Water+methanol aqueous COSTALD density should be reasonable, got: " + density);
+          "Water+methanol aqueous COSTALD density should be reasonable, got: " + density);
     }
   }
 
@@ -505,7 +505,7 @@ public class CostaldTest extends neqsim.NeqSimTest {
 
     // TEG at 20°C = ~1125 kg/m3
     assertEquals(1125.0, density, 1125.0 * 0.08,
-	"TEG COSTALD density should be within 8% of reference, got: " + density);
+        "TEG COSTALD density should be within 8% of reference, got: " + density);
     assertTrue(density > 1000.0 && density < 1300.0, "TEG density should be physically reasonable, got: " + density);
   }
 
@@ -527,7 +527,7 @@ public class CostaldTest extends neqsim.NeqSimTest {
 
     // Ethanol at 20°C = ~789 kg/m3
     assertEquals(789.0, density, 789.0 * 0.05,
-	"Ethanol COSTALD density should be within 5% of reference, got: " + density);
+        "Ethanol COSTALD density should be within 5% of reference, got: " + density);
   }
 
   // ---- Rackett equation tests ----
@@ -587,7 +587,7 @@ public class CostaldTest extends neqsim.NeqSimTest {
 
     // Binary mixture should be between pure component densities
     assertTrue(density > 600.0 && density < 780.0,
-	"Binary Rackett density should be between pure component values, got: " + density);
+        "Binary Rackett density should be between pure component values, got: " + density);
   }
 
   /**
@@ -650,13 +650,13 @@ public class CostaldTest extends neqsim.NeqSimTest {
 
       // Both should be reasonable
       assertTrue(costaldDensity > 900.0 && costaldDensity < 1100.0,
-	  "COSTALD water density should be reasonable, got: " + costaldDensity);
+          "COSTALD water density should be reasonable, got: " + costaldDensity);
       assertTrue(nastaldDensity > 900.0 && nastaldDensity < 1100.0,
-	  "NASTALD water density should be reasonable, got: " + nastaldDensity);
+          "NASTALD water density should be reasonable, got: " + nastaldDensity);
 
       // NASTALD and standard COSTALD should give different results for water
       assertTrue(Math.abs(costaldDensity - nastaldDensity) > 0.1,
-	  "NASTALD should differ from standard COSTALD for water");
+          "NASTALD should differ from standard COSTALD for water");
     }
   }
 
@@ -680,9 +680,9 @@ public class CostaldTest extends neqsim.NeqSimTest {
     // Note: NASTALD with V* back-calculated from density may over-correct for alcohols
     // since the V* already captures some polarity effects. The range is wider here.
     assertEquals(791.0, density, 791.0 * 0.15,
-	"NASTALD methanol density should be within 15% of reference, got: " + density);
+        "NASTALD methanol density should be within 15% of reference, got: " + density);
     assertTrue(density > 700.0 && density < 1000.0,
-	"NASTALD methanol density should be physically reasonable, got: " + density);
+        "NASTALD methanol density should be physically reasonable, got: " + density);
   }
 
   /**
@@ -731,7 +731,7 @@ public class CostaldTest extends neqsim.NeqSimTest {
     if (fluid.hasPhaseType("oil")) {
       double oilDensity = fluid.getPhase("oil").getPhysicalProperties().getDensity();
       assertTrue(oilDensity > 500.0 && oilDensity < 900.0,
-	  "Oil phase with COSTALD should have reasonable density, got: " + oilDensity);
+          "Oil phase with COSTALD should have reasonable density, got: " + oilDensity);
     }
   }
 
@@ -753,7 +753,7 @@ public class CostaldTest extends neqsim.NeqSimTest {
 
     // n-hexane at 15°C, 1 atm = ~663 kg/m3 (NIST)
     assertEquals(663.0, refDensity, 663.0 * 0.05,
-	"n-hexane at standard conditions should be within 5% of NIST, got: " + refDensity);
+        "n-hexane at standard conditions should be within 5% of NIST, got: " + refDensity);
 
     // Original fluid should not be modified
     assertEquals(313.15, fluid.getTemperature(), 0.01, "Original fluid temperature should be unchanged");

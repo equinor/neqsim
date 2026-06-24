@@ -366,9 +366,9 @@ public class PackedColumn extends DistillationColumn {
 
       // Update internal diameter from sizing
       if (columnDiameter <= 0) {
-	setInternalDiameter(designer.getRequiredDiameter());
+        setInternalDiameter(designer.getRequiredDiameter());
       } else {
-	setInternalDiameter(columnDiameter);
+        setInternalDiameter(columnDiameter);
       }
     }
   }

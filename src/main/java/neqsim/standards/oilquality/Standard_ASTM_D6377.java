@@ -27,7 +27,7 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   double referenceTemperature = 37.8;
   String referenceTemperatureUnit = "C";
   String methodRVP = "VPCR4"; // RVP_ASTM_D6377 // RVP_ASTM_D323_73_79
-			      // RVP_ASTM_D323_82 // VPCR4_no_water // VPCR4
+  // RVP_ASTM_D323_82 // VPCR4_no_water // VPCR4
 
   private double VPCR4_no_water = 0.0;
   private double VPCR4 = 0.0;
@@ -88,11 +88,11 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
      */
     public static RvpMethod fromLabel(String label) {
       if (label != null) {
-	for (RvpMethod method : values()) {
-	  if (method.label.equals(label) || method.name().equals(label)) {
-	    return method;
-	  }
-	}
+        for (RvpMethod method : values()) {
+          if (method.label.equals(label) || method.name().equals(label)) {
+            return method;
+          }
+        }
       }
       throw new IllegalArgumentException("Unknown RVP method: " + label);
     }
@@ -394,17 +394,17 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     if (returnParameter.equals("RVP")) {
       switch (methodRVP) {
       case "RVP_ASTM_D6377":
-	return RVP_ASTM_D6377;
+        return RVP_ASTM_D6377;
       case "RVP_ASTM_D323_73_79":
-	return RVP_ASTM_D323_73_79;
+        return RVP_ASTM_D323_73_79;
       case "VPCR4":
-	return VPCR4;
+        return VPCR4;
       case "RVP_ASTM_D323_82":
-	return RVP_ASTM_D323_82;
+        return RVP_ASTM_D323_82;
       case "VPCR4_no_water":
-	return VPCR4_no_water;
+        return VPCR4_no_water;
       default:
-	return VPCR4;
+        return VPCR4;
       }
     } else if (returnParameter.equals("TVP")) {
       return TVP;

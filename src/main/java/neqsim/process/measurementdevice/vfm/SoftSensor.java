@@ -234,8 +234,8 @@ public class SoftSensor extends StreamMeasurementDeviceBaseClass {
       SystemInterface gas = fluid.phaseToSystem("gas");
       // Approximate HHV based on methane content
       if (gas.hasComponent("methane")) {
-	double methaneFrac = gas.getComponent("methane").getz();
-	hv = 37.0 * methaneFrac + 40.0 * (1 - methaneFrac); // MJ/Sm3
+        double methaneFrac = gas.getComponent("methane").getz();
+        hv = 37.0 * methaneFrac + 40.0 * (1 - methaneFrac); // MJ/Sm3
       }
     }
     return hv;

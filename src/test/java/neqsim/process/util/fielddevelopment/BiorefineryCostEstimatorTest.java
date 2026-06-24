@@ -51,7 +51,7 @@ class BiorefineryCostEstimatorTest {
 
     assertTrue(est.getTotalCapexUSD() > 0.0, "CAPEX should be positive");
     assertTrue(est.getTotalInstalledCostUSD() > est.getTotalPurchasedEquipmentCostUSD(),
-	"Installed cost should exceed purchased cost");
+        "Installed cost should exceed purchased cost");
   }
 
   @Test
@@ -64,7 +64,7 @@ class BiorefineryCostEstimatorTest {
 
     assertEquals(40.0 * 50000.0, est.getAnnualFeedstockCostUSD(), 1.0, "Feedstock cost = price * consumption");
     assertTrue(est.getAnnualOpexUSD() > est.getAnnualFeedstockCostUSD(),
-	"Total OPEX should exceed feedstock cost alone");
+        "Total OPEX should exceed feedstock cost alone");
   }
 
   @Test
@@ -187,7 +187,7 @@ class BiorefineryCostEstimatorTest {
 
       assertTrue(est.getTotalCapexUSD() > 0.0, eq.getDisplayName() + " should have positive CAPEX");
       assertTrue(est.getTotalInstalledCostUSD() > est.getTotalPurchasedEquipmentCostUSD(),
-	  eq.getDisplayName() + ": installed > purchased");
+          eq.getDisplayName() + ": installed > purchased");
     }
   }
 

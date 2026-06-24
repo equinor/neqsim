@@ -210,7 +210,7 @@ public class ProductionProfile implements Serializable {
      * @param rateUnit engineering unit for rate (e.g., "Sm3/day", "kg/hr")
      */
     public DeclineParameters(double initialRate, double declineRate, double hyperbolicExponent, DeclineType type,
-	String rateUnit) {
+        String rateUnit) {
       this(initialRate, declineRate, hyperbolicExponent, type, rateUnit, "year");
     }
 
@@ -226,15 +226,15 @@ public class ProductionProfile implements Serializable {
      * @throws IllegalArgumentException if parameters are invalid
      */
     public DeclineParameters(double initialRate, double declineRate, double hyperbolicExponent, DeclineType type,
-	String rateUnit, String timeUnit) {
+        String rateUnit, String timeUnit) {
       if (initialRate <= 0) {
-	throw new IllegalArgumentException("Initial rate must be positive: " + initialRate);
+        throw new IllegalArgumentException("Initial rate must be positive: " + initialRate);
       }
       if (declineRate < 0) {
-	throw new IllegalArgumentException("Decline rate cannot be negative: " + declineRate);
+        throw new IllegalArgumentException("Decline rate cannot be negative: " + declineRate);
       }
       if (type == DeclineType.HYPERBOLIC && (hyperbolicExponent <= 0 || hyperbolicExponent > 1)) {
-	throw new IllegalArgumentException("Hyperbolic exponent must be in (0, 1]: " + hyperbolicExponent);
+        throw new IllegalArgumentException("Hyperbolic exponent must be in (0, 1]: " + hyperbolicExponent);
       }
       this.initialRate = initialRate;
       this.declineRate = declineRate;
@@ -311,7 +311,7 @@ public class ProductionProfile implements Serializable {
     @Override
     public String toString() {
       return String.format("DeclineParameters[type=%s, qi=%.2f %s, D=%.4f/%s, b=%.2f]", type, initialRate, rateUnit,
-	  declineRate, timeUnit, hyperbolicExponent);
+          declineRate, timeUnit, hyperbolicExponent);
     }
   }
 
@@ -349,7 +349,7 @@ public class ProductionProfile implements Serializable {
      * @param isAboveEconomicLimit true if rate exceeds economic limit
      */
     public ProductionPoint(double time, String timeUnit, double rate, double cumulativeProduction, String rateUnit,
-	String bottleneckEquipment, double facilityUtilization, boolean isOnPlateau, boolean isAboveEconomicLimit) {
+        String bottleneckEquipment, double facilityUtilization, boolean isOnPlateau, boolean isAboveEconomicLimit) {
       this.time = time;
       this.timeUnit = timeUnit;
       this.rate = rate;
@@ -477,8 +477,8 @@ public class ProductionProfile implements Serializable {
      * @param declineParams decline parameters used
      */
     public ProductionForecast(List<ProductionPoint> profile, double plateauRate, double actualPlateauRate,
-	double plateauDuration, double actualPlateauDuration, double economicLimit, double totalRecovery,
-	double economicLifeYears, DeclineParameters declineParams) {
+        double plateauDuration, double actualPlateauDuration, double economicLimit, double totalRecovery,
+        double economicLifeYears, DeclineParameters declineParams) {
       this.profile = new ArrayList<>(profile);
       this.plateauRate = plateauRate;
       this.actualPlateauRate = actualPlateauRate;
@@ -580,9 +580,9 @@ public class ProductionProfile implements Serializable {
       StringBuilder sb = new StringBuilder();
       sb.append("## Production Forecast\n\n");
       sb.append(String.format("- **Plateau Rate**: %.2f %s (actual: %.2f)\n", plateauRate, declineParams.getRateUnit(),
-	  actualPlateauRate));
+          actualPlateauRate));
       sb.append(
-	  String.format("- **Plateau Duration**: %.1f years (actual: %.1f)\n", plateauDuration, actualPlateauDuration));
+          String.format("- **Plateau Duration**: %.1f years (actual: %.1f)\n", plateauDuration, actualPlateauDuration));
       sb.append(String.format("- **Economic Limit**: %.2f %s\n", economicLimit, declineParams.getRateUnit()));
       sb.append(String.format("- **Total Recovery**: %.2f\n", totalRecovery));
       sb.append(String.format("- **Economic Life**: %.1f years\n\n", economicLifeYears));
@@ -591,14 +591,14 @@ public class ProductionProfile implements Serializable {
       sb.append("|---|---|---|---|---|---|\n");
 
       for (ProductionPoint point : profile) {
-	String phase = point.isOnPlateau() ? "Plateau" : "Decline";
-	if (!point.isAboveEconomicLimit()) {
-	  phase = "Below Limit";
-	}
-	sb.append(String.format("| %.2f | %.2f | %.2f | %s | %s | %.1f%% |\n", point.getTime(), point.getRate(),
-	    point.getCumulativeProduction(), phase,
-	    point.getBottleneckEquipment() != null ? point.getBottleneckEquipment() : "-",
-	    point.getFacilityUtilization() * 100));
+        String phase = point.isOnPlateau() ? "Plateau" : "Decline";
+        if (!point.isAboveEconomicLimit()) {
+          phase = "Below Limit";
+        }
+        sb.append(String.format("| %.2f | %.2f | %.2f | %s | %s | %.1f%% |\n", point.getTime(), point.getRate(),
+            point.getCumulativeProduction(), phase,
+            point.getBottleneckEquipment() != null ? point.getBottleneckEquipment() : "-",
+            point.getFacilityUtilization() * 100));
       }
       return sb.toString();
     }
@@ -612,14 +612,14 @@ public class ProductionProfile implements Serializable {
       StringBuilder sb = new StringBuilder();
       sb.append("Time,Rate,Cumulative,Phase,Bottleneck,Utilization\n");
       for (ProductionPoint point : profile) {
-	String phase = point.isOnPlateau() ? "Plateau" : "Decline";
-	if (!point.isAboveEconomicLimit()) {
-	  phase = "BelowLimit";
-	}
-	sb.append(String.format("%.4f,%.4f,%.4f,%s,%s,%.4f\n", point.getTime(), point.getRate(),
-	    point.getCumulativeProduction(), phase,
-	    point.getBottleneckEquipment() != null ? point.getBottleneckEquipment() : "",
-	    point.getFacilityUtilization()));
+        String phase = point.isOnPlateau() ? "Plateau" : "Decline";
+        if (!point.isAboveEconomicLimit()) {
+          phase = "BelowLimit";
+        }
+        sb.append(String.format("%.4f,%.4f,%.4f,%s,%s,%.4f\n", point.getTime(), point.getRate(),
+            point.getCumulativeProduction(), phase,
+            point.getBottleneckEquipment() != null ? point.getBottleneckEquipment() : "",
+            point.getFacilityUtilization()));
       }
       return sb.toString();
     }
@@ -693,16 +693,16 @@ public class ProductionProfile implements Serializable {
     double facilityMaxRate = Double.MAX_VALUE;
     if (facility != null && feedStream != null && optimizer != null) {
       try {
-	OptimizationConfig config = new OptimizationConfig(economicLimit, decline.getInitialRate())
-	    .rateUnit(decline.getRateUnit()).tolerance(economicLimit * 0.01);
-	OptimizationResult result = optimizer.optimize(facility, feedStream, config, Collections.emptyList(),
-	    Collections.emptyList());
-	if (result.isFeasible()) {
-	  facilityMaxRate = result.getOptimalRate();
-	}
+        OptimizationConfig config = new OptimizationConfig(economicLimit, decline.getInitialRate())
+            .rateUnit(decline.getRateUnit()).tolerance(economicLimit * 0.01);
+        OptimizationResult result = optimizer.optimize(facility, feedStream, config, Collections.emptyList(),
+            Collections.emptyList());
+        if (result.isFeasible()) {
+          facilityMaxRate = result.getOptimalRate();
+        }
       } catch (Exception e) {
-	// If optimization fails, assume no facility constraint
-	facilityMaxRate = Double.MAX_VALUE;
+        // If optimization fails, assume no facility constraint
+        facilityMaxRate = Double.MAX_VALUE;
       }
     }
 
@@ -719,52 +719,52 @@ public class ProductionProfile implements Serializable {
       double utilization = 0.0;
 
       if (onPlateau && t <= plateauDurationYears && reservoirRate >= actualPlateauRate) {
-	// Still on plateau
-	rate = actualPlateauRate;
-	actualPlateauDuration = t;
+        // Still on plateau
+        rate = actualPlateauRate;
+        actualPlateauDuration = t;
 
-	if (actualPlateauRate < plateauRate && actualPlateauRate < facilityMaxRate) {
-	  // Limited by facility
-	  bottleneck = getFacilityBottleneckName();
-	  utilization = rate / facilityMaxRate;
-	}
+        if (actualPlateauRate < plateauRate && actualPlateauRate < facilityMaxRate) {
+          // Limited by facility
+          bottleneck = getFacilityBottleneckName();
+          utilization = rate / facilityMaxRate;
+        }
       } else {
-	// In decline phase
-	onPlateau = false;
-	rate = Math.min(reservoirRate, facilityMaxRate);
+        // In decline phase
+        onPlateau = false;
+        rate = Math.min(reservoirRate, facilityMaxRate);
 
-	if (rate >= facilityMaxRate * 0.99) {
-	  bottleneck = getFacilityBottleneckName();
-	  utilization = 1.0;
-	} else {
-	  utilization = facilityMaxRate > 0 ? rate / facilityMaxRate : 0.0;
-	}
+        if (rate >= facilityMaxRate * 0.99) {
+          bottleneck = getFacilityBottleneckName();
+          utilization = 1.0;
+        } else {
+          utilization = facilityMaxRate > 0 ? rate / facilityMaxRate : 0.0;
+        }
       }
 
       boolean aboveLimit = rate >= economicLimit;
       if (!aboveLimit && !foundEconomicLimit) {
-	economicLifeYears = t;
-	foundEconomicLimit = true;
+        economicLifeYears = t;
+        foundEconomicLimit = true;
       }
 
       // Calculate cumulative production (trapezoidal integration)
       if (!points.isEmpty()) {
-	ProductionPoint lastPoint = points.get(points.size() - 1);
-	double avgRate = (lastPoint.getRate() + rate) / 2.0;
-	cumulativeProduction += avgRate * timeStepDays; // rate is per day
+        ProductionPoint lastPoint = points.get(points.size() - 1);
+        double avgRate = (lastPoint.getRate() + rate) / 2.0;
+        cumulativeProduction += avgRate * timeStepDays; // rate is per day
       }
 
       points.add(new ProductionPoint(t, "years", rate, cumulativeProduction, decline.getRateUnit(), bottleneck,
-	  utilization, onPlateau && t <= plateauDurationYears, aboveLimit));
+          utilization, onPlateau && t <= plateauDurationYears, aboveLimit));
 
       // Stop if below economic limit
       if (!aboveLimit) {
-	break;
+        break;
       }
     }
 
     return new ProductionForecast(points, plateauRate, actualPlateauRate, plateauDurationYears, actualPlateauDuration,
-	economicLimit, cumulativeProduction, economicLifeYears, decline);
+        economicLimit, cumulativeProduction, economicLifeYears, decline);
   }
 
   /**
@@ -799,7 +799,7 @@ public class ProductionProfile implements Serializable {
     case HYPERBOLIC:
       double denom = 1.0 + b * d * time;
       if (denom <= 0) {
-	return 0.0; // Prevent negative rates
+        return 0.0; // Prevent negative rates
       }
       return qi / Math.pow(denom, 1.0 / b);
 
@@ -848,8 +848,8 @@ public class ProductionProfile implements Serializable {
 
     case HYPERBOLIC:
       if (Math.abs(b - 1.0) < 1e-12) {
-	// b ≈ 1: harmonic case
-	return (qi / d) * Math.log(1.0 + d * time);
+        // b ≈ 1: harmonic case
+        return (qi / d) * Math.log(1.0 + d * time);
       }
       double exponent = 1.0 - 1.0 / b;
       return (qi / (d * (1.0 - b))) * (1.0 - Math.pow(1.0 + b * d * time, exponent));
@@ -893,8 +893,8 @@ public class ProductionProfile implements Serializable {
     List<Double> validRates = new ArrayList<>();
     for (int i = 0; i < times.size(); i++) {
       if (rates.get(i) > 0) {
-	validTimes.add(times.get(i));
-	validRates.add(rates.get(i));
+        validTimes.add(times.get(i));
+        validRates.add(rates.get(i));
       }
     }
 
@@ -986,16 +986,16 @@ public class ProductionProfile implements Serializable {
       // Calculate sum of squared errors
       double error = 0;
       for (int i = 0; i < times.size(); i++) {
-	double predicted = qi / Math.pow(1.0 + b * d * times.get(i), 1.0 / b);
-	double diff = predicted - rates.get(i);
-	error += diff * diff;
+        double predicted = qi / Math.pow(1.0 + b * d * times.get(i), 1.0 / b);
+        double diff = predicted - rates.get(i);
+        error += diff * diff;
       }
 
       if (error < bestError) {
-	bestError = error;
-	bestQi = qi;
-	bestD = d;
-	bestB = b;
+        bestError = error;
+        bestQi = qi;
+        bestD = d;
+        bestB = b;
       }
     }
 

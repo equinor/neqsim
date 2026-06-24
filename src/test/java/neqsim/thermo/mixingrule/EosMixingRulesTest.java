@@ -15,16 +15,16 @@ public class EosMixingRulesTest {
     testSystem.addComponent("nitrogen", 0.01);
     testSystem.addComponent("CO2", 0.01);
     testSystem.changeComponentName(testSystem.getComponent(0).getName(),
-	(testSystem.getComponent(0).getName() + "__well1"));
+        (testSystem.getComponent(0).getName() + "__well1"));
     testSystem.changeComponentName(testSystem.getComponent(1).getName(),
-	(testSystem.getComponent(1).getName() + "__well1"));
+        (testSystem.getComponent(1).getName() + "__well1"));
 
     testSystem.addComponent("nitrogen", 0.01);
     testSystem.addComponent("CO2", 0.01);
     testSystem.changeComponentName(testSystem.getComponent(2).getName(),
-	(testSystem.getComponent(2).getName() + "__well2"));
+        (testSystem.getComponent(2).getName() + "__well2"));
     testSystem.changeComponentName(testSystem.getComponent(3).getName(),
-	(testSystem.getComponent(3).getName() + "__well2"));
+        (testSystem.getComponent(3).getName() + "__well2"));
 
     testSystem.setMixingRule("classic");
 
@@ -56,16 +56,16 @@ public class EosMixingRulesTest {
     testSystem.addTBPfraction("C8", 0.01, 90.9 / 1000.0, 0.9);
     testSystem.addComponent("CO2", 0.01);
     testSystem.changeComponentName(testSystem.getComponent(0).getName(),
-	(testSystem.getComponent(0).getName() + "__well1"));
+        (testSystem.getComponent(0).getName() + "__well1"));
     testSystem.changeComponentName(testSystem.getComponent(1).getName(),
-	(testSystem.getComponent(1).getName() + "__well1"));
+        (testSystem.getComponent(1).getName() + "__well1"));
 
     testSystem.addTBPfraction("C8", 0.01, 90.9 / 1000.0, 0.9);
     testSystem.addComponent("CO2", 0.01);
     testSystem.changeComponentName(testSystem.getComponent(2).getName(),
-	(testSystem.getComponent(2).getName() + "__well2"));
+        (testSystem.getComponent(2).getName() + "__well2"));
     testSystem.changeComponentName(testSystem.getComponent(3).getName(),
-	(testSystem.getComponent(3).getName() + "__well2"));
+        (testSystem.getComponent(3).getName() + "__well2"));
 
     testSystem.setMixingRule("classic");
 
@@ -89,7 +89,7 @@ public class EosMixingRulesTest {
 
       double kij = ((PhaseEos) testSystem.getPhase(0)).getEosMixingRule().getBinaryInteractionParameter(0, 1);
       double expected = BIPEstimator.estimateChuehPrausnitz(testSystem.getComponent("methane"),
-	  testSystem.getComponent("n-heptane"));
+          testSystem.getComponent("n-heptane"));
 
       assertEquals(expected, kij, 1e-12);
       assertTrue(kij > 0.0, "Calculated critical-volume kij should not collapse to zero");

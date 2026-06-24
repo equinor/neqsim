@@ -73,8 +73,8 @@ public class Standard_ISO18453 extends neqsim.standards.Standard {
     } else {
       this.internalThermoSystem = new SystemGERGwaterEos(initTemperature, getReferencePressure());
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
-	this.internalThermoSystem.addComponent(thermoSystem.getPhase(0).getComponent(i).getName(),
-	    thermoSystem.getPhase(0).getComponent(i).getNumberOfmoles());
+        this.internalThermoSystem.addComponent(thermoSystem.getPhase(0).getComponent(i).getName(),
+            thermoSystem.getPhase(0).getComponent(i).getNumberOfmoles());
       }
     }
 
@@ -125,10 +125,10 @@ public class Standard_ISO18453 extends neqsim.standards.Standard {
   public double getValue(String returnParameter, String returnUnit) {
     if ("dewPointTemperature".equals(returnParameter)) {
       if ("K".equals(returnUnit)) {
-	return dewPointTemperature + 273.15;
+        return dewPointTemperature + 273.15;
       }
       if ("F".equals(returnUnit)) {
-	return dewPointTemperature * 9.0 / 5.0 + 32.0;
+        return dewPointTemperature * 9.0 / 5.0 + 32.0;
       }
     }
     return dewPointTemperature;

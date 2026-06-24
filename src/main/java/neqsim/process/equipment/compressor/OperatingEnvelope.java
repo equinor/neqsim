@@ -360,7 +360,7 @@ public class OperatingEnvelope implements Serializable {
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < violations.size(); i++) {
       if (i > 0) {
-	sb.append(", ");
+        sb.append(", ");
       }
       sb.append(violations.get(i));
     }
@@ -381,9 +381,9 @@ public class OperatingEnvelope implements Serializable {
     // Find bracketing points
     for (int i = 0; i < surgeHeads.length - 1; i++) {
       if (head >= surgeHeads[i + 1] && head <= surgeHeads[i]) {
-	// Linear interpolation
-	double fraction = (head - surgeHeads[i + 1]) / (surgeHeads[i] - surgeHeads[i + 1]);
-	return surgeFlows[i + 1] + fraction * (surgeFlows[i] - surgeFlows[i + 1]);
+        // Linear interpolation
+        double fraction = (head - surgeHeads[i + 1]) / (surgeHeads[i] - surgeHeads[i + 1]);
+        return surgeFlows[i + 1] + fraction * (surgeFlows[i] - surgeFlows[i + 1]);
       }
     }
 
@@ -408,8 +408,8 @@ public class OperatingEnvelope implements Serializable {
     // Find bracketing points
     for (int i = 0; i < stonewallHeads.length - 1; i++) {
       if (head >= stonewallHeads[i + 1] && head <= stonewallHeads[i]) {
-	double fraction = (head - stonewallHeads[i + 1]) / (stonewallHeads[i] - stonewallHeads[i + 1]);
-	return stonewallFlows[i + 1] + fraction * (stonewallFlows[i] - stonewallFlows[i + 1]);
+        double fraction = (head - stonewallHeads[i + 1]) / (stonewallHeads[i] - stonewallHeads[i + 1]);
+        return stonewallFlows[i + 1] + fraction * (stonewallFlows[i] - stonewallFlows[i + 1]);
       }
     }
 

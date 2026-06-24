@@ -222,7 +222,7 @@ public class ProcessTopologyAnalyzerTest {
     List<String> recycleUpstream = loopAnalyzer.getUpstreamEquipment("Liquid Recycle");
     List<String> recycleDownstream = loopAnalyzer.getDownstreamEquipment("Liquid Recycle");
     assertTrue(recycleUpstream.contains("Loop Separator"),
-	"Recycle should receive the separator liquid outlet as an inlet");
+        "Recycle should receive the separator liquid outlet as an inlet");
     assertTrue(recycleDownstream.contains("Loop Mixer"), "Recycle outlet (tear seed) should feed the loop mixer");
 
     String dot = loopAnalyzer.toDotGraph();

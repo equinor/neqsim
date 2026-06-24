@@ -136,7 +136,7 @@ public class TrayHydraulicsCalculatorTest {
 
     // Valve trays have higher flooding velocity (~1.1x sieve)
     assertTrue(valveCalc.getFloodingVelocity() > sieveCalc.getFloodingVelocity(),
-	"Valve trays should have higher capacity");
+        "Valve trays should have higher capacity");
     // So percent flood should be lower for valve trays
     assertTrue(valveCalc.getPercentFlood() < sieveCalc.getPercentFlood(), "Valve tray should show lower % flood");
   }
@@ -211,7 +211,7 @@ public class TrayHydraulicsCalculatorTest {
 
     // Total DP = dry + liquid + residual
     double totalDP = calc.getDryTrayPressureDrop() + calc.getLiquidHeadPressureDrop()
-	+ calc.getResidualHeadPressureDrop();
+        + calc.getResidualHeadPressureDrop();
     assertEquals(totalDP, calc.getTotalTrayPressureDrop(), 0.01, "Total should equal sum of components");
 
     // mbar conversion
@@ -219,9 +219,9 @@ public class TrayHydraulicsCalculatorTest {
 
     // Typical sieve tray DP is 3-15 mbar
     assertTrue(calc.getTotalTrayPressureDropMbar() > 0.1,
-	"Pressure drop too low: " + calc.getTotalTrayPressureDropMbar());
+        "Pressure drop too low: " + calc.getTotalTrayPressureDropMbar());
     assertTrue(calc.getTotalTrayPressureDropMbar() < 100,
-	"Pressure drop too high: " + calc.getTotalTrayPressureDropMbar());
+        "Pressure drop too high: " + calc.getTotalTrayPressureDropMbar());
   }
 
   /**
@@ -253,6 +253,6 @@ public class TrayHydraulicsCalculatorTest {
 
     // O'Connell: higher alpha*mu → lower efficiency
     assertTrue(calcLowAlpha.getTrayEfficiency() > calcHighAlpha.getTrayEfficiency(),
-	"Higher alpha should give lower O'Connell efficiency");
+        "Higher alpha should give lower O'Connell efficiency");
   }
 }

@@ -73,7 +73,7 @@ public class OilInWaterAnalyzerDriftModel implements Serializable {
   public double measureConservative(double trueOilInWaterMgL, double daysSinceCalibration,
       double confidenceMultiplier) {
     return measure(trueOilInWaterMgL, daysSinceCalibration)
-	+ Math.max(0.0, confidenceMultiplier) * noiseStandardDeviationMgL;
+        + Math.max(0.0, confidenceMultiplier) * noiseStandardDeviationMgL;
   }
 
   /**

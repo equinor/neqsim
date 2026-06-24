@@ -356,9 +356,9 @@ public class UnisimCalculator extends ProcessEquipmentBaseClass {
     StreamInterface inletStream = getInletStream();
     if (inletStream != null) {
       if (outletStream == null) {
-	outletStream = createOutletStream(inletStream);
+        outletStream = createOutletStream(inletStream);
       } else {
-	outletStream.setThermoSystem(inletStream.getThermoSystem().clone());
+        outletStream.setThermoSystem(inletStream.getThermoSystem().clone());
       }
     }
     if (outletStream != null) {

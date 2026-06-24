@@ -240,7 +240,7 @@ public class ProcessLinearizer {
 
     if (numMV == 0 || numCV == 0) {
       return new LinearizationResult("At least one MV and one CV must be defined",
-	  System.currentTimeMillis() - startTime);
+          System.currentTimeMillis() - startTime);
     }
 
     try {
@@ -256,65 +256,65 @@ public class ProcessLinearizer {
       String[] dvNames = new String[numDV];
 
       for (int i = 0; i < numMV; i++) {
-	ManipulatedVariable mv = manipulatedVariables.get(i);
-	mvBaseline[i] = mv.readValue();
-	mvNames[i] = mv.getName();
+        ManipulatedVariable mv = manipulatedVariables.get(i);
+        mvBaseline[i] = mv.readValue();
+        mvNames[i] = mv.getName();
       }
 
       for (int i = 0; i < numCV; i++) {
-	ControlledVariable cv = controlledVariables.get(i);
-	cvBaseline[i] = cv.readValue();
-	cvNames[i] = cv.getName();
+        ControlledVariable cv = controlledVariables.get(i);
+        cvBaseline[i] = cv.readValue();
+        cvNames[i] = cv.getName();
       }
 
       for (int i = 0; i < numDV; i++) {
-	DisturbanceVariable dv = disturbanceVariables.get(i);
-	dvBaseline[i] = dv.readValue();
-	dvNames[i] = dv.getName();
+        DisturbanceVariable dv = disturbanceVariables.get(i);
+        dvBaseline[i] = dv.readValue();
+        dvNames[i] = dv.getName();
       }
 
       // Calculate gain matrix (∂CV/∂MV)
       double[][] gainMatrix = new double[numCV][numMV];
 
       for (int j = 0; j < numMV; j++) {
-	ManipulatedVariable mv = manipulatedVariables.get(j);
-	double originalValue = mvBaseline[j];
+        ManipulatedVariable mv = manipulatedVariables.get(j);
+        double originalValue = mvBaseline[j];
 
-	// Calculate perturbation delta
-	double delta = calculatePerturbation(mv, originalValue, perturbationSize);
+        // Calculate perturbation delta
+        double delta = calculatePerturbation(mv, originalValue, perturbationSize);
 
-	double[] cvPlus;
-	double[] cvMinus;
+        double[] cvPlus;
+        double[] cvMinus;
 
-	if (useCentralDifferences) {
-	  // Central difference: perturb both directions
-	  // Positive perturbation
-	  mv.writeValue(originalValue + delta);
-	  processSystem.run();
-	  cvPlus = readAllCVs();
+        if (useCentralDifferences) {
+          // Central difference: perturb both directions
+          // Positive perturbation
+          mv.writeValue(originalValue + delta);
+          processSystem.run();
+          cvPlus = readAllCVs();
 
-	  // Negative perturbation
-	  mv.writeValue(originalValue - delta);
-	  processSystem.run();
-	  cvMinus = readAllCVs();
+          // Negative perturbation
+          mv.writeValue(originalValue - delta);
+          processSystem.run();
+          cvMinus = readAllCVs();
 
-	  // Calculate gains using central difference
-	  for (int i = 0; i < numCV; i++) {
-	    gainMatrix[i][j] = (cvPlus[i] - cvMinus[i]) / (2.0 * delta);
-	  }
-	} else {
-	  // Forward difference: perturb positive only
-	  mv.writeValue(originalValue + delta);
-	  processSystem.run();
-	  cvPlus = readAllCVs();
+          // Calculate gains using central difference
+          for (int i = 0; i < numCV; i++) {
+            gainMatrix[i][j] = (cvPlus[i] - cvMinus[i]) / (2.0 * delta);
+          }
+        } else {
+          // Forward difference: perturb positive only
+          mv.writeValue(originalValue + delta);
+          processSystem.run();
+          cvPlus = readAllCVs();
 
-	  for (int i = 0; i < numCV; i++) {
-	    gainMatrix[i][j] = (cvPlus[i] - cvBaseline[i]) / delta;
-	  }
-	}
+          for (int i = 0; i < numCV; i++) {
+            gainMatrix[i][j] = (cvPlus[i] - cvBaseline[i]) / delta;
+          }
+        }
 
-	// Restore original value
-	mv.writeValue(originalValue);
+        // Restore original value
+        mv.writeValue(originalValue);
       }
 
       // Restore process to baseline state
@@ -325,17 +325,17 @@ public class ProcessLinearizer {
       // Note: DV gains would require external perturbation capability
       // For now, use stored sensitivity if available
       for (int k = 0; k < numDV; k++) {
-	DisturbanceVariable dv = disturbanceVariables.get(k);
-	double[] sensitivity = dv.getCvSensitivity();
-	for (int i = 0; i < numCV && i < sensitivity.length; i++) {
-	  disturbanceGainMatrix[i][k] = sensitivity[i];
-	}
+        DisturbanceVariable dv = disturbanceVariables.get(k);
+        double[] sensitivity = dv.getCvSensitivity();
+        for (int i = 0; i < numCV && i < sensitivity.length; i++) {
+          disturbanceGainMatrix[i][k] = sensitivity[i];
+        }
       }
 
       long computationTime = System.currentTimeMillis() - startTime;
 
       return new LinearizationResult(gainMatrix, disturbanceGainMatrix, mvBaseline, cvBaseline, dvBaseline, mvNames,
-	  cvNames, dvNames, perturbationSize, computationTime);
+          cvNames, dvNames, perturbationSize, computationTime);
 
     } catch (Exception e) {
       return new LinearizationResult("Linearization failed: " + e.getMessage(), System.currentTimeMillis() - startTime);
@@ -427,9 +427,9 @@ public class ProcessLinearizer {
 
       primaryMV.writeValue(testValue);
       try {
-	processSystem.run();
+        processSystem.run();
       } catch (Exception e) {
-	continue;
+        continue;
       }
 
       results.add(linearize(perturbationSize));
@@ -467,15 +467,15 @@ public class ProcessLinearizer {
 
     for (int i = 0; i < gains1.length; i++) {
       for (int j = 0; j < gains1[i].length; j++) {
-	double g1 = gains1[i][j];
-	double g2 = gains2[i][j];
-	double maxAbs = Math.max(Math.abs(g1), Math.abs(g2));
-	if (maxAbs > 1e-10) {
-	  double relDiff = Math.abs(g1 - g2) / maxAbs;
-	  if (relDiff > tolerance) {
-	    return false;
-	  }
-	}
+        double g1 = gains1[i][j];
+        double g2 = gains2[i][j];
+        double maxAbs = Math.max(Math.abs(g1), Math.abs(g2));
+        if (maxAbs > 1e-10) {
+          double relDiff = Math.abs(g1 - g2) / maxAbs;
+          if (relDiff > tolerance) {
+            return false;
+          }
+        }
       }
     }
     return true;

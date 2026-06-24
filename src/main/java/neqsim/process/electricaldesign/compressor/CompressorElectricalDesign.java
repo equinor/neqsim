@@ -66,7 +66,7 @@ public class CompressorElectricalDesign extends ElectricalDesign {
     // Check if compressor uses electric motor with VFD
     if (comp.getDriver() != null) {
       if (comp.getDriver().getDriverType() == DriverType.VFD_MOTOR) {
-	setUseVFD(true);
+        setUseVFD(true);
       }
     }
   }

@@ -107,17 +107,17 @@ public class VariableFrequencyDrive implements java.io.Serializable {
     if (voltageV > 3300) {
       // Medium voltage - use multi-level or 3-level
       if (powerKW > 2000) {
-	topologyType = "Multi-level";
-	pulseConfiguration = "AFE";
-	hasActiveRectifier = true;
-	thdCurrentPercent = 3.0;
-	requiresInputFilter = false;
+        topologyType = "Multi-level";
+        pulseConfiguration = "AFE";
+        hasActiveRectifier = true;
+        thdCurrentPercent = 3.0;
+        requiresInputFilter = false;
       } else {
-	topologyType = "3-level";
-	pulseConfiguration = "12-pulse";
-	hasActiveRectifier = false;
-	thdCurrentPercent = 10.0;
-	requiresInputFilter = false;
+        topologyType = "3-level";
+        pulseConfiguration = "12-pulse";
+        hasActiveRectifier = false;
+        thdCurrentPercent = 10.0;
+        requiresInputFilter = false;
       }
     } else if (powerKW > 250) {
       // High power LV - use AFE

@@ -104,7 +104,7 @@ public class AsphalteneCharacterizationTest {
     double cii = characterization.getColloidalInstabilityIndex();
     // Should be in the marginal range (0.7 - 0.9)
     assertTrue(
-	cii >= AsphalteneCharacterization.CII_STABLE_LIMIT || cii <= AsphalteneCharacterization.CII_UNSTABLE_LIMIT);
+        cii >= AsphalteneCharacterization.CII_STABLE_LIMIT || cii <= AsphalteneCharacterization.CII_UNSTABLE_LIMIT);
   }
 
   @Test

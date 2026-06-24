@@ -59,7 +59,7 @@ public class WellFlowTest {
     double producxtionIndex = 10.000100751427403E-3;
 
     neqsim.process.equipment.reservoir.SimpleReservoir reservoirOps = new neqsim.process.equipment.reservoir.SimpleReservoir(
-	"Well 1 reservoir");
+        "Well 1 reservoir");
     reservoirOps.setReservoirFluid(fluid1.clone(), 700000000.0, 1.0, 10.0e7);
     reservoirOps.setLowPressureLimit(10.0, "bara");
 
@@ -67,41 +67,41 @@ public class WellFlowTest {
     producedGasStream.setFlowRate(9.0, "MSm3/day");
 
     neqsim.process.equipment.reservoir.WellFlow wellflow = new neqsim.process.equipment.reservoir.WellFlow(
-	"well flow unit");
+        "well flow unit");
     wellflow.setInletStream(producedGasStream);
     wellflow.setWellProductionIndex(producxtionIndex);
 
     neqsim.process.equipment.pipeline.PipeBeggsAndBrills pipe = new neqsim.process.equipment.pipeline.PipeBeggsAndBrills(
-	"pipe", wellflow.getOutletStream());
+        "pipe", wellflow.getOutletStream());
     pipe.setPipeWallRoughness(5e-6);
     pipe.setLength(170.0);
     pipe.setElevation(170);
     pipe.setDiameter(0.625);
 
     neqsim.process.equipment.compressor.Compressor compressor = new neqsim.process.equipment.compressor.Compressor(
-	"subcomp");
+        "subcomp");
     compressor.setInletStream(pipe.getOutletStream());
     compressor.setUsePolytropicCalc(true);
     compressor.setPolytropicEfficiency(0.6);
     compressor.setCompressionRatio(2.0);
 
     neqsim.process.equipment.heatexchanger.Cooler intercooler = new neqsim.process.equipment.heatexchanger.Cooler(
-	"cooler", compressor.getOutletStream());
+        "cooler", compressor.getOutletStream());
     intercooler.setOutTemperature(25.0, "C");
 
     neqsim.process.equipment.compressor.Compressor compressor2 = new neqsim.process.equipment.compressor.Compressor(
-	"subcomp2");
+        "subcomp2");
     compressor2.setInletStream(intercooler.getOutletStream());
     compressor2.setUsePolytropicCalc(true);
     compressor2.setPolytropicEfficiency(0.6);
     compressor2.setCompressionRatio(2.0);
 
     neqsim.process.equipment.heatexchanger.Heater cooler1 = new neqsim.process.equipment.heatexchanger.Heater(
-	"cooler 1", compressor2.getOutletStream());
+        "cooler 1", compressor2.getOutletStream());
     cooler1.setOutTemperature(30.0, "C");
 
     neqsim.process.equipment.pipeline.PipeBeggsAndBrills pipeline = new neqsim.process.equipment.pipeline.PipeBeggsAndBrills(
-	"pipeline", cooler1.getOutletStream());
+        "pipeline", cooler1.getOutletStream());
     pipeline.setPipeWallRoughness(50e-6);
     pipeline.setLength(50 * 1e3);
     pipeline.setElevation(0);

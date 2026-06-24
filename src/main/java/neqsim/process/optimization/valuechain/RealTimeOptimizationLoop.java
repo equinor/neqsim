@@ -264,7 +264,7 @@ public class RealTimeOptimizationLoop implements Serializable {
     for (int c = 1; c <= cycles; c++) {
       double[] measurements = reader != null ? reader.read() : new double[0];
       if (calibrator != null) {
-	calibrator.calibrate(measurements);
+        calibrator.calibrate(measurements);
       }
       double[] setpoints = optimizer.optimize();
       writer.apply(setpoints);
@@ -294,7 +294,7 @@ public class RealTimeOptimizationLoop implements Serializable {
     for (int i = 0; i < history.size(); i++) {
       CycleRecord r = history.get(i);
       if (i > 0) {
-	sb.append(",");
+        sb.append(",");
       }
       sb.append("{");
       sb.append("\"cycle\":").append(r.getCycle()).append(",");

@@ -178,27 +178,27 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
 
       int comps = inletStream.getThermoSystem().getPhase(0).getNumberOfComponents();
       for (int i = 0; i < comps; i++) {
-	String name = inletStream.getThermoSystem().getPhase(0).getComponent(i).getName();
-	double moles = inletStream.getThermoSystem().getPhase(0).getComponent(i).getNumberOfmoles();
+        String name = inletStream.getThermoSystem().getPhase(0).getComponent(i).getName();
+        double moles = inletStream.getThermoSystem().getPhase(0).getComponent(i).getNumberOfmoles();
 
-	double molesPerm = 0.0;
-	if (!permeabilities.isEmpty() && membraneArea > 0.0) {
-	  double perm = permeabilities.getOrDefault(name, 0.0);
-	  double xFeed = inletStream.getThermoSystem().getPhase(0).getComponent(i).getx();
-	  double partialFeed = xFeed * inletStream.getThermoSystem().getPressure();
-	  molesPerm = perm * membraneArea * partialFeed;
-	  if (molesPerm > moles) {
-	    molesPerm = moles;
-	  }
-	} else {
-	  double frac = permeateFractions.getOrDefault(name, defaultPermeateFraction);
-	  molesPerm = moles * frac;
-	}
+        double molesPerm = 0.0;
+        if (!permeabilities.isEmpty() && membraneArea > 0.0) {
+          double perm = permeabilities.getOrDefault(name, 0.0);
+          double xFeed = inletStream.getThermoSystem().getPhase(0).getComponent(i).getx();
+          double partialFeed = xFeed * inletStream.getThermoSystem().getPressure();
+          molesPerm = perm * membraneArea * partialFeed;
+          if (molesPerm > moles) {
+            molesPerm = moles;
+          }
+        } else {
+          double frac = permeateFractions.getOrDefault(name, defaultPermeateFraction);
+          molesPerm = moles * frac;
+        }
 
-	retentateStream.getThermoSystem().addComponent(name, -(moles));
-	retentateStream.getThermoSystem().addComponent(name, moles - molesPerm);
-	permeateStream.getThermoSystem().addComponent(name, -(moles));
-	permeateStream.getThermoSystem().addComponent(name, molesPerm);
+        retentateStream.getThermoSystem().addComponent(name, -(moles));
+        retentateStream.getThermoSystem().addComponent(name, moles - molesPerm);
+        permeateStream.getThermoSystem().addComponent(name, -(moles));
+        permeateStream.getThermoSystem().addComponent(name, molesPerm);
       }
 
       ThermodynamicOperations opsRet = new ThermodynamicOperations(retentateStream.getThermoSystem());
@@ -236,7 +236,7 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
   public double getMassBalance(String unit) {
     double inletFlow = inletStream.getThermoSystem().getFlowRate(unit);
     double outletFlow = permeateStream.getThermoSystem().getFlowRate(unit)
-	+ retentateStream.getThermoSystem().getFlowRate(unit);
+        + retentateStream.getThermoSystem().getFlowRate(unit);
     return outletFlow - inletFlow;
   }
 }

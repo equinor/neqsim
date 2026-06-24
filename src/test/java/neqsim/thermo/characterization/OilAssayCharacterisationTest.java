@@ -19,9 +19,9 @@ public class OilAssayCharacterisationTest {
     characterisation.clearCuts();
 
     AssayCut light = new AssayCut("Light").withWeightPercent(40.0).withDensity(0.75)
-	.withAverageBoilingPointCelsius(200.0);
+        .withAverageBoilingPointCelsius(200.0);
     AssayCut heavy = new AssayCut("Heavy").withVolumePercent(60.0).withApiGravity(25.0)
-	.withAverageBoilingPointCelsius(350.0);
+        .withAverageBoilingPointCelsius(350.0);
 
     characterisation.addCut(light);
     characterisation.addCut(heavy);
@@ -67,7 +67,7 @@ public class OilAssayCharacterisationTest {
     OilAssayCharacterisation original = system.getOilAssayCharacterisation();
     original.clearCuts();
     original.addCut(
-	new AssayCut("CloneTest").withMassFraction(1.0).withDensity(0.85).withAverageBoilingPointCelsius(310.0));
+        new AssayCut("CloneTest").withMassFraction(1.0).withDensity(0.85).withAverageBoilingPointCelsius(310.0));
 
     SystemInterface cloned = system.clone();
     OilAssayCharacterisation cloneCharacterisation = cloned.getOilAssayCharacterisation();
@@ -86,11 +86,11 @@ public class OilAssayCharacterisationTest {
 
     // Create a cut with explicit molar mass but no boiling point
     AssayCut cut = new AssayCut("ExplicitMW").withMassFraction(1.0).withDensity(0.8).withMolarMass(150.0); // Explicit
-													   // molar
-													   // mass,
-													   // no
-													   // boiling
-													   // point
+    // molar
+    // mass,
+    // no
+    // boiling
+    // point
 
     characterisation.addCut(cut);
     characterisation.apply(); // Should not throw exception
@@ -133,7 +133,7 @@ public class OilAssayCharacterisationTest {
 
     // Cut with calculated molar mass (requires boiling point)
     AssayCut calculatedCut = new AssayCut("Calculated").withMassFraction(0.5).withDensity(0.85)
-	.withAverageBoilingPointCelsius(250.0);
+        .withAverageBoilingPointCelsius(250.0);
 
     characterisation.addCut(explicitCut);
     characterisation.addCut(calculatedCut);

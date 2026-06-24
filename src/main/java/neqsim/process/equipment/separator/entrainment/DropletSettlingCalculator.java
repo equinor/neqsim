@@ -85,8 +85,8 @@ public class DropletSettlingCalculator implements Serializable {
       double vNew = Math.sqrt(4.0 * G * dropletDiameter * deltaRho / (3.0 * cd * continuousDensity));
 
       if (Math.abs(vNew - velocity) / (velocity + 1e-30) < TOLERANCE) {
-	velocity = vNew;
-	break;
+        velocity = vNew;
+        break;
       }
       velocity = 0.5 * (velocity + vNew); // Under-relaxation for stability
     }
@@ -246,7 +246,7 @@ public class DropletSettlingCalculator implements Serializable {
      * @param kUtil K-factor utilization fraction
      */
     public ApiComplianceResult(boolean gasOk, boolean liquidOk, String gasComment, String liquidCommentArg,
-	double cutDiam_um, double kUtil) {
+        double cutDiam_um, double kUtil) {
       this.gasLiquidSectionCompliant = gasOk;
       this.liquidSectionCompliant = liquidOk;
       this.gasLiquidComment = gasComment;
@@ -298,7 +298,8 @@ public class DropletSettlingCalculator implements Serializable {
       boolean mistEliminatorPresent, double liquidResidenceTime_s, String orientation, boolean isThreePhase) {
 
     // -- Gas section K-factor limits (API 12J Table 2) --
-    double maxKNoME = "vertical".equalsIgnoreCase(orientation) ? 0.107 : 0.120; // m/s without mist eliminator
+    double maxKNoME = "vertical".equalsIgnoreCase(orientation) ? 0.107 : 0.120; // m/s without mist
+                                                                                // eliminator
     double maxKWithME = 0.25; // m/s with wire-mesh mist eliminator (typical)
     double maxK = mistEliminatorPresent ? maxKWithME : maxKNoME;
     double kUtil = (maxK > 0) ? kFactor / maxK : 0.0;
@@ -309,10 +310,10 @@ public class DropletSettlingCalculator implements Serializable {
     String gasComment;
     if (gasOk) {
       gasComment = String.format("COMPLIANT: cut=%.0f um (max 100 um), K=%.3f m/s (max %.3f m/s)",
-	  gravityCutDiameter_m * 1e6, kFactor, maxK);
+          gravityCutDiameter_m * 1e6, kFactor, maxK);
     } else {
       gasComment = String.format("NON-COMPLIANT: cut=%.0f um (max 100 um), K=%.3f m/s (max %.3f m/s)",
-	  gravityCutDiameter_m * 1e6, kFactor, maxK);
+          gravityCutDiameter_m * 1e6, kFactor, maxK);
     }
 
     // -- Liquid section residence time limit --
@@ -321,10 +322,10 @@ public class DropletSettlingCalculator implements Serializable {
     String liquidComment;
     if (liquidOk) {
       liquidComment = String.format("COMPLIANT: liquid residence time = %.0f s (min %.0f s)", liquidResidenceTime_s,
-	  minResidenceTime);
+          minResidenceTime);
     } else {
       liquidComment = String.format("NON-COMPLIANT: liquid residence time = %.0f s (min %.0f s)", liquidResidenceTime_s,
-	  minResidenceTime);
+          minResidenceTime);
     }
 
     return new ApiComplianceResult(gasOk, liquidOk, gasComment, liquidComment, gravityCutDiameter_m * 1e6, kUtil);
@@ -369,14 +370,14 @@ public class DropletSettlingCalculator implements Serializable {
     for (int i = 0; i < MAX_ITERATIONS; i++) {
       double vt = Math.abs(calcTerminalVelocity(dCut, continuousDensity, dispersedDensity, continuousViscosity));
       if (vt <= 0) {
-	break;
+        break;
       }
       double ratio = requiredVelocity / vt;
       // Adjust diameter: in Stokes regime, v ~ d^2, so d ~ sqrt(ratio) * d
       double dNew = dCut * Math.sqrt(ratio);
       if (Math.abs(dNew - dCut) / (dCut + 1e-30) < TOLERANCE) {
-	dCut = dNew;
-	break;
+        dCut = dNew;
+        break;
       }
       dCut = 0.5 * (dCut + dNew);
     }

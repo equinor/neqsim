@@ -114,9 +114,9 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
   public Diffusivity(PhysicalProperties gasPhase) {
     super(gasPhase);
     binaryDiffusionCoefficients = new double[gasPhase.getPhase().getNumberOfComponents()][gasPhase.getPhase()
-	.getNumberOfComponents()];
+        .getNumberOfComponents()];
     binaryLennardJonesOmega = new double[gasPhase.getPhase().getNumberOfComponents()][gasPhase.getPhase()
-	.getNumberOfComponents()];
+        .getNumberOfComponents()];
     effectiveDiffusionCoefficient = new double[gasPhase.getPhase().getNumberOfComponents()];
   }
 
@@ -150,30 +150,30 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
       String name = gasPhase.getPhase().getComponent(i).getComponentName().toLowerCase();
       double[] ljParams = DIFFUSION_LJ_PARAMS.get(name);
       if (ljParams != null) {
-	sigma[i] = ljParams[0];
-	epsOverK[i] = ljParams[1];
+        sigma[i] = ljParams[0];
+        epsOverK[i] = ljParams[1];
       } else {
-	// Estimate from critical properties using Tee-Gotoh-Stewart correlation
-	// (Poling et al., 2001, Eq. 9-4.2 and 9-4.3) for consistency with the
-	// textbook values used for known components.
-	double Tc = gasPhase.getPhase().getComponent(i).getTC(); // K
-	double Pc = gasPhase.getPhase().getComponent(i).getPC(); // bara
-	double omega = gasPhase.getPhase().getComponent(i).getAcentricFactor();
-	if (Tc > 0 && Pc > 0) {
-	  sigma[i] = (2.3551 - 0.087 * omega) * Math.pow(Tc / Pc, 1.0 / 3.0);
-	  epsOverK[i] = Tc * (0.7915 + 0.1693 * omega * omega);
-	} else {
-	  // Last resort: keep original DB values
-	  sigma[i] = gasPhase.getPhase().getComponent(i).getLennardJonesMolecularDiameter();
-	  epsOverK[i] = gasPhase.getPhase().getComponent(i).getLennardJonesEnergyParameter();
-	}
+        // Estimate from critical properties using Tee-Gotoh-Stewart correlation
+        // (Poling et al., 2001, Eq. 9-4.2 and 9-4.3) for consistency with the
+        // textbook values used for known components.
+        double Tc = gasPhase.getPhase().getComponent(i).getTC(); // K
+        double Pc = gasPhase.getPhase().getComponent(i).getPC(); // bara
+        double omega = gasPhase.getPhase().getComponent(i).getAcentricFactor();
+        if (Tc > 0 && Pc > 0) {
+          sigma[i] = (2.3551 - 0.087 * omega) * Math.pow(Tc / Pc, 1.0 / 3.0);
+          epsOverK[i] = Tc * (0.7915 + 0.1693 * omega * omega);
+        } else {
+          // Last resort: keep original DB values
+          sigma[i] = gasPhase.getPhase().getComponent(i).getLennardJonesMolecularDiameter();
+          epsOverK[i] = gasPhase.getPhase().getComponent(i).getLennardJonesEnergyParameter();
+        }
       }
     }
     // Recompute binary combining rules
     for (int i = 0; i < nComps; i++) {
       for (int j = 0; j < nComps; j++) {
-	binaryMolecularDiameter[i][j] = (sigma[i] + sigma[j]) / 2.0;
-	binaryEnergyParameter[i][j] = Math.sqrt(epsOverK[i] * epsOverK[j]);
+        binaryMolecularDiameter[i][j] = (sigma[i] + sigma[j]) / 2.0;
+        binaryEnergyParameter[i][j] = Math.sqrt(epsOverK[i] * epsOverK[j]);
       }
     }
   }
@@ -191,10 +191,10 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
     if (this.binaryDiffusionCoefficients != null && this.binaryDiffusionCoefficients.length > 0) {
       properties.binaryDiffusionCoefficients = this.binaryDiffusionCoefficients.clone();
       for (int i = 0; i < this.binaryDiffusionCoefficients.length; i++) {
-	if (this.binaryDiffusionCoefficients[i] != null && properties.binaryDiffusionCoefficients[i] != null) {
-	  System.arraycopy(this.binaryDiffusionCoefficients[i], 0, properties.binaryDiffusionCoefficients[i], 0,
-	      this.binaryDiffusionCoefficients[i].length);
-	}
+        if (this.binaryDiffusionCoefficients[i] != null && properties.binaryDiffusionCoefficients[i] != null) {
+          System.arraycopy(this.binaryDiffusionCoefficients[i], 0, properties.binaryDiffusionCoefficients[i], 0,
+              this.binaryDiffusionCoefficients[i].length);
+        }
       }
     }
     if (this.effectiveDiffusionCoefficient != null && this.effectiveDiffusionCoefficient.length > 0) {
@@ -213,7 +213,7 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
     // Temperature range validation
     if (enableTemperatureWarnings && (T < T_MIN || T > T_MAX)) {
       logger.warn("Temperature {} K is outside validated range [{}-{}] for gas diffusivity calculation", T, T_MIN,
-	  T_MAX);
+          T_MAX);
     }
 
     double A2 = 1.06036;
@@ -226,10 +226,10 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
     double H2 = 3.89411;
     double tempVar2 = T / binaryEnergyParameter[i][j];
     binaryLennardJonesOmega[i][j] = A2 / Math.pow(tempVar2, B2) + C2 / Math.exp(D2 * tempVar2)
-	+ E2 / Math.exp(F2 * tempVar2) + G2 / Math.exp(H2 * tempVar2);
+        + E2 / Math.exp(F2 * tempVar2) + G2 / Math.exp(H2 * tempVar2);
     binaryDiffusionCoefficients[i][j] = 0.00266 * Math.pow(T, 1.5)
-	/ (gasPhase.getPhase().getPressure() * Math.sqrt(binaryMolecularMass[i][j])
-	    * Math.pow(binaryMolecularDiameter[i][j], 2) * binaryLennardJonesOmega[i][j]);
+        / (gasPhase.getPhase().getPressure() * Math.sqrt(binaryMolecularMass[i][j])
+            * Math.pow(binaryMolecularDiameter[i][j], 2) * binaryLennardJonesOmega[i][j]);
     // Convert from cm²/s to m²/s
     binaryDiffusionCoefficients[i][j] *= 1e-4;
     return binaryDiffusionCoefficients[i][j];
@@ -259,8 +259,8 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
   public double[][] calcDiffusionCoefficients(int binaryDiffusionCoefficientMethod, int multicomponentDiffusionMethod) {
     for (int i = 0; i < gasPhase.getPhase().getNumberOfComponents(); i++) {
       for (int j = i; j < gasPhase.getPhase().getNumberOfComponents(); j++) {
-	binaryDiffusionCoefficients[i][j] = calcBinaryDiffusionCoefficient(i, j, binaryDiffusionCoefficientMethod);
-	binaryDiffusionCoefficients[j][i] = binaryDiffusionCoefficients[i][j];
+        binaryDiffusionCoefficients[i][j] = calcBinaryDiffusionCoefficient(i, j, binaryDiffusionCoefficientMethod);
+        binaryDiffusionCoefficients[j][i] = binaryDiffusionCoefficients[i][j];
       }
     }
 
@@ -280,10 +280,10 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
     for (int i = 0; i < gasPhase.getPhase().getNumberOfComponents(); i++) {
       sum = 0;
       for (int j = 0; j < gasPhase.getPhase().getNumberOfComponents(); j++) {
-	if (i == j) {
-	} else {
-	  sum += gasPhase.getPhase().getComponent(j).getx() / binaryDiffusionCoefficients[i][j];
-	}
+        if (i == j) {
+        } else {
+          sum += gasPhase.getPhase().getComponent(j).getx() / binaryDiffusionCoefficients[i][j];
+        }
       }
       effectiveDiffusionCoefficient[i] = (1.0 - gasPhase.getPhase().getComponent(i).getx()) / sum;
     }

@@ -107,8 +107,8 @@ public class ProcessModel implements Runnable, Serializable {
      * @param structureVersions process structure versions observed while building the plan
      */
     private AreaExecutionPlan(List<List<ProcessSystem>> levels,
-	Map<ProcessSystem, java.util.Set<ProcessSystem>> successors, java.util.Set<Object> boundaryStreams,
-	Map<Object, java.util.Set<ProcessSystem>> boundaryConsumers, Map<ProcessSystem, Long> structureVersions) {
+        Map<ProcessSystem, java.util.Set<ProcessSystem>> successors, java.util.Set<Object> boundaryStreams,
+        Map<Object, java.util.Set<ProcessSystem>> boundaryConsumers, Map<ProcessSystem, Long> structureVersions) {
       this.levels = levels;
       this.successors = successors;
       this.boundaryStreams = boundaryStreams;
@@ -210,7 +210,7 @@ public class ProcessModel implements Runnable, Serializable {
      * @param iterationNumber current outer iteration number (starts at 1)
      */
     void onProcessAreaComplete(String areaName, ProcessSystem process, int areaIndex, int totalAreas,
-	int iterationNumber);
+        int iterationNumber);
 
     /**
      * Called before a process area is executed.
@@ -222,7 +222,7 @@ public class ProcessModel implements Runnable, Serializable {
      * @param iterationNumber current outer iteration number (starts at 1)
      */
     default void onBeforeProcessArea(String areaName, ProcessSystem process, int areaIndex, int totalAreas,
-	int iterationNumber) {
+        int iterationNumber) {
       // Default does nothing
     }
 
@@ -795,12 +795,12 @@ public class ProcessModel implements Runnable, Serializable {
       ProcessSystem area = entry.getValue();
       RunStatus areaStatus = area.getRunStatus();
       for (UnitRunStatus u : areaStatus.getUnits()) {
-	if (u.isSuccess()) {
-	  aggregate.recordSuccess(u.getUnitName(), u.getUnitType(), areaName);
-	} else {
-	  aggregate.recordFailure(u.getUnitName(), u.getUnitType(), u.getErrorMessage(), areaName);
-	  anyFailure = true;
-	}
+        if (u.isSuccess()) {
+          aggregate.recordSuccess(u.getUnitName(), u.getUnitType(), areaName);
+        } else {
+          aggregate.recordFailure(u.getUnitName(), u.getUnitType(), u.getErrorMessage(), areaName);
+          anyFailure = true;
+        }
       }
     }
     aggregate.markComplete(!anyFailure);
@@ -852,11 +852,11 @@ public class ProcessModel implements Runnable, Serializable {
    */
   public List<String> getBottleneckRanking() {
     List<Map.Entry<String, Double>> entries = new ArrayList<Map.Entry<String, Double>>(
-	getCapacityUtilizationSummary().entrySet());
+        getCapacityUtilizationSummary().entrySet());
     entries.sort(new java.util.Comparator<Map.Entry<String, Double>>() {
       @Override
       public int compare(Map.Entry<String, Double> a, Map.Entry<String, Double> b) {
-	return Double.compare(b.getValue(), a.getValue());
+        return Double.compare(b.getValue(), a.getValue());
       }
     });
     List<String> ranking = new ArrayList<String>();
@@ -889,8 +889,8 @@ public class ProcessModel implements Runnable, Serializable {
   public boolean setSectionLowFlowThreshold(String unitName, double threshold) {
     for (ProcessSystem ps : processes.values()) {
       if (ps.hasUnitName(unitName)) {
-	ps.setSectionLowFlowThreshold(unitName, threshold);
-	return true;
+        ps.setSectionLowFlowThreshold(unitName, threshold);
+        return true;
       }
     }
     return false;
@@ -920,7 +920,7 @@ public class ProcessModel implements Runnable, Serializable {
     java.util.List<String> all = new java.util.ArrayList<String>();
     for (Map.Entry<String, ProcessSystem> e : processes.entrySet()) {
       for (String unit : e.getValue().getBypassedUnits()) {
-	all.add(e.getKey() + "::" + unit);
+        all.add(e.getKey() + "::" + unit);
       }
     }
     return all;
@@ -936,7 +936,7 @@ public class ProcessModel implements Runnable, Serializable {
   public int deactivateSection(String unitName) {
     for (ProcessSystem ps : processes.values()) {
       if (ps.hasUnitName(unitName)) {
-	return ps.deactivateSection(unitName);
+        return ps.deactivateSection(unitName);
       }
     }
     return 0;
@@ -966,7 +966,7 @@ public class ProcessModel implements Runnable, Serializable {
   public int activateSection(String unitName) {
     for (ProcessSystem ps : processes.values()) {
       if (ps.hasUnitName(unitName)) {
-	return ps.activateSection(unitName);
+        return ps.activateSection(unitName);
       }
     }
     return 0;
@@ -1010,7 +1010,7 @@ public class ProcessModel implements Runnable, Serializable {
   public neqsim.process.equipment.iec81346.ReferenceDesignationGenerator generateReferenceDesignations(
       String locationPrefix) {
     neqsim.process.equipment.iec81346.ReferenceDesignationGenerator gen = new neqsim.process.equipment.iec81346.ReferenceDesignationGenerator(
-	this);
+        this);
     gen.setLocationPrefix(locationPrefix);
     gen.generate();
     return gen;
@@ -1027,7 +1027,7 @@ public class ProcessModel implements Runnable, Serializable {
   public neqsim.process.equipment.iec81346.ReferenceDesignationGenerator generateReferenceDesignations(
       String functionPrefix, String locationPrefix) {
     neqsim.process.equipment.iec81346.ReferenceDesignationGenerator gen = new neqsim.process.equipment.iec81346.ReferenceDesignationGenerator(
-	this);
+        this);
     gen.setFunctionPrefix(functionPrefix);
     gen.setLocationPrefix(locationPrefix);
     gen.setUseHierarchicalFunctions(true);
@@ -1049,7 +1049,7 @@ public class ProcessModel implements Runnable, Serializable {
     for (ProcessSystem system : processes.values()) {
       neqsim.process.equipment.ProcessEquipmentInterface found = system.getUnitByReferenceDesignation(refDesignation);
       if (found != null) {
-	return found;
+        return found;
       }
     }
     return null;
@@ -1250,7 +1250,7 @@ public class ProcessModel implements Runnable, Serializable {
     for (ProcessSystem area : processes.values()) {
       EventScheduler s = area.getEventScheduler();
       if (s != null) {
-	return s;
+        return s;
       }
     }
     return null;
@@ -1300,7 +1300,7 @@ public class ProcessModel implements Runnable, Serializable {
     // Publish model-start event and notify listener
     notifyModelStart(totalAreas);
     publishModelEvent(ProcessEvent.EventType.INFO, "ProcessModel starting with " + totalAreas + " process areas",
-	ProcessEvent.Severity.INFO);
+        ProcessEvent.Severity.INFO);
 
     // Auto-validate all ProcessSystems before first iteration
     if (autoValidate) {
@@ -1320,7 +1320,7 @@ public class ProcessModel implements Runnable, Serializable {
       runAllProcessStepsWithHooks(1);
       notifyModelComplete(1, true);
       publishModelEvent(ProcessEvent.EventType.SIMULATION_COMPLETE, "ProcessModel step mode completed",
-	  ProcessEvent.Severity.INFO);
+          ProcessEvent.Severity.INFO);
     } else {
       // Reset convergence tracking
       lastIterationCount = 0;
@@ -1344,68 +1344,68 @@ public class ProcessModel implements Runnable, Serializable {
 
       int iterations = 0;
       while (!Thread.currentThread().isInterrupted() && iterations < maxIterations) {
-	// Notify before-iteration
-	notifyBeforeIteration(iterations + 1);
+        // Notify before-iteration
+        notifyBeforeIteration(iterations + 1);
 
-	// Run all processes - use parallel execution for independent systems
-	runAllProcessesWithHooks(iterations + 1, dirtyAreas, areaPlan);
-	iterations++;
+        // Run all processes - use parallel execution for independent systems
+        runAllProcessesWithHooks(iterations + 1, dirtyAreas, areaPlan);
+        iterations++;
 
-	// Capture current stream states and calculate errors
-	Map<Object, double[]> currentBoundaryStreamStates = captureBoundaryStreamStates(boundaryStreams);
-	double[] errors = calculateConvergenceErrors(previousBoundaryStreamStates, currentBoundaryStreamStates);
-	java.util.Set<Object> changedBoundaryStreams = findChangedBoundaryStreams(previousBoundaryStreamStates,
-	    currentBoundaryStreamStates);
-	lastMaxFlowError = errors[0];
-	lastMaxTemperatureError = errors[1];
-	lastMaxPressureError = errors[2];
+        // Capture current stream states and calculate errors
+        Map<Object, double[]> currentBoundaryStreamStates = captureBoundaryStreamStates(boundaryStreams);
+        double[] errors = calculateConvergenceErrors(previousBoundaryStreamStates, currentBoundaryStreamStates);
+        java.util.Set<Object> changedBoundaryStreams = findChangedBoundaryStreams(previousBoundaryStreamStates,
+            currentBoundaryStreamStates);
+        lastMaxFlowError = errors[0];
+        lastMaxTemperatureError = errors[1];
+        lastMaxPressureError = errors[2];
 
-	// Check if model has converged
-	boolean allProcessesSolved = isFinished();
-	boolean valuesConverged = lastMaxFlowError < flowTolerance && lastMaxTemperatureError < temperatureTolerance
-	    && lastMaxPressureError < pressureTolerance;
-	lastAllProcessesSolved = allProcessesSolved;
-	lastBoundaryValuesConverged = valuesConverged;
+        // Check if model has converged
+        boolean allProcessesSolved = isFinished();
+        boolean valuesConverged = lastMaxFlowError < flowTolerance && lastMaxTemperatureError < temperatureTolerance
+            && lastMaxPressureError < pressureTolerance;
+        lastAllProcessesSolved = allProcessesSolved;
+        lastBoundaryValuesConverged = valuesConverged;
 
-	if (logger.isDebugEnabled()) {
-	  logger.debug("Iteration " + iterations + ": flowErr=" + lastMaxFlowError + ", tempErr="
-	      + lastMaxTemperatureError + ", pressErr=" + lastMaxPressureError + ", allSolved=" + allProcessesSolved
-	      + ", valuesConverged=" + valuesConverged);
-	}
+        if (logger.isDebugEnabled()) {
+          logger.debug("Iteration " + iterations + ": flowErr=" + lastMaxFlowError + ", tempErr="
+              + lastMaxTemperatureError + ", pressErr=" + lastMaxPressureError + ", allSolved=" + allProcessesSolved
+              + ", valuesConverged=" + valuesConverged);
+        }
 
-	double maxError = getError();
+        double maxError = getError();
 
-	// Notify iteration complete
-	boolean boundaryDrivenModel = !boundaryStreams.isEmpty();
-	boolean minimumIterationsMet = boundaryStreams.isEmpty() || iterations > 1;
-	boolean iterConverged = valuesConverged && minimumIterationsMet && (allProcessesSolved || boundaryDrivenModel);
-	notifyIterationComplete(iterations, iterConverged, maxError);
+        // Notify iteration complete
+        boolean boundaryDrivenModel = !boundaryStreams.isEmpty();
+        boolean minimumIterationsMet = boundaryStreams.isEmpty() || iterations > 1;
+        boolean iterConverged = valuesConverged && minimumIterationsMet && (allProcessesSolved || boundaryDrivenModel);
+        notifyIterationComplete(iterations, iterConverged, maxError);
 
-	// Converged if all processes solved AND values are not changing
-	if (iterConverged) {
-	  modelConverged = true;
-	  logger.debug("ProcessModel converged after " + iterations + " iterations");
-	  break;
-	}
+        // Converged if all processes solved AND values are not changing
+        if (iterConverged) {
+          modelConverged = true;
+          logger.debug("ProcessModel converged after " + iterations + " iterations");
+          break;
+        }
 
-	// Update previous states for next iteration
-	previousBoundaryStreamStates = currentBoundaryStreamStates;
-	dirtyAreas = getDirtyAreasForNextIteration(areaPlan, changedBoundaryStreams);
+        // Update previous states for next iteration
+        previousBoundaryStreamStates = currentBoundaryStreamStates;
+        dirtyAreas = getDirtyAreasForNextIteration(areaPlan, changedBoundaryStreams);
       }
       lastIterationCount = iterations;
 
       if (!modelConverged && iterations >= maxIterations) {
-	logger.warn("ProcessModel reached max iterations (" + maxIterations + ") without full convergence. Flow error: "
-	    + lastMaxFlowError + ", Temp error: " + lastMaxTemperatureError);
-	publishModelEvent(ProcessEvent.EventType.WARNING, "ProcessModel did not converge after " + maxIterations
-	    + " iterations. Max error: " + String.format("%.2e", getError()), ProcessEvent.Severity.WARNING);
+        logger.warn("ProcessModel reached max iterations (" + maxIterations + ") without full convergence. Flow error: "
+            + lastMaxFlowError + ", Temp error: " + lastMaxTemperatureError);
+        publishModelEvent(ProcessEvent.EventType.WARNING, "ProcessModel did not converge after " + maxIterations
+            + " iterations. Max error: " + String.format("%.2e", getError()), ProcessEvent.Severity.WARNING);
       }
 
       notifyModelComplete(lastIterationCount, modelConverged);
       publishModelEvent(
-	  ProcessEvent.EventType.SIMULATION_COMPLETE, "ProcessModel completed: "
-	      + (modelConverged ? "CONVERGED" : "NOT CONVERGED") + " after " + lastIterationCount + " iterations",
-	  ProcessEvent.Severity.INFO);
+          ProcessEvent.EventType.SIMULATION_COMPLETE, "ProcessModel completed: "
+              + (modelConverged ? "CONVERGED" : "NOT CONVERGED") + " after " + lastIterationCount + " iterations",
+          ProcessEvent.Severity.INFO);
     }
   }
 
@@ -1440,9 +1440,9 @@ public class ProcessModel implements Runnable, Serializable {
     if (processes.size() <= 1) {
       // Single process - run directly, no parallelism overhead
       for (ProcessSystem process : processes.values()) {
-	if (shouldRunArea(process, runnableAreas)) {
-	  runSingleProcess(process);
-	}
+        if (shouldRunArea(process, runnableAreas)) {
+          runSingleProcess(process);
+        }
       }
       return;
     }
@@ -1456,28 +1456,28 @@ public class ProcessModel implements Runnable, Serializable {
     List<List<ProcessSystem>> levels = areaPlan.levels;
     for (List<ProcessSystem> level : levels) {
       if (Thread.currentThread().isInterrupted()) {
-	return;
+        return;
       }
       List<ProcessSystem> activeLevel = filterRunnableAreas(level, runnableAreas);
       if (activeLevel.isEmpty()) {
-	continue;
+        continue;
       }
       if (activeLevel.size() == 1) {
-	runSingleProcess(activeLevel.get(0));
+        runSingleProcess(activeLevel.get(0));
       } else if (shouldPreserveInnerParallelism(activeLevel)) {
-	for (ProcessSystem process : activeLevel) {
-	  runSingleProcess(process, true);
-	}
+        for (ProcessSystem process : activeLevel) {
+          runSingleProcess(process, true);
+        }
       } else {
-	List<Future<?>> futures = new ArrayList<>();
-	for (ProcessSystem process : activeLevel) {
-	  final ProcessSystem proc = process;
-	  final boolean allowInnerParallel = !preventNestedParallelExecution;
-	  futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
-	    runSingleProcess(proc, allowInnerParallel);
-	  }));
-	}
-	waitForFutures(futures);
+        List<Future<?>> futures = new ArrayList<>();
+        for (ProcessSystem process : activeLevel) {
+          final ProcessSystem proc = process;
+          final boolean allowInnerParallel = !preventNestedParallelExecution;
+          futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
+            runSingleProcess(proc, allowInnerParallel);
+          }));
+        }
+        waitForFutures(futures);
       }
     }
   }
@@ -1538,7 +1538,7 @@ public class ProcessModel implements Runnable, Serializable {
   private void runAllProcessSteps() {
     for (ProcessSystem process : processes.values()) {
       if (Thread.currentThread().isInterrupted()) {
-	return;
+        return;
       }
       runSingleProcessStep(process);
     }
@@ -1558,9 +1558,9 @@ public class ProcessModel implements Runnable, Serializable {
   private void runSingleProcessStep(ProcessSystem process) {
     try {
       if (process.isSolveFullyInModelStep()) {
-	process.run();
+        process.run();
       } else {
-	process.run_step();
+        process.run_step();
       }
     } catch (Exception e) {
       logger.error("Error running process step " + process.getName() + ": " + e.getMessage(), e);
@@ -1582,24 +1582,24 @@ public class ProcessModel implements Runnable, Serializable {
     int areaIdx = 0;
     for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
       try {
-	if (Thread.currentThread().isInterrupted()) {
-	  logger.debug("Thread was interrupted, exiting run()...");
-	  return;
-	}
-	notifyBeforeProcessArea(entry.getKey(), entry.getValue(), areaIdx, totalAreas, iterationNumber);
-	if (entry.getValue().isSolveFullyInModelStep()) {
-	  entry.getValue().run();
-	} else {
-	  entry.getValue().run_step();
-	}
-	notifyProcessAreaComplete(entry.getKey(), entry.getValue(), areaIdx, totalAreas, iterationNumber);
+        if (Thread.currentThread().isInterrupted()) {
+          logger.debug("Thread was interrupted, exiting run()...");
+          return;
+        }
+        notifyBeforeProcessArea(entry.getKey(), entry.getValue(), areaIdx, totalAreas, iterationNumber);
+        if (entry.getValue().isSolveFullyInModelStep()) {
+          entry.getValue().run();
+        } else {
+          entry.getValue().run_step();
+        }
+        notifyProcessAreaComplete(entry.getKey(), entry.getValue(), areaIdx, totalAreas, iterationNumber);
       } catch (Exception e) {
-	logger.error("Error running process step: " + e.getMessage(), e);
-	publishModelEvent(ProcessEvent.EventType.ERROR,
-	    "Error in process area '" + entry.getKey() + "': " + e.getMessage(), ProcessEvent.Severity.ERROR);
-	if (!notifyProcessAreaError(entry.getKey(), entry.getValue(), e)) {
-	  break;
-	}
+        logger.error("Error running process step: " + e.getMessage(), e);
+        publishModelEvent(ProcessEvent.EventType.ERROR,
+            "Error in process area '" + entry.getKey() + "': " + e.getMessage(), ProcessEvent.Severity.ERROR);
+        if (!notifyProcessAreaError(entry.getKey(), entry.getValue(), e)) {
+          break;
+        }
       }
       areaIdx++;
     }
@@ -1631,7 +1631,7 @@ public class ProcessModel implements Runnable, Serializable {
     List<ProcessSystem> activeLevel = new ArrayList<>();
     for (ProcessSystem process : level) {
       if (runnableAreas.contains(process)) {
-	activeLevel.add(process);
+        activeLevel.add(process);
       }
     }
     return activeLevel;
@@ -1685,64 +1685,64 @@ public class ProcessModel implements Runnable, Serializable {
     {
       int idx = 0;
       for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
-	areaIndex.put(entry.getValue(), idx);
-	areaName.put(entry.getValue(), entry.getKey());
-	idx++;
+        areaIndex.put(entry.getValue(), idx);
+        areaName.put(entry.getValue(), entry.getKey());
+        idx++;
       }
     }
 
     for (List<ProcessSystem> level : levels) {
       if (Thread.currentThread().isInterrupted()) {
-	return;
+        return;
       }
       List<ProcessSystem> activeLevel = level;
       // Fire "before" hooks for all areas in this level first (main thread)
       for (ProcessSystem process : activeLevel) {
-	notifyBeforeProcessArea(areaName.get(process), process, areaIndex.get(process), totalAreas, iterationNumber);
+        notifyBeforeProcessArea(areaName.get(process), process, areaIndex.get(process), totalAreas, iterationNumber);
       }
       if (activeLevel.size() == 1) {
-	ProcessSystem process = activeLevel.get(0);
-	try {
-	  runSingleProcess(process);
-	  notifyProcessAreaComplete(areaName.get(process), process, areaIndex.get(process), totalAreas,
-	      iterationNumber);
-	} catch (Exception e) {
-	  publishModelEvent(ProcessEvent.EventType.ERROR,
-	      "Error in process area '" + areaName.get(process) + "': " + e.getMessage(), ProcessEvent.Severity.ERROR);
-	  if (!notifyProcessAreaError(areaName.get(process), process, e)) {
-	    return;
-	  }
-	}
+        ProcessSystem process = activeLevel.get(0);
+        try {
+          runSingleProcess(process);
+          notifyProcessAreaComplete(areaName.get(process), process, areaIndex.get(process), totalAreas,
+              iterationNumber);
+        } catch (Exception e) {
+          publishModelEvent(ProcessEvent.EventType.ERROR,
+              "Error in process area '" + areaName.get(process) + "': " + e.getMessage(), ProcessEvent.Severity.ERROR);
+          if (!notifyProcessAreaError(areaName.get(process), process, e)) {
+            return;
+          }
+        }
       } else if (shouldPreserveInnerParallelism(activeLevel)) {
-	for (ProcessSystem process : activeLevel) {
-	  try {
-	    runSingleProcess(process, true);
-	    notifyProcessAreaComplete(areaName.get(process), process, areaIndex.get(process), totalAreas,
-		iterationNumber);
-	  } catch (Exception e) {
-	    publishModelEvent(ProcessEvent.EventType.ERROR,
-		"Error in process area '" + areaName.get(process) + "': " + e.getMessage(),
-		ProcessEvent.Severity.ERROR);
-	    if (!notifyProcessAreaError(areaName.get(process), process, e)) {
-	      return;
-	    }
-	  }
-	}
+        for (ProcessSystem process : activeLevel) {
+          try {
+            runSingleProcess(process, true);
+            notifyProcessAreaComplete(areaName.get(process), process, areaIndex.get(process), totalAreas,
+                iterationNumber);
+          } catch (Exception e) {
+            publishModelEvent(ProcessEvent.EventType.ERROR,
+                "Error in process area '" + areaName.get(process) + "': " + e.getMessage(),
+                ProcessEvent.Severity.ERROR);
+            if (!notifyProcessAreaError(areaName.get(process), process, e)) {
+              return;
+            }
+          }
+        }
       } else {
-	List<Future<?>> futures = new ArrayList<>();
-	for (ProcessSystem process : activeLevel) {
-	  final ProcessSystem proc = process;
-	  final boolean allowInnerParallel = !preventNestedParallelExecution;
-	  futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
-	    runSingleProcess(proc, allowInnerParallel);
-	  }));
-	}
-	waitForFutures(futures);
-	// Fire "after" hooks for the completed level
-	for (ProcessSystem process : activeLevel) {
-	  notifyProcessAreaComplete(areaName.get(process), process, areaIndex.get(process), totalAreas,
-	      iterationNumber);
-	}
+        List<Future<?>> futures = new ArrayList<>();
+        for (ProcessSystem process : activeLevel) {
+          final ProcessSystem proc = process;
+          final boolean allowInnerParallel = !preventNestedParallelExecution;
+          futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
+            runSingleProcess(proc, allowInnerParallel);
+          }));
+        }
+        waitForFutures(futures);
+        // Fire "after" hooks for the completed level
+        for (ProcessSystem process : activeLevel) {
+          notifyProcessAreaComplete(areaName.get(process), process, areaIndex.get(process), totalAreas,
+              iterationNumber);
+        }
       }
     }
   }
@@ -1755,7 +1755,7 @@ public class ProcessModel implements Runnable, Serializable {
    */
   private boolean shouldPreserveInnerParallelism(List<ProcessSystem> activeLevel) {
     if (!useAdaptiveModelParallelism || !preventNestedParallelExecution || !useOptimizedExecution || activeLevel == null
-	|| activeLevel.size() <= 1) {
+        || activeLevel.size() <= 1) {
       return false;
     }
     int maxInnerParallelism = 1;
@@ -1781,12 +1781,12 @@ public class ProcessModel implements Runnable, Serializable {
     try {
       neqsim.process.processmodel.graph.ProcessGraph.ParallelPartition partition = process.getParallelPartition();
       if (partition == null) {
-	return 1;
+        return 1;
       }
       return Math.max(1, partition.getMaxParallelism());
     } catch (Exception exception) {
       if (logger.isDebugEnabled()) {
-	logger.debug("Could not estimate inner parallelism for process " + process.getName(), exception);
+        logger.debug("Could not estimate inner parallelism for process " + process.getName(), exception);
       }
       return 1;
     }
@@ -1816,9 +1816,9 @@ public class ProcessModel implements Runnable, Serializable {
     for (ProcessSystem process : allProcesses) {
       java.util.Set<Object> streams = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
       for (Object unit : process.getUnitOperations()) {
-	if (unit instanceof StreamInterface) {
-	  streams.add(unit);
-	}
+        if (unit instanceof StreamInterface) {
+          streams.add(unit);
+        }
       }
       processStreams.add(streams);
     }
@@ -1827,12 +1827,12 @@ public class ProcessModel implements Runnable, Serializable {
     boolean hasSharedStreams = false;
     for (int i = 0; i < allProcesses.size() && !hasSharedStreams; i++) {
       for (int j = i + 1; j < allProcesses.size() && !hasSharedStreams; j++) {
-	for (Object stream : processStreams.get(i)) {
-	  if (processStreams.get(j).contains(stream)) {
-	    hasSharedStreams = true;
-	    break;
-	  }
-	}
+        for (Object stream : processStreams.get(i)) {
+          if (processStreams.get(j).contains(stream)) {
+            hasSharedStreams = true;
+            break;
+          }
+        }
       }
     }
 
@@ -1843,9 +1843,9 @@ public class ProcessModel implements Runnable, Serializable {
     } else {
       // Has dependencies - each process is its own group (sequential execution)
       for (ProcessSystem process : allProcesses) {
-	List<ProcessSystem> single = new ArrayList<>();
-	single.add(process);
-	result.add(single);
+        List<ProcessSystem> single = new ArrayList<>();
+        single.add(process);
+        result.add(single);
       }
     }
     return result;
@@ -1867,7 +1867,7 @@ public class ProcessModel implements Runnable, Serializable {
    */
   private AreaExecutionPlan getAreaExecutionPlan() {
     if (cachedAreaExecutionPlan == null || areaExecutionPlanDirty
-	|| isAreaExecutionPlanStale(cachedAreaExecutionPlan)) {
+        || isAreaExecutionPlanStale(cachedAreaExecutionPlan)) {
       cachedAreaExecutionPlan = buildAreaExecutionPlan();
       areaExecutionPlanDirty = false;
     }
@@ -1887,7 +1887,7 @@ public class ProcessModel implements Runnable, Serializable {
     for (ProcessSystem process : processes.values()) {
       Long cachedVersion = plan.structureVersions.get(process);
       if (cachedVersion == null || cachedVersion.longValue() != process.getStructureVersion()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -1932,7 +1932,7 @@ public class ProcessModel implements Runnable, Serializable {
 
     if (n == 0) {
       return new AreaExecutionPlan(new ArrayList<>(), successorMap, boundaryStreams, boundaryConsumers,
-	  structureVersions);
+          structureVersions);
     }
 
     // Index processes by their position in the insertion order for
@@ -1952,29 +1952,29 @@ public class ProcessModel implements Runnable, Serializable {
       java.util.Set<Object> outs = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
       java.util.Set<Object> mem = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
       for (Object unit : p.getUnitOperations()) {
-	if (unit instanceof StreamInterface) {
-	  mem.add(unit);
-	}
-	if (unit instanceof neqsim.process.equipment.ProcessEquipmentInterface) {
-	  try {
-	    java.util.List<StreamInterface> outletStreams = ((neqsim.process.equipment.ProcessEquipmentInterface) unit)
-		.getOutletStreams();
-	    if (outletStreams != null) {
-	      outs.addAll(outletStreams);
-	    }
-	  } catch (Exception e) {
-	    // Not all equipment implements getOutletStreams cleanly; ignore.
-	  }
-	  try {
-	    java.util.List<StreamInterface> inletStreams = ((neqsim.process.equipment.ProcessEquipmentInterface) unit)
-		.getInletStreams();
-	    if (inletStreams != null) {
-	      mem.addAll(inletStreams);
-	    }
-	  } catch (Exception e) {
-	    // ignore
-	  }
-	}
+        if (unit instanceof StreamInterface) {
+          mem.add(unit);
+        }
+        if (unit instanceof neqsim.process.equipment.ProcessEquipmentInterface) {
+          try {
+            java.util.List<StreamInterface> outletStreams = ((neqsim.process.equipment.ProcessEquipmentInterface) unit)
+                .getOutletStreams();
+            if (outletStreams != null) {
+              outs.addAll(outletStreams);
+            }
+          } catch (Exception e) {
+            // Not all equipment implements getOutletStreams cleanly; ignore.
+          }
+          try {
+            java.util.List<StreamInterface> inletStreams = ((neqsim.process.equipment.ProcessEquipmentInterface) unit)
+                .getInletStreams();
+            if (inletStreams != null) {
+              mem.addAll(inletStreams);
+            }
+          } catch (Exception e) {
+            // ignore
+          }
+        }
       }
       outputs.add(outs);
       members.add(mem);
@@ -1986,30 +1986,30 @@ public class ProcessModel implements Runnable, Serializable {
       seen.addAll(outputs.get(i));
       seen.addAll(members.get(i));
       for (Object stream : seen) {
-	occurrenceCounts.merge(stream, 1, Integer::sum);
+        occurrenceCounts.merge(stream, 1, Integer::sum);
       }
     }
     for (Map.Entry<Object, Integer> entry : occurrenceCounts.entrySet()) {
       if (entry.getValue() == null || entry.getValue() < 2) {
-	continue;
+        continue;
       }
       Object stream = entry.getKey();
       boundaryStreams.add(stream);
       java.util.Set<ProcessSystem> consumers = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
       java.util.Set<ProcessSystem> participants = java.util.Collections
-	  .newSetFromMap(new java.util.IdentityHashMap<>());
+          .newSetFromMap(new java.util.IdentityHashMap<>());
       for (int j = 0; j < n; j++) {
-	boolean produced = outputs.get(j).contains(stream);
-	boolean member = members.get(j).contains(stream);
-	if (produced || member) {
-	  participants.add(allProcesses.get(j));
-	}
-	if (member && !produced) {
-	  consumers.add(allProcesses.get(j));
-	}
+        boolean produced = outputs.get(j).contains(stream);
+        boolean member = members.get(j).contains(stream);
+        if (produced || member) {
+          participants.add(allProcesses.get(j));
+        }
+        if (member && !produced) {
+          consumers.add(allProcesses.get(j));
+        }
       }
       if (consumers.isEmpty()) {
-	consumers.addAll(participants);
+        consumers.addAll(participants);
       }
       boundaryConsumers.put(stream, consumers);
     }
@@ -2023,27 +2023,27 @@ public class ProcessModel implements Runnable, Serializable {
     }
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
-	if (i == j) {
-	  continue;
-	}
-	boolean linked = false;
-	for (Object s : outputs.get(i)) {
-	  if (outputs.get(j).contains(s)) {
-	    // Produced in both — ambiguous. Treat as link only in insertion order.
-	    if (index.get(allProcesses.get(i)) < index.get(allProcesses.get(j))) {
-	      linked = true;
-	      break;
-	    }
-	  } else if (members.get(j).contains(s)) {
-	    linked = true;
-	    break;
-	  }
-	}
-	if (linked) {
-	  successors.get(i).add(j);
-	  successorMap.get(allProcesses.get(i)).add(allProcesses.get(j));
-	  inDegree[j]++;
-	}
+        if (i == j) {
+          continue;
+        }
+        boolean linked = false;
+        for (Object s : outputs.get(i)) {
+          if (outputs.get(j).contains(s)) {
+            // Produced in both — ambiguous. Treat as link only in insertion order.
+            if (index.get(allProcesses.get(i)) < index.get(allProcesses.get(j))) {
+              linked = true;
+              break;
+            }
+          } else if (members.get(j).contains(s)) {
+            linked = true;
+            break;
+          }
+        }
+        if (linked) {
+          successors.get(i).add(j);
+          successorMap.get(allProcesses.get(i)).add(allProcesses.get(j));
+          inDegree[j]++;
+        }
       }
     }
 
@@ -2052,7 +2052,7 @@ public class ProcessModel implements Runnable, Serializable {
     java.util.Deque<Integer> queue = new java.util.ArrayDeque<>();
     for (int i = 0; i < n; i++) {
       if (inDegree[i] == 0) {
-	queue.add(i);
+        queue.add(i);
       }
     }
     int processed = 0;
@@ -2060,10 +2060,10 @@ public class ProcessModel implements Runnable, Serializable {
       int u = queue.poll();
       processed++;
       for (int v : successors.get(u)) {
-	level[v] = Math.max(level[v], level[u] + 1);
-	if (--inDegree[v] == 0) {
-	  queue.add(v);
-	}
+        level[v] = Math.max(level[v], level[u] + 1);
+        if (--inDegree[v] == 0) {
+          queue.add(v);
+        }
       }
     }
     if (processed < n) {
@@ -2071,9 +2071,9 @@ public class ProcessModel implements Runnable, Serializable {
       // consumed by each other). Fall back to insertion order one-per-level.
       List<List<ProcessSystem>> fallback = new ArrayList<>();
       for (ProcessSystem p : allProcesses) {
-	List<ProcessSystem> single = new ArrayList<>();
-	single.add(p);
-	fallback.add(single);
+        List<ProcessSystem> single = new ArrayList<>();
+        single.add(p);
+        fallback.add(single);
       }
       return new AreaExecutionPlan(fallback, successorMap, boundaryStreams, boundaryConsumers, structureVersions);
     }
@@ -2100,13 +2100,13 @@ public class ProcessModel implements Runnable, Serializable {
   private void waitForFutures(List<Future<?>> futures) {
     for (Future<?> future : futures) {
       try {
-	future.get();
+        future.get();
       } catch (InterruptedException e) {
-	Thread.currentThread().interrupt();
-	logger.warn("ProcessModel execution interrupted");
-	break;
+        Thread.currentThread().interrupt();
+        logger.warn("ProcessModel execution interrupted");
+        break;
       } catch (ExecutionException e) {
-	logger.error("ProcessModel parallel execution error: " + e.getMessage(), e);
+        logger.error("ProcessModel parallel execution error: " + e.getMessage(), e);
       }
     }
   }
@@ -2134,16 +2134,16 @@ public class ProcessModel implements Runnable, Serializable {
     }
     for (Object boundaryObject : boundaryStreams) {
       if (!(boundaryObject instanceof StreamInterface)) {
-	continue;
+        continue;
       }
       StreamInterface stream = (StreamInterface) boundaryObject;
       try {
-	double flow = stream.getFlowRate("kg/hr");
-	double temp = stream.getTemperature("K");
-	double press = stream.getPressure("bara");
-	states.put(boundaryObject, new double[] { flow, temp, press });
+        double flow = stream.getFlowRate("kg/hr");
+        double temp = stream.getTemperature("K");
+        double press = stream.getPressure("bara");
+        states.put(boundaryObject, new double[] { flow, temp, press });
       } catch (Exception exception) {
-	// Skip streams that cannot be read.
+        // Skip streams that cannot be read.
       }
     }
     return states;
@@ -2162,8 +2162,8 @@ public class ProcessModel implements Runnable, Serializable {
     for (Map.Entry<Object, double[]> entry : current.entrySet()) {
       double[] prev = previous.get(entry.getKey());
       if (prev == null) {
-	changed.add(entry.getKey());
-	continue;
+        changed.add(entry.getKey());
+        continue;
       }
       double[] curr = entry.getValue();
       double flowBase = Math.max(Math.abs(prev[0]), 1e-10);
@@ -2173,7 +2173,7 @@ public class ProcessModel implements Runnable, Serializable {
       boolean tempChanged = Math.abs(curr[1] - prev[1]) / tempBase >= temperatureTolerance;
       boolean pressureChanged = Math.abs(curr[2] - prev[2]) / pressBase >= pressureTolerance;
       if (flowChanged || tempChanged || pressureChanged) {
-	changed.add(entry.getKey());
+        changed.add(entry.getKey());
       }
     }
     return changed;
@@ -2199,7 +2199,7 @@ public class ProcessModel implements Runnable, Serializable {
   private java.util.Set<ProcessSystem> getDirtyAreasForNextIteration(AreaExecutionPlan plan,
       java.util.Set<Object> changedBoundaryStreams) {
     if (!useIncrementalAreaExecution || progressListener != null || publishEvents || changedBoundaryStreams == null
-	|| changedBoundaryStreams.isEmpty()) {
+        || changedBoundaryStreams.isEmpty()) {
       return null;
     }
     java.util.Set<ProcessSystem> dirtyAreas = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
@@ -2207,24 +2207,24 @@ public class ProcessModel implements Runnable, Serializable {
     for (Object stream : changedBoundaryStreams) {
       java.util.Set<ProcessSystem> consumers = plan.boundaryConsumers.get(stream);
       if (consumers == null) {
-	return null;
+        return null;
       }
       for (ProcessSystem consumer : consumers) {
-	if (dirtyAreas.add(consumer)) {
-	  queue.add(consumer);
-	}
+        if (dirtyAreas.add(consumer)) {
+          queue.add(consumer);
+        }
       }
     }
     while (!queue.isEmpty()) {
       ProcessSystem current = queue.poll();
       java.util.Set<ProcessSystem> successors = plan.successors.get(current);
       if (successors == null) {
-	continue;
+        continue;
       }
       for (ProcessSystem successor : successors) {
-	if (dirtyAreas.add(successor)) {
-	  queue.add(successor);
-	}
+        if (dirtyAreas.add(successor)) {
+          queue.add(successor);
+        }
       }
     }
     if (dirtyAreas.isEmpty() || dirtyAreas.size() >= processes.size()) {
@@ -2247,29 +2247,29 @@ public class ProcessModel implements Runnable, Serializable {
 
     for (Object key : current.keySet()) {
       if (previous.containsKey(key)) {
-	double[] prev = previous.get(key);
-	double[] curr = current.get(key);
+        double[] prev = previous.get(key);
+        double[] curr = current.get(key);
 
-	// Skip near-zero (inactive / bypassed) boundary streams so that low-flow
-	// sections do not block global convergence.
-	if (Math.max(Math.abs(prev[0]), Math.abs(curr[0])) < 1e-9) {
-	  continue;
-	}
+        // Skip near-zero (inactive / bypassed) boundary streams so that low-flow
+        // sections do not block global convergence.
+        if (Math.max(Math.abs(prev[0]), Math.abs(curr[0])) < 1e-9) {
+          continue;
+        }
 
-	// Flow rate relative error (with min threshold to avoid div by zero)
-	double flowBase = Math.max(Math.abs(prev[0]), 1e-10);
-	double flowErr = Math.abs(curr[0] - prev[0]) / flowBase;
-	maxFlowErr = Math.max(maxFlowErr, flowErr);
+        // Flow rate relative error (with min threshold to avoid div by zero)
+        double flowBase = Math.max(Math.abs(prev[0]), 1e-10);
+        double flowErr = Math.abs(curr[0] - prev[0]) / flowBase;
+        maxFlowErr = Math.max(maxFlowErr, flowErr);
 
-	// Temperature relative error (use Kelvin to avoid issues near 0)
-	double tempBase = Math.max(prev[1], 1.0);
-	double tempErr = Math.abs(curr[1] - prev[1]) / tempBase;
-	maxTempErr = Math.max(maxTempErr, tempErr);
+        // Temperature relative error (use Kelvin to avoid issues near 0)
+        double tempBase = Math.max(prev[1], 1.0);
+        double tempErr = Math.abs(curr[1] - prev[1]) / tempBase;
+        maxTempErr = Math.max(maxTempErr, tempErr);
 
-	// Pressure relative error
-	double pressBase = Math.max(prev[2], 1e-10);
-	double pressErr = Math.abs(curr[2] - prev[2]) / pressBase;
-	maxPressErr = Math.max(maxPressErr, pressErr);
+        // Pressure relative error
+        double pressBase = Math.max(prev[2], 1e-10);
+        double pressErr = Math.abs(curr[2] - prev[2]) / pressBase;
+        maxPressErr = Math.max(maxPressErr, pressErr);
       }
     }
 
@@ -2291,23 +2291,23 @@ public class ProcessModel implements Runnable, Serializable {
     sb.append("All process areas solved: ").append(lastAllProcessesSolved ? "YES" : "NO").append("\n");
     sb.append("\nFinal Errors (relative):\n");
     sb.append(String.format(Locale.US, "  Flow rate:    %.2e (tolerance: %.2e) %s\n", lastMaxFlowError, flowTolerance,
-	lastMaxFlowError < flowTolerance ? "OK" : "NOT CONVERGED"));
+        lastMaxFlowError < flowTolerance ? "OK" : "NOT CONVERGED"));
 
     sb.append(String.format(Locale.US, "  Temperature:  %.2e (tolerance: %.2e) %s\n", lastMaxTemperatureError,
-	temperatureTolerance, lastMaxTemperatureError < temperatureTolerance ? "OK" : "NOT CONVERGED"));
+        temperatureTolerance, lastMaxTemperatureError < temperatureTolerance ? "OK" : "NOT CONVERGED"));
 
     sb.append(String.format(Locale.US, "  Pressure:     %.2e (tolerance: %.2e) %s\n", lastMaxPressureError,
-	pressureTolerance, lastMaxPressureError < pressureTolerance ? "OK" : "NOT CONVERGED"));
+        pressureTolerance, lastMaxPressureError < pressureTolerance ? "OK" : "NOT CONVERGED"));
 
     sb.append("\nProcess Status:\n");
     for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
       boolean processSolved = entry.getValue().solved();
       sb.append(String.format(Locale.US, "  %-30s: %s\n", entry.getKey(), processSolved ? "SOLVED" : "NOT SOLVED"));
       if (!processSolved) {
-	List<String> unsolvedUnits = getUnsolvedUnitNames(entry.getValue());
-	if (!unsolvedUnits.isEmpty()) {
-	  sb.append("    Unsolved units: ").append(formatUnitNameList(unsolvedUnits, 12)).append("\n");
-	}
+        List<String> unsolvedUnits = getUnsolvedUnitNames(entry.getValue());
+        if (!unsolvedUnits.isEmpty()) {
+          sb.append("    Unsolved units: ").append(formatUnitNameList(unsolvedUnits, 12)).append("\n");
+        }
       }
     }
     return sb.toString();
@@ -2392,9 +2392,9 @@ public class ProcessModel implements Runnable, Serializable {
       area.addProperty("solved", processSolved);
       JsonArray unsolved = new JsonArray();
       if (!processSolved) {
-	for (String unitName : getUnsolvedUnitNames(entry.getValue())) {
-	  unsolved.add(unitName);
-	}
+        for (String unitName : getUnsolvedUnitNames(entry.getValue())) {
+          unsolved.add(unitName);
+        }
       }
       area.add("unsolvedUnits", unsolved);
       areas.add(area);
@@ -2428,7 +2428,7 @@ public class ProcessModel implements Runnable, Serializable {
     List<String> names = new ArrayList<>();
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       if (!unit.solved()) {
-	names.add(unit.getName());
+        names.add(unit.getName());
       }
     }
     return names;
@@ -2446,7 +2446,7 @@ public class ProcessModel implements Runnable, Serializable {
     int includedNames = Math.min(unitNames.size(), maxNames);
     for (int unitIndex = 0; unitIndex < includedNames; unitIndex++) {
       if (unitIndex > 0) {
-	names.append(", ");
+        names.append(", ");
       }
       names.append(unitNames.get(unitIndex));
     }
@@ -2482,10 +2482,10 @@ public class ProcessModel implements Runnable, Serializable {
       sb.append("Units: ").append(process.getUnitOperations().size()).append("\n");
       sb.append("Has recycles: ").append(process.hasRecycleLoops()).append("\n");
       if (useOptimizedExecution) {
-	sb.append("Strategy: ").append(process.hasRecycleLoops() ? "Hybrid (parallel + iterative)" : "Parallel")
-	    .append("\n");
+        sb.append("Strategy: ").append(process.hasRecycleLoops() ? "Hybrid (parallel + iterative)" : "Parallel")
+            .append("\n");
       } else {
-	sb.append("Strategy: Sequential\n");
+        sb.append("Strategy: Sequential\n");
       }
       sb.append("\n");
     }
@@ -2530,7 +2530,7 @@ public class ProcessModel implements Runnable, Serializable {
   public boolean isFinished() {
     for (ProcessSystem process : processes.values()) {
       if (!process.solved()) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -2542,14 +2542,14 @@ public class ProcessModel implements Runnable, Serializable {
   public void runStep() {
     for (ProcessSystem process : processes.values()) {
       try {
-	if (Thread.currentThread().isInterrupted()) {
-	  logger.debug("Thread was interrupted, exiting run()...");
-	  return;
-	}
-	process.run_step();
+        if (Thread.currentThread().isInterrupted()) {
+          logger.debug("Thread was interrupted, exiting run()...");
+          return;
+        }
+        process.run_step();
       } catch (Exception e) {
-	System.err.println("Error in runStep: " + e.getMessage());
-	e.printStackTrace();
+        System.err.println("Error in runStep: " + e.getMessage());
+        e.printStackTrace();
       }
     }
   }
@@ -2563,9 +2563,9 @@ public class ProcessModel implements Runnable, Serializable {
     Map<String, Thread> threads = new LinkedHashMap<>();
     try {
       for (ProcessSystem process : processes.values()) {
-	Thread thread = new Thread(process);
-	thread.setName(process.getName() + " thread");
-	threads.put(process.getName(), thread);
+        Thread thread = new Thread(process);
+        thread.setName(process.getName() + " thread");
+        threads.put(process.getName(), thread);
       }
     } catch (Exception ex) {
       logger.debug(ex.getMessage(), ex);
@@ -2681,7 +2681,7 @@ public class ProcessModel implements Runnable, Serializable {
       ProcessSystem process = entry.getValue();
       Map<String, ProcessSystem.MassBalanceResult> failedResults = process.getFailedMassBalance(unit, percentThreshold);
       if (!failedResults.isEmpty()) {
-	allFailedResults.put(processName, failedResults);
+        allFailedResults.put(processName, failedResults);
       }
     }
     return allFailedResults;
@@ -2697,7 +2697,7 @@ public class ProcessModel implements Runnable, Serializable {
     for (ProcessSystem process : processes.values()) {
       Map<String, ProcessSystem.MassBalanceResult> failedResults = process.getFailedMassBalance();
       if (!failedResults.isEmpty()) {
-	allFailedResults.put(process.getName(), failedResults);
+        allFailedResults.put(process.getName(), failedResults);
       }
     }
     return allFailedResults;
@@ -2729,13 +2729,13 @@ public class ProcessModel implements Runnable, Serializable {
 
       Map<String, ProcessSystem.MassBalanceResult> unitResults = processEntry.getValue();
       if (unitResults.isEmpty()) {
-	report.append("No unit operations found.\n");
+        report.append("No unit operations found.\n");
       } else {
-	for (Map.Entry<String, ProcessSystem.MassBalanceResult> unitEntry : unitResults.entrySet()) {
-	  String unitName = unitEntry.getKey();
-	  ProcessSystem.MassBalanceResult result = unitEntry.getValue();
-	  report.append(String.format("  %-30s: %s\n", unitName, result.toString()));
-	}
+        for (Map.Entry<String, ProcessSystem.MassBalanceResult> unitEntry : unitResults.entrySet()) {
+          String unitName = unitEntry.getKey();
+          ProcessSystem.MassBalanceResult result = unitEntry.getValue();
+          report.append(String.format("  %-30s: %s\n", unitName, result.toString()));
+        }
       }
     }
     return report.toString();
@@ -2760,21 +2760,21 @@ public class ProcessModel implements Runnable, Serializable {
   public String getFailedMassBalanceReport(String unit, double percentThreshold) {
     StringBuilder report = new StringBuilder();
     Map<String, Map<String, ProcessSystem.MassBalanceResult>> failedResults = getFailedMassBalance(unit,
-	percentThreshold);
+        percentThreshold);
 
     if (failedResults.isEmpty()) {
       report.append("All unit operations passed mass balance check.\n");
     } else {
       for (Map.Entry<String, Map<String, ProcessSystem.MassBalanceResult>> processEntry : failedResults.entrySet()) {
-	report.append("\nProcess: ").append(processEntry.getKey()).append("\n");
-	report.append(String.format("%0" + 60 + "d", 0).replace('0', '=')).append("\n");
+        report.append("\nProcess: ").append(processEntry.getKey()).append("\n");
+        report.append(String.format("%0" + 60 + "d", 0).replace('0', '=')).append("\n");
 
-	Map<String, ProcessSystem.MassBalanceResult> unitResults = processEntry.getValue();
-	for (Map.Entry<String, ProcessSystem.MassBalanceResult> unitEntry : unitResults.entrySet()) {
-	  String unitName = unitEntry.getKey();
-	  ProcessSystem.MassBalanceResult result = unitEntry.getValue();
-	  report.append(String.format("  %-30s: %s\n", unitName, result.toString()));
-	}
+        Map<String, ProcessSystem.MassBalanceResult> unitResults = processEntry.getValue();
+        for (Map.Entry<String, ProcessSystem.MassBalanceResult> unitEntry : unitResults.entrySet()) {
+          String unitName = unitEntry.getKey();
+          ProcessSystem.MassBalanceResult result = unitEntry.getValue();
+          report.append(String.format("  %-30s: %s\n", unitName, result.toString()));
+        }
       }
     }
     return report.toString();
@@ -2892,13 +2892,13 @@ public class ProcessModel implements Runnable, Serializable {
       IdentityHashMap<StreamInterface, AreaStreamReference> producedStreamReferences) {
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       if (unit instanceof StreamInterface) {
-	addProducedStreamReference(areaName, (StreamInterface) unit, exporter, producedStreamReferences);
+        addProducedStreamReference(areaName, (StreamInterface) unit, exporter, producedStreamReferences);
       }
       List<StreamInterface> outlets = unit.getOutletStreams();
       if (outlets != null) {
-	for (StreamInterface outlet : outlets) {
-	  addProducedStreamReference(areaName, outlet, exporter, producedStreamReferences);
-	}
+        for (StreamInterface outlet : outlets) {
+          addProducedStreamReference(areaName, outlet, exporter, producedStreamReferences);
+        }
       }
     }
   }
@@ -2935,24 +2935,24 @@ public class ProcessModel implements Runnable, Serializable {
       String targetAreaName = areaEntry.getKey();
       ProcessSystem targetProcess = areaEntry.getValue();
       for (ProcessEquipmentInterface unit : targetProcess.getUnitOperations()) {
-	if (unit instanceof StreamInterface) {
-	  continue;
-	}
-	List<StreamInterface> inlets = getEquipmentInletStreams(unit);
-	for (int inletIndex = 0; inletIndex < inlets.size(); inletIndex++) {
-	  StreamInterface inlet = inlets.get(inletIndex);
-	  AreaStreamReference source = producedStreamReferences.get(inlet);
-	  if (source == null || source.areaName.equals(targetAreaName)) {
-	    continue;
-	  }
-	  JsonObject link = new JsonObject();
-	  link.addProperty("sourceArea", source.areaName);
-	  link.addProperty("source", source.streamReference);
-	  link.addProperty("targetArea", targetAreaName);
-	  link.addProperty("targetUnit", unit.getName());
-	  link.addProperty("targetInletIndex", inletIndex);
-	  links.add(link);
-	}
+        if (unit instanceof StreamInterface) {
+          continue;
+        }
+        List<StreamInterface> inlets = getEquipmentInletStreams(unit);
+        for (int inletIndex = 0; inletIndex < inlets.size(); inletIndex++) {
+          StreamInterface inlet = inlets.get(inletIndex);
+          AreaStreamReference source = producedStreamReferences.get(inlet);
+          if (source == null || source.areaName.equals(targetAreaName)) {
+            continue;
+          }
+          JsonObject link = new JsonObject();
+          link.addProperty("sourceArea", source.areaName);
+          link.addProperty("source", source.streamReference);
+          link.addProperty("targetArea", targetAreaName);
+          link.addProperty("targetUnit", unit.getName());
+          link.addProperty("targetInletIndex", inletIndex);
+          links.add(link);
+        }
       }
     }
     return links;
@@ -2995,15 +2995,15 @@ public class ProcessModel implements Runnable, Serializable {
       String areaJson = entry.getValue().toString();
       SimulationResult result = new JsonProcessBuilder().build(areaJson);
       if (result.isSuccess()) {
-	model.add(areaName, result.getProcessSystem());
+        model.add(areaName, result.getProcessSystem());
       } else {
-	logger.warn("Failed to build area '{}': {}", areaName, result);
+        logger.warn("Failed to build area '{}': {}", areaName, result);
       }
     }
     if (root.has(INTER_AREA_LINKS_KEY) && root.get(INTER_AREA_LINKS_KEY).isJsonArray()) {
       List<String> warnings = model.applyInterAreaLinks(root.getAsJsonArray(INTER_AREA_LINKS_KEY));
       for (String warning : warnings) {
-	logger.warn(warning);
+        logger.warn(warning);
       }
     }
     return model;
@@ -3079,23 +3079,23 @@ public class ProcessModel implements Runnable, Serializable {
   public static ProcessModelResult buildFromJson(String json) {
     if (json == null || json.trim().isEmpty()) {
       return ProcessModelResult.error("EMPTY_INPUT", "JSON input is null or empty",
-	  "Provide a JSON string with an 'areas' object");
+          "Provide a JSON string with an 'areas' object");
     }
     com.google.gson.JsonObject root;
     try {
       com.google.gson.JsonElement parsed = com.google.gson.JsonParser.parseString(json);
       if (!parsed.isJsonObject()) {
-	return ProcessModelResult.error("JSON_PARSE_ERROR", "Top-level JSON is not an object",
-	    "Wrap the model definition in a JSON object with an 'areas' key");
+        return ProcessModelResult.error("JSON_PARSE_ERROR", "Top-level JSON is not an object",
+            "Wrap the model definition in a JSON object with an 'areas' key");
       }
       root = parsed.getAsJsonObject();
     } catch (RuntimeException ex) {
       return ProcessModelResult.error("JSON_PARSE_ERROR", "Could not parse JSON: " + ex.getMessage(),
-	  "Verify the JSON syntax is valid");
+          "Verify the JSON syntax is valid");
     }
     if (!root.has("areas") || !root.get("areas").isJsonObject()) {
       return ProcessModelResult.error("MISSING_AREAS", "JSON must contain an 'areas' object with named process systems",
-	  "Add an 'areas' object whose keys are area names and values are process definitions");
+          "Add an 'areas' object whose keys are area names and values are process definitions");
     }
 
     ProcessModel model = new ProcessModel();
@@ -3110,33 +3110,33 @@ public class ProcessModel implements Runnable, Serializable {
       String areaName = entry.getKey();
       SimulationResult result;
       try {
-	result = new JsonProcessBuilder().build(entry.getValue().toString());
+        result = new JsonProcessBuilder().build(entry.getValue().toString());
       } catch (RuntimeException ex) {
-	result = SimulationResult.error("AREA_BUILD_EXCEPTION", "Area '" + areaName + "' threw: " + ex.getMessage(),
-	    "Inspect the area definition for invalid equipment or stream references");
+        result = SimulationResult.error("AREA_BUILD_EXCEPTION", "Area '" + areaName + "' threw: " + ex.getMessage(),
+            "Inspect the area definition for invalid equipment or stream references");
       }
       areaResults.put(areaName, result);
       if (result.isSuccess() && result.getProcessSystem() != null) {
-	model.add(areaName, result.getProcessSystem());
+        model.add(areaName, result.getProcessSystem());
       } else {
-	failedAreas.add(areaName);
-	warnings.add("Failed to build area '" + areaName + "'");
+        failedAreas.add(areaName);
+        warnings.add("Failed to build area '" + areaName + "'");
       }
     }
 
     List<String> interAreaLinkWarnings = new ArrayList<String>();
     if (root.has(INTER_AREA_LINKS_KEY) && root.get(INTER_AREA_LINKS_KEY).isJsonArray()) {
       try {
-	interAreaLinkWarnings.addAll(model.applyInterAreaLinks(root.getAsJsonArray(INTER_AREA_LINKS_KEY)));
+        interAreaLinkWarnings.addAll(model.applyInterAreaLinks(root.getAsJsonArray(INTER_AREA_LINKS_KEY)));
       } catch (RuntimeException ex) {
-	interAreaLinkWarnings.add("Could not apply inter-area links: " + ex.getMessage());
+        interAreaLinkWarnings.add("Could not apply inter-area links: " + ex.getMessage());
       }
     }
 
     if (model.size() == 0) {
       List<SimulationResult.ErrorDetail> errors = new ArrayList<SimulationResult.ErrorDetail>();
       errors.add(new SimulationResult.ErrorDetail("NO_AREAS_BUILT", "No process area could be built", null,
-	  "Check the per-area errors in the result"));
+          "Check the per-area errors in the result"));
       return ProcessModelResult.failure(errors, areaResults, failedAreas, warnings);
     }
     return ProcessModelResult.success(model, areaResults, failedAreas, interAreaLinkWarnings, warnings, null);
@@ -3175,7 +3175,7 @@ public class ProcessModel implements Runnable, Serializable {
       warnings.add("Could not read run status: " + ex.getMessage());
     }
     return ProcessModelResult.success(model, buildResult.getAreaResults(), buildResult.getFailedAreas(),
-	buildResult.getInterAreaLinkWarnings(), warnings, runStatusJson);
+        buildResult.getInterAreaLinkWarnings(), warnings, runStatusJson);
   }
 
   /**
@@ -3192,8 +3192,8 @@ public class ProcessModel implements Runnable, Serializable {
     boolean topologyChanged = false;
     for (JsonElement linkElement : interAreaLinks) {
       if (!linkElement.isJsonObject()) {
-	warnings.add("Skipping interAreaLinks entry because it is not a JSON object");
-	continue;
+        warnings.add("Skipping interAreaLinks entry because it is not a JSON object");
+        continue;
       }
       topologyChanged = applyInterAreaLink(linkElement.getAsJsonObject(), warnings) || topologyChanged;
     }
@@ -3241,7 +3241,7 @@ public class ProcessModel implements Runnable, Serializable {
     }
     if (!replaceInletReference(targetUnit, targetInletIndex, sourceStream)) {
       warnings.add(
-	  "Could not apply inter-area link to " + targetArea + "::" + targetUnitName + " inlet " + targetInletIndex);
+          "Could not apply inter-area link to " + targetArea + "::" + targetUnitName + " inlet " + targetInletIndex);
       return false;
     }
     targetProcess.invalidateGraph();
@@ -3300,37 +3300,37 @@ public class ProcessModel implements Runnable, Serializable {
   private StreamInterface resolveEquipmentOutlet(ProcessEquipmentInterface unit, String port) {
     try {
       if ("gasout".equals(port) || "gas".equals(port)) {
-	return (StreamInterface) unit.getClass().getMethod("getGasOutStream").invoke(unit);
+        return (StreamInterface) unit.getClass().getMethod("getGasOutStream").invoke(unit);
       }
       if ("liquidout".equals(port) || "liquid".equals(port)) {
-	return (StreamInterface) unit.getClass().getMethod("getLiquidOutStream").invoke(unit);
+        return (StreamInterface) unit.getClass().getMethod("getLiquidOutStream").invoke(unit);
       }
       if ("oilout".equals(port) || "oil".equals(port)) {
-	return (StreamInterface) unit.getClass().getMethod("getOilOutStream").invoke(unit);
+        return (StreamInterface) unit.getClass().getMethod("getOilOutStream").invoke(unit);
       }
       if ("waterout".equals(port) || "water".equals(port)) {
-	return (StreamInterface) unit.getClass().getMethod("getWaterOutStream").invoke(unit);
+        return (StreamInterface) unit.getClass().getMethod("getWaterOutStream").invoke(unit);
       }
       int splitIndex = parseNumericSuffix(port, "split");
       if (splitIndex >= 0) {
-	return (StreamInterface) unit.getClass().getMethod("getSplitStream", int.class).invoke(unit, splitIndex);
+        return (StreamInterface) unit.getClass().getMethod("getSplitStream", int.class).invoke(unit, splitIndex);
       }
       int outletIndex = parseNumericSuffix(port, "outlet");
       if (outletIndex >= 0 && unit instanceof HeatExchanger) {
-	return ((HeatExchanger) unit).getOutStream(outletIndex);
+        return ((HeatExchanger) unit).getOutStream(outletIndex);
       }
       int heatExchangerIndex = parseNumericSuffix(port, "hx");
       if (heatExchangerIndex >= 0 && unit instanceof HeatExchanger) {
-	return ((HeatExchanger) unit).getOutStream(heatExchangerIndex);
+        return ((HeatExchanger) unit).getOutStream(heatExchangerIndex);
       }
       if (unit instanceof HeatExchanger) {
-	return ((HeatExchanger) unit).getOutStream(0);
+        return ((HeatExchanger) unit).getOutStream(0);
       }
       return (StreamInterface) unit.getClass().getMethod("getOutletStream").invoke(unit);
     } catch (Exception exception) {
       List<StreamInterface> outlets = unit.getOutletStreams();
       if (outlets != null && !outlets.isEmpty()) {
-	return outlets.get(0);
+        return outlets.get(0);
       }
       return null;
     }
@@ -3366,10 +3366,10 @@ public class ProcessModel implements Runnable, Serializable {
       StreamInterface sourceStream) {
     if (targetUnit instanceof HeatExchanger) {
       try {
-	((HeatExchanger) targetUnit).setFeedStream(targetInletIndex, sourceStream);
-	return true;
+        ((HeatExchanger) targetUnit).setFeedStream(targetInletIndex, sourceStream);
+        return true;
       } catch (Exception exception) {
-	return false;
+        return false;
       }
     }
     if (invokeIndexedStreamReplacement(targetUnit, targetInletIndex, sourceStream)) {
@@ -3393,7 +3393,7 @@ public class ProcessModel implements Runnable, Serializable {
       StreamInterface sourceStream) {
     try {
       java.lang.reflect.Method replaceStream = targetUnit.getClass().getMethod("replaceStream", int.class,
-	  StreamInterface.class);
+          StreamInterface.class);
       replaceStream.invoke(targetUnit, targetInletIndex, sourceStream);
       return true;
     } catch (Exception exception) {
@@ -3411,17 +3411,17 @@ public class ProcessModel implements Runnable, Serializable {
   private boolean invokeSingleInletSetter(ProcessEquipmentInterface targetUnit, StreamInterface sourceStream) {
     try {
       java.lang.reflect.Method setInletStream = targetUnit.getClass().getMethod("setInletStream",
-	  StreamInterface.class);
+          StreamInterface.class);
       setInletStream.invoke(targetUnit, sourceStream);
       return true;
     } catch (Exception firstException) {
       try {
-	java.lang.reflect.Method setFeedStream = targetUnit.getClass().getMethod("setFeedStream",
-	    StreamInterface.class);
-	setFeedStream.invoke(targetUnit, sourceStream);
-	return true;
+        java.lang.reflect.Method setFeedStream = targetUnit.getClass().getMethod("setFeedStream",
+            StreamInterface.class);
+        setFeedStream.invoke(targetUnit, sourceStream);
+        return true;
       } catch (Exception secondException) {
-	return false;
+        return false;
       }
     }
   }
@@ -3437,23 +3437,23 @@ public class ProcessModel implements Runnable, Serializable {
     try {
       List<StreamInterface> listedInlets = unit.getInletStreams();
       if (listedInlets != null) {
-	for (StreamInterface inlet : listedInlets) {
-	  if (inlet != null) {
-	    inlets.add(inlet);
-	  }
-	}
+        for (StreamInterface inlet : listedInlets) {
+          if (inlet != null) {
+            inlets.add(inlet);
+          }
+        }
       }
     } catch (Exception exception) {
       // Fall back below for equipment without robust getInletStreams support.
     }
     if (inlets.isEmpty()) {
       try {
-	StreamInterface inlet = (StreamInterface) unit.getClass().getMethod("getInletStream").invoke(unit);
-	if (inlet != null) {
-	  inlets.add(inlet);
-	}
+        StreamInterface inlet = (StreamInterface) unit.getClass().getMethod("getInletStream").invoke(unit);
+        if (inlet != null) {
+          inlets.add(inlet);
+        }
       } catch (Exception exception) {
-	// No single inlet accessor available.
+        // No single inlet accessor available.
       }
     }
     return inlets;
@@ -3493,7 +3493,7 @@ public class ProcessModel implements Runnable, Serializable {
     // Check if model has any processes
     if (processes.isEmpty()) {
       result.addError("ProcessModel", "ProcessModel has no processes added",
-	  "Add at least one ProcessSystem using add(name, process)");
+          "Add at least one ProcessSystem using add(name, process)");
     }
 
     // Validate each ProcessSystem
@@ -3504,11 +3504,11 @@ public class ProcessModel implements Runnable, Serializable {
 
       // Add all issues from the process, prefixed with process name
       for (ValidationResult.ValidationIssue issue : processResult.getIssues()) {
-	if (issue.getSeverity() == ValidationResult.Severity.CRITICAL) {
-	  result.addError("[" + processName + "] " + issue.getCategory(), issue.getMessage(), issue.getRemediation());
-	} else {
-	  result.addWarning("[" + processName + "] " + issue.getCategory(), issue.getMessage(), issue.getRemediation());
-	}
+        if (issue.getSeverity() == ValidationResult.Severity.CRITICAL) {
+          result.addError("[" + processName + "] " + issue.getCategory(), issue.getMessage(), issue.getRemediation());
+        } else {
+          result.addWarning("[" + processName + "] " + issue.getCategory(), issue.getMessage(), issue.getRemediation());
+        }
       }
     }
 
@@ -3532,7 +3532,7 @@ public class ProcessModel implements Runnable, Serializable {
     ValidationResult modelResult = new ValidationResult();
     if (processes.isEmpty()) {
       modelResult.addError("ProcessModel", "ProcessModel has no processes added",
-	  "Add at least one ProcessSystem using add(name, process)");
+          "Add at least one ProcessSystem using add(name, process)");
     }
     results.put("ProcessModel", modelResult);
 
@@ -3561,7 +3561,7 @@ public class ProcessModel implements Runnable, Serializable {
     // Check if there are any CRITICAL errors
     for (ValidationResult.ValidationIssue issue : result.getIssues()) {
       if (issue.getSeverity() == ValidationResult.Severity.CRITICAL) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -3591,21 +3591,21 @@ public class ProcessModel implements Runnable, Serializable {
       ValidationResult result = entry.getValue();
 
       if (!result.getIssues().isEmpty()) {
-	report.append("--- ").append(name).append(" ---\n");
-	for (ValidationResult.ValidationIssue issue : result.getIssues()) {
-	  report.append("  [").append(issue.getSeverity()).append("] ");
-	  report.append(issue.getMessage()).append("\n");
-	  if (issue.getRemediation() != null && !issue.getRemediation().isEmpty()) {
-	    report.append("    Fix: ").append(issue.getRemediation()).append("\n");
-	  }
-	  totalIssues++;
-	  if (issue.getSeverity() == ValidationResult.Severity.CRITICAL) {
-	    criticalCount++;
-	  } else if (issue.getSeverity() == ValidationResult.Severity.MAJOR) {
-	    majorCount++;
-	  }
-	}
-	report.append("\n");
+        report.append("--- ").append(name).append(" ---\n");
+        for (ValidationResult.ValidationIssue issue : result.getIssues()) {
+          report.append("  [").append(issue.getSeverity()).append("] ");
+          report.append(issue.getMessage()).append("\n");
+          if (issue.getRemediation() != null && !issue.getRemediation().isEmpty()) {
+            report.append("    Fix: ").append(issue.getRemediation()).append("\n");
+          }
+          totalIssues++;
+          if (issue.getSeverity() == ValidationResult.Severity.CRITICAL) {
+            criticalCount++;
+          } else if (issue.getSeverity() == ValidationResult.Severity.MAJOR) {
+            majorCount++;
+          }
+        }
+        report.append("\n");
       }
     }
 
@@ -3679,13 +3679,13 @@ public class ProcessModel implements Runnable, Serializable {
     try {
       Object loaded = neqsim.util.serialization.NeqSimXtream.openNeqsim(filename);
       if (loaded instanceof ProcessModel) {
-	ProcessModel model = (ProcessModel) loaded;
-	model.run();
-	logger.info("ProcessModel loaded from: " + filename);
-	return model;
+        ProcessModel model = (ProcessModel) loaded;
+        model.run();
+        logger.info("ProcessModel loaded from: " + filename);
+        return model;
       } else {
-	logger.error("Loaded object is not a ProcessModel: " + (loaded != null ? loaded.getClass().getName() : "null"));
-	return null;
+        logger.error("Loaded object is not a ProcessModel: " + (loaded != null ? loaded.getClass().getName() : "null"));
+        return null;
       }
     } catch (Exception e) {
       logger.error("Failed to load ProcessModel from file: " + filename, e);
@@ -3715,12 +3715,12 @@ public class ProcessModel implements Runnable, Serializable {
     } else {
       // Legacy binary serialization
       try (java.io.ObjectOutputStream oos = new java.io.ObjectOutputStream(new java.io.FileOutputStream(filename))) {
-	oos.writeObject(this);
-	logger.info("ProcessModel saved (binary) to: " + filename);
-	return true;
+        oos.writeObject(this);
+        logger.info("ProcessModel saved (binary) to: " + filename);
+        return true;
       } catch (IOException e) {
-	logger.error("Failed to save ProcessModel to: " + filename, e);
-	return false;
+        logger.error("Failed to save ProcessModel to: " + filename, e);
+        return false;
       }
     }
   }
@@ -3747,13 +3747,13 @@ public class ProcessModel implements Runnable, Serializable {
     } else {
       // Legacy binary serialization
       try (java.io.ObjectInputStream ois = new java.io.ObjectInputStream(new java.io.FileInputStream(filename))) {
-	ProcessModel model = (ProcessModel) ois.readObject();
-	model.run();
-	logger.info("ProcessModel loaded (binary) from: " + filename);
-	return model;
+        ProcessModel model = (ProcessModel) ois.readObject();
+        model.run();
+        logger.info("ProcessModel loaded (binary) from: " + filename);
+        return model;
       } catch (Exception e) {
-	logger.error("Failed to load ProcessModel from: " + filename, e);
-	return null;
+        logger.error("Failed to load ProcessModel from: " + filename, e);
+        return null;
       }
     }
   }
@@ -3774,7 +3774,7 @@ public class ProcessModel implements Runnable, Serializable {
   public boolean saveStateToFile(String filename) {
     try {
       neqsim.process.processmodel.lifecycle.ProcessModelState state = neqsim.process.processmodel.lifecycle.ProcessModelState
-	  .fromProcessModel(this);
+          .fromProcessModel(this);
       state.saveToFile(filename);
       logger.info("ProcessModel state saved to: " + filename);
       return true;
@@ -3798,7 +3798,7 @@ public class ProcessModel implements Runnable, Serializable {
   public static ProcessModel loadStateFromFile(String filename) {
     try {
       neqsim.process.processmodel.lifecycle.ProcessModelState state = neqsim.process.processmodel.lifecycle.ProcessModelState
-	  .loadFromFile(filename);
+          .loadFromFile(filename);
       ProcessModel model = state.toProcessModel();
       logger.info("ProcessModel state loaded from: " + filename);
       return model;
@@ -3986,12 +3986,12 @@ public class ProcessModel implements Runnable, Serializable {
     for (ProcessSystem processSystem : processes.values()) {
       ProcessEquipmentInterface areaBottleneck = processSystem.getBottleneck();
       if (areaBottleneck == null) {
-	continue;
+        continue;
       }
       double utilization = processSystem.getBottleneckUtilization();
       if (!Double.isNaN(utilization) && !Double.isInfinite(utilization) && utilization > maxUtilization) {
-	maxUtilization = utilization;
-	bottleneck = areaBottleneck;
+        maxUtilization = utilization;
+        bottleneck = areaBottleneck;
       }
     }
     return bottleneck;
@@ -4010,11 +4010,11 @@ public class ProcessModel implements Runnable, Serializable {
     double maxUtilization = 0.0;
     for (ProcessSystem processSystem : processes.values()) {
       if (processSystem.getBottleneck() == null) {
-	continue;
+        continue;
       }
       double utilization = processSystem.getBottleneckUtilization();
       if (!Double.isNaN(utilization) && !Double.isInfinite(utilization) && utilization > maxUtilization) {
-	maxUtilization = utilization;
+        maxUtilization = utilization;
       }
     }
     return maxUtilization;
@@ -4032,7 +4032,7 @@ public class ProcessModel implements Runnable, Serializable {
   public boolean isAnyHardLimitExceeded() {
     for (ProcessSystem processSystem : processes.values()) {
       if (processSystem.isAnyHardLimitExceeded()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -4053,16 +4053,16 @@ public class ProcessModel implements Runnable, Serializable {
    */
   public neqsim.process.equipment.capacity.BottleneckResult findBottleneck() {
     neqsim.process.equipment.capacity.BottleneckResult best = neqsim.process.equipment.capacity.BottleneckResult
-	.empty();
+        .empty();
     double maxUtil = -1.0;
     for (ProcessSystem ps : processes.values()) {
       neqsim.process.equipment.capacity.BottleneckResult areaResult = ps.findBottleneck();
       if (areaResult != null && areaResult.hasBottleneck()) {
-	double util = areaResult.getUtilizationPercent();
-	if (util > maxUtil) {
-	  maxUtil = util;
-	  best = areaResult;
-	}
+        double util = areaResult.getUtilizationPercent();
+        if (util > maxUtil) {
+          maxUtil = util;
+          best = areaResult;
+        }
       }
     }
     return best;
@@ -4076,7 +4076,7 @@ public class ProcessModel implements Runnable, Serializable {
   public boolean isAnyEquipmentOverloaded() {
     for (ProcessSystem ps : processes.values()) {
       if (ps.isAnyEquipmentOverloaded()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -4098,7 +4098,7 @@ public class ProcessModel implements Runnable, Serializable {
       String area = entry.getKey();
       Map<String, Double> areaSummary = entry.getValue().getCapacityUtilizationSummary();
       for (Map.Entry<String, Double> u : areaSummary.entrySet()) {
-	summary.put(area + "::" + u.getKey(), u.getValue());
+        summary.put(area + "::" + u.getKey(), u.getValue());
       }
     }
     return summary;
@@ -4115,7 +4115,7 @@ public class ProcessModel implements Runnable, Serializable {
     for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
       String area = entry.getKey();
       for (String unitName : entry.getValue().getEquipmentNearCapacityLimit()) {
-	nearLimit.add(area + "::" + unitName);
+        nearLimit.add(area + "::" + unitName);
       }
     }
     return nearLimit;
@@ -4188,7 +4188,7 @@ public class ProcessModel implements Runnable, Serializable {
       bn.addProperty("utilization", bottleneck.getUtilization());
       bn.addProperty("utilizationPercent", bottleneck.getUtilization() * 100.0);
       if (bottleneck.getConstraint() != null) {
-	bn.addProperty("limitingConstraint", bottleneck.getConstraint().getName());
+        bn.addProperty("limitingConstraint", bottleneck.getConstraint().getName());
       }
       root.add("bottleneck", bn);
     } else {
@@ -4209,9 +4209,9 @@ public class ProcessModel implements Runnable, Serializable {
   private void notifyModelStart(int totalAreas) {
     if (progressListener != null) {
       try {
-	progressListener.onModelStart(totalAreas);
+        progressListener.onModelStart(totalAreas);
       } catch (Exception ex) {
-	logger.warn("ModelProgressListener threw exception in onModelStart: " + ex.getMessage());
+        logger.warn("ModelProgressListener threw exception in onModelStart: " + ex.getMessage());
       }
     }
   }
@@ -4225,9 +4225,9 @@ public class ProcessModel implements Runnable, Serializable {
   private void notifyModelComplete(int totalIterations, boolean converged) {
     if (progressListener != null) {
       try {
-	progressListener.onModelComplete(totalIterations, converged);
+        progressListener.onModelComplete(totalIterations, converged);
       } catch (Exception ex) {
-	logger.warn("ModelProgressListener threw exception in onModelComplete: " + ex.getMessage());
+        logger.warn("ModelProgressListener threw exception in onModelComplete: " + ex.getMessage());
       }
     }
   }
@@ -4240,9 +4240,9 @@ public class ProcessModel implements Runnable, Serializable {
   private void notifyBeforeIteration(int iterationNumber) {
     if (progressListener != null) {
       try {
-	progressListener.onBeforeIteration(iterationNumber);
+        progressListener.onBeforeIteration(iterationNumber);
       } catch (Exception ex) {
-	logger.warn("ModelProgressListener threw exception in onBeforeIteration: " + ex.getMessage());
+        logger.warn("ModelProgressListener threw exception in onBeforeIteration: " + ex.getMessage());
       }
     }
   }
@@ -4257,9 +4257,9 @@ public class ProcessModel implements Runnable, Serializable {
   private void notifyIterationComplete(int iterationNumber, boolean converged, double maxError) {
     if (progressListener != null) {
       try {
-	progressListener.onIterationComplete(iterationNumber, converged, maxError);
+        progressListener.onIterationComplete(iterationNumber, converged, maxError);
       } catch (Exception ex) {
-	logger.warn("ModelProgressListener threw exception in onIterationComplete: " + ex.getMessage());
+        logger.warn("ModelProgressListener threw exception in onIterationComplete: " + ex.getMessage());
       }
     }
   }
@@ -4277,9 +4277,9 @@ public class ProcessModel implements Runnable, Serializable {
       int iterationNumber) {
     if (progressListener != null) {
       try {
-	progressListener.onBeforeProcessArea(areaName, process, areaIndex, totalAreas, iterationNumber);
+        progressListener.onBeforeProcessArea(areaName, process, areaIndex, totalAreas, iterationNumber);
       } catch (Exception ex) {
-	logger.warn("ModelProgressListener threw exception in onBeforeProcessArea: " + ex.getMessage());
+        logger.warn("ModelProgressListener threw exception in onBeforeProcessArea: " + ex.getMessage());
       }
     }
   }
@@ -4297,9 +4297,9 @@ public class ProcessModel implements Runnable, Serializable {
       int iterationNumber) {
     if (progressListener != null) {
       try {
-	progressListener.onProcessAreaComplete(areaName, process, areaIndex, totalAreas, iterationNumber);
+        progressListener.onProcessAreaComplete(areaName, process, areaIndex, totalAreas, iterationNumber);
       } catch (Exception ex) {
-	logger.warn("ModelProgressListener threw exception in onProcessAreaComplete: " + ex.getMessage());
+        logger.warn("ModelProgressListener threw exception in onProcessAreaComplete: " + ex.getMessage());
       }
     }
   }
@@ -4315,9 +4315,9 @@ public class ProcessModel implements Runnable, Serializable {
   private boolean notifyProcessAreaError(String areaName, ProcessSystem process, Exception exception) {
     if (progressListener != null) {
       try {
-	return progressListener.onProcessAreaError(areaName, process, exception);
+        return progressListener.onProcessAreaError(areaName, process, exception);
       } catch (Exception ex) {
-	logger.warn("ModelProgressListener threw exception in onProcessAreaError: " + ex.getMessage());
+        logger.warn("ModelProgressListener threw exception in onProcessAreaError: " + ex.getMessage());
       }
     }
     return false;
@@ -4333,10 +4333,10 @@ public class ProcessModel implements Runnable, Serializable {
   private void publishModelEvent(ProcessEvent.EventType type, String description, ProcessEvent.Severity severity) {
     if (publishEvents) {
       try {
-	ProcessEvent event = new ProcessEvent(ProcessEvent.generateId(), type, "ProcessModel", description, severity);
-	ProcessEventBus.getInstance().publish(event);
+        ProcessEvent event = new ProcessEvent(ProcessEvent.generateId(), type, "ProcessModel", description, severity);
+        ProcessEventBus.getInstance().publish(event);
       } catch (Exception ex) {
-	logger.warn("Failed to publish ProcessModel event: " + ex.getMessage());
+        logger.warn("Failed to publish ProcessModel event: " + ex.getMessage());
       }
     }
   }
@@ -4350,16 +4350,16 @@ public class ProcessModel implements Runnable, Serializable {
       String areaName = entry.getKey();
       ProcessSystem process = entry.getValue();
       try {
-	ValidationResult result = process.validateSetup();
-	if (result != null && !result.isValid()) {
-	  logger.warn("Validation warning for area '" + areaName + "': " + result);
-	  if (publishEvents) {
-	    publishModelEvent(ProcessEvent.EventType.WARNING,
-		"Validation warning for area '" + areaName + "': " + result.toString(), ProcessEvent.Severity.WARNING);
-	  }
-	}
+        ValidationResult result = process.validateSetup();
+        if (result != null && !result.isValid()) {
+          logger.warn("Validation warning for area '" + areaName + "': " + result);
+          if (publishEvents) {
+            publishModelEvent(ProcessEvent.EventType.WARNING,
+                "Validation warning for area '" + areaName + "': " + result.toString(), ProcessEvent.Severity.WARNING);
+          }
+        }
       } catch (Exception ex) {
-	logger.debug("Could not validate area '" + areaName + "': " + ex.getMessage());
+        logger.debug("Could not validate area '" + areaName + "': " + ex.getMessage());
       }
     }
   }

@@ -28,7 +28,7 @@ public class AmineFlash {
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     SystemInterface testSystem = new SystemFurstElectrolyteEos(273.15 + 50,
-	ThermodynamicConstantsInterface.referencePressure);
+        ThermodynamicConstantsInterface.referencePressure);
     // SystemInterface testSystem = new SystemElectrolyteCPA(273.15+40,
     // ThermodynamicConstantsInterface.referencePressure);
     double molMDEA = 0.1;

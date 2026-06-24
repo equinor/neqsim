@@ -189,12 +189,12 @@ public class GasTurbineUnit extends TwoPortEquipment {
     consumers.add(new PowerDemandConsumer() {
       @Override
       public double getDemandedPowerW() {
-	return compressor.getPower();
+        return compressor.getPower();
       }
 
       @Override
       public String getConsumerName() {
-	return compressor.getName();
+        return compressor.getName();
       }
     });
   }
@@ -248,7 +248,7 @@ public class GasTurbineUnit extends TwoPortEquipment {
 
     // 1) Available power at site conditions, with degradation derate
     double sitePower = performanceMap.getAvailablePower(spec.getRatedPowerW(), ambientTemperatureK,
-	ambientPressureBara);
+        ambientPressureBara);
     this.availablePowerW = sitePower * degradation.getPowerDerateFactor();
 
     // 2) Demanded power
@@ -257,10 +257,10 @@ public class GasTurbineUnit extends TwoPortEquipment {
     } else {
       double sum = 0.0;
       for (PowerDemandConsumer c : consumers) {
-	double p = c.getDemandedPowerW();
-	if (p > 0.0) {
-	  sum += p;
-	}
+        double p = c.getDemandedPowerW();
+        if (p > 0.0) {
+          sum += p;
+        }
       }
       this.demandedPowerW = sum;
     }
@@ -277,8 +277,8 @@ public class GasTurbineUnit extends TwoPortEquipment {
     if (enforcePowerLimit) {
       applyAvailablePowerLimitToCompressors();
       if (this.overloaded) {
-	logger.warn("GasTurbineUnit {} overloaded: demanded {} W exceeds available {} W (shortfall {} W)", getName(),
-	    this.demandedPowerW, this.availablePowerW, getPowerShortfallW());
+        logger.warn("GasTurbineUnit {} overloaded: demanded {} W exceeds available {} W (shortfall {} W)", getName(),
+            this.demandedPowerW, this.availablePowerW, getPowerShortfallW());
       }
     }
 
@@ -362,10 +362,10 @@ public class GasTurbineUnit extends TwoPortEquipment {
       // not J/mol. To get J/kg we compute ISO 6976 directly on a mass basis.
       SystemInterface fluid = getInletStream().getFluid();
       if (fluid == null) {
-	return 0.0;
+        return 0.0;
       }
       neqsim.standards.gasquality.Standard_ISO6976 iso6976 = new neqsim.standards.gasquality.Standard_ISO6976(
-	  fluid.clone(), 0, 15.55, "mass");
+          fluid.clone(), 0, 15.55, "mass");
       iso6976.setReferenceState("real");
       iso6976.calculate();
       // getValue returns kJ/kg on a mass basis; convert to J/kg.
@@ -620,17 +620,17 @@ public class GasTurbineUnit extends TwoPortEquipment {
     for (Compressor c : drivenCompressors) {
       double p = c.getPower();
       if (p > 0.0) {
-	totalDemand += p;
+        totalDemand += p;
       }
     }
     int count = drivenCompressors.size();
     for (Compressor c : drivenCompressors) {
       double shareW;
       if (totalDemand > 0.0) {
-	double p = Math.max(0.0, c.getPower());
-	shareW = availablePowerW * (p / totalDemand);
+        double p = Math.max(0.0, c.getPower());
+        shareW = availablePowerW * (p / totalDemand);
       } else {
-	shareW = availablePowerW / count;
+        shareW = availablePowerW / count;
       }
       allocation.put(c.getName(), shareW);
     }
@@ -656,7 +656,7 @@ public class GasTurbineUnit extends TwoPortEquipment {
     for (Compressor c : drivenCompressors) {
       Double shareW = allocation.get(c.getName());
       if (shareW == null || shareW <= 0.0) {
-	continue;
+        continue;
       }
       GasTurbineDriver curve = new GasTurbineDriver(shareW / 1000.0, 0.35);
       curve.setAmbientTemperature(15.0); // ISO so the allocation maps 1:1 to available power

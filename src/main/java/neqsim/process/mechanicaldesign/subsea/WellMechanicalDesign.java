@@ -184,7 +184,7 @@ public class WellMechanicalDesign extends MechanicalDesign {
     barrierSchematic.setWellType(well.getWellType().name());
     if (barrierReqs.containsKey("minPrimaryElements")) {
       barrierSchematic.setMinimumElements(barrierReqs.get("minPrimaryElements").intValue(),
-	  barrierReqs.get("minSecondaryElements").intValue());
+          barrierReqs.get("minSecondaryElements").intValue());
     }
     if (barrierReqs.containsKey("dhsvRequired")) {
       barrierSchematic.setDhsvRequired(barrierReqs.get("dhsvRequired") > 0.5 && !isInjector);
@@ -273,35 +273,35 @@ public class WellMechanicalDesign extends MechanicalDesign {
       barrierSchematic.validate();
 
       for (String issue : barrierSchematic.getIssues()) {
-	barrierNotes.add(issue);
-	if (issue.startsWith("FAIL:") || issue.startsWith("WARNING:")) {
-	  barrierIssueCount++;
-	}
+        barrierNotes.add(issue);
+        if (issue.startsWith("FAIL:") || issue.startsWith("WARNING:")) {
+          barrierIssueCount++;
+        }
       }
       barrierVerificationPassed = barrierSchematic.isPassed();
     } else {
       // Legacy count-based validation
       if (well.getPrimaryBarrierElements() < 2) {
-	barrierNotes.add("WARNING: Primary barrier requires minimum 2 elements (NORSOK D-010)");
-	barrierIssueCount++;
+        barrierNotes.add("WARNING: Primary barrier requires minimum 2 elements (NORSOK D-010)");
+        barrierIssueCount++;
       }
       if (well.getSecondaryBarrierElements() < 2) {
-	barrierNotes.add("WARNING: Secondary barrier requires minimum 2 elements (NORSOK D-010)");
-	barrierIssueCount++;
+        barrierNotes.add("WARNING: Secondary barrier requires minimum 2 elements (NORSOK D-010)");
+        barrierIssueCount++;
       }
       if (!well.hasDHSV() && well.isProducer()) {
-	barrierNotes.add("WARNING: DHSV (SSSV) required for subsea production wells (NORSOK D-010)");
-	barrierIssueCount++;
+        barrierNotes.add("WARNING: DHSV (SSSV) required for subsea production wells (NORSOK D-010)");
+        barrierIssueCount++;
       }
       barrierNotes.add("INFO: Annular pressure monitoring required per NORSOK D-010 Section 9");
 
       if (well.getPrimaryBarrierElements() >= 2 && well.getSecondaryBarrierElements() >= 2
-	  && (well.hasDHSV() || !well.isProducer())) {
-	barrierVerificationPassed = true;
-	barrierNotes.add("PASS: Two-barrier principle satisfied per NORSOK D-010");
+          && (well.hasDHSV() || !well.isProducer())) {
+        barrierVerificationPassed = true;
+        barrierNotes.add("PASS: Two-barrier principle satisfied per NORSOK D-010");
       } else {
-	barrierVerificationPassed = false;
-	barrierNotes.add("FAIL: Two-barrier principle NOT satisfied — review well design");
+        barrierVerificationPassed = false;
+        barrierNotes.add("FAIL: Two-barrier principle NOT satisfied — review well design");
       }
     }
   }
@@ -344,7 +344,7 @@ public class WellMechanicalDesign extends MechanicalDesign {
     int extraSecondary = well.getSecondaryBarrierElements() - secondary.getElementCount();
     for (int i = 0; i < extraSecondary; i++) {
       secondary
-	  .addElement(new BarrierElement(BarrierElement.ElementType.PLUG, "Additional secondary element " + (i + 1)));
+          .addElement(new BarrierElement(BarrierElement.ElementType.PLUG, "Additional secondary element " + (i + 1)));
     }
 
     barrierSchematic.setPrimaryEnvelope(primary);
@@ -359,8 +359,8 @@ public class WellMechanicalDesign extends MechanicalDesign {
     WellCostEstimator ce = getCostEstimator();
 
     ce.calculateWellCost(well.getWellType().name(), well.getRigType().name(), well.getCompletionType().name(),
-	well.getMeasuredDepth(), well.getWaterDepth(), well.getDrillingDays(), well.getCompletionDays(),
-	well.getRigDayRate(), well.hasDHSV(), well.getNumberOfCasingStrings());
+        well.getMeasuredDepth(), well.getWaterDepth(), well.getDrillingDays(), well.getCompletionDays(),
+        well.getRigDayRate(), well.hasDHSV(), well.getNumberOfCasingStrings());
 
     totalCostUSD = ce.getTotalCost();
     drillingCostUSD = ce.getDrillingCost();
@@ -571,7 +571,7 @@ public class WellMechanicalDesign extends MechanicalDesign {
       barriers.addProperty("primaryFunctionalCount", barrierSchematic.getPrimaryEnvelope().getFunctionalElementCount());
       barriers.addProperty("secondaryElementCount", barrierSchematic.getSecondaryEnvelope().getElementCount());
       barriers.addProperty("secondaryFunctionalCount",
-	  barrierSchematic.getSecondaryEnvelope().getFunctionalElementCount());
+          barrierSchematic.getSecondaryEnvelope().getFunctionalElementCount());
     }
     jsonObj.add("barrierVerification", barriers);
 
@@ -581,14 +581,14 @@ public class WellMechanicalDesign extends MechanicalDesign {
     if (dataSource != null) {
       dsStandards = dataSource.getAppliedStandards();
       for (String std : dsStandards) {
-	standardsArray.add(std);
+        standardsArray.add(std);
       }
     }
     if (barrierSchematic != null) {
       for (String std : barrierSchematic.getAppliedStandards()) {
-	if (!dsStandards.contains(std)) {
-	  standardsArray.add(std);
-	}
+        if (!dsStandards.contains(std)) {
+          standardsArray.add(std);
+        }
       }
     }
     jsonObj.add("appliedStandards", standardsArray);

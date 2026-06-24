@@ -115,7 +115,7 @@ public class AdvancedProcessLogicExample {
     double votedPressure = analogVoting.evaluateMedian();
     logger.printf(org.apache.logging.log4j.Level.INFO, "Voted pressure (median): %.2f bara\n", votedPressure);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Valid inputs: %d/%d\n", analogVoting.getValidInputCount(),
-	analogVoting.getTotalInputCount());
+        analogVoting.getTotalInputCount());
 
     // Digital voting - high pressure alarm
     double alarmSetpoint = 15.0;
@@ -130,7 +130,7 @@ public class AdvancedProcessLogicExample {
 
     boolean highPressureAlarm = digitalVoting.evaluateDigital();
     logger.printf(org.apache.logging.log4j.Level.INFO, "High pressure alarm (>%.1f bara): %s\n", alarmSetpoint,
-	highPressureAlarm ? "ACTIVE" : "INACTIVE");
+        highPressureAlarm ? "ACTIVE" : "INACTIVE");
 
     // ======================================================================================
     // FEATURE 2: STARTUP LOGIC WITH PERMISSIVES
@@ -191,7 +191,7 @@ public class AdvancedProcessLogicExample {
       logger.printf(org.apache.logging.log4j.Level.INFO, "%8.1f | %s\n", time, startupLogic.getStatusDescription());
 
       if (startupLogic.isComplete()) {
-	break;
+        break;
       }
     }
 
@@ -222,11 +222,11 @@ public class AdvancedProcessLogicExample {
     });
 
     ConditionalAction conditionalAction = new ConditionalAction(highPressure, reduceFlow, increaseFlow,
-	"Pressure Control");
+        "Pressure Control");
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Current pressure: %.1f bara\n", feedStream.getPressure());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Condition: Pressure > 12.0 bara? %s\n",
-	highPressure.evaluate() ? "YES" : "NO");
+        highPressure.evaluate() ? "YES" : "NO");
 
     conditionalAction.execute();
     logger.info("Conditional action executed:");
@@ -264,8 +264,8 @@ public class AdvancedProcessLogicExample {
     parallelActions.execute();
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Completion: %d/%d actions (%.0f%%)\n",
-	parallelActions.getCompletedCount(), parallelActions.getTotalCount(),
-	parallelActions.getCompletionPercentage());
+        parallelActions.getCompletedCount(), parallelActions.getTotalCount(),
+        parallelActions.getCompletionPercentage());
 
     if (parallelActions.isComplete()) {
       logger.info("✓ All parallel actions completed");
@@ -304,9 +304,9 @@ public class AdvancedProcessLogicExample {
 
     logger.info("Shutdown sequence configured:");
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Mode: %s\n",
-	shutdownLogic.isEmergencyMode() ? "EMERGENCY" : "CONTROLLED");
+        shutdownLogic.isEmergencyMode() ? "EMERGENCY" : "CONTROLLED");
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Duration: %.0f seconds\n",
-	shutdownLogic.getEffectiveShutdownTime());
+        shutdownLogic.getEffectiveShutdownTime());
     logger.info("  Actions: 4 steps");
 
     // Activate shutdown
@@ -320,13 +320,13 @@ public class AdvancedProcessLogicExample {
       shutdownLogic.execute(timeStep);
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%8.1f | %9.1f | %7.0f%% | ", time,
-	  feedValve.getPercentValveOpening(), shutdownLogic.getProgress());
+          feedValve.getPercentValveOpening(), shutdownLogic.getProgress());
 
       if (shutdownLogic.isComplete()) {
-	logger.info("COMPLETED");
-	break;
+        logger.info("COMPLETED");
+        break;
       } else {
-	logger.info("RUNNING");
+        logger.info("RUNNING");
       }
     }
 
@@ -357,9 +357,9 @@ public class AdvancedProcessLogicExample {
 
     logger.info("Emergency shutdown activated...");
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Normal duration: %.0f seconds\n",
-	emergencyShutdown.getRampDownTime());
+        emergencyShutdown.getRampDownTime());
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Emergency duration: %.0f seconds\n",
-	emergencyShutdown.getEmergencyShutdownTime());
+        emergencyShutdown.getEmergencyShutdownTime());
 
     emergencyShutdown.activate();
 
@@ -370,10 +370,10 @@ public class AdvancedProcessLogicExample {
       emergencyShutdown.execute(0.5);
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%8.1f | %9.1f | %s\n", time,
-	  feedValve.getPercentValveOpening(), emergencyShutdown.isComplete() ? "COMPLETED" : "RUNNING");
+          feedValve.getPercentValveOpening(), emergencyShutdown.isComplete() ? "COMPLETED" : "RUNNING");
 
       if (emergencyShutdown.isComplete()) {
-	break;
+        break;
       }
     }
 
@@ -415,7 +415,7 @@ public class AdvancedProcessLogicExample {
     @Override
     public void execute() {
       if (!complete) {
-	complete = executor.get();
+        complete = executor.get();
       }
     }
 

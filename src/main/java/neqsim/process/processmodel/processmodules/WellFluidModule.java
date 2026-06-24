@@ -75,7 +75,7 @@ public class WellFluidModule extends ProcessModuleBaseClass {
 
     double volGas = ((Mixer) getOperations().getUnit("gas mixer")).getOutletStream().getThermoSystem().getVolume();
     double volOil = ((ThreePhaseSeparator) getOperations().getUnit("3rd stage Separator")).getOilOutStream()
-	.getThermoSystem().getVolume();
+        .getThermoSystem().getVolume();
 
     double GOR = volGas / volOil;
     System.out.println("GOR " + GOR);
@@ -86,7 +86,7 @@ public class WellFluidModule extends ProcessModuleBaseClass {
     Stream gasStream = (Stream) ((Heater) getOperations().getUnit("gas heater")).getOutletStream().clone();
     gasStream.getThermoSystem().setPressure(inletPressure);
     Stream oilStream = (Stream) ((ThreePhaseSeparator) getOperations().getUnit("3rd stage Separator")).getOilOutStream()
-	.clone();
+        .clone();
     oilStream.getThermoSystem().setPressure(inletPressure);
 
     ((Separator) getOperations().getUnit("Inlet separator")).addStream(gasStream);
@@ -95,7 +95,7 @@ public class WellFluidModule extends ProcessModuleBaseClass {
 
     volGas = ((Mixer) getOperations().getUnit("gas mixer")).getOutletStream().getThermoSystem().getVolume();
     volOil = ((ThreePhaseSeparator) getOperations().getUnit("3rd stage Separator")).getOilOutStream().getThermoSystem()
-	.getVolume();
+        .getVolume();
 
     GOR = volGas / volOil;
     System.out.println("GOR " + GOR);
@@ -116,7 +116,7 @@ public class WellFluidModule extends ProcessModuleBaseClass {
     liquidOutHeater.setOutTemperature(separationTemperature);
 
     ThreePhaseSeparator firstStageSeparator = new ThreePhaseSeparator("1st stage separator",
-	liquidOutHeater.getOutletStream());
+        liquidOutHeater.getOutletStream());
 
     ThrottlingValve valve1 = new ThrottlingValve("1stTo2ndStageOilValve", firstStageSeparator.getOilOutStream());
     valve1.setOutletPressure(secondstagePressure);
@@ -125,17 +125,17 @@ public class WellFluidModule extends ProcessModuleBaseClass {
     liquidOutHeater2.setOutTemperature(separationTemperature);
 
     ThreePhaseSeparator secondStageSeparator = new ThreePhaseSeparator("2nd stage Separator",
-	liquidOutHeater2.getOutletStream());
+        liquidOutHeater2.getOutletStream());
 
     ThrottlingValve thirdStageValve = new ThrottlingValve("2-3stageOilValve",
-	secondStageSeparator.getLiquidOutStream());
+        secondStageSeparator.getLiquidOutStream());
     thirdStageValve.setOutletPressure(thirdstagePressure);
 
     Heater liquidOutHeater3 = new Heater("oil/water heater3", thirdStageValve.getOutletStream());
     liquidOutHeater3.setOutTemperature(separationTemperature);
 
     ThreePhaseSeparator thirdStageSeparator = new ThreePhaseSeparator("3rd stage Separator",
-	liquidOutHeater3.getOutletStream());
+        liquidOutHeater3.getOutletStream());
 
     Mixer gasMixer = new Mixer("gas mixer");
 

@@ -138,7 +138,7 @@ public class MultiVesselBlowdownStudy implements Serializable {
     double endTime = 0.0;
     for (DepressurizationResult r : all.values()) {
       if (!r.time.isEmpty()) {
-	endTime = Math.max(endTime, r.time.get(r.time.size() - 1));
+        endTime = Math.max(endTime, r.time.get(r.time.size() - 1));
       }
     }
 
@@ -163,15 +163,15 @@ public class MultiVesselBlowdownStudy implements Serializable {
       double t = grid.get(i);
       double sum = 0.0;
       for (Map.Entry<String, DepressurizationResult> entry : all.entrySet()) {
-	double q = interpolateMassFlow(entry.getValue(), t);
-	perSource.get(entry.getKey()).add(q);
-	sum += q;
+        double q = interpolateMassFlow(entry.getValue(), t);
+        perSource.get(entry.getKey()).add(q);
+        sum += q;
       }
       total.add(sum);
       if (sum > peakTotal) {
-	peakTotal = sum;
-	peakTime = t;
-	peakIndex = i;
+        peakTotal = sum;
+        peakTime = t;
+        peakIndex = i;
       }
     }
 
@@ -194,7 +194,7 @@ public class MultiVesselBlowdownStudy implements Serializable {
     }
 
     return new MultiVesselBlowdownResult(grid, total, perSource, peakTotal, peakTime, peakContribution, velocity, mach,
-	maxAllowableMach, machOk);
+        maxAllowableMach, machOk);
   }
 
   /**
@@ -219,12 +219,12 @@ public class MultiVesselBlowdownStudy implements Serializable {
     }
     for (int i = 1; i < times.size(); i++) {
       if (t <= times.get(i)) {
-	double t0 = times.get(i - 1);
-	double t1 = times.get(i);
-	double f0 = flows.get(i - 1);
-	double f1 = flows.get(i);
-	double frac = (t1 > t0) ? (t - t0) / (t1 - t0) : 0.0;
-	return f0 + frac * (f1 - f0);
+        double t0 = times.get(i - 1);
+        double t1 = times.get(i);
+        double f0 = flows.get(i - 1);
+        double f1 = flows.get(i);
+        double frac = (t1 > t0) ? (t - t0) / (t1 - t0) : 0.0;
+        return f0 + frac * (f1 - f0);
       }
     }
     return 0.0;
@@ -248,9 +248,9 @@ public class MultiVesselBlowdownStudy implements Serializable {
     private final boolean headerMachAcceptable;
 
     MultiVesselBlowdownResult(List<Double> timeS, List<Double> totalMassFlowKgPerS,
-	Map<String, List<Double>> sourceMassFlowKgPerS, double peakTotalMassFlowKgPerS, double peakTimeS,
-	Map<String, Double> peakContributionKgPerS, double headerVelocityMPerS, double headerMach,
-	double maxAllowableMach, boolean headerMachAcceptable) {
+        Map<String, List<Double>> sourceMassFlowKgPerS, double peakTotalMassFlowKgPerS, double peakTimeS,
+        Map<String, Double> peakContributionKgPerS, double headerVelocityMPerS, double headerMach,
+        double maxAllowableMach, boolean headerMachAcceptable) {
       this.timeS = timeS;
       this.totalMassFlowKgPerS = totalMassFlowKgPerS;
       this.sourceMassFlowKgPerS = sourceMassFlowKgPerS;
@@ -362,14 +362,14 @@ public class MultiVesselBlowdownStudy implements Serializable {
       StringBuilder sb = new StringBuilder();
       sb.append("Multi-vessel blowdown (API 521 §7):\n");
       sb.append(
-	  String.format("  Peak total relief load : %.3f kg/s at t = %.0f s%n", peakTotalMassFlowKgPerS, peakTimeS));
+          String.format("  Peak total relief load : %.3f kg/s at t = %.0f s%n", peakTotalMassFlowKgPerS, peakTimeS));
       for (Map.Entry<String, Double> entry : peakContributionKgPerS.entrySet()) {
-	sb.append(String.format("    %-20s : %.3f kg/s%n", entry.getKey(), entry.getValue()));
+        sb.append(String.format("    %-20s : %.3f kg/s%n", entry.getKey(), entry.getValue()));
       }
       if (!Double.isNaN(headerMach)) {
-	sb.append(String.format("  Header velocity        : %.1f m/s%n", headerVelocityMPerS));
-	sb.append(String.format("  Header Mach            : %.3f (limit %.2f) -> %s%n", headerMach, maxAllowableMach,
-	    headerMachAcceptable ? "OK" : "EXCEEDED"));
+        sb.append(String.format("  Header velocity        : %.1f m/s%n", headerVelocityMPerS));
+        sb.append(String.format("  Header Mach            : %.3f (limit %.2f) -> %s%n", headerMach, maxAllowableMach,
+            headerMachAcceptable ? "OK" : "EXCEEDED"));
       }
       return sb.toString();
     }

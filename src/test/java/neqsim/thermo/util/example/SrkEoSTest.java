@@ -62,7 +62,7 @@ public class SrkEoSTest {
   public void testinitPhysicalProperties() {
     thermoSystem.initPhysicalProperties();
     assertEquals(thermoSystem.getPhase(0).getPhysicalProperties().getDensity(),
-	thermoSystem.getPhase(0).getPhysicalProperties().getDensity());
+        thermoSystem.getPhase(0).getPhysicalProperties().getDensity());
   }
 
   /**

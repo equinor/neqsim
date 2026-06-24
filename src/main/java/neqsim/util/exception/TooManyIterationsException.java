@@ -46,9 +46,9 @@ public class TooManyIterationsException extends neqsim.util.exception.ThermoExce
    */
   public String getRemediation() {
     return "Solver did not converge within " + maxIterations + " iterations. Try:\n"
-	+ "1. Check initial conditions are physically reasonable\n"
-	+ "2. Simplify the fluid composition (fewer components)\n" + "3. Use a different equation of state\n"
-	+ "4. Increase max iterations if close to convergence\n"
-	+ "5. For distillation: use DAMPED solver instead of SEQUENTIAL";
+        + "1. Check initial conditions are physically reasonable\n"
+        + "2. Simplify the fluid composition (fewer components)\n" + "3. Use a different equation of state\n"
+        + "4. Increase max iterations if close to convergence\n"
+        + "5. For distillation: use DAMPED solver instead of SEQUENTIAL";
   }
 }

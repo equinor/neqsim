@@ -328,11 +328,11 @@ public class GasFlotationUnit extends Separator {
     sb.append(String.format("Per-stage efficiency: %.1f%%\n", perStageEfficiency * 100.0));
     sb.append(String.format("Water flow: %.1f m3/h\n", waterFlowRateM3h));
     sb.append(
-	String.format("Min gas flow: %.1f Am3/h (%.0f Avol%%)\n", flotationGasFlowRateM3h, minGasVolumeFractionPct));
+        String.format("Min gas flow: %.1f Am3/h (%.0f Avol%%)\n", flotationGasFlowRateM3h, minGasVolumeFractionPct));
     sb.append(String.format("Min gas overpressure: %.1f bar above water\n", minGasOverpressureBar));
     sb.append(String.format("Min gas mixing valve dP: %.1f bar\n", minGasMixingDPBar));
     sb.append(String.format("Reject flow per stage: %.1f m3/h (%.1f%% of inlet)\n", rejectFlowPerStageM3h,
-	minRejectFractionPerStage * 100.0));
+        minRejectFractionPerStage * 100.0));
     sb.append(String.format("Total reject flow: %.1f m3/h\n", getTotalRejectFlow()));
     sb.append(String.format("Inlet OIW: %.0f mg/L\n", inletOilMgL));
     sb.append(String.format("Outlet OIW: %.0f mg/L\n", outletOilMgL));

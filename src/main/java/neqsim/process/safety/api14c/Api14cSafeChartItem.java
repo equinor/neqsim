@@ -106,7 +106,7 @@ public class Api14cSafeChartItem implements Serializable {
     boolean first = true;
     for (Api14cDeviceType d : s) {
       if (!first) {
-	sb.append(", ");
+        sb.append(", ");
       }
       sb.append(d.name());
       first = false;

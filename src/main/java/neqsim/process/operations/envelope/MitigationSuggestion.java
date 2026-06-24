@@ -108,11 +108,11 @@ public final class MitigationSuggestion implements Serializable, Comparable<Miti
     double suggestedValue = suggestedValue(margin);
     String direction = margin.isMinimumConstraint() ? "increase" : "reduce";
     String description = "Review " + margin.getEquipmentName() + " " + margin.getConstraintName() + " and " + direction
-	+ " loading away from the limit.";
+        + " loading away from the limit.";
     String expected = "Restore margin above " + OperationalMargin.WARNING_MARGIN_PERCENT
-	+ "% and confirm against plant data.";
+        + "% and confirm against plant data.";
     return new MitigationSuggestion(margin.getKey(), description, margin.getEquipmentName(), margin.getConstraintName(),
-	suggestedValue, margin.getUnit(), priority, category, expected, 0.6);
+        suggestedValue, margin.getUnit(), priority, category, expected, 0.6);
   }
 
   /**

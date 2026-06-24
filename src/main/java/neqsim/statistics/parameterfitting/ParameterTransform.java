@@ -36,12 +36,12 @@ public enum ParameterTransform implements Serializable {
       return value;
     } else if (this == LOG) {
       if (value <= 0.0) {
-	throw new IllegalArgumentException("LOG transform requires a positive value");
+        throw new IllegalArgumentException("LOG transform requires a positive value");
       }
       return Math.log(value);
     } else if (this == LOG10) {
       if (value <= 0.0) {
-	throw new IllegalArgumentException("LOG10 transform requires a positive value");
+        throw new IllegalArgumentException("LOG10 transform requires a positive value");
       }
       return Math.log10(value);
     }

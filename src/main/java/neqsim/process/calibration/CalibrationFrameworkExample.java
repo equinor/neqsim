@@ -70,7 +70,7 @@ public class CalibrationFrameworkExample {
 
     // Well configurations: [pressure, flowRate, pipeLength]
     double[][] configs = { { 100.0, 50000.0, 8000.0 }, { 95.0, 45000.0, 8500.0 }, { 92.0, 55000.0, 7500.0 },
-	{ 88.0, 48000.0, 9000.0 } };
+        { 88.0, 48000.0, 9000.0 } };
 
     wellStreams = new Stream[NUM_WELLS];
     pipes = new PipeBeggsAndBrills[NUM_WELLS];
@@ -127,11 +127,11 @@ public class CalibrationFrameworkExample {
     // Add tunable parameters (heat transfer coefficients)
     for (int i = 0; i < NUM_WELLS; i++) {
       estimator.addTunableParameter("Pipe" + (i + 1) + ".heatTransferCoefficient", "W/(m2·K)", 1.0, 100.0, 15.0); // Initial
-														  // guess
-														  // 15,
-														  // bounds
-														  // [1,
-														  // 100]
+      // guess
+      // 15,
+      // bounds
+      // [1,
+      // 100]
     }
 
     // Add measured variables (manifold temperatures)
@@ -190,7 +190,7 @@ public class CalibrationFrameworkExample {
       EstimationTestHarness.TestReport noiseReport = harness.runConvergenceTest(estimator, 30, noise, null);
 
       System.out.printf("Noise level %.1fx: RMSE=%.3f, Coverage=%.0f%%%n", noise, noiseReport.getRMSE(),
-	  noiseReport.getCoverageRate() * 100);
+          noiseReport.getCoverageRate() * 100);
     }
 
     // Test 3: Drift Tracking
@@ -239,26 +239,26 @@ public class CalibrationFrameworkExample {
     for (int step = 1; step <= 20; step++) {
       // Simulate "plant" with true coefficients
       for (int i = 0; i < NUM_WELLS; i++) {
-	pipes[i].setHeatTransferCoefficient(trueCoeffs[i]);
+        pipes[i].setHeatTransferCoefficient(trueCoeffs[i]);
       }
       process.run();
 
       // Get "measurements" with noise
       Map<String, Double> measurements = new HashMap<>();
       measurements.put("HPManifold.outletStream.temperature",
-	  hpManifold.getOutletStream().getTemperature("C") + 0.5 * rng.nextGaussian());
+          hpManifold.getOutletStream().getTemperature("C") + 0.5 * rng.nextGaussian());
       measurements.put("LPManifold.outletStream.temperature",
-	  lpManifold.getOutletStream().getTemperature("C") + 0.5 * rng.nextGaussian());
+          lpManifold.getOutletStream().getTemperature("C") + 0.5 * rng.nextGaussian());
 
       // Update estimator
       EnKFParameterEstimator.EnKFResult result = estimator.update(measurements);
 
       if (step % 5 == 0 || step == 1) {
-	System.out.printf("Step %2d: RMSE=%.3f°C", step, result.getRMSE());
-	if (result.isAnomalyDetected()) {
-	  System.out.print(" ⚠ ANOMALY");
-	}
-	System.out.println();
+        System.out.printf("Step %2d: RMSE=%.3f°C", step, result.getRMSE());
+        if (result.isAnomalyDetected()) {
+          System.out.print(" ⚠ ANOMALY");
+        }
+        System.out.println();
       }
     }
 
@@ -273,7 +273,7 @@ public class CalibrationFrameworkExample {
     for (int i = 0; i < NUM_WELLS; i++) {
       double errorPct = 100 * Math.abs(estimates[i] - trueCoeffs[i]) / trueCoeffs[i];
       System.out.printf("%-10s %10.2f %10.2f %10.2f %11.1f%%%n", "Pipe" + (i + 1), trueCoeffs[i], estimates[i],
-	  uncertainties[i], errorPct);
+          uncertainties[i], errorPct);
     }
 
     // Convert to CalibrationResult for compatibility

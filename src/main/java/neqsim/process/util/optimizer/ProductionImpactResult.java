@@ -188,7 +188,7 @@ public class ProductionImpactResult implements Serializable {
     } else if (percentLoss < 20.0 && lossVsFullShutdown > 0) {
       recommendedAction = RecommendedAction.REDUCE_THROUGHPUT;
       recommendationReason = String.format("Degraded operation produces %.1f kg/hr more than shutdown",
-	  lossVsFullShutdown);
+          lossVsFullShutdown);
     } else if (percentLoss >= 50.0 && lossVsFullShutdown < absoluteLoss * 0.1) {
       recommendedAction = RecommendedAction.FULL_SHUTDOWN;
       recommendationReason = "Large production loss with marginal benefit vs shutdown";
@@ -732,7 +732,7 @@ public class ProductionImpactResult implements Serializable {
     StringBuilder sb = new StringBuilder();
     sb.append("=== Production Impact Analysis ===\n");
     sb.append(
-	String.format("Equipment: %s (%s)\n", equipmentName, failureMode != null ? failureMode.getName() : "Unknown"));
+        String.format("Equipment: %s (%s)\n", equipmentName, failureMode != null ? failureMode.getName() : "Unknown"));
     sb.append(String.format("Baseline Production: %.1f kg/hr\n", baselineProductionRate));
     sb.append(String.format("Production with Failure: %.1f kg/hr\n", productionWithFailure));
     sb.append(String.format("Production Loss: %.1f kg/hr (%.1f%%)\n", absoluteLoss, percentLoss));

@@ -58,7 +58,7 @@ public class LevelTransmitter extends MeasurementDeviceBaseClass {
   public double getMeasuredValue(String unit) {
     if (!unit.equalsIgnoreCase("")) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getMeasuredValue", "unit",
-	  "currently only supports \"\""));
+          "currently only supports \"\""));
     }
     return separator.getLiquidLevel();
   }

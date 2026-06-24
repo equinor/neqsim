@@ -114,7 +114,7 @@ public class Nog070SilDetermination implements Serializable {
       msg = "Compliant: achieved SIL " + achieved + " >= NOG 070 minimum SIL " + minimumSil + " for " + sifType.name();
     } else {
       msg = "NOT compliant: achieved SIL " + achieved + " < NOG 070 minimum SIL " + minimumSil + " for "
-	  + sifType.name() + ". Reduce PFD by factor " + Math.pow(10.0, minimumSil - achieved) + " or revise SIF.";
+          + sifType.name() + ". Reduce PFD by factor " + Math.pow(10.0, minimumSil - achieved) + " or revise SIF.";
     }
     return new Nog070SilDetermination(sifType, pfdAvg, achieved, minimumSil, ok, msg);
   }

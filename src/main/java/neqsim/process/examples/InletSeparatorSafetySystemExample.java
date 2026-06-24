@@ -219,19 +219,19 @@ public class InletSeparatorSafetySystemExample {
 
     pressureTransmitter = new PressureTransmitter("PT-1001", inletSeparator.getGasOutStream());
     pressureTransmitter.setAlarmConfig(AlarmConfig.builder().unit("bara").lowLowLimit(35.0).lowLimit(50.0)
-	.highLimit(85.0).highHighLimit(95.0).deadband(0.5).delay(1.0).build());
+        .highLimit(85.0).highHighLimit(95.0).deadband(0.5).delay(1.0).build());
 
     temperatureTransmitter = new TemperatureTransmitter("TT-1001", inletSeparator.getGasOutStream());
     temperatureTransmitter.setAlarmConfig(
-	AlarmConfig.builder().unit("C").highLimit(80.0).highHighLimit(90.0).deadband(1.0).delay(2.0).build());
+        AlarmConfig.builder().unit("C").highLimit(80.0).highHighLimit(90.0).deadband(1.0).delay(2.0).build());
 
     oilLevelTransmitter = new LevelTransmitter("LT-1001 oil level", inletSeparator);
     oilLevelTransmitter.setAlarmConfig(AlarmConfig.builder().unit("frac").lowLowLimit(0.15).lowLimit(0.30)
-	.highLimit(0.70).highHighLimit(0.85).deadband(0.02).delay(3.0).build());
+        .highLimit(0.70).highHighLimit(0.85).deadband(0.02).delay(3.0).build());
 
     waterLevelTransmitter = new LevelTransmitter("LT-1002 water level", inletSeparator);
     waterLevelTransmitter.setAlarmConfig(
-	AlarmConfig.builder().unit("frac").highLimit(0.50).highHighLimit(0.70).deadband(0.02).delay(3.0).build());
+        AlarmConfig.builder().unit("frac").highLimit(0.50).highHighLimit(0.70).deadband(0.02).delay(3.0).build());
 
     process.add(pressureTransmitter);
     process.add(temperatureTransmitter);
@@ -266,17 +266,17 @@ public class InletSeparatorSafetySystemExample {
     reliefValve.setFullOpenPressure(DESIGN_PRESSURE_BARA * 1.10);
 
     StreamInterface blockedOutletRelief = buildReliefStream(protectedStream, 110.0, NORMAL_TEMPERATURE_C,
-	FEED_FLOW_KGHR * 0.95);
+        FEED_FLOW_KGHR * 0.95);
     StreamInterface fireCaseRelief = buildReliefStream(protectedStream, DESIGN_PRESSURE_BARA * 1.21, 200.0,
-	FEED_FLOW_KGHR * 0.30);
+        FEED_FLOW_KGHR * 0.30);
 
     reliefValve.addScenario(new RelievingScenario.Builder("Blocked gas outlet").fluidService(FluidService.GAS)
-	.relievingStream(blockedOutletRelief).setPressure(DESIGN_PRESSURE_BARA).overpressureFraction(0.10)
-	.backPressure(2.0).sizingStandard(SizingStandard.API_520).build());
+        .relievingStream(blockedOutletRelief).setPressure(DESIGN_PRESSURE_BARA).overpressureFraction(0.10)
+        .backPressure(2.0).sizingStandard(SizingStandard.API_520).build());
 
     reliefValve.addScenario(new RelievingScenario.Builder("External fire").fluidService(FluidService.FIRE)
-	.relievingStream(fireCaseRelief).setPressure(DESIGN_PRESSURE_BARA).overpressureFraction(0.21).backPressure(2.0)
-	.sizingStandard(SizingStandard.API_520).build());
+        .relievingStream(fireCaseRelief).setPressure(DESIGN_PRESSURE_BARA).overpressureFraction(0.21).backPressure(2.0)
+        .sizingStandard(SizingStandard.API_520).build());
 
     SafetyValveMechanicalDesign design = (SafetyValveMechanicalDesign) reliefValve.getMechanicalDesign();
     design.calcDesign();
@@ -299,27 +299,27 @@ public class InletSeparatorSafetySystemExample {
    */
   public Map<String, SafetyInstrumentedFunction> configureSafetyInstrumentedSystem() {
     SafetyInstrumentedFunction psh = SafetyInstrumentedFunction.builder().id("SIF-001")
-	.name("Inlet separator high-pressure ESD")
-	.description("PT-1001 HIHI 2oo3 voting trips ESDV-1001 on overpressure").sil(2).pfd(5.0e-3)
-	.testIntervalHours(8760.0).mttr(8.0).architecture("2oo3")
-	.protectedEquipment(Arrays.asList("V-100", "Downstream gas processing"))
-	.initiatingEvent("Overpressure (blocked outlet, control failure, gas breakthrough)").safeState("Inlet isolated")
-	.category(SIFCategory.ESD).spuriousTripRate(0.02).build();
+        .name("Inlet separator high-pressure ESD")
+        .description("PT-1001 HIHI 2oo3 voting trips ESDV-1001 on overpressure").sil(2).pfd(5.0e-3)
+        .testIntervalHours(8760.0).mttr(8.0).architecture("2oo3")
+        .protectedEquipment(Arrays.asList("V-100", "Downstream gas processing"))
+        .initiatingEvent("Overpressure (blocked outlet, control failure, gas breakthrough)").safeState("Inlet isolated")
+        .category(SIFCategory.ESD).spuriousTripRate(0.02).build();
 
     SafetyInstrumentedFunction lsll = SafetyInstrumentedFunction.builder().id("SIF-002")
-	.name("Inlet separator low-low oil level trip")
-	.description("LT-1001 LOLO 1oo2 voting closes LV-1001 to prevent gas blow-by").sil(1).pfd(5.0e-2)
-	.testIntervalHours(8760.0).mttr(4.0).architecture("1oo2").protectedEquipment(Arrays.asList("V-100"))
-	.initiatingEvent("Oil drain rate exceeds inflow / level controller failure").safeState("Oil outlet closed")
-	.category(SIFCategory.PSD).spuriousTripRate(0.05).build();
+        .name("Inlet separator low-low oil level trip")
+        .description("LT-1001 LOLO 1oo2 voting closes LV-1001 to prevent gas blow-by").sil(1).pfd(5.0e-2)
+        .testIntervalHours(8760.0).mttr(4.0).architecture("1oo2").protectedEquipment(Arrays.asList("V-100"))
+        .initiatingEvent("Oil drain rate exceeds inflow / level controller failure").safeState("Oil outlet closed")
+        .category(SIFCategory.PSD).spuriousTripRate(0.05).build();
 
     SafetyInstrumentedFunction fg = SafetyInstrumentedFunction.builder().id("SIF-003")
-	.name("Confirmed fire/gas zonal ESD")
-	.description("2oo3 confirmed F&G detection in inlet zone trips ESDV-1001 and isolates fuel").sil(2).pfd(3.0e-3)
-	.testIntervalHours(8760.0).mttr(8.0).architecture("2oo3 with diverse detectors")
-	.protectedEquipment(Arrays.asList("Inlet zone", "V-100", "Manifold"))
-	.initiatingEvent("Confirmed gas release or fire in inlet zone").safeState("Zone depressurised / isolated")
-	.category(SIFCategory.FIRE_GAS).spuriousTripRate(0.01).build();
+        .name("Confirmed fire/gas zonal ESD")
+        .description("2oo3 confirmed F&G detection in inlet zone trips ESDV-1001 and isolates fuel").sil(2).pfd(3.0e-3)
+        .testIntervalHours(8760.0).mttr(8.0).architecture("2oo3 with diverse detectors")
+        .protectedEquipment(Arrays.asList("Inlet zone", "V-100", "Manifold"))
+        .initiatingEvent("Confirmed gas release or fire in inlet zone").safeState("Zone depressurised / isolated")
+        .category(SIFCategory.FIRE_GAS).spuriousTripRate(0.01).build();
 
     sifs.clear();
     sifs.put(psh.getId(), psh);
@@ -393,10 +393,10 @@ public class InletSeparatorSafetySystemExample {
 
     inletEsdValve.deEnergize();
     return String.format(
-	"PT-1001 HIHI detected (set %.1f bara). SIF-001 de-energised ESDV-1001 (energized=%s). "
-	    + "Initiating freq %.2e /yr -> mitigated %.2e /yr with RRF %.0f.",
-	DESIGN_PRESSURE_BARA, inletEsdValve.isEnergized(), initiatingEventFrequency, mitigatedFrequency,
-	psh.getRiskReductionFactor());
+        "PT-1001 HIHI detected (set %.1f bara). SIF-001 de-energised ESDV-1001 (energized=%s). "
+            + "Initiating freq %.2e /yr -> mitigated %.2e /yr with RRF %.0f.",
+        DESIGN_PRESSURE_BARA, inletEsdValve.isEnergized(), initiatingEventFrequency, mitigatedFrequency,
+        psh.getRiskReductionFactor());
   }
 
   /**
@@ -475,34 +475,34 @@ public class InletSeparatorSafetySystemExample {
   private void logReport(SafetyReport report) {
     logger.info("=== Inlet Separator Safety System Demonstration ===");
     logger.info("Inlet separator V-100: P={} bara, T={} C, gas={} kg/hr, oil={} kg/hr, water={} kg/hr",
-	String.format("%.2f", report.getSeparatorPressure()), String.format("%.2f", report.getSeparatorTemperature()),
-	String.format("%.0f", report.getGasMassFlow()), String.format("%.0f", report.getOilMassFlow()),
-	String.format("%.0f", report.getWaterMassFlow()));
+        String.format("%.2f", report.getSeparatorPressure()), String.format("%.2f", report.getSeparatorTemperature()),
+        String.format("%.0f", report.getGasMassFlow()), String.format("%.0f", report.getOilMassFlow()),
+        String.format("%.0f", report.getWaterMassFlow()));
 
     logger.info("--- PSV-1001 sizing (API 520) ---");
     for (SafetyValveScenarioResult result : report.getScenarioResults().values()) {
       logger.info("Scenario '{}' ({}): orifice area = {} mm2, set P = {} bara, controlling = {}",
-	  result.getScenarioName(), result.getFluidService(),
-	  String.format("%.2f", result.getRequiredOrificeArea() * 1.0e6),
-	  String.format("%.2f", result.getSetPressureBar()), result.isControllingScenario());
+          result.getScenarioName(), result.getFluidService(),
+          String.format("%.2f", result.getRequiredOrificeArea() * 1.0e6),
+          String.format("%.2f", result.getSetPressureBar()), result.isControllingScenario());
     }
     logger.info("PSV controlling scenario: '{}' with orifice area {} mm2", report.getControllingScenario(),
-	String.format("%.2f", report.getControllingOrificeArea() * 1.0e6));
+        String.format("%.2f", report.getControllingOrificeArea() * 1.0e6));
 
     logger.info("--- Safety Instrumented System ---");
     for (SafetyInstrumentedFunction sif : report.getSifs().values()) {
       logger.info("{} '{}': SIL {} PFD={} RRF={} ({}) - {}", sif.getId(), sif.getName(), sif.getSil(),
-	  String.format("%.2e", sif.getPfdAvg()), String.format("%.0f", sif.getRiskReductionFactor()),
-	  sif.getCategory().getDescription(), sif.getSafeState());
+          String.format("%.2e", sif.getPfdAvg()), String.format("%.0f", sif.getRiskReductionFactor()),
+          sif.getCategory().getDescription(), sif.getSafeState());
     }
 
     logger.info("--- LOPA: {} ---", report.getOverpressureLopa().getScenarioName());
     logger.info("Initiating freq = {} /yr, target = {} /yr, mitigated = {} /yr, total RRF = {}, target met = {}",
-	String.format("%.2e", report.getOverpressureLopa().getInitiatingEventFrequency()),
-	String.format("%.2e", report.getOverpressureLopa().getTargetFrequency()),
-	String.format("%.2e", report.getOverpressureLopa().getMitigatedFrequency()),
-	String.format("%.0f", report.getOverpressureLopa().getTotalRRF()),
-	report.getOverpressureLopa().getMitigatedFrequency() <= report.getOverpressureLopa().getTargetFrequency());
+        String.format("%.2e", report.getOverpressureLopa().getInitiatingEventFrequency()),
+        String.format("%.2e", report.getOverpressureLopa().getTargetFrequency()),
+        String.format("%.2e", report.getOverpressureLopa().getMitigatedFrequency()),
+        String.format("%.0f", report.getOverpressureLopa().getTotalRRF()),
+        report.getOverpressureLopa().getMitigatedFrequency() <= report.getOverpressureLopa().getTargetFrequency());
 
     logger.info("--- Trip demonstration ---");
     logger.info(report.getTripDescription());

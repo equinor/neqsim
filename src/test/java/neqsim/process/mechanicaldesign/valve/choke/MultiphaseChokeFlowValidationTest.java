@@ -113,9 +113,9 @@ public class MultiphaseChokeFlowValidationTest {
     // This validates that our implementation correctly reproduces the published correlation
     // Format: P1(psia), d(64ths), GLR(scf/stb)
     double[][] conditions = { { 400, 24, 500 }, { 500, 24, 500 }, { 600, 24, 500 }, { 400, 32, 500 }, { 500, 32, 500 },
-	{ 600, 32, 500 }, { 400, 24, 1000 }, { 500, 24, 1000 }, { 600, 24, 1000 }, { 400, 32, 1000 }, { 500, 32, 1000 },
-	{ 600, 32, 1000 }, { 400, 24, 2000 }, { 500, 24, 2000 }, { 600, 24, 2000 }, { 400, 32, 2000 },
-	{ 500, 32, 2000 }, { 600, 32, 2000 }, { 700, 32, 1000 }, { 800, 32, 1000 } };
+        { 600, 32, 500 }, { 400, 24, 1000 }, { 500, 24, 1000 }, { 600, 24, 1000 }, { 400, 32, 1000 }, { 500, 32, 1000 },
+        { 600, 32, 1000 }, { 400, 24, 2000 }, { 500, 24, 2000 }, { 600, 24, 2000 }, { 400, 32, 2000 },
+        { 500, 32, 2000 }, { 600, 32, 2000 }, { 700, 32, 1000 }, { 800, 32, 1000 } };
 
     for (double[] row : conditions) {
       ExperimentalDataPoint dp = new ExperimentalDataPoint("Gilbert (1954)");
@@ -143,10 +143,10 @@ public class MultiphaseChokeFlowValidationTest {
     // Data from Fortunati (1972) SPE 3742 - Laboratory air-water data
     // Format: P1(bara), P2(bara), d(mm), GLR(Sm3/Sm3), qL(m3/h)
     double[][] rawData = { { 10.0, 3.0, 10.0, 100, 5.5 }, { 10.0, 4.0, 10.0, 100, 4.8 }, { 10.0, 5.0, 10.0, 100, 4.2 },
-	{ 15.0, 5.0, 10.0, 100, 7.5 }, { 15.0, 7.0, 10.0, 100, 6.2 }, { 20.0, 6.0, 10.0, 100, 10.5 },
-	{ 20.0, 8.0, 10.0, 100, 9.2 }, { 10.0, 3.0, 10.0, 200, 4.2 }, { 10.0, 4.0, 10.0, 200, 3.6 },
-	{ 15.0, 5.0, 10.0, 200, 5.8 }, { 15.0, 7.0, 10.0, 200, 4.8 }, { 20.0, 6.0, 10.0, 200, 8.2 },
-	{ 10.0, 3.0, 15.0, 100, 12.5 }, { 10.0, 4.0, 15.0, 100, 11.0 }, { 15.0, 5.0, 15.0, 100, 17.0 } };
+        { 15.0, 5.0, 10.0, 100, 7.5 }, { 15.0, 7.0, 10.0, 100, 6.2 }, { 20.0, 6.0, 10.0, 100, 10.5 },
+        { 20.0, 8.0, 10.0, 100, 9.2 }, { 10.0, 3.0, 10.0, 200, 4.2 }, { 10.0, 4.0, 10.0, 200, 3.6 },
+        { 15.0, 5.0, 10.0, 200, 5.8 }, { 15.0, 7.0, 10.0, 200, 4.8 }, { 20.0, 6.0, 10.0, 200, 8.2 },
+        { 10.0, 3.0, 15.0, 100, 12.5 }, { 10.0, 4.0, 15.0, 100, 11.0 }, { 15.0, 5.0, 15.0, 100, 17.0 } };
 
     for (double[] row : rawData) {
       ExperimentalDataPoint dp = new ExperimentalDataPoint("Fortunati (1972)");
@@ -173,9 +173,9 @@ public class MultiphaseChokeFlowValidationTest {
     // Data from Perkins (1993) SPE 25458 - Critical flow test data
     // Format: P1(psia), d(64ths), GLR(scf/stb), qL(stb/d), gas_quality
     double[][] rawData = { { 500, 32, 800, 2200, 0.35 }, { 600, 32, 800, 2650, 0.35 }, { 700, 32, 800, 3100, 0.35 },
-	{ 500, 32, 1200, 1800, 0.45 }, { 600, 32, 1200, 2150, 0.45 }, { 700, 32, 1200, 2500, 0.45 },
-	{ 500, 48, 800, 4800, 0.35 }, { 600, 48, 800, 5800, 0.35 }, { 700, 48, 800, 6800, 0.35 },
-	{ 500, 48, 1200, 3900, 0.45 }, { 600, 48, 1200, 4700, 0.45 } };
+        { 500, 32, 1200, 1800, 0.45 }, { 600, 32, 1200, 2150, 0.45 }, { 700, 32, 1200, 2500, 0.45 },
+        { 500, 48, 800, 4800, 0.35 }, { 600, 48, 800, 5800, 0.35 }, { 700, 48, 800, 6800, 0.35 },
+        { 500, 48, 1200, 3900, 0.45 }, { 600, 48, 1200, 4700, 0.45 } };
 
     for (double[] row : rawData) {
       ExperimentalDataPoint dp = new ExperimentalDataPoint("Perkins (1993)");
@@ -212,18 +212,18 @@ public class MultiphaseChokeFlowValidationTest {
       logger.info("----------------------------------------------------");
 
       for (CriticalRatioDataPoint dp : sachdevaCriticalRatioData) {
-	double calculated = model.calculateCriticalPressureRatio(dp.gasQuality, gamma);
-	double error = Math.abs(calculated - dp.measuredCriticalRatio) / dp.measuredCriticalRatio * 100;
+        double calculated = model.calculateCriticalPressureRatio(dp.gasQuality, gamma);
+        double error = Math.abs(calculated - dp.measuredCriticalRatio) / dp.measuredCriticalRatio * 100;
 
-	logger.printf(org.apache.logging.log4j.Level.INFO, "   %.2f     |    %.2f      |     %.3f      |  %.1f%%\n",
-	    dp.gasQuality, dp.measuredCriticalRatio, calculated, error);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "   %.2f     |    %.2f      |     %.3f      |  %.1f%%\n",
+            dp.gasQuality, dp.measuredCriticalRatio, calculated, error);
 
-	sumSquaredError += Math.pow(error, 2);
-	count++;
+        sumSquaredError += Math.pow(error, 2);
+        count++;
 
-	// Each point should be within 10% of measured value
-	assertTrue(error < 10.0,
-	    String.format("Critical ratio error %.1f%% exceeds 10%% for x_g=%.2f", error, dp.gasQuality));
+        // Each point should be within 10% of measured value
+        assertTrue(error < 10.0,
+            String.format("Critical ratio error %.1f%% exceeds 10%% for x_g=%.2f", error, dp.gasQuality));
       }
 
       double rmse = Math.sqrt(sumSquaredError / count);
@@ -256,11 +256,11 @@ public class MultiphaseChokeFlowValidationTest {
 
       // Test across range of gas qualities
       for (double xg = 0.05; xg <= 0.95; xg += 0.05) {
-	double yc = model.calculateCriticalPressureRatio(xg, gamma);
+        double yc = model.calculateCriticalPressureRatio(xg, gamma);
 
-	// Should be between 0.3 and 0.9 for two-phase flow
-	assertTrue(yc >= 0.3 && yc <= 0.9,
-	    String.format("Critical ratio %.3f outside bounds [0.3, 0.9] for x_g=%.2f", yc, xg));
+        // Should be between 0.3 and 0.9 for two-phase flow
+        assertTrue(yc >= 0.3 && yc <= 0.9,
+            String.format("Critical ratio %.3f outside bounds [0.3, 0.9] for x_g=%.2f", yc, xg));
       }
     }
   }
@@ -283,23 +283,23 @@ public class MultiphaseChokeFlowValidationTest {
       int count = 0;
 
       for (ExperimentalDataPoint dp : gilbertFieldData) {
-	model.setChokeDiameter(dp.chokeDiameter_m);
+        model.setChokeDiameter(dp.chokeDiameter_m);
 
-	// Calculate using Gilbert equation directly
-	// q = P * d^1.89 / (10 * GLR^0.546)
-	double P_psia = dp.upstreamPressure_Pa / PSIA_TO_PA;
-	double d_64ths = dp.chokeDiameter_m / INCH_64THS_TO_M;
-	double qL_calc_stbd = P_psia * Math.pow(d_64ths, 1.89) / (10.0 * Math.pow(dp.GLR_scf_stb, 0.546));
+        // Calculate using Gilbert equation directly
+        // q = P * d^1.89 / (10 * GLR^0.546)
+        double P_psia = dp.upstreamPressure_Pa / PSIA_TO_PA;
+        double d_64ths = dp.chokeDiameter_m / INCH_64THS_TO_M;
+        double qL_calc_stbd = P_psia * Math.pow(d_64ths, 1.89) / (10.0 * Math.pow(dp.GLR_scf_stb, 0.546));
 
-	double qL_meas_stbd = dp.measuredLiquidFlow_m3_s / BBL_PER_DAY_TO_M3_PER_SEC;
-	double error = Math.abs(qL_calc_stbd - qL_meas_stbd) / qL_meas_stbd * 100;
+        double qL_meas_stbd = dp.measuredLiquidFlow_m3_s / BBL_PER_DAY_TO_M3_PER_SEC;
+        double error = Math.abs(qL_calc_stbd - qL_meas_stbd) / qL_meas_stbd * 100;
 
-	logger.printf(org.apache.logging.log4j.Level.INFO,
-	    "  %4.0f   |   %2.0f     | %4.0f |     %5.0f      |  %5.0f  |  %.1f%%\n", P_psia, d_64ths, dp.GLR_scf_stb,
-	    qL_meas_stbd, qL_calc_stbd, error);
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "  %4.0f   |   %2.0f     | %4.0f |     %5.0f      |  %5.0f  |  %.1f%%\n", P_psia, d_64ths, dp.GLR_scf_stb,
+            qL_meas_stbd, qL_calc_stbd, error);
 
-	sumError += error;
-	count++;
+        sumError += error;
+        count++;
       }
 
       double avgError = sumError / count;
@@ -323,7 +323,7 @@ public class MultiphaseChokeFlowValidationTest {
       // Doubling pressure should approximately double flow
       double ratio = q2 / q1;
       assertTrue(ratio > 1.8 && ratio < 2.2,
-	  "Flow ratio " + ratio + " should be approximately 2 when pressure doubles");
+          "Flow ratio " + ratio + " should be approximately 2 when pressure doubles");
     }
 
     @Test
@@ -336,7 +336,7 @@ public class MultiphaseChokeFlowValidationTest {
       // d2/d1 = 2, so flow ratio should be 2^1.89 ≈ 3.7
       double ratio = q2 / q1;
       assertTrue(ratio > 3.2 && ratio < 4.2,
-	  "Flow ratio " + ratio + " should be approximately 3.7 when choke size doubles");
+          "Flow ratio " + ratio + " should be approximately 3.7 when choke size doubles");
     }
 
     private double calculateGilbertFlow(double P1_Pa, double d_64ths, double GLR) {
@@ -362,30 +362,30 @@ public class MultiphaseChokeFlowValidationTest {
       int total = 0;
 
       for (ExperimentalDataPoint dp : fortunatiLabData) {
-	double ratio = dp.downstreamPressure_Pa / dp.upstreamPressure_Pa;
+        double ratio = dp.downstreamPressure_Pa / dp.upstreamPressure_Pa;
 
-	// Estimate gas quality from GLR (rough approximation)
-	double glr_sm3_sm3 = dp.GLR_scf_stb * 6.28981 / 35.3147;
-	double gasQuality = glr_sm3_sm3 / (1 + glr_sm3_sm3) * 0.5; // Rough estimate
+        // Estimate gas quality from GLR (rough approximation)
+        double glr_sm3_sm3 = dp.GLR_scf_stb * 6.28981 / 35.3147;
+        double gasQuality = glr_sm3_sm3 / (1 + glr_sm3_sm3) * 0.5; // Rough estimate
 
-	double criticalRatio = model.calculateCriticalPressureRatio(gasQuality, 1.4);
+        double criticalRatio = model.calculateCriticalPressureRatio(gasQuality, 1.4);
 
-	String expectedRegime = ratio < criticalRatio ? "CRITICAL" : "SUBCRITICAL";
-	String calculatedRegime = ratio < criticalRatio ? "CRITICAL" : "SUBCRITICAL";
+        String expectedRegime = ratio < criticalRatio ? "CRITICAL" : "SUBCRITICAL";
+        String calculatedRegime = ratio < criticalRatio ? "CRITICAL" : "SUBCRITICAL";
 
-	logger.printf(org.apache.logging.log4j.Level.INFO, "  %4.1f  |  %4.1f  | %.2f  |  %-11s   |  %s\n",
-	    dp.upstreamPressure_Pa / BARA_TO_PA, dp.downstreamPressure_Pa / BARA_TO_PA, ratio, expectedRegime,
-	    calculatedRegime);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  %4.1f  |  %4.1f  | %.2f  |  %-11s   |  %s\n",
+            dp.upstreamPressure_Pa / BARA_TO_PA, dp.downstreamPressure_Pa / BARA_TO_PA, ratio, expectedRegime,
+            calculatedRegime);
 
-	if (expectedRegime.equals(calculatedRegime)) {
-	  correctClassifications++;
-	}
-	total++;
+        if (expectedRegime.equals(calculatedRegime)) {
+          correctClassifications++;
+        }
+        total++;
       }
 
       double accuracy = (double) correctClassifications / total * 100;
       logger.printf(org.apache.logging.log4j.Level.INFO, "\nClassification Accuracy: %.1f%% (%d/%d)\n", accuracy,
-	  correctClassifications, total);
+          correctClassifications, total);
 
       assertTrue(accuracy >= 80.0, "Flow regime classification accuracy should be >= 80%");
     }
@@ -396,30 +396,30 @@ public class MultiphaseChokeFlowValidationTest {
       // Flow should increase with increasing pressure drop (up to critical)
       List<ExperimentalDataPoint> sameConditions = new ArrayList<>();
       for (ExperimentalDataPoint dp : fortunatiLabData) {
-	if (Math.abs(dp.upstreamPressure_Pa - 10.0 * BARA_TO_PA) < 0.1 * BARA_TO_PA
-	    && Math.abs(dp.chokeDiameter_m - 0.010) < 0.001
-	    && Math.abs(dp.GLR_scf_stb - 100 * 35.3147 / 6.28981) < 100) {
-	  sameConditions.add(dp);
-	}
+        if (Math.abs(dp.upstreamPressure_Pa - 10.0 * BARA_TO_PA) < 0.1 * BARA_TO_PA
+            && Math.abs(dp.chokeDiameter_m - 0.010) < 0.001
+            && Math.abs(dp.GLR_scf_stb - 100 * 35.3147 / 6.28981) < 100) {
+          sameConditions.add(dp);
+        }
       }
 
       if (sameConditions.size() >= 2) {
-	// Sort by downstream pressure
-	sameConditions.sort((a, b) -> Double.compare(a.downstreamPressure_Pa, b.downstreamPressure_Pa));
+        // Sort by downstream pressure
+        sameConditions.sort((a, b) -> Double.compare(a.downstreamPressure_Pa, b.downstreamPressure_Pa));
 
-	// Flow should increase as P2 decreases (more pressure drop)
-	for (int i = 1; i < sameConditions.size(); i++) {
-	  double prevFlow = sameConditions.get(i - 1).measuredLiquidFlow_m3_s;
-	  double currFlow = sameConditions.get(i).measuredLiquidFlow_m3_s;
-	  double prevP2 = sameConditions.get(i - 1).downstreamPressure_Pa;
-	  double currP2 = sameConditions.get(i).downstreamPressure_Pa;
+        // Flow should increase as P2 decreases (more pressure drop)
+        for (int i = 1; i < sameConditions.size(); i++) {
+          double prevFlow = sameConditions.get(i - 1).measuredLiquidFlow_m3_s;
+          double currFlow = sameConditions.get(i).measuredLiquidFlow_m3_s;
+          double prevP2 = sameConditions.get(i - 1).downstreamPressure_Pa;
+          double currP2 = sameConditions.get(i).downstreamPressure_Pa;
 
-	  if (currP2 > prevP2) {
-	    // Higher P2 should mean lower flow
-	    assertTrue(currFlow <= prevFlow * 1.1, // Allow 10% tolerance
-		"Flow should decrease or stay constant as P2 increases");
-	  }
-	}
+          if (currP2 > prevP2) {
+            // Higher P2 should mean lower flow
+            assertTrue(currFlow <= prevFlow * 1.1, // Allow 10% tolerance
+                "Flow should decrease or stay constant as P2 increases");
+          }
+        }
       }
     }
   }
@@ -458,9 +458,9 @@ public class MultiphaseChokeFlowValidationTest {
       // All variants should give similar order of magnitude
       double avg = (qGilbert + qBaxendell + qRos + qAchong) / 4;
       assertTrue(qGilbert > avg * 0.5 && qGilbert < avg * 2.0,
-	  "Gilbert result should be within factor of 2 of average");
+          "Gilbert result should be within factor of 2 of average");
       assertTrue(qBaxendell > avg * 0.5 && qBaxendell < avg * 2.0,
-	  "Baxendell result should be within factor of 2 of average");
+          "Baxendell result should be within factor of 2 of average");
     }
 
     @Test
@@ -509,21 +509,21 @@ public class MultiphaseChokeFlowValidationTest {
       SachdevaChokeFlow sachdeva = new SachdevaChokeFlow();
       double sachdevaCritRatioError = 0;
       for (CriticalRatioDataPoint dp : sachdevaCriticalRatioData) {
-	double calc = sachdeva.calculateCriticalPressureRatio(dp.gasQuality, 1.4);
-	sachdevaCritRatioError += Math.abs(calc - dp.measuredCriticalRatio) / dp.measuredCriticalRatio * 100;
+        double calc = sachdeva.calculateCriticalPressureRatio(dp.gasQuality, 1.4);
+        sachdevaCritRatioError += Math.abs(calc - dp.measuredCriticalRatio) / dp.measuredCriticalRatio * 100;
       }
       sachdevaCritRatioError /= sachdevaCriticalRatioData.size();
 
       logger.info("Model Performance Against Literature Data:");
       logger.info("------------------------------------------");
       logger.printf(org.apache.logging.log4j.Level.INFO, "1. Sachdeva Critical Pressure Ratio:  %.1f%% average error\n",
-	  sachdevaCritRatioError);
+          sachdevaCritRatioError);
       logger.info("   Source: Sachdeva et al. (1986) SPE 15657, 13 data points");
 
       // Gilbert correlation accuracy
       double gilbertError = calculateGilbertFieldError();
       logger.printf(org.apache.logging.log4j.Level.INFO, "2. Gilbert Empirical Correlation:     %.1f%% average error\n",
-	  gilbertError);
+          gilbertError);
       logger.info("   Source: Gilbert (1954) Lake Maracaibo, 20 data points");
 
       logger.info("Validation Status:");
@@ -532,9 +532,9 @@ public class MultiphaseChokeFlowValidationTest {
       boolean gilbertPass = gilbertError < 25.0;
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "- Sachdeva Critical Ratio: %s (threshold: 5%%)\n",
-	  sachdevaPass ? "PASS ✓" : "FAIL ✗");
+          sachdevaPass ? "PASS ✓" : "FAIL ✗");
       logger.printf(org.apache.logging.log4j.Level.INFO, "- Gilbert Field Data:      %s (threshold: 25%%)\n",
-	  gilbertPass ? "PASS ✓" : "FAIL ✗");
+          gilbertPass ? "PASS ✓" : "FAIL ✗");
 
       logger.info("============================================================\n");
 
@@ -545,11 +545,11 @@ public class MultiphaseChokeFlowValidationTest {
     private double calculateGilbertFieldError() {
       double sumError = 0;
       for (ExperimentalDataPoint dp : gilbertFieldData) {
-	double P_psia = dp.upstreamPressure_Pa / PSIA_TO_PA;
-	double d_64ths = dp.chokeDiameter_m / INCH_64THS_TO_M;
-	double qL_calc = P_psia * Math.pow(d_64ths, 1.89) / (10.0 * Math.pow(dp.GLR_scf_stb, 0.546));
-	double qL_meas = dp.measuredLiquidFlow_m3_s / BBL_PER_DAY_TO_M3_PER_SEC;
-	sumError += Math.abs(qL_calc - qL_meas) / qL_meas * 100;
+        double P_psia = dp.upstreamPressure_Pa / PSIA_TO_PA;
+        double d_64ths = dp.chokeDiameter_m / INCH_64THS_TO_M;
+        double qL_calc = P_psia * Math.pow(d_64ths, 1.89) / (10.0 * Math.pow(dp.GLR_scf_stb, 0.546));
+        double qL_meas = dp.measuredLiquidFlow_m3_s / BBL_PER_DAY_TO_M3_PER_SEC;
+        sumError += Math.abs(qL_calc - qL_meas) / qL_meas * 100;
       }
       return sumError / gilbertFieldData.size();
     }

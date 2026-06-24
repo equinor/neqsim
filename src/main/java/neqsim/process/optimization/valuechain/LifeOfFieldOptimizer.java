@@ -246,8 +246,8 @@ public class LifeOfFieldOptimizer implements Serializable {
       optionCount[i] = feasibleYears + 1; // +1 for "never"
       combos *= optionCount[i];
       if (combos > maxCombinations) {
-	throw new IllegalStateException("Investment-timing combinations (" + combos + ") exceed the configured cap ("
-	    + maxCombinations + "); reduce investments or raise the cap.");
+        throw new IllegalStateException("Investment-timing combinations (" + combos + ") exceed the configured cap ("
+            + maxCombinations + "); reduce investments or raise the cap.");
       }
     }
 
@@ -276,9 +276,9 @@ public class LifeOfFieldOptimizer implements Serializable {
       double[] cashFlow = new double[nYears];
       double npv = computeNpv(current, cashFlow, evaluator);
       if (npv > bestNpv[0]) {
-	bestNpv[0] = npv;
-	System.arraycopy(current, 0, best, 0, n);
-	System.arraycopy(cashFlow, 0, bestCashFlow, 0, nYears);
+        bestNpv[0] = npv;
+        System.arraycopy(current, 0, best, 0, n);
+        System.arraycopy(cashFlow, 0, bestCashFlow, 0, nYears);
       }
       return;
     }
@@ -306,7 +306,7 @@ public class LifeOfFieldOptimizer implements Serializable {
     for (int year = 0; year < nYears; year++) {
       boolean[] active = new boolean[n];
       for (int i = 0; i < n; i++) {
-	active[i] = installYears[i] >= 0 && year >= installYears[i];
+        active[i] = installYears[i] >= 0 && year >= installYears[i];
       }
       double value = evaluator.annualNetValueNok(year, active);
       cashFlowOut[year] = value;
@@ -314,7 +314,7 @@ public class LifeOfFieldOptimizer implements Serializable {
     }
     for (int i = 0; i < n; i++) {
       if (installYears[i] >= 0) {
-	npv -= investments.get(i).getCapexNok() * econ.discountFactor(installYears[i]);
+        npv -= investments.get(i).getCapexNok() * econ.discountFactor(installYears[i]);
       }
     }
     return npv;

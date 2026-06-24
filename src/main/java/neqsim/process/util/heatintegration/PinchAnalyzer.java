@@ -196,25 +196,25 @@ public class PinchAnalyzer implements Serializable {
 
     for (ProcessEquipmentInterface equip : processSystem.getUnitOperations()) {
       if (equip instanceof Cooler) {
-	Cooler cooler = (Cooler) equip;
-	double duty = Math.abs(cooler.getDuty());
-	if (duty > 0.0 && cooler.getInletStream() != null && cooler.getOutletStream() != null) {
-	  double inletT = cooler.getInletStream().getTemperature();
-	  double outletT = cooler.getOutletStream().getTemperature();
-	  if (inletT > outletT) {
-	    hotStreams.add(new HeatStream(cooler.getName(), inletT, outletT, duty, true));
-	  }
-	}
+        Cooler cooler = (Cooler) equip;
+        double duty = Math.abs(cooler.getDuty());
+        if (duty > 0.0 && cooler.getInletStream() != null && cooler.getOutletStream() != null) {
+          double inletT = cooler.getInletStream().getTemperature();
+          double outletT = cooler.getOutletStream().getTemperature();
+          if (inletT > outletT) {
+            hotStreams.add(new HeatStream(cooler.getName(), inletT, outletT, duty, true));
+          }
+        }
       } else if (equip instanceof Heater && !(equip instanceof Cooler) && !(equip instanceof HeatExchanger)) {
-	Heater heater = (Heater) equip;
-	double duty = Math.abs(heater.getDuty());
-	if (duty > 0.0 && heater.getInletStream() != null && heater.getOutletStream() != null) {
-	  double inletT = heater.getInletStream().getTemperature();
-	  double outletT = heater.getOutletStream().getTemperature();
-	  if (outletT > inletT) {
-	    coldStreams.add(new HeatStream(heater.getName(), inletT, outletT, duty, false));
-	  }
-	}
+        Heater heater = (Heater) equip;
+        double duty = Math.abs(heater.getDuty());
+        if (duty > 0.0 && heater.getInletStream() != null && heater.getOutletStream() != null) {
+          double inletT = heater.getInletStream().getTemperature();
+          double outletT = heater.getOutletStream().getTemperature();
+          if (outletT > inletT) {
+            coldStreams.add(new HeatStream(heater.getName(), inletT, outletT, duty, false));
+          }
+        }
       }
     }
     analyzed = false;
@@ -262,10 +262,10 @@ public class PinchAnalyzer implements Serializable {
     List<Double> temperatures = new ArrayList<>();
     for (HeatStream s : streams) {
       if (!temperatures.contains(s.supplyTemperature)) {
-	temperatures.add(s.supplyTemperature);
+        temperatures.add(s.supplyTemperature);
       }
       if (!temperatures.contains(s.targetTemperature)) {
-	temperatures.add(s.targetTemperature);
+        temperatures.add(s.targetTemperature);
       }
     }
     Collections.sort(temperatures);
@@ -286,13 +286,13 @@ public class PinchAnalyzer implements Serializable {
       // Sum heat capacity flow rates of streams active in this interval
       double totalCpFlow = 0.0;
       for (HeatStream s : streams) {
-	double sLow = Math.min(s.supplyTemperature, s.targetTemperature);
-	double sHigh = Math.max(s.supplyTemperature, s.targetTemperature);
-	double iLow = Math.min(t1, t2);
-	double iHigh = Math.max(t1, t2);
-	if (sLow <= iLow && sHigh >= iHigh) {
-	  totalCpFlow += s.heatCapacityFlowRate;
-	}
+        double sLow = Math.min(s.supplyTemperature, s.targetTemperature);
+        double sHigh = Math.max(s.supplyTemperature, s.targetTemperature);
+        double iLow = Math.min(t1, t2);
+        double iHigh = Math.max(t1, t2);
+        if (sLow <= iLow && sHigh >= iHigh) {
+          totalCpFlow += s.heatCapacityFlowRate;
+        }
       }
 
       cumulativeQ += totalCpFlow * intervalDT;
@@ -317,20 +317,20 @@ public class PinchAnalyzer implements Serializable {
       double shifted1 = s.supplyTemperature - minApproachTemperature / 2.0;
       double shifted2 = s.targetTemperature - minApproachTemperature / 2.0;
       if (!containsDouble(shiftedTemps, shifted1)) {
-	shiftedTemps.add(shifted1);
+        shiftedTemps.add(shifted1);
       }
       if (!containsDouble(shiftedTemps, shifted2)) {
-	shiftedTemps.add(shifted2);
+        shiftedTemps.add(shifted2);
       }
     }
     for (HeatStream s : coldStreams) {
       double shifted1 = s.supplyTemperature + minApproachTemperature / 2.0;
       double shifted2 = s.targetTemperature + minApproachTemperature / 2.0;
       if (!containsDouble(shiftedTemps, shifted1)) {
-	shiftedTemps.add(shifted1);
+        shiftedTemps.add(shifted1);
       }
       if (!containsDouble(shiftedTemps, shifted2)) {
-	shiftedTemps.add(shifted2);
+        shiftedTemps.add(shifted2);
       }
     }
 
@@ -346,20 +346,20 @@ public class PinchAnalyzer implements Serializable {
 
       double hotCpSum = 0.0;
       for (HeatStream s : hotStreams) {
-	double sShiftedHigh = Math.max(s.supplyTemperature, s.targetTemperature) - minApproachTemperature / 2.0;
-	double sShiftedLow = Math.min(s.supplyTemperature, s.targetTemperature) - minApproachTemperature / 2.0;
-	if (sShiftedHigh >= tHigh - 0.001 && sShiftedLow <= tLow + 0.001) {
-	  hotCpSum += s.heatCapacityFlowRate;
-	}
+        double sShiftedHigh = Math.max(s.supplyTemperature, s.targetTemperature) - minApproachTemperature / 2.0;
+        double sShiftedLow = Math.min(s.supplyTemperature, s.targetTemperature) - minApproachTemperature / 2.0;
+        if (sShiftedHigh >= tHigh - 0.001 && sShiftedLow <= tLow + 0.001) {
+          hotCpSum += s.heatCapacityFlowRate;
+        }
       }
 
       double coldCpSum = 0.0;
       for (HeatStream s : coldStreams) {
-	double sShiftedHigh = Math.max(s.supplyTemperature, s.targetTemperature) + minApproachTemperature / 2.0;
-	double sShiftedLow = Math.min(s.supplyTemperature, s.targetTemperature) + minApproachTemperature / 2.0;
-	if (sShiftedHigh >= tHigh - 0.001 && sShiftedLow <= tLow + 0.001) {
-	  coldCpSum += s.heatCapacityFlowRate;
-	}
+        double sShiftedHigh = Math.max(s.supplyTemperature, s.targetTemperature) + minApproachTemperature / 2.0;
+        double sShiftedLow = Math.min(s.supplyTemperature, s.targetTemperature) + minApproachTemperature / 2.0;
+        if (sShiftedHigh >= tHigh - 0.001 && sShiftedLow <= tLow + 0.001) {
+          coldCpSum += s.heatCapacityFlowRate;
+        }
       }
 
       double deficit = (coldCpSum - hotCpSum) * dt;
@@ -377,8 +377,8 @@ public class PinchAnalyzer implements Serializable {
       cascadeHeat += intervalDeficits.get(i);
       cascadeValues.add(cascadeHeat);
       if (cascadeHeat < minCascade) {
-	minCascade = cascadeHeat;
-	pinchIndex = i + 1;
+        minCascade = cascadeHeat;
+        pinchIndex = i + 1;
       }
     }
 
@@ -428,7 +428,7 @@ public class PinchAnalyzer implements Serializable {
     Collections.sort(unmatchedHot, new Comparator<HeatStream>() {
       @Override
       public int compare(HeatStream a, HeatStream b) {
-	return Double.compare(b.duty, a.duty);
+        return Double.compare(b.duty, a.duty);
       }
     });
 
@@ -438,34 +438,34 @@ public class PinchAnalyzer implements Serializable {
       double bestDuty = 0.0;
 
       for (HeatStream cold : unmatchedCold) {
-	// Check temperature feasibility with min approach
-	double hotHigh = Math.max(hot.supplyTemperature, hot.targetTemperature);
-	double hotLow = Math.min(hot.supplyTemperature, hot.targetTemperature);
-	double coldHigh = Math.max(cold.supplyTemperature, cold.targetTemperature);
-	double coldLow = Math.min(cold.supplyTemperature, cold.targetTemperature);
+        // Check temperature feasibility with min approach
+        double hotHigh = Math.max(hot.supplyTemperature, hot.targetTemperature);
+        double hotLow = Math.min(hot.supplyTemperature, hot.targetTemperature);
+        double coldHigh = Math.max(cold.supplyTemperature, cold.targetTemperature);
+        double coldLow = Math.min(cold.supplyTemperature, cold.targetTemperature);
 
-	if (hotHigh - coldHigh >= minApproachTemperature || hotLow - coldLow >= minApproachTemperature) {
-	  double matchDuty = Math.min(hot.duty, cold.duty);
-	  double dt1 = hotHigh - coldHigh;
-	  double dt2 = hotLow - coldLow;
+        if (hotHigh - coldHigh >= minApproachTemperature || hotLow - coldLow >= minApproachTemperature) {
+          double matchDuty = Math.min(hot.duty, cold.duty);
+          double dt1 = hotHigh - coldHigh;
+          double dt2 = hotLow - coldLow;
 
-	  if (dt1 > 0 && dt2 > 0) {
-	    double lmtd = (dt1 - dt2) / Math.log(dt1 / dt2);
-	    if (Math.abs(dt1 - dt2) < 0.01) {
-	      lmtd = dt1;
-	    }
-	    if (lmtd > bestLmtd) {
-	      bestLmtd = lmtd;
-	      bestCold = cold;
-	      bestDuty = matchDuty;
-	    }
-	  }
-	}
+          if (dt1 > 0 && dt2 > 0) {
+            double lmtd = (dt1 - dt2) / Math.log(dt1 / dt2);
+            if (Math.abs(dt1 - dt2) < 0.01) {
+              lmtd = dt1;
+            }
+            if (lmtd > bestLmtd) {
+              bestLmtd = lmtd;
+              bestCold = cold;
+              bestDuty = matchDuty;
+            }
+          }
+        }
       }
 
       if (bestCold != null && bestDuty > 0) {
-	matches.add(new HeatExchangerMatch(hot.name, bestCold.name, bestDuty, bestLmtd));
-	unmatchedCold.remove(bestCold);
+        matches.add(new HeatExchangerMatch(hot.name, bestCold.name, bestDuty, bestLmtd));
+        unmatchedCold.remove(bestCold);
       }
     }
   }
@@ -480,7 +480,7 @@ public class PinchAnalyzer implements Serializable {
   private boolean containsDouble(List<Double> list, double value) {
     for (Double d : list) {
       if (Math.abs(d - value) < 0.001) {
-	return true;
+        return true;
       }
     }
     return false;

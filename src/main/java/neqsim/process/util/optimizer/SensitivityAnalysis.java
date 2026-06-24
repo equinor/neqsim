@@ -193,21 +193,21 @@ public class SensitivityAnalysis implements Serializable {
       logger.debug("SensitivityAnalysis: {} = {} (step {}/{})", parameterName, currentValue, i + 1, steps);
 
       try {
-	ProcessSystem copy = baseProcess.copy();
-	parameterSetter.accept(copy);
-	copy.run();
+        ProcessSystem copy = baseProcess.copy();
+        parameterSetter.accept(copy);
+        copy.run();
 
-	for (Map.Entry<String, Function<ProcessSystem, Double>> entry : outputExtractors.entrySet()) {
-	  double value = entry.getValue().apply(copy);
-	  outputs.get(entry.getKey())[i] = value;
-	}
-	succeeded[i] = true;
+        for (Map.Entry<String, Function<ProcessSystem, Double>> entry : outputExtractors.entrySet()) {
+          double value = entry.getValue().apply(copy);
+          outputs.get(entry.getKey())[i] = value;
+        }
+        succeeded[i] = true;
       } catch (Exception e) {
-	logger.warn("SensitivityAnalysis failed at {} = {}: {}", parameterName, currentValue, e.getMessage());
-	for (String name : outputs.keySet()) {
-	  outputs.get(name)[i] = Double.NaN;
-	}
-	succeeded[i] = false;
+        logger.warn("SensitivityAnalysis failed at {} = {}: {}", parameterName, currentValue, e.getMessage());
+        for (String name : outputs.keySet()) {
+          outputs.get(name)[i] = Double.NaN;
+        }
+        succeeded[i] = false;
       }
     }
 
@@ -243,7 +243,7 @@ public class SensitivityAnalysis implements Serializable {
      * @param succeeded success flag per step
      */
     SensitivityResult(String parameterName, double[] parameterValues, Map<String, double[]> outputs,
-	boolean[] succeeded) {
+        boolean[] succeeded) {
       this.parameterName = parameterName;
       this.parameterValues = parameterValues;
       this.outputs = outputs;
@@ -295,9 +295,9 @@ public class SensitivityAnalysis implements Serializable {
     public int getSuccessCount() {
       int count = 0;
       for (boolean s : succeeded) {
-	if (s) {
-	  count++;
-	}
+        if (s) {
+          count++;
+        }
       }
       return count;
     }
@@ -315,17 +315,17 @@ public class SensitivityAnalysis implements Serializable {
 
       JsonArray valuesArray = new JsonArray();
       for (double v : parameterValues) {
-	valuesArray.add(v);
+        valuesArray.add(v);
       }
       json.add("parameterValues", valuesArray);
 
       JsonObject outputsJson = new JsonObject();
       for (Map.Entry<String, double[]> entry : outputs.entrySet()) {
-	JsonArray arr = new JsonArray();
-	for (double v : entry.getValue()) {
-	  arr.add(v);
-	}
-	outputsJson.add(entry.getKey(), arr);
+        JsonArray arr = new JsonArray();
+        for (double v : entry.getValue()) {
+          arr.add(v);
+        }
+        outputsJson.add(entry.getKey(), arr);
       }
       json.add("outputs", outputsJson);
 
@@ -341,17 +341,17 @@ public class SensitivityAnalysis implements Serializable {
       StringBuilder sb = new StringBuilder();
       sb.append(parameterName);
       for (String name : outputs.keySet()) {
-	sb.append(",").append(name);
+        sb.append(",").append(name);
       }
       sb.append(",succeeded\n");
 
       for (int i = 0; i < parameterValues.length; i++) {
-	sb.append(parameterValues[i]);
-	for (double[] values : outputs.values()) {
-	  sb.append(",").append(values[i]);
-	}
-	sb.append(",").append(succeeded[i]);
-	sb.append("\n");
+        sb.append(parameterValues[i]);
+        for (double[] values : outputs.values()) {
+          sb.append(",").append(values[i]);
+        }
+        sb.append(",").append(succeeded[i]);
+        sb.append("\n");
       }
       return sb.toString();
     }

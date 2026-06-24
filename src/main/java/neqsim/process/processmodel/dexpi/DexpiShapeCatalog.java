@@ -186,7 +186,7 @@ final class DexpiShapeCatalog {
 
   private static void appendSeparatorShape(Document document, Element catalogue) {
     Element shape = createShapeElement(document, "Equipment", "TaggedPlantItemShape-Sep", SEPARATOR_SHAPE,
-	"ISO10628:2012-2062-A");
+        "ISO10628:2012-2062-A");
     // Vertical vessel: two straight sides + two dished head arcs
     appendPolyLine(document, shape, new double[][] { { 10, -12.5 }, { 10, 12.5 } });
     appendTrimmedCurve(document, shape, 61.93, 118.07, 21.25, 0, -6.25);
@@ -199,7 +199,7 @@ final class DexpiShapeCatalog {
 
   private static void appendThreePhaseSeparatorShape(Document document, Element catalogue) {
     Element shape = createShapeElement(document, "Equipment", "TaggedPlantItemShape-3PSep", THREE_PHASE_SEPARATOR_SHAPE,
-	"ISO10628:2012-2062-A");
+        "ISO10628:2012-2062-A");
     // Same vessel outline as separator
     appendPolyLine(document, shape, new double[][] { { 10, -12.5 }, { 10, 12.5 } });
     appendTrimmedCurve(document, shape, 61.93, 118.07, 21.25, 0, -6.25);
@@ -214,7 +214,7 @@ final class DexpiShapeCatalog {
 
   private static void appendCompressorShape(Document document, Element catalogue) {
     Element shape = createShapeElement(document, "Equipment", "TaggedPlantItemShape-Comp", COMPRESSOR_SHAPE,
-	"ISO10628:2012-2332-A");
+        "ISO10628:2012-2332-A");
     appendCircle(document, shape, 7.5, 0, 0, false);
     // Horizontal diameter line
     appendPolyLine(document, shape, new double[][] { { -7.5, 0 }, { 7.5, 0 } });
@@ -227,7 +227,7 @@ final class DexpiShapeCatalog {
 
   private static void appendPumpShape(Document document, Element catalogue) {
     Element shape = createShapeElement(document, "Equipment", "TaggedPlantItemShape-Pump", PUMP_SHAPE,
-	"ISO10628:2012-2322-A");
+        "ISO10628:2012-2322-A");
     appendCircle(document, shape, 7.5, 0, 0, false);
     appendPolyLine(document, shape, new double[][] { { -7.5, 0 }, { 7.5, 0 } });
     appendPolyLine(document, shape, new double[][] { { 0, -7.5 }, { 7.5, 0 }, { 0, 7.5 } });
@@ -238,7 +238,7 @@ final class DexpiShapeCatalog {
 
   private static void appendCoolerShape(Document document, Element catalogue) {
     Element shape = createShapeElement(document, "Equipment", "TaggedPlantItemShape-Cooler", COOLER_SHAPE,
-	"ISO10628:2012-2514-A");
+        "ISO10628:2012-2514-A");
     // Rectangle body
     appendPolyLine(document, shape, new double[][] { { -15, 5 }, { 15, 5 }, { 15, -5 }, { -15, -5 }, { -15, 5 } });
     // Fan symbol: X across the top
@@ -255,7 +255,7 @@ final class DexpiShapeCatalog {
 
   private static void appendHeaterShape(Document document, Element catalogue) {
     Element shape = createShapeElement(document, "Equipment", "TaggedPlantItemShape-Heater", HEATER_SHAPE,
-	"ISO10628:2012-2502-A");
+        "ISO10628:2012-2502-A");
     // Rectangle
     appendPolyLine(document, shape, new double[][] { { -12, 8 }, { 12, 8 }, { 12, -8 }, { -12, -8 }, { -12, 8 } });
     // Flame / heat symbol (zigzag)
@@ -267,10 +267,10 @@ final class DexpiShapeCatalog {
 
   private static void appendHeatExchangerShape(Document document, Element catalogue) {
     Element shape = createShapeElement(document, "Equipment", "TaggedPlantItemShape-HX", HEAT_EXCHANGER_SHAPE,
-	"ISO10628:2012-2512-A");
+        "ISO10628:2012-2512-A");
     // Outer rectangle (shell)
     appendPolyLine(document, shape,
-	new double[][] { { -17.5, 5 }, { 17.5, 5 }, { 17.5, -5 }, { -17.5, -5 }, { -17.5, 5 } });
+        new double[][] { { -17.5, 5 }, { 17.5, 5 }, { 17.5, -5 }, { -17.5, -5 }, { -17.5, 5 } });
     // Channel partition
     appendPolyLine(document, shape, new double[][] { { -12.5, 5 }, { -12.5, -5 } });
     appendPolyLine(document, shape, new double[][] { { -17.5, 0 }, { -12.5, 0 } });
@@ -279,7 +279,7 @@ final class DexpiShapeCatalog {
     appendPolyLine(document, shape, new double[][] { { -12.5, -2.5 }, { 10, -2.5 } });
     // Floating head
     appendPolyLine(document, shape,
-	new double[][] { { 10, 3.75 }, { 12.5, 3.75 }, { 12.5, -3.75 }, { 10, -3.75 }, { 10, 3.75 } });
+        new double[][] { { 10, 3.75 }, { 12.5, 3.75 }, { 12.5, -3.75 }, { 10, -3.75 }, { 10, 3.75 } });
     catalogue.appendChild(shape);
   }
 
@@ -287,7 +287,7 @@ final class DexpiShapeCatalog {
 
   private static void appendTankShape(Document document, Element catalogue) {
     Element shape = createShapeElement(document, "Equipment", "TaggedPlantItemShape-Tank", TANK_SHAPE,
-	"ISO10628:2012-2002-A");
+        "ISO10628:2012-2002-A");
     // Flat-bottom cylindrical storage tank: straight sides, flat base, shallow dished roof
     appendPolyLine(document, shape, new double[][] { { -12.5, 12 }, { -12.5, -12 }, { 12.5, -12 }, { 12.5, 12 } });
     // Shallow curved roof
@@ -301,7 +301,7 @@ final class DexpiShapeCatalog {
 
   private static void appendFilterShape(Document document, Element catalogue) {
     Element shape = createShapeElement(document, "Equipment", "TaggedPlantItemShape-Filter", FILTER_SHAPE,
-	"ISO10628:2012-2702-A");
+        "ISO10628:2012-2702-A");
     // Rectangular body
     appendPolyLine(document, shape, new double[][] { { -8, 10 }, { 8, 10 }, { 8, -10 }, { -8, -10 }, { -8, 10 } });
     // Diagonal filter element (mesh) line across the body
@@ -313,7 +313,7 @@ final class DexpiShapeCatalog {
 
   private static void appendGlobeValveShape(Document document, Element catalogue) {
     Element shape = createShapeElement(document, "PipingComponent", "PipingComponentShape-GV", GLOBE_VALVE_SHAPE,
-	"ISO10628:2012-X8068-A");
+        "ISO10628:2012-X8068-A");
     // Bowtie
     appendPolyLine(document, shape, new double[][] { { -5, 2.5 }, { 5, -2.5 }, { 5, 2.5 }, { -5, -2.5 }, { -5, 2.5 } });
     appendCircle(document, shape, 1.25, 0, 0, true);
@@ -324,7 +324,7 @@ final class DexpiShapeCatalog {
 
   private static void appendGateValveShape(Document document, Element catalogue) {
     Element shape = createShapeElement(document, "PipingComponent", "PipingComponentShape-GtV", GATE_VALVE_SHAPE,
-	"ISO10628:2012-X8062-A");
+        "ISO10628:2012-X8062-A");
     // Bowtie only (no center dot distinguishes gate from globe)
     appendPolyLine(document, shape, new double[][] { { -5, 2.5 }, { 5, -2.5 }, { 5, 2.5 }, { -5, -2.5 }, { -5, 2.5 } });
     catalogue.appendChild(shape);
@@ -334,7 +334,7 @@ final class DexpiShapeCatalog {
 
   private static void appendBallValveShape(Document document, Element catalogue) {
     Element shape = createShapeElement(document, "PipingComponent", "PipingComponentShape-BV", BALL_VALVE_SHAPE,
-	"ISO10628:2012-X8038-A");
+        "ISO10628:2012-X8038-A");
     // Bowtie
     appendPolyLine(document, shape, new double[][] { { -5, 2.5 }, { 5, -2.5 }, { 5, 2.5 }, { -5, -2.5 }, { -5, 2.5 } });
     // Center stem line (distinguishes ball valve)
@@ -346,7 +346,7 @@ final class DexpiShapeCatalog {
 
   private static void appendCheckValveShape(Document document, Element catalogue) {
     Element shape = createShapeElement(document, "PipingComponent", "PipingComponentShape-CV", CHECK_VALVE_SHAPE,
-	"ISO10628:2012-X8072-A");
+        "ISO10628:2012-X8072-A");
     // Triangle pointing in flow direction (right)
     appendPolyLine(document, shape, new double[][] { { -5, 2.5 }, { 5, 0 }, { -5, -2.5 }, { -5, 2.5 } });
     // Vertical bar at outlet side (prevents backflow)
@@ -358,7 +358,7 @@ final class DexpiShapeCatalog {
 
   private static void appendButterflyValveShape(Document document, Element catalogue) {
     Element shape = createShapeElement(document, "PipingComponent", "PipingComponentShape-BtV", BUTTERFLY_VALVE_SHAPE,
-	"ISO10628:2012-X8042-A");
+        "ISO10628:2012-X8042-A");
     // Bowtie
     appendPolyLine(document, shape, new double[][] { { -5, 2.5 }, { 5, -2.5 }, { 5, 2.5 }, { -5, -2.5 }, { -5, 2.5 } });
     // Open circle in center (disc indicator)
@@ -370,10 +370,10 @@ final class DexpiShapeCatalog {
 
   private static void appendExpanderShape(Document document, Element catalogue) {
     Element shape = createShapeElement(document, "Equipment", "TaggedPlantItemShape-Exp", EXPANDER_SHAPE,
-	"ISO10628:2012-2342-A");
+        "ISO10628:2012-2342-A");
     // Expanding trapezoid shape
     appendPolyLine(document, shape,
-	new double[][] { { -7.5, 3 }, { 7.5, 7.5 }, { 7.5, -7.5 }, { -7.5, -3 }, { -7.5, 3 } });
+        new double[][] { { -7.5, 3 }, { 7.5, 7.5 }, { 7.5, -7.5 }, { -7.5, -3 }, { -7.5, 3 } });
     catalogue.appendChild(shape);
   }
 
@@ -408,7 +408,7 @@ final class DexpiShapeCatalog {
 
   private static void appendDistillationColumnShape(Document document, Element catalogue) {
     Element shape = createShapeElement(document, "Equipment", "TaggedPlantItemShape-Col", DISTILLATION_COLUMN_SHAPE,
-	"ISO10628:2012-2092-A");
+        "ISO10628:2012-2092-A");
     // Tall vertical vessel outline (taller than separator, aspect ~3:1)
     appendPolyLine(document, shape, new double[][] { { 10, -20 }, { 10, 20 } });
     appendTrimmedCurve(document, shape, 61.93, 118.07, 21.25, 0, -13.75);
@@ -427,7 +427,7 @@ final class DexpiShapeCatalog {
 
   private static void appendReliefValveShape(Document document, Element catalogue) {
     Element shape = createShapeElement(document, "PipingComponent", "PipingComponentShape-RV", RELIEF_VALVE_SHAPE,
-	"ISO10628:2012-X8088-A");
+        "ISO10628:2012-X8088-A");
     // Valve body (triangle pointing up = discharge direction)
     appendPolyLine(document, shape, new double[][] { { -5, -2.5 }, { 0, 2.5 }, { 5, -2.5 }, { -5, -2.5 } });
     // Spring / bonnet line on top
@@ -465,7 +465,7 @@ final class DexpiShapeCatalog {
   private static void appendGenericEquipmentShape(Document document, Element catalogue) {
     Element shape = createShapeElement(document, "Equipment", "TaggedPlantItemShape-Gen", GENERIC_EQUIPMENT_SHAPE, "");
     appendPolyLine(document, shape,
-	new double[][] { { -10, 7.5 }, { 10, 7.5 }, { 10, -7.5 }, { -10, -7.5 }, { -10, 7.5 } });
+        new double[][] { { -10, 7.5 }, { 10, 7.5 }, { 10, -7.5 }, { -10, -7.5 }, { -10, 7.5 } });
     catalogue.appendChild(shape);
   }
 

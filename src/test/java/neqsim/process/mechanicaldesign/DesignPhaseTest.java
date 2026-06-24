@@ -47,8 +47,8 @@ class DesignPhaseTest {
     @DisplayName("Should have descriptions")
     void shouldHaveDescriptions() {
       for (DesignPhase phase : DesignPhase.values()) {
-	assertNotNull(phase.getDescription());
-	assertFalse(phase.getDescription().isEmpty());
+        assertNotNull(phase.getDescription());
+        assertFalse(phase.getDescription().isEmpty());
       }
     }
   }

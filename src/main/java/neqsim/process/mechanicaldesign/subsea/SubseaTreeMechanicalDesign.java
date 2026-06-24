@@ -217,7 +217,7 @@ public class SubseaTreeMechanicalDesign extends MechanicalDesign {
     boolean isDualBore = tree.getTreeType() == SubseaTree.TreeType.DUAL_BORE;
 
     costEstimator.calculateTreeCost(pressureRatingPsi, tree.getBoreSizeInches(), tree.getWaterDepth(), isHorizontal,
-	isDualBore);
+        isDualBore);
 
     totalCostUSD = costEstimator.getTotalCost();
     equipmentCostUSD = costEstimator.getEquipmentCost();

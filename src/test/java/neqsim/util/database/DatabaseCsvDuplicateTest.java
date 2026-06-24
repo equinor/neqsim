@@ -94,19 +94,19 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
     CsvTable table = readCsvResource(resourcePath);
     for (String keyColumn : keyColumns) {
       if (!table.header.contains(keyColumn)) {
-	throw new IOException("Missing key column " + keyColumn + " in " + resourcePath);
+        throw new IOException("Missing key column " + keyColumn + " in " + resourcePath);
       }
     }
     Map<String, List<CsvRow>> rowsByKey = new LinkedHashMap<String, List<CsvRow>>();
     for (CsvRow row : table.rows) {
       String key = buildKey(row, keyColumns, unordered);
       if (key.trim().isEmpty()) {
-	continue;
+        continue;
       }
       List<CsvRow> rows = rowsByKey.get(key);
       if (rows == null) {
-	rows = new ArrayList<CsvRow>();
-	rowsByKey.put(key, rows);
+        rows = new ArrayList<CsvRow>();
+        rowsByKey.put(key, rows);
       }
       rows.add(row);
     }
@@ -114,7 +114,7 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
     List<String> duplicateMessages = new ArrayList<String>();
     for (Map.Entry<String, List<CsvRow>> entry : rowsByKey.entrySet()) {
       if (entry.getValue().size() > 1) {
-	duplicateMessages.add(formatDuplicate(resourcePath, keyColumns, entry.getKey(), entry.getValue()));
+        duplicateMessages.add(formatDuplicate(resourcePath, keyColumns, entry.getKey(), entry.getValue()));
       }
     }
 
@@ -145,12 +145,12 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
       String key = row.values.get(keyColumn);
       key = key == null ? "" : key.trim();
       if (key.isEmpty()) {
-	continue;
+        continue;
       }
       List<CsvRow> rows = rowsByKey.get(key);
       if (rows == null) {
-	rows = new ArrayList<CsvRow>();
-	rowsByKey.put(key, rows);
+        rows = new ArrayList<CsvRow>();
+        rowsByKey.put(key, rows);
       }
       rows.add(row);
     }
@@ -158,8 +158,8 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
     List<String> duplicateMessages = new ArrayList<String>();
     for (Map.Entry<String, List<CsvRow>> entry : rowsByKey.entrySet()) {
       if (hasDifferentValues(entry.getValue(), valueColumn)) {
-	duplicateMessages
-	    .add(formatDuplicate(resourcePath, new String[] { keyColumn }, entry.getKey(), entry.getValue()));
+        duplicateMessages
+            .add(formatDuplicate(resourcePath, new String[] { keyColumn }, entry.getKey(), entry.getValue()));
       }
     }
     return duplicateMessages;
@@ -178,12 +178,12 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
       String value = row.values.get(valueColumn);
       value = value == null ? "" : value.trim();
       if (value.isEmpty()) {
-	continue;
+        continue;
       }
       if (firstValue == null) {
-	firstValue = value;
+        firstValue = value;
       } else if (!firstValue.equals(value)) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -207,24 +207,24 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
       String line;
       int lineNumber = 0;
       while ((line = reader.readLine()) != null) {
-	lineNumber++;
-	String name = normalizeNameIndexLine(line, lineNumber);
-	if (name.isEmpty() || (lineNumber == 1 && "NAME".equals(name))) {
-	  continue;
-	}
-	List<Integer> lines = linesByName.get(name);
-	if (lines == null) {
-	  lines = new ArrayList<Integer>();
-	  linesByName.put(name, lines);
-	}
-	lines.add(Integer.valueOf(lineNumber));
+        lineNumber++;
+        String name = normalizeNameIndexLine(line, lineNumber);
+        if (name.isEmpty() || (lineNumber == 1 && "NAME".equals(name))) {
+          continue;
+        }
+        List<Integer> lines = linesByName.get(name);
+        if (lines == null) {
+          lines = new ArrayList<Integer>();
+          linesByName.put(name, lines);
+        }
+        lines.add(Integer.valueOf(lineNumber));
       }
     }
 
     List<String> duplicateMessages = new ArrayList<String>();
     for (Map.Entry<String, List<Integer>> entry : linesByName.entrySet()) {
       if (entry.getValue().size() > 1) {
-	duplicateMessages.add(formatDuplicateNameIndexEntry(resourcePath, entry.getKey(), entry.getValue()));
+        duplicateMessages.add(formatDuplicateNameIndexEntry(resourcePath, entry.getKey(), entry.getValue()));
       }
     }
     return duplicateMessages;
@@ -258,7 +258,7 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
     message.append(resourcePath).append(" NAME=").append(name).append(" at lines ");
     for (int i = 0; i < lines.size(); i++) {
       if (i > 0) {
-	message.append(", ");
+        message.append(", ");
       }
       message.append(lines.get(i));
     }
@@ -280,7 +280,7 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
     }
     if (duplicateMessages.size() > duplicatesToReport) {
       message.append(System.lineSeparator()).append("  - ... and ")
-	  .append(duplicateMessages.size() - duplicatesToReport).append(" more");
+          .append(duplicateMessages.size() - duplicatesToReport).append(" more");
     }
     return message.toString();
   }
@@ -305,7 +305,7 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
     StringBuilder key = new StringBuilder();
     for (int i = 0; i < values.size(); i++) {
       if (i > 0) {
-	key.append("||");
+        key.append("||");
       }
       key.append(values.get(i));
     }
@@ -326,18 +326,18 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
     message.append(resourcePath).append(" ").append(Arrays.toString(keyColumns)).append("=").append(key).append(" at ");
     for (int i = 0; i < rows.size(); i++) {
       if (i > 0) {
-	message.append("; ");
+        message.append("; ");
       }
       CsvRow row = rows.get(i);
       message.append("line ").append(row.startLine);
       if (row.values.containsKey("ID")) {
-	message.append(" ID=").append(row.values.get("ID"));
+        message.append(" ID=").append(row.values.get("ID"));
       }
       if (row.values.containsKey("NAME")) {
-	message.append(" NAME=").append(row.values.get("NAME"));
+        message.append(" NAME=").append(row.values.get("NAME"));
       }
       if (row.values.containsKey("COMP1") && row.values.containsKey("COMP2")) {
-	message.append(" COMP1=").append(row.values.get("COMP1")).append(" COMP2=").append(row.values.get("COMP2"));
+        message.append(" COMP1=").append(row.values.get("COMP1")).append(" COMP2=").append(row.values.get("COMP2"));
       }
     }
     return message.toString();
@@ -363,29 +363,29 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
       List<CsvRow> rows = new ArrayList<CsvRow>();
       StringBuilder record = new StringBuilder();
       while ((line = reader.readLine()) != null) {
-	lineNumber++;
-	if (record.length() == 0) {
-	  recordStartLine = lineNumber;
-	} else {
-	  record.append('\n');
-	}
-	record.append(line);
-	if (!isCompleteCsvRecord(record.toString())) {
-	  continue;
-	}
-	List<String> fields = parseCsvRecord(record.toString());
-	if (header == null) {
-	  header = normalizeHeader(fields);
-	} else {
-	  rows.add(new CsvRow(recordStartLine, mapFields(header, fields)));
-	}
-	record.setLength(0);
+        lineNumber++;
+        if (record.length() == 0) {
+          recordStartLine = lineNumber;
+        } else {
+          record.append('\n');
+        }
+        record.append(line);
+        if (!isCompleteCsvRecord(record.toString())) {
+          continue;
+        }
+        List<String> fields = parseCsvRecord(record.toString());
+        if (header == null) {
+          header = normalizeHeader(fields);
+        } else {
+          rows.add(new CsvRow(recordStartLine, mapFields(header, fields)));
+        }
+        record.setLength(0);
       }
       if (record.length() > 0) {
-	throw new IOException("Unterminated quoted CSV record in " + resourcePath + " at line " + recordStartLine);
+        throw new IOException("Unterminated quoted CSV record in " + resourcePath + " at line " + recordStartLine);
       }
       if (header == null) {
-	throw new IOException("CSV resource has no header: " + resourcePath);
+        throw new IOException("CSV resource has no header: " + resourcePath);
       }
       return new CsvTable(header, rows);
     }
@@ -402,7 +402,7 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
     for (int i = 0; i < fields.size(); i++) {
       String field = fields.get(i).trim();
       if (i == 0 && field.length() > 0 && field.charAt(0) == '\ufeff') {
-	field = field.substring(1);
+        field = field.substring(1);
       }
       normalized.add(field);
     }
@@ -436,11 +436,11 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
     for (int i = 0; i < record.length(); i++) {
       char character = record.charAt(i);
       if (character == '"') {
-	if (inQuotes && i + 1 < record.length() && record.charAt(i + 1) == '"') {
-	  i++;
-	} else {
-	  inQuotes = !inQuotes;
-	}
+        if (inQuotes && i + 1 < record.length() && record.charAt(i + 1) == '"') {
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
       }
     }
     return !inQuotes;
@@ -459,17 +459,17 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
     for (int i = 0; i < record.length(); i++) {
       char character = record.charAt(i);
       if (character == '"') {
-	if (inQuotes && i + 1 < record.length() && record.charAt(i + 1) == '"') {
-	  field.append('"');
-	  i++;
-	} else {
-	  inQuotes = !inQuotes;
-	}
+        if (inQuotes && i + 1 < record.length() && record.charAt(i + 1) == '"') {
+          field.append('"');
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
       } else if (character == ',' && !inQuotes) {
-	fields.add(field.toString());
-	field.setLength(0);
+        fields.add(field.toString());
+        field.setLength(0);
       } else {
-	field.append(character);
+        field.append(character);
       }
     }
     fields.add(field.toString());

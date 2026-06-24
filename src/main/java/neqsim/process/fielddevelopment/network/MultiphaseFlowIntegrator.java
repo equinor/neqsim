@@ -392,14 +392,14 @@ public class MultiphaseFlowIntegrator implements Serializable {
       sb.append(String.format("  Erosional ratio: %.2f\n", erosionalVelocityRatio));
 
       if (slugFrequencyPerMin > 0) {
-	sb.append(String.format("  Slug freq:   %.1f /min\n", slugFrequencyPerMin));
+        sb.append(String.format("  Slug freq:   %.1f /min\n", slugFrequencyPerMin));
       }
 
       sb.append("\nFeasibility: ");
       if (feasible) {
-	sb.append("PASS\n");
+        sb.append("PASS\n");
       } else {
-	sb.append("FAIL - ").append(infeasibilityReason).append("\n");
+        sb.append("FAIL - ").append(infeasibilityReason).append("\n");
       }
 
       return sb.toString();
@@ -482,9 +482,9 @@ public class MultiphaseFlowIntegrator implements Serializable {
       pipe.setNumberOfIncrements(numberOfSegments);
       pipe.setConstantSurfaceTemperature(seabedTemperatureC, "C");
       if (overallHtcWm2K > 0.0) {
-	pipe.setHeatTransferCoefficient(overallHtcWm2K);
+        pipe.setHeatTransferCoefficient(overallHtcWm2K);
       } else {
-	pipe.setHeatTransferMode(PipeBeggsAndBrills.HeatTransferMode.ADIABATIC);
+        pipe.setHeatTransferMode(PipeBeggsAndBrills.HeatTransferMode.ADIABATIC);
       }
 
       // Run calculation
@@ -514,10 +514,10 @@ public class MultiphaseFlowIntegrator implements Serializable {
 
       // Velocities
       if (liquidHoldup > 0.01) {
-	result.setLiquidVelocityMs(mixtureVelocity * liquidHoldup);
-	result.setGasVelocityMs(mixtureVelocity * (1 - liquidHoldup));
+        result.setLiquidVelocityMs(mixtureVelocity * liquidHoldup);
+        result.setGasVelocityMs(mixtureVelocity * (1 - liquidHoldup));
       } else {
-	result.setGasVelocityMs(mixtureVelocity);
+        result.setGasVelocityMs(mixtureVelocity);
       }
 
       // Erosional velocity
@@ -527,7 +527,7 @@ public class MultiphaseFlowIntegrator implements Serializable {
 
       // Slug frequency (for intermittent flow)
       if (regime == FlowRegime.INTERMITTENT) {
-	result.setSlugFrequencyPerMin(estimateSlugFrequency(mixtureVelocity, pipelineDiameterM));
+        result.setSlugFrequencyPerMin(estimateSlugFrequency(mixtureVelocity, pipelineDiameterM));
       }
 
       // Check feasibility
@@ -587,8 +587,8 @@ public class MultiphaseFlowIntegrator implements Serializable {
       PipelineResult result = calculateHydraulics(inlet, minArrivalP);
 
       if (result.isFeasible() && result.getErosionalVelocityRatio() < maxVelocityRatio) {
-	pipelineDiameterM = originalDiameter;
-	return diameter;
+        pipelineDiameterM = originalDiameter;
+        return diameter;
       }
     }
 
@@ -695,7 +695,7 @@ public class MultiphaseFlowIntegrator implements Serializable {
     if (result.getArrivalPressureBar() < minArrivalP) {
       result.setFeasible(false);
       result.setInfeasibilityReason(
-	  String.format("Arrival pressure %.1f bar < minimum %.1f bar", result.getArrivalPressureBar(), minArrivalP));
+          String.format("Arrival pressure %.1f bar < minimum %.1f bar", result.getArrivalPressureBar(), minArrivalP));
       return;
     }
 
@@ -703,7 +703,7 @@ public class MultiphaseFlowIntegrator implements Serializable {
     if (result.getErosionalVelocityRatio() > 1.0) {
       result.setFeasible(false);
       result.setInfeasibilityReason(String.format("Velocity %.1f m/s exceeds erosional limit %.1f m/s",
-	  result.getMixtureVelocityMs(), result.getErosionalVelocityMs()));
+          result.getMixtureVelocityMs(), result.getErosionalVelocityMs()));
       return;
     }
 
@@ -711,8 +711,8 @@ public class MultiphaseFlowIntegrator implements Serializable {
     if (result.getArrivalTemperatureC() < seabedTemperatureC + 5) {
       result.setFeasible(false);
       result
-	  .setInfeasibilityReason(String.format("Arrival temperature %.1f°C too close to seabed %.1f°C (hydrate risk)",
-	      result.getArrivalTemperatureC(), seabedTemperatureC));
+          .setInfeasibilityReason(String.format("Arrival temperature %.1f°C too close to seabed %.1f°C (hydrate risk)",
+              result.getArrivalTemperatureC(), seabedTemperatureC));
     }
   }
 

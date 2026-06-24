@@ -222,16 +222,16 @@ public class GasLiftCalculator implements Serializable {
       double pwfVLP = calculateBHPfromVLP(qTest, totalGLR);
 
       if (Math.abs(pwfIPR - pwfVLP) < tolerance * reservoirPressure) {
-	// Check if solution is physical
-	if (pwfIPR > wellheadPressure && pwfIPR < reservoirPressure) {
-	  return qTest;
-	}
+        // Check if solution is physical
+        if (pwfIPR > wellheadPressure && pwfIPR < reservoirPressure) {
+          return qTest;
+        }
       }
 
       if (pwfIPR > pwfVLP) {
-	qMin = qTest; // Need higher rate
+        qMin = qTest; // Need higher rate
       } else {
-	qMax = qTest; // Need lower rate
+        qMax = qTest; // Need lower rate
       }
     }
 
@@ -324,7 +324,7 @@ public class GasLiftCalculator implements Serializable {
     if (ppr > 0.1) {
       z = 0.27 * ppr / (tpr * calculateHallYarboroughY(ppr, tpr));
       if (z < 0.3 || z > 2.0) {
-	z = 1.0 - 0.3 * ppr / tpr; // Fallback to simple correlation
+        z = 1.0 - 0.3 * ppr / tpr; // Fallback to simple correlation
       }
     }
 
@@ -345,16 +345,16 @@ public class GasLiftCalculator implements Serializable {
 
     for (int i = 0; i < 10; i++) {
       double f = -0.06125 * ppr * t * Math.exp(-1.2 * (1 - t) * (1 - t))
-	  + (y + y * y + y * y * y - y * y * y * y) / Math.pow(1 - y, 3)
-	  - (14.76 * t - 9.76 * t * t + 4.58 * t * t * t) * y * y
-	  + (90.7 * t - 242.2 * t * t + 42.4 * t * t * t) * Math.pow(y, 2.18 + 2.82 * t);
+          + (y + y * y + y * y * y - y * y * y * y) / Math.pow(1 - y, 3)
+          - (14.76 * t - 9.76 * t * t + 4.58 * t * t * t) * y * y
+          + (90.7 * t - 242.2 * t * t + 42.4 * t * t * t) * Math.pow(y, 2.18 + 2.82 * t);
 
       double df = (1 + 4 * y + 4 * y * y - 4 * y * y * y + y * y * y * y) / Math.pow(1 - y, 4)
-	  - 2 * (14.76 * t - 9.76 * t * t + 4.58 * t * t * t) * y
-	  + (2.18 + 2.82 * t) * (90.7 * t - 242.2 * t * t + 42.4 * t * t * t) * Math.pow(y, 1.18 + 2.82 * t);
+          - 2 * (14.76 * t - 9.76 * t * t + 4.58 * t * t * t) * y
+          + (2.18 + 2.82 * t) * (90.7 * t - 242.2 * t * t + 42.4 * t * t * t) * Math.pow(y, 1.18 + 2.82 * t);
 
       if (Math.abs(df) < 1e-10) {
-	break;
+        break;
       }
       y = y - f / df;
       y = Math.max(0.01, Math.min(y, 0.99));
@@ -455,8 +455,8 @@ public class GasLiftCalculator implements Serializable {
 
     for (PerformancePoint point : performanceCurve) {
       if (point.productionRate > maxRate) {
-	maxRate = point.productionRate;
-	optGLR = point.totalGLR;
+        maxRate = point.productionRate;
+        optGLR = point.totalGLR;
       }
     }
 
@@ -498,43 +498,43 @@ public class GasLiftCalculator implements Serializable {
       // Calculate valve depth based on available injection pressure
       double pressureAtDepth;
       if (valveNumber == 1) {
-	// First valve: unload from static conditions
-	pressureAtDepth = wellheadPressure + killFluidGradient * currentDepth;
-	double availablePressure = surfaceInjPressure * safetyFactor;
+        // First valve: unload from static conditions
+        pressureAtDepth = wellheadPressure + killFluidGradient * currentDepth;
+        double availablePressure = surfaceInjPressure * safetyFactor;
 
-	// Find depth where injection can overcome kill fluid
-	double valveDepth = (availablePressure - wellheadPressure) / killFluidGradient;
-	valveDepth = Math.min(valveDepth, wellDepth);
+        // Find depth where injection can overcome kill fluid
+        double valveDepth = (availablePressure - wellheadPressure) / killFluidGradient;
+        valveDepth = Math.min(valveDepth, wellDepth);
 
-	currentDepth = valveDepth;
+        currentDepth = valveDepth;
       } else {
-	// Subsequent valves: spaced based on production gradient
-	double productionGradient = calculateAverageFluidDensity(formationGOR) * GRAVITY / 1e5;
-	double availablePressure = surfaceInjPressure * safetyFactor - valvePressureDrop * (valveNumber - 1);
+        // Subsequent valves: spaced based on production gradient
+        double productionGradient = calculateAverageFluidDensity(formationGOR) * GRAVITY / 1e5;
+        double availablePressure = surfaceInjPressure * safetyFactor - valvePressureDrop * (valveNumber - 1);
 
-	double nextValveDepth = currentDepth
-	    + (availablePressure - wellheadPressure - productionGradient * currentDepth) / productionGradient;
+        double nextValveDepth = currentDepth
+            + (availablePressure - wellheadPressure - productionGradient * currentDepth) / productionGradient;
 
-	nextValveDepth = Math.min(nextValveDepth, wellDepth);
-	nextValveDepth = Math.max(nextValveDepth, currentDepth + 50); // Min 50m spacing
+        nextValveDepth = Math.min(nextValveDepth, wellDepth);
+        nextValveDepth = Math.max(nextValveDepth, currentDepth + 50); // Min 50m spacing
 
-	currentDepth = nextValveDepth;
+        currentDepth = nextValveDepth;
       }
 
       ValvePosition valve = new ValvePosition();
       valve.valveNumber = valveNumber;
       valve.depth = currentDepth;
       valve.openingPressure = surfaceInjPressure * safetyFactor - (valveNumber - 1) * 1.5; // Decrease
-											   // for
-											   // each
-											   // valve
+      // for
+      // each
+      // valve
       valve.closingPressure = valve.openingPressure - 0.5;
       valve.isOperatingValve = (currentDepth >= wellDepth * 0.95);
 
       valvePositions.add(valve);
 
       if (valve.isOperatingValve) {
-	break;
+        break;
       }
     }
   }
@@ -900,7 +900,7 @@ public class GasLiftCalculator implements Serializable {
     @Override
     public String toString() {
       return String.format("Valve %d: %.1f m, Open: %.1f bara, Close: %.1f bara%s", valveNumber, depth, openingPressure,
-	  closingPressure, isOperatingValve ? " [OPERATING]" : "");
+          closingPressure, isOperatingValve ? " [OPERATING]" : "");
     }
   }
 

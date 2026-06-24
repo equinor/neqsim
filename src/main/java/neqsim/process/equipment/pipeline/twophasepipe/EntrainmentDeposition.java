@@ -156,11 +156,11 @@ public class EntrainmentDeposition implements Serializable {
     if (result.isEntraining) {
       // Calculate entrainment rate
       result.entrainmentRate = calculateEntrainmentRate(gasVelocity, liquidVelocity, gasDensity, liquidDensity,
-	  gasViscosity, liquidViscosity, surfaceTension, diameter, filmThickness);
+          gasViscosity, liquidViscosity, surfaceTension, diameter, filmThickness);
 
       // Calculate entrainment fraction
       result.entrainmentFraction = calculateEntrainmentFraction(gasVelocity, gasDensity, liquidDensity, liquidViscosity,
-	  surfaceTension, diameter, reFilm);
+          surfaceTension, diameter, reFilm);
     } else {
       result.entrainmentRate = 0.0;
       result.entrainmentFraction = 0.0;
@@ -171,11 +171,11 @@ public class EntrainmentDeposition implements Serializable {
 
     // Estimate droplet concentration
     result.dropletConcentration = estimateDropletConcentration(liquidVelocity, liquidDensity, liquidHoldup,
-	result.entrainmentFraction, gasVelocity, diameter);
+        result.entrainmentFraction, gasVelocity, diameter);
 
     // Calculate deposition rate
     result.depositionRate = calculateDepositionRate(result.dropletConcentration, result.dropletDiameter, gasDensity,
-	gasViscosity, liquidDensity, gasVelocity, diameter);
+        gasViscosity, liquidDensity, gasVelocity, diameter);
 
     // Net transfer rate
     result.netTransferRate = result.entrainmentRate - result.depositionRate;
@@ -226,7 +226,7 @@ public class EntrainmentDeposition implements Serializable {
 
     case PAN_HANRATTY:
       return entrainmentPanHanratty(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity,
-	  liquidViscosity, surfaceTension, diameter);
+          liquidViscosity, surfaceTension, diameter);
 
     case OLIEMANS:
       return entrainmentOliemans(gasVelocity, gasDensity, liquidDensity, liquidViscosity, surfaceTension, diameter);
@@ -365,18 +365,18 @@ public class EntrainmentDeposition implements Serializable {
     switch (depositionModel) {
     case MCCOY_HANRATTY:
       return depositionMcCoyHanratty(dropletConcentration, dropletDiameter, gasDensity, gasViscosity, gasVelocity,
-	  diameter);
+          diameter);
 
     case RELAXATION:
       return depositionRelaxation(dropletConcentration, dropletDiameter, gasDensity, gasViscosity, liquidDensity,
-	  gasVelocity, diameter);
+          gasVelocity, diameter);
 
     case COUSINS:
       return depositionCousins(dropletConcentration, dropletDiameter, gasVelocity, gasDensity, gasViscosity, diameter);
 
     default:
       return depositionMcCoyHanratty(dropletConcentration, dropletDiameter, gasDensity, gasViscosity, gasVelocity,
-	  diameter);
+          diameter);
     }
   }
 
@@ -400,7 +400,7 @@ public class EntrainmentDeposition implements Serializable {
 
     // Dimensionless droplet relaxation time
     double tauPlus = dropletConcentration * dropletDiameter * dropletDiameter * uStar * uStar
-	/ (18.0 * gasViscosity * gasViscosity / gasDensity);
+        / (18.0 * gasViscosity * gasViscosity / gasDensity);
 
     // Deposition velocity (McCoy-Hanratty)
     double kd;

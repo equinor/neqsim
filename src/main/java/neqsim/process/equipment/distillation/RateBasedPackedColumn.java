@@ -859,7 +859,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     }
     for (int i = 0; i < componentNames.length; i++) {
       if (componentNames[i] != null && !componentNames[i].trim().isEmpty()) {
-	transferComponents.add(componentNames[i].trim());
+        transferComponents.add(componentNames[i].trim());
       }
     }
   }
@@ -965,32 +965,32 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     }
     if (gasInStream == null) {
       result.addError("gasInStream", "No gas inlet stream connected",
-	  "Call setGasInStream(stream) before running the column");
+          "Call setGasInStream(stream) before running the column");
     } else if (gasInStream.getThermoSystem() == null) {
       result.addError("gasInStream", "Gas inlet stream has no thermodynamic system",
-	  "Create the gas inlet stream with a valid fluid");
+          "Create the gas inlet stream with a valid fluid");
     }
     if (liquidInStream == null) {
       result.addError("liquidInStream", "No liquid inlet stream connected",
-	  "Call setLiquidInStream(stream) before running the column");
+          "Call setLiquidInStream(stream) before running the column");
     } else if (liquidInStream.getThermoSystem() == null) {
       result.addError("liquidInStream", "Liquid inlet stream has no thermodynamic system",
-	  "Create the liquid inlet stream with a valid fluid");
+          "Create the liquid inlet stream with a valid fluid");
     }
     if (columnDiameter <= 0.0) {
       result.addError("columnDiameter", "Column diameter must be positive",
-	  "Set column diameter in metres with setColumnDiameter");
+          "Set column diameter in metres with setColumnDiameter");
     }
     if (packedHeight < 0.0) {
       result.addError("packedHeight", "Packed height can not be negative",
-	  "Set a non-negative packed height in metres");
+          "Set a non-negative packed height in metres");
     }
     if (numberOfSegments < 1) {
       result.addError("numberOfSegments", "At least one segment is required", "Set numberOfSegments to one or more");
     }
     if (packingSpecification == null) {
       result.addError("packingSpecification", "No packing specification configured",
-	  "Use setPackingType or setPackingSpecification");
+          "Use setPackingType or setPackingSpecification");
     }
     return result;
   }
@@ -1003,7 +1003,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   @Override
   public String toJson() {
     return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-	.toJson(new ColumnReport(this));
+        .toJson(new ColumnReport(this));
   }
 
   /**
@@ -1048,12 +1048,12 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     for (int iteration = 1; iteration <= maxIterations; iteration++) {
       solution = runOneProfileIteration(gasIn, liquidIn, liquidEntering);
       double residual = calculateOutletResidual(previousGasOutlet, solution.gasOutlet, previousLiquidOutlet,
-	  solution.liquidOutlet);
+          solution.liquidOutlet);
       lastIterationCount = iteration;
       lastConvergenceResidual = residual;
       if (residual <= convergenceTolerance || packedHeight == 0.0) {
-	acceptSolution(solution);
-	return solution;
+        acceptSolution(solution);
+        return solution;
       }
       previousGasOutlet = solution.gasOutlet.clone();
       previousLiquidOutlet = solution.liquidOutlet.clone();
@@ -1121,15 +1121,15 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     for (int segment = 0; segment < numberOfSegments; segment++) {
       SegmentResult result = seed.segmentResults.get(Math.min(segment, seed.segmentResults.size() - 1));
       for (int componentIndex = 0; componentIndex < components.size(); componentIndex++) {
-	Double transfer = result.componentMoleTransfer.get(components.get(componentIndex));
-	unknowns[columnFluxIndex(segment, componentIndex, components)] = transfer == null ? 0.0
-	    : transfer.doubleValue();
+        Double transfer = result.componentMoleTransfer.get(components.get(componentIndex));
+        unknowns[columnFluxIndex(segment, componentIndex, components)] = transfer == null ? 0.0
+            : transfer.doubleValue();
       }
       unknowns[columnInterfaceTemperatureIndex(segment, components)] = finitePositive(result.interfaceTemperatureK,
-	  0.5 * (result.gasTemperatureK + result.liquidTemperatureK));
+          0.5 * (result.gasTemperatureK + result.liquidTemperatureK));
       unknowns[columnGasOutletTemperatureIndex(segment, components)] = finitePositive(result.gasTemperatureK, 300.0);
       unknowns[columnLiquidOutletTemperatureIndex(segment, components)] = finitePositive(result.liquidTemperatureK,
-	  300.0);
+          300.0);
     }
     return unknowns;
   }
@@ -1150,30 +1150,30 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     ColumnResidualEvaluation best = evaluateColumnResidual(gasIn, liquidIn, components, unknowns, homotopyFactor, 0);
     for (int iteration = 0; iteration < maxColumnResidualIterations; iteration++) {
       if (best.norm <= columnResidualTolerance) {
-	return best.withIterations(iteration);
+        return best.withIterations(iteration);
       }
       Matrix step = calculateColumnResidualStep(gasIn, liquidIn, components, unknowns, best, homotopyFactor);
       if (step == null) {
-	return best.withIterations(iteration);
+        return best.withIterations(iteration);
       }
       boolean improved = false;
       double[] bestUnknowns = unknowns;
       ColumnResidualEvaluation bestCandidate = best;
       double damping = 1.0;
       for (int lineSearch = 0; lineSearch < 10; lineSearch++) {
-	double[] candidateUnknowns = applyColumnResidualStep(unknowns, step, damping, gasIn, liquidIn, components);
-	ColumnResidualEvaluation candidate = evaluateColumnResidual(gasIn, liquidIn, components, candidateUnknowns,
-	    homotopyFactor, iteration + 1);
-	if (candidate.norm < bestCandidate.norm) {
-	  bestUnknowns = candidateUnknowns;
-	  bestCandidate = candidate;
-	  improved = true;
-	  break;
-	}
-	damping *= 0.5;
+        double[] candidateUnknowns = applyColumnResidualStep(unknowns, step, damping, gasIn, liquidIn, components);
+        ColumnResidualEvaluation candidate = evaluateColumnResidual(gasIn, liquidIn, components, candidateUnknowns,
+            homotopyFactor, iteration + 1);
+        if (candidate.norm < bestCandidate.norm) {
+          bestUnknowns = candidateUnknowns;
+          bestCandidate = candidate;
+          improved = true;
+          break;
+        }
+        damping *= 0.5;
       }
       if (!improved) {
-	return best.withIterations(iteration);
+        return best.withIterations(iteration);
       }
       unknowns = bestUnknowns;
       best = bestCandidate;
@@ -1214,26 +1214,26 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       double gasMassEnthalpy = 0.0;
       double liquidMassEnthalpy = 0.0;
       for (int componentIndex = 0; componentIndex < components.size(); componentIndex++) {
-	String component = components.get(componentIndex);
-	double transfer = boundedUnknowns[columnFluxIndex(segment, componentIndex, components)];
-	double predictedTransfer = calculateUnboundedComponentTransfer(component, gas, liquid, snapshot, equilibrium)
-	    * homotopyFactor;
-	predictedTransfer = limitTransfer(component, predictedTransfer, gas, liquid);
-	double fluxResidual = transfer - predictedTransfer;
-	residuals.add(Double.valueOf(fluxResidual / transferResidualScale(component, predictedTransfer, gas, liquid)));
-	maxFluxResidual = Math.max(maxFluxResidual, Math.abs(fluxResidual));
-	componentTransfers.put(component, transfer);
-	gasMassEnthalpy += transfer * equilibrium.getGasMolarEnthalpy(component);
-	liquidMassEnthalpy += transfer * equilibrium.getLiquidMolarEnthalpy(component);
+        String component = components.get(componentIndex);
+        double transfer = boundedUnknowns[columnFluxIndex(segment, componentIndex, components)];
+        double predictedTransfer = calculateUnboundedComponentTransfer(component, gas, liquid, snapshot, equilibrium)
+            * homotopyFactor;
+        predictedTransfer = limitTransfer(component, predictedTransfer, gas, liquid);
+        double fluxResidual = transfer - predictedTransfer;
+        residuals.add(Double.valueOf(fluxResidual / transferResidualScale(component, predictedTransfer, gas, liquid)));
+        maxFluxResidual = Math.max(maxFluxResidual, Math.abs(fluxResidual));
+        componentTransfers.put(component, transfer);
+        gasMassEnthalpy += transfer * equilibrium.getGasMolarEnthalpy(component);
+        liquidMassEnthalpy += transfer * equilibrium.getLiquidMolarEnthalpy(component);
       }
       double segmentVolume = Math.PI * columnDiameter * columnDiameter / 4.0 * packedHeight / numberOfSegments;
       double gasSensibleHeat = snapshot.gasHeatTransferCoefficient * segmentVolume
-	  * (gas.getTemperature() - interfaceTemperature);
+          * (gas.getTemperature() - interfaceTemperature);
       double liquidSensibleHeat = snapshot.liquidHeatTransferCoefficient * segmentVolume
-	  * (interfaceTemperature - liquid.getTemperature());
+          * (interfaceTemperature - liquid.getTemperature());
       double heatResidual = gasSensibleHeat + gasMassEnthalpy - liquidSensibleHeat - liquidMassEnthalpy;
       residuals.add(Double.valueOf(
-	  heatResidual / heatResidualScale(gasSensibleHeat, liquidSensibleHeat, gasMassEnthalpy, liquidMassEnthalpy)));
+          heatResidual / heatResidualScale(gasSensibleHeat, liquidSensibleHeat, gasMassEnthalpy, liquidMassEnthalpy)));
       maxHeatResidual = Math.max(maxHeatResidual, Math.abs(heatResidual));
 
       SystemInterface gasOutletTarget = state.gasLeaving.get(segment).clone();
@@ -1249,46 +1249,46 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       residuals.add(Double.valueOf(gasTemperatureResidual / 10.0));
       residuals.add(Double.valueOf(liquidTemperatureResidual / 10.0));
       maxEnergyResidual = Math.max(maxEnergyResidual,
-	  Math.max(Math.abs(gasEnthalpyResidual), Math.abs(liquidEnthalpyResidual)));
+          Math.max(Math.abs(gasEnthalpyResidual), Math.abs(liquidEnthalpyResidual)));
 
       for (int componentIndex = 0; componentIndex < components.size(); componentIndex++) {
-	String component = components.get(componentIndex);
-	double transfer = componentTransfers.get(component).doubleValue();
-	double gasBalance = componentMoles(state.gasLeaving.get(segment), component)
-	    - (componentMoles(gas, component) - transfer);
-	double liquidBalance = componentMoles(state.liquidLeaving.get(segment), component)
-	    - (componentMoles(liquid, component) + transfer);
-	residuals.add(Double.valueOf(gasBalance / transferResidualScale(component, transfer, gas, liquid)));
-	residuals.add(Double.valueOf(liquidBalance / transferResidualScale(component, transfer, gas, liquid)));
-	maxGasBalanceResidual = Math.max(maxGasBalanceResidual, Math.abs(gasBalance));
-	maxLiquidBalanceResidual = Math.max(maxLiquidBalanceResidual, Math.abs(liquidBalance));
+        String component = components.get(componentIndex);
+        double transfer = componentTransfers.get(component).doubleValue();
+        double gasBalance = componentMoles(state.gasLeaving.get(segment), component)
+            - (componentMoles(gas, component) - transfer);
+        double liquidBalance = componentMoles(state.liquidLeaving.get(segment), component)
+            - (componentMoles(liquid, component) + transfer);
+        residuals.add(Double.valueOf(gasBalance / transferResidualScale(component, transfer, gas, liquid)));
+        residuals.add(Double.valueOf(liquidBalance / transferResidualScale(component, transfer, gas, liquid)));
+        maxGasBalanceResidual = Math.max(maxGasBalanceResidual, Math.abs(gasBalance));
+        maxLiquidBalanceResidual = Math.max(maxLiquidBalanceResidual, Math.abs(liquidBalance));
       }
 
       double totalTransfer = 0.0;
       for (Double value : componentTransfers.values()) {
-	totalTransfer += value.doubleValue();
+        totalTransfer += value.doubleValue();
       }
       double segmentEnergyResidual = state.gasLeaving.get(segment).getEnthalpy()
-	  + state.liquidLeaving.get(segment).getEnthalpy() - gas.getEnthalpy() - liquid.getEnthalpy();
+          + state.liquidLeaving.get(segment).getEnthalpy() - gas.getEnthalpy() - liquid.getEnthalpy();
       SegmentResult result = new SegmentResult(segment + 1, (segment + 0.5) * segmentHeight,
-	  state.gasLeaving.get(segment).getTemperature(), state.liquidLeaving.get(segment).getTemperature(),
-	  state.gasLeaving.get(segment).getPressure(), state.liquidLeaving.get(segment).getPressure(),
-	  state.gasLeaving.get(segment).getTotalNumberOfMoles(),
-	  state.liquidLeaving.get(segment).getTotalNumberOfMoles(), snapshot.gasDensity, snapshot.liquidDensity,
-	  snapshot.gasViscosity, snapshot.liquidViscosity, snapshot.gasDiffusivity, snapshot.liquidDiffusivity,
-	  snapshot.wettedArea, snapshot.kGa, snapshot.kLa, snapshot.gasHeatTransferCoefficient,
-	  snapshot.liquidHeatTransferCoefficient, snapshot.overallHeatTransferCoefficient, interfaceTemperature,
-	  liquidSensibleHeat, snapshot.pressureDropPerMeter, snapshot.percentFlood, totalTransfer, componentTransfers,
-	  equilibrium.gasMoleFractions, equilibrium.liquidMoleFractions, equilibrium.equilibriumRatios,
-	  ColumnSolver.EQUATION_ORIENTED.name(), iterations, maxFluxResidual, heatResidual, segmentEnergyResidual);
+          state.gasLeaving.get(segment).getTemperature(), state.liquidLeaving.get(segment).getTemperature(),
+          state.gasLeaving.get(segment).getPressure(), state.liquidLeaving.get(segment).getPressure(),
+          state.gasLeaving.get(segment).getTotalNumberOfMoles(),
+          state.liquidLeaving.get(segment).getTotalNumberOfMoles(), snapshot.gasDensity, snapshot.liquidDensity,
+          snapshot.gasViscosity, snapshot.liquidViscosity, snapshot.gasDiffusivity, snapshot.liquidDiffusivity,
+          snapshot.wettedArea, snapshot.kGa, snapshot.kLa, snapshot.gasHeatTransferCoefficient,
+          snapshot.liquidHeatTransferCoefficient, snapshot.overallHeatTransferCoefficient, interfaceTemperature,
+          liquidSensibleHeat, snapshot.pressureDropPerMeter, snapshot.percentFlood, totalTransfer, componentTransfers,
+          equilibrium.gasMoleFractions, equilibrium.liquidMoleFractions, equilibrium.equilibriumRatios,
+          ColumnSolver.EQUATION_ORIENTED.name(), iterations, maxFluxResidual, heatResidual, segmentEnergyResidual);
       results.add(result);
     }
     double[] residualArray = toPrimitiveArray(residuals);
     CounterCurrentSolution solution = new CounterCurrentSolution(state.gasOutlet, state.liquidOutlet,
-	state.liquidLeaving, results);
+        state.liquidLeaving, results);
     return new ColumnResidualEvaluation(boundedUnknowns, residualArray, residualNorm(residualArray), solution,
-	iterations, maxFluxResidual, maxHeatResidual, maxEnergyResidual, maxGasBalanceResidual,
-	maxLiquidBalanceResidual);
+        iterations, maxFluxResidual, maxHeatResidual, maxEnergyResidual, maxGasBalanceResidual,
+        maxLiquidBalanceResidual);
   }
 
   /**
@@ -1314,32 +1314,32 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       shifted = clampColumnUnknowns(shifted, gasIn, liquidIn, components);
       double actualStep = shifted[variable] - unknowns[variable];
       if (Math.abs(actualStep) < 1.0e-20) {
-	shifted = unknowns.clone();
-	shifted[variable] -= step;
-	shifted = clampColumnUnknowns(shifted, gasIn, liquidIn, components);
-	actualStep = shifted[variable] - unknowns[variable];
+        shifted = unknowns.clone();
+        shifted[variable] -= step;
+        shifted = clampColumnUnknowns(shifted, gasIn, liquidIn, components);
+        actualStep = shifted[variable] - unknowns[variable];
       }
       if (Math.abs(actualStep) < 1.0e-20) {
-	sparseJacobian.set(variable % residualCount, variable, 1.0);
+        sparseJacobian.set(variable % residualCount, variable, 1.0);
       } else {
-	ColumnResidualEvaluation shiftedEvaluation = evaluateColumnResidual(gasIn, liquidIn, components, shifted,
-	    homotopyFactor, evaluation.iterations);
-	for (int row = 0; row < residualCount; row++) {
-	  double derivative = (shiftedEvaluation.normalizedResiduals[row] - evaluation.normalizedResiduals[row])
-	      / actualStep;
-	  if (Math.abs(derivative) > 1.0e-14 && Double.isFinite(derivative)) {
-	    sparseJacobian.set(row, variable, derivative);
-	  }
-	}
+        ColumnResidualEvaluation shiftedEvaluation = evaluateColumnResidual(gasIn, liquidIn, components, shifted,
+            homotopyFactor, evaluation.iterations);
+        for (int row = 0; row < residualCount; row++) {
+          double derivative = (shiftedEvaluation.normalizedResiduals[row] - evaluation.normalizedResiduals[row])
+              / actualStep;
+          if (Math.abs(derivative) > 1.0e-14 && Double.isFinite(derivative)) {
+            sparseJacobian.set(row, variable, derivative);
+          }
+        }
       }
     }
     try {
       Matrix jacobian = sparseJacobian.toDenseMatrix();
       Matrix normalMatrix = jacobian.transpose().times(jacobian)
-	  .plus(Matrix.identity(variableCount, variableCount).times(1.0e-10));
+          .plus(Matrix.identity(variableCount, variableCount).times(1.0e-10));
       double[][] rhsValues = new double[residualCount][1];
       for (int row = 0; row < residualCount; row++) {
-	rhsValues[row][0] = -evaluation.normalizedResiduals[row];
+        rhsValues[row][0] = -evaluation.normalizedResiduals[row];
       }
       Matrix normalRhs = jacobian.transpose().times(new Matrix(rhsValues));
       return normalMatrix.solve(normalRhs);
@@ -1387,8 +1387,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       gasEntering.add(gasCurrent.clone());
       SystemInterface gasOutlet = gasCurrent.clone();
       for (int componentIndex = 0; componentIndex < components.size(); componentIndex++) {
-	double transfer = unknowns[columnFluxIndex(segment, componentIndex, components)];
-	addComponentDelta(gasOutlet, components.get(componentIndex), -transfer);
+        double transfer = unknowns[columnFluxIndex(segment, componentIndex, components)];
+        addComponentDelta(gasOutlet, components.get(componentIndex), -transfer);
       }
       gasOutlet.setTemperature(unknowns[columnGasOutletTemperatureIndex(segment, components)]);
       flashAndInitialize(gasOutlet);
@@ -1408,8 +1408,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       liquidEntering.set(segment, liquidCurrent.clone());
       SystemInterface liquidOutlet = liquidCurrent.clone();
       for (int componentIndex = 0; componentIndex < components.size(); componentIndex++) {
-	double transfer = unknowns[columnFluxIndex(segment, componentIndex, components)];
-	addComponentDelta(liquidOutlet, components.get(componentIndex), transfer);
+        double transfer = unknowns[columnFluxIndex(segment, componentIndex, components)];
+        addComponentDelta(liquidOutlet, components.get(componentIndex), transfer);
       }
       liquidOutlet.setTemperature(unknowns[columnLiquidOutletTemperatureIndex(segment, components)]);
       flashAndInitialize(liquidOutlet);
@@ -1417,7 +1417,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       liquidCurrent = liquidOutlet.clone();
     }
     return new ColumnState(gasEntering, gasLeaving, liquidEntering, liquidLeaving,
-	gasLeaving.get(numberOfSegments - 1).clone(), liquidLeaving.get(0).clone());
+        gasLeaving.get(numberOfSegments - 1).clone(), liquidLeaving.get(0).clone());
   }
 
   /**
@@ -1435,31 +1435,31 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     Map<String, Double> gasAvailable = componentInventoryMap(gasIn, components);
     for (int segment = 0; segment < numberOfSegments; segment++) {
       for (int componentIndex = 0; componentIndex < components.size(); componentIndex++) {
-	int index = columnFluxIndex(segment, componentIndex, components);
-	if (!Double.isFinite(bounded[index])) {
-	  bounded[index] = 0.0;
-	}
-	String component = components.get(componentIndex);
-	if (bounded[index] > 0.0) {
-	  double available = Math.max(0.0, gasAvailable.get(component).doubleValue() * maxTransferFractionPerSegment);
-	  bounded[index] = Math.min(bounded[index], available);
-	  gasAvailable.put(component,
-	      Double.valueOf(Math.max(0.0, gasAvailable.get(component).doubleValue() - bounded[index])));
-	}
+        int index = columnFluxIndex(segment, componentIndex, components);
+        if (!Double.isFinite(bounded[index])) {
+          bounded[index] = 0.0;
+        }
+        String component = components.get(componentIndex);
+        if (bounded[index] > 0.0) {
+          double available = Math.max(0.0, gasAvailable.get(component).doubleValue() * maxTransferFractionPerSegment);
+          bounded[index] = Math.min(bounded[index], available);
+          gasAvailable.put(component,
+              Double.valueOf(Math.max(0.0, gasAvailable.get(component).doubleValue() - bounded[index])));
+        }
       }
     }
     Map<String, Double> liquidAvailable = componentInventoryMap(liquidIn, components);
     for (int segment = numberOfSegments - 1; segment >= 0; segment--) {
       for (int componentIndex = 0; componentIndex < components.size(); componentIndex++) {
-	int index = columnFluxIndex(segment, componentIndex, components);
-	String component = components.get(componentIndex);
-	if (bounded[index] < 0.0) {
-	  double available = Math.max(0.0,
-	      liquidAvailable.get(component).doubleValue() * maxTransferFractionPerSegment);
-	  bounded[index] = -Math.min(-bounded[index], available);
-	  liquidAvailable.put(component,
-	      Double.valueOf(Math.max(0.0, liquidAvailable.get(component).doubleValue() + bounded[index])));
-	}
+        int index = columnFluxIndex(segment, componentIndex, components);
+        String component = components.get(componentIndex);
+        if (bounded[index] < 0.0) {
+          double available = Math.max(0.0,
+              liquidAvailable.get(component).doubleValue() * maxTransferFractionPerSegment);
+          bounded[index] = -Math.min(-bounded[index], available);
+          liquidAvailable.put(component,
+              Double.valueOf(Math.max(0.0, liquidAvailable.get(component).doubleValue() + bounded[index])));
+        }
       }
     }
     for (int segment = 0; segment < numberOfSegments; segment++) {
@@ -1655,9 +1655,9 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     List<SystemInterface> updated = new ArrayList<SystemInterface>();
     for (int segment = 0; segment < numberOfSegments; segment++) {
       if (segment == numberOfSegments - 1) {
-	updated.add(liquidIn.clone());
+        updated.add(liquidIn.clone());
       } else {
-	updated.add(liquidLeaving.get(segment + 1).clone());
+        updated.add(liquidLeaving.get(segment + 1).clone());
       }
     }
     return updated;
@@ -1679,10 +1679,10 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     for (int i = 0; i < solution.segmentResults.size(); i++) {
       SegmentResult result = solution.segmentResults.get(i);
       for (Map.Entry<String, Double> entry : result.getComponentMoleTransfer().entrySet()) {
-	Double oldValue = componentTransferTotals.get(entry.getKey());
-	double newValue = (oldValue == null ? 0.0 : oldValue.doubleValue()) + entry.getValue();
-	componentTransferTotals.put(entry.getKey(), newValue);
-	totalAbsoluteMolarTransfer += Math.abs(entry.getValue());
+        Double oldValue = componentTransferTotals.get(entry.getKey());
+        double newValue = (oldValue == null ? 0.0 : oldValue.doubleValue()) + entry.getValue();
+        componentTransferTotals.put(entry.getKey(), newValue);
+        totalAbsoluteMolarTransfer += Math.abs(entry.getValue());
       }
     }
   }
@@ -1703,7 +1703,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
 
     double segmentHeight = packedHeight / numberOfSegments;
     if (segmentHeight > 0.0 && segmentSolver == SegmentSolver.SIMULTANEOUS_RESIDUAL
-	&& heatTransferModel != HeatTransferModel.NONE) {
+        && heatTransferModel != HeatTransferModel.NONE) {
       return calculateSimultaneousResidualSegment(segment, gas, liquid, segmentHeight);
     }
 
@@ -1715,12 +1715,12 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     if (segmentHeight > 0.0) {
       List<String> components = getTransferComponentList(gas, liquid);
       for (int i = 0; i < components.size(); i++) {
-	String component = components.get(i);
-	double transfer = calculateComponentTransfer(component, gas, liquid, snapshot, interfaceEquilibrium);
-	if (Math.abs(transfer) > 0.0) {
-	  applyComponentTransfer(component, transfer, gas, liquid);
-	  componentTransfers.put(component, transfer);
-	}
+        String component = components.get(i);
+        double transfer = calculateComponentTransfer(component, gas, liquid, snapshot, interfaceEquilibrium);
+        if (Math.abs(transfer) > 0.0) {
+          applyComponentTransfer(component, transfer, gas, liquid);
+          componentTransfers.put(component, transfer);
+        }
       }
       heatTransferRate = applyInterphaseHeatTransfer(gas, liquid, snapshot);
       flashAndInitialize(gas);
@@ -1732,15 +1732,15 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       totalTransfer += value.doubleValue();
     }
     SegmentResult result = new SegmentResult(segment + 1, (segment + 0.5) * segmentHeight, gas.getTemperature(),
-	liquid.getTemperature(), gas.getPressure(), liquid.getPressure(), gas.getTotalNumberOfMoles(),
-	liquid.getTotalNumberOfMoles(), snapshot.gasDensity, snapshot.liquidDensity, snapshot.gasViscosity,
-	snapshot.liquidViscosity, snapshot.gasDiffusivity, snapshot.liquidDiffusivity, snapshot.wettedArea,
-	snapshot.kGa, snapshot.kLa, snapshot.gasHeatTransferCoefficient, snapshot.liquidHeatTransferCoefficient,
-	snapshot.overallHeatTransferCoefficient, interfaceEquilibrium.interfaceTemperatureK, heatTransferRate,
-	snapshot.pressureDropPerMeter, snapshot.percentFlood, totalTransfer, componentTransfers,
-	interfaceEquilibrium.gasMoleFractions, interfaceEquilibrium.liquidMoleFractions,
-	interfaceEquilibrium.equilibriumRatios, SegmentSolver.SEQUENTIAL_EXPLICIT.name(), 0, 0.0, 0.0,
-	gas.getEnthalpy() + liquid.getEnthalpy() - inletTotalEnthalpy);
+        liquid.getTemperature(), gas.getPressure(), liquid.getPressure(), gas.getTotalNumberOfMoles(),
+        liquid.getTotalNumberOfMoles(), snapshot.gasDensity, snapshot.liquidDensity, snapshot.gasViscosity,
+        snapshot.liquidViscosity, snapshot.gasDiffusivity, snapshot.liquidDiffusivity, snapshot.wettedArea,
+        snapshot.kGa, snapshot.kLa, snapshot.gasHeatTransferCoefficient, snapshot.liquidHeatTransferCoefficient,
+        snapshot.overallHeatTransferCoefficient, interfaceEquilibrium.interfaceTemperatureK, heatTransferRate,
+        snapshot.pressureDropPerMeter, snapshot.percentFlood, totalTransfer, componentTransfers,
+        interfaceEquilibrium.gasMoleFractions, interfaceEquilibrium.liquidMoleFractions,
+        interfaceEquilibrium.equilibriumRatios, SegmentSolver.SEQUENTIAL_EXPLICIT.name(), 0, 0.0, 0.0,
+        gas.getEnthalpy() + liquid.getEnthalpy() - inletTotalEnthalpy);
     return new SegmentComputation(gas, liquid, result);
   }
 
@@ -1792,18 +1792,18 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     double kGa = finiteNonNegative(hydraulics.getKGa(), 0.0) * gasMultiplier * massTransferCorrectionFactor;
     double kLa = finiteNonNegative(hydraulics.getKLa(), 0.0) * liquidMultiplier * massTransferCorrectionFactor;
     double gasHeatTransferCoefficient = calculateVolumetricHeatTransferCoefficient(kGa, gasDensity, gasHeatCapacity,
-	gasViscosity, gasDiffusivity, gasConductivity);
+        gasViscosity, gasDiffusivity, gasConductivity);
     double liquidHeatTransferCoefficient = calculateVolumetricHeatTransferCoefficient(kLa, liquidDensity,
-	liquidHeatCapacity, liquidViscosity, liquidDiffusivity, liquidConductivity);
+        liquidHeatCapacity, liquidViscosity, liquidDiffusivity, liquidConductivity);
     double overallHeatTransferCoefficient = combineHeatTransferCoefficients(gasHeatTransferCoefficient,
-	liquidHeatTransferCoefficient);
+        liquidHeatTransferCoefficient);
     double interfaceTemperature = calculateInterfaceTemperature(gas.getTemperature(), liquid.getTemperature(),
-	gasHeatTransferCoefficient, liquidHeatTransferCoefficient);
+        gasHeatTransferCoefficient, liquidHeatTransferCoefficient);
     return new TransportSnapshot(gasDensity, liquidDensity, gasViscosity, liquidViscosity, gasDiffusivity,
-	liquidDiffusivity, finiteNonNegative(hydraulics.getWettedArea(), 0.0), kGa, kLa, gasHeatCapacity,
-	liquidHeatCapacity, gasHeatTransferCoefficient, liquidHeatTransferCoefficient, overallHeatTransferCoefficient,
-	interfaceTemperature, finiteNonNegative(hydraulics.getPressureDropPerMeter(), 0.0),
-	finiteNonNegative(hydraulics.getPercentFlood(), 0.0));
+        liquidDiffusivity, finiteNonNegative(hydraulics.getWettedArea(), 0.0), kGa, kLa, gasHeatCapacity,
+        liquidHeatCapacity, gasHeatTransferCoefficient, liquidHeatTransferCoefficient, overallHeatTransferCoefficient,
+        interfaceTemperature, finiteNonNegative(hydraulics.getPressureDropPerMeter(), 0.0),
+        finiteNonNegative(hydraulics.getPercentFlood(), 0.0));
   }
 
   /**
@@ -1840,18 +1840,18 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     double gasFraction = moleFraction(gasPhase, component);
     double liquidFraction = moleFraction(liquidPhase, component);
     double gasInterfaceFraction = interfaceEquilibrium.getGasMoleFraction(component,
-	clamp(kValue * liquidFraction, 0.0, 0.999999));
+        clamp(kValue * liquidFraction, 0.0, 0.999999));
     double liquidInterfaceFraction = interfaceEquilibrium.getLiquidMoleFraction(component,
-	kValue > 1.0e-12 ? clamp(gasInterfaceFraction / kValue, 0.0, 0.999999) : liquidFraction);
+        kValue > 1.0e-12 ? clamp(gasInterfaceFraction / kValue, 0.0, 0.999999) : liquidFraction);
     double gasDrivingForce = gasFraction - gasInterfaceFraction;
     double liquidDrivingForce = liquidInterfaceFraction - liquidFraction;
     if (Math.abs(gasDrivingForce) < 1.0e-12 || snapshot.kGa <= 0.0 || snapshot.kLa <= 0.0) {
       return 0.0;
     }
     double gasFilmCoefficient = calculateFilmCoefficient(gasPhase, component, snapshot.kGa, snapshot.gasDiffusivity,
-	true);
+        true);
     double liquidFilmCoefficient = calculateFilmCoefficient(liquidPhase, component, snapshot.kLa,
-	snapshot.liquidDiffusivity, false);
+        snapshot.liquidDiffusivity, false);
     double gasFluxDensity = gasFilmCoefficient * molarConcentration(gasPhase) * gasDrivingForce;
     double liquidFluxDensity = liquidFilmCoefficient * molarConcentration(liquidPhase) * liquidDrivingForce;
     double transferDensity = combineFilmFluxes(gasFluxDensity, liquidFluxDensity);
@@ -1887,8 +1887,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       Double transferValue = evaluation.componentTransfers.get(component);
       double transfer = transferValue == null ? 0.0 : transferValue.doubleValue();
       if (Math.abs(transfer) > 0.0) {
-	applyComponentTransfer(component, transfer, gas, liquid);
-	componentTransfers.put(component, transfer);
+        applyComponentTransfer(component, transfer, gas, liquid);
+        componentTransfers.put(component, transfer);
       }
     }
     flashAndInitialize(gas);
@@ -1902,16 +1902,16 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     }
     double enthalpyBalanceResidual = gas.getEnthalpy() + liquid.getEnthalpy() - inletTotalEnthalpy;
     SegmentResult result = new SegmentResult(segment + 1, (segment + 0.5) * segmentHeight, gas.getTemperature(),
-	liquid.getTemperature(), gas.getPressure(), liquid.getPressure(), gas.getTotalNumberOfMoles(),
-	liquid.getTotalNumberOfMoles(), snapshot.gasDensity, snapshot.liquidDensity, snapshot.gasViscosity,
-	snapshot.liquidViscosity, snapshot.gasDiffusivity, snapshot.liquidDiffusivity, snapshot.wettedArea,
-	snapshot.kGa, snapshot.kLa, snapshot.gasHeatTransferCoefficient, snapshot.liquidHeatTransferCoefficient,
-	snapshot.overallHeatTransferCoefficient, evaluation.interfaceEquilibrium.interfaceTemperatureK,
-	evaluation.heatTransferRateW, snapshot.pressureDropPerMeter, snapshot.percentFlood, totalTransfer,
-	componentTransfers, evaluation.interfaceEquilibrium.gasMoleFractions,
-	evaluation.interfaceEquilibrium.liquidMoleFractions, evaluation.interfaceEquilibrium.equilibriumRatios,
-	SegmentSolver.SIMULTANEOUS_RESIDUAL.name(), evaluation.iterations, evaluation.maxFluxResidualMolPerSec,
-	evaluation.heatBalanceResidualW, enthalpyBalanceResidual);
+        liquid.getTemperature(), gas.getPressure(), liquid.getPressure(), gas.getTotalNumberOfMoles(),
+        liquid.getTotalNumberOfMoles(), snapshot.gasDensity, snapshot.liquidDensity, snapshot.gasViscosity,
+        snapshot.liquidViscosity, snapshot.gasDiffusivity, snapshot.liquidDiffusivity, snapshot.wettedArea,
+        snapshot.kGa, snapshot.kLa, snapshot.gasHeatTransferCoefficient, snapshot.liquidHeatTransferCoefficient,
+        snapshot.overallHeatTransferCoefficient, evaluation.interfaceEquilibrium.interfaceTemperatureK,
+        evaluation.heatTransferRateW, snapshot.pressureDropPerMeter, snapshot.percentFlood, totalTransfer,
+        componentTransfers, evaluation.interfaceEquilibrium.gasMoleFractions,
+        evaluation.interfaceEquilibrium.liquidMoleFractions, evaluation.interfaceEquilibrium.equilibriumRatios,
+        SegmentSolver.SIMULTANEOUS_RESIDUAL.name(), evaluation.iterations, evaluation.maxFluxResidualMolPerSec,
+        evaluation.heatBalanceResidualW, enthalpyBalanceResidual);
     return new SegmentComputation(gas, liquid, result);
   }
 
@@ -1930,30 +1930,30 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     SegmentResidualEvaluation best = evaluateSegmentResidual(gas, liquid, snapshot, components, unknowns, 0);
     for (int iteration = 0; iteration < maxSegmentResidualIterations; iteration++) {
       if (best.norm <= segmentResidualTolerance) {
-	return best;
+        return best;
       }
       Matrix step = calculateResidualStep(gas, liquid, snapshot, components, unknowns, best);
       if (step == null) {
-	return best;
+        return best;
       }
       boolean improved = false;
       double[] bestUnknowns = unknowns;
       SegmentResidualEvaluation bestCandidate = best;
       double damping = 1.0;
       for (int lineSearch = 0; lineSearch < 8; lineSearch++) {
-	double[] candidateUnknowns = applyResidualStep(unknowns, step, damping, gas, liquid, components);
-	SegmentResidualEvaluation candidate = evaluateSegmentResidual(gas, liquid, snapshot, components,
-	    candidateUnknowns, iteration + 1);
-	if (candidate.norm < bestCandidate.norm) {
-	  bestUnknowns = candidateUnknowns;
-	  bestCandidate = candidate;
-	  improved = true;
-	  break;
-	}
-	damping *= 0.5;
+        double[] candidateUnknowns = applyResidualStep(unknowns, step, damping, gas, liquid, components);
+        SegmentResidualEvaluation candidate = evaluateSegmentResidual(gas, liquid, snapshot, components,
+            candidateUnknowns, iteration + 1);
+        if (candidate.norm < bestCandidate.norm) {
+          bestUnknowns = candidateUnknowns;
+          bestCandidate = candidate;
+          improved = true;
+          break;
+        }
+        damping *= 0.5;
       }
       if (!improved) {
-	return best;
+        return best;
       }
       unknowns = bestUnknowns;
       best = bestCandidate;
@@ -2013,9 +2013,9 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
 
     double segmentVolume = Math.PI * columnDiameter * columnDiameter / 4.0 * packedHeight / numberOfSegments;
     double gasSensibleHeat = snapshot.gasHeatTransferCoefficient * segmentVolume
-	* (gas.getTemperature() - interfaceTemperature);
+        * (gas.getTemperature() - interfaceTemperature);
     double liquidSensibleHeat = snapshot.liquidHeatTransferCoefficient * segmentVolume
-	* (interfaceTemperature - liquid.getTemperature());
+        * (interfaceTemperature - liquid.getTemperature());
     double gasMassEnthalpy = 0.0;
     double liquidMassEnthalpy = 0.0;
     for (int i = 0; i < components.size(); i++) {
@@ -2026,11 +2026,11 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     }
     double heatBalanceResidual = gasSensibleHeat + gasMassEnthalpy - liquidSensibleHeat - liquidMassEnthalpy;
     residuals[components.size()] = heatBalanceResidual
-	/ heatResidualScale(gasSensibleHeat, liquidSensibleHeat, gasMassEnthalpy, liquidMassEnthalpy);
+        / heatResidualScale(gasSensibleHeat, liquidSensibleHeat, gasMassEnthalpy, liquidMassEnthalpy);
     double gasTargetEnthalpy = gas.getEnthalpy() - gasSensibleHeat - gasMassEnthalpy;
     double liquidTargetEnthalpy = liquid.getEnthalpy() + liquidSensibleHeat + liquidMassEnthalpy;
     return new SegmentResidualEvaluation(equilibrium, componentTransfers, residuals, residualNorm(residuals),
-	maxFluxResidual, heatBalanceResidual, liquidSensibleHeat, gasTargetEnthalpy, liquidTargetEnthalpy, iterations);
+        maxFluxResidual, heatBalanceResidual, liquidSensibleHeat, gasTargetEnthalpy, liquidTargetEnthalpy, iterations);
   }
 
   /**
@@ -2055,20 +2055,20 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       shifted = clampResidualUnknowns(shifted, gas, liquid, components);
       double actualStep = shifted[variable] - unknowns[variable];
       if (Math.abs(actualStep) < 1.0e-20) {
-	shifted = unknowns.clone();
-	shifted[variable] -= step;
-	shifted = clampResidualUnknowns(shifted, gas, liquid, components);
-	actualStep = shifted[variable] - unknowns[variable];
+        shifted = unknowns.clone();
+        shifted[variable] -= step;
+        shifted = clampResidualUnknowns(shifted, gas, liquid, components);
+        actualStep = shifted[variable] - unknowns[variable];
       }
       if (Math.abs(actualStep) < 1.0e-20) {
-	jacobian[variable][variable] = 1.0;
+        jacobian[variable][variable] = 1.0;
       } else {
-	SegmentResidualEvaluation shiftedEvaluation = evaluateSegmentResidual(gas, liquid, snapshot, components,
-	    shifted, evaluation.iterations);
-	for (int row = 0; row < dimension; row++) {
-	  jacobian[row][variable] = (shiftedEvaluation.normalizedResiduals[row] - evaluation.normalizedResiduals[row])
-	      / actualStep;
-	}
+        SegmentResidualEvaluation shiftedEvaluation = evaluateSegmentResidual(gas, liquid, snapshot, components,
+            shifted, evaluation.iterations);
+        for (int row = 0; row < dimension; row++) {
+          jacobian[row][variable] = (shiftedEvaluation.normalizedResiduals[row] - evaluation.normalizedResiduals[row])
+              / actualStep;
+        }
       }
     }
     double[][] rhsValues = new double[dimension][1];
@@ -2116,7 +2116,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     double[] bounded = unknowns.clone();
     for (int i = 0; i < components.size(); i++) {
       if (!Double.isFinite(bounded[i])) {
-	bounded[i] = 0.0;
+        bounded[i] = 0.0;
       }
       bounded[i] = limitTransfer(components.get(i), bounded[i], gas, liquid);
     }
@@ -2171,7 +2171,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   private double heatResidualScale(double gasSensibleHeat, double liquidSensibleHeat, double gasMassEnthalpy,
       double liquidMassEnthalpy) {
     return Math.max(1.0, Math.abs(gasSensibleHeat) + Math.abs(liquidSensibleHeat) + Math.abs(gasMassEnthalpy)
-	+ Math.abs(liquidMassEnthalpy));
+        + Math.abs(liquidMassEnthalpy));
   }
 
   /**
@@ -2203,11 +2203,11 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       double estimatedTemperature = estimateTemperatureForTargetEnthalpy(system, targetEnthalpy);
       system.setTemperature(estimatedTemperature);
       try {
-	flashAndInitialize(system);
+        flashAndInitialize(system);
       } catch (RuntimeException innerException) {
-	system.setTemperature(clamp(system.getTemperature(), 250.0, 500.0));
-	system.init(3);
-	system.initProperties();
+        system.setTemperature(clamp(system.getTemperature(), 250.0, 500.0));
+        system.init(3);
+        system.initProperties();
       }
     }
   }
@@ -2298,17 +2298,17 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       gasFractions.put(component, y);
       liquidFractions.put(component, x);
       gasMolarEnthalpies.put(component,
-	  componentMolarEnthalpy(gasPhase, component, snapshot.interfaceTemperatureK, phaseMolarEnthalpy(gasPhase)));
+          componentMolarEnthalpy(gasPhase, component, snapshot.interfaceTemperatureK, phaseMolarEnthalpy(gasPhase)));
       liquidMolarEnthalpies.put(component, componentMolarEnthalpy(liquidPhase, component,
-	  snapshot.interfaceTemperatureK, phaseMolarEnthalpy(liquidPhase)));
+          snapshot.interfaceTemperatureK, phaseMolarEnthalpy(liquidPhase)));
       if (x > 1.0e-12 && y >= 0.0) {
-	ratios.put(component, Math.max(1.0e-12, y / x));
+        ratios.put(component, Math.max(1.0e-12, y / x));
       } else {
-	ratios.put(component, 1.0);
+        ratios.put(component, 1.0);
       }
     }
     return new InterfaceEquilibrium(snapshot.interfaceTemperatureK, gasFractions, liquidFractions, ratios,
-	gasMolarEnthalpies, liquidMolarEnthalpies);
+        gasMolarEnthalpies, liquidMolarEnthalpies);
   }
 
   /**
@@ -2322,8 +2322,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   private InterfaceEquilibrium calculateInterfaceEquilibrium(SystemInterface gas, SystemInterface liquid,
       double interfaceTemperatureK) {
     TransportSnapshot snapshot = new TransportSnapshot(0.0, 0.0, 0.0, 0.0, DEFAULT_GAS_DIFFUSIVITY,
-	DEFAULT_LIQUID_DIFFUSIVITY, 0.0, 0.0, 0.0, DEFAULT_GAS_HEAT_CAPACITY, DEFAULT_LIQUID_HEAT_CAPACITY, 0.0, 0.0,
-	0.0, interfaceTemperatureK, 0.0, 0.0);
+        DEFAULT_LIQUID_DIFFUSIVITY, 0.0, 0.0, 0.0, DEFAULT_GAS_HEAT_CAPACITY, DEFAULT_LIQUID_HEAT_CAPACITY, 0.0, 0.0,
+        0.0, interfaceTemperatureK, 0.0, 0.0);
     return calculateInterfaceEquilibrium(gas, liquid, snapshot);
   }
 
@@ -2374,31 +2374,31 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     try {
       Matrix resistanceMatrix = new Matrix(reducedDimension, reducedDimension);
       for (int row = 0; row < reducedDimension; row++) {
-	double rowSum = 0.0;
-	double referenceCoefficient = binaryFilmCoefficient(phase, row, reducedDimension, baseCoefficient,
-	    referenceDiffusivity, gasPhase);
-	for (int column = 0; column < componentCount; column++) {
-	  double binaryCoefficient = binaryFilmCoefficient(phase, row, column, baseCoefficient, referenceDiffusivity,
-	      gasPhase);
-	  if (row != column) {
-	    rowSum += moleFraction(phase, column) / binaryCoefficient;
-	  }
-	  if (column < reducedDimension) {
-	    double value = -moleFraction(phase, row) * (1.0 / binaryCoefficient - 1.0 / referenceCoefficient);
-	    resistanceMatrix.set(row, column, value);
-	  }
-	}
-	resistanceMatrix.set(row, row,
-	    resistanceMatrix.get(row, row) + rowSum + moleFraction(phase, row) / referenceCoefficient);
+        double rowSum = 0.0;
+        double referenceCoefficient = binaryFilmCoefficient(phase, row, reducedDimension, baseCoefficient,
+            referenceDiffusivity, gasPhase);
+        for (int column = 0; column < componentCount; column++) {
+          double binaryCoefficient = binaryFilmCoefficient(phase, row, column, baseCoefficient, referenceDiffusivity,
+              gasPhase);
+          if (row != column) {
+            rowSum += moleFraction(phase, column) / binaryCoefficient;
+          }
+          if (column < reducedDimension) {
+            double value = -moleFraction(phase, row) * (1.0 / binaryCoefficient - 1.0 / referenceCoefficient);
+            resistanceMatrix.set(row, column, value);
+          }
+        }
+        resistanceMatrix.set(row, row,
+            resistanceMatrix.get(row, row) + rowSum + moleFraction(phase, row) / referenceCoefficient);
       }
       Matrix coefficientMatrix = resistanceMatrix.inverse();
       double coefficient = coefficientMatrix.get(componentIndex, componentIndex);
       if (isFinitePositive(coefficient)) {
-	return clamp(coefficient, baseCoefficient * 0.02, baseCoefficient * 50.0);
+        return clamp(coefficient, baseCoefficient * 0.02, baseCoefficient * 50.0);
       }
     } catch (RuntimeException ex) {
       return scaleFilmCoefficient(baseCoefficient,
-	  mixtureDiffusivityForComponent(phase, componentIndex, referenceDiffusivity, gasPhase), referenceDiffusivity);
+          mixtureDiffusivityForComponent(phase, componentIndex, referenceDiffusivity, gasPhase), referenceDiffusivity);
     }
     return baseCoefficient;
   }
@@ -2448,7 +2448,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     double segmentVolume = Math.PI * columnDiameter * columnDiameter / 4.0 * packedHeight / numberOfSegments;
     double heatRate = snapshot.overallHeatTransferCoefficient * segmentVolume * temperatureDifference;
     double maximumHeatRate = Math.min(gasHeatCapacityRate, liquidHeatCapacityRate) * Math.abs(temperatureDifference)
-	* maxHeatTransferFractionPerSegment;
+        * maxHeatTransferFractionPerSegment;
     heatRate = Math.signum(heatRate) * Math.min(Math.abs(heatRate), maximumHeatRate);
     if (Math.abs(heatRate) <= 0.0) {
       return 0.0;
@@ -2472,8 +2472,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   private double calculateVolumetricHeatTransferCoefficient(double massTransferCoefficient, double density,
       double heatCapacity, double viscosity, double diffusivity, double thermalConductivity) {
     if (heatTransferModel == HeatTransferModel.NONE || !isFinitePositive(massTransferCoefficient)
-	|| !isFinitePositive(density) || !isFinitePositive(heatCapacity) || !isFinitePositive(viscosity)
-	|| !isFinitePositive(diffusivity) || !isFinitePositive(thermalConductivity)) {
+        || !isFinitePositive(density) || !isFinitePositive(heatCapacity) || !isFinitePositive(viscosity)
+        || !isFinitePositive(diffusivity) || !isFinitePositive(thermalConductivity)) {
       return 0.0;
     }
     double prandtlNumber = heatCapacity * viscosity / thermalConductivity;
@@ -2514,7 +2514,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       return 0.5 * (gasTemperature + liquidTemperature);
     }
     return (gasCoefficient * gasTemperature + liquidCoefficient * liquidTemperature)
-	/ (gasCoefficient + liquidCoefficient);
+        / (gasCoefficient + liquidCoefficient);
   }
 
   /**
@@ -2606,7 +2606,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     }
     for (int i = 0; i < phase.getNumberOfComponents(); i++) {
       if (component.equals(phase.getComponent(i).getComponentName())) {
-	return i;
+        return i;
       }
     }
     return -1;
@@ -2643,8 +2643,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       return baseCoefficient;
     }
     return scaleFilmCoefficient(baseCoefficient,
-	binaryDiffusivity(phase, firstComponent, secondComponent, referenceDiffusivity, gasPhase),
-	referenceDiffusivity);
+        binaryDiffusivity(phase, firstComponent, secondComponent, referenceDiffusivity, gasPhase),
+        referenceDiffusivity);
   }
 
   /**
@@ -2678,8 +2678,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     double resistance = 0.0;
     for (int i = 0; i < phase.getNumberOfComponents(); i++) {
       if (i != componentIndex) {
-	double diffusivity = binaryDiffusivity(phase, componentIndex, i, referenceDiffusivity, gasPhase);
-	resistance += moleFraction(phase, i) / diffusivity;
+        double diffusivity = binaryDiffusivity(phase, componentIndex, i, referenceDiffusivity, gasPhase);
+        resistance += moleFraction(phase, i) / diffusivity;
       }
     }
     if (isFinitePositive(resistance)) {
@@ -2703,7 +2703,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     try {
       double value = phase.getPhysicalProperties().getDiffusionCoefficient(firstComponent, secondComponent);
       if (isFinitePositive(value)) {
-	return value;
+        return value;
       }
     } catch (RuntimeException ex) {
       // Fallback below uses effective component diffusivity or robust defaults.
@@ -2711,7 +2711,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     try {
       double value = phase.getPhysicalProperties().getEffectiveDiffusionCoefficient(firstComponent);
       if (isFinitePositive(value)) {
-	return value;
+        return value;
       }
     } catch (RuntimeException ex) {
       // Fallback below keeps Maxwell-Stefan correction robust for sparse property models.
@@ -2739,9 +2739,9 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     components.addAll(getComponentNames(currentLiquid));
     for (String component : components) {
       residual = Math.max(residual,
-	  Math.abs(componentMoles(previousGas, component) - componentMoles(currentGas, component)));
+          Math.abs(componentMoles(previousGas, component) - componentMoles(currentGas, component)));
       residual = Math.max(residual,
-	  Math.abs(componentMoles(previousLiquid, component) - componentMoles(currentLiquid, component)));
+          Math.abs(componentMoles(previousLiquid, component) - componentMoles(currentLiquid, component)));
     }
     return residual;
   }
@@ -2792,7 +2792,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     }
     for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
       if (system.getPhase(phase).getType() != PhaseType.GAS) {
-	return system.getPhase(phase);
+        return system.getPhase(phase);
       }
     }
     return system.getPhase(0);
@@ -2811,13 +2811,13 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     PhysicalProperties properties = phase.getPhysicalProperties();
     for (int component = 0; component < phase.getNumberOfComponents(); component++) {
       try {
-	double value = properties.getEffectiveDiffusionCoefficient(component);
-	if (isFinitePositive(value)) {
-	  sum += value;
-	  count++;
-	}
+        double value = properties.getEffectiveDiffusionCoefficient(component);
+        if (isFinitePositive(value)) {
+          sum += value;
+          count++;
+        }
       } catch (RuntimeException ex) {
-	// Fallback below keeps the column robust when a diffusion model is unavailable.
+        // Fallback below keeps the column robust when a diffusion model is unavailable.
       }
     }
     if (count > 0) {
@@ -2839,14 +2839,14 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     flashAndInitialize(mixed);
     try {
       if (mixed.hasPhaseType(PhaseType.GAS) && mixed.getNumberOfPhases() > 1) {
-	int gasPhaseNumber = mixed.getPhaseNumberOfPhase(PhaseType.GAS);
-	int liquidPhaseNumber = getLiquidPhaseNumber(mixed);
-	if (liquidPhaseNumber >= 0 && liquidPhaseNumber != gasPhaseNumber) {
-	  double value = mixed.getInterphaseProperties().getSurfaceTension(gasPhaseNumber, liquidPhaseNumber);
-	  if (isFinitePositive(value)) {
-	    return value;
-	  }
-	}
+        int gasPhaseNumber = mixed.getPhaseNumberOfPhase(PhaseType.GAS);
+        int liquidPhaseNumber = getLiquidPhaseNumber(mixed);
+        if (liquidPhaseNumber >= 0 && liquidPhaseNumber != gasPhaseNumber) {
+          double value = mixed.getInterphaseProperties().getSurfaceTension(gasPhaseNumber, liquidPhaseNumber);
+          if (isFinitePositive(value)) {
+            return value;
+          }
+        }
       }
     } catch (RuntimeException ex) {
       return DEFAULT_SURFACE_TENSION;
@@ -2867,8 +2867,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       String component = components.get(i);
       double moles = componentMoles(source, component);
       if (moles > 0.0) {
-	target.addComponent(component, moles);
-	addedComponent = true;
+        target.addComponent(component, moles);
+        addedComponent = true;
       }
     }
     if (addedComponent) {
@@ -2886,11 +2886,11 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     try {
       system.createDatabase(true);
       if (mixingRuleName != null && !mixingRuleName.trim().isEmpty()) {
-	system.setMixingRule(mixingRuleName);
+        system.setMixingRule(mixingRuleName);
       }
     } catch (RuntimeException ex) {
       if (mixingRuleName == null || mixingRuleName.trim().isEmpty()) {
-	system.setMixingRule("classic");
+        system.setMixingRule("classic");
       }
     }
   }
@@ -2913,7 +2913,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     }
     for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
       if (system.getPhase(phase).getType() != PhaseType.GAS) {
-	return phase;
+        return phase;
       }
     }
     return -1;
@@ -3213,15 +3213,15 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
      * @param enthalpyBalanceResidualW total outlet enthalpy-balance residual in W-equivalent stream basis
      */
     public SegmentResult(int segmentNumber, double heightFromBottom, double gasTemperatureK, double liquidTemperatureK,
-	double gasPressureBar, double liquidPressureBar, double gasMolarFlow, double liquidMolarFlow, double gasDensity,
-	double liquidDensity, double gasViscosity, double liquidViscosity, double gasDiffusivity,
-	double liquidDiffusivity, double wettedArea, double kGa, double kLa, double gasHeatTransferCoefficient,
-	double liquidHeatTransferCoefficient, double overallHeatTransferCoefficient, double interfaceTemperatureK,
-	double heatTransferRateW, double pressureDropPerMeter, double percentFlood, double netMolarTransfer,
-	Map<String, Double> componentMoleTransfer, Map<String, Double> interfaceGasMoleFractions,
-	Map<String, Double> interfaceLiquidMoleFractions, Map<String, Double> interfaceEquilibriumRatios,
-	String segmentSolver, int residualIterations, double maxFluxResidualMolPerSec, double heatBalanceResidualW,
-	double enthalpyBalanceResidualW) {
+        double gasPressureBar, double liquidPressureBar, double gasMolarFlow, double liquidMolarFlow, double gasDensity,
+        double liquidDensity, double gasViscosity, double liquidViscosity, double gasDiffusivity,
+        double liquidDiffusivity, double wettedArea, double kGa, double kLa, double gasHeatTransferCoefficient,
+        double liquidHeatTransferCoefficient, double overallHeatTransferCoefficient, double interfaceTemperatureK,
+        double heatTransferRateW, double pressureDropPerMeter, double percentFlood, double netMolarTransfer,
+        Map<String, Double> componentMoleTransfer, Map<String, Double> interfaceGasMoleFractions,
+        Map<String, Double> interfaceLiquidMoleFractions, Map<String, Double> interfaceEquilibriumRatios,
+        String segmentSolver, int residualIterations, double maxFluxResidualMolPerSec, double heatBalanceResidualW,
+        double enthalpyBalanceResidualW) {
       this.segmentNumber = segmentNumber;
       this.heightFromBottom = heightFromBottom;
       this.gasTemperatureK = gasTemperatureK;
@@ -3608,7 +3608,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
      * @param segmentResults segment profile results
      */
     private CounterCurrentSolution(SystemInterface gasOutlet, SystemInterface liquidOutlet,
-	List<SystemInterface> liquidLeavingSegments, List<SegmentResult> segmentResults) {
+        List<SystemInterface> liquidLeavingSegments, List<SegmentResult> segmentResults) {
       this.gasOutlet = gasOutlet;
       this.liquidOutlet = liquidOutlet;
       this.liquidLeavingSegments = liquidLeavingSegments;
@@ -3675,10 +3675,10 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
      * @param percentFlood percent flooding
      */
     private TransportSnapshot(double gasDensity, double liquidDensity, double gasViscosity, double liquidViscosity,
-	double gasDiffusivity, double liquidDiffusivity, double wettedArea, double kGa, double kLa,
-	double gasHeatCapacity, double liquidHeatCapacity, double gasHeatTransferCoefficient,
-	double liquidHeatTransferCoefficient, double overallHeatTransferCoefficient, double interfaceTemperatureK,
-	double pressureDropPerMeter, double percentFlood) {
+        double gasDiffusivity, double liquidDiffusivity, double wettedArea, double kGa, double kLa,
+        double gasHeatCapacity, double liquidHeatCapacity, double gasHeatTransferCoefficient,
+        double liquidHeatTransferCoefficient, double overallHeatTransferCoefficient, double interfaceTemperatureK,
+        double pressureDropPerMeter, double percentFlood) {
       this.gasDensity = gasDensity;
       this.liquidDensity = liquidDensity;
       this.gasViscosity = gasViscosity;
@@ -3725,8 +3725,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
      * @param liquidMolarEnthalpies liquid-side component molar enthalpies by component
      */
     private InterfaceEquilibrium(double interfaceTemperatureK, Map<String, Double> gasMoleFractions,
-	Map<String, Double> liquidMoleFractions, Map<String, Double> equilibriumRatios,
-	Map<String, Double> gasMolarEnthalpies, Map<String, Double> liquidMolarEnthalpies) {
+        Map<String, Double> liquidMoleFractions, Map<String, Double> equilibriumRatios,
+        Map<String, Double> gasMolarEnthalpies, Map<String, Double> liquidMolarEnthalpies) {
       this.interfaceTemperatureK = interfaceTemperatureK;
       this.gasMoleFractions = new LinkedHashMap<String, Double>(gasMoleFractions);
       this.liquidMoleFractions = new LinkedHashMap<String, Double>(liquidMoleFractions);
@@ -3819,8 +3819,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
      * @param liquidOutlet column liquid outlet system
      */
     private ColumnState(List<SystemInterface> gasEntering, List<SystemInterface> gasLeaving,
-	List<SystemInterface> liquidEntering, List<SystemInterface> liquidLeaving, SystemInterface gasOutlet,
-	SystemInterface liquidOutlet) {
+        List<SystemInterface> liquidEntering, List<SystemInterface> liquidLeaving, SystemInterface gasOutlet,
+        SystemInterface liquidOutlet) {
       this.gasEntering = gasEntering;
       this.gasLeaving = gasLeaving;
       this.liquidEntering = liquidEntering;
@@ -3860,8 +3860,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     private void set(int row, int column, double value) {
       Map<Integer, Double> rowValues = values.get(Integer.valueOf(row));
       if (rowValues == null) {
-	rowValues = new LinkedHashMap<Integer, Double>();
-	values.put(Integer.valueOf(row), rowValues);
+        rowValues = new LinkedHashMap<Integer, Double>();
+        values.put(Integer.valueOf(row), rowValues);
       }
       rowValues.put(Integer.valueOf(column), Double.valueOf(value));
     }
@@ -3874,10 +3874,10 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     private Matrix toDenseMatrix() {
       double[][] dense = new double[rows][columns];
       for (Map.Entry<Integer, Map<Integer, Double>> rowEntry : values.entrySet()) {
-	int row = rowEntry.getKey().intValue();
-	for (Map.Entry<Integer, Double> columnEntry : rowEntry.getValue().entrySet()) {
-	  dense[row][columnEntry.getKey().intValue()] = columnEntry.getValue().doubleValue();
-	}
+        int row = rowEntry.getKey().intValue();
+        for (Map.Entry<Integer, Double> columnEntry : rowEntry.getValue().entrySet()) {
+          dense[row][columnEntry.getKey().intValue()] = columnEntry.getValue().doubleValue();
+        }
       }
       return new Matrix(dense);
     }
@@ -3921,9 +3921,9 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
      * @param maxLiquidComponentBalanceResidual maximum liquid component-balance residual in mol/s
      */
     private ColumnResidualEvaluation(double[] unknowns, double[] normalizedResiduals, double norm,
-	CounterCurrentSolution solution, int iterations, double maxFluxResidual, double maxHeatResidual,
-	double maxEnergyBalanceResidual, double maxGasComponentBalanceResidual,
-	double maxLiquidComponentBalanceResidual) {
+        CounterCurrentSolution solution, int iterations, double maxFluxResidual, double maxHeatResidual,
+        double maxEnergyBalanceResidual, double maxGasComponentBalanceResidual,
+        double maxLiquidComponentBalanceResidual) {
       this.unknowns = unknowns.clone();
       this.normalizedResiduals = normalizedResiduals.clone();
       this.norm = norm;
@@ -3944,7 +3944,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
      */
     private ColumnResidualEvaluation withIterations(int iterations) {
       return new ColumnResidualEvaluation(unknowns, normalizedResiduals, norm, solution, iterations, maxFluxResidual,
-	  maxHeatResidual, maxEnergyBalanceResidual, maxGasComponentBalanceResidual, maxLiquidComponentBalanceResidual);
+          maxHeatResidual, maxEnergyBalanceResidual, maxGasComponentBalanceResidual, maxLiquidComponentBalanceResidual);
     }
   }
 
@@ -3986,8 +3986,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
      * @param iterations residual iterations used for this evaluation
      */
     private SegmentResidualEvaluation(InterfaceEquilibrium interfaceEquilibrium, Map<String, Double> componentTransfers,
-	double[] normalizedResiduals, double norm, double maxFluxResidualMolPerSec, double heatBalanceResidualW,
-	double heatTransferRateW, double gasTargetEnthalpy, double liquidTargetEnthalpy, int iterations) {
+        double[] normalizedResiduals, double norm, double maxFluxResidualMolPerSec, double heatBalanceResidualW,
+        double heatTransferRateW, double gasTargetEnthalpy, double liquidTargetEnthalpy, int iterations) {
       this.interfaceEquilibrium = interfaceEquilibrium;
       this.componentTransfers = new LinkedHashMap<String, Double>(componentTransfers);
       this.normalizedResiduals = normalizedResiduals.clone();

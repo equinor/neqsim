@@ -65,7 +65,7 @@ public class FrictionTheoryViscosityMethodTest extends neqsim.NeqSimTest {
     double baseVisc = plusSystem.getPhase("gas").getViscosity("kg/msec");
 
     ((FrictionTheoryViscosityMethod) plusSystem.getPhase("gas").getPhysicalProperties().getViscosityModel())
-	.setTBPviscosityCorrection(1.2);
+        .setTBPviscosityCorrection(1.2);
     plusSystem.initProperties();
     double corrected = plusSystem.getPhase("gas").getViscosity("kg/msec");
     assertTrue(corrected > baseVisc);

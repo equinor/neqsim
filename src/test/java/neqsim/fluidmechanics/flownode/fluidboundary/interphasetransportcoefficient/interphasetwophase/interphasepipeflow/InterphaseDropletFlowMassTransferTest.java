@@ -145,7 +145,7 @@ public class InterphaseDropletFlowMassTransferTest {
     // Abramzon-Sirignano with B_M > 0 should give lower Sh* (thicker film)
     // which means lower kc
     assertTrue(kcAS < kcStandard,
-	"Abramzon-Sirignano should reduce kc due to blowing. kcAS=" + kcAS + " kcStandard=" + kcStandard);
+        "Abramzon-Sirignano should reduce kc due to blowing. kcAS=" + kcAS + " kcStandard=" + kcStandard);
     assertTrue(kcAS > 0, "Abramzon-Sirignano kc should still be positive");
   }
 
@@ -173,7 +173,7 @@ public class InterphaseDropletFlowMassTransferTest {
   void testDropletMassTransferDiffersFromStratified() {
     // Create a stratified flow node with same system
     neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode stratNode = new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode(
-	testSystem, pipe);
+        testSystem, pipe);
     stratNode.initFlowCalc();
 
     InterphaseStratifiedFlow stratInterphase = new InterphaseStratifiedFlow(stratNode);
@@ -185,7 +185,7 @@ public class InterphaseDropletFlowMassTransferTest {
     // The two should NOT be equal (the old bug made them identical)
     // This test ensures the fix is working
     assertTrue(Math.abs(kcDropletGas - kcStratifiedGas) > 1e-10, "Droplet and stratified gas-side kc should differ. "
-	+ "kcDroplet=" + kcDropletGas + " kcStrat=" + kcStratifiedGas);
+        + "kcDroplet=" + kcDropletGas + " kcStrat=" + kcStratifiedGas);
   }
 
   /**

@@ -146,7 +146,7 @@ class CompressorWaterWashProcessTest extends neqsim.NeqSimTest {
     assertTrue(power > 0, "Compressor power should be positive");
     assertTrue(polytropicHead > 0, "Polytropic head should be positive");
     assertTrue(polytropicEfficiency > 0.5 && polytropicEfficiency < 1.0,
-	"Polytropic efficiency should be between 50% and 100%");
+        "Polytropic efficiency should be between 50% and 100%");
     assertEquals(COMP_POUT, outletPressure, 1.0, "Outlet pressure should match setpoint");
     assertEquals(COMP_TOUT, outletTemperature, 2.0, "Outlet temperature should match setpoint");
   }
@@ -279,12 +279,12 @@ class CompressorWaterWashProcessTest extends neqsim.NeqSimTest {
       Mixer mixerFeed = new Mixer("feedMix");
 
       if (washRates[i] > 0.0) {
-	Stream feedAqStream = new Stream("WashLiquid", washFluid.clone());
-	feedAqStream.setFlowRate(washRates[i], "kg/hr");
-	feedAqStream.setTemperature(COMP_TIN, "K");
-	feedAqStream.setPressure(COMP_PIN, "bara");
-	processOps.add(feedAqStream);
-	mixerFeed.addStream(feedAqStream);
+        Stream feedAqStream = new Stream("WashLiquid", washFluid.clone());
+        feedAqStream.setFlowRate(washRates[i], "kg/hr");
+        feedAqStream.setTemperature(COMP_TIN, "K");
+        feedAqStream.setPressure(COMP_PIN, "bara");
+        processOps.add(feedAqStream);
+        mixerFeed.addStream(feedAqStream);
       }
       mixerFeed.addStream(feedGasStream);
       processOps.add(mixerFeed);
@@ -354,7 +354,7 @@ class CompressorWaterWashProcessTest extends neqsim.NeqSimTest {
     assertTrue(tOut > 20.0, "Outlet T must be above inlet (26.85 C) — got " + tOut + " C");
     assertTrue(tOut < 500.0, "Outlet T must be physically bounded — got " + tOut + " C");
     assertTrue(Double.isFinite(rhoOut) && rhoOut > 0.0 && rhoOut < 5000.0,
-	"Outlet density must be in physical range — got " + rhoOut + " kg/m3");
+        "Outlet density must be in physical range — got " + rhoOut + " kg/m3");
     assertEquals(10, profileLength, "Property profile must contain exactly numberOfCompressorCalcSteps fluids");
   }
 }

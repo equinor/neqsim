@@ -182,12 +182,12 @@ public final class EmergencyShutdownTestResult implements Serializable {
       String tag = entry.getKey();
       Double value = entry.getValue();
       if (value == null) {
-	continue;
+        continue;
       }
       SignalStats stats = signalStats.get(tag);
       if (stats == null) {
-	stats = new SignalStats(tag, units == null ? "" : units.get(tag));
-	signalStats.put(tag, stats);
+        stats = new SignalStats(tag, units == null ? "" : units.get(tag));
+        signalStats.put(tag, stats);
       }
       stats.record(value.doubleValue());
     }
@@ -328,12 +328,12 @@ public final class EmergencyShutdownTestResult implements Serializable {
      */
     private void record(double value) {
       if (Double.isNaN(value) || Double.isInfinite(value)) {
-	return;
+        return;
       }
       if (sampleCount == 0) {
-	initialValue = value;
-	minValue = value;
-	maxValue = value;
+        initialValue = value;
+        minValue = value;
+        maxValue = value;
       }
       finalValue = value;
       minValue = Math.min(minValue, value);
@@ -478,7 +478,7 @@ public final class EmergencyShutdownTestResult implements Serializable {
      * @param toleranceFraction relative tolerance fraction
      */
     FieldComparison(String logicalTag, String historianTag, String unit, Double fieldValue, Double modelValue,
-	double toleranceFraction) {
+        double toleranceFraction) {
       this.logicalTag = logicalTag == null ? "" : logicalTag;
       this.historianTag = historianTag == null ? "" : historianTag;
       this.unit = unit == null ? "" : unit;

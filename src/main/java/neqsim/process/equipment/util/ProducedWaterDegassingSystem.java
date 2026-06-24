@@ -403,12 +403,12 @@ public class ProducedWaterDegassingSystem implements Serializable {
       Map<String, Double> modelComposition = getModelGasComposition();
 
       for (Map.Entry<String, Double> labEntry : labGasComposition.entrySet()) {
-	String component = labEntry.getKey();
-	double labValue = labEntry.getValue() * 100.0; // Convert to mol%
-	double modelValue = modelComposition.getOrDefault(component, 0.0) * 100.0;
-	compositionDeviations.put(component + "_model_molpct", modelValue);
-	compositionDeviations.put(component + "_lab_molpct", labValue);
-	compositionDeviations.put(component + "_deviation_molpct", modelValue - labValue);
+        String component = labEntry.getKey();
+        double labValue = labEntry.getValue() * 100.0; // Convert to mol%
+        double modelValue = modelComposition.getOrDefault(component, 0.0) * 100.0;
+        compositionDeviations.put(component + "_model_molpct", modelValue);
+        compositionDeviations.put(component + "_lab_molpct", labValue);
+        compositionDeviations.put(component + "_deviation_molpct", modelValue - labValue);
       }
       validation.put("gasComposition", compositionDeviations);
     }
@@ -584,7 +584,7 @@ public class ProducedWaterDegassingSystem implements Serializable {
   public double getTotalCO2EmissionRate(String unit) {
     checkRun();
     return degasserEmissions.getCO2EmissionRate(unit) + cfuEmissions.getCO2EmissionRate(unit)
-	+ caissonEmissions.getCO2EmissionRate(unit);
+        + caissonEmissions.getCO2EmissionRate(unit);
   }
 
   /**
@@ -596,7 +596,7 @@ public class ProducedWaterDegassingSystem implements Serializable {
   public double getTotalMethaneEmissionRate(String unit) {
     checkRun();
     return degasserEmissions.getMethaneEmissionRate(unit) + cfuEmissions.getMethaneEmissionRate(unit)
-	+ caissonEmissions.getMethaneEmissionRate(unit);
+        + caissonEmissions.getMethaneEmissionRate(unit);
   }
 
   /**
@@ -608,7 +608,7 @@ public class ProducedWaterDegassingSystem implements Serializable {
   public double getTotalNMVOCEmissionRate(String unit) {
     checkRun();
     return degasserEmissions.getNMVOCEmissionRate(unit) + cfuEmissions.getNMVOCEmissionRate(unit)
-	+ caissonEmissions.getNMVOCEmissionRate(unit);
+        + caissonEmissions.getNMVOCEmissionRate(unit);
   }
 
   /**
@@ -620,7 +620,7 @@ public class ProducedWaterDegassingSystem implements Serializable {
   public double getTotalCO2Equivalents(String unit) {
     checkRun();
     return degasserEmissions.getCO2Equivalents(unit) + cfuEmissions.getCO2Equivalents(unit)
-	+ caissonEmissions.getCO2Equivalents(unit);
+        + caissonEmissions.getCO2Equivalents(unit);
   }
 
   /**
@@ -691,24 +691,24 @@ public class ProducedWaterDegassingSystem implements Serializable {
     sb.append("    ─────────────────────────────────────────────────\n");
 
     sb.append(String.format("    Degasser     %8.2f  %8.2f  %7.2f  %7.2f%n", degasserEmissions.getTotalGasRate("kg/hr"),
-	degasserEmissions.getCO2EmissionRate("kg/hr"), degasserEmissions.getMethaneEmissionRate("kg/hr"),
-	degasserEmissions.getNMVOCEmissionRate("kg/hr")));
+        degasserEmissions.getCO2EmissionRate("kg/hr"), degasserEmissions.getMethaneEmissionRate("kg/hr"),
+        degasserEmissions.getNMVOCEmissionRate("kg/hr")));
 
     sb.append(String.format("    CFU          %8.2f  %8.2f  %7.2f  %7.2f%n", cfuEmissions.getTotalGasRate("kg/hr"),
-	cfuEmissions.getCO2EmissionRate("kg/hr"), cfuEmissions.getMethaneEmissionRate("kg/hr"),
-	cfuEmissions.getNMVOCEmissionRate("kg/hr")));
+        cfuEmissions.getCO2EmissionRate("kg/hr"), cfuEmissions.getMethaneEmissionRate("kg/hr"),
+        cfuEmissions.getNMVOCEmissionRate("kg/hr")));
 
     sb.append(String.format("    Caisson      %8.2f  %8.2f  %7.2f  %7.2f%n", caissonEmissions.getTotalGasRate("kg/hr"),
-	caissonEmissions.getCO2EmissionRate("kg/hr"), caissonEmissions.getMethaneEmissionRate("kg/hr"),
-	caissonEmissions.getNMVOCEmissionRate("kg/hr")));
+        caissonEmissions.getCO2EmissionRate("kg/hr"), caissonEmissions.getMethaneEmissionRate("kg/hr"),
+        caissonEmissions.getNMVOCEmissionRate("kg/hr")));
 
     sb.append("    ─────────────────────────────────────────────────\n");
 
     double totalGas = degasserEmissions.getTotalGasRate("kg/hr") + cfuEmissions.getTotalGasRate("kg/hr")
-	+ caissonEmissions.getTotalGasRate("kg/hr");
+        + caissonEmissions.getTotalGasRate("kg/hr");
 
     sb.append(String.format("    TOTAL        %8.2f  %8.2f  %7.2f  %7.2f%n", totalGas, getTotalCO2EmissionRate("kg/hr"),
-	getTotalMethaneEmissionRate("kg/hr"), getTotalNMVOCEmissionRate("kg/hr")));
+        getTotalMethaneEmissionRate("kg/hr"), getTotalNMVOCEmissionRate("kg/hr")));
 
     sb.append("\n  ANNUAL EMISSIONS (tonnes/year, assuming 8760 hrs):\n");
     sb.append(String.format("    CO2:              %.1f tonnes/year%n", getTotalCO2EmissionRate("tonnes/year")));
@@ -773,7 +773,7 @@ public class ProducedWaterDegassingSystem implements Serializable {
     sb.append(String.format("    Annual water volume:   %.0f m³/year%n", annualWaterVolume_m3));
     sb.append(String.format("    Pressure drop:         %.1f bar%n", pressureDrop_bar));
     sb.append(String.format("    Handbook factors:      f_CH4=%.1f, f_nmVOC=%.1f g/m³/bar%n",
-	EmissionsCalculator.HANDBOOK_F_CH4, EmissionsCalculator.HANDBOOK_F_NMVOC));
+        EmissionsCalculator.HANDBOOK_F_CH4, EmissionsCalculator.HANDBOOK_F_NMVOC));
 
     sb.append("\n  ANNUAL EMISSIONS (tonnes/year):\n");
     sb.append("    ─────────────────────────────────────────────────────────────\n");
@@ -781,15 +781,15 @@ public class ProducedWaterDegassingSystem implements Serializable {
     sb.append("    ─────────────────────────────────────────────────────────────\n");
 
     sb.append(String.format("    CO2             %10.1f       %10.1f       %+.1f%%%n", thermoCO2, 0.0,
-	thermoCO2 > 0 ? 100.0 : 0.0)); // Conv misses CO2
+        thermoCO2 > 0 ? 100.0 : 0.0)); // Conv misses CO2
     sb.append(String.format("    Methane (CH4)   %10.1f       %10.1f       %+.1f%%%n", thermoCH4, convCH4,
-	convCH4 > 0 ? ((thermoCH4 - convCH4) / convCH4 * 100) : 0.0));
+        convCH4 > 0 ? ((thermoCH4 - convCH4) / convCH4 * 100) : 0.0));
     sb.append(String.format("    nmVOC (C2+)     %10.1f       %10.1f       %+.1f%%%n", thermoNMVOC, convNMVOC,
-	convNMVOC > 0 ? ((thermoNMVOC - convNMVOC) / convNMVOC * 100) : 0.0));
+        convNMVOC > 0 ? ((thermoNMVOC - convNMVOC) / convNMVOC * 100) : 0.0));
 
     sb.append("    ─────────────────────────────────────────────────────────────\n");
     sb.append(String.format("    CO2 Equivalents %10.1f       %10.1f       %+.1f%%%n", thermoCO2eq, convCO2eq,
-	convCO2eq > 0 ? ((thermoCO2eq - convCO2eq) / convCO2eq * 100) : 0.0));
+        convCO2eq > 0 ? ((thermoCO2eq - convCO2eq) / convCO2eq * 100) : 0.0));
 
     sb.append("\n  KEY FINDINGS:\n");
     if (thermoCO2 > 0) {
@@ -861,7 +861,7 @@ public class ProducedWaterDegassingSystem implements Serializable {
     double annualWaterVolume = (waterFlowRate_kghr / 1000.0) * 8760.0;
     double pressureDrop = inletPressure_bara - caissonPressure_bara;
     data.put("conventionalMethodComparison",
-	EmissionsCalculator.calculateConventionalEmissions(annualWaterVolume, pressureDrop));
+        EmissionsCalculator.calculateConventionalEmissions(annualWaterVolume, pressureDrop));
 
     return data;
   }

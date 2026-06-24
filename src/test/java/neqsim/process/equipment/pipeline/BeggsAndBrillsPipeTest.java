@@ -12,7 +12,7 @@ public class BeggsAndBrillsPipeTest {
   @Test
   public void testFlowNoVolumeCorrection() {
     neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 15),
-	ThermodynamicConstantsInterface.referencePressure);
+        ThermodynamicConstantsInterface.referencePressure);
 
     testSystem.addComponent("nC10", 50, "MSm^3/day");
     testSystem.setMixingRule(2);
@@ -29,7 +29,7 @@ public class BeggsAndBrillsPipeTest {
   @Test
   public void testFlowVolumeCorrection() {
     neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 15),
-	ThermodynamicConstantsInterface.referencePressure);
+        ThermodynamicConstantsInterface.referencePressure);
 
     testSystem.addComponent("nC10", 50, "MSm^3/day");
     testSystem.setMixingRule(2);
@@ -46,7 +46,7 @@ public class BeggsAndBrillsPipeTest {
   @Test
   public void testVelocityCapacityConstraintUsesRhonePoulencWhenEnabled() {
     neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 20),
-	ThermodynamicConstantsInterface.referencePressure);
+        ThermodynamicConstantsInterface.referencePressure);
     testSystem.addComponent("methane", 1.0);
     testSystem.setMixingRule(2);
     testSystem.setPressure(50.0, "bara");
@@ -78,7 +78,7 @@ public class BeggsAndBrillsPipeTest {
     double massFlowRate = 1100000.000000000;
 
     neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 45),
-	ThermodynamicConstantsInterface.referencePressure);
+        ThermodynamicConstantsInterface.referencePressure);
 
     testSystem.addComponent("methane", 0.5);
     testSystem.addComponent("nC10", 0.5);
@@ -118,7 +118,7 @@ public class BeggsAndBrillsPipeTest {
     Assertions.assertEquals(32.567, pressureOut, 1);
     Assertions.assertEquals(39.3374, temperatureOut, 1);
     Assertions.assertEquals(pipe.getOutletSuperficialVelocity(),
-	pipe.getSegmentMixtureSuperficialVelocity(pipe.getNumberOfIncrements()), 0.1);
+        pipe.getSegmentMixtureSuperficialVelocity(pipe.getNumberOfIncrements()), 0.1);
   }
 
   @Test
@@ -128,7 +128,7 @@ public class BeggsAndBrillsPipeTest {
     double massFlowRate = 110000.000000000;
 
     neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 45),
-	ThermodynamicConstantsInterface.referencePressure);
+        ThermodynamicConstantsInterface.referencePressure);
 
     testSystem.addComponent("methane", 0.5);
     testSystem.addComponent("nC10", 0.5);
@@ -165,7 +165,7 @@ public class BeggsAndBrillsPipeTest {
     Assertions.assertEquals(temperatureOut, 38.8, 0.1);
     Assertions.assertEquals(pipe.getFlowRegimeEnum(), PipeBeggsAndBrills.FlowRegime.INTERMITTENT);
     Assertions.assertEquals(pipe.getOutletSuperficialVelocity(),
-	pipe.getSegmentMixtureSuperficialVelocity(pipe.getNumberOfIncrements()), 0.1);
+        pipe.getSegmentMixtureSuperficialVelocity(pipe.getNumberOfIncrements()), 0.1);
   }
 
   @Test
@@ -175,7 +175,7 @@ public class BeggsAndBrillsPipeTest {
     double massFlowRate = 110000.000000000;
 
     neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 45),
-	ThermodynamicConstantsInterface.referencePressure);
+        ThermodynamicConstantsInterface.referencePressure);
 
     testSystem.addComponent("methane", 0.3);
     testSystem.addComponent("nC10", 0.4);
@@ -227,7 +227,7 @@ public class BeggsAndBrillsPipeTest {
     Assertions.assertEquals(pipe.getSegmentLength(10), 410.0, 1.0);
     Assertions.assertEquals(pipe.getSegmentElevation(10), 300, 1.0);
     Assertions.assertEquals(pipe.getOutletSuperficialVelocity(),
-	pipe.getSegmentMixtureSuperficialVelocity(pipe.getNumberOfIncrements()), 0.1);
+        pipe.getSegmentMixtureSuperficialVelocity(pipe.getNumberOfIncrements()), 0.1);
 
     pipe.setRunIsothermal(true);
     pipe.run();
@@ -243,7 +243,7 @@ public class BeggsAndBrillsPipeTest {
     double massFlowRate = 110000.000000000;
 
     neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 45),
-	ThermodynamicConstantsInterface.referencePressure);
+        ThermodynamicConstantsInterface.referencePressure);
 
     testSystem.addComponent("methane", 1);
     testSystem.setMixingRule(2);
@@ -294,10 +294,10 @@ public class BeggsAndBrillsPipeTest {
     Assertions.assertEquals(pipe.getSegmentElevation(10), -1000, 1.0);
     Assertions.assertEquals(pipe.getNumberOfIncrements(), 10, 0.1);
     Assertions.assertEquals(pipe.getOutletSuperficialVelocity(),
-	pipe.getSegmentMixtureSuperficialVelocity(pipe.getNumberOfIncrements()), 0.1);
+        pipe.getSegmentMixtureSuperficialVelocity(pipe.getNumberOfIncrements()), 0.1);
 
     neqsim.thermo.system.SystemInterface testSystem2 = new neqsim.thermo.system.SystemSrkEos((273.15 + 45),
-	ThermodynamicConstantsInterface.referencePressure);
+        ThermodynamicConstantsInterface.referencePressure);
 
     testSystem2.addComponent("water", 1);
     testSystem2.setMixingRule(2);
@@ -329,7 +329,7 @@ public class BeggsAndBrillsPipeTest {
     Assertions.assertEquals(pressureOut2, 238.8205556280226, 1);
 
     neqsim.thermo.system.SystemInterface testSystem3 = new neqsim.thermo.system.SystemSrkEos((273.15 + 45),
-	ThermodynamicConstantsInterface.referencePressure);
+        ThermodynamicConstantsInterface.referencePressure);
 
     testSystem3.addComponent("ethane", 1);
     testSystem3.setMixingRule(2);
@@ -380,7 +380,7 @@ public class BeggsAndBrillsPipeTest {
     double constantSurfaceTemperature = 100; // C
 
     neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 45),
-	ThermodynamicConstantsInterface.referencePressure);
+        ThermodynamicConstantsInterface.referencePressure);
 
     testSystem.addComponent("water", 1.0);
     testSystem.setMixingRule(2);
@@ -444,7 +444,7 @@ public class BeggsAndBrillsPipeTest {
     double heatTransferCoeff = 755; // W/m2K
 
     neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 45),
-	ThermodynamicConstantsInterface.referencePressure);
+        ThermodynamicConstantsInterface.referencePressure);
     testSystem.addComponent("water", 1.0);
     testSystem.setMixingRule(2);
     testSystem.init(0);

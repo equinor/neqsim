@@ -72,10 +72,10 @@ public class TrappedLiquidFireRuptureStudy implements Serializable {
     double flangeRatingAmbientPa = flangeClassRatingPa(builder.flangeClass);
 
     TransientWallHeatTransfer wall = new TransientWallHeatTransfer(builder.wallThicknessM,
-	builder.wallThermalConductivityWPerMK, builder.wallDensityKgPerM3, builder.wallHeatCapacityJPerKgK,
-	initialTemperatureK, builder.wallNodes);
+        builder.wallThermalConductivityWPerMK, builder.wallDensityKgPerM3, builder.wallHeatCapacityJPerKgK,
+        initialTemperatureK, builder.wallNodes);
     TrappedLiquidFireRuptureResult.Builder result = TrappedLiquidFireRuptureResult.builder(builder.segmentId)
-	.geometry(builder.pipeInternalDiameterM, builder.inventory.getTotalVolumeM3());
+        .geometry(builder.pipeInternalDiameterM, builder.inventory.getTotalVolumeM3());
     addStandards(result);
     addInputWarnings(result, liquidMassKg);
 
@@ -85,34 +85,34 @@ public class TrappedLiquidFireRuptureStudy implements Serializable {
       double outerWallTemperatureK = wall.getOuterWallTemperature();
       double innerWallTemperatureK = wall.getInnerWallTemperature();
       double allowableStressPa = builder.material.allowableRuptureStressAt(outerWallTemperatureK,
-	  builder.tensileStrengthFactor);
+          builder.tensileStrengthFactor);
       double vonMisesStressPa = VesselRuptureCalculator.vonMisesStress(pressurePa, pipeInnerRadiusM,
-	  builder.wallThicknessM);
+          builder.wallThicknessM);
       double flangeRatingPa = temperatureReducedFlangeRating(flangeRatingAmbientPa, outerWallTemperatureK);
 
       result.addPoint(timeS, pressurePa / PA_PER_BARA, liquidTemperatureK, innerWallTemperatureK, outerWallTemperatureK,
-	  vonMisesStressPa / 1.0e6, allowableStressPa / 1.0e6, flangeRatingPa / PA_PER_BARA);
+          vonMisesStressPa / 1.0e6, allowableStressPa / 1.0e6, flangeRatingPa / PA_PER_BARA);
       recordEvents(result, timeS, pressurePa, vonMisesStressPa, allowableStressPa, flangeRatingPa, liquidTemperatureK);
       if (vonMisesStressPa >= allowableStressPa || pressurePa >= flangeRatingPa) {
-	break;
+        break;
       }
       if (i == steps) {
-	break;
+        break;
       }
 
       double previousMeanWallTemperatureK = wall.getMeanWallTemperature();
       double incidentFluxWPerM2 = builder.fireScenario.incidentHeatFlux(outerWallTemperatureK);
       wall.advanceTimeStep(builder.timeStepSeconds, liquidTemperatureK, builder.innerHeatTransferCoefficientWPerM2K,
-	  builder.fireScenario.getAmbientTemperatureK(), builder.outerHeatTransferCoefficientWPerM2K,
-	  incidentFluxWPerM2);
+          builder.fireScenario.getAmbientTemperatureK(), builder.outerHeatTransferCoefficientWPerM2K,
+          incidentFluxWPerM2);
       double heatAbsorbedByWallJ = wall.getHeatAbsorbed(exposedAreaM2, previousMeanWallTemperatureK);
       double incidentHeatJ = incidentFluxWPerM2 * exposedAreaM2 * builder.timeStepSeconds;
       double heatToLiquidJ = Math.max(0.0, incidentHeatJ - Math.max(0.0, heatAbsorbedByWallJ));
       liquidTemperatureK += heatToLiquidJ / (liquidMassKg * builder.liquidHeatCapacityJPerKgK);
       pressurePa = pressureFromThermalExpansion(initialPressurePa, initialTemperatureK, liquidTemperatureK);
       if (builder.reliefSetPressurePa > 0.0 && pressurePa >= builder.reliefSetPressurePa
-	  && builder.reliefLimitsPressure) {
-	pressurePa = builder.reliefSetPressurePa;
+          && builder.reliefLimitsPressure) {
+        pressurePa = builder.reliefSetPressurePa;
       }
     }
     addRecommendations(result);
@@ -170,7 +170,7 @@ public class TrappedLiquidFireRuptureStudy implements Serializable {
     }
     if (builder.inventory.getWarnings() != null) {
       for (String warning : builder.inventory.getWarnings()) {
-	result.addWarning("Inventory warning: " + warning);
+        result.addWarning("Inventory warning: " + warning);
       }
     }
     if (liquidMassKg <= 0.0) {
@@ -185,13 +185,13 @@ public class TrappedLiquidFireRuptureStudy implements Serializable {
    */
   private void addRecommendations(TrappedLiquidFireRuptureResult.Builder result) {
     result.addRecommendation(
-	"Verify trapped inventory and isolation boundaries from current P&IDs, line lists, and valve positions.");
+        "Verify trapped inventory and isolation boundaries from current P&IDs, line lists, and valve positions.");
     result.addRecommendation(
-	"Use certified material, flange, bolt, and gasket pressure-temperature data for final design decisions.");
+        "Use certified material, flange, bolt, and gasket pressure-temperature data for final design decisions.");
     result.addRecommendation(
-	"Evaluate PSV, thermal relief, drain/vent, or procedural safeguards for blocked-in liquid segments exposed to fire.");
+        "Evaluate PSV, thermal relief, drain/vent, or procedural safeguards for blocked-in liquid segments exposed to fire.");
     result.addRecommendation(
-	"Use the source-term handoff for consequence screening if pipe or flange failure is predicted.");
+        "Use the source-term handoff for consequence screening if pipe or flange failure is predicted.");
   }
 
   /**
@@ -325,7 +325,7 @@ public class TrappedLiquidFireRuptureStudy implements Serializable {
      */
     public Builder segmentId(String segmentId) {
       if (segmentId != null && !segmentId.trim().isEmpty()) {
-	this.segmentId = segmentId.trim();
+        this.segmentId = segmentId.trim();
       }
       return this;
     }
@@ -413,9 +413,9 @@ public class TrappedLiquidFireRuptureStudy implements Serializable {
      * @return this builder
      */
     public Builder pipeGeometry(double pipeInternalDiameter, String diameterUnit, double wallThickness,
-	String thicknessUnit, double exposedLength, String lengthUnit) {
+        String thicknessUnit, double exposedLength, String lengthUnit) {
       return pipeGeometry(toMeters(pipeInternalDiameter, diameterUnit), toMeters(wallThickness, thicknessUnit),
-	  toMeters(exposedLength, lengthUnit));
+          toMeters(exposedLength, lengthUnit));
     }
 
     /**
@@ -465,7 +465,7 @@ public class TrappedLiquidFireRuptureStudy implements Serializable {
      * @return this builder
      */
     public Builder liquidThermalProperties(double heatCapacityJPerKgK, double thermalExpansionPerK,
-	double bulkModulusPa) {
+        double bulkModulusPa) {
       this.liquidHeatCapacityJPerKgK = heatCapacityJPerKgK;
       this.liquidThermalExpansionPerK = thermalExpansionPerK;
       this.liquidBulkModulusPa = bulkModulusPa;
@@ -481,7 +481,7 @@ public class TrappedLiquidFireRuptureStudy implements Serializable {
      * @return this builder
      */
     public Builder wallThermalProperties(double densityKgPerM3, double heatCapacityJPerKgK,
-	double thermalConductivityWPerMK) {
+        double thermalConductivityWPerMK) {
       this.wallDensityKgPerM3 = densityKgPerM3;
       this.wallHeatCapacityJPerKgK = heatCapacityJPerKgK;
       this.wallThermalConductivityWPerMK = thermalConductivityWPerMK;
@@ -496,7 +496,7 @@ public class TrappedLiquidFireRuptureStudy implements Serializable {
      * @return this builder
      */
     public Builder heatTransferCoefficients(double innerHeatTransferCoefficientWPerM2K,
-	double outerHeatTransferCoefficientWPerM2K) {
+        double outerHeatTransferCoefficientWPerM2K) {
       this.innerHeatTransferCoefficientWPerM2K = innerHeatTransferCoefficientWPerM2K;
       this.outerHeatTransferCoefficientWPerM2K = outerHeatTransferCoefficientWPerM2K;
       return this;
@@ -551,17 +551,17 @@ public class TrappedLiquidFireRuptureStudy implements Serializable {
      */
     private void validate() {
       if (inventory == null) {
-	throw new IllegalStateException("inventory must be set");
+        throw new IllegalStateException("inventory must be set");
       }
       if (material == null) {
-	throw new IllegalStateException("material must be set");
+        throw new IllegalStateException("material must be set");
       }
       validatePositive(pipeInternalDiameterM, "pipeInternalDiameterM");
       validatePositive(pipeOuterDiameterM, "pipeOuterDiameterM");
       validatePositive(wallThicknessM, "wallThicknessM");
       validatePositive(exposedLengthM, "exposedLengthM");
       if (fireScenario == null) {
-	fireScenario = FireExposureScenario.api521PoolFire(exposedAreaM2(), 1.0);
+        fireScenario = FireExposureScenario.api521PoolFire(exposedAreaM2(), 1.0);
       }
       validatePositive(maxTimeSeconds, "maxTimeSeconds");
       validatePositive(timeStepSeconds, "timeStepSeconds");
@@ -575,7 +575,7 @@ public class TrappedLiquidFireRuptureStudy implements Serializable {
       validatePositive(outerHeatTransferCoefficientWPerM2K, "outerHeatTransferCoefficientWPerM2K");
       validatePositive(tensileStrengthFactor, "tensileStrengthFactor");
       if (wallNodes < 3) {
-	throw new IllegalArgumentException("wallNodes must be at least 3");
+        throw new IllegalArgumentException("wallNodes must be at least 3");
       }
     }
   }

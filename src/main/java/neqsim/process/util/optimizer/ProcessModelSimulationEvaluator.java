@@ -447,7 +447,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      */
     public double evaluateRaw(ProcessModel model) {
       if (evaluator == null) {
-	throw new IllegalStateException("Objective evaluator is not set for " + name);
+        throw new IllegalStateException("Objective evaluator is not set for " + name);
       }
       return evaluator.applyAsDouble(model);
     }
@@ -544,7 +544,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      * @param upperBound upper bound
      */
     public ConstraintDefinition(String name, ToDoubleFunction<ProcessModel> evaluator, double lowerBound,
-	double upperBound) {
+        double upperBound) {
       this.name = name;
       this.evaluator = evaluator;
       this.lowerBound = lowerBound;
@@ -768,7 +768,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      * @param capacityConstraint captured capacity constraint
      */
     public void setCapacityMetadata(String areaName, String equipmentName, String equipmentConstraintName,
-	CapacityConstraint capacityConstraint) {
+        CapacityConstraint capacityConstraint) {
       this.capacityConstraint = true;
       this.areaName = areaName;
       this.equipmentName = equipmentName;
@@ -784,7 +784,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      */
     public double evaluate(ProcessModel model) {
       if (evaluator == null) {
-	throw new IllegalStateException("Constraint evaluator is not set for " + name);
+        throw new IllegalStateException("Constraint evaluator is not set for " + name);
       }
       return evaluator.applyAsDouble(model);
     }
@@ -799,15 +799,15 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       double value = evaluate(model);
       switch (type) {
       case LOWER_BOUND:
-	return value - lowerBound;
+        return value - lowerBound;
       case UPPER_BOUND:
-	return upperBound - value;
+        return upperBound - value;
       case RANGE:
-	return Math.min(value - lowerBound, upperBound - value);
+        return Math.min(value - lowerBound, upperBound - value);
       case EQUALITY:
-	return equalityTolerance - Math.abs(value - lowerBound);
+        return equalityTolerance - Math.abs(value - lowerBound);
       default:
-	return 0.0;
+        return 0.0;
       }
     }
 
@@ -830,7 +830,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     public double penalty(ProcessModel model) {
       double margin = margin(model);
       if (margin >= 0.0) {
-	return 0.0;
+        return 0.0;
       }
       return penaltyWeight * margin * margin;
     }
@@ -896,7 +896,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      * @param feasible true when utilization is less than or equal to one
      */
     public BottleneckStatus(String areaName, String equipmentName, String constraintName, double utilization,
-	double currentValue, double designValue, String unit, boolean feasible) {
+        double currentValue, double designValue, String unit, boolean feasible) {
       this.areaName = areaName;
       this.equipmentName = equipmentName;
       this.constraintName = constraintName;
@@ -941,7 +941,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      */
     public String getQualifiedEquipmentName() {
       if (!isPresent()) {
-	return "";
+        return "";
       }
       return areaName + ProcessAutomation.AREA_SEPARATOR + equipmentName;
     }
@@ -1314,7 +1314,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     public double getPenalizedObjective() {
       double objective = getObjective();
       if (Double.isNaN(objective)) {
-	return penaltySum;
+        return penaltySum;
       }
       return objective + penaltySum;
     }
@@ -1566,20 +1566,20 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     for (String areaName : processModel.getProcessSystemNames()) {
       ProcessSystem area = processModel.get(areaName);
       if (area == null) {
-	continue;
+        continue;
       }
       for (ProcessEquipmentInterface equipment : area.getUnitOperations()) {
-	Map<String, CapacityConstraint> equipmentConstraints = getAllCapacityConstraints(registry, equipment);
-	if (equipmentConstraints.isEmpty()) {
-	  continue;
-	}
-	for (Map.Entry<String, CapacityConstraint> entry : equipmentConstraints.entrySet()) {
-	  CapacityConstraint capacityConstraint = entry.getValue();
-	  if (capacityConstraint == null || !capacityConstraint.isEnabled()) {
-	    continue;
-	  }
-	  addCapacityConstraint(areaName, equipment.getName(), entry.getKey(), capacityConstraint);
-	}
+        Map<String, CapacityConstraint> equipmentConstraints = getAllCapacityConstraints(registry, equipment);
+        if (equipmentConstraints.isEmpty()) {
+          continue;
+        }
+        for (Map.Entry<String, CapacityConstraint> entry : equipmentConstraints.entrySet()) {
+          CapacityConstraint capacityConstraint = entry.getValue();
+          if (capacityConstraint == null || !capacityConstraint.isEnabled()) {
+            continue;
+          }
+          addCapacityConstraint(areaName, equipment.getName(), entry.getKey(), capacityConstraint);
+        }
       }
     }
     return this;
@@ -1599,7 +1599,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     if (includeStrategyCapacityConstraints) {
       EquipmentCapacityStrategy strategy = registry.findStrategy(equipment);
       if (strategy != null) {
-	equipmentConstraints.putAll(strategy.getConstraints(equipment));
+        equipmentConstraints.putAll(strategy.getConstraints(equipment));
       }
     }
 
@@ -1636,11 +1636,11 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       /** {@inheritDoc} */
       @Override
       public double applyAsDouble(ProcessModel ignoredModel) {
-	return capturedCapacityConstraint.getUtilization();
+        return capturedCapacityConstraint.getUtilization();
       }
     });
     boolean hardConstraint = capacityConstraint.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL
-	|| capacityConstraint.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD;
+        || capacityConstraint.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD;
     definition.setHard(hardConstraint);
     definition.setCapacityMetadata(areaName, equipmentName, equipmentConstraintName, capacityConstraint);
     constraints.add(definition);
@@ -1655,7 +1655,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   private boolean hasConstraint(String constraintName) {
     for (ConstraintDefinition constraint : constraints) {
       if (constraintName.equals(constraint.getName())) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -1737,8 +1737,8 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     ensureProcessModel();
     if (parameterValues == null || parameterValues.length != parameters.size()) {
       throw new IllegalArgumentException(
-	  "Parameter array length (" + (parameterValues == null ? "null" : Integer.toString(parameterValues.length))
-	      + ") must match parameter count (" + parameters.size() + ")");
+          "Parameter array length (" + (parameterValues == null ? "null" : Integer.toString(parameterValues.length))
+              + ") must match parameter count (" + parameters.size() + ")");
     }
 
     long startTime = System.currentTimeMillis();
@@ -1756,8 +1756,8 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       double[] objectiveValues = new double[objectives.size()];
       double[] rawObjectiveValues = new double[objectives.size()];
       for (int objectiveIndex = 0; objectiveIndex < objectives.size(); objectiveIndex++) {
-	rawObjectiveValues[objectiveIndex] = objectives.get(objectiveIndex).evaluateRaw(processModel);
-	objectiveValues[objectiveIndex] = objectives.get(objectiveIndex).evaluate(processModel);
+        rawObjectiveValues[objectiveIndex] = objectives.get(objectiveIndex).evaluateRaw(processModel);
+        objectiveValues[objectiveIndex] = objectives.get(objectiveIndex).evaluate(processModel);
       }
       result.setObjectives(objectiveValues);
       result.setObjectivesRaw(rawObjectiveValues);
@@ -1767,15 +1767,15 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       double penaltySum = 0.0;
       boolean feasible = processModel.isModelConverged();
       for (int constraintIndex = 0; constraintIndex < constraints.size(); constraintIndex++) {
-	ConstraintDefinition constraint = constraints.get(constraintIndex);
-	constraintValues[constraintIndex] = constraint.evaluate(processModel);
-	margins[constraintIndex] = constraint.margin(processModel);
-	if (margins[constraintIndex] < 0.0) {
-	  penaltySum += constraint.penalty(processModel);
-	  if (constraint.isHard()) {
-	    feasible = false;
-	  }
-	}
+        ConstraintDefinition constraint = constraints.get(constraintIndex);
+        constraintValues[constraintIndex] = constraint.evaluate(processModel);
+        margins[constraintIndex] = constraint.margin(processModel);
+        if (margins[constraintIndex] < 0.0) {
+          penaltySum += constraint.penalty(processModel);
+          if (constraint.isHard()) {
+            feasible = false;
+          }
+        }
       }
       result.setConstraintValues(constraintValues);
       result.setConstraintMargins(margins);
@@ -1817,9 +1817,9 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       ParameterDefinition parameter = parameters.get(parameterIndex);
       double value = parameter.clamp(parameterValues[parameterIndex]);
       if (parameter.getSetter() != null) {
-	parameter.getSetter().accept(model, value);
+        parameter.getSetter().accept(model, value);
       } else {
-	model.setVariableValue(parameter.getAddress(), value, parameter.getUnit());
+        model.setVariableValue(parameter.getAddress(), value, parameter.getUnit());
       }
     }
   }
@@ -1841,26 +1841,26 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     for (String areaName : model.getProcessSystemNames()) {
       ProcessSystem area = model.get(areaName);
       if (area == null) {
-	continue;
+        continue;
       }
       for (ProcessEquipmentInterface equipment : area.getUnitOperations()) {
-	Map<String, CapacityConstraint> equipmentConstraints = getAllCapacityConstraints(registry, equipment);
-	if (equipmentConstraints.isEmpty()) {
-	  continue;
-	}
-	for (Map.Entry<String, CapacityConstraint> entry : equipmentConstraints.entrySet()) {
-	  CapacityConstraint capacityConstraint = entry.getValue();
-	  if (capacityConstraint == null || !capacityConstraint.isEnabled()) {
-	    continue;
-	  }
-	  double utilization = capacityConstraint.getUtilization();
-	  if (!Double.isNaN(utilization) && utilization > highestUtilization) {
-	    highestUtilization = utilization;
-	    active = new BottleneckStatus(areaName, equipment.getName(), entry.getKey(), utilization,
-		capacityConstraint.getCurrentValue(), capacityConstraint.getDesignValue(), capacityConstraint.getUnit(),
-		utilization <= 1.0);
-	  }
-	}
+        Map<String, CapacityConstraint> equipmentConstraints = getAllCapacityConstraints(registry, equipment);
+        if (equipmentConstraints.isEmpty()) {
+          continue;
+        }
+        for (Map.Entry<String, CapacityConstraint> entry : equipmentConstraints.entrySet()) {
+          CapacityConstraint capacityConstraint = entry.getValue();
+          if (capacityConstraint == null || !capacityConstraint.isEnabled()) {
+            continue;
+          }
+          double utilization = capacityConstraint.getUtilization();
+          if (!Double.isNaN(utilization) && utilization > highestUtilization) {
+            highestUtilization = utilization;
+            active = new BottleneckStatus(areaName, equipment.getName(), entry.getKey(), utilization,
+                capacityConstraint.getCurrentValue(), capacityConstraint.getDesignValue(), capacityConstraint.getUnit(),
+                utilization <= 1.0);
+          }
+        }
       }
     }
     return active;
@@ -1932,12 +1932,12 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     double baseValue = evaluate(parameterValues).getObjectives()[objectiveIndex];
     for (int parameterIndex = 0; parameterIndex < parameterValues.length; parameterIndex++) {
       double step = useRelativeStep ? finiteDifferenceStep * Math.max(Math.abs(parameterValues[parameterIndex]), 1.0)
-	  : finiteDifferenceStep;
+          : finiteDifferenceStep;
       double[] shiftedValues = Arrays.copyOf(parameterValues, parameterValues.length);
       shiftedValues[parameterIndex] += step;
       if (shiftedValues[parameterIndex] > parameters.get(parameterIndex).getUpperBound()) {
-	shiftedValues[parameterIndex] = parameterValues[parameterIndex] - step;
-	step = -step;
+        shiftedValues[parameterIndex] = parameterValues[parameterIndex] - step;
+        step = -step;
       }
       double shiftedValue = evaluate(shiftedValues).getObjectives()[objectiveIndex];
       gradient[parameterIndex] = (shiftedValue - baseValue) / step;
@@ -1956,17 +1956,17 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     double[] baseMargins = evaluate(parameterValues).getConstraintMargins();
     for (int parameterIndex = 0; parameterIndex < parameterValues.length; parameterIndex++) {
       double step = useRelativeStep ? finiteDifferenceStep * Math.max(Math.abs(parameterValues[parameterIndex]), 1.0)
-	  : finiteDifferenceStep;
+          : finiteDifferenceStep;
       double[] shiftedValues = Arrays.copyOf(parameterValues, parameterValues.length);
       shiftedValues[parameterIndex] += step;
       if (shiftedValues[parameterIndex] > parameters.get(parameterIndex).getUpperBound()) {
-	shiftedValues[parameterIndex] = parameterValues[parameterIndex] - step;
-	step = -step;
+        shiftedValues[parameterIndex] = parameterValues[parameterIndex] - step;
+        step = -step;
       }
       double[] shiftedMargins = evaluate(shiftedValues).getConstraintMargins();
       for (int constraintIndex = 0; constraintIndex < constraints.size(); constraintIndex++) {
-	jacobian[constraintIndex][parameterIndex] = (shiftedMargins[constraintIndex] - baseMargins[constraintIndex])
-	    / step;
+        jacobian[constraintIndex][parameterIndex] = (shiftedMargins[constraintIndex] - baseMargins[constraintIndex])
+            / step;
       }
     }
     return jacobian;
@@ -2120,7 +2120,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
    */
   public String toJson() {
     return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-	.toJson(getProblemDefinition());
+        .toJson(getProblemDefinition());
   }
 
   /**

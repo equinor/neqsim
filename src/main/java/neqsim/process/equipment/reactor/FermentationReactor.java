@@ -748,13 +748,13 @@ public class FermentationReactor extends Fermenter {
       double sNew = solveSteadyStateSubstrate(dilutionRate);
 
       if (sNew < 0 || sNew > substrateConcentration) {
-	// Washout condition: D > muMax, no conversion
-	finalSubstrateConc = substrateConcentration;
-	finalBiomassConc = 0.0;
-	finalProductConc = 0.0;
-	substrateConversion = 0.0;
-	specificGrowthRate = 0.0;
-	break;
+        // Washout condition: D > muMax, no conversion
+        finalSubstrateConc = substrateConcentration;
+        finalBiomassConc = 0.0;
+        finalProductConc = 0.0;
+        substrateConversion = 0.0;
+        specificGrowthRate = 0.0;
+        break;
       }
 
       double substrateConsumedPerL = substrateConcentration - sNew;
@@ -762,10 +762,10 @@ public class FermentationReactor extends Fermenter {
       double pNew = initialProductConcentration + yieldProduct * substrateConsumedPerL;
 
       if (Math.abs(sNew - s) < 1e-8) {
-	s = sNew;
-	x = xNew;
-	p = pNew;
-	break;
+        s = sNew;
+        x = xNew;
+        p = pNew;
+        break;
       }
       s = sNew;
       x = xNew;
@@ -814,11 +814,11 @@ public class FermentationReactor extends Fermenter {
 
       // Fed-batch feeding
       if (operationMode == OperationMode.FED_BATCH && feedingRate > 0) {
-	double feedFrac = feedingRate / Math.max(1e-10, v);
-	dsdt += feedFrac * (feedSubstrateConcentration - s);
-	dxdt -= feedFrac * x;
-	dpdt -= feedFrac * p;
-	v += feedingRate * dt;
+        double feedFrac = feedingRate / Math.max(1e-10, v);
+        dsdt += feedFrac * (feedSubstrateConcentration - s);
+        dxdt -= feedFrac * x;
+        dpdt -= feedFrac * p;
+        v += feedingRate * dt;
       }
 
       s = Math.max(0.0, s + dsdt * dt);
@@ -826,7 +826,7 @@ public class FermentationReactor extends Fermenter {
       p = Math.max(0.0, p + dpdt * dt);
 
       if (s <= 0.0) {
-	break;
+        break;
       }
     }
 
@@ -865,7 +865,7 @@ public class FermentationReactor extends Fermenter {
     default:
       // D = muMax * S / (Ks + S) => S = Ks * D / (muMax - D)
       if (dilutionRate >= muMax) {
-	return substrateConcentration; // washout
+        return substrateConcentration; // washout
       }
       return monodConstant * dilutionRate / (muMax - dilutionRate);
     }
@@ -921,7 +921,7 @@ public class FermentationReactor extends Fermenter {
       double error = mu - d;
 
       if (Math.abs(error) < 1e-10) {
-	break;
+        break;
       }
 
       // Bisection: if mu > D, S is too high; if mu < D, S is too low
@@ -930,7 +930,7 @@ public class FermentationReactor extends Fermenter {
       sNew = Math.max(0.0, Math.min(substrateConcentration, sNew));
 
       if (Math.abs(sNew - s) < 1e-10) {
-	break;
+        break;
       }
       s = sNew;
     }
@@ -952,7 +952,7 @@ public class FermentationReactor extends Fermenter {
     double waterMolPerHr = waterKgPerHr * 1000.0 / 18.015;
     double productMolPerHr = productFormedKgPerHr * 1000.0 / 46.07; // ethanol MW
     double substrateMolPerHr = finalSubstrateConc * volumetricFlowLPerHr / 1000.0 * 1000.0 / 86.18; // n-hexane
-												    // MW
+    // MW
 
     SystemInterface liquidFluid = new SystemSrkEos(reactorTemp, reactorPres);
     liquidFluid.addComponent("water", Math.max(1e-10, waterMolPerHr), "mole/hr");

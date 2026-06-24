@@ -509,7 +509,7 @@ public class WaterTreatmentEquipmentTest {
     MechanicalDesign md = hc.getMechanicalDesign();
     assertNotNull(md, "getMechanicalDesign() should not return null after init");
     assertTrue(md instanceof HydrocycloneMechanicalDesign,
-	"Should be HydrocycloneMechanicalDesign, not " + md.getClass().getSimpleName());
+        "Should be HydrocycloneMechanicalDesign, not " + md.getClass().getSimpleName());
   }
 
   @Test
@@ -542,7 +542,7 @@ public class WaterTreatmentEquipmentTest {
     double opPressure = hc.getLiquidOutStream().getPressure() - 1.01325;
     double desPressure = md.getDesignPressureBarg();
     assertTrue(desPressure > opPressure,
-	"Design pressure (" + desPressure + ") must exceed operating (" + opPressure + ")");
+        "Design pressure (" + desPressure + ") must exceed operating (" + opPressure + ")");
   }
 
   @Test
@@ -555,17 +555,17 @@ public class WaterTreatmentEquipmentTest {
     double[] stdSizes = { 25.0, 40.0, 50.0, 80.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0 };
 
     assertTrue(isStandardSize(md.getInletNozzleIdMm(), stdSizes),
-	"Inlet nozzle " + md.getInletNozzleIdMm() + " not a standard size");
+        "Inlet nozzle " + md.getInletNozzleIdMm() + " not a standard size");
     assertTrue(isStandardSize(md.getOverflowNozzleIdMm(), stdSizes),
-	"Overflow nozzle " + md.getOverflowNozzleIdMm() + " not a standard size");
+        "Overflow nozzle " + md.getOverflowNozzleIdMm() + " not a standard size");
     assertTrue(isStandardSize(md.getRejectNozzleIdMm(), stdSizes),
-	"Reject nozzle " + md.getRejectNozzleIdMm() + " not a standard size");
+        "Reject nozzle " + md.getRejectNozzleIdMm() + " not a standard size");
   }
 
   private boolean isStandardSize(double value, double[] standards) {
     for (double s : standards) {
       if (Math.abs(value - s) < 0.01) {
-	return true;
+        return true;
       }
     }
     return false;

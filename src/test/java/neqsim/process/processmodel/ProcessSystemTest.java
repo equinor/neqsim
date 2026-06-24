@@ -289,7 +289,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     ProcessEventListener listener = new ProcessEventListener() {
       @Override
       public void onEvent(ProcessEvent event) {
-	captured.add(event);
+        captured.add(event);
       }
     };
 
@@ -325,7 +325,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     process.add(new PassiveMultiInputTestUnit("PassiveMultiInputUnit", firstInlet, secondInlet));
 
     RuntimeException thrown = Assertions.assertThrows(RuntimeException.class,
-	() -> process.runParallel(UUID.randomUUID()));
+        () -> process.runParallel(UUID.randomUUID()));
     Assertions.assertTrue(thrown.getMessage().contains("SharedFailingUnit"));
   }
 
@@ -335,7 +335,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     process.add(new FailingProcessUnit("DataflowFailingUnit"));
 
     RuntimeException thrown = Assertions.assertThrows(RuntimeException.class,
-	() -> process.runDataflow(UUID.randomUUID()));
+        () -> process.runDataflow(UUID.randomUUID()));
     Assertions.assertTrue(thrown.getMessage().contains("DataflowFailingUnit"));
   }
 
@@ -349,9 +349,9 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
       p.add(new Separator(name));
     });
     Assertions.assertEquals(
-	"neqsim.util.exception.InvalidInputException: ProcessSystem:add - Input operation - Process equipment of type Separator named "
-	    + name + " already included in ProcessSystem",
-	thrown.getMessage());
+        "neqsim.util.exception.InvalidInputException: ProcessSystem:add - Input operation - Process equipment of type Separator named "
+            + name + " already included in ProcessSystem",
+        thrown.getMessage());
     p.removeUnit(name);
     Assertions.assertEquals(0, p.size());
     p.add(new Tank(name));
@@ -361,9 +361,9 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
       p.add(new Separator(name));
     });
     Assertions.assertEquals(
-	"neqsim.util.exception.InvalidInputException: ProcessSystem:add - Input operation - Process equipment of type Tank named "
-	    + name + " already included in ProcessSystem",
-	thrown2.getMessage());
+        "neqsim.util.exception.InvalidInputException: ProcessSystem:add - Input operation - Process equipment of type Tank named "
+            + name + " already included in ProcessSystem",
+        thrown2.getMessage());
   }
 
   @Test
@@ -543,13 +543,13 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     dryFeedGasSmorbukk.setPressure(40.0, "bara");
 
     StreamSaturatorUtil saturatedFeedGasSmorbukk = new StreamSaturatorUtil("water saturator Smorbukk",
-	dryFeedGasSmorbukk);
+        dryFeedGasSmorbukk);
 
     Stream waterSaturatedFeedGasSmorbukk = new Stream("water saturated feed gas Smorbukk",
-	saturatedFeedGasSmorbukk.getOutletStream());
+        saturatedFeedGasSmorbukk.getOutletStream());
 
     HydrateEquilibriumTemperatureAnalyser hydrateTAnalyserSmorbukk = new HydrateEquilibriumTemperatureAnalyser(
-	"hydrate temperature analyser Smorbukk", waterSaturatedFeedGasSmorbukk);
+        "hydrate temperature analyser Smorbukk", waterSaturatedFeedGasSmorbukk);
 
     Splitter SmorbukkSplit = new Splitter("Smorbukk Splitter", waterSaturatedFeedGasSmorbukk);
     double[] splitSmorbukk = { 1.0 - 1e-10, 1e-10 };
@@ -563,10 +563,10 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     StreamSaturatorUtil saturatedFeedGasMidgard = new StreamSaturatorUtil("water saturator Midgard", dryFeedGasMidgard);
 
     Stream waterSaturatedFeedGasMidgard = new Stream("water saturated feed gas Midgard",
-	saturatedFeedGasMidgard.getOutletStream());
+        saturatedFeedGasMidgard.getOutletStream());
 
     HydrateEquilibriumTemperatureAnalyser hydrateTAnalyserMidgard = new HydrateEquilibriumTemperatureAnalyser(
-	"hydrate temperature analyser Midgard", waterSaturatedFeedGasMidgard);
+        "hydrate temperature analyser Midgard", waterSaturatedFeedGasMidgard);
 
     Splitter MidgardSplit = new Splitter("Midgard Splitter", waterSaturatedFeedGasMidgard);
     double[] splitMidgard = { 1e-10, 1 - 1e-10 };
@@ -583,10 +583,10 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Stream feedToAbsorber = new Stream("feed to TEG absorber", feedTPsetterToAbsorber.getOutletStream());
 
     HydrateEquilibriumTemperatureAnalyser hydrateTAnalyser2 = new HydrateEquilibriumTemperatureAnalyser(
-	"hydrate temperature gas to absorber", feedToAbsorber);
+        "hydrate temperature gas to absorber", feedToAbsorber);
 
     WaterDewPointAnalyser waterDewPointAnalyserToAbsorber = new WaterDewPointAnalyser("water dew point gas to absorber",
-	feedToAbsorber);
+        feedToAbsorber);
     waterDewPointAnalyserToAbsorber.setMethod("multiphase");
     waterDewPointAnalyserToAbsorber.setReferencePressure(40.0);
 
@@ -610,7 +610,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Stream richTEG = new Stream("rich TEG from absorber", absorber.getLiquidOutStream());
 
     HydrateEquilibriumTemperatureAnalyser waterDewPointAnalyser = new HydrateEquilibriumTemperatureAnalyser(
-	"hydrate dew point analyser", dehydratedGas);
+        "hydrate dew point analyser", dehydratedGas);
     waterDewPointAnalyser.setReferencePressure(70.0);
 
     WaterDewPointAnalyser waterDewPointAnalyser2 = new WaterDewPointAnalyser("water dew point analyser", dehydratedGas);
@@ -654,9 +654,9 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     double reboilerPressure = 1.4;
     double condenserPressure = 1.2;
     double feedPressureGLycol = (reboilerPressure + condenserPressure) / 2.0; // enters middle of
-									      // column
+    // column
     double feedPressureStripGas = (reboilerPressure + condenserPressure) / 2.0; // enters middle of
-										// column
+    // column
 
     ThrottlingValve glycol_flash_valve2 = new ThrottlingValve("Rich TEG LP flash valve", heatEx.getOutStream(0));
     glycol_flash_valve2.setOutletPressure(feedPressureGLycol);
@@ -841,13 +841,13 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     dryFeedGasSmorbukk.setPressure(40.0, "bara");
 
     StreamSaturatorUtil saturatedFeedGasSmorbukk = new StreamSaturatorUtil("water saturator Smorbukk",
-	dryFeedGasSmorbukk);
+        dryFeedGasSmorbukk);
 
     Stream waterSaturatedFeedGasSmorbukk = new Stream("water saturated feed gas Smorbukk",
-	saturatedFeedGasSmorbukk.getOutletStream());
+        saturatedFeedGasSmorbukk.getOutletStream());
 
     HydrateEquilibriumTemperatureAnalyser hydrateTAnalyserSmorbukk = new HydrateEquilibriumTemperatureAnalyser(
-	"hydrate temperature analyser Smorbukk", waterSaturatedFeedGasSmorbukk);
+        "hydrate temperature analyser Smorbukk", waterSaturatedFeedGasSmorbukk);
 
     Splitter SmorbukkSplit = new Splitter("Smorbukk Splitter", waterSaturatedFeedGasSmorbukk);
     double[] splitSmorbukk = { 1.0 - 1e-10, 1e-10 };
@@ -861,10 +861,10 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     StreamSaturatorUtil saturatedFeedGasMidgard = new StreamSaturatorUtil("water saturator Midgard", dryFeedGasMidgard);
 
     Stream waterSaturatedFeedGasMidgard = new Stream("water saturated feed gas Midgard",
-	saturatedFeedGasMidgard.getOutletStream());
+        saturatedFeedGasMidgard.getOutletStream());
 
     HydrateEquilibriumTemperatureAnalyser hydrateTAnalyserMidgard = new HydrateEquilibriumTemperatureAnalyser(
-	"hydrate temperature analyser Midgard", waterSaturatedFeedGasMidgard);
+        "hydrate temperature analyser Midgard", waterSaturatedFeedGasMidgard);
 
     Splitter MidgardSplit = new Splitter("Midgard Splitter", waterSaturatedFeedGasMidgard);
     double[] splitMidgard = { 1e-10, 1 - 1e-10 };
@@ -881,10 +881,10 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Stream feedToAbsorber = new Stream("feed to TEG absorber", feedTPsetterToAbsorber.getOutletStream());
 
     HydrateEquilibriumTemperatureAnalyser hydrateTAnalyser2 = new HydrateEquilibriumTemperatureAnalyser(
-	"hydrate temperature gas to absorber", feedToAbsorber);
+        "hydrate temperature gas to absorber", feedToAbsorber);
 
     WaterDewPointAnalyser waterDewPointAnalyserToAbsorber = new WaterDewPointAnalyser("water dew point gas to absorber",
-	feedToAbsorber);
+        feedToAbsorber);
     waterDewPointAnalyserToAbsorber.setMethod("multiphase");
     waterDewPointAnalyserToAbsorber.setReferencePressure(40.0);
 
@@ -908,7 +908,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Stream richTEG = new Stream("rich TEG from absorber", absorber.getLiquidOutStream());
 
     HydrateEquilibriumTemperatureAnalyser waterDewPointAnalyser = new HydrateEquilibriumTemperatureAnalyser(
-	"hydrate dew point analyser", dehydratedGas);
+        "hydrate dew point analyser", dehydratedGas);
     waterDewPointAnalyser.setReferencePressure(70.0);
 
     WaterDewPointAnalyser waterDewPointAnalyser2 = new WaterDewPointAnalyser("water dew point analyser", dehydratedGas);
@@ -952,9 +952,9 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     double reboilerPressure = 1.4;
     double condenserPressure = 1.2;
     double feedPressureGLycol = (reboilerPressure + condenserPressure) / 2.0; // enters middle of
-									      // column
+    // column
     double feedPressureStripGas = (reboilerPressure + condenserPressure) / 2.0; // enters middle of
-										// column
+    // column
 
     ThrottlingValve glycol_flash_valve2 = new ThrottlingValve("Rich TEG LP flash valve", heatEx.getOutStream(0));
     glycol_flash_valve2.setOutletPressure(feedPressureGLycol);
@@ -1220,7 +1220,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     assertTrue(results.containsKey("Separator1"));
     ProcessSystem.MassBalanceResult sepResult = results.get("Separator1");
     assertTrue(Math.abs(sepResult.getAbsoluteError()) < 0.01,
-	"Separator mass balance error: " + sepResult.getAbsoluteError());
+        "Separator mass balance error: " + sepResult.getAbsoluteError());
   }
 
   @Test
@@ -1295,7 +1295,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     ProcessSystem.MassBalanceResult mixerResult = results.get("Mixer1");
     assertTrue(Math.abs(mixerResult.getAbsoluteError()) < 0.01,
-	"Mixer mass balance error: " + mixerResult.getAbsoluteError());
+        "Mixer mass balance error: " + mixerResult.getAbsoluteError());
 
     // Check that mixer balances 50 + 30 = 80 kg/hr
     double expectedFlow = 80.0;
@@ -1329,7 +1329,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     ProcessSystem.MassBalanceResult splitterResult = results.get("Splitter1");
     assertTrue(Math.abs(splitterResult.getAbsoluteError()) < 0.01,
-	"Splitter mass balance error: " + splitterResult.getAbsoluteError());
+        "Splitter mass balance error: " + splitterResult.getAbsoluteError());
   }
 
   @Test
@@ -1356,7 +1356,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     // Separator should not be in failed list (has good mass balance)
     assertTrue(
-	!failedUnits.containsKey("Separator1") || Math.abs(failedUnits.get("Separator1").getPercentError()) < 0.1);
+        !failedUnits.containsKey("Separator1") || Math.abs(failedUnits.get("Separator1").getPercentError()) < 0.1);
   }
 
   @Test
@@ -1422,7 +1422,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Map<String, ProcessSystem.MassBalanceResult> failedUnits = process.getFailedMassBalance();
     // Separator with insignificant flow should not appear in failed units
     assertTrue(!failedUnits.containsKey("Separator1"),
-	"Separator with insignificant flow should not be in failed units list");
+        "Separator with insignificant flow should not be in failed units list");
   }
 
   @Test
@@ -1525,13 +1525,13 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     // All units should have good mass balance
     for (Map.Entry<String, ProcessSystem.MassBalanceResult> entry : results.entrySet()) {
       assertTrue(Math.abs(entry.getValue().getAbsoluteError()) < 1.0,
-	  entry.getKey() + " has mass balance error: " + entry.getValue().getAbsoluteError());
+          entry.getKey() + " has mass balance error: " + entry.getValue().getAbsoluteError());
     }
 
     // No units should fail with default threshold
     Map<String, ProcessSystem.MassBalanceResult> failedUnits = process.getFailedMassBalance();
     assertTrue(failedUnits.isEmpty() || failedUnits.size() == 0,
-	"Found " + failedUnits.size() + " units with mass balance errors");
+        "Found " + failedUnits.size() + " units with mass balance errors");
   }
 
   @Test

@@ -79,7 +79,7 @@ class ElectrolyzerCostEstimateTest extends neqsim.NeqSimTest {
     double usdPerKwBig = cBig.getPurchasedEquipmentCost() / big.getTotalPowerKW();
 
     assertTrue(usdPerKwBig < usdPerKwSmall,
-	"Larger plant should have lower USD/kW (scale economies), got " + usdPerKwBig + " vs " + usdPerKwSmall);
+        "Larger plant should have lower USD/kW (scale economies), got " + usdPerKwBig + " vs " + usdPerKwSmall);
   }
 
   @Test
@@ -89,7 +89,7 @@ class ElectrolyzerCostEstimateTest extends neqsim.NeqSimTest {
     ElectrolyzerCostEstimate noBop = new ElectrolyzerCostEstimate(mech);
     noBop.setIncludeBalanceOfPlant(false);
     assertTrue(noBop.getPurchasedEquipmentCost() < withBop.getPurchasedEquipmentCost(),
-	"Cost without BOP should be lower than with BOP");
+        "Cost without BOP should be lower than with BOP");
     assertEquals(0.65, noBop.getPurchasedEquipmentCost() / withBop.getPurchasedEquipmentCost(), 1e-6);
   }
 

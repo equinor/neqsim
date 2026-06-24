@@ -25,14 +25,14 @@ public class MixerResponse extends BaseResponse {
     }
     data.put("feed mass flow", new Value(Double.toString(feedMassFlow), neqsim.util.unit.Units.getSymbol("mass flow")));
     data.put("outlet mass flow",
-	new Value(Double.toString(mixer.getOutletStream().getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
-	    neqsim.util.unit.Units.getSymbol("mass flow")));
+        new Value(Double.toString(mixer.getOutletStream().getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+            neqsim.util.unit.Units.getSymbol("mass flow")));
     data.put("outlet temperature",
-	new Value(
-	    Double.toString(mixer.getOutletStream().getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
-	    neqsim.util.unit.Units.getSymbol("temperature")));
+        new Value(
+            Double.toString(mixer.getOutletStream().getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
+            neqsim.util.unit.Units.getSymbol("temperature")));
     data.put("outlet pressure",
-	new Value(Double.toString(mixer.getOutletStream().getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
-	    neqsim.util.unit.Units.getSymbol("pressure")));
+        new Value(Double.toString(mixer.getOutletStream().getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
+            neqsim.util.unit.Units.getSymbol("pressure")));
   }
 }

@@ -74,12 +74,12 @@ public class GERG2008ResultVerificationTest {
     logger.info("Property                  | Call 1         | Call 2         | Call 3");
     logger.info("--------------------------|----------------|----------------|--------");
     String[] propNames = { "Pressure (kPa)", "Z-factor", "dPdD", "d2PdD2", "d2PdTD", "dPdT", "U (J/mol)", "H (J/mol)",
-	"S (J/mol-K)", "Cv (J/mol-K)", "Cp (J/mol-K)", "W (m/s)", "G (J/mol)", "JT (K/kPa)", "Kappa" };
+        "S (J/mol-K)", "Cv (J/mol-K)", "Cp (J/mol-K)", "W (m/s)", "G (J/mol)", "JT (K/kPa)", "Kappa" };
 
     for (int i = 0; i < Math.min(props1.length, 15); i++) {
       String status = (props1[i] == props2[i] && props2[i] == props3[i]) ? "OK" : "FAIL";
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s | %14.6f | %14.6f | %s%n",
-	  i < propNames.length ? propNames[i] : "Prop " + i, props1[i], props2[i], status);
+          i < propNames.length ? propNames[i] : "Prop " + i, props1[i], props2[i], status);
       assertEquals(props1[i], props2[i], TOLERANCE, "Property " + i + " mismatch between calls");
       assertEquals(props2[i], props3[i], TOLERANCE, "Property " + i + " mismatch between calls");
     }
@@ -133,17 +133,17 @@ public class GERG2008ResultVerificationTest {
     logger.info("Property     | Call 1         | Call 2         | Call 3         | Match");
     logger.info("-------------|----------------|----------------|----------------|------");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Density      | %14.6f | %14.6f | %14.6f | %s%n", density1,
-	density2, density3, density1 == density2 && density2 == density3 ? "OK" : "FAIL");
+        density2, density3, density1 == density2 && density2 == density3 ? "OK" : "FAIL");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Enthalpy     | %14.6f | %14.6f | %14.6f | %s%n", enthalpy1,
-	enthalpy2, enthalpy3, enthalpy1 == enthalpy2 && enthalpy2 == enthalpy3 ? "OK" : "FAIL");
+        enthalpy2, enthalpy3, enthalpy1 == enthalpy2 && enthalpy2 == enthalpy3 ? "OK" : "FAIL");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Entropy      | %14.6f | %14.6f | %14.6f | %s%n", entropy1,
-	entropy2, entropy3, entropy1 == entropy2 && entropy2 == entropy3 ? "OK" : "FAIL");
+        entropy2, entropy3, entropy1 == entropy2 && entropy2 == entropy3 ? "OK" : "FAIL");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Cp           | %14.6f | %14.6f | %14.6f | %s%n", cp1, cp2, cp3,
-	cp1 == cp2 && cp2 == cp3 ? "OK" : "FAIL");
+        cp1 == cp2 && cp2 == cp3 ? "OK" : "FAIL");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Cv           | %14.6f | %14.6f | %14.6f | %s%n", cv1, cv2, cv3,
-	cv1 == cv2 && cv2 == cv3 ? "OK" : "FAIL");
+        cv1 == cv2 && cv2 == cv3 ? "OK" : "FAIL");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Z-factor     | %14.6f | %14.6f | %14.6f | %s%n", z1, z2, z3,
-	z1 == z2 && z2 == z3 ? "OK" : "FAIL");
+        z1 == z2 && z2 == z3 ? "OK" : "FAIL");
 
     // Verify exact equality (caching should return identical values)
     assertEquals(density1, density2, 0.0, "Density should be identical");
@@ -194,11 +194,11 @@ public class GERG2008ResultVerificationTest {
     logger.info("State                    | Density (kg/m3) | Enthalpy (J/mol)");
     logger.info("-------------------------|-----------------|------------------");
     logger.printf(org.apache.logging.log4j.Level.INFO, "T=300K, P=50bar          | %15.6f | %16.6f%n", density1,
-	enthalpy1);
+        enthalpy1);
     logger.printf(org.apache.logging.log4j.Level.INFO, "T=350K, P=50bar          | %15.6f | %16.6f%n", density2,
-	enthalpy2);
+        enthalpy2);
     logger.printf(org.apache.logging.log4j.Level.INFO, "T=350K, P=100bar         | %15.6f | %16.6f%n", density3,
-	enthalpy3);
+        enthalpy3);
 
     // Verify properties changed appropriately
     // Higher temperature at same pressure -> lower density
@@ -266,25 +266,25 @@ public class GERG2008ResultVerificationTest {
     double cpDiffPct = 100.0 * Math.abs(nativeGergProps[10] - srkGergProps[10]) / Math.abs(srkGergProps[10]);
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Pressure (kPa)    | %15.6f | %16.6f | %8.6f%n",
-	nativeGergProps[0], srkGergProps[0], densityDiffPct);
+        nativeGergProps[0], srkGergProps[0], densityDiffPct);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Z-factor          | %15.6f | %16.6f | %8.6f%n",
-	nativeGergProps[1], srkGergProps[1], zDiffPct);
+        nativeGergProps[1], srkGergProps[1], zDiffPct);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Enthalpy (J/mol)  | %15.6f | %16.6f | %8.6f%n",
-	nativeGergProps[7], srkGergProps[7], enthalpyDiffPct);
+        nativeGergProps[7], srkGergProps[7], enthalpyDiffPct);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Entropy (J/mol-K) | %15.6f | %16.6f | %8.6f%n",
-	nativeGergProps[8], srkGergProps[8], entropyDiffPct);
+        nativeGergProps[8], srkGergProps[8], entropyDiffPct);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Cp (J/mol-K)      | %15.6f | %16.6f | %8.6f%n",
-	nativeGergProps[10], srkGergProps[10], cpDiffPct);
+        nativeGergProps[10], srkGergProps[10], cpDiffPct);
 
     // Both should use the same GERG-2008 calculation, so results should be identical
     assertEquals(nativeGergProps[0], srkGergProps[0], TOLERANCE,
-	"Pressure should match between native GERG and SRK+GERG");
+        "Pressure should match between native GERG and SRK+GERG");
     assertEquals(nativeGergProps[1], srkGergProps[1], TOLERANCE,
-	"Z-factor should match between native GERG and SRK+GERG");
+        "Z-factor should match between native GERG and SRK+GERG");
     assertEquals(nativeGergProps[7], srkGergProps[7], TOLERANCE,
-	"Enthalpy should match between native GERG and SRK+GERG");
+        "Enthalpy should match between native GERG and SRK+GERG");
     assertEquals(nativeGergProps[8], srkGergProps[8], TOLERANCE,
-	"Entropy should match between native GERG and SRK+GERG");
+        "Entropy should match between native GERG and SRK+GERG");
     assertEquals(nativeGergProps[10], srkGergProps[10], TOLERANCE, "Cp should match between native GERG and SRK+GERG");
 
     logger.info("\n✓ Native GERG-2008 EoS and SRK + GERG property lookup produce identical results");
@@ -314,7 +314,7 @@ public class GERG2008ResultVerificationTest {
 
     // Run compressor with GERG-2008
     neqsim.process.equipment.compressor.Compressor compressor = new neqsim.process.equipment.compressor.Compressor(
-	"compressor", inletStream);
+        "compressor", inletStream);
     compressor.setOutletPressure(100.0, "bara");
     compressor.setPolytropicEfficiency(0.78);
     compressor.setUsePolytropicCalc(true);
@@ -340,11 +340,11 @@ public class GERG2008ResultVerificationTest {
     logger.info("Run | Power (kW)      | Outlet T (K)    | Polytropic Head (kJ/kg)");
     logger.info("----|-----------------|-----------------|------------------------");
     logger.printf(org.apache.logging.log4j.Level.INFO, "1   | %15.3f | %15.3f | %22.3f%n", power1 / 1000, outletTemp1,
-	polytropicHead1);
+        polytropicHead1);
     logger.printf(org.apache.logging.log4j.Level.INFO, "2   | %15.3f | %15.3f | %22.3f%n", power2 / 1000, outletTemp2,
-	polytropicHead2);
+        polytropicHead2);
     logger.printf(org.apache.logging.log4j.Level.INFO, "3   | %15.3f | %15.3f | %22.3f%n", power3 / 1000, outletTemp3,
-	polytropicHead3);
+        polytropicHead3);
 
     // Verify consistent results
     assertEquals(power1, power2, 1.0, "Power should be consistent between runs");

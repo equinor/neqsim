@@ -207,21 +207,21 @@ public class DiffusivityExperimentalValidationTest {
     // CO2 is solute (i=0), water is solvent (j=1)
     double D = sys.getPhase("aqueous").getPhysicalProperties().diffusivityCalc.calcBinaryDiffusionCoefficient(0, 1, 0);
     logger.info(
-	model + " CO2/water: D = " + D + " m2/s (" + (D * 1e4) + " cm2/s), exp = " + EXP_CO2_WATER_298K + " m2/s");
+        model + " CO2/water: D = " + D + " m2/s (" + (D * 1e4) + " cm2/s), exp = " + EXP_CO2_WATER_298K + " m2/s");
     return D;
   }
 
   private void assertGasAccuracy(String label, double calc, double exp, double tol) {
     double error = Math.abs(calc - exp) / exp;
     logger.info(label + ": calc=" + (calc * 1e4) + " cm2/s, exp=" + (exp * 1e4) + " cm2/s, error="
-	+ String.format("%.1f", error * 100) + "%");
+        + String.format("%.1f", error * 100) + "%");
     assertTrue(error < tol, label + " error " + String.format("%.1f", error * 100) + "% exceeds " + (tol * 100) + "%");
   }
 
   private void assertLiquidAccuracy(String label, double calc, double exp, double tol) {
     double error = Math.abs(calc - exp) / exp;
     logger.info(
-	label + ": calc=" + calc + " m2/s, exp=" + exp + " m2/s, error=" + String.format("%.1f", error * 100) + "%");
+        label + ": calc=" + calc + " m2/s, exp=" + exp + " m2/s, error=" + String.format("%.1f", error * 100) + "%");
     assertTrue(calc > 1e-12 && calc < 1e-6, label + " value " + calc + " outside reasonable liquid D range");
     assertTrue(error < tol, label + " error " + String.format("%.1f", error * 100) + "% exceeds " + (tol * 100) + "%");
   }
@@ -229,6 +229,6 @@ public class DiffusivityExperimentalValidationTest {
   private void assertModelsAgree(String label, double d1, double d2, double maxRatio) {
     double ratio = d1 / d2;
     assertTrue(ratio > 1.0 / maxRatio && ratio < maxRatio,
-	label + " ratio " + ratio + " outside [" + (1.0 / maxRatio) + ", " + maxRatio + "]");
+        label + " ratio " + ratio + " outside [" + (1.0 / maxRatio) + ", " + maxRatio + "]");
   }
 }

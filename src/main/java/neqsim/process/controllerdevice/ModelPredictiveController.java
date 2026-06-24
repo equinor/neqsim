@@ -127,10 +127,10 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     double computeFeedEffect(Map<String, Double> deltaComposition, double deltaRate) {
       double effect = rateSensitivity * deltaRate;
       if (deltaComposition != null && !deltaComposition.isEmpty()) {
-	for (Map.Entry<String, Double> entry : compositionSensitivity.entrySet()) {
-	  double delta = deltaComposition.getOrDefault(entry.getKey(), 0.0);
-	  effect += entry.getValue() * delta;
-	}
+        for (Map.Entry<String, Double> entry : compositionSensitivity.entrySet()) {
+          double delta = deltaComposition.getOrDefault(entry.getKey(), 0.0);
+          effect += entry.getValue() * delta;
+        }
       }
       return effect;
     }
@@ -185,79 +185,79 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       private double rateSensitivity;
 
       private Builder(String name) {
-	if (name == null || name.trim().isEmpty()) {
-	  throw new IllegalArgumentException("Constraint name must be provided");
-	}
-	this.name = name;
+        if (name == null || name.trim().isEmpty()) {
+          throw new IllegalArgumentException("Constraint name must be provided");
+        }
+        this.name = name;
       }
 
       public Builder measurement(MeasurementDeviceInterface device) {
-	this.measurement = device;
-	return this;
+        this.measurement = device;
+        return this;
       }
 
       public Builder unit(String unit) {
-	this.unit = unit;
-	return this;
+        this.unit = unit;
+        return this;
       }
 
       public Builder limit(double limit) {
-	if (!Double.isFinite(limit)) {
-	  throw new IllegalArgumentException("Constraint limit must be finite");
-	}
-	this.limit = limit;
-	return this;
+        if (!Double.isFinite(limit)) {
+          throw new IllegalArgumentException("Constraint limit must be finite");
+        }
+        this.limit = limit;
+        return this;
       }
 
       public Builder margin(double margin) {
-	if (!Double.isFinite(margin) || margin < 0.0) {
-	  throw new IllegalArgumentException("Constraint margin must be non-negative and finite");
-	}
-	this.margin = margin;
-	return this;
+        if (!Double.isFinite(margin) || margin < 0.0) {
+          throw new IllegalArgumentException("Constraint margin must be non-negative and finite");
+        }
+        this.margin = margin;
+        return this;
       }
 
       public Builder controlSensitivity(double... sensitivity) {
-	if (sensitivity == null || sensitivity.length == 0) {
-	  throw new IllegalArgumentException("Control sensitivity must have at least one value");
-	}
-	this.controlSensitivity = Arrays.copyOf(sensitivity, sensitivity.length);
-	return this;
+        if (sensitivity == null || sensitivity.length == 0) {
+          throw new IllegalArgumentException("Control sensitivity must have at least one value");
+        }
+        this.controlSensitivity = Arrays.copyOf(sensitivity, sensitivity.length);
+        return this;
       }
 
       public Builder compositionSensitivity(String component, double sensitivity) {
-	if (component == null || component.trim().isEmpty()) {
-	  throw new IllegalArgumentException("Component name must be provided");
-	}
-	this.compositionSensitivity.put(component, sensitivity);
-	return this;
+        if (component == null || component.trim().isEmpty()) {
+          throw new IllegalArgumentException("Component name must be provided");
+        }
+        this.compositionSensitivity.put(component, sensitivity);
+        return this;
       }
 
       public Builder compositionSensitivities(Map<String, Double> sensitivities) {
-	if (sensitivities != null) {
-	  for (Map.Entry<String, Double> entry : sensitivities.entrySet()) {
-	    compositionSensitivity.put(entry.getKey(), entry.getValue());
-	  }
-	}
-	return this;
+        if (sensitivities != null) {
+          for (Map.Entry<String, Double> entry : sensitivities.entrySet()) {
+            compositionSensitivity.put(entry.getKey(), entry.getValue());
+          }
+        }
+        return this;
       }
 
       public Builder rateSensitivity(double sensitivity) {
-	this.rateSensitivity = sensitivity;
-	return this;
+        this.rateSensitivity = sensitivity;
+        return this;
       }
 
       public QualityConstraint build() {
-	if (measurement == null && (unit == null || unit.trim().isEmpty())) {
-	  unit = "[?]";
-	}
-	if (controlSensitivity.length == 0) {
-	  throw new IllegalStateException("Control sensitivity must be defined for constraint '" + name + "'");
-	}
-	if (!Double.isFinite(limit)) {
-	  throw new IllegalStateException("Constraint limit must be finite for constraint '" + name + "'");
-	}
-	return new QualityConstraint(this);
+        if (measurement == null && (unit == null || unit.trim().isEmpty())) {
+          unit = "[?]";
+        }
+        if (controlSensitivity.length == 0) {
+          throw new IllegalStateException("Control sensitivity must be defined for constraint '" + name + "'");
+        }
+        if (!Double.isFinite(limit)) {
+          throw new IllegalStateException("Constraint limit must be finite for constraint '" + name + "'");
+        }
+        return new QualityConstraint(this);
       }
     }
   }
@@ -274,7 +274,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     private final int sampleCount;
 
     private MovingHorizonEstimate(double processGain, double timeConstant, double processBias, double meanSquaredError,
-	int sampleCount) {
+        int sampleCount) {
       this.processGain = processGain;
       this.timeConstant = timeConstant;
       this.processBias = processBias;
@@ -386,83 +386,83 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       }
 
       public Builder closedLoopTimeConstantRatio(double ratio) {
-	if (!Double.isFinite(ratio) || ratio <= 0.0) {
-	  throw new IllegalArgumentException("Closed loop ratio must be positive and finite");
-	}
-	this.closedLoopTimeConstantRatio = ratio;
-	return this;
+        if (!Double.isFinite(ratio) || ratio <= 0.0) {
+          throw new IllegalArgumentException("Closed loop ratio must be positive and finite");
+        }
+        this.closedLoopTimeConstantRatio = ratio;
+        return this;
       }
 
       public Builder predictionHorizonMultiple(double multiple) {
-	if (!Double.isFinite(multiple) || multiple <= 0.0) {
-	  throw new IllegalArgumentException("Prediction horizon multiple must be positive");
-	}
-	this.predictionHorizonMultiple = multiple;
-	return this;
+        if (!Double.isFinite(multiple) || multiple <= 0.0) {
+          throw new IllegalArgumentException("Prediction horizon multiple must be positive");
+        }
+        this.predictionHorizonMultiple = multiple;
+        return this;
       }
 
       public Builder controlWeightFactor(double factor) {
-	if (factor < 0.0) {
-	  throw new IllegalArgumentException("Control weight factor must be non-negative");
-	}
-	this.controlWeightFactor = factor;
-	return this;
+        if (factor < 0.0) {
+          throw new IllegalArgumentException("Control weight factor must be non-negative");
+        }
+        this.controlWeightFactor = factor;
+        return this;
       }
 
       public Builder moveWeightFactor(double factor) {
-	if (factor < 0.0) {
-	  throw new IllegalArgumentException("Move weight factor must be non-negative");
-	}
-	this.moveWeightFactor = factor;
-	return this;
+        if (factor < 0.0) {
+          throw new IllegalArgumentException("Move weight factor must be non-negative");
+        }
+        this.moveWeightFactor = factor;
+        return this;
       }
 
       public Builder outputWeight(double weight) {
-	if (weight < 0.0) {
-	  throw new IllegalArgumentException("Output weight must be non-negative");
-	}
-	this.outputWeight = weight;
-	return this;
+        if (weight < 0.0) {
+          throw new IllegalArgumentException("Output weight must be non-negative");
+        }
+        this.outputWeight = weight;
+        return this;
       }
 
       public Builder minimumHorizon(int horizon) {
-	if (horizon <= 0) {
-	  throw new IllegalArgumentException("Minimum horizon must be positive");
-	}
-	this.minimumHorizon = horizon;
-	return this;
+        if (horizon <= 0) {
+          throw new IllegalArgumentException("Minimum horizon must be positive");
+        }
+        this.minimumHorizon = horizon;
+        return this;
       }
 
       public Builder maximumHorizon(int horizon) {
-	if (horizon <= 0) {
-	  throw new IllegalArgumentException("Maximum horizon must be positive");
-	}
-	this.maximumHorizon = horizon;
-	return this;
+        if (horizon <= 0) {
+          throw new IllegalArgumentException("Maximum horizon must be positive");
+        }
+        this.maximumHorizon = horizon;
+        return this;
       }
 
       public Builder sampleTimeOverride(Double sampleTime) {
-	if (sampleTime != null && (!Double.isFinite(sampleTime) || sampleTime <= 0.0)) {
-	  throw new IllegalArgumentException("Sample time override must be positive and finite");
-	}
-	this.sampleTimeOverride = sampleTime;
-	return this;
+        if (sampleTime != null && (!Double.isFinite(sampleTime) || sampleTime <= 0.0)) {
+          throw new IllegalArgumentException("Sample time override must be positive and finite");
+        }
+        this.sampleTimeOverride = sampleTime;
+        return this;
       }
 
       public Builder applyImmediately(boolean apply) {
-	this.applyImmediately = apply;
-	return this;
+        this.applyImmediately = apply;
+        return this;
       }
 
       public Builder defaults() {
-	return this;
+        return this;
       }
 
       public AutoTuneConfiguration build() {
-	if (maximumHorizon < minimumHorizon) {
-	  throw new IllegalStateException("Maximum horizon must be at least the minimum horizon");
-	}
-	return new AutoTuneConfiguration(this);
+        if (maximumHorizon < minimumHorizon) {
+          throw new IllegalStateException("Maximum horizon must be at least the minimum horizon");
+        }
+        return new AutoTuneConfiguration(this);
       }
     }
   }
@@ -486,8 +486,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     private final boolean applied;
 
     private AutoTuneResult(double processGain, double timeConstant, double processBias, double outputWeight,
-	double controlWeight, double moveWeight, int predictionHorizon, double sampleTime,
-	double closedLoopTimeConstant, double meanSquaredError, int sampleCount, boolean applied) {
+        double controlWeight, double moveWeight, int predictionHorizon, double sampleTime,
+        double closedLoopTimeConstant, double meanSquaredError, int sampleCount, boolean applied) {
       this.processGain = processGain;
       this.timeConstant = timeConstant;
       this.processBias = processBias;
@@ -581,7 +581,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     controlNames.clear();
     for (String name : names) {
       if (name == null || name.trim().isEmpty()) {
-	throw new IllegalArgumentException("Control names must be non-empty");
+        throw new IllegalArgumentException("Control names must be non-empty");
       }
       controlNames.add(name);
     }
@@ -611,7 +611,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   private void ensureControlLength(int expectedLength) {
     if (controlVector.length != expectedLength) {
       throw new IllegalStateException(
-	  "Controller configured for " + controlVector.length + " controls but received " + expectedLength);
+          "Controller configured for " + controlVector.length + " controls but received " + expectedLength);
     }
   }
 
@@ -723,7 +723,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     ensureControlLength(weights.length);
     for (int i = 0; i < weights.length; i++) {
       if (weights[i] < 0.0) {
-	throw new IllegalArgumentException("Control weights must be non-negative");
+        throw new IllegalArgumentException("Control weights must be non-negative");
       }
       controlWeightsVector[i] = weights[i];
     }
@@ -741,7 +741,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     ensureControlLength(weights.length);
     for (int i = 0; i < weights.length; i++) {
       if (weights[i] < 0.0) {
-	throw new IllegalArgumentException("Move weights must be non-negative");
+        throw new IllegalArgumentException("Move weights must be non-negative");
       }
       moveWeightsVector[i] = weights[i];
     }
@@ -852,9 +852,9 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     }
     for (QualityConstraint constraint : qualityConstraints) {
       if (name.equals(constraint.getName())) {
-	constraint.setLastMeasurement(Double.isFinite(measurement) ? measurement : Double.NaN);
-	predictedQualityValues.remove(name);
-	return true;
+        constraint.setLastMeasurement(Double.isFinite(measurement) ? measurement : Double.NaN);
+        predictedQualityValues.remove(name);
+        return true;
       }
     }
     return false;
@@ -885,7 +885,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     Map<String, Double> copy = new LinkedHashMap<>();
     if (composition != null) {
       for (Map.Entry<String, Double> entry : composition.entrySet()) {
-	copy.put(entry.getKey(), entry.getValue());
+        copy.put(entry.getKey(), entry.getValue());
       }
     }
     pendingFeedComposition = copy;
@@ -921,7 +921,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   public void enableMovingHorizonEstimation(int windowSize) {
     if (windowSize < MIN_ESTIMATION_SAMPLES) {
       throw new IllegalArgumentException(
-	  "Estimation window must contain at least " + MIN_ESTIMATION_SAMPLES + " samples");
+          "Estimation window must contain at least " + MIN_ESTIMATION_SAMPLES + " samples");
     }
     this.movingHorizonWindow = windowSize;
     this.movingHorizonEstimationEnabled = true;
@@ -1001,7 +1001,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     if (estimate == null) {
       estimate = estimateFromHistory();
       if (estimate != null) {
-	lastMovingHorizonEstimate = estimate;
+        lastMovingHorizonEstimate = estimate;
       }
     }
     if (estimate == null) {
@@ -1077,7 +1077,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     }
 
     return new AutoTuneResult(gain, timeConstant, bias, outputWeight, controlWeight, moveWeight, horizon, sampleTime,
-	closedLoopTimeConstant, estimate.getMeanSquaredError(), estimate.getSampleCount(), applied);
+        closedLoopTimeConstant, estimate.getMeanSquaredError(), estimate.getSampleCount(), applied);
   }
 
   /**
@@ -1291,10 +1291,10 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     lastSampleTime = dt;
     if (!qualityConstraints.isEmpty()) {
       if (!isActive) {
-	clampControlVector();
-	response = controlVector[Math.min(primaryControlIndex, controlVector.length - 1)];
-	lastAppliedControl = response;
-	return;
+        clampControlVector();
+        response = controlVector[Math.min(primaryControlIndex, controlVector.length - 1)];
+        lastAppliedControl = response;
+        return;
       }
       runMultivariable();
       return;
@@ -1331,19 +1331,19 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     for (int i = 0; i < controlVector.length; i++) {
       double value = controlVector[i];
       if (!Double.isInfinite(minControlVector[i])) {
-	value = Math.max(minControlVector[i], value);
+        value = Math.max(minControlVector[i], value);
       }
       if (!Double.isInfinite(maxControlVector[i])) {
-	value = Math.min(maxControlVector[i], value);
+        value = Math.min(maxControlVector[i], value);
       }
       double minMoveLimit = minControlMoveVector.length > i ? minControlMoveVector[i] : Double.NEGATIVE_INFINITY;
       double maxMoveLimit = maxControlMoveVector.length > i ? maxControlMoveVector[i] : Double.POSITIVE_INFINITY;
       double previous = lastControlVector.length > i ? lastControlVector[i] : 0.0;
       if (!Double.isInfinite(minMoveLimit)) {
-	value = Math.max(previous + minMoveLimit, value);
+        value = Math.max(previous + minMoveLimit, value);
       }
       if (!Double.isInfinite(maxMoveLimit)) {
-	value = Math.min(previous + maxMoveLimit, value);
+        value = Math.min(previous + maxMoveLimit, value);
       }
       controlVector[i] = value;
     }
@@ -1364,12 +1364,12 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       keys.addAll(lastFeedComposition.keySet());
       keys.addAll(pendingFeedComposition.keySet());
       for (String key : keys) {
-	double future = pendingFeedComposition.getOrDefault(key, 0.0);
-	double past = lastFeedComposition.getOrDefault(key, 0.0);
-	double delta = future - past;
-	if (Math.abs(delta) > 1.0e-12) {
-	  deltaComposition.put(key, delta);
-	}
+        double future = pendingFeedComposition.getOrDefault(key, 0.0);
+        double past = lastFeedComposition.getOrDefault(key, 0.0);
+        double delta = future - past;
+        if (Math.abs(delta) > 1.0e-12) {
+          deltaComposition.put(key, delta);
+        }
       }
       deltaRate = pendingFeedRate - lastFeedRate;
     }
@@ -1384,22 +1384,22 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       double measurement = constraint.getLastMeasurement();
       MeasurementDeviceInterface device = constraint.getMeasurement();
       if (device != null) {
-	try {
-	  double measured = constraint.getUnit() == null ? device.getMeasuredValue()
-	      : device.getMeasuredValue(constraint.getUnit());
-	  if (Double.isFinite(measured)) {
-	    measurement = measured;
-	  }
-	} catch (Exception ex) {
-	  // ignore measurement exceptions and fall back to last value
-	}
+        try {
+          double measured = constraint.getUnit() == null ? device.getMeasuredValue()
+              : device.getMeasuredValue(constraint.getUnit());
+          if (Double.isFinite(measured)) {
+            measurement = measured;
+          }
+        } catch (Exception ex) {
+          // ignore measurement exceptions and fall back to last value
+        }
       }
       if (!Double.isFinite(measurement)) {
-	measurement = constraint.getLimit();
+        measurement = constraint.getLimit();
       }
       constraint.setLastMeasurement(measurement);
       if (idx == 0) {
-	lastSampledValue = measurement;
+        lastSampledValue = measurement;
       }
 
       double[] sensitivity = constraint.getControlSensitivity();
@@ -1409,25 +1409,25 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       double deviation = futureMeasurement - target;
       double normSquared = 0.0;
       for (double value : sensitivity) {
-	normSquared += value * value;
+        normSquared += value * value;
       }
       if (normSquared > 1.0e-12 && Math.abs(deviation) > 1.0e-9) {
-	double scale = deviation / normSquared;
-	for (int i = 0; i < controlCount; i++) {
-	  double desiredDelta = scale * sensitivity[i];
-	  double diagonalWeight = Math.max(controlWeightsVector[i], 0.0) + Math.max(moveWeightsVector[i], 0.0);
-	  if (diagonalWeight < 1.0e-9) {
-	    diagonalWeight = 1.0e-9;
-	  }
-	  feedForwardGradient[i] += diagonalWeight * desiredDelta;
-	}
+        double scale = deviation / normSquared;
+        for (int i = 0; i < controlCount; i++) {
+          double desiredDelta = scale * sensitivity[i];
+          double diagonalWeight = Math.max(controlWeightsVector[i], 0.0) + Math.max(moveWeightsVector[i], 0.0);
+          if (diagonalWeight < 1.0e-9) {
+            diagonalWeight = 1.0e-9;
+          }
+          feedForwardGradient[i] += diagonalWeight * desiredDelta;
+        }
       }
       double rhs = constraint.getLimit() - constraint.getMargin() - futureMeasurement;
       double[] row = new double[controlCount];
       double dotPrev = 0.0;
       for (int i = 0; i < controlCount; i++) {
-	row[i] = sensitivity[i];
-	dotPrev += sensitivity[i] * previousControl[i];
+        row[i] = sensitivity[i];
+        dotPrev += sensitivity[i] * previousControl[i];
       }
       constraintRows.add(row);
       constraintBounds.add(rhs + dotPrev);
@@ -1435,30 +1435,30 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
 
     for (int i = 0; i < controlCount; i++) {
       if (!Double.isInfinite(minControlVector[i])) {
-	double[] row = new double[controlCount];
-	row[i] = -1.0;
-	constraintRows.add(row);
-	constraintBounds.add(-minControlVector[i]);
+        double[] row = new double[controlCount];
+        row[i] = -1.0;
+        constraintRows.add(row);
+        constraintBounds.add(-minControlVector[i]);
       }
       if (!Double.isInfinite(maxControlVector[i])) {
-	double[] row = new double[controlCount];
-	row[i] = 1.0;
-	constraintRows.add(row);
-	constraintBounds.add(maxControlVector[i]);
+        double[] row = new double[controlCount];
+        row[i] = 1.0;
+        constraintRows.add(row);
+        constraintBounds.add(maxControlVector[i]);
       }
       double minMoveLimit = minControlMoveVector.length > i ? minControlMoveVector[i] : Double.NEGATIVE_INFINITY;
       double maxMoveLimit = maxControlMoveVector.length > i ? maxControlMoveVector[i] : Double.POSITIVE_INFINITY;
       if (!Double.isInfinite(maxMoveLimit)) {
-	double[] row = new double[controlCount];
-	row[i] = 1.0;
-	constraintRows.add(row);
-	constraintBounds.add(previousControl[i] + maxMoveLimit);
+        double[] row = new double[controlCount];
+        row[i] = 1.0;
+        constraintRows.add(row);
+        constraintBounds.add(previousControl[i] + maxMoveLimit);
       }
       if (!Double.isInfinite(minMoveLimit)) {
-	double[] row = new double[controlCount];
-	row[i] = -1.0;
-	constraintRows.add(row);
-	constraintBounds.add(-(previousControl[i] + minMoveLimit));
+        double[] row = new double[controlCount];
+        row[i] = -1.0;
+        constraintRows.add(row);
+        constraintBounds.add(-(previousControl[i] + minMoveLimit));
       }
     }
 
@@ -1475,11 +1475,11 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       double moveWeight = Math.max(moveWeightsVector[i], 0.0);
       double diagonal = absoluteWeight + moveWeight;
       if (diagonal < 1.0e-9) {
-	diagonal = 1.0e-9;
+        diagonal = 1.0e-9;
       }
       hessian[i][i] = diagonal;
       gradient[i] = -absoluteWeight * preferredControlVector[i] - moveWeight * previousControl[i]
-	  + feedForwardGradient[i];
+          + feedForwardGradient[i];
     }
 
     double[] solution = solveQuadraticProgram(hessian, gradient, constraintMatrix, constraintVector);
@@ -1490,18 +1490,18 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     for (int i = 0; i < controlCount; i++) {
       double value = solution[i];
       if (!Double.isInfinite(minControlVector[i])) {
-	value = Math.max(minControlVector[i], value);
+        value = Math.max(minControlVector[i], value);
       }
       if (!Double.isInfinite(maxControlVector[i])) {
-	value = Math.min(maxControlVector[i], value);
+        value = Math.min(maxControlVector[i], value);
       }
       double minMoveLimit = minControlMoveVector.length > i ? minControlMoveVector[i] : Double.NEGATIVE_INFINITY;
       double maxMoveLimit = maxControlMoveVector.length > i ? maxControlMoveVector[i] : Double.POSITIVE_INFINITY;
       if (!Double.isInfinite(minMoveLimit)) {
-	value = Math.max(previousControl[i] + minMoveLimit, value);
+        value = Math.max(previousControl[i] + minMoveLimit, value);
       }
       if (!Double.isInfinite(maxMoveLimit)) {
-	value = Math.min(previousControl[i] + maxMoveLimit, value);
+        value = Math.min(previousControl[i] + maxMoveLimit, value);
       }
       controlVector[i] = value;
     }
@@ -1513,8 +1513,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       double dotNew = 0.0;
       double dotPrev = 0.0;
       for (int i = 0; i < controlCount; i++) {
-	dotNew += sensitivity[i] * controlVector[i];
-	dotPrev += sensitivity[i] * previousControl[i];
+        dotNew += sensitivity[i] * controlVector[i];
+        dotPrev += sensitivity[i] * previousControl[i];
       }
       double predicted = measurement + (dotNew - dotPrev) + feedEffect;
       constraint.setPredictedValue(predicted);
@@ -1541,7 +1541,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       return;
     }
     if (estimationMeasurements.size() != estimationControls.size() + 1
-	|| estimationSampleTimes.size() != estimationControls.size()) {
+        || estimationSampleTimes.size() != estimationControls.size()) {
       clearMovingHorizonHistory();
       estimationMeasurements.add(measurement);
       return;
@@ -1555,7 +1555,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       estimationControls.remove(0);
       estimationSampleTimes.remove(0);
       if (!estimationMeasurements.isEmpty()) {
-	estimationMeasurements.remove(0);
+        estimationMeasurements.remove(0);
       }
     }
 
@@ -1566,7 +1566,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
 
   private void updateMovingHorizonEstimate() {
     MovingHorizonEstimate estimate = estimateFromSamples(estimationMeasurements, estimationControls,
-	estimationSampleTimes);
+        estimationSampleTimes);
     if (estimate == null) {
       return;
     }
@@ -1580,7 +1580,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     processBias = estimatedBias;
 
     lastMovingHorizonEstimate = new MovingHorizonEstimate(estimatedGain, estimatedTimeConstant, estimatedBias,
-	estimate.getMeanSquaredError(), estimate.getSampleCount());
+        estimate.getMeanSquaredError(), estimate.getSampleCount());
   }
 
   private MovingHorizonEstimate estimateFromSamples(List<Double> measurements, List<Double> controls,
@@ -1614,16 +1614,16 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       double nextMeasurement = measurements.get(i + 1);
       double dt = sampleTimes.get(i);
       if (!Double.isFinite(dt) || dt <= 0.0) {
-	return null;
+        return null;
       }
       double rateOfChange = (nextMeasurement - measurement) / dt;
       double[] row = { measurement / measurementScale, control / controlScale, 1.0 };
       for (int rowIndex = 0; rowIndex < 3; rowIndex++) {
-	double value = row[rowIndex];
-	for (int colIndex = 0; colIndex < 3; colIndex++) {
-	  normal[rowIndex][colIndex] += value * row[colIndex];
-	}
-	rhs[rowIndex] += value * rateOfChange;
+        double value = row[rowIndex];
+        for (int colIndex = 0; colIndex < 3; colIndex++) {
+          normal[rowIndex][colIndex] += value * row[colIndex];
+        }
+        rhs[rowIndex] += value * rateOfChange;
       }
     }
 
@@ -1665,7 +1665,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       double nextMeasurement = measurements.get(i + 1);
       double dt = sampleTimes.get(i);
       if (!Double.isFinite(dt) || dt <= 0.0) {
-	return null;
+        return null;
       }
       double predictedRate = alpha * measurement + beta * control + gamma;
       double predictedNext = measurement + dt * predictedRate;
@@ -1683,7 +1683,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       return null;
     }
     if (estimationMeasurements.size() != estimationControls.size() + 1
-	|| estimationSampleTimes.size() != estimationControls.size()) {
+        || estimationSampleTimes.size() != estimationControls.size()) {
       return null;
     }
     return estimateFromSamples(estimationMeasurements, estimationControls, estimationSampleTimes);
@@ -1696,7 +1696,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     for (int i = 0; i < n; i++) {
       double value = hessian[i][i];
       if (value < 1.0e-12) {
-	value = 1.0e-12;
+        value = 1.0e-12;
       }
       inverseDiagonal[i] = 1.0 / value;
     }
@@ -1715,23 +1715,23 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     if (constraintCount > 0) {
       int combinations = 1 << constraintCount;
       for (int mask = 1; mask < combinations; mask++) {
-	if (Integer.bitCount(mask) > n) {
-	  continue;
-	}
-	double[][] activeConstraints = buildActiveMatrix(constraints, mask);
-	double[] activeBounds = buildActiveVector(bounds, mask);
-	double[] candidate = solveEqualityConstrained(inverseDiagonal, gradient, activeConstraints, activeBounds);
-	if (candidate == null) {
-	  continue;
-	}
-	if (!isFeasible(candidate, constraints, bounds)) {
-	  continue;
-	}
-	double objective = objectiveValue(hessian, gradient, candidate);
-	if (objective < bestObjective) {
-	  bestObjective = objective;
-	  bestSolution = candidate;
-	}
+        if (Integer.bitCount(mask) > n) {
+          continue;
+        }
+        double[][] activeConstraints = buildActiveMatrix(constraints, mask);
+        double[] activeBounds = buildActiveVector(bounds, mask);
+        double[] candidate = solveEqualityConstrained(inverseDiagonal, gradient, activeConstraints, activeBounds);
+        if (candidate == null) {
+          continue;
+        }
+        if (!isFeasible(candidate, constraints, bounds)) {
+          continue;
+        }
+        double objective = objectiveValue(hessian, gradient, candidate);
+        if (objective < bestObjective) {
+          bestObjective = objective;
+          bestSolution = candidate;
+        }
       }
     }
 
@@ -1742,24 +1742,24 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     double[] fallback = Arrays.copyOf(unconstrained, n);
     if (constraints != null && bounds != null) {
       for (int row = 0; row < constraints.length; row++) {
-	double[] constraint = constraints[row];
-	double violation = 0.0;
-	for (int i = 0; i < n; i++) {
-	  violation += constraint[i] * fallback[i];
-	}
-	violation -= bounds[row];
-	if (violation > 0.0) {
-	  double norm = 0.0;
-	  for (double coefficient : constraint) {
-	    norm += coefficient * coefficient;
-	  }
-	  if (norm > 1.0e-12) {
-	    double factor = violation / norm;
-	    for (int i = 0; i < n; i++) {
-	      fallback[i] -= factor * constraint[i];
-	    }
-	  }
-	}
+        double[] constraint = constraints[row];
+        double violation = 0.0;
+        for (int i = 0; i < n; i++) {
+          violation += constraint[i] * fallback[i];
+        }
+        violation -= bounds[row];
+        if (violation > 0.0) {
+          double norm = 0.0;
+          for (double coefficient : constraint) {
+            norm += coefficient * coefficient;
+          }
+          if (norm > 1.0e-12) {
+            double factor = violation / norm;
+            for (int i = 0; i < n; i++) {
+              fallback[i] -= factor * constraint[i];
+            }
+          }
+        }
       }
     }
     if (isFeasible(fallback, constraints, bounds)) {
@@ -1780,7 +1780,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     int index = 0;
     for (int row = 0; row < matrix.length; row++) {
       if ((mask & (1 << row)) != 0) {
-	active[index++] = Arrays.copyOf(matrix[row], matrix[row].length);
+        active[index++] = Arrays.copyOf(matrix[row], matrix[row].length);
       }
     }
     return active;
@@ -1795,7 +1795,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     int index = 0;
     for (int row = 0; row < vector.length; row++) {
       if ((mask & (1 << row)) != 0) {
-	active[index++] = vector[row];
+        active[index++] = vector[row];
       }
     }
     return active;
@@ -1808,7 +1808,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     if (m == 0) {
       double[] solution = new double[n];
       for (int i = 0; i < n; i++) {
-	solution[i] = -inverseDiagonal[i] * gradient[i];
+        solution[i] = -inverseDiagonal[i] * gradient[i];
       }
       return solution;
     }
@@ -1816,11 +1816,11 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     double[][] reduced = new double[m][m];
     for (int row = 0; row < m; row++) {
       for (int col = 0; col < m; col++) {
-	double sum = 0.0;
-	for (int i = 0; i < n; i++) {
-	  sum += constraints[row][i] * inverseDiagonal[i] * constraints[col][i];
-	}
-	reduced[row][col] = sum;
+        double sum = 0.0;
+        for (int i = 0; i < n; i++) {
+          sum += constraints[row][i] * inverseDiagonal[i] * constraints[col][i];
+        }
+        reduced[row][col] = sum;
       }
     }
 
@@ -1828,7 +1828,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     for (int row = 0; row < m; row++) {
       double sum = 0.0;
       for (int i = 0; i < n; i++) {
-	sum += constraints[row][i] * inverseDiagonal[i] * gradient[i];
+        sum += constraints[row][i] * inverseDiagonal[i] * gradient[i];
       }
       rhs[row] = -bounds[row] - sum;
     }
@@ -1842,7 +1842,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     for (int i = 0; i < n; i++) {
       double sum = gradient[i];
       for (int row = 0; row < m; row++) {
-	sum += constraints[row][i] * multipliers[row];
+        sum += constraints[row][i] * multipliers[row];
       }
       solution[i] = -inverseDiagonal[i] * sum;
     }
@@ -1864,32 +1864,32 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       int bestRow = pivot;
       double bestValue = Math.abs(augmented[pivot][pivot]);
       for (int row = pivot + 1; row < n; row++) {
-	double value = Math.abs(augmented[row][pivot]);
-	if (value > bestValue) {
-	  bestValue = value;
-	  bestRow = row;
-	}
+        double value = Math.abs(augmented[row][pivot]);
+        if (value > bestValue) {
+          bestValue = value;
+          bestRow = row;
+        }
       }
       if (bestValue < 1.0e-12) {
-	return null;
+        return null;
       }
       if (bestRow != pivot) {
-	double[] tmp = augmented[pivot];
-	augmented[pivot] = augmented[bestRow];
-	augmented[bestRow] = tmp;
+        double[] tmp = augmented[pivot];
+        augmented[pivot] = augmented[bestRow];
+        augmented[bestRow] = tmp;
       }
       double diagonal = augmented[pivot][pivot];
       for (int col = pivot; col <= n; col++) {
-	augmented[pivot][col] /= diagonal;
+        augmented[pivot][col] /= diagonal;
       }
       for (int row = 0; row < n; row++) {
-	if (row == pivot) {
-	  continue;
-	}
-	double factor = augmented[row][pivot];
-	for (int col = pivot; col <= n; col++) {
-	  augmented[row][col] -= factor * augmented[pivot][col];
-	}
+        if (row == pivot) {
+          continue;
+        }
+        double factor = augmented[row][pivot];
+        for (int col = pivot; col <= n; col++) {
+          augmented[row][col] -= factor * augmented[pivot][col];
+        }
       }
     }
 
@@ -1910,10 +1910,10 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     for (int row = 0; row < constraints.length; row++) {
       double lhs = 0.0;
       for (int i = 0; i < candidate.length; i++) {
-	lhs += constraints[row][i] * candidate[i];
+        lhs += constraints[row][i] * candidate[i];
       }
       if (lhs > bounds[row] + 1.0e-8) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -1947,13 +1947,13 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
 
     double quadratic = sumBetaSquared + controlWeight + moveWeight;
     double linear = 2.0 * sumBetaError - 2.0 * controlWeight * preferredControlValue
-	- 2.0 * moveWeight * previousControl;
+        - 2.0 * moveWeight * previousControl;
 
     if (quadratic < 1.0e-12) {
       if (controlWeight + moveWeight > 0.0) {
-	double weighted = (controlWeight * preferredControlValue + moveWeight * previousControl)
-	    / (controlWeight + moveWeight);
-	return clamp(weighted);
+        double weighted = (controlWeight * preferredControlValue + moveWeight * previousControl)
+            / (controlWeight + moveWeight);
+        return clamp(weighted);
       }
       return clamp(previousControl);
     }

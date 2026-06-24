@@ -207,7 +207,7 @@ public class ElectrolyteScaleCalculator implements Serializable {
 
     // Ionic strength I = 0.5 * sum(m_i * z_i^2)
     ionicStrengthMolKg = 0.5 * (mCa * 4 + mBa * 4 + mSr * 4 + mMg * 4 + mNa * 1 + mK * 1 + mFe * 4 + mCl * 1 + mSO4 * 4
-	+ mHCO3 * 1 + mCO3 * 4);
+        + mHCO3 * 1 + mCO3 * 4);
 
     // Debye-Hueckel constant A(T) — linear approximation 0..100 C
     debyeHueckelA = 0.5092 + 8.5e-4 * (temperatureC - 25.0);

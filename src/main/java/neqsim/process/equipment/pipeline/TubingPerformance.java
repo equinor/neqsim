@@ -249,15 +249,15 @@ public class TubingPerformance extends Pipeline {
       // Update pressure for next segment
       currentPressure -= dpSegment;
       if (currentPressure < 1.0) {
-	currentPressure = 1.0;
+        currentPressure = 1.0;
       }
       workingSystem.setPressure(currentPressure, "bara");
 
       // Update temperature if using gradient
       if (temperatureModel != TemperatureModel.ISOTHERMAL) {
-	double depth = length - (i + 1) * segmentLength;
-	double temp = calculateTemperatureAtDepth(depth);
-	workingSystem.setTemperature(temp, "C");
+        double depth = length - (i + 1) * segmentLength;
+        double temp = calculateTemperatureAtDepth(depth);
+        workingSystem.setTemperature(temp, "C");
       }
     }
 
@@ -303,9 +303,9 @@ public class TubingPerformance extends Pipeline {
       // Uphill flow
       double nLv = 1.0; // simplified
       double C = (1.0 - lambdaL)
-	  * Math.log(2.96 * Math.pow(lambdaL, 0.305) * Math.pow(nFr, 0.0978) * Math.pow(nLv, 0.0609));
+          * Math.log(2.96 * Math.pow(lambdaL, 0.305) * Math.pow(nFr, 0.0978) * Math.pow(nLv, 0.0609));
       if (C < 0) {
-	C = 0;
+        C = 0;
       }
       psi = 1.0 + C * (sinBeta - 0.333 * Math.pow(sinBeta, 3));
     } else {
@@ -344,10 +344,10 @@ public class TubingPerformance extends Pipeline {
     for (int i = 0; i < numberOfSegments; i++) {
       ops = new ThermodynamicOperations(workingSystem);
       try {
-	ops.TPflash();
+        ops.TPflash();
       } catch (Exception e) {
-	// If flash fails, use properties from previous segment
-	logger.warn("TPflash failed in segment " + i + ", using previous properties");
+        // If flash fails, use properties from previous segment
+        logger.warn("TPflash failed in segment " + i + ", using previous properties");
       }
 
       double rhoL = workingSystem.getPhase(1).getDensity("kg/m3");
@@ -356,13 +356,13 @@ public class TubingPerformance extends Pipeline {
 
       // Check for invalid values
       if (Double.isNaN(rhoL) || Double.isNaN(rhoG) || rhoL <= 0 || rhoG <= 0) {
-	logger.warn("Invalid density in segment " + i + ", using simplified calculation");
-	// Use a simplified single-phase approach
-	rhoL = 800.0; // Default liquid density
-	rhoG = workingSystem.getDensity("kg/m3");
-	if (Double.isNaN(rhoG) || rhoG <= 0) {
-	  rhoG = 50.0; // Default gas density
-	}
+        logger.warn("Invalid density in segment " + i + ", using simplified calculation");
+        // Use a simplified single-phase approach
+        rhoL = 800.0; // Default liquid density
+        rhoG = workingSystem.getDensity("kg/m3");
+        if (Double.isNaN(rhoG) || rhoG <= 0) {
+          rhoG = 50.0; // Default gas density
+        }
       }
 
       double area = Math.PI * diameter * diameter / 4.0;
@@ -390,7 +390,7 @@ public class TubingPerformance extends Pipeline {
 
       currentPressure -= dpSegment;
       if (currentPressure < 1.0) {
-	currentPressure = 1.0;
+        currentPressure = 1.0;
       }
       workingSystem.setPressure(currentPressure, "bara");
     }
@@ -468,7 +468,7 @@ public class TubingPerformance extends Pipeline {
       // Simplified Gray holdup - assumes mist flow dominance
       double holdup = lambdaL * 1.2; // Gray adjustment for entrainment
       if (holdup > 1.0) {
-	holdup = 1.0;
+        holdup = 1.0;
       }
 
       double rhoM = holdup * rhoL + (1 - holdup) * rhoG;
@@ -486,7 +486,7 @@ public class TubingPerformance extends Pipeline {
 
       currentPressure -= dpSegment;
       if (currentPressure < 1.0) {
-	currentPressure = 1.0;
+        currentPressure = 1.0;
       }
       workingSystem.setPressure(currentPressure, "bara");
     }
@@ -527,21 +527,21 @@ public class TubingPerformance extends Pipeline {
       // Hasan-Kabir uses drift-flux model
       double C0 = 1.2; // Distribution coefficient
       double vd = 1.53
-	  * Math.pow(ThermodynamicConstantsInterface.gravity * sigma * (rhoL - rhoG) / (rhoL * rhoL + 1e-10), 0.25); // Drift
-														     // velocity
+          * Math.pow(ThermodynamicConstantsInterface.gravity * sigma * (rhoL - rhoG) / (rhoL * rhoL + 1e-10), 0.25); // Drift
+      // velocity
 
       double lambdaL = vsL / (vm + 1e-10);
       double holdup;
       if (vsG < 0.001) {
-	holdup = 1.0;
+        holdup = 1.0;
       } else {
-	holdup = 1 - vsG / (C0 * vm + vd);
-	if (holdup < 0) {
-	  holdup = lambdaL;
-	}
-	if (holdup > 1) {
-	  holdup = 1.0;
-	}
+        holdup = 1 - vsG / (C0 * vm + vd);
+        if (holdup < 0) {
+          holdup = lambdaL;
+        }
+        if (holdup > 1) {
+          holdup = 1.0;
+        }
       }
 
       double rhoM = holdup * rhoL + (1 - holdup) * rhoG;
@@ -559,7 +559,7 @@ public class TubingPerformance extends Pipeline {
 
       currentPressure -= dpSegment;
       if (currentPressure < 1.0) {
-	currentPressure = 1.0;
+        currentPressure = 1.0;
       }
       workingSystem.setPressure(currentPressure, "bara");
     }
@@ -609,10 +609,10 @@ public class TubingPerformance extends Pipeline {
       // Simplified holdup
       double holdup = lambdaL * (1 + 0.3 * nGv / (nLv + 1));
       if (holdup > 1) {
-	holdup = 1.0;
+        holdup = 1.0;
       }
       if (holdup < lambdaL) {
-	holdup = lambdaL;
+        holdup = lambdaL;
       }
 
       double rhoM = holdup * rhoL + (1 - holdup) * rhoG;
@@ -629,7 +629,7 @@ public class TubingPerformance extends Pipeline {
 
       currentPressure -= dpSegment;
       if (currentPressure < 1.0) {
-	currentPressure = 1.0;
+        currentPressure = 1.0;
       }
       workingSystem.setPressure(currentPressure, "bara");
     }
@@ -776,28 +776,28 @@ public class TubingPerformance extends Pipeline {
       double tolerance = 0.5; // bar
 
       for (int iter = 0; iter < 20; iter++) {
-	system.setPressure(bhp, "bara");
+        system.setPressure(bhp, "bara");
 
-	// Create temporary stream
-	neqsim.process.equipment.stream.Stream tempStream = new neqsim.process.equipment.stream.Stream("temp", system);
-	tempStream.setFlowRate(flowRates[i], "MSm3/day");
-	tempStream.run();
+        // Create temporary stream
+        neqsim.process.equipment.stream.Stream tempStream = new neqsim.process.equipment.stream.Stream("temp", system);
+        tempStream.setFlowRate(flowRates[i], "MSm3/day");
+        tempStream.run();
 
-	setInletStream(tempStream);
-	run();
+        setInletStream(tempStream);
+        run();
 
-	double calculatedWHP = getOutletStream().getPressure("bara");
-	double error = calculatedWHP - wellheadPressure;
+        double calculatedWHP = getOutletStream().getPressure("bara");
+        double error = calculatedWHP - wellheadPressure;
 
-	if (Math.abs(error) < tolerance) {
-	  break;
-	}
+        if (Math.abs(error) < tolerance) {
+          break;
+        }
 
-	// Adjust BHP
-	bhp += error * 0.5;
-	if (bhp < wellheadPressure + 1) {
-	  bhp = wellheadPressure + 1;
-	}
+        // Adjust BHP
+        bhp += error * 0.5;
+        if (bhp < wellheadPressure + 1) {
+          bhp = wellheadPressure + 1;
+        }
       }
 
       result[1][i] = bhp;

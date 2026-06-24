@@ -173,7 +173,7 @@ public class RiskModel {
   public RiskEvent addConditionalEvent(String name, RiskEvent parentEvent, double probability,
       ConsequenceCategory category) {
     RiskEvent event = RiskEvent.builder().name(name).parentEvent(parentEvent).conditionalProbability(probability)
-	.consequenceCategory(category).build();
+        .consequenceCategory(category).build();
     events.add(event);
     return event;
   }
@@ -196,7 +196,7 @@ public class RiskModel {
     List<RiskEvent> initiating = new ArrayList<>();
     for (RiskEvent event : events) {
       if (event.isInitiatingEvent()) {
-	initiating.add(event);
+        initiating.add(event);
       }
     }
     return initiating;
@@ -233,7 +233,7 @@ public class RiskModel {
 
       // Add event result
       result.addEventResult(new EventResult(event.getName(), freq, event.getConditionalProbability(), risk,
-	  event.getConsequenceCategory()));
+          event.getConsequenceCategory()));
     }
 
     result.setTotalRiskIndex(totalRisk);
@@ -271,27 +271,27 @@ public class RiskModel {
       double iterFreq = 0.0;
 
       for (RiskEvent event : events) {
-	// Sample frequency from log-normal
-	double sampledFreq = sampleLogNormal(random, event.getFrequency(), frequencyUncertaintyFactor);
+        // Sample frequency from log-normal
+        double sampledFreq = sampleLogNormal(random, event.getFrequency(), frequencyUncertaintyFactor);
 
-	// Sample probability from truncated normal
-	double sampledProb = sampleTruncatedNormal(random, event.getConditionalProbability(),
-	    probabilityUncertaintyStdDev);
+        // Sample probability from truncated normal
+        double sampledProb = sampleTruncatedNormal(random, event.getConditionalProbability(),
+            probabilityUncertaintyStdDev);
 
-	// Calculate absolute frequency for this sample
-	double absFreq = sampledFreq;
-	if (event.getParentEvent() != null) {
-	  // For conditional events, we need the parent's sampled frequency
-	  // Simplified: use point estimate for parent
-	  absFreq = event.getParentEvent().getAbsoluteFrequency() * sampledProb;
-	}
+        // Calculate absolute frequency for this sample
+        double absFreq = sampledFreq;
+        if (event.getParentEvent() != null) {
+          // For conditional events, we need the parent's sampled frequency
+          // Simplified: use point estimate for parent
+          absFreq = event.getParentEvent().getAbsoluteFrequency() * sampledProb;
+        }
 
-	double severity = event.getConsequenceCategory().getSeverity();
-	iterRisk += absFreq * severity;
-	iterFreq += absFreq;
+        double severity = event.getConsequenceCategory().getSeverity();
+        iterRisk += absFreq * severity;
+        iterFreq += absFreq;
 
-	// Accumulate category frequencies
-	catFreqs[event.getConsequenceCategory().ordinal()] += absFreq / iterations;
+        // Accumulate category frequencies
+        catFreqs[event.getConsequenceCategory().ordinal()] += absFreq / iterations;
       }
 
       riskSamples[iter] = iterRisk;
@@ -323,7 +323,7 @@ public class RiskModel {
       double freq = event.getAbsoluteFrequency();
       double risk = freq * event.getConsequenceCategory().getSeverity();
       result.addEventResult(new EventResult(event.getName(), freq, event.getConditionalProbability(), risk,
-	  event.getConsequenceCategory()));
+          event.getConsequenceCategory()));
     }
 
     if (storeMonteCarloSamples) {
@@ -376,7 +376,7 @@ public class RiskModel {
     // Vary each event's frequency
     for (RiskEvent event : events) {
       if (!event.isInitiatingEvent()) {
-	continue; // Only vary initiating events
+        continue; // Only vary initiating events
       }
 
       double baseFreq = event.getFrequency();
@@ -384,9 +384,9 @@ public class RiskModel {
       double[] risks = new double[numPoints];
 
       for (int i = 0; i < numPoints; i++) {
-	event.setFrequency(baseFreq * multipliers[i]);
-	values[i] = baseFreq * multipliers[i];
-	risks[i] = calculateTotalRisk();
+        event.setFrequency(baseFreq * multipliers[i]);
+        values[i] = baseFreq * multipliers[i];
+        risks[i] = calculateTotalRisk();
       }
 
       // Restore base frequency
@@ -432,7 +432,7 @@ public class RiskModel {
       result.setCategoryFrequency(event.getConsequenceCategory(), catFreq + freq);
 
       result.addEventResult(new EventResult(event.getName(), freq, event.getConditionalProbability(), risk,
-	  event.getConsequenceCategory()));
+          event.getConsequenceCategory()));
     }
 
     result.setTotalRiskIndex(totalRisk);

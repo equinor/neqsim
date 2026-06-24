@@ -380,7 +380,7 @@ public class BlueHydrogenPlantBuilder extends SMRHydrogenPlantBuilder {
    */
   public double getResidualCo2EquivalentKgPerHour() {
     double residual = getCarbonAsCo2EquivalentKgPerHour(
-	reformerFurnace == null ? null : reformerFurnace.getFlueGasOutStream());
+        reformerFurnace == null ? null : reformerFurnace.getFlueGasOutStream());
     if (psaCascade != null) {
       residual += getCarbonAsCo2EquivalentKgPerHour(psaCascade.getTailGasStream());
     }
@@ -424,7 +424,7 @@ public class BlueHydrogenPlantBuilder extends SMRHydrogenPlantBuilder {
    */
   public String getCaptureReadinessSummary() {
     return "SMR + HT/LT WGS + CO2 capture/compression + PSA + H2 drying/compression, " + "target CO2 capture fraction "
-	+ co2CaptureFraction;
+        + co2CaptureFraction;
   }
 
   /** {@inheritDoc} */
@@ -433,11 +433,11 @@ public class BlueHydrogenPlantBuilder extends SMRHydrogenPlantBuilder {
     ProcessSystem process = new ProcessSystem();
     String name = getPlantName();
     Stream feed = createMethaneSteamFeed(name + " feed", getMethaneFeedMolePerSec(), getSteamToCarbonRatio(),
-	getFeedTemperatureK(), getPressureBara());
+        getFeedTemperatureK(), getPressureBara());
     Stream fuel = createMethaneFuel(name + " furnace fuel", getMethaneFeedMolePerSec() * getFuelToFeedMethaneRatio(),
-	298.15, getPressureBara());
+        298.15, getPressureBara());
     Stream air = createAir(name + " combustion air", 2.0 * getMethaneFeedMolePerSec() * getFuelToFeedMethaneRatio(),
-	298.15, getPressureBara());
+        298.15, getPressureBara());
 
     reformerFurnace = new ReformerFurnace(name + " reformer furnace", feed);
     reformerFurnace.setFuelInletStream(fuel);
@@ -445,18 +445,18 @@ public class BlueHydrogenPlantBuilder extends SMRHydrogenPlantBuilder {
     reformerFurnace.setTargetReformingTemperature(getReformingTemperatureK());
 
     highTemperatureShiftReactor = new WaterGasShiftReactor(name + " high temperature shift",
-	reformerFurnace.getSyngasOutStream());
+        reformerFurnace.getSyngasOutStream());
     highTemperatureShiftReactor.setShiftTemperature(highTemperatureShiftTemperatureK);
 
     lowTemperatureShiftReactor = new WaterGasShiftReactor(name + " low temperature shift",
-	highTemperatureShiftReactor.getOutletStream());
+        highTemperatureShiftReactor.getOutletStream());
     lowTemperatureShiftReactor.setShiftTemperature(lowTemperatureShiftTemperatureK);
 
     shiftedGasCooler = new Cooler(name + " shifted gas cooler", lowTemperatureShiftReactor.getOutletStream());
     shiftedGasCooler.setOutletTemperature(shiftedGasCoolerOutletTemperatureK);
 
     shiftedCondensateSeparator = new Separator(name + " shifted condensate separator",
-	shiftedGasCooler.getOutletStream());
+        shiftedGasCooler.getOutletStream());
 
     co2CaptureUnit = new ComponentCaptureUnit(name + " CO2 capture");
     co2CaptureUnit.setComponentName("CO2");
@@ -499,9 +499,9 @@ public class BlueHydrogenPlantBuilder extends SMRHydrogenPlantBuilder {
     Map<String, Object> results = new LinkedHashMap<String, Object>();
     results.put("co2CaptureFractionTarget", co2CaptureFraction);
     results.put("highTemperatureShiftConversion",
-	highTemperatureShiftReactor == null ? Double.NaN : highTemperatureShiftReactor.getCarbonMonoxideConversion());
+        highTemperatureShiftReactor == null ? Double.NaN : highTemperatureShiftReactor.getCarbonMonoxideConversion());
     results.put("lowTemperatureShiftConversion",
-	lowTemperatureShiftReactor == null ? Double.NaN : lowTemperatureShiftReactor.getCarbonMonoxideConversion());
+        lowTemperatureShiftReactor == null ? Double.NaN : lowTemperatureShiftReactor.getCarbonMonoxideConversion());
     results.put("capturedCo2_kg_per_hr", getCapturedCo2MassFlowKgPerHour());
     results.put("residualCo2e_kg_per_hr", getResidualCo2EquivalentKgPerHour());
     results.put("grossCo2e_kg_per_hr", getGrossCo2EquivalentKgPerHour());
@@ -600,7 +600,7 @@ public class BlueHydrogenPlantBuilder extends SMRHydrogenPlantBuilder {
     }
     SystemInterface system = stream.getThermoSystem();
     double carbonMoles = getComponentMoles(system, "CO2") + getComponentMoles(system, "CO")
-	+ getComponentMoles(system, "methane");
+        + getComponentMoles(system, "methane");
     return carbonMoles * CO2_MOLAR_MASS_KG_PER_MOL * 3600.0;
   }
 
@@ -614,7 +614,7 @@ public class BlueHydrogenPlantBuilder extends SMRHydrogenPlantBuilder {
   private double getComponentMoles(SystemInterface system, String componentName) {
     try {
       if (system != null && system.hasComponent(componentName)) {
-	return Math.max(0.0, system.getComponent(componentName).getNumberOfmoles());
+        return Math.max(0.0, system.getComponent(componentName).getNumberOfmoles());
       }
     } catch (Exception ex) {
       return 0.0;

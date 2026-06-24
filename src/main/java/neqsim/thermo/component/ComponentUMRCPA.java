@@ -43,10 +43,10 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
       // System.out.println("aSRK " + a + " aCPA " + aCPA);
       // System.out.println("bSRK " + b + " bCPA " + bCPA);
       for (int j = 0; j < getNumberOfAssociationSites(); j++) {
-	setXsite(j, 1.0);
-	setXsiteOld(j, 1.0);
-	setXsitedV(j, 0.0);
-	setXsitedT(j, 0.0);
+        setXsite(j, 1.0);
+        setXsiteOld(j, 1.0);
+        setXsitedV(j, 0.0);
+        setXsitedT(j, 0.0);
       }
       // if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
       // a = aCPA;
@@ -79,10 +79,10 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
     xsiteOld = new double[numberOfAssociationSites];
     if (numberOfAssociationSites != 0 && cpaon == 1) {
       for (int j = 0; j < getNumberOfAssociationSites(); j++) {
-	setXsite(j, 1.0);
-	setXsiteOld(j, 1.0);
-	setXsitedV(j, 0.0);
-	setXsitedT(j, 0.0);
+        setXsite(j, 1.0);
+        setXsiteOld(j, 1.0);
+        setXsitedV(j, 0.0);
+        setXsitedT(j, 0.0);
       }
       // if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
       // a = aCPA;
@@ -172,10 +172,10 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
     boolean hasUmrcpaMc = false;
     if (umrcpaMc != null) {
       for (int k = 0; k < umrcpaMc.length; k++) {
-	if (Math.abs(umrcpaMc[k]) > 1e-20) {
-	  hasUmrcpaMc = true;
-	  break;
-	}
+        if (Math.abs(umrcpaMc[k]) > 1e-20) {
+          hasUmrcpaMc = true;
+          break;
+        }
       }
     }
     if ((numberOfAssociationSites != 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
@@ -185,10 +185,10 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
       // the regressed UMR-CPA alpha. Otherwise fall back to the standard PR alpha with the
       // CPA-regressed m parameter.
       if (hasUmrcpaMc) {
-	super.setAttractiveTerm(22);
+        super.setAttractiveTerm(22);
       } else {
-	super.setAttractiveTerm(1);
-	getAttractiveTerm().setm(mCPA);
+        super.setAttractiveTerm(1);
+        getAttractiveTerm().setm(mCPA);
       }
     } else {
       // Non-associating compounds use the five-parameter Mathias-Copeman alpha of the UMR-CPA
@@ -200,12 +200,12 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
       // attractive term from the term number, so consistency between the main and reference
       // phases is preserved in either case.
       if (hasUmrcpaMc) {
-	// Install the five-parameter Mathias-Copeman UMR-CPA term (term 22).
-	super.setAttractiveTerm(22);
+        // Install the five-parameter Mathias-Copeman UMR-CPA term (term 22).
+        super.setAttractiveTerm(22);
       } else {
-	// No dedicated UMR-CPA fit: reduce to UMR-PRU-new (term 19) for this non-associating
-	// component instead of the generic requested attractive term.
-	super.setAttractiveTerm(19);
+        // No dedicated UMR-CPA fit: reduce to UMR-PRU-new (term 19) for this non-associating
+        // component instead of the generic requested attractive term.
+        super.setAttractiveTerm(19);
       }
     }
   }
@@ -259,7 +259,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     if (((PhaseCPAInterface) phase).getTotalNumberOfAccociationSites() > 0) {
       return super.dFdNdT(phase, numberOfComponents, temperature, pressure)
-	  + dFCPAdNdT(phase, numberOfComponents, temperature, pressure);
+          + dFCPAdNdT(phase, numberOfComponents, temperature, pressure);
     } else {
       return super.dFdNdT(phase, numberOfComponents, temperature, pressure);
     }
@@ -273,7 +273,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
     // temperature, pressure));
     if (((PhaseCPAInterface) phase).getTotalNumberOfAccociationSites() > 0) {
       return super.dFdNdV(phase, numberOfComponents, temperature, pressure)
-	  + dFCPAdNdV(phase, numberOfComponents, temperature, pressure);
+          + dFCPAdNdV(phase, numberOfComponents, temperature, pressure);
     } else {
       return super.dFdNdV(phase, numberOfComponents, temperature, pressure);
     }
@@ -290,7 +290,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
     // pressure)));
     if (((PhaseCPAInterface) phase).getTotalNumberOfAccociationSites() > 0) {
       return super.dFdNdN(j, phase, numberOfComponents, temperature, pressure)
-	  + dFCPAdNdN(j, phase, numberOfComponents, temperature, pressure);
+          + dFCPAdNdN(j, phase, numberOfComponents, temperature, pressure);
     } else {
       return super.dFdNdN(j, phase, numberOfComponents, temperature, pressure);
     }
@@ -322,8 +322,8 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
     double tot10 = 0.0;
     for (int kk = 0; kk < phase.getNumberOfComponents(); kk++) {
       for (int k = 0; k < phase.getComponent(kk).getNumberOfAssociationSites(); k++) {
-	tot10 += -phase.getComponent(kk).getNumberOfMolesInPhase()
-	    * ((ComponentUMRCPA) phase.getComponent(kk)).getXsitedni(k, j);
+        tot10 += -phase.getComponent(kk).getNumberOfMolesInPhase()
+            * ((ComponentUMRCPA) phase.getComponent(kk)).getXsitedni(k, j);
       }
     }
     double tot11 = tot10 / 2.0 * calc_lngi(phase);
@@ -402,7 +402,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
     for (int k = 0; k < phase.getNumberOfComponents(); k++) {
       tot2 = 0.0;
       for (int i = 0; i < phase.getComponent(k).getNumberOfAssociationSites(); i++) {
-	tot2 -= ((ComponentUMRCPA) phase.getComponent(k)).getXsitedT()[i];
+        tot2 -= ((ComponentUMRCPA) phase.getComponent(k)).getXsitedT()[i];
       }
       tot1 += tot2 * phase.getComponent(k).getNumberOfMolesInPhase();
     }
@@ -450,16 +450,16 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
       fact = 1.0;
     }
     return -getNumberOfMolesInPhase() / Math.pow(xsite[sitei], 2.0) * fact
-	- getNumberOfMolesInPhase() * phase.getComponent(compj).getNumberOfMolesInPhase()
-	    * ((PhaseCPAInterface) phase).getCpaMixingRule().calcDelta(sitei, sitej, componentNumber, compj, phase,
-		phase.getTemperature(), phase.getPressure(), phase.getNumberOfComponents());
+        - getNumberOfMolesInPhase() * phase.getComponent(compj).getNumberOfMolesInPhase()
+            * ((PhaseCPAInterface) phase).getCpaMixingRule().calcDelta(sitei, sitej, componentNumber, compj, phase,
+                phase.getTemperature(), phase.getPressure(), phase.getNumberOfComponents());
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFCPAdVdXi(int site, PhaseInterface phase) {
     return -1.0 / (2.0 * phase.getTotalVolume())
-	* (1.0 - phase.getTotalVolume() * ((PhaseCPAInterface) phase).getGcpav()) * getNumberOfMolesInPhase();
+        * (1.0 - phase.getTotalVolume() * ((PhaseCPAInterface) phase).getGcpav()) * getNumberOfMolesInPhase();
   }
 
   /** {@inheritDoc} */
@@ -493,7 +493,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
    */
   public double calc_lngi(PhaseInterface phase) {
     return 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB())
-	/ ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()));
+        / ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()));
   }
 
   /**
@@ -504,10 +504,10 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
    */
   public double calc_lngidV(PhaseInterface phase) {
     return 2.0 * getBi() * (10.0)
-	/ ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()))
-	- 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB())
-	    * (2.0 * 32.0 * phase.getTotalVolume() - 12.0 * phase.getB()) / Math.pow(
-		((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB())), 2.0);
+        / ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()))
+        - 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB())
+            * (2.0 * 32.0 * phase.getTotalVolume() - 12.0 * phase.getB()) / Math.pow(
+                ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB())), 2.0);
   }
 
   /**

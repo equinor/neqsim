@@ -60,12 +60,12 @@ public class CostEstimateBaseClass implements java.io.Serializable {
     ArrayList<String> names = processdesign.getProcess().getAllUnitNames();
     for (int i = 0; i < names.size(); i++) {
       try {
-	if (!(this.processdesign.getProcess().getUnit(names.get(i)) == null)) {
-	  cost += this.processdesign.getProcess().getUnit(names.get(i)).getMechanicalDesign().getCostEstimate()
-	      .getTotalCost();
-	}
+        if (!(this.processdesign.getProcess().getUnit(names.get(i)) == null)) {
+          cost += this.processdesign.getProcess().getUnit(names.get(i)).getMechanicalDesign().getCostEstimate()
+              .getTotalCost();
+        }
       } catch (Exception ex) {
-	logger.error(ex.getMessage(), ex);
+        logger.error(ex.getMessage(), ex);
       }
     }
     return cost;

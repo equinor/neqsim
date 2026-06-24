@@ -192,7 +192,7 @@ public class WindFarm extends ProcessEquipmentBaseClass {
     // Hours per year * number of turbines * losses
     double hoursPerYear = 8760.0;
     aep = aep * hoursPerYear * numberOfTurbines * (1.0 - wakeLossFactor) * availabilityFactor
-	* (1.0 - electricalLossFactor);
+        * (1.0 - electricalLossFactor);
     return aep;
   }
 
@@ -241,7 +241,7 @@ public class WindFarm extends ProcessEquipmentBaseClass {
     for (int i = 0; i < windSpeedTimeSeries.length; i++) {
       double singlePower = calculateTurbinePower(windSpeedTimeSeries[i]);
       powerTimeSeries[i] = singlePower * numberOfTurbines * (1.0 - wakeLossFactor) * availabilityFactor
-	  * (1.0 - electricalLossFactor);
+          * (1.0 - electricalLossFactor);
     }
   }
 

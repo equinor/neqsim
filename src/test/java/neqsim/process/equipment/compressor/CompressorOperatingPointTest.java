@@ -120,7 +120,7 @@ public class CompressorOperatingPointTest {
       assertEquals("none", constraint, "withinChart should imply no limiting constraint");
     } else {
       assertTrue("surge".equals(constraint) || "stonewall".equals(constraint),
-	  "A constrained point must be surge or stonewall, was " + constraint);
+          "A constrained point must be surge or stonewall, was " + constraint);
     }
   }
 }

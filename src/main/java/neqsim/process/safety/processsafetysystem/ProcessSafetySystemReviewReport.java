@@ -32,24 +32,24 @@ public class ProcessSafetySystemReviewReport implements Serializable {
    */
   public ProcessSafetySystemReviewReport(String projectName) {
     this.projectName = projectName == null || projectName.trim().isEmpty() ? "process-safety-system-review"
-	: projectName.trim();
+        : projectName.trim();
     standardsApplied.add(ProcessSafetySystemReviewEngine.NORSOK_S001 + " Clause 10");
     assumptions.add("Technical documentation and instrument data are normalized before review.");
     limitations.add("The Java review engine does not connect directly to STID or tagreader.");
     limitations.add("Calculated PSV, SIF, LOPA, and operational outputs are referenced as evidence when supplied.");
     extractionTemplates.add(
-	"HAZID/HAZOP/LOPA: scenario id, consequence, demand frequency, safeguards, and credited protection layers.");
+        "HAZID/HAZOP/LOPA: scenario id, consequence, demand frequency, safeguards, and credited protection layers.");
     extractionTemplates.add("C&E matrix: functionId, causes, actions, response times, logic solver, final elements.");
     extractionTemplates.add("SRS/SIL records: SIF id, architecture, SIL/PFD, proof-test interval, bypass rules.");
     extractionTemplates.add(
-	"SIS/ESD/FGS implementation: logic solver, FGS/ESD/SIS architecture, cause/effect implementation, and final-element data.");
+        "SIS/ESD/FGS implementation: logic solver, FGS/ESD/SIS architecture, cause/effect implementation, and final-element data.");
     extractionTemplates.add(
-	"Verification/testing/operation: FAT, SAT, proof-test status, bypass/override register, maintenance plan, and live instrument status.");
+        "Verification/testing/operation: FAT, SAT, proof-test status, bypass/override register, maintenance plan, and live instrument status.");
     extractionTemplates
-	.add("PSV list: protected equipment, set pressure, relief load, rated capacity, scenario basis.");
+        .add("PSV list: protected equipment, set pressure, relief load, rated capacity, scenario basis.");
     extractionTemplates.add("Instrument data: tag, role, trip setpoint, proof-test status, bypass/override status.");
     extractionTemplates
-	.add("Utility dependency matrix: safety function, required utility, fail-safe state, survivability.");
+        .add("Utility dependency matrix: safety function, required utility, fail-safe state, survivability.");
   }
 
   /**
@@ -111,9 +111,9 @@ public class ProcessSafetySystemReviewReport implements Serializable {
     int warningItems = 0;
     for (ProcessSafetySystemReviewResult result : results) {
       if ("FAIL".equals(result.getVerdict())) {
-	failedItems++;
+        failedItems++;
       } else if ("PASS_WITH_WARNINGS".equals(result.getVerdict())) {
-	warningItems++;
+        warningItems++;
       }
     }
     map.put("status", "success");

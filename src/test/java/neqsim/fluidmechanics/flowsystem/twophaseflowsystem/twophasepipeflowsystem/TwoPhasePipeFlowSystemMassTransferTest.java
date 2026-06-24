@@ -36,7 +36,7 @@ public class TwoPhasePipeFlowSystemMassTransferTest {
 
     // Create a simple pipe system using builder
     pipe = TwoPhasePipeFlowSystem.builder().withFluid(testFluid).withDiameter(0.1, "m").withLength(100, "m")
-	.withNodes(10).withFlowPattern(FlowPattern.STRATIFIED).build();
+        .withNodes(10).withFlowPattern(FlowPattern.STRATIFIED).build();
   }
 
   @Test
@@ -115,7 +115,7 @@ public class TwoPhasePipeFlowSystemMassTransferTest {
 
     for (int i = 0; i < areas.length; i++) {
       assertTrue(areas[i] >= 0.0,
-	  "Specific interfacial area should be non-negative at all nodes, was " + areas[i] + " at node " + i);
+          "Specific interfacial area should be non-negative at all nodes, was " + areas[i] + " at node " + i);
     }
   }
 

@@ -118,7 +118,7 @@ public class MPCIntegrationTest {
     String[] dvNames = { "DV1" };
 
     LinearizationResult result = new LinearizationResult(gains, distGains, mvOp, cvOp, dvOp, mvNames, cvNames, dvNames,
-	1e-3, 2);
+        1e-3, 2);
 
     assertEquals(2, result.getNumMV());
     assertEquals(2, result.getNumCV());
@@ -238,7 +238,7 @@ public class MPCIntegrationTest {
     String[] cvNames = { "pressure" };
 
     LinearizationResult result = new LinearizationResult(gains, new double[1][0], new double[] { 0.5 },
-	new double[] { 30.0 }, new double[0], mvNames, cvNames, new String[0], 1e-3, 1);
+        new double[] { 30.0 }, new double[0], mvNames, cvNames, new String[0], 1e-3, 1);
 
     StateSpaceExporter exporter = new StateSpaceExporter(result);
     StateSpaceExporter.StateSpaceModel model = exporter.toDiscreteStateSpace(60.0);
@@ -272,7 +272,7 @@ public class MPCIntegrationTest {
   public void testStateSpaceModelSimulation() {
     double[][] gains = { { 1.0 } };
     LinearizationResult result = new LinearizationResult(gains, new double[1][0], new double[] { 0.5 },
-	new double[] { 0.0 }, new double[0], new String[] { "u" }, new String[] { "y" }, new String[0], 1e-3, 1);
+        new double[] { 0.0 }, new double[0], new String[] { "u" }, new String[] { "y" }, new String[0], 1e-3, 1);
 
     StateSpaceExporter exporter = new StateSpaceExporter(result);
     // Use sample time matching default time constant for faster convergence in test

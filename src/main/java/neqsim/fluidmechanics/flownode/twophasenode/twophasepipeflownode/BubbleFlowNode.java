@@ -42,7 +42,7 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
     this.flowNodeType = "bubble";
     this.interphaseTransportCoefficient = new InterphaseDropletFlow(this);
     this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-	this);
+        this);
   }
 
   /**
@@ -57,7 +57,7 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
     this.flowNodeType = "bubble";
     this.interphaseTransportCoefficient = new InterphaseDropletFlow(this);
     this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-	this);
+        this);
   }
 
   /** {@inheritDoc} */
@@ -105,7 +105,7 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
   @Override
   public double calcContactLength() {
     double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
-	+ Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
+        + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
     wallContactLength[1] = phaseAngel * pipe.getDiameter();
     wallContactLength[0] = pi * pipe.getDiameter() - wallContactLength[1];
     interphaseContactLength[0] = pipe.getDiameter() * Math.sin(phaseAngel);
@@ -159,7 +159,7 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
       // Use d_32 ≈ 0.6 * d_max for Sauter mean diameter
       double d32 = 0.6 * dMax;
       if (d32 > 0 && phaseFraction[0] > 0) {
-	return 6.0 * phaseFraction[0] / d32;
+        return 6.0 * phaseFraction[0] / d32;
       }
     }
     return calcGeometricInterfacialAreaPerVolume();
@@ -215,15 +215,15 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
       test.initFlowCalc();
       test.calcFluxes();
       if (i > 1 && (i % 100) == 0) {
-	k++;
-	test.display("length " + length);
-	test.getBulkSystem().display("length " + length);
-	// test.getInterphaseSystem().display("length " + length);
-	// test.getFluidBoundary().display("length " + length);
-	// test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
-	temperatures2[0][k] = length;
-	temperatures2[1][k] = test.getGeometry().getInnerWallTemperature();
-	// test.getFluidBoundary().display("test");
+        k++;
+        test.display("length " + length);
+        test.getBulkSystem().display("length " + length);
+        // test.getInterphaseSystem().display("length " + length);
+        // test.getFluidBoundary().display("length " + length);
+        // test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
+        temperatures2[0][k] = length;
+        temperatures2[1][k] = test.getGeometry().getInnerWallTemperature();
+        // test.getFluidBoundary().display("test");
       }
 
       // test.getBulkSystem().display();

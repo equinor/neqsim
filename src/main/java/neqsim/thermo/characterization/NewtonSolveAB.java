@@ -55,14 +55,14 @@ public class NewtonSolveAB implements java.io.Serializable {
   public void setfvec() {
     double f0 = -characterizeClass.getZPlus();
     for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
-	.getLastPlusFractionNumber(); i++) {
+        .getLastPlusFractionNumber(); i++) {
       f0 += Math.exp(characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i));
     }
     fvec.set(0, 0, f0);
 
     f0 = -characterizeClass.getMPlus() * characterizeClass.getZPlus();
     for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
-	.getLastPlusFractionNumber(); i++) {
+        .getLastPlusFractionNumber(); i++) {
       f0 += Math.exp(characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i)) * (14.0 * i - 4.0);
     }
     fvec.set(1, 0, f0);
@@ -76,31 +76,31 @@ public class NewtonSolveAB implements java.io.Serializable {
 
     double f0 = 0.0;
     for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
-	.getLastPlusFractionNumber(); i++) {
+        .getLastPlusFractionNumber(); i++) {
       f0 += Math.exp(characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i));
     }
     Jac.set(0, 0, f0 + (0.0));
 
     f0 = 0.0;
     for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
-	.getLastPlusFractionNumber(); i++) {
+        .getLastPlusFractionNumber(); i++) {
       f0 += characterizeClass.getPlusCoefs(1)
-	  * Math.exp(characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i));
+          * Math.exp(characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i));
     }
     Jac.set(1, 0, f0);
 
     f0 = 0.0;
     for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
-	.getLastPlusFractionNumber(); i++) {
+        .getLastPlusFractionNumber(); i++) {
       f0 += (14.0 * i - 4.0) * Math.exp(characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i));
     }
     Jac.set(0, 1, f0);
 
     f0 = 0.0;
     for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
-	.getLastPlusFractionNumber(); i++) {
+        .getLastPlusFractionNumber(); i++) {
       f0 += (14.0 * i - 4.0) * characterizeClass.getPlusCoefs(1)
-	  * Math.exp(characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i));
+          * Math.exp(characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i));
     }
     Jac.set(1, 1, f0 + (0.0));
   }

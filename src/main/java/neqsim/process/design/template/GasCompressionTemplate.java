@@ -125,9 +125,9 @@ public class GasCompressionTemplate implements ProcessTemplate {
     for (int stage = 1; stage <= numStages; stage++) {
       double stageDischargePressure;
       if (stage == numStages) {
-	stageDischargePressure = dischargePressure; // Ensure exact final pressure
+        stageDischargePressure = dischargePressure; // Ensure exact final pressure
       } else {
-	stageDischargePressure = currentPressure * stageRatio;
+        stageDischargePressure = currentPressure * stageRatio;
       }
 
       // Inlet separator (knockout drum)
@@ -143,12 +143,12 @@ public class GasCompressionTemplate implements ProcessTemplate {
 
       // Interstage cooler (except for last stage if no aftercooler needed)
       if (stage < numStages || basis.getParameter("includeAftercooler", 1.0) > 0) {
-	Cooler cooler = new Cooler("Stage " + stage + " Cooler", compressor.getOutletStream());
-	cooler.setOutTemperature(interstageTemp + 273.15); // Convert to K
-	process.add(cooler);
-	currentStream = (Stream) cooler.getOutletStream();
+        Cooler cooler = new Cooler("Stage " + stage + " Cooler", compressor.getOutletStream());
+        cooler.setOutTemperature(interstageTemp + 273.15); // Convert to K
+        process.add(cooler);
+        currentStream = (Stream) cooler.getOutletStream();
       } else {
-	currentStream = (Stream) compressor.getOutletStream();
+        currentStream = (Stream) compressor.getOutletStream();
       }
 
       currentPressure = stageDischargePressure;
@@ -216,8 +216,8 @@ public class GasCompressionTemplate implements ProcessTemplate {
   @Override
   public String[] getExpectedOutputs() {
     return new String[] { "Compressed Gas - High pressure gas from final stage",
-	"Knockout Liquids - Condensate from each stage knockout drum",
-	"Compression Power - Total shaft power required" };
+        "Knockout Liquids - Condensate from each stage knockout drum",
+        "Compression Power - Total shaft power required" };
   }
 
   /** {@inheritDoc} */
@@ -230,7 +230,7 @@ public class GasCompressionTemplate implements ProcessTemplate {
   @Override
   public String getDescription() {
     return "Multi-stage gas compression train with interstage cooling and liquid knockout. "
-	+ "Automatically calculates optimal stage count based on pressure ratio. "
-	+ "Suitable for gas export, injection, and fuel gas systems.";
+        + "Automatically calculates optimal stage count based on pressure ratio. "
+        + "Suitable for gas export, injection, and fuel gas systems.";
   }
 }

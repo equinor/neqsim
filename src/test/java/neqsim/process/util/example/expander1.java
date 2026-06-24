@@ -33,7 +33,7 @@ public class expander1 {
     // neqsim.processSimulation.processEquipment.expander.Expander expander = new
     // neqsim.processSimulation.processEquipment.expander.Expander(stream_1);
     neqsim.process.equipment.compressor.Compressor expander = new neqsim.process.equipment.compressor.Compressor(
-	"expander", stream_1);
+        "expander", stream_1);
 
     expander.setOutletPressure(80.0);
     expander.setPolytropicEfficiency(0.9);

@@ -113,6 +113,6 @@ public class ThermoToProcessTests {
 
     // Should have warning about mixing rule
     assertTrue(result.getWarnings().size() > 0 || !result.isReady(),
-	"Validation should warn about missing mixing rule");
+        "Validation should warn about missing mixing rule");
   }
 }

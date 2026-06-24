@@ -61,17 +61,17 @@ public class OpenDrainReviewItem implements Serializable {
       item.addSourceReference(String.valueOf(sourceDocument));
     }
     for (String key : new String[] { "design", "requirements", "service", "operationalData", "tagreaderData",
-	"historianData" }) {
+        "historianData" }) {
       Object nested = source.get(key);
       if (nested instanceof Map<?, ?>) {
-	for (Map.Entry<String, Object> entry : ((Map<String, Object>) nested).entrySet()) {
-	  item.put(entry.getKey(), entry.getValue());
-	}
+        for (Map.Entry<String, Object> entry : ((Map<String, Object>) nested).entrySet()) {
+          item.put(entry.getKey(), entry.getValue());
+        }
       }
     }
     for (Map.Entry<String, Object> entry : source.entrySet()) {
       if (!isCoreKey(entry.getKey())) {
-	item.put(entry.getKey(), entry.getValue());
+        item.put(entry.getKey(), entry.getValue());
       }
     }
     return item;
@@ -210,7 +210,7 @@ public class OpenDrainReviewItem implements Serializable {
   public boolean hasAny(String... keys) {
     for (String key : keys) {
       if (has(key)) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -237,14 +237,14 @@ public class OpenDrainReviewItem implements Serializable {
     for (String key : keys) {
       Object value = get(key);
       if (value instanceof Number) {
-	return ((Number) value).doubleValue();
+        return ((Number) value).doubleValue();
       }
       if (value instanceof String) {
-	try {
-	  return Double.parseDouble(((String) value).trim());
-	} catch (NumberFormatException ex) {
-	  return defaultValue;
-	}
+        try {
+          return Double.parseDouble(((String) value).trim());
+        } catch (NumberFormatException ex) {
+          return defaultValue;
+        }
       }
     }
     return defaultValue;
@@ -260,18 +260,18 @@ public class OpenDrainReviewItem implements Serializable {
     for (String key : keys) {
       Object value = get(key);
       if (value instanceof Boolean) {
-	return (Boolean) value;
+        return (Boolean) value;
       }
       if (value instanceof String) {
-	String text = ((String) value).trim();
-	if ("true".equalsIgnoreCase(text) || "yes".equalsIgnoreCase(text) || "y".equalsIgnoreCase(text)
-	    || "1".equals(text)) {
-	  return Boolean.TRUE;
-	}
-	if ("false".equalsIgnoreCase(text) || "no".equalsIgnoreCase(text) || "n".equalsIgnoreCase(text)
-	    || "0".equals(text)) {
-	  return Boolean.FALSE;
-	}
+        String text = ((String) value).trim();
+        if ("true".equalsIgnoreCase(text) || "yes".equalsIgnoreCase(text) || "y".equalsIgnoreCase(text)
+            || "1".equals(text)) {
+          return Boolean.TRUE;
+        }
+        if ("false".equalsIgnoreCase(text) || "no".equalsIgnoreCase(text) || "n".equalsIgnoreCase(text)
+            || "0".equals(text)) {
+          return Boolean.FALSE;
+        }
       }
     }
     return null;
@@ -300,7 +300,7 @@ public class OpenDrainReviewItem implements Serializable {
     for (String key : keys) {
       Object value = get(key);
       if (value != null) {
-	return String.valueOf(value);
+        return String.valueOf(value);
       }
     }
     return defaultValue;
@@ -316,16 +316,16 @@ public class OpenDrainReviewItem implements Serializable {
     for (String key : keys) {
       Object value = get(key);
       if (value instanceof List<?>) {
-	List<String> result = new ArrayList<String>();
-	for (Object item : (List<?>) value) {
-	  if (item != null) {
-	    result.add(String.valueOf(item));
-	  }
-	}
-	return result;
+        List<String> result = new ArrayList<String>();
+        for (Object item : (List<?>) value) {
+          if (item != null) {
+            result.add(String.valueOf(item));
+          }
+        }
+        return result;
       }
       if (value != null) {
-	return Collections.singletonList(String.valueOf(value));
+        return Collections.singletonList(String.valueOf(value));
       }
     }
     return Collections.emptyList();
@@ -387,9 +387,9 @@ public class OpenDrainReviewItem implements Serializable {
   private static void addReferences(OpenDrainReviewItem item, Object references) {
     if (references instanceof List<?>) {
       for (Object reference : (List<?>) references) {
-	if (reference != null) {
-	  item.addSourceReference(String.valueOf(reference));
-	}
+        if (reference != null) {
+          item.addSourceReference(String.valueOf(reference));
+        }
       }
     } else if (references != null) {
       item.addSourceReference(String.valueOf(references));
@@ -418,7 +418,7 @@ public class OpenDrainReviewItem implements Serializable {
   private static Object firstObject(Map<String, Object> source, String... keys) {
     for (String key : keys) {
       if (source.containsKey(key) && source.get(key) != null) {
-	return source.get(key);
+        return source.get(key);
       }
     }
     return null;
@@ -432,11 +432,11 @@ public class OpenDrainReviewItem implements Serializable {
    */
   private static boolean isCoreKey(String key) {
     return "areaId".equals(key) || "area".equals(key) || "tag".equals(key) || "lineNumber".equals(key)
-	|| "name".equals(key) || "areaType".equals(key) || "type".equals(key) || "mainArea".equals(key)
-	|| "service".equals(key) || "drainSystemType".equals(key) || "drainType".equals(key) || "systemType".equals(key)
-	|| "sourceReferences".equals(key) || "sourceRefs".equals(key) || "evidenceRefs".equals(key)
-	|| "sourceDocument".equals(key) || "documentId".equals(key) || "stidDocument".equals(key)
-	|| "design".equals(key) || "requirements".equals(key) || "operationalData".equals(key)
-	|| "tagreaderData".equals(key) || "historianData".equals(key);
+        || "name".equals(key) || "areaType".equals(key) || "type".equals(key) || "mainArea".equals(key)
+        || "service".equals(key) || "drainSystemType".equals(key) || "drainType".equals(key) || "systemType".equals(key)
+        || "sourceReferences".equals(key) || "sourceRefs".equals(key) || "evidenceRefs".equals(key)
+        || "sourceDocument".equals(key) || "documentId".equals(key) || "stidDocument".equals(key)
+        || "design".equals(key) || "requirements".equals(key) || "operationalData".equals(key)
+        || "tagreaderData".equals(key) || "historianData".equals(key);
   }
 }

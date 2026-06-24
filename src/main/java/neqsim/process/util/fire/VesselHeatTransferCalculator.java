@@ -192,7 +192,7 @@ public final class VesselHeatTransferCalculator {
     double beta = 1.0 / filmTemperatureK;
 
     return calculateInternalFilmCoefficient(characteristicLength, wallTemperatureK, fluidTemperatureK,
-	thermalConductivity, heatCapacity, dynamicViscosity, density, isVertical, beta);
+        thermalConductivity, heatCapacity, dynamicViscosity, density, isVertical, beta);
   }
 
   /**
@@ -225,7 +225,7 @@ public final class VesselHeatTransferCalculator {
 
     // Calculate dimensionless numbers
     double Gr = calculateGrashofNumber(characteristicLength, fluidTemperatureK, wallTemperatureK, thermalExpansionCoeff,
-	nu);
+        nu);
     double Pr = calculatePrandtlNumber(heatCapacity, dynamicViscosity, thermalConductivity);
     double Ra = calculateRayleighNumber(Gr, Pr);
 
@@ -382,7 +382,7 @@ public final class VesselHeatTransferCalculator {
       double thermalConductivity, double heatCapacity, double dynamicViscosity, double density, boolean isVertical) {
     // Natural convection component
     double hNatural = calculateInternalFilmCoefficient(characteristicLength, wallTemperatureK, fluidTemperatureK,
-	thermalConductivity, heatCapacity, dynamicViscosity, density, isVertical);
+        thermalConductivity, heatCapacity, dynamicViscosity, density, isVertical);
 
     // Forced convection via momentum-based circulation velocity
     double inletArea = Math.PI * inletDiameter * inletDiameter / 4.0;
@@ -425,7 +425,7 @@ public final class VesselHeatTransferCalculator {
       double fluidTemperatureK, double massFlowRate, double inletDiameter, double thermalConductivity,
       double heatCapacity, double dynamicViscosity, double density, boolean isVertical) {
     return calculateMixedConvectionCoefficient(characteristicLength, wallTemperatureK, fluidTemperatureK, massFlowRate,
-	inletDiameter, characteristicLength, thermalConductivity, heatCapacity, dynamicViscosity, density, isVertical);
+        inletDiameter, characteristicLength, thermalConductivity, heatCapacity, dynamicViscosity, density, isVertical);
   }
 
   /**
@@ -458,7 +458,7 @@ public final class VesselHeatTransferCalculator {
       double thermalExpansionCoeff) {
     // Natural convection component with real-gas beta
     double hNatural = calculateInternalFilmCoefficient(characteristicLength, wallTemperatureK, fluidTemperatureK,
-	thermalConductivity, heatCapacity, dynamicViscosity, density, isVertical, thermalExpansionCoeff);
+        thermalConductivity, heatCapacity, dynamicViscosity, density, isVertical, thermalExpansionCoeff);
 
     // Forced convection via momentum-based circulation velocity
     double inletArea = Math.PI * inletDiameter * inletDiameter / 4.0;
@@ -505,7 +505,7 @@ public final class VesselHeatTransferCalculator {
       double thermalConductivity, double heatCapacity, double dynamicViscosity, double density, boolean isVertical) {
     // Natural convection component
     double hNatural = calculateInternalFilmCoefficient(characteristicLength, wallTemperatureK, fluidTemperatureK,
-	thermalConductivity, heatCapacity, dynamicViscosity, density, isVertical);
+        thermalConductivity, heatCapacity, dynamicViscosity, density, isVertical);
 
     // Estimate internal circulation velocity from momentum balance.
     // Orifice velocity:
@@ -552,7 +552,7 @@ public final class VesselHeatTransferCalculator {
       double thermalExpansionCoeff) {
     // Natural convection component with real-gas beta
     double hNatural = calculateInternalFilmCoefficient(characteristicLength, wallTemperatureK, fluidTemperatureK,
-	thermalConductivity, heatCapacity, dynamicViscosity, density, isVertical, thermalExpansionCoeff);
+        thermalConductivity, heatCapacity, dynamicViscosity, density, isVertical, thermalExpansionCoeff);
 
     // Circulation velocity (same as ideal-gas version)
     double orificeArea = Math.PI * orificeDiameter * orificeDiameter / 4.0;
@@ -640,7 +640,7 @@ public final class VesselHeatTransferCalculator {
       double dynamicViscosity, double density, boolean isVertical) {
     // Natural convection in liquid
     double hConv = calculateInternalFilmCoefficient(characteristicLength, wallTemperatureK, fluidTemperatureK,
-	thermalConductivity, heatCapacity, dynamicViscosity, density, isVertical);
+        thermalConductivity, heatCapacity, dynamicViscosity, density, isVertical);
 
     // If wall is above saturation, check for nucleate boiling contribution.
     // Compute boiling heat flux via the Rohsenow correlation when enough liquid properties are
@@ -660,14 +660,14 @@ public final class VesselHeatTransferCalculator {
       double vaporDensity = density * 0.01;
 
       double qBoiling = calculateNucleateBoilingHeatFlux(wallTemperatureK, saturationTemperatureK, latentHeat, density,
-	  vaporDensity, dynamicViscosity, heatCapacity, surfaceTension, liquidPrandtl);
+          vaporDensity, dynamicViscosity, heatCapacity, surfaceTension, liquidPrandtl);
 
       if (qBoiling > 0.0 && deltaT > 0.0) {
-	hBoiling = qBoiling / deltaT;
+        hBoiling = qBoiling / deltaT;
       }
       // If Rohsenow gives unreasonably small values (missing data), use simplified estimate
       if (hBoiling < 100.0) {
-	hBoiling = Math.max(hBoiling, 1000.0 * Math.pow(deltaT, 0.3));
+        hBoiling = Math.max(hBoiling, 1000.0 * Math.pow(deltaT, 0.3));
       }
     }
 
@@ -697,7 +697,7 @@ public final class VesselHeatTransferCalculator {
      * @param heatFlux Heat flux [W/m^2]
      */
     public HeatTransferResult(double grashofNumber, double prandtlNumber, double rayleighNumber, double nusseltNumber,
-	double filmCoefficient, double heatFlux) {
+        double filmCoefficient, double heatFlux) {
       this.grashofNumber = grashofNumber;
       this.prandtlNumber = prandtlNumber;
       this.rayleighNumber = rayleighNumber;
@@ -750,7 +750,7 @@ public final class VesselHeatTransferCalculator {
     double filmTemperatureK = (wallTemperatureK + fluidTemperatureK) / 2.0;
     double beta = 1.0 / filmTemperatureK; // ideal-gas fallback
     return calculateCompleteHeatTransfer(characteristicLength, wallTemperatureK, fluidTemperatureK, thermalConductivity,
-	heatCapacity, dynamicViscosity, density, isVertical, beta);
+        heatCapacity, dynamicViscosity, density, isVertical, beta);
   }
 
   /**
@@ -773,7 +773,7 @@ public final class VesselHeatTransferCalculator {
     double nu = dynamicViscosity / density;
 
     double Gr = calculateGrashofNumber(characteristicLength, fluidTemperatureK, wallTemperatureK, thermalExpansionCoeff,
-	nu);
+        nu);
     double Pr = calculatePrandtlNumber(heatCapacity, dynamicViscosity, thermalConductivity);
     double Ra = calculateRayleighNumber(Gr, Pr);
 

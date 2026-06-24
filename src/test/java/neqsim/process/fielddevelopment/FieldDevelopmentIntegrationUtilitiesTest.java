@@ -33,15 +33,15 @@ class FieldDevelopmentIntegrationUtilitiesTest extends neqsim.NeqSimTest {
   @DisplayName("ConceptToProcessLinker creates process equipment from a field concept")
   void testConceptToProcessLinkerCreatesProcessSystem() {
     FieldConcept concept = FieldConcept.builder("Linker Gas Concept")
-	.reservoir(ReservoirInput.leanGas().gor(12000.0).resourceEstimate(8.0, "GSm3").build())
-	.wells(WellsInput.builder().producerCount(2).ratePerWell(0.8e6, "Sm3/d").tubeheadPressure(90.0).build())
-	.infrastructure(
-	    InfrastructureInput.subseaTieback().tiebackLength(30.0).waterDepth(250.0).exportPressure(150.0).build())
-	.build();
+        .reservoir(ReservoirInput.leanGas().gor(12000.0).resourceEstimate(8.0, "GSm3").build())
+        .wells(WellsInput.builder().producerCount(2).ratePerWell(0.8e6, "Sm3/d").tubeheadPressure(90.0).build())
+        .infrastructure(
+            InfrastructureInput.subseaTieback().tiebackLength(30.0).waterDepth(250.0).exportPressure(150.0).build())
+        .build();
 
     ConceptToProcessLinker linker = new ConceptToProcessLinker();
     neqsim.process.processmodel.ProcessSystem process = linker.generateProcessSystem(concept,
-	ConceptToProcessLinker.FidelityLevel.CONCEPT);
+        ConceptToProcessLinker.FidelityLevel.CONCEPT);
 
     assertNotNull(process);
     assertTrue(process.size() >= 5, "Gas concept should generate inlet handling and export units");
@@ -81,7 +81,7 @@ class FieldDevelopmentIntegrationUtilitiesTest extends neqsim.NeqSimTest {
     assertTrue(keywords.contains("WVFPPROD"));
 
     String forecastCsv = exporter.exportProductionForecastCsv(new int[] { 2028, 2029 }, new double[] { 1000.0, 900.0 },
-	new double[] { 2.0e6, 1.8e6 }, new double[] { 100.0, 150.0 });
+        new double[] { 2.0e6, 1.8e6 }, new double[] { 100.0, 150.0 });
     assertTrue(forecastCsv.contains("Year,Oil_Sm3d,Gas_Sm3d,Water_Sm3d"));
     assertTrue(forecastCsv.contains("2029"));
   }
@@ -94,7 +94,7 @@ class FieldDevelopmentIntegrationUtilitiesTest extends neqsim.NeqSimTest {
 
     NetworkSolver network = new NetworkSolver("Subsea Gathering");
     network.addWell(wellA, 5.0, 0.16).addWell(wellB, 8.0, 0.18).setManifoldPressure(55.0, "bara")
-	.setMaxTotalRate(1.5, "MSm3/day").setReferenceFluid(createGasFluid());
+        .setMaxTotalRate(1.5, "MSm3/day").setReferenceFluid(createGasFluid());
 
     NetworkResult result = network.solve();
 

@@ -58,13 +58,13 @@ public class StandardsDesignReview implements Serializable {
       throw new IllegalArgumentException("process must not be null");
     }
     StandardsComplianceReport report = new StandardsComplianceReport(process.getName()).loadSTS0131().loadTR1965()
-	.loadNORSOKP002().loadTR2237();
+        .loadNORSOKP002().loadTR2237();
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       if (unit instanceof GasScrubber) {
-	reviewGasScrubber((GasScrubber) unit, report);
+        reviewGasScrubber((GasScrubber) unit, report);
       }
       if (unit instanceof PipeLineInterface) {
-	reviewPipeline((PipeLineInterface) unit, report);
+        reviewPipeline((PipeLineInterface) unit, report);
       }
     }
     return report;
@@ -100,9 +100,9 @@ public class StandardsDesignReview implements Serializable {
     LineSizingResult result = lineSizingValidator.validate(pipe);
     String clause = ((ProcessEquipmentInterface) pipe).getName() + ":line-sizing";
     report.addRequirement("NORSOK P-002", clause,
-	"Line sizing velocity, pressure gradient, and erosional velocity screening");
+        "Line sizing velocity, pressure gradient, and erosional velocity screening");
     report.setStatus("NORSOK P-002", clause, result.isAcceptable() ? Status.COMPLIANT : Status.NON_COMPLIANT,
-	result.toJson());
+        result.toJson());
   }
 
   /**
@@ -135,6 +135,6 @@ public class StandardsDesignReview implements Serializable {
       return result.getDescription();
     }
     return result.getDescription() + "; actual=" + result.getActualValue() + " " + result.getUnit() + ", limit="
-	+ result.getLimitValue() + " " + result.getUnit();
+        + result.getLimitValue() + " " + result.getUnit();
   }
 }

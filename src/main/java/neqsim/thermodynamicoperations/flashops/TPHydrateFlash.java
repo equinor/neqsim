@@ -106,8 +106,8 @@ public class TPHydrateFlash extends TPflash {
   private void calculateHydrateEquilibrium() {
     // Check if water is present in the system
     int waterIndex = system.getPhase(0).getComponent("water") != null
-	? system.getPhase(0).getComponent("water").getComponentNumber()
-	: -1;
+        ? system.getPhase(0).getComponent("water").getComponentNumber()
+        : -1;
 
     if (waterIndex < 0) {
       logger.debug("No water component found - hydrate cannot form");
@@ -120,8 +120,8 @@ public class TPHydrateFlash extends TPflash {
     boolean hasHydrateFormers = false;
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       if (system.getPhase(0).getComponent(i).isHydrateFormer()) {
-	hasHydrateFormers = true;
-	break;
+        hasHydrateFormers = true;
+        break;
       }
     }
 
@@ -163,10 +163,10 @@ public class TPHydrateFlash extends TPflash {
     if (waterPhaseIndex < 0 && attemptGasHydrateOnly) {
       waterPhaseIndex = findGasPhaseWithWater();
       if (waterPhaseIndex < 0) {
-	logger.debug("No water-bearing phase found for gas-hydrate equilibrium");
-	hydrateFormed = false;
-	hydrateFraction = 0.0;
-	return;
+        logger.debug("No water-bearing phase found for gas-hydrate equilibrium");
+        hydrateFormed = false;
+        hydrateFraction = 0.0;
+        return;
       }
     }
 
@@ -182,7 +182,7 @@ public class TPHydrateFlash extends TPflash {
 
       // For gas-hydrate only mode with low water, try to remove aqueous phase
       if (attemptGasHydrateOnly) {
-	attemptRemoveAqueousPhase(waterIndex);
+        attemptRemoveAqueousPhase(waterIndex);
       }
     } else {
       hydrateFormed = false;
@@ -201,20 +201,20 @@ public class TPHydrateFlash extends TPflash {
     int refPhaseIndex = 0;
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       if (system.getPhase(i).getType() == PhaseType.GAS) {
-	refPhaseIndex = i;
-	break;
+        refPhaseIndex = i;
+        break;
       }
     }
 
     // Set reference fugacities for each component
     for (int i = 0; i < hydratePhase.getNumberOfComponents(); i++) {
       for (int j = 0; j < hydratePhase.getNumberOfComponents(); j++) {
-	if (hydratePhase.getComponent(j).isHydrateFormer() || hydratePhase.getComponent(j).getName().equals("water")) {
-	  double refFugacity = system.getPhase(refPhaseIndex).getFugacity(j);
-	  ((ComponentHydrate) hydratePhase.getComponent(i)).setRefFug(j, refFugacity);
-	} else {
-	  ((ComponentHydrate) hydratePhase.getComponent(i)).setRefFug(j, 0);
-	}
+        if (hydratePhase.getComponent(j).isHydrateFormer() || hydratePhase.getComponent(j).getName().equals("water")) {
+          double refFugacity = system.getPhase(refPhaseIndex).getFugacity(j);
+          ((ComponentHydrate) hydratePhase.getComponent(i)).setRefFug(j, refFugacity);
+        } else {
+          ((ComponentHydrate) hydratePhase.getComponent(i)).setRefFug(j, 0);
+        }
       }
     }
 
@@ -223,7 +223,7 @@ public class TPHydrateFlash extends TPflash {
 
     // Initialize the hydrate phase with updated fugacities
     hydratePhase.init(hydratePhase.getNumberOfMolesInPhase(), hydratePhase.getNumberOfComponents(), 1,
-	PhaseType.HYDRATE, 1.0);
+        PhaseType.HYDRATE, 1.0);
   }
 
   /**
@@ -251,11 +251,11 @@ public class TPHydrateFlash extends TPflash {
 
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       if (system.getPhase(i).hasComponent("water")) {
-	double waterFraction = system.getPhase(i).getComponent("water").getx();
-	if (waterFraction > maxWaterFraction) {
-	  maxWaterFraction = waterFraction;
-	  waterPhaseIndex = i;
-	}
+        double waterFraction = system.getPhase(i).getComponent("water").getx();
+        if (waterFraction > maxWaterFraction) {
+          maxWaterFraction = waterFraction;
+          waterPhaseIndex = i;
+        }
       }
     }
 
@@ -270,7 +270,7 @@ public class TPHydrateFlash extends TPflash {
   private int findGasPhaseWithWater() {
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       if (system.getPhase(i).getType() == PhaseType.GAS && system.getPhase(i).hasComponent("water")) {
-	return i;
+        return i;
       }
     }
     return -1;
@@ -313,8 +313,8 @@ public class TPHydrateFlash extends TPflash {
     int aqueousPhaseIndex = -1;
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       if (system.getPhase(i).getType() == PhaseType.AQUEOUS) {
-	aqueousPhaseIndex = i;
-	break;
+        aqueousPhaseIndex = i;
+        break;
       }
     }
 
@@ -364,12 +364,12 @@ public class TPHydrateFlash extends TPflash {
     int hydratePhaseNewIndex = -1;
     for (int i = 0; i < currentNumPhases; i++) {
       if (i != aqueousPhaseIndex) {
-	newBetas[newPhaseCount] = system.getBeta(i);
-	newPhaseIndices[newPhaseCount] = system.getPhaseIndex(i);
-	if (system.getPhase(i).getType() == PhaseType.HYDRATE) {
-	  hydratePhaseNewIndex = newPhaseCount;
-	}
-	newPhaseCount++;
+        newBetas[newPhaseCount] = system.getBeta(i);
+        newPhaseIndices[newPhaseCount] = system.getPhaseIndex(i);
+        if (system.getPhase(i).getType() == PhaseType.HYDRATE) {
+          hydratePhaseNewIndex = newPhaseCount;
+        }
+        newPhaseCount++;
       }
     }
 
@@ -403,8 +403,8 @@ public class TPHydrateFlash extends TPflash {
     // Update hydrate fraction
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       if (system.getPhase(i).getType() == PhaseType.HYDRATE) {
-	hydrateFraction = system.getBeta(i);
-	break;
+        hydrateFraction = system.getBeta(i);
+        break;
       }
     }
   }
@@ -442,17 +442,17 @@ public class TPHydrateFlash extends TPflash {
 
     for (int iter = 0; iter < MAX_HYDRATE_ITERATIONS; iter++) {
       if (Math.abs(f2 - f1) < 1e-20) {
-	break;
+        break;
       }
 
       double betaNew = beta2 - f2 * (beta2 - beta1) / (f2 - f1);
 
       // Bound the solution
       if (betaNew < MIN_HYDRATE_FRACTION) {
-	betaNew = MIN_HYDRATE_FRACTION;
+        betaNew = MIN_HYDRATE_FRACTION;
       }
       if (betaNew > maxHydrateFraction) {
-	betaNew = maxHydrateFraction;
+        betaNew = maxHydrateFraction;
       }
 
       beta1 = beta2;
@@ -461,7 +461,7 @@ public class TPHydrateFlash extends TPflash {
       f2 = calculateHydrateObjective(beta2, waterPhaseIndex, waterIndex);
 
       if (Math.abs(f2) < HYDRATE_TOLERANCE) {
-	break;
+        break;
       }
     }
 
@@ -519,8 +519,8 @@ public class TPHydrateFlash extends TPflash {
     boolean hasInitialAqueous = false;
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       if (system.getPhase(i).getType() == PhaseType.AQUEOUS) {
-	hasInitialAqueous = true;
-	break;
+        hasInitialAqueous = true;
+        break;
       }
     }
 
@@ -582,20 +582,20 @@ public class TPHydrateFlash extends TPflash {
 
     for (int i = 0; i < hydratePhase.getNumberOfComponents(); i++) {
       if (hydratePhase.getComponent(i).isHydrateFormer()) {
-	// Get cavity occupancy (YKI) for this component
-	double yki = ((ComponentHydrate) hydratePhase.getComponent(i)).calcYKI(stableHydrateStructure - 1, 0,
-	    hydratePhase);
-	totalOccupancy += yki;
+        // Get cavity occupancy (YKI) for this component
+        double yki = ((ComponentHydrate) hydratePhase.getComponent(i)).calcYKI(stableHydrateStructure - 1, 0,
+            hydratePhase);
+        totalOccupancy += yki;
       }
     }
 
     if (totalOccupancy > 0) {
       for (int i = 0; i < hydratePhase.getNumberOfComponents(); i++) {
-	if (hydratePhase.getComponent(i).isHydrateFormer()) {
-	  double yki = ((ComponentHydrate) hydratePhase.getComponent(i)).calcYKI(stableHydrateStructure - 1, 0,
-	      hydratePhase);
-	  moleFractions[i] = guestFraction * (yki / totalOccupancy);
-	}
+        if (hydratePhase.getComponent(i).isHydrateFormer()) {
+          double yki = ((ComponentHydrate) hydratePhase.getComponent(i)).calcYKI(stableHydrateStructure - 1, 0,
+              hydratePhase);
+          moleFractions[i] = guestFraction * (yki / totalOccupancy);
+        }
       }
     }
 
@@ -608,9 +608,9 @@ public class TPHydrateFlash extends TPflash {
     // Set normalized mole fractions
     for (int i = 0; i < hydratePhase.getNumberOfComponents(); i++) {
       if (sum > 0) {
-	hydratePhase.getComponent(i).setx(moleFractions[i] / sum);
+        hydratePhase.getComponent(i).setx(moleFractions[i] / sum);
       } else {
-	hydratePhase.getComponent(i).setx(0.0);
+        hydratePhase.getComponent(i).setx(0.0);
       }
     }
   }

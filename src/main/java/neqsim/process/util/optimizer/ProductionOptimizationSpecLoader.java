@@ -190,8 +190,8 @@ public final class ProductionOptimizationSpecLoader {
       Map<String, StreamInterface> feeds, Map<String, java.util.function.ToDoubleFunction<ProcessSystem>> metrics)
       throws IOException {
     ObjectMapper mapper = specPath.toString().endsWith(".yaml") || specPath.toString().endsWith(".yml")
-	? new ObjectMapper(new YAMLFactory())
-	: new ObjectMapper();
+        ? new ObjectMapper(new YAMLFactory())
+        : new ObjectMapper();
     String raw = new String(Files.readAllBytes(specPath), StandardCharsets.UTF_8);
     Spec spec = mapper.readValue(raw, Spec.class);
 
@@ -200,52 +200,52 @@ public final class ProductionOptimizationSpecLoader {
       ProcessSystem process = processes.get(scenarioSpec.process);
       StreamInterface feed = scenarioSpec.feedStream != null ? feeds.get(scenarioSpec.feedStream) : null;
       if (process == null) {
-	throw new IllegalArgumentException("Missing process mapping for scenario " + scenarioSpec.name);
+        throw new IllegalArgumentException("Missing process mapping for scenario " + scenarioSpec.name);
       }
       OptimizationConfig config = new OptimizationConfig(scenarioSpec.lowerBound, scenarioSpec.upperBound)
-	  .rateUnit(scenarioSpec.rateUnit).tolerance(scenarioSpec.tolerance).maxIterations(scenarioSpec.maxIterations)
-	  .searchMode(SearchMode.valueOf(scenarioSpec.searchMode))
-	  .utilizationMarginFraction(scenarioSpec.utilizationMarginFraction)
-	  .capacityUncertaintyFraction(scenarioSpec.capacityUncertaintyFraction)
-	  .capacityPercentile(scenarioSpec.capacityPercentile).enableCaching(scenarioSpec.enableCaching)
-	  .swarmSize(scenarioSpec.swarmSize).inertiaWeight(scenarioSpec.inertiaWeight)
-	  .cognitiveWeight(scenarioSpec.cognitiveWeight).socialWeight(scenarioSpec.socialWeight)
-	  .columnFsFactorLimit(scenarioSpec.columnFsFactorLimit);
+          .rateUnit(scenarioSpec.rateUnit).tolerance(scenarioSpec.tolerance).maxIterations(scenarioSpec.maxIterations)
+          .searchMode(SearchMode.valueOf(scenarioSpec.searchMode))
+          .utilizationMarginFraction(scenarioSpec.utilizationMarginFraction)
+          .capacityUncertaintyFraction(scenarioSpec.capacityUncertaintyFraction)
+          .capacityPercentile(scenarioSpec.capacityPercentile).enableCaching(scenarioSpec.enableCaching)
+          .swarmSize(scenarioSpec.swarmSize).inertiaWeight(scenarioSpec.inertiaWeight)
+          .cognitiveWeight(scenarioSpec.cognitiveWeight).socialWeight(scenarioSpec.socialWeight)
+          .columnFsFactorLimit(scenarioSpec.columnFsFactorLimit);
       List<OptimizationObjective> objectives = new ArrayList<>();
       if (scenarioSpec.objectives != null) {
-	for (ObjectiveSpec objectiveSpec : scenarioSpec.objectives) {
-	  ObjectiveType type = ObjectiveType.valueOf(objectiveSpec.type.toUpperCase());
-	  objectives.add(new OptimizationObjective(objectiveSpec.name, requireMetric(metrics, objectiveSpec.metric),
-	      objectiveSpec.weight, type));
-	}
+        for (ObjectiveSpec objectiveSpec : scenarioSpec.objectives) {
+          ObjectiveType type = ObjectiveType.valueOf(objectiveSpec.type.toUpperCase());
+          objectives.add(new OptimizationObjective(objectiveSpec.name, requireMetric(metrics, objectiveSpec.metric),
+              objectiveSpec.weight, type));
+        }
       }
 
       List<OptimizationConstraint> constraints = new ArrayList<>();
       if (scenarioSpec.constraints != null) {
-	for (ConstraintSpec constraintSpec : scenarioSpec.constraints) {
-	  ConstraintDirection direction = ConstraintDirection.valueOf(constraintSpec.direction);
-	  ConstraintSeverity severity = ConstraintSeverity.valueOf(constraintSpec.severity);
-	  constraints.add(new OptimizationConstraint(constraintSpec.name, requireMetric(metrics, constraintSpec.metric),
-	      constraintSpec.limit, direction, severity, constraintSpec.penaltyWeight, constraintSpec.description));
-	}
+        for (ConstraintSpec constraintSpec : scenarioSpec.constraints) {
+          ConstraintDirection direction = ConstraintDirection.valueOf(constraintSpec.direction);
+          ConstraintSeverity severity = ConstraintSeverity.valueOf(constraintSpec.severity);
+          constraints.add(new OptimizationConstraint(constraintSpec.name, requireMetric(metrics, constraintSpec.metric),
+              constraintSpec.limit, direction, severity, constraintSpec.penaltyWeight, constraintSpec.description));
+        }
       }
       if (scenarioSpec.variables != null && !scenarioSpec.variables.isEmpty()) {
-	List<ManipulatedVariable> vars = new ArrayList<>();
-	for (VariableSpec variableSpec : scenarioSpec.variables) {
-	  StreamInterface stream = feeds.get(variableSpec.stream);
-	  if (stream == null) {
-	    throw new IllegalArgumentException("Missing stream mapping for variable: " + variableSpec.name);
-	  }
-	  vars.add(new ManipulatedVariable(variableSpec.name, variableSpec.lowerBound, variableSpec.upperBound,
-	      variableSpec.unit, (proc, value) -> stream.setFlowRate(value,
-		  variableSpec.unit != null ? variableSpec.unit : scenarioSpec.rateUnit)));
-	}
-	scenarios.add(new ScenarioRequest(scenarioSpec.name, process, vars, config, objectives, constraints));
+        List<ManipulatedVariable> vars = new ArrayList<>();
+        for (VariableSpec variableSpec : scenarioSpec.variables) {
+          StreamInterface stream = feeds.get(variableSpec.stream);
+          if (stream == null) {
+            throw new IllegalArgumentException("Missing stream mapping for variable: " + variableSpec.name);
+          }
+          vars.add(new ManipulatedVariable(variableSpec.name, variableSpec.lowerBound, variableSpec.upperBound,
+              variableSpec.unit, (proc, value) -> stream.setFlowRate(value,
+                  variableSpec.unit != null ? variableSpec.unit : scenarioSpec.rateUnit)));
+        }
+        scenarios.add(new ScenarioRequest(scenarioSpec.name, process, vars, config, objectives, constraints));
       } else {
-	if (feed == null) {
-	  throw new IllegalArgumentException("Missing feed mapping for scenario " + scenarioSpec.name);
-	}
-	scenarios.add(new ScenarioRequest(scenarioSpec.name, process, feed, config, objectives, constraints));
+        if (feed == null) {
+          throw new IllegalArgumentException("Missing feed mapping for scenario " + scenarioSpec.name);
+        }
+        scenarios.add(new ScenarioRequest(scenarioSpec.name, process, feed, config, objectives, constraints));
       }
     }
     return scenarios;

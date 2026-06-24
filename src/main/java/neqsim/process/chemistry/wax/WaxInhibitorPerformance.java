@@ -219,8 +219,8 @@ public class WaxInhibitorPerformance implements Serializable {
    */
   public List<Map<String, Object>> getStandardsApplied() {
     return StandardsRegistry.toMapList(
-	new StandardReference("ASTM D97", "ASTM", "Standard test method for pour point of petroleum products"),
-	new StandardReference("ASTM D7346", "ASTM", "No-flow point and pour point of petroleum products"));
+        new StandardReference("ASTM D97", "ASTM", "Standard test method for pour point of petroleum products"),
+        new StandardReference("ASTM D7346", "ASTM", "No-flow point and pour point of petroleum products"));
   }
 
   /**

@@ -449,7 +449,7 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
     synchronized (assessmentHistory) {
       assessmentHistory.add(assessment);
       while (assessmentHistory.size() > historySize) {
-	assessmentHistory.poll();
+        assessmentHistory.poll();
       }
     }
 
@@ -487,22 +487,22 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
     // Check threshold breaches
     if (riskScore >= alertThresholds.getCriticalRiskLevel()) {
       generateAlert(RiskAlert.AlertSeverity.CRITICAL, RiskAlert.AlertType.RISK_THRESHOLD_EXCEEDED, "System",
-	  "Critical risk level exceeded", riskScore, alertThresholds.getCriticalRiskLevel());
+          "Critical risk level exceeded", riskScore, alertThresholds.getCriticalRiskLevel());
     } else if (riskScore >= alertThresholds.getHighRiskLevel()) {
       generateAlert(RiskAlert.AlertSeverity.HIGH, RiskAlert.AlertType.RISK_THRESHOLD_EXCEEDED, "System",
-	  "High risk level exceeded", riskScore, alertThresholds.getHighRiskLevel());
+          "High risk level exceeded", riskScore, alertThresholds.getHighRiskLevel());
     } else if (riskScore >= alertThresholds.getWarningRiskLevel()) {
       generateAlert(RiskAlert.AlertSeverity.WARNING, RiskAlert.AlertType.RISK_THRESHOLD_EXCEEDED, "System",
-	  "Warning risk level exceeded", riskScore, alertThresholds.getWarningRiskLevel());
+          "Warning risk level exceeded", riskScore, alertThresholds.getWarningRiskLevel());
     }
 
     // Check for anomalies
     if (baselineRiskLevel > 0 && baselineStdDev > 0) {
       double deviation = Math.abs(riskScore - baselineRiskLevel) / baselineStdDev;
       if (deviation > alertThresholds.getAnomalyStdDevs()) {
-	generateAlert(RiskAlert.AlertSeverity.WARNING, RiskAlert.AlertType.ANOMALY_DETECTED, "System",
-	    String.format("Risk level anomaly detected (%.1f std devs from baseline)", deviation), riskScore,
-	    baselineRiskLevel);
+        generateAlert(RiskAlert.AlertSeverity.WARNING, RiskAlert.AlertType.ANOMALY_DETECTED, "System",
+            String.format("Risk level anomaly detected (%.1f std devs from baseline)", deviation), riskScore,
+            baselineRiskLevel);
       }
     }
   }
@@ -517,7 +517,7 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
     // Notify listeners
     if (alertListeners != null) {
       for (AlertListener listener : alertListeners) {
-	listener.onAlert(alert);
+        listener.onAlert(alert);
       }
     }
   }
@@ -525,26 +525,26 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
   private void calculateTrends(RealTimeRiskAssessment assessment) {
     synchronized (assessmentHistory) {
       if (assessmentHistory.size() < 10) {
-	return;
+        return;
       }
 
       // Calculate trend over last 10 assessments
       List<RealTimeRiskAssessment> recent = new ArrayList<>();
       int count = 0;
       for (RealTimeRiskAssessment a : assessmentHistory) {
-	if (count++ >= assessmentHistory.size() - 10) {
-	  recent.add(a);
-	}
+        if (count++ >= assessmentHistory.size() - 10) {
+          recent.add(a);
+        }
       }
 
       // Simple linear regression for trend
       double sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
       int n = recent.size();
       for (int i = 0; i < n; i++) {
-	sumX += i;
-	sumY += recent.get(i).getOverallRiskScore();
-	sumXY += i * recent.get(i).getOverallRiskScore();
-	sumX2 += i * i;
+        sumX += i;
+        sumY += recent.get(i).getOverallRiskScore();
+        sumXY += i * recent.get(i).getOverallRiskScore();
+        sumX2 += i * i;
       }
       double slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
       assessment.setRiskTrend(slope > 0.01 ? "INCREASING" : slope < -0.01 ? "DECREASING" : "STABLE");
@@ -569,14 +569,14 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
   public void calculateBaseline() {
     synchronized (assessmentHistory) {
       if (assessmentHistory.isEmpty()) {
-	return;
+        return;
       }
 
       double sum = 0, sumSq = 0;
       int n = assessmentHistory.size();
       for (RealTimeRiskAssessment a : assessmentHistory) {
-	sum += a.getOverallRiskScore();
-	sumSq += a.getOverallRiskScore() * a.getOverallRiskScore();
+        sum += a.getOverallRiskScore();
+        sumSq += a.getOverallRiskScore() * a.getOverallRiskScore();
       }
       baselineRiskLevel = sum / n;
       baselineStdDev = Math.sqrt((sumSq - sum * sum / n) / (n - 1));
@@ -617,7 +617,7 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
     List<RiskAlert> unacked = new ArrayList<>();
     for (RiskAlert alert : activeAlerts) {
       if (!alert.isAcknowledged()) {
-	unacked.add(alert);
+        unacked.add(alert);
       }
     }
     return unacked;
@@ -626,8 +626,8 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
   public void acknowledgeAlert(String alertId) {
     for (RiskAlert alert : activeAlerts) {
       if (alert.getAlertId().equals(alertId)) {
-	alert.acknowledge();
-	break;
+        alert.acknowledge();
+        break;
       }
     }
   }
@@ -686,6 +686,6 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
   @Override
   public String toString() {
     return String.format("RealTimeRiskMonitor[%s, active=%s, score=%.2f]", name, monitoringActive,
-	currentAssessment != null ? currentAssessment.getOverallRiskScore() : 0);
+        currentAssessment != null ? currentAssessment.getOverallRiskScore() : 0);
   }
 }

@@ -200,7 +200,7 @@ class BlackOilCorrelationsTest {
     double Pb_field_to_bara = Pb_field / 14.5038;
 
     assertEquals(Pb_field_to_bara, Pb_si, Pb_field_to_bara * 0.001,
-	"SI and field results should match after conversion");
+        "SI and field results should match after conversion");
   }
 
   @Test

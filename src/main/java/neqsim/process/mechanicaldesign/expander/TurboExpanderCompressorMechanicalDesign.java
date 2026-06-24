@@ -616,7 +616,7 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
     if (lSpan > 0 && massPerLength > 0) {
       double stiffness = 48.0 * 2.1e11 * Math.PI * Math.pow(dSh, 4) / 64.0;
       firstCriticalSpeed = (946.0 / (2.0 * Math.PI)) * Math.sqrt(stiffness / (massPerLength * Math.pow(lSpan, 3)))
-	  * 60.0;
+          * 60.0;
     }
 
     // Second critical: roughly 4x first for uniform shaft
@@ -653,7 +653,7 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
     double jointEfficiency = 0.85;
 
     expanderCasingWallThickness = (pressureMPa * casingID)
-	/ (2.0 * allowableStress * jointEfficiency - 0.6 * pressureMPa);
+        / (2.0 * allowableStress * jointEfficiency - 0.6 * pressureMPa);
     expanderCasingWallThickness += 3.0; // corrosion allowance
     expanderCasingWallThickness = Math.max(10.0, expanderCasingWallThickness);
   }
@@ -668,7 +668,7 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
     double jointEfficiency = 0.85;
 
     compressorCasingWallThickness = (pressureMPa * casingID)
-	/ (2.0 * allowableStress * jointEfficiency - 0.6 * pressureMPa);
+        / (2.0 * allowableStress * jointEfficiency - 0.6 * pressureMPa);
     compressorCasingWallThickness += 3.0; // corrosion allowance
     compressorCasingWallThickness = Math.max(10.0, compressorCasingWallThickness);
   }
@@ -714,7 +714,7 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
 
     // Compressor impellers (all stages)
     double impVol = compressorStages * Math.PI * Math.pow(compressorImpellerDiameter / 2000.0, 2)
-	* (compressorImpellerDiameter / 3000.0);
+        * (compressorImpellerDiameter / 3000.0);
     compressorImpellerWeight = impVol * STEEL_DENSITY * 0.7;
 
     // Shaft
@@ -727,7 +727,7 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
     double expCasingID = expanderWheelDiameter * 1.3;
     double expCasingLength = expanderWheelDiameter * 2.0;
     double expCasingVol = Math.PI / 4.0 * (Math.pow(expCasingOD / 1000.0, 2) - Math.pow(expCasingID / 1000.0, 2))
-	* (expCasingLength / 1000.0);
+        * (expCasingLength / 1000.0);
     expanderCasingWeight = expCasingVol * STEEL_DENSITY * 1.5;
 
     // Compressor casing
@@ -735,7 +735,7 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
     double compCasingID = compressorImpellerDiameter * 1.3;
     double compCasingLength = compressorStages * compressorImpellerDiameter * 1.2;
     double compCasingVol = Math.PI / 4.0 * (Math.pow(compCasingOD / 1000.0, 2) - Math.pow(compCasingID / 1000.0, 2))
-	* (compCasingLength / 1000.0);
+        * (compCasingLength / 1000.0);
     compressorCasingWeight = compCasingVol * STEEL_DENSITY * 1.5;
 
     // Bundle weight
@@ -769,7 +769,7 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
     double compressorLen = compressorStages * compressorImpellerDiameter / 1000.0 * 1.2 + 1.0;
     moduleLength = expanderLen + compressorLen + 3.0; // access space
     double maxCasingOD = Math.max(expanderWheelDiameter * 1.3 + 2.0 * expanderCasingWallThickness,
-	compressorImpellerDiameter * 1.3 + 2.0 * compressorCasingWallThickness);
+        compressorImpellerDiameter * 1.3 + 2.0 * compressorCasingWallThickness);
     moduleWidth = Math.max(2.5, maxCasingOD / 1000.0 * 2.0 + 1.5);
     moduleHeight = Math.max(2.0, maxCasingOD / 1000.0 + 1.5);
   }
@@ -827,7 +827,7 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
     // --- 3. Casing pressure checks ---
     result.setExpanderCasingPressureMargin((expanderCasingDesignPressure - expInletP) / expanderCasingDesignPressure);
     result.setCompressorCasingPressureMargin(
-	(compressorCasingDesignPressure - compDischargeP) / compressorCasingDesignPressure);
+        (compressorCasingDesignPressure - compDischargeP) / compressorCasingDesignPressure);
 
     // --- 4. Shaft stress check ---
     // Estimate off-design torque. When rated expander power and design conditions are known,
@@ -838,16 +838,16 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
       // Use the known design mass flow (derive from power and enthalpy drop)
       double designMassFlowKghr = 0.0;
       if (expanderEnthalpyDropKJkg > 0) {
-	// P = mdot * dh * eta => mdot = P / (dh * eta)
-	designMassFlowKghr = (expanderPowerKW * 3600.0) / expanderEnthalpyDropKJkg;
+        // P = mdot * dh * eta => mdot = P / (dh * eta)
+        designMassFlowKghr = (expanderPowerKW * 3600.0) / expanderEnthalpyDropKJkg;
       }
       if (designMassFlowKghr > 0) {
-	// Scale design torque by mass flow ratio
-	double flowRatio = expMassFlow / designMassFlowKghr;
-	offDesignTorque = designTorqueNm * flowRatio;
+        // Scale design torque by mass flow ratio
+        double flowRatio = expMassFlow / designMassFlowKghr;
+        offDesignTorque = designTorqueNm * flowRatio;
       } else {
-	// Fallback: scale by pressure-ratio change
-	offDesignTorque = designTorqueNm;
+        // Fallback: scale by pressure-ratio change
+        offDesignTorque = designTorqueNm;
       }
     } else if (N > 0) {
       // No design baseline — fall back to ideal-gas estimate
@@ -867,7 +867,7 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
     if (firstCriticalSpeed > 0) {
       double separation = Math.abs(N - firstCriticalSpeed) / firstCriticalSpeed;
       result.setCriticalSpeedSeparationMargin(
-	  (separation - MIN_CRITICAL_SPEED_SEPARATION) / MIN_CRITICAL_SPEED_SEPARATION);
+          (separation - MIN_CRITICAL_SPEED_SEPARATION) / MIN_CRITICAL_SPEED_SEPARATION);
     }
 
     // --- 6. Compressor surge margin ---
@@ -889,7 +889,7 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
       double expDensity = expInletP * 100.0 * expMolarMass / (8.314 * T_inK);
       double requiredArea = 0.0;
       if (nozzleVelocity > 0 && expDensity > 0) {
-	requiredArea = (expMassFlow / 3600.0) / (expDensity * nozzleVelocity);
+        requiredArea = (expMassFlow / 3600.0) / (expDensity * nozzleVelocity);
       }
       result.setExpanderChokeMargin((expanderNozzleThroatArea - requiredArea) / expanderNozzleThroatArea);
     }
@@ -907,9 +907,9 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
     // --- 9. Thrust bearing load margin (enhanced with thrust balance details) ---
     // Simplified: thrust ~ pressure difference * area * correction factor
     double expanderThrust = (expInletP - expOutletP) * 1.0e5 * Math.PI * Math.pow(expanderWheelDiameter / 2000.0, 2)
-	* 0.3;
+        * 0.3;
     double compressorThrust = (compDischargeP - compInletP) * 1.0e5 * Math.PI
-	* Math.pow(compressorImpellerDiameter / 2000.0, 2) * 0.3;
+        * Math.pow(compressorImpellerDiameter / 2000.0, 2) * 0.3;
 
     // Balance piston contribution (if present)
     double balancePistonThrust = 0.0;
@@ -935,13 +935,13 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
     // Fall back to 2x design net thrust if no vendor capacity specified
     if (thrustCapacity <= 0) {
       double designExpThrust = (expanderDesignInletPressure - expanderDesignOutletPressure) * 1.0e5 * Math.PI
-	  * Math.pow(expanderWheelDiameter / 2000.0, 2) * 0.3;
+          * Math.pow(expanderWheelDiameter / 2000.0, 2) * 0.3;
       double designCompThrust = (compressorDesignDischargePressure - compressorDesignSuctionPressure) * 1.0e5 * Math.PI
-	  * Math.pow(compressorImpellerDiameter / 2000.0, 2) * 0.3;
+          * Math.pow(compressorImpellerDiameter / 2000.0, 2) * 0.3;
       double designBalPiston = 0.0;
       if (balancePistonDiameterMm > 0) {
-	double designBalDp = (compressorDesignDischargePressure - compressorDesignSuctionPressure) * 0.7;
-	designBalPiston = designBalDp * 1.0e5 * Math.PI * Math.pow(balancePistonDiameterMm / 2000.0, 2) * 0.25;
+        double designBalDp = (compressorDesignDischargePressure - compressorDesignSuctionPressure) * 0.7;
+        designBalPiston = designBalDp * 1.0e5 * Math.PI * Math.pow(balancePistonDiameterMm / 2000.0, 2) * 0.25;
       }
       double designNetThrust = Math.abs(designExpThrust - designCompThrust + designBalPiston);
       thrustCapacity = designNetThrust * 2.0;
@@ -1019,7 +1019,7 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
 
     // Run scalar evaluation first (handles tip speed, casing, thrust, etc.)
     DesignEvaluationResult result = evaluateDesignAtConditions(expInletP, expOutletP, expInletT, compInletP,
-	compDischargeP, compInletT, expMassFlow, compMassFlow, expMolarMass, compMolarMass);
+        compDischargeP, compInletT, expMassFlow, compMassFlow, expMolarMass, compMolarMass);
 
     // Override shaft stress with EOS-accurate enthalpy drop from isentropic flash
     try {
@@ -1028,21 +1028,21 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
       SystemInterface expFlashClone = expFluid.clone();
       expFlashClone.setPressure(expOutletP, "bara");
       neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	  expFlashClone);
+          expFlashClone);
       ops.PSflash(s1, "J/kgK");
       double h2s = expFlashClone.getEnthalpy("J/kg");
       double dhIsActual = Math.abs(h1 - h2s);
 
       if (dhIsActual > 0 && operatingSpeed > 0) {
-	double actualPowerW = (expMassFlow / 3600.0) * dhIsActual * 0.85;
-	double actualTorque = (actualPowerW * 60.0) / (2.0 * Math.PI * operatingSpeed);
-	double dSh = shaftDiameter / 1000.0;
-	double polarMom = Math.PI * Math.pow(dSh, 4) / 32.0;
-	if (polarMom > 0) {
-	  double stressMPa = (actualTorque * dSh / 2.0) / polarMom / 1.0e6;
-	  double allowMPa = ALLOWABLE_SHEAR_STRESS / 1.0e6;
-	  result.setShaftStressMargin((allowMPa - stressMPa) / allowMPa);
-	}
+        double actualPowerW = (expMassFlow / 3600.0) * dhIsActual * 0.85;
+        double actualTorque = (actualPowerW * 60.0) / (2.0 * Math.PI * operatingSpeed);
+        double dSh = shaftDiameter / 1000.0;
+        double polarMom = Math.PI * Math.pow(dSh, 4) / 32.0;
+        if (polarMom > 0) {
+          double stressMPa = (actualTorque * dSh / 2.0) / polarMom / 1.0e6;
+          double allowMPa = ALLOWABLE_SHEAR_STRESS / 1.0e6;
+          result.setShaftStressMargin((allowMPa - stressMPa) / allowMPa);
+        }
       }
     } catch (Exception ex) {
       // If flash fails, keep the scalar-based shaft stress margin
@@ -1216,42 +1216,42 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
     dialogContentPane.setLayout(new BorderLayout());
 
     String[][] data = { { "=== EXPANDER SIDE ===", "", "" }, { "Expander Type", expanderType, "" },
-	{ "Stages", String.valueOf(expanderStages), "" },
-	{ "Wheel Diameter", String.format("%.1f", expanderWheelDiameter), "mm" },
-	{ "Tip Speed", String.format("%.1f", expanderTipSpeed), "m/s" },
-	{ "Power", String.format("%.1f", expanderPowerKW), "kW" },
-	{ "Casing Design Pressure", String.format("%.1f", expanderCasingDesignPressure), "bara" },
-	{ "Seal Type", expanderSealType, "" }, { "=== COMPRESSOR SIDE ===", "", "" },
-	{ "Stages", String.valueOf(compressorStages), "" },
-	{ "Impeller Diameter", String.format("%.1f", compressorImpellerDiameter), "mm" },
-	{ "Tip Speed", String.format("%.1f", compressorTipSpeed), "m/s" }, { "Casing Type", compressorCasingType, "" },
-	{ "Power", String.format("%.1f", compressorPowerKW), "kW" },
-	{ "Casing Design Pressure", String.format("%.1f", compressorCasingDesignPressure), "bara" },
-	{ "Seal Type", compressorSealType, "" }, { "Surge Flow", String.format("%.1f", designSurgeFlowM3hr), "m3/hr" },
-	{ "=== SHARED SHAFT ===", "", "" }, { "Shaft Diameter", String.format("%.1f", shaftDiameter), "mm" },
-	{ "Operating Speed", String.format("%.0f", operatingSpeed), "rpm" },
-	{ "1st Critical Speed", String.format("%.0f", firstCriticalSpeed), "rpm" },
-	{ "Trip Speed", String.format("%.0f", tripSpeed), "rpm" }, { "Bearing Type", bearingType, "" },
-	{ "Bearing Span", String.format("%.0f", bearingSpan), "mm" }, { "=== SHEAR PINS ===", "", "" },
-	{ "Number of Pins", String.valueOf(numberOfShearPins), "" },
-	{ "Pin Diameter", String.format("%.1f", shearPinDiameterMm), "mm" }, { "Pin Material", shearPinMaterial, "" },
-	{ "Breaking Torque", String.format("%.0f", shearPinBreakingTorqueNm), "Nm" },
-	{ "=== THRUST BALANCE ===", "", "" },
-	{ "Balance Piston Dia", String.format("%.1f", balancePistonDiameterMm), "mm" },
-	{ "Bearing Capacity", String.format("%.0f", thrustBearingCapacityN), "N" },
-	{ "=== SEAL GAS SYSTEM ===", "", "" },
-	{ "Supply Pressure", String.format("%.1f", sealGasSupplyPressureBara), "bara" },
-	{ "Required DP", String.format("%.1f", sealGasRequiredDpBar), "bar" }, { "Gas Type", sealGasType, "" },
-	{ "Arrangement", sealArrangement, "" }, { "=== OIL SEAL SYSTEM ===", "", "" },
-	{ "Supply Pressure", String.format("%.1f", sealOilSupplyPressureBara), "bara" },
-	{ "DP Above Process", String.format("%.1f", sealOilDpAboveProcessBar), "bar" },
-	{ "Oil Grade", sealOilGrade, "" }, { "=== ANTI-SURGE ===", "", "" },
-	{ "Valve Cv", String.format("%.1f", antiSurgeValveCv), "" },
-	{ "Stroke Time", String.format("%.1f", antiSurgeValveStrokeTimeS), "s" },
-	{ "Control Line Margin", String.format("%.0f", surgeControlLineMarginFrac * 100), "%" },
-	{ "Controller Type", antiSurgeControllerType, "" }, { "=== TOTALS ===", "", "" },
-	{ "Total Weight", String.format("%.0f", getWeightTotal()), "kg" },
-	{ "Module L x W x H", String.format("%.1f x %.1f x %.1f", moduleLength, moduleWidth, moduleHeight), "m" } };
+        { "Stages", String.valueOf(expanderStages), "" },
+        { "Wheel Diameter", String.format("%.1f", expanderWheelDiameter), "mm" },
+        { "Tip Speed", String.format("%.1f", expanderTipSpeed), "m/s" },
+        { "Power", String.format("%.1f", expanderPowerKW), "kW" },
+        { "Casing Design Pressure", String.format("%.1f", expanderCasingDesignPressure), "bara" },
+        { "Seal Type", expanderSealType, "" }, { "=== COMPRESSOR SIDE ===", "", "" },
+        { "Stages", String.valueOf(compressorStages), "" },
+        { "Impeller Diameter", String.format("%.1f", compressorImpellerDiameter), "mm" },
+        { "Tip Speed", String.format("%.1f", compressorTipSpeed), "m/s" }, { "Casing Type", compressorCasingType, "" },
+        { "Power", String.format("%.1f", compressorPowerKW), "kW" },
+        { "Casing Design Pressure", String.format("%.1f", compressorCasingDesignPressure), "bara" },
+        { "Seal Type", compressorSealType, "" }, { "Surge Flow", String.format("%.1f", designSurgeFlowM3hr), "m3/hr" },
+        { "=== SHARED SHAFT ===", "", "" }, { "Shaft Diameter", String.format("%.1f", shaftDiameter), "mm" },
+        { "Operating Speed", String.format("%.0f", operatingSpeed), "rpm" },
+        { "1st Critical Speed", String.format("%.0f", firstCriticalSpeed), "rpm" },
+        { "Trip Speed", String.format("%.0f", tripSpeed), "rpm" }, { "Bearing Type", bearingType, "" },
+        { "Bearing Span", String.format("%.0f", bearingSpan), "mm" }, { "=== SHEAR PINS ===", "", "" },
+        { "Number of Pins", String.valueOf(numberOfShearPins), "" },
+        { "Pin Diameter", String.format("%.1f", shearPinDiameterMm), "mm" }, { "Pin Material", shearPinMaterial, "" },
+        { "Breaking Torque", String.format("%.0f", shearPinBreakingTorqueNm), "Nm" },
+        { "=== THRUST BALANCE ===", "", "" },
+        { "Balance Piston Dia", String.format("%.1f", balancePistonDiameterMm), "mm" },
+        { "Bearing Capacity", String.format("%.0f", thrustBearingCapacityN), "N" },
+        { "=== SEAL GAS SYSTEM ===", "", "" },
+        { "Supply Pressure", String.format("%.1f", sealGasSupplyPressureBara), "bara" },
+        { "Required DP", String.format("%.1f", sealGasRequiredDpBar), "bar" }, { "Gas Type", sealGasType, "" },
+        { "Arrangement", sealArrangement, "" }, { "=== OIL SEAL SYSTEM ===", "", "" },
+        { "Supply Pressure", String.format("%.1f", sealOilSupplyPressureBara), "bara" },
+        { "DP Above Process", String.format("%.1f", sealOilDpAboveProcessBar), "bar" },
+        { "Oil Grade", sealOilGrade, "" }, { "=== ANTI-SURGE ===", "", "" },
+        { "Valve Cv", String.format("%.1f", antiSurgeValveCv), "" },
+        { "Stroke Time", String.format("%.1f", antiSurgeValveStrokeTimeS), "s" },
+        { "Control Line Margin", String.format("%.0f", surgeControlLineMarginFrac * 100), "%" },
+        { "Controller Type", antiSurgeControllerType, "" }, { "=== TOTALS ===", "", "" },
+        { "Total Weight", String.format("%.0f", getWeightTotal()), "kg" },
+        { "Module L x W x H", String.format("%.1f x %.1f x %.1f", moduleLength, moduleWidth, moduleHeight), "m" } };
 
     String[] columnNames = { "Parameter", "Value", "Unit" };
     JTable table = new JTable(data, columnNames);
@@ -2438,10 +2438,10 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
       String name = i < scenarioNames.size() ? scenarioNames.get(i) : "Scenario " + (i + 1);
 
       DesignEvaluationResult result = evaluateDesignAtConditions(getScenarioValue(s, "expInletP"),
-	  getScenarioValue(s, "expOutletP"), getScenarioValue(s, "expInletT"), getScenarioValue(s, "compInletP"),
-	  getScenarioValue(s, "compDischargeP"), getScenarioValue(s, "compInletT"), getScenarioValue(s, "expMassFlow"),
-	  getScenarioValue(s, "compMassFlow"), getScenarioValue(s, "expMolarMass"),
-	  getScenarioValue(s, "compMolarMass"));
+          getScenarioValue(s, "expOutletP"), getScenarioValue(s, "expInletT"), getScenarioValue(s, "compInletP"),
+          getScenarioValue(s, "compDischargeP"), getScenarioValue(s, "compInletT"), getScenarioValue(s, "expMassFlow"),
+          getScenarioValue(s, "compMassFlow"), getScenarioValue(s, "expMolarMass"),
+          getScenarioValue(s, "compMolarMass"));
       result.setScenarioName(name);
       results.add(result);
     }
@@ -2545,18 +2545,18 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
 
       // Input conditions
       if (i < scenarios.size()) {
-	Map<String, Double> s = scenarios.get(i);
-	JsonObject inputs = new JsonObject();
-	for (Map.Entry<String, Double> entry : s.entrySet()) {
-	  inputs.addProperty(entry.getKey(), entry.getValue());
-	}
-	scenObj.add("inputConditions", inputs);
+        Map<String, Double> s = scenarios.get(i);
+        JsonObject inputs = new JsonObject();
+        for (Map.Entry<String, Double> entry : s.entrySet()) {
+          inputs.addProperty(entry.getKey(), entry.getValue());
+        }
+        scenObj.add("inputConditions", inputs);
       }
 
       // Margins
       JsonObject margins = new JsonObject();
       for (Map.Entry<String, Double> entry : r.getMargins().entrySet()) {
-	margins.addProperty(entry.getKey(), Math.round(entry.getValue() * 1000.0) / 10.0);
+        margins.addProperty(entry.getKey(), Math.round(entry.getValue() * 1000.0) / 10.0);
       }
       scenObj.add("margins_percent", margins);
 
@@ -2570,21 +2570,21 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
 
       // Issues
       if (!r.getFailures().isEmpty()) {
-	JsonArray failures = new JsonArray();
-	for (String f : r.getFailures()) {
-	  failures.add(f);
-	}
-	scenObj.add("failures", failures);
-	overallFailures += r.getFailures().size();
+        JsonArray failures = new JsonArray();
+        for (String f : r.getFailures()) {
+          failures.add(f);
+        }
+        scenObj.add("failures", failures);
+        overallFailures += r.getFailures().size();
       }
 
       if (!r.getWarnings().isEmpty()) {
-	JsonArray warnings = new JsonArray();
-	for (String w : r.getWarnings()) {
-	  warnings.add(w);
-	}
-	scenObj.add("warnings", warnings);
-	overallWarnings += r.getWarnings().size();
+        JsonArray warnings = new JsonArray();
+        for (String w : r.getWarnings()) {
+          warnings.add(w);
+        }
+        scenObj.add("warnings", warnings);
+        overallWarnings += r.getWarnings().size();
       }
 
       scenarioResults.add(scenObj);
@@ -2597,7 +2597,7 @@ public class TurboExpanderCompressorMechanicalDesign extends MechanicalDesign {
     int acceptable = 0;
     for (DesignEvaluationResult r : results) {
       if (r.isAcceptable()) {
-	acceptable++;
+        acceptable++;
       }
     }
     summary.addProperty("acceptableScenarios", acceptable);

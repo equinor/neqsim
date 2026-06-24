@@ -203,7 +203,7 @@ public class SeparatorGeometryCalculator implements Serializable {
 
     // Volumes
     double oilArea = calcSegmentArea(internalDiameter, liquidHeight)
-	- calcSegmentArea(internalDiameter, waterLayerHeight);
+        - calcSegmentArea(internalDiameter, waterLayerHeight);
     double waterArea = calcSegmentArea(internalDiameter, waterLayerHeight);
     gasVolume = gasArea * tangentToTangentLength;
     liquidVolume = liquidArea * tangentToTangentLength;

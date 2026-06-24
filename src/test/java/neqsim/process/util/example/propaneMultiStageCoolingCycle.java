@@ -32,7 +32,7 @@ public class propaneMultiStageCoolingCycle {
     testSystem.setMixingRule(2);
 
     neqsim.thermo.system.SystemInterface testSystemEthane = new neqsim.thermo.system.SystemPrEos((273.15 - 40.0),
-	15.00);
+        15.00);
     testSystemEthane.addComponent("ethane", 130759.0, "kg/hr");
     testSystemEthane.createDatabase(true);
     testSystemEthane.setMixingRule(2);

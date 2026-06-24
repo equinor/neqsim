@@ -200,7 +200,7 @@ public class EjectorCostEstimate extends UnitCostEstimateBaseClass {
     double stageFactor = 1.0 + (numberOfStages - 1) * 0.7;
 
     double baseCost = k * Math.pow(Math.max(suctionCapacity, 10.0), 0.6) * Math.pow(compressionRatio, 0.3)
-	* stageFactor;
+        * stageFactor;
 
     return baseCost * (getCostCalculator().getCurrentCepci() / 607.5);
   }

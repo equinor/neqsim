@@ -173,8 +173,8 @@ public class LumpingConfigBuilder {
     // Validate configuration
     if (plusFractionGroups > 0 && totalPseudoComponents > 0) {
       logger.warn("Both plusFractionGroups and totalPseudoComponents are set. "
-	  + "plusFractionGroups ({}) will take precedence for PVTlumpingModel, "
-	  + "totalPseudoComponents ({}) for standard model.", plusFractionGroups, totalPseudoComponents);
+          + "plusFractionGroups ({}) will take precedence for PVTlumpingModel, "
+          + "totalPseudoComponents ({}) for standard model.", plusFractionGroups, totalPseudoComponents);
     }
 
     // Set the model
@@ -193,21 +193,21 @@ public class LumpingConfigBuilder {
       logger.debug("Configured 'no lumping' model - all SCN components will be preserved");
     } else if ("PVTlumpingModel".equalsIgnoreCase(modelName)) {
       if (plusFractionGroups > 0) {
-	characterise.getLumpingModel().setNumberOfLumpedComponents(plusFractionGroups);
-	logger.debug("Configured PVTlumpingModel with {} plus fraction groups", plusFractionGroups);
+        characterise.getLumpingModel().setNumberOfLumpedComponents(plusFractionGroups);
+        logger.debug("Configured PVTlumpingModel with {} plus fraction groups", plusFractionGroups);
       } else if (totalPseudoComponents > 0) {
-	logger.warn("Using totalPseudoComponents with PVTlumpingModel may have unexpected results. "
-	    + "Consider using plusFractionGroups() instead.");
-	characterise.getLumpingModel().setNumberOfPseudoComponents(totalPseudoComponents);
+        logger.warn("Using totalPseudoComponents with PVTlumpingModel may have unexpected results. "
+            + "Consider using plusFractionGroups() instead.");
+        characterise.getLumpingModel().setNumberOfPseudoComponents(totalPseudoComponents);
       }
     } else if ("standard".equalsIgnoreCase(modelName)) {
       if (totalPseudoComponents > 0) {
-	characterise.getLumpingModel().setNumberOfPseudoComponents(totalPseudoComponents);
-	logger.debug("Configured standard lumping model with {} total pseudo-components", totalPseudoComponents);
+        characterise.getLumpingModel().setNumberOfPseudoComponents(totalPseudoComponents);
+        logger.debug("Configured standard lumping model with {} total pseudo-components", totalPseudoComponents);
       } else if (plusFractionGroups > 0) {
-	logger.warn("Using plusFractionGroups with standard model. This sets numberOfLumpedComponents "
-	    + "which equals totalPseudoComponents for standard model.");
-	characterise.getLumpingModel().setNumberOfLumpedComponents(plusFractionGroups);
+        logger.warn("Using plusFractionGroups with standard model. This sets numberOfLumpedComponents "
+            + "which equals totalPseudoComponents for standard model.");
+        characterise.getLumpingModel().setNumberOfLumpedComponents(plusFractionGroups);
       }
     }
 

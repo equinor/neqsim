@@ -62,7 +62,7 @@ public class CO2WaterEquilibriumTest {
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       double moles = system.getPhase(0).getComponent(i).getNumberOfMolesInPhase();
       if (moles > 1e-20) {
-	logger.info("  " + system.getPhase(0).getComponent(i).getComponentName() + ": " + moles + " mol");
+        logger.info("  " + system.getPhase(0).getComponent(i).getComponentName() + ": " + moles + " mol");
       }
     }
 
@@ -87,12 +87,12 @@ public class CO2WaterEquilibriumTest {
       logger.info("\nPhase " + p + " (" + system.getPhase(p).getPhaseTypeName() + "):");
       logger.info("  Moles: " + system.getPhase(p).getNumberOfMolesInPhase());
       for (int i = 0; i < system.getPhase(p).getNumberOfComponents(); i++) {
-	double moles = system.getPhase(p).getComponent(i).getNumberOfMolesInPhase();
-	double moleFrac = system.getPhase(p).getComponent(i).getx();
-	if (moles > 1e-20) {
-	  logger.info("  " + system.getPhase(p).getComponent(i).getComponentName() + ": " + moles + " mol (x="
-	      + moleFrac + ")");
-	}
+        double moles = system.getPhase(p).getComponent(i).getNumberOfMolesInPhase();
+        double moleFrac = system.getPhase(p).getComponent(i).getx();
+        if (moles > 1e-20) {
+          logger.info("  " + system.getPhase(p).getComponent(i).getComponentName() + ": " + moles + " mol (x="
+              + moleFrac + ")");
+        }
       }
     }
 
@@ -100,12 +100,12 @@ public class CO2WaterEquilibriumTest {
     double totalCarbon = 0.0;
     for (int p = 0; p < system.getNumberOfPhases(); p++) {
       for (int i = 0; i < system.getPhase(p).getNumberOfComponents(); i++) {
-	String name = system.getPhase(p).getComponent(i).getComponentName();
-	double moles = system.getPhase(p).getComponent(i).getNumberOfMolesInPhase();
-	// Count carbon atoms in each species
-	if (name.equals("CO2") || name.equals("HCO3-") || name.equals("CO3--")) {
-	  totalCarbon += moles; // 1 carbon per molecule
-	}
+        String name = system.getPhase(p).getComponent(i).getComponentName();
+        double moles = system.getPhase(p).getComponent(i).getNumberOfMolesInPhase();
+        // Count carbon atoms in each species
+        if (name.equals("CO2") || name.equals("HCO3-") || name.equals("CO3--")) {
+          totalCarbon += moles; // 1 carbon per molecule
+        }
       }
     }
     logger.info("\nTotal carbon: " + totalCarbon + " mol (initial: 0.01 mol)");
@@ -167,10 +167,10 @@ public class CO2WaterEquilibriumTest {
     for (int p = 0; p < system.getNumberOfPhases(); p++) {
       logger.info("\nPhase " + p + " (" + system.getPhase(p).getPhaseTypeName() + "):");
       for (int i = 0; i < system.getPhase(p).getNumberOfComponents(); i++) {
-	double moles = system.getPhase(p).getComponent(i).getNumberOfMolesInPhase();
-	if (moles > 1e-20) {
-	  logger.info("  " + system.getPhase(p).getComponent(i).getComponentName() + ": " + moles + " mol");
-	}
+        double moles = system.getPhase(p).getComponent(i).getNumberOfMolesInPhase();
+        if (moles > 1e-20) {
+          logger.info("  " + system.getPhase(p).getComponent(i).getComponentName() + ": " + moles + " mol");
+        }
       }
     }
 
@@ -197,7 +197,7 @@ public class CO2WaterEquilibriumTest {
 
     // Verify it has reactions
     assertTrue(system.getChemicalReactionOperations().hasReactions(),
-	"Should have chemical reactions for CO2-water system");
+        "Should have chemical reactions for CO2-water system");
 
     logger.info("\n=== Chemical Reaction Operations Test ===");
     logger.info("Has reactions: " + system.getChemicalReactionOperations().hasReactions());

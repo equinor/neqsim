@@ -101,7 +101,7 @@ public class Switchgear implements java.io.Serializable {
   private double selectStandardRating(double requiredA) {
     for (double std : STANDARD_RATINGS_A) {
       if (std >= requiredA) {
-	return std;
+        return std;
       }
     }
     return Math.ceil(requiredA / 100.0) * 100.0;
@@ -115,11 +115,11 @@ public class Switchgear implements java.io.Serializable {
    */
   private double selectStandardFuseRating(double motorFLC) {
     double[] fuseRatings = { 16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000,
-	1250 };
+        1250 };
     double target = motorFLC * 1.6;
     for (double fuse : fuseRatings) {
       if (fuse >= target) {
-	return fuse;
+        return fuse;
       }
     }
     return fuseRatings[fuseRatings.length - 1];

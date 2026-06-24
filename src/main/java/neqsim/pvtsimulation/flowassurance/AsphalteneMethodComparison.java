@@ -114,14 +114,14 @@ public class AsphalteneMethodComparison {
     report.append("├────────────────────────────────────────────────────────────────┤\n");
     report.append(String.format("│ Reservoir Pressure:     %8.1f bara                         │%n", reservoirPressure));
     report.append(String.format("│ Reservoir Temperature:  %8.1f K (%.1f °C)                  │%n",
-	reservoirTemperature, reservoirTemperature - 273.15));
+        reservoirTemperature, reservoirTemperature - 273.15));
     report
-	.append(String.format("│ Bubble Point Pressure:  %8.1f bara                         │%n", bubblePointPressure));
+        .append(String.format("│ Bubble Point Pressure:  %8.1f bara                         │%n", bubblePointPressure));
     report.append(String.format("│ Undersaturation:        %8.1f bar                          │%n",
-	reservoirPressure - bubblePointPressure));
+        reservoirPressure - bubblePointPressure));
     report.append(String.format("│ In-situ Density:        %8.1f kg/m³                        │%n", inSituDensity));
     report.append(String.format("│ API Gravity:            %8.1f                              │%n",
-	deBoerScreening.getAPIGravity()));
+        deBoerScreening.getAPIGravity()));
     report.append("└────────────────────────────────────────────────────────────────┘\n\n");
 
     // Section 2: SARA Analysis (independent)
@@ -135,11 +135,11 @@ public class AsphalteneMethodComparison {
       report.append(String.format("│ Resin/Asphaltene Ratio (R/A):      %.3f                      │%n", ra));
       report.append("│                                                                │\n");
       if (cii < 0.7) {
-	report.append("│ SARA Verdict: STABLE (CII < 0.7)                               │\n");
+        report.append("│ SARA Verdict: STABLE (CII < 0.7)                               │\n");
       } else if (cii < 0.9) {
-	report.append("│ SARA Verdict: MARGINAL (0.7 ≤ CII < 0.9)                        │\n");
+        report.append("│ SARA Verdict: MARGINAL (0.7 ≤ CII < 0.9)                        │\n");
       } else {
-	report.append("│ SARA Verdict: UNSTABLE (CII ≥ 0.9)                              │\n");
+        report.append("│ SARA Verdict: UNSTABLE (CII ≥ 0.9)                              │\n");
       }
     } else {
       report.append("│ SARA data not available                                        │\n");
@@ -170,15 +170,15 @@ public class AsphalteneMethodComparison {
 
     if (!Double.isNaN(cpaOnsetPressure)) {
       report.append(
-	  String.format("│ Onset Pressure: %.1f bara                                     │%n", cpaOnsetPressure));
+          String.format("│ Onset Pressure: %.1f bara                                     │%n", cpaOnsetPressure));
       double margin = reservoirPressure - cpaOnsetPressure;
       report.append(String.format("│ Safety Margin:  %.1f bar (reservoir - onset)                 │%n", margin));
       if (margin > 50) {
-	report.append("│ Status: SAFE - Operating well above onset                     │\n");
+        report.append("│ Status: SAFE - Operating well above onset                     │\n");
       } else if (margin > 0) {
-	report.append("│ Status: CAUTION - Close to onset pressure                     │\n");
+        report.append("│ Status: CAUTION - Close to onset pressure                     │\n");
       } else {
-	report.append("│ Status: CRITICAL - Below onset pressure!                      │\n");
+        report.append("│ Status: CRITICAL - Below onset pressure!                      │\n");
       }
     } else {
       report.append("│ Onset Pressure: Not found (no solid phase precipitation)      │\n");
@@ -220,7 +220,7 @@ public class AsphalteneMethodComparison {
       report.append("│ ⚡ METHODS DISAGREE - FURTHER ANALYSIS NEEDED                 │\n");
       report.append("│                                                                │\n");
       report.append(String.format("│   De Boer: %-8s  CPA: %-8s  SARA: %-8s          │%n",
-	  deBoerProblem ? "PROBLEM" : "OK", cpaProblem ? "PROBLEM" : "OK", saraProblem ? "PROBLEM" : "OK"));
+          deBoerProblem ? "PROBLEM" : "OK", cpaProblem ? "PROBLEM" : "OK", saraProblem ? "PROBLEM" : "OK"));
       report.append("│                                                                │\n");
       report.append("│ Confidence: MODERATE                                          │\n");
       report.append("│ Recommendation:                                               │\n");
@@ -258,9 +258,9 @@ public class AsphalteneMethodComparison {
       workSystem.initPhysicalProperties();
 
       if (workSystem.hasPhaseType("oil")) {
-	inSituDensity = workSystem.getPhase("oil").getDensity("kg/m3");
+        inSituDensity = workSystem.getPhase("oil").getDensity("kg/m3");
       } else if (workSystem.getNumberOfPhases() > 0) {
-	inSituDensity = workSystem.getPhase(0).getDensity("kg/m3");
+        inSituDensity = workSystem.getPhase(0).getDensity("kg/m3");
       }
 
       // Update De Boer screening with calculated values
@@ -283,7 +283,7 @@ public class AsphalteneMethodComparison {
     AsphalteneStabilityAnalyzer.AsphalteneRisk cpaRisk = cpaAnalyzer.evaluateSARAStability();
 
     return String.format("De Boer: %s | CPA/SARA: %s | Onset P: %.1f bara", deBoerRisk.name(), cpaRisk.name(),
-	Double.isNaN(cpaOnsetPressure) ? -1 : cpaOnsetPressure);
+        Double.isNaN(cpaOnsetPressure) ? -1 : cpaOnsetPressure);
   }
 
   /**

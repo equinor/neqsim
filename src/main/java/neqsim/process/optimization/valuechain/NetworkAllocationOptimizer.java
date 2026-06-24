@@ -243,34 +243,34 @@ public class NetworkAllocationOptimizer implements Serializable {
     while (step > tolerance * total && iter < maxIterations) {
       boolean improved = false;
       for (int i = 0; i < nLegs; i++) {
-	for (int j = 0; j < nLegs; j++) {
-	  if (i == j) {
-	    continue;
-	  }
-	  if (best[i] + step > upperBound[i] || best[j] - step < lowerBound[j]) {
-	    continue;
-	  }
-	  double[] trial = best.clone();
-	  trial[i] += step;
-	  trial[j] -= step;
-	  AllocationResult r = evaluator.evaluate(trial);
-	  iter++;
-	  if (r.isFeasible() && (!haveFeasible || r.getObjective() > bestObj + 1e-12)) {
-	    best = trial;
-	    bestObj = r.getObjective();
-	    haveFeasible = true;
-	    improved = true;
-	  }
-	  if (iter >= maxIterations) {
-	    break;
-	  }
-	}
-	if (iter >= maxIterations) {
-	  break;
-	}
+        for (int j = 0; j < nLegs; j++) {
+          if (i == j) {
+            continue;
+          }
+          if (best[i] + step > upperBound[i] || best[j] - step < lowerBound[j]) {
+            continue;
+          }
+          double[] trial = best.clone();
+          trial[i] += step;
+          trial[j] -= step;
+          AllocationResult r = evaluator.evaluate(trial);
+          iter++;
+          if (r.isFeasible() && (!haveFeasible || r.getObjective() > bestObj + 1e-12)) {
+            best = trial;
+            bestObj = r.getObjective();
+            haveFeasible = true;
+            improved = true;
+          }
+          if (iter >= maxIterations) {
+            break;
+          }
+        }
+        if (iter >= maxIterations) {
+          break;
+        }
       }
       if (!improved) {
-	step *= 0.5;
+        step *= 0.5;
       }
     }
     return new AllocationResult(best, bestObj, haveFeasible);
@@ -301,17 +301,17 @@ public class NetworkAllocationOptimizer implements Serializable {
     // Distribute the residual across legs that still have headroom in the needed direction.
     if (Math.abs(diff) > 1e-12) {
       for (int i = 0; i < nLegs && Math.abs(diff) > 1e-12; i++) {
-	if (diff > 0) {
-	  double headroom = upperBound[i] - alloc[i];
-	  double add = Math.min(headroom, diff);
-	  alloc[i] += add;
-	  diff -= add;
-	} else {
-	  double headroom = alloc[i] - lowerBound[i];
-	  double sub = Math.min(headroom, -diff);
-	  alloc[i] -= sub;
-	  diff += sub;
-	}
+        if (diff > 0) {
+          double headroom = upperBound[i] - alloc[i];
+          double add = Math.min(headroom, diff);
+          alloc[i] += add;
+          diff -= add;
+        } else {
+          double headroom = alloc[i] - lowerBound[i];
+          double sub = Math.min(headroom, -diff);
+          alloc[i] -= sub;
+          diff += sub;
+        }
       }
     }
     return alloc;

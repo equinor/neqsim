@@ -85,21 +85,21 @@ public class EscalationGraphAnalyzer implements Serializable {
       // Reset and recompute cumulative loads on each non-failed item
       Map<String, Double> newCumulative = new HashMap<>();
       for (String src : failed) {
-	for (Edge e : outgoing.get(src)) {
-	  double current = newCumulative.containsKey(e.target) ? newCumulative.get(e.target) : 0.0;
-	  newCumulative.put(e.target, current + e.load);
-	}
+        for (Edge e : outgoing.get(src)) {
+          double current = newCumulative.containsKey(e.target) ? newCumulative.get(e.target) : 0.0;
+          newCumulative.put(e.target, current + e.load);
+        }
       }
       cumulative = newCumulative;
       // Check which not-yet-failed items exceed threshold
       for (Map.Entry<String, Double> en : cumulative.entrySet()) {
-	if (failed.contains(en.getKey())) {
-	  continue;
-	}
-	if (en.getValue() >= thresholds.get(en.getKey())) {
-	  failed.add(en.getKey());
-	  changed = true;
-	}
+        if (failed.contains(en.getKey())) {
+          continue;
+        }
+        if (en.getValue() >= thresholds.get(en.getKey())) {
+          failed.add(en.getKey());
+          changed = true;
+        }
       }
     }
     return failed;
@@ -116,7 +116,7 @@ public class EscalationGraphAnalyzer implements Serializable {
     for (String item : thresholds.keySet()) {
       Set<String> esc = propagate(item);
       if (esc.size() > worst.size()) {
-	worst = esc;
+        worst = esc;
       }
     }
     return worst;

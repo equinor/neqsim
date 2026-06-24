@@ -116,30 +116,30 @@ public class ChemicalInteractionRule implements Serializable {
     try {
       String line = reader.readLine(); // header
       while ((line = reader.readLine()) != null) {
-	line = line.trim();
-	if (line.isEmpty() || line.startsWith("#")) {
-	  continue;
-	}
-	String[] parts = line.split(",", -1);
-	if (parts.length < 8) {
-	  continue;
-	}
-	Severity severity;
-	try {
-	  severity = Severity.valueOf(parts[5].trim().toUpperCase());
-	} catch (IllegalArgumentException ex) {
-	  severity = Severity.INFO;
-	}
-	rules.add(new ChemicalInteractionRule(parts[0].trim(), parts[1].trim(), parts[2].trim(), parts[3].trim(),
-	    parts[4].trim(), severity, parts[6].trim(), parts[7].trim()));
+        line = line.trim();
+        if (line.isEmpty() || line.startsWith("#")) {
+          continue;
+        }
+        String[] parts = line.split(",", -1);
+        if (parts.length < 8) {
+          continue;
+        }
+        Severity severity;
+        try {
+          severity = Severity.valueOf(parts[5].trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+          severity = Severity.INFO;
+        }
+        rules.add(new ChemicalInteractionRule(parts[0].trim(), parts[1].trim(), parts[2].trim(), parts[3].trim(),
+            parts[4].trim(), severity, parts[6].trim(), parts[7].trim()));
       }
     } catch (IOException ex) {
       // log and continue with what we have
     } finally {
       try {
-	reader.close();
+        reader.close();
       } catch (IOException ignored) {
-	// ignored
+        // ignored
       }
     }
     return rules;
@@ -160,9 +160,9 @@ public class ChemicalInteractionRule implements Serializable {
       return matchOperand(chemical1Type, chemical1Ingredient, a);
     }
     boolean forward = matchOperand(chemical1Type, chemical1Ingredient, a)
-	&& matchOperand(chemical2Type, chemical2Ingredient, b);
+        && matchOperand(chemical2Type, chemical2Ingredient, b);
     boolean reverse = matchOperand(chemical1Type, chemical1Ingredient, b)
-	&& matchOperand(chemical2Type, chemical2Ingredient, a);
+        && matchOperand(chemical2Type, chemical2Ingredient, a);
     return forward || reverse;
   }
 
@@ -207,11 +207,11 @@ public class ChemicalInteractionRule implements Serializable {
     }
     if ("material_carbon_steel".equals(tag)) {
       if (material == null || !material.toLowerCase().contains("carbon")) {
-	return false;
+        return false;
       }
       // optional temperature gating
       if (thresholdSpec.startsWith("T")) {
-	return checkThreshold(thresholdSpec, "T", temperatureC);
+        return checkThreshold(thresholdSpec, "T", temperatureC);
       }
       return true;
     }
@@ -239,9 +239,9 @@ public class ChemicalInteractionRule implements Serializable {
     for (int i = 0; i < body.length(); i++) {
       char c = body.charAt(i);
       if (Character.isDigit(c) || c == '.' || c == '-') {
-	digits.append(c);
+        digits.append(c);
       } else {
-	break;
+        break;
       }
     }
     double threshold;
@@ -273,16 +273,16 @@ public class ChemicalInteractionRule implements Serializable {
       String enumName = c.getType().name();
       String spec = typeSpec;
       if ("THERMODYNAMIC_HHI".equals(spec)) {
-	spec = "HYDRATE_INHIBITOR_THERMODYNAMIC";
+        spec = "HYDRATE_INHIBITOR_THERMODYNAMIC";
       }
       if (!enumName.equalsIgnoreCase(spec)) {
-	return false;
+        return false;
       }
     }
     if (!"*".equals(ingredientSpec) && ingredientSpec != null && !ingredientSpec.isEmpty()) {
       String ai = c.getActiveIngredient() == null ? "" : c.getActiveIngredient();
       if (!ai.equalsIgnoreCase(ingredientSpec)) {
-	return false;
+        return false;
       }
     }
     return true;

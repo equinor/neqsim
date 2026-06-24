@@ -232,11 +232,11 @@ public class OnePhasePipeLine extends Pipeline {
     for (int i = 0; i < nNodes; i++) {
       double pressure = pipe.getNode(i).getBulkSystem().getPressure();
       if ("bara".equalsIgnoreCase(unit)) {
-	profile[i] = pressure;
+        profile[i] = pressure;
       } else if ("Pa".equalsIgnoreCase(unit)) {
-	profile[i] = pressure * 1e5;
+        profile[i] = pressure * 1e5;
       } else {
-	profile[i] = pressure; // default to bara
+        profile[i] = pressure; // default to bara
       }
     }
 
@@ -256,9 +256,9 @@ public class OnePhasePipeLine extends Pipeline {
     for (int i = 0; i < nNodes; i++) {
       double temp = pipe.getNode(i).getBulkSystem().getTemperature();
       if ("C".equalsIgnoreCase(unit)) {
-	profile[i] = temp - 273.15;
+        profile[i] = temp - 273.15;
       } else {
-	profile[i] = temp; // default to K
+        profile[i] = temp; // default to K
       }
     }
 

@@ -186,7 +186,7 @@ public class FuelGasSystemTest {
   @Test
   public void testConsumerEfficiency() {
     FuelGasSystem.FuelGasConsumer consumer = new FuelGasSystem.FuelGasConsumer("GT-1", ConsumerType.GAS_TURBINE,
-	1000.0);
+        1000.0);
 
     consumer.setEfficiencyPercent(35.0);
     double usefulPower = consumer.getUsefulThermalPowerKW(45.0);

@@ -36,7 +36,7 @@ public class SafetyReliefValveTest {
     flare.setPressure(1.03, "bara");
 
     SafetyReliefValve psv = new SafetyReliefValve("PSV-101", vesselGas).configureConventionalSnap(10.0, 0.10, 0.07,
-	180.0);
+        180.0);
     psv.setOutletStream(flare);
     psv.setMinStableOpenFrac(0.0);
 

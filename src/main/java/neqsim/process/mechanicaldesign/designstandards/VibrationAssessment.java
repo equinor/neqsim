@@ -59,7 +59,7 @@ public class VibrationAssessment implements Serializable {
       double temperatureK, double molecularWeight, double pipeDiameterMm, double pipeWallThicknessMm) {
 
     double pwl = acousticPowerLevel(massFlowKgS, upstreamPressureBar, downstreamPressureBar, temperatureK,
-	molecularWeight);
+        molecularWeight);
 
     double screeningLimit = aivScreeningLimit(pipeDiameterMm, pipeWallThicknessMm);
 
@@ -163,7 +163,7 @@ public class VibrationAssessment implements Serializable {
     // Critical velocity for fluid-elastic instability
     double massRatio = tubeMassPerLengthKgM / (shellFluidDensityKgM3 * Math.pow(tubeODMm / 1000.0, 2));
     double criticalVelocity = connorsK * tubeNaturalFreqHz * (tubeODMm / 1000.0)
-	* Math.pow(2.0 * Math.PI * damping * massRatio, 0.5);
+        * Math.pow(2.0 * Math.PI * damping * massRatio, 0.5);
 
     double velocityRatio = crossFlowVelocityMS / Math.max(criticalVelocity, 0.01);
 

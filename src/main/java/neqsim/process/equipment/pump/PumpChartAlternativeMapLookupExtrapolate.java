@@ -102,8 +102,8 @@ public class PumpChartAlternativeMapLookupExtrapolate extends CompressorChartAlt
       double f = minFlow + (maxFlow - minFlow) * i / nPoints;
       double eff = getEfficiency(f, testSpeed);
       if (eff > bestEff) {
-	bestEff = eff;
-	bestFlow = f;
+        bestEff = eff;
+        bestFlow = f;
       }
     }
     cachedBEPFlow = bestFlow;
@@ -178,16 +178,16 @@ public class PumpChartAlternativeMapLookupExtrapolate extends CompressorChartAlt
     if (speedArr != null && speedArr.length > 0) {
       double refSpeed = speedArr[0];
       for (int i = 0; i < npshRequired.length; i++) {
-	double s = (speedArr != null && i < speedArr.length) ? speedArr[i] : refSpeed;
-	double[][] flowArr = getFlows();
-	if (flowArr != null && i < flowArr.length) {
-	  for (int j = 0; j < npshRequired[i].length && j < flowArr[i].length; j++) {
-	    // Reduced NPSH: NPSH / N^2
-	    double rFlow = flowArr[i][j] / s;
-	    double rNpsh = npshRequired[i][j] / (s * s);
-	    points.add(rFlow, rNpsh);
-	  }
-	}
+        double s = (speedArr != null && i < speedArr.length) ? speedArr[i] : refSpeed;
+        double[][] flowArr = getFlows();
+        if (flowArr != null && i < flowArr.length) {
+          for (int j = 0; j < npshRequired[i].length && j < flowArr[i].length; j++) {
+            // Reduced NPSH: NPSH / N^2
+            double rFlow = flowArr[i][j] / s;
+            double rNpsh = npshRequired[i][j] / (s * s);
+            points.add(rFlow, rNpsh);
+          }
+        }
       }
     }
     if (!points.toList().isEmpty()) {
@@ -265,7 +265,7 @@ public class PumpChartAlternativeMapLookupExtrapolate extends CompressorChartAlt
       return;
     }
     double paramB = 26.6 * Math.pow(viscosity, 0.5) * Math.pow(hFt, 0.0625)
-	/ (Math.pow(qGpm, 0.375) * Math.pow(speed, 0.25));
+        / (Math.pow(qGpm, 0.375) * Math.pow(speed, 0.25));
     if (paramB <= 1.0) {
       cQ = 1.0;
       cH = 1.0;
@@ -288,15 +288,15 @@ public class PumpChartAlternativeMapLookupExtrapolate extends CompressorChartAlt
   public double getFullyCorrectedHead(double flow, double speed, double actualDensity, double actualViscosity) {
     if (useViscosityCorrection && actualViscosity > 1.0) {
       if (Math.abs(actualViscosity - lastViscosity) > 0.1) {
-	double flowBEP = getBestEfficiencyFlowRate();
-	double headBEP = getHead(flowBEP, speed);
-	calculateViscosityCorrection(actualViscosity, flowBEP, headBEP, speed);
+        double flowBEP = getBestEfficiencyFlowRate();
+        double headBEP = getHead(flowBEP, speed);
+        calculateViscosityCorrection(actualViscosity, flowBEP, headBEP, speed);
       }
       double waterFlow = flow / cQ;
       double waterHead = getHead(waterFlow, speed);
       double corrHead = waterHead * cH;
       if (referenceDensity > 0 && actualDensity > 0) {
-	return corrHead * (referenceDensity / actualDensity);
+        return corrHead * (referenceDensity / actualDensity);
       }
       return corrHead;
     }
@@ -309,9 +309,9 @@ public class PumpChartAlternativeMapLookupExtrapolate extends CompressorChartAlt
     double baseEff = getEfficiency(flow, speed);
     if (useViscosityCorrection && actualViscosity > 1.0) {
       if (Math.abs(actualViscosity - lastViscosity) > 0.1) {
-	double flowBEP = getBestEfficiencyFlowRate();
-	double headBEP = getHead(flowBEP, speed);
-	calculateViscosityCorrection(actualViscosity, flowBEP, headBEP, speed);
+        double flowBEP = getBestEfficiencyFlowRate();
+        double headBEP = getHead(flowBEP, speed);
+        calculateViscosityCorrection(actualViscosity, flowBEP, headBEP, speed);
       }
       return baseEff * cEta;
     }
@@ -373,11 +373,11 @@ public class PumpChartAlternativeMapLookupExtrapolate extends CompressorChartAlt
     double min = Double.MAX_VALUE;
     for (double[] row : flows) {
       if (row != null) {
-	for (double f : row) {
-	  if (f < min) {
-	    min = f;
-	  }
-	}
+        for (double f : row) {
+          if (f < min) {
+            min = f;
+          }
+        }
       }
     }
     return min == Double.MAX_VALUE ? 0.0 : min;
@@ -396,11 +396,11 @@ public class PumpChartAlternativeMapLookupExtrapolate extends CompressorChartAlt
     double max = -Double.MAX_VALUE;
     for (double[] row : flows) {
       if (row != null) {
-	for (double f : row) {
-	  if (f > max) {
-	    max = f;
-	  }
-	}
+        for (double f : row) {
+          if (f > max) {
+            max = f;
+          }
+        }
       }
     }
     return max == -Double.MAX_VALUE ? 0.0 : max;

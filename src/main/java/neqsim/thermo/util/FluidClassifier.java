@@ -227,17 +227,17 @@ public final class FluidClassifier {
       // If reservoir T < Tc, it's an oil (volatile or black)
 
       if (reservoirTemperatureK > criticalTemp * 1.1) {
-	// Well above critical - gas phase dominates
-	if (compositionBased == ReservoirFluidType.GAS_CONDENSATE || compositionBased == ReservoirFluidType.WET_GAS) {
-	  return ReservoirFluidType.WET_GAS;
-	}
+        // Well above critical - gas phase dominates
+        if (compositionBased == ReservoirFluidType.GAS_CONDENSATE || compositionBased == ReservoirFluidType.WET_GAS) {
+          return ReservoirFluidType.WET_GAS;
+        }
       } else if (reservoirTemperatureK > criticalTemp * 0.95) {
-	// Near critical - volatile oil or gas condensate
-	if (compositionBased == ReservoirFluidType.BLACK_OIL) {
-	  return ReservoirFluidType.VOLATILE_OIL;
-	} else if (compositionBased == ReservoirFluidType.WET_GAS) {
-	  return ReservoirFluidType.GAS_CONDENSATE;
-	}
+        // Near critical - volatile oil or gas condensate
+        if (compositionBased == ReservoirFluidType.BLACK_OIL) {
+          return ReservoirFluidType.VOLATILE_OIL;
+        } else if (compositionBased == ReservoirFluidType.WET_GAS) {
+          return ReservoirFluidType.GAS_CONDENSATE;
+        }
       }
     } catch (Exception e) {
       logger.debug("Phase envelope analysis failed, using composition-based classification: " + e.getMessage());
@@ -267,11 +267,11 @@ public final class FluidClassifier {
       // C7+ includes n-heptane and heavier components (MW >= 100 g/mol approximately)
       // Also includes TBP and plus fractions
       boolean isC7Plus = molarMass >= 100.0 || name.startsWith("c7") || name.startsWith("c8") || name.startsWith("c9")
-	  || name.contains("heptane") || name.contains("octane") || name.contains("nonane") || name.contains("decane")
-	  || fluid.getComponent(i).isIsTBPfraction() || fluid.getComponent(i).isIsPlusFraction();
+          || name.contains("heptane") || name.contains("octane") || name.contains("nonane") || name.contains("decane")
+          || fluid.getComponent(i).isIsTBPfraction() || fluid.getComponent(i).isIsPlusFraction();
 
       if (isC7Plus) {
-	c7PlusMoles += fluid.getComponent(i).getNumberOfmoles();
+        c7PlusMoles += fluid.getComponent(i).getNumberOfmoles();
       }
     }
 
@@ -304,11 +304,11 @@ public final class FluidClassifier {
 
       // Get oil phase density
       if (stdFluid.hasPhaseType("oil")) {
-	double oilDensity = stdFluid.getPhase("oil").getDensity("kg/m3");
-	double waterDensity = 999.0; // kg/m³ at 60°F
-	double specificGravity = oilDensity / waterDensity;
+        double oilDensity = stdFluid.getPhase("oil").getDensity("kg/m3");
+        double waterDensity = 999.0; // kg/m³ at 60°F
+        double specificGravity = oilDensity / waterDensity;
 
-	return 141.5 / specificGravity - 131.5;
+        return 141.5 / specificGravity - 131.5;
       }
     } catch (Exception e) {
       logger.debug("API gravity estimation failed: " + e.getMessage());

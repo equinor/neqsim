@@ -416,7 +416,7 @@ public class CompressorWashing implements Serializable {
     // Inverse of fouling model: hours = sqrt(maxHeadLoss / 0.20) / rate
     double targetFouling = Math.sqrt(maxHeadLoss / 0.20);
     double effectiveRate = dominantFoulingType.getFoulingRatePerHour() * environmentalSeverity
-	* (1.0 - inletFilterEfficiency * 0.8);
+        * (1.0 - inletFilterEfficiency * 0.8);
     if (effectiveRate > 0) {
       return targetFouling / effectiveRate;
     }

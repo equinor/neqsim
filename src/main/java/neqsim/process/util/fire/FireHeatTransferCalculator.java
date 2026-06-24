@@ -77,7 +77,7 @@ public final class FireHeatTransferCalculator {
     }
 
     double totalResistance = 1.0 / externalFilmCoefficientWPerM2K + wallThicknessM / thermalConductivityWPerMPerK
-	+ 1.0 / internalFilmCoefficientWPerM2K;
+        + 1.0 / internalFilmCoefficientWPerM2K;
 
     double heatFlux = (fireTemperatureK - processFluidTemperatureK) / totalResistance;
     double innerWallTemperatureK = processFluidTemperatureK + heatFlux / internalFilmCoefficientWPerM2K;

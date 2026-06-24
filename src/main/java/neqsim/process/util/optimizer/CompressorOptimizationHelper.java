@@ -117,7 +117,7 @@ public class CompressorOptimizationHelper {
      * @param flowUnit flow rate unit
      */
     public CompressorBounds(double minSpeed, double maxSpeed, double minFlow, double maxFlow, double surgeFlow,
-	double stoneWallFlow, String flowUnit) {
+        double stoneWallFlow, String flowUnit) {
       this.minSpeed = minSpeed;
       this.maxSpeed = maxSpeed;
       this.minFlow = minFlow;
@@ -205,7 +205,7 @@ public class CompressorOptimizationHelper {
     @Override
     public String toString() {
       return String.format("CompressorBounds[speed=%.0f-%.0f RPM, flow=%.1f-%.1f %s, surge=%.1f, stonewall=%.1f]",
-	  minSpeed, maxSpeed, minFlow, maxFlow, flowUnit, surgeFlow, stoneWallFlow);
+          minSpeed, maxSpeed, minFlow, maxFlow, flowUnit, surgeFlow, stoneWallFlow);
     }
   }
 
@@ -237,8 +237,8 @@ public class CompressorOptimizationHelper {
      * @param stage2Result result from throughput maximization stage
      */
     public TwoStageResult(double totalFlow, String flowUnit, Map<String, Double> trainSplits,
-	Map<String, Double> trainFlows, Map<String, Double> trainUtilizations, Map<String, Double> trainPowers,
-	Map<String, Double> trainSurgeMargins, OptimizationResult stage1Result, OptimizationResult stage2Result) {
+        Map<String, Double> trainFlows, Map<String, Double> trainUtilizations, Map<String, Double> trainPowers,
+        Map<String, Double> trainSurgeMargins, OptimizationResult stage1Result, OptimizationResult stage2Result) {
       this.totalFlow = totalFlow;
       this.flowUnit = flowUnit;
       this.trainSplits = new HashMap<>(trainSplits);
@@ -362,9 +362,9 @@ public class CompressorOptimizationHelper {
       sb.append(String.format("  Min Surge Margin: %.1f%%%n", getMinSurgeMargin() * 100));
       sb.append(String.format("  Train Details:%n"));
       for (String train : trainSplits.keySet()) {
-	sb.append(String.format("    %s: split=%.1f%%, flow=%.1f %s, util=%.1f%%, power=%.1f kW%n", train,
-	    trainSplits.get(train) * 100, trainFlows.get(train), flowUnit, trainUtilizations.get(train) * 100,
-	    trainPowers.get(train)));
+        sb.append(String.format("    %s: split=%.1f%%, flow=%.1f %s, util=%.1f%%, power=%.1f kW%n", train,
+            trainSplits.get(train) * 100, trainFlows.get(train), flowUnit, trainUtilizations.get(train) * 100,
+            trainPowers.get(train)));
       }
       return sb.toString();
     }
@@ -400,7 +400,7 @@ public class CompressorOptimizationHelper {
 
     if (chart == null || !(chart instanceof CompressorChart)) {
       return new CompressorBounds(defaultMinSpeed, defaultMaxSpeed, defaultMinFlow, defaultMaxFlow, defaultSurgeFlow,
-	  defaultStoneWall, "Am3/hr");
+          defaultStoneWall, "Am3/hr");
     }
 
     CompressorChart fullChart = (CompressorChart) chart;
@@ -413,12 +413,12 @@ public class CompressorOptimizationHelper {
       minSpeed = speeds[0];
       maxSpeed = speeds[speeds.length - 1];
       for (double speed : speeds) {
-	if (speed < minSpeed) {
-	  minSpeed = speed;
-	}
-	if (speed > maxSpeed) {
-	  maxSpeed = speed;
-	}
+        if (speed < minSpeed) {
+          minSpeed = speed;
+        }
+        if (speed > maxSpeed) {
+          maxSpeed = speed;
+        }
       }
     }
 
@@ -448,7 +448,7 @@ public class CompressorOptimizationHelper {
     double maxFlow = stoneWallFlow;
 
     return new CompressorBounds(minSpeed, maxSpeed, minFlow, maxFlow, surgeFlow, stoneWallFlow,
-	fullChart.getHeadUnit() != null ? "Am3/hr" : "Am3/hr");
+        fullChart.getHeadUnit() != null ? "Am3/hr" : "Am3/hr");
   }
 
   /**
@@ -494,7 +494,7 @@ public class CompressorOptimizationHelper {
     return new OptimizationObjective("totalPower", proc -> {
       double totalPower = 0.0;
       for (Compressor comp : compressors) {
-	totalPower += comp.getPower("kW");
+        totalPower += comp.getPower("kW");
       }
       return totalPower;
     }, weight, ObjectiveType.MINIMIZE);
@@ -512,10 +512,10 @@ public class CompressorOptimizationHelper {
     return new OptimizationObjective("minSurgeMargin", proc -> {
       double minMargin = Double.MAX_VALUE;
       for (Compressor comp : compressors) {
-	double margin = comp.getDistanceToSurge();
-	if (margin < minMargin) {
-	  minMargin = margin;
-	}
+        double margin = comp.getDistanceToSurge();
+        if (margin < minMargin) {
+          minMargin = margin;
+        }
       }
       return minMargin == Double.MAX_VALUE ? 0.0 : minMargin;
     }, weight, ObjectiveType.MAXIMIZE);
@@ -534,11 +534,11 @@ public class CompressorOptimizationHelper {
       double totalEff = 0.0;
       int count = 0;
       for (Compressor comp : compressors) {
-	double eff = comp.getPolytropicEfficiency();
-	if (eff > 0 && eff <= 1.0) {
-	  totalEff += eff;
-	  count++;
-	}
+        double eff = comp.getPolytropicEfficiency();
+        if (eff > 0 && eff <= 1.0) {
+          totalEff += eff;
+          count++;
+        }
       }
       return count > 0 ? totalEff / count : 0.0;
     }, weight, ObjectiveType.MAXIMIZE);
@@ -558,10 +558,10 @@ public class CompressorOptimizationHelper {
     return OptimizationConstraint.greaterThan("minSurgeMargin", proc -> {
       double minActual = Double.MAX_VALUE;
       for (Compressor comp : compressors) {
-	double margin = comp.getDistanceToSurge();
-	if (margin < minActual) {
-	  minActual = margin;
-	}
+        double margin = comp.getDistanceToSurge();
+        if (margin < minActual) {
+          minActual = margin;
+        }
       }
       return minActual == Double.MAX_VALUE ? 0.0 : minActual;
     }, minMargin, severity, 100.0, "Minimum surge margin across all compressors");
@@ -577,9 +577,9 @@ public class CompressorOptimizationHelper {
     Objects.requireNonNull(compressors, "Compressors list is required");
     return OptimizationConstraint.greaterThan("compressorValidity", proc -> {
       for (Compressor comp : compressors) {
-	if (!comp.isSimulationValid()) {
-	  return -1.0; // Invalid
-	}
+        if (!comp.isSimulationValid()) {
+          return -1.0; // Invalid
+        }
       }
       return 1.0; // All valid
     }, 0.0, ConstraintSeverity.HARD, 1000.0, "All compressor simulations must be valid");
@@ -626,7 +626,7 @@ public class CompressorOptimizationHelper {
       final int trainIndex = i;
       String name = "split_" + compressors.get(i).getName();
       BiConsumer<ProcessSystem, Double> setter = (proc, val) -> {
-	trainStreamSetters.get(trainIndex).accept(proc, val);
+        trainStreamSetters.get(trainIndex).accept(proc, val);
       };
       // Allow splits from 10% to 50% per train
       splitVariables.add(new ManipulatedVariable(name, 0.1, 0.5, "fraction", setter));
@@ -634,16 +634,16 @@ public class CompressorOptimizationHelper {
 
     // Objective: minimize maximum utilization (balance loads)
     List<OptimizationObjective> balanceObjectives = Collections
-	.singletonList(new OptimizationObjective("maxUtilization", proc -> {
-	  double maxUtil = 0.0;
-	  for (Compressor comp : compressors) {
-	    double util = comp.getCapacityDuty() / Math.max(1e-6, comp.getCapacityMax());
-	    if (util > maxUtil) {
-	      maxUtil = util;
-	    }
-	  }
-	  return maxUtil;
-	}, 1.0, ObjectiveType.MINIMIZE));
+        .singletonList(new OptimizationObjective("maxUtilization", proc -> {
+          double maxUtil = 0.0;
+          for (Compressor comp : compressors) {
+            double util = comp.getCapacityDuty() / Math.max(1e-6, comp.getCapacityMax());
+            if (util > maxUtil) {
+              maxUtil = util;
+            }
+          }
+          return maxUtil;
+        }, 1.0, ObjectiveType.MINIMIZE));
 
     // Constraints for Stage 1
     List<OptimizationConstraint> balanceConstraints = new ArrayList<>();
@@ -651,10 +651,10 @@ public class CompressorOptimizationHelper {
     balanceConstraints.add(createSurgeMarginConstraint(compressors, 0.10, ConstraintSeverity.HARD));
 
     OptimizationConfig stage1Config = new OptimizationConfig(0, 1).searchMode(SearchMode.NELDER_MEAD_SCORE)
-	.maxIterations(config.getMaxIterations() / 2).tolerance(0.01);
+        .maxIterations(config.getMaxIterations() / 2).tolerance(0.01);
 
     OptimizationResult stage1Result = optimizer.optimize(process, splitVariables, stage1Config, balanceObjectives,
-	balanceConstraints);
+        balanceConstraints);
 
     // Extract optimal splits
     Map<String, Double> optimalSplits = new HashMap<>();
@@ -676,18 +676,18 @@ public class CompressorOptimizationHelper {
 
     // Throughput objective
     List<OptimizationObjective> throughputObjectives = Collections.singletonList(new OptimizationObjective("totalFlow",
-	proc -> feedStream.getFlowRate(config.getRateUnit()), 1.0, ObjectiveType.MAXIMIZE));
+        proc -> feedStream.getFlowRate(config.getRateUnit()), 1.0, ObjectiveType.MAXIMIZE));
 
     OptimizationConfig stage2Config = new OptimizationConfig(flowLowerBound, flowUpperBound)
-	.searchMode(config.getSearchMode()).maxIterations(config.getMaxIterations()).tolerance(config.getTolerance())
-	.rateUnit(config.getRateUnit());
+        .searchMode(config.getSearchMode()).maxIterations(config.getMaxIterations()).tolerance(config.getTolerance())
+        .rateUnit(config.getRateUnit());
 
     List<OptimizationConstraint> throughputConstraints = new ArrayList<>();
     throughputConstraints.add(createValidityConstraint(compressors));
     throughputConstraints.add(createSurgeMarginConstraint(compressors, 0.10, ConstraintSeverity.HARD));
 
     OptimizationResult stage2Result = optimizer.optimize(process, feedStream, stage2Config, throughputObjectives,
-	throughputConstraints);
+        throughputConstraints);
 
     // Collect final train data
     Map<String, Double> trainFlows = new HashMap<>();
@@ -707,7 +707,7 @@ public class CompressorOptimizationHelper {
     }
 
     return new TwoStageResult(totalFlow, config.getRateUnit(), optimalSplits, trainFlows, trainUtilizations,
-	trainPowers, trainSurgeMargins, stage1Result, stage2Result);
+        trainPowers, trainSurgeMargins, stage1Result, stage2Result);
   }
 
   /**
@@ -742,7 +742,7 @@ public class CompressorOptimizationHelper {
    */
   public static List<OptimizationObjective> createStandardObjectives(List<Compressor> compressors) {
     return Arrays.asList(createPowerObjective(compressors, 0.4), createSurgeMarginObjective(compressors, 0.3),
-	createEfficiencyObjective(compressors, 0.3));
+        createEfficiencyObjective(compressors, 0.3));
   }
 
   /**
@@ -761,6 +761,6 @@ public class CompressorOptimizationHelper {
    */
   public static List<OptimizationConstraint> createStandardConstraints(List<Compressor> compressors) {
     return Arrays.asList(createValidityConstraint(compressors),
-	createSurgeMarginConstraint(compressors, 0.10, ConstraintSeverity.HARD));
+        createSurgeMarginConstraint(compressors, 0.10, ConstraintSeverity.HARD));
   }
 }

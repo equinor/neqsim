@@ -167,7 +167,7 @@ public class PressureBoundaryOptimizerTest {
     double[] outletPressures = { 60.0, 70.0, 75.0 }; // Must be less than inlet
 
     PressureBoundaryOptimizer.LiftCurveTable table = optimizer.generateLiftCurveTable(inletPressures, outletPressures,
-	"bara");
+        "bara");
 
     logger.info("\nLift Curve Table:");
     logger.info(table.toEclipseFormat());
@@ -215,7 +215,7 @@ public class PressureBoundaryOptimizerTest {
     String[][] bottlenecks = { { "Valve", "Valve" }, { "Valve", "Valve" } };
 
     PressureBoundaryOptimizer.LiftCurveTable table = new PressureBoundaryOptimizer.LiftCurveTable("TestTable", inletP,
-	outletP, flows, powers, bottlenecks, "bara", "kg/hr");
+        outletP, flows, powers, bottlenecks, "bara", "kg/hr");
 
     String json = table.toJson();
     logger.info("\nJSON format:");
@@ -254,7 +254,7 @@ public class PressureBoundaryOptimizerTest {
     processWithCompressor.run();
 
     PressureBoundaryOptimizer optimizer = new PressureBoundaryOptimizer(processWithCompressor,
-	(Stream) processWithCompressor.getUnit("Feed"), (Stream) processWithCompressor.getUnit("Export"));
+        (Stream) processWithCompressor.getUnit("Feed"), (Stream) processWithCompressor.getUnit("Export"));
 
     double power = optimizer.calculateTotalPower();
     logger.info("Total compressor power: " + power + " kW");
@@ -279,7 +279,7 @@ public class PressureBoundaryOptimizerTest {
     logger.info("  Feasible: " + result.isFeasible());
     for (ProductionOptimizer.UtilizationRecord record : result.getUtilizationRecords()) {
       logger.info("  " + record.getEquipmentName() + ": " + String.format("%.1f%%", record.getUtilization() * 100)
-	  + " (limit: " + String.format("%.1f%%", record.getUtilizationLimit() * 100) + ")");
+          + " (limit: " + String.format("%.1f%%", record.getUtilizationLimit() * 100) + ")");
     }
 
     assertNotNull(result.getUtilizationRecords(), "Should have utilization records");

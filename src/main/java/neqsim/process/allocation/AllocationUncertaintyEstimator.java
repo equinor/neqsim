@@ -111,7 +111,7 @@ public class AllocationUncertaintyEstimator implements Serializable {
      * non-null and shape {@code [S][C][K]}
      */
     public UncertaintyResult(String[] sourceNames, String[] custodyNames, ProductType[] custodyTypes,
-	String[] componentNames, double[] molarMass, double[][][] allocMoleVariance) {
+        String[] componentNames, double[] molarMass, double[][][] allocMoleVariance) {
       this.sourceNames = sourceNames.clone();
       this.custodyNames = custodyNames.clone();
       this.custodyTypes = custodyTypes.clone();
@@ -120,11 +120,11 @@ public class AllocationUncertaintyEstimator implements Serializable {
       this.allocMoleVariance = allocMoleVariance;
       this.sourceIndex = new LinkedHashMap<>();
       for (int i = 0; i < sourceNames.length; i++) {
-	sourceIndex.put(sourceNames[i], i);
+        sourceIndex.put(sourceNames[i], i);
       }
       this.custodyIndex = new LinkedHashMap<>();
       for (int i = 0; i < custodyNames.length; i++) {
-	custodyIndex.put(custodyNames[i], i);
+        custodyIndex.put(custodyNames[i], i);
       }
     }
 
@@ -141,7 +141,7 @@ public class AllocationUncertaintyEstimator implements Serializable {
       int c = lookup(custodyIndex, custody, "custody");
       double sum = 0.0;
       for (int k = 0; k < componentNames.length; k++) {
-	sum += allocMoleVariance[s][c][k];
+        sum += allocMoleVariance[s][c][k];
       }
       return sum;
     }
@@ -169,8 +169,8 @@ public class AllocationUncertaintyEstimator implements Serializable {
       int c = lookup(custodyIndex, custody, "custody");
       double sum = 0.0;
       for (int k = 0; k < componentNames.length; k++) {
-	double mass = molarMass[k] * 3.6;
-	sum += allocMoleVariance[s][c][k] * mass * mass;
+        double mass = molarMass[k] * 3.6;
+        sum += allocMoleVariance[s][c][k] * mass * mass;
       }
       return Math.sqrt(sum);
     }
@@ -203,13 +203,13 @@ public class AllocationUncertaintyEstimator implements Serializable {
       int s = lookup(sourceIndex, source, "source");
       double sum = 0.0;
       for (int c = 0; c < custodyNames.length; c++) {
-	if (custodyTypes[c] != productType) {
-	  continue;
-	}
-	for (int k = 0; k < componentNames.length; k++) {
-	  double weight = unitWeight(k, unit);
-	  sum += allocMoleVariance[s][c][k] * weight * weight;
-	}
+        if (custodyTypes[c] != productType) {
+          continue;
+        }
+        for (int k = 0; k < componentNames.length; k++) {
+          double weight = unitWeight(k, unit);
+          sum += allocMoleVariance[s][c][k] * weight * weight;
+        }
       }
       return Math.sqrt(sum);
     }
@@ -260,15 +260,15 @@ public class AllocationUncertaintyEstimator implements Serializable {
 
       List<Map<String, Object>> allocStdDev = new ArrayList<>();
       for (int s = 0; s < sourceNames.length; s++) {
-	for (int c = 0; c < custodyNames.length; c++) {
-	  Map<String, Object> entry = new LinkedHashMap<>();
-	  entry.put("source", sourceNames[s]);
-	  entry.put("custody", custodyNames[c]);
-	  entry.put("productType", custodyTypes[c].name());
-	  entry.put("stdDev_moleps", getAllocatedFlowStdDevMoles(sourceNames[s], custodyNames[c]));
-	  entry.put("stdDev_kgph", getAllocatedFlowStdDevKgPerHr(sourceNames[s], custodyNames[c]));
-	  allocStdDev.add(entry);
-	}
+        for (int c = 0; c < custodyNames.length; c++) {
+          Map<String, Object> entry = new LinkedHashMap<>();
+          entry.put("source", sourceNames[s]);
+          entry.put("custody", custodyNames[c]);
+          entry.put("productType", custodyTypes[c].name());
+          entry.put("stdDev_moleps", getAllocatedFlowStdDevMoles(sourceNames[s], custodyNames[c]));
+          entry.put("stdDev_kgph", getAllocatedFlowStdDevKgPerHr(sourceNames[s], custodyNames[c]));
+          allocStdDev.add(entry);
+        }
       }
       root.put("allocationStdDev", allocStdDev);
       return new GsonBuilder().setPrettyPrinting().create().toJson(root);
@@ -285,7 +285,7 @@ public class AllocationUncertaintyEstimator implements Serializable {
     private static int lookup(Map<String, Integer> map, String name, String label) {
       Integer i = map.get(name);
       if (i == null) {
-	throw new IllegalArgumentException("Unknown " + label + ": " + name);
+        throw new IllegalArgumentException("Unknown " + label + ": " + name);
       }
       return i;
     }
@@ -298,9 +298,9 @@ public class AllocationUncertaintyEstimator implements Serializable {
      */
     private int componentIndexOf(String component) {
       for (int k = 0; k < componentNames.length; k++) {
-	if (componentNames[k].equals(component)) {
-	  return k;
-	}
+        if (componentNames[k].equals(component)) {
+          return k;
+        }
       }
       throw new IllegalArgumentException("Unknown component: " + component);
     }
@@ -314,10 +314,10 @@ public class AllocationUncertaintyEstimator implements Serializable {
      */
     private double unitWeight(int componentIndex, String unit) {
       if ("mole/sec".equals(unit)) {
-	return 1.0;
+        return 1.0;
       }
       if ("kg/hr".equals(unit)) {
-	return molarMass[componentIndex] * 3.6;
+        return molarMass[componentIndex] * 3.6;
       }
       throw new IllegalArgumentException("Unsupported unit: " + unit + " (use mole/sec or kg/hr)");
     }
@@ -363,7 +363,7 @@ public class AllocationUncertaintyEstimator implements Serializable {
       molarMass[k] = allocator.getExtractor().getMolarMass(componentNames.get(k));
     }
     return propagate(network, entryUnits, custodyOutlets, sourceNames, custodyNames, custodyTypes,
-	componentNames.toArray(new String[0]), molarMass, injectionVariance);
+        componentNames.toArray(new String[0]), molarMass, injectionVariance);
   }
 
   /**
@@ -393,15 +393,15 @@ public class AllocationUncertaintyEstimator implements Serializable {
 
     if (componentNames.length != numComp) {
       throw new IllegalArgumentException(
-	  "componentNames length (" + componentNames.length + ") must equal network component count (" + numComp + ")");
+          "componentNames length (" + componentNames.length + ") must equal network component count (" + numComp + ")");
     }
     if (injectionVariance.length != numSources) {
       throw new IllegalArgumentException("injectionVariance must have one row per source (S=" + numSources + ")");
     }
     for (int j = 0; j < numSources; j++) {
       if (injectionVariance[j].length != numComp) {
-	throw new IllegalArgumentException(
-	    "injectionVariance[" + j + "] must have one entry per component (K=" + numComp + ")");
+        throw new IllegalArgumentException(
+            "injectionVariance[" + j + "] must have one entry per component (K=" + numComp + ")");
       }
     }
 
@@ -410,8 +410,8 @@ public class AllocationUncertaintyEstimator implements Serializable {
       StreamInterface stream = custodyOutlets.get(c).getStream();
       producers[c] = network.findProducer(stream);
       if (producers[c] == null) {
-	logger.warn("Custody outlet '{}' is not produced by any node; its variance will be zero.",
-	    custodyOutlets.get(c).getName());
+        logger.warn("Custody outlet '{}' is not produced by any node; its variance will be zero.",
+            custodyOutlets.get(c).getName());
       }
     }
 
@@ -421,13 +421,13 @@ public class AllocationUncertaintyEstimator implements Serializable {
       // Skip components with no input variance from any source.
       boolean anyVariance = false;
       for (int j = 0; j < numSources; j++) {
-	if (injectionVariance[j][k] > 0.0) {
-	  anyVariance = true;
-	  break;
-	}
+        if (injectionVariance[j][k] > 0.0) {
+          anyVariance = true;
+          break;
+        }
       }
       if (!anyVariance) {
-	continue;
+        continue;
       }
 
       double[][] a = network.buildRoutingMatrix(k);
@@ -437,51 +437,51 @@ public class AllocationUncertaintyEstimator implements Serializable {
       SimpleMatrix e = new SimpleMatrix(n, numSources);
       boolean anyEntry = false;
       for (int j = 0; j < numSources; j++) {
-	int eu = sourceEntryUnits[j];
-	if (eu >= 0 && injectionVariance[j][k] > 0.0) {
-	  e.set(eu, j, 1.0);
-	  anyEntry = true;
-	}
+        int eu = sourceEntryUnits[j];
+        if (eu >= 0 && injectionVariance[j][k] > 0.0) {
+          e.set(eu, j, 1.0);
+          anyEntry = true;
+        }
       }
       if (!anyEntry) {
-	continue;
+        continue;
       }
 
       SimpleMatrix sens;
       try {
-	sens = mMatrix.solve(e);
+        sens = mMatrix.solve(e);
       } catch (RuntimeException ex) {
-	logger.warn("Sensitivity solve failed for component {} ({}); component variances set to zero.", k,
-	    ex.getMessage());
-	continue;
+        logger.warn("Sensitivity solve failed for component {} ({}); component variances set to zero.", k,
+            ex.getMessage());
+        continue;
       }
       if (!isFinite(sens)) {
-	logger.warn("Sensitivity solve returned non-finite entries for component {}; variances set to zero.", k);
-	continue;
+        logger.warn("Sensitivity solve returned non-finite entries for component {}; variances set to zero.", k);
+        continue;
       }
 
       for (int c = 0; c < numCustody; c++) {
-	if (producers[c] == null) {
-	  continue;
-	}
-	int w = producers[c][0];
-	double f = network.getCustodyFactor(producers[c], k);
-	if (f == 0.0) {
-	  continue;
-	}
-	double f2 = f * f;
-	for (int j = 0; j < numSources; j++) {
-	  double sigma2 = injectionVariance[j][k];
-	  if (sigma2 <= 0.0) {
-	    continue;
-	  }
-	  double jVal = sens.get(w, j);
-	  double var = f2 * jVal * jVal * sigma2;
-	  if (var < 0.0 && var > -negativeClipTolerance) {
-	    var = 0.0;
-	  }
-	  allocMoleVariance[j][c][k] = var;
-	}
+        if (producers[c] == null) {
+          continue;
+        }
+        int w = producers[c][0];
+        double f = network.getCustodyFactor(producers[c], k);
+        if (f == 0.0) {
+          continue;
+        }
+        double f2 = f * f;
+        for (int j = 0; j < numSources; j++) {
+          double sigma2 = injectionVariance[j][k];
+          if (sigma2 <= 0.0) {
+            continue;
+          }
+          double jVal = sens.get(w, j);
+          double var = f2 * jVal * jVal * sigma2;
+          if (var < 0.0 && var > -negativeClipTolerance) {
+            var = 0.0;
+          }
+          allocMoleVariance[j][c][k] = var;
+        }
       }
     }
 
@@ -514,7 +514,7 @@ public class AllocationUncertaintyEstimator implements Serializable {
     for (StreamInterface feed : external) {
       String name = feed.getName();
       if (name == null || name.trim().isEmpty()) {
-	name = "Source-" + i;
+        name = "Source-" + i;
       }
       list.add(new AllocationSource(name, feed));
       i++;
@@ -540,7 +540,7 @@ public class AllocationUncertaintyEstimator implements Serializable {
     for (StreamInterface product : terminal) {
       String name = product.getName();
       if (name == null || name.trim().isEmpty()) {
-	name = "Custody-" + i;
+        name = "Custody-" + i;
       }
       list.add(new CustodyOutlet(name, product, SourceAllocator.inferProductType(product)));
       i++;
@@ -560,7 +560,7 @@ public class AllocationUncertaintyEstimator implements Serializable {
     SimpleMatrix m = new SimpleMatrix(rows, cols);
     for (int i = 0; i < rows; i++) {
       for (int j = 0; j < cols; j++) {
-	m.set(i, j, a[i][j]);
+        m.set(i, j, a[i][j]);
       }
     }
     return m;
@@ -575,9 +575,9 @@ public class AllocationUncertaintyEstimator implements Serializable {
   private static boolean isFinite(SimpleMatrix m) {
     for (int i = 0; i < m.numRows(); i++) {
       for (int j = 0; j < m.numCols(); j++) {
-	if (!Double.isFinite(m.get(i, j))) {
-	  return false;
-	}
+        if (!Double.isFinite(m.get(i, j))) {
+          return false;
+        }
       }
     }
     return true;

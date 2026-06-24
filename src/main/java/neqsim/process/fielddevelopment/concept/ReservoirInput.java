@@ -100,7 +100,7 @@ public final class ReservoirInput implements Serializable {
    */
   public static Builder leanGas() {
     return new Builder().fluidType(FluidType.LEAN_GAS).gasGravity(0.60).co2Percent(0.5).h2sPercent(0.0)
-	.resourceEstimate(15.0, "GSm3").recoveryFactor(0.75);
+        .resourceEstimate(15.0, "GSm3").recoveryFactor(0.75);
   }
 
   /**
@@ -110,7 +110,7 @@ public final class ReservoirInput implements Serializable {
    */
   public static Builder richGas() {
     return new Builder().fluidType(FluidType.RICH_GAS).gasGravity(0.75).co2Percent(1.0).h2sPercent(0.0)
-	.resourceEstimate(25.0, "GSm3").recoveryFactor(0.70);
+        .resourceEstimate(25.0, "GSm3").recoveryFactor(0.70);
   }
 
   /**
@@ -120,7 +120,7 @@ public final class ReservoirInput implements Serializable {
    */
   public static Builder gasCondensate() {
     return new Builder().fluidType(FluidType.GAS_CONDENSATE).gor(5000, "Sm3/Sm3").gasGravity(0.80).apiGravity(50.0)
-	.co2Percent(2.0).resourceEstimate(20.0, "GSm3").recoveryFactor(0.65);
+        .co2Percent(2.0).resourceEstimate(20.0, "GSm3").recoveryFactor(0.65);
   }
 
   /**
@@ -130,7 +130,7 @@ public final class ReservoirInput implements Serializable {
    */
   public static Builder blackOil() {
     return new Builder().fluidType(FluidType.BLACK_OIL).gor(100, "Sm3/m3").apiGravity(30.0).co2Percent(0.5)
-	.resourceEstimate(80.0, "MMbbl").recoveryFactor(0.45);
+        .resourceEstimate(80.0, "MMbbl").recoveryFactor(0.45);
   }
 
   // Getters
@@ -338,13 +338,13 @@ public final class ReservoirInput implements Serializable {
    */
   public boolean hasLiquidProduction() {
     return fluidType == FluidType.BLACK_OIL || fluidType == FluidType.HEAVY_OIL || fluidType == FluidType.VOLATILE_OIL
-	|| fluidType == FluidType.GAS_CONDENSATE;
+        || fluidType == FluidType.GAS_CONDENSATE;
   }
 
   @Override
   public String toString() {
     return String.format("ReservoirInput[type=%s, GOR=%.0f %s, CO2=%.1f%%, H2S=%.2f%%, WC=%.0f%%]", fluidType, gor,
-	gorUnit, co2Percent, h2sPercent, waterCut * 100);
+        gorUnit, co2Percent, h2sPercent, waterCut * 100);
   }
 
   /**
@@ -407,7 +407,7 @@ public final class ReservoirInput implements Serializable {
 
     public Builder waterCut(double fraction) {
       if (fraction < 0 || fraction > 1) {
-	throw new IllegalArgumentException("Water cut must be between 0 and 1");
+        throw new IllegalArgumentException("Water cut must be between 0 and 1");
       }
       this.waterCut = fraction;
       return this;
@@ -447,7 +447,7 @@ public final class ReservoirInput implements Serializable {
      */
     public Builder resourceEstimate(double estimate, String unit) {
       if (estimate < 0.0) {
-	throw new IllegalArgumentException("Resource estimate cannot be negative");
+        throw new IllegalArgumentException("Resource estimate cannot be negative");
       }
       this.resourceEstimate = estimate;
       this.resourceUnit = unit;
@@ -465,7 +465,7 @@ public final class ReservoirInput implements Serializable {
      */
     public Builder resourceUncertainty(double p10, double p50, double p90, String unit) {
       if (p10 < 0.0 || p50 < 0.0 || p90 < 0.0) {
-	throw new IllegalArgumentException("Resource uncertainty values cannot be negative");
+        throw new IllegalArgumentException("Resource uncertainty values cannot be negative");
       }
       this.resourceP10 = p10;
       this.resourceP50 = p50;
@@ -495,7 +495,7 @@ public final class ReservoirInput implements Serializable {
      */
     public Builder recoveryFactor(double factor) {
       if (factor < 0.0 || factor > 1.0) {
-	throw new IllegalArgumentException("Recovery factor must be between 0 and 1");
+        throw new IllegalArgumentException("Recovery factor must be between 0 and 1");
       }
       this.recoveryFactor = factor;
       return this;

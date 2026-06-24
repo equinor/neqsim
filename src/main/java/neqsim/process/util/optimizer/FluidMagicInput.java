@@ -209,7 +209,7 @@ public class FluidMagicInput implements Serializable {
       // Calculate standard gas volume
       gasStdVolume = gasPhase.getVolume("m3");
       logger.info("Gas phase extracted: {} components, {:.4f} m3 at std conditions", gasPhase.getNumberOfComponents(),
-	  gasStdVolume);
+          gasStdVolume);
     } else {
       logger.warn("No gas phase found in reference fluid at standard conditions");
     }
@@ -225,7 +225,7 @@ public class FluidMagicInput implements Serializable {
       // Calculate standard oil volume
       oilStdVolume = oilPhase.getVolume("m3");
       logger.info("Oil phase extracted: {} components, {:.4f} m3 at std conditions", oilPhase.getNumberOfComponents(),
-	  oilStdVolume);
+          oilStdVolume);
     } else {
       logger.warn("No oil phase found in reference fluid at standard conditions");
     }
@@ -274,13 +274,13 @@ public class FluidMagicInput implements Serializable {
       double logMin = Math.log10(minGOR);
       double logMax = Math.log10(maxGOR);
       for (int i = 0; i < numberOfGORPoints; i++) {
-	double logVal = logMin + (logMax - logMin) * i / (numberOfGORPoints - 1);
-	values[i] = Math.pow(10, logVal);
+        double logVal = logMin + (logMax - logMin) * i / (numberOfGORPoints - 1);
+        values[i] = Math.pow(10, logVal);
       }
     } else {
       // Linear spacing
       for (int i = 0; i < numberOfGORPoints; i++) {
-	values[i] = minGOR + (maxGOR - minGOR) * i / (numberOfGORPoints - 1);
+        values[i] = minGOR + (maxGOR - minGOR) * i / (numberOfGORPoints - 1);
       }
     }
 
@@ -775,7 +775,7 @@ public class FluidMagicInput implements Serializable {
     sb.append("  GOR range: ").append(minGOR).append(" - ").append(maxGOR).append(" Sm3/Sm3\n");
     sb.append("  WC range: ").append(minWaterCut * 100).append(" - ").append(maxWaterCut * 100).append(" %\n");
     sb.append("  GOR points: ").append(numberOfGORPoints).append(" (").append(gorSpacing.name().toLowerCase())
-	.append(")\n");
+        .append(")\n");
     sb.append("  WC points: ").append(numberOfWaterCutPoints).append("\n");
     sb.append("  Total scenarios: ").append(getTotalScenarios()).append("\n");
     if (baseCaseGOR > 0) {

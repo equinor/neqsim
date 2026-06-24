@@ -47,7 +47,7 @@ public class NeqSimProcessDesignDataBase extends NeqSimDataBase {
     // Fill tables from csv-files if not initialized and not currently being initialized.
     synchronized (NeqSimProcessDesignDataBase.class) {
       if ("H2fromCSV".equals(dataBaseType) && !h2IsInitialized && !h2IsInitalizing) {
-	initH2DatabaseFromCSVfiles();
+        initH2DatabaseFromCSVfiles();
       }
     }
     setDataBaseType(dataBaseType);

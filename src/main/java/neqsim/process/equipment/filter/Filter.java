@@ -104,7 +104,7 @@ public class Filter extends TwoPortEquipment {
   @Override
   public String toJson() {
     return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create()
-	.toJson(new neqsim.process.util.monitor.FilterResponse(this));
+        .toJson(new neqsim.process.util.monitor.FilterResponse(this));
   }
 
   /** {@inheritDoc} */

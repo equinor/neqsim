@@ -101,7 +101,7 @@ class DetailedEmissionsCalculatorTest {
 
     assertTrue(report.scope1Total > 0, "Scope 1 should include fugitives");
     assertTrue(report.scope1Breakdown.containsKey("Fugitives") || report.emissionsBySource.size() > 0,
-	"Should have fugitive emissions");
+        "Should have fugitive emissions");
   }
 
   @Test

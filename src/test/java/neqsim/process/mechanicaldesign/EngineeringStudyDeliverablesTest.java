@@ -87,7 +87,7 @@ class EngineeringStudyDeliverablesTest {
 
       // At least one of cooling or heating should be non-zero (we have a cooler and heater)
       assertTrue(util.getTotalCoolingDutyKW() > 0 || util.getTotalHeatingDutyKW() > 0,
-	  "Should have some thermal utility demand");
+          "Should have some thermal utility demand");
     }
 
     @Test
@@ -135,7 +135,7 @@ class EngineeringStudyDeliverablesTest {
 
       // Wider deltaT should give lower flow for same duty
       assertTrue(util1.getCoolingWaterFlowM3hr() <= util2.getCoolingWaterFlowM3hr() + 0.01,
-	  "Wider DeltaT should need less CW");
+          "Wider DeltaT should need less CW");
     }
 
     @Test
@@ -248,7 +248,7 @@ class EngineeringStudyDeliverablesTest {
     @DisplayName("Fire scenario assessment should return non-null result")
     void testFireScenarioAssessment() {
       FireProtectionDesign.FireScenarioResult result = FireProtectionDesign.assessFireScenarios("V-100", 5000.0, 20.0,
-	  50.0, 10.0, 2.0, 50000.0, 0.055);
+          50.0, 10.0, 2.0, 50000.0, 0.055);
       assertNotNull(result);
       assertTrue(result.poolFireHeatReleaseKW > 0);
       assertTrue(result.jetFireFlameLengthM > 0);
@@ -259,7 +259,7 @@ class EngineeringStudyDeliverablesTest {
     @DisplayName("Fire scenario result toJson should be valid")
     void testFireScenarioResultJson() {
       FireProtectionDesign.FireScenarioResult result = FireProtectionDesign.assessFireScenarios("V-100", 5000.0, 20.0,
-	  50.0, 10.0, 2.0, 50000.0, 0.055);
+          50.0, 10.0, 2.0, 50000.0, 0.055);
       String json = result.toJson();
       assertNotNull(json);
       assertTrue(json.contains("poolFire"));
@@ -398,10 +398,10 @@ class EngineeringStudyDeliverablesTest {
       gen.generate();
       boolean hasLevel = false;
       for (AlarmTripScheduleGenerator.AlarmTripEntry e : gen.getEntriesForEquipment("HP-Sep")) {
-	if (e.getServiceType() == AlarmTripScheduleGenerator.ServiceType.LEVEL) {
-	  hasLevel = true;
-	  break;
-	}
+        if (e.getServiceType() == AlarmTripScheduleGenerator.ServiceType.LEVEL) {
+          hasLevel = true;
+          break;
+        }
       }
       assertTrue(hasLevel, "Separator should have level alarms");
     }

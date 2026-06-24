@@ -109,7 +109,7 @@ public class Ammonia2023 {
       double step = diff / dpdrho;
       rho -= step;
       if (Math.abs(step) < 1e-8) {
-	break;
+        break;
       }
     }
 
@@ -122,27 +122,27 @@ public class Ammonia2023 {
       double fHigh = pressureFromDensity(rhoHigh, T) - p;
       int iter = 0;
       while (fLow * fHigh > 0.0 && iter < 50) {
-	rhoHigh *= 2.0;
-	fHigh = pressureFromDensity(rhoHigh, T) - p;
-	iter++;
+        rhoHigh *= 2.0;
+        fHigh = pressureFromDensity(rhoHigh, T) - p;
+        iter++;
       }
       if (fLow * fHigh < 0.0) {
-	for (int i = 0; i < 100; i++) {
-	  double rhoMid = 0.5 * (rhoLow + rhoHigh);
-	  double fMid = pressureFromDensity(rhoMid, T) - p;
-	  if (Math.abs(fMid) < 1e-8) {
-	    rho = rhoMid;
-	    break;
-	  }
-	  if (fLow * fMid < 0.0) {
-	    rhoHigh = rhoMid;
-	    fHigh = fMid;
-	  } else {
-	    rhoLow = rhoMid;
-	    fLow = fMid;
-	  }
-	  rho = rhoMid;
-	}
+        for (int i = 0; i < 100; i++) {
+          double rhoMid = 0.5 * (rhoLow + rhoHigh);
+          double fMid = pressureFromDensity(rhoMid, T) - p;
+          if (Math.abs(fMid) < 1e-8) {
+            rho = rhoMid;
+            break;
+          }
+          if (fLow * fMid < 0.0) {
+            rhoHigh = rhoMid;
+            fHigh = fMid;
+          } else {
+            rhoLow = rhoMid;
+            fLow = fMid;
+          }
+          rho = rhoMid;
+        }
       }
     }
     return rho;
@@ -202,7 +202,7 @@ public class Ammonia2023 {
     doubleW[][] ar = new doubleW[4][4];
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; j++) {
-	ar[i][j] = new doubleW(0.0);
+        ar[i][j] = new doubleW(0.0);
       }
     }
     ar[0][0].val = r.alpha;
@@ -258,7 +258,7 @@ public class Ammonia2023 {
       r.alpha += term;
       r.dalpha_dDelta += term * B;
       r.d2alpha_dDelta2 += term
-	  * (B * B - D[i] / (delta * delta) - G[li] * L[li] * (L[li] - 1.0) * Math.pow(delta, L[li] - 2.0));
+          * (B * B - D[i] / (delta * delta) - G[li] * L[li] * (L[li] - 1.0) * Math.pow(delta, L[li] - 2.0));
       r.dalpha_dTau += term * T[i] / tau;
       r.d2alpha_dTau2 += term * T[i] * (T[i] - 1.0) / (tau * tau);
       r.d2alpha_dDelta_dTau += term * B * T[i] / tau;
@@ -298,7 +298,7 @@ public class Ammonia2023 {
       r.d2alpha_dDelta2 += term * (Bdelta * Bdelta - GAOB_D[i] / (delta * delta) + 2.0 * GAOB_ETA[i]);
       r.dalpha_dTau += term * Bt;
       r.d2alpha_dTau2 += term * (Bt * Bt - GAOB_T[i] / (tau * tau)
-	  + 2.0 * GAOB_BETA[i] * ((Y - 2.0 * GAOB_BETA[i] * Math.pow(tau - GAOB_GAMMA[i], 2.0)) / (Y * Y * Y)));
+          + 2.0 * GAOB_BETA[i] * ((Y - 2.0 * GAOB_BETA[i] * Math.pow(tau - GAOB_GAMMA[i], 2.0)) / (Y * Y * Y)));
       r.d2alpha_dDelta_dTau += term * Bdelta * Bt;
     }
 
@@ -366,7 +366,7 @@ public class Ammonia2023 {
     double muJT = (T * dv_dT_p - 1.0 / rhoMolar) / cp;
 
     double sound = Math.sqrt(Math.max(0.0, R * T / MOLAR_MASS * (1.0 + 2.0 * delta * r.dalpha_dDelta
-	+ delta * delta * r.d2alpha_dDelta2 - numer * numer / (tau * tau * (id.d2alpha_dTau2 + r.d2alpha_dTau2)))));
+        + delta * delta * r.d2alpha_dDelta2 - numer * numer / (tau * tau * (id.d2alpha_dTau2 + r.d2alpha_dTau2)))));
 
     double pCalc = rhoMolar * R * T * (1.0 + delta * r.dalpha_dDelta);
     double Z = pCalc / (rhoMolar * R * T);

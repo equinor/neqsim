@@ -162,7 +162,7 @@ public abstract class ConformityRuleSet implements Serializable {
       // Read operating conditions from the separator's current fluid state
       neqsim.thermo.system.SystemInterface fluid = sep.getThermoSystem();
       if (fluid == null) {
-	return report;
+        return report;
       }
       fluid.initPhysicalProperties();
 
@@ -171,11 +171,11 @@ public abstract class ConformityRuleSet implements Serializable {
 
       double liquidDensity = 1000.0; // default for dry gas
       if (fluid.getNumberOfPhases() >= 2) {
-	if (fluid.hasPhaseType("oil")) {
-	  liquidDensity = fluid.getPhase("oil").getPhysicalProperties().getDensity();
-	} else if (fluid.hasPhaseType("aqueous")) {
-	  liquidDensity = fluid.getPhase("aqueous").getPhysicalProperties().getDensity();
-	}
+        if (fluid.hasPhaseType("oil")) {
+          liquidDensity = fluid.getPhase("oil").getPhysicalProperties().getDensity();
+        } else if (fluid.hasPhaseType("aqueous")) {
+          liquidDensity = fluid.getPhase("aqueous").getPhysicalProperties().getDensity();
+        }
       }
 
       // --- Vessel-level checks (ALWAYS) ---
@@ -185,64 +185,64 @@ public abstract class ConformityRuleSet implements Serializable {
       double gasVelocity = vesselArea > 0 ? gasFlowM3s / vesselArea : 0;
       double kFactor = gasVelocity * Math.sqrt(gasDensity / (liquidDensity - gasDensity));
       report.addResult(new ConformityResult("k-factor", getName(), "", kFactor, K_FACTOR_LIMIT, "m/s",
-	  ConformityResult.LimitDirection.MAXIMUM, "Souders-Brown K-factor at vessel cross-section"));
+          ConformityResult.LimitDirection.MAXIMUM, "Souders-Brown K-factor at vessel cross-section"));
 
       // --- Inlet device checks ---
       if (design.hasInletCyclones() || design.getInletNozzleID() > 0) {
-	double inletArea = Math.PI * Math.pow(design.getInletNozzleID() / 2.0, 2);
-	double mixedDensity = gasDensity; // simplified; could weight by volume fraction
-	if (fluid.getNumberOfPhases() >= 2) {
-	  double totalMassFlow = fluid.getFlowRate("kg/sec");
-	  double totalVolFlow = fluid.getPhase(0).getFlowRate("m3/sec");
-	  for (int i = 1; i < fluid.getNumberOfPhases(); i++) {
-	    totalVolFlow += fluid.getPhase(i).getFlowRate("m3/sec");
-	  }
-	  mixedDensity = totalVolFlow > 0 ? totalMassFlow / totalVolFlow : gasDensity;
-	}
-	double inletVelocity = inletArea > 0 ? gasFlowM3s / inletArea : 0;
-	double inletMomentum = mixedDensity * inletVelocity * inletVelocity;
-	report.addResult(new ConformityResult("inlet-momentum", getName(), "inlet-device", inletMomentum,
-	    INLET_MOMENTUM_LIMIT, "Pa", ConformityResult.LimitDirection.MAXIMUM, "Inlet nozzle momentum (rho*v^2)"));
+        double inletArea = Math.PI * Math.pow(design.getInletNozzleID() / 2.0, 2);
+        double mixedDensity = gasDensity; // simplified; could weight by volume fraction
+        if (fluid.getNumberOfPhases() >= 2) {
+          double totalMassFlow = fluid.getFlowRate("kg/sec");
+          double totalVolFlow = fluid.getPhase(0).getFlowRate("m3/sec");
+          for (int i = 1; i < fluid.getNumberOfPhases(); i++) {
+            totalVolFlow += fluid.getPhase(i).getFlowRate("m3/sec");
+          }
+          mixedDensity = totalVolFlow > 0 ? totalMassFlow / totalVolFlow : gasDensity;
+        }
+        double inletVelocity = inletArea > 0 ? gasFlowM3s / inletArea : 0;
+        double inletMomentum = mixedDensity * inletVelocity * inletVelocity;
+        report.addResult(new ConformityResult("inlet-momentum", getName(), "inlet-device", inletMomentum,
+            INLET_MOMENTUM_LIMIT, "Pa", ConformityResult.LimitDirection.MAXIMUM, "Inlet nozzle momentum (rho*v^2)"));
       }
 
       // --- Demisting cyclones checks ---
       if (design.hasDemistingCyclones()) {
-	// Drainage head check
-	double cycloneDeckBottom = design.getCycloneDeckElevationM();
-	double laHH = design.getLaHHElevationM();
-	if (cycloneDeckBottom > 0 && laHH > 0) {
-	  double drainageHead = (cycloneDeckBottom - laHH) * 1000.0; // m to mm
+        // Drainage head check
+        double cycloneDeckBottom = design.getCycloneDeckElevationM();
+        double laHH = design.getLaHHElevationM();
+        if (cycloneDeckBottom > 0 && laHH > 0) {
+          double drainageHead = (cycloneDeckBottom - laHH) * 1000.0; // m to mm
 
-	  // Required drainage from cyclone dP
-	  int nCyclones = design.getNumberOfDemistingCyclones();
-	  double cycloneDiameter = design.getDemistingCycloneDiameterM();
-	  double cycloneArea = nCyclones * Math.PI * Math.pow(cycloneDiameter / 2.0, 2);
-	  double gasMomentumPerCyclone = cycloneArea > 0 ? gasDensity * Math.pow(gasFlowM3s / cycloneArea, 2) : 0;
-	  double cycloneDpTotal = design.getCycloneEulerNumber() * gasMomentumPerCyclone;
-	  double cycloneDpToDrain = cycloneDpTotal * design.getCycloneDpToDrainPct() / 100.0;
-	  double requiredDrainage = liquidDensity > 0 ? cycloneDpToDrain / (liquidDensity * 9.81) * 1000.0 : 0;
+          // Required drainage from cyclone dP
+          int nCyclones = design.getNumberOfDemistingCyclones();
+          double cycloneDiameter = design.getDemistingCycloneDiameterM();
+          double cycloneArea = nCyclones * Math.PI * Math.pow(cycloneDiameter / 2.0, 2);
+          double gasMomentumPerCyclone = cycloneArea > 0 ? gasDensity * Math.pow(gasFlowM3s / cycloneArea, 2) : 0;
+          double cycloneDpTotal = design.getCycloneEulerNumber() * gasMomentumPerCyclone;
+          double cycloneDpToDrain = cycloneDpTotal * design.getCycloneDpToDrainPct() / 100.0;
+          double requiredDrainage = liquidDensity > 0 ? cycloneDpToDrain / (liquidDensity * 9.81) * 1000.0 : 0;
 
-	  report.addResult(
-	      new ConformityResult("drainage-head", getName(), "demisting-cyclones", drainageHead, requiredDrainage,
-		  "mm", ConformityResult.LimitDirection.MINIMUM, "Available drainage head above LA(HH) vs required"));
+          report.addResult(
+              new ConformityResult("drainage-head", getName(), "demisting-cyclones", drainageHead, requiredDrainage,
+                  "mm", ConformityResult.LimitDirection.MINIMUM, "Available drainage head above LA(HH) vs required"));
 
-	  // Cyclone dP to drain
-	  report.addResult(
-	      new ConformityResult("cyclone-dp-to-drain", getName(), "demisting-cyclones", cycloneDpToDrain / 100.0,
-		  50.0, "mbar", ConformityResult.LimitDirection.MAXIMUM, "Cyclone pressure drop available to drain"));
-	} else {
-	  report.addResult(
-	      ConformityResult.notApplicable("drainage-head", getName(), "Cyclone deck or LA(HH) elevation not set"));
-	}
+          // Cyclone dP to drain
+          report.addResult(
+              new ConformityResult("cyclone-dp-to-drain", getName(), "demisting-cyclones", cycloneDpToDrain / 100.0,
+                  50.0, "mbar", ConformityResult.LimitDirection.MAXIMUM, "Cyclone pressure drop available to drain"));
+        } else {
+          report.addResult(
+              ConformityResult.notApplicable("drainage-head", getName(), "Cyclone deck or LA(HH) elevation not set"));
+        }
       }
 
       // --- Mesh pad checks ---
       if (design.hasMeshPad()) {
-	double meshArea = design.getMeshPadAreaM2();
-	double meshGasVelocity = meshArea > 0 ? gasFlowM3s / meshArea : 0;
-	double meshKValue = meshGasVelocity * Math.sqrt(gasDensity / (liquidDensity - gasDensity));
-	report.addResult(new ConformityResult("mesh-k-value", getName(), "mesh-pad", meshKValue, MESH_K_VALUE_LIMIT,
-	    "m/s", ConformityResult.LimitDirection.MAXIMUM, "K-value through mesh pad area"));
+        double meshArea = design.getMeshPadAreaM2();
+        double meshGasVelocity = meshArea > 0 ? gasFlowM3s / meshArea : 0;
+        double meshKValue = meshGasVelocity * Math.sqrt(gasDensity / (liquidDensity - gasDensity));
+        report.addResult(new ConformityResult("mesh-k-value", getName(), "mesh-pad", meshKValue, MESH_K_VALUE_LIMIT,
+            "m/s", ConformityResult.LimitDirection.MAXIMUM, "K-value through mesh pad area"));
       }
 
       return report;
@@ -255,7 +255,7 @@ public abstract class ConformityRuleSet implements Serializable {
       names.add("gasLoadFactor");
       names.add("kValue");
       if (design.hasInletCyclones() || design.getInletNozzleID() > 0) {
-	names.add("inletMomentum");
+        names.add("inletMomentum");
       }
       return names;
     }
@@ -318,7 +318,7 @@ public abstract class ConformityRuleSet implements Serializable {
       ConformityReport report = new ConformityReport(separator.getName(), getName());
       neqsim.thermo.system.SystemInterface fluid = separator.getThermoSystem();
       if (fluid == null) {
-	return report;
+        return report;
       }
       fluid.initPhysicalProperties();
 
@@ -331,35 +331,35 @@ public abstract class ConformityRuleSet implements Serializable {
       double kFactorLimit = selectKFactorLimit(design) * deratingFactor;
 
       report.addResult(new ConformityResult("tr1965-k-factor", getName(), "gas-load", kFactor, kFactorLimit, "m/s",
-	  ConformityResult.LimitDirection.MAXIMUM,
-	  "TR1965 gas-load K-factor limit including low-surface-tension derating"));
+          ConformityResult.LimitDirection.MAXIMUM,
+          "TR1965 gas-load K-factor limit including low-surface-tension derating"));
 
       if (Double.isFinite(kFactor) && kFactor > 0.0) {
-	double gasMargin = kFactorLimit / kFactor - 1.0;
-	report.addResult(new ConformityResult("tr1965-gas-design-margin", getName(), "gas-load", gasMargin,
-	    MIN_GAS_MARGIN_FRACTION, "fraction", ConformityResult.LimitDirection.MINIMUM,
-	    "Gas design margin between effective TR1965 limit and operating K-factor"));
+        double gasMargin = kFactorLimit / kFactor - 1.0;
+        report.addResult(new ConformityResult("tr1965-gas-design-margin", getName(), "gas-load", gasMargin,
+            MIN_GAS_MARGIN_FRACTION, "fraction", ConformityResult.LimitDirection.MINIMUM,
+            "Gas design margin between effective TR1965 limit and operating K-factor"));
       } else {
-	report.addResult(ConformityResult.notApplicable("tr1965-gas-design-margin", getName(),
-	    "K-factor could not be calculated from the current fluid and vessel geometry"));
+        report.addResult(ConformityResult.notApplicable("tr1965-gas-design-margin", getName(),
+            "K-factor could not be calculated from the current fluid and vessel geometry"));
       }
 
       if (Double.isFinite(design.getLiquidEntrainmentLitresPerMSm3())) {
-	report.addResult(new ConformityResult("tr1965-liquid-entrainment", getName(), "gas-outlet",
-	    design.getLiquidEntrainmentLitresPerMSm3(), MAX_LIQUID_ENTRAINMENT_LITRE_PER_MSM3, "litre/MSm3",
-	    ConformityResult.LimitDirection.MAXIMUM, "Documented liquid entrainment to gas outlet"));
+        report.addResult(new ConformityResult("tr1965-liquid-entrainment", getName(), "gas-outlet",
+            design.getLiquidEntrainmentLitresPerMSm3(), MAX_LIQUID_ENTRAINMENT_LITRE_PER_MSM3, "litre/MSm3",
+            ConformityResult.LimitDirection.MAXIMUM, "Documented liquid entrainment to gas outlet"));
       } else {
-	report.addResult(ConformityResult.notApplicable("tr1965-liquid-entrainment", getName(),
-	    "Liquid entrainment value has not been configured on the mechanical design"));
+        report.addResult(ConformityResult.notApplicable("tr1965-liquid-entrainment", getName(),
+            "Liquid entrainment value has not been configured on the mechanical design"));
       }
 
       if (Double.isFinite(design.getLiquidDesignMarginFraction())) {
-	report.addResult(new ConformityResult("tr1965-liquid-design-margin", getName(), "liquid-handling",
-	    design.getLiquidDesignMarginFraction(), MIN_LIQUID_MARGIN_FRACTION, "fraction",
-	    ConformityResult.LimitDirection.MINIMUM, "Documented liquid handling design margin"));
+        report.addResult(new ConformityResult("tr1965-liquid-design-margin", getName(), "liquid-handling",
+            design.getLiquidDesignMarginFraction(), MIN_LIQUID_MARGIN_FRACTION, "fraction",
+            ConformityResult.LimitDirection.MINIMUM, "Documented liquid handling design margin"));
       } else {
-	report.addResult(ConformityResult.notApplicable("tr1965-liquid-design-margin", getName(),
-	    "Liquid design margin has not been configured on the mechanical design"));
+        report.addResult(ConformityResult.notApplicable("tr1965-liquid-design-margin", getName(),
+            "Liquid design margin has not been configured on the mechanical design"));
       }
 
       addDistanceChecks(design, report);
@@ -373,7 +373,7 @@ public abstract class ConformityRuleSet implements Serializable {
       names.add("gasLoadFactor");
       names.add("kValue");
       if (design.hasInletCyclones() || design.getInletNozzleID() > 0) {
-	names.add("inletMomentum");
+        names.add("inletMomentum");
       }
       return names;
     }
@@ -386,13 +386,13 @@ public abstract class ConformityRuleSet implements Serializable {
      */
     private double selectKFactorLimit(GasScrubberMechanicalDesign design) {
       if (design.hasDemistingCyclones() && !design.hasMeshPad()) {
-	return COMPACT_CYCLONE_K_LIMIT;
+        return COMPACT_CYCLONE_K_LIMIT;
       }
       if ((design.hasDemistingCyclones() || design.hasVanePack()) && design.hasMeshPad()) {
-	return MESH_WITH_AFC_OR_VANE_K_LIMIT;
+        return MESH_WITH_AFC_OR_VANE_K_LIMIT;
       }
       if (design.hasVanePack()) {
-	return MESH_WITH_AFC_OR_VANE_K_LIMIT;
+        return MESH_WITH_AFC_OR_VANE_K_LIMIT;
       }
       return MESH_K_LIMIT;
     }
@@ -407,24 +407,24 @@ public abstract class ConformityRuleSet implements Serializable {
       double laHH = design.getLaHHElevationM();
       double inletElevation = design.getInletDeviceElevationM();
       if (laHH > 0.0 && inletElevation > 0.0) {
-	double distance = inletElevation - laHH;
-	report.addResult(
-	    new ConformityResult("tr1965-hhll-to-inlet-distance", getName(), "layout", distance, MIN_HHLL_TO_INLET_M,
-		"m", ConformityResult.LimitDirection.MINIMUM, "Distance from LA(HH) to inlet device centerline"));
+        double distance = inletElevation - laHH;
+        report.addResult(
+            new ConformityResult("tr1965-hhll-to-inlet-distance", getName(), "layout", distance, MIN_HHLL_TO_INLET_M,
+                "m", ConformityResult.LimitDirection.MINIMUM, "Distance from LA(HH) to inlet device centerline"));
       } else {
-	report.addResult(ConformityResult.notApplicable("tr1965-hhll-to-inlet-distance", getName(),
-	    "LA(HH) and inlet device elevations are required for this check"));
+        report.addResult(ConformityResult.notApplicable("tr1965-hhll-to-inlet-distance", getName(),
+            "LA(HH) and inlet device elevations are required for this check"));
       }
 
       double meshElevation = design.getMeshPadElevationM();
       if (inletElevation > 0.0 && meshElevation > 0.0) {
-	double distance = meshElevation - inletElevation;
-	report.addResult(new ConformityResult("tr1965-inlet-to-mesh-distance", getName(), "layout", distance,
-	    MIN_INLET_TO_MESH_M, "m", ConformityResult.LimitDirection.MINIMUM,
-	    "Distance from inlet device centerline to mesh pad centerline"));
+        double distance = meshElevation - inletElevation;
+        report.addResult(new ConformityResult("tr1965-inlet-to-mesh-distance", getName(), "layout", distance,
+            MIN_INLET_TO_MESH_M, "m", ConformityResult.LimitDirection.MINIMUM,
+            "Distance from inlet device centerline to mesh pad centerline"));
       } else if (design.hasMeshPad()) {
-	report.addResult(ConformityResult.notApplicable("tr1965-inlet-to-mesh-distance", getName(),
-	    "Inlet device and mesh pad elevations are required for this check"));
+        report.addResult(ConformityResult.notApplicable("tr1965-inlet-to-mesh-distance", getName(),
+            "Inlet device and mesh pad elevations are required for this check"));
       }
     }
 
@@ -440,7 +440,7 @@ public abstract class ConformityRuleSet implements Serializable {
     private double calculateKFactor(double diameterM, double gasFlowM3s, double gasDensity, double liquidDensity) {
       double vesselArea = Math.PI * Math.pow(diameterM / 2.0, 2.0);
       if (vesselArea <= 0.0 || gasFlowM3s <= 0.0 || gasDensity <= 0.0 || liquidDensity <= gasDensity) {
-	return Double.NaN;
+        return Double.NaN;
       }
       double gasVelocity = gasFlowM3s / vesselArea;
       return gasVelocity * Math.sqrt(gasDensity / (liquidDensity - gasDensity));
@@ -454,12 +454,12 @@ public abstract class ConformityRuleSet implements Serializable {
      */
     private double getGasDensity(neqsim.thermo.system.SystemInterface fluid) {
       try {
-	if (fluid.hasPhaseType("gas")) {
-	  return fluid.getPhase("gas").getPhysicalProperties().getDensity();
-	}
-	return fluid.getPhase(0).getPhysicalProperties().getDensity();
+        if (fluid.hasPhaseType("gas")) {
+          return fluid.getPhase("gas").getPhysicalProperties().getDensity();
+        }
+        return fluid.getPhase(0).getPhysicalProperties().getDensity();
       } catch (RuntimeException ex) {
-	return Double.NaN;
+        return Double.NaN;
       }
     }
 
@@ -471,14 +471,14 @@ public abstract class ConformityRuleSet implements Serializable {
      */
     private double getLiquidDensity(neqsim.thermo.system.SystemInterface fluid) {
       try {
-	if (fluid.hasPhaseType("oil")) {
-	  return fluid.getPhase("oil").getPhysicalProperties().getDensity();
-	}
-	if (fluid.hasPhaseType("aqueous")) {
-	  return fluid.getPhase("aqueous").getPhysicalProperties().getDensity();
-	}
+        if (fluid.hasPhaseType("oil")) {
+          return fluid.getPhase("oil").getPhysicalProperties().getDensity();
+        }
+        if (fluid.hasPhaseType("aqueous")) {
+          return fluid.getPhase("aqueous").getPhysicalProperties().getDensity();
+        }
       } catch (RuntimeException ex) {
-	return 1000.0;
+        return 1000.0;
       }
       return 1000.0;
     }
@@ -491,12 +491,12 @@ public abstract class ConformityRuleSet implements Serializable {
      */
     private double getGasFlowRateM3s(neqsim.thermo.system.SystemInterface fluid) {
       try {
-	if (fluid.hasPhaseType("gas")) {
-	  return fluid.getPhase("gas").getFlowRate("m3/sec");
-	}
-	return fluid.getPhase(0).getFlowRate("m3/sec");
+        if (fluid.hasPhaseType("gas")) {
+          return fluid.getPhase("gas").getFlowRate("m3/sec");
+        }
+        return fluid.getPhase(0).getFlowRate("m3/sec");
       } catch (RuntimeException ex) {
-	return 0.0;
+        return 0.0;
       }
     }
 
@@ -508,12 +508,12 @@ public abstract class ConformityRuleSet implements Serializable {
      */
     private double getSurfaceTensionMNPerM(neqsim.thermo.system.SystemInterface fluid) {
       if (fluid.getNumberOfPhases() < 2) {
-	return Double.NaN;
+        return Double.NaN;
       }
       try {
-	return fluid.getInterphaseProperties().getSurfaceTension(0, 1) * 1000.0;
+        return fluid.getInterphaseProperties().getSurfaceTension(0, 1) * 1000.0;
       } catch (RuntimeException ex) {
-	return Double.NaN;
+        return Double.NaN;
       }
     }
 
@@ -525,8 +525,8 @@ public abstract class ConformityRuleSet implements Serializable {
      */
     private double getSurfaceTensionDeratingFactor(double surfaceTensionMNPerM) {
       if (!Double.isFinite(surfaceTensionMNPerM)
-	  || surfaceTensionMNPerM >= SURFACE_TENSION_DERATING_REFERENCE_MN_PER_M) {
-	return 1.0;
+          || surfaceTensionMNPerM >= SURFACE_TENSION_DERATING_REFERENCE_MN_PER_M) {
+        return 1.0;
       }
       double ratio = Math.max(0.0, surfaceTensionMNPerM) / SURFACE_TENSION_DERATING_REFERENCE_MN_PER_M;
       return Math.pow(ratio, 0.25);

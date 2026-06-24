@@ -86,8 +86,8 @@ public class Standard_EN116 extends neqsim.standards.Standard {
       cloudPointC = d2500.getValue("cloudPoint", "C");
 
       if (Double.isNaN(cloudPointC)) {
-	logger.error("CFPP input unavailable (cloud point)");
-	return;
+        logger.error("CFPP input unavailable (cloud point)");
+        return;
       }
 
       cfppC = cloudPointC + offsetC;
@@ -100,7 +100,7 @@ public class Standard_EN116 extends neqsim.standards.Standard {
   @Override
   public double getValue(String returnParameter, String returnUnit) {
     if ("CFPP".equalsIgnoreCase(returnParameter) || "cloudPoint".equalsIgnoreCase(returnParameter)
-	|| "CP".equalsIgnoreCase(returnParameter)) {
+        || "CP".equalsIgnoreCase(returnParameter)) {
       return convertTempFromC(getValue(returnParameter), returnUnit);
     }
     return getValue(returnParameter);

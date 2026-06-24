@@ -228,6 +228,6 @@ public class SISRiskResult implements Serializable {
   @Override
   public String toString() {
     return String.format("SISRiskResult[%s: unmitigated=%.2e, mitigated=%.2e, RRF=%.0f, reduction=%.1f%%]", studyName,
-	totalUnmitigatedFrequency, totalMitigatedFrequency, overallRRF, getRiskReductionPercent());
+        totalUnmitigatedFrequency, totalMitigatedFrequency, overallRRF, getRiskReductionPercent());
   }
 }

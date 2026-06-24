@@ -250,7 +250,7 @@ public class GradeEfficiencyCurve implements Serializable {
   public static GradeEfficiencyCurve custom(double[] diametersM, double[] efficiencies) {
     if (diametersM.length != efficiencies.length || diametersM.length < 2) {
       throw new IllegalArgumentException(
-	  "Custom grade efficiency requires at least 2 matching diameter-efficiency pairs");
+          "Custom grade efficiency requires at least 2 matching diameter-efficiency pairs");
     }
     GradeEfficiencyCurve curve = new GradeEfficiencyCurve();
     curve.type = InternalsType.CUSTOM;
@@ -325,8 +325,8 @@ public class GradeEfficiencyCurve implements Serializable {
     }
     for (int i = 0; i < customCurve.length - 1; i++) {
       if (diameter >= customCurve[i][0] && diameter < customCurve[i + 1][0]) {
-	double frac = (diameter - customCurve[i][0]) / (customCurve[i + 1][0] - customCurve[i][0]);
-	return customCurve[i][1] + frac * (customCurve[i + 1][1] - customCurve[i][1]);
+        double frac = (diameter - customCurve[i][0]) / (customCurve[i + 1][0] - customCurve[i][0]);
+        return customCurve[i][1] + frac * (customCurve[i + 1][1] - customCurve[i][1]);
       }
     }
     return customCurve[customCurve.length - 1][1];

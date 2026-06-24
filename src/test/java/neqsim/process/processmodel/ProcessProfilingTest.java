@@ -89,7 +89,7 @@ public class ProcessProfilingTest {
     double totalMs = (System.nanoTime() - totalStart) / 1e6;
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Total for %d runs: %.1f ms (%.1f ms/run)%n%n", runs, totalMs,
-	totalMs / runs);
+        totalMs / runs);
     process.printExecutionProfile();
 
     // Show execution strategy info
@@ -121,19 +121,19 @@ public class ProcessProfilingTest {
     Object recording = null;
     if (jfrAvailable) {
       try {
-	jfrFile = new File("neqsim_profile.jfr");
-	// Use reflection to avoid compile error on Java 8
-	// Load "profile" configuration which enables jdk.ExecutionSample
-	Class<?> configClass = Class.forName("jdk.jfr.Configuration");
-	Object profileConfig = configClass.getMethod("getConfiguration", String.class).invoke(null, "profile");
+        jfrFile = new File("neqsim_profile.jfr");
+        // Use reflection to avoid compile error on Java 8
+        // Load "profile" configuration which enables jdk.ExecutionSample
+        Class<?> configClass = Class.forName("jdk.jfr.Configuration");
+        Object profileConfig = configClass.getMethod("getConfiguration", String.class).invoke(null, "profile");
 
-	Class<?> recordingClass = Class.forName("jdk.jfr.Recording");
-	recording = recordingClass.getConstructor(configClass).newInstance(profileConfig);
-	recordingClass.getMethod("start").invoke(recording);
-	System.out.println("JFR recording started (profile config) -> " + jfrFile.getAbsolutePath());
+        Class<?> recordingClass = Class.forName("jdk.jfr.Recording");
+        recording = recordingClass.getConstructor(configClass).newInstance(profileConfig);
+        recordingClass.getMethod("start").invoke(recording);
+        System.out.println("JFR recording started (profile config) -> " + jfrFile.getAbsolutePath());
       } catch (Exception e) {
-	logger.info("Could not start JFR programmatically: " + e.getMessage());
-	jfrAvailable = false;
+        logger.info("Could not start JFR programmatically: " + e.getMessage());
+        jfrAvailable = false;
       }
     }
 
@@ -154,22 +154,22 @@ public class ProcessProfilingTest {
     // Stop JFR
     if (jfrAvailable && recording != null) {
       try {
-	Class<?> recordingClass = recording.getClass();
-	Class<?> pathClass = Class.forName("java.nio.file.Path");
-	java.lang.reflect.Method dumpMethod = recordingClass.getMethod("dump", pathClass);
-	Object path = java.nio.file.Paths.get(jfrFile.toURI());
-	dumpMethod.invoke(recording, path);
-	recordingClass.getMethod("stop").invoke(recording);
-	recordingClass.getMethod("close").invoke(recording);
-	logger.info("JFR recording saved to: " + jfrFile.getAbsolutePath());
-	System.out.println("Open with: jmc " + jfrFile.getAbsolutePath() + "  (or IntelliJ profiler)");
+        Class<?> recordingClass = recording.getClass();
+        Class<?> pathClass = Class.forName("java.nio.file.Path");
+        java.lang.reflect.Method dumpMethod = recordingClass.getMethod("dump", pathClass);
+        Object path = java.nio.file.Paths.get(jfrFile.toURI());
+        dumpMethod.invoke(recording, path);
+        recordingClass.getMethod("stop").invoke(recording);
+        recordingClass.getMethod("close").invoke(recording);
+        logger.info("JFR recording saved to: " + jfrFile.getAbsolutePath());
+        System.out.println("Open with: jmc " + jfrFile.getAbsolutePath() + "  (or IntelliJ profiler)");
       } catch (Exception e) {
-	logger.info("Error saving JFR: " + e.getMessage());
+        logger.info("Error saving JFR: " + e.getMessage());
       }
     }
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%nTotal for %d runs: %.1f ms (%.1f ms/run)%n%n", runs,
-	elapsedMs, elapsedMs / runs);
+        elapsedMs, elapsedMs / runs);
     process.printExecutionProfile();
   }
 
@@ -183,7 +183,7 @@ public class ProcessProfilingTest {
 
     SystemInterface fluid = makeRichGasFluid();
     neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	fluid);
+        fluid);
 
     // First flash to establish phases
     ops.TPflash();
@@ -255,7 +255,7 @@ public class ProcessProfilingTest {
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-35s %10s%n", "Operation", "Time (ms)");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-35s %10s%n", "-----------------------------------",
-	"----------");
+        "----------");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-35s %10.3f%n", "TPflash", tpflashMs);
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-35s %10.3f%n", "PHflash", phflashMs);
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-35s %10.3f%n", "PSflash", psflashMs);
@@ -269,12 +269,12 @@ public class ProcessProfilingTest {
 
     double totalEquipRun = tpflashMs + initPropsMs; // Approximate what a Separator does
     logger.printf(org.apache.logging.log4j.Level.INFO,
-	"Estimated Separator.run() cost: ~%.3f ms (TPflash + initProperties)%n", totalEquipRun);
+        "Estimated Separator.run() cost: ~%.3f ms (TPflash + initProperties)%n", totalEquipRun);
     logger.printf(org.apache.logging.log4j.Level.INFO,
-	"Estimated Compressor.run() cost: ~%.3f ms (PSflash + init(3) + initProperties)%n",
-	psflashMs + init3Ms + initPropsMs);
+        "Estimated Compressor.run() cost: ~%.3f ms (PSflash + init(3) + initProperties)%n",
+        psflashMs + init3Ms + initPropsMs);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Components: %d  |  Phases: %d%n", fluid.getNumberOfComponents(),
-	fluid.getNumberOfPhases());
+        fluid.getNumberOfPhases());
   }
 
   /**
@@ -294,25 +294,25 @@ public class ProcessProfilingTest {
       ProcessSystem seq = buildParallelCompressionWithMixer();
       seq.setUseOptimizedExecution(false); // Force sequential
       for (int i = 0; i < warmup; i++)
-	seq.run();
+        seq.run();
       long t0 = System.nanoTime();
       for (int i = 0; i < runs; i++)
-	seq.run();
+        seq.run();
       double seqMs = (System.nanoTime() - t0) / (double) runs / 1e6;
 
       ProcessSystem opt = buildParallelCompressionWithMixer();
       opt.setUseOptimizedExecution(true); // Now uses parallel (graph handles Mixer)
       for (int i = 0; i < warmup; i++)
-	opt.run();
+        opt.run();
       t0 = System.nanoTime();
       for (int i = 0; i < runs; i++)
-	opt.run();
+        opt.run();
       double optMs = (System.nanoTime() - t0) / (double) runs / 1e6;
 
       logger.printf(org.apache.logging.log4j.Level.INFO,
-	  "  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs, optMs, seqMs / optMs);
+          "  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs, optMs, seqMs / optMs);
       logger.printf(org.apache.logging.log4j.Level.INFO, "  hasMultiInputEquipment: %b  |  Max parallelism: %d%n",
-	  opt.hasMultiInputEquipment(), opt.getMaxParallelism());
+          opt.hasMultiInputEquipment(), opt.getMaxParallelism());
     }
 
     // Scenario B: HP/LP separation with HeatExchanger
@@ -321,25 +321,25 @@ public class ProcessProfilingTest {
       ProcessSystem seq = buildHPLPWithHeatExchanger();
       seq.setUseOptimizedExecution(false);
       for (int i = 0; i < warmup; i++)
-	seq.run();
+        seq.run();
       long t0 = System.nanoTime();
       for (int i = 0; i < runs; i++)
-	seq.run();
+        seq.run();
       double seqMs = (System.nanoTime() - t0) / (double) runs / 1e6;
 
       ProcessSystem opt = buildHPLPWithHeatExchanger();
       opt.setUseOptimizedExecution(true);
       for (int i = 0; i < warmup; i++)
-	opt.run();
+        opt.run();
       t0 = System.nanoTime();
       for (int i = 0; i < runs; i++)
-	opt.run();
+        opt.run();
       double optMs = (System.nanoTime() - t0) / (double) runs / 1e6;
 
       logger.printf(org.apache.logging.log4j.Level.INFO,
-	  "  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs, optMs, seqMs / optMs);
+          "  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs, optMs, seqMs / optMs);
       logger.printf(org.apache.logging.log4j.Level.INFO, "  hasMultiInputEquipment: %b  |  Max parallelism: %d%n",
-	  opt.hasMultiInputEquipment(), opt.getMaxParallelism());
+          opt.hasMultiInputEquipment(), opt.getMaxParallelism());
     }
 
     // Scenario C: Large 6-train process with Mixer (the big parallelism opportunity)
@@ -348,26 +348,26 @@ public class ProcessProfilingTest {
       ProcessSystem seq = buildNTrainCompression(6);
       seq.setUseOptimizedExecution(false);
       for (int i = 0; i < warmup; i++)
-	seq.run();
+        seq.run();
       long t0 = System.nanoTime();
       for (int i = 0; i < runs; i++)
-	seq.run();
+        seq.run();
       double seqMs = (System.nanoTime() - t0) / (double) runs / 1e6;
 
       ProcessSystem opt = buildNTrainCompression(6);
       opt.setUseOptimizedExecution(true);
       opt.setProfilingEnabled(true);
       for (int i = 0; i < warmup; i++)
-	opt.run();
+        opt.run();
       t0 = System.nanoTime();
       for (int i = 0; i < runs; i++)
-	opt.run();
+        opt.run();
       double optMs = (System.nanoTime() - t0) / (double) runs / 1e6;
 
       logger.printf(org.apache.logging.log4j.Level.INFO,
-	  "  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs, optMs, seqMs / optMs);
+          "  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs, optMs, seqMs / optMs);
       logger.printf(org.apache.logging.log4j.Level.INFO, "  hasMultiInputEquipment: %b  |  Max parallelism: %d%n",
-	  opt.hasMultiInputEquipment(), opt.getMaxParallelism());
+          opt.hasMultiInputEquipment(), opt.getMaxParallelism());
       logger.info("\n  Per-unit profile (last run):");
       opt.printExecutionProfile();
     }
@@ -403,7 +403,7 @@ public class ProcessProfilingTest {
     double seqCpuMs = (threadMXBean.getCurrentThreadCpuTime() - cpuStart) / 1e6;
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Sequential: wall=%.1f ms, CPU=%.1f ms, ratio=%.2f%n", seqWallMs,
-	seqCpuMs, seqCpuMs / seqWallMs);
+        seqCpuMs, seqCpuMs / seqWallMs);
 
     // Optimized (parallel/hybrid)
     process.setUseOptimizedExecution(true);
@@ -417,7 +417,7 @@ public class ProcessProfilingTest {
     double optCpuMs = (threadMXBean.getCurrentThreadCpuTime() - cpuStart) / 1e6;
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Optimized:  wall=%.1f ms, CPU=%.1f ms, ratio=%.2f%n", optWallMs,
-	optCpuMs, optCpuMs / optWallMs);
+        optCpuMs, optCpuMs / optWallMs);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Wall-clock speedup: %.2fx%n", seqWallMs / optWallMs);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Note: CPU/wall ratio > 1.0 indicates multi-threaded work%n");
   }

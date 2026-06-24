@@ -46,51 +46,51 @@ public final class SILRunner {
       int claimedSil = input.has("claimedSIL") ? input.get("claimedSIL").getAsInt() : 2;
       String architecture = input.has("architecture") ? input.get("architecture").getAsString() : "1oo1";
       double testIntervalHours = input.has("proofTestInterval_hours")
-	  ? input.get("proofTestInterval_hours").getAsDouble()
-	  : 8760.0;
+          ? input.get("proofTestInterval_hours").getAsDouble()
+          : 8760.0;
 
       // Aggregate PFD from components.
       double totalPfd = 0.0;
       JsonArray componentsOut = new JsonArray();
       if (input.has("components")) {
-	JsonArray comps = input.getAsJsonArray("components");
-	for (JsonElement el : comps) {
-	  JsonObject c = el.getAsJsonObject();
-	  String cName = c.has("name") ? c.get("name").getAsString() : "comp";
-	  String cType = c.has("type") ? c.get("type").getAsString() : "sensor";
-	  double cPfd;
-	  double failureRate = 0.0;
-	  if (c.has("pfd")) {
-	    cPfd = c.get("pfd").getAsDouble();
-	  } else if (c.has("lambdaDU_per_hr")) {
-	    failureRate = c.get("lambdaDU_per_hr").getAsDouble();
-	    String arch = c.has("architecture") ? c.get("architecture").getAsString() : architecture;
-	    cPfd = computePfdForArchitecture(arch, failureRate, testIntervalHours);
-	  } else {
-	    throw new IllegalArgumentException("Component '" + cName + "' must specify 'pfd' or 'lambdaDU_per_hr'");
-	  }
-	  totalPfd += cPfd;
-	  JsonObject co = new JsonObject();
-	  co.addProperty("name", cName);
-	  co.addProperty("type", cType);
-	  co.addProperty("failureRate_per_hr", failureRate);
-	  co.addProperty("pfdContribution", round(cPfd, 8));
-	  componentsOut.add(co);
-	}
-	// Compute percentages
-	for (JsonElement el : componentsOut) {
-	  JsonObject co = el.getAsJsonObject();
-	  double pfd = co.get("pfdContribution").getAsDouble();
-	  co.addProperty("percentOfTotal", round(totalPfd > 0 ? 100.0 * pfd / totalPfd : 0.0, 2));
-	}
+        JsonArray comps = input.getAsJsonArray("components");
+        for (JsonElement el : comps) {
+          JsonObject c = el.getAsJsonObject();
+          String cName = c.has("name") ? c.get("name").getAsString() : "comp";
+          String cType = c.has("type") ? c.get("type").getAsString() : "sensor";
+          double cPfd;
+          double failureRate = 0.0;
+          if (c.has("pfd")) {
+            cPfd = c.get("pfd").getAsDouble();
+          } else if (c.has("lambdaDU_per_hr")) {
+            failureRate = c.get("lambdaDU_per_hr").getAsDouble();
+            String arch = c.has("architecture") ? c.get("architecture").getAsString() : architecture;
+            cPfd = computePfdForArchitecture(arch, failureRate, testIntervalHours);
+          } else {
+            throw new IllegalArgumentException("Component '" + cName + "' must specify 'pfd' or 'lambdaDU_per_hr'");
+          }
+          totalPfd += cPfd;
+          JsonObject co = new JsonObject();
+          co.addProperty("name", cName);
+          co.addProperty("type", cType);
+          co.addProperty("failureRate_per_hr", failureRate);
+          co.addProperty("pfdContribution", round(cPfd, 8));
+          componentsOut.add(co);
+        }
+        // Compute percentages
+        for (JsonElement el : componentsOut) {
+          JsonObject co = el.getAsJsonObject();
+          double pfd = co.get("pfdContribution").getAsDouble();
+          co.addProperty("percentOfTotal", round(totalPfd > 0 ? 100.0 * pfd / totalPfd : 0.0, 2));
+        }
       } else if (input.has("pfdAvg")) {
-	totalPfd = input.get("pfdAvg").getAsDouble();
+        totalPfd = input.get("pfdAvg").getAsDouble();
       } else {
-	throw new IllegalArgumentException("Provide either 'components' array or top-level 'pfdAvg'");
+        throw new IllegalArgumentException("Provide either 'components' array or top-level 'pfdAvg'");
       }
 
       SafetyInstrumentedFunction sif = SafetyInstrumentedFunction.builder().name(name).description(description)
-	  .sil(claimedSil).pfd(totalPfd).testIntervalHours(testIntervalHours).architecture(architecture).build();
+          .sil(claimedSil).pfd(totalPfd).testIntervalHours(testIntervalHours).architecture(architecture).build();
 
       SILVerificationResult ver = new SILVerificationResult(sif);
 

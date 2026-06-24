@@ -163,7 +163,7 @@ public class DropletSizeDistribution implements Serializable {
     if (type == DistributionType.ROSIN_RAMMLER) {
       double ratio = d / characteristicDiameter;
       return (spreadParameter / characteristicDiameter) * Math.pow(ratio, spreadParameter - 1.0)
-	  * Math.exp(-Math.pow(ratio, spreadParameter));
+          * Math.exp(-Math.pow(ratio, spreadParameter));
     } else {
       double z = (Math.log(d) - Math.log(characteristicDiameter)) / spreadParameter;
       return 1.0 / (d * spreadParameter * Math.sqrt(2.0 * Math.PI)) * Math.exp(-0.5 * z * z);

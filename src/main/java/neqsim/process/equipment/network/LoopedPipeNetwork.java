@@ -2320,7 +2320,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     double total = 0.0;
     for (NetworkPipe pipe : pipes.values()) {
       if (pipe.getArtificialLiftType() == ArtificialLiftType.GAS_LIFT) {
-	total += pipe.getGasLiftRate();
+        total += pipe.getGasLiftRate();
       }
     }
     return total * 3600.0;
@@ -2336,8 +2336,8 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     for (NetworkPipe pipe : pipes.values()) {
       ArtificialLiftType lift = pipe.getArtificialLiftType();
       if (lift == ArtificialLiftType.ESP || lift == ArtificialLiftType.JET_PUMP
-	  || lift == ArtificialLiftType.ROD_PUMP) {
-	total += pipe.getEspPower();
+          || lift == ArtificialLiftType.ROD_PUMP) {
+        total += pipe.getEspPower();
       }
     }
     return total;
@@ -2412,8 +2412,8 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       String node = pipe.getFlowRate() >= 0 ? pipe.getToNode() : pipe.getFromNode();
       double[] existing = nodeWaterBalance.get(node);
       if (existing == null) {
-	existing = new double[3];
-	nodeWaterBalance.put(node, existing);
+        existing = new double[3];
+        nodeWaterBalance.put(node, existing);
       }
       existing[0] += waterProd * 3600.0;
       existing[1] += waterInj * 3600.0;
@@ -2541,9 +2541,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     // Initialize sand from well elements
     for (NetworkPipe pipe : pipes.values()) {
       if (pipe.getSandRate() > 0) {
-	String downNode = pipe.getFlowRate() >= 0 ? pipe.getToNode() : pipe.getFromNode();
-	double existing = nodeSandRate.containsKey(downNode) ? nodeSandRate.get(downNode) : 0.0;
-	nodeSandRate.put(downNode, existing + pipe.getSandRate());
+        String downNode = pipe.getFlowRate() >= 0 ? pipe.getToNode() : pipe.getFromNode();
+        double existing = nodeSandRate.containsKey(downNode) ? nodeSandRate.get(downNode) : 0.0;
+        nodeSandRate.put(downNode, existing + pipe.getSandRate());
       }
     }
 
@@ -2554,13 +2554,13 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     for (NetworkPipe pipe : pipes.values()) {
       NetworkElementType type = pipe.getElementType();
       if (type == NetworkElementType.WELL_IPR || type == NetworkElementType.COMPRESSOR
-	  || type == NetworkElementType.REGULATOR) {
-	continue;
+          || type == NetworkElementType.REGULATOR) {
+        continue;
       }
 
       double flowKgs = Math.abs(pipe.getFlowRate());
       if (flowKgs < 1e-10 || pipe.getDiameter() < 1e-6) {
-	continue;
+        continue;
       }
 
       // Get sand rate entering this pipe from upstream node
@@ -2575,14 +2575,14 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       // E = K * rho_p * v^2.6 * d_p^0.2 / (rho_t * A_pipe)
       double kMaterial = 2e-9; // material erosion constant for carbon steel
       double erosionMmYr = kMaterial * sandConc * Math.pow(velocity, 2.6) * Math.pow(particleDiameter, 0.2) * 3600.0
-	  * 8760.0;
+          * 8760.0;
       pipe.setErosionRate(erosionMmYr);
       pipe.setSandConcentration(sandConc);
 
       // Deposition — simplified: if velocity < 1 m/s, sand settles
       double depositionKgmYr = 0.0;
       if (velocity < 1.0 && sandConc > 0) {
-	depositionKgmYr = sandConc * area * (1.0 - velocity) * 3600.0 * 8760.0;
+        depositionKgmYr = sandConc * area * (1.0 - velocity) * 3600.0 * 8760.0;
       }
       pipe.setDepositionRate(depositionKgmYr);
 
@@ -2590,7 +2590,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       double wallThicknessMm = pipe.getWallThickness() * 1000.0;
       double minThicknessMm = wallThicknessMm * 0.2; // 20% of original is minimum
       if (erosionMmYr > 0.001) {
-	pipe.setRemainingWallLife((wallThicknessMm - minThicknessMm) / erosionMmYr);
+        pipe.setRemainingWallLife((wallThicknessMm - minThicknessMm) / erosionMmYr);
       }
 
       pipeSandResults.put(pipe.getName(), new double[] { sandConc, erosionMmYr, depositionKgmYr, velocity });
@@ -2602,12 +2602,12 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
       // Check violations
       if (maxAllowableSandRate > 0 && sandKgs > maxAllowableSandRate) {
-	sandViolations.add(String.format("%s: sand rate %.2f kg/hr exceeds limit %.2f kg/hr", pipe.getName(),
-	    sandKgs * 3600.0, maxAllowableSandRate * 3600.0));
+        sandViolations.add(String.format("%s: sand rate %.2f kg/hr exceeds limit %.2f kg/hr", pipe.getName(),
+            sandKgs * 3600.0, maxAllowableSandRate * 3600.0));
       }
       if (erosionMmYr > maxAllowableErosionRate) {
-	sandViolations.add(String.format("%s: erosion rate %.2f mm/yr exceeds limit %.1f mm/yr", pipe.getName(),
-	    erosionMmYr, maxAllowableErosionRate));
+        sandViolations.add(String.format("%s: erosion rate %.2f mm/yr exceeds limit %.1f mm/yr", pipe.getName(),
+            erosionMmYr, maxAllowableErosionRate));
       }
     }
     return new LinkedHashMap<>(pipeSandResults);
@@ -2688,20 +2688,20 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     for (NetworkPipe pipe : pipes.values()) {
       NetworkElementType type = pipe.getElementType();
       if (type == NetworkElementType.WELL_IPR || type == NetworkElementType.COMPRESSOR
-	  || type == NetworkElementType.REGULATOR) {
-	continue;
+          || type == NetworkElementType.REGULATOR) {
+        continue;
       }
 
       double co2Frac = pipe.getCo2MoleFraction();
       double h2sFrac = pipe.getH2sMoleFraction();
       if (co2Frac < 1e-10 && h2sFrac < 1e-10) {
-	continue;
+        continue;
       }
 
       // Get pipe conditions (upstream node pressure, temperature)
       NetworkNode upNode = nodes.get(pipe.getFromNode());
       if (upNode == null) {
-	continue;
+        continue;
       }
       double pressureBar = upNode.getPressure() / 1e5;
       double temperatureK = upNode.getTemperature();
@@ -2713,40 +2713,40 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       double corrosionMmYr = 0.0;
 
       if ("norsokM506".equals(pipe.getCorrosionModel())) {
-	// NORSOK M-506 (2005) simplified model
-	// Vcorr = Kt * fCO2^0.62 * (S/19)^0.146
-	// Kt is temperature-dependent factor
-	double kt;
-	if (temperatureC < 20) {
-	  kt = 0.42;
-	} else if (temperatureC < 40) {
-	  kt = 0.42 + (temperatureC - 20) * 0.058;
-	} else if (temperatureC < 60) {
-	  kt = 1.58 + (temperatureC - 40) * 0.021;
-	} else if (temperatureC < 80) {
-	  kt = 2.0 + (temperatureC - 60) * (-0.03);
-	} else if (temperatureC < 120) {
-	  kt = 1.4 + (temperatureC - 80) * (-0.01);
-	} else {
-	  kt = 1.0;
-	}
-	double fCO2 = pCO2; // simplified: fugacity ~ partial pressure
-	if (fCO2 > 0.001) {
-	  double wallShear = 19.0; // Pa — default wall shear stress
-	  corrosionMmYr = kt * Math.pow(fCO2, 0.62) * Math.pow(wallShear / 19.0, 0.146);
-	}
+        // NORSOK M-506 (2005) simplified model
+        // Vcorr = Kt * fCO2^0.62 * (S/19)^0.146
+        // Kt is temperature-dependent factor
+        double kt;
+        if (temperatureC < 20) {
+          kt = 0.42;
+        } else if (temperatureC < 40) {
+          kt = 0.42 + (temperatureC - 20) * 0.058;
+        } else if (temperatureC < 60) {
+          kt = 1.58 + (temperatureC - 40) * 0.021;
+        } else if (temperatureC < 80) {
+          kt = 2.0 + (temperatureC - 60) * (-0.03);
+        } else if (temperatureC < 120) {
+          kt = 1.4 + (temperatureC - 80) * (-0.01);
+        } else {
+          kt = 1.0;
+        }
+        double fCO2 = pCO2; // simplified: fugacity ~ partial pressure
+        if (fCO2 > 0.001) {
+          double wallShear = 19.0; // Pa — default wall shear stress
+          corrosionMmYr = kt * Math.pow(fCO2, 0.62) * Math.pow(wallShear / 19.0, 0.146);
+        }
       } else {
-	// de Waard-Milliams (1975/1991) model
-	// log10(Vcorr) = 5.8 - 1710/T + 0.67*log10(pCO2)
-	if (pCO2 > 0.001 && temperatureK > 250) {
-	  double logCR = 5.8 - 1710.0 / temperatureK + 0.67 * Math.log10(pCO2);
-	  corrosionMmYr = Math.pow(10.0, logCR);
-	}
+        // de Waard-Milliams (1975/1991) model
+        // log10(Vcorr) = 5.8 - 1710/T + 0.67*log10(pCO2)
+        if (pCO2 > 0.001 && temperatureK > 250) {
+          double logCR = 5.8 - 1710.0 / temperatureK + 0.67 * Math.log10(pCO2);
+          corrosionMmYr = Math.pow(10.0, logCR);
+        }
       }
 
       // H2S contribution (NACE MR0175 — adds to CO2 corrosion when pH2S > 0.003 bar)
       if (pH2S > 0.003) {
-	corrosionMmYr *= (1.0 + 0.5 * Math.log10(pH2S / 0.003));
+        corrosionMmYr *= (1.0 + 0.5 * Math.log10(pH2S / 0.003));
       }
 
       // Clamp to reasonable range
@@ -2763,9 +2763,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
       // Check violations
       if (remainingLife < minAllowableWallLife) {
-	corrosionViolations
-	    .add(String.format("%s: remaining wall life %.1f yr < minimum %.1f yr (CR=%.2f mm/yr, pCO2=%.3f bar)",
-		pipe.getName(), remainingLife, minAllowableWallLife, corrosionMmYr, pCO2));
+        corrosionViolations
+            .add(String.format("%s: remaining wall life %.1f yr < minimum %.1f yr (CR=%.2f mm/yr, pCO2=%.3f bar)",
+                pipe.getName(), remainingLife, minAllowableWallLife, corrosionMmYr, pCO2));
       }
     }
     return new LinkedHashMap<>(pipeCorrosionResults);
@@ -2841,11 +2841,11 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       double molarMass = fuel.getMolarMass("kg/mol");
       // Approximate LHV from molar mass: CH4=50MJ, C2=47, C3=46
       if (molarMass < 0.02) {
-	lhvKJPerKg = 50000.0;
+        lhvKJPerKg = 50000.0;
       } else if (molarMass < 0.035) {
-	lhvKJPerKg = 48000.0;
+        lhvKJPerKg = 48000.0;
       } else {
-	lhvKJPerKg = 46000.0;
+        lhvKJPerKg = 46000.0;
       }
     } catch (Exception ex) {
       // Use default
@@ -2853,11 +2853,11 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
     for (NetworkPipe pipe : pipes.values()) {
       if (pipe.getElementType() != NetworkElementType.COMPRESSOR) {
-	continue;
+        continue;
       }
       double powerKW = pipe.getCompressorPower();
       if (powerKW < 0.001) {
-	continue;
+        continue;
       }
 
       // Fuel gas consumption: power * heat_rate / LHV
@@ -3186,10 +3186,10 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     double netFlowKgs = 0.0;
     for (NetworkPipe pipe : pipes.values()) {
       if (pipe.getToNode().equals(nodeName)) {
-	netFlowKgs += pipe.getFlowRate(); // inflow
+        netFlowKgs += pipe.getFlowRate(); // inflow
       }
       if (pipe.getFromNode().equals(nodeName)) {
-	netFlowKgs -= pipe.getFlowRate(); // outflow
+        netFlowKgs -= pipe.getFlowRate(); // outflow
       }
     }
     return netFlowKgs * 3600.0; // Convert to kg/hr
@@ -3215,8 +3215,8 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     java.util.Queue<String> queue = new java.util.LinkedList<>();
     for (NetworkNode node : nodes.values()) {
       if (node.getType() == NodeType.SOURCE) {
-	queue.add(node.getName());
-	visited.add(node.getName());
+        queue.add(node.getName());
+        visited.add(node.getName());
       }
     }
 
@@ -3225,24 +3225,24 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       bfsOrder.add(current);
 
       for (NetworkPipe pipe : pipes.values()) {
-	String neighbor = null;
-	boolean forward = false;
+        String neighbor = null;
+        boolean forward = false;
 
-	if (pipe.getFromNode().equals(current) && !visited.contains(pipe.getToNode())) {
-	  neighbor = pipe.getToNode();
-	  forward = true; // parent->child follows pipe from->to
-	} else if (pipe.getToNode().equals(current) && !visited.contains(pipe.getFromNode())) {
-	  neighbor = pipe.getFromNode();
-	  forward = false; // parent->child opposes pipe direction
-	}
+        if (pipe.getFromNode().equals(current) && !visited.contains(pipe.getToNode())) {
+          neighbor = pipe.getToNode();
+          forward = true; // parent->child follows pipe from->to
+        } else if (pipe.getToNode().equals(current) && !visited.contains(pipe.getFromNode())) {
+          neighbor = pipe.getFromNode();
+          forward = false; // parent->child opposes pipe direction
+        }
 
-	if (neighbor != null) {
-	  visited.add(neighbor);
-	  parentPipeName.put(neighbor, pipe.getName());
-	  parentPipeForward.put(neighbor, forward);
-	  treeEdges.add(pipe.getName());
-	  queue.add(neighbor);
-	}
+        if (neighbor != null) {
+          visited.add(neighbor);
+          parentPipeName.put(neighbor, pipe.getName());
+          parentPipeForward.put(neighbor, forward);
+          treeEdges.add(pipe.getName());
+          queue.add(neighbor);
+        }
       }
     }
 
@@ -3264,29 +3264,29 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
       // Add subtree demands of all BFS children of this node
       for (String child : bfsOrder) {
-	if (parentPipeName.containsKey(child)) {
-	  // Find the parent of 'child' - it's the other end of the parent pipe
-	  String pipeName = parentPipeName.get(child);
-	  boolean fwd = parentPipeForward.get(child);
-	  NetworkPipe pipe = pipes.get(pipeName);
-	  String parent = fwd ? pipe.getFromNode() : pipe.getToNode();
-	  if (parent.equals(nodeName)) {
-	    demand += subtreeDemand.getOrDefault(child, 0.0);
-	  }
-	}
+        if (parentPipeName.containsKey(child)) {
+          // Find the parent of 'child' - it's the other end of the parent pipe
+          String pipeName = parentPipeName.get(child);
+          boolean fwd = parentPipeForward.get(child);
+          NetworkPipe pipe = pipes.get(pipeName);
+          String parent = fwd ? pipe.getFromNode() : pipe.getToNode();
+          if (parent.equals(nodeName)) {
+            demand += subtreeDemand.getOrDefault(child, 0.0);
+          }
+        }
       }
       subtreeDemand.put(nodeName, demand);
 
       // Set tree pipe flow from parent to this node
       if (parentPipeName.containsKey(nodeName)) {
-	String pipeName = parentPipeName.get(nodeName);
-	boolean forward = parentPipeForward.get(nodeName);
-	NetworkPipe pipe = pipes.get(pipeName);
+        String pipeName = parentPipeName.get(nodeName);
+        boolean forward = parentPipeForward.get(nodeName);
+        NetworkPipe pipe = pipes.get(pipeName);
 
-	// The pipe must deliver 'demand' kg/s into this node's subtree
-	// forward=true: pipe from->to = parent->child, so positive flow = delivery
-	// forward=false: pipe to->from = parent->child, so negative flow = delivery
-	pipe.setFlowRate(forward ? demand : -demand);
+        // The pipe must deliver 'demand' kg/s into this node's subtree
+        // forward=true: pipe from->to = parent->child, so positive flow = delivery
+        // forward=false: pipe to->from = parent->child, so negative flow = delivery
+        pipe.setFlowRate(forward ? demand : -demand);
       }
     }
 
@@ -3297,152 +3297,152 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     boolean allFlowsZero = true;
     for (NetworkPipe pipe : pipes.values()) {
       if (Math.abs(pipe.getFlowRate()) > 1e-15) {
-	allFlowsZero = false;
-	break;
+        allFlowsZero = false;
+        break;
       }
     }
     if (allFlowsZero) {
       // Estimate initial flows from pressure differences using simplified resistance
       SystemInterface fluid = fluidTemplate.clone();
       try {
-	neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	    fluid);
-	ops.TPflash();
+        neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+            fluid);
+        ops.TPflash();
       } catch (Exception ex) {
-	logger.warn("TP flash failed during flow init: " + ex.getMessage());
+        logger.warn("TP flash failed during flow init: " + ex.getMessage());
       }
       fluid.initProperties();
       double density = fluid.getDensity("kg/m3");
       double viscosity = fluid.getViscosity("kg/msec");
 
       for (NetworkPipe pipe : pipes.values()) {
-	NetworkNode fromNode = nodes.get(pipe.getFromNode());
-	NetworkNode toNode = nodes.get(pipe.getToNode());
-	double dP = fromNode.getPressure() - toNode.getPressure()
-	    - density * 9.81 * (toNode.getElevation() - fromNode.getElevation());
-	if (Math.abs(dP) < 1.0) {
-	  dP = 100.0; // Small default if pressures are equal
-	}
+        NetworkNode fromNode = nodes.get(pipe.getFromNode());
+        NetworkNode toNode = nodes.get(pipe.getToNode());
+        double dP = fromNode.getPressure() - toNode.getPressure()
+            - density * 9.81 * (toNode.getElevation() - fromNode.getElevation());
+        if (Math.abs(dP) < 1.0) {
+          dP = 100.0; // Small default if pressures are equal
+        }
 
-	double qEstimate;
+        double qEstimate;
 
-	switch (pipe.getElementType()) {
-	case WELL_IPR:
-	  // Use IPR equation for initial flow estimate
-	  double absDp = Math.abs(dP);
-	  switch (pipe.getIprType()) {
-	  case VOGEL:
-	    // q/qmax = 1 - 0.2*(Pwf/Pr) - 0.8*(Pwf/Pr)^2
-	    // Rough: assume 50% drawdown ratio -> q ~ 0.65*qmax
-	    qEstimate = 0.3 * pipe.getVogelQmax() * Math.signum(dP);
-	    break;
-	  case FETKOVICH:
-	    double pRes = pipe.getReservoirPressure();
-	    if (pRes < 1.0) {
-	      pRes = fromNode.getPressure();
-	    }
-	    double pWf = Math.max(pRes - absDp, pRes * 0.5);
-	    double p2d = pRes * pRes - pWf * pWf;
-	    qEstimate = pipe.getFetkovichC() * Math.pow(Math.max(p2d, 0.0), pipe.getFetkovichN()) * Math.signum(dP);
-	    break;
-	  case PRODUCTIVITY_INDEX:
-	  default:
-	    if (pipe.isGasIPR()) {
-	      double pResPI = pipe.getReservoirPressure();
-	      if (pResPI < 1.0) {
-		pResPI = fromNode.getPressure();
-	      }
-	      double pWfPI = Math.max(pResPI - absDp, pResPI * 0.5);
-	      qEstimate = pipe.getProductivityIndex() * (pResPI * pResPI - pWfPI * pWfPI) * Math.signum(dP);
-	    } else {
-	      qEstimate = pipe.getProductivityIndex() * dP;
-	    }
-	    break;
-	  }
-	  break;
+        switch (pipe.getElementType()) {
+        case WELL_IPR:
+          // Use IPR equation for initial flow estimate
+          double absDp = Math.abs(dP);
+          switch (pipe.getIprType()) {
+          case VOGEL:
+            // q/qmax = 1 - 0.2*(Pwf/Pr) - 0.8*(Pwf/Pr)^2
+            // Rough: assume 50% drawdown ratio -> q ~ 0.65*qmax
+            qEstimate = 0.3 * pipe.getVogelQmax() * Math.signum(dP);
+            break;
+          case FETKOVICH:
+            double pRes = pipe.getReservoirPressure();
+            if (pRes < 1.0) {
+              pRes = fromNode.getPressure();
+            }
+            double pWf = Math.max(pRes - absDp, pRes * 0.5);
+            double p2d = pRes * pRes - pWf * pWf;
+            qEstimate = pipe.getFetkovichC() * Math.pow(Math.max(p2d, 0.0), pipe.getFetkovichN()) * Math.signum(dP);
+            break;
+          case PRODUCTIVITY_INDEX:
+          default:
+            if (pipe.isGasIPR()) {
+              double pResPI = pipe.getReservoirPressure();
+              if (pResPI < 1.0) {
+                pResPI = fromNode.getPressure();
+              }
+              double pWfPI = Math.max(pResPI - absDp, pResPI * 0.5);
+              qEstimate = pipe.getProductivityIndex() * (pResPI * pResPI - pWfPI * pWfPI) * Math.signum(dP);
+            } else {
+              qEstimate = pipe.getProductivityIndex() * dP;
+            }
+            break;
+          }
+          break;
 
-	case CHOKE:
-	  // Q = Kv * opening * sqrt(dP * rho) -> Use valve equation
-	  double kvEff = pipe.getChokeKv() * pipe.getChokeOpening() / 100.0;
-	  if (kvEff > 1e-10) {
-	    // Kv is in m3/hr per sqrt(bar), dP is in Pa
-	    double dPbar = Math.abs(dP) / 1e5;
-	    double qVolM3hr = kvEff * Math.sqrt(dPbar);
-	    double qMassKgs = qVolM3hr * density / 3600.0;
-	    qEstimate = qMassKgs * Math.signum(dP);
-	  } else {
-	    qEstimate = 0.001 * Math.signum(dP);
-	  }
-	  break;
+        case CHOKE:
+          // Q = Kv * opening * sqrt(dP * rho) -> Use valve equation
+          double kvEff = pipe.getChokeKv() * pipe.getChokeOpening() / 100.0;
+          if (kvEff > 1e-10) {
+            // Kv is in m3/hr per sqrt(bar), dP is in Pa
+            double dPbar = Math.abs(dP) / 1e5;
+            double qVolM3hr = kvEff * Math.sqrt(dPbar);
+            double qMassKgs = qVolM3hr * density / 3600.0;
+            qEstimate = qMassKgs * Math.signum(dP);
+          } else {
+            qEstimate = 0.001 * Math.signum(dP);
+          }
+          break;
 
-	case COMPRESSOR:
-	  // Compressor: estimate from polytropic head equation
-	  // Start with a moderate flow based on pipe area if available
-	  double compDia = pipe.getDiameter();
-	  if (compDia > 0.01) {
-	    double compArea = Math.PI * compDia * compDia / 4.0;
-	    qEstimate = compArea * 20.0 * density * Math.signum(dP); // ~20 m/s
-	  } else {
-	    qEstimate = 10.0 * Math.signum(dP); // 10 kg/s default
-	  }
-	  break;
+        case COMPRESSOR:
+          // Compressor: estimate from polytropic head equation
+          // Start with a moderate flow based on pipe area if available
+          double compDia = pipe.getDiameter();
+          if (compDia > 0.01) {
+            double compArea = Math.PI * compDia * compDia / 4.0;
+            qEstimate = compArea * 20.0 * density * Math.signum(dP); // ~20 m/s
+          } else {
+            qEstimate = 10.0 * Math.signum(dP); // 10 kg/s default
+          }
+          break;
 
-	case REGULATOR:
-	  // Regulator: treat as short pipe with Cv sizing
-	  // Use Kv-like approximation: Q = Cv * sqrt(dP * rho)
-	  double regDia = pipe.getDiameter();
-	  if (regDia > 0.01) {
-	    double regArea = Math.PI * regDia * regDia / 4.0;
-	    qEstimate = regArea * 10.0 * density * Math.signum(dP); // ~10 m/s
-	  } else {
-	    qEstimate = 5.0 * Math.signum(dP); // 5 kg/s default
-	  }
-	  break;
+        case REGULATOR:
+          // Regulator: treat as short pipe with Cv sizing
+          // Use Kv-like approximation: Q = Cv * sqrt(dP * rho)
+          double regDia = pipe.getDiameter();
+          if (regDia > 0.01) {
+            double regArea = Math.PI * regDia * regDia / 4.0;
+            qEstimate = regArea * 10.0 * density * Math.signum(dP); // ~10 m/s
+          } else {
+            qEstimate = 5.0 * Math.signum(dP); // 5 kg/s default
+          }
+          break;
 
-	default:
-	  // Standard Darcy-Weisbach estimate for pipes and tubing
-	  double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
-	  double ff = 0.02;
-	  double denom = ff * pipe.getLength() / (pipe.getDiameter() * 2.0 * density * area * area);
-	  qEstimate = Math.sqrt(Math.abs(dP) / denom) * Math.signum(dP);
-	  break;
-	}
-	pipe.setFlowRate(qEstimate);
+        default:
+          // Standard Darcy-Weisbach estimate for pipes and tubing
+          double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
+          double ff = 0.02;
+          double denom = ff * pipe.getLength() / (pipe.getDiameter() * 2.0 * density * area * area);
+          qEstimate = Math.sqrt(Math.abs(dP) / denom) * Math.signum(dP);
+          break;
+        }
+        pipe.setFlowRate(qEstimate);
 
-	// Cap maximum initial flow to prevent divergence from unrealistic estimates
-	double maxInitFlowKgs = 500.0; // kg/s (~1800 t/hr) - generous upper bound
-	if (Math.abs(pipe.getFlowRate()) > maxInitFlowKgs) {
-	  pipe.setFlowRate(maxInitFlowKgs * Math.signum(pipe.getFlowRate()));
-	}
+        // Cap maximum initial flow to prevent divergence from unrealistic estimates
+        double maxInitFlowKgs = 500.0; // kg/s (~1800 t/hr) - generous upper bound
+        if (Math.abs(pipe.getFlowRate()) > maxInitFlowKgs) {
+          pipe.setFlowRate(maxInitFlowKgs * Math.signum(pipe.getFlowRate()));
+        }
       }
 
       // For serial element paths (source -> IPR -> junction -> choke -> junction -> pipe -> sink),
       // independent estimates often violate mass balance wildly. Equalize flows by setting each
       // junction's connected element flows to the minimum magnitude estimate (most restrictive).
       for (int pass = 0; pass < 3; pass++) {
-	for (NetworkNode node : nodes.values()) {
-	  if (node.getType() != NodeType.JUNCTION) {
-	    continue;
-	  }
-	  // Find all elements connected to this junction
-	  List<NetworkPipe> connected = new ArrayList<>();
-	  for (NetworkPipe pp : pipes.values()) {
-	    if (pp.getFromNode().equals(node.getName()) || pp.getToNode().equals(node.getName())) {
-	      connected.add(pp);
-	    }
-	  }
-	  if (connected.size() == 2) {
-	    // Serial connection: equalize flows to the minimum magnitude
-	    double minMag = Math.min(Math.abs(connected.get(0).getFlowRate()),
-		Math.abs(connected.get(1).getFlowRate()));
-	    if (minMag < 1e-10) {
-	      minMag = 0.1; // Ensure nonzero
-	    }
-	    for (NetworkPipe pp : connected) {
-	      pp.setFlowRate(minMag * Math.signum(pp.getFlowRate()));
-	    }
-	  }
-	}
+        for (NetworkNode node : nodes.values()) {
+          if (node.getType() != NodeType.JUNCTION) {
+            continue;
+          }
+          // Find all elements connected to this junction
+          List<NetworkPipe> connected = new ArrayList<>();
+          for (NetworkPipe pp : pipes.values()) {
+            if (pp.getFromNode().equals(node.getName()) || pp.getToNode().equals(node.getName())) {
+              connected.add(pp);
+            }
+          }
+          if (connected.size() == 2) {
+            // Serial connection: equalize flows to the minimum magnitude
+            double minMag = Math.min(Math.abs(connected.get(0).getFlowRate()),
+                Math.abs(connected.get(1).getFlowRate()));
+            if (minMag < 1e-10) {
+              minMag = 0.1; // Ensure nonzero
+            }
+            for (NetworkPipe pp : connected) {
+              pp.setFlowRate(minMag * Math.signum(pp.getFlowRate()));
+            }
+          }
+        }
       }
     }
   }
@@ -3494,20 +3494,20 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       double density = fluid.getDensity("kg/m3");
 
       if (liftType == ArtificialLiftType.GAS_LIFT && pipe.getGasLiftRate() > 0) {
-	// Gas lift reduces hydrostatic head by lightening the fluid column
-	// Effective: reduces head loss by ~20-50% depending on GLR
-	double glr = pipe.getGasLiftRate() / Math.max(flowKgs, 1e-6);
-	double reductionFactor = Math.min(0.5, glr * 2.0); // up to 50% reduction
-	boostPa = Math.abs(baseHeadLoss) * reductionFactor;
+        // Gas lift reduces hydrostatic head by lightening the fluid column
+        // Effective: reduces head loss by ~20-50% depending on GLR
+        double glr = pipe.getGasLiftRate() / Math.max(flowKgs, 1e-6);
+        double reductionFactor = Math.min(0.5, glr * 2.0); // up to 50% reduction
+        boostPa = Math.abs(baseHeadLoss) * reductionFactor;
       } else if (pipe.getEspPower() > 0 && pipe.getEspEfficiency() > 0) {
-	// ESP/jet pump/rod pump: dP_boost = Power * efficiency / Q_volumetric
-	double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
-	double velocity = flowKgs / (density * Math.max(area, 1e-6));
-	double volumeFlowM3s = velocity * area;
-	if (volumeFlowM3s > 1e-10) {
-	  boostPa = pipe.getEspPower() * 1000.0 * pipe.getEspEfficiency() / volumeFlowM3s;
-	}
-	pipe.setEspHeadRise(boostPa / 1e5); // store in bar for reporting
+        // ESP/jet pump/rod pump: dP_boost = Power * efficiency / Q_volumetric
+        double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
+        double velocity = flowKgs / (density * Math.max(area, 1e-6));
+        double volumeFlowM3s = velocity * area;
+        if (volumeFlowM3s > 1e-10) {
+          boostPa = pipe.getEspPower() * 1000.0 * pipe.getEspEfficiency() / volumeFlowM3s;
+        }
+        pipe.setEspHeadRise(boostPa / 1e5); // store in bar for reporting
       }
 
       // Subtract boost from head loss (boost acts against the natural pressure drop)
@@ -3559,7 +3559,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
     // Darcy-Weisbach: dP_friction = f * (L/D) * (rho * v^2 / 2)
     double frictionLoss = frictionFactor * (pipe.getLength() / pipe.getDiameter())
-	* (density * velocity * velocity / 2.0);
+        * (density * velocity * velocity / 2.0);
 
     // Hydrostatic head
     NetworkNode fromNode = nodes.get(pipe.getFromNode());
@@ -3625,12 +3625,12 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       double cCoeff = pipe.getFetkovichC();
       double nExp = pipe.getFetkovichN();
       if (cCoeff < 1e-20) {
-	return 0.0;
+        return 0.0;
       }
       double p2diff = Math.pow(flowKgs / cCoeff, 1.0 / nExp);
       double pwf2 = pRes * pRes - p2diff;
       if (pwf2 < 0) {
-	pwf2 = 0.0; // Beyond AOF
+        pwf2 = 0.0; // Beyond AOF
       }
       dP = pRes - Math.sqrt(pwf2);
       break;
@@ -3638,19 +3638,19 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     case PRODUCTIVITY_INDEX:
     default:
       if (pipe.isGasIPR()) {
-	// Gas: q = PI * (Pr^2 - Pwf^2) => Pwf = sqrt(Pr^2 - q/PI)
-	double pi = pipe.getProductivityIndex();
-	if (pi < 1e-20) {
-	  return 0.0;
-	}
-	double pwf2Gas = pRes * pRes - flowKgs / pi;
-	if (pwf2Gas < 0) {
-	  pwf2Gas = 0.0; // Beyond AOF
-	}
-	dP = pRes - Math.sqrt(pwf2Gas);
+        // Gas: q = PI * (Pr^2 - Pwf^2) => Pwf = sqrt(Pr^2 - q/PI)
+        double pi = pipe.getProductivityIndex();
+        if (pi < 1e-20) {
+          return 0.0;
+        }
+        double pwf2Gas = pRes * pRes - flowKgs / pi;
+        if (pwf2Gas < 0) {
+          pwf2Gas = 0.0; // Beyond AOF
+        }
+        dP = pRes - Math.sqrt(pwf2Gas);
       } else {
-	// Oil: q = PI * (Pr - Pwf) => dP = q / PI
-	dP = flowKgs / Math.max(pipe.getProductivityIndex(), 1e-20);
+        // Oil: q = PI * (Pr - Pwf) => dP = q / PI
+        dP = flowKgs / Math.max(pipe.getProductivityIndex(), 1e-20);
       }
       break;
     }
@@ -3687,45 +3687,45 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     // Only when explicitly enabled via setChokeUseValveModel(true) — slower but more accurate
     if (pipe.isChokeUseValveModel()) {
       try {
-	SystemInterface chokeFluid = fluid.clone();
-	Stream chokeInlet = new Stream("chokeIn", chokeFluid);
-	chokeInlet.setFlowRate(flowKgs, "kg/sec");
+        SystemInterface chokeFluid = fluid.clone();
+        Stream chokeInlet = new Stream("chokeIn", chokeFluid);
+        chokeInlet.setFlowRate(flowKgs, "kg/sec");
 
-	// Set upstream pressure from the from-node
-	NetworkNode fromNode = nodes.get(pipe.getFromNode());
-	double upstreamP = fromNode.getPressure();
-	chokeInlet.setPressure(upstreamP / 1e5, "bara");
-	chokeInlet.setTemperature(fromNode.getTemperature(), "K");
-	chokeInlet.run();
+        // Set upstream pressure from the from-node
+        NetworkNode fromNode = nodes.get(pipe.getFromNode());
+        double upstreamP = fromNode.getPressure();
+        chokeInlet.setPressure(upstreamP / 1e5, "bara");
+        chokeInlet.setTemperature(fromNode.getTemperature(), "K");
+        chokeInlet.run();
 
-	ThrottlingValve valve = new ThrottlingValve("networkChoke", chokeInlet);
-	double kvEff = pipe.getChokeKv() * pipe.getChokeOpening() / 100.0;
-	if (kvEff > 0.01) {
-	  valve.setCv(kvEff, "Kv");
-	}
-	valve.run();
+        ThrottlingValve valve = new ThrottlingValve("networkChoke", chokeInlet);
+        double kvEff = pipe.getChokeKv() * pipe.getChokeOpening() / 100.0;
+        if (kvEff > 0.01) {
+          valve.setCv(kvEff, "Kv");
+        }
+        valve.run();
 
-	double outP = valve.getOutletPressure(); // bara
-	double dP = (upstreamP / 1e5 - outP) * 1e5; // Pa
-	if (dP < 0.0) {
-	  dP = 0.0;
-	}
+        double outP = valve.getOutletPressure(); // bara
+        double dP = (upstreamP / 1e5 - outP) * 1e5; // Pa
+        if (dP < 0.0) {
+          dP = 0.0;
+        }
 
-	// Update pipe hydraulic info
-	double qVolM3s = flowKgs / density;
-	double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
-	if (area > 1e-10) {
-	  pipe.setVelocity(qVolM3s / area);
-	}
+        // Update pipe hydraulic info
+        double qVolM3s = flowKgs / density;
+        double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
+        if (area > 1e-10) {
+          pipe.setVelocity(qVolM3s / area);
+        }
 
-	// Check if choked
-	double xt = pipe.getChokeCriticalPressureRatio();
-	double maxDp = upstreamP * xt;
-	pipe.setFlowRegime(dP >= maxDp * 0.95 ? "Choked" : "Subcritical");
+        // Check if choked
+        double xt = pipe.getChokeCriticalPressureRatio();
+        double maxDp = upstreamP * xt;
+        pipe.setFlowRegime(dP >= maxDp * 0.95 ? "Choked" : "Subcritical");
 
-	return Math.signum(pipe.getFlowRate()) * dP;
+        return Math.signum(pipe.getFlowRate()) * dP;
       } catch (Exception ex) {
-	logger.debug("ThrottlingValve delegate failed, using simplified: " + ex.getMessage());
+        logger.debug("ThrottlingValve delegate failed, using simplified: " + ex.getMessage());
       }
     } // end if chokeUseValveModel
 
@@ -3835,37 +3835,37 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       Stream inletStream;
 
       if (bbPipe == null) {
-	// First call: create and cache the model
-	SystemInterface pipeFluid = fluid.clone();
-	pipeFluid.setPressure(inletP, "bara");
-	pipeFluid.setTemperature(inletT, "K");
+        // First call: create and cache the model
+        SystemInterface pipeFluid = fluid.clone();
+        pipeFluid.setPressure(inletP, "bara");
+        pipeFluid.setTemperature(inletT, "K");
 
-	inletStream = new Stream(pipe.getName() + "_bbInlet", pipeFluid);
-	inletStream.setFlowRate(flowKgs * 3600.0, "kg/hr");
-	inletStream.run();
+        inletStream = new Stream(pipe.getName() + "_bbInlet", pipeFluid);
+        inletStream.setFlowRate(flowKgs * 3600.0, "kg/hr");
+        inletStream.run();
 
-	bbPipe = new PipeBeggsAndBrills(pipe.getName() + "_bb", inletStream);
-	bbPipe.setPipeWallRoughness(pipe.getRoughness() * 1000.0); // m -> mm
-	bbPipe.setLength(pipe.getLength());
-	bbPipe.setDiameter(pipe.getDiameter());
-	bbPipe.setNumberOfIncrements(pipe.getMultiphaseSegments());
-	pipe.setBBModel(bbPipe);
+        bbPipe = new PipeBeggsAndBrills(pipe.getName() + "_bb", inletStream);
+        bbPipe.setPipeWallRoughness(pipe.getRoughness() * 1000.0); // m -> mm
+        bbPipe.setLength(pipe.getLength());
+        bbPipe.setDiameter(pipe.getDiameter());
+        bbPipe.setNumberOfIncrements(pipe.getMultiphaseSegments());
+        pipe.setBBModel(bbPipe);
       } else {
-	// Subsequent calls: reuse model, update inlet conditions
-	inletStream = (Stream) bbPipe.getInletStream();
-	SystemInterface pipeFluid = inletStream.getFluid();
-	pipeFluid.setPressure(inletP, "bara");
-	pipeFluid.setTemperature(inletT, "K");
-	inletStream.setFlowRate(flowKgs * 3600.0, "kg/hr");
-	inletStream.run();
+        // Subsequent calls: reuse model, update inlet conditions
+        inletStream = (Stream) bbPipe.getInletStream();
+        SystemInterface pipeFluid = inletStream.getFluid();
+        pipeFluid.setPressure(inletP, "bara");
+        pipeFluid.setTemperature(inletT, "K");
+        inletStream.setFlowRate(flowKgs * 3600.0, "kg/hr");
+        inletStream.run();
       }
 
       // Set elevation angle from node elevations
       NetworkNode toNode = nodes.get(pipe.getToNode());
       double dz = toNode.getElevation() - fromNode.getElevation();
       if (pipe.getLength() > 0 && Math.abs(dz) > 0.01) {
-	double angle = Math.toDegrees(Math.asin(dz / pipe.getLength()));
-	bbPipe.setAngle(angle);
+        double angle = Math.toDegrees(Math.asin(dz / pipe.getLength()));
+        bbPipe.setAngle(angle);
       }
       bbPipe.run();
 
@@ -3880,13 +3880,13 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       // Apply pipe efficiency factor
       double effFactor = pipe.getPipeEfficiency();
       if (effFactor > 0.01 && effFactor < 1.0) {
-	dP = dP / effFactor;
+        dP = dP / effFactor;
       }
 
       return Math.signum(pipe.getFlowRate()) * dP;
     } catch (Exception ex) {
       logger.warn("Beggs-Brill calculation failed for " + pipe.getName() + ", falling back to Darcy-Weisbach: "
-	  + ex.getMessage());
+          + ex.getMessage());
       return calculateHeadLossDarcyWeisbach(pipe, fluid);
     }
   }
@@ -3912,31 +3912,31 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     // Use NeqSim Compressor model if available (has chart)
     if (pipe.getCompressorModel() != null) {
       try {
-	Compressor comp = pipe.getCompressorModel();
-	SystemInterface compFluid = fluid.clone();
-	NetworkNode fromNode = nodes.get(pipe.getFromNode());
-	NetworkNode toNode = nodes.get(pipe.getToNode());
-	compFluid.setPressure(fromNode.getPressure() / 1e5, "bara");
-	compFluid.setTemperature(fromNode.getTemperature(), "K");
+        Compressor comp = pipe.getCompressorModel();
+        SystemInterface compFluid = fluid.clone();
+        NetworkNode fromNode = nodes.get(pipe.getFromNode());
+        NetworkNode toNode = nodes.get(pipe.getToNode());
+        compFluid.setPressure(fromNode.getPressure() / 1e5, "bara");
+        compFluid.setTemperature(fromNode.getTemperature(), "K");
 
-	Stream compInlet = new Stream(pipe.getName() + "_compIn", compFluid);
-	compInlet.setFlowRate(flowKgs * 3600.0, "kg/hr");
-	compInlet.run();
+        Stream compInlet = new Stream(pipe.getName() + "_compIn", compFluid);
+        compInlet.setFlowRate(flowKgs * 3600.0, "kg/hr");
+        compInlet.run();
 
-	comp.setInletStream(compInlet);
-	comp.setOutletPressure(toNode.getPressure() / 1e5, "bara");
-	comp.run();
+        comp.setInletStream(compInlet);
+        comp.setOutletPressure(toNode.getPressure() / 1e5, "bara");
+        comp.run();
 
-	double power = comp.getPower("kW");
-	pipe.setCompressorPower(power);
-	pipe.setCompressorEfficiency(comp.getPolytropicEfficiency());
+        double power = comp.getPower("kW");
+        pipe.setCompressorPower(power);
+        pipe.setCompressorEfficiency(comp.getPolytropicEfficiency());
 
-	// Pressure rise from suction to discharge
-	double pRise = comp.getOutletStream().getPressure("Pa") - fromNode.getPressure();
-	pipe.setFlowRegime("Compressor-Chart");
-	return -Math.signum(pipe.getFlowRate()) * Math.abs(pRise);
+        // Pressure rise from suction to discharge
+        double pRise = comp.getOutletStream().getPressure("Pa") - fromNode.getPressure();
+        pipe.setFlowRegime("Compressor-Chart");
+        return -Math.signum(pipe.getFlowRate()) * Math.abs(pRise);
       } catch (Exception ex) {
-	logger.warn("Compressor chart calculation failed for " + pipe.getName() + ": " + ex.getMessage());
+        logger.warn("Compressor chart calculation failed for " + pipe.getName() + ": " + ex.getMessage());
       }
     }
 
@@ -3962,7 +3962,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     double nPoly = kappa / (1.0 - (kappa - 1.0) / (kappa * pipe.getCompressorEfficiency()));
     double compressionRatio = pDischarge / pSuction;
     double polytropicHead = zFactor * 8314.0 * temperature / (molarMass * (nPoly / (nPoly - 1.0)))
-	* (Math.pow(compressionRatio, (nPoly - 1.0) / nPoly) - 1.0);
+        * (Math.pow(compressionRatio, (nPoly - 1.0) / nPoly) - 1.0);
 
     double power = flowKgs * polytropicHead / (pipe.getCompressorEfficiency() * 1000.0); // kW
     pipe.setCompressorPower(power);
@@ -4068,18 +4068,18 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       double cCoeff = pipe.getFetkovichC();
       double nExp = pipe.getFetkovichN();
       if (cCoeff < 1e-20) {
-	return 1e10;
+        return 1e10;
       }
       // Pwf^2 = Pr^2 - (q/C)^(1/n)
       // dPwf/dq = -(1/(2*n*C)) * (q/C)^(1/n - 1) / sqrt(Pr^2 - (q/C)^(1/n))
       double p2diff = Math.pow(flowKgs / cCoeff, 1.0 / nExp);
       double pwf2 = pRes * pRes - p2diff;
       if (pwf2 < pRes * pRes * 0.01) {
-	// Near or beyond AOF: Pwf ~ 0, derivative singular
-	// Use secant approximation: d(dP)/dQ ≈ 2*dP/Q
-	// dP is approximately pRes when near AOF
-	double dPApprox = pRes - Math.sqrt(Math.max(pwf2, 0.0));
-	return 2.0 * dPApprox / flowKgs;
+        // Near or beyond AOF: Pwf ~ 0, derivative singular
+        // Use secant approximation: d(dP)/dQ ≈ 2*dP/Q
+        // dP is approximately pRes when near AOF
+        double dPApprox = pRes - Math.sqrt(Math.max(pwf2, 0.0));
+        return 2.0 * dPApprox / flowKgs;
       }
       double pwf = Math.sqrt(pwf2);
       double dPwf_dq = (1.0 / (2.0 * nExp * cCoeff)) * Math.pow(flowKgs / cCoeff, 1.0 / nExp - 1.0) / pwf;
@@ -4088,17 +4088,17 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     case PRODUCTIVITY_INDEX:
     default:
       if (pipe.isGasIPR()) {
-	// dP = Pr - sqrt(Pr^2 - q/PI)
-	double pi = Math.max(pipe.getProductivityIndex(), 1e-20);
-	double pwf2Gas = pRes * pRes - flowKgs / pi;
-	if (pwf2Gas < pRes * pRes * 0.01) {
-	  // Near AOF: use secant approximation
-	  double dPApproxGas = pRes - Math.sqrt(Math.max(pwf2Gas, 0.0));
-	  return 2.0 * dPApproxGas / flowKgs;
-	}
-	return 1.0 / (2.0 * pi * Math.sqrt(pwf2Gas));
+        // dP = Pr - sqrt(Pr^2 - q/PI)
+        double pi = Math.max(pipe.getProductivityIndex(), 1e-20);
+        double pwf2Gas = pRes * pRes - flowKgs / pi;
+        if (pwf2Gas < pRes * pRes * 0.01) {
+          // Near AOF: use secant approximation
+          double dPApproxGas = pRes - Math.sqrt(Math.max(pwf2Gas, 0.0));
+          return 2.0 * dPApproxGas / flowKgs;
+        }
+        return 1.0 / (2.0 * pi * Math.sqrt(pwf2Gas));
       } else {
-	return 1.0 / Math.max(pipe.getProductivityIndex(), 1e-20);
+        return 1.0 / Math.max(pipe.getProductivityIndex(), 1e-20);
       }
     }
   }
@@ -4235,7 +4235,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     SystemInterface fluid = fluidTemplate.clone();
     try {
       neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	  fluid);
+          fluid);
       ops.TPflash();
     } catch (Exception ex) {
       logger.warn("TP flash failed for fluid template: " + ex.getMessage());
@@ -4251,54 +4251,54 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
       // Update head losses for all pipes
       for (NetworkPipe pipe : pipes.values()) {
-	double headLoss = calculateHeadLoss(pipe, fluid);
-	pipe.setHeadLoss(headLoss);
+        double headLoss = calculateHeadLoss(pipe, fluid);
+        pipe.setHeadLoss(headLoss);
       }
 
       // Calculate corrections for each loop
       for (NetworkLoop loop : loops) {
-	// Calculate head loss imbalance around the loop
-	double imbalance = 0.0;
-	double derivativeSum = 0.0;
+        // Calculate head loss imbalance around the loop
+        double imbalance = 0.0;
+        double derivativeSum = 0.0;
 
-	for (NetworkLoop.LoopMember member : loop.getMembers()) {
-	  NetworkPipe pipe = pipes.get(member.getPipeName());
-	  if (pipe != null) {
-	    // Head loss with sign based on loop direction
-	    imbalance += member.getDirection() * pipe.getHeadLoss();
+        for (NetworkLoop.LoopMember member : loop.getMembers()) {
+          NetworkPipe pipe = pipes.get(member.getPipeName());
+          if (pipe != null) {
+            // Head loss with sign based on loop direction
+            imbalance += member.getDirection() * pipe.getHeadLoss();
 
-	    // Derivative magnitude
-	    derivativeSum += calculateHeadLossDerivative(pipe, fluid);
-	  }
-	}
+            // Derivative magnitude
+            derivativeSum += calculateHeadLossDerivative(pipe, fluid);
+          }
+        }
 
-	// Update max residual
-	maxResidual = Math.max(maxResidual, Math.abs(imbalance));
+        // Update max residual
+        maxResidual = Math.max(maxResidual, Math.abs(imbalance));
 
-	// Calculate flow correction
-	double correction = 0.0;
-	if (derivativeSum > 1e-10) {
-	  correction = -imbalance / derivativeSum;
-	  correction *= relaxationFactor;
-	}
+        // Calculate flow correction
+        double correction = 0.0;
+        if (derivativeSum > 1e-10) {
+          correction = -imbalance / derivativeSum;
+          correction *= relaxationFactor;
+        }
 
-	// Apply correction to all pipes in loop
-	for (NetworkLoop.LoopMember member : loop.getMembers()) {
-	  NetworkPipe pipe = pipes.get(member.getPipeName());
-	  if (pipe != null) {
-	    double newFlow = pipe.getFlowRate() + member.getDirection() * correction;
-	    pipe.setFlowRate(newFlow);
-	  }
-	}
+        // Apply correction to all pipes in loop
+        for (NetworkLoop.LoopMember member : loop.getMembers()) {
+          NetworkPipe pipe = pipes.get(member.getPipeName());
+          if (pipe != null) {
+            double newFlow = pipe.getFlowRate() + member.getDirection() * correction;
+            pipe.setFlowRate(newFlow);
+          }
+        }
       }
 
       // Check convergence
       if (maxResidual < tolerance) {
-	converged = true;
+        converged = true;
       }
 
       if (iterationCount % 10 == 0) {
-	logger.debug("Hardy Cross iteration " + iterationCount + ", max residual: " + maxResidual + " Pa");
+        logger.debug("Hardy Cross iteration " + iterationCount + ", max residual: " + maxResidual + " Pa");
       }
     }
 
@@ -4306,7 +4306,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       logger.info("Hardy Cross converged in " + iterationCount + " iterations, residual: " + maxResidual + " Pa");
     } else {
       logger.warn(
-	  "Hardy Cross did not converge after " + iterationCount + " iterations, residual: " + maxResidual + " Pa");
+          "Hardy Cross did not converge after " + iterationCount + " iterations, residual: " + maxResidual + " Pa");
     }
 
     // Update node pressures based on final flow distribution
@@ -4333,11 +4333,11 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     for (String pipeName : pipeNames) {
       NetworkPipe pipe = pipes.get(pipeName);
       if (pipe.getPipeModel() != null) {
-	pipe.getPipeModel().run(id);
-	// Extract head loss from model
-	double inletP = pipe.getPipeModel().getInletStream().getPressure("Pa");
-	double outletP = pipe.getPipeModel().getOutletStream().getPressure("Pa");
-	pipe.setHeadLoss(inletP - outletP);
+        pipe.getPipeModel().run(id);
+        // Extract head loss from model
+        double inletP = pipe.getPipeModel().getInletStream().getPressure("Pa");
+        double outletP = pipe.getPipeModel().getOutletStream().getPressure("Pa");
+        pipe.setHeadLoss(inletP - outletP);
       }
     }
 
@@ -4351,23 +4351,23 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   private void initializePipeModels() {
     for (NetworkPipe pipe : pipes.values()) {
       if (pipe.getPipeModel() == null) {
-	NetworkNode fromNode = nodes.get(pipe.getFromNode());
+        NetworkNode fromNode = nodes.get(pipe.getFromNode());
 
-	// Create inlet stream
-	SystemInterface inletFluid = fluidTemplate.clone();
-	inletFluid.setTemperature(fromNode.getTemperature());
-	inletFluid.setPressure(fromNode.getPressure() / 1e5); // bara
+        // Create inlet stream
+        SystemInterface inletFluid = fluidTemplate.clone();
+        inletFluid.setTemperature(fromNode.getTemperature());
+        inletFluid.setPressure(fromNode.getPressure() / 1e5); // bara
 
-	Stream inlet = new Stream(pipe.getName() + "_inlet", inletFluid);
-	inlet.setFlowRate(Math.abs(pipe.getFlowRate()), "kg/sec");
-	inlet.run();
+        Stream inlet = new Stream(pipe.getName() + "_inlet", inletFluid);
+        inlet.setFlowRate(Math.abs(pipe.getFlowRate()), "kg/sec");
+        inlet.run();
 
-	// Create pipe model
-	AdiabaticPipe model = new AdiabaticPipe(pipe.getName(), inlet);
-	model.setLength(pipe.getLength());
-	model.setDiameter(pipe.getDiameter());
+        // Create pipe model
+        AdiabaticPipe model = new AdiabaticPipe(pipe.getName(), inlet);
+        model.setLength(pipe.getLength());
+        model.setDiameter(pipe.getDiameter());
 
-	pipe.setPipeModel(model);
+        pipe.setPipeModel(model);
       }
     }
   }
@@ -4381,7 +4381,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     // Start from source nodes (fixed pressure) and propagate
     for (NetworkNode node : nodes.values()) {
       if (node.isPressureFixed()) {
-	propagatePressure(node.getName(), fluid);
+        propagatePressure(node.getName(), fluid);
       }
     }
   }
@@ -4405,25 +4405,25 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
       // Find all connected pipes
       for (NetworkPipe pipe : pipes.values()) {
-	String neighbor = null;
-	double pressureDrop = 0.0;
+        String neighbor = null;
+        double pressureDrop = 0.0;
 
-	if (pipe.getFromNode().equals(current)) {
-	  neighbor = pipe.getToNode();
-	  pressureDrop = pipe.getHeadLoss(); // Positive = pressure drops from->to
-	} else if (pipe.getToNode().equals(current)) {
-	  neighbor = pipe.getFromNode();
-	  pressureDrop = -pipe.getHeadLoss(); // Negative = pressure drops to->from
-	}
+        if (pipe.getFromNode().equals(current)) {
+          neighbor = pipe.getToNode();
+          pressureDrop = pipe.getHeadLoss(); // Positive = pressure drops from->to
+        } else if (pipe.getToNode().equals(current)) {
+          neighbor = pipe.getFromNode();
+          pressureDrop = -pipe.getHeadLoss(); // Negative = pressure drops to->from
+        }
 
-	if (neighbor != null && !visited.contains(neighbor)) {
-	  NetworkNode neighborNode = nodes.get(neighbor);
-	  if (!neighborNode.isPressureFixed()) {
-	    neighborNode.setPressure(currentNode.getPressure() - pressureDrop);
-	  }
-	  visited.add(neighbor);
-	  queue.add(neighbor);
-	}
+        if (neighbor != null && !visited.contains(neighbor)) {
+          NetworkNode neighborNode = nodes.get(neighbor);
+          if (!neighborNode.isPressureFixed()) {
+            neighborNode.setPressure(currentNode.getPressure() - pressureDrop);
+          }
+          visited.add(neighbor);
+          queue.add(neighbor);
+        }
       }
     }
   }
@@ -4486,7 +4486,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     SystemInterface fluid = fluidTemplate.clone();
     try {
       neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	  fluid);
+          fluid);
       ops.TPflash();
       fluid.initProperties();
     } catch (Exception ex) {
@@ -4528,8 +4528,8 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     for (Map.Entry<String, SystemInterface> entry : nodeFluidMap.entrySet()) {
       NetworkNode node = nodes.get(entry.getKey());
       if (node != null && node.getType() == NodeType.SOURCE) {
-	processed.add(entry.getKey());
-	queue.add(entry.getKey());
+        processed.add(entry.getKey());
+        queue.add(entry.getKey());
       }
     }
 
@@ -4542,85 +4542,85 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
       // Find all pipes leaving this node (current is fromNode)
       for (NetworkPipe pipe : pipes.values()) {
-	String downstream = null;
-	if (pipe.getFromNode().equals(current) && pipe.getFlowRate() > 0) {
-	  downstream = pipe.getToNode();
-	} else if (pipe.getToNode().equals(current) && pipe.getFlowRate() < 0) {
-	  downstream = pipe.getFromNode();
-	}
+        String downstream = null;
+        if (pipe.getFromNode().equals(current) && pipe.getFlowRate() > 0) {
+          downstream = pipe.getToNode();
+        } else if (pipe.getToNode().equals(current) && pipe.getFlowRate() < 0) {
+          downstream = pipe.getFromNode();
+        }
 
-	if (downstream == null || processed.contains(downstream)) {
-	  continue;
-	}
+        if (downstream == null || processed.contains(downstream)) {
+          continue;
+        }
 
-	// Collect all inflows to the downstream node
-	List<SystemInterface> inflowFluids = new ArrayList<>();
-	List<Double> inflowMasses = new ArrayList<>();
-	boolean allInputsProcessed = true;
+        // Collect all inflows to the downstream node
+        List<SystemInterface> inflowFluids = new ArrayList<>();
+        List<Double> inflowMasses = new ArrayList<>();
+        boolean allInputsProcessed = true;
 
-	for (NetworkPipe inPipe : pipes.values()) {
-	  String upstreamNode = null;
-	  double flow = 0.0;
-	  if (inPipe.getToNode().equals(downstream) && inPipe.getFlowRate() > 0) {
-	    upstreamNode = inPipe.getFromNode();
-	    flow = inPipe.getFlowRate();
-	  } else if (inPipe.getFromNode().equals(downstream) && inPipe.getFlowRate() < 0) {
-	    upstreamNode = inPipe.getToNode();
-	    flow = Math.abs(inPipe.getFlowRate());
-	  }
-	  if (upstreamNode != null && flow > 1e-10) {
-	    SystemInterface upFluid = nodeFluidMap.get(upstreamNode);
-	    if (upFluid == null) {
-	      allInputsProcessed = false;
-	      break;
-	    }
-	    inflowFluids.add(upFluid);
-	    inflowMasses.add(flow);
-	  }
-	}
+        for (NetworkPipe inPipe : pipes.values()) {
+          String upstreamNode = null;
+          double flow = 0.0;
+          if (inPipe.getToNode().equals(downstream) && inPipe.getFlowRate() > 0) {
+            upstreamNode = inPipe.getFromNode();
+            flow = inPipe.getFlowRate();
+          } else if (inPipe.getFromNode().equals(downstream) && inPipe.getFlowRate() < 0) {
+            upstreamNode = inPipe.getToNode();
+            flow = Math.abs(inPipe.getFlowRate());
+          }
+          if (upstreamNode != null && flow > 1e-10) {
+            SystemInterface upFluid = nodeFluidMap.get(upstreamNode);
+            if (upFluid == null) {
+              allInputsProcessed = false;
+              break;
+            }
+            inflowFluids.add(upFluid);
+            inflowMasses.add(flow);
+          }
+        }
 
-	if (!allInputsProcessed || inflowFluids.isEmpty()) {
-	  continue;
-	}
+        if (!allInputsProcessed || inflowFluids.isEmpty()) {
+          continue;
+        }
 
-	// Mass-weighted mixing of component mole fractions
-	if (inflowFluids.size() == 1) {
-	  nodeFluidMap.put(downstream, inflowFluids.get(0).clone());
-	} else {
-	  SystemInterface mixedFluid = inflowFluids.get(0).clone();
-	  double totalMass = inflowMasses.get(0);
-	  int nComp = mixedFluid.getNumberOfComponents();
+        // Mass-weighted mixing of component mole fractions
+        if (inflowFluids.size() == 1) {
+          nodeFluidMap.put(downstream, inflowFluids.get(0).clone());
+        } else {
+          SystemInterface mixedFluid = inflowFluids.get(0).clone();
+          double totalMass = inflowMasses.get(0);
+          int nComp = mixedFluid.getNumberOfComponents();
 
-	  // Accumulate mass-weighted mole fractions
-	  double[] mixedZ = new double[nComp];
-	  for (int c = 0; c < nComp; c++) {
-	    mixedZ[c] = inflowFluids.get(0).getPhase(0).getComponent(c).getz() * inflowMasses.get(0);
-	  }
-	  for (int f = 1; f < inflowFluids.size(); f++) {
-	    double mass = inflowMasses.get(f);
-	    totalMass += mass;
-	    SystemInterface fFluid = inflowFluids.get(f);
-	    int compCount = Math.min(nComp, fFluid.getNumberOfComponents());
-	    for (int c = 0; c < compCount; c++) {
-	      mixedZ[c] += fFluid.getPhase(0).getComponent(c).getz() * mass;
-	    }
-	  }
+          // Accumulate mass-weighted mole fractions
+          double[] mixedZ = new double[nComp];
+          for (int c = 0; c < nComp; c++) {
+            mixedZ[c] = inflowFluids.get(0).getPhase(0).getComponent(c).getz() * inflowMasses.get(0);
+          }
+          for (int f = 1; f < inflowFluids.size(); f++) {
+            double mass = inflowMasses.get(f);
+            totalMass += mass;
+            SystemInterface fFluid = inflowFluids.get(f);
+            int compCount = Math.min(nComp, fFluid.getNumberOfComponents());
+            for (int c = 0; c < compCount; c++) {
+              mixedZ[c] += fFluid.getPhase(0).getComponent(c).getz() * mass;
+            }
+          }
 
-	  // Normalize
-	  for (int c = 0; c < nComp; c++) {
-	    mixedZ[c] /= totalMass;
-	  }
+          // Normalize
+          for (int c = 0; c < nComp; c++) {
+            mixedZ[c] /= totalMass;
+          }
 
-	  // Set mixed composition — use addComponent to reset moles
-	  for (int c = 0; c < nComp; c++) {
-	    mixedFluid.getPhase(0).getComponent(c).setz(mixedZ[c]);
-	    mixedFluid.getPhase(1).getComponent(c).setz(mixedZ[c]);
-	  }
-	  nodeFluidMap.put(downstream, mixedFluid);
-	}
+          // Set mixed composition — use addComponent to reset moles
+          for (int c = 0; c < nComp; c++) {
+            mixedFluid.getPhase(0).getComponent(c).setz(mixedZ[c]);
+            mixedFluid.getPhase(1).getComponent(c).setz(mixedZ[c]);
+          }
+          nodeFluidMap.put(downstream, mixedFluid);
+        }
 
-	processed.add(downstream);
-	queue.add(downstream);
+        processed.add(downstream);
+        queue.add(downstream);
       }
     }
   }
@@ -4654,7 +4654,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     SystemInterface fluid = fluidTemplate.clone();
     try {
       neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	  fluid);
+          fluid);
       ops.TPflash();
       fluid.initProperties();
     } catch (Exception ex) {
@@ -4668,13 +4668,13 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       // Only check pipe-type elements (not IPR, not abstract elements)
       NetworkElementType type = pipe.getElementType();
       if (type == NetworkElementType.WELL_IPR || type == NetworkElementType.COMPRESSOR
-	  || type == NetworkElementType.REGULATOR) {
-	continue;
+          || type == NetworkElementType.REGULATOR) {
+        continue;
       }
 
       double flowKgs = Math.abs(pipe.getFlowRate());
       if (flowKgs < 1e-10 || pipe.getDiameter() < 1e-6) {
-	continue;
+        continue;
       }
 
       double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
@@ -4686,9 +4686,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       pipe.setErosionalVelocityRatio(velocity / verosional);
 
       if (velocity > verosional) {
-	String msg = String.format("%s: V=%.1f m/s exceeds Ve=%.1f m/s (C=%.0f, ratio=%.2f)", pipe.getName(), velocity,
-	    verosional, cFactor, velocity / verosional);
-	erosionalViolations.add(msg);
+        String msg = String.format("%s: V=%.1f m/s exceeds Ve=%.1f m/s (C=%.0f, ratio=%.2f)", pipe.getName(), velocity,
+            verosional, cFactor, velocity / verosional);
+        erosionalViolations.add(msg);
       }
     }
 
@@ -4724,20 +4724,20 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       SystemInterface fluid = entry.getValue();
 
       try {
-	Standard_ISO6976 iso = new Standard_ISO6976(fluid.clone());
-	iso.setReferenceState("real");
-	iso.setVolRefT(15);
-	iso.setEnergyRefT(15);
-	iso.calculate();
+        Standard_ISO6976 iso = new Standard_ISO6976(fluid.clone());
+        iso.setReferenceState("real");
+        iso.setVolRefT(15);
+        iso.setEnergyRefT(15);
+        iso.calculate();
 
-	double wobbeIndex = iso.getValue("SuperiorWobbeIndex") / 1e3; // kJ -> MJ
-	double hhv = iso.getValue("SuperiorCalorificValue"); // kJ/Sm3
-	double lhv = iso.getValue("InferiorCalorificValue"); // kJ/Sm3
-	double relDens = iso.getValue("RelativeDensity");
+        double wobbeIndex = iso.getValue("SuperiorWobbeIndex") / 1e3; // kJ -> MJ
+        double hhv = iso.getValue("SuperiorCalorificValue"); // kJ/Sm3
+        double lhv = iso.getValue("InferiorCalorificValue"); // kJ/Sm3
+        double relDens = iso.getValue("RelativeDensity");
 
-	nodeGasQuality.put(nodeName, new double[] { wobbeIndex, hhv, lhv, relDens });
+        nodeGasQuality.put(nodeName, new double[] { wobbeIndex, hhv, lhv, relDens });
       } catch (Exception ex) {
-	logger.warn("Gas quality calculation failed for node {}: {}", nodeName, ex.getMessage());
+        logger.warn("Gas quality calculation failed for node {}: {}", nodeName, ex.getMessage());
       }
     }
     return Collections.unmodifiableMap(nodeGasQuality);
@@ -4774,14 +4774,14 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     for (Map.Entry<String, double[]> entry : nodeGasQuality.entrySet()) {
       NetworkNode node = nodes.get(entry.getKey());
       if (node == null || node.getType() != NodeType.SINK) {
-	continue;
+        continue;
       }
       double wobbe = entry.getValue()[0];
       if (wobbe < wobbeMin) {
-	violations.add(String.format("%s: Wobbe=%.2f MJ/Sm3 below min %.2f", entry.getKey(), wobbe, wobbeMin));
+        violations.add(String.format("%s: Wobbe=%.2f MJ/Sm3 below min %.2f", entry.getKey(), wobbe, wobbeMin));
       }
       if (wobbe > wobbeMax) {
-	violations.add(String.format("%s: Wobbe=%.2f MJ/Sm3 above max %.2f", entry.getKey(), wobbe, wobbeMax));
+        violations.add(String.format("%s: Wobbe=%.2f MJ/Sm3 above max %.2f", entry.getKey(), wobbe, wobbeMax));
       }
     }
     return violations;
@@ -4815,32 +4815,32 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       SystemInterface fluid = entry.getValue();
       NetworkNode node = nodes.get(nodeName);
       if (node == null) {
-	continue;
+        continue;
       }
 
       try {
-	// TVP: bubble-point pressure at flowing temperature
-	double nodeTempK = node.getPressure() > 0 ? estimateNodeTemperature(nodeName) : 273.15 + 15.0; // default
-												       // 15C if no
-												       // temperature
-												       // info
-	SystemInterface tvpFluid = fluid.clone();
-	tvpFluid.setTemperature(nodeTempK);
-	tvpFluid.setPressure(1.01325); // start near atmospheric
-	ThermodynamicOperations tvpOps = new ThermodynamicOperations(tvpFluid);
-	tvpOps.bubblePointPressureFlash(false);
-	double tvp = tvpFluid.getPressure(); // bara
+        // TVP: bubble-point pressure at flowing temperature
+        double nodeTempK = node.getPressure() > 0 ? estimateNodeTemperature(nodeName) : 273.15 + 15.0; // default
+        // 15C if no
+        // temperature
+        // info
+        SystemInterface tvpFluid = fluid.clone();
+        tvpFluid.setTemperature(nodeTempK);
+        tvpFluid.setPressure(1.01325); // start near atmospheric
+        ThermodynamicOperations tvpOps = new ThermodynamicOperations(tvpFluid);
+        tvpOps.bubblePointPressureFlash(false);
+        double tvp = tvpFluid.getPressure(); // bara
 
-	// RVP: per ASTM D6377 at 37.8C
-	SystemInterface rvpFluid = fluid.clone();
-	Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(rvpFluid);
-	standard.calculate();
-	double rvp = standard.getValue("RVP"); // bara (default VPCR4 method)
-	double vpcr4 = standard.getValue("TVP"); // TVP from the ASTM standard = VPCR4 base
+        // RVP: per ASTM D6377 at 37.8C
+        SystemInterface rvpFluid = fluid.clone();
+        Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(rvpFluid);
+        standard.calculate();
+        double rvp = standard.getValue("RVP"); // bara (default VPCR4 method)
+        double vpcr4 = standard.getValue("TVP"); // TVP from the ASTM standard = VPCR4 base
 
-	nodeOilQuality.put(nodeName, new double[] { tvp, rvp, vpcr4 });
+        nodeOilQuality.put(nodeName, new double[] { tvp, rvp, vpcr4 });
       } catch (Exception ex) {
-	logger.warn("Oil quality calculation failed for node {}: {}", nodeName, ex.getMessage());
+        logger.warn("Oil quality calculation failed for node {}: {}", nodeName, ex.getMessage());
       }
     }
     return Collections.unmodifiableMap(nodeOilQuality);
@@ -4899,15 +4899,15 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     for (Map.Entry<String, double[]> entry : nodeOilQuality.entrySet()) {
       NetworkNode node = nodes.get(entry.getKey());
       if (node == null || node.getType() != NodeType.SINK) {
-	continue;
+        continue;
       }
       double tvp = entry.getValue()[0];
       double rvp = entry.getValue()[1];
       if (tvp > tvpMaxBara) {
-	violations.add(String.format("%s: TVP=%.4f bara above max %.4f", entry.getKey(), tvp, tvpMaxBara));
+        violations.add(String.format("%s: TVP=%.4f bara above max %.4f", entry.getKey(), tvp, tvpMaxBara));
       }
       if (rvp > rvpMaxBara) {
-	violations.add(String.format("%s: RVP=%.4f bara above max %.4f", entry.getKey(), rvp, rvpMaxBara));
+        violations.add(String.format("%s: RVP=%.4f bara above max %.4f", entry.getKey(), rvp, rvpMaxBara));
       }
     }
     return violations;
@@ -4989,12 +4989,12 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     int crossIdx = 0;
     for (int i = 0; i < numPoints; i++) {
       if (iprRate[i] < 1e-3 && vlpRate[i] < 1e-3) {
-	continue; // Skip points where both rates are essentially zero
+        continue; // Skip points where both rates are essentially zero
       }
       double diff = Math.abs(iprRate[i] - vlpRate[i]);
       if (diff < minDiff) {
-	minDiff = diff;
-	crossIdx = i;
+        minDiff = diff;
+        crossIdx = i;
       }
     }
 
@@ -5024,9 +5024,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       return pi * (pResPa * pResPa - bhpPa * bhpPa);
     } else {
       if (iprPipe.getIprType() == IPRType.VOGEL) {
-	double ratio = bhpPa / pResPa;
-	double qRatio = 1.0 - 0.2 * ratio - 0.8 * ratio * ratio;
-	return iprPipe.getVogelQmax() * Math.max(0.0, qRatio);
+        double ratio = bhpPa / pResPa;
+        double qRatio = 1.0 - 0.2 * ratio - 0.8 * ratio * ratio;
+        return iprPipe.getVogelQmax() * Math.max(0.0, qRatio);
       }
       return pi * (pResPa - bhpPa);
     }
@@ -5058,11 +5058,11 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       double kv = outPipe.getChokeKv();
       double opening = outPipe.getChokeOpening() / 100.0;
       if (kv < 1e-10 || opening < 0.01) {
-	return 0.0;
+        return 0.0;
       }
       double density = (fluidTemplate != null) ? fluidTemplate.getDensity("kg/m3") : 50.0;
       if (density < 1.0) {
-	density = 50.0;
+        density = 50.0;
       }
       double sg = density / 1000.0;
       double dpBar = dpAvailable / 1e5;
@@ -5146,16 +5146,16 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       double[] limits = entry.getValue();
       NetworkNode node = nodes.get(nodeName);
       if (node == null) {
-	continue;
+        continue;
       }
       double pPa = node.getPressure();
       if (pPa < limits[0]) {
-	constraintViolations
-	    .add(String.format("PRESSURE_LOW: %s = %.2f bara < min %.2f bara", nodeName, pPa / 1e5, limits[0] / 1e5));
+        constraintViolations
+            .add(String.format("PRESSURE_LOW: %s = %.2f bara < min %.2f bara", nodeName, pPa / 1e5, limits[0] / 1e5));
       }
       if (pPa > limits[1]) {
-	constraintViolations
-	    .add(String.format("PRESSURE_HIGH: %s = %.2f bara > max %.2f bara", nodeName, pPa / 1e5, limits[1] / 1e5));
+        constraintViolations
+            .add(String.format("PRESSURE_HIGH: %s = %.2f bara > max %.2f bara", nodeName, pPa / 1e5, limits[1] / 1e5));
       }
     }
 
@@ -5165,16 +5165,16 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       double[] limits = entry.getValue();
       NetworkPipe pipe = getPipe(elemName);
       if (pipe == null) {
-	continue;
+        continue;
       }
       double absFlow = Math.abs(pipe.getFlowRate());
       if (absFlow < limits[0]) {
-	constraintViolations.add(String.format("FLOW_LOW: %s = %.0f kg/hr < min %.0f kg/hr", elemName, absFlow * 3600.0,
-	    limits[0] * 3600.0));
+        constraintViolations.add(String.format("FLOW_LOW: %s = %.0f kg/hr < min %.0f kg/hr", elemName, absFlow * 3600.0,
+            limits[0] * 3600.0));
       }
       if (absFlow > limits[1]) {
-	constraintViolations.add(String.format("FLOW_HIGH: %s = %.0f kg/hr > max %.0f kg/hr", elemName,
-	    absFlow * 3600.0, limits[1] * 3600.0));
+        constraintViolations.add(String.format("FLOW_HIGH: %s = %.0f kg/hr > max %.0f kg/hr", elemName,
+            absFlow * 3600.0, limits[1] * 3600.0));
       }
     }
 
@@ -5246,13 +5246,13 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
     for (NetworkPipe pipe : pipes.values()) {
       if (pipe.getElementType() != NetworkElementType.COMPRESSOR) {
-	continue;
+        continue;
       }
 
       double powerKW = pipe.getCompressorPower();
       if (powerKW <= 0.0) {
-	// Estimate power from polytropic head if not set
-	powerKW = estimateCompressorPower(pipe);
+        // Estimate power from polytropic head if not set
+        powerKW = estimateCompressorPower(pipe);
       }
 
       // Get LHV: prefer ISO 6976 calculation, fallback to default
@@ -5260,16 +5260,16 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       String suctionNode = pipe.getFromNode();
       double[] gasQuality = nodeGasQuality.get(suctionNode);
       if (gasQuality != null && gasQuality[2] > 0) {
-	// gasQuality[2] = LHV in kJ/Sm3, convert to kJ/kg using density
-	double relDens = gasQuality[3];
-	if (relDens > 0) {
-	  double molMass = relDens * 28.97e-3; // kg/mol (approx from relative density)
-	  double molarVol = 0.02366; // Sm3/mol at 15C (approx)
-	  double densStd = molMass / molarVol; // kg/Sm3
-	  if (densStd > 0.1) {
-	    lhvKJperKg = gasQuality[2] / densStd;
-	  }
-	}
+        // gasQuality[2] = LHV in kJ/Sm3, convert to kJ/kg using density
+        double relDens = gasQuality[3];
+        if (relDens > 0) {
+          double molMass = relDens * 28.97e-3; // kg/mol (approx from relative density)
+          double molarVol = 0.02366; // Sm3/mol at 15C (approx)
+          double densStd = molMass / molarVol; // kg/Sm3
+          if (densStd > 0.1) {
+            lhvKJperKg = gasQuality[2] / densStd;
+          }
+        }
       }
 
       // Fuel rate = power * heat_rate / (LHV * 3600)
@@ -5321,7 +5321,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     double pratio = pDischarge / pSuction;
     double exponent = (gamma - 1.0) / gamma;
     double polyHead = (gamma / (gamma - 1.0)) * (R * temp / molarMass) * (Math.pow(pratio, exponent) - 1.0)
-	/ efficiency;
+        / efficiency;
     double powerW = massFlow * polyHead;
     return powerW / 1000.0; // kW
   }
@@ -5353,14 +5353,14 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     double totalSinkKgS = 0.0;
     for (NetworkNode node : nodes.values()) {
       if (node.getType() == NodeType.SINK) {
-	// Sum absolute flow into sink from all connected pipes
-	for (NetworkPipe pipe : pipes.values()) {
-	  if (pipe.getToNode().equals(node.getName()) && pipe.getFlowRate() > 0) {
-	    totalSinkKgS += pipe.getFlowRate();
-	  } else if (pipe.getFromNode().equals(node.getName()) && pipe.getFlowRate() < 0) {
-	    totalSinkKgS += Math.abs(pipe.getFlowRate());
-	  }
-	}
+        // Sum absolute flow into sink from all connected pipes
+        for (NetworkPipe pipe : pipes.values()) {
+          if (pipe.getToNode().equals(node.getName()) && pipe.getFlowRate() > 0) {
+            totalSinkKgS += pipe.getFlowRate();
+          } else if (pipe.getFromNode().equals(node.getName()) && pipe.getFlowRate() < 0) {
+            totalSinkKgS += Math.abs(pipe.getFlowRate());
+          }
+        }
       }
     }
     if (totalSinkKgS < 1e-10) {
@@ -5391,7 +5391,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     List<NetworkPipe> chokes = new ArrayList<>();
     for (NetworkPipe pipe : pipes.values()) {
       if (pipe.getElementType() == NetworkElementType.CHOKE) {
-	chokes.add(pipe);
+        chokes.add(pipe);
       }
     }
 
@@ -5409,45 +5409,45 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
       // Check convergence
       if (iter > 0) {
-	double relChange = Math.abs(currentProduction - lastProduction) / Math.max(Math.abs(currentProduction), 1e-10);
-	if (relChange < tolerance) {
-	  logger.info("Choke optimization converged after " + (iter + 1) + " iterations");
-	  break;
-	}
+        double relChange = Math.abs(currentProduction - lastProduction) / Math.max(Math.abs(currentProduction), 1e-10);
+        if (relChange < tolerance) {
+          logger.info("Choke optimization converged after " + (iter + 1) + " iterations");
+          break;
+        }
       }
       lastProduction = currentProduction;
 
       // Compute gradient for each choke
       double[] gradients = new double[chokes.size()];
       for (int c = 0; c < chokes.size(); c++) {
-	NetworkPipe choke = chokes.get(c);
-	double origOpening = choke.getChokeOpening();
+        NetworkPipe choke = chokes.get(c);
+        double origOpening = choke.getChokeOpening();
 
-	// Perturb opening upward
-	double perturbedOpening = Math.min(origOpening + stepSize, 100.0);
-	choke.setChokeOpening(perturbedOpening);
-	run();
-	double productionUp = getTotalSinkFlow();
+        // Perturb opening upward
+        double perturbedOpening = Math.min(origOpening + stepSize, 100.0);
+        choke.setChokeOpening(perturbedOpening);
+        run();
+        double productionUp = getTotalSinkFlow();
 
-	// Restore and perturb downward
-	double perturbedDown = Math.max(origOpening - stepSize, 1.0);
-	choke.setChokeOpening(perturbedDown);
-	run();
-	double productionDown = getTotalSinkFlow();
+        // Restore and perturb downward
+        double perturbedDown = Math.max(origOpening - stepSize, 1.0);
+        choke.setChokeOpening(perturbedDown);
+        run();
+        double productionDown = getTotalSinkFlow();
 
-	// Central difference gradient
-	gradients[c] = (productionUp - productionDown) / (perturbedOpening - perturbedDown);
+        // Central difference gradient
+        gradients[c] = (productionUp - productionDown) / (perturbedOpening - perturbedDown);
 
-	// Restore original
-	choke.setChokeOpening(origOpening);
+        // Restore original
+        choke.setChokeOpening(origOpening);
       }
 
       // Update choke openings in gradient direction
       for (int c = 0; c < chokes.size(); c++) {
-	NetworkPipe choke = chokes.get(c);
-	double newOpening = choke.getChokeOpening() + stepSize * Math.signum(gradients[c]);
-	newOpening = Math.max(1.0, Math.min(100.0, newOpening));
-	choke.setChokeOpening(newOpening);
+        NetworkPipe choke = chokes.get(c);
+        double newOpening = choke.getChokeOpening() + stepSize * Math.signum(gradients[c]);
+        newOpening = Math.max(1.0, Math.min(100.0, newOpening));
+        choke.setChokeOpening(newOpening);
       }
     }
 
@@ -5465,14 +5465,14 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     double totalFlow = 0.0;
     for (NetworkNode node : nodes.values()) {
       if (node.getType() == NodeType.SINK) {
-	// Sum all pipe inflows to this sink
-	for (NetworkPipe pipe : pipes.values()) {
-	  if (pipe.getToNode().equals(node.getName()) && pipe.getFlowRate() > 0) {
-	    totalFlow += pipe.getFlowRate();
-	  } else if (pipe.getFromNode().equals(node.getName()) && pipe.getFlowRate() < 0) {
-	    totalFlow += Math.abs(pipe.getFlowRate());
-	  }
-	}
+        // Sum all pipe inflows to this sink
+        for (NetworkPipe pipe : pipes.values()) {
+          if (pipe.getToNode().equals(node.getName()) && pipe.getFlowRate() > 0) {
+            totalFlow += pipe.getFlowRate();
+          } else if (pipe.getFromNode().equals(node.getName()) && pipe.getFlowRate() < 0) {
+            totalFlow += Math.abs(pipe.getFlowRate());
+          }
+        }
       }
     }
     return totalFlow;
@@ -5499,27 +5499,27 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
       int tableNum = 1;
       for (NetworkPipe pipe : pipes.values()) {
-	if (pipe.getElementType() == NetworkElementType.WELL_IPR
-	    || pipe.getElementType() == NetworkElementType.TUBING) {
-	  exporter.setTableNumber(tableNum);
-	  exporter.setFlowRates(flowRates);
-	  exporter.setTHPs(thps);
-	  if (waterCuts != null) {
-	    exporter.setWaterCuts(waterCuts);
-	  }
-	  if (gors != null) {
-	    exporter.setGORs(gors);
-	  }
+        if (pipe.getElementType() == NetworkElementType.WELL_IPR
+            || pipe.getElementType() == NetworkElementType.TUBING) {
+          exporter.setTableNumber(tableNum);
+          exporter.setFlowRates(flowRates);
+          exporter.setTHPs(thps);
+          if (waterCuts != null) {
+            exporter.setWaterCuts(waterCuts);
+          }
+          if (gors != null) {
+            exporter.setGORs(gors);
+          }
 
-	  // Generate BHP table data from the network model
-	  // For each combo of (flow, THP), solve the well system to get BHP
-	  double[][][][][] bhpTable = generateBHPTable(pipe, flowRates, thps, waterCuts, gors);
-	  exporter.setBHPTable(bhpTable);
+          // Generate BHP table data from the network model
+          // For each combo of (flow, THP), solve the well system to get BHP
+          double[][][][][] bhpTable = generateBHPTable(pipe, flowRates, thps, waterCuts, gors);
+          exporter.setBHPTable(bhpTable);
 
-	  String wellFile = filePath.replace(".inc", "_" + pipe.getName().replaceAll("\\s+", "_") + ".inc");
-	  exporter.exportVFPPROD(wellFile);
-	  tableNum++;
-	}
+          String wellFile = filePath.replace(".inc", "_" + pipe.getName().replaceAll("\\s+", "_") + ".inc");
+          exporter.exportVFPPROD(wellFile);
+          tableNum++;
+        }
       }
       logger.info("VFP tables exported for " + (tableNum - 1) + " well elements to " + filePath);
     } catch (Exception ex) {
@@ -5552,45 +5552,46 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       // Use source node pressure as reservoir pressure
       NetworkNode srcNode = nodes.get(pipe.getFromNode());
       if (srcNode != null) {
-	pRes = srcNode.getPressure();
+        pRes = srcNode.getPressure();
       }
     }
 
     for (int f = 0; f < nFlow; f++) {
       for (int t = 0; t < nThp; t++) {
-	for (int w = 0; w < nWc; w++) {
-	  for (int g = 0; g < nGor; g++) {
-	    // Calculate BHP from IPR at this flow rate
-	    double qSm3d = flowRates[f];
-	    // Convert to kg/s using approximate density (gas ~0.8 kg/m3 at std conditions)
-	    double qKgs = qSm3d * 0.8 / 86400.0;
+        for (int w = 0; w < nWc; w++) {
+          for (int g = 0; g < nGor; g++) {
+            // Calculate BHP from IPR at this flow rate
+            double qSm3d = flowRates[f];
+            // Convert to kg/s using approximate density (gas ~0.8 kg/m3 at std
+            // conditions)
+            double qKgs = qSm3d * 0.8 / 86400.0;
 
-	    double bhp;
-	    switch (pipe.getIprType()) {
-	    case VOGEL:
-	      double qmax = pipe.getVogelQmax();
-	      double qRatio = Math.min(Math.abs(qKgs) / qmax, 0.999);
-	      double pwfRatio = (-0.2 + Math.sqrt(0.04 + 3.2 * (1.0 - qRatio))) / 1.6;
-	      bhp = pRes * pwfRatio;
-	      break;
-	    case FETKOVICH:
-	      double cCoeff = pipe.getFetkovichC();
-	      double nExp = pipe.getFetkovichN();
-	      double p2d = Math.pow(Math.abs(qKgs) / cCoeff, 1.0 / nExp);
-	      bhp = Math.sqrt(Math.max(pRes * pRes - p2d, 0.0));
-	      break;
-	    default:
-	      double pi = pipe.getProductivityIndex();
-	      if (pipe.isGasIPR()) {
-		bhp = Math.sqrt(Math.max(pRes * pRes - Math.abs(qKgs) / pi, 0.0));
-	      } else {
-		bhp = pRes - Math.abs(qKgs) / Math.max(pi, 1e-20);
-	      }
-	      break;
-	    }
-	    bhpTable[f][t][w][g][0] = Math.max(bhp / 1e5, 0.0); // Convert to bara
-	  }
-	}
+            double bhp;
+            switch (pipe.getIprType()) {
+            case VOGEL:
+              double qmax = pipe.getVogelQmax();
+              double qRatio = Math.min(Math.abs(qKgs) / qmax, 0.999);
+              double pwfRatio = (-0.2 + Math.sqrt(0.04 + 3.2 * (1.0 - qRatio))) / 1.6;
+              bhp = pRes * pwfRatio;
+              break;
+            case FETKOVICH:
+              double cCoeff = pipe.getFetkovichC();
+              double nExp = pipe.getFetkovichN();
+              double p2d = Math.pow(Math.abs(qKgs) / cCoeff, 1.0 / nExp);
+              bhp = Math.sqrt(Math.max(pRes * pRes - p2d, 0.0));
+              break;
+            default:
+              double pi = pipe.getProductivityIndex();
+              if (pipe.isGasIPR()) {
+                bhp = Math.sqrt(Math.max(pRes * pRes - Math.abs(qKgs) / pi, 0.0));
+              } else {
+                bhp = pRes - Math.abs(qKgs) / Math.max(pi, 1e-20);
+              }
+              break;
+            }
+            bhpTable[f][t][w][g][0] = Math.max(bhp / 1e5, 0.0); // Convert to bara
+          }
+        }
       }
     }
 
@@ -5618,7 +5619,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   public void setOilPrice(double pricePerKg) {
     for (NetworkPipe pipe : pipes.values()) {
       if (pipe.getElementType() == NetworkElementType.WELL_IPR || pipe.getElementType() == NetworkElementType.CHOKE) {
-	wellOilPrices.put(pipe.getName(), pricePerKg);
+        wellOilPrices.put(pipe.getName(), pricePerKg);
       }
     }
   }
@@ -5631,7 +5632,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   public void setGasPrice(double pricePerKg) {
     for (NetworkPipe pipe : pipes.values()) {
       if (pipe.getElementType() == NetworkElementType.WELL_IPR || pipe.getElementType() == NetworkElementType.CHOKE) {
-	wellGasPrices.put(pipe.getName(), pricePerKg);
+        wellGasPrices.put(pipe.getName(), pricePerKg);
       }
     }
   }
@@ -5662,7 +5663,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     List<NetworkPipe> chokes = new ArrayList<>();
     for (NetworkPipe pipe : pipes.values()) {
       if (pipe.getElementType() == NetworkElementType.CHOKE) {
-	chokes.add(pipe);
+        chokes.add(pipe);
       }
     }
     if (chokes.isEmpty()) {
@@ -5680,10 +5681,10 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       double currentObj = computeObjective();
 
       if (iter > 0) {
-	double relChange = Math.abs(currentObj - lastObjective) / Math.max(Math.abs(currentObj), 1e-10);
-	if (relChange < tolerance) {
-	  break;
-	}
+        double relChange = Math.abs(currentObj - lastObjective) / Math.max(Math.abs(currentObj), 1e-10);
+        if (relChange < tolerance) {
+          break;
+        }
       }
       lastObjective = currentObj;
 
@@ -5691,57 +5692,57 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       double[] gradients = new double[chokes.size()];
       double[] openings = new double[chokes.size()];
       for (int c = 0; c < chokes.size(); c++) {
-	NetworkPipe choke = chokes.get(c);
-	openings[c] = choke.getChokeOpening();
-	double h = Math.max(stepSize * 0.1, 0.5);
+        NetworkPipe choke = chokes.get(c);
+        openings[c] = choke.getChokeOpening();
+        double h = Math.max(stepSize * 0.1, 0.5);
 
-	double upOpen = Math.min(openings[c] + h, 100.0);
-	choke.setChokeOpening(upOpen);
-	run();
-	double objUp = computeConstrainedObjective();
+        double upOpen = Math.min(openings[c] + h, 100.0);
+        choke.setChokeOpening(upOpen);
+        run();
+        double objUp = computeConstrainedObjective();
 
-	double downOpen = Math.max(openings[c] - h, 1.0);
-	choke.setChokeOpening(downOpen);
-	run();
-	double objDown = computeConstrainedObjective();
+        double downOpen = Math.max(openings[c] - h, 1.0);
+        choke.setChokeOpening(downOpen);
+        run();
+        double objDown = computeConstrainedObjective();
 
-	gradients[c] = (objUp - objDown) / (upOpen - downOpen);
-	choke.setChokeOpening(openings[c]);
+        gradients[c] = (objUp - objDown) / (upOpen - downOpen);
+        choke.setChokeOpening(openings[c]);
       }
 
       // Normalize gradient and apply Armijo backtracking line search
       double gradNorm = 0.0;
       for (double g : gradients) {
-	gradNorm += g * g;
+        gradNorm += g * g;
       }
       gradNorm = Math.sqrt(gradNorm);
       if (gradNorm < 1e-15) {
-	break;
+        break;
       }
 
       // Try full step, then backtrack
       double alpha = stepSize;
       boolean improved = false;
       for (int bt = 0; bt < 5; bt++) {
-	for (int c = 0; c < chokes.size(); c++) {
-	  double newOpen = openings[c] + alpha * gradients[c] / gradNorm;
-	  chokes.get(c).setChokeOpening(Math.max(1.0, Math.min(100.0, newOpen)));
-	}
-	run();
-	double trialObj = computeConstrainedObjective();
-	if (trialObj > currentObj - 1e-10) {
-	  improved = true;
-	  break;
-	}
-	alpha *= 0.5;
+        for (int c = 0; c < chokes.size(); c++) {
+          double newOpen = openings[c] + alpha * gradients[c] / gradNorm;
+          chokes.get(c).setChokeOpening(Math.max(1.0, Math.min(100.0, newOpen)));
+        }
+        run();
+        double trialObj = computeConstrainedObjective();
+        if (trialObj > currentObj - 1e-10) {
+          improved = true;
+          break;
+        }
+        alpha *= 0.5;
       }
 
       if (!improved) {
-	// Restore and reduce step size
-	for (int c = 0; c < chokes.size(); c++) {
-	  chokes.get(c).setChokeOpening(openings[c]);
-	}
-	stepSize = Math.max(stepSize * stepDecay, minStep);
+        // Restore and reduce step size
+        for (int c = 0; c < chokes.size(); c++) {
+          chokes.get(c).setChokeOpening(openings[c]);
+        }
+        stepSize = Math.max(stepSize * stepDecay, minStep);
       }
     }
 
@@ -5763,13 +5764,13 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     double revenue = 0.0;
     for (NetworkPipe pipe : pipes.values()) {
       if (pipe.getElementType() == NetworkElementType.CHOKE || pipe.getElementType() == NetworkElementType.WELL_IPR) {
-	double rate = Math.abs(pipe.getFlowRate()) * 3600.0; // kg/hr
-	Double price = wellOilPrices.get(pipe.getName());
-	if (price != null) {
-	  revenue += rate * price;
-	} else {
-	  revenue += rate;
-	}
+        double rate = Math.abs(pipe.getFlowRate()) * 3600.0; // kg/hr
+        Double price = wellOilPrices.get(pipe.getName());
+        if (price != null) {
+          revenue += rate * price;
+        } else {
+          revenue += rate;
+        }
       }
     }
     return revenue;
@@ -5801,12 +5802,12 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     wellAllocationResults.clear();
     for (NetworkPipe pipe : pipes.values()) {
       if (pipe.getElementType() == NetworkElementType.WELL_IPR || pipe.getElementType() == NetworkElementType.CHOKE) {
-	double rate = Math.abs(pipe.getFlowRate()) * 3600.0; // kg/hr
-	Double price = wellOilPrices.get(pipe.getName());
-	double rev = (price != null) ? rate * price : rate;
-	double opening = pipe.getChokeOpening();
-	// [0]=rate_kg_hr, [1]=revenue_usd_hr, [2]=choke_opening_pct
-	wellAllocationResults.put(pipe.getName(), new double[] { rate, rev, opening });
+        double rate = Math.abs(pipe.getFlowRate()) * 3600.0; // kg/hr
+        Double price = wellOilPrices.get(pipe.getName());
+        double rev = (price != null) ? rate * price : rate;
+        double opening = pipe.getChokeOpening();
+        // [0]=rate_kg_hr, [1]=revenue_usd_hr, [2]=choke_opening_pct
+        wellAllocationResults.put(pipe.getName(), new double[] { rate, rev, opening });
       }
     }
   }
@@ -5856,19 +5857,19 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     if (targetPipe != null) {
       switch (parameterType) {
       case "choke_opening":
-	origValue = targetPipe.getChokeOpening();
-	break;
+        origValue = targetPipe.getChokeOpening();
+        break;
       case "reservoir_pressure":
-	origValue = targetPipe.getReservoirPressure() / 1e5;
-	break;
+        origValue = targetPipe.getReservoirPressure() / 1e5;
+        break;
       case "well_pi":
-	origValue = targetPipe.getProductivityIndex();
-	break;
+        origValue = targetPipe.getProductivityIndex();
+        break;
       case "pipe_diameter":
-	origValue = targetPipe.getDiameter();
-	break;
+        origValue = targetPipe.getDiameter();
+        break;
       default:
-	break;
+        break;
       }
     } else if (targetNode != null && "sink_pressure".equals(parameterType)) {
       origValue = targetNode.getPressure() / 1e5;
@@ -5879,12 +5880,12 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       applyParameterValue(elementName, parameterType, values[i]);
 
       try {
-	run();
-	totalFlows[i] = getTotalSinkFlow() * 3600.0; // kg/hr
-	objectiveValues[i] = computeObjective();
+        run();
+        totalFlows[i] = getTotalSinkFlow() * 3600.0; // kg/hr
+        objectiveValues[i] = computeObjective();
       } catch (Exception e) {
-	totalFlows[i] = 0.0;
-	objectiveValues[i] = 0.0;
+        totalFlows[i] = 0.0;
+        objectiveValues[i] = 0.0;
       }
     }
 
@@ -5912,19 +5913,19 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     if (pipe != null) {
       switch (parameterType) {
       case "choke_opening":
-	pipe.setChokeOpening(Math.max(1.0, Math.min(100.0, value)));
-	break;
+        pipe.setChokeOpening(Math.max(1.0, Math.min(100.0, value)));
+        break;
       case "reservoir_pressure":
-	pipe.setReservoirPressure(value * 1e5); // bara -> Pa
-	break;
+        pipe.setReservoirPressure(value * 1e5); // bara -> Pa
+        break;
       case "well_pi":
-	pipe.setProductivityIndex(value);
-	break;
+        pipe.setProductivityIndex(value);
+        break;
       case "pipe_diameter":
-	pipe.setDiameter(value);
-	break;
+        pipe.setDiameter(value);
+        break;
       default:
-	break;
+        break;
       }
     } else if (node != null && "sink_pressure".equals(parameterType)) {
       node.setPressure(value * 1e5);
@@ -5958,7 +5959,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     List<NetworkPipe> wells = new ArrayList<>();
     for (NetworkPipe pipe : pipes.values()) {
       if (pipe.getElementType() == NetworkElementType.WELL_IPR) {
-	wells.add(pipe);
+        wells.add(pipe);
       }
     }
 
@@ -5967,12 +5968,12 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       // Update all well reservoir pressures
       double pResPa = reservoirPressures[t] * 1e5;
       for (NetworkPipe well : wells) {
-	well.setReservoirPressure(pResPa);
-	// Also update the source node pressure
-	NetworkNode srcNode = nodes.get(well.getFromNode());
-	if (srcNode != null && srcNode.getType() == NodeType.SOURCE) {
-	  srcNode.setPressure(pResPa);
-	}
+        well.setReservoirPressure(pResPa);
+        // Also update the source node pressure
+        NetworkNode srcNode = nodes.get(well.getFromNode());
+        if (srcNode != null && srcNode.getType() == NodeType.SOURCE) {
+          srcNode.setPressure(pResPa);
+        }
       }
 
       run();
@@ -5982,8 +5983,8 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
       // Cumulative production (trapezoidal integration)
       if (t > 0) {
-	double dtHours = (timestepYears[t] - timestepYears[t - 1]) * 8760.0;
-	cumProd += 0.5 * (rates[t - 1] + rates[t]) * dtHours;
+        double dtHours = (timestepYears[t] - timestepYears[t - 1]) * 8760.0;
+        cumProd += 0.5 * (rates[t - 1] + rates[t]) * dtHours;
       }
       cumulative[t] = cumProd;
     }
@@ -6018,48 +6019,48 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     // Find IPR + downstream tubing/flowline pairs
     for (NetworkPipe iprPipe : pipes.values()) {
       if (iprPipe.getElementType() != NetworkElementType.WELL_IPR) {
-	continue;
+        continue;
       }
 
       String wellName = iprPipe.getName();
       double pRes = iprPipe.getReservoirPressure(); // Pa
       if (pRes < 1e5) {
-	NetworkNode srcNode = nodes.get(iprPipe.getFromNode());
-	if (srcNode != null) {
-	  pRes = srcNode.getPressure();
-	}
+        NetworkNode srcNode = nodes.get(iprPipe.getFromNode());
+        if (srcNode != null) {
+          pRes = srcNode.getPressure();
+        }
       }
 
       // Find the outflow element(s) from the IPR downstream node
       String bhpNodeName = iprPipe.getToNode();
       List<NetworkPipe> outflowElements = new ArrayList<>();
       for (NetworkPipe p : pipes.values()) {
-	if (p.getFromNode().equals(bhpNodeName) && p != iprPipe) {
-	  outflowElements.add(p);
-	}
+        if (p.getFromNode().equals(bhpNodeName) && p != iprPipe) {
+          outflowElements.add(p);
+        }
       }
 
       double[][] bhpTable = new double[flowRates_kghr.length][thps.length];
 
       for (int f = 0; f < flowRates_kghr.length; f++) {
-	for (int t = 0; t < thps.length; t++) {
-	  double qKgHr = flowRates_kghr[f];
-	  double thpPa = thps[t] * 1e5;
+        for (int t = 0; t < thps.length; t++) {
+          double qKgHr = flowRates_kghr[f];
+          double thpPa = thps[t] * 1e5;
 
-	  // Calculate BHP by summing THP + pressure drops through outflow elements
-	  double totalDp = 0.0;
-	  for (NetworkPipe outPipe : outflowElements) {
-	    double dpPa = estimatePressureDropAtRate(outPipe, qKgHr / 3600.0);
-	    totalDp += dpPa;
-	  }
+          // Calculate BHP by summing THP + pressure drops through outflow elements
+          double totalDp = 0.0;
+          for (NetworkPipe outPipe : outflowElements) {
+            double dpPa = estimatePressureDropAtRate(outPipe, qKgHr / 3600.0);
+            totalDp += dpPa;
+          }
 
-	  // BHP from IPR: for given Q, what BHP is needed?
-	  double bhpFromIpr = computeBHPFromIPR(iprPipe, pRes, qKgHr / 3600.0);
+          // BHP from IPR: for given Q, what BHP is needed?
+          double bhpFromIpr = computeBHPFromIPR(iprPipe, pRes, qKgHr / 3600.0);
 
-	  // Coupled BHP = max(IPR-derived BHP, THP + outflow dP)
-	  double bhpCoupled = Math.max(bhpFromIpr, (thpPa + totalDp));
-	  bhpTable[f][t] = Math.max(bhpCoupled / 1e5, 0.0); // bara
-	}
+          // Coupled BHP = max(IPR-derived BHP, THP + outflow dP)
+          double bhpCoupled = Math.max(bhpFromIpr, (thpPa + totalDp));
+          bhpTable[f][t] = Math.max(bhpCoupled / 1e5, 0.0); // bara
+        }
       }
 
       allTables.put(wellName, bhpTable);
@@ -6095,7 +6096,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       return Math.sqrt(Math.max(pResPa * pResPa - p2diff, 0.0));
     default:
       if (iprPipe.isGasIPR()) {
-	return Math.sqrt(Math.max(pResPa * pResPa - Math.abs(qKgs) / pi, 0.0));
+        return Math.sqrt(Math.max(pResPa * pResPa - Math.abs(qKgs) / pi, 0.0));
       }
       return Math.max(pResPa - Math.abs(qKgs) / Math.max(pi, 1e-20), 0.0);
     }
@@ -6121,7 +6122,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       double kv = pipe.getChokeKv();
       double opening = pipe.getChokeOpening() / 100.0;
       if (kv < 1e-10 || opening < 0.01) {
-	return 1e7;
+        return 1e7;
       }
       double sg = density / 1000.0;
       double qm3hr = qKgs * 3600.0 / density;
@@ -6158,33 +6159,33 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     int tableNum = 1;
     for (Map.Entry<String, double[][]> entry : tables.entrySet()) {
       try {
-	neqsim.process.util.optimizer.EclipseVFPExporter exporter = new neqsim.process.util.optimizer.EclipseVFPExporter();
-	exporter.setTableNumber(tableNum);
-	exporter.setTableTitle("Coupled VFP for " + entry.getKey());
+        neqsim.process.util.optimizer.EclipseVFPExporter exporter = new neqsim.process.util.optimizer.EclipseVFPExporter();
+        exporter.setTableNumber(tableNum);
+        exporter.setTableTitle("Coupled VFP for " + entry.getKey());
 
-	// Convert kg/hr to Sm3/d (approximate: gas density ~0.8 kg/Sm3)
-	double[] flowRatesSm3d = new double[flowRates_kghr.length];
-	for (int i = 0; i < flowRates_kghr.length; i++) {
-	  flowRatesSm3d[i] = flowRates_kghr[i] / 0.8 * 24.0;
-	}
-	exporter.setFlowRates(flowRatesSm3d);
-	exporter.setTHPs(thps);
+        // Convert kg/hr to Sm3/d (approximate: gas density ~0.8 kg/Sm3)
+        double[] flowRatesSm3d = new double[flowRates_kghr.length];
+        for (int i = 0; i < flowRates_kghr.length; i++) {
+          flowRatesSm3d[i] = flowRates_kghr[i] / 0.8 * 24.0;
+        }
+        exporter.setFlowRates(flowRatesSm3d);
+        exporter.setTHPs(thps);
 
-	// Convert 2D table to 5D (single WC, GOR, ALQ)
-	double[][] bhp2d = entry.getValue();
-	double[][][][][] bhp5d = new double[bhp2d.length][bhp2d[0].length][1][1][1];
-	for (int f = 0; f < bhp2d.length; f++) {
-	  for (int t = 0; t < bhp2d[0].length; t++) {
-	    bhp5d[f][t][0][0][0] = bhp2d[f][t];
-	  }
-	}
-	exporter.setBHPTable(bhp5d);
+        // Convert 2D table to 5D (single WC, GOR, ALQ)
+        double[][] bhp2d = entry.getValue();
+        double[][][][][] bhp5d = new double[bhp2d.length][bhp2d[0].length][1][1][1];
+        for (int f = 0; f < bhp2d.length; f++) {
+          for (int t = 0; t < bhp2d[0].length; t++) {
+            bhp5d[f][t][0][0][0] = bhp2d[f][t];
+          }
+        }
+        exporter.setBHPTable(bhp5d);
 
-	String wellFile = filePath.replace(".inc", "_" + entry.getKey().replaceAll("\\s+", "_") + ".inc");
-	exporter.exportVFPPROD(wellFile);
-	tableNum++;
+        String wellFile = filePath.replace(".inc", "_" + entry.getKey().replaceAll("\\s+", "_") + ".inc");
+        exporter.exportVFPPROD(wellFile);
+        tableNum++;
       } catch (Exception ex) {
-	logger.error("Coupled VFP export failed for " + entry.getKey() + ": " + ex.getMessage());
+        logger.error("Coupled VFP export failed for " + entry.getKey() + ": " + ex.getMessage());
       }
     }
     logger.info("Exported coupled VFP tables for " + (tableNum - 1) + " wells to " + filePath);
@@ -6212,7 +6213,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     Map<String, Double> origSourcePressures = new LinkedHashMap<>();
     for (NetworkNode node : nodes.values()) {
       if (node.getType() == NodeType.SOURCE) {
-	origSourcePressures.put(node.getName(), node.getPressure());
+        origSourcePressures.put(node.getName(), node.getPressure());
       }
     }
 
@@ -6225,32 +6226,32 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
       double pResult = pHigh;
       for (int bisect = 0; bisect < 30; bisect++) {
-	double pMid = (pLow + pHigh) / 2.0;
+        double pMid = (pLow + pHigh) / 2.0;
 
-	// Set all source node pressures proportionally
-	for (Map.Entry<String, Double> entry : origSourcePressures.entrySet()) {
-	  double ratio = pMid / origSourcePressures.values().iterator().next();
-	  nodes.get(entry.getKey()).setPressure(entry.getValue() * ratio);
-	  // Also update IPR reservoir pressures
-	  for (NetworkPipe pipe : pipes.values()) {
-	    if (pipe.getElementType() == NetworkElementType.WELL_IPR && pipe.getFromNode().equals(entry.getKey())) {
-	      pipe.setReservoirPressure(entry.getValue() * ratio);
-	    }
-	  }
-	}
+        // Set all source node pressures proportionally
+        for (Map.Entry<String, Double> entry : origSourcePressures.entrySet()) {
+          double ratio = pMid / origSourcePressures.values().iterator().next();
+          nodes.get(entry.getKey()).setPressure(entry.getValue() * ratio);
+          // Also update IPR reservoir pressures
+          for (NetworkPipe pipe : pipes.values()) {
+            if (pipe.getElementType() == NetworkElementType.WELL_IPR && pipe.getFromNode().equals(entry.getKey())) {
+              pipe.setReservoirPressure(entry.getValue() * ratio);
+            }
+          }
+        }
 
-	try {
-	  run();
-	  double actualRate = getTotalSinkFlow();
-	  if (Math.abs(actualRate) > targetRate) {
-	    pHigh = pMid;
-	  } else {
-	    pLow = pMid;
-	  }
-	  pResult = pMid;
-	} catch (Exception e) {
-	  pHigh = pMid;
-	}
+        try {
+          run();
+          double actualRate = getTotalSinkFlow();
+          if (Math.abs(actualRate) > targetRate) {
+            pHigh = pMid;
+          } else {
+            pLow = pMid;
+          }
+          pResult = pMid;
+        } catch (Exception e) {
+          pHigh = pMid;
+        }
       }
 
       pressures[i] = pResult / 1e5; // bara
@@ -6260,9 +6261,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     for (Map.Entry<String, Double> entry : origSourcePressures.entrySet()) {
       nodes.get(entry.getKey()).setPressure(entry.getValue());
       for (NetworkPipe pipe : pipes.values()) {
-	if (pipe.getElementType() == NetworkElementType.WELL_IPR && pipe.getFromNode().equals(entry.getKey())) {
-	  pipe.setReservoirPressure(entry.getValue());
-	}
+        if (pipe.getElementType() == NetworkElementType.WELL_IPR && pipe.getFromNode().equals(entry.getKey())) {
+          pipe.setReservoirPressure(entry.getValue());
+        }
       }
     }
     run();
@@ -6321,11 +6322,11 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     int ix = 0;
     for (int i = 0; i < xAxis.length - 1; i++) {
       if (x >= xAxis[i] && x <= xAxis[i + 1]) {
-	ix = i;
-	break;
+        ix = i;
+        break;
       }
       if (x > xAxis[i]) {
-	ix = i;
+        ix = i;
       }
     }
     int ix2 = Math.min(ix + 1, xAxis.length - 1);
@@ -6334,11 +6335,11 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     int iy = 0;
     for (int i = 0; i < yAxis.length - 1; i++) {
       if (y >= yAxis[i] && y <= yAxis[i + 1]) {
-	iy = i;
-	break;
+        iy = i;
+        break;
       }
       if (y > yAxis[i]) {
-	iy = i;
+        iy = i;
       }
     }
     int iy2 = Math.min(iy + 1, yAxis.length - 1);
@@ -6370,28 +6371,28 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     StringBuilder sb = new StringBuilder();
     sb.append("=== Network Solution Report ===\n");
     sb.append(String.format("Network: %s | Converged: %b | Iterations: %d | Max Residual: %.2f Pa%n", getName(),
-	converged, iterationCount, maxResidual));
+        converged, iterationCount, maxResidual));
     sb.append("\n--- Nodes ---\n");
     sb.append(String.format("%-20s %-10s %12s %12s%n", "Name", "Type", "P (bara)", "Demand (kg/h)"));
     for (NetworkNode node : nodes.values()) {
       sb.append(String.format("%-20s %-10s %12.2f %12.2f%n", node.getName(), node.getType().name(),
-	  node.getPressure() / 1e5, node.getDemand() * 3600.0));
+          node.getPressure() / 1e5, node.getDemand() * 3600.0));
     }
 
     sb.append("\n--- Elements ---\n");
     sb.append(String.format("%-20s %-12s %-12s %-8s %12s %12s %10s%n", "Name", "Type", "From", "To", "Flow (kg/h)",
-	"dP (bar)", "Velocity"));
+        "dP (bar)", "Velocity"));
     for (NetworkPipe pipe : pipes.values()) {
       sb.append(String.format("%-20s %-12s %-12s %-8s %12.2f %12.4f %10.2f%n", pipe.getName(),
-	  pipe.getElementType().name(), pipe.getFromNode(), pipe.getToNode(), pipe.getFlowRate() * 3600.0,
-	  pipe.getHeadLoss() / 1e5, pipe.getVelocity()));
+          pipe.getElementType().name(), pipe.getFromNode(), pipe.getToNode(), pipe.getFlowRate() * 3600.0,
+          pipe.getHeadLoss() / 1e5, pipe.getVelocity()));
     }
 
     // Erosional violations
     if (!erosionalViolations.isEmpty()) {
       sb.append("\n--- Erosional Velocity Violations (API RP 14E) ---\n");
       for (String v : erosionalViolations) {
-	sb.append("  WARN: ").append(v).append("\n");
+        sb.append("  WARN: ").append(v).append("\n");
       }
     }
 
@@ -6400,7 +6401,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       sb.append("\n--- Gas Composition at Nodes ---\n");
       sb.append(String.format("%-20s %12s%n", "Node", "Components"));
       for (Map.Entry<String, SystemInterface> entry : nodeFluidMap.entrySet()) {
-	sb.append(String.format("%-20s %12d%n", entry.getKey(), entry.getValue().getNumberOfComponents()));
+        sb.append(String.format("%-20s %12d%n", entry.getKey(), entry.getValue().getNumberOfComponents()));
       }
     }
 
@@ -6408,10 +6409,10 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     if (!nodeGasQuality.isEmpty()) {
       sb.append("\n--- Gas Quality (ISO 6976 @ 15C) ---\n");
       sb.append(String.format("%-20s %12s %12s %12s %10s%n", "Node", "Wobbe(MJ/Sm3)", "HHV(kJ/Sm3)", "LHV(kJ/Sm3)",
-	  "Rel.Dens"));
+          "Rel.Dens"));
       for (Map.Entry<String, double[]> entry : nodeGasQuality.entrySet()) {
-	double[] q = entry.getValue();
-	sb.append(String.format("%-20s %12.2f %12.1f %12.1f %10.4f%n", entry.getKey(), q[0], q[1], q[2], q[3]));
+        double[] q = entry.getValue();
+        sb.append(String.format("%-20s %12.2f %12.1f %12.1f %10.4f%n", entry.getKey(), q[0], q[1], q[2], q[3]));
       }
     }
 
@@ -6420,8 +6421,8 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       sb.append("\n--- Oil Quality (TVP / RVP per ASTM D6377) ---\n");
       sb.append(String.format("%-20s %12s %12s %12s%n", "Node", "TVP(bara)", "RVP(bara)", "VPCR4(bara)"));
       for (Map.Entry<String, double[]> entry : nodeOilQuality.entrySet()) {
-	double[] q = entry.getValue();
-	sb.append(String.format("%-20s %12.4f %12.4f %12.4f%n", entry.getKey(), q[0], q[1], q[2]));
+        double[] q = entry.getValue();
+        sb.append(String.format("%-20s %12.4f %12.4f %12.4f%n", entry.getKey(), q[0], q[1], q[2]));
       }
     }
 
@@ -6429,18 +6430,18 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     boolean hasLift = false;
     for (NetworkPipe pipe : pipes.values()) {
       if (pipe.getArtificialLiftType() != ArtificialLiftType.NONE) {
-	if (!hasLift) {
-	  sb.append("\n--- Artificial Lift ---\n");
-	  sb.append(String.format("%-20s %-12s %12s %12s%n", "Well", "Lift Type", "GL Rate(kg/h)", "ESP Power(kW)"));
-	  hasLift = true;
-	}
-	sb.append(String.format("%-20s %-12s %12.1f %12.1f%n", pipe.getName(), pipe.getArtificialLiftType().name(),
-	    pipe.getGasLiftRate() * 3600.0, pipe.getEspPower()));
+        if (!hasLift) {
+          sb.append("\n--- Artificial Lift ---\n");
+          sb.append(String.format("%-20s %-12s %12s %12s%n", "Well", "Lift Type", "GL Rate(kg/h)", "ESP Power(kW)"));
+          hasLift = true;
+        }
+        sb.append(String.format("%-20s %-12s %12.1f %12.1f%n", pipe.getName(), pipe.getArtificialLiftType().name(),
+            pipe.getGasLiftRate() * 3600.0, pipe.getEspPower()));
       }
     }
     if (hasLift) {
       sb.append(String.format("  Total gas lift: %.1f kg/hr | Total ESP power: %.1f kW%n", getTotalGasLiftRate(),
-	  getTotalESPPower()));
+          getTotalESPPower()));
     }
 
     // Water balance
@@ -6448,8 +6449,8 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       sb.append("\n--- Water Balance ---\n");
       sb.append(String.format("%-20s %12s %12s %12s%n", "Node", "WaterProd(kg/h)", "WaterInj(kg/h)", "NetWater(kg/h)"));
       for (Map.Entry<String, double[]> entry : nodeWaterBalance.entrySet()) {
-	double[] wb = entry.getValue();
-	sb.append(String.format("%-20s %12.1f %12.1f %12.1f%n", entry.getKey(), wb[0], wb[1], wb[2]));
+        double[] wb = entry.getValue();
+        sb.append(String.format("%-20s %12.1f %12.1f %12.1f%n", entry.getKey(), wb[0], wb[1], wb[2]));
       }
       sb.append(String.format("  Total water production: %.1f kg/hr%n", getTotalWaterProduction()));
       sb.append(String.format("  Total water injection: %.1f kg/hr%n", getTotalWaterInjection()));
@@ -6459,16 +6460,16 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     if (!pipeSandResults.isEmpty()) {
       sb.append("\n--- Sand Transport & Erosion (DNV RP O501) ---\n");
       sb.append(String.format("%-20s %12s %12s %12s %12s%n", "Element", "SandConc(kg/m3)", "Erosion(mm/yr)",
-	  "Deposition(kg/m/yr)", "Velocity(m/s)"));
+          "Deposition(kg/m/yr)", "Velocity(m/s)"));
       for (Map.Entry<String, double[]> entry : pipeSandResults.entrySet()) {
-	double[] sr = entry.getValue();
-	sb.append(String.format("%-20s %12.4f %12.3f %12.2f %12.2f%n", entry.getKey(), sr[0], sr[1], sr[2], sr[3]));
+        double[] sr = entry.getValue();
+        sb.append(String.format("%-20s %12.4f %12.3f %12.2f %12.2f%n", entry.getKey(), sr[0], sr[1], sr[2], sr[3]));
       }
     }
     if (!sandViolations.isEmpty()) {
       sb.append("\n--- Sand/Erosion Violations ---\n");
       for (String v : sandViolations) {
-	sb.append("  WARN: ").append(v).append("\n");
+        sb.append("  WARN: ").append(v).append("\n");
       }
     }
 
@@ -6476,16 +6477,16 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     if (!pipeCorrosionResults.isEmpty()) {
       sb.append("\n--- Corrosion Assessment ---\n");
       sb.append(
-	  String.format("%-20s %12s %12s %12s %12s%n", "Element", "CR(mm/yr)", "pCO2(bar)", "pH2S(bar)", "Life(yr)"));
+          String.format("%-20s %12s %12s %12s %12s%n", "Element", "CR(mm/yr)", "pCO2(bar)", "pH2S(bar)", "Life(yr)"));
       for (Map.Entry<String, double[]> entry : pipeCorrosionResults.entrySet()) {
-	double[] cr = entry.getValue();
-	sb.append(String.format("%-20s %12.3f %12.4f %12.4f %12.1f%n", entry.getKey(), cr[0], cr[1], cr[2], cr[3]));
+        double[] cr = entry.getValue();
+        sb.append(String.format("%-20s %12.3f %12.4f %12.4f %12.1f%n", entry.getKey(), cr[0], cr[1], cr[2], cr[3]));
       }
     }
     if (!corrosionViolations.isEmpty()) {
       sb.append("\n--- Corrosion Integrity Violations ---\n");
       for (String v : corrosionViolations) {
-	sb.append("  ALERT: ").append(v).append("\n");
+        sb.append("  ALERT: ").append(v).append("\n");
       }
     }
 
@@ -6493,14 +6494,14 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     if (!emissionsResults.isEmpty()) {
       sb.append("\n--- GHG Emissions (per compressor) ---\n");
       sb.append(String.format("%-20s %12s %12s %12s %12s %12s%n", "Compressor", "CO2(kg/hr)", "CH4slip(kg/hr)",
-	  "CO2eq(kg/hr)", "Power(kW)", "FuelGas(kg/hr)"));
+          "CO2eq(kg/hr)", "Power(kW)", "FuelGas(kg/hr)"));
       for (Map.Entry<String, double[]> entry : emissionsResults.entrySet()) {
-	double[] em = entry.getValue();
-	sb.append(String.format("%-20s %12.1f %12.2f %12.1f %12.0f %12.1f%n", entry.getKey(), em[0], em[1], em[2],
-	    em[3], em[4]));
+        double[] em = entry.getValue();
+        sb.append(String.format("%-20s %12.1f %12.2f %12.1f %12.0f %12.1f%n", entry.getKey(), em[0], em[1], em[2],
+            em[3], em[4]));
       }
       sb.append(String.format("  Total CO2eq: %.1f kg/hr (%.0f tonnes/yr)%n", totalCO2Emissions,
-	  getAnnualCO2EmissionsTonnes()));
+          getAnnualCO2EmissionsTonnes()));
       sb.append(String.format("  Emissions intensity: %.1f kgCO2eq/tonne product%n", getEmissionsIntensity()));
     }
 
@@ -6508,7 +6509,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     if (!constraintViolations.isEmpty()) {
       sb.append("\n--- Constraint Violations ---\n");
       for (String v : constraintViolations) {
-	sb.append("  VIOLATION: ").append(v).append("\n");
+        sb.append("  VIOLATION: ").append(v).append("\n");
       }
     }
 
@@ -6516,7 +6517,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     if (totalFuelGasRate > 0) {
       sb.append(String.format("%n--- Fuel Gas Consumption (heat rate: %.0f kJ/kWh) ---%n", fuelGasHeatRate));
       sb.append(String.format("  Total fuel gas: %.1f kg/hr (%.2f%% of throughput)%n", totalFuelGasRate * 3600.0,
-	  getFuelGasPercentage()));
+          getFuelGasPercentage()));
     }
 
     return sb.toString();
@@ -6535,17 +6536,17 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     double minP = Double.MAX_VALUE;
     for (NetworkNode node : nodes.values()) {
       if (node.isPressureFixed()) {
-	maxP = Math.max(maxP, node.getPressure());
-	minP = Math.min(minP, node.getPressure());
+        maxP = Math.max(maxP, node.getPressure());
+        minP = Math.min(minP, node.getPressure());
       }
     }
     if (maxP <= minP) {
       // Fallback: all fixed pressures are the same
       for (String name : freeNodeList) {
-	NetworkNode node = nodes.get(name);
-	if (node.getPressure() < 1.0) {
-	  node.setPressure(maxP * 0.9);
-	}
+        NetworkNode node = nodes.get(name);
+        if (node.getPressure() < 1.0) {
+          node.setPressure(maxP * 0.9);
+        }
       }
       return;
     }
@@ -6559,8 +6560,8 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     java.util.Queue<String> queue = new java.util.LinkedList<>();
     for (NetworkNode node : nodes.values()) {
       if (node.getType() == NodeType.SOURCE) {
-	queue.add(node.getName());
-	distFromSource.put(node.getName(), 0);
+        queue.add(node.getName());
+        distFromSource.put(node.getName(), 0);
       }
     }
     bfsDistances(queue, distFromSource);
@@ -6569,8 +6570,8 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     queue.clear();
     for (NetworkNode node : nodes.values()) {
       if (node.getType() == NodeType.SINK) {
-	queue.add(node.getName());
-	distFromSink.put(node.getName(), 0);
+        queue.add(node.getName());
+        distFromSink.put(node.getName(), 0);
       }
     }
     bfsDistances(queue, distFromSink);
@@ -6579,14 +6580,14 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     for (String name : freeNodeList) {
       NetworkNode node = nodes.get(name);
       if (node.getPressure() >= 1.0) {
-	continue; // Already initialized
+        continue; // Already initialized
       }
 
       int dSrc = distFromSource.getOrDefault(name, 1);
       int dSnk = distFromSink.getOrDefault(name, 1);
       int total = dSrc + dSnk;
       if (total == 0) {
-	total = 1;
+        total = 1;
       }
 
       // Linear interpolation: closer to source -> higher pressure
@@ -6610,16 +6611,16 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       String current = queue.poll();
       int d = dist.get(current);
       for (NetworkPipe pipe : pipes.values()) {
-	String neighbor = null;
-	if (pipe.getFromNode().equals(current)) {
-	  neighbor = pipe.getToNode();
-	} else if (pipe.getToNode().equals(current)) {
-	  neighbor = pipe.getFromNode();
-	}
-	if (neighbor != null && !dist.containsKey(neighbor)) {
-	  dist.put(neighbor, d + 1);
-	  queue.add(neighbor);
-	}
+        String neighbor = null;
+        if (pipe.getFromNode().equals(current)) {
+          neighbor = pipe.getToNode();
+        } else if (pipe.getToNode().equals(current)) {
+          neighbor = pipe.getFromNode();
+        }
+        if (neighbor != null && !dist.containsKey(neighbor)) {
+          dist.put(neighbor, d + 1);
+          queue.add(neighbor);
+        }
       }
     }
   }
@@ -6644,7 +6645,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     SystemInterface fluid = fluidTemplate.clone();
     try {
       neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	  fluid);
+          fluid);
       ops.TPflash();
     } catch (Exception ex) {
       logger.warn("TP flash failed for fluid template: " + ex.getMessage());
@@ -6656,7 +6657,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     List<String> freeNodeList = new ArrayList<>();
     for (NetworkNode node : nodes.values()) {
       if (!node.isPressureFixed()) {
-	freeNodeList.add(node.getName());
+        freeNodeList.add(node.getName());
       }
     }
 
@@ -6687,12 +6688,12 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       double[] elementDerivative = new double[np]; // dh/d|Q| in Pa/(kg/s)
 
       for (int i = 0; i < np; i++) {
-	NetworkPipe pipe = pipes.get(pipeList.get(i));
-	pipeFlowsSI[i] = pipe.getFlowRate(); // Already in kg/s
+        NetworkPipe pipe = pipes.get(pipeList.get(i));
+        pipeFlowsSI[i] = pipe.getFlowRate(); // Already in kg/s
 
-	// Calculate head loss using the element-specific model
-	elementHeadLoss[i] = calculateHeadLoss(pipe, fluid);
-	elementDerivative[i] = calculateHeadLossDerivative(pipe, fluid);
+        // Calculate head loss using the element-specific model
+        elementHeadLoss[i] = calculateHeadLoss(pipe, fluid);
+        elementDerivative[i] = calculateHeadLossDerivative(pipe, fluid);
       }
 
       // --- Step 2: Build and solve the linearized system ---
@@ -6703,11 +6704,11 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       // Build A11 diagonal (inverse): 1/derivative for each element
       double[] a11inv = new double[np];
       for (int i = 0; i < np; i++) {
-	double deriv = elementDerivative[i];
-	if (deriv < 1e-10) {
-	  deriv = 1e-10; // Avoid singularity
-	}
-	a11inv[i] = 1.0 / deriv;
+        double deriv = elementDerivative[i];
+        if (deriv < 1e-10) {
+          deriv = 1e-10; // Avoid singularity
+        }
+        a11inv[i] = 1.0 / deriv;
       }
 
       // Build head residuals: f1_i = h_i(Q_i) - (P_from - P_to) + rho*g*(z_to - z_from)
@@ -6716,63 +6717,63 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       // Residual: f1_i = h_element(Q) - (P_from - P_to)
       double[] f1 = new double[np];
       for (int i = 0; i < np; i++) {
-	NetworkPipe pipe = pipes.get(pipeList.get(i));
-	double pFromPa = nodes.get(pipe.getFromNode()).getPressure();
-	double pToPa = nodes.get(pipe.getToNode()).getPressure();
+        NetworkPipe pipe = pipes.get(pipeList.get(i));
+        double pFromPa = nodes.get(pipe.getFromNode()).getPressure();
+        double pToPa = nodes.get(pipe.getToNode()).getPressure();
 
-	// For standard pipes: headLoss already includes sign and elevation
-	// Residual = headLoss - (P_from - P_to). When converged, headLoss = P_from - P_to
-	if (pipe.getElementType() == NetworkElementType.PIPE
-	    || pipe.getElementType() == NetworkElementType.MULTIPHASE_PIPE) {
-	  // calculateHeadLoss returns signed value with elevation included
-	  double elevDiff = nodes.get(pipe.getToNode()).getElevation() - nodes.get(pipe.getFromNode()).getElevation();
-	  double absFlow = Math.abs(pipeFlowsSI[i]);
-	  if (absFlow < 1e-10) {
-	    absFlow = 1e-10;
-	  }
-	  // Resistance formulation: r*Q*|Q| + rho*g*dz = P_from - P_to
-	  double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
-	  double vel = absFlow / (density * area);
-	  double viscosity = fluid.getViscosity("kg/msec");
-	  double reynolds = density * vel * pipe.getDiameter() / viscosity;
-	  double ff;
-	  if (reynolds < 2300) {
-	    ff = 64.0 / Math.max(reynolds, 1.0);
-	  } else {
-	    double e = pipe.getRoughness() / pipe.getDiameter();
-	    ff = 0.25 / Math.pow(Math.log10(e / 3.7 + 5.74 / Math.pow(reynolds, 0.9)), 2);
-	  }
-	  double resistance = ff * pipe.getLength() / (pipe.getDiameter() * 2.0 * density * area * area);
-	  // Apply pipe efficiency factor (aging/fouling): increase effective resistance
-	  double effFactor = pipe.getPipeEfficiency();
-	  if (effFactor > 0.01 && effFactor < 1.0) {
-	    resistance = resistance / effFactor;
-	  }
-	  f1[i] = resistance * pipeFlowsSI[i] * Math.abs(pipeFlowsSI[i]) - (pFromPa - pToPa)
-	      + density * 9.81 * elevDiff;
-	} else {
-	  // For IPR, choke, tubing: elementHeadLoss is the signed ΔP(Q)
-	  // Residual = |elementHeadLoss| - (P_from - P_to) for positive flow dir
-	  f1[i] = elementHeadLoss[i] - (pFromPa - pToPa);
-	}
+        // For standard pipes: headLoss already includes sign and elevation
+        // Residual = headLoss - (P_from - P_to). When converged, headLoss = P_from - P_to
+        if (pipe.getElementType() == NetworkElementType.PIPE
+            || pipe.getElementType() == NetworkElementType.MULTIPHASE_PIPE) {
+          // calculateHeadLoss returns signed value with elevation included
+          double elevDiff = nodes.get(pipe.getToNode()).getElevation() - nodes.get(pipe.getFromNode()).getElevation();
+          double absFlow = Math.abs(pipeFlowsSI[i]);
+          if (absFlow < 1e-10) {
+            absFlow = 1e-10;
+          }
+          // Resistance formulation: r*Q*|Q| + rho*g*dz = P_from - P_to
+          double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
+          double vel = absFlow / (density * area);
+          double viscosity = fluid.getViscosity("kg/msec");
+          double reynolds = density * vel * pipe.getDiameter() / viscosity;
+          double ff;
+          if (reynolds < 2300) {
+            ff = 64.0 / Math.max(reynolds, 1.0);
+          } else {
+            double e = pipe.getRoughness() / pipe.getDiameter();
+            ff = 0.25 / Math.pow(Math.log10(e / 3.7 + 5.74 / Math.pow(reynolds, 0.9)), 2);
+          }
+          double resistance = ff * pipe.getLength() / (pipe.getDiameter() * 2.0 * density * area * area);
+          // Apply pipe efficiency factor (aging/fouling): increase effective resistance
+          double effFactor = pipe.getPipeEfficiency();
+          if (effFactor > 0.01 && effFactor < 1.0) {
+            resistance = resistance / effFactor;
+          }
+          f1[i] = resistance * pipeFlowsSI[i] * Math.abs(pipeFlowsSI[i]) - (pFromPa - pToPa)
+              + density * 9.81 * elevDiff;
+        } else {
+          // For IPR, choke, tubing: elementHeadLoss is the signed ΔP(Q)
+          // Residual = |elementHeadLoss| - (P_from - P_to) for positive flow dir
+          f1[i] = elementHeadLoss[i] - (pFromPa - pToPa);
+        }
       }
 
       // Build node flow residuals: f2_j = demand_j - sum(Q_i * sign_ij)
       double[] f2 = new double[nn];
       for (int j = 0; j < nn; j++) {
-	String nodeName = freeNodeList.get(j);
-	NetworkNode node = nodes.get(nodeName);
-	double netFlow = node.getDemand();
-	for (int i = 0; i < np; i++) {
-	  NetworkPipe pipe = pipes.get(pipeList.get(i));
-	  if (pipe.getToNode().equals(nodeName)) {
-	    netFlow -= pipeFlowsSI[i]; // inflow
-	  }
-	  if (pipe.getFromNode().equals(nodeName)) {
-	    netFlow += pipeFlowsSI[i]; // outflow
-	  }
-	}
-	f2[j] = netFlow;
+        String nodeName = freeNodeList.get(j);
+        NetworkNode node = nodes.get(nodeName);
+        double netFlow = node.getDemand();
+        for (int i = 0; i < np; i++) {
+          NetworkPipe pipe = pipes.get(pipeList.get(i));
+          if (pipe.getToNode().equals(nodeName)) {
+            netFlow -= pipeFlowsSI[i]; // inflow
+          }
+          if (pipe.getFromNode().equals(nodeName)) {
+            netFlow += pipeFlowsSI[i]; // outflow
+          }
+        }
+        f2[j] = netFlow;
       }
 
       // Build Schur complement matrix S = A21 * A11^{-1} * A12 (nn x nn)
@@ -6780,28 +6781,28 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       double[] rhs = new double[nn];
 
       for (int i = 0; i < np; i++) {
-	NetworkPipe pipe = pipes.get(pipeList.get(i));
-	int jFrom = freeNodeList.indexOf(pipe.getFromNode());
-	int jTo = freeNodeList.indexOf(pipe.getToNode());
+        NetworkPipe pipe = pipes.get(pipeList.get(i));
+        int jFrom = freeNodeList.indexOf(pipe.getFromNode());
+        int jTo = freeNodeList.indexOf(pipe.getToNode());
 
-	double val = a11inv[i];
+        double val = a11inv[i];
 
-	if (jFrom >= 0) {
-	  schur[jFrom][jFrom] += val;
-	  rhs[jFrom] += val * f1[i];
-	}
-	if (jTo >= 0) {
-	  schur[jTo][jTo] += val;
-	  rhs[jTo] -= val * f1[i];
-	}
-	if (jFrom >= 0 && jTo >= 0) {
-	  schur[jFrom][jTo] -= val;
-	  schur[jTo][jFrom] -= val;
-	}
+        if (jFrom >= 0) {
+          schur[jFrom][jFrom] += val;
+          rhs[jFrom] += val * f1[i];
+        }
+        if (jTo >= 0) {
+          schur[jTo][jTo] += val;
+          rhs[jTo] -= val * f1[i];
+        }
+        if (jFrom >= 0 && jTo >= 0) {
+          schur[jFrom][jTo] -= val;
+          schur[jTo][jFrom] -= val;
+        }
       }
 
       for (int j = 0; j < nn; j++) {
-	rhs[j] = -f2[j] + rhs[j];
+        rhs[j] = -f2[j] + rhs[j];
       }
 
       double[] dH = solveLinearSystem(schur, rhs, nn);
@@ -6811,56 +6812,56 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       // overshooting, especially for mixed element networks (IPR + choke + pipe).
       double stepRelax = relaxationFactor;
       if (iterationCount <= 5 && maxResidual > 1e6) {
-	stepRelax = Math.min(relaxationFactor, 0.3);
+        stepRelax = Math.min(relaxationFactor, 0.3);
       } else if (iterationCount <= 15 && maxResidual > 1e4) {
-	stepRelax = Math.min(relaxationFactor, 0.6);
+        stepRelax = Math.min(relaxationFactor, 0.6);
       }
 
       // --- Step 4: Update pressures ---
       for (int j = 0; j < nn; j++) {
-	NetworkNode node = nodes.get(freeNodeList.get(j));
-	double newP = node.getPressure() + stepRelax * dH[j];
-	// Prevent negative pressures
-	if (newP < 1e3) {
-	  newP = 1e3; // Minimum 0.01 bar
-	}
-	node.setPressure(newP);
+        NetworkNode node = nodes.get(freeNodeList.get(j));
+        double newP = node.getPressure() + stepRelax * dH[j];
+        // Prevent negative pressures
+        if (newP < 1e3) {
+          newP = 1e3; // Minimum 0.01 bar
+        }
+        node.setPressure(newP);
       }
 
       // --- Step 5: Back-substitute for new flows ---
       for (int i = 0; i < np; i++) {
-	NetworkPipe pipe = pipes.get(pipeList.get(i));
-	int jFrom = freeNodeList.indexOf(pipe.getFromNode());
-	int jTo = freeNodeList.indexOf(pipe.getToNode());
+        NetworkPipe pipe = pipes.get(pipeList.get(i));
+        int jFrom = freeNodeList.indexOf(pipe.getFromNode());
+        int jTo = freeNodeList.indexOf(pipe.getToNode());
 
-	double atDh = 0.0;
-	if (jFrom >= 0) {
-	  atDh += dH[jFrom];
-	}
-	if (jTo >= 0) {
-	  atDh -= dH[jTo];
-	}
+        double atDh = 0.0;
+        if (jFrom >= 0) {
+          atDh += dH[jFrom];
+        }
+        if (jTo >= 0) {
+          atDh -= dH[jTo];
+        }
 
-	double dQ = a11inv[i] * (-f1[i] + atDh);
-	double newFlowKgs = pipeFlowsSI[i] + stepRelax * dQ;
-	pipe.setFlowRate(newFlowKgs);
+        double dQ = a11inv[i] * (-f1[i] + atDh);
+        double newFlowKgs = pipeFlowsSI[i] + stepRelax * dQ;
+        pipe.setFlowRate(newFlowKgs);
       }
 
       // --- Step 5: Check convergence ---
       maxResidual = 0.0;
       for (int i = 0; i < np; i++) {
-	maxResidual = Math.max(maxResidual, Math.abs(f1[i]));
+        maxResidual = Math.max(maxResidual, Math.abs(f1[i]));
       }
       for (int j = 0; j < nn; j++) {
-	maxResidual = Math.max(maxResidual, Math.abs(f2[j]) * 1e5);
+        maxResidual = Math.max(maxResidual, Math.abs(f2[j]) * 1e5);
       }
 
       if (maxResidual < tolerance) {
-	converged = true;
+        converged = true;
       }
 
       if (iterationCount % 10 == 0) {
-	logger.debug("NR-GGA iteration " + iterationCount + ", max residual: " + maxResidual);
+        logger.debug("NR-GGA iteration " + iterationCount + ", max residual: " + maxResidual);
       }
     }
 
@@ -6901,16 +6902,16 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     massBalanceError = 0.0;
     for (NetworkNode node : nodes.values()) {
       if (node.isPressureFixed()) {
-	continue; // Source nodes balance is implicit
+        continue; // Source nodes balance is implicit
       }
       double netFlow = node.getDemand(); // positive = outflow
       for (NetworkPipe pipe : pipes.values()) {
-	if (pipe.getToNode().equals(node.getName())) {
-	  netFlow -= pipe.getFlowRate(); // inflow
-	}
-	if (pipe.getFromNode().equals(node.getName())) {
-	  netFlow += pipe.getFlowRate(); // outflow
-	}
+        if (pipe.getToNode().equals(node.getName())) {
+          netFlow -= pipe.getFlowRate(); // inflow
+        }
+        if (pipe.getFromNode().equals(node.getName())) {
+          netFlow += pipe.getFlowRate(); // outflow
+        }
       }
       massBalanceError = Math.max(massBalanceError, Math.abs(netFlow));
     }
@@ -6929,43 +6930,43 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       String nodeName = entry.getKey();
       StreamInterface stream = entry.getValue();
       if (stream == null) {
-	continue;
+        continue;
       }
 
       // Handle the default single-feed case: bind to first source node
       if ("__default__".equals(nodeName)) {
-	for (NetworkNode node : nodes.values()) {
-	  if (node.getType() == NodeType.SOURCE) {
-	    nodeName = node.getName();
-	    break;
-	  }
-	}
-	if ("__default__".equals(nodeName)) {
-	  continue; // No source nodes defined yet
-	}
+        for (NetworkNode node : nodes.values()) {
+          if (node.getType() == NodeType.SOURCE) {
+            nodeName = node.getName();
+            break;
+          }
+        }
+        if ("__default__".equals(nodeName)) {
+          continue; // No source nodes defined yet
+        }
       }
 
       NetworkNode node = nodes.get(nodeName);
       if (node == null || node.getType() != NodeType.SOURCE) {
-	continue;
+        continue;
       }
 
       // Update source node from stream state
       double streamPressurePa = stream.getPressure("Pa");
       if (streamPressurePa > 0) {
-	node.setPressure(streamPressurePa);
+        node.setPressure(streamPressurePa);
       }
 
       double streamFlowKgs = stream.getFlowRate("kg/sec");
       if (streamFlowKgs > 0) {
-	node.setDemand(-streamFlowKgs); // Negative = supply
+        node.setDemand(-streamFlowKgs); // Negative = supply
       }
 
       node.setTemperature(stream.getTemperature("K"));
 
       // Update fluid template from first feed stream
       if (fluidTemplate == null && stream.getFluid() != null) {
-	fluidTemplate = stream.getFluid().clone();
+        fluidTemplate = stream.getFluid().clone();
       }
     }
   }
@@ -6986,79 +6987,79 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
     for (NetworkNode node : nodes.values()) {
       if (node.getType() != NodeType.SINK) {
-	continue;
+        continue;
       }
 
       // Calculate total flow into this sink node from all connected pipes
       double totalFlowKgs = 0.0;
       for (NetworkPipe pipe : pipes.values()) {
-	if (pipe.getToNode().equals(node.getName())) {
-	  totalFlowKgs += Math.abs(pipe.getFlowRate());
-	}
-	if (pipe.getFromNode().equals(node.getName())) {
-	  totalFlowKgs -= Math.abs(pipe.getFlowRate());
-	}
+        if (pipe.getToNode().equals(node.getName())) {
+          totalFlowKgs += Math.abs(pipe.getFlowRate());
+        }
+        if (pipe.getFromNode().equals(node.getName())) {
+          totalFlowKgs -= Math.abs(pipe.getFlowRate());
+        }
       }
       if (totalFlowKgs < 0) {
-	totalFlowKgs = 0.0;
+        totalFlowKgs = 0.0;
       }
 
       try {
-	// Create or update outlet stream
-	StreamInterface outStream = outletStreams.get(node.getName());
-	if (outStream == null) {
-	  SystemInterface outFluid = fluidTemplate.clone();
-	  outFluid.setPressure(node.getPressure() / 1e5, "bara");
-	  outFluid.setTemperature(node.getTemperature(), "K");
-	  outStream = new Stream(node.getName() + "_outlet", outFluid);
-	  outStream.setFlowRate(totalFlowKgs * 3600.0, "kg/hr");
-	  outStream.run();
-	  outletStreams.put(node.getName(), outStream);
-	} else {
-	  outStream.getFluid().setPressure(node.getPressure() / 1e5, "bara");
-	  outStream.getFluid().setTemperature(node.getTemperature(), "K");
-	  outStream.setFlowRate(totalFlowKgs * 3600.0, "kg/hr");
-	  outStream.run();
-	}
+        // Create or update outlet stream
+        StreamInterface outStream = outletStreams.get(node.getName());
+        if (outStream == null) {
+          SystemInterface outFluid = fluidTemplate.clone();
+          outFluid.setPressure(node.getPressure() / 1e5, "bara");
+          outFluid.setTemperature(node.getTemperature(), "K");
+          outStream = new Stream(node.getName() + "_outlet", outFluid);
+          outStream.setFlowRate(totalFlowKgs * 3600.0, "kg/hr");
+          outStream.run();
+          outletStreams.put(node.getName(), outStream);
+        } else {
+          outStream.getFluid().setPressure(node.getPressure() / 1e5, "bara");
+          outStream.getFluid().setTemperature(node.getTemperature(), "K");
+          outStream.setFlowRate(totalFlowKgs * 3600.0, "kg/hr");
+          outStream.run();
+        }
 
-	// Also store on the node for direct access
-	node.setStream(outStream);
+        // Also store on the node for direct access
+        node.setStream(outStream);
       } catch (Exception ex) {
-	logger.warn("Failed to create outlet stream for node " + node.getName() + ": " + ex.getMessage());
+        logger.warn("Failed to create outlet stream for node " + node.getName() + ": " + ex.getMessage());
       }
     }
 
     // Also update streams on source nodes (useful for IPR wells)
     for (NetworkNode node : nodes.values()) {
       if (node.getType() != NodeType.SOURCE) {
-	continue;
+        continue;
       }
       double totalFlowKgs = 0.0;
       for (NetworkPipe pipe : pipes.values()) {
-	if (pipe.getFromNode().equals(node.getName())) {
-	  totalFlowKgs += Math.abs(pipe.getFlowRate());
-	}
+        if (pipe.getFromNode().equals(node.getName())) {
+          totalFlowKgs += Math.abs(pipe.getFlowRate());
+        }
       }
       if (totalFlowKgs > 0) {
-	try {
-	  StreamInterface srcStream = node.getStream();
-	  if (srcStream == null) {
-	    SystemInterface srcFluid = fluidTemplate.clone();
-	    srcFluid.setPressure(node.getPressure() / 1e5, "bara");
-	    srcFluid.setTemperature(node.getTemperature(), "K");
-	    srcStream = new Stream(node.getName() + "_stream", srcFluid);
-	    srcStream.setFlowRate(totalFlowKgs * 3600.0, "kg/hr");
-	    srcStream.run();
-	    node.setStream(srcStream);
-	  } else {
-	    srcStream.getFluid().setPressure(node.getPressure() / 1e5, "bara");
-	    srcStream.getFluid().setTemperature(node.getTemperature(), "K");
-	    srcStream.setFlowRate(totalFlowKgs * 3600.0, "kg/hr");
-	    srcStream.run();
-	  }
-	} catch (Exception ex) {
-	  logger.warn("Failed to create source stream for node " + node.getName() + ": " + ex.getMessage());
-	}
+        try {
+          StreamInterface srcStream = node.getStream();
+          if (srcStream == null) {
+            SystemInterface srcFluid = fluidTemplate.clone();
+            srcFluid.setPressure(node.getPressure() / 1e5, "bara");
+            srcFluid.setTemperature(node.getTemperature(), "K");
+            srcStream = new Stream(node.getName() + "_stream", srcFluid);
+            srcStream.setFlowRate(totalFlowKgs * 3600.0, "kg/hr");
+            srcStream.run();
+            node.setStream(srcStream);
+          } else {
+            srcStream.getFluid().setPressure(node.getPressure() / 1e5, "bara");
+            srcStream.getFluid().setTemperature(node.getTemperature(), "K");
+            srcStream.setFlowRate(totalFlowKgs * 3600.0, "kg/hr");
+            srcStream.run();
+          }
+        } catch (Exception ex) {
+          logger.warn("Failed to create source stream for node " + node.getName() + ": " + ex.getMessage());
+        }
       }
     }
   }
@@ -7085,8 +7086,8 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     boolean hasSource = false;
     for (NetworkNode node : nodes.values()) {
       if (node.getType() == NodeType.SOURCE) {
-	hasSource = true;
-	break;
+        hasSource = true;
+        break;
       }
     }
     if (!hasSource) {
@@ -7098,23 +7099,23 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     double totalDemand = 0.0;
     for (NetworkNode node : nodes.values()) {
       if (node.getDemand() < 0) {
-	totalSupply += Math.abs(node.getDemand());
+        totalSupply += Math.abs(node.getDemand());
       } else {
-	totalDemand += node.getDemand();
+        totalDemand += node.getDemand();
       }
     }
     if (totalDemand > totalSupply * 1.001 && totalSupply > 0) {
       issues.add("WARNING: Total demand (" + String.format("%.2f", totalDemand * 3600) + " kg/hr) exceeds supply ("
-	  + String.format("%.2f", totalSupply * 3600) + " kg/hr)");
+          + String.format("%.2f", totalSupply * 3600) + " kg/hr)");
     }
 
     // Check all pipe endpoints exist
     for (NetworkPipe pipe : pipes.values()) {
       if (!nodes.containsKey(pipe.getFromNode())) {
-	issues.add("ERROR: Pipe '" + pipe.getName() + "' references unknown node '" + pipe.getFromNode() + "'");
+        issues.add("ERROR: Pipe '" + pipe.getName() + "' references unknown node '" + pipe.getFromNode() + "'");
       }
       if (!nodes.containsKey(pipe.getToNode())) {
-	issues.add("ERROR: Pipe '" + pipe.getName() + "' references unknown node '" + pipe.getToNode() + "'");
+        issues.add("ERROR: Pipe '" + pipe.getName() + "' references unknown node '" + pipe.getToNode() + "'");
       }
     }
 
@@ -7276,61 +7277,61 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
       // Element-specific fields
       if (pipe.getElementType() == NetworkElementType.COMPRESSOR) {
-	pipeJson.addProperty("compressorSpeed_rpm", pipe.getCompressorSpeed());
-	pipeJson.addProperty("compressorEfficiency", pipe.getCompressorEfficiency());
-	pipeJson.addProperty("compressorPower_kW", pipe.getCompressorPower());
-	pipeJson.addProperty("compressorHasChart", pipe.isCompressorHasChart());
+        pipeJson.addProperty("compressorSpeed_rpm", pipe.getCompressorSpeed());
+        pipeJson.addProperty("compressorEfficiency", pipe.getCompressorEfficiency());
+        pipeJson.addProperty("compressorPower_kW", pipe.getCompressorPower());
+        pipeJson.addProperty("compressorHasChart", pipe.isCompressorHasChart());
       }
       if (pipe.getElementType() == NetworkElementType.REGULATOR) {
-	pipeJson.addProperty("regulatorSetPoint_bara", pipe.getRegulatorSetPoint() / 1e5);
+        pipeJson.addProperty("regulatorSetPoint_bara", pipe.getRegulatorSetPoint() / 1e5);
       }
       if (pipe.getElementType() == NetworkElementType.CHOKE) {
-	pipeJson.addProperty("chokeKv", pipe.getChokeKv());
-	pipeJson.addProperty("chokeOpening_pct", pipe.getChokeOpening());
+        pipeJson.addProperty("chokeKv", pipe.getChokeKv());
+        pipeJson.addProperty("chokeOpening_pct", pipe.getChokeOpening());
       }
       if (pipe.getElementType() == NetworkElementType.WELL_IPR) {
-	pipeJson.addProperty("iprType", pipe.getIprType().name());
-	pipeJson.addProperty("reservoirPressure_bara", pipe.getReservoirPressure() / 1e5);
+        pipeJson.addProperty("iprType", pipe.getIprType().name());
+        pipeJson.addProperty("reservoirPressure_bara", pipe.getReservoirPressure() / 1e5);
       }
 
       // Erosional velocity data
       if (pipe.getErosionalVelocity() > 0) {
-	pipeJson.addProperty("erosionalVelocity_ms", pipe.getErosionalVelocity());
-	pipeJson.addProperty("erosionalVelocityRatio", pipe.getErosionalVelocityRatio());
-	pipeJson.addProperty("erosionalC", pipe.getErosionalC());
+        pipeJson.addProperty("erosionalVelocity_ms", pipe.getErosionalVelocity());
+        pipeJson.addProperty("erosionalVelocityRatio", pipe.getErosionalVelocityRatio());
+        pipeJson.addProperty("erosionalC", pipe.getErosionalC());
       }
 
       // Artificial lift data
       if (pipe.getArtificialLiftType() != ArtificialLiftType.NONE) {
-	pipeJson.addProperty("artificialLiftType", pipe.getArtificialLiftType().name());
-	pipeJson.addProperty("gasLiftRate_kghr", pipe.getGasLiftRate() * 3600.0);
-	pipeJson.addProperty("espPower_kW", pipe.getEspPower());
-	pipeJson.addProperty("espEfficiency", pipe.getEspEfficiency());
-	pipeJson.addProperty("espHeadRise_bar", pipe.getEspHeadRise());
+        pipeJson.addProperty("artificialLiftType", pipe.getArtificialLiftType().name());
+        pipeJson.addProperty("gasLiftRate_kghr", pipe.getGasLiftRate() * 3600.0);
+        pipeJson.addProperty("espPower_kW", pipe.getEspPower());
+        pipeJson.addProperty("espEfficiency", pipe.getEspEfficiency());
+        pipeJson.addProperty("espHeadRise_bar", pipe.getEspHeadRise());
       }
 
       // Water handling data
       if (pipe.getWaterCut() > 0 || pipe.getWaterInjectionRate() > 0) {
-	pipeJson.addProperty("waterCut", pipe.getWaterCut());
-	pipeJson.addProperty("waterFlowRate_kghr", pipe.getWaterFlowRate() * 3600.0);
-	pipeJson.addProperty("waterInjectionRate_kghr", pipe.getWaterInjectionRate() * 3600.0);
+        pipeJson.addProperty("waterCut", pipe.getWaterCut());
+        pipeJson.addProperty("waterFlowRate_kghr", pipe.getWaterFlowRate() * 3600.0);
+        pipeJson.addProperty("waterInjectionRate_kghr", pipe.getWaterInjectionRate() * 3600.0);
       }
 
       // Sand/erosion data
       if (pipe.getSandRate() > 0 || pipe.getErosionRate() > 0) {
-	pipeJson.addProperty("sandRate_kghr", pipe.getSandRate() * 3600.0);
-	pipeJson.addProperty("sandConcentration_kgm3", pipe.getSandConcentration());
-	pipeJson.addProperty("erosionRate_mmyr", pipe.getErosionRate());
-	pipeJson.addProperty("depositionRate_kgmyr", pipe.getDepositionRate());
+        pipeJson.addProperty("sandRate_kghr", pipe.getSandRate() * 3600.0);
+        pipeJson.addProperty("sandConcentration_kgm3", pipe.getSandConcentration());
+        pipeJson.addProperty("erosionRate_mmyr", pipe.getErosionRate());
+        pipeJson.addProperty("depositionRate_kgmyr", pipe.getDepositionRate());
       }
 
       // Corrosion data
       if (pipe.getCorrosionRate() > 0) {
-	pipeJson.addProperty("corrosionModel", pipe.getCorrosionModel());
-	pipeJson.addProperty("co2MoleFraction", pipe.getCo2MoleFraction());
-	pipeJson.addProperty("h2sMoleFraction", pipe.getH2sMoleFraction());
-	pipeJson.addProperty("corrosionRate_mmyr", pipe.getCorrosionRate());
-	pipeJson.addProperty("remainingWallLife_yr", pipe.getRemainingWallLife());
+        pipeJson.addProperty("corrosionModel", pipe.getCorrosionModel());
+        pipeJson.addProperty("co2MoleFraction", pipe.getCo2MoleFraction());
+        pipeJson.addProperty("h2sMoleFraction", pipe.getH2sMoleFraction());
+        pipeJson.addProperty("corrosionRate_mmyr", pipe.getCorrosionRate());
+        pipeJson.addProperty("remainingWallLife_yr", pipe.getRemainingWallLife());
       }
 
       pipesArray.add(pipeJson);
@@ -7341,7 +7342,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     if (!erosionalViolations.isEmpty()) {
       JsonArray violationsArray = new JsonArray();
       for (String v : erosionalViolations) {
-	violationsArray.add(v);
+        violationsArray.add(v);
       }
       json.add("erosionalViolations", violationsArray);
     }
@@ -7350,13 +7351,13 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     if (!nodeGasQuality.isEmpty()) {
       JsonObject gasQualObj = new JsonObject();
       for (Map.Entry<String, double[]> entry : nodeGasQuality.entrySet()) {
-	double[] q = entry.getValue();
-	JsonObject nodeGQ = new JsonObject();
-	nodeGQ.addProperty("wobbeIndex_MJperSm3", q[0]);
-	nodeGQ.addProperty("hhv_kJperSm3", q[1]);
-	nodeGQ.addProperty("lhv_kJperSm3", q[2]);
-	nodeGQ.addProperty("relativeDensity", q[3]);
-	gasQualObj.add(entry.getKey(), nodeGQ);
+        double[] q = entry.getValue();
+        JsonObject nodeGQ = new JsonObject();
+        nodeGQ.addProperty("wobbeIndex_MJperSm3", q[0]);
+        nodeGQ.addProperty("hhv_kJperSm3", q[1]);
+        nodeGQ.addProperty("lhv_kJperSm3", q[2]);
+        nodeGQ.addProperty("relativeDensity", q[3]);
+        gasQualObj.add(entry.getKey(), nodeGQ);
       }
       json.add("gasQuality_ISO6976", gasQualObj);
     }
@@ -7365,12 +7366,12 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     if (!nodeOilQuality.isEmpty()) {
       JsonObject oilQualObj = new JsonObject();
       for (Map.Entry<String, double[]> entry : nodeOilQuality.entrySet()) {
-	double[] q = entry.getValue();
-	JsonObject nodeOQ = new JsonObject();
-	nodeOQ.addProperty("tvp_bara", q[0]);
-	nodeOQ.addProperty("rvp_bara", q[1]);
-	nodeOQ.addProperty("vpcr4_bara", q[2]);
-	oilQualObj.add(entry.getKey(), nodeOQ);
+        double[] q = entry.getValue();
+        JsonObject nodeOQ = new JsonObject();
+        nodeOQ.addProperty("tvp_bara", q[0]);
+        nodeOQ.addProperty("rvp_bara", q[1]);
+        nodeOQ.addProperty("vpcr4_bara", q[2]);
+        oilQualObj.add(entry.getKey(), nodeOQ);
       }
       json.add("oilQuality_ASTM_D6377", oilQualObj);
     }
@@ -7382,12 +7383,12 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       waterObj.addProperty("totalWaterInjection_kghr", getTotalWaterInjection());
       JsonObject nodesWB = new JsonObject();
       for (Map.Entry<String, double[]> entry : nodeWaterBalance.entrySet()) {
-	double[] wb = entry.getValue();
-	JsonObject nodeWB = new JsonObject();
-	nodeWB.addProperty("waterProduction_kghr", wb[0]);
-	nodeWB.addProperty("waterInjection_kghr", wb[1]);
-	nodeWB.addProperty("netWater_kghr", wb[2]);
-	nodesWB.add(entry.getKey(), nodeWB);
+        double[] wb = entry.getValue();
+        JsonObject nodeWB = new JsonObject();
+        nodeWB.addProperty("waterProduction_kghr", wb[0]);
+        nodeWB.addProperty("waterInjection_kghr", wb[1]);
+        nodeWB.addProperty("netWater_kghr", wb[2]);
+        nodesWB.add(entry.getKey(), nodeWB);
       }
       waterObj.add("nodeBalance", nodesWB);
       json.add("waterBalance", waterObj);
@@ -7397,13 +7398,13 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     if (!pipeSandResults.isEmpty()) {
       JsonObject sandObj = new JsonObject();
       for (Map.Entry<String, double[]> entry : pipeSandResults.entrySet()) {
-	double[] sr = entry.getValue();
-	JsonObject pipeS = new JsonObject();
-	pipeS.addProperty("sandConcentration_kgm3", sr[0]);
-	pipeS.addProperty("erosionRate_mmyr", sr[1]);
-	pipeS.addProperty("depositionRate_kgmyr", sr[2]);
-	pipeS.addProperty("velocity_ms", sr[3]);
-	sandObj.add(entry.getKey(), pipeS);
+        double[] sr = entry.getValue();
+        JsonObject pipeS = new JsonObject();
+        pipeS.addProperty("sandConcentration_kgm3", sr[0]);
+        pipeS.addProperty("erosionRate_mmyr", sr[1]);
+        pipeS.addProperty("depositionRate_kgmyr", sr[2]);
+        pipeS.addProperty("velocity_ms", sr[3]);
+        sandObj.add(entry.getKey(), pipeS);
       }
       json.add("sandTransport_DNV_RP_O501", sandObj);
     }
@@ -7412,13 +7413,13 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     if (!pipeCorrosionResults.isEmpty()) {
       JsonObject corrObj = new JsonObject();
       for (Map.Entry<String, double[]> entry : pipeCorrosionResults.entrySet()) {
-	double[] cr = entry.getValue();
-	JsonObject pipeC = new JsonObject();
-	pipeC.addProperty("corrosionRate_mmyr", cr[0]);
-	pipeC.addProperty("co2PartialPressure_bar", cr[1]);
-	pipeC.addProperty("h2sPartialPressure_bar", cr[2]);
-	pipeC.addProperty("remainingLife_yr", cr[3]);
-	corrObj.add(entry.getKey(), pipeC);
+        double[] cr = entry.getValue();
+        JsonObject pipeC = new JsonObject();
+        pipeC.addProperty("corrosionRate_mmyr", cr[0]);
+        pipeC.addProperty("co2PartialPressure_bar", cr[1]);
+        pipeC.addProperty("h2sPartialPressure_bar", cr[2]);
+        pipeC.addProperty("remainingLife_yr", cr[3]);
+        corrObj.add(entry.getKey(), pipeC);
       }
       json.add("corrosionAssessment", corrObj);
     }
@@ -7433,14 +7434,14 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       emObj.addProperty("methaneSlipFactor", methaneSlipFactor);
       JsonObject compEmissions = new JsonObject();
       for (Map.Entry<String, double[]> entry : emissionsResults.entrySet()) {
-	double[] em = entry.getValue();
-	JsonObject compEm = new JsonObject();
-	compEm.addProperty("co2_kghr", em[0]);
-	compEm.addProperty("ch4Slip_kghr", em[1]);
-	compEm.addProperty("co2eq_kghr", em[2]);
-	compEm.addProperty("power_kW", em[3]);
-	compEm.addProperty("fuelGas_kghr", em[4]);
-	compEmissions.add(entry.getKey(), compEm);
+        double[] em = entry.getValue();
+        JsonObject compEm = new JsonObject();
+        compEm.addProperty("co2_kghr", em[0]);
+        compEm.addProperty("ch4Slip_kghr", em[1]);
+        compEm.addProperty("co2eq_kghr", em[2]);
+        compEm.addProperty("power_kW", em[3]);
+        compEm.addProperty("fuelGas_kghr", em[4]);
+        compEmissions.add(entry.getKey(), compEm);
       }
       emObj.add("compressors", compEmissions);
       json.add("emissions", emObj);
@@ -7450,7 +7451,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     if (!constraintViolations.isEmpty()) {
       JsonArray constrArray = new JsonArray();
       for (String v : constraintViolations) {
-	constrArray.add(v);
+        constrArray.add(v);
       }
       json.add("constraintViolations", constrArray);
     }
@@ -7468,18 +7469,18 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     if (loops != null && !loops.isEmpty()) {
       JsonArray loopsArray = new JsonArray();
       for (NetworkLoop loop : loops) {
-	JsonObject loopJson = new JsonObject();
-	loopJson.addProperty("id", loop.getLoopId());
+        JsonObject loopJson = new JsonObject();
+        loopJson.addProperty("id", loop.getLoopId());
 
-	JsonArray membersArray = new JsonArray();
-	for (NetworkLoop.LoopMember member : loop.getMembers()) {
-	  JsonObject memberJson = new JsonObject();
-	  memberJson.addProperty("pipeName", member.getPipeName());
-	  memberJson.addProperty("direction", member.getDirection());
-	  membersArray.add(memberJson);
-	}
-	loopJson.add("members", membersArray);
-	loopsArray.add(loopJson);
+        JsonArray membersArray = new JsonArray();
+        for (NetworkLoop.LoopMember member : loop.getMembers()) {
+          JsonObject memberJson = new JsonObject();
+          memberJson.addProperty("pipeName", member.getPipeName());
+          memberJson.addProperty("direction", member.getDirection());
+          membersArray.add(memberJson);
+        }
+        loopJson.add("members", membersArray);
+        loopsArray.add(loopJson);
       }
       json.add("loops", loopsArray);
     }
@@ -7527,7 +7528,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     double pPa = pressureBar * 1e5;
     for (NetworkPipe pipe : pipes.values()) {
       if (pipe.getElementType() == NetworkElementType.WELL_IPR && pipe.getFromNode().equals(sourceNodeName)) {
-	pipe.setReservoirPressure(pPa);
+        pipe.setReservoirPressure(pPa);
       }
     }
   }
@@ -7680,35 +7681,35 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     for (double p = pHigh; p >= pLow; p -= step) {
       totalIter++;
       if (totalIter > maxCouplingIterations) {
-	break;
+        break;
       }
       setNodePressure(topsideSinkNodeName, p);
       try {
-	run();
+        run();
       } catch (Exception e) {
-	continue;
+        continue;
       }
       if (!isConverged()) {
-	continue;
+        continue;
       }
 
       double flow = Math.abs(getTotalSinkFlow()) * 3600.0;
       if (flow < 1.0) {
-	continue;
+        continue;
       }
 
       // Feed network outlet to topside
       StreamInterface outlet = getOutletStream(topsideSinkNodeName);
       if (outlet == null) {
-	continue;
+        continue;
       }
 
       // Update the topside feed stream with network flow and pressure
       neqsim.process.equipment.ProcessEquipmentInterface firstUnit = topsideModel.getUnitOperations().get(0);
       if (firstUnit instanceof neqsim.process.equipment.stream.StreamInterface) {
-	neqsim.process.equipment.stream.StreamInterface feedStream = (neqsim.process.equipment.stream.StreamInterface) firstUnit;
-	feedStream.setFlowRate(flow, "kg/hr");
-	feedStream.setPressure(p, "bara");
+        neqsim.process.equipment.stream.StreamInterface feedStream = (neqsim.process.equipment.stream.StreamInterface) firstUnit;
+        feedStream.setFlowRate(flow, "kg/hr");
+        feedStream.setPressure(p, "bara");
       }
       topsideModel.run();
 
@@ -7716,23 +7717,23 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       double sepUtil = 0.0;
       double compPower = 0.0;
       for (neqsim.process.equipment.ProcessEquipmentInterface unit : topsideModel.getUnitOperations()) {
-	if (unit instanceof neqsim.process.equipment.separator.Separator) {
-	  neqsim.process.equipment.separator.Separator sep = (neqsim.process.equipment.separator.Separator) unit;
-	  sepUtil = Math.max(sepUtil, sep.getCapacityUtilization());
-	}
-	if (unit instanceof Compressor) {
-	  Compressor comp = (Compressor) unit;
-	  compPower += comp.getPower("MW");
-	}
+        if (unit instanceof neqsim.process.equipment.separator.Separator) {
+          neqsim.process.equipment.separator.Separator sep = (neqsim.process.equipment.separator.Separator) unit;
+          sepUtil = Math.max(sepUtil, sep.getCapacityUtilization());
+        }
+        if (unit instanceof Compressor) {
+          Compressor comp = (Compressor) unit;
+          compPower += comp.getPower("MW");
+        }
       }
 
       boolean feasible = sepUtil <= maxSeparatorUtilization && compPower <= maxCompressorPowerMW;
 
       if (feasible && flow > bestFlow) {
-	bestP = p;
-	bestFlow = flow;
-	bestSepUtil = sepUtil;
-	bestCompPower = compPower;
+        bestP = p;
+        bestFlow = flow;
+        bestSepUtil = sepUtil;
+        bestCompPower = compPower;
       }
     }
 
@@ -7762,16 +7763,16 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     }
     for (neqsim.process.equipment.ProcessEquipmentInterface unit : topsideModel.getUnitOperations()) {
       if (unit instanceof neqsim.process.equipment.separator.Separator) {
-	neqsim.process.equipment.separator.Separator sep = (neqsim.process.equipment.separator.Separator) unit;
-	if (sep.getCapacityUtilization() > maxSeparatorUtilization) {
-	  return false;
-	}
+        neqsim.process.equipment.separator.Separator sep = (neqsim.process.equipment.separator.Separator) unit;
+        if (sep.getCapacityUtilization() > maxSeparatorUtilization) {
+          return false;
+        }
       }
       if (unit instanceof Compressor) {
-	Compressor comp = (Compressor) unit;
-	if (comp.getPower("MW") > maxCompressorPowerMW) {
-	  return false;
-	}
+        Compressor comp = (Compressor) unit;
+        if (comp.getPower("MW") > maxCompressorPowerMW) {
+          return false;
+        }
       }
     }
     return true;
@@ -7813,11 +7814,11 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     for (int t = 0; t < n; t++) {
       // Update each reservoir's pressure
       for (Map.Entry<String, double[]> entry : reservoirPressureProfiles.entrySet()) {
-	String sourceNode = entry.getKey();
-	double[] pressures = entry.getValue();
-	if (t < pressures.length) {
-	  setReservoirPressure(sourceNode, pressures[t]);
-	}
+        String sourceNode = entry.getKey();
+        double[] pressures = entry.getValue();
+        if (t < pressures.length) {
+          setReservoirPressure(sourceNode, pressures[t]);
+        }
       }
 
       // Optimise choke settings at this timestep
@@ -7829,35 +7830,35 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
       // Run topside if coupled
       if (topsideModel != null) {
-	try {
-	  // Update topside feed with current network output
-	  neqsim.process.equipment.ProcessEquipmentInterface firstUnit = topsideModel.getUnitOperations().get(0);
-	  if (firstUnit instanceof neqsim.process.equipment.stream.StreamInterface) {
-	    neqsim.process.equipment.stream.StreamInterface feedStream = (neqsim.process.equipment.stream.StreamInterface) firstUnit;
-	    feedStream.setFlowRate(rateKgHr, "kg/hr");
-	    double sinkP = getNodePressure(topsideSinkNodeName);
-	    feedStream.setPressure(sinkP, "bara");
-	  }
-	  topsideModel.run();
-	  for (neqsim.process.equipment.ProcessEquipmentInterface unit : topsideModel.getUnitOperations()) {
-	    if (unit instanceof neqsim.process.equipment.separator.Separator) {
-	      neqsim.process.equipment.separator.Separator sep = (neqsim.process.equipment.separator.Separator) unit;
-	      sepUtil[t] = Math.max(sepUtil[t], sep.getCapacityUtilization() * 100.0);
-	    }
-	    if (unit instanceof Compressor) {
-	      Compressor comp = (Compressor) unit;
-	      compPower[t] += comp.getPower("MW");
-	    }
-	  }
-	} catch (Exception e) {
-	  logger.warn("Topside run failed at timestep " + t + ": " + e.getMessage());
-	}
+        try {
+          // Update topside feed with current network output
+          neqsim.process.equipment.ProcessEquipmentInterface firstUnit = topsideModel.getUnitOperations().get(0);
+          if (firstUnit instanceof neqsim.process.equipment.stream.StreamInterface) {
+            neqsim.process.equipment.stream.StreamInterface feedStream = (neqsim.process.equipment.stream.StreamInterface) firstUnit;
+            feedStream.setFlowRate(rateKgHr, "kg/hr");
+            double sinkP = getNodePressure(topsideSinkNodeName);
+            feedStream.setPressure(sinkP, "bara");
+          }
+          topsideModel.run();
+          for (neqsim.process.equipment.ProcessEquipmentInterface unit : topsideModel.getUnitOperations()) {
+            if (unit instanceof neqsim.process.equipment.separator.Separator) {
+              neqsim.process.equipment.separator.Separator sep = (neqsim.process.equipment.separator.Separator) unit;
+              sepUtil[t] = Math.max(sepUtil[t], sep.getCapacityUtilization() * 100.0);
+            }
+            if (unit instanceof Compressor) {
+              Compressor comp = (Compressor) unit;
+              compPower[t] += comp.getPower("MW");
+            }
+          }
+        } catch (Exception e) {
+          logger.warn("Topside run failed at timestep " + t + ": " + e.getMessage());
+        }
       }
 
       // Cumulative production (trapezoidal integration)
       if (t > 0) {
-	double dtHours = (timestepYears[t] - timestepYears[t - 1]) * 8760.0;
-	cumProd += 0.5 * (rates[t - 1] + rates[t]) * dtHours;
+        double dtHours = (timestepYears[t] - timestepYears[t - 1]) * 8760.0;
+        cumProd += 0.5 * (rates[t - 1] + rates[t]) * dtHours;
       }
       cumulative[t] = cumProd;
     }
@@ -8015,7 +8016,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     Map<String, Double> chokeSettings = new LinkedHashMap<>();
     for (NetworkPipe pipe : pipes.values()) {
       if (pipe.getElementType() == NetworkElementType.CHOKE) {
-	chokeSettings.put(pipe.getName(), pipe.getChokeOpening());
+        chokeSettings.put(pipe.getName(), pipe.getChokeOpening());
       }
     }
     result.put("chokeSettings", chokeSettings);
@@ -8165,17 +8166,17 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     // Step 2: Run topside if coupled
     if (topsideModel != null) {
       try {
-	neqsim.process.equipment.ProcessEquipmentInterface firstUnit = topsideModel.getUnitOperations().get(0);
-	if (firstUnit instanceof neqsim.process.equipment.stream.StreamInterface) {
-	  neqsim.process.equipment.stream.StreamInterface feedStream = (neqsim.process.equipment.stream.StreamInterface) firstUnit;
-	  feedStream.setFlowRate(totalFlowKgHr, "kg/hr");
-	  if (topsideSinkNodeName != null) {
-	    feedStream.setPressure(getNodePressure(topsideSinkNodeName), "bara");
-	  }
-	}
-	topsideModel.run();
+        neqsim.process.equipment.ProcessEquipmentInterface firstUnit = topsideModel.getUnitOperations().get(0);
+        if (firstUnit instanceof neqsim.process.equipment.stream.StreamInterface) {
+          neqsim.process.equipment.stream.StreamInterface feedStream = (neqsim.process.equipment.stream.StreamInterface) firstUnit;
+          feedStream.setFlowRate(totalFlowKgHr, "kg/hr");
+          if (topsideSinkNodeName != null) {
+            feedStream.setPressure(getNodePressure(topsideSinkNodeName), "bara");
+          }
+        }
+        topsideModel.run();
       } catch (Exception e) {
-	logger.warn("Topside run failed in transient step: " + e.getMessage());
+        logger.warn("Topside run failed in transient step: " + e.getMessage());
       }
     }
 
@@ -8187,18 +8188,18 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       // Sum the flow from all IPR + choke pipes leaving this source node (kg/s)
       double flowKgS = 0.0;
       for (NetworkPipe pipe : pipes.values()) {
-	if (pipe.getFromNode().equals(srcNode) && (pipe.getElementType() == NetworkElementType.WELL_IPR
-	    || pipe.getElementType() == NetworkElementType.CHOKE)) {
-	  flowKgS += Math.abs(pipe.getFlowRate());
-	}
+        if (pipe.getFromNode().equals(srcNode) && (pipe.getElementType() == NetworkElementType.WELL_IPR
+            || pipe.getElementType() == NetworkElementType.CHOKE)) {
+          flowKgS += Math.abs(pipe.getFlowRate());
+        }
       }
 
       // Update well stream on the reservoir
       StreamInterface wellStream;
       if ("oil".equalsIgnoreCase(att.wellType)) {
-	wellStream = att.reservoir.getOilProducer(att.wellIndex).getStream();
+        wellStream = att.reservoir.getOilProducer(att.wellIndex).getStream();
       } else {
-	wellStream = att.reservoir.getGasProducer(att.wellIndex).getStream();
+        wellStream = att.reservoir.getGasProducer(att.wellIndex).getStream();
       }
       wellStream.setFlowRate(flowKgS, "kg/sec");
 
@@ -8209,11 +8210,11 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       int nSubSteps = Math.max(1, (int) Math.ceil(dtSeconds / maxSubStepSeconds));
       double subDt = dtSeconds / nSubSteps;
       for (int ss = 0; ss < nSubSteps; ss++) {
-	double currentP = att.reservoir.getReservoirFluid().getPressure("bara");
-	if (currentP < att.reservoir.getLowPressureLimit("bara")) {
-	  break;
-	}
-	att.reservoir.runTransient(subDt);
+        double currentP = att.reservoir.getReservoirFluid().getPressure("bara");
+        if (currentP < att.reservoir.getLowPressureLimit("bara")) {
+          break;
+        }
+        att.reservoir.runTransient(subDt);
       }
 
       // Step 4: Read new reservoir pressure and update network
@@ -8264,7 +8265,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
     if (attachedReservoirs.isEmpty()) {
       throw new IllegalStateException(
-	  "No reservoirs attached. Use attachReservoir() before calling productionForecastCoupled.");
+          "No reservoirs attached. Use attachReservoir() before calling productionForecastCoupled.");
     }
 
     int n = timestepYears.length;
@@ -8289,22 +8290,22 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       // Calculate dt in seconds
       double dtSeconds;
       if (t == 0) {
-	// First timestep: just solve, don't drain yet
-	dtSeconds = 0.0;
+        // First timestep: just solve, don't drain yet
+        dtSeconds = 0.0;
       } else {
-	dtSeconds = (timestepYears[t] - timestepYears[t - 1]) * 365.25 * 24 * 3600.0;
+        dtSeconds = (timestepYears[t] - timestepYears[t - 1]) * 365.25 * 24 * 3600.0;
       }
 
       // Run the coupled step
       if (dtSeconds > 0) {
-	runTransientCoupled(dtSeconds, optimMaxIter, optimTolerance);
+        runTransientCoupled(dtSeconds, optimMaxIter, optimTolerance);
       } else {
-	// Initial step: just optimise at starting conditions
-	if (optimMaxIter > 0) {
-	  optimizeProduction(optimMaxIter, optimTolerance);
-	} else {
-	  run();
-	}
+        // Initial step: just optimise at starting conditions
+        if (optimMaxIter > 0) {
+          optimizeProduction(optimMaxIter, optimTolerance);
+        } else {
+          run();
+        }
       }
 
       double rateKgHr = Math.abs(getTotalSinkFlow()) * 3600.0;
@@ -8313,49 +8314,49 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
       // Run topside for metrics (already run inside runTransientCoupled, but t=0 needs it)
       if (topsideModel != null && dtSeconds == 0) {
-	try {
-	  neqsim.process.equipment.ProcessEquipmentInterface firstUnit = topsideModel.getUnitOperations().get(0);
-	  if (firstUnit instanceof neqsim.process.equipment.stream.StreamInterface) {
-	    neqsim.process.equipment.stream.StreamInterface feedStream = (neqsim.process.equipment.stream.StreamInterface) firstUnit;
-	    feedStream.setFlowRate(rateKgHr, "kg/hr");
-	    if (topsideSinkNodeName != null) {
-	      feedStream.setPressure(getNodePressure(topsideSinkNodeName), "bara");
-	    }
-	  }
-	  topsideModel.run();
-	} catch (Exception e) {
-	  logger.warn("Topside run failed at t=0: " + e.getMessage());
-	}
+        try {
+          neqsim.process.equipment.ProcessEquipmentInterface firstUnit = topsideModel.getUnitOperations().get(0);
+          if (firstUnit instanceof neqsim.process.equipment.stream.StreamInterface) {
+            neqsim.process.equipment.stream.StreamInterface feedStream = (neqsim.process.equipment.stream.StreamInterface) firstUnit;
+            feedStream.setFlowRate(rateKgHr, "kg/hr");
+            if (topsideSinkNodeName != null) {
+              feedStream.setPressure(getNodePressure(topsideSinkNodeName), "bara");
+            }
+          }
+          topsideModel.run();
+        } catch (Exception e) {
+          logger.warn("Topside run failed at t=0: " + e.getMessage());
+        }
       }
 
       // Collect topside metrics
       if (topsideModel != null) {
-	for (neqsim.process.equipment.ProcessEquipmentInterface unit : topsideModel.getUnitOperations()) {
-	  if (unit instanceof neqsim.process.equipment.separator.Separator) {
-	    neqsim.process.equipment.separator.Separator sep = (neqsim.process.equipment.separator.Separator) unit;
-	    sepUtil[t] = Math.max(sepUtil[t], sep.getCapacityUtilization() * 100.0);
-	  }
-	  if (unit instanceof Compressor) {
-	    Compressor comp = (Compressor) unit;
-	    compPower[t] += comp.getPower("MW");
-	  }
-	}
+        for (neqsim.process.equipment.ProcessEquipmentInterface unit : topsideModel.getUnitOperations()) {
+          if (unit instanceof neqsim.process.equipment.separator.Separator) {
+            neqsim.process.equipment.separator.Separator sep = (neqsim.process.equipment.separator.Separator) unit;
+            sepUtil[t] = Math.max(sepUtil[t], sep.getCapacityUtilization() * 100.0);
+          }
+          if (unit instanceof Compressor) {
+            Compressor comp = (Compressor) unit;
+            compPower[t] += comp.getPower("MW");
+          }
+        }
       }
 
       // Cumulative production (trapezoidal)
       if (t > 0) {
-	double dtHours = (timestepYears[t] - timestepYears[t - 1]) * 8760.0;
-	cumProd += 0.5 * (rates[t - 1] + rates[t]) * dtHours;
+        double dtHours = (timestepYears[t] - timestepYears[t - 1]) * 8760.0;
+        cumProd += 0.5 * (rates[t - 1] + rates[t]) * dtHours;
       }
       cumulative[t] = cumProd;
 
       // Record per-reservoir state
       for (Map.Entry<String, ReservoirAttachment> entry : attachedReservoirs.entrySet()) {
-	String key = entry.getKey();
-	SimpleReservoir res = entry.getValue().reservoir;
-	resPressures.get(key)[t] = res.getReservoirFluid().getPressure("bara");
-	resGIP.get(key)[t] = res.getGasInPlace("GSm3");
-	resOIP.get(key)[t] = res.getOilInPlace("MSm3");
+        String key = entry.getKey();
+        SimpleReservoir res = entry.getValue().reservoir;
+        resPressures.get(key)[t] = res.getReservoirFluid().getPressure("bara");
+        resGIP.get(key)[t] = res.getGasInPlace("GSm3");
+        resOIP.get(key)[t] = res.getOilInPlace("MSm3");
       }
     }
 

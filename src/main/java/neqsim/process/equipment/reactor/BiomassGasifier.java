@@ -623,7 +623,7 @@ public class BiomassGasifier extends ProcessEquipmentBaseClass {
   private double getMoleFraction(SystemInterface system, String componentName) {
     try {
       if (system.hasComponent(componentName)) {
-	return system.getPhase(0).getComponent(componentName).getz();
+        return system.getPhase(0).getComponent(componentName).getz();
       }
     } catch (Exception e) {
       logger.debug("Could not get mole fraction for {}: {}", componentName, e.getMessage());
@@ -650,15 +650,15 @@ public class BiomassGasifier extends ProcessEquipmentBaseClass {
     if (syngasOutStream != null) {
       SystemInterface syngas = syngasOutStream.getThermoSystem();
       if (syngas != null) {
-	Map<String, Double> composition = new LinkedHashMap<String, Double>();
-	for (int i = 0; i < syngas.getPhase(0).getNumberOfComponents(); i++) {
-	  String name = syngas.getPhase(0).getComponent(i).getComponentName();
-	  double z = syngas.getPhase(0).getComponent(i).getz();
-	  if (z > 1e-10) {
-	    composition.put(name, z);
-	  }
-	}
-	results.put("syngasComposition_molFrac", composition);
+        Map<String, Double> composition = new LinkedHashMap<String, Double>();
+        for (int i = 0; i < syngas.getPhase(0).getNumberOfComponents(); i++) {
+          String name = syngas.getPhase(0).getComponent(i).getComponentName();
+          double z = syngas.getPhase(0).getComponent(i).getz();
+          if (z > 1e-10) {
+            composition.put(name, z);
+          }
+        }
+        results.put("syngasComposition_molFrac", composition);
       }
     }
     return results;

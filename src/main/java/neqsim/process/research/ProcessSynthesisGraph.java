@@ -111,7 +111,7 @@ public class ProcessSynthesisGraph {
     initialMaterials.add(normalize(feedMaterialName));
     Set<String> normalizedTargets = normalizeAll(targetMaterials);
     enumerateRecursive(initialMaterials, normalizedTargets, new ArrayList<OperationOption>(),
-	new LinkedHashSet<OperationOption>(), initialMaterials, Math.max(1, maxDepth), Math.max(1, maxPaths), paths);
+        new LinkedHashSet<OperationOption>(), initialMaterials, Math.max(1, maxDepth), Math.max(1, maxPaths), paths);
     return paths;
   }
 
@@ -142,20 +142,20 @@ public class ProcessSynthesisGraph {
     }
     for (OperationOption operation : operations) {
       if (usedOperations.contains(operation) || !inputsAvailable(operation, availableMaterials)
-	  || !continuesSerialPath(operation, currentPath, terminalMaterials)) {
-	continue;
+          || !continuesSerialPath(operation, currentPath, terminalMaterials)) {
+        continue;
       }
       Set<String> nextMaterials = new LinkedHashSet<String>(availableMaterials);
       Set<String> nextTerminalMaterials = new LinkedHashSet<String>();
       for (String output : operation.getOutputMaterials()) {
-	String normalizedOutput = normalize(output);
-	nextMaterials.add(normalizedOutput);
-	nextTerminalMaterials.add(normalizedOutput);
+        String normalizedOutput = normalize(output);
+        nextMaterials.add(normalizedOutput);
+        nextTerminalMaterials.add(normalizedOutput);
       }
       currentPath.add(operation);
       usedOperations.add(operation);
       enumerateRecursive(nextMaterials, targetMaterials, currentPath, usedOperations, nextTerminalMaterials, maxDepth,
-	  maxPaths, paths);
+          maxPaths, paths);
       usedOperations.remove(operation);
       currentPath.remove(currentPath.size() - 1);
     }
@@ -176,7 +176,7 @@ public class ProcessSynthesisGraph {
     }
     for (String input : operation.getInputMaterials()) {
       if (terminalMaterials.contains(normalize(input))) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -195,7 +195,7 @@ public class ProcessSynthesisGraph {
     }
     for (String input : operation.getInputMaterials()) {
       if (!availableMaterials.contains(normalize(input))) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -211,7 +211,7 @@ public class ProcessSynthesisGraph {
   private boolean containsAny(Set<String> left, Set<String> right) {
     for (String value : right) {
       if (left.contains(value)) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -239,7 +239,7 @@ public class ProcessSynthesisGraph {
     Set<String> normalized = new LinkedHashSet<String>();
     for (String value : values) {
       if (value != null && !value.trim().isEmpty()) {
-	normalized.add(normalize(value));
+        normalized.add(normalize(value));
       }
     }
     return normalized;

@@ -143,13 +143,13 @@ public class FlowRateAdjuster extends TwoPortEquipment {
       gasStream.setFlowRate(desiredGasFlow, unit);
       oilStream.setFlowRate(desiredOilFlow * oilDensity, "kg/hr");
       if (desiredWaterFlow > 0.0) {
-	waterStream.setFlowRate(desiredWaterFlow * waterDensity, "kg/hr");
+        waterStream.setFlowRate(desiredWaterFlow * waterDensity, "kg/hr");
       }
     } else {
       gasStream.setFlowRate(desiredGasFlow, unit);
       oilStream.setFlowRate(desiredOilFlow, unit);
       if (desiredWaterFlow > 0.0) {
-	waterStream.setFlowRate(desiredWaterFlow, unit);
+        waterStream.setFlowRate(desiredWaterFlow, unit);
       }
     }
     gasStream.run();

@@ -69,7 +69,7 @@ class ClassicalNucleationTheoryTest {
 
     cnt.calculate();
     assertEquals(expectedRadius, cnt.getCriticalRadius(), expectedRadius * 1e-10,
-	"Critical radius must match Kelvin equation");
+        "Critical radius must match Kelvin equation");
   }
 
   @Test
@@ -118,14 +118,14 @@ class ClassicalNucleationTheoryTest {
 
     cnt.calculate();
     assertEquals(expectedBarrier, cnt.getFreeEnergyBarrier(), expectedBarrier * 1e-10,
-	"Free energy barrier must match CNT formula");
+        "Free energy barrier must match CNT formula");
   }
 
   @Test
   void testDimensionlessBarrierIsPositive() {
     cnt.calculate();
     assertTrue(cnt.getDimensionlessFreeEnergyBarrier() > 0.0,
-	"Dimensionless free energy barrier must be positive for S > 1");
+        "Dimensionless free energy barrier must be positive for S > 1");
   }
 
   @Test
@@ -163,7 +163,7 @@ class ClassicalNucleationTheoryTest {
     double expectedN = (4.0 * Math.PI / 3.0) * Math.pow(r, 3) / vm;
 
     assertEquals(expectedN, cnt.getCriticalNucleusMolecules(), expectedN * 1e-10,
-	"Critical nucleus molecules must be consistent with critical radius");
+        "Critical nucleus molecules must be consistent with critical radius");
   }
 
   // ============================================================================
@@ -248,7 +248,7 @@ class ClassicalNucleationTheoryTest {
 
     cnt.calculate();
     assertEquals(expected, cnt.getCoagulationKernel(), expected * 1e-10,
-	"Coagulation kernel must match Smoluchowski formula");
+        "Coagulation kernel must match Smoluchowski formula");
   }
 
   // ============================================================================
@@ -428,7 +428,7 @@ class ClassicalNucleationTheoryTest {
     double barrierHet = cnt.getFreeEnergyBarrier();
 
     assertEquals(barrierHom, barrierHet, barrierHom * 1e-10,
-	"f(180) = 1, so heterogeneous barrier should equal homogeneous");
+        "f(180) = 1, so heterogeneous barrier should equal homogeneous");
   }
 
   @Test
@@ -443,7 +443,7 @@ class ClassicalNucleationTheoryTest {
     double barrierHet = cnt.getFreeEnergyBarrier();
 
     assertEquals(0.5 * barrierHom, barrierHet, barrierHom * 1e-10,
-	"f(90) = 0.5, so heterogeneous barrier should be half of homogeneous");
+        "f(90) = 0.5, so heterogeneous barrier should be half of homogeneous");
   }
 
   @Test
@@ -482,13 +482,13 @@ class ClassicalNucleationTheoryTest {
   void testFromThermoSystemCreatesValidModel() {
     // Create a simple NeqSim system with a condensable component
     neqsim.thermo.system.SystemInterface system = new neqsim.thermo.system.SystemSrkEos(250.0, 50.0e5 / 1e5); // 250K,
-													      // 50 bar
+    // 50 bar
     system.addComponent("methane", 0.95);
     system.addComponent("n-heptane", 0.05);
     system.setMixingRule("classic");
 
     neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	system);
+        system);
     ops.TPflash();
     system.initProperties();
 
@@ -600,6 +600,6 @@ class ClassicalNucleationTheoryTest {
 
     String json = cnt.toJson();
     assertTrue(json.contains("heterogeneous") || json.contains("contactAngle"),
-	"JSON should contain heterogeneous nucleation info");
+        "JSON should contain heterogeneous nucleation info");
   }
 }

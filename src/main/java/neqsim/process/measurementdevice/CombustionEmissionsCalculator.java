@@ -129,7 +129,7 @@ public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseCl
       double moleFraction = entry.getValue();
 
       if (COMPONENT_MOLAR_MASS.containsKey(component)) {
-	totalMass += moleFraction * COMPONENT_MOLAR_MASS.get(component);
+        totalMass += moleFraction * COMPONENT_MOLAR_MASS.get(component);
       }
     }
 
@@ -139,12 +139,12 @@ public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseCl
       double moleFraction = entry.getValue();
 
       if (COMPONENT_MOLAR_MASS.containsKey(component) && emissionsFactors.containsKey(component)) {
-	// Convert mole fraction to mass fraction
-	double massFraction = (moleFraction * COMPONENT_MOLAR_MASS.get(component)) / totalMass;
-	double emissionsFactor = emissionsFactors.get(component);
-	double componentEmissions = massFraction * emissionsFactor;
+        // Convert mole fraction to mass fraction
+        double massFraction = (moleFraction * COMPONENT_MOLAR_MASS.get(component)) / totalMass;
+        double emissionsFactor = emissionsFactors.get(component);
+        double componentEmissions = massFraction * emissionsFactor;
 
-	totalEmissions += componentEmissions;
+        totalEmissions += componentEmissions;
       }
     }
 

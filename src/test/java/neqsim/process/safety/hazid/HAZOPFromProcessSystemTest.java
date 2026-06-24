@@ -70,10 +70,10 @@ public class HAZOPFromProcessSystemTest {
     boolean hasPressure = false;
     for (HAZOPTemplate.HAZOPDeviation d : separatorNode.getDeviations()) {
       if (d.parameter == HAZOPTemplate.Parameter.LEVEL) {
-	hasLevel = true;
+        hasLevel = true;
       }
       if (d.parameter == HAZOPTemplate.Parameter.PRESSURE) {
-	hasPressure = true;
+        hasPressure = true;
       }
     }
     assertTrue(hasLevel, "separator node should seed LEVEL deviations");
@@ -87,7 +87,7 @@ public class HAZOPFromProcessSystemTest {
     boolean hasReverseFlow = false;
     for (HAZOPTemplate.HAZOPDeviation d : compressorNode.getDeviations()) {
       if (d.guideWord == HAZOPTemplate.GuideWord.REVERSE && d.parameter == HAZOPTemplate.Parameter.FLOW) {
-	hasReverseFlow = true;
+        hasReverseFlow = true;
       }
     }
     assertTrue(hasReverseFlow, "compressor node should seed REVERSE FLOW deviation");
@@ -105,7 +105,7 @@ public class HAZOPFromProcessSystemTest {
     assertThrows(IllegalArgumentException.class, new Executable() {
       @Override
       public void execute() {
-	HAZOPTemplate.fromProcessSystem(null);
+        HAZOPTemplate.fromProcessSystem(null);
       }
     });
   }
@@ -132,7 +132,7 @@ public class HAZOPFromProcessSystemTest {
   private HAZOPTemplate findNode(List<HAZOPTemplate> nodes, String unitName) {
     for (HAZOPTemplate node : nodes) {
       if (node.getNodeId().contains(unitName)) {
-	return node;
+        return node;
       }
     }
     throw new IllegalStateException("node not found for unit " + unitName);

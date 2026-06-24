@@ -88,7 +88,7 @@ public class ALARPAuditReport implements Serializable {
     double threshold = valueOfStatisticalLifeNOK * disproportionFactor;
     for (MeasureRecord m : measures) {
       double icaf = m.riskReductionPerYear == 0.0 ? Double.POSITIVE_INFINITY
-	  : m.annualisedCostNOK / m.riskReductionPerYear;
+          : m.annualisedCostNOK / m.riskReductionPerYear;
       String verdict = icaf <= threshold ? "IMPLEMENT (cost-effective)" : "REJECT (exceeds GDF threshold)";
       out.add(new EvaluationResult(m.description, m.riskReductionPerYear, m.annualisedCostNOK, icaf, verdict));
     }
@@ -104,11 +104,11 @@ public class ALARPAuditReport implements Serializable {
     StringBuilder sb = new StringBuilder();
     sb.append("ALARP audit: ").append(studyName).append('\n');
     sb.append(String.format("VSL = %.2e NOK   GDF = %.1f   threshold = %.2e NOK%n", valueOfStatisticalLifeNOK,
-	disproportionFactor, valueOfStatisticalLifeNOK * disproportionFactor));
+        disproportionFactor, valueOfStatisticalLifeNOK * disproportionFactor));
     sb.append("---------------------------------------------------\n");
     for (EvaluationResult r : evaluate()) {
       sb.append(String.format("ΔF=%.4e /yr  C=%.2e NOK/yr  ICAF=%.2e NOK/fatality%n", r.riskReductionPerYear,
-	  r.annualisedCostNOK, r.icaf));
+          r.annualisedCostNOK, r.icaf));
       sb.append("    ").append(r.description).append('\n');
       sb.append("    Verdict: ").append(r.verdict).append('\n');
     }
@@ -144,7 +144,7 @@ public class ALARPAuditReport implements Serializable {
     public final String verdict;
 
     EvaluationResult(String description, double riskReductionPerYear, double annualisedCostNOK, double icaf,
-	String verdict) {
+        String verdict) {
       this.description = description;
       this.riskReductionPerYear = riskReductionPerYear;
       this.annualisedCostNOK = annualisedCostNOK;

@@ -110,7 +110,7 @@ public class POXHydrogenPlantBuilder extends HydrogenPlantBuilderBase {
   public ProcessSystem build() {
     ProcessSystem process = new ProcessSystem();
     Stream feed = createMethaneSteamOxygenFeed(name + " feed", methaneFeedMolePerSec, steamToCarbonRatio,
-	oxygenToCarbonRatio, feedTemperatureK, pressureBara);
+        oxygenToCarbonRatio, feedTemperatureK, pressureBara);
 
     PartialOxidationReactor pox = new PartialOxidationReactor(name + " partial oxidation", feed);
     pox.setOxygenToCarbonTarget(oxygenToCarbonRatio);

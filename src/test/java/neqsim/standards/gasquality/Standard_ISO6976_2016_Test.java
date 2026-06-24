@@ -83,7 +83,7 @@ class Standard_ISO6976_2016_Test extends neqsim.NeqSimTest {
     double richWI = richStd.getValue("WI");
 
     Assertions.assertTrue(Math.abs(leanWI - richWI) > 1000.0,
-	"WI should differ between lean and rich gas, got lean=" + leanWI + " rich=" + richWI);
+        "WI should differ between lean and rich gas, got lean=" + leanWI + " rich=" + richWI);
     Assertions.assertTrue(richWI > leanWI, "Rich gas should have higher WI, got lean=" + leanWI + " rich=" + richWI);
     Assertions.assertTrue(leanWI > 45000.0 && leanWI < 60000.0, "leanWI=" + leanWI);
     Assertions.assertTrue(richWI > 45000.0 && richWI < 60000.0, "richWI=" + richWI);
@@ -99,7 +99,7 @@ class Standard_ISO6976_2016_Test extends neqsim.NeqSimTest {
     double volumeReferenceState = 0;
     double energyReferenceState = 15.55;
     Standard_ISO6976_2016 standard = new Standard_ISO6976_2016(testSystem, volumeReferenceState, energyReferenceState,
-	"volume");
+        "volume");
     standard.setReferenceState("real");
     standard.setReferenceType("volume");
     standard.calculate();

@@ -128,12 +128,12 @@ public class DIISAccelerator implements java.io.Serializable {
     for (int i = 0; i < m; i++) {
       int ii = bufferIndex(i);
       for (int j = 0; j < m; j++) {
-	int jj = bufferIndex(j);
-	double dot = 0.0;
-	for (int k = 0; k < vectorLength; k++) {
-	  dot += residualHistory[ii][k] * residualHistory[jj][k];
-	}
-	aug[i][j] = dot;
+        int jj = bufferIndex(j);
+        double dot = 0.0;
+        for (int k = 0; k < vectorLength; k++) {
+          dot += residualHistory[ii][k] * residualHistory[jj][k];
+        }
+        aug[i][j] = dot;
       }
       aug[i][m] = -1.0;
       aug[m][i] = -1.0;
@@ -147,24 +147,24 @@ public class DIISAccelerator implements java.io.Serializable {
       int pr = c;
       double mx = Math.abs(aug[c][c]);
       for (int r = c + 1; r < dim; r++) {
-	if (Math.abs(aug[r][c]) > mx) {
-	  mx = Math.abs(aug[r][c]);
-	  pr = r;
-	}
+        if (Math.abs(aug[r][c]) > mx) {
+          mx = Math.abs(aug[r][c]);
+          pr = r;
+        }
       }
       if (mx < 1.0e-30) {
-	return null;
+        return null;
       }
       if (pr != c) {
-	double[] tmp = aug[c];
-	aug[c] = aug[pr];
-	aug[pr] = tmp;
+        double[] tmp = aug[c];
+        aug[c] = aug[pr];
+        aug[pr] = tmp;
       }
       for (int r = c + 1; r < dim; r++) {
-	double f = aug[r][c] / aug[c][c];
-	for (int jj = c; jj <= dim; jj++) {
-	  aug[r][jj] -= f * aug[c][jj];
-	}
+        double f = aug[r][c] / aug[c][c];
+        for (int jj = c; jj <= dim; jj++) {
+          aug[r][jj] -= f * aug[c][jj];
+        }
       }
     }
 
@@ -172,10 +172,10 @@ public class DIISAccelerator implements java.io.Serializable {
     for (int i = dim - 1; i >= 0; i--) {
       sol[i] = aug[i][dim];
       for (int j = i + 1; j < dim; j++) {
-	sol[i] -= aug[i][j] * sol[j];
+        sol[i] -= aug[i][j] * sol[j];
       }
       if (Math.abs(aug[i][i]) < 1.0e-30) {
-	return null;
+        return null;
       }
       sol[i] /= aug[i][i];
     }
@@ -186,7 +186,7 @@ public class DIISAccelerator implements java.io.Serializable {
       int ii = bufferIndex(i);
       double ci = sol[i];
       for (int k = 0; k < vectorLength; k++) {
-	result[k] += ci * iterateHistory[ii][k];
+        result[k] += ci * iterateHistory[ii][k];
       }
     }
 

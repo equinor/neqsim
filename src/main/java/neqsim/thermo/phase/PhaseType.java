@@ -79,7 +79,7 @@ public enum PhaseType {
   public static PhaseType byName(String name) {
     for (PhaseType pt : copyOfValues) {
       if (pt.name().equals(name)) {
-	return pt;
+        return pt;
       }
     }
     throw new RuntimeException(new InvalidInputException("PhaseType", "byName", "name", "is not valid."));
@@ -94,7 +94,7 @@ public enum PhaseType {
   public static PhaseType byDesc(String desc) {
     for (PhaseType pt : copyOfValues) {
       if (pt.getDesc().equals(desc)) {
-	return pt;
+        return pt;
       }
     }
     throw new RuntimeException(new InvalidInputException("PhaseType", "byDesc", "desc", "is not valid."));
@@ -109,7 +109,7 @@ public enum PhaseType {
   public static PhaseType byValue(int value) {
     for (PhaseType pt : copyOfValues) {
       if (pt.getValue() == (value)) {
-	return pt;
+        return pt;
       }
     }
     throw new RuntimeException(new InvalidInputException("PhaseType", "byValue", "value", "is not valid."));

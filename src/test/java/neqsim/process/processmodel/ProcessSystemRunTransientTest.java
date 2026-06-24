@@ -116,7 +116,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
       // + separator1.getGasOutStream().getPressure());
       p.runTransient();
       for (SimulationInterface sim : p.getUnitOperations()) {
-	assertEquals(sim.getCalculationIdentifier(), p.getCalculationIdentifier());
+        assertEquals(sim.getCalculationIdentifier(), p.getCalculationIdentifier());
       }
     }
     assertEquals(73.49473569951421, flowTransmitter.getMeasuredValue(), 10.0);
@@ -224,7 +224,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
       // + valve2.getPercentValveOpening() + "valve3 opening " + valve3.getPercentValveOpening());
       p.runTransient();
       for (SimulationInterface sim : p.getUnitOperations()) {
-	assertEquals(p.getCalculationIdentifier(), sim.getCalculationIdentifier());
+        assertEquals(p.getCalculationIdentifier(), sim.getCalculationIdentifier());
       }
     }
     assertEquals(0.4470214843750001, separatorLevelTransmitter.getMeasuredValue(), 0.1);
@@ -288,7 +288,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     assertEquals(100.0, compressor1.getOutletStream().getPressure(), 0.01);
 
     neqsim.process.equipment.compressor.CompressorChartGenerator compchartgenerator = new neqsim.process.equipment.compressor.CompressorChartGenerator(
-	compressor1);
+        compressor1);
     compressor1.setCompressorChart(compchartgenerator.generateCompressorChart("normal"));
     compressor1.getCompressorChart().setUseCompressorChart(true);
     // compressor1.setCalculateSteadyState(true);
@@ -382,7 +382,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
 
     // logger.info("steady state with compressor curves.....");
     neqsim.process.equipment.compressor.CompressorChartGenerator compchartgenerator = new neqsim.process.equipment.compressor.CompressorChartGenerator(
-	compressor1);
+        compressor1);
     compressor1.setCompressorChart(compchartgenerator.generateCompressorChart("normal"));
     compressor1.getCompressorChart().setUseCompressorChart(true);
     // compressor1.setCalculateSteadyState(true);
@@ -485,7 +485,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     assertEquals(100.0, compressor1.getOutletStream().getPressure(), 0.01);
 
     neqsim.process.equipment.compressor.CompressorChartGenerator compchartgenerator = new neqsim.process.equipment.compressor.CompressorChartGenerator(
-	compressor1);
+        compressor1);
     compressor1.setCompressorChart(compchartgenerator.generateCompressorChart("normal"));
     compressor1.getCompressorChart().setUseCompressorChart(true);
     // compressor1.setCalculateSteadyState(true);
@@ -742,7 +742,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
      * " pres out " + compressor1.getOutletStream().getPressure() + " distancetosurge ");
      */
     neqsim.process.equipment.compressor.CompressorChartGenerator compchartgenerator = new neqsim.process.equipment.compressor.CompressorChartGenerator(
-	compressor1);
+        compressor1);
     compressor1.setCompressorChart(compchartgenerator.generateCompressorChart("normal"));
     compressor1.getCompressorChart().setUseCompressorChart(true);
     p.run();
@@ -840,18 +840,18 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     stream1.setCalculateSteadyState(true);
 
     neqsim.process.equipment.valve.ThrottlingValve valve1 = new neqsim.process.equipment.valve.ThrottlingValve(
-	"valve_1", stream1);
+        "valve_1", stream1);
     valve1.setOutletPressure(5.0);
     valve1.setPercentValveOpening(30.0);
     valve1.setCalculateSteadyState(false);
 
     neqsim.process.equipment.separator.Separator separator1 = new neqsim.process.equipment.separator.Separator(
-	"separator_1");
+        "separator_1");
     separator1.addStream(valve1.getOutletStream());
     separator1.setCalculateSteadyState(true);
 
     neqsim.process.equipment.compressor.Compressor compressor1 = new neqsim.process.equipment.compressor.Compressor(
-	"compressor_1");
+        "compressor_1");
     compressor1.setInletStream(separator1.getGasOutStream());
     compressor1.setOutletPressure(10.0, "bara");
     compressor1.setCalculateSteadyState(true);
@@ -890,13 +890,13 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     stream1.setCalculateSteadyState(true);
 
     neqsim.process.equipment.valve.ThrottlingValve valve1 = new neqsim.process.equipment.valve.ThrottlingValve(
-	"valve_1", stream1);
+        "valve_1", stream1);
     valve1.setOutletPressure(5.0);
     valve1.setPercentValveOpening(30.0);
     valve1.setCalculateSteadyState(false);
 
     neqsim.process.equipment.separator.Separator separator1 = new neqsim.process.equipment.separator.Separator(
-	"separator_1");
+        "separator_1");
     separator1.addStream(valve1.getOutletStream());
     separator1.setSeparatorLength(10.3);
     separator1.setInternalDiameter(0.2);
@@ -904,19 +904,19 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     separator1.setCalculateSteadyState(false);
 
     neqsim.process.equipment.valve.ThrottlingValve valve2 = new neqsim.process.equipment.valve.ThrottlingValve(
-	"valve_2", separator1.getLiquidOutStream());
+        "valve_2", separator1.getLiquidOutStream());
     valve2.setOutletPressure(1.0);
     valve2.setPercentValveOpening(30.0);
     valve2.setCalculateSteadyState(false);
 
     neqsim.process.equipment.valve.ThrottlingValve valve3 = new neqsim.process.equipment.valve.ThrottlingValve(
-	"valve_3", separator1.getGasOutStream());
+        "valve_3", separator1.getGasOutStream());
     valve3.setOutletPressure(1.0);
     valve3.setPercentValveOpening(30.0);
     valve3.setCalculateSteadyState(false);
 
     neqsim.process.measurementdevice.VolumeFlowTransmitter flowTransmitter = new neqsim.process.measurementdevice.VolumeFlowTransmitter(
-	stream1);
+        stream1);
     flowTransmitter.setUnit("kg/hr");
     flowTransmitter.setMaximumValue(100.0);
     flowTransmitter.setMinimumValue(1.0);
@@ -951,8 +951,8 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
 
     for (int i = 0; i < 10; i++) {
       logger.debug("time {} sep pres {} valve1 opening {} valve2 opening {} valve3 opening {} flow {}", i,
-	  separator1.getPressure("bara"), valve1.getPercentValveOpening(), valve2.getPercentValveOpening(),
-	  valve3.getPercentValveOpening(), flowTransmitter.getMeasuredValue());
+          separator1.getPressure("bara"), valve1.getPercentValveOpening(), valve2.getPercentValveOpening(),
+          valve3.getPercentValveOpening(), flowTransmitter.getMeasuredValue());
       p.runTransient(deltaTsec);
     }
 
@@ -960,8 +960,8 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
 
     for (int i = 0; i < 100; i++) {
       logger.debug("time {} sep pres {} valve1 opening {} valve2 opening {} valve3 opening {} liq_level {} flow {}", i,
-	  separator1.getPressure("bara"), valve1.getPercentValveOpening(), valve2.getPercentValveOpening(),
-	  valve3.getPercentValveOpening(), separator1.getLiquidLevel(), flowTransmitter.getMeasuredValue());
+          separator1.getPressure("bara"), valve1.getPercentValveOpening(), valve2.getPercentValveOpening(),
+          valve3.getPercentValveOpening(), separator1.getLiquidLevel(), flowTransmitter.getMeasuredValue());
       p.runTransient(deltaTsec);
     }
   }

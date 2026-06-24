@@ -127,7 +127,7 @@ class FLNGprocessSimulationTest {
     // ---- PRINT PROCESS PROFILE ----
     logger.info("\n===== FLNG Process Temperature Profile =====");
     logger.info(
-	"Feed:        " + fmt(feedStream.getTemperature("C")) + " C, " + fmt(feedStream.getPressure("bara")) + " bara");
+        "Feed:        " + fmt(feedStream.getTemperature("C")) + " C, " + fmt(feedStream.getPressure("bara")) + " bara");
     System.out.println("Pre-cool 1:  " + fmt(precool1.getOutletStream().getTemperature("C")) + " C");
     System.out.println("Pre-cool 2:  " + fmt(precool2.getOutletStream().getTemperature("C")) + " C");
     System.out.println("Pre-cool 3:  " + fmt(precool3.getOutletStream().getTemperature("C")) + " C");
@@ -136,7 +136,7 @@ class FLNGprocessSimulationTest {
     logger.info("MCHE-3:      " + fmt(mche3.getOutletStream().getTemperature("C")) + " C");
     double jtOutTemp = jtValve.getOutletStream().getTemperature("C");
     logger
-	.info("JT valve:    " + fmt(jtOutTemp) + " C, " + fmt(jtValve.getOutletStream().getPressure("bara")) + " bara");
+        .info("JT valve:    " + fmt(jtOutTemp) + " C, " + fmt(jtValve.getOutletStream().getPressure("bara")) + " bara");
 
     // ---- VERIFY RESULTS ----
 
@@ -390,7 +390,7 @@ class FLNGprocessSimulationTest {
     lngFluid.setMixingRule("classic");
 
     LNGTank.InsulationType[] types = { LNGTank.InsulationType.MEMBRANE, LNGTank.InsulationType.MOSS,
-	LNGTank.InsulationType.PRISMATIC };
+        LNGTank.InsulationType.PRISMATIC };
 
     logger.info("\nLNG Tank Insulation Comparison:");
     logger.info(String.format("%-12s  %-8s  %-12s  %-10s", "Type", "U (W/m2K)", "BOG (%/day)", "BOG (kg/hr)"));
@@ -413,7 +413,7 @@ class FLNGprocessSimulationTest {
       proc.run();
 
       logger.info(String.format("%-12s  %-8.3f  %-12.4f  %-10.1f", type, tank.getOverallHeatTransferCoefficient(),
-	  tank.getBoilOffRatePctPerDay(), tank.getBOGMassFlowRate()));
+          tank.getBoilOffRatePctPerDay(), tank.getBOGMassFlowRate()));
 
       assertTrue(tank.getBoilOffRatePctPerDay() > 0.0, "BOG rate should be positive for " + type);
       assertTrue(tank.getHeatIngress() > 0.0, "Heat ingress should be positive for " + type);

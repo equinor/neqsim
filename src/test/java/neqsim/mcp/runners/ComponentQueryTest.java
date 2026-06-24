@@ -75,8 +75,8 @@ class ComponentQueryTest {
     boolean foundMethane = false;
     for (int i = 0; i < result.getAsJsonArray("components").size(); i++) {
       if ("methane".equals(result.getAsJsonArray("components").get(i).getAsString())) {
-	foundMethane = true;
-	break;
+        foundMethane = true;
+        break;
       }
     }
     assertTrue(foundMethane, "Search for 'meth' should include methane");
@@ -169,7 +169,7 @@ class ComponentQueryTest {
     assertEquals("error", result.get("status").getAsString());
     assertTrue(result.has("errors"));
     assertEquals("UNKNOWN_COMPONENT",
-	result.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+        result.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
   }
 
   @Test

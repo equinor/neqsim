@@ -195,7 +195,7 @@ public class WaterGasShiftReactor extends TwoPortEquipment {
     reactorFeed.run(id);
 
     equilibriumReactor = HydrogenProductionUtils.createSyngasGibbsReactor(getName() + " equilibrium", reactorFeed,
-	GibbsReactor.EnergyMode.ISOTHERMAL);
+        GibbsReactor.EnergyMode.ISOTHERMAL);
     equilibriumReactor.setComponentAsInert("methane");
     equilibriumReactor.setComponentAsInert("nitrogen");
     equilibriumReactor.setComponentAsInert("oxygen");
@@ -224,7 +224,7 @@ public class WaterGasShiftReactor extends TwoPortEquipment {
     results.put("wgsEquilibriumRatio", wgsEquilibriumRatio);
     results.put("converged", hasConverged());
     results.put("outletComposition",
-	HydrogenProductionUtils.extractSyngasComposition(getOutletStream().getThermoSystem()));
+        HydrogenProductionUtils.extractSyngasComposition(getOutletStream().getThermoSystem()));
     return results;
   }
 

@@ -31,6 +31,6 @@ public class MultiStreamHeatExchanger2Response extends BaseResponse {
     temperatureApproach = inputHeatExchanger.getTemperatureApproach();
     compositeCurveResults = inputHeatExchanger.getCompositeCurve();
     data.put("temperature approach",
-	new Value(Double.toString(temperatureApproach), neqsim.util.unit.Units.getSymbol("temperature")));
+        new Value(Double.toString(temperatureApproach), neqsim.util.unit.Units.getSymbol("temperature")));
   }
 }

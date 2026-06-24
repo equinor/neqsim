@@ -366,7 +366,7 @@ public class InjectionConformanceMonitor extends ProcessEquipmentBaseClass {
     double targetFraction = 0.0;
     for (ZoneProfilePoint point : injectionProfile) {
       if (point.isTargetZone()) {
-	targetFraction += point.getAllocationFraction();
+        targetFraction += point.getAllocationFraction();
       }
     }
     return targetFraction;
@@ -522,8 +522,8 @@ public class InjectionConformanceMonitor extends ProcessEquipmentBaseClass {
     if (!injectionProfile.isEmpty()) {
       double oozFraction = getOutOfZoneFraction();
       if (oozFraction > 0.2) {
-	diagnosis = ConformanceDiagnosis.OUT_OF_ZONE_SUSPECTED;
-	return;
+        diagnosis = ConformanceDiagnosis.OUT_OF_ZONE_SUSPECTED;
+        return;
       }
     }
 
@@ -555,12 +555,12 @@ public class InjectionConformanceMonitor extends ProcessEquipmentBaseClass {
       return "Stable injectivity, no conformance issues detected.";
     case FRACTURE_GROWTH:
       return "Hall slope decreased — possible fracture growth or improved injectivity. "
-	  + "Risk of out-of-zone fracture extension.";
+          + "Risk of out-of-zone fracture extension.";
     case PLUGGING:
       return "Hall slope increased — possible near-wellbore plugging, scaling, or skin increase.";
     case OUT_OF_ZONE_SUSPECTED:
       return "Injection profile shows significant out-of-zone injection — "
-	  + String.format("%.1f%% going to non-target zones.", getOutOfZoneFraction() * 100);
+          + String.format("%.1f%% going to non-target zones.", getOutOfZoneFraction() * 100);
     case INSUFFICIENT_DATA:
     default:
       return "Insufficient data for diagnosis (need at least 5 data points).";

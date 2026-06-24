@@ -379,9 +379,9 @@ public class SeparatorSizingCalculator implements Serializable {
       double actualGasVelocity = gasVolumeFlow / gasArea;
 
       if (actualGasVelocity > maxGasVelocity) {
-	// Gas constrained - increase diameter
-	diameter = Math.sqrt(4.0 * gasVolumeFlow / (maxGasVelocity * 0.5 * Math.PI));
-	length = ld * diameter;
+        // Gas constrained - increase diameter
+        diameter = Math.sqrt(4.0 * gasVolumeFlow / (maxGasVelocity * 0.5 * Math.PI));
+        length = ld * diameter;
       }
     }
 
@@ -450,7 +450,7 @@ public class SeparatorSizingCalculator implements Serializable {
     result.slendernessRatio = result.tanTanLength / result.internalDiameter;
     result.kFactor = design.getGasLoadFactor();
     result.maxGasVelocity = design.getMaxDesignVolumeFlow()
-	/ (Math.PI * result.internalDiameter * result.internalDiameter / 4.0);
+        / (Math.PI * result.internalDiameter * result.internalDiameter / 4.0);
     result.requiredRetentionTime = design.getRetentionTime();
     result.designStandard = DesignStandard.API_12J;
 
@@ -522,16 +522,16 @@ public class SeparatorSizingCalculator implements Serializable {
      */
     public double getLiquidVolume() {
       if (separatorType == SeparatorType.VERTICAL) {
-	return getVolume() * 0.7; // 70% for liquid
+        return getVolume() * 0.7; // 70% for liquid
       } else {
-	return getVolume() * 0.5; // 50% for horizontal
+        return getVolume() * 0.5; // 50% for horizontal
       }
     }
 
     @Override
     public String toString() {
       return String.format("SeparatorSizingResult[type=%s, D=%.2fm, L=%.2fm, L/D=%.1f, K=%.3f, t_ret=%.0fs]",
-	  separatorType, internalDiameter, tanTanLength, slendernessRatio, kFactor, requiredRetentionTime);
+          separatorType, internalDiameter, tanTanLength, slendernessRatio, kFactor, requiredRetentionTime);
     }
   }
 }

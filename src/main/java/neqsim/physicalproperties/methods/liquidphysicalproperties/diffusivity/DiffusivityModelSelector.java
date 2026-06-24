@@ -79,7 +79,7 @@ public class DiffusivityModelSelector {
     // Validate temperature range
     if (temperature < T_MIN || temperature > T_MAX) {
       logger.warn("Temperature {} K is outside validated range [{}-{}] for diffusivity models", temperature, T_MIN,
-	  T_MAX);
+          T_MAX);
     }
 
     // Check for special components
@@ -165,7 +165,7 @@ public class DiffusivityModelSelector {
     for (int i = 0; i < phase.getNumberOfComponents(); i++) {
       String name = phase.getComponent(i).getComponentName().toLowerCase();
       if (name.equals("water") || name.equals("h2o")) {
-	return phase.getComponent(i).getx() > AQUEOUS_THRESHOLD;
+        return phase.getComponent(i).getx() > AQUEOUS_THRESHOLD;
       }
     }
     return false;
@@ -182,7 +182,7 @@ public class DiffusivityModelSelector {
     for (int i = 0; i < phase.getNumberOfComponents(); i++) {
       String name = phase.getComponent(i).getComponentName();
       if (name.equalsIgnoreCase(componentName) && phase.getComponent(i).getx() > 1e-10) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -199,9 +199,9 @@ public class DiffusivityModelSelector {
     for (int i = 0; i < phase.getNumberOfComponents(); i++) {
       String name = phase.getComponent(i).getComponentName();
       for (String amine : amineNames) {
-	if (name.equalsIgnoreCase(amine) && phase.getComponent(i).getx() > 1e-10) {
-	  return true;
-	}
+        if (name.equalsIgnoreCase(amine) && phase.getComponent(i).getx() > 1e-10) {
+          return true;
+        }
       }
     }
     return false;
@@ -224,8 +224,8 @@ public class DiffusivityModelSelector {
       return "CO2-water model selected for CO2 dissolution in aqueous phase.";
     case HIGH_PRESSURE_CORRECTED:
       return String.format(
-	  "High-pressure corrected model selected due to pressure (%.1f bar) exceeding %.1f bar threshold.", pressure,
-	  HIGH_PRESSURE_THRESHOLD);
+          "High-pressure corrected model selected due to pressure (%.1f bar) exceeding %.1f bar threshold.", pressure,
+          HIGH_PRESSURE_THRESHOLD);
     case SIDDIQI_LUCAS:
       return "Siddiqi-Lucas model selected for aqueous liquid phase (water > 50 mol%).";
     case HAYDUK_MINHAS:

@@ -127,21 +127,22 @@ public class SeparatorCapacityStrategy implements EquipmentCapacityStrategy {
 
     // Liquid level constraint
     CapacityConstraint levelConstraint = new CapacityConstraint("liquidLevel").setDesignValue(maxLiquidLevel)
-	.setMaxValue(0.95).setUnit("fraction").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-	.setWarningThreshold(0.9).setValueSupplier(() -> sep.getLiquidLevel());
+        .setMaxValue(0.95).setUnit("fraction").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
+        .setWarningThreshold(0.9).setValueSupplier(() -> sep.getLiquidLevel());
     constraints.put("liquidLevel", levelConstraint);
 
     // Gas load factor constraint (if separator has gas handling)
     try {
       if (sep.getGasOutStream() != null && sep.getGasOutStream().getThermoSystem() != null) {
-	// Calculate gas load factor (Souders-Brown equation approximation)
-	CapacityConstraint gasConstraint = new CapacityConstraint("gasLoadFactor").setDesignValue(maxGasLoadFactor)
-	    .setMaxValue(maxGasLoadFactor * 1.2).setUnit("m/s*sqrt(kg/m3)")
-	    .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT).setValueSupplier(() -> {
-	      double gasFlowRate = sep.getGasOutStream().getFlowRate("m3/hr");
-	      return gasFlowRate / 3600.0 / 100.0; // Simplified - actual would use Fs factor
-	    });
-	constraints.put("gasLoadFactor", gasConstraint);
+        // Calculate gas load factor (Souders-Brown equation approximation)
+        CapacityConstraint gasConstraint = new CapacityConstraint("gasLoadFactor").setDesignValue(maxGasLoadFactor)
+            .setMaxValue(maxGasLoadFactor * 1.2).setUnit("m/s*sqrt(kg/m3)")
+            .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT).setValueSupplier(() -> {
+              double gasFlowRate = sep.getGasOutStream().getFlowRate("m3/hr");
+              return gasFlowRate / 3600.0 / 100.0; // Simplified - actual
+                                                   // would use Fs factor
+            });
+        constraints.put("gasLoadFactor", gasConstraint);
       }
     } catch (Exception e) {
       // Gas outlet not available
@@ -158,7 +159,7 @@ public class SeparatorCapacityStrategy implements EquipmentCapacityStrategy {
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.isViolated()) {
-	violations.add(constraint);
+        violations.add(constraint);
       }
     }
 
@@ -176,8 +177,8 @@ public class SeparatorCapacityStrategy implements EquipmentCapacityStrategy {
     for (CapacityConstraint constraint : constraints.values()) {
       double util = constraint.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-	maxUtil = util;
-	bottleneck = constraint;
+        maxUtil = util;
+        bottleneck = constraint;
       }
     }
 
@@ -191,10 +192,10 @@ public class SeparatorCapacityStrategy implements EquipmentCapacityStrategy {
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD
-	  || constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
-	if (constraint.isHardLimitExceeded()) {
-	  return false;
-	}
+          || constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
+        if (constraint.isHardLimitExceeded()) {
+          return false;
+        }
       }
     }
 
@@ -208,7 +209,7 @@ public class SeparatorCapacityStrategy implements EquipmentCapacityStrategy {
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.getUtilization() > 1.0) {
-	return false;
+        return false;
       }
     }
 

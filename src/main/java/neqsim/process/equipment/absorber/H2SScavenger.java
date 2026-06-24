@@ -498,7 +498,7 @@ public class H2SScavenger extends TwoPortEquipment {
       injectionRateUnit = tempUnit;
 
       if (efficiency >= requiredRemoval) {
-	break;
+        break;
       }
       rate *= 1.2; // Increase by 20%
     }
@@ -553,7 +553,7 @@ public class H2SScavenger extends TwoPortEquipment {
 
     // Calculate removal efficiency
     h2sRemovalEfficiency = calculateRemovalEfficiency(h2sMassFlow, outletSystem.getTemperature(),
-	outletSystem.getPressure());
+        outletSystem.getPressure());
 
     // Calculate H2S removed
     h2sRemoved = h2sMassFlow * h2sRemovalEfficiency; // kg/hr
@@ -711,7 +711,7 @@ public class H2SScavenger extends TwoPortEquipment {
   @Override
   public String toJson() {
     return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create()
-	.toJson(new H2SScavengerResponse(this));
+        .toJson(new H2SScavengerResponse(this));
   }
 
   /**

@@ -98,17 +98,17 @@ public class AllocationNetwork implements Serializable {
       UnitSplit split = factors.getUnitSplits().get(units.get(u).getName());
       List<StreamInterface> outlets = split.getOutletStreams();
       for (int s = 0; s < outlets.size(); s++) {
-	streamProducer.put(outlets.get(s), new int[] { u, s });
+        streamProducer.put(outlets.get(s), new int[] { u, s });
       }
       for (StreamInterface in : split.getInletStreams()) {
-	List<Integer> consumers = streamConsumers.get(in);
-	if (consumers == null) {
-	  consumers = new ArrayList<>();
-	  streamConsumers.put(in, consumers);
-	}
-	if (!consumers.contains(u)) {
-	  consumers.add(u);
-	}
+        List<Integer> consumers = streamConsumers.get(in);
+        if (consumers == null) {
+          consumers = new ArrayList<>();
+          streamConsumers.put(in, consumers);
+        }
+        if (!consumers.contains(u)) {
+          consumers.add(u);
+        }
       }
     }
     logger.info("Allocation network: {} nodes, {} components", n, numComponents);
@@ -132,14 +132,14 @@ public class AllocationNetwork implements Serializable {
       UnitSplit split = factors.getUnitSplits().get(units.get(w).getName());
       List<StreamInterface> outlets = split.getOutletStreams();
       for (int s = 0; s < outlets.size(); s++) {
-	List<Integer> consumers = streamConsumers.get(outlets.get(s));
-	if (consumers == null) {
-	  continue; // terminal / custody outlet — leaves the network
-	}
-	double f = split.getFactor(s, componentIndex);
-	for (Integer u : consumers) {
-	  a[u][w] += f;
-	}
+        List<Integer> consumers = streamConsumers.get(outlets.get(s));
+        if (consumers == null) {
+          continue; // terminal / custody outlet — leaves the network
+        }
+        double f = split.getFactor(s, componentIndex);
+        for (Integer u : consumers) {
+          a[u][w] += f;
+        }
       }
     }
     return a;
@@ -194,9 +194,9 @@ public class AllocationNetwork implements Serializable {
     for (int u = 0; u < n; u++) {
       UnitSplit split = factors.getUnitSplits().get(units.get(u).getName());
       for (StreamInterface in : split.getInletStreams()) {
-	if (!streamProducer.containsKey(in) && !containsIdentity(sources, in)) {
-	  sources.add(in);
-	}
+        if (!streamProducer.containsKey(in) && !containsIdentity(sources, in)) {
+          sources.add(in);
+        }
       }
     }
     return sources;
@@ -213,9 +213,9 @@ public class AllocationNetwork implements Serializable {
     for (int u = 0; u < n; u++) {
       UnitSplit split = factors.getUnitSplits().get(units.get(u).getName());
       for (StreamInterface out : split.getOutletStreams()) {
-	if (!streamConsumers.containsKey(out) && !containsIdentity(custody, out)) {
-	  custody.add(out);
-	}
+        if (!streamConsumers.containsKey(out) && !containsIdentity(custody, out)) {
+          custody.add(out);
+        }
       }
     }
     return custody;
@@ -231,7 +231,7 @@ public class AllocationNetwork implements Serializable {
   private static boolean containsIdentity(List<StreamInterface> list, StreamInterface stream) {
     for (StreamInterface s : list) {
       if (s == stream) {
-	return true;
+        return true;
       }
     }
     return false;

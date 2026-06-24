@@ -129,8 +129,8 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
     double co2Density = getCO2Density(inlet);
     if (co2Density < MIN_CO2_DENSITY) {
       logger.info(
-	  "CO2 density ({} kg/m³) is below threshold ({} kg/m³). " + "Bulk phase reactions skipped for reactor '{}'.",
-	  co2Density, MIN_CO2_DENSITY, getName());
+          "CO2 density ({} kg/m³) is below threshold ({} kg/m³). " + "Bulk phase reactions skipped for reactor '{}'.",
+          co2Density, MIN_CO2_DENSITY, getName());
       return inlet.getThermoSystem().clone();
     }
 
@@ -140,11 +140,11 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
 
     try {
       if (hasSignificantConcentration(no2ppm) && hasSignificantConcentration(h2sppm)) {
-	return runSingleReactor(inlet);
+        return runSingleReactor(inlet);
       } else if (hasSignificantConcentration(oxyppm)) {
-	return runTwoStageOxidation(inlet, no2ppm, h2sppm);
+        return runTwoStageOxidation(inlet, no2ppm, h2sppm);
       } else {
-	return runSingleReactorWithSO2Inert(inlet);
+        return runSingleReactorWithSO2Inert(inlet);
       }
     } catch (Exception e) {
       logger.error("Equilibrium calculation failed for reactor '{}': {}", getName(), e.getMessage());
@@ -332,7 +332,7 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
     try {
       SystemInterface system = stream.getThermoSystem();
       if (system.getComponent("CO2") == null) {
-	return 0.0;
+        return 0.0;
       }
       // Return the overall fluid density as a proxy for CO2-rich phase density
       return system.getDensity("kg/m3");

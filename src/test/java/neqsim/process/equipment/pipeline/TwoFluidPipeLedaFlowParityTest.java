@@ -117,7 +117,7 @@ public class TwoFluidPipeLedaFlowParityTest {
       // Single-phase: models must agree within 10%
       assertTrue(dp > 0, "Pressure drop must be positive");
       assertTrue(ratio > 0.85 && ratio < 1.15,
-	  "Single-phase gas: TwoFluid and B&B should agree within 15%. Ratio=" + ratio);
+          "Single-phase gas: TwoFluid and B&B should agree within 15%. Ratio=" + ratio);
     }
 
     /**
@@ -337,7 +337,7 @@ public class TwoFluidPipeLedaFlowParityTest {
       double height = 200.0;
       double[] elevations = new double[nSec];
       for (int i = 0; i < nSec; i++) {
-	elevations[i] = height * i / (nSec - 1);
+        elevations[i] = height * i / (nSec - 1);
       }
 
       TwoFluidPipe pipe = new TwoFluidPipe("riser", inlet);
@@ -389,7 +389,7 @@ public class TwoFluidPipeLedaFlowParityTest {
       double elevDrop = pipeLen * Math.sin(Math.toRadians(5.0));
       double[] downElev = new double[nSec];
       for (int i = 0; i < nSec; i++) {
-	downElev[i] = elevDrop * (1.0 - (double) i / (nSec - 1));
+        downElev[i] = elevDrop * (1.0 - (double) i / (nSec - 1));
       }
 
       Stream inlet = new Stream("down-in", fluid);
@@ -589,8 +589,8 @@ public class TwoFluidPipeLedaFlowParityTest {
       double pipeLen = 10000.0;
       double[] elevations = new double[nSec];
       for (int i = 0; i < nSec; i++) {
-	double x = (double) i / (nSec - 1);
-	elevations[i] = 30.0 * Math.sin(2 * Math.PI * x * 2); // Two full sine waves
+        double x = (double) i / (nSec - 1);
+        elevations[i] = 30.0 * Math.sin(2 * Math.PI * x * 2); // Two full sine waves
       }
 
       TwoFluidPipe pipe = new TwoFluidPipe("terrain-pipe", inlet);
@@ -611,7 +611,7 @@ public class TwoFluidPipeLedaFlowParityTest {
       logger.info("=== Three-Phase Terrain: 10 km, undulating ===");
       logger.info("  dP = " + String.format("%.3f bar", dp));
       logger.info(
-	  "  Holdup range: [" + String.format("%.4f", min(holdup)) + ", " + String.format("%.4f", max(holdup)) + "]");
+          "  Holdup range: [" + String.format("%.4f", min(holdup)) + ", " + String.format("%.4f", max(holdup)) + "]");
 
       // Note: dP can be negative for undulating terrain with liquid accumulation
       // in valleys (hydrostatic head at low spots). This is physical behavior.
@@ -697,16 +697,16 @@ public class TwoFluidPipeLedaFlowParityTest {
       logger.info("  Initial outlet P: " + String.format("%.3f bara", initialOutletP));
 
       for (int step = 0; step < nSteps; step++) {
-	pipe.runTransient(dt, UUID.randomUUID());
+        pipe.runTransient(dt, UUID.randomUUID());
 
-	double outP = pipe.getOutletStream().getPressure("bara");
-	assertTrue(!Double.isNaN(outP), "Outlet P must not be NaN at step " + step);
-	assertTrue(outP > 0.1, "Outlet P must be positive at step " + step);
+        double outP = pipe.getOutletStream().getPressure("bara");
+        assertTrue(!Double.isNaN(outP), "Outlet P must not be NaN at step " + step);
+        assertTrue(outP > 0.1, "Outlet P must be positive at step " + step);
       }
 
       double[] finalHoldup = pipe.getLiquidHoldupProfile();
       for (double h : finalHoldup) {
-	assertTrue(h >= 0 && h <= 1.0, "Final holdup must be in [0,1]. Got " + h);
+        assertTrue(h >= 0 && h <= 1.0, "Final holdup must be in [0,1]. Got " + h);
       }
 
       logger.info("  Transient completed without crash or NaN — PASS");
@@ -754,7 +754,7 @@ public class TwoFluidPipeLedaFlowParityTest {
       // Run transient
       int nSteps = 10;
       for (int step = 0; step < nSteps; step++) {
-	pipe.runTransient(0.2, UUID.randomUUID());
+        pipe.runTransient(0.2, UUID.randomUUID());
       }
 
       double dpFinal = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
@@ -815,19 +815,19 @@ public class TwoFluidPipeLedaFlowParityTest {
       int boundaryViolations = 0;
 
       for (int step = 0; step < nSteps; step++) {
-	pipe.runTransient(dt, UUID.randomUUID());
+        pipe.runTransient(dt, UUID.randomUUID());
 
-	double[] holdup = pipe.getLiquidHoldupProfile();
-	double[] pressure = pipe.getPressureProfile();
+        double[] holdup = pipe.getLiquidHoldupProfile();
+        double[] pressure = pipe.getPressureProfile();
 
-	for (int j = 0; j < holdup.length; j++) {
-	  if (Double.isNaN(holdup[j]) || Double.isNaN(pressure[j])) {
-	    nanCount++;
-	  }
-	  if (holdup[j] < -0.01 || holdup[j] > 1.01) {
-	    boundaryViolations++;
-	  }
-	}
+        for (int j = 0; j < holdup.length; j++) {
+          if (Double.isNaN(holdup[j]) || Double.isNaN(pressure[j])) {
+            nanCount++;
+          }
+          if (holdup[j] < -0.01 || holdup[j] > 1.01) {
+            boundaryViolations++;
+          }
+        }
       }
 
       logger.info("=== Three-Phase Transient Stability ===");
@@ -862,38 +862,38 @@ public class TwoFluidPipeLedaFlowParityTest {
       logger.info("Flow (kg/hr) | dP (bar)");
 
       for (double flow : flows) {
-	SystemInterface fluid = new SystemSrkEos(273.15 + 40.0, 60.0);
-	fluid.addComponent("methane", 0.85);
-	fluid.addComponent("n-pentane", 0.10);
-	fluid.addComponent("n-heptane", 0.05);
-	fluid.setMixingRule("classic");
-	fluid.setMultiPhaseCheck(true);
+        SystemInterface fluid = new SystemSrkEos(273.15 + 40.0, 60.0);
+        fluid.addComponent("methane", 0.85);
+        fluid.addComponent("n-pentane", 0.10);
+        fluid.addComponent("n-heptane", 0.05);
+        fluid.setMixingRule("classic");
+        fluid.setMultiPhaseCheck(true);
 
-	Stream inlet = new Stream("in", fluid);
-	inlet.setFlowRate(flow, "kg/hr");
-	inlet.run();
+        Stream inlet = new Stream("in", fluid);
+        inlet.setFlowRate(flow, "kg/hr");
+        inlet.run();
 
-	int nSec = 20;
-	TwoFluidPipe pipe = new TwoFluidPipe("mono-pipe", inlet);
-	pipe.setLength(5000.0);
-	pipe.setDiameter(0.203);
-	pipe.setRoughness(4.6e-5);
-	pipe.setNumberOfSections(nSec);
-	double[] flat = new double[nSec];
-	pipe.setElevationProfile(flat);
+        int nSec = 20;
+        TwoFluidPipe pipe = new TwoFluidPipe("mono-pipe", inlet);
+        pipe.setLength(5000.0);
+        pipe.setDiameter(0.203);
+        pipe.setRoughness(4.6e-5);
+        pipe.setNumberOfSections(nSec);
+        double[] flat = new double[nSec];
+        pipe.setElevationProfile(flat);
 
-	ProcessSystem proc = new ProcessSystem();
-	proc.add(inlet);
-	proc.add(pipe);
-	proc.run();
+        ProcessSystem proc = new ProcessSystem();
+        proc.add(inlet);
+        proc.add(pipe);
+        proc.run();
 
-	double dp = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
-	logger.printf(org.apache.logging.log4j.Level.INFO, "  %10.0f | %8.3f%n", flow, dp);
+        double dp = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  %10.0f | %8.3f%n", flow, dp);
 
-	if (prevDp > 0) {
-	  assertTrue(dp > prevDp * 0.8, "dP should increase with flow. Current: " + dp + ", Previous: " + prevDp);
-	}
-	prevDp = dp;
+        if (prevDp > 0) {
+          assertTrue(dp > prevDp * 0.8, "dP should increase with flow. Current: " + dp + ", Previous: " + prevDp);
+        }
+        prevDp = dp;
       }
     }
 
@@ -931,8 +931,8 @@ public class TwoFluidPipeLedaFlowParityTest {
 
       double[] holdup = pipe.getLiquidHoldupProfile();
       for (int i = 0; i < holdup.length; i++) {
-	double alphaL = holdup[i];
-	assertTrue(alphaL >= -0.001 && alphaL <= 1.001, "Holdup at section " + i + " must be in [0,1]. Got " + alphaL);
+        double alphaL = holdup[i];
+        assertTrue(alphaL >= -0.001 && alphaL <= 1.001, "Holdup at section " + i + " must be in [0,1]. Got " + alphaL);
       }
     }
 
@@ -949,37 +949,37 @@ public class TwoFluidPipeLedaFlowParityTest {
       logger.info("Diameter (mm) | dP (bar)");
 
       for (double d : diameters) {
-	SystemInterface fluid = new SystemSrkEos(273.15 + 40.0, 60.0);
-	fluid.addComponent("methane", 0.85);
-	fluid.addComponent("n-pentane", 0.10);
-	fluid.addComponent("n-heptane", 0.05);
-	fluid.setMixingRule("classic");
-	fluid.setMultiPhaseCheck(true);
+        SystemInterface fluid = new SystemSrkEos(273.15 + 40.0, 60.0);
+        fluid.addComponent("methane", 0.85);
+        fluid.addComponent("n-pentane", 0.10);
+        fluid.addComponent("n-heptane", 0.05);
+        fluid.setMixingRule("classic");
+        fluid.setMultiPhaseCheck(true);
 
-	Stream inlet = new Stream("dia-in", fluid);
-	inlet.setFlowRate(20000.0, "kg/hr");
-	inlet.run();
+        Stream inlet = new Stream("dia-in", fluid);
+        inlet.setFlowRate(20000.0, "kg/hr");
+        inlet.run();
 
-	int nSec = 20;
-	TwoFluidPipe pipe = new TwoFluidPipe("dia-pipe", inlet);
-	pipe.setLength(5000.0);
-	pipe.setDiameter(d);
-	pipe.setRoughness(4.6e-5);
-	pipe.setNumberOfSections(nSec);
-	double[] flat = new double[nSec];
-	pipe.setElevationProfile(flat);
+        int nSec = 20;
+        TwoFluidPipe pipe = new TwoFluidPipe("dia-pipe", inlet);
+        pipe.setLength(5000.0);
+        pipe.setDiameter(d);
+        pipe.setRoughness(4.6e-5);
+        pipe.setNumberOfSections(nSec);
+        double[] flat = new double[nSec];
+        pipe.setElevationProfile(flat);
 
-	ProcessSystem proc = new ProcessSystem();
-	proc.add(inlet);
-	proc.add(pipe);
-	proc.run();
+        ProcessSystem proc = new ProcessSystem();
+        proc.add(inlet);
+        proc.add(pipe);
+        proc.run();
 
-	double dp = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
-	logger.printf(org.apache.logging.log4j.Level.INFO, "  %13.0f | %8.3f%n", d * 1000, dp);
+        double dp = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  %13.0f | %8.3f%n", d * 1000, dp);
 
-	// dP should decrease with increasing diameter
-	assertTrue(dp < prevDp, "dP should decrease with larger diameter. D=" + d * 1000 + "mm, dp=" + dp);
-	prevDp = dp;
+        // dP should decrease with increasing diameter
+        assertTrue(dp < prevDp, "dP should decrease with larger diameter. D=" + d * 1000 + "mm, dp=" + dp);
+        prevDp = dp;
       }
     }
   }
@@ -1010,7 +1010,7 @@ public class TwoFluidPipeLedaFlowParityTest {
     double m = arr[0];
     for (double v : arr) {
       if (v < m) {
-	m = v;
+        m = v;
       }
     }
     return m;
@@ -1026,7 +1026,7 @@ public class TwoFluidPipeLedaFlowParityTest {
     double m = arr[0];
     for (double v : arr) {
       if (v > m) {
-	m = v;
+        m = v;
       }
     }
     return m;

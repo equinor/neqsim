@@ -19,7 +19,7 @@ public class HazardousAreaCalculatorTest {
   @Test
   public void testMethaneSecondaryReleaseZone2() {
     HazardousAreaCalculator calc = new HazardousAreaCalculator(0.1, 6.0, 340.0, 0.044, 0.01604)
-	.setReleaseGrade(ReleaseGrade.SECONDARY).setSafetyFactor(0.5);
+        .setReleaseGrade(ReleaseGrade.SECONDARY).setSafetyFactor(0.5);
 
     assertTrue(calc.effectiveDiameterM() > 0.0);
     assertTrue(calc.lflMassFraction() > 0.0 && calc.lflMassFraction() < 0.1);
@@ -47,9 +47,9 @@ public class HazardousAreaCalculatorTest {
   @Test
   public void testZoneMapping() {
     HazardousAreaCalculator continuous = new HazardousAreaCalculator(0.1, 6.0, 340.0, 0.044, 0.01604)
-	.setReleaseGrade(ReleaseGrade.CONTINUOUS);
+        .setReleaseGrade(ReleaseGrade.CONTINUOUS);
     HazardousAreaCalculator primary = new HazardousAreaCalculator(0.1, 6.0, 340.0, 0.044, 0.01604)
-	.setReleaseGrade(ReleaseGrade.PRIMARY);
+        .setReleaseGrade(ReleaseGrade.PRIMARY);
     assertEquals("Zone 0", continuous.zoneClassification());
     assertEquals("Zone 1", primary.zoneClassification());
   }

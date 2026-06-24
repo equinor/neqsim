@@ -88,13 +88,13 @@ public class Standard_ASTM_D1322 extends neqsim.standards.Standard {
       anilinePointC = d611.getValue("anilinePoint");
 
       if (Double.isNaN(anilinePointC)) {
-	logger.error("Smoke point input unavailable (aniline point)");
-	return;
+        logger.error("Smoke point input unavailable (aniline point)");
+        return;
       }
 
       smokePointMm = sp0 + sp1 * anilinePointC;
       if (smokePointMm < 0.0) {
-	smokePointMm = 0.0;
+        smokePointMm = 0.0;
       }
     } catch (Exception ex) {
       logger.error("Smoke point calculation failed: {}", ex.getMessage());

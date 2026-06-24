@@ -264,8 +264,8 @@ public class PTPhaseEnvelopeMichelsenTest {
 
     // All standard keys should return non-null
     String[] keys = { "dewT", "dewP", "bubT", "bubP", "dewH", "dewDens", "dewS", "bubH", "bubDens", "bubS",
-	"cricondentherm", "cricondenthermX", "cricondenthermY", "cricondenbar", "cricondenbarX", "cricondenbarY",
-	"criticalPoint1", "criticalPoint2" };
+        "cricondentherm", "cricondenthermX", "cricondenthermY", "cricondenbar", "cricondenbarX", "cricondenbarY",
+        "criticalPoint1", "criticalPoint2" };
     for (String key : keys) {
       assertNotNull(testOps.get(key), "get(\"" + key + "\") should not be null");
     }
@@ -288,7 +288,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     assertTrue(dewT.length > 0, "Should have at least one dew point");
     for (double t : dewT) {
       if (Double.isNaN(t)) {
-	continue; // NaN sentinel marks branch breaks
+        continue; // NaN sentinel marks branch breaks
       }
       assertTrue(t > 100.0, "Temperature should be in Kelvin (>100 K), got: " + t);
       assertTrue(t < 500.0, "Temperature should be reasonable (<500 K), got: " + t);
@@ -312,7 +312,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     assertTrue(dewP.length > 0, "Should have at least one dew point");
     for (double p : dewP) {
       if (Double.isNaN(p)) {
-	continue; // NaN sentinel marks branch breaks
+        continue; // NaN sentinel marks branch breaks
       }
       assertTrue(p > 0.0, "Pressure should be positive, got: " + p);
       assertTrue(p < 1000.0, "Pressure should be reasonable (<1000 bar), got: " + p);

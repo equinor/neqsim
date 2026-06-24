@@ -30,16 +30,16 @@ import neqsim.process.equipment.stream.StreamInterface;
  * {@code
  * // Pressure CV with setpoint control
  * ControlledVariable pressureCV = new ControlledVariable("Pressure", separator, "pressure", "bara").setSetpoint(50.0) // Target
- * 														    // pressure
+ *     // pressure
  *     .setWeight(1.0) // High priority
  *     .setSoftConstraints(45.0, 55.0) // Comfortable range
  *     .setHardConstraints(35.0, 65.0); // Absolute limits
  *
  * // Temperature CV with zone control
  * ControlledVariable tempCV = new ControlledVariable("Temperature", outlet, "temperature", "C").setZone(20.0, 30.0) // Keep
- * 														  // in
- * 														  // this
- * 														  // zone
+ *     // in
+ *     // this
+ *     // zone
  *     .setWeight(0.5); // Lower priority
  * }
  * </pre>
@@ -376,17 +376,17 @@ public class ControlledVariable extends MPCVariable {
     // All process equipment implements getPressure and getTemperature via ProcessEquipmentInterface
     if ("pressure".equalsIgnoreCase(propertyName)) {
       if (unit != null) {
-	currentValue = equipment.getPressure(unit);
+        currentValue = equipment.getPressure(unit);
       } else {
-	currentValue = equipment.getPressure("bara");
+        currentValue = equipment.getPressure("bara");
       }
       return currentValue;
     }
     if ("temperature".equalsIgnoreCase(propertyName)) {
       if (unit != null) {
-	currentValue = equipment.getTemperature(unit);
+        currentValue = equipment.getTemperature(unit);
       } else {
-	currentValue = equipment.getTemperature("C");
+        currentValue = equipment.getTemperature("C");
       }
       return currentValue;
     }
@@ -395,11 +395,11 @@ public class ControlledVariable extends MPCVariable {
     if (equipment instanceof StreamInterface) {
       StreamInterface stream = (StreamInterface) equipment;
       if ("flowRate".equalsIgnoreCase(propertyName)) {
-	if (unit != null) {
-	  currentValue = stream.getFlowRate(unit);
-	} else {
-	  currentValue = stream.getFlowRate("kg/hr");
-	}
+        if (unit != null) {
+          currentValue = stream.getFlowRate(unit);
+        } else {
+          currentValue = stream.getFlowRate("kg/hr");
+        }
       }
     }
 

@@ -47,7 +47,7 @@ public class FieldDevelopmentNPVTest {
 
     // Create reservoir fluid (SRK EOS)
     neqsim.thermo.system.SystemInterface reservoirFluid = new neqsim.thermo.system.SystemSrkEos(
-	273.15 + reservoirTemperature, reservoirPressure);
+        273.15 + reservoirTemperature, reservoirPressure);
     reservoirFluid.addComponent("nitrogen", 0.5);
     reservoirFluid.addComponent("CO2", 0.5);
     reservoirFluid.addComponent("methane", 90.0);
@@ -132,7 +132,7 @@ public class FieldDevelopmentNPVTest {
     // drop. The adjuster should converge at max flow accepting the higher pressure.
     assertEquals(maxGasProduction, gasFlow, 0.5, "Flow should be at max when target pressure is unreachable");
     assertTrue(outletPressure > inletPressure,
-	"Outlet pressure should be above target when at max flow: " + outletPressure);
+        "Outlet pressure should be above target when at max flow: " + outletPressure);
 
     // Verify reservoir pressure is reasonable
     double resPressure = reservoirOps.getReservoirFluid().getPressure("bara");
@@ -164,7 +164,7 @@ public class FieldDevelopmentNPVTest {
 
     // Create reservoir fluid
     neqsim.thermo.system.SystemInterface reservoirFluid = new neqsim.thermo.system.SystemSrkEos(
-	273.15 + reservoirTemperature, reservoirPressure);
+        273.15 + reservoirTemperature, reservoirPressure);
     reservoirFluid.addComponent("nitrogen", 0.5);
     reservoirFluid.addComponent("CO2", 0.5);
     reservoirFluid.addComponent("methane", 90.0);
@@ -240,13 +240,13 @@ public class FieldDevelopmentNPVTest {
       wellflow.setWellProductionIndex(productionIndex);
 
       if (pipeline2.getOutletStream().getPressure("bara") < inletPressure) {
-	break;
+        break;
       }
       if (t >= 1) {
-	for (int k = 0; k < 3; k++) {
-	  reservoirOps.runTransient(deltaT / 10.0);
-	  process.run();
-	}
+        for (int k = 0; k < 3; k++) {
+          reservoirOps.runTransient(deltaT / 10.0);
+          process.run();
+        }
       }
 
       double resPressure = reservoirOps.getReservoirFluid().getPressure("bara");
@@ -261,7 +261,7 @@ public class FieldDevelopmentNPVTest {
 
       // Validate topside pressure is positive and within physical range
       assertTrue(topsidePressure > 0 && topsidePressure < 200,
-	  "Year " + t + ": Topside pressure should be in physical range: " + topsidePressure);
+          "Year " + t + ": Topside pressure should be in physical range: " + topsidePressure);
     }
 
     // Verify some gas was produced

@@ -107,7 +107,7 @@ public class InherentSafetyEvaluator implements Serializable {
     for (Pillar p : Pillar.values()) {
       sb.append(String.format("  %-10s : %4.1f / 10%n", p.name(), getScore(p)));
       for (String n : notes[p.ordinal()]) {
-	sb.append("       - ").append(n).append('\n');
+        sb.append("       - ").append(n).append('\n');
       }
     }
     sb.append(String.format("  OVERALL    : %4.1f / 10%n", overallIndex()));

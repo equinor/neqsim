@@ -80,9 +80,9 @@ public class NetworkLinearSolver {
 
     try {
       if (n > SPARSE_THRESHOLD) {
-	return solveSparse(matA, vecB, n);
+        return solveSparse(matA, vecB, n);
       } else {
-	return solveDense(matA, vecB, n);
+        return solveDense(matA, vecB, n);
       }
     } catch (Exception e) {
       logger.warn("EJML solver failed (n=" + n + "), falling back to Gaussian: " + e.getMessage());
@@ -111,7 +111,7 @@ public class NetworkLinearSolver {
     // Copy data to EJML matrices
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
-	denseA.set(i, j, matA[i][j]);
+        denseA.set(i, j, matA[i][j]);
       }
       denseB.set(i, 0, vecB[i]);
     }
@@ -150,9 +150,9 @@ public class NetworkLinearSolver {
     int nnz = 0;
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
-	if (Math.abs(matA[i][j]) > 1e-30) {
-	  nnz++;
-	}
+        if (Math.abs(matA[i][j]) > 1e-30) {
+          nnz++;
+        }
       }
     }
 
@@ -167,9 +167,9 @@ public class NetworkLinearSolver {
     DMatrixSparseCSC sparseA = new DMatrixSparseCSC(n, n, nnz);
     for (int j = 0; j < n; j++) {
       for (int i = 0; i < n; i++) {
-	if (Math.abs(matA[i][j]) > 1e-30) {
-	  sparseA.set(i, j, matA[i][j]);
-	}
+        if (Math.abs(matA[i][j]) > 1e-30) {
+          sparseA.set(i, j, matA[i][j]);
+        }
       }
     }
 
@@ -180,7 +180,7 @@ public class NetworkLinearSolver {
     }
 
     LinearSolverSparse<DMatrixSparseCSC, DMatrixRMaj> solver = LinearSolverFactory_DSCC
-	.lu(org.ejml.sparse.FillReducing.NONE);
+        .lu(org.ejml.sparse.FillReducing.NONE);
     if (!solver.setA(sparseA)) {
       logger.warn("Sparse LU setA failed (singular?), falling back to dense");
       return solveDense(matA, vecB, n);
@@ -225,9 +225,9 @@ public class NetworkLinearSolver {
     for (int k = 0; k < n; k++) {
       int maxRow = k;
       for (int i = k + 1; i < n; i++) {
-	if (Math.abs(matA[i][k]) > Math.abs(matA[maxRow][k])) {
-	  maxRow = i;
-	}
+        if (Math.abs(matA[i][k]) > Math.abs(matA[maxRow][k])) {
+          maxRow = i;
+        }
       }
       double[] tempRow = matA[k];
       matA[k] = matA[maxRow];
@@ -237,15 +237,15 @@ public class NetworkLinearSolver {
       vecB[maxRow] = tempB;
 
       if (Math.abs(matA[k][k]) < 1e-20) {
-	continue;
+        continue;
       }
 
       for (int i = k + 1; i < n; i++) {
-	double factor = matA[i][k] / matA[k][k];
-	for (int j = k + 1; j < n; j++) {
-	  matA[i][j] -= factor * matA[k][j];
-	}
-	vecB[i] -= factor * vecB[k];
+        double factor = matA[i][k] / matA[k][k];
+        for (int j = k + 1; j < n; j++) {
+          matA[i][j] -= factor * matA[k][j];
+        }
+        vecB[i] -= factor * vecB[k];
       }
     }
 
@@ -253,10 +253,10 @@ public class NetworkLinearSolver {
     for (int i = n - 1; i >= 0; i--) {
       x[i] = vecB[i];
       for (int j = i + 1; j < n; j++) {
-	x[i] -= matA[i][j] * x[j];
+        x[i] -= matA[i][j] * x[j];
       }
       if (Math.abs(matA[i][i]) > 1e-20) {
-	x[i] /= matA[i][i];
+        x[i] /= matA[i][i];
       }
     }
     return x;

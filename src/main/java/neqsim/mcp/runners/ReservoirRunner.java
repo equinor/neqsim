@@ -59,8 +59,8 @@ public class ReservoirRunner {
     try {
       // --- Create reservoir fluid ---
       if (!input.has("components")) {
-	return errorJson("MISSING_COMPONENTS", "No 'components' specified",
-	    "Provide a components map for the reservoir fluid");
+        return errorJson("MISSING_COMPONENTS", "No 'components' specified",
+            "Provide a components map for the reservoir fluid");
       }
       SystemInterface fluid = createFluidFromInput(input);
 
@@ -77,7 +77,7 @@ public class ReservoirRunner {
       JsonArray producers = input.has("producers") ? input.getAsJsonArray("producers") : null;
       int numProducers = 1;
       if (producers != null) {
-	numProducers = producers.size();
+        numProducers = producers.size();
       }
 
       ProcessSystem process = new ProcessSystem();
@@ -85,19 +85,19 @@ public class ReservoirRunner {
 
       StreamInterface[] prodStreams = new StreamInterface[numProducers];
       for (int i = 0; i < numProducers; i++) {
-	String name = producers != null && producers.get(i).getAsJsonObject().has("name")
-	    ? producers.get(i).getAsJsonObject().get("name").getAsString()
-	    : "Producer-" + (i + 1);
-	prodStreams[i] = reservoir.addGasProducer(name);
-	if (producers != null) {
-	  JsonObject prod = producers.get(i).getAsJsonObject();
-	  if (prod.has("flowRate")) {
-	    JsonObject fr = prod.getAsJsonObject("flowRate");
-	    prodStreams[i].setFlowRate(fr.get("value").getAsDouble(),
-		fr.has("unit") ? fr.get("unit").getAsString() : "MSm3/day");
-	  }
-	}
-	process.add(prodStreams[i]);
+        String name = producers != null && producers.get(i).getAsJsonObject().has("name")
+            ? producers.get(i).getAsJsonObject().get("name").getAsString()
+            : "Producer-" + (i + 1);
+        prodStreams[i] = reservoir.addGasProducer(name);
+        if (producers != null) {
+          JsonObject prod = producers.get(i).getAsJsonObject();
+          if (prod.has("flowRate")) {
+            JsonObject fr = prod.getAsJsonObject("flowRate");
+            prodStreams[i].setFlowRate(fr.get("value").getAsDouble(),
+                fr.has("unit") ? fr.get("unit").getAsString() : "MSm3/day");
+          }
+        }
+        process.add(prodStreams[i]);
       }
 
       // --- Run initial steady state ---
@@ -106,52 +106,52 @@ public class ReservoirRunner {
       // --- Run transient if timeSteps specified ---
       JsonObject data = new JsonObject();
       if (input.has("simulationYears") || input.has("timeSteps")) {
-	int years = input.has("simulationYears") ? input.get("simulationYears").getAsInt() : 20;
-	double dtDays = input.has("timeStepDays") ? input.get("timeStepDays").getAsDouble() : 30.0;
-	int steps = (int) (years * 365.0 / dtDays);
+        int years = input.has("simulationYears") ? input.get("simulationYears").getAsInt() : 20;
+        double dtDays = input.has("timeStepDays") ? input.get("timeStepDays").getAsDouble() : 30.0;
+        int steps = (int) (years * 365.0 / dtDays);
 
-	JsonArray timeArr = new JsonArray();
-	JsonArray pressureArr = new JsonArray();
-	JsonArray gasInPlaceArr = new JsonArray();
-	JsonArray oilInPlaceArr = new JsonArray();
-	JsonArray cumGasArr = new JsonArray();
-	JsonArray cumOilArr = new JsonArray();
+        JsonArray timeArr = new JsonArray();
+        JsonArray pressureArr = new JsonArray();
+        JsonArray gasInPlaceArr = new JsonArray();
+        JsonArray oilInPlaceArr = new JsonArray();
+        JsonArray cumGasArr = new JsonArray();
+        JsonArray cumOilArr = new JsonArray();
 
-	for (int step = 0; step <= steps; step++) {
-	  double time_days = step * dtDays;
-	  timeArr.add(time_days / 365.0);
-	  pressureArr.add(reservoir.getReservoirFluid().getPressure());
-	  gasInPlaceArr.add(reservoir.getGasInPlace("GSm3"));
-	  oilInPlaceArr.add(reservoir.getOilInPlace("MSm3"));
-	  cumGasArr.add(reservoir.getGasProductionTotal("GSm3"));
-	  cumOilArr.add(reservoir.getOilProductionTotal("MSm3"));
+        for (int step = 0; step <= steps; step++) {
+          double time_days = step * dtDays;
+          timeArr.add(time_days / 365.0);
+          pressureArr.add(reservoir.getReservoirFluid().getPressure());
+          gasInPlaceArr.add(reservoir.getGasInPlace("GSm3"));
+          oilInPlaceArr.add(reservoir.getOilInPlace("MSm3"));
+          cumGasArr.add(reservoir.getGasProductionTotal("GSm3"));
+          cumOilArr.add(reservoir.getOilProductionTotal("MSm3"));
 
-	  if (step < steps) {
-	    process.runTransient(dtDays * 24.0 * 3600.0);
-	  }
-	}
+          if (step < steps) {
+            process.runTransient(dtDays * 24.0 * 3600.0);
+          }
+        }
 
-	data.add("time_years", timeArr);
-	data.add("reservoirPressure_bara", pressureArr);
-	data.add("gasInPlace_GSm3", gasInPlaceArr);
-	data.add("oilInPlace_MSm3", oilInPlaceArr);
-	data.add("cumulativeGasProduction_GSm3", cumGasArr);
-	data.add("cumulativeOilProduction_MSm3", cumOilArr);
+        data.add("time_years", timeArr);
+        data.add("reservoirPressure_bara", pressureArr);
+        data.add("gasInPlace_GSm3", gasInPlaceArr);
+        data.add("oilInPlace_MSm3", oilInPlaceArr);
+        data.add("cumulativeGasProduction_GSm3", cumGasArr);
+        data.add("cumulativeOilProduction_MSm3", cumOilArr);
       } else {
-	// Single-step results
-	data.addProperty("reservoirPressure_bara", reservoir.getReservoirFluid().getPressure());
-	data.addProperty("gasInPlace_GSm3", reservoir.getGasInPlace("GSm3"));
-	data.addProperty("oilInPlace_MSm3", reservoir.getOilInPlace("MSm3"));
+        // Single-step results
+        data.addProperty("reservoirPressure_bara", reservoir.getReservoirFluid().getPressure());
+        data.addProperty("gasInPlace_GSm3", reservoir.getGasInPlace("GSm3"));
+        data.addProperty("oilInPlace_MSm3", reservoir.getOilInPlace("MSm3"));
       }
 
       // --- Producer stream results ---
       JsonArray prodResults = new JsonArray();
       for (int i = 0; i < numProducers; i++) {
-	JsonObject pr = new JsonObject();
-	pr.addProperty("name", prodStreams[i].getName());
-	pr.addProperty("temperature_C", prodStreams[i].getTemperature() - 273.15);
-	pr.addProperty("pressure_bara", prodStreams[i].getPressure());
-	prodResults.add(pr);
+        JsonObject pr = new JsonObject();
+        pr.addProperty("name", prodStreams[i].getName());
+        pr.addProperty("temperature_C", prodStreams[i].getTemperature() - 273.15);
+        pr.addProperty("pressure_bara", prodStreams[i].getPressure());
+        prodResults.add(pr);
       }
       data.add("producers", prodResults);
 
@@ -168,7 +168,7 @@ public class ReservoirRunner {
       return GSON.toJson(result);
     } catch (Exception e) {
       return errorJson("RESERVOIR_ERROR", "Reservoir simulation failed: " + e.getMessage(),
-	  "Check fluid definition and reservoir parameters");
+          "Check fluid definition and reservoir parameters");
     }
   }
 
@@ -181,7 +181,7 @@ public class ReservoirRunner {
   private static SystemInterface createFluidFromInput(JsonObject input) {
     String model = input.has("model") ? input.get("model").getAsString().toUpperCase() : "SRK";
     double tempK = input.has("reservoirTemperature_C") ? input.get("reservoirTemperature_C").getAsDouble() + 273.15
-	: 373.15;
+        : 373.15;
     double pBara = input.has("reservoirPressure_bara") ? input.get("reservoirPressure_bara").getAsDouble() : 200.0;
     SystemInterface fluid;
     switch (model.toUpperCase()) {

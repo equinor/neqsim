@@ -118,8 +118,8 @@ public class UncertaintyResult implements Serializable {
     for (Map.Entry<String, UncertaintyBounds> entry : outputUncertainties.entrySet()) {
       double relUncert = entry.getValue().getCoefficientOfVariation();
       if (!Double.isNaN(relUncert) && relUncert > maxRelUncert) {
-	maxRelUncert = relUncert;
-	mostUncertain = entry.getKey();
+        maxRelUncert = relUncert;
+        mostUncertain = entry.getKey();
       }
     }
 
@@ -135,7 +135,7 @@ public class UncertaintyResult implements Serializable {
   public boolean meetsUncertaintyThreshold(double maxRelativeUncertainty) {
     for (UncertaintyBounds bounds : outputUncertainties.values()) {
       if (bounds.getCoefficientOfVariation() > maxRelativeUncertainty) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -152,7 +152,7 @@ public class UncertaintyResult implements Serializable {
 
     for (Map.Entry<String, UncertaintyBounds> entry : outputUncertainties.entrySet()) {
       if (entry.getValue().getCoefficientOfVariation() > threshold) {
-	exceeding.put(entry.getKey(), entry.getValue());
+        exceeding.put(entry.getKey(), entry.getValue());
       }
     }
 
@@ -180,7 +180,7 @@ public class UncertaintyResult implements Serializable {
     for (Map.Entry<String, UncertaintyBounds> entry : outputUncertainties.entrySet()) {
       UncertaintyBounds bounds = entry.getValue();
       sb.append(String.format("  %s: %.4f ± %.4f %s (%.1f%%)\n", entry.getKey(), bounds.getMean(),
-	  bounds.getStandardDeviation(), bounds.getUnit(), bounds.getRelativeUncertaintyPercent()));
+          bounds.getStandardDeviation(), bounds.getUnit(), bounds.getRelativeUncertaintyPercent()));
     }
 
     return sb.toString();

@@ -173,7 +173,7 @@ public class FlowlineScaleProfile implements Serializable {
       calc.setPressureBara(pressBar);
       calc.setCO2PartialPressure(co2PartialPressureBar);
       if (autoPH) {
-	calc.enableAutoPH();
+        calc.enableAutoPH();
       }
       calc.calculate();
 
@@ -210,7 +210,7 @@ public class FlowlineScaleProfile implements Serializable {
     for (SegmentResult sr : results) {
       double si = getSIByName(sr, scaleName);
       if (!Double.isNaN(si) && si > maxSI) {
-	maxSI = si;
+        maxSI = si;
       }
     }
     return maxSI;

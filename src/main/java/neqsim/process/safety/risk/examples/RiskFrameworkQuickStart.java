@@ -155,9 +155,10 @@ public class RiskFrameworkQuickStart {
 
     // Create a Safety Instrumented Function using builder
     SafetyInstrumentedFunction sif = SafetyInstrumentedFunction.builder().name("ESD-001")
-	.description("High Pressure Emergency Shutdown").sil(2).pfd(0.005) // PFD within SIL 2 range
-	.architecture("1oo2").testIntervalHours(8760) // Annual testing
-	.build();
+        .description("High Pressure Emergency Shutdown").sil(2).pfd(0.005) // PFD within SIL 2
+                                                                           // range
+        .architecture("1oo2").testIntervalHours(8760) // Annual testing
+        .build();
 
     System.out.println("  SIF: " + sif.getName());
     System.out.println("  SIL: " + sif.getSil());
@@ -169,23 +170,23 @@ public class RiskFrameworkQuickStart {
     // LOPA Analysis - create model and add initiating event first
     SISIntegratedRiskModel model = new SISIntegratedRiskModel("HP Vessel Overpressure");
     model.addInitiatingEvent("Overpressure", 0.1, neqsim.process.safety.risk.RiskEvent.ConsequenceCategory.MAJOR); // 0.1
-														   // per
-														   // year
+    // per
+    // year
 
     // Add Independent Protection Layers
     SISIntegratedRiskModel.IndependentProtectionLayer bpcs = new SISIntegratedRiskModel.IndependentProtectionLayer(
-	"BPCS", 0.1, SISIntegratedRiskModel.IndependentProtectionLayer.IPLType.BPCS);
+        "BPCS", 0.1, SISIntegratedRiskModel.IndependentProtectionLayer.IPLType.BPCS);
     bpcs.addApplicableEvent("Overpressure");
     model.addIPL(bpcs);
 
     SISIntegratedRiskModel.IndependentProtectionLayer reliefValve = new SISIntegratedRiskModel.IndependentProtectionLayer(
-	"Relief Valve", 0.01, SISIntegratedRiskModel.IndependentProtectionLayer.IPLType.MECHANICAL);
+        "Relief Valve", 0.01, SISIntegratedRiskModel.IndependentProtectionLayer.IPLType.MECHANICAL);
     reliefValve.addApplicableEvent("Overpressure");
     model.addIPL(reliefValve);
 
     // Add the SIF with initiating event reference
     sif = SafetyInstrumentedFunction.builder().name("ESD-001").sil(2).pfd(0.005).initiatingEvent("Overpressure")
-	.build();
+        .build();
     model.addSIF(sif);
 
     LOPAResult lopa = model.performLOPA("Overpressure");
@@ -233,7 +234,7 @@ public class RiskFrameworkQuickStart {
 
     System.out.println("  Overall Risk Score: " + String.format("%.2f", assessment.getOverallRiskScore()));
     System.out
-	.println("  System Capacity Margin: " + String.format("%.1f%%", assessment.getSystemCapacityMargin() * 100));
+        .println("  System Capacity Margin: " + String.format("%.1f%%", assessment.getSystemCapacityMargin() * 100));
     System.out.println("  Highest Risk Equipment: " + assessment.getHighestRiskEquipment());
     System.out.println("  Warnings: " + assessment.getWarnings().size());
     System.out.println();
@@ -315,8 +316,8 @@ public class RiskFrameworkQuickStart {
     System.out.println("  Unmitigated Frequency: " + String.format("%.4f /yr", bowtie.getUnmitigatedFrequency()));
     System.out.println("  Mitigated Frequency: " + String.format("%.6f /yr", bowtie.getMitigatedFrequency()));
     double riskReduction = bowtie.getUnmitigatedFrequency() > 0
-	? bowtie.getUnmitigatedFrequency() / Math.max(bowtie.getMitigatedFrequency(), 1e-10)
-	: 1.0;
+        ? bowtie.getUnmitigatedFrequency() / Math.max(bowtie.getMitigatedFrequency(), 1e-10)
+        : 1.0;
     System.out.println("  Risk Reduction: " + String.format("%.0fx", riskReduction));
     System.out.println("  Number of Threats: " + bowtie.getThreats().size());
     System.out.println();
@@ -341,15 +342,15 @@ public class RiskFrameworkQuickStart {
 
     // Add common cause scenarios using proper CommonCauseScenario objects
     PortfolioRiskAnalyzer.CommonCauseScenario weatherScenario = new PortfolioRiskAnalyzer.CommonCauseScenario(
-	"WEATHER-NS", "Severe North Sea Weather", PortfolioRiskAnalyzer.CommonCauseScenario.CommonCauseType.WEATHER,
-	0.1);
+        "WEATHER-NS", "Severe North Sea Weather", PortfolioRiskAnalyzer.CommonCauseScenario.CommonCauseType.WEATHER,
+        0.1);
     weatherScenario.addAffectedAsset("ALPHA-001", 0.3);
     weatherScenario.addAffectedAsset("BETA-001", 0.3);
     weatherScenario.addAffectedAsset("GAMMA-001", 0.2);
     portfolio.addCommonCauseScenario(weatherScenario);
 
     PortfolioRiskAnalyzer.CommonCauseScenario cyberScenario = new PortfolioRiskAnalyzer.CommonCauseScenario("CYBER-001",
-	"Cyber Attack on OT Systems", PortfolioRiskAnalyzer.CommonCauseScenario.CommonCauseType.CYBER, 0.05);
+        "Cyber Attack on OT Systems", PortfolioRiskAnalyzer.CommonCauseScenario.CommonCauseType.CYBER, 0.05);
     cyberScenario.addAffectedAsset("ALPHA-001", 0.5);
     cyberScenario.addAffectedAsset("BETA-001", 0.5);
     cyberScenario.addAffectedAsset("GAMMA-001", 0.5);
@@ -359,10 +360,10 @@ public class RiskFrameworkQuickStart {
     PortfolioRiskResult result = portfolio.run();
 
     System.out
-	.println("  Total Expected Production: " + String.format("%.0f bbl", result.getTotalExpectedProduction()));
+        .println("  Total Expected Production: " + String.format("%.0f bbl", result.getTotalExpectedProduction()));
     System.out.println("  Portfolio VaR (95%): $" + String.format("%.0f", result.getValueAtRisk(95)));
     System.out
-	.println("  Diversification Benefit: " + String.format("%.1f%%", result.getDiversificationBenefit() * 100));
+        .println("  Diversification Benefit: " + String.format("%.1f%%", result.getDiversificationBenefit() * 100));
     System.out.println("  Common Cause Fraction: " + String.format("%.1f%%", result.getCommonCauseFraction() * 100));
     System.out.println();
   }
@@ -382,11 +383,11 @@ public class RiskFrameworkQuickStart {
 
     // Add condition indicators using convenience methods
     ConditionBasedReliability.ConditionIndicator vibration = cbr.addVibrationIndicator("VIB-001", "Bearing Vibration",
-	1.0, 5.0, 10.0);
+        1.0, 5.0, 10.0);
     vibration.updateValue(2.5); // Current value
 
     ConditionBasedReliability.ConditionIndicator temp = cbr.addTemperatureIndicator("TEMP-001", "Bearing Temperature",
-	60.0, 95.0, 110.0);
+        60.0, 95.0, 110.0);
     temp.updateValue(85.0); // Current value
 
     // Recalculate health based on updated indicators
@@ -397,7 +398,7 @@ public class RiskFrameworkQuickStart {
     System.out.println("  Adjusted Failure Rate: " + String.format("%.6f /hr", cbr.getAdjustedFailureRate()));
     System.out.println("  Remaining Useful Life: " + String.format("%.0f hours", cbr.getRemainingUsefulLife()));
     String priority = cbr.getHealthIndex() > 0.8 ? "LOW"
-	: cbr.getHealthIndex() > 0.5 ? "MEDIUM" : cbr.getHealthIndex() > 0.2 ? "HIGH" : "CRITICAL";
+        : cbr.getHealthIndex() > 0.5 ? "MEDIUM" : cbr.getHealthIndex() > 0.2 ? "HIGH" : "CRITICAL";
     System.out.println("  Maintenance Priority: " + priority);
     System.out.println();
   }
@@ -419,28 +420,28 @@ public class RiskFrameworkQuickStart {
       // Extract features from process data map
       Map<String, Double> features = new HashMap<>();
       features.put("temperature",
-	  processData.containsKey("temperature") ? ((Number) processData.get("temperature")).doubleValue() : 85.0);
+          processData.containsKey("temperature") ? ((Number) processData.get("temperature")).doubleValue() : 85.0);
       features.put("pressure",
-	  processData.containsKey("pressure") ? ((Number) processData.get("pressure")).doubleValue() : 45.0);
+          processData.containsKey("pressure") ? ((Number) processData.get("pressure")).doubleValue() : 45.0);
       features.put("vibration",
-	  processData.containsKey("vibration") ? ((Number) processData.get("vibration")).doubleValue() : 2.5);
+          processData.containsKey("vibration") ? ((Number) processData.get("vibration")).doubleValue() : 2.5);
       features.put("flow_rate",
-	  processData.containsKey("flow_rate") ? ((Number) processData.get("flow_rate")).doubleValue() : 1000.0);
+          processData.containsKey("flow_rate") ? ((Number) processData.get("flow_rate")).doubleValue() : 1000.0);
       return features;
     });
 
     // Create anomaly detection model
     RiskMLInterface.MLModel anomalyModel = mlInterface.createAnomalyDetectionModel("anomaly_detector",
-	"Anomaly Detector");
+        "Anomaly Detector");
     anomalyModel.setPredictor(features -> {
       // Simple anomaly score based on thresholds
       double temp = features.getOrDefault("temperature", 0.0);
       double vib = features.getOrDefault("vibration", 0.0);
       double score = 0.0;
       if (temp > 90)
-	score += 0.3;
+        score += 0.3;
       if (vib > 3.0)
-	score += 0.4;
+        score += 0.4;
       RiskMLInterface.MLPrediction pred = new RiskMLInterface.MLPrediction(anomalyModel.getModelId());
       pred.setPrediction(score);
       pred.setConfidence(0.85);
@@ -450,7 +451,7 @@ public class RiskFrameworkQuickStart {
 
     // Create failure prediction model
     RiskMLInterface.MLModel failureModel = mlInterface.createFailurePredictionModel("failure_predictor",
-	"Failure Predictor");
+        "Failure Predictor");
     failureModel.setPredictor(features -> {
       // Simple failure probability
       double temp = features.getOrDefault("temperature", 0.0);

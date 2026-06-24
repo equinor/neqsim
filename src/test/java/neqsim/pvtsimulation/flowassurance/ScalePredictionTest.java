@@ -63,7 +63,7 @@ public class ScalePredictionTest {
 
     double si = calc.getBaSO4SaturationIndex();
     assertTrue(si > 0.0,
-	"BaSO4 SI should be positive (supersaturated) with 200 mg/L Ba + 2000 " + "mg/L SO4, got " + si);
+        "BaSO4 SI should be positive (supersaturated) with 200 mg/L Ba + 2000 " + "mg/L SO4, got " + si);
   }
 
   @Test
@@ -94,7 +94,7 @@ public class ScalePredictionTest {
     double si80 = calcCaCO3SI(80.0, 1.013);
 
     assertTrue(si80 > si25,
-	"CaCO3 SI at 80C (" + si80 + ") should exceed SI at 25C (" + si25 + ") due to retrograde solubility");
+        "CaCO3 SI at 80C (" + si80 + ") should exceed SI at 25C (" + si25 + ") due to retrograde solubility");
   }
 
   @Test
@@ -104,7 +104,7 @@ public class ScalePredictionTest {
     double si500 = calcCaCO3SI(80.0, 500.0);
 
     assertTrue(si500 < si1,
-	"CaCO3 SI at 500 bar (" + si500 + ") should be lower than at 1 bar (" + si1 + ") due to pressure correction");
+        "CaCO3 SI at 500 bar (" + si500 + ") should be lower than at 1 bar (" + si1 + ") due to pressure correction");
   }
 
   @Test

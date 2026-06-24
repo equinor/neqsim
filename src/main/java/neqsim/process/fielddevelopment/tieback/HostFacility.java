@@ -275,34 +275,34 @@ public class HostFacility implements Serializable {
     if (processSystem != null) {
       processModelUsed = true;
       try {
-	processSystem.run();
-	BottleneckAnalyzer analyzer = new BottleneckAnalyzer(processSystem);
-	List<BottleneckResult> active = analyzer.getActiveBottlenecks();
-	activeBottleneckCount = active.size();
-	BottleneckResult primary = analyzer.getPrimaryBottleneck();
-	if (primary != null) {
-	  primaryBottleneckName = primary.getEquipmentName();
-	  primaryBottleneckUtilization = primary.getUtilization();
-	  processOk = primary.getUtilization() < 0.95;
-	  processMessage = String.format("Primary process bottleneck %s at %.0f%% utilization",
-	      primary.getEquipmentName(), primary.getUtilization() * 100.0);
-	} else {
-	  processMessage = "Process model has no recognized bottlenecking equipment";
-	}
+        processSystem.run();
+        BottleneckAnalyzer analyzer = new BottleneckAnalyzer(processSystem);
+        List<BottleneckResult> active = analyzer.getActiveBottlenecks();
+        activeBottleneckCount = active.size();
+        BottleneckResult primary = analyzer.getPrimaryBottleneck();
+        if (primary != null) {
+          primaryBottleneckName = primary.getEquipmentName();
+          primaryBottleneckUtilization = primary.getUtilization();
+          processOk = primary.getUtilization() < 0.95;
+          processMessage = String.format("Primary process bottleneck %s at %.0f%% utilization",
+              primary.getEquipmentName(), primary.getUtilization() * 100.0);
+        } else {
+          processMessage = "Process model has no recognized bottlenecking equipment";
+        }
       } catch (Exception e) {
-	processOk = false;
-	processMessage = "Process model capacity check failed: " + e.getMessage();
+        processOk = false;
+        processMessage = "Process model capacity check failed: " + e.getMessage();
       }
     }
 
     boolean capacityAvailable = gasOk && oilOk && waterOk && liquidOk && processOk;
     String summary = buildCapacitySummary(additionalGasMSm3d, additionalOilBopd, additionalWaterM3d,
-	additionalLiquidM3d, gasOk, oilOk, waterOk, liquidOk, processMessage);
+        additionalLiquidM3d, gasOk, oilOk, waterOk, liquidOk, processMessage);
 
     return new HostCapacityReport(name, capacityAvailable, gasOk, oilOk, waterOk, liquidOk, processOk, processModelUsed,
-	additionalGasMSm3d, getSpareGasCapacity(), additionalOilBopd, getSpareOilCapacity(), additionalWaterM3d,
-	getSpareWaterCapacity(), additionalLiquidM3d, getSpareLiquidCapacity(), primaryBottleneckName,
-	primaryBottleneckUtilization, activeBottleneckCount, summary);
+        additionalGasMSm3d, getSpareGasCapacity(), additionalOilBopd, getSpareOilCapacity(), additionalWaterM3d,
+        getSpareWaterCapacity(), additionalLiquidM3d, getSpareLiquidCapacity(), primaryBottleneckName,
+        primaryBottleneckUtilization, activeBottleneckCount, summary);
   }
 
   /**
@@ -325,16 +325,16 @@ public class HostFacility implements Serializable {
     StringBuilder summary = new StringBuilder();
     summary.append("Capacity: ");
     summary.append(
-	String.format("Gas %.2f/%.2f MSm3/d %s; ", additionalGasMSm3d, getSpareGasCapacity(), gasOk ? "OK" : "LIMIT"));
+        String.format("Gas %.2f/%.2f MSm3/d %s; ", additionalGasMSm3d, getSpareGasCapacity(), gasOk ? "OK" : "LIMIT"));
     summary.append(
-	String.format("Oil %.0f/%.0f bbl/d %s; ", additionalOilBopd, getSpareOilCapacity(), oilOk ? "OK" : "LIMIT"));
+        String.format("Oil %.0f/%.0f bbl/d %s; ", additionalOilBopd, getSpareOilCapacity(), oilOk ? "OK" : "LIMIT"));
     if (waterCapacityM3d > 0.0) {
       summary.append(String.format("Water %.0f/%.0f m3/d %s; ", additionalWaterM3d, getSpareWaterCapacity(),
-	  waterOk ? "OK" : "LIMIT"));
+          waterOk ? "OK" : "LIMIT"));
     }
     if (liquidCapacityM3d > 0.0) {
       summary.append(String.format("Liquid %.0f/%.0f m3/d %s; ", additionalLiquidM3d, getSpareLiquidCapacity(),
-	  liquidOk ? "OK" : "LIMIT"));
+          liquidOk ? "OK" : "LIMIT"));
     }
     summary.append(processMessage);
     return summary.toString();
@@ -359,7 +359,7 @@ public class HostFacility implements Serializable {
     double dLon = Math.toRadians(targetLongitude - longitude);
 
     double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(Math.toRadians(latitude))
-	* Math.cos(Math.toRadians(targetLatitude)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        * Math.cos(Math.toRadians(targetLatitude)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
 
     double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
@@ -738,11 +738,11 @@ public class HostFacility implements Serializable {
      * @param summary concise text summary
      */
     private HostCapacityReport(String hostName, boolean capacityAvailable, boolean gasCapacityAvailable,
-	boolean oilCapacityAvailable, boolean waterCapacityAvailable, boolean liquidCapacityAvailable,
-	boolean processCapacityAvailable, boolean processModelUsed, double requiredGasMSm3d, double spareGasMSm3d,
-	double requiredOilBopd, double spareOilBopd, double requiredWaterM3d, double spareWaterM3d,
-	double requiredLiquidM3d, double spareLiquidM3d, String primaryBottleneckName,
-	double primaryBottleneckUtilization, int activeBottleneckCount, String summary) {
+        boolean oilCapacityAvailable, boolean waterCapacityAvailable, boolean liquidCapacityAvailable,
+        boolean processCapacityAvailable, boolean processModelUsed, double requiredGasMSm3d, double spareGasMSm3d,
+        double requiredOilBopd, double spareOilBopd, double requiredWaterM3d, double spareWaterM3d,
+        double requiredLiquidM3d, double spareLiquidM3d, String primaryBottleneckName,
+        double primaryBottleneckUtilization, int activeBottleneckCount, String summary) {
       this.hostName = hostName;
       this.capacityAvailable = capacityAvailable;
       this.gasCapacityAvailable = gasCapacityAvailable;
@@ -949,8 +949,8 @@ public class HostFacility implements Serializable {
   @Override
   public String toString() {
     return String.format(
-	"HostFacility[%s, type=%s, pos=(%.2f, %.2f), depth=%.0fm, " + "spareGas=%.1f MSm3/d, spareOil=%.0f bopd]", name,
-	type, latitude, longitude, waterDepthM, getSpareGasCapacity(), getSpareOilCapacity());
+        "HostFacility[%s, type=%s, pos=(%.2f, %.2f), depth=%.0fm, " + "spareGas=%.1f MSm3/d, spareOil=%.0f bopd]", name,
+        type, latitude, longitude, waterDepthM, getSpareGasCapacity(), getSpareOilCapacity());
   }
 
   // ============================================================================

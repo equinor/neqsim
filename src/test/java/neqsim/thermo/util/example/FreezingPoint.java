@@ -32,7 +32,7 @@ public class FreezingPoint {
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
     SystemInterface testSystem2 = new SystemSrkCPAstatoil(273.15 + 100,
-	ThermodynamicConstantsInterface.referencePressure);
+        ThermodynamicConstantsInterface.referencePressure);
     ThermodynamicOperations testOps2 = new ThermodynamicOperations(testSystem2);
 
     testSystem.addComponent("methane", 0.00882);
@@ -77,11 +77,11 @@ public class FreezingPoint {
       logger.error(ex.getMessage(), ex);
     }
     logger.info("wt% methanol " + 100 * testSystem.getPhase(1).getComponent("methanol").getx()
-	* testSystem.getPhase(1).getComponent("methanol").getMolarMass()
-	/ (testSystem.getPhase(1).getComponent("methanol").getx()
-	    * testSystem.getPhase(1).getComponent("methanol").getMolarMass()
-	    + testSystem.getPhase(1).getComponent("water").getx()
-		* testSystem.getPhase(1).getComponent("water").getMolarMass()));
+        * testSystem.getPhase(1).getComponent("methanol").getMolarMass()
+        / (testSystem.getPhase(1).getComponent("methanol").getx()
+            * testSystem.getPhase(1).getComponent("methanol").getMolarMass()
+            + testSystem.getPhase(1).getComponent("water").getx()
+                * testSystem.getPhase(1).getComponent("water").getMolarMass()));
     logger.info("mol% methanol " + 100 * testSystem.getPhase(1).getComponent("methanol").getx());
   }
 }

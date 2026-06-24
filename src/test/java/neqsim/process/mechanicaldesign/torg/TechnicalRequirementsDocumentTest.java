@@ -16,7 +16,7 @@ class TechnicalRequirementsDocumentTest {
   @Test
   void testBuilderCreatesDocument() {
     TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder().projectId("TEST-001")
-	.projectName("Test Project").companyIdentifier("TestCo").revision("1").issueDate("2024-01-01").build();
+        .projectName("Test Project").companyIdentifier("TestCo").revision("1").issueDate("2024-01-01").build();
 
     assertNotNull(torg);
     assertEquals("TEST-001", torg.getProjectId());
@@ -29,9 +29,9 @@ class TechnicalRequirementsDocumentTest {
   @Test
   void testAddStandardToCategory() {
     TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder().projectId("TEST-002")
-	.addStandard("pressure vessel design code", StandardType.ASME_VIII_DIV1)
-	.addStandard("separator process design", StandardType.API_12J)
-	.addStandard("pipeline design codes", StandardType.NORSOK_L_001).build();
+        .addStandard("pressure vessel design code", StandardType.ASME_VIII_DIV1)
+        .addStandard("separator process design", StandardType.API_12J)
+        .addStandard("pipeline design codes", StandardType.NORSOK_L_001).build();
 
     List<StandardType> pvStandards = torg.getStandardsForCategory("pressure vessel design code");
     assertEquals(1, pvStandards.size());
@@ -45,8 +45,8 @@ class TechnicalRequirementsDocumentTest {
   @Test
   void testAddMultipleStandardsToSameCategory() {
     TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder().projectId("TEST-003")
-	.addStandard("separator process design", StandardType.API_12J)
-	.addStandard("separator process design", StandardType.NORSOK_P_001).build();
+        .addStandard("separator process design", StandardType.API_12J)
+        .addStandard("separator process design", StandardType.NORSOK_P_001).build();
 
     List<StandardType> standards = torg.getStandardsForCategory("separator process design");
     assertEquals(2, standards.size());
@@ -57,8 +57,8 @@ class TechnicalRequirementsDocumentTest {
   @Test
   void testSetStandardsReplacesExisting() {
     TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder().projectId("TEST-004")
-	.addStandard("pipeline design codes", StandardType.NORSOK_L_001)
-	.setStandards("pipeline design codes", Arrays.asList(StandardType.DNV_ST_F101, StandardType.ISO_13623)).build();
+        .addStandard("pipeline design codes", StandardType.NORSOK_L_001)
+        .setStandards("pipeline design codes", Arrays.asList(StandardType.DNV_ST_F101, StandardType.ISO_13623)).build();
 
     List<StandardType> standards = torg.getStandardsForCategory("pipeline design codes");
     assertEquals(2, standards.size());
@@ -70,8 +70,8 @@ class TechnicalRequirementsDocumentTest {
   @Test
   void testAddEquipmentSpecificStandard() {
     TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder().projectId("TEST-005")
-	.addEquipmentStandard("Separator", StandardType.API_12J)
-	.addEquipmentStandard("Separator", StandardType.ASME_VIII_DIV1).build();
+        .addEquipmentStandard("Separator", StandardType.API_12J)
+        .addEquipmentStandard("Separator", StandardType.ASME_VIII_DIV1).build();
 
     List<StandardType> standards = torg.getStandardsForEquipment("Separator");
     assertEquals(2, standards.size());
@@ -82,8 +82,8 @@ class TechnicalRequirementsDocumentTest {
   @Test
   void testGetAllApplicableStandards() {
     TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder().projectId("TEST-006")
-	.addEquipmentStandard("Separator", StandardType.API_12J)
-	.addStandard("pressure vessel design code", StandardType.ASME_VIII_DIV1).build();
+        .addEquipmentStandard("Separator", StandardType.API_12J)
+        .addStandard("pressure vessel design code", StandardType.ASME_VIII_DIV1).build();
 
     List<StandardType> applicable = torg.getAllApplicableStandards("Separator");
     assertTrue(applicable.contains(StandardType.API_12J));
@@ -93,10 +93,10 @@ class TechnicalRequirementsDocumentTest {
   @Test
   void testEnvironmentalConditions() {
     TechnicalRequirementsDocument.EnvironmentalConditions env = new TechnicalRequirementsDocument.EnvironmentalConditions(
-	-40.0, 45.0, 4.0, "0", 30.0, 15.0, "North Sea");
+        -40.0, 45.0, 4.0, "0", 30.0, 15.0, "North Sea");
 
     TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder().projectId("TEST-007")
-	.environmentalConditions(env).build();
+        .environmentalConditions(env).build();
 
     assertNotNull(torg.getEnvironmentalConditions());
     assertEquals(-40.0, torg.getEnvironmentalConditions().getMinAmbientTemperature(), 0.01);
@@ -109,7 +109,7 @@ class TechnicalRequirementsDocumentTest {
   @Test
   void testSimplifiedEnvironmentalConditions() {
     TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder().projectId("TEST-008")
-	.environmentalConditions(-46.0, 40.0).build();
+        .environmentalConditions(-46.0, 40.0).build();
 
     assertNotNull(torg.getEnvironmentalConditions());
     assertEquals(-46.0, torg.getEnvironmentalConditions().getMinAmbientTemperature(), 0.01);
@@ -119,10 +119,10 @@ class TechnicalRequirementsDocumentTest {
   @Test
   void testSafetyFactors() {
     TechnicalRequirementsDocument.SafetyFactors safety = new TechnicalRequirementsDocument.SafetyFactors(1.1, 10.0, 3.0,
-	0.125, 1.0);
+        0.125, 1.0);
 
     TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder().projectId("TEST-009")
-	.safetyFactors(safety).build();
+        .safetyFactors(safety).build();
 
     assertNotNull(torg.getSafetyFactors());
     assertEquals(1.1, torg.getSafetyFactors().getPressureSafetyFactor(), 0.01);
@@ -135,10 +135,10 @@ class TechnicalRequirementsDocumentTest {
   @Test
   void testMaterialSpecifications() {
     TechnicalRequirementsDocument.MaterialSpecifications materials = new TechnicalRequirementsDocument.MaterialSpecifications(
-	"A516-70", "A106-B", -46.0, 300.0, true, "ASTM");
+        "A516-70", "A106-B", -46.0, 300.0, true, "ASTM");
 
     TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder().projectId("TEST-010")
-	.materialSpecifications(materials).build();
+        .materialSpecifications(materials).build();
 
     assertNotNull(torg.getMaterialSpecifications());
     assertEquals("A516-70", torg.getMaterialSpecifications().getDefaultPlateMaterial());
@@ -152,8 +152,8 @@ class TechnicalRequirementsDocumentTest {
   @Test
   void testCustomParameters() {
     TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder().projectId("TEST-011")
-	.customParameter("maxFlowRate", 1000.0).customParameter("fluidType", "Natural Gas")
-	.customParameter("corrosive", true).build();
+        .customParameter("maxFlowRate", 1000.0).customParameter("fluidType", "Natural Gas")
+        .customParameter("corrosive", true).build();
 
     assertEquals(1000.0, torg.getCustomParameter("maxFlowRate", Double.class), 0.01);
     assertEquals("Natural Gas", torg.getCustomParameter("fluidType", String.class));
@@ -163,7 +163,7 @@ class TechnicalRequirementsDocumentTest {
   @Test
   void testHasStandardsForCategory() {
     TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder().projectId("TEST-012")
-	.addStandard("pressure vessel design code", StandardType.ASME_VIII_DIV1).build();
+        .addStandard("pressure vessel design code", StandardType.ASME_VIII_DIV1).build();
 
     assertTrue(torg.hasStandardsForCategory("pressure vessel design code"));
     assertFalse(torg.hasStandardsForCategory("pipeline design codes"));
@@ -172,8 +172,8 @@ class TechnicalRequirementsDocumentTest {
   @Test
   void testGetDefinedCategories() {
     TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder().projectId("TEST-013")
-	.addStandard("pressure vessel design code", StandardType.ASME_VIII_DIV1)
-	.addStandard("separator process design", StandardType.API_12J).build();
+        .addStandard("pressure vessel design code", StandardType.ASME_VIII_DIV1)
+        .addStandard("separator process design", StandardType.API_12J).build();
 
     java.util.Set<String> categories = torg.getDefinedCategories();
     assertEquals(2, categories.size());
@@ -184,8 +184,8 @@ class TechnicalRequirementsDocumentTest {
   @Test
   void testToString() {
     TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder().projectId("TEST-014")
-	.projectName("Test Project").companyIdentifier("TestCo")
-	.addStandard("pressure vessel design code", StandardType.ASME_VIII_DIV1).build();
+        .projectName("Test Project").companyIdentifier("TestCo")
+        .addStandard("pressure vessel design code", StandardType.ASME_VIII_DIV1).build();
 
     String str = torg.toString();
     assertTrue(str.contains("TEST-014"));

@@ -187,45 +187,46 @@ public class DynamicProcessHelper {
     // First pass: identify separator-valve pairings by stream identity
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof Separator) {
-	Separator sep = (Separator) unit;
-	StreamInterface gasOut;
-	StreamInterface liqOut;
-	try {
-	  gasOut = sep.getGasOutStream();
-	  liqOut = sep.getLiquidOutStream();
-	} catch (Exception ex) {
-	  // Separator has no inlet wired (e.g. orphan vessel in JSON build) — skip pairing.
-	  continue;
-	}
-	StreamInterface waterOut = null;
-	if (sep instanceof ThreePhaseSeparator) {
-	  waterOut = ((ThreePhaseSeparator) sep).getWaterOutStream();
-	}
+        Separator sep = (Separator) unit;
+        StreamInterface gasOut;
+        StreamInterface liqOut;
+        try {
+          gasOut = sep.getGasOutStream();
+          liqOut = sep.getLiquidOutStream();
+        } catch (Exception ex) {
+          // Separator has no inlet wired (e.g. orphan vessel in JSON build) — skip
+          // pairing.
+          continue;
+        }
+        StreamInterface waterOut = null;
+        if (sep instanceof ThreePhaseSeparator) {
+          waterOut = ((ThreePhaseSeparator) sep).getWaterOutStream();
+        }
 
-	for (ProcessEquipmentInterface other : units) {
-	  if (other instanceof ThrottlingValve) {
-	    ThrottlingValve v = (ThrottlingValve) other;
-	    StreamInterface vIn = v.getInletStream();
-	    if (vIn == gasOut) {
-	      gasValves.put(sep.getName(), v);
-	    } else if (vIn == liqOut) {
-	      liquidValves.put(sep.getName(), v);
-	    } else if (waterOut != null && vIn == waterOut) {
-	      waterValves.put(sep.getName(), v);
-	    }
-	  }
-	}
+        for (ProcessEquipmentInterface other : units) {
+          if (other instanceof ThrottlingValve) {
+            ThrottlingValve v = (ThrottlingValve) other;
+            StreamInterface vIn = v.getInletStream();
+            if (vIn == gasOut) {
+              gasValves.put(sep.getName(), v);
+            } else if (vIn == liqOut) {
+              liquidValves.put(sep.getName(), v);
+            } else if (waterOut != null && vIn == waterOut) {
+              waterValves.put(sep.getName(), v);
+            }
+          }
+        }
       }
     }
 
     // Second pass: instrument each equipment type
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof Separator) {
-	instrumentSeparator((Separator) unit, gasValves, liquidValves, waterValves);
+        instrumentSeparator((Separator) unit, gasValves, liquidValves, waterValves);
       } else if (unit instanceof Compressor) {
-	instrumentCompressor((Compressor) unit);
+        instrumentCompressor((Compressor) unit);
       } else if (unit instanceof Heater || unit instanceof Cooler) {
-	instrumentHeatExchanger(unit);
+        instrumentHeatExchanger(unit);
       }
     }
 
@@ -296,9 +297,9 @@ public class DynamicProcessHelper {
     if (sep instanceof ThreePhaseSeparator) {
       ThrottlingValve waterValve = waterValves.get(tag);
       if (waterValve != null && !waterValve.hasController) {
-	ControllerDeviceInterface wlc = createPIDController("WLC-" + tag, lt, 50.0, levelKp, levelTi, 0.0, false);
-	waterValve.setController(wlc);
-	addController("WLC-" + tag, wlc);
+        ControllerDeviceInterface wlc = createPIDController("WLC-" + tag, lt, 50.0, levelKp, levelTi, 0.0, false);
+        waterValve.setController(wlc);
+        addController("WLC-" + tag, wlc);
       }
     }
   }
@@ -463,7 +464,7 @@ public class DynamicProcessHelper {
     addTransmitter("TT-" + tag, tt);
 
     ControllerDeviceInterface tc = createPIDController("TC-" + tag, tt, tempSetpointC, temperatureKp, temperatureTi,
-	0.0, false);
+        0.0, false);
     heatExchanger.setController(tc);
     addController("TC-" + tag, tc);
     return tc;

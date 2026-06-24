@@ -31,7 +31,7 @@ public class PhaseTransitionInitiationTest {
     assertTrue(TwoPhaseFlowNode.MIN_PHASE_FRACTION > 0, "MIN_PHASE_FRACTION should be positive");
     assertTrue(TwoPhaseFlowNode.MIN_PHASE_FRACTION < 1e-6, "MIN_PHASE_FRACTION should be very small");
     assertTrue(TwoPhaseFlowNode.NUCLEATION_PHASE_FRACTION > TwoPhaseFlowNode.MIN_PHASE_FRACTION,
-	"NUCLEATION_PHASE_FRACTION should be larger than MIN_PHASE_FRACTION");
+        "NUCLEATION_PHASE_FRACTION should be larger than MIN_PHASE_FRACTION");
     assertTrue(TwoPhaseFlowNode.NUCLEATION_PHASE_FRACTION < 1e-3, "NUCLEATION_PHASE_FRACTION should be small");
   }
 
@@ -57,9 +57,9 @@ public class PhaseTransitionInitiationTest {
 
     // Should detect as single-phase gas
     assertTrue(node.isEffectivelySinglePhaseGas(),
-	"Node with gas fraction near 1.0 should be detected as effectively single-phase gas");
+        "Node with gas fraction near 1.0 should be detected as effectively single-phase gas");
     assertFalse(node.isEffectivelySinglePhaseLiquid(),
-	"Node with gas fraction near 1.0 should not be detected as single-phase liquid");
+        "Node with gas fraction near 1.0 should not be detected as single-phase liquid");
   }
 
   @Test
@@ -83,9 +83,9 @@ public class PhaseTransitionInitiationTest {
 
     // Should detect as single-phase liquid
     assertTrue(node.isEffectivelySinglePhaseLiquid(),
-	"Node with liquid fraction near 1.0 should be detected as effectively single-phase liquid");
+        "Node with liquid fraction near 1.0 should be detected as effectively single-phase liquid");
     assertFalse(node.isEffectivelySinglePhaseGas(),
-	"Node with liquid fraction near 1.0 should not be detected as single-phase gas");
+        "Node with liquid fraction near 1.0 should not be detected as single-phase gas");
   }
 
   @Test
@@ -112,9 +112,9 @@ public class PhaseTransitionInitiationTest {
 
     // Verify minimum fractions are enforced
     assertTrue(node.getPhaseFraction(0) >= TwoPhaseFlowNode.MIN_PHASE_FRACTION,
-	"Gas phase fraction should be at least MIN_PHASE_FRACTION");
+        "Gas phase fraction should be at least MIN_PHASE_FRACTION");
     assertTrue(node.getPhaseFraction(1) >= TwoPhaseFlowNode.MIN_PHASE_FRACTION,
-	"Liquid phase fraction should be at least MIN_PHASE_FRACTION");
+        "Liquid phase fraction should be at least MIN_PHASE_FRACTION");
     assertEquals(1.0, node.getPhaseFraction(0) + node.getPhaseFraction(1), 1e-9, "Phase fractions should sum to 1.0");
   }
 
@@ -143,7 +143,7 @@ public class PhaseTransitionInitiationTest {
 
     // Verify liquid phase was created
     assertTrue(node.getPhaseFraction(1) >= TwoPhaseFlowNode.NUCLEATION_PHASE_FRACTION,
-	"Liquid phase fraction should be at least NUCLEATION_PHASE_FRACTION after condensation");
+        "Liquid phase fraction should be at least NUCLEATION_PHASE_FRACTION after condensation");
   }
 
   @Test
@@ -171,7 +171,7 @@ public class PhaseTransitionInitiationTest {
 
     // Verify gas phase was created
     assertTrue(node.getPhaseFraction(0) >= TwoPhaseFlowNode.NUCLEATION_PHASE_FRACTION,
-	"Gas phase fraction should be at least NUCLEATION_PHASE_FRACTION after nucleation");
+        "Gas phase fraction should be at least NUCLEATION_PHASE_FRACTION after nucleation");
   }
 
   @Test
@@ -380,12 +380,12 @@ public class PhaseTransitionInitiationTest {
 
     // After nucleation, gas phase should have at least minimum nucleation fraction
     assertTrue(node.getPhaseFraction(0) >= TwoPhaseFlowNode.MIN_PHASE_FRACTION,
-	"Gas phase should have at least MIN_PHASE_FRACTION after bubble nucleation");
+        "Gas phase should have at least MIN_PHASE_FRACTION after bubble nucleation");
     // Phase fractions should be valid
     assertTrue(node.getPhaseFraction(0) >= 0 && node.getPhaseFraction(0) <= 1.0,
-	"Gas phase fraction should be between 0 and 1");
+        "Gas phase fraction should be between 0 and 1");
     assertTrue(node.getPhaseFraction(1) >= 0 && node.getPhaseFraction(1) <= 1.0,
-	"Liquid phase fraction should be between 0 and 1");
+        "Liquid phase fraction should be between 0 and 1");
     assertEquals(1.0, node.getPhaseFraction(0) + node.getPhaseFraction(1), 1e-9, "Phase fractions should sum to 1.0");
   }
 

@@ -96,14 +96,14 @@ public class JsonProcessBuilder {
   public SimulationResult build(String json) {
     if (json == null || json.trim().isEmpty()) {
       return SimulationResult.error("JSON_PARSE_ERROR", "JSON input is null or empty",
-	  "Provide a valid JSON process definition");
+          "Provide a valid JSON process definition");
     }
     try {
       JsonObject root = JsonParser.parseString(json).getAsJsonObject();
       return buildFromJsonObject(root);
     } catch (Exception e) {
       return SimulationResult.error("JSON_PARSE_ERROR", "Failed to parse JSON: " + e.getMessage(),
-	  "Ensure the JSON is well-formed");
+          "Ensure the JSON is well-formed");
     }
   }
 
@@ -146,7 +146,7 @@ public class JsonProcessBuilder {
     } else if (root.has("fluid")) {
       defaultFluid = buildFluid(root.getAsJsonObject("fluid"));
       if (defaultFluid != null) {
-	namedFluids.put("default", defaultFluid);
+        namedFluids.put("default", defaultFluid);
       }
     }
 
@@ -154,17 +154,17 @@ public class JsonProcessBuilder {
     if (root.has("fluids")) {
       JsonObject fluidsObj = root.getAsJsonObject("fluids");
       for (Map.Entry<String, JsonElement> entry : fluidsObj.entrySet()) {
-	SystemInterface fluid = buildFluid(entry.getValue().getAsJsonObject());
-	if (fluid != null) {
-	  namedFluids.put(entry.getKey(), fluid);
-	}
+        SystemInterface fluid = buildFluid(entry.getValue().getAsJsonObject());
+        if (fluid != null) {
+          namedFluids.put(entry.getKey(), fluid);
+        }
       }
     }
 
     // Step 2: Build process units (two-pass for recycle loops)
     if (!root.has("process")) {
       errors.add(new SimulationResult.ErrorDetail("MISSING_PROCESS", "JSON must contain a 'process' array", null,
-	  "Add a 'process' array with unit definitions"));
+          "Add a 'process' array with unit definitions"));
       return SimulationResult.failure(errors, warnings);
     }
 
@@ -189,21 +189,21 @@ public class JsonProcessBuilder {
       String name = unitDef.has("name") ? unitDef.get("name").getAsString() : type + "_" + (i + 1);
       unitDefMap.put(name, unitDef);
       if (needsWiring(unitDef)) {
-	unwired.add(name);
+        unwired.add(name);
       } else if (!"Stream".equalsIgnoreCase(type) && unitDef.has("properties")) {
-	// Non-stream units without inlet/inlets still need properties applied
-	// (e.g. Adjuster which references other equipment, not streams).
-	ProcessEquipmentInterface eq = namedEquipment.get(name);
-	if (eq != null) {
-	  JsonObject props = unitDef.getAsJsonObject("properties");
-	  if (eq instanceof Adjuster && (props.has("adjustedEquipment") || props.has("targetEquipment"))) {
-	    wireAdjuster((Adjuster) eq, props);
-	  }
-	  if (eq instanceof Calculator && (props.has("calculatorInputs") || props.has("calculatorOutput"))) {
-	    wireCalculator((Calculator) eq, props);
-	  }
-	  applyProperties(eq, props);
-	}
+        // Non-stream units without inlet/inlets still need properties applied
+        // (e.g. Adjuster which references other equipment, not streams).
+        ProcessEquipmentInterface eq = namedEquipment.get(name);
+        if (eq != null) {
+          JsonObject props = unitDef.getAsJsonObject("properties");
+          if (eq instanceof Adjuster && (props.has("adjustedEquipment") || props.has("targetEquipment"))) {
+            wireAdjuster((Adjuster) eq, props);
+          }
+          if (eq instanceof Calculator && (props.has("calculatorInputs") || props.has("calculatorOutput"))) {
+            wireCalculator((Calculator) eq, props);
+          }
+          applyProperties(eq, props);
+        }
       }
     }
 
@@ -211,14 +211,14 @@ public class JsonProcessBuilder {
     for (int iter = 0; iter < maxIterations && !unwired.isEmpty(); iter++) {
       java.util.Set<String> wiredThisRound = new java.util.LinkedHashSet<>();
       for (String name : unwired) {
-	JsonObject unitDef = unitDefMap.get(name);
-	if (unitDef != null && tryWireUnit(name, unitDef)) {
-	  wiredThisRound.add(name);
-	}
+        JsonObject unitDef = unitDefMap.get(name);
+        if (unitDef != null && tryWireUnit(name, unitDef)) {
+          wiredThisRound.add(name);
+        }
       }
       unwired.removeAll(wiredThisRound);
       if (wiredThisRound.isEmpty()) {
-	break; // No progress — remaining refs cannot be resolved
+        break; // No progress — remaining refs cannot be resolved
       }
     }
 
@@ -230,10 +230,10 @@ public class JsonProcessBuilder {
     for (String name : unwired) {
       JsonObject unitDef = unitDefMap.get(name);
       if (unitDef != null) {
-	reportUnwiredUnit(name, unitDef);
-	// Remove the unit from the process so it doesn't crash during run()
-	process.removeUnit(name);
-	namedEquipment.remove(name);
+        reportUnwiredUnit(name, unitDef);
+        // Remove the unit from the process so it doesn't crash during run()
+        process.removeUnit(name);
+        namedEquipment.remove(name);
       }
     }
 
@@ -245,9 +245,9 @@ public class JsonProcessBuilder {
     for (SimulationResult.ErrorDetail err : errors) {
       String code = err.getCode();
       if ("STREAM_NOT_FOUND".equals(code) || "UNIT_ERROR".equals(code)) {
-	warnings.add("[" + code + "] " + err.getMessage());
+        warnings.add("[" + code + "] " + err.getMessage());
       } else {
-	criticalErrors.add(err);
+        criticalErrors.add(err);
       }
     }
     errors.clear();
@@ -263,7 +263,7 @@ public class JsonProcessBuilder {
     List<String> toRemove = new ArrayList<>();
     for (ProcessEquipmentInterface eq : process.getUnitOperations()) {
       if (eq instanceof Mixer && ((Mixer) eq).getOutletStream() == null) {
-	toRemove.add(eq.getName());
+        toRemove.add(eq.getName());
       }
     }
     for (String removeName : toRemove) {
@@ -282,29 +282,29 @@ public class JsonProcessBuilder {
     if (root.has("connections") && root.get("connections").isJsonArray()) {
       JsonArray connectionsArray = root.getAsJsonArray("connections");
       for (int i = 0; i < connectionsArray.size(); i++) {
-	try {
-	  JsonObject conn = connectionsArray.get(i).getAsJsonObject();
-	  String from = conn.has("from") ? conn.get("from").getAsString() : null;
-	  String to = conn.has("to") ? conn.get("to").getAsString() : null;
-	  if (from == null || to == null || from.trim().isEmpty() || to.trim().isEmpty()) {
-	    warnings.add("Skipping connections[" + i + "] - requires non-empty 'from' and 'to'");
-	    continue;
-	  }
-	  String sourcePort = conn.has("sourcePort") ? conn.get("sourcePort").getAsString() : "outlet";
-	  String targetPort = conn.has("targetPort") ? conn.get("targetPort").getAsString() : "inlet";
-	  ProcessConnection.ConnectionType type = ProcessConnection.ConnectionType.MATERIAL;
-	  if (conn.has("type")) {
-	    try {
-	      type = ProcessConnection.ConnectionType.valueOf(conn.get("type").getAsString().toUpperCase());
-	    } catch (Exception ex) {
-	      warnings.add("connections[" + i + "] has unknown type '" + conn.get("type").getAsString()
-		  + "' - defaulting to MATERIAL");
-	    }
-	  }
-	  process.connect(from, sourcePort, to, targetPort, type);
-	} catch (Exception ex) {
-	  warnings.add("Failed to parse connections[" + i + "]: " + ex.getMessage());
-	}
+        try {
+          JsonObject conn = connectionsArray.get(i).getAsJsonObject();
+          String from = conn.has("from") ? conn.get("from").getAsString() : null;
+          String to = conn.has("to") ? conn.get("to").getAsString() : null;
+          if (from == null || to == null || from.trim().isEmpty() || to.trim().isEmpty()) {
+            warnings.add("Skipping connections[" + i + "] - requires non-empty 'from' and 'to'");
+            continue;
+          }
+          String sourcePort = conn.has("sourcePort") ? conn.get("sourcePort").getAsString() : "outlet";
+          String targetPort = conn.has("targetPort") ? conn.get("targetPort").getAsString() : "inlet";
+          ProcessConnection.ConnectionType type = ProcessConnection.ConnectionType.MATERIAL;
+          if (conn.has("type")) {
+            try {
+              type = ProcessConnection.ConnectionType.valueOf(conn.get("type").getAsString().toUpperCase());
+            } catch (Exception ex) {
+              warnings.add("connections[" + i + "] has unknown type '" + conn.get("type").getAsString()
+                  + "' - defaulting to MATERIAL");
+            }
+          }
+          process.connect(from, sourcePort, to, targetPort, type);
+        } catch (Exception ex) {
+          warnings.add("Failed to parse connections[" + i + "]: " + ex.getMessage());
+        }
       }
     }
 
@@ -312,16 +312,16 @@ public class JsonProcessBuilder {
     boolean autoRun = root.has("autoRun") && root.get("autoRun").getAsBoolean();
     if (autoRun) {
       try {
-	process.run();
+        process.run();
       } catch (Exception e) {
-	warnings.add("process.run() threw: " + e.getMessage() + " — partial results may still be available");
+        warnings.add("process.run() threw: " + e.getMessage() + " — partial results may still be available");
       }
       // Report generation can also fail if some units have corrupted state
       String report = null;
       try {
-	report = process.getReport_json();
+        report = process.getReport_json();
       } catch (Exception e) {
-	warnings.add("Report generation failed: " + e.getMessage());
+        warnings.add("Report generation failed: " + e.getMessage());
       }
       return SimulationResult.success(process, report, warnings, metadata);
     }
@@ -407,15 +407,15 @@ public class JsonProcessBuilder {
     }
     if (equipmentDesign.has("separatorSizing") && equipmentDesign.get("separatorSizing").isJsonArray()) {
       report.add("separatorSizing",
-	  applySeparatorSizing(equipmentDesign.getAsJsonArray("separatorSizing"), generatedDesignCapacities));
+          applySeparatorSizing(equipmentDesign.getAsJsonArray("separatorSizing"), generatedDesignCapacities));
     }
     if (equipmentDesign.has("compressorSizing") && equipmentDesign.get("compressorSizing").isJsonArray()) {
       report.add("compressorSizing",
-	  applyCompressorSizing(equipmentDesign.getAsJsonArray("compressorSizing"), generatedDesignCapacities));
+          applyCompressorSizing(equipmentDesign.getAsJsonArray("compressorSizing"), generatedDesignCapacities));
     }
     if (equipmentDesign.has("coolerSizing") && equipmentDesign.get("coolerSizing").isJsonArray()) {
       report.add("coolerSizing",
-	  applyCoolerSizing(equipmentDesign.getAsJsonArray("coolerSizing"), generatedDesignCapacities));
+          applyCoolerSizing(equipmentDesign.getAsJsonArray("coolerSizing"), generatedDesignCapacities));
     }
     if (generatedDesignCapacities.size() > 0) {
       report.add("generatedDesignCapacities", applyDesignCapacities(process, generatedDesignCapacities));
@@ -433,7 +433,7 @@ public class JsonProcessBuilder {
     JsonArray report = new JsonArray();
     for (JsonElement groupElement : groups) {
       if (!groupElement.isJsonObject()) {
-	continue;
+        continue;
       }
       JsonObject group = groupElement.getAsJsonObject();
       JsonObject props = new JsonObject();
@@ -457,7 +457,7 @@ public class JsonProcessBuilder {
     JsonArray report = new JsonArray();
     for (JsonElement groupElement : groups) {
       if (!groupElement.isJsonObject()) {
-	continue;
+        continue;
       }
       JsonObject group = groupElement.getAsJsonObject();
       JsonObject props = new JsonObject();
@@ -467,9 +467,9 @@ public class JsonProcessBuilder {
       addMappedNumber(capacityProps, "internalDiameter", group, "innerDiameterM");
       addMappedNumber(capacityProps, "separatorLength", group, "tanTanLengthM");
       if (group.has("designPressureBara")) {
-	JsonObject mechanicalDesign = new JsonObject();
-	mechanicalDesign.addProperty("maxOperationPressure", group.get("designPressureBara").getAsDouble());
-	props.add("mechanicalDesign", mechanicalDesign);
+        JsonObject mechanicalDesign = new JsonObject();
+        mechanicalDesign.addProperty("maxOperationPressure", group.get("designPressureBara").getAsDouble());
+        props.add("mechanicalDesign", mechanicalDesign);
       }
       addCapacityDataForUnitNames(generatedDesignCapacities, group, capacityProps);
       report.add(applyGroupedUnitProperties(group, props));
@@ -488,7 +488,7 @@ public class JsonProcessBuilder {
     JsonArray report = new JsonArray();
     for (JsonElement groupElement : groups) {
       if (!groupElement.isJsonObject()) {
-	continue;
+        continue;
       }
       JsonObject group = groupElement.getAsJsonObject();
       JsonObject props = new JsonObject();
@@ -497,11 +497,11 @@ public class JsonProcessBuilder {
       addMappedNumber(props, "outletPressure", group, "designDischargePressureBara");
       addMappedNumber(props, "isentropicEfficiency", group, "normalIsentropicEfficiency");
       if (group.has("ratedShaftPowerMW")) {
-	driverProps.addProperty("ratedPower", group.get("ratedShaftPowerMW").getAsDouble() * 1000.0);
-	capacityProps.addProperty("ratedPower", group.get("ratedShaftPowerMW").getAsDouble() * 1000.0);
+        driverProps.addProperty("ratedPower", group.get("ratedShaftPowerMW").getAsDouble() * 1000.0);
+        capacityProps.addProperty("ratedPower", group.get("ratedShaftPowerMW").getAsDouble() * 1000.0);
       }
       if (driverProps.size() > 0) {
-	props.add("driver", driverProps);
+        props.add("driver", driverProps);
       }
       addCapacityDataForUnitName(generatedDesignCapacities, group, capacityProps);
       report.add(applySingleUnitProperties(group, props));
@@ -548,23 +548,23 @@ public class JsonProcessBuilder {
     JsonArray report = new JsonArray();
     for (JsonElement groupElement : groups) {
       if (!groupElement.isJsonObject()) {
-	continue;
+        continue;
       }
       JsonObject group = groupElement.getAsJsonObject();
       JsonObject props = new JsonObject();
       JsonObject capacityProps = new JsonObject();
       if (group.has("normalOutletTemperatureDegC")) {
-	JsonArray outletTemperature = new JsonArray();
-	outletTemperature.add(group.get("normalOutletTemperatureDegC").getAsDouble());
-	outletTemperature.add("C");
-	props.add("outletTemperature", outletTemperature);
+        JsonArray outletTemperature = new JsonArray();
+        outletTemperature.add(group.get("normalOutletTemperatureDegC").getAsDouble());
+        outletTemperature.add("C");
+        props.add("outletTemperature", outletTemperature);
       }
       if (group.has("maxDesignDutyMWEach")) {
-	JsonArray maxDesignDuty = new JsonArray();
-	maxDesignDuty.add(group.get("maxDesignDutyMWEach").getAsDouble());
-	maxDesignDuty.add("MW");
-	props.add("maxDesignDuty", maxDesignDuty);
-	capacityProps.addProperty("maxDesignDutyMW", group.get("maxDesignDutyMWEach").getAsDouble());
+        JsonArray maxDesignDuty = new JsonArray();
+        maxDesignDuty.add(group.get("maxDesignDutyMWEach").getAsDouble());
+        maxDesignDuty.add("MW");
+        props.add("maxDesignDuty", maxDesignDuty);
+        capacityProps.addProperty("maxDesignDutyMW", group.get("maxDesignDutyMWEach").getAsDouble());
       }
       addCapacityDataForUnitNames(generatedDesignCapacities, group, capacityProps);
       report.add(applyGroupedUnitProperties(group, props));
@@ -582,7 +582,7 @@ public class JsonProcessBuilder {
    */
   private void addMappedNumber(JsonObject target, String targetKey, JsonObject source, String sourceKey) {
     if (source.has(sourceKey) && source.get(sourceKey).isJsonPrimitive()
-	&& source.get(sourceKey).getAsJsonPrimitive().isNumber()) {
+        && source.get(sourceKey).getAsJsonPrimitive().isNumber()) {
       target.addProperty(targetKey, source.get(sourceKey).getAsDouble());
     }
   }
@@ -600,7 +600,7 @@ public class JsonProcessBuilder {
     if (group.has("unitNames") && group.get("unitNames").isJsonArray()) {
       JsonArray names = group.getAsJsonArray("unitNames");
       for (JsonElement nameElement : names) {
-	unitReports.add(applyUnitProperties(nameElement.getAsString(), props));
+        unitReports.add(applyUnitProperties(nameElement.getAsString(), props));
       }
     } else if (group.has("unitName")) {
       unitReports.add(applyUnitProperties(group.get("unitName").getAsString(), props));
@@ -624,7 +624,7 @@ public class JsonProcessBuilder {
     } else if (group.has("unitNames") && group.get("unitNames").isJsonArray()) {
       JsonArray names = group.getAsJsonArray("unitNames");
       for (JsonElement nameElement : names) {
-	unitReports.add(applyUnitProperties(nameElement.getAsString(), props));
+        unitReports.add(applyUnitProperties(nameElement.getAsString(), props));
       }
     }
     groupReport.add("units", unitReports);
@@ -687,7 +687,7 @@ public class JsonProcessBuilder {
     if (group.has("unitNames") && group.get("unitNames").isJsonArray()) {
       JsonArray names = group.getAsJsonArray("unitNames");
       for (JsonElement nameElement : names) {
-	designCapacities.add(nameElement.getAsString(), JsonParser.parseString(capacityProps.toString()));
+        designCapacities.add(nameElement.getAsString(), JsonParser.parseString(capacityProps.toString()));
       }
     } else {
       addCapacityDataForUnitName(designCapacities, group, capacityProps);
@@ -723,105 +723,105 @@ public class JsonProcessBuilder {
 
       SystemInterface fluid;
       if (fluidDef.has("e300FilePath")) {
-	String e300FilePath = fluidDef.get("e300FilePath").getAsString();
-	fluid = EclipseFluidReadWrite.read(e300FilePath);
-	fluid.setTemperature(temperature, "K");
-	fluid.setPressure(pressure, "bara");
+        String e300FilePath = fluidDef.get("e300FilePath").getAsString();
+        fluid = EclipseFluidReadWrite.read(e300FilePath);
+        fluid.setTemperature(temperature, "K");
+        fluid.setPressure(pressure, "bara");
       } else {
-	fluid = createFluidByModel(model, temperature, pressure);
-	if (fluid == null) {
-	  errors.add(new SimulationResult.ErrorDetail("UNKNOWN_MODEL", "Unknown thermodynamic model: " + model, null,
-	      "Use one of: SRK, PR, PR_LK, CPA, GERG2008, PCSAFT, UMRPRU"));
-	  return null;
-	}
+        fluid = createFluidByModel(model, temperature, pressure);
+        if (fluid == null) {
+          errors.add(new SimulationResult.ErrorDetail("UNKNOWN_MODEL", "Unknown thermodynamic model: " + model, null,
+              "Use one of: SRK, PR, PR_LK, CPA, GERG2008, PCSAFT, UMRPRU"));
+          return null;
+        }
       }
 
       // Add standard database components
       if (!fluidDef.has("e300FilePath") && fluidDef.has("components")) {
-	JsonObject components = fluidDef.getAsJsonObject("components");
-	for (Map.Entry<String, JsonElement> comp : components.entrySet()) {
-	  fluid.addComponent(comp.getKey(), comp.getValue().getAsDouble());
-	}
+        JsonObject components = fluidDef.getAsJsonObject("components");
+        for (Map.Entry<String, JsonElement> comp : components.entrySet()) {
+          fluid.addComponent(comp.getKey(), comp.getValue().getAsDouble());
+        }
       }
 
       // Add characterized (TBP/plus) components with full properties
       if (!fluidDef.has("e300FilePath") && fluidDef.has("characterizedComponents")) {
-	JsonArray charComps = fluidDef.getAsJsonArray("characterizedComponents");
-	for (int i = 0; i < charComps.size(); i++) {
-	  JsonObject cc = charComps.get(i).getAsJsonObject();
-	  String compName = cc.get("name").getAsString();
-	  double moleFraction = cc.get("moleFraction").getAsDouble();
-	  double molarMass = cc.get("molarMass").getAsDouble();
-	  double density = cc.get("density").getAsDouble();
-	  double tc = cc.get("Tc").getAsDouble();
-	  double pc = cc.get("Pc").getAsDouble();
-	  double omega = cc.get("acentricFactor").getAsDouble();
-	  boolean isPlusFraction = cc.has("isPlusFraction") && cc.get("isPlusFraction").getAsBoolean();
-	  int compIdx;
-	  if (isPlusFraction) {
-	    fluid.addPlusFraction(compName, moleFraction, molarMass, density);
-	    compIdx = fluid.getPhase(0).getNumberOfComponents() - 1;
-	    applyComponentPropertiesToIndex(fluid, compIdx, cc);
-	  } else {
-	    fluid.addTBPfraction(compName, moleFraction, molarMass, density);
-	    compIdx = fluid.getPhase(0).getNumberOfComponents() - 1;
-	    applyComponentPropertiesToIndex(fluid, compIdx, cc);
-	  }
-	  fluid.getPhase(0).getComponent(compIdx).setTC(tc);
-	  fluid.getPhase(0).getComponent(compIdx).setPC(pc);
-	  fluid.getPhase(0).getComponent(compIdx).setAcentricFactor(omega);
-	}
+        JsonArray charComps = fluidDef.getAsJsonArray("characterizedComponents");
+        for (int i = 0; i < charComps.size(); i++) {
+          JsonObject cc = charComps.get(i).getAsJsonObject();
+          String compName = cc.get("name").getAsString();
+          double moleFraction = cc.get("moleFraction").getAsDouble();
+          double molarMass = cc.get("molarMass").getAsDouble();
+          double density = cc.get("density").getAsDouble();
+          double tc = cc.get("Tc").getAsDouble();
+          double pc = cc.get("Pc").getAsDouble();
+          double omega = cc.get("acentricFactor").getAsDouble();
+          boolean isPlusFraction = cc.has("isPlusFraction") && cc.get("isPlusFraction").getAsBoolean();
+          int compIdx;
+          if (isPlusFraction) {
+            fluid.addPlusFraction(compName, moleFraction, molarMass, density);
+            compIdx = fluid.getPhase(0).getNumberOfComponents() - 1;
+            applyComponentPropertiesToIndex(fluid, compIdx, cc);
+          } else {
+            fluid.addTBPfraction(compName, moleFraction, molarMass, density);
+            compIdx = fluid.getPhase(0).getNumberOfComponents() - 1;
+            applyComponentPropertiesToIndex(fluid, compIdx, cc);
+          }
+          fluid.getPhase(0).getComponent(compIdx).setTC(tc);
+          fluid.getPhase(0).getComponent(compIdx).setPC(pc);
+          fluid.getPhase(0).getComponent(compIdx).setAcentricFactor(omega);
+        }
       }
 
       if (!fluidDef.has("e300FilePath") && fluidDef.has("componentProperties")) {
-	applyComponentProperties(fluid, fluidDef.getAsJsonArray("componentProperties"));
+        applyComponentProperties(fluid, fluidDef.getAsJsonArray("componentProperties"));
       }
 
       // Set mixing rule
       if (!fluidDef.has("e300FilePath")) {
-	String mixingRule = fluidDef.has("mixingRule") ? fluidDef.get("mixingRule").getAsString() : "classic";
-	fluid.setMixingRule(mixingRule);
+        String mixingRule = fluidDef.has("mixingRule") ? fluidDef.get("mixingRule").getAsString() : "classic";
+        fluid.setMixingRule(mixingRule);
       }
 
       if (fluidDef.has("useVolumeCorrection")) {
-	fluid.useVolumeCorrection(fluidDef.get("useVolumeCorrection").getAsBoolean());
+        fluid.useVolumeCorrection(fluidDef.get("useVolumeCorrection").getAsBoolean());
       }
 
       // Apply binary interaction parameters (BICs)
       if (!fluidDef.has("e300FilePath") && fluidDef.has("binaryInteractionParameters")) {
-	// Build a mapping from exported names to actual system names
-	// addTBPfraction appends "_PC" to component names
-	Map<String, String> nameMap = createComponentNameMap(fluid);
+        // Build a mapping from exported names to actual system names
+        // addTBPfraction appends "_PC" to component names
+        Map<String, String> nameMap = createComponentNameMap(fluid);
 
-	JsonArray bics = fluidDef.getAsJsonArray("binaryInteractionParameters");
-	for (int i = 0; i < bics.size(); i++) {
-	  JsonObject bic = bics.get(i).getAsJsonObject();
-	  String comp1 = bic.get("comp1").getAsString();
-	  String comp2 = bic.get("comp2").getAsString();
-	  double kij = bic.get("kij").getAsDouble();
-	  String mapped1 = nameMap.get(comp1);
-	  String mapped2 = nameMap.get(comp2);
-	  if (mapped1 == null || mapped2 == null) {
-	    continue; // Skip silently if component not found
-	  }
-	  try {
-	    fluid.setBinaryInteractionParameter(mapped1, mapped2, kij);
-	  } catch (Exception ex) {
-	    warnings.add("Could not set BIC for " + mapped1 + "/" + mapped2 + ": " + ex.getMessage());
-	  }
-	}
+        JsonArray bics = fluidDef.getAsJsonArray("binaryInteractionParameters");
+        for (int i = 0; i < bics.size(); i++) {
+          JsonObject bic = bics.get(i).getAsJsonObject();
+          String comp1 = bic.get("comp1").getAsString();
+          String comp2 = bic.get("comp2").getAsString();
+          double kij = bic.get("kij").getAsDouble();
+          String mapped1 = nameMap.get(comp1);
+          String mapped2 = nameMap.get(comp2);
+          if (mapped1 == null || mapped2 == null) {
+            continue; // Skip silently if component not found
+          }
+          try {
+            fluid.setBinaryInteractionParameter(mapped1, mapped2, kij);
+          } catch (Exception ex) {
+            warnings.add("Could not set BIC for " + mapped1 + "/" + mapped2 + ": " + ex.getMessage());
+          }
+        }
       }
 
       // Multi-phase check
       if (fluidDef.has("multiPhaseCheck")) {
-	fluid.setMultiPhaseCheck(fluidDef.get("multiPhaseCheck").getAsBoolean());
+        fluid.setMultiPhaseCheck(fluidDef.get("multiPhaseCheck").getAsBoolean());
       }
 
       fluid.init(0);
       return fluid;
     } catch (Exception e) {
       errors.add(new SimulationResult.ErrorDetail("FLUID_ERROR", "Failed to create fluid: " + e.getMessage(), null,
-	  "Check component names and fluid parameters"));
+          "Check component names and fluid parameters"));
       return null;
     }
   }
@@ -837,11 +837,11 @@ public class JsonProcessBuilder {
     for (int i = 0; i < componentProperties.size(); i++) {
       JsonObject props = componentProperties.get(i).getAsJsonObject();
       if (!props.has("name")) {
-	continue;
+        continue;
       }
       String mappedName = nameMap.get(props.get("name").getAsString());
       if (mappedName != null) {
-	applyComponentPropertiesToName(fluid, mappedName, props);
+        applyComponentPropertiesToName(fluid, mappedName, props);
       }
     }
   }
@@ -858,7 +858,7 @@ public class JsonProcessBuilder {
       String sysName = fluid.getPhase(0).getComponent(i).getComponentName();
       nameMap.put(sysName, sysName);
       if (sysName.endsWith("_PC")) {
-	nameMap.put(sysName.substring(0, sysName.length() - 3), sysName);
+        nameMap.put(sysName.substring(0, sysName.length() - 3), sysName);
       }
     }
     return nameMap;
@@ -874,9 +874,9 @@ public class JsonProcessBuilder {
   private void applyComponentPropertiesToIndex(SystemInterface fluid, int componentIndex, JsonObject props) {
     for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
       try {
-	applyComponentProperties(fluid.getPhase(phase).getComponent(componentIndex), props);
+        applyComponentProperties(fluid.getPhase(phase).getComponent(componentIndex), props);
       } catch (Exception ex) {
-	logger.debug("Could not apply component properties to phase {} component index {}", phase, componentIndex, ex);
+        logger.debug("Could not apply component properties to phase {} component index {}", phase, componentIndex, ex);
       }
     }
   }
@@ -891,9 +891,9 @@ public class JsonProcessBuilder {
   private void applyComponentPropertiesToName(SystemInterface fluid, String componentName, JsonObject props) {
     for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
       try {
-	applyComponentProperties(fluid.getPhase(phase).getComponent(componentName), props);
+        applyComponentProperties(fluid.getPhase(phase).getComponent(componentName), props);
       } catch (Exception ex) {
-	logger.debug("Could not apply component properties to phase {} component {}", phase, componentName, ex);
+        logger.debug("Could not apply component properties to phase {} component {}", phase, componentName, ex);
       }
     }
   }
@@ -992,7 +992,7 @@ public class JsonProcessBuilder {
   private void createUnit(ProcessSystem process, JsonObject unitDef, SystemInterface defaultFluid, int index) {
     if (!unitDef.has("type")) {
       errors.add(new SimulationResult.ErrorDetail("MISSING_TYPE", "Unit at index " + index + " has no 'type' field",
-	  null, "Add a 'type' field (e.g., 'Stream', 'Separator', 'Compressor')"));
+          null, "Add a 'type' field (e.g., 'Stream', 'Separator', 'Compressor')"));
       return;
     }
 
@@ -1003,51 +1003,51 @@ public class JsonProcessBuilder {
       ProcessEquipmentInterface equipment;
 
       if ("Stream".equalsIgnoreCase(type)) {
-	equipment = createStream(name, unitDef, defaultFluid);
+        equipment = createStream(name, unitDef, defaultFluid);
       } else if ("DistillationColumn".equalsIgnoreCase(type) || "Column".equalsIgnoreCase(type)) {
-	equipment = createDistillationColumn(name, unitDef);
+        equipment = createDistillationColumn(name, unitDef);
       } else {
-	equipment = EquipmentFactory.createEquipment(name, type);
+        equipment = EquipmentFactory.createEquipment(name, type);
       }
 
       if (equipment != null) {
-	if (unitDef.has("tagName")) {
-	  equipment.setTagName(unitDef.get("tagName").getAsString());
-	}
-	// Special handling for Splitter: set split number before wiring
-	// so that setInletStream creates the right number of split streams
-	if (equipment instanceof Splitter && unitDef.has("properties")) {
-	  JsonObject props = unitDef.getAsJsonObject("properties");
-	  if (props.has("flowRates")) {
-	    int nSplits = props.getAsJsonArray("flowRates").size();
-	    ((Splitter) equipment).setSplitNumber(nSplits);
-	  } else if (props.has("splitFactors")) {
-	    int nSplits = props.getAsJsonArray("splitFactors").size();
-	    ((Splitter) equipment).setSplitNumber(nSplits);
-	  }
-	}
+        if (unitDef.has("tagName")) {
+          equipment.setTagName(unitDef.get("tagName").getAsString());
+        }
+        // Special handling for Splitter: set split number before wiring
+        // so that setInletStream creates the right number of split streams
+        if (equipment instanceof Splitter && unitDef.has("properties")) {
+          JsonObject props = unitDef.getAsJsonObject("properties");
+          if (props.has("flowRates")) {
+            int nSplits = props.getAsJsonArray("flowRates").size();
+            ((Splitter) equipment).setSplitNumber(nSplits);
+          } else if (props.has("splitFactors")) {
+            int nSplits = props.getAsJsonArray("splitFactors").size();
+            ((Splitter) equipment).setSplitNumber(nSplits);
+          }
+        }
 
-	// Special handling for Recycle: create a guess stream so downstream
-	// units can reference RCY.outlet before the Recycle is wired
-	if (equipment instanceof Recycle && defaultFluid != null) {
-	  StreamInterface guessStream = new Stream(name + "_guess", defaultFluid.clone());
-	  ((Recycle) equipment).setOutletStream(guessStream);
-	}
+        // Special handling for Recycle: create a guess stream so downstream
+        // units can reference RCY.outlet before the Recycle is wired
+        if (equipment instanceof Recycle && defaultFluid != null) {
+          StreamInterface guessStream = new Stream(name + "_guess", defaultFluid.clone());
+          ((Recycle) equipment).setOutletStream(guessStream);
+        }
 
-	// Apply properties only for Streams (they don't need wiring).
-	// Non-stream properties (e.g. outletPressure) are applied after wiring
-	// because they may reference the outlet stream which needs an inlet first.
-	if ("Stream".equalsIgnoreCase(type) && unitDef.has("properties")) {
-	  applyProperties(equipment, unitDef.getAsJsonObject("properties"));
-	}
+        // Apply properties only for Streams (they don't need wiring).
+        // Non-stream properties (e.g. outletPressure) are applied after wiring
+        // because they may reference the outlet stream which needs an inlet first.
+        if ("Stream".equalsIgnoreCase(type) && unitDef.has("properties")) {
+          applyProperties(equipment, unitDef.getAsJsonObject("properties"));
+        }
 
-	process.add(equipment);
-	namedEquipment.put(name, equipment);
+        process.add(equipment);
+        namedEquipment.put(name, equipment);
       }
     } catch (Exception e) {
       errors.add(new SimulationResult.ErrorDetail("UNIT_ERROR",
-	  "Failed to create unit '" + name + "' (type: " + type + "): " + e.getMessage(), name,
-	  "Check the unit definition and ensure all required fields are present"));
+          "Failed to create unit '" + name + "' (type: " + type + "): " + e.getMessage(), name,
+          "Check the unit definition and ensure all required fields are present"));
     }
   }
 
@@ -1067,13 +1067,13 @@ public class JsonProcessBuilder {
     if (unitDef.has("properties")) {
       JsonObject props = unitDef.getAsJsonObject("properties");
       if (props.has("numberOfTrays")) {
-	numberOfTrays = props.get("numberOfTrays").getAsInt();
+        numberOfTrays = props.get("numberOfTrays").getAsInt();
       }
       if (props.has("hasReboiler")) {
-	hasReboiler = props.get("hasReboiler").getAsBoolean();
+        hasReboiler = props.get("hasReboiler").getAsBoolean();
       }
       if (props.has("hasCondenser")) {
-	hasCondenser = props.get("hasCondenser").getAsBoolean();
+        hasCondenser = props.get("hasCondenser").getAsBoolean();
       }
     }
 
@@ -1091,19 +1091,19 @@ public class JsonProcessBuilder {
     if (unitDef.has("inlets")) {
       JsonArray inletsArr = unitDef.getAsJsonArray("inlets");
       for (JsonElement inletElem : inletsArr) {
-	String inletRef = inletElem.getAsString();
-	StreamInterface stream = resolveStreamReference(inletRef);
-	if (stream == null) {
-	  warnings.add("Unresolved inlet '" + inletRef + "' for unit '" + name
-	      + "' (source may be in sub-flowsheet or skipped operation)");
-	}
+        String inletRef = inletElem.getAsString();
+        StreamInterface stream = resolveStreamReference(inletRef);
+        if (stream == null) {
+          warnings.add("Unresolved inlet '" + inletRef + "' for unit '" + name
+              + "' (source may be in sub-flowsheet or skipped operation)");
+        }
       }
     } else if (unitDef.has("inlet")) {
       String inletRef = unitDef.get("inlet").getAsString();
       StreamInterface stream = resolveStreamReference(inletRef);
       if (stream == null) {
-	warnings.add("Unresolved inlet '" + inletRef + "' for unit '" + name
-	    + "' (source may be in sub-flowsheet or skipped operation)");
+        warnings.add("Unresolved inlet '" + inletRef + "' for unit '" + name
+            + "' (source may be in sub-flowsheet or skipped operation)");
       }
     }
   }
@@ -1124,26 +1124,26 @@ public class JsonProcessBuilder {
     if (unitDef.has("inlets")) {
       JsonArray inletsArr = unitDef.getAsJsonArray("inlets");
       for (JsonElement inletElem : inletsArr) {
-	String inletRef = inletElem.getAsString();
-	StreamInterface stream = resolveStreamReference(inletRef);
-	if (stream == null) {
-	  errors.add(new SimulationResult.ErrorDetail("STREAM_NOT_FOUND",
-	      "Inlet reference '" + inletRef + "' not found for unit '" + name + "'", name,
-	      "Ensure the referenced unit exists and was defined before this unit"));
-	} else {
-	  wireInletStream(equipment, stream);
-	}
+        String inletRef = inletElem.getAsString();
+        StreamInterface stream = resolveStreamReference(inletRef);
+        if (stream == null) {
+          errors.add(new SimulationResult.ErrorDetail("STREAM_NOT_FOUND",
+              "Inlet reference '" + inletRef + "' not found for unit '" + name + "'", name,
+              "Ensure the referenced unit exists and was defined before this unit"));
+        } else {
+          wireInletStream(equipment, stream);
+        }
       }
     } else if (unitDef.has("inlet")) {
       // Single inlet
       String inletRef = unitDef.get("inlet").getAsString();
       StreamInterface inletStream = resolveStreamReference(inletRef);
       if (inletStream == null) {
-	errors.add(new SimulationResult.ErrorDetail("STREAM_NOT_FOUND",
-	    "Inlet reference '" + inletRef + "' not found for unit '" + name + "'", name,
-	    "Ensure the referenced unit exists"));
+        errors.add(new SimulationResult.ErrorDetail("STREAM_NOT_FOUND",
+            "Inlet reference '" + inletRef + "' not found for unit '" + name + "'", name,
+            "Ensure the referenced unit exists"));
       } else {
-	wireInletStream(equipment, inletStream);
+        wireInletStream(equipment, inletStream);
       }
     }
   }
@@ -1182,37 +1182,37 @@ public class JsonProcessBuilder {
       List<StreamInterface> resolved = new ArrayList<>();
       boolean allResolved = true;
       for (JsonElement inletElem : inletsArr) {
-	StreamInterface stream = resolveStreamReference(inletElem.getAsString());
-	if (stream == null) {
-	  allResolved = false;
-	} else {
-	  resolved.add(stream);
-	}
+        StreamInterface stream = resolveStreamReference(inletElem.getAsString());
+        if (stream == null) {
+          allResolved = false;
+        } else {
+          resolved.add(stream);
+        }
       }
       // For Mixer/Manifold: wire whatever inlets we have (partial is OK)
       // For HeatExchanger: need both sides
       if ((equipment instanceof Mixer || equipment instanceof Manifold) && !resolved.isEmpty()) {
-	for (StreamInterface stream : resolved) {
-	  wireInletStream(equipment, stream);
-	}
-	if (!allResolved) {
-	  warnings.add("Mixer/manifold '" + name + "' wired with " + resolved.size() + " of " + inletsArr.size()
-	      + " inlets (some not found)");
-	}
+        for (StreamInterface stream : resolved) {
+          wireInletStream(equipment, stream);
+        }
+        if (!allResolved) {
+          warnings.add("Mixer/manifold '" + name + "' wired with " + resolved.size() + " of " + inletsArr.size()
+              + " inlets (some not found)");
+        }
       } else if (equipment instanceof HeatExchanger && resolved.size() == 2) {
-	((HeatExchanger) equipment).setFeedStream(0, resolved.get(0));
-	((HeatExchanger) equipment).setFeedStream(1, resolved.get(1));
+        ((HeatExchanger) equipment).setFeedStream(0, resolved.get(0));
+        ((HeatExchanger) equipment).setFeedStream(1, resolved.get(1));
       } else if (allResolved) {
-	for (StreamInterface stream : resolved) {
-	  wireInletStream(equipment, stream);
-	}
+        for (StreamInterface stream : resolved) {
+          wireInletStream(equipment, stream);
+        }
       } else {
-	return false; // Not all resolved yet
+        return false; // Not all resolved yet
       }
     } else if (unitDef.has("inlet")) {
       StreamInterface stream = resolveStreamReference(unitDef.get("inlet").getAsString());
       if (stream == null) {
-	return false;
+        return false;
       }
       wireInletStream(equipment, stream);
     }
@@ -1222,43 +1222,43 @@ public class JsonProcessBuilder {
       JsonObject props = unitDef.getAsJsonObject("properties");
       // Handle split factors specially (Splitter needs inlet stream first)
       if (equipment instanceof Splitter && props.has("flowRates")) {
-	JsonArray flowRates = props.getAsJsonArray("flowRates");
-	double[] splitFlowRates = new double[flowRates.size()];
-	for (int i = 0; i < flowRates.size(); i++) {
-	  splitFlowRates[i] = flowRates.get(i).getAsDouble();
-	}
-	String flowUnit = props.has("flowUnit") ? props.get("flowUnit").getAsString() : "mole/sec";
-	((Splitter) equipment).setFlowRates(splitFlowRates, flowUnit);
+        JsonArray flowRates = props.getAsJsonArray("flowRates");
+        double[] splitFlowRates = new double[flowRates.size()];
+        for (int i = 0; i < flowRates.size(); i++) {
+          splitFlowRates[i] = flowRates.get(i).getAsDouble();
+        }
+        String flowUnit = props.has("flowUnit") ? props.get("flowUnit").getAsString() : "mole/sec";
+        ((Splitter) equipment).setFlowRates(splitFlowRates, flowUnit);
       } else if (equipment instanceof Splitter && props.has("splitFactors")) {
-	JsonArray factors = props.getAsJsonArray("splitFactors");
-	double[] splitFact = new double[factors.size()];
-	for (int i = 0; i < factors.size(); i++) {
-	  splitFact[i] = factors.get(i).getAsDouble();
-	}
-	((Splitter) equipment).setSplitFactors(splitFact);
+        JsonArray factors = props.getAsJsonArray("splitFactors");
+        double[] splitFact = new double[factors.size()];
+        for (int i = 0; i < factors.size(); i++) {
+          splitFact[i] = factors.get(i).getAsDouble();
+        }
+        ((Splitter) equipment).setSplitFactors(splitFact);
       }
       if (equipment instanceof ComponentSplitter && props.has("splitFactors")) {
-	JsonArray factors = props.getAsJsonArray("splitFactors");
-	double[] splitFact = new double[factors.size()];
-	for (int i = 0; i < factors.size(); i++) {
-	  splitFact[i] = factors.get(i).getAsDouble();
-	}
-	((ComponentSplitter) equipment).setSplitFactors(splitFact);
+        JsonArray factors = props.getAsJsonArray("splitFactors");
+        double[] splitFact = new double[factors.size()];
+        for (int i = 0; i < factors.size(); i++) {
+          splitFact[i] = factors.get(i).getAsDouble();
+        }
+        ((ComponentSplitter) equipment).setSplitFactors(splitFact);
       }
       if (equipment instanceof Manifold && props.has("splitFactors")) {
-	JsonArray factors = props.getAsJsonArray("splitFactors");
-	double[] splitFact = new double[factors.size()];
-	for (int i = 0; i < factors.size(); i++) {
-	  splitFact[i] = factors.get(i).getAsDouble();
-	}
-	((Manifold) equipment).setSplitFactors(splitFact);
+        JsonArray factors = props.getAsJsonArray("splitFactors");
+        double[] splitFact = new double[factors.size()];
+        for (int i = 0; i < factors.size(); i++) {
+          splitFact[i] = factors.get(i).getAsDouble();
+        }
+        ((Manifold) equipment).setSplitFactors(splitFact);
       }
       // Handle Adjuster: wire adjusted/target variables by equipment reference
       if (equipment instanceof Adjuster && (props.has("adjustedEquipment") || props.has("targetEquipment"))) {
-	wireAdjuster((Adjuster) equipment, props);
+        wireAdjuster((Adjuster) equipment, props);
       }
       if (equipment instanceof Calculator && (props.has("calculatorInputs") || props.has("calculatorOutput"))) {
-	wireCalculator((Calculator) equipment, props);
+        wireCalculator((Calculator) equipment, props);
       }
       applyProperties(equipment, props);
     }
@@ -1308,25 +1308,25 @@ public class JsonProcessBuilder {
     if (unitDef.has("inlets")) {
       JsonArray inletsArr = unitDef.getAsJsonArray("inlets");
       for (JsonElement inletElem : inletsArr) {
-	String inletRef = inletElem.getAsString();
-	StreamInterface stream = resolveStreamReference(inletRef);
-	if (stream == null) {
-	  errors.add(new SimulationResult.ErrorDetail("STREAM_NOT_FOUND",
-	      "Inlet reference '" + inletRef + "' not found for unit '" + name + "'", name,
-	      "Ensure the referenced unit exists and was defined before this unit"));
-	} else {
-	  wireInletStream(equipment, stream);
-	}
+        String inletRef = inletElem.getAsString();
+        StreamInterface stream = resolveStreamReference(inletRef);
+        if (stream == null) {
+          errors.add(new SimulationResult.ErrorDetail("STREAM_NOT_FOUND",
+              "Inlet reference '" + inletRef + "' not found for unit '" + name + "'", name,
+              "Ensure the referenced unit exists and was defined before this unit"));
+        } else {
+          wireInletStream(equipment, stream);
+        }
       }
     } else if (unitDef.has("inlet")) {
       // Single inlet
       String inletRef = unitDef.get("inlet").getAsString();
       StreamInterface inletStream = resolveStreamReference(inletRef);
       if (inletStream == null) {
-	errors.add(new SimulationResult.ErrorDetail("STREAM_NOT_FOUND",
-	    "Inlet reference '" + inletRef + "' not found for unit '" + name + "'", name,
-	    "Ensure the referenced unit exists and was defined before this unit"));
-	return null;
+        errors.add(new SimulationResult.ErrorDetail("STREAM_NOT_FOUND",
+            "Inlet reference '" + inletRef + "' not found for unit '" + name + "'", name,
+            "Ensure the referenced unit exists and was defined before this unit"));
+        return null;
       }
       wireInletStream(equipment, inletStream);
     }
@@ -1349,16 +1349,16 @@ public class JsonProcessBuilder {
       String fluidRef = unitDef.get("fluidRef").getAsString();
       fluid = namedFluids.get(fluidRef);
       if (fluid == null) {
-	errors.add(new SimulationResult.ErrorDetail("FLUID_NOT_FOUND",
-	    "Fluid reference '" + fluidRef + "' not found for stream '" + name + "'", name,
-	    "Define the fluid in the 'fluids' section first"));
-	return null;
+        errors.add(new SimulationResult.ErrorDetail("FLUID_NOT_FOUND",
+            "Fluid reference '" + fluidRef + "' not found for stream '" + name + "'", name,
+            "Define the fluid in the 'fluids' section first"));
+        return null;
       }
     }
 
     if (fluid == null) {
       errors.add(new SimulationResult.ErrorDetail("NO_FLUID", "No fluid defined for stream '" + name + "'", name,
-	  "Define a 'fluid' section or set 'fluidRef' on the stream"));
+          "Define a 'fluid' section or set 'fluidRef' on the stream"));
       return null;
     }
 
@@ -1412,88 +1412,88 @@ public class JsonProcessBuilder {
       case "gasout":
       case "gasoutstream":
       case "gas":
-	return (StreamInterface) unit.getClass().getMethod("getGasOutStream").invoke(unit);
+        return (StreamInterface) unit.getClass().getMethod("getGasOutStream").invoke(unit);
       case "liquidout":
       case "liquidoutstream":
       case "liquid":
-	return (StreamInterface) unit.getClass().getMethod("getLiquidOutStream").invoke(unit);
+        return (StreamInterface) unit.getClass().getMethod("getLiquidOutStream").invoke(unit);
       case "oilout":
       case "oil":
-	return (StreamInterface) unit.getClass().getMethod("getOilOutStream").invoke(unit);
+        return (StreamInterface) unit.getClass().getMethod("getOilOutStream").invoke(unit);
       case "waterout":
       case "water":
-	return (StreamInterface) unit.getClass().getMethod("getWaterOutStream").invoke(unit);
+        return (StreamInterface) unit.getClass().getMethod("getWaterOutStream").invoke(unit);
       case "out":
       case "outstream":
       case "outlet":
       default:
-	// Handle legacy indexed split aliases: "splitStream_0", "splitStream_1", etc.
-	if (port.startsWith("splitstream_") && port.length() > 12) {
-	  try {
-	    int idx = Integer.parseInt(port.substring(12));
-	    return (StreamInterface) unit.getClass().getMethod("getSplitStream", int.class).invoke(unit, idx);
-	  } catch (NumberFormatException nfe) {
-	    // fall through to default outlet
-	  }
-	}
-	// Handle indexed split streams: "split0", "split1", etc.
-	if (port.startsWith("split") && port.length() > 5) {
-	  try {
-	    int idx = Integer.parseInt(port.substring(5));
-	    return (StreamInterface) unit.getClass().getMethod("getSplitStream", int.class).invoke(unit, idx);
-	  } catch (NumberFormatException nfe) {
-	    // fall through to default outlet
-	  }
-	}
-	// Handle indexed HeatExchanger ports: "hx0", "hx1", etc.
-	if (port.startsWith("hx") && port.length() > 2) {
-	  try {
-	    int idx = Integer.parseInt(port.substring(2));
-	    if (unit instanceof HeatExchanger) {
-	      return ((HeatExchanger) unit).getOutStream(idx);
-	    }
-	  } catch (NumberFormatException nfe) {
-	    // fall through to default outlet
-	  }
-	}
-	// Handle indexed HeatExchanger ports emitted by JsonProcessExporter:
-	// "outlet1", "outlet2", etc. Plain "outlet" remains the first outlet.
-	if (port.startsWith("outlet") && port.length() > 6) {
-	  try {
-	    int idx = Integer.parseInt(port.substring(6));
-	    if (unit instanceof HeatExchanger) {
-	      return ((HeatExchanger) unit).getOutStream(idx);
-	    }
-	  } catch (NumberFormatException nfe) {
-	    // fall through to default outlet
-	  }
-	}
-	// Handle HeatExchanger which uses getOutStream(int) instead of
-	// getOutletStream()
-	if (unit instanceof HeatExchanger) {
-	  return ((HeatExchanger) unit).getOutStream(0);
-	}
-	return (StreamInterface) unit.getClass().getMethod("getOutletStream").invoke(unit);
+        // Handle legacy indexed split aliases: "splitStream_0", "splitStream_1", etc.
+        if (port.startsWith("splitstream_") && port.length() > 12) {
+          try {
+            int idx = Integer.parseInt(port.substring(12));
+            return (StreamInterface) unit.getClass().getMethod("getSplitStream", int.class).invoke(unit, idx);
+          } catch (NumberFormatException nfe) {
+            // fall through to default outlet
+          }
+        }
+        // Handle indexed split streams: "split0", "split1", etc.
+        if (port.startsWith("split") && port.length() > 5) {
+          try {
+            int idx = Integer.parseInt(port.substring(5));
+            return (StreamInterface) unit.getClass().getMethod("getSplitStream", int.class).invoke(unit, idx);
+          } catch (NumberFormatException nfe) {
+            // fall through to default outlet
+          }
+        }
+        // Handle indexed HeatExchanger ports: "hx0", "hx1", etc.
+        if (port.startsWith("hx") && port.length() > 2) {
+          try {
+            int idx = Integer.parseInt(port.substring(2));
+            if (unit instanceof HeatExchanger) {
+              return ((HeatExchanger) unit).getOutStream(idx);
+            }
+          } catch (NumberFormatException nfe) {
+            // fall through to default outlet
+          }
+        }
+        // Handle indexed HeatExchanger ports emitted by JsonProcessExporter:
+        // "outlet1", "outlet2", etc. Plain "outlet" remains the first outlet.
+        if (port.startsWith("outlet") && port.length() > 6) {
+          try {
+            int idx = Integer.parseInt(port.substring(6));
+            if (unit instanceof HeatExchanger) {
+              return ((HeatExchanger) unit).getOutStream(idx);
+            }
+          } catch (NumberFormatException nfe) {
+            // fall through to default outlet
+          }
+        }
+        // Handle HeatExchanger which uses getOutStream(int) instead of
+        // getOutletStream()
+        if (unit instanceof HeatExchanger) {
+          return ((HeatExchanger) unit).getOutStream(0);
+        }
+        return (StreamInterface) unit.getClass().getMethod("getOutletStream").invoke(unit);
       }
     } catch (NoSuchMethodException e) {
       // Fallback chain: getOutStream(int) -> getOutletStreams().get(0) ->
       // getOutStream()
       try {
-	return (StreamInterface) unit.getClass().getMethod("getOutStream", int.class).invoke(unit, 0);
+        return (StreamInterface) unit.getClass().getMethod("getOutStream", int.class).invoke(unit, 0);
       } catch (Exception ex2) {
-	try {
-	  List<StreamInterface> outlets = unit.getOutletStreams();
-	  if (outlets != null && !outlets.isEmpty()) {
-	    return outlets.get(0);
-	  }
-	} catch (Exception ex3) {
-	  // ignore
-	}
-	try {
-	  return (StreamInterface) unit.getClass().getMethod("getOutStream").invoke(unit);
-	} catch (Exception ex4) {
-	  return null;
-	}
+        try {
+          List<StreamInterface> outlets = unit.getOutletStreams();
+          if (outlets != null && !outlets.isEmpty()) {
+            return outlets.get(0);
+          }
+        } catch (Exception ex3) {
+          // ignore
+        }
+        try {
+          return (StreamInterface) unit.getClass().getMethod("getOutStream").invoke(unit);
+        } catch (Exception ex4) {
+          return null;
+        }
       }
     } catch (Exception e) {
       return null;
@@ -1521,17 +1521,17 @@ public class JsonProcessBuilder {
     } catch (NoSuchMethodException e) {
       // Try addStream for Mixer
       try {
-	java.lang.reflect.Method addStream = equipment.getClass().getMethod("addStream", StreamInterface.class);
-	addStream.invoke(equipment, stream);
+        java.lang.reflect.Method addStream = equipment.getClass().getMethod("addStream", StreamInterface.class);
+        addStream.invoke(equipment, stream);
       } catch (Exception ex) {
-	// Try addFeedStream for column-like equipment
-	try {
-	  java.lang.reflect.Method addFeed = equipment.getClass().getMethod("addFeedStream", StreamInterface.class);
-	  addFeed.invoke(equipment, stream);
-	} catch (Exception ex2) {
-	  warnings.add("Cannot set inlet stream on " + equipment.getName()
-	      + ": no setInletStream, addStream, or addFeedStream method");
-	}
+        // Try addFeedStream for column-like equipment
+        try {
+          java.lang.reflect.Method addFeed = equipment.getClass().getMethod("addFeedStream", StreamInterface.class);
+          addFeed.invoke(equipment, stream);
+        } catch (Exception ex2) {
+          warnings.add("Cannot set inlet stream on " + equipment.getName()
+              + ": no setInletStream, addStream, or addFeedStream method");
+        }
       }
     } catch (Exception e) {
       warnings.add("Error wiring inlet to " + equipment.getName() + ": " + e.getMessage());
@@ -1547,14 +1547,14 @@ public class JsonProcessBuilder {
   private void applyProperties(ProcessEquipmentInterface equipment, JsonObject properties) {
     // Properties that are handled by dedicated logic (not generic reflection)
     java.util.Set<String> handledProps = new java.util.HashSet<>(
-	java.util.Arrays.asList("splitFactors", "flowRates", "flowUnit", "adjustedEquipment", "adjustedVariable",
-	    "targetEquipment", "targetVariable", "targetValue", "stepSize", "compressorChart", "antiSurge", "driver",
-	    "calculatorInputs", "calculatorOutput", "calculationType", "accelerationMethod", "downstreamProperty"));
+        java.util.Arrays.asList("splitFactors", "flowRates", "flowUnit", "adjustedEquipment", "adjustedVariable",
+            "targetEquipment", "targetVariable", "targetValue", "stepSize", "compressorChart", "antiSurge", "driver",
+            "calculatorInputs", "calculatorOutput", "calculationType", "accelerationMethod", "downstreamProperty"));
     if (equipment instanceof Recycle) {
       applyRecycleProperties((Recycle) equipment, properties);
     }
     if (equipment instanceof Compressor && properties.has("compressorChart")
-	&& properties.get("compressorChart").isJsonObject()) {
+        && properties.get("compressorChart").isJsonObject()) {
       applyCompressorChart((Compressor) equipment, properties.getAsJsonObject("compressorChart"));
     }
     if (equipment instanceof Compressor && properties.has("antiSurge") && properties.get("antiSurge").isJsonObject()) {
@@ -1566,16 +1566,16 @@ public class JsonProcessBuilder {
     for (Map.Entry<String, JsonElement> entry : properties.entrySet()) {
       String propName = entry.getKey();
       if (handledProps.contains(propName)) {
-	continue;
+        continue;
       }
       // entrainment is handled specially for separators (multi-param setter)
       if ("entrainment".equals(propName) && equipment instanceof Separator) {
-	applyEntrainment((Separator) equipment, entry.getValue());
-	continue;
+        applyEntrainment((Separator) equipment, entry.getValue());
+        continue;
       }
       if ("mechanicalDesign".equals(propName) && entry.getValue().isJsonObject()) {
-	applyMechanicalDesignProperties(equipment, entry.getValue().getAsJsonObject());
-	continue;
+        applyMechanicalDesignProperties(equipment, entry.getValue().getAsJsonObject());
+        continue;
       }
       JsonElement value = entry.getValue();
       applyProperty(equipment, propName, value);
@@ -1591,16 +1591,16 @@ public class JsonProcessBuilder {
   private void applyRecycleProperties(Recycle recycle, JsonObject props) {
     if (props.has("accelerationMethod")) {
       try {
-	recycle.setAccelerationMethod(AccelerationMethod.valueOf(props.get("accelerationMethod").getAsString()));
+        recycle.setAccelerationMethod(AccelerationMethod.valueOf(props.get("accelerationMethod").getAsString()));
       } catch (IllegalArgumentException exception) {
-	warnings.add("Unknown recycle accelerationMethod on " + recycle.getName() + ": "
-	    + props.get("accelerationMethod").getAsString());
+        warnings.add("Unknown recycle accelerationMethod on " + recycle.getName() + ": "
+            + props.get("accelerationMethod").getAsString());
       }
     }
     if (props.has("downstreamProperty") && props.get("downstreamProperty").isJsonArray()) {
       JsonArray downstreamProperties = props.getAsJsonArray("downstreamProperty");
       for (int i = 0; i < downstreamProperties.size(); i++) {
-	recycle.setDownstreamProperty(downstreamProperties.get(i).getAsString());
+        recycle.setDownstreamProperty(downstreamProperties.get(i).getAsString());
       }
     }
   }
@@ -1614,36 +1614,36 @@ public class JsonProcessBuilder {
   private void applyCompressorChart(Compressor compressor, JsonObject chartJson) {
     try {
       if (chartJson.has("chartType")) {
-	compressor.setCompressorChartType(chartJson.get("chartType").getAsString());
+        compressor.setCompressorChartType(chartJson.get("chartType").getAsString());
       }
       CompressorChartInterface chart = compressor.getCompressorChart();
       if (chartJson.has("headUnit")) {
-	chart.setHeadUnit(chartJson.get("headUnit").getAsString());
+        chart.setHeadUnit(chartJson.get("headUnit").getAsString());
       }
       if (chartJson.has("useRealKappa")) {
-	chart.setUseRealKappa(chartJson.get("useRealKappa").getAsBoolean());
+        chart.setUseRealKappa(chartJson.get("useRealKappa").getAsBoolean());
       }
       if (chartJson.has("speeds") && chartJson.has("flows") && chartJson.has("heads")
-	  && chartJson.has("polytropicEfficiencies")) {
-	double[] chartConditions = chartJson.has("chartConditions")
-	    ? readDoubleArray(chartJson.getAsJsonArray("chartConditions"))
-	    : new double[0];
-	double[] speeds = readDoubleArray(chartJson.getAsJsonArray("speeds"));
-	double[][] flows = readDoubleMatrix(chartJson.getAsJsonArray("flows"));
-	double[][] heads = readDoubleMatrix(chartJson.getAsJsonArray("heads"));
-	double[][] efficiencies = readDoubleMatrix(chartJson.getAsJsonArray("polytropicEfficiencies"));
-	if (speeds.length > 0) {
-	  chart.setCurves(chartConditions, speeds, flows, heads, efficiencies);
-	}
+          && chartJson.has("polytropicEfficiencies")) {
+        double[] chartConditions = chartJson.has("chartConditions")
+            ? readDoubleArray(chartJson.getAsJsonArray("chartConditions"))
+            : new double[0];
+        double[] speeds = readDoubleArray(chartJson.getAsJsonArray("speeds"));
+        double[][] flows = readDoubleMatrix(chartJson.getAsJsonArray("flows"));
+        double[][] heads = readDoubleMatrix(chartJson.getAsJsonArray("heads"));
+        double[][] efficiencies = readDoubleMatrix(chartJson.getAsJsonArray("polytropicEfficiencies"));
+        if (speeds.length > 0) {
+          chart.setCurves(chartConditions, speeds, flows, heads, efficiencies);
+        }
       }
       if (chartJson.has("surgeCurve") && chartJson.get("surgeCurve").isJsonObject()) {
-	applySurgeCurve(chart, chartJson.getAsJsonObject("surgeCurve"));
+        applySurgeCurve(chart, chartJson.getAsJsonObject("surgeCurve"));
       }
       if (chartJson.has("stoneWallCurve") && chartJson.get("stoneWallCurve").isJsonObject()) {
-	applyStoneWallCurve(chart, chartJson.getAsJsonObject("stoneWallCurve"));
+        applyStoneWallCurve(chart, chartJson.getAsJsonObject("stoneWallCurve"));
       }
       if (chartJson.has("useCompressorChart")) {
-	chart.setUseCompressorChart(chartJson.get("useCompressorChart").getAsBoolean());
+        chart.setUseCompressorChart(chartJson.get("useCompressorChart").getAsBoolean());
       }
     } catch (Exception exception) {
       warnings.add("Error applying compressorChart on " + compressor.getName() + ": " + exception.getMessage());
@@ -1776,13 +1776,13 @@ public class JsonProcessBuilder {
     if (driverJson.has("vfdEfficiencyCoefficients") && driverJson.get("vfdEfficiencyCoefficients").isJsonArray()) {
       double[] coeffs = readDoubleArray(driverJson.getAsJsonArray("vfdEfficiencyCoefficients"));
       if (coeffs.length >= 3) {
-	driver.setVfdEfficiencyCoefficients(coeffs[0], coeffs[1], coeffs[2]);
+        driver.setVfdEfficiencyCoefficients(coeffs[0], coeffs[1], coeffs[2]);
       }
     }
     if (driverJson.has("maxPowerCurveCoefficients") && driverJson.get("maxPowerCurveCoefficients").isJsonArray()) {
       double[] coeffs = readDoubleArray(driverJson.getAsJsonArray("maxPowerCurveCoefficients"));
       if (coeffs.length >= 3) {
-	driver.setMaxPowerCurveCoefficients(coeffs[0], coeffs[1], coeffs[2]);
+        driver.setMaxPowerCurveCoefficients(coeffs[0], coeffs[1], coeffs[2]);
       }
     }
     if (driverJson.has("maxPowerCurveEnabled") && !driverJson.get("maxPowerCurveEnabled").getAsBoolean()) {
@@ -1801,18 +1801,18 @@ public class JsonProcessBuilder {
     if (driverJson.has("maxPowerSpeedCurve") && driverJson.get("maxPowerSpeedCurve").isJsonObject()) {
       JsonObject curve = driverJson.getAsJsonObject("maxPowerSpeedCurve");
       if (curve.has("speeds") && curve.has("powers")) {
-	String powerUnit = curve.has("powerUnit") ? curve.get("powerUnit").getAsString() : "kW";
-	driver.setMaxPowerSpeedCurve(readDoubleArray(curve.getAsJsonArray("speeds")),
-	    readDoubleArray(curve.getAsJsonArray("powers")), powerUnit);
+        String powerUnit = curve.has("powerUnit") ? curve.get("powerUnit").getAsString() : "kW";
+        driver.setMaxPowerSpeedCurve(readDoubleArray(curve.getAsJsonArray("speeds")),
+            readDoubleArray(curve.getAsJsonArray("powers")), powerUnit);
       }
       return;
     }
     if (driverJson.has("maxPowerCurveSpeeds") && driverJson.has("maxPowerCurvePowers")) {
       String powerUnit = driverJson.has("maxPowerCurvePowerUnit")
-	  ? driverJson.get("maxPowerCurvePowerUnit").getAsString()
-	  : "kW";
+          ? driverJson.get("maxPowerCurvePowerUnit").getAsString()
+          : "kW";
       driver.setMaxPowerSpeedCurve(readDoubleArray(driverJson.getAsJsonArray("maxPowerCurveSpeeds")),
-	  readDoubleArray(driverJson.getAsJsonArray("maxPowerCurvePowers")), powerUnit);
+          readDoubleArray(driverJson.getAsJsonArray("maxPowerCurvePowers")), powerUnit);
     }
   }
 
@@ -1838,11 +1838,11 @@ public class JsonProcessBuilder {
     }
     if (antiSurgeJson.has("controlStrategy")) {
       try {
-	antiSurge
-	    .setControlStrategy(AntiSurge.ControlStrategy.valueOf(antiSurgeJson.get("controlStrategy").getAsString()));
+        antiSurge
+            .setControlStrategy(AntiSurge.ControlStrategy.valueOf(antiSurgeJson.get("controlStrategy").getAsString()));
       } catch (IllegalArgumentException exception) {
-	warnings.add("Unknown antiSurge controlStrategy on " + compressor.getName() + ": "
-	    + antiSurgeJson.get("controlStrategy").getAsString());
+        warnings.add("Unknown antiSurge controlStrategy on " + compressor.getName() + ": "
+            + antiSurgeJson.get("controlStrategy").getAsString());
       }
     }
     if (antiSurgeJson.has("minimumRecycleFlow")) {
@@ -1890,8 +1890,8 @@ public class JsonProcessBuilder {
     boolean active = curveJson.has("active") && curveJson.get("active").getAsBoolean();
     if (curveJson.has("flow") && curveJson.has("head")) {
       SafeSplineSurgeCurve surgeCurve = new SafeSplineSurgeCurve(
-	  ensureSplineBoundaryPointCount(readDoubleArray(curveJson.getAsJsonArray("flow"))),
-	  ensureSplineBoundaryPointCount(readDoubleArray(curveJson.getAsJsonArray("head"))));
+          ensureSplineBoundaryPointCount(readDoubleArray(curveJson.getAsJsonArray("flow"))),
+          ensureSplineBoundaryPointCount(readDoubleArray(curveJson.getAsJsonArray("head"))));
       surgeCurve.setActive(active);
       chart.setSurgeCurve(surgeCurve);
     } else {
@@ -1909,8 +1909,8 @@ public class JsonProcessBuilder {
     boolean active = curveJson.has("active") && curveJson.get("active").getAsBoolean();
     if (curveJson.has("flow") && curveJson.has("head")) {
       SafeSplineStoneWallCurve stoneWallCurve = new SafeSplineStoneWallCurve(
-	  ensureSplineBoundaryPointCount(readDoubleArray(curveJson.getAsJsonArray("flow"))),
-	  ensureSplineBoundaryPointCount(readDoubleArray(curveJson.getAsJsonArray("head"))));
+          ensureSplineBoundaryPointCount(readDoubleArray(curveJson.getAsJsonArray("flow"))),
+          ensureSplineBoundaryPointCount(readDoubleArray(curveJson.getAsJsonArray("head"))));
       stoneWallCurve.setActive(active);
       chart.setStoneWallCurve(stoneWallCurve);
     } else {
@@ -1928,22 +1928,22 @@ public class JsonProcessBuilder {
     if (props.has("calculatorInputs") && calculator.getInputVariable().isEmpty()) {
       JsonArray inputs = props.getAsJsonArray("calculatorInputs");
       for (JsonElement inputElement : inputs) {
-	ProcessEquipmentInterface input = namedEquipment.get(inputElement.getAsString());
-	if (input != null) {
-	  calculator.addInputVariable(input);
-	} else {
-	  warnings.add("Calculator '" + calculator.getName() + "' input equipment '" + inputElement.getAsString()
-	      + "' not found");
-	}
+        ProcessEquipmentInterface input = namedEquipment.get(inputElement.getAsString());
+        if (input != null) {
+          calculator.addInputVariable(input);
+        } else {
+          warnings.add("Calculator '" + calculator.getName() + "' input equipment '" + inputElement.getAsString()
+              + "' not found");
+        }
       }
     }
     if (props.has("calculatorOutput") && calculator.getOutputVariable() == null) {
       String outputName = props.get("calculatorOutput").getAsString();
       ProcessEquipmentInterface output = namedEquipment.get(outputName);
       if (output != null) {
-	calculator.setOutputVariable(output);
+        calculator.setOutputVariable(output);
       } else {
-	warnings.add("Calculator '" + calculator.getName() + "' output equipment '" + outputName + "' not found");
+        warnings.add("Calculator '" + calculator.getName() + "' output equipment '" + outputName + "' not found");
       }
     }
   }
@@ -1994,21 +1994,21 @@ public class JsonProcessBuilder {
       equipment.initMechanicalDesign();
       Object design = equipment.getMechanicalDesign();
       if (design == null) {
-	warnings.add("Mechanical design not available for " + equipment.getName());
-	return;
+        warnings.add("Mechanical design not available for " + equipment.getName());
+        return;
       }
       for (Map.Entry<String, JsonElement> entry : mdProps.entrySet()) {
-	String key = entry.getKey();
-	if ("calcDesign".equalsIgnoreCase(key) || "readDesignSpecifications".equalsIgnoreCase(key)) {
-	  continue;
-	}
-	applyPropertyObject(design, equipment.getName(), key, entry.getValue());
+        String key = entry.getKey();
+        if ("calcDesign".equalsIgnoreCase(key) || "readDesignSpecifications".equalsIgnoreCase(key)) {
+          continue;
+        }
+        applyPropertyObject(design, equipment.getName(), key, entry.getValue());
       }
       if (mdProps.has("readDesignSpecifications") && mdProps.get("readDesignSpecifications").getAsBoolean()) {
-	invokeNoArg(design, equipment.getName(), "readDesignSpecifications");
+        invokeNoArg(design, equipment.getName(), "readDesignSpecifications");
       }
       if (mdProps.has("calcDesign") && mdProps.get("calcDesign").getAsBoolean()) {
-	invokeNoArg(design, equipment.getName(), "calcDesign");
+        invokeNoArg(design, equipment.getName(), "calcDesign");
       }
     } catch (Exception e) {
       warnings.add("Error applying mechanicalDesign on " + equipment.getName() + ": " + e.getMessage());
@@ -2044,13 +2044,13 @@ public class JsonProcessBuilder {
       String adjEquipName = props.get("adjustedEquipment").getAsString();
       ProcessEquipmentInterface adjEquip = namedEquipment.get(adjEquipName);
       if (adjEquip != null) {
-	if (props.has("adjustedVariable")) {
-	  adjuster.setAdjustedVariable(adjEquip, props.get("adjustedVariable").getAsString());
-	} else {
-	  adjuster.setAdjustedVariable(adjEquip);
-	}
+        if (props.has("adjustedVariable")) {
+          adjuster.setAdjustedVariable(adjEquip, props.get("adjustedVariable").getAsString());
+        } else {
+          adjuster.setAdjustedVariable(adjEquip);
+        }
       } else {
-	warnings.add("Adjuster '" + adjuster.getName() + "' — adjusted equipment '" + adjEquipName + "' not found");
+        warnings.add("Adjuster '" + adjuster.getName() + "' — adjusted equipment '" + adjEquipName + "' not found");
       }
     }
 
@@ -2059,18 +2059,18 @@ public class JsonProcessBuilder {
       String tgtEquipName = props.get("targetEquipment").getAsString();
       ProcessEquipmentInterface tgtEquip = namedEquipment.get(tgtEquipName);
       if (tgtEquip != null) {
-	String tgtVar = props.has("targetVariable") ? props.get("targetVariable").getAsString() : "";
-	double tgtVal = props.has("targetValue") ? props.get("targetValue").getAsDouble() : 0.0;
-	String tgtUnit = props.has("targetUnit") ? props.get("targetUnit").getAsString() : "";
-	if (!tgtVar.isEmpty() && props.has("targetValue")) {
-	  adjuster.setTargetVariable(tgtEquip, tgtVar, tgtVal, tgtUnit);
-	} else if (!tgtVar.isEmpty()) {
-	  adjuster.setTargetVariable(tgtEquip, tgtVar);
-	} else {
-	  adjuster.setTargetVariable(tgtEquip);
-	}
+        String tgtVar = props.has("targetVariable") ? props.get("targetVariable").getAsString() : "";
+        double tgtVal = props.has("targetValue") ? props.get("targetValue").getAsDouble() : 0.0;
+        String tgtUnit = props.has("targetUnit") ? props.get("targetUnit").getAsString() : "";
+        if (!tgtVar.isEmpty() && props.has("targetValue")) {
+          adjuster.setTargetVariable(tgtEquip, tgtVar, tgtVal, tgtUnit);
+        } else if (!tgtVar.isEmpty()) {
+          adjuster.setTargetVariable(tgtEquip, tgtVar);
+        } else {
+          adjuster.setTargetVariable(tgtEquip);
+        }
       } else {
-	warnings.add("Adjuster '" + adjuster.getName() + "' — target equipment '" + tgtEquipName + "' not found");
+        warnings.add("Adjuster '" + adjuster.getName() + "' — target equipment '" + tgtEquipName + "' not found");
       }
     }
   }
@@ -2094,18 +2094,18 @@ public class JsonProcessBuilder {
     JsonArray specs = entrainmentElement.getAsJsonArray();
     for (JsonElement specElem : specs) {
       if (!specElem.isJsonObject()) {
-	continue;
+        continue;
       }
       JsonObject spec = specElem.getAsJsonObject();
       try {
-	double value = spec.get("value").getAsDouble();
-	String specType = spec.has("specType") ? spec.get("specType").getAsString() : "volume";
-	String specifiedStream = spec.has("specifiedStream") ? spec.get("specifiedStream").getAsString() : "product";
-	String phaseFrom = spec.get("phaseFrom").getAsString();
-	String phaseTo = spec.get("phaseTo").getAsString();
-	separator.setEntrainment(value, specType, specifiedStream, phaseFrom, phaseTo);
+        double value = spec.get("value").getAsDouble();
+        String specType = spec.has("specType") ? spec.get("specType").getAsString() : "volume";
+        String specifiedStream = spec.has("specifiedStream") ? spec.get("specifiedStream").getAsString() : "product";
+        String phaseFrom = spec.get("phaseFrom").getAsString();
+        String phaseTo = spec.get("phaseTo").getAsString();
+        separator.setEntrainment(value, specType, specifiedStream, phaseFrom, phaseTo);
       } catch (Exception e) {
-	warnings.add("Error applying entrainment on " + separator.getName() + ": " + e.getMessage());
+        warnings.add("Error applying entrainment on " + separator.getName() + ": " + e.getMessage());
       }
     }
   }
@@ -2126,32 +2126,32 @@ public class JsonProcessBuilder {
 
     try {
       if (value.isJsonArray()) {
-	// Array format: [value, "unit"] — e.g., [50000, "kg/hr"]
-	JsonArray arr = value.getAsJsonArray();
-	if (arr.size() >= 2) {
-	  double numValue = arr.get(0).getAsDouble();
-	  String unit = arr.get(1).getAsString();
-	  java.lang.reflect.Method method = target.getClass().getMethod(setterName, double.class, String.class);
-	  method.invoke(target, numValue, unit);
-	}
+        // Array format: [value, "unit"] — e.g., [50000, "kg/hr"]
+        JsonArray arr = value.getAsJsonArray();
+        if (arr.size() >= 2) {
+          double numValue = arr.get(0).getAsDouble();
+          String unit = arr.get(1).getAsString();
+          java.lang.reflect.Method method = target.getClass().getMethod(setterName, double.class, String.class);
+          method.invoke(target, numValue, unit);
+        }
       } else if (value.isJsonPrimitive()) {
-	if (value.getAsJsonPrimitive().isNumber()) {
-	  // Try double setter first
-	  try {
-	    java.lang.reflect.Method method = target.getClass().getMethod(setterName, double.class);
-	    method.invoke(target, value.getAsDouble());
-	  } catch (NoSuchMethodException e) {
-	    // Try int setter
-	    java.lang.reflect.Method method = target.getClass().getMethod(setterName, int.class);
-	    method.invoke(target, value.getAsInt());
-	  }
-	} else if (value.getAsJsonPrimitive().isBoolean()) {
-	  java.lang.reflect.Method method = target.getClass().getMethod(setterName, boolean.class);
-	  method.invoke(target, value.getAsBoolean());
-	} else if (value.getAsJsonPrimitive().isString()) {
-	  java.lang.reflect.Method method = target.getClass().getMethod(setterName, String.class);
-	  method.invoke(target, value.getAsString());
-	}
+        if (value.getAsJsonPrimitive().isNumber()) {
+          // Try double setter first
+          try {
+            java.lang.reflect.Method method = target.getClass().getMethod(setterName, double.class);
+            method.invoke(target, value.getAsDouble());
+          } catch (NoSuchMethodException e) {
+            // Try int setter
+            java.lang.reflect.Method method = target.getClass().getMethod(setterName, int.class);
+            method.invoke(target, value.getAsInt());
+          }
+        } else if (value.getAsJsonPrimitive().isBoolean()) {
+          java.lang.reflect.Method method = target.getClass().getMethod(setterName, boolean.class);
+          method.invoke(target, value.getAsBoolean());
+        } else if (value.getAsJsonPrimitive().isString()) {
+          java.lang.reflect.Method method = target.getClass().getMethod(setterName, String.class);
+          method.invoke(target, value.getAsString());
+        }
       }
     } catch (NoSuchMethodException e) {
       warnings.add("Property '" + propName + "' not found on " + targetName + " (tried " + setterName + ")");

@@ -70,8 +70,8 @@ class CfdSourceTermCaseTest {
     assertTrue(Files.exists(openFoamRoot.resolve("constant").resolve("sourceTimeSeries").resolve("massFlowRate")));
 
     String releaseSource = new String(
-	Files.readAllBytes(openFoamRoot.resolve("constant").resolve("releaseSourceProperties")),
-	StandardCharsets.UTF_8);
+        Files.readAllBytes(openFoamRoot.resolve("constant").resolve("releaseSourceProperties")),
+        StandardCharsets.UTF_8);
     String manifest = new String(Files.readAllBytes(manifestFile), StandardCharsets.UTF_8);
 
     assertTrue(releaseSource.contains("tabulatedMassMomentumTemperature"));
@@ -82,14 +82,14 @@ class CfdSourceTermCaseTest {
   private static CfdSourceTermCase createCfdCase() {
     ProcessSystem process = createProcess();
     List<ReleaseDispersionScenario> scenarios = new ReleaseDispersionScenarioGenerator(process)
-	.releaseCases(ReleaseCase.TEN_MM_HOLE).addWeatherCase("neutral-D", standardWeather()).releaseDuration(20.0, 5.0)
-	.generateScenarios();
+        .releaseCases(ReleaseCase.TEN_MM_HOLE).addWeatherCase("neutral-D", standardWeather()).releaseDuration(20.0, 5.0)
+        .generateScenarios();
     return scenarios.get(0).toCfdSourceTermCase();
   }
 
   private static BoundaryConditions standardWeather() {
     return BoundaryConditions.builder().ambientTemperature(15.0, "C").windSpeed(5.0).pasquillStabilityClass('D')
-	.isOffshore(false).surfaceRoughness(0.1).build();
+        .isOffshore(false).surfaceRoughness(0.1).build();
   }
 
   private static ProcessSystem createProcess() {

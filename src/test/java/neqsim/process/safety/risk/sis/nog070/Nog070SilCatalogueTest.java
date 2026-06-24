@@ -40,7 +40,7 @@ class Nog070SilCatalogueTest {
   void catalogueIsImmutable() {
     assertNotNull(Nog070SilCatalogue.getCatalogue());
     assertThrows(UnsupportedOperationException.class,
-	() -> Nog070SilCatalogue.getCatalogue().put(Nog070SifType.CUSTOM, Integer.valueOf(5)));
+        () -> Nog070SilCatalogue.getCatalogue().put(Nog070SifType.CUSTOM, Integer.valueOf(5)));
   }
 
   @Test
@@ -81,9 +81,9 @@ class Nog070SilCatalogueTest {
   @Test
   void invalidPfdRejected() {
     assertThrows(IllegalArgumentException.class,
-	() -> Nog070SilDetermination.evaluate(Nog070SifType.HIPPS_PIPELINE, 0.0));
+        () -> Nog070SilDetermination.evaluate(Nog070SifType.HIPPS_PIPELINE, 0.0));
     assertThrows(IllegalArgumentException.class,
-	() -> Nog070SilDetermination.evaluate(Nog070SifType.HIPPS_PIPELINE, 1.5));
+        () -> Nog070SilDetermination.evaluate(Nog070SifType.HIPPS_PIPELINE, 1.5));
   }
 
   @Test

@@ -144,15 +144,15 @@ public class SISIntegratedRiskModel extends RiskModel implements Serializable {
     public double getTolerableFrequency(ConsequenceType type) {
       switch (type) {
       case FATALITY:
-	return tolerableFrequencyFatality;
+        return tolerableFrequencyFatality;
       case INJURY:
-	return tolerableFrequencyInjury;
+        return tolerableFrequencyInjury;
       case ENVIRONMENT:
-	return tolerableFrequencyEnvironment;
+        return tolerableFrequencyEnvironment;
       case ASSET:
-	return tolerableFrequencyAsset;
+        return tolerableFrequencyAsset;
       default:
-	return tolerableFrequencyAsset;
+        return tolerableFrequencyAsset;
       }
     }
 
@@ -278,14 +278,14 @@ public class SISIntegratedRiskModel extends RiskModel implements Serializable {
       // Apply SIFs for this event
       List<SafetyInstrumentedFunction> applicableSIFs = getSIFsForEvent(event.getName());
       for (SafetyInstrumentedFunction sif : applicableSIFs) {
-	mitigatedFreq = sif.getMitigatedFrequency(mitigatedFreq);
+        mitigatedFreq = sif.getMitigatedFrequency(mitigatedFreq);
       }
 
       // Apply IPLs for this event
       for (IndependentProtectionLayer ipl : ipls) {
-	if (ipl.getApplicableEvents().contains(event.getName()) || ipl.getApplicableEvents().isEmpty()) {
-	  mitigatedFreq *= ipl.getPfd();
-	}
+        if (ipl.getApplicableEvents().contains(event.getName()) || ipl.getApplicableEvents().isEmpty()) {
+          mitigatedFreq *= ipl.getPfd();
+        }
       }
 
       result.addEventResult(event.getName(), unmitigatedFreq, mitigatedFreq, applicableSIFs);
@@ -308,8 +308,8 @@ public class SISIntegratedRiskModel extends RiskModel implements Serializable {
     RiskEvent event = null;
     for (RiskEvent e : getInitiatingEvents()) {
       if (e.getName().equals(eventName)) {
-	event = e;
-	break;
+        event = e;
+        break;
       }
     }
 
@@ -323,8 +323,8 @@ public class SISIntegratedRiskModel extends RiskModel implements Serializable {
     double currentFreq = event.getFrequency();
     for (IndependentProtectionLayer ipl : ipls) {
       if (ipl.getApplicableEvents().contains(eventName) || ipl.getApplicableEvents().isEmpty()) {
-	lopa.addLayer(ipl.getName(), ipl.getPfd(), currentFreq, currentFreq * ipl.getPfd());
-	currentFreq *= ipl.getPfd();
+        lopa.addLayer(ipl.getName(), ipl.getPfd(), currentFreq, currentFreq * ipl.getPfd());
+        currentFreq *= ipl.getPfd();
       }
     }
 

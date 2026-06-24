@@ -100,13 +100,13 @@ public class EquipmentDatasheetGenerator implements Serializable {
 
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       try {
-	JsonObject ds = generateDatasheet(unit, seq);
-	if (ds != null) {
-	  datasheets.add(ds);
-	  seq++;
-	}
+        JsonObject ds = generateDatasheet(unit, seq);
+        if (ds != null) {
+          datasheets.add(ds);
+          seq++;
+        }
       } catch (Exception e) {
-	// Skip equipment that fails
+        // Skip equipment that fails
       }
     }
 
@@ -151,15 +151,15 @@ public class EquipmentDatasheetGenerator implements Serializable {
     try {
       MechanicalDesign mechDesign = equipment.getMechanicalDesign();
       if (mechDesign != null) {
-	design.addProperty("designPressure_barg", roundTo(mechDesign.getMaxDesignPressure() - 1.01325, 1));
-	design.addProperty("designTemperature_C", roundTo(mechDesign.getDesignMaxTemperatureLimit(), 0));
-	design.addProperty("minDesignTemperature_C", roundTo(mechDesign.getDesignMinTemperatureLimit(), 0));
-	design.addProperty("corrosionAllowance_mm", roundTo(mechDesign.getCorrosionAllowance() * 1000.0, 1));
+        design.addProperty("designPressure_barg", roundTo(mechDesign.getMaxDesignPressure() - 1.01325, 1));
+        design.addProperty("designTemperature_C", roundTo(mechDesign.getDesignMaxTemperatureLimit(), 0));
+        design.addProperty("minDesignTemperature_C", roundTo(mechDesign.getDesignMinTemperatureLimit(), 0));
+        design.addProperty("corrosionAllowance_mm", roundTo(mechDesign.getCorrosionAllowance() * 1000.0, 1));
 
-	// Weight
-	double shellWeight = mechDesign.getWeigthVesselShell();
-	design.addProperty("dryWeight_kg", roundTo(shellWeight, 0));
-	design.addProperty("wallThickness_mm", roundTo(mechDesign.getWallThickness() * 1000.0, 1));
+        // Weight
+        double shellWeight = mechDesign.getWeigthVesselShell();
+        design.addProperty("dryWeight_kg", roundTo(shellWeight, 0));
+        design.addProperty("wallThickness_mm", roundTo(mechDesign.getWallThickness() * 1000.0, 1));
       }
     } catch (Exception e) {
       // No mechanical design available
@@ -203,28 +203,28 @@ public class EquipmentDatasheetGenerator implements Serializable {
     try {
       // Try to get inlet conditions
       if (equipment instanceof Separator) {
-	Separator sep = (Separator) equipment;
-	StreamInterface feed = sep.getFeedStream();
-	if (feed != null && feed.getFluid() != null) {
-	  ops.addProperty("inletPressure_bara", roundTo(feed.getPressure(), 1));
-	  ops.addProperty("inletTemperature_C", roundTo(feed.getTemperature() - 273.15, 1));
-	  ops.addProperty("inletFlowRate_kgPerHr", roundTo(feed.getFlowRate("kg/hr"), 0));
-	}
+        Separator sep = (Separator) equipment;
+        StreamInterface feed = sep.getFeedStream();
+        if (feed != null && feed.getFluid() != null) {
+          ops.addProperty("inletPressure_bara", roundTo(feed.getPressure(), 1));
+          ops.addProperty("inletTemperature_C", roundTo(feed.getTemperature() - 273.15, 1));
+          ops.addProperty("inletFlowRate_kgPerHr", roundTo(feed.getFlowRate("kg/hr"), 0));
+        }
       }
 
       if (equipment instanceof Compressor) {
-	Compressor comp = (Compressor) equipment;
-	ops.addProperty("inletPressure_bara", roundTo(comp.getInletStream().getPressure(), 1));
-	ops.addProperty("outletPressure_bara", roundTo(comp.getOutletPressure(), 1));
-	ops.addProperty("inletTemperature_C", roundTo(comp.getInletStream().getTemperature() - 273.15, 1));
-	ops.addProperty("power_kW", roundTo(comp.getPower() / 1000.0, 1));
-	ops.addProperty("polytropicEfficiency", roundTo(comp.getPolytropicEfficiency(), 3));
+        Compressor comp = (Compressor) equipment;
+        ops.addProperty("inletPressure_bara", roundTo(comp.getInletStream().getPressure(), 1));
+        ops.addProperty("outletPressure_bara", roundTo(comp.getOutletPressure(), 1));
+        ops.addProperty("inletTemperature_C", roundTo(comp.getInletStream().getTemperature() - 273.15, 1));
+        ops.addProperty("power_kW", roundTo(comp.getPower() / 1000.0, 1));
+        ops.addProperty("polytropicEfficiency", roundTo(comp.getPolytropicEfficiency(), 3));
       }
 
       if (equipment instanceof ThrottlingValve) {
-	ThrottlingValve valve = (ThrottlingValve) equipment;
-	ops.addProperty("inletPressure_bara", roundTo(valve.getInletStream().getPressure(), 1));
-	ops.addProperty("outletPressure_bara", roundTo(valve.getOutletPressure(), 1));
+        ThrottlingValve valve = (ThrottlingValve) equipment;
+        ops.addProperty("inletPressure_bara", roundTo(valve.getInletStream().getPressure(), 1));
+        ops.addProperty("outletPressure_bara", roundTo(valve.getOutletPressure(), 1));
       }
     } catch (Exception e) {
       // Cannot extract operating conditions
@@ -244,27 +244,27 @@ public class EquipmentDatasheetGenerator implements Serializable {
 
     try {
       if (equipment instanceof Separator) {
-	Separator sep = (Separator) equipment;
-	perf.addProperty("internalDiameter_m", roundTo(sep.getInternalDiameter(), 3));
-	perf.addProperty("separatorLength_m", roundTo(sep.getSeparatorLength(), 2));
+        Separator sep = (Separator) equipment;
+        perf.addProperty("internalDiameter_m", roundTo(sep.getInternalDiameter(), 3));
+        perf.addProperty("separatorLength_m", roundTo(sep.getSeparatorLength(), 2));
       }
 
       if (equipment instanceof Compressor) {
-	Compressor comp = (Compressor) equipment;
-	perf.addProperty("power_kW", roundTo(comp.getPower() / 1000.0, 1));
-	perf.addProperty("polytropicHead_kJPerKg", roundTo(comp.getPolytropicHead() / 1000.0, 1));
-	perf.addProperty("polytropicEfficiency", roundTo(comp.getPolytropicEfficiency(), 3));
-	perf.addProperty("pressureRatio", roundTo(comp.getOutletPressure() / comp.getInletStream().getPressure(), 2));
+        Compressor comp = (Compressor) equipment;
+        perf.addProperty("power_kW", roundTo(comp.getPower() / 1000.0, 1));
+        perf.addProperty("polytropicHead_kJPerKg", roundTo(comp.getPolytropicHead() / 1000.0, 1));
+        perf.addProperty("polytropicEfficiency", roundTo(comp.getPolytropicEfficiency(), 3));
+        perf.addProperty("pressureRatio", roundTo(comp.getOutletPressure() / comp.getInletStream().getPressure(), 2));
       }
 
       if (equipment instanceof Heater) {
-	Heater heater = (Heater) equipment;
-	perf.addProperty("duty_kW", roundTo(heater.getDuty() / 1000.0, 1));
+        Heater heater = (Heater) equipment;
+        perf.addProperty("duty_kW", roundTo(heater.getDuty() / 1000.0, 1));
       }
 
       if (equipment instanceof Cooler) {
-	Cooler cooler = (Cooler) equipment;
-	perf.addProperty("duty_kW", roundTo(Math.abs(cooler.getDuty()) / 1000.0, 1));
+        Cooler cooler = (Cooler) equipment;
+        perf.addProperty("duty_kW", roundTo(Math.abs(cooler.getDuty()) / 1000.0, 1));
       }
     } catch (Exception e) {
       // Cannot extract performance data

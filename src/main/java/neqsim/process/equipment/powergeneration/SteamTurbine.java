@@ -92,7 +92,7 @@ public class SteamTurbine extends TwoPortEquipment implements CapacityConstraine
     isentropicFluid.setPressure(outletPressure);
 
     neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	isentropicFluid);
+        isentropicFluid);
     try {
       ops.PSflash(inletEntropy);
     } catch (Exception ex) {
@@ -112,7 +112,7 @@ public class SteamTurbine extends TwoPortEquipment implements CapacityConstraine
     SystemInterface outletFluid = inletFluid.clone();
     outletFluid.setPressure(outletPressure);
     neqsim.thermodynamicoperations.ThermodynamicOperations opsOut = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	outletFluid);
+        outletFluid);
     try {
       opsOut.PHflash(actualOutletEnthalpy);
     } catch (Exception ex) {
@@ -299,9 +299,9 @@ public class SteamTurbine extends TwoPortEquipment implements CapacityConstraine
     capacityConstraints.clear();
     if (ratedPowerW > 0) {
       addCapacityConstraint(new CapacityConstraint("power", "kW", CapacityConstraint.ConstraintType.HARD)
-	  .setDesignValue(ratedPowerW / 1000.0).setMaxValue(ratedPowerW / 1000.0 * 1.1).setWarningThreshold(0.9)
-	  .setDescription("Steam turbine power output vs rated capacity")
-	  .setValueSupplier(() -> Math.abs(this.power) / 1000.0));
+          .setDesignValue(ratedPowerW / 1000.0).setMaxValue(ratedPowerW / 1000.0 * 1.1).setWarningThreshold(0.9)
+          .setDescription("Steam turbine power output vs rated capacity")
+          .setValueSupplier(() -> Math.abs(this.power) / 1000.0));
     }
   }
 
@@ -319,8 +319,8 @@ public class SteamTurbine extends TwoPortEquipment implements CapacityConstraine
     for (CapacityConstraint c : capacityConstraints.values()) {
       double util = c.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-	maxUtil = util;
-	bottleneck = c;
+        maxUtil = util;
+        bottleneck = c;
       }
     }
     return bottleneck;
@@ -331,7 +331,7 @@ public class SteamTurbine extends TwoPortEquipment implements CapacityConstraine
   public boolean isCapacityExceeded() {
     for (CapacityConstraint c : capacityConstraints.values()) {
       if (c.isViolated()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -342,7 +342,7 @@ public class SteamTurbine extends TwoPortEquipment implements CapacityConstraine
   public boolean isHardLimitExceeded() {
     for (CapacityConstraint c : capacityConstraints.values()) {
       if (c.isHardLimitExceeded()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -355,7 +355,7 @@ public class SteamTurbine extends TwoPortEquipment implements CapacityConstraine
     for (CapacityConstraint c : capacityConstraints.values()) {
       double util = c.getUtilization();
       if (!Double.isNaN(util)) {
-	maxUtil = Math.max(maxUtil, util);
+        maxUtil = Math.max(maxUtil, util);
       }
     }
     return maxUtil;

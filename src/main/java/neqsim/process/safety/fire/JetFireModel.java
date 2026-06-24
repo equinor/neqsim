@@ -123,8 +123,8 @@ public class JetFireModel implements Serializable {
       double tau = transmissivity(r);
       double rNew = Math.sqrt(q * tau / (4.0 * Math.PI * targetFluxWperM2));
       if (Math.abs(rNew - r) < 0.01) {
-	r = rNew;
-	break;
+        r = rNew;
+        break;
       }
       r = rNew;
     }

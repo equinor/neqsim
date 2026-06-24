@@ -79,8 +79,8 @@ public class SafetyValveMechanicalDesignTest {
     SafetyValve valve = createValve(stream, 50.0);
 
     RelievingScenario scenario = new RelievingScenario.Builder("gasAPI").fluidService(FluidService.GAS)
-	.relievingStream(stream).setPressure(50.0).overpressureFraction(0.0).backPressure(0.0)
-	.sizingStandard(SizingStandard.API_520).build();
+        .relievingStream(stream).setPressure(50.0).overpressureFraction(0.0).backPressure(0.0)
+        .sizingStandard(SizingStandard.API_520).build();
 
     valve.addScenario(scenario);
 
@@ -93,7 +93,7 @@ public class SafetyValveMechanicalDesignTest {
     double kb = 1.0;
     double kw = 1.0;
     double expected = design.calcGasOrificeAreaAPI520(gas.getFlowRate("kg/sec"), relievingPressure,
-	gas.getTemperature(), gas.getZ(), gas.getMolarMass(), gas.getGamma(), kd, kb, kw);
+        gas.getTemperature(), gas.getZ(), gas.getMolarMass(), gas.getGamma(), kd, kb, kw);
 
     assertEquals(expected, result.getRequiredOrificeArea(), 1e-8);
     assertEquals(expected, design.getOrificeArea(), 1e-8);
@@ -107,7 +107,7 @@ public class SafetyValveMechanicalDesignTest {
     SafetyValve valve = createValve(stream, 15.0);
 
     RelievingScenario scenario = new RelievingScenario.Builder("liquid").fluidService(FluidService.LIQUID)
-	.relievingStream(stream).setPressure(15.0).overpressureFraction(0.1).backPressure(1.0).build();
+        .relievingStream(stream).setPressure(15.0).overpressureFraction(0.1).backPressure(1.0).build();
 
     valve.addScenario(scenario);
 
@@ -134,7 +134,7 @@ public class SafetyValveMechanicalDesignTest {
     SafetyValve valve = createValve(stream, 30.0);
 
     RelievingScenario scenario = new RelievingScenario.Builder("multiphase").fluidService(FluidService.MULTIPHASE)
-	.relievingStream(stream).setPressure(30.0).overpressureFraction(0.05).backPressure(5.0).build();
+        .relievingStream(stream).setPressure(30.0).overpressureFraction(0.05).backPressure(5.0).build();
 
     valve.addScenario(scenario);
 
@@ -161,14 +161,14 @@ public class SafetyValveMechanicalDesignTest {
     SafetyValve valve = createValve(fireStream, 60.0);
 
     RelievingScenario apiScenario = new RelievingScenario.Builder("apiGas").fluidService(FluidService.GAS)
-	.relievingStream(fireStream).setPressure(60.0).overpressureFraction(0.0).backPressure(0.0)
-	.sizingStandard(SizingStandard.API_520).build();
+        .relievingStream(fireStream).setPressure(60.0).overpressureFraction(0.0).backPressure(0.0)
+        .sizingStandard(SizingStandard.API_520).build();
 
     SystemInterface fireGas = createGasSystem(320.0, 60.0, 14.0);
     StreamInterface fireScenarioStream = new Stream("fire-case", fireGas);
     RelievingScenario fireScenario = new RelievingScenario.Builder("fire").fluidService(FluidService.FIRE)
-	.relievingStream(fireScenarioStream).setPressure(60.0).overpressureFraction(0.1).backPressure(2.0)
-	.sizingStandard(SizingStandard.API_520).build();
+        .relievingStream(fireScenarioStream).setPressure(60.0).overpressureFraction(0.1).backPressure(2.0)
+        .sizingStandard(SizingStandard.API_520).build();
 
     valve.addScenario(apiScenario);
     valve.addScenario(fireScenario);
@@ -183,7 +183,7 @@ public class SafetyValveMechanicalDesignTest {
     double kb = 1.0;
     double kw = 1.0;
     double baseArea = design.calcGasOrificeAreaAPI520(fireGas.getFlowRate("kg/sec"), relievingPressure,
-	fireGas.getTemperature(), fireGas.getZ(), fireGas.getMolarMass(), fireGas.getGamma(), kd, kb, kw);
+        fireGas.getTemperature(), fireGas.getZ(), fireGas.getMolarMass(), fireGas.getGamma(), kd, kb, kw);
     double expected = baseArea * 1.1;
 
     assertEquals(expected, fireResult.getRequiredOrificeArea(), 1e-8);

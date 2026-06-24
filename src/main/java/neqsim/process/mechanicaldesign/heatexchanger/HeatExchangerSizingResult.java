@@ -132,7 +132,7 @@ public final class HeatExchangerSizingResult {
   @Override
   public String toString() {
     return "HeatExchangerSizingResult{" + "type=" + type + ", requiredArea=" + requiredArea + ", estimatedWeight="
-	+ estimatedWeight + ", estimatedPressureDrop=" + estimatedPressureDrop + '}';
+        + estimatedWeight + ", estimatedPressureDrop=" + estimatedPressureDrop + '}';
   }
 
   /**

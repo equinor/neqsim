@@ -280,7 +280,7 @@ public class GravityDumpFloodInjectionAnalyzer implements Serializable {
       this.propertiesSet = true;
     } catch (Exception ex) {
       recommendations.add("computePropertiesFromFluid: density/viscosity flash failed (" + ex.getMessage()
-	  + "); using supplied properties.");
+          + "); using supplied properties.");
     }
     // Vapour pressure: use a robust pure-water CPA bubble point with a salinity activity reduction.
     try {
@@ -294,7 +294,7 @@ public class GravityDumpFloodInjectionAnalyzer implements Serializable {
       this.vapourPressureBara = 0.98 * pvapPure;
     } catch (Exception ex) {
       recommendations.add("computePropertiesFromFluid: vapour-pressure flash failed (" + ex.getMessage()
-	  + "); using supplied vapour pressure.");
+          + "); using supplied vapour pressure.");
     }
   }
 
@@ -329,7 +329,7 @@ public class GravityDumpFloodInjectionAnalyzer implements Serializable {
     // p_sandface = p_wh + rho*g*L - dp_fric => p_wh = p_res + dp_fric - rho*g*L
     wellheadPressureRequiredBara = reservoirPressureBara + frictionPressureDropBar - subSeabedColumnHeadBar;
     freeFalling = wellheadPressureRequiredBara < seabedHydrostaticBara
-	|| wellheadPressureRequiredBara < vapourPressureBara;
+        || wellheadPressureRequiredBara < vapourPressureBara;
 
     // Vapour-cavity onset: liquid-full height that the reservoir can support from below.
     // rho*g*(L - d) + Pvap ≈ p_res => d = L - (p_res - Pvap)/(rho*g)
@@ -339,11 +339,11 @@ public class GravityDumpFloodInjectionAnalyzer implements Serializable {
     // Down-hole back-pressure that a deep choke / ICD / tail-pipe must dissipate.
     double whSupply = Double.isNaN(wellheadSupplyPressureBara) ? vapourPressureBara : wellheadSupplyPressureBara;
     downholeBackPressureRequiredBar = Math.max(0.0,
-	whSupply + subSeabedColumnHeadBar - frictionPressureDropBar - reservoirPressureBara);
+        whSupply + subSeabedColumnHeadBar - frictionPressureDropBar - reservoirPressureBara);
 
     // Tail-pipe ID whose friction equals the excess head to dissipate.
     frictionTailpipeIdMm = sizeFrictionTailpipeIdMm(downholeBackPressureRequiredBar, injectionRateSm3PerDay,
-	subSeabedLengthM);
+        subSeabedLengthM);
 
     // Wellhead-choke cavitation index for a hypothetical choke taking the full drop.
     // sigma = (p2 - pv) / (p1 - p2), with p1 = seabed supply, p2 = vapour-limited downstream.
@@ -366,7 +366,7 @@ public class GravityDumpFloodInjectionAnalyzer implements Serializable {
   private void validateInputs() {
     if (reservoirDepthTvdM <= waterDepthM) {
       throw new IllegalStateException(
-	  "reservoir depth (" + reservoirDepthTvdM + " m) must exceed water depth (" + waterDepthM + " m)");
+          "reservoir depth (" + reservoirDepthTvdM + " m) must exceed water depth (" + waterDepthM + " m)");
     }
     if (tubingIdM <= 0.0) {
       throw new IllegalStateException("tubing ID must be positive");
@@ -376,7 +376,7 @@ public class GravityDumpFloodInjectionAnalyzer implements Serializable {
     }
     if (!propertiesSet) {
       recommendations
-	  .add("Seawater properties not explicitly set; using defaults (rho=1025, mu=1.6 cP, Pvap=0.0075 bara).");
+          .add("Seawater properties not explicitly set; using defaults (rho=1025, mu=1.6 cP, Pvap=0.0075 bara).");
     }
   }
 
@@ -428,9 +428,9 @@ public class GravityDumpFloodInjectionAnalyzer implements Serializable {
       double mid = 0.5 * (lo + hi);
       double dp = frictionDropBar(rateSm3PerDay, mid, lengthM);
       if (dp > targetBar) {
-	lo = mid; // too much friction → larger ID
+        lo = mid; // too much friction → larger ID
       } else {
-	hi = mid; // too little friction → smaller ID
+        hi = mid; // too little friction → smaller ID
       }
     }
     return 0.5 * (lo + hi) * 1000.0;
@@ -442,33 +442,33 @@ public class GravityDumpFloodInjectionAnalyzer implements Serializable {
   private void buildRecommendations() {
     if (freeFalling) {
       recommendations.add("The sub-seabed seawater column head (" + round(subSeabedColumnHeadBar)
-	  + " bar) exceeds the reservoir pressure (" + round(reservoirPressureBara)
-	  + " bara). The well cannot be controlled by a wellhead/seabed choke — the required " + "wellhead pressure is "
-	  + round(wellheadPressureRequiredBara) + " bara (below the seabed hydrostatic / vapour pressure).");
+          + " bar) exceeds the reservoir pressure (" + round(reservoirPressureBara)
+          + " bara). The well cannot be controlled by a wellhead/seabed choke — the required " + "wellhead pressure is "
+          + round(wellheadPressureRequiredBara) + " bara (below the seabed hydrostatic / vapour pressure).");
       recommendations.add("The upper tubing will partially empty; a low-pressure vapour cavity " + "forms down to ~"
-	  + round(vapourCavityDepthBelowSeabedM) + " m below the seabed (~"
-	  + round(waterDepthM + vapourCavityDepthBelowSeabedM) + " m TVD).");
+          + round(vapourCavityDepthBelowSeabedM) + " m below the seabed (~"
+          + round(waterDepthM + vapourCavityDepthBelowSeabedM) + " m TVD).");
       recommendations.add("Dissipate the excess head DOWN-HOLE near the sandface: a down-hole choke, "
-	  + "ICD/AICD completion, or small-ID tail-pipe absorbing ~" + round(downholeBackPressureRequiredBar)
-	  + " bar. Friction-only sizing needs an ID of ~" + round(frictionTailpipeIdMm)
-	  + " mm (erosion / plugging trade-off — API RP 14E).");
+          + "ICD/AICD completion, or small-ID tail-pipe absorbing ~" + round(downholeBackPressureRequiredBar)
+          + " bar. Friction-only sizing needs an ID of ~" + round(frictionTailpipeIdMm)
+          + " mm (erosion / plugging trade-off — API RP 14E).");
     } else {
       recommendations.add("Gravity head does not over-pressure the reservoir; a wellhead choke can "
-	  + "in principle set the rate. Verify cavitation margin (sigma=" + round(cavitationIndex) + ").");
+          + "in principle set the rate. Verify cavitation margin (sigma=" + round(cavitationIndex) + ").");
     }
     if (cavitationIndex < cavitationThreshold) {
       recommendations.add("A wellhead choke taking the full drop would cavitate hard (sigma=" + round(cavitationIndex)
-	  + " < " + cavitationThreshold
-	  + "): severe flashing / flow-induced vibration / erosion. Do not dissipate the head at a "
-	  + "single wellhead choke.");
+          + " < " + cavitationThreshold
+          + "): severe flashing / flow-induced vibration / erosion. Do not dissipate the head at a "
+          + "single wellhead choke.");
     }
     recommendations.add(
-	"True seawater vapour pressure at " + round(seabedTemperatureC) + " C is ~" + round(vapourPressureBara * 1000.0)
-	    + " mbar — a near-vacuum vapour, NOT 0.01 bar of liquid. Joule-Thomson cooling of "
-	    + "near-incompressible liquid water across a throttle is negligible; icing/hydrate risk only "
-	    + "arises locally if flashing occurs and a hydrocarbon source is present.");
+        "True seawater vapour pressure at " + round(seabedTemperatureC) + " C is ~" + round(vapourPressureBara * 1000.0)
+            + " mbar — a near-vacuum vapour, NOT 0.01 bar of liquid. Joule-Thomson cooling of "
+            + "near-incompressible liquid water across a throttle is negligible; icing/hydrate risk only "
+            + "arises locally if flashing occurs and a hydrocarbon source is present.");
     recommendations.add("Gradual near-well plugging raises back-pressure over time and is "
-	+ "self-regulating / beneficial; injection is ultimately formation-injectivity limited.");
+        + "self-regulating / beneficial; injection is ultimately formation-injectivity limited.");
   }
 
   /**

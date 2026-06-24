@@ -116,12 +116,12 @@ public class BDFIntegrator implements IntegratorStrategy {
       double dfdx = (slope.dxdt(tNext, x + h) - slope.dxdt(tNext, x - h)) / (2.0 * h);
       double dgdx = 1.0 - dt * dfdx;
       if (Math.abs(dgdx) < 1.0e-14) {
-	break;
+        break;
       }
       double dx = -g / dgdx;
       x += dx;
       if (Math.abs(dx) < tolerance) {
-	return x;
+        return x;
       }
     }
     // Fall back to explicit Euler for this step

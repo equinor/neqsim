@@ -93,7 +93,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
     }
     String normalizedName = methodName.toLowerCase().trim();
     if (normalizedName.contains("mccain") || normalizedName.contains("culberson")
-	|| normalizedName.contains("mcketta")) {
+        || normalizedName.contains("mcketta")) {
       this.method = CalculationMethod.MCCAIN;
     } else if (normalizedName.contains("soreide") || normalizedName.contains("whitson")) {
       this.method = CalculationMethod.SOREIDE_WHITSON;
@@ -223,14 +223,14 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
     // where coefficients are temperature-dependent
 
     double A = 8.15839 - 6.12265e-2 * temperatureF + 1.91663e-4 * temperatureF * temperatureF
-	- 2.1654e-7 * temperatureF * temperatureF * temperatureF;
+        - 2.1654e-7 * temperatureF * temperatureF * temperatureF;
 
     double B = 1.01021e-2 - 7.44241e-5 * temperatureF + 3.05553e-7 * temperatureF * temperatureF
-	- 2.94883e-10 * temperatureF * temperatureF * temperatureF;
+        - 2.94883e-10 * temperatureF * temperatureF * temperatureF;
 
     double C = (-9.02505 + 0.130237 * temperatureF - 8.53425e-4 * temperatureF * temperatureF
-	+ 2.34122e-6 * temperatureF * temperatureF * temperatureF
-	- 2.37049e-9 * temperatureF * temperatureF * temperatureF * temperatureF) * 1e-7;
+        + 2.34122e-6 * temperatureF * temperatureF * temperatureF
+        - 2.37049e-9 * temperatureF * temperatureF * temperatureF * temperatureF) * 1e-7;
 
     // Gas solubility in pure water (scf/STB)
     double rswPure = A + B * pressurePsia + C * pressurePsia * pressurePsia;
@@ -304,7 +304,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
       // If total moles not available, calculate from components
       totalSourceMoles = 0.0;
       for (int i = 0; i < sourceSystem.getNumberOfComponents(); i++) {
-	totalSourceMoles += sourceSystem.getComponent(i).getNumberOfmoles();
+        totalSourceMoles += sourceSystem.getComponent(i).getNumberOfmoles();
       }
     }
 
@@ -315,10 +315,10 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
       double moles = sourceSystem.getComponent(i).getNumberOfmoles();
       // Skip water as we add it separately
       if (!componentName.equalsIgnoreCase("water") && !componentName.equalsIgnoreCase("H2O")) {
-	// Scale to reasonable amounts (use fraction * 10 for numerical stability)
-	double scaledMoles = (moles / totalSourceMoles) * 10.0;
-	system.addComponent(componentName, scaledMoles, "mole/sec");
-	totalGasMoles += scaledMoles;
+        // Scale to reasonable amounts (use fraction * 10 for numerical stability)
+        double scaledMoles = (moles / totalSourceMoles) * 10.0;
+        system.addComponent(componentName, scaledMoles, "mole/sec");
+        totalGasMoles += scaledMoles;
       }
     }
 
@@ -414,7 +414,7 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
     if (totalSourceMoles <= 0) {
       totalSourceMoles = 0.0;
       for (int i = 0; i < sourceSystem.getNumberOfComponents(); i++) {
-	totalSourceMoles += sourceSystem.getComponent(i).getNumberOfmoles();
+        totalSourceMoles += sourceSystem.getComponent(i).getNumberOfmoles();
       }
     }
 
@@ -423,9 +423,9 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
       double moles = sourceSystem.getComponent(i).getNumberOfmoles();
       // Skip water as we add it separately
       if (!componentName.equalsIgnoreCase("water") && !componentName.equalsIgnoreCase("H2O")) {
-	// Scale to reasonable amounts (use fraction * 10 for numerical stability)
-	double scaledMoles = (moles / totalSourceMoles) * 10.0;
-	targetSystem.addComponent(componentName, scaledMoles);
+        // Scale to reasonable amounts (use fraction * 10 for numerical stability)
+        double scaledMoles = (moles / totalSourceMoles) * 10.0;
+        targetSystem.addComponent(componentName, scaledMoles);
       }
     }
   }
@@ -448,8 +448,8 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
     int aqueousPhaseIndex = -1;
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       if (system.getPhase(i).getType() == PhaseType.AQUEOUS) {
-	aqueousPhaseIndex = i;
-	break;
+        aqueousPhaseIndex = i;
+        break;
       }
     }
 
@@ -457,17 +457,17 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
       // Try to find by water content - look for phase with highest water mole fraction
       double maxWaterFrac = 0.0;
       for (int i = 0; i < system.getNumberOfPhases(); i++) {
-	for (int j = 0; j < system.getPhase(i).getNumberOfComponents(); j++) {
-	  String compName = system.getPhase(i).getComponent(j).getComponentName();
-	  if (compName.equalsIgnoreCase("water") || compName.equalsIgnoreCase("H2O")) {
-	    double waterMoleFrac = system.getPhase(i).getComponent(j).getx();
-	    if (waterMoleFrac > maxWaterFrac && waterMoleFrac > 0.5) {
-	      maxWaterFrac = waterMoleFrac;
-	      aqueousPhaseIndex = i;
-	    }
-	    break;
-	  }
-	}
+        for (int j = 0; j < system.getPhase(i).getNumberOfComponents(); j++) {
+          String compName = system.getPhase(i).getComponent(j).getComponentName();
+          if (compName.equalsIgnoreCase("water") || compName.equalsIgnoreCase("H2O")) {
+            double waterMoleFrac = system.getPhase(i).getComponent(j).getx();
+            if (waterMoleFrac > maxWaterFrac && waterMoleFrac > 0.5) {
+              maxWaterFrac = waterMoleFrac;
+              aqueousPhaseIndex = i;
+            }
+            break;
+          }
+        }
       }
     }
 
@@ -484,10 +484,10 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
       double x = system.getPhase(aqueousPhaseIndex).getComponent(i).getx();
 
       if (compName.equalsIgnoreCase("water") || compName.equalsIgnoreCase("H2O")) {
-	waterMoleFrac += x;
+        waterMoleFrac += x;
       } else if (!compName.equalsIgnoreCase("Na+") && !compName.equalsIgnoreCase("Cl-")
-	  && !compName.equalsIgnoreCase("NaCl")) {
-	gasMoleFrac += x;
+          && !compName.equalsIgnoreCase("NaCl")) {
+        gasMoleFrac += x;
       }
     }
 

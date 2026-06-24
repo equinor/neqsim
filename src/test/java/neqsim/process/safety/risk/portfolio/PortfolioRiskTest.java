@@ -57,7 +57,7 @@ class PortfolioRiskTest {
   @Test
   void testCommonCauseScenario() {
     PortfolioRiskAnalyzer.CommonCauseScenario weather = analyzer.createRegionalWeatherScenario("Northern North Sea",
-	0.5, 5.0);
+        0.5, 5.0);
 
     assertNotNull(weather);
     assertEquals(0.5, weather.getFrequency(), 0.01);
@@ -72,7 +72,7 @@ class PortfolioRiskTest {
   @Test
   void testCustomCommonCause() {
     PortfolioRiskAnalyzer.CommonCauseScenario cyber = new PortfolioRiskAnalyzer.CommonCauseScenario("CYBER-001",
-	"Regional cyber attack", PortfolioRiskAnalyzer.CommonCauseScenario.CommonCauseType.CYBER, 0.1);
+        "Regional cyber attack", PortfolioRiskAnalyzer.CommonCauseScenario.CommonCauseType.CYBER, 0.1);
     cyber.setDuration(3.0);
     cyber.addAffectedAsset("A", 0.8);
     cyber.addAffectedAsset("B", 0.8);
@@ -208,7 +208,7 @@ class PortfolioRiskTest {
     analyzer.createRegionalWeatherScenario("Central North Sea", 0.3, 3.0);
 
     PortfolioRiskAnalyzer.CommonCauseScenario pandemic = new PortfolioRiskAnalyzer.CommonCauseScenario("PANDEMIC",
-	"Pandemic impact", PortfolioRiskAnalyzer.CommonCauseScenario.CommonCauseType.PANDEMIC, 0.05);
+        "Pandemic impact", PortfolioRiskAnalyzer.CommonCauseScenario.CommonCauseType.PANDEMIC, 0.05);
     pandemic.setDuration(30.0);
     pandemic.addAffectedAsset("A", 0.3);
     pandemic.addAffectedAsset("B", 0.3);

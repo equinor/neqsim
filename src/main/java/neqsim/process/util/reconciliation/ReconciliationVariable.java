@@ -323,6 +323,6 @@ public class ReconciliationVariable implements java.io.Serializable {
     String unitStr = unit.isEmpty() ? "" : " " + unit;
     String flag = grossError ? " [GROSS ERROR]" : "";
     return String.format("%s: meas=%.4f%s, rec=%.4f%s, adj=%.4f, |r|=%.3f%s", name, measuredValue, unitStr,
-	reconciledValue, unitStr, getAdjustment(), Math.abs(normalizedResidual), flag);
+        reconciledValue, unitStr, getAdjustment(), Math.abs(normalizedResidual), flag);
   }
 }

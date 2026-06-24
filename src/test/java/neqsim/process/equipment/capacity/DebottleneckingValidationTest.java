@@ -65,7 +65,7 @@ public class DebottleneckingValidationTest {
     process.add(valve);
 
     separator = new Separator.Builder("Test Separator").inletStream(valve.getOutletStream()).orientation("horizontal")
-	.length(5.0).diameter(2.0).build();
+        .length(5.0).diameter(2.0).build();
     separator.setDesignGasLoadFactor(0.10);
     process.add(separator);
 
@@ -168,34 +168,34 @@ public class DebottleneckingValidationTest {
   public void testConstraintSeverityLevels() {
     // Create constraint with CRITICAL severity
     CapacityConstraint criticalConstraint = new CapacityConstraint("surge", "m3/hr",
-	CapacityConstraint.ConstraintType.HARD);
+        CapacityConstraint.ConstraintType.HARD);
     criticalConstraint.setDesignValue(100.0).setSeverity(CapacityConstraint.ConstraintSeverity.CRITICAL)
-	.setValueSupplier(() -> 110.0); // Exceeded
+        .setValueSupplier(() -> 110.0); // Exceeded
 
     assertEquals(CapacityConstraint.ConstraintSeverity.CRITICAL, criticalConstraint.getSeverity(),
-	"Severity should be CRITICAL");
+        "Severity should be CRITICAL");
     assertTrue(criticalConstraint.isViolated(), "Constraint should be violated");
     assertTrue(criticalConstraint.isCriticalViolation(), "Should be critical violation");
 
     // Create constraint with SOFT severity
     CapacityConstraint softConstraint = new CapacityConstraint("efficiency", "%",
-	CapacityConstraint.ConstraintType.SOFT);
+        CapacityConstraint.ConstraintType.SOFT);
     softConstraint.setDesignValue(80.0).setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-	.setValueSupplier(() -> 75.0); // Below design but not critical
+        .setValueSupplier(() -> 75.0); // Below design but not critical
 
     assertEquals(CapacityConstraint.ConstraintSeverity.SOFT, softConstraint.getSeverity(), "Severity should be SOFT");
     assertFalse(softConstraint.isCriticalViolation(), "Should not be critical violation");
 
     // Create ADVISORY constraint
     CapacityConstraint advisoryConstraint = new CapacityConstraint("turndown", "ratio",
-	CapacityConstraint.ConstraintType.DESIGN);
+        CapacityConstraint.ConstraintType.DESIGN);
     advisoryConstraint.setDesignValue(1.0).setSeverity(CapacityConstraint.ConstraintSeverity.ADVISORY)
-	.setValueSupplier(() -> 1.5); // Exceeded
-				      // but
-				      // advisory
+        .setValueSupplier(() -> 1.5); // Exceeded
+    // but
+    // advisory
 
     assertEquals(CapacityConstraint.ConstraintSeverity.ADVISORY, advisoryConstraint.getSeverity(),
-	"Severity should be ADVISORY");
+        "Severity should be ADVISORY");
     assertFalse(advisoryConstraint.isCriticalViolation(), "Advisory violations are not critical");
   }
 

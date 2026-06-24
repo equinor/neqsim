@@ -522,29 +522,29 @@ public class MonteCarloRunner implements Serializable {
 
       // Sample all variables
       for (UncertainVariable var : variables) {
-	double value = sample(var);
-	result.setInput(var.getName(), value);
+        double value = sample(var);
+        result.setInput(var.getName(), value);
 
-	// Apply to cash flow engine
-	applyVariable(var.getName(), value);
+        // Apply to cash flow engine
+        applyVariable(var.getName(), value);
       }
 
       // Calculate economics
       try {
-	CashFlowResult cfResult = cashFlowEngine.calculate(discountRate);
-	result.setNpv(cfResult.getNpv());
-	result.setIrr(cfResult.getIrr());
-	result.setPaybackYears(cfResult.getPaybackYears());
-	// Profitability Index = NPV / CAPEX + 1
-	double totalCapex = cfResult.getTotalCapex();
-	double pi = totalCapex > 0 ? (cfResult.getNpv() / totalCapex) + 1.0 : 0.0;
-	result.setProfitabilityIndex(pi);
-	result.setConverged(true);
-	convergedCount++;
+        CashFlowResult cfResult = cashFlowEngine.calculate(discountRate);
+        result.setNpv(cfResult.getNpv());
+        result.setIrr(cfResult.getIrr());
+        result.setPaybackYears(cfResult.getPaybackYears());
+        // Profitability Index = NPV / CAPEX + 1
+        double totalCapex = cfResult.getTotalCapex();
+        double pi = totalCapex > 0 ? (cfResult.getNpv() / totalCapex) + 1.0 : 0.0;
+        result.setProfitabilityIndex(pi);
+        result.setConverged(true);
+        convergedCount++;
       } catch (Exception e) {
-	logger.debug("Iteration {} failed: {}", i, e.getMessage());
-	result.setConverged(false);
-	result.setNpv(Double.NaN);
+        logger.debug("Iteration {} failed: {}", i, e.getMessage());
+        result.setConverged(false);
+        result.setNpv(Double.NaN);
       }
 
       results.add(result);
@@ -595,10 +595,10 @@ public class MonteCarloRunner implements Serializable {
     List<Double> values = new ArrayList<Double>();
     for (IterationResult r : results) {
       if (r.isConverged()) {
-	double value = getMetricValue(r, metric);
-	if (!Double.isNaN(value)) {
-	  values.add(Double.valueOf(value));
-	}
+        double value = getMetricValue(r, metric);
+        if (!Double.isNaN(value)) {
+          values.add(Double.valueOf(value));
+        }
       }
     }
 
@@ -670,11 +670,11 @@ public class MonteCarloRunner implements Serializable {
 
     for (IterationResult r : results) {
       if (r.isConverged()) {
-	double value = getMetricValue(r, metric);
-	if (!Double.isNaN(value)) {
-	  sum += value;
-	  count++;
-	}
+        double value = getMetricValue(r, metric);
+        if (!Double.isNaN(value)) {
+          sum += value;
+          count++;
+        }
       }
     }
 
@@ -698,11 +698,11 @@ public class MonteCarloRunner implements Serializable {
 
     for (IterationResult r : results) {
       if (r.isConverged()) {
-	double value = getMetricValue(r, metric);
-	if (!Double.isNaN(value)) {
-	  sumSq += Math.pow(value - mean, 2);
-	  count++;
-	}
+        double value = getMetricValue(r, metric);
+        if (!Double.isNaN(value)) {
+          sumSq += Math.pow(value - mean, 2);
+          count++;
+        }
       }
     }
 
@@ -724,10 +724,10 @@ public class MonteCarloRunner implements Serializable {
 
     for (IterationResult r : results) {
       if (r.isConverged() && !Double.isNaN(r.getNpv())) {
-	total++;
-	if (r.getNpv() > 0) {
-	  positive++;
-	}
+        total++;
+        if (r.getNpv() > 0) {
+          positive++;
+        }
       }
     }
 
@@ -750,10 +750,10 @@ public class MonteCarloRunner implements Serializable {
 
     for (IterationResult r : results) {
       if (r.isConverged() && !Double.isNaN(r.getNpv())) {
-	total++;
-	if (r.getNpv() > threshold) {
-	  exceeds++;
-	}
+        total++;
+        if (r.getNpv() > threshold) {
+          exceeds++;
+        }
       }
     }
 
@@ -803,7 +803,7 @@ public class MonteCarloRunner implements Serializable {
     int count = 0;
     for (IterationResult r : results) {
       if (r.isConverged()) {
-	count++;
+        count++;
       }
     }
     return count;
@@ -826,7 +826,7 @@ public class MonteCarloRunner implements Serializable {
     sb.append("Variables:\n");
     for (UncertainVariable var : variables) {
       sb.append(String.format("  %s: %s (%.2f, %.2f, %.2f)%n", var.getName(), var.getDistribution(), var.getParam1(),
-	  var.getParam2(), var.getParam3()));
+          var.getParam2(), var.getParam3()));
     }
     sb.append("\n");
 

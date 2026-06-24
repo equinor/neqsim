@@ -52,12 +52,12 @@ public class ParaOrthoH2CorrectionTest extends neqsim.NeqSimTest {
   @Test
   public void testCatalystEquilibrationTimesRankCorrectly() {
     double charcoal = ParaOrthoH2Correction.estimateEquilibrationTimeSeconds(77.0,
-	ConversionCatalyst.ACTIVATED_CHARCOAL);
+        ConversionCatalyst.ACTIVATED_CHARCOAL);
     double ferricOxide = ParaOrthoH2Correction.estimateEquilibrationTimeSeconds(77.0,
-	ConversionCatalyst.HYDROUS_FERRIC_OXIDE);
+        ConversionCatalyst.HYDROUS_FERRIC_OXIDE);
     double noCatalyst = ParaOrthoH2Correction.estimateEquilibrationTimeSeconds(77.0, ConversionCatalyst.NONE);
     double coldFerricOxide = ParaOrthoH2Correction.estimateEquilibrationTimeSeconds(40.0,
-	ConversionCatalyst.HYDROUS_FERRIC_OXIDE);
+        ConversionCatalyst.HYDROUS_FERRIC_OXIDE);
 
     assertTrue(ferricOxide < charcoal);
     assertTrue(Double.isInfinite(noCatalyst));

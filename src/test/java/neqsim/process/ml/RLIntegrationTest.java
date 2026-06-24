@@ -125,7 +125,7 @@ class RLIntegrationTest {
   void testStateVectorFeatureNames() {
     StateVector state = new StateVector();
     state.add("level", 0.5, 0.0, 1.0, "fraction").add("pressure", 50.0, 0.0, 100.0, "bar").add("temperature", 300.0,
-	200.0, 400.0, "K");
+        200.0, 400.0, "K");
 
     String[] names = state.getFeatureNames();
     assertEquals(3, names.length);
@@ -192,10 +192,10 @@ class RLIntegrationTest {
   @Test
   void testConstraintCategories() {
     Constraint safety = new Constraint("hipps", "HIPPS trigger", Constraint.Type.HARD, Constraint.Category.SAFETY,
-	"pressure", 0.0, 150.0, "bar");
+        "pressure", 0.0, 150.0, "bar");
 
     Constraint operational = new Constraint("optimal", "Optimal range", Constraint.Type.SOFT,
-	Constraint.Category.OPERATIONAL, "temperature", 280.0, 320.0, "K");
+        Constraint.Category.OPERATIONAL, "temperature", 280.0, 320.0, "K");
 
     assertEquals(Constraint.Category.SAFETY, safety.getCategory());
     assertEquals(Constraint.Category.OPERATIONAL, operational.getCategory());

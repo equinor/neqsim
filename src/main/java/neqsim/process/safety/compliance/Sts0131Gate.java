@@ -95,8 +95,8 @@ public class Sts0131Gate implements Serializable {
     }
     Severity sev = result.isAcceptable() ? Severity.PASS : Severity.FAIL;
     String msg = "Depressurisation STS-0131 acceptance " + (result.isAcceptable() ? "MET" : "NOT MET")
-	+ " at limiting time " + result.getLimitingTimeS() + " s (P = " + result.getPressureAtLimitingTimeBara()
-	+ " bara, remaining mass = " + result.getRemainingMassAtLimitingTimeKg() + " kg)";
+        + " at limiting time " + result.getLimitingTimeS() + " s (P = " + result.getPressureAtLimitingTimeBara()
+        + " bara, remaining mass = " + result.getRemainingMassAtLimitingTimeKg() + " kg)";
     findings.add(new Finding("Depressurisation", sev, msg));
     return this;
   }
@@ -118,8 +118,8 @@ public class Sts0131Gate implements Serializable {
     boolean ok = margin >= requiredMargin;
     Severity sev = ok ? Severity.PASS : Severity.FAIL;
     String msg = "PSV sizing margin = " + String.format(java.util.Locale.ROOT, "%.1f%%", margin * 100.0) + " (required "
-	+ String.format(java.util.Locale.ROOT, "%.1f%%", requiredMargin * 100.0) + "), required area " + requiredAreaIn2
-	+ " in2, selected " + selectedAreaIn2 + " in2";
+        + String.format(java.util.Locale.ROOT, "%.1f%%", requiredMargin * 100.0) + "), required area " + requiredAreaIn2
+        + " in2, selected " + selectedAreaIn2 + " in2";
     findings.add(new Finding("PSV sizing margin", sev, msg));
     return this;
   }
@@ -135,7 +135,7 @@ public class Sts0131Gate implements Serializable {
     boolean ok = minimumWallTemperatureC >= designMdmtC;
     Severity sev = ok ? Severity.PASS : Severity.FAIL;
     String msg = "Minimum wall metal temperature " + minimumWallTemperatureC + " degC vs design MDMT " + designMdmtC
-	+ " degC -> " + (ok ? "above" : "below") + " MDMT";
+        + " degC -> " + (ok ? "above" : "below") + " MDMT";
     findings.add(new Finding("MDMT", sev, msg));
     return this;
   }
@@ -153,8 +153,8 @@ public class Sts0131Gate implements Serializable {
     boolean ruptured = result.isRupturePredicted();
     Severity sev = ruptured ? Severity.FAIL : Severity.PASS;
     String msg = "Trapped-liquid fire rupture screening: "
-	+ (ruptured ? "rupture predicted - PFP demand or relief required"
-	    : "no rupture predicted within evaluation window");
+        + (ruptured ? "rupture predicted - PFP demand or relief required"
+            : "no rupture predicted within evaluation window");
     findings.add(new Finding("Trapped liquid fire rupture", sev, msg));
     return this;
   }
@@ -200,7 +200,7 @@ public class Sts0131Gate implements Serializable {
   public boolean isAcceptable() {
     for (Finding f : findings) {
       if (f.severity == Severity.FAIL) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -213,7 +213,7 @@ public class Sts0131Gate implements Serializable {
     int n = 0;
     for (Finding f : findings) {
       if (f.severity == Severity.FAIL) {
-	n++;
+        n++;
       }
     }
     return n;

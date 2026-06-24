@@ -38,25 +38,25 @@ class CPACO2WaterDiagnosticTest extends neqsim.NeqSimTest {
     // Reference experimental data: {T(C), P(bar), x_CO2_exp}
     // Sources: Wiebe & Gaddy (1940), Bamberger et al. (2000), Duan & Sun (2003)
     double[][] refData = {
-	// T(C), P(bar), x_CO2_experimental
-	{ 25.0, 25.0, 0.0133 }, // Wiebe & Gaddy
-	{ 25.0, 50.0, 0.0196 }, // Wiebe & Gaddy
-	{ 25.0, 100.0, 0.0234 }, // Wiebe & Gaddy
-	{ 25.0, 200.0, 0.0262 }, // Wiebe & Gaddy
-	{ 40.0, 50.0, 0.0145 }, // Bamberger et al.
-	{ 40.0, 100.0, 0.0195 }, // Bamberger et al.
-	{ 50.0, 50.0, 0.0123 }, // Bamberger et al.
-	{ 50.0, 100.0, 0.0178 }, // Bamberger et al.
-	{ 60.0, 50.0, 0.0110 }, // Bamberger et al.
-	{ 60.0, 100.0, 0.0170 }, // Bamberger et al.
-	{ 80.0, 100.0, 0.0155 }, // Duan & Sun model
-	{ 80.0, 200.0, 0.0230 }, // Duan & Sun model
-	{ 100.0, 100.0, 0.0145 }, // Duan & Sun model
-	{ 100.0, 200.0, 0.0230 }, // Duan & Sun model
+        // T(C), P(bar), x_CO2_experimental
+        { 25.0, 25.0, 0.0133 }, // Wiebe & Gaddy
+        { 25.0, 50.0, 0.0196 }, // Wiebe & Gaddy
+        { 25.0, 100.0, 0.0234 }, // Wiebe & Gaddy
+        { 25.0, 200.0, 0.0262 }, // Wiebe & Gaddy
+        { 40.0, 50.0, 0.0145 }, // Bamberger et al.
+        { 40.0, 100.0, 0.0195 }, // Bamberger et al.
+        { 50.0, 50.0, 0.0123 }, // Bamberger et al.
+        { 50.0, 100.0, 0.0178 }, // Bamberger et al.
+        { 60.0, 50.0, 0.0110 }, // Bamberger et al.
+        { 60.0, 100.0, 0.0170 }, // Bamberger et al.
+        { 80.0, 100.0, 0.0155 }, // Duan & Sun model
+        { 80.0, 200.0, 0.0230 }, // Duan & Sun model
+        { 100.0, 100.0, 0.0145 }, // Duan & Sun model
+        { 100.0, 200.0, 0.0230 }, // Duan & Sun model
     };
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-8s %-12s %-12s %-12s %-10s%n", "T(C)", "P(bar)",
-	"x_CO2_exp", "x_CO2_CPA", "error(%)", "kij_eff");
+        "x_CO2_exp", "x_CO2_CPA", "error(%)", "kij_eff");
     System.out.println("--------------------------------------------------------------" + "--------");
 
     double sumAbsError = 0.0;
@@ -77,11 +77,11 @@ class CPACO2WaterDiagnosticTest extends neqsim.NeqSimTest {
 
       ThermodynamicOperations ops = new ThermodynamicOperations(system);
       try {
-	ops.TPflash();
+        ops.TPflash();
       } catch (Exception e) {
-	logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.0f %-8.0f FLASH FAILED: %s%n", tempC, pressure,
-	    e.getMessage());
-	continue;
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.0f %-8.0f FLASH FAILED: %s%n", tempC, pressure,
+            e.getMessage());
+        continue;
       }
 
       double co2InAq = getAqueousCO2(system);
@@ -98,7 +98,7 @@ class CPACO2WaterDiagnosticTest extends neqsim.NeqSimTest {
       count++;
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.0f %-8.0f %-12.5f %-12.5f %-12.1f %-10.4f%n", tempC,
-	  pressure, xCO2exp, co2InAq, errorPct, kijLinear);
+          pressure, xCO2exp, co2InAq, errorPct, kijLinear);
     }
 
     System.out.println("--------------------------------------------------------------" + "--------");
@@ -107,15 +107,15 @@ class CPACO2WaterDiagnosticTest extends neqsim.NeqSimTest {
     // Also print water in CO2-rich phase
     logger.info("=== Water in CO2-rich Phase ===");
     double[][] waterRefData = {
-	// T(C), P(bar), y_H2O_experimental
-	{ 25.0, 100.0, 0.0027 }, // King et al.
-	{ 50.0, 100.0, 0.0058 }, // King et al.
-	{ 80.0, 100.0, 0.0156 }, // estimated
-	{ 100.0, 100.0, 0.0310 }, // estimated
+        // T(C), P(bar), y_H2O_experimental
+        { 25.0, 100.0, 0.0027 }, // King et al.
+        { 50.0, 100.0, 0.0058 }, // King et al.
+        { 80.0, 100.0, 0.0156 }, // estimated
+        { 100.0, 100.0, 0.0310 }, // estimated
     };
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-8s %-12s %-12s %-12s%n", "T(C)", "P(bar)", "y_H2O_exp",
-	"y_H2O_CPA", "error(%)");
+        "y_H2O_CPA", "error(%)");
     logger.info("--------------------------------------------------");
 
     for (double[] row : waterRefData) {
@@ -133,17 +133,17 @@ class CPACO2WaterDiagnosticTest extends neqsim.NeqSimTest {
 
       ThermodynamicOperations ops = new ThermodynamicOperations(system);
       try {
-	ops.TPflash();
+        ops.TPflash();
       } catch (Exception e) {
-	logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.0f %-8.0f FLASH FAILED%n", tempC, pressure);
-	continue;
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.0f %-8.0f FLASH FAILED%n", tempC, pressure);
+        continue;
       }
 
       double waterInCO2 = getCO2PhaseWater(system);
       double errorPct = (waterInCO2 - yH2Oexp) / yH2Oexp * 100.0;
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.0f %-8.0f %-12.5f %-12.5f %-12.1f%n", tempC, pressure,
-	  yH2Oexp, waterInCO2, errorPct);
+          yH2Oexp, waterInCO2, errorPct);
     }
   }
 
@@ -157,18 +157,18 @@ class CPACO2WaterDiagnosticTest extends neqsim.NeqSimTest {
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       String pt = system.getPhase(i).getType().toString().toLowerCase();
       if (pt.contains("aqueous")) {
-	if (system.getPhase(i).hasComponent("CO2")) {
-	  return system.getPhase(i).getComponent("CO2").getx();
-	}
+        if (system.getPhase(i).hasComponent("CO2")) {
+          return system.getPhase(i).getComponent("CO2").getx();
+        }
       }
     }
     // fallback: look for liquid phase
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       String pt = system.getPhase(i).getType().toString().toLowerCase();
       if (pt.contains("liquid")) {
-	if (system.getPhase(i).hasComponent("CO2")) {
-	  return system.getPhase(i).getComponent("CO2").getx();
-	}
+        if (system.getPhase(i).hasComponent("CO2")) {
+          return system.getPhase(i).getComponent("CO2").getx();
+        }
       }
     }
     return 0.0;
@@ -184,9 +184,9 @@ class CPACO2WaterDiagnosticTest extends neqsim.NeqSimTest {
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       String pt = system.getPhase(i).getType().toString().toLowerCase();
       if (pt.contains("gas") || pt.contains("oil")) {
-	if (system.getPhase(i).hasComponent("water")) {
-	  return system.getPhase(i).getComponent("water").getx();
-	}
+        if (system.getPhase(i).hasComponent("water")) {
+          return system.getPhase(i).getComponent("water").getx();
+        }
       }
     }
     return 0.0;

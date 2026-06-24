@@ -93,7 +93,7 @@ public final class PipeSectionAnalyzer {
   public static String run(String json) {
     if (json == null || json.trim().isEmpty()) {
       return errorJson("INPUT_ERROR", "JSON input is null or empty",
-	  "Provide a JSON object with 'pipeSections' array and fluid definition.");
+          "Provide a JSON object with 'pipeSections' array and fluid definition.");
     }
 
     JsonObject input;
@@ -101,14 +101,14 @@ public final class PipeSectionAnalyzer {
       input = JsonParser.parseString(json).getAsJsonObject();
     } catch (RuntimeException ex) {
       return errorJson("JSON_PARSE_ERROR", "Failed to parse JSON: " + ex.getMessage(),
-	  "Ensure the pipe-section analysis input is valid JSON.");
+          "Ensure the pipe-section analysis input is valid JSON.");
     }
 
     try {
       return GSON.toJson(analyze(input));
     } catch (RuntimeException ex) {
       return errorJson("ANALYSIS_ERROR", "Pipe section analysis failed: " + ex.getMessage(),
-	  "Check fluid definition, pipe section geometry, and operating conditions.");
+          "Check fluid definition, pipe section geometry, and operating conditions.");
     }
   }
 
@@ -122,7 +122,7 @@ public final class PipeSectionAnalyzer {
     JsonArray pipeSections = getSections(input);
     if (pipeSections == null || pipeSections.size() == 0) {
       throw new IllegalArgumentException("No 'pipeSections' array found or it is empty. "
-	  + "Provide at least one pipe section with geometry and flow conditions.");
+          + "Provide at least one pipe section with geometry and flow conditions.");
     }
 
     FluidSpec fluidSpec = readFluidSpec(input);
@@ -146,13 +146,13 @@ public final class PipeSectionAnalyzer {
 
       double utilization = sectionResult.get("velocityUtilization").getAsDouble();
       if (utilization > maxUtilization) {
-	maxUtilization = utilization;
-	maxUtilizationSection = sectionName;
+        maxUtilization = utilization;
+        maxUtilizationSection = sectionName;
       }
       if (utilization > 1.0) {
-	overDesignCount++;
+        overDesignCount++;
       } else if (utilization > 0.9) {
-	nearLimitCount++;
+        nearLimitCount++;
       }
     }
 
@@ -271,7 +271,7 @@ public final class PipeSectionAnalyzer {
     JsonObject components = section.has("components") ? section.getAsJsonObject("components") : fluidSpec.components;
     if (components != null) {
       for (Map.Entry<String, JsonElement> entry : components.entrySet()) {
-	fluid.addComponent(entry.getKey(), entry.getValue().getAsDouble());
+        fluid.addComponent(entry.getKey(), entry.getValue().getAsDouble());
       }
     }
     fluid.setMixingRule("classic");
@@ -321,16 +321,16 @@ public final class PipeSectionAnalyzer {
     for (JsonObject binding : sectionBindings) {
       String boundSection = getString(binding, "pipeSectionName", "");
       if (!sectionName.equals(boundSection)) {
-	continue;
+        continue;
       }
       String logicalTag = getString(binding, "logicalTag", "");
       String property = getString(binding, "property", "");
       if (logicalTag.isEmpty() || property.isEmpty()) {
-	continue;
+        continue;
       }
       Double value = fieldData.get(logicalTag);
       if (value == null) {
-	continue;
+        continue;
       }
       section.addProperty(property, value);
     }
@@ -371,7 +371,7 @@ public final class PipeSectionAnalyzer {
       spec.temperatureC = getDouble(fluid, "temperature_C", spec.temperatureC);
       spec.pressureBara = getDouble(fluid, "pressure_bara", spec.pressureBara);
       if (fluid.has("components") && fluid.get("components").isJsonObject()) {
-	spec.components = fluid.getAsJsonObject("components");
+        spec.components = fluid.getAsJsonObject("components");
       }
     }
     if (spec.components == null && input.has("components") && input.get("components").isJsonObject()) {
@@ -397,9 +397,9 @@ public final class PipeSectionAnalyzer {
     if (input.has("fieldData") && input.get("fieldData").isJsonObject()) {
       JsonObject fd = input.getAsJsonObject("fieldData");
       for (Map.Entry<String, JsonElement> entry : fd.entrySet()) {
-	if (entry.getValue().isJsonPrimitive() && entry.getValue().getAsJsonPrimitive().isNumber()) {
-	  data.put(entry.getKey(), entry.getValue().getAsDouble());
-	}
+        if (entry.getValue().isJsonPrimitive() && entry.getValue().getAsJsonPrimitive().isNumber()) {
+          data.put(entry.getKey(), entry.getValue().getAsDouble());
+        }
       }
     }
     return data;
@@ -415,9 +415,9 @@ public final class PipeSectionAnalyzer {
     List<JsonObject> bindings = new ArrayList<JsonObject>();
     if (input.has("sectionTagBindings") && input.get("sectionTagBindings").isJsonArray()) {
       for (JsonElement el : input.getAsJsonArray("sectionTagBindings")) {
-	if (el.isJsonObject()) {
-	  bindings.add(el.getAsJsonObject());
-	}
+        if (el.isJsonObject()) {
+          bindings.add(el.getAsJsonObject());
+        }
       }
     }
     return bindings;
@@ -480,9 +480,9 @@ public final class PipeSectionAnalyzer {
   private static double getDouble(JsonObject obj, String key, double defaultValue) {
     if (obj != null && obj.has(key) && obj.get(key).isJsonPrimitive()) {
       try {
-	return obj.get(key).getAsDouble();
+        return obj.get(key).getAsDouble();
       } catch (NumberFormatException e) {
-	return defaultValue;
+        return defaultValue;
       }
     }
     return defaultValue;
@@ -499,9 +499,9 @@ public final class PipeSectionAnalyzer {
   private static int getInt(JsonObject obj, String key, int defaultValue) {
     if (obj != null && obj.has(key) && obj.get(key).isJsonPrimitive()) {
       try {
-	return obj.get(key).getAsInt();
+        return obj.get(key).getAsInt();
       } catch (NumberFormatException e) {
-	return defaultValue;
+        return defaultValue;
       }
     }
     return defaultValue;

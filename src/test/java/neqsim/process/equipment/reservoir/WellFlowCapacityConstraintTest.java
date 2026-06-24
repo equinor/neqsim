@@ -139,7 +139,7 @@ public class WellFlowCapacityConstraintTest {
 
     java.util.Map<String, Double> summary = plant.getCapacityUtilizationSummary();
     assertTrue(summary.containsKey("Subsurface::well"),
-	"area-qualified summary should contain the well: " + summary.keySet());
+        "area-qualified summary should contain the well: " + summary.keySet());
 
     java.util.List<String> ranking = plant.getBottleneckRanking();
     assertFalse(ranking.isEmpty(), "ranking should not be empty");

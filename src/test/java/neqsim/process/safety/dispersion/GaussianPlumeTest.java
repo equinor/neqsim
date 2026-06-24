@@ -26,7 +26,7 @@ class GaussianPlumeTest {
     // Verify the bisection actually converged to the threshold within an order of magnitude
     // (Gaussian curve steepness gives non-trivial inverse precision; tolerance is loose).
     assertTrue(back > thresh / 10.0 && back < thresh * 10.0,
-	"concentration at returned distance should be near threshold; got " + back);
+        "concentration at returned distance should be near threshold; got " + back);
   }
 
   @Test

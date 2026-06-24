@@ -290,12 +290,12 @@ public class Ejector extends ProcessEquipmentBaseClass
     double mDotSuction = suctionStream.getFlowRate("kg/sec");
 
     double localMixingPressure = Double.isNaN(mixingPressure)
-	? estimateDefaultMixingPressure(suctionPressure, dischargePressure, mDotMotive, mDotSuction)
-	: mixingPressure;
+        ? estimateDefaultMixingPressure(suctionPressure, dischargePressure, mDotMotive, mDotSuction)
+        : mixingPressure;
 
     if (localMixingPressure > suctionPressure) {
       logger.warn("Mixing pressure {} bara exceeds suction pressure {} bara – using suction "
-	  + "pressure for mixing calculations.", localMixingPressure, suctionPressure);
+          + "pressure for mixing calculations.", localMixingPressure, suctionPressure);
       localMixingPressure = suctionPressure;
     }
 
@@ -402,7 +402,7 @@ public class Ejector extends ProcessEquipmentBaseClass
     double rhoDiffuser = Math.max(mixedFluid.getDensity("kg/m3"), 1.0e-9);
 
     double localDesignDiffuserOutletVelocity = designDiffuserVelocityOverride ? designDiffuserOutletVelocity
-	: estimateDesignDiffuserOutletVelocity(localMixingPressure, dischargePressure, rhoDiffuser, mDotTotal);
+        : estimateDesignDiffuserOutletVelocity(localMixingPressure, dischargePressure, rhoDiffuser, mDotTotal);
     localDesignDiffuserOutletVelocity = Math.max(localDesignDiffuserOutletVelocity, 1.0e-6);
 
     double diffuserArea = mDotTotal / (rhoDiffuser * localDesignDiffuserOutletVelocity);
@@ -422,7 +422,7 @@ public class Ejector extends ProcessEquipmentBaseClass
     // sharply. Uses the total enthalpy (stagnation enthalpy) and a thermodynamic flash to find
     // the maximum achievable pressure through the diffuser.
     criticalBackPressure = estimateCriticalBackPressure(mixedFluid.clone(), mixedTotalEnthalpy, localMixingPressure,
-	dischargePressure);
+        dischargePressure);
 
     double motiveNozzleDiameter = diameterFromArea(motiveNozzleArea);
     double suctionDiameter = diameterFromArea(suctionArea);
@@ -435,24 +435,24 @@ public class Ejector extends ProcessEquipmentBaseClass
     double diffuserLength = estimateLength(diffuserDiameter, DEFAULT_DIFFUSER_LENGTH_FACTOR);
 
     double localSuctionConnectionLength = suctionConnectionLengthOverride ? suctionConnectionLength
-	: estimateSuctionConnectionLength(suctionDiameter, suctionPressure, dischargePressure);
+        : estimateSuctionConnectionLength(suctionDiameter, suctionPressure, dischargePressure);
     double localDischargeConnectionLength = dischargeConnectionLengthOverride ? dischargeConnectionLength
-	: estimateDischargeConnectionLength(diffuserDiameter, localMixingPressure, dischargePressure);
+        : estimateDischargeConnectionLength(diffuserDiameter, localMixingPressure, dischargePressure);
 
     double bodyVolume = cylinderVolume(motiveNozzleArea, nozzleLength) + cylinderVolume(suctionArea, suctionLength)
-	+ cylinderVolume(mixingArea, mixingLength) + cylinderVolume(diffuserArea, diffuserLength);
+        + cylinderVolume(mixingArea, mixingLength) + cylinderVolume(diffuserArea, diffuserLength);
 
     double connectedPipingVolume = cylinderVolume(suctionArea, localSuctionConnectionLength)
-	+ cylinderVolume(diffuserArea, localDischargeConnectionLength);
+        + cylinderVolume(diffuserArea, localDischargeConnectionLength);
 
     mixedStream.setThermoSystem(mixedFluid);
     mixedStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
 
     getMechanicalDesign().updateDesign(localMixingPressure, motiveNozzleArea, velocityNozzle, suctionArea,
-	velocitySuction, mixingArea, mixingVelocity, diffuserArea, diffuserVelocity, getEntrainmentRatio(),
-	nozzleLength, suctionLength, mixingLength, diffuserLength, bodyVolume, connectedPipingVolume,
-	localSuctionConnectionLength, localDischargeConnectionLength);
+        velocitySuction, mixingArea, mixingVelocity, diffuserArea, diffuserVelocity, getEntrainmentRatio(),
+        nozzleLength, suctionLength, mixingLength, diffuserLength, bodyVolume, connectedPipingVolume,
+        localSuctionConnectionLength, localDischargeConnectionLength);
   }
 
   /**
@@ -594,12 +594,12 @@ public class Ejector extends ProcessEquipmentBaseClass
       double pDischarge = minDischargePressure + i * step;
       this.dischargePressure = pDischarge;
       try {
-	this.run();
-	double suctionP = suctionStream.getPressure("bara");
-	double cr = suctionP > 0 ? pDischarge / suctionP : 0.0;
-	curve.add(new double[] { pDischarge, getEntrainmentRatio(), cr });
+        this.run();
+        double suctionP = suctionStream.getPressure("bara");
+        double cr = suctionP > 0 ? pDischarge / suctionP : 0.0;
+        curve.add(new double[] { pDischarge, getEntrainmentRatio(), cr });
       } catch (Exception ex) {
-	logger.warn("Performance curve point at {} bara failed: {}", pDischarge, ex.getMessage());
+        logger.warn("Performance curve point at {} bara failed: {}", pDischarge, ex.getMessage());
       }
     }
 
@@ -710,7 +710,7 @@ public class Ejector extends ProcessEquipmentBaseClass
     try {
       double rho = fluid.getDensity("kg/m3");
       if (rho <= 0) {
-	return 0.0;
+        return 0.0;
       }
 
       // Try using Cp/Cv ratio (kappa) for ideal-gas speed of sound approximation
@@ -718,7 +718,7 @@ public class Ejector extends ProcessEquipmentBaseClass
       double pressurePa = fluid.getPressure("Pa");
       double kappa = fluid.getGamma2(); // Cp/Cv ratio
       if (kappa > 0 && pressurePa > 0) {
-	return Math.sqrt(kappa * pressurePa / rho);
+        return Math.sqrt(kappa * pressurePa / rho);
       }
 
       // Fallback: use molar mass and temperature for ideal gas estimate
@@ -726,8 +726,8 @@ public class Ejector extends ProcessEquipmentBaseClass
       double temperature = fluid.getTemperature(); // Kelvin
       double molarMass = fluid.getMolarMass("kg/mol");
       if (molarMass > 0 && temperature > 0) {
-	double gamma = 1.3; // reasonable default for hydrocarbon gases
-	return Math.sqrt(gamma * 8.314 * temperature / molarMass);
+        double gamma = 1.3; // reasonable default for hydrocarbon gases
+        return Math.sqrt(gamma * 8.314 * temperature / molarMass);
       }
     } catch (Exception e) {
       logger.debug("Could not estimate speed of sound: {}", e.getMessage());
@@ -780,31 +780,31 @@ public class Ejector extends ProcessEquipmentBaseClass
       // enthalpy produces a well-defined thermodynamic state
       int maxIterations = 20;
       for (int i = 0; i < maxIterations; i++) {
-	double pTrial = 0.5 * (pLow + pHigh);
-	try {
-	  SystemInterface trial = mixedFluidClone.clone();
-	  trial.setPressure(pTrial, "bara");
-	  ThermodynamicOperations trialOps = new ThermodynamicOperations(trial);
-	  trialOps.PHflash(totalEnthalpy, "J/kg");
-	  trial.init(3);
+        double pTrial = 0.5 * (pLow + pHigh);
+        try {
+          SystemInterface trial = mixedFluidClone.clone();
+          trial.setPressure(pTrial, "bara");
+          ThermodynamicOperations trialOps = new ThermodynamicOperations(trial);
+          trialOps.PHflash(totalEnthalpy, "J/kg");
+          trial.init(3);
 
-	  // Check if the flash produced a valid state (temperature reasonable)
-	  double trialTemp = trial.getTemperature();
-	  if (trialTemp > 0 && trialTemp < 2000.0) {
-	    // Valid state - this pressure is achievable, try higher
-	    cbp = pTrial;
-	    pLow = pTrial;
-	  } else {
-	    pHigh = pTrial;
-	  }
-	} catch (Exception e) {
-	  // Flash failed - pressure too high
-	  pHigh = pTrial;
-	}
+          // Check if the flash produced a valid state (temperature reasonable)
+          double trialTemp = trial.getTemperature();
+          if (trialTemp > 0 && trialTemp < 2000.0) {
+            // Valid state - this pressure is achievable, try higher
+            cbp = pTrial;
+            pLow = pTrial;
+          } else {
+            pHigh = pTrial;
+          }
+        } catch (Exception e) {
+          // Flash failed - pressure too high
+          pHigh = pTrial;
+        }
 
-	if (pHigh - pLow < 0.01) {
-	  break;
-	}
+        if (pHigh - pLow < 0.01) {
+          break;
+        }
       }
 
       // Apply diffuser efficiency: the practical CBP is between mixing pressure and ideal CBP
@@ -821,7 +821,7 @@ public class Ejector extends ProcessEquipmentBaseClass
   @Override
   public double getMassBalance(String unit) {
     double inletFlow = motiveStream.getThermoSystem().getFlowRate(unit)
-	+ suctionStream.getThermoSystem().getFlowRate(unit);
+        + suctionStream.getThermoSystem().getFlowRate(unit);
     return mixedStream.getThermoSystem().getFlowRate(unit) - inletFlow;
   }
 
@@ -874,7 +874,7 @@ public class Ejector extends ProcessEquipmentBaseClass
   @Override
   public String toJson() {
     return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create()
-	.toJson(new neqsim.process.util.monitor.EjectorResponse(this));
+        .toJson(new neqsim.process.util.monitor.EjectorResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -916,7 +916,7 @@ public class Ejector extends ProcessEquipmentBaseClass
 
     autoSized = true;
     logger.info("Ejector '{}' auto-sized: design ER={:.2f}, CR={:.2f}", getName(), designEntrainmentRatio,
-	designCompressionRatio);
+        designCompressionRatio);
   }
 
   /** {@inheritDoc} */
@@ -952,34 +952,34 @@ public class Ejector extends ProcessEquipmentBaseClass
     if (motiveStream != null && suctionStream != null) {
       sb.append("\n--- Operating Conditions ---\n");
       sb.append("Motive Pressure: ").append(String.format(Locale.US, "%.2f bara", motiveStream.getPressure("bara")))
-	  .append("\n");
+          .append("\n");
       sb.append("Suction Pressure: ").append(String.format(Locale.US, "%.2f bara", suctionStream.getPressure("bara")))
-	  .append("\n");
+          .append("\n");
       sb.append("Discharge Pressure: ").append(String.format(Locale.US, "%.2f bara", dischargePressure)).append("\n");
       sb.append("Motive Flow: ").append(String.format(Locale.US, "%.3f kg/s", motiveStream.getFlowRate("kg/sec")))
-	  .append("\n");
+          .append("\n");
       sb.append("Suction Flow: ").append(String.format(Locale.US, "%.3f kg/s", suctionStream.getFlowRate("kg/sec")))
-	  .append("\n");
+          .append("\n");
 
       sb.append("\n--- Performance ---\n");
       sb.append("Entrainment Ratio: ").append(String.format(Locale.US, "%.3f", getEntrainmentRatio())).append("\n");
       sb.append("Compression Ratio: ")
-	  .append(String.format(Locale.US, "%.3f", dischargePressure / suctionStream.getPressure("bara"))).append("\n");
+          .append(String.format(Locale.US, "%.3f", dischargePressure / suctionStream.getPressure("bara"))).append("\n");
       sb.append("Nozzle Efficiency: ").append(String.format(Locale.US, "%.1f%%", efficiencyIsentropic * 100))
-	  .append("\n");
+          .append("\n");
       sb.append("Diffuser Efficiency: ").append(String.format(Locale.US, "%.1f%%", diffuserEfficiency * 100))
-	  .append("\n");
+          .append("\n");
 
       if (isAutoSized()) {
-	sb.append("\n--- Design Values ---\n");
-	sb.append("Design Entrainment Ratio: ").append(String.format(Locale.US, "%.3f", designEntrainmentRatio))
-	    .append("\n");
-	sb.append("Design Compression Ratio: ").append(String.format(Locale.US, "%.3f", designCompressionRatio))
-	    .append("\n");
-	sb.append("Design Motive Flow: ").append(String.format(Locale.US, "%.3f kg/s", designMotiveFlowRate))
-	    .append("\n");
-	sb.append("Max Critical Back Pressure: ").append(String.format(Locale.US, "%.2f bara", maxCriticalBackPressure))
-	    .append("\n");
+        sb.append("\n--- Design Values ---\n");
+        sb.append("Design Entrainment Ratio: ").append(String.format(Locale.US, "%.3f", designEntrainmentRatio))
+            .append("\n");
+        sb.append("Design Compression Ratio: ").append(String.format(Locale.US, "%.3f", designCompressionRatio))
+            .append("\n");
+        sb.append("Design Motive Flow: ").append(String.format(Locale.US, "%.3f kg/s", designMotiveFlowRate))
+            .append("\n");
+        sb.append("Max Critical Back Pressure: ").append(String.format(Locale.US, "%.2f bara", maxCriticalBackPressure))
+            .append("\n");
       }
     }
 
@@ -1006,17 +1006,17 @@ public class Ejector extends ProcessEquipmentBaseClass
       report.put("operatingConditions", operating);
 
       if (autoSized) {
-	java.util.Map<String, Object> design = new java.util.LinkedHashMap<String, Object>();
-	design.put("designEntrainmentRatio", designEntrainmentRatio);
-	design.put("designCompressionRatio", designCompressionRatio);
-	design.put("designMotiveFlow_kg_s", designMotiveFlowRate);
-	design.put("maxCriticalBackPressure_bara", maxCriticalBackPressure);
-	report.put("designValues", design);
+        java.util.Map<String, Object> design = new java.util.LinkedHashMap<String, Object>();
+        design.put("designEntrainmentRatio", designEntrainmentRatio);
+        design.put("designCompressionRatio", designCompressionRatio);
+        design.put("designMotiveFlow_kg_s", designMotiveFlowRate);
+        design.put("maxCriticalBackPressure_bara", maxCriticalBackPressure);
+        report.put("designValues", design);
       }
     }
 
     return new com.google.gson.GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-	.toJson(report);
+        .toJson(report);
   }
 
   // ============================================================================
@@ -1032,7 +1032,7 @@ public class Ejector extends ProcessEquipmentBaseClass
     // Entrainment ratio constraint
     if (designEntrainmentRatio > 0) {
       neqsim.process.equipment.capacity.CapacityConstraint erConstraint = new neqsim.process.equipment.capacity.CapacityConstraint(
-	  "entrainmentRatio", "-", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+          "entrainmentRatio", "-", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
       erConstraint.setDesignValue(designEntrainmentRatio);
       erConstraint.setDescription("Entrainment ratio (suction/motive mass ratio)");
       erConstraint.setValueSupplier(this::getEntrainmentRatio);
@@ -1042,14 +1042,14 @@ public class Ejector extends ProcessEquipmentBaseClass
     // Compression ratio constraint
     if (designCompressionRatio > 0) {
       neqsim.process.equipment.capacity.CapacityConstraint crConstraint = new neqsim.process.equipment.capacity.CapacityConstraint(
-	  "compressionRatio", "-", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+          "compressionRatio", "-", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
       crConstraint.setDesignValue(designCompressionRatio);
       crConstraint.setDescription("Compression ratio (discharge/suction pressure)");
       crConstraint.setValueSupplier(() -> {
-	if (suctionStream != null && suctionStream.getPressure("bara") > 0) {
-	  return dischargePressure / suctionStream.getPressure("bara");
-	}
-	return 0.0;
+        if (suctionStream != null && suctionStream.getPressure("bara") > 0) {
+          return dischargePressure / suctionStream.getPressure("bara");
+        }
+        return 0.0;
       });
       ejectorCapacityConstraints.put("compressionRatio", crConstraint);
     }
@@ -1057,7 +1057,7 @@ public class Ejector extends ProcessEquipmentBaseClass
     // Critical back pressure constraint (HARD limit)
     if (maxCriticalBackPressure > 0) {
       neqsim.process.equipment.capacity.CapacityConstraint bpConstraint = new neqsim.process.equipment.capacity.CapacityConstraint(
-	  "criticalBackPressure", "bara", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD);
+          "criticalBackPressure", "bara", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD);
       bpConstraint.setDesignValue(maxCriticalBackPressure);
       bpConstraint.setMaxValue(maxCriticalBackPressure);
       bpConstraint.setDescription("Maximum allowable back pressure");
@@ -1068,7 +1068,7 @@ public class Ejector extends ProcessEquipmentBaseClass
     // Motive flow rate constraint
     if (designMotiveFlowRate > 0) {
       neqsim.process.equipment.capacity.CapacityConstraint mfConstraint = new neqsim.process.equipment.capacity.CapacityConstraint(
-	  "motiveFlowRate", "kg/s", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+          "motiveFlowRate", "kg/s", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
       mfConstraint.setDesignValue(designMotiveFlowRate);
       mfConstraint.setDescription("Motive stream flow rate");
       mfConstraint.setValueSupplier(() -> motiveStream != null ? motiveStream.getFlowRate("kg/sec") : 0.0);
@@ -1158,11 +1158,11 @@ public class Ejector extends ProcessEquipmentBaseClass
     double maxUtil = 0.0;
     for (neqsim.process.equipment.capacity.CapacityConstraint constraint : ejectorCapacityConstraints.values()) {
       if (constraint.isEnabled()) {
-	double util = constraint.getUtilization();
-	if (util > maxUtil) {
-	  maxUtil = util;
-	  bottleneck = constraint;
-	}
+        double util = constraint.getUtilization();
+        if (util > maxUtil) {
+          maxUtil = util;
+          bottleneck = constraint;
+        }
       }
     }
     return bottleneck;
@@ -1173,7 +1173,7 @@ public class Ejector extends ProcessEquipmentBaseClass
   public boolean isCapacityExceeded() {
     for (neqsim.process.equipment.capacity.CapacityConstraint constraint : ejectorCapacityConstraints.values()) {
       if (constraint.isEnabled() && constraint.getUtilization() > 1.0) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -1184,9 +1184,9 @@ public class Ejector extends ProcessEquipmentBaseClass
   public boolean isHardLimitExceeded() {
     for (neqsim.process.equipment.capacity.CapacityConstraint constraint : ejectorCapacityConstraints.values()) {
       if (constraint.isEnabled()
-	  && constraint.getType() == neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD
-	  && constraint.getUtilization() > 1.0) {
-	return true;
+          && constraint.getType() == neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD
+          && constraint.getUtilization() > 1.0) {
+        return true;
       }
     }
     return false;
@@ -1198,7 +1198,7 @@ public class Ejector extends ProcessEquipmentBaseClass
     double maxUtil = 0.0;
     for (neqsim.process.equipment.capacity.CapacityConstraint constraint : ejectorCapacityConstraints.values()) {
       if (constraint.isEnabled()) {
-	maxUtil = Math.max(maxUtil, constraint.getUtilization());
+        maxUtil = Math.max(maxUtil, constraint.getUtilization());
       }
     }
     return maxUtil;

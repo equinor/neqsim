@@ -38,7 +38,7 @@ class ShortcutDistillationColumnTest {
 
     assertTrue(column.isSolved(), "Column should converge");
     assertTrue(column.getMinimumNumberOfStages() > 1.0,
-	"Nmin should be > 1, got: " + column.getMinimumNumberOfStages());
+        "Nmin should be > 1, got: " + column.getMinimumNumberOfStages());
     assertTrue(column.getMinimumRefluxRatio() > 0.0, "Rmin should be positive, got: " + column.getMinimumRefluxRatio());
     assertTrue(column.getActualNumberOfStages() > column.getMinimumNumberOfStages(), "N_actual should exceed N_min");
     assertTrue(column.getActualRefluxRatio() > column.getMinimumRefluxRatio(), "R_actual should exceed R_min");
@@ -50,9 +50,9 @@ class ShortcutDistillationColumnTest {
 
     double feedMolarFlow = feed.getFlowRate("mole/hr");
     double productMolarFlow = column.getDistillateStream().getFlowRate("mole/hr")
-	+ column.getBottomsStream().getFlowRate("mole/hr");
+        + column.getBottomsStream().getFlowRate("mole/hr");
     assertEquals(feedMolarFlow, productMolarFlow, feedMolarFlow * 1.0e-10,
-	"Shortcut products should conserve molar feed flow");
+        "Shortcut products should conserve molar feed flow");
 
     double feedEthane = feed.getFluid().getComponent("ethane").getTotalFlowRate("mole/hr");
     double distEthane = column.getDistillateStream().getFluid().getComponent("ethane").getTotalFlowRate("mole/hr");
@@ -138,7 +138,7 @@ class ShortcutDistillationColumnTest {
 
     DistillationColumn column = new DistillationColumn("RigorousFromShortcut", 3, true, true);
     DistillationColumn.ShortcutInitializationResult result = column.initializeFromShortcut(feed, "ethane", "propane",
-	0.95, 0.95, 1.3);
+        0.95, 0.95, 1.3);
 
     assertTrue(result.isInitialized(), result.getMessage());
     assertEquals(result, column.getLastShortcutInitializationResult());

@@ -69,7 +69,7 @@ public class AutomaticScenarioGeneratorTest {
   @Test
   void testAddFailureModes() {
     AutomaticScenarioGenerator result = generator.addFailureModes(AutomaticScenarioGenerator.FailureMode.COOLING_LOSS,
-	AutomaticScenarioGenerator.FailureMode.VALVE_STUCK_CLOSED);
+        AutomaticScenarioGenerator.FailureMode.VALVE_STUCK_CLOSED);
 
     // Should return same generator for chaining
     assertEquals(generator, result);
@@ -85,7 +85,7 @@ public class AutomaticScenarioGeneratorTest {
   @Test
   void testGenerateSingleFailures() {
     generator.addFailureModes(AutomaticScenarioGenerator.FailureMode.VALVE_STUCK_CLOSED,
-	AutomaticScenarioGenerator.FailureMode.COOLING_LOSS);
+        AutomaticScenarioGenerator.FailureMode.COOLING_LOSS);
 
     List<ProcessSafetyScenario> scenarios = generator.generateSingleFailures();
 
@@ -106,7 +106,7 @@ public class AutomaticScenarioGeneratorTest {
   @Test
   void testGenerateCombinations() {
     generator.addFailureModes(AutomaticScenarioGenerator.FailureMode.VALVE_STUCK_CLOSED,
-	AutomaticScenarioGenerator.FailureMode.COOLING_LOSS);
+        AutomaticScenarioGenerator.FailureMode.COOLING_LOSS);
 
     List<ProcessSafetyScenario> scenarios = generator.generateCombinations(2);
 
@@ -211,14 +211,14 @@ public class AutomaticScenarioGeneratorTest {
   @Test
   void testProcessWithValveIdentifiesValveFailures() {
     generator.addFailureModes(AutomaticScenarioGenerator.FailureMode.VALVE_STUCK_CLOSED,
-	AutomaticScenarioGenerator.FailureMode.VALVE_STUCK_OPEN);
+        AutomaticScenarioGenerator.FailureMode.VALVE_STUCK_OPEN);
 
     List<AutomaticScenarioGenerator.EquipmentFailure> failures = generator.getIdentifiedFailures();
 
     // Should have valve failures identified
     boolean hasValveFailure = failures.stream()
-	.anyMatch(f -> f.getMode() == AutomaticScenarioGenerator.FailureMode.VALVE_STUCK_CLOSED
-	    || f.getMode() == AutomaticScenarioGenerator.FailureMode.VALVE_STUCK_OPEN);
+        .anyMatch(f -> f.getMode() == AutomaticScenarioGenerator.FailureMode.VALVE_STUCK_CLOSED
+            || f.getMode() == AutomaticScenarioGenerator.FailureMode.VALVE_STUCK_OPEN);
 
     assertTrue(hasValveFailure);
   }
@@ -228,7 +228,7 @@ public class AutomaticScenarioGeneratorTest {
     List<AutomaticScenarioGenerator.EquipmentFailure> failures = generator.getIdentifiedFailures();
 
     boolean hasCoolingLoss = failures.stream()
-	.anyMatch(f -> f.getMode() == AutomaticScenarioGenerator.FailureMode.COOLING_LOSS);
+        .anyMatch(f -> f.getMode() == AutomaticScenarioGenerator.FailureMode.COOLING_LOSS);
 
     assertTrue(hasCoolingLoss);
   }
@@ -236,8 +236,8 @@ public class AutomaticScenarioGeneratorTest {
   @Test
   void testChainedConfiguration() {
     List<ProcessSafetyScenario> scenarios = generator
-	.addFailureModes(AutomaticScenarioGenerator.FailureMode.VALVE_STUCK_CLOSED)
-	.addFailureModes(AutomaticScenarioGenerator.FailureMode.COOLING_LOSS).generateSingleFailures();
+        .addFailureModes(AutomaticScenarioGenerator.FailureMode.VALVE_STUCK_CLOSED)
+        .addFailureModes(AutomaticScenarioGenerator.FailureMode.COOLING_LOSS).generateSingleFailures();
 
     assertNotNull(scenarios);
   }

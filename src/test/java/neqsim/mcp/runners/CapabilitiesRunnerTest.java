@@ -126,7 +126,7 @@ class CapabilitiesRunnerTest {
       assertTrue(examples.size() > 0, "Missing example reference for " + schemaToolName);
       JsonObject example = examples.get(0).getAsJsonObject();
       assertNotNull(ExampleCatalog.getExample(example.get("category").getAsString(), example.get("name").getAsString()),
-	  "Example reference does not resolve for " + schemaToolName);
+          "Example reference does not resolve for " + schemaToolName);
 
       JsonArray templates = descriptor.getAsJsonArray("setupTemplates");
       assertTrue(templates.size() > 0, "Missing setup template reference for " + schemaToolName);

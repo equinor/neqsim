@@ -123,7 +123,7 @@ public final class LMTDcorrectionFactor {
     if (shellPasses > 1) {
       P1 = convertPtoPerShell(P, R, shellPasses);
       if (P1 <= 0.0 || P1 >= 1.0 || Double.isNaN(P1)) {
-	return 1.0;
+        return 1.0;
       }
     }
 
@@ -144,7 +144,7 @@ public final class LMTDcorrectionFactor {
     for (int n = 1; n <= 6; n++) {
       double ft = calcFt(tHotIn, tHotOut, tColdIn, tColdOut, n);
       if (ft >= MIN_ACCEPTABLE_FT) {
-	return n;
+        return n;
       }
     }
     return -1;
@@ -214,11 +214,11 @@ public final class LMTDcorrectionFactor {
       double arg1 = 2.0 - P * (2.0 - sqrt2);
       double arg2 = 2.0 - P * (2.0 + sqrt2);
       if (arg1 <= 0.0 || arg2 <= 0.0 || arg1 / arg2 <= 0.0) {
-	return 0.0;
+        return 0.0;
       }
       double denominator = (1.0 - P) * Math.log(arg1 / arg2);
       if (Math.abs(denominator) < 1e-15) {
-	return 1.0;
+        return 1.0;
       }
       return numerator / denominator;
     }

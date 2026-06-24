@@ -154,7 +154,7 @@ public final class OperationalEnvelopeReport implements Serializable {
     int count = 0;
     for (OperationalMargin margin : margins) {
       if (margin.getStatus().getRank() >= OperationalMargin.Status.WARNING.getRank()) {
-	count++;
+        count++;
       }
     }
     return count;
@@ -168,7 +168,7 @@ public final class OperationalEnvelopeReport implements Serializable {
   public boolean hasHighUrgencyPrediction() {
     for (TripPrediction prediction : tripPredictions) {
       if (prediction.getSeverity().getRank() >= TripPrediction.Severity.HIGH.getRank()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -226,7 +226,7 @@ public final class OperationalEnvelopeReport implements Serializable {
    */
   private static List<OperationalMargin> copyMargins(List<OperationalMargin> source) {
     List<OperationalMargin> copy = source == null ? new ArrayList<OperationalMargin>()
-	: new ArrayList<OperationalMargin>(source);
+        : new ArrayList<OperationalMargin>(source);
     Collections.sort(copy);
     return copy;
   }
@@ -239,7 +239,7 @@ public final class OperationalEnvelopeReport implements Serializable {
    */
   private static List<TripPrediction> copyTrips(List<TripPrediction> source) {
     List<TripPrediction> copy = source == null ? new ArrayList<TripPrediction>()
-	: new ArrayList<TripPrediction>(source);
+        : new ArrayList<TripPrediction>(source);
     Collections.sort(copy);
     return copy;
   }
@@ -252,7 +252,7 @@ public final class OperationalEnvelopeReport implements Serializable {
    */
   private static List<MitigationSuggestion> copyMitigations(List<MitigationSuggestion> source) {
     List<MitigationSuggestion> copy = source == null ? new ArrayList<MitigationSuggestion>()
-	: new ArrayList<MitigationSuggestion>(source);
+        : new ArrayList<MitigationSuggestion>(source);
     Collections.sort(copy);
     return copy;
   }
@@ -268,7 +268,7 @@ public final class OperationalEnvelopeReport implements Serializable {
     for (OperationalMargin margin : margins) {
       EnvelopeStatus candidate = mapStatus(margin.getStatus());
       if (candidate.getRank() > status.getRank()) {
-	status = candidate;
+        status = candidate;
       }
     }
     return status;
@@ -311,7 +311,7 @@ public final class OperationalEnvelopeReport implements Serializable {
     }
     StringBuilder builder = new StringBuilder();
     builder.append("Operational envelope status ").append(status.name()).append(" with ").append(margins.size())
-	.append(" evaluated margins");
+        .append(" evaluated margins");
     if (!predictions.isEmpty()) {
       builder.append(" and ").append(predictions.size()).append(" trip prediction(s)");
     }

@@ -83,7 +83,7 @@ public class ProbitModel implements Serializable {
     x = Math.abs(x);
     double t = 1.0 / (1.0 + 0.3275911 * x);
     double y = 1.0 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t
-	* Math.exp(-x * x);
+        * Math.exp(-x * x);
     return sign * y;
   }
 

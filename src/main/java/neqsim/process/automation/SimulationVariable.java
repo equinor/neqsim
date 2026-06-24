@@ -54,8 +54,8 @@ public class SimulationVariable implements Serializable {
    */
   public SimulationVariable(String address, String name, VariableType type, String defaultUnit, String description) {
     this(address, name, type, defaultUnit, description, "general", "process-automation", inferUnitFamily(defaultUnit),
-	null, null, new ArrayList<String>(), type == VariableType.INPUT, type == VariableType.INPUT,
-	"Available when the owning unit operation is present");
+        null, null, new ArrayList<String>(), type == VariableType.INPUT, type == VariableType.INPUT,
+        "Available when the owning unit operation is present");
   }
 
   /**
@@ -137,7 +137,7 @@ public class SimulationVariable implements Serializable {
    */
   public SimulationVariable withCategory(String category) {
     return copy(category, source, unitFamily, minimumValue, maximumValue, allowedValues, writable, invalidatesProcess,
-	applicability);
+        applicability);
   }
 
   /**
@@ -149,7 +149,7 @@ public class SimulationVariable implements Serializable {
    */
   public SimulationVariable withBounds(Double minimumValue, Double maximumValue) {
     return copy(category, source, unitFamily, minimumValue, maximumValue, allowedValues, writable, invalidatesProcess,
-	applicability);
+        applicability);
   }
 
   /**
@@ -160,7 +160,7 @@ public class SimulationVariable implements Serializable {
    */
   public SimulationVariable withAllowedValues(String... allowedValues) {
     return copy(category, source, unitFamily, minimumValue, maximumValue, Arrays.asList(allowedValues), writable,
-	invalidatesProcess, applicability);
+        invalidatesProcess, applicability);
   }
 
   /**
@@ -172,7 +172,7 @@ public class SimulationVariable implements Serializable {
    */
   public SimulationVariable withWritableSafety(boolean writable, boolean invalidatesProcess) {
     return copy(category, source, unitFamily, minimumValue, maximumValue, allowedValues, writable, invalidatesProcess,
-	applicability);
+        applicability);
   }
 
   /**
@@ -183,7 +183,7 @@ public class SimulationVariable implements Serializable {
    */
   public SimulationVariable withApplicability(String applicability) {
     return copy(category, source, unitFamily, minimumValue, maximumValue, allowedValues, writable, invalidatesProcess,
-	applicability);
+        applicability);
   }
 
   /**
@@ -194,7 +194,7 @@ public class SimulationVariable implements Serializable {
    */
   public SimulationVariable withUnitFamily(String unitFamily) {
     return copy(category, source, unitFamily, minimumValue, maximumValue, allowedValues, writable, invalidatesProcess,
-	applicability);
+        applicability);
   }
 
   /**
@@ -205,7 +205,7 @@ public class SimulationVariable implements Serializable {
    */
   public SimulationVariable withSource(String source) {
     return copy(category, source, unitFamily, minimumValue, maximumValue, allowedValues, writable, invalidatesProcess,
-	applicability);
+        applicability);
   }
 
   /**
@@ -226,7 +226,7 @@ public class SimulationVariable implements Serializable {
       Double maximumValue, List<String> allowedValues, boolean writable, boolean invalidatesProcess,
       String applicability) {
     return new SimulationVariable(address, name, type, defaultUnit, description, category, source, unitFamily,
-	minimumValue, maximumValue, allowedValues, writable, invalidatesProcess, applicability);
+        minimumValue, maximumValue, allowedValues, writable, invalidatesProcess, applicability);
   }
 
   /**

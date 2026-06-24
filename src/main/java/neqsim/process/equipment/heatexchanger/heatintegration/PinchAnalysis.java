@@ -179,9 +179,9 @@ public class PinchAnalysis implements Serializable {
       // Fall back to phase-weighted Cp
       cp_JperKgK = 0.0;
       for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
-	double phaseFraction = fluid.getPhase(p).getBeta();
-	double phaseCp = fluid.getPhase(p).getCp("J/kgK");
-	cp_JperKgK += phaseFraction * phaseCp;
+        double phaseFraction = fluid.getPhase(p).getBeta();
+        double phaseCp = fluid.getPhase(p).getCp("J/kgK");
+        cp_JperKgK += phaseFraction * phaseCp;
       }
     }
 
@@ -226,10 +226,10 @@ public class PinchAnalysis implements Serializable {
       StreamInterface inletStream = heatExchanger.getInStream(i);
       StreamInterface outletStream = outlets.get(i);
       if (inletStream == null || outletStream == null) {
-	continue;
+        continue;
       }
       if (inletStream.getThermoSystem() == null || outletStream.getThermoSystem() == null) {
-	continue;
+        continue;
       }
 
       double inletT_C = inletStream.getTemperature("C");
@@ -238,20 +238,20 @@ public class PinchAnalysis implements Serializable {
       double deltaT = Math.abs(inletT_C - outletT_C);
 
       if (deltaT < 1e-6 || massFlow <= 0) {
-	continue;
+        continue;
       }
 
       // Compute duty and MCp
       double duty_kW = Math
-	  .abs(inletStream.getThermoSystem().getEnthalpy() - outletStream.getThermoSystem().getEnthalpy()) / 1000.0;
+          .abs(inletStream.getThermoSystem().getEnthalpy() - outletStream.getThermoSystem().getEnthalpy()) / 1000.0;
       double mCp_kWperK = duty_kW / deltaT;
 
       String streamName = baseName + (i == 0 ? " hot-side" : " cold-side");
 
       if (inletT_C > outletT_C) {
-	addHotStream(streamName, inletT_C, outletT_C, mCp_kWperK);
+        addHotStream(streamName, inletT_C, outletT_C, mCp_kWperK);
       } else {
-	addColdStream(streamName, inletT_C, outletT_C, mCp_kWperK);
+        addColdStream(streamName, inletT_C, outletT_C, mCp_kWperK);
       }
     }
   }
@@ -272,17 +272,17 @@ public class PinchAnalysis implements Serializable {
       StreamInterface inStream;
       StreamInterface outStream;
       try {
-	inStream = mshe.getInStream(i);
-	outStream = mshe.getOutStream(i);
+        inStream = mshe.getInStream(i);
+        outStream = mshe.getOutStream(i);
       } catch (IndexOutOfBoundsException ex) {
-	break; // no more streams
+        break; // no more streams
       }
 
       if (inStream == null || outStream == null) {
-	continue;
+        continue;
       }
       if (inStream.getThermoSystem() == null || outStream.getThermoSystem() == null) {
-	continue;
+        continue;
       }
 
       double inletT_C = mshe.getInTemperature(i);
@@ -290,20 +290,20 @@ public class PinchAnalysis implements Serializable {
       double deltaT = Math.abs(inletT_C - outletT_C);
 
       if (deltaT < 1e-6) {
-	continue;
+        continue;
       }
 
       // Compute duty and MCp from enthalpy difference
       double duty_kW = Math.abs(inStream.getThermoSystem().getEnthalpy() - outStream.getThermoSystem().getEnthalpy())
-	  / 1000.0;
+          / 1000.0;
       double mCp_kWperK = duty_kW / deltaT;
 
       String streamName = mshe.getName() + " stream-" + i;
 
       if (inletT_C > outletT_C) {
-	addHotStream(streamName, inletT_C, outletT_C, mCp_kWperK);
+        addHotStream(streamName, inletT_C, outletT_C, mCp_kWperK);
       } else {
-	addColdStream(streamName, inletT_C, outletT_C, mCp_kWperK);
+        addColdStream(streamName, inletT_C, outletT_C, mCp_kWperK);
       }
     }
   }
@@ -331,55 +331,55 @@ public class PinchAnalysis implements Serializable {
 
     for (ProcessEquipmentInterface equipment : process.getUnitOperations()) {
       if (equipment instanceof MultiStreamHeatExchanger2) {
-	pinch.addStreamsFromHeatExchanger((MultiStreamHeatExchanger2) equipment);
+        pinch.addStreamsFromHeatExchanger((MultiStreamHeatExchanger2) equipment);
       } else if (equipment instanceof HeatExchanger) {
-	pinch.addStreamsFromHeatExchanger((HeatExchanger) equipment);
+        pinch.addStreamsFromHeatExchanger((HeatExchanger) equipment);
       } else if (equipment instanceof Heater) {
-	// Heater and Cooler (extends Heater) represent utility streams
-	Heater heater = (Heater) equipment;
-	List<StreamInterface> inlets = heater.getInletStreams();
-	List<StreamInterface> outlets = heater.getOutletStreams();
-	if (inlets == null || outlets == null || inlets.isEmpty() || outlets.isEmpty()) {
-	  continue;
-	}
+        // Heater and Cooler (extends Heater) represent utility streams
+        Heater heater = (Heater) equipment;
+        List<StreamInterface> inlets = heater.getInletStreams();
+        List<StreamInterface> outlets = heater.getOutletStreams();
+        if (inlets == null || outlets == null || inlets.isEmpty() || outlets.isEmpty()) {
+          continue;
+        }
 
-	StreamInterface inletStream = inlets.get(0);
-	StreamInterface outletStream = outlets.get(0);
-	if (inletStream == null || outletStream == null) {
-	  continue;
-	}
-	if (inletStream.getThermoSystem() == null || outletStream.getThermoSystem() == null) {
-	  continue;
-	}
+        StreamInterface inletStream = inlets.get(0);
+        StreamInterface outletStream = outlets.get(0);
+        if (inletStream == null || outletStream == null) {
+          continue;
+        }
+        if (inletStream.getThermoSystem() == null || outletStream.getThermoSystem() == null) {
+          continue;
+        }
 
-	double inletT_C = inletStream.getTemperature("C");
-	double outletT_C = outletStream.getTemperature("C");
-	double massFlow = inletStream.getThermoSystem().getFlowRate("kg/sec");
-	double deltaT = Math.abs(inletT_C - outletT_C);
+        double inletT_C = inletStream.getTemperature("C");
+        double outletT_C = outletStream.getTemperature("C");
+        double massFlow = inletStream.getThermoSystem().getFlowRate("kg/sec");
+        double deltaT = Math.abs(inletT_C - outletT_C);
 
-	if (deltaT < 1e-6 || massFlow <= 0) {
-	  continue;
-	}
+        if (deltaT < 1e-6 || massFlow <= 0) {
+          continue;
+        }
 
-	double duty_kW = Math
-	    .abs(inletStream.getThermoSystem().getEnthalpy() - outletStream.getThermoSystem().getEnthalpy()) / 1000.0;
-	double mCp_kWperK = duty_kW / deltaT;
+        double duty_kW = Math
+            .abs(inletStream.getThermoSystem().getEnthalpy() - outletStream.getThermoSystem().getEnthalpy()) / 1000.0;
+        double mCp_kWperK = duty_kW / deltaT;
 
-	String name = heater.getName();
-	boolean isCooler = equipment instanceof Cooler || inletT_C > outletT_C;
+        String name = heater.getName();
+        boolean isCooler = equipment instanceof Cooler || inletT_C > outletT_C;
 
-	if (isCooler) {
-	  // The process side needs cooling → hot stream in pinch analysis
-	  pinch.addHotStream(name, inletT_C, outletT_C, mCp_kWperK);
-	} else {
-	  // The process side needs heating → cold stream in pinch analysis
-	  pinch.addColdStream(name, inletT_C, outletT_C, mCp_kWperK);
-	}
+        if (isCooler) {
+          // The process side needs cooling → hot stream in pinch analysis
+          pinch.addHotStream(name, inletT_C, outletT_C, mCp_kWperK);
+        } else {
+          // The process side needs heating → cold stream in pinch analysis
+          pinch.addColdStream(name, inletT_C, outletT_C, mCp_kWperK);
+        }
       }
     }
 
     logger.info("PinchAnalysis.fromProcessSystem: found {} hot + {} cold streams from '{}'",
-	pinch.getNumberOfHotStreams(), pinch.getNumberOfColdStreams(), process.getName());
+        pinch.getNumberOfHotStreams(), pinch.getNumberOfColdStreams(), process.getName());
 
     return pinch;
   }
@@ -428,19 +428,19 @@ public class PinchAnalysis implements Serializable {
       double sumMCpCold = 0.0;
 
       for (HeatStream hs : hotStreams) {
-	double hsHigh = hs.getSupplyTemperatureC() - deltaTmin / 2.0;
-	double hsLow = hs.getTargetTemperatureC() - deltaTmin / 2.0;
-	if (hsHigh >= tHigh && hsLow <= tLow) {
-	  sumMCpHot += hs.getHeatCapacityFlowRate();
-	}
+        double hsHigh = hs.getSupplyTemperatureC() - deltaTmin / 2.0;
+        double hsLow = hs.getTargetTemperatureC() - deltaTmin / 2.0;
+        if (hsHigh >= tHigh && hsLow <= tLow) {
+          sumMCpHot += hs.getHeatCapacityFlowRate();
+        }
       }
 
       for (HeatStream cs : coldStreams) {
-	double csHigh = cs.getTargetTemperatureC() + deltaTmin / 2.0;
-	double csLow = cs.getSupplyTemperatureC() + deltaTmin / 2.0;
-	if (csHigh >= tHigh && csLow <= tLow) {
-	  sumMCpCold += cs.getHeatCapacityFlowRate();
-	}
+        double csHigh = cs.getTargetTemperatureC() + deltaTmin / 2.0;
+        double csLow = cs.getSupplyTemperatureC() + deltaTmin / 2.0;
+        if (csHigh >= tHigh && csLow <= tLow) {
+          sumMCpCold += cs.getHeatCapacityFlowRate();
+        }
       }
 
       intervalQ[i] = (sumMCpHot - sumMCpCold) * dT;
@@ -458,8 +458,8 @@ public class PinchAnalysis implements Serializable {
     int pinchIndex = 0;
     for (int i = 0; i <= nIntervals; i++) {
       if (cascade[i] < minCascade) {
-	minCascade = cascade[i];
-	pinchIndex = i;
+        minCascade = cascade[i];
+        pinchIndex = i;
       }
     }
 
@@ -512,7 +512,7 @@ public class PinchAnalysis implements Serializable {
     // Shift cold composite Q by hot utility for proper overlap
     if (coldCompositeQ != null && coldCompositeQ.length > 0) {
       for (int i = 0; i < coldCompositeQ.length; i++) {
-	coldCompositeQ[i] += minimumHeatingUtility;
+        coldCompositeQ[i] += minimumHeatingUtility;
       }
     }
   }
@@ -557,11 +557,11 @@ public class PinchAnalysis implements Serializable {
 
       double sumMCp = 0.0;
       for (HeatStream s : streams) {
-	double sHigh = Math.max(s.getSupplyTemperature(), s.getTargetTemperature());
-	double sLow = Math.min(s.getSupplyTemperature(), s.getTargetTemperature());
-	if (sHigh >= tHigh && sLow <= tLow) {
-	  sumMCp += s.getHeatCapacityFlowRate();
-	}
+        double sHigh = Math.max(s.getSupplyTemperature(), s.getTargetTemperature());
+        double sLow = Math.min(s.getSupplyTemperature(), s.getTargetTemperature());
+        if (sHigh >= tHigh && sLow <= tLow) {
+          sumMCp += s.getHeatCapacityFlowRate();
+        }
       }
 
       qArray[i] = qArray[i - 1] + sumMCp * dT;

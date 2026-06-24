@@ -302,7 +302,7 @@ public class NetworkOptimizer {
     lastResult.totalProductionKgHr = totalProd;
 
     logger.info(String.format("Optimization complete: obj=%.4f, production=%.0f kg/hr, time=%d ms",
-	lastResult.objectiveValue, totalProd, lastResult.elapsedMs));
+        lastResult.objectiveValue, totalProd, lastResult.elapsedMs));
 
     return lastResult;
   }
@@ -349,50 +349,50 @@ public class NetworkOptimizer {
       // Create weighted objective function
       final double weight = w;
       ObjectiveFunction objFunc = new ObjectiveFunction(x -> {
-	try {
-	  applyChokeOpenings(x);
-	  network.run();
+        try {
+          applyChokeOpenings(x);
+          network.run();
 
-	  double production = network.getTotalSinkFlow() * 3600.0; // kg/hr
-	  double power = getTotalCompressorPower(); // kW
+          double production = network.getTotalSinkFlow() * 3600.0; // kg/hr
+          double power = getTotalCompressorPower(); // kW
 
-	  // Normalize: production in thousands of kg/hr, power in MW
-	  double normProd = production / 1000.0;
-	  double normPower = power / 1000.0;
+          // Normalize: production in thousands of kg/hr, power in MW
+          double normProd = production / 1000.0;
+          double normPower = power / 1000.0;
 
-	  double penalty = computePenalty();
-	  double objective = weight * normProd - (1.0 - weight) * normPower - penalty;
-	  if (Double.isNaN(objective) || Double.isInfinite(objective)) {
-	    return 1e12;
-	  }
-	  return -objective; // Minimize negative of objective
-	} catch (Exception ex) {
-	  logger.debug("Multi-objective evaluation failed: " + ex.getMessage());
-	  return 1e12;
-	}
+          double penalty = computePenalty();
+          double objective = weight * normProd - (1.0 - weight) * normPower - penalty;
+          if (Double.isNaN(objective) || Double.isInfinite(objective)) {
+            return 1e12;
+          }
+          return -objective; // Minimize negative of objective
+        } catch (Exception ex) {
+          logger.debug("Multi-objective evaluation failed: " + ex.getMessage());
+          return 1e12;
+        }
       });
 
       // Use current position as start (warm-start from previous Pareto point)
       double[] x0;
       if (p == 0 || paretoFront.isEmpty()) {
-	x0 = originalOpenings.clone();
+        x0 = originalOpenings.clone();
       } else {
-	x0 = paretoFront.get(paretoFront.size() - 1).chokeOpenings.clone();
+        x0 = paretoFront.get(paretoFront.size() - 1).chokeOpenings.clone();
       }
 
       PointValuePair result;
       try {
-	int interpPts = Math.min(2 * n + 1, (n + 1) * (n + 2) / 2);
-	interpPts = Math.max(interpPts, n + 2);
-	double trustRadius = 10.0;
-	double stopRadius = 0.01;
-	BOBYQAOptimizer optimizer = new BOBYQAOptimizer(interpPts, trustRadius, stopRadius);
-	int evalBudget = Math.max(maxEvaluations / paretoPoints + 50, 100);
-	result = optimizer.optimize(new MaxEval(evalBudget), objFunc, GoalType.MINIMIZE, new InitialGuess(x0),
-	    new SimpleBounds(lowerBounds, upperBounds));
+        int interpPts = Math.min(2 * n + 1, (n + 1) * (n + 2) / 2);
+        interpPts = Math.max(interpPts, n + 2);
+        double trustRadius = 10.0;
+        double stopRadius = 0.01;
+        BOBYQAOptimizer optimizer = new BOBYQAOptimizer(interpPts, trustRadius, stopRadius);
+        int evalBudget = Math.max(maxEvaluations / paretoPoints + 50, 100);
+        result = optimizer.optimize(new MaxEval(evalBudget), objFunc, GoalType.MINIMIZE, new InitialGuess(x0),
+            new SimpleBounds(lowerBounds, upperBounds));
       } catch (Exception e) {
-	logger.warn("Pareto point w=" + w + " failed: " + e.getMessage());
-	continue;
+        logger.warn("Pareto point w=" + w + " failed: " + e.getMessage());
+        continue;
       }
 
       // Apply and capture result
@@ -441,31 +441,31 @@ public class NetworkOptimizer {
 
     ObjectiveFunction objFunc = new ObjectiveFunction(x -> {
       try {
-	applyChokeOpenings(x);
-	network.run();
-	double obj = evaluateObjective();
-	if (Double.isNaN(obj) || Double.isInfinite(obj)) {
-	  return 1e12;
-	}
-	return -obj; // BOBYQA minimizes; we want to maximize
+        applyChokeOpenings(x);
+        network.run();
+        double obj = evaluateObjective();
+        if (Double.isNaN(obj) || Double.isInfinite(obj)) {
+          return 1e12;
+        }
+        return -obj; // BOBYQA minimizes; we want to maximize
       } catch (Exception ex) {
-	logger.debug("Objective evaluation failed: " + ex.getMessage());
-	return 1e12; // Large penalty for failed evaluations
+        logger.debug("Objective evaluation failed: " + ex.getMessage());
+        return 1e12; // Large penalty for failed evaluations
       }
     });
 
     try {
       return optimizer.optimize(new MaxEval(maxEvaluations), objFunc, GoalType.MINIMIZE, new InitialGuess(x0),
-	  new SimpleBounds(lowerBounds, upperBounds));
+          new SimpleBounds(lowerBounds, upperBounds));
     } catch (Exception e) {
       logger.warn("BOBYQA optimization exception: " + e.getMessage());
       // Return initial point if optimization fails
       try {
-	applyChokeOpenings(x0);
-	network.run();
-	return new PointValuePair(x0, -evaluateObjective());
+        applyChokeOpenings(x0);
+        network.run();
+        return new PointValuePair(x0, -evaluateObjective());
       } catch (Exception ex2) {
-	return new PointValuePair(x0, 1e12);
+        return new PointValuePair(x0, 1e12);
       }
     }
   }
@@ -483,35 +483,35 @@ public class NetworkOptimizer {
 
     int populationSize = 4 + (int) (3.0 * Math.log(n));
     CMAESOptimizer optimizer = new CMAESOptimizer(maxEvaluations, 1e-6, true, 0, 10, new MersenneTwister(42), false,
-	null);
+        null);
 
     ObjectiveFunction objFunc = new ObjectiveFunction(x -> {
       try {
-	applyChokeOpenings(x);
-	network.run();
-	double obj = evaluateObjective();
-	if (Double.isNaN(obj) || Double.isInfinite(obj)) {
-	  return 1e12;
-	}
-	return -obj; // CMA-ES minimizes
+        applyChokeOpenings(x);
+        network.run();
+        double obj = evaluateObjective();
+        if (Double.isNaN(obj) || Double.isInfinite(obj)) {
+          return 1e12;
+        }
+        return -obj; // CMA-ES minimizes
       } catch (Exception ex) {
-	logger.debug("Objective evaluation failed: " + ex.getMessage());
-	return 1e12;
+        logger.debug("Objective evaluation failed: " + ex.getMessage());
+        return 1e12;
       }
     });
 
     try {
       return optimizer.optimize(new MaxEval(maxEvaluations), objFunc, GoalType.MINIMIZE, new InitialGuess(x0),
-	  new SimpleBounds(lowerBounds, upperBounds), new CMAESOptimizer.Sigma(sigma),
-	  new CMAESOptimizer.PopulationSize(populationSize));
+          new SimpleBounds(lowerBounds, upperBounds), new CMAESOptimizer.Sigma(sigma),
+          new CMAESOptimizer.PopulationSize(populationSize));
     } catch (Exception e) {
       logger.warn("CMA-ES optimization exception: " + e.getMessage());
       try {
-	applyChokeOpenings(x0);
-	network.run();
-	return new PointValuePair(x0, -evaluateObjective());
+        applyChokeOpenings(x0);
+        network.run();
+        return new PointValuePair(x0, -evaluateObjective());
       } catch (Exception ex2) {
-	return new PointValuePair(x0, 1e12);
+        return new PointValuePair(x0, 1e12);
       }
     }
   }
@@ -530,11 +530,11 @@ public class NetworkOptimizer {
       double revenue = 0.0;
       Map<String, double[]> alloc = network.getWellAllocationResults();
       if (alloc != null && !alloc.isEmpty()) {
-	for (double[] vals : alloc.values()) {
-	  revenue += vals[1]; // revenue column
-	}
+        for (double[] vals : alloc.values()) {
+          revenue += vals[1]; // revenue column
+        }
       } else {
-	revenue = production; // Fallback: use mass flow
+        revenue = production; // Fallback: use mass flow
       }
       return revenue - penalty;
 
@@ -545,7 +545,7 @@ public class NetworkOptimizer {
     case MAX_SPECIFIC_PRODUCTION:
       double totalPower = getTotalCompressorPower();
       if (totalPower < 1.0) {
-	totalPower = 1.0; // Avoid division by zero
+        totalPower = 1.0; // Avoid division by zero
       }
       return (production / totalPower) - penalty;
 
@@ -577,7 +577,7 @@ public class NetworkOptimizer {
     for (String pipeName : network.getPipeNames()) {
       LoopedPipeNetwork.NetworkPipe pipe = network.getPipe(pipeName);
       if (pipe != null && pipe.getElementType() == LoopedPipeNetwork.NetworkElementType.COMPRESSOR) {
-	total += pipe.getCompressorPower();
+        total += pipe.getCompressorPower();
       }
     }
     return total;
@@ -591,7 +591,7 @@ public class NetworkOptimizer {
     for (String pipeName : network.getPipeNames()) {
       LoopedPipeNetwork.NetworkPipe pipe = network.getPipe(pipeName);
       if (pipe != null && pipe.getElementType() == LoopedPipeNetwork.NetworkElementType.CHOKE) {
-	chokeNames.add(pipeName);
+        chokeNames.add(pipeName);
       }
     }
     int n = chokeNames.size();
@@ -610,8 +610,8 @@ public class NetworkOptimizer {
     for (int i = 0; i < chokeNames.size(); i++) {
       LoopedPipeNetwork.NetworkPipe pipe = network.getPipe(chokeNames.get(i));
       if (pipe != null) {
-	double clipped = Math.max(lowerBounds[i], Math.min(upperBounds[i], openings[i]));
-	pipe.setChokeOpening(clipped);
+        double clipped = Math.max(lowerBounds[i], Math.min(upperBounds[i], openings[i]));
+        pipe.setChokeOpening(clipped);
       }
     }
   }
@@ -693,14 +693,14 @@ public class NetworkOptimizer {
       sb.append(String.format("Objective value: %.4f%n", objectiveValue));
       sb.append(String.format("Total production: %.0f kg/hr%n", totalProductionKgHr));
       if (totalCompressorPowerKW > 0) {
-	sb.append(String.format("Compressor power: %.1f kW%n", totalCompressorPowerKW));
+        sb.append(String.format("Compressor power: %.1f kW%n", totalCompressorPowerKW));
       }
       sb.append(String.format("Time: %d ms, Evaluations: %d%n", elapsedMs, functionEvaluations));
       if (chokeNames != null && chokeOpenings != null) {
-	sb.append("Choke openings:\n");
-	for (int i = 0; i < chokeNames.size(); i++) {
-	  sb.append(String.format("  %s: %.1f%%%n", chokeNames.get(i), chokeOpenings[i]));
-	}
+        sb.append("Choke openings:\n");
+        for (int i = 0; i < chokeNames.size(); i++) {
+          sb.append(String.format("  %s: %.1f%%%n", chokeNames.get(i), chokeOpenings[i]));
+        }
       }
       return sb.toString();
     }

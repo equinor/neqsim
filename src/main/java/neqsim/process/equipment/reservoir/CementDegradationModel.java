@@ -360,7 +360,7 @@ public class CementDegradationModel extends ProcessEquipmentBaseClass {
     double activationEnergy = 20000.0; // J/mol for diffusion
     double gasConstant = 8.314;
     this.effectiveDiffusivity = baseDiffusivity
-	* Math.exp(-activationEnergy / gasConstant * (1.0 / temperature - 1.0 / refTemp));
+        * Math.exp(-activationEnergy / gasConstant * (1.0 / temperature - 1.0 / refTemp));
   }
 
   /** {@inheritDoc} */

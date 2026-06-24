@@ -41,8 +41,8 @@ class LiquidAccumulationTrackerTest {
 
       // Set inclination
       if (i > 0) {
-	double dz = elevations[i] - elevations[i - 1];
-	sections[i].setInclination(Math.atan2(dz, 100));
+        double dz = elevations[i] - elevations[i - 1];
+        sections[i].setInclination(Math.atan2(dz, 100));
       }
 
       // Set fluid properties
@@ -176,8 +176,8 @@ class LiquidAccumulationTrackerTest {
     for (int i = 0; i < 10; i++) {
       sections[i].setElevation(elevations[i]);
       if (i > 0) {
-	double dz = elevations[i] - elevations[i - 1];
-	sections[i].setInclination(Math.atan2(dz, 100));
+        double dz = elevations[i] - elevations[i - 1];
+        sections[i].setInclination(Math.atan2(dz, 100));
       }
     }
 

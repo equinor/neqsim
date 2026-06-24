@@ -89,13 +89,13 @@ public class AlarmTripScheduleGenerator implements Serializable {
       ProcessEquipmentInterface equip = processSystem.getUnitOperations().get(i);
 
       if (equip instanceof Separator) {
-	generateSeparatorAlarms((Separator) equip);
+        generateSeparatorAlarms((Separator) equip);
       } else if (equip instanceof Compressor) {
-	generateCompressorAlarms((Compressor) equip);
+        generateCompressorAlarms((Compressor) equip);
       } else if (equip instanceof Heater) {
-	generateHeaterAlarms((Heater) equip);
+        generateHeaterAlarms((Heater) equip);
       } else if (equip instanceof ThrottlingValve) {
-	generateValveAlarms((ThrottlingValve) equip);
+        generateValveAlarms((ThrottlingValve) equip);
       }
     }
   }
@@ -112,22 +112,22 @@ public class AlarmTripScheduleGenerator implements Serializable {
     // Pressure alarms
     if (opPressure > 0) {
       entries.add(new AlarmTripEntry(tag, "PT", ServiceType.PRESSURE, "LO", opPressure * 0.85, "bara",
-	  AlarmPriority.MEDIUM, "Alarm", "Low pressure warning"));
+          AlarmPriority.MEDIUM, "Alarm", "Low pressure warning"));
       entries.add(new AlarmTripEntry(tag, "PT", ServiceType.PRESSURE, "HI", opPressure * 1.05, "bara",
-	  AlarmPriority.HIGH, "Alarm", "High pressure alarm"));
+          AlarmPriority.HIGH, "Alarm", "High pressure alarm"));
       entries.add(new AlarmTripEntry(tag, "PT", ServiceType.PRESSURE, "HIHI", opPressure * 1.10, "bara",
-	  AlarmPriority.EMERGENCY, "Trip", "High-high pressure trip (ESD)"));
+          AlarmPriority.EMERGENCY, "Trip", "High-high pressure trip (ESD)"));
     }
 
     // Level alarms (percentage of normal operating level)
     entries.add(new AlarmTripEntry(tag, "LT", ServiceType.LEVEL, "LOLO", 10.0, "%", AlarmPriority.EMERGENCY, "Trip",
-	"Low-low level trip - pump protection"));
+        "Low-low level trip - pump protection"));
     entries.add(new AlarmTripEntry(tag, "LT", ServiceType.LEVEL, "LO", 25.0, "%", AlarmPriority.MEDIUM, "Alarm",
-	"Low level alarm"));
+        "Low level alarm"));
     entries.add(new AlarmTripEntry(tag, "LT", ServiceType.LEVEL, "HI", 75.0, "%", AlarmPriority.HIGH, "Alarm",
-	"High level alarm"));
+        "High level alarm"));
     entries.add(new AlarmTripEntry(tag, "LT", ServiceType.LEVEL, "HIHI", 90.0, "%", AlarmPriority.EMERGENCY, "Trip",
-	"High-high level trip - liquid carryover"));
+        "High-high level trip - liquid carryover"));
   }
 
   /**
@@ -145,9 +145,9 @@ public class AlarmTripScheduleGenerator implements Serializable {
     }
     if (suctionP > 0) {
       entries.add(new AlarmTripEntry(tag, "PT-suction", ServiceType.PRESSURE, "LO", suctionP * 0.90, "bara",
-	  AlarmPriority.HIGH, "Alarm", "Low suction pressure"));
+          AlarmPriority.HIGH, "Alarm", "Low suction pressure"));
       entries.add(new AlarmTripEntry(tag, "PT-suction", ServiceType.PRESSURE, "LOLO", suctionP * 0.80, "bara",
-	  AlarmPriority.EMERGENCY, "Trip", "Low-low suction pressure trip"));
+          AlarmPriority.EMERGENCY, "Trip", "Low-low suction pressure trip"));
     }
 
     // Discharge pressure
@@ -157,9 +157,9 @@ public class AlarmTripScheduleGenerator implements Serializable {
     }
     if (dischargeP > 0) {
       entries.add(new AlarmTripEntry(tag, "PT-discharge", ServiceType.PRESSURE, "HI", dischargeP * 1.05, "bara",
-	  AlarmPriority.HIGH, "Alarm", "High discharge pressure"));
+          AlarmPriority.HIGH, "Alarm", "High discharge pressure"));
       entries.add(new AlarmTripEntry(tag, "PT-discharge", ServiceType.PRESSURE, "HIHI", dischargeP * 1.10, "bara",
-	  AlarmPriority.EMERGENCY, "Trip", "High-high discharge pressure trip"));
+          AlarmPriority.EMERGENCY, "Trip", "High-high discharge pressure trip"));
     }
 
     // Discharge temperature
@@ -169,9 +169,9 @@ public class AlarmTripScheduleGenerator implements Serializable {
     }
     if (dischargeTempC > 0) {
       entries.add(new AlarmTripEntry(tag, "TT-discharge", ServiceType.TEMPERATURE, "HI", dischargeTempC + 15.0, "degC",
-	  AlarmPriority.HIGH, "Alarm", "High discharge temperature"));
+          AlarmPriority.HIGH, "Alarm", "High discharge temperature"));
       entries.add(new AlarmTripEntry(tag, "TT-discharge", ServiceType.TEMPERATURE, "HIHI", dischargeTempC + 30.0,
-	  "degC", AlarmPriority.EMERGENCY, "Trip", "High-high discharge temperature trip"));
+          "degC", AlarmPriority.EMERGENCY, "Trip", "High-high discharge temperature trip"));
     }
   }
 
@@ -188,9 +188,9 @@ public class AlarmTripScheduleGenerator implements Serializable {
     }
     if (outTempC > 0) {
       entries.add(new AlarmTripEntry(tag, "TT-outlet", ServiceType.TEMPERATURE, "LO", outTempC - 10.0, "degC",
-	  AlarmPriority.MEDIUM, "Alarm", "Low outlet temperature"));
+          AlarmPriority.MEDIUM, "Alarm", "Low outlet temperature"));
       entries.add(new AlarmTripEntry(tag, "TT-outlet", ServiceType.TEMPERATURE, "HI", outTempC + 10.0, "degC",
-	  AlarmPriority.HIGH, "Alarm", "High outlet temperature"));
+          AlarmPriority.HIGH, "Alarm", "High outlet temperature"));
     }
   }
 
@@ -207,9 +207,9 @@ public class AlarmTripScheduleGenerator implements Serializable {
     }
     if (downstreamP > 0) {
       entries.add(new AlarmTripEntry(tag, "PT-downstream", ServiceType.PRESSURE, "LO", downstreamP * 0.85, "bara",
-	  AlarmPriority.MEDIUM, "Alarm", "Low downstream pressure"));
+          AlarmPriority.MEDIUM, "Alarm", "Low downstream pressure"));
       entries.add(new AlarmTripEntry(tag, "PT-downstream", ServiceType.PRESSURE, "HI", downstreamP * 1.10, "bara",
-	  AlarmPriority.HIGH, "Alarm", "High downstream pressure"));
+          AlarmPriority.HIGH, "Alarm", "High downstream pressure"));
     }
   }
 
@@ -241,7 +241,7 @@ public class AlarmTripScheduleGenerator implements Serializable {
     List<AlarmTripEntry> filtered = new ArrayList<AlarmTripEntry>();
     for (AlarmTripEntry e : entries) {
       if (e.getEquipmentTag().equals(equipmentName)) {
-	filtered.add(e);
+        filtered.add(e);
       }
     }
     return filtered;
@@ -260,9 +260,9 @@ public class AlarmTripScheduleGenerator implements Serializable {
     int tripCount = 0;
     for (AlarmTripEntry e : entries) {
       if ("Trip".equals(e.getActionType())) {
-	tripCount++;
+        tripCount++;
       } else {
-	alarmCount++;
+        alarmCount++;
       }
     }
     JsonObject summary = new JsonObject();
@@ -321,7 +321,7 @@ public class AlarmTripScheduleGenerator implements Serializable {
      * @param description textual description
      */
     public AlarmTripEntry(String equipmentTag, String instrumentTag, ServiceType serviceType, String setpointType,
-	double setpointValue, String unit, AlarmPriority priority, String actionType, String description) {
+        double setpointValue, String unit, AlarmPriority priority, String actionType, String description) {
       this.equipmentTag = equipmentTag;
       this.instrumentTag = instrumentTag;
       this.serviceType = serviceType;

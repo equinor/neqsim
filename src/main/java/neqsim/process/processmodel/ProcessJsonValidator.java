@@ -53,13 +53,13 @@ public final class ProcessJsonValidator {
   private static void validateAreas(ValidationReport report, JsonObject areas) {
     for (Map.Entry<String, JsonElement> entry : areas.entrySet()) {
       if (!entry.getValue().isJsonObject()) {
-	report.addError("areas." + entry.getKey() + " must be a JSON object");
-	continue;
+        report.addError("areas." + entry.getKey() + " must be a JSON object");
+        continue;
       }
       JsonObject area = entry.getValue().getAsJsonObject();
       if (!area.has("process") || !area.get("process").isJsonArray()) {
-	report.addError("areas." + entry.getKey() + " is missing required 'process' array");
-	continue;
+        report.addError("areas." + entry.getKey() + " is missing required 'process' array");
+        continue;
       }
       validateProcessObject(report, area, "areas." + entry.getKey());
     }
@@ -83,14 +83,14 @@ public final class ProcessJsonValidator {
       String name = getString(unit, "name");
 
       if (type == null || type.trim().isEmpty()) {
-	report.addError(context + ".process[" + i + "] is missing required field 'type'");
+        report.addError(context + ".process[" + i + "] is missing required field 'type'");
       }
       if (name == null || name.trim().isEmpty()) {
-	report.addError(context + ".process[" + i + "] is missing required field 'name'");
-	name = "unnamed_" + i;
+        report.addError(context + ".process[" + i + "] is missing required field 'name'");
+        name = "unnamed_" + i;
       }
       if (names.contains(name)) {
-	report.addError(context + " has duplicate unit name: '" + name + "'");
+        report.addError(context + " has duplicate unit name: '" + name + "'");
       }
       names.add(name);
       validRefs.add(name);
@@ -121,26 +121,26 @@ public final class ProcessJsonValidator {
       JsonObject unit = process.get(i).getAsJsonObject();
       validateReferenceField(report, validRefs, unit, context, i, "inlet");
       if (unit.has("inlets") && unit.get("inlets").isJsonArray()) {
-	JsonArray inlets = unit.getAsJsonArray("inlets");
-	for (int j = 0; j < inlets.size(); j++) {
-	  String ref = inlets.get(j).getAsString();
-	  if (!validRefs.contains(ref)) {
-	    report
-		.addWarning(context + ".process[" + i + "].inlets[" + j + "] references unknown stream '" + ref + "'");
-	  }
-	}
+        JsonArray inlets = unit.getAsJsonArray("inlets");
+        for (int j = 0; j < inlets.size(); j++) {
+          String ref = inlets.get(j).getAsString();
+          if (!validRefs.contains(ref)) {
+            report
+                .addWarning(context + ".process[" + i + "].inlets[" + j + "] references unknown stream '" + ref + "'");
+          }
+        }
       }
       if (unit.has("streams") && unit.get("streams").isJsonObject()) {
-	JsonObject streams = unit.getAsJsonObject("streams");
-	for (Map.Entry<String, JsonElement> e : streams.entrySet()) {
-	  if (e.getValue().isJsonPrimitive() && e.getValue().getAsJsonPrimitive().isString()) {
-	    String ref = e.getValue().getAsString();
-	    if (isLikelyInputKey(e.getKey()) && !validRefs.contains(ref)) {
-	      report.addWarning(
-		  context + ".process[" + i + "].streams." + e.getKey() + " references unknown stream '" + ref + "'");
-	    }
-	  }
-	}
+        JsonObject streams = unit.getAsJsonObject("streams");
+        for (Map.Entry<String, JsonElement> e : streams.entrySet()) {
+          if (e.getValue().isJsonPrimitive() && e.getValue().getAsJsonPrimitive().isString()) {
+            String ref = e.getValue().getAsString();
+            if (isLikelyInputKey(e.getKey()) && !validRefs.contains(ref)) {
+              report.addWarning(
+                  context + ".process[" + i + "].streams." + e.getKey() + " references unknown stream '" + ref + "'");
+            }
+          }
+        }
       }
     }
   }
@@ -150,7 +150,7 @@ public final class ProcessJsonValidator {
     if (unit.has(key) && unit.get(key).isJsonPrimitive() && unit.get(key).getAsJsonPrimitive().isString()) {
       String ref = unit.get(key).getAsString();
       if (!validRefs.contains(ref)) {
-	report.addWarning(context + ".process[" + idx + "]." + key + " references unknown stream '" + ref + "'");
+        report.addWarning(context + ".process[" + idx + "]." + key + " references unknown stream '" + ref + "'");
       }
     }
   }

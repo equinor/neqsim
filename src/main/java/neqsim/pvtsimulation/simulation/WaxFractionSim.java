@@ -67,36 +67,36 @@ public class WaxFractionSim extends BasePVTsimulation {
       System.out.println("adding....");
 
       for (int i = 0; i < experimentalData[0].length; i++) {
-	ArrayList<Double> guessArray = new ArrayList<Double>();
-	for (int p = 0; p < 3; p++) {
-	  guessArray.add(getThermoSystem().getWaxModel().getWaxParameters()[p]);
-	}
-	guessArray.add(getThermoSystem().getWaxModel().getParameterWaxHeatOfFusion()[0]);
-	guessArray.add(getThermoSystem().getWaxModel().getParameterWaxTriplePointTemperature()[0]);
+        ArrayList<Double> guessArray = new ArrayList<Double>();
+        for (int p = 0; p < 3; p++) {
+          guessArray.add(getThermoSystem().getWaxModel().getWaxParameters()[p]);
+        }
+        guessArray.add(getThermoSystem().getWaxModel().getParameterWaxHeatOfFusion()[0]);
+        guessArray.add(getThermoSystem().getWaxModel().getParameterWaxTriplePointTemperature()[0]);
 
-	// double[] guess = getThermoSystem().getWaxModel().getWaxParameters();
-	double[] guess = new double[optimizer.getNumberOfTuningParameters()];
-	for (int o = 0; o < guess.length; o++) {
-	  guess[o] = guessArray.get(o);
-	}
-	// guess = guessArray.subList(0, optimizer.getNumberOfTuningParameters()-1);
+        // double[] guess = getThermoSystem().getWaxModel().getWaxParameters();
+        double[] guess = new double[optimizer.getNumberOfTuningParameters()];
+        for (int o = 0; o < guess.length; o++) {
+          guess[o] = guessArray.get(o);
+        }
+        // guess = guessArray.subList(0, optimizer.getNumberOfTuningParameters()-1);
 
-	WaxFunction function = new WaxFunction();
-	function.setInitialGuess(guess);
+        WaxFunction function = new WaxFunction();
+        function.setInitialGuess(guess);
 
-	SystemInterface tempSystem = getThermoSystem(); // getThermoSystem().clone();
+        SystemInterface tempSystem = getThermoSystem(); // getThermoSystem().clone();
 
-	tempSystem.setTemperature(temperature[i]);
-	tempSystem.setPressure(pressure[i]);
-	thermoOps.TPflash();
-	// tempSystem.display();
-	double[] sample1 = { temperature[i] };
-	double waxContent = experimentalData[0][i];
-	double[] standardDeviation1 = { 1.5 };
-	SampleValue sample = new SampleValue(waxContent, waxContent / 10.0 + 0.1, sample1, standardDeviation1);
-	sample.setFunction(function);
-	sample.setThermodynamicSystem(tempSystem);
-	sampleList.add(sample);
+        tempSystem.setTemperature(temperature[i]);
+        tempSystem.setPressure(pressure[i]);
+        thermoOps.TPflash();
+        // tempSystem.display();
+        double[] sample1 = { temperature[i] };
+        double waxContent = experimentalData[0][i];
+        double[] standardDeviation1 = { 1.5 };
+        SampleValue sample = new SampleValue(waxContent, waxContent / 10.0 + 0.1, sample1, standardDeviation1);
+        sample.setFunction(function);
+        sample.setThermodynamicSystem(tempSystem);
+        sampleList.add(sample);
       }
     } catch (Exception ex) {
       logger.error("database error", ex);
@@ -126,7 +126,7 @@ public class WaxFractionSim extends BasePVTsimulation {
       thermoOps.TPflash();
       waxFraction[i] = 0.0;
       if (getThermoSystem().hasPhaseType("wax")) {
-	waxFraction[i] = getThermoSystem().getWtFraction(getThermoSystem().getPhaseNumberOfPhase("wax"));
+        waxFraction[i] = getThermoSystem().getWtFraction(getThermoSystem().getPhaseNumberOfPhase("wax"));
       }
       // System.out.println("wax fraction " + waxFraction[i]);
     }

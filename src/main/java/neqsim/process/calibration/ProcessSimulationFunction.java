@@ -104,8 +104,8 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
     double[][] newBounds = new double[n][2];
     if (bounds != null) {
       for (int i = 0; i < bounds.length; i++) {
-	newBounds[i][0] = bounds[i][0];
-	newBounds[i][1] = bounds[i][1];
+        newBounds[i][0] = bounds[i][0];
+        newBounds[i][1] = bounds[i][1];
       }
     }
     newBounds[n - 1][0] = lowerBound;
@@ -201,7 +201,7 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
     int dotIndex = path.indexOf('.');
     if (dotIndex < 0) {
       throw new IllegalArgumentException(
-	  "Invalid path format: " + path + ". Expected 'Equipment.property' or 'Equipment.stream.property'");
+          "Invalid path format: " + path + ". Expected 'Equipment.property' or 'Equipment.stream.property'");
     }
     return new String[] { path.substring(0, dotIndex), path.substring(dotIndex + 1) };
   }
@@ -274,14 +274,14 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
       Object current = processSystem.getUnit(parts[0]);
 
       for (int i = 1; i < parts.length; i++) {
-	if (current == null) {
-	  throw new IllegalArgumentException("Cannot resolve path: " + path);
-	}
-	current = invokeGetter(current, parts[i]);
+        if (current == null) {
+          throw new IllegalArgumentException("Cannot resolve path: " + path);
+        }
+        current = invokeGetter(current, parts[i]);
       }
 
       if (current instanceof Number) {
-	return ((Number) current).doubleValue();
+        return ((Number) current).doubleValue();
       }
       throw new IllegalArgumentException("Property at path " + path + " is not a number");
     } catch (Exception e) {
@@ -303,15 +303,15 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
 
       // Navigate to the parent of the final property
       for (int i = 1; i < parts.length - 1; i++) {
-	if (current == null) {
-	  throw new IllegalArgumentException("Cannot resolve path: " + path);
-	}
-	current = invokeGetter(current, parts[i]);
+        if (current == null) {
+          throw new IllegalArgumentException("Cannot resolve path: " + path);
+        }
+        current = invokeGetter(current, parts[i]);
       }
 
       // Set the final property
       if (current != null) {
-	invokeSetter(current, parts[parts.length - 1], value);
+        invokeSetter(current, parts[parts.length - 1], value);
       }
     } catch (Exception e) {
       logger.error("Failed to set property value for path: " + path, e);
@@ -335,15 +335,15 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
     } catch (NoSuchMethodException e) {
       // Try property() directly
       try {
-	java.lang.reflect.Method method = obj.getClass().getMethod(property);
-	return method.invoke(obj);
+        java.lang.reflect.Method method = obj.getClass().getMethod(property);
+        return method.invoke(obj);
       } catch (NoSuchMethodException e2) {
-	// Try getOutletStream() for stream access
-	if (property.equals("outletStream")) {
-	  java.lang.reflect.Method method = obj.getClass().getMethod("getOutletStream");
-	  return method.invoke(obj);
-	}
-	throw e2;
+        // Try getOutletStream() for stream access
+        if (property.equals("outletStream")) {
+          java.lang.reflect.Method method = obj.getClass().getMethod("getOutletStream");
+          return method.invoke(obj);
+        }
+        throw e2;
       }
     }
   }
@@ -364,10 +364,10 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
     } catch (NoSuchMethodException e) {
       // Try with Double.class
       try {
-	java.lang.reflect.Method method = obj.getClass().getMethod(setterName, Double.class);
-	method.invoke(obj, value);
+        java.lang.reflect.Method method = obj.getClass().getMethod(setterName, Double.class);
+        method.invoke(obj, value);
       } catch (NoSuchMethodException e2) {
-	throw new IllegalArgumentException("No setter found for property: " + property);
+        throw new IllegalArgumentException("No setter found for property: " + property);
       }
     }
   }

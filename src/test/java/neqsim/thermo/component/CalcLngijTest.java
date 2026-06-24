@@ -30,7 +30,7 @@ public class CalcLngijTest {
     comp1.Bi = 0.3;
     PhaseSrkEos phase = createPhase(2.0, 0.5, comp0, comp1);
     double expected = 2.0 * comp0.getBij(1) * (10.0 * phase.getTotalVolume() - phase.getB())
-	/ ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()));
+        / ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()));
     assertEquals(expected, comp0.calc_lngij(1, phase), 1e-12);
   }
 
@@ -66,7 +66,7 @@ public class CalcLngijTest {
     PhaseSrkEos phase = createPhase(4.0, 0.9, comp0, comp1);
     double temp = phase.getTotalVolume() - 0.475 * phase.getB();
     double expected = 0.475 * comp0.getBij(1) * 0 / (phase.getTotalVolume() - 0.475 * phase.getB()) - 0.475
-	* comp0.getBi() * 1.0 / (temp * temp) * (-0.475 * ((ComponentEosInterface) phase.getComponent(1)).getBi());
+        * comp0.getBi() * 1.0 / (temp * temp) * (-0.475 * ((ComponentEosInterface) phase.getComponent(1)).getBi());
     assertEquals(expected, comp0.calc_lngij(1, phase), 1e-12);
   }
 
@@ -80,7 +80,7 @@ public class CalcLngijTest {
     PhaseSrkEos phase = createPhase(5.0, 1.1, comp0, comp1);
     double temp = phase.getTotalVolume() - 0.475 * phase.getB();
     double expected = (0.475 * comp0.getBij(1) * temp
-	+ 0.475 * ((ComponentEosInterface) phase.getComponent(1)).getBi() * 0.475 * comp0.getBi()) / (temp * temp);
+        + 0.475 * ((ComponentEosInterface) phase.getComponent(1)).getBi() * 0.475 * comp0.getBi()) / (temp * temp);
     assertEquals(expected, comp0.calc_lngij(1, phase), 1e-12);
   }
 
@@ -93,13 +93,13 @@ public class CalcLngijTest {
     comp1.Bi = 0.3;
     PhaseSrkEos phase = createPhase(6.0, 1.3, comp0, comp1);
     double temp = (10.0 * phase.getTotalVolume() - phase.getB())
-	/ ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()));
+        / ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()));
     double temp1 = (8.0 * phase.getTotalVolume() - phase.getB());
     double temp2 = (4.0 * phase.getTotalVolume() - phase.getB());
     double temp3 = (10.0 * phase.getTotalVolume() - phase.getB());
     double tempj = (-((ComponentEosInterface) phase.getComponent(1)).getBi() * temp1 * temp2
-	+ ((ComponentEosInterface) phase.getComponent(1)).getBi() * temp3 * (temp1 + temp2)) / temp1 / temp1 / temp2
-	/ temp2;
+        + ((ComponentEosInterface) phase.getComponent(1)).getBi() * temp3 * (temp1 + temp2)) / temp1 / temp1 / temp2
+        / temp2;
     double expected = 2.0 * (comp0.getBij(1) * temp + comp0.getBi() * tempj);
     assertEquals(expected, comp0.calc_lngij(1, phase), 1e-12);
   }

@@ -149,14 +149,14 @@ public abstract class MultiphaseChokeFlow implements Serializable {
       // Use mole fractions and molecular weights
       totalMass = fluid.getTotalNumberOfMoles() * fluid.getMolarMass("kg/mol");
       if (fluid.hasPhaseType("gas")) {
-	int gasPhaseIndex = fluid.getPhaseIndex("gas");
-	gasMass = fluid.getPhase(gasPhaseIndex).getNumberOfMolesInPhase()
-	    * fluid.getPhase(gasPhaseIndex).getMolarMass("kg/mol");
+        int gasPhaseIndex = fluid.getPhaseIndex("gas");
+        gasMass = fluid.getPhase(gasPhaseIndex).getNumberOfMolesInPhase()
+            * fluid.getPhase(gasPhaseIndex).getMolarMass("kg/mol");
       }
     } else {
       if (fluid.hasPhaseType("gas")) {
-	int gasPhaseIndex = fluid.getPhaseIndex("gas");
-	gasMass = fluid.getPhase(gasPhaseIndex).getFlowRate("kg/sec");
+        int gasPhaseIndex = fluid.getPhaseIndex("gas");
+        gasMass = fluid.getPhase(gasPhaseIndex).getFlowRate("kg/sec");
       }
     }
 
@@ -180,7 +180,7 @@ public abstract class MultiphaseChokeFlow implements Serializable {
       int gasPhaseIndex = fluid.getPhaseIndex("gas");
       // Approximate standard conditions flow
       gasStdVolFlow = fluid.getPhase(gasPhaseIndex).getFlowRate("m3/sec") * fluid.getPhase(gasPhaseIndex).getZ()
-	  * fluid.getTemperature() / 288.15 * 101325.0 / fluid.getPressure("Pa");
+          * fluid.getTemperature() / 288.15 * 101325.0 / fluid.getPressure("Pa");
     }
 
     if (fluid.hasPhaseType("oil")) {

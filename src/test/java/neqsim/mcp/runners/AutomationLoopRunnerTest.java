@@ -20,17 +20,17 @@ class AutomationLoopRunnerTest {
   /** A small compressor process with an adjustable discharge pressure. */
   private static String compressorProcessJson() {
     return "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15," + "  \"pressure\": 50.0,"
-	+ "  \"mixingRule\": \"classic\","
-	+ "  \"components\": {\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05}" + "}," + "\"process\": ["
-	+ "  {\"type\": \"Stream\", \"name\": \"feed\"," + "   \"properties\": {\"flowRate\": [10000.0, \"kg/hr\"]}},"
-	+ "  {\"type\": \"Compressor\", \"name\": \"Compressor\", \"inlet\": \"feed\","
-	+ "   \"properties\": {\"outletPressure\": [100.0, \"bara\"]}}" + "]" + "}";
+        + "  \"mixingRule\": \"classic\","
+        + "  \"components\": {\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05}" + "}," + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"feed\"," + "   \"properties\": {\"flowRate\": [10000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"Compressor\", \"name\": \"Compressor\", \"inlet\": \"feed\","
+        + "   \"properties\": {\"outletPressure\": [100.0, \"bara\"]}}" + "]" + "}";
   }
 
   @Test
   void testRunLoopSweepsAllTrials() {
     String trials = "[{\"Compressor.outletPressure\": 90.0}," + "{\"Compressor.outletPressure\": 110.0},"
-	+ "{\"Compressor.outletPressure\": 130.0}]";
+        + "{\"Compressor.outletPressure\": 130.0}]";
     String readbacks = "[\"Compressor.power\"]";
 
     String result = AutomationRunner.runLoop(compressorProcessJson(), trials, readbacks, "bara", "kW");

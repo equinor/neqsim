@@ -157,6 +157,6 @@ public class CalibrationQuality implements Serializable {
   @Override
   public String toString() {
     return String.format("CalibrationQuality[RMSE=%.4f, R2=%.4f, samples=%d, coverage=%.1f%%]", rmse, r2, sampleCount,
-	coverage);
+        coverage);
   }
 }

@@ -44,7 +44,7 @@ class OperationalEnvelopeEvaluatorTest {
     ProcessSystem process = createProcess(72.0);
     Map<String, MarginTrendTracker> history = new LinkedHashMap<String, MarginTrendTracker>();
     MarginTrendTracker tracker = new MarginTrendTracker("Outlet Valve.valveOpening").addSample(0.0, 35.0)
-	.addSample(60.0, 25.0).addSample(120.0, 15.0);
+        .addSample(60.0, 25.0).addSample(120.0, 15.0);
     history.put(tracker.getMarginKey(), tracker);
 
     OperationalEnvelopeReport report = OperationalEnvelopeEvaluator.evaluate(process, history, 1800.0, true);

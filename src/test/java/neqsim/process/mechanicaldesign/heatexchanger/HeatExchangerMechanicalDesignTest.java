@@ -51,7 +51,7 @@ public class HeatExchangerMechanicalDesignTest {
     assertTrue(selected.getTubeCount() > 0);
 
     Optional<HeatExchangerSizingResult> shellResult = design.getSizingResults().stream()
-	.filter(result -> result.getType() == HeatExchangerType.SHELL_AND_TUBE).findFirst();
+        .filter(result -> result.getType() == HeatExchangerType.SHELL_AND_TUBE).findFirst();
     assertTrue(shellResult.isPresent());
     assertTrue(shellResult.get().getTubeCount() > 0);
   }
@@ -62,7 +62,7 @@ public class HeatExchangerMechanicalDesignTest {
     hx.initMechanicalDesign();
     HeatExchangerMechanicalDesign design = hx.getMechanicalDesign();
     design.setCandidateTypes(HeatExchangerType.SHELL_AND_TUBE, HeatExchangerType.PLATE_AND_FRAME,
-	HeatExchangerType.AIR_COOLER);
+        HeatExchangerType.AIR_COOLER);
 
     design.setSelectionCriterion(SelectionCriterion.MIN_AREA);
     design.calcDesign();
@@ -70,7 +70,7 @@ public class HeatExchangerMechanicalDesignTest {
     HeatExchangerSizingResult selected = design.getSelectedSizingResult();
     assertNotNull(selected);
     double minArea = design.getSizingResults().stream().mapToDouble(HeatExchangerSizingResult::getRequiredArea).min()
-	.orElseThrow(() -> new IllegalStateException("No sizing results available"));
+        .orElseThrow(() -> new IllegalStateException("No sizing results available"));
     assertEquals(minArea, selected.getRequiredArea(), 1e-6);
 
     // Switch criterion to evaluate another automatic decision
@@ -78,13 +78,13 @@ public class HeatExchangerMechanicalDesignTest {
     design.setManualSelection(null);
     design.calcDesign();
     HeatExchangerType minPressureType = design.getSizingResults().stream()
-	.min(Comparator.comparingDouble(HeatExchangerSizingResult::getEstimatedPressureDrop))
-	.map(HeatExchangerSizingResult::getType)
-	.orElseThrow(() -> new IllegalStateException("No sizing result available"));
+        .min(Comparator.comparingDouble(HeatExchangerSizingResult::getEstimatedPressureDrop))
+        .map(HeatExchangerSizingResult::getType)
+        .orElseThrow(() -> new IllegalStateException("No sizing result available"));
     assertEquals(minPressureType, design.getSelectedType());
 
     Optional<HeatExchangerSizingResult> airCooler = design.getSizingResults().stream()
-	.filter(result -> result.getType() == HeatExchangerType.AIR_COOLER).findFirst();
+        .filter(result -> result.getType() == HeatExchangerType.AIR_COOLER).findFirst();
     assertTrue(airCooler.isPresent());
     assertTrue(airCooler.get().getFinSurfaceArea() > 0.0);
   }
@@ -150,7 +150,7 @@ public class HeatExchangerMechanicalDesignTest {
     String temaClass = design.getTemaClass();
     assertNotNull(temaClass, "TEMA class should not be null");
     assertTrue(temaClass.equals("R") || temaClass.equals("C") || temaClass.equals("B"),
-	"TEMA class should be R, C, or B");
+        "TEMA class should be R, C, or B");
     logger.info("TEMA class: " + temaClass);
   }
 
@@ -250,7 +250,7 @@ public class HeatExchangerMechanicalDesignTest {
     logger.info("Heat exchanger validation valid: " + result.isValid());
     if (!result.isValid()) {
       for (String issue : result.getIssues()) {
-	logger.info("  Issue: " + issue);
+        logger.info("  Issue: " + issue);
       }
     }
   }
@@ -279,7 +279,7 @@ public class HeatExchangerMechanicalDesignTest {
 
     // Hydro test pressure should exceed MAWP
     assertTrue(calc.getHydroTestPressureShell() > calc.getMawpShellSide(),
-	"Hydro test pressure shell should exceed MAWP");
+        "Hydro test pressure shell should exceed MAWP");
     assertTrue(calc.getHydroTestPressureTube() > calc.getMawpTubeSide(), "Hydro test pressure tube should exceed MAWP");
     logger.info("Hydro test pressure shell: " + calc.getHydroTestPressureShell() + " bara");
 

@@ -74,10 +74,10 @@ final class BlockTridiagonalMatrix {
     for (int blockIndex = 0; blockIndex < blockCount; blockIndex++) {
       copyBlockToDense(dense, diagonal[blockIndex], blockIndex, blockIndex);
       if (blockIndex > 0) {
-	copyBlockToDense(dense, lower[blockIndex], blockIndex, blockIndex - 1);
+        copyBlockToDense(dense, lower[blockIndex], blockIndex, blockIndex - 1);
       }
       if (blockIndex < blockCount - 1) {
-	copyBlockToDense(dense, upper[blockIndex], blockIndex, blockIndex + 1);
+        copyBlockToDense(dense, upper[blockIndex], blockIndex, blockIndex + 1);
       }
     }
     return dense;

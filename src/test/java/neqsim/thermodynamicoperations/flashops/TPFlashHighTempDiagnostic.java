@@ -39,7 +39,7 @@ public class TPFlashHighTempDiagnostic {
     sys.addComponent("nC19", 1.0);
     sys.setMixingRule("classic");
     sys.setMolarComposition(new double[] { 1.63e-3, 3.23e-3, 0, 3e-1, 4.6e-2, 1.4e-2, 2.2e-2, 3.9e-3, 8.8e-3, 2.6e-3,
-	3.2e-2, 1.2e-1, 1.5e-1, 9.8e-2, 7.6e-2, 4.1e-2, 2.5e-2, 1.6e-2, 1e-2, 5.6e-3, 2.7e-3, 1.3e-3, 8.7e-4, 3.8e-4 });
+        3.2e-2, 1.2e-1, 1.5e-1, 9.8e-2, 7.6e-2, 4.1e-2, 2.5e-2, 1.6e-2, 1e-2, 5.6e-3, 2.7e-3, 1.3e-3, 8.7e-4, 3.8e-4 });
     return sys;
   }
 
@@ -60,10 +60,10 @@ public class TPFlashHighTempDiagnostic {
       logger.info("  Gibbs energy: " + sys.getGibbsEnergy());
       double betaSum = 0;
       for (int p = 0; p < sys.getNumberOfPhases(); p++) {
-	double b = sys.getBeta(p);
-	betaSum += b;
-	logger.info("  Phase " + p + ": type=" + sys.getPhase(p).getPhaseTypeName() + " beta=" + b + " Z="
-	    + sys.getPhase(p).getZ());
+        double b = sys.getBeta(p);
+        betaSum += b;
+        logger.info("  Phase " + p + ": type=" + sys.getPhase(p).getPhaseTypeName() + " beta=" + b + " Z="
+            + sys.getPhase(p).getZ());
       }
       logger.info("  Beta sum: " + betaSum + (Math.abs(betaSum - 1.0) > 1e-6 ? " *** NOT NORMALIZED ***" : " (OK)"));
     }
@@ -82,10 +82,10 @@ public class TPFlashHighTempDiagnostic {
       logger.info("  Gibbs energy: " + sys.getGibbsEnergy());
       double betaSum = 0;
       for (int p = 0; p < sys.getNumberOfPhases(); p++) {
-	double b = sys.getBeta(p);
-	betaSum += b;
-	logger.info("  Phase " + p + ": type=" + sys.getPhase(p).getPhaseTypeName() + " beta=" + b + " Z="
-	    + sys.getPhase(p).getZ());
+        double b = sys.getBeta(p);
+        betaSum += b;
+        logger.info("  Phase " + p + ": type=" + sys.getPhase(p).getPhaseTypeName() + " beta=" + b + " Z="
+            + sys.getPhase(p).getZ());
       }
       logger.info("  Beta sum: " + betaSum + (Math.abs(betaSum - 1.0) > 1e-6 ? " *** NOT NORMALIZED ***" : " (OK)"));
     }
@@ -98,12 +98,12 @@ public class TPFlashHighTempDiagnostic {
       sys.setPressure(88, "bara");
       ThermodynamicOperations ops = new ThermodynamicOperations(sys);
       for (double t = 260.0; t <= 276.0; t += 1.0) {
-	sys.setTemperature(t, "C");
-	ops.TPflash();
-	double gasFrac = sys.getPhaseFraction("gas", "mole");
-	int nph = sys.getNumberOfPhases();
-	logger.printf(org.apache.logging.log4j.Level.INFO, "  T=%.0f C  nPhases=%d  gasFrac=%.8f  Gibbs=%.2f%n", t, nph,
-	    gasFrac, sys.getGibbsEnergy());
+        sys.setTemperature(t, "C");
+        ops.TPflash();
+        double gasFrac = sys.getPhaseFraction("gas", "mole");
+        int nph = sys.getNumberOfPhases();
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  T=%.0f C  nPhases=%d  gasFrac=%.8f  Gibbs=%.2f%n", t, nph,
+            gasFrac, sys.getGibbsEnergy());
       }
     }
 
@@ -117,7 +117,7 @@ public class TPFlashHighTempDiagnostic {
       ThermodynamicOperations ops = new ThermodynamicOperations(sys);
       ops.TPflash();
       logger.printf(org.apache.logging.log4j.Level.INFO, "  Run %d: gasFrac=%.15f  nPhases=%d  Gibbs=%.6f%n", run,
-	  sys.getPhaseFraction("gas", "mole"), sys.getNumberOfPhases(), sys.getGibbsEnergy());
+          sys.getPhaseFraction("gas", "mole"), sys.getNumberOfPhases(), sys.getGibbsEnergy());
     }
 
     // Test 5: Force single-phase flash and compare Gibbs energy
@@ -158,7 +158,7 @@ public class TPFlashHighTempDiagnostic {
       opsNoMPC.TPflash();
       double gibbsNoMPC = sysNoMPC.getGibbsEnergy();
       logger.info("  2-phase (no MPC): nPhases=" + sysNoMPC.getNumberOfPhases() + " gasFrac="
-	  + sysNoMPC.getPhaseFraction("gas", "mole") + " Gibbs=" + gibbsNoMPC);
+          + sysNoMPC.getPhaseFraction("gas", "mole") + " Gibbs=" + gibbsNoMPC);
       logger.info("  MPC vs no-MPC Gibbs diff: " + (gibbs2 - gibbsNoMPC));
       System.out.println("  MPC result " + (gibbs2 <= gibbsNoMPC ? "is better or equal" : "is WORSE"));
     }
@@ -193,15 +193,15 @@ public class TPFlashHighTempDiagnostic {
       sysPR.addComponent("nC19", 1.0);
       sysPR.setMixingRule("classic");
       sysPR.setMolarComposition(
-	  new double[] { 1.63e-3, 3.23e-3, 0, 3e-1, 4.6e-2, 1.4e-2, 2.2e-2, 3.9e-3, 8.8e-3, 2.6e-3, 3.2e-2, 1.2e-1,
-	      1.5e-1, 9.8e-2, 7.6e-2, 4.1e-2, 2.5e-2, 1.6e-2, 1e-2, 5.6e-3, 2.7e-3, 1.3e-3, 8.7e-4, 3.8e-4 });
+          new double[] { 1.63e-3, 3.23e-3, 0, 3e-1, 4.6e-2, 1.4e-2, 2.2e-2, 3.9e-3, 8.8e-3, 2.6e-3, 3.2e-2, 1.2e-1,
+              1.5e-1, 9.8e-2, 7.6e-2, 4.1e-2, 2.5e-2, 1.6e-2, 1e-2, 5.6e-3, 2.7e-3, 1.3e-3, 8.7e-4, 3.8e-4 });
       sysPR.setMultiPhaseCheck(true);
       sysPR.setPressure(88, "bara");
       sysPR.setTemperature(268.0, "C");
       ThermodynamicOperations opsPR = new ThermodynamicOperations(sysPR);
       opsPR.TPflash();
       logger.info("  PR EOS: nPhases=" + sysPR.getNumberOfPhases() + " gasFrac=" + sysPR.getPhaseFraction("gas", "mole")
-	  + " Gibbs=" + sysPR.getGibbsEnergy());
+          + " Gibbs=" + sysPR.getGibbsEnergy());
     }
 
     // Test 7: System-level vs Phase-level beta comparison
@@ -216,17 +216,17 @@ public class TPFlashHighTempDiagnostic {
 
       logger.info("  Number of phases: " + sys.getNumberOfPhases());
       for (int p = 0; p < sys.getNumberOfPhases(); p++) {
-	double sysBeta = sys.getBeta(p);
-	double phaseBeta = sys.getPhase(p).getBeta();
-	logger.info("  Phase " + p + " (" + sys.getPhase(p).getPhaseTypeName() + "):" + " sys.getBeta(" + p + ")="
-	    + sysBeta + " phase.getBeta()=" + phaseBeta
-	    + (Math.abs(sysBeta - phaseBeta) > 1e-10 ? " *** MISMATCH ***" : " (match)"));
+        double sysBeta = sys.getBeta(p);
+        double phaseBeta = sys.getPhase(p).getBeta();
+        logger.info("  Phase " + p + " (" + sys.getPhase(p).getPhaseTypeName() + "):" + " sys.getBeta(" + p + ")="
+            + sysBeta + " phase.getBeta()=" + phaseBeta
+            + (Math.abs(sysBeta - phaseBeta) > 1e-10 ? " *** MISMATCH ***" : " (match)"));
       }
 
       // Print phaseIndex mapping
       logger.info("  Phase index mapping:");
       for (int i = 0; i < sys.getNumberOfPhases(); i++) {
-	logger.info("    phaseIndex[" + i + "] = " + sys.getPhaseIndex(i));
+        logger.info("    phaseIndex[" + i + "] = " + sys.getPhaseIndex(i));
       }
     }
 
@@ -241,27 +241,27 @@ public class TPFlashHighTempDiagnostic {
       ops.TPflash();
 
       if (sys.getNumberOfPhases() >= 2) {
-	logger.info("  MPC flash - checking fi*xi across phases:");
-	double maxRelError = 0;
-	int worstComp = -1;
-	for (int j = 0; j < sys.getPhase(0).getNumberOfComponents(); j++) {
-	  double fug0 = sys.getPhase(0).getComponent(j).getFugacityCoefficient()
-	      * sys.getPhase(0).getComponent(j).getx() * sys.getPressure();
-	  double fug1 = sys.getPhase(1).getComponent(j).getFugacityCoefficient()
-	      * sys.getPhase(1).getComponent(j).getx() * sys.getPressure();
-	  double relErr = (fug1 > 1e-30) ? Math.abs(fug0 - fug1) / fug1 : 0;
-	  if (relErr > maxRelError) {
-	    maxRelError = relErr;
-	    worstComp = j;
-	  }
-	  if (relErr > 1e-6) {
-	    logger.printf(org.apache.logging.log4j.Level.INFO, "    %s: fug_ph0=%.6e fug_ph1=%.6e relErr=%.2e%n",
-		sys.getPhase(0).getComponent(j).getComponentName(), fug0, fug1, relErr);
-	  }
-	}
-	logger.printf(org.apache.logging.log4j.Level.INFO, "  Max fugacity relative error: %.2e (comp %d)%n",
-	    maxRelError, worstComp);
-	logger.info("  " + (maxRelError < 1e-4 ? "OK (converged)" : "POOR CONVERGENCE"));
+        logger.info("  MPC flash - checking fi*xi across phases:");
+        double maxRelError = 0;
+        int worstComp = -1;
+        for (int j = 0; j < sys.getPhase(0).getNumberOfComponents(); j++) {
+          double fug0 = sys.getPhase(0).getComponent(j).getFugacityCoefficient()
+              * sys.getPhase(0).getComponent(j).getx() * sys.getPressure();
+          double fug1 = sys.getPhase(1).getComponent(j).getFugacityCoefficient()
+              * sys.getPhase(1).getComponent(j).getx() * sys.getPressure();
+          double relErr = (fug1 > 1e-30) ? Math.abs(fug0 - fug1) / fug1 : 0;
+          if (relErr > maxRelError) {
+            maxRelError = relErr;
+            worstComp = j;
+          }
+          if (relErr > 1e-6) {
+            logger.printf(org.apache.logging.log4j.Level.INFO, "    %s: fug_ph0=%.6e fug_ph1=%.6e relErr=%.2e%n",
+                sys.getPhase(0).getComponent(j).getComponentName(), fug0, fug1, relErr);
+          }
+        }
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  Max fugacity relative error: %.2e (comp %d)%n",
+            maxRelError, worstComp);
+        logger.info("  " + (maxRelError < 1e-4 ? "OK (converged)" : "POOR CONVERGENCE"));
       }
 
       // Same check for no-MPC flash
@@ -273,19 +273,19 @@ public class TPFlashHighTempDiagnostic {
       opsNoMPC.TPflash();
 
       if (sysNoMPC.getNumberOfPhases() >= 2) {
-	logger.info("  No-MPC flash - checking fi*xi across phases:");
-	double maxRelError = 0;
-	for (int j = 0; j < sysNoMPC.getPhase(0).getNumberOfComponents(); j++) {
-	  double fug0 = sysNoMPC.getPhase(0).getComponent(j).getFugacityCoefficient()
-	      * sysNoMPC.getPhase(0).getComponent(j).getx() * sysNoMPC.getPressure();
-	  double fug1 = sysNoMPC.getPhase(1).getComponent(j).getFugacityCoefficient()
-	      * sysNoMPC.getPhase(1).getComponent(j).getx() * sysNoMPC.getPressure();
-	  double relErr = (fug1 > 1e-30) ? Math.abs(fug0 - fug1) / fug1 : 0;
-	  if (relErr > maxRelError)
-	    maxRelError = relErr;
-	}
-	logger.printf(org.apache.logging.log4j.Level.INFO, "  Max fugacity relative error (no-MPC): %.2e%n",
-	    maxRelError);
+        logger.info("  No-MPC flash - checking fi*xi across phases:");
+        double maxRelError = 0;
+        for (int j = 0; j < sysNoMPC.getPhase(0).getNumberOfComponents(); j++) {
+          double fug0 = sysNoMPC.getPhase(0).getComponent(j).getFugacityCoefficient()
+              * sysNoMPC.getPhase(0).getComponent(j).getx() * sysNoMPC.getPressure();
+          double fug1 = sysNoMPC.getPhase(1).getComponent(j).getFugacityCoefficient()
+              * sysNoMPC.getPhase(1).getComponent(j).getx() * sysNoMPC.getPressure();
+          double relErr = (fug1 > 1e-30) ? Math.abs(fug0 - fug1) / fug1 : 0;
+          if (relErr > maxRelError)
+            maxRelError = relErr;
+        }
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  Max fugacity relative error (no-MPC): %.2e%n",
+            maxRelError);
       }
     }
 
@@ -303,7 +303,7 @@ public class TPFlashHighTempDiagnostic {
       double gasFracBefore = sys.getPhaseFraction("gas", "mole");
       double betaSumBefore = 0;
       for (int p = 0; p < sys.getNumberOfPhases(); p++) {
-	betaSumBefore += sys.getBeta(p);
+        betaSumBefore += sys.getBeta(p);
       }
 
       logger.info("  Before: gasFrac=" + gasFracBefore + " betaSum=" + betaSumBefore + " Gibbs=" + gibbsBefore);
@@ -316,7 +316,7 @@ public class TPFlashHighTempDiagnostic {
       double gasFracAfter = sys.getPhaseFraction("gas", "mole");
       double betaSumAfter = 0;
       for (int p = 0; p < sys.getNumberOfPhases(); p++) {
-	betaSumAfter += sys.getBeta(p);
+        betaSumAfter += sys.getBeta(p);
       }
 
       logger.info("  After:  gasFrac=" + gasFracAfter + " betaSum=" + betaSumAfter + " Gibbs=" + gibbsAfter);

@@ -47,7 +47,7 @@ public enum PhysicalPropertyModel {
   public static PhysicalPropertyModel byName(String name) {
     for (PhysicalPropertyModel pt : copyOfValues) {
       if (pt.name().equals(name.toUpperCase())) {
-	return pt;
+        return pt;
       }
     }
     throw new RuntimeException(new InvalidInputException("PhysicalPropertyModel", "byName", "name", "is not valid."));
@@ -62,7 +62,7 @@ public enum PhysicalPropertyModel {
   public static PhysicalPropertyModel byValue(int value) {
     for (PhysicalPropertyModel pt : copyOfValues) {
       if (pt.getValue() == (value)) {
-	return pt;
+        return pt;
       }
     }
     throw new RuntimeException(new InvalidInputException("PhysicalPropertyModel", "byValue", "value", "is not valid."));

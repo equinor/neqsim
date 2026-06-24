@@ -109,7 +109,7 @@ public class StidHazopDataSource {
     for (int i = 0; i < array.size(); i++) {
       JsonElement element = array.get(i);
       if (!element.isJsonObject()) {
-	continue;
+        continue;
       }
       HAZOPTemplate node = buildNode(element.getAsJsonObject(), index);
       nodes.add(node);
@@ -140,10 +140,10 @@ public class StidHazopDataSource {
     JsonArray deviations = firstArray(record, DEVIATION_ARRAY_KEYS);
     if (deviations != null) {
       for (int i = 0; i < deviations.size(); i++) {
-	JsonElement element = deviations.get(i);
-	if (element.isJsonObject()) {
-	  addDeviation(node, element.getAsJsonObject());
-	}
+        JsonElement element = deviations.get(i);
+        if (element.isJsonObject()) {
+          addDeviation(node, element.getAsJsonObject());
+        }
       }
     }
     return node;
@@ -165,8 +165,8 @@ public class StidHazopDataSource {
     String consequence = optString(record, "consequence", "TBD");
     String safeguard = optString(record, "safeguard", "TBD");
     String recommendation = record.has("recommendation") && !record.get("recommendation").isJsonNull()
-	? record.get("recommendation").getAsString()
-	: null;
+        ? record.get("recommendation").getAsString()
+        : null;
     node.addDeviation(guideWord, parameter, cause, consequence, safeguard, recommendation);
   }
 
@@ -183,7 +183,7 @@ public class StidHazopDataSource {
     }
     for (HAZOPTemplate.GuideWord value : HAZOPTemplate.GuideWord.values()) {
       if (value.name().equals(key)) {
-	return value;
+        return value;
       }
     }
     return null;
@@ -202,7 +202,7 @@ public class StidHazopDataSource {
     }
     for (HAZOPTemplate.Parameter value : HAZOPTemplate.Parameter.values()) {
       if (value.name().equals(key)) {
-	return value;
+        return value;
       }
     }
     return null;
@@ -235,7 +235,7 @@ public class StidHazopDataSource {
   private static JsonArray firstArray(JsonObject object, String[] keys) {
     for (String key : keys) {
       if (object.has(key) && object.get(key).isJsonArray()) {
-	return object.getAsJsonArray(key);
+        return object.getAsJsonArray(key);
       }
     }
     return null;

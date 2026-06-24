@@ -739,15 +739,15 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
     try {
       MechanicalDesign design = getMechanicalDesign();
       if (design != null) {
-	List<CapacityConstraint> derived = design.getDesignCapacityConstraints();
-	if (derived != null) {
-	  for (CapacityConstraint constraint : derived) {
-	    if (constraint != null) {
-	      addCapacityConstraint(constraint);
-	      added++;
-	    }
-	  }
-	}
+        List<CapacityConstraint> derived = design.getDesignCapacityConstraints();
+        if (derived != null) {
+          for (CapacityConstraint constraint : derived) {
+            if (constraint != null) {
+              addCapacityConstraint(constraint);
+              added++;
+            }
+          }
+        }
       }
     } catch (RuntimeException ex) {
       // Treated as "no derived constraints" — never throws.
@@ -774,11 +774,11 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
     double maxUtil = -1.0;
     for (CapacityConstraint c : constraints.values()) {
       if (c.isEnabled()) {
-	double util = c.getUtilization();
-	if (util > maxUtil) {
-	  maxUtil = util;
-	  bottleneck = c;
-	}
+        double util = c.getUtilization();
+        if (util > maxUtil) {
+          maxUtil = util;
+          bottleneck = c;
+        }
       }
     }
     return bottleneck;
@@ -801,7 +801,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
     }
     for (CapacityConstraint c : constraints.values()) {
       if (c.isEnabled() && c.isViolated()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -824,7 +824,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
     }
     for (CapacityConstraint c : constraints.values()) {
       if (c.isEnabled() && c.isHardLimitExceeded()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -848,10 +848,10 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
     double maxUtil = 0.0;
     for (CapacityConstraint c : constraints.values()) {
       if (c.isEnabled()) {
-	double util = c.getUtilization();
-	if (util > maxUtil) {
-	  maxUtil = util;
-	}
+        double util = c.getUtilization();
+        if (util > maxUtil) {
+          maxUtil = util;
+        }
       }
     }
     return maxUtil;
@@ -906,7 +906,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
     }
     for (CapacityConstraint c : constraints.values()) {
       if (c.isEnabled() && c.isNearLimit()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -930,7 +930,7 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
     for (Map.Entry<String, CapacityConstraint> entry : constraints.entrySet()) {
       CapacityConstraint c = entry.getValue();
       if (c.isEnabled()) {
-	summary.put(entry.getKey(), c.getUtilization() * 100.0);
+        summary.put(entry.getKey(), c.getUtilization() * 100.0);
       }
     }
     return summary;

@@ -433,7 +433,7 @@ public class CompressorTrain extends TwoPortEquipment implements CapacityConstra
 
     if (compressor != null) {
       sb.append(String.format("  Inlet P: %.2f bara, Outlet P: %.2f bara%n", compressor.getInletPressure(),
-	  compressor.getOutletPressure()));
+          compressor.getOutletPressure()));
       sb.append(String.format("  Compression Ratio: %.3f%n", getCompressionRatio()));
       sb.append(String.format("  Polytropic Efficiency: %.1f%%%n", getPolytropicEfficiency() * 100.0));
       sb.append(String.format("  Power: %.1f kW%n", getPower("kW")));

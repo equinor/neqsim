@@ -137,10 +137,10 @@ public final class SeparatorFireExposure {
     private final boolean ruptureLikely;
 
     public FireExposureResult(double wettedArea, double unwettedArea, double poolFireHeatLoad, double radiativeHeatFlux,
-	double unwettedRadiativeHeat, double flareRadiativeFlux, double flareRadiativeHeat, double totalFireHeat,
-	FireHeatTransferCalculator.SurfaceTemperatureResult wettedWall,
-	FireHeatTransferCalculator.SurfaceTemperatureResult unwettedWall, double vonMisesStressPa,
-	double ruptureMarginPa, boolean ruptureLikely) {
+        double unwettedRadiativeHeat, double flareRadiativeFlux, double flareRadiativeHeat, double totalFireHeat,
+        FireHeatTransferCalculator.SurfaceTemperatureResult wettedWall,
+        FireHeatTransferCalculator.SurfaceTemperatureResult unwettedWall, double vonMisesStressPa,
+        double ruptureMarginPa, boolean ruptureLikely) {
       this.wettedArea = wettedArea;
       this.unwettedArea = unwettedArea;
       this.poolFireHeatLoad = poolFireHeatLoad;
@@ -262,17 +262,17 @@ public final class SeparatorFireExposure {
     double poolFireHeatLoad = FireHeatLoadCalculator.api521PoolFireHeatLoad(wettedArea, config.environmentalFactor());
 
     FireHeatTransferCalculator.SurfaceTemperatureResult wettedWall = FireHeatTransferCalculator
-	.calculateWallTemperatures(processTemperatureK, config.fireTemperatureK(), config.wallThicknessM(),
-	    config.thermalConductivityWPerMPerK(), config.wettedInternalFilmCoefficientWPerM2K(),
-	    config.externalFilmCoefficientWPerM2K());
+        .calculateWallTemperatures(processTemperatureK, config.fireTemperatureK(), config.wallThicknessM(),
+            config.thermalConductivityWPerMPerK(), config.wettedInternalFilmCoefficientWPerM2K(),
+            config.externalFilmCoefficientWPerM2K());
 
     FireHeatTransferCalculator.SurfaceTemperatureResult unwettedWall = FireHeatTransferCalculator
-	.calculateWallTemperatures(processTemperatureK, config.fireTemperatureK(), config.wallThicknessM(),
-	    config.thermalConductivityWPerMPerK(), config.unwettedInternalFilmCoefficientWPerM2K(),
-	    config.externalFilmCoefficientWPerM2K());
+        .calculateWallTemperatures(processTemperatureK, config.fireTemperatureK(), config.wallThicknessM(),
+            config.thermalConductivityWPerMPerK(), config.unwettedInternalFilmCoefficientWPerM2K(),
+            config.externalFilmCoefficientWPerM2K());
 
     double radiativeHeatFlux = FireHeatLoadCalculator.generalizedStefanBoltzmannHeatFlux(config.emissivity(),
-	config.viewFactor(), config.fireTemperatureK(), unwettedWall.outerWallTemperatureK());
+        config.viewFactor(), config.fireTemperatureK(), unwettedWall.outerWallTemperatureK());
 
     double unwettedRadiativeHeat = radiativeHeatFlux * unwettedArea;
     double flareRadiativeFlux = 0.0;
@@ -290,8 +290,8 @@ public final class SeparatorFireExposure {
     boolean ruptureLikely = VesselRuptureCalculator.isRuptureLikely(vonMises, config.allowableTensileStrengthPa());
 
     return new FireExposureResult(wettedArea, unwettedArea, poolFireHeatLoad, radiativeHeatFlux, unwettedRadiativeHeat,
-	flareRadiativeFlux, flareRadiativeHeat, totalFireHeat, wettedWall, unwettedWall, vonMises, ruptureMargin,
-	ruptureLikely);
+        flareRadiativeFlux, flareRadiativeHeat, totalFireHeat, wettedWall, unwettedWall, vonMises, ruptureMargin,
+        ruptureLikely);
   }
 
   /**

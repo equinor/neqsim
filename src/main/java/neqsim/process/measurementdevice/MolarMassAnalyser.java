@@ -44,7 +44,7 @@ public class MolarMassAnalyser extends StreamMeasurementDeviceBaseClass {
   public double getMeasuredValue(String unit) {
     if (!unit.equalsIgnoreCase("gr/mol")) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getMeasuredValue", "unit",
-	  "currently only supports \"gr/mol\""));
+          "currently only supports \"gr/mol\""));
     }
     return applySignalModifiers(stream.getThermoSystem().getMolarMass() * 1000.0);
   }

@@ -187,7 +187,7 @@ public class UtilityAirSystemTest {
   @Test
   public void testAirConsumerClass() {
     UtilityAirSystem.AirConsumer consumer = new UtilityAirSystem.AirConsumer("Test Consumer", 100.0,
-	AirQualityClass.CLASS_3);
+        AirQualityClass.CLASS_3);
 
     assertEquals("Test Consumer", consumer.getName());
     assertEquals(100.0, consumer.getDemandNm3h(), 1e-6);

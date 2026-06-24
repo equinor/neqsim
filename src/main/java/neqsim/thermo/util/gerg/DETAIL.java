@@ -149,16 +149,16 @@ public class DETAIL {
     doubleW[][] ar = new doubleW[3 + 1][3 + 1];
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; j++) {
-	ar[i][j] = new doubleW(0.0d);
+        ar[i][j] = new doubleW(0.0d);
       }
     }
     xTermsDetail(x);
     AlpharDetail(0, 2, T, D, ar);
     Z.val = 1 + ar[0][1].val / RDetail / T; // ar(0,1) is the first derivative of alpha(r) with
-					    // respect to density
+    // respect to density
     P.val = D * RDetail * T * Z.val;
     dPdDsave = RDetail * T + 2 * ar[0][1].val + ar[0][2].val; // d(P)/d(D) for use in density
-							      // iteration
+    // iteration
   }
 
   /**
@@ -217,26 +217,26 @@ public class DETAIL {
     vlog = -Math.log(D.val);
     for (int it = 1; it <= 20; ++it) {
       if (vlog < -7 || vlog > 100) {
-	ierr.val = 1;
-	herr.val = "Calculation failed to converge in DETAIL method, ideal gas density returned.";
-	D.val = P / RDetail / T;
-	return;
+        ierr.val = 1;
+        herr.val = "Calculation failed to converge in DETAIL method, ideal gas density returned.";
+        D.val = P / RDetail / T;
+        return;
       }
       D.val = Math.exp(-vlog);
       PressureDetail(T, D.val, x, P2, Z);
       if (dPdDsave < epsilon || P2.val < epsilon) {
-	vlog += 0.1;
+        vlog += 0.1;
       } else {
-	// Find the next density with a first order Newton's type iterative scheme, with
-	// log(P) as the known variable and log(v) as the unknown property.
-	// See AGA 8 publication for further information.
-	dpdlv = -D.val * dPdDsave; // d(p)/d[log(v)]
-	vdiff = (Math.log(P2.val) - plog) * P2.val / dpdlv;
-	vlog = vlog - vdiff;
-	if (Math.abs(vdiff) < tolr) {
-	  D.val = Math.exp(-vlog);
-	  return; // Iteration converged
-	}
+        // Find the next density with a first order Newton's type iterative scheme, with
+        // log(P) as the known variable and log(v) as the unknown property.
+        // See AGA 8 publication for further information.
+        dpdlv = -D.val * dPdDsave; // d(p)/d[log(v)]
+        vdiff = (Math.log(P2.val) - plog) * P2.val / dpdlv;
+        vlog = vlog - vdiff;
+        if (Math.abs(vdiff) < tolr) {
+          D.val = Math.exp(-vlog);
+          return; // Iteration converged
+        }
       }
     }
     ierr.val = 1;
@@ -312,7 +312,7 @@ public class DETAIL {
 
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; j++) {
-	ar[i][j] = new doubleW(0.0d);
+        ar[i][j] = new doubleW(0.0d);
       }
     }
     doubleW Mm = new doubleW(0.0d);
@@ -374,7 +374,7 @@ public class DETAIL {
     icheck = 0;
     for (int i = 1; i <= NcDetail; ++i) {
       if (Math.abs(x[i] - xold[i]) > 0.0000001) {
-	icheck = 1;
+        icheck = 1;
       }
       xold[i] = x[i];
     }
@@ -394,16 +394,16 @@ public class DETAIL {
     // Calculate pure fluid contributions
     for (int i = 1; i <= NcDetail; ++i) {
       if (x[i] > 0) {
-	xi2 = sq(x[i]);
-	K3 += x[i] * Ki25[i]; // K, U, and G are the sums of a pure fluid contribution and a
-	U += x[i] * Ei25[i]; // binary pair contribution
-	G += x[i] * Gi[i];
-	Q += x[i] * Qi[i]; // Q and F depend only on the pure fluid parts
-	F += xi2 * Fi[i];
-	for (int n = 1; n <= 18; ++n) {
-	  Bs[n] = Bs[n] + xi2 * Bsnij2[i][i][n]; // Pure fluid contributions to second
-						 // virial coefficient
-	}
+        xi2 = sq(x[i]);
+        K3 += x[i] * Ki25[i]; // K, U, and G are the sums of a pure fluid contribution and a
+        U += x[i] * Ei25[i]; // binary pair contribution
+        G += x[i] * Gi[i];
+        Q += x[i] * Qi[i]; // Q and F depend only on the pure fluid parts
+        F += xi2 * Fi[i];
+        for (int n = 1; n <= 18; ++n) {
+          Bs[n] = Bs[n] + xi2 * Bsnij2[i][i][n]; // Pure fluid contributions to second
+          // virial coefficient
+        }
       }
     }
     K3 = sq(K3);
@@ -412,18 +412,19 @@ public class DETAIL {
     // Binary pair contributions
     for (int i = 1; i <= NcDetail - 1; ++i) {
       if (x[i] > 0) {
-	for (int j = i + 1; j <= NcDetail; ++j) {
-	  if (x[j] > 0) {
-	    xij = 2 * x[i] * x[j];
-	    K3 = K3 + xij * Kij5[i][j];
-	    U = U + xij * Uij5[i][j];
-	    G = G + xij * Gij5[i][j];
-	    for (int n = 1; n <= 18; ++n) {
-	      Bs[n] = Bs[n] + xij * Bsnij2[i][j][n]; // Second virial coefficients of
-						     // mixture
-	    }
-	  }
-	}
+        for (int j = i + 1; j <= NcDetail; ++j) {
+          if (x[j] > 0) {
+            xij = 2 * x[i] * x[j];
+            K3 = K3 + xij * Kij5[i][j];
+            U = U + xij * Uij5[i][j];
+            G = G + xij * Gij5[i][j];
+            for (int n = 1; n <= 18; ++n) {
+              Bs[n] = Bs[n] + xij * Bsnij2[i][j][n]; // Second virial
+                                                     // coefficients of
+              // mixture
+            }
+          }
+        }
       }
     }
     K3 = Math.pow(K3, 0.6);
@@ -434,13 +435,13 @@ public class DETAIL {
     for (int n = 13; n <= 58; ++n) {
       Csn[n] = an[n] * Math.pow(U, un[n]);
       if (gn[n] == 1) {
-	Csn[n] = Csn[n] * G;
+        Csn[n] = Csn[n] * G;
       }
       if (qn[n] == 1) {
-	Csn[n] = Csn[n] * Q2;
+        Csn[n] = Csn[n] * Q2;
       }
       if (fn[n] == 1) {
-	Csn[n] = Csn[n] * F;
+        Csn[n] = Csn[n] * F;
       }
     }
   }
@@ -484,33 +485,33 @@ public class DETAIL {
     LogT = Math.log(T);
     for (int i = 1; i <= NcDetail; ++i) {
       if (x[i] > 0) {
-	LogxD = LogD + Math.log(x[i]);
-	SumHyp0 = 0;
-	SumHyp1 = 0;
-	SumHyp2 = 0;
-	for (int j = 4; j <= 7; ++j) {
-	  if (th0i[i][j] > 0) {
-	    th0T = th0i[i][j] / T;
-	    ep = Math.exp(th0T);
-	    em = 1 / ep;
-	    hsn = (ep - em) / 2;
-	    hcn = (ep + em) / 2;
-	    if (j == 4 || j == 6) {
-	      LogHyp = Math.log(Math.abs(hsn));
-	      SumHyp0 += n0i[i][j] * LogHyp;
-	      SumHyp1 += n0i[i][j] * (LogHyp - th0T * hcn / hsn);
-	      SumHyp2 += n0i[i][j] * sq(th0T / hsn);
-	    } else {
-	      LogHyp = Math.log(Math.abs(hcn));
-	      SumHyp0 += -n0i[i][j] * LogHyp;
-	      SumHyp1 += -n0i[i][j] * (LogHyp - th0T * hsn / hcn);
-	      SumHyp2 += +n0i[i][j] * sq(th0T / hcn);
-	    }
-	  }
-	}
-	a0[0].val += x[i] * (LogxD + n0i[i][1] + n0i[i][2] / T - n0i[i][3] * LogT + SumHyp0);
-	a0[1].val += x[i] * (LogxD + n0i[i][1] - n0i[i][3] * (1 + LogT) + SumHyp1);
-	a0[2].val += -x[i] * (n0i[i][3] + SumHyp2);
+        LogxD = LogD + Math.log(x[i]);
+        SumHyp0 = 0;
+        SumHyp1 = 0;
+        SumHyp2 = 0;
+        for (int j = 4; j <= 7; ++j) {
+          if (th0i[i][j] > 0) {
+            th0T = th0i[i][j] / T;
+            ep = Math.exp(th0T);
+            em = 1 / ep;
+            hsn = (ep - em) / 2;
+            hcn = (ep + em) / 2;
+            if (j == 4 || j == 6) {
+              LogHyp = Math.log(Math.abs(hsn));
+              SumHyp0 += n0i[i][j] * LogHyp;
+              SumHyp1 += n0i[i][j] * (LogHyp - th0T * hcn / hsn);
+              SumHyp2 += n0i[i][j] * sq(th0T / hsn);
+            } else {
+              LogHyp = Math.log(Math.abs(hcn));
+              SumHyp0 += -n0i[i][j] * LogHyp;
+              SumHyp1 += -n0i[i][j] * (LogHyp - th0T * hsn / hcn);
+              SumHyp2 += +n0i[i][j] * sq(th0T / hcn);
+            }
+          }
+        }
+        a0[0].val += x[i] * (LogxD + n0i[i][1] + n0i[i][2] / T - n0i[i][3] * LogT + SumHyp0);
+        a0[1].val += x[i] * (LogxD + n0i[i][1] - n0i[i][3] * (1 + LogT) + SumHyp1);
+        a0[2].val += -x[i] * (n0i[i][3] + SumHyp2);
       }
     }
     a0[0].val = a0[0].val * RDetail * T;
@@ -567,12 +568,12 @@ public class DETAIL {
 
     for (int i = 0; i < 3; ++i) {
       for (int j = 0; j < 3; ++j) {
-	ar[i][j].val = 0;
+        ar[i][j].val = 0;
       }
     }
     if (Math.abs(T - Told) > 0.0000001) {
       for (int n = 1; n <= 58; ++n) {
-	Tun[n] = Math.pow(T, -un[n]);
+        Tun[n] = Math.pow(T, -un[n]);
       }
     }
     Told = T;
@@ -598,26 +599,26 @@ public class DETAIL {
       SumB[n] = 0;
       Sum0[n] = 0;
       if (n <= 18) {
-	Sum = Bs[n] * D;
-	if (n >= 13) {
-	  Sum += -Csn[n] * Dred;
-	}
-	SumB[n] = Sum * Tun[n];
+        Sum = Bs[n] * D;
+        if (n >= 13) {
+          Sum += -Csn[n] * Dred;
+        }
+        SumB[n] = Sum * Tun[n];
       }
       if (n >= 13) {
-	// Contributions to the residual part of the Helmholtz energy
-	Sum0[n] = Csn[n] * Dknn[bn[n]] * Tun[n] * Expn[kn[n]];
-	// Contributions to the derivatives of the Helmholtz energy with respect to
-	// density
-	bkd = bn[n] - kn[n] * Dknn[kn[n]];
-	ckd = kn[n] * kn[n] * Dknn[kn[n]];
-	CoefD1[n] = bkd;
-	CoefD2[n] = bkd * (bkd - 1) - ckd;
-	CoefD3[n] = (bkd - 2) * CoefD2[n] + ckd * (1 - kn[n] - 2 * bkd);
+        // Contributions to the residual part of the Helmholtz energy
+        Sum0[n] = Csn[n] * Dknn[bn[n]] * Tun[n] * Expn[kn[n]];
+        // Contributions to the derivatives of the Helmholtz energy with respect to
+        // density
+        bkd = bn[n] - kn[n] * Dknn[kn[n]];
+        ckd = kn[n] * kn[n] * Dknn[kn[n]];
+        CoefD1[n] = bkd;
+        CoefD2[n] = bkd * (bkd - 1) - ckd;
+        CoefD3[n] = (bkd - 2) * CoefD2[n] + ckd * (1 - kn[n] - 2 * bkd);
       } else {
-	CoefD1[n] = 0;
-	CoefD2[n] = 0;
-	CoefD3[n] = 0;
+        CoefD1[n] = 0;
+        CoefD2[n] = 0;
+        CoefD3[n] = 0;
       }
     }
 
@@ -633,15 +634,15 @@ public class DETAIL {
       ar[0][3].val = ar[0][3].val + RT * s3;
       // Temperature derivatives
       if (itau > 0) {
-	ar[1][0].val = ar[1][0].val - CoefT1[n] * s0;
-	ar[1][1].val = ar[1][1].val - CoefT1[n] * s1;
-	ar[2][0].val = ar[2][0].val + CoefT2[n] * s0;
-	// The following are not used, but fully functional
-	// ar(1, 2) = ar(1, 2) - CoefT1(n) * s2;
-	// ar(1, 3) = ar(1, 3) - CoefT1(n) * s3;
-	// ar(2, 1) = ar(2, 1) + CoefT2(n) * s1;
-	// ar(2, 2) = ar(2, 2) + CoefT2(n) * s2;
-	// ar(2, 3) = ar(2, 3) + CoefT2(n) * s3;
+        ar[1][0].val = ar[1][0].val - CoefT1[n] * s0;
+        ar[1][1].val = ar[1][1].val - CoefT1[n] * s1;
+        ar[2][0].val = ar[2][0].val + CoefT2[n] * s0;
+        // The following are not used, but fully functional
+        // ar(1, 2) = ar(1, 2) - CoefT1(n) * s2;
+        // ar(1, 3) = ar(1, 3) - CoefT1(n) * s3;
+        // ar(2, 1) = ar(2, 1) + CoefT2(n) * s1;
+        // ar(2, 2) = ar(2, 2) + CoefT2(n) * s2;
+        // ar(2, 3) = ar(2, 3) + CoefT2(n) * s3;
       }
     }
   }
@@ -719,10 +720,10 @@ public class DETAIL {
       Wi[i] = 0;
       xold[i] = 0;
       for (int j = 1; j <= MaxFlds; ++j) {
-	Eij[i][j] = 1;
-	Gij[i][j] = 1;
-	Kij[i][j] = 1;
-	Uij[i][j] = 1;
+        Eij[i][j] = 1;
+        Gij[i][j] = 1;
+        Kij[i][j] = 1;
+        Uij[i][j] = 1;
       }
     }
 
@@ -1435,29 +1436,29 @@ public class DETAIL {
     }
     for (int i = 1; i <= MaxFlds; ++i) {
       for (int j = i; j <= MaxFlds; ++j) {
-	for (int n = 1; n <= 18; ++n) {
-	  Bsnij = 1;
-	  if (gn[n] == 1) {
-	    Bsnij = Gij[i][j] * (Gi[i] + Gi[j]) / 2;
-	  }
-	  if (qn[n] == 1) {
-	    Bsnij = Bsnij * Qi[i] * Qi[j];
-	  }
-	  if (fn[n] == 1) {
-	    Bsnij = Bsnij * Fi[i] * Fi[j];
-	  }
-	  if (sn[n] == 1) {
-	    Bsnij = Bsnij * Si[i] * Si[j];
-	  }
-	  if (wn[n] == 1) {
-	    Bsnij = Bsnij * Wi[i] * Wi[j];
-	  }
-	  Bsnij2[i][j][n] = an[n] * Math.pow(Eij[i][j] * Math.sqrt(Ei[i] * Ei[j]), un[n]) * Math.pow(Ki[i] * Ki[j], 1.5)
-	      * Bsnij;
-	}
-	Kij5[i][j] = (Math.pow(Kij[i][j], 5) - 1) * Ki25[i] * Ki25[j];
-	Uij5[i][j] = (Math.pow(Uij[i][j], 5) - 1) * Ei25[i] * Ei25[j];
-	Gij5[i][j] = (Gij[i][j] - 1) * (Gi[i] + Gi[j]) / 2;
+        for (int n = 1; n <= 18; ++n) {
+          Bsnij = 1;
+          if (gn[n] == 1) {
+            Bsnij = Gij[i][j] * (Gi[i] + Gi[j]) / 2;
+          }
+          if (qn[n] == 1) {
+            Bsnij = Bsnij * Qi[i] * Qi[j];
+          }
+          if (fn[n] == 1) {
+            Bsnij = Bsnij * Fi[i] * Fi[j];
+          }
+          if (sn[n] == 1) {
+            Bsnij = Bsnij * Si[i] * Si[j];
+          }
+          if (wn[n] == 1) {
+            Bsnij = Bsnij * Wi[i] * Wi[j];
+          }
+          Bsnij2[i][j][n] = an[n] * Math.pow(Eij[i][j] * Math.sqrt(Ei[i] * Ei[j]), un[n]) * Math.pow(Ki[i] * Ki[j], 1.5)
+              * Bsnij;
+        }
+        Kij5[i][j] = (Math.pow(Kij[i][j], 5) - 1) * Ki25[i] * Ki25[j];
+        Uij5[i][j] = (Math.pow(Uij[i][j], 5) - 1) * Ei25[i] * Ei25[j];
+        Gij5[i][j] = (Gij[i][j] - 1) * (Gi[i] + Gi[j]) / 2;
       }
     }
     // Ideal gas terms
@@ -1509,7 +1510,7 @@ public class DETAIL {
     StringW herr = new StringW("");
 
     double x[] = { 0.0, 0.77824, 0.02, 0.06, 0.08, 0.03, 0.0015, 0.003, 0.0005, 0.00165, 0.00215, 0.00088, 0.00024,
-	0.00015, 0.00009, 0.004, 0.005, 0.002, 0.0001, 0.0025, 0.007, 0.001 };
+        0.00015, 0.00009, 0.004, 0.005, 0.002, 0.0001, 0.0025, 0.007, 0.001 };
 
     test.MolarMassDetail(x, Mm);
 
@@ -1522,10 +1523,10 @@ public class DETAIL {
     System.out.println("Z " + Z.val);
 
     doubleW dPdD = new doubleW(0.0d), d2PdD2 = new doubleW(0.0d), d2PdTD = new doubleW(0.0d), dPdT = new doubleW(0.0d),
-	U = new doubleW(0.0d), H = new doubleW(0.0d), S = new doubleW(0.0d), A = new doubleW(0.0d),
-	P2 = new doubleW(0.0d);
+        U = new doubleW(0.0d), H = new doubleW(0.0d), S = new doubleW(0.0d), A = new doubleW(0.0d),
+        P2 = new doubleW(0.0d);
     doubleW Cv = new doubleW(0.0d), Cp = new doubleW(0.0d), W = new doubleW(0.0d), G = new doubleW(0.0d),
-	JT = new doubleW(0.0d), Kappa = new doubleW(0.0d), PP = new doubleW(0.0d);
+        JT = new doubleW(0.0d), Kappa = new doubleW(0.0d), PP = new doubleW(0.0d);
 
     test.PropertiesDetail(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa);
 

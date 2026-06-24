@@ -213,9 +213,9 @@ public class AmmoniaSynthesisReactor extends TwoPortEquipment {
       // Keep temperature, remove heat
       ThermodynamicOperations ops = new ThermodynamicOperations(outSystem);
       try {
-	ops.TPflash();
+        ops.TPflash();
       } catch (Exception ex) {
-	logger.error("Isothermal TP flash failed: {}", ex.getMessage());
+        logger.error("Isothermal TP flash failed: {}", ex.getMessage());
       }
       outSystem.init(3);
     } else {
@@ -224,10 +224,10 @@ public class AmmoniaSynthesisReactor extends TwoPortEquipment {
       double inletEnthalpy = inStream.getThermoSystem().getEnthalpy();
       double newEnthalpy = inletEnthalpy - heatDuty; // Subtract negative = add
       try {
-	ops.PHflash(newEnthalpy);
+        ops.PHflash(newEnthalpy);
       } catch (Exception ex) {
-	logger.error("Adiabatic PH flash failed: {}", ex.getMessage());
-	outSystem.init(3);
+        logger.error("Adiabatic PH flash failed: {}", ex.getMessage());
+        outSystem.init(3);
       }
     }
 
@@ -260,7 +260,7 @@ public class AmmoniaSynthesisReactor extends TwoPortEquipment {
   private double calculateEquilibriumConversion(double tempK, double pressureBar, double n2Moles, double h2Moles) {
     // Simplified Kp using Gillespie-Beattie
     double logKp = -2.691122 * Math.log10(tempK) - 5.519265e-5 * tempK + 1.848863e-7 * tempK * tempK + 2001.6 / tempK
-	+ 2.6899;
+        + 2.6899;
     double kp = Math.pow(10.0, logKp);
 
     // Pressure effect (higher pressure favors products)

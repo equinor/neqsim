@@ -25,8 +25,8 @@ class ChemistryAdvancedModelsTest {
   @Test
   void electrolyteScaleCalculatorPredictsSeawaterIonicStrength() {
     ElectrolyteScaleCalculator calc = new ElectrolyteScaleCalculator().setTemperatureCelsius(60.0).setPressureBara(50.0)
-	.setPH(6.5).setCO2PartialPressureBar(2.0).setCations(420.0, 0.05, 8.0, 1280.0, 10800.0, 400.0, 0.0)
-	.setAnions(19400.0, 2700.0, 142.0, 0.0).calculate();
+        .setPH(6.5).setCO2PartialPressureBar(2.0).setCations(420.0, 0.05, 8.0, 1280.0, 10800.0, 400.0, 0.0)
+        .setAnions(19400.0, 2700.0, 142.0, 0.0).calculate();
     assertTrue(calc.isEvaluated());
     // Seawater I ~ 0.7 mol/kg; tolerate range [0.4, 1.2]
     double I = calc.getIonicStrength();
@@ -68,18 +68,18 @@ class ChemistryAdvancedModelsTest {
   @Test
   void mechanisticCorrosionMixedControlAndInhibition() {
     MechanisticCorrosionModel model = new MechanisticCorrosionModel().setTemperatureCelsius(60.0)
-	.setTotalPressureBara(80.0).setGasComposition(0.05, 0.0).setWaterChemistry(5.5, 100.0, 0.5)
-	.setFlow(2.0, 0.15, 1000.0, 1.0e-3).setInhibitor(null, 0.0).evaluate();
+        .setTotalPressureBara(80.0).setGasComposition(0.05, 0.0).setWaterChemistry(5.5, 100.0, 0.5)
+        .setFlow(2.0, 0.15, 1000.0, 1.0e-3).setInhibitor(null, 0.0).evaluate();
     double crUninhibited = model.getInhibitedRateMmYr();
     assertTrue(crUninhibited > 0.0, "expected positive corrosion rate, got " + crUninhibited);
     assertTrue(model.getReynoldsNumber() > 4000.0, "should be turbulent");
     assertTrue(model.getSherwoodNumber() > 100.0, "Sh should be large in turbulent flow");
 
     MechanisticCorrosionModel inhibited = new MechanisticCorrosionModel().setTemperatureCelsius(60.0)
-	.setTotalPressureBara(80.0).setGasComposition(0.05, 0.0).setWaterChemistry(5.5, 100.0, 0.5)
-	.setFlow(2.0, 0.15, 1000.0, 1.0e-3).setInhibitor(null, 50.0).evaluate();
+        .setTotalPressureBara(80.0).setGasComposition(0.05, 0.0).setWaterChemistry(5.5, 100.0, 0.5)
+        .setFlow(2.0, 0.15, 1000.0, 1.0e-3).setInhibitor(null, 50.0).evaluate();
     assertTrue(inhibited.getInhibitedRateMmYr() < crUninhibited,
-	"inhibitor must reduce corrosion: bare=" + crUninhibited + ", inhibited=" + inhibited.getInhibitedRateMmYr());
+        "inhibitor must reduce corrosion: bare=" + crUninhibited + ", inhibited=" + inhibited.getInhibitedRateMmYr());
     assertTrue(inhibited.getInhibitorEfficiency() > 0.05);
     assertNotNull(inhibited.toJson());
     assertEquals(2, inhibited.getStandardsApplied().size());
@@ -92,10 +92,10 @@ class ChemistryAdvancedModelsTest {
   @Test
   void mechanisticCorrosionMassTransferLimitsKineticRate() {
     MechanisticCorrosionModel model = new MechanisticCorrosionModel().setTemperatureCelsius(80.0)
-	.setTotalPressureBara(150.0).setGasComposition(0.30, 0.0).setWaterChemistry(4.5, 50.0, 0.5)
-	.setFlow(5.0, 0.05, 1000.0, 1.0e-3).setInhibitor(null, 0.0).evaluate();
+        .setTotalPressureBara(150.0).setGasComposition(0.30, 0.0).setWaterChemistry(4.5, 50.0, 0.5)
+        .setFlow(5.0, 0.05, 1000.0, 1.0e-3).setInhibitor(null, 0.0).evaluate();
     assertTrue(model.getMixedControlRateMmYr() <= model.getKineticRateMmYr() + 1e-9,
-	"mixed control rate must not exceed kinetic rate");
+        "mixed control rate must not exceed kinetic rate");
     assertFalse(Double.isNaN(model.getMixedControlRateMmYr()));
   }
 }

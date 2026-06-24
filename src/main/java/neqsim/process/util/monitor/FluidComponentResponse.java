@@ -60,14 +60,14 @@ public class FluidComponentResponse {
       newdata.put("Mole Fraction", new Value(Double.toString(component.getz()), "-"));
       newdata.put("Weigth Fraction", new Value(Double.toString(phase.getWtFrac(i)), "-"));
       newdata.put("Critical Temperature",
-	  new Value(Double.toString(component.getTC(neqsim.util.unit.Units.getSymbol("temperature"))),
-	      neqsim.util.unit.Units.getSymbol("temperature")));
+          new Value(Double.toString(component.getTC(neqsim.util.unit.Units.getSymbol("temperature"))),
+              neqsim.util.unit.Units.getSymbol("temperature")));
       newdata.put("Critical Pressure",
-	  new Value(Double.toString(component.getPC(neqsim.util.unit.Units.getSymbol("pressure"))),
-	      neqsim.util.unit.Units.getSymbol("pressure")));
+          new Value(Double.toString(component.getPC(neqsim.util.unit.Units.getSymbol("pressure"))),
+              neqsim.util.unit.Units.getSymbol("pressure")));
       newdata.put("Normal Liquid Density",
-	  new Value(Double.toString(component.getNormalLiquidDensity(neqsim.util.unit.Units.getSymbol("density"))),
-	      neqsim.util.unit.Units.getSymbol("density")));
+          new Value(Double.toString(component.getNormalLiquidDensity(neqsim.util.unit.Units.getSymbol("density"))),
+              neqsim.util.unit.Units.getSymbol("density")));
 
       properties.put(name, newdata);
     }

@@ -91,7 +91,7 @@ class DegradedOperationOptimizerTest {
     optimizer.setProductStreamName("Export Gas");
 
     java.util.Map<DegradedOperationOptimizer.OperatingMode, Double> results = optimizer
-	.evaluateOperatingModes("Export Compressor");
+        .evaluateOperatingModes("Export Compressor");
 
     assertNotNull(results);
     // Should have at least one operating mode

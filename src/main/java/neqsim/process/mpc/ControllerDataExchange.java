@@ -266,8 +266,8 @@ public class ControllerDataExchange implements Serializable {
     List<ControlledVariable> cvs = controller.getControlledVariables();
     for (int i = 0; i < setpoints.length; i++) {
       if (Double.isFinite(setpoints[i])) {
-	this.setpoints[i] = setpoints[i];
-	cvs.get(i).setSetpoint(setpoints[i]);
+        this.setpoints[i] = setpoints[i];
+        cvs.get(i).setSetpoint(setpoints[i]);
       }
     }
   }
@@ -283,17 +283,17 @@ public class ControllerDataExchange implements Serializable {
 
     if (lowLimits != null && lowLimits.length == cvLowLimits.length) {
       for (int i = 0; i < lowLimits.length; i++) {
-	if (Double.isFinite(lowLimits[i])) {
-	  cvLowLimits[i] = lowLimits[i];
-	}
+        if (Double.isFinite(lowLimits[i])) {
+          cvLowLimits[i] = lowLimits[i];
+        }
       }
     }
 
     if (highLimits != null && highLimits.length == cvHighLimits.length) {
       for (int i = 0; i < highLimits.length; i++) {
-	if (Double.isFinite(highLimits[i])) {
-	  cvHighLimits[i] = highLimits[i];
-	}
+        if (Double.isFinite(highLimits[i])) {
+          cvHighLimits[i] = highLimits[i];
+        }
       }
     }
 
@@ -313,8 +313,8 @@ public class ControllerDataExchange implements Serializable {
       // Check for bad quality inputs
       boolean hasGoodData = checkDataQuality();
       if (!hasGoodData) {
-	executionStatus = ExecutionStatus.WARNING;
-	executionMessage = "Some inputs have bad quality";
+        executionStatus = ExecutionStatus.WARNING;
+        executionMessage = "Some inputs have bad quality";
       }
 
       // Calculate control moves
@@ -338,12 +338,12 @@ public class ControllerDataExchange implements Serializable {
   private boolean checkDataQuality() {
     for (QualityStatus q : mvQuality) {
       if (q == QualityStatus.BAD) {
-	return false;
+        return false;
       }
     }
     for (QualityStatus q : cvQuality) {
       if (q == QualityStatus.BAD) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -495,7 +495,7 @@ public class ControllerDataExchange implements Serializable {
      * @param timestamp the execution timestamp
      */
     public ControllerOutput(double[] mvTargets, double[][] cvPredictions, ExecutionStatus status, String message,
-	Instant timestamp) {
+        Instant timestamp) {
       this.mvTargets = mvTargets;
       this.cvPredictions = cvPredictions;
       this.status = status;
@@ -519,11 +519,11 @@ public class ControllerDataExchange implements Serializable {
      */
     public double[][] getCvPredictions() {
       if (cvPredictions == null) {
-	return null;
+        return null;
       }
       double[][] copy = new double[cvPredictions.length][];
       for (int i = 0; i < cvPredictions.length; i++) {
-	copy[i] = cvPredictions[i].clone();
+        copy[i] = cvPredictions[i].clone();
       }
       return copy;
     }

@@ -285,7 +285,7 @@ public class MultiphasePipe extends Pipeline {
       // Create linear elevation profile
       double[] heights = new double[numberOfLegs + 1];
       for (int i = 0; i <= numberOfLegs; i++) {
-	heights[i] = inletElevation + (outletElevation - inletElevation) * i / numberOfLegs;
+        heights[i] = inletElevation + (outletElevation - inletElevation) * i / numberOfLegs;
       }
       flowSystem.setLegHeights(heights);
     }
@@ -296,7 +296,7 @@ public class MultiphasePipe extends Pipeline {
       // Create uniform leg positions
       double[] positions = new double[numberOfLegs + 1];
       for (int i = 0; i <= numberOfLegs; i++) {
-	positions[i] = length * i / numberOfLegs;
+        positions[i] = length * i / numberOfLegs;
       }
       flowSystem.setLegPositions(positions);
     }
@@ -315,7 +315,7 @@ public class MultiphasePipe extends Pipeline {
     } else {
       double[] temps = new double[numberOfLegs + 1];
       for (int i = 0; i < temps.length; i++) {
-	temps[i] = ambientTemperature;
+        temps[i] = ambientTemperature;
       }
       flowSystem.setLegOuterTemperatures(temps);
     }
@@ -327,11 +327,11 @@ public class MultiphasePipe extends Pipeline {
       // Calculate overall U-value if insulation is present
       double uValue = calculateOverallHeatTransferCoefficient();
       if (uValue > 0) {
-	double[] coeffs = new double[numberOfLegs + 1];
-	for (int i = 0; i < coeffs.length; i++) {
-	  coeffs[i] = uValue;
-	}
-	flowSystem.setLegOuterHeatTransferCoefficients(coeffs);
+        double[] coeffs = new double[numberOfLegs + 1];
+        for (int i = 0; i < coeffs.length; i++) {
+          coeffs[i] = uValue;
+        }
+        flowSystem.setLegOuterHeatTransferCoefficients(coeffs);
       }
     }
 
@@ -426,12 +426,12 @@ public class MultiphasePipe extends Pipeline {
     if (flowSystem != null) {
       double[] profile = flowSystem.getPressureProfile();
       if (profile != null) {
-	// Convert from Pa to bar
-	double[] profileBar = new double[profile.length];
-	for (int i = 0; i < profile.length; i++) {
-	  profileBar[i] = profile[i] / 1e5;
-	}
-	return profileBar;
+        // Convert from Pa to bar
+        double[] profileBar = new double[profile.length];
+        for (int i = 0; i < profile.length; i++) {
+          profileBar[i] = profile[i] / 1e5;
+        }
+        return profileBar;
       }
     }
     return pressureProfile;
@@ -472,7 +472,7 @@ public class MultiphasePipe extends Pipeline {
       // Get mixture velocity at outlet
       double[] velocities = flowSystem.getMixtureVelocityProfile();
       if (velocities != null && velocities.length > 0) {
-	return velocities[velocities.length - 1];
+        return velocities[velocities.length - 1];
       }
     }
     return velocity;

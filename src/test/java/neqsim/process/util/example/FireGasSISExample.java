@@ -124,7 +124,7 @@ public class FireGasSISExample {
 
     // Fire Detection SIF (2oo3 voting)
     SafetyInstrumentedFunction fireSIF = new SafetyInstrumentedFunction("Fire Detection SIF",
-	VotingLogic.TWO_OUT_OF_THREE);
+        VotingLogic.TWO_OUT_OF_THREE);
 
     Detector fireDetector1 = new Detector("FD-101", DetectorType.FIRE, AlarmLevel.HIGH, 60.0, "°C");
     Detector fireDetector2 = new Detector("FD-102", DetectorType.FIRE, AlarmLevel.HIGH, 60.0, "°C");
@@ -136,7 +136,7 @@ public class FireGasSISExample {
 
     // Gas Detection SIF (2oo3 voting)
     SafetyInstrumentedFunction gasSIF = new SafetyInstrumentedFunction("Gas Detection SIF",
-	VotingLogic.TWO_OUT_OF_THREE);
+        VotingLogic.TWO_OUT_OF_THREE);
 
     Detector gasDetector1 = new Detector("GD-101", DetectorType.GAS, AlarmLevel.HIGH_HIGH, 25.0, "% LEL");
     Detector gasDetector2 = new Detector("GD-102", DetectorType.GAS, AlarmLevel.HIGH_HIGH, 25.0, "% LEL");
@@ -217,7 +217,7 @@ public class FireGasSISExample {
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "ESD Logic: %s%n", esdLogic.getStatusDescription());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Process flow: %.1f kg/hr%n",
-	processStream.getFlowRate("kg/hr"));
+        processStream.getFlowRate("kg/hr"));
 
     // ═══════════════════════════════════════════════════════════════
     // SCENARIO 2: SINGLE FIRE DETECTOR TRIP (NO ESD)
@@ -275,13 +275,13 @@ public class FireGasSISExample {
       esdInletValve.runTransient(timeStep, java.util.UUID.randomUUID());
 
       if (esdInletValve.getPercentValveOpening() < 1.0) {
-	separatorInlet.getThermoSystem().setTotalFlowRate(0.1, "kg/hr");
+        separatorInlet.getThermoSystem().setTotalFlowRate(0.1, "kg/hr");
       } else {
-	feedStream.run();
-	controlValve.run();
-	afterControlValve.run();
-	esdInletValve.run();
-	separatorInlet.run();
+        feedStream.run();
+        controlValve.run();
+        afterControlValve.run();
+        esdInletValve.run();
+        separatorInlet.run();
       }
 
       separator.runTransient(timeStep, java.util.UUID.randomUUID());
@@ -296,8 +296,8 @@ public class FireGasSISExample {
       String esdStep = esdLogic.isComplete() ? "DONE" : "Step " + (esdLogic.getCurrentActionIndex() + 1) + "/3";
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%8.1f | %8s | %8s | %8s | %13.1f | %12.1f | %12.1f%n", time,
-	  fireStatus, gasStatus, esdStep, esdInletValve.getPercentValveOpening(), bdValve.getPercentValveOpening(),
-	  processStream.getFlowRate("kg/hr"));
+          fireStatus, gasStatus, esdStep, esdInletValve.getPercentValveOpening(), bdValve.getPercentValveOpening(),
+          processStream.getFlowRate("kg/hr"));
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -317,11 +317,11 @@ public class FireGasSISExample {
 
     logger.info("Gas detectors status:");
     logger.info("  GD-101: " + (gasDetector1.isBypassed() ? "BYPASSED" : "ACTIVE") + " ("
-	+ (gasDetector1.isTripped() ? "TRIPPED" : "NORMAL") + ")");
+        + (gasDetector1.isTripped() ? "TRIPPED" : "NORMAL") + ")");
     logger.info("  GD-102: " + (gasDetector2.isBypassed() ? "BYPASSED" : "ACTIVE") + " ("
-	+ (gasDetector2.isTripped() ? "TRIPPED" : "NORMAL") + ")");
+        + (gasDetector2.isTripped() ? "TRIPPED" : "NORMAL") + ")");
     logger.info("  GD-103: " + (gasDetector3.isBypassed() ? "BYPASSED" : "ACTIVE") + " ("
-	+ (gasDetector3.isTripped() ? "TRIPPED" : "NORMAL") + ")");
+        + (gasDetector3.isTripped() ? "TRIPPED" : "NORMAL") + ")");
 
     logger.info(gasSIF.getStatusDescription());
     logger.info("Note: With 1 bypassed, 2oo3 becomes effectively 2oo2");

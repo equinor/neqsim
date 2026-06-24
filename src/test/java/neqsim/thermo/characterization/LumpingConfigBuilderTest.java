@@ -41,7 +41,7 @@ public class LumpingConfigBuilderTest {
     fluid.getCharacterization().configureLumping().model("PVTlumpingModel").plusFractionGroups(5).build();
 
     assertEquals(5, fluid.getCharacterization().getLumpingModel().getNumberOfLumpedComponents(),
-	"PVTlumpingModel should have 5 lumped components for plus fraction");
+        "PVTlumpingModel should have 5 lumped components for plus fraction");
   }
 
   @Test
@@ -49,7 +49,7 @@ public class LumpingConfigBuilderTest {
     fluid.getCharacterization().configureLumping().model("standard").totalPseudoComponents(6).build();
 
     assertEquals(6, fluid.getCharacterization().getLumpingModel().getNumberOfPseudoComponents(),
-	"Standard model should have 6 total pseudo-components");
+        "Standard model should have 6 total pseudo-components");
   }
 
   @Test
@@ -57,13 +57,13 @@ public class LumpingConfigBuilderTest {
     fluid.getCharacterization().configureLumping().noLumping().build();
 
     assertEquals("no lumping", fluid.getCharacterization().getLumpingModel().getName(),
-	"noLumping() should set 'no lumping' model");
+        "noLumping() should set 'no lumping' model");
   }
 
   @Test
   void testBuilderReturnsCharacterise() {
     Characterise result = fluid.getCharacterization().configureLumping().model("PVTlumpingModel").plusFractionGroups(3)
-	.build();
+        .build();
 
     assertNotNull(result, "build() should return the Characterise instance");
     assertEquals(fluid.getCharacterization(), result, "build() should return the same Characterise instance");
@@ -85,7 +85,7 @@ public class LumpingConfigBuilderTest {
 
     assertTrue(fluid.getCharacterization().getLumpingModel().hasCustomBoundaries(), "Custom boundaries should be set");
     assertArrayEquals(boundaries, fluid.getCharacterization().getLumpingModel().getCustomBoundaries(),
-	"Custom boundaries should match input");
+        "Custom boundaries should match input");
   }
 
   @Test
@@ -95,15 +95,15 @@ public class LumpingConfigBuilderTest {
     fluid.getCharacterization().configureLumping().model("standard").customBoundaries(boundaries).build();
 
     assertEquals(5, fluid.getCharacterization().getLumpingModel().getNumberOfLumpedComponents(),
-	"Number of lumped components should equal number of boundaries");
+        "Number of lumped components should equal number of boundaries");
   }
 
   @Test
   void testLumpingResultCreation() {
     // Test LumpingResult builder (feature 5)
     LumpingResult result = new LumpingResult.Builder().modelName("PVTlumpingModel").originalComponentCount(75)
-	.lumpedComponentCount(5).originalAverageMW(0.150).lumpedAverageMW(0.151).originalAverageDensity(750.0)
-	.lumpedAverageDensity(752.0).addWarning("Test warning").build();
+        .lumpedComponentCount(5).originalAverageMW(0.150).lumpedAverageMW(0.151).originalAverageDensity(750.0)
+        .lumpedAverageDensity(752.0).addWarning("Test warning").build();
 
     assertEquals("PVTlumpingModel", result.getModelName());
     assertEquals(75, result.getOriginalComponentCount());
@@ -117,7 +117,7 @@ public class LumpingConfigBuilderTest {
   @Test
   void testLumpingResultToMap() {
     LumpingResult result = new LumpingResult.Builder().modelName("standard").originalComponentCount(50)
-	.lumpedComponentCount(6).build();
+        .lumpedComponentCount(6).build();
 
     java.util.Map<String, Object> map = result.toMap();
     assertNotNull(map);

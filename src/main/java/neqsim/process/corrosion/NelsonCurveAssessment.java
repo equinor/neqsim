@@ -368,17 +368,17 @@ public class NelsonCurveAssessment implements Serializable {
 
     for (int i = 0; i < curve.length - 1; i++) {
       if (pressurePsia >= curve[i][0] && pressurePsia <= curve[i + 1][0]) {
-	double fraction;
-	if (curve[i + 1][0] - curve[i][0] < 1e-6) {
-	  fraction = 0.0;
-	} else {
-	  // Log interpolation for pressure (typical for Nelson curves)
-	  double logP = Math.log(pressurePsia + 1.0);
-	  double logP1 = Math.log(curve[i][0] + 1.0);
-	  double logP2 = Math.log(curve[i + 1][0] + 1.0);
-	  fraction = (logP - logP1) / (logP2 - logP1);
-	}
-	return curve[i][1] + fraction * (curve[i + 1][1] - curve[i][1]);
+        double fraction;
+        if (curve[i + 1][0] - curve[i][0] < 1e-6) {
+          fraction = 0.0;
+        } else {
+          // Log interpolation for pressure (typical for Nelson curves)
+          double logP = Math.log(pressurePsia + 1.0);
+          double logP1 = Math.log(curve[i][0] + 1.0);
+          double logP2 = Math.log(curve[i + 1][0] + 1.0);
+          fraction = (logP - logP1) / (logP2 - logP1);
+        }
+        return curve[i][1] + fraction * (curve[i + 1][1] - curve[i][1]);
       }
     }
     return curve[curve.length - 1][1];
@@ -405,13 +405,13 @@ public class NelsonCurveAssessment implements Serializable {
     for (int i = 0; i < curve.length - 1; i++) {
       // Curve has decreasing temperature with increasing pressure
       if (tempF <= curve[i][1] && tempF >= curve[i + 1][1]) {
-	double fraction;
-	if (Math.abs(curve[i][1] - curve[i + 1][1]) < 1e-6) {
-	  fraction = 0.0;
-	} else {
-	  fraction = (curve[i][1] - tempF) / (curve[i][1] - curve[i + 1][1]);
-	}
-	return curve[i][0] + fraction * (curve[i + 1][0] - curve[i][0]);
+        double fraction;
+        if (Math.abs(curve[i][1] - curve[i + 1][1]) < 1e-6) {
+          fraction = 0.0;
+        } else {
+          fraction = (curve[i][1] - tempF) / (curve[i][1] - curve[i + 1][1]);
+        }
+        return curve[i][0] + fraction * (curve[i + 1][0] - curve[i][0]);
       }
     }
     return 0.0;
@@ -427,12 +427,12 @@ public class NelsonCurveAssessment implements Serializable {
   private String findMinimumUpgrade(double tempF, double pressurePsia) {
     double[][][] curves = { C_0_5MO_CURVE, CR1_0_5MO_CURVE, CR1_25_0_5MO_CURVE, CR2_25_1MO_CURVE, AUSTENITIC_SS_CURVE };
     String[] names = { "C-0.5Mo (use with caution per API 941)", "1Cr-0.5Mo", "1.25Cr-0.5Mo", "2.25Cr-1Mo",
-	"Austenitic stainless steel (304/316)" };
+        "Austenitic stainless steel (304/316)" };
 
     for (int i = 0; i < curves.length; i++) {
       double maxT = interpolateMaxTemp(curves[i], pressurePsia);
       if (tempF <= maxT) {
-	return names[i];
+        return names[i];
       }
     }
     return "No standard material sufficient — consider special alloys or reduce conditions";

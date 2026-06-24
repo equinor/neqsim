@@ -111,7 +111,7 @@ public final class InfrastructureInput implements Serializable {
    */
   public static Builder subseaTieback() {
     return new Builder().processingLocation(ProcessingLocation.HOST_PLATFORM).powerSupply(PowerSupply.POWER_FROM_HOST)
-	.exportType(ExportType.WET_GAS);
+        .exportType(ExportType.WET_GAS);
   }
 
   // Getters
@@ -250,7 +250,7 @@ public final class InfrastructureInput implements Serializable {
   @Override
   public String toString() {
     return String.format("InfrastructureInput[tieback=%.0f km, depth=%.0f m, processing=%s, power=%s]", tiebackLength,
-	waterDepth, processingLocation, powerSupply);
+        waterDepth, processingLocation, powerSupply);
   }
 
   /**
@@ -312,7 +312,7 @@ public final class InfrastructureInput implements Serializable {
 
     public Builder hostCapacityAvailable(double fraction) {
       if (fraction < 0 || fraction > 1) {
-	throw new IllegalArgumentException("Host capacity fraction must be between 0 and 1");
+        throw new IllegalArgumentException("Host capacity fraction must be between 0 and 1");
       }
       this.hostCapacityAvailable = fraction;
       return this;

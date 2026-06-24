@@ -66,36 +66,36 @@ class CDFTCriticalCorrectionCalibrationTest {
       int cnt = 0;
 
       for (Object[] row : DATA) {
-	String comp = (String) row[0];
-	double tempK = (Double) row[1];
-	double sigmaExp = (Double) row[2];
-	double tc = (Double) row[3];
+        String comp = (String) row[0];
+        double tempK = (Double) row[1];
+        double sigmaExp = (Double) row[2];
+        double tc = (Double) row[3];
 
-	try {
-	  SystemInterface sys = new SystemPrEos(tempK, 1.0);
-	  sys.addComponent(comp, 1.0);
-	  sys.setMixingRule("classic");
-	  sys.setMultiPhaseCheck(true);
+        try {
+          SystemInterface sys = new SystemPrEos(tempK, 1.0);
+          sys.addComponent(comp, 1.0);
+          sys.setMixingRule("classic");
+          sys.setMultiPhaseCheck(true);
 
-	  ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-	  ops.bubblePointPressureFlash(false);
-	  sys.initProperties();
+          ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+          ops.bubblePointPressureFlash(false);
+          sys.initProperties();
 
-	  CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
-	  cdft.setAttractiveRangeFactor(lambda);
-	  double sigmaRaw = cdft.calcSurfaceTension(0, 1) * 1000.0;
+          CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
+          cdft.setAttractiveRangeFactor(lambda);
+          double sigmaRaw = cdft.calcSurfaceTension(0, 1) * 1000.0;
 
-	  // Critical correction
-	  double tr = tempK / tc;
-	  double correction = Math.pow(1.0 - tr, DELTA_MU);
-	  double sigmaCorrected = sigmaRaw * correction;
+          // Critical correction
+          double tr = tempK / tc;
+          double correction = Math.pow(1.0 - tr, DELTA_MU);
+          double sigmaCorrected = sigmaRaw * correction;
 
-	  sumRaw += Math.abs((sigmaRaw - sigmaExp) / sigmaExp) * 100.0;
-	  sumCorr += Math.abs((sigmaCorrected - sigmaExp) / sigmaExp) * 100.0;
-	  cnt++;
-	} catch (Exception ex) {
-	  // skip
-	}
+          sumRaw += Math.abs((sigmaRaw - sigmaExp) / sigmaExp) * 100.0;
+          sumCorr += Math.abs((sigmaCorrected - sigmaExp) / sigmaExp) * 100.0;
+          cnt++;
+        } catch (Exception ex) {
+          // skip
+        }
       }
 
       double aadRaw = (cnt > 0) ? sumRaw / cnt : 999.0;
@@ -103,13 +103,13 @@ class CDFTCriticalCorrectionCalibrationTest {
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.3f | %12.2f | %12.2f%n", lambda, aadRaw, aadCorr);
 
       if (aadCorr < bestAADCorr) {
-	bestAADCorr = aadCorr;
-	bestLambdaCorr = lambda;
+        bestAADCorr = aadCorr;
+        bestLambdaCorr = lambda;
       }
     }
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%nOptimal lambda (with correction) = %.3f, AAD = %.2f%%%n",
-	bestLambdaCorr, bestAADCorr);
+        bestLambdaCorr, bestAADCorr);
 
     // Print per-component at optimal
     printPerComponent("PR", bestLambdaCorr, true);
@@ -122,7 +122,7 @@ class CDFTCriticalCorrectionCalibrationTest {
   void perComponentOptimalLambda() {
     logger.info("\n=== Per-component optimal lambda (PR, with correction) ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %6s | %-10s | %-10s | %-10s%n", "Component", "omega",
-	"lambda_opt", "AAD(%)", "AAD_raw(%)");
+        "lambda_opt", "AAD(%)", "AAD_raw(%)");
     logger.info("-------------|--------|------------|------------|----------");
 
     String[] components = { "methane", "ethane", "propane", "n-butane", "n-pentane", "n-hexane", "nitrogen", "CO2" };
@@ -139,52 +139,52 @@ class CDFTCriticalCorrectionCalibrationTest {
       double bestAADRaw = Double.MAX_VALUE;
 
       for (double lambda = 0.40; lambda <= 1.60; lambda += 0.01) {
-	double sumCorr = 0.0;
-	double sumRaw = 0.0;
-	int cnt = 0;
+        double sumCorr = 0.0;
+        double sumRaw = 0.0;
+        int cnt = 0;
 
-	for (Object[] row : DATA) {
-	  if (!comp.equals(row[0])) {
-	    continue;
-	  }
-	  double tempK = (Double) row[1];
-	  double sigmaExp = (Double) row[2];
+        for (Object[] row : DATA) {
+          if (!comp.equals(row[0])) {
+            continue;
+          }
+          double tempK = (Double) row[1];
+          double sigmaExp = (Double) row[2];
 
-	  try {
-	    SystemInterface sys = new SystemPrEos(tempK, 1.0);
-	    sys.addComponent(comp, 1.0);
-	    sys.setMixingRule("classic");
-	    sys.setMultiPhaseCheck(true);
+          try {
+            SystemInterface sys = new SystemPrEos(tempK, 1.0);
+            sys.addComponent(comp, 1.0);
+            sys.setMixingRule("classic");
+            sys.setMultiPhaseCheck(true);
 
-	    ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-	    ops.bubblePointPressureFlash(false);
-	    sys.initProperties();
+            ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+            ops.bubblePointPressureFlash(false);
+            sys.initProperties();
 
-	    CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
-	    cdft.setAttractiveRangeFactor(lambda);
-	    double sigmaRaw = cdft.calcSurfaceTension(0, 1) * 1000.0;
-	    double tr = tempK / tc;
-	    double sigmaCorrected = sigmaRaw * Math.pow(1.0 - tr, DELTA_MU);
+            CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
+            cdft.setAttractiveRangeFactor(lambda);
+            double sigmaRaw = cdft.calcSurfaceTension(0, 1) * 1000.0;
+            double tr = tempK / tc;
+            double sigmaCorrected = sigmaRaw * Math.pow(1.0 - tr, DELTA_MU);
 
-	    sumCorr += Math.abs((sigmaCorrected - sigmaExp) / sigmaExp) * 100.0;
-	    sumRaw += Math.abs((sigmaRaw - sigmaExp) / sigmaExp) * 100.0;
-	    cnt++;
-	  } catch (Exception ex) {
-	    // skip
-	  }
-	}
+            sumCorr += Math.abs((sigmaCorrected - sigmaExp) / sigmaExp) * 100.0;
+            sumRaw += Math.abs((sigmaRaw - sigmaExp) / sigmaExp) * 100.0;
+            cnt++;
+          } catch (Exception ex) {
+            // skip
+          }
+        }
 
-	double aad = (cnt > 0) ? sumCorr / cnt : 999.0;
-	if (aad < bestAAD) {
-	  bestAAD = aad;
-	  bestLam = lambda;
-	  bestAADRaw = (cnt > 0) ? sumRaw / cnt : 999.0;
-	}
+        double aad = (cnt > 0) ? sumCorr / cnt : 999.0;
+        if (aad < bestAAD) {
+          bestAAD = aad;
+          bestLam = lambda;
+          bestAADRaw = (cnt > 0) ? sumRaw / cnt : 999.0;
+        }
       }
 
       optLambdas[ci] = bestLam;
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %6.3f | %10.3f | %10.2f | %10.2f%n", comp, omegas[ci],
-	  bestLam, bestAAD, bestAADRaw);
+          bestLam, bestAAD, bestAADRaw);
     }
 
     // Fit linear correlation: lambda(omega) = A + B*omega
@@ -214,31 +214,31 @@ class CDFTCriticalCorrectionCalibrationTest {
       double lambdaCorr = intercept + slope * omega;
 
       try {
-	SystemInterface sys = new SystemPrEos(tempK, 1.0);
-	sys.addComponent(comp, 1.0);
-	sys.setMixingRule("classic");
-	sys.setMultiPhaseCheck(true);
+        SystemInterface sys = new SystemPrEos(tempK, 1.0);
+        sys.addComponent(comp, 1.0);
+        sys.setMixingRule("classic");
+        sys.setMultiPhaseCheck(true);
 
-	ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-	ops.bubblePointPressureFlash(false);
-	sys.initProperties();
+        ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+        ops.bubblePointPressureFlash(false);
+        sys.initProperties();
 
-	CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
-	cdft.setAttractiveRangeFactor(lambdaCorr);
-	double sigmaRaw = cdft.calcSurfaceTension(0, 1) * 1000.0;
-	double tr = tempK / tc;
-	double sigmaCorrected = sigmaRaw * Math.pow(1.0 - tr, DELTA_MU);
+        CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
+        cdft.setAttractiveRangeFactor(lambdaCorr);
+        double sigmaRaw = cdft.calcSurfaceTension(0, 1) * 1000.0;
+        double tr = tempK / tc;
+        double sigmaCorrected = sigmaRaw * Math.pow(1.0 - tr, DELTA_MU);
 
-	sumAAD += Math.abs((sigmaCorrected - sigmaExp) / sigmaExp) * 100.0;
-	totalCount++;
+        sumAAD += Math.abs((sigmaCorrected - sigmaExp) / sigmaExp) * 100.0;
+        totalCount++;
       } catch (Exception ex) {
-	// skip
+        // skip
       }
     }
 
     double finalAAD = (totalCount > 0) ? sumAAD / totalCount : 999.0;
     logger.printf(org.apache.logging.log4j.Level.INFO, "AAD with lambda(omega) + critical correction = %.2f%%%n",
-	finalAAD);
+        finalAAD);
   }
 
   /**
@@ -250,9 +250,9 @@ class CDFTCriticalCorrectionCalibrationTest {
    */
   private void printPerComponent(String eos, double lambda, boolean applyCorrection) {
     logger.printf(org.apache.logging.log4j.Level.INFO, "%n=== Per-component at lambda=%.3f (%s, correction=%b) ===%n",
-	lambda, eos, applyCorrection);
+        lambda, eos, applyCorrection);
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %6s | %8s | %8s | %8s | %7s%n", "Component", "T (K)",
-	"Exp", "Raw", "Corr", "Dev(%)");
+        "Exp", "Raw", "Corr", "Dev(%)");
     logger.info("-------------|--------|----------|----------|----------|--------");
 
     for (Object[] row : DATA) {
@@ -262,33 +262,33 @@ class CDFTCriticalCorrectionCalibrationTest {
       double tc = (Double) row[3];
 
       try {
-	SystemInterface sys;
-	if ("SRK".equals(eos)) {
-	  sys = new SystemSrkEos(tempK, 1.0);
-	} else {
-	  sys = new SystemPrEos(tempK, 1.0);
-	}
-	sys.addComponent(comp, 1.0);
-	sys.setMixingRule("classic");
-	sys.setMultiPhaseCheck(true);
+        SystemInterface sys;
+        if ("SRK".equals(eos)) {
+          sys = new SystemSrkEos(tempK, 1.0);
+        } else {
+          sys = new SystemPrEos(tempK, 1.0);
+        }
+        sys.addComponent(comp, 1.0);
+        sys.setMixingRule("classic");
+        sys.setMultiPhaseCheck(true);
 
-	ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-	ops.bubblePointPressureFlash(false);
-	sys.initProperties();
+        ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+        ops.bubblePointPressureFlash(false);
+        sys.initProperties();
 
-	CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
-	cdft.setAttractiveRangeFactor(lambda);
-	double sigmaRaw = cdft.calcSurfaceTension(0, 1) * 1000.0;
-	double tr = tempK / tc;
-	double corrFactor = applyCorrection ? Math.pow(1.0 - tr, DELTA_MU) : 1.0;
-	double sigmaCorr = sigmaRaw * corrFactor;
-	double dev = (sigmaCorr - sigmaExp) / sigmaExp * 100.0;
+        CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
+        cdft.setAttractiveRangeFactor(lambda);
+        double sigmaRaw = cdft.calcSurfaceTension(0, 1) * 1000.0;
+        double tr = tempK / tc;
+        double corrFactor = applyCorrection ? Math.pow(1.0 - tr, DELTA_MU) : 1.0;
+        double sigmaCorr = sigmaRaw * corrFactor;
+        double dev = (sigmaCorr - sigmaExp) / sigmaExp * 100.0;
 
-	logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %6.1f | %8.2f | %8.2f | %8.2f | %+7.1f%n", comp,
-	    tempK, sigmaExp, sigmaRaw, sigmaCorr, dev);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %6.1f | %8.2f | %8.2f | %8.2f | %+7.1f%n", comp,
+            tempK, sigmaExp, sigmaRaw, sigmaCorr, dev);
       } catch (Exception ex) {
-	logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %6.1f | %8.2f | %8s | %8s | %7s%n", comp, tempK,
-	    sigmaExp, "FAIL", "FAIL", "N/A");
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %6.1f | %8.2f | %8s | %8s | %7s%n", comp, tempK,
+            sigmaExp, "FAIL", "FAIL", "N/A");
       }
     }
   }
@@ -306,11 +306,11 @@ class CDFTCriticalCorrectionCalibrationTest {
 
     logger.info("\n=== FULL OPTIMISED PREDICTION ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Correlation: lambda = %.4f + %.4f * omega%n", interceptA,
-	slopeB);
+        slopeB);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Critical correction: sigma * (1-Tr)^(%.3f)%n%n", DELTA_MU);
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %6s | %8s | %8s | %7s | %6s%n", "Component", "T (K)",
-	"Exp", "Pred", "Dev(%)", "lambda");
+        "Exp", "Pred", "Dev(%)", "lambda");
     logger.info("-------------|--------|----------|----------|---------|-------");
 
     double sumAbsDev = 0;
@@ -326,30 +326,30 @@ class CDFTCriticalCorrectionCalibrationTest {
       double lambda = interceptA + slopeB * omega;
 
       try {
-	SystemInterface sys = new SystemPrEos(tempK, 1.0);
-	sys.addComponent(comp, 1.0);
-	sys.setMixingRule("classic");
-	sys.setMultiPhaseCheck(true);
+        SystemInterface sys = new SystemPrEos(tempK, 1.0);
+        sys.addComponent(comp, 1.0);
+        sys.setMixingRule("classic");
+        sys.setMultiPhaseCheck(true);
 
-	ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-	ops.bubblePointPressureFlash(false);
-	sys.initProperties();
+        ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+        ops.bubblePointPressureFlash(false);
+        sys.initProperties();
 
-	CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
-	cdft.setAttractiveRangeFactor(lambda);
-	double sigmaRaw = cdft.calcSurfaceTension(0, 1) * 1000.0;
-	double tr = tempK / tc;
-	double sigmaPred = sigmaRaw * Math.pow(1.0 - tr, DELTA_MU);
-	double dev = (sigmaPred - sigmaExp) / sigmaExp * 100.0;
+        CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
+        cdft.setAttractiveRangeFactor(lambda);
+        double sigmaRaw = cdft.calcSurfaceTension(0, 1) * 1000.0;
+        double tr = tempK / tc;
+        double sigmaPred = sigmaRaw * Math.pow(1.0 - tr, DELTA_MU);
+        double dev = (sigmaPred - sigmaExp) / sigmaExp * 100.0;
 
-	logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %6.1f | %8.2f | %8.2f | %+7.1f | %6.3f%n", comp,
-	    tempK, sigmaExp, sigmaPred, dev, lambda);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %6.1f | %8.2f | %8.2f | %+7.1f | %6.3f%n", comp,
+            tempK, sigmaExp, sigmaPred, dev, lambda);
 
-	sumAbsDev += Math.abs(dev);
-	count++;
+        sumAbsDev += Math.abs(dev);
+        count++;
       } catch (Exception ex) {
-	logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %6.1f | %8.2f | %8s | %7s | %6.3f%n", comp, tempK,
-	    sigmaExp, "FAIL", "N/A", lambda);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %6.1f | %8.2f | %8s | %7s | %6.3f%n", comp, tempK,
+            sigmaExp, "FAIL", "N/A", lambda);
       }
     }
 

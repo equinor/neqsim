@@ -108,7 +108,7 @@ public class OperationalRiskResult implements Serializable {
     double maxDown = 0;
     for (double d : downtimes) {
       if (d > maxDown) {
-	maxDown = d;
+        maxDown = d;
       }
     }
     this.maxDowntimeHours = maxDown;
@@ -434,7 +434,7 @@ public class OperationalRiskResult implements Serializable {
     sb.append(String.format("  Efficiency:    %.1f%%%n", getProductionEfficiency()));
     sb.append(String.format("%nAvailability:%n"));
     sb.append(
-	String.format("  Mean: %.2f%%, Range: %.2f%% - %.2f%%%n", meanAvailability, minAvailability, maxAvailability));
+        String.format("  Mean: %.2f%%, Range: %.2f%% - %.2f%%%n", meanAvailability, minAvailability, maxAvailability));
     sb.append(String.format("%nFailure Events:%n"));
     sb.append(String.format("  Mean Count:    %.1f%n", meanFailureCount));
     sb.append(String.format("  Mean Downtime: %.1f hours%n", meanDowntimeHours));
@@ -442,7 +442,7 @@ public class OperationalRiskResult implements Serializable {
     if (!equipmentAvailability.isEmpty()) {
       sb.append(String.format("%nEquipment Availability:%n"));
       for (Map.Entry<String, Double> entry : equipmentAvailability.entrySet()) {
-	sb.append(String.format("  %s: %.2f%%%n", entry.getKey(), entry.getValue()));
+        sb.append(String.format("  %s: %.2f%%%n", entry.getKey(), entry.getValue()));
       }
     }
 

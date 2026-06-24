@@ -214,7 +214,7 @@ public class RootCauseAnalyzer implements Serializable {
     for (Hypothesis h : hypotheses) {
       List<Hypothesis.Evidence> evidence = collector.collectEvidence(h);
       for (Hypothesis.Evidence e : evidence) {
-	h.addEvidence(e);
+        h.addEvidence(e);
       }
       double likelihood = collector.calculateLikelihoodScore(evidence);
       h.setLikelihoodScore(likelihood);
@@ -230,7 +230,7 @@ public class RootCauseAnalyzer implements Serializable {
       java.util.Collections.sort(sorted);
       int verifyCount = Math.min(5, sorted.size());
       for (int i = 0; i < verifyCount; i++) {
-	verifier.verify(sorted.get(i));
+        verifier.verify(sorted.get(i));
       }
     }
 
@@ -249,10 +249,10 @@ public class RootCauseAnalyzer implements Serializable {
     String summary;
     if (top != null) {
       summary = String.format(
-	  "Most likely root cause: %s (%.1f%% confidence, category: %s). "
-	      + "Analyzed %d parameters with %d data points. " + "%d hypotheses above 50%% confidence.",
-	  top.getName(), top.getConfidenceScore() * 100, top.getCategory().name(), historianData.size(),
-	  totalDataPoints, report.getHypothesesAboveThreshold(0.5).size());
+          "Most likely root cause: %s (%.1f%% confidence, category: %s). "
+              + "Analyzed %d parameters with %d data points. " + "%d hypotheses above 50%% confidence.",
+          top.getName(), top.getConfidenceScore() * 100, top.getCategory().name(), historianData.size(),
+          totalDataPoints, report.getHypothesesAboveThreshold(0.5).size());
     } else {
       summary = "No hypotheses could be generated for the given symptom and equipment.";
     }
@@ -291,7 +291,7 @@ public class RootCauseAnalyzer implements Serializable {
 
     if (totalScore > 1e-12) {
       for (Hypothesis h : hypotheses) {
-	h.setConfidenceScore(h.getConfidenceScore() / totalScore);
+        h.setConfidenceScore(h.getConfidenceScore() / totalScore);
       }
     }
   }
@@ -304,7 +304,7 @@ public class RootCauseAnalyzer implements Serializable {
   private ProcessEquipmentInterface findEquipment() {
     for (ProcessEquipmentInterface eq : processSystem.getUnitOperations()) {
       if (eq.getName().equals(equipmentName)) {
-	return eq;
+        return eq;
       }
     }
     return null;

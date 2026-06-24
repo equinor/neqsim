@@ -99,7 +99,7 @@ public final class NeqSimSpanWagner {
       double dterm = D[i] / delta - (L[i] == 0 ? 0.0 : L[i] * Math.pow(delta, L[i] - 1));
       d.ar_d += common * dterm;
       d.ar_dd += common * (dterm * dterm
-	  + (-D[i] / (delta * delta) - (L[i] == 0 ? 0.0 : L[i] * (L[i] - 1) * Math.pow(delta, L[i] - 2))));
+          + (-D[i] / (delta * delta) - (L[i] == 0 ? 0.0 : L[i] * (L[i] - 1) * Math.pow(delta, L[i] - 2))));
       double tterm = T[i] / tau;
       d.ar_t += common * tterm;
       d.ar_tt += common * tterm * (tterm - 1.0 / tau);
@@ -145,7 +145,7 @@ public final class NeqSimSpanWagner {
       double df = R * (TC / tau) * RHOC * (1 + 2 * delta * d.ar_d + delta * delta * d.ar_dd);
       double deltaNew = delta - f / df;
       if (Math.abs(deltaNew - delta) < 1e-12) {
-	return deltaNew;
+        return deltaNew;
       }
       delta = deltaNew;
     }
@@ -176,7 +176,7 @@ public final class NeqSimSpanWagner {
     double s = R * (tau * at - (d.a0 + d.ar));
     double cv = R * (-tau * tau * att);
     double cp = cv + R * Math.pow(1 + delta * d.ar_d - delta * tau * d.ar_dt, 2)
-	/ (1 + 2 * delta * d.ar_d + delta * delta * d.ar_dd);
+        / (1 + 2 * delta * d.ar_d + delta * delta * d.ar_dd);
     double u = R * temperature * tau * at;
     double g = R * temperature * (d.a0 + d.ar + 1 + delta * d.ar_d);
     double dPdrho = R * temperature * (1 + 2 * delta * d.ar_d + delta * delta * d.ar_dd);

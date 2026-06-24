@@ -80,10 +80,10 @@ public class NumericalDispersionAnalysisTest {
 
     for (double dx : gridSizes) {
       for (double L : pipeLengths) {
-	double v = 10.0; // m/s
-	double D_num = v * dx / 2.0 * (1.0 - cfl);
-	double sigma = Math.sqrt(2.0 * D_num * L / v);
-	logger.info(String.format("%-8.0f %-10.0f %-12.1f %-15.1f %-15.2f", dx, L / 1000, D_num, sigma, sigma / dx));
+        double v = 10.0; // m/s
+        double D_num = v * dx / 2.0 * (1.0 - cfl);
+        double sigma = Math.sqrt(2.0 * D_num * L / v);
+        logger.info(String.format("%-8.0f %-10.0f %-12.1f %-15.1f %-15.2f", dx, L / 1000, D_num, sigma, sigma / dx));
       }
     }
 
@@ -219,17 +219,17 @@ public class NumericalDispersionAnalysisTest {
 
     // Common pipeline scenarios
     double[][] scenarios = {
-	// {pipeLength_km, velocity_mps, acceptableFrontWidth_m}
-	{ 10.0, 10.0, 50.0 }, // Short gas pipeline
-	{ 50.0, 10.0, 100.0 }, // Medium gas pipeline
-	{ 100.0, 15.0, 200.0 }, // Long gas pipeline
-	{ 200.0, 12.0, 300.0 }, // Very long pipeline
+        // {pipeLength_km, velocity_mps, acceptableFrontWidth_m}
+        { 10.0, 10.0, 50.0 }, // Short gas pipeline
+        { 50.0, 10.0, 100.0 }, // Medium gas pipeline
+        { 100.0, 15.0, 200.0 }, // Long gas pipeline
+        { 200.0, 12.0, 300.0 }, // Very long pipeline
     };
 
     double cfl = 0.8;
 
     logger.info(
-	String.format("%-12s %-10s %-12s %-12s %-12s", "Pipe (km)", "v (m/s)", "σ_max (m)", "Δx_max (m)", "Min Nodes"));
+        String.format("%-12s %-10s %-12s %-12s %-12s", "Pipe (km)", "v (m/s)", "σ_max (m)", "Δx_max (m)", "Min Nodes"));
     logger.info(StringUtils.repeat("-", 70));
 
     for (double[] scenario : scenarios) {

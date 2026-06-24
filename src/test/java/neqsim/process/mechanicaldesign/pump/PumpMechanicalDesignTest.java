@@ -67,7 +67,7 @@ public class PumpMechanicalDesignTest {
     double shaftDiam = mechDesign.getShaftDiameter();
     assertTrue(shaftDiam > 0, "Shaft diameter should be positive");
     assertTrue(shaftDiam < impellerDiameterUpperBound(mechDesign.getImpellerDiameter()),
-	"Shaft diameter should be smaller than impeller");
+        "Shaft diameter should be smaller than impeller");
     logger.info("Shaft diameter: " + shaftDiam + " mm");
   }
 
@@ -256,7 +256,7 @@ public class PumpMechanicalDesignTest {
     logger.info("Validation valid: " + result.isValid());
     if (!result.isValid()) {
       for (String issue : result.getIssues()) {
-	logger.info("  Issue: " + issue);
+        logger.info("  Issue: " + issue);
       }
     }
   }

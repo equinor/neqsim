@@ -67,9 +67,9 @@ public class EquipmentCapacityStrategyRegistry {
   public static EquipmentCapacityStrategyRegistry getInstance() {
     if (instance == null) {
       synchronized (EquipmentCapacityStrategyRegistry.class) {
-	if (instance == null) {
-	  instance = new EquipmentCapacityStrategyRegistry();
-	}
+        if (instance == null) {
+          instance = new EquipmentCapacityStrategyRegistry();
+        }
       }
     }
     return instance;
@@ -134,7 +134,7 @@ public class EquipmentCapacityStrategyRegistry {
     synchronized (strategies) {
       boolean removed = strategies.removeIf(s -> s.getName().equals(strategyName));
       if (removed) {
-	strategyCache.clear();
+        strategyCache.clear();
       }
       return removed;
     }
@@ -165,10 +165,10 @@ public class EquipmentCapacityStrategyRegistry {
     // Find matching strategy
     synchronized (strategies) {
       for (EquipmentCapacityStrategy strategy : strategies) {
-	if (strategy.supports(equipment)) {
-	  strategyCache.put(equipmentClass, strategy);
-	  return strategy;
-	}
+        if (strategy.supports(equipment)) {
+          strategyCache.put(equipmentClass, strategy);
+          return strategy;
+        }
       }
     }
 

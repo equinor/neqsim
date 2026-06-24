@@ -86,8 +86,8 @@ public class PhaseDuanSun extends PhaseGE {
     // }
     for (int i = 0; i < numberOfComponents; i++) {
       if (phase.getComponent(i).isIsIon()) {
-	salinity = salinity + phase.getComponent(i).getNumberOfMolesInPhase()
-	    / (phase.getComponent("water").getNumberOfMolesInPhase() * phase.getComponent("water").getMolarMass());
+        salinity = salinity + phase.getComponent(i).getNumberOfMolesInPhase()
+            / (phase.getComponent("water").getNumberOfMolesInPhase() * phase.getComponent("water").getMolarMass());
       }
     }
     // for (int i=0; i < numberOfComponents; i++) {
@@ -104,7 +104,7 @@ public class PhaseDuanSun extends PhaseGE {
       // componentArray[i]).getGammaNRTL(phase, numberOfComponents, temperature, pressure,
       // pt, alpha, Dij));
       GE += phase.getComponent(i).getx() * Math.log(((ComponentGeDuanSun) componentArray[i]).getGammaPitzer(phase,
-	  numberOfComponents, temperature, pressure, pt, salinity));
+          numberOfComponents, temperature, pressure, pt, salinity));
     }
 
     return R * temperature * numberOfMolesInPhase * GE;

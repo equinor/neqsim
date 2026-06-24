@@ -123,7 +123,7 @@ public class ProcessModelCapacityAnalysisTest {
     }
 
     int perAreaTotal = plant.get("separation").getCapacityUtilizationSummary().size()
-	+ plant.get("compression").getCapacityUtilizationSummary().size();
+        + plant.get("compression").getCapacityUtilizationSummary().size();
     Assertions.assertEquals(perAreaTotal, summary.size());
   }
 

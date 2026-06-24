@@ -261,15 +261,15 @@ public class TransientWellbore extends Pipeline {
       double[] newPressures = new double[numberOfSegments + 1];
 
       for (int i = 0; i <= numberOfSegments; i++) {
-	double depth = depths[i];
-	double formationT = formationTempTop + geothermalGrad * depth;
+        double depth = depths[i];
+        double formationT = formationTempTop + geothermalGrad * depth;
 
-	// Exponential decay toward formation temperature
-	double decayFactor = Math.exp(-timeStepHours / coolingTimeConstant);
-	newTemps[i] = formationT + (currentTemps[i] - formationT) * decayFactor;
+        // Exponential decay toward formation temperature
+        double decayFactor = Math.exp(-timeStepHours / coolingTimeConstant);
+        newTemps[i] = formationT + (currentTemps[i] - formationT) * decayFactor;
 
-	// Hydrostatic pressure at this depth
-	newPressures[i] = currentWHP + density * 9.81 * depth / 1.0e5;
+        // Hydrostatic pressure at this depth
+        newPressures[i] = currentWHP + density * 9.81 * depth / 1.0e5;
       }
 
       // Create snapshot with flash at each segment
@@ -304,25 +304,25 @@ public class TransientWellbore extends Pipeline {
 
       ThermodynamicOperations segOps = new ThermodynamicOperations(segFluid);
       try {
-	segOps.TPflash();
-	segFluid.initProperties();
-	snap.numberOfPhases[i] = segFluid.getNumberOfPhases();
+        segOps.TPflash();
+        segFluid.initProperties();
+        snap.numberOfPhases[i] = segFluid.getNumberOfPhases();
 
-	if (segFluid.hasPhaseType("gas") && segFluid.getNumberOfPhases() > 1) {
-	  int gasIdx = segFluid.getPhaseNumberOfPhase("gas");
-	  snap.gasFraction[i] = segFluid.getBeta(gasIdx);
-	  // Track light impurity composition in gas phase
-	  for (int c = 0; c < segFluid.getPhase("gas").getNumberOfComponents(); c++) {
-	    String compName = segFluid.getPhase("gas").getComponent(c).getComponentName();
-	    double yi = segFluid.getPhase("gas").getComponent(c).getx();
-	    snap.addGasComposition(i, compName, yi);
-	  }
-	} else {
-	  snap.gasFraction[i] = segFluid.hasPhaseType("gas") ? 1.0 : 0.0;
-	}
+        if (segFluid.hasPhaseType("gas") && segFluid.getNumberOfPhases() > 1) {
+          int gasIdx = segFluid.getPhaseNumberOfPhase("gas");
+          snap.gasFraction[i] = segFluid.getBeta(gasIdx);
+          // Track light impurity composition in gas phase
+          for (int c = 0; c < segFluid.getPhase("gas").getNumberOfComponents(); c++) {
+            String compName = segFluid.getPhase("gas").getComponent(c).getComponentName();
+            double yi = segFluid.getPhase("gas").getComponent(c).getx();
+            snap.addGasComposition(i, compName, yi);
+          }
+        } else {
+          snap.gasFraction[i] = segFluid.hasPhaseType("gas") ? 1.0 : 0.0;
+        }
       } catch (Exception e) {
-	snap.numberOfPhases[i] = 1;
-	snap.gasFraction[i] = 0.0;
+        snap.numberOfPhases[i] = 1;
+        snap.gasFraction[i] = 0.0;
       }
     }
     return snap;
@@ -373,13 +373,13 @@ public class TransientWellbore extends Pipeline {
     double maxConc = 0.0;
     for (TransientSnapshot snap : snapshots) {
       for (int i = 0; i <= numberOfSegments; i++) {
-	Map<String, Double> gasComp = snap.gasCompositions.get(i);
-	if (gasComp != null) {
-	  Double yi = gasComp.get(componentName);
-	  if (yi != null && yi > maxConc) {
-	    maxConc = yi;
-	  }
-	}
+        Map<String, Double> gasComp = snap.gasCompositions.get(i);
+        if (gasComp != null) {
+          Double yi = gasComp.get(componentName);
+          if (yi != null && yi > maxConc) {
+            maxConc = yi;
+          }
+        }
       }
     }
     return maxConc;
@@ -460,8 +460,8 @@ public class TransientWellbore extends Pipeline {
     public void addGasComposition(int segmentIndex, String componentName, double moleFraction) {
       Map<String, Double> compMap = gasCompositions.get(segmentIndex);
       if (compMap == null) {
-	compMap = new LinkedHashMap<>();
-	gasCompositions.put(segmentIndex, compMap);
+        compMap = new LinkedHashMap<>();
+        gasCompositions.put(segmentIndex, compMap);
       }
       compMap.put(componentName, moleFraction);
     }

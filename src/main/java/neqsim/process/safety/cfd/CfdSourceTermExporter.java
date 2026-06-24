@@ -124,7 +124,7 @@ public class CfdSourceTermExporter implements Serializable {
     text.append("(\n");
     for (Map<String, Object> row : rows) {
       text.append("  (").append(valueOrZero(row.get("timeS"))).append(' ').append(valueOrZero(row.get(field)))
-	  .append(")\n");
+          .append(")\n");
     }
     text.append(");\n");
     return text.toString();

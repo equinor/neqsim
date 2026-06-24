@@ -49,7 +49,7 @@ public class BlackOilPVTTable implements Serializable {
      * @param mu_w a double
      */
     public Record(double p, double Rs, double Bo, double mu_o, double Bg, double mu_g, double Rv, double Bw,
-	double mu_w) {
+        double mu_w) {
       this.p = p;
       this.Rs = Rs;
       this.Bo = Bo;
@@ -100,8 +100,8 @@ public class BlackOilPVTTable implements Serializable {
       Record a = recs.get(i);
       Record b = recs.get(i + 1);
       if (p >= a.p && p <= b.p) {
-	double t = (p - a.p) / (b.p - a.p);
-	return f.applyAsDouble(a) * (1.0 - t) + f.applyAsDouble(b) * t;
+        double t = (p - a.p) / (b.p - a.p);
+        return f.applyAsDouble(a) * (1.0 - t) + f.applyAsDouble(b) * t;
       }
     }
     return f.applyAsDouble(recs.get(recs.size() - 1));

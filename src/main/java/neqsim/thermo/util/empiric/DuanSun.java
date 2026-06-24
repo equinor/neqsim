@@ -59,10 +59,10 @@ public class DuanSun {
       // Normalize Y
       double SUMY = 0.0;
       for (int i = 0; i < 2; i++) {
-	SUMY = SUMY + y[i];
+        SUMY = SUMY + y[i];
       }
       for (int i = 0; i < 2; i++) {
-	y[i] = y[i] / SUMY;
+        y[i] = y[i] / SUMY;
       }
       // System.out.println(SUMY);
       // System.out.println(y[0]);
@@ -82,13 +82,13 @@ public class DuanSun {
       double[] b = { 0.0, 0.0 };
 
       for (int i = 0; i < 2; i++) {
-	Tr[i] = T / Tc[i];
-	dm[i] = d[0] + w[i] * (d[1] + w[i] * (d[2] + w[i] * (d[3] + w[i] * d[4])));
-	ag[i] = Math.pow((1.0 + dm[i] * (1.0 - Math.pow(Tr[i], 0.5))), 2.0);
-	asmal[i] = ag[i] * ac * ((Math.pow(R * Tc[i], 2.0)) / Pc[i]);
-	bsmal[i] = bc * (R * Tc[i]) / Pc[i];
-	a[i] = asmal[i] * P / (Math.pow(R * T, 2.0));
-	b[i] = bsmal[i] * P / (R * T);
+        Tr[i] = T / Tc[i];
+        dm[i] = d[0] + w[i] * (d[1] + w[i] * (d[2] + w[i] * (d[3] + w[i] * d[4])));
+        ag[i] = Math.pow((1.0 + dm[i] * (1.0 - Math.pow(Tr[i], 0.5))), 2.0);
+        asmal[i] = ag[i] * ac * ((Math.pow(R * Tc[i], 2.0)) / Pc[i]);
+        bsmal[i] = bc * (R * Tc[i]) / Pc[i];
+        a[i] = asmal[i] * P / (Math.pow(R * T, 2.0));
+        b[i] = bsmal[i] * P / (R * T);
       }
 
       // System.out.println("asmal0 = " + asmal[0]);
@@ -108,13 +108,13 @@ public class DuanSun {
       double aij = 0.0;
 
       for (int i = 0; i < 2; i++) {
-	sumav[i] = 0.0;
-	for (int j = 0; j < 2; j++) {
-	  aij = Math.sqrt(a[i] * a[j]) * (1.0 - K12[i][j]);
-	  av = av + y[i] * y[j] * aij;
-	  sumav[i] = sumav[i] + y[j] * aij;
-	}
-	bv = bv + y[i] * b[i];
+        sumav[i] = 0.0;
+        for (int j = 0; j < 2; j++) {
+          aij = Math.sqrt(a[i] * a[j]) * (1.0 - K12[i][j]);
+          av = av + y[i] * y[j] * aij;
+          sumav[i] = sumav[i] + y[j] * aij;
+        }
+        bv = bv + y[i] * b[i];
       }
       // System.out.println("av = " + av);
       // System.out.println("bv = " + bv);
@@ -159,47 +159,47 @@ public class DuanSun {
       double PI = Math.acos(-1.0);
 
       if (D < Math.pow(10.0, -16.0)) {
-	NRR = 3.0;
-	PHI = Math.acos(-Q / (2.0 * r));
-	for (int i = 0; i < 3; i++) {
-	  k = i - 1.0;
-	  W[i] = 2.0 * Math.pow(r, (1.0 / 3.0)) * Math.cos((PHI + 2.0 * PI * k) / 3.0);
-	  ROOT[i] = W[i] - A2 / 3.0;
-	}
+        NRR = 3.0;
+        PHI = Math.acos(-Q / (2.0 * r));
+        for (int i = 0; i < 3; i++) {
+          k = i - 1.0;
+          W[i] = 2.0 * Math.pow(r, (1.0 / 3.0)) * Math.cos((PHI + 2.0 * PI * k) / 3.0);
+          ROOT[i] = W[i] - A2 / 3.0;
+        }
       } else {
-	NRR = 1.0;
-	if (p < 0.0) {
-	  OMEGA = Math.asin(2.0 * r / Q);
-	  PHI = Math.atan(Math.pow((Math.tan(Math.abs(OMEGA) / 2.0)), 1.0 / 3.0));
-	  if (OMEGA < 0.0) {
-	    PHI = -PHI;
-	    W[0] = -2.0 * Math.sqrt(-p / 3.0) / Math.sin(2.0 * PHI);
-	  }
-	} else {
-	  OMEGA = Math.atan(2.0 * r / Q);
-	  PHI = Math.atan(Math.pow((Math.tan(Math.abs(OMEGA) / 2.0)), 1.0 / 3.0));
-	  if (OMEGA < 0.0) {
-	    PHI = -PHI;
-	  }
-	  W[0] = -2.0 * Math.sqrt(p / 3.0) / Math.tan(2.0 * PHI);
-	}
-	ROOT[0] = W[0] - A2 / 3.0;
-	ROOT[1] = 0.0;
-	ROOT[2] = 0.0;
+        NRR = 1.0;
+        if (p < 0.0) {
+          OMEGA = Math.asin(2.0 * r / Q);
+          PHI = Math.atan(Math.pow((Math.tan(Math.abs(OMEGA) / 2.0)), 1.0 / 3.0));
+          if (OMEGA < 0.0) {
+            PHI = -PHI;
+            W[0] = -2.0 * Math.sqrt(-p / 3.0) / Math.sin(2.0 * PHI);
+          }
+        } else {
+          OMEGA = Math.atan(2.0 * r / Q);
+          PHI = Math.atan(Math.pow((Math.tan(Math.abs(OMEGA) / 2.0)), 1.0 / 3.0));
+          if (OMEGA < 0.0) {
+            PHI = -PHI;
+          }
+          W[0] = -2.0 * Math.sqrt(p / 3.0) / Math.tan(2.0 * PHI);
+        }
+        ROOT[0] = W[0] - A2 / 3.0;
+        ROOT[1] = 0.0;
+        ROOT[2] = 0.0;
       }
 
       double zv = 0.0;
       // double IERR = 0.0;
 
       if (NRR == 1.0) {
-	zv = ROOT[0];
+        zv = ROOT[0];
       } else {
-	zv = Math.max(Math.max(ROOT[0], ROOT[1]), ROOT[2]);
+        zv = Math.max(Math.max(ROOT[0], ROOT[1]), ROOT[2]);
       }
 
       if (zv < Math.pow(10.0, -19.0)) {
-	// IERR = 1;
-	// System.out.println(IERR);
+        // IERR = 1;
+        // System.out.println(IERR);
       }
 
       // System.out.println("zv = " + zv);
@@ -226,12 +226,12 @@ public class DuanSun {
       double dl1 = -28.63120;
       double dl2 = 0.0;
       for (int i = 0; i < 2; i++) {
-	zc[i] = 0.2890 + w[i] * (-0.0701 - 0.0207 * w[i]);
-	ti[i] = (R * Tc[i] / Pc[i]) * (zceos - zc[i]);
-	t0[i] = (R * Tc[i] / Pc[i]) * (dk0 + w[i] * (dk1 + w[i] * (dk2 + w[i] * (dk3 + w[i] * dk4))));
-	bh[i] = dl0 + w[i] * (dl1 + w[i] * dl2);
-	trans[i] = t0[i] + (ti[i] - t0[i]) * Math.exp(bh[i] * Math.abs(1.0 - Tr[i]));
-	TEV = TEV + y[i] * trans[i];
+        zc[i] = 0.2890 + w[i] * (-0.0701 - 0.0207 * w[i]);
+        ti[i] = (R * Tc[i] / Pc[i]) * (zceos - zc[i]);
+        t0[i] = (R * Tc[i] / Pc[i]) * (dk0 + w[i] * (dk1 + w[i] * (dk2 + w[i] * (dk3 + w[i] * dk4))));
+        bh[i] = dl0 + w[i] * (dl1 + w[i] * dl2);
+        trans[i] = t0[i] + (ti[i] - t0[i]) * Math.exp(bh[i] * Math.abs(1.0 - Tr[i]));
+        TEV = TEV + y[i] * trans[i];
       }
       VV = VV - TEV;
       // System.out.println("VV = " + VV);
@@ -243,9 +243,9 @@ public class DuanSun {
       double[] fcv = { 0.0, 0.0 };
 
       for (int i = 0; i < 2; i++) {
-	dlnfc[i] = (b[i] / bv) * (zv - 1.0) - Math.log(zv - bv) - (av / (2.0 * Math.sqrt(2.0) * bv))
-	    * (2.0 * sumav[i] / av - b[i] / bv) * Math.log((zv + 2.414 * bv) / (zv - 0.414 * bv));
-	fcv[i] = Math.exp(dlnfc[i]);
+        dlnfc[i] = (b[i] / bv) * (zv - 1.0) - Math.log(zv - bv) - (av / (2.0 * Math.sqrt(2.0) * bv))
+            * (2.0 * sumav[i] / av - b[i] / bv) * Math.log((zv + 2.414 * bv) / (zv - 0.414 * bv));
+        fcv[i] = Math.exp(dlnfc[i]);
       }
 
       // System.out.println("fcv0 = " + fcv[0]);
@@ -254,7 +254,7 @@ public class DuanSun {
       double[] fv = { 0.0, 0.0 };
 
       for (int i = 0; i < 2; i++) {
-	fv[i] = fcv[i] * y[i] * P;
+        fv[i] = fcv[i] * y[i] * P;
       }
 
       // System.out.println("fv0 = " + fv[0]);
@@ -265,28 +265,28 @@ public class DuanSun {
       double VCO2INF = 0.0;
 
       VCO2INF = (-159751499.972988 * Math.pow(10.0, -10.0)) + (101831855.926854 * Math.pow(10.0, -10)) * S
-	  + (18075168.978622 * Math.pow(10.0, -11.0)) * T - (787538191.939352 * Math.pow(10.0, -13.0)) * S * T
-	  - (192886808.345857 * Math.pow(10.0, -11.0)) * (Math.pow(S, 2.0))
-	  + 142830810.095592 * Math.pow(10.0, -15.0) * S * (Math.pow(T, 2.0))
-	  + (123450785.102997 * Math.pow(10.0, -13.0)) * T * (Math.pow(S, 2.0))
-	  - (220053285.910771 * Math.pow(10.0, -16.0)) * (Math.pow(S, 2.0)) * (Math.pow(T, 2.0))
-	  - 35351000.350961 * Math.pow(10.0, -17.0) * (Math.pow(T, 3.0));
+          + (18075168.978622 * Math.pow(10.0, -11.0)) * T - (787538191.939352 * Math.pow(10.0, -13.0)) * S * T
+          - (192886808.345857 * Math.pow(10.0, -11.0)) * (Math.pow(S, 2.0))
+          + 142830810.095592 * Math.pow(10.0, -15.0) * S * (Math.pow(T, 2.0))
+          + (123450785.102997 * Math.pow(10.0, -13.0)) * T * (Math.pow(S, 2.0))
+          - (220053285.910771 * Math.pow(10.0, -16.0)) * (Math.pow(S, 2.0)) * (Math.pow(T, 2.0))
+          - 35351000.350961 * Math.pow(10.0, -17.0) * (Math.pow(T, 3.0));
 
       // System.out.println("VCO2INF = " + VCO2INF);
 
       double HCO2AST = 0.0;
 
       HCO2AST = (547703618.010975 * Math.pow(10.0, -3.0)) - (237824440.424155 * Math.pow(10.0, -4.0)) * T
-	  - (108668654.561957 * Math.pow(10.0, -7.0)) * (Math.pow(T, 2.0))
-	  + (10492428.477532 * Math.pow(10.0, -8.0)) * S * (Math.pow(T, 2.0))
-	  + (426241410.644264 * Math.pow(10.0, -11.0)) * Math.pow(T, 3.0)
-	  - (124268021.223715 * Math.pow(10.0, -12.0)) * S * (Math.pow(T, 3.0))
-	  + (435491737.902085 * Math.pow(10.0, -5.0)) * T * Math.log(T)
-	  + (19224323.617885 * Math.pow(10.0, -8.0)) * Math.pow(S, 3.0) * T
-	  - (486711042.327079 * Math.pow(10.0, -9.0)) * T * Math.exp(S)
-	  + (593013871.824553 * Math.pow(10.0, -10.0)) * S * T * Math.exp(S)
-	  - (186057141.990893 * Math.pow(10.0, -7.0)) * S * T
-	  + (13867353.798785 * Math.pow(10.0, -7.0)) * Math.exp(S) * Math.log(T);
+          - (108668654.561957 * Math.pow(10.0, -7.0)) * (Math.pow(T, 2.0))
+          + (10492428.477532 * Math.pow(10.0, -8.0)) * S * (Math.pow(T, 2.0))
+          + (426241410.644264 * Math.pow(10.0, -11.0)) * Math.pow(T, 3.0)
+          - (124268021.223715 * Math.pow(10.0, -12.0)) * S * (Math.pow(T, 3.0))
+          + (435491737.902085 * Math.pow(10.0, -5.0)) * T * Math.log(T)
+          + (19224323.617885 * Math.pow(10.0, -8.0)) * Math.pow(S, 3.0) * T
+          - (486711042.327079 * Math.pow(10.0, -9.0)) * T * Math.exp(S)
+          + (593013871.824553 * Math.pow(10.0, -10.0)) * S * T * Math.exp(S)
+          - (186057141.990893 * Math.pow(10.0, -7.0)) * S * T
+          + (13867353.798785 * Math.pow(10.0, -7.0)) * Math.exp(S) * Math.log(T);
 
       // System.out.println("HCO2AST = " + HCO2AST);
 
@@ -305,11 +305,11 @@ public class DuanSun {
 
       double PHIWSAT = 0.0;
       if (((9.0 / 5.0) * T - 459.67) > 90.0) {
-	PHIWSAT = 0.9958 + 9.68330 * Math.pow(10.0, -5.0) * ((9.0 / 5.0) * T - 459.67)
-	    - 6.17050 * Math.pow(10.0, -7.0) * Math.pow((9.0 / 5.0) * T - 459.67, 2.0)
-	    - 3.08333 * Math.pow(10.0, -10.0) * Math.pow((9.0 / 5.0) * T - 459.67, 3.0);
+        PHIWSAT = 0.9958 + 9.68330 * Math.pow(10.0, -5.0) * ((9.0 / 5.0) * T - 459.67)
+            - 6.17050 * Math.pow(10.0, -7.0) * Math.pow((9.0 / 5.0) * T - 459.67, 2.0)
+            - 3.08333 * Math.pow(10.0, -10.0) * Math.pow((9.0 / 5.0) * T - 459.67, 3.0);
       } else {
-	PHIWSAT = 1.0;
+        PHIWSAT = 1.0;
       }
 
       // VWATER
@@ -323,7 +323,7 @@ public class DuanSun {
 
       double PWSAT = 0.0;
       PWSAT = Math.exp(73.649 - 7258.2 / T - 7.3037 * Math.log(T) + 0.0000041653 * Math.pow(T, 2.0))
-	  / Math.pow(10.0, 5.0);
+          / Math.pow(10.0, 5.0);
 
       // Calculation of H2O fugacity in the aqueous phase
 
@@ -335,23 +335,23 @@ public class DuanSun {
 
       double SUMY1 = 0.0;
       for (int i = 0; i < 2; i++) {
-	y[i] = y[i] * fl[i] / fv[i];
-	SUMY1 = SUMY1 + y[i];
+        y[i] = y[i] * fl[i] / fv[i];
+        SUMY1 = SUMY1 + y[i];
       }
 
       double G = 0.0;
       G = SUMY1 - 1.0;
 
       if (Math.abs((fl[0] - fv[0])) < Math.pow(10.0, -5.0) && Math.abs((fl[1] - fv[1])) < Math.pow(10.0, -5.0)
-	  && Math.abs(G) < Math.pow(10.0, -5.0)) {
-	System.out.println("fl0 = " + fl[0]);
-	System.out.println("fl1 = " + fl[1]);
-	System.out.println("fv0 = " + fv[0]);
-	System.out.println("fv1 = " + fv[1]);
-	System.out.println("y0 = " + y[0]);
-	System.out.println("y1 = " + y[1]);
-	System.out.println("P = " + P + " bar ");
-	break;
+          && Math.abs(G) < Math.pow(10.0, -5.0)) {
+        System.out.println("fl0 = " + fl[0]);
+        System.out.println("fl1 = " + fl[1]);
+        System.out.println("fv0 = " + fv[0]);
+        System.out.println("fv1 = " + fv[1]);
+        System.out.println("y0 = " + y[0]);
+        System.out.println("y1 = " + y[1]);
+        System.out.println("P = " + P + " bar ");
+        break;
       }
       errorOld = error;
       error = Math.abs((fl[0] - fv[0])) + Math.abs((fl[1] - fv[1])) + Math.abs(G);
@@ -359,9 +359,9 @@ public class DuanSun {
       Pold = P;
 
       if (iter < 5) {
-	P = P + Math.pow(10.0, -7.0) * P;
+        P = P + Math.pow(10.0, -7.0) * P;
       } else {
-	P = P - 0.1 * (error - errorOld) / (Pold - Poldold);
+        P = P - 0.1 * (error - errorOld) / (Pold - Poldold);
       }
       System.out.println("P = " + P + " bar " + " error " + error);
     } while (Math.abs(error) > 1e-6);
@@ -407,8 +407,8 @@ public class DuanSun {
     // }
     double PCO2sat = 0.0;
     PCO2sat = Math.exp(
-	parcdpsat[0] + (parcdpsat[1] / T) + (parcdpsat[2] * Math.log(T)) + (parcdpsat[3] * (Math.pow(T, parcdpsat[4]))))
-	/ 100000;
+        parcdpsat[0] + (parcdpsat[1] / T) + (parcdpsat[2] * Math.log(T)) + (parcdpsat[3] * (Math.pow(T, parcdpsat[4]))))
+        / 100000;
     // System.out.println(PCO2sat);
     if (T >= 273.0 && T < 305.0 && P <= PCO2sat) {
       c1 = 1.0;
@@ -577,24 +577,24 @@ public class DuanSun {
 
     double fCO2 = 0.0;
     fCO2 = c1 + (c2 + c3 * T + c4 / T + c5 / (T - 150.0)) * P + (c6 + c7 * T + c8 / T) * Math.pow(P, 2)
-	+ (c9 + c10 * T + c11 / T) * Math.log(P) + (c12 + c13 * T) / P + c14 / T + c15 * Math.pow(T, 2);
+        + (c9 + c10 * T + c11 / T) * Math.log(P) + (c12 + c13 * T) / P + c14 / T + c15 * Math.pow(T, 2);
     // System.out.println("fCO2 = " + fCO2);
 
     double chempotliqCO2RT = 0.0;
     chempotliqCO2RT = 28.9447706 - 0.0354581768 * T - 4770.67077 / T
-	+ 1.02782768 * Math.pow(10.0, -5.0) * Math.pow(T, 2.0) + 33.8126098 / (630.0 - T) + 0.009040371 * P
-	- 0.00114934 * P * Math.log(T) - 0.307405726 * P / T - 0.090730149 * P / (630.0 - T)
-	+ 0.000932713 * Math.pow(P, 2) / (Math.pow((630.0 - T), 2));
+        + 1.02782768 * Math.pow(10.0, -5.0) * Math.pow(T, 2.0) + 33.8126098 / (630.0 - T) + 0.009040371 * P
+        - 0.00114934 * P * Math.log(T) - 0.307405726 * P / T - 0.090730149 * P / (630.0 - T)
+        + 0.000932713 * Math.pow(P, 2) / (Math.pow((630.0 - T), 2));
     // System.out.println("chempotliqCO2RT = " + chempotliqCO2RT);
 
     double lamdaCO2Na = 0.0;
     lamdaCO2Na = -0.411370585 + 0.000607632 * T + 97.5347708 / T - 0.023762247 * P / T + 0.017065624 * P / (630.0 - T)
-	+ 1.41335834 * Math.pow(10.0, -5.0) * T * Math.log(P);
+        + 1.41335834 * Math.pow(10.0, -5.0) * T * Math.log(P);
     // System.out.println("lamdaCO2Na = " + lamdaCO2Na);
 
     double zetaCO2NaCl = 0.0;
     zetaCO2NaCl = 0.00033639 - 1.9829898 * Math.pow(10.0, -5.0) * T + 0.002122208 * P / T
-	- 0.005248733 * P / (630. - T);
+        - 0.005248733 * P / (630. - T);
     // System.out.println("zetaCO2NaCl = " + zetaCO2NaCl);
 
     double tH2O = 0.0;
@@ -602,14 +602,14 @@ public class DuanSun {
 
     double PH2O = 0.0;
     PH2O = (Pc2 * T / Tc2) * (1.0 - 38.640844 * Math.pow(-tH2O, 1.9) + 5.8948420 * tH2O
-	+ 59.876516 * Math.pow(tH2O, 2.0) + 26.654627 * Math.pow(tH2O, 3.0) + 10.637097 * Math.pow(tH2O, 4.0));
+        + 59.876516 * Math.pow(tH2O, 2.0) + 26.654627 * Math.pow(tH2O, 3.0) + 10.637097 * Math.pow(tH2O, 4.0));
 
     double yCO2 = 0.0;
     yCO2 = (P - PH2O) / P;
 
     double mCO2 = 0.0;
     mCO2 = (yCO2 * P)
-	/ Math.exp((-Math.log(fCO2) + chempotliqCO2RT + (2.0) * lamdaCO2Na * S + zetaCO2NaCl * Math.pow(S, 2.0)));
+        / Math.exp((-Math.log(fCO2) + chempotliqCO2RT + (2.0) * lamdaCO2Na * S + zetaCO2NaCl * Math.pow(S, 2.0)));
     // System.out.println("mCO2 = " + mCO2 + "b mol/kg solvent ");
 
     double xCO2 = 0.0;

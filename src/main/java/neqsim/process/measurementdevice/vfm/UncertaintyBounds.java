@@ -178,7 +178,7 @@ public class UncertaintyBounds implements Serializable {
   public UncertaintyBounds add(UncertaintyBounds other) {
     double newMean = this.mean + other.mean;
     double newStd = Math
-	.sqrt(this.standardDeviation * this.standardDeviation + other.standardDeviation * other.standardDeviation);
+        .sqrt(this.standardDeviation * this.standardDeviation + other.standardDeviation * other.standardDeviation);
     return new UncertaintyBounds(newMean, newStd, this.unit);
   }
 

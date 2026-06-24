@@ -54,34 +54,34 @@ public class SaturationPressure extends BasePVTsimulation {
       boolean previousIsTwoPhase = isTwoPhaseAtPressure(previousPressure);
 
       for (double trialPressure = previousPressure
-	  + SEARCH_PRESSURE_STEP_BARA; trialPressure <= MAXIMUM_SEARCH_PRESSURE_BARA; trialPressure += SEARCH_PRESSURE_STEP_BARA) {
-	boolean trialIsTwoPhase = isTwoPhaseAtPressure(trialPressure);
-	if (previousIsTwoPhase && !trialIsTwoPhase) {
-	  twoPhasePressure = previousPressure;
-	  singlePhasePressure = trialPressure;
-	}
-	previousPressure = trialPressure;
-	previousIsTwoPhase = trialIsTwoPhase;
+          + SEARCH_PRESSURE_STEP_BARA; trialPressure <= MAXIMUM_SEARCH_PRESSURE_BARA; trialPressure += SEARCH_PRESSURE_STEP_BARA) {
+        boolean trialIsTwoPhase = isTwoPhaseAtPressure(trialPressure);
+        if (previousIsTwoPhase && !trialIsTwoPhase) {
+          twoPhasePressure = previousPressure;
+          singlePhasePressure = trialPressure;
+        }
+        previousPressure = trialPressure;
+        previousIsTwoPhase = trialIsTwoPhase;
       }
 
       if (previousPressure < MAXIMUM_SEARCH_PRESSURE_BARA) {
-	boolean trialIsTwoPhase = isTwoPhaseAtPressure(MAXIMUM_SEARCH_PRESSURE_BARA);
-	if (previousIsTwoPhase && !trialIsTwoPhase) {
-	  twoPhasePressure = previousPressure;
-	  singlePhasePressure = MAXIMUM_SEARCH_PRESSURE_BARA;
-	}
+        boolean trialIsTwoPhase = isTwoPhaseAtPressure(MAXIMUM_SEARCH_PRESSURE_BARA);
+        if (previousIsTwoPhase && !trialIsTwoPhase) {
+          twoPhasePressure = previousPressure;
+          singlePhasePressure = MAXIMUM_SEARCH_PRESSURE_BARA;
+        }
       }
 
       if (Double.isNaN(twoPhasePressure) || Double.isNaN(singlePhasePressure)) {
-	getThermoSystem().setPressure(MAXIMUM_SEARCH_PRESSURE_BARA);
-	thermoOps.TPflash();
-	return getThermoSystem().getPressure();
+        getThermoSystem().setPressure(MAXIMUM_SEARCH_PRESSURE_BARA);
+        thermoOps.TPflash();
+        return getThermoSystem().getPressure();
       }
 
       return refineUpperSaturationPressure(twoPhasePressure, singlePhasePressure);
     } finally {
       if (isMultiPhaseCheckChanged) {
-	getThermoSystem().setMultiPhaseCheck(false);
+        getThermoSystem().setMultiPhaseCheck(false);
       }
     }
   }
@@ -113,9 +113,9 @@ public class SaturationPressure extends BasePVTsimulation {
       iteration++;
       double trialPressure = (minPres + maxPres) / 2.0;
       if (isTwoPhaseAtPressure(trialPressure)) {
-	minPres = trialPressure;
+        minPres = trialPressure;
       } else {
-	maxPres = trialPressure;
+        maxPres = trialPressure;
       }
     } while (Math.abs(maxPres - minPres) > PRESSURE_TOLERANCE_BARA && iteration < MAXIMUM_BISECTION_ITERATIONS);
     getThermoSystem().setPressure(maxPres);

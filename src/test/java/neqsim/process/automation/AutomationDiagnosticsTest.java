@@ -162,7 +162,7 @@ class AutomationDiagnosticsTest {
     diagnostics.recordSuccess("get", "HP Sep.temperature");
     diagnostics.recordSuccess("get", "HP Sep.pressure");
     diagnostics.recordFailure("get", "HP separator.temp", AutomationDiagnostics.ErrorCategory.UNIT_NOT_FOUND,
-	"HP Sep.temperature");
+        "HP Sep.temperature");
 
     assertEquals(3, diagnostics.getOperationCount());
     assertEquals(2.0 / 3.0, diagnostics.getSuccessRate(), 0.01);
@@ -186,7 +186,7 @@ class AutomationDiagnosticsTest {
   void testLearningReport() {
     diagnostics.recordSuccess("get", "HP Sep.temperature");
     diagnostics.recordFailure("get", "hp separator.temp", AutomationDiagnostics.ErrorCategory.UNIT_NOT_FOUND,
-	"HP Sep.temperature");
+        "HP Sep.temperature");
 
     String report = diagnostics.getLearningReport();
     assertNotNull(report);
@@ -198,7 +198,7 @@ class AutomationDiagnosticsTest {
   @Test
   void testDiagnosticResultToJson() {
     AutomationDiagnostics.DiagnosticResult result = diagnostics.diagnoseUnitNotFound("HP Separator",
-	Arrays.asList("HP Sep", "LP Sep"));
+        Arrays.asList("HP Sep", "LP Sep"));
 
     String json = result.toJson();
     assertNotNull(json);

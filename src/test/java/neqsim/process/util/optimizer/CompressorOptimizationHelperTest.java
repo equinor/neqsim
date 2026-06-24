@@ -164,13 +164,13 @@ public class CompressorOptimizationHelperTest {
     ProductionOptimizer optimizer = new ProductionOptimizer();
 
     OptimizationConfig config = new OptimizationConfig(50000.0, 150000.0).searchMode(SearchMode.GRADIENT_DESCENT_SCORE)
-	.maxIterations(20).tolerance(100.0).rateUnit("kg/hr");
+        .maxIterations(20).tolerance(100.0).rateUnit("kg/hr");
 
     OptimizationResult result = optimizer.optimize(process, feedStream, config, null, null);
 
     assertNotNull(result);
     assertTrue(result.getOptimalRate() >= 50000.0 && result.getOptimalRate() <= 150000.0,
-	"Optimal rate should be within bounds: " + result.getOptimalRate());
+        "Optimal rate should be within bounds: " + result.getOptimalRate());
     assertTrue(result.getIterations() > 0, "Should have performed iterations");
   }
 
@@ -181,15 +181,15 @@ public class CompressorOptimizationHelperTest {
 
     // Create two variables: flow rate and compressor outlet pressure
     ManipulatedVariable flowVar = new ManipulatedVariable("flow", 50000.0, 150000.0, "kg/hr",
-	(proc, val) -> feedStream.setFlowRate(val, "kg/hr"));
+        (proc, val) -> feedStream.setFlowRate(val, "kg/hr"));
 
     ManipulatedVariable pressVar = new ManipulatedVariable("pressure", 80.0, 120.0, "bara",
-	(proc, val) -> compressor1.setOutletPressure(val, "bara"));
+        (proc, val) -> compressor1.setOutletPressure(val, "bara"));
 
     List<ManipulatedVariable> variables = Arrays.asList(flowVar, pressVar);
 
     OptimizationConfig config = new OptimizationConfig(0, 1) // Bounds ignored for multi-var
-	.searchMode(SearchMode.GRADIENT_DESCENT_SCORE).maxIterations(15).tolerance(0.01);
+        .searchMode(SearchMode.GRADIENT_DESCENT_SCORE).maxIterations(15).tolerance(0.01);
 
     OptimizationResult result = optimizer.optimize(process, variables, config, null, null);
 
@@ -206,7 +206,7 @@ public class CompressorOptimizationHelperTest {
     List<OptimizationObjective> objectives = CompressorOptimizationHelper.createStandardObjectives(compressors);
 
     OptimizationConfig config = new OptimizationConfig(50000.0, 150000.0).searchMode(SearchMode.GRADIENT_DESCENT_SCORE)
-	.maxIterations(15).tolerance(100.0).rateUnit("kg/hr");
+        .maxIterations(15).tolerance(100.0).rateUnit("kg/hr");
 
     OptimizationResult result = optimizer.optimize(process, feedStream, config, objectives, null);
 

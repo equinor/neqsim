@@ -346,7 +346,7 @@ public class DensePhaseCO2Corrosion implements Serializable {
       meetsImpuritySpecs = false;
     } else if (o2ContentPpmv > 10) {
       impurityIssues
-	  .add("O2: " + o2ContentPpmv + " ppmv — acceptable with dehydration but" + " above 10 ppmv preferred limit");
+          .add("O2: " + o2ContentPpmv + " ppmv — acceptable with dehydration but" + " above 10 ppmv preferred limit");
     }
     if (so2ContentPpmv > 100) {
       impurityIssues.add("SO2: " + so2ContentPpmv + " ppmv exceeds 100 ppmv limit");
@@ -365,7 +365,7 @@ public class DensePhaseCO2Corrosion implements Serializable {
     }
     if (n2ContentMolPct + arContentMolPct > 4.0) {
       impurityIssues.add(
-	  "N2+Ar: " + (n2ContentMolPct + arContentMolPct) + " mol% — may affect critical point and two-phase region");
+          "N2+Ar: " + (n2ContentMolPct + arContentMolPct) + " mol% — may affect critical point and two-phase region");
     }
   }
 
@@ -387,16 +387,16 @@ public class DensePhaseCO2Corrosion implements Serializable {
 
       // SO2 and O2 synergistic effects
       if (so2ContentPpmv > 50 && o2ContentPpmv > 50) {
-	wetCorrosionRateMmYr *= 2.0;
-	notes.add("SO2 + O2 synergy increases corrosion from sulfuric acid formation.");
+        wetCorrosionRateMmYr *= 2.0;
+        notes.add("SO2 + O2 synergy increases corrosion from sulfuric acid formation.");
       }
 
       if (wetCorrosionRateMmYr > 10.0) {
-	riskLevel = "Very High";
+        riskLevel = "Very High";
       } else if (wetCorrosionRateMmYr > 1.0) {
-	riskLevel = "High";
+        riskLevel = "High";
       } else {
-	riskLevel = "Medium";
+        riskLevel = "Medium";
       }
     } else {
       riskLevel = "Medium";
@@ -427,7 +427,7 @@ public class DensePhaseCO2Corrosion implements Serializable {
     } else {
       sb.append("Address impurity exceedances: ");
       for (String issue : impurityIssues) {
-	sb.append(issue).append("; ");
+        sb.append(issue).append("; ");
       }
     }
 

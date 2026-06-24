@@ -162,9 +162,9 @@ public class UncertaintyAnalysis {
   public boolean hasHighCorrelations() {
     for (int i = 0; i < correlationMatrix.length; i++) {
       for (int j = i + 1; j < correlationMatrix[i].length; j++) {
-	if (Math.abs(correlationMatrix[i][j]) > 0.8) {
-	  return true;
-	}
+        if (Math.abs(correlationMatrix[i][j]) > 0.8) {
+          return true;
+        }
       }
     }
     return false;
@@ -195,7 +195,7 @@ public class UncertaintyAnalysis {
     sb.append("Parameter Estimates:\n");
     for (int i = 0; i < parameterValues.length; i++) {
       sb.append(String.format("  Parameter %d: %.6f ± %.6f (%.1f%%)\n", i, parameterValues[i], confidenceIntervals95[i],
-	  getRelativeUncertainty(i)));
+          getRelativeUncertainty(i)));
     }
 
     sb.append("\nStatistics:\n");
@@ -211,7 +211,7 @@ public class UncertaintyAnalysis {
     for (int i = 0; i < correlationMatrix.length; i++) {
       sb.append("  ");
       for (int j = 0; j < correlationMatrix[i].length; j++) {
-	sb.append(String.format("%7.3f ", correlationMatrix[i][j]));
+        sb.append(String.format("%7.3f ", correlationMatrix[i][j]));
       }
       sb.append("\n");
     }

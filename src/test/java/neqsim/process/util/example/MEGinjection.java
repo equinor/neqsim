@@ -54,7 +54,7 @@ public class MEGinjection {
 
     neqsim.thermo.system.SystemInterface feedMEG = feedGas.clone();
     feedMEG.setMolarComposition(
-	new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.9 });
+        new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.9 });
 
     Stream MEGFeed = new Stream("lean MEG feed stream", feedMEG);
     MEGFeed.setFlowRate(1000.0, "kg/hr");
@@ -97,7 +97,7 @@ public class MEGinjection {
 
     neqsim.thermo.system.SystemInterface feedMEGOnshore = feedGas.clone();
     feedMEG.setMolarComposition(
-	new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.9 });
+        new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.9 });
 
     Stream MEGFeedOnshore = new Stream("lean MEG feed stream", feedMEGOnshore);
     MEGFeedOnshore.setFlowRate(1000.0, "kg/hr");

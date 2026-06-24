@@ -127,14 +127,14 @@ class KValueProcessSimulatorTest {
   private ProcessSystem buildProductionAllocationReferenceProcess() {
     ProcessSystem process = new ProcessSystem();
     Stream feedGas = new Stream("Well-Gas",
-	makePrFluid(new double[] { 0.80, 3.56, 84.0, 4.5, 2.0, 0.5, 0.9, 0.4, 0.5, 1.2, 0.8, 0.5, 0.3, 0.2, 0.04 }));
+        makePrFluid(new double[] { 0.80, 3.56, 84.0, 4.5, 2.0, 0.5, 0.9, 0.4, 0.5, 1.2, 0.8, 0.5, 0.3, 0.2, 0.04 }));
     feedGas.setFlowRate(120000.0, "kg/hr");
     feedGas.setTemperature(45.0, "C");
     feedGas.setPressure(75.0, "bara");
     process.add(feedGas);
 
     Stream feedOil = new Stream("Well-Oil",
-	makePrFluid(new double[] { 0.30, 2.0, 45.0, 5.0, 4.0, 1.5, 2.5, 1.5, 2.0, 6.0, 7.0, 8.0, 6.0, 5.0, 4.0 }));
+        makePrFluid(new double[] { 0.30, 2.0, 45.0, 5.0, 4.0, 1.5, 2.5, 1.5, 2.0, 6.0, 7.0, 8.0, 6.0, 5.0, 4.0 }));
     feedOil.setFlowRate(90000.0, "kg/hr");
     feedOil.setTemperature(45.0, "C");
     feedOil.setPressure(75.0, "bara");
@@ -181,7 +181,7 @@ class KValueProcessSimulatorTest {
    */
   private SystemPrEos makePrFluid(double[] composition) {
     String[] defined = new String[] { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane",
-	"i-pentane", "n-pentane" };
+        "i-pentane", "n-pentane" };
     String[] tbpNames = new String[] { "C6", "C7", "C8", "C9", "C10", "C12" };
     double[] tbpMolarMass = new double[] { 0.08499, 0.09787, 0.11000, 0.12500, 0.13700, 0.16100 };
     double[] tbpDensity = new double[] { 0.695, 0.718, 0.745, 0.766, 0.781, 0.804 };
@@ -217,11 +217,11 @@ class KValueProcessSimulatorTest {
     assertNotNull(result);
     assertTrue(simulator.getUnitProfiles().get(1).usesKValueRouting());
     assertEquals(separator.getGasOutStream().getFlowRate("kg/hr"),
-	result.getStreamTotalFlow("Inlet Separator.gasOutStream", "kg/hr"), FLOW_TOL);
+        result.getStreamTotalFlow("Inlet Separator.gasOutStream", "kg/hr"), FLOW_TOL);
     assertEquals(separator.getLiquidOutStream().getFlowRate("kg/hr"),
-	result.getStreamTotalFlow("Inlet Separator.liquidOutStream", "kg/hr"), FLOW_TOL);
+        result.getStreamTotalFlow("Inlet Separator.liquidOutStream", "kg/hr"), FLOW_TOL);
     assertEquals(result.getStreamTotalFlow("Inlet Separator.gasOutStream", "kg/hr"),
-	result.getStreamTotalFlow("ExportGas", "kg/hr"), FLOW_TOL);
+        result.getStreamTotalFlow("ExportGas", "kg/hr"), FLOW_TOL);
   }
 
   /**
@@ -261,11 +261,11 @@ class KValueProcessSimulatorTest {
     assertTrue(separator.getOilOutStream().getFlowRate("kg/hr") > 0.0);
     assertTrue(separator.getWaterOutStream().getFlowRate("kg/hr") > 0.0);
     assertEquals(separator.getGasOutStream().getFlowRate("kg/hr"),
-	result.getStreamTotalFlow("Three Phase Separator.gasOutStream", "kg/hr"), FLOW_TOL);
+        result.getStreamTotalFlow("Three Phase Separator.gasOutStream", "kg/hr"), FLOW_TOL);
     assertEquals(separator.getOilOutStream().getFlowRate("kg/hr"),
-	result.getStreamTotalFlow("Three Phase Separator.liquidOutStream", "kg/hr"), FLOW_TOL);
+        result.getStreamTotalFlow("Three Phase Separator.liquidOutStream", "kg/hr"), FLOW_TOL);
     assertEquals(separator.getWaterOutStream().getFlowRate("kg/hr"),
-	result.getStreamTotalFlow("Three Phase Separator.waterOutStream", "kg/hr"), FLOW_TOL);
+        result.getStreamTotalFlow("Three Phase Separator.waterOutStream", "kg/hr"), FLOW_TOL);
   }
 
   /**
@@ -285,17 +285,17 @@ class KValueProcessSimulatorTest {
     ThreePhaseSeparator separator = (ThreePhaseSeparator) process.getUnit("Three Phase Separator");
 
     double sourceMass = result.getStreamTotalFlow("HydrocarbonWell", "kg/hr")
-	+ result.getStreamTotalFlow("WaterWell", "kg/hr");
+        + result.getStreamTotalFlow("WaterWell", "kg/hr");
     assertEquals(sourceMass, result.getTerminalTotalFlow("kg/hr"), 1.0e-8 * sourceMass);
     assertEquals(separator.getGasOutStream().getFlowRate("kg/hr"),
-	result.getStreamTotalFlow("Three Phase Separator.gasOutStream", "kg/hr"),
-	0.05 * separator.getGasOutStream().getFlowRate("kg/hr"));
+        result.getStreamTotalFlow("Three Phase Separator.gasOutStream", "kg/hr"),
+        0.05 * separator.getGasOutStream().getFlowRate("kg/hr"));
     assertEquals(separator.getOilOutStream().getFlowRate("kg/hr"),
-	result.getStreamTotalFlow("Three Phase Separator.liquidOutStream", "kg/hr"),
-	0.05 * separator.getOilOutStream().getFlowRate("kg/hr"));
+        result.getStreamTotalFlow("Three Phase Separator.liquidOutStream", "kg/hr"),
+        0.05 * separator.getOilOutStream().getFlowRate("kg/hr"));
     assertEquals(separator.getWaterOutStream().getFlowRate("kg/hr"),
-	result.getStreamTotalFlow("Three Phase Separator.waterOutStream", "kg/hr"),
-	0.05 * separator.getWaterOutStream().getFlowRate("kg/hr"));
+        result.getStreamTotalFlow("Three Phase Separator.waterOutStream", "kg/hr"),
+        0.05 * separator.getWaterOutStream().getFlowRate("kg/hr"));
     assertTrue(result.getStreamTotalFlow("ExportWater3P", "kg/hr") > 0.0);
     assertTrue(result.getMaxResidual() < 1.0e-8);
   }
@@ -326,7 +326,7 @@ class KValueProcessSimulatorTest {
     KValueProcessResult rateCase = simulator.runWithSourceFlowRates(sourceRates, "kg/hr");
 
     KValueProcessBenchmarkResult benchmark = simulator.benchmarkSourceFlowMultipliers("Well-B",
-	new double[] { 0.80, 1.00, 1.20 });
+        new double[] { 0.80, 1.00, 1.20 });
     double speedup = benchmark.getSpeedup();
     String benchmarkJson = benchmark.toJson();
 
@@ -348,7 +348,7 @@ class KValueProcessSimulatorTest {
     ProcessSystem process = buildProductionAllocationReferenceProcess();
     KValueProcessSimulator simulator = KValueProcessSimulator.fromBaseCase(process);
     KValueProcessBenchmarkResult benchmark = simulator.benchmarkSourceFlowMultipliers("Well-Oil",
-	new double[] { 0.80, 1.00, 1.20, 1.40 });
+        new double[] { 0.80, 1.00, 1.20, 1.40 });
 
     assertTrue(benchmark.getProxyAverageTimeNanos() > 0.0);
     assertTrue(benchmark.getRigorousAverageTimeNanos() > 0.0);

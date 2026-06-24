@@ -329,7 +329,7 @@ public class PipeDesign {
     }
     for (int i = 0; i < Dis.length; i++) {
       if (Dis[i] >= DiMm) {
-	return new double[] { NPSes[i], Dis[i], Dos[i], ts[i] };
+        return new double[] { NPSes[i], Dis[i], Dos[i], ts[i] };
       }
     }
     // Should not happen
@@ -342,7 +342,7 @@ public class PipeDesign {
     }
     for (int i = 0; i < Dos.length; i++) {
       if (Dos[i] >= DoMm) {
-	return new double[] { NPSes[i], Dis[i], Dos[i], ts[i] };
+        return new double[] { NPSes[i], Dis[i], Dos[i], ts[i] };
       }
     }
     throw new RuntimeException("Do lookup failed");
@@ -351,7 +351,7 @@ public class PipeDesign {
   private static double[] NPSLookup(double wantedNPS, double[] NPSes, double[] Dis, double[] Dos, double[] ts) {
     for (int i = 0; i < NPSes.length; i++) {
       if (Double.compare(NPSes[i], wantedNPS) == 0) {
-	return new double[] { NPSes[i], Dis[i], Dos[i], ts[i] };
+        return new double[] { NPSes[i], Dis[i], Dos[i], ts[i] };
       }
     }
     throw new RuntimeException("NPS not in list: " + wantedNPS);
@@ -416,7 +416,7 @@ public class PipeDesign {
     public final double[] thicknessInch;
     public final double[] thicknessM; // thickness in meters
     public final boolean something; // the Python code had a boolean for "true if the schedule
-				    // numbering is x..."
+    // numbering is x..."
 
     public WireScheduleData(double[] gaugeNumbers, double[] thicknessInch, double[] thicknessM, boolean something) {
       this.gaugeNumbers = gaugeNumbers;
@@ -519,7 +519,7 @@ public class PipeDesign {
     // Exact match?
     for (int i = 0; i < wsd.thicknessInch.length; i++) {
       if (Math.abs(tInch - wsd.thicknessInch[i]) < 1e-12) {
-	return wsd.gaugeNumbers[i];
+        return wsd.gaugeNumbers[i];
       }
     }
 
@@ -528,9 +528,9 @@ public class PipeDesign {
     int idxLarger = -1;
     for (int i = 0; i < wsd.thicknessInch.length; i++) {
       if (wsd.thicknessInch[i] >= tInch) {
-	nextLargerVal = wsd.thicknessInch[i];
-	idxLarger = i;
-	break;
+        nextLargerVal = wsd.thicknessInch[i];
+        idxLarger = i;
+        break;
       }
     }
     if (idxLarger == -1) {
@@ -570,8 +570,8 @@ public class PipeDesign {
     int idx = -1;
     for (int i = 0; i < wsd.gaugeNumbers.length; i++) {
       if (Double.compare(wsd.gaugeNumbers[i], gauge) == 0) {
-	idx = i;
-	break;
+        idx = i;
+        break;
       }
     }
     if (idx == -1) {
@@ -616,7 +616,7 @@ public class PipeDesign {
     // Example usage: nearestPipe by inner diameter 0.021 m, schedule "40"
     double[] res = nearestPipe(null, 0.021, null, "40");
     System.out.printf("nearestPipe(Di=0.021, schedule=40) => NPS=%.3f, Di=%.6f m, Do=%.6f m, t=%.6f m%n", res[0],
-	res[1], res[2], res[3]);
+        res[1], res[2], res[3]);
 
     // Example usage: gaugeFromThickness
     double gaugeBWG = gaugeFromThickness(0.5, false, "BWG"); // thickness=0.5 inch, schedule=BWG

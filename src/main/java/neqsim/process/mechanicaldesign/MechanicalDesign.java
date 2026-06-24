@@ -237,65 +237,65 @@ public class MechanicalDesign implements java.io.Serializable {
   public List<CapacityConstraint> getDesignCapacityConstraints() {
     List<CapacityConstraint> constraints = new ArrayList<CapacityConstraint>();
     addDesignConstraint(constraints, "design volume flow", "m3/hr", maxDesignVolumeFlow, getOperatingVolumeFlow(),
-	new DoubleSupplier() {
-	  @Override
-	  public double getAsDouble() {
-	    return getOperatingVolumeFlow();
-	  }
-	});
+        new DoubleSupplier() {
+          @Override
+          public double getAsDouble() {
+            return getOperatingVolumeFlow();
+          }
+        });
     addDesignConstraint(constraints, "design gas volume flow", "m3/hr", maxDesignGassVolumeFlow,
-	getOperatingGasVolumeFlow(), new DoubleSupplier() {
-	  @Override
-	  public double getAsDouble() {
-	    return getOperatingGasVolumeFlow();
-	  }
-	});
+        getOperatingGasVolumeFlow(), new DoubleSupplier() {
+          @Override
+          public double getAsDouble() {
+            return getOperatingGasVolumeFlow();
+          }
+        });
     addDesignConstraint(constraints, "design oil volume flow", "m3/hr", maxDesignOilVolumeFlow,
-	getOperatingOilVolumeFlow(), new DoubleSupplier() {
-	  @Override
-	  public double getAsDouble() {
-	    return getOperatingOilVolumeFlow();
-	  }
-	});
+        getOperatingOilVolumeFlow(), new DoubleSupplier() {
+          @Override
+          public double getAsDouble() {
+            return getOperatingOilVolumeFlow();
+          }
+        });
     addDesignConstraint(constraints, "design water volume flow", "m3/hr", maxDesignWaterVolumeFlow,
-	getOperatingWaterVolumeFlow(), new DoubleSupplier() {
-	  @Override
-	  public double getAsDouble() {
-	    return getOperatingWaterVolumeFlow();
-	  }
-	});
+        getOperatingWaterVolumeFlow(), new DoubleSupplier() {
+          @Override
+          public double getAsDouble() {
+            return getOperatingWaterVolumeFlow();
+          }
+        });
     addDesignConstraint(constraints, "design power", "kW", maxDesignPower, getOperatingPower(), new DoubleSupplier() {
       @Override
       public double getAsDouble() {
-	return getOperatingPower();
+        return getOperatingPower();
       }
     });
     addDesignConstraint(constraints, "design duty", "kW", maxDesignDuty, getOperatingDuty(), new DoubleSupplier() {
       @Override
       public double getAsDouble() {
-	return getOperatingDuty();
+        return getOperatingDuty();
       }
     });
     addDesignConstraint(constraints, "design Cv", "", maxDesignCv, getOperatingCv(), new DoubleSupplier() {
       @Override
       public double getAsDouble() {
-	return getOperatingCv();
+        return getOperatingCv();
       }
     });
     addDesignConstraint(constraints, "design velocity", "m/s", maxDesignVelocity, getOperatingVelocity(),
-	new DoubleSupplier() {
-	  @Override
-	  public double getAsDouble() {
-	    return getOperatingVelocity();
-	  }
-	});
+        new DoubleSupplier() {
+          @Override
+          public double getAsDouble() {
+            return getOperatingVelocity();
+          }
+        });
     addDesignConstraint(constraints, "design pressure drop", "bara", maxDesignPressureDrop, getOperatingPressureDrop(),
-	new DoubleSupplier() {
-	  @Override
-	  public double getAsDouble() {
-	    return getOperatingPressureDrop();
-	  }
-	});
+        new DoubleSupplier() {
+          @Override
+          public double getAsDouble() {
+            return getOperatingPressureDrop();
+          }
+        });
     return constraints;
   }
 
@@ -313,9 +313,9 @@ public class MechanicalDesign implements java.io.Serializable {
       double currentValue, DoubleSupplier supplier) {
     if (designLimit > 0.0 && Double.isFinite(currentValue)) {
       CapacityConstraint constraint = new CapacityConstraint(name, unit, CapacityConstraint.ConstraintType.DESIGN)
-	  .setDesignValue(designLimit).setWarningThreshold(0.9).setDataSource("mechanicalDesign")
-	  .setDescription("Derived from mechanical design limit").setValueSupplier(supplier)
-	  .setCurrentValue(currentValue);
+          .setDesignValue(designLimit).setWarningThreshold(0.9).setDataSource("mechanicalDesign")
+          .setDescription("Derived from mechanical design limit").setValueSupplier(supplier)
+          .setCurrentValue(currentValue);
       constraint.setEnabled(true);
       constraints.add(constraint);
     }
@@ -337,7 +337,7 @@ public class MechanicalDesign implements java.io.Serializable {
     for (CapacityConstraint constraint : getDesignCapacityConstraints()) {
       double value = constraint.getUtilization();
       if (!Double.isNaN(value)) {
-	utilization.put(constraint.getName(), value);
+        utilization.put(constraint.getName(), value);
       }
     }
     return utilization;
@@ -353,7 +353,7 @@ public class MechanicalDesign implements java.io.Serializable {
     double max = 0.0;
     for (Double value : getDesignUtilization().values()) {
       if (value != null && !Double.isNaN(value) && value > max) {
-	max = value;
+        max = value;
       }
     }
     return max;
@@ -377,12 +377,12 @@ public class MechanicalDesign implements java.io.Serializable {
       List<StreamInterface> inlets = processEquipment.getInletStreams();
       List<StreamInterface> outlets = processEquipment.getOutletStreams();
       if (inlets.isEmpty() || outlets.isEmpty()) {
-	return Double.NaN;
+        return Double.NaN;
       }
       double pin = inlets.get(0).getPressure("bara");
       double pout = outlets.get(0).getPressure("bara");
       if (Double.isNaN(pin) || Double.isNaN(pout)) {
-	return Double.NaN;
+        return Double.NaN;
       }
       return Math.abs(pin - pout);
     } catch (RuntimeException ex) {
@@ -407,16 +407,16 @@ public class MechanicalDesign implements java.io.Serializable {
     try {
       List<StreamInterface> inlets = processEquipment.getInletStreams();
       if (inlets.isEmpty()) {
-	return Double.NaN;
+        return Double.NaN;
       }
       double total = 0.0;
       boolean any = false;
       for (StreamInterface stream : inlets) {
-	double flow = stream.getFlowRate("m3/hr");
-	if (!Double.isNaN(flow)) {
-	  total += flow;
-	  any = true;
-	}
+        double flow = stream.getFlowRate("m3/hr");
+        if (!Double.isNaN(flow)) {
+          total += flow;
+          any = true;
+        }
       }
       return any ? total : Double.NaN;
     } catch (RuntimeException ex) {
@@ -586,8 +586,8 @@ public class MechanicalDesign implements java.io.Serializable {
     for (MechanicalDesignDataSource dataSource : getActiveDesignDataSources()) {
       Optional<DesignLimitData> candidate = dataSource.getDesignLimits(equipmentType, companyIdentifier);
       if (candidate.isPresent()) {
-	loadedData = candidate.get();
-	break;
+        loadedData = candidate.get();
+        break;
       }
     }
 
@@ -708,7 +708,7 @@ public class MechanicalDesign implements java.io.Serializable {
    */
   public MechanicalDesignMarginResult validateOperatingEnvelope() {
     return validateOperatingEnvelope(maxOperationPressure, minOperationPressure, maxOperationTemperature,
-	minOperationTemperature, corrosionAllowance, jointEfficiency);
+        minOperationTemperature, corrosionAllowance, jointEfficiency);
   }
 
   /**
@@ -733,7 +733,7 @@ public class MechanicalDesign implements java.io.Serializable {
     double jointMargin = marginFromLowerLimit(operatingJointEfficiency, designLimitData.getJointEfficiency());
 
     lastMarginResult = new MechanicalDesignMarginResult(maxPressureMargin, minPressureMargin, maxTemperatureMargin,
-	minTemperatureMargin, corrosionMargin, jointMargin);
+        minTemperatureMargin, corrosionMargin, jointMargin);
     return lastMarginResult;
   }
 
@@ -1015,16 +1015,16 @@ public class MechanicalDesign implements java.io.Serializable {
 
     if (this.companySpecificDesignStandards.equals("StatoilTR")) {
       getDesignStandard().put("pressure vessel design code",
-	  new PressureVesselDesignStandard("ASME - Pressure Vessel Code", this));
+          new PressureVesselDesignStandard("ASME - Pressure Vessel Code", this));
       getDesignStandard().put("separator process design", new SeparatorDesignStandard("StatoilTR", this));
       getDesignStandard().put("gas scrubber process design", new GasScrubberDesignStandard("Statoil_TR1414", this));
       getDesignStandard().put("adsorption dehydration process design",
-	  new AdsorptionDehydrationDesignStandard("", this));
+          new AdsorptionDehydrationDesignStandard("", this));
       getDesignStandard().put("pipeline design codes", new PipelineDesignStandard("Statoil_TR1414", this));
       getDesignStandard().put("compressor design codes", new CompressorDesignStandard("Statoil_TR1414", this));
       getDesignStandard().put("material plate design codes", new MaterialPlateDesignStandard("Statoil_TR1414", this));
       getDesignStandard().put("plate Joint Efficiency design codes",
-	  new JointEfficiencyPlateStandard("Statoil_TR1414", this));
+          new JointEfficiencyPlateStandard("Statoil_TR1414", this));
       getDesignStandard().put("material pipe design codes", new MaterialPipeDesignStandard("Statoil_TR1414", this));
 
       // pressureVesselDesignStandard = "ASME - Pressure Vessel Code";
@@ -1032,18 +1032,18 @@ public class MechanicalDesign implements java.io.Serializable {
       // setValveDesignStandard("TR1903_Statoil");
     } else {
       System.out.println(
-	  "using default mechanical design standards...no design standard " + this.companySpecificDesignStandards);
+          "using default mechanical design standards...no design standard " + this.companySpecificDesignStandards);
       getDesignStandard().put("pressure vessel design code",
-	  new PressureVesselDesignStandard("ASME - Pressure Vessel Code", this));
+          new PressureVesselDesignStandard("ASME - Pressure Vessel Code", this));
       getDesignStandard().put("separator process design", new SeparatorDesignStandard("StatoilTR", this));
       getDesignStandard().put("gas scrubber process design", new GasScrubberDesignStandard("Statoil_TR1414", this));
       getDesignStandard().put("adsorption dehydration process design",
-	  new AdsorptionDehydrationDesignStandard("", this));
+          new AdsorptionDehydrationDesignStandard("", this));
       getDesignStandard().put("pipeline design codes", new PipelineDesignStandard("Statoil_TR1414", this));
       getDesignStandard().put("compressor design codes", new CompressorDesignStandard("Statoil_TR1414", this));
       getDesignStandard().put("material plate design codes", new MaterialPlateDesignStandard("Statoil_TR1414", this));
       getDesignStandard().put("plate Joint Efficiency design codes",
-	  new JointEfficiencyPlateStandard("Statoil_TR1414", this));
+          new JointEfficiencyPlateStandard("Statoil_TR1414", this));
       getDesignStandard().put("material pipe design codes", new MaterialPipeDesignStandard("Statoil_TR1414", this));
     }
     hasSetCompanySpecificDesignStandards = true;
@@ -1113,7 +1113,7 @@ public class MechanicalDesign implements java.io.Serializable {
     }
     for (StandardType type : standardTypes) {
       if (type != null) {
-	setDesignStandard(type);
+        setDesignStandard(type);
       }
     }
   }
@@ -1902,14 +1902,14 @@ public class MechanicalDesign implements java.io.Serializable {
   @Override
   public int hashCode() {
     return Objects.hash(companySpecificDesignStandards, construtionMaterial, corrosionAllowance, costEstimate,
-	designStandard, hasSetCompanySpecificDesignStandards, innerDiameter, jointEfficiency,
-	materialPipeDesignStandard, materialPlateDesignStandard, maxDesignGassVolumeFlow, maxDesignOilVolumeFlow,
-	maxDesignVolumeFlow, maxDesignWaterVolumeFlow, maxOperationPressure, maxOperationTemperature,
-	minDesignGassVolumeFLow, minDesignOilFLow, minDesignVolumeFLow, minDesignWaterVolumeFLow, minOperationPressure,
-	minOperationTemperature, moduleHeight, moduleLength, moduleWidth, outerDiameter, pressureMarginFactor,
-	processEquipment, tantanLength, tensileStrength, volumeTotal, wallThickness, weightElectroInstrument,
-	weightNozzle, weightPiping, weightStructualSteel, weightTotal, weightVessel, weigthInternals,
-	weigthVesselShell);
+        designStandard, hasSetCompanySpecificDesignStandards, innerDiameter, jointEfficiency,
+        materialPipeDesignStandard, materialPlateDesignStandard, maxDesignGassVolumeFlow, maxDesignOilVolumeFlow,
+        maxDesignVolumeFlow, maxDesignWaterVolumeFlow, maxOperationPressure, maxOperationTemperature,
+        minDesignGassVolumeFLow, minDesignOilFLow, minDesignVolumeFLow, minDesignWaterVolumeFLow, minOperationPressure,
+        minOperationTemperature, moduleHeight, moduleLength, moduleWidth, outerDiameter, pressureMarginFactor,
+        processEquipment, tantanLength, tensileStrength, volumeTotal, wallThickness, weightElectroInstrument,
+        weightNozzle, weightPiping, weightStructualSteel, weightTotal, weightVessel, weigthInternals,
+        weigthVesselShell);
   }
 
   /** {@inheritDoc} */
@@ -1926,43 +1926,43 @@ public class MechanicalDesign implements java.io.Serializable {
     }
     MechanicalDesign other = (MechanicalDesign) obj;
     return Objects.equals(companySpecificDesignStandards, other.companySpecificDesignStandards)
-	&& Objects.equals(construtionMaterial, other.construtionMaterial)
-	&& Double.doubleToLongBits(corrosionAllowance) == Double.doubleToLongBits(other.corrosionAllowance)
-	&& Objects.equals(costEstimate, other.costEstimate) && Objects.equals(designStandard, other.designStandard)
-	&& hasSetCompanySpecificDesignStandards == other.hasSetCompanySpecificDesignStandards
-	&& Double.doubleToLongBits(innerDiameter) == Double.doubleToLongBits(other.innerDiameter)
-	&& Double.doubleToLongBits(jointEfficiency) == Double.doubleToLongBits(other.jointEfficiency)
-	&& Objects.equals(materialPipeDesignStandard, other.materialPipeDesignStandard)
-	&& Objects.equals(materialPlateDesignStandard, other.materialPlateDesignStandard)
-	&& Double.doubleToLongBits(maxDesignGassVolumeFlow) == Double.doubleToLongBits(other.maxDesignGassVolumeFlow)
-	&& Double.doubleToLongBits(maxDesignOilVolumeFlow) == Double.doubleToLongBits(other.maxDesignOilVolumeFlow)
-	&& Double.doubleToLongBits(maxDesignVolumeFlow) == Double.doubleToLongBits(other.maxDesignVolumeFlow)
-	&& Double.doubleToLongBits(maxDesignWaterVolumeFlow) == Double.doubleToLongBits(other.maxDesignWaterVolumeFlow)
-	&& Double.doubleToLongBits(maxOperationPressure) == Double.doubleToLongBits(other.maxOperationPressure)
-	&& Double.doubleToLongBits(maxOperationTemperature) == Double.doubleToLongBits(other.maxOperationTemperature)
-	&& Double.doubleToLongBits(minDesignGassVolumeFLow) == Double.doubleToLongBits(other.minDesignGassVolumeFLow)
-	&& Double.doubleToLongBits(minDesignOilFLow) == Double.doubleToLongBits(other.minDesignOilFLow)
-	&& Double.doubleToLongBits(minDesignVolumeFLow) == Double.doubleToLongBits(other.minDesignVolumeFLow)
-	&& Double.doubleToLongBits(minDesignWaterVolumeFLow) == Double.doubleToLongBits(other.minDesignWaterVolumeFLow)
-	&& Double.doubleToLongBits(minOperationPressure) == Double.doubleToLongBits(other.minOperationPressure)
-	&& Double.doubleToLongBits(minOperationTemperature) == Double.doubleToLongBits(other.minOperationTemperature)
-	&& Double.doubleToLongBits(moduleHeight) == Double.doubleToLongBits(other.moduleHeight)
-	&& Double.doubleToLongBits(moduleLength) == Double.doubleToLongBits(other.moduleLength)
-	&& Double.doubleToLongBits(moduleWidth) == Double.doubleToLongBits(other.moduleWidth)
-	&& Double.doubleToLongBits(outerDiameter) == Double.doubleToLongBits(other.outerDiameter)
-	&& Double.doubleToLongBits(pressureMarginFactor) == Double.doubleToLongBits(other.pressureMarginFactor)
-	&& Objects.equals(processEquipment, other.processEquipment)
-	&& Double.doubleToLongBits(tantanLength) == Double.doubleToLongBits(other.tantanLength)
-	&& Double.doubleToLongBits(tensileStrength) == Double.doubleToLongBits(other.tensileStrength)
-	&& Double.doubleToLongBits(volumeTotal) == Double.doubleToLongBits(other.volumeTotal)
-	&& Double.doubleToLongBits(wallThickness) == Double.doubleToLongBits(other.wallThickness)
-	&& Double.doubleToLongBits(weightElectroInstrument) == Double.doubleToLongBits(other.weightElectroInstrument)
-	&& Double.doubleToLongBits(weightNozzle) == Double.doubleToLongBits(other.weightNozzle)
-	&& Double.doubleToLongBits(weightPiping) == Double.doubleToLongBits(other.weightPiping)
-	&& Double.doubleToLongBits(weightStructualSteel) == Double.doubleToLongBits(other.weightStructualSteel)
-	&& Double.doubleToLongBits(weightTotal) == Double.doubleToLongBits(other.weightTotal)
-	&& Double.doubleToLongBits(weightVessel) == Double.doubleToLongBits(other.weightVessel)
-	&& Double.doubleToLongBits(weigthInternals) == Double.doubleToLongBits(other.weigthInternals)
-	&& Double.doubleToLongBits(weigthVesselShell) == Double.doubleToLongBits(other.weigthVesselShell);
+        && Objects.equals(construtionMaterial, other.construtionMaterial)
+        && Double.doubleToLongBits(corrosionAllowance) == Double.doubleToLongBits(other.corrosionAllowance)
+        && Objects.equals(costEstimate, other.costEstimate) && Objects.equals(designStandard, other.designStandard)
+        && hasSetCompanySpecificDesignStandards == other.hasSetCompanySpecificDesignStandards
+        && Double.doubleToLongBits(innerDiameter) == Double.doubleToLongBits(other.innerDiameter)
+        && Double.doubleToLongBits(jointEfficiency) == Double.doubleToLongBits(other.jointEfficiency)
+        && Objects.equals(materialPipeDesignStandard, other.materialPipeDesignStandard)
+        && Objects.equals(materialPlateDesignStandard, other.materialPlateDesignStandard)
+        && Double.doubleToLongBits(maxDesignGassVolumeFlow) == Double.doubleToLongBits(other.maxDesignGassVolumeFlow)
+        && Double.doubleToLongBits(maxDesignOilVolumeFlow) == Double.doubleToLongBits(other.maxDesignOilVolumeFlow)
+        && Double.doubleToLongBits(maxDesignVolumeFlow) == Double.doubleToLongBits(other.maxDesignVolumeFlow)
+        && Double.doubleToLongBits(maxDesignWaterVolumeFlow) == Double.doubleToLongBits(other.maxDesignWaterVolumeFlow)
+        && Double.doubleToLongBits(maxOperationPressure) == Double.doubleToLongBits(other.maxOperationPressure)
+        && Double.doubleToLongBits(maxOperationTemperature) == Double.doubleToLongBits(other.maxOperationTemperature)
+        && Double.doubleToLongBits(minDesignGassVolumeFLow) == Double.doubleToLongBits(other.minDesignGassVolumeFLow)
+        && Double.doubleToLongBits(minDesignOilFLow) == Double.doubleToLongBits(other.minDesignOilFLow)
+        && Double.doubleToLongBits(minDesignVolumeFLow) == Double.doubleToLongBits(other.minDesignVolumeFLow)
+        && Double.doubleToLongBits(minDesignWaterVolumeFLow) == Double.doubleToLongBits(other.minDesignWaterVolumeFLow)
+        && Double.doubleToLongBits(minOperationPressure) == Double.doubleToLongBits(other.minOperationPressure)
+        && Double.doubleToLongBits(minOperationTemperature) == Double.doubleToLongBits(other.minOperationTemperature)
+        && Double.doubleToLongBits(moduleHeight) == Double.doubleToLongBits(other.moduleHeight)
+        && Double.doubleToLongBits(moduleLength) == Double.doubleToLongBits(other.moduleLength)
+        && Double.doubleToLongBits(moduleWidth) == Double.doubleToLongBits(other.moduleWidth)
+        && Double.doubleToLongBits(outerDiameter) == Double.doubleToLongBits(other.outerDiameter)
+        && Double.doubleToLongBits(pressureMarginFactor) == Double.doubleToLongBits(other.pressureMarginFactor)
+        && Objects.equals(processEquipment, other.processEquipment)
+        && Double.doubleToLongBits(tantanLength) == Double.doubleToLongBits(other.tantanLength)
+        && Double.doubleToLongBits(tensileStrength) == Double.doubleToLongBits(other.tensileStrength)
+        && Double.doubleToLongBits(volumeTotal) == Double.doubleToLongBits(other.volumeTotal)
+        && Double.doubleToLongBits(wallThickness) == Double.doubleToLongBits(other.wallThickness)
+        && Double.doubleToLongBits(weightElectroInstrument) == Double.doubleToLongBits(other.weightElectroInstrument)
+        && Double.doubleToLongBits(weightNozzle) == Double.doubleToLongBits(other.weightNozzle)
+        && Double.doubleToLongBits(weightPiping) == Double.doubleToLongBits(other.weightPiping)
+        && Double.doubleToLongBits(weightStructualSteel) == Double.doubleToLongBits(other.weightStructualSteel)
+        && Double.doubleToLongBits(weightTotal) == Double.doubleToLongBits(other.weightTotal)
+        && Double.doubleToLongBits(weightVessel) == Double.doubleToLongBits(other.weightVessel)
+        && Double.doubleToLongBits(weigthInternals) == Double.doubleToLongBits(other.weigthInternals)
+        && Double.doubleToLongBits(weigthVesselShell) == Double.doubleToLongBits(other.weigthVesselShell);
   }
 }

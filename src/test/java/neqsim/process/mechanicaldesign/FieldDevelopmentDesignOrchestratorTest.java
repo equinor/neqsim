@@ -193,15 +193,15 @@ class FieldDevelopmentDesignOrchestratorTest {
       boolean hasDesignStep = false;
 
       for (FieldDevelopmentDesignOrchestrator.WorkflowStep step : history) {
-	if (step.getStepName().contains("Initialize")) {
-	  hasInitStep = true;
-	}
-	if (step.getStepName().contains("Simulation")) {
-	  hasSimStep = true;
-	}
-	if (step.getStepName().contains("Mechanical")) {
-	  hasDesignStep = true;
-	}
+        if (step.getStepName().contains("Initialize")) {
+          hasInitStep = true;
+        }
+        if (step.getStepName().contains("Simulation")) {
+          hasSimStep = true;
+        }
+        if (step.getStepName().contains("Mechanical")) {
+          hasDesignStep = true;
+        }
       }
 
       assertTrue(hasInitStep);

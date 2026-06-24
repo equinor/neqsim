@@ -67,9 +67,9 @@ public class PUflash extends Flash {
     double factor = 0.8;
     do {
       if (error > errorOld) {
-	factor /= 2.0;
+        factor /= 2.0;
       } else if (error < errorOld && factor < 0.8) {
-	factor *= 1.1;
+        factor *= 1.1;
       }
       iterations++;
       oldTemp = nyTemp;
@@ -78,7 +78,7 @@ public class PUflash extends Flash {
       // f(Math.abs(1.0/nyTemp-1.0/oldTemp)>5.0) nyTemp = 1.0/(1.0/oldTemp +
       // Math.signum(1.0/nyTemp-1.0/oldTemp)*5.0);
       if (Double.isNaN(nyTemp)) {
-	nyTemp = oldTemp + 1.0;
+        nyTemp = oldTemp + 1.0;
       }
       system.setTemperature(1.0 / nyTemp);
       tpFlash.run();

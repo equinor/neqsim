@@ -75,31 +75,31 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
       // Calculate temperature step using secant method when possible
       double dT;
       if (iter < 3) {
-	// Initial steps: use simple proportional step
-	dT = diff * 5.0; // Scale factor for initial convergence
-	if (Math.abs(dT) > 10.0) {
-	  dT = Math.signum(dT) * 10.0;
-	}
+        // Initial steps: use simple proportional step
+        dT = diff * 5.0; // Scale factor for initial convergence
+        if (Math.abs(dT) > 10.0) {
+          dT = Math.signum(dT) * 10.0;
+        }
       } else {
-	// Secant method for faster convergence
-	double dDiffdT = (oldDiff - oldOldDiff) / (oldTemp - oldOldTemp);
-	if (Math.abs(dDiffdT) > 1e-10) {
-	  dT = oldDiff / dDiffdT;
-	  // Limit step size
-	  if (Math.abs(dT) > 10.0) {
-	    dT = Math.signum(dT) * 10.0;
-	  }
-	} else {
-	  dT = diff * 3.0;
-	  if (Math.abs(dT) > 5.0) {
-	    dT = Math.signum(dT) * 5.0;
-	  }
-	}
+        // Secant method for faster convergence
+        double dDiffdT = (oldDiff - oldOldDiff) / (oldTemp - oldOldTemp);
+        if (Math.abs(dDiffdT) > 1e-10) {
+          dT = oldDiff / dDiffdT;
+          // Limit step size
+          if (Math.abs(dT) > 10.0) {
+            dT = Math.signum(dT) * 10.0;
+          }
+        } else {
+          dT = diff * 3.0;
+          if (Math.abs(dT) > 5.0) {
+            dT = Math.signum(dT) * 5.0;
+          }
+        }
       }
 
       // Handle NaN
       if (Double.isNaN(dT)) {
-	dT = 1.0;
+        dT = 1.0;
       }
 
       // Update temperature
@@ -107,10 +107,10 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
 
       // Ensure temperature stays in reasonable range (150K to 350K)
       if (temp < 150.0) {
-	temp = 150.0;
+        temp = 150.0;
       }
       if (temp > 350.0) {
-	temp = 350.0;
+        temp = 350.0;
       }
 
       system.setTemperature(temp);
@@ -127,26 +127,26 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
 
       // Check for oscillation and dampen if needed
       if (iter > 3 && Math.abs(diff) > Math.abs(oldDiff) * 1.1) {
-	// Oscillating - take smaller step
-	temp = (oldTemp + temp) / 2.0;
-	system.setTemperature(temp);
-	ops.TPflash();
-	setFug();
-	system.getPhase(4).getComponent("water").fugcoef(system.getPhase(4));
-	system.getPhase(4).getComponent("water").setx(1.0);
-	waterPhaseIndex = findWaterPhaseIndex();
-	diff = 1.0 - (system.getPhase(4).getFugacity("water") / system.getPhase(waterPhaseIndex).getFugacity("water"));
+        // Oscillating - take smaller step
+        temp = (oldTemp + temp) / 2.0;
+        system.setTemperature(temp);
+        ops.TPflash();
+        setFug();
+        system.getPhase(4).getComponent("water").fugcoef(system.getPhase(4));
+        system.getPhase(4).getComponent("water").setx(1.0);
+        waterPhaseIndex = findWaterPhaseIndex();
+        diff = 1.0 - (system.getPhase(4).getFugacity("water") / system.getPhase(waterPhaseIndex).getFugacity("water"));
       }
 
       if (logger.isDebugEnabled()) {
-	logger.debug("Hydrate T iter {}: T={} K, diff={}", iter, temp, diff);
+        logger.debug("Hydrate T iter {}: T={} K, diff={}", iter, temp, diff);
       }
 
     } while (Math.abs(diff) > tolerance && iter < maxIterations);
 
     if (iter >= maxIterations) {
       logger.warn("Hydrate formation temperature did not converge after {} iterations. " + "Final diff={}",
-	  maxIterations, diff);
+          maxIterations, diff);
     }
 
     // Restore original multi-phase check setting
@@ -161,7 +161,7 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
   private int findGasPhaseIndex() {
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       if (system.getPhase(i).getType() == neqsim.thermo.phase.PhaseType.GAS) {
-	return i;
+        return i;
       }
     }
     // Fallback to phase 0 if no gas phase found
@@ -179,11 +179,11 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
 
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       if (system.getPhase(i).hasComponent("water")) {
-	double waterFraction = system.getPhase(i).getComponent("water").getx();
-	if (waterFraction > maxWaterFraction && waterFraction > 0.3) {
-	  maxWaterFraction = waterFraction;
-	  aqueousIndex = i;
-	}
+        double waterFraction = system.getPhase(i).getComponent("water").getx();
+        if (waterFraction > maxWaterFraction && waterFraction > 0.3) {
+          maxWaterFraction = waterFraction;
+          aqueousIndex = i;
+        }
       }
     }
     return aqueousIndex;
@@ -232,24 +232,24 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
 
       int waterPhaseIndex = findWaterPhaseIndex();
       if (iter % 4 == 0) {
-	// logger.info("ny temp " +(system.getTemperature() -
-	// oldDiff/((oldDiff-oldOldDiff)/(oldTemp-oldOldTemp))));
-	double change = -oldDiff / ((oldDiff - oldOldDiff) / (oldTemp - oldOldTemp));
-	if (Math.abs(change) > 5.0) {
-	  change = Math.abs(change) / change * 5.0;
-	}
-	system.setTemperature((system.getTemperature() + change));
+        // logger.info("ny temp " +(system.getTemperature() -
+        // oldDiff/((oldDiff-oldOldDiff)/(oldTemp-oldOldTemp))));
+        double change = -oldDiff / ((oldDiff - oldOldDiff) / (oldTemp - oldOldTemp));
+        if (Math.abs(change) > 5.0) {
+          change = Math.abs(change) / change * 5.0;
+        }
+        system.setTemperature((system.getTemperature() + change));
       } else {
-	double change = (1.0
-	    - system.getPhase(4).getFugacity("water") / system.getPhase(waterPhaseIndex).getFugacity("water"));
-	if (Math.abs(change) > 5.0) {
-	  change = Math.abs(change) / change * 5.0;
-	}
-	system.setTemperature(system.getTemperature() + change);
+        double change = (1.0
+            - system.getPhase(4).getFugacity("water") / system.getPhase(waterPhaseIndex).getFugacity("water"));
+        if (Math.abs(change) > 5.0) {
+          change = Math.abs(change) / change * 5.0;
+        }
+        system.setTemperature(system.getTemperature() + change);
       }
 
       double diff = 1.0
-	  - (system.getPhase(4).getFugacity("water") / system.getPhase(waterPhaseIndex).getFugacity("water"));
+          - (system.getPhase(4).getFugacity("water") / system.getPhase(waterPhaseIndex).getFugacity("water"));
       // logger.info("iter " + iter + " diff " +
       // (system.getPhase(4).getFugacity("water") /
       // system.getPhase(gasPhaseIndex).getFugacity("water")));
@@ -275,13 +275,13 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
     int gasPhaseIndex = findGasPhaseIndex();
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       for (int j = 0; j < system.getPhase(0).getNumberOfComponents(); j++) {
-	if (system.getPhase(4).getComponent(j).isHydrateFormer()
-	    || system.getPhase(4).getComponent(j).getName().equals("water")) {
-	  ((ComponentHydrate) system.getPhase(4).getComponent(i)).setRefFug(j,
-	      system.getPhase(gasPhaseIndex).getFugacity(j));
-	} else {
-	  ((ComponentHydrate) system.getPhase(4).getComponent(i)).setRefFug(j, 0);
-	}
+        if (system.getPhase(4).getComponent(j).isHydrateFormer()
+            || system.getPhase(4).getComponent(j).getName().equals("water")) {
+          ((ComponentHydrate) system.getPhase(4).getComponent(i)).setRefFug(j,
+              system.getPhase(gasPhaseIndex).getFugacity(j));
+        } else {
+          ((ComponentHydrate) system.getPhase(4).getComponent(i)).setRefFug(j, 0);
+        }
       }
     }
     system.getPhase(4).getComponent("water").setx(1.0);

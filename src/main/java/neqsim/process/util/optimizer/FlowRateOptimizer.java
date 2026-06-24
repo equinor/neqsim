@@ -188,7 +188,7 @@ public class FlowRateOptimizer implements Serializable {
   private StreamInterface inletStream;
   private StreamInterface outletStream;
   private ProcessEquipmentInterface outletEquipment; // The outlet equipment (may be same as
-						     // outletStream)
+  // outletStream)
   private SystemInterface baseFluid;
 
   /**
@@ -243,7 +243,7 @@ public class FlowRateOptimizer implements Serializable {
       this.baseFluid = inletStream.getThermoSystem().clone();
       double currentFlow = baseFluid.getFlowRate("kg/hr");
       if (currentFlow > 0) {
-	this.initialFlowGuess = currentFlow;
+        this.initialFlowGuess = currentFlow;
       }
     }
   }
@@ -264,21 +264,21 @@ public class FlowRateOptimizer implements Serializable {
     // Find streams across all ProcessSystems
     for (ProcessSystem ps : processModel.getAllProcesses()) {
       if (this.inletStream == null) {
-	ProcessEquipmentInterface inletUnit = ps.getUnit(inletStreamName);
-	if (inletUnit instanceof StreamInterface) {
-	  this.inletStream = (StreamInterface) inletUnit;
-	}
+        ProcessEquipmentInterface inletUnit = ps.getUnit(inletStreamName);
+        if (inletUnit instanceof StreamInterface) {
+          this.inletStream = (StreamInterface) inletUnit;
+        }
       }
       if (this.outletStream == null) {
-	ProcessEquipmentInterface outletUnit = ps.getUnit(outletStreamName);
-	if (outletUnit != null) {
-	  this.outletEquipment = outletUnit; // Store the outlet equipment
-	}
-	if (outletUnit instanceof StreamInterface) {
-	  this.outletStream = (StreamInterface) outletUnit;
-	} else if (outletUnit instanceof TwoPortInterface) {
-	  this.outletStream = ((TwoPortInterface) outletUnit).getOutletStream();
-	}
+        ProcessEquipmentInterface outletUnit = ps.getUnit(outletStreamName);
+        if (outletUnit != null) {
+          this.outletEquipment = outletUnit; // Store the outlet equipment
+        }
+        if (outletUnit instanceof StreamInterface) {
+          this.outletStream = (StreamInterface) outletUnit;
+        } else if (outletUnit instanceof TwoPortInterface) {
+          this.outletStream = ((TwoPortInterface) outletUnit).getOutletStream();
+        }
       }
     }
 
@@ -286,7 +286,7 @@ public class FlowRateOptimizer implements Serializable {
       this.baseFluid = inletStream.getThermoSystem().clone();
       double currentFlow = baseFluid.getFlowRate("kg/hr");
       if (currentFlow > 0) {
-	this.initialFlowGuess = currentFlow;
+        this.initialFlowGuess = currentFlow;
       }
     }
   }
@@ -332,18 +332,18 @@ public class FlowRateOptimizer implements Serializable {
     // Check flow rate bounds
     if (minFlowRate >= maxFlowRate) {
       issues.add("Invalid flow rate bounds: minFlowRate (" + minFlowRate + ") must be less than maxFlowRate ("
-	  + maxFlowRate + ").");
+          + maxFlowRate + ").");
     }
 
     // Check compressor charts if not auto-configuring
     if (!autoConfigureProcessCompressors) {
       List<Compressor> compressors = getProcessCompressors();
       for (Compressor comp : compressors) {
-	CompressorChartInterface chart = comp.getCompressorChart();
-	if (chart == null || !chart.isUseCompressorChart()) {
-	  issues.add("Compressor '" + comp.getName() + "' has no chart configured. "
-	      + "Either configure a chart or enable autoConfigureProcessCompressors.");
-	}
+        CompressorChartInterface chart = comp.getCompressorChart();
+        if (chart == null || !chart.isUseCompressorChart()) {
+          issues.add("Compressor '" + comp.getName() + "' has no chart configured. "
+              + "Either configure a chart or enable autoConfigureProcessCompressors.");
+        }
       }
     }
 
@@ -360,7 +360,7 @@ public class FlowRateOptimizer implements Serializable {
     if (!issues.isEmpty()) {
       StringBuilder msg = new StringBuilder("FlowRateOptimizer configuration errors:\n");
       for (int i = 0; i < issues.size(); i++) {
-	msg.append("  ").append(i + 1).append(". ").append(issues.get(i)).append("\n");
+        msg.append("  ").append(i + 1).append(". ").append(issues.get(i)).append("\n");
       }
       throw new IllegalStateException(msg.toString());
     }
@@ -409,72 +409,72 @@ public class FlowRateOptimizer implements Serializable {
 
       // Handle NaN at boundaries
       if (Double.isNaN(pOutLow)) {
-	// Try increasing the low bound to find valid region
-	int searchIter = 0;
-	while (Double.isNaN(pOutLow) && searchIter < 20) {
-	  flowLow *= 2.0;
-	  if (flowLow > flowHigh) {
-	    result.setStatus(Status.ERROR);
-	    result.setInfeasibilityReason("Cannot find valid flow region - calculation failed at all flow rates");
-	    result.setComputationTimeMs(System.currentTimeMillis() - startTime);
-	    return result;
-	  }
-	  pOutLow = evaluateOutletPressure(flowLow, inletPressure, pressureUnit);
-	  searchIter++;
-	}
+        // Try increasing the low bound to find valid region
+        int searchIter = 0;
+        while (Double.isNaN(pOutLow) && searchIter < 20) {
+          flowLow *= 2.0;
+          if (flowLow > flowHigh) {
+            result.setStatus(Status.ERROR);
+            result.setInfeasibilityReason("Cannot find valid flow region - calculation failed at all flow rates");
+            result.setComputationTimeMs(System.currentTimeMillis() - startTime);
+            return result;
+          }
+          pOutLow = evaluateOutletPressure(flowLow, inletPressure, pressureUnit);
+          searchIter++;
+        }
       }
 
       if (Double.isNaN(pOutHigh)) {
-	// Try decreasing the high bound to find valid region
-	int searchIter = 0;
-	while (Double.isNaN(pOutHigh) && searchIter < 20) {
-	  flowHigh /= 2.0;
-	  if (flowHigh < flowLow) {
-	    result.setStatus(Status.ERROR);
-	    result.setInfeasibilityReason("Cannot find valid flow region - calculation failed at high flow rates");
-	    result.setComputationTimeMs(System.currentTimeMillis() - startTime);
-	    return result;
-	  }
-	  pOutHigh = evaluateOutletPressure(flowHigh, inletPressure, pressureUnit);
-	  searchIter++;
-	}
+        // Try decreasing the high bound to find valid region
+        int searchIter = 0;
+        while (Double.isNaN(pOutHigh) && searchIter < 20) {
+          flowHigh /= 2.0;
+          if (flowHigh < flowLow) {
+            result.setStatus(Status.ERROR);
+            result.setInfeasibilityReason("Cannot find valid flow region - calculation failed at high flow rates");
+            result.setComputationTimeMs(System.currentTimeMillis() - startTime);
+            return result;
+          }
+          pOutHigh = evaluateOutletPressure(flowHigh, inletPressure, pressureUnit);
+          searchIter++;
+        }
       }
 
       // Check bounds
       // If even at minimum flow, outlet pressure is below target, target is infeasible
       if (!Double.isNaN(pOutLow) && pOutLow < outletPressure) {
-	// Try even lower flow
-	int boundIter = 0;
-	while (pOutLow < outletPressure && boundIter < 20) {
-	  flowLow /= 10.0;
-	  if (flowLow < 1e-10) {
-	    result.setStatus(Status.INFEASIBLE_PRESSURE);
-	    result.setInfeasibilityReason("Cannot achieve target outlet pressure even at zero flow. "
-		+ "Minimum outlet pressure at near-zero flow: " + String.format("%.4f", pOutLow) + " " + pressureUnit);
-	    result.setComputationTimeMs(System.currentTimeMillis() - startTime);
-	    return result;
-	  }
-	  pOutLow = evaluateOutletPressure(flowLow, inletPressure, pressureUnit);
-	  if (Double.isNaN(pOutLow)) {
-	    break; // Can't go lower
-	  }
-	  boundIter++;
-	}
+        // Try even lower flow
+        int boundIter = 0;
+        while (pOutLow < outletPressure && boundIter < 20) {
+          flowLow /= 10.0;
+          if (flowLow < 1e-10) {
+            result.setStatus(Status.INFEASIBLE_PRESSURE);
+            result.setInfeasibilityReason("Cannot achieve target outlet pressure even at zero flow. "
+                + "Minimum outlet pressure at near-zero flow: " + String.format("%.4f", pOutLow) + " " + pressureUnit);
+            result.setComputationTimeMs(System.currentTimeMillis() - startTime);
+            return result;
+          }
+          pOutLow = evaluateOutletPressure(flowLow, inletPressure, pressureUnit);
+          if (Double.isNaN(pOutLow)) {
+            break; // Can't go lower
+          }
+          boundIter++;
+        }
       }
 
       // If at maximum flow, outlet pressure is still above target, need more flow
       int boundIter = 0;
       while (!Double.isNaN(pOutHigh) && pOutHigh > outletPressure && boundIter < 20) {
-	flowHigh *= 10.0;
-	if (flowHigh > maxFlowRate) {
-	  result.setStatus(Status.INFEASIBLE_PRESSURE);
-	  result.setInfeasibilityReason("Cannot achieve target outlet pressure within flow limits. "
-	      + "Outlet pressure at max flow: " + String.format("%.4f", pOutHigh) + " " + pressureUnit);
-	  result.setComputationTimeMs(System.currentTimeMillis() - startTime);
-	  return result;
-	}
-	pOutHigh = evaluateOutletPressure(flowHigh, inletPressure, pressureUnit);
-	boundIter++;
+        flowHigh *= 10.0;
+        if (flowHigh > maxFlowRate) {
+          result.setStatus(Status.INFEASIBLE_PRESSURE);
+          result.setInfeasibilityReason("Cannot achieve target outlet pressure within flow limits. "
+              + "Outlet pressure at max flow: " + String.format("%.4f", pOutHigh) + " " + pressureUnit);
+          result.setComputationTimeMs(System.currentTimeMillis() - startTime);
+          return result;
+        }
+        pOutHigh = evaluateOutletPressure(flowHigh, inletPressure, pressureUnit);
+        boundIter++;
       }
 
       // Bisection iteration
@@ -485,66 +485,66 @@ public class FlowRateOptimizer implements Serializable {
       int nanCount = 0;
 
       for (iter = 0; iter < maxIterations; iter++) {
-	flowMid = (flowLow + flowHigh) / 2.0;
-	pOutMid = evaluateOutletPressure(flowMid, inletPressure, pressureUnit);
+        flowMid = (flowLow + flowHigh) / 2.0;
+        pOutMid = evaluateOutletPressure(flowMid, inletPressure, pressureUnit);
 
-	// Handle NaN in bisection - move toward the valid region
-	if (Double.isNaN(pOutMid)) {
-	  nanCount++;
-	  if (nanCount > 10) {
-	    result.setStatus(Status.ERROR);
-	    result.setInfeasibilityReason("Too many invalid evaluations during optimization");
-	    result.setComputationTimeMs(System.currentTimeMillis() - startTime);
-	    return result;
-	  }
-	  // Assume NaN means flow is too extreme, reduce range toward valid region
-	  if (!Double.isNaN(pOutLow)) {
-	    flowHigh = flowMid;
-	  } else if (!Double.isNaN(pOutHigh)) {
-	    flowLow = flowMid;
-	  }
-	  continue;
-	}
+        // Handle NaN in bisection - move toward the valid region
+        if (Double.isNaN(pOutMid)) {
+          nanCount++;
+          if (nanCount > 10) {
+            result.setStatus(Status.ERROR);
+            result.setInfeasibilityReason("Too many invalid evaluations during optimization");
+            result.setComputationTimeMs(System.currentTimeMillis() - startTime);
+            return result;
+          }
+          // Assume NaN means flow is too extreme, reduce range toward valid region
+          if (!Double.isNaN(pOutLow)) {
+            flowHigh = flowMid;
+          } else if (!Double.isNaN(pOutHigh)) {
+            flowLow = flowMid;
+          }
+          continue;
+        }
 
-	// Check constraints at this flow rate
-	violations = checkConstraints();
+        // Check constraints at this flow rate
+        violations = checkConstraints();
 
-	// Check for hard constraint violations
-	boolean hasHardViolation = false;
-	for (ConstraintViolation v : violations) {
-	  if (v.isHardViolation()) {
-	    hasHardViolation = true;
-	    break;
-	  }
-	}
+        // Check for hard constraint violations
+        boolean hasHardViolation = false;
+        for (ConstraintViolation v : violations) {
+          if (v.isHardViolation()) {
+            hasHardViolation = true;
+            break;
+          }
+        }
 
-	double relError = Math.abs(pOutMid - outletPressure) / outletPressure;
-	result.setConvergenceError(relError);
+        double relError = Math.abs(pOutMid - outletPressure) / outletPressure;
+        result.setConvergenceError(relError);
 
-	if (relError < tolerance) {
-	  // Converged - check if constraints allow this solution
-	  if (hasHardViolation) {
-	    // Try to find a feasible region
-	    // If high flow violates, search in lower range
-	    // This is a simplified approach - could be more sophisticated
-	    logger.debug("Converged but hard constraint violated at flow {}", flowMid);
-	  }
-	  break;
-	}
+        if (relError < tolerance) {
+          // Converged - check if constraints allow this solution
+          if (hasHardViolation) {
+            // Try to find a feasible region
+            // If high flow violates, search in lower range
+            // This is a simplified approach - could be more sophisticated
+            logger.debug("Converged but hard constraint violated at flow {}", flowMid);
+          }
+          break;
+        }
 
-	// Bisection logic: higher flow = more pressure drop = lower outlet pressure
-	if (pOutMid > outletPressure) {
-	  // Outlet pressure too high, need more pressure drop, increase flow
-	  flowLow = flowMid;
-	} else {
-	  // Outlet pressure too low, need less pressure drop, decrease flow
-	  flowHigh = flowMid;
-	}
+        // Bisection logic: higher flow = more pressure drop = lower outlet pressure
+        if (pOutMid > outletPressure) {
+          // Outlet pressure too high, need more pressure drop, increase flow
+          flowLow = flowMid;
+        } else {
+          // Outlet pressure too low, need less pressure drop, decrease flow
+          flowHigh = flowMid;
+        }
 
-	// Check for convergence by flow rate change
-	if (Math.abs(flowHigh - flowLow) / flowMid < tolerance) {
-	  break;
-	}
+        // Check for convergence by flow rate change
+        if (Math.abs(flowHigh - flowLow) / flowMid < tolerance) {
+          break;
+        }
       }
 
       result.setIterationCount(iter + 1);
@@ -552,20 +552,20 @@ public class FlowRateOptimizer implements Serializable {
       // Final constraint check
       violations = checkConstraints();
       for (ConstraintViolation v : violations) {
-	result.addConstraintViolation(v);
+        result.addConstraintViolation(v);
       }
 
       if (result.hasHardViolations()) {
-	result.setStatus(Status.INFEASIBLE_CONSTRAINT);
-	result.setInfeasibilityReason("Hard constraint violated: " + violations.get(0));
+        result.setStatus(Status.INFEASIBLE_CONSTRAINT);
+        result.setInfeasibilityReason("Hard constraint violated: " + violations.get(0));
       } else if (iter >= maxIterations - 1 && Math.abs(pOutMid - outletPressure) / outletPressure > tolerance) {
-	result.setStatus(Status.NOT_CONVERGED);
-	result.setInfeasibilityReason(String.format("Did not converge after %d iterations", maxIterations));
+        result.setStatus(Status.NOT_CONVERGED);
+        result.setInfeasibilityReason(String.format("Did not converge after %d iterations", maxIterations));
       } else {
-	result.setStatus(Status.OPTIMAL);
-	result.setFlowRate(flowMid);
-	result.setInletPressure(inletPressure);
-	result.setOutletPressure(pOutMid);
+        result.setStatus(Status.OPTIMAL);
+        result.setFlowRate(flowMid);
+        result.setInletPressure(inletPressure);
+        result.setOutletPressure(pOutMid);
       }
     } catch (Exception e) {
       logger.error("Error during flow rate optimization", e);
@@ -619,9 +619,9 @@ public class FlowRateOptimizer implements Serializable {
       // Expand high bound if needed
       int boundIter = 0;
       while (pOutAtHigh < outletPressure && boundIter < 20) {
-	pInHigh *= 2.0;
-	pOutAtHigh = evaluateOutletPressureAtFlow(flowRate, flowRateUnit, pInHigh, pressureUnit);
-	boundIter++;
+        pInHigh *= 2.0;
+        pOutAtHigh = evaluateOutletPressureAtFlow(flowRate, flowRateUnit, pInHigh, pressureUnit);
+        boundIter++;
       }
 
       // Bisection
@@ -630,22 +630,22 @@ public class FlowRateOptimizer implements Serializable {
       int iter = 0;
 
       for (iter = 0; iter < maxIterations; iter++) {
-	pInMid = (pInLow + pInHigh) / 2.0;
-	pOutMid = evaluateOutletPressureAtFlow(flowRate, flowRateUnit, pInMid, pressureUnit);
+        pInMid = (pInLow + pInHigh) / 2.0;
+        pOutMid = evaluateOutletPressureAtFlow(flowRate, flowRateUnit, pInMid, pressureUnit);
 
-	double relError = Math.abs(pOutMid - outletPressure) / outletPressure;
-	result.setConvergenceError(relError);
+        double relError = Math.abs(pOutMid - outletPressure) / outletPressure;
+        result.setConvergenceError(relError);
 
-	if (relError < tolerance) {
-	  break;
-	}
+        if (relError < tolerance) {
+          break;
+        }
 
-	// Higher inlet pressure = higher outlet pressure
-	if (pOutMid < outletPressure) {
-	  pInLow = pInMid;
-	} else {
-	  pInHigh = pInMid;
-	}
+        // Higher inlet pressure = higher outlet pressure
+        if (pOutMid < outletPressure) {
+          pInLow = pInMid;
+        } else {
+          pInHigh = pInMid;
+        }
       }
 
       result.setIterationCount(iter + 1);
@@ -653,16 +653,16 @@ public class FlowRateOptimizer implements Serializable {
       // Check constraints
       List<ConstraintViolation> violations = checkConstraints();
       for (ConstraintViolation v : violations) {
-	result.addConstraintViolation(v);
+        result.addConstraintViolation(v);
       }
 
       if (result.hasHardViolations()) {
-	result.setStatus(Status.INFEASIBLE_CONSTRAINT);
-	result.setInfeasibilityReason("Hard constraint violated: " + violations.get(0));
+        result.setStatus(Status.INFEASIBLE_CONSTRAINT);
+        result.setInfeasibilityReason("Hard constraint violated: " + violations.get(0));
       } else {
-	result.setStatus(Status.OPTIMAL);
-	result.setInletPressure(pInMid);
-	result.setOutletPressure(pOutMid);
+        result.setStatus(Status.OPTIMAL);
+        result.setInletPressure(pInMid);
+        result.setOutletPressure(pOutMid);
       }
     } catch (Exception e) {
       logger.error("Error during inlet pressure calculation", e);
@@ -786,7 +786,7 @@ public class FlowRateOptimizer implements Serializable {
       comp.setMaximumSpeed(maxSpeed);
 
       logger.info("Chart generated for {} with {} speed lines, max speed set to {} RPM", comp.getName(),
-	  numberOfChartSpeeds, maxSpeed);
+          numberOfChartSpeeds, maxSpeed);
     }
   }
 
@@ -801,7 +801,7 @@ public class FlowRateOptimizer implements Serializable {
     List<ProcessEquipmentInterface> equipment = getEquipmentList();
     for (ProcessEquipmentInterface equip : equipment) {
       if (equip instanceof Compressor) {
-	compressors.add((Compressor) equip);
+        compressors.add((Compressor) equip);
       }
     }
 
@@ -819,7 +819,7 @@ public class FlowRateOptimizer implements Serializable {
     List<ProcessEquipmentInterface> equipment = getEquipmentList();
     for (ProcessEquipmentInterface equip : equipment) {
       if (equip instanceof Separator) {
-	separators.add((Separator) equip);
+        separators.add((Separator) equip);
       }
     }
 
@@ -839,7 +839,7 @@ public class FlowRateOptimizer implements Serializable {
     for (Compressor comp : compressors) {
       double power = comp.getPower(powerUnit);
       if (!Double.isNaN(power) && power > 0) {
-	totalPower += power;
+        totalPower += power;
       }
     }
 
@@ -860,10 +860,10 @@ public class FlowRateOptimizer implements Serializable {
       double duty = equip.getCapacityDuty();
 
       if (capacity > 0 && duty > 0) {
-	double util = duty / capacity;
-	if (!Double.isNaN(util) && !Double.isInfinite(util) && util > maxUtil) {
-	  maxUtil = util;
-	}
+        double util = duty / capacity;
+        if (!Double.isNaN(util) && !Double.isInfinite(util) && util > maxUtil) {
+          maxUtil = util;
+        }
       }
     }
 
@@ -888,18 +888,18 @@ public class FlowRateOptimizer implements Serializable {
       double duty = equip.getCapacityDuty();
 
       if (capacity > 0 && duty > 0) {
-	data.setUtilization(duty / capacity);
-	data.setCapacity(capacity);
-	data.setDuty(duty);
+        data.setUtilization(duty / capacity);
+        data.setCapacity(capacity);
+        data.setDuty(duty);
       }
 
       // Add compressor-specific data
       if (equip instanceof Compressor) {
-	Compressor comp = (Compressor) equip;
-	data.setPower(comp.getPower("kW"));
-	data.setSpeed(comp.getSpeed());
-	data.setSurgeMargin(comp.getDistanceToSurge());
-	data.setStonewallMargin(comp.getDistanceToStoneWall());
+        Compressor comp = (Compressor) equip;
+        data.setPower(comp.getPower("kW"));
+        data.setSpeed(comp.getSpeed());
+        data.setSurgeMargin(comp.getDistanceToSurge());
+        data.setStonewallMargin(comp.getDistanceToStoneWall());
       }
 
       report.put(equip.getName(), data);
@@ -937,10 +937,10 @@ public class FlowRateOptimizer implements Serializable {
     if (autoConfigureProcessCompressors) {
       List<Compressor> compressors = getProcessCompressors();
       for (Compressor comp : compressors) {
-	CompressorChartInterface chart = comp.getCompressorChart();
-	if (chart == null || !chart.isUseCompressorChart()) {
-	  configureCompressorChart(comp);
-	}
+        CompressorChartInterface chart = comp.getCompressorChart();
+        if (chart == null || !chart.isUseCompressorChart()) {
+          configureCompressorChart(comp);
+        }
       }
     }
 
@@ -972,12 +972,12 @@ public class FlowRateOptimizer implements Serializable {
 
       // Check total power limit
       if (maxTotalPowerLimit < Double.MAX_VALUE && point.getTotalPower() > maxTotalPowerLimit) {
-	feasible = false;
+        feasible = false;
       }
 
       // Check max utilization limit
       if (point.getMaxUtilization() > maxEquipmentUtilization) {
-	feasible = false;
+        feasible = false;
       }
 
       point.setFeasible(feasible);
@@ -1053,7 +1053,7 @@ public class FlowRateOptimizer implements Serializable {
   private boolean hasHardViolations(List<ConstraintViolation> violations) {
     for (ConstraintViolation v : violations) {
       if (v.isHardViolation()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -1119,11 +1119,11 @@ public class FlowRateOptimizer implements Serializable {
     // Evaluate at each flow rate
     for (int i = 0; i < flowRates.length; i++) {
       try {
-	ProcessOperatingPoint point = findProcessOperatingPoint(flowRates[i], flowRateUnit, inletPressure,
-	    pressureUnit);
-	table.setOperatingPoint(i, point);
+        ProcessOperatingPoint point = findProcessOperatingPoint(flowRates[i], flowRateUnit, inletPressure,
+            pressureUnit);
+        table.setOperatingPoint(i, point);
       } catch (Exception e) {
-	logger.debug("Error at flow={}: {}", flowRates[i], e.getMessage());
+        logger.debug("Error at flow={}: {}", flowRates[i], e.getMessage());
       }
     }
 
@@ -1173,7 +1173,7 @@ public class FlowRateOptimizer implements Serializable {
     }
 
     ProcessLiftCurveTable table = new ProcessLiftCurveTable("Process_LiftCurve", flowRates, inletPressures,
-	compressorNames);
+        compressorNames);
     table.setFlowRateUnit(flowRateUnit);
     table.setPressureUnit(pressureUnit);
 
@@ -1185,13 +1185,13 @@ public class FlowRateOptimizer implements Serializable {
     // Evaluate at each flow rate and inlet pressure
     for (int i = 0; i < flowRates.length; i++) {
       for (int j = 0; j < inletPressures.length; j++) {
-	try {
-	  ProcessOperatingPoint point = findProcessOperatingPoint(flowRates[i], flowRateUnit, inletPressures[j],
-	      pressureUnit);
-	  table.setOperatingPoint(i, j, point);
-	} catch (Exception e) {
-	  logger.debug("Error at flow={}, Pin={}: {}", flowRates[i], inletPressures[j], e.getMessage());
-	}
+        try {
+          ProcessOperatingPoint point = findProcessOperatingPoint(flowRates[i], flowRateUnit, inletPressures[j],
+              pressureUnit);
+          table.setOperatingPoint(i, j, point);
+        } catch (Exception e) {
+          logger.debug("Error at flow={}, Pin={}: {}", flowRates[i], inletPressures[j], e.getMessage());
+        }
       }
     }
 
@@ -1230,7 +1230,7 @@ public class FlowRateOptimizer implements Serializable {
       String pressureUnit, double minFlow, double maxFlow, String flowRateUnit) {
     if (mode != Mode.PROCESS_SYSTEM && mode != Mode.PROCESS_MODEL) {
       throw new IllegalStateException(
-	  "findMinimumTotalPowerOperatingPoint requires PROCESS_SYSTEM or PROCESS_MODEL mode");
+          "findMinimumTotalPowerOperatingPoint requires PROCESS_SYSTEM or PROCESS_MODEL mode");
     }
 
     // Auto-configure compressor charts
@@ -1258,31 +1258,31 @@ public class FlowRateOptimizer implements Serializable {
       // Check if points achieve target outlet pressure (within tolerance)
       double pressureTol = targetOutletPressure * tolerance;
       boolean cAchievesTarget = pointC != null && pointC.isFeasible()
-	  && Math.abs(pointC.getOutletPressure() - targetOutletPressure) < pressureTol;
+          && Math.abs(pointC.getOutletPressure() - targetOutletPressure) < pressureTol;
       boolean dAchievesTarget = pointD != null && pointD.isFeasible()
-	  && Math.abs(pointD.getOutletPressure() - targetOutletPressure) < pressureTol;
+          && Math.abs(pointD.getOutletPressure() - targetOutletPressure) < pressureTol;
 
       double powerC = cAchievesTarget ? pointC.getTotalPower() : Double.MAX_VALUE;
       double powerD = dAchievesTarget ? pointD.getTotalPower() : Double.MAX_VALUE;
 
       // Track best feasible point
       if (pointC != null && pointC.isFeasible() && powerC < minPower) {
-	minPower = powerC;
-	bestPoint = pointC;
+        minPower = powerC;
+        bestPoint = pointC;
       }
       if (pointD != null && pointD.isFeasible() && powerD < minPower) {
-	minPower = powerD;
-	bestPoint = pointD;
+        minPower = powerD;
+        bestPoint = pointD;
       }
 
       if (powerC < powerD) {
-	b = d;
-	d = c;
-	c = b - (b - a) / phi;
+        b = d;
+        d = c;
+        c = b - (b - a) / phi;
       } else {
-	a = c;
-	c = d;
-	d = a + (b - a) / phi;
+        a = c;
+        c = d;
+        d = a + (b - a) / phi;
       }
     }
 
@@ -1333,12 +1333,12 @@ public class FlowRateOptimizer implements Serializable {
       ProcessOperatingPoint point = findProcessOperatingPoint(midRate, "kg/hr", inletPressure, pressureUnit);
 
       if (point != null && point.isFeasible() && point.getMaxUtilization() <= targetUtilization) {
-	// Feasible - try higher
-	lowRate = midRate;
-	bestPoint = point;
+        // Feasible - try higher
+        lowRate = midRate;
+        bestPoint = point;
       } else {
-	// Infeasible - try lower
-	highRate = midRate;
+        // Infeasible - try lower
+        highRate = midRate;
       }
 
       iter++;
@@ -1393,7 +1393,7 @@ public class FlowRateOptimizer implements Serializable {
       String pressureUnit, double maxUtilization) {
     if (mode != Mode.PROCESS_SYSTEM && mode != Mode.PROCESS_MODEL) {
       throw new IllegalStateException(
-	  "findMaxFlowRateAtPressureBoundaries requires PROCESS_SYSTEM or PROCESS_MODEL mode");
+          "findMaxFlowRateAtPressureBoundaries requires PROCESS_SYSTEM or PROCESS_MODEL mode");
     }
 
     // Auto-configure compressor charts
@@ -1422,50 +1422,50 @@ public class FlowRateOptimizer implements Serializable {
     try {
       int iter = 0;
       while ((highRate - lowRate) > searchTolerance && iter < maxIterations) {
-	double midRate = (lowRate + highRate) / 2.0;
+        double midRate = (lowRate + highRate) / 2.0;
 
-	ProcessOperatingPoint point = findProcessOperatingPoint(midRate, "kg/hr", inletPressure, pressureUnit);
+        ProcessOperatingPoint point = findProcessOperatingPoint(midRate, "kg/hr", inletPressure, pressureUnit);
 
-	if (point == null) {
-	  // Simulation failed - reduce flow
-	  highRate = midRate;
-	  iter++;
-	  continue;
-	}
+        if (point == null) {
+          // Simulation failed - reduce flow
+          highRate = midRate;
+          iter++;
+          continue;
+        }
 
-	double outletPressure = point.getOutletPressure();
-	double util = point.getMaxUtilization();
-	boolean utilizationOk = util <= maxUtilization;
+        double outletPressure = point.getOutletPressure();
+        double util = point.getMaxUtilization();
+        boolean utilizationOk = util <= maxUtilization;
 
-	// Check if outlet pressure is within tolerance of target
-	boolean pressureOk = Math.abs(outletPressure - targetOutletPressure) <= pressureTol;
+        // Check if outlet pressure is within tolerance of target
+        boolean pressureOk = Math.abs(outletPressure - targetOutletPressure) <= pressureTol;
 
-	// Check compressor feasibility (surge, stonewall, power limits)
-	boolean compressorsFeasible = checkCompressorsFeasible(point);
+        // Check compressor feasibility (surge, stonewall, power limits)
+        boolean compressorsFeasible = checkCompressorsFeasible(point);
 
-	boolean feasible = point.isFeasible() && utilizationOk && pressureOk && compressorsFeasible;
+        boolean feasible = point.isFeasible() && utilizationOk && pressureOk && compressorsFeasible;
 
-	logger.debug("Iter {}: flow={:.0f}, Pout={:.2f} (target={:.2f}), util={:.1f}%, feasible={}", iter, midRate,
-	    outletPressure, targetOutletPressure, util * 100, feasible);
+        logger.debug("Iter {}: flow={:.0f}, Pout={:.2f} (target={:.2f}), util={:.1f}%, feasible={}", iter, midRate,
+            outletPressure, targetOutletPressure, util * 100, feasible);
 
-	if (feasible) {
-	  // This flow rate works - try higher
-	  if (midRate > bestFlow) {
-	    bestFlow = midRate;
-	    bestPoint = point;
-	  }
-	  lowRate = midRate;
-	} else {
-	  // Not feasible - try lower
-	  highRate = midRate;
-	}
+        if (feasible) {
+          // This flow rate works - try higher
+          if (midRate > bestFlow) {
+            bestFlow = midRate;
+            bestPoint = point;
+          }
+          lowRate = midRate;
+        } else {
+          // Not feasible - try lower
+          highRate = midRate;
+        }
 
-	iter++;
+        iter++;
       }
     } finally {
       // Restore original outlet pressure setting
       if (lastCompressor != null) {
-	lastCompressor.setOutletPressure(originalOutletPressure);
+        lastCompressor.setOutletPressure(originalOutletPressure);
       }
     }
 
@@ -1492,23 +1492,23 @@ public class FlowRateOptimizer implements Serializable {
     for (CompressorOperatingPoint cp : compPoints.values()) {
       // Check surge
       if (cp.isInSurge()) {
-	return false;
+        return false;
       }
       // Check stonewall
       if (cp.isAtStoneWall()) {
-	return false;
+        return false;
       }
       // Check surge margin
       if (cp.getSurgeMargin() < minSurgeMargin) {
-	return false;
+        return false;
       }
       // Check power limit
       if (maxPowerLimit < Double.MAX_VALUE && cp.getPower() > maxPowerLimit) {
-	return false;
+        return false;
       }
       // Check speed limits
       if (cp.getSpeed() > maxSpeedLimit || cp.getSpeed() < minSpeedLimit) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -1562,7 +1562,7 @@ public class FlowRateOptimizer implements Serializable {
     }
 
     ProcessCapacityTable table = new ProcessCapacityTable("Process_Capacity", inletPressures, outletPressures,
-	compressorNames);
+        compressorNames);
     table.setPressureUnit(pressureUnit);
     table.setMaxUtilization(maxUtilization);
 
@@ -1596,17 +1596,17 @@ public class FlowRateOptimizer implements Serializable {
     int evalCount = 0;
     for (int i = 0; i < inletPressures.length; i++) {
       for (int j = 0; j < outletPressures.length; j++) {
-	evalCount++;
-	try {
-	  reportProgress(evalCount, totalEvals,
-	      String.format("Evaluating Pin=%.1f, Pout=%.1f %s", inletPressures[i], outletPressures[j], pressureUnit));
+        evalCount++;
+        try {
+          reportProgress(evalCount, totalEvals,
+              String.format("Evaluating Pin=%.1f, Pout=%.1f %s", inletPressures[i], outletPressures[j], pressureUnit));
 
-	  ProcessOperatingPoint point = findMaxFlowRateAtPressureBoundaries(inletPressures[i], outletPressures[j],
-	      pressureUnit, maxUtilization);
-	  table.setOperatingPoint(i, j, point);
-	} catch (Exception e) {
-	  logger.debug("Error at Pin={}, Pout={}: {}", inletPressures[i], outletPressures[j], e.getMessage());
-	}
+          ProcessOperatingPoint point = findMaxFlowRateAtPressureBoundaries(inletPressures[i], outletPressures[j],
+              pressureUnit, maxUtilization);
+          table.setOperatingPoint(i, j, point);
+        } catch (Exception e) {
+          logger.debug("Error at Pin={}, Pout={}: {}", inletPressures[i], outletPressures[j], e.getMessage());
+        }
       }
     }
   }
@@ -1641,67 +1641,67 @@ public class FlowRateOptimizer implements Serializable {
     try {
       // Submit evaluation tasks
       for (int i = 0; i < inletPressures.length; i++) {
-	for (int j = 0; j < outletPressures.length; j++) {
-	  final int rowIdx = i;
-	  final int colIdx = j;
-	  final double inletP = inletPressures[i];
-	  final double outletP = outletPressures[j];
+        for (int j = 0; j < outletPressures.length; j++) {
+          final int rowIdx = i;
+          final int colIdx = j;
+          final double inletP = inletPressures[i];
+          final double outletP = outletPressures[j];
 
-	  Callable<Void> task = new Callable<Void>() {
-	    @Override
-	    public Void call() {
-	      try {
-		// Create a cloned optimizer for thread safety
-		FlowRateOptimizer threadOptimizer = createThreadSafeClone();
+          Callable<Void> task = new Callable<Void>() {
+            @Override
+            public Void call() {
+              try {
+                // Create a cloned optimizer for thread safety
+                FlowRateOptimizer threadOptimizer = createThreadSafeClone();
 
-		ProcessOperatingPoint point = threadOptimizer.findMaxFlowRateAtPressureBoundaries(inletP, outletP,
-		    pressureUnit, maxUtilization);
+                ProcessOperatingPoint point = threadOptimizer.findMaxFlowRateAtPressureBoundaries(inletP, outletP,
+                    pressureUnit, maxUtilization);
 
-		if (point != null) {
-		  results.put(rowIdx + "," + colIdx, point);
-		}
+                if (point != null) {
+                  results.put(rowIdx + "," + colIdx, point);
+                }
 
-		int currentCount = evalCount.incrementAndGet();
-		reportProgress(currentCount, totalEvals,
-		    String.format("Parallel: Pin=%.1f, Pout=%.1f %s", inletP, outletP, pressureUnit));
-	      } catch (Exception e) {
-		logger.debug("Parallel error at Pin={}, Pout={}: {}", inletP, outletP, e.getMessage());
-		evalCount.incrementAndGet();
-	      }
-	      return null;
-	    }
-	  };
+                int currentCount = evalCount.incrementAndGet();
+                reportProgress(currentCount, totalEvals,
+                    String.format("Parallel: Pin=%.1f, Pout=%.1f %s", inletP, outletP, pressureUnit));
+              } catch (Exception e) {
+                logger.debug("Parallel error at Pin={}, Pout={}: {}", inletP, outletP, e.getMessage());
+                evalCount.incrementAndGet();
+              }
+              return null;
+            }
+          };
 
-	  futures.add(executor.submit(task));
-	}
+          futures.add(executor.submit(task));
+        }
       }
 
       // Wait for all tasks to complete
       for (Future<?> future : futures) {
-	try {
-	  future.get();
-	} catch (Exception e) {
-	  logger.debug("Error waiting for parallel task: {}", e.getMessage());
-	}
+        try {
+          future.get();
+        } catch (Exception e) {
+          logger.debug("Error waiting for parallel task: {}", e.getMessage());
+        }
       }
     } finally {
       // Shutdown executor
       executor.shutdown();
       try {
-	if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
-	  executor.shutdownNow();
-	}
+        if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
+          executor.shutdownNow();
+        }
       } catch (InterruptedException e) {
-	executor.shutdownNow();
-	Thread.currentThread().interrupt();
+        executor.shutdownNow();
+        Thread.currentThread().interrupt();
       }
     }
 
     // Populate table from results
     for (int i = 0; i < inletPressures.length; i++) {
       for (int j = 0; j < outletPressures.length; j++) {
-	ProcessOperatingPoint point = results.get(i + "," + j);
-	table.setOperatingPoint(i, j, point);
+        ProcessOperatingPoint point = results.get(i + "," + j);
+        table.setOperatingPoint(i, j, point);
       }
     }
   }
@@ -1784,8 +1784,8 @@ public class FlowRateOptimizer implements Serializable {
       curve[i] = findMaxFlowRateAtPressureBoundaries(inletPressure, outletPressures[i], pressureUnit, maxUtilization);
 
       if (curve[i] != null) {
-	logger.info("Pout={} {}: Max flow={} {}, Power={} kW, Util={}%", outletPressures[i], pressureUnit,
-	    curve[i].getFlowRate(), flowRateUnit, curve[i].getTotalPower(), curve[i].getMaxUtilization() * 100);
+        logger.info("Pout={} {}: Max flow={} {}, Power={} kW, Util={}%", outletPressures[i], pressureUnit,
+            curve[i].getFlowRate(), flowRateUnit, curve[i].getTotalPower(), curve[i].getMaxUtilization() * 100);
       }
     }
 
@@ -1865,26 +1865,26 @@ public class FlowRateOptimizer implements Serializable {
     List<ProcessEquipmentInterface> equipment = getEquipmentList();
     for (ProcessEquipmentInterface equip : equipment) {
       if (equip instanceof CapacityConstrainedEquipment) {
-	try {
-	  CapacityConstrainedEquipment constrained = (CapacityConstrainedEquipment) equip;
-	  Map<String, CapacityConstraint> constraints = constrained.getCapacityConstraints();
+        try {
+          CapacityConstrainedEquipment constrained = (CapacityConstrainedEquipment) equip;
+          Map<String, CapacityConstraint> constraints = constrained.getCapacityConstraints();
 
-	  if (constraints != null) {
-	    for (Map.Entry<String, CapacityConstraint> entry : constraints.entrySet()) {
-	      CapacityConstraint c = entry.getValue();
-	      if (c.isViolated()) {
-		boolean isHard = c.getType() == CapacityConstraint.ConstraintType.HARD
-		    || c.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL
-		    || c.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD;
+          if (constraints != null) {
+            for (Map.Entry<String, CapacityConstraint> entry : constraints.entrySet()) {
+              CapacityConstraint c = entry.getValue();
+              if (c.isViolated()) {
+                boolean isHard = c.getType() == CapacityConstraint.ConstraintType.HARD
+                    || c.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL
+                    || c.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD;
 
-		violations.add(new ConstraintViolation(c.getName(), equip.getName(), c.getCurrentValue(),
-		    c.getDesignValue(), c.getUnit(), isHard));
-	      }
-	    }
-	  }
-	} catch (Exception e) {
-	  logger.debug("Could not check constraints for {}: {}", equip.getName(), e.getMessage());
-	}
+                violations.add(new ConstraintViolation(c.getName(), equip.getName(), c.getCurrentValue(),
+                    c.getDesignValue(), c.getUnit(), isHard));
+              }
+            }
+          }
+        } catch (Exception e) {
+          logger.debug("Could not check constraints for {}: {}", equip.getName(), e.getMessage());
+        }
       }
     }
 
@@ -1906,7 +1906,7 @@ public class FlowRateOptimizer implements Serializable {
 
     case PROCESS_MODEL:
       for (ProcessSystem ps : processModel.getAllProcesses()) {
-	equipment.addAll(ps.getUnitOperations());
+        equipment.addAll(ps.getUnitOperations());
       }
       break;
     }
@@ -2414,7 +2414,7 @@ public class FlowRateOptimizer implements Serializable {
    *
    * <pre>
    * LiftCurveConfiguration config = new LiftCurveConfiguration().withInletPressureRange(50.0, 90.0, 5) // 50-90 bara, 5
-   * 												   // points
+   *     // points
    *     .withOutletPressureRange(130.0, 160.0, 4) // 130-160 bara, 4 points
    *     .withSurgeMargin(0.15) // 15% surge margin
    *     .withMaxPowerLimit(5000.0) // 5 MW limit
@@ -2661,12 +2661,12 @@ public class FlowRateOptimizer implements Serializable {
 
     private double[] generateLinearArray(double min, double max, int points) {
       if (points <= 1) {
-	return new double[] { min };
+        return new double[] { min };
       }
       double[] arr = new double[points];
       double step = (max - min) / (points - 1);
       for (int i = 0; i < points; i++) {
-	arr[i] = min + i * step;
+        arr[i] = min + i * step;
       }
       return arr;
     }
@@ -2846,7 +2846,7 @@ public class FlowRateOptimizer implements Serializable {
      */
     public double getFeasibilityPercentage() {
       if (totalEvaluations == 0) {
-	return 0.0;
+        return 0.0;
       }
       return 100.0 * feasiblePoints / totalEvaluations;
     }
@@ -2864,25 +2864,25 @@ public class FlowRateOptimizer implements Serializable {
       sb.append(String.format("Feasible Points: %d (%.1f%%)\n", feasiblePoints, getFeasibilityPercentage()));
 
       if (!warnings.isEmpty()) {
-	sb.append("\nWarnings:\n");
-	for (String w : warnings) {
-	  sb.append("  - ").append(w).append("\n");
-	}
+        sb.append("\nWarnings:\n");
+        for (String w : warnings) {
+          sb.append("  - ").append(w).append("\n");
+        }
       }
 
       if (capacityTable != null) {
-	ProcessOperatingPoint maxFlow = capacityTable.findMaxFlowRatePoint();
-	if (maxFlow != null) {
-	  sb.append(String.format("\nMax Flow Rate: %.0f %s at Pin=%.1f, Pout=%.1f %s\n", maxFlow.getFlowRate(),
-	      capacityTable.getFlowRateUnit(), maxFlow.getInletPressure(), maxFlow.getOutletPressure(),
-	      capacityTable.getPressureUnit()));
-	}
+        ProcessOperatingPoint maxFlow = capacityTable.findMaxFlowRatePoint();
+        if (maxFlow != null) {
+          sb.append(String.format("\nMax Flow Rate: %.0f %s at Pin=%.1f, Pout=%.1f %s\n", maxFlow.getFlowRate(),
+              capacityTable.getFlowRateUnit(), maxFlow.getInletPressure(), maxFlow.getOutletPressure(),
+              capacityTable.getPressureUnit()));
+        }
 
-	ProcessOperatingPoint minPower = capacityTable.findMinimumPowerPoint();
-	if (minPower != null) {
-	  sb.append(String.format("Min Power Point: %.1f kW at %.0f %s\n", minPower.getTotalPower(),
-	      minPower.getFlowRate(), capacityTable.getFlowRateUnit()));
-	}
+        ProcessOperatingPoint minPower = capacityTable.findMinimumPowerPoint();
+        if (minPower != null) {
+          sb.append(String.format("Min Power Point: %.1f kW at %.0f %s\n", minPower.getTotalPower(),
+              minPower.getFlowRate(), capacityTable.getFlowRateUnit()));
+        }
       }
 
       return sb.toString();
@@ -2946,7 +2946,7 @@ public class FlowRateOptimizer implements Serializable {
       reportProgress(0, 100, "Generating capacity table...");
 
       ProcessCapacityTable capacityTable = generateProcessCapacityTable(inletPressures, outletPressures, pressureUnit,
-	  maxUtil);
+          maxUtil);
       result.setCapacityTable(capacityTable);
 
       totalEvals += inletPressures.length * outletPressures.length;
@@ -2954,8 +2954,8 @@ public class FlowRateOptimizer implements Serializable {
 
       // Check for low feasibility
       if (capacityTable.countFeasiblePoints() < inletPressures.length * outletPressures.length / 2) {
-	result.addWarning("Less than 50% of pressure combinations are feasible. "
-	    + "Consider expanding pressure ranges or relaxing constraints.");
+        result.addWarning("Less than 50% of pressure combinations are feasible. "
+            + "Consider expanding pressure ranges or relaxing constraints.");
       }
     }
 
@@ -2964,18 +2964,18 @@ public class FlowRateOptimizer implements Serializable {
       reportProgress(50, 100, "Generating lift curve table...");
 
       ProcessLiftCurveTable liftCurveTable = generateProcessLiftCurve(flowRates, flowRateUnit, inletPressures,
-	  pressureUnit);
+          pressureUnit);
       result.setLiftCurveTable(liftCurveTable);
 
       // Count feasible points in lift curve table
       int liftFeasible = 0;
       for (int i = 0; i < flowRates.length; i++) {
-	for (int j = 0; j < inletPressures.length; j++) {
-	  ProcessOperatingPoint pt = liftCurveTable.getOperatingPoint(i, j);
-	  if (pt != null && pt.isFeasible()) {
-	    liftFeasible++;
-	  }
-	}
+        for (int j = 0; j < inletPressures.length; j++) {
+          ProcessOperatingPoint pt = liftCurveTable.getOperatingPoint(i, j);
+          if (pt != null && pt.isFeasible()) {
+            liftFeasible++;
+          }
+        }
       }
       totalEvals += flowRates.length * inletPressures.length;
       feasibleCount += liftFeasible;
@@ -2987,7 +2987,7 @@ public class FlowRateOptimizer implements Serializable {
 
       double midInletPressure = inletPressures[inletPressures.length / 2];
       ProcessPerformanceTable perfTable = generateProcessPerformanceTable(flowRates, flowRateUnit, midInletPressure,
-	  pressureUnit);
+          pressureUnit);
       result.setPerformanceTable(perfTable);
     }
 
@@ -3019,9 +3019,9 @@ public class FlowRateOptimizer implements Serializable {
   public LiftCurveResult generateProfessionalLiftCurves(double minInletPressure, double maxInletPressure,
       double minOutletPressure, double maxOutletPressure, String pressureUnit) {
     LiftCurveConfiguration config = new LiftCurveConfiguration()
-	.withInletPressureRange(minInletPressure, maxInletPressure, 5)
-	.withOutletPressureRange(minOutletPressure, maxOutletPressure, 5).withSurgeMargin(0.15).withMaxUtilization(0.95)
-	.withPressureUnit(pressureUnit).withProgressLogging(true);
+        .withInletPressureRange(minInletPressure, maxInletPressure, 5)
+        .withOutletPressureRange(minOutletPressure, maxOutletPressure, 5).withSurgeMargin(0.15).withMaxUtilization(0.95)
+        .withPressureUnit(pressureUnit).withProgressLogging(true);
 
     return generateProfessionalLiftCurves(config);
   }
@@ -3198,7 +3198,7 @@ public class FlowRateOptimizer implements Serializable {
      */
     public double getPressureRatio() {
       if (inletPressure > 0) {
-	return outletPressure / inletPressure;
+        return outletPressure / inletPressure;
       }
       return Double.NaN;
     }
@@ -3207,10 +3207,10 @@ public class FlowRateOptimizer implements Serializable {
     @Override
     public String toString() {
       return String.format(
-	  "CompressorOperatingPoint[flow=%.1f %s, Pin=%.2f %s, Pout=%.2f %s, "
-	      + "speed=%.0f RPM, power=%.1f kW, surgeMargin=%.1f%%, feasible=%s]",
-	  flowRate, flowRateUnit, inletPressure, pressureUnit, outletPressure, pressureUnit, speed, power,
-	  surgeMargin * 100, feasible);
+          "CompressorOperatingPoint[flow=%.1f %s, Pin=%.2f %s, Pout=%.2f %s, "
+              + "speed=%.0f RPM, power=%.1f kW, surgeMargin=%.1f%%, feasible=%s]",
+          flowRate, flowRateUnit, inletPressure, pressureUnit, outletPressure, pressureUnit, speed, power,
+          surgeMargin * 100, feasible);
     }
   }
 
@@ -3338,16 +3338,16 @@ public class FlowRateOptimizer implements Serializable {
       StringBuilder sb = new StringBuilder();
       sb.append(name).append(" (").append(equipmentType).append("): ");
       if (!Double.isNaN(utilization)) {
-	sb.append(String.format("Util=%.1f%%, ", utilization * 100));
+        sb.append(String.format("Util=%.1f%%, ", utilization * 100));
       }
       if (!Double.isNaN(power)) {
-	sb.append(String.format("Power=%.1f kW, ", power));
+        sb.append(String.format("Power=%.1f kW, ", power));
       }
       if (!Double.isNaN(speed)) {
-	sb.append(String.format("Speed=%.0f RPM, ", speed));
+        sb.append(String.format("Speed=%.0f RPM, ", speed));
       }
       if (!Double.isNaN(surgeMargin)) {
-	sb.append(String.format("Surge=%.1f%%, ", surgeMargin * 100));
+        sb.append(String.format("Surge=%.1f%%, ", surgeMargin * 100));
       }
       return sb.toString();
     }
@@ -3548,7 +3548,7 @@ public class FlowRateOptimizer implements Serializable {
      */
     public double getPressureRatio() {
       if (inletPressure > 0) {
-	return outletPressure / inletPressure;
+        return outletPressure / inletPressure;
       }
       return Double.NaN;
     }
@@ -3557,10 +3557,10 @@ public class FlowRateOptimizer implements Serializable {
     @Override
     public String toString() {
       return String.format(
-	  "ProcessOperatingPoint[flow=%.1f %s, Pin=%.2f %s, Pout=%.2f %s, "
-	      + "totalPower=%.1f kW, maxUtil=%.1f%%, feasible=%s]",
-	  flowRate, flowRateUnit, inletPressure, pressureUnit, outletPressure, pressureUnit, totalPower,
-	  maxUtilization * 100, feasible);
+          "ProcessOperatingPoint[flow=%.1f %s, Pin=%.2f %s, Pout=%.2f %s, "
+              + "totalPower=%.1f kW, maxUtil=%.1f%%, feasible=%s]",
+          flowRate, flowRateUnit, inletPressure, pressureUnit, outletPressure, pressureUnit, totalPower,
+          maxUtilization * 100, feasible);
     }
 
     /**
@@ -3581,16 +3581,16 @@ public class FlowRateOptimizer implements Serializable {
 
       sb.append("--- Compressor Details ---\n");
       for (Map.Entry<String, CompressorOperatingPoint> entry : compressorPoints.entrySet()) {
-	CompressorOperatingPoint cp = entry.getValue();
-	sb.append(String.format("%s: Power=%.1f kW, Speed=%.0f RPM, SurgeMargin=%.1f%%\n", entry.getKey(),
-	    cp.getPower(), cp.getSpeed(), cp.getSurgeMargin() * 100));
+        CompressorOperatingPoint cp = entry.getValue();
+        sb.append(String.format("%s: Power=%.1f kW, Speed=%.0f RPM, SurgeMargin=%.1f%%\n", entry.getKey(),
+            cp.getPower(), cp.getSpeed(), cp.getSurgeMargin() * 100));
       }
 
       if (!constraintViolations.isEmpty()) {
-	sb.append("\n--- Constraint Violations ---\n");
-	for (ConstraintViolation v : constraintViolations) {
-	  sb.append(v.toString()).append("\n");
-	}
+        sb.append("\n--- Constraint Violations ---\n");
+        for (ConstraintViolation v : constraintViolations) {
+          sb.append(v.toString()).append("\n");
+        }
       }
 
       return sb.toString();
@@ -3686,10 +3686,10 @@ public class FlowRateOptimizer implements Serializable {
       double minPower = Double.MAX_VALUE;
 
       for (ProcessOperatingPoint point : operatingPoints) {
-	if (point != null && point.isFeasible() && point.getTotalPower() < minPower) {
-	  minPower = point.getTotalPower();
-	  minPoint = point;
-	}
+        if (point != null && point.isFeasible() && point.getTotalPower() < minPower) {
+          minPower = point.getTotalPower();
+          minPoint = point;
+        }
       }
       return minPoint;
     }
@@ -3707,43 +3707,43 @@ public class FlowRateOptimizer implements Serializable {
       // Header
       sb.append(String.format("%-12s %-10s %-12s %-10s", "Flow", "Pout", "TotalPower", "MaxUtil"));
       for (String compName : compressorNames) {
-	sb.append(String.format(" %-15s", compName));
+        sb.append(String.format(" %-15s", compName));
       }
       sb.append(" Feasible\n");
 
       // Units row
       sb.append(String.format("%-12s %-10s %-12s %-10s", flowRateUnit, pressureUnit, "kW", "%"));
       for (int i = 0; i < compressorNames.size(); i++) {
-	sb.append(String.format(" %-15s", "kW"));
+        sb.append(String.format(" %-15s", "kW"));
       }
       sb.append("\n");
 
       // Data rows
       for (int i = 0; i < flowRates.length; i++) {
-	ProcessOperatingPoint point = operatingPoints[i];
-	if (point != null) {
-	  sb.append(String.format("%-12.1f %-10.2f %-12.1f %-10.1f", flowRates[i], point.getOutletPressure(),
-	      point.getTotalPower(), point.getMaxUtilization() * 100));
-	  for (String compName : compressorNames) {
-	    double compPower = point.getCompressorPower(compName);
-	    sb.append(String.format(" %-15.1f", compPower));
-	  }
-	  sb.append(" ").append(point.isFeasible() ? "Yes" : "No").append("\n");
-	} else {
-	  sb.append(String.format("%-12.1f %-10s %-12s %-10s", flowRates[i], "NaN", "NaN", "NaN"));
-	  for (int j = 0; j < compressorNames.size(); j++) {
-	    sb.append(String.format(" %-15s", "NaN"));
-	  }
-	  sb.append(" No\n");
-	}
+        ProcessOperatingPoint point = operatingPoints[i];
+        if (point != null) {
+          sb.append(String.format("%-12.1f %-10.2f %-12.1f %-10.1f", flowRates[i], point.getOutletPressure(),
+              point.getTotalPower(), point.getMaxUtilization() * 100));
+          for (String compName : compressorNames) {
+            double compPower = point.getCompressorPower(compName);
+            sb.append(String.format(" %-15.1f", compPower));
+          }
+          sb.append(" ").append(point.isFeasible() ? "Yes" : "No").append("\n");
+        } else {
+          sb.append(String.format("%-12.1f %-10s %-12s %-10s", flowRates[i], "NaN", "NaN", "NaN"));
+          for (int j = 0; j < compressorNames.size(); j++) {
+            sb.append(String.format(" %-15s", "NaN"));
+          }
+          sb.append(" No\n");
+        }
       }
 
       // Summary
       ProcessOperatingPoint minPower = findMinimumPowerPoint();
       if (minPower != null) {
-	sb.append("\nMinimum Power: ").append(String.format("%.1f kW", minPower.getTotalPower()));
-	sb.append(" at flow ").append(String.format("%.1f %s", minPower.getFlowRate(), flowRateUnit));
-	sb.append("\n");
+        sb.append("\nMinimum Power: ").append(String.format("%.1f kW", minPower.getTotalPower()));
+        sb.append(" at flow ").append(String.format("%.1f %s", minPower.getFlowRate(), flowRateUnit));
+        sb.append("\n");
       }
 
       return sb.toString();
@@ -3828,7 +3828,7 @@ public class FlowRateOptimizer implements Serializable {
      * @param compressorNames list of compressor names
      */
     public ProcessLiftCurveTable(String tableName, double[] flowRates, double[] inletPressures,
-	List<String> compressorNames) {
+        List<String> compressorNames) {
       this.tableName = tableName;
       this.flowRates = flowRates.clone();
       this.inletPressures = inletPressures.clone();
@@ -3866,10 +3866,10 @@ public class FlowRateOptimizer implements Serializable {
     public double[][] getOutletPressureValues() {
       double[][] pressure = new double[flowRates.length][inletPressures.length];
       for (int i = 0; i < flowRates.length; i++) {
-	for (int j = 0; j < inletPressures.length; j++) {
-	  ProcessOperatingPoint point = operatingPoints[i][j];
-	  pressure[i][j] = (point != null && point.isFeasible()) ? point.getOutletPressure() : Double.NaN;
-	}
+        for (int j = 0; j < inletPressures.length; j++) {
+          ProcessOperatingPoint point = operatingPoints[i][j];
+          pressure[i][j] = (point != null && point.isFeasible()) ? point.getOutletPressure() : Double.NaN;
+        }
       }
       return pressure;
     }
@@ -3882,10 +3882,10 @@ public class FlowRateOptimizer implements Serializable {
     public double[][] getTotalPowerValues() {
       double[][] power = new double[flowRates.length][inletPressures.length];
       for (int i = 0; i < flowRates.length; i++) {
-	for (int j = 0; j < inletPressures.length; j++) {
-	  ProcessOperatingPoint point = operatingPoints[i][j];
-	  power[i][j] = (point != null && point.isFeasible()) ? point.getTotalPower() : Double.NaN;
-	}
+        for (int j = 0; j < inletPressures.length; j++) {
+          ProcessOperatingPoint point = operatingPoints[i][j];
+          power[i][j] = (point != null && point.isFeasible()) ? point.getTotalPower() : Double.NaN;
+        }
       }
       return power;
     }
@@ -3898,10 +3898,10 @@ public class FlowRateOptimizer implements Serializable {
     public double[][] getMaxUtilizationValues() {
       double[][] util = new double[flowRates.length][inletPressures.length];
       for (int i = 0; i < flowRates.length; i++) {
-	for (int j = 0; j < inletPressures.length; j++) {
-	  ProcessOperatingPoint point = operatingPoints[i][j];
-	  util[i][j] = (point != null && point.isFeasible()) ? point.getMaxUtilization() : Double.NaN;
-	}
+        for (int j = 0; j < inletPressures.length; j++) {
+          ProcessOperatingPoint point = operatingPoints[i][j];
+          util[i][j] = (point != null && point.isFeasible()) ? point.getMaxUtilization() : Double.NaN;
+        }
       }
       return util;
     }
@@ -3916,13 +3916,13 @@ public class FlowRateOptimizer implements Serializable {
       double minPower = Double.MAX_VALUE;
 
       for (int i = 0; i < flowRates.length; i++) {
-	for (int j = 0; j < inletPressures.length; j++) {
-	  ProcessOperatingPoint point = operatingPoints[i][j];
-	  if (point != null && point.isFeasible() && point.getTotalPower() < minPower) {
-	    minPower = point.getTotalPower();
-	    minPoint = point;
-	  }
-	}
+        for (int j = 0; j < inletPressures.length; j++) {
+          ProcessOperatingPoint point = operatingPoints[i][j];
+          if (point != null && point.isFeasible() && point.getTotalPower() < minPower) {
+            minPower = point.getTotalPower();
+            minPoint = point;
+          }
+        }
       }
       return minPoint;
     }
@@ -3940,72 +3940,72 @@ public class FlowRateOptimizer implements Serializable {
       sb.append("--- Outlet Pressure (").append(pressureUnit).append(") ---\n");
       sb.append(String.format("%-12s", "Flow\\Pin"));
       for (double p : inletPressures) {
-	sb.append(String.format("%10.1f", p));
+        sb.append(String.format("%10.1f", p));
       }
       sb.append("\n");
 
       for (int i = 0; i < flowRates.length; i++) {
-	sb.append(String.format("%-12.1f", flowRates[i]));
-	for (int j = 0; j < inletPressures.length; j++) {
-	  ProcessOperatingPoint point = operatingPoints[i][j];
-	  if (point != null && point.isFeasible()) {
-	    sb.append(String.format("%10.2f", point.getOutletPressure()));
-	  } else {
-	    sb.append(String.format("%10s", "NaN"));
-	  }
-	}
-	sb.append("\n");
+        sb.append(String.format("%-12.1f", flowRates[i]));
+        for (int j = 0; j < inletPressures.length; j++) {
+          ProcessOperatingPoint point = operatingPoints[i][j];
+          if (point != null && point.isFeasible()) {
+            sb.append(String.format("%10.2f", point.getOutletPressure()));
+          } else {
+            sb.append(String.format("%10s", "NaN"));
+          }
+        }
+        sb.append("\n");
       }
 
       // Total power table
       sb.append("\n--- Total Power (kW) ---\n");
       sb.append(String.format("%-12s", "Flow\\Pin"));
       for (double p : inletPressures) {
-	sb.append(String.format("%10.1f", p));
+        sb.append(String.format("%10.1f", p));
       }
       sb.append("\n");
 
       for (int i = 0; i < flowRates.length; i++) {
-	sb.append(String.format("%-12.1f", flowRates[i]));
-	for (int j = 0; j < inletPressures.length; j++) {
-	  ProcessOperatingPoint point = operatingPoints[i][j];
-	  if (point != null && point.isFeasible()) {
-	    sb.append(String.format("%10.1f", point.getTotalPower()));
-	  } else {
-	    sb.append(String.format("%10s", "NaN"));
-	  }
-	}
-	sb.append("\n");
+        sb.append(String.format("%-12.1f", flowRates[i]));
+        for (int j = 0; j < inletPressures.length; j++) {
+          ProcessOperatingPoint point = operatingPoints[i][j];
+          if (point != null && point.isFeasible()) {
+            sb.append(String.format("%10.1f", point.getTotalPower()));
+          } else {
+            sb.append(String.format("%10s", "NaN"));
+          }
+        }
+        sb.append("\n");
       }
 
       // Max utilization table
       sb.append("\n--- Max Utilization (%) ---\n");
       sb.append(String.format("%-12s", "Flow\\Pin"));
       for (double p : inletPressures) {
-	sb.append(String.format("%10.1f", p));
+        sb.append(String.format("%10.1f", p));
       }
       sb.append("\n");
 
       for (int i = 0; i < flowRates.length; i++) {
-	sb.append(String.format("%-12.1f", flowRates[i]));
-	for (int j = 0; j < inletPressures.length; j++) {
-	  ProcessOperatingPoint point = operatingPoints[i][j];
-	  if (point != null && point.isFeasible()) {
-	    sb.append(String.format("%10.1f", point.getMaxUtilization() * 100));
-	  } else {
-	    sb.append(String.format("%10s", "NaN"));
-	  }
-	}
-	sb.append("\n");
+        sb.append(String.format("%-12.1f", flowRates[i]));
+        for (int j = 0; j < inletPressures.length; j++) {
+          ProcessOperatingPoint point = operatingPoints[i][j];
+          if (point != null && point.isFeasible()) {
+            sb.append(String.format("%10.1f", point.getMaxUtilization() * 100));
+          } else {
+            sb.append(String.format("%10s", "NaN"));
+          }
+        }
+        sb.append("\n");
       }
 
       // Summary
       ProcessOperatingPoint minPower = findMinimumPowerPoint();
       if (minPower != null) {
-	sb.append("\n--- Summary ---\n");
-	sb.append(String.format("Minimum Power Point: %.1f kW\n", minPower.getTotalPower()));
-	sb.append(String.format("  At flow=%.1f %s, Pin=%.1f %s, Pout=%.1f %s\n", minPower.getFlowRate(), flowRateUnit,
-	    minPower.getInletPressure(), pressureUnit, minPower.getOutletPressure(), pressureUnit));
+        sb.append("\n--- Summary ---\n");
+        sb.append(String.format("Minimum Power Point: %.1f kW\n", minPower.getTotalPower()));
+        sb.append(String.format("  At flow=%.1f %s, Pin=%.1f %s, Pout=%.1f %s\n", minPower.getFlowRate(), flowRateUnit,
+            minPower.getInletPressure(), pressureUnit, minPower.getOutletPressure(), pressureUnit));
       }
 
       return sb.toString();
@@ -4026,22 +4026,22 @@ public class FlowRateOptimizer implements Serializable {
       // Header with inlet pressures
       sb.append("-- Flow\\THP ");
       for (double p : inletPressures) {
-	sb.append(String.format("%8.1f ", p));
+        sb.append(String.format("%8.1f ", p));
       }
       sb.append("\n");
 
       // Data rows
       for (int i = 0; i < flowRates.length; i++) {
-	sb.append(String.format("-- %8.1f", flowRates[i]));
-	for (int j = 0; j < inletPressures.length; j++) {
-	  ProcessOperatingPoint point = operatingPoints[i][j];
-	  if (point != null && point.isFeasible()) {
-	    sb.append(String.format("%8.2f ", point.getOutletPressure()));
-	  } else {
-	    sb.append("     NaN ");
-	  }
-	}
-	sb.append("\n");
+        sb.append(String.format("-- %8.1f", flowRates[i]));
+        for (int j = 0; j < inletPressures.length; j++) {
+          ProcessOperatingPoint point = operatingPoints[i][j];
+          if (point != null && point.isFeasible()) {
+            sb.append(String.format("%8.2f ", point.getOutletPressure()));
+          } else {
+            sb.append("     NaN ");
+          }
+        }
+        sb.append("\n");
       }
 
       return sb.toString();
@@ -4062,30 +4062,30 @@ public class FlowRateOptimizer implements Serializable {
       // Flow rates
       sb.append("  \"flowRates\": [");
       for (int i = 0; i < flowRates.length; i++) {
-	sb.append(flowRates[i]);
-	if (i < flowRates.length - 1) {
-	  sb.append(", ");
-	}
+        sb.append(flowRates[i]);
+        if (i < flowRates.length - 1) {
+          sb.append(", ");
+        }
       }
       sb.append("],\n");
 
       // Inlet pressures
       sb.append("  \"inletPressures\": [");
       for (int i = 0; i < inletPressures.length; i++) {
-	sb.append(inletPressures[i]);
-	if (i < inletPressures.length - 1) {
-	  sb.append(", ");
-	}
+        sb.append(inletPressures[i]);
+        if (i < inletPressures.length - 1) {
+          sb.append(", ");
+        }
       }
       sb.append("],\n");
 
       // Compressor names
       sb.append("  \"compressorNames\": [");
       for (int i = 0; i < compressorNames.size(); i++) {
-	sb.append("\"").append(compressorNames.get(i)).append("\"");
-	if (i < compressorNames.size() - 1) {
-	  sb.append(", ");
-	}
+        sb.append("\"").append(compressorNames.get(i)).append("\"");
+        if (i < compressorNames.size() - 1) {
+          sb.append(", ");
+        }
       }
       sb.append("],\n");
 
@@ -4093,22 +4093,22 @@ public class FlowRateOptimizer implements Serializable {
       sb.append("  \"outletPressures\": [\n");
       double[][] pout = getOutletPressureValues();
       for (int i = 0; i < pout.length; i++) {
-	sb.append("    [");
-	for (int j = 0; j < pout[i].length; j++) {
-	  if (Double.isNaN(pout[i][j])) {
-	    sb.append("null");
-	  } else {
-	    sb.append(String.format("%.2f", pout[i][j]));
-	  }
-	  if (j < pout[i].length - 1) {
-	    sb.append(", ");
-	  }
-	}
-	sb.append("]");
-	if (i < pout.length - 1) {
-	  sb.append(",");
-	}
-	sb.append("\n");
+        sb.append("    [");
+        for (int j = 0; j < pout[i].length; j++) {
+          if (Double.isNaN(pout[i][j])) {
+            sb.append("null");
+          } else {
+            sb.append(String.format("%.2f", pout[i][j]));
+          }
+          if (j < pout[i].length - 1) {
+            sb.append(", ");
+          }
+        }
+        sb.append("]");
+        if (i < pout.length - 1) {
+          sb.append(",");
+        }
+        sb.append("\n");
       }
       sb.append("  ],\n");
 
@@ -4116,36 +4116,36 @@ public class FlowRateOptimizer implements Serializable {
       sb.append("  \"totalPower\": [\n");
       double[][] power = getTotalPowerValues();
       for (int i = 0; i < power.length; i++) {
-	sb.append("    [");
-	for (int j = 0; j < power[i].length; j++) {
-	  if (Double.isNaN(power[i][j])) {
-	    sb.append("null");
-	  } else {
-	    sb.append(String.format("%.2f", power[i][j]));
-	  }
-	  if (j < power[i].length - 1) {
-	    sb.append(", ");
-	  }
-	}
-	sb.append("]");
-	if (i < power.length - 1) {
-	  sb.append(",");
-	}
-	sb.append("\n");
+        sb.append("    [");
+        for (int j = 0; j < power[i].length; j++) {
+          if (Double.isNaN(power[i][j])) {
+            sb.append("null");
+          } else {
+            sb.append(String.format("%.2f", power[i][j]));
+          }
+          if (j < power[i].length - 1) {
+            sb.append(", ");
+          }
+        }
+        sb.append("]");
+        if (i < power.length - 1) {
+          sb.append(",");
+        }
+        sb.append("\n");
       }
       sb.append("  ],\n");
 
       // Minimum power point
       ProcessOperatingPoint minPower = findMinimumPowerPoint();
       if (minPower != null) {
-	sb.append("  \"minimumPowerPoint\": {\n");
-	sb.append("    \"flowRate\": ").append(minPower.getFlowRate()).append(",\n");
-	sb.append("    \"inletPressure\": ").append(minPower.getInletPressure()).append(",\n");
-	sb.append("    \"outletPressure\": ").append(minPower.getOutletPressure()).append(",\n");
-	sb.append("    \"totalPower\": ").append(minPower.getTotalPower()).append("\n");
-	sb.append("  }\n");
+        sb.append("  \"minimumPowerPoint\": {\n");
+        sb.append("    \"flowRate\": ").append(minPower.getFlowRate()).append(",\n");
+        sb.append("    \"inletPressure\": ").append(minPower.getInletPressure()).append(",\n");
+        sb.append("    \"outletPressure\": ").append(minPower.getOutletPressure()).append(",\n");
+        sb.append("    \"totalPower\": ").append(minPower.getTotalPower()).append("\n");
+        sb.append("  }\n");
       } else {
-	sb.append("  \"minimumPowerPoint\": null\n");
+        sb.append("  \"minimumPowerPoint\": null\n");
       }
 
       sb.append("}");
@@ -4250,7 +4250,7 @@ public class FlowRateOptimizer implements Serializable {
      * @param compressorNames list of compressor names in the process
      */
     public ProcessCapacityTable(String tableName, double[] inletPressures, double[] outletPressures,
-	List<String> compressorNames) {
+        List<String> compressorNames) {
       this.tableName = tableName;
       this.inletPressures = inletPressures.clone();
       this.outletPressures = outletPressures.clone();
@@ -4288,13 +4288,13 @@ public class FlowRateOptimizer implements Serializable {
     public double[][] getFlowRateValues() {
       double[][] values = new double[inletPressures.length][outletPressures.length];
       for (int i = 0; i < inletPressures.length; i++) {
-	for (int j = 0; j < outletPressures.length; j++) {
-	  if (operatingPoints[i][j] != null) {
-	    values[i][j] = operatingPoints[i][j].getFlowRate();
-	  } else {
-	    values[i][j] = Double.NaN;
-	  }
-	}
+        for (int j = 0; j < outletPressures.length; j++) {
+          if (operatingPoints[i][j] != null) {
+            values[i][j] = operatingPoints[i][j].getFlowRate();
+          } else {
+            values[i][j] = Double.NaN;
+          }
+        }
       }
       return values;
     }
@@ -4307,13 +4307,13 @@ public class FlowRateOptimizer implements Serializable {
     public double[][] getTotalPowerValues() {
       double[][] values = new double[inletPressures.length][outletPressures.length];
       for (int i = 0; i < inletPressures.length; i++) {
-	for (int j = 0; j < outletPressures.length; j++) {
-	  if (operatingPoints[i][j] != null) {
-	    values[i][j] = operatingPoints[i][j].getTotalPower();
-	  } else {
-	    values[i][j] = Double.NaN;
-	  }
-	}
+        for (int j = 0; j < outletPressures.length; j++) {
+          if (operatingPoints[i][j] != null) {
+            values[i][j] = operatingPoints[i][j].getTotalPower();
+          } else {
+            values[i][j] = Double.NaN;
+          }
+        }
       }
       return values;
     }
@@ -4326,13 +4326,13 @@ public class FlowRateOptimizer implements Serializable {
     public double[][] getMaxUtilizationValues() {
       double[][] values = new double[inletPressures.length][outletPressures.length];
       for (int i = 0; i < inletPressures.length; i++) {
-	for (int j = 0; j < outletPressures.length; j++) {
-	  if (operatingPoints[i][j] != null) {
-	    values[i][j] = operatingPoints[i][j].getMaxUtilization();
-	  } else {
-	    values[i][j] = Double.NaN;
-	  }
-	}
+        for (int j = 0; j < outletPressures.length; j++) {
+          if (operatingPoints[i][j] != null) {
+            values[i][j] = operatingPoints[i][j].getMaxUtilization();
+          } else {
+            values[i][j] = Double.NaN;
+          }
+        }
       }
       return values;
     }
@@ -4346,13 +4346,13 @@ public class FlowRateOptimizer implements Serializable {
       ProcessOperatingPoint maxPoint = null;
       double maxFlow = Double.NEGATIVE_INFINITY;
       for (int i = 0; i < inletPressures.length; i++) {
-	for (int j = 0; j < outletPressures.length; j++) {
-	  ProcessOperatingPoint point = operatingPoints[i][j];
-	  if (point != null && point.isFeasible() && point.getFlowRate() > maxFlow) {
-	    maxFlow = point.getFlowRate();
-	    maxPoint = point;
-	  }
-	}
+        for (int j = 0; j < outletPressures.length; j++) {
+          ProcessOperatingPoint point = operatingPoints[i][j];
+          if (point != null && point.isFeasible() && point.getFlowRate() > maxFlow) {
+            maxFlow = point.getFlowRate();
+            maxPoint = point;
+          }
+        }
       }
       return maxPoint;
     }
@@ -4366,13 +4366,13 @@ public class FlowRateOptimizer implements Serializable {
       ProcessOperatingPoint minPoint = null;
       double minPower = Double.POSITIVE_INFINITY;
       for (int i = 0; i < inletPressures.length; i++) {
-	for (int j = 0; j < outletPressures.length; j++) {
-	  ProcessOperatingPoint point = operatingPoints[i][j];
-	  if (point != null && point.isFeasible() && point.getTotalPower() < minPower && point.getTotalPower() > 0) {
-	    minPower = point.getTotalPower();
-	    minPoint = point;
-	  }
-	}
+        for (int j = 0; j < outletPressures.length; j++) {
+          ProcessOperatingPoint point = operatingPoints[i][j];
+          if (point != null && point.isFeasible() && point.getTotalPower() < minPower && point.getTotalPower() > 0) {
+            minPower = point.getTotalPower();
+            minPoint = point;
+          }
+        }
       }
       return minPoint;
     }
@@ -4385,11 +4385,11 @@ public class FlowRateOptimizer implements Serializable {
     public int countFeasiblePoints() {
       int count = 0;
       for (int i = 0; i < inletPressures.length; i++) {
-	for (int j = 0; j < outletPressures.length; j++) {
-	  if (operatingPoints[i][j] != null && operatingPoints[i][j].isFeasible()) {
-	    count++;
-	  }
-	}
+        for (int j = 0; j < outletPressures.length; j++) {
+          if (operatingPoints[i][j] != null && operatingPoints[i][j].isFeasible()) {
+            count++;
+          }
+        }
       }
       return count;
     }
@@ -4409,30 +4409,30 @@ public class FlowRateOptimizer implements Serializable {
       // Header row with outlet pressures
       sb.append(String.format("%12s", "Pin\\Pout"));
       for (double pout : outletPressures) {
-	sb.append(String.format("%12.1f", pout));
+        sb.append(String.format("%12.1f", pout));
       }
       sb.append("\n");
 
       // Data rows
       for (int i = 0; i < inletPressures.length; i++) {
-	sb.append(String.format("%12.1f", inletPressures[i]));
-	for (int j = 0; j < outletPressures.length; j++) {
-	  if (operatingPoints[i][j] != null && operatingPoints[i][j].isFeasible()) {
-	    sb.append(String.format("%12.0f", operatingPoints[i][j].getFlowRate()));
-	  } else {
-	    sb.append(String.format("%12s", "-"));
-	  }
-	}
-	sb.append("\n");
+        sb.append(String.format("%12.1f", inletPressures[i]));
+        for (int j = 0; j < outletPressures.length; j++) {
+          if (operatingPoints[i][j] != null && operatingPoints[i][j].isFeasible()) {
+            sb.append(String.format("%12.0f", operatingPoints[i][j].getFlowRate()));
+          } else {
+            sb.append(String.format("%12s", "-"));
+          }
+        }
+        sb.append("\n");
       }
 
       // Summary
       ProcessOperatingPoint maxFlow = findMaxFlowRatePoint();
       if (maxFlow != null) {
-	sb.append("\nMax Flow Rate: ").append(String.format("%.0f", maxFlow.getFlowRate())).append(" ")
-	    .append(flowRateUnit).append(" at Pin=").append(String.format("%.1f", maxFlow.getInletPressure()))
-	    .append(", Pout=").append(String.format("%.1f", maxFlow.getOutletPressure())).append(" ")
-	    .append(pressureUnit);
+        sb.append("\nMax Flow Rate: ").append(String.format("%.0f", maxFlow.getFlowRate())).append(" ")
+            .append(flowRateUnit).append(" at Pin=").append(String.format("%.1f", maxFlow.getInletPressure()))
+            .append(", Pout=").append(String.format("%.1f", maxFlow.getOutletPressure())).append(" ")
+            .append(pressureUnit);
       }
 
       return sb.toString();
@@ -4470,11 +4470,11 @@ public class FlowRateOptimizer implements Serializable {
       // Collect all unique feasible flow rates
       java.util.TreeSet<Double> flowRateSet = new java.util.TreeSet<Double>();
       for (int i = 0; i < inletPressures.length; i++) {
-	for (int j = 0; j < outletPressures.length; j++) {
-	  if (operatingPoints[i][j] != null && operatingPoints[i][j].isFeasible()) {
-	    flowRateSet.add(operatingPoints[i][j].getFlowRate());
-	  }
-	}
+        for (int j = 0; j < outletPressures.length; j++) {
+          if (operatingPoints[i][j] != null && operatingPoints[i][j].isFeasible()) {
+            flowRateSet.add(operatingPoints[i][j].getFlowRate());
+          }
+        }
       }
 
       // Convert to array
@@ -4485,20 +4485,20 @@ public class FlowRateOptimizer implements Serializable {
       sb.append("-- Table number, datum depth, FLO type, WFR type, GFR type, THP type, ");
       sb.append("ALQ type, UNITS, TAB type\n");
       sb.append(String.format("   1   0.0   'LIQ'   'WCT'   'GOR'   'THP'   ''   '%s'   'BHP'  /\n",
-	  "METRIC".equalsIgnoreCase(pressureUnit) ? "METRIC" : "FIELD"));
+          "METRIC".equalsIgnoreCase(pressureUnit) ? "METRIC" : "FIELD"));
       sb.append("\n");
 
       // Flow rate axis (FLO)
       sb.append("-- Flow rates (").append(flowRateUnit).append(")\n");
       for (Double flow : sortedFlows) {
-	sb.append(String.format("   %.2f\n", flow));
+        sb.append(String.format("   %.2f\n", flow));
       }
       sb.append("/\n\n");
 
       // THP axis (inlet pressures)
       sb.append("-- THP values (inlet pressures in ").append(pressureUnit).append(")\n");
       for (double pin : inletPressures) {
-	sb.append(String.format("   %.2f\n", pin));
+        sb.append(String.format("   %.2f\n", pin));
       }
       sb.append("/\n\n");
 
@@ -4519,28 +4519,28 @@ public class FlowRateOptimizer implements Serializable {
       sb.append("-- Format: BHP for each FLO at each THP (WCT=0, GOR=0, ALQ=0)\n");
 
       for (int thpIdx = 0; thpIdx < inletPressures.length; thpIdx++) {
-	sb.append(String.format("-- THP = %.2f %s\n", inletPressures[thpIdx], pressureUnit));
-	for (Double targetFlow : sortedFlows) {
-	  // Find closest matching operating point at this inlet pressure
-	  ProcessOperatingPoint bestMatch = null;
-	  double minDiff = Double.MAX_VALUE;
-	  for (int j = 0; j < outletPressures.length; j++) {
-	    ProcessOperatingPoint pt = operatingPoints[thpIdx][j];
-	    if (pt != null && pt.isFeasible()) {
-	      double diff = Math.abs(pt.getFlowRate() - targetFlow);
-	      if (diff < minDiff) {
-		minDiff = diff;
-		bestMatch = pt;
-	      }
-	    }
-	  }
-	  if (bestMatch != null && minDiff < targetFlow * 0.1) {
-	    sb.append(String.format("   %.2f\n", bestMatch.getOutletPressure()));
-	  } else {
-	    sb.append("   1* \n"); // Eclipse default/undefined marker
-	  }
-	}
-	sb.append("/\n");
+        sb.append(String.format("-- THP = %.2f %s\n", inletPressures[thpIdx], pressureUnit));
+        for (Double targetFlow : sortedFlows) {
+          // Find closest matching operating point at this inlet pressure
+          ProcessOperatingPoint bestMatch = null;
+          double minDiff = Double.MAX_VALUE;
+          for (int j = 0; j < outletPressures.length; j++) {
+            ProcessOperatingPoint pt = operatingPoints[thpIdx][j];
+            if (pt != null && pt.isFeasible()) {
+              double diff = Math.abs(pt.getFlowRate() - targetFlow);
+              if (diff < minDiff) {
+                minDiff = diff;
+                bestMatch = pt;
+              }
+            }
+          }
+          if (bestMatch != null && minDiff < targetFlow * 0.1) {
+            sb.append(String.format("   %.2f\n", bestMatch.getOutletPressure()));
+          } else {
+            sb.append("   1* \n"); // Eclipse default/undefined marker
+          }
+        }
+        sb.append("/\n");
       }
 
       sb.append("\n");
@@ -4565,16 +4565,16 @@ public class FlowRateOptimizer implements Serializable {
 
       // Data rows
       for (int i = 0; i < inletPressures.length; i++) {
-	for (int j = 0; j < outletPressures.length; j++) {
-	  ProcessOperatingPoint pt = operatingPoints[i][j];
-	  sb.append(String.format("%.2f,%.2f,", inletPressures[i], outletPressures[j]));
-	  if (pt != null) {
-	    sb.append(String.format("%.2f,%.2f,%.4f,%s\n", pt.getFlowRate(), pt.getTotalPower(), pt.getMaxUtilization(),
-		pt.isFeasible() ? "true" : "false"));
-	  } else {
-	    sb.append(",,,,false\n");
-	  }
-	}
+        for (int j = 0; j < outletPressures.length; j++) {
+          ProcessOperatingPoint pt = operatingPoints[i][j];
+          sb.append(String.format("%.2f,%.2f,", inletPressures[i], outletPressures[j]));
+          if (pt != null) {
+            sb.append(String.format("%.2f,%.2f,%.4f,%s\n", pt.getFlowRate(), pt.getTotalPower(), pt.getMaxUtilization(),
+                pt.isFeasible() ? "true" : "false"));
+          } else {
+            sb.append(",,,,false\n");
+          }
+        }
       }
 
       return sb.toString();
@@ -4596,30 +4596,30 @@ public class FlowRateOptimizer implements Serializable {
       // Inlet pressures
       sb.append("  \"inletPressures\": [");
       for (int i = 0; i < inletPressures.length; i++) {
-	sb.append(inletPressures[i]);
-	if (i < inletPressures.length - 1) {
-	  sb.append(", ");
-	}
+        sb.append(inletPressures[i]);
+        if (i < inletPressures.length - 1) {
+          sb.append(", ");
+        }
       }
       sb.append("],\n");
 
       // Outlet pressures
       sb.append("  \"outletPressures\": [");
       for (int i = 0; i < outletPressures.length; i++) {
-	sb.append(outletPressures[i]);
-	if (i < outletPressures.length - 1) {
-	  sb.append(", ");
-	}
+        sb.append(outletPressures[i]);
+        if (i < outletPressures.length - 1) {
+          sb.append(", ");
+        }
       }
       sb.append("],\n");
 
       // Compressor names
       sb.append("  \"compressorNames\": [");
       for (int i = 0; i < compressorNames.size(); i++) {
-	sb.append("\"").append(compressorNames.get(i)).append("\"");
-	if (i < compressorNames.size() - 1) {
-	  sb.append(", ");
-	}
+        sb.append("\"").append(compressorNames.get(i)).append("\"");
+        if (i < compressorNames.size() - 1) {
+          sb.append(", ");
+        }
       }
       sb.append("],\n");
 
@@ -4627,22 +4627,22 @@ public class FlowRateOptimizer implements Serializable {
       sb.append("  \"flowRates\": [\n");
       double[][] flows = getFlowRateValues();
       for (int i = 0; i < flows.length; i++) {
-	sb.append("    [");
-	for (int j = 0; j < flows[i].length; j++) {
-	  if (Double.isNaN(flows[i][j])) {
-	    sb.append("null");
-	  } else {
-	    sb.append(String.format("%.1f", flows[i][j]));
-	  }
-	  if (j < flows[i].length - 1) {
-	    sb.append(", ");
-	  }
-	}
-	sb.append("]");
-	if (i < flows.length - 1) {
-	  sb.append(",");
-	}
-	sb.append("\n");
+        sb.append("    [");
+        for (int j = 0; j < flows[i].length; j++) {
+          if (Double.isNaN(flows[i][j])) {
+            sb.append("null");
+          } else {
+            sb.append(String.format("%.1f", flows[i][j]));
+          }
+          if (j < flows[i].length - 1) {
+            sb.append(", ");
+          }
+        }
+        sb.append("]");
+        if (i < flows.length - 1) {
+          sb.append(",");
+        }
+        sb.append("\n");
       }
       sb.append("  ],\n");
 
@@ -4650,22 +4650,22 @@ public class FlowRateOptimizer implements Serializable {
       sb.append("  \"totalPower\": [\n");
       double[][] power = getTotalPowerValues();
       for (int i = 0; i < power.length; i++) {
-	sb.append("    [");
-	for (int j = 0; j < power[i].length; j++) {
-	  if (Double.isNaN(power[i][j])) {
-	    sb.append("null");
-	  } else {
-	    sb.append(String.format("%.2f", power[i][j]));
-	  }
-	  if (j < power[i].length - 1) {
-	    sb.append(", ");
-	  }
-	}
-	sb.append("]");
-	if (i < power.length - 1) {
-	  sb.append(",");
-	}
-	sb.append("\n");
+        sb.append("    [");
+        for (int j = 0; j < power[i].length; j++) {
+          if (Double.isNaN(power[i][j])) {
+            sb.append("null");
+          } else {
+            sb.append(String.format("%.2f", power[i][j]));
+          }
+          if (j < power[i].length - 1) {
+            sb.append(", ");
+          }
+        }
+        sb.append("]");
+        if (i < power.length - 1) {
+          sb.append(",");
+        }
+        sb.append("\n");
       }
       sb.append("  ],\n");
 
@@ -4673,22 +4673,22 @@ public class FlowRateOptimizer implements Serializable {
       sb.append("  \"maxUtilizationValues\": [\n");
       double[][] util = getMaxUtilizationValues();
       for (int i = 0; i < util.length; i++) {
-	sb.append("    [");
-	for (int j = 0; j < util[i].length; j++) {
-	  if (Double.isNaN(util[i][j])) {
-	    sb.append("null");
-	  } else {
-	    sb.append(String.format("%.3f", util[i][j]));
-	  }
-	  if (j < util[i].length - 1) {
-	    sb.append(", ");
-	  }
-	}
-	sb.append("]");
-	if (i < util.length - 1) {
-	  sb.append(",");
-	}
-	sb.append("\n");
+        sb.append("    [");
+        for (int j = 0; j < util[i].length; j++) {
+          if (Double.isNaN(util[i][j])) {
+            sb.append("null");
+          } else {
+            sb.append(String.format("%.3f", util[i][j]));
+          }
+          if (j < util[i].length - 1) {
+            sb.append(", ");
+          }
+        }
+        sb.append("]");
+        if (i < util.length - 1) {
+          sb.append(",");
+        }
+        sb.append("\n");
       }
       sb.append("  ],\n");
 
@@ -4698,26 +4698,26 @@ public class FlowRateOptimizer implements Serializable {
 
       ProcessOperatingPoint maxFlow = findMaxFlowRatePoint();
       if (maxFlow != null) {
-	sb.append("  \"maxFlowRatePoint\": {\n");
-	sb.append("    \"flowRate\": ").append(maxFlow.getFlowRate()).append(",\n");
-	sb.append("    \"inletPressure\": ").append(maxFlow.getInletPressure()).append(",\n");
-	sb.append("    \"outletPressure\": ").append(maxFlow.getOutletPressure()).append(",\n");
-	sb.append("    \"totalPower\": ").append(maxFlow.getTotalPower()).append("\n");
-	sb.append("  },\n");
+        sb.append("  \"maxFlowRatePoint\": {\n");
+        sb.append("    \"flowRate\": ").append(maxFlow.getFlowRate()).append(",\n");
+        sb.append("    \"inletPressure\": ").append(maxFlow.getInletPressure()).append(",\n");
+        sb.append("    \"outletPressure\": ").append(maxFlow.getOutletPressure()).append(",\n");
+        sb.append("    \"totalPower\": ").append(maxFlow.getTotalPower()).append("\n");
+        sb.append("  },\n");
       } else {
-	sb.append("  \"maxFlowRatePoint\": null,\n");
+        sb.append("  \"maxFlowRatePoint\": null,\n");
       }
 
       ProcessOperatingPoint minPower = findMinimumPowerPoint();
       if (minPower != null) {
-	sb.append("  \"minimumPowerPoint\": {\n");
-	sb.append("    \"flowRate\": ").append(minPower.getFlowRate()).append(",\n");
-	sb.append("    \"inletPressure\": ").append(minPower.getInletPressure()).append(",\n");
-	sb.append("    \"outletPressure\": ").append(minPower.getOutletPressure()).append(",\n");
-	sb.append("    \"totalPower\": ").append(minPower.getTotalPower()).append("\n");
-	sb.append("  }\n");
+        sb.append("  \"minimumPowerPoint\": {\n");
+        sb.append("    \"flowRate\": ").append(minPower.getFlowRate()).append(",\n");
+        sb.append("    \"inletPressure\": ").append(minPower.getInletPressure()).append(",\n");
+        sb.append("    \"outletPressure\": ").append(minPower.getOutletPressure()).append(",\n");
+        sb.append("    \"totalPower\": ").append(minPower.getTotalPower()).append("\n");
+        sb.append("  }\n");
       } else {
-	sb.append("  \"minimumPowerPoint\": null\n");
+        sb.append("  \"minimumPowerPoint\": null\n");
       }
 
       sb.append("}");

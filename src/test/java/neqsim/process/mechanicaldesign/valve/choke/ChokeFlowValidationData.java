@@ -255,7 +255,7 @@ public final class ChokeFlowValidationData {
    * </p>
    */
   public static final double[][] FORTUNATI_FIELD_DATA = { { 85.0, 25.0, 12.7, 150, 320.5, 55, 38 }, // Well
-												    // A
+      // A
       { 85.0, 25.0, 12.7, 280, 245.2, 55, 38 }, // Well A - different GLR
       { 72.0, 20.0, 9.5, 420, 125.8, 48, 35 }, // Well B
       { 72.0, 20.0, 9.5, 680, 97.2, 48, 35 }, // Well B - different GLR

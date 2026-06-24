@@ -194,11 +194,11 @@ public class Standard_ISO14687 extends neqsim.standards.Standard {
       // Total hydrocarbons
       totalHC = 0.0;
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
-	String type = thermoSystem.getPhase(0).getComponent(i).getComponentType();
-	String name = thermoSystem.getPhase(0).getComponent(i).getName();
-	if ("HC".equals(type) || "methane".equals(name) || "ethane".equals(name) || "propane".equals(name)) {
-	  totalHC += thermoSystem.getPhase(0).getComponent(i).getz() * toUmol;
-	}
+        String type = thermoSystem.getPhase(0).getComponent(i).getComponentType();
+        String name = thermoSystem.getPhase(0).getComponent(i).getName();
+        if ("HC".equals(type) || "methane".equals(name) || "ethane".equals(name) || "propane".equals(name)) {
+          totalHC += thermoSystem.getPhase(0).getComponent(i).getz() * toUmol;
+        }
       }
 
       // Total non-hydrogen
@@ -268,11 +268,11 @@ public class Standard_ISO14687 extends neqsim.standards.Standard {
   public boolean isOnSpec() {
     if ("A".equals(grade) || "B".equals(grade) || "C".equals(grade)) {
       return h2Purity >= GRADE_A_PURITY_MIN && waterContent <= GRADE_A_WATER_MAX && totalHC <= GRADE_A_HC_MAX
-	  && o2Content <= GRADE_A_O2_MAX && n2Content <= GRADE_A_N2_MAX && co2Content <= GRADE_A_CO2_MAX
-	  && coContent <= GRADE_A_CO_MAX && totalSulfur <= GRADE_A_SULFUR_MAX && totalNonH2 <= GRADE_A_TOTAL_MAX;
+          && o2Content <= GRADE_A_O2_MAX && n2Content <= GRADE_A_N2_MAX && co2Content <= GRADE_A_CO2_MAX
+          && coContent <= GRADE_A_CO_MAX && totalSulfur <= GRADE_A_SULFUR_MAX && totalNonH2 <= GRADE_A_TOTAL_MAX;
     } else if ("D".equals(grade)) {
       return h2Purity >= GRADE_D_PURITY_MIN && waterContent <= GRADE_D_WATER_MAX && totalHC <= GRADE_D_HC_MAX
-	  && o2Content <= GRADE_D_O2_MAX;
+          && o2Content <= GRADE_D_O2_MAX;
     } else {
       // Grade E: most relaxed - 98% purity minimum
       return h2Purity >= 98.0;

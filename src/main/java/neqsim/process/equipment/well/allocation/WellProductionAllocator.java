@@ -187,7 +187,7 @@ public class WellProductionAllocator implements Serializable {
   public WellData getWell(String wellName) {
     for (WellData well : wells) {
       if (well.getWellName().equals(wellName)) {
-	return well;
+        return well;
       }
     }
     return null;
@@ -356,7 +356,7 @@ public class WellProductionAllocator implements Serializable {
       oilRates.put(name, wVFM * oilVFM + wTest * oilTest + wChoke * oilChoke);
       gasRates.put(name, wVFM * well.getVfmGasRate() + wTest * well.getTestGasRate() + wChoke * well.getTestGasRate());
       waterRates.put(name,
-	  wVFM * well.getVfmWaterRate() + wTest * well.getTestWaterRate() + wChoke * well.getTestWaterRate());
+          wVFM * well.getVfmWaterRate() + wTest * well.getTestWaterRate() + wChoke * well.getTestWaterRate());
       uncertainties.put(name, 0.07); // Combined has ~7% uncertainty
     }
   }
@@ -373,7 +373,7 @@ public class WellProductionAllocator implements Serializable {
     if (sum > 0 && Math.abs(sum - total) > reconciliationTolerance * total) {
       double factor = total / sum;
       for (String key : rates.keySet()) {
-	rates.put(key, rates.get(key) * factor);
+        rates.put(key, rates.get(key) * factor);
       }
     }
   }

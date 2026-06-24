@@ -61,7 +61,7 @@ public class CombinedModelsTest {
     wellStreamHP.setFlowRate(10.0, "MSm3/day");
 
     ThreePhaseSeparator firstStageSeparator = new neqsim.process.equipment.separator.ThreePhaseSeparator(
-	"1st stage separator", wellStreamHP);
+        "1st stage separator", wellStreamHP);
 
     ProcessSystem process1 = new ProcessSystem();
     process1.add(wellStreamHP);
@@ -72,7 +72,7 @@ public class CombinedModelsTest {
 
   public ProcessSystem getCompressorProcess(StreamInterface gasFeedStream) {
     neqsim.process.equipment.compressor.Compressor compressor1 = new neqsim.process.equipment.compressor.Compressor(
-	"Compressor1", gasFeedStream);
+        "Compressor1", gasFeedStream);
     compressor1.setPolytropicEfficiency(0.56);
     compressor1.setUsePolytropicCalc(true);
 
@@ -86,7 +86,7 @@ public class CombinedModelsTest {
   public ProcessModel getCombinedModel() {
     ProcessSystem inletProcess = getinletModel();
     ProcessSystem compressorProcess = getCompressorProcess(
-	((ThreePhaseSeparator) inletProcess.getUnit("1st stage separator")).getGasOutStream());
+        ((ThreePhaseSeparator) inletProcess.getUnit("1st stage separator")).getGasOutStream());
 
     ProcessModel combinedProcess = new ProcessModel();
     combinedProcess.add("feed process", inletProcess);
@@ -122,9 +122,9 @@ public class CombinedModelsTest {
     }
 
     Assertions.assertEquals(165.238244803687,
-	((Compressor) fullProcess.get("compressor process").getUnit("Compressor1")).getOutletStream()
-	    .getTemperature("C"),
-	0.1);
+        ((Compressor) fullProcess.get("compressor process").getUnit("Compressor1")).getOutletStream()
+            .getTemperature("C"),
+        0.1);
 
     Report reporter = new Report(fullProcess);
     Assertions.assertTrue(fullProcess.getReport_json().equals(reporter.generateJsonReport()));

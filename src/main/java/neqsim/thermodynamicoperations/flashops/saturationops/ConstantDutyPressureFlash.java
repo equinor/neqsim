@@ -25,7 +25,7 @@ public class ConstantDutyPressureFlash extends ConstantDutyFlash {
   @Override
   public void run() {
     if (system.getPhase(0).getNumberOfComponents() == 1
-	&& system.getTemperature() >= system.getPhase(0).getComponent(0).getTC()) {
+        && system.getTemperature() >= system.getPhase(0).getComponent(0).getTC()) {
       // throw new IllegalStateException("System is supercritical");
     }
     // system.calc_x_y();
@@ -48,9 +48,9 @@ public class ConstantDutyPressureFlash extends ConstantDutyFlash {
       system.init(2);
       iterations++;
       for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-	system.getPhases()[0].getComponent(i).setK(system.getPhases()[1].getComponent(i).getFugacityCoefficient()
-	    / system.getPhases()[0].getComponent(i).getFugacityCoefficient());
-	system.getPhases()[1].getComponent(i).setK(system.getPhases()[0].getComponent(i).getK());
+        system.getPhases()[0].getComponent(i).setK(system.getPhases()[1].getComponent(i).getFugacityCoefficient()
+            / system.getPhases()[0].getComponent(i).getFugacityCoefficient());
+        system.getPhases()[1].getComponent(i).setK(system.getPhases()[0].getComponent(i).getK());
       }
 
       system.calc_x_y_nonorm();
@@ -59,14 +59,14 @@ public class ConstantDutyPressureFlash extends ConstantDutyFlash {
       deriv = 0.0;
 
       for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-	dkidp = (system.getPhases()[1].getComponent(i).getdfugdp() - system.getPhases()[0].getComponent(i).getdfugdp())
-	    * system.getPhases()[1].getComponent(i).getK();
-	dxidp = -system.getPhases()[1].getComponent(i).getz() * system.getBeta() * dkidp
-	    / Math.pow(1.0 - system.getBeta() + system.getBeta() * system.getPhases()[1].getComponent(i).getK(), 2.0);
-	dyidp = dkidp * system.getPhases()[1].getComponent(i).getx()
-	    + system.getPhases()[1].getComponent(i).getK() * dxidp;
-	funk += system.getPhases()[0].getComponent(i).getx() - system.getPhases()[1].getComponent(i).getx();
-	deriv += dyidp - dxidp;
+        dkidp = (system.getPhases()[1].getComponent(i).getdfugdp() - system.getPhases()[0].getComponent(i).getdfugdp())
+            * system.getPhases()[1].getComponent(i).getK();
+        dxidp = -system.getPhases()[1].getComponent(i).getz() * system.getBeta() * dkidp
+            / Math.pow(1.0 - system.getBeta() + system.getBeta() * system.getPhases()[1].getComponent(i).getK(), 2.0);
+        dyidp = dkidp * system.getPhases()[1].getComponent(i).getx()
+            + system.getPhases()[1].getComponent(i).getK() * dxidp;
+        funk += system.getPhases()[0].getComponent(i).getx() - system.getPhases()[1].getComponent(i).getx();
+        deriv += dyidp - dxidp;
       }
 
       // System.out.println("Pressure: " + system.getPressure() + " funk " + funk);
@@ -75,7 +75,7 @@ public class ConstantDutyPressureFlash extends ConstantDutyFlash {
       double pres = Math.abs(Pold - 0.5 * funk / deriv);
       system.setPressure(pres);
     } while ((Math.abs((system.getPressure() - Pold) / system.getPressure()) > 1e-10 && iterations < 300)
-	|| iterations < 3);
+        || iterations < 3);
     if (isSuperCritical()) {
       // throw new IllegalStateException("System is supercritical");
     }

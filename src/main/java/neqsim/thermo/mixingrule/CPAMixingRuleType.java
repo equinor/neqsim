@@ -47,7 +47,7 @@ public enum CPAMixingRuleType implements MixingRuleTypeInterface {
   public static CPAMixingRuleType byName(String name) {
     for (CPAMixingRuleType mr : copyOfValues) {
       if (mr.name().equals(name.toUpperCase())) {
-	return mr;
+        return mr;
       }
     }
     throw new RuntimeException(new InvalidInputException("CPAMixingRuleType", "byName", "name", "is not valid."));
@@ -62,7 +62,7 @@ public enum CPAMixingRuleType implements MixingRuleTypeInterface {
   public static CPAMixingRuleType byValue(int value) {
     for (CPAMixingRuleType mr : copyOfValues) {
       if (mr.getValue() == (value)) {
-	return mr;
+        return mr;
       }
     }
     throw new RuntimeException(new InvalidInputException("CPAMixingRuleType", "byValue", "value", "is not valid."));

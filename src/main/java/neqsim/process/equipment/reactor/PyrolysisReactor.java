@@ -721,7 +721,7 @@ public class PyrolysisReactor extends ProcessEquipmentBaseClass {
   private double getMoleFraction(SystemInterface system, String componentName) {
     try {
       if (system.hasComponent(componentName)) {
-	return system.getPhase(0).getComponent(componentName).getz();
+        return system.getPhase(0).getComponent(componentName).getz();
       }
     } catch (Exception e) {
       logger.debug("Could not get mole fraction for {}: {}", componentName, e.getMessage());
@@ -762,15 +762,15 @@ public class PyrolysisReactor extends ProcessEquipmentBaseClass {
     if (gasOutStream != null) {
       SystemInterface gas = gasOutStream.getThermoSystem();
       if (gas != null) {
-	Map<String, Double> composition = new LinkedHashMap<String, Double>();
-	for (int i = 0; i < gas.getPhase(0).getNumberOfComponents(); i++) {
-	  String cname = gas.getPhase(0).getComponent(i).getComponentName();
-	  double z = gas.getPhase(0).getComponent(i).getz();
-	  if (z > 1e-10) {
-	    composition.put(cname, z);
-	  }
-	}
-	results.put("gasComposition_molFrac", composition);
+        Map<String, Double> composition = new LinkedHashMap<String, Double>();
+        for (int i = 0; i < gas.getPhase(0).getNumberOfComponents(); i++) {
+          String cname = gas.getPhase(0).getComponent(i).getComponentName();
+          double z = gas.getPhase(0).getComponent(i).getz();
+          if (z > 1e-10) {
+            composition.put(cname, z);
+          }
+        }
+        results.put("gasComposition_molFrac", composition);
       }
     }
     return results;
@@ -796,7 +796,7 @@ public class PyrolysisReactor extends ProcessEquipmentBaseClass {
     sb.append("PyrolysisReactor '").append(getName()).append("'\n");
     sb.append(String.format("  Mode: %s, T = %.0f C%n", pyrolysisMode, pyrolysisTemperature - 273.15));
     sb.append(String.format("  Yields: char = %.1f%%, oil = %.1f%%, gas = %.1f%%%n", actualCharYield * 100,
-	actualBioOilYield * 100, actualGasYield * 100));
+        actualBioOilYield * 100, actualGasYield * 100));
     sb.append(String.format("  Gas LHV = %.2f MJ/Nm3%n", gasLHVMjPerNm3));
     sb.append(String.format("  Energy yield = %.3f%n", energyYield));
     return sb.toString();

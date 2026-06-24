@@ -100,7 +100,7 @@ public class StabilityAnalysisBenchmarkTest {
       double elapsedMs = (endTime - startTime) / 1_000_000.0;
       totalTime += elapsedMs;
       logger.info("T=" + String.format("%.1f", temperatures[i] - 273.15) + "°C: " + String.format("%.2f", elapsedMs)
-	  + " ms, phases=" + fluid.getNumberOfPhases());
+          + " ms, phases=" + fluid.getNumberOfPhases());
     }
 
     logger.info("Total time for " + temperatures.length + " flashes: " + String.format("%.2f", totalTime) + " ms");
@@ -151,11 +151,11 @@ public class StabilityAnalysisBenchmarkTest {
     int phasesWithoutStability = fluid2.getNumberOfPhases();
 
     logger.info(
-	"WITH stability analysis: " + String.format("%.2f", withStabilityMs) + " ms, phases=" + phasesWithStability);
+        "WITH stability analysis: " + String.format("%.2f", withStabilityMs) + " ms, phases=" + phasesWithStability);
     logger.info("WITHOUT stability analysis: " + String.format("%.2f", withoutStabilityMs) + " ms, phases="
-	+ phasesWithoutStability);
+        + phasesWithoutStability);
     logger.info("Stability analysis overhead: " + String.format("%.2f", withStabilityMs - withoutStabilityMs) + " ms ("
-	+ String.format("%.1f", (withStabilityMs / withoutStabilityMs - 1) * 100) + "% slower)");
+        + String.format("%.1f", (withStabilityMs / withoutStabilityMs - 1) * 100) + "% slower)");
   }
 
   /**
@@ -174,8 +174,8 @@ public class StabilityAnalysisBenchmarkTest {
     logger.info("After flash:");
     for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
       logger.info("  Phase " + p + ": " + fluid.getPhase(p).getPhaseTypeName() + " ("
-	  + fluid.getPhase(p).getClass().getSimpleName() + ")" + " moles="
-	  + fluid.getPhase(p).getNumberOfMolesInPhase());
+          + fluid.getPhase(p).getClass().getSimpleName() + ")" + " moles="
+          + fluid.getPhase(p).getNumberOfMolesInPhase());
     }
 
     // Measure init(1) cost for different phases
@@ -184,24 +184,24 @@ public class StabilityAnalysisBenchmarkTest {
     for (int phaseNum = 0; phaseNum < Math.min(fluid.getNumberOfPhases(), 2); phaseNum++) {
       long startTime = System.nanoTime();
       for (int i = 0; i < numIterations; i++) {
-	fluid.init(1, phaseNum);
+        fluid.init(1, phaseNum);
       }
       long endTime = System.nanoTime();
       double avgMs = (endTime - startTime) / 1_000_000.0 / numIterations;
       logger.info("Phase " + phaseNum + " (" + fluid.getPhase(phaseNum).getPhaseTypeName() + ") init(1) avg: "
-	  + String.format("%.3f", avgMs) + " ms");
+          + String.format("%.3f", avgMs) + " ms");
     }
 
     // Measure init(3) cost (with derivatives)
     for (int phaseNum = 0; phaseNum < Math.min(fluid.getNumberOfPhases(), 2); phaseNum++) {
       long startTime = System.nanoTime();
       for (int i = 0; i < numIterations; i++) {
-	fluid.init(3, phaseNum);
+        fluid.init(3, phaseNum);
       }
       long endTime = System.nanoTime();
       double avgMs = (endTime - startTime) / 1_000_000.0 / numIterations;
       logger.info("Phase " + phaseNum + " (" + fluid.getPhase(phaseNum).getPhaseTypeName() + ") init(3) avg: "
-	  + String.format("%.3f", avgMs) + " ms");
+          + String.format("%.3f", avgMs) + " ms");
     }
   }
 
@@ -222,16 +222,16 @@ public class StabilityAnalysisBenchmarkTest {
     for (int phaseNum = 0; phaseNum < fluid.getNumberOfPhases(); phaseNum++) {
       long totalTime = 0;
       for (int i = 0; i < numIterations; i++) {
-	long startTime = System.nanoTime();
-	for (int comp = 0; comp < fluid.getNumberOfComponents(); comp++) {
-	  fluid.getPhase(phaseNum).getComponent(comp).fugcoef(fluid.getPhase(phaseNum));
-	}
-	long endTime = System.nanoTime();
-	totalTime += (endTime - startTime);
+        long startTime = System.nanoTime();
+        for (int comp = 0; comp < fluid.getNumberOfComponents(); comp++) {
+          fluid.getPhase(phaseNum).getComponent(comp).fugcoef(fluid.getPhase(phaseNum));
+        }
+        long endTime = System.nanoTime();
+        totalTime += (endTime - startTime);
       }
       double avgMs = totalTime / 1_000_000.0 / numIterations;
       logger.info("Phase " + phaseNum + " (" + fluid.getPhase(phaseNum).getPhaseTypeName() + ") " + "all fugcoef avg: "
-	  + String.format("%.3f", avgMs) + " ms");
+          + String.format("%.3f", avgMs) + " ms");
     }
   }
 
@@ -274,11 +274,11 @@ public class StabilityAnalysisBenchmarkTest {
     double withoutIonsMs = (endTime - startTime) / 1_000_000.0;
 
     logger.info(
-	"WITH ions: " + String.format("%.2f", withIonsMs) + " ms, " + fluid.getNumberOfComponents() + " components");
+        "WITH ions: " + String.format("%.2f", withIonsMs) + " ms, " + fluid.getNumberOfComponents() + " components");
     logger.info("WITHOUT ions: " + String.format("%.2f", withoutIonsMs) + " ms, " + fluidNoIons.getNumberOfComponents()
-	+ " components");
+        + " components");
     logger.info("Ion overhead: " + String.format("%.2f", withIonsMs - withoutIonsMs) + " ms ("
-	+ String.format("%.1f", (withIonsMs / withoutIonsMs - 1) * 100) + "% slower)");
+        + String.format("%.1f", (withIonsMs / withoutIonsMs - 1) * 100) + "% slower)");
   }
 
   /**
@@ -338,7 +338,7 @@ public class StabilityAnalysisBenchmarkTest {
     logger.info("Number of phases after flash: " + fluid.getNumberOfPhases());
     for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
       logger.info("Phase " + p + ": " + fluid.getPhase(p).getPhaseTypeName() + " ("
-	  + fluid.getPhase(p).getClass().getSimpleName() + ")");
+          + fluid.getPhase(p).getClass().getSimpleName() + ")");
     }
 
     // Clone the system (simulating what stability analysis does)
@@ -355,8 +355,8 @@ public class StabilityAnalysisBenchmarkTest {
     logger.info("Ion mole fractions in phase 1 before setx(0):");
     for (int i = 0; i < clone.getNumberOfComponents(); i++) {
       if (clone.getPhase(1).getComponent(i).getIonicCharge() != 0) {
-	logger.info("  " + clone.getPhase(1).getComponent(i).getComponentName() + ": x="
-	    + clone.getPhase(1).getComponent(i).getx());
+        logger.info("  " + clone.getPhase(1).getComponent(i).getComponentName() + ": x="
+            + clone.getPhase(1).getComponent(i).getx());
       }
     }
 
@@ -370,7 +370,7 @@ public class StabilityAnalysisBenchmarkTest {
     // Now set ions to x=0 (simulating what stability analysis does for trial phases)
     for (int i = 0; i < clone.getNumberOfComponents(); i++) {
       if (clone.getPhase(1).getComponent(i).getIonicCharge() != 0) {
-	clone.getPhase(1).getComponent(i).setx(0.0);
+        clone.getPhase(1).getComponent(i).setx(0.0);
       }
     }
 
@@ -378,8 +378,8 @@ public class StabilityAnalysisBenchmarkTest {
     logger.info("Ion mole fractions in phase 1 after setx(0):");
     for (int i = 0; i < clone.getNumberOfComponents(); i++) {
       if (clone.getPhase(1).getComponent(i).getIonicCharge() != 0) {
-	logger.info("  " + clone.getPhase(1).getComponent(i).getComponentName() + ": x="
-	    + clone.getPhase(1).getComponent(i).getx());
+        logger.info("  " + clone.getPhase(1).getComponent(i).getComponentName() + ": x="
+            + clone.getPhase(1).getComponent(i).getx());
       }
     }
 
@@ -392,9 +392,9 @@ public class StabilityAnalysisBenchmarkTest {
     double avgNoIonsMs = (endNoIons - startNoIons) / 1_000_000.0 / numIterations;
 
     logger.info("init(1,1) with ions present: " + String.format("%.3f", avgWithIonsMs) + " ms avg over " + numIterations
-	+ " iterations");
+        + " iterations");
     logger.info("init(1,1) with ions x=0: " + String.format("%.3f", avgNoIonsMs) + " ms avg over " + numIterations
-	+ " iterations");
+        + " iterations");
     double speedup = avgWithIonsMs / avgNoIonsMs;
     logger.info("Speedup from ion optimization: " + String.format("%.1fx", speedup));
 

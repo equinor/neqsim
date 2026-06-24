@@ -123,13 +123,13 @@ public class SampleSet implements Cloneable {
 
     for (int i = 0; i < samples.size(); i++) {
       for (int j = 0; j < newSet.getSample(i).getDependentValues().length; j++) {
-	System.out.println("old Var: " + newSet.getSample(i).getDependentValue(j));
-	double newVar = cern.jet.random.Normal.staticNextDouble(newSet.getSample(i).getDependentValue(j),
-	    newSet.getSample(i).getStandardDeviation(j));
-	newVar = cern.jet.random.Normal.staticNextDouble(newSet.getSample(i).getDependentValue(j),
-	    newSet.getSample(i).getStandardDeviation(j));
-	newSet.getSample(i).setDependentValue(j, newVar);
-	System.out.println("new var: " + newVar);
+        System.out.println("old Var: " + newSet.getSample(i).getDependentValue(j));
+        double newVar = cern.jet.random.Normal.staticNextDouble(newSet.getSample(i).getDependentValue(j),
+            newSet.getSample(i).getStandardDeviation(j));
+        newVar = cern.jet.random.Normal.staticNextDouble(newSet.getSample(i).getDependentValue(j),
+            newSet.getSample(i).getStandardDeviation(j));
+        newSet.getSample(i).setDependentValue(j, newVar);
+        System.out.println("new var: " + newVar);
       }
     }
     return newSet;

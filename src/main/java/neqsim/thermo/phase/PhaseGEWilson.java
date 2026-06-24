@@ -40,8 +40,8 @@ public class PhaseGEWilson extends PhaseGE {
     for (int i = 0; i < alpha[0].length; i++) {
       numberOfComponents++;
       componentArray[i] = new ComponentGEWilson(phase.getComponent(i).getName(),
-	  phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
-	  phase.getComponent(i).getComponentNumber());
+          phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
+          phase.getComponent(i).getComponentNumber());
     }
   }
 
@@ -97,7 +97,7 @@ public class PhaseGEWilson extends PhaseGE {
     GE = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       GE += phase.getComponent(i).getx()
-	  * Math.log(((ComponentGEWilson) componentArray[i]).getWilsonActivityCoefficient(phase));
+          * Math.log(((ComponentGEWilson) componentArray[i]).getWilsonActivityCoefficient(phase));
     }
 
     return R * temperature * numberOfMolesInPhase * GE;

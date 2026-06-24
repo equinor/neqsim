@@ -74,7 +74,7 @@ public class TankMechanicalDesignTest {
 
       // Each course should be >= the one above it
       for (int i = 1; i < thicknesses.length; i++) {
-	assertTrue(thicknesses[i - 1] >= thicknesses[i], "Lower courses should be thicker or equal");
+        assertTrue(thicknesses[i - 1] >= thicknesses[i], "Lower courses should be thicker or equal");
       }
       logger.info("Number of shell courses: " + thicknesses.length);
       logger.info("Bottom course thickness: " + bottomCourse + " mm");

@@ -93,6 +93,6 @@ class TransientThreePhaseFlowTest {
     // Change ratio should be within reasonable bounds (factor of 5)
     double ratio = finalInventory / initialInventory;
     assertTrue(ratio > 0.2 && ratio < 5.0, "Inventory ratio should be reasonable. Initial: " + initialInventory
-	+ ", Final: " + finalInventory + ", Ratio: " + ratio);
+        + ", Final: " + finalInventory + ", Ratio: " + ratio);
   }
 }

@@ -102,19 +102,19 @@ public class RadialExpanderGeometryMapTest {
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-	generator.generateChart(new double[] { 1.0 }, new double[] { 95.0 });
+        generator.generateChart(new double[] { 1.0 }, new double[] { 95.0 });
       }
     });
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-	generator.generateChart(new double[] { 0.5, 1.0 }, new double[] { 70.0 });
+        generator.generateChart(new double[] { 0.5, 1.0 }, new double[] { 70.0 });
       }
     });
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-	generator.setDegreeOfReaction(1.0);
+        generator.setDegreeOfReaction(1.0);
       }
     });
   }

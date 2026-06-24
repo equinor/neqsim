@@ -83,7 +83,7 @@ public class StidHazopDataSourceTest {
   @Test
   void skipsUnrecognizedDeviation() {
     String json = "{\"nodes\": [{\"nodeId\": \"N1\", \"designIntent\": \"x\","
-	+ "\"deviations\": [{\"guideWord\": \"BOGUS\", \"parameter\": \"FLOW\"}]}]}";
+        + "\"deviations\": [{\"guideWord\": \"BOGUS\", \"parameter\": \"FLOW\"}]}]}";
     List<HAZOPTemplate> nodes = new StidHazopDataSource(json).read();
     assertEquals(1, nodes.size());
     assertTrue(nodes.get(0).getDeviations().isEmpty());

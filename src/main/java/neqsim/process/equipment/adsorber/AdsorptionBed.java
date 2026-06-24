@@ -228,7 +228,7 @@ public class AdsorptionBed extends TwoPortEquipment {
       molesAdsorbed = Math.min(molesAdsorbed, inletMoles * 0.999);
 
       if (molesAdsorbed > 1e-15) {
-	system.addComponent(comp, -molesAdsorbed);
+        system.addComponent(comp, -molesAdsorbed);
       }
     }
 
@@ -236,7 +236,7 @@ public class AdsorptionBed extends TwoPortEquipment {
     if (pressureDrop > 0 && calculatePressureDrop) {
       double outletPressure = system.getPressure("Pa") - pressureDrop;
       if (outletPressure > 0) {
-	system.setPressure(outletPressure, "Pa");
+        system.setPressure(outletPressure, "Pa");
       }
     }
 
@@ -317,62 +317,63 @@ public class AdsorptionBed extends TwoPortEquipment {
       // 1) Convective transport (upwind)
       double[][] newGasConc = new double[numberOfCells][numComp];
       for (int comp = 0; comp < numComp; comp++) {
-	// Cell 0 gets inlet concentration
-	double upstreamConc = desorptionMode ? 0.0 : inletConc[comp];
-	for (int cell = 0; cell < numberOfCells; cell++) {
-	  double convFlux = interstitialVelocity * (upstreamConc - gasConcentation[cell][comp]) / cellLength;
-	  newGasConc[cell][comp] = gasConcentation[cell][comp] + subDt * convFlux;
-	  upstreamConc = gasConcentation[cell][comp];
-	}
+        // Cell 0 gets inlet concentration
+        double upstreamConc = desorptionMode ? 0.0 : inletConc[comp];
+        for (int cell = 0; cell < numberOfCells; cell++) {
+          double convFlux = interstitialVelocity * (upstreamConc - gasConcentation[cell][comp]) / cellLength;
+          newGasConc[cell][comp] = gasConcentation[cell][comp] + subDt * convFlux;
+          upstreamConc = gasConcentation[cell][comp];
+        }
       }
 
       // 2) LDF mass-transfer in each cell
       for (int cell = 0; cell < numberOfCells; cell++) {
-	// Create a local thermo system for equilibrium calculation
-	SystemInterface localSystem = system.clone();
-	localSystem.init(0);
+        // Create a local thermo system for equilibrium calculation
+        SystemInterface localSystem = system.clone();
+        localSystem.init(0);
 
-	// During desorption, adjust local conditions to drive q* down
-	if (desorptionMode) {
-	  if (desorptionPressure > 0) {
-	    localSystem.setPressure(desorptionPressure);
-	  } else {
-	    // Default: atmospheric pressure for PSA-style desorption
-	    localSystem.setPressure(1.01325);
-	  }
-	  if (desorptionTemperature > 0) {
-	    localSystem.setTemperature(desorptionTemperature);
-	  }
-	}
+        // During desorption, adjust local conditions to drive q* down
+        if (desorptionMode) {
+          if (desorptionPressure > 0) {
+            localSystem.setPressure(desorptionPressure);
+          } else {
+            // Default: atmospheric pressure for PSA-style desorption
+            localSystem.setPressure(1.01325);
+          }
+          if (desorptionTemperature > 0) {
+            localSystem.setTemperature(desorptionTemperature);
+          }
+        }
 
-	for (int comp = 0; comp < numComp; comp++) {
-	  double moleFrac = newGasConc[cell][comp] / Math.max(sumArray(newGasConc[cell]), 1e-20);
-	  localSystem.getPhase(0).getComponent(comp).setx(moleFrac);
-	}
+        for (int comp = 0; comp < numComp; comp++) {
+          double moleFrac = newGasConc[cell][comp] / Math.max(sumArray(newGasConc[cell]), 1e-20);
+          localSystem.getPhase(0).getComponent(comp).setx(moleFrac);
+        }
 
-	AdsorptionInterface localModel = createIsothermModel(localSystem);
-	localModel.setSolidMaterial(adsorbentMaterial);
-	localModel.calcAdsorption(0);
+        AdsorptionInterface localModel = createIsothermModel(localSystem);
+        localModel.setSolidMaterial(adsorbentMaterial);
+        localModel.calcAdsorption(0);
 
-	for (int comp = 0; comp < numComp; comp++) {
-	  double qStar = localModel.getSurfaceExcess(comp); // equilibrium loading (mol/kg)
-	  double qCurrent = solidLoading[cell][comp]; // current loading
-	  double kLDFcomp = getKLDF(comp);
+        for (int comp = 0; comp < numComp; comp++) {
+          double qStar = localModel.getSurfaceExcess(comp); // equilibrium loading
+                                                            // (mol/kg)
+          double qCurrent = solidLoading[cell][comp]; // current loading
+          double kLDFcomp = getKLDF(comp);
 
-	  // Mass transfer: dq/dt = k_LDF * (q* - q)
-	  // During desorption q* < q (lower pressure/higher temp), so dqdt < 0
-	  double dqdt = kLDFcomp * (qStar - qCurrent);
+          // Mass transfer: dq/dt = k_LDF * (q* - q)
+          // During desorption q* < q (lower pressure/higher temp), so dqdt < 0
+          double dqdt = kLDFcomp * (qStar - qCurrent);
 
-	  // Update solid loading
-	  solidLoading[cell][comp] += subDt * dqdt;
-	  solidLoading[cell][comp] = Math.max(0.0, solidLoading[cell][comp]);
+          // Update solid loading
+          solidLoading[cell][comp] += subDt * dqdt;
+          solidLoading[cell][comp] = Math.max(0.0, solidLoading[cell][comp]);
 
-	  // Update gas concentration (mass balance in void space)
-	  double molesTransferred = dqdt * cellAdsorbentMass; // mol/s
-	  double concChange = molesTransferred / cellVoidVolume; // mol/m3/s
-	  newGasConc[cell][comp] -= subDt * concChange;
-	  newGasConc[cell][comp] = Math.max(0.0, newGasConc[cell][comp]);
-	}
+          // Update gas concentration (mass balance in void space)
+          double molesTransferred = dqdt * cellAdsorbentMass; // mol/s
+          double concChange = molesTransferred / cellVoidVolume; // mol/m3/s
+          newGasConc[cell][comp] -= subDt * concChange;
+          newGasConc[cell][comp] = Math.max(0.0, newGasConc[cell][comp]);
+        }
       }
 
       gasConcentation = newGasConc;
@@ -383,8 +384,8 @@ public class AdsorptionBed extends TwoPortEquipment {
     double totalOutletConc = sumArray(outletConc);
     if (totalOutletConc > 1e-20) {
       for (int comp = 0; comp < numComp; comp++) {
-	double moleFrac = outletConc[comp] / totalOutletConc;
-	system.getPhase(0).getComponent(comp).setx(Math.max(moleFrac, 1e-30));
+        double moleFrac = outletConc[comp] / totalOutletConc;
+        system.getPhase(0).getComponent(comp).setx(Math.max(moleFrac, 1e-30));
       }
     }
 
@@ -393,7 +394,7 @@ public class AdsorptionBed extends TwoPortEquipment {
       pressureDrop = calcErgunPressureDrop(system, superficialVelocity(system));
       double outPressure = system.getPressure("Pa") - pressureDrop;
       if (outPressure > 0) {
-	system.setPressure(outPressure, "Pa");
+        system.setPressure(outPressure, "Pa");
       }
     }
 
@@ -435,7 +436,7 @@ public class AdsorptionBed extends TwoPortEquipment {
     if (kLDF == null || kLDF.length != numComp) {
       kLDF = new double[numComp];
       for (int i = 0; i < numComp; i++) {
-	kLDF[i] = defaultKLDF;
+        kLDF[i] = defaultKLDF;
       }
     }
 
@@ -465,7 +466,7 @@ public class AdsorptionBed extends TwoPortEquipment {
     int numComp = refSystem.getPhase(0).getNumberOfComponents();
     for (int cell = 0; cell < numberOfCells; cell++) {
       for (int comp = 0; comp < numComp; comp++) {
-	solidLoading[cell][comp] = fractionalSaturation * model.getSurfaceExcess(comp);
+        solidLoading[cell][comp] = fractionalSaturation * model.getSurfaceExcess(comp);
       }
     }
     logger.info("Bed pre-loaded to " + (fractionalSaturation * 100) + "% saturation");
@@ -484,7 +485,7 @@ public class AdsorptionBed extends TwoPortEquipment {
   public void setDesorptionMode(boolean desorb) {
     this.desorptionMode = desorb;
     this.currentPhase = desorb ? AdsorptionCycleController.CyclePhase.DESORPTION
-	: AdsorptionCycleController.CyclePhase.ADSORPTION;
+        : AdsorptionCycleController.CyclePhase.ADSORPTION;
     logger.info("Bed mode set to: " + currentPhase);
   }
 
@@ -571,13 +572,13 @@ public class AdsorptionBed extends TwoPortEquipment {
   private void checkBreakthrough(double[] inletConc, double[] outletConc) {
     for (int comp = 0; comp < inletConc.length; comp++) {
       if (inletConc[comp] > 1e-15) {
-	double ratio = outletConc[comp] / inletConc[comp];
-	if (ratio > breakthroughThreshold && !breakthroughOccurred) {
-	  breakthroughOccurred = true;
-	  breakthroughTime = elapsedTime;
-	  logger.info(
-	      "Breakthrough detected for component " + comp + " at time " + elapsedTime + " s (C/C0 = " + ratio + ")");
-	}
+        double ratio = outletConc[comp] / inletConc[comp];
+        if (ratio > breakthroughThreshold && !breakthroughOccurred) {
+          breakthroughOccurred = true;
+          breakthroughTime = elapsedTime;
+          logger.info(
+              "Breakthrough detected for component " + comp + " at time " + elapsedTime + " s (C/C0 = " + ratio + ")");
+        }
       }
     }
   }
@@ -723,10 +724,10 @@ public class AdsorptionBed extends TwoPortEquipment {
     for (int cell = 0; cell < numberOfCells; cell++) {
       double cNorm = gasConcentation[cell][component] / inletConc;
       if (cNorm >= 0.05 && cellLow < 0) {
-	cellLow = cell;
+        cellLow = cell;
       }
       if (cNorm >= 0.95 && cellHigh < 0) {
-	cellHigh = cell;
+        cellHigh = cell;
       }
     }
     if (cellLow < 0 || cellHigh < 0 || cellHigh <= cellLow) {
@@ -841,11 +842,11 @@ public class AdsorptionBed extends TwoPortEquipment {
     }
     if (adsorbentMaterial == null || adsorbentMaterial.trim().isEmpty()) {
       result.addError("adsorbent", "Adsorbent material not specified",
-	  "Set adsorbent material: setAdsorbentMaterial(name)");
+          "Set adsorbent material: setAdsorbentMaterial(name)");
     }
     if (adsorbentBulkDensity <= 0) {
       result.addError("adsorbent", "Bulk density must be positive",
-	  "Set adsorbent bulk density: setAdsorbentBulkDensity(value)");
+          "Set adsorbent bulk density: setAdsorbentBulkDensity(value)");
     }
 
     return result;
@@ -1027,7 +1028,7 @@ public class AdsorptionBed extends TwoPortEquipment {
       int numComp = getInletStream().getThermoSystem().getPhase(0).getNumberOfComponents();
       kLDF = new double[numComp];
       for (int i = 0; i < numComp; i++) {
-	kLDF[i] = defaultKLDF;
+        kLDF[i] = defaultKLDF;
       }
     }
     if (component < kLDF.length) {
@@ -1044,7 +1045,7 @@ public class AdsorptionBed extends TwoPortEquipment {
     this.defaultKLDF = value;
     if (kLDF != null) {
       for (int i = 0; i < kLDF.length; i++) {
-	kLDF[i] = value;
+        kLDF[i] = value;
       }
     }
   }

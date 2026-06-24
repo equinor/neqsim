@@ -129,51 +129,51 @@ public class WhitsonPVTReader {
       boolean inBipTable = false;
 
       while ((line = br.readLine()) != null) {
-	line = line.trim();
-	if (line.isEmpty()) {
-	  continue;
-	}
+        line = line.trim();
+        if (line.isEmpty()) {
+          continue;
+        }
 
-	// Detect section transitions
-	if (line.startsWith("Component") && line.contains("MW")) {
-	  inComponentTable = true;
-	  inBipTable = false;
-	  // Skip header line
-	  br.readLine(); // Units line
-	  continue;
-	}
+        // Detect section transitions
+        if (line.startsWith("Component") && line.contains("MW")) {
+          inComponentTable = true;
+          inBipTable = false;
+          // Skip header line
+          br.readLine(); // Units line
+          continue;
+        }
 
-	if (line.startsWith("BIPS")) {
-	  inBipTable = true;
-	  inComponentTable = false;
-	  // Parse BIP column headers
-	  String[] headers = line.split("\t");
-	  for (int i = 1; i < headers.length; i++) {
-	    componentNames.add(headers[i].trim());
-	  }
-	  continue;
-	}
+        if (line.startsWith("BIPS")) {
+          inBipTable = true;
+          inComponentTable = false;
+          // Parse BIP column headers
+          String[] headers = line.split("\t");
+          for (int i = 1; i < headers.length; i++) {
+            componentNames.add(headers[i].trim());
+          }
+          continue;
+        }
 
-	if (inComponentTable && !inBipTable) {
-	  parseComponentLine(line);
-	} else if (inBipTable) {
-	  parseBipLine(line, componentNames.size(), bipRows);
-	} else {
-	  parseParameterLine(line);
-	}
+        if (inComponentTable && !inBipTable) {
+          parseComponentLine(line);
+        } else if (inBipTable) {
+          parseBipLine(line, componentNames.size(), bipRows);
+        } else {
+          parseParameterLine(line);
+        }
       }
 
       // Build BIP matrix
       if (!bipRows.isEmpty()) {
-	bipMatrix = new double[bipRows.size()][bipRows.size()];
-	for (int i = 0; i < bipRows.size(); i++) {
-	  bipMatrix[i] = bipRows.get(i);
-	}
+        bipMatrix = new double[bipRows.size()][bipRows.size()];
+        for (int i = 0; i < bipRows.size(); i++) {
+          bipMatrix[i] = bipRows.get(i);
+        }
       }
 
       // Build component index map
       for (int i = 0; i < components.size(); i++) {
-	componentIndex.put(components.get(i).name, i);
+        componentIndex.put(components.get(i).name, i);
       }
     }
   }
@@ -257,7 +257,7 @@ public class WhitsonPVTReader {
 
       // LMW is optional (only for C6+ fractions)
       if (parts.length > 13 && !parts[13].trim().isEmpty()) {
-	comp.lmw = parseDouble(parts[13]);
+        comp.lmw = parseDouble(parts[13]);
       }
 
       components.add(comp);
@@ -359,10 +359,10 @@ public class WhitsonPVTReader {
     // Set LBC viscosity model for all phases
     for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
       try {
-	fluid.getPhase(phase).getPhysicalProperties().setViscosityModel("LBC");
-	fluid.getPhase(phase).getPhysicalProperties().setLbcParameters(lbcParams);
+        fluid.getPhase(phase).getPhysicalProperties().setViscosityModel("LBC");
+        fluid.getPhase(phase).getPhysicalProperties().setLbcParameters(lbcParams);
       } catch (Exception e) {
-	logger.debug("Could not set LBC model for phase " + phase + ": " + e.getMessage());
+        logger.debug("Could not set LBC model for phase " + phase + ": " + e.getMessage());
       }
     }
   }
@@ -409,24 +409,24 @@ public class WhitsonPVTReader {
 
       // Set all component properties
       for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
-	setComponentProperties(fluid, phase, pseudoName, comp, tcKelvin, tbKelvin);
+        setComponentProperties(fluid, phase, pseudoName, comp, tcKelvin, tbKelvin);
       }
     } else {
       // Try to add as standard component first
       String standardName = mapToStandardName(name);
       try {
-	fluid.addComponent(standardName, moles);
+        fluid.addComponent(standardName, moles);
 
-	// Override properties with those from file
-	for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
-	  setComponentProperties(fluid, phase, standardName, comp, tcKelvin, tbKelvin);
-	}
+        // Override properties with those from file
+        for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
+          setComponentProperties(fluid, phase, standardName, comp, tcKelvin, tbKelvin);
+        }
       } catch (Exception e) {
-	// If standard component fails, add as pseudo-component
-	fluid.addComponent(name, moles, tcKelvin, comp.pc, comp.accentricFactor);
-	for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
-	  setComponentProperties(fluid, phase, name, comp, tcKelvin, tbKelvin);
-	}
+        // If standard component fails, add as pseudo-component
+        fluid.addComponent(name, moles, tcKelvin, comp.pc, comp.accentricFactor);
+        for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
+          setComponentProperties(fluid, phase, name, comp, tcKelvin, tbKelvin);
+        }
       }
     }
   }
@@ -446,7 +446,7 @@ public class WhitsonPVTReader {
     try {
       ComponentInterface component = fluid.getPhase(phase).getComponent(name);
       if (component == null) {
-	return;
+        return;
       }
 
       component.setMolarMass(comp.mw / 1000.0); // Convert g/mol to kg/mol
@@ -459,13 +459,13 @@ public class WhitsonPVTReader {
       component.setParachorParameter(comp.parachor);
 
       if (comp.sg > 0) {
-	// normalLiquidDensity is stored in g/cm3 (same as specific gravity)
-	component.setNormalLiquidDensity(comp.sg);
+        // normalLiquidDensity is stored in g/cm3 (same as specific gravity)
+        component.setNormalLiquidDensity(comp.sg);
       }
 
       // Set viscosity-related critical properties if available
       if (comp.zcVisc > 0) {
-	component.setRacketZ(comp.zcVisc);
+        component.setRacketZ(comp.zcVisc);
       }
     } catch (Exception e) {
       logger.warn("Failed to set properties for component: " + name, e);
@@ -486,23 +486,23 @@ public class WhitsonPVTReader {
 
     for (int i = 0; i < n; i++) {
       for (int j = i; j < n; j++) {
-	if (i >= bipMatrix.length || j >= bipMatrix[i].length) {
-	  continue;
-	}
+        if (i >= bipMatrix.length || j >= bipMatrix[i].length) {
+          continue;
+        }
 
-	double kij = bipMatrix[i][j];
-	if (Math.abs(kij) < 1e-10) {
-	  continue; // Skip zero BIPs
-	}
+        double kij = bipMatrix[i][j];
+        if (Math.abs(kij) < 1e-10) {
+          continue; // Skip zero BIPs
+        }
 
-	for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
-	  try {
-	    ((PhaseEosInterface) fluid.getPhase(phase)).getEosMixingRule().setBinaryInteractionParameter(i, j, kij);
-	    ((PhaseEosInterface) fluid.getPhase(phase)).getEosMixingRule().setBinaryInteractionParameter(j, i, kij);
-	  } catch (Exception e) {
-	    logger.warn("Failed to set BIP for components " + i + ", " + j, e);
-	  }
-	}
+        for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
+          try {
+            ((PhaseEosInterface) fluid.getPhase(phase)).getEosMixingRule().setBinaryInteractionParameter(i, j, kij);
+            ((PhaseEosInterface) fluid.getPhase(phase)).getEosMixingRule().setBinaryInteractionParameter(j, i, kij);
+          } catch (Exception e) {
+            logger.warn("Failed to set BIP for components " + i + ", " + j, e);
+          }
+        }
       }
     }
   }
@@ -518,8 +518,8 @@ public class WhitsonPVTReader {
       // Extract carbon number
       String numStr = name.replaceAll("[^0-9]", "");
       if (!numStr.isEmpty()) {
-	int carbonNumber = Integer.parseInt(numStr.substring(0, Math.min(2, numStr.length())));
-	return carbonNumber >= 7;
+        int carbonNumber = Integer.parseInt(numStr.substring(0, Math.min(2, numStr.length())));
+        return carbonNumber >= 7;
       }
     }
     return name.contains("+") || name.contains("C36");

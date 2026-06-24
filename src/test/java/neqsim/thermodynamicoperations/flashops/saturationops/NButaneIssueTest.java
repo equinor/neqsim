@@ -128,8 +128,8 @@ public class NButaneIssueTest {
       logger.info("  Time: " + (end - start) + " ms");
       logger.info("  Phases: " + fluid.getNumberOfPhases());
       for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-	logger.info("    Phase " + i + ": " + fluid.getPhase(i).getPhaseTypeName() + " beta="
-	    + String.format("%.4f", fluid.getBeta(i)));
+        logger.info("    Phase " + i + ": " + fluid.getPhase(i).getPhaseTypeName() + " beta="
+            + String.format("%.4f", fluid.getBeta(i)));
       }
 
     }
@@ -165,7 +165,7 @@ public class NButaneIssueTest {
     for (int i = 0; i < fluid1.getNumberOfPhases(); i++) {
       logger.info("    Phase " + i + ": " + fluid1.getPhase(i).getPhaseTypeName());
       if (fluid1.getPhase(i).hasComponent("n-butane")) {
-	System.out.println("      n-butane x = " + fluid1.getPhase(i).getComponent("n-butane").getx());
+        System.out.println("      n-butane x = " + fluid1.getPhase(i).getComponent("n-butane").getx());
       }
     }
 
@@ -244,7 +244,7 @@ public class NButaneIssueTest {
     logger.info("Components:");
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       logger.info("  " + i + ": " + fluid.getComponent(i).getName() + " (ionic charge: "
-	  + fluid.getComponent(i).getIonicCharge() + ")");
+          + fluid.getComponent(i).getIonicCharge() + ")");
     }
 
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);

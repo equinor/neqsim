@@ -60,10 +60,10 @@ class ProductionOptimizerAdvancedTest {
 
     ProductionOptimizer optimizer = new ProductionOptimizer();
     OptimizationConfig config = new OptimizationConfig(50.0, 500.0).searchMode(SearchMode.GRADIENT_DESCENT_SCORE)
-	.rateUnit("kg/hr").maxIterations(20).tolerance(1.0);
+        .rateUnit("kg/hr").maxIterations(20).tolerance(1.0);
 
     OptimizationResult result = optimizer.optimize(process, feed, config, Collections.emptyList(),
-	Collections.emptyList());
+        Collections.emptyList());
 
     Assertions.assertNotNull(result, "Gradient descent should return a result");
     Assertions.assertTrue(result.getOptimalRate() >= 50.0, "Optimal rate should be within lower bound");
@@ -83,15 +83,15 @@ class ProductionOptimizerAdvancedTest {
     ProductionOptimizer optimizer = new ProductionOptimizer();
 
     ManipulatedVariable flowVar = new ManipulatedVariable("flow", 50.0, 300.0, "kg/hr",
-	(proc, val) -> ((StreamInterface) proc.getUnit("feed")).setFlowRate(val, "kg/hr"));
+        (proc, val) -> ((StreamInterface) proc.getUnit("feed")).setFlowRate(val, "kg/hr"));
     ManipulatedVariable pressureVar = new ManipulatedVariable("pressure", 40.0, 100.0, "bara",
-	(proc, val) -> ((Compressor) proc.getUnit("compressor")).setOutletPressure(val));
+        (proc, val) -> ((Compressor) proc.getUnit("compressor")).setOutletPressure(val));
 
     OptimizationConfig config = new OptimizationConfig(50.0, 300.0).searchMode(SearchMode.GRADIENT_DESCENT_SCORE)
-	.rateUnit("kg/hr").maxIterations(15).tolerance(1.0);
+        .rateUnit("kg/hr").maxIterations(15).tolerance(1.0);
 
     OptimizationResult result = optimizer.optimize(process, Arrays.asList(flowVar, pressureVar), config,
-	Collections.emptyList(), Collections.emptyList());
+        Collections.emptyList(), Collections.emptyList());
 
     Assertions.assertNotNull(result, "Multi-variable gradient descent should return a result");
     Assertions.assertNotNull(result.getDecisionVariables(), "Should have decision variables");
@@ -110,16 +110,16 @@ class ProductionOptimizerAdvancedTest {
 
     ProductionOptimizer optimizer = new ProductionOptimizer();
     OptimizationConfig config = new OptimizationConfig(50.0, 500.0).searchMode(SearchMode.PARTICLE_SWARM_SCORE)
-	.rateUnit("kg/hr").maxIterations(10).tolerance(1.0).randomSeed(42L).useFixedSeed(true);
+        .rateUnit("kg/hr").maxIterations(10).tolerance(1.0).randomSeed(42L).useFixedSeed(true);
 
     OptimizationResult result1 = optimizer.optimize(process, feed, config, Collections.emptyList(),
-	Collections.emptyList());
+        Collections.emptyList());
 
     OptimizationResult result2 = optimizer.optimize(process, feed, config, Collections.emptyList(),
-	Collections.emptyList());
+        Collections.emptyList());
 
     Assertions.assertEquals(result1.getOptimalRate(), result2.getOptimalRate(), 1e-6,
-	"PSO with fixed seed should produce identical results");
+        "PSO with fixed seed should produce identical results");
   }
 
   /**
@@ -135,20 +135,20 @@ class ProductionOptimizerAdvancedTest {
 
     // Stream-based call (delegates internally)
     OptimizationConfig config = new OptimizationConfig(50.0, 500.0).searchMode(SearchMode.GOLDEN_SECTION_SCORE)
-	.rateUnit("kg/hr").maxIterations(15).tolerance(1.0);
+        .rateUnit("kg/hr").maxIterations(15).tolerance(1.0);
 
     OptimizationResult streamResult = optimizer.optimize(process, feed, config, Collections.emptyList(),
-	Collections.emptyList());
+        Collections.emptyList());
 
     // Equivalent variable-based call
     ManipulatedVariable feedVar = new ManipulatedVariable("feed", 50.0, 500.0, "kg/hr",
-	(proc, val) -> ((StreamInterface) proc.getUnit("feed")).setFlowRate(val, "kg/hr"));
+        (proc, val) -> ((StreamInterface) proc.getUnit("feed")).setFlowRate(val, "kg/hr"));
 
     OptimizationResult varResult = optimizer.optimize(process, Collections.singletonList(feedVar), config,
-	Collections.emptyList(), Collections.emptyList());
+        Collections.emptyList(), Collections.emptyList());
 
     Assertions.assertEquals(streamResult.getOptimalRate(), varResult.getOptimalRate(), 50.0,
-	"Stream-based and variable-based should converge to similar results");
+        "Stream-based and variable-based should converge to similar results");
     Assertions.assertTrue(streamResult.isFeasible() == varResult.isFeasible(), "Feasibility should be consistent");
   }
 
@@ -165,12 +165,12 @@ class ProductionOptimizerAdvancedTest {
     OptimizationConfig config = new OptimizationConfig(100.0, 100.0).rateUnit("kg/hr").maxIterations(5).tolerance(0.1);
 
     OptimizationResult result = optimizer.optimize(process, feed, config, Collections.emptyList(),
-	Collections.emptyList());
+        Collections.emptyList());
 
     Assertions.assertNotNull(result);
     // With equal bounds, optimal rate should equal the single feasible point
     Assertions.assertEquals(100.0, result.getOptimalRate(), 1.0,
-	"Equal bounds should force optimal to the single point");
+        "Equal bounds should force optimal to the single point");
   }
 
   /**
@@ -186,16 +186,16 @@ class ProductionOptimizerAdvancedTest {
 
     // Throughput objective (maximize)
     OptimizationObjective throughput = new OptimizationObjective("throughput",
-	proc -> ((StreamInterface) proc.getUnit("feed")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
+        proc -> ((StreamInterface) proc.getUnit("feed")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
 
     // Power objective (minimize — less compressor power is better)
     OptimizationObjective power = new OptimizationObjective("power",
-	proc -> Math.abs(((Compressor) proc.getUnit("compressor")).getPower()), 1.0, ObjectiveType.MINIMIZE);
+        proc -> Math.abs(((Compressor) proc.getUnit("compressor")).getPower()), 1.0, ObjectiveType.MINIMIZE);
 
     List<OptimizationObjective> objectives = Arrays.asList(throughput, power);
 
     OptimizationConfig config = new OptimizationConfig(50.0, 300.0).rateUnit("kg/hr").maxIterations(10).tolerance(10.0)
-	.paretoGridSize(5);
+        .paretoGridSize(5);
 
     ParetoResult pareto = optimizer.optimizePareto(process, feed, config, objectives, Collections.emptyList());
 
@@ -217,10 +217,10 @@ class ProductionOptimizerAdvancedTest {
 
     // Run with tight utilization limit to force some infeasible points
     OptimizationConfig config = new OptimizationConfig(50.0, 500.0).rateUnit("kg/hr").maxIterations(15)
-	.defaultUtilizationLimit(0.5);
+        .defaultUtilizationLimit(0.5);
 
     OptimizationResult result = optimizer.optimize(process, feed, config, Collections.emptyList(),
-	Collections.emptyList());
+        Collections.emptyList());
 
     Assertions.assertNotNull(result);
     // With a 50% utilization limit, the optimizer should find a constrained optimum
@@ -242,10 +242,10 @@ class ProductionOptimizerAdvancedTest {
 
     ProductionOptimizer optimizer = new ProductionOptimizer();
     OptimizationConfig config = new OptimizationConfig(50.0, 500.0).searchMode(SearchMode.NELDER_MEAD_SCORE)
-	.rateUnit("kg/hr").maxIterations(20).tolerance(1.0);
+        .rateUnit("kg/hr").maxIterations(20).tolerance(1.0);
 
     OptimizationResult result = optimizer.optimize(process, feed, config, Collections.emptyList(),
-	Collections.emptyList());
+        Collections.emptyList());
 
     Assertions.assertNotNull(result);
     Assertions.assertTrue(result.getOptimalRate() >= 50.0);
@@ -272,9 +272,9 @@ class ProductionOptimizerAdvancedTest {
     OptimizationConfig config2 = new OptimizationConfig(100.0, 500.0).rateUnit("kg/hr").maxIterations(10);
 
     ProductionOptimizer.ScenarioRequest scenario1 = new ProductionOptimizer.ScenarioRequest("Low Pressure", process1,
-	feed1, config1, Collections.emptyList(), Collections.emptyList());
+        feed1, config1, Collections.emptyList(), Collections.emptyList());
     ProductionOptimizer.ScenarioRequest scenario2 = new ProductionOptimizer.ScenarioRequest("High Pressure", process2,
-	feed2, config2, Collections.emptyList(), Collections.emptyList());
+        feed2, config2, Collections.emptyList(), Collections.emptyList());
 
     List<ProductionOptimizer.ScenarioResult> results = optimizer.optimizeScenarios(Arrays.asList(scenario1, scenario2));
 

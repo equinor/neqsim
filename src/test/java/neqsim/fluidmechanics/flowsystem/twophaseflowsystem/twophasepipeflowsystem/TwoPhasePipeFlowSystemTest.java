@@ -182,7 +182,7 @@ public class TwoPhasePipeFlowSystemTest {
     double tolerance = 0.1; // 10% tolerance for mass balance
     double massRatio = outletMoles / inletMoles;
     assertTrue(massRatio > (1 - tolerance) && massRatio < (1 + tolerance),
-	"Mass conservation violated: inlet=" + inletMoles + " outlet=" + outletMoles);
+        "Mass conservation violated: inlet=" + inletMoles + " outlet=" + outletMoles);
   }
 
   @Test
@@ -219,7 +219,7 @@ public class TwoPhasePipeFlowSystemTest {
 
     // Pressure should decrease (or stay same) along horizontal pipe due to friction
     assertTrue(outletPressure <= inletPressure,
-	"Pressure should decrease along pipe: inlet=" + inletPressure + " outlet=" + outletPressure);
+        "Pressure should decrease along pipe: inlet=" + inletPressure + " outlet=" + outletPressure);
   }
 
   @Test
@@ -263,7 +263,7 @@ public class TwoPhasePipeFlowSystemTest {
 
     // Temperature should decrease due to heat loss to cold surroundings
     assertTrue(outletTemp <= inletTemp,
-	"Temperature should decrease due to heat loss: inlet=" + inletTemp + " outlet=" + outletTemp);
+        "Temperature should decrease due to heat loss: inlet=" + inletTemp + " outlet=" + outletTemp);
   }
 
   @Test
@@ -330,7 +330,7 @@ public class TwoPhasePipeFlowSystemTest {
 
     // Each node should have a fluid boundary for mass/heat transfer
     assertNotNull(pipe.getNode(0).getFluidBoundary(),
-	"Fluid boundary should be initialized for mass transfer calculations");
+        "Fluid boundary should be initialized for mass transfer calculations");
   }
 
   // ==================== PROFILE OUTPUT TESTS ====================
@@ -347,7 +347,7 @@ public class TwoPhasePipeFlowSystemTest {
 
     assertNotNull(temperatures, "Temperature profile should not be null");
     assertEquals(pipe.getTotalNumberOfNodes(), temperatures.length,
-	"Temperature profile length should match number of nodes");
+        "Temperature profile length should match number of nodes");
     assertTrue(temperatures[0] > 0, "Temperatures should be positive");
   }
 
@@ -363,7 +363,7 @@ public class TwoPhasePipeFlowSystemTest {
 
     assertNotNull(pressures, "Pressure profile should not be null");
     assertEquals(pipe.getTotalNumberOfNodes(), pressures.length,
-	"Pressure profile length should match number of nodes");
+        "Pressure profile length should match number of nodes");
     assertTrue(pressures[0] > 0, "Pressures should be positive");
   }
 
@@ -378,7 +378,7 @@ public class TwoPhasePipeFlowSystemTest {
 
     assertNotNull(positions, "Position profile should not be null");
     assertEquals(pipe.getTotalNumberOfNodes(), positions.length,
-	"Position profile length should match number of nodes");
+        "Position profile length should match number of nodes");
     assertEquals(0.0, positions[0], 0.001, "First position should be 0");
 
     // Positions should be monotonically increasing
@@ -399,7 +399,7 @@ public class TwoPhasePipeFlowSystemTest {
 
     assertNotNull(voidFractions, "Void fraction profile should not be null");
     assertEquals(pipe.getTotalNumberOfNodes(), voidFractions.length,
-	"Void fraction profile length should match number of nodes");
+        "Void fraction profile length should match number of nodes");
 
     // Void fractions should be between 0 and 1
     for (double vf : voidFractions) {
@@ -549,7 +549,7 @@ public class TwoPhasePipeFlowSystemTest {
 
     // Flash to establish two-phase equilibrium
     neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	twoPhaseSystem);
+        twoPhaseSystem);
     ops.TPflash();
     twoPhaseSystem.initPhysicalProperties();
 
@@ -586,7 +586,7 @@ public class TwoPhasePipeFlowSystemTest {
     double liquidVelAfterInit = pipeWithTransfer.getNode(0).getVelocity(1);
     assertTrue(Double.isFinite(gasVelAfterInit), "Gas velocity should be finite after init, was: " + gasVelAfterInit);
     assertTrue(Double.isFinite(liquidVelAfterInit),
-	"Liquid velocity should be finite after init, was: " + liquidVelAfterInit);
+        "Liquid velocity should be finite after init, was: " + liquidVelAfterInit);
 
     // Verify velocities are realistic (< 100 m/s for typical pipe flow)
     assertTrue(gasVelAfterInit < 100.0, "Gas velocity should be realistic (< 100 m/s), was: " + gasVelAfterInit);
@@ -599,14 +599,14 @@ public class TwoPhasePipeFlowSystemTest {
     double[] gasVelocities = pipeWithTransfer.getVelocityProfile(0);
     double[] liquidVelocities = pipeWithTransfer.getVelocityProfile(1);
     double pressureDropWithTransfer = pressuresWithTransfer[0]
-	- pressuresWithTransfer[pressuresWithTransfer.length - 1];
+        - pressuresWithTransfer[pressuresWithTransfer.length - 1];
 
     // ======== Verify results ========
     // Pressure drop should be positive (friction causes pressure loss)
     assertTrue(pressureDropWithTransfer > 0,
-	"Pressure drop should be positive for flowing fluid: " + pressureDropWithTransfer);
+        "Pressure drop should be positive for flowing fluid: " + pressureDropWithTransfer);
     assertTrue(pressureDropWithTransfer < 5.0,
-	"Pressure drop should be reasonable (< 5 bar for 150m pipe): " + pressureDropWithTransfer);
+        "Pressure drop should be reasonable (< 5 bar for 150m pipe): " + pressureDropWithTransfer);
 
     // Temperature should decrease along pipe with heat transfer to cold surroundings
     double inletTemp = temperaturesWithTransfer[0];
@@ -616,7 +616,7 @@ public class TwoPhasePipeFlowSystemTest {
     // Final velocities should be realistic
     assertTrue(gasVelocities[0] > 0 && gasVelocities[0] < 100, "Gas velocity should be realistic: " + gasVelocities[0]);
     assertTrue(liquidVelocities[0] > 0 && liquidVelocities[0] < 50,
-	"Liquid velocity should be realistic: " + liquidVelocities[0]);
+        "Liquid velocity should be realistic: " + liquidVelocities[0]);
 
     // Verify basic physics
     assertNotNull(pressuresWithTransfer, "Pressure profile should not be null");
@@ -656,7 +656,7 @@ public class TwoPhasePipeFlowSystemTest {
     fluid.setMixingRule(2);
 
     neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	fluid);
+        fluid);
     ops.TPflash();
     fluid.initPhysicalProperties();
 
@@ -666,7 +666,7 @@ public class TwoPhasePipeFlowSystemTest {
     inlet.run();
 
     neqsim.process.equipment.pipeline.PipeBeggsAndBrills beggsBrillsPipe = new neqsim.process.equipment.pipeline.PipeBeggsAndBrills(
-	"BeggsBrills", inlet);
+        "BeggsBrills", inlet);
     beggsBrillsPipe.setPipeWallRoughness(1.5e-5);
     beggsBrillsPipe.setLength(pipeLength);
     beggsBrillsPipe.setDiameter(pipeDiameter);
@@ -727,7 +727,7 @@ public class TwoPhasePipeFlowSystemTest {
 
     // Enable mass transfer mode
     twoFluidPipe.setMassTransferMode(
-	neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.MassTransferMode.BIDIRECTIONAL);
+        neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.MassTransferMode.BIDIRECTIONAL);
 
     twoFluidPipe.createSystem();
     twoFluidPipe.init();
@@ -741,25 +741,25 @@ public class TwoPhasePipeFlowSystemTest {
     // ======== Compare results ========
     logger.info("=== Pressure Drop Comparison: TwoPhasePipeFlowSystem vs Beggs-Brill ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Pipe: %.0f m length, %.0f mm diameter, horizontal%n",
-	pipeLength, pipeDiameter * 1000);
+        pipeLength, pipeDiameter * 1000);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Fluid: methane + n-pentane + n-heptane at %.0f bar, %.1f C%n",
-	pressure, temperature - 273.15);
+        pressure, temperature - 273.15);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Mass flow rate: %.1f kg/s%n%n", massFlowRate);
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Beggs-Brill:%n");
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Pressure drop:  %.4f bar%n", beggsBrillsPressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Outlet pressure: %.4f bar%n",
-	beggsBrillsPipe.getOutletStream().getPressure());
+        beggsBrillsPipe.getOutletStream().getPressure());
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "TwoPhasePipeFlowSystem:%n");
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Pressure drop:  %.4f bar%n", twoFluidPressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Inlet pressure:  %.4f bar%n", pressures[0]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Outlet pressure: %.4f bar%n",
-	pressures[pressures.length - 1]);
+        pressures[pressures.length - 1]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Gas velocity (inlet): %.4f m/s%n", gasVelocities[0]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Liquid velocity (inlet): %.4f m/s%n", liquidVelocities[0]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Gas holdup (inlet): %.4f%n",
-	twoFluidPipe.getNode(0).getPhaseFraction(0));
+        twoFluidPipe.getNode(0).getPhaseFraction(0));
 
     double percentDiff = Math.abs(beggsBrillsPressureDrop - twoFluidPressureDrop) / beggsBrillsPressureDrop * 100;
     logger.printf(org.apache.logging.log4j.Level.INFO, "Difference: %.1f%%%n", percentDiff);
@@ -772,7 +772,7 @@ public class TwoPhasePipeFlowSystemTest {
     // The two models use different approaches so exact match is not expected
     double ratio = twoFluidPressureDrop / beggsBrillsPressureDrop;
     assertTrue(ratio > 0.2 && ratio < 5.0, "Pressure drops should be within factor of 5. Beggs-Brill: "
-	+ beggsBrillsPressureDrop + " bar, TwoFluid: " + twoFluidPressureDrop + " bar, ratio: " + ratio);
+        + beggsBrillsPressureDrop + " bar, TwoFluid: " + twoFluidPressureDrop + " bar, ratio: " + ratio);
   }
 
   /**
@@ -803,7 +803,7 @@ public class TwoPhasePipeFlowSystemTest {
     fluid.setMixingRule(2);
 
     neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	fluid);
+        fluid);
     ops.TPflash();
     fluid.initPhysicalProperties();
 
@@ -813,7 +813,7 @@ public class TwoPhasePipeFlowSystemTest {
     inlet.run();
 
     neqsim.process.equipment.pipeline.TwoFluidPipe twoFluidPipeEquip = new neqsim.process.equipment.pipeline.TwoFluidPipe(
-	"TwoFluidPipe", inlet);
+        "TwoFluidPipe", inlet);
     twoFluidPipeEquip.setLength(pipeLength);
     twoFluidPipeEquip.setDiameter(pipeDiameter);
     twoFluidPipeEquip.setNumberOfSections(50);
@@ -878,28 +878,28 @@ public class TwoPhasePipeFlowSystemTest {
     // ======== Compare results ========
     logger.info("=== Comparison: TwoPhasePipeFlowSystem vs TwoFluidPipe ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Pipe: %.0f m length, %.0f mm diameter, horizontal%n",
-	pipeLength, pipeDiameter * 1000);
+        pipeLength, pipeDiameter * 1000);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Fluid: methane + n-pentane + n-heptane at %.0f bar, %.1f C%n",
-	pressure, temperature - 273.15);
+        pressure, temperature - 273.15);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Mass flow rate: %.1f kg/s%n", massFlowRate);
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "TwoFluidPipe (process equipment):%n");
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Pressure drop:   %.4f bar%n", twoFluidPipePressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Outlet pressure: %.4f bar%n",
-	twoFluidPipeEquip.getOutletStream().getPressure());
+        twoFluidPipeEquip.getOutletStream().getPressure());
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "TwoPhasePipeFlowSystem (fluidmechanics):%n");
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Pressure drop:   %.4f bar%n", twoPhaseFlowSystemPressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Inlet pressure:  %.4f bar%n", pressures[0]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Outlet pressure: %.4f bar%n",
-	pressures[pressures.length - 1]);
+        pressures[pressures.length - 1]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Gas velocity (inlet): %.4f m/s%n", gasVelocities[0]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Liquid velocity (inlet): %.4f m/s%n", liquidVelocities[0]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Gas holdup (inlet): %.4f%n",
-	twoPhaseFlowSystem.getNode(0).getPhaseFraction(0));
+        twoPhaseFlowSystem.getNode(0).getPhaseFraction(0));
 
     double percentDiff = Math.abs(twoFluidPipePressureDrop - twoPhaseFlowSystemPressureDrop) / twoFluidPipePressureDrop
-	* 100;
+        * 100;
     logger.printf(org.apache.logging.log4j.Level.INFO, "Difference: %.1f%%%n", percentDiff);
 
     // Both should give positive pressure drops
@@ -918,8 +918,8 @@ public class TwoPhasePipeFlowSystemTest {
     // We accept up to a factor of 3.5 (250%) difference as reasonable for different
     // modeling approaches, with margin for numerical precision and mesh discretization.
     assertTrue(percentDiff < 250,
-	"Two-fluid models should give comparable results (< factor of 3.5). TwoFluidPipe: " + twoFluidPipePressureDrop
-	    + " bar, TwoPhasePipeFlowSystem: " + twoPhaseFlowSystemPressureDrop + " bar, diff: " + percentDiff + "%");
+        "Two-fluid models should give comparable results (< factor of 3.5). TwoFluidPipe: " + twoFluidPipePressureDrop
+            + " bar, TwoPhasePipeFlowSystem: " + twoPhaseFlowSystemPressureDrop + " bar, diff: " + percentDiff + "%");
   }
 
   /**
@@ -950,7 +950,7 @@ public class TwoPhasePipeFlowSystemTest {
     fluid.setMixingRule(2);
 
     neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	fluid);
+        fluid);
     ops.TPflash();
     fluid.initPhysicalProperties();
 
@@ -960,7 +960,7 @@ public class TwoPhasePipeFlowSystemTest {
     inlet.run();
 
     neqsim.process.equipment.pipeline.twophasepipe.TransientPipe transientPipe = new neqsim.process.equipment.pipeline.twophasepipe.TransientPipe(
-	"TransientPipe", inlet);
+        "TransientPipe", inlet);
     transientPipe.setLength(pipeLength);
     transientPipe.setDiameter(pipeDiameter);
     transientPipe.setNumberOfSections(50);
@@ -1028,28 +1028,28 @@ public class TwoPhasePipeFlowSystemTest {
     // ======== Compare results ========
     logger.info("=== Comparison: TwoPhasePipeFlowSystem vs TransientPipe ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Pipe: %.0f m length, %.0f mm diameter, horizontal%n",
-	pipeLength, pipeDiameter * 1000);
+        pipeLength, pipeDiameter * 1000);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Fluid: methane + n-pentane + n-heptane at %.0f bar, %.1f C%n",
-	pressure, temperature - 273.15);
+        pressure, temperature - 273.15);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Mass flow rate: %.1f kg/s%n", massFlowRate);
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "TransientPipe (process equipment - drift-flux):%n");
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Pressure drop:   %.4f bar%n", transientPipePressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Outlet pressure: %.4f bar%n",
-	transientPipe.getOutletStream().getPressure());
+        transientPipe.getOutletStream().getPressure());
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "TwoPhasePipeFlowSystem (fluidmechanics - separated flow):%n");
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Pressure drop:   %.4f bar%n", twoPhaseFlowSystemPressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Inlet pressure:  %.4f bar%n", pressures[0]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Outlet pressure: %.4f bar%n",
-	pressures[pressures.length - 1]);
+        pressures[pressures.length - 1]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Gas velocity (inlet): %.4f m/s%n", gasVelocities[0]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Liquid velocity (inlet): %.4f m/s%n", liquidVelocities[0]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Gas holdup (inlet): %.4f%n",
-	twoPhaseFlowSystem.getNode(0).getPhaseFraction(0));
+        twoPhaseFlowSystem.getNode(0).getPhaseFraction(0));
 
     double percentDiff = Math.abs(transientPipePressureDrop - twoPhaseFlowSystemPressureDrop)
-	/ Math.max(transientPipePressureDrop, 0.001) * 100;
+        / Math.max(transientPipePressureDrop, 0.001) * 100;
     logger.printf(org.apache.logging.log4j.Level.INFO, "Difference: %.1f%%%n", percentDiff);
 
     // Both should give positive pressure drops
@@ -1098,22 +1098,22 @@ public class TwoPhasePipeFlowSystemTest {
     fluid.setMixingRule(2);
 
     neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	fluid);
+        fluid);
     ops.TPflash();
     fluid.initPhysicalProperties();
 
     logger.info("=== Gas-Dominated (High GVF) Model Comparison ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Pipe: %.0f m length, %.0f mm diameter, horizontal%n",
-	pipeLength, pipeDiameter * 1000);
+        pipeLength, pipeDiameter * 1000);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Fluid: 98%% methane + 2%% ethane at %.0f bar, %.1f C%n",
-	pressure, temperature - 273.15);
+        pressure, temperature - 273.15);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Number of phases: %d%n", fluid.getNumberOfPhases());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Mass flow rate: %.1f kg/s%n", massFlowRate);
     if (fluid.hasPhaseType("gas")) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "Gas density: %.2f kg/m3%n",
-	  fluid.getPhase("gas").getPhysicalProperties().getDensity());
+          fluid.getPhase("gas").getPhysicalProperties().getDensity());
       logger.printf(org.apache.logging.log4j.Level.INFO, "Gas viscosity: %.6f Pa.s%n",
-	  fluid.getPhase("gas").getPhysicalProperties().getViscosity());
+          fluid.getPhase("gas").getPhysicalProperties().getViscosity());
     }
 
     // ======== 1. Beggs-Brill ========
@@ -1122,7 +1122,7 @@ public class TwoPhasePipeFlowSystemTest {
     inlet1.run();
 
     neqsim.process.equipment.pipeline.PipeBeggsAndBrills beggsBrills = new neqsim.process.equipment.pipeline.PipeBeggsAndBrills(
-	"Beggs-Brill", inlet1);
+        "Beggs-Brill", inlet1);
     beggsBrills.setPipeWallRoughness(1e-5);
     beggsBrills.setLength(pipeLength);
     beggsBrills.setElevation(0.0); // Horizontal pipe
@@ -1138,7 +1138,7 @@ public class TwoPhasePipeFlowSystemTest {
     inlet2.run();
 
     neqsim.process.equipment.pipeline.TwoFluidPipe twoFluidPipe = new neqsim.process.equipment.pipeline.TwoFluidPipe(
-	"TwoFluidPipe", inlet2);
+        "TwoFluidPipe", inlet2);
     twoFluidPipe.setLength(pipeLength);
     twoFluidPipe.setDiameter(pipeDiameter);
     twoFluidPipe.setNumberOfSections(50);
@@ -1151,7 +1151,7 @@ public class TwoPhasePipeFlowSystemTest {
     inlet3.run();
 
     neqsim.process.equipment.pipeline.twophasepipe.TransientPipe transientPipe = new neqsim.process.equipment.pipeline.twophasepipe.TransientPipe(
-	"TransientPipe", inlet3);
+        "TransientPipe", inlet3);
     transientPipe.setLength(pipeLength);
     transientPipe.setDiameter(pipeDiameter);
     transientPipe.setNumberOfSections(50);
@@ -1170,7 +1170,7 @@ public class TwoPhasePipeFlowSystemTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %12.4f%n", "TwoFluidPipe", twoFluidPipeDp);
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %12.4f%n", "TransientPipe", transientPipeDp);
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %12s%n", "TwoPhasePipeFlowSystem",
-	"(N/A - requires 2 phases)");
+        "(N/A - requires 2 phases)");
 
     // All should give positive pressure drops
     assertTrue(beggsBrillsDp > 0, "Beggs-Brill should give positive pressure drop");
@@ -1209,26 +1209,26 @@ public class TwoPhasePipeFlowSystemTest {
     fluid.setMixingRule(2);
 
     neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	fluid);
+        fluid);
     ops.TPflash();
     fluid.initPhysicalProperties();
 
     logger.info("=== Liquid-Dominated (Low GVF) Model Comparison ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Pipe: %.0f m length, %.0f mm diameter, horizontal%n",
-	pipeLength, pipeDiameter * 1000);
+        pipeLength, pipeDiameter * 1000);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Fluid: 70%% n-heptane + 30%% n-octane at %.0f bar, %.1f C%n",
-	pressure, temperature - 273.15);
+        pressure, temperature - 273.15);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Mass flow rate: %.1f kg/s%n", massFlowRate);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Number of phases: %d%n", fluid.getNumberOfPhases());
     if (fluid.hasPhaseType("gas")) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "Gas density: %.2f kg/m3%n",
-	  fluid.getPhase("gas").getPhysicalProperties().getDensity());
+          fluid.getPhase("gas").getPhysicalProperties().getDensity());
     }
     if (fluid.hasPhaseType("oil")) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "Oil density: %.2f kg/m3%n",
-	  fluid.getPhase("oil").getPhysicalProperties().getDensity());
+          fluid.getPhase("oil").getPhysicalProperties().getDensity());
       logger.printf(org.apache.logging.log4j.Level.INFO, "Oil viscosity: %.6f Pa.s%n",
-	  fluid.getPhase("oil").getPhysicalProperties().getViscosity());
+          fluid.getPhase("oil").getPhysicalProperties().getViscosity());
     }
 
     // ======== 1. Beggs-Brill ========
@@ -1237,7 +1237,7 @@ public class TwoPhasePipeFlowSystemTest {
     inlet1.run();
 
     neqsim.process.equipment.pipeline.PipeBeggsAndBrills beggsBrills = new neqsim.process.equipment.pipeline.PipeBeggsAndBrills(
-	"Beggs-Brill", inlet1);
+        "Beggs-Brill", inlet1);
     beggsBrills.setPipeWallRoughness(1e-5);
     beggsBrills.setLength(pipeLength);
     beggsBrills.setElevation(0.0); // Horizontal pipe
@@ -1253,7 +1253,7 @@ public class TwoPhasePipeFlowSystemTest {
     inlet2.run();
 
     neqsim.process.equipment.pipeline.TwoFluidPipe twoFluidPipe = new neqsim.process.equipment.pipeline.TwoFluidPipe(
-	"TwoFluidPipe", inlet2);
+        "TwoFluidPipe", inlet2);
     twoFluidPipe.setLength(pipeLength);
     twoFluidPipe.setDiameter(pipeDiameter);
     twoFluidPipe.setNumberOfSections(50);
@@ -1266,7 +1266,7 @@ public class TwoPhasePipeFlowSystemTest {
     inlet3.run();
 
     neqsim.process.equipment.pipeline.twophasepipe.TransientPipe transientPipe = new neqsim.process.equipment.pipeline.twophasepipe.TransientPipe(
-	"TransientPipe", inlet3);
+        "TransientPipe", inlet3);
     transientPipe.setLength(pipeLength);
     transientPipe.setDiameter(pipeDiameter);
     transientPipe.setNumberOfSections(50);
@@ -1293,7 +1293,7 @@ public class TwoPhasePipeFlowSystemTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "Number of phases: %d%n", fluid4.getNumberOfPhases());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Phase 0 type: %s%n", fluid4.getPhase(0).getType());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Phase 0 density: %.2f kg/m3%n",
-	fluid4.getPhase(0).getPhysicalProperties().getDensity());
+        fluid4.getPhase(0).getPhysicalProperties().getDensity());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Beta (vapor fraction): %.6f%n", fluid4.getBeta());
 
     TwoPhasePipeFlowSystem twoPhaseFlowSystem = new TwoPhasePipeFlowSystem();
@@ -1337,37 +1337,37 @@ public class TwoPhasePipeFlowSystemTest {
     // ======== Debug diagnostic output ========
     logger.info("=== Debug Diagnostics ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Total number of nodes: %d%n",
-	twoPhaseFlowSystem.getTotalNumberOfNodes());
+        twoPhaseFlowSystem.getTotalNumberOfNodes());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Node 0 velocity[0]: %.6f m/s%n",
-	twoPhaseFlowSystem.getNode(0).getVelocity(0));
+        twoPhaseFlowSystem.getNode(0).getVelocity(0));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Node 0 velocity[1]: %.6f m/s%n",
-	twoPhaseFlowSystem.getNode(0).getVelocity(1));
+        twoPhaseFlowSystem.getNode(0).getVelocity(1));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Node 5 velocity[0]: %.6f m/s%n",
-	twoPhaseFlowSystem.getNode(5).getVelocity(0));
+        twoPhaseFlowSystem.getNode(5).getVelocity(0));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Node 25 velocity[0]: %.6f m/s%n",
-	twoPhaseFlowSystem.getNode(25).getVelocity(0));
+        twoPhaseFlowSystem.getNode(25).getVelocity(0));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Node 50 velocity[0]: %.6f m/s%n",
-	twoPhaseFlowSystem.getNode(50).getVelocity(0));
+        twoPhaseFlowSystem.getNode(50).getVelocity(0));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Node 0 phaseFraction[0]: %.6f%n",
-	twoPhaseFlowSystem.getNode(0).getPhaseFraction(0));
+        twoPhaseFlowSystem.getNode(0).getPhaseFraction(0));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Node 0 phaseFraction[1]: %.6f%n",
-	twoPhaseFlowSystem.getNode(0).getPhaseFraction(1));
+        twoPhaseFlowSystem.getNode(0).getPhaseFraction(1));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Node 5 phaseFraction[0]: %.6f%n",
-	twoPhaseFlowSystem.getNode(5).getPhaseFraction(0));
+        twoPhaseFlowSystem.getNode(5).getPhaseFraction(0));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Node 5 phaseFraction[1]: %.6f%n",
-	twoPhaseFlowSystem.getNode(5).getPhaseFraction(1));
+        twoPhaseFlowSystem.getNode(5).getPhaseFraction(1));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Node 0 nodeLength: %.6f m%n",
-	twoPhaseFlowSystem.getNode(0).getGeometry().getNodeLength());
+        twoPhaseFlowSystem.getNode(0).getGeometry().getNodeLength());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Node 1 nodeLength: %.6f m%n",
-	twoPhaseFlowSystem.getNode(1).getGeometry().getNodeLength());
+        twoPhaseFlowSystem.getNode(1).getGeometry().getNodeLength());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Node 0 interphaseContactLength: %.6f%n",
-	twoPhaseFlowSystem.getNode(0).getInterphaseContactLength(0));
+        twoPhaseFlowSystem.getNode(0).getInterphaseContactLength(0));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Node 0 wallContactLength[0]: %.6f%n",
-	twoPhaseFlowSystem.getNode(0).getWallContactLength(0));
+        twoPhaseFlowSystem.getNode(0).getWallContactLength(0));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Node 5 interphaseContactLength: %.6f%n",
-	twoPhaseFlowSystem.getNode(5).getInterphaseContactLength(0));
+        twoPhaseFlowSystem.getNode(5).getInterphaseContactLength(0));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Node 5 wallContactLength[0]: %.6f%n",
-	twoPhaseFlowSystem.getNode(5).getWallContactLength(0));
+        twoPhaseFlowSystem.getNode(5).getWallContactLength(0));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Inlet pressure: %.6f bar%n", pressures[0]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Node 1 pressure: %.6f bar%n", pressures[1]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Node 5 pressure: %.6f bar%n", pressures[5]);
@@ -1381,14 +1381,14 @@ public class TwoPhasePipeFlowSystemTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %12.4f%n", "TwoFluidPipe", twoFluidPipeDp);
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %12.4f%n", "TransientPipe", transientPipeDp);
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %12.4f%n", "TwoPhasePipeFlowSystem",
-	twoPhaseFlowSystemDp);
+        twoPhaseFlowSystemDp);
 
     // All should give positive pressure drops for liquid flow
     assertTrue(beggsBrillsDp > 0, "Beggs-Brill should give positive pressure drop");
     assertTrue(twoFluidPipeDp > 0, "TwoFluidPipe should give positive pressure drop");
     assertTrue(transientPipeDp > 0, "TransientPipe should give positive pressure drop");
     assertTrue(twoPhaseFlowSystemDp > 0,
-	"TwoPhasePipeFlowSystem should give positive pressure drop for single-phase flow");
+        "TwoPhasePipeFlowSystem should give positive pressure drop for single-phase flow");
 
     // For single-phase liquid, all models should be reasonably close
     double maxDp = Math.max(Math.max(beggsBrillsDp, twoFluidPipeDp), Math.max(transientPipeDp, twoPhaseFlowSystemDp));
@@ -1416,22 +1416,22 @@ public class TwoPhasePipeFlowSystemTest {
     fluid.setMixingRule(2);
 
     neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	fluid);
+        fluid);
     ops.TPflash();
     fluid.initPhysicalProperties();
 
     logger.info("=== Single-Phase Gas Model Comparison ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Pipe: %.0f m length, %.0f mm diameter, horizontal%n",
-	pipeLength, pipeDiameter * 1000);
+        pipeLength, pipeDiameter * 1000);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Fluid: pure methane at %.0f bar, %.1f C%n", pressure,
-	temperature - 273.15);
+        temperature - 273.15);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Mass flow rate: %.1f kg/s%n", massFlowRate);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Number of phases: %d%n", fluid.getNumberOfPhases());
     if (fluid.hasPhaseType("gas")) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "Gas density: %.2f kg/m3%n",
-	  fluid.getPhase("gas").getPhysicalProperties().getDensity());
+          fluid.getPhase("gas").getPhysicalProperties().getDensity());
       logger.printf(org.apache.logging.log4j.Level.INFO, "Gas viscosity: %.6f Pa.s%n",
-	  fluid.getPhase("gas").getPhysicalProperties().getViscosity());
+          fluid.getPhase("gas").getPhysicalProperties().getViscosity());
     }
 
     // ======== 1. Beggs-Brill ========
@@ -1440,7 +1440,7 @@ public class TwoPhasePipeFlowSystemTest {
     inlet1.run();
 
     neqsim.process.equipment.pipeline.PipeBeggsAndBrills beggsBrills = new neqsim.process.equipment.pipeline.PipeBeggsAndBrills(
-	"Beggs-Brill", inlet1);
+        "Beggs-Brill", inlet1);
     beggsBrills.setPipeWallRoughness(1e-5);
     beggsBrills.setLength(pipeLength);
     beggsBrills.setElevation(0.0);
@@ -1456,7 +1456,7 @@ public class TwoPhasePipeFlowSystemTest {
     inlet2.run();
 
     neqsim.process.equipment.pipeline.TwoFluidPipe twoFluidPipe = new neqsim.process.equipment.pipeline.TwoFluidPipe(
-	"TwoFluidPipe", inlet2);
+        "TwoFluidPipe", inlet2);
     twoFluidPipe.setLength(pipeLength);
     twoFluidPipe.setDiameter(pipeDiameter);
     twoFluidPipe.setNumberOfSections(50);
@@ -1469,7 +1469,7 @@ public class TwoPhasePipeFlowSystemTest {
     inlet3.run();
 
     neqsim.process.equipment.pipeline.twophasepipe.TransientPipe transientPipe = new neqsim.process.equipment.pipeline.twophasepipe.TransientPipe(
-	"TransientPipe", inlet3);
+        "TransientPipe", inlet3);
     transientPipe.setLength(pipeLength);
     transientPipe.setDiameter(pipeDiameter);
     transientPipe.setNumberOfSections(50);
@@ -1494,7 +1494,7 @@ public class TwoPhasePipeFlowSystemTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "Number of phases: %d%n", fluid4.getNumberOfPhases());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Phase 0 type: %s%n", fluid4.getPhase(0).getType());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Phase 0 density: %.2f kg/m3%n",
-	fluid4.getPhase(0).getPhysicalProperties().getDensity());
+        fluid4.getPhase(0).getPhysicalProperties().getDensity());
 
     TwoPhasePipeFlowSystem twoPhaseFlowSystem = new TwoPhasePipeFlowSystem();
     twoPhaseFlowSystem.setInletThermoSystem(fluid4);
@@ -1537,19 +1537,19 @@ public class TwoPhasePipeFlowSystemTest {
     // ======== Debug diagnostic output ========
     logger.info("=== Debug Diagnostics ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Total number of nodes: %d%n",
-	twoPhaseFlowSystem.getTotalNumberOfNodes());
+        twoPhaseFlowSystem.getTotalNumberOfNodes());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Node 0 velocity[0]: %.6f m/s%n",
-	twoPhaseFlowSystem.getNode(0).getVelocity(0));
+        twoPhaseFlowSystem.getNode(0).getVelocity(0));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Node 25 velocity[0]: %.6f m/s%n",
-	twoPhaseFlowSystem.getNode(25).getVelocity(0));
+        twoPhaseFlowSystem.getNode(25).getVelocity(0));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Node 50 velocity[0]: %.6f m/s%n",
-	twoPhaseFlowSystem.getNode(50).getVelocity(0));
+        twoPhaseFlowSystem.getNode(50).getVelocity(0));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Node 0 phaseFraction[0]: %.6f%n",
-	twoPhaseFlowSystem.getNode(0).getPhaseFraction(0));
+        twoPhaseFlowSystem.getNode(0).getPhaseFraction(0));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Node 0 interphaseContactLength: %.6f%n",
-	twoPhaseFlowSystem.getNode(0).getInterphaseContactLength(0));
+        twoPhaseFlowSystem.getNode(0).getInterphaseContactLength(0));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Node 0 wallContactLength[0]: %.6f%n",
-	twoPhaseFlowSystem.getNode(0).getWallContactLength(0));
+        twoPhaseFlowSystem.getNode(0).getWallContactLength(0));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Inlet pressure: %.6f bar%n", pressures[0]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Outlet pressure: %.6f bar%n", pressures[pressures.length - 1]);
 
@@ -1560,14 +1560,14 @@ public class TwoPhasePipeFlowSystemTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %12.4f%n", "TwoFluidPipe", twoFluidPipeDp);
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %12.4f%n", "TransientPipe", transientPipeDp);
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %12.4f%n", "TwoPhasePipeFlowSystem",
-	twoPhaseFlowSystemDp);
+        twoPhaseFlowSystemDp);
 
     // All should give positive pressure drops for gas flow
     assertTrue(beggsBrillsDp > 0, "Beggs-Brill should give positive pressure drop");
     assertTrue(twoFluidPipeDp > 0, "TwoFluidPipe should give positive pressure drop");
     assertTrue(transientPipeDp > 0, "TransientPipe should give positive pressure drop");
     assertTrue(twoPhaseFlowSystemDp > 0,
-	"TwoPhasePipeFlowSystem should give positive pressure drop for single-phase gas flow");
+        "TwoPhasePipeFlowSystem should give positive pressure drop for single-phase gas flow");
 
     // For single-phase gas, all models should be reasonably close
     double maxDp = Math.max(Math.max(beggsBrillsDp, twoFluidPipeDp), Math.max(transientPipeDp, twoPhaseFlowSystemDp));
@@ -1602,15 +1602,15 @@ public class TwoPhasePipeFlowSystemTest {
     fluid.setMixingRule(2);
 
     neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	fluid);
+        fluid);
     ops.TPflash();
     fluid.initPhysicalProperties();
 
     logger.info("=== Gas with Potential Condensation Test ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Pipe: %.0f m length, %.0f mm diameter%n", pipeLength,
-	pipeDiameter * 1000);
+        pipeDiameter * 1000);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Inlet conditions: %.0f bar, %.1f C%n", pressure,
-	inletTemperature - 273.15);
+        inletTemperature - 273.15);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Inlet number of phases: %d%n", fluid.getNumberOfPhases());
 
     // Quick phase check at inlet and cold temperature
@@ -1618,7 +1618,7 @@ public class TwoPhasePipeFlowSystemTest {
     coldFluid.setTemperature(250.0); // -23C
     new neqsim.thermodynamicoperations.ThermodynamicOperations(coldFluid).TPflash();
     logger.printf(org.apache.logging.log4j.Level.INFO, "At -23C: %d phase(s), liquid fraction=%.4f%n",
-	coldFluid.getNumberOfPhases(), coldFluid.getNumberOfPhases() > 1 ? (1.0 - coldFluid.getBeta()) : 0.0);
+        coldFluid.getNumberOfPhases(), coldFluid.getNumberOfPhases() > 1 ? (1.0 - coldFluid.getBeta()) : 0.0);
 
     // ======== TwoPhasePipeFlowSystem with cooling ========
     double totalMolarMass = fluid.getMolarMass();
@@ -1643,9 +1643,9 @@ public class TwoPhasePipeFlowSystemTest {
       logger.printf(org.apache.logging.log4j.Level.INFO, "Single phase type: %s%n", fluid4.getPhase(0).getType());
     } else {
       logger.printf(org.apache.logging.log4j.Level.INFO, "Phase 0 type: %s, fraction: %.4f%n",
-	  fluid4.getPhase(0).getType(), fluid4.getBeta());
+          fluid4.getPhase(0).getType(), fluid4.getBeta());
       logger.printf(org.apache.logging.log4j.Level.INFO, "Phase 1 type: %s, fraction: %.4f%n",
-	  fluid4.getPhase(1).getType(), 1.0 - fluid4.getBeta());
+          fluid4.getPhase(1).getType(), 1.0 - fluid4.getBeta());
     }
 
     TwoPhasePipeFlowSystem twoPhaseFlowSystem = new TwoPhasePipeFlowSystem();
@@ -1688,7 +1688,7 @@ public class TwoPhasePipeFlowSystemTest {
     // ======== Analyze results along the pipeline ========
     logger.info("\n=== Results Along Pipeline ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-12s %-12s %-12s %-15s%n", "Node", "Pressure",
-	"Temperature", "NumPhases", "LiquidFraction");
+        "Temperature", "NumPhases", "LiquidFraction");
 
     double[] pressures = twoPhaseFlowSystem.getPressureProfile();
     int totalNodes = twoPhaseFlowSystem.getTotalNumberOfNodes();
@@ -1702,7 +1702,7 @@ public class TwoPhasePipeFlowSystemTest {
       double liquidFrac = node.getPhaseFraction(1);
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-8d %-12.2f %-12.2f %-12d %-15.4f%n", nodeIdx, nodeP, nodeT,
-	  numPhases, liquidFrac);
+          numPhases, liquidFrac);
     }
 
     double pressureDrop = pressures[0] - pressures[pressures.length - 1];

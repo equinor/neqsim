@@ -61,14 +61,14 @@ public class FlashRequest {
     if (root.has("temperature")) {
       ValueWithUnit t = ValueWithUnit.fromJson(root.get("temperature"), "K");
       if (t != null) {
-	req.temperature = t;
+        req.temperature = t;
       }
     }
 
     if (root.has("pressure")) {
       ValueWithUnit p = ValueWithUnit.fromJson(root.get("pressure"), "bara");
       if (p != null) {
-	req.pressure = p;
+        req.pressure = p;
       }
     }
 
@@ -83,7 +83,7 @@ public class FlashRequest {
     if (root.has("components")) {
       JsonObject comps = root.getAsJsonObject("components");
       for (Map.Entry<String, JsonElement> entry : comps.entrySet()) {
-	req.components.put(entry.getKey(), entry.getValue().getAsDouble());
+        req.components.put(entry.getKey(), entry.getValue().getAsDouble());
       }
     }
 

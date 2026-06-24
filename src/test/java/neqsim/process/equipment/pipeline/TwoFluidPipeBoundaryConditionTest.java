@@ -82,9 +82,9 @@ class TwoFluidPipeBoundaryConditionTest {
   @DisplayName("Default BCs: inlet=STREAM_CONNECTED, outlet=CONSTANT_PRESSURE")
   void testDefaultBoundaryConditions() {
     assertEquals(BoundaryCondition.STREAM_CONNECTED, pipe.getInletBoundaryCondition(),
-	"Default inlet BC should be STREAM_CONNECTED");
+        "Default inlet BC should be STREAM_CONNECTED");
     assertEquals(BoundaryCondition.CONSTANT_PRESSURE, pipe.getOutletBoundaryCondition(),
-	"Default outlet BC should be CONSTANT_PRESSURE");
+        "Default outlet BC should be CONSTANT_PRESSURE");
     assertFalse(pipe.isOutletClosed(), "Outlet should not be closed by default");
     assertFalse(pipe.isInletClosed(), "Inlet should not be closed by default");
   }
@@ -402,7 +402,7 @@ class TwoFluidPipeBoundaryConditionTest {
     assertOutletPressure(gasPipe, 55.0);
     assertPressureProfilePhysical(gasPipe);
     assertTrue(averageArray(gasPipe.getLiquidHoldupProfile()) < 1e-6,
-	"One-phase gas should not build artificial liquid holdup");
+        "One-phase gas should not build artificial liquid holdup");
   }
 
   @Test
@@ -415,9 +415,9 @@ class TwoFluidPipeBoundaryConditionTest {
     assertOutletPressure(twoPhasePipe, 58.0);
     assertPressureProfilePhysical(twoPhasePipe);
     assertTrue(averageArray(twoPhasePipe.getLiquidHoldupProfile()) > 1e-6,
-	"Gas-liquid flow should keep a positive liquid holdup");
+        "Gas-liquid flow should keep a positive liquid holdup");
     assertTrue(averageArray(twoPhasePipe.getWaterHoldupProfile()) < 1e-6,
-	"Two-phase hydrocarbon case should not create water holdup");
+        "Two-phase hydrocarbon case should not create water holdup");
   }
 
   @Test
@@ -430,7 +430,7 @@ class TwoFluidPipeBoundaryConditionTest {
     assertOutletPressure(threePhasePipe, 60.0);
     assertPressureProfilePhysical(threePhasePipe);
     assertTrue(averageArray(threePhasePipe.getWaterHoldupProfile()) > 1e-7,
-	"Three-phase flow should keep water holdup");
+        "Three-phase flow should keep water holdup");
     assertTrue(averageArray(threePhasePipe.getOilHoldupProfile()) > 1e-7, "Three-phase flow should keep oil holdup");
     assertLiquidHoldupMatchesOilPlusWater(threePhasePipe);
   }
@@ -439,21 +439,21 @@ class TwoFluidPipeBoundaryConditionTest {
   @DisplayName("Transient gas flow relaxes toward new stationary solution after outlet change")
   void testTransientOutletPressureChangeOnePhaseGas() {
     assertTransientOutletPressureChangeApproachesStationary("one-phase-gas", createOnePhaseGasFluid(), 4.0, 70.0, 58.0,
-	52.0, 60.0);
+        52.0, 60.0);
   }
 
   @Test
   @DisplayName("Transient gas-liquid flow relaxes toward new stationary solution after outlet change")
   void testTransientOutletPressureChangeTwoPhase() {
     assertTransientOutletPressureChangeApproachesStationary("two-phase", createTwoPhaseFluid(), 6.0, 75.0, 62.0, 56.0,
-	60.0);
+        60.0);
   }
 
   @Test
   @DisplayName("Transient gas-oil-water flow relaxes toward new stationary solution after outlet change")
   void testTransientOutletPressureChangeThreePhase() {
     assertTransientOutletPressureChangeApproachesStationary("three-phase", createThreePhaseFluid(), 6.0, 80.0, 64.0,
-	58.0, 60.0);
+        58.0, 60.0);
   }
 
   @Test
@@ -638,25 +638,25 @@ class TwoFluidPipeBoundaryConditionTest {
       double flowRateKgSec, double inletPressureBara, double initialOutletBara, double changedOutletBara,
       double maxReasonableTime) {
     TwoFluidPipe transientPipe = createRegressionPipe(name + "-transient", fluid, flowRateKgSec, inletPressureBara,
-	initialOutletBara);
+        initialOutletBara);
     transientPipe.run();
     double[] initialPressure = transientPipe.getPressureProfile();
 
     TwoFluidPipe stationaryPipe = createStationaryTargetPipe(name, fluid.clone(), flowRateKgSec, inletPressureBara,
-	changedOutletBara);
+        changedOutletBara);
     SettlingResult settling = runTransientUntilNewStationaryState(transientPipe, stationaryPipe, changedOutletBara,
-	maxReasonableTime);
+        maxReasonableTime);
 
     assertOutletPressure(transientPipe, changedOutletBara);
     assertPressureProfilePhysical(transientPipe);
     double initialDistance = rmsDifference(initialPressure, stationaryPipe.getPressureProfile());
     assertTrue(settling.pressureRmsPa < initialDistance,
-	"Transient pressure profile should move toward new stationary target. Initial RMS: " + initialDistance
-	    + " Pa, final RMS: " + settling.pressureRmsPa + " Pa");
+        "Transient pressure profile should move toward new stationary target. Initial RMS: " + initialDistance
+            + " Pa, final RMS: " + settling.pressureRmsPa + " Pa");
     assertTrue(settling.settled,
-	name + " did not reach the new stationary solution within " + maxReasonableTime + " s. Pressure RMS: "
-	    + settling.pressureRmsPa + " Pa, liquid holdup RMS: " + settling.liquidHoldupRms + ", elapsed time: "
-	    + settling.elapsedTime + " s");
+        name + " did not reach the new stationary solution within " + maxReasonableTime + " s. Pressure RMS: "
+            + settling.pressureRmsPa + " Pa, liquid holdup RMS: " + settling.liquidHoldupRms + ", elapsed time: "
+            + settling.elapsedTime + " s");
   }
 
   /**
@@ -673,19 +673,19 @@ class TwoFluidPipeBoundaryConditionTest {
   private void assertTimeToNewStationaryPressureProfile(String name, SystemInterface fluid, double flowRateKgSec,
       double inletPressureBara, double initialOutletBara, double changedOutletBara, double maxReasonableTime) {
     TwoFluidPipe transientPipe = createRegressionPipe(name + "-settling-transient", fluid, flowRateKgSec,
-	inletPressureBara, initialOutletBara);
+        inletPressureBara, initialOutletBara);
     transientPipe.run();
 
     TwoFluidPipe stationaryPipe = createStationaryTargetPipe(name + "-settling", fluid.clone(), flowRateKgSec,
-	inletPressureBara, changedOutletBara);
+        inletPressureBara, changedOutletBara);
     SettlingResult settling = runTransientUntilNewStationaryState(transientPipe, stationaryPipe, changedOutletBara,
-	maxReasonableTime);
+        maxReasonableTime);
 
     assertOutletPressure(transientPipe, changedOutletBara);
     assertPressureProfilePhysical(transientPipe);
     assertTrue(settling.settled,
-	name + " should settle within " + maxReasonableTime + " s. Settling time: " + settling.elapsedTime
-	    + " s, pressure RMS: " + settling.pressureRmsPa + " Pa, liquid holdup RMS: " + settling.liquidHoldupRms);
+        name + " should settle within " + maxReasonableTime + " s. Settling time: " + settling.elapsedTime
+            + " s, pressure RMS: " + settling.pressureRmsPa + " Pa, liquid holdup RMS: " + settling.liquidHoldupRms);
   }
 
   /**
@@ -702,7 +702,7 @@ class TwoFluidPipeBoundaryConditionTest {
     twoFluidPipe.run();
 
     PipeBeggsAndBrills beggsBrillPipe = createPressureDropBeggsBrillPipe(name, fluid.clone(), flowRateKgSec,
-	inletPressureBara);
+        inletPressureBara);
     beggsBrillPipe.run();
 
     double twoFluidDpBar = pressureDropBar(twoFluidPipe.getPressureProfile(), true);
@@ -710,14 +710,14 @@ class TwoFluidPipeBoundaryConditionTest {
     double relativeDifference = Math.abs(twoFluidDpBar - beggsBrillDpBar) / Math.max(0.1, Math.abs(beggsBrillDpBar));
 
     logger.printf(org.apache.logging.log4j.Level.INFO,
-	"%s steady pressure drop: TwoFluidPipe %.3f bar, " + "Beggs-Brill %.3f bar, relative difference %.2f%n", name,
-	twoFluidDpBar, beggsBrillDpBar, relativeDifference);
+        "%s steady pressure drop: TwoFluidPipe %.3f bar, " + "Beggs-Brill %.3f bar, relative difference %.2f%n", name,
+        twoFluidDpBar, beggsBrillDpBar, relativeDifference);
 
     assertTrue(twoFluidDpBar > 0.0, name + " TwoFluidPipe pressure drop should be positive");
     assertTrue(beggsBrillDpBar > 0.0, name + " Beggs-Brill pressure drop should be positive");
     assertTrue(relativeDifference < 1.0,
-	name + " TwoFluidPipe steady pressure drop should be similar to Beggs-Brill. TwoFluidPipe: " + twoFluidDpBar
-	    + " bar, Beggs-Brill: " + beggsBrillDpBar + " bar");
+        name + " TwoFluidPipe steady pressure drop should be similar to Beggs-Brill. TwoFluidPipe: " + twoFluidDpBar
+            + " bar, Beggs-Brill: " + beggsBrillDpBar + " bar");
   }
 
   /**
@@ -733,7 +733,7 @@ class TwoFluidPipeBoundaryConditionTest {
   private TwoFluidPipe createStationaryTargetPipe(String name, SystemInterface fluid, double flowRateKgSec,
       double inletPressureBara, double outletPressureBara) {
     TwoFluidPipe stationaryPipe = createRegressionPipe(name + "-stationary", fluid, flowRateKgSec, inletPressureBara,
-	outletPressureBara);
+        outletPressureBara);
     stationaryPipe.run();
     return stationaryPipe;
   }
@@ -762,16 +762,16 @@ class TwoFluidPipeBoundaryConditionTest {
       result.elapsedTime = elapsedTime;
       result.pressureRmsPa = rmsDifference(transientPipe.getPressureProfile(), stationaryPipe.getPressureProfile());
       result.liquidHoldupRms = rmsDifference(transientPipe.getLiquidHoldupProfile(),
-	  stationaryPipe.getLiquidHoldupProfile());
+          stationaryPipe.getLiquidHoldupProfile());
       result.oilHoldupRms = rmsDifference(transientPipe.getOilHoldupProfile(), stationaryPipe.getOilHoldupProfile());
       result.waterHoldupRms = rmsDifference(transientPipe.getWaterHoldupProfile(),
-	  stationaryPipe.getWaterHoldupProfile());
+          stationaryPipe.getWaterHoldupProfile());
       result.settled = isSettledToStationaryState(result, stationaryPipe);
       if (result.settled) {
-	logger.printf(org.apache.logging.log4j.Level.INFO,
-	    "%s reached new stationary state in %.1f s " + "(pressure RMS %.0f Pa, liquid holdup RMS %.4f)%n",
-	    transientPipe.getName(), result.elapsedTime, result.pressureRmsPa, result.liquidHoldupRms);
-	return result;
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "%s reached new stationary state in %.1f s " + "(pressure RMS %.0f Pa, liquid holdup RMS %.4f)%n",
+            transientPipe.getName(), result.elapsedTime, result.pressureRmsPa, result.liquidHoldupRms);
+        return result;
       }
     }
     return result;
@@ -790,8 +790,8 @@ class TwoFluidPipeBoundaryConditionTest {
     double targetOilHoldup = averageArray(stationaryPipe.getOilHoldupProfile());
     double targetWaterHoldup = averageArray(stationaryPipe.getWaterHoldupProfile());
     return result.pressureRmsPa <= pressureLimitPa && result.liquidHoldupRms <= liquidHoldupLimit
-	&& (targetOilHoldup <= 1e-6 || result.oilHoldupRms <= 0.08)
-	&& (targetWaterHoldup <= 1e-6 || result.waterHoldupRms <= 0.08);
+        && (targetOilHoldup <= 1e-6 || result.oilHoldupRms <= 0.08)
+        && (targetWaterHoldup <= 1e-6 || result.waterHoldupRms <= 0.08);
   }
 
   /**
@@ -816,7 +816,7 @@ class TwoFluidPipeBoundaryConditionTest {
     double[] pressureProfile = checkedPipe.getPressureProfile();
     double outletPressureBara = pressureProfile[pressureProfile.length - 1] / 1e5;
     assertEquals(expectedOutletBara, outletPressureBara, 0.05,
-	"Outlet pressure should match the explicit constant-pressure boundary");
+        "Outlet pressure should match the explicit constant-pressure boundary");
   }
 
   /**
@@ -831,7 +831,7 @@ class TwoFluidPipeBoundaryConditionTest {
       assertTrue(pressureProfile[i] > 0.0, "Pressure should be positive at index " + i);
     }
     assertTrue(pressureProfile[0] >= pressureProfile[pressureProfile.length - 1],
-	"Pressure should not increase from inlet to outlet");
+        "Pressure should not increase from inlet to outlet");
   }
 
   /**
@@ -845,7 +845,7 @@ class TwoFluidPipeBoundaryConditionTest {
     double[] waterHoldup = checkedPipe.getWaterHoldupProfile();
     for (int i = 0; i < liquidHoldup.length; i++) {
       assertEquals(liquidHoldup[i], oilHoldup[i] + waterHoldup[i], 0.02,
-	  "Oil plus water holdup should equal total liquid holdup at index " + i);
+          "Oil plus water holdup should equal total liquid holdup at index " + i);
     }
   }
 

@@ -167,7 +167,7 @@ public class Wall implements WallInterface {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append(String.format("Wall[layers=%d, thickness=%.4f m, U=%.3f W/(m²·K)]%n", getNumberOfLayers(),
-	getTotalThickness(), getHeatTransferCoefficient()));
+        getTotalThickness(), getHeatTransferCoefficient()));
 
     for (int i = 0; i < wallMaterialLayers.size(); i++) {
       sb.append(String.format("  Layer %d: %s%n", i, wallMaterialLayers.get(i)));

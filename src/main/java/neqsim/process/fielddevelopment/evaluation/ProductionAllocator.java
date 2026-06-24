@@ -171,7 +171,7 @@ public class ProductionAllocator implements Serializable {
       // Equal allocation if no oil
       double equalShare = sources.isEmpty() ? 0 : 1.0 / sources.size();
       for (ProductionSource source : sources) {
-	allocation.put(source.name, equalShare);
+        allocation.put(source.name, equalShare);
       }
       return allocation;
     }
@@ -200,7 +200,7 @@ public class ProductionAllocator implements Serializable {
     if (totalGas <= 0) {
       double equalShare = sources.isEmpty() ? 0 : 1.0 / sources.size();
       for (ProductionSource source : sources) {
-	allocation.put(source.name, equalShare);
+        allocation.put(source.name, equalShare);
       }
       return allocation;
     }
@@ -229,7 +229,7 @@ public class ProductionAllocator implements Serializable {
     if (totalMass <= 0) {
       double equalShare = sources.isEmpty() ? 0 : 1.0 / sources.size();
       for (ProductionSource source : sources) {
-	allocation.put(source.name, equalShare);
+        allocation.put(source.name, equalShare);
       }
       return allocation;
     }
@@ -258,7 +258,7 @@ public class ProductionAllocator implements Serializable {
     if (totalEnergy <= 0) {
       double equalShare = sources.isEmpty() ? 0 : 1.0 / sources.size();
       for (ProductionSource source : sources) {
-	allocation.put(source.name, equalShare);
+        allocation.put(source.name, equalShare);
       }
       return allocation;
     }
@@ -347,7 +347,7 @@ public class ProductionAllocator implements Serializable {
   public double getSourceUncertainty(String sourceName) {
     for (ProductionSource source : sources) {
       if (source.name.equals(sourceName)) {
-	return source.meterType.getUncertainty();
+        return source.meterType.getUncertainty();
       }
     }
     return 0.0;
@@ -431,7 +431,7 @@ public class ProductionAllocator implements Serializable {
     sb.append("|--------|------------|-------------|------------|------------|\n");
     for (ProductionSource source : sources) {
       sb.append(String.format("| %s | %s | ±%.1f%% | %.1f | %.1f |\n", source.name, source.meterType.getDisplayName(),
-	  source.meterType.getUncertainty() * 100, getOilFlowRate(source.stream), getGasFlowRate(source.stream)));
+          source.meterType.getUncertainty() * 100, getOilFlowRate(source.stream), getGasFlowRate(source.stream)));
     }
 
     sb.append("\n## Allocation Fractions\n\n");
@@ -444,7 +444,7 @@ public class ProductionAllocator implements Serializable {
       Double oilFrac = oilAlloc.get(source.name);
       Double gasFrac = gasAlloc.get(source.name);
       sb.append(String.format("| %s | %.1f%% | %.1f%% |\n", source.name, (oilFrac != null ? oilFrac : 0) * 100,
-	  (gasFrac != null ? gasFrac : 0) * 100));
+          (gasFrac != null ? gasFrac : 0) * 100));
     }
 
     // Uncertainty

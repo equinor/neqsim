@@ -398,24 +398,24 @@ public class SubrModlExporter implements Serializable {
       writer.newLine();
 
       for (ModelParameter param : parameters) {
-	writer.write(String.format("%16s=  %s", param.getName(), formatValue(param.getValue())));
-	writer.newLine();
+        writer.write(String.format("%16s=  %s", param.getName(), formatValue(param.getValue())));
+        writer.newLine();
       }
       writer.newLine();
 
       // SubrXvr definitions
       for (SubrXvr xvr : subrXvrs) {
-	writer.write(String.format("  SubrXvr:       %s", xvr.getName()));
-	writer.newLine();
-	writer.write(String.format("         Text1=  \"%s\"", xvr.getText1()));
-	writer.newLine();
-	writer.write(String.format("         Text2=  \"%s\"", xvr.getText2()));
-	writer.newLine();
-	writer.write(String.format("         DtaIx=  \"%s\"", xvr.getDtaIx()));
-	writer.newLine();
-	writer.write(String.format("          Init=  %s", formatValue(xvr.getInit())));
-	writer.newLine();
-	writer.newLine();
+        writer.write(String.format("  SubrXvr:       %s", xvr.getName()));
+        writer.newLine();
+        writer.write(String.format("         Text1=  \"%s\"", xvr.getText1()));
+        writer.newLine();
+        writer.write(String.format("         Text2=  \"%s\"", xvr.getText2()));
+        writer.newLine();
+        writer.write(String.format("         DtaIx=  \"%s\"", xvr.getDtaIx()));
+        writer.newLine();
+        writer.write(String.format("          Init=  %s", formatValue(xvr.getInit())));
+        writer.newLine();
+        writer.newLine();
       }
 
       // Model section (for MPC)
@@ -425,26 +425,26 @@ public class SubrModlExporter implements Serializable {
       writer.newLine();
 
       for (ModelParameter param : parameters) {
-	writer.write(String.format("%16s=  %s", param.getName(), formatValue(param.getValue())));
-	writer.newLine();
+        writer.write(String.format("%16s=  %s", param.getName(), formatValue(param.getValue())));
+        writer.newLine();
       }
       writer.newLine();
 
       // State variables
       if (!stateVariables.isEmpty()) {
-	writer.write("# State Variables (SVR)");
-	writer.newLine();
-	for (StateVariable svr : stateVariables) {
-	  writer.write(String.format("  SubrXvr:       %s", svr.getName()));
-	  writer.newLine();
-	  writer.write(String.format("         Text1=  \"%s\"", svr.getDescription()));
-	  writer.newLine();
-	  writer.write(String.format("         DtaIx=  \"%s\"", svr.getDtaIx()));
-	  writer.newLine();
-	  writer.write(String.format("          Init=  %s", formatValue(svr.getModelValue())));
-	  writer.newLine();
-	  writer.newLine();
-	}
+        writer.write("# State Variables (SVR)");
+        writer.newLine();
+        for (StateVariable svr : stateVariables) {
+          writer.write(String.format("  SubrXvr:       %s", svr.getName()));
+          writer.newLine();
+          writer.write(String.format("         Text1=  \"%s\"", svr.getDescription()));
+          writer.newLine();
+          writer.write(String.format("         DtaIx=  \"%s\"", svr.getDtaIx()));
+          writer.newLine();
+          writer.write(String.format("          Init=  %s", formatValue(svr.getModelValue())));
+          writer.newLine();
+          writer.newLine();
+        }
       }
     }
   }
@@ -479,53 +479,53 @@ public class SubrModlExporter implements Serializable {
       writer.newLine();
 
       if (useNonlinear) {
-	// Nonlinear MPC parameters
-	writer.write(String.format("     IterOpt=  %s", "ON"));
-	writer.newLine();
-	writer.write(String.format(" IterNewSens=  %s", "ON"));
-	writer.newLine();
-	writer.write(String.format("   IterQpMax=  %s", "10"));
-	writer.newLine();
-	writer.write(String.format(" IterLineMax=  %s", "10"));
-	writer.newLine();
-	writer.write(String.format("SteadySolver=  %s", "SQP"));
-	writer.newLine();
-	writer.write(String.format("    MajItLim=  %s", "200"));
-	writer.newLine();
-	writer.write(String.format("    MajPrint=  %s", "0"));
-	writer.newLine();
-	writer.write(String.format(" VerifyGrads=  %s", "OFF"));
-	writer.newLine();
-	writer.write(String.format("    FuncPrec=  %s", "1e-08"));
-	writer.newLine();
-	writer.write(String.format("       FeTol=  %s", "1e-03"));
-	writer.newLine();
-	writer.write(String.format("    OptimTol=  %s", "1e-05"));
-	writer.newLine();
-	writer.write(String.format("    FdifIntv=  %s", "0.001"));
-	writer.newLine();
-	writer.write(String.format("  MaxSeconds=  %s", "10"));
-	writer.newLine();
-	writer.write(String.format("      LmPrio=  %s", "100"));
-	writer.newLine();
-	writer.write(String.format("  MaxPrioSQP=  %s", "100"));
-	writer.newLine();
-	writer.write(String.format("     RelPert=  %s", "0.2"));
-	writer.newLine();
-	writer.write(String.format("   EachParam=  %s", "ON"));
-	writer.newLine();
-	writer.write(String.format(" LinErrorLim=  %s", "0.2"));
-	writer.newLine();
-	writer.write(String.format("   SensLimSS=  %s", "1e-06"));
-	writer.newLine();
-	writer.write(String.format("  SensLimDyn=  %s", "1e-06"));
-	writer.newLine();
+        // Nonlinear MPC parameters
+        writer.write(String.format("     IterOpt=  %s", "ON"));
+        writer.newLine();
+        writer.write(String.format(" IterNewSens=  %s", "ON"));
+        writer.newLine();
+        writer.write(String.format("   IterQpMax=  %s", "10"));
+        writer.newLine();
+        writer.write(String.format(" IterLineMax=  %s", "10"));
+        writer.newLine();
+        writer.write(String.format("SteadySolver=  %s", "SQP"));
+        writer.newLine();
+        writer.write(String.format("    MajItLim=  %s", "200"));
+        writer.newLine();
+        writer.write(String.format("    MajPrint=  %s", "0"));
+        writer.newLine();
+        writer.write(String.format(" VerifyGrads=  %s", "OFF"));
+        writer.newLine();
+        writer.write(String.format("    FuncPrec=  %s", "1e-08"));
+        writer.newLine();
+        writer.write(String.format("       FeTol=  %s", "1e-03"));
+        writer.newLine();
+        writer.write(String.format("    OptimTol=  %s", "1e-05"));
+        writer.newLine();
+        writer.write(String.format("    FdifIntv=  %s", "0.001"));
+        writer.newLine();
+        writer.write(String.format("  MaxSeconds=  %s", "10"));
+        writer.newLine();
+        writer.write(String.format("      LmPrio=  %s", "100"));
+        writer.newLine();
+        writer.write(String.format("  MaxPrioSQP=  %s", "100"));
+        writer.newLine();
+        writer.write(String.format("     RelPert=  %s", "0.2"));
+        writer.newLine();
+        writer.write(String.format("   EachParam=  %s", "ON"));
+        writer.newLine();
+        writer.write(String.format(" LinErrorLim=  %s", "0.2"));
+        writer.newLine();
+        writer.write(String.format("   SensLimSS=  %s", "1e-06"));
+        writer.newLine();
+        writer.write(String.format("  SensLimDyn=  %s", "1e-06"));
+        writer.newLine();
       } else {
-	// Linear MPC parameters
-	writer.write(String.format("SteadySolver=  %s", "QP"));
-	writer.newLine();
-	writer.write(String.format("     IterOpt=  %s", "OFF"));
-	writer.newLine();
+        // Linear MPC parameters
+        writer.write(String.format("SteadySolver=  %s", "QP"));
+        writer.newLine();
+        writer.write(String.format("     IterOpt=  %s", "OFF"));
+        writer.newLine();
       }
       writer.newLine();
     }
@@ -550,14 +550,14 @@ public class SubrModlExporter implements Serializable {
       writer.write("    ");
 
       for (int i = 0; i < indexTable.size(); i++) {
-	writer.write("\"" + indexTable.get(i) + "\"");
-	if (i < indexTable.size() - 1) {
-	  writer.write(", ");
-	}
-	if ((i + 1) % 8 == 0 && i < indexTable.size() - 1) {
-	  writer.newLine();
-	  writer.write("    ");
-	}
+        writer.write("\"" + indexTable.get(i) + "\"");
+        if (i < indexTable.size() - 1) {
+          writer.write(", ");
+        }
+        if ((i + 1) % 8 == 0 && i < indexTable.size() - 1) {
+          writer.newLine();
+          writer.write("    ");
+        }
       }
       writer.write(", \"\"};");
       writer.newLine();

@@ -121,10 +121,10 @@ class PipelineNetworkDocExamplesTest {
     for (int i = 0; i < n; i++) {
       matA[i][i] = 4.0;
       if (i > 0) {
-	matA[i][i - 1] = -1.0;
+        matA[i][i - 1] = -1.0;
       }
       if (i < n - 1) {
-	matA[i][i + 1] = -1.0;
+        matA[i][i + 1] = -1.0;
       }
       vecB[i] = 1.0;
     }

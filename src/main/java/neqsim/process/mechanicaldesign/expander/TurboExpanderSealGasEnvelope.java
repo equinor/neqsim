@@ -124,18 +124,18 @@ public class TurboExpanderSealGasEnvelope implements Serializable {
     double dpCompressorPa = 0.0;
     if (machine != null) {
       try {
-	double expIn = machine.getInletStream().getPressure("bara");
-	double expOut = machine.getExpanderOutPressure();
-	dpExpanderPa = (expIn - expOut) * 1.0e5;
+        double expIn = machine.getInletStream().getPressure("bara");
+        double expOut = machine.getExpanderOutPressure();
+        dpExpanderPa = (expIn - expOut) * 1.0e5;
       } catch (Exception ex) {
-	logger.debug("Could not read expander pressures for thrust", ex);
+        logger.debug("Could not read expander pressures for thrust", ex);
       }
       try {
-	double compIn = machine.getCompressorFeedStream().getPressure("bara");
-	double compOut = machine.getCompressorOutletStream().getPressure("bara");
-	dpCompressorPa = (compOut - compIn) * 1.0e5;
+        double compIn = machine.getCompressorFeedStream().getPressure("bara");
+        double compOut = machine.getCompressorOutletStream().getPressure("bara");
+        dpCompressorPa = (compOut - compIn) * 1.0e5;
       } catch (Exception ex) {
-	logger.debug("Could not read compressor pressures for thrust", ex);
+        logger.debug("Could not read compressor pressures for thrust", ex);
       }
     }
     // Expander and compressor axial thrusts act in opposite directions on a back-to-back rotor.
@@ -224,11 +224,11 @@ public class TurboExpanderSealGasEnvelope implements Serializable {
     map.put("heaterDutyAcceptable", isHeaterDutyAcceptable());
     map.put("firstCriticalSpeed_rpm", firstCriticalSpeed);
     map.put("operatingSpeed_rpm",
-	machine != null && machine.getSpeed() > 0.0 ? machine.getSpeed() : maxContinuousSpeed);
+        machine != null && machine.getSpeed() > 0.0 ? machine.getSpeed() : maxContinuousSpeed);
     map.put("criticalSpeedMargin_fraction", criticalSpeedMargin);
     map.put("criticalSpeedMarginAcceptable", isCriticalSpeedMarginAcceptable());
     map.put("mechanicallyAllowable",
-	isThrustAcceptable() && isHeaterDutyAcceptable() && isCriticalSpeedMarginAcceptable());
+        isThrustAcceptable() && isHeaterDutyAcceptable() && isCriticalSpeedMarginAcceptable());
     return map;
   }
 

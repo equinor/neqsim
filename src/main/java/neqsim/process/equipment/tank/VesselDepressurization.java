@@ -179,7 +179,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     private final double incidentFlux;
 
     FireType(double absorptivity, double flameEmissivity, double surfaceEmissivity, double convectionCoeff,
-	double incidentFlux) {
+        double incidentFlux) {
       this.absorptivity = absorptivity;
       this.flameEmissivity = flameEmissivity;
       this.surfaceEmissivity = surfaceEmissivity;
@@ -446,11 +446,11 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   private void initializeWallModel() {
     if (hasLiner) {
       wallModel = new TransientWallHeatTransfer(linerThickness, linerThermalConductivity, linerDensity,
-	  linerHeatCapacity, wallThickness, wallThermalConductivity, wallDensity, wallHeatCapacity, wallTemperature,
-	  11);
+          linerHeatCapacity, wallThickness, wallThermalConductivity, wallDensity, wallHeatCapacity, wallTemperature,
+          11);
     } else {
       wallModel = new TransientWallHeatTransfer(wallThickness, wallThermalConductivity, wallDensity, wallHeatCapacity,
-	  wallTemperature, 11);
+          wallTemperature, 11);
     }
 
     // Initialize two-phase wall models if enabled
@@ -459,17 +459,17 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
       liquidWallTemperature = wallTemperature;
 
       if (hasLiner) {
-	gasWallModel = new TransientWallHeatTransfer(linerThickness, linerThermalConductivity, linerDensity,
-	    linerHeatCapacity, wallThickness, wallThermalConductivity, wallDensity, wallHeatCapacity,
-	    gasWallTemperature, 11);
-	liquidWallModel = new TransientWallHeatTransfer(linerThickness, linerThermalConductivity, linerDensity,
-	    linerHeatCapacity, wallThickness, wallThermalConductivity, wallDensity, wallHeatCapacity,
-	    liquidWallTemperature, 11);
+        gasWallModel = new TransientWallHeatTransfer(linerThickness, linerThermalConductivity, linerDensity,
+            linerHeatCapacity, wallThickness, wallThermalConductivity, wallDensity, wallHeatCapacity,
+            gasWallTemperature, 11);
+        liquidWallModel = new TransientWallHeatTransfer(linerThickness, linerThermalConductivity, linerDensity,
+            linerHeatCapacity, wallThickness, wallThermalConductivity, wallDensity, wallHeatCapacity,
+            liquidWallTemperature, 11);
       } else {
-	gasWallModel = new TransientWallHeatTransfer(wallThickness, wallThermalConductivity, wallDensity,
-	    wallHeatCapacity, gasWallTemperature, 11);
-	liquidWallModel = new TransientWallHeatTransfer(wallThickness, wallThermalConductivity, wallDensity,
-	    wallHeatCapacity, liquidWallTemperature, 11);
+        gasWallModel = new TransientWallHeatTransfer(wallThickness, wallThermalConductivity, wallDensity,
+            wallHeatCapacity, gasWallTemperature, 11);
+        liquidWallModel = new TransientWallHeatTransfer(wallThickness, wallThermalConductivity, wallDensity,
+            wallHeatCapacity, liquidWallTemperature, 11);
       }
     }
   }
@@ -578,9 +578,9 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     if (thermoSystem.getNumberOfPhases() < 2) {
       // Single phase
       if (thermoSystem.getPhase(0).getType().equals(neqsim.thermo.phase.PhaseType.GAS)) {
-	return 0.0;
+        return 0.0;
       } else {
-	return 1.0;
+        return 1.0;
       }
     }
 
@@ -590,9 +590,9 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
 
     for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
       if (thermoSystem.getPhase(i).getType().equals(neqsim.thermo.phase.PhaseType.GAS)) {
-	gasMoles = thermoSystem.getPhase(i).getNumberOfMolesInPhase();
+        gasMoles = thermoSystem.getPhase(i).getNumberOfMolesInPhase();
       } else {
-	liquidMoles = thermoSystem.getPhase(i).getNumberOfMolesInPhase();
+        liquidMoles = thermoSystem.getPhase(i).getNumberOfMolesInPhase();
       }
     }
 
@@ -608,7 +608,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
       double phaseVolume = thermoSystem.getPhase(i).getVolume() * 1e-5; // L to m³
       totalVolume += phaseVolume;
       if (!thermoSystem.getPhase(i).getType().equals(neqsim.thermo.phase.PhaseType.GAS)) {
-	liquidVolume += phaseVolume;
+        liquidVolume += phaseVolume;
       }
     }
 
@@ -656,11 +656,11 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
       double df = dfNum / Math.PI;
 
       if (Math.abs(df) < 1e-10) {
-	break;
+        break;
       }
       double xNew = x - f / df;
       if (Math.abs(xNew - x) < 1e-8) {
-	break;
+        break;
       }
       x = Math.max(0.0, Math.min(1.0, xNew));
     }
@@ -775,7 +775,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    */
   public void setVesselMaterial(double thickness, VesselMaterial material) {
     setVesselProperties(thickness, material.getDensity(), material.getHeatCapacity(),
-	material.getThermalConductivity());
+        material.getThermalConductivity());
   }
 
   /**
@@ -1109,13 +1109,13 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     double Tf = 900.0; // Initial guess [K]
     for (int iter = 0; iter < 100; iter++) {
       double f = surfaceAbsorptivity * flameEmissivity * STEFAN_BOLTZMANN * Math.pow(Tf, 4)
-	  + fireConvectionCoeff * (Tf - Tref) - incidentHeatFlux;
+          + fireConvectionCoeff * (Tf - Tref) - incidentHeatFlux;
       double df = 4.0 * surfaceAbsorptivity * flameEmissivity * STEFAN_BOLTZMANN * Math.pow(Tf, 3)
-	  + fireConvectionCoeff;
+          + fireConvectionCoeff;
       double dT = f / df;
       Tf -= dT;
       if (Math.abs(dT) < 0.01) {
-	break;
+        break;
       }
     }
     this.flameTemperature = Tf;
@@ -1198,7 +1198,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
       rateSm3PerSec = rate;
     } else {
       throw new IllegalArgumentException(
-	  "Unknown volumetric flow unit: " + unit + ". Use Sm3/day, Sm3/hr, or Sm3/sec.");
+          "Unknown volumetric flow unit: " + unit + ". Use Sm3/day, Sm3/hr, or Sm3/sec.");
     }
     // Standard conditions: 15 deg C (288.15 K), 1 atm (101325 Pa)
     // rho_std = P * MW / (Z * R * T) where Z ~ 1.0 for ideal gas at std conditions
@@ -1534,7 +1534,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     double targetPa = targetPressure * 1e5;
     for (int i = 0; i < pressureHistory.size(); i++) {
       if (pressureHistory.get(i) <= targetPa) {
-	return timeHistory.get(i);
+        return timeHistory.get(i);
       }
     }
     return -1.0; // Not reached
@@ -1692,7 +1692,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     } else {
       // Subsonic flow
       double factor = Math.sqrt(2.0 * gamma / (gamma - 1.0)
-	  * (Math.pow(pressureRatio, 2.0 / gamma) - Math.pow(pressureRatio, (gamma + 1.0) / gamma)));
+          * (Math.pow(pressureRatio, 2.0 / gamma) - Math.pow(pressureRatio, (gamma + 1.0) / gamma)));
       massFlowRate = dischargeCoefficient * orificeArea * pUpstream * Math.sqrt(MW / (Z * R * T)) * factor;
     }
 
@@ -1734,11 +1734,11 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     try {
       double drhodT = phase.getdrhodT(); // kg/(m^3 * K)
       if (Double.isFinite(drhodT) && density > 0.0) {
-	double beta = -drhodT / density;
-	// Sanity: beta should be positive for normal fluids and not excessively large
-	if (beta > 0.0 && beta < 1.0) {
-	  return beta;
-	}
+        double beta = -drhodT / density;
+        // Sanity: beta should be positive for normal fluids and not excessively large
+        if (beta > 0.0 && beta < 1.0) {
+          return beta;
+        }
       }
     } catch (Exception e) {
       // EoS derivative not available; use ideal-gas approximation
@@ -1774,7 +1774,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
       // Assuming gas phase dominates
       k = thermoSystem.getPhase(0).getThermalConductivity();
       Cp = thermoSystem.getPhase(0).getCp() / thermoSystem.getPhase(0).getNumberOfMolesInPhase()
-	  / thermoSystem.getPhase(0).getMolarMass(); // J/(kg*K)
+          / thermoSystem.getPhase(0).getMolarMass(); // J/(kg*K)
       mu = thermoSystem.getPhase(0).getViscosity();
       rho = thermoSystem.getPhase(0).getDensity("kg/m3");
     } catch (Exception e) {
@@ -1801,14 +1801,14 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     try {
       double h;
       if (flowDirection == FlowDirection.FILLING) {
-	double massFlowRate = Math.abs(calculateMassFlowRate());
-	h = VesselHeatTransferCalculator.calculateMixedConvectionCoefficient(L, Twall, Tfluid, massFlowRate,
-	    orificeDiameter, vesselDiameter, k, Cp, mu, rho, isVertical, beta);
+        double massFlowRate = Math.abs(calculateMassFlowRate());
+        h = VesselHeatTransferCalculator.calculateMixedConvectionCoefficient(L, Twall, Tfluid, massFlowRate,
+            orificeDiameter, vesselDiameter, k, Cp, mu, rho, isVertical, beta);
       } else {
-	// During discharge the outflow jet creates internal circulation
-	double massFlowRate = Math.abs(calculateMassFlowRate());
-	h = VesselHeatTransferCalculator.calculateDischargeConvectionCoefficient(L, Twall, Tfluid, massFlowRate,
-	    orificeDiameter, vesselDiameter, k, Cp, mu, rho, isVertical, beta);
+        // During discharge the outflow jet creates internal circulation
+        double massFlowRate = Math.abs(calculateMassFlowRate());
+        h = VesselHeatTransferCalculator.calculateDischargeConvectionCoefficient(L, Twall, Tfluid, massFlowRate,
+            orificeDiameter, vesselDiameter, k, Cp, mu, rho, isVertical, beta);
       }
       return Math.min(h, maxGasHtc);
     } catch (Exception e) {
@@ -1840,14 +1840,14 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     double k = 0.02, Cp = 1000.0, mu = 1e-5, rho = 10.0;
     try {
       for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
-	if (thermoSystem.getPhase(i).getType().equals(neqsim.thermo.phase.PhaseType.GAS)) {
-	  k = thermoSystem.getPhase(i).getThermalConductivity();
-	  Cp = thermoSystem.getPhase(i).getCp() / thermoSystem.getPhase(i).getNumberOfMolesInPhase()
-	      / thermoSystem.getPhase(i).getMolarMass(); // J/(kg*K)
-	  mu = thermoSystem.getPhase(i).getViscosity();
-	  rho = thermoSystem.getPhase(i).getDensity("kg/m3");
-	  break;
-	}
+        if (thermoSystem.getPhase(i).getType().equals(neqsim.thermo.phase.PhaseType.GAS)) {
+          k = thermoSystem.getPhase(i).getThermalConductivity();
+          Cp = thermoSystem.getPhase(i).getCp() / thermoSystem.getPhase(i).getNumberOfMolesInPhase()
+              / thermoSystem.getPhase(i).getMolarMass(); // J/(kg*K)
+          mu = thermoSystem.getPhase(i).getViscosity();
+          rho = thermoSystem.getPhase(i).getDensity("kg/m3");
+          break;
+        }
       }
     } catch (Exception e) {
       // Use fallback values
@@ -1864,10 +1864,10 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     double beta = 1.0 / Tfluid; // default ideal-gas fallback
     try {
       for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
-	if (thermoSystem.getPhase(i).getType().equals(neqsim.thermo.phase.PhaseType.GAS)) {
-	  beta = computeThermalExpansionCoeff(thermoSystem.getPhase(i), rho, Tfluid);
-	  break;
-	}
+        if (thermoSystem.getPhase(i).getType().equals(neqsim.thermo.phase.PhaseType.GAS)) {
+          beta = computeThermalExpansionCoeff(thermoSystem.getPhase(i), rho, Tfluid);
+          break;
+        }
       }
     } catch (Exception e) {
       // Keep ideal-gas fallback
@@ -1879,13 +1879,13 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     try {
       double h;
       if (flowDirection == FlowDirection.FILLING) {
-	double massFlowRate = Math.abs(calculateMassFlowRate());
-	h = VesselHeatTransferCalculator.calculateMixedConvectionCoefficient(L, Twall, Tfluid, massFlowRate,
-	    orificeDiameter, vesselDiameter, k, Cp, mu, rho, isVertical, beta);
+        double massFlowRate = Math.abs(calculateMassFlowRate());
+        h = VesselHeatTransferCalculator.calculateMixedConvectionCoefficient(L, Twall, Tfluid, massFlowRate,
+            orificeDiameter, vesselDiameter, k, Cp, mu, rho, isVertical, beta);
       } else {
-	double massFlowRate = Math.abs(calculateMassFlowRate());
-	h = VesselHeatTransferCalculator.calculateDischargeConvectionCoefficient(L, Twall, Tfluid, massFlowRate,
-	    orificeDiameter, vesselDiameter, k, Cp, mu, rho, isVertical, beta);
+        double massFlowRate = Math.abs(calculateMassFlowRate());
+        h = VesselHeatTransferCalculator.calculateDischargeConvectionCoefficient(L, Twall, Tfluid, massFlowRate,
+            orificeDiameter, vesselDiameter, k, Cp, mu, rho, isVertical, beta);
       }
       return Math.min(h, maxGasHtc);
     } catch (Exception e) {
@@ -1921,14 +1921,14 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
 
     try {
       for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
-	if (!thermoSystem.getPhase(i).getType().equals(neqsim.thermo.phase.PhaseType.GAS)) {
-	  k = thermoSystem.getPhase(i).getThermalConductivity();
-	  Cp = thermoSystem.getPhase(i).getCp() / thermoSystem.getPhase(i).getNumberOfMolesInPhase()
-	      / thermoSystem.getPhase(i).getMolarMass(); // J/(kg*K)
-	  mu = thermoSystem.getPhase(i).getViscosity();
-	  rho = thermoSystem.getPhase(i).getDensity("kg/m3");
-	  break;
-	}
+        if (!thermoSystem.getPhase(i).getType().equals(neqsim.thermo.phase.PhaseType.GAS)) {
+          k = thermoSystem.getPhase(i).getThermalConductivity();
+          Cp = thermoSystem.getPhase(i).getCp() / thermoSystem.getPhase(i).getNumberOfMolesInPhase()
+              / thermoSystem.getPhase(i).getMolarMass(); // J/(kg*K)
+          mu = thermoSystem.getPhase(i).getViscosity();
+          rho = thermoSystem.getPhase(i).getDensity("kg/m3");
+          break;
+        }
       }
     } catch (Exception e) {
       // Use fallback values
@@ -1938,13 +1938,13 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
 
     // Use natural convection for liquid, potentially enhanced by boiling
     double hConv = VesselHeatTransferCalculator.calculateInternalFilmCoefficient(L, Twall, Tfluid, k, Cp, mu, rho,
-	isVertical);
+        isVertical);
 
     // Check for boiling conditions (wall above saturation)
     if (Twall > satTemp + 1.0) {
       // Use wetted wall correlation (includes boiling)
       return VesselHeatTransferCalculator.calculateWettedWallFilmCoefficient(Twall, Tfluid, satTemp, L, k, Cp, mu, rho,
-	  isVertical);
+          isVertical);
     }
 
     return hConv;
@@ -1963,21 +1963,21 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   private double calculateInletSpecificEnthalpy() {
     if (!Double.isNaN(inletTemperature) && inletFluid != null) {
       try {
-	SystemInterface inletCalc = inletFluid.clone();
-	inletCalc.setTemperature(inletTemperature);
-	inletCalc.setPressure(thermoSystem.getPressure());
-	inletCalc.init(0);
-	inletCalc.init(1);
-	ThermodynamicOperations opsInlet = new ThermodynamicOperations(inletCalc);
-	opsInlet.TPflash();
-	inletCalc.init(3);
-	inletCalc.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
-	double inletH = inletCalc.getEnthalpy(); // J
-	double inletMass = inletCalc.getTotalNumberOfMoles() * inletCalc.getMolarMass(); // kg
-	return inletH / inletMass; // J/kg
+        SystemInterface inletCalc = inletFluid.clone();
+        inletCalc.setTemperature(inletTemperature);
+        inletCalc.setPressure(thermoSystem.getPressure());
+        inletCalc.init(0);
+        inletCalc.init(1);
+        ThermodynamicOperations opsInlet = new ThermodynamicOperations(inletCalc);
+        opsInlet.TPflash();
+        inletCalc.init(3);
+        inletCalc.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+        double inletH = inletCalc.getEnthalpy(); // J
+        double inletMass = inletCalc.getTotalNumberOfMoles() * inletCalc.getMolarMass(); // kg
+        return inletH / inletMass; // J/kg
       } catch (Exception e) {
-	logger.warn(
-	    "Failed to compute inlet enthalpy at inlet temperature, " + "using vessel gas enthalpy: " + e.getMessage());
+        logger.warn(
+            "Failed to compute inlet enthalpy at inlet temperature, " + "using vessel gas enthalpy: " + e.getMessage());
       }
     }
     // Fallback: use vessel gas specific enthalpy
@@ -2079,12 +2079,12 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     case CALCULATED:
     case TRANSIENT_WALL:
       if (twoPhaseHeatTransfer && thermoSystem.getNumberOfPhases() > 1) {
-	Q = calculateTwoPhaseHeatRate();
+        Q = calculateTwoPhaseHeatRate();
       } else {
-	double hInner = calculateInternalHeatTransferCoeff();
-	double wallArea = getWallArea();
-	double Twall = getWallTemperature();
-	Q = hInner * wallArea * (Twall - thermoSystem.getTemperature());
+        double hInner = calculateInternalHeatTransferCoeff();
+        double wallArea = getWallArea();
+        double Twall = getWallTemperature();
+        Q = hInner * wallArea * (Twall - thermoSystem.getTemperature());
       }
       break;
     default:
@@ -2160,14 +2160,14 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     // For pure components, check if feed was two-phase (initialBeta < 1.0)
     // For mixtures, check current number of phases
     boolean shouldInitializeTwoPhase = initialLiquidLevel > 0.0
-	&& (thermoSystem.getNumberOfPhases() > 1 || (thermoSystem.getNumberOfComponents() == 1 && initialBeta < 1.0));
+        && (thermoSystem.getNumberOfPhases() > 1 || (thermoSystem.getNumberOfComponents() == 1 && initialBeta < 1.0));
 
     if (shouldInitializeTwoPhase) {
       // For pure components, ensure we have two phases before initializing liquid level
       if (thermoSystem.getNumberOfComponents() == 1 && thermoSystem.getNumberOfPhases() == 1) {
-	thermoSystem.setNumberOfPhases(2);
-	thermoSystem.setBeta(initialBeta);
-	thermoSystem.init(1);
+        thermoSystem.setNumberOfPhases(2);
+        thermoSystem.setBeta(initialBeta);
+        thermoSystem.init(1);
       }
       initializeWithLiquidLevel();
     } else {
@@ -2209,17 +2209,17 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
       double targetVolume;
 
       if (thermoSystem.getPhase(j).getType().equals(neqsim.thermo.phase.PhaseType.GAS)) {
-	targetVolume = targetGasVolume;
+        targetVolume = targetGasVolume;
       } else {
-	targetVolume = targetLiquidVolume;
+        targetVolume = targetLiquidVolume;
       }
 
       if (currentPhaseVolume > 0.0) {
-	double relFact = targetVolume / currentPhaseVolume;
-	for (int i = 0; i < thermoSystem.getPhase(j).getNumberOfComponents(); i++) {
-	  double molesInPhase = thermoSystem.getPhase(j).getComponent(i).getNumberOfMolesInPhase();
-	  thermoSystem.addComponent(i, (relFact - 1.0) * molesInPhase, j);
-	}
+        double relFact = targetVolume / currentPhaseVolume;
+        for (int i = 0; i < thermoSystem.getPhase(j).getNumberOfComponents(); i++) {
+          double molesInPhase = thermoSystem.getPhase(j).getComponent(i).getNumberOfMolesInPhase();
+          thermoSystem.addComponent(i, (relFact - 1.0) * molesInPhase, j);
+        }
       }
     }
 
@@ -2301,9 +2301,9 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
       double totalCompMoles = thermoSystem.getPhase(0).getComponent(i).getNumberOfmoles();
       double scaledTotal = totalCompMoles * moleFactor;
       for (int j = 0; j < thermoSystem.getMaxNumberOfPhases(); j++) {
-	thermoSystem.getPhase(j).getComponent(i).setNumberOfmoles(scaledTotal);
-	double phaseMoles = thermoSystem.getPhase(j).getComponent(i).getNumberOfMolesInPhase();
-	thermoSystem.getPhase(j).getComponent(i).setNumberOfMolesInPhase(phaseMoles * moleFactor);
+        thermoSystem.getPhase(j).getComponent(i).setNumberOfmoles(scaledTotal);
+        double phaseMoles = thermoSystem.getPhase(j).getComponent(i).getNumberOfMolesInPhase();
+        thermoSystem.getPhase(j).getComponent(i).setNumberOfMolesInPhase(phaseMoles * moleFactor);
       }
     }
     thermoSystem.setTotalNumberOfMoles(thermoSystem.getTotalNumberOfMoles() * moleFactor);
@@ -2325,52 +2325,52 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     try {
       switch (calculationType) {
       case ISOTHERMAL:
-	// Constant temperature - solve for new pressure at fixed T and V
-	thermoSystem.setTemperature(initialT);
-	ops.TVflash(volume, "m3");
-	break;
+        // Constant temperature - solve for new pressure at fixed T and V
+        thermoSystem.setTemperature(initialT);
+        ops.TVflash(volume, "m3");
+        break;
 
       case ISENTHALPIC:
-	// Constant enthalpy (per unit mass) - specific h stays constant
-	double targetH = initialH / initialMass * newMass;
-	ops.VHflash(volume, targetH, "m3", "J");
-	break;
+        // Constant enthalpy (per unit mass) - specific h stays constant
+        double targetH = initialH / initialMass * newMass;
+        ops.VHflash(volume, targetH, "m3", "J");
+        break;
 
       case ISENTROPIC:
-	// Constant entropy (per unit mass) - specific s stays constant
-	double targetS = initialS / initialMass * newMass;
-	ops.VSflash(volume, targetS, "m3", "J/K");
-	break;
+        // Constant entropy (per unit mass) - specific s stays constant
+        double targetS = initialS / initialMass * newMass;
+        ops.VSflash(volume, targetS, "m3", "J/K");
+        break;
 
       case ISENERGETIC:
-	// Constant internal energy
-	ops.VUflash(volume, initialU, "m3", "J");
-	break;
+        // Constant internal energy
+        ops.VUflash(volume, initialU, "m3", "J");
+        break;
 
       case ENERGY_BALANCE:
-	// Full energy balance: U_new = U_old - mdot*h_out*dt + Q*dt
-	double hOut;
-	if (flowDirection == FlowDirection.IDLE) {
-	  // IDLE: no mass flow, only heat exchange
-	  hOut = 0.0;
-	} else if (flowDirection == FlowDirection.DISCHARGE) {
-	  // Gas leaving carries its own specific enthalpy
-	  hOut = initialH / initialMass;
-	} else {
-	  // FILLING: incoming gas enthalpy at inlet temperature and vessel pressure
-	  hOut = calculateInletSpecificEnthalpy();
-	}
-	double newU = initialU - massFlowRate * hOut * dt + heatInput;
-	ops.VUflash(volume, newU, "m3", "J");
-	break;
+        // Full energy balance: U_new = U_old - mdot*h_out*dt + Q*dt
+        double hOut;
+        if (flowDirection == FlowDirection.IDLE) {
+          // IDLE: no mass flow, only heat exchange
+          hOut = 0.0;
+        } else if (flowDirection == FlowDirection.DISCHARGE) {
+          // Gas leaving carries its own specific enthalpy
+          hOut = initialH / initialMass;
+        } else {
+          // FILLING: incoming gas enthalpy at inlet temperature and vessel pressure
+          hOut = calculateInletSpecificEnthalpy();
+        }
+        double newU = initialU - massFlowRate * hOut * dt + heatInput;
+        ops.VUflash(volume, newU, "m3", "J");
+        break;
       }
     } catch (Exception e) {
       logger.warn("Flash calculation failed: " + e.getMessage());
       // Fallback to TPflash at current conditions
       try {
-	ops.TPflash();
+        ops.TPflash();
       } catch (Exception e2) {
-	logger.error("TPflash also failed: " + e2.getMessage());
+        logger.error("TPflash also failed: " + e2.getMessage());
       }
     }
 
@@ -2378,14 +2378,14 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
       thermoSystem.init(3);
     } catch (Exception e) {
       logger.warn(
-	  "init(3) failed after flash: " + e.getMessage() + ", reverting to previous temperature " + initialT + " K");
+          "init(3) failed after flash: " + e.getMessage() + ", reverting to previous temperature " + initialT + " K");
       thermoSystem.setTemperature(initialT);
       try {
-	ThermodynamicOperations opsRecover = new ThermodynamicOperations(thermoSystem);
-	opsRecover.TPflash();
-	thermoSystem.init(3);
+        ThermodynamicOperations opsRecover = new ThermodynamicOperations(thermoSystem);
+        opsRecover.TPflash();
+        thermoSystem.init(3);
       } catch (Exception e2) {
-	logger.error("Recovery TPflash also failed after init: " + e2.getMessage());
+        logger.error("Recovery TPflash also failed after init: " + e2.getMessage());
       }
     }
 
@@ -2393,14 +2393,14 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     double flashedT = thermoSystem.getTemperature();
     if (flashedT < 50.0 || flashedT > 2000.0 || !Double.isFinite(flashedT)) {
       logger.warn("VU flash produced non-physical temperature " + flashedT + " K, clamping to previous temperature "
-	  + initialT + " K");
+          + initialT + " K");
       thermoSystem.setTemperature(initialT);
       try {
-	ThermodynamicOperations opsRecover = new ThermodynamicOperations(thermoSystem);
-	opsRecover.TVflash(volume, "m3");
-	thermoSystem.init(3);
+        ThermodynamicOperations opsRecover = new ThermodynamicOperations(thermoSystem);
+        opsRecover.TVflash(volume, "m3");
+        thermoSystem.init(3);
       } catch (Exception e) {
-	logger.error("Recovery TVflash also failed: " + e.getMessage());
+        logger.error("Recovery TVflash also failed: " + e.getMessage());
       }
     }
 
@@ -2412,107 +2412,107 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     if (fireModelType == FireModelType.STEFAN_BOLTZMANN && fireCase) {
       double outerWallT;
       if (heatTransferType == HeatTransferType.TRANSIENT_WALL && wallModel != null) {
-	outerWallT = wallModel.getOuterWallTemperature();
+        outerWallT = wallModel.getOuterWallTemperature();
       } else {
-	outerWallT = wallTemperature;
+        outerWallT = wallTemperature;
       }
       sbFireFlux = calculateSBFireFlux(outerWallT) * wetSurfaceFraction;
     }
 
     if (heatTransferType == HeatTransferType.TRANSIENT_WALL && wallModel != null) {
       if (twoPhaseHeatTransfer && thermoSystem.getNumberOfPhases() > 1) {
-	// Calculate S-B fire flux for each wall model
-	double sbFluxGas = 0.0;
-	double sbFluxLiquid = 0.0;
-	if (fireModelType == FireModelType.STEFAN_BOLTZMANN && fireCase) {
-	  sbFluxGas = calculateSBFireFlux(gasWallModel.getOuterWallTemperature()) * wetSurfaceFraction;
-	  sbFluxLiquid = calculateSBFireFlux(liquidWallModel.getOuterWallTemperature()) * wetSurfaceFraction;
-	}
+        // Calculate S-B fire flux for each wall model
+        double sbFluxGas = 0.0;
+        double sbFluxLiquid = 0.0;
+        if (fireModelType == FireModelType.STEFAN_BOLTZMANN && fireCase) {
+          sbFluxGas = calculateSBFireFlux(gasWallModel.getOuterWallTemperature()) * wetSurfaceFraction;
+          sbFluxLiquid = calculateSBFireFlux(liquidWallModel.getOuterWallTemperature()) * wetSurfaceFraction;
+        }
 
-	// Update gas wall model
-	double hGas = calculateGasHeatTransferCoeff();
-	gasWallModel.advanceTimeStep(dt, thermoSystem.getTemperature(), hGas, ambientTemperature, hExternal, sbFluxGas);
-	gasWallTemperature = gasWallModel.getMeanWallTemperature();
+        // Update gas wall model
+        double hGas = calculateGasHeatTransferCoeff();
+        gasWallModel.advanceTimeStep(dt, thermoSystem.getTemperature(), hGas, ambientTemperature, hExternal, sbFluxGas);
+        gasWallTemperature = gasWallModel.getMeanWallTemperature();
 
-	// Update liquid wall model
-	double hLiquid = calculateLiquidHeatTransferCoeff();
-	liquidWallModel.advanceTimeStep(dt, thermoSystem.getTemperature(), hLiquid, ambientTemperature, hExternal,
-	    sbFluxLiquid);
-	liquidWallTemperature = liquidWallModel.getMeanWallTemperature();
+        // Update liquid wall model
+        double hLiquid = calculateLiquidHeatTransferCoeff();
+        liquidWallModel.advanceTimeStep(dt, thermoSystem.getTemperature(), hLiquid, ambientTemperature, hExternal,
+            sbFluxLiquid);
+        liquidWallTemperature = liquidWallModel.getMeanWallTemperature();
 
-	// Average wall temperature weighted by area
-	double gasArea = getUnwettedWallArea();
-	double liquidArea = getWettedWallArea();
-	double totalArea = gasArea + liquidArea;
-	if (totalArea > 0) {
-	  wallTemperature = (gasWallTemperature * gasArea + liquidWallTemperature * liquidArea) / totalArea;
-	}
+        // Average wall temperature weighted by area
+        double gasArea = getUnwettedWallArea();
+        double liquidArea = getWettedWallArea();
+        double totalArea = gasArea + liquidArea;
+        if (totalArea > 0) {
+          wallTemperature = (gasWallTemperature * gasArea + liquidWallTemperature * liquidArea) / totalArea;
+        }
       } else {
-	double hInner = calculateInternalHeatTransferCoeff();
-	wallModel.advanceTimeStep(dt, thermoSystem.getTemperature(), hInner, ambientTemperature, hExternal, sbFireFlux);
-	wallTemperature = wallModel.getMeanWallTemperature();
+        double hInner = calculateInternalHeatTransferCoeff();
+        wallModel.advanceTimeStep(dt, thermoSystem.getTemperature(), hInner, ambientTemperature, hExternal, sbFireFlux);
+        wallTemperature = wallModel.getMeanWallTemperature();
       }
     } else if (calculationType == CalculationType.ENERGY_BALANCE) {
       if (twoPhaseHeatTransfer && thermoSystem.getNumberOfPhases() > 1) {
-	// Two-phase wall energy balance
-	double gasArea = getUnwettedWallArea();
-	double liquidArea = getWettedWallArea();
-	double wallThicknessTotal = hasLiner ? wallThickness + linerThickness : wallThickness;
+        // Two-phase wall energy balance
+        double gasArea = getUnwettedWallArea();
+        double liquidArea = getWettedWallArea();
+        double wallThicknessTotal = hasLiner ? wallThickness + linerThickness : wallThickness;
 
-	// Gas wall energy balance with Biot correction
-	double gasWallMass = wallDensity * gasArea * wallThicknessTotal;
-	if (gasWallMass > 0) {
-	  double hGasInner = calculateGasHeatTransferCoeff();
-	  double effectiveThicknessGas = hasLiner
-	      ? linerThickness / linerThermalConductivity + wallThickness / (2.0 * wallThermalConductivity)
-	      : wallThickness / (2.0 * wallThermalConductivity);
-	  double hGasEff = 1.0 / (1.0 / hGasInner + effectiveThicknessGas);
-	  double QinGas = hExternal * gasArea * (ambientTemperature - gasWallTemperature);
-	  // Add S-B fire heat to outer wall
-	  if (fireModelType == FireModelType.STEFAN_BOLTZMANN && fireCase) {
-	    QinGas += calculateSBFireFlux(gasWallTemperature) * wetSurfaceFraction * gasArea;
-	  }
-	  double QoutGas = hGasEff * gasArea * (gasWallTemperature - thermoSystem.getTemperature());
-	  gasWallTemperature += (QinGas - QoutGas) * dt / (gasWallMass * wallHeatCapacity);
-	}
+        // Gas wall energy balance with Biot correction
+        double gasWallMass = wallDensity * gasArea * wallThicknessTotal;
+        if (gasWallMass > 0) {
+          double hGasInner = calculateGasHeatTransferCoeff();
+          double effectiveThicknessGas = hasLiner
+              ? linerThickness / linerThermalConductivity + wallThickness / (2.0 * wallThermalConductivity)
+              : wallThickness / (2.0 * wallThermalConductivity);
+          double hGasEff = 1.0 / (1.0 / hGasInner + effectiveThicknessGas);
+          double QinGas = hExternal * gasArea * (ambientTemperature - gasWallTemperature);
+          // Add S-B fire heat to outer wall
+          if (fireModelType == FireModelType.STEFAN_BOLTZMANN && fireCase) {
+            QinGas += calculateSBFireFlux(gasWallTemperature) * wetSurfaceFraction * gasArea;
+          }
+          double QoutGas = hGasEff * gasArea * (gasWallTemperature - thermoSystem.getTemperature());
+          gasWallTemperature += (QinGas - QoutGas) * dt / (gasWallMass * wallHeatCapacity);
+        }
 
-	// Liquid wall energy balance with Biot correction
-	double liquidWallMass = wallDensity * liquidArea * wallThicknessTotal;
-	if (liquidWallMass > 0) {
-	  double hLiqInner = calculateLiquidHeatTransferCoeff();
-	  double effectiveThicknessLiq = hasLiner
-	      ? linerThickness / linerThermalConductivity + wallThickness / (2.0 * wallThermalConductivity)
-	      : wallThickness / (2.0 * wallThermalConductivity);
-	  double hLiqEff = 1.0 / (1.0 / hLiqInner + effectiveThicknessLiq);
-	  double QinLiquid = hExternal * liquidArea * (ambientTemperature - liquidWallTemperature);
-	  // Add S-B fire heat to outer wall
-	  if (fireModelType == FireModelType.STEFAN_BOLTZMANN && fireCase) {
-	    QinLiquid += calculateSBFireFlux(liquidWallTemperature) * wetSurfaceFraction * liquidArea;
-	  }
-	  double QoutLiquid = hLiqEff * liquidArea * (liquidWallTemperature - thermoSystem.getTemperature());
-	  liquidWallTemperature += (QinLiquid - QoutLiquid) * dt / (liquidWallMass * wallHeatCapacity);
-	}
+        // Liquid wall energy balance with Biot correction
+        double liquidWallMass = wallDensity * liquidArea * wallThicknessTotal;
+        if (liquidWallMass > 0) {
+          double hLiqInner = calculateLiquidHeatTransferCoeff();
+          double effectiveThicknessLiq = hasLiner
+              ? linerThickness / linerThermalConductivity + wallThickness / (2.0 * wallThermalConductivity)
+              : wallThickness / (2.0 * wallThermalConductivity);
+          double hLiqEff = 1.0 / (1.0 / hLiqInner + effectiveThicknessLiq);
+          double QinLiquid = hExternal * liquidArea * (ambientTemperature - liquidWallTemperature);
+          // Add S-B fire heat to outer wall
+          if (fireModelType == FireModelType.STEFAN_BOLTZMANN && fireCase) {
+            QinLiquid += calculateSBFireFlux(liquidWallTemperature) * wetSurfaceFraction * liquidArea;
+          }
+          double QoutLiquid = hLiqEff * liquidArea * (liquidWallTemperature - thermoSystem.getTemperature());
+          liquidWallTemperature += (QinLiquid - QoutLiquid) * dt / (liquidWallMass * wallHeatCapacity);
+        }
 
-	// Average wall temperature
-	double totalArea = gasArea + liquidArea;
-	if (totalArea > 0) {
-	  wallTemperature = (gasWallTemperature * gasArea + liquidWallTemperature * liquidArea) / totalArea;
-	}
+        // Average wall temperature
+        double totalArea = gasArea + liquidArea;
+        if (totalArea > 0) {
+          wallTemperature = (gasWallTemperature * gasArea + liquidWallTemperature * liquidArea) / totalArea;
+        }
       } else {
-	// Simple wall energy balance with Biot-number correction.
-	double wallMass = wallDensity * getWallArea() * (hasLiner ? wallThickness + linerThickness : wallThickness);
-	double hInner = calculateInternalHeatTransferCoeff();
-	double effectiveThickness = hasLiner
-	    ? linerThickness / linerThermalConductivity + wallThickness / (2.0 * wallThermalConductivity)
-	    : wallThickness / (2.0 * wallThermalConductivity);
-	double hEffective = 1.0 / (1.0 / hInner + effectiveThickness);
-	double Qin = hExternal * getWallArea() * (ambientTemperature - wallTemperature);
-	// Add S-B fire heat to outer wall
-	if (fireModelType == FireModelType.STEFAN_BOLTZMANN && fireCase) {
-	  Qin += calculateSBFireFlux(wallTemperature) * wetSurfaceFraction * getWallArea();
-	}
-	double Qout = hEffective * getWallArea() * (wallTemperature - thermoSystem.getTemperature());
-	wallTemperature += (Qin - Qout) * dt / (wallMass * wallHeatCapacity);
+        // Simple wall energy balance with Biot-number correction.
+        double wallMass = wallDensity * getWallArea() * (hasLiner ? wallThickness + linerThickness : wallThickness);
+        double hInner = calculateInternalHeatTransferCoeff();
+        double effectiveThickness = hasLiner
+            ? linerThickness / linerThermalConductivity + wallThickness / (2.0 * wallThermalConductivity)
+            : wallThickness / (2.0 * wallThermalConductivity);
+        double hEffective = 1.0 / (1.0 / hInner + effectiveThickness);
+        double Qin = hExternal * getWallArea() * (ambientTemperature - wallTemperature);
+        // Add S-B fire heat to outer wall
+        if (fireModelType == FireModelType.STEFAN_BOLTZMANN && fireCase) {
+          Qin += calculateSBFireFlux(wallTemperature) * wetSurfaceFraction * getWallArea();
+        }
+        double Qout = hEffective * getWallArea() * (wallTemperature - thermoSystem.getTemperature());
+        wallTemperature += (Qin - Qout) * dt / (wallMass * wallHeatCapacity);
       }
     }
 
@@ -2650,8 +2650,8 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     private final double timeStep;
 
     SimulationResult(List<Double> time, List<Double> pressure, List<Double> temperature, List<Double> mass,
-	List<Double> wallTemperature, List<Double> massFlowRate, List<Double> gasWallTemperature,
-	List<Double> liquidWallTemperature, List<Double> liquidLevel, double endTime, double timeStep) {
+        List<Double> wallTemperature, List<Double> massFlowRate, List<Double> gasWallTemperature,
+        List<Double> liquidWallTemperature, List<Double> liquidLevel, double endTime, double timeStep) {
       this.time = time;
       this.pressure = pressure;
       this.temperature = temperature;
@@ -2830,36 +2830,36 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     for (double t = dt; t <= endTime + dt / 2; t += dt) {
       // Check target pressure stop condition
       if (!Double.isNaN(targetPressure) && flowDirection != FlowDirection.IDLE) {
-	double currentP = thermoSystem.getPressure() * 1e5;
-	if (flowDirection == FlowDirection.FILLING && currentP >= targetPressure) {
-	  targetPressureReached = true;
-	  break;
-	} else if (flowDirection == FlowDirection.DISCHARGE && currentP <= targetPressure) {
-	  targetPressureReached = true;
-	  break;
-	}
+        double currentP = thermoSystem.getPressure() * 1e5;
+        if (flowDirection == FlowDirection.FILLING && currentP >= targetPressure) {
+          targetPressureReached = true;
+          break;
+        } else if (flowDirection == FlowDirection.DISCHARGE && currentP <= targetPressure) {
+          targetPressureReached = true;
+          break;
+        }
       }
 
       runTransient(dt, uuid);
       step++;
 
       if (step % recordInterval == 0) {
-	timeData.add(t);
-	pressureData.add(getPressure("bar"));
-	temperatureData.add(getTemperature());
-	double currentMass = getMass();
-	massData.add(currentMass);
-	wallTempData.add(getWallTemperature());
-	massFlowData.add((prevMass - currentMass) / dt);
-	gasWallData.add(getGasWallTemperature());
-	liqWallData.add(getLiquidWallTemperature());
-	liquidLevelData.add(getLiquidLevel());
-	prevMass = currentMass;
+        timeData.add(t);
+        pressureData.add(getPressure("bar"));
+        temperatureData.add(getTemperature());
+        double currentMass = getMass();
+        massData.add(currentMass);
+        wallTempData.add(getWallTemperature());
+        massFlowData.add((prevMass - currentMass) / dt);
+        gasWallData.add(getGasWallTemperature());
+        liqWallData.add(getLiquidWallTemperature());
+        liquidLevelData.add(getLiquidLevel());
+        prevMass = currentMass;
       }
     }
 
     return new SimulationResult(timeData, pressureData, temperatureData, massData, wallTempData, massFlowData,
-	gasWallData, liqWallData, liquidLevelData, endTime, dt);
+        gasWallData, liqWallData, liquidLevelData, endTime, dt);
   }
 
   /**
@@ -2890,7 +2890,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     double backPressureBar = backPressure / 1e5;
     if (backPressureBar >= initialPressure) {
       errors.add(String.format("Back pressure (%.1f bar) >= initial pressure (%.1f bar). No flow will occur.",
-	  backPressureBar, initialPressure));
+          backPressureBar, initialPressure));
     }
 
     // Check orifice size
@@ -2898,26 +2898,26 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     double vesselCrossSection = Math.PI * vesselDiameter * vesselDiameter / 4.0;
     if (orificeArea > vesselCrossSection * 0.5) {
       warnings.add(String.format("Orifice area (%.1f%% of vessel cross-section) is very large. "
-	  + "Results may not represent realistic orifice flow.", 100 * orificeArea / vesselCrossSection));
+          + "Results may not represent realistic orifice flow.", 100 * orificeArea / vesselCrossSection));
     }
 
     // Check two-phase settings
     if (initialLiquidLevel > 0 && !twoPhaseHeatTransfer) {
       warnings.add("Initial liquid level is set but two-phase heat transfer is disabled. "
-	  + "Consider calling setTwoPhaseHeatTransfer(true).");
+          + "Consider calling setTwoPhaseHeatTransfer(true).");
     }
 
     if (twoPhaseHeatTransfer && initialLiquidLevel <= 0) {
       warnings.add("Two-phase heat transfer is enabled but initial liquid level is 0. "
-	  + "Gas and liquid wall temperatures will be identical.");
+          + "Gas and liquid wall temperatures will be identical.");
     }
 
     // Check heat transfer settings
     if (calculationType == CalculationType.ENERGY_BALANCE) {
       if (heatTransferType == HeatTransferType.CALCULATED || heatTransferType == HeatTransferType.TRANSIENT_WALL) {
-	if (vesselLength <= 0 || vesselDiameter <= 0) {
-	  errors.add("Vessel geometry required for calculated heat transfer. " + "Call setVesselGeometry().");
-	}
+        if (vesselLength <= 0 || vesselDiameter <= 0) {
+          errors.add("Vessel geometry required for calculated heat transfer. " + "Call setVesselGeometry().");
+        }
       }
     }
 
@@ -2925,7 +2925,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     double calculatedVolume = Math.PI * vesselDiameter * vesselDiameter / 4.0 * vesselLength;
     if (Math.abs(calculatedVolume - volume) / volume > 0.01) {
       warnings.add(String.format("Vessel volume (%.3f m³) differs from geometry-calculated volume (%.3f m³). "
-	  + "Heat transfer area may be inconsistent.", volume, calculatedVolume));
+          + "Heat transfer area may be inconsistent.", volume, calculatedVolume));
     }
 
     // Log warnings
@@ -2957,13 +2957,13 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     if (thermoSystem != null) {
       double initialPressure = thermoSystem.getPressure() / 1e5;
       if (initialPressure > 700) {
-	warnings.add(String.format("Very high pressure (%.0f bar). Ensure equation of state is valid for this range.",
-	    initialPressure));
+        warnings.add(String.format("Very high pressure (%.0f bar). Ensure equation of state is valid for this range.",
+            initialPressure));
       }
 
       double temperature = thermoSystem.getTemperature();
       if (temperature < 100) {
-	warnings.add(String.format("Very low temperature (%.1f K). Check for cryogenic validity.", temperature));
+        warnings.add(String.format("Very low temperature (%.1f K). Check for cryogenic validity.", temperature));
       }
     }
 
@@ -3006,7 +3006,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
       ops.bubblePointPressureFlash(false);
     } catch (Exception e) {
       throw new IllegalArgumentException(
-	  "Could not find saturation pressure for " + componentName + " at " + temperature + " K", e);
+          "Could not find saturation pressure for " + componentName + " at " + temperature + " K", e);
     }
 
     double saturationPressure = init.getPressure();
@@ -3053,7 +3053,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
       ops.dewPointTemperatureFlash();
     } catch (Exception e) {
       throw new IllegalArgumentException(
-	  "Could not find saturation temperature for " + componentName + " at " + pressure + " bar", e);
+          "Could not find saturation temperature for " + componentName + " at " + pressure + " bar", e);
     }
 
     double saturationTemp = init.getTemperature();
@@ -3101,19 +3101,19 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     int n = timeHistory.size();
     for (int i = 0; i < n; i++) {
       csv.append(
-	  String.format("%.2f,%.4f,%.2f,%.2f,%.4f,%.2f,%.6f,%.2f", timeHistory.get(i), pressureHistory.get(i) / 1e5, // Pa
-														     // to
-														     // bar
-	      temperatureHistory.get(i), temperatureHistory.get(i) - 273.15, massHistory.get(i),
-	      wallTemperatureHistory.size() > i ? wallTemperatureHistory.get(i) : 0.0,
-	      massFlowHistory.size() > i ? massFlowHistory.get(i) : 0.0,
-	      heatRateHistory.size() > i ? heatRateHistory.get(i) : 0.0));
+          String.format("%.2f,%.4f,%.2f,%.2f,%.4f,%.2f,%.6f,%.2f", timeHistory.get(i), pressureHistory.get(i) / 1e5, // Pa
+              // to
+              // bar
+              temperatureHistory.get(i), temperatureHistory.get(i) - 273.15, massHistory.get(i),
+              wallTemperatureHistory.size() > i ? wallTemperatureHistory.get(i) : 0.0,
+              massFlowHistory.size() > i ? massFlowHistory.get(i) : 0.0,
+              heatRateHistory.size() > i ? heatRateHistory.get(i) : 0.0));
 
       if (twoPhaseHeatTransfer) {
-	csv.append(String.format(",%.2f,%.2f,%.4f",
-	    gasWallTemperatureHistory.size() > i ? gasWallTemperatureHistory.get(i) : 0.0,
-	    liquidWallTemperatureHistory.size() > i ? liquidWallTemperatureHistory.get(i) : 0.0,
-	    liquidLevelHistory.size() > i ? liquidLevelHistory.get(i) : 0.0));
+        csv.append(String.format(",%.2f,%.2f,%.4f",
+            gasWallTemperatureHistory.size() > i ? gasWallTemperatureHistory.get(i) : 0.0,
+            liquidWallTemperatureHistory.size() > i ? liquidWallTemperatureHistory.get(i) : 0.0,
+            liquidLevelHistory.size() > i ? liquidLevelHistory.get(i) : 0.0));
       }
       csv.append("\n");
     }
@@ -3142,10 +3142,10 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
       json.append("\"T_K\": ").append(String.format("%.2f", temperatureHistory.get(i))).append(", ");
       json.append("\"m_kg\": ").append(String.format("%.4f", massHistory.get(i))).append(", ");
       json.append("\"mdot_kgs\": ")
-	  .append(String.format("%.6f", massFlowHistory.size() > i ? massFlowHistory.get(i) : 0.0));
+          .append(String.format("%.6f", massFlowHistory.size() > i ? massFlowHistory.get(i) : 0.0));
       json.append("}");
       if (i < n - 1) {
-	json.append(",");
+        json.append(",");
       }
       json.append("\n");
     }
@@ -3196,16 +3196,16 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
       double dt = 1.0;
       double time = 0;
       while (thermoSystem.getPressure() > targetPressure && time < targetTime * 2) {
-	runTransient(dt, uuid);
-	time += dt;
+        runTransient(dt, uuid);
+        time += dt;
       }
 
       if (time <= targetTime) {
-	// Orifice too big, try smaller
-	maxOrifice = testOrifice;
+        // Orifice too big, try smaller
+        maxOrifice = testOrifice;
       } else {
-	// Orifice too small, try larger
-	minOrifice = testOrifice;
+        // Orifice too small, try larger
+        minOrifice = testOrifice;
       }
     }
 
@@ -3246,8 +3246,8 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
       double time = 0;
       double maxTime = 7200; // 2 hour max
       while (thermoSystem.getPressure() / 1e5 > targetPressure && time < maxTime) {
-	runTransient(dt, uuid);
-	time += dt;
+        runTransient(dt, uuid);
+        time += dt;
       }
       times[i] = time;
     }
@@ -3279,7 +3279,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
       return false;
     }
     return outletStream.getFluid().hasPhaseType("aqueous") || outletStream.getFluid().hasPhaseType("oil")
-	|| outletStream.getFluid().hasPhaseType("liquid");
+        || outletStream.getFluid().hasPhaseType("liquid");
   }
 
   /**
@@ -3302,7 +3302,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
       double phaseMass = fluid.getPhase(i).getMass();
       totalMass += phaseMass;
       if (!fluid.getPhase(i).getPhaseTypeName().equals("gas")) {
-	liquidMass += phaseMass;
+        liquidMass += phaseMass;
       }
     }
 
@@ -3409,10 +3409,10 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     for (int i = 0; i < thermoSystem.getNumberOfComponents(); i++) {
       String name = thermoSystem.getComponent(i).getComponentName().toLowerCase();
       if (name.equals("water") || name.equals("h2o")) {
-	if (thermoSystem.getComponent(i).getz() > 0.0001) {
-	  hasWater = true;
-	  break;
-	}
+        if (thermoSystem.getComponent(i).getz() > 0.0001) {
+          hasWater = true;
+          break;
+        }
       }
     }
 
@@ -3504,21 +3504,21 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
 
       // Calculate hydrate temp at this P, T
       try {
-	SystemInterface testSystem = thermoSystem.clone();
-	testSystem.setTemperature(T);
-	testSystem.setPressure(P);
-	testSystem.setHydrateCheck(true);
+        SystemInterface testSystem = thermoSystem.clone();
+        testSystem.setTemperature(T);
+        testSystem.setPressure(P);
+        testSystem.setHydrateCheck(true);
 
-	ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
-	ops.hydrateFormationTemperature();
+        ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
+        ops.hydrateFormationTemperature();
 
-	double hydrateTemp = testSystem.getTemperature();
-	double subcooling = hydrateTemp - T;
-	if (subcooling > maxSubcooling) {
-	  maxSubcooling = subcooling;
-	}
+        double hydrateTemp = testSystem.getTemperature();
+        double subcooling = hydrateTemp - T;
+        if (subcooling > maxSubcooling) {
+          maxSubcooling = subcooling;
+        }
       } catch (Exception e) {
-	// Skip this point
+        // Skip this point
       }
     }
     return maxSubcooling;
@@ -3554,8 +3554,8 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     for (int i = 0; i < thermoSystem.getNumberOfComponents(); i++) {
       String name = thermoSystem.getComponent(i).getComponentName().toLowerCase();
       if (name.equals("co2") || name.equals("carbon dioxide")) {
-	co2MoleFrac = thermoSystem.getComponent(i).getz();
-	break;
+        co2MoleFrac = thermoSystem.getComponent(i).getz();
+        break;
       }
     }
 
@@ -3575,7 +3575,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
       // ln(P) = 15.96 - 1512/T approximately
       // Solving for T: T = 1512 / (15.96 - ln(P))
       if (P <= 0.001) {
-	P = 0.001; // Prevent log of zero
+        P = 0.001; // Prevent log of zero
       }
       double T_sublim = 1512.0 / (15.96 - Math.log(P));
       // Clamp to reasonable range
@@ -3656,10 +3656,10 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     if (hydrateTemp > -200) {
       double subcooling = hydrateTemp - fluidTemp;
       if (subcooling > 0) {
-	risks.put("HYDRATE", String.format("RISK: Fluid (%.1f°C) is %.1f°C below hydrate temp (%.1f°C)", fluidTemp,
-	    subcooling, hydrateTemp));
+        risks.put("HYDRATE", String.format("RISK: Fluid (%.1f°C) is %.1f°C below hydrate temp (%.1f°C)", fluidTemp,
+            subcooling, hydrateTemp));
       } else {
-	risks.put("HYDRATE", String.format("OK: %.1f°C margin above hydrate temp (%.1f°C)", -subcooling, hydrateTemp));
+        risks.put("HYDRATE", String.format("OK: %.1f°C margin above hydrate temp (%.1f°C)", -subcooling, hydrateTemp));
       }
     } else {
       risks.put("HYDRATE", "N/A: No hydrate formers or calculation failed");
@@ -3670,11 +3670,11 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     if (freezeTemp > -200) {
       double subcooling = freezeTemp - fluidTemp;
       if (subcooling > 0) {
-	risks.put("CO2_FREEZING", String.format("RISK: Fluid (%.1f°C) is %.1f°C below CO2 freeze (%.1f°C)", fluidTemp,
-	    subcooling, freezeTemp));
+        risks.put("CO2_FREEZING", String.format("RISK: Fluid (%.1f°C) is %.1f°C below CO2 freeze (%.1f°C)", fluidTemp,
+            subcooling, freezeTemp));
       } else {
-	risks.put("CO2_FREEZING",
-	    String.format("OK: %.1f°C margin above CO2 freeze (%.1f°C)", -subcooling, freezeTemp));
+        risks.put("CO2_FREEZING",
+            String.format("OK: %.1f°C margin above CO2 freeze (%.1f°C)", -subcooling, freezeTemp));
       }
     } else {
       risks.put("CO2_FREEZING", "N/A: No CO2 in system");
@@ -3685,10 +3685,10 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     double minWallTemp = getMinimumWallTemperatureReached("C");
     if (minWallTemp < -29) {
       risks.put("MDMT",
-	  String.format("CRITICAL: Wall temp (%.1f°C) requires special materials (CS limit -29°C)", minWallTemp));
+          String.format("CRITICAL: Wall temp (%.1f°C) requires special materials (CS limit -29°C)", minWallTemp));
     } else if (minWallTemp < 0) {
       risks.put("MDMT",
-	  String.format("WARNING: Wall temp (%.1f°C) below 0°C - verify CS impact properties", minWallTemp));
+          String.format("WARNING: Wall temp (%.1f°C) below 0°C - verify CS impact properties", minWallTemp));
     } else {
       risks.put("MDMT", String.format("OK: Wall temp (%.1f°C) within normal CS range", minWallTemp));
     }

@@ -506,7 +506,7 @@ public class CompressorCasingDesignCalculator implements Serializable {
     double denominator = allowableS * efficiency - 0.6 * pressureMPa;
     if (denominator <= 0) {
       designIssues.add("BLOCKER: Pressure exceeds material capability. "
-	  + "Select higher strength material or reduce design pressure.");
+          + "Select higher strength material or reduce design pressure.");
       requiredWallThicknessMm = casingInnerDiameterMm; // Flag as impossible
       return;
     }
@@ -533,7 +533,7 @@ public class CompressorCasingDesignCalculator implements Serializable {
 
     if (stressRatio > 1.0) {
       designIssues.add("WARNING: Hoop stress ratio " + String.format("%.2f", stressRatio)
-	  + " exceeds 1.0. Increase wall thickness or select stronger material.");
+          + " exceeds 1.0. Increase wall thickness or select stronger material.");
     }
   }
 
@@ -546,11 +546,11 @@ public class CompressorCasingDesignCalculator implements Serializable {
   private double roundUpToStandardThickness(double thicknessMm) {
     // Standard plate thicknesses in mm (metric preferred series)
     double[] standardThicknesses = { 6.0, 8.0, 10.0, 12.0, 12.7, 14.0, 16.0, 18.0, 20.0, 22.0, 25.0, 28.0, 30.0, 32.0,
-	35.0, 38.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 90.0, 100.0 };
+        35.0, 38.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 90.0, 100.0 };
 
     for (double stdThk : standardThicknesses) {
       if (stdThk >= thicknessMm) {
-	return stdThk;
+        return stdThk;
       }
     }
     // If beyond standard range, round up to nearest 5mm
@@ -618,7 +618,7 @@ public class CompressorCasingDesignCalculator implements Serializable {
     double innerRadiusMm = casingInnerDiameterMm / 2.0;
     if (effectiveThickness > 0) {
       hydroTestStressMPa = hydroTestPressureMPa * (innerRadiusMm + 0.6 * effectiveThickness)
-	  / (jointEfficiency * effectiveThickness);
+          / (jointEfficiency * effectiveThickness);
     }
 
     double maxHydroStress = 0.90 * smysMPa;
@@ -626,7 +626,7 @@ public class CompressorCasingDesignCalculator implements Serializable {
 
     if (!hydroTestAcceptable) {
       designIssues.add("WARNING: Hydrostatic test stress " + String.format("%.1f", hydroTestStressMPa)
-	  + " MPa exceeds 90% SMYS (" + String.format("%.1f", maxHydroStress) + " MPa).");
+          + " MPa exceeds 90% SMYS (" + String.format("%.1f", maxHydroStress) + " MPa).");
     }
 
     appliedStandards.add("ASME VIII UG-99 - Hydrostatic Test");
@@ -670,17 +670,17 @@ public class CompressorCasingDesignCalculator implements Serializable {
     for (int i = 0; i < classes.length; i++) {
       double derated = ratingsAtAmbientBarg[i] * tempDeratingFactor;
       if (derated >= designPressureBarg) {
-	flangeClass = classes[i];
-	flangeRatingBarg = derated;
-	flangeRatingAdequate = true;
-	break;
+        flangeClass = classes[i];
+        flangeRatingBarg = derated;
+        flangeRatingAdequate = true;
+        break;
       }
     }
 
     if (!flangeRatingAdequate) {
       designIssues.add(
-	  "BLOCKER: No standard flange class adequate for design pressure " + String.format("%.1f", designPressureBarg)
-	      + " barg at " + String.format("%.0f", designTemperatureC) + " C.");
+          "BLOCKER: No standard flange class adequate for design pressure " + String.format("%.1f", designPressureBarg)
+              + " barg at " + String.format("%.0f", designTemperatureC) + " C.");
       flangeClass = 2500;
       flangeRatingBarg = ratingsAtAmbientBarg[5] * tempDeratingFactor;
     }
@@ -773,7 +773,7 @@ public class CompressorCasingDesignCalculator implements Serializable {
 
     if (!thermalGrowthAcceptable) {
       designIssues.add("WARNING: Differential expansion " + String.format("%.2f", Math.abs(differentialExpansionMm))
-	  + " mm exceeds " + String.format("%.1f", maxDifferentialMm) + " mm limit. Review seal clearance design.");
+          + " mm exceeds " + String.format("%.1f", maxDifferentialMm) + " mm limit. Review seal clearance design.");
     }
   }
 
@@ -848,14 +848,14 @@ public class CompressorCasingDesignCalculator implements Serializable {
       double requiredStress = totalBoltLoadN / (totalBoltArea * 1e-6) / 1e6; // MPa
 
       if (requiredStress <= boltAllowableStressMPa) {
-	splitLineBoltDiameterMm = boltSize;
-	splitLineBoltCount = numBolts;
-	splitLineBoltPitchMm = boltPitchMm;
-	boltTensileStressMPa = requiredStress;
-	boltPreloadForceN = totalBoltLoadN / numBolts;
-	splitLineBoltsAdequate = true;
-	found = true;
-	break;
+        splitLineBoltDiameterMm = boltSize;
+        splitLineBoltCount = numBolts;
+        splitLineBoltPitchMm = boltPitchMm;
+        boltTensileStressMPa = requiredStress;
+        boltPreloadForceN = totalBoltLoadN / numBolts;
+        splitLineBoltsAdequate = true;
+        found = true;
+        break;
       }
     }
 
@@ -899,7 +899,7 @@ public class CompressorCasingDesignCalculator implements Serializable {
     // C = 0.33 for bolted flat head
     double coverC = 0.33;
     barrelEndCoverThicknessMm = barrelOuterIDMm
-	* Math.sqrt(coverC * designPressureMPa / (allowableStressMPa * jointEfficiency));
+        * Math.sqrt(coverC * designPressureMPa / (allowableStressMPa * jointEfficiency));
     barrelEndCoverThicknessMm = Math.max(barrelEndCoverThicknessMm, 25.0); // Min 25mm
 
     // Round up to standard thickness
@@ -933,7 +933,7 @@ public class CompressorCasingDesignCalculator implements Serializable {
 
     if (boltStress > boltAllowableStressMPa) {
       designIssues.add("WARNING: Barrel end-cover bolt stress " + String.format("%.0f", boltStress)
-	  + " MPa exceeds allowable " + String.format("%.0f", boltAllowableStressMPa) + " MPa. Increase bolt size.");
+          + " MPa exceeds allowable " + String.format("%.0f", boltAllowableStressMPa) + " MPa. Increase bolt size.");
     }
 
     appliedStandards.add("ASME VIII UG-34 - Flat Head (Barrel End Cover)");
@@ -991,33 +991,33 @@ public class CompressorCasingDesignCalculator implements Serializable {
     } else {
       // Carbon steels: check hardness and strength limits
       if (materialType.contains("CarbonSteel") || materialType.contains("LowAlloy")) {
-	naceMaxHardnessHRC = 22.0;
-	if (smysMPa > 360.0) {
-	  naceIssues.add("Material SMYS " + String.format("%.0f", smysMPa)
-	      + " MPa exceeds NACE limit of 360 MPa for carbon steel in sour service.");
-	  naceComplianceStatus = "NON_COMPLIANT";
-	} else {
-	  naceComplianceStatus = "CONDITIONALLY_COMPLIANT";
-	  naceIssues.add("Carbon steel acceptable if hardness <= 22 HRC " + "and proper PWHT applied per NACE MR0175.");
-	}
+        naceMaxHardnessHRC = 22.0;
+        if (smysMPa > 360.0) {
+          naceIssues.add("Material SMYS " + String.format("%.0f", smysMPa)
+              + " MPa exceeds NACE limit of 360 MPa for carbon steel in sour service.");
+          naceComplianceStatus = "NON_COMPLIANT";
+        } else {
+          naceComplianceStatus = "CONDITIONALLY_COMPLIANT";
+          naceIssues.add("Carbon steel acceptable if hardness <= 22 HRC " + "and proper PWHT applied per NACE MR0175.");
+        }
       } else if (materialType.contains("CrMo")) {
-	naceMaxHardnessHRC = 22.0;
-	if (smysMPa > 520.0) {
-	  naceComplianceStatus = "NON_COMPLIANT";
-	  naceIssues.add("CrMo steel SMYS exceeds NACE limit for sour service.");
-	} else {
-	  naceComplianceStatus = "CONDITIONALLY_COMPLIANT";
-	  naceIssues.add("CrMo acceptable with PWHT and hardness <= 22 HRC.");
-	}
+        naceMaxHardnessHRC = 22.0;
+        if (smysMPa > 520.0) {
+          naceComplianceStatus = "NON_COMPLIANT";
+          naceIssues.add("CrMo steel SMYS exceeds NACE limit for sour service.");
+        } else {
+          naceComplianceStatus = "CONDITIONALLY_COMPLIANT";
+          naceIssues.add("CrMo acceptable with PWHT and hardness <= 22 HRC.");
+        }
       } else {
-	naceComplianceStatus = "NON_COMPLIANT";
-	naceIssues.add("Material " + materialGrade + " not listed as NACE compliant.");
+        naceComplianceStatus = "NON_COMPLIANT";
+        naceIssues.add("Material " + materialGrade + " not listed as NACE compliant.");
       }
     }
 
     if ("NON_COMPLIANT".equals(naceComplianceStatus)) {
       designIssues.add("BLOCKER: Material " + materialGrade + " is not NACE MR0175 compliant for sour service. "
-	  + "Consider SA-182-F316L, SA-182-F304L, or Inconel-718.");
+          + "Consider SA-182-F316L, SA-182-F304L, or Inconel-718.");
     }
   }
 
@@ -1044,7 +1044,7 @@ public class CompressorCasingDesignCalculator implements Serializable {
   public String recommendMaterial() {
     if (sourService || h2sPartialPressureKPa > 0.3) {
       if (designTemperatureC > 200.0) {
-	return "Inconel-718";
+        return "Inconel-718";
       }
       return "SA-182-F316L";
     }
@@ -1063,7 +1063,7 @@ public class CompressorCasingDesignCalculator implements Serializable {
     if (designPressureMPa > 10.0) {
       // High pressure - use forging grade
       if (casingType == CompressorMechanicalDesign.CasingType.BARREL) {
-	return "SA-266-Gr4";
+        return "SA-266-Gr4";
       }
       return "SA-266-Gr2";
     }

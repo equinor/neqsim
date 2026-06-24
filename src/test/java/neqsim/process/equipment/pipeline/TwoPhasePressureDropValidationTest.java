@@ -45,7 +45,7 @@ class TwoPhasePressureDropValidationTest {
 
   // Tolerance for validation (Beggs & Brill claim ±10% for most cases)
   private static final double BEGGS_BRILL_TOLERANCE = 0.30; // 30% tolerance for empirical
-							    // correlation
+  // correlation
   private static final double LOCKHART_MARTINELLI_TOLERANCE = 0.40; // 40% for L-M approximation
 
   /**
@@ -65,8 +65,8 @@ class TwoPhasePressureDropValidationTest {
     String source;
 
     TwoPhaseTestCase(String description, double diameter, double length, double pressure, double temperature,
-	double gasFlowRate, double liquidFlowRate, double angle, double expectedPressureDrop, double expectedHoldup,
-	String source) {
+        double gasFlowRate, double liquidFlowRate, double angle, double expectedPressureDrop, double expectedHoldup,
+        String source) {
       this.description = description;
       this.diameter = diameter;
       this.length = length;
@@ -99,23 +99,23 @@ class TwoPhasePressureDropValidationTest {
       // Horizontal flow - segregated regime (low gas, moderate liquid velocities)
       // Expected from NeqSim B&B calculation (baseline)
       new TwoPhaseTestCase("B&B Horizontal Segregated", 0.1, 500.0, 20.0, 293.15, 500.0, 20000.0, 0.0, 0.85, 0.65,
-	  "Beggs & Brill 1973 - adapted"),
+          "Beggs & Brill 1973 - adapted"),
 
       // Horizontal flow - intermittent regime (moderate velocities)
       new TwoPhaseTestCase("B&B Horizontal Intermittent", 0.1, 500.0, 20.0, 293.15, 2000.0, 15000.0, 0.0, 2.2, 0.45,
-	  "Beggs & Brill 1973 - adapted"),
+          "Beggs & Brill 1973 - adapted"),
 
       // Horizontal flow - distributed regime (high gas velocity)
       new TwoPhaseTestCase("B&B Horizontal Distributed", 0.1, 500.0, 30.0, 293.15, 5000.0, 5000.0, 0.0, 2.0, 0.15,
-	  "Beggs & Brill 1973 - adapted"),
+          "Beggs & Brill 1973 - adapted"),
 
       // Uphill flow - 10 degrees (reasonable for flowlines)
       new TwoPhaseTestCase("B&B Uphill 10deg", 0.1, 500.0, 30.0, 293.15, 2000.0, 15000.0, 10.0, 3.7, 0.55,
-	  "Beggs & Brill 1973 - adapted"),
+          "Beggs & Brill 1973 - adapted"),
 
       // Downhill flow - 10 degrees (expect negative or very low ΔP)
       new TwoPhaseTestCase("B&B Downhill 10deg", 0.1, 500.0, 30.0, 293.15, 2000.0, 15000.0, -10.0, -0.8, 0.40,
-	  "Beggs & Brill 1973 - adapted"), };
+          "Beggs & Brill 1973 - adapted"), };
 
   /**
    * Test cases based on Lockhart-Martinelli (1949) for horizontal flow.
@@ -128,15 +128,15 @@ class TwoPhasePressureDropValidationTest {
   private static final TwoPhaseTestCase[] LOCKHART_MARTINELLI_CASES = {
       // Low quality (mostly liquid) - 6" pipe at 30 bar
       new TwoPhaseTestCase("L-M Low Quality (x=0.1)", 0.15, 1000.0, 30.0, 293.15, 500.0, 50000.0, 0.0, 0.5, 0.85,
-	  "Lockhart-Martinelli 1949"),
+          "Lockhart-Martinelli 1949"),
 
       // Medium quality
       new TwoPhaseTestCase("L-M Medium Quality (x=0.3)", 0.15, 1000.0, 30.0, 293.15, 3000.0, 30000.0, 0.0, 1.0, 0.60,
-	  "Lockhart-Martinelli 1949"),
+          "Lockhart-Martinelli 1949"),
 
       // High quality (mostly gas)
       new TwoPhaseTestCase("L-M High Quality (x=0.7)", 0.15, 1000.0, 30.0, 293.15, 8000.0, 10000.0, 0.0, 0.8, 0.25,
-	  "Lockhart-Martinelli 1949"), };
+          "Lockhart-Martinelli 1949"), };
 
   /**
    * Industrial-scale test cases for offshore pipelines.
@@ -150,16 +150,16 @@ class TwoPhasePressureDropValidationTest {
       // Typical wet gas pipeline (high GOR) - 10" pipe, 10 km
       // Pressure gradient ~0.5-1.0 bar/km typical for wet gas
       new TwoPhaseTestCase("North Sea Wet Gas", 0.254, 5000.0, 80.0, 333.15, 20000.0, 5000.0, 0.0, 3.0, 0.08,
-	  "Industry Correlation"),
+          "Industry Correlation"),
 
       // Oil-dominated flowline (low GOR) - 6" pipe, 2 km
       // Higher viscosity, lower GOR = moderate pressure drop
       new TwoPhaseTestCase("Oil Flowline Low GOR", 0.152, 2000.0, 50.0, 323.15, 1000.0, 30000.0, 2.0, 4.0, 0.75,
-	  "Industry Correlation"),
+          "Industry Correlation"),
 
       // Gas condensate line - 8" pipe, 5 km
       new TwoPhaseTestCase("Gas Condensate", 0.203, 5000.0, 100.0, 313.15, 15000.0, 2000.0, 0.0, 2.0, 0.05,
-	  "Industry Correlation"), };
+          "Industry Correlation"), };
 
   @BeforeEach
   void setUp() {
@@ -191,69 +191,69 @@ class TwoPhasePressureDropValidationTest {
       total++;
       logger.info("Test: " + testCase.description);
       logger.info("  Conditions: D=" + (testCase.diameter * 1000) + " mm, L=" + testCase.length + " m, angle="
-	  + testCase.angle + "°");
+          + testCase.angle + "°");
 
       try {
-	// Create two-phase fluid (methane + n-decane as gas-oil system)
-	SystemInterface fluid = new SystemSrkEos(testCase.temperature, testCase.pressure);
-	fluid.addComponent("methane", testCase.gasFlowRate, "kg/hr");
-	fluid.addComponent("nC10", testCase.liquidFlowRate, "kg/hr");
-	fluid.setMixingRule("classic");
-	fluid.setMultiPhaseCheck(true);
+        // Create two-phase fluid (methane + n-decane as gas-oil system)
+        SystemInterface fluid = new SystemSrkEos(testCase.temperature, testCase.pressure);
+        fluid.addComponent("methane", testCase.gasFlowRate, "kg/hr");
+        fluid.addComponent("nC10", testCase.liquidFlowRate, "kg/hr");
+        fluid.setMixingRule("classic");
+        fluid.setMultiPhaseCheck(true);
 
-	Stream inlet = new Stream("inlet", fluid);
-	inlet.run();
+        Stream inlet = new Stream("inlet", fluid);
+        inlet.run();
 
-	// Verify we have two phases
-	int numPhases = inlet.getFluid().getNumberOfPhases();
+        // Verify we have two phases
+        int numPhases = inlet.getFluid().getNumberOfPhases();
 
-	// Run PipeBeggsAndBrills
-	PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("test-pipe", inlet);
-	pipe.setLength(testCase.length);
-	pipe.setDiameter(testCase.diameter);
-	pipe.setAngle(testCase.angle);
-	pipe.setPipeWallRoughness(4.6e-5); // Steel pipe
-	pipe.setNumberOfIncrements(20);
-	pipe.run();
+        // Run PipeBeggsAndBrills
+        PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("test-pipe", inlet);
+        pipe.setLength(testCase.length);
+        pipe.setDiameter(testCase.diameter);
+        pipe.setAngle(testCase.angle);
+        pipe.setPipeWallRoughness(4.6e-5); // Steel pipe
+        pipe.setNumberOfIncrements(20);
+        pipe.run();
 
-	// Calculate pressure drop as inlet - outlet
-	double inletP = inlet.getPressure("bara");
-	double outletP = pipe.getOutletStream().getPressure("bara");
-	double calculatedDp = inletP - outletP;
-	double expectedDp = testCase.expectedPressureDrop;
+        // Calculate pressure drop as inlet - outlet
+        double inletP = inlet.getPressure("bara");
+        double outletP = pipe.getOutletStream().getPressure("bara");
+        double calculatedDp = inletP - outletP;
+        double expectedDp = testCase.expectedPressureDrop;
 
-	// For error calculation, use absolute values to handle negative expected ΔP (downhill)
-	double error;
-	if (Math.abs(expectedDp) < 0.01) {
-	  error = Math.abs(calculatedDp - expectedDp); // Absolute error for small values
-	} else {
-	  error = Math.abs(calculatedDp - expectedDp) / Math.abs(expectedDp);
-	}
-	boolean withinTolerance = error <= BEGGS_BRILL_TOLERANCE;
+        // For error calculation, use absolute values to handle negative expected ΔP (downhill)
+        double error;
+        if (Math.abs(expectedDp) < 0.01) {
+          error = Math.abs(calculatedDp - expectedDp); // Absolute error for small values
+        } else {
+          error = Math.abs(calculatedDp - expectedDp) / Math.abs(expectedDp);
+        }
+        boolean withinTolerance = error <= BEGGS_BRILL_TOLERANCE;
 
-	logger.info("  Number of phases: " + numPhases);
-	logger.info("  Expected ΔP: " + String.format("%.3f", expectedDp) + " bar");
-	logger.info("  Calculated ΔP: " + String.format("%.3f", calculatedDp) + " bar");
-	logger.info("  Error: " + String.format("%.1f", error * 100) + "%");
-	logger.info("  Result: " + (withinTolerance ? "PASS" : "FAIL"));
+        logger.info("  Number of phases: " + numPhases);
+        logger.info("  Expected ΔP: " + String.format("%.3f", expectedDp) + " bar");
+        logger.info("  Calculated ΔP: " + String.format("%.3f", calculatedDp) + " bar");
+        logger.info("  Error: " + String.format("%.1f", error * 100) + "%");
+        logger.info("  Result: " + (withinTolerance ? "PASS" : "FAIL"));
 
-	if (withinTolerance) {
-	  passed++;
-	}
+        if (withinTolerance) {
+          passed++;
+        }
 
-	// For downhill flow, pressure drop can be negative (pressure increases)
-	// Only assert positive for uphill or horizontal
-	if (testCase.angle >= 0) {
-	  assertTrue(calculatedDp > -0.1, "Pressure drop should be positive or near-zero for non-downhill flow");
-	}
+        // For downhill flow, pressure drop can be negative (pressure increases)
+        // Only assert positive for uphill or horizontal
+        if (testCase.angle >= 0) {
+          assertTrue(calculatedDp > -0.1, "Pressure drop should be positive or near-zero for non-downhill flow");
+        }
       } catch (Exception e) {
-	logger.info("  ERROR: " + e.getMessage());
+        logger.info("  ERROR: " + e.getMessage());
 
       }
     }
 
     logger.info(
-	"Summary: " + passed + "/" + total + " cases within " + (int) (BEGGS_BRILL_TOLERANCE * 100) + "% tolerance");
+        "Summary: " + passed + "/" + total + " cases within " + (int) (BEGGS_BRILL_TOLERANCE * 100) + "% tolerance");
     assertTrue(passed >= total * 0.5, "At least 50% of test cases should pass");
   }
 
@@ -277,51 +277,51 @@ class TwoPhasePressureDropValidationTest {
       logger.info("Test: " + testCase.description);
 
       try {
-	// Create two-phase fluid
-	SystemInterface fluid = new SystemSrkEos(testCase.temperature, testCase.pressure);
-	fluid.addComponent("methane", testCase.gasFlowRate, "kg/hr");
-	fluid.addComponent("nC10", testCase.liquidFlowRate, "kg/hr");
-	fluid.setMixingRule("classic");
-	fluid.setMultiPhaseCheck(true);
+        // Create two-phase fluid
+        SystemInterface fluid = new SystemSrkEos(testCase.temperature, testCase.pressure);
+        fluid.addComponent("methane", testCase.gasFlowRate, "kg/hr");
+        fluid.addComponent("nC10", testCase.liquidFlowRate, "kg/hr");
+        fluid.setMixingRule("classic");
+        fluid.setMultiPhaseCheck(true);
 
-	Stream inlet = new Stream("inlet", fluid);
-	inlet.run();
+        Stream inlet = new Stream("inlet", fluid);
+        inlet.run();
 
-	// Run pipe calculation
-	PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("test-pipe", inlet);
-	pipe.setLength(testCase.length);
-	pipe.setDiameter(testCase.diameter);
-	pipe.setAngle(testCase.angle);
-	pipe.setPipeWallRoughness(4.6e-5);
-	pipe.setNumberOfIncrements(20);
-	pipe.run();
+        // Run pipe calculation
+        PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("test-pipe", inlet);
+        pipe.setLength(testCase.length);
+        pipe.setDiameter(testCase.diameter);
+        pipe.setAngle(testCase.angle);
+        pipe.setPipeWallRoughness(4.6e-5);
+        pipe.setNumberOfIncrements(20);
+        pipe.run();
 
-	double inletP = inlet.getPressure("bara");
-	double outletP = pipe.getOutletStream().getPressure("bara");
-	double calculatedDp = inletP - outletP;
+        double inletP = inlet.getPressure("bara");
+        double outletP = pipe.getOutletStream().getPressure("bara");
+        double calculatedDp = inletP - outletP;
 
-	// Calculate L-M prediction for comparison
-	double lmPrediction = calcLockhartMartinelliPressureDrop(inlet.getFluid(), testCase.length, testCase.diameter,
-	    4.6e-5);
+        // Calculate L-M prediction for comparison
+        double lmPrediction = calcLockhartMartinelliPressureDrop(inlet.getFluid(), testCase.length, testCase.diameter,
+            4.6e-5);
 
-	logger.info("  Gas flow: " + testCase.gasFlowRate + " kg/hr");
-	logger.info("  Liquid flow: " + testCase.liquidFlowRate + " kg/hr");
-	logger.info("  Beggs & Brill ΔP: " + String.format("%.3f", calculatedDp) + " bar");
-	System.out.println("  Lockhart-Martinelli ΔP: " + String.format("%.3f", lmPrediction) + " bar");
+        logger.info("  Gas flow: " + testCase.gasFlowRate + " kg/hr");
+        logger.info("  Liquid flow: " + testCase.liquidFlowRate + " kg/hr");
+        logger.info("  Beggs & Brill ΔP: " + String.format("%.3f", calculatedDp) + " bar");
+        System.out.println("  Lockhart-Martinelli ΔP: " + String.format("%.3f", lmPrediction) + " bar");
 
-	// Compare if L-M gives valid result
-	if (lmPrediction > 0.001) {
-	  double ratio = calculatedDp / lmPrediction;
-	  logger.info("  Ratio (B&B/L-M): " + String.format("%.2f", ratio));
-	  // Both correlations should give same order of magnitude
-	  assertTrue(ratio > 0.1 && ratio < 10.0, "B&B and L-M should agree within order of magnitude");
-	} else {
-	  logger.info("  L-M calculation returned near-zero (single phase detected)");
-	  assertTrue(calculatedDp > 0, "Beggs & Brill should give positive pressure drop");
-	}
+        // Compare if L-M gives valid result
+        if (lmPrediction > 0.001) {
+          double ratio = calculatedDp / lmPrediction;
+          logger.info("  Ratio (B&B/L-M): " + String.format("%.2f", ratio));
+          // Both correlations should give same order of magnitude
+          assertTrue(ratio > 0.1 && ratio < 10.0, "B&B and L-M should agree within order of magnitude");
+        } else {
+          logger.info("  L-M calculation returned near-zero (single phase detected)");
+          assertTrue(calculatedDp > 0, "Beggs & Brill should give positive pressure drop");
+        }
 
       } catch (Exception e) {
-	logger.info("  ERROR: " + e.getMessage());
+        logger.info("  ERROR: " + e.getMessage());
 
       }
     }
@@ -355,37 +355,37 @@ class TwoPhasePressureDropValidationTest {
 
     for (double gasFlow : gasFlowRates) {
       try {
-	SystemInterface fluid = new SystemSrkEos(293.15, 20.0);
-	fluid.addComponent("methane", gasFlow, "kg/hr");
-	fluid.addComponent("nC10", liquidFlowRate, "kg/hr");
-	fluid.setMixingRule("classic");
-	fluid.setMultiPhaseCheck(true);
+        SystemInterface fluid = new SystemSrkEos(293.15, 20.0);
+        fluid.addComponent("methane", gasFlow, "kg/hr");
+        fluid.addComponent("nC10", liquidFlowRate, "kg/hr");
+        fluid.setMixingRule("classic");
+        fluid.setMultiPhaseCheck(true);
 
-	Stream inlet = new Stream("inlet", fluid);
-	inlet.run();
+        Stream inlet = new Stream("inlet", fluid);
+        inlet.run();
 
-	PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("pipe", inlet);
-	pipe.setLength(1000.0);
-	pipe.setDiameter(0.1);
-	pipe.setAngle(0.0);
-	pipe.setPipeWallRoughness(4.6e-5);
-	pipe.setNumberOfIncrements(20);
-	pipe.run();
+        PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("pipe", inlet);
+        pipe.setLength(1000.0);
+        pipe.setDiameter(0.1);
+        pipe.setAngle(0.0);
+        pipe.setPipeWallRoughness(4.6e-5);
+        pipe.setNumberOfIncrements(20);
+        pipe.run();
 
-	double inletP = inlet.getPressure("bara");
-	double outletP = pipe.getOutletStream().getPressure("bara");
-	double dp = inletP - outletP;
-	double glr = gasFlow / liquidFlowRate;
-	String trend = (dp > prevDp) ? "↑" : (dp < prevDp) ? "↓" : "→";
+        double inletP = inlet.getPressure("bara");
+        double outletP = pipe.getOutletStream().getPressure("bara");
+        double dp = inletP - outletP;
+        double glr = gasFlow / liquidFlowRate;
+        String trend = (dp > prevDp) ? "↑" : (dp < prevDp) ? "↓" : "→";
 
-	logger.printf(org.apache.logging.log4j.Level.INFO, "%15.0f | %19.0f | %5.2f | %8.4f | %s%n", gasFlow,
-	    liquidFlowRate, glr, dp, trend);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%15.0f | %19.0f | %5.2f | %8.4f | %s%n", gasFlow,
+            liquidFlowRate, glr, dp, trend);
 
-	prevDp = dp;
+        prevDp = dp;
 
       } catch (Exception e) {
-	logger.printf(org.apache.logging.log4j.Level.INFO, "%15.0f | %19.0f | ERROR: %s%n", gasFlow, liquidFlowRate,
-	    e.getMessage());
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%15.0f | %19.0f | ERROR: %s%n", gasFlow, liquidFlowRate,
+            e.getMessage());
       }
     }
 
@@ -417,51 +417,51 @@ class TwoPhasePressureDropValidationTest {
 
     for (double angle : angles) {
       try {
-	SystemInterface fluid = new SystemSrkEos(293.15, 20.0);
-	fluid.addComponent("methane", 1000.0, "kg/hr");
-	fluid.addComponent("nC10", 5000.0, "kg/hr");
-	fluid.setMixingRule("classic");
-	fluid.setMultiPhaseCheck(true);
+        SystemInterface fluid = new SystemSrkEos(293.15, 20.0);
+        fluid.addComponent("methane", 1000.0, "kg/hr");
+        fluid.addComponent("nC10", 5000.0, "kg/hr");
+        fluid.setMixingRule("classic");
+        fluid.setMultiPhaseCheck(true);
 
-	Stream inlet = new Stream("inlet", fluid);
-	inlet.run();
+        Stream inlet = new Stream("inlet", fluid);
+        inlet.run();
 
-	PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("pipe", inlet);
-	pipe.setLength(100.0);
-	pipe.setDiameter(0.1);
-	pipe.setAngle(angle);
-	pipe.setPipeWallRoughness(4.6e-5);
-	pipe.setNumberOfIncrements(20);
-	pipe.run();
+        PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("pipe", inlet);
+        pipe.setLength(100.0);
+        pipe.setDiameter(0.1);
+        pipe.setAngle(angle);
+        pipe.setPipeWallRoughness(4.6e-5);
+        pipe.setNumberOfIncrements(20);
+        pipe.run();
 
-	double inletP = inlet.getPressure("bara");
-	double outletP = pipe.getOutletStream().getPressure("bara");
-	double dp = inletP - outletP;
+        double inletP = inlet.getPressure("bara");
+        double outletP = pipe.getOutletStream().getPressure("bara");
+        double dp = inletP - outletP;
 
-	if (angle == 0) {
-	  horizontalDp = dp;
-	}
+        if (angle == 0) {
+          horizontalDp = dp;
+        }
 
-	// Estimate hydrostatic contribution
-	double elevationChange = 100.0 * Math.sin(Math.toRadians(angle));
-	double avgDensity = 600; // Approximate mixture density kg/m³
-	double dpHydro = avgDensity * 9.81 * elevationChange / 1e5;
-	double dpFric = dp - dpHydro;
+        // Estimate hydrostatic contribution
+        double elevationChange = 100.0 * Math.sin(Math.toRadians(angle));
+        double avgDensity = 600; // Approximate mixture density kg/m³
+        double dpHydro = avgDensity * 9.81 * elevationChange / 1e5;
+        double dpFric = dp - dpHydro;
 
-	String comment;
-	if (angle > 0) {
-	  comment = "Uphill (gravity opposes)";
-	} else if (angle < 0) {
-	  comment = "Downhill (gravity assists)";
-	} else {
-	  comment = "Horizontal (baseline)";
-	}
+        String comment;
+        if (angle > 0) {
+          comment = "Uphill (gravity opposes)";
+        } else if (angle < 0) {
+          comment = "Downhill (gravity assists)";
+        } else {
+          comment = "Horizontal (baseline)";
+        }
 
-	logger.printf(org.apache.logging.log4j.Level.INFO, "%9.0f | %8.4f | %14.4f | %11.4f | %s%n", angle, dp, dpHydro,
-	    dpFric, comment);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%9.0f | %8.4f | %14.4f | %11.4f | %s%n", angle, dp, dpHydro,
+            dpFric, comment);
 
       } catch (Exception e) {
-	logger.printf(org.apache.logging.log4j.Level.INFO, "%9.0f | ERROR: %s%n", angle, e.getMessage());
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%9.0f | ERROR: %s%n", angle, e.getMessage());
       }
     }
 
@@ -487,47 +487,47 @@ class TwoPhasePressureDropValidationTest {
       logger.info("  P=" + testCase.pressure + " bara, T=" + (testCase.temperature - 273.15) + " °C");
 
       try {
-	SystemInterface fluid = new SystemSrkEos(testCase.temperature, testCase.pressure);
-	fluid.addComponent("methane", testCase.gasFlowRate, "kg/hr");
-	fluid.addComponent("nC10", testCase.liquidFlowRate, "kg/hr");
-	fluid.setMixingRule("classic");
-	fluid.setMultiPhaseCheck(true);
+        SystemInterface fluid = new SystemSrkEos(testCase.temperature, testCase.pressure);
+        fluid.addComponent("methane", testCase.gasFlowRate, "kg/hr");
+        fluid.addComponent("nC10", testCase.liquidFlowRate, "kg/hr");
+        fluid.setMixingRule("classic");
+        fluid.setMultiPhaseCheck(true);
 
-	Stream inlet = new Stream("inlet", fluid);
-	inlet.run();
+        Stream inlet = new Stream("inlet", fluid);
+        inlet.run();
 
-	PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("test-pipe", inlet);
-	pipe.setLength(testCase.length);
-	pipe.setDiameter(testCase.diameter);
-	pipe.setAngle(testCase.angle);
-	pipe.setPipeWallRoughness(4.6e-5);
-	pipe.setNumberOfIncrements(50);
-	pipe.run();
+        PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("test-pipe", inlet);
+        pipe.setLength(testCase.length);
+        pipe.setDiameter(testCase.diameter);
+        pipe.setAngle(testCase.angle);
+        pipe.setPipeWallRoughness(4.6e-5);
+        pipe.setNumberOfIncrements(50);
+        pipe.run();
 
-	double inletP = inlet.getPressure("bara");
-	double outletP = pipe.getOutletStream().getPressure("bara");
-	double calculatedDp = inletP - outletP;
-	double expectedDp = testCase.expectedPressureDrop;
-	double error = Math.abs(calculatedDp - expectedDp) / expectedDp * 100;
+        double inletP = inlet.getPressure("bara");
+        double outletP = pipe.getOutletStream().getPressure("bara");
+        double calculatedDp = inletP - outletP;
+        double expectedDp = testCase.expectedPressureDrop;
+        double error = Math.abs(calculatedDp - expectedDp) / expectedDp * 100;
 
-	// Calculate pressure gradient for comparison
-	double dpPerKm = calculatedDp / (testCase.length / 1000);
+        // Calculate pressure gradient for comparison
+        double dpPerKm = calculatedDp / (testCase.length / 1000);
 
-	logger.info("  Gas flow: " + testCase.gasFlowRate + " kg/hr");
-	logger.info("  Liquid flow: " + testCase.liquidFlowRate + " kg/hr");
-	logger.info("  GOR: " + String.format("%.1f", testCase.gasFlowRate / testCase.liquidFlowRate));
-	logger.info("  Expected ΔP: " + String.format("%.2f", expectedDp) + " bar");
-	logger.info("  Calculated ΔP: " + String.format("%.2f", calculatedDp) + " bar");
-	logger.info("  Pressure gradient: " + String.format("%.2f", dpPerKm) + " bar/km");
-	logger.info("  Difference: " + String.format("%.1f", error) + "%");
+        logger.info("  Gas flow: " + testCase.gasFlowRate + " kg/hr");
+        logger.info("  Liquid flow: " + testCase.liquidFlowRate + " kg/hr");
+        logger.info("  GOR: " + String.format("%.1f", testCase.gasFlowRate / testCase.liquidFlowRate));
+        logger.info("  Expected ΔP: " + String.format("%.2f", expectedDp) + " bar");
+        logger.info("  Calculated ΔP: " + String.format("%.2f", calculatedDp) + " bar");
+        logger.info("  Pressure gradient: " + String.format("%.2f", dpPerKm) + " bar/km");
+        logger.info("  Difference: " + String.format("%.1f", error) + "%");
 
-	// Basic sanity checks
-	assertTrue(calculatedDp > 0, "Pressure drop should be positive");
-	assertTrue(calculatedDp < testCase.pressure * 0.5, "Pressure drop should be less than 50% of inlet pressure");
+        // Basic sanity checks
+        assertTrue(calculatedDp > 0, "Pressure drop should be positive");
+        assertTrue(calculatedDp < testCase.pressure * 0.5, "Pressure drop should be less than 50% of inlet pressure");
 
       } catch (Exception e) {
-	logger.info("  ERROR: " + e.getMessage());
-	e.printStackTrace();
+        logger.info("  ERROR: " + e.getMessage());
+        e.printStackTrace();
 
       }
     }
@@ -548,7 +548,7 @@ class TwoPhasePressureDropValidationTest {
     logger.info("Comparison with Beggs & Brill (1973) test cases");
 
     logger.info(String.format("%-30s | %8s | %8s | %8s | %8s | %6s", "Test Case", "D (mm)", "L (m)", "B&B ΔP", "TFP ΔP",
-	"Ratio"));
+        "Ratio"));
     logger.info(org.apache.commons.lang3.StringUtils.repeat("-", 85));
 
     int passed = 0;
@@ -557,71 +557,71 @@ class TwoPhasePressureDropValidationTest {
     for (TwoPhaseTestCase testCase : BEGGS_BRILL_CASES) {
       total++;
       try {
-	// Create two-phase fluid (methane + n-decane as gas-oil system)
-	SystemInterface fluid = new SystemSrkEos(testCase.temperature, testCase.pressure);
-	fluid.addComponent("methane", testCase.gasFlowRate, "kg/hr");
-	fluid.addComponent("nC10", testCase.liquidFlowRate, "kg/hr");
-	fluid.setMixingRule("classic");
-	fluid.setMultiPhaseCheck(true);
+        // Create two-phase fluid (methane + n-decane as gas-oil system)
+        SystemInterface fluid = new SystemSrkEos(testCase.temperature, testCase.pressure);
+        fluid.addComponent("methane", testCase.gasFlowRate, "kg/hr");
+        fluid.addComponent("nC10", testCase.liquidFlowRate, "kg/hr");
+        fluid.setMixingRule("classic");
+        fluid.setMultiPhaseCheck(true);
 
-	// Stream for Beggs & Brill
-	Stream inlet1 = new Stream("inlet1", fluid);
-	inlet1.run();
+        // Stream for Beggs & Brill
+        Stream inlet1 = new Stream("inlet1", fluid);
+        inlet1.run();
 
-	// Stream for TwoFluidPipe
-	Stream inlet2 = new Stream("inlet2", fluid.clone());
-	inlet2.run();
+        // Stream for TwoFluidPipe
+        Stream inlet2 = new Stream("inlet2", fluid.clone());
+        inlet2.run();
 
-	// Run PipeBeggsAndBrills
-	PipeBeggsAndBrills beggsPipe = new PipeBeggsAndBrills("beggs-pipe", inlet1);
-	beggsPipe.setLength(testCase.length);
-	beggsPipe.setDiameter(testCase.diameter);
-	beggsPipe.setAngle(testCase.angle);
-	beggsPipe.setPipeWallRoughness(4.6e-5);
-	beggsPipe.setNumberOfIncrements(20);
-	beggsPipe.run();
+        // Run PipeBeggsAndBrills
+        PipeBeggsAndBrills beggsPipe = new PipeBeggsAndBrills("beggs-pipe", inlet1);
+        beggsPipe.setLength(testCase.length);
+        beggsPipe.setDiameter(testCase.diameter);
+        beggsPipe.setAngle(testCase.angle);
+        beggsPipe.setPipeWallRoughness(4.6e-5);
+        beggsPipe.setNumberOfIncrements(20);
+        beggsPipe.run();
 
-	double inletP1 = inlet1.getPressure("bara");
-	double outletP1 = beggsPipe.getOutletStream().getPressure("bara");
-	double dpBeggs = inletP1 - outletP1;
+        double inletP1 = inlet1.getPressure("bara");
+        double outletP1 = beggsPipe.getOutletStream().getPressure("bara");
+        double dpBeggs = inletP1 - outletP1;
 
-	// Run TwoFluidPipe
-	TwoFluidPipe twoFluidPipe = new TwoFluidPipe("twofluid-pipe", inlet2);
-	twoFluidPipe.setLength(testCase.length);
-	twoFluidPipe.setDiameter(testCase.diameter);
-	twoFluidPipe.setRoughness(4.6e-5);
-	int numSections = 20;
-	twoFluidPipe.setNumberOfSections(numSections);
+        // Run TwoFluidPipe
+        TwoFluidPipe twoFluidPipe = new TwoFluidPipe("twofluid-pipe", inlet2);
+        twoFluidPipe.setLength(testCase.length);
+        twoFluidPipe.setDiameter(testCase.diameter);
+        twoFluidPipe.setRoughness(4.6e-5);
+        int numSections = 20;
+        twoFluidPipe.setNumberOfSections(numSections);
 
-	// Set elevation profile based on angle
-	double[] elevations = new double[numSections];
-	double sectionLength = testCase.length / numSections;
-	for (int i = 0; i < numSections; i++) {
-	  elevations[i] = sectionLength * (i + 1) * Math.sin(Math.toRadians(testCase.angle));
-	}
-	twoFluidPipe.setElevationProfile(elevations);
-	twoFluidPipe.run();
+        // Set elevation profile based on angle
+        double[] elevations = new double[numSections];
+        double sectionLength = testCase.length / numSections;
+        for (int i = 0; i < numSections; i++) {
+          elevations[i] = sectionLength * (i + 1) * Math.sin(Math.toRadians(testCase.angle));
+        }
+        twoFluidPipe.setElevationProfile(elevations);
+        twoFluidPipe.run();
 
-	double[] pressureProfile = twoFluidPipe.getPressureProfile();
-	double dpTwoFluid = (inlet2.getPressure("bara") - pressureProfile[pressureProfile.length - 1] / 1e5);
+        double[] pressureProfile = twoFluidPipe.getPressureProfile();
+        double dpTwoFluid = (inlet2.getPressure("bara") - pressureProfile[pressureProfile.length - 1] / 1e5);
 
-	// Calculate ratio (handle negative/near-zero values)
-	double ratio = (Math.abs(dpBeggs) > 0.001) ? dpTwoFluid / dpBeggs : Double.NaN;
+        // Calculate ratio (handle negative/near-zero values)
+        double ratio = (Math.abs(dpBeggs) > 0.001) ? dpTwoFluid / dpBeggs : Double.NaN;
 
-	logger.info(String.format("%-30s | %8.1f | %8.1f | %8.3f | %8.3f | %6.2f", testCase.description,
-	    testCase.diameter * 1000, testCase.length, dpBeggs, dpTwoFluid, ratio));
+        logger.info(String.format("%-30s | %8.1f | %8.1f | %8.3f | %8.3f | %6.2f", testCase.description,
+            testCase.diameter * 1000, testCase.length, dpBeggs, dpTwoFluid, ratio));
 
-	// Both models should give same sign (direction)
-	if (testCase.angle >= 0) {
-	  assertTrue(dpTwoFluid > -0.1, "TwoFluidPipe ΔP should be positive for uphill/horizontal");
-	  passed++;
-	} else if (dpBeggs < 0 && dpTwoFluid < 0) {
-	  passed++; // Both show pressure gain for downhill
-	} else {
-	  passed++; // Allow some flexibility in comparison
-	}
+        // Both models should give same sign (direction)
+        if (testCase.angle >= 0) {
+          assertTrue(dpTwoFluid > -0.1, "TwoFluidPipe ΔP should be positive for uphill/horizontal");
+          passed++;
+        } else if (dpBeggs < 0 && dpTwoFluid < 0) {
+          passed++; // Both show pressure gain for downhill
+        } else {
+          passed++; // Allow some flexibility in comparison
+        }
       } catch (Exception e) {
-	System.out.println(String.format("%-30s | ERROR: %s", testCase.description, e.getMessage()));
+        System.out.println(String.format("%-30s | ERROR: %s", testCase.description, e.getMessage()));
       }
     }
 
@@ -677,7 +677,7 @@ class TwoPhasePressureDropValidationTest {
       twoFluidPipe.setNumberOfSections(20);
       double[] elevations = new double[20];
       for (int i = 0; i < 20; i++) {
-	elevations[i] = 0.0;
+        elevations[i] = 0.0;
       }
       twoFluidPipe.setElevationProfile(elevations);
       twoFluidPipe.run();
@@ -719,19 +719,19 @@ class TwoPhasePressureDropValidationTest {
     try {
       // Get phase properties
       if (fluid.getNumberOfPhases() < 2) {
-	return 0.0;
+        return 0.0;
       }
 
       double rhoG = fluid.getPhase("gas").getDensity("kg/m3");
       double rhoL = fluid.hasPhaseType("oil") ? fluid.getPhase("oil").getDensity("kg/m3")
-	  : fluid.getPhase("aqueous").getDensity("kg/m3");
+          : fluid.getPhase("aqueous").getDensity("kg/m3");
       double muG = fluid.getPhase("gas").getViscosity("kg/msec");
       double muL = fluid.hasPhaseType("oil") ? fluid.getPhase("oil").getViscosity("kg/msec")
-	  : fluid.getPhase("aqueous").getViscosity("kg/msec");
+          : fluid.getPhase("aqueous").getViscosity("kg/msec");
 
       double mDotG = fluid.getPhase("gas").getFlowRate("kg/hr") / 3600.0; // kg/s
       double mDotL = fluid.hasPhaseType("oil") ? fluid.getPhase("oil").getFlowRate("kg/hr") / 3600.0
-	  : fluid.getPhase("aqueous").getFlowRate("kg/hr") / 3600.0;
+          : fluid.getPhase("aqueous").getFlowRate("kg/hr") / 3600.0;
 
       double area = Math.PI * diameter * diameter / 4.0;
 
@@ -794,34 +794,34 @@ class TwoPhasePressureDropValidationTest {
 
     for (double gasRate : gasRates) {
       for (double liquidRate : liquidRates) {
-	try {
-	  SystemInterface fluid = new SystemSrkEos(293.15, 20.0);
-	  fluid.addComponent("methane", gasRate, "kg/hr");
-	  fluid.addComponent("nC10", liquidRate, "kg/hr");
-	  fluid.setMixingRule("classic");
-	  fluid.setMultiPhaseCheck(true);
+        try {
+          SystemInterface fluid = new SystemSrkEos(293.15, 20.0);
+          fluid.addComponent("methane", gasRate, "kg/hr");
+          fluid.addComponent("nC10", liquidRate, "kg/hr");
+          fluid.setMixingRule("classic");
+          fluid.setMultiPhaseCheck(true);
 
-	  Stream inlet = new Stream("inlet", fluid);
-	  inlet.run();
+          Stream inlet = new Stream("inlet", fluid);
+          inlet.run();
 
-	  PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("pipe", inlet);
-	  pipe.setLength(100.0);
-	  pipe.setDiameter(0.1);
-	  pipe.setAngle(0.0);
-	  pipe.setPipeWallRoughness(4.6e-5);
-	  pipe.setNumberOfIncrements(10);
-	  pipe.run();
+          PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("pipe", inlet);
+          pipe.setLength(100.0);
+          pipe.setDiameter(0.1);
+          pipe.setAngle(0.0);
+          pipe.setPipeWallRoughness(4.6e-5);
+          pipe.setNumberOfIncrements(10);
+          pipe.run();
 
-	  PipeBeggsAndBrills.FlowRegime regime = pipe.getFlowRegimeEnum();
-	  double glr = gasRate / liquidRate;
+          PipeBeggsAndBrills.FlowRegime regime = pipe.getFlowRegimeEnum();
+          double glr = gasRate / liquidRate;
 
-	  logger.printf(org.apache.logging.log4j.Level.INFO, "%11.0f | %14.0f | %6.2f | %s%n", gasRate, liquidRate, glr,
-	      regime);
+          logger.printf(org.apache.logging.log4j.Level.INFO, "%11.0f | %14.0f | %6.2f | %s%n", gasRate, liquidRate, glr,
+              regime);
 
-	} catch (Exception e) {
-	  logger.printf(org.apache.logging.log4j.Level.INFO, "%11.0f | %14.0f | ERROR: %s%n", gasRate, liquidRate,
-	      e.getMessage());
-	}
+        } catch (Exception e) {
+          logger.printf(org.apache.logging.log4j.Level.INFO, "%11.0f | %14.0f | ERROR: %s%n", gasRate, liquidRate,
+              e.getMessage());
+        }
       }
     }
 

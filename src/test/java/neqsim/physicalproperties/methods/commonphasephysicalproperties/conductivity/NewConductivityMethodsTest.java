@@ -82,8 +82,8 @@ public class NewConductivityMethodsTest {
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       String phType = system.getPhase(i).getType().toString();
       if (phType.contains("LIQUID") || phType.contains("AQUEOUS")) {
-	liqIdx = i;
-	break;
+        liqIdx = i;
+        break;
       }
     }
     if (liqIdx < 0) {
@@ -276,8 +276,8 @@ public class NewConductivityMethodsTest {
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       String phType = system.getPhase(i).getType().toString();
       if (phType.contains("LIQUID") || phType.contains("AQUEOUS")) {
-	liqIdx = i;
-	break;
+        liqIdx = i;
+        break;
       }
     }
 

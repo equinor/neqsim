@@ -104,21 +104,21 @@ public class Standard_ASTM_D4052 extends neqsim.standards.Standard {
       // Find oil/liquid phase
       int liquidPhaseIndex = -1;
       for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-	String phaseType = fluid.getPhase(i).getType().toString();
-	if ("oil".equals(phaseType) || "liquid".equals(phaseType)) {
-	  liquidPhaseIndex = i;
-	  break;
-	}
+        String phaseType = fluid.getPhase(i).getType().toString();
+        if ("oil".equals(phaseType) || "liquid".equals(phaseType)) {
+          liquidPhaseIndex = i;
+          break;
+        }
       }
 
       if (liquidPhaseIndex < 0 && fluid.getNumberOfPhases() > 0) {
-	liquidPhaseIndex = 0;
+        liquidPhaseIndex = 0;
       }
 
       if (liquidPhaseIndex >= 0) {
-	density15C = fluid.getPhase(liquidPhaseIndex).getDensity("kg/m3");
-	specificGravity60F = density15C / WATER_DENSITY_60F;
-	apiGravity = (141.5 / specificGravity60F) - 131.5;
+        density15C = fluid.getPhase(liquidPhaseIndex).getDensity("kg/m3");
+        specificGravity60F = density15C / WATER_DENSITY_60F;
+        apiGravity = (141.5 / specificGravity60F) - 131.5;
       }
     } catch (Exception ex) {
       logger.error("Density calculation at 15 C failed: {}", ex.getMessage());
@@ -150,12 +150,12 @@ public class Standard_ASTM_D4052 extends neqsim.standards.Standard {
     if ("density".equals(returnParameter) || "density15C".equals(returnParameter)) {
       double densityKgM3 = getValue(returnParameter);
       if (Double.isNaN(densityKgM3)) {
-	return Double.NaN;
+        return Double.NaN;
       }
       if ("lb/ft3".equalsIgnoreCase(returnUnit)) {
-	return densityKgM3 * 0.062428;
+        return densityKgM3 * 0.062428;
       } else if ("g/cm3".equalsIgnoreCase(returnUnit) || "g/cc".equalsIgnoreCase(returnUnit)) {
-	return densityKgM3 / 1000.0;
+        return densityKgM3 / 1000.0;
       }
       return densityKgM3;
     }

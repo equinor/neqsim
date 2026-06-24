@@ -88,12 +88,12 @@ public class CfdSourceTermCase implements Serializable {
       throw new IllegalArgumentException("scenario must not be null");
     }
     return builder().caseId(normalizeCaseId(scenario.getScenarioName())).scenarioName(scenario.getScenarioName())
-	.context(contextMap(scenario)).fluid(fluidMap(scenario)).release(releaseMap(scenario))
-	.sourceTerm(sourceTermMap(scenario.getSourceTerm())).ambient(ambientMap(scenario))
-	.dispersionScreening(dispersionMap(scenario.getDispersionResult()))
-	.inventory(inventoryMap(scenario.getTrappedInventoryResult(), scenario.getInventoryVolumeM3()))
-	.consequenceBranches(branchMaps(scenario.getConsequenceBranches())).cfdHints(defaultCfdHints(scenario))
-	.provenance(provenanceMap(scenario)).warnings(qualityWarnings(scenario)).build();
+        .context(contextMap(scenario)).fluid(fluidMap(scenario)).release(releaseMap(scenario))
+        .sourceTerm(sourceTermMap(scenario.getSourceTerm())).ambient(ambientMap(scenario))
+        .dispersionScreening(dispersionMap(scenario.getDispersionResult()))
+        .inventory(inventoryMap(scenario.getTrappedInventoryResult(), scenario.getInventoryVolumeM3()))
+        .consequenceBranches(branchMaps(scenario.getConsequenceBranches())).cfdHints(defaultCfdHints(scenario))
+        .provenance(provenanceMap(scenario)).warnings(qualityWarnings(scenario)).build();
   }
 
   /**
@@ -244,7 +244,7 @@ public class CfdSourceTermCase implements Serializable {
     map.put("fuelMoleFraction", finiteOrNull(scenario.getDispersionResult().getFuelMoleFraction()));
     map.put("fuelMassFraction", finiteOrNull(scenario.getDispersionResult().getFuelMassFraction()));
     map.put("lowerFlammableLimitVolumeFraction",
-	finiteOrNull(scenario.getDispersionResult().getLowerFlammableLimitVolumeFraction()));
+        finiteOrNull(scenario.getDispersionResult().getLowerFlammableLimitVolumeFraction()));
     return map;
   }
 
@@ -386,7 +386,7 @@ public class CfdSourceTermCase implements Serializable {
     map.put("basis", "Representative volume configured on ReleaseDispersionScenarioGenerator");
     map.put("totalVolumeM3", finiteOrNull(representativeVolumeM3));
     map.put("warnings",
-	Collections.singletonList("No TrappedInventoryCalculator result attached; volume is a screening assumption."));
+        Collections.singletonList("No TrappedInventoryCalculator result attached; volume is a screening assumption."));
     return map;
   }
 
@@ -413,7 +413,7 @@ public class CfdSourceTermCase implements Serializable {
   private static Map<String, Object> defaultCfdHints(ReleaseDispersionScenario scenario) {
     Map<String, Object> map = new LinkedHashMap<String, Object>();
     double endpoint = maxFinite(scenario.getDispersionResult().getDistanceToHalfLflM(),
-	scenario.getDispersionResult().getToxicDistanceM());
+        scenario.getDispersionResult().getToxicDistanceM());
     if (!Double.isFinite(endpoint) || endpoint <= 0.0) {
       endpoint = 100.0;
     }
@@ -629,7 +629,7 @@ public class CfdSourceTermCase implements Serializable {
      */
     public Builder caseId(String caseId) {
       if (caseId != null && !caseId.trim().isEmpty()) {
-	this.caseId = caseId;
+        this.caseId = caseId;
       }
       return this;
     }
@@ -642,7 +642,7 @@ public class CfdSourceTermCase implements Serializable {
      */
     public Builder scenarioName(String scenarioName) {
       if (scenarioName != null && !scenarioName.trim().isEmpty()) {
-	this.scenarioName = scenarioName;
+        this.scenarioName = scenarioName;
       }
       return this;
     }
@@ -785,7 +785,7 @@ public class CfdSourceTermCase implements Serializable {
      */
     private static Map<String, Object> copyOrEmpty(Map<String, Object> map) {
       if (map == null) {
-	return new LinkedHashMap<String, Object>();
+        return new LinkedHashMap<String, Object>();
       }
       return new LinkedHashMap<String, Object>(map);
     }

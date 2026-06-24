@@ -76,8 +76,8 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
     // Check if candidate is dominated by any existing solution
     for (ParetoSolution existing : solutions) {
       if (existing.dominates(candidate)) {
-	logger.debug("Candidate dominated by existing solution");
-	return false; // Candidate is dominated, don't add
+        logger.debug("Candidate dominated by existing solution");
+        return false; // Candidate is dominated, don't add
       }
     }
 
@@ -86,8 +86,8 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
     java.util.Iterator<ParetoSolution> it = solutions.iterator();
     while (it.hasNext()) {
       if (candidate.dominates(it.next())) {
-	it.remove();
-	removedCount++;
+        it.remove();
+        removedCount++;
       }
     }
     if (removedCount > 0) {
@@ -191,11 +191,11 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
       double y0 = sol.getRawValue(1);
       // Distance from point to line
       double distance = Math.abs((y2 - y1) * x0 - (x2 - x1) * y0 + x2 * y1 - y2 * x1)
-	  / Math.sqrt((y2 - y1) * (y2 - y1) + (x2 - x1) * (x2 - x1));
+          / Math.sqrt((y2 - y1) * (y2 - y1) + (x2 - x1) * (x2 - x1));
 
       if (distance > maxDistance) {
-	maxDistance = distance;
-	knee = sol;
+        maxDistance = distance;
+        knee = sol;
       }
     }
 
@@ -226,16 +226,16 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
     for (ParetoSolution sol : solutions) {
       double dist = 0;
       for (int i = 0; i < numObj; i++) {
-	double range = ideal[i] - nadir[i];
-	if (range > 0) {
-	  double normalized = (ideal[i] - sol.getValue(i)) / range;
-	  dist += normalized * normalized;
-	}
+        double range = ideal[i] - nadir[i];
+        if (range > 0) {
+          double normalized = (ideal[i] - sol.getValue(i)) / range;
+          dist += normalized * normalized;
+        }
       }
       dist = Math.sqrt(dist);
       if (dist < minDist) {
-	minDist = dist;
-	best = sol;
+        minDist = dist;
+        best = sol;
       }
     }
 
@@ -288,8 +288,8 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
       double x = sol.getValue(0);
       double y = sol.getValue(1);
       if (x > referencePoint[0] && y > referencePoint[1]) {
-	hypervolume += (x - referencePoint[0]) * (y - prevY);
-	prevY = y;
+        hypervolume += (x - referencePoint[0]) * (y - prevY);
+        prevY = y;
       }
     }
 
@@ -311,10 +311,10 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
     for (ParetoSolution sol : solutions) {
       double minDist = Double.MAX_VALUE;
       for (ParetoSolution other : solutions) {
-	if (sol != other) {
-	  double dist = sol.distanceTo(other);
-	  minDist = Math.min(minDist, dist);
-	}
+        if (sol != other) {
+          double dist = sol.distanceTo(other);
+          minDist = Math.min(minDist, dist);
+        }
       }
       minDistances.add(minDist);
     }
@@ -341,11 +341,11 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
 
       List<Object> objList = new ArrayList<>();
       for (int i = 0; i < sol.getNumObjectives(); i++) {
-	java.util.Map<String, Object> objMap = new java.util.LinkedHashMap<>();
-	objMap.put("name", sol.getObjectiveName(i));
-	objMap.put("value", sol.getRawValue(i));
-	objMap.put("unit", sol.getObjectiveUnit(i));
-	objList.add(objMap);
+        java.util.Map<String, Object> objMap = new java.util.LinkedHashMap<>();
+        objMap.put("name", sol.getObjectiveName(i));
+        objMap.put("value", sol.getRawValue(i));
+        objMap.put("unit", sol.getObjectiveUnit(i));
+        objList.add(objMap);
       }
       solMap.put("objectives", objList);
       jsonSolutions.add(solMap);
@@ -357,12 +357,12 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
     if (!solutions.isEmpty()) {
       ParetoSolution knee = findKneePoint();
       if (knee != null) {
-	java.util.Map<String, Object> kneeMap = new java.util.LinkedHashMap<>();
-	kneeMap.put("decisionVariables", knee.getDecisionVariables());
-	for (int i = 0; i < knee.getNumObjectives(); i++) {
-	  kneeMap.put(knee.getObjectiveName(i), knee.getRawValue(i));
-	}
-	result.put("kneePoint", kneeMap);
+        java.util.Map<String, Object> kneeMap = new java.util.LinkedHashMap<>();
+        kneeMap.put("decisionVariables", knee.getDecisionVariables());
+        for (int i = 0; i < knee.getNumObjectives(); i++) {
+          kneeMap.put(knee.getObjectiveName(i), knee.getRawValue(i));
+        }
+        result.put("kneePoint", kneeMap);
       }
     }
     result.put("solutions", jsonSolutions);

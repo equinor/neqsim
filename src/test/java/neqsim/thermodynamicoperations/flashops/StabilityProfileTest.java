@@ -69,81 +69,81 @@ public class StabilityProfileTest {
     String[] caseNames = new String[] { "Light 5c gas (1ph)", "Heavy 13c gas", "Wet gas 2ph" };
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%n%-22s %12s %12s %12s %12s %12s%n", "case", "flash_noStab",
-	"flash_stab", "stab_delta", "stab_only", "multiPh+stab");
+        "flash_stab", "stab_delta", "stab_only", "multiPh+stab");
     logger.info("--------------------------------------------------------------------------------------");
 
     for (int c = 0; c < cases.length; c++) {
       SystemInterface base = cases[c];
       // Warm up
       for (int w = 0; w < 5; w++) {
-	SystemInterface cln = base.clone();
-	cln.checkStability(false);
-	new ThermodynamicOperations(cln).TPflash();
+        SystemInterface cln = base.clone();
+        cln.checkStability(false);
+        new ThermodynamicOperations(cln).TPflash();
       }
 
       // A) TPflash without stability
       double a;
       {
-	long t0 = System.nanoTime();
-	for (int i = 0; i < ITERS; i++) {
-	  SystemInterface cln = base.clone();
-	  cln.checkStability(false);
-	  cln.setMultiPhaseCheck(false);
-	  new ThermodynamicOperations(cln).TPflash();
-	}
-	a = (System.nanoTime() - t0) / (double) ITERS / 1e6;
+        long t0 = System.nanoTime();
+        for (int i = 0; i < ITERS; i++) {
+          SystemInterface cln = base.clone();
+          cln.checkStability(false);
+          cln.setMultiPhaseCheck(false);
+          new ThermodynamicOperations(cln).TPflash();
+        }
+        a = (System.nanoTime() - t0) / (double) ITERS / 1e6;
       }
 
       // B) TPflash with stability
       double b;
       {
-	long t0 = System.nanoTime();
-	for (int i = 0; i < ITERS; i++) {
-	  SystemInterface cln = base.clone();
-	  cln.checkStability(true);
-	  cln.setMultiPhaseCheck(false);
-	  new ThermodynamicOperations(cln).TPflash();
-	}
-	b = (System.nanoTime() - t0) / (double) ITERS / 1e6;
+        long t0 = System.nanoTime();
+        for (int i = 0; i < ITERS; i++) {
+          SystemInterface cln = base.clone();
+          cln.checkStability(true);
+          cln.setMultiPhaseCheck(false);
+          new ThermodynamicOperations(cln).TPflash();
+        }
+        b = (System.nanoTime() - t0) / (double) ITERS / 1e6;
       }
 
       // C) Bare stability analysis only (no full flash)
       double d;
       {
-	// Pre-flash to prime state
-	SystemInterface primed = base.clone();
-	primed.checkStability(false);
-	primed.setMultiPhaseCheck(false);
-	new ThermodynamicOperations(primed).TPflash();
+        // Pre-flash to prime state
+        SystemInterface primed = base.clone();
+        primed.checkStability(false);
+        primed.setMultiPhaseCheck(false);
+        new ThermodynamicOperations(primed).TPflash();
 
-	long t0 = System.nanoTime();
-	for (int i = 0; i < ITERS; i++) {
-	  SystemInterface cln = primed.clone();
-	  Flash flash = new TPflash(cln);
-	  try {
-	    flash.stabilityAnalysis();
-	  } catch (Exception ex) {
-	    // ignore
-	  }
-	}
-	d = (System.nanoTime() - t0) / (double) ITERS / 1e6;
+        long t0 = System.nanoTime();
+        for (int i = 0; i < ITERS; i++) {
+          SystemInterface cln = primed.clone();
+          Flash flash = new TPflash(cln);
+          try {
+            flash.stabilityAnalysis();
+          } catch (Exception ex) {
+            // ignore
+          }
+        }
+        d = (System.nanoTime() - t0) / (double) ITERS / 1e6;
       }
 
       // D) TPflash with multiPhase + stability
       double e;
       {
-	long t0 = System.nanoTime();
-	for (int i = 0; i < ITERS; i++) {
-	  SystemInterface cln = base.clone();
-	  cln.checkStability(true);
-	  cln.setMultiPhaseCheck(true);
-	  new ThermodynamicOperations(cln).TPflash();
-	}
-	e = (System.nanoTime() - t0) / (double) ITERS / 1e6;
+        long t0 = System.nanoTime();
+        for (int i = 0; i < ITERS; i++) {
+          SystemInterface cln = base.clone();
+          cln.checkStability(true);
+          cln.setMultiPhaseCheck(true);
+          new ThermodynamicOperations(cln).TPflash();
+        }
+        e = (System.nanoTime() - t0) / (double) ITERS / 1e6;
       }
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-22s %12.3f %12.3f %12.3f %12.3f %12.3f%n", caseNames[c], a,
-	  b, (b - a), d, e);
+          b, (b - a), d, e);
     }
 
   }

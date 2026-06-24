@@ -289,7 +289,7 @@ class PinchAnalysisTest {
     assertTrue(pinch.getMinimumHeatingUtility() >= 0.0);
     assertTrue(pinch.getMinimumCoolingUtility() >= 0.0);
     assertTrue(pinch.getMaximumHeatRecovery() > 0.0,
-	"Heat recovery should be possible when hot and cold duties overlap");
+        "Heat recovery should be possible when hot and cold duties overlap");
 
     // Verify JSON contains all streams
     String json = pinch.toJson();
@@ -339,7 +339,7 @@ class PinchAnalysisTest {
     pinch.run();
     // Allow tiny floating-point rounding error (e.g. -5.7e-14)
     assertTrue(pinch.getMinimumCoolingUtility() >= -1e-6,
-	"Cooling utility should be >= 0, got " + pinch.getMinimumCoolingUtility());
+        "Cooling utility should be >= 0, got " + pinch.getMinimumCoolingUtility());
   }
 
   /**

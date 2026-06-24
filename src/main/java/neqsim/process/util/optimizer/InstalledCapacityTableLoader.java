@@ -82,7 +82,7 @@ public final class InstalledCapacityTableLoader {
      * @param enabled true when enabled
      */
     public InstalledCapacityRecord(String area, String equipment, String constraint, String currentValueAddress,
-	double designValue, double maxValue, String unit, ConstraintSeverity severity, boolean enabled) {
+        double designValue, double maxValue, String unit, ConstraintSeverity severity, boolean enabled) {
       this.area = area;
       this.equipment = equipment;
       this.constraint = constraint;
@@ -212,20 +212,20 @@ public final class InstalledCapacityTableLoader {
     try {
       String headerLine = reader.readLine();
       if (headerLine == null) {
-	return records;
+        return records;
       }
       Map<String, Integer> headerIndex = buildHeaderIndex(parseCsvLine(headerLine));
       String line;
       int rowNumber = 1;
       while ((line = reader.readLine()) != null) {
-	rowNumber++;
-	if (line.trim().isEmpty() || line.trim().startsWith("#")) {
-	  continue;
-	}
-	InstalledCapacityRecord record = parseRecord(model, headerIndex, parseCsvLine(line), rowNumber);
-	attachRecord(model, record, getOptional(headerIndex, parseCsvLine(line), "type"),
-	    getOptional(headerIndex, parseCsvLine(line), "description"));
-	records.add(record);
+        rowNumber++;
+        if (line.trim().isEmpty() || line.trim().startsWith("#")) {
+          continue;
+        }
+        InstalledCapacityRecord record = parseRecord(model, headerIndex, parseCsvLine(line), rowNumber);
+        attachRecord(model, record, getOptional(headerIndex, parseCsvLine(line), "type"),
+            getOptional(headerIndex, parseCsvLine(line), "description"));
+        records.add(record);
       }
     } finally {
       reader.close();
@@ -249,7 +249,7 @@ public final class InstalledCapacityTableLoader {
     String constraint = getRequired(headerIndex, values, "constraint", rowNumber);
     String currentValueAddress = getRequired(headerIndex, values, "currentValueAddress", rowNumber);
     double designValue = parseDouble(getRequired(headerIndex, values, "designValue", rowNumber), "designValue",
-	rowNumber);
+        rowNumber);
     String maxValueText = getOptional(headerIndex, values, "maxValue");
     double maxValue = maxValueText.length() == 0 ? designValue : parseDouble(maxValueText, "maxValue", rowNumber);
     String unit = getRequired(headerIndex, values, "unit", rowNumber);
@@ -257,7 +257,7 @@ public final class InstalledCapacityTableLoader {
     boolean enabled = parseBoolean(getOptional(headerIndex, values, "enabled"), true);
     validateTargetExists(model, area, equipment, rowNumber);
     return new InstalledCapacityRecord(area, equipment, constraint, currentValueAddress, designValue, maxValue, unit,
-	severity, enabled);
+        severity, enabled);
   }
 
   /**
@@ -273,16 +273,16 @@ public final class InstalledCapacityTableLoader {
     ProcessSystem area = model.get(record.getArea());
     ProcessEquipmentInterface equipment = area.getUnit(record.getEquipment());
     CapacityConstraint capacityConstraint = new CapacityConstraint(record.getConstraint(), record.getUnit(),
-	parseType(typeText, record.getSeverity())).setDesignValue(record.getDesignValue())
-	.setMaxValue(record.getMaxValue()).setSeverity(record.getSeverity()).setEnabled(record.isEnabled())
-	.setDataSource("installed_capacity_table").setDescription(description)
-	.setValueSupplier(new java.util.function.DoubleSupplier() {
-	  /** {@inheritDoc} */
-	  @Override
-	  public double getAsDouble() {
-	    return model.getVariableValue(record.getCurrentValueAddress(), record.getUnit());
-	  }
-	});
+        parseType(typeText, record.getSeverity())).setDesignValue(record.getDesignValue())
+        .setMaxValue(record.getMaxValue()).setSeverity(record.getSeverity()).setEnabled(record.isEnabled())
+        .setDataSource("installed_capacity_table").setDescription(description)
+        .setValueSupplier(new java.util.function.DoubleSupplier() {
+          /** {@inheritDoc} */
+          @Override
+          public double getAsDouble() {
+            return model.getVariableValue(record.getCurrentValueAddress(), record.getUnit());
+          }
+        });
     equipment.addCapacityConstraint(capacityConstraint);
   }
 
@@ -301,7 +301,7 @@ public final class InstalledCapacityTableLoader {
     }
     if (area.getUnit(equipmentName) == null) {
       throw new IllegalArgumentException(
-	  "No equipment named '" + equipmentName + "' in area '" + areaName + "' for capacity row " + rowNumber);
+          "No equipment named '" + equipmentName + "' in area '" + areaName + "' for capacity row " + rowNumber);
     }
   }
 
@@ -376,17 +376,17 @@ public final class InstalledCapacityTableLoader {
     for (int i = 0; i < line.length(); i++) {
       char character = line.charAt(i);
       if (character == '"') {
-	if (inQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') {
-	  value.append('"');
-	  i++;
-	} else {
-	  inQuotes = !inQuotes;
-	}
+        if (inQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') {
+          value.append('"');
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
       } else if (character == ',' && !inQuotes) {
-	values.add(value.toString());
-	value.setLength(0);
+        values.add(value.toString());
+        value.setLength(0);
       } else {
-	value.append(character);
+        value.append(character);
       }
     }
     values.add(value.toString());
@@ -406,7 +406,7 @@ public final class InstalledCapacityTableLoader {
       return Double.parseDouble(value);
     } catch (NumberFormatException exception) {
       throw new IllegalArgumentException("Invalid " + fieldName + " value '" + value + "' at capacity row " + rowNumber,
-	  exception);
+          exception);
     }
   }
 

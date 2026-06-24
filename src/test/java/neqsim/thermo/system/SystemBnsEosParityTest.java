@@ -25,7 +25,7 @@ public class SystemBnsEosParityTest {
     double density = sys.getDensity("kg/m3");
     double gamma = cp / cv;
     double speed = Math.sqrt(gamma * sys.getPhase(0).getZ() * neqsim.thermo.ThermodynamicConstantsInterface.R
-	* sys.getTemperature() / sys.getMolarMass());
+        * sys.getTemperature() / sys.getMolarMass());
 
     assertEquals(39.07660873260809, cp, 0.1);
     assertEquals(29.81775015631597, cv, 0.1);
@@ -54,7 +54,7 @@ public class SystemBnsEosParityTest {
     double density = sys.getDensity("kg/m3");
     double gamma = cp / cv;
     double speed = Math.sqrt(gamma * sys.getPhase(0).getZ() * neqsim.thermo.ThermodynamicConstantsInterface.R
-	* sys.getTemperature() / sys.getMolarMass());
+        * sys.getTemperature() / sys.getMolarMass());
 
     assertEquals(0.790903069244, Z, 0.01);
     assertEquals(95.4492017141868, density, 0.5);

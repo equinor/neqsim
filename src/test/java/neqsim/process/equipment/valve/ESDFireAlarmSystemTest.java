@@ -103,8 +103,8 @@ class ESDFireAlarmSystemTest {
 
     // Configure alarm thresholds
     AlarmConfig fireAlarmConfig = AlarmConfig.builder().highLimit(0.5) // Fire detected at 0.5
-	.delay(1.0) // 1 second confirmation delay
-	.deadband(0.1).unit("binary").build();
+        .delay(1.0) // 1 second confirmation delay
+        .deadband(0.1).unit("binary").build();
 
     fireDetector1.setAlarmConfig(fireAlarmConfig);
     fireDetector2.setAlarmConfig(fireAlarmConfig);
@@ -227,9 +227,9 @@ class ESDFireAlarmSystemTest {
     // PHASE 4: Dynamic blowdown simulation with flare heat and emissions tracking
     logger.info("═══ PHASE 4: BLOWDOWN SIMULATION WITH FLARE EMISSIONS ═══");
     logger.info(
-	"Time (s) | FD-101 | FD-102 | Alarms | BD Open (%) | BD Flow (kg/hr) | Flare Heat (MW) | CO2 Rate (kg/s) | Cumul Heat (GJ) | Cumul CO2 (kg)");
+        "Time (s) | FD-101 | FD-102 | Alarms | BD Open (%) | BD Flow (kg/hr) | Flare Heat (MW) | CO2 Rate (kg/s) | Cumul Heat (GJ) | Cumul CO2 (kg)");
     logger.info(
-	"---------|--------|--------|--------|-------------|-----------------|-----------------|-----------------|-----------------|----------------");
+        "---------|--------|--------|--------|-------------|-----------------|-----------------|-----------------|-----------------|----------------");
 
     double timeStep = 1.0;
     double totalTime = 20.0;
@@ -238,18 +238,18 @@ class ESDFireAlarmSystemTest {
     for (double time = 0.0; time <= totalTime; time += timeStep) {
       // Run equipment
       if (separator.getCalculateSteadyState()) {
-	separator.run();
+        separator.run();
       } else {
-	separator.runTransient(timeStep, java.util.UUID.randomUUID());
+        separator.runTransient(timeStep, java.util.UUID.randomUUID());
       }
       separatorGasOut.run();
       gasSplitter.run();
       blowdownStream.run();
 
       if (time >= esdActivationTime && bdValve.isActivated()) {
-	bdValve.runTransient(timeStep, java.util.UUID.randomUUID());
+        bdValve.runTransient(timeStep, java.util.UUID.randomUUID());
       } else {
-	bdValve.run();
+        bdValve.run();
       }
 
       bdValveOutlet.run();
@@ -266,25 +266,25 @@ class ESDFireAlarmSystemTest {
 
       // Print status every 2 seconds or at key events
       if (time % 2.0 == 0.0 || time == 5.0 || time == 10.0) {
-	logger.printf(org.apache.logging.log4j.Level.INFO,
-	    "%8.1f | %6s | %6s | %6d | %11.1f | %15.1f | %15.2f | %15.3f | %15.2f | %14.1f%n", time,
-	    fireDetector1.isFireDetected() ? "FIRE" : "OK", fireDetector2.isFireDetected() ? "FIRE" : "OK",
-	    activeAlarms, bdValve.getPercentValveOpening(), toFlare.getFlowRate("kg/hr"), flare.getHeatDuty("MW"),
-	    flare.getCO2Emission("kg/sec"), flare.getCumulativeHeatReleased("GJ"),
-	    flare.getCumulativeCO2Emission("kg"));
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "%8.1f | %6s | %6s | %6d | %11.1f | %15.1f | %15.2f | %15.3f | %15.2f | %14.1f%n", time,
+            fireDetector1.isFireDetected() ? "FIRE" : "OK", fireDetector2.isFireDetected() ? "FIRE" : "OK",
+            activeAlarms, bdValve.getPercentValveOpening(), toFlare.getFlowRate("kg/hr"), flare.getHeatDuty("MW"),
+            flare.getCO2Emission("kg/sec"), flare.getCumulativeHeatReleased("GJ"),
+            flare.getCumulativeCO2Emission("kg"));
       }
     }
 
     // PHASE 5: Summary and verification
     logger.info("═══ BLOWDOWN SUMMARY ═══");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Final BD valve opening: %.1f%%%n",
-	bdValve.getPercentValveOpening());
+        bdValve.getPercentValveOpening());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Total gas blown down: %.1f kg%n",
-	flare.getCumulativeGasBurned("kg"));
+        flare.getCumulativeGasBurned("kg"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Total heat released: %.2f GJ%n",
-	flare.getCumulativeHeatReleased("GJ"));
+        flare.getCumulativeHeatReleased("GJ"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Total CO2 emissions: %.1f kg%n",
-	flare.getCumulativeCO2Emission("kg"));
+        flare.getCumulativeCO2Emission("kg"));
 
     logger.info("═══ FIRE ALARM STATUS ═══");
     logger.info(fireDetector1.toString());
@@ -425,7 +425,7 @@ class ESDFireAlarmSystemTest {
     int count = 0;
     for (FireDetector detector : detectors) {
       if (detector.isFireDetected()) {
-	count++;
+        count++;
       }
     }
     return count;
@@ -465,10 +465,10 @@ class ESDFireAlarmSystemTest {
 
     // Configure two-level alarms: 20% LEL (warning) and 60% LEL (high alarm)
     AlarmConfig gasAlarmConfig = AlarmConfig.builder().highLimit(20.0) // 20% LEL - warning level
-	.highHighLimit(60.0) // 60% LEL - high alarm, triggers ESD
-	.delay(2.0) // 2 second confirmation delay
-	.deadband(2.0) // 2% deadband
-	.unit("% LEL").build();
+        .highHighLimit(60.0) // 60% LEL - high alarm, triggers ESD
+        .delay(2.0) // 2 second confirmation delay
+        .deadband(2.0) // 2% deadband
+        .unit("% LEL").build();
 
     gasDetector1.setAlarmConfig(gasAlarmConfig);
     gasDetector2.setAlarmConfig(gasAlarmConfig);
@@ -586,18 +586,18 @@ class ESDFireAlarmSystemTest {
 
     for (double time = 0.0; time <= totalTime; time += timeStep) {
       if (separator.getCalculateSteadyState()) {
-	separator.run();
+        separator.run();
       } else {
-	separator.runTransient(timeStep, java.util.UUID.randomUUID());
+        separator.runTransient(timeStep, java.util.UUID.randomUUID());
       }
       separatorGasOut.run();
       gasSplitter.run();
       blowdownStream.run();
 
       if (bdValve.isActivated()) {
-	bdValve.runTransient(timeStep, java.util.UUID.randomUUID());
+        bdValve.runTransient(timeStep, java.util.UUID.randomUUID());
       } else {
-	bdValve.run();
+        bdValve.run();
       }
 
       bdValveOutlet.run();
@@ -607,8 +607,8 @@ class ESDFireAlarmSystemTest {
       flare.updateCumulative(timeStep);
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%8.0f | %6.1f%% | %6.1f%% | %5.0f | %15.2f | %14.1f%n", time,
-	  gasDetector1.getGasConcentration(), gasDetector2.getGasConcentration(), bdValve.getPercentValveOpening(),
-	  flare.getHeatDuty("MW"), flare.getCumulativeCO2Emission("kg"));
+          gasDetector1.getGasConcentration(), gasDetector2.getGasConcentration(), bdValve.getPercentValveOpening(),
+          flare.getHeatDuty("MW"), flare.getCumulativeCO2Emission("kg"));
     }
 
     logger.info("═══ SUMMARY ═══");
@@ -673,7 +673,7 @@ class ESDFireAlarmSystemTest {
     gd2.setGasSpecies("methane");
 
     AlarmConfig gasAlarmConfig = AlarmConfig.builder().highLimit(20.0).highHighLimit(60.0).delay(2.0).unit("% LEL")
-	.build();
+        .build();
     gd1.setAlarmConfig(gasAlarmConfig);
     gd2.setAlarmConfig(gasAlarmConfig);
 

@@ -49,7 +49,7 @@ class IntegratedProductionTest {
   @Test
   void testDeliverabilityCurveInterpolation() {
     WellDeliverabilityCurve curve = WellDeliverabilityCurve.fromArrays(new double[] { 40.0, 90.0, 140.0 },
-	new double[] { 3000.0, 1500.0, 0.0 });
+        new double[] { 3000.0, 1500.0, 0.0 });
     assertEquals(2250.0, curve.rateAt(65.0), 1.0e-6);
     assertEquals(750.0, curve.rateAt(115.0), 1.0e-6);
     assertEquals(0.0, curve.rateAt(140.0), RATE_TOL);
@@ -198,9 +198,9 @@ class IntegratedProductionTest {
     model.setEnergyIntensity(0.05);
     model.setEmissionIntensity(0.18);
     model.addWell("GAS-1", new MaterialBalanceGasDrive(250.0, 5.0e9, 0.90),
-	WellDeliverabilityCurve.fromVogel(2.0e6, 250.0));
+        WellDeliverabilityCurve.fromVogel(2.0e6, 250.0));
     model.addWell("OIL-1", new OilTankDrive(220.0, 8.0e6, 120.0, 90.0),
-	WellDeliverabilityCurve.fromVogel(4000.0, 220.0));
+        WellDeliverabilityCurve.fromVogel(4000.0, 220.0));
     IntegratedSolveResult res = model.solve();
     assertTrue(res.isConverged(), "model must converge, method=" + res.getMethod());
     assertTrue(res.getFieldRate() > 0.0);
@@ -218,7 +218,7 @@ class IntegratedProductionTest {
     IntegratedProductionModel model = new IntegratedProductionModel("Field");
     model.setExportPressure(40.0).setHydrocarbonPrice(0.5);
     model.addWell("GAS-1", new MaterialBalanceGasDrive(250.0, 2.0e9, 0.90),
-	WellDeliverabilityCurve.fromVogel(2.0e6, 250.0));
+        WellDeliverabilityCurve.fromVogel(2.0e6, 250.0));
     ProductionProfile profile = model.runProfile(8.0, 1.0);
     assertNotNull(profile);
     assertTrue(profile.getPoints().size() >= 8);
@@ -237,13 +237,13 @@ class IntegratedProductionTest {
     IntegratedProductionModel model = new IntegratedProductionModel("Field");
     model.setExportPressure(40.0).setHydrocarbonPrice(0.5);
     model.addWell("GAS-1", new MaterialBalanceGasDrive(250.0, 5.0e9, 0.90),
-	WellDeliverabilityCurve.fromVogel(2.0e6, 250.0));
+        WellDeliverabilityCurve.fromVogel(2.0e6, 250.0));
     model.addWell("OIL-1", new OilTankDrive(220.0, 8.0e6, 120.0, 90.0),
-	WellDeliverabilityCurve.fromVogel(4000.0, 220.0));
+        WellDeliverabilityCurve.fromVogel(4000.0, 220.0));
     // Capacity well below the unconstrained field rate.
     double capacity = 500000.0;
     ReservoirToMarketOptimizer optimizer = new ReservoirToMarketOptimizer(model)
-	.setObjective(ReservoirToMarketOptimizer.Objective.REVENUE).setFacilityCapacity(capacity);
+        .setObjective(ReservoirToMarketOptimizer.Objective.REVENUE).setFacilityCapacity(capacity);
     ReservoirToMarketOptimizer.OptimizationResult opt = optimizer.optimize();
     assertNotNull(opt);
     assertTrue(opt.getFieldRate() <= capacity * 1.01, "field rate must respect capacity");

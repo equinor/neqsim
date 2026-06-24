@@ -197,10 +197,10 @@ public class ComponentCoutinhoWax extends ComponentSolid {
     if (xI > 1e-100 && phiI > 0 && thetaI > 0) {
       double sumXL = 0.0;
       for (int j = 0; j < ncomp; j++) {
-	sumXL += phase1.getComponent(j).getx() * li[j];
+        sumXL += phase1.getComponent(j).getx() * li[j];
       }
       lnGammaComb = Math.log(phiI / xI) + Z_COORD / 2.0 * qi[iThis] * Math.log(thetaI / phiI) + li[iThis]
-	  - phiI / xI * sumXL;
+          - phiI / xI * sumXL;
     }
 
     // Residual contribution
@@ -213,8 +213,8 @@ public class ComponentCoutinhoWax extends ComponentSolid {
     double[][] tau = new double[ncomp][ncomp];
     for (int i = 0; i < ncomp; i++) {
       for (int j = 0; j < ncomp; j++) {
-	double lambdaIJ = calcLambdaIJ(phase1, i, j);
-	tau[i][j] = Math.exp(-lambdaIJ / (R * tempK));
+        double lambdaIJ = calcLambdaIJ(phase1, i, j);
+        tau[i][j] = Math.exp(-lambdaIJ / (R * tempK));
       }
     }
 
@@ -234,10 +234,10 @@ public class ComponentCoutinhoWax extends ComponentSolid {
     for (int j = 0; j < ncomp; j++) {
       double denomJ = 0.0;
       for (int k = 0; k < ncomp; k++) {
-	denomJ += theta[k] * tau[k][j];
+        denomJ += theta[k] * tau[k][j];
       }
       if (denomJ > 0) {
-	sum2 += theta[j] * tau[iThis][j] / denomJ;
+        sum2 += theta[j] * tau[iThis][j] / denomJ;
       }
     }
 
@@ -355,12 +355,12 @@ public class ComponentCoutinhoWax extends ComponentSolid {
     }
     double x = 1.0 - tempK / tc;
     double deltaHvap0 = 5.2804 * Math.pow(x, 0.3333) + 12.865 * Math.pow(x, 0.8333) + 1.171 * Math.pow(x, 1.2083)
-	- 13.166 * x + 0.4858 * x * x - 1.088 * x * x * x;
+        - 13.166 * x + 0.4858 * x * x - 1.088 * x * x * x;
     double omega = 0.0520750 + 0.0448946 * cn - 0.000185397 * cn * cn;
     double deltaHvap1 = 0.80022 * Math.pow(x, 0.3333) + 273.23 * Math.pow(x, 0.8333) + 465.08 * Math.pow(x, 1.2083)
-	- 638.51 * x - 145.12 * x * x - 74.049 * x * x * x;
+        - 638.51 * x - 145.12 * x * x - 74.049 * x * x * x;
     double deltaHvap2 = 7.2543 * Math.pow(x, 0.3333) - 346.45 * Math.pow(x, 0.8333) - 610.48 * Math.pow(x, 1.2083)
-	+ 839.89 * x + 160.05 * x * x - 50.711 * x * x * x;
+        + 839.89 * x + 160.05 * x * x - 50.711 * x * x * x;
 
     double deltaHvap = R * tc * (deltaHvap0 + omega * deltaHvap1 + omega * omega * deltaHvap2);
 

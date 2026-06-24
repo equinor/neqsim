@@ -76,12 +76,12 @@ public final class OpenDrainProcessEvidenceCalculator {
     double pressureBara = getStreamPressureBara(stream, fluid);
     double temperatureC = getStreamTemperatureC(stream, fluid);
     double credibleLeakRateKgPerS = calculateCredibleLiquidLeakRateKgPerS(liquidMassFlowKgPerS,
-	safeBasis.getCredibleLeakFractionOfLiquidFlow(), safeBasis.getMaximumCredibleLiquidLeakRateKgPerS());
+        safeBasis.getCredibleLeakFractionOfLiquidFlow(), safeBasis.getMaximumCredibleLiquidLeakRateKgPerS());
     double fireWaterLoadKgPerS = calculateFireWaterLoadKgPerS(safeBasis.getFireWaterAreaM2(),
-	safeBasis.getFireWaterApplicationRateLPerMinM2(), safeBasis.getFireWaterDensityKgPerM3());
+        safeBasis.getFireWaterApplicationRateLPerMinM2(), safeBasis.getFireWaterDensityKgPerM3());
     double drainCapacityKgPerS = calculateGravityDrainCapacityKgPerS(liquidDensityKgPerM3,
-	safeBasis.getDrainPipeDiameterM(), safeBasis.getAvailableDrainHeadM(), safeBasis.getDrainDischargeCoefficient(),
-	safeBasis.getDrainBackpressureBarg());
+        safeBasis.getDrainPipeDiameterM(), safeBasis.getAvailableDrainHeadM(), safeBasis.getDrainDischargeCoefficient(),
+        safeBasis.getDrainBackpressureBarg());
 
     putIfFinite(item, "neqsimLiquidMassFlowKgPerS", liquidMassFlowKgPerS);
     putIfFinite(item, "liquidDensityKgPerM3", liquidDensityKgPerM3);
@@ -135,9 +135,9 @@ public final class OpenDrainProcessEvidenceCalculator {
     List<ProcessEquipmentInterface> units = process.getUnitOperations();
     for (ProcessEquipmentInterface unit : units) {
       try {
-	input.addItem(createItemFromEquipment(unit, designBasis));
+        input.addItem(createItemFromEquipment(unit, designBasis));
       } catch (IllegalArgumentException ex) {
-	// Equipment without process streams cannot provide thermodynamic drain evidence.
+        // Equipment without process streams cannot provide thermodynamic drain evidence.
       }
     }
     return input;
@@ -175,8 +175,8 @@ public final class OpenDrainProcessEvidenceCalculator {
   public static double calculateFireWaterLoadKgPerS(double fireWaterAreaM2, double applicationRateLPerMinM2,
       double fireWaterDensityKgPerM3) {
     if (!Double.isFinite(fireWaterAreaM2) || !Double.isFinite(applicationRateLPerMinM2)
-	|| !Double.isFinite(fireWaterDensityKgPerM3) || fireWaterAreaM2 <= 0.0 || applicationRateLPerMinM2 <= 0.0
-	|| fireWaterDensityKgPerM3 <= 0.0) {
+        || !Double.isFinite(fireWaterDensityKgPerM3) || fireWaterAreaM2 <= 0.0 || applicationRateLPerMinM2 <= 0.0
+        || fireWaterDensityKgPerM3 <= 0.0) {
       return 0.0;
     }
     return fireWaterAreaM2 * applicationRateLPerMinM2 * LITRE_PER_MINUTE_TO_M3_PER_S * fireWaterDensityKgPerM3;
@@ -195,20 +195,20 @@ public final class OpenDrainProcessEvidenceCalculator {
   public static double calculateGravityDrainCapacityKgPerS(double liquidDensityKgPerM3, double drainPipeDiameterM,
       double availableHeadM, double dischargeCoefficient, double backpressureBarg) {
     if (!Double.isFinite(liquidDensityKgPerM3) || !Double.isFinite(drainPipeDiameterM)
-	|| !Double.isFinite(availableHeadM) || !Double.isFinite(dischargeCoefficient) || liquidDensityKgPerM3 <= 0.0
-	|| drainPipeDiameterM <= 0.0 || availableHeadM <= 0.0 || dischargeCoefficient <= 0.0) {
+        || !Double.isFinite(availableHeadM) || !Double.isFinite(dischargeCoefficient) || liquidDensityKgPerM3 <= 0.0
+        || drainPipeDiameterM <= 0.0 || availableHeadM <= 0.0 || dischargeCoefficient <= 0.0) {
       return 0.0;
     }
     double backpressureHeadM = Double.isFinite(backpressureBarg) && backpressureBarg > 0.0
-	? backpressureBarg * BAR_TO_PA / (liquidDensityKgPerM3 * GRAVITY_M_PER_S2)
-	: 0.0;
+        ? backpressureBarg * BAR_TO_PA / (liquidDensityKgPerM3 * GRAVITY_M_PER_S2)
+        : 0.0;
     double effectiveHeadM = availableHeadM - backpressureHeadM;
     if (effectiveHeadM <= 0.0) {
       return 0.0;
     }
     double flowAreaM2 = Math.PI * Math.pow(drainPipeDiameterM / 2.0, 2.0);
     double volumetricCapacityM3PerS = dischargeCoefficient * flowAreaM2
-	* Math.sqrt(2.0 * GRAVITY_M_PER_S2 * effectiveHeadM);
+        * Math.sqrt(2.0 * GRAVITY_M_PER_S2 * effectiveHeadM);
     return liquidDensityKgPerM3 * volumetricCapacityM3PerS;
   }
 
@@ -221,7 +221,7 @@ public final class OpenDrainProcessEvidenceCalculator {
    */
   private static OpenDrainReviewItem createBaseItem(String areaId, DesignBasis designBasis) {
     OpenDrainReviewItem item = new OpenDrainReviewItem().setAreaId(areaId).setAreaType(designBasis.getAreaType())
-	.setDrainSystemType(designBasis.getDrainSystemType()).put("standards", designBasis.getStandards());
+        .setDrainSystemType(designBasis.getDrainSystemType()).put("standards", designBasis.getStandards());
     if (!designBasis.getSourceReference().isEmpty()) {
       item.addSourceReference(designBasis.getSourceReference());
     }
@@ -238,9 +238,9 @@ public final class OpenDrainProcessEvidenceCalculator {
     item.put("hasOpenDrainMeasures", Boolean.valueOf(designBasis.hasOpenDrainMeasures()));
     item.put("backflowPrevented", Boolean.valueOf(designBasis.isBackflowPrevented()));
     item.put("closedOpenDrainInteractionPrevented",
-	Boolean.valueOf(designBasis.isClosedOpenDrainInteractionPrevented()));
+        Boolean.valueOf(designBasis.isClosedOpenDrainInteractionPrevented()));
     item.put("hazardousNonHazardousPhysicallySeparated",
-	Boolean.valueOf(designBasis.isHazardousNonHazardousPhysicallySeparated()));
+        Boolean.valueOf(designBasis.isHazardousNonHazardousPhysicallySeparated()));
     item.put("sealDesignedForMaxBackpressure", Boolean.valueOf(designBasis.isSealDesignedForMaxBackpressure()));
     item.put("ventTerminatedSafe", Boolean.valueOf(designBasis.isVentTerminatedSafe()));
     item.put("openDrainDependsOnUtility", Boolean.valueOf(designBasis.isOpenDrainDependsOnUtility()));
@@ -301,7 +301,7 @@ public final class OpenDrainProcessEvidenceCalculator {
     for (int phaseIndex = 0; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
       PhaseInterface phase = fluid.getPhase(phaseIndex);
       if (isLiquidPhase(phase.getType())) {
-	liquidMassFlowKgPerS += Math.max(0.0, phase.getFlowRate("kg/sec"));
+        liquidMassFlowKgPerS += Math.max(0.0, phase.getFlowRate("kg/sec"));
       }
     }
     return liquidMassFlowKgPerS;
@@ -319,12 +319,12 @@ public final class OpenDrainProcessEvidenceCalculator {
     for (int phaseIndex = 0; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
       PhaseInterface phase = fluid.getPhase(phaseIndex);
       if (isLiquidPhase(phase.getType())) {
-	double phaseMassFlowKgPerS = Math.max(0.0, phase.getFlowRate("kg/sec"));
-	double phaseDensityKgPerM3 = phase.getPhysicalProperties().getDensity();
-	if (Double.isFinite(phaseDensityKgPerM3) && phaseDensityKgPerM3 > 0.0) {
-	  weightedDensity += phaseDensityKgPerM3 * Math.max(phaseMassFlowKgPerS, 1.0e-12);
-	  liquidMassFlowKgPerS += Math.max(phaseMassFlowKgPerS, 1.0e-12);
-	}
+        double phaseMassFlowKgPerS = Math.max(0.0, phase.getFlowRate("kg/sec"));
+        double phaseDensityKgPerM3 = phase.getPhysicalProperties().getDensity();
+        if (Double.isFinite(phaseDensityKgPerM3) && phaseDensityKgPerM3 > 0.0) {
+          weightedDensity += phaseDensityKgPerM3 * Math.max(phaseMassFlowKgPerS, 1.0e-12);
+          liquidMassFlowKgPerS += Math.max(phaseMassFlowKgPerS, 1.0e-12);
+        }
       }
     }
     if (liquidMassFlowKgPerS > 0.0) {
@@ -341,7 +341,7 @@ public final class OpenDrainProcessEvidenceCalculator {
    */
   private static boolean isLiquidPhase(PhaseType phaseType) {
     return phaseType == PhaseType.LIQUID || phaseType == PhaseType.OIL || phaseType == PhaseType.AQUEOUS
-	|| phaseType == PhaseType.LIQUID_ASPHALTENE;
+        || phaseType == PhaseType.LIQUID_ASPHALTENE;
   }
 
   /**

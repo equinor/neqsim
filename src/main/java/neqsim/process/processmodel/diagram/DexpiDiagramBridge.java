@@ -68,7 +68,7 @@ public final class DexpiDiagramBridge implements Serializable {
    */
   public static ProcessDiagramExporter createExporter(ProcessSystem processSystem) {
     return new ProcessDiagramExporter(processSystem).setShowDexpiMetadata(true)
-	.setDetailLevel(DiagramDetailLevel.ENGINEERING).setShowLegend(true);
+        .setDetailLevel(DiagramDetailLevel.ENGINEERING).setShowLegend(true);
   }
 
   /**
@@ -83,7 +83,7 @@ public final class DexpiDiagramBridge implements Serializable {
    */
   public static ProcessDiagramExporter createDetailedExporter(ProcessSystem processSystem) {
     return new ProcessDiagramExporter(processSystem).setShowDexpiMetadata(true).setDetailLevel(DiagramDetailLevel.DEBUG)
-	.setShowLegend(true).setShowStreamValues(true);
+        .setShowLegend(true).setShowStreamValues(true);
   }
 
   /**

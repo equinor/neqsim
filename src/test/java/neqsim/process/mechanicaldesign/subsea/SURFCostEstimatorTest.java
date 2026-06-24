@@ -80,7 +80,7 @@ class SURFCostEstimatorTest {
 
     // Sum of categories should equal total
     double categorySum = est.getSubseaCostUSD() + est.getUmbilicalCostUSD() + est.getRiserCostUSD()
-	+ est.getFlowlineCostUSD();
+        + est.getFlowlineCostUSD();
     assertEquals(totalUSD, categorySum, 1.0, "Category sum should equal total");
 
     // Flowlines typically dominate for long export pipelines (>50%)
@@ -161,7 +161,7 @@ class SURFCostEstimatorTest {
 
     // Norway should be more expensive than GOM (factor 1.35 vs 1.0)
     assertTrue(estNorway.getTotalSURFCostUSD() > estGOM.getTotalSURFCostUSD(),
-	"Norway SURF should be more expensive than GOM");
+        "Norway SURF should be more expensive than GOM");
   }
 
   /**

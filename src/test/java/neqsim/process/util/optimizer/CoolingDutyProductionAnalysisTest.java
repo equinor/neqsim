@@ -82,7 +82,7 @@ public class CoolingDutyProductionAnalysisTest {
 
     // First get baseline (no cooling)
     double baselineFlow = runOptimizationWithCooling(0.0, coolingDeltaTs, coolingDuties, optimalFlows,
-	productionIncreases, bottlenecks);
+        productionIncreases, bottlenecks);
 
     // Sweep cooling from 1Â°C to 15Â°C in 1Â°C increments
     for (double deltaT = 1.0; deltaT <= 15.0; deltaT += 1.0) {
@@ -103,7 +103,7 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("RESULTS SUMMARY");
     logger.info(StringUtils.repeat("=", 140));
     logger.info(String.format("%-10s %-12s %-12s %-14s %-16s %-14s %-10s %s", "Cooling(C)", "Duty(MW)", "CW(m3/hr)",
-	"Flow(MSm3/d)", "Flow(kg/hr)", "Increase(kg/hr)", "Incr(%)", "Bottleneck"));
+        "Flow(MSm3/d)", "Flow(kg/hr)", "Increase(kg/hr)", "Incr(%)", "Bottleneck"));
     logger.info(StringUtils.repeat("-", 140));
 
     for (int i = 0; i < coolingDeltaTs.size(); i++) {
@@ -114,7 +114,7 @@ public class CoolingDutyProductionAnalysisTest {
       // Convert kg/hr to MSm3/day: (kg/hr) / (kg/Sm3) * 24 / 1e6
       double flowMSm3Day = optimalFlows.get(i) / gasStdDensity * 24.0 / 1e6;
       logger.info(String.format("%-10.1f %-12.2f %-12.0f %-14.2f %-16.0f %-14.0f %-10.2f %s", coolingDeltaTs.get(i),
-	  duty, cwFlowM3Hr, flowMSm3Day, optimalFlows.get(i), increase, increasePercent, bottlenecks.get(i)));
+          duty, cwFlowM3Hr, flowMSm3Day, optimalFlows.get(i), increase, increasePercent, bottlenecks.get(i)));
     }
 
     // Print CSV format for plotting
@@ -122,12 +122,12 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("CSV DATA (copy for plotting)");
     logger.info(StringUtils.repeat("=", 80));
     logger.info(
-	"Cooling_DeltaT_C,Cooling_Duty_MW,Optimal_Flow_kg_hr,Production_Increase_kg_hr,Production_Increase_Percent,Bottleneck");
+        "Cooling_DeltaT_C,Cooling_Duty_MW,Optimal_Flow_kg_hr,Production_Increase_kg_hr,Production_Increase_Percent,Bottleneck");
     for (int i = 0; i < coolingDeltaTs.size(); i++) {
       double increase = optimalFlows.get(i) - baselineFlow;
       double increasePercent = (increase / baselineFlow) * 100;
       logger.info(String.format("%.1f,%.2f,%.0f,%.0f,%.2f,%s", coolingDeltaTs.get(i), coolingDuties.get(i),
-	  optimalFlows.get(i), increase, increasePercent, bottlenecks.get(i)));
+          optimalFlows.get(i), increase, increasePercent, bottlenecks.get(i)));
     }
 
     // Print efficiency metrics
@@ -156,7 +156,7 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("COOLING WATER REQUIREMENTS (Inlet: 10Â°C, Outlet: 20Â°C)");
     logger.info(StringUtils.repeat("=", 80));
     logger.info(String.format("%-12s %-15s %-18s %-18s %-15s", "Cooling(Â°C)", "Duty(MW)", "CW Flow(kg/s)",
-	"CW Flow(mÂ³/hr)", "CW Flow(kg/hr)"));
+        "CW Flow(mÂ³/hr)", "CW Flow(kg/hr)"));
     logger.info(StringUtils.repeat("-", 80));
 
     for (int i = 0; i < coolingDeltaTs.size(); i++) {
@@ -164,10 +164,10 @@ public class CoolingDutyProductionAnalysisTest {
       // m_water (kg/s) = Q (MW) Ã— 1000 / (Cp Ã— Î”T)
       double cwFlowKgS = duty * 1000.0 / (cpWater * waterDeltaT);
       double cwFlowM3Hr = cwFlowKgS * 3600.0 / 1000.0; // Convert kg/s to mÂ³/hr (assuming ~1000
-						       // kg/mÂ³)
+      // kg/mÂ³)
       double cwFlowKgHr = cwFlowKgS * 3600.0;
       logger.info(String.format("%-12.1f %-15.2f %-18.1f %-18.1f %-15.0f", coolingDeltaTs.get(i), duty, cwFlowKgS,
-	  cwFlowM3Hr, cwFlowKgHr));
+          cwFlowM3Hr, cwFlowKgHr));
     }
 
     // Print summary at max cooling
@@ -216,20 +216,20 @@ public class CoolingDutyProductionAnalysisTest {
     double coolingDuty = 0.0;
     if (cooler != null) {
       coolingDuty = Math.abs(cooler.getDuty() / 1e6); // Convert to MW (duty is in W, negative for
-						      // cooling)
+      // cooling)
     }
 
     // Run optimization
     ProductionOptimizer optimizer = new ProductionOptimizer();
     OptimizationConfig config = new OptimizationConfig(originalFlow * 0.9, originalFlow * 1.15).rateUnit("kg/hr")
-	.tolerance(originalFlow * 0.002).maxIterations(15).defaultUtilizationLimit(1.0)
-	.searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
+        .tolerance(originalFlow * 0.002).maxIterations(15).defaultUtilizationLimit(1.0)
+        .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
 
     OptimizationObjective throughputObjective = new OptimizationObjective("throughput",
-	proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
+        proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
 
     OptimizationResult result = optimizer.optimize(process, inletStream, config,
-	Collections.singletonList(throughputObjective), Collections.emptyList());
+        Collections.singletonList(throughputObjective), Collections.emptyList());
 
     // Record results
     coolingDeltaTs.add(coolingDeltaT);
@@ -239,8 +239,8 @@ public class CoolingDutyProductionAnalysisTest {
     bottlenecks.add(result.getBottleneck() != null ? result.getBottleneck().getName() : "N/A");
 
     logger.info(String.format("Cooling Î”T=%.1fÂ°C: Duty=%.2f MW, Optimal=%.0f kg/hr, Bottleneck=%s", coolingDeltaT,
-	coolingDuty, result.getOptimalRate(),
-	result.getBottleneck() != null ? result.getBottleneck().getName() : "N/A"));
+        coolingDuty, result.getOptimalRate(),
+        result.getBottleneck() != null ? result.getBottleneck().getName() : "N/A"));
 
     return result.getOptimalRate();
   }
@@ -349,11 +349,11 @@ public class CoolingDutyProductionAnalysisTest {
     // Auto-size and configure
     for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       if (equipment instanceof Separator) {
-	((Separator) equipment).autoSize();
+        ((Separator) equipment).autoSize();
       } else if (equipment instanceof Compressor) {
-	((Compressor) equipment).autoSize();
+        ((Compressor) equipment).autoSize();
       } else if (equipment instanceof Manifold) {
-	((Manifold) equipment).autoSize();
+        ((Manifold) equipment).autoSize();
       }
     }
 
@@ -369,9 +369,9 @@ public class CoolingDutyProductionAnalysisTest {
     // Initialize pipe mechanical designs
     for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       if (equipment instanceof PipeBeggsAndBrills) {
-	PipeBeggsAndBrills pipe = (PipeBeggsAndBrills) equipment;
-	pipe.initMechanicalDesign();
-	pipe.getMechanicalDesign().setMaxDesignVelocity(20.0);
+        PipeBeggsAndBrills pipe = (PipeBeggsAndBrills) equipment;
+        pipe.initMechanicalDesign();
+        pipe.getMechanicalDesign().setMaxDesignVelocity(20.0);
       }
     }
 
@@ -446,7 +446,7 @@ public class CoolingDutyProductionAnalysisTest {
     process.add(compressor);
 
     PipeBeggsAndBrills outletPipe2 = new PipeBeggsAndBrills(trainName + " ups Outlet Pipe2",
-	compressor.getOutletStream());
+        compressor.getOutletStream());
     outletPipe2.setLength(50.0);
     outletPipe2.setDiameter(0.75);
     outletPipe2.setPipeWallRoughness(15e-6);
@@ -475,7 +475,7 @@ public class CoolingDutyProductionAnalysisTest {
     // Designed to provide ~44 MW at 6900-7100 RPM range (where compressor operates)
     // Power increases smoothly - no plateau or discrete steps
     double[] speeds = { 4922.0, 5200.0, 5500.0, 5800.0, 6100.0, 6400.0, 6700.0, 6900.0, 7100.0, 7200.0, 7300.0,
-	7383.0 };
+        7383.0 };
     // Smooth curve reaching 44.4 MW at ~6900 RPM
     double[] powers = { 28.0, 30.5, 33.5, 36.5, 39.5, 42.0, 43.8, 44.2, 44.35, 44.38, 44.40, 44.40 };
     driver.setMaxPowerSpeedCurve(speeds, powers, "MW");
@@ -501,7 +501,7 @@ public class CoolingDutyProductionAnalysisTest {
     // Smooth power curve - linear interpolation from 4484 to 6726 RPM
     // Gradually approaches max power (50 MW) instead of discrete steps
     double[] speeds = { 4484.0, 4700.0, 4950.0, 5200.0, 5450.0, 5700.0, 5950.0, 6150.0, 6350.0, 6500.0, 6600.0, 6680.0,
-	6726.0 };
+        6726.0 };
     double[] powers = { 30.0, 33.0, 36.5, 40.0, 43.5, 46.5, 48.5, 49.2, 49.6, 49.85, 49.93, 49.98, 50.0 };
     driver.setMaxPowerSpeedCurve(speeds, powers, "MW");
 
@@ -534,7 +534,7 @@ public class CoolingDutyProductionAnalysisTest {
 
     logger.info("\n        " + StringUtils.repeat("-", 50));
     logger.info(
-	String.format("        %-25s %25s", String.format("%.0f", minFlow), String.format("%.0f kg/hr", maxFlow)));
+        String.format("        %-25s %25s", String.format("%.0f", minFlow), String.format("%.0f kg/hr", maxFlow)));
   }
 
   /**
@@ -564,14 +564,14 @@ public class CoolingDutyProductionAnalysisTest {
       // Run optimization
       ProductionOptimizer optimizer = new ProductionOptimizer();
       OptimizationConfig config = new OptimizationConfig(originalFlow * 0.9, originalFlow * 1.15).rateUnit("kg/hr")
-	  .tolerance(originalFlow * 0.002).maxIterations(15).defaultUtilizationLimit(1.0)
-	  .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
+          .tolerance(originalFlow * 0.002).maxIterations(15).defaultUtilizationLimit(1.0)
+          .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
 
       OptimizationObjective throughputObjective = new OptimizationObjective("throughput",
-	  proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
+          proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
 
       OptimizationResult result = optimizer.optimize(process, inletStream, config,
-	  Collections.singletonList(throughputObjective), Collections.emptyList());
+          Collections.singletonList(throughputObjective), Collections.emptyList());
 
       pressureDrops.add(dP);
       optimalFlows.add(result.getOptimalRate());
@@ -579,8 +579,8 @@ public class CoolingDutyProductionAnalysisTest {
 
       double flowMSm3Day = result.getOptimalRate() / gasStdDensity * 24.0 / 1e6;
       System.out.println(
-	  String.format("dP=%.1f bar: Optimal=%.0f kg/hr (%.2f MSm3/d), Bottleneck=%s", dP, result.getOptimalRate(),
-	      flowMSm3Day, result.getBottleneck() != null ? result.getBottleneck().getName() : "N/A"));
+          String.format("dP=%.1f bar: Optimal=%.0f kg/hr (%.2f MSm3/d), Bottleneck=%s", dP, result.getOptimalRate(),
+              flowMSm3Day, result.getBottleneck() != null ? result.getBottleneck().getName() : "N/A"));
     }
 
     // Get baseline (0 bar dP)
@@ -592,7 +592,7 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("RESULTS SUMMARY - PRESSURE DROP EFFECT (NO COOLING)");
     logger.info(StringUtils.repeat("=", 100));
     logger.info(String.format("%-10s %-14s %-16s %-16s %-12s %s", "dP(bar)", "Flow(MSm3/d)", "Flow(kg/hr)",
-	"Loss(kg/hr)", "Loss(%)", "Bottleneck"));
+        "Loss(kg/hr)", "Loss(%)", "Bottleneck"));
     logger.info(StringUtils.repeat("-", 100));
 
     for (int i = 0; i < pressureDrops.size(); i++) {
@@ -602,7 +602,7 @@ public class CoolingDutyProductionAnalysisTest {
       double loss = baselineFlow - flow;
       double lossPercent = (loss / baselineFlow) * 100;
       logger.info(String.format("%-10.1f %-14.2f %-16.0f %-16.0f %-12.2f %s", dP, flowMSm3Day, flow, loss, lossPercent,
-	  bottlenecks.get(i)));
+          bottlenecks.get(i)));
     }
 
     // Print summary
@@ -619,7 +619,7 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info(String.format("  Total production loss:  %.0f kg/hr (%.2f%%)", totalLoss, totalLossPercent));
     logger.info(String.format("  Loss per 0.1 bar dP:    ~%.0f kg/hr", lossPerBar / 10.0));
     logger.info(String.format("  Loss per bar dP:        ~%.0f kg/hr = ~%.2f MSm3/day", lossPerBar,
-	lossPerBar / gasStdDensity * 24.0 / 1e6));
+        lossPerBar / gasStdDensity * 24.0 / 1e6));
 
     // Print ASCII plot
     logger.info("\n" + StringUtils.repeat("=", 80));
@@ -644,7 +644,7 @@ public class CoolingDutyProductionAnalysisTest {
 
     logger.info("\n         " + StringUtils.repeat("-", 50));
     logger.info(
-	String.format("         %-25s %25s", String.format("%.0f", minFlow), String.format("%.0f kg/hr", maxFlow)));
+        String.format("         %-25s %25s", String.format("%.0f", minFlow), String.format("%.0f kg/hr", maxFlow)));
   }
 
   /**
@@ -707,19 +707,19 @@ public class CoolingDutyProductionAnalysisTest {
 
       gasCooler.setOutTemperature(inletTemp - coolingDeltaT, "C");
       if (pressureDrop > 0) {
-	gasCooler.setOutPressure(inletPressure - pressureDrop, "bara");
+        gasCooler.setOutPressure(inletPressure - pressureDrop, "bara");
       }
       gasCooler.run();
       processSystem.add(gasCooler);
 
       if (coolingDeltaT > 0) {
-	// Add separator after cooler if there's cooling (to remove condensate)
-	Separator coolerSeparator = new Separator("Cooler Separator", gasCooler.getOutletStream());
-	coolerSeparator.run();
-	processSystem.add(coolerSeparator);
-	feedToSplitter2 = coolerSeparator.getGasOutStream();
+        // Add separator after cooler if there's cooling (to remove condensate)
+        Separator coolerSeparator = new Separator("Cooler Separator", gasCooler.getOutletStream());
+        coolerSeparator.run();
+        processSystem.add(coolerSeparator);
+        feedToSplitter2 = coolerSeparator.getGasOutStream();
       } else {
-	feedToSplitter2 = gasCooler.getOutletStream();
+        feedToSplitter2 = gasCooler.getOutletStream();
       }
     } else {
       feedToSplitter2 = finalSeparator.getGasOutStream();
@@ -752,11 +752,11 @@ public class CoolingDutyProductionAnalysisTest {
     // Auto-size and configure
     for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       if (equipment instanceof Separator) {
-	((Separator) equipment).autoSize();
+        ((Separator) equipment).autoSize();
       } else if (equipment instanceof Compressor) {
-	((Compressor) equipment).autoSize();
+        ((Compressor) equipment).autoSize();
       } else if (equipment instanceof Manifold) {
-	((Manifold) equipment).autoSize();
+        ((Manifold) equipment).autoSize();
       }
     }
 
@@ -772,9 +772,9 @@ public class CoolingDutyProductionAnalysisTest {
     // Initialize pipe mechanical designs
     for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       if (equipment instanceof PipeBeggsAndBrills) {
-	PipeBeggsAndBrills pipe = (PipeBeggsAndBrills) equipment;
-	pipe.initMechanicalDesign();
-	pipe.getMechanicalDesign().setMaxDesignVelocity(20.0);
+        PipeBeggsAndBrills pipe = (PipeBeggsAndBrills) equipment;
+        pipe.initMechanicalDesign();
+        pipe.getMechanicalDesign().setMaxDesignVelocity(20.0);
       }
     }
 
@@ -814,12 +814,12 @@ public class CoolingDutyProductionAnalysisTest {
 
     // First get baseline (no cooling)
     double baselineFlow = runOptimizationWithIdenticalCompressors(0.0, coolingDeltaTs, coolingDuties, optimalFlows,
-	productionIncreases, bottlenecks);
+        productionIncreases, bottlenecks);
 
     // Sweep cooling from 0.5Â°C to 15Â°C in 0.5Â°C increments for smoother curves
     for (double deltaT = 0.5; deltaT <= 15.0; deltaT += 0.5) {
       runOptimizationWithIdenticalCompressors(deltaT, coolingDeltaTs, coolingDuties, optimalFlows, productionIncreases,
-	  bottlenecks);
+          bottlenecks);
     }
 
     // Print results table
@@ -827,7 +827,7 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("RESULTS SUMMARY - COMPRESSOR 2 SAME AS COMPRESSOR 1");
     logger.info(StringUtils.repeat("=", 140));
     logger.info(String.format("%-10s %-12s %-12s %-14s %-16s %-14s %-10s %s", "Cooling(C)", "Duty(MW)", "CW(m3/hr)",
-	"Flow(MSm3/d)", "Flow(kg/hr)", "Increase(kg/hr)", "Incr(%)", "Bottleneck"));
+        "Flow(MSm3/d)", "Flow(kg/hr)", "Increase(kg/hr)", "Incr(%)", "Bottleneck"));
     logger.info(StringUtils.repeat("-", 140));
 
     for (int i = 0; i < coolingDeltaTs.size(); i++) {
@@ -837,7 +837,7 @@ public class CoolingDutyProductionAnalysisTest {
       double cwFlowM3Hr = duty * 1000.0 / (cpWater * waterDeltaT) * 3600.0 / 1000.0;
       double flowMSm3Day = optimalFlows.get(i) / gasStdDensity * 24.0 / 1e6;
       logger.info(String.format("%-10.1f %-12.2f %-12.0f %-14.2f %-16.0f %-14.0f %-10.2f %s", coolingDeltaTs.get(i),
-	  duty, cwFlowM3Hr, flowMSm3Day, optimalFlows.get(i), increase, increasePercent, bottlenecks.get(i)));
+          duty, cwFlowM3Hr, flowMSm3Day, optimalFlows.get(i), increase, increasePercent, bottlenecks.get(i)));
     }
 
     // Print comparison with original configuration
@@ -867,7 +867,7 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("SUMMARY (Identical Compressor 1 & 2 Curves):");
     logger.info(String.format("  Baseline (0Â°C cooling): %.0f kg/hr = %.2f MSm3/day", baselineFlow, baselineMSm3Day));
     logger.info(
-	String.format("  At 15Â°C cooling:        %.0f kg/hr = %.2f MSm3/day", maxCoolingFlow, maxCoolingMSm3Day));
+        String.format("  At 15Â°C cooling:        %.0f kg/hr = %.2f MSm3/day", maxCoolingFlow, maxCoolingMSm3Day));
     logger.info(String.format("  Production increase:    %.0f kg/hr (+%.2f%%)", totalIncrease, totalIncreasePercent));
     logger.info(String.format("  Bottleneck at baseline: %s", bottlenecks.get(0)));
     logger.info(String.format("  Bottleneck at 15Â°C:     %s", bottlenecks.get(bottlenecks.size() - 1)));
@@ -895,14 +895,14 @@ public class CoolingDutyProductionAnalysisTest {
     // Use tighter tolerance and more iterations for consistent results with
     // identical compressors
     OptimizationConfig config = new OptimizationConfig(originalFlow * 0.9, originalFlow * 1.15).rateUnit("kg/hr")
-	.tolerance(originalFlow * 0.0005).maxIterations(25).defaultUtilizationLimit(1.0)
-	.searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
+        .tolerance(originalFlow * 0.0005).maxIterations(25).defaultUtilizationLimit(1.0)
+        .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
 
     OptimizationObjective throughputObjective = new OptimizationObjective("throughput",
-	proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
+        proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
 
     OptimizationResult result = optimizer.optimize(process, inletStream, config,
-	Collections.singletonList(throughputObjective), Collections.emptyList());
+        Collections.singletonList(throughputObjective), Collections.emptyList());
 
     coolingDeltaTs.add(coolingDeltaT);
     coolingDuties.add(coolingDuty);
@@ -915,11 +915,11 @@ public class CoolingDutyProductionAnalysisTest {
     Compressor ups2 = (Compressor) process.getUnit("ups2 Compressor");
     Compressor ups3 = (Compressor) process.getUnit("ups3 Compressor");
     logger.info(String.format("  Speeds: ups1=%.0f, ups2=%.0f, ups3=%.0f RPM | Max util: %.1f%%", ups1.getSpeed(),
-	ups2.getSpeed(), ups3.getSpeed(), result.getBottleneckUtilization() * 100));
+        ups2.getSpeed(), ups3.getSpeed(), result.getBottleneckUtilization() * 100));
 
     logger.info(String.format("Cooling Î”T=%.1fÂ°C: Duty=%.2f MW, Optimal=%.0f kg/hr, Bottleneck=%s", coolingDeltaT,
-	coolingDuty, result.getOptimalRate(),
-	result.getBottleneck() != null ? result.getBottleneck().getName() : "N/A"));
+        coolingDuty, result.getOptimalRate(),
+        result.getBottleneck() != null ? result.getBottleneck().getName() : "N/A"));
 
     return result.getOptimalRate();
   }
@@ -1012,11 +1012,11 @@ public class CoolingDutyProductionAnalysisTest {
 
     for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       if (equipment instanceof Separator) {
-	((Separator) equipment).autoSize();
+        ((Separator) equipment).autoSize();
       } else if (equipment instanceof Compressor) {
-	((Compressor) equipment).autoSize();
+        ((Compressor) equipment).autoSize();
       } else if (equipment instanceof Manifold) {
-	((Manifold) equipment).autoSize();
+        ((Manifold) equipment).autoSize();
       }
     }
 
@@ -1029,14 +1029,14 @@ public class CoolingDutyProductionAnalysisTest {
     // (example_compressor_curve.json)
     configureCompressor1And2WithElectricDriver(ups1Comp, 7383.0);
     configureCompressor1And2WithElectricDriver(ups2Comp, 7383.0); // SAME as
-								  // ups1!
+    // ups1!
     configureCompressor3WithElectricDriver(ups3Comp, 6726.0);
 
     for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       if (equipment instanceof PipeBeggsAndBrills) {
-	PipeBeggsAndBrills pipe = (PipeBeggsAndBrills) equipment;
-	pipe.initMechanicalDesign();
-	pipe.getMechanicalDesign().setMaxDesignVelocity(20.0);
+        PipeBeggsAndBrills pipe = (PipeBeggsAndBrills) equipment;
+        pipe.initMechanicalDesign();
+        pipe.getMechanicalDesign().setMaxDesignVelocity(20.0);
       }
     }
 
@@ -1066,14 +1066,14 @@ public class CoolingDutyProductionAnalysisTest {
 
       ProductionOptimizer optimizer = new ProductionOptimizer();
       OptimizationConfig config = new OptimizationConfig(originalFlow * 0.9, originalFlow * 1.15).rateUnit("kg/hr")
-	  .tolerance(originalFlow * 0.002).maxIterations(15).defaultUtilizationLimit(1.0)
-	  .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
+          .tolerance(originalFlow * 0.002).maxIterations(15).defaultUtilizationLimit(1.0)
+          .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
 
       OptimizationObjective throughputObjective = new OptimizationObjective("throughput",
-	  proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
+          proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
 
       OptimizationResult result = optimizer.optimize(process, inletStream, config,
-	  Collections.singletonList(throughputObjective), Collections.emptyList());
+          Collections.singletonList(throughputObjective), Collections.emptyList());
 
       pressureDrops.add(dP);
       optimalFlows.add(result.getOptimalRate());
@@ -1081,8 +1081,8 @@ public class CoolingDutyProductionAnalysisTest {
 
       double flowMSm3Day = result.getOptimalRate() / gasStdDensity * 24.0 / 1e6;
       System.out.println(
-	  String.format("dP=%.1f bar: Optimal=%.0f kg/hr (%.2f MSm3/d), Bottleneck=%s", dP, result.getOptimalRate(),
-	      flowMSm3Day, result.getBottleneck() != null ? result.getBottleneck().getName() : "N/A"));
+          String.format("dP=%.1f bar: Optimal=%.0f kg/hr (%.2f MSm3/d), Bottleneck=%s", dP, result.getOptimalRate(),
+              flowMSm3Day, result.getBottleneck() != null ? result.getBottleneck().getName() : "N/A"));
     }
 
     double baselineFlow = optimalFlows.get(0);
@@ -1092,7 +1092,7 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("RESULTS SUMMARY - PRESSURE DROP (Identical Compressor Curves)");
     logger.info(StringUtils.repeat("=", 100));
     logger.info(String.format("%-10s %-14s %-16s %-16s %-12s %s", "dP(bar)", "Flow(MSm3/d)", "Flow(kg/hr)",
-	"Loss(kg/hr)", "Loss(%)", "Bottleneck"));
+        "Loss(kg/hr)", "Loss(%)", "Bottleneck"));
     logger.info(StringUtils.repeat("-", 100));
 
     for (int i = 0; i < pressureDrops.size(); i++) {
@@ -1102,7 +1102,7 @@ public class CoolingDutyProductionAnalysisTest {
       double loss = baselineFlow - flow;
       double lossPercent = (loss / baselineFlow) * 100;
       logger.info(String.format("%-10.1f %-14.2f %-16.0f %-16.0f %-12.2f %s", dP, flowMSm3Day, flow, loss, lossPercent,
-	  bottlenecks.get(i)));
+          bottlenecks.get(i)));
     }
 
     // Print summary
@@ -1168,18 +1168,18 @@ public class CoolingDutyProductionAnalysisTest {
 
       gasCooler.setOutTemperature(inletTemp - coolingDeltaT, "C");
       if (pressureDrop > 0) {
-	gasCooler.setOutPressure(inletPressure - pressureDrop, "bara");
+        gasCooler.setOutPressure(inletPressure - pressureDrop, "bara");
       }
       gasCooler.run();
       processSystem.add(gasCooler);
 
       if (coolingDeltaT > 0) {
-	Separator coolerSeparator = new Separator("Cooler Separator", gasCooler.getOutletStream());
-	coolerSeparator.run();
-	processSystem.add(coolerSeparator);
-	feedToSplitter2 = coolerSeparator.getGasOutStream();
+        Separator coolerSeparator = new Separator("Cooler Separator", gasCooler.getOutletStream());
+        coolerSeparator.run();
+        processSystem.add(coolerSeparator);
+        feedToSplitter2 = coolerSeparator.getGasOutStream();
       } else {
-	feedToSplitter2 = gasCooler.getOutletStream();
+        feedToSplitter2 = gasCooler.getOutletStream();
       }
     } else {
       feedToSplitter2 = finalSeparator.getGasOutStream();
@@ -1207,11 +1207,11 @@ public class CoolingDutyProductionAnalysisTest {
 
     for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       if (equipment instanceof Separator) {
-	((Separator) equipment).autoSize();
+        ((Separator) equipment).autoSize();
       } else if (equipment instanceof Compressor) {
-	((Compressor) equipment).autoSize();
+        ((Compressor) equipment).autoSize();
       } else if (equipment instanceof Manifold) {
-	((Manifold) equipment).autoSize();
+        ((Manifold) equipment).autoSize();
       }
     }
 
@@ -1222,14 +1222,14 @@ public class CoolingDutyProductionAnalysisTest {
 
     configureCompressor1And2WithElectricDriver(ups1Comp, 7383.0);
     configureCompressor1And2WithElectricDriver(ups2Comp, 7383.0); // SAME as
-								  // ups1!
+    // ups1!
     configureCompressor3WithElectricDriver(ups3Comp, 6726.0);
 
     for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       if (equipment instanceof PipeBeggsAndBrills) {
-	PipeBeggsAndBrills pipe = (PipeBeggsAndBrills) equipment;
-	pipe.initMechanicalDesign();
-	pipe.getMechanicalDesign().setMaxDesignVelocity(20.0);
+        PipeBeggsAndBrills pipe = (PipeBeggsAndBrills) equipment;
+        pipe.initMechanicalDesign();
+        pipe.getMechanicalDesign().setMaxDesignVelocity(20.0);
       }
     }
 
@@ -1273,12 +1273,12 @@ public class CoolingDutyProductionAnalysisTest {
 
     // First get baseline (no cooling)
     double baselineFlow = runOptimization2027Scenario(0.0, coolingDeltaTs, coolingDuties, optimalFlows,
-	productionIncreases, bottlenecks);
+        productionIncreases, bottlenecks);
 
     // Sweep cooling from 0.5Â°C to 15Â°C in 0.5Â°C increments
     for (double deltaT = 0.5; deltaT <= 15.0; deltaT += 0.5) {
       runOptimization2027Scenario(deltaT, coolingDeltaTs, coolingDuties, optimalFlows, productionIncreases,
-	  bottlenecks);
+          bottlenecks);
     }
 
     // Print results table
@@ -1286,7 +1286,7 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("RESULTS SUMMARY - 2027 SCENARIO (2 COMPRESSOR TRAINS, 40 MSmÂ³/day)");
     logger.info(StringUtils.repeat("=", 140));
     logger.info(String.format("%-10s %-12s %-12s %-14s %-16s %-14s %-10s %s", "Cooling(C)", "Duty(MW)", "CW(m3/hr)",
-	"Flow(MSm3/d)", "Flow(kg/hr)", "Increase(kg/hr)", "Incr(%)", "Bottleneck"));
+        "Flow(MSm3/d)", "Flow(kg/hr)", "Increase(kg/hr)", "Incr(%)", "Bottleneck"));
     logger.info(StringUtils.repeat("-", 140));
 
     for (int i = 0; i < coolingDeltaTs.size(); i++) {
@@ -1296,7 +1296,7 @@ public class CoolingDutyProductionAnalysisTest {
       double cwFlowM3Hr = duty * 1000.0 / (cpWater * waterDeltaT) * 3600.0 / 1000.0;
       double flowMSm3Day = optimalFlows.get(i) / gasStdDensity * 24.0 / 1e6;
       logger.info(String.format("%-10.1f %-12.2f %-12.0f %-14.2f %-16.0f %-14.0f %-10.2f %s", coolingDeltaTs.get(i),
-	  duty, cwFlowM3Hr, flowMSm3Day, optimalFlows.get(i), increase, increasePercent, bottlenecks.get(i)));
+          duty, cwFlowM3Hr, flowMSm3Day, optimalFlows.get(i), increase, increasePercent, bottlenecks.get(i)));
     }
 
     // Print ASCII plot
@@ -1313,7 +1313,7 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("SUMMARY - 2027 SCENARIO (2 Compressor Trains A & B):");
     logger.info(String.format("  Baseline (0Â°C cooling): %.0f kg/hr = %.2f MSm3/day", baselineFlow, baselineMSm3Day));
     logger.info(
-	String.format("  At 15Â°C cooling:        %.0f kg/hr = %.2f MSm3/day", maxCoolingFlow, maxCoolingMSm3Day));
+        String.format("  At 15Â°C cooling:        %.0f kg/hr = %.2f MSm3/day", maxCoolingFlow, maxCoolingMSm3Day));
     logger.info(String.format("  Production increase:    %.0f kg/hr (+%.2f%%)", totalIncrease, totalIncreasePercent));
     logger.info(String.format("  Bottleneck at baseline: %s", bottlenecks.get(0)));
     logger.info(String.format("  Bottleneck at 15Â°C:     %s", bottlenecks.get(bottlenecks.size() - 1)));
@@ -1367,12 +1367,12 @@ public class CoolingDutyProductionAnalysisTest {
 
     // First get baseline (no cooling) at max capacity
     double baselineFlow = runOptimization2027MaxCapacity(0.0, coolingDeltaTs, coolingDuties, optimalFlows,
-	productionIncreases, bottlenecks, coolingWaterFlows);
+        productionIncreases, bottlenecks, coolingWaterFlows);
 
     // Sweep cooling from 1Â°C to 15Â°C in 1Â°C increments
     for (double deltaT = 1.0; deltaT <= 15.0; deltaT += 1.0) {
       runOptimization2027MaxCapacity(deltaT, coolingDeltaTs, coolingDuties, optimalFlows, productionIncreases,
-	  bottlenecks, coolingWaterFlows);
+          bottlenecks, coolingWaterFlows);
     }
 
     // Print results table
@@ -1380,7 +1380,7 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("RESULTS SUMMARY - 2027 MAX CAPACITY (2 COMPRESSOR TRAINS A & B)");
     logger.info(StringUtils.repeat("=", 160));
     logger.info(String.format("%-10s %-12s %-14s %-14s %-16s %-16s %-10s %-10s %s", "Cooling(C)", "Duty(MW)",
-	"CW(m3/hr)", "CW(kg/s)", "Flow(MSm3/d)", "Flow(kg/hr)", "Incr(kg/hr)", "Incr(%)", "Bottleneck"));
+        "CW(m3/hr)", "CW(kg/s)", "Flow(MSm3/d)", "Flow(kg/hr)", "Incr(kg/hr)", "Incr(%)", "Bottleneck"));
     logger.info(StringUtils.repeat("-", 160));
 
     for (int i = 0; i < coolingDeltaTs.size(); i++) {
@@ -1392,8 +1392,8 @@ public class CoolingDutyProductionAnalysisTest {
       double cwVolFlowM3Hr = cwMassFlowKgS * 3600 / waterDensity;
       double flowMSm3Day = optimalFlows.get(i) / gasStdDensity * 24.0 / 1e6;
       logger.info(String.format("%-10.1f %-12.2f %-14.1f %-14.1f %-16.2f %-16.0f %-10.0f %-10.2f %s",
-	  coolingDeltaTs.get(i), duty, cwVolFlowM3Hr, cwMassFlowKgS, flowMSm3Day, optimalFlows.get(i), increase,
-	  increasePercent, bottlenecks.get(i)));
+          coolingDeltaTs.get(i), duty, cwVolFlowM3Hr, cwMassFlowKgS, flowMSm3Day, optimalFlows.get(i), increase,
+          increasePercent, bottlenecks.get(i)));
     }
 
     // Print summary
@@ -1411,7 +1411,7 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info(StringUtils.repeat("=", 100));
     logger.info(String.format("  Baseline (0Â°C cooling): %.0f kg/hr = %.2f MSm3/day", baselineFlow, baselineMSm3Day));
     logger.info(
-	String.format("  At 15Â°C cooling:        %.0f kg/hr = %.2f MSm3/day", maxCoolingFlow, maxCoolingMSm3Day));
+        String.format("  At 15Â°C cooling:        %.0f kg/hr = %.2f MSm3/day", maxCoolingFlow, maxCoolingMSm3Day));
     logger.info(String.format("  Production increase:    %.0f kg/hr (+%.2f%%)", totalIncrease, totalIncreasePercent));
     logger.info(String.format("  Bottleneck at baseline: %s", bottlenecks.get(0)));
     logger.info(String.format("  Bottleneck at 15Â°C:     %s", bottlenecks.get(bottlenecks.size() - 1)));
@@ -1428,7 +1428,7 @@ public class CoolingDutyProductionAnalysisTest {
     // Calculate efficiency
     double productionPerMW = totalIncrease / maxDuty; // kg/hr per MW
     double productionPerMWMSm3 = (totalIncrease / gasStdDensity * 24.0 / 1e6) / maxDuty; // MSmÂ³/d
-											 // per MW
+    // per MW
     logger.info("\n" + StringUtils.repeat("-", 80));
     logger.info("COOLING EFFICIENCY:");
     logger.info(String.format("  Production gain per MW: %.0f kg/hr per MW of cooling", productionPerMW));
@@ -1466,14 +1466,14 @@ public class CoolingDutyProductionAnalysisTest {
 
     ProductionOptimizer optimizer = new ProductionOptimizer();
     OptimizationConfig config = new OptimizationConfig(originalFlow * 0.8, originalFlow * 1.3).rateUnit("kg/hr")
-	.tolerance(originalFlow * 0.0005).maxIterations(30).defaultUtilizationLimit(1.0)
-	.searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
+        .tolerance(originalFlow * 0.0005).maxIterations(30).defaultUtilizationLimit(1.0)
+        .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
 
     OptimizationObjective throughputObjective = new OptimizationObjective("throughput",
-	proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
+        proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
 
     OptimizationResult result = optimizer.optimize(process, inletStream, config,
-	Collections.singletonList(throughputObjective), Collections.emptyList());
+        Collections.singletonList(throughputObjective), Collections.emptyList());
 
     // Re-run process at optimal flow to get correct cooling duty
     inletStream.setFlowRate(result.getOptimalRate(), "kg/hr");
@@ -1495,8 +1495,8 @@ public class CoolingDutyProductionAnalysisTest {
     Compressor compA = (Compressor) process.getUnit("CompA Compressor");
     Compressor compB = (Compressor) process.getUnit("CompB Compressor");
     logger.info(String.format("  Î”T=%.0fÂ°C: Duty=%.2f MW, Speed A=%.0f B=%.0f RPM, Util=%.1f%%, Flow=%.2f MSm3/d",
-	coolingDeltaT, coolingDuty, compA.getSpeed(), compB.getSpeed(), result.getBottleneckUtilization() * 100,
-	result.getOptimalRate() / 0.73 * 24 / 1e6));
+        coolingDeltaT, coolingDuty, compA.getSpeed(), compB.getSpeed(), result.getBottleneckUtilization() * 100,
+        result.getOptimalRate() / 0.73 * 24 / 1e6));
 
     return result.getOptimalRate();
   }
@@ -1595,11 +1595,11 @@ public class CoolingDutyProductionAnalysisTest {
 
     for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       if (equipment instanceof Separator) {
-	((Separator) equipment).autoSize();
+        ((Separator) equipment).autoSize();
       } else if (equipment instanceof Compressor) {
-	((Compressor) equipment).autoSize();
+        ((Compressor) equipment).autoSize();
       } else if (equipment instanceof Manifold) {
-	((Manifold) equipment).autoSize();
+        ((Manifold) equipment).autoSize();
       }
     }
 
@@ -1612,9 +1612,9 @@ public class CoolingDutyProductionAnalysisTest {
 
     for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       if (equipment instanceof PipeBeggsAndBrills) {
-	PipeBeggsAndBrills pipe = (PipeBeggsAndBrills) equipment;
-	pipe.initMechanicalDesign();
-	pipe.getMechanicalDesign().setMaxDesignVelocity(20.0);
+        PipeBeggsAndBrills pipe = (PipeBeggsAndBrills) equipment;
+        pipe.initMechanicalDesign();
+        pipe.getMechanicalDesign().setMaxDesignVelocity(20.0);
       }
     }
 
@@ -1711,11 +1711,11 @@ public class CoolingDutyProductionAnalysisTest {
 
     for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       if (equipment instanceof Separator) {
-	((Separator) equipment).autoSize();
+        ((Separator) equipment).autoSize();
       } else if (equipment instanceof Compressor) {
-	((Compressor) equipment).autoSize();
+        ((Compressor) equipment).autoSize();
       } else if (equipment instanceof Manifold) {
-	((Manifold) equipment).autoSize();
+        ((Manifold) equipment).autoSize();
       }
     }
 
@@ -1727,9 +1727,9 @@ public class CoolingDutyProductionAnalysisTest {
 
     for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       if (equipment instanceof PipeBeggsAndBrills) {
-	PipeBeggsAndBrills pipe = (PipeBeggsAndBrills) equipment;
-	pipe.initMechanicalDesign();
-	pipe.getMechanicalDesign().setMaxDesignVelocity(20.0);
+        PipeBeggsAndBrills pipe = (PipeBeggsAndBrills) equipment;
+        pipe.initMechanicalDesign();
+        pipe.getMechanicalDesign().setMaxDesignVelocity(20.0);
       }
     }
 
@@ -1779,14 +1779,14 @@ public class CoolingDutyProductionAnalysisTest {
 
       ProductionOptimizer optimizer = new ProductionOptimizer();
       OptimizationConfig config = new OptimizationConfig(originalFlow * 0.8, originalFlow * 1.3).rateUnit("kg/hr")
-	  .tolerance(originalFlow * 0.0005).maxIterations(30).defaultUtilizationLimit(1.0)
-	  .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
+          .tolerance(originalFlow * 0.0005).maxIterations(30).defaultUtilizationLimit(1.0)
+          .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
 
       OptimizationObjective throughputObjective = new OptimizationObjective("throughput",
-	  proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
+          proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
 
       OptimizationResult result = optimizer.optimize(process, inletStream, config,
-	  Collections.singletonList(throughputObjective), Collections.emptyList());
+          Collections.singletonList(throughputObjective), Collections.emptyList());
 
       // Re-run at optimal to get accurate readings
       inletStream.setFlowRate(result.getOptimalRate(), "kg/hr");
@@ -1806,7 +1806,7 @@ public class CoolingDutyProductionAnalysisTest {
 
       double flowMSm3Day = result.getOptimalRate() / gasStdDensity * 24.0 / 1e6;
       logger.info(String.format("dP=%.1f bar: P_in=%.2f bar, Speed=%.0f RPM, Power=%.2f MW, Flow=%.2f MSm3/d", dP, pIn,
-	  speed, power, flowMSm3Day));
+          speed, power, flowMSm3Day));
     }
 
     double baselineFlow = optimalFlows.get(0);
@@ -1818,7 +1818,7 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("DETAILED RESULTS - PRESSURE DROP EFFECT (NO COOLING)");
     logger.info(StringUtils.repeat("=", 150));
     logger.info(String.format("%-8s %-12s %-12s %-12s %-12s %-14s %-14s %-12s %s", "dP(bar)", "P_in(bar)", "Speed(RPM)",
-	"Power(MW)", "Flow(MSm3/d)", "Loss(MSm3/d)", "Loss(%)", "Loss/0.1bar", "Bottleneck"));
+        "Power(MW)", "Flow(MSm3/d)", "Loss(MSm3/d)", "Loss(%)", "Loss/0.1bar", "Bottleneck"));
     logger.info(StringUtils.repeat("-", 150));
 
     double prevFlow = baselineFlow;
@@ -1835,7 +1835,7 @@ public class CoolingDutyProductionAnalysisTest {
       double incrementalLoss = (prevFlow - flow) / gasStdDensity * 24.0 / 1e6;
 
       logger.info(String.format("%-8.1f %-12.2f %-12.0f %-12.2f %-12.2f %-14.2f %-14.2f %-12.3f %s", dP, pIn, speed,
-	  power, flowMSm3, lossMSm3, lossPercent, i > 0 ? incrementalLoss : 0.0, bottlenecks.get(i)));
+          power, flowMSm3, lossMSm3, lossPercent, i > 0 ? incrementalLoss : 0.0, bottlenecks.get(i)));
 
       prevFlow = flow;
     }
@@ -1853,9 +1853,9 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("SUMMARY");
     logger.info(StringUtils.repeat("=", 100));
     logger.info(String.format("  Baseline (0 bar dP):      %.2f MSmÂ³/day at %.2f bar inlet", baselineMSm3Day,
-	baselinePressure));
+        baselinePressure));
     logger.info(
-	String.format("  At 1.0 bar dP:            %.2f MSmÂ³/day at %.2f bar inlet", maxDpMSm3Day, finalPressure));
+        String.format("  At 1.0 bar dP:            %.2f MSmÂ³/day at %.2f bar inlet", maxDpMSm3Day, finalPressure));
     logger.info(String.format("  Total production loss:    %.2f MSmÂ³/day (%.2f%%)", totalLossMSm3, totalLossPercent));
     System.out.println(String.format("  Loss per 0.1 bar dP:      ~%.3f MSmÂ³/day", lossPerBar / 10));
     logger.info(String.format("  Loss per 1.0 bar dP:      ~%.2f MSmÂ³/day", lossPerBar));
@@ -1879,11 +1879,11 @@ public class CoolingDutyProductionAnalysisTest {
 
       StringBuilder bar = new StringBuilder();
       for (int j = 0; j < barWidth; j++) {
-	if (j < barLen) {
-	  bar.append("â–ˆ");
-	} else {
-	  bar.append(" ");
-	}
+        if (j < barLen) {
+          bar.append("â–ˆ");
+        } else {
+          bar.append(" ");
+        }
       }
 
       double lossPercent = ((baselineFlow - flow) / baselineFlow) * 100;
@@ -1892,7 +1892,7 @@ public class CoolingDutyProductionAnalysisTest {
 
     logger.info("        |" + StringUtils.repeat(" ", barWidth) + "|");
     logger.info(String.format("         %.2f%s%.2f MSmÂ³/d", minFlowPlot / gasStdDensity * 24.0 / 1e6,
-	StringUtils.repeat(" ", barWidth - 12), maxFlowPlot / gasStdDensity * 24.0 / 1e6));
+        StringUtils.repeat(" ", barWidth - 12), maxFlowPlot / gasStdDensity * 24.0 / 1e6));
 
     // Key insight
     logger.info("\n" + StringUtils.repeat("=", 100));
@@ -1926,14 +1926,14 @@ public class CoolingDutyProductionAnalysisTest {
 
     ProductionOptimizer optimizer = new ProductionOptimizer();
     OptimizationConfig config = new OptimizationConfig(originalFlow * 0.9, originalFlow * 1.15).rateUnit("kg/hr")
-	.tolerance(originalFlow * 0.0005).maxIterations(25).defaultUtilizationLimit(1.0)
-	.searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
+        .tolerance(originalFlow * 0.0005).maxIterations(25).defaultUtilizationLimit(1.0)
+        .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
 
     OptimizationObjective throughputObjective = new OptimizationObjective("throughput",
-	proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
+        proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
 
     OptimizationResult result = optimizer.optimize(process, inletStream, config,
-	Collections.singletonList(throughputObjective), Collections.emptyList());
+        Collections.singletonList(throughputObjective), Collections.emptyList());
 
     coolingDeltaTs.add(coolingDeltaT);
     coolingDuties.add(coolingDuty);
@@ -1945,11 +1945,11 @@ public class CoolingDutyProductionAnalysisTest {
     Compressor compA = (Compressor) process.getUnit("CompA Compressor");
     Compressor compB = (Compressor) process.getUnit("CompB Compressor");
     logger.info(String.format("  Speeds: CompA=%.0f, CompB=%.0f RPM | Max util: %.1f%%", compA.getSpeed(),
-	compB.getSpeed(), result.getBottleneckUtilization() * 100));
+        compB.getSpeed(), result.getBottleneckUtilization() * 100));
 
     logger.info(String.format("Cooling Î”T=%.1fÂ°C: Duty=%.2f MW, Optimal=%.0f kg/hr, Bottleneck=%s", coolingDeltaT,
-	coolingDuty, result.getOptimalRate(),
-	result.getBottleneck() != null ? result.getBottleneck().getName() : "N/A"));
+        coolingDuty, result.getOptimalRate(),
+        result.getBottleneck() != null ? result.getBottleneck().getName() : "N/A"));
 
     return result.getOptimalRate();
   }
@@ -2048,11 +2048,11 @@ public class CoolingDutyProductionAnalysisTest {
 
     for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       if (equipment instanceof Separator) {
-	((Separator) equipment).autoSize();
+        ((Separator) equipment).autoSize();
       } else if (equipment instanceof Compressor) {
-	((Compressor) equipment).autoSize();
+        ((Compressor) equipment).autoSize();
       } else if (equipment instanceof Manifold) {
-	((Manifold) equipment).autoSize();
+        ((Manifold) equipment).autoSize();
       }
     }
 
@@ -2065,9 +2065,9 @@ public class CoolingDutyProductionAnalysisTest {
 
     for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       if (equipment instanceof PipeBeggsAndBrills) {
-	PipeBeggsAndBrills pipe = (PipeBeggsAndBrills) equipment;
-	pipe.initMechanicalDesign();
-	pipe.getMechanicalDesign().setMaxDesignVelocity(20.0);
+        PipeBeggsAndBrills pipe = (PipeBeggsAndBrills) equipment;
+        pipe.initMechanicalDesign();
+        pipe.getMechanicalDesign().setMaxDesignVelocity(20.0);
       }
     }
 
@@ -2108,7 +2108,7 @@ public class CoolingDutyProductionAnalysisTest {
     process.add(compressor);
 
     PipeBeggsAndBrills outletPipe2 = new PipeBeggsAndBrills(trainName + " ups Outlet Pipe2",
-	compressor.getOutletStream());
+        compressor.getOutletStream());
     outletPipe2.setLength(50.0);
     outletPipe2.setDiameter(0.75);
     outletPipe2.setPipeWallRoughness(15e-6);
@@ -2135,8 +2135,8 @@ public class CoolingDutyProductionAnalysisTest {
 
     // Headers for diagnostic table
     logger.info(String.format("%-6s %-10s %-10s %-10s %-10s %-10s %-12s %-10s %-10s %-12s %-10s %-10s %-10s", "Cool",
-	"P_in(bar)", "P_out(bar)", "T_in(C)", "T_out(C)", "Density", "Act.Vol(m3/h)", "Speed", "Util(%)", "Flow(MSm3)",
-	"Head(kJ)", "Power(MW)", "MaxPwr(MW)"));
+        "P_in(bar)", "P_out(bar)", "T_in(C)", "T_out(C)", "Density", "Act.Vol(m3/h)", "Speed", "Util(%)", "Flow(MSm3)",
+        "Head(kJ)", "Power(MW)", "MaxPwr(MW)"));
     logger.info(StringUtils.repeat("-", 150));
 
     // Sweep cooling from 0Â°C to 15Â°C
@@ -2149,8 +2149,8 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("DETAILED ANALYSIS: 3-8Â°C COOLING (PROBLEMATIC ZONE)");
     logger.info(StringUtils.repeat("=", 150));
     logger.info(String.format("%-6s %-10s %-10s %-10s %-10s %-10s %-12s %-10s %-10s %-12s %-10s %-10s %-10s", "Cool",
-	"P_in(bar)", "P_out(bar)", "T_in(C)", "T_out(C)", "Density", "Act.Vol(m3/h)", "Speed", "Util(%)", "Flow(MSm3)",
-	"Head(kJ)", "Power(MW)", "MaxPwr(MW)"));
+        "P_in(bar)", "P_out(bar)", "T_in(C)", "T_out(C)", "Density", "Act.Vol(m3/h)", "Speed", "Util(%)", "Flow(MSm3)",
+        "Head(kJ)", "Power(MW)", "MaxPwr(MW)"));
     logger.info(StringUtils.repeat("-", 150));
 
     for (double deltaT = 3.0; deltaT <= 8.0; deltaT += 0.5) {
@@ -2176,14 +2176,14 @@ public class CoolingDutyProductionAnalysisTest {
     // Run optimization
     ProductionOptimizer optimizer = new ProductionOptimizer();
     OptimizationConfig config = new OptimizationConfig(originalFlow * 0.8, originalFlow * 1.3).rateUnit("kg/hr")
-	.tolerance(originalFlow * 0.0005).maxIterations(30).defaultUtilizationLimit(1.0)
-	.searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
+        .tolerance(originalFlow * 0.0005).maxIterations(30).defaultUtilizationLimit(1.0)
+        .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
 
     OptimizationObjective throughputObjective = new OptimizationObjective("throughput",
-	proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
+        proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
 
     OptimizationResult result = optimizer.optimize(process, inletStream, config,
-	Collections.singletonList(throughputObjective), Collections.emptyList());
+        Collections.singletonList(throughputObjective), Collections.emptyList());
 
     // Re-run at optimal to get accurate readings
     inletStream.setFlowRate(result.getOptimalRate(), "kg/hr");
@@ -2205,8 +2205,8 @@ public class CoolingDutyProductionAnalysisTest {
     double maxPower = compA.getCapacityMax() / 1e6; // Max available power at current speed
 
     logger.info(String.format(
-	"%-6.1f %-10.2f %-10.2f %-10.2f %-10.2f %-10.3f %-12.0f %-10.0f %-10.1f %-12.2f %-10.1f %-10.2f %-10.2f",
-	coolingDeltaT, pIn, pOut, tIn, tOut, density, actVolFlow, speed, util, flowMSm3, head, power, maxPower));
+        "%-6.1f %-10.2f %-10.2f %-10.2f %-10.2f %-10.3f %-12.0f %-10.0f %-10.1f %-12.2f %-10.1f %-10.2f %-10.2f",
+        coolingDeltaT, pIn, pOut, tIn, tOut, density, actVolFlow, speed, util, flowMSm3, head, power, maxPower));
   }
 
   /**
@@ -2267,27 +2267,27 @@ public class CoolingDutyProductionAnalysisTest {
     // Speed curve data from example_compressor_curve.json
     double[] speeds = { 7382.55, 7031.0, 6679.45, 6327.9, 5976.35, 5624.8, 5273.25, 4921.7 };
     double[][] flows = {
-	{ 19852.05, 21679.87, 23507.69, 25335.50, 27163.32, 28991.13, 30818.95, 32646.77, 34474.58, 36302.40 },
-	{ 17735.92, 19543.79, 21351.65, 23159.52, 24967.38, 26775.24, 28583.11, 30390.97, 32198.84, 34006.70 },
-	{ 16592.03, 18276.26, 19960.48, 21644.71, 23328.94, 25013.16, 26697.39, 28381.61, 30065.84, 31750.06 },
-	{ 15510.56, 17055.53, 18600.50, 20145.47, 21690.43, 23235.40, 24780.37, 26325.34, 27870.30, 29415.27 },
-	{ 14424.75, 15829.80, 17234.85, 18639.89, 20044.94, 21449.98, 22855.03, 24260.08, 25665.12, 27070.17 },
-	{ 13369.91, 14633.37, 15896.83, 17160.29, 18423.75, 19687.20, 20950.66, 22214.12, 23477.58, 24741.04 },
-	{ 12285.77, 13413.17, 14540.57, 15667.96, 16795.36, 17922.76, 19050.15, 20177.55, 21304.95, 22432.35 },
-	{ 11291.62, 12279.63, 13267.64, 14255.65, 15243.67, 16231.68, 17219.69, 18207.70, 19195.72, 20183.73 } };
+        { 19852.05, 21679.87, 23507.69, 25335.50, 27163.32, 28991.13, 30818.95, 32646.77, 34474.58, 36302.40 },
+        { 17735.92, 19543.79, 21351.65, 23159.52, 24967.38, 26775.24, 28583.11, 30390.97, 32198.84, 34006.70 },
+        { 16592.03, 18276.26, 19960.48, 21644.71, 23328.94, 25013.16, 26697.39, 28381.61, 30065.84, 31750.06 },
+        { 15510.56, 17055.53, 18600.50, 20145.47, 21690.43, 23235.40, 24780.37, 26325.34, 27870.30, 29415.27 },
+        { 14424.75, 15829.80, 17234.85, 18639.89, 20044.94, 21449.98, 22855.03, 24260.08, 25665.12, 27070.17 },
+        { 13369.91, 14633.37, 15896.83, 17160.29, 18423.75, 19687.20, 20950.66, 22214.12, 23477.58, 24741.04 },
+        { 12285.77, 13413.17, 14540.57, 15667.96, 16795.36, 17922.76, 19050.15, 20177.55, 21304.95, 22432.35 },
+        { 11291.62, 12279.63, 13267.64, 14255.65, 15243.67, 16231.68, 17219.69, 18207.70, 19195.72, 20183.73 } };
     double[][] heads = { { 256.69, 253.67, 249.29, 243.58, 236.91, 228.33, 217.05, 202.21, 181.39, 119.74 },
-	{ 233.14, 230.33, 226.34, 220.79, 214.38, 206.20, 195.54, 181.90, 163.47, 114.76 },
-	{ 209.59, 206.70, 202.64, 197.42, 191.12, 183.31, 173.50, 161.16, 145.23, 100.52 },
-	{ 187.13, 184.12, 180.13, 175.31, 169.41, 162.10, 153.42, 142.65, 128.75, 92.68 },
-	{ 165.86, 162.92, 159.18, 154.69, 149.26, 142.74, 135.03, 125.77, 113.55, 85.09 },
-	{ 145.85, 143.07, 139.64, 135.56, 130.66, 124.99, 118.26, 110.59, 100.09, 77.01 },
-	{ 127.29, 124.71, 121.65, 117.98, 113.70, 108.82, 102.98, 96.26, 87.69, 69.36 },
-	{ 109.91, 107.60, 104.90, 101.73, 98.08, 93.96, 89.22, 83.71, 76.25, 61.73 } };
+        { 233.14, 230.33, 226.34, 220.79, 214.38, 206.20, 195.54, 181.90, 163.47, 114.76 },
+        { 209.59, 206.70, 202.64, 197.42, 191.12, 183.31, 173.50, 161.16, 145.23, 100.52 },
+        { 187.13, 184.12, 180.13, 175.31, 169.41, 162.10, 153.42, 142.65, 128.75, 92.68 },
+        { 165.86, 162.92, 159.18, 154.69, 149.26, 142.74, 135.03, 125.77, 113.55, 85.09 },
+        { 145.85, 143.07, 139.64, 135.56, 130.66, 124.99, 118.26, 110.59, 100.09, 77.01 },
+        { 127.29, 124.71, 121.65, 117.98, 113.70, 108.82, 102.98, 96.26, 87.69, 69.36 },
+        { 109.91, 107.60, 104.90, 101.73, 98.08, 93.96, 89.22, 83.71, 76.25, 61.73 } };
 
     // Print compressor map summary
     logger.info("SPEED CURVE SUMMARY:");
     logger.info(String.format("%-12s %-18s %-18s %-18s %-18s", "Speed(RPM)", "Min Flow(m3/h)", "Max Flow(m3/h)",
-	"Max Head(kJ/kg)", "Min Head(kJ/kg)"));
+        "Max Head(kJ/kg)", "Min Head(kJ/kg)"));
     logger.info(StringUtils.repeat("-", 85));
     for (int i = 0; i < speeds.length; i++) {
       double minFlow = flows[i][0];
@@ -2295,7 +2295,7 @@ public class CoolingDutyProductionAnalysisTest {
       double maxHead = heads[i][0];
       double minHead = heads[i][heads[i].length - 1];
       logger.info(
-	  String.format("%-12.0f %-18.0f %-18.0f %-18.1f %-18.1f", speeds[i], minFlow, maxFlow, maxHead, minHead));
+          String.format("%-12.0f %-18.0f %-18.0f %-18.1f %-18.1f", speeds[i], minFlow, maxFlow, maxHead, minHead));
     }
 
     // Now collect operating points at different cooling levels
@@ -2303,7 +2303,7 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("OPERATING POINTS AT DIFFERENT COOLING LEVELS");
     logger.info(StringUtils.repeat("=", 150));
     logger.info(String.format("%-8s %-12s %-12s %-12s %-14s %-10s %-12s %-10s %-10s", "Cool(C)", "Speed(RPM)",
-	"Flow(m3/h)", "Head(kJ/kg)", "Flow(MSm3/d)", "Power(MW)", "MaxPwr(MW)", "Util(%)", "Status"));
+        "Flow(m3/h)", "Head(kJ/kg)", "Flow(MSm3/d)", "Power(MW)", "MaxPwr(MW)", "Util(%)", "Status"));
     logger.info(StringUtils.repeat("-", 150));
 
     // Store operating points for visualization
@@ -2317,15 +2317,15 @@ public class CoolingDutyProductionAnalysisTest {
       String status = "OK";
       double speed = opPoint[1];
       if (speed >= 7020 && speed <= 7050) {
-	status = "FULL POWER (44.4MW)";
+        status = "FULL POWER (44.4MW)";
       } else if (speed >= 6930 && speed < 7020) {
-	status = "REDUCED PWR (~43.7MW)";
+        status = "REDUCED PWR (~43.7MW)";
       } else if (speed >= 6850 && speed < 6930) {
-	status = "LOWER PWR (~43.0MW)";
+        status = "LOWER PWR (~43.0MW)";
       }
 
       logger.info(String.format("%-8.1f %-12.0f %-12.0f %-12.1f %-14.2f %-10.2f %-12.2f %-10.1f %-10s", opPoint[0],
-	  opPoint[1], opPoint[2], opPoint[3], opPoint[4], opPoint[5], opPoint[6], opPoint[7], status));
+          opPoint[1], opPoint[2], opPoint[3], opPoint[4], opPoint[5], opPoint[6], opPoint[7], status));
     }
 
     // ASCII visualization of compressor map with operating points
@@ -2382,14 +2382,14 @@ public class CoolingDutyProductionAnalysisTest {
     // Run optimization
     ProductionOptimizer optimizer = new ProductionOptimizer();
     OptimizationConfig config = new OptimizationConfig(originalFlow * 0.8, originalFlow * 1.3).rateUnit("kg/hr")
-	.tolerance(originalFlow * 0.0005).maxIterations(30).defaultUtilizationLimit(1.0)
-	.searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
+        .tolerance(originalFlow * 0.0005).maxIterations(30).defaultUtilizationLimit(1.0)
+        .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
 
     OptimizationObjective throughputObjective = new OptimizationObjective("throughput",
-	proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
+        proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
 
     OptimizationResult result = optimizer.optimize(process, inletStream, config,
-	Collections.singletonList(throughputObjective), Collections.emptyList());
+        Collections.singletonList(throughputObjective), Collections.emptyList());
 
     // Re-run at optimal to get accurate readings
     inletStream.setFlowRate(result.getOptimalRate(), "kg/hr");
@@ -2425,7 +2425,7 @@ public class CoolingDutyProductionAnalysisTest {
     char[][] grid = new char[height][width];
     for (int i = 0; i < height; i++) {
       for (int j = 0; j < width; j++) {
-	grid[i][j] = ' ';
+        grid[i][j] = ' ';
       }
     }
 
@@ -2433,18 +2433,18 @@ public class CoolingDutyProductionAnalysisTest {
     char[] curveChars = { '1', '2', '3', '4', '5', '6', '7', '8' };
     for (int s = 0; s < speeds.length; s++) {
       for (int p = 0; p < flows[s].length - 1; p++) {
-	int x1 = (int) ((flows[s][p] - minFlow) / (maxFlow - minFlow) * (width - 1));
-	int y1 = height - 1 - (int) ((heads[s][p] - minHead) / (maxHead - minHead) * (height - 1));
-	int x2 = (int) ((flows[s][p + 1] - minFlow) / (maxFlow - minFlow) * (width - 1));
-	int y2 = height - 1 - (int) ((heads[s][p + 1] - minHead) / (maxHead - minHead) * (height - 1));
+        int x1 = (int) ((flows[s][p] - minFlow) / (maxFlow - minFlow) * (width - 1));
+        int y1 = height - 1 - (int) ((heads[s][p] - minHead) / (maxHead - minHead) * (height - 1));
+        int x2 = (int) ((flows[s][p + 1] - minFlow) / (maxFlow - minFlow) * (width - 1));
+        int y2 = height - 1 - (int) ((heads[s][p + 1] - minHead) / (maxHead - minHead) * (height - 1));
 
-	// Draw line between points
-	if (x1 >= 0 && x1 < width && y1 >= 0 && y1 < height) {
-	  grid[y1][x1] = curveChars[s];
-	}
-	if (x2 >= 0 && x2 < width && y2 >= 0 && y2 < height) {
-	  grid[y2][x2] = curveChars[s];
-	}
+        // Draw line between points
+        if (x1 >= 0 && x1 < width && y1 >= 0 && y1 < height) {
+          grid[y1][x1] = curveChars[s];
+        }
+        if (x2 >= 0 && x2 < width && y2 >= 0 && y2 < height) {
+          grid[y2][x2] = curveChars[s];
+        }
       }
     }
 
@@ -2455,7 +2455,7 @@ public class CoolingDutyProductionAnalysisTest {
       int x = (int) ((flow - minFlow) / (maxFlow - minFlow) * (width - 1));
       int y = height - 1 - (int) ((head - minHead) / (maxHead - minHead) * (height - 1));
       if (x >= 0 && x < width && y >= 0 && y < height) {
-	grid[y][x] = '*';
+        grid[y][x] = '*';
       }
     }
 
@@ -2463,13 +2463,13 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("Head (kJ/kg)");
     for (int i = 0; i < height; i++) {
       if (i == 0) {
-	System.out.print(String.format("%6.0f |", maxHead));
+        System.out.print(String.format("%6.0f |", maxHead));
       } else if (i == height / 2) {
-	System.out.print(String.format("%6.0f |", (maxHead + minHead) / 2));
+        System.out.print(String.format("%6.0f |", (maxHead + minHead) / 2));
       } else if (i == height - 1) {
-	System.out.print(String.format("%6.0f |", minHead));
+        System.out.print(String.format("%6.0f |", minHead));
       } else {
-	System.out.print("       |");
+        System.out.print("       |");
       }
       logger.info(new String(grid[i]));
     }
@@ -2517,16 +2517,16 @@ public class CoolingDutyProductionAnalysisTest {
 
       StringBuilder line = new StringBuilder();
       for (int i = 0; i < width; i++) {
-	if (i == pos) {
-	  line.append("*");
-	} else {
-	  line.append("-");
-	}
+        if (i == pos) {
+          line.append("*");
+        } else {
+          line.append("-");
+        }
       }
 
       String powerStatus = maxPwr >= 44.3 ? "FULL" : "LIMITED";
       logger.info(String.format("%4.0fÂ°C |%s| %.0f RPM, %.2f MSm3/d, %.1f MW max [%s]", cooling, line.toString(),
-	  speed, flowMSm3, maxPwr, powerStatus));
+          speed, flowMSm3, maxPwr, powerStatus));
     }
 
     logger.info("       |" + StringUtils.repeat(" ", width) + "|");
@@ -2568,18 +2568,18 @@ public class CoolingDutyProductionAnalysisTest {
 
       StringBuilder bar = new StringBuilder();
       for (int j = 0; j < width; j++) {
-	if (j == pos) {
-	  bar.append("â–ˆ");
-	} else if (j < pos) {
-	  bar.append("â–‘");
-	} else {
-	  bar.append(" ");
-	}
+        if (j == pos) {
+          bar.append("â–ˆ");
+        } else if (j < pos) {
+          bar.append("â–‘");
+        } else {
+          bar.append(" ");
+        }
       }
 
       String marker = maxPwr >= 44.3 ? " â† full power" : " â† LIMITED";
       if (i == 0 || (i > 0 && flow < operatingPoints.get(i - 1)[4])) {
-	marker = " â† DIP (power limited)";
+        marker = " â† DIP (power limited)";
       }
       logger.info(String.format("              |%s %4.0fÂ°C (%.2f)%s", bar.toString(), cooling, flow, marker));
     }
@@ -2629,19 +2629,19 @@ public class CoolingDutyProductionAnalysisTest {
 
     ProductionOptimizer baselineOptimizer = new ProductionOptimizer();
     OptimizationConfig baselineConfig = new OptimizationConfig(originalFlow * 0.9, originalFlow * 1.15)
-	.rateUnit("kg/hr").tolerance(originalFlow * 0.0005).maxIterations(30).defaultUtilizationLimit(1.0)
-	.searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
+        .rateUnit("kg/hr").tolerance(originalFlow * 0.0005).maxIterations(30).defaultUtilizationLimit(1.0)
+        .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
 
     OptimizationObjective baselineThroughputObjective = new OptimizationObjective("throughput",
-	proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
+        proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
 
     OptimizationResult baselineResult = baselineOptimizer.optimize(baselineProcess, baselineInletStream, baselineConfig,
-	Collections.singletonList(baselineThroughputObjective), Collections.emptyList());
+        Collections.singletonList(baselineThroughputObjective), Collections.emptyList());
 
     double baselineFlow = baselineResult.getOptimalRate();
     double baselineMSm3Day = baselineFlow / gasStdDensity * 24.0 / 1e6;
     String baselineBottleneck = baselineResult.getBottleneck() != null ? baselineResult.getBottleneck().getName()
-	: "N/A";
+        : "N/A";
 
     logger.info(String.format("\nBaseline (no cooling): %.2f MSmÂ³/day (%.0f kg/hr)", baselineMSm3Day, baselineFlow));
     logger.info(String.format("Baseline bottleneck: %s", baselineBottleneck));
@@ -2653,14 +2653,14 @@ public class CoolingDutyProductionAnalysisTest {
 
       ProductionOptimizer optimizer = new ProductionOptimizer();
       OptimizationConfig config = new OptimizationConfig(originalFlow * 0.9, originalFlow * 1.15).rateUnit("kg/hr")
-	  .tolerance(originalFlow * 0.0005).maxIterations(30).defaultUtilizationLimit(1.0)
-	  .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
+          .tolerance(originalFlow * 0.0005).maxIterations(30).defaultUtilizationLimit(1.0)
+          .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
 
       OptimizationObjective throughputObjective = new OptimizationObjective("throughput",
-	  proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
+          proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
 
       OptimizationResult result = optimizer.optimize(process, inletStream, config,
-	  Collections.singletonList(throughputObjective), Collections.emptyList());
+          Collections.singletonList(throughputObjective), Collections.emptyList());
 
       // Calculate cooling duty from cooler
       Heater cooler = (Heater) process.getUnit("Gas Cooler");
@@ -2670,7 +2670,7 @@ public class CoolingDutyProductionAnalysisTest {
       // Calculate cooling water requirement
       // Q = m * Cp * Î”T => m = Q / (Cp * Î”T)
       double coolingWaterMassFlowKgS = (coolingDutyKW > 0) ? coolingDutyKW / (coolingWaterCp * coolingWaterDeltaT)
-	  : 0.0;
+          : 0.0;
       double coolingWaterMassFlowKgHr = coolingWaterMassFlowKgS * 3600.0;
       double coolingWaterVolFlowM3Hr = coolingWaterMassFlowKgHr / 1000.0; // density ~ 1000 kg/mÂ³
 
@@ -2685,11 +2685,11 @@ public class CoolingDutyProductionAnalysisTest {
       // Store results: [coolingDeltaT, flowMSm3Day, coolingDutyMW, coolingWaterM3Hr,
       // increasePercent, increaseMSm3Day, optimalFlowKgHr]
       results.add(new double[] { coolingDeltaT, flowMSm3Day, coolingDutyMW, coolingWaterVolFlowM3Hr, increasePercent,
-	  increaseMSm3Day, optimalFlow });
+          increaseMSm3Day, optimalFlow });
 
       logger.info(String.format(
-	  "Cooling Î”T=%4.0fÂ°C: Flow=%.2f MSmÂ³/d (+%.2f%%), Duty=%.2f MW, CW=%.0f mÂ³/hr, Bottleneck=%s",
-	  coolingDeltaT, flowMSm3Day, increasePercent, coolingDutyMW, coolingWaterVolFlowM3Hr, bottleneck));
+          "Cooling Î”T=%4.0fÂ°C: Flow=%.2f MSmÂ³/d (+%.2f%%), Duty=%.2f MW, CW=%.0f mÂ³/hr, Bottleneck=%s",
+          coolingDeltaT, flowMSm3Day, increasePercent, coolingDutyMW, coolingWaterVolFlowM3Hr, bottleneck));
     }
 
     // Print detailed results table
@@ -2697,12 +2697,12 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("2026 SCENARIO DETAILED RESULTS TABLE - 3 COMPRESSORS (UPS1=UPS2, UPS3 OPERATING)");
     logger.info(StringUtils.repeat("=", 140));
     logger.info(String.format("%-12s %-18s %-18s %-16s %-18s %-14s %-18s", "Cooling(Â°C)", "Production(MSmÂ³/d)",
-	"Production(kg/hr)", "Duty(MW)", "CoolingWater(mÂ³/hr)", "Increase(%)", "Increase(MSmÂ³/d)"));
+        "Production(kg/hr)", "Duty(MW)", "CoolingWater(mÂ³/hr)", "Increase(%)", "Increase(MSmÂ³/d)"));
     logger.info(StringUtils.repeat("-", 140));
 
     for (double[] row : results) {
       logger.info(String.format("%-12.0f %-18.2f %-18.0f %-16.2f %-18.0f %-14.2f %-18.3f", row[0], row[1], row[6],
-	  row[2], row[3], row[4], row[5]));
+          row[2], row[3], row[4], row[5]));
     }
 
     // Summary statistics
@@ -2727,7 +2727,7 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("\n" + StringUtils.repeat("-", 100));
     logger.info("EFFICIENCY METRICS (per unit cooling):");
     logger.info(String.format("%-12s %-20s %-25s %-20s", "Cooling(Â°C)", "MSmÂ³/d per Â°C",
-	"CW(mÂ³/hr) per MSmÂ³/d gain", "MW per MSmÂ³/d gain"));
+        "CW(mÂ³/hr) per MSmÂ³/d gain", "MW per MSmÂ³/d gain"));
     logger.info(StringUtils.repeat("-", 100));
 
     for (int i = 1; i < results.size(); i++) {
@@ -2773,12 +2773,12 @@ public class CoolingDutyProductionAnalysisTest {
       String bar = StringUtils.repeat("#", barLen);
       double increasePercent = row[4];
       logger.info(String.format("%5.0fÂ°C |%-55s| %.2f MSmÂ³/d (+%.2f%%) CW:%.0fmÂ³/hr", cooling, bar, flow,
-	  increasePercent, cw));
+          increasePercent, cw));
     }
 
     logger.info("\n        " + StringUtils.repeat("-", 55));
     logger.info(
-	String.format("        %-27s %27s", String.format("%.2f", minFlow), String.format("%.2f MSmÂ³/day", maxFlow)));
+        String.format("        %-27s %27s", String.format("%.2f", minFlow), String.format("%.2f MSmÂ³/day", maxFlow)));
   }
 
   /**
@@ -2794,7 +2794,7 @@ public class CoolingDutyProductionAnalysisTest {
   public void test2026ScenarioPressureDropEffectNoCooling() {
     logger.info("\n" + StringUtils.repeat("=", 110));
     logger
-	.info("2026 SCENARIO: PRESSURE DROP EFFECT (NO COOLING) - 3 COMPRESSORS (UPS1=UPS2 BUNDLE, UPS3 IN OPERATION)");
+        .info("2026 SCENARIO: PRESSURE DROP EFFECT (NO COOLING) - 3 COMPRESSORS (UPS1=UPS2 BUNDLE, UPS3 IN OPERATION)");
     logger.info(StringUtils.repeat("=", 110));
     logger.info("Configuration:");
     System.out.println("  - Compressor 1 (ups1): example_compressor_curve.json, 44.4 MW max @ 7383 RPM");
@@ -2822,22 +2822,22 @@ public class CoolingDutyProductionAnalysisTest {
 
     ProductionOptimizer baselineOptimizer = new ProductionOptimizer();
     OptimizationConfig baselineConfig = new OptimizationConfig(originalFlow * 0.9, originalFlow * 1.15)
-	.rateUnit("kg/hr").tolerance(originalFlow * 0.0005).maxIterations(30).defaultUtilizationLimit(1.0)
-	.searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
+        .rateUnit("kg/hr").tolerance(originalFlow * 0.0005).maxIterations(30).defaultUtilizationLimit(1.0)
+        .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
 
     OptimizationObjective baselineThroughputObjective = new OptimizationObjective("throughput",
-	proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
+        proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
 
     OptimizationResult baselineResult = baselineOptimizer.optimize(baselineProcess, baselineInletStream, baselineConfig,
-	Collections.singletonList(baselineThroughputObjective), Collections.emptyList());
+        Collections.singletonList(baselineThroughputObjective), Collections.emptyList());
 
     double baselineFlow = baselineResult.getOptimalRate();
     double baselineMSm3Day = baselineFlow / gasStdDensity * 24.0 / 1e6;
     String baselineBottleneck = baselineResult.getBottleneck() != null ? baselineResult.getBottleneck().getName()
-	: "N/A";
+        : "N/A";
 
     logger.info(
-	String.format("\nBaseline (no pressure drop): %.2f MSmÂ³/day (%.0f kg/hr)", baselineMSm3Day, baselineFlow));
+        String.format("\nBaseline (no pressure drop): %.2f MSmÂ³/day (%.0f kg/hr)", baselineMSm3Day, baselineFlow));
     logger.info(String.format("Baseline bottleneck: %s", baselineBottleneck));
 
     // Sweep pressure drop from 0 to 1 bar in 0.1 bar increments
@@ -2847,14 +2847,14 @@ public class CoolingDutyProductionAnalysisTest {
 
       ProductionOptimizer optimizer = new ProductionOptimizer();
       OptimizationConfig config = new OptimizationConfig(originalFlow * 0.9, originalFlow * 1.15).rateUnit("kg/hr")
-	  .tolerance(originalFlow * 0.0005).maxIterations(30).defaultUtilizationLimit(1.0)
-	  .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
+          .tolerance(originalFlow * 0.0005).maxIterations(30).defaultUtilizationLimit(1.0)
+          .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
 
       OptimizationObjective throughputObjective = new OptimizationObjective("throughput",
-	  proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
+          proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
 
       OptimizationResult result = optimizer.optimize(process, inletStream, config,
-	  Collections.singletonList(throughputObjective), Collections.emptyList());
+          Collections.singletonList(throughputObjective), Collections.emptyList());
 
       double optimalFlow = result.getOptimalRate();
       double flowMSm3Day = optimalFlow / gasStdDensity * 24.0 / 1e6;
@@ -2870,8 +2870,8 @@ public class CoolingDutyProductionAnalysisTest {
       results.add(new double[] { dP, flowMSm3Day, lossPercent, lossMSm3Day, optimalFlow, compressorInletPressure });
 
       logger.info(
-	  String.format("dP=%4.1f bar: Flow=%.2f MSmÂ³/d (%.2f%%), Inlet P=%.2f bara, Loss=%.3f MSmÂ³/d, Bottleneck=%s",
-	      dP, flowMSm3Day, -lossPercent, compressorInletPressure, lossMSm3Day, bottleneck));
+          String.format("dP=%4.1f bar: Flow=%.2f MSmÂ³/d (%.2f%%), Inlet P=%.2f bara, Loss=%.3f MSmÂ³/d, Bottleneck=%s",
+              dP, flowMSm3Day, -lossPercent, compressorInletPressure, lossMSm3Day, bottleneck));
     }
 
     // Print detailed results table
@@ -2879,13 +2879,13 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("2026 SCENARIO DETAILED RESULTS TABLE - PRESSURE DROP EFFECT (NO COOLING) - 3 COMPRESSORS");
     logger.info(StringUtils.repeat("=", 130));
     logger.info(String.format("%-10s %-14s %-18s %-18s %-14s %-14s %-18s", "dP(bar)", "Inlet P(bara)",
-	"Production(MSmÂ³/d)", "Production(kg/hr)", "Loss(MSmÂ³/d)", "Loss(%)", "Loss(kg/hr)"));
+        "Production(MSmÂ³/d)", "Production(kg/hr)", "Loss(MSmÂ³/d)", "Loss(%)", "Loss(kg/hr)"));
     logger.info(StringUtils.repeat("-", 130));
 
     for (double[] row : results) {
       double lossKgHr = baselineFlow - row[4];
       logger.info(String.format("%-10.1f %-14.2f %-18.2f %-18.0f %-14.3f %-14.2f %-18.0f", row[0], row[5], row[1],
-	  row[4], row[3], row[2], lossKgHr));
+          row[4], row[3], row[2], lossKgHr));
     }
 
     // Summary statistics
@@ -2901,9 +2901,9 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info(StringUtils.repeat("-", 130));
     logger.info("\n2026 SCENARIO SUMMARY (3 Compressors - ups1=ups2 bundle, ups3 operating) - PRESSURE DROP:");
     logger.info(String.format("  Baseline production (0 bar dP): %.2f MSmÂ³/day at %.2f bara inlet", baselineMSm3Day,
-	baselineInletPressure));
+        baselineInletPressure));
     logger.info(String.format("  Minimum production (%.1f bar dP): %.2f MSmÂ³/day at %.2f bara inlet", maxDp, minFlow,
-	minInletPressure));
+        minInletPressure));
     logger.info(String.format("  Total production loss: %.3f MSmÂ³/day (%.2f%%)", totalLossMSm3, totalLossPercent));
     logger.info(String.format("  Average loss per bar of pressure drop: ~%.2f MSmÂ³/day", avgLossPerBar));
     logger.info(String.format("  Rule of thumb: ~%.1f MSmÂ³/day lost per bar of dP", avgLossPerBar));
@@ -2912,15 +2912,15 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("\n" + StringUtils.repeat("-", 100));
     logger.info("INCREMENTAL LOSS ANALYSIS (per 0.1 bar pressure drop):");
     logger.info(String.format("%-10s %-18s %-22s %-25s", "dP(bar)", "Flow(MSmÂ³/d)", "Incremental Loss(MSmÂ³/d)",
-	"Cumulative Loss(MSmÂ³/d)"));
+        "Cumulative Loss(MSmÂ³/d)"));
     logger.info(StringUtils.repeat("-", 100));
 
     for (int i = 0; i < results.size(); i++) {
       double[] curr = results.get(i);
       double incrementalLoss = 0;
       if (i > 0) {
-	double[] prev = results.get(i - 1);
-	incrementalLoss = prev[1] - curr[1];
+        double[] prev = results.get(i - 1);
+        incrementalLoss = prev[1] - curr[1];
       }
       logger.info(String.format("%-10.1f %-18.2f %-22.3f %-25.3f", curr[0], curr[1], incrementalLoss, curr[3]));
     }
@@ -2941,18 +2941,18 @@ public class CoolingDutyProductionAnalysisTest {
     // be far larger than 2% and would still be caught.
     double maxAllowedFlow = baselineMSm3Day * 1.02;
     assertTrue(results.get(results.size() - 1)[1] <= maxAllowedFlow,
-	String.format(
-	    "Production should not significantly increase with pressure drop: got %.4f MSm3/d, "
-		+ "baseline %.4f MSm3/d (max allowed %.4f)",
-	    results.get(results.size() - 1)[1], baselineMSm3Day, maxAllowedFlow));
+        String.format(
+            "Production should not significantly increase with pressure drop: got %.4f MSm3/d, "
+                + "baseline %.4f MSm3/d (max allowed %.4f)",
+            results.get(results.size() - 1)[1], baselineMSm3Day, maxAllowedFlow));
     // Apply the same symmetric numerical tolerance to the lower bound: a slightly
     // negative loss (production at dP marginally above baseline) is a valid outcome
     // of the binary-feasibility optimizer's convergence tolerance, not a regression.
     double minAllowedLoss = -baselineMSm3Day * 0.02;
     assertTrue(totalLossMSm3 >= minAllowedLoss,
-	String.format(
-	    "Production loss should not be significantly negative: got %.4f MSm3/d " + "(min allowed %.4f MSm3/d)",
-	    totalLossMSm3, minAllowedLoss));
+        String.format(
+            "Production loss should not be significantly negative: got %.4f MSm3/d " + "(min allowed %.4f MSm3/d)",
+            totalLossMSm3, minAllowedLoss));
   }
 
   /**
@@ -2981,7 +2981,7 @@ public class CoolingDutyProductionAnalysisTest {
 
     logger.info("\n          " + StringUtils.repeat("-", 55));
     logger.info(String.format("          %-27s %27s", String.format("%.2f", minFlow),
-	String.format("%.2f MSmÂ³/day", maxFlow)));
+        String.format("%.2f MSmÂ³/day", maxFlow)));
   }
 
   // ==================================================================================
@@ -3330,12 +3330,12 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("\nReference Data Summary (sampled):");
     logger.info(StringUtils.repeat("-", 100));
     logger.info(String.format("%-12s %-15s %-15s %-15s %-12s", "Date", "Flow(MSm3/d)", "P_inlet(bara)",
-	"P_outlet(bara)", "PR"));
+        "P_outlet(bara)", "PR"));
     logger.info(StringUtils.repeat("-", 100));
     for (TrollEastDetailedRefPoint ref : sampledData) {
       double pr = ref.outletPressure / ref.inletPressure;
       logger.info(String.format("%-12s %-15.2f %-15.2f %-15.2f %-12.2f", ref.getDateString(), ref.flowMSm3Day,
-	  ref.inletPressure, ref.outletPressure, pr));
+          ref.inletPressure, ref.outletPressure, pr));
     }
 
     // Run model comparison
@@ -3343,7 +3343,7 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("MODEL vs REFERENCE COMPARISON (No Cooler)");
     logger.info(StringUtils.repeat("=", 180));
     logger.info(String.format("%-12s %-12s %-12s %-12s %-12s %-10s %-10s %-12s %-12s %-15s", "Date", "Ref_Flow",
-	"Model_Flow", "Deviation%", "P_inlet", "P_outlet", "PR_ref", "PR_model", "Power(MW)", "Bottleneck"));
+        "Model_Flow", "Deviation%", "P_inlet", "P_outlet", "PR_ref", "PR_model", "Power(MW)", "Bottleneck"));
     logger.info(StringUtils.repeat("-", 180));
 
     double gasStdDensity = 0.73; // kg/SmÂ³
@@ -3360,14 +3360,14 @@ public class CoolingDutyProductionAnalysisTest {
       // Run optimizer
       ProductionOptimizer optimizer = new ProductionOptimizer();
       OptimizationConfig config = new OptimizationConfig(originalFlow * 0.3, originalFlow * 1.5).rateUnit("kg/hr")
-	  .tolerance(originalFlow * 0.001).maxIterations(25).defaultUtilizationLimit(1.0)
-	  .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
+          .tolerance(originalFlow * 0.001).maxIterations(25).defaultUtilizationLimit(1.0)
+          .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
 
       OptimizationObjective throughputObjective = new OptimizationObjective("throughput",
-	  proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
+          proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
 
       OptimizationResult result = optimizer.optimize(process, inletStream, config,
-	  Collections.singletonList(throughputObjective), Collections.emptyList());
+          Collections.singletonList(throughputObjective), Collections.emptyList());
 
       double modelFlowKgHr = result.getOptimalRate();
       double modelFlowMSm3Day = modelFlowKgHr / gasStdDensity * 24.0 / 1e6;
@@ -3382,16 +3382,16 @@ public class CoolingDutyProductionAnalysisTest {
 
       String bottleneck = result.getBottleneck() != null ? result.getBottleneck().getName() : "N/A";
       if (bottleneck.contains("Scrubber")) {
-	bottleneck = bottleneck.replace("Scrubber", "Compressor") + "*";
+        bottleneck = bottleneck.replace("Scrubber", "Compressor") + "*";
       }
       bottleneckList.add(bottleneck);
 
       results.add(new double[] { ref.excelDate, ref.flowMSm3Day, modelFlowMSm3Day, deviation, ref.inletPressure,
-	  ref.outletPressure, refPR, modelPR, compPower });
+          ref.outletPressure, refPR, modelPR, compPower });
 
       logger.info(String.format("%-12s %-12.2f %-12.2f %-12.1f %-12.2f %-10.2f %-10.2f %-12.2f %-12.1f %-15s",
-	  ref.getDateString(), ref.flowMSm3Day, modelFlowMSm3Day, deviation, ref.inletPressure, ref.outletPressure,
-	  refPR, modelPR, compPower, bottleneck));
+          ref.getDateString(), ref.flowMSm3Day, modelFlowMSm3Day, deviation, ref.inletPressure, ref.outletPressure,
+          refPR, modelPR, compPower, bottleneck));
     }
 
     // Print statistics
@@ -3421,11 +3421,11 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("CSV DATA FOR PLOTTING");
     logger.info(StringUtils.repeat("=", 100));
     logger.info(
-	"ExcelDate,Ref_Flow_MSm3d,Model_Flow_MSm3d,Deviation_pct,P_inlet,P_outlet,PR_ref,PR_model,Power_MW,Bottleneck");
+        "ExcelDate,Ref_Flow_MSm3d,Model_Flow_MSm3d,Deviation_pct,P_inlet,P_outlet,PR_ref,PR_model,Power_MW,Bottleneck");
     for (int i = 0; i < results.size(); i++) {
       double[] row = results.get(i);
       logger.info(String.format("%.0f,%.4f,%.4f,%.2f,%.2f,%.2f,%.3f,%.3f,%.2f,%s", row[0], row[1], row[2], row[3],
-	  row[4], row[5], row[6], row[7], row[8], bottleneckList.get(i)));
+          row[4], row[5], row[6], row[7], row[8], bottleneckList.get(i)));
     }
 
     // Analyze results by pressure ratio range - exclude invalid solutions (power <=
@@ -3452,21 +3452,21 @@ public class CoolingDutyProductionAnalysisTest {
       // - power <= 1 MW indicates chart failure (real compressors use 20+ MW)
       // - deviation > 100% also indicates model failure
       if (power <= 1.0 || deviation > 100.0) {
-	invalidSolutions.add(row);
-	continue;
+        invalidSolutions.add(row);
+        continue;
       }
 
       if (pr < 3.5) {
-	lowPR.add(row);
+        lowPR.add(row);
       } else if (pr < 5.0) {
-	midPR.add(row);
+        midPR.add(row);
       } else {
-	highPR.add(row);
+        highPR.add(row);
       }
     }
 
     System.out.println(String.format("Valid solutions: %d, Invalid (chart failure or >100%% dev): %d",
-	lowPR.size() + midPR.size() + highPR.size(), invalidSolutions.size()));
+        lowPR.size() + midPR.size() + highPR.size(), invalidSolutions.size()));
 
     // Calculate stats for each group
     printPRGroupStats("Low PR (<3.5)", lowPR);
@@ -3494,7 +3494,7 @@ public class CoolingDutyProductionAnalysisTest {
     if (!lowPR.isEmpty()) {
       double lowPRAvgAbsDev = 0;
       for (double[] row : lowPR) {
-	lowPRAvgAbsDev += Math.abs(row[3]);
+        lowPRAvgAbsDev += Math.abs(row[3]);
       }
       lowPRAvgAbsDev /= lowPR.size();
       logger.info(String.format("\nLow-PR period average absolute deviation: %.1f%%", lowPRAvgAbsDev));
@@ -3541,8 +3541,8 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("MODEL COMPARISON: NO COOLER vs WITH COOLER (10Â°C, 0.5 bar dP)");
     logger.info(StringUtils.repeat("=", 200));
     System.out.println(String.format("%-12s %-12s %-14s %-14s %-10s %-12s %-12s %-12s %-12s %-12s %-15s", "Date",
-	"Ref_Flow", "NoCooler", "WithCooler", "Benefit%", "P_inlet", "P_outlet", "PR_ref", "Power_NC", "Power_WC",
-	"Bottleneck_WC"));
+        "Ref_Flow", "NoCooler", "WithCooler", "Benefit%", "P_inlet", "P_outlet", "PR_ref", "Power_NC", "Power_WC",
+        "Bottleneck_WC"));
     logger.info(StringUtils.repeat("-", 200));
 
     double gasStdDensity = 0.73; // kg/SmÂ³
@@ -3560,14 +3560,14 @@ public class CoolingDutyProductionAnalysisTest {
       // Run optimizer - NO COOLER
       ProductionOptimizer optimizerNC = new ProductionOptimizer();
       OptimizationConfig configNC = new OptimizationConfig(originalFlow * 0.3, originalFlow * 1.5).rateUnit("kg/hr")
-	  .tolerance(originalFlow * 0.001).maxIterations(25).defaultUtilizationLimit(1.0)
-	  .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
+          .tolerance(originalFlow * 0.001).maxIterations(25).defaultUtilizationLimit(1.0)
+          .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
 
       OptimizationObjective throughputObjective = new OptimizationObjective("throughput",
-	  proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
+          proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
 
       OptimizationResult resultNC = optimizerNC.optimize(processNoCooler, inletStreamNC, configNC,
-	  Collections.singletonList(throughputObjective), Collections.emptyList());
+          Collections.singletonList(throughputObjective), Collections.emptyList());
 
       double modelFlowNoCoolerKgHr = resultNC.getOptimalRate();
       double modelFlowNoCoolerMSm3Day = modelFlowNoCoolerKgHr / gasStdDensity * 24.0 / 1e6;
@@ -3581,18 +3581,18 @@ public class CoolingDutyProductionAnalysisTest {
 
       // Build process WITH cooler (10Â°C, 0.5 bar dP)
       ProcessSystem processWithCooler = buildTrollEastProcessWithCooler(ref.inletPressure, ref.outletPressure, 2, 10.0,
-	  0.5);
+          0.5);
 
       Stream inletStreamWC = (Stream) processWithCooler.getUnit("Inlet Stream");
 
       // Run optimizer - WITH COOLER
       ProductionOptimizer optimizerWC = new ProductionOptimizer();
       OptimizationConfig configWC = new OptimizationConfig(originalFlow * 0.3, originalFlow * 1.5).rateUnit("kg/hr")
-	  .tolerance(originalFlow * 0.001).maxIterations(25).defaultUtilizationLimit(1.0)
-	  .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
+          .tolerance(originalFlow * 0.001).maxIterations(25).defaultUtilizationLimit(1.0)
+          .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
 
       OptimizationResult resultWC = optimizerWC.optimize(processWithCooler, inletStreamWC, configWC,
-	  Collections.singletonList(throughputObjective), Collections.emptyList());
+          Collections.singletonList(throughputObjective), Collections.emptyList());
 
       double modelFlowWithCoolerKgHr = resultWC.getOptimalRate();
       double modelFlowWithCoolerMSm3Day = modelFlowWithCoolerKgHr / gasStdDensity * 24.0 / 1e6;
@@ -3603,26 +3603,26 @@ public class CoolingDutyProductionAnalysisTest {
 
       String bottleneckWC = resultWC.getBottleneck() != null ? resultWC.getBottleneck().getName() : "N/A";
       if (bottleneckWC.contains("Scrubber")) {
-	bottleneckWC = bottleneckWC.replace("Scrubber", "Compressor") + "*";
+        bottleneckWC = bottleneckWC.replace("Scrubber", "Compressor") + "*";
       }
       bottleneckListWithCooler.add(bottleneckWC);
 
       // Calculate benefit
       double benefitPercent = modelFlowNoCoolerMSm3Day > 0
-	  ? ((modelFlowWithCoolerMSm3Day - modelFlowNoCoolerMSm3Day) / modelFlowNoCoolerMSm3Day) * 100
-	  : 0;
+          ? ((modelFlowWithCoolerMSm3Day - modelFlowNoCoolerMSm3Day) / modelFlowNoCoolerMSm3Day) * 100
+          : 0;
 
       double refPR = ref.outletPressure / ref.inletPressure;
       double deviationNC = ((modelFlowNoCoolerMSm3Day - ref.flowMSm3Day) / ref.flowMSm3Day) * 100;
       double deviationWC = ((modelFlowWithCoolerMSm3Day - ref.flowMSm3Day) / ref.flowMSm3Day) * 100;
 
       results.add(new double[] { ref.excelDate, ref.flowMSm3Day, modelFlowNoCoolerMSm3Day, modelFlowWithCoolerMSm3Day,
-	  benefitPercent, ref.inletPressure, ref.outletPressure, refPR, compPowerNC, compPowerWC, deviationNC,
-	  deviationWC });
+          benefitPercent, ref.inletPressure, ref.outletPressure, refPR, compPowerNC, compPowerWC, deviationNC,
+          deviationWC });
 
       logger.info(String.format("%-12s %-12.2f %-14.2f %-14.2f %-10.1f %-12.2f %-12.2f %-12.2f %-12.1f %-12.1f %-15s",
-	  ref.getDateString(), ref.flowMSm3Day, modelFlowNoCoolerMSm3Day, modelFlowWithCoolerMSm3Day, benefitPercent,
-	  ref.inletPressure, ref.outletPressure, refPR, compPowerNC, compPowerWC, bottleneckWC));
+          ref.getDateString(), ref.flowMSm3Day, modelFlowNoCoolerMSm3Day, modelFlowWithCoolerMSm3Day, benefitPercent,
+          ref.inletPressure, ref.outletPressure, refPR, compPowerNC, compPowerWC, bottleneckWC));
     }
 
     // Print summary statistics
@@ -3634,7 +3634,7 @@ public class CoolingDutyProductionAnalysisTest {
     List<double[]> validResults = new ArrayList<>();
     for (double[] row : results) {
       if (row[8] > 1.0 && row[9] > 1.0) { // Both powers > 1 MW
-	validResults.add(row);
+        validResults.add(row);
       }
     }
 
@@ -3644,14 +3644,14 @@ public class CoolingDutyProductionAnalysisTest {
       int positiveBenefitCount = 0;
 
       for (double[] row : validResults) {
-	double benefit = row[4];
-	sumBenefit += benefit;
-	maxBenefit = Math.max(maxBenefit, benefit);
-	minBenefit = Math.min(minBenefit, benefit);
-	sumDevNC += Math.abs(row[10]);
-	sumDevWC += Math.abs(row[11]);
-	if (benefit > 0)
-	  positiveBenefitCount++;
+        double benefit = row[4];
+        sumBenefit += benefit;
+        maxBenefit = Math.max(maxBenefit, benefit);
+        minBenefit = Math.min(minBenefit, benefit);
+        sumDevNC += Math.abs(row[10]);
+        sumDevWC += Math.abs(row[11]);
+        if (benefit > 0)
+          positiveBenefitCount++;
       }
 
       double avgBenefit = sumBenefit / validResults.size();
@@ -3665,7 +3665,7 @@ public class CoolingDutyProductionAnalysisTest {
       logger.info(String.format("  Maximum benefit: %.2f%%", maxBenefit));
       logger.info(String.format("  Minimum benefit: %.2f%%", minBenefit));
       logger.info(String.format("  Points with positive benefit: %d (%.0f%%)", positiveBenefitCount,
-	  (double) positiveBenefitCount / validResults.size() * 100));
+          (double) positiveBenefitCount / validResults.size() * 100));
 
       logger.info("MODEL ACCURACY vs REFERENCE:");
       System.out.println(String.format("  Without cooler - avg absolute deviation: %.1f%%", avgAbsDevNC));
@@ -3684,11 +3684,11 @@ public class CoolingDutyProductionAnalysisTest {
     for (double[] row : validResults) {
       double pr = row[7];
       if (pr < 3.5) {
-	lowPR.add(row);
+        lowPR.add(row);
       } else if (pr < 5.0) {
-	midPR.add(row);
+        midPR.add(row);
       } else {
-	highPR.add(row);
+        highPR.add(row);
       }
     }
 
@@ -3701,10 +3701,10 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("CSV DATA FOR PLOTTING");
     logger.info(StringUtils.repeat("=", 150));
     logger.info(
-	"ExcelDate,Ref_Flow,NoCooler_Flow,WithCooler_Flow,Benefit_pct,P_inlet,P_outlet,PR,Power_NC,Power_WC,Dev_NC,Dev_WC");
+        "ExcelDate,Ref_Flow,NoCooler_Flow,WithCooler_Flow,Benefit_pct,P_inlet,P_outlet,PR,Power_NC,Power_WC,Dev_NC,Dev_WC");
     for (double[] row : results) {
       logger.info(String.format("%.0f,%.4f,%.4f,%.4f,%.2f,%.2f,%.2f,%.3f,%.2f,%.2f,%.2f,%.2f", row[0], row[1], row[2],
-	  row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11]));
+          row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11]));
     }
 
     // Conclusions
@@ -3723,16 +3723,16 @@ public class CoolingDutyProductionAnalysisTest {
     if (!validResults.isEmpty()) {
       double avgBenefit = 0;
       for (double[] row : validResults)
-	avgBenefit += row[4];
+        avgBenefit += row[4];
       avgBenefit /= validResults.size();
       if (avgBenefit > 2.0) {
-	logger.info("  âœ“ RECOMMENDED - Average production benefit of " + String.format("%.1f%%", avgBenefit)
-	    + " justifies cooler installation");
+        logger.info("  âœ“ RECOMMENDED - Average production benefit of " + String.format("%.1f%%", avgBenefit)
+            + " justifies cooler installation");
       } else if (avgBenefit > 0) {
-	logger.info("  âš  MARGINAL - Small positive benefit of " + String.format("%.1f%%", avgBenefit)
-	    + " - requires detailed economic analysis");
+        logger.info("  âš  MARGINAL - Small positive benefit of " + String.format("%.1f%%", avgBenefit)
+            + " - requires detailed economic analysis");
       } else {
-	logger.info("  âœ— NOT RECOMMENDED - No production benefit from cooler");
+        logger.info("  âœ— NOT RECOMMENDED - No production benefit from cooler");
       }
     }
 
@@ -3756,12 +3756,12 @@ public class CoolingDutyProductionAnalysisTest {
       maxBenefit = Math.max(maxBenefit, benefit);
       minBenefit = Math.min(minBenefit, benefit);
       if (benefit > 0)
-	posCount++;
+        posCount++;
     }
     double avgBenefit = sumBenefit / data.size();
 
     logger.info(String.format("%-20s: %3d points, Avg Benefit=%.1f%%, Min=%.1f%%, Max=%.1f%%, Positive=%d (%.0f%%)",
-	groupName, data.size(), avgBenefit, minBenefit, maxBenefit, posCount, (double) posCount / data.size() * 100));
+        groupName, data.size(), avgBenefit, minBenefit, maxBenefit, posCount, (double) posCount / data.size() * 100));
   }
 
   /**
@@ -4116,14 +4116,14 @@ public class CoolingDutyProductionAnalysisTest {
 
     // Create compressor trains
     StreamInterface ups1Outlet = createUpstreamCompressorsForYear("ups1", splitter.getSplitStream(0), processSystem,
-	outletPressure);
+        outletPressure);
     StreamInterface ups2Outlet = createUpstreamCompressorsForYear("ups2", splitter.getSplitStream(1), processSystem,
-	outletPressure);
+        outletPressure);
 
     Manifold manifold;
     if (numCompressors == 3) {
       StreamInterface ups3Outlet = createUpstreamCompressorsForYear("ups3", splitter.getSplitStream(2), processSystem,
-	  outletPressure);
+          outletPressure);
       manifold = new Manifold("Compressor Outlet Manifold");
       manifold.addStream(ups1Outlet);
       manifold.addStream(ups2Outlet);
@@ -4186,7 +4186,7 @@ public class CoolingDutyProductionAnalysisTest {
     double avgAbsDev = sumAbsDev / data.size();
 
     logger.info(String.format("%-20s: %3d points, Avg|Dev|=%.1f%%, Min=%.1f%%, Max=%.1f%%", groupName, data.size(),
-	avgAbsDev, minDev, maxDev));
+        avgAbsDev, minDev, maxDev));
   }
 
   /**
@@ -4202,7 +4202,7 @@ public class CoolingDutyProductionAnalysisTest {
     int numCompressors; // Number of compressors in operation
 
     TrollEastReferenceCase(int year, double teInlet, double kollsnes, double teRate, double totalRate, String config,
-	int numComp) {
+        int numComp) {
       this.year = year;
       this.teInletPressure = teInlet;
       this.kollsnesPressure = kollsnes;
@@ -4248,11 +4248,11 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("\nReference Case Data (from Figure 3-1):");
     logger.info(StringUtils.repeat("-", 100));
     logger.info(String.format("%-6s %-12s %-14s %-12s %-12s %-25s", "Year", "TE_Inlet(bara)", "Kollsnes(bara)",
-	"TE_Rate", "Total_Rate", "Configuration"));
+        "TE_Rate", "Total_Rate", "Configuration"));
     logger.info(StringUtils.repeat("-", 100));
     for (TrollEastReferenceCase ref : referenceData) {
       logger.info(String.format("%-6d %-12.0f %-14.0f %-12.0f %-12.0f %-25s", ref.year, ref.teInletPressure,
-	  ref.kollsnesPressure, ref.teRate, ref.totalRate, ref.compressorConfig));
+          ref.kollsnesPressure, ref.teRate, ref.totalRate, ref.compressorConfig));
     }
 
     // Store model results for comparison
@@ -4281,14 +4281,14 @@ public class CoolingDutyProductionAnalysisTest {
       // Run optimizer to find max production
       ProductionOptimizer optimizer = new ProductionOptimizer();
       OptimizationConfig config = new OptimizationConfig(originalFlow * 0.5, originalFlow * 1.5).rateUnit("kg/hr")
-	  .tolerance(originalFlow * 0.001).maxIterations(25).defaultUtilizationLimit(1.0)
-	  .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
+          .tolerance(originalFlow * 0.001).maxIterations(25).defaultUtilizationLimit(1.0)
+          .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
 
       OptimizationObjective throughputObjective = new OptimizationObjective("throughput",
-	  proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
+          proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
 
       OptimizationResult result = optimizer.optimize(process, inletStream, config,
-	  Collections.singletonList(throughputObjective), Collections.emptyList());
+          Collections.singletonList(throughputObjective), Collections.emptyList());
 
       double modelFlowKgHr = result.getOptimalRate();
       double modelFlowMSm3Day = modelFlowKgHr / gasStdDensity * 24.0 / 1e6;
@@ -4311,36 +4311,36 @@ public class CoolingDutyProductionAnalysisTest {
       String chartStatus = "N/A";
 
       if (hasChart) {
-	try {
-	  // Use Compressor's built-in methods for surge detection
-	  double distanceToSurge = comp1.getDistanceToSurge();
-	  boolean isStonewall = comp1.isStoneWall();
+        try {
+          // Use Compressor's built-in methods for surge detection
+          double distanceToSurge = comp1.getDistanceToSurge();
+          boolean isStonewall = comp1.isStoneWall();
 
-	  // distanceToSurge: negative means in surge (flow < surge flow)
-	  // positive means margin to surge
-	  boolean isSurge = distanceToSurge < 0;
+          // distanceToSurge: negative means in surge (flow < surge flow)
+          // positive means margin to surge
+          boolean isSurge = distanceToSurge < 0;
 
-	  if (Double.isNaN(compSpeed) || compSpeed <= 0) {
-	    chartStatus = "NO_SOLUTION";
-	  } else if (compPower < 0) {
-	    chartStatus = "INVALID_POWER";
-	  } else if (isSurge) {
-	    chartStatus = String.format("SURGE(%.1f%%)", distanceToSurge * 100);
-	  } else if (isStonewall) {
-	    chartStatus = "STONEWALL";
-	  } else {
-	    chartStatus = String.format("OK(%.0f%%)", distanceToSurge * 100);
-	  }
-	} catch (Exception e) {
-	  chartStatus = "ERROR";
-	}
+          if (Double.isNaN(compSpeed) || compSpeed <= 0) {
+            chartStatus = "NO_SOLUTION";
+          } else if (compPower < 0) {
+            chartStatus = "INVALID_POWER";
+          } else if (isSurge) {
+            chartStatus = String.format("SURGE(%.1f%%)", distanceToSurge * 100);
+          } else if (isStonewall) {
+            chartStatus = "STONEWALL";
+          } else {
+            chartStatus = String.format("OK(%.0f%%)", distanceToSurge * 100);
+          }
+        } catch (Exception e) {
+          chartStatus = "ERROR";
+        }
       }
 
       // Calculate deviation from reference
       double deviation = ((modelFlowMSm3Day - ref.teRate) / ref.teRate) * 100;
 
       modelResults.add(new double[] { ref.year, ref.teRate, modelFlowMSm3Day, deviation, pressureRatio, compPower,
-	  compSpeed, polyEff, ref.teInletPressure, ref.kollsnesPressure, polytropicHead, actualInletFlow });
+          compSpeed, polyEff, ref.teInletPressure, ref.kollsnesPressure, polytropicHead, actualInletFlow });
 
       // Store chart status
       chartStatusList.add(chartStatus);
@@ -4353,16 +4353,16 @@ public class CoolingDutyProductionAnalysisTest {
       // limits first)
       String bottleneck = rawBottleneck;
       if (rawBottleneck.contains("Scrubber")) {
-	// Replace scrubber name with corresponding compressor
-	bottleneck = rawBottleneck.replace("Scrubber", "Compressor") + "*";
+        // Replace scrubber name with corresponding compressor
+        bottleneck = rawBottleneck.replace("Scrubber", "Compressor") + "*";
       }
       bottleneckList.add(bottleneck);
 
       logger.info(String.format(
-	  "Year %d: Model=%.1f MSmÂ³/d, Ref=%.0f MSmÂ³/d, Dev=%+.1f%%, PR=%.2f, Power=%.1f MW, "
-	      + "Speed=%.0f RPM, Î·=%.1f%%, Head=%.0f kJ/kg, Flow=%.0f mÂ³/hr, ChartStatus=%s, Bottleneck=%s",
-	  ref.year, modelFlowMSm3Day, ref.teRate, deviation, pressureRatio, compPower, compSpeed, polyEff,
-	  polytropicHead, actualInletFlow, chartStatus, bottleneck));
+          "Year %d: Model=%.1f MSmÂ³/d, Ref=%.0f MSmÂ³/d, Dev=%+.1f%%, PR=%.2f, Power=%.1f MW, "
+              + "Speed=%.0f RPM, Î·=%.1f%%, Head=%.0f kJ/kg, Flow=%.0f mÂ³/hr, ChartStatus=%s, Bottleneck=%s",
+          ref.year, modelFlowMSm3Day, ref.teRate, deviation, pressureRatio, compPower, compSpeed, polyEff,
+          polytropicHead, actualInletFlow, chartStatus, bottleneck));
     }
 
     // Print detailed comparison table with bottleneck
@@ -4370,8 +4370,8 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("DETAILED MODEL vs REFERENCE COMPARISON");
     logger.info(StringUtils.repeat("=", 220));
     logger.info(String.format("%-6s %-8s %-8s %-10s %-10s %-8s %-6s %-10s %-8s %-8s %-10s %-12s %-15s %-20s", "Year",
-	"P_in", "P_out", "Ref", "Model", "Dev%", "PR", "Power(MW)", "Speed", "Î·(%)", "Head(kJ/kg)", "Flow(mÂ³/hr)",
-	"ChartStatus", "Bottleneck"));
+        "P_in", "P_out", "Ref", "Model", "Dev%", "PR", "Power(MW)", "Speed", "Î·(%)", "Head(kJ/kg)", "Flow(mÂ³/hr)",
+        "ChartStatus", "Bottleneck"));
     logger.info(StringUtils.repeat("-", 220));
 
     for (int i = 0; i < modelResults.size(); i++) {
@@ -4382,9 +4382,9 @@ public class CoolingDutyProductionAnalysisTest {
       // P_in, P_out, head,
       // flow]
       logger.info(String.format(
-	  "%-6.0f %-8.0f %-8.0f %-10.0f %-10.1f %-8.1f %-6.2f %-10.1f %-8.0f %-8.1f %-10.0f %-12.0f %-15s %-20s",
-	  row[0], row[8], row[9], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[10], row[11], chartStatus,
-	  bottleneck));
+          "%-6.0f %-8.0f %-8.0f %-10.0f %-10.1f %-8.1f %-6.2f %-10.1f %-8.0f %-8.1f %-10.0f %-12.0f %-15s %-20s",
+          row[0], row[8], row[9], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[10], row[11], chartStatus,
+          bottleneck));
     }
 
     // Print compressor chart analysis
@@ -4403,15 +4403,15 @@ public class CoolingDutyProductionAnalysisTest {
     int okCount = 0, surgeCount = 0, stonewallCount = 0, noSolutionCount = 0, invalidCount = 0;
     for (String status : chartStatusList) {
       if (status.equals("OK"))
-	okCount++;
+        okCount++;
       else if (status.equals("SURGE"))
-	surgeCount++;
+        surgeCount++;
       else if (status.equals("STONEWALL"))
-	stonewallCount++;
+        stonewallCount++;
       else if (status.equals("NO_SOLUTION"))
-	noSolutionCount++;
+        noSolutionCount++;
       else if (status.equals("INVALID_POWER"))
-	invalidCount++;
+        invalidCount++;
     }
 
     logger.info("Summary:");
@@ -4435,7 +4435,7 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("\nOperating Condition Analysis:");
     logger.info(StringUtils.repeat("-", 120));
     logger.info(String.format("%-6s %-12s %-12s %-12s %-15s %-35s", "Year", "P_in(bara)", "P_ratio", "Speed(RPM)",
-	"Status", "Rebundling Recommendation"));
+        "Status", "Rebundling Recommendation"));
     logger.info(StringUtils.repeat("-", 120));
 
     for (double[] row : modelResults) {
@@ -4450,34 +4450,34 @@ public class CoolingDutyProductionAnalysisTest {
 
       // Analyze operating conditions
       if (year <= 2032) {
-	status = "OPTIMAL";
-	recommendation = "No action needed - operating near design point";
+        status = "OPTIMAL";
+        recommendation = "No action needed - operating near design point";
       } else if (year <= 2036) {
-	if (pr > 1.8 || speed > 7200) {
-	  status = "MARGINAL";
-	  recommendation = "CONSIDER rebundling - PR increasing, approaching limits";
-	} else if (pIn < 50) {
-	  status = "SUB-OPTIMAL";
-	  recommendation = "CONSIDER LP rebundle for lower inlet pressure";
-	} else {
-	  status = "ACCEPTABLE";
-	  recommendation = "Monitor - efficiency declining";
-	}
+        if (pr > 1.8 || speed > 7200) {
+          status = "MARGINAL";
+          recommendation = "CONSIDER rebundling - PR increasing, approaching limits";
+        } else if (pIn < 50) {
+          status = "SUB-OPTIMAL";
+          recommendation = "CONSIDER LP rebundle for lower inlet pressure";
+        } else {
+          status = "ACCEPTABLE";
+          recommendation = "Monitor - efficiency declining";
+        }
       } else if (year <= 2040) {
-	if (pr > 2.0) {
-	  status = "CRITICAL";
-	  recommendation = "REBUNDLE REQUIRED - PR exceeds single-stage capability";
-	} else {
-	  status = "SUB-OPTIMAL";
-	  recommendation = "REBUNDLE RECOMMENDED - LP bundle for 40-50 bara inlet";
-	}
+        if (pr > 2.0) {
+          status = "CRITICAL";
+          recommendation = "REBUNDLE REQUIRED - PR exceeds single-stage capability";
+        } else {
+          status = "SUB-OPTIMAL";
+          recommendation = "REBUNDLE RECOMMENDED - LP bundle for 40-50 bara inlet";
+        }
       } else {
-	status = "LOW FLOW";
-	recommendation = "Series operation or turndown - consider decommissioning";
+        status = "LOW FLOW";
+        recommendation = "Series operation or turndown - consider decommissioning";
       }
 
       logger.info(
-	  String.format("%-6d %-12.0f %-12.2f %-12.0f %-15s %-35s", year, pIn, pr, speed, status, recommendation));
+          String.format("%-6d %-12.0f %-12.2f %-12.0f %-15s %-35s", year, pIn, pr, speed, status, recommendation));
     }
 
     // Rebundling benefit analysis
@@ -4493,7 +4493,7 @@ public class CoolingDutyProductionAnalysisTest {
     logger.info("\nEstimated Production Benefits (with LP rebundle after 2034):");
     logger.info(StringUtils.repeat("-", 100));
     logger.info(String.format("%-6s %-15s %-15s %-15s %-20s", "Year", "Current(MSmÂ³/d)", "With LP Bundle",
-	"Gain(MSmÂ³/d)", "Gain(%)"));
+        "Gain(MSmÂ³/d)", "Gain(%)"));
     logger.info(StringUtils.repeat("-", 100));
 
     // Estimate benefits from rebundling
@@ -4503,25 +4503,25 @@ public class CoolingDutyProductionAnalysisTest {
       double pIn = row[8];
 
       if (year >= 2034) {
-	// Estimate improvement from LP bundle
-	// LP bundle more efficient at lower inlet pressures
-	double improvementFactor;
-	if (pIn < 35) {
-	  improvementFactor = 1.15; // 15% improvement at very low pressure
-	} else if (pIn < 42) {
-	  improvementFactor = 1.12; // 12% improvement
-	} else if (pIn < 48) {
-	  improvementFactor = 1.08; // 8% improvement
-	} else {
-	  improvementFactor = 1.04; // 4% improvement at moderate pressure
-	}
+        // Estimate improvement from LP bundle
+        // LP bundle more efficient at lower inlet pressures
+        double improvementFactor;
+        if (pIn < 35) {
+          improvementFactor = 1.15; // 15% improvement at very low pressure
+        } else if (pIn < 42) {
+          improvementFactor = 1.12; // 12% improvement
+        } else if (pIn < 48) {
+          improvementFactor = 1.08; // 8% improvement
+        } else {
+          improvementFactor = 1.04; // 4% improvement at moderate pressure
+        }
 
-	double lpProd = currentProd * improvementFactor;
-	double gain = lpProd - currentProd;
-	double gainPercent = (gain / currentProd) * 100;
+        double lpProd = currentProd * improvementFactor;
+        double gain = lpProd - currentProd;
+        double gainPercent = (gain / currentProd) * 100;
 
-	logger
-	    .info(String.format("%-6d %-15.1f %-15.1f %-15.1f %-20.1f", year, currentProd, lpProd, gain, gainPercent));
+        logger
+            .info(String.format("%-6d %-15.1f %-15.1f %-15.1f %-20.1f", year, currentProd, lpProd, gain, gainPercent));
       }
     }
 
@@ -4591,14 +4591,14 @@ public class CoolingDutyProductionAnalysisTest {
 
     // Create compressor trains
     StreamInterface ups1Outlet = createUpstreamCompressorsForYear("ups1", splitter.getSplitStream(0), processSystem,
-	outletPressure);
+        outletPressure);
     StreamInterface ups2Outlet = createUpstreamCompressorsForYear("ups2", splitter.getSplitStream(1), processSystem,
-	outletPressure);
+        outletPressure);
 
     Manifold manifold;
     if (numCompressors == 3) {
       StreamInterface ups3Outlet = createUpstreamCompressorsForYear("ups3", splitter.getSplitStream(2), processSystem,
-	  outletPressure);
+          outletPressure);
       manifold = new Manifold("Compressor Outlet Manifold");
       manifold.addStream(ups1Outlet);
       manifold.addStream(ups2Outlet);

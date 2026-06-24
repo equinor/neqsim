@@ -251,19 +251,19 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
     int liquidPhaseIndex = findLiquidPhaseIndex(feedFluid);
     if (gasPhaseIndex >= 0 && liquidPhaseIndex >= 0 && gasPhaseIndex != liquidPhaseIndex) {
       for (int i = 0; i < numComponents; i++) {
-	double yi = feedFluid.getPhase(gasPhaseIndex).getComponent(i).getx();
-	double xi = feedFluid.getPhase(liquidPhaseIndex).getComponent(i).getx();
-	kValues[i] = (xi > 1.0e-20) ? yi / xi : 1.0e10;
+        double yi = feedFluid.getPhase(gasPhaseIndex).getComponent(i).getx();
+        double xi = feedFluid.getPhase(liquidPhaseIndex).getComponent(i).getx();
+        kValues[i] = (xi > 1.0e-20) ? yi / xi : 1.0e10;
       }
     } else {
       // Single phase — estimate K-values using Wilson correlation
       for (int i = 0; i < numComponents; i++) {
-	double Tc = feedFluid.getPhase(0).getComponent(i).getTC();
-	double Pc = feedFluid.getPhase(0).getComponent(i).getPC();
-	double omega = feedFluid.getPhase(0).getComponent(i).getAcentricFactor();
-	double T = feedFluid.getTemperature();
-	double P = feedFluid.getPressure();
-	kValues[i] = (Pc / P) * Math.exp(5.373 * (1.0 + omega) * (1.0 - Tc / T));
+        double Tc = feedFluid.getPhase(0).getComponent(i).getTC();
+        double Pc = feedFluid.getPhase(0).getComponent(i).getPC();
+        double omega = feedFluid.getPhase(0).getComponent(i).getAcentricFactor();
+        double T = feedFluid.getTemperature();
+        double P = feedFluid.getPressure();
+        kValues[i] = (Pc / P) * Math.exp(5.373 * (1.0 + omega) * (1.0 - Tc / T));
       }
     }
 
@@ -273,7 +273,7 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
 
     if (alphaLKHK <= 1.0) {
       logger.error("Relative volatility alpha_LK/HK <= 1.0 (" + alphaLKHK
-	  + "). Light key is less volatile than heavy key. Check key assignment.");
+          + "). Light key is less volatile than heavy key. Check key assignment.");
       solved = false;
       return;
     }
@@ -318,7 +318,7 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
     double rMinPlusOne = 0.0;
     for (int i = 0; i < numComponents; i++) {
       if (xD[i] > 1.0e-15 && Math.abs(alpha[i] - theta) > 1.0e-10) {
-	rMinPlusOne += alpha[i] * xD[i] / (alpha[i] - theta);
+        rMinPlusOne += alpha[i] * xD[i] / (alpha[i] - theta);
       }
     }
     rMin = Math.max(rMinPlusOne - 1.0, 0.0);
@@ -378,9 +378,9 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
   private double computeFeedQuality(SystemInterface feedFluid) {
     if (feedFluid.getNumberOfPhases() == 1) {
       if (feedFluid.getPhase(0).getType() == PhaseType.GAS) {
-	return 0.0; // Saturated vapor
+        return 0.0; // Saturated vapor
       } else {
-	return 1.0; // Saturated liquid
+        return 1.0; // Saturated liquid
       }
     }
     int gasPhaseIndex = findPhaseIndex(feedFluid, "gas");
@@ -390,7 +390,7 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
       double liquidMoles = Math.max(0.0, feedFluid.getPhase(liquidPhaseIndex).getNumberOfMolesInPhase());
       double totalMoles = vaporMoles + liquidMoles;
       if (totalMoles > 1.0e-20) {
-	return liquidMoles / totalMoles;
+        return liquidMoles / totalMoles;
       }
     }
     return 1.0 - feedFluid.getBeta();
@@ -406,7 +406,7 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
   private int findPhaseIndex(SystemInterface system, String phaseTypeName) {
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
       if (phaseTypeName.equals(system.getPhase(phaseIndex).getPhaseTypeName())) {
-	return phaseIndex;
+        return phaseIndex;
       }
     }
     return -1;
@@ -422,12 +422,12 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
       String phaseTypeName = system.getPhase(phaseIndex).getPhaseTypeName();
       if ("liquid".equals(phaseTypeName) || "oil".equals(phaseTypeName) || "aqueous".equals(phaseTypeName)) {
-	return phaseIndex;
+        return phaseIndex;
       }
     }
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
       if (!"gas".equals(system.getPhase(phaseIndex).getPhaseTypeName())) {
-	return phaseIndex;
+        return phaseIndex;
       }
     }
     return -1;
@@ -452,14 +452,14 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
       double fMid = underwoodFunction(alpha, zFeed, thetaMid, q, n);
 
       if (Math.abs(fMid) < 1.0e-10 || (thetaHigh - thetaLow) < 1.0e-12) {
-	return thetaMid;
+        return thetaMid;
       }
 
       double fLow = underwoodFunction(alpha, zFeed, thetaLow, q, n);
       if (fLow * fMid < 0.0) {
-	thetaHigh = thetaMid;
+        thetaHigh = thetaMid;
       } else {
-	thetaLow = thetaMid;
+        thetaLow = thetaMid;
       }
     }
     return 0.5 * (thetaLow + thetaHigh);
@@ -479,7 +479,7 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
     double sum = 0.0;
     for (int i = 0; i < n; i++) {
       if (Math.abs(alpha[i] - theta) > 1.0e-10) {
-	sum += alpha[i] * zFeed[i] / (alpha[i] - theta);
+        sum += alpha[i] * zFeed[i] / (alpha[i] - theta);
       }
     }
     return sum - (1.0 - q);
@@ -508,7 +508,7 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
     // Normalize
     if (totalD > 0.0) {
       for (int i = 0; i < n; i++) {
-	xD[i] /= totalD;
+        xD[i] /= totalD;
       }
     }
     return xD;
@@ -549,17 +549,17 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
     double[] distillateFractions = new double[n];
     for (int i = 0; i < n; i++) {
       if (i == lkIdx) {
-	distillateFractions[i] = lightKeyRecoveryDistillate;
+        distillateFractions[i] = lightKeyRecoveryDistillate;
       } else if (i == hkIdx) {
-	distillateFractions[i] = 1.0 - heavyKeyRecoveryBottoms;
+        distillateFractions[i] = 1.0 - heavyKeyRecoveryBottoms;
       } else if (alpha[i] > alphaLKHK) {
-	distillateFractions[i] = 0.999;
+        distillateFractions[i] = 0.999;
       } else if (alpha[i] < 1.0) {
-	distillateFractions[i] = 0.001;
+        distillateFractions[i] = 0.001;
       } else {
-	double recovery = 1.0 / (1.0
-	    + Math.pow(alpha[i] / alphaLKHK, -nMin) * (1.0 - lightKeyRecoveryDistillate) / lightKeyRecoveryDistillate);
-	distillateFractions[i] = recovery;
+        double recovery = 1.0 / (1.0
+            + Math.pow(alpha[i] / alphaLKHK, -nMin) * (1.0 - lightKeyRecoveryDistillate) / lightKeyRecoveryDistillate);
+        distillateFractions[i] = recovery;
       }
       distillateFractions[i] = boundedSplitFraction(distillateFractions[i]);
     }
@@ -665,10 +665,10 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
     for (int componentIndex = 0; componentIndex < componentMoles.length; componentIndex++) {
       double componentTotal = 0.0;
       for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
-	componentTotal += system.getPhase(phaseIndex).getComponent(componentIndex).getNumberOfMolesInPhase();
+        componentTotal += system.getPhase(phaseIndex).getComponent(componentIndex).getNumberOfMolesInPhase();
       }
       if (componentTotal <= 0.0) {
-	componentTotal = system.getPhase(0).getComponent(componentIndex).getNumberOfmoles();
+        componentTotal = system.getPhase(0).getComponent(componentIndex).getNumberOfmoles();
       }
       componentMoles[componentIndex] = Math.max(0.0, componentTotal);
     }

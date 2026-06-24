@@ -55,9 +55,9 @@ public class ProcessSynthesisTemplateLibrary {
       return;
     }
     addUnique(options,
-	new OperationOption("library phase split to " + targetMaterial, "Separator")
-	    .addInputMaterial(spec.getFeedMaterialName()).addOutputMaterial(targetMaterial)
-	    .setDescription("Template-library phase split toward target material."));
+        new OperationOption("library phase split to " + targetMaterial, "Separator")
+            .addInputMaterial(spec.getFeedMaterialName()).addOutputMaterial(targetMaterial)
+            .setDescription("Template-library phase split toward target material."));
   }
 
   /**
@@ -78,18 +78,18 @@ public class ProcessSynthesisTemplateLibrary {
     double outletTemperature = Math.max(233.15, spec.getFeedTemperatureK() - 15.0);
 
     addUnique(options,
-	new OperationOption("library compression to " + targetMaterial, "Compressor")
-	    .addInputMaterial(spec.getFeedMaterialName()).addOutputMaterial(compressed)
-	    .setProperty("outletPressure", outletPressure, "bara").setProperty("isentropicEfficiency", 0.75)
-	    .setDescription("Template-library pressure boost for gas-conditioning trains."));
+        new OperationOption("library compression to " + targetMaterial, "Compressor")
+            .addInputMaterial(spec.getFeedMaterialName()).addOutputMaterial(compressed)
+            .setProperty("outletPressure", outletPressure, "bara").setProperty("isentropicEfficiency", 0.75)
+            .setDescription("Template-library pressure boost for gas-conditioning trains."));
     addUnique(options,
-	new OperationOption("library aftercooler to " + targetMaterial, "Cooler").addInputMaterial(compressed)
-	    .addOutputMaterial(cooled).setProperty("outletTemperature", outletTemperature, "K")
-	    .setDescription("Template-library aftercooling before phase polishing."));
+        new OperationOption("library aftercooler to " + targetMaterial, "Cooler").addInputMaterial(compressed)
+            .addOutputMaterial(cooled).setProperty("outletTemperature", outletTemperature, "K")
+            .setDescription("Template-library aftercooling before phase polishing."));
     addUnique(options,
-	new OperationOption("library polishing separator to " + targetMaterial, "Separator").addInputMaterial(cooled)
-	    .addOutputMaterial(targetMaterial)
-	    .setDescription("Template-library condensate knock-out after compression and cooling."));
+        new OperationOption("library polishing separator to " + targetMaterial, "Separator").addInputMaterial(cooled)
+            .addOutputMaterial(targetMaterial)
+            .setDescription("Template-library condensate knock-out after compression and cooling."));
   }
 
   /**
@@ -103,17 +103,17 @@ public class ProcessSynthesisTemplateLibrary {
       List<OperationOption> options) {
     if (spec.allowsUnitType("Heater")) {
       addUnique(options,
-	  new OperationOption("library heater to " + targetMaterial, "Heater")
-	      .addInputMaterial(spec.getFeedMaterialName()).addOutputMaterial(targetMaterial)
-	      .setProperty("outletTemperature", spec.getFeedTemperatureK() + 30.0, "K")
-	      .setDescription("Template-library heating step for thermal conditioning."));
+          new OperationOption("library heater to " + targetMaterial, "Heater")
+              .addInputMaterial(spec.getFeedMaterialName()).addOutputMaterial(targetMaterial)
+              .setProperty("outletTemperature", spec.getFeedTemperatureK() + 30.0, "K")
+              .setDescription("Template-library heating step for thermal conditioning."));
     }
     if (spec.allowsUnitType("Cooler")) {
       addUnique(options,
-	  new OperationOption("library cooler to " + targetMaterial, "Cooler")
-	      .addInputMaterial(spec.getFeedMaterialName()).addOutputMaterial(targetMaterial)
-	      .setProperty("outletTemperature", Math.max(233.15, spec.getFeedTemperatureK() - 30.0), "K")
-	      .setDescription("Template-library cooling step for thermal conditioning."));
+          new OperationOption("library cooler to " + targetMaterial, "Cooler")
+              .addInputMaterial(spec.getFeedMaterialName()).addOutputMaterial(targetMaterial)
+              .setProperty("outletTemperature", Math.max(233.15, spec.getFeedTemperatureK() - 30.0), "K")
+              .setDescription("Template-library cooling step for thermal conditioning."));
     }
   }
 
@@ -130,10 +130,10 @@ public class ProcessSynthesisTemplateLibrary {
       return;
     }
     addUnique(options,
-	new OperationOption("library pressure letdown to " + targetMaterial, "ThrottlingValve")
-	    .addInputMaterial(spec.getFeedMaterialName()).addOutputMaterial(targetMaterial)
-	    .setProperty("outletPressure", Math.max(1.0, spec.getFeedPressureBara() * 0.7), "bara")
-	    .setDescription("Template-library pressure letdown for JT/expansion screening."));
+        new OperationOption("library pressure letdown to " + targetMaterial, "ThrottlingValve")
+            .addInputMaterial(spec.getFeedMaterialName()).addOutputMaterial(targetMaterial)
+            .setProperty("outletPressure", Math.max(1.0, spec.getFeedPressureBara() * 0.7), "bara")
+            .setDescription("Template-library pressure letdown for JT/expansion screening."));
   }
 
   /**
@@ -146,7 +146,7 @@ public class ProcessSynthesisTemplateLibrary {
     List<String> targets = new ArrayList<String>();
     for (ProcessResearchSpec.ProductTarget target : spec.getProductTargets()) {
       if (target.getMaterialName() != null && !target.getMaterialName().trim().isEmpty()) {
-	targets.add(target.getMaterialName());
+        targets.add(target.getMaterialName());
       }
     }
     return targets;
@@ -176,7 +176,7 @@ public class ProcessSynthesisTemplateLibrary {
    */
   private String signature(OperationOption option) {
     return option.getName().toLowerCase() + "|" + option.getEquipmentType().toLowerCase() + "|"
-	+ option.getInputMaterials().toString().toLowerCase() + "|"
-	+ option.getOutputMaterials().toString().toLowerCase();
+        + option.getInputMaterials().toString().toLowerCase() + "|"
+        + option.getOutputMaterials().toString().toLowerCase();
   }
 }

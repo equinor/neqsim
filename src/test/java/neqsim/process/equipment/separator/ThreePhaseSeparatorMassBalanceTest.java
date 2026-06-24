@@ -70,7 +70,7 @@ public class ThreePhaseSeparatorMassBalanceTest {
     double massBalance = sep.getMassBalance("kg/hr");
     // Even with missing aqueous phase, mass balance should be acceptable
     assertTrue(Math.abs(massBalance) < 1.0,
-	"Mass balance should be near zero even with missing phase, got: " + massBalance);
+        "Mass balance should be near zero even with missing phase, got: " + massBalance);
   }
 
   /**
@@ -116,7 +116,7 @@ public class ThreePhaseSeparatorMassBalanceTest {
     // Should not throw exception
     double massBalance = sep.getMassBalance("kg/hr");
     assertTrue(!Double.isNaN(massBalance) && !Double.isInfinite(massBalance),
-	"Mass balance should be a valid number even with zero flow");
+        "Mass balance should be a valid number even with zero flow");
   }
 
   /**
@@ -147,7 +147,7 @@ public class ThreePhaseSeparatorMassBalanceTest {
     double massBalance = sep.getMassBalance("kg/hr");
     // Should account for non-negligible flow (80 kg/hr) and filter out negligible flow
     assertTrue(Math.abs(massBalance) < 1.0,
-	"Mass balance with multiple inlets should be near zero, got: " + massBalance);
+        "Mass balance with multiple inlets should be near zero, got: " + massBalance);
   }
 
   /**
@@ -191,6 +191,6 @@ public class ThreePhaseSeparatorMassBalanceTest {
 
     double massBalance = sep.getMassBalance("kg/hr");
     assertTrue(Math.abs(massBalance) < 1.0,
-	"High pressure (liquid only) mass balance should be near zero, got: " + massBalance);
+        "High pressure (liquid only) mass balance should be near zero, got: " + massBalance);
   }
 }

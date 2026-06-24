@@ -195,7 +195,7 @@ public class KValueProcessSimulator implements Serializable {
       Double multiplier = sourceFlowMultipliers == null ? null : sourceFlowMultipliers.get(sourceName);
       double scale = multiplier == null ? 1.0 : multiplier.doubleValue();
       if (scale < 0.0) {
-	throw new IllegalArgumentException("Source multiplier must be non-negative for " + sourceName);
+        throw new IllegalArgumentException("Source multiplier must be non-negative for " + sourceName);
       }
       sourceFlows.put(sourceName, scale(baseSourceComponentFlows.get(sourceName), scale));
     }
@@ -215,12 +215,12 @@ public class KValueProcessSimulator implements Serializable {
       double[] baseFlow = baseSourceComponentFlows.get(sourceName);
       Double requestedFlow = sourceFlowRates == null ? null : sourceFlowRates.get(sourceName);
       if (requestedFlow == null) {
-	sourceFlows.put(sourceName, baseFlow.clone());
+        sourceFlows.put(sourceName, baseFlow.clone());
       } else {
-	if (requestedFlow.doubleValue() < 0.0) {
-	  throw new IllegalArgumentException("Source flow rate must be non-negative for " + sourceName);
-	}
-	sourceFlows.put(sourceName, setTotalFlow(baseFlow, requestedFlow.doubleValue(), unit));
+        if (requestedFlow.doubleValue() < 0.0) {
+          throw new IllegalArgumentException("Source flow rate must be non-negative for " + sourceName);
+        }
+        sourceFlows.put(sourceName, setTotalFlow(baseFlow, requestedFlow.doubleValue(), unit));
       }
     }
     return runFromSourceFlows(sourceFlows);
@@ -251,22 +251,22 @@ public class KValueProcessSimulator implements Serializable {
     double maxMassDeviation = 0.0;
     try {
       for (int i = 0; i < multipliers.length; i++) {
-	Map<String, Double> scenario = new LinkedHashMap<String, Double>();
-	scenario.put(sourceName, multipliers[i]);
+        Map<String, Double> scenario = new LinkedHashMap<String, Double>();
+        scenario.put(sourceName, multipliers[i]);
 
-	long proxyStart = System.nanoTime();
-	KValueProcessResult proxyResult = runWithSourceFlowMultipliers(scenario);
-	proxyTotal += System.nanoTime() - proxyStart;
+        long proxyStart = System.nanoTime();
+        KValueProcessResult proxyResult = runWithSourceFlowMultipliers(scenario);
+        proxyTotal += System.nanoTime() - proxyStart;
 
-	sourceByName.get(sourceName).setFlowRate(baseKgPerHr.get(sourceName) * multipliers[i], "kg/hr");
-	long rigorousStart = System.nanoTime();
-	process.run();
-	rigorousTotal += System.nanoTime() - rigorousStart;
+        sourceByName.get(sourceName).setFlowRate(baseKgPerHr.get(sourceName) * multipliers[i], "kg/hr");
+        long rigorousStart = System.nanoTime();
+        process.run();
+        rigorousTotal += System.nanoTime() - rigorousStart;
 
-	double proxyMass = proxyResult.getTerminalTotalFlow("kg/hr");
-	double rigorousMass = rigorousTerminalMassFlow();
-	double denominator = Math.max(Math.max(Math.abs(proxyMass), Math.abs(rigorousMass)), 1.0e-30);
-	maxMassDeviation = Math.max(maxMassDeviation, Math.abs(proxyMass - rigorousMass) / denominator);
+        double proxyMass = proxyResult.getTerminalTotalFlow("kg/hr");
+        double rigorousMass = rigorousTerminalMassFlow();
+        double denominator = Math.max(Math.max(Math.abs(proxyMass), Math.abs(rigorousMass)), 1.0e-30);
+        maxMassDeviation = Math.max(maxMassDeviation, Math.abs(proxyMass - rigorousMass) / denominator);
       }
     } finally {
       restoreSourceFlows(baseKgPerHr);
@@ -281,27 +281,27 @@ public class KValueProcessSimulator implements Serializable {
     for (KValueUnitProfile profile : unitProfiles) {
       List<StreamInterface> outlets = profile.getOutletStreams();
       for (int outlet = 0; outlet < outlets.size(); outlet++) {
-	streamProducer.put(outlets.get(outlet), profile);
-	streamProducerOutletIndex.put(outlets.get(outlet), Integer.valueOf(outlet));
+        streamProducer.put(outlets.get(outlet), profile);
+        streamProducerOutletIndex.put(outlets.get(outlet), Integer.valueOf(outlet));
       }
       for (StreamInterface inlet : profile.getInletStreams()) {
-	List<KValueUnitProfile> consumers = streamConsumers.get(inlet);
-	if (consumers == null) {
-	  consumers = new ArrayList<KValueUnitProfile>();
-	  streamConsumers.put(inlet, consumers);
-	}
-	if (!consumers.contains(profile)) {
-	  consumers.add(profile);
-	}
+        List<KValueUnitProfile> consumers = streamConsumers.get(inlet);
+        if (consumers == null) {
+          consumers = new ArrayList<KValueUnitProfile>();
+          streamConsumers.put(inlet, consumers);
+        }
+        if (!consumers.contains(profile)) {
+          consumers.add(profile);
+        }
       }
     }
 
     for (KValueUnitProfile profile : unitProfiles) {
       List<StreamInterface> outlets = profile.getOutletStreams();
       for (int outlet = 0; outlet < outlets.size(); outlet++) {
-	if (!streamConsumers.containsKey(outlets.get(outlet))) {
-	  terminalStreamNames.add(profile.getOutletKey(outlet));
-	}
+        if (!streamConsumers.containsKey(outlets.get(outlet))) {
+          terminalStreamNames.add(profile.getOutletKey(outlet));
+        }
       }
     }
   }
@@ -312,13 +312,13 @@ public class KValueProcessSimulator implements Serializable {
   private void identifySources() {
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       if (!(unit instanceof StreamInterface)) {
-	continue;
+        continue;
       }
       StreamInterface stream = (StreamInterface) unit;
       if (streamConsumers.containsKey(stream) && !streamProducer.containsKey(stream)) {
-	sourceStreams.add(stream);
-	sourceByName.put(stream.getName(), stream);
-	baseSourceComponentFlows.put(stream.getName(), componentFlows(stream));
+        sourceStreams.add(stream);
+        sourceByName.put(stream.getName(), stream);
+        baseSourceComponentFlows.put(stream.getName(), componentFlows(stream));
       }
     }
   }
@@ -330,10 +330,10 @@ public class KValueProcessSimulator implements Serializable {
     for (KValueUnitProfile profile : unitProfiles) {
       List<StreamInterface> outlets = profile.getOutletStreams();
       for (int outlet = 0; outlet < outlets.size(); outlet++) {
-	SystemInterface fluid = outlets.get(outlet).getFluid();
-	if (fluid != null) {
-	  fluidAliasKeys.put(fluid, profile.getOutletKey(outlet));
-	}
+        SystemInterface fluid = outlets.get(outlet).getFluid();
+        if (fluid != null) {
+          fluidAliasKeys.put(fluid, profile.getOutletKey(outlet));
+        }
       }
     }
   }
@@ -352,7 +352,7 @@ public class KValueProcessSimulator implements Serializable {
     }
     for (KValueUnitProfile profile : unitProfiles) {
       for (StreamInterface outlet : profile.getOutletStreams()) {
-	streamFlows.put(outlet, componentFlows(outlet));
+        streamFlows.put(outlet, componentFlows(outlet));
       }
     }
 
@@ -361,21 +361,21 @@ public class KValueProcessSimulator implements Serializable {
     for (; iteration < maxIterations; iteration++) {
       residual = 0.0;
       for (KValueUnitProfile profile : unitProfiles) {
-	double[] inlet = sumInletFlows(profile, streamFlows);
-	double[][] routed = profile.route(inlet);
-	List<StreamInterface> outlets = profile.getOutletStreams();
-	for (int outlet = 0; outlet < outlets.size(); outlet++) {
-	  double[] previous = streamFlows.get(outlets.get(outlet));
-	  if (previous == null) {
-	    previous = new double[componentNames.length];
-	  }
-	  residual = Math.max(residual, relativeChange(previous, routed[outlet]));
-	  streamFlows.put(outlets.get(outlet), routed[outlet]);
-	}
+        double[] inlet = sumInletFlows(profile, streamFlows);
+        double[][] routed = profile.route(inlet);
+        List<StreamInterface> outlets = profile.getOutletStreams();
+        for (int outlet = 0; outlet < outlets.size(); outlet++) {
+          double[] previous = streamFlows.get(outlets.get(outlet));
+          if (previous == null) {
+            previous = new double[componentNames.length];
+          }
+          residual = Math.max(residual, relativeChange(previous, routed[outlet]));
+          streamFlows.put(outlets.get(outlet), routed[outlet]);
+        }
       }
       if (residual < tolerance) {
-	iteration++;
-	break;
+        iteration++;
+        break;
       }
     }
 
@@ -402,32 +402,32 @@ public class KValueProcessSimulator implements Serializable {
     for (KValueUnitProfile profile : unitProfiles) {
       List<StreamInterface> outlets = profile.getOutletStreams();
       for (int outlet = 0; outlet < outlets.size(); outlet++) {
-	double[] flow = streamFlows.get(outlets.get(outlet));
-	namedFlows.put(profile.getOutletKey(outlet), flow == null ? new double[componentNames.length] : flow.clone());
+        double[] flow = streamFlows.get(outlets.get(outlet));
+        namedFlows.put(profile.getOutletKey(outlet), flow == null ? new double[componentNames.length] : flow.clone());
       }
     }
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       if (!(unit instanceof StreamInterface)) {
-	continue;
+        continue;
       }
       StreamInterface stream = (StreamInterface) unit;
       if (namedFlows.containsKey(stream.getName())) {
-	continue;
+        continue;
       }
       double[] directFlow = streamFlows.get(stream);
       if (directFlow != null) {
-	namedFlows.put(stream.getName(), directFlow.clone());
-	continue;
+        namedFlows.put(stream.getName(), directFlow.clone());
+        continue;
       }
       SystemInterface fluid = stream.getFluid();
       String aliasKey = fluid == null ? null : fluidAliasKeys.get(fluid);
       if (aliasKey != null && namedFlows.containsKey(aliasKey)) {
-	namedFlows.put(stream.getName(), namedFlows.get(aliasKey).clone());
+        namedFlows.put(stream.getName(), namedFlows.get(aliasKey).clone());
       }
     }
     List<String> sourceNames = new ArrayList<String>(sourceByName.keySet());
     return new KValueProcessResult(componentNames, molarMass, namedFlows, terminalStreamNames, sourceNames, iterations,
-	residual, runTime);
+        residual, runTime);
   }
 
   /**
@@ -442,10 +442,10 @@ public class KValueProcessSimulator implements Serializable {
     for (StreamInterface stream : profile.getInletStreams()) {
       double[] flow = streamFlows.get(stream);
       if (flow == null) {
-	continue;
+        continue;
       }
       for (int component = 0; component < componentNames.length; component++) {
-	inlet[component] += flow[component];
+        inlet[component] += flow[component];
       }
     }
     return inlet;
@@ -473,9 +473,9 @@ public class KValueProcessSimulator implements Serializable {
     for (KValueUnitProfile profile : unitProfiles) {
       List<StreamInterface> outlets = profile.getOutletStreams();
       for (StreamInterface outlet : outlets) {
-	if (!streamConsumers.containsKey(outlet)) {
-	  total += outlet.getFlowRate("kg/hr");
-	}
+        if (!streamConsumers.containsKey(outlet)) {
+          total += outlet.getFlowRate("kg/hr");
+        }
       }
     }
     return total;
@@ -491,11 +491,11 @@ public class KValueProcessSimulator implements Serializable {
     List<ProcessEquipmentInterface> nodes = new ArrayList<ProcessEquipmentInterface>();
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       if (unit instanceof StreamInterface) {
-	continue;
+        continue;
       }
       List<StreamInterface> outlets = safeOutlets(unit);
       if (!outlets.isEmpty()) {
-	nodes.add(unit);
+        nodes.add(unit);
       }
     }
     return nodes;
@@ -513,15 +513,15 @@ public class KValueProcessSimulator implements Serializable {
     Map<String, Double> molarMassByComponent = new LinkedHashMap<String, Double>();
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       if (unit instanceof StreamInterface) {
-	collectComponents((StreamInterface) unit, molarMassByComponent);
+        collectComponents((StreamInterface) unit, molarMassByComponent);
       }
     }
     for (ProcessEquipmentInterface unit : nodeUnits) {
       for (StreamInterface stream : safeInlets(unit)) {
-	collectComponents(stream, molarMassByComponent);
+        collectComponents(stream, molarMassByComponent);
       }
       for (StreamInterface stream : safeOutlets(unit)) {
-	collectComponents(stream, molarMassByComponent);
+        collectComponents(stream, molarMassByComponent);
       }
     }
     return molarMassByComponent;
@@ -541,7 +541,7 @@ public class KValueProcessSimulator implements Serializable {
     for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
       String name = fluid.getComponent(component).getComponentName();
       if (!molarMassByComponent.containsKey(name)) {
-	molarMassByComponent.put(name, fluid.getComponent(component).getMolarMass());
+        molarMassByComponent.put(name, fluid.getComponent(component).getMolarMass());
       }
     }
   }
@@ -559,7 +559,7 @@ public class KValueProcessSimulator implements Serializable {
     double[] inletComponentFlow = new double[componentNames.length];
     for (int component = 0; component < componentNames.length; component++) {
       for (StreamInterface inlet : inlets) {
-	inletComponentFlow[component] += componentFlow(inlet, componentNames[component]);
+        inletComponentFlow[component] += componentFlow(inlet, componentNames[component]);
       }
     }
     double[][] fallbackFactors = buildFallbackFactors(outlets, inletComponentFlow, componentNames);
@@ -571,21 +571,21 @@ public class KValueProcessSimulator implements Serializable {
     if (outlets.size() == 3 && gasOutletIndex >= 0) {
       waterOutletIndex = findWaterOutletIndex(outlets);
       if (waterOutletIndex >= 0 && waterOutletIndex != gasOutletIndex) {
-	liquidOutletIndex = findRemainingOutletIndex(outlets.size(), gasOutletIndex, waterOutletIndex);
-	if (liquidOutletIndex >= 0) {
-	  kValues = extractKValues(outlets.get(gasOutletIndex), outlets.get(liquidOutletIndex), componentNames);
-	  waterKValues = extractKValues(outlets.get(waterOutletIndex), outlets.get(liquidOutletIndex), componentNames);
-	}
+        liquidOutletIndex = findRemainingOutletIndex(outlets.size(), gasOutletIndex, waterOutletIndex);
+        if (liquidOutletIndex >= 0) {
+          kValues = extractKValues(outlets.get(gasOutletIndex), outlets.get(liquidOutletIndex), componentNames);
+          waterKValues = extractKValues(outlets.get(waterOutletIndex), outlets.get(liquidOutletIndex), componentNames);
+        }
       }
     }
     if (gasOutletIndex >= 0 && liquidOutletIndex >= 0) {
       if (kValues == null) {
-	kValues = extractKValues(outlets.get(gasOutletIndex), outlets.get(liquidOutletIndex), componentNames);
+        kValues = extractKValues(outlets.get(gasOutletIndex), outlets.get(liquidOutletIndex), componentNames);
       }
     }
     return new KValueUnitProfile(unit.getName(), unit.getClass().getSimpleName(), inlets, outlets, componentNames,
-	fallbackFactors, kValues, waterKValues, gasOutletIndex, liquidOutletIndex, waterOutletIndex,
-	inletComponentFlow);
+        fallbackFactors, kValues, waterKValues, gasOutletIndex, liquidOutletIndex, waterOutletIndex,
+        inletComponentFlow);
   }
 
   /**
@@ -601,12 +601,12 @@ public class KValueProcessSimulator implements Serializable {
     double[][] factors = new double[outlets.size()][componentNames.length];
     for (int component = 0; component < componentNames.length; component++) {
       if (inletComponentFlow[component] > MIN_FLOW) {
-	for (int outlet = 0; outlet < outlets.size(); outlet++) {
-	  factors[outlet][component] = componentFlow(outlets.get(outlet), componentNames[component])
-	      / inletComponentFlow[component];
-	}
+        for (int outlet = 0; outlet < outlets.size(); outlet++) {
+          factors[outlet][component] = componentFlow(outlets.get(outlet), componentNames[component])
+              / inletComponentFlow[component];
+        }
       } else if (outlets.size() == 1) {
-	factors[0][component] = 1.0;
+        factors[0][component] = 1.0;
       }
     }
     return factors;
@@ -635,13 +635,13 @@ public class KValueProcessSimulator implements Serializable {
       double y = gasFlow[component] / gasTotal;
       double x = liquidFlow[component] / liquidTotal;
       if (x <= MIN_FLOW && y <= MIN_FLOW) {
-	kValues[component] = 1.0;
+        kValues[component] = 1.0;
       } else if (x <= MIN_FLOW) {
-	kValues[component] = 1.0e12;
+        kValues[component] = 1.0e12;
       } else if (y <= MIN_FLOW) {
-	kValues[component] = 1.0e-12;
+        kValues[component] = 1.0e-12;
       } else {
-	kValues[component] = y / x;
+        kValues[component] = y / x;
       }
     }
     return kValues;
@@ -657,10 +657,10 @@ public class KValueProcessSimulator implements Serializable {
     int gasIndex = -1;
     for (int outlet = 0; outlet < outlets.size(); outlet++) {
       if (isGasOutlet(outlets.get(outlet))) {
-	if (gasIndex >= 0) {
-	  return -1;
-	}
-	gasIndex = outlet;
+        if (gasIndex >= 0) {
+          return -1;
+        }
+        gasIndex = outlet;
       }
     }
     return gasIndex;
@@ -676,10 +676,10 @@ public class KValueProcessSimulator implements Serializable {
     int waterIndex = -1;
     for (int outlet = 0; outlet < outlets.size(); outlet++) {
       if (isWaterOutlet(outlets.get(outlet))) {
-	if (waterIndex >= 0) {
-	  return -1;
-	}
-	waterIndex = outlet;
+        if (waterIndex >= 0) {
+          return -1;
+        }
+        waterIndex = outlet;
       }
     }
     return waterIndex;
@@ -696,7 +696,7 @@ public class KValueProcessSimulator implements Serializable {
   private static int findRemainingOutletIndex(int outletCount, int gasOutletIndex, int waterOutletIndex) {
     for (int outlet = 0; outlet < outletCount; outlet++) {
       if (outlet != gasOutletIndex && outlet != waterOutletIndex) {
-	return outlet;
+        return outlet;
       }
     }
     return -1;
@@ -743,7 +743,7 @@ public class KValueProcessSimulator implements Serializable {
     try {
       String phaseTypeName = fluid.getPhase(0).getPhaseTypeName();
       if (phaseTypeName != null && phaseTypeName.toLowerCase().contains("aqueous")) {
-	return true;
+        return true;
       }
     } catch (Exception ex) {
       return false;
@@ -790,7 +790,7 @@ public class KValueProcessSimulator implements Serializable {
     }
     for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
       if (fluid.getComponent(component).getComponentName().equals(componentName)) {
-	return Math.max(0.0, fluid.getComponent(component).getTotalFlowRate("mole/sec"));
+        return Math.max(0.0, fluid.getComponent(component).getTotalFlowRate("mole/sec"));
       }
     }
     return 0.0;

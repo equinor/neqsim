@@ -175,47 +175,47 @@ public class EngineeringDeliverablesPackage implements Serializable {
    */
   public void generate() {
     logger.info("Generating engineering deliverables for {} with {}", processSystem.getClass().getSimpleName(),
-	studyClass);
+        studyClass);
 
     for (DeliverableType type : studyClass.getRequiredDeliverables()) {
       DeliverableStatus status = new DeliverableStatus(type);
       long start = System.currentTimeMillis();
 
       try {
-	switch (type) {
-	case PFD:
-	  generatePfd();
-	  break;
-	case THERMAL_UTILITIES:
-	  generateThermalUtilities();
-	  break;
-	case ALARM_TRIP_SCHEDULE:
-	  generateAlarmTripSchedule();
-	  break;
-	case SPARE_PARTS:
-	  generateSparePartsInventory();
-	  break;
-	case FIRE_SCENARIOS:
-	  generateFireScenarios();
-	  break;
-	case NOISE_ASSESSMENT:
-	  generateNoiseAssessment();
-	  break;
-	case INSTRUMENT_SCHEDULE:
-	  generateInstrumentSchedule();
-	  break;
-	case REFERENCE_DESIGNATION_SCHEDULE:
-	  generateReferenceDesignationSchedule();
-	  break;
-	default:
-	  break;
-	}
-	status.success = true;
-	status.message = "Generated successfully";
+        switch (type) {
+        case PFD:
+          generatePfd();
+          break;
+        case THERMAL_UTILITIES:
+          generateThermalUtilities();
+          break;
+        case ALARM_TRIP_SCHEDULE:
+          generateAlarmTripSchedule();
+          break;
+        case SPARE_PARTS:
+          generateSparePartsInventory();
+          break;
+        case FIRE_SCENARIOS:
+          generateFireScenarios();
+          break;
+        case NOISE_ASSESSMENT:
+          generateNoiseAssessment();
+          break;
+        case INSTRUMENT_SCHEDULE:
+          generateInstrumentSchedule();
+          break;
+        case REFERENCE_DESIGNATION_SCHEDULE:
+          generateReferenceDesignationSchedule();
+          break;
+        default:
+          break;
+        }
+        status.success = true;
+        status.message = "Generated successfully";
       } catch (Exception e) {
-	status.success = false;
-	status.message = "Generation failed: " + e.getMessage();
-	logger.warn("Failed to generate {}: {}", type.getDisplayName(), e.getMessage());
+        status.success = false;
+        status.message = "Generation failed: " + e.getMessage();
+        logger.warn("Failed to generate {}: {}", type.getDisplayName(), e.getMessage());
       }
 
       status.durationMs = System.currentTimeMillis() - start;
@@ -274,8 +274,8 @@ public class EngineeringDeliverablesPackage implements Serializable {
     double massBurningRateKgM2s = 0.055;
 
     FireProtectionDesign.FireScenarioResult scenario = FireProtectionDesign.assessFireScenarios(equipmentName,
-	inventoryKg, operatingPressureBara, vesselVolumeM3, poolDiameterM, releaseRateKgS, heatingValueKJKg,
-	massBurningRateKgM2s);
+        inventoryKg, operatingPressureBara, vesselVolumeM3, poolDiameterM, releaseRateKgS, heatingValueKJKg,
+        massBurningRateKgM2s);
     JsonObject obj = new JsonObject();
     obj.add("fireScenario", JsonParser.parseString(scenario.toJson()));
     obj.addProperty("inventoryKg", inventoryKg);
@@ -307,7 +307,7 @@ public class EngineeringDeliverablesPackage implements Serializable {
     obj.addProperty("norsokLimitEquipmentAreaDbA", NoiseAssessment.NORSOK_MAX_EQUIPMENT_AREA_DBA);
 
     noiseAssessmentJson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-	.toJson(obj);
+        .toJson(obj);
   }
 
   /**
@@ -337,7 +337,7 @@ public class EngineeringDeliverablesPackage implements Serializable {
     int count = 0;
     for (DeliverableStatus status : statusMap.values()) {
       if (status.isSuccess()) {
-	count++;
+        count++;
       }
     }
     return count;
@@ -354,7 +354,7 @@ public class EngineeringDeliverablesPackage implements Serializable {
     }
     for (DeliverableStatus status : statusMap.values()) {
       if (!status.isSuccess()) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -468,7 +468,7 @@ public class EngineeringDeliverablesPackage implements Serializable {
     List<DeliverableType> failed = new ArrayList<DeliverableType>();
     for (Map.Entry<DeliverableType, DeliverableStatus> entry : statusMap.entrySet()) {
       if (!entry.getValue().isSuccess()) {
-	failed.add(entry.getKey());
+        failed.add(entry.getKey());
       }
     }
     return failed;
@@ -532,6 +532,6 @@ public class EngineeringDeliverablesPackage implements Serializable {
   @Override
   public String toString() {
     return String.format("EngineeringDeliverablesPackage[%s, %s, %d/%d deliverables]", studyClass,
-	generated ? "generated" : "not generated", getSuccessCount(), statusMap.size());
+        generated ? "generated" : "not generated", getSuccessCount(), statusMap.size());
   }
 }

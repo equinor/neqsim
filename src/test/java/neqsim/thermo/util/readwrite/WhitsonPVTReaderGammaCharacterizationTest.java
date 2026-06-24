@@ -185,8 +185,8 @@ public class WhitsonPVTReaderGammaCharacterizationTest {
 
     // Use fluent API to set gamma parameters
     fluid.getCharacterization().setGammaShapeParameter(1.0) // alpha = 1.0 (exponential)
-	.setGammaMinMW(90.0) // eta = 90 g/mol (minimum MW)
-	.setGammaDensityModel("Soreide"); // Soreide density correlation
+        .setGammaMinMW(90.0) // eta = 90 g/mol (minimum MW)
+        .setGammaDensityModel("Soreide"); // Soreide density correlation
 
     // Configure for 7 lumped pseudo-components - must set lumping model first!
     fluid.getCharacterization().setLumpingModel("PVTlumpingModel");

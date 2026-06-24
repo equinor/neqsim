@@ -60,13 +60,13 @@ public class GTSurfaceTensionFullGT {
     boolean hasAddedComp = false;
     for (i = 0; i < this.ncomp; i++) {
       if (this.sys.getPhase(phase1).getComponent(i).getx() < Double.MIN_VALUE) {
-	this.sys.addComponent(i, this.sys.getTotalNumberOfMoles() / 1e10);
-	hasAddedComp = true;
+        this.sys.addComponent(i, this.sys.getTotalNumberOfMoles() / 1e10);
+        hasAddedComp = true;
       }
     }
     if (hasAddedComp) {
       neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	  this.sys);
+          this.sys);
       ops.TPflash();
     }
 
@@ -76,9 +76,9 @@ public class GTSurfaceTensionFullGT {
     for (i = 0; i < this.ncomp; i++) {
       this.ci[i] = this.sys.getPhase(0).getComponent(i).getSurfaceTenisionInfluenceParameter(t);
       this.rho_ph1[i] = this.sys.getPhase(phase1).getComponent(i).getx() / this.sys.getPhase(phase1).getMolarVolume()
-	  / m3;
+          / m3;
       this.rho_ph2[i] = this.sys.getPhase(phase2).getComponent(i).getx() / this.sys.getPhase(phase2).getMolarVolume()
-	  / m3;
+          / m3;
     }
     this.sys.setBeta(1.0);
     this.sys.init(0);
@@ -176,8 +176,8 @@ public class GTSurfaceTensionFullGT {
     // NeqSIM function for evaluating \f$\beta_{ij}\f$ becomes available.
     for (i = 0; i < ncomp; i++) {
       for (j = i; j < ncomp; j++) {
-	cij[i][j] = 1.e18 * Math.sqrt(this.ci[i] * this.ci[j]); // Use nm as unit for length
-	cij[j][i] = cij[i][j];
+        cij[i][j] = 1.e18 * Math.sqrt(this.ci[i] * this.ci[j]); // Use nm as unit for length
+        cij[j][i] = cij[i][j];
       }
     }
     // ----------------------------
@@ -189,7 +189,7 @@ public class GTSurfaceTensionFullGT {
     for (i = 0; i < Nrefinements; i++) {
       sigma = Newton(cij, L, N_Newton, maxRelChange, highOrder, directMethod, rhomat, sys, ncomp, t, mueq);
       if (!NDEBUG && DEBUGPLOT) {
-	debugPlot(xgrid, rhomat); // create a plot using xaxis and yvalues
+        debugPlot(xgrid, rhomat); // create a plot using xaxis and yvalues
       }
       // Calculate size of interesting region
       drhodz = new double[rhomat.length - 1][ncomp];
@@ -199,9 +199,9 @@ public class GTSurfaceTensionFullGT {
 
       // Termination
       if (i > 0 && Math.abs(sigma - sigma_old) < StopTolerance * sigma) {
-	break;
+        break;
       } else {
-	sigma_old = sigma;
+        sigma_old = sigma;
       }
 
       // Remesh
@@ -219,20 +219,20 @@ public class GTSurfaceTensionFullGT {
 
       // Interpolate old solution to new:
       for (j = 0; j < rhotmp.length; j++) {
-	if (xgridNew[j] < xgrid[0]) { // Pad if outside left boundary
-	  rhotmp[j] = this.rho_ph1.clone();
-	} else if (xgridNew[j] > xgrid[xgrid.length - 1]) { // Pad right
-	  rhotmp[j] = this.rho_ph2.clone();
-	} else { // Interpolate known region
-	  while (xgridNew[j] > xgrid[kk + 1]) { // Find correct interval (Should be safe)
-	    kk++;
-	  }
+        if (xgridNew[j] < xgrid[0]) { // Pad if outside left boundary
+          rhotmp[j] = this.rho_ph1.clone();
+        } else if (xgridNew[j] > xgrid[xgrid.length - 1]) { // Pad right
+          rhotmp[j] = this.rho_ph2.clone();
+        } else { // Interpolate known region
+          while (xgridNew[j] > xgrid[kk + 1]) { // Find correct interval (Should be safe)
+            kk++;
+          }
 
-	  alpha = (xgrid[kk + 1] - xgridNew[j]) / (xgrid[kk + 1] - xgrid[kk]);
-	  for (k = 0; k < this.ncomp; k++) { // Linear interpolation
-	    rhotmp[j][k] = alpha * rhomat[kk][k] + (1 - alpha) * rhomat[kk + 1][k];
-	  }
-	}
+          alpha = (xgrid[kk + 1] - xgridNew[j]) / (xgrid[kk + 1] - xgrid[kk]);
+          for (k = 0; k < this.ncomp; k++) { // Linear interpolation
+            rhotmp[j][k] = alpha * rhomat[kk][k] + (1 - alpha) * rhomat[kk + 1][k];
+          }
+        }
       }
 
       // Update the current guess
@@ -244,7 +244,7 @@ public class GTSurfaceTensionFullGT {
       Ngrid = NgridNew;
       xgrid = xgridNew;
       if (!NDEBUG && DEBUGPLOT) {
-	debugPlot(xgrid, rhomat);
+        debugPlot(xgrid, rhomat);
       }
       // End Remesh
     }
@@ -303,19 +303,19 @@ public class GTSurfaceTensionFullGT {
       delta_mu(sys, ncomp, t, mueq, rhomat[i], dmu[i], Jac[i]);
       // rres[i]=Matrix.subtract(dmu[i],Matrix.multiply(Jac[i],rhomat[i]));
       for (j = 0; j < ncomp; j++) {
-	rres[i][j] = dmu[i][j];
-	for (k = 0; k < ncomp; k++) {
-	  rres[i][j] -= Jac[i][j][k] * rhomat[i][k];
-	}
+        rres[i][j] = dmu[i][j];
+        for (k = 0; k < ncomp; k++) {
+          rres[i][j] -= Jac[i][j][k] * rhomat[i][k];
+        }
       }
     }
 
     // FIXME: Add deferred correction here
     if (highOrder) {
       for (i = 1; i < Ngrid - 1; i++) { // Inner grid points
-	for (j = 0; j < ncomp; j++) {
-	  rres[i][j] += (dmu[i - 1][j] - 2.0 * dmu[i][j] + dmu[i + 1][j]) / 12.0;
-	}
+        for (j = 0; j < ncomp; j++) {
+          rres[i][j] += (dmu[i - 1][j] - 2.0 * dmu[i][j] + dmu[i + 1][j]) / 12.0;
+        }
       }
     }
 
@@ -323,9 +323,9 @@ public class GTSurfaceTensionFullGT {
       // rrho_prev = rhomat.clone(); // rrho_prev = rrho{1}; %Previous solution. Clone
       // not a good idea...
       for (i = 0; i < Ngrid; i++) {
-	for (j = 0; j < ncomp; j++) {
-	  rrho_prev[i][j] = rhomat[i][j];
-	}
+        for (j = 0; j < ncomp; j++) {
+          rrho_prev[i][j] = rhomat[i][j];
+        }
       }
 
       // if directMethod
@@ -334,84 +334,84 @@ public class GTSurfaceTensionFullGT {
       // %Limit the Newton step by max relative change in solution
       maxrelchange = 0.0;
       for (i = 1; i < Ngrid - 1; i++) { // Inner grid points
-	for (j = 0; j < ncomp; j++) { // Each specie
-	  if (Math.abs(rhomat[i][j] - rrho_prev[i][j]) > maxrelchange * Math.abs(rrho_prev[i][j])) {
-	    maxrelchange = Math.abs(rhomat[i][j] - rrho_prev[i][j]) / Math.abs(rrho_prev[i][j]);
-	  }
-	}
+        for (j = 0; j < ncomp; j++) { // Each specie
+          if (Math.abs(rhomat[i][j] - rrho_prev[i][j]) > maxrelchange * Math.abs(rrho_prev[i][j])) {
+            maxrelchange = Math.abs(rhomat[i][j] - rrho_prev[i][j]) / Math.abs(rrho_prev[i][j]);
+          }
+        }
       }
       urel_Newton = Math.min(allowedRelChange / maxrelchange, 1.0);
 
       // Update solution
       for (i = 1; i < Ngrid - 1; i++) { // Inner grid points
-	for (j = 0; j < ncomp; j++) { // Each specie
-	  rhomat[i][j] = urel_Newton * rhomat[i][j] + (1.0 - urel_Newton) * rrho_prev[i][j];
-	}
+        for (j = 0; j < ncomp; j++) { // Each specie
+          rhomat[i][j] = urel_Newton * rhomat[i][j] + (1.0 - urel_Newton) * rrho_prev[i][j];
+        }
       }
 
       if (urel_Newton * maxrelchange < 0.00001) { // Convergence test
-	// FIXME: Hardcoded tolerance
-	break;
+        // FIXME: Hardcoded tolerance
+        break;
       }
 
       sigma = sigmaCalc(H, rhomat, cij, false, drhodz, ncomp);
 
       // System.out.printf("Sigma=%.12f\n",sigma);
       if (!NDEBUG) {
-	logger.info("Sigma= " + sigma);
+        logger.info("Sigma= " + sigma);
       }
 
       sum_ztmp = 0.0;
       sum_tmp = 0.0;
       for (i = 0; i < drhodz.length; i++) {
-	tmp = 0.0;
-	for (j = 0; j < ncomp; j++) {
-	  for (k = 0; k < ncomp; k++) {
-	    tmp += drhodz[i][j] * cij[j][k] * drhodz[i][k];
-	  }
-	}
-	sum_ztmp += 0.5 * (xgrid[i + 1] + xgrid[i]) * tmp;
-	sum_tmp += tmp;
+        tmp = 0.0;
+        for (j = 0; j < ncomp; j++) {
+          for (k = 0; k < ncomp; k++) {
+            tmp += drhodz[i][j] * cij[j][k] * drhodz[i][k];
+          }
+        }
+        sum_ztmp += 0.5 * (xgrid[i + 1] + xgrid[i]) * tmp;
+        sum_tmp += tmp;
       }
       cg = sum_ztmp / sum_tmp; // Center of gravity
 
       icorr = (int) Math.round(cg / H); // Predicted shift to keep centered.
       if (icorr > 0) { // Shift left. Fill in with right boundary values
-	for (i = 1; i < Ngrid - icorr; i++) {
-	  rhomat[i] = rhomat[i + icorr];
-	}
-	for (i = Ngrid - icorr; i < Ngrid - 1; i++) {
-	  rhomat[i] = rhomat[Ngrid - 1].clone();
-	}
+        for (i = 1; i < Ngrid - icorr; i++) {
+          rhomat[i] = rhomat[i + icorr];
+        }
+        for (i = Ngrid - icorr; i < Ngrid - 1; i++) {
+          rhomat[i] = rhomat[Ngrid - 1].clone();
+        }
       } else if (icorr < 0) { // Shift right
-	icorr = -icorr;
-	for (i = Ngrid - 2; i >= icorr; i--) {
-	  rhomat[i] = rhomat[i - icorr];
-	}
-	for (i = 1; i < icorr; i++) {
-	  rhomat[i] = rhomat[0].clone();
-	}
+        icorr = -icorr;
+        for (i = Ngrid - 2; i >= icorr; i--) {
+          rhomat[i] = rhomat[i - icorr];
+        }
+        for (i = 1; i < icorr; i++) {
+          rhomat[i] = rhomat[0].clone();
+        }
       }
 
       // Update the linearization
       for (i = 1; i < Ngrid - 1; i++) { // Inner grid points
-	delta_mu(sys, ncomp, t, mueq, rhomat[i], dmu[i], Jac[i]);
+        delta_mu(sys, ncomp, t, mueq, rhomat[i], dmu[i], Jac[i]);
 
-	for (j = 0; j < ncomp; j++) {
-	  rres[i][j] = dmu[i][j];
-	  for (k = 0; k < ncomp; k++) {
-	    rres[i][j] -= Jac[i][j][k] * rhomat[i][k];
-	  }
-	}
+        for (j = 0; j < ncomp; j++) {
+          rres[i][j] = dmu[i][j];
+          for (k = 0; k < ncomp; k++) {
+            rres[i][j] -= Jac[i][j][k] * rhomat[i][k];
+          }
+        }
       }
 
       // %Deferred correction
       if (highOrder) {
-	for (i = 1; i < Ngrid - 1; i++) { // Inner grid points
-	  for (j = 0; j < ncomp; j++) {
-	    rres[i][j] += (dmu[i - 1][j] - 2.0 * dmu[i][j] + dmu[i + 1][j]) / 12.0;
-	  }
-	}
+        for (i = 1; i < Ngrid - 1; i++) { // Inner grid points
+          for (j = 0; j < ncomp; j++) {
+            rres[i][j] += (dmu[i - 1][j] - 2.0 * dmu[i][j] + dmu[i + 1][j]) / 12.0;
+          }
+        }
       }
     }
 
@@ -449,13 +449,13 @@ public class GTSurfaceTensionFullGT {
     iglob = 0; // Global index
     for (i = 1; i < Ngrid - 1; i++) { // Inner grid points
       for (j = 0; j < ncomp; j++) { // Each specie
-	bbtmp = rres[i][j];
-	for (k = 0; k < ncomp; k++) { // Each specie
-	  // bb[i][j] = rhomat[i][j] + JJ[i][j][k]*rhomat[i][k] -
-	  // C[j][k]*(rhomat[i][k-1]-2*rhomat[i][k]+rhomat[i][k+1])/(H*H) //Loop k
-	  bbtmp += JJ[i][j][k] * rhomat[i][k] - C[j][k] * (rhomat[i - 1][k] - 2 * rhomat[i][k] + rhomat[i + 1][k]) / H2;
-	}
-	bb.set(iglob++, 0, -bbtmp);
+        bbtmp = rres[i][j];
+        for (k = 0; k < ncomp; k++) { // Each specie
+          // bb[i][j] = rhomat[i][j] + JJ[i][j][k]*rhomat[i][k] -
+          // C[j][k]*(rhomat[i][k-1]-2*rhomat[i][k]+rhomat[i][k+1])/(H*H) //Loop k
+          bbtmp += JJ[i][j][k] * rhomat[i][k] - C[j][k] * (rhomat[i - 1][k] - 2 * rhomat[i][k] + rhomat[i + 1][k]) / H2;
+        }
+        bb.set(iglob++, 0, -bbtmp);
       }
     }
 
@@ -463,24 +463,24 @@ public class GTSurfaceTensionFullGT {
     i = 1; // Grid point 2 is the first unknown
     for (j = 0; j < ncomp; j++) { // Each specie
       for (k = 0; k < ncomp; k++) { // Each specie
-	// Jac[j][k]=JJ[i][j][k]+2.0/H2*C[j][k];
-	// Jac[j][k+ncomp] = -1.0/H2*C[j][k];
-	Jac.set(j, k, JJ[i][j][k] + 2.0 / H2 * C[j][k]);
-	Jac.set(j, k + ncomp, -1.0 / H2 * C[j][k]);
+        // Jac[j][k]=JJ[i][j][k]+2.0/H2*C[j][k];
+        // Jac[j][k+ncomp] = -1.0/H2*C[j][k];
+        Jac.set(j, k, JJ[i][j][k] + 2.0 / H2 * C[j][k]);
+        Jac.set(j, k + ncomp, -1.0 / H2 * C[j][k]);
       }
     }
 
     for (i = 2; i < Ngrid - 2; i++) { // Inner grid points
       skip = ncomp * (i - 1);
       for (j = 0; j < ncomp; j++) { // Each specie
-	for (k = 0; k < ncomp; k++) { // Each specie
-	  // Jac[j+skip][k+skip-ncomp] = -1.0/H2*C[j][k];
-	  // Jac[j+skip][k+skip]=JJ[i][j][k]+2.0/H2*C[j][k];
-	  // Jac[j+skip][k+skip+ncomp] = -1.0/H2*C[j][k];
-	  Jac.set(j + skip, k + skip - ncomp, -1.0 / H2 * C[j][k]);
-	  Jac.set(j + skip, k + skip, JJ[i][j][k] + 2.0 / H2 * C[j][k]);
-	  Jac.set(j + skip, k + skip + ncomp, -1.0 / H2 * C[j][k]);
-	}
+        for (k = 0; k < ncomp; k++) { // Each specie
+          // Jac[j+skip][k+skip-ncomp] = -1.0/H2*C[j][k];
+          // Jac[j+skip][k+skip]=JJ[i][j][k]+2.0/H2*C[j][k];
+          // Jac[j+skip][k+skip+ncomp] = -1.0/H2*C[j][k];
+          Jac.set(j + skip, k + skip - ncomp, -1.0 / H2 * C[j][k]);
+          Jac.set(j + skip, k + skip, JJ[i][j][k] + 2.0 / H2 * C[j][k]);
+          Jac.set(j + skip, k + skip + ncomp, -1.0 / H2 * C[j][k]);
+        }
       }
     }
 
@@ -488,10 +488,10 @@ public class GTSurfaceTensionFullGT {
     skip = ncomp * (i - 1);
     for (j = 0; j < ncomp; j++) { // Each specie
       for (k = 0; k < ncomp; k++) { // Each specie
-	// Jac[j+skip][k+skip-ncomp] = -1.0/H2*C[j][k];
-	// Jac[j+skip][k+skip]=JJ[i][j][k]+2.0/H2*C[j][k];
-	Jac.set(j + skip, k + skip - ncomp, -1.0 / H2 * C[j][k]);
-	Jac.set(j + skip, k + skip, JJ[i][j][k] + 2.0 / H2 * C[j][k]);
+        // Jac[j+skip][k+skip-ncomp] = -1.0/H2*C[j][k];
+        // Jac[j+skip][k+skip]=JJ[i][j][k]+2.0/H2*C[j][k];
+        Jac.set(j + skip, k + skip - ncomp, -1.0 / H2 * C[j][k]);
+        Jac.set(j + skip, k + skip, JJ[i][j][k] + 2.0 / H2 * C[j][k]);
       }
     }
 
@@ -501,8 +501,8 @@ public class GTSurfaceTensionFullGT {
     iglob = 0;
     for (i = 1; i < Ngrid - 1; i++) { // Inner grid points
       for (j = 0; j < ncomp; j++) { // Each specie
-	bbtmp = drho.get(iglob++, 0); // FIXME: Only debugging
-	rhomat[i][j] += bbtmp; // drho.get(iglob++);
+        bbtmp = drho.get(iglob++, 0); // FIXME: Only debugging
+        rhomat[i][j] += bbtmp; // drho.get(iglob++);
       }
     }
   }
@@ -533,7 +533,7 @@ public class GTSurfaceTensionFullGT {
 
     for (i = 0; i < rrho.length - 1; i++) {
       for (j = 0; j < ncomp; j++) {
-	drhodz[i][j] = (rrho[i + 1][j] - rrho[i][j]) / h;
+        drhodz[i][j] = (rrho[i + 1][j] - rrho[i][j]) / h;
       }
     }
 
@@ -541,11 +541,11 @@ public class GTSurfaceTensionFullGT {
     sigma = 0.0;
     for (j = 0; j < ncomp; j++) {
       for (k = 0; k < ncomp; k++) {
-	drho2 = 0.0;
-	for (i = 0; i < rrho.length - 1; i++) {
-	  drho2 += drhodz[i][j] * drhodz[i][k];
-	}
-	sigma += C[j][k] * drho2;
+        drho2 = 0.0;
+        for (i = 0; i < rrho.length - 1; i++) {
+          drho2 += drhodz[i][j] * drhodz[i][k];
+        }
+        sigma += C[j][k] * drho2;
       }
     }
     sigma *= h * 1.0e-9; // Multiply grid spacing, convert for nm-unit
@@ -583,9 +583,9 @@ public class GTSurfaceTensionFullGT {
     for (j = 0; j < Ngrid - 1; j++) {
       dum = 0.0;
       for (m = 0; m < ncomp; m++) {
-	for (n = 0; n < ncomp; n++) {
-	  dum = drhodz[j][m] * C[m][n] * drhodz[j][n];
-	}
+        for (n = 0; n < ncomp; n++) {
+          dum = drhodz[j][m] * C[m][n] * drhodz[j][n];
+        }
       }
       sumdum += dum * h1;
       zdum += dum * (z[j + 1] * z[j + 1] - z[j] * z[j]) / 2.0;
@@ -654,12 +654,12 @@ public class GTSurfaceTensionFullGT {
 
     for (j = 0; j < M; j++) {
       for (i = 0; i < N; i++) {
-	yy[i] = Math.log10(y[i][j]);
+        yy[i] = Math.log10(y[i][j]);
       }
       if (j == 0) {
-	// plot(x, yy); // removed EasyJccKit.jar
+        // plot(x, yy); // removed EasyJccKit.jar
       } else {
-	// addPlot(x, yy); // removed EasyJccKit.jar
+        // addPlot(x, yy); // removed EasyJccKit.jar
       }
     }
   }
@@ -693,7 +693,7 @@ public class GTSurfaceTensionFullGT {
     }
     if (maxerr > reltol) {
       logger.warn(
-	  "Flash is not properly solved.  Maximum relative error in chemical potential:  " + maxerr + " > " + reltol);
+          "Flash is not properly solved.  Maximum relative error in chemical potential:  " + maxerr + " > " + reltol);
       throw new RuntimeException("Flash not solved!");
     }
   }

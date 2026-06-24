@@ -211,7 +211,7 @@ public class TwoFluidSection extends PipeSection {
    */
   public static TwoFluidSection fromPipeSection(PipeSection base) {
     TwoFluidSection section = new TwoFluidSection(base.getPosition(), base.getLength(), base.getDiameter(),
-	base.getInclination());
+        base.getInclination());
 
     // Copy state
     section.setPressure(base.getPressure());
@@ -384,8 +384,8 @@ public class TwoFluidSection extends PipeSection {
       alphaG = getGasHoldup();
       alphaL = getLiquidHoldup();
       if (Double.isNaN(alphaG) || Double.isNaN(alphaL) || alphaG < 0 || alphaL < 0) {
-	alphaG = 0.5;
-	alphaL = 0.5;
+        alphaG = 0.5;
+        alphaL = 0.5;
       }
       // Split liquid according to preserved water cut
       alphaW = alphaL * calculatedWaterCut;
@@ -417,7 +417,7 @@ public class TwoFluidSection extends PipeSection {
       // Limit velocity to physical range
       vG = Math.max(-100, Math.min(100, vG));
       if (!Double.isNaN(vG)) {
-	setGasVelocity(vG);
+        setGasVelocity(vG);
       }
     }
     if (liquidMassPerLength > 1e-12) {
@@ -425,7 +425,7 @@ public class TwoFluidSection extends PipeSection {
       // Limit velocity to physical range
       vL = Math.max(-50, Math.min(50, vL));
       if (!Double.isNaN(vL)) {
-	setLiquidVelocity(vL);
+        setLiquidVelocity(vL);
       }
     }
 
@@ -440,7 +440,7 @@ public class TwoFluidSection extends PipeSection {
    */
   public double[] getStateVector() {
     return new double[] { gasMassPerLength, oilMassPerLength, waterMassPerLength, gasMomentumPerLength,
-	oilMomentumPerLength, waterMomentumPerLength, energyPerLength };
+        oilMomentumPerLength, waterMomentumPerLength, energyPerLength };
   }
 
   /**
@@ -472,8 +472,8 @@ public class TwoFluidSection extends PipeSection {
       // Split momentum proportionally to mass
       double totalLiqMass = oilMassPerLength + waterMassPerLength;
       if (totalLiqMass > 1e-10) {
-	oilMomentumPerLength = liquidMomentumPerLength * oilMassPerLength / totalLiqMass;
-	waterMomentumPerLength = liquidMomentumPerLength * waterMassPerLength / totalLiqMass;
+        oilMomentumPerLength = liquidMomentumPerLength * oilMassPerLength / totalLiqMass;
+        waterMomentumPerLength = liquidMomentumPerLength * waterMassPerLength / totalLiqMass;
       }
       energyPerLength = state[5];
     } else if (state.length >= 5) {
@@ -497,14 +497,14 @@ public class TwoFluidSection extends PipeSection {
       double vO = oilMomentumPerLength / oilMassPerLength;
       vO = Math.max(-50, Math.min(50, vO)); // Clamp to physical range
       if (!Double.isNaN(vO)) {
-	oilVelocity = vO;
+        oilVelocity = vO;
       }
     }
     if (waterMassPerLength > 1e-12) {
       double vW = waterMomentumPerLength / waterMassPerLength;
       vW = Math.max(-50, Math.min(50, vW)); // Clamp to physical range
       if (!Double.isNaN(vW)) {
-	waterVelocity = vW;
+        waterVelocity = vW;
       }
     }
   }
@@ -545,18 +545,18 @@ public class TwoFluidSection extends PipeSection {
 
       // Use flow regime detector for physics-based viscosity and continuous phase
       if (oilViscosity > 0 && waterViscosity > 0) {
-	double muL;
-	double vMix = getLiquidVelocity();
+        double muL;
+        double vMix = getLiquidVelocity();
 
-	if (oilWaterDetector == null) {
-	  oilWaterDetector = new OilWaterFlowRegimeDetector();
-	}
+        if (oilWaterDetector == null) {
+          oilWaterDetector = new OilWaterFlowRegimeDetector();
+        }
 
-	oilWaterResult = oilWaterDetector.detect(waterCut, vMix, oilDensity, waterDensity, oilViscosity, waterViscosity,
-	    oilWaterInterfacialTension, getDiameter(), getInclination());
+        oilWaterResult = oilWaterDetector.detect(waterCut, vMix, oilDensity, waterDensity, oilViscosity, waterViscosity,
+            oilWaterInterfacialTension, getDiameter(), getInclination());
 
-	muL = oilWaterResult.effectiveViscosity;
-	setLiquidViscosity(muL);
+        muL = oilWaterResult.effectiveViscosity;
+        setLiquidViscosity(muL);
       }
     } else if (waterCut >= 1.0 && waterDensity > 0 && waterViscosity > 0) {
       // Pure water
@@ -696,24 +696,24 @@ public class TwoFluidSection extends PipeSection {
       switch (oilWaterResult.regime) {
       case STRATIFIED:
       case STRATIFIED_WITH_MIXING:
-	f_ow = 0.02;
-	break;
+        f_ow = 0.02;
+        break;
       case DISPERSED_OIL_IN_WATER:
       case DISPERSED_WATER_IN_OIL:
-	f_ow = 0.005;
-	break;
+        f_ow = 0.005;
+        break;
       case DUAL_DISPERSION:
-	f_ow = 0.015;
-	break;
+        f_ow = 0.015;
+        break;
       default:
-	f_ow = 0.01;
-	break;
+        f_ow = 0.01;
+        break;
       }
     } else {
       // Fallback when no regime detection available
       f_ow = 0.01;
       if (waterHoldup > 0.1 && oilHoldup > 0.1) {
-	f_ow = 0.02;
+        f_ow = 0.02;
       }
     }
 
@@ -917,9 +917,9 @@ public class TwoFluidSection extends PipeSection {
       // Ensure they don't exceed the new liquid holdup
       double totalLiqHoldup = oilHoldup + waterHoldup;
       if (totalLiqHoldup > liquidHoldup + 1e-10) {
-	double norm = liquidHoldup / totalLiqHoldup;
-	oilHoldup *= norm;
-	waterHoldup *= norm;
+        double norm = liquidHoldup / totalLiqHoldup;
+        oilHoldup *= norm;
+        waterHoldup *= norm;
       }
     } else if (liquidHoldup > 1e-10) {
       // Old holdup was near zero - use water cut to distribute

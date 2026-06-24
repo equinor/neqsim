@@ -57,8 +57,8 @@ public class RhonePoulencVelocityTest {
       RhonePoulencVelocity nonCorrosive = new RhonePoulencVelocity(RhonePoulencVelocity.ServiceType.NON_CORROSIVE_GAS);
       double[] densities = { 1.0, 5.0, 10.0, 50.0, 100.0, 300.0 };
       for (double rho : densities) {
-	assertTrue(calc.getMaxVelocity(rho) <= nonCorrosive.getMaxVelocity(rho),
-	    "Corrosive velocity should be <= non-corrosive at density=" + rho);
+        assertTrue(calc.getMaxVelocity(rho) <= nonCorrosive.getMaxVelocity(rho),
+            "Corrosive velocity should be <= non-corrosive at density=" + rho);
       }
     }
 
@@ -70,9 +70,9 @@ public class RhonePoulencVelocityTest {
       double prevVelocity = Double.MAX_VALUE;
       double[] densities = { 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0 };
       for (double rho : densities) {
-	double v = calc.getMaxVelocity(rho);
-	assertTrue(v <= prevVelocity, "Velocity should decrease with density: at rho=" + rho + " got v=" + v);
-	prevVelocity = v;
+        double v = calc.getMaxVelocity(rho);
+        assertTrue(v <= prevVelocity, "Velocity should decrease with density: at rho=" + rho + " got v=" + v);
+        prevVelocity = v;
       }
     }
 
@@ -273,7 +273,7 @@ public class RhonePoulencVelocityTest {
       double corrosiveVel = pipe.getRhonePoulencMaxVelocity();
 
       assertTrue(nonCorrosiveVel > corrosiveVel, "Non-corrosive max velocity (" + nonCorrosiveVel
-	  + ") should be higher than corrosive (" + corrosiveVel + ")");
+          + ") should be higher than corrosive (" + corrosiveVel + ")");
     }
   }
 
@@ -360,7 +360,7 @@ public class RhonePoulencVelocityTest {
       double maxAllowable = pipe.getMaxAllowableVelocity();
 
       assertEquals(erosionalVel, maxAllowable, 0.001,
-	  "Without Rhone-Poulenc, max allowable should equal erosional velocity");
+          "Without Rhone-Poulenc, max allowable should equal erosional velocity");
       assertEquals("API_RP_14E", pipe.getMaxVelocityMethod());
     }
 

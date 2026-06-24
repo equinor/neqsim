@@ -35,19 +35,19 @@ public class SulfurSpecificationMethod extends neqsim.standards.Standard {
     thermoSystem.init(0);
     if (returnParameter.equals("H2S")) {
       if (thermoSystem.getPhase(0).hasComponent("H2S")) {
-	H2Scontent = thermoSystem.getPhase(0).getComponent("H2S").getx() * 1e6;
-	return H2Scontent;
+        H2Scontent = thermoSystem.getPhase(0).getComponent("H2S").getx() * 1e6;
+        return H2Scontent;
       } else {
-	return 0.0;
+        return 0.0;
       }
     }
     if (returnParameter.equals("Total sulfur")) {
       double sulfurcontent = 0.0;
       if (thermoSystem.getPhase(0).hasComponent("H2S")) {
-	sulfurcontent += thermoSystem.getPhase(0).getComponent("H2S").getx() * 1e6;
+        sulfurcontent += thermoSystem.getPhase(0).getComponent("H2S").getx() * 1e6;
       }
       if (thermoSystem.getPhase(0).hasComponent("SO2")) {
-	sulfurcontent += thermoSystem.getPhase(0).getComponent("So2").getx() * 1e6;
+        sulfurcontent += thermoSystem.getPhase(0).getComponent("So2").getx() * 1e6;
       }
       return sulfurcontent;
     }

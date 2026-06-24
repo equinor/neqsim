@@ -99,7 +99,7 @@ public class ElectricalDesign implements java.io.Serializable {
     // 2. Size VFD if applicable
     if (useVFD) {
       if (vfd == null) {
-	vfd = new VariableFrequencyDrive();
+        vfd = new VariableFrequencyDrive();
       }
       vfd.sizeVFD(motor);
     }
@@ -198,7 +198,7 @@ public class ElectricalDesign implements java.io.Serializable {
   public String toJson() {
     ElectricalDesignResponse response = new ElectricalDesignResponse(this);
     return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-	.toJson(JsonParser.parseString(response.toJson()));
+        .toJson(JsonParser.parseString(response.toJson()));
   }
 
   // === Getters and Setters ===

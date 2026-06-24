@@ -167,7 +167,7 @@ public class ProcessDiagramExporter implements Serializable {
     sb.append("  // Equipment Nodes\n");
     for (ProcessNode node : graph.getNodes()) {
       if (shouldIncludeNode(node)) {
-	appendNode(sb, node);
+        appendNode(sb, node);
       }
     }
     sb.append("\n");
@@ -176,7 +176,7 @@ public class ProcessDiagramExporter implements Serializable {
     sb.append("  // Stream Connections\n");
     for (ProcessEdge edge : graph.getEdges()) {
       if (shouldIncludeEdge(edge)) {
-	appendEdge(sb, edge);
+        appendEdge(sb, edge);
       }
     }
     sb.append("\n");
@@ -291,30 +291,30 @@ public class ProcessDiagramExporter implements Serializable {
 
     for (ProcessNode node : graph.getNodes()) {
       if (!shouldIncludeNode(node)) {
-	continue;
+        continue;
       }
       String name = node.getName().toLowerCase();
 
       // Keywords that indicate product/exit equipment
       boolean hasProductKeyword = name.contains("export") || name.contains("disposal") || name.contains("vent")
-	  || name.contains("product") || name.contains("outlet") || name.contains("out") || name.contains("rich")
-	  || name.contains("sweet") || name.contains("treated");
+          || name.contains("product") || name.contains("outlet") || name.contains("out") || name.contains("rich")
+          || name.contains("sweet") || name.contains("treated");
 
       // Keywords that indicate feed/inlet equipment
       boolean hasFeedKeyword = name.contains("feed") || name.contains("inlet") || name.contains("well")
-	  || name.contains("lean") || name.contains("sour") || name.contains("raw") || name.contains("untreated");
+          || name.contains("lean") || name.contains("sour") || name.contains("raw") || name.contains("untreated");
 
       // Sink nodes (no outputs) go to the RIGHT - these are terminal equipment
       if (node.isSink()) {
-	productNodes.add(node);
+        productNodes.add(node);
       }
       // Source nodes (no inputs) that aren't product-named go to the LEFT
       else if (node.isSource() && !hasProductKeyword) {
-	feedNodes.add(node);
+        feedNodes.add(node);
       }
       // Product-keyword nodes also go to the RIGHT
       else if (hasProductKeyword && !hasFeedKeyword) {
-	productNodes.add(node);
+        productNodes.add(node);
       }
     }
 
@@ -326,7 +326,7 @@ public class ProcessDiagramExporter implements Serializable {
       sb.append("  // Feed streams/equipment (left side)\n");
       sb.append("  { rank=min; ");
       for (ProcessNode node : feedNodes) {
-	sb.append("\"").append(escapeString(node.getName())).append("\"; ");
+        sb.append("\"").append(escapeString(node.getName())).append("\"; ");
       }
       sb.append("}\n");
     }
@@ -336,7 +336,7 @@ public class ProcessDiagramExporter implements Serializable {
       sb.append("  // Product/Export streams (right side)\n");
       sb.append("  { rank=max; ");
       for (ProcessNode node : productNodes) {
-	sb.append("\"").append(escapeString(node.getName())).append("\"; ");
+        sb.append("\"").append(escapeString(node.getName())).append("\"; ");
       }
       sb.append("}\n");
     }
@@ -348,14 +348,14 @@ public class ProcessDiagramExporter implements Serializable {
       // Find a central processing node (separator or first non-feed/product)
       ProcessNode centralNode = findCentralProcessingNode(graph, feedNodes, productNodes);
       if (centralNode != null) {
-	for (ProcessNode feed : feedNodes) {
-	  sb.append("  \"").append(escapeString(feed.getName())).append("\" -> \"")
-	      .append(escapeString(centralNode.getName())).append("\" [style=invis, weight=0];\n");
-	}
-	for (ProcessNode product : productNodes) {
-	  sb.append("  \"").append(escapeString(centralNode.getName())).append("\" -> \"")
-	      .append(escapeString(product.getName())).append("\" [style=invis, weight=0];\n");
-	}
+        for (ProcessNode feed : feedNodes) {
+          sb.append("  \"").append(escapeString(feed.getName())).append("\" -> \"")
+              .append(escapeString(centralNode.getName())).append("\" [style=invis, weight=0];\n");
+        }
+        for (ProcessNode product : productNodes) {
+          sb.append("  \"").append(escapeString(centralNode.getName())).append("\" -> \"")
+              .append(escapeString(product.getName())).append("\" [style=invis, weight=0];\n");
+        }
       }
     }
 
@@ -378,17 +378,17 @@ public class ProcessDiagramExporter implements Serializable {
     // Look for a separator first (they're typically central)
     for (ProcessNode node : graph.getNodes()) {
       if (feedNodes.contains(node) || productNodes.contains(node)) {
-	continue;
+        continue;
       }
       EquipmentRole role = layoutPolicy.classifyEquipment(node.getEquipment());
       if (role == EquipmentRole.SEPARATOR) {
-	return node;
+        return node;
       }
     }
     // Otherwise return the first non-feed/product node
     for (ProcessNode node : graph.getNodes()) {
       if (!feedNodes.contains(node) && !productNodes.contains(node) && shouldIncludeNode(node)) {
-	return node;
+        return node;
       }
     }
     return null;
@@ -414,10 +414,10 @@ public class ProcessDiagramExporter implements Serializable {
     for (ProcessNode node : graph.getNodes()) {
       // Skip only true feed streams
       if (sourceNodes.contains(node)) {
-	continue;
+        continue;
       }
       if (!shouldIncludeNode(node)) {
-	continue;
+        continue;
       }
 
       PFDLayoutPolicy.PhaseZone zone = layoutPolicy.classifyPhaseZone(node);
@@ -434,21 +434,21 @@ public class ProcessDiagramExporter implements Serializable {
     if (phaseGroups.containsKey(PFDLayoutPolicy.PhaseZone.GAS_TOP)) {
       List<ProcessNode> gasNodes = phaseGroups.get(PFDLayoutPolicy.PhaseZone.GAS_TOP);
       if (!gasNodes.isEmpty()) {
-	gasRep = gasNodes.get(0);
+        gasRep = gasNodes.get(0);
       }
     }
 
     if (phaseGroups.containsKey(PFDLayoutPolicy.PhaseZone.OIL_MIDDLE)) {
       List<ProcessNode> oilNodes = phaseGroups.get(PFDLayoutPolicy.PhaseZone.OIL_MIDDLE);
       if (!oilNodes.isEmpty()) {
-	oilRep = oilNodes.get(0);
+        oilRep = oilNodes.get(0);
       }
     }
 
     if (phaseGroups.containsKey(PFDLayoutPolicy.PhaseZone.WATER_BOTTOM)) {
       List<ProcessNode> waterNodes = phaseGroups.get(PFDLayoutPolicy.PhaseZone.WATER_BOTTOM);
       if (!waterNodes.isEmpty()) {
-	waterRep = waterNodes.get(0);
+        waterRep = waterNodes.get(0);
       }
     }
 
@@ -496,7 +496,7 @@ public class ProcessDiagramExporter implements Serializable {
     if (rankGroups.containsKey(0)) {
       sb.append("  { rank=min; ");
       for (ProcessNode node : rankGroups.get(0)) {
-	sb.append("\"").append(escapeString(node.getName())).append("\"; ");
+        sb.append("\"").append(escapeString(node.getName())).append("\"; ");
       }
       sb.append("}\n");
     }
@@ -505,7 +505,7 @@ public class ProcessDiagramExporter implements Serializable {
     if (rankGroups.containsKey(2)) {
       sb.append("  { rank=max; ");
       for (ProcessNode node : rankGroups.get(2)) {
-	sb.append("\"").append(escapeString(node.getName())).append("\"; ");
+        sb.append("\"").append(escapeString(node.getName())).append("\"; ");
       }
       sb.append("}\n");
     }
@@ -538,16 +538,16 @@ public class ProcessDiagramExporter implements Serializable {
       // Skip feed streams only - they're positioned by rank constraints at left
       // Include sinks (products) in phase zone clusters for proper vertical positioning
       if (sourceNodes.contains(node)) {
-	String name = node.getName().toLowerCase();
-	// But allow source nodes that are product-named to be in clusters
-	boolean isProduct = name.contains("export") || name.contains("disposal") || name.contains("vent")
-	    || name.contains("product") || name.contains("outlet") || name.contains("out");
-	if (!isProduct) {
-	  continue; // Skip true feed streams
-	}
+        String name = node.getName().toLowerCase();
+        // But allow source nodes that are product-named to be in clusters
+        boolean isProduct = name.contains("export") || name.contains("disposal") || name.contains("vent")
+            || name.contains("product") || name.contains("outlet") || name.contains("out");
+        if (!isProduct) {
+          continue; // Skip true feed streams
+        }
       }
       if (!shouldIncludeNode(node)) {
-	continue;
+        continue;
       }
 
       PFDLayoutPolicy.PhaseZone zone = layoutPolicy.classifyPhaseZone(node);
@@ -571,7 +571,7 @@ public class ProcessDiagramExporter implements Serializable {
       // Invisible anchor for ordering
       sb.append("    \"").append(anchorName).append("\" [style=invis, width=0, height=0, label=\"\"];\n");
       for (ProcessNode node : zoneGroups.get(PFDLayoutPolicy.PhaseZone.GAS_TOP)) {
-	sb.append("    \"").append(escapeString(node.getName())).append("\";\n");
+        sb.append("    \"").append(escapeString(node.getName())).append("\";\n");
       }
       sb.append("  }\n\n");
     }
@@ -588,7 +588,7 @@ public class ProcessDiagramExporter implements Serializable {
       // Invisible anchor for ordering
       sb.append("    \"").append(anchorName).append("\" [style=invis, width=0, height=0, label=\"\"];\n");
       for (ProcessNode node : zoneGroups.get(PFDLayoutPolicy.PhaseZone.OIL_MIDDLE)) {
-	sb.append("    \"").append(escapeString(node.getName())).append("\";\n");
+        sb.append("    \"").append(escapeString(node.getName())).append("\";\n");
       }
       sb.append("  }\n\n");
     }
@@ -605,7 +605,7 @@ public class ProcessDiagramExporter implements Serializable {
       // Invisible anchor for ordering
       sb.append("    \"").append(anchorName).append("\" [style=invis, width=0, height=0, label=\"\"];\n");
       for (ProcessNode node : zoneGroups.get(PFDLayoutPolicy.PhaseZone.SEPARATION_CENTER)) {
-	sb.append("    \"").append(escapeString(node.getName())).append("\";\n");
+        sb.append("    \"").append(escapeString(node.getName())).append("\";\n");
       }
       sb.append("  }\n\n");
     }
@@ -622,7 +622,7 @@ public class ProcessDiagramExporter implements Serializable {
       // Invisible anchor for ordering
       sb.append("    \"").append(anchorName).append("\" [style=invis, width=0, height=0, label=\"\"];\n");
       for (ProcessNode node : zoneGroups.get(PFDLayoutPolicy.PhaseZone.WATER_BOTTOM)) {
-	sb.append("    \"").append(escapeString(node.getName())).append("\";\n");
+        sb.append("    \"").append(escapeString(node.getName())).append("\";\n");
       }
       sb.append("  }\n\n");
     }
@@ -634,8 +634,8 @@ public class ProcessDiagramExporter implements Serializable {
       sb.append("  // Force vertical cluster ordering (gas top, water bottom)\n");
       // Chain the anchors in reverse order - target goes above source
       for (int i = clusterAnchors.size() - 1; i > 0; i--) {
-	sb.append("  \"").append(clusterAnchors.get(i)).append("\" -> \"").append(clusterAnchors.get(i - 1))
-	    .append("\" [style=invis, constraint=true, weight=1000];\n");
+        sb.append("  \"").append(clusterAnchors.get(i)).append("\" -> \"").append(clusterAnchors.get(i - 1))
+            .append("\" [style=invis, constraint=true, weight=1000];\n");
       }
       sb.append("\n");
     }
@@ -688,7 +688,7 @@ public class ProcessDiagramExporter implements Serializable {
 
     // Check for special equipment types that need HTML rendering
     if (lowerType.contains("heater") || lowerType.contains("reboiler") || lowerType.contains("cooler")
-	|| lowerType.contains("condenser") || lowerType.contains("heatexchanger")) {
+        || lowerType.contains("condenser") || lowerType.contains("heatexchanger")) {
       appendHeatExchangerNode(sb, node, name, type, lowerType);
       return;
     }
@@ -699,7 +699,7 @@ public class ProcessDiagramExporter implements Serializable {
     }
 
     if (lowerType.contains("column") || lowerType.contains("absorber") || lowerType.contains("stripper")
-	|| lowerType.contains("regenerator") || lowerType.contains("distillation")) {
+        || lowerType.contains("regenerator") || lowerType.contains("distillation")) {
       appendColumnNode(sb, name, type);
       return;
     }
@@ -723,9 +723,9 @@ public class ProcessDiagramExporter implements Serializable {
     if (diagramStyle != DiagramStyle.NEQSIM) {
       String styleFillColor = diagramStyle.getEquipmentFillColor(type);
       if (styleFillColor != null) {
-	// Create a new style with the diagram style colors
-	style = new EquipmentVisualStyle(style.getShape(), styleFillColor, diagramStyle.getEquipmentOutlineColor(),
-	    diagramStyle.getFontColor(), style.getWidth(), style.getHeight(), style.getStyle());
+        // Create a new style with the diagram style colors
+        style = new EquipmentVisualStyle(style.getShape(), styleFillColor, diagramStyle.getEquipmentOutlineColor(),
+            diagramStyle.getFontColor(), style.getWidth(), style.getHeight(), style.getStyle());
       }
     }
 
@@ -965,33 +965,33 @@ public class ProcessDiagramExporter implements Serializable {
       label.append("(").append(type).append(")");
 
       if (detailLevel.showConditions()) {
-	try {
-	  SystemInterface fluid = equipment.getFluid();
-	  if (fluid != null) {
-	    label.append("\n");
-	    label.append(String.format("%.1f °C / %.1f bar", fluid.getTemperature("C"), fluid.getPressure("bara")));
-	  }
-	} catch (Exception e) {
-	  // Ignore - conditions not available
-	}
+        try {
+          SystemInterface fluid = equipment.getFluid();
+          if (fluid != null) {
+            label.append("\n");
+            label.append(String.format("%.1f °C / %.1f bar", fluid.getTemperature("C"), fluid.getPressure("bara")));
+          }
+        } catch (Exception e) {
+          // Ignore - conditions not available
+        }
       }
 
       if (detailLevel.showFlowRates()) {
-	try {
-	  if (equipment instanceof StreamInterface) {
-	    StreamInterface stream = (StreamInterface) equipment;
-	    double flowRate = stream.getFlowRate("kg/hr");
-	    label.append("\n");
-	    label.append(String.format("%.1f kg/hr", flowRate));
-	  }
-	} catch (Exception e) {
-	  // Ignore
-	}
+        try {
+          if (equipment instanceof StreamInterface) {
+            StreamInterface stream = (StreamInterface) equipment;
+            double flowRate = stream.getFlowRate("kg/hr");
+            label.append("\n");
+            label.append(String.format("%.1f kg/hr", flowRate));
+          }
+        } catch (Exception e) {
+          // Ignore
+        }
       }
 
       // Add DEXPI metadata if enabled
       if (showDexpiMetadata) {
-	appendDexpiMetadata(label, equipment);
+        appendDexpiMetadata(label, equipment);
       }
     }
 
@@ -1015,12 +1015,12 @@ public class ProcessDiagramExporter implements Serializable {
       String fluidCode = dexpiUnit.getFluidCode();
 
       if (lineNumber != null && !lineNumber.trim().isEmpty()) {
-	label.append("\n");
-	label.append("Line: ").append(lineNumber);
+        label.append("\n");
+        label.append("Line: ").append(lineNumber);
       }
       if (fluidCode != null && !fluidCode.trim().isEmpty()) {
-	label.append("\n");
-	label.append("Fluid: ").append(fluidCode);
+        label.append("\n");
+        label.append("Fluid: ").append(fluidCode);
       }
     } else if (equipment instanceof DexpiStream) {
       DexpiStream dexpiStream = (DexpiStream) equipment;
@@ -1028,12 +1028,12 @@ public class ProcessDiagramExporter implements Serializable {
       String fluidCode = dexpiStream.getFluidCode();
 
       if (lineNumber != null && !lineNumber.trim().isEmpty()) {
-	label.append("\n");
-	label.append("Line: ").append(lineNumber);
+        label.append("\n");
+        label.append("Line: ").append(lineNumber);
       }
       if (fluidCode != null && !fluidCode.trim().isEmpty()) {
-	label.append("\n");
-	label.append("Fluid: ").append(fluidCode);
+        label.append("\n");
+        label.append("Fluid: ").append(fluidCode);
       }
     }
   }
@@ -1087,34 +1087,34 @@ public class ProcessDiagramExporter implements Serializable {
     if (showStreamValues && edge.getStream() != null) {
       String label = buildStreamLabel(edge.getStream(), isRecycle);
       if (!label.isEmpty()) {
-	if (useStreamTables) {
-	  sb.append(", label=<").append(label).append(">");
-	} else {
-	  sb.append(", label=\"").append(escapeString(label)).append("\"");
-	}
+        if (useStreamTables) {
+          sb.append(", label=<").append(label).append(">");
+        } else {
+          sb.append(", label=\"").append(escapeString(label)).append("\"");
+        }
       }
     }
 
     // Port positioning for separator outlets - routes gas up, oil right, water down
     if (isSeparator(edge.getSource().getEquipment()) && edge.getStream() != null) {
       PFDLayoutPolicy.SeparatorOutlet outlet = layoutPolicy.classifySeparatorOutlet(edge.getSource().getEquipment(),
-	  edge.getStream());
+          edge.getStream());
       sb.append(", tailport=").append(outlet.getPort());
 
       // Add corresponding headport for proper routing
       switch (outlet) {
       case GAS_TOP:
-	sb.append(", headport=s"); // Gas enters target from bottom (coming from above)
-	break;
+        sb.append(", headport=s"); // Gas enters target from bottom (coming from above)
+        break;
       case WATER_BOTTOM:
-	sb.append(", headport=n"); // Water enters target from top (coming from below)
-	break;
+        sb.append(", headport=n"); // Water enters target from top (coming from below)
+        break;
       case OIL_MIDDLE:
       case LIQUID_BOTTOM:
-	sb.append(", headport=w"); // Oil/liquid enters target from left (horizontal flow)
-	break;
+        sb.append(", headport=w"); // Oil/liquid enters target from left (horizontal flow)
+        break;
       default:
-	break;
+        break;
       }
     }
 
@@ -1139,9 +1139,9 @@ public class ProcessDiagramExporter implements Serializable {
   private String buildStreamLabel(StreamInterface stream, boolean isRecycle) {
     try {
       if (useStreamTables) {
-	return buildStreamTableLabel(stream, isRecycle);
+        return buildStreamTableLabel(stream, isRecycle);
       } else {
-	return buildStreamTextLabel(stream, isRecycle);
+        return buildStreamTextLabel(stream, isRecycle);
       }
     } catch (Exception e) {
       return stream.getName();
@@ -1165,23 +1165,23 @@ public class ProcessDiagramExporter implements Serializable {
 
     if (detailLevel.showConditions()) {
       try {
-	SystemInterface fluid = stream.getFluid();
-	if (fluid != null) {
-	  label.append("\n");
-	  label.append(String.format("%.1f°C, %.1f bar", fluid.getTemperature("C"), fluid.getPressure("bara")));
-	}
+        SystemInterface fluid = stream.getFluid();
+        if (fluid != null) {
+          label.append("\n");
+          label.append(String.format("%.1f°C, %.1f bar", fluid.getTemperature("C"), fluid.getPressure("bara")));
+        }
       } catch (Exception e) {
-	// Ignore
+        // Ignore
       }
     }
 
     if (detailLevel.showFlowRates()) {
       try {
-	double flowRate = stream.getFlowRate("kg/hr");
-	label.append("\n");
-	label.append(String.format("%.0f kg/hr", flowRate));
+        double flowRate = stream.getFlowRate("kg/hr");
+        label.append("\n");
+        label.append(String.format("%.0f kg/hr", flowRate));
       } catch (Exception e) {
-	// Ignore
+        // Ignore
       }
     }
 
@@ -1211,23 +1211,23 @@ public class ProcessDiagramExporter implements Serializable {
     try {
       SystemInterface fluid = stream.getFluid();
       if (fluid != null && detailLevel.showConditions()) {
-	// Temperature row
-	html.append("<TR><TD ALIGN=\"LEFT\">T:</TD><TD ALIGN=\"RIGHT\">");
-	html.append(String.format("%.1f °C", fluid.getTemperature("C")));
-	html.append("</TD></TR>");
+        // Temperature row
+        html.append("<TR><TD ALIGN=\"LEFT\">T:</TD><TD ALIGN=\"RIGHT\">");
+        html.append(String.format("%.1f °C", fluid.getTemperature("C")));
+        html.append("</TD></TR>");
 
-	// Pressure row
-	html.append("<TR><TD ALIGN=\"LEFT\">P:</TD><TD ALIGN=\"RIGHT\">");
-	html.append(String.format("%.1f bar", fluid.getPressure("bara")));
-	html.append("</TD></TR>");
+        // Pressure row
+        html.append("<TR><TD ALIGN=\"LEFT\">P:</TD><TD ALIGN=\"RIGHT\">");
+        html.append(String.format("%.1f bar", fluid.getPressure("bara")));
+        html.append("</TD></TR>");
       }
 
       if (detailLevel.showFlowRates()) {
-	// Flow rate row
-	double flowRate = stream.getFlowRate("kg/hr");
-	html.append("<TR><TD ALIGN=\"LEFT\">F:</TD><TD ALIGN=\"RIGHT\">");
-	html.append(String.format("%.0f kg/hr", flowRate));
-	html.append("</TD></TR>");
+        // Flow rate row
+        double flowRate = stream.getFlowRate("kg/hr");
+        html.append("<TR><TD ALIGN=\"LEFT\">F:</TD><TD ALIGN=\"RIGHT\">");
+        html.append(String.format("%.0f kg/hr", flowRate));
+        html.append("</TD></TR>");
       }
     } catch (Exception e) {
       // Ignore
@@ -1311,8 +1311,8 @@ public class ProcessDiagramExporter implements Serializable {
       sb.append("    legend_recycle [label=\"Recycle Stream\" shape=plaintext];\n");
       sb.append("    legend_recycle_line [label=\"\" shape=point width=0];\n");
       sb.append("    legend_recycle -> legend_recycle_line [style=\"dashed,bold\", color=\"")
-	  .append(diagramStyle.getRecycleColor()).append("\", penwidth=").append(diagramStyle.getStreamWidth() + 0.5)
-	  .append(", arrowhead=none];\n");
+          .append(diagramStyle.getRecycleColor()).append("\", penwidth=").append(diagramStyle.getStreamWidth() + 0.5)
+          .append(", arrowhead=none];\n");
     }
 
     sb.append("  }\n");
@@ -1409,15 +1409,15 @@ public class ProcessDiagramExporter implements Serializable {
       // Read output for error handling
       StringBuilder output = new StringBuilder();
       try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-	String line;
-	while ((line = reader.readLine()) != null) {
-	  output.append(line).append("\n");
-	}
+        String line;
+        while ((line = reader.readLine()) != null) {
+          output.append(line).append("\n");
+        }
       }
 
       int exitCode = process.waitFor();
       if (exitCode != 0) {
-	throw new IOException("Graphviz failed with exit code " + exitCode + ": " + output);
+        throw new IOException("Graphviz failed with exit code " + exitCode + ": " + output);
       }
 
       logger.info("Exported {} diagram to: {}", format.toUpperCase(), path);

@@ -44,14 +44,14 @@ public final class MaterialsReviewRunner {
   public static String run(String json) {
     if (json == null || json.trim().isEmpty()) {
       return errorJson("INPUT_ERROR", "JSON input is null or empty",
-	  "Provide processJson, materialsRegister/items, or stidData.");
+          "Provide processJson, materialsRegister/items, or stidData.");
     }
     JsonObject input;
     try {
       input = JsonParser.parseString(json).getAsJsonObject();
     } catch (Exception ex) {
       return errorJson("JSON_PARSE_ERROR", "Failed to parse materials-review JSON input.",
-	  "Ensure the input JSON is well formed and does not contain comments or trailing commas.");
+          "Ensure the input JSON is well formed and does not contain comments or trailing commas.");
     }
 
     long startTime = System.currentTimeMillis();
@@ -61,25 +61,25 @@ public final class MaterialsReviewRunner {
       MaterialsReviewReport report;
       JsonArray warnings = new JsonArray();
       if (input.has("processJson")) {
-	SimulationResult processResult = ProcessSystem.fromJsonAndRun(processJsonAsString(input));
-	if (processResult.isError()) {
-	  return errorJson("PROCESS_SIMULATION_ERROR", "Process JSON failed to run",
-	      "Run runProcess first and fix process JSON errors before materials review.");
-	}
-	for (String warning : processResult.getWarnings()) {
-	  warnings.add(warning);
-	}
-	report = engine.evaluate(processResult.getProcessSystem(), registerInput);
+        SimulationResult processResult = ProcessSystem.fromJsonAndRun(processJsonAsString(input));
+        if (processResult.isError()) {
+          return errorJson("PROCESS_SIMULATION_ERROR", "Process JSON failed to run",
+              "Run runProcess first and fix process JSON errors before materials review.");
+        }
+        for (String warning : processResult.getWarnings()) {
+          warnings.add(warning);
+        }
+        report = engine.evaluate(processResult.getProcessSystem(), registerInput);
       } else {
-	if (registerInput.getItems().isEmpty()) {
-	  return errorJson("MISSING_MATERIALS_DATA", "No materialsRegister/items/stidData or processJson was supplied",
-	      "Provide at least one review item or a runnable processJson object.");
-	}
-	report = engine.evaluate(registerInput);
+        if (registerInput.getItems().isEmpty()) {
+          return errorJson("MISSING_MATERIALS_DATA", "No materialsRegister/items/stidData or processJson was supplied",
+              "Provide at least one review item or a runnable processJson object.");
+        }
+        report = engine.evaluate(registerInput);
       }
       JsonObject root = JsonParser.parseString(report.toJson()).getAsJsonObject();
       if (warnings.size() > 0) {
-	root.add("processWarnings", warnings);
+        root.add("processWarnings", warnings);
       }
       ResultProvenance provenance = new ResultProvenance();
       provenance.setCalculationType("materials review");
@@ -89,7 +89,7 @@ public final class MaterialsReviewRunner {
       return GSON.toJson(root);
     } catch (Exception ex) {
       return errorJson("MATERIALS_REVIEW_ERROR", "Materials review failed during evaluation.",
-	  "Check material register keys, numeric units, and process JSON compatibility.");
+          "Check material register keys, numeric units, and process JSON compatibility.");
     }
   }
 

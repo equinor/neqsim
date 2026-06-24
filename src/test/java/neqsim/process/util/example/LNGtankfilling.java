@@ -49,7 +49,7 @@ public class LNGtankfilling {
     testSystem2.setMixingRule(2);
 
     neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	testSystem);
+        testSystem);
     ops.TPflash();
     testSystem.display();
 
@@ -107,7 +107,7 @@ public class LNGtankfilling {
       operations.runTransient();
       // operations.displayResult();
       if (i % 6 == 0) {
-	tank.displayResult();
+        tank.displayResult();
       }
     }
 
@@ -118,7 +118,7 @@ public class LNGtankfilling {
       operations.runTransient();
       // operations.displayResult();
       if (i % 6 == 0) {
-	tank.displayResult();
+        tank.displayResult();
       }
     }
 
@@ -130,7 +130,7 @@ public class LNGtankfilling {
       operations.runTransient();
       // operations.displayResult();
       if (i % 6 == 0) {
-	tank.displayResult();
+        tank.displayResult();
       }
     }
 
@@ -142,7 +142,7 @@ public class LNGtankfilling {
       operations.runTransient();
       // operations.displayResult();
       if (i % 6 == 0) {
-	tank.displayResult();
+        tank.displayResult();
       }
     }
 
@@ -152,7 +152,7 @@ public class LNGtankfilling {
       operations.runTransient();
       // operations.displayResult();
       if (i % 6 == 0) {
-	tank.displayResult();
+        tank.displayResult();
       }
     }
 
@@ -162,7 +162,7 @@ public class LNGtankfilling {
       operations.runTransient();
       // operations.displayResult();
       if (i % 6 == 0) {
-	tank.displayResult();
+        tank.displayResult();
       }
     }
 
@@ -172,7 +172,7 @@ public class LNGtankfilling {
       operations.runTransient();
       // operations.displayResult();
       if (i % 6 == 0) {
-	tank.displayResult();
+        tank.displayResult();
       }
     }
 

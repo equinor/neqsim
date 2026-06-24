@@ -257,7 +257,7 @@ public class WellToOilStabilizationExampleTest {
     logger.info(String.format("   Inlet Pressure:        %.1f bara", flowline.getInletStream().getPressure("bara")));
     logger.info(String.format("   Outlet Pressure:       %.1f bara", flowline.getOutletStream().getPressure("bara")));
     logger.info(String.format("   Pressure Drop:         %.1f bar",
-	flowline.getInletStream().getPressure("bara") - flowline.getOutletStream().getPressure("bara")));
+        flowline.getInletStream().getPressure("bara") - flowline.getOutletStream().getPressure("bara")));
 
     // Choke
     logger.info("\n--- INLET CHOKE ---");
@@ -267,22 +267,22 @@ public class WellToOilStabilizationExampleTest {
     // Separation
     logger.info("\n--- SEPARATION TRAIN ---");
     logger.info(
-	String.format("   HP Sep Gas:            %.1f Sm³/day", hpSeparator.getGasOutStream().getFlowRate("Sm3/day")));
+        String.format("   HP Sep Gas:            %.1f Sm³/day", hpSeparator.getGasOutStream().getFlowRate("Sm3/day")));
     logger.info(
-	String.format("   MP Sep Gas:            %.1f Sm³/day", mpSeparator.getGasOutStream().getFlowRate("Sm3/day")));
+        String.format("   MP Sep Gas:            %.1f Sm³/day", mpSeparator.getGasOutStream().getFlowRate("Sm3/day")));
     logger.info(
-	String.format("   LP Sep Gas:            %.1f Sm³/day", lpSeparator.getGasOutStream().getFlowRate("Sm3/day")));
+        String.format("   LP Sep Gas:            %.1f Sm³/day", lpSeparator.getGasOutStream().getFlowRate("Sm3/day")));
 
     // Products
     logger.info("\n--- PRODUCT STREAMS ---");
     logger.info(String.format("   Stabilized Oil Rate:   %.1f Sm³/day",
-	lpSeparator.getLiquidOutStream().getFlowRate("Sm3/day")));
+        lpSeparator.getLiquidOutStream().getFlowRate("Sm3/day")));
     logger.info(
-	String.format("   Stabilized Oil Pressure: %.1f bara", lpSeparator.getLiquidOutStream().getPressure("bara")));
+        String.format("   Stabilized Oil Pressure: %.1f bara", lpSeparator.getLiquidOutStream().getPressure("bara")));
     logger.info(
-	String.format("   Export Gas Rate:       %.1f Sm³/day", exportCooler.getOutletStream().getFlowRate("Sm3/day")));
+        String.format("   Export Gas Rate:       %.1f Sm³/day", exportCooler.getOutletStream().getFlowRate("Sm3/day")));
     logger
-	.info(String.format("   Export Gas Pressure:   %.1f bara", exportCooler.getOutletStream().getPressure("bara")));
+        .info(String.format("   Export Gas Pressure:   %.1f bara", exportCooler.getOutletStream().getPressure("bara")));
 
     // Compression power
     logger.info("\n--- COMPRESSION POWER ---");

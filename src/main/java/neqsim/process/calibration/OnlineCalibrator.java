@@ -43,7 +43,7 @@ public class OnlineCalibrator implements Serializable {
     private final Map<String, Double> conditions;
 
     public DataPoint(Map<String, Double> measurements, Map<String, Double> predictions,
-	Map<String, Double> conditions) {
+        Map<String, Double> conditions) {
       this.timestamp = Instant.now();
       this.measurements = new HashMap<>(measurements);
       this.predictions = new HashMap<>(predictions);
@@ -70,7 +70,7 @@ public class OnlineCalibrator implements Serializable {
       Double meas = measurements.get(variable);
       Double pred = predictions.get(variable);
       if (meas != null && pred != null) {
-	return meas - pred;
+        return meas - pred;
       }
       return Double.NaN;
     }
@@ -78,7 +78,7 @@ public class OnlineCalibrator implements Serializable {
     public double getRelativeError(String variable) {
       Double meas = measurements.get(variable);
       if (meas != null && Math.abs(meas) > 1e-10) {
-	return getError(variable) / meas;
+        return getError(variable) / meas;
       }
       return Double.NaN;
     }
@@ -166,7 +166,7 @@ public class OnlineCalibrator implements Serializable {
     for (String variable : point.getMeasurements().keySet()) {
       double relError = Math.abs(point.getRelativeError(variable));
       if (!Double.isNaN(relError) && relError > deviationThreshold) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -193,9 +193,9 @@ public class OnlineCalibrator implements Serializable {
       Double meas = measurements.get(variable);
       Double pred = predictions.get(variable);
       if (meas != null && pred != null && Math.abs(pred) > 1e-10) {
-	double ratio = meas / pred;
-	totalError += Math.abs(1 - ratio);
-	errorCount++;
+        double ratio = meas / pred;
+        totalError += Math.abs(1 - ratio);
+        errorCount++;
       }
     }
 
@@ -231,17 +231,17 @@ public class OnlineCalibrator implements Serializable {
 
     for (DataPoint point : calibrationHistory) {
       for (String variable : point.getMeasurements().keySet()) {
-	double error = point.getError(variable);
-	if (!Double.isNaN(error)) {
-	  // Simple feature: conditions
-	  double[] feature = new double[point.getConditions().size()];
-	  int i = 0;
-	  for (Double val : point.getConditions().values()) {
-	    feature[i++] = val;
-	  }
-	  features.add(feature);
-	  targets.add(error);
-	}
+        double error = point.getError(variable);
+        if (!Double.isNaN(error)) {
+          // Simple feature: conditions
+          double[] feature = new double[point.getConditions().size()];
+          int i = 0;
+          for (Double val : point.getConditions().values()) {
+            feature[i++] = val;
+          }
+          features.add(feature);
+          targets.add(error);
+        }
       }
     }
 
@@ -289,23 +289,23 @@ public class OnlineCalibrator implements Serializable {
 
     for (DataPoint point : calibrationHistory) {
       for (String variable : point.getMeasurements().keySet()) {
-	Double meas = point.getMeasurements().get(variable);
-	if (meas != null) {
-	  mean += meas;
-	  count++;
-	}
+        Double meas = point.getMeasurements().get(variable);
+        if (meas != null) {
+          mean += meas;
+          count++;
+        }
       }
     }
     mean = (count > 0) ? mean / count : 0;
 
     for (DataPoint point : calibrationHistory) {
       for (String variable : point.getMeasurements().keySet()) {
-	Double meas = point.getMeasurements().get(variable);
-	Double pred = point.getPredictions().get(variable);
-	if (meas != null && pred != null) {
-	  sumSquaredTotal += (meas - mean) * (meas - mean);
-	  sumSquaredResidual += (meas - pred) * (meas - pred);
-	}
+        Double meas = point.getMeasurements().get(variable);
+        Double pred = point.getPredictions().get(variable);
+        if (meas != null && pred != null) {
+          sumSquaredTotal += (meas - mean) * (meas - mean);
+          sumSquaredResidual += (meas - pred) * (meas - pred);
+        }
       }
     }
 

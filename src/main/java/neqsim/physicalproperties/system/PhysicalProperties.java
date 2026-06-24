@@ -294,7 +294,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    */
   public boolean isPFCTViscosityModel() {
     return viscosityCalc instanceof PFCTViscosityMethod || viscosityCalc instanceof PFCTViscosityMethodMod86
-	|| viscosityCalc instanceof PFCTViscosityMethodHeavyOil;
+        || viscosityCalc instanceof PFCTViscosityMethodHeavyOil;
   }
 
   /**
@@ -394,7 +394,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
       diffusivityCalc = new CorrespondingStatesDiffusivity(this);
     } else if ("Chapman-Enskog".equals(model)) {
       neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity ceModel = new neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity(
-	  this);
+          this);
       ceModel.setUseDiffusionLJOverride(true);
       diffusivityCalc = ceModel;
     } else if ("Wilke Lee".equals(model)) {
@@ -558,8 +558,8 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    */
   public double getViscosityOfWaxyOil(double waxVolumeFraction, double shareRate) {
     return viscosity * (Math.exp(waxViscosityParameter[0] * waxVolumeFraction)
-	+ waxViscosityParameter[1] * waxVolumeFraction / Math.sqrt(shareRate)
-	+ waxViscosityParameter[2] * Math.pow(waxVolumeFraction, 4.0) / shareRate);
+        + waxViscosityParameter[1] * waxVolumeFraction / Math.sqrt(shareRate)
+        + waxViscosityParameter[2] * Math.pow(waxVolumeFraction, 4.0) / shareRate);
   }
 
   /**
@@ -646,7 +646,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    */
   public double getDiffusionCoefficient(String comp1, String comp2) {
     return diffusivityCalc.getMaxwellStefanBinaryDiffusionCoefficient(phase.getComponent(comp1).getComponentNumber(),
-	phase.getComponent(comp2).getComponentNumber());
+        phase.getComponent(comp2).getComponentNumber());
   }
 
   /**

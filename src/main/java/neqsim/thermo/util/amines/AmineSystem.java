@@ -263,10 +263,10 @@ public class AmineSystem implements java.io.Serializable {
     List<String> species = AMINE_SPECIES.get(amineType);
     if (species != null) {
       for (String comp : species) {
-	double molFrac = getInitialMolFraction(comp);
-	if (molFrac > 0) {
-	  system.addComponent(comp, molFrac);
-	}
+        double molFrac = getInitialMolFraction(comp);
+        if (molFrac > 0) {
+          system.addComponent(comp, molFrac);
+        }
       }
     }
 
@@ -304,25 +304,25 @@ public class AmineSystem implements java.io.Serializable {
     switch (amineType) {
     case MEA:
       if ("MEA".equals(componentName)) {
-	return amineMolFraction;
+        return amineMolFraction;
       }
       break;
     case DEA:
       if ("DEA".equals(componentName)) {
-	return amineMolFraction;
+        return amineMolFraction;
       }
       break;
     case MDEA:
       if ("MDEA".equals(componentName)) {
-	return amineMolFraction;
+        return amineMolFraction;
       }
       break;
     case AMDEA:
       if ("MDEA".equals(componentName)) {
-	return amineMolFraction;
+        return amineMolFraction;
       }
       if ("Piperazine".equals(componentName)) {
-	return piperazineMolFraction;
+        return piperazineMolFraction;
       }
       break;
     default:

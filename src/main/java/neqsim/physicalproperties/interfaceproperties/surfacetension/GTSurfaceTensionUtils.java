@@ -50,7 +50,7 @@ public class GTSurfaceTensionUtils {
 
     for (i = 0; i < ncomp; i++) {
       if (rho[i] < 0.) {
-	throw new RuntimeException("Number density is negative.");
+        throw new RuntimeException("Number density is negative.");
       }
       // ComponentInterface component = phase.getComponent(i);
       n = rho[i] * Pa;
@@ -74,10 +74,10 @@ public class GTSurfaceTensionUtils {
     for (i = 0; i < ncomp; i++) {
       mu[i] = sys.getPhase(0).getComponent(i).getChemicalPotential(sys.getPhase(0));
       if (Double.isNaN(mu[i])) {
-	throw new RuntimeException("Thermo returned NaN for chemical potential.");
+        throw new RuntimeException("Thermo returned NaN for chemical potential.");
       }
       for (j = 0; j < ncomp; j++) {
-	dmu_drho[i][j] = sys.getPhase(0).getComponent(i).getChemicalPotentialdNTV(j, sys.getPhase(0)) * Pa;
+        dmu_drho[i][j] = sys.getPhase(0).getComponent(i).getChemicalPotentialdNTV(j, sys.getPhase(0)) * Pa;
       }
     }
     p[0] = sys.getPhase(0).getPressure() / Pa;

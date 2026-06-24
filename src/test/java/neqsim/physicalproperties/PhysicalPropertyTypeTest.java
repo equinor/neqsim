@@ -24,7 +24,7 @@ public class PhysicalPropertyTypeTest {
     assertEquals(PhysicalPropertyType.byName("viscosity"), PhysicalPropertyType.DYNAMIC_VISCOSITY);
 
     RuntimeException ex = assertThrows(RuntimeException.class, () -> PhysicalPropertyType.byName(null),
-	"null input should be rejected");
+        "null input should be rejected");
     assertEquals(InvalidInputException.class, ex.getCause().getClass());
   }
 

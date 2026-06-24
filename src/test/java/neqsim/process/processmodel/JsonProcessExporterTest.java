@@ -183,13 +183,13 @@ class JsonProcessExporterTest {
     chart.setHeadUnit("kJ/kg");
     chart.setUseRealKappa(true);
     chart.setCurves(new double[] { 18.0, 288.15, 45.0, 0.9 }, new double[] { 8000.0, 10000.0 },
-	new double[][] { { 800.0, 1000.0, 1200.0 }, { 900.0, 1100.0, 1300.0 } },
-	new double[][] { { 90.0, 85.0, 75.0 }, { 110.0, 103.0, 92.0 } },
-	new double[][] { { 72.0, 78.0, 74.0 }, { 73.0, 79.0, 75.0 } });
+        new double[][] { { 800.0, 1000.0, 1200.0 }, { 900.0, 1100.0, 1300.0 } },
+        new double[][] { { 90.0, 85.0, 75.0 }, { 110.0, 103.0, 92.0 } },
+        new double[][] { { 72.0, 78.0, 74.0 }, { 73.0, 79.0, 75.0 } });
     chart.getSurgeCurve().setCurve(new double[] { 18.0, 288.15, 45.0, 0.9 }, new double[] { 780.0, 830.0, 880.0 },
-	new double[] { 92.0, 101.0, 112.0 });
+        new double[] { 92.0, 101.0, 112.0 });
     chart.getStoneWallCurve().setCurve(new double[] { 18.0, 288.15, 45.0, 0.9 },
-	new double[] { 1220.0, 1270.0, 1320.0 }, new double[] { 74.0, 82.0, 91.0 });
+        new double[] { 1220.0, 1270.0, 1320.0 }, new double[] { 74.0, 82.0, 91.0 });
     compressor.getAntiSurge().setActive(true);
     compressor.getAntiSurge().setControlStrategy(neqsim.process.equipment.compressor.AntiSurge.ControlStrategy.PID);
     compressor.getAntiSurge().setSurgeControlFactor(1.12);
@@ -386,7 +386,7 @@ class JsonProcessExporterTest {
     assertTrue("Splitter".equals(splitterJson.get("type").getAsString()));
     assertTrue(splitterJson.has("properties"), "Splitter should have properties");
     assertTrue(splitterJson.getAsJsonObject("properties").has("splitFactors"),
-	"Splitter properties should have splitFactors");
+        "Splitter properties should have splitFactors");
   }
 
   @Test
@@ -459,7 +459,7 @@ class JsonProcessExporterTest {
     assertEquals(0.65, rebuiltFluid.getPhase(0).getComponent("C7_PC").getz(), 1.0e-12);
     assertEquals(0.0123, rebuiltFluid.getPhase(0).getComponent("methane").getVolumeCorrectionConst(), 1.0e-12);
     assertEquals(0.45724, ((ComponentEos) rebuiltFluid.getPhase(0).getComponent("methane")).getOmegaAOverride(),
-	1.0e-12);
+        1.0e-12);
     assertEquals(0.0456, rebuiltFluid.getPhase(0).getComponent("C7_PC").getVolumeCorrectionConst(), 1.0e-12);
     assertEquals(0.8123, rebuiltFluid.getPhase(0).getComponent("C7_PC").getCriticalVolume(), 1.0e-12);
     assertEquals(444.4, rebuiltFluid.getPhase(0).getComponent("C7_PC").getParachorParameter(), 1.0e-12);
@@ -492,7 +492,7 @@ class JsonProcessExporterTest {
 
     Stream rebuiltFeed = (Stream) result.getProcessSystem().getUnit("gas feed");
     EosMixingRulesInterface rebuiltMixingRule = (EosMixingRulesInterface) rebuiltFeed.getFluid().getPhase(0)
-	.getMixingRule();
+        .getMixingRule();
     int methaneIndex = rebuiltFeed.getFluid().getComponent("methane").getComponentNumber();
     int ethaneIndex = rebuiltFeed.getFluid().getComponent("ethane").getComponentNumber();
     int propaneIndex = rebuiltFeed.getFluid().getComponent("propane").getComponentNumber();
@@ -755,9 +755,9 @@ class JsonProcessExporterTest {
 
     // Verify unit counts match
     assertTrue(rebuilt.get("separation").getUnitOperations().size() >= 2,
-	"separation area should have at least feed + separator");
+        "separation area should have at least feed + separator");
     assertTrue(rebuilt.get("compression").getUnitOperations().size() >= 2,
-	"compression area should have at least feed + compressor");
+        "compression area should have at least feed + compressor");
   }
 
   @Test
@@ -812,13 +812,13 @@ class JsonProcessExporterTest {
     SimulationResult result = new JsonProcessBuilder().build(downstreamJson.toString());
     assertTrue(result.isSuccess(), "Downstream area should rebuild: " + result.toJson());
     assertTrue(result.getWarnings().isEmpty(),
-	"Materialized boundary stream should avoid unresolved inlet warnings: " + result.getWarnings());
+        "Materialized boundary stream should avoid unresolved inlet warnings: " + result.getWarnings());
 
     ProcessModel rebuilt = ProcessModel.fromJson(json);
     Separator rebuiltSeparator = (Separator) rebuilt.get("separation").getUnit("HP Sep");
     Cooler rebuiltCooler = (Cooler) rebuilt.get("downstream").getUnit("Downstream Cooler");
     assertTrue(rebuiltCooler.getInletStreams().get(0) == rebuiltSeparator.getGasOutStream(),
-	"Whole-model import should restore the live shared stream, not only the boundary copy");
+        "Whole-model import should restore the live shared stream, not only the boundary copy");
   }
 
   @Test
@@ -890,7 +890,7 @@ class JsonProcessExporterTest {
     SimulationResult result = ProcessSystem.fromJsonAndRun(json);
     assertTrue(result.isSuccess(), "Manifold process should rebuild: " + result.toJson());
     assertTrue(result.getWarnings().isEmpty(),
-	"Manifold round-trip should not produce warnings: " + result.getWarnings());
+        "Manifold round-trip should not produce warnings: " + result.getWarnings());
 
     Manifold rebuilt = (Manifold) result.getProcessSystem().getUnit("test manifold");
     assertEquals(2, rebuilt.getInletStreams().size());
@@ -931,12 +931,12 @@ class JsonProcessExporterTest {
     assertEquals(2, heatExchangerJson.getAsJsonArray("inlets").size());
     assertEquals(1000.0, heatExchangerJson.getAsJsonObject("properties").get("UAvalue").getAsDouble(), 1.0e-12);
     assertEquals(273.15 + 45.0,
-	heatExchangerJson.getAsJsonObject("properties").getAsJsonArray("guessOutTemperature").get(0).getAsDouble(),
-	1.0e-12);
+        heatExchangerJson.getAsJsonObject("properties").getAsJsonArray("guessOutTemperature").get(0).getAsDouble(),
+        1.0e-12);
 
     SimulationResult result = ProcessSystem.fromJsonAndRun(json);
     assertTrue(result.isSuccess(), "Heat exchanger process should rebuild: " + result.toJson());
     assertTrue(result.getWarnings().isEmpty(),
-	"Heat exchanger round-trip should not produce warnings: " + result.getWarnings());
+        "Heat exchanger round-trip should not produce warnings: " + result.getWarnings());
   }
 }

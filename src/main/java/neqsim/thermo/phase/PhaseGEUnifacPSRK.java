@@ -43,8 +43,8 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
     componentArray = new ComponentGEUnifac[alpha[0].length];
     for (int i = 0; i < alpha[0].length; i++) {
       componentArray[i] = new ComponentGEUnifacPSRK(phase.getComponent(i).getName(),
-	  phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
-	  phase.getComponent(i).getComponentNumber());
+          phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
+          phase.getComponent(i).getComponentNumber());
     }
     this.setMixingRule(EosMixingRuleType.CLASSIC);
   }
@@ -74,7 +74,7 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
     double GE = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       GE += phase.getComponent(i).getx() * Math
-	  .log(((ComponentGEUniquac) componentArray[i]).getGamma(phase, numberOfComponents, temperature, pressure, pt));
+          .log(((ComponentGEUniquac) componentArray[i]).getGamma(phase, numberOfComponents, temperature, pressure, pt));
     }
     return R * phase.getTemperature() * phase.getNumberOfMolesInPhase() * GE;
   }
@@ -84,31 +84,31 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
    */
   public void calcbij() {
     bij = new double[((ComponentGEUnifac) getComponent(0))
-	.getNumberOfUNIFACgroups()][((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups()];
+        .getNumberOfUNIFACgroups()][((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups()];
     for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
       for (int j = 0; j < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); j++) {
-	try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
-	  java.sql.ResultSet dataSet = null;
-	  try {
-	    dataSet = database.getResultSet(("SELECT * FROM unifacinterparamb WHERE MainGroup="
-		+ ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
-	    dataSet.next();
-	    dataSet.getClob("MainGroup");
-	  } catch (Exception ex) {
-	    dataSet.close();
-	    logger.error(ex.getMessage(), ex);
-	    dataSet = database.getResultSet(("SELECT * FROM unifacinterparamb WHERE MainGroup="
-		+ ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
-	    dataSet.next();
-	  }
+        try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
+          java.sql.ResultSet dataSet = null;
+          try {
+            dataSet = database.getResultSet(("SELECT * FROM unifacinterparamb WHERE MainGroup="
+                + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+            dataSet.next();
+            dataSet.getClob("MainGroup");
+          } catch (Exception ex) {
+            dataSet.close();
+            logger.error(ex.getMessage(), ex);
+            dataSet = database.getResultSet(("SELECT * FROM unifacinterparamb WHERE MainGroup="
+                + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+            dataSet.next();
+          }
 
-	  bij[i][j] = Double.parseDouble(
-	      dataSet.getString("n" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(j).getMainGroup() + ""));
-	  // System.out.println("aij " + aij[i][j]);
-	  dataSet.close();
-	} catch (Exception ex) {
-	  logger.error(ex.getMessage(), ex);
-	}
+          bij[i][j] = Double.parseDouble(
+              dataSet.getString("n" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(j).getMainGroup() + ""));
+          // System.out.println("aij " + aij[i][j]);
+          dataSet.close();
+        } catch (Exception ex) {
+          logger.error(ex.getMessage(), ex);
+        }
       }
     }
     logger.info("finished finding interaction coefficient...B");
@@ -119,31 +119,31 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
    */
   public void calccij() {
     cij = new double[((ComponentGEUnifac) getComponent(0))
-	.getNumberOfUNIFACgroups()][((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups()];
+        .getNumberOfUNIFACgroups()][((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups()];
     for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
       for (int j = 0; j < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); j++) {
-	try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
-	  java.sql.ResultSet dataSet = null;
-	  try {
-	    dataSet = database.getResultSet(("SELECT * FROM unifacinterparamc WHERE MainGroup="
-		+ ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
-	    dataSet.next();
-	    dataSet.getClob("MainGroup");
-	  } catch (Exception ex) {
-	    logger.error(ex.getMessage(), ex);
-	    dataSet.close();
-	    dataSet = database.getResultSet(("SELECT * FROM unifacinterparamc WHERE MainGroup="
-		+ ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
-	    dataSet.next();
-	  }
+        try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
+          java.sql.ResultSet dataSet = null;
+          try {
+            dataSet = database.getResultSet(("SELECT * FROM unifacinterparamc WHERE MainGroup="
+                + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+            dataSet.next();
+            dataSet.getClob("MainGroup");
+          } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            dataSet.close();
+            dataSet = database.getResultSet(("SELECT * FROM unifacinterparamc WHERE MainGroup="
+                + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+            dataSet.next();
+          }
 
-	  cij[i][j] = Double.parseDouble(
-	      dataSet.getString("n" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(j).getMainGroup() + ""));
-	  // System.out.println("aij " + aij[i][j]);
-	  dataSet.close();
-	} catch (Exception ex) {
-	  logger.error(ex.getMessage(), ex);
-	}
+          cij[i][j] = Double.parseDouble(
+              dataSet.getString("n" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(j).getMainGroup() + ""));
+          // System.out.println("aij " + aij[i][j]);
+          dataSet.close();
+        } catch (Exception ex) {
+          logger.error(ex.getMessage(), ex);
+        }
       }
     }
     logger.info("finished finding interaction coefficient...C");

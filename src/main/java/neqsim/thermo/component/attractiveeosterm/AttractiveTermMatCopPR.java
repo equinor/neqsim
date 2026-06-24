@@ -23,7 +23,7 @@ public class AttractiveTermMatCopPR extends AttractiveTermPr {
   public AttractiveTermMatCopPR(ComponentEosInterface component) {
     super(component);
     m = (0.37464 + 1.54226 * component.getAcentricFactor()
-	- 0.26992 * component.getAcentricFactor() * component.getAcentricFactor());
+        - 0.26992 * component.getAcentricFactor() * component.getAcentricFactor());
 
     if (component.getName().equals("water")) {
       parameters[0] = 0.91256735118818810000000000;
@@ -85,7 +85,7 @@ public class AttractiveTermMatCopPR extends AttractiveTermPr {
       double Tr = temperature / getComponent().getTC();
       double trRoot = 1.0 - Math.sqrt(Tr);
       double temp = 1.0 + parameters[0] * trRoot + parameters[1] * trRoot * trRoot
-	  + parameters[2] * trRoot * trRoot * trRoot;
+          + parameters[2] * trRoot * trRoot * trRoot;
       return temp * temp;
     }
   }
@@ -111,9 +111,9 @@ public class AttractiveTermMatCopPR extends AttractiveTermPr {
     double TC = getComponent().getTC();
     double rootTR = 1.0 - Math.sqrt(Tr);
     return 2.0
-	* (1.0 + parameters[0] * rootTR + parameters[1] * rootTR * rootTR + parameters[2] * rootTR * rootTR * rootTR)
-	* (-parameters[0] / Math.sqrt(Tr) / TC / 2.0 - parameters[1] * rootTR / Math.sqrt(Tr) / TC
-	    - 3.0 / 2.0 * parameters[2] * rootTR * rootTR / Math.sqrt(Tr) / TC);
+        * (1.0 + parameters[0] * rootTR + parameters[1] * rootTR * rootTR + parameters[2] * rootTR * rootTR * rootTR)
+        * (-parameters[0] / Math.sqrt(Tr) / TC / 2.0 - parameters[1] * rootTR / Math.sqrt(Tr) / TC
+            - 3.0 / 2.0 * parameters[2] * rootTR * rootTR / Math.sqrt(Tr) / TC);
   }
 
   /** {@inheritDoc} */
@@ -127,15 +127,15 @@ public class AttractiveTermMatCopPR extends AttractiveTermPr {
     double TC = getComponent().getTC();
     double rootTR = 1.0 - Math.sqrt(Tr);
     return 2.0
-	* Math.pow(-parameters[0] / Math.sqrt(Tr) / TC / 2.0 - parameters[1] * rootTR / Math.sqrt(Tr) / TC
-	    - 3.0 / 2.0 * parameters[2] * rootTR * rootTR / Math.sqrt(Tr) / TC, 2.0)
-	+ 2.0
-	    * (1.0 + parameters[0] * rootTR + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
-		+ parameters[2] * rootTR * rootTR * rootTR)
-	    * (parameters[0] / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 4.0 + parameters[1] / temperature / TC / 2.0
-		+ parameters[1] * rootTR / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 2.0
-		+ 3.0 / 2.0 * parameters[2] * rootTR / temperature / TC
-		+ 3.0 / 4.0 * parameters[2] * rootTR * rootTR / Math.sqrt(Tr * Tr * Tr) / (TC * TC));
+        * Math.pow(-parameters[0] / Math.sqrt(Tr) / TC / 2.0 - parameters[1] * rootTR / Math.sqrt(Tr) / TC
+            - 3.0 / 2.0 * parameters[2] * rootTR * rootTR / Math.sqrt(Tr) / TC, 2.0)
+        + 2.0
+            * (1.0 + parameters[0] * rootTR + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
+                + parameters[2] * rootTR * rootTR * rootTR)
+            * (parameters[0] / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 4.0 + parameters[1] / temperature / TC / 2.0
+                + parameters[1] * rootTR / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 2.0
+                + 3.0 / 2.0 * parameters[2] * rootTR / temperature / TC
+                + 3.0 / 4.0 * parameters[2] * rootTR * rootTR / Math.sqrt(Tr * Tr * Tr) / (TC * TC));
   }
 
   /** {@inheritDoc} */

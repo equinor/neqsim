@@ -54,7 +54,7 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     assertEquals(neqsim.thermo.phase.PhaseType.AQUEOUS, system.getPhase(1).getType());
     PhasePitzer aq = (PhasePitzer) system.getPhase(1);
     double waterMass = system.getPhase(1).getComponent("water").getNumberOfMolesInPhase()
-	* system.getPhase(1).getComponent("water").getMolarMass();
+        * system.getPhase(1).getComponent("water").getMolarMass();
     assertEquals(waterMass, aq.getSolventWeight(), 1e-12);
   }
 
@@ -150,7 +150,7 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     double cpIdeal = 0.0;
     for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
       cpIdeal += system.getPhase(1).getComponent(i).getx()
-	  * system.getPhase(1).getComponent(i).getPureComponentCpLiquid(system.getTemperature());
+          * system.getPhase(1).getComponent(i).getPureComponentCpLiquid(system.getTemperature());
     }
     double n = system.getPhase(1).getNumberOfMolesInPhase();
 
@@ -313,10 +313,10 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     boolean hasGas = false;
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       if (system.getPhase(i).getType() == neqsim.thermo.phase.PhaseType.AQUEOUS) {
-	hasAqueous = true;
+        hasAqueous = true;
       }
       if (system.getPhase(i).getType() == neqsim.thermo.phase.PhaseType.GAS) {
-	hasGas = true;
+        hasGas = true;
       }
     }
     assertTrue(hasGas, "System should have a gas phase");
@@ -405,7 +405,7 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     assertTrue(Double.isFinite(gammaWithTheta), "Na+ gamma with theta must be finite");
     // Theta should change the activity coefficient slightly
     assertTrue(Math.abs(gammaWithTheta - gammaBaseline) < 5.0,
-	"Theta effect should be moderate, baseline=" + gammaBaseline + " new=" + gammaWithTheta);
+        "Theta effect should be moderate, baseline=" + gammaBaseline + " new=" + gammaWithTheta);
   }
 
   /**
@@ -430,7 +430,7 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
       double gamma = system.getPhase(1).getActivityCoefficient(i, water);
       assertTrue(Double.isFinite(gamma),
-	  "Activity coefficient for " + system.getPhase(1).getComponent(i).getName() + " must be finite: " + gamma);
+          "Activity coefficient for " + system.getPhase(1).getComponent(i).getName() + " must be finite: " + gamma);
     }
 
     // Verify parameters were loaded (check that Pitzer params are nonzero for NaCl)

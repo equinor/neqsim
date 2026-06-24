@@ -186,7 +186,7 @@ public class MultilayerThermalCalculator implements Serializable {
    */
   public void createInsulatedSubseaPipe(double pipeInnerDiameter, double wallThickness, double insulationThickness) {
     createSubseaPipeConfig(pipeInnerDiameter, wallThickness, insulationThickness, 0,
-	RadialThermalLayer.MaterialType.PU_FOAM);
+        RadialThermalLayer.MaterialType.PU_FOAM);
   }
 
   /**
@@ -353,12 +353,12 @@ public class MultilayerThermalCalculator implements Serializable {
       double k = layer.getThermalConductivity();
 
       if (!atOuterSurface && i == layerIndex) {
-	// Return inner surface temperature of this layer
-	return T;
+        // Return inner surface temperature of this layer
+        return T;
       }
 
       if (k > 0 && ro > ri) {
-	T -= q * Math.log(ro / ri) / (2.0 * Math.PI * k);
+        T -= q * Math.log(ro / ri) / (2.0 * Math.PI * k);
       }
     }
 
@@ -396,7 +396,7 @@ public class MultilayerThermalCalculator implements Serializable {
       // Set to mean temperature of this layer
       double T_inner = T;
       if (k > 0 && ro > ri) {
-	T -= q * Math.log(ro / ri) / (2.0 * Math.PI * k);
+        T -= q * Math.log(ro / ri) / (2.0 * Math.PI * k);
       }
       double T_outer = T;
       layer.initializeTemperature((T_inner + T_outer) / 2.0);
@@ -432,43 +432,43 @@ public class MultilayerThermalCalculator implements Serializable {
       // Heat flux from inside
       double Q_in;
       if (i == 0) {
-	// From fluid to first layer
-	double ri = layer.getInnerRadius();
-	Q_in = innerHTC * 2.0 * Math.PI * ri * (fluidTemperature - Ti);
+        // From fluid to first layer
+        double ri = layer.getInnerRadius();
+        Q_in = innerHTC * 2.0 * Math.PI * ri * (fluidTemperature - Ti);
       } else {
-	// From previous layer
-	RadialThermalLayer prevLayer = layers.get(i - 1);
-	double T_prev = prevLayer.getTemperature();
-	double r_interface = layer.getInnerRadius();
+        // From previous layer
+        RadialThermalLayer prevLayer = layers.get(i - 1);
+        double T_prev = prevLayer.getTemperature();
+        double r_interface = layer.getInnerRadius();
 
-	// Contact conductance at interface (simplified: use harmonic mean of conductivities)
-	double k_prev = prevLayer.getThermalConductivity();
-	double k_curr = layer.getThermalConductivity();
-	double k_eff = 2.0 * k_prev * k_curr / (k_prev + k_curr + 1e-10);
+        // Contact conductance at interface (simplified: use harmonic mean of conductivities)
+        double k_prev = prevLayer.getThermalConductivity();
+        double k_curr = layer.getThermalConductivity();
+        double k_eff = 2.0 * k_prev * k_curr / (k_prev + k_curr + 1e-10);
 
-	// Approximate contact width as mean of thicknesses
-	double dx = (prevLayer.getThickness() + layer.getThickness()) / 2.0;
-	Q_in = k_eff * 2.0 * Math.PI * r_interface / dx * (T_prev - Ti);
+        // Approximate contact width as mean of thicknesses
+        double dx = (prevLayer.getThickness() + layer.getThickness()) / 2.0;
+        Q_in = k_eff * 2.0 * Math.PI * r_interface / dx * (T_prev - Ti);
       }
 
       // Heat flux to outside
       double Q_out;
       if (i == n - 1) {
-	// From last layer to ambient
-	double ro = layer.getOuterRadius();
-	Q_out = outerHTC * 2.0 * Math.PI * ro * (Ti - ambientTemperature);
+        // From last layer to ambient
+        double ro = layer.getOuterRadius();
+        Q_out = outerHTC * 2.0 * Math.PI * ro * (Ti - ambientTemperature);
       } else {
-	// To next layer
-	RadialThermalLayer nextLayer = layers.get(i + 1);
-	double T_next = nextLayer.getTemperature();
-	double r_interface = layer.getOuterRadius();
+        // To next layer
+        RadialThermalLayer nextLayer = layers.get(i + 1);
+        double T_next = nextLayer.getTemperature();
+        double r_interface = layer.getOuterRadius();
 
-	double k_curr = layer.getThermalConductivity();
-	double k_next = nextLayer.getThermalConductivity();
-	double k_eff = 2.0 * k_curr * k_next / (k_curr + k_next + 1e-10);
+        double k_curr = layer.getThermalConductivity();
+        double k_next = nextLayer.getThermalConductivity();
+        double k_eff = 2.0 * k_curr * k_next / (k_curr + k_next + 1e-10);
 
-	double dx = (layer.getThickness() + nextLayer.getThickness()) / 2.0;
-	Q_out = k_eff * 2.0 * Math.PI * r_interface / dx * (Ti - T_next);
+        double dx = (layer.getThickness() + nextLayer.getThickness()) / 2.0;
+        Q_out = k_eff * 2.0 * Math.PI * r_interface / dx * (Ti - T_next);
       }
 
       // Update temperature
@@ -771,13 +771,13 @@ public class MultilayerThermalCalculator implements Serializable {
     sb.append(String.format("  Outer HTC: %.1f W/(m²·K)\n", outerHTC));
     sb.append(String.format("  Fluid temperature: %.1f K (%.1f °C)\n", fluidTemperature, fluidTemperature - 273.15));
     sb.append(
-	String.format("  Ambient temperature: %.1f K (%.1f °C)\n", ambientTemperature, ambientTemperature - 273.15));
+        String.format("  Ambient temperature: %.1f K (%.1f °C)\n", ambientTemperature, ambientTemperature - 273.15));
 
     sb.append("\nLayers (inside to outside):\n");
     for (int i = 0; i < layers.size(); i++) {
       RadialThermalLayer layer = layers.get(i);
       sb.append(String.format("  %d. %s: t=%.1f mm, k=%.3f W/(m·K), R=%.4f (m·K)/W\n", i + 1, layer.getName(),
-	  layer.getThickness() * 1000, layer.getThermalConductivity(), layer.getThermalResistance()));
+          layer.getThickness() * 1000, layer.getThermalConductivity(), layer.getThermalResistance()));
     }
 
     sb.append(String.format("\nOuter radius: %.4f m (OD = %.1f mm)\n", getOuterRadius(), getOuterRadius() * 2000));
@@ -791,6 +791,6 @@ public class MultilayerThermalCalculator implements Serializable {
   @Override
   public String toString() {
     return String.format("MultilayerThermalCalculator[%d layers, U=%.2f W/(m²·K), Q=%.1f W/m]", layers.size(),
-	calculateOverallUValue(), calculateHeatLossPerLength());
+        calculateOverallUValue(), calculateHeatLossPerLength());
   }
 }

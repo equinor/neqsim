@@ -90,7 +90,7 @@ public class FireExposureScenario implements Serializable {
     validatePositive(environmentalFactor, "environmentalFactor");
     double totalHeatW = FireHeatLoadCalculator.api521PoolFireHeatLoad(exposedAreaM2, environmentalFactor);
     return new FireExposureScenario("API 521 pool fire", FireType.API_521_POOL_FIRE, exposedAreaM2,
-	totalHeatW / exposedAreaM2, environmentalFactor, 0.0, 0.0, 1200.0, 298.15, 1.0);
+        totalHeatW / exposedAreaM2, environmentalFactor, 0.0, 0.0, 1200.0, 298.15, 1.0);
   }
 
   /**
@@ -103,7 +103,7 @@ public class FireExposureScenario implements Serializable {
   public static FireExposureScenario fixedHeatFlux(double exposedAreaM2, double heatFluxWPerM2) {
     validatePositive(heatFluxWPerM2, "heatFluxWPerM2");
     return new FireExposureScenario("Fixed heat flux", FireType.FIXED_HEAT_FLUX, exposedAreaM2, heatFluxWPerM2, 1.0,
-	0.0, 0.0, 1200.0, 298.15, 1.0);
+        0.0, 0.0, 1200.0, 298.15, 1.0);
   }
 
   /**
@@ -119,7 +119,7 @@ public class FireExposureScenario implements Serializable {
   public static FireExposureScenario radiativeFire(double exposedAreaM2, double emissivity, double viewFactor,
       double flameTemperatureK, double ambientTemperatureK) {
     return new FireExposureScenario("Radiative fire", FireType.RADIATIVE_FIRE, exposedAreaM2, 0.0, 1.0, emissivity,
-	viewFactor, flameTemperatureK, ambientTemperatureK, 1.0);
+        viewFactor, flameTemperatureK, ambientTemperatureK, 1.0);
   }
 
   /**
@@ -130,7 +130,7 @@ public class FireExposureScenario implements Serializable {
    */
   public FireExposureScenario withPassiveProtectionFactor(double heatFluxFactor) {
     return new FireExposureScenario(name, fireType, exposedAreaM2, heatFluxWPerM2, environmentalFactor, emissivity,
-	viewFactor, flameTemperatureK, ambientTemperatureK, heatFluxFactor);
+        viewFactor, flameTemperatureK, ambientTemperatureK, heatFluxFactor);
   }
 
   /**
@@ -189,7 +189,7 @@ public class FireExposureScenario implements Serializable {
     double flux;
     if (fireType == FireType.RADIATIVE_FIRE) {
       flux = FireHeatLoadCalculator.generalizedStefanBoltzmannHeatFlux(emissivity, viewFactor, flameTemperatureK,
-	  outerSurfaceTemperatureK);
+          outerSurfaceTemperatureK);
     } else {
       flux = heatFluxWPerM2;
     }

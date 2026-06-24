@@ -82,7 +82,7 @@ public class SystemPrLeeKeslerEosTest extends neqsim.NeqSimTest {
 
     // PR76 == PR78 for omega < 0.49 -> VF must agree within numerical precision
     assertEquals(vfPr78, vfLk, 1e-6,
-	"PR-LK and PR78 should give identical VF for light components; got LK=" + vfLk + " vs PR78=" + vfPr78);
+        "PR-LK and PR78 should give identical VF for light components; got LK=" + vfLk + " vs PR78=" + vfPr78);
   }
 
   @Test
@@ -125,8 +125,8 @@ public class SystemPrLeeKeslerEosTest extends neqsim.NeqSimTest {
     // PR76 != PR78 for heavy components -> VF must differ by more than numerical
     // noise
     assertTrue(Math.abs(vfLk - vfPr78) > 1e-6,
-	"PR-LK and PR78 should give different VF for heavy components (omega>0.49); got LK=" + vfLk + " vs PR78="
-	    + vfPr78);
+        "PR-LK and PR78 should give different VF for heavy components (omega>0.49); got LK=" + vfLk + " vs PR78="
+            + vfPr78);
   }
 
   @Test

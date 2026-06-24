@@ -225,12 +225,12 @@ public class FieldDevelopmentWorkflow implements Serializable {
     case DISCOVERY:
     case FEASIBILITY:
       if (fidelityLevel == FidelityLevel.DETAILED) {
-	fidelityLevel = FidelityLevel.SCREENING;
+        fidelityLevel = FidelityLevel.SCREENING;
       }
       break;
     case CONCEPT_SELECT:
       if (fidelityLevel == FidelityLevel.SCREENING) {
-	fidelityLevel = FidelityLevel.CONCEPTUAL;
+        fidelityLevel = FidelityLevel.CONCEPTUAL;
       }
       break;
     case FEED:
@@ -499,11 +499,11 @@ public class FieldDevelopmentWorkflow implements Serializable {
     if (concept.isSubseaTieback() && subseaSystem == null) {
       subseaSystem = new SubseaProductionSystem(projectName + " Subsea");
       subseaSystem.setArchitecture(subseaArchitecture).setWaterDepthM(waterDepthM)
-	  .setTiebackDistanceKm(tiebackDistanceKm)
-	  .setWellCount(concept.getWells() != null ? concept.getWells().getProducerCount() : 2);
+          .setTiebackDistanceKm(tiebackDistanceKm)
+          .setWellCount(concept.getWells() != null ? concept.getWells().getProducerCount() : 2);
 
       if (fluid != null) {
-	subseaSystem.setReservoirFluid(fluid);
+        subseaSystem.setReservoirFluid(fluid);
       }
     }
 
@@ -603,7 +603,7 @@ public class FieldDevelopmentWorkflow implements Serializable {
     double totalPeakRate = peakRate * wellCount;
 
     result.gasProfile = gen.generateFullProfile(totalPeakRate, 1, (int) plateauYears, declineRate,
-	ProductionProfileGenerator.DeclineType.EXPONENTIAL, firstProductionYear, fieldLifeYears);
+        ProductionProfileGenerator.DeclineType.EXPONENTIAL, firstProductionYear, fieldLifeYears);
 
     // 4. Cash flow analysis
     CashFlowEngine engine = new CashFlowEngine(countryCode);
@@ -653,13 +653,13 @@ public class FieldDevelopmentWorkflow implements Serializable {
     if (!wells.isEmpty()) {
       double totalRate = 0;
       for (WellSystem well : wells) {
-	well.run();
-	totalRate += well.getOperatingFlowRate("Sm3/day");
+        well.run();
+        totalRate += well.getOperatingFlowRate("Sm3/day");
       }
       // Recalculate production profile with actual well rates
       ProductionProfileGenerator gen = new ProductionProfileGenerator();
       result.gasProfile = gen.generateFullProfile(totalRate, 1, (int) plateauYears, declineRate,
-	  ProductionProfileGenerator.DeclineType.EXPONENTIAL, firstProductionYear, fieldLifeYears);
+          ProductionProfileGenerator.DeclineType.EXPONENTIAL, firstProductionYear, fieldLifeYears);
     }
 
     // 4. If facility config provided, use detailed costs
@@ -715,8 +715,8 @@ public class FieldDevelopmentWorkflow implements Serializable {
     // 1. If subsea system provided, run detailed subsea simulation
     if (subseaSystem != null && runSubseaAnalysis) {
       if (fluid != null && subseaSystem.getWells().isEmpty()) {
-	subseaSystem.setReservoirFluid(fluid);
-	subseaSystem.build();
+        subseaSystem.setReservoirFluid(fluid);
+        subseaSystem.build();
       }
       subseaSystem.run();
 
@@ -726,9 +726,9 @@ public class FieldDevelopmentWorkflow implements Serializable {
 
       // Update CAPEX with detailed subsea costs
       if (result.economicsReport != null) {
-	double additionalSubseaCapex = subseaResult.getTotalSubseaCapexMusd();
-	// Subsea CAPEX already included in concept estimate, but update with detailed values
-	result.subseaCapexMusd = additionalSubseaCapex;
+        double additionalSubseaCapex = subseaResult.getTotalSubseaCapexMusd();
+        // Subsea CAPEX already included in concept estimate, but update with detailed values
+        result.subseaCapexMusd = additionalSubseaCapex;
       }
 
       result.arrivalPressureBara = subseaResult.getArrivalPressureBara();
@@ -745,17 +745,17 @@ public class FieldDevelopmentWorkflow implements Serializable {
 
       // 1b. Run mechanical design if enabled
       if (runMechanicalDesign) {
-	SystemMechanicalDesign sysMecDesign = new SystemMechanicalDesign(processSystem);
-	sysMecDesign.setCompanySpecificDesignStandards(designStandard);
-	sysMecDesign.runDesignCalculation();
-	result.mechanicalDesign = sysMecDesign;
-	result.totalEquipmentWeightTonnes = sysMecDesign.getTotalWeight() / 1000.0;
-	result.totalFootprintM2 = sysMecDesign.getTotalPlotSpace();
+        SystemMechanicalDesign sysMecDesign = new SystemMechanicalDesign(processSystem);
+        sysMecDesign.setCompanySpecificDesignStandards(designStandard);
+        sysMecDesign.runDesignCalculation();
+        result.mechanicalDesign = sysMecDesign;
+        result.totalEquipmentWeightTonnes = sysMecDesign.getTotalWeight() / 1000.0;
+        result.totalFootprintM2 = sysMecDesign.getTotalPlotSpace();
       }
 
       // 1c. Calculate CO2 emissions if enabled
       if (calculateEmissions) {
-	calculateProcessEmissions(result, processSystem);
+        calculateProcessEmissions(result, processSystem);
       }
     } else if (calculateEmissions && concept != null) {
       // Use concept-level emissions estimation if no process system
@@ -786,7 +786,7 @@ public class FieldDevelopmentWorkflow implements Serializable {
     SensitivityAnalyzer analyzer = new SensitivityAnalyzer(engine, discountRate);
     analyzer.setGasPriceDistribution(gasPrice * 0.7, gasPrice * 1.3);
     analyzer.setCapexDistribution(result.economicsReport.getTotalCapexMUSD() * 0.8,
-	result.economicsReport.getTotalCapexMUSD() * 1.2);
+        result.economicsReport.getTotalCapexMUSD() * 1.2);
     analyzer.setProductionFactorDistribution(0.8, 1.2);
 
     result.monteCarloResult = analyzer.monteCarloAnalysis(monteCarloIterations);
@@ -819,22 +819,22 @@ public class FieldDevelopmentWorkflow implements Serializable {
       result.tiebackReport = report;
 
       if (report.getBestFeasibleOption() != null) {
-	result.selectedTiebackOption = report.getBestFeasibleOption();
-	result.subseaCapexMusd = report.getBestFeasibleOption().getTotalCapexMusd();
-	result.arrivalPressureBara = report.getBestFeasibleOption().getArrivalPressureBara();
+        result.selectedTiebackOption = report.getBestFeasibleOption();
+        result.subseaCapexMusd = report.getBestFeasibleOption().getTotalCapexMusd();
+        result.arrivalPressureBara = report.getBestFeasibleOption().getArrivalPressureBara();
       }
     }
 
     // If subsea system provided, use it for hydraulic analysis
     if (subseaSystem != null) {
       if (fluid != null) {
-	subseaSystem.setReservoirFluid(fluid);
+        subseaSystem.setReservoirFluid(fluid);
       }
 
       // Configure from concept if not already done
       if (concept != null && concept.getWells() != null) {
-	subseaSystem.setWellCount(concept.getWells().getProducerCount());
-	subseaSystem.setRatePerWell(concept.getWells().getRatePerWellSm3d());
+        subseaSystem.setWellCount(concept.getWells().getProducerCount());
+        subseaSystem.setRatePerWell(concept.getWells().getRatePerWellSm3d());
       }
 
       subseaSystem.setWaterDepthM(waterDepthM);
@@ -843,31 +843,31 @@ public class FieldDevelopmentWorkflow implements Serializable {
 
       // Build and run if fluid is available
       if (fluid != null) {
-	try {
-	  subseaSystem.build();
-	  subseaSystem.run();
+        try {
+          subseaSystem.build();
+          subseaSystem.run();
 
-	  SubseaProductionSystem.SubseaSystemResult subseaResult = subseaSystem.getResult();
-	  result.subseaSystemResult = subseaResult;
+          SubseaProductionSystem.SubseaSystemResult subseaResult = subseaSystem.getResult();
+          result.subseaSystemResult = subseaResult;
 
-	  // Update arrival conditions
-	  result.arrivalPressureBara = subseaResult.getArrivalPressureBara();
-	  result.arrivalTemperatureC = subseaResult.getArrivalTemperatureC();
+          // Update arrival conditions
+          result.arrivalPressureBara = subseaResult.getArrivalPressureBara();
+          result.arrivalTemperatureC = subseaResult.getArrivalTemperatureC();
 
-	  // Update CAPEX if not already set from tieback analysis
-	  if (result.subseaCapexMusd <= 0) {
-	    result.subseaCapexMusd = subseaResult.getTotalSubseaCapexMusd();
-	  }
-	} catch (Exception e) {
-	  // Subsea simulation failed, use tieback estimates only
-	  result.subseaSimulationError = e.getMessage();
-	}
+          // Update CAPEX if not already set from tieback analysis
+          if (result.subseaCapexMusd <= 0) {
+            result.subseaCapexMusd = subseaResult.getTotalSubseaCapexMusd();
+          }
+        } catch (Exception e) {
+          // Subsea simulation failed, use tieback estimates only
+          result.subseaSimulationError = e.getMessage();
+        }
       }
     } else if (concept.isSubseaTieback()) {
       // Auto-create subsea system from concept for cost estimation
       SubseaProductionSystem autoSubsea = new SubseaProductionSystem(projectName + " Auto Subsea");
       autoSubsea.setArchitecture(subseaArchitecture).setWaterDepthM(waterDepthM).setTiebackDistanceKm(tiebackDistanceKm)
-	  .setWellCount(concept.getWells() != null ? concept.getWells().getProducerCount() : 2);
+          .setWellCount(concept.getWells() != null ? concept.getWells().getProducerCount() : 2);
 
       // Get cost estimate (without running hydraulics)
       result.subseaCapexMusd = estimateSubseaCapex(autoSubsea);
@@ -921,8 +921,8 @@ public class FieldDevelopmentWorkflow implements Serializable {
 
       // Run each well at current reservoir pressure
       for (WellSystem well : wellList) {
-	well.run();
-	totalRate += well.getOperatingFlowRate("Sm3/day");
+        well.run();
+        totalRate += well.getOperatingFlowRate("Sm3/day");
       }
 
       profile.put(year, totalRate);
@@ -953,7 +953,7 @@ public class FieldDevelopmentWorkflow implements Serializable {
       double ratePerWellMSm3d, String countryCode) {
     FieldConcept concept = FieldConcept.gasTieback(name, tiebackKm, wellCount, ratePerWellMSm3d);
     return new FieldDevelopmentWorkflow(name, concept).setCountryCode(countryCode)
-	.setFidelityLevel(FidelityLevel.SCREENING);
+        .setFidelityLevel(FidelityLevel.SCREENING);
   }
 
   /**
@@ -970,7 +970,7 @@ public class FieldDevelopmentWorkflow implements Serializable {
       double ratePerWellBopd, String countryCode) {
     FieldConcept concept = FieldConcept.oilDevelopment(name, wellCount, ratePerWellBopd, 0.1);
     return new FieldDevelopmentWorkflow(name, concept).setCountryCode(countryCode)
-	.setFidelityLevel(FidelityLevel.SCREENING);
+        .setFidelityLevel(FidelityLevel.SCREENING);
   }
 
   /**
@@ -989,7 +989,7 @@ public class FieldDevelopmentWorkflow implements Serializable {
       WorkflowResult r = wf.run();
       String risk = r.flowAssuranceResult != null ? r.flowAssuranceResult.getOverallResult().toString() : "N/A";
       sb.append(String.format("| %s | %.0f | %.1f | %.1f | %.0f | %s |\n", wf.projectName, r.npv, r.irr * 100,
-	  r.paybackYears, r.economicsReport.getTotalCapexMUSD(), risk));
+          r.paybackYears, r.economicsReport.getTotalCapexMUSD(), risk));
     }
 
     return sb.toString();
@@ -1049,9 +1049,9 @@ public class FieldDevelopmentWorkflow implements Serializable {
     double totalPower = 0.0;
     for (ProcessEquipmentInterface equip : process.getUnitOperations()) {
       if (equip instanceof Compressor) {
-	totalPower += ((Compressor) equip).getPower("MW");
+        totalPower += ((Compressor) equip).getPower("MW");
       } else if (equip instanceof Pump) {
-	totalPower += ((Pump) equip).getPower("MW");
+        totalPower += ((Pump) equip).getPower("MW");
       }
     }
     return totalPower;
@@ -1070,9 +1070,9 @@ public class FieldDevelopmentWorkflow implements Serializable {
 
     for (ProcessEquipmentInterface equip : process.getUnitOperations()) {
       if (equip instanceof Compressor) {
-	compressionPower += ((Compressor) equip).getPower("MW");
+        compressionPower += ((Compressor) equip).getPower("MW");
       } else if (equip instanceof Pump) {
-	pumpingPower += ((Pump) equip).getPower("MW");
+        pumpingPower += ((Pump) equip).getPower("MW");
       }
     }
 
@@ -1109,7 +1109,7 @@ public class FieldDevelopmentWorkflow implements Serializable {
       double annualGasSm3 = peakRateSm3d * 365;
       double annualBoe = annualGasSm3 / 163.0; // 163 Sm3 gas = 1 boe
       if (annualBoe > 0) {
-	result.co2IntensityKgPerBoe = annualCO2eKg / annualBoe;
+        result.co2IntensityKgPerBoe = annualCO2eKg / annualBoe;
       }
     }
 
@@ -1117,8 +1117,8 @@ public class FieldDevelopmentWorkflow implements Serializable {
     result.emissionBreakdown = new HashMap<>();
     if (result.powerBreakdownMW != null) {
       for (Map.Entry<String, Double> entry : result.powerBreakdownMW.entrySet()) {
-	double categoryEmission = entry.getValue() * operatingHours * emissionFactor / 1e6;
-	result.emissionBreakdown.put(entry.getKey(), categoryEmission);
+        double categoryEmission = entry.getValue() * operatingHours * emissionFactor / 1e6;
+        result.emissionBreakdown.put(entry.getKey(), categoryEmission);
       }
     }
   }

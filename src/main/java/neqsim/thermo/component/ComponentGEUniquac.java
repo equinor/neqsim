@@ -49,13 +49,13 @@ public class ComponentGEUniquac extends ComponentGE {
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = null;
       try {
-	dataSet = database.getResultSet(("SELECT * FROM unifaccomp WHERE Name='" + name + "'"));
-	dataSet.next();
-	dataSet.getClob("name");
+        dataSet = database.getResultSet(("SELECT * FROM unifaccomp WHERE Name='" + name + "'"));
+        dataSet.next();
+        dataSet.getClob("name");
       } catch (Exception ex) {
-	dataSet.close();
-	dataSet = database.getResultSet(("SELECT * FROM unifaccomp WHERE Name='" + name + "'"));
-	dataSet.next();
+        dataSet.close();
+        dataSet = database.getResultSet(("SELECT * FROM unifaccomp WHERE Name='" + name + "'"));
+        dataSet.next();
       }
       r = Double.parseDouble(dataSet.getString("rUNIQUAQ"));
       q = Double.parseDouble(dataSet.getString("qUNIQUAQ"));
@@ -77,7 +77,7 @@ public class ComponentGEUniquac extends ComponentGE {
   public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
       PhaseType pt) {
     fugacityCoefficient = (this.getGamma(phase, numberOfComponents, temperature, pressure, pt)
-	* this.getAntoineVaporPressure(temperature) / pressure);
+        * this.getAntoineVaporPressure(temperature) / pressure);
     return fugacityCoefficient;
   }
 
@@ -157,7 +157,7 @@ public class ComponentGEUniquac extends ComponentGE {
   public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
       PhaseType pt) {
     dfugdp = (Math.log(fugcoef(phase, numberOfComponents, temperature, pressure + 0.01, pt))
-	- Math.log(fugcoef(phase, numberOfComponents, temperature, pressure - 0.01, pt))) / 0.02;
+        - Math.log(fugcoef(phase, numberOfComponents, temperature, pressure - 0.01, pt))) / 0.02;
     return dfugdp;
   }
 
@@ -174,7 +174,7 @@ public class ComponentGEUniquac extends ComponentGE {
   public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
       PhaseType pt) {
     dfugdt = (Math.log(fugcoef(phase, numberOfComponents, temperature + 0.01, pressure, pt))
-	- Math.log(fugcoef(phase, numberOfComponents, temperature - 0.01, pressure, pt))) / 0.02;
+        - Math.log(fugcoef(phase, numberOfComponents, temperature - 0.01, pressure, pt))) / 0.02;
     return dfugdt;
   }
   /*

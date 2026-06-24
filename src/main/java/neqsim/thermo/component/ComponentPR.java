@@ -211,9 +211,9 @@ public class ComponentPR extends ComponentEos {
     if (tt <= 0 || tt >= tc) {
       double tb = getNormalBoilingPoint();
       if (tb > 0 && tb < tc) {
-	tt = 0.6 * tb;
+        tt = 0.6 * tb;
       } else {
-	tt = 0.3 * tc;
+        tt = 0.3 * tc;
       }
     }
 

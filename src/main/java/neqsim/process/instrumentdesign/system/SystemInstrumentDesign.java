@@ -103,47 +103,47 @@ public class SystemInstrumentDesign implements java.io.Serializable {
     for (ProcessEquipmentInterface equip : equipment) {
       InstrumentDesign design = equip.getInstrumentDesign();
       if (design != null) {
-	design.calcDesign();
-	InstrumentList list = design.getInstrumentList();
+        design.calcDesign();
+        InstrumentList list = design.getInstrumentList();
 
-	int eqAI = list.getAnalogInputCount();
-	int eqAO = list.getAnalogOutputCount();
-	int eqDI = list.getDigitalInputCount();
-	int eqDO = list.getDigitalOutputCount();
-	int eqSafety = list.getSafetyInstrumentCount();
+        int eqAI = list.getAnalogInputCount();
+        int eqAO = list.getAnalogOutputCount();
+        int eqDI = list.getDigitalInputCount();
+        int eqDO = list.getDigitalOutputCount();
+        int eqSafety = list.getSafetyInstrumentCount();
 
-	totalAI += eqAI;
-	totalAO += eqAO;
-	totalDI += eqDI;
-	totalDO += eqDO;
-	totalInstruments += list.size();
-	totalInstrumentCostUSD += list.getTotalCostUSD();
+        totalAI += eqAI;
+        totalAO += eqAO;
+        totalDI += eqDI;
+        totalDO += eqDO;
+        totalInstruments += list.size();
+        totalInstrumentCostUSD += list.getTotalCostUSD();
 
-	// Count safety I/O by type
-	for (InstrumentSpecification spec : list.getAll()) {
-	  if (spec.isSafetyRelated()) {
-	    String io = spec.getIoType();
-	    if ("AI".equals(io)) {
-	      safetyAI++;
-	    } else if ("DI".equals(io)) {
-	      safetyDI++;
-	    } else if ("DO".equals(io)) {
-	      safetyDO++;
-	    }
-	  }
-	}
+        // Count safety I/O by type
+        for (InstrumentSpecification spec : list.getAll()) {
+          if (spec.isSafetyRelated()) {
+            String io = spec.getIoType();
+            if ("AI".equals(io)) {
+              safetyAI++;
+            } else if ("DI".equals(io)) {
+              safetyDI++;
+            } else if ("DO".equals(io)) {
+              safetyDO++;
+            }
+          }
+        }
 
-	Map<String, Object> summary = new LinkedHashMap<String, Object>();
-	summary.put("equipment", equip.getName());
-	summary.put("equipmentType", equip.getClass().getSimpleName());
-	summary.put("instruments", list.size());
-	summary.put("AI", eqAI);
-	summary.put("AO", eqAO);
-	summary.put("DI", eqDI);
-	summary.put("DO", eqDO);
-	summary.put("safetyInstruments", eqSafety);
-	summary.put("costUSD", list.getTotalCostUSD());
-	equipmentSummaries.add(summary);
+        Map<String, Object> summary = new LinkedHashMap<String, Object>();
+        summary.put("equipment", equip.getName());
+        summary.put("equipmentType", equip.getClass().getSimpleName());
+        summary.put("instruments", list.size());
+        summary.put("AI", eqAI);
+        summary.put("AO", eqAO);
+        summary.put("DI", eqDI);
+        summary.put("DO", eqDO);
+        summary.put("safetyInstruments", eqSafety);
+        summary.put("costUSD", list.getTotalCostUSD());
+        equipmentSummaries.add(summary);
       }
     }
 

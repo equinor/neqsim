@@ -111,7 +111,7 @@ public class GasLiftOptimizerTest {
     for (GasLiftOptimizer.WellAllocation alloc : result.allocations) {
       assertTrue(alloc.incrementalOil >= 0, "Incremental oil should be non-negative");
       assertEquals(alloc.oilRate - alloc.naturalFlowRate, alloc.incrementalOil, 0.001,
-	  "Incremental oil should be calculated correctly");
+          "Incremental oil should be calculated correctly");
     }
   }
 
@@ -124,8 +124,8 @@ public class GasLiftOptimizerTest {
 
     for (GasLiftOptimizer.WellAllocation alloc : result.allocations) {
       if (alloc.gasRate > 0) {
-	assertEquals(alloc.incrementalOil / alloc.gasRate, alloc.gasEfficiency, 0.001,
-	    "Gas efficiency should be calculated correctly");
+        assertEquals(alloc.incrementalOil / alloc.gasRate, alloc.gasEfficiency, 0.001,
+            "Gas efficiency should be calculated correctly");
       }
     }
   }
@@ -164,7 +164,7 @@ public class GasLiftOptimizerTest {
     GasLiftOptimizer.AllocationResult result = optimizer.optimize();
 
     assertTrue(result.compressionPower <= 1000.0 || result.totalGasAllocated < 70000.0,
-	"Should respect compression power limit");
+        "Should respect compression power limit");
   }
 
   @Test
@@ -345,8 +345,8 @@ public class GasLiftOptimizerTest {
   @DisplayName("Test chained configuration methods")
   void testChainedConfiguration() {
     GasLiftOptimizer opt = new GasLiftOptimizer().addWell("W1", 30.0, 100.0, 20000.0, 40000.0)
-	.addWell("W2", 25.0, 80.0, 15000.0, 35000.0).setAvailableGas(50000.0, "Sm3/d").setMaxCompressionPower(5000.0)
-	.setCompressionEfficiency(0.75).setOptimizationMethod(GasLiftOptimizer.OptimizationMethod.EQUAL_SLOPE);
+        .addWell("W2", 25.0, 80.0, 15000.0, 35000.0).setAvailableGas(50000.0, "Sm3/d").setMaxCompressionPower(5000.0)
+        .setCompressionEfficiency(0.75).setOptimizationMethod(GasLiftOptimizer.OptimizationMethod.EQUAL_SLOPE);
 
     assertEquals(2, opt.getWellCount(), "Should have 2 wells from chained calls");
   }

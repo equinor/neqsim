@@ -84,11 +84,11 @@ public class CompressorWashingTest {
   public void testWashMethodEffectiveness() {
     // Offline soak should be more effective than online
     assertTrue(
-	WashingMethod.OFFLINE_SOAK.getRecoveryEffectiveness() > WashingMethod.ONLINE_WET.getRecoveryEffectiveness());
+        WashingMethod.OFFLINE_SOAK.getRecoveryEffectiveness() > WashingMethod.ONLINE_WET.getRecoveryEffectiveness());
 
     // Crank wash should be most effective
     assertTrue(
-	WashingMethod.CRANK_WASH.getRecoveryEffectiveness() > WashingMethod.OFFLINE_SOAK.getRecoveryEffectiveness());
+        WashingMethod.CRANK_WASH.getRecoveryEffectiveness() > WashingMethod.OFFLINE_SOAK.getRecoveryEffectiveness());
   }
 
   @Test

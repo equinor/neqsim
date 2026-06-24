@@ -90,7 +90,7 @@ public class NorsokP002ComplianceChecker implements Serializable {
   public NorsokP002ComplianceChecker checkFlareLineMach(String segmentName, double machNumber, double limit) {
     boolean ok = machNumber <= limit;
     findings.add(new P002Finding(segmentName, P002Criterion.FLARE_LINE_MACH_07, ok, machNumber, limit, "-",
-	"Flare line Mach " + machNumber + (ok ? " <= " : " > ") + limit));
+        "Flare line Mach " + machNumber + (ok ? " <= " : " > ") + limit));
     return this;
   }
 
@@ -116,7 +116,7 @@ public class NorsokP002ComplianceChecker implements Serializable {
   public NorsokP002ComplianceChecker checkBlowdownRhoV2(String segmentName, double rhoV2, double limit) {
     boolean ok = rhoV2 <= limit;
     findings.add(new P002Finding(segmentName, P002Criterion.BLOWDOWN_RHO_V2, ok, rhoV2, limit, "kg/(m.s2)",
-	"Blowdown rhoV2 " + rhoV2 + (ok ? " <= " : " > ") + limit));
+        "Blowdown rhoV2 " + rhoV2 + (ok ? " <= " : " > ") + limit));
     return this;
   }
 
@@ -142,7 +142,7 @@ public class NorsokP002ComplianceChecker implements Serializable {
   public NorsokP002ComplianceChecker checkErosionalVelocity(String segmentName, double rhoV2, double limit) {
     boolean ok = rhoV2 <= limit;
     findings.add(new P002Finding(segmentName, P002Criterion.EROSIONAL_VELOCITY, ok, rhoV2, limit, "kg/(m.s2)",
-	"Erosional rhoV2 " + rhoV2 + (ok ? " <= " : " > ") + limit));
+        "Erosional rhoV2 " + rhoV2 + (ok ? " <= " : " > ") + limit));
     return this;
   }
 
@@ -168,7 +168,7 @@ public class NorsokP002ComplianceChecker implements Serializable {
   public NorsokP002ComplianceChecker checkVentGasVelocity(String segmentName, double velocityMps, double limit) {
     boolean ok = velocityMps <= limit;
     findings.add(new P002Finding(segmentName, P002Criterion.VENT_GAS_VELOCITY, ok, velocityMps, limit, "m/s",
-	"Vent gas velocity " + velocityMps + (ok ? " <= " : " > ") + limit));
+        "Vent gas velocity " + velocityMps + (ok ? " <= " : " > ") + limit));
     return this;
   }
 
@@ -194,7 +194,7 @@ public class NorsokP002ComplianceChecker implements Serializable {
   public NorsokP002ComplianceChecker checkLiquidCarryOver(String equipmentName, double fraction, double limit) {
     boolean ok = fraction <= limit;
     findings.add(new P002Finding(equipmentName, P002Criterion.LIQUID_CARRY_OVER, ok, fraction, limit, "vol fr",
-	"Liquid carry-over fraction " + fraction + (ok ? " <= " : " > ") + limit));
+        "Liquid carry-over fraction " + fraction + (ok ? " <= " : " > ") + limit));
     return this;
   }
 
@@ -208,7 +208,7 @@ public class NorsokP002ComplianceChecker implements Serializable {
    */
   public NorsokP002ComplianceChecker recordDepressurisationValve(String valveName, boolean ok, String message) {
     findings.add(new P002Finding(valveName, P002Criterion.DEPRESSURISATION_VALVE_SIZE, ok, Double.NaN, Double.NaN, "-",
-	message));
+        message));
     return this;
   }
 
@@ -222,7 +222,7 @@ public class NorsokP002ComplianceChecker implements Serializable {
    */
   public NorsokP002ComplianceChecker recordDrainSlope(String drainName, boolean ok, String message) {
     findings
-	.add(new P002Finding(drainName, P002Criterion.DRAIN_SLOPE_CAPACITY, ok, Double.NaN, Double.NaN, "-", message));
+        .add(new P002Finding(drainName, P002Criterion.DRAIN_SLOPE_CAPACITY, ok, Double.NaN, Double.NaN, "-", message));
     return this;
   }
 
@@ -239,7 +239,7 @@ public class NorsokP002ComplianceChecker implements Serializable {
   public boolean isCompliant() {
     for (P002Finding f : findings) {
       if (!f.isCompliant()) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -252,7 +252,7 @@ public class NorsokP002ComplianceChecker implements Serializable {
     int n = 0;
     for (P002Finding f : findings) {
       if (!f.isCompliant()) {
-	n++;
+        n++;
       }
     }
     return n;

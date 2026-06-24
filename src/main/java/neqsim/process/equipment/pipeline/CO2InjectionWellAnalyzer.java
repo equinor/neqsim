@@ -235,22 +235,22 @@ public class CO2InjectionWellAnalyzer {
 
     for (double tempC = -30; tempC <= 30; tempC += 2) {
       for (double pBara = 10; pBara <= 100; pBara += 2) {
-	SystemInterface testFluid = fluid.clone();
-	testFluid.setTemperature(273.15 + tempC);
-	testFluid.setPressure(pBara);
-	ThermodynamicOperations ops = new ThermodynamicOperations(testFluid);
-	try {
-	  ops.TPflash();
-	  if (testFluid.getNumberOfPhases() > 1) {
-	    twoPhaseCount++;
-	    minTwoPhaseP = Math.min(minTwoPhaseP, pBara);
-	    maxTwoPhaseP = Math.max(maxTwoPhaseP, pBara);
-	    minTwoPhaseT = Math.min(minTwoPhaseT, tempC);
-	    maxTwoPhaseT = Math.max(maxTwoPhaseT, tempC);
-	  }
-	} catch (Exception e) {
-	  // skip failed flash
-	}
+        SystemInterface testFluid = fluid.clone();
+        testFluid.setTemperature(273.15 + tempC);
+        testFluid.setPressure(pBara);
+        ThermodynamicOperations ops = new ThermodynamicOperations(testFluid);
+        try {
+          ops.TPflash();
+          if (testFluid.getNumberOfPhases() > 1) {
+            twoPhaseCount++;
+            minTwoPhaseP = Math.min(minTwoPhaseP, pBara);
+            maxTwoPhaseP = Math.max(maxTwoPhaseP, pBara);
+            minTwoPhaseT = Math.min(minTwoPhaseT, tempC);
+            maxTwoPhaseT = Math.max(maxTwoPhaseT, tempC);
+          }
+        } catch (Exception e) {
+          // skip failed flash
+        }
       }
     }
 
@@ -281,45 +281,45 @@ public class CO2InjectionWellAnalyzer {
       double twoPhaseMaxP = 0;
 
       for (double pBara = 10; pBara <= 100; pBara += 1) {
-	SystemInterface testFluid = fluid.clone();
-	testFluid.setTemperature(273.15 + tempC);
-	testFluid.setPressure(pBara);
-	ThermodynamicOperations ops = new ThermodynamicOperations(testFluid);
-	try {
-	  ops.TPflash();
-	  if (testFluid.getNumberOfPhases() > 1 && testFluid.hasPhaseType("gas")) {
-	    twoPhaseMinP = Math.min(twoPhaseMinP, pBara);
-	    twoPhaseMaxP = Math.max(twoPhaseMaxP, pBara);
+        SystemInterface testFluid = fluid.clone();
+        testFluid.setTemperature(273.15 + tempC);
+        testFluid.setPressure(pBara);
+        ThermodynamicOperations ops = new ThermodynamicOperations(testFluid);
+        try {
+          ops.TPflash();
+          if (testFluid.getNumberOfPhases() > 1 && testFluid.hasPhaseType("gas")) {
+            twoPhaseMinP = Math.min(twoPhaseMinP, pBara);
+            twoPhaseMaxP = Math.max(twoPhaseMaxP, pBara);
 
-	    for (String comp : trackedComponents) {
-	      try {
-		double yi = testFluid.getPhase("gas").getComponent(comp).getx();
-		double zi = testFluid.getComponent(comp).getz();
-		if (yi > maxH2) {
-		  maxH2 = yi;
-		}
-		double enrichment = zi > 0 ? yi / zi : 0;
-		if (enrichment > maxEnrich) {
-		  maxEnrich = enrichment;
-		}
-	      } catch (Exception e) {
-		// component not found
-	      }
-	    }
-	  }
-	} catch (Exception e) {
-	  // skip failed flash
-	}
+            for (String comp : trackedComponents) {
+              try {
+                double yi = testFluid.getPhase("gas").getComponent(comp).getx();
+                double zi = testFluid.getComponent(comp).getz();
+                if (yi > maxH2) {
+                  maxH2 = yi;
+                }
+                double enrichment = zi > 0 ? yi / zi : 0;
+                if (enrichment > maxEnrich) {
+                  maxEnrich = enrichment;
+                }
+              } catch (Exception e) {
+                // component not found
+              }
+            }
+          }
+        } catch (Exception e) {
+          // skip failed flash
+        }
       }
 
       if (twoPhaseMinP < Double.MAX_VALUE) {
-	tempResult.put("two_phase_bara", twoPhaseMinP + "-" + twoPhaseMaxP);
-	tempResult.put("max_impurity_mol_frac", maxH2);
-	tempResult.put("max_enrichment_factor", maxEnrich);
+        tempResult.put("two_phase_bara", twoPhaseMinP + "-" + twoPhaseMaxP);
+        tempResult.put("max_impurity_mol_frac", maxH2);
+        tempResult.put("max_enrichment_factor", maxEnrich);
       } else {
-	tempResult.put("two_phase_bara", "none");
-	tempResult.put("max_impurity_mol_frac", 0.0);
-	tempResult.put("max_enrichment_factor", 0.0);
+        tempResult.put("two_phase_bara", "none");
+        tempResult.put("max_impurity_mol_frac", 0.0);
+        tempResult.put("max_enrichment_factor", 0.0);
       }
       result.put(String.valueOf((int) tempC) + "C", tempResult);
     }
@@ -346,33 +346,33 @@ public class CO2InjectionWellAnalyzer {
 
       // Check conditions at 20 depth points
       for (int seg = 0; seg <= 20; seg++) {
-	double depth = seg * wellDepth / 20.0;
-	double tempC = seabedTempC + geothermalGrad * depth;
+        double depth = seg * wellDepth / 20.0;
+        double tempC = seabedTempC + geothermalGrad * depth;
 
-	SystemInterface testFluid = fluid.clone();
-	// Approximate density for hydrostatic
-	testFluid.setTemperature(273.15 + tempC);
-	testFluid.setPressure(whp + 800.0 * 9.81 * depth / 1.0e5); // rough estimate
-	ThermodynamicOperations ops = new ThermodynamicOperations(testFluid);
-	try {
-	  ops.TPflash();
-	  if (testFluid.getNumberOfPhases() > 1 && testFluid.hasPhaseType("gas")) {
-	    hasTwoPhase = true;
-	    twoPhaseDepthMax = depth;
-	    for (String comp : trackedComponents) {
-	      try {
-		double yi = testFluid.getPhase("gas").getComponent(comp).getx();
-		if (yi > maxImpurity) {
-		  maxImpurity = yi;
-		}
-	      } catch (Exception e) {
-		// component not found
-	      }
-	    }
-	  }
-	} catch (Exception e) {
-	  // skip
-	}
+        SystemInterface testFluid = fluid.clone();
+        // Approximate density for hydrostatic
+        testFluid.setTemperature(273.15 + tempC);
+        testFluid.setPressure(whp + 800.0 * 9.81 * depth / 1.0e5); // rough estimate
+        ThermodynamicOperations ops = new ThermodynamicOperations(testFluid);
+        try {
+          ops.TPflash();
+          if (testFluid.getNumberOfPhases() > 1 && testFluid.hasPhaseType("gas")) {
+            hasTwoPhase = true;
+            twoPhaseDepthMax = depth;
+            for (String comp : trackedComponents) {
+              try {
+                double yi = testFluid.getPhase("gas").getComponent(comp).getx();
+                if (yi > maxImpurity) {
+                  maxImpurity = yi;
+                }
+              } catch (Exception e) {
+                // component not found
+              }
+            }
+          }
+        } catch (Exception e) {
+          // skip
+        }
       }
 
       whpResult.put("has_two_phase", hasTwoPhase);
@@ -402,13 +402,13 @@ public class CO2InjectionWellAnalyzer {
       testFluid.setPressure(whp);
       ThermodynamicOperations ops = new ThermodynamicOperations(testFluid);
       try {
-	ops.TPflash();
-	if (testFluid.getNumberOfPhases() > 1) {
-	  safeMinWHP = whp + 1;
-	  break;
-	}
+        ops.TPflash();
+        if (testFluid.getNumberOfPhases() > 1) {
+          safeMinWHP = whp + 1;
+          break;
+        }
       } catch (Exception e) {
-	// skip
+        // skip
       }
     }
 
@@ -428,18 +428,18 @@ public class CO2InjectionWellAnalyzer {
       testFluid.setPressure(Math.max(20, safeMinWHP - 5));
       ThermodynamicOperations ops = new ThermodynamicOperations(testFluid);
       try {
-	ops.TPflash();
-	if (testFluid.getNumberOfPhases() > 1 && testFluid.hasPhaseType("gas")) {
-	  double yi = testFluid.getPhase("gas").getComponent(comp).getx();
-	  boolean exceeded = yi > threshold;
-	  alarmResults.put(comp + "_max_gas_frac", yi);
-	  alarmResults.put(comp + "_alarm_exceeded", exceeded);
-	  if (exceeded) {
-	    anyAlarmExceeded = true;
-	  }
-	}
+        ops.TPflash();
+        if (testFluid.getNumberOfPhases() > 1 && testFluid.hasPhaseType("gas")) {
+          double yi = testFluid.getPhase("gas").getComponent(comp).getx();
+          boolean exceeded = yi > threshold;
+          alarmResults.put(comp + "_max_gas_frac", yi);
+          alarmResults.put(comp + "_alarm_exceeded", exceeded);
+          if (exceeded) {
+            anyAlarmExceeded = true;
+          }
+        }
       } catch (Exception e) {
-	// skip
+        // skip
       }
     }
     result.put("alarm_results", alarmResults);

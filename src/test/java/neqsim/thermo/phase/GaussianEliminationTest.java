@@ -20,36 +20,36 @@ public class GaussianEliminationTest {
       int maxRow = col;
       double maxVal = Math.abs(a[col][col]);
       for (int row = col + 1; row < n; row++) {
-	double val = Math.abs(a[row][col]);
-	if (val > maxVal) {
-	  maxVal = val;
-	  maxRow = row;
-	}
+        double val = Math.abs(a[row][col]);
+        if (val > maxVal) {
+          maxVal = val;
+          maxRow = row;
+        }
       }
       if (maxVal < 1.0e-30) {
-	return false;
+        return false;
       }
       if (maxRow != col) {
-	double[] tempRow = a[col];
-	a[col] = a[maxRow];
-	a[maxRow] = tempRow;
-	double tempB = b[col];
-	b[col] = b[maxRow];
-	b[maxRow] = tempB;
+        double[] tempRow = a[col];
+        a[col] = a[maxRow];
+        a[maxRow] = tempRow;
+        double tempB = b[col];
+        b[col] = b[maxRow];
+        b[maxRow] = tempB;
       }
       double pivot = a[col][col];
       for (int row = col + 1; row < n; row++) {
-	double factor = a[row][col] / pivot;
-	for (int k = col + 1; k < n; k++) {
-	  a[row][k] -= factor * a[col][k];
-	}
-	b[row] -= factor * b[col];
+        double factor = a[row][col] / pivot;
+        for (int k = col + 1; k < n; k++) {
+          a[row][k] -= factor * a[col][k];
+        }
+        b[row] -= factor * b[col];
       }
     }
     for (int row = n - 1; row >= 0; row--) {
       double sum = b[row];
       for (int k = row + 1; k < n; k++) {
-	sum -= a[row][k] * b[k];
+        sum -= a[row][k] * b[k];
       }
       b[row] = sum / a[row][row];
     }
@@ -65,12 +65,12 @@ public class GaussianEliminationTest {
       double[][] copy = new double[n][n];
       double[] rhs = new double[n];
       for (int i = 0; i < n; i++) {
-	System.arraycopy(mat[i], 0, copy[i], 0, n);
-	rhs[i] = (i == col) ? 1.0 : 0.0;
+        System.arraycopy(mat[i], 0, copy[i], 0, n);
+        rhs[i] = (i == col) ? 1.0 : 0.0;
       }
       solveLinearSystem(copy, rhs, n);
       for (int i = 0; i < n; i++) {
-	inv[i][col] = rhs[i];
+        inv[i][col] = rhs[i];
       }
     }
     return inv;
@@ -87,10 +87,10 @@ public class GaussianEliminationTest {
 
     for (int i = 0; i < 2; i++) {
       for (int j = 0; j < 2; j++) {
-	double diff = Math.abs(invGE[i][j] - invEJML.get(i, j));
-	logger.printf(org.apache.logging.log4j.Level.INFO, "inv[%d][%d]: GE=%.15e  EJML=%.15e  diff=%.4e%n", i, j,
-	    invGE[i][j], invEJML.get(i, j), diff);
-	assertTrue(diff < 1e-12, "2x2 inv mismatch at [" + i + "][" + j + "]");
+        double diff = Math.abs(invGE[i][j] - invEJML.get(i, j));
+        logger.printf(org.apache.logging.log4j.Level.INFO, "inv[%d][%d]: GE=%.15e  EJML=%.15e  diff=%.4e%n", i, j,
+            invGE[i][j], invEJML.get(i, j), diff);
+        assertTrue(diff < 1e-12, "2x2 inv mismatch at [" + i + "][" + j + "]");
       }
     }
   }
@@ -118,15 +118,15 @@ public class GaussianEliminationTest {
     double[][] hess = new double[4][4];
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; j++) {
-	double kron = (i == j) ? -m / (x * x) : 0.0;
-	hess[i][j] = kron - klk[i][j];
+        double kron = (i == j) ? -m / (x * x) : 0.0;
+        hess[i][j] = kron - klk[i][j];
       }
     }
 
     logger.info("Hessian matrix:");
     for (int i = 0; i < 4; i++) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "  [%.6f, %.6f, %.6f, %.6f]%n", hess[i][0], hess[i][1],
-	  hess[i][2], hess[i][3]);
+          hess[i][2], hess[i][3]);
     }
 
     // Compute inverse with both methods
@@ -143,10 +143,10 @@ public class GaussianEliminationTest {
     double maxDiff = 0;
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; j++) {
-	double diff = Math.abs(invGE[i][j] - invEJML.get(i, j));
-	maxDiff = Math.max(maxDiff, diff);
-	logger.printf(org.apache.logging.log4j.Level.INFO, "inv[%d][%d]: GE=%.15e  EJML=%.15e  diff=%.4e%n", i, j,
-	    invGE[i][j], invEJML.get(i, j), diff);
+        double diff = Math.abs(invGE[i][j] - invEJML.get(i, j));
+        maxDiff = Math.max(maxDiff, diff);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "inv[%d][%d]: GE=%.15e  EJML=%.15e  diff=%.4e%n", i, j,
+            invGE[i][j], invEJML.get(i, j), diff);
       }
     }
     logger.printf(org.apache.logging.log4j.Level.INFO, "Max difference: %.4e%n", maxDiff);
@@ -173,7 +173,7 @@ public class GaussianEliminationTest {
 
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; j++) {
-	hess[i][j] = ((i == j) ? -m / (x * x) : 0.0) - klk[i][j];
+        hess[i][j] = ((i == j) ? -m / (x * x) : 0.0) - klk[i][j];
       }
     }
 
@@ -198,7 +198,7 @@ public class GaussianEliminationTest {
     for (int i = 0; i < 4; i++) {
       double diff = Math.abs(rhsCopy[i] - xvEJML.get(i, 0));
       logger.printf(org.apache.logging.log4j.Level.INFO, "  xv[%d]: GE=%.15e  EJML=%.15e  diff=%.4e%n", i, rhsCopy[i],
-	  xvEJML.get(i, 0), diff);
+          xvEJML.get(i, 0), diff);
       assertTrue(diff < 1e-12, "Single RHS solve mismatch at [" + i + "]");
     }
   }

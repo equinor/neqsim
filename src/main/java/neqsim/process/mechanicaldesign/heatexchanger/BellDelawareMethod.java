@@ -78,24 +78,24 @@ public final class BellDelawareMethod {
     if (triangularPitch > 0.5) {
       // Staggered (triangular) layout - Zhukauskas
       if (Re < 100) {
-	Nu = 0.9 * Math.pow(Re, 0.4) * Math.pow(Pr, 0.36) * viscCorr;
+        Nu = 0.9 * Math.pow(Re, 0.4) * Math.pow(Pr, 0.36) * viscCorr;
       } else if (Re < 1000) {
-	Nu = 0.52 * Math.pow(Re, 0.5) * Math.pow(Pr, 0.36) * viscCorr;
+        Nu = 0.52 * Math.pow(Re, 0.5) * Math.pow(Pr, 0.36) * viscCorr;
       } else if (Re < 200000) {
-	Nu = 0.27 * Math.pow(Re, 0.63) * Math.pow(Pr, 0.36) * viscCorr;
+        Nu = 0.27 * Math.pow(Re, 0.63) * Math.pow(Pr, 0.36) * viscCorr;
       } else {
-	Nu = 0.033 * Math.pow(Re, 0.8) * Math.pow(Pr, 0.36) * viscCorr;
+        Nu = 0.033 * Math.pow(Re, 0.8) * Math.pow(Pr, 0.36) * viscCorr;
       }
     } else {
       // Inline (square) layout
       if (Re < 100) {
-	Nu = 0.9 * Math.pow(Re, 0.4) * Math.pow(Pr, 0.36) * viscCorr;
+        Nu = 0.9 * Math.pow(Re, 0.4) * Math.pow(Pr, 0.36) * viscCorr;
       } else if (Re < 1000) {
-	Nu = 0.52 * Math.pow(Re, 0.5) * Math.pow(Pr, 0.36) * viscCorr;
+        Nu = 0.52 * Math.pow(Re, 0.5) * Math.pow(Pr, 0.36) * viscCorr;
       } else if (Re < 200000) {
-	Nu = 0.27 * Math.pow(Re, 0.63) * Math.pow(Pr, 0.36) * viscCorr;
+        Nu = 0.27 * Math.pow(Re, 0.63) * Math.pow(Pr, 0.36) * viscCorr;
       } else {
-	Nu = 0.021 * Math.pow(Re, 0.84) * Math.pow(Pr, 0.36) * viscCorr;
+        Nu = 0.021 * Math.pow(Re, 0.84) * Math.pow(Pr, 0.36) * viscCorr;
       }
     }
 
@@ -265,7 +265,7 @@ public final class BellDelawareMethod {
 
     // Bell's correlation
     double Jl = 0.44 * (1.0 - shellLeakageFraction)
-	+ (1.0 - 0.44 * (1.0 - shellLeakageFraction)) * Math.exp(-2.2 * totalLeakageRatio);
+        + (1.0 - 0.44 * (1.0 - shellLeakageFraction)) * Math.exp(-2.2 * totalLeakageRatio);
 
     return Math.max(0.2, Math.min(1.0, Jl));
   }
@@ -298,7 +298,7 @@ public final class BellDelawareMethod {
       double Nc = tubeRowsCrossflow;
       double ratio = Nss / Nc;
       if (ratio >= 0.5) {
-	return 1.0;
+        return 1.0;
       }
     }
 
@@ -441,7 +441,7 @@ public final class BellDelawareMethod {
     if (hasSealing && tubeRowsCrossflow > 0) {
       double ratio = (double) sealingPairs / tubeRowsCrossflow;
       if (ratio >= 0.5) {
-	return 1.0;
+        return 1.0;
       }
     }
 
@@ -469,15 +469,15 @@ public final class BellDelawareMethod {
     double f;
     if (triangularPitch) {
       if (Re < 1000) {
-	f = 48.0 / Math.max(Re, 0.1);
+        f = 48.0 / Math.max(Re, 0.1);
       } else {
-	f = 0.35 * Math.pow(Re, -0.15);
+        f = 0.35 * Math.pow(Re, -0.15);
       }
     } else {
       if (Re < 1000) {
-	f = 35.0 / Math.max(Re, 0.1);
+        f = 35.0 / Math.max(Re, 0.1);
       } else {
-	f = 0.18 * Math.pow(Re, -0.15);
+        f = 0.18 * Math.pow(Re, -0.15);
       }
     }
 

@@ -153,7 +153,7 @@ public class FireProtectionDesign implements Serializable {
     // Choked flow mass rate at initial pressure
     double pPa = initialPressureBara * 1.0e5;
     double massFlowKgS = areaSqM * pPa * Math.sqrt(gamma * molecularWeightKgKmol / (R * temperatureK))
-	* Math.pow(criticalRatio, (gamma + 1.0) / (2.0 * (gamma - 1.0)));
+        * Math.pow(criticalRatio, (gamma + 1.0) / (2.0 * (gamma - 1.0)));
 
     if (massFlowKgS <= 0) {
       return Double.MAX_VALUE;
@@ -180,7 +180,7 @@ public class FireProtectionDesign implements Serializable {
   public static boolean meetsBlowdownRequirement(double inventoryKg, double initialPressureBara,
       double targetPressureBara, double orificeAreaMm2, double molecularWeightKgKmol, double temperatureK) {
     double time = blowdownTime(inventoryKg, initialPressureBara, targetPressureBara, orificeAreaMm2,
-	molecularWeightKgKmol, temperatureK);
+        molecularWeightKgKmol, temperatureK);
     return time <= 15.0;
   }
 

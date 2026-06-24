@@ -179,64 +179,65 @@ public class SetPoint extends ProcessEquipmentBaseClass {
 
     if (targetEquipment instanceof Stream) {
       if (targetVariable.equals("pressure")) {
-	if (sourceValueCalculator == null) {
-	  val = sourceEquipment.getPressure();
-	}
-	targetEquipment.setPressure(val);
+        if (sourceValueCalculator == null) {
+          val = sourceEquipment.getPressure();
+        }
+        targetEquipment.setPressure(val);
       } else if (targetVariable.equals("temperature")) {
-	if (sourceValueCalculator == null) {
-	  val = sourceEquipment.getTemperature();
-	}
-	targetEquipment.setTemperature(val);
+        if (sourceValueCalculator == null) {
+          val = sourceEquipment.getTemperature();
+        }
+        targetEquipment.setTemperature(val);
       } else {
-	// Legacy logic for other variables?
-	// The original code had some specific logic here involving inputValue and deviation
-	// which looked like copy-paste from Adjuster?
-	// "inputValue = ((Stream) sourceEquipment).getThermoSystem().getNumberOfMoles();"
-	// "double deviation = targetValue - targetValueCurrent;"
-	// This looks suspicious in SetPoint. SetPoint should just set value.
-	// But I will preserve it if possible, or just ignore for now as I am fixing the structure.
+        // Legacy logic for other variables?
+        // The original code had some specific logic here involving inputValue and deviation
+        // which looked like copy-paste from Adjuster?
+        // "inputValue = ((Stream) sourceEquipment).getThermoSystem().getNumberOfMoles();"
+        // "double deviation = targetValue - targetValueCurrent;"
+        // This looks suspicious in SetPoint. SetPoint should just set value.
+        // But I will preserve it if possible, or just ignore for now as I am fixing the
+        // structure.
       }
     } else if (targetEquipment instanceof ThrottlingValve) {
       if (targetVariable.equals("pressure")) {
-	if (sourceValueCalculator == null) {
-	  val = sourceEquipment.getPressure();
-	}
-	((ThrottlingValve) targetEquipment).setOutletPressure(val);
+        if (sourceValueCalculator == null) {
+          val = sourceEquipment.getPressure();
+        }
+        ((ThrottlingValve) targetEquipment).setOutletPressure(val);
       } else {
-	throw new RuntimeException(targetVariable + " adjustment is not supported for ThrottlingValve.");
+        throw new RuntimeException(targetVariable + " adjustment is not supported for ThrottlingValve.");
       }
     } else if (targetEquipment instanceof Compressor) {
       if (targetVariable.equals("pressure")) {
-	if (sourceValueCalculator == null) {
-	  val = sourceEquipment.getPressure();
-	}
-	((Compressor) targetEquipment).setOutletPressure(val);
+        if (sourceValueCalculator == null) {
+          val = sourceEquipment.getPressure();
+        }
+        ((Compressor) targetEquipment).setOutletPressure(val);
       } else {
-	throw new RuntimeException(targetVariable + " adjustment is not supported for Compressor.");
+        throw new RuntimeException(targetVariable + " adjustment is not supported for Compressor.");
       }
     } else if (targetEquipment instanceof Pump) {
       if (targetVariable.equals("pressure")) {
-	if (sourceValueCalculator == null) {
-	  val = sourceEquipment.getPressure();
-	}
-	((Pump) targetEquipment).setOutletPressure(val);
+        if (sourceValueCalculator == null) {
+          val = sourceEquipment.getPressure();
+        }
+        ((Pump) targetEquipment).setOutletPressure(val);
       } else {
-	throw new RuntimeException(targetVariable + " adjustment is not supported for Pump.");
+        throw new RuntimeException(targetVariable + " adjustment is not supported for Pump.");
       }
     } else if (targetEquipment instanceof Heater || targetEquipment instanceof Cooler) {
       if (targetVariable.equals("pressure")) {
-	if (sourceValueCalculator == null) {
-	  val = sourceEquipment.getPressure();
-	}
-	((Heater) targetEquipment).setOutletPressure(val);
+        if (sourceValueCalculator == null) {
+          val = sourceEquipment.getPressure();
+        }
+        ((Heater) targetEquipment).setOutletPressure(val);
       } else if (targetVariable.equals("temperature") || targetVariable.equals("outTemperature")) {
-	if (sourceValueCalculator == null) {
-	  val = sourceEquipment.getTemperature();
-	}
-	((Heater) targetEquipment).setOutTemperature(val);
+        if (sourceValueCalculator == null) {
+          val = sourceEquipment.getTemperature();
+        }
+        ((Heater) targetEquipment).setOutTemperature(val);
       } else {
-	throw new RuntimeException(targetVariable + " adjustment is not supported for Heater.");
+        throw new RuntimeException(targetVariable + " adjustment is not supported for Heater.");
       }
     }
 

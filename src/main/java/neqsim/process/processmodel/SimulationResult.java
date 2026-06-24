@@ -113,10 +113,10 @@ public class SimulationResult {
       obj.addProperty("code", code);
       obj.addProperty("message", message);
       if (unit != null) {
-	obj.addProperty("unit", unit);
+        obj.addProperty("unit", unit);
       }
       if (remediation != null) {
-	obj.addProperty("remediation", remediation);
+        obj.addProperty("remediation", remediation);
       }
       return obj;
     }
@@ -124,7 +124,7 @@ public class SimulationResult {
     @Override
     public String toString() {
       return "[" + code + "] " + message + (unit != null ? " (unit: " + unit + ")" : "")
-	  + (remediation != null ? " | Fix: " + remediation : "");
+          + (remediation != null ? " | Fix: " + remediation : "");
     }
   }
 
@@ -193,7 +193,7 @@ public class SimulationResult {
   public static SimulationResult success(ProcessSystem process, String reportJson, List<String> warnings,
       JsonObject metadata) {
     return new SimulationResult(Status.SUCCESS, process, reportJson, Collections.<ErrorDetail>emptyList(), warnings,
-	metadata);
+        metadata);
   }
 
   /**
@@ -346,7 +346,7 @@ public class SimulationResult {
     if (!errors.isEmpty()) {
       JsonArray errArray = new JsonArray();
       for (ErrorDetail err : errors) {
-	errArray.add(err.toJsonObject());
+        errArray.add(err.toJsonObject());
       }
       root.add("errors", errArray);
     }
@@ -355,7 +355,7 @@ public class SimulationResult {
     if (!warnings.isEmpty()) {
       JsonArray warnArray = new JsonArray();
       for (String w : warnings) {
-	warnArray.add(w);
+        warnArray.add(w);
       }
       root.add("warnings", warnArray);
     }
@@ -367,9 +367,9 @@ public class SimulationResult {
     // Report (embedded as parsed JSON to avoid double-escaping)
     if (reportJson != null) {
       try {
-	root.add("report", com.google.gson.JsonParser.parseString(reportJson));
+        root.add("report", com.google.gson.JsonParser.parseString(reportJson));
       } catch (Exception e) {
-	root.addProperty("report", reportJson);
+        root.addProperty("report", reportJson);
       }
     }
 
@@ -397,7 +397,7 @@ public class SimulationResult {
       return "SimulationResult[SUCCESS" + (hasWarnings() ? ", " + warnings.size() + " warnings" : "") + "]";
     } else {
       return "SimulationResult[ERROR, " + errors.size() + " errors"
-	  + (hasWarnings() ? ", " + warnings.size() + " warnings" : "") + "]";
+          + (hasWarnings() ? ", " + warnings.size() + " warnings" : "") + "]";
     }
   }
 }

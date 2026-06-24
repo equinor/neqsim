@@ -148,9 +148,9 @@ public class VCEModel implements Serializable {
     for (int i = 0; i < 80; i++) {
       double mid = 0.5 * (lo + hi);
       if (overpressurePa(mid) > targetDpPa) {
-	lo = mid;
+        lo = mid;
       } else {
-	hi = mid;
+        hi = mid;
       }
     }
     return 0.5 * (lo + hi);

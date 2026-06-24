@@ -164,7 +164,7 @@ class SimultaneousSolvingIntegrationTest {
     double feedFlow = feedGas.getFlowRate("kg/hr");
     double productFlow = productGas.getFlowRate("kg/hr");
     double liquidFlow = inletSeparator.getLiquidOutStream().getFlowRate("kg/hr")
-	+ hpSeparator.getLiquidOutStream().getFlowRate("kg/hr");
+        + hpSeparator.getLiquidOutStream().getFlowRate("kg/hr");
 
     logger.info("\nMass Balance:");
     logger.info("  Feed: " + String.format("%.2f", feedFlow) + " kg/hr");

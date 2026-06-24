@@ -81,7 +81,7 @@ public class CapillaryCondensationTest {
     highPModel.calcCapillaryCondensation(0);
 
     assertTrue(highPModel.getKelvinRadius(0) > lowPModel.getKelvinRadius(0),
-	"Kelvin radius should increase with relative pressure");
+        "Kelvin radius should increase with relative pressure");
   }
 
   /**
@@ -159,7 +159,7 @@ public class CapillaryCondensationTest {
     // Calculation runs without error
     capModel.calcCapillaryCondensation(0);
     assertTrue(capModel.getKelvinRadius(0) > 0 || capModel.getKelvinRadius(0) == Double.MAX_VALUE,
-	"Kelvin radius should be positive or MAX_VALUE for supersaturated");
+        "Kelvin radius should be positive or MAX_VALUE for supersaturated");
   }
 
   /**

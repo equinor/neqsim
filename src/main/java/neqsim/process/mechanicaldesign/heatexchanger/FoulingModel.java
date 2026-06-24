@@ -206,7 +206,7 @@ public class FoulingModel implements Serializable {
 
     // Deposition rate
     double deposition = alpha * Math.pow(reynoldsNumber, beta)
-	* Math.exp(-activationEnergy / (R_GAS * wallTemperature));
+        * Math.exp(-activationEnergy / (R_GAS * wallTemperature));
 
     // Removal rate
     double removal = gamma * wallShearStress * currentRf;
@@ -230,7 +230,7 @@ public class FoulingModel implements Serializable {
 
     // Analytical solution approximation using asymptotic behaviour
     double depositionRate = alpha * Math.pow(reynoldsNumber, beta)
-	* Math.exp(-activationEnergy / (R_GAS * wallTemperature));
+        * Math.exp(-activationEnergy / (R_GAS * wallTemperature));
 
     double removalCoeff = gamma * wallShearStress;
 
@@ -330,9 +330,9 @@ public class FoulingModel implements Serializable {
       double rfAsymptotic = (gamma * tau > 0) ? deposition / (gamma * tau) : Double.MAX_VALUE;
 
       if (rfAsymptotic > fixedFoulingResistance) {
-	vLow = vMid;
+        vLow = vMid;
       } else {
-	vHigh = vMid;
+        vHigh = vMid;
       }
     }
 
@@ -394,7 +394,7 @@ public class FoulingModel implements Serializable {
     switch (modelType) {
     case EBERT_PANCHAL:
       double deposition = alpha * Math.pow(reynoldsNumber, beta)
-	  * Math.exp(-activationEnergy / (R_GAS * wallTemperature));
+          * Math.exp(-activationEnergy / (R_GAS * wallTemperature));
       double removalCoeff = gamma * wallShearStress;
       return (removalCoeff > 0) ? deposition / removalCoeff : Double.MAX_VALUE;
     case KERN_SEATON:

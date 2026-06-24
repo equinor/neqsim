@@ -89,8 +89,8 @@ public class CompressorCurve implements java.io.Serializable {
     }
     CompressorCurve other = (CompressorCurve) obj;
     return Arrays.equals(flow, other.flow) && Arrays.equals(head, other.head)
-	&& Arrays.equals(flowPolytropicEfficiency, other.flowPolytropicEfficiency)
-	&& Arrays.equals(polytropicEfficiency, other.polytropicEfficiency)
-	&& Double.doubleToLongBits(speed) == Double.doubleToLongBits(other.speed);
+        && Arrays.equals(flowPolytropicEfficiency, other.flowPolytropicEfficiency)
+        && Arrays.equals(polytropicEfficiency, other.polytropicEfficiency)
+        && Double.doubleToLongBits(speed) == Double.doubleToLongBits(other.speed);
   }
 }

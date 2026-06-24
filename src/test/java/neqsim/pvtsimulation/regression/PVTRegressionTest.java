@@ -261,7 +261,7 @@ public class PVTRegressionTest {
   @Test
   public void testRegressionParameterConfig() {
     RegressionParameterConfig config = new RegressionParameterConfig(RegressionParameter.BIP_METHANE_C7PLUS, 0.0, 0.10,
-	0.03);
+        0.03);
 
     assertEquals(RegressionParameter.BIP_METHANE_C7PLUS, config.getParameter());
     assertEquals(0.0, config.getLowerBound(), 1e-6);
@@ -305,7 +305,7 @@ public class PVTRegressionTest {
     PVTRegression regression = new PVTRegression(testFluid);
     regression.addCCEData(new double[] { 200.0 }, new double[] { 1.0 }, 373.15);
     regression.addDLEData(new double[] { 200.0 }, new double[] { 100.0 }, new double[] { 1.3 }, new double[] { 750.0 },
-	373.15);
+        373.15);
     regression.addViscosityData(new double[] { 10.0 }, new double[] { 3.5e-4 }, 320.0, "oil");
 
     assertEquals(1, regression.getCCEData().size());
@@ -343,7 +343,7 @@ public class PVTRegressionTest {
 
     java.util.List<RegressionParameterConfig> paramConfigs = new java.util.ArrayList<>();
     RegressionParameterConfig config = new RegressionParameterConfig(RegressionParameter.BIP_METHANE_C7PLUS, 0.0, 0.10,
-	0.03);
+        0.03);
     config.setOptimizedValue(0.045);
     paramConfigs.add(config);
 
@@ -355,7 +355,7 @@ public class PVTRegressionTest {
     UncertaintyAnalysis uncertainty = new UncertaintyAnalysis(paramValues, stdErrors, corrMatrix, ci95, 10, 0.001);
 
     RegressionResult result = new RegressionResult(fluid, objectiveValues, paramConfigs, uncertainty, paramValues,
-	0.001);
+        0.001);
 
     // Test result methods
     assertNotNull(result.getTunedFluid());

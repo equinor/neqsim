@@ -135,12 +135,12 @@ public class AllocationComparison {
     double worst = 0.0;
     for (String source : ra.getSourceNames()) {
       for (ProductType product : COMPARED_PRODUCTS) {
-	double va = ra.getProductAllocation(source, product, "kg/hr");
-	double vb = rb.getProductAllocation(source, product, "kg/hr");
-	double denom = Math.max(Math.abs(va), Math.abs(vb));
-	if (denom > FLOW_NOISE_FLOOR) {
-	  worst = Math.max(worst, Math.abs(va - vb) / denom);
-	}
+        double va = ra.getProductAllocation(source, product, "kg/hr");
+        double vb = rb.getProductAllocation(source, product, "kg/hr");
+        double denom = Math.max(Math.abs(va), Math.abs(vb));
+        if (denom > FLOW_NOISE_FLOOR) {
+          worst = Math.max(worst, Math.abs(va - vb) / denom);
+        }
       }
     }
     return worst;
@@ -181,33 +181,33 @@ public class AllocationComparison {
     if (hasAi && hasSa) {
       double dAiSa = getMaxRelativeDifference(AllocationMethod.ALL_IN, AllocationMethod.STAND_ALONE);
       if (dAiSa > tolerance) {
-	recommendedMethod = AllocationMethod.STAND_ALONE;
-	recommendationRationale = String
-	    .format("All-in and stand-alone disagree by %.2f%% (> %.2f%% tolerance): commingling introduces material "
-		+ "non-linear compositional/thermal coupling, so the most faithful stand-alone re-simulation is "
-		+ "recommended; consider refreshing the base case.", dAiSa * 100.0, tolerance * 100.0);
-	return;
+        recommendedMethod = AllocationMethod.STAND_ALONE;
+        recommendationRationale = String
+            .format("All-in and stand-alone disagree by %.2f%% (> %.2f%% tolerance): commingling introduces material "
+                + "non-linear compositional/thermal coupling, so the most faithful stand-alone re-simulation is "
+                + "recommended; consider refreshing the base case.", dAiSa * 100.0, tolerance * 100.0);
+        return;
       }
     }
 
     if (hasCr && hasAi) {
       double dCrAi = getMaxRelativeDifference(AllocationMethod.COMPONENT_RATIO, AllocationMethod.ALL_IN);
       if (dCrAi > tolerance) {
-	recommendedMethod = AllocationMethod.ALL_IN;
-	recommendationRationale = String.format(
-	    "Common recovery factor and all-in disagree by %.2f%% (> %.2f%% tolerance): source-dependent routing "
-		+ "matters but commingling coupling is weak, so the linear all-in proxy is recommended as a cheaper "
-		+ "alternative to stand-alone re-simulation.",
-	    dCrAi * 100.0, tolerance * 100.0);
-	return;
+        recommendedMethod = AllocationMethod.ALL_IN;
+        recommendationRationale = String.format(
+            "Common recovery factor and all-in disagree by %.2f%% (> %.2f%% tolerance): source-dependent routing "
+                + "matters but commingling coupling is weak, so the linear all-in proxy is recommended as a cheaper "
+                + "alternative to stand-alone re-simulation.",
+            dCrAi * 100.0, tolerance * 100.0);
+        return;
       }
     }
 
     if (hasCr) {
       recommendedMethod = AllocationMethod.COMPONENT_RATIO;
       recommendationRationale = String
-	  .format("All evaluated methods agree within the %.2f%% tolerance, so the cheapest and most auditable common "
-	      + "recovery factor is sufficient.", tolerance * 100.0);
+          .format("All evaluated methods agree within the %.2f%% tolerance, so the cheapest and most auditable common "
+              + "recovery factor is sufficient.", tolerance * 100.0);
       return;
     }
 
@@ -238,18 +238,18 @@ public class AllocationComparison {
     ProductionAllocationResult any = results.values().iterator().next();
     for (String source : any.getSourceNames()) {
       for (ProductType product : COMPARED_PRODUCTS) {
-	Map<AllocationMethod, Double> perMethod = new LinkedHashMap<>();
-	double min = Double.POSITIVE_INFINITY;
-	double max = Double.NEGATIVE_INFINITY;
-	for (Map.Entry<AllocationMethod, ProductionAllocationResult> entry : results.entrySet()) {
-	  double value = entry.getValue().getProductAllocation(source, product, unit);
-	  perMethod.put(entry.getKey(), value);
-	  min = Math.min(min, value);
-	  max = Math.max(max, value);
-	}
-	if (max > FLOW_NOISE_FLOOR) {
-	  rows.add(new OwnerSensitivity(source, product, unit, perMethod, max - min));
-	}
+        Map<AllocationMethod, Double> perMethod = new LinkedHashMap<>();
+        double min = Double.POSITIVE_INFINITY;
+        double max = Double.NEGATIVE_INFINITY;
+        for (Map.Entry<AllocationMethod, ProductionAllocationResult> entry : results.entrySet()) {
+          double value = entry.getValue().getProductAllocation(source, product, unit);
+          perMethod.put(entry.getKey(), value);
+          min = Math.min(min, value);
+          max = Math.max(max, value);
+        }
+        if (max > FLOW_NOISE_FLOOR) {
+          rows.add(new OwnerSensitivity(source, product, unit, perMethod, max - min));
+        }
       }
     }
     return rows;
@@ -281,10 +281,10 @@ public class AllocationComparison {
 
     Map<String, Object> diffs = new LinkedHashMap<>();
     diffs.put("componentRatio_vs_allIn",
-	getMaxRelativeDifference(AllocationMethod.COMPONENT_RATIO, AllocationMethod.ALL_IN));
+        getMaxRelativeDifference(AllocationMethod.COMPONENT_RATIO, AllocationMethod.ALL_IN));
     diffs.put("allIn_vs_standAlone", getMaxRelativeDifference(AllocationMethod.ALL_IN, AllocationMethod.STAND_ALONE));
     diffs.put("componentRatio_vs_standAlone",
-	getMaxRelativeDifference(AllocationMethod.COMPONENT_RATIO, AllocationMethod.STAND_ALONE));
+        getMaxRelativeDifference(AllocationMethod.COMPONENT_RATIO, AllocationMethod.STAND_ALONE));
     root.put("maxRelativeDifferences", diffs);
 
     List<Map<String, Object>> sensitivity = new ArrayList<>();
@@ -295,7 +295,7 @@ public class AllocationComparison {
       r.put("unit", row.getUnit());
       Map<String, Double> byMethod = new LinkedHashMap<>();
       for (Map.Entry<AllocationMethod, Double> e : row.getPerMethod().entrySet()) {
-	byMethod.put(e.getKey().name(), e.getValue());
+        byMethod.put(e.getKey().name(), e.getValue());
       }
       r.put("byMethod", byMethod);
       r.put("spread", row.getSpread());
@@ -340,7 +340,7 @@ public class AllocationComparison {
      * @param spread the spread across methods in {@code unit}
      */
     OwnerSensitivity(String source, ProductType product, String unit, Map<AllocationMethod, Double> perMethod,
-	double spread) {
+        double spread) {
       this.source = source;
       this.product = product;
       this.unit = unit;

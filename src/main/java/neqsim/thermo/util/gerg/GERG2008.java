@@ -128,7 +128,7 @@ public class GERG2008 {
     doubleW[][] ar = new doubleW[4][4];
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; j++) {
-	ar[i][j] = new doubleW(0.0d);
+        ar[i][j] = new doubleW(0.0d);
       }
     }
     AlpharGERG(0, 0, T, D, x, ar);
@@ -229,7 +229,7 @@ public class GERG2008 {
     if (D.val > -epsilon) {
       D.val = P / RGERG / T; // Ideal gas estimate for vapor phase
       if (iFlag == 2) {
-	D.val = Dcx.val * 3;
+        D.val = Dcx.val * 3;
       } // Initial estimate for liquid phase
     } else {
       D.val = Math.abs(D.val); // If D<0, then use as initial estimate
@@ -239,73 +239,74 @@ public class GERG2008 {
     vlog = -Math.log(D.val);
     for (int it = 1; it <= 50; ++it) {
       if (vlog < -7 || vlog > 100 || it == 20 || it == 30 || it == 40 || iFail == 1) {
-	// Current state is bad or iteration is taking too long. Restart with completely
-	// different initial state
-	iFail = 0;
-	if (nFail > 2) {
-	  // Iteration failed (above loop did not find a solution or checks made below
-	  // indicate possible 2-phase state)
-	  ierr.val = 1;
-	  herr.val = "Calculation failed to converge in GERG method, ideal gas density returned.";
-	  D.val = P / RGERG / T;
-	}
-	nFail++;
-	if (nFail == 1) {
-	  D.val = Dcx.val * 3; // If vapor phase search fails, look for root in liquid
-			       // region
-	} else if (nFail == 2) {
-	  D.val = Dcx.val * 2.5; // If liquid phase search fails, look for root between
-				 // liquid and critical
-				 // regions
-	} else if (nFail == 3) {
-	  D.val = Dcx.val * 2; // If search fails, look for root in critical region
-	}
-	vlog = -Math.log(D.val);
+        // Current state is bad or iteration is taking too long. Restart with completely
+        // different initial state
+        iFail = 0;
+        if (nFail > 2) {
+          // Iteration failed (above loop did not find a solution or checks made below
+          // indicate possible 2-phase state)
+          ierr.val = 1;
+          herr.val = "Calculation failed to converge in GERG method, ideal gas density returned.";
+          D.val = P / RGERG / T;
+        }
+        nFail++;
+        if (nFail == 1) {
+          D.val = Dcx.val * 3; // If vapor phase search fails, look for root in liquid
+          // region
+        } else if (nFail == 2) {
+          D.val = Dcx.val * 2.5; // If liquid phase search fails, look for root between
+          // liquid and critical
+          // regions
+        } else if (nFail == 3) {
+          D.val = Dcx.val * 2; // If search fails, look for root in critical region
+        }
+        vlog = -Math.log(D.val);
       }
       D.val = Math.exp(-vlog);
       PressureGERG(T, D.val, x, P2, Z);
       if (dPdDsave < epsilon || P2.val < epsilon) {
-	// Current state is 2-phase, try locating a different state that is single phase
-	vinc = 0.1;
-	if (D.val > Dcx.val) {
-	  vinc = -0.1;
-	}
-	if (it > 5) {
-	  vinc = vinc / 2;
-	}
-	if (it > 10 && it < 20) {
-	  vinc = vinc / 5;
-	}
-	vlog += vinc;
+        // Current state is 2-phase, try locating a different state that is single phase
+        vinc = 0.1;
+        if (D.val > Dcx.val) {
+          vinc = -0.1;
+        }
+        if (it > 5) {
+          vinc = vinc / 2;
+        }
+        if (it > 10 && it < 20) {
+          vinc = vinc / 5;
+        }
+        vlog += vinc;
       } else {
-	// Find the next density with a first order Newton's type iterative scheme, with
-	// log(P) as the known variable and log(v) as the unknown property.
-	// See AGA 8 publication for further information.
-	dpdlv = -D.val * dPdDsave; // d(p)/d[log(v)]
-	vdiff = (Math.log(P2.val) - plog) * P2.val / dpdlv;
-	vlog += -vdiff;
-	if (Math.abs(vdiff) < tolr) {
-	  // Check to see if state is possibly 2-phase, and if so restart
-	  if (dPdDsave < 0) {
-	    iFail = 1;
-	  } else {
-	    D.val = Math.exp(-vlog);
+        // Find the next density with a first order Newton's type iterative scheme, with
+        // log(P) as the known variable and log(v) as the unknown property.
+        // See AGA 8 publication for further information.
+        dpdlv = -D.val * dPdDsave; // d(p)/d[log(v)]
+        vdiff = (Math.log(P2.val) - plog) * P2.val / dpdlv;
+        vlog += -vdiff;
+        if (Math.abs(vdiff) < tolr) {
+          // Check to see if state is possibly 2-phase, and if so restart
+          if (dPdDsave < 0) {
+            iFail = 1;
+          } else {
+            D.val = Math.exp(-vlog);
 
-	    // If requested, check to see if point is possibly 2-phase
-	    if (iFlag > 0) {
-	      PropertiesGERG(T, D.val, x, PP, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa, A);
-	      if ((PP.val <= 0 || dPdD.val <= 0 || d2PdTD.val <= 0) || (Cv.val <= 0 || Cp.val <= 0 || W.val <= 0)) {
-		// Iteration failed (above loop did find a solution or checks made
-		// below
-		// indicate possible 2-phase state)
-		ierr.val = 1;
-		herr.val = "Calculation failed to converge in GERG method, ideal gas density returned.";
-		D.val = P / RGERG / T;
-	      }
-	    }
-	    return; // Iteration converged
-	  }
-	}
+            // If requested, check to see if point is possibly 2-phase
+            if (iFlag > 0) {
+              PropertiesGERG(T, D.val, x, PP, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa, A);
+              if ((PP.val <= 0 || dPdD.val <= 0 || d2PdTD.val <= 0) || (Cv.val <= 0 || Cp.val <= 0 || W.val <= 0)) {
+                // Iteration failed (above loop did find a solution or
+                // checks made
+                // below
+                // indicate possible 2-phase state)
+                ierr.val = 1;
+                herr.val = "Calculation failed to converge in GERG method, ideal gas density returned.";
+                D.val = P / RGERG / T;
+              }
+            }
+            return; // Iteration converged
+          }
+        }
       }
     }
     // Iteration failed (above loop did not find a solution or checks made below
@@ -385,7 +386,7 @@ public class GERG2008 {
 
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; j++) {
-	ar[i][j] = new doubleW(0.0d);
+        ar[i][j] = new doubleW(0.0d);
       }
     }
 
@@ -421,8 +422,8 @@ public class GERG2008 {
       Cp.val = Cv.val + T * (dPdT.val / D) * (dPdT.val / D) / dPdD.val;
       d2PdD2.val = RT * (2 * ar[0][1].val + 4 * ar[0][2].val + ar[0][3].val) / D;
       JT.val = (T / D * dPdT.val / dPdD.val - 1) / Cp.val / D; // '=(dB/dT*T-B)/Cp for an
-							       // ideal gas, but dB/dT is
-							       // not known
+      // ideal gas, but dB/dT is
+      // not known
     } else {
       Cp.val = Cv.val + R;
       d2PdD2.val = 0;
@@ -465,7 +466,7 @@ public class GERG2008 {
     icheck = 0;
     for (int i = 1; i <= NcGERG; ++i) {
       if (Math.abs(x[i] - xold[i]) > 0.0000001) {
-	icheck = 1;
+        icheck = 1;
       }
       xold[i] = x[i];
     }
@@ -483,15 +484,15 @@ public class GERG2008 {
     Tr.val = 0;
     for (int i = 1; i <= NcGERG; ++i) {
       if (x[i] > epsilon) {
-	F = 1;
-	for (int j = i; j <= NcGERG; ++j) {
-	  if (x[j] > epsilon) {
-	    xij = F * (x[i] * x[j]) * (x[i] + x[j]);
-	    Vr = Vr + xij * gvij[i][j] / (bvij[i][j] * x[i] + x[j]);
-	    Tr.val = Tr.val + xij * gtij[i][j] / (btij[i][j] * x[i] + x[j]);
-	    F = 2;
-	  }
-	}
+        F = 1;
+        for (int j = i; j <= NcGERG; ++j) {
+          if (x[j] > epsilon) {
+            xij = F * (x[i] * x[j]) * (x[i] + x[j]);
+            Vr = Vr + xij * gvij[i][j] / (bvij[i][j] * x[i] + x[j]);
+            Tr.val = Tr.val + xij * gtij[i][j] / (btij[i][j] * x[i] + x[j]);
+            F = 2;
+          }
+        }
       }
     }
     if (Vr > epsilon) {
@@ -548,33 +549,33 @@ public class GERG2008 {
     LogT = Math.log(T);
     for (int i = 1; i <= NcGERG; ++i) {
       if (x[i] > epsilon) {
-	LogxD = LogD + Math.log(x[i]);
-	SumHyp0 = 0;
-	SumHyp1 = 0;
-	SumHyp2 = 0;
-	for (int j = 4; j <= 7; ++j) {
-	  if (th0i[i][j] > epsilon) {
-	    th0T = th0i[i][j] / T;
-	    ep = Math.exp(th0T);
-	    em = 1 / ep;
-	    hsn = (ep - em) / 2;
-	    hcn = (ep + em) / 2;
-	    if (j == 4 || j == 6) {
-	      LogHyp = Math.log(Math.abs(hsn));
-	      SumHyp0 = SumHyp0 + n0i[i][j] * LogHyp;
-	      SumHyp1 = SumHyp1 + n0i[i][j] * th0T * hcn / hsn;
-	      SumHyp2 = SumHyp2 + n0i[i][j] * (th0T / hsn) * (th0T / hsn);
-	    } else {
-	      LogHyp = Math.log(Math.abs(hcn));
-	      SumHyp0 = SumHyp0 - n0i[i][j] * LogHyp;
-	      SumHyp1 = SumHyp1 - n0i[i][j] * th0T * hsn / hcn;
-	      SumHyp2 = SumHyp2 + n0i[i][j] * (th0T / hcn) * (th0T / hcn);
-	    }
-	  }
-	}
-	a0[0].val += +x[i] * (LogxD + n0i[i][1] + n0i[i][2] / T - n0i[i][3] * LogT + SumHyp0);
-	a0[1].val += +x[i] * (n0i[i][3] + n0i[i][2] / T + SumHyp1);
-	a0[2].val += -x[i] * (n0i[i][3] + SumHyp2);
+        LogxD = LogD + Math.log(x[i]);
+        SumHyp0 = 0;
+        SumHyp1 = 0;
+        SumHyp2 = 0;
+        for (int j = 4; j <= 7; ++j) {
+          if (th0i[i][j] > epsilon) {
+            th0T = th0i[i][j] / T;
+            ep = Math.exp(th0T);
+            em = 1 / ep;
+            hsn = (ep - em) / 2;
+            hcn = (ep + em) / 2;
+            if (j == 4 || j == 6) {
+              LogHyp = Math.log(Math.abs(hsn));
+              SumHyp0 = SumHyp0 + n0i[i][j] * LogHyp;
+              SumHyp1 = SumHyp1 + n0i[i][j] * th0T * hcn / hsn;
+              SumHyp2 = SumHyp2 + n0i[i][j] * (th0T / hsn) * (th0T / hsn);
+            } else {
+              LogHyp = Math.log(Math.abs(hcn));
+              SumHyp0 = SumHyp0 - n0i[i][j] * LogHyp;
+              SumHyp1 = SumHyp1 - n0i[i][j] * th0T * hsn / hcn;
+              SumHyp2 = SumHyp2 + n0i[i][j] * (th0T / hcn) * (th0T / hcn);
+            }
+          }
+        }
+        a0[0].val += +x[i] * (LogxD + n0i[i][1] + n0i[i][2] / T - n0i[i][3] * LogT + SumHyp0);
+        a0[1].val += +x[i] * (n0i[i][3] + n0i[i][2] / T + SumHyp1);
+        a0[2].val += -x[i] * (n0i[i][3] + SumHyp2);
       }
     }
   }
@@ -631,7 +632,7 @@ public class GERG2008 {
 
     for (int i = 0; i <= 3; ++i) {
       for (int j = 0; j <= 3; ++j) {
-	ar[i][j].val = 0;
+        ar[i][j].val = 0;
       }
     }
 
@@ -657,86 +658,86 @@ public class GERG2008 {
     // Calculate pure fluid contributions
     for (int i = 1; i <= NcGERG; ++i) {
       if (x[i] > epsilon) {
-	for (int k = 1; k <= kpol[i]; ++k) {
-	  ndt = x[i] * delp[doik[i][k]] * taup[i][k];
-	  ndtd = ndt * doik[i][k];
-	  ar[0][1].val += ndtd;
-	  ar[0][2].val += ndtd * (doik[i][k] - 1);
-	  if (itau > 0) {
-	    ndtt = ndt * toik[i][k];
-	    ar[0][0].val += ndt;
-	    ar[1][0].val += ndtt;
-	    ar[2][0].val += ndtt * (toik[i][k] - 1);
-	    ar[1][1].val += ndtt * doik[i][k];
-	    ar[1][2].val += ndtt * doik[i][k] * (doik[i][k] - 1);
-	    ar[0][3].val += ndtd * (doik[i][k] - 1) * (doik[i][k] - 2);
-	  }
-	}
-	for (int k = 1 + kpol[i]; k <= kpol[i] + kexp[i]; ++k) {
-	  ndt = x[i] * delp[doik[i][k]] * taup[i][k] * Expd[coik[i][k]];
-	  ex = coik[i][k] * delp[coik[i][k]];
-	  ex2 = doik[i][k] - ex;
-	  ex3 = ex2 * (ex2 - 1);
-	  ar[0][1].val += ndt * ex2;
-	  ar[0][2].val += ndt * (ex3 - coik[i][k] * ex);
-	  if (itau > 0) {
-	    ndtt = ndt * toik[i][k];
-	    ar[0][0].val += ndt;
-	    ar[1][0].val += ndtt;
-	    ar[2][0].val += ndtt * (toik[i][k] - 1);
-	    ar[1][1].val += ndtt * ex2;
-	    ar[1][2].val += ndtt * (ex3 - coik[i][k] * ex);
-	    ar[0][3].val += ndt * (ex3 * (ex2 - 2) - ex * (3 * ex2 - 3 + coik[i][k]) * coik[i][k]);
-	  }
-	}
+        for (int k = 1; k <= kpol[i]; ++k) {
+          ndt = x[i] * delp[doik[i][k]] * taup[i][k];
+          ndtd = ndt * doik[i][k];
+          ar[0][1].val += ndtd;
+          ar[0][2].val += ndtd * (doik[i][k] - 1);
+          if (itau > 0) {
+            ndtt = ndt * toik[i][k];
+            ar[0][0].val += ndt;
+            ar[1][0].val += ndtt;
+            ar[2][0].val += ndtt * (toik[i][k] - 1);
+            ar[1][1].val += ndtt * doik[i][k];
+            ar[1][2].val += ndtt * doik[i][k] * (doik[i][k] - 1);
+            ar[0][3].val += ndtd * (doik[i][k] - 1) * (doik[i][k] - 2);
+          }
+        }
+        for (int k = 1 + kpol[i]; k <= kpol[i] + kexp[i]; ++k) {
+          ndt = x[i] * delp[doik[i][k]] * taup[i][k] * Expd[coik[i][k]];
+          ex = coik[i][k] * delp[coik[i][k]];
+          ex2 = doik[i][k] - ex;
+          ex3 = ex2 * (ex2 - 1);
+          ar[0][1].val += ndt * ex2;
+          ar[0][2].val += ndt * (ex3 - coik[i][k] * ex);
+          if (itau > 0) {
+            ndtt = ndt * toik[i][k];
+            ar[0][0].val += ndt;
+            ar[1][0].val += ndtt;
+            ar[2][0].val += ndtt * (toik[i][k] - 1);
+            ar[1][1].val += ndtt * ex2;
+            ar[1][2].val += ndtt * (ex3 - coik[i][k] * ex);
+            ar[0][3].val += ndt * (ex3 * (ex2 - 2) - ex * (3 * ex2 - 3 + coik[i][k]) * coik[i][k]);
+          }
+        }
       }
     }
 
     // Calculate mixture contributions
     for (int i = 1; i <= NcGERG - 1; ++i) {
       if (x[i] > epsilon) {
-	for (int j = i + 1; j <= NcGERG; ++j) {
-	  if (x[j] > epsilon) {
-	    mn = mNumb[i][j];
-	    if (mn >= 0) {
-	      xijf = x[i] * x[j] * fij[i][j];
-	      for (int k = 1; k <= kpolij[mn]; ++k) {
-		ndt = xijf * delp[dijk[mn][k]] * taupijk[mn][k];
-		ndtd = ndt * dijk[mn][k];
-		ar[0][1].val += ndtd;
-		ar[0][2].val += ndtd * (dijk[mn][k] - 1);
-		if (itau > 0) {
-		  ndtt = ndt * tijk[mn][k];
-		  ar[0][0].val += ndt;
-		  ar[1][0].val += ndtt;
-		  ar[2][0].val += ndtt * (tijk[mn][k] - 1);
-		  ar[1][1].val += ndtt * dijk[mn][k];
-		  ar[1][2].val += ndtt * dijk[mn][k] * (dijk[mn][k] - 1);
-		  ar[0][3].val += ndtd * (dijk[mn][k] - 1) * (dijk[mn][k] - 2);
-		}
-	      }
-	      for (int k = 1 + kpolij[mn]; k <= kpolij[mn] + kexpij[mn]; ++k) {
-		cij0 = cijk[mn][k] * delp[2];
-		eij0 = eijk[mn][k] * del;
-		ndt = xijf * nijk[mn][k] * delp[dijk[mn][k]]
-		    * Math.exp(cij0 + eij0 + gijk[mn][k] + tijk[mn][k] * lntau);
-		ex = dijk[mn][k] + 2 * cij0 + eij0;
-		ex2 = (ex * ex - dijk[mn][k] + 2 * cij0);
-		ar[0][1].val += ndt * ex;
-		ar[0][2].val += ndt * ex2;
-		if (itau > 0) {
-		  ndtt = ndt * tijk[mn][k];
-		  ar[0][0].val += ndt;
-		  ar[1][0].val += ndtt;
-		  ar[2][0].val += ndtt * (tijk[mn][k] - 1);
-		  ar[1][1].val += ndtt * ex;
-		  ar[1][2].val += ndtt * ex2;
-		  ar[0][3].val += ndt * (ex * (ex2 - 2 * (dijk[mn][k] - 2 * cij0)) + 2 * dijk[mn][k]);
-		}
-	      }
-	    }
-	  }
-	}
+        for (int j = i + 1; j <= NcGERG; ++j) {
+          if (x[j] > epsilon) {
+            mn = mNumb[i][j];
+            if (mn >= 0) {
+              xijf = x[i] * x[j] * fij[i][j];
+              for (int k = 1; k <= kpolij[mn]; ++k) {
+                ndt = xijf * delp[dijk[mn][k]] * taupijk[mn][k];
+                ndtd = ndt * dijk[mn][k];
+                ar[0][1].val += ndtd;
+                ar[0][2].val += ndtd * (dijk[mn][k] - 1);
+                if (itau > 0) {
+                  ndtt = ndt * tijk[mn][k];
+                  ar[0][0].val += ndt;
+                  ar[1][0].val += ndtt;
+                  ar[2][0].val += ndtt * (tijk[mn][k] - 1);
+                  ar[1][1].val += ndtt * dijk[mn][k];
+                  ar[1][2].val += ndtt * dijk[mn][k] * (dijk[mn][k] - 1);
+                  ar[0][3].val += ndtd * (dijk[mn][k] - 1) * (dijk[mn][k] - 2);
+                }
+              }
+              for (int k = 1 + kpolij[mn]; k <= kpolij[mn] + kexpij[mn]; ++k) {
+                cij0 = cijk[mn][k] * delp[2];
+                eij0 = eijk[mn][k] * del;
+                ndt = xijf * nijk[mn][k] * delp[dijk[mn][k]]
+                    * Math.exp(cij0 + eij0 + gijk[mn][k] + tijk[mn][k] * lntau);
+                ex = dijk[mn][k] + 2 * cij0 + eij0;
+                ex2 = (ex * ex - dijk[mn][k] + 2 * cij0);
+                ar[0][1].val += ndt * ex;
+                ar[0][2].val += ndt * ex2;
+                if (itau > 0) {
+                  ndtt = ndt * tijk[mn][k];
+                  ar[0][0].val += ndt;
+                  ar[1][0].val += ndtt;
+                  ar[2][0].val += ndtt * (tijk[mn][k] - 1);
+                  ar[1][1].val += ndtt * ex;
+                  ar[1][2].val += ndtt * ex2;
+                  ar[0][3].val += ndt * (ex * (ex2 - 2 * (dijk[mn][k] - 2 * cij0)) + 2 * dijk[mn][k]);
+                }
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -760,30 +761,30 @@ public class GERG2008 {
     }
     for (i = 1; i <= NcGERG; ++i) {
       if (x[i] > epsilon) {
-	if (i > 4 && i != 15 && i != 18 && i != 20) {
-	  for (int k = 1; k <= kpol[i] + kexp[i]; ++k) {
-	    taup[i][k] = noik[i][k] * taup0[k];
-	  }
-	} else {
-	  for (int k = 1; k <= kpol[i] + kexp[i]; ++k) {
-	    taup[i][k] = noik[i][k] * Math.exp(toik[i][k] * lntau);
-	  }
-	}
+        if (i > 4 && i != 15 && i != 18 && i != 20) {
+          for (int k = 1; k <= kpol[i] + kexp[i]; ++k) {
+            taup[i][k] = noik[i][k] * taup0[k];
+          }
+        } else {
+          for (int k = 1; k <= kpol[i] + kexp[i]; ++k) {
+            taup[i][k] = noik[i][k] * Math.exp(toik[i][k] * lntau);
+          }
+        }
       }
     }
 
     for (i = 1; i <= NcGERG - 1; ++i) {
       if (x[i] > epsilon) {
-	for (int j = i + 1; j <= NcGERG; ++j) {
-	  if (x[j] > epsilon) {
-	    mn = mNumb[i][j];
-	    if (mn >= 0) {
-	      for (int k = 1; k <= kpolij[mn]; ++k) {
-		taupijk[mn][k] = nijk[mn][k] * Math.exp(tijk[mn][k] * lntau);
-	      }
-	    }
-	  }
-	}
+        for (int j = i + 1; j <= NcGERG; ++j) {
+          if (x[j] > epsilon) {
+            mn = mNumb[i][j];
+            if (mn >= 0) {
+              for (int k = 1; k <= kpolij[mn]; ++k) {
+                taupijk[mn][k] = nijk[mn][k] * Math.exp(tijk[mn][k] * lntau);
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -944,7 +945,7 @@ public class GERG2008 {
     // Exponents in pure fluid equations
     for (int i = 1; i <= MaxFlds; ++i) {
       if (Dc[i] > epsilon) {
-	Vc3[i] = 1 / Math.pow(Dc[i], o13) / 2;
+        Vc3[i] = 1 / Math.pow(Dc[i], o13) / 2;
       }
       Tc2[i] = Math.sqrt(Tc[i]);
       coik[i][1] = 0;
@@ -986,78 +987,78 @@ public class GERG2008 {
     }
     for (int i = 1; i <= 4; ++i) {
       if (i != 3) {
-	coik[i][1] = 0;
-	doik[i][1] = 1;
-	toik[i][1] = 0.125;
-	coik[i][2] = 0;
-	doik[i][2] = 1;
-	toik[i][2] = 1.125;
-	coik[i][3] = 0;
-	doik[i][3] = 2;
-	toik[i][3] = 0.375;
-	coik[i][4] = 0;
-	doik[i][4] = 2;
-	toik[i][4] = 1.125;
-	coik[i][5] = 0;
-	doik[i][5] = 4;
-	toik[i][5] = 0.625;
-	coik[i][6] = 0;
-	doik[i][6] = 4;
-	toik[i][6] = 1.5;
-	coik[i][7] = 1;
-	doik[i][7] = 1;
-	toik[i][7] = 0.625;
-	coik[i][8] = 1;
-	doik[i][8] = 1;
-	toik[i][8] = 2.625;
-	coik[i][9] = 1;
-	doik[i][9] = 1;
-	toik[i][9] = 2.75;
-	coik[i][10] = 1;
-	doik[i][10] = 2;
-	toik[i][10] = 2.125;
-	coik[i][11] = 1;
-	doik[i][11] = 3;
-	toik[i][11] = 2;
-	coik[i][12] = 1;
-	doik[i][12] = 6;
-	toik[i][12] = 1.75;
-	coik[i][13] = 2;
-	doik[i][13] = 2;
-	toik[i][13] = 4.5;
-	coik[i][14] = 2;
-	doik[i][14] = 3;
-	toik[i][14] = 4.75;
-	coik[i][15] = 2;
-	doik[i][15] = 3;
-	toik[i][15] = 5;
-	coik[i][16] = 2;
-	doik[i][16] = 4;
-	toik[i][16] = 4;
-	coik[i][17] = 2;
-	doik[i][17] = 4;
-	toik[i][17] = 4.5;
-	coik[i][18] = 3;
-	doik[i][18] = 2;
-	toik[i][18] = 7.5;
-	coik[i][19] = 3;
-	doik[i][19] = 3;
-	toik[i][19] = 14;
-	coik[i][20] = 3;
-	doik[i][20] = 4;
-	toik[i][20] = 11.5;
-	coik[i][21] = 6;
-	doik[i][21] = 5;
-	toik[i][21] = 26;
-	coik[i][22] = 6;
-	doik[i][22] = 6;
-	toik[i][22] = 28;
-	coik[i][23] = 6;
-	doik[i][23] = 6;
-	toik[i][23] = 30;
-	coik[i][24] = 6;
-	doik[i][24] = 7;
-	toik[i][24] = 16;
+        coik[i][1] = 0;
+        doik[i][1] = 1;
+        toik[i][1] = 0.125;
+        coik[i][2] = 0;
+        doik[i][2] = 1;
+        toik[i][2] = 1.125;
+        coik[i][3] = 0;
+        doik[i][3] = 2;
+        toik[i][3] = 0.375;
+        coik[i][4] = 0;
+        doik[i][4] = 2;
+        toik[i][4] = 1.125;
+        coik[i][5] = 0;
+        doik[i][5] = 4;
+        toik[i][5] = 0.625;
+        coik[i][6] = 0;
+        doik[i][6] = 4;
+        toik[i][6] = 1.5;
+        coik[i][7] = 1;
+        doik[i][7] = 1;
+        toik[i][7] = 0.625;
+        coik[i][8] = 1;
+        doik[i][8] = 1;
+        toik[i][8] = 2.625;
+        coik[i][9] = 1;
+        doik[i][9] = 1;
+        toik[i][9] = 2.75;
+        coik[i][10] = 1;
+        doik[i][10] = 2;
+        toik[i][10] = 2.125;
+        coik[i][11] = 1;
+        doik[i][11] = 3;
+        toik[i][11] = 2;
+        coik[i][12] = 1;
+        doik[i][12] = 6;
+        toik[i][12] = 1.75;
+        coik[i][13] = 2;
+        doik[i][13] = 2;
+        toik[i][13] = 4.5;
+        coik[i][14] = 2;
+        doik[i][14] = 3;
+        toik[i][14] = 4.75;
+        coik[i][15] = 2;
+        doik[i][15] = 3;
+        toik[i][15] = 5;
+        coik[i][16] = 2;
+        doik[i][16] = 4;
+        toik[i][16] = 4;
+        coik[i][17] = 2;
+        doik[i][17] = 4;
+        toik[i][17] = 4.5;
+        coik[i][18] = 3;
+        doik[i][18] = 2;
+        toik[i][18] = 7.5;
+        coik[i][19] = 3;
+        doik[i][19] = 3;
+        toik[i][19] = 14;
+        coik[i][20] = 3;
+        doik[i][20] = 4;
+        toik[i][20] = 11.5;
+        coik[i][21] = 6;
+        doik[i][21] = 5;
+        toik[i][21] = 26;
+        coik[i][22] = 6;
+        doik[i][22] = 6;
+        toik[i][22] = 28;
+        coik[i][23] = 6;
+        doik[i][23] = 6;
+        toik[i][23] = 30;
+        coik[i][24] = 6;
+        doik[i][24] = 7;
+        toik[i][24] = 16;
       }
     }
 
@@ -2046,9 +2047,9 @@ public class GERG2008 {
     for (int i = 1; i <= MaxFlds; ++i) {
       mNumb[i][i] = -1;
       for (int j = i + 1; j <= MaxFlds; ++j) {
-	fij[j][i] = fij[i][j];
-	mNumb[i][j] = -1;
-	mNumb[j][i] = -1;
+        fij[j][i] = fij[i][j];
+        mNumb[i][j] = -1;
+        mNumb[j][i] = -1;
       }
     }
 
@@ -3154,18 +3155,18 @@ public class GERG2008 {
       gvij[i][i] = 1 / Dc[i];
       gtij[i][i] = Tc[i];
       for (int j = i + 1; j <= NcGERG; ++j) {
-	gvij[i][j] = gvij[i][j] * bvij[i][j] * Math.pow(Vc3[i] + Vc3[j], 3);
-	gtij[i][j] = gtij[i][j] * btij[i][j] * Tc2[i] * Tc2[j];
-	bvij[i][j] = Math.pow(bvij[i][j], 2);
-	btij[i][j] = Math.pow(btij[i][j], 2);
+        gvij[i][j] = gvij[i][j] * bvij[i][j] * Math.pow(Vc3[i] + Vc3[j], 3);
+        gtij[i][j] = gtij[i][j] * btij[i][j] * Tc2[i] * Tc2[j];
+        bvij[i][j] = Math.pow(bvij[i][j], 2);
+        btij[i][j] = Math.pow(btij[i][j], 2);
       }
     }
 
     for (int i = 1; i <= MaxMdl; ++i) {
       for (int j = 1; j <= MaxTrmM; ++j) {
-	gijk[i][j] = -cijk[i][j] * Math.pow(eijk[i][j], 2) + bijk[i][j] * gijk[i][j];
-	eijk[i][j] = 2 * cijk[i][j] * eijk[i][j] - bijk[i][j];
-	cijk[i][j] = -cijk[i][j];
+        gijk[i][j] = -cijk[i][j] * Math.pow(eijk[i][j], 2) + bijk[i][j] * gijk[i][j];
+        eijk[i][j] = 2 * cijk[i][j] * eijk[i][j] - bijk[i][j];
+        cijk[i][j] = -cijk[i][j];
       }
     }
 
@@ -3176,7 +3177,7 @@ public class GERG2008 {
       n0i[i][3] = n0i[i][3] - 1;
       n0i[i][2] = n0i[i][2] + T0;
       for (int j = 1; j <= 7; ++j) {
-	n0i[i][j] = Rsr * n0i[i][j];
+        n0i[i][j] = Rsr * n0i[i][j];
       }
       n0i[i][2] = n0i[i][2] - T0;
       n0i[i][1] = n0i[i][1] - Math.log(d0);
@@ -3229,7 +3230,7 @@ public class GERG2008 {
     StringW herr = new StringW("");
 
     double[] x = { 0.0, 0.77824, 0.02, 0.06, 0.08, 0.03, 0.0015, 0.003, 0.0005, 0.00165, 0.00215, 0.00088, 0.00024,
-	0.00015, 0.00009, 0.004, 0.005, 0.002, 0.0001, 0.0025, 0.007, 0.001 };
+        0.00015, 0.00009, 0.004, 0.005, 0.002, 0.0001, 0.0025, 0.007, 0.001 };
 
     test.MolarMassGERG(x, Mm);
 

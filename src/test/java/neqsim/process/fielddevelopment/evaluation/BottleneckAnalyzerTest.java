@@ -62,8 +62,8 @@ public class BottleneckAnalyzerTest {
     List<BottleneckResult> bottlenecks = analyzer.identifyBottlenecks();
     if (bottlenecks.size() > 1) {
       for (int i = 1; i < bottlenecks.size(); i++) {
-	assertTrue(bottlenecks.get(i - 1).getUtilization() >= bottlenecks.get(i).getUtilization(),
-	    "Bottlenecks should be sorted by utilization (descending)");
+        assertTrue(bottlenecks.get(i - 1).getUtilization() >= bottlenecks.get(i).getUtilization(),
+            "Bottlenecks should be sorted by utilization (descending)");
       }
     }
   }

@@ -143,7 +143,7 @@ class CompressorCurveCorrectionsTest {
     // c = sqrt(κ * Z * R * T / M)
     // c = sqrt(1.31 * 0.998 * 8314 * 300 / 16.04) ≈ 450 m/s
     assertTrue(sonicVelocity > 400 && sonicVelocity < 500,
-	"Sonic velocity for methane should be ~450 m/s, got " + sonicVelocity);
+        "Sonic velocity for methane should be ~450 m/s, got " + sonicVelocity);
   }
 
   @Test
@@ -158,7 +158,7 @@ class CompressorCurveCorrectionsTest {
 
     // Expected ~347 m/s for air at 300 K
     assertTrue(sonicVelocity > 340 && sonicVelocity < 360,
-	"Sonic velocity for air should be ~347 m/s, got " + sonicVelocity);
+        "Sonic velocity for air should be ~347 m/s, got " + sonicVelocity);
   }
 
   @Test
@@ -208,7 +208,7 @@ class CompressorCurveCorrectionsTest {
     int stages = 4;
 
     double correctedFlow = CompressorCurveCorrections.calculateMultistageSurgeCorrection(baseSurgeFlow, speedRatio,
-	stages);
+        stages);
 
     assertEquals(baseSurgeFlow, correctedFlow, TOLERANCE, "No surge correction at full speed");
   }
@@ -221,7 +221,7 @@ class CompressorCurveCorrectionsTest {
     int stages = 4;
 
     double correctedFlow = CompressorCurveCorrections.calculateMultistageSurgeCorrection(baseSurgeFlow, speedRatio,
-	stages);
+        stages);
 
     assertTrue(correctedFlow > baseSurgeFlow, "Multistage surge at reduced speed should shift to higher flow");
   }
@@ -233,9 +233,9 @@ class CompressorCurveCorrectionsTest {
     double speedRatio = 0.7;
 
     double corrected4Stage = CompressorCurveCorrections.calculateMultistageSurgeCorrection(baseSurgeFlow, speedRatio,
-	4);
+        4);
     double corrected8Stage = CompressorCurveCorrections.calculateMultistageSurgeCorrection(baseSurgeFlow, speedRatio,
-	8);
+        8);
 
     assertTrue(corrected8Stage > corrected4Stage, "More stages should result in larger surge correction");
   }
@@ -249,7 +249,7 @@ class CompressorCurveCorrectionsTest {
     double correctedFlow = CompressorCurveCorrections.calculateMultistageSurgeCorrection(baseSurgeFlow, speedRatio, 1);
 
     assertEquals(baseSurgeFlow, correctedFlow, TOLERANCE,
-	"Single stage compressor should have no multistage correction");
+        "Single stage compressor should have no multistage correction");
   }
 
   // ==================== Multistage Surge Head Correction Tests ====================
@@ -261,7 +261,7 @@ class CompressorCurveCorrectionsTest {
     int stages = 4;
 
     double correctedHead = CompressorCurveCorrections.calculateMultistageSurgeHeadCorrection(baseSurgeHead, speedRatio,
-	stages);
+        stages);
 
     assertEquals(baseSurgeHead, correctedHead, TOLERANCE, "No head correction at full speed");
   }
@@ -274,7 +274,7 @@ class CompressorCurveCorrectionsTest {
     int stages = 4;
 
     double correctedHead = CompressorCurveCorrections.calculateMultistageSurgeHeadCorrection(baseSurgeHead, speedRatio,
-	stages);
+        stages);
 
     // Just verify that correction produces a reasonable value
     assertTrue(correctedHead > 0, "Surge head should be positive");

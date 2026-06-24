@@ -352,7 +352,7 @@ public class DetailedEmissionsCalculator implements Serializable {
     double pumpSealRate = 5.0; // kg/yr per pump
 
     double componentEmissions = (flangeCount * flangeLeakRate + valveCount * valveLeakRate
-	+ compressorSealCount * compressorSealRate + pumpSealCount * pumpSealRate) / 1000.0 * GWP_CH4;
+        + compressorSealCount * compressorSealRate + pumpSealCount * pumpSealRate) / 1000.0 * GWP_CH4;
 
     // Use higher of the two methods
     totalFugitive = Math.max(ch4CO2e, componentEmissions);
@@ -662,18 +662,18 @@ public class DetailedEmissionsCalculator implements Serializable {
     double calculateAnnualFuelConsumption(double operatingHours) {
       switch (type) {
       case GAS_TURBINE_SIMPLE:
-	return powerMW * operatingHours * GT_FUEL_SM3_PER_MWH_SIMPLE;
+        return powerMW * operatingHours * GT_FUEL_SM3_PER_MWH_SIMPLE;
       case GAS_TURBINE_COMBINED:
-	return powerMW * operatingHours * GT_FUEL_SM3_PER_MWH_COMBINED;
+        return powerMW * operatingHours * GT_FUEL_SM3_PER_MWH_COMBINED;
       case FIRED_HEATER:
-	// Assume 85% efficiency, gas: 35 MJ/Sm³
-	double heatMJ = powerMW * operatingHours * 3600.0; // MWh to MJ
-	return heatMJ / 35.0 / 0.85;
+        // Assume 85% efficiency, gas: 35 MJ/Sm³
+        double heatMJ = powerMW * operatingHours * 3600.0; // MWh to MJ
+        return heatMJ / 35.0 / 0.85;
       case DIESEL_ENGINE:
-	// Convert liters to Sm³ equivalent
-	return fuelRateLPerHour * operatingHours * DIESEL_CO2_KG_PER_L / NG_CO2_KG_PER_SM3;
+        // Convert liters to Sm³ equivalent
+        return fuelRateLPerHour * operatingHours * DIESEL_CO2_KG_PER_L / NG_CO2_KG_PER_SM3;
       default:
-	return 0;
+        return 0;
       }
     }
   }
@@ -761,11 +761,11 @@ public class DetailedEmissionsCalculator implements Serializable {
       sb.append(String.format("Production: %.0f boe/year%n", totalProductionBoePerYear));
       sb.append(String.format("%nScope 1 (Direct): %.0f tCO2e/year%n", scope1Total));
       for (Map.Entry<String, Double> entry : scope1Breakdown.entrySet()) {
-	sb.append(String.format("  %s: %.0f tCO2e%n", entry.getKey(), entry.getValue()));
+        sb.append(String.format("  %s: %.0f tCO2e%n", entry.getKey(), entry.getValue()));
       }
       sb.append(String.format("%nScope 2 (Indirect): %.0f tCO2e/year%n", scope2Total));
       for (Map.Entry<String, Double> entry : scope2Breakdown.entrySet()) {
-	sb.append(String.format("  %s: %.0f tCO2e%n", entry.getKey(), entry.getValue()));
+        sb.append(String.format("  %s: %.0f tCO2e%n", entry.getKey(), entry.getValue()));
       }
       sb.append(String.format("%nTotal: %.0f tCO2e/year%n", totalEmissions));
       sb.append(String.format("Intensity: %.1f kg CO2e/boe%n", intensityKgCO2PerBoe));

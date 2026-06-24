@@ -29,23 +29,23 @@ public final class Api14cSafetyAnalysisTable implements Serializable {
 
   static {
     EnumMap<Api14cEquipmentCategory, Set<Api14cDeviceType>> t = new EnumMap<Api14cEquipmentCategory, Set<Api14cDeviceType>>(
-	Api14cEquipmentCategory.class);
+        Api14cEquipmentCategory.class);
     t.put(Api14cEquipmentCategory.PRESSURE_VESSEL, toSet(Api14cDeviceType.PSH, Api14cDeviceType.PSL,
-	Api14cDeviceType.LSH, Api14cDeviceType.LSL, Api14cDeviceType.PSV, Api14cDeviceType.SDV));
+        Api14cDeviceType.LSH, Api14cDeviceType.LSL, Api14cDeviceType.PSV, Api14cDeviceType.SDV));
     t.put(Api14cEquipmentCategory.ATMOSPHERIC_VESSEL,
-	toSet(Api14cDeviceType.LSH, Api14cDeviceType.PSV, Api14cDeviceType.FSV));
+        toSet(Api14cDeviceType.LSH, Api14cDeviceType.PSV, Api14cDeviceType.FSV));
     t.put(Api14cEquipmentCategory.FIRED_VESSEL, toSet(Api14cDeviceType.PSH, Api14cDeviceType.TSH, Api14cDeviceType.LSL,
-	Api14cDeviceType.PSV, Api14cDeviceType.SDV, Api14cDeviceType.BDV, Api14cDeviceType.FIRE));
+        Api14cDeviceType.PSV, Api14cDeviceType.SDV, Api14cDeviceType.BDV, Api14cDeviceType.FIRE));
     t.put(Api14cEquipmentCategory.PIPELINE_SEGMENT,
-	toSet(Api14cDeviceType.PSH, Api14cDeviceType.PSL, Api14cDeviceType.SDV, Api14cDeviceType.FSV));
+        toSet(Api14cDeviceType.PSH, Api14cDeviceType.PSL, Api14cDeviceType.SDV, Api14cDeviceType.FSV));
     t.put(Api14cEquipmentCategory.COMPRESSOR, toSet(Api14cDeviceType.PSH, Api14cDeviceType.PSL, Api14cDeviceType.TSH,
-	Api14cDeviceType.SDV, Api14cDeviceType.BDV, Api14cDeviceType.PSV));
+        Api14cDeviceType.SDV, Api14cDeviceType.BDV, Api14cDeviceType.PSV));
     t.put(Api14cEquipmentCategory.PUMP,
-	toSet(Api14cDeviceType.PSH, Api14cDeviceType.SDV, Api14cDeviceType.PSV, Api14cDeviceType.FSV));
+        toSet(Api14cDeviceType.PSH, Api14cDeviceType.SDV, Api14cDeviceType.PSV, Api14cDeviceType.FSV));
     t.put(Api14cEquipmentCategory.HEAT_EXCHANGER,
-	toSet(Api14cDeviceType.PSH, Api14cDeviceType.PSV, Api14cDeviceType.TSH));
+        toSet(Api14cDeviceType.PSH, Api14cDeviceType.PSV, Api14cDeviceType.TSH));
     t.put(Api14cEquipmentCategory.WELLHEAD, toSet(Api14cDeviceType.PSH, Api14cDeviceType.PSL, Api14cDeviceType.USV,
-	Api14cDeviceType.SDV, Api14cDeviceType.PSV));
+        Api14cDeviceType.SDV, Api14cDeviceType.PSV));
     TABLE = Collections.unmodifiableMap(t);
   }
 

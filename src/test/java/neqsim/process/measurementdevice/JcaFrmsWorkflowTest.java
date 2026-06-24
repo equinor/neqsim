@@ -33,10 +33,10 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
 
   private static JsonObject loadFluidData() {
     try (InputStream resourceStream = JcaFrmsWorkflowTest.class
-	.getResourceAsStream("/neqsim/process/measurementdevice/jca_frms_fluid_characterisation.json")) {
+        .getResourceAsStream("/neqsim/process/measurementdevice/jca_frms_fluid_characterisation.json")) {
       Objects.requireNonNull(resourceStream, "Missing FRMS fluid data resource");
       try (Reader reader = new InputStreamReader(resourceStream, StandardCharsets.UTF_8)) {
-	return JsonParser.parseReader(reader).getAsJsonObject();
+        return JsonParser.parseReader(reader).getAsJsonObject();
       }
     } catch (IOException ex) {
       throw new IllegalStateException("Failed to load FRMS fluid characterisation data", ex);
@@ -56,10 +56,10 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
       JsonElement densityElement = component.get("density");
 
       if (molarMassElement != null && !molarMassElement.isJsonNull() && densityElement != null
-	  && !densityElement.isJsonNull() && Math.abs(densityElement.getAsDouble()) > 1.0e-12) {
-	fluidSystem.addTBPfraction(name, amount, molarMassElement.getAsDouble() / 1000.0, densityElement.getAsDouble());
+          && !densityElement.isJsonNull() && Math.abs(densityElement.getAsDouble()) > 1.0e-12) {
+        fluidSystem.addTBPfraction(name, amount, molarMassElement.getAsDouble() / 1000.0, densityElement.getAsDouble());
       } else {
-	fluidSystem.addComponent(name, amount);
+        fluidSystem.addComponent(name, amount);
       }
     }
 
@@ -157,80 +157,81 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
 
     for (int i = 0; i < iterations; i++) {
       try {
-	// logger.info("Starting iteration " + (i + 1));
-	// Apply 10% random variation to each parameter
-	double gasFlow = baseGasFlow * (1.0 + (random.nextGaussian() * 0.1));
-	double oilFlow = baseOilFlow * (1.0 + (random.nextGaussian() * 0.1));
-	double waterFlow = baseWaterFlow * (1.0 + (random.nextGaussian() * 0.1));
-	double pressure = basePressure * (1.0 + (random.nextGaussian() * 0.1));
-	double temperature = baseTemperature * (1.0 + (random.nextGaussian() * 0.1));
+        // logger.info("Starting iteration " + (i + 1));
+        // Apply 10% random variation to each parameter
+        double gasFlow = baseGasFlow * (1.0 + (random.nextGaussian() * 0.1));
+        double oilFlow = baseOilFlow * (1.0 + (random.nextGaussian() * 0.1));
+        double waterFlow = baseWaterFlow * (1.0 + (random.nextGaussian() * 0.1));
+        double pressure = basePressure * (1.0 + (random.nextGaussian() * 0.1));
+        double temperature = baseTemperature * (1.0 + (random.nextGaussian() * 0.1));
 
-	// logger.printf(org.apache.logging.log4j.Level.INFO,
-	// "Iteration %d: gasFlow=%.12f, oilFlow=%.12f, waterFlow=%.12f, "
-	// + "pressure=%.12f, temperature=%.12f%n",
-	// i, gasFlow, oilFlow, waterFlow, pressure, temperature);
+        // logger.printf(org.apache.logging.log4j.Level.INFO,
+        // "Iteration %d: gasFlow=%.12f, oilFlow=%.12f, waterFlow=%.12f, "
+        // + "pressure=%.12f, temperature=%.12f%n",
+        // i, gasFlow, oilFlow, waterFlow, pressure, temperature);
 
-	// Ensure positive values
-	gasFlow = Math.max(gasFlow, baseGasFlow * 0.1);
-	oilFlow = Math.max(oilFlow, baseOilFlow * 0.1);
-	waterFlow = Math.max(waterFlow, baseWaterFlow * 0.1);
-	pressure = Math.max(pressure, basePressure * 0.01);
-	temperature = Math.max(temperature, baseTemperature * 0.1);
+        // Ensure positive values
+        gasFlow = Math.max(gasFlow, baseGasFlow * 0.1);
+        oilFlow = Math.max(oilFlow, baseOilFlow * 0.1);
+        waterFlow = Math.max(waterFlow, baseWaterFlow * 0.1);
+        pressure = Math.max(pressure, basePressure * 0.01);
+        temperature = Math.max(temperature, baseTemperature * 0.1);
 
-	SystemInterface oilFluid = createFluid(fluidMap.get(fluidType) + "_oil", waterFlow);
+        SystemInterface oilFluid = createFluid(fluidMap.get(fluidType) + "_oil", waterFlow);
 
-	Stream oilStream = new Stream("oil stream", oilFluid);
-	oilStream.setPressure(1.0, "atm");
-	oilStream.setTemperature(15.0, "C");
-	oilStream.setFlowRate(oilFlow, "Sm3/hr");
-	oilStream.run();
+        Stream oilStream = new Stream("oil stream", oilFluid);
+        oilStream.setPressure(1.0, "atm");
+        oilStream.setTemperature(15.0, "C");
+        oilStream.setFlowRate(oilFlow, "Sm3/hr");
+        oilStream.run();
 
-	FlowRateAdjuster flowAdjuster = new FlowRateAdjuster("flow rate adjuster", oilStream);
-	flowAdjuster.setAdjustedFlowRates(gasFlow, oilFlow, waterFlow, "Sm3/hr");
-	flowAdjuster.run();
+        FlowRateAdjuster flowAdjuster = new FlowRateAdjuster("flow rate adjuster", oilStream);
+        flowAdjuster.setAdjustedFlowRates(gasFlow, oilFlow, waterFlow, "Sm3/hr");
+        flowAdjuster.run();
 
-	Heater multiphaseHeater = new Heater("multiphase heater", flowAdjuster.getOutletStream());
-	multiphaseHeater.setOutPressure(pressure, "barg");
-	multiphaseHeater.setOutTemperature(temperature, "C");
-	multiphaseHeater.run();
+        Heater multiphaseHeater = new Heater("multiphase heater", flowAdjuster.getOutletStream());
+        multiphaseHeater.setOutPressure(pressure, "barg");
+        multiphaseHeater.setOutTemperature(temperature, "C");
+        multiphaseHeater.run();
 
-	Stream multiphaseStream = new Stream("multiphase stream", multiphaseHeater.getOutletStream());
-	multiphaseStream.setPressure(pressure, "barg");
-	multiphaseStream.setTemperature(temperature, "C");
-	multiphaseStream.run();
+        Stream multiphaseStream = new Stream("multiphase stream", multiphaseHeater.getOutletStream());
+        multiphaseStream.setPressure(pressure, "barg");
+        multiphaseStream.setTemperature(temperature, "C");
+        multiphaseStream.run();
 
-	SystemInterface multiphaseFluid = multiphaseStream.getFluid();
-	// multiphaseFluid.prettyPrint();
-	// Same assertions as original test
-	assertEquals(temperature, multiphaseFluid.getTemperature("C"), 1e-3); // Slightly relaxed
-									      // tolerance
-	assertEquals(pressure, multiphaseFluid.getPressure("barg"), 1e-3); // Slightly relaxed
-									   // tolerance
-	assertTrue(multiphaseFluid.hasPhaseType("gas"));
-	assertTrue(multiphaseFluid.hasPhaseType("oil"));
-	assertTrue(multiphaseFluid.hasPhaseType("aqueous"));
+        SystemInterface multiphaseFluid = multiphaseStream.getFluid();
+        // multiphaseFluid.prettyPrint();
+        // Same assertions as original test
+        assertEquals(temperature, multiphaseFluid.getTemperature("C"), 1e-3); // Slightly
+                                                                              // relaxed
+        // tolerance
+        assertEquals(pressure, multiphaseFluid.getPressure("barg"), 1e-3); // Slightly relaxed
+        // tolerance
+        assertTrue(multiphaseFluid.hasPhaseType("gas"));
+        assertTrue(multiphaseFluid.hasPhaseType("oil"));
+        assertTrue(multiphaseFluid.hasPhaseType("aqueous"));
 
-	double gasSm3PerHour = multiphaseFluid.getPhase("gas").getFlowRate("Sm3/hr");
-	double oilSm3PerHour = multiphaseFluid.getPhase("oil").getFlowRate("Sm3/hr");
-	double waterSm3PerHour = multiphaseFluid.getPhase("aqueous").getFlowRate("Sm3/hr");
+        double gasSm3PerHour = multiphaseFluid.getPhase("gas").getFlowRate("Sm3/hr");
+        double oilSm3PerHour = multiphaseFluid.getPhase("oil").getFlowRate("Sm3/hr");
+        double waterSm3PerHour = multiphaseFluid.getPhase("aqueous").getFlowRate("Sm3/hr");
 
-	// Verify that flow rates are positive and reasonable
-	assertTrue(gasSm3PerHour > 0.0);
-	assertTrue(oilSm3PerHour > 0.0);
-	assertTrue(waterSm3PerHour > 0.0);
-	assertTrue(multiphaseStream.getFlowRate("kg/hr") > 0.0);
+        // Verify that flow rates are positive and reasonable
+        assertTrue(gasSm3PerHour > 0.0);
+        assertTrue(oilSm3PerHour > 0.0);
+        assertTrue(waterSm3PerHour > 0.0);
+        assertTrue(multiphaseStream.getFlowRate("kg/hr") > 0.0);
 
-	successfulRuns++;
+        successfulRuns++;
       } catch (Exception | AssertionError e) {
-	// Log failed iteration but continue with others
-	logger.info("Iteration " + i + " failed: " + e.getMessage());
+        // Log failed iteration but continue with others
+        logger.info("Iteration " + i + " failed: " + e.getMessage());
       }
     }
 
     // Verify that at least 95% of runs were successful
     double successRate = (double) successfulRuns / iterations;
     String message = "Random variation test: " + successfulRuns + "/" + iterations + " ("
-	+ String.format("%.2f%%", successRate * 100) + ")";
+        + String.format("%.2f%%", successRate * 100) + ")";
     assertTrue(successRate >= 0.95, message);
   }
 

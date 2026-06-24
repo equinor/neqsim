@@ -56,20 +56,20 @@ public class CalcIonicComposition extends Flash {
       // if (system.getPhase(phaseNumber).getComponent(i).isIsIon()) {
       resultTable[ionNumber + 1][0] = system.getPhase(phaseNumber).getComponent(i).getComponentName();
       resultTable[ionNumber + 1][1] = Double
-	  .valueOf(nf.format(system.getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase()
-	      / (system.getPhase(phaseNumber).getComponent("water").getNumberOfMolesInPhase()
-		  * system.getPhase(phaseNumber).getComponent("water").getMolarMass())
-	      * 1000))
-	  .toString();
+          .valueOf(nf.format(system.getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase()
+              / (system.getPhase(phaseNumber).getComponent("water").getNumberOfMolesInPhase()
+                  * system.getPhase(phaseNumber).getComponent("water").getMolarMass())
+              * 1000))
+          .toString();
       resultTable[ionNumber + 1][2] = Double
-	  .valueOf(nf.format(system.getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase()
-	      * system.getPhase(phaseNumber).getComponent(i).getMolarMass()
-	      / (system.getPhase(phaseNumber).getComponent("water").getNumberOfMolesInPhase()
-		  * system.getPhase(phaseNumber).getComponent("water").getMolarMass())
-	      * 1e6))
-	  .toString();
+          .valueOf(nf.format(system.getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase()
+              * system.getPhase(phaseNumber).getComponent(i).getMolarMass()
+              / (system.getPhase(phaseNumber).getComponent("water").getNumberOfMolesInPhase()
+                  * system.getPhase(phaseNumber).getComponent("water").getMolarMass())
+              * 1e6))
+          .toString();
       resultTable[ionNumber + 1][3] = Double.valueOf(nf.format(system.getPhase(phaseNumber).getActivityCoefficient(i,
-	  system.getPhase(phaseNumber).getComponent("water").getComponentNumber()))).toString();
+          system.getPhase(phaseNumber).getComponent("water").getComponentNumber()))).toString();
 
       ionNumber++;
       // }

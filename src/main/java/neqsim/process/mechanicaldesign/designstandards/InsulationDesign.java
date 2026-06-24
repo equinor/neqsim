@@ -219,11 +219,11 @@ public class InsulationDesign implements Serializable {
       double surfaceTemp = ambientTempC + qPerMeter * rConvection;
 
       if (processTempC > ambientTempC && surfaceTemp <= targetSurfaceTemp) {
-	bestThickness = tMm;
-	break;
+        bestThickness = tMm;
+        break;
       } else if (processTempC < ambientTempC && surfaceTemp >= targetSurfaceTemp) {
-	bestThickness = tMm;
-	break;
+        bestThickness = tMm;
+        break;
       }
       bestThickness = tMm;
     }

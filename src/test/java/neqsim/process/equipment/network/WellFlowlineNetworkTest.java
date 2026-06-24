@@ -177,8 +177,8 @@ class WellFlowlineNetworkTest {
 
     double arrivalFlow = network.getArrivalStream().getFlowRate("MSm3/day");
     double expectedFlow = pipe1.getOutletStream().getFlowRate("MSm3/day")
-	+ pipe2.getOutletStream().getFlowRate("MSm3/day") + pipe3.getOutletStream().getFlowRate("MSm3/day")
-	+ pipe4.getOutletStream().getFlowRate("MSm3/day") + pipe5.getOutletStream().getFlowRate("MSm3/day");
+        + pipe2.getOutletStream().getFlowRate("MSm3/day") + pipe3.getOutletStream().getFlowRate("MSm3/day")
+        + pipe4.getOutletStream().getFlowRate("MSm3/day") + pipe5.getOutletStream().getFlowRate("MSm3/day");
     assertEquals(expectedFlow, arrivalFlow, 1e-4);
 
     double twoManifoldPressure = twoToCentral.getOutletStream().getPressure("bara");
@@ -345,18 +345,18 @@ class WellFlowlineNetworkTest {
 
     for (double opening1 : openings) {
       for (double opening2 : openings) {
-	choke1.setPercentValveOpening(opening1);
-	choke2.setPercentValveOpening(opening2);
-	process.run();
+        choke1.setPercentValveOpening(opening1);
+        choke2.setPercentValveOpening(opening2);
+        process.run();
 
-	double oilRate = network.getArrivalStream().getFluid().getComponent("nC12").getFlowRate("kg/hr");
+        double oilRate = network.getArrivalStream().getFluid().getComponent("nC12").getFlowRate("kg/hr");
 
-	if (oilRate > bestOilRate || (Math.abs(oilRate - bestOilRate) < 1e-6
-	    && (opening1 > bestChoke1 || (opening1 == bestChoke1 && opening2 > bestChoke2)))) {
-	  bestOilRate = oilRate;
-	  bestChoke1 = opening1;
-	  bestChoke2 = opening2;
-	}
+        if (oilRate > bestOilRate || (Math.abs(oilRate - bestOilRate) < 1e-6
+            && (opening1 > bestChoke1 || (opening1 == bestChoke1 && opening2 > bestChoke2)))) {
+          bestOilRate = oilRate;
+          bestChoke1 = opening1;
+          bestChoke2 = opening2;
+        }
       }
     }
 

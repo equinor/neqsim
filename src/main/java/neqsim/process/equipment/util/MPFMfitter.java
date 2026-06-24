@@ -142,9 +142,9 @@ public class MPFMfitter extends TwoPortEquipment {
       tempFluid.removePhase(0);
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
       try {
-	thermoOps.TPflash();
+        thermoOps.TPflash();
       } catch (Exception ex) {
-	logger.error(ex.getMessage(), ex);
+        logger.error(ex.getMessage(), ex);
       }
       outStream.setThermoSystem(tempFluid);
       return;
@@ -168,7 +168,7 @@ public class MPFMfitter extends TwoPortEquipment {
 
     if (fitAsGVF) {
       GOR = tempFluid.getPhase("oil").getCorrectedVolume() * getGOR() / (tempFluid.getPhase("oil").getCorrectedVolume()
-	  - tempFluid.getPhase("oil").getCorrectedVolume() * getGOR());
+          - tempFluid.getPhase("oil").getCorrectedVolume() * getGOR());
       // GVF*Vo/(Vo-GVF*Vo)
       // currGOR = tempFluid.getPhase("gas").getCorrectedVolume()
       // / (tempFluid.getPhase("oil").getCorrectedVolume() +
@@ -200,7 +200,7 @@ public class MPFMfitter extends TwoPortEquipment {
       GVF = 0.0;
     } else if (tempFluid.hasPhaseType("gas") && tempFluid.hasPhaseType("oil")) {
       GVF = tempFluid.getPhase("gas").getCorrectedVolume()
-	  / (tempFluid.getPhase("oil").getCorrectedVolume() + tempFluid.getPhase("gas").getCorrectedVolume());
+          / (tempFluid.getPhase("oil").getCorrectedVolume() + tempFluid.getPhase("gas").getCorrectedVolume());
     } else {
       GVF = Double.NaN;
     }

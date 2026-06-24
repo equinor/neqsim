@@ -144,13 +144,13 @@ public class TransientWallHeatTransfer {
     for (int i = 0; i < numNodes; i++) {
       double x = i * dx;
       if (x <= linerThickness) {
-	this.thermalConductivity[i] = linerK;
-	this.density[i] = linerDensity;
-	this.heatCapacity[i] = linerCp;
+        this.thermalConductivity[i] = linerK;
+        this.density[i] = linerDensity;
+        this.heatCapacity[i] = linerCp;
       } else {
-	this.thermalConductivity[i] = shellK;
-	this.density[i] = shellDensity;
-	this.heatCapacity[i] = shellCp;
+        this.thermalConductivity[i] = shellK;
+        this.density[i] = shellDensity;
+        this.heatCapacity[i] = shellCp;
       }
       this.thermalDiffusivity[i] = this.thermalConductivity[i] / (this.density[i] * this.heatCapacity[i]);
     }
@@ -176,7 +176,7 @@ public class TransientWallHeatTransfer {
   public void advanceTimeStep(double dt, double innerFluidTemperatureK, double innerFilmCoefficientWPerM2K,
       double outerAmbientTemperatureK, double outerFilmCoefficientWPerM2K) {
     advanceTimeStep(dt, innerFluidTemperatureK, innerFilmCoefficientWPerM2K, outerAmbientTemperatureK,
-	outerFilmCoefficientWPerM2K, 0.0);
+        outerFilmCoefficientWPerM2K, 0.0);
   }
 
   /**
@@ -218,12 +218,12 @@ public class TransientWallHeatTransfer {
       int subSteps = (int) Math.ceil(dt / maxDt) + 1;
       double subDt = dt / subSteps;
       for (int s = 0; s < subSteps; s++) {
-	advanceTimeStepInternal(subDt, innerFluidTemperatureK, innerFilmCoefficientWPerM2K, outerAmbientTemperatureK,
-	    outerFilmCoefficientWPerM2K, additionalOuterFluxWPerM2);
+        advanceTimeStepInternal(subDt, innerFluidTemperatureK, innerFilmCoefficientWPerM2K, outerAmbientTemperatureK,
+            outerFilmCoefficientWPerM2K, additionalOuterFluxWPerM2);
       }
     } else {
       advanceTimeStepInternal(dt, innerFluidTemperatureK, innerFilmCoefficientWPerM2K, outerAmbientTemperatureK,
-	  outerFilmCoefficientWPerM2K, additionalOuterFluxWPerM2);
+          outerFilmCoefficientWPerM2K, additionalOuterFluxWPerM2);
     }
   }
 
@@ -248,16 +248,16 @@ public class TransientWallHeatTransfer {
 
       // Handle interface between materials with harmonic mean of conductivity
       double kLeft = 2.0 * thermalConductivity[i] * thermalConductivity[i - 1]
-	  / (thermalConductivity[i] + thermalConductivity[i - 1]);
+          / (thermalConductivity[i] + thermalConductivity[i - 1]);
       double kRight = 2.0 * thermalConductivity[i] * thermalConductivity[i + 1]
-	  / (thermalConductivity[i] + thermalConductivity[i + 1]);
+          / (thermalConductivity[i] + thermalConductivity[i + 1]);
       double kEff = (kLeft + kRight) / 2.0;
 
       double alphaEff = kEff / (density[i] * heatCapacity[i]);
       Fo = alphaEff * dt / (dx * dx);
 
       newTemp[i] = temperatureProfile[i]
-	  + Fo * (temperatureProfile[i - 1] - 2.0 * temperatureProfile[i] + temperatureProfile[i + 1]);
+          + Fo * (temperatureProfile[i - 1] - 2.0 * temperatureProfile[i] + temperatureProfile[i + 1]);
     }
 
     // Inner boundary (x = 0): convective BC with process fluid
@@ -267,7 +267,7 @@ public class TransientWallHeatTransfer {
     double FoInner = alphaInner * dt / (dx * dx);
 
     newTemp[0] = temperatureProfile[0] + 2.0 * FoInner
-	* (temperatureProfile[1] - temperatureProfile[0] + BiInner * (innerFluidTemperatureK - temperatureProfile[0]));
+        * (temperatureProfile[1] - temperatureProfile[0] + BiInner * (innerFluidTemperatureK - temperatureProfile[0]));
 
     // Outer boundary (x = L): convective BC with ambient/fire + additional flux
     int n = numNodes - 1;
@@ -280,7 +280,7 @@ public class TransientWallHeatTransfer {
     double fluxTerm = additionalOuterFluxWPerM2 * dx / kOuter;
 
     newTemp[n] = temperatureProfile[n] + 2.0 * FoOuter * (temperatureProfile[n - 1] - temperatureProfile[n]
-	+ BiOuter * (outerAmbientTemperatureK - temperatureProfile[n]) + fluxTerm);
+        + BiOuter * (outerAmbientTemperatureK - temperatureProfile[n]) + fluxTerm);
 
     // Update temperature profile
     temperatureProfile = newTemp;

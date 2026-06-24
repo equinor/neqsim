@@ -121,7 +121,7 @@ public class DistillationColumnModeTest {
     assertTrue(column.isDynamicColumnModelExperimental());
     assertTrue(result.hasWarnings());
     assertTrue(result.getWarnings().stream()
-	.anyMatch(warning -> warning.getMessage().contains("explicit-Euler holdup screening")));
+        .anyMatch(warning -> warning.getMessage().contains("explicit-Euler holdup screening")));
   }
 
   /**

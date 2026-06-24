@@ -335,8 +335,8 @@ public class ClassicalNucleationTheory {
     int compIndex = -1;
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       if (system.getPhase(0).getComponent(i).getComponentName().equalsIgnoreCase(componentName)) {
-	compIndex = i;
-	break;
+        compIndex = i;
+        break;
       }
     }
     if (compIndex < 0) {
@@ -356,9 +356,9 @@ public class ClassicalNucleationTheory {
     double sigma;
     if (system.getNumberOfPhases() >= 2) {
       try {
-	sigma = system.getInterphaseProperties().getSurfaceTension(0, 1);
+        sigma = system.getInterphaseProperties().getSurfaceTension(0, 1);
       } catch (Exception e) {
-	sigma = estimateSurfaceTension(tc, pc, system.getTemperature());
+        sigma = estimateSurfaceTension(tc, pc, system.getTemperature());
       }
     } else {
       sigma = estimateSurfaceTension(tc, pc, system.getTemperature());
@@ -373,56 +373,56 @@ public class ClassicalNucleationTheory {
     // Set gas-phase transport properties if available
     if (system.getNumberOfPhases() >= 1 && system.hasPhaseType("gas")) {
       try {
-	int gasPhaseIndex = system.getPhaseNumberOfPhase("gas");
-	double gasVisc = system.getPhase(gasPhaseIndex).getViscosity("kg/msec");
-	if (gasVisc > 0.0) {
-	  cnt.setGasViscosity(gasVisc);
-	}
+        int gasPhaseIndex = system.getPhaseNumberOfPhase("gas");
+        double gasVisc = system.getPhase(gasPhaseIndex).getViscosity("kg/msec");
+        if (gasVisc > 0.0) {
+          cnt.setGasViscosity(gasVisc);
+        }
       } catch (Exception e) {
-	// Use default viscosity
+        // Use default viscosity
       }
     }
 
     // Estimate supersaturation from fugacity ratio if two phases present
     if (system.getNumberOfPhases() >= 2) {
       try {
-	int gasPhaseIndex = system.getPhaseNumberOfPhase("gas");
-	int liquidPhaseIndex = system.getPhaseNumberOfPhase("oil");
-	if (liquidPhaseIndex < 0) {
-	  liquidPhaseIndex = system.getPhaseNumberOfPhase("aqueous");
-	}
+        int gasPhaseIndex = system.getPhaseNumberOfPhase("gas");
+        int liquidPhaseIndex = system.getPhaseNumberOfPhase("oil");
+        if (liquidPhaseIndex < 0) {
+          liquidPhaseIndex = system.getPhaseNumberOfPhase("aqueous");
+        }
 
-	if (gasPhaseIndex >= 0 && liquidPhaseIndex >= 0) {
-	  // Fugacity = x_i * P * phi_i
-	  double xGas = system.getPhase(gasPhaseIndex).getComponent(compIndex).getx();
-	  double phiGas = system.getPhase(gasPhaseIndex).getComponent(compIndex).getFugacityCoefficient();
-	  double xLiq = system.getPhase(liquidPhaseIndex).getComponent(compIndex).getx();
-	  double phiLiq = system.getPhase(liquidPhaseIndex).getComponent(compIndex).getFugacityCoefficient();
-	  double pressure = system.getPressure() * 1e5; // bara to Pa
-	  double fugGas = xGas * pressure * phiGas;
-	  double fugLiq = xLiq * pressure * phiLiq;
-	  if (fugLiq > 0.0 && fugGas > 0.0) {
-	    double s = fugGas / fugLiq;
-	    if (s > 1.0) {
-	      cnt.setSupersaturationRatio(s);
-	    }
-	  }
-	}
+        if (gasPhaseIndex >= 0 && liquidPhaseIndex >= 0) {
+          // Fugacity = x_i * P * phi_i
+          double xGas = system.getPhase(gasPhaseIndex).getComponent(compIndex).getx();
+          double phiGas = system.getPhase(gasPhaseIndex).getComponent(compIndex).getFugacityCoefficient();
+          double xLiq = system.getPhase(liquidPhaseIndex).getComponent(compIndex).getx();
+          double phiLiq = system.getPhase(liquidPhaseIndex).getComponent(compIndex).getFugacityCoefficient();
+          double pressure = system.getPressure() * 1e5; // bara to Pa
+          double fugGas = xGas * pressure * phiGas;
+          double fugLiq = xLiq * pressure * phiLiq;
+          if (fugLiq > 0.0 && fugGas > 0.0) {
+            double s = fugGas / fugLiq;
+            if (s > 1.0) {
+              cnt.setSupersaturationRatio(s);
+            }
+          }
+        }
       } catch (Exception e) {
-	// Supersaturation remains at default
+        // Supersaturation remains at default
       }
     }
 
     // Set carrier gas molar mass (approximate from overall gas composition)
     if (system.hasPhaseType("gas")) {
       try {
-	int gasPhaseIndex = system.getPhaseNumberOfPhase("gas");
-	double gasMw = system.getPhase(gasPhaseIndex).getMolarMass();
-	if (gasMw > 0.0) {
-	  cnt.setCarrierGasMolarMass(gasMw);
-	}
+        int gasPhaseIndex = system.getPhaseNumberOfPhase("gas");
+        double gasMw = system.getPhase(gasPhaseIndex).getMolarMass();
+        if (gasMw > 0.0) {
+          cnt.setCarrierGasMolarMass(gasMw);
+        }
       } catch (Exception e) {
-	// Use default
+        // Use default
       }
     }
 
@@ -726,7 +726,7 @@ public class ClassicalNucleationTheory {
     // 4. Free energy barrier
     // DeltaG* = (16*pi/3) * gamma^3 * v_m^2 / (kT * ln(S))^2
     double homogeneousBarrier = (16.0 * Math.PI / 3.0) * Math.pow(surfaceTension, 3) * Math.pow(molecularVolume, 2)
-	/ Math.pow(kT * lnS, 2);
+        / Math.pow(kT * lnS, 2);
 
     // Apply heterogeneous nucleation correction if enabled
     // DeltaG*_het = f(theta) * DeltaG*_hom
@@ -742,7 +742,7 @@ public class ClassicalNucleationTheory {
     // Z = sqrt(DeltaG* / (3*pi*kT*n*^2))
     if (criticalNucleusMolecules > 0.0) {
       zeldovichFactor = Math
-	  .sqrt(freeEnergyBarrier / (3.0 * Math.PI * kT * criticalNucleusMolecules * criticalNucleusMolecules));
+          .sqrt(freeEnergyBarrier / (3.0 * Math.PI * kT * criticalNucleusMolecules * criticalNucleusMolecules));
     } else {
       zeldovichFactor = 0.01;
     }
@@ -761,15 +761,15 @@ public class ClassicalNucleationTheory {
 
     // Collision rate constant: k = alpha * sqrt(kT / (2*pi*m)) * 4*pi*r*^2
     double collisionRateConstant = stickingCoefficient
-	* Math.sqrt(K_BOLTZMANN * temperature / (2.0 * Math.PI * molecularMass)) * 4.0 * Math.PI
-	* Math.pow(criticalRadius, 2);
+        * Math.sqrt(K_BOLTZMANN * temperature / (2.0 * Math.PI * molecularMass)) * 4.0 * Math.PI
+        * Math.pow(criticalRadius, 2);
 
     double exponent = -dimensionlessFreeEnergyBarrier;
     if (exponent < -700.0) {
       nucleationRate = 0.0;
     } else {
       nucleationRate = zeldovichFactor * collisionRateConstant * vaporConcentration * vaporConcentration
-	  * Math.exp(exponent);
+          * Math.exp(exponent);
     }
 
     // Cap nucleation rate at physically reasonable maximum
@@ -823,19 +823,19 @@ public class ClassicalNucleationTheory {
     } else {
       excessPressure = saturationPressure * (supersaturationRatio - 1.0);
       if (excessPressure <= 0) {
-	excessPressure = 1e-5;
+        excessPressure = 1e-5;
       }
     }
 
     // Free molecular regime: dr/dt = alpha * v_m * deltaP / sqrt(2*pi*m*kT)
     growthRateFreeM = stickingCoefficient * molecularVolume * excessPressure
-	/ Math.sqrt(2.0 * Math.PI * molecularMass * kT);
+        / Math.sqrt(2.0 * Math.PI * molecularMass * kT);
 
     // Continuum (diffusion-limited) regime: dr/dt = D * M * deltaP / (rho_p * R * T * r)
     // At r = criticalRadius
     if (criticalRadius > 0.0) {
       growthRateContinuum = gasDiffusivity * molecularWeight * excessPressure
-	  / (condensedPhaseDensity * R_GAS * temperature * criticalRadius);
+          / (condensedPhaseDensity * R_GAS * temperature * criticalRadius);
     } else {
       growthRateContinuum = growthRateFreeM;
     }
@@ -935,7 +935,7 @@ public class ClassicalNucleationTheory {
     if (coagulationKernel > 0.0 && n0 > 1.0) {
       nt = n0 / (1.0 + coagulationKernel * n0 * growthTime / 2.0);
       if (nt < 1.0) {
-	nt = 1.0;
+        nt = 1.0;
       }
       // Volume conservation: total volume = N0*v0 = Nt*vt
       // vt/v0 = N0/Nt => r_coag = r * (N0/Nt)^(1/3)
@@ -1317,6 +1317,6 @@ public class ClassicalNucleationTheory {
       return "ClassicalNucleationTheory [not calculated]";
     }
     return String.format("CNT[%s]: S=%.1f, r*=%.1f nm, d_mean=%.2f um, J=%.2e /m3s, N=%.2e /m3", substanceName,
-	supersaturationRatio, criticalRadius * 1e9, meanParticleDiameter * 1e6, nucleationRate, particleNumberDensity);
+        supersaturationRatio, criticalRadius * 1e9, meanParticleDiameter * 1e6, nucleationRate, particleNumberDensity);
   }
 }

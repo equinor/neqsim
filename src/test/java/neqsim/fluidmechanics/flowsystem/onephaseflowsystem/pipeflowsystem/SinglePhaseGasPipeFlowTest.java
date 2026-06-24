@@ -83,10 +83,10 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       // Verify pressure decreases monotonically
       double previousPressure = pipe.getNode(0).getBulkSystem().getPressure();
       for (int i = 1; i < pipe.getTotalNumberOfNodes(); i++) {
-	double currentPressure = pipe.getNode(i).getBulkSystem().getPressure();
-	assertTrue(currentPressure <= previousPressure,
-	    "Pressure should decrease or stay constant along pipe at node " + i);
-	previousPressure = currentPressure;
+        double currentPressure = pipe.getNode(i).getBulkSystem().getPressure();
+        assertTrue(currentPressure <= previousPressure,
+            "Pressure should decrease or stay constant along pipe at node " + i);
+        previousPressure = currentPressure;
       }
 
       // Verify total pressure drop is positive and reasonable
@@ -134,7 +134,7 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
 
       // Allow 10% tolerance for compressible flow numerical accuracy
       assertEquals(inletMassFlow, outletMassFlow, inletMassFlow * 0.15,
-	  "Inlet and outlet mass flow should be approximately equal in steady state");
+          "Inlet and outlet mass flow should be approximately equal in steady state");
 
       // Verify outlet pressure is lower than inlet (basic sanity check)
       double inletPressure = pipe.getNode(0).getBulkSystem().getPressure();
@@ -152,11 +152,11 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       pipe.solveSteadyState(0);
 
       for (int i = 0; i < pipe.getTotalNumberOfNodes(); i++) {
-	double Re = pipe.getNode(i).getReynoldsNumber();
-	// High-pressure gas pipeline should have turbulent flow (Re > 4000)
-	assertTrue(Re > 4000, "Pipeline flow should be turbulent, Re = " + Re);
-	// But not unreasonably high
-	assertTrue(Re < 1e9, "Reynolds number should be realistic, Re = " + Re);
+        double Re = pipe.getNode(i).getReynoldsNumber();
+        // High-pressure gas pipeline should have turbulent flow (Re > 4000)
+        assertTrue(Re > 4000, "Pipeline flow should be turbulent, Re = " + Re);
+        // But not unreasonably high
+        assertTrue(Re < 1e9, "Reynolds number should be realistic, Re = " + Re);
       }
     }
 
@@ -170,10 +170,10 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       pipe.solveSteadyState(0);
 
       for (int i = 0; i < pipe.getTotalNumberOfNodes(); i++) {
-	double friction = pipe.getNode(i).getWallFrictionFactor(0);
-	// Darcy friction factor for smooth-ish pipe: 0.005 - 0.03
-	assertTrue(friction > 0.005, "Friction factor too low: " + friction);
-	assertTrue(friction < 0.05, "Friction factor too high: " + friction);
+        double friction = pipe.getNode(i).getWallFrictionFactor(0);
+        // Darcy friction factor for smooth-ish pipe: 0.005 - 0.03
+        assertTrue(friction > 0.005, "Friction factor too low: " + friction);
+        assertTrue(friction < 0.05, "Friction factor too high: " + friction);
       }
     }
 
@@ -185,25 +185,25 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       int[] solverTypes = { 0, 1, 10, 20 };
 
       for (int solverType : solverTypes) {
-	// Reset for each solver type
-	pipe = new PipeFlowSystem();
-	inletGas = new SystemSrkEos(288.15, 100.0);
-	inletGas.addComponent("methane", 0.90);
-	inletGas.addComponent("ethane", 0.10);
-	inletGas.createDatabase(true);
-	inletGas.init(0);
-	inletGas.init(3);
-	inletGas.initPhysicalProperties();
-	inletGas.setTotalFlowRate(10.0, "MSm3/day");
+        // Reset for each solver type
+        pipe = new PipeFlowSystem();
+        inletGas = new SystemSrkEos(288.15, 100.0);
+        inletGas.addComponent("methane", 0.90);
+        inletGas.addComponent("ethane", 0.10);
+        inletGas.createDatabase(true);
+        inletGas.init(0);
+        inletGas.init(3);
+        inletGas.initPhysicalProperties();
+        inletGas.setTotalFlowRate(10.0, "MSm3/day");
 
-	setupHorizontalPipeline(20000.0, 0.8);
-	pipe.createSystem();
-	pipe.init();
+        setupHorizontalPipeline(20000.0, 0.8);
+        pipe.createSystem();
+        pipe.init();
 
-	assertDoesNotThrow(() -> pipe.solveSteadyState(solverType), "Solver type " + solverType + " should converge");
+        assertDoesNotThrow(() -> pipe.solveSteadyState(solverType), "Solver type " + solverType + " should converge");
 
-	double pressureDrop = pipe.getTotalPressureDrop();
-	assertTrue(pressureDrop > 0, "Solver type " + solverType + " should produce valid results");
+        double pressureDrop = pipe.getTotalPressureDrop();
+        assertTrue(pressureDrop > 0, "Solver type " + solverType + " should produce valid results");
       }
     }
 
@@ -214,7 +214,7 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
 
       double[] length = new double[numLegs + 1];
       for (int i = 0; i <= numLegs; i++) {
-	length[i] = lengthMeters * i / numLegs;
+        length[i] = lengthMeters * i / numLegs;
       }
 
       double[] outerTemp = new double[numLegs + 1];
@@ -228,9 +228,9 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
 
       GeometryDefinitionInterface[] pipeGeometry = new PipeData[numLegs + 1];
       for (int i = 0; i <= numLegs; i++) {
-	pipeGeometry[i] = new PipeData();
-	pipeGeometry[i].setDiameter(diameterMeters);
-	pipeGeometry[i].setInnerSurfaceRoughness(1e-5);
+        pipeGeometry[i] = new PipeData();
+        pipeGeometry[i].setDiameter(diameterMeters);
+        pipeGeometry[i].setInnerSurfaceRoughness(1e-5);
       }
 
       pipe.setInletThermoSystem(inletGas);
@@ -273,13 +273,13 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       double inletEthane = pipe.getNode(0).getBulkSystem().getPhase(0).getComponent("ethane").getx();
 
       for (int i = 1; i < pipe.getTotalNumberOfNodes(); i++) {
-	double nodeMethane = pipe.getNode(i).getBulkSystem().getPhase(0).getComponent("methane").getx();
-	double nodeEthane = pipe.getNode(i).getBulkSystem().getPhase(0).getComponent("ethane").getx();
+        double nodeMethane = pipe.getNode(i).getBulkSystem().getPhase(0).getComponent("methane").getx();
+        double nodeEthane = pipe.getNode(i).getBulkSystem().getPhase(0).getComponent("ethane").getx();
 
-	assertEquals(inletMethane, nodeMethane, TOLERANCE_COMPOSITION,
-	    "Methane fraction should be preserved at node " + i);
-	assertEquals(inletEthane, nodeEthane, TOLERANCE_COMPOSITION,
-	    "Ethane fraction should be preserved at node " + i);
+        assertEquals(inletMethane, nodeMethane, TOLERANCE_COMPOSITION,
+            "Methane fraction should be preserved at node " + i);
+        assertEquals(inletEthane, nodeEthane, TOLERANCE_COMPOSITION,
+            "Ethane fraction should be preserved at node " + i);
       }
     }
 
@@ -305,11 +305,11 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       pipe.solveSteadyState(20);
 
       for (int i = 0; i < pipe.getTotalNumberOfNodes(); i++) {
-	double sumMoleFractions = 0.0;
-	for (int j = 0; j < pipe.getNode(i).getBulkSystem().getPhase(0).getNumberOfComponents(); j++) {
-	  sumMoleFractions += pipe.getNode(i).getBulkSystem().getPhase(0).getComponent(j).getx();
-	}
-	assertEquals(1.0, sumMoleFractions, 1e-6, "Mole fractions should sum to 1 at node " + i);
+        double sumMoleFractions = 0.0;
+        for (int j = 0; j < pipe.getNode(i).getBulkSystem().getPhase(0).getNumberOfComponents(); j++) {
+          sumMoleFractions += pipe.getNode(i).getBulkSystem().getPhase(0).getComponent(j).getx();
+        }
+        assertEquals(1.0, sumMoleFractions, 1e-6, "Mole fractions should sum to 1 at node " + i);
       }
     }
 
@@ -322,18 +322,18 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       double[] wallHeatCoef = new double[numLegs + 1];
 
       for (int i = 0; i <= numLegs; i++) {
-	height[i] = 0.0;
-	length[i] = lengthMeters * i / numLegs;
-	outerTemp[i] = 278.0;
-	outerHeatCoef[i] = 5.0;
-	wallHeatCoef[i] = 15.0;
+        height[i] = 0.0;
+        length[i] = lengthMeters * i / numLegs;
+        outerTemp[i] = 278.0;
+        outerHeatCoef[i] = 5.0;
+        wallHeatCoef[i] = 15.0;
       }
 
       GeometryDefinitionInterface[] pipeGeometry = new PipeData[numLegs + 1];
       for (int i = 0; i <= numLegs; i++) {
-	pipeGeometry[i] = new PipeData();
-	pipeGeometry[i].setDiameter(0.8);
-	pipeGeometry[i].setInnerSurfaceRoughness(1e-5);
+        pipeGeometry[i] = new PipeData();
+        pipeGeometry[i].setDiameter(0.8);
+        pipeGeometry[i].setInnerSurfaceRoughness(1e-5);
       }
 
       pipe.setInletThermoSystem(gas);
@@ -422,9 +422,9 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
 
       GeometryDefinitionInterface[] pipeGeometry = new PipeData[numLegs + 1];
       for (int i = 0; i <= numLegs; i++) {
-	pipeGeometry[i] = new PipeData();
-	pipeGeometry[i].setDiameter(0.8);
-	pipeGeometry[i].setInnerSurfaceRoughness(1e-5);
+        pipeGeometry[i] = new PipeData();
+        pipeGeometry[i].setDiameter(0.8);
+        pipeGeometry[i].setInnerSurfaceRoughness(1e-5);
       }
 
       pipe.setInletThermoSystem(gas);
@@ -456,18 +456,18 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       double[] wallHeatCoef = new double[numLegs + 1];
 
       for (int i = 0; i <= numLegs; i++) {
-	height[i] = 0.0;
-	length[i] = lengthMeters * i / numLegs;
-	outerTemp[i] = 278.0;
-	outerHeatCoef[i] = 5.0;
-	wallHeatCoef[i] = 15.0;
+        height[i] = 0.0;
+        length[i] = lengthMeters * i / numLegs;
+        outerTemp[i] = 278.0;
+        outerHeatCoef[i] = 5.0;
+        wallHeatCoef[i] = 15.0;
       }
 
       GeometryDefinitionInterface[] pipeGeometry = new PipeData[numLegs + 1];
       for (int i = 0; i <= numLegs; i++) {
-	pipeGeometry[i] = new PipeData();
-	pipeGeometry[i].setDiameter(diameter);
-	pipeGeometry[i].setInnerSurfaceRoughness(1e-5);
+        pipeGeometry[i] = new PipeData();
+        pipeGeometry[i].setDiameter(diameter);
+        pipeGeometry[i].setInnerSurfaceRoughness(1e-5);
       }
 
       pipe.setInletThermoSystem(gas);
@@ -545,18 +545,18 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       double[] wallHeatCoef = new double[numLegs + 1];
 
       for (int i = 0; i <= numLegs; i++) {
-	height[i] = 0.0;
-	length[i] = 100000.0 * i / numLegs; // 100 km
-	outerTemp[i] = 300.0; // Same as inlet (isothermal surroundings)
-	outerHeatCoef[i] = 0.001; // Near-adiabatic
-	wallHeatCoef[i] = 0.001;
+        height[i] = 0.0;
+        length[i] = 100000.0 * i / numLegs; // 100 km
+        outerTemp[i] = 300.0; // Same as inlet (isothermal surroundings)
+        outerHeatCoef[i] = 0.001; // Near-adiabatic
+        wallHeatCoef[i] = 0.001;
       }
 
       GeometryDefinitionInterface[] pipeGeometry = new PipeData[numLegs + 1];
       for (int i = 0; i <= numLegs; i++) {
-	pipeGeometry[i] = new PipeData();
-	pipeGeometry[i].setDiameter(1.0);
-	pipeGeometry[i].setInnerSurfaceRoughness(1e-5);
+        pipeGeometry[i] = new PipeData();
+        pipeGeometry[i].setDiameter(1.0);
+        pipeGeometry[i].setInnerSurfaceRoughness(1e-5);
       }
 
       pipe.setInletThermoSystem(gas);
@@ -590,18 +590,18 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       double[] wallHeatCoef = new double[numLegs + 1];
 
       for (int i = 0; i <= numLegs; i++) {
-	height[i] = 0.0;
-	length[i] = lengthMeters * i / numLegs;
-	outerTemp[i] = 278.0;
-	outerHeatCoef[i] = 5.0;
-	wallHeatCoef[i] = 15.0;
+        height[i] = 0.0;
+        length[i] = lengthMeters * i / numLegs;
+        outerTemp[i] = 278.0;
+        outerHeatCoef[i] = 5.0;
+        wallHeatCoef[i] = 15.0;
       }
 
       GeometryDefinitionInterface[] pipeGeometry = new PipeData[numLegs + 1];
       for (int i = 0; i <= numLegs; i++) {
-	pipeGeometry[i] = new PipeData();
-	pipeGeometry[i].setDiameter(diameter);
-	pipeGeometry[i].setInnerSurfaceRoughness(1e-5);
+        pipeGeometry[i] = new PipeData();
+        pipeGeometry[i].setDiameter(diameter);
+        pipeGeometry[i].setInnerSurfaceRoughness(1e-5);
       }
 
       pipe.setInletThermoSystem(gas);
@@ -674,7 +674,7 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       // Record steady-state pressure profile
       double[] steadyStatePressures = new double[pipe.getTotalNumberOfNodes()];
       for (int i = 0; i < pipe.getTotalNumberOfNodes(); i++) {
-	steadyStatePressures[i] = pipe.getNode(i).getBulkSystem().getPressure();
+        steadyStatePressures[i] = pipe.getNode(i).getBulkSystem().getPressure();
       }
 
       // Run transient with constant inlet (should maintain steady state)
@@ -694,10 +694,10 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
 
       // After transient with constant inlet, pressure profile should be similar
       for (int i = 0; i < pipe.getTotalNumberOfNodes(); i++) {
-	double transientPressure = pipe.getNode(i).getBulkSystem().getPressure();
-	// Allow 20% deviation due to transient dynamics
-	assertEquals(steadyStatePressures[i], transientPressure, steadyStatePressures[i] * 0.20,
-	    "Pressure at node " + i + " should be similar to steady state");
+        double transientPressure = pipe.getNode(i).getBulkSystem().getPressure();
+        // Allow 20% deviation due to transient dynamics
+        assertEquals(steadyStatePressures[i], transientPressure, steadyStatePressures[i] * 0.20,
+            "Pressure at node " + i + " should be similar to steady state");
       }
     }
 
@@ -753,7 +753,7 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
 
       // Midpoint should be between cold and hot (thermal front propagating)
       assertTrue(midpointTemp > initialOutletTemp - 10,
-	  "Midpoint temp should be affected by hot front: " + midpointTemp);
+          "Midpoint temp should be affected by hot front: " + midpointTemp);
     }
 
     @Test
@@ -778,7 +778,7 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
 
       // Record initial composition at outlet
       double initialOutletMethane = pipe.getNode(pipe.getTotalNumberOfNodes() - 1).getBulkSystem().getPhase(0)
-	  .getComponent("methane").getx();
+          .getComponent("methane").getx();
 
       // Now introduce rich gas (more ethane)
       SystemInterface richGas = new SystemSrkEos(290.0, 90.0);
@@ -813,10 +813,10 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       // Nodes near inlet should have higher ethane than nodes near outlet
       double node2Ethane = pipe.getNode(2).getBulkSystem().getPhase(0).getComponent("ethane").getx();
       double lastNodeEthane = pipe.getNode(pipe.getTotalNumberOfNodes() - 1).getBulkSystem().getPhase(0)
-	  .getComponent("ethane").getx();
+          .getComponent("ethane").getx();
 
       assertTrue(node2Ethane >= lastNodeEthane - 0.05,
-	  "Ethane should be higher near inlet (" + node2Ethane + ") than at outlet (" + lastNodeEthane + ")");
+          "Ethane should be higher near inlet (" + node2Ethane + ") than at outlet (" + lastNodeEthane + ")");
     }
 
     @Test
@@ -919,11 +919,11 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
 
       // Temperature should have increased
       assertTrue(newInletTemp > initialInletTemp + 20,
-	  "Inlet temp should increase. Was: " + initialInletTemp + ", Now: " + newInletTemp);
+          "Inlet temp should increase. Was: " + initialInletTemp + ", Now: " + newInletTemp);
 
       // Methane fraction should have decreased
       assertTrue(newMethane < initialMethane - 0.05,
-	  "Methane fraction should decrease. Was: " + initialMethane + ", Now: " + newMethane);
+          "Methane fraction should decrease. Was: " + initialMethane + ", Now: " + newMethane);
 
       // Propane fraction should have increased
       assertTrue(newPropane > 0.04, "Propane fraction should be ~6%: " + newPropane);
@@ -933,7 +933,7 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
     }
 
     private void setupTransientPipeline(FlowSystemInterface pipe, SystemInterface gas, double lengthMeters,
-	double diameter) {
+        double diameter) {
       int numLegs = 5;
       double[] height = new double[numLegs + 1];
       double[] length = new double[numLegs + 1];
@@ -942,18 +942,18 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       double[] wallHeatCoef = new double[numLegs + 1];
 
       for (int i = 0; i <= numLegs; i++) {
-	height[i] = 0.0;
-	length[i] = lengthMeters * i / numLegs;
-	outerTemp[i] = 278.0;
-	outerHeatCoef[i] = 5.0;
-	wallHeatCoef[i] = 15.0;
+        height[i] = 0.0;
+        length[i] = lengthMeters * i / numLegs;
+        outerTemp[i] = 278.0;
+        outerHeatCoef[i] = 5.0;
+        wallHeatCoef[i] = 15.0;
       }
 
       GeometryDefinitionInterface[] pipeGeometry = new PipeData[numLegs + 1];
       for (int i = 0; i <= numLegs; i++) {
-	pipeGeometry[i] = new PipeData();
-	pipeGeometry[i].setDiameter(diameter);
-	pipeGeometry[i].setInnerSurfaceRoughness(1e-5);
+        pipeGeometry[i] = new PipeData();
+        pipeGeometry[i].setDiameter(diameter);
+        pipeGeometry[i].setInnerSurfaceRoughness(1e-5);
       }
 
       pipe.setInletThermoSystem(gas);
@@ -1156,7 +1156,7 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
     }
 
     private void setupOutletBoundaryPipeline(FlowSystemInterface pipe, SystemInterface gas, double lengthMeters,
-	double diameter) {
+        double diameter) {
       int numLegs = 5;
       double[] height = new double[numLegs + 1];
       double[] length = new double[numLegs + 1];
@@ -1165,18 +1165,18 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       double[] wallHeatCoef = new double[numLegs + 1];
 
       for (int i = 0; i <= numLegs; i++) {
-	height[i] = 0.0;
-	length[i] = lengthMeters * i / numLegs;
-	outerTemp[i] = 288.0;
-	outerHeatCoef[i] = 5.0;
-	wallHeatCoef[i] = 15.0;
+        height[i] = 0.0;
+        length[i] = lengthMeters * i / numLegs;
+        outerTemp[i] = 288.0;
+        outerHeatCoef[i] = 5.0;
+        wallHeatCoef[i] = 15.0;
       }
 
       GeometryDefinitionInterface[] pipeGeometry = new PipeData[numLegs + 1];
       for (int i = 0; i <= numLegs; i++) {
-	pipeGeometry[i] = new PipeData();
-	pipeGeometry[i].setDiameter(diameter);
-	pipeGeometry[i].setInnerSurfaceRoughness(1e-5);
+        pipeGeometry[i] = new PipeData();
+        pipeGeometry[i].setDiameter(diameter);
+        pipeGeometry[i].setInnerSurfaceRoughness(1e-5);
       }
 
       pipe.setInletThermoSystem(gas);
@@ -1317,7 +1317,7 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
     }
 
     private void setupSimplePipeline(FlowSystemInterface pipe, SystemInterface gas, double lengthMeters,
-	double diameter) {
+        double diameter) {
       int numLegs = 5;
       double[] height = new double[numLegs + 1];
       double[] length = new double[numLegs + 1];
@@ -1326,18 +1326,18 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       double[] wallHeatCoef = new double[numLegs + 1];
 
       for (int i = 0; i <= numLegs; i++) {
-	height[i] = 0.0;
-	length[i] = lengthMeters * i / numLegs;
-	outerTemp[i] = 288.0;
-	outerHeatCoef[i] = 5.0;
-	wallHeatCoef[i] = 15.0;
+        height[i] = 0.0;
+        length[i] = lengthMeters * i / numLegs;
+        outerTemp[i] = 288.0;
+        outerHeatCoef[i] = 5.0;
+        wallHeatCoef[i] = 15.0;
       }
 
       GeometryDefinitionInterface[] pipeGeometry = new PipeData[numLegs + 1];
       for (int i = 0; i <= numLegs; i++) {
-	pipeGeometry[i] = new PipeData();
-	pipeGeometry[i].setDiameter(diameter);
-	pipeGeometry[i].setInnerSurfaceRoughness(1e-5);
+        pipeGeometry[i] = new PipeData();
+        pipeGeometry[i].setDiameter(diameter);
+        pipeGeometry[i].setInnerSurfaceRoughness(1e-5);
       }
 
       pipe.setInletThermoSystem(gas);

@@ -269,7 +269,7 @@ public class TBPfractionModel implements java.io.Serializable {
     @Override
     public double calcTB(double molarMass, double density) {
       if (getBoilingPoint() > 0.0) {
-	return getBoilingPoint();
+        return getBoilingPoint();
       }
       return Math.pow((molarMass / 5.805e-5 * Math.pow(density, 0.9371)), 1.0 / 2.3776);
     }
@@ -290,11 +290,11 @@ public class TBPfractionModel implements java.io.Serializable {
       double TBR = TB / TC;
       double PBR = ThermodynamicConstantsInterface.referencePressure / PC;
       if (TBR < 0.8) {
-	return (Math.log(PBR) - 5.92714 + 6.09649 / TBR + 1.28862 * Math.log(TBR) - 0.169347 * Math.pow(TBR, 6.0))
-	    / (15.2518 - 15.6875 / TBR - 13.4721 * Math.log(TBR) + 0.43577 * Math.pow(TBR, 6.0));
+        return (Math.log(PBR) - 5.92714 + 6.09649 / TBR + 1.28862 * Math.log(TBR) - 0.169347 * Math.pow(TBR, 6.0))
+            / (15.2518 - 15.6875 / TBR - 13.4721 * Math.log(TBR) + 0.43577 * Math.pow(TBR, 6.0));
       } else {
-	double Kw = Math.pow(TB, 1.0 / 3.0) / density;
-	return -7.904 + 0.1352 * Kw - 0.007465 * Kw * Kw + 8.359 * TBR + (1.408 - 0.01063 * Kw) / TBR;
+        double Kw = Math.pow(TB, 1.0 / 3.0) / density;
+        return -7.904 + 0.1352 * Kw - 0.007465 * Kw * Kw + 8.359 * TBR + (1.408 - 0.01063 * Kw) / TBR;
       }
     }
 
@@ -315,8 +315,8 @@ public class TBPfractionModel implements java.io.Serializable {
       double acs = calcAcentricFactor(molarMass, density); // thermoSystem.getPhase(thermoSystem.getPhaseIndex(0)).getComponent(0).getAcentricFactor();
       double criticaVol = (0.2918 - 0.0928 * acs) * ThermodynamicConstantsInterface.R * TC / PC * 10.0;
       if (criticaVol < 0) {
-	// logger.info("acentric factor in calc critVol " + acs);
-	criticaVol = (0.2918 - 0.0928) * ThermodynamicConstantsInterface.R * TC / PC * 10.0;
+        // logger.info("acentric factor in calc critVol " + acs);
+        criticaVol = (0.2918 - 0.0928) * ThermodynamicConstantsInterface.R * TC / PC * 10.0;
       }
       return criticaVol;
     }
@@ -387,9 +387,9 @@ public class TBPfractionModel implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
 
     double[][] TBPfractionCoefOil = { { 163.12, 86.052, 0.43475, -1877.4, 0.0 },
-	{ -0.13408, 2.5019, 208.46, -3987.2, 1.0 }, { 0.7431, 0.0048122, 0.0096707, -3.7184e-6, 0.0 } };
+        { -0.13408, 2.5019, 208.46, -3987.2, 1.0 }, { 0.7431, 0.0048122, 0.0096707, -3.7184e-6, 0.0 } };
     double[][] TBPfractionCoefsHeavyOil = { { 8.3063e2, 1.75228e1, 4.55911e-2, -1.13484e4, 0.0 },
-	{ 8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25 }, { -4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0 } };
+        { 8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25 }, { -4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0 } };
     double[] TPBracketcoefs = { 0.29441, 0.40768 };
     double[][] TBPfractionCoefs = null;
 
@@ -398,51 +398,51 @@ public class TBPfractionModel implements java.io.Serializable {
     public double calcTC(double molarMass, double density) {
       // System.out.println("TC ccc " + TBPfractionCoefs[0][0]);
       if (molarMass < 1120) {
-	TBPfractionCoefs = TBPfractionCoefOil;
+        TBPfractionCoefs = TBPfractionCoefOil;
       } else {
-	TBPfractionCoefs = TBPfractionCoefsHeavyOil;
+        TBPfractionCoefs = TBPfractionCoefsHeavyOil;
       }
       // System.out.println("coef " + TBPfractionCoefs[0][0]);
       return TBPfractionCoefs[0][0] * density + TBPfractionCoefs[0][1] * Math.log(molarMass)
-	  + TBPfractionCoefs[0][2] * molarMass + TBPfractionCoefs[0][3] / molarMass;
+          + TBPfractionCoefs[0][2] * molarMass + TBPfractionCoefs[0][3] / molarMass;
     }
 
     /** {@inheritDoc} */
     @Override
     public double calcPC(double molarMass, double density) {
       if (molarMass < 1120) {
-	TBPfractionCoefs = TBPfractionCoefOil;
+        TBPfractionCoefs = TBPfractionCoefOil;
       } else {
-	TBPfractionCoefs = TBPfractionCoefsHeavyOil;
+        TBPfractionCoefs = TBPfractionCoefsHeavyOil;
       }
 
       return Math
-	  .exp(0.01325 + TBPfractionCoefs[1][0] + TBPfractionCoefs[1][1] * Math.pow(density, TBPfractionCoefs[1][4])
-	      + TBPfractionCoefs[1][2] / molarMass + TBPfractionCoefs[1][3] / Math.pow(molarMass, 2.0));
+          .exp(0.01325 + TBPfractionCoefs[1][0] + TBPfractionCoefs[1][1] * Math.pow(density, TBPfractionCoefs[1][4])
+              + TBPfractionCoefs[1][2] / molarMass + TBPfractionCoefs[1][3] / Math.pow(molarMass, 2.0));
     }
 
     /** {@inheritDoc} */
     @Override
     public double calcm(double molarMass, double density) {
       if (molarMass < 1120) {
-	TBPfractionCoefs = TBPfractionCoefOil;
+        TBPfractionCoefs = TBPfractionCoefOil;
       } else {
-	TBPfractionCoefs = TBPfractionCoefsHeavyOil;
+        TBPfractionCoefs = TBPfractionCoefsHeavyOil;
       }
       return TBPfractionCoefs[2][0] + TBPfractionCoefs[2][1] * molarMass + TBPfractionCoefs[2][2] * density
-	  + TBPfractionCoefs[2][3] * Math.pow(molarMass, 2.0);
+          + TBPfractionCoefs[2][3] * Math.pow(molarMass, 2.0);
     }
 
     /** {@inheritDoc} */
     @Override
     public double calcTB(double molarMass, double density) {
       if (getBoilingPoint() > 0.0) {
-	return getBoilingPoint();
+        return getBoilingPoint();
       }
       if (molarMass < 540) {
-	return 2E-06 * Math.pow(molarMass, 3) - 0.0035 * Math.pow(molarMass, 2) + 2.4003 * molarMass + 171.74;
+        return 2E-06 * Math.pow(molarMass, 3) - 0.0035 * Math.pow(molarMass, 2) + 2.4003 * molarMass + 171.74;
       } else {
-	return 97.58 * Math.pow(molarMass, 0.3323) * Math.pow(density, 0.04609);
+        return 97.58 * Math.pow(molarMass, 0.3323) * Math.pow(density, 0.04609);
       }
     }
 
@@ -455,7 +455,7 @@ public class TBPfractionModel implements java.io.Serializable {
       // double TB = calcTB(molarMass, density);
       double PC = calcPC(molarMass, density);
       return TPBracketcoefs[0]
-	  - penelouxC / (TPBracketcoefs[1] * neqsim.thermo.ThermodynamicConstantsInterface.R * TC / PC);
+          - penelouxC / (TPBracketcoefs[1] * neqsim.thermo.ThermodynamicConstantsInterface.R * TC / PC);
     }
   }
 
@@ -464,12 +464,12 @@ public class TBPfractionModel implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
 
     double[][] TBPfractionCoefsHeavyOil = { { 8.3063e2, 1.75228e1, 4.55911e-2, -1.13484e4, 0.0 },
-	{ 8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25 }, { -4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0 } };
+        { 8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25 }, { -4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0 } };
     double[][] TBPfractionCoefOil = TBPfractionCoefsHeavyOil;
 
     public PedersenTBPModelSRKHeavyOil() {
       TBPfractionCoefsHeavyOil = new double[][] { { 8.3063e2, 1.75228e1, 4.55911e-2, -1.13484e4, 0.0 },
-	  { 8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25 }, { -4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0 } };
+          { 8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25 }, { -4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0 } };
       TBPfractionCoefOil = TBPfractionCoefsHeavyOil;
     }
   }
@@ -480,9 +480,9 @@ public class TBPfractionModel implements java.io.Serializable {
 
     public PedersenTBPModelPR() {
       double[][] TBPfractionCoefOil2 = { { 73.4043, 97.3562, 0.618744, -2059.32, 0.0 },
-	  { 0.0728462, 2.18811, 163.91, -4043.23, 1.0 / 4.0 }, { 0.373765, 0.00549269, 0.0117934, -4.93049e-6, 0.0 } };
+          { 0.0728462, 2.18811, 163.91, -4043.23, 1.0 / 4.0 }, { 0.373765, 0.00549269, 0.0117934, -4.93049e-6, 0.0 } };
       double[][] TBPfractionCoefHeavyOil2 = { { 9.13222e2, 1.01134e1, 4.54194e-2, -1.3587e4, 0.0 },
-	  { 1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25 }, { -2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0 } };
+          { 1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25 }, { -2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0 } };
       double[] TPBracketcoefs2 = { 0.25969, 0.50033 };
       TBPfractionCoefOil = TBPfractionCoefOil2;
       TBPfractionCoefsHeavyOil = TBPfractionCoefHeavyOil2;
@@ -497,9 +497,9 @@ public class TBPfractionModel implements java.io.Serializable {
 
     public PedersenTBPModelPR2() {
       double[][] TBPfractionCoefOil2 = { { 73.4043, 97.3562, 0.618744, -2059.32, 0.0 },
-	  { 0.0728462, 2.18811, 163.91, -4043.23, 1.0 / 4.0 }, { 0.373765, 0.00549269, 0.0117934, -4.93049e-6, 0.0 } };
+          { 0.0728462, 2.18811, 163.91, -4043.23, 1.0 / 4.0 }, { 0.373765, 0.00549269, 0.0117934, -4.93049e-6, 0.0 } };
       double[][] TBPfractionCoefHeavyOil2 = { { 9.13222e2, 1.01134e1, 4.54194e-2, -1.3587e4, 0.0 },
-	  { 1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25 }, { -2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0 } };
+          { 1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25 }, { -2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0 } };
       double[] TPBracketcoefs2 = { 0.25969, 0.50033 };
       TBPfractionCoefOil = TBPfractionCoefOil2;
       TBPfractionCoefsHeavyOil = TBPfractionCoefHeavyOil2;
@@ -510,11 +510,11 @@ public class TBPfractionModel implements java.io.Serializable {
     @Override
     public double calcTB(double molarMass, double density) {
       if (getBoilingPoint() > 0.0) {
-	return getBoilingPoint();
+        return getBoilingPoint();
       }
       // Søreide correlation
       double calculated_TB = (1928.3 - 1.695e5 * Math.pow(molarMass, -0.03522) * Math.pow(density, 3.266)
-	  * Math.exp(-4.922e-3 * molarMass - 4.7685 * density + 3.462e-3 * molarMass * density));
+          * Math.exp(-4.922e-3 * molarMass - 4.7685 * density + 3.462e-3 * molarMass * density));
       return calculated_TB / 1.8;
     }
   }
@@ -525,7 +525,7 @@ public class TBPfractionModel implements java.io.Serializable {
 
     public PedersenTBPModelPRHeavyOil() {
       double[][] TBPfractionCoefHeavyOil2 = { { 9.13222e2, 1.01134e1, 4.54194e-2, -1.3587e4, 0.0 },
-	  { 1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25 }, { -2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0 } };
+          { 1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25 }, { -2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0 } };
       // double[][] TBPfractionCoefOil = TBPfractionCoefHeavyOil2;
       // double[][] TBPfractionCoefsHeavyOil = TBPfractionCoefHeavyOil2;
       TBPfractionCoefOil = TBPfractionCoefHeavyOil2;
@@ -603,23 +603,24 @@ public class TBPfractionModel implements java.io.Serializable {
     public double calcTC(double molarMass, double density) {
       // molarMass=molarMass*1e3;
       if (molarMass > 300) {
-	return super.calcTC(molarMass, density);
+        return super.calcTC(molarMass, density);
       }
       return 5.0 / 9.0 * 554.4 * Math.exp(-1.3478e-4 * molarMass - 0.61641 * density + 0.0 * molarMass * density)
-	  * Math.pow(molarMass, 0.2998) * Math.pow(density, 1.0555); // Math.pow(sig1, b) *
-								     // Math.pow(sig2, c);
+          * Math.pow(molarMass, 0.2998) * Math.pow(density, 1.0555); // Math.pow(sig1, b)
+                                                                     // *
+      // Math.pow(sig2, c);
     }
 
     /** {@inheritDoc} */
     @Override
     public double calcPC(double molarMass, double density) {
       if (molarMass > 300) {
-	return super.calcPC(molarMass, density);
+        return super.calcPC(molarMass, density);
       }
       return 0.068947 * 4.5203e4 * Math.exp(-1.8078e-3 * molarMass + -0.3084 * density + 0.0 * molarMass * density)
-	  * Math.pow(molarMass, -0.8063) * Math.pow(density, 1.6015); // Math.pow(sig1, b)
-								      // * Math.pow(sig2,
-								      // c);
+          * Math.pow(molarMass, -0.8063) * Math.pow(density, 1.6015); // Math.pow(sig1, b)
+      // * Math.pow(sig2,
+      // c);
     }
 
     public double calcAcentricFactor2(double molarMass, double density) {
@@ -633,7 +634,7 @@ public class TBPfractionModel implements java.io.Serializable {
     @Override
     public double calcTB(double molarMass, double density) {
       if (getBoilingPoint() > 0.0) {
-	return getBoilingPoint();
+        return getBoilingPoint();
       }
       return 97.58 * Math.pow(molarMass, 0.3323) * Math.pow(density, 0.04609);
     }
@@ -647,11 +648,11 @@ public class TBPfractionModel implements java.io.Serializable {
       double TBR = TB / TC;
       double PBR = ThermodynamicConstantsInterface.referencePressure / PC;
       if (TBR < 0.8) {
-	return (Math.log(PBR) - 5.92714 + 6.09649 / TBR + 1.28862 * Math.log(TBR) - 0.169347 * Math.pow(TBR, 6.0))
-	    / (15.2518 - 15.6875 / TBR - 13.4721 * Math.log(TBR) + 0.43577 * Math.pow(TBR, 6.0));
+        return (Math.log(PBR) - 5.92714 + 6.09649 / TBR + 1.28862 * Math.log(TBR) - 0.169347 * Math.pow(TBR, 6.0))
+            / (15.2518 - 15.6875 / TBR - 13.4721 * Math.log(TBR) + 0.43577 * Math.pow(TBR, 6.0));
       } else {
-	double Kw = Math.pow(TB, 1.0 / 3.0) / density;
-	return -7.904 + 0.1352 * Kw - 0.007465 * Kw * Kw + 8.359 * TBR + (1.408 - 0.01063 * Kw) / TBR;
+        double Kw = Math.pow(TB, 1.0 / 3.0) / density;
+        return -7.904 + 0.1352 * Kw - 0.007465 * Kw * Kw + 8.359 * TBR + (1.408 - 0.01063 * Kw) / TBR;
       }
     }
   }
@@ -701,8 +702,8 @@ public class TBPfractionModel implements java.io.Serializable {
       double sg = density;
       double TB = calcTB(molarMass, density);
       double logpc = 3.3864 - 0.0566 / sg - ((0.43639 + 4.1216 / sg + 0.21343 / sg / sg) * 1e-3 * TB)
-	  + ((0.47579 + 1.182 / sg + 0.15302 / sg / sg) * 1e-6 * TB * TB)
-	  - ((2.4505 + 9.9099 / sg / sg) * 1e-10 * TB * TB * TB);
+          + ((0.47579 + 1.182 / sg + 0.15302 / sg / sg) * 1e-6 * TB * TB)
+          - ((2.4505 + 9.9099 / sg / sg) * 1e-10 * TB * TB * TB);
       double PC = Math.exp(logpc) * 10;
       return PC;
     }
@@ -764,13 +765,13 @@ public class TBPfractionModel implements java.io.Serializable {
       double TB = calcTB(molarMass, density);
       double MW = solveMW(TB);
       double Tcnalkane = TB * 1.0 / (0.533272 + 0.343831e-3 * TB + 2.526167e-7 * TB * TB - 1.65848e-10 * TB * TB * TB
-	  + 4.60774e24 * Math.pow(TB, -13));
+          + 4.60774e24 * Math.pow(TB, -13));
       double phi = 1.0 - TB / Tcnalkane;
       double SGalkane = 0.843593 - 0.128624 * phi - 3.36159 * Math.pow(phi, 3) - 13749 * Math.pow(phi, 12);
       double PCnalkane = Math.pow(
-	  0.318317 + 0.099334 * Math.sqrt(phi) + 2.89698 * phi + 3.0054 * phi * phi + 8.65163 * Math.pow(phi, 4), 2);
+          0.318317 + 0.099334 * Math.sqrt(phi) + 2.89698 * phi + 3.0054 * phi * phi + 8.65163 * Math.pow(phi, 4), 2);
       double VCnalkane = Math.pow((0.82055 + 0.715468 * phi + 2.21266 * phi * phi * phi + 13411.1 * Math.pow(phi, 14)),
-	  -8);
+          -8);
       double deltaST = Math.exp(5.0 * (SGalkane - sg)) - 1.0;
       double fT = deltaST * (-0.270159 * Math.pow(TB, -0.5) + (0.0398285 - 0.706691 * Math.pow(TB, -0.5) * deltaST));
       double TC = Tcnalkane * Math.pow(((1 + 2 * fT) / (1 - 2 * fT)), 2);
@@ -780,7 +781,7 @@ public class TBPfractionModel implements java.io.Serializable {
     public double calculateTfunc(double MW_alkane, double TB) {
       double phi = Math.log(MW_alkane);
       return Math.exp(5.1264 + 2.71579 * phi - 0.28659 * phi * phi - 39.8544 / phi - 0.122488 / phi / phi)
-	  - 13.7512 * phi + 19.6197 * phi * phi - TB;
+          - 13.7512 * phi + 19.6197 * phi * phi - TB;
     }
 
     public double computeGradient(double MW_alkane, double TB) {
@@ -798,11 +799,11 @@ public class TBPfractionModel implements java.io.Serializable {
       int iter = 0;
 
       do {
-	iter++;
-	prevMW_alkane = MW_alkane;
-	double gradient = computeGradient(MW_alkane, TB);
-	MW_alkane -= 0.5 * calculateTfunc(MW_alkane, TB) / gradient;
-	error = Math.abs(MW_alkane - prevMW_alkane);
+        iter++;
+        prevMW_alkane = MW_alkane;
+        double gradient = computeGradient(MW_alkane, TB);
+        MW_alkane -= 0.5 * calculateTfunc(MW_alkane, TB) / gradient;
+        error = Math.abs(MW_alkane - prevMW_alkane);
       } while (Math.abs(error) > tolerance && iter < 1000 || iter < 3);
 
       return MW_alkane;
@@ -815,13 +816,13 @@ public class TBPfractionModel implements java.io.Serializable {
       double TB = calcTB(molarMass, density);
       double MW = solveMW(TB);
       double Tcnalkane = TB * 1.0 / (0.533272 + 0.343831e-3 * TB + 2.526167e-7 * TB * TB - 1.65848e-10 * TB * TB * TB
-	  + 4.60774e24 * Math.pow(TB, -13));
+          + 4.60774e24 * Math.pow(TB, -13));
       double phi = 1.0 - TB / Tcnalkane;
       double SGalkane = 0.843593 - 0.128624 * phi - 3.36159 * Math.pow(phi, 3) - 13749 * Math.pow(phi, 12);
       double PCnalkane = Math.pow(
-	  0.318317 + 0.099334 * Math.sqrt(phi) + 2.89698 * phi + 3.0054 * phi * phi + 8.65163 * Math.pow(phi, 4), 2);
+          0.318317 + 0.099334 * Math.sqrt(phi) + 2.89698 * phi + 3.0054 * phi * phi + 8.65163 * Math.pow(phi, 4), 2);
       double VCnalkane = Math.pow((0.82055 + 0.715468 * phi + 2.21266 * phi * phi * phi + 13411.1 * Math.pow(phi, 14)),
-	  -8);
+          -8);
       double deltaST = Math.exp(5.0 * (SGalkane - sg)) - 1.0;
       double fT = deltaST * (-0.270159 * Math.pow(TB, -0.5) + (0.0398285 - 0.706691 * Math.pow(TB, -0.5) * deltaST));
       double TC = Tcnalkane * Math.pow(((1 + 2 * fT) / (1 - 2 * fT)), 2);
@@ -830,7 +831,7 @@ public class TBPfractionModel implements java.io.Serializable {
       double fV = deltaSV * (0.347776 * Math.pow(TB, -0.5) + (-0.182421 + 2.24890 * Math.pow(TB, -0.5)) * deltaSV);
       double VC = VCnalkane * Math.pow(((1 + 2 * fV) / (1 - 2 * fV)), 2);
       double fP = deltaSP * ((2.53262 - 34.4321 * Math.pow(TB, -0.5) - 0.00230193 * TB)
-	  + (-11.4277 + 187.934 * Math.pow(TB, -0.5) + 0.00414963 * TB) * deltaSP);
+          + (-11.4277 + 187.934 * Math.pow(TB, -0.5) + 0.00414963 * TB) * deltaSP);
       double PC = PCnalkane * (TC / Tcnalkane) * (VCnalkane / VC) * Math.pow(((1 + 2 * fP) / (1 - 2 * fP)), 2);
       return PC * 10.0; // * 10 due to conversion MPa to bar
     }
@@ -842,13 +843,13 @@ public class TBPfractionModel implements java.io.Serializable {
       double TB = calcTB(molarMass, density);
       double MW = solveMW(TB);
       double Tcnalkane = TB * 1.0 / (0.533272 + 0.343831e-3 * TB + 2.526167e-7 * TB * TB - 1.65848e-10 * TB * TB * TB
-	  + 4.60774e24 * Math.pow(TB, -13));
+          + 4.60774e24 * Math.pow(TB, -13));
       double phi = 1.0 - TB / Tcnalkane;
       double SGalkane = 0.843593 - 0.128624 * phi - 3.36159 * Math.pow(phi, 3) - 13749 * Math.pow(phi, 12);
       double PCnalkane = Math.pow(
-	  0.318317 + 0.099334 * Math.sqrt(phi) + 2.89698 * phi + 3.0054 * phi * phi + 8.65163 * Math.pow(phi, 4), 2);
+          0.318317 + 0.099334 * Math.sqrt(phi) + 2.89698 * phi + 3.0054 * phi * phi + 8.65163 * Math.pow(phi, 4), 2);
       double VCnalkane = Math.pow((0.82055 + 0.715468 * phi + 2.21266 * phi * phi * phi + 13411.1 * Math.pow(phi, 14)),
-	  -8);
+          -8);
       double deltaST = Math.exp(5.0 * (SGalkane - sg)) - 1.0;
       double fT = deltaST * (-0.270159 * Math.pow(TB, -0.5) + (0.0398285 - 0.706691 * Math.pow(TB, -0.5) * deltaST));
       double TC = Tcnalkane * Math.pow(((1 + 2 * fT) / (1 - 2 * fT)), 2);
@@ -857,7 +858,7 @@ public class TBPfractionModel implements java.io.Serializable {
       double fV = deltaSV * (0.347776 * Math.pow(TB, -0.5) + (-0.182421 + 2.24890 * Math.pow(TB, -0.5)) * deltaSV);
       double VC = VCnalkane * Math.pow(((1 + 2 * fV) / (1 - 2 * fV)), 2);
       double fP = deltaSP * ((2.53262 - 34.4321 * Math.pow(TB, -0.5) - 0.00230193 * TB)
-	  + (-11.4277 + 187.934 * Math.pow(TB, -0.5) + 0.00414963 * TB) * deltaSP);
+          + (-11.4277 + 187.934 * Math.pow(TB, -0.5) + 0.00414963 * TB) * deltaSP);
       double PC = PCnalkane * (TC / Tcnalkane) * (VCnalkane / VC) * Math.pow(((1 + 2 * fP) / (1 - 2 * fP)), 2);
       return VC * 1e3; // m3/mol
     }
@@ -975,7 +976,7 @@ public class TBPfractionModel implements java.io.Serializable {
     @Override
     public double calcTB(double molarMass, double density) {
       if (getBoilingPoint() > 0.0) {
-	return getBoilingPoint();
+        return getBoilingPoint();
       }
       // Riazi-Daubert boiling point correlation: Tb = 97.58 * M^0.3323 * SG^0.04609
       return 97.58 * Math.pow(molarMass, 0.3323) * Math.pow(density, 0.04609);
@@ -1000,8 +1001,8 @@ public class TBPfractionModel implements java.io.Serializable {
       // Apply Cavett-style API correction for heavy fractions (API < 30)
       // Light fractions (API > 30) use pure Lee-Kesler
       if (API < 30) {
-	double apiCorrection = 1.0 + 0.002 * (30 - API);
-	TC_base = TC_base * apiCorrection;
+        double apiCorrection = 1.0 + 0.002 * (30 - API);
+        TC_base = TC_base * apiCorrection;
       }
       return TC_base;
     }
@@ -1021,14 +1022,14 @@ public class TBPfractionModel implements java.io.Serializable {
 
       // Lee-Kesler base correlation
       double logpc = 3.3864 - 0.0566 / sg - ((0.43639 + 4.1216 / sg + 0.21343 / sg / sg) * 1e-3 * TB)
-	  + ((0.47579 + 1.182 / sg + 0.15302 / sg / sg) * 1e-6 * TB * TB)
-	  - ((2.4505 + 9.9099 / sg / sg) * 1e-10 * TB * TB * TB);
+          + ((0.47579 + 1.182 / sg + 0.15302 / sg / sg) * 1e-6 * TB * TB)
+          - ((2.4505 + 9.9099 / sg / sg) * 1e-10 * TB * TB * TB);
       double PC_base = Math.exp(logpc) * 10; // Result in bar
 
       // Apply Cavett-style API correction for heavy fractions
       if (API < 30) {
-	double apiCorrection = 1.0 + 0.001 * (30 - API);
-	PC_base = PC_base * apiCorrection;
+        double apiCorrection = 1.0 + 0.001 * (30 - API);
+        PC_base = PC_base * apiCorrection;
       }
       return PC_base;
     }
@@ -1049,17 +1050,17 @@ public class TBPfractionModel implements java.io.Serializable {
       // Edmister correlation: ω = (3/7) * log10(Pc/1.01325) / (Tc/Tb - 1) - 1
       double TBR = TB / TC;
       if (TBR >= 1.0) {
-	return super.calcAcentricFactorKeslerLee(molarMass, density);
+        return super.calcAcentricFactorKeslerLee(molarMass, density);
       }
 
       double omega = (3.0 / 7.0) * Math.log10(PC / ThermodynamicConstantsInterface.referencePressure) / (TC / TB - 1.0)
-	  - 1.0;
+          - 1.0;
 
       // Bounds check
       if (omega < 0.0) {
-	omega = 0.0;
+        omega = 0.0;
       } else if (omega > 1.5) {
-	omega = 1.5;
+        omega = 1.5;
       }
       return omega;
     }
@@ -1143,7 +1144,7 @@ public class TBPfractionModel implements java.io.Serializable {
       // Note: molarMass is passed in g/mol from SystemThermo
       // Uses same formula as RiaziDaubert for consistency
       double TC_K = 5.0 / 9.0 * 554.4 * Math.exp(-1.3478e-4 * molarMass - 0.61641 * density)
-	  * Math.pow(molarMass, 0.2998) * Math.pow(density, 1.0555);
+          * Math.pow(molarMass, 0.2998) * Math.pow(density, 1.0555);
       return TC_K;
     }
 
@@ -1154,7 +1155,7 @@ public class TBPfractionModel implements java.io.Serializable {
       // Pc = a * exp(b*M + c*SG) * M^d * SG^e (result in bar)
       // Note: molarMass is passed in g/mol from SystemThermo
       double PC_bar = 4.5203e4 * Math.exp(-1.8078e-3 * molarMass - 0.3084 * density) * Math.pow(molarMass, -0.8063)
-	  * Math.pow(density, 1.6015);
+          * Math.pow(density, 1.6015);
       return PC_bar * 0.068947; // Convert to bar (same as RiaziDaubert)
     }
 
@@ -1220,7 +1221,7 @@ public class TBPfractionModel implements java.io.Serializable {
     double TB;
     if (molarMass < 0.540) {
       TB = 2E-06 * Math.pow(molarMass * 1000, 3) - 0.0035 * Math.pow(molarMass * 1000, 2) + 2.4003 * molarMass * 1000
-	  + 171.74;
+          + 171.74;
     } else {
       TB = 97.58 * Math.pow(molarMass * 1000, 0.3323) * Math.pow(density, 0.04609);
     }
@@ -1252,11 +1253,11 @@ public class TBPfractionModel implements java.io.Serializable {
     // Heavy oil check (MW > 500 g/mol)
     if (M_gmol > 500) {
       if (eosType.equalsIgnoreCase("PR")) {
-	logger.info("Recommending PedersenPRHeavyOil for heavy fluid (MW=" + M_gmol + " g/mol)");
-	return "PedersenPRHeavyOil";
+        logger.info("Recommending PedersenPRHeavyOil for heavy fluid (MW=" + M_gmol + " g/mol)");
+        return "PedersenPRHeavyOil";
       } else {
-	logger.info("Recommending PedersenSRKHeavyOil for heavy fluid (MW=" + M_gmol + " g/mol)");
-	return "PedersenSRKHeavyOil";
+        logger.info("Recommending PedersenSRKHeavyOil for heavy fluid (MW=" + M_gmol + " g/mol)");
+        return "PedersenSRKHeavyOil";
       }
     }
 
@@ -1264,13 +1265,13 @@ public class TBPfractionModel implements java.io.Serializable {
     if (M_gmol < 300) {
       // Highly paraffinic - Twu model is best
       if (Kw > 12.0) {
-	logger.info("Recommending Twu for paraffinic fluid (Kw=" + Kw + ")");
-	return "Twu";
+        logger.info("Recommending Twu for paraffinic fluid (Kw=" + Kw + ")");
+        return "Twu";
       }
       // Naphthenic/aromatic - Riazi-Daubert
       if (Kw < 11.0) {
-	logger.info("Recommending RiaziDaubert for naphthenic/aromatic fluid (Kw=" + Kw + ")");
-	return "RiaziDaubert";
+        logger.info("Recommending RiaziDaubert for naphthenic/aromatic fluid (Kw=" + Kw + ")");
+        return "RiaziDaubert";
       }
     }
 
@@ -1291,7 +1292,7 @@ public class TBPfractionModel implements java.io.Serializable {
    */
   public static String[] getAvailableModels() {
     return new String[] { "PedersenSRK", "PedersenSRKHeavyOil", "PedersenPR", "PedersenPR2", "PedersenPRHeavyOil",
-	"RiaziDaubert", "Lee-Kesler", "Twu", "Cavett", "Standing" };
+        "RiaziDaubert", "Lee-Kesler", "Twu", "Cavett", "Standing" };
   }
 
   /**

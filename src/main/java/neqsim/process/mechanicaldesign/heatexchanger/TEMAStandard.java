@@ -233,7 +233,7 @@ public class TEMAStandard {
     private final double minCorrosionAllowanceMm;
 
     TEMAClass(String description, String notes, double costFactor, double minTubeWallMm,
-	double minCorrosionAllowanceMm) {
+        double minCorrosionAllowanceMm) {
       this.description = description;
       this.notes = notes;
       this.costFactor = costFactor;
@@ -463,34 +463,34 @@ public class TEMAStandard {
 
     // Most common configurations
     configs.put("AES", new TEMAConfiguration(FrontHeadType.A, ShellType.E, RearHeadType.S,
-	"Most common type, fully accessible bundle", EnumSet.allOf(TEMAClass.class)));
+        "Most common type, fully accessible bundle", EnumSet.allOf(TEMAClass.class)));
 
     configs.put("BEM", new TEMAConfiguration(FrontHeadType.B, ShellType.E, RearHeadType.M,
-	"Fixed tubesheet, economical for clean fluids", EnumSet.allOf(TEMAClass.class)));
+        "Fixed tubesheet, economical for clean fluids", EnumSet.allOf(TEMAClass.class)));
 
     configs.put("AEU", new TEMAConfiguration(FrontHeadType.A, ShellType.E, RearHeadType.U,
-	"U-tube, excellent thermal expansion handling", EnumSet.allOf(TEMAClass.class)));
+        "U-tube, excellent thermal expansion handling", EnumSet.allOf(TEMAClass.class)));
 
     configs.put("AET", new TEMAConfiguration(FrontHeadType.A, ShellType.E, RearHeadType.T,
-	"Pull-through floating head, easy bundle removal", EnumSet.allOf(TEMAClass.class)));
+        "Pull-through floating head, easy bundle removal", EnumSet.allOf(TEMAClass.class)));
 
     configs.put("AEP", new TEMAConfiguration(FrontHeadType.A, ShellType.E, RearHeadType.P,
-	"Outside packed floating head, moderate cost", EnumSet.allOf(TEMAClass.class)));
+        "Outside packed floating head, moderate cost", EnumSet.allOf(TEMAClass.class)));
 
     configs.put("AKT", new TEMAConfiguration(FrontHeadType.A, ShellType.K, RearHeadType.T,
-	"Kettle reboiler, common in distillation", EnumSet.of(TEMAClass.R, TEMAClass.C)));
+        "Kettle reboiler, common in distillation", EnumSet.of(TEMAClass.R, TEMAClass.C)));
 
     configs.put("AJW", new TEMAConfiguration(FrontHeadType.A, ShellType.J, RearHeadType.W,
-	"Divided flow condenser, hazardous service", EnumSet.of(TEMAClass.R)));
+        "Divided flow condenser, hazardous service", EnumSet.of(TEMAClass.R)));
 
     configs.put("BEU", new TEMAConfiguration(FrontHeadType.B, ShellType.E, RearHeadType.U,
-	"U-tube with bonnet, economical", EnumSet.allOf(TEMAClass.class)));
+        "U-tube with bonnet, economical", EnumSet.allOf(TEMAClass.class)));
 
     configs.put("CFU", new TEMAConfiguration(FrontHeadType.C, ShellType.F, RearHeadType.U,
-	"Two-pass U-tube, better approach temp", EnumSet.of(TEMAClass.R, TEMAClass.C)));
+        "Two-pass U-tube, better approach temp", EnumSet.of(TEMAClass.R, TEMAClass.C)));
 
     configs.put("NEN", new TEMAConfiguration(FrontHeadType.N, ShellType.E, RearHeadType.N,
-	"High pressure fixed tubesheet", EnumSet.of(TEMAClass.R)));
+        "High pressure fixed tubesheet", EnumSet.of(TEMAClass.R)));
 
     COMMON_CONFIGURATIONS = Collections.unmodifiableMap(configs);
   }
@@ -515,7 +515,7 @@ public class TEMAStandard {
      * @param applicableClasses applicable TEMA classes
      */
     public TEMAConfiguration(FrontHeadType frontHead, ShellType shell, RearHeadType rearHead, String description,
-	Set<TEMAClass> applicableClasses) {
+        Set<TEMAClass> applicableClasses) {
       this.frontHead = frontHead;
       this.shell = shell;
       this.rearHead = rearHead;
@@ -605,27 +605,27 @@ public class TEMAStandard {
 
       // Front head cost
       if (frontHead == FrontHeadType.D) {
-	factor += 0.4;
+        factor += 0.4;
       } else if (frontHead == FrontHeadType.A) {
-	factor += 0.15;
+        factor += 0.15;
       } else if (frontHead == FrontHeadType.C || frontHead == FrontHeadType.N) {
-	factor += 0.1;
+        factor += 0.1;
       }
 
       // Shell cost
       if (shell == ShellType.K) {
-	factor += 0.3;
+        factor += 0.3;
       } else if (shell == ShellType.F) {
-	factor += 0.2;
+        factor += 0.2;
       }
 
       // Rear head cost
       if (rearHead == RearHeadType.T) {
-	factor += 0.25;
+        factor += 0.25;
       } else if (rearHead == RearHeadType.S) {
-	factor += 0.2;
+        factor += 0.2;
       } else if (rearHead == RearHeadType.P || rearHead == RearHeadType.W) {
-	factor += 0.15;
+        factor += 0.15;
       }
 
       return factor;
@@ -681,21 +681,21 @@ public class TEMAStandard {
       boolean isHighPressure, boolean isHazardous) {
     if (isHazardous) {
       if (hasLargeTemperatureDifference) {
-	return "AEW"; // Sealed floating head
+        return "AEW"; // Sealed floating head
       }
       return "BEM"; // Fixed tubesheet, fully sealed
     }
 
     if (isHighPressure) {
       if (hasLargeTemperatureDifference) {
-	return "NEU"; // U-tube with high-pressure heads
+        return "NEU"; // U-tube with high-pressure heads
       }
       return "NEN"; // Fixed tubesheet, high-pressure
     }
 
     if (hasLargeTemperatureDifference) {
       if (needsCleanable) {
-	return "AES"; // Floating head, cleanable
+        return "AES"; // Floating head, cleanable
       }
       return "AEU"; // U-tube
     }
@@ -775,11 +775,11 @@ public class TEMAStandard {
     if (tubeMaterial != null) {
       String upper = tubeMaterial.toUpperCase();
       if (upper.contains("STAINLESS") || upper.contains("SS")) {
-	materialFactor = 0.95;
+        materialFactor = 0.95;
       } else if (upper.contains("COPPER") || upper.contains("CU")) {
-	materialFactor = 0.75;
+        materialFactor = 0.75;
       } else if (upper.contains("TITANIUM") || upper.contains("TI")) {
-	materialFactor = 0.90;
+        materialFactor = 0.90;
       }
     }
 

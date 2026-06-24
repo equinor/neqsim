@@ -94,17 +94,17 @@ public final class DexpiXmlWriter {
 
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       if (unit instanceof DexpiProcessUnit) {
-	appendProcessUnit(document, root, (DexpiProcessUnit) unit, usedIds);
+        appendProcessUnit(document, root, (DexpiProcessUnit) unit, usedIds);
       } else if (unit instanceof DexpiStream) {
-	DexpiStream stream = (DexpiStream) unit;
-	String systemKey = stream.getLineNumber();
-	if (isBlank(systemKey)) {
-	  systemKey = stream.getFluidCode();
-	}
-	if (isBlank(systemKey)) {
-	  systemKey = "Segment";
-	}
-	segmentsBySystem.computeIfAbsent(systemKey, key -> new ArrayList<>()).add(stream);
+        DexpiStream stream = (DexpiStream) unit;
+        String systemKey = stream.getLineNumber();
+        if (isBlank(systemKey)) {
+          systemKey = stream.getFluidCode();
+        }
+        if (isBlank(systemKey)) {
+          systemKey = "Segment";
+        }
+        segmentsBySystem.computeIfAbsent(systemKey, key -> new ArrayList<>()).add(stream);
       }
     }
 
@@ -137,7 +137,7 @@ public final class DexpiXmlWriter {
   private static Element createPlantInformation(Document document) {
     Element plantInformation = document.createElement("PlantInformation");
     String applicationVersion = ProcessSystem.class.getPackage().getImplementationVersion() == null ? "1.0"
-	: ProcessSystem.class.getPackage().getImplementationVersion();
+        : ProcessSystem.class.getPackage().getImplementationVersion();
     plantInformation.setAttribute("Application", "NeqSim");
     plantInformation.setAttribute("ApplicationVersion", applicationVersion);
     plantInformation.setAttribute("OriginatingSystem", "NeqSim");
@@ -213,10 +213,10 @@ public final class DexpiXmlWriter {
 
     Element systemAttributes = document.createElement("GenericAttributes");
     String lineNumber = streams.stream().map(DexpiStream::getLineNumber).filter(value -> !isBlank(value)).findFirst()
-	.orElse(null);
+        .orElse(null);
     appendGenericAttribute(document, systemAttributes, DexpiMetadata.LINE_NUMBER, lineNumber);
     String fluidCode = streams.stream().map(DexpiStream::getFluidCode).filter(value -> !isBlank(value)).findFirst()
-	.orElse(null);
+        .orElse(null);
     appendGenericAttribute(document, systemAttributes, DexpiMetadata.FLUID_CODE, fluidCode);
     appendGenericAttribute(document, systemAttributes, "NeqSimGroupingKey", key);
     if (systemAttributes.hasChildNodes()) {
@@ -242,17 +242,17 @@ public final class DexpiXmlWriter {
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.LINE_NUMBER, stream.getLineNumber());
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.FLUID_CODE, stream.getFluidCode());
     appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_PRESSURE_VALUE,
-	stream.getPressure(DexpiMetadata.DEFAULT_PRESSURE_UNIT), DexpiMetadata.DEFAULT_PRESSURE_UNIT);
+        stream.getPressure(DexpiMetadata.DEFAULT_PRESSURE_UNIT), DexpiMetadata.DEFAULT_PRESSURE_UNIT);
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_PRESSURE_UNIT,
-	DexpiMetadata.DEFAULT_PRESSURE_UNIT);
+        DexpiMetadata.DEFAULT_PRESSURE_UNIT);
     appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_TEMPERATURE_VALUE,
-	stream.getTemperature(DexpiMetadata.DEFAULT_TEMPERATURE_UNIT), DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
+        stream.getTemperature(DexpiMetadata.DEFAULT_TEMPERATURE_UNIT), DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_TEMPERATURE_UNIT,
-	DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
+        DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
     appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_FLOW_VALUE,
-	stream.getFlowRate(DexpiMetadata.DEFAULT_FLOW_UNIT), DexpiMetadata.DEFAULT_FLOW_UNIT);
+        stream.getFlowRate(DexpiMetadata.DEFAULT_FLOW_UNIT), DexpiMetadata.DEFAULT_FLOW_UNIT);
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_FLOW_UNIT,
-	DexpiMetadata.DEFAULT_FLOW_UNIT);
+        DexpiMetadata.DEFAULT_FLOW_UNIT);
     if (genericAttributes.hasChildNodes()) {
       segmentElement.appendChild(genericAttributes);
     }
@@ -355,7 +355,7 @@ public final class DexpiXmlWriter {
     }
     for (String value : values) {
       if (!isBlank(value)) {
-	return value.trim();
+        return value.trim();
       }
     }
     return null;

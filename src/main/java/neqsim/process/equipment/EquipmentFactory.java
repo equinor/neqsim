@@ -276,15 +276,15 @@ public final class EquipmentFactory {
       return new ComponentCaptureUnit(name);
     case ReservoirCVDsim:
       throw new IllegalArgumentException(
-	  "ReservoirCVDsim requires a reservoir fluid. Use createReservoirCVDsim instead.");
+          "ReservoirCVDsim requires a reservoir fluid. Use createReservoirCVDsim instead.");
     case ReservoirDiffLibsim:
       throw new IllegalArgumentException(
-	  "ReservoirDiffLibsim requires a reservoir fluid. Use createReservoirDiffLibsim instead.");
+          "ReservoirDiffLibsim requires a reservoir fluid. Use createReservoirDiffLibsim instead.");
     case VirtualStream:
       return new VirtualStream(name);
     case ReservoirTPsim:
       throw new IllegalArgumentException(
-	  "ReservoirTPsim requires a reservoir fluid. Use createReservoirTPsim instead.");
+          "ReservoirTPsim requires a reservoir fluid. Use createReservoirTPsim instead.");
     case SimpleReservoir:
       return new SimpleReservoir(name);
     case Manifold:
@@ -332,7 +332,7 @@ public final class EquipmentFactory {
     String sanitized = equipmentType.replaceAll("[\\s_-]", "");
     for (EquipmentEnum value : EquipmentEnum.values()) {
       if (value.name().equalsIgnoreCase(equipmentType) || value.name().equalsIgnoreCase(sanitized)) {
-	return value;
+        return value;
       }
     }
     throw new IllegalArgumentException("Unknown equipment type: " + equipmentType);

@@ -105,8 +105,8 @@ public class FilippovConductivityMethod extends LiquidPhysicalPropertyMethod imp
     for (int i = 0; i < ncomp; i++) {
       double wi = liquidPhase.getPhase().getWtFrac(i);
       for (int j = i + 1; j < ncomp; j++) {
-	double wj = liquidPhase.getPhase().getWtFrac(j);
-	correctionSum += wi * wj * Math.abs(pureComponentConductivity[i] - pureComponentConductivity[j]);
+        double wj = liquidPhase.getPhase().getWtFrac(j);
+        correctionSum += wi * wj * Math.abs(pureComponentConductivity[i] - pureComponentConductivity[j]);
       }
     }
 
@@ -131,10 +131,10 @@ public class FilippovConductivityMethod extends LiquidPhysicalPropertyMethod imp
     double temp = liquidPhase.getPhase().getTemperature();
     for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
       pureComponentConductivity[i] = liquidPhase.getPhase().getComponent(i).getLiquidConductivityParameter(0)
-	  + liquidPhase.getPhase().getComponent(i).getLiquidConductivityParameter(1) * temp
-	  + liquidPhase.getPhase().getComponent(i).getLiquidConductivityParameter(2) * temp * temp;
+          + liquidPhase.getPhase().getComponent(i).getLiquidConductivityParameter(1) * temp
+          + liquidPhase.getPhase().getComponent(i).getLiquidConductivityParameter(2) * temp * temp;
       if (pureComponentConductivity[i] < 1e-10) {
-	pureComponentConductivity[i] = 1e-10;
+        pureComponentConductivity[i] = 1e-10;
       }
     }
   }

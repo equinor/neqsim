@@ -140,7 +140,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
       ((PlusFractionModel.WhitsonGammaModel) plusFractionModel).setAlpha(alpha);
     } else {
       logger.warn(
-	  "setGammaShapeParameter only applies to Whitson Gamma Model. Current model: " + plusFractionModel.getName());
+          "setGammaShapeParameter only applies to Whitson Gamma Model. Current model: " + plusFractionModel.getName());
     }
     return this;
   }
@@ -173,7 +173,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
       ((PlusFractionModel.WhitsonGammaModel) plusFractionModel).setAutoEstimateAlpha(autoEstimate);
     } else {
       logger.warn("setAutoEstimateGammaAlpha only applies to Whitson Gamma Model. Current model: "
-	  + plusFractionModel.getName());
+          + plusFractionModel.getName());
     }
     return this;
   }
@@ -190,7 +190,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
       ((PlusFractionModel.WhitsonGammaModel) plusFractionModel).setDensityModel(densityModel);
     } else {
       logger.warn(
-	  "setGammaDensityModel only applies to Whitson Gamma Model. Current model: " + plusFractionModel.getName());
+          "setGammaDensityModel only applies to Whitson Gamma Model. Current model: " + plusFractionModel.getName());
     }
     return this;
   }
@@ -240,13 +240,13 @@ public class Characterise implements java.io.Serializable, Cloneable {
     system.init(0);
     if (plusFractionModel.hasPlusFraction()) {
       if (plusFractionModel.getMPlus() > plusFractionModel.getMaxPlusMolarMass()) {
-	logger.error("plus fraction molar mass too heavy for " + plusFractionModel.getName());
-	plusFractionModel = plusFractionModelSelector.getModel("Pedersen Heavy Oil");
-	logger.info("changing to " + plusFractionModel.getName());
+        logger.error("plus fraction molar mass too heavy for " + plusFractionModel.getName());
+        plusFractionModel = plusFractionModelSelector.getModel("Pedersen Heavy Oil");
+        logger.info("changing to " + plusFractionModel.getName());
       }
       boolean couldCharacerize = plusFractionModel.characterizePlusFraction(TBPfractionModel);
       if (couldCharacerize) {
-	lumpingModel.generateLumpedComposition(this);
+        lumpingModel.generateLumpedComposition(this);
       }
     }
   }

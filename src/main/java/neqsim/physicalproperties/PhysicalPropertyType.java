@@ -23,7 +23,7 @@ public enum PhysicalPropertyType {
   public static PhysicalPropertyType byName(String name) {
     if (name == null || name.trim().isEmpty()) {
       throw new RuntimeException(
-	  new InvalidInputException("PhysicalPropertyType", "byName", "name", "cannot be null or empty."));
+          new InvalidInputException("PhysicalPropertyType", "byName", "name", "cannot be null or empty."));
     }
 
     // suport old names
@@ -41,7 +41,7 @@ public enum PhysicalPropertyType {
     // todo: consider replacing this function with built-in valueOf
     for (PhysicalPropertyType pt : copyOfValues) {
       if (pt.name().equals(name)) {
-	return pt;
+        return pt;
       }
     }
     throw new RuntimeException(new InvalidInputException("PhysicalPropertyType", "byName", "name", "is not valid."));

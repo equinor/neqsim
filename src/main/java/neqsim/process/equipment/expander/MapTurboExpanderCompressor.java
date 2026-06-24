@@ -405,32 +405,32 @@ public class MapTurboExpanderCompressor extends ProcessEquipmentBaseClass {
       double fHigh = compressorPowerAtSpeed(sHigh, id) - availableShaftPower;
 
       if (fLow > 0.0) {
-	// Expander cannot supply enough power even at the lowest speed.
-	shaftSpeed = sLow;
-	speedLimited = true;
-	operatingStatus = OperatingStatus.UNDER_POWER_SURGE;
+        // Expander cannot supply enough power even at the lowest speed.
+        shaftSpeed = sLow;
+        speedLimited = true;
+        operatingStatus = OperatingStatus.UNDER_POWER_SURGE;
       } else if (fHigh < 0.0) {
-	// Surplus power available; speed pegged at the upper bound.
-	shaftSpeed = sHigh;
-	speedLimited = true;
-	operatingStatus = OperatingStatus.OVER_POWER_MAX_SPEED;
+        // Surplus power available; speed pegged at the upper bound.
+        shaftSpeed = sHigh;
+        speedLimited = true;
+        operatingStatus = OperatingStatus.OVER_POWER_MAX_SPEED;
       } else {
-	// Bisection on the monotonically increasing power-speed relationship.
-	double a = sLow;
-	double b = sHigh;
-	for (int iter = 0; iter < 80; iter++) {
-	  double mid = 0.5 * (a + b);
-	  double fMid = compressorPowerAtSpeed(mid, id) - availableShaftPower;
-	  if (fMid > 0.0) {
-	    b = mid;
-	  } else {
-	    a = mid;
-	  }
-	  if (Math.abs(b - a) < 1.0e-3) {
-	    break;
-	  }
-	}
-	shaftSpeed = 0.5 * (a + b);
+        // Bisection on the monotonically increasing power-speed relationship.
+        double a = sLow;
+        double b = sHigh;
+        for (int iter = 0; iter < 80; iter++) {
+          double mid = 0.5 * (a + b);
+          double fMid = compressorPowerAtSpeed(mid, id) - availableShaftPower;
+          if (fMid > 0.0) {
+            b = mid;
+          } else {
+            a = mid;
+          }
+          if (Math.abs(b - a) < 1.0e-3) {
+            break;
+          }
+        }
+        shaftSpeed = 0.5 * (a + b);
       }
 
       // Final run at the solved (or pegged) shaft speed.

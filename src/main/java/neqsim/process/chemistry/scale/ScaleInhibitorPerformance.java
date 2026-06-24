@@ -181,10 +181,10 @@ public class ScaleInhibitorPerformance implements Serializable {
     if (availableDoseMgL > 0.0) {
       double ratio = availableDoseMgL / minimumInhibitorConcentrationMgL;
       if (ratio >= 1.0) {
-	efficiency = Math.min(1.0, 0.85 + 0.15 * (1.0 - Math.exp(-(ratio - 1.0))));
+        efficiency = Math.min(1.0, 0.85 + 0.15 * (1.0 - Math.exp(-(ratio - 1.0))));
       } else {
-	// Below MIC: efficiency drops sharply
-	efficiency = 0.85 * ratio;
+        // Below MIC: efficiency drops sharply
+        efficiency = 0.85 * ratio;
       }
       adequate = ratio >= 1.0;
     } else {
@@ -195,19 +195,19 @@ public class ScaleInhibitorPerformance implements Serializable {
     // Warnings
     if (chemistry == InhibitorChemistry.PHOSPHONATE && temperatureC > 175.0) {
       warnings.put("thermal_degradation",
-	  "Phosphonate inhibitors hydrolyse above 175 C; switch to polymeric chemistry");
+          "Phosphonate inhibitors hydrolyse above 175 C; switch to polymeric chemistry");
     }
     if (chemistry == InhibitorChemistry.PHOSPHONATE && calciumMgL > 2000.0) {
       warnings.put("calcium_phosphonate_precipitation",
-	  "Risk of Ca-phosphonate precipitation above 2000 mg/L Ca; use polyacrylate or phosphate ester");
+          "Risk of Ca-phosphonate precipitation above 2000 mg/L Ca; use polyacrylate or phosphate ester");
     }
     if (saturationRatio > 100.0) {
       warnings.put("extreme_supersaturation",
-	  "SR > 100; nucleation outpaces inhibition — consider mechanical removal or water exclusion");
+          "SR > 100; nucleation outpaces inhibition — consider mechanical removal or water exclusion");
     }
     if (chemistry == InhibitorChemistry.PHOSPHATE_ESTER && temperatureC < 40.0) {
       warnings.put("low_temperature_solubility",
-	  "Phosphate ester may have limited solubility below 40 C in produced water");
+          "Phosphate ester may have limited solubility below 40 C in produced water");
     }
     evaluated = true;
   }
@@ -435,6 +435,6 @@ public class ScaleInhibitorPerformance implements Serializable {
    */
   public java.util.List<java.util.Map<String, Object>> getStandardsApplied() {
     return neqsim.process.chemistry.util.StandardsRegistry
-	.toMapList(neqsim.process.chemistry.util.StandardsRegistry.NACE_TM0374);
+        .toMapList(neqsim.process.chemistry.util.StandardsRegistry.NACE_TM0374);
   }
 }

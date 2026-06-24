@@ -137,7 +137,7 @@ public class SafetySystemPerformanceReport implements Serializable {
     int count = 0;
     for (BarrierAssessment assessment : assessments) {
       if (assessment.getVerdict() == verdict) {
-	count++;
+        count++;
       }
     }
     return count;
@@ -371,7 +371,7 @@ public class SafetySystemPerformanceReport implements Serializable {
     public BarrierAssessment addMetric(String name, Object value) {
       String key = normalize(name);
       if (!key.isEmpty()) {
-	metrics.put(key, value);
+        metrics.put(key, value);
       }
       return this;
     }
@@ -385,7 +385,7 @@ public class SafetySystemPerformanceReport implements Serializable {
     public BarrierAssessment addInstrumentTag(String tag) {
       String normalized = normalize(tag);
       if (!normalized.isEmpty() && !instrumentTags.contains(normalized)) {
-	instrumentTags.add(normalized);
+        instrumentTags.add(normalized);
       }
       return this;
     }
@@ -399,7 +399,7 @@ public class SafetySystemPerformanceReport implements Serializable {
     public BarrierAssessment addSafetyInstrumentedFunction(String name) {
       String normalized = normalize(name);
       if (!normalized.isEmpty() && !safetyInstrumentedFunctions.contains(normalized)) {
-	safetyInstrumentedFunctions.add(normalized);
+        safetyInstrumentedFunctions.add(normalized);
       }
       return this;
     }
@@ -435,9 +435,9 @@ public class SafetySystemPerformanceReport implements Serializable {
      */
     private void mergeVerdict(FindingSeverity severity) {
       if (severity == FindingSeverity.FAIL) {
-	verdict = Verdict.FAIL;
+        verdict = Verdict.FAIL;
       } else if (severity == FindingSeverity.WARNING && verdict == Verdict.PASS) {
-	verdict = Verdict.PASS_WITH_WARNINGS;
+        verdict = Verdict.PASS_WITH_WARNINGS;
       }
     }
 
@@ -459,7 +459,7 @@ public class SafetySystemPerformanceReport implements Serializable {
 
       List<Map<String, Object>> rows = new ArrayList<Map<String, Object>>();
       for (Finding finding : findings) {
-	rows.add(finding.toMap());
+        rows.add(finding.toMap());
       }
       map.put("findings", rows);
       return map;

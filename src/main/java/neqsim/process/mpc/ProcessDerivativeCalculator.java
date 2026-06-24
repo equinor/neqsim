@@ -140,19 +140,19 @@ public class ProcessDerivativeCalculator {
     private VariableType inferVariableType(String path) {
       String lowerPath = path.toLowerCase();
       if (lowerPath.contains("pressure")) {
-	return VariableType.PRESSURE;
+        return VariableType.PRESSURE;
       }
       if (lowerPath.contains("temperature") || lowerPath.contains("temp")) {
-	return VariableType.TEMPERATURE;
+        return VariableType.TEMPERATURE;
       }
       if (lowerPath.contains("flow")) {
-	return VariableType.FLOW_RATE;
+        return VariableType.FLOW_RATE;
       }
       if (lowerPath.contains("composition") || lowerPath.contains("fraction") || lowerPath.contains("mole")) {
-	return VariableType.COMPOSITION;
+        return VariableType.COMPOSITION;
       }
       if (lowerPath.contains("level")) {
-	return VariableType.LEVEL;
+        return VariableType.LEVEL;
       }
       return VariableType.GENERAL;
     }
@@ -371,7 +371,7 @@ public class ProcessDerivativeCalculator {
     for (int j = 0; j < numInputs; j++) {
       double[] gradient = calculateGradientForInput(j);
       for (int i = 0; i < numOutputs; i++) {
-	jacobian[i][j] = gradient[i];
+        jacobian[i][j] = gradient[i];
       }
     }
   }
@@ -397,10 +397,10 @@ public class ProcessDerivativeCalculator {
 
     try {
       for (int j = 0; j < numInputs; j++) {
-	double[] gradient = futures.get(j).get();
-	for (int i = 0; i < numOutputs; i++) {
-	  jacobian[i][j] = gradient[i];
-	}
+        double[] gradient = futures.get(j).get();
+        for (int i = 0; i < numOutputs; i++) {
+          jacobian[i][j] = gradient[i];
+        }
       }
     } catch (Exception e) {
       throw new RuntimeException("Parallel Jacobian calculation failed", e);
@@ -561,21 +561,21 @@ public class ProcessDerivativeCalculator {
 
     for (int i = 0; i < inputVariables.size(); i++) {
       if (inputVariables.get(i).path.equals(inputPath)) {
-	inputIndex = i;
-	break;
+        inputIndex = i;
+        break;
       }
     }
 
     for (int i = 0; i < outputVariables.size(); i++) {
       if (outputVariables.get(i).path.equals(outputPath)) {
-	outputIndex = i;
-	break;
+        outputIndex = i;
+        break;
       }
     }
 
     if (inputIndex < 0 || outputIndex < 0) {
       throw new IllegalArgumentException(
-	  "Variable not found. Ensure variables are added before calculating derivatives.");
+          "Variable not found. Ensure variables are added before calculating derivatives.");
     }
 
     ensureBaseCase();
@@ -593,8 +593,8 @@ public class ProcessDerivativeCalculator {
     int outputIndex = -1;
     for (int i = 0; i < outputVariables.size(); i++) {
       if (outputVariables.get(i).path.equals(outputPath)) {
-	outputIndex = i;
-	break;
+        outputIndex = i;
+        break;
       }
     }
 
@@ -616,8 +616,8 @@ public class ProcessDerivativeCalculator {
     int outputIndex = -1;
     for (int i = 0; i < outputVariables.size(); i++) {
       if (outputVariables.get(i).path.equals(outputPath)) {
-	outputIndex = i;
-	break;
+        outputIndex = i;
+        break;
       }
     }
 
@@ -654,16 +654,16 @@ public class ProcessDerivativeCalculator {
 
       // d²f/dx_i dx_j ≈ (∂f/∂x_j|_{x_i+h} - ∂f/∂x_j|_{x_i-h}) / 2h
       for (int j = 0; j < n; j++) {
-	hessian[i][j] = (gradPlus[j] - gradMinus[j]) / (2.0 * step);
+        hessian[i][j] = (gradPlus[j] - gradMinus[j]) / (2.0 * step);
       }
     }
 
     // Symmetrize (average upper and lower triangular)
     for (int i = 0; i < n; i++) {
       for (int j = i + 1; j < n; j++) {
-	double avg = (hessian[i][j] + hessian[j][i]) / 2.0;
-	hessian[i][j] = avg;
-	hessian[j][i] = avg;
+        double avg = (hessian[i][j] + hessian[j][i]) / 2.0;
+        hessian[i][j] = avg;
+        hessian[j][i] = avg;
       }
     }
 
@@ -825,7 +825,7 @@ public class ProcessDerivativeCalculator {
     for (int i = 0; i < outputVariables.size(); i++) {
       sb.append(outputVariables.get(i).path);
       for (int j = 0; j < inputVariables.size(); j++) {
-	sb.append(",").append(jacobian[i][j]);
+        sb.append(",").append(jacobian[i][j]);
       }
       sb.append("\n");
     }
@@ -850,7 +850,7 @@ public class ProcessDerivativeCalculator {
     json.append("  \"inputs\": [");
     for (int i = 0; i < inputVariables.size(); i++) {
       if (i > 0) {
-	json.append(", ");
+        json.append(", ");
       }
       json.append("\"").append(inputVariables.get(i).path).append("\"");
     }
@@ -859,7 +859,7 @@ public class ProcessDerivativeCalculator {
     json.append("  \"outputs\": [");
     for (int i = 0; i < outputVariables.size(); i++) {
       if (i > 0) {
-	json.append(", ");
+        json.append(", ");
       }
       json.append("\"").append(outputVariables.get(i).path).append("\"");
     }
@@ -868,7 +868,7 @@ public class ProcessDerivativeCalculator {
     json.append("  \"baseInputValues\": [");
     for (int i = 0; i < baseInputValues.length; i++) {
       if (i > 0) {
-	json.append(", ");
+        json.append(", ");
       }
       json.append(baseInputValues[i]);
     }
@@ -877,7 +877,7 @@ public class ProcessDerivativeCalculator {
     json.append("  \"baseOutputValues\": [");
     for (int i = 0; i < baseOutputValues.length; i++) {
       if (i > 0) {
-	json.append(", ");
+        json.append(", ");
       }
       json.append(baseOutputValues[i]);
     }
@@ -887,14 +887,14 @@ public class ProcessDerivativeCalculator {
     for (int i = 0; i < jacobian.length; i++) {
       json.append("    [");
       for (int j = 0; j < jacobian[i].length; j++) {
-	if (j > 0) {
-	  json.append(", ");
-	}
-	json.append(jacobian[i][j]);
+        if (j > 0) {
+          json.append(", ");
+        }
+        json.append(jacobian[i][j]);
       }
       json.append("]");
       if (i < jacobian.length - 1) {
-	json.append(",");
+        json.append(",");
       }
       json.append("\n");
     }

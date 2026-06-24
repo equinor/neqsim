@@ -104,23 +104,23 @@ public class TransientEntrainmentTest {
     // Check if the performance calculator actually computed non-zero entrainment
     double oilInGasFrac = sepEntrain.getPerformanceCalculator().getOilInGasFraction();
     logger.printf(org.apache.logging.log4j.Level.INFO,
-	"Performance calc oilInGas=%.6e, waterInGas=%.6e, gasInOil=%.6e%n", oilInGasFrac,
-	sepEntrain.getPerformanceCalculator().getWaterInGasFraction(),
-	sepEntrain.getPerformanceCalculator().getGasInOilFraction());
+        "Performance calc oilInGas=%.6e, waterInGas=%.6e, gasInOil=%.6e%n", oilInGasFrac,
+        sepEntrain.getPerformanceCalculator().getWaterInGasFraction(),
+        sepEntrain.getPerformanceCalculator().getGasInOilFraction());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Vessel phases=%d, hasGas=%b, hasOil=%b, hasAqueous=%b%n",
-	sepEntrain.getThermoSystem().getNumberOfPhases(), sepEntrain.getThermoSystem().hasPhaseType("gas"),
-	sepEntrain.getThermoSystem().hasPhaseType("oil"), sepEntrain.getThermoSystem().hasPhaseType("aqueous"));
+        sepEntrain.getThermoSystem().getNumberOfPhases(), sepEntrain.getThermoSystem().hasPhaseType("gas"),
+        sepEntrain.getThermoSystem().hasPhaseType("oil"), sepEntrain.getThermoSystem().hasPhaseType("aqueous"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Gas outlet flow m3/s=%.6e, T=%.2f K, P=%.2f bar%n",
-	sepEntrain.getGasOutStream().getFluid().getFlowRate("m3/sec"), sepEntrain.getThermoSystem().getTemperature(),
-	sepEntrain.getThermoSystem().getPressure());
+        sepEntrain.getGasOutStream().getFluid().getFlowRate("m3/sec"), sepEntrain.getThermoSystem().getTemperature(),
+        sepEntrain.getThermoSystem().getPressure());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Liquid level=%.4f%n", sepEntrain.getLiquidLevel());
 
     // The compositions should differ — entrainment adds liquid components to gas
     boolean anyDifference = false;
     for (int i = 0; i < gasCompNoEntrain.length; i++) {
       if (Math.abs(gasCompNoEntrain[i] - gasCompEntrain[i]) > 1e-12) {
-	anyDifference = true;
-	break;
+        anyDifference = true;
+        break;
       }
     }
     assertTrue(anyDifference, "Gas outlet composition should differ when entrainment is enabled in transient");
@@ -239,8 +239,8 @@ public class TransientEntrainmentTest {
     boolean gasChanged = false;
     for (int i = 0; i < gasNoEntrain.length; i++) {
       if (Math.abs(gasNoEntrain[i] - gasEntrain[i]) > 1e-12) {
-	gasChanged = true;
-	break;
+        gasChanged = true;
+        break;
       }
     }
     assertTrue(gasChanged, "ThreePhaseSeparator gas outlet should differ with entrainment in transient");
@@ -288,8 +288,8 @@ public class TransientEntrainmentTest {
     boolean anyDiff = false;
     for (int i = 0; i < gasManual.length; i++) {
       if (Math.abs(gasManual[i] - gasBase[i]) > 1e-12) {
-	anyDiff = true;
-	break;
+        anyDiff = true;
+        break;
       }
     }
     assertTrue(anyDiff, "Manual entrainment should produce different gas compositions in transient");

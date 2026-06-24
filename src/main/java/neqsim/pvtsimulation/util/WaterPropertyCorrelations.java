@@ -110,7 +110,7 @@ public final class WaterPropertyCorrelations {
     double s = salinityPpm / 1.0e6;
     double tShift = tf - 60.0;
     double numerator = 5.1e-8 * pp + (tf - 60.0) * (5.47e-6 - 1.95e-10 * pp) + (tShift * tShift) * (-3.23e-8)
-	+ 8.5e-13 * pp * pp;
+        + 8.5e-13 * pp * pp;
     return 1.0 + numerator - s * (0.0840655 * s * Math.sqrt(tf) + 0.0);
   }
 
@@ -183,7 +183,7 @@ public final class WaterPropertyCorrelations {
     double s = salinityPpm / 1.0e6;
 
     double cwPureInvPsi = (3.8546 - 0.000134 * pp) + (-(0.01052 + 4.77e-7 * pp)) * tf
-	+ (3.9267e-5 + 8.8e-10 * pp) * tf * tf;
+        + (3.9267e-5 + 8.8e-10 * pp) * tf * tf;
     cwPureInvPsi = cwPureInvPsi * 1.0e-6;
 
     double salCorr = 1.0 + s * 0.7;
@@ -213,13 +213,13 @@ public final class WaterPropertyCorrelations {
     double s = salinityWtFrac;
 
     double rhoW = 1.0 + 1.0e-6 * (-80.0 * tc - 3.3 * tc * tc + 0.00175 * tc * tc * tc + 489.0 * pMPa - 2.0 * tc * pMPa
-	+ 0.016 * tc * tc * pMPa - 1.3e-5 * tc * tc * tc * pMPa - 0.333 * pMPa * pMPa - 0.002 * tc * pMPa * pMPa);
+        + 0.016 * tc * tc * pMPa - 1.3e-5 * tc * tc * tc * pMPa - 0.333 * pMPa * pMPa - 0.002 * tc * pMPa * pMPa);
     rhoW = rhoW * 1000.0;
 
     double rhoBrine = rhoW + s
-	* (0.668 + 0.44 * s + 1.0e-6
-	    * (300.0 * pMPa - 2400.0 * pMPa * s + tc * (80.0 + 3.0 * tc - 3300.0 * s - 13.0 * pMPa + 47.0 * pMPa * s)))
-	* 1000.0;
+        * (0.668 + 0.44 * s + 1.0e-6
+            * (300.0 * pMPa - 2400.0 * pMPa * s + tc * (80.0 + 3.0 * tc - 3300.0 * s - 13.0 * pMPa + 47.0 * pMPa * s)))
+        * 1000.0;
     return rhoBrine;
   }
 

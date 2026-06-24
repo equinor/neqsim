@@ -232,9 +232,9 @@ public final class BoundaryConditions implements Serializable {
    */
   public static BoundaryConditions northSeaWinter() {
     return builder().ambientTemperature(278.15) // 5°C
-	.windSpeed(15.0).relativeHumidity(0.85).pasquillStabilityClass('D').seaWaterTemperature(280.15) // 7°C
-	.isOffshore(true).surfaceRoughness(0.0002) // Open sea
-	.build();
+        .windSpeed(15.0).relativeHumidity(0.85).pasquillStabilityClass('D').seaWaterTemperature(280.15) // 7°C
+        .isOffshore(true).surfaceRoughness(0.0002) // Open sea
+        .build();
   }
 
   /**
@@ -244,9 +244,9 @@ public final class BoundaryConditions implements Serializable {
    */
   public static BoundaryConditions northSeaSummer() {
     return builder().ambientTemperature(288.15) // 15°C
-	.windSpeed(8.0).relativeHumidity(0.75).solarRadiation(500.0).pasquillStabilityClass('C')
-	.seaWaterTemperature(285.15) // 12°C
-	.isOffshore(true).surfaceRoughness(0.0002).build();
+        .windSpeed(8.0).relativeHumidity(0.75).solarRadiation(500.0).pasquillStabilityClass('C')
+        .seaWaterTemperature(285.15) // 12°C
+        .isOffshore(true).surfaceRoughness(0.0002).build();
   }
 
   /**
@@ -256,9 +256,9 @@ public final class BoundaryConditions implements Serializable {
    */
   public static BoundaryConditions gulfOfMexico() {
     return builder().ambientTemperature(303.15) // 30°C
-	.windSpeed(5.0).relativeHumidity(0.80).solarRadiation(800.0).pasquillStabilityClass('B')
-	.seaWaterTemperature(299.15) // 26°C
-	.isOffshore(true).surfaceRoughness(0.0002).build();
+        .windSpeed(5.0).relativeHumidity(0.80).solarRadiation(800.0).pasquillStabilityClass('B')
+        .seaWaterTemperature(299.15) // 26°C
+        .isOffshore(true).surfaceRoughness(0.0002).build();
   }
 
   /**
@@ -268,9 +268,9 @@ public final class BoundaryConditions implements Serializable {
    */
   public static BoundaryConditions onshoreIndustrial() {
     return builder().ambientTemperature(293.15) // 20°C
-	.windSpeed(3.0).relativeHumidity(0.50).solarRadiation(400.0).pasquillStabilityClass('D').isOffshore(false)
-	.surfaceRoughness(1.0) // Industrial area
-	.build();
+        .windSpeed(3.0).relativeHumidity(0.50).solarRadiation(400.0).pasquillStabilityClass('D').isOffshore(false)
+        .surfaceRoughness(1.0) // Industrial area
+        .build();
   }
 
   @Override
@@ -283,23 +283,23 @@ public final class BoundaryConditions implements Serializable {
     }
     BoundaryConditions that = (BoundaryConditions) o;
     return Double.compare(that.ambientTemperature, ambientTemperature) == 0
-	&& Double.compare(that.windSpeed, windSpeed) == 0 && Double.compare(that.windDirection, windDirection) == 0
-	&& Double.compare(that.relativeHumidity, relativeHumidity) == 0
-	&& Double.compare(that.atmosphericPressure, atmosphericPressure) == 0
-	&& pasquillStabilityClass == that.pasquillStabilityClass && isOffshore == that.isOffshore;
+        && Double.compare(that.windSpeed, windSpeed) == 0 && Double.compare(that.windDirection, windDirection) == 0
+        && Double.compare(that.relativeHumidity, relativeHumidity) == 0
+        && Double.compare(that.atmosphericPressure, atmosphericPressure) == 0
+        && pasquillStabilityClass == that.pasquillStabilityClass && isOffshore == that.isOffshore;
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(ambientTemperature, windSpeed, windDirection, relativeHumidity, atmosphericPressure,
-	pasquillStabilityClass, isOffshore);
+        pasquillStabilityClass, isOffshore);
   }
 
   @Override
   public String toString() {
     return String.format("BoundaryConditions[T=%.1f°C, wind=%.1f m/s @ %.0f°, RH=%.0f%%, P=%.0f Pa, stability=%c, %s]",
-	getAmbientTemperature("C"), windSpeed, windDirection, relativeHumidity * 100, atmosphericPressure,
-	pasquillStabilityClass, isOffshore ? "offshore" : "onshore");
+        getAmbientTemperature("C"), windSpeed, windDirection, relativeHumidity * 100, atmosphericPressure,
+        pasquillStabilityClass, isOffshore ? "offshore" : "onshore");
   }
 
   /**
@@ -337,11 +337,11 @@ public final class BoundaryConditions implements Serializable {
      */
     public Builder ambientTemperature(double temperature, String unit) {
       if ("C".equalsIgnoreCase(unit)) {
-	this.ambientTemperature = temperature + 273.15;
+        this.ambientTemperature = temperature + 273.15;
       } else if ("F".equalsIgnoreCase(unit)) {
-	this.ambientTemperature = (temperature - 32.0) * 5.0 / 9.0 + 273.15;
+        this.ambientTemperature = (temperature - 32.0) * 5.0 / 9.0 + 273.15;
       } else {
-	this.ambientTemperature = temperature;
+        this.ambientTemperature = temperature;
       }
       return this;
     }
@@ -410,7 +410,7 @@ public final class BoundaryConditions implements Serializable {
     public Builder pasquillStabilityClass(char stabilityClass) {
       char upper = Character.toUpperCase(stabilityClass);
       if (upper < 'A' || upper > 'F') {
-	throw new IllegalArgumentException("Pasquill stability class must be A-F, got: " + stabilityClass);
+        throw new IllegalArgumentException("Pasquill stability class must be A-F, got: " + stabilityClass);
       }
       this.pasquillStabilityClass = upper;
       return this;

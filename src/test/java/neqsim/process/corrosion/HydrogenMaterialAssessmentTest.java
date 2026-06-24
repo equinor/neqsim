@@ -144,7 +144,7 @@ public class HydrogenMaterialAssessmentTest {
     assessment.evaluate();
 
     assertTrue(assessment.getHTHARisk().contains("Not applicable"),
-	"HTHA should not apply below 200°C: " + assessment.getHTHARisk());
+        "HTHA should not apply below 200°C: " + assessment.getHTHARisk());
     assertTrue(assessment.isHTHAAcceptable());
   }
 
@@ -160,7 +160,7 @@ public class HydrogenMaterialAssessmentTest {
     // 280°C + 20 bar H2 on carbon steel — should be above Nelson curve
     assertFalse(assessment.isHTHAAcceptable(), "280°C at 20 bar H2 should be above Nelson curve for carbon steel");
     assertTrue(assessment.getHTHARisk().contains("High") || assessment.getHTHARisk().contains("Very"),
-	"Risk should be High or Very High: " + assessment.getHTHARisk());
+        "Risk should be High or Very High: " + assessment.getHTHARisk());
   }
 
   @Test
@@ -186,7 +186,7 @@ public class HydrogenMaterialAssessmentTest {
     assessment.evaluate();
 
     assertTrue(assessment.getHICRisk().contains("Not applicable"),
-	"Should be N/A with no H2S: " + assessment.getHICRisk());
+        "Should be N/A with no H2S: " + assessment.getHICRisk());
     assertTrue(assessment.isSourServiceOk());
   }
 
@@ -201,9 +201,9 @@ public class HydrogenMaterialAssessmentTest {
     assessment.evaluate();
 
     assertFalse(assessment.getHICRisk().contains("Not applicable"),
-	"Should flag sour service: " + assessment.getHICRisk());
+        "Should flag sour service: " + assessment.getHICRisk());
     assertTrue(assessment.getHICRisk().contains("Region 1"),
-	"pH2S 0.1 bar should be Region 1: " + assessment.getHICRisk());
+        "pH2S 0.1 bar should be Region 1: " + assessment.getHICRisk());
   }
 
   @Test
@@ -217,7 +217,7 @@ public class HydrogenMaterialAssessmentTest {
     assessment.evaluate();
 
     assertTrue(assessment.getHICRisk().contains("Region 3"),
-	"pH2S 2 bar should be Region 3: " + assessment.getHICRisk());
+        "pH2S 2 bar should be Region 3: " + assessment.getHICRisk());
   }
 
   @Test
@@ -250,7 +250,7 @@ public class HydrogenMaterialAssessmentTest {
     assertFalse(overall.isEmpty());
     // With multiple mechanisms, risk should be at least Medium
     assertTrue("Medium".equals(overall) || "High".equals(overall) || "Very High".equals(overall),
-	"Combined risk should be elevated: " + overall);
+        "Combined risk should be elevated: " + overall);
   }
 
   @Test
@@ -305,8 +305,8 @@ public class HydrogenMaterialAssessmentTest {
     boolean cyclicHasWarnings = false;
     for (String w : cyclicAssessment.getWarnings()) {
       if (w.contains("Cyclic") || w.contains("fatigue")) {
-	cyclicHasWarnings = true;
-	break;
+        cyclicHasWarnings = true;
+        break;
       }
     }
     assertTrue(cyclicHasWarnings, "Cyclic service should produce fatigue warning");
@@ -360,8 +360,8 @@ public class HydrogenMaterialAssessmentTest {
     boolean hasPwhtWarning = false;
     for (String w : assessment.getWarnings()) {
       if (w.contains("PWHT")) {
-	hasPwhtWarning = true;
-	break;
+        hasPwhtWarning = true;
+        break;
       }
     }
     assertTrue(hasPwhtWarning, "Should warn about missing PWHT at pH2 > 5 bar");
@@ -433,7 +433,7 @@ public class HydrogenMaterialAssessmentTest {
     // Should detect both H2 and H2S
     assertTrue(assessment.getH2PartialPressureBar() > 0.0, "Should detect H2");
     assertFalse(assessment.getHICRisk().contains("Not applicable (no H2S)"),
-	"Should detect H2S for sour assessment: " + assessment.getHICRisk());
+        "Should detect H2S for sour assessment: " + assessment.getHICRisk());
   }
 
   @Test
@@ -492,13 +492,13 @@ public class HydrogenMaterialAssessmentTest {
     boolean hasNace = false;
     for (String s : standards) {
       if (s.contains("B31.12")) {
-	hasB3112 = true;
+        hasB3112 = true;
       }
       if (s.contains("941")) {
-	hasApi941 = true;
+        hasApi941 = true;
       }
       if (s.contains("NACE") || s.contains("15156")) {
-	hasNace = true;
+        hasNace = true;
       }
     }
     assertTrue(hasB3112, "Should apply ASME B31.12");

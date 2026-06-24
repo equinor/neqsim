@@ -37,11 +37,11 @@ public class ParachorSurfaceTension extends SurfaceTension {
   @Override
   public double calcPureComponentSurfaceTension(int componentNumber) {
     return 1.0e-3 * Math.pow(system.getPhases()[0].getComponents()[componentNumber].getParachorParameter() * 1.0e-6
-	* (system.getPhases()[1].getPhysicalProperties().getDensity() / system.getPhases()[1].getMolarMass()
-	    * system.getPhases()[1].getComponents()[componentNumber].getx()
-	    - system.getPhases()[0].getPhysicalProperties().getDensity() / system.getPhases()[0].getMolarMass()
-		* system.getPhases()[0].getComponents()[componentNumber].getx()),
-	4.0);
+        * (system.getPhases()[1].getPhysicalProperties().getDensity() / system.getPhases()[1].getMolarMass()
+            * system.getPhases()[1].getComponents()[componentNumber].getx()
+            - system.getPhases()[0].getPhysicalProperties().getDensity() / system.getPhases()[0].getMolarMass()
+                * system.getPhases()[0].getComponents()[componentNumber].getx()),
+        4.0);
   }
 
   /**
@@ -61,15 +61,15 @@ public class ParachorSurfaceTension extends SurfaceTension {
     // return 0.0;
     try {
       for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-	// System.out.println("density1 parachor " +
-	// system.getPhase(interface1).getPhysicalProperties().getDensity());
-	// System.out.println("density2 parachor " +
-	// system.getPhase(interface2).getPhysicalProperties().getDensity());
-	temp += system.getPhase(interface1).getComponent(i).getParachorParameter() * 1.0e-6
-	    * (system.getPhase(interface2).getPhysicalProperties().getDensity()
-		/ system.getPhase(interface2).getMolarMass() * system.getPhase(interface2).getComponent(i).getx()
-		- system.getPhase(interface1).getPhysicalProperties().getDensity()
-		    / system.getPhase(interface1).getMolarMass() * system.getPhase(interface1).getComponent(i).getx());
+        // System.out.println("density1 parachor " +
+        // system.getPhase(interface1).getPhysicalProperties().getDensity());
+        // System.out.println("density2 parachor " +
+        // system.getPhase(interface2).getPhysicalProperties().getDensity());
+        temp += system.getPhase(interface1).getComponent(i).getParachorParameter() * 1.0e-6
+            * (system.getPhase(interface2).getPhysicalProperties().getDensity()
+                / system.getPhase(interface2).getMolarMass() * system.getPhase(interface2).getComponent(i).getx()
+                - system.getPhase(interface1).getPhysicalProperties().getDensity()
+                    / system.getPhase(interface1).getMolarMass() * system.getPhase(interface1).getComponent(i).getx());
       }
     } catch (Exception ex) {
       // logger.error(ex.getMessage(), ex);

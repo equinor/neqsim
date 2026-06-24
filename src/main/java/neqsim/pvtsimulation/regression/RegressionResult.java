@@ -103,7 +103,7 @@ public class RegressionResult {
   public double getOptimizedValue(RegressionParameter parameter) {
     for (RegressionParameterConfig config : parameterConfigs) {
       if (config.getParameter() == parameter) {
-	return config.getOptimizedValue();
+        return config.getOptimizedValue();
       }
     }
     return Double.NaN;
@@ -131,9 +131,9 @@ public class RegressionResult {
 
     for (int i = 0; i < parameterConfigs.size(); i++) {
       if (parameterConfigs.get(i).getParameter() == parameter) {
-	double value = optimizedParameters[i];
-	double ci = uncertainty.getConfidenceInterval95(i);
-	return new double[] { value - ci, value + ci };
+        double value = optimizedParameters[i];
+        double ci = uncertainty.getConfidenceInterval95(i);
+        return new double[] { value - ci, value + ci };
       }
     }
     return null;
@@ -171,7 +171,7 @@ public class RegressionResult {
       RegressionParameterConfig config = parameterConfigs.get(i);
       sb.append(String.format("  %s: %.6f", config.getParameter().name(), optimizedParameters[i]));
       if (uncertainty != null) {
-	sb.append(String.format(" ± %.6f (95%% CI)", uncertainty.getConfidenceInterval95(i)));
+        sb.append(String.format(" ± %.6f (95%% CI)", uncertainty.getConfidenceInterval95(i)));
       }
       sb.append("\n");
     }

@@ -368,7 +368,7 @@ public class TwoPhasePipeFlowSystemBuilder {
     if (legPositions == null) {
       legPositions = new double[numberOfLegs + 1];
       for (int i = 0; i <= numberOfLegs; i++) {
-	legPositions[i] = i * length / numberOfLegs;
+        legPositions[i] = i * length / numberOfLegs;
       }
     }
     pipe.setLegPositions(legPositions);
@@ -377,10 +377,10 @@ public class TwoPhasePipeFlowSystemBuilder {
     if (legHeights == null) {
       legHeights = new double[numberOfLegs + 1];
       if (Math.abs(inclination) > 1e-10) {
-	// Calculate heights based on inclination angle
-	for (int i = 0; i <= numberOfLegs; i++) {
-	  legHeights[i] = legPositions[i] * Math.sin(inclination);
-	}
+        // Calculate heights based on inclination angle
+        for (int i = 0; i <= numberOfLegs; i++) {
+          legHeights[i] = legPositions[i] * Math.sin(inclination);
+        }
       }
     }
     pipe.setLegHeights(legHeights);
@@ -390,7 +390,7 @@ public class TwoPhasePipeFlowSystemBuilder {
     if (outerTemperatures == null) {
       outerTemperatures = new double[numberOfLegs + 1];
       for (int i = 0; i <= numberOfLegs; i++) {
-	outerTemperatures[i] = ambientTemperature;
+        outerTemperatures[i] = ambientTemperature;
       }
     }
     pipe.setLegOuterTemperatures(outerTemperatures);
@@ -441,24 +441,24 @@ public class TwoPhasePipeFlowSystemBuilder {
     // Check fluid is set
     if (fluid == null) {
       throw new IllegalStateException(
-	  "Fluid system must be set using withFluid(). " + "Example: builder().withFluid(myFluid)");
+          "Fluid system must be set using withFluid(). " + "Example: builder().withFluid(myFluid)");
     }
 
     // Provide helpful message if fluid might not be properly initialized
     if (fluid.getNumberOfComponents() == 0) {
       throw new IllegalStateException("Fluid system has no components. Add components before building the pipe. "
-	  + "Example: fluid.addComponent(\"methane\", 0.1, 0);");
+          + "Example: fluid.addComponent(\"methane\", 0.1, 0);");
     }
 
     // Check geometry parameters
     if (diameter <= 0) {
       throw new IllegalStateException("Pipe diameter must be positive. Got: " + diameter + " m. "
-	  + "Set diameter using withDiameter(value, unit).");
+          + "Set diameter using withDiameter(value, unit).");
     }
 
     if (length <= 0) {
       throw new IllegalStateException(
-	  "Pipe length must be positive. Got: " + length + " m. " + "Set length using withLength(value, unit).");
+          "Pipe length must be positive. Got: " + length + " m. " + "Set length using withLength(value, unit).");
     }
 
     if (numberOfLegs < 1) {
@@ -467,7 +467,7 @@ public class TwoPhasePipeFlowSystemBuilder {
 
     if (nodesPerLeg < 1) {
       throw new IllegalStateException("Nodes per leg must be at least 1. Got: " + nodesPerLeg + ". "
-	  + "Set nodes using withNodes(n) or withLegs(legs, nodesPerLeg).");
+          + "Set nodes using withNodes(n) or withLegs(legs, nodesPerLeg).");
     }
 
     // Warn about very coarse discretization
@@ -475,20 +475,20 @@ public class TwoPhasePipeFlowSystemBuilder {
     if (totalNodes < 5 && length > 100) {
       // This is just a warning - we don't throw
       System.err.println("Warning: Only " + totalNodes + " nodes for a " + length
-	  + " m pipe may give inaccurate results. " + "Consider using at least 10-20 nodes.");
+          + " m pipe may give inaccurate results. " + "Consider using at least 10-20 nodes.");
     }
 
     // Validate temperature settings
     if (wallHeatTransferModel == WallHeatTransferModel.CONSTANT_WALL_TEMPERATURE) {
       if (wallTemperature <= 0) {
-	throw new IllegalStateException(
-	    "Wall temperature must be positive (in Kelvin). Got: " + wallTemperature + " K.");
+        throw new IllegalStateException(
+            "Wall temperature must be positive (in Kelvin). Got: " + wallTemperature + " K.");
       }
     }
 
     if (ambientTemperature <= 0) {
       throw new IllegalStateException(
-	  "Ambient temperature must be positive (in Kelvin). Got: " + ambientTemperature + " K.");
+          "Ambient temperature must be positive (in Kelvin). Got: " + ambientTemperature + " K.");
     }
   }
 

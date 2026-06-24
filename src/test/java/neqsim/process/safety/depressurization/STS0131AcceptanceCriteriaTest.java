@@ -24,8 +24,8 @@ class STS0131AcceptanceCriteriaTest {
     result.append(200.0, 5.0, 275.0, 20.0, 280.0, 2.0);
 
     STS0131AcceptanceCriteria criteria = new STS0131AcceptanceCriteria().setTimeToEscapeS(120.0)
-	.setEstimatedTimeToRuptureS(100.0).setMaximumPressureAtRuptureBara(15.0).setMaximumRemainingMassKg(50.0)
-	.setMaximumEscalatedFireRateKgPerS(6.0);
+        .setEstimatedTimeToRuptureS(100.0).setMaximumPressureAtRuptureBara(15.0).setMaximumRemainingMassKg(50.0)
+        .setMaximumEscalatedFireRateKgPerS(6.0);
 
     STS0131AcceptanceResult acceptance = result.evaluateSTS0131(criteria);
 

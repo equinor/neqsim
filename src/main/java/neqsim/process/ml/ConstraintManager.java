@@ -138,10 +138,10 @@ public class ConstraintManager implements Serializable {
       c.evaluate(value);
 
       if (c.isViolated()) {
-	violations.add(c);
-	for (ConstraintViolationListener listener : listeners) {
-	  listener.onViolation(c);
-	}
+        violations.add(c);
+        for (ConstraintViolationListener listener : listeners) {
+          listener.onViolation(c);
+        }
       }
     }
 
@@ -167,9 +167,9 @@ public class ConstraintManager implements Serializable {
     for (Constraint c : constraints.values()) {
       double violation = c.getNormalizedViolation();
       if (c.isHard()) {
-	penalty += 10.0 * violation; // Hard constraints penalized more
+        penalty += 10.0 * violation; // Hard constraints penalized more
       } else {
-	penalty += violation;
+        penalty += violation;
       }
     }
     return penalty;
@@ -182,7 +182,7 @@ public class ConstraintManager implements Serializable {
    */
   public double getMinHardMargin() {
     return constraints.values().stream().filter(Constraint::isHard).mapToDouble(Constraint::getMargin).min()
-	.orElse(Double.POSITIVE_INFINITY);
+        .orElse(Double.POSITIVE_INFINITY);
   }
 
   /**
@@ -202,7 +202,7 @@ public class ConstraintManager implements Serializable {
    */
   public List<Constraint> getViolationsByCategory(Constraint.Category category) {
     return constraints.values().stream().filter(c -> c.isViolated() && c.getCategory() == category)
-	.collect(Collectors.toList());
+        .collect(Collectors.toList());
   }
 
   /**
@@ -225,9 +225,9 @@ public class ConstraintManager implements Serializable {
       sb.append(String.format("%.2f %s", c.getCurrentValue(), c.getUnit()));
 
       if (c.getCurrentValue() < c.getLowerBound()) {
-	sb.append(String.format(" < min %.2f", c.getLowerBound()));
+        sb.append(String.format(" < min %.2f", c.getLowerBound()));
       } else {
-	sb.append(String.format(" > max %.2f", c.getUpperBound()));
+        sb.append(String.format(" > max %.2f", c.getUpperBound()));
       }
 
       sb.append(" [").append(c.getType()).append("]\n");

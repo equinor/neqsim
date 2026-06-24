@@ -72,7 +72,7 @@ class PSACascadeTest extends neqsim.NeqSimTest {
     sixBeds.run();
 
     assertTrue(sixBeds.getH2Recovery() > twoBeds.getH2Recovery(), "6-bed cascade should out-recover 2-bed cascade: 6="
-	+ sixBeds.getH2Recovery() + ", 2=" + twoBeds.getH2Recovery());
+        + sixBeds.getH2Recovery() + ", 2=" + twoBeds.getH2Recovery());
   }
 
   @Test
@@ -82,7 +82,7 @@ class PSACascadeTest extends neqsim.NeqSimTest {
     cascade.setConfiguration(PSACascade.CascadeConfiguration.BEDS_12); // +0.12
     // 0.90 + 0.12 = 1.02 → capped at 0.93.
     assertEquals(0.93, cascade.getCascadeRecoveryTarget(), 1e-9,
-	"Cascade target must be capped at the industry-benchmark maximum 0.93");
+        "Cascade target must be capped at the industry-benchmark maximum 0.93");
   }
 
   @Test

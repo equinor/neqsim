@@ -46,10 +46,10 @@ public class GERG2008H2ComparisonTest {
     double P = 10000.0; // kPa (10 MPa)
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P,
-	P / 1000.0);
+        P / 1000.0);
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-15s %-15s %-15s %-15s%n", "x(H2)", "ρ GERG-2008",
-	"ρ GERG-2008-H2", "Δρ (mol/L)", "Δρ (%)");
+        "ρ GERG-2008-H2", "Δρ (mol/L)", "Δρ (%)");
     logger.info(StringUtils.repeat("-", 80));
 
     double[] h2Fractions = { 0.0, 0.05, 0.10, 0.20, 0.30, 0.50, 0.70, 1.0 };
@@ -71,7 +71,7 @@ public class GERG2008H2ComparisonTest {
       double relDiff = (D1.val != 0) ? (deltaD / D1.val) * 100 : 0;
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.2f %-15.6f %-15.6f %-15.6f %-15.4f%n", xH2, D1.val,
-	  D2.val, deltaD, relDiff);
+          D2.val, deltaD, relDiff);
     }
 
   }
@@ -90,10 +90,10 @@ public class GERG2008H2ComparisonTest {
     double P = 20000.0; // kPa (20 MPa)
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P,
-	P / 1000.0);
+        P / 1000.0);
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-15s %-15s %-15s %-15s%n", "x(H2)", "Z GERG-2008",
-	"Z GERG-2008-H2", "ΔZ", "ΔZ (%)");
+        "Z GERG-2008-H2", "ΔZ", "ΔZ (%)");
     logger.info(StringUtils.repeat("-", 80));
 
     double[] h2Fractions = { 0.0, 0.10, 0.20, 0.30, 0.50, 0.70, 1.0 };
@@ -122,7 +122,7 @@ public class GERG2008H2ComparisonTest {
       double relDiff = (Z1.val != 0) ? (deltaZ / Z1.val) * 100 : 0;
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.2f %-15.6f %-15.6f %-15.6f %-15.4f%n", xH2, Z1.val,
-	  Z2.val, deltaZ, relDiff);
+          Z2.val, deltaZ, relDiff);
     }
 
   }
@@ -140,10 +140,10 @@ public class GERG2008H2ComparisonTest {
     double P = 10000.0; // kPa
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P,
-	P / 1000.0);
+        P / 1000.0);
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-15s %-15s %-15s %-15s%n", "x(H2)", "ρ GERG-2008",
-	"ρ GERG-2008-H2", "Δρ (mol/L)", "Δρ (%)");
+        "ρ GERG-2008-H2", "Δρ (mol/L)", "Δρ (%)");
     logger.info(StringUtils.repeat("-", 80));
 
     double[] h2Fractions = { 0.0, 0.10, 0.20, 0.30, 0.50, 0.70, 1.0 };
@@ -165,7 +165,7 @@ public class GERG2008H2ComparisonTest {
       double relDiff = (D1.val != 0) ? (deltaD / D1.val) * 100 : 0;
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.2f %-15.6f %-15.6f %-15.6f %-15.4f%n", xH2, D1.val,
-	  D2.val, deltaD, relDiff);
+          D2.val, deltaD, relDiff);
     }
 
   }
@@ -183,10 +183,10 @@ public class GERG2008H2ComparisonTest {
     double P = 5000.0; // kPa
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P,
-	P / 1000.0);
+        P / 1000.0);
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-15s %-15s %-15s %-15s%n", "x(H2)", "W GERG-2008",
-	"W GERG-2008-H2", "ΔW (m/s)", "ΔW (%)");
+        "W GERG-2008-H2", "ΔW (m/s)", "ΔW (%)");
     logger.info(StringUtils.repeat("-", 80));
 
     double[] h2Fractions = { 0.0, 0.05, 0.10, 0.20, 0.30, 0.50, 1.0 };
@@ -205,7 +205,7 @@ public class GERG2008H2ComparisonTest {
       double relDiff = (W1 != 0) ? (deltaW / W1) * 100 : 0;
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.2f %-15.4f %-15.4f %-15.4f %-15.4f%n", xH2, W1, W2,
-	  deltaW, relDiff);
+          deltaW, relDiff);
     }
 
   }
@@ -223,10 +223,10 @@ public class GERG2008H2ComparisonTest {
     double P = 10000.0;
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P,
-	P / 1000.0);
+        P / 1000.0);
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-15s %-15s %-15s %-15s%n", "x(H2)", "Cp GERG-2008",
-	"Cp GERG-2008-H2", "ΔCp", "ΔCp (%)");
+        "Cp GERG-2008-H2", "ΔCp", "ΔCp (%)");
     logger.info(StringUtils.repeat("-", 80));
 
     double[] h2Fractions = { 0.0, 0.10, 0.20, 0.30, 0.50, 1.0 };
@@ -245,7 +245,7 @@ public class GERG2008H2ComparisonTest {
       double relDiff = (Cp1 != 0) ? (deltaCp / Cp1) * 100 : 0;
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.2f %-15.4f %-15.4f %-15.4f %-15.4f%n", xH2, Cp1, Cp2,
-	  deltaCp, relDiff);
+          deltaCp, relDiff);
     }
 
   }
@@ -269,7 +269,7 @@ public class GERG2008H2ComparisonTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "Composition: 50%% CH4, 50%% H2 at T = %.1f K%n", T);
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %-15s %-15s %-15s %-15s%n", "P (MPa)", "ρ GERG-2008",
-	"ρ GERG-2008-H2", "Δρ (mol/L)", "Δρ (%)");
+        "ρ GERG-2008-H2", "Δρ (mol/L)", "Δρ (%)");
     logger.info(StringUtils.repeat("-", 80));
 
     double[] pressures = { 1000, 2000, 5000, 10000, 20000, 30000, 50000 }; // kPa
@@ -287,7 +287,7 @@ public class GERG2008H2ComparisonTest {
       double relDiff = (D1.val != 0) ? (deltaD / D1.val) * 100 : 0;
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-15.1f %-15.6f %-15.6f %-15.6f %-15.4f%n", P / 1000.0,
-	  D1.val, D2.val, deltaD, relDiff);
+          D1.val, D2.val, deltaD, relDiff);
     }
 
   }
@@ -315,7 +315,7 @@ public class GERG2008H2ComparisonTest {
     System.out.println("Composition: 70% CH4, 2% N2, 1% CO2, 5% C2H6, 2% C3H8, 20% H2 at P = 10 MPa");
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %-15s %-15s %-15s %-15s%n", "T (K)", "ρ GERG-2008",
-	"ρ GERG-2008-H2", "Δρ (mol/L)", "Δρ (%)");
+        "ρ GERG-2008-H2", "Δρ (mol/L)", "Δρ (%)");
     logger.info(StringUtils.repeat("-", 80));
 
     double[] temperatures = { 200, 250, 300, 350, 400, 450, 500 };
@@ -333,7 +333,7 @@ public class GERG2008H2ComparisonTest {
       double relDiff = (D1.val != 0) ? (deltaD / D1.val) * 100 : 0;
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-15.1f %-15.6f %-15.6f %-15.6f %-15.4f%n", T, D1.val, D2.val,
-	  deltaD, relDiff);
+          deltaD, relDiff);
     }
 
   }
@@ -351,10 +351,10 @@ public class GERG2008H2ComparisonTest {
     double P = 10000.0;
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P,
-	P / 1000.0);
+        P / 1000.0);
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-18s %-18s %-18s%n", "x(H2)", "JT GERG-2008",
-	"JT GERG-2008-H2", "ΔJT (%)");
+        "JT GERG-2008-H2", "ΔJT (%)");
     logger.info(StringUtils.repeat("-", 80));
 
     double[] h2Fractions = { 0.0, 0.10, 0.20, 0.30, 0.50, 1.0 };
@@ -399,7 +399,7 @@ public class GERG2008H2ComparisonTest {
     logger.info("Binary System Analysis at P = 10 MPa, x(H2) = 0.50");
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-20s %-15s %-15s %-15s%n", "System", "Δρ (%)", "ΔZ (%)",
-	"ΔW (%)");
+        "ΔW (%)");
     logger.info(StringUtils.repeat("-", 65));
 
     for (int s = 0; s < systems.length; s++) {
@@ -424,7 +424,7 @@ public class GERG2008H2ComparisonTest {
       double relDiffW = (props1[0] != 0) ? ((props2[0] - props1[0]) / props1[0]) * 100 : 0;
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-20s %-15.4f %-15.4f %-15.4f%n", systems[s], relDiffD,
-	  relDiffZ, relDiffW);
+          relDiffZ, relDiffW);
     }
 
     logger.info("Key Observations:");

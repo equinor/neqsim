@@ -222,7 +222,7 @@ public class KValueProcessResult implements Serializable {
       stream.put("totalKgPerHr", getStreamTotalFlow(entry.getKey(), "kg/hr"));
       Map<String, Double> components = new LinkedHashMap<String, Double>();
       for (int component = 0; component < componentNames.length; component++) {
-	components.put(componentNames[component], entry.getValue()[component]);
+        components.put(componentNames[component], entry.getValue()[component]);
       }
       stream.put("componentMolePerSec", components);
       streams.put(entry.getKey(), stream);
@@ -241,7 +241,7 @@ public class KValueProcessResult implements Serializable {
   private int getComponentIndex(String componentName) {
     for (int i = 0; i < componentNames.length; i++) {
       if (componentNames[i].equals(componentName)) {
-	return i;
+        return i;
       }
     }
     throw new IllegalArgumentException("Unknown component: " + componentName);

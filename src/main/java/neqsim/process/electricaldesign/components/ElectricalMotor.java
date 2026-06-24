@@ -90,7 +90,7 @@ public class ElectricalMotor implements java.io.Serializable {
     // Calculate rated current
     if (ratedVoltageV > 0 && efficiencyPercent > 0 && powerFactorFL > 0) {
       ratedCurrentA = (ratedPowerKW * 1000.0)
-	  / (Math.sqrt(3) * ratedVoltageV * (efficiencyPercent / 100.0) * powerFactorFL);
+          / (Math.sqrt(3) * ratedVoltageV * (efficiencyPercent / 100.0) * powerFactorFL);
     }
 
     // Estimate frame size
@@ -125,7 +125,7 @@ public class ElectricalMotor implements java.io.Serializable {
   private double selectStandardPower(double requiredPowerKW) {
     for (double stdPower : IEC_STANDARD_POWERS_KW) {
       if (stdPower >= requiredPowerKW) {
-	return stdPower;
+        return stdPower;
       }
     }
     // Above largest standard size - round up
@@ -239,19 +239,19 @@ public class ElectricalMotor implements java.io.Serializable {
   private String estimateFrameSize(double powerKW, int motorPoles, String standard) {
     if ("NEMA".equals(standard)) {
       if (powerKW <= 1.1) {
-	return "143T";
+        return "143T";
       } else if (powerKW <= 3.7) {
-	return "182T";
+        return "182T";
       } else if (powerKW <= 7.5) {
-	return "213T";
+        return "213T";
       } else if (powerKW <= 22.0) {
-	return "256T";
+        return "256T";
       } else if (powerKW <= 55.0) {
-	return "326T";
+        return "326T";
       } else if (powerKW <= 150.0) {
-	return "405T";
+        return "405T";
       } else {
-	return "449T";
+        return "449T";
       }
     }
     // IEC frame sizes

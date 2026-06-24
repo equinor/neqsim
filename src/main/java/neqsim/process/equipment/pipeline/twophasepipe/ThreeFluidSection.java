@@ -300,14 +300,14 @@ public class ThreeFluidSection extends TwoFluidSection {
 
       double error = area - targetArea;
       if (Math.abs(error) < 1e-12 * totalArea) {
-	break;
+        break;
       }
 
       if (dArea_dh > 1e-12) {
-	double correction = error / dArea_dh;
-	// Limit step size to prevent overshooting
-	correction = Math.max(-h * 0.5, Math.min((d - h) * 0.5, correction));
-	h = h - correction;
+        double correction = error / dArea_dh;
+        // Limit step size to prevent overshooting
+        correction = Math.max(-h * 0.5, Math.min((d - h) * 0.5, correction));
+        h = h - correction;
       }
     }
 

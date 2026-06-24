@@ -237,7 +237,7 @@ public class EnergyEfficiencyCalculator implements Serializable {
       // Assume some GOR
       double gor = 200.0; // Sm3/Sm3 default
       if (concept.getReservoir() != null && concept.getReservoir().getGor() > 0) {
-	gor = concept.getReservoir().getGor();
+        gor = concept.getReservoir().getGor();
       }
 
       // Convert to units
@@ -248,16 +248,16 @@ public class EnergyEfficiencyCalculator implements Serializable {
     // Estimate power from facility config
     if (facilityConfig != null) {
       for (BlockConfig block : facilityConfig.getBlocksOfType(BlockType.COMPRESSION)) {
-	int stages = block.getIntParameter("stages", 1);
-	this.compressorPowerKW += stages * 5000; // 5 MW per stage typical
+        int stages = block.getIntParameter("stages", 1);
+        this.compressorPowerKW += stages * 5000; // 5 MW per stage typical
       }
 
       if (facilityConfig.hasBlock(BlockType.TEG_DEHYDRATION)) {
-	this.heatingDutyKW += 2000; // TEG reboiler
+        this.heatingDutyKW += 2000; // TEG reboiler
       }
 
       if (facilityConfig.hasBlock(BlockType.MEG_REGENERATION)) {
-	this.heatingDutyKW += 5000; // MEG regeneration
+        this.heatingDutyKW += 5000; // MEG regeneration
       }
     }
 
@@ -266,17 +266,17 @@ public class EnergyEfficiencyCalculator implements Serializable {
       InfrastructureInput.ProcessingLocation location = concept.getInfrastructure().getProcessingLocation();
       switch (location) {
       case FPSO:
-	this.facilityType = FacilityType.FPSO;
-	break;
+        this.facilityType = FacilityType.FPSO;
+        break;
       case SUBSEA:
-	this.facilityType = FacilityType.SUBSEA;
-	break;
+        this.facilityType = FacilityType.SUBSEA;
+        break;
       case ONSHORE:
-	this.facilityType = FacilityType.ONSHORE;
-	break;
+        this.facilityType = FacilityType.ONSHORE;
+        break;
       default:
-	this.facilityType = FacilityType.PLATFORM;
-	break;
+        this.facilityType = FacilityType.PLATFORM;
+        break;
       }
     }
 
@@ -402,7 +402,7 @@ public class EnergyEfficiencyCalculator implements Serializable {
     // Compressor upgrade potential
     if (compressorEfficiency < REFERENCE_COMPRESSOR_EFFICIENCY) {
       double potentialSavings = compressorPowerKW * (REFERENCE_COMPRESSOR_EFFICIENCY - compressorEfficiency)
-	  / compressorEfficiency;
+          / compressorEfficiency;
       Recommendation rec = new Recommendation();
       rec.category = "Compression";
       rec.description = "Upgrade compressors to higher efficiency";
@@ -767,17 +767,17 @@ public class EnergyEfficiencyCalculator implements Serializable {
      */
     public String getEfficiencyRating() {
       if (energyEfficiencyIndex < 0.7) {
-	return "A";
+        return "A";
       } else if (energyEfficiencyIndex < 0.85) {
-	return "B";
+        return "B";
       } else if (energyEfficiencyIndex < 1.0) {
-	return "C";
+        return "C";
       } else if (energyEfficiencyIndex < 1.15) {
-	return "D";
+        return "D";
       } else if (energyEfficiencyIndex < 1.3) {
-	return "E";
+        return "E";
       } else {
-	return "F";
+        return "F";
       }
     }
 
@@ -795,11 +795,11 @@ public class EnergyEfficiencyCalculator implements Serializable {
       sb.append(String.format("Potential Savings: %.0f kW%n", totalPotentialSavingsKW));
 
       if (!recommendations.isEmpty()) {
-	sb.append("\nRecommendations:\n");
-	for (Recommendation rec : recommendations) {
-	  sb.append(String.format("  - %s: %.0f kW savings, %.1f year payback%n", rec.description,
-	      rec.potentialSavingsKW, rec.paybackYears));
-	}
+        sb.append("\nRecommendations:\n");
+        for (Recommendation rec : recommendations) {
+          sb.append(String.format("  - %s: %.0f kW savings, %.1f year payback%n", rec.description,
+              rec.potentialSavingsKW, rec.paybackYears));
+        }
       }
 
       return sb.toString();

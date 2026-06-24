@@ -69,7 +69,7 @@ public class HydrateFormationTemperatureFlashTest {
     // significantly below pure water hydrate temperature (~10°C at 50 bar)
     // Expected range: roughly -15 to +5°C
     assertTrue(hydrateTemp > -30.0 && hydrateTemp < 15.0,
-	"Hydrate temperature with MEG+brine at 50 bar should be between -30 and 15°C, got: " + hydrateTemp + "°C");
+        "Hydrate temperature with MEG+brine at 50 bar should be between -30 and 15°C, got: " + hydrateTemp + "°C");
   }
 
   /**
@@ -113,7 +113,7 @@ public class HydrateFormationTemperatureFlashTest {
     // At higher pressure, hydrate forms at higher temperature
     // With inhibitors, expect roughly -10 to +10°C
     assertTrue(hydrateTemp > -25.0 && hydrateTemp < 20.0,
-	"Hydrate temperature with MEG+brine at 100 bar should be between -25 and 20°C, got: " + hydrateTemp + "°C");
+        "Hydrate temperature with MEG+brine at 100 bar should be between -25 and 20°C, got: " + hydrateTemp + "°C");
   }
 
   /**
@@ -150,10 +150,10 @@ public class HydrateFormationTemperatureFlashTest {
       logger.info("  Beta (phase fraction): " + fluid.getBeta(i));
       logger.info("  Density: " + fluid.getPhase(i).getDensity("kg/m3") + " kg/m3");
       if (fluid.getPhase(i).hasComponent("water")) {
-	System.out.println("  Water mole fraction: " + fluid.getPhase(i).getComponent("water").getx());
+        System.out.println("  Water mole fraction: " + fluid.getPhase(i).getComponent("water").getx());
       }
       if (fluid.getPhase(i).hasComponent("n-butane")) {
-	logger.info("  n-butane mole fraction: " + fluid.getPhase(i).getComponent("n-butane").getx());
+        logger.info("  n-butane mole fraction: " + fluid.getPhase(i).getComponent("n-butane").getx());
       }
     }
 
@@ -161,7 +161,7 @@ public class HydrateFormationTemperatureFlashTest {
 
     // Should have at least 2 phases (gas + aqueous)
     assertTrue(fluid.getNumberOfPhases() >= 2,
-	"Should have at least 2 phases (gas + aqueous), got: " + fluid.getNumberOfPhases());
+        "Should have at least 2 phases (gas + aqueous), got: " + fluid.getNumberOfPhases());
   }
 
   /**
@@ -204,7 +204,7 @@ public class HydrateFormationTemperatureFlashTest {
 
     // Without salt, temperature should be slightly higher than with salt
     assertTrue(hydrateTemp > -25.0 && hydrateTemp < 15.0,
-	"Hydrate temperature with MEG only at 50 bar should be between -25 and 15°C, got: " + hydrateTemp + "°C");
+        "Hydrate temperature with MEG only at 50 bar should be between -25 and 15°C, got: " + hydrateTemp + "°C");
   }
 
   /**
@@ -247,14 +247,14 @@ public class HydrateFormationTemperatureFlashTest {
 
       // Verify temperature is in reasonable range
       assertTrue(temperatures[p] > -35.0 && temperatures[p] < 25.0,
-	  "Hydrate temperature at " + pressures[p] + " bar should be reasonable, got: " + temperatures[p] + "°C");
+          "Hydrate temperature at " + pressures[p] + " bar should be reasonable, got: " + temperatures[p] + "°C");
     }
 
     // Verify hydrate temperature increases with pressure (thermodynamic consistency)
     for (int i = 1; i < pressures.length; i++) {
       assertTrue(temperatures[i] >= temperatures[i - 1] - 2.0,
-	  "Hydrate temperature should generally increase with pressure. At " + pressures[i] + " bar: " + temperatures[i]
-	      + "°C vs " + pressures[i - 1] + " bar: " + temperatures[i - 1] + "°C");
+          "Hydrate temperature should generally increase with pressure. At " + pressures[i] + " bar: " + temperatures[i]
+              + "°C vs " + pressures[i - 1] + " bar: " + temperatures[i - 1] + "°C");
     }
   }
 
@@ -288,7 +288,7 @@ public class HydrateFormationTemperatureFlashTest {
 
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
       logger.info("Phase " + i + ": " + fluid.getPhase(i).getPhaseTypeName() + " (beta="
-	  + String.format("%.4f", fluid.getBeta(i)) + ")");
+          + String.format("%.4f", fluid.getBeta(i)) + ")");
     }
 
     // fluid.prettyPrint();
@@ -348,7 +348,7 @@ public class HydrateFormationTemperatureFlashTest {
     // With optimization: only first flash does full stability analysis (~5-8s),
     // subsequent flashes are fast (~0.1s each). Total should be < 20 seconds.
     assertTrue(elapsedSeconds < 20.0,
-	"Hydrate temperature calculation should complete in < 20 seconds, took: " + elapsedSeconds + "s");
+        "Hydrate temperature calculation should complete in < 20 seconds, took: " + elapsedSeconds + "s");
 
     // Result should still be valid
     assertTrue(hydrateTemp > -30.0 && hydrateTemp < 15.0, "Result should be valid: " + hydrateTemp + "°C");
@@ -379,8 +379,8 @@ public class HydrateFormationTemperatureFlashTest {
     int aqueousIndexNoElec = -1;
     for (int i = 0; i < fluidNoElectrolyte.getNumberOfPhases(); i++) {
       if (fluidNoElectrolyte.getPhase(i).getPhaseTypeName().equals("aqueous")) {
-	aqueousIndexNoElec = i;
-	break;
+        aqueousIndexNoElec = i;
+        break;
       }
     }
 
@@ -390,7 +390,7 @@ public class HydrateFormationTemperatureFlashTest {
       logger.info("Number of phases: " + fluidNoElectrolyte.getNumberOfPhases());
 
       assertTrue(methaneXNoElec > 1e-10,
-	  "Methane should have measurable solubility in aqueous phase without electrolytes");
+          "Methane should have measurable solubility in aqueous phase without electrolytes");
     }
 
     // Test 2: Electrolyte system
@@ -410,8 +410,8 @@ public class HydrateFormationTemperatureFlashTest {
     int aqueousIndexElec = -1;
     for (int i = 0; i < fluidElectrolyte.getNumberOfPhases(); i++) {
       if (fluidElectrolyte.getPhase(i).getPhaseTypeName().equals("aqueous")) {
-	aqueousIndexElec = i;
-	break;
+        aqueousIndexElec = i;
+        break;
       }
     }
 
@@ -423,8 +423,8 @@ public class HydrateFormationTemperatureFlashTest {
       // With electrolytes, solubility is reduced (salting out effect) but not zero
       // The value 1E-50 indicates a problem
       if (methaneXElec < 1e-40) {
-	logger.info("WARNING: Methane solubility appears to be set to minimum value");
-	System.out.println("This may indicate an issue with electrolyte model hydrocarbon handling");
+        logger.info("WARNING: Methane solubility appears to be set to minimum value");
+        System.out.println("This may indicate an issue with electrolyte model hydrocarbon handling");
       }
     }
 
@@ -454,11 +454,11 @@ public class HydrateFormationTemperatureFlashTest {
     for (int i = 0; i < fluidCold.getNumberOfPhases(); i++) {
       logger.info("Phase " + i + ": " + fluidCold.getPhase(i).getPhaseTypeName());
       if (fluidCold.getPhase(i).hasComponent("methane")) {
-	double methaneX = fluidCold.getPhase(i).getComponent("methane").getx();
-	logger.info("  Methane mole fraction: " + methaneX);
-	if (fluidCold.getPhase(i).getPhaseTypeName().equals("aqueous") && methaneX < 1e-40) {
-	  logger.info("  WARNING: Near-zero methane in aqueous phase at low temp!");
-	}
+        double methaneX = fluidCold.getPhase(i).getComponent("methane").getx();
+        logger.info("  Methane mole fraction: " + methaneX);
+        if (fluidCold.getPhase(i).getPhaseTypeName().equals("aqueous") && methaneX < 1e-40) {
+          logger.info("  WARNING: Near-zero methane in aqueous phase at low temp!");
+        }
       }
     }
     // fluidCold.prettyPrint();
@@ -481,8 +481,8 @@ public class HydrateFormationTemperatureFlashTest {
     for (int i = 0; i < fluidNoMEG.getNumberOfPhases(); i++) {
       logger.info("Phase " + i + ": " + fluidNoMEG.getPhase(i).getPhaseTypeName());
       if (fluidNoMEG.getPhase(i).hasComponent("methane")) {
-	double methaneX = fluidNoMEG.getPhase(i).getComponent("methane").getx();
-	logger.info("  Methane mole fraction: " + methaneX);
+        double methaneX = fluidNoMEG.getPhase(i).getComponent("methane").getx();
+        logger.info("  Methane mole fraction: " + methaneX);
       }
     }
 
@@ -506,8 +506,8 @@ public class HydrateFormationTemperatureFlashTest {
     for (int i = 0; i < fluidMEGonly.getNumberOfPhases(); i++) {
       logger.info("Phase " + i + ": " + fluidMEGonly.getPhase(i).getPhaseTypeName());
       if (fluidMEGonly.getPhase(i).hasComponent("methane")) {
-	double methaneX = fluidMEGonly.getPhase(i).getComponent("methane").getx();
-	logger.info("  Methane mole fraction: " + methaneX);
+        double methaneX = fluidMEGonly.getPhase(i).getComponent("methane").getx();
+        logger.info("  Methane mole fraction: " + methaneX);
       }
     }
 
@@ -560,17 +560,17 @@ public class HydrateFormationTemperatureFlashTest {
 
       // Show fugacity coefficients for key components
       for (String compName : new String[] { "water", "MEG", "methane", "ethane", "Na+" }) {
-	if (fluid.getPhase(p).hasComponent(compName)) {
-	  double x = fluid.getPhase(p).getComponent(compName).getx();
-	  double phi = fluid.getPhase(p).getComponent(compName).getFugacityCoefficient();
-	  double logPhi = fluid.getPhase(p).getComponent(compName).getLogFugacityCoefficient();
-	  double fug = fluid.getPhase(p).getFugacity(compName);
-	  logger.info("  " + compName + ":");
-	  logger.info("    x = " + x);
-	  logger.info("    phi = " + phi);
-	  logger.info("    ln(phi) = " + logPhi);
-	  logger.info("    f = " + fug + " bar");
-	}
+        if (fluid.getPhase(p).hasComponent(compName)) {
+          double x = fluid.getPhase(p).getComponent(compName).getx();
+          double phi = fluid.getPhase(p).getComponent(compName).getFugacityCoefficient();
+          double logPhi = fluid.getPhase(p).getComponent(compName).getLogFugacityCoefficient();
+          double fug = fluid.getPhase(p).getFugacity(compName);
+          logger.info("  " + compName + ":");
+          logger.info("    x = " + x);
+          logger.info("    phi = " + phi);
+          logger.info("    ln(phi) = " + logPhi);
+          logger.info("    f = " + fug + " bar");
+        }
       }
     }
 
@@ -578,8 +578,8 @@ public class HydrateFormationTemperatureFlashTest {
     int aqueousIndex = -1;
     for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
       if (fluid.getPhase(p).getPhaseTypeName().equals("aqueous")) {
-	aqueousIndex = p;
-	break;
+        aqueousIndex = p;
+        break;
       }
     }
 
@@ -593,14 +593,14 @@ public class HydrateFormationTemperatureFlashTest {
       logger.info("  phi(methane) = " + methanePhi);
 
       if (methaneX < 1e-40) {
-	logger.info("\nPROBLEM DETECTED: Methane mole fraction is essentially zero!");
-	logger.info("This indicates the flash algorithm is not properly handling");
-	logger.info("hydrocarbon solubility in the electrolyte+MEG aqueous phase.");
+        logger.info("\nPROBLEM DETECTED: Methane mole fraction is essentially zero!");
+        logger.info("This indicates the flash algorithm is not properly handling");
+        logger.info("hydrocarbon solubility in the electrolyte+MEG aqueous phase.");
 
-	if (methanePhi > 1e10) {
-	  logger.info("\nROOT CAUSE: Extremely large fugacity coefficient for methane");
-	  logger.info("This causes x = z/(E*phi) to become effectively zero.");
-	}
+        if (methanePhi > 1e10) {
+          logger.info("\nROOT CAUSE: Extremely large fugacity coefficient for methane");
+          logger.info("This causes x = z/(E*phi) to become effectively zero.");
+        }
       }
     }
 
@@ -611,10 +611,10 @@ public class HydrateFormationTemperatureFlashTest {
     int aqIdx = -1;
     for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
       if (fluid.getPhase(p).getPhaseTypeName().equals("gas")) {
-	gasIdx = p;
+        gasIdx = p;
       }
       if (fluid.getPhase(p).getPhaseTypeName().equals("aqueous")) {
-	aqIdx = p;
+        aqIdx = p;
       }
     }
     if (gasIdx >= 0 && aqIdx >= 0) {
@@ -624,7 +624,7 @@ public class HydrateFormationTemperatureFlashTest {
       logger.info("Methane fugacity in aqueous phase: " + fAq + " bar");
       logger.info("Ratio fGas/fAq: " + (fGas / fAq));
       if (Math.abs(fGas - fAq) / fGas > 0.01) {
-	logger.info("WARNING: Fugacities are NOT equal - phases NOT at equilibrium!");
+        logger.info("WARNING: Fugacities are NOT equal - phases NOT at equilibrium!");
       }
     }
   }
@@ -660,10 +660,10 @@ public class HydrateFormationTemperatureFlashTest {
     int aqIdx = -1;
     for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
       if (fluid.getPhase(p).getPhaseTypeName().equals("gas")) {
-	gasIdx = p;
+        gasIdx = p;
       }
       if (fluid.getPhase(p).getPhaseTypeName().equals("aqueous")) {
-	aqIdx = p;
+        aqIdx = p;
       }
     }
 
@@ -709,7 +709,7 @@ public class HydrateFormationTemperatureFlashTest {
 
     if (xAqExpected / xAq > 1e10) {
       logger.info(
-	  "\n>>> CONFIRMED: The reported x_aq is WRONG by a factor of " + String.format("%.2e", xAqExpected / xAq));
+          "\n>>> CONFIRMED: The reported x_aq is WRONG by a factor of " + String.format("%.2e", xAqExpected / xAq));
       logger.info(">>> Expected methane solubility: " + String.format("%.6f", xAqExpected));
       logger.info(">>> The flash algorithm is not converging properly for this system.");
     }
@@ -828,15 +828,15 @@ public class HydrateFormationTemperatureFlashTest {
     for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
       String type = fluid.getPhase(p).getPhaseTypeName();
       if (type.equals("aqueous")) {
-	double xMethane = fluid.getPhase(p).getComponent("methane").getx();
-	double fMethane = fluid.getPhase(p).getFugacity("methane");
-	logger.info("  Aqueous: x(methane) = " + xMethane + ", f(methane) = " + fMethane);
-	if (xMethane < 1e-10) {
-	  logger.info("  >>> PROBLEM: x(methane) is near zero!");
-	}
+        double xMethane = fluid.getPhase(p).getComponent("methane").getx();
+        double fMethane = fluid.getPhase(p).getFugacity("methane");
+        logger.info("  Aqueous: x(methane) = " + xMethane + ", f(methane) = " + fMethane);
+        if (xMethane < 1e-10) {
+          logger.info("  >>> PROBLEM: x(methane) is near zero!");
+        }
       } else if (type.equals("gas")) {
-	double fMethane = fluid.getPhase(p).getFugacity("methane");
-	logger.info("  Gas:     f(methane) = " + fMethane);
+        double fMethane = fluid.getPhase(p).getFugacity("methane");
+        logger.info("  Gas:     f(methane) = " + fMethane);
       }
     }
   }
@@ -873,13 +873,13 @@ public class HydrateFormationTemperatureFlashTest {
     logger.info("\n--- All component mole fractions in aqueous phase ---");
     for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
       if (fluid.getPhase(p).getPhaseTypeName().equals("aqueous")) {
-	logger.info("Aqueous phase beta = " + fluid.getBeta(p));
-	for (int i = 0; i < fluid.getPhase(p).getNumberOfComponents(); i++) {
-	  String name = fluid.getPhase(p).getComponent(i).getComponentName();
-	  double x = fluid.getPhase(p).getComponent(i).getx();
-	  double phi = fluid.getPhase(p).getComponent(i).getFugacityCoefficient();
-	  logger.info("  " + name + ": x = " + x + ", phi = " + phi);
-	}
+        logger.info("Aqueous phase beta = " + fluid.getBeta(p));
+        for (int i = 0; i < fluid.getPhase(p).getNumberOfComponents(); i++) {
+          String name = fluid.getPhase(p).getComponent(i).getComponentName();
+          double x = fluid.getPhase(p).getComponent(i).getx();
+          double phi = fluid.getPhase(p).getComponent(i).getFugacityCoefficient();
+          logger.info("  " + name + ": x = " + x + ", phi = " + phi);
+        }
       }
     }
 
@@ -905,7 +905,7 @@ public class HydrateFormationTemperatureFlashTest {
     for (int p = 0; p < fluid2.getNumberOfPhases(); p++) {
       logger.info("Phase " + p + " type: " + fluid2.getPhase(p).getPhaseTypeName());
       if (fluid2.getPhase(p).hasComponent("methane")) {
-	logger.info("  x(methane) = " + fluid2.getPhase(p).getComponent("methane").getx());
+        logger.info("  x(methane) = " + fluid2.getPhase(p).getComponent("methane").getx());
       }
     }
   }

@@ -94,8 +94,8 @@ public class SeparatorResponse extends BaseResponse {
     gasLoadFactor = inputSeparator.getGasLoadFactor();
     feed = new StreamResponse(inputSeparator.getFeedStream());
     if (inputSeparator.getThermoSystem().hasPhaseType("aqueous")
-	|| inputSeparator.getThermoSystem().hasPhaseType("liquid")
-	|| inputSeparator.getThermoSystem().hasPhaseType("oil")) {
+        || inputSeparator.getThermoSystem().hasPhaseType("liquid")
+        || inputSeparator.getThermoSystem().hasPhaseType("oil")) {
       liquid = new StreamResponse(inputSeparator.getLiquidOutStream());
     }
     if (inputSeparator.getThermoSystem().hasPhaseType("gas")) {

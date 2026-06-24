@@ -41,7 +41,7 @@ public enum AllocationMethod {
    */
   ALL_IN("All-in (linearised per-equipment recovery factors)",
       "Freezes per-unit per-component split factors from the commingled base case and propagates each source through "
-	  + "the network by superposition.",
+          + "the network by superposition.",
       2),
 
   /**
@@ -51,7 +51,7 @@ public enum AllocationMethod {
    */
   STAND_ALONE("Stand-alone (isolated per-source re-simulation)",
       "Runs the process once per source with the other feeds suppressed, then renormalises the standalone custody "
-	  + "distributions to the measured commingled totals.",
+          + "distributions to the measured commingled totals.",
       3);
 
   /** Human-readable display label. */

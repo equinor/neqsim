@@ -212,12 +212,12 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
     // Map<String, Object> result;
     if (fluid.hasPhaseType(PhaseType.GAS)) {
       return sizeControlValveGas(fluid.getTemperature(), fluid.getMolarMass("gr/mol"), fluid.getGamma2(), fluid.getZ(),
-	  getValve().getInletPressure() * 1e5, getValve().getOutletPressure() * 1e5, fluid.getFlowRate("m3/sec"),
-	  percentOpening);
+          getValve().getInletPressure() * 1e5, getValve().getOutletPressure() * 1e5, fluid.getFlowRate("m3/sec"),
+          percentOpening);
     } else {
       return sizeControlValveLiquid(fluid.getDensity("kg/m3"), fluid.getZ(), fluid.getPC() * 1e5,
-	  getValve().getInletPressure() * 1e5, getValve().getOutletPressure() * 1e5, fluid.getFlowRate("m3/sec"),
-	  percentOpening);
+          getValve().getInletPressure() * 1e5, getValve().getOutletPressure() * 1e5, fluid.getFlowRate("m3/sec"),
+          percentOpening);
     }
   }
 
@@ -343,9 +343,9 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   public double calculateFlowRateFromValveOpeningGas(double adjustedKv, StreamInterface inletStream,
       StreamInterface outletStream) {
     return calculateFlowRateFromKvAndValveOpeningGas(adjustedKv, inletStream.getThermoSystem().getTemperature("K"),
-	inletStream.getThermoSystem().getMolarMass("gr/mol"), inletStream.getThermoSystem().getViscosity("kg/msec"),
-	inletStream.getThermoSystem().getGamma2(), inletStream.getThermoSystem().getZ(), inletStream.getPressure("Pa"),
-	outletStream.getPressure("Pa"), FL, xT, allowChoked);
+        inletStream.getThermoSystem().getMolarMass("gr/mol"), inletStream.getThermoSystem().getViscosity("kg/msec"),
+        inletStream.getThermoSystem().getGamma2(), inletStream.getThermoSystem().getZ(), inletStream.getPressure("Pa"),
+        outletStream.getPressure("Pa"), FL, xT, allowChoked);
   }
 
   /**
@@ -394,9 +394,9 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   public double calculateFlowRateFromValveOpeningLiquid(double adjustedKv, StreamInterface inletStream,
       StreamInterface outletStream) {
     return calculateFlowRateFromValveOpeningLiquid(adjustedKv, inletStream.getThermoSystem().getDensity("kg/m3"),
-	inletStream.getThermoSystem().getPhase(0).getPressure("Pa"),
-	inletStream.getThermoSystem().getPhase(0).getPseudoCriticalPressure() * 1e5, inletStream.getPressure("Pa"),
-	outletStream.getPressure("Pa"));
+        inletStream.getThermoSystem().getPhase(0).getPressure("Pa"),
+        inletStream.getThermoSystem().getPhase(0).getPseudoCriticalPressure() * 1e5, inletStream.getPressure("Pa"),
+        outletStream.getPressure("Pa"));
   }
 
   /**
@@ -448,9 +448,9 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   public double calculateValveOpeningFromFlowRateLiquid(double Q, double Kv, StreamInterface inletStream,
       StreamInterface outletStream) {
     return calculateValveOpeningFromFlowRateLiquid(Q, Kv, inletStream.getThermoSystem().getDensity("kg/m3"),
-	inletStream.getThermoSystem().getPhase(0).getPressure("Pa"),
-	inletStream.getThermoSystem().getPhase(0).getPseudoCriticalPressure() * 1e5, inletStream.getPressure("Pa"),
-	outletStream.getPressure("Pa"));
+        inletStream.getThermoSystem().getPhase(0).getPressure("Pa"),
+        inletStream.getThermoSystem().getPhase(0).getPseudoCriticalPressure() * 1e5, inletStream.getPressure("Pa"),
+        outletStream.getPressure("Pa"));
   }
 
   /**
@@ -488,16 +488,16 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
       double guessP2_pa = P2_mid_kPa * 1000.0;
 
       Map<String, Object> result = sizeControlValveLiquid(rho, Psat, Pc, P1, guessP2_pa, Q,
-	  ((ValveInterface) getValveMechanicalDesign().getProcessEquipment()).getPercentValveOpening());
+          ((ValveInterface) getValveMechanicalDesign().getProcessEquipment()).getPercentValveOpening());
       double requiredKv = (double) result.get("Kv");
 
       // Bisection logic
       if (requiredKv < actualKv) {
-	// Pressure drop is too high. Increase P2 to reduce the drop.
-	P2_low_kPa = P2_mid_kPa;
+        // Pressure drop is too high. Increase P2 to reduce the drop.
+        P2_low_kPa = P2_mid_kPa;
       } else {
-	// Pressure drop is too low. Decrease P2 to increase the drop.
-	P2_high_kPa = P2_mid_kPa;
+        // Pressure drop is too low. Decrease P2 to increase the drop.
+        P2_high_kPa = P2_mid_kPa;
       }
 
       double oldMid_kPa = P2_mid_kPa;
@@ -505,7 +505,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
 
       // Check for convergence
       if (Math.abs(P2_mid_kPa - oldMid_kPa) < tolerance) {
-	break;
+        break;
       }
     }
 
@@ -524,10 +524,10 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    */
   public double findOutletPressureForFixedKvLiquid(double actualKv, StreamInterface inletStream) {
     return findOutletPressureForFixedKvLiquid(inletStream.getThermoSystem().getDensity("kg/m3"),
-	inletStream.getThermoSystem().getPhase(0).getPressure("Pa"),
-	inletStream.getThermoSystem().getPhase(0).getPseudoCriticalPressure() * 1e5,
-	inletStream.getThermoSystem().getViscosity("kg/msec"), inletStream.getPressure("Pa"),
-	inletStream.getFlowRate("m3/sec"), actualKv, FL, FD, allowChoked, allowLaminar);
+        inletStream.getThermoSystem().getPhase(0).getPressure("Pa"),
+        inletStream.getThermoSystem().getPhase(0).getPseudoCriticalPressure() * 1e5,
+        inletStream.getThermoSystem().getViscosity("kg/msec"), inletStream.getPressure("Pa"),
+        inletStream.getFlowRate("m3/sec"), actualKv, FL, FD, allowChoked, allowLaminar);
   }
 
   /**
@@ -648,9 +648,9 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   public double calculateFlowRateFromKvAndValveOpeningGas(double adjustedKv, StreamInterface inletStream,
       StreamInterface outletStream) {
     return calculateFlowRateFromKvAndValveOpeningGas(adjustedKv, inletStream.getThermoSystem().getTemperature("K"),
-	inletStream.getThermoSystem().getMolarMass("g/mol"), inletStream.getThermoSystem().getViscosity("kg/msec"),
-	inletStream.getThermoSystem().getGamma2(), inletStream.getThermoSystem().getZ(), inletStream.getPressure("Pa"),
-	outletStream.getPressure("Pa"), FL, FD, allowChoked);
+        inletStream.getThermoSystem().getMolarMass("g/mol"), inletStream.getThermoSystem().getViscosity("kg/msec"),
+        inletStream.getThermoSystem().getGamma2(), inletStream.getThermoSystem().getZ(), inletStream.getPressure("Pa"),
+        outletStream.getPressure("Pa"), FL, FD, allowChoked);
   }
 
   /**
@@ -726,9 +726,9 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   public double calculateValveOpeningFromFlowRateGas(double Q, double Kv, double valveOpening,
       StreamInterface inletStream, StreamInterface outletStream) {
     return calculateValveOpeningFromFlowRateGas(Q, Kv, inletStream.getThermoSystem().getTemperature("K"),
-	inletStream.getThermoSystem().getMolarMass("g/mol"), inletStream.getThermoSystem().getViscosity("kg/msec"),
-	inletStream.getThermoSystem().getGamma2(), inletStream.getThermoSystem().getZ(), inletStream.getPressure("Pa"),
-	outletStream.getPressure("Pa"), FL, FD, allowChoked);
+        inletStream.getThermoSystem().getMolarMass("g/mol"), inletStream.getThermoSystem().getViscosity("kg/msec"),
+        inletStream.getThermoSystem().getGamma2(), inletStream.getThermoSystem().getZ(), inletStream.getPressure("Pa"),
+        outletStream.getPressure("Pa"), FL, FD, allowChoked);
   }
 
   /**
@@ -766,11 +766,11 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
 
       // Bisection logic (this part was already correct)
       if (requiredKv < actualKv) {
-	// Pressure drop is too high. Increase P2 to reduce the drop.
-	P2_low = P2_mid;
+        // Pressure drop is too high. Increase P2 to reduce the drop.
+        P2_low = P2_mid;
       } else {
-	// Pressure drop is too low. Decrease P2 to increase the drop.
-	P2_high = P2_mid;
+        // Pressure drop is too low. Decrease P2 to increase the drop.
+        P2_high = P2_mid;
       }
 
       double oldMid = P2_mid;
@@ -778,12 +778,12 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
 
       // Check for convergence with a check to avoid division by zero
       if (P2_mid > 1e-9 && Math.abs(P2_mid - oldMid) / P2_mid < tolerance) {
-	break;
+        break;
       }
       if (i == maxIter - 1) {
-	// Optional: Add a warning if the loop maxes out
-	// logger.warn("findOutletPressureForFixedKvGas did not converge within " + maxIter + "
-	// iterations.");
+        // Optional: Add a warning if the loop maxes out
+        // logger.warn("findOutletPressureForFixedKvGas did not converge within " + maxIter + "
+        // iterations.");
       }
     }
 
@@ -800,9 +800,9 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    */
   public double findOutletPressureForFixedKvGas(double actualKv, StreamInterface inletStream) {
     return findOutletPressureForFixedKvGas(inletStream.getThermoSystem().getTemperature("K"),
-	inletStream.getThermoSystem().getMolarMass("gr/mol"), inletStream.getThermoSystem().getGamma2(),
-	inletStream.getThermoSystem().getZ(), inletStream.getPressure("Pa"), inletStream.getFlowRate("m3/sec"),
-	actualKv);
+        inletStream.getThermoSystem().getMolarMass("gr/mol"), inletStream.getThermoSystem().getGamma2(),
+        inletStream.getThermoSystem().getZ(), inletStream.getPressure("Pa"), inletStream.getFlowRate("m3/sec"),
+        actualKv);
   }
 
   boolean isChokedTurbulentL(double dP, double P1, double Psat, double FF, double FL) {

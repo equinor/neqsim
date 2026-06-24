@@ -429,7 +429,7 @@ public class RadialThermalLayer implements Serializable {
   @Override
   public String toString() {
     return String.format("RadialThermalLayer[%s: ri=%.4f m, ro=%.4f m, k=%.3f W/(m·K), T=%.1f K]", name, innerRadius,
-	outerRadius, thermalConductivity, temperature);
+        outerRadius, thermalConductivity, temperature);
   }
 
   /**
@@ -439,7 +439,7 @@ public class RadialThermalLayer implements Serializable {
    */
   public RadialThermalLayer copy() {
     RadialThermalLayer copy = new RadialThermalLayer(name, innerRadius, getThickness(), thermalConductivity, density,
-	specificHeat);
+        specificHeat);
     copy.materialType = this.materialType;
     copy.temperature = this.temperature;
     copy.previousTemperature = this.previousTemperature;

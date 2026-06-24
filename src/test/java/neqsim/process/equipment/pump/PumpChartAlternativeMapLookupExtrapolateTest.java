@@ -65,7 +65,7 @@ class PumpChartAlternativeMapLookupExtrapolateTest {
     for (int i = 0; i < head.length; i++) {
       headKj[i] = new double[head[i].length];
       for (int j = 0; j < head[i].length; j++) {
-	headKj[i][j] = head[i][j] * 9.80665 / 1000.0;
+        headKj[i][j] = head[i][j] * 9.80665 / 1000.0;
       }
     }
     double[] chartConditions = new double[] { 0.3, 1.0, 1.0, 1.0 };
@@ -78,7 +78,7 @@ class PumpChartAlternativeMapLookupExtrapolateTest {
   void testOperatingStatusNormal() {
     String status = chart.getOperatingStatus(250, 3000);
     assertTrue("NORMAL".equals(status) || "OPTIMAL".equals(status),
-	"Status at mid-flow should be NORMAL or OPTIMAL, got " + status);
+        "Status at mid-flow should be NORMAL or OPTIMAL, got " + status);
   }
 
   @Test
@@ -109,7 +109,7 @@ class PumpChartAlternativeMapLookupExtrapolateTest {
 
     // NPSH typically increases with flow
     double[][] npshReq = new double[][] { { 3.0, 3.5, 4.5, 6.0, 9.0 }, { 2.4, 2.8, 3.6, 4.8, 7.2 },
-	{ 1.9, 2.2, 2.8, 3.8, 5.7 } };
+        { 1.9, 2.2, 2.8, 3.8, 5.7 } };
 
     npshChart.setNPSHCurve(npshReq);
     assertTrue(npshChart.hasNPSHCurve(), "NPSH should be available after setting");

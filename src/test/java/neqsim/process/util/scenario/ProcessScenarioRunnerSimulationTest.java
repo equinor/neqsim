@@ -104,7 +104,7 @@ class ProcessScenarioRunnerSimulationTest {
 
     // Verify no simulation errors occurred
     assertTrue(summary.getErrors().isEmpty() || summary.getErrors().size() < 3,
-	"Should have minimal or no simulation errors");
+        "Should have minimal or no simulation errors");
 
     logger.info("✓ Transient simulation completed:");
     logger.info("  Initial pressure: " + initialPressure + " bara");
@@ -142,17 +142,17 @@ class ProcessScenarioRunnerSimulationTest {
 
     // Create a scenario that might cause some issues but shouldn't crash
     ProcessSafetyScenario scenario = ProcessSafetyScenario.builder("Stress Test")
-	.customManipulator("Feed", equipment -> {
-	  if (equipment instanceof Stream) {
-	    // Set extreme conditions that might cause calculation challenges
-	    ((Stream) equipment).setPressure(200.0, "bara");
-	  }
-	}).build();
+        .customManipulator("Feed", equipment -> {
+          if (equipment instanceof Stream) {
+            // Set extreme conditions that might cause calculation challenges
+            ((Stream) equipment).setPressure(200.0, "bara");
+          }
+        }).build();
 
     // Should complete without throwing exception even if there are some errors
     ScenarioExecutionSummary summary = assertDoesNotThrow(
-	() -> runner.runScenario("Error Handling Test", scenario, 5.0, 0.5),
-	"Scenario should handle errors gracefully");
+        () -> runner.runScenario("Error Handling Test", scenario, 5.0, 0.5),
+        "Scenario should handle errors gracefully");
 
     assertNotNull(summary, "Summary should be generated even with errors");
 

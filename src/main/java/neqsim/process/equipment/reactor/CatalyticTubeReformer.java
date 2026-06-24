@@ -314,7 +314,7 @@ public class CatalyticTubeReformer extends TwoPortEquipment {
     steamToCarbonRatio = HydrogenProductionUtils.calculateSteamToCarbonRatio(reactorFeedSystem);
     if (deactivationKinetics != null) {
       deactivationKinetics.setTemperature(reformingTemperatureK)
-	  .setSteamToCarbonRatio(Double.isNaN(steamToCarbonRatio) ? 0.0 : steamToCarbonRatio);
+          .setSteamToCarbonRatio(Double.isNaN(steamToCarbonRatio) ? 0.0 : steamToCarbonRatio);
       deactivationKinetics.applyTo(catalystBed);
     }
 
@@ -322,7 +322,7 @@ public class CatalyticTubeReformer extends TwoPortEquipment {
     reactorFeed.run(id);
 
     equilibriumReactor = HydrogenProductionUtils.createSyngasGibbsReactor(getName() + " Gibbs equilibrium", reactorFeed,
-	GibbsReactor.EnergyMode.ISOTHERMAL);
+        GibbsReactor.EnergyMode.ISOTHERMAL);
     equilibriumReactor.run(id);
 
     SystemInterface outletSystem = equilibriumReactor.getOutletStream().getThermoSystem().clone();
@@ -357,7 +357,7 @@ public class CatalyticTubeReformer extends TwoPortEquipment {
     results.put("drySyngasLhvMjPerNm3", drySyngasLhvMjPerNm3);
     if (outStream != null && outStream.getThermoSystem() != null) {
       results.put("syngasComposition_molFrac",
-	  HydrogenProductionUtils.extractSyngasComposition(outStream.getThermoSystem()));
+          HydrogenProductionUtils.extractSyngasComposition(outStream.getThermoSystem()));
     }
     return results;
   }

@@ -38,23 +38,23 @@ public class GERG2008NH3DiagnosticTest {
     logger.info("(Tillner-Roth SFE-12 amplitudes + Gao critical params)");
     logger.info("========================================================");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-6s %-8s %-12s %-12s %-8s %-10s %-10s %-8s%n", "T(K)",
-	"P(MPa)", "rho_NIST", "rho_calc", "err(%)", "Cp_calc", "W_calc", "Z_calc");
+        "P(MPa)", "rho_NIST", "rho_calc", "err(%)", "Cp_calc", "W_calc", "Z_calc");
     logger.info("------------------------------------------------------------------------");
 
     // NIST data: {T(K), P(kPa), rho(mol/L), Cp(J/molK), W(m/s)}
     double[][] nistData = {
-	// 300 K
-	{ 300, 100, 0.040501, 36.827, 434.47 },
-	// 400 K
-	{ 400, 500, 0.15299, 40.083, 493.91 }, { 400, 1000, 0.31160, 41.617, 488.91 },
-	{ 400, 2000, 0.64791, 45.119, 478.46 }, { 400, 3000, 1.0143, 49.362, 467.32 },
-	{ 400, 5000, 1.8705, 61.423, 442.30 },
-	// 430 K
-	{ 430, 1000, 0.28739, 41.776, 507.74 }, { 430, 3000, 0.91503, 46.901, 491.57 },
-	{ 430, 5000, 1.6327, 53.639, 474.14 },
-	// 500 K
-	{ 500, 1000, 0.24426, 43.067, 547.34 }, { 500, 5000, 1.3042, 48.514, 529.23 },
-	{ 500, 10000, 2.8633, 57.522, 507.36 } };
+        // 300 K
+        { 300, 100, 0.040501, 36.827, 434.47 },
+        // 400 K
+        { 400, 500, 0.15299, 40.083, 493.91 }, { 400, 1000, 0.31160, 41.617, 488.91 },
+        { 400, 2000, 0.64791, 45.119, 478.46 }, { 400, 3000, 1.0143, 49.362, 467.32 },
+        { 400, 5000, 1.8705, 61.423, 442.30 },
+        // 430 K
+        { 430, 1000, 0.28739, 41.776, 507.74 }, { 430, 3000, 0.91503, 46.901, 491.57 },
+        { 430, 5000, 1.6327, 53.639, 474.14 },
+        // 500 K
+        { 500, 1000, 0.24426, 43.067, 547.34 }, { 500, 5000, 1.3042, 48.514, 529.23 },
+        { 500, 10000, 2.8633, 57.522, 507.36 } };
 
     for (double[] pt : nistData) {
       double T = pt[0];
@@ -69,9 +69,9 @@ public class GERG2008NH3DiagnosticTest {
       gerg.DensityGERG(0, T, P_kPa, x, D, ierr, herr);
 
       if (ierr.val != 0 || D.val > 20.0) {
-	logger.printf(org.apache.logging.log4j.Level.INFO, "%-6.0f %-8.1f %-12.5f %-12s %-8s%n", T, P_kPa / 1000,
-	    rhoNIST, "FAILED", "---");
-	continue;
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-6.0f %-8.1f %-12.5f %-12s %-8s%n", T, P_kPa / 1000,
+            rhoNIST, "FAILED", "---");
+        continue;
       }
 
       double relErr = (D.val - rhoNIST) / rhoNIST * 100.0;
@@ -96,8 +96,8 @@ public class GERG2008NH3DiagnosticTest {
       gerg.PropertiesGERG(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa, A);
 
       logger.printf(org.apache.logging.log4j.Level.INFO,
-	  "%-6.0f %-8.1f %-12.5f %-12.5f %-+8.2f %-10.3f %-10.2f %-8.5f%n", T, P_kPa / 1000, rhoNIST, D.val, relErr,
-	  Cp.val, W.val, Z.val);
+          "%-6.0f %-8.1f %-12.5f %-12.5f %-+8.2f %-10.3f %-10.2f %-8.5f%n", T, P_kPa / 1000, rhoNIST, D.val, relErr,
+          Cp.val, W.val, Z.val);
     }
 
     logger.info("------------------------------------------------------------------------");

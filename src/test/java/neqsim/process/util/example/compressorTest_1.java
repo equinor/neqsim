@@ -26,7 +26,7 @@ public class compressorTest_1 {
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 20.0),
-	10.00);
+        10.00);
     testSystem.addComponent("nitrogen", 0.8);
     testSystem.addComponent("oxygen", 2.0);
     // testSystem.addComponent("water", 0.2);

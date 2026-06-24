@@ -221,7 +221,7 @@ public class CompressorMechanicalLosses implements Serializable {
     // Calculate leakage per seal [Nm³/hr]
     if (deltaP > 0 && gasCompressibilityZ > 0) {
       primarySealLeakage = K * shaftDiameter
-	  * Math.sqrt(deltaP * gasMolecularWeight / (temperatureK * gasCompressibilityZ));
+          * Math.sqrt(deltaP * gasMolecularWeight / (temperatureK * gasCompressibilityZ));
     } else {
       primarySealLeakage = 0.5; // Minimum leakage estimate
     }
@@ -492,7 +492,7 @@ public class CompressorMechanicalLosses implements Serializable {
     if (sealType == SealType.OIL_FILM) {
       // Oil seals have significant friction
       sealFriction = 0.0001 * shaftDiameter * shaftDiameter * Math.pow(shaftSpeed / 1000.0, 1.5) / 1000.0
-	  * numberOfSeals;
+          * numberOfSeals;
     }
 
     return bearingLoss + sealFriction;

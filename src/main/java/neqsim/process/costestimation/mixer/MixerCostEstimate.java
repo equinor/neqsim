@@ -225,7 +225,7 @@ public class MixerCostEstimate extends UnitCostEstimateBaseClass {
     // Two flanges (inlet and outlet)
     double baseFlangePrice = 50.0 + 30.0 * Math.pow(pipeDiameter, 1.2);
     return 2 * baseFlangePrice * getMaterialFactor() * getPressureClassFactor()
-	* (getCostCalculator().getCurrentCepci() / 607.5);
+        * (getCostCalculator().getCurrentCepci() / 607.5);
   }
 
   /**

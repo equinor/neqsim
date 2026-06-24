@@ -129,7 +129,7 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
 
     for (int i = 0; i < thermoSystem.getPhases()[0].getNumberOfComponents() + 30; i++) {
       for (int j = 0; j < 6; j++) {
-	table[i][j] = "";
+        table[i][j] = "";
       }
     }
     for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
@@ -140,11 +140,11 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
     FieldPosition test = new FieldPosition(0);
     for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
       for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
-	table[j + 1][0] = thermoSystem.getPhases()[0].getComponent(j).getName();
-	buf = new StringBuffer();
-	table[j + 1][i + 1] = nf
-	    .format(thermoSystem.getPhase(thermoSystem.getPhaseIndex(i)).getComponent(j).getx(), buf, test).toString();
-	table[j + 1][4] = "[-]";
+        table[j + 1][0] = thermoSystem.getPhases()[0].getComponent(j).getName();
+        buf = new StringBuffer();
+        table[j + 1][i + 1] = nf
+            .format(thermoSystem.getPhase(thermoSystem.getPhaseIndex(i)).getComponent(j).getx(), buf, test).toString();
+        table[j + 1][4] = "[-]";
       }
     }
 

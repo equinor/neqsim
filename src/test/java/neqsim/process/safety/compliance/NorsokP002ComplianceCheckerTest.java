@@ -42,9 +42,9 @@ class NorsokP002ComplianceCheckerTest {
   @Test
   void multipleChecksAggregate() {
     NorsokP002ComplianceChecker c = new NorsokP002ComplianceChecker().checkFlareLineMach("Header", 0.5)
-	.checkBlowdownRhoV2("BDV-1", 150000.0).checkVentGasVelocity("Vent", 45.0).checkLiquidCarryOver("V-100", 1.0e-4)
-	.checkErosionalVelocity("Line-200", 80000.0).recordDepressurisationValve("BDV-2", true, "Sized for fire case")
-	.recordDrainSlope("CD-1", true, "1:100 slope OK");
+        .checkBlowdownRhoV2("BDV-1", 150000.0).checkVentGasVelocity("Vent", 45.0).checkLiquidCarryOver("V-100", 1.0e-4)
+        .checkErosionalVelocity("Line-200", 80000.0).recordDepressurisationValve("BDV-2", true, "Sized for fire case")
+        .recordDrainSlope("CD-1", true, "1:100 slope OK");
     assertTrue(c.isCompliant());
     assertEquals(7, c.getFindings().size());
   }
@@ -52,7 +52,7 @@ class NorsokP002ComplianceCheckerTest {
   @Test
   void overallFailsWhenAnyFails() {
     NorsokP002ComplianceChecker c = new NorsokP002ComplianceChecker().checkFlareLineMach("Header", 0.5)
-	.checkBlowdownRhoV2("BDV-1", 250000.0);
+        .checkBlowdownRhoV2("BDV-1", 250000.0);
     assertFalse(c.isCompliant());
     assertEquals(1, c.countNonCompliant());
   }

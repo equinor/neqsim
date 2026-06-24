@@ -33,7 +33,7 @@ class TwoPhasePipeFlowSystemBuilderTest {
     SystemInterface fluid = createTestFluid();
 
     TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.builder().withFluid(fluid).withDiameter(0.025, "m")
-	.withLength(3, "m").withNodes(15).withFlowPattern(FlowPattern.STRATIFIED).build();
+        .withLength(3, "m").withNodes(15).withFlowPattern(FlowPattern.STRATIFIED).build();
 
     assertNotNull(pipe, "Pipe system should be created");
     // Total nodes includes requested nodes plus boundary nodes
@@ -46,13 +46,13 @@ class TwoPhasePipeFlowSystemBuilderTest {
 
     // Test diameter in mm
     TwoPhasePipeFlowSystem pipe1 = TwoPhasePipeFlowSystem.builder().withFluid(fluid).withDiameter(25, "mm")
-	.withLength(3, "m").withNodes(10).build();
+        .withLength(3, "m").withNodes(10).build();
 
     assertNotNull(pipe1);
 
     // Test diameter in inches
     TwoPhasePipeFlowSystem pipe2 = TwoPhasePipeFlowSystem.builder().withFluid(fluid).withDiameter(1, "in")
-	.withLength(10, "ft").withNodes(10).build();
+        .withLength(10, "ft").withNodes(10).build();
 
     assertNotNull(pipe2);
   }
@@ -62,7 +62,7 @@ class TwoPhasePipeFlowSystemBuilderTest {
     SystemInterface fluid = createTestFluid();
 
     TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.builder().withFluid(fluid).withDiameter(0.025, "m")
-	.withLength(3, "m").withNodes(10).withAutomaticFlowPatternDetection(FlowPatternModel.TAITEL_DUKLER).build();
+        .withLength(3, "m").withNodes(10).withAutomaticFlowPatternDetection(FlowPatternModel.TAITEL_DUKLER).build();
 
     assertNotNull(pipe);
     assertEquals(FlowPatternModel.TAITEL_DUKLER, pipe.getFlowPatternModel());
@@ -73,7 +73,7 @@ class TwoPhasePipeFlowSystemBuilderTest {
     SystemInterface fluid = createTestFluid();
 
     TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.builder().withFluid(fluid).withDiameter(0.025, "m")
-	.withLength(3, "m").withNodes(10).withWallTemperature(20, "C").build();
+        .withLength(3, "m").withNodes(10).withWallTemperature(20, "C").build();
 
     assertNotNull(pipe);
     assertEquals(WallHeatTransferModel.CONSTANT_WALL_TEMPERATURE, pipe.getWallHeatTransferModel());
@@ -85,7 +85,7 @@ class TwoPhasePipeFlowSystemBuilderTest {
     SystemInterface fluid = createTestFluid();
 
     TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.builder().withFluid(fluid).withDiameter(0.025, "m")
-	.withLength(3, "m").withNodes(10).withConvectiveBoundary(10, "C", 15.0).build();
+        .withLength(3, "m").withNodes(10).withConvectiveBoundary(10, "C", 15.0).build();
 
     assertNotNull(pipe);
     assertEquals(WallHeatTransferModel.CONVECTIVE_BOUNDARY, pipe.getWallHeatTransferModel());
@@ -98,7 +98,7 @@ class TwoPhasePipeFlowSystemBuilderTest {
     SystemInterface fluid = createTestFluid();
 
     TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.builder().withFluid(fluid).withDiameter(0.025, "m")
-	.withLength(3, "m").withNodes(10).withAdiabaticWall().build();
+        .withLength(3, "m").withNodes(10).withAdiabaticWall().build();
 
     assertNotNull(pipe);
     assertEquals(WallHeatTransferModel.ADIABATIC, pipe.getWallHeatTransferModel());
@@ -112,7 +112,7 @@ class TwoPhasePipeFlowSystemBuilderTest {
     // with flow nodes, so we don't call enable methods in the builder for now.
     // Instead, we test that the pipe is created successfully.
     TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.builder().withFluid(fluid).withDiameter(0.025, "m")
-	.withLength(3, "m").withNodes(10).build();
+        .withLength(3, "m").withNodes(10).build();
 
     assertNotNull(pipe);
   }
@@ -129,7 +129,7 @@ class TwoPhasePipeFlowSystemBuilderTest {
     SystemInterface fluid = createTestFluid();
 
     TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.builder().withFluid(fluid).withDiameter(0.025, "m")
-	.withLength(3, "m").withLegs(3, 5).build();
+        .withLength(3, "m").withLegs(3, 5).build();
 
     assertNotNull(pipe);
     // Total nodes includes requested nodes (3×5=15) plus boundary nodes
@@ -141,7 +141,7 @@ class TwoPhasePipeFlowSystemBuilderTest {
     SystemInterface fluid = createTestFluid();
 
     TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.builder().withFluid(fluid).withDiameter(0.025, "m")
-	.withLength(3, "m").withNodes(10).withRoughness(50, "um").build();
+        .withLength(3, "m").withNodes(10).withRoughness(50, "um").build();
 
     assertNotNull(pipe);
   }
@@ -159,7 +159,7 @@ class TwoPhasePipeFlowSystemBuilderTest {
   @Test
   void testUnsupportedTemperatureUnitThrows() {
     assertThrows(IllegalArgumentException.class,
-	() -> TwoPhasePipeFlowSystem.builder().withWallTemperature(20.0, "degC"));
+        () -> TwoPhasePipeFlowSystem.builder().withWallTemperature(20.0, "degC"));
   }
 
   @Test

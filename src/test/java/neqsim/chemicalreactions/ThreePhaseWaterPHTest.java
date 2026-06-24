@@ -67,7 +67,7 @@ public class ThreePhaseWaterPHTest {
     for (int i = 0; i < aMat.length; i++) {
       double sum = 0;
       for (int j = 0; j < nVec.length; j++) {
-	sum += aMat[i][j] * nVec[j];
+        sum += aMat[i][j] * nVec[j];
       }
       assertEquals(bVec[i], sum, 1e-10, "Element conservation should hold for row " + i);
     }
@@ -115,14 +115,14 @@ public class ThreePhaseWaterPHTest {
       // Find aqueous phase
       int aqueousPhaseIndex = -1;
       for (int p = 0; p < system.getNumberOfPhases(); p++) {
-	String phaseType = system.getPhase(p).getPhaseTypeName();
-	if (phaseType.equalsIgnoreCase("aqueous")) {
-	  aqueousPhaseIndex = p;
-	  break;
-	}
-	if (system.getPhase(p).hasComponent("water") && system.getPhase(p).getComponent("water").getx() > 0.9) {
-	  aqueousPhaseIndex = p;
-	}
+        String phaseType = system.getPhase(p).getPhaseTypeName();
+        if (phaseType.equalsIgnoreCase("aqueous")) {
+          aqueousPhaseIndex = p;
+          break;
+        }
+        if (system.getPhase(p).hasComponent("water") && system.getPhase(p).getComponent("water").getx() > 0.9) {
+          aqueousPhaseIndex = p;
+        }
       }
 
       assertNotEquals(-1, aqueousPhaseIndex, "Should have an aqueous phase");

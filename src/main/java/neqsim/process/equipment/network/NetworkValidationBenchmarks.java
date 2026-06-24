@@ -80,7 +80,7 @@ public class NetworkValidationBenchmarks {
 
     SystemInterface gas = createBenchmarkGas();
     neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	gas);
+        gas);
     try {
       ops.TPflash();
     } catch (Exception e) {
@@ -383,18 +383,18 @@ public class NetworkValidationBenchmarks {
     for (int i = 0; i < n; i++) {
       matA[i][i] = 4.0 + i * 0.1; // Positive diagonal
       if (i > 0) {
-	matA[i][i - 1] = -1.0;
+        matA[i][i - 1] = -1.0;
       }
       if (i < n - 1) {
-	matA[i][i + 1] = -1.0;
+        matA[i][i + 1] = -1.0;
       }
       // Grid connectivity: connect to row above/below
       int gridSize = 6;
       if (i >= gridSize) {
-	matA[i][i - gridSize] = -0.5;
+        matA[i][i - gridSize] = -0.5;
       }
       if (i + gridSize < n) {
-	matA[i][i + gridSize] = -0.5;
+        matA[i][i + gridSize] = -0.5;
       }
       vecB[i] = 1.0 + 0.1 * i;
     }
@@ -455,9 +455,9 @@ public class NetworkValidationBenchmarks {
     int failed = 0;
     for (BenchmarkResult r : results) {
       if (r.allPassed) {
-	passed++;
+        passed++;
       } else {
-	failed++;
+        failed++;
       }
     }
     logger.info("Benchmarks: " + passed + " passed, " + failed + " failed out of " + results.size());
@@ -535,10 +535,10 @@ public class NetworkValidationBenchmarks {
     public void evaluate() {
       allPassed = converged;
       for (MetricResult m : metrics) {
-	m.passed = Math.abs(m.computed - m.expected) <= m.tolerance;
-	if (!m.passed) {
-	  allPassed = false;
-	}
+        m.passed = Math.abs(m.computed - m.expected) <= m.tolerance;
+        if (!m.passed) {
+          allPassed = false;
+        }
       }
     }
 
@@ -555,8 +555,8 @@ public class NetworkValidationBenchmarks {
       sb.append(", OVERALL: ").append(allPassed ? "PASS" : "FAIL");
       sb.append("\n");
       for (MetricResult m : metrics) {
-	sb.append(String.format("  %-35s computed=%.6f  expected=%.6f  tol=%.6f  %s%n", m.name, m.computed, m.expected,
-	    m.tolerance, m.passed ? "PASS" : "FAIL"));
+        sb.append(String.format("  %-35s computed=%.6f  expected=%.6f  tol=%.6f  %s%n", m.name, m.computed, m.expected,
+            m.tolerance, m.passed ? "PASS" : "FAIL"));
       }
       return sb.toString();
     }

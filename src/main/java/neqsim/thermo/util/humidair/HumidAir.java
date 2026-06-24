@@ -43,7 +43,7 @@ public final class HumidAir {
       double a5 = -15.9618719;
       double a6 = 1.80122502;
       double lnP = Tc / temperature * (a1 * theta + a2 * Math.pow(theta, 1.5) + a3 * Math.pow(theta, 3)
-	  + a4 * Math.pow(theta, 3.5) + a5 * Math.pow(theta, 4) + a6 * Math.pow(theta, 7.5));
+          + a4 * Math.pow(theta, 3.5) + a5 * Math.pow(theta, 4) + a6 * Math.pow(theta, 7.5));
       return Pc * Math.exp(lnP);
     }
     // Sublimation pressure over ice, IAPWS formulation
@@ -101,7 +101,7 @@ public final class HumidAir {
     for (int i = 0; i < 50; i++) {
       double f = saturationPressureWater(T) - pw;
       if (Math.abs(f / pw) < 1e-6) {
-	return T;
+        return T;
       }
       double dP = (saturationPressureWater(T + 0.01) - saturationPressureWater(T - 0.01)) / 0.02;
       T -= f / dP;
@@ -138,6 +138,6 @@ public final class HumidAir {
   public static double cairSat(double temperature) {
     double T = temperature;
     return 2.14627073E+03 - 3.28917768E+01 * T + 1.89471075E-01 * T * T - 4.86290986E-04 * T * T * T
-	+ 4.69540143E-07 * T * T * T * T;
+        + 4.69540143E-07 * T * T * T * T;
   }
 }

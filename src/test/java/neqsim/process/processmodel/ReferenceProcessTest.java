@@ -36,40 +36,40 @@ public class ReferenceProcessTest extends neqsim.NeqSimTest {
     // thermoSystem.setMultiPhaseCheck(true);
 
     thermoSystem.setMolarComposition(new double[] { 0.005269, 0.039189, 0.700553, 0.091154, 0.050908, 0.007751,
-	0.014665, 0.004249, 0.004878, 0.004541, 0.007189, 0.006904, 0.004355, 0.007658, 0.003861, 0.003301, 0.002624,
-	0.001857, 0.001320, 0.001426, 0.001164, 0.000916 });
+        0.014665, 0.004249, 0.004878, 0.004541, 0.007189, 0.006904, 0.004355, 0.007658, 0.003861, 0.003301, 0.002624,
+        0.001857, 0.001320, 0.001426, 0.001164, 0.000916 });
 
     neqsim.process.equipment.stream.Stream wellStream = new neqsim.process.equipment.stream.Stream("well stream",
-	thermoSystem);
+        thermoSystem);
     wellStream.setTemperature(70.0, "C");
     wellStream.setPressure(90.0, "bara");
 
     neqsim.process.equipment.separator.ThreePhaseSeparator firstStageSeparator = new neqsim.process.equipment.separator.ThreePhaseSeparator(
-	"1st stage separator", wellStream);
+        "1st stage separator", wellStream);
 
     neqsim.process.equipment.heatexchanger.Heater oilHeaterSecondStage = new neqsim.process.equipment.heatexchanger.Heater(
-	"oil heater second stage", firstStageSeparator.getOilOutStream());
+        "oil heater second stage", firstStageSeparator.getOilOutStream());
     oilHeaterSecondStage.setOutPressure(30.0);
     oilHeaterSecondStage.setOutTemperature(68.0, "C");
 
     neqsim.process.equipment.separator.ThreePhaseSeparator secondStageSeparator = new neqsim.process.equipment.separator.ThreePhaseSeparator(
-	"2nd stage separator", oilHeaterSecondStage.getOutletStream());
+        "2nd stage separator", oilHeaterSecondStage.getOutletStream());
 
     neqsim.process.equipment.heatexchanger.Heater oilHeaterThirdStage = new neqsim.process.equipment.heatexchanger.Heater(
-	"oil heater third stage", secondStageSeparator.getOilOutStream());
+        "oil heater third stage", secondStageSeparator.getOilOutStream());
     oilHeaterThirdStage.setOutPressure(2.8);
     oilHeaterThirdStage.setOutTemperature(70.0, "C");
 
     neqsim.process.equipment.separator.ThreePhaseSeparator thirdStageSeparator = new neqsim.process.equipment.separator.ThreePhaseSeparator(
-	"3rd stage separator", oilHeaterThirdStage.getOutletStream());
+        "3rd stage separator", oilHeaterThirdStage.getOutletStream());
 
     neqsim.process.equipment.heatexchanger.Heater oilHeaterStandardStage = new neqsim.process.equipment.heatexchanger.Heater(
-	"oil heater standard stage", thirdStageSeparator.getOilOutStream());
+        "oil heater standard stage", thirdStageSeparator.getOilOutStream());
     oilHeaterStandardStage.setOutPressure(1.01325);
     oilHeaterStandardStage.setOutTemperature(15.0, "C");
 
     neqsim.process.equipment.separator.ThreePhaseSeparator standardStageSeparator = new neqsim.process.equipment.separator.ThreePhaseSeparator(
-	"standard stage separator", oilHeaterStandardStage.getOutletStream());
+        "standard stage separator", oilHeaterStandardStage.getOutletStream());
 
     neqsim.process.equipment.mixer.Mixer gasMixer = new neqsim.process.equipment.mixer.Mixer("gas mixer");
     gasMixer.addStream(firstStageSeparator.getGasOutStream());
@@ -79,9 +79,9 @@ public class ReferenceProcessTest extends neqsim.NeqSimTest {
     gasMixer.setOutTemperature(288.15);
 
     neqsim.process.equipment.stream.Stream exportoil = new neqsim.process.equipment.stream.Stream("export oil",
-	standardStageSeparator.getOilOutStream());
+        standardStageSeparator.getOilOutStream());
     neqsim.process.equipment.stream.Stream exportgas = new neqsim.process.equipment.stream.Stream("export gas",
-	gasMixer.getOutletStream());
+        gasMixer.getOutletStream());
 
     neqsim.process.processmodel.ProcessSystem oilprocess = new neqsim.process.processmodel.ProcessSystem();
     oilprocess.add(wellStream);

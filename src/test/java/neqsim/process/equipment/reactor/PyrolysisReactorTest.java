@@ -28,9 +28,9 @@ class PyrolysisReactorTest {
 
     // Fast pyrolysis should maximise bio-oil
     assertTrue(reactor.getActualBioOilYield() > reactor.getActualCharYield(),
-	"Bio-oil yield should exceed char yield in fast mode");
+        "Bio-oil yield should exceed char yield in fast mode");
     assertTrue(reactor.getActualBioOilYield() > reactor.getActualGasYield(),
-	"Bio-oil yield should exceed gas yield in fast mode");
+        "Bio-oil yield should exceed gas yield in fast mode");
 
     // Yields should sum to approximately 1.0
     double sum = reactor.getActualCharYield() + reactor.getActualBioOilYield() + reactor.getActualGasYield();

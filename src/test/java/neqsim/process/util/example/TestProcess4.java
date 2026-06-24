@@ -20,7 +20,7 @@ public class TestProcess4 {
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 28.0),
-	90.0);
+        90.0);
     testSystem.addComponent("methane", 79.034);
     testSystem.addComponent("ethane", 7.102);
     testSystem.addComponent("propane", 5.121);

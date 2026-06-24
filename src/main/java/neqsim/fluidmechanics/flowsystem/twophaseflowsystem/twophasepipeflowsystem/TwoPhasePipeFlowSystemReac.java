@@ -51,7 +51,7 @@ public class TwoPhasePipeFlowSystemReac extends TwoPhasePipeFlowSystem {
     pipe.setInletThermoSystem(testSystem); // setter termodyanmikken for rorsystemet
     pipe.setNumberOfLegs(3); // deler inn roret i et gitt antall legger
     pipe.setNumberOfNodesInLeg(10); // setter antall nodepunkter (beregningspunkter/grid) pr.
-				    // leg
+    // leg
 
     double[] height = { 0, 0, 0, 0, 0, 0 };
     double[] length = { 0.0, 0.03, 0.07, 0.13, 2.5, 3.7 };
@@ -62,9 +62,9 @@ public class TwoPhasePipeFlowSystemReac extends TwoPhasePipeFlowSystem {
     pipe.setLegOuterTemperatures(outerTemperature);
 
     neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface[] pipeGemometry = new neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData[5]; // Deffinerer
-																			    // geometrien
-																			    // for
-																			    // roret
+    // geometrien
+    // for
+    // roret
     double[] pipeDiameter = { 0.025, 0.025, 0.025, 0.025, 0.025 };
     for (int i = 0; i < pipeDiameter.length; i++) {
       pipeGemometry[i] = new neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData(pipeDiameter[i]);

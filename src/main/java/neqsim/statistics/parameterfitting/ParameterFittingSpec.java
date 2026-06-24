@@ -73,7 +73,7 @@ public class ParameterFittingSpec implements Serializable {
     }
     for (int i = 0; i < parameters.size(); i++) {
       if (parameters.get(i) == null) {
-	throw new IllegalArgumentException("parameter " + i + " cannot be null");
+        throw new IllegalArgumentException("parameter " + i + " cannot be null");
       }
       parameters.get(i).validate();
     }
@@ -167,7 +167,7 @@ public class ParameterFittingSpec implements Serializable {
     for (int i = 0; i < parameters.size(); i++) {
       double[] parameterBounds = parameters.get(i).getInternalBounds();
       if (parameterBounds == null) {
-	return null;
+        return null;
       }
       bounds[i][0] = parameterBounds[0];
       bounds[i][1] = parameterBounds[1];
@@ -204,7 +204,7 @@ public class ParameterFittingSpec implements Serializable {
     validate();
     for (int i = 0; i < parameters.size(); i++) {
       if (parameters.get(i).getTransform().isTransformed()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -375,7 +375,7 @@ public class ParameterFittingSpec implements Serializable {
    */
   public void setObjectiveFunctionType(ObjectiveFunctionType objectiveFunctionType) {
     this.objectiveFunctionType = objectiveFunctionType == null ? ObjectiveFunctionType.WEIGHTED_LEAST_SQUARES
-	: objectiveFunctionType;
+        : objectiveFunctionType;
   }
 
   /**

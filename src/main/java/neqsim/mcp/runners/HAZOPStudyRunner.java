@@ -78,7 +78,7 @@ public final class HAZOPStudyRunner {
     SimulationResult simulation = ProcessSystem.fromJsonAndRun(processJson);
     if (simulation.isError() || simulation.getProcessSystem() == null) {
       throw new IllegalArgumentException(
-	  "Process simulation failed before HAZOP generation: " + errorsToText(simulation.getErrors()));
+          "Process simulation failed before HAZOP generation: " + errorsToText(simulation.getErrors()));
     }
 
     StudyContext context = new StudyContext();
@@ -111,7 +111,7 @@ public final class HAZOPStudyRunner {
 
     List<ProcessSafetyScenario> scenarios = generator.generateSingleFailures();
     Map<String, AutomaticScenarioGenerator.ScenarioRunResult> scenarioResults = runScenarios(context, generator,
-	scenarios);
+        scenarios);
 
     JsonArray rows = new JsonArray();
     JsonArray nodesOut = new JsonArray();
@@ -123,21 +123,21 @@ public final class HAZOPStudyRunner {
       HAZOPTemplate worksheet = new HAZOPTemplate(node.nodeId, node.designIntent);
       worksheets.put(node.nodeId, worksheet);
       for (EquipmentFailure failure : failures) {
-	if (!context.enabledFailureModes.contains(failure.getMode()) || !node.matches(failure)) {
-	  continue;
-	}
-	HAZOPTemplate.GuideWord guideWord = mapGuideWord(failure.getMode().getHazopDeviation());
-	HAZOPTemplate.Parameter parameter = mapParameter(failure.getMode().getHazopDeviation());
-	String scenarioName = scenarioName(failure);
-	AutomaticScenarioGenerator.ScenarioRunResult scenarioResult = scenarioResults.get(scenarioName);
-	String consequence = buildConsequence(failure, scenarioResult);
-	String safeguards = node.safeguards.isEmpty() ? "Review extracted barrier register"
-	    : String.join("; ", node.safeguards);
-	String recommendation = buildRecommendation(failure, scenarioResult);
-	worksheet.addDeviation(guideWord, parameter, buildCause(failure), consequence, safeguards, recommendation);
-	rows.add(buildRow(context.studyId, rowNumber, node, failure, guideWord, parameter, consequence, safeguards,
-	    recommendation, scenarioResult));
-	rowNumber++;
+        if (!context.enabledFailureModes.contains(failure.getMode()) || !node.matches(failure)) {
+          continue;
+        }
+        HAZOPTemplate.GuideWord guideWord = mapGuideWord(failure.getMode().getHazopDeviation());
+        HAZOPTemplate.Parameter parameter = mapParameter(failure.getMode().getHazopDeviation());
+        String scenarioName = scenarioName(failure);
+        AutomaticScenarioGenerator.ScenarioRunResult scenarioResult = scenarioResults.get(scenarioName);
+        String consequence = buildConsequence(failure, scenarioResult);
+        String safeguards = node.safeguards.isEmpty() ? "Review extracted barrier register"
+            : String.join("; ", node.safeguards);
+        String recommendation = buildRecommendation(failure, scenarioResult);
+        worksheet.addDeviation(guideWord, parameter, buildCause(failure), consequence, safeguards, recommendation);
+        rows.add(buildRow(context.studyId, rowNumber, node, failure, guideWord, parameter, consequence, safeguards,
+            recommendation, scenarioResult));
+        rowNumber++;
       }
       nodesOut.add(buildNodeOutput(node, worksheet));
     }
@@ -196,7 +196,7 @@ public final class HAZOPStudyRunner {
     if (input.has("process") && input.get("process").isJsonObject()) {
       JsonObject process = input.getAsJsonObject("process");
       if (process.has("fluid") && process.has("process")) {
-	return process.toString();
+        return process.toString();
       }
     }
     if (input.has("fluid") && input.has("process") && input.get("process").isJsonArray()) {
@@ -206,7 +206,7 @@ public final class HAZOPStudyRunner {
       return process.toString();
     }
     throw new IllegalArgumentException(
-	"Missing process definition. Provide processDefinition, processJson, or top-level fluid/process.");
+        "Missing process definition. Provide processDefinition, processJson, or top-level fluid/process.");
   }
 
   /**
@@ -221,9 +221,9 @@ public final class HAZOPStudyRunner {
     if (input.has("nodes") && input.get("nodes").isJsonArray()) {
       JsonArray nodeArray = input.getAsJsonArray("nodes");
       for (JsonElement element : nodeArray) {
-	if (element.isJsonObject()) {
-	  nodes.add(parseNode(element.getAsJsonObject()));
-	}
+        if (element.isJsonObject()) {
+          nodes.add(parseNode(element.getAsJsonObject()));
+        }
       }
     }
     if (!nodes.isEmpty()) {
@@ -231,7 +231,7 @@ public final class HAZOPStudyRunner {
     }
     for (ProcessEquipmentInterface equipment : process.getUnitOperations()) {
       if (equipment instanceof StreamInterface) {
-	continue;
+        continue;
       }
       HazopNode node = new HazopNode();
       node.nodeId = equipment.getName();
@@ -286,9 +286,9 @@ public final class HAZOPStudyRunner {
     for (JsonElement element : input.getAsJsonArray("failureModes")) {
       String modeName = element.getAsString();
       try {
-	modes.add(FailureMode.valueOf(modeName.trim().toUpperCase()));
+        modes.add(FailureMode.valueOf(modeName.trim().toUpperCase()));
       } catch (IllegalArgumentException e) {
-	warnings.add("Unknown failure mode ignored: " + modeName);
+        warnings.add("Unknown failure mode ignored: " + modeName);
       }
     }
     return modes;
@@ -304,15 +304,15 @@ public final class HAZOPStudyRunner {
   private static void addStringValues(JsonObject input, Set<String> values, String... fieldNames) {
     for (String fieldName : fieldNames) {
       if (!input.has(fieldName)) {
-	continue;
+        continue;
       }
       JsonElement element = input.get(fieldName);
       if (element.isJsonArray()) {
-	for (JsonElement item : element.getAsJsonArray()) {
-	  values.add(item.getAsString());
-	}
+        for (JsonElement item : element.getAsJsonArray()) {
+          values.add(item.getAsString());
+        }
       } else if (element.isJsonPrimitive()) {
-	values.add(element.getAsString());
+        values.add(element.getAsString());
       }
     }
   }
@@ -401,7 +401,7 @@ public final class HAZOPStudyRunner {
   private static String buildConsequence(EquipmentFailure failure,
       AutomaticScenarioGenerator.ScenarioRunResult result) {
     String base = "Potential " + failure.getMode().getHazopDeviation().name().toLowerCase() + " deviation at "
-	+ failure.getEquipmentName();
+        + failure.getEquipmentName();
     if (result == null) {
       return base + "; simulation not run.";
     }
@@ -502,7 +502,7 @@ public final class HAZOPStudyRunner {
     int failed = 0;
     for (AutomaticScenarioGenerator.ScenarioRunResult result : scenarioResults.values()) {
       if (!result.isSuccessful()) {
-	failed++;
+        failed++;
       }
     }
     summary.addProperty("failedSimulationCount", failed);
@@ -522,9 +522,9 @@ public final class HAZOPStudyRunner {
     process.add("warnings", toJsonArray(context.warnings));
     if (context.baselineReportJson != null && !context.baselineReportJson.trim().isEmpty()) {
       try {
-	process.add("baselineReport", JsonParser.parseString(context.baselineReportJson));
+        process.add("baselineReport", JsonParser.parseString(context.baselineReportJson));
       } catch (Exception e) {
-	process.addProperty("baselineReport", context.baselineReportJson);
+        process.addProperty("baselineReport", context.baselineReportJson);
       }
     }
     return process;
@@ -584,7 +584,7 @@ public final class HAZOPStudyRunner {
     gates.addProperty("hasDocumentEvidence", hasDocumentEvidence(context.nodes));
     gates.addProperty("hasGeneratedRows", rows.size() > 0);
     gates.addProperty("reviewNote",
-	"Automatic HAZOP rows are screening output. A competent HAZOP team must verify nodes, causes, safeguards, and action ownership.");
+        "Automatic HAZOP rows are screening output. A competent HAZOP team must verify nodes, causes, safeguards, and action ownership.");
     return gates;
   }
 
@@ -648,7 +648,7 @@ public final class HAZOPStudyRunner {
   private static JsonObject buildDocumentExtractionTemplate() {
     JsonObject template = new JsonObject();
     template.addProperty("purpose",
-	"Extract these fields from STID/P&ID, C&E, SRS, line lists, and historian tag maps before running HAZOP.");
+        "Extract these fields from STID/P&ID, C&E, SRS, line lists, and historian tag maps before running HAZOP.");
     JsonArray fields = new JsonArray();
     fields.add("nodes[].nodeId");
     fields.add("nodes[].designIntent");
@@ -671,7 +671,7 @@ public final class HAZOPStudyRunner {
   private static boolean hasDocumentEvidence(List<HazopNode> nodes) {
     for (HazopNode node : nodes) {
       if (!node.evidenceRefs.isEmpty()) {
-	return true;
+        return true;
       }
     }
     return false;

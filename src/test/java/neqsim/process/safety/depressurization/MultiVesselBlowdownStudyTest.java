@@ -39,8 +39,8 @@ public class MultiVesselBlowdownStudyTest {
   @Test
   public void testSimultaneousPeakIsSumOfSources() {
     MultiVesselBlowdownStudy study = new MultiVesselBlowdownStudy().setGridStep(1.0)
-	.addSourceResult("HP-sep", linearDecay(40.0, 120.0, 1.0))
-	.addSourceResult("Inlet-sep", linearDecay(25.0, 90.0, 1.0));
+        .addSourceResult("HP-sep", linearDecay(40.0, 120.0, 1.0))
+        .addSourceResult("Inlet-sep", linearDecay(25.0, 90.0, 1.0));
 
     MultiVesselBlowdownResult res = study.run();
 
@@ -56,15 +56,15 @@ public class MultiVesselBlowdownStudyTest {
   @Test
   public void testHeaderMachCheck() {
     MultiVesselBlowdownStudy smallHeader = new MultiVesselBlowdownStudy().setGridStep(1.0)
-	.addSourceResult("HP-sep", linearDecay(40.0, 120.0, 1.0))
-	.addSourceResult("Inlet-sep", linearDecay(25.0, 90.0, 1.0)).setHeader(0.20, 1.5, 288.15, 0.020, 1.30);
+        .addSourceResult("HP-sep", linearDecay(40.0, 120.0, 1.0))
+        .addSourceResult("Inlet-sep", linearDecay(25.0, 90.0, 1.0)).setHeader(0.20, 1.5, 288.15, 0.020, 1.30);
     MultiVesselBlowdownResult smallRes = smallHeader.run();
     assertTrue(smallRes.getHeaderMach() > 0.70);
     assertFalse(smallRes.isHeaderMachAcceptable());
 
     MultiVesselBlowdownStudy largeHeader = new MultiVesselBlowdownStudy().setGridStep(1.0)
-	.addSourceResult("HP-sep", linearDecay(40.0, 120.0, 1.0))
-	.addSourceResult("Inlet-sep", linearDecay(25.0, 90.0, 1.0)).setHeader(0.80, 1.5, 288.15, 0.020, 1.30);
+        .addSourceResult("HP-sep", linearDecay(40.0, 120.0, 1.0))
+        .addSourceResult("Inlet-sep", linearDecay(25.0, 90.0, 1.0)).setHeader(0.80, 1.5, 288.15, 0.020, 1.30);
     MultiVesselBlowdownResult largeRes = largeHeader.run();
     assertTrue(largeRes.getHeaderMach() < 0.70);
     assertTrue(largeRes.isHeaderMachAcceptable());

@@ -57,8 +57,8 @@ public class PhaseGEUniquac extends PhaseGE {
     }
     for (int i = 0; i < numberOfComponents; i++) {
       componentArray[i] = new ComponentGEUniquac(phase.getComponent(i).getName(),
-	  phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
-	  phase.getComponent(i).getComponentNumber());
+          phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
+          phase.getComponent(i).getComponentNumber());
     }
   }
 
@@ -108,7 +108,7 @@ public class PhaseGEUniquac extends PhaseGE {
     GE = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       GE += phase.getComponent(i).getx() * Math.log(((ComponentGEInterface) componentArray[i]).getGamma(phase,
-	  numberOfComponents, temperature, pressure, pt, alpha, Dij, intparam, mixRule));
+          numberOfComponents, temperature, pressure, pt, alpha, Dij, intparam, mixRule));
     }
 
     return R * temperature * numberOfMolesInPhase * GE;

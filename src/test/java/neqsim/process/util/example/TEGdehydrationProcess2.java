@@ -239,7 +239,7 @@ public class TEGdehydrationProcess2 {
     logger.info("Energy reboiler 2 " + heaterToReboiler.getDuty());
 
     logger.info("wt lean TEG after stripper " + ((WaterStripperColumn) operations.getUnit("TEG stripper"))
-	.getSolventOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG"));
+        .getSolventOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG"));
 
     operations.save("c:/temp/TEGprocessSimple.neqsim");
   }

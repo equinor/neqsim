@@ -383,11 +383,11 @@ public class Umbilical extends ProcessEquipmentBaseClass {
     double totalArea = 0.0;
     for (UmbilicalElement element : elements) {
       if (element.getOuterDiameterMm() > 0) {
-	totalArea += Math.PI * element.getOuterDiameterMm() * element.getOuterDiameterMm() / 4.0;
+        totalArea += Math.PI * element.getOuterDiameterMm() * element.getOuterDiameterMm() / 4.0;
       } else if (element.getInnerDiameterMm() > 0) {
-	// Estimate outer diameter
-	double od = element.getInnerDiameterMm() * 1.5; // Rough estimate
-	totalArea += Math.PI * od * od / 4.0;
+        // Estimate outer diameter
+        double od = element.getInnerDiameterMm() * 1.5; // Rough estimate
+        totalArea += Math.PI * od * od / 4.0;
       }
     }
     return totalArea;
@@ -437,17 +437,17 @@ public class Umbilical extends ProcessEquipmentBaseClass {
     // Steel tubes/armor
     for (UmbilicalElement element : elements) {
       if ("hydraulic".equals(element.getElementType()) || "chemical".equals(element.getElementType())) {
-	if (umbilicalType == UmbilicalType.STEEL_TUBE) {
-	  // Steel tube weight
-	  double od = element.getOuterDiameterMm() > 0 ? element.getOuterDiameterMm()
-	      : element.getInnerDiameterMm() * 1.3;
-	  double id = element.getInnerDiameterMm();
-	  double tubeArea = Math.PI * (od * od - id * id) / 4.0 / 1e6; // m²
-	  totalDryWeight += tubeArea * steelDensity;
-	}
+        if (umbilicalType == UmbilicalType.STEEL_TUBE) {
+          // Steel tube weight
+          double od = element.getOuterDiameterMm() > 0 ? element.getOuterDiameterMm()
+              : element.getInnerDiameterMm() * 1.3;
+          double id = element.getInnerDiameterMm();
+          double tubeArea = Math.PI * (od * od - id * id) / 4.0 / 1e6; // m²
+          totalDryWeight += tubeArea * steelDensity;
+        }
       } else if ("electrical".equals(element.getElementType())) {
-	// Copper cable weight (approximate)
-	totalDryWeight += element.getNumberOfCores() * 0.5; // kg/m per core (rough)
+        // Copper cable weight (approximate)
+        totalDryWeight += element.getNumberOfCores() * 0.5; // kg/m per core (rough)
       }
     }
 

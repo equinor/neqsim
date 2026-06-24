@@ -99,7 +99,7 @@ public class BarrierEnvelope implements Serializable {
     int count = 0;
     for (BarrierElement el : elements) {
       if (el.isFunctional()) {
-	count++;
+        count++;
       }
     }
     return count;
@@ -114,7 +114,7 @@ public class BarrierEnvelope implements Serializable {
     int count = 0;
     for (BarrierElement el : elements) {
       if (el.isVerified()) {
-	count++;
+        count++;
       }
     }
     return count;
@@ -131,7 +131,7 @@ public class BarrierEnvelope implements Serializable {
     }
     for (BarrierElement el : elements) {
       if (!el.isFunctional()) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -160,7 +160,7 @@ public class BarrierEnvelope implements Serializable {
   public boolean hasElementType(BarrierElement.ElementType type) {
     for (BarrierElement el : elements) {
       if (el.getType() == type) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -176,7 +176,7 @@ public class BarrierEnvelope implements Serializable {
     List<BarrierElement> result = new ArrayList<BarrierElement>();
     for (BarrierElement el : elements) {
       if (el.getType() == type) {
-	result.add(el);
+        result.add(el);
       }
     }
     return result;
@@ -191,7 +191,7 @@ public class BarrierEnvelope implements Serializable {
     List<BarrierElement> failed = new ArrayList<BarrierElement>();
     for (BarrierElement el : elements) {
       if (el.getStatus() == BarrierElement.Status.FAILED) {
-	failed.add(el);
+        failed.add(el);
       }
     }
     return failed;

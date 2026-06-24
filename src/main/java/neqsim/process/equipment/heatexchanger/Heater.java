@@ -340,8 +340,8 @@ public class Heater extends TwoPortEquipment
     SystemInterface inFluid = inStream.getFluid();
     // Cheap scalar checks first - avoid the composition array walk if any fail.
     if (inFluid.getTemperature() != lastTemperature || inFluid.getPressure() != lastPressure || lastDuty != getDuty()
-	|| lastOutPressure != pressureOut || lastOutTemperature != temperatureOut
-	|| getPressureDrop() != lastPressureDrop) {
+        || lastOutPressure != pressureOut || lastOutTemperature != temperatureOut
+        || getPressureDrop() != lastPressureDrop) {
       return true;
     }
     double inFlow = inFluid.getFlowRate("kg/hr");
@@ -356,7 +356,7 @@ public class Heater extends TwoPortEquipment
     }
     for (int i = 0; i < n; i++) {
       if (ph0.getComponent(i).getz() != lastComposition[i]) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -494,7 +494,7 @@ public class Heater extends TwoPortEquipment
     StreamInterface out = getOutletStream();
     if (out != null) {
       state.put("temperature",
-	  ProcessEquipmentInterface.createStateEntry(out.getTemperature(temperatureUnit), temperatureUnit));
+          ProcessEquipmentInterface.createStateEntry(out.getTemperature(temperatureUnit), temperatureUnit));
       state.put("pressure", ProcessEquipmentInterface.createStateEntry(out.getPressure(pressureUnit), pressureUnit));
       state.put("flow", ProcessEquipmentInterface.createStateEntry(out.getFlowRate(flowUnit), flowUnit));
     }
@@ -766,7 +766,7 @@ public class Heater extends TwoPortEquipment
     outStream.getFluid().init(3);
 
     return outStream.getThermoSystem().getExergy(surroundingTemperature, unit)
-	- inStream.getThermoSystem().getExergy(surroundingTemperature, unit);
+        - inStream.getThermoSystem().getExergy(surroundingTemperature, unit);
   }
 
   /** {@inheritDoc} */
@@ -819,25 +819,25 @@ public class Heater extends TwoPortEquipment
       double cp = 2000.0; // Approximate Cp in J/(kg·K) for hydrocarbons
 
       if (inStream.getThermoSystem() != null) {
-	try {
-	  // Try to get actual Cp
-	  cp = inStream.getThermoSystem().getCp("J/kgK");
-	  if (Double.isNaN(cp) || cp <= 0) {
-	    cp = 2000.0;
-	  }
-	} catch (Exception e) {
-	  cp = 2000.0;
-	}
+        try {
+          // Try to get actual Cp
+          cp = inStream.getThermoSystem().getCp("J/kgK");
+          if (Double.isNaN(cp) || cp <= 0) {
+            cp = 2000.0;
+          }
+        } catch (Exception e) {
+          cp = 2000.0;
+        }
       }
 
       if (massFlow > 0) {
-	// Design duty for 50°C temperature change
-	double deltaT = 50.0;
-	designDuty = massFlow * cp * deltaT / 3600.0; // Convert to Watts
-	designDuty = Math.max(designDuty, MIN_DEFAULT_DESIGN_DUTY);
+        // Design duty for 50°C temperature change
+        double deltaT = 50.0;
+        designDuty = massFlow * cp * deltaT / 3600.0; // Convert to Watts
+        designDuty = Math.max(designDuty, MIN_DEFAULT_DESIGN_DUTY);
       } else {
-	// No flow - use minimum default
-	designDuty = MIN_DEFAULT_DESIGN_DUTY;
+        // No flow - use minimum default
+        designDuty = MIN_DEFAULT_DESIGN_DUTY;
       }
 
       logger.info("Heater '{}' has zero current duty, estimated design duty: {} kW", getName(), designDuty / 1000.0);
@@ -912,12 +912,12 @@ public class Heater extends TwoPortEquipment
       sb.append("Duty: ").append(String.format(Locale.US, "%.2f kW", duty / 1000.0)).append("\n");
 
       if (mechanicalDesign != null) {
-	sb.append("\n--- Design Parameters ---\n");
-	sb.append("Max Design Duty: ")
-	    .append(String.format(Locale.US, "%.2f kW", mechanicalDesign.maxDesignDuty / 1000.0)).append("\n");
-	sb.append("Duty Utilization: ")
-	    .append(String.format(Locale.US, "%.1f%%", Math.abs(duty) / mechanicalDesign.maxDesignDuty * 100))
-	    .append("\n");
+        sb.append("\n--- Design Parameters ---\n");
+        sb.append("Max Design Duty: ")
+            .append(String.format(Locale.US, "%.2f kW", mechanicalDesign.maxDesignDuty / 1000.0)).append("\n");
+        sb.append("Duty Utilization: ")
+            .append(String.format(Locale.US, "%.1f%%", Math.abs(duty) / mechanicalDesign.maxDesignDuty * 100))
+            .append("\n");
       }
     }
 
@@ -942,8 +942,8 @@ public class Heater extends TwoPortEquipment
       report.put("duty_kW", duty / 1000.0);
 
       if (mechanicalDesign != null) {
-	report.put("maxDesignDuty_kW", mechanicalDesign.maxDesignDuty / 1000.0);
-	report.put("dutyUtilization", Math.abs(duty) / mechanicalDesign.maxDesignDuty);
+        report.put("maxDesignDuty_kW", mechanicalDesign.maxDesignDuty / 1000.0);
+        report.put("dutyUtilization", Math.abs(duty) / mechanicalDesign.maxDesignDuty);
       }
     }
 
@@ -965,8 +965,8 @@ public class Heater extends TwoPortEquipment
     double maxDuty = getMechanicalDesign().maxDesignDuty;
     if (maxDuty > 0.0) {
       addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("duty", "W",
-	  neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD).setDesignValue(maxDuty)
-	  .setWarningThreshold(0.9).setValueSupplier(() -> Math.abs(getDuty())));
+          neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD).setDesignValue(maxDuty)
+          .setWarningThreshold(0.9).setValueSupplier(() -> Math.abs(getDuty())));
     }
 
     // Pressure drop constraint (DESIGN limit) - only add if maxDesignPressureDrop
@@ -974,25 +974,25 @@ public class Heater extends TwoPortEquipment
     double maxPressureDrop = getMechanicalDesign().maxDesignPressureDrop;
     if (maxPressureDrop > 0.0) {
       addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("pressureDrop", "bara",
-	  neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN).setDesignValue(maxPressureDrop)
-	  .setWarningThreshold(0.9).setValueSupplier(() -> pressureDrop));
+          neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN).setDesignValue(maxPressureDrop)
+          .setWarningThreshold(0.9).setValueSupplier(() -> pressureDrop));
     }
 
     // Maximum outlet temperature constraint (for coolers)
     if (hasMaxOutletTemperatureLimit()) {
       addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("maxOutletTemperature", "K",
-	  neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD)
-	  .setDesignValue(maxOutletTemperatureLimit).setWarningThreshold(0.9)
-	  .setValueSupplier(() -> getOutletStream() != null ? getOutletStream().getTemperature() : 0.0));
+          neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD)
+          .setDesignValue(maxOutletTemperatureLimit).setWarningThreshold(0.9)
+          .setValueSupplier(() -> getOutletStream() != null ? getOutletStream().getTemperature() : 0.0));
     }
 
     // Minimum outlet temperature constraint (for heaters)
     // Uses inverse logic: utilization = minLimit / currentValue
     if (hasMinOutletTemperatureLimit()) {
       addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("minOutletTemperature", "K",
-	  neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD)
-	  .setMinValue(minOutletTemperatureLimit).setWarningThreshold(0.9)
-	  .setValueSupplier(() -> getOutletStream() != null ? getOutletStream().getTemperature() : Double.MAX_VALUE));
+          neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD)
+          .setMinValue(minOutletTemperatureLimit).setWarningThreshold(0.9)
+          .setValueSupplier(() -> getOutletStream() != null ? getOutletStream().getTemperature() : Double.MAX_VALUE));
     }
   }
 
@@ -1013,8 +1013,8 @@ public class Heater extends TwoPortEquipment
     for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints().values()) {
       double util = c.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-	maxUtil = util;
-	bottleneck = c;
+        maxUtil = util;
+        bottleneck = c;
       }
     }
     return bottleneck;
@@ -1025,7 +1025,7 @@ public class Heater extends TwoPortEquipment
   public boolean isCapacityExceeded() {
     for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints().values()) {
       if (c.isViolated()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -1036,7 +1036,7 @@ public class Heater extends TwoPortEquipment
   public boolean isHardLimitExceeded() {
     for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints().values()) {
       if (c.isHardLimitExceeded()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -1049,7 +1049,7 @@ public class Heater extends TwoPortEquipment
     for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints().values()) {
       double util = c.getUtilization();
       if (!Double.isNaN(util)) {
-	maxUtil = Math.max(maxUtil, util);
+        maxUtil = Math.max(maxUtil, util);
       }
     }
     return maxUtil;

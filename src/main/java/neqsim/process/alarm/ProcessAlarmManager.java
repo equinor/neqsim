@@ -107,12 +107,12 @@ public class ProcessAlarmManager implements Serializable {
   private void executeActionHandlers(List<AlarmEvent> events) {
     for (AlarmEvent event : events) {
       for (AlarmActionHandler handler : actionHandlers) {
-	try {
-	  handler.handle(event);
-	} catch (Exception e) {
-	  // Log but don't propagate exceptions from handlers
-	  System.err.println("Error executing alarm action handler: " + e.getMessage());
-	}
+        try {
+          handler.handle(event);
+        } catch (Exception e) {
+          // Log but don't propagate exceptions from handlers
+          System.err.println("Error executing alarm action handler: " + e.getMessage());
+        }
       }
     }
   }
@@ -128,8 +128,8 @@ public class ProcessAlarmManager implements Serializable {
     for (MeasurementDeviceInterface device : devices) {
       AlarmEvent event = device.acknowledgeAlarm(time);
       if (event != null) {
-	history.add(event);
-	events.add(event);
+        history.add(event);
+        events.add(event);
       }
     }
     return events;
@@ -154,10 +154,10 @@ public class ProcessAlarmManager implements Serializable {
     for (MeasurementDeviceInterface device : devices) {
       AlarmState state = device.getAlarmState();
       if (state != null && state.isActive()) {
-	AlarmStatusSnapshot snapshot = state.snapshot(device.getName());
-	if (snapshot != null) {
-	  active.add(snapshot);
-	}
+        AlarmStatusSnapshot snapshot = state.snapshot(device.getName());
+        if (snapshot != null) {
+          active.add(snapshot);
+        }
       }
     }
     return active;

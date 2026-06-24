@@ -87,7 +87,7 @@ public class Flare extends TwoPortEquipment {
     outStream.setThermoSystem(thermoSystem);
     setCalculationIdentifier(id);
     lastCapacityCheck = evaluateCapacityInternal(heatDuty, inStream.getFlowRate("kg/sec"),
-	inStream.getFlowRate("mole/sec"));
+        inStream.getFlowRate("mole/sec"));
   }
 
   /**
@@ -369,7 +369,7 @@ public class Flare extends TwoPortEquipment {
    */
   public FlareDispersionSurrogateDTO getDispersionSurrogate() {
     return getDispersionSurrogate(inStream != null ? inStream.getFlowRate("kg/sec") : 0.0,
-	inStream != null ? inStream.getFlowRate("mole/sec") : 0.0);
+        inStream != null ? inStream.getFlowRate("mole/sec") : 0.0);
   }
 
   /**
@@ -395,7 +395,7 @@ public class Flare extends TwoPortEquipment {
     }
 
     return new FlareDispersionSurrogateDTO(massRateKgS, molarRateMoleS, velocity, momentumFlux, massPerMomentum,
-	standardVolumeRate);
+        standardVolumeRate);
   }
 
   /**
@@ -405,7 +405,7 @@ public class Flare extends TwoPortEquipment {
    */
   public CapacityCheckResult evaluateCapacity() {
     lastCapacityCheck = evaluateCapacityInternal(heatDuty, inStream != null ? inStream.getFlowRate("kg/sec") : 0.0,
-	inStream != null ? inStream.getFlowRate("mole/sec") : 0.0);
+        inStream != null ? inStream.getFlowRate("mole/sec") : 0.0);
     return lastCapacityCheck;
   }
 
@@ -428,13 +428,13 @@ public class Flare extends TwoPortEquipment {
     double molarCapacity = designMolarFlowCapacityMoleS;
 
     double heatUtil = (Double.isFinite(heatCapacity) && heatCapacity > 0.0) ? scenarioHeatDutyW / heatCapacity
-	: Double.NaN;
+        : Double.NaN;
     double massUtil = (Double.isFinite(massCapacity) && massCapacity > 0.0) ? massRateKgS / massCapacity : Double.NaN;
     double molarUtil = (Double.isFinite(molarCapacity) && molarCapacity > 0.0) ? molarRateMoleS / molarCapacity
-	: Double.NaN;
+        : Double.NaN;
 
     return new CapacityCheckResult(scenarioHeatDutyW, heatCapacity, massRateKgS, massCapacity, molarRateMoleS,
-	molarCapacity, heatUtil, massUtil, molarUtil);
+        molarCapacity, heatUtil, massUtil, molarUtil);
   }
 
   /**
@@ -455,7 +455,7 @@ public class Flare extends TwoPortEquipment {
     double massRate = inStream != null ? inStream.getFlowRate("kg/sec") : 0.0;
     double molarRate = inStream != null ? inStream.getFlowRate("mole/sec") : 0.0;
     return buildPerformanceSummary(getName(), heatDuty, massRate, molarRate, co2Emission,
-	inStream != null ? buildEmissionMap() : Collections.emptyMap());
+        inStream != null ? buildEmissionMap() : Collections.emptyMap());
   }
 
   /**
@@ -490,7 +490,7 @@ public class Flare extends TwoPortEquipment {
     CapacityCheckResult capacity = evaluateCapacityInternal(scenarioHeatDutyW, massRateKgS, molarRateMoleS);
 
     return new FlarePerformanceDTO(label, scenarioHeatDutyW, massRateKgS, molarRateMoleS, co2RateKgS, flux30m,
-	distance4kW, dispersion, emissionMap, capacity.toDTO());
+        distance4kW, dispersion, emissionMap, capacity.toDTO());
   }
 
   private double estimateHeatDutyFromMassRate(double massRateKgS) {
@@ -594,8 +594,8 @@ public class Flare extends TwoPortEquipment {
     private final double molarUtilization;
 
     CapacityCheckResult(double heatDutyW, double designHeatDutyW, double massRateKgS, double designMassRateKgS,
-	double molarRateMoleS, double designMolarRateMoleS, double heatUtilization, double massUtilization,
-	double molarUtilization) {
+        double molarRateMoleS, double designMolarRateMoleS, double heatUtilization, double massUtilization,
+        double molarUtilization) {
       this.heatDutyW = heatDutyW;
       this.designHeatDutyW = designHeatDutyW;
       this.massRateKgS = massRateKgS;
@@ -609,7 +609,7 @@ public class Flare extends TwoPortEquipment {
 
     static CapacityCheckResult empty() {
       return new CapacityCheckResult(0.0, Double.NaN, 0.0, Double.NaN, 0.0, Double.NaN, Double.NaN, Double.NaN,
-	  Double.NaN);
+          Double.NaN);
     }
 
     public double getHeatDutyW() {
@@ -668,7 +668,7 @@ public class Flare extends TwoPortEquipment {
      */
     public FlareCapacityDTO toDTO() {
       return new FlareCapacityDTO(heatDutyW, designHeatDutyW, heatUtilization, massRateKgS, designMassRateKgS,
-	  massUtilization, molarRateMoleS, designMolarRateMoleS, molarUtilization, isOverloaded());
+          massUtilization, molarRateMoleS, designMolarRateMoleS, molarUtilization, isOverloaded());
     }
   }
 
@@ -676,7 +676,7 @@ public class Flare extends TwoPortEquipment {
   @Override
   public String toJson() {
     return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create()
-	.toJson(new neqsim.process.util.monitor.FlareResponse(this));
+        .toJson(new neqsim.process.util.monitor.FlareResponse(this));
   }
 
   /** {@inheritDoc} */

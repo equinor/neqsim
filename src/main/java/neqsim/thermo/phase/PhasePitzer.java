@@ -77,7 +77,7 @@ public class PhasePitzer extends PhaseGE {
     double GE = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       GE += phase.getComponent(i).getx() * Math
-	  .log(((ComponentGePitzer) componentArray[i]).getGamma(phase, numberOfComponents, temperature, pressure, pt));
+          .log(((ComponentGePitzer) componentArray[i]).getGamma(phase, numberOfComponents, temperature, pressure, pt));
     }
     return R * temperature * numberOfMolesInPhase * GE;
   }
@@ -179,61 +179,61 @@ public class PhasePitzer extends PhaseGE {
    */
   public void loadParametersFromDatabase() {
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-	java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM pitzerparameters")) {
+        java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM pitzerparameters")) {
       while (dataSet.next()) {
-	String ion1Name = dataSet.getString("ion1").trim();
-	String ion2Name = dataSet.getString("ion2").trim();
+        String ion1Name = dataSet.getString("ion1").trim();
+        String ion2Name = dataSet.getString("ion2").trim();
 
-	int idx1 = -1;
-	int idx2 = -1;
-	for (int k = 0; k < numberOfComponents; k++) {
-	  String compName = getComponent(k).getComponentName();
-	  if (compName.equals(ion1Name)) {
-	    idx1 = k;
-	  }
-	  if (compName.equals(ion2Name)) {
-	    idx2 = k;
-	  }
-	}
-	if (idx1 < 0 || idx2 < 0) {
-	  continue;
-	}
+        int idx1 = -1;
+        int idx2 = -1;
+        for (int k = 0; k < numberOfComponents; k++) {
+          String compName = getComponent(k).getComponentName();
+          if (compName.equals(ion1Name)) {
+            idx1 = k;
+          }
+          if (compName.equals(ion2Name)) {
+            idx2 = k;
+          }
+        }
+        if (idx1 < 0 || idx2 < 0) {
+          continue;
+        }
 
-	double b0 = dataSet.getDouble("beta0_25");
-	double b1 = dataSet.getDouble("beta1_25");
-	double cp = dataSet.getDouble("Cphi_25");
-	setBinaryParameters(idx1, idx2, b0, b1, cp);
+        double b0 = dataSet.getDouble("beta0_25");
+        double b1 = dataSet.getDouble("beta1_25");
+        double cp = dataSet.getDouble("Cphi_25");
+        setBinaryParameters(idx1, idx2, b0, b1, cp);
 
-	// Load beta2 for 2-2 electrolytes
-	try {
-	  double b2 = dataSet.getDouble("beta2_25");
-	  if (Math.abs(b2) > 1e-20) {
-	    beta2[idx1][idx2] = b2;
-	    beta2[idx2][idx1] = b2;
-	  }
-	} catch (Exception ex2) {
-	  // Column may not exist in older databases
-	}
+        // Load beta2 for 2-2 electrolytes
+        try {
+          double b2 = dataSet.getDouble("beta2_25");
+          if (Math.abs(b2) > 1e-20) {
+            beta2[idx1][idx2] = b2;
+            beta2[idx2][idx1] = b2;
+          }
+        } catch (Exception ex2) {
+          // Column may not exist in older databases
+        }
 
-	double b0t1 = dataSet.getDouble("beta0_T1");
-	double b0t2 = dataSet.getDouble("beta0_T2");
-	double b1t1 = dataSet.getDouble("beta1_T1");
-	double b1t2 = dataSet.getDouble("beta1_T2");
-	double ct1 = dataSet.getDouble("Cphi_T1");
-	double ct2 = dataSet.getDouble("Cphi_T2");
+        double b0t1 = dataSet.getDouble("beta0_T1");
+        double b0t2 = dataSet.getDouble("beta0_T2");
+        double b1t1 = dataSet.getDouble("beta1_T1");
+        double b1t2 = dataSet.getDouble("beta1_T2");
+        double ct1 = dataSet.getDouble("Cphi_T1");
+        double ct2 = dataSet.getDouble("Cphi_T2");
 
-	beta0T1[idx1][idx2] = b0t1;
-	beta0T1[idx2][idx1] = b0t1;
-	beta0T2[idx1][idx2] = b0t2;
-	beta0T2[idx2][idx1] = b0t2;
-	beta1T1[idx1][idx2] = b1t1;
-	beta1T1[idx2][idx1] = b1t1;
-	beta1T2[idx1][idx2] = b1t2;
-	beta1T2[idx2][idx1] = b1t2;
-	cphiT1[idx1][idx2] = ct1;
-	cphiT1[idx2][idx1] = ct1;
-	cphiT2[idx1][idx2] = ct2;
-	cphiT2[idx2][idx1] = ct2;
+        beta0T1[idx1][idx2] = b0t1;
+        beta0T1[idx2][idx1] = b0t1;
+        beta0T2[idx1][idx2] = b0t2;
+        beta0T2[idx2][idx1] = b0t2;
+        beta1T1[idx1][idx2] = b1t1;
+        beta1T1[idx2][idx1] = b1t1;
+        beta1T2[idx1][idx2] = b1t2;
+        beta1T2[idx2][idx1] = b1t2;
+        cphiT1[idx1][idx2] = ct1;
+        cphiT1[idx2][idx1] = ct1;
+        cphiT2[idx1][idx2] = ct2;
+        cphiT2[idx2][idx1] = ct2;
       }
       parametersLoaded = true;
     } catch (Exception ex) {
@@ -436,7 +436,7 @@ public class PhasePitzer extends PhaseGE {
     double moles = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       if (getComponent(i).getComponentName().equals("water")) {
-	moles += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
+        moles += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
       }
     }
     return moles;
@@ -486,10 +486,10 @@ public class PhasePitzer extends PhaseGE {
     double waterMassKg = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       if (Math.abs(getComponent(i).getIonicCharge()) > 0.5) {
-	ionMassKg += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
+        ionMassKg += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
       }
       if (getComponent(i).getComponentName().equals("water")) {
-	waterMassKg += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
+        waterMassKg += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
       }
     }
     double totalMass = ionMassKg + waterMassKg;

@@ -149,7 +149,7 @@ public class DehydrationTemplate implements ProcessTemplate {
     // Using separate Heater/Cooler instead of HeatExchanger for template simplicity
     Heater richGlycolHeater = new Heater("Rich Glycol Heater", flashDrum.getLiquidOutStream());
     richGlycolHeater.setOutTemperature(reboilerTemp - 20.0 + 273.15); // Preheat to near reboiler
-								      // temp
+    // temp
     process.add(richGlycolHeater);
 
     // Regeneration still (simplified as heater + separator)
@@ -167,7 +167,7 @@ public class DehydrationTemplate implements ProcessTemplate {
 
     // Lean glycol cooler
     neqsim.process.equipment.heatexchanger.Cooler glycolCooler = new neqsim.process.equipment.heatexchanger.Cooler(
-	"Lean Glycol Cooler", glycolPump.getOutletStream());
+        "Lean Glycol Cooler", glycolPump.getOutletStream());
     glycolCooler.setOutTemperature(leanGlycolTemp + 273.15);
     process.add(glycolCooler);
 
@@ -206,15 +206,15 @@ public class DehydrationTemplate implements ProcessTemplate {
       // Check if fluid contains water
       boolean hasWater = false;
       for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
-	String name = fluid.getComponent(i).getName().toLowerCase();
-	if (name.equals("water") || name.equals("h2o")) {
-	  hasWater = true;
-	  break;
-	}
+        String name = fluid.getComponent(i).getName().toLowerCase();
+        if (name.equals("water") || name.equals("h2o")) {
+          hasWater = true;
+          break;
+        }
       }
 
       if (!hasWater) {
-	return false;
+        return false;
       }
 
       // Check if predominantly gas
@@ -240,8 +240,8 @@ public class DehydrationTemplate implements ProcessTemplate {
   @Override
   public String[] getExpectedOutputs() {
     return new String[] { "Dry Gas - Dehydrated gas meeting pipeline specification",
-	"Flash Gas - Hydrocarbon-rich gas from flash drum", "Water - Produced water from regeneration still",
-	"TEG Losses - Estimated glycol losses" };
+        "Flash Gas - Hydrocarbon-rich gas from flash drum", "Water - Produced water from regeneration still",
+        "TEG Losses - Estimated glycol losses" };
   }
 
   /** {@inheritDoc} */
@@ -254,8 +254,8 @@ public class DehydrationTemplate implements ProcessTemplate {
   @Override
   public String getDescription() {
     return "TEG (Triethylene Glycol) gas dehydration system with absorber, "
-	+ "flash drum, lean/rich heat exchanger, and regeneration still. "
-	+ "Suitable for pipeline-spec gas dehydration and cryogenic pre-treatment.";
+        + "flash drum, lean/rich heat exchanger, and regeneration still. "
+        + "Suitable for pipeline-spec gas dehydration and cryogenic pre-treatment.";
   }
 
   /**

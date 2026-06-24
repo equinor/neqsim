@@ -314,13 +314,13 @@ public class RhonePoulencVelocity implements Serializable {
     // Within table range - interpolate
     for (int i = 0; i < n - 1; i++) {
       if (x >= xTable[i] && x <= xTable[i + 1]) {
-	double logX0 = Math.log(xTable[i]);
-	double logX1 = Math.log(xTable[i + 1]);
-	double logY0 = Math.log(yTable[i]);
-	double logY1 = Math.log(yTable[i + 1]);
-	double slope = (logY1 - logY0) / (logX1 - logX0);
-	double logY = logY0 + slope * (logX - logX0);
-	return Math.exp(logY);
+        double logX0 = Math.log(xTable[i]);
+        double logX1 = Math.log(xTable[i + 1]);
+        double logY0 = Math.log(yTable[i]);
+        double logY1 = Math.log(yTable[i + 1]);
+        double slope = (logY1 - logY0) / (logX1 - logX0);
+        double logY = logY0 + slope * (logX - logX0);
+        return Math.exp(logY);
       }
     }
 

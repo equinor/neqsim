@@ -96,8 +96,8 @@ public class BulkMechanicalDesignConstraintsTest {
     int second = process.applyMechanicalDesignCapacityConstraints();
     assertEquals(first, second, "re-applying should register the same count");
     assertEquals(1L, heater.getCapacityConstraints().values().stream()
-	.filter(c -> "mechanicalDesign".equals(c.getDataSource())).count(),
-	"exactly one mechanical-design constraint should remain after re-apply");
+        .filter(c -> "mechanicalDesign".equals(c.getDataSource())).count(),
+        "exactly one mechanical-design constraint should remain after re-apply");
   }
 
   /**

@@ -104,30 +104,30 @@ public class StidBarrierRegisterDataSource {
     JsonArray sces = firstArray(source, SCE_ARRAY_KEYS);
     if (sces != null) {
       for (int i = 0; i < sces.size(); i++) {
-	JsonElement element = sces.get(i);
-	if (element.isJsonObject()) {
-	  register.addSafetyCriticalElement(buildSce(element.getAsJsonObject(), installationCode));
-	}
+        JsonElement element = sces.get(i);
+        if (element.isJsonObject()) {
+          register.addSafetyCriticalElement(buildSce(element.getAsJsonObject(), installationCode));
+        }
       }
     }
 
     JsonArray barriers = firstArray(source, BARRIER_ARRAY_KEYS);
     if (barriers != null) {
       for (int i = 0; i < barriers.size(); i++) {
-	JsonElement element = barriers.get(i);
-	if (element.isJsonObject()) {
-	  register.addBarrier(buildBarrier(element.getAsJsonObject(), installationCode));
-	}
+        JsonElement element = barriers.get(i);
+        if (element.isJsonObject()) {
+          register.addBarrier(buildBarrier(element.getAsJsonObject(), installationCode));
+        }
       }
     }
 
     JsonArray evidence = firstArray(source, EVIDENCE_ARRAY_KEYS);
     if (evidence != null) {
       for (int i = 0; i < evidence.size(); i++) {
-	JsonElement element = evidence.get(i);
-	if (element.isJsonObject()) {
-	  register.addEvidence(buildEvidence(element.getAsJsonObject(), installationCode, i));
-	}
+        JsonElement element = evidence.get(i);
+        if (element.isJsonObject()) {
+          register.addEvidence(buildEvidence(element.getAsJsonObject(), installationCode, i));
+        }
       }
     }
     return register;
@@ -151,19 +151,19 @@ public class StidBarrierRegisterDataSource {
     JsonArray barriers = firstArray(record, BARRIER_ARRAY_KEYS);
     if (barriers != null) {
       for (int i = 0; i < barriers.size(); i++) {
-	JsonElement element = barriers.get(i);
-	if (element.isJsonObject()) {
-	  sce.addBarrier(buildBarrier(element.getAsJsonObject(), installationCode));
-	}
+        JsonElement element = barriers.get(i);
+        if (element.isJsonObject()) {
+          sce.addBarrier(buildBarrier(element.getAsJsonObject(), installationCode));
+        }
       }
     }
     JsonArray evidence = firstArray(record, EVIDENCE_ARRAY_KEYS);
     if (evidence != null) {
       for (int i = 0; i < evidence.size(); i++) {
-	JsonElement element = evidence.get(i);
-	if (element.isJsonObject()) {
-	  sce.addEvidence(buildEvidence(element.getAsJsonObject(), installationCode, i));
-	}
+        JsonElement element = evidence.get(i);
+        if (element.isJsonObject()) {
+          sce.addEvidence(buildEvidence(element.getAsJsonObject(), installationCode, i));
+        }
       }
     }
     return sce;
@@ -195,10 +195,10 @@ public class StidBarrierRegisterDataSource {
     JsonArray evidence = firstArray(record, EVIDENCE_ARRAY_KEYS);
     if (evidence != null) {
       for (int i = 0; i < evidence.size(); i++) {
-	JsonElement element = evidence.get(i);
-	if (element.isJsonObject()) {
-	  barrier.addEvidence(buildEvidence(element.getAsJsonObject(), installationCode, i));
-	}
+        JsonElement element = evidence.get(i);
+        if (element.isJsonObject()) {
+          barrier.addEvidence(buildEvidence(element.getAsJsonObject(), installationCode, i));
+        }
       }
     }
     return barrier;
@@ -222,11 +222,11 @@ public class StidBarrierRegisterDataSource {
     String sourceReference = optString(record, "sourceReference", "");
     String excerpt = optString(record, "excerpt", "");
     double confidence = record.has("confidence") && !record.get("confidence").isJsonNull()
-	? record.get("confidence").getAsDouble()
-	: 1.0;
+        ? record.get("confidence").getAsDouble()
+        : 1.0;
     String installationCode = optString(record, "installationCode", defaultInstallationCode);
     return new DocumentEvidence(evidenceId, documentId, documentTitle, revision, section, page, sourceReference,
-	excerpt, confidence, installationCode);
+        excerpt, confidence, installationCode);
   }
 
   /**
@@ -239,9 +239,9 @@ public class StidBarrierRegisterDataSource {
     if (record.has("equipmentTags") && record.get("equipmentTags").isJsonArray()) {
       JsonArray tags = record.getAsJsonArray("equipmentTags");
       for (int i = 0; i < tags.size(); i++) {
-	if (!tags.get(i).isJsonNull()) {
-	  sce.addEquipmentTag(tags.get(i).getAsString());
-	}
+        if (!tags.get(i).isJsonNull()) {
+          sce.addEquipmentTag(tags.get(i).getAsString());
+        }
       }
     }
   }
@@ -256,9 +256,9 @@ public class StidBarrierRegisterDataSource {
     if (record.has("equipmentTags") && record.get("equipmentTags").isJsonArray()) {
       JsonArray tags = record.getAsJsonArray("equipmentTags");
       for (int i = 0; i < tags.size(); i++) {
-	if (!tags.get(i).isJsonNull()) {
-	  barrier.addEquipmentTag(tags.get(i).getAsString());
-	}
+        if (!tags.get(i).isJsonNull()) {
+          barrier.addEquipmentTag(tags.get(i).getAsString());
+        }
       }
     }
   }
@@ -273,9 +273,9 @@ public class StidBarrierRegisterDataSource {
     if (record.has("hazardIds") && record.get("hazardIds").isJsonArray()) {
       JsonArray hazards = record.getAsJsonArray("hazardIds");
       for (int i = 0; i < hazards.size(); i++) {
-	if (!hazards.get(i).isJsonNull()) {
-	  barrier.addHazardId(hazards.get(i).getAsString());
-	}
+        if (!hazards.get(i).isJsonNull()) {
+          barrier.addHazardId(hazards.get(i).getAsString());
+        }
       }
     }
   }
@@ -290,7 +290,7 @@ public class StidBarrierRegisterDataSource {
     String key = normalizeToken(raw);
     for (SafetyBarrier.BarrierType value : SafetyBarrier.BarrierType.values()) {
       if (value.name().equals(key)) {
-	return value;
+        return value;
       }
     }
     return SafetyBarrier.BarrierType.PREVENTION;
@@ -306,7 +306,7 @@ public class StidBarrierRegisterDataSource {
     String key = normalizeToken(raw);
     for (SafetyBarrier.BarrierStatus value : SafetyBarrier.BarrierStatus.values()) {
       if (value.name().equals(key)) {
-	return value;
+        return value;
       }
     }
     return SafetyBarrier.BarrierStatus.UNKNOWN;
@@ -322,7 +322,7 @@ public class StidBarrierRegisterDataSource {
     String key = normalizeToken(raw);
     for (SafetyCriticalElement.ElementType value : SafetyCriticalElement.ElementType.values()) {
       if (value.name().equals(key)) {
-	return value;
+        return value;
       }
     }
     return SafetyCriticalElement.ElementType.OTHER;
@@ -355,7 +355,7 @@ public class StidBarrierRegisterDataSource {
   private static JsonArray firstArray(JsonObject object, String[] keys) {
     for (String key : keys) {
       if (object.has(key) && object.get(key).isJsonArray()) {
-	return object.getAsJsonArray(key);
+        return object.getAsJsonArray(key);
       }
     }
     return null;

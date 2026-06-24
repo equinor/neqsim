@@ -191,10 +191,10 @@ public class GaussianPlume implements Serializable {
       double distance = minDistance * Math.pow(maxDistance / minDistance, fraction);
       double concentration = centerlineGroundConcentration(distance);
       if (concentration >= thresholdKgPerM3) {
-	aboveDistance = distance;
+        aboveDistance = distance;
       } else if (previousConcentration >= thresholdKgPerM3) {
-	aboveDistance = previousDistance;
-	belowDistance = distance;
+        aboveDistance = previousDistance;
+        belowDistance = distance;
       }
       previousDistance = distance;
       previousConcentration = concentration;
@@ -212,12 +212,12 @@ public class GaussianPlume implements Serializable {
       double mid = 0.5 * (lo + hi);
       double c = centerlineGroundConcentration(mid);
       if (c > thresholdKgPerM3) {
-	lo = mid;
+        lo = mid;
       } else {
-	hi = mid;
+        hi = mid;
       }
       if ((hi - lo) < 0.5) {
-	break;
+        break;
       }
     }
     return 0.5 * (lo + hi);

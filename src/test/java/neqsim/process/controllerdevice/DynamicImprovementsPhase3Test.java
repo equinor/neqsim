@@ -53,7 +53,7 @@ class DynamicImprovementsPhase3Test {
     tx.setValue(100.0);
     double val2 = tx.getMeasuredValue();
     Assertions.assertTrue(val2 < 100.0 && val2 > 50.0,
-	"Filtered value should be between 50 and 100 after step, got " + val2);
+        "Filtered value should be between 50 and 100 after step, got " + val2);
 
     // Multiple readings should approach 100
     double prev = val2;
@@ -214,7 +214,7 @@ class DynamicImprovementsPhase3Test {
 
     // Gas pressure should be reduced by the mist eliminator pressure drop
     Assertions.assertTrue(gasPAfter <= gasPBefore,
-	"Gas out pressure should be reduced by ME DP: before=" + gasPBefore + " after=" + gasPAfter);
+        "Gas out pressure should be reduced by ME DP: before=" + gasPBefore + " after=" + gasPAfter);
   }
 
   // ─── 4. HX fluid accumulation ODE ───
@@ -279,7 +279,7 @@ class DynamicImprovementsPhase3Test {
     double distWithHoldup = Math.abs(hotInlet - hotOutWithHoldup);
     // The holdup model adds fluid thermal mass, so the response should be different
     Assertions.assertNotEquals(hotOutNoHoldup, hotOutWithHoldup, 0.001,
-	"With holdup should differ from without holdup");
+        "With holdup should differ from without holdup");
   }
 
   @Test
@@ -419,8 +419,8 @@ class DynamicImprovementsPhase3Test {
     boolean anyNonZero = false;
     for (double h : enthalpies) {
       if (Math.abs(h) > 1.0) {
-	anyNonZero = true;
-	break;
+        anyNonZero = true;
+        break;
       }
     }
     Assertions.assertTrue(anyNonZero, "At least one tray should have non-zero enthalpy");

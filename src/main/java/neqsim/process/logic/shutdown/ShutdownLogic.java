@@ -183,15 +183,15 @@ public class ShutdownLogic implements ProcessLogic {
       ActionWithDelay actionWithDelay = actions.get(i);
 
       if (effectiveTime >= actionWithDelay.delay) {
-	// Time to execute this action
-	actionWithDelay.action.execute();
+        // Time to execute this action
+        actionWithDelay.action.execute();
 
-	if (actionWithDelay.action.isComplete()) {
-	  currentActionIndex = i + 1;
-	}
+        if (actionWithDelay.action.isComplete()) {
+          currentActionIndex = i + 1;
+        }
       } else {
-	// Haven't reached this action's delay yet
-	break;
+        // Haven't reached this action's delay yet
+        break;
       }
     }
 
@@ -199,14 +199,14 @@ public class ShutdownLogic implements ProcessLogic {
     if (currentActionIndex >= actions.size()) {
       boolean allComplete = true;
       for (ActionWithDelay actionWithDelay : actions) {
-	if (!actionWithDelay.action.isComplete()) {
-	  allComplete = false;
-	  break;
-	}
+        if (!actionWithDelay.action.isComplete()) {
+          allComplete = false;
+          break;
+        }
       }
 
       if (allComplete) {
-	state = LogicState.COMPLETED;
+        state = LogicState.COMPLETED;
       }
     }
   }
@@ -268,17 +268,17 @@ public class ShutdownLogic implements ProcessLogic {
       sb.append("IDLE");
     } else if (state == LogicState.RUNNING) {
       sb.append(String.format("RUNNING (%.1f%% complete, %.1fs / %.1fs)", getProgress(), elapsedTime,
-	  getEffectiveShutdownTime()));
+          getEffectiveShutdownTime()));
 
       // Show current action
       if (currentActionIndex < actions.size()) {
-	ActionWithDelay current = actions.get(currentActionIndex);
-	sb.append(String.format("\n  Current: %s", current.action.getDescription()));
+        ActionWithDelay current = actions.get(currentActionIndex);
+        sb.append(String.format("\n  Current: %s", current.action.getDescription()));
       }
 
       // Show completed actions
       if (currentActionIndex > 0) {
-	sb.append(String.format("\n  Completed: %d/%d actions", currentActionIndex, actions.size()));
+        sb.append(String.format("\n  Completed: %d/%d actions", currentActionIndex, actions.size()));
       }
     } else if (state == LogicState.COMPLETED) {
       sb.append(String.format("COMPLETED (%.1fs)", elapsedTime));

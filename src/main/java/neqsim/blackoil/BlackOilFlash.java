@@ -56,15 +56,15 @@ public final class BlackOilFlash implements Serializable {
     } else {
       double denom = 1.0 - Rs * Rv;
       if (Math.abs(denom) < 1e-12) {
-	denom = 1e-12;
+        denom = 1e-12;
       }
       Gf_std = (Gtot_std - Rs * Otot_std) / denom;
       if (Gf_std < 0) {
-	Gf_std = 0.0;
+        Gf_std = 0.0;
       }
       Ostd_liq = Otot_std - Rv * Gf_std;
       if (Ostd_liq < 0) {
-	Ostd_liq = 0.0;
+        Ostd_liq = 0.0;
       }
     }
 

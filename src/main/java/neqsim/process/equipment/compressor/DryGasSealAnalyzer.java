@@ -434,56 +434,56 @@ public class DryGasSealAnalyzer {
     for (int i = 0; i <= nSteps; i++) {
       double pOut = pStart - i * dp;
       if (pOut < 1.0) {
-	pOut = 1.0;
+        pOut = 1.0;
       }
 
       try {
-	SystemInterface expandedFluid = sealGas.clone();
-	expandedFluid.setTemperature(sealCavityTemperatureK);
-	expandedFluid.setPressure(sealCavityPressureBara);
+        SystemInterface expandedFluid = sealGas.clone();
+        expandedFluid.setTemperature(sealCavityTemperatureK);
+        expandedFluid.setPressure(sealCavityPressureBara);
 
-	ThermodynamicOperations ops = new ThermodynamicOperations(expandedFluid);
-	ops.TPflash();
-	double enthalpy = expandedFluid.getEnthalpy("J/mol");
+        ThermodynamicOperations ops = new ThermodynamicOperations(expandedFluid);
+        ops.TPflash();
+        double enthalpy = expandedFluid.getEnthalpy("J/mol");
 
-	// Now do PH flash at the lower outlet pressure
-	expandedFluid.setPressure(pOut);
-	ops.PHflash(enthalpy, "J/mol");
-	expandedFluid.initProperties();
+        // Now do PH flash at the lower outlet pressure
+        expandedFluid.setPressure(pOut);
+        ops.PHflash(enthalpy, "J/mol");
+        expandedFluid.initProperties();
 
-	double outletTempC = expandedFluid.getTemperature("C");
-	double liquidVolFraction = 0.0;
-	double liquidMolFraction = 0.0;
-	double liquidDensity = 0.0;
+        double outletTempC = expandedFluid.getTemperature("C");
+        double liquidVolFraction = 0.0;
+        double liquidMolFraction = 0.0;
+        double liquidDensity = 0.0;
 
-	if (expandedFluid.getNumberOfPhases() > 1 && expandedFluid.hasPhaseType("oil")) {
-	  liquidVolFraction = expandedFluid.getPhase("oil").getVolume("m3") / expandedFluid.getVolume("m3") * 100.0;
-	  liquidMolFraction = expandedFluid.getPhase("oil").getBeta();
-	  liquidDensity = expandedFluid.getPhase("oil").getDensity("kg/m3");
-	}
+        if (expandedFluid.getNumberOfPhases() > 1 && expandedFluid.hasPhaseType("oil")) {
+          liquidVolFraction = expandedFluid.getPhase("oil").getVolume("m3") / expandedFluid.getVolume("m3") * 100.0;
+          liquidMolFraction = expandedFluid.getPhase("oil").getBeta();
+          liquidDensity = expandedFluid.getPhase("oil").getDensity("kg/m3");
+        }
 
-	double jtCoeff = expandedFluid.getJouleThomsonCoefficient();
+        double jtCoeff = expandedFluid.getJouleThomsonCoefficient();
 
-	Map<String, Object> point = new LinkedHashMap<>();
-	point.put("pressure_bara", pOut);
-	point.put("temperature_C", outletTempC);
-	point.put("liquid_vol_pct", liquidVolFraction);
-	point.put("liquid_mol_fraction", liquidMolFraction);
-	point.put("liquid_density_kg_m3", liquidDensity);
-	point.put("jt_coefficient_K_per_bar", jtCoeff * 1e5);
-	point.put("number_of_phases", expandedFluid.getNumberOfPhases());
-	expansionPath.add(point);
+        Map<String, Object> point = new LinkedHashMap<>();
+        point.put("pressure_bara", pOut);
+        point.put("temperature_C", outletTempC);
+        point.put("liquid_vol_pct", liquidVolFraction);
+        point.put("liquid_mol_fraction", liquidMolFraction);
+        point.put("liquid_density_kg_m3", liquidDensity);
+        point.put("jt_coefficient_K_per_bar", jtCoeff * 1e5);
+        point.put("number_of_phases", expandedFluid.getNumberOfPhases());
+        expansionPath.add(point);
 
-	if (liquidVolFraction > maxLiquidFraction) {
-	  maxLiquidFraction = liquidVolFraction;
-	  maxLiquidPressure = pOut;
-	}
-	if (outletTempC < minOutletTemperatureC) {
-	  minOutletTemperatureC = outletTempC;
-	}
+        if (liquidVolFraction > maxLiquidFraction) {
+          maxLiquidFraction = liquidVolFraction;
+          maxLiquidPressure = pOut;
+        }
+        if (outletTempC < minOutletTemperatureC) {
+          minOutletTemperatureC = outletTempC;
+        }
 
       } catch (Exception ex) {
-	logger.warn("PH flash failed at P={} bara: {}", pOut, ex.getMessage());
+        logger.warn("PH flash failed at P={} bara: {}", pOut, ex.getMessage());
       }
     }
 
@@ -521,11 +521,11 @@ public class DryGasSealAnalyzer {
       vent.put("number_of_phases", ventFluid.getNumberOfPhases());
 
       if (ventFluid.hasPhaseType("oil")) {
-	double liqVol = ventFluid.getPhase("oil").getVolume("m3") / ventFluid.getVolume("m3") * 100.0;
-	vent.put("liquid_vol_pct", liqVol);
-	vent.put("liquid_density_kg_m3", ventFluid.getPhase("oil").getDensity("kg/m3"));
+        double liqVol = ventFluid.getPhase("oil").getVolume("m3") / ventFluid.getVolume("m3") * 100.0;
+        vent.put("liquid_vol_pct", liqVol);
+        vent.put("liquid_density_kg_m3", ventFluid.getPhase("oil").getDensity("kg/m3"));
       } else {
-	vent.put("liquid_vol_pct", 0.0);
+        vent.put("liquid_vol_pct", 0.0);
       }
     } catch (Exception ex) {
       vent.put("error", ex.getMessage());
@@ -576,54 +576,54 @@ public class DryGasSealAnalyzer {
 
       // Find dew point temperature at this pressure
       try {
-	SystemInterface dewFluid = sealGas.clone();
-	dewFluid.setPressure(pBara);
-	dewFluid.setTemperature(273.15 + 0.0);
-	ThermodynamicOperations dewOps = new ThermodynamicOperations(dewFluid);
-	dewOps.dewPointTemperatureFlash();
-	double dewTempC = dewFluid.getTemperature("C");
-	Map<String, Object> dewPt = new LinkedHashMap<>();
-	dewPt.put("pressure_bara", pBara);
-	dewPt.put("dew_point_C", dewTempC);
-	dewPointCurve.add(dewPt);
+        SystemInterface dewFluid = sealGas.clone();
+        dewFluid.setPressure(pBara);
+        dewFluid.setTemperature(273.15 + 0.0);
+        ThermodynamicOperations dewOps = new ThermodynamicOperations(dewFluid);
+        dewOps.dewPointTemperatureFlash();
+        double dewTempC = dewFluid.getTemperature("C");
+        Map<String, Object> dewPt = new LinkedHashMap<>();
+        dewPt.put("pressure_bara", pBara);
+        dewPt.put("dew_point_C", dewTempC);
+        dewPointCurve.add(dewPt);
       } catch (Exception ex) {
-	// Dew point calc can fail near cricondenbar or above
-	logger.debug("Dew point calc failed at P={}: {}", pBara, ex.getMessage());
+        // Dew point calc can fail near cricondenbar or above
+        logger.debug("Dew point calc failed at P={}: {}", pBara, ex.getMessage());
       }
 
       // Sweep temperature at this pressure
       for (int i = 0; i <= nT; i++) {
-	double tC = tMinC + i * dtC;
+        double tC = tMinC + i * dtC;
 
-	try {
-	  SystemInterface gridFluid = sealGas.clone();
-	  gridFluid.setTemperature(273.15 + tC);
-	  gridFluid.setPressure(pBara);
-	  gridFluid.setMultiPhaseCheck(true);
+        try {
+          SystemInterface gridFluid = sealGas.clone();
+          gridFluid.setTemperature(273.15 + tC);
+          gridFluid.setPressure(pBara);
+          gridFluid.setMultiPhaseCheck(true);
 
-	  ThermodynamicOperations gridOps = new ThermodynamicOperations(gridFluid);
-	  gridOps.TPflash();
+          ThermodynamicOperations gridOps = new ThermodynamicOperations(gridFluid);
+          gridOps.TPflash();
 
-	  double liquidVolPct = 0.0;
-	  if (gridFluid.getNumberOfPhases() > 1 && gridFluid.hasPhaseType("oil")) {
-	    liquidVolPct = gridFluid.getPhase("oil").getVolume("m3") / gridFluid.getVolume("m3") * 100.0;
-	  }
+          double liquidVolPct = 0.0;
+          if (gridFluid.getNumberOfPhases() > 1 && gridFluid.hasPhaseType("oil")) {
+            liquidVolPct = gridFluid.getPhase("oil").getVolume("m3") / gridFluid.getVolume("m3") * 100.0;
+          }
 
-	  Map<String, Object> pt = new LinkedHashMap<>();
-	  pt.put("temperature_C", tC);
-	  pt.put("pressure_bara", pBara);
-	  pt.put("liquid_vol_pct", liquidVolPct);
-	  pt.put("n_phases", gridFluid.getNumberOfPhases());
-	  gridPoints.add(pt);
+          Map<String, Object> pt = new LinkedHashMap<>();
+          pt.put("temperature_C", tC);
+          pt.put("pressure_bara", pBara);
+          pt.put("liquid_vol_pct", liquidVolPct);
+          pt.put("n_phases", gridFluid.getNumberOfPhases());
+          gridPoints.add(pt);
 
-	  if (liquidVolPct > maxLiquid) {
-	    maxLiquid = liquidVolPct;
-	    maxLiquidTC = tC;
-	    maxLiquidPBara = pBara;
-	  }
-	} catch (Exception ex) {
-	  // Skip failed points
-	}
+          if (liquidVolPct > maxLiquid) {
+            maxLiquid = liquidVolPct;
+            maxLiquidTC = tC;
+            maxLiquidPBara = pBara;
+          }
+        } catch (Exception ex) {
+          // Skip failed points
+        }
       }
     }
 
@@ -728,50 +728,50 @@ public class DryGasSealAnalyzer {
       // TP flash at current conditions
       double liquidVolPct = 0.0;
       try {
-	SystemInterface stepFluid = sealGas.clone();
-	stepFluid.setTemperature(currentTK);
-	stepFluid.setPressure(initialPBara);
-	stepFluid.setMultiPhaseCheck(true);
-	ThermodynamicOperations stepOps = new ThermodynamicOperations(stepFluid);
-	stepOps.TPflash();
+        SystemInterface stepFluid = sealGas.clone();
+        stepFluid.setTemperature(currentTK);
+        stepFluid.setPressure(initialPBara);
+        stepFluid.setMultiPhaseCheck(true);
+        ThermodynamicOperations stepOps = new ThermodynamicOperations(stepFluid);
+        stepOps.TPflash();
 
-	if (stepFluid.getNumberOfPhases() > 1 && stepFluid.hasPhaseType("oil")) {
-	  liquidVolPct = stepFluid.getPhase("oil").getVolume("m3") / stepFluid.getVolume("m3") * 100.0;
+        if (stepFluid.getNumberOfPhases() > 1 && stepFluid.hasPhaseType("oil")) {
+          liquidVolPct = stepFluid.getPhase("oil").getVolume("m3") / stepFluid.getVolume("m3") * 100.0;
 
-	  if (!condensationStarted) {
-	    condensationStarted = true;
-	    dewPointTimeHours = timeHours;
-	  }
-	}
-	if (liquidVolPct > maxLiquidFraction) {
-	  maxLiquidFraction = liquidVolPct;
-	}
+          if (!condensationStarted) {
+            condensationStarted = true;
+            dewPointTimeHours = timeHours;
+          }
+        }
+        if (liquidVolPct > maxLiquidFraction) {
+          maxLiquidFraction = liquidVolPct;
+        }
 
-	// Update gas Cp for next step
-	stepFluid.initProperties();
-	gasCp = stepFluid.getCp("J/kgK");
-	gasDensity = stepFluid.getDensity("kg/m3");
-	gasMass = gasDensity * volume;
-	gasThermalCapacity = gasMass * gasCp;
-	totalThermalCap = gasThermalCapacity + steelThermalCapacity;
+        // Update gas Cp for next step
+        stepFluid.initProperties();
+        gasCp = stepFluid.getCp("J/kgK");
+        gasDensity = stepFluid.getDensity("kg/m3");
+        gasMass = gasDensity * volume;
+        gasThermalCapacity = gasMass * gasCp;
+        totalThermalCap = gasThermalCapacity + steelThermalCapacity;
       } catch (Exception ex) {
-	// Use previous Cp values
+        // Use previous Cp values
       }
 
       // Record point every 15 minutes (or at key events)
       if (step % Math.max(1, (int) (900.0 / dt)) == 0 || step == 0
-	  || (condensationStarted && step == (int) (dewPointTimeHours * 3600.0 / dt))) {
-	Map<String, Object> pt = new LinkedHashMap<>();
-	pt.put("time_hours", timeHours);
-	pt.put("temperature_C", currentTK - 273.15);
-	pt.put("liquid_vol_pct", liquidVolPct);
-	pt.put("condensation_started", condensationStarted);
-	cooldownProfile.add(pt);
+          || (condensationStarted && step == (int) (dewPointTimeHours * 3600.0 / dt))) {
+        Map<String, Object> pt = new LinkedHashMap<>();
+        pt.put("time_hours", timeHours);
+        pt.put("temperature_C", currentTK - 273.15);
+        pt.put("liquid_vol_pct", liquidVolPct);
+        pt.put("condensation_started", condensationStarted);
+        cooldownProfile.add(pt);
       }
 
       // Stop if gas has reached ambient temperature
       if (Math.abs(currentTK - ambientTemperatureK) < 0.1) {
-	break;
+        break;
       }
 
       // Calculate heat loss
@@ -783,7 +783,7 @@ public class DryGasSealAnalyzer {
       double dT = -qLoss * dt / totalThermalCap;
       currentTK += dT;
       if (currentTK < ambientTemperatureK) {
-	currentTK = ambientTemperatureK;
+        currentTK = ambientTemperatureK;
       }
     }
 
@@ -836,16 +836,16 @@ public class DryGasSealAnalyzer {
     double hForced = 5.0; // minimum natural convection
     if (re > 1.0) {
       double nuForced = 0.3 + 0.62 * Math.pow(re, 0.5) * Math.pow(airPr, 1.0 / 3.0)
-	  / Math.pow(1.0 + Math.pow(0.4 / airPr, 2.0 / 3.0), 0.25)
-	  * Math.pow(1.0 + Math.pow(re / 282000.0, 5.0 / 8.0), 4.0 / 5.0);
+          / Math.pow(1.0 + Math.pow(0.4 / airPr, 2.0 / 3.0), 0.25)
+          * Math.pow(1.0 + Math.pow(re / 282000.0, 5.0 / 8.0), 4.0 / 5.0);
       hForced = nuForced * airK / dOuter;
     }
 
     // Radiation
     double emissivity = 0.9; // oxidised steel
     double hRad = emissivity * STEFAN_BOLTZMANN
-	* (surfaceTemperatureK * surfaceTemperatureK + ambientTemperatureK * ambientTemperatureK)
-	* (surfaceTemperatureK + ambientTemperatureK);
+        * (surfaceTemperatureK * surfaceTemperatureK + ambientTemperatureK * ambientTemperatureK)
+        * (surfaceTemperatureK + ambientTemperatureK);
 
     return hForced + hRad;
   }
@@ -946,9 +946,9 @@ public class DryGasSealAnalyzer {
       double liquidMW = 0.080; // kg/mol default
 
       if (ventFluid.getNumberOfPhases() > 1 && ventFluid.hasPhaseType("oil")) {
-	liquidMolFraction = ventFluid.getPhase("oil").getBeta();
-	liquidDensity = ventFluid.getPhase("oil").getDensity("kg/m3");
-	liquidMW = ventFluid.getPhase("oil").getMolarMass("kg/mol");
+        liquidMolFraction = ventFluid.getPhase("oil").getBeta();
+        liquidDensity = ventFluid.getPhase("oil").getDensity("kg/m3");
+        liquidMW = ventFluid.getPhase("oil").getMolarMass("kg/mol");
       }
 
       // Liquid molar flow rate
@@ -1044,8 +1044,8 @@ public class DryGasSealAnalyzer {
       double condensateDensity = 550.0;
       double condensateMW = 0.080;
       if (ventFluid.hasPhaseType("oil")) {
-	condensateDensity = ventFluid.getPhase("oil").getDensity("kg/m3");
-	condensateMW = ventFluid.getPhase("oil").getMolarMass("kg/mol");
+        condensateDensity = ventFluid.getPhase("oil").getDensity("kg/m3");
+        condensateMW = ventFluid.getPhase("oil").getMolarMass("kg/mol");
       }
 
       double condensateMass = condensateDensity * liquidVolumeM3;
@@ -1069,11 +1069,11 @@ public class DryGasSealAnalyzer {
       // This gives the confined pressure rise
       flashFluid.setTemperature(repressT);
       try {
-	flashOps.TVflash(molarVolAtCondensation, "m3/mol");
-	double confinedPressureBara = flashFluid.getPressure("bara");
-	result.put("confined_flash_pressure_bara", confinedPressureBara);
+        flashOps.TVflash(molarVolAtCondensation, "m3/mol");
+        double confinedPressureBara = flashFluid.getPressure("bara");
+        result.put("confined_flash_pressure_bara", confinedPressureBara);
       } catch (Exception tvEx) {
-	result.put("confined_flash_pressure_note", "TV flash not converged");
+        result.put("confined_flash_pressure_note", "TV flash not converged");
       }
 
       // Method 2: Water hammer / Joukowsky pressure rise
@@ -1084,17 +1084,17 @@ public class DryGasSealAnalyzer {
 
       // Get actual speed of sound from NeqSim
       try {
-	SystemInterface soundFluid = sealGas.clone();
-	soundFluid.setTemperature(sealCavityTemperatureK);
-	soundFluid.setPressure(sealCavityPressureBara);
-	ThermodynamicOperations soundOps = new ThermodynamicOperations(soundFluid);
-	soundOps.TPflash();
-	soundFluid.initProperties();
-	if (soundFluid.hasPhaseType("gas")) {
-	  gasSpeedOfSound = soundFluid.getPhase("gas").getSoundSpeed();
-	}
+        SystemInterface soundFluid = sealGas.clone();
+        soundFluid.setTemperature(sealCavityTemperatureK);
+        soundFluid.setPressure(sealCavityPressureBara);
+        ThermodynamicOperations soundOps = new ThermodynamicOperations(soundFluid);
+        soundOps.TPflash();
+        soundFluid.initProperties();
+        if (soundFluid.hasPhaseType("gas")) {
+          gasSpeedOfSound = soundFluid.getPhase("gas").getSoundSpeed();
+        }
       } catch (Exception sEx) {
-	// use default
+        // use default
       }
 
       // Slug acceleration: dP/dx = rho * a for the liquid slug
@@ -1193,21 +1193,21 @@ public class DryGasSealAnalyzer {
       double dpSearch = (pSearchMax - pSearchMin) / nSearch;
 
       for (int i = 0; i <= nSearch; i++) {
-	double pSearch = pSearchMin + i * dpSearch;
-	try {
-	  SystemInterface dewSweep = sealGas.clone();
-	  dewSweep.setPressure(pSearch);
-	  dewSweep.setTemperature(273.15 + 0.0);
-	  ThermodynamicOperations dewSweepOps = new ThermodynamicOperations(dewSweep);
-	  dewSweepOps.dewPointTemperatureFlash();
-	  double dewTempC = dewSweep.getTemperature("C");
-	  if (dewTempC > maxDewPointC) {
-	    maxDewPointC = dewTempC;
-	    maxDewPointPBara = pSearch;
-	  }
-	} catch (Exception dewEx) {
-	  // Dew point calc can fail near or above cricondenbar — skip
-	}
+        double pSearch = pSearchMin + i * dpSearch;
+        try {
+          SystemInterface dewSweep = sealGas.clone();
+          dewSweep.setPressure(pSearch);
+          dewSweep.setTemperature(273.15 + 0.0);
+          ThermodynamicOperations dewSweepOps = new ThermodynamicOperations(dewSweep);
+          dewSweepOps.dewPointTemperatureFlash();
+          double dewTempC = dewSweep.getTemperature("C");
+          if (dewTempC > maxDewPointC) {
+            maxDewPointC = dewTempC;
+            maxDewPointPBara = pSearch;
+          }
+        } catch (Exception dewEx) {
+          // Dew point calc can fail near or above cricondenbar — skip
+        }
       }
     } catch (Exception sweepEx) {
       logger.warn("GCU dew point sweep failed: {}", sweepEx.getMessage());
@@ -1272,8 +1272,8 @@ public class DryGasSealAnalyzer {
       double liquidVolPct = 0.0;
       double liquidMolFraction = 0.0;
       if (coldFluid.getNumberOfPhases() > 1 && coldFluid.hasPhaseType("oil")) {
-	liquidVolPct = coldFluid.getPhase("oil").getVolume("m3") / coldFluid.getVolume("m3") * 100.0;
-	liquidMolFraction = coldFluid.getPhase("oil").getBeta();
+        liquidVolPct = coldFluid.getPhase("oil").getVolume("m3") / coldFluid.getVolume("m3") * 100.0;
+        liquidMolFraction = coldFluid.getPhase("oil").getBeta();
       }
       result.put("liquid_separated_vol_pct", liquidVolPct);
       result.put("liquid_separated_mol_fraction", liquidMolFraction);
@@ -1353,7 +1353,7 @@ public class DryGasSealAnalyzer {
       Map<String, Object> jt = (Map<String, Object>) jtResult;
       Object maxLiq = jt.get("max_liquid_vol_pct");
       if (maxLiq instanceof Number && ((Number) maxLiq).doubleValue() > 0.01) {
-	return false;
+        return false;
       }
     }
 
@@ -1363,7 +1363,7 @@ public class DryGasSealAnalyzer {
       Map<String, Object> retro = (Map<String, Object>) retroResult;
       Object maxRetroLiq = retro.get("max_liquid_vol_pct");
       if (maxRetroLiq instanceof Number && ((Number) maxRetroLiq).doubleValue() > 0.01) {
-	return false;
+        return false;
       }
     }
 
@@ -1387,7 +1387,7 @@ public class DryGasSealAnalyzer {
       Map<String, Object> accum = (Map<String, Object>) accumResult;
       Object fillTime = accum.get("fill_time_hours");
       if (fillTime instanceof Number) {
-	return ((Number) fillTime).doubleValue();
+        return ((Number) fillTime).doubleValue();
       }
     }
     return -1.0;
@@ -1409,7 +1409,7 @@ public class DryGasSealAnalyzer {
       Map<String, Object> jt = (Map<String, Object>) jtResult;
       Object maxLiq = jt.get("max_liquid_vol_pct");
       if (maxLiq instanceof Number) {
-	return ((Number) maxLiq).doubleValue();
+        return ((Number) maxLiq).doubleValue();
       }
     }
     return 0.0;
@@ -1440,7 +1440,7 @@ public class DryGasSealAnalyzer {
    */
   public String toJson() {
     return new com.google.gson.GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-	.toJson(results);
+        .toJson(results);
   }
 
   // ═══════════════════════════════════════════════════════════════════

@@ -205,10 +205,10 @@ class LoopedPipeNetworkTest {
     boolean foundPipe3Reverse = false;
     for (NetworkLoop.LoopMember member : loop.getMembers()) {
       if (member.getPipeName().equals("pipe1") && member.getDirection() == 1) {
-	foundPipe1 = true;
+        foundPipe1 = true;
       }
       if (member.getPipeName().equals("pipe3") && member.getDirection() == -1) {
-	foundPipe3Reverse = true;
+        foundPipe3Reverse = true;
       }
     }
     assertTrue(foundPipe1, "Should find pipe1 with positive direction");
@@ -348,7 +348,7 @@ class LoopedPipeNetworkTest {
     // The main loop should have 4 edges (the ring path)
     if (!loops.isEmpty()) {
       assertEquals(4, loops.get(0).getMembers().size(),
-	  "Ring loop should have 4 members: riser1, ring12, ring23, riser2");
+          "Ring loop should have 4 members: riser1, ring12, ring23, riser2");
     }
   }
 
@@ -387,7 +387,7 @@ class LoopedPipeNetworkTest {
     double upperFlow = Math.abs(network.getPipeFlowRate("upper"));
     double lowerFlow = Math.abs(network.getPipeFlowRate("lower"));
     assertTrue(lowerFlow > upperFlow,
-	"Shorter/larger pipe should carry more flow: lower=" + lowerFlow + " upper=" + upperFlow);
+        "Shorter/larger pipe should carry more flow: lower=" + lowerFlow + " upper=" + upperFlow);
 
     // Total flow in parallel section should equal inlet flow
     double inletFlow = Math.abs(network.getPipeFlowRate("inlet"));
@@ -457,7 +457,7 @@ class LoopedPipeNetworkTest {
     double lowerFlow = Math.abs(network.getPipeFlowRate("lower"));
     double diff = Math.abs(upperFlow - lowerFlow);
     assertTrue(diff < upperFlow * 0.1,
-	"Equal parallel pipes should carry similar flow: upper=" + upperFlow + " lower=" + lowerFlow);
+        "Equal parallel pipes should carry similar flow: upper=" + upperFlow + " lower=" + lowerFlow);
   }
 
   /**
@@ -501,7 +501,7 @@ class LoopedPipeNetworkTest {
     boolean hasFluidError = false;
     for (String issue : issues) {
       if (issue.contains("Fluid template")) {
-	hasFluidError = true;
+        hasFluidError = true;
       }
     }
     assertTrue(hasFluidError, "Should report missing fluid template");
@@ -516,7 +516,7 @@ class LoopedPipeNetworkTest {
     boolean hasErrors = false;
     for (String issue : issues2) {
       if (issue.startsWith("ERROR")) {
-	hasErrors = true;
+        hasErrors = true;
       }
     }
     assertTrue(!hasErrors, "Valid network should have no errors");
@@ -754,8 +754,8 @@ class LoopedPipeNetworkTest {
     logger.info("Manifold 3: " + String.format("%.4f", m3P) + " bara");
     for (String pipeName : network.getPipeNames()) {
       logger.info(pipeName + ": " + String.format("%.1f", network.getPipeFlowRate(pipeName)) + " kg/hr, dP="
-	  + String.format("%.4f", network.getPipeHeadLoss(pipeName)) + " bar, v="
-	  + String.format("%.3f", network.getPipeVelocity(pipeName)) + " m/s");
+          + String.format("%.4f", network.getPipeHeadLoss(pipeName)) + " bar, v="
+          + String.format("%.3f", network.getPipeVelocity(pipeName)) + " m/s");
     }
 
     // Verify convergence and solution quality
@@ -979,7 +979,7 @@ class LoopedPipeNetworkTest {
 
       double flow = network.getPipeFlowRate("ipr");
       assertTrue(flow < previousFlow || opening == 100.0,
-	  "Reducing choke opening should reduce flow: " + flow + " at " + opening + "%");
+          "Reducing choke opening should reduce flow: " + flow + " at " + opening + "%");
       previousFlow = flow;
 
       System.out.println("Opening=" + opening + "% -> Flow=" + String.format("%.1f", flow) + " kg/hr");
@@ -1105,9 +1105,9 @@ class LoopedPipeNetworkTest {
 
     logger.info("=== Multi-Well Gathering Network ===");
     logger.info("Well 1: " + String.format("%.1f", flow1) + " kg/hr, WHP="
-	+ String.format("%.2f", network.getNodePressure("wh1")) + " bara");
+        + String.format("%.2f", network.getNodePressure("wh1")) + " bara");
     logger.info("Well 2: " + String.format("%.1f", flow2) + " kg/hr, WHP="
-	+ String.format("%.2f", network.getNodePressure("wh2")) + " bara");
+        + String.format("%.2f", network.getNodePressure("wh2")) + " bara");
     logger.info("Manifold P = " + String.format("%.2f", pManifold) + " bara");
     logger.info("Export: " + String.format("%.1f", exportFlow) + " kg/hr");
   }
@@ -1227,8 +1227,8 @@ class LoopedPipeNetworkTest {
 
     logger.info("=== Complete Well System ===");
     logger.info("P_res=" + String.format("%.1f", pRes) + " -> BHP=" + String.format("%.1f", pBh) + " -> WHP="
-	+ String.format("%.1f", pWh) + " -> DS_choke=" + String.format("%.1f", pDs) + " -> Sep="
-	+ String.format("%.1f", pSep) + " bara");
+        + String.format("%.1f", pWh) + " -> DS_choke=" + String.format("%.1f", pDs) + " -> Sep="
+        + String.format("%.1f", pSep) + " bara");
     logger.info("IPR drawdown = " + String.format("%.1f", pRes - pBh) + " bar");
     logger.info("Tubing dP = " + String.format("%.1f", pBh - pWh) + " bar");
     logger.info("Choke dP = " + String.format("%.1f", pWh - pDs) + " bar");
@@ -1302,7 +1302,7 @@ class LoopedPipeNetworkTest {
     // Outlet stream should have solved pressure
     double outPressureBara = outStream.getPressure("bara");
     assertTrue(outPressureBara > 1.0 && outPressureBara < 50.0,
-	"Outlet pressure should be between 1 and 50 bara, got " + outPressureBara);
+        "Outlet pressure should be between 1 and 50 bara, got " + outPressureBara);
 
     // Default getOutletStream() should return the same
     neqsim.process.equipment.stream.StreamInterface defaultOut = network.getOutletStream();
@@ -1448,7 +1448,7 @@ class LoopedPipeNetworkTest {
     assertNotNull(pipelineOutlet, "Pipeline outlet should exist");
 
     neqsim.process.equipment.separator.Separator separator = new neqsim.process.equipment.separator.Separator("HP Sep",
-	pipelineOutlet);
+        pipelineOutlet);
     process.add(separator);
 
     // Run separator
@@ -1587,7 +1587,7 @@ class LoopedPipeNetworkTest {
 
     // Fouled pipe should carry less flow (or at least not more)
     assertTrue(Math.abs(flowFouled) <= Math.abs(flowDefault) * 1.01,
-	"Fouled pipe should not carry more flow than clean pipe");
+        "Fouled pipe should not carry more flow than clean pipe");
   }
 
   /**
@@ -1676,7 +1676,7 @@ class LoopedPipeNetworkTest {
     // The mixed methane fraction should be between the two sources
     double methaneZ = mixedFluid.getPhase(0).getComponent("methane").getz();
     assertTrue(methaneZ > 0.79 && methaneZ < 0.96,
-	"Mixed methane fraction should be between lean and rich gas: " + methaneZ);
+        "Mixed methane fraction should be between lean and rich gas: " + methaneZ);
   }
 
   /**
@@ -1990,11 +1990,11 @@ class LoopedPipeNetworkTest {
     double[] well1Quality = network.getNodeGasQuality("well1");
     assertNotNull(well1Quality, "Well1 should have gas quality data");
     assertTrue(well1Quality[0] > 40.0 && well1Quality[0] < 60.0,
-	"Wobbe index should be in typical range (40-60 MJ/Sm3): " + well1Quality[0]);
+        "Wobbe index should be in typical range (40-60 MJ/Sm3): " + well1Quality[0]);
     assertTrue(well1Quality[1] > 30000 && well1Quality[1] < 50000,
-	"HHV should be reasonable (30000-50000 kJ/Sm3): " + well1Quality[1]);
+        "HHV should be reasonable (30000-50000 kJ/Sm3): " + well1Quality[1]);
     assertTrue(well1Quality[3] > 0.5 && well1Quality[3] < 1.0,
-	"Relative density should be between 0.5 and 1.0: " + well1Quality[3]);
+        "Relative density should be between 0.5 and 1.0: " + well1Quality[3]);
 
     // Lean gas should have higher Wobbe than rich gas (more methane, less heavy)
     double[] well2Quality = network.getNodeGasQuality("well2");
@@ -2054,7 +2054,7 @@ class LoopedPipeNetworkTest {
     logger.info("Nodal debug: wellhead P=" + network.getNodePressure("wellhead"));
     for (int i = 0; i < Math.min(5, bhps.length); i++) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "  BHP=%.1f: IPR=%.0f, VLP=%.0f%n", bhps[i], iprRates[i],
-	  vlpRates[i]);
+          vlpRates[i]);
     }
 
     // Operating point should exist
@@ -2391,7 +2391,7 @@ class LoopedPipeNetworkTest {
     for (double f : flows) {
       assertTrue(f >= 0, "Flow should not be negative");
       if (f > 0) {
-	anyPositive = true;
+        anyPositive = true;
       }
     }
     assertTrue(anyPositive, "At least some choke openings should produce flow");
@@ -2483,14 +2483,14 @@ class LoopedPipeNetworkTest {
     // BHP should be positive
     for (int f = 0; f < flowRates.length; f++) {
       for (int t = 0; t < thps.length; t++) {
-	assertTrue(bhpTable[f][t] > 0, "BHP should be positive at flow=" + flowRates[f] + " THP=" + thps[t]);
+        assertTrue(bhpTable[f][t] > 0, "BHP should be positive at flow=" + flowRates[f] + " THP=" + thps[t]);
       }
     }
 
     // BHP should increase with THP
     for (int f = 0; f < flowRates.length; f++) {
       assertTrue(bhpTable[f][thps.length - 1] >= bhpTable[f][0],
-	  "BHP should increase with THP for flow rate index " + f);
+          "BHP should increase with THP for flow rate index " + f);
     }
   }
 
@@ -2541,7 +2541,7 @@ class LoopedPipeNetworkTest {
     double[][] bhpTable = tables.values().iterator().next();
 
     java.util.Map<String, Double> validation = network.validateVFPPoint(bhpTable, flowRates, thps, 2000, 60.0,
-	bhpTable[1][1]);
+        bhpTable[1][1]);
 
     assertNotNull(validation.get("error_pct"), "Should have error percentage");
     assertTrue(validation.get("error_pct") < 5.0, "Error at table point should be small");
@@ -2657,7 +2657,7 @@ class LoopedPipeNetworkTest {
     assertNotNull(outlet, "Should have outlet stream");
 
     neqsim.process.equipment.stream.Stream feed = new neqsim.process.equipment.stream.Stream("Feed",
-	outlet.getFluid().clone());
+        outlet.getFluid().clone());
     feed.setFlowRate(outlet.getFlowRate("kg/hr"), "kg/hr");
     feed.setPressure(outlet.getPressure("bara"), "bara");
     feed.setTemperature(25.0, "C");
@@ -2667,7 +2667,7 @@ class LoopedPipeNetworkTest {
     sep.setSeparatorLength(10.0);
 
     neqsim.process.equipment.compressor.Compressor comp = new neqsim.process.equipment.compressor.Compressor("Comp",
-	sep.getGasOutStream());
+        sep.getGasOutStream());
     comp.setOutletPressure(150.0);
     comp.setPolytropicEfficiency(0.78);
 
@@ -3099,7 +3099,7 @@ class LoopedPipeNetworkTest {
 
     // Gas lift should increase production by reducing head loss
     assertTrue(liftedFlow >= baseFlow * 0.95,
-	"Gas lift should maintain or increase flow: base=" + baseFlow + " lifted=" + liftedFlow);
+        "Gas lift should maintain or increase flow: base=" + baseFlow + " lifted=" + liftedFlow);
 
     // Total gas lift rate should be tracked
     assertEquals(500.0, network.getTotalGasLiftRate(), 1.0);
@@ -3124,7 +3124,7 @@ class LoopedPipeNetworkTest {
 
     // ESP should boost production
     assertTrue(espFlow >= baseFlow * 0.95,
-	"ESP should maintain or increase flow: base=" + baseFlow + " esp=" + espFlow);
+        "ESP should maintain or increase flow: base=" + baseFlow + " esp=" + espFlow);
     assertEquals(50.0, network.getTotalESPPower(), 0.1);
   }
 
@@ -3168,12 +3168,12 @@ class LoopedPipeNetworkTest {
     // Create 120 wells (20 per manifold)
     for (int m = 1; m <= 6; m++) {
       for (int w = 1; w <= 20; w++) {
-	String resNode = "res_m" + m + "_w" + w;
-	String wellName = "well_m" + m + "_w" + w;
-	double pRes = 250.0 + (w * 2.0); // Vary reservoir pressure slightly
+        String resNode = "res_m" + m + "_w" + w;
+        String wellName = "well_m" + m + "_w" + w;
+        double pRes = 250.0 + (w * 2.0); // Vary reservoir pressure slightly
 
-	network.addSourceNode(resNode, pRes, 0.0);
-	network.addWellIPR(resNode, "manifold" + m, wellName, 5e-13, true);
+        network.addSourceNode(resNode, pRes, 0.0);
+        network.addWellIPR(resNode, "manifold" + m, wellName, 5e-13, true);
       }
     }
 
@@ -3185,11 +3185,11 @@ class LoopedPipeNetworkTest {
     int activeWells = 0;
     for (int m = 1; m <= 6; m++) {
       for (int w = 1; w <= 20; w++) {
-	String wellName = "well_m" + m + "_w" + w;
-	double flow = network.getPipeFlowRate(wellName) * 3600.0;
-	if (flow > 0.1) {
-	  activeWells++;
-	}
+        String wellName = "well_m" + m + "_w" + w;
+        double flow = network.getPipeFlowRate(wellName) * 3600.0;
+        if (flow > 0.1) {
+          activeWells++;
+        }
       }
     }
     assertTrue(activeWells >= 100, "At least 100 of 120 wells should be active, got: " + activeWells);

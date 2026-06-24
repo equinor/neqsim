@@ -92,7 +92,7 @@ public class DeBoerAsphalteneScreeningTest {
 
     // Light oil with high undersaturation should be problematic
     assertTrue(risk.ordinal() >= DeBoerAsphalteneScreening.DeBoerRisk.MODERATE_PROBLEM.ordinal(),
-	"Should be at least moderate problem: " + risk);
+        "Should be at least moderate problem: " + risk);
   }
 
   @Test

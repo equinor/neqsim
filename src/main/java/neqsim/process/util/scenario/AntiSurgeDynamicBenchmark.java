@@ -132,21 +132,21 @@ public class AntiSurgeDynamicBenchmark {
       compressor.setDistanceToSurge(margin);
 
       if (controllerActive) {
-	controller.runTransient(controller.getValveOpening(), timeStep, UUID.randomUUID());
+        controller.runTransient(controller.getValveOpening(), timeStep, UUID.randomUUID());
       }
 
       double appliedOpening = controllerActive ? recycleValve.getPercentValveOpening() : 0.0;
       surgeMarginTrace[k] = margin;
       valveOpeningTrace[k] = appliedOpening;
       if (margin < minimumSurgeMargin) {
-	minimumSurgeMargin = margin;
+        minimumSurgeMargin = margin;
       }
       if (appliedOpening > maximumValveOpening) {
-	maximumValveOpening = appliedOpening;
+        maximumValveOpening = appliedOpening;
       }
     }
     logger.debug("AntiSurgeDynamicBenchmark finished: minMargin={}, maxOpening={}", minimumSurgeMargin,
-	maximumValveOpening);
+        maximumValveOpening);
   }
 
   /**

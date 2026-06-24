@@ -167,7 +167,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       oldoldError = error;
       derivativeState = 0.0;
       if (propConstant != 0) {
-	TintValue = (manualOutput - initResponse) / propConstant;
+        TintValue = (manualOutput - initResponse) / propConstant;
       }
       bumplessTransferPending = false;
     }
@@ -182,10 +182,10 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     if (usesDefaultUnit) {
       double measurementPercent = transmitter.getMeasuredPercentValue();
       double setPointPercent = (controllerSetPoint - transmitter.getMinimumValue())
-	  / (transmitter.getMaximumValue() - transmitter.getMinimumValue()) * 100.0;
+          / (transmitter.getMaximumValue() - transmitter.getMinimumValue()) * 100.0;
       error = measurementPercent - setPointPercent;
       if (Ti != 0) {
-	TintValue = Kp / Ti * error;
+        TintValue = Kp / Ti * error;
       }
       double TderivValue = Kp * Td * ((error - 2 * oldError + oldoldError) / (dt * dt));
       response = initResponse + propConstant * ((Kp * (error - oldError) / dt) + TintValue + TderivValue) * dt;
@@ -198,25 +198,25 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       integralAbsoluteError += Math.abs(error) * dt;
       band = settlingTolerance * Math.max(Math.abs(controllerSetPoint), 1.0);
       if (Math.abs(error) > band) {
-	lastTimeOutsideBand = totalTime;
+        lastTimeOutsideBand = totalTime;
       }
       TintIncrement = 0.0;
       if (Ti > 0) {
-	TintIncrement = Kp / Ti * error * dt;
-	TintValue += TintIncrement;
+        TintIncrement = Kp / Ti * error * dt;
+        TintValue += TintIncrement;
       } else {
-	TintValue = 0.0;
+        TintValue = 0.0;
       }
 
       derivative = (error - oldError) / dt;
       if (Td > 0) {
-	if (derivativeFilterTime > 0) {
-	  derivativeState += dt / (derivativeFilterTime + dt) * (derivative - derivativeState);
-	} else {
-	  derivativeState = derivative;
-	}
+        if (derivativeFilterTime > 0) {
+          derivativeState += dt / (derivativeFilterTime + dt) * (derivative - derivativeState);
+        } else {
+          derivativeState = derivative;
+        }
       } else {
-	derivativeState = 0.0;
+        derivativeState = 0.0;
       }
 
       delta = Kp * (propError - oldPropError) + TintValue + Kp * Td * derivativeState;
@@ -224,15 +224,15 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       response = initResponse + propConstant * delta;
 
       if (response > maxResponse) {
-	response = maxResponse;
-	if (Ti > 0) {
-	  TintValue -= TintIncrement;
-	}
+        response = maxResponse;
+        if (Ti > 0) {
+          TintValue -= TintIncrement;
+        }
       } else if (response < minResponse) {
-	response = minResponse;
-	if (Ti > 0) {
-	  TintValue -= TintIncrement;
-	}
+        response = minResponse;
+        if (Ti > 0) {
+          TintValue -= TintIncrement;
+        }
       }
     }
 
@@ -287,7 +287,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
    */
   public void setReferenceDesignation(neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignation) {
     this.referenceDesignation = referenceDesignation != null ? referenceDesignation
-	: new neqsim.process.equipment.iec81346.ReferenceDesignation();
+        : new neqsim.process.equipment.iec81346.ReferenceDesignation();
   }
 
   /**
@@ -480,20 +480,20 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       double lambda = Math.max(theta, timeConstant / 4.0);
 
       if (tuneDerivative) {
-	double halfTheta = 0.5 * theta;
-	kp = (timeConstant + halfTheta) / (lambda + halfTheta) / processGain;
-	ti = timeConstant + halfTheta;
-	double denominator = 2.0 * timeConstant + theta;
-	td = denominator > 0.0 ? timeConstant * theta / denominator : 0.0;
+        double halfTheta = 0.5 * theta;
+        kp = (timeConstant + halfTheta) / (lambda + halfTheta) / processGain;
+        ti = timeConstant + halfTheta;
+        double denominator = 2.0 * timeConstant + theta;
+        td = denominator > 0.0 ? timeConstant * theta / denominator : 0.0;
       } else {
-	kp = timeConstant / (lambda + theta) / processGain;
-	ti = Math.min(timeConstant, 4.0 * (lambda + theta));
+        kp = timeConstant / (lambda + theta) / processGain;
+        ti = Math.min(timeConstant, 4.0 * (lambda + theta));
       }
     } else {
       double theta = deadTime;
       if (theta <= 0.0) {
-	logger.warn("Invalid dead time for classic step response auto tune.");
-	return;
+        logger.warn("Invalid dead time for classic step response auto tune.");
+        return;
       }
       kp = 1.2 / processGain * (timeConstant / theta);
       ti = 2.0 * theta;
@@ -555,17 +555,17 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     for (ControllerEvent event : eventLog) {
       double value = event.getMeasuredValue();
       if (Double.isNaN(tStart)) {
-	if ((positiveChange && value >= startThreshold) || (!positiveChange && value <= startThreshold)) {
-	  tStart = event.getTime();
-	}
+        if ((positiveChange && value >= startThreshold) || (!positiveChange && value <= startThreshold)) {
+          tStart = event.getTime();
+        }
       }
       if (Double.isNaN(t63)) {
-	if ((positiveChange && value >= threshold63) || (!positiveChange && value <= threshold63)) {
-	  t63 = event.getTime();
-	}
+        if ((positiveChange && value >= threshold63) || (!positiveChange && value <= threshold63)) {
+          t63 = event.getTime();
+        }
       }
       if (!Double.isNaN(tStart) && !Double.isNaN(t63)) {
-	break;
+        break;
       }
     }
 

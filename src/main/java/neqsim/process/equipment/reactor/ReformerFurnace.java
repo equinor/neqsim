@@ -340,11 +340,11 @@ public class ReformerFurnace extends ProcessEquipmentBaseClass {
   @Override
   public double getMassBalance(String unit) {
     if (processInletStream == null || fuelInletStream == null || airInletStream == null || syngasOutStream == null
-	|| flueGasOutStream == null) {
+        || flueGasOutStream == null) {
       return Double.NaN;
     }
     double inletMass = processInletStream.getFlowRate(unit) + fuelInletStream.getFlowRate(unit)
-	+ airInletStream.getFlowRate(unit);
+        + airInletStream.getFlowRate(unit);
     double outletMass = syngasOutStream.getFlowRate(unit) + flueGasOutStream.getFlowRate(unit);
     return outletMass - inletMass;
   }

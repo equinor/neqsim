@@ -170,7 +170,7 @@ public class BroydenAccelerator implements Serializable {
     if (stepNorm > maxStepSize) {
       double scale = maxStepSize / stepNorm;
       for (int i = 0; i < n; i++) {
-	step[i] *= scale;
+        step[i] *= scale;
       }
       logger.debug("Broyden step limited from {} to {}", stepNorm, maxStepSize);
     }
@@ -224,14 +224,14 @@ public class BroydenAccelerator implements Serializable {
     for (int j = 0; j < n; j++) {
       deltaXTransposeBinv[j] = 0.0;
       for (int i = 0; i < n; i++) {
-	deltaXTransposeBinv[j] += deltaX[i] * inverseJacobian[i][j];
+        deltaXTransposeBinv[j] += deltaX[i] * inverseJacobian[i][j];
       }
     }
 
     // Update inverse Jacobian: B^{-1} += (numerator * deltaXTransposeBinv) / denom
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
-	inverseJacobian[i][j] += numerator[i] * deltaXTransposeBinv[j] / denom;
+        inverseJacobian[i][j] += numerator[i] * deltaXTransposeBinv[j] / denom;
       }
     }
   }
@@ -249,7 +249,7 @@ public class BroydenAccelerator implements Serializable {
     for (int i = 0; i < n; i++) {
       result[i] = 0.0;
       for (int j = 0; j < n; j++) {
-	result[i] += matrix[i][j] * vector[j];
+        result[i] += matrix[i][j] * vector[j];
       }
     }
     return result;

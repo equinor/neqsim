@@ -97,7 +97,7 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
     SystemInterface gasCooled = gasIn.clone();
     gasCooled.setTemperature(minGasOutTemp);
     neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	gasCooled);
+        gasCooled);
     ops.TPflash();
     double gasEnthalypCooled = gasCooled.getEnthalpy();
 
@@ -113,7 +113,7 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
     double actualGasOutEnthalpy = gasInletEnthalpy - heatTransferred;
     SystemInterface gasOut = gasIn.clone();
     neqsim.thermodynamicoperations.ThermodynamicOperations opsOut = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	gasOut);
+        gasOut);
     try {
       opsOut.PHflash(actualGasOutEnthalpy);
     } catch (Exception ex) {
@@ -385,9 +385,9 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
     capacityConstraints.clear();
     if (designHeatDutyW > 0) {
       addCapacityConstraint(new CapacityConstraint("heatDuty", "kW", CapacityConstraint.ConstraintType.HARD)
-	  .setDesignValue(designHeatDutyW / 1000.0).setMaxValue(designHeatDutyW / 1000.0 * 1.1).setWarningThreshold(0.9)
-	  .setDescription("HRSG heat transfer duty vs design capacity")
-	  .setValueSupplier(() -> Math.abs(this.heatTransferred) / 1000.0));
+          .setDesignValue(designHeatDutyW / 1000.0).setMaxValue(designHeatDutyW / 1000.0 * 1.1).setWarningThreshold(0.9)
+          .setDescription("HRSG heat transfer duty vs design capacity")
+          .setValueSupplier(() -> Math.abs(this.heatTransferred) / 1000.0));
     }
   }
 
@@ -405,8 +405,8 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
     for (CapacityConstraint c : capacityConstraints.values()) {
       double util = c.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-	maxUtil = util;
-	bottleneck = c;
+        maxUtil = util;
+        bottleneck = c;
       }
     }
     return bottleneck;
@@ -417,7 +417,7 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
   public boolean isCapacityExceeded() {
     for (CapacityConstraint c : capacityConstraints.values()) {
       if (c.isViolated()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -428,7 +428,7 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
   public boolean isHardLimitExceeded() {
     for (CapacityConstraint c : capacityConstraints.values()) {
       if (c.isHardLimitExceeded()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -441,7 +441,7 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
     for (CapacityConstraint c : capacityConstraints.values()) {
       double util = c.getUtilization();
       if (!Double.isNaN(util)) {
-	maxUtil = Math.max(maxUtil, util);
+        maxUtil = Math.max(maxUtil, util);
       }
     }
     return maxUtil;
@@ -489,7 +489,7 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
     if (designHeatDutyW > 0) {
       sb.append("Design Heat Duty: ").append(String.format("%.2f kW", designHeatDutyW / 1000.0)).append("\n");
       sb.append("Utilization: ").append(String.format("%.1f%%", Math.abs(heatTransferred) / designHeatDutyW * 100))
-	  .append("\n");
+          .append("\n");
     }
     return sb.toString();
   }

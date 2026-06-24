@@ -287,21 +287,21 @@ public class ConceptEvaluator {
 
     ProductionProfileGenerator generator = new ProductionProfileGenerator();
     Map<Integer, Double> profile = generator.generateFromReservoirInput(reservoir, peakRatePerDay, gasConcept, 2026,
-	30);
+        30);
 
     double targetRecoverable = reservoir != null ? reservoir.getRecoverableResourceEstimate() : 0.0;
     String resourceUnit = reservoir != null ? reservoir.getResourceUnit() : "";
     double cumulativeInResourceUnit = calculateCumulativeInResourceUnit(profile, gasConcept, resourceUnit,
-	targetRecoverable);
+        targetRecoverable);
     double resourceEstimate = reservoir != null ? reservoir.getResourceEstimate() : 0.0;
     double recoveryPercent = resourceEstimate > 0.0
-	? Math.min(cumulativeInResourceUnit / resourceEstimate * 100.0, 100.0)
-	: defaultRecoveryFactor(reservoir) * 100.0;
+        ? Math.min(cumulativeInResourceUnit / resourceEstimate * 100.0, 100.0)
+        : defaultRecoveryFactor(reservoir) * 100.0;
 
     builder.fieldLife(estimateFieldLifeYears(profile, gasConcept, resourceUnit, targetRecoverable));
     builder.estimatedRecovery(recoveryPercent);
     builder.addNote("production_forecast",
-	String.format("Arps forecast with 2-year ramp-up, 5-year plateau, %.0f%% recovery target", recoveryPercent));
+        String.format("Arps forecast with 2-year ramp-up, 5-year plateau, %.0f%% recovery target", recoveryPercent));
   }
 
   /**
@@ -315,8 +315,8 @@ public class ConceptEvaluator {
       return true;
     }
     return reservoir.getFluidType() == ReservoirInput.FluidType.LEAN_GAS
-	|| reservoir.getFluidType() == ReservoirInput.FluidType.RICH_GAS
-	|| reservoir.getFluidType() == ReservoirInput.FluidType.GAS_CONDENSATE;
+        || reservoir.getFluidType() == ReservoirInput.FluidType.RICH_GAS
+        || reservoir.getFluidType() == ReservoirInput.FluidType.GAS_CONDENSATE;
   }
 
   /**
@@ -335,7 +335,7 @@ public class ConceptEvaluator {
     double totalRate = ratePerWell * concept.getWells().getProducerCount();
     if (gasConcept) {
       if (unit != null && unit.toLowerCase().contains("msm3")) {
-	return totalRate * 1.0e6;
+        return totalRate * 1.0e6;
       }
       return concept.getWells().getRatePerWellSm3d() * concept.getWells().getProducerCount();
     }
@@ -360,7 +360,7 @@ public class ConceptEvaluator {
     for (Double annualVolume : profile.values()) {
       cumulative += convertAnnualVolumeToResourceUnit(annualVolume, gasConcept, resourceUnit);
       if (targetRecoverable > 0.0 && cumulative >= targetRecoverable) {
-	return targetRecoverable;
+        return targetRecoverable;
       }
     }
     return cumulative;
@@ -386,7 +386,7 @@ public class ConceptEvaluator {
       cumulative += convertAnnualVolumeToResourceUnit(annualVolume, gasConcept, resourceUnit);
       years++;
       if (cumulative >= targetRecoverable) {
-	return years;
+        return years;
       }
     }
     return years;
@@ -407,13 +407,13 @@ public class ConceptEvaluator {
     String normalizedUnit = resourceUnit.toLowerCase();
     if (gasConcept) {
       if (normalizedUnit.contains("gsm3")) {
-	return annualVolume / 1.0e9;
+        return annualVolume / 1.0e9;
       }
       if (normalizedUnit.contains("msm3")) {
-	return annualVolume / 1.0e6;
+        return annualVolume / 1.0e6;
       }
       if (normalizedUnit.contains("mmboe")) {
-	return annualVolume / 1000.0 / 1.0e6;
+        return annualVolume / 1000.0 / 1.0e6;
       }
       return annualVolume;
     }

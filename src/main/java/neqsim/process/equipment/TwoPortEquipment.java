@@ -194,13 +194,13 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass impleme
       result.addError("stream", "No inlet stream connected", "Set inlet stream: equipment.setInletStream(stream)");
     } else if (inStream.getThermoSystem() == null) {
       result.addError("stream", "Inlet stream has no fluid system",
-	  "Ensure inlet stream has a valid thermodynamic system");
+          "Ensure inlet stream has a valid thermodynamic system");
     }
 
     // Check: Outlet stream is initialized
     if (outStream == null) {
       result.addWarning("stream", "Outlet stream not initialized",
-	  "Outlet stream is typically created when inlet stream is set");
+          "Outlet stream is typically created when inlet stream is set");
     }
 
     return result;

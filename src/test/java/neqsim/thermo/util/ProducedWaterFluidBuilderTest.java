@@ -28,7 +28,7 @@ class ProducedWaterFluidBuilderTest extends neqsim.NeqSimTest {
     assertTrue(system.getPhase(0).hasComponent("water"), "Should have water component");
     // chemicalReactionInit adds H3O+, OH- etc., so component count > 3
     assertTrue(system.getPhase(0).getNumberOfComponents() >= 3,
-	"Should have at least 3 components but had " + system.getPhase(0).getNumberOfComponents());
+        "Should have at least 3 components but had " + system.getPhase(0).getNumberOfComponents());
   }
 
   /**

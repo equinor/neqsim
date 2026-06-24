@@ -162,8 +162,8 @@ public class SteamTurbineDriver extends DriverCurveBase {
       double coolingWaterTemp = ambientTemperature + 10.0; // Assume 10°C approach
       double baseTemp = 25.0;
       if (coolingWaterTemp > baseTemp) {
-	double tempRise = coolingWaterTemp - baseTemp;
-	return Math.max(0.8, 1.0 - 0.01 * tempRise);
+        double tempRise = coolingWaterTemp - baseTemp;
+        return Math.max(0.8, 1.0 - 0.01 * tempRise);
       }
     }
     return 1.0;

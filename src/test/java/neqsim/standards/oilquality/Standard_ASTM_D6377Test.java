@@ -164,11 +164,11 @@ public class Standard_ASTM_D6377Test {
     // fromLabel resolves both the legacy label and the enum name.
     Assertions.assertEquals(Standard_ASTM_D6377.RvpMethod.VPCR4, Standard_ASTM_D6377.RvpMethod.fromLabel("VPCR4"));
     Assertions.assertEquals(Standard_ASTM_D6377.RvpMethod.VPCR4_NO_WATER,
-	Standard_ASTM_D6377.RvpMethod.fromLabel("VPCR4_no_water"));
+        Standard_ASTM_D6377.RvpMethod.fromLabel("VPCR4_no_water"));
     Assertions.assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-	Standard_ASTM_D6377.RvpMethod.fromLabel("not_a_method");
+        Standard_ASTM_D6377.RvpMethod.fromLabel("not_a_method");
       }
     });
   }

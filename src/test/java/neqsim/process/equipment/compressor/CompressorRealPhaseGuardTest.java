@@ -52,7 +52,7 @@ public class CompressorRealPhaseGuardTest {
     assertTrue(Double.isFinite(power), "compressor shaft power must be finite (was " + power + ")");
     assertTrue(power > 0.0, "compressor power must be positive (was " + power + ")");
     assertEquals(1, comp.getOutletStream().getFluid().getNumberOfPhases(),
-	"single-phase gas inlet should produce a single-phase outlet");
+        "single-phase gas inlet should produce a single-phase outlet");
   }
 
   @Test
@@ -74,8 +74,8 @@ public class CompressorRealPhaseGuardTest {
     outFluid.initProperties();
     double outRho = outFluid.getPhase(0).getDensity();
     assertTrue(Double.isFinite(outT) && outT > 20.0 && outT < 300.0,
-	"compressor outlet temperature must be physically reasonable (was " + outT + " C)");
+        "compressor outlet temperature must be physically reasonable (was " + outT + " C)");
     assertTrue(Double.isFinite(outRho) && outRho > 0.0,
-	"compressor outlet density must be finite and positive (was " + outRho + ")");
+        "compressor outlet density must be finite and positive (was " + outRho + ")");
   }
 }

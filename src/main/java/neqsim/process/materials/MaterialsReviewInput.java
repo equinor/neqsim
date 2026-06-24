@@ -67,14 +67,14 @@ public class MaterialsReviewInput implements Serializable {
     JsonArray itemArray = getFirstArray(object, "items", "materialsRegister", "equipment", "lineList", "lines");
     if (itemArray != null) {
       for (int i = 0; i < itemArray.size(); i++) {
-	if (itemArray.get(i).isJsonObject()) {
-	  input.addItem(MaterialReviewItem.fromMap(toMap(itemArray.get(i).getAsJsonObject())));
-	}
+        if (itemArray.get(i).isJsonObject()) {
+          input.addItem(MaterialReviewItem.fromMap(toMap(itemArray.get(i).getAsJsonObject())));
+        }
       }
     }
     for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
       if (!isCoreKey(entry.getKey())) {
-	input.putMetadata(entry.getKey(), toObject(entry.getValue()));
+        input.putMetadata(entry.getKey(), toObject(entry.getValue()));
       }
     }
     if (object.has("stidData") && object.get("stidData").isJsonObject()) {
@@ -107,18 +107,18 @@ public class MaterialsReviewInput implements Serializable {
       item.setEquipmentType(unit.getClass().getSimpleName());
       MaterialServiceEnvelope envelope = new MaterialServiceEnvelope();
       try {
-	SystemInterface fluid = unit.getThermoSystem();
-	if (fluid != null) {
-	  envelope.set("temperature_C", fluid.getTemperature("C"));
-	  envelope.set("pressure_bara", fluid.getPressure("bara"));
-	  envelope.set("co2_mole_fraction", getComponentFraction(fluid, "CO2"));
-	  envelope.set("h2s_mole_fraction", getComponentFraction(fluid, "H2S"));
-	  envelope.set("h2_mole_fraction", getComponentFraction(fluid, "hydrogen"));
-	  envelope.set("water_mole_fraction", getComponentFraction(fluid, "water"));
-	  envelope.set("free_water", fluid.hasComponent("water") && getComponentFraction(fluid, "water") > 1.0e-8);
-	}
+        SystemInterface fluid = unit.getThermoSystem();
+        if (fluid != null) {
+          envelope.set("temperature_C", fluid.getTemperature("C"));
+          envelope.set("pressure_bara", fluid.getPressure("bara"));
+          envelope.set("co2_mole_fraction", getComponentFraction(fluid, "CO2"));
+          envelope.set("h2s_mole_fraction", getComponentFraction(fluid, "H2S"));
+          envelope.set("h2_mole_fraction", getComponentFraction(fluid, "hydrogen"));
+          envelope.set("water_mole_fraction", getComponentFraction(fluid, "water"));
+          envelope.set("free_water", fluid.hasComponent("water") && getComponentFraction(fluid, "water") > 1.0e-8);
+        }
       } catch (Exception ex) {
-	item.putMetadata("processExtractionWarning", "Thermo system extraction failed for this unit.");
+        item.putMetadata("processExtractionWarning", "Thermo system extraction failed for this unit.");
       }
       item.setServiceEnvelope(envelope);
       item.addSourceReference("ProcessSystem:" + unit.getName());
@@ -219,9 +219,9 @@ public class MaterialsReviewInput implements Serializable {
     for (MaterialReviewItem otherItem : other.getItems()) {
       MaterialReviewItem existing = findByTag(otherItem.getTag());
       if (existing == null) {
-	addItem(otherItem);
+        addItem(otherItem);
       } else {
-	existing.mergeFrom(otherItem);
+        existing.mergeFrom(otherItem);
       }
     }
   }
@@ -256,7 +256,7 @@ public class MaterialsReviewInput implements Serializable {
     }
     for (MaterialReviewItem item : items) {
       if (tag.equalsIgnoreCase(item.getTag())) {
-	return item;
+        return item;
       }
     }
     return null;
@@ -272,8 +272,8 @@ public class MaterialsReviewInput implements Serializable {
   private static double getComponentFraction(SystemInterface fluid, String componentName) {
     try {
       if (fluid.hasComponent(componentName)) {
-	ComponentInterface component = fluid.getComponent(componentName);
-	return component == null ? 0.0 : component.getz();
+        ComponentInterface component = fluid.getComponent(componentName);
+        return component == null ? 0.0 : component.getz();
       }
     } catch (Exception ex) {
       return 0.0;
@@ -315,7 +315,7 @@ public class MaterialsReviewInput implements Serializable {
   private static JsonArray getFirstArray(JsonObject object, String... keys) {
     for (String key : keys) {
       if (object.has(key) && object.get(key).isJsonArray()) {
-	return object.getAsJsonArray(key);
+        return object.getAsJsonArray(key);
       }
     }
     return null;
@@ -351,7 +351,7 @@ public class MaterialsReviewInput implements Serializable {
     if (element.isJsonArray()) {
       List<Object> list = new ArrayList<Object>();
       for (JsonElement child : element.getAsJsonArray()) {
-	list.add(toObject(child));
+        list.add(toObject(child));
       }
       return list;
     }
@@ -372,7 +372,7 @@ public class MaterialsReviewInput implements Serializable {
    */
   private static boolean isCoreKey(String key) {
     return "projectName".equals(key) || "designLifeYears".equals(key) || "items".equals(key)
-	|| "materialsRegister".equals(key) || "equipment".equals(key) || "lineList".equals(key) || "lines".equals(key)
-	|| "stidData".equals(key);
+        || "materialsRegister".equals(key) || "equipment".equals(key) || "lineList".equals(key) || "lines".equals(key)
+        || "stidData".equals(key);
   }
 }

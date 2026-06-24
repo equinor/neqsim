@@ -68,7 +68,7 @@ public class OnshoreMEGprocess {
     interstageGasCooler.setOutTemperature(40.0, "C");
 
     Compressor inletCompressor2ndstage = new Compressor("Compressor 1 - second stage",
-	interstageGasCooler.getOutletStream());
+        interstageGasCooler.getOutletStream());
     inletCompressor2ndstage.setOutletPressure(105.0, "bara");
 
     neqsim.thermo.system.SystemInterface feedMEG = feedGas.clone();
@@ -105,7 +105,7 @@ public class OnshoreMEGprocess {
     presRedValveLT.setOutletPressure(92.0);
 
     ThreePhaseSeparator mpseparator = new ThreePhaseSeparator("low temperature scrubber",
-	presRedValveLT.getOutletStream());
+        presRedValveLT.getOutletStream());
 
     Stream coldGasFromSep = new Stream("gas from cold scrubber", mpseparator.getGasOutStream());
 
@@ -271,8 +271,8 @@ public class OnshoreMEGprocess {
     waterToSea.displayResult();
     logger.info("lean MEG wt% " + column.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("MEG") * 100.0);
     logger
-	.info("hydrate temperature 1 " + (inletGasCooler.getOutletStream().getHydrateEquilibriumTemperature() - 273.15)
-	    + " wt% MEG " + inletGasCooler.getOutletStream().getFluid().getPhase("aqueous").getWtFrac("MEG") * 100.0);
+        .info("hydrate temperature 1 " + (inletGasCooler.getOutletStream().getHydrateEquilibriumTemperature() - 273.15)
+            + " wt% MEG " + inletGasCooler.getOutletStream().getFluid().getPhase("aqueous").getWtFrac("MEG") * 100.0);
 
     operations.save("c:/temp/MEGdehydrationProcess.neqsim");
   }

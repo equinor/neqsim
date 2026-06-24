@@ -98,8 +98,8 @@ public class OilInWaterDoseOptimizer implements Serializable {
      * @param message recommendation message
      */
     public DoseRecommendation(double setpointDosePpm, double effectiveDosePpm, double predictedOilInWaterMgL,
-	double predictedMeasuredOilInWaterMgL, double targetOilInWaterMgL, boolean feasible, String status,
-	String message) {
+        double predictedMeasuredOilInWaterMgL, double targetOilInWaterMgL, boolean feasible, String status,
+        String message) {
       this.setpointDosePpm = setpointDosePpm;
       this.effectiveDosePpm = effectiveDosePpm;
       this.predictedOilInWaterMgL = predictedOilInWaterMgL;
@@ -218,27 +218,27 @@ public class OilInWaterDoseOptimizer implements Serializable {
 
     for (double dose = minimumDosePpm; dose <= maximumDosePpm + 1.0e-9; dose += doseStepPpm) {
       DoseRecommendation candidate = evaluateDose(dose, untreatedOilInWaterMgL, waterRateM3h,
-	  daysSinceAnalyzerCalibration, targetOilInWater);
+          daysSinceAnalyzerCalibration, targetOilInWater);
       if (candidate.getPredictedMeasuredOilInWaterMgL() <= targetOilInWater) {
-	bestRecommendation = candidate;
-	break;
+        bestRecommendation = candidate;
+        break;
       }
       bestRecommendation = candidate;
     }
 
     if (bestRecommendation != null && bestRecommendation.getPredictedMeasuredOilInWaterMgL() <= targetOilInWater) {
       lastRecommendation = new DoseRecommendation(bestRecommendation.getSetpointDosePpm(),
-	  bestRecommendation.getEffectiveDosePpm(), bestRecommendation.getPredictedOilInWaterMgL(),
-	  bestRecommendation.getPredictedMeasuredOilInWaterMgL(), targetOilInWater, true, "OK",
-	  monthlyStatus.getRecommendation());
+          bestRecommendation.getEffectiveDosePpm(), bestRecommendation.getPredictedOilInWaterMgL(),
+          bestRecommendation.getPredictedMeasuredOilInWaterMgL(), targetOilInWater, true, "OK",
+          monthlyStatus.getRecommendation());
     } else if (bestRecommendation != null) {
       lastRecommendation = new DoseRecommendation(bestRecommendation.getSetpointDosePpm(),
-	  bestRecommendation.getEffectiveDosePpm(), bestRecommendation.getPredictedOilInWaterMgL(),
-	  bestRecommendation.getPredictedMeasuredOilInWaterMgL(), targetOilInWater, false, "NO_FEASIBLE_DOSE",
-	  "Maximum configured dose does not meet the OIW target");
+          bestRecommendation.getEffectiveDosePpm(), bestRecommendation.getPredictedOilInWaterMgL(),
+          bestRecommendation.getPredictedMeasuredOilInWaterMgL(), targetOilInWater, false, "NO_FEASIBLE_DOSE",
+          "Maximum configured dose does not meet the OIW target");
     } else {
       lastRecommendation = new DoseRecommendation(0.0, 0.0, untreatedOilInWaterMgL, untreatedOilInWaterMgL,
-	  targetOilInWater, false, "NO_EVALUATION", "No dose could be evaluated");
+          targetOilInWater, false, "NO_EVALUATION", "No dose could be evaluated");
     }
     return lastRecommendation;
   }
@@ -302,9 +302,9 @@ public class OilInWaterDoseOptimizer implements Serializable {
     double effectiveDose = predictEffectiveDose(setpointDosePpm, waterRateM3h);
     double trueOiw = doseResponseModel.predictOilInWater(untreatedOilInWaterMgL, effectiveDose);
     double measuredOiw = analyzerDriftModel.measureConservative(trueOiw, daysSinceAnalyzerCalibration,
-	analyzerConfidenceMultiplier);
+        analyzerConfidenceMultiplier);
     return new DoseRecommendation(setpointDosePpm, effectiveDose, trueOiw, measuredOiw, targetOilInWaterMgL,
-	measuredOiw <= targetOilInWaterMgL, "CANDIDATE", "Candidate dose");
+        measuredOiw <= targetOilInWaterMgL, "CANDIDATE", "Candidate dose");
   }
 
   /**

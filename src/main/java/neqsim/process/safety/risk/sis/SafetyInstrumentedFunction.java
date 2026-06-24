@@ -259,7 +259,7 @@ public class SafetyInstrumentedFunction implements Serializable {
 
     public SafetyInstrumentedFunction build() {
       if (sif.pfdAvg > 0 && sif.sil > 0) {
-	sif.pfdAvg = sif.validatePfd(sif.pfdAvg, sif.sil);
+        sif.pfdAvg = sif.validatePfd(sif.pfdAvg, sif.sil);
       }
       return sif;
     }
@@ -598,6 +598,6 @@ public class SafetyInstrumentedFunction implements Serializable {
   @Override
   public String toString() {
     return String.format("SIF[%s: SIL%d, PFD=%.2e, RRF=%.0f, protects=%d equipment]", name, sil, pfdAvg,
-	getRiskReductionFactor(), protectedEquipment.size());
+        getRiskReductionFactor(), protectedEquipment.size());
   }
 }

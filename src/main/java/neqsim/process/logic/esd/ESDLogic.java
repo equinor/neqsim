@@ -82,9 +82,9 @@ public class ESDLogic implements ProcessLogic {
 
       // Reset all actions
       for (ActionWithDelay actionWithDelay : actions) {
-	if (actionWithDelay.action instanceof ResettableAction) {
-	  ((ResettableAction) actionWithDelay.action).reset();
-	}
+        if (actionWithDelay.action instanceof ResettableAction) {
+          ((ResettableAction) actionWithDelay.action).reset();
+        }
       }
     }
   }
@@ -119,8 +119,8 @@ public class ESDLogic implements ProcessLogic {
 
       // Wait for delay
       if (currentDelay < currentActionWithDelay.delay) {
-	currentDelay += timeStep;
-	return;
+        currentDelay += timeStep;
+        return;
       }
 
       // Execute action if not yet executed
@@ -128,13 +128,13 @@ public class ESDLogic implements ProcessLogic {
 
       // Check if action is complete
       if (currentActionWithDelay.action.isComplete()) {
-	// Move to next action
-	currentActionIndex++;
-	currentDelay = 0.0;
+        // Move to next action
+        currentActionIndex++;
+        currentDelay = 0.0;
 
-	if (currentActionIndex >= actions.size()) {
-	  state = LogicState.COMPLETED;
-	}
+        if (currentActionIndex >= actions.size()) {
+          state = LogicState.COMPLETED;
+        }
       }
     } else {
       state = LogicState.COMPLETED;
@@ -163,11 +163,11 @@ public class ESDLogic implements ProcessLogic {
       return name + " - IDLE (not triggered)";
     } else if (state == LogicState.RUNNING) {
       if (currentActionIndex < actions.size()) {
-	ActionWithDelay current = actions.get(currentActionIndex);
-	return String.format("%s - RUNNING (Step %d/%d: %s, delay: %.1fs)", name, currentActionIndex + 1,
-	    actions.size(), current.action.getDescription(), Math.max(0, current.delay - currentDelay));
+        ActionWithDelay current = actions.get(currentActionIndex);
+        return String.format("%s - RUNNING (Step %d/%d: %s, delay: %.1fs)", name, currentActionIndex + 1,
+            actions.size(), current.action.getDescription(), Math.max(0, current.delay - currentDelay));
       } else {
-	return name + " - RUNNING (finalizing)";
+        return name + " - RUNNING (finalizing)";
       }
     } else if (state == LogicState.COMPLETED) {
       return String.format("%s - COMPLETED (%.1fs)", name, elapsedTime);

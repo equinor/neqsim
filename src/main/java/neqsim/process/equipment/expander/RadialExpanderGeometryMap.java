@@ -140,8 +140,8 @@ public class RadialExpanderGeometryMap implements Serializable {
     for (int i = 0; i < nIgv; i++) {
       double alpha2 = Math.toRadians(nozzleAngleDeg[i]);
       if (nozzleAngleDeg[i] <= 0.0 || nozzleAngleDeg[i] >= 90.0) {
-	throw new IllegalArgumentException(
-	    "nozzleAngleDeg must be in the open interval (0, 90); got " + nozzleAngleDeg[i]);
+        throw new IllegalArgumentException(
+            "nozzleAngleDeg must be in the open interval (0, 90); got " + nozzleAngleDeg[i]);
       }
       double cosA = Math.cos(alpha2);
       double sinA = Math.sin(alpha2);
@@ -154,16 +154,16 @@ public class RadialExpanderGeometryMap implements Serializable {
       double headAtIgv = designHeadDropKjPerKg * headScale;
 
       for (int j = 0; j < pointsPerCurve; j++) {
-	double nu = minVelocityRatio + (maxVelocityRatio - minVelocityRatio) * j / (double) (pointsPerCurve - 1);
-	double incidence = incidenceLossFactor * (nuOpt - nu) * (nuOpt - nu);
-	double rotorLoss = rotorLossCoefficient * (radiusRatio * radiusRatio * nu * nu + reactionTerm * cosA * cosA);
-	double efficiency = 1.0 - (incidence + constantLoss + rotorLoss);
-	if (efficiency < 0.0) {
-	  efficiency = 0.0;
-	}
-	uc[i][j] = nu;
-	eta[i][j] = efficiency;
-	headDrop[i][j] = headAtIgv;
+        double nu = minVelocityRatio + (maxVelocityRatio - minVelocityRatio) * j / (double) (pointsPerCurve - 1);
+        double incidence = incidenceLossFactor * (nuOpt - nu) * (nuOpt - nu);
+        double rotorLoss = rotorLossCoefficient * (radiusRatio * radiusRatio * nu * nu + reactionTerm * cosA * cosA);
+        double efficiency = 1.0 - (incidence + constantLoss + rotorLoss);
+        if (efficiency < 0.0) {
+          efficiency = 0.0;
+        }
+        uc[i][j] = nu;
+        eta[i][j] = efficiency;
+        headDrop[i][j] = headAtIgv;
       }
     }
 

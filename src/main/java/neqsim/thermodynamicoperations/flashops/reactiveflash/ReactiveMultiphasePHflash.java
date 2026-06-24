@@ -163,27 +163,27 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
       // single-phase standard solver).
       FormulaMatrix quickCheck = new FormulaMatrix(system);
       if (quickCheck.getNumberOfIndependentReactions() == 0 && !quickCheck.hasIonicSpecies() && couldHaveVLE()) {
-	// NR=0 with possible VLE — delegate to standard flash
-	logger.debug("NR=0 with genuine VLE, delegating to standard flash");
-	if (useEntropySpec) {
-	  neqsim.thermodynamicoperations.flashops.PSFlash psFlash = new neqsim.thermodynamicoperations.flashops.PSFlash(
-	      system, entropySpec, 0);
-	  psFlash.run();
-	} else {
-	  neqsim.thermodynamicoperations.flashops.PHflash phFlash = new neqsim.thermodynamicoperations.flashops.PHflash(
-	      system, enthalpySpec, 0);
-	  phFlash.run();
-	}
-	converged = true;
-	equilibriumTemperature = system.getTemperature();
-	outerIterations = 1;
-	return;
+        // NR=0 with possible VLE — delegate to standard flash
+        logger.debug("NR=0 with genuine VLE, delegating to standard flash");
+        if (useEntropySpec) {
+          neqsim.thermodynamicoperations.flashops.PSFlash psFlash = new neqsim.thermodynamicoperations.flashops.PSFlash(
+              system, entropySpec, 0);
+          psFlash.run();
+        } else {
+          neqsim.thermodynamicoperations.flashops.PHflash phFlash = new neqsim.thermodynamicoperations.flashops.PHflash(
+              system, enthalpySpec, 0);
+          phFlash.run();
+        }
+        converged = true;
+        equilibriumTemperature = system.getTemperature();
+        outerIterations = 1;
+        return;
       }
 
       if (useEntropySpec) {
-	solveEntropySpec();
+        solveEntropySpec();
       } else {
-	solveEnthalpySpec();
+        solveEnthalpySpec();
       }
     } catch (Exception ex) {
       logger.error("ReactiveMultiphasePHflash failed: " + ex.getMessage(), ex);
@@ -266,36 +266,36 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
       boolean hasBracket = tLow > T_MIN && tHigh < T_MAX;
 
       if (iter == 0 || Double.isNaN(errPrev) || Math.abs(T - Tprev) < 1.0e-12) {
-	// First iteration or degenerate: Cp-based Newton step
-	double Cp = system.getCp();
-	if (Math.abs(Cp) < 1.0e-20) {
-	  Cp = 100.0;
-	}
-	Tnew = T - (system.getEnthalpy() - enthalpySpec) / Cp;
+        // First iteration or degenerate: Cp-based Newton step
+        double Cp = system.getCp();
+        if (Math.abs(Cp) < 1.0e-20) {
+          Cp = 100.0;
+        }
+        Tnew = T - (system.getEnthalpy() - enthalpySpec) / Cp;
       } else {
-	// Secant method: interpolate using two successive (T, error) pairs.
-	// This naturally captures the effective dH/dT including reaction enthalpy
-	// contributions (Le Chatelier shift), unlike the Cp-only Newton derivative.
-	double dErrDT = (error - errPrev) / (T - Tprev);
-	if (Math.abs(dErrDT) > 1.0e-30) {
-	  Tnew = T - error / dErrDT;
-	} else {
-	  double Cp = system.getCp();
-	  if (Math.abs(Cp) < 1.0e-20) {
-	    Cp = 100.0;
-	  }
-	  Tnew = T - (system.getEnthalpy() - enthalpySpec) / Cp;
-	}
+        // Secant method: interpolate using two successive (T, error) pairs.
+        // This naturally captures the effective dH/dT including reaction enthalpy
+        // contributions (Le Chatelier shift), unlike the Cp-only Newton derivative.
+        double dErrDT = (error - errPrev) / (T - Tprev);
+        if (Math.abs(dErrDT) > 1.0e-30) {
+          Tnew = T - error / dErrDT;
+        } else {
+          double Cp = system.getCp();
+          if (Math.abs(Cp) < 1.0e-20) {
+            Cp = 100.0;
+          }
+          Tnew = T - (system.getEnthalpy() - enthalpySpec) / Cp;
+        }
       }
 
       // Clamp step size
       if (Math.abs(Tnew - T) > MAX_T_STEP) {
-	Tnew = T + Math.signum(Tnew - T) * MAX_T_STEP;
+        Tnew = T + Math.signum(Tnew - T) * MAX_T_STEP;
       }
 
       // If step goes outside bracket, use bisection
       if (hasBracket && (Tnew <= tLow || Tnew >= tHigh)) {
-	Tnew = 0.5 * (tLow + tHigh);
+        Tnew = 0.5 * (tLow + tHigh);
       }
 
       // Enforce absolute bounds
@@ -303,11 +303,11 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
 
       // Avoid stagnation at the same temperature
       if (Math.abs(Tnew - T) < 1.0e-12) {
-	if (hasBracket) {
-	  Tnew = 0.5 * (tLow + tHigh);
-	} else {
-	  Tnew = T + (error < 0 ? 1.0 : -1.0);
-	}
+        if (hasBracket) {
+          Tnew = 0.5 * (tLow + tHigh);
+        } else {
+          Tnew = T + (error < 0 ? 1.0 : -1.0);
+        }
       }
 
       // Store history for secant
@@ -323,27 +323,27 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
 
       // Update bracket
       if (error > 0 && T < tHigh) {
-	tHigh = T;
+        tHigh = T;
       } else if (error < 0 && T > tLow) {
-	tLow = T;
+        tLow = T;
       }
 
       logger.debug(
-	  "PH iter=" + iter + " T=" + String.format("%.4f", T) + " H=" + String.format("%.4e", system.getEnthalpy())
-	      + " Hspec=" + String.format("%.4e", enthalpySpec) + " err=" + String.format("%.3e", error) + " bracket=["
-	      + String.format("%.2f", tLow) + "," + String.format("%.2f", tHigh) + "]");
+          "PH iter=" + iter + " T=" + String.format("%.4f", T) + " H=" + String.format("%.4e", system.getEnthalpy())
+              + " Hspec=" + String.format("%.4e", enthalpySpec) + " err=" + String.format("%.3e", error) + " bracket=["
+              + String.format("%.2f", tLow) + "," + String.format("%.2f", tHigh) + "]");
 
       // Check convergence
       if (Math.abs(error) < TOL) {
-	converged = true;
-	break;
+        converged = true;
+        break;
       }
 
       // If bracket is very tight, declare convergence
       hasBracket = tLow > T_MIN && tHigh < T_MAX;
       if (hasBracket && (tHigh - tLow) < 1.0e-6) {
-	converged = true;
-	break;
+        converged = true;
+        break;
       }
     }
 
@@ -351,10 +351,10 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
 
     if (!converged) {
       logger.warn("ReactiveMultiphasePHflash did not converge after " + outerIterations + " iterations. Final T="
-	  + equilibriumTemperature + " error=" + error);
+          + equilibriumTemperature + " error=" + error);
     } else {
       logger.debug("ReactiveMultiphasePHflash converged: T=" + String.format("%.4f", equilibriumTemperature) + " K, "
-	  + outerIterations + " outer iterations, " + totalInnerIterations + " total inner iterations");
+          + outerIterations + " outer iterations, " + totalInnerIterations + " total inner iterations");
     }
   }
 
@@ -405,44 +405,44 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
       boolean hasBracket = tLow > T_MIN && tHigh < T_MAX;
 
       if (iter == 0 || Double.isNaN(errPrev) || Math.abs(T - Tprev) < 1.0e-12) {
-	// Cp-based Newton step: dS/dT = Cp/T
-	double CpOverT = system.getCp() / system.getTemperature();
-	if (Math.abs(CpOverT) < 1.0e-20) {
-	  CpOverT = 1.0;
-	}
-	Tnew = T - (system.getEntropy() - entropySpec) / CpOverT;
+        // Cp-based Newton step: dS/dT = Cp/T
+        double CpOverT = system.getCp() / system.getTemperature();
+        if (Math.abs(CpOverT) < 1.0e-20) {
+          CpOverT = 1.0;
+        }
+        Tnew = T - (system.getEntropy() - entropySpec) / CpOverT;
       } else {
-	// Secant method
-	double dErrDT = (error - errPrev) / (T - Tprev);
-	if (Math.abs(dErrDT) > 1.0e-30) {
-	  Tnew = T - error / dErrDT;
-	} else {
-	  double CpOverT = system.getCp() / system.getTemperature();
-	  if (Math.abs(CpOverT) < 1.0e-20) {
-	    CpOverT = 1.0;
-	  }
-	  Tnew = T - (system.getEntropy() - entropySpec) / CpOverT;
-	}
+        // Secant method
+        double dErrDT = (error - errPrev) / (T - Tprev);
+        if (Math.abs(dErrDT) > 1.0e-30) {
+          Tnew = T - error / dErrDT;
+        } else {
+          double CpOverT = system.getCp() / system.getTemperature();
+          if (Math.abs(CpOverT) < 1.0e-20) {
+            CpOverT = 1.0;
+          }
+          Tnew = T - (system.getEntropy() - entropySpec) / CpOverT;
+        }
       }
 
       // Clamp step size
       if (Math.abs(Tnew - T) > MAX_T_STEP) {
-	Tnew = T + Math.signum(Tnew - T) * MAX_T_STEP;
+        Tnew = T + Math.signum(Tnew - T) * MAX_T_STEP;
       }
 
       // Bisection fallback
       if (hasBracket && (Tnew <= tLow || Tnew >= tHigh)) {
-	Tnew = 0.5 * (tLow + tHigh);
+        Tnew = 0.5 * (tLow + tHigh);
       }
 
       Tnew = Math.max(T_MIN, Math.min(T_MAX, Tnew));
 
       if (Math.abs(Tnew - T) < 1.0e-12) {
-	if (hasBracket) {
-	  Tnew = 0.5 * (tLow + tHigh);
-	} else {
-	  Tnew = T + (error < 0 ? 1.0 : -1.0);
-	}
+        if (hasBracket) {
+          Tnew = 0.5 * (tLow + tHigh);
+        } else {
+          Tnew = T + (error < 0 ? 1.0 : -1.0);
+        }
       }
 
       Tprev = T;
@@ -455,22 +455,22 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
       error = (system.getEntropy() - entropySpec) / absSspec;
 
       if (error > 0 && T < tHigh) {
-	tHigh = T;
+        tHigh = T;
       } else if (error < 0 && T > tLow) {
-	tLow = T;
+        tLow = T;
       }
 
       logger.debug("PS iter=" + iter + " T=" + String.format("%.4f", T) + " err=" + String.format("%.3e", error));
 
       if (Math.abs(error) < TOL) {
-	converged = true;
-	break;
+        converged = true;
+        break;
       }
 
       hasBracket = tLow > T_MIN && tHigh < T_MAX;
       if (hasBracket && (tHigh - tLow) < 1.0e-6) {
-	converged = true;
-	break;
+        converged = true;
+        break;
       }
     }
 
@@ -642,7 +642,7 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
     sb.append("  Mode:           ").append(useEntropySpec ? "PS flash" : "PH flash").append("\n");
     sb.append("  Converged:      ").append(converged).append("\n");
     sb.append("  T_equilibrium:  ")
-	.append(String.format("%.4f K (%.2f C)", equilibriumTemperature, equilibriumTemperature - 273.15)).append("\n");
+        .append(String.format("%.4f K (%.2f C)", equilibriumTemperature, equilibriumTemperature - 273.15)).append("\n");
     sb.append("  Outer iters:    ").append(outerIterations).append("\n");
     sb.append("  Inner iters:    ").append(totalInnerIterations).append("\n");
     sb.append("  Phases:         ").append(system.getNumberOfPhases()).append("\n");

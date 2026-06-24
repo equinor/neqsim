@@ -59,25 +59,25 @@ public final class ValidationProfileRunner {
 
       switch (action) {
       case "listProfiles":
-	return listProfiles();
+        return listProfiles();
       case "getProfile":
-	return getProfile(input);
+        return getProfile(input);
       case "setActiveProfile":
-	return setActiveProfile(input);
+        return setActiveProfile(input);
       case "createProfile":
-	return createProfile(input);
+        return createProfile(input);
       case "deleteProfile":
-	return deleteProfile(input);
+        return deleteProfile(input);
       case "validateWithProfile":
-	return validateWithProfile(input);
+        return validateWithProfile(input);
       case "getActiveProfile":
-	return getActiveProfile();
+        return getActiveProfile();
       case "getStandardsForEquipment":
-	return getStandardsForEquipment(input);
+        return getStandardsForEquipment(input);
       default:
-	return errorJson("UNKNOWN_ACTION", "Unknown validation profile action: " + action,
-	    "Use: listProfiles, getProfile, setActiveProfile, createProfile, "
-		+ "deleteProfile, validateWithProfile, getActiveProfile, " + "getStandardsForEquipment");
+        return errorJson("UNKNOWN_ACTION", "Unknown validation profile action: " + action,
+            "Use: listProfiles, getProfile, setActiveProfile, createProfile, "
+                + "deleteProfile, validateWithProfile, getActiveProfile, " + "getStandardsForEquipment");
       }
     } catch (Exception e) {
       return errorJson("VALIDATION_PROFILE_ERROR", e.getMessage(), "Check JSON format");
@@ -177,8 +177,8 @@ public final class ValidationProfileRunner {
     } else {
       profile = getBuiltInProfile(name);
       if (profile == null) {
-	return errorJson("PROFILE_NOT_FOUND", "Profile not found: " + name,
-	    "Use 'listProfiles' to see available profiles");
+        return errorJson("PROFILE_NOT_FOUND", "Profile not found: " + name,
+            "Use 'listProfiles' to see available profiles");
       }
       type = "built-in";
     }
@@ -206,7 +206,7 @@ public final class ValidationProfileRunner {
     // Verify it exists
     if (!CUSTOM_PROFILES.containsKey(name) && getBuiltInProfile(name) == null) {
       return errorJson("PROFILE_NOT_FOUND", "Profile not found: " + name,
-	  "Use 'listProfiles' to see available profiles, or 'createProfile' to make one");
+          "Use 'listProfiles' to see available profiles, or 'createProfile' to make one");
     }
 
     activeProfile = name;
@@ -233,7 +233,7 @@ public final class ValidationProfileRunner {
     // Don't allow overwriting built-in profiles
     if (Arrays.asList("ncs", "ukcs", "gom", "brazil", "generic").contains(name)) {
       return errorJson("RESERVED_NAME", "Cannot overwrite built-in profile: " + name,
-	  "Choose a different name for your custom profile");
+          "Choose a different name for your custom profile");
     }
 
     // Build profile from input or from base + overrides
@@ -245,15 +245,15 @@ public final class ValidationProfileRunner {
       String baseName = input.has("basedOn") ? input.get("basedOn").getAsString() : "generic";
       profile = getBuiltInProfile(baseName);
       if (profile == null) {
-	profile = getBuiltInProfile("generic");
+        profile = getBuiltInProfile("generic");
       }
 
       // Apply overrides
       if (input.has("overrides")) {
-	JsonObject overrides = input.getAsJsonObject("overrides");
-	for (String key : overrides.keySet()) {
-	  profile.add(key, overrides.get(key));
-	}
+        JsonObject overrides = input.getAsJsonObject("overrides");
+        for (String key : overrides.keySet()) {
+          profile.add(key, overrides.get(key));
+        }
       }
     }
 
@@ -283,7 +283,7 @@ public final class ValidationProfileRunner {
     String name = input.has("profileName") ? input.get("profileName").getAsString() : "";
     if (Arrays.asList("ncs", "ukcs", "gom", "brazil", "generic").contains(name)) {
       return errorJson("CANNOT_DELETE", "Cannot delete built-in profile: " + name,
-	  "Only custom profiles can be deleted");
+          "Only custom profiles can be deleted");
     }
 
     JsonObject removed = CUSTOM_PROFILES.remove(name);
@@ -359,7 +359,7 @@ public final class ValidationProfileRunner {
 
     if (equipmentType.isEmpty()) {
       return errorJson("MISSING_TYPE", "equipmentType is required",
-	  "Provide equipment type: separator, pipeline, compressor, heatExchanger, vessel, valve");
+          "Provide equipment type: separator, pipeline, compressor, heatExchanger, vessel, valve");
     }
 
     JsonObject profile;
@@ -384,8 +384,8 @@ public final class ValidationProfileRunner {
     if (profile.has("equipmentStandards")) {
       JsonObject eqStandards = profile.getAsJsonObject("equipmentStandards");
       if (eqStandards.has(lowerType)) {
-	response.add("standards", eqStandards.get(lowerType));
-	return GSON.toJson(response);
+        response.add("standards", eqStandards.get(lowerType));
+        return GSON.toJson(response);
       }
     }
 

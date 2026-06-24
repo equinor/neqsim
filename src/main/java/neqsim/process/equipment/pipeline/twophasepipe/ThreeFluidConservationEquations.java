@@ -171,13 +171,13 @@ public class ThreeFluidConservationEquations implements Serializable {
     // Gas-oil interface
     double relVelGO = uG - uO;
     double fiGO = calculateInterfacialFrictionFactor(alphaG, alphaO, rhoG, rhoO, relVelGO, diameter,
-	section.getGasOilSurfaceTension());
+        section.getGasOilSurfaceTension());
     rhs.gasOilInterfacialShear = 0.5 * fiGO * rhoG * relVelGO * Math.abs(relVelGO);
 
     // Oil-water interface
     double relVelOW = uO - uW;
     double fiOW = calculateInterfacialFrictionFactor(alphaO, alphaW, rhoO, rhoW, relVelOW, diameter,
-	section.getOilWaterSurfaceTension());
+        section.getOilWaterSurfaceTension());
     rhs.oilWaterInterfacialShear = 0.5 * fiOW * rhoO * relVelOW * Math.abs(relVelOW);
 
     // ===== Mass conservation equations (no sources in basic model) =====
@@ -192,24 +192,24 @@ public class ThreeFluidConservationEquations implements Serializable {
     // Gas momentum: pressure, wall friction, interfacial (with oil), gravity
     double areaG = alphaG * area;
     rhs.gasMomentum = -areaG * dPdx // Pressure
-	- rhs.gasWallShear * sWallG // Wall friction
-	- rhs.gasOilInterfacialShear * sIntGO // Interfacial (gas side loses)
-	- rhoG * G * sinTheta * areaG; // Gravity
+        - rhs.gasWallShear * sWallG // Wall friction
+        - rhs.gasOilInterfacialShear * sIntGO // Interfacial (gas side loses)
+        - rhoG * G * sinTheta * areaG; // Gravity
 
     // Oil momentum: pressure, wall friction, interfacial (gas and water), gravity
     double areaO = alphaO * area;
     rhs.oilMomentum = -areaO * dPdx // Pressure
-	- rhs.oilWallShear * sWallO // Wall friction
-	+ rhs.gasOilInterfacialShear * sIntGO // Interfacial (oil gains from gas)
-	- rhs.oilWaterInterfacialShear * sIntOW // Interfacial (oil loses to water)
-	- rhoO * G * sinTheta * areaO; // Gravity
+        - rhs.oilWallShear * sWallO // Wall friction
+        + rhs.gasOilInterfacialShear * sIntGO // Interfacial (oil gains from gas)
+        - rhs.oilWaterInterfacialShear * sIntOW // Interfacial (oil loses to water)
+        - rhoO * G * sinTheta * areaO; // Gravity
 
     // Water momentum: pressure, wall friction, interfacial (with oil), gravity
     double areaW = alphaW * area;
     rhs.waterMomentum = -areaW * dPdx // Pressure
-	- rhs.waterWallShear * sWallW // Wall friction
-	+ rhs.oilWaterInterfacialShear * sIntOW // Interfacial (water gains from oil)
-	- rhoW * G * sinTheta * areaW; // Gravity
+        - rhs.waterWallShear * sWallW // Wall friction
+        + rhs.oilWaterInterfacialShear * sIntOW // Interfacial (water gains from oil)
+        - rhoW * G * sinTheta * areaW; // Gravity
 
     // ===== Energy equation (mixture) =====
     // Heat transfer to surroundings: Q = h * π * D * (T_surface - T_fluid)
@@ -295,10 +295,10 @@ public class ThreeFluidConservationEquations implements Serializable {
    */
   public double[] getStateVector(ThreeFluidSection section) {
     return new double[] { section.getGasMassPerLength(), section.getOilMassPerLength(), section.getWaterMassPerLength(),
-	section.getGasMomentumPerLength(), section.getOilMomentumPerLength(), section.getWaterMomentumPerLength(),
-	section.getGasEnthalpy() * section.getGasMassPerLength()
-	    + section.getOilEnthalpy() * section.getOilMassPerLength()
-	    + section.getWaterEnthalpy() * section.getWaterMassPerLength() };
+        section.getGasMomentumPerLength(), section.getOilMomentumPerLength(), section.getWaterMomentumPerLength(),
+        section.getGasEnthalpy() * section.getGasMassPerLength()
+            + section.getOilEnthalpy() * section.getOilMassPerLength()
+            + section.getWaterEnthalpy() * section.getWaterMassPerLength() };
   }
 
   /**

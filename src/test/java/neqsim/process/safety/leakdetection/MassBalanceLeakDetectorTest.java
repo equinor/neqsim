@@ -28,8 +28,8 @@ class MassBalanceLeakDetectorTest {
     outlet.run();
 
     MassBalanceLeakDetector.LeakDetectionSensitivityResult result = new MassBalanceLeakDetector(inlet, outlet)
-	.setFlowMeasurementUncertaintyFraction(0.005).setLinepackVolumeM3(25.0).setPressureUncertaintyBara(0.1)
-	.setTemperatureUncertaintyK(0.5).setDetectionWindowS(120.0).calculateSensitivity();
+        .setFlowMeasurementUncertaintyFraction(0.005).setLinepackVolumeM3(25.0).setPressureUncertaintyBara(0.1)
+        .setTemperatureUncertaintyK(0.5).setDetectionWindowS(120.0).calculateSensitivity();
 
     assertTrue(result.getMinimumDetectableLeakRateKgPerS() > 0.2);
     assertTrue(result.getMinimumDetectableLeakFraction() > 0.0);

@@ -675,7 +675,7 @@ public class ProcessConstraintEvaluator implements Serializable {
 
       EquipmentCapacityStrategy strategy = strategyRegistry.findStrategy(equipment);
       if (strategy == null) {
-	continue;
+        continue;
       }
 
       // Get constraints (possibly from cache)
@@ -692,32 +692,32 @@ public class ProcessConstraintEvaluator implements Serializable {
       int equipmentViolations = 0;
 
       for (Map.Entry<String, CapacityConstraint> entry : constraints.entrySet()) {
-	CapacityConstraint constraint = entry.getValue();
-	double util = constraint.getUtilization();
+        CapacityConstraint constraint = entry.getValue();
+        double util = constraint.getUtilization();
 
-	if (!Double.isNaN(util) && !Double.isInfinite(util)) {
-	  summary.addConstraintDetail(entry.getKey(), util);
+        if (!Double.isNaN(util) && !Double.isInfinite(util)) {
+          summary.addConstraintDetail(entry.getKey(), util);
 
-	  // Normalized utilization key
-	  String normalizedKey = equipment.getName() + "/" + entry.getKey();
-	  result.addNormalizedUtilization(normalizedKey, util);
+          // Normalized utilization key
+          String normalizedKey = equipment.getName() + "/" + entry.getKey();
+          result.addNormalizedUtilization(normalizedKey, util);
 
-	  if (util > equipmentMaxUtil) {
-	    equipmentMaxUtil = util;
-	    equipmentLimitingConstraint = entry.getKey();
-	  }
+          if (util > equipmentMaxUtil) {
+            equipmentMaxUtil = util;
+            equipmentLimitingConstraint = entry.getKey();
+          }
 
-	  if (util > 1.0) {
-	    equipmentViolations++;
-	  }
+          if (util > 1.0) {
+            equipmentViolations++;
+          }
 
-	  // Track overall bottleneck
-	  if (util > maxUtilization) {
-	    maxUtilization = util;
-	    bottleneckEquipment = equipment.getName();
-	    bottleneckConstraint = entry.getKey();
-	  }
-	}
+          // Track overall bottleneck
+          if (util > maxUtilization) {
+            maxUtilization = util;
+            bottleneckEquipment = equipment.getName();
+            bottleneckConstraint = entry.getKey();
+          }
+        }
       }
 
       summary.setUtilization(equipmentMaxUtil);
@@ -728,10 +728,10 @@ public class ProcessConstraintEvaluator implements Serializable {
       totalViolations += equipmentViolations;
 
       if (!summary.isWithinLimits()) {
-	allHardSatisfied = false;
+        allHardSatisfied = false;
       }
       if (!strategy.isWithinSoftLimits(equipment)) {
-	allSoftSatisfied = false;
+        allSoftSatisfied = false;
       }
 
       result.addEquipmentSummary(summary);
@@ -805,21 +805,21 @@ public class ProcessConstraintEvaluator implements Serializable {
       Map<String, Double> perturbedUtils = perturbedResult.getNormalizedUtilizations();
 
       for (String key : baseUtils.keySet()) {
-	double baseUtil = baseUtils.get(key);
-	Double perturbedUtil = perturbedUtils.get(key);
+        double baseUtil = baseUtils.get(key);
+        Double perturbedUtil = perturbedUtils.get(key);
 
-	if (perturbedUtil != null && !Double.isNaN(baseUtil) && !Double.isNaN(perturbedUtil)) {
-	  double sensitivity = (perturbedUtil - baseUtil) / step;
-	  sensitivities.put(key, sensitivity);
-	}
+        if (perturbedUtil != null && !Double.isNaN(baseUtil) && !Double.isNaN(perturbedUtil)) {
+          double sensitivity = (perturbedUtil - baseUtil) / step;
+          sensitivities.put(key, sensitivity);
+        }
       }
     } finally {
       // Restore original flow rate
       setFeedFlowRate(processSystem, originalFlow);
       try {
-	processSystem.run();
+        processSystem.run();
       } catch (Exception e) {
-	logger.warn("Failed to restore original flow rate", e);
+        logger.warn("Failed to restore original flow rate", e);
       }
     }
 

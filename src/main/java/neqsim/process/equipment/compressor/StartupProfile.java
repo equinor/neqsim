@@ -117,9 +117,9 @@ public class StartupProfile implements Serializable {
     // Standard startup sequence
     profile.add(new ProfilePoint(0.0, 0.0, antisurgeOpeningDuration, "Open antisurge valve, check oil pressure"));
     profile.add(new ProfilePoint(antisurgeOpeningDuration, minimumIdleSpeed * 0.5, 10.0,
-	"Initial rotation, check for vibration"));
+        "Initial rotation, check for vibration"));
     profile.add(new ProfilePoint(antisurgeOpeningDuration + 10.0, minimumIdleSpeed, idleHoldTime,
-	"Idle speed, check bearing temperatures"));
+        "Idle speed, check bearing temperatures"));
     profile.add(new ProfilePoint(antisurgeOpeningDuration + 10.0 + idleHoldTime, -1.0, 0.0, "Ramp to operating speed"));
   }
 
@@ -160,10 +160,10 @@ public class StartupProfile implements Serializable {
     for (int i = 0; i < profile.size(); i++) {
       ProfilePoint point = profile.get(i);
       if (point.getTime() <= elapsedTime) {
-	current = point;
-	if (i + 1 < profile.size()) {
-	  next = profile.get(i + 1);
-	}
+        current = point;
+        if (i + 1 < profile.size()) {
+          next = profile.get(i + 1);
+        }
       }
     }
 
@@ -256,7 +256,7 @@ public class StartupProfile implements Serializable {
     for (int i = profile.size() - 1; i >= 0; i--) {
       ProfilePoint point = profile.get(i);
       if (point.getTime() <= elapsedTime) {
-	return point.getCheckDescription();
+        return point.getCheckDescription();
       }
     }
     return "Pre-start checks";

@@ -85,56 +85,56 @@ public final class IonParametersAdvanced implements Serializable {
     // Li+ : Small, strong kosmotrope. Very negative hydration energy (-515 kJ/mol)
     // W0 fitted to R&S (1959) LiCl gamma_pm data using corrected reference state
     ION_DATA.put("Li+", new AdvancedIonData(1.82, // sigma [A] - Marcus effective radius
-	3.780e-03, // W0 - fitted to LiCl activity coefficient data (corrected ref state)
-	-1.12e-07, // WT
-	0.0, // WTT
-	1.64, // RBorn0 [A] - constrained by dGhydration
-	4.5e-04, // RBornT [A/K]
-	1, // ionic charge
-	-515.0 // hydration Gibbs energy [kJ/mol]
+        3.780e-03, // W0 - fitted to LiCl activity coefficient data (corrected ref state)
+        -1.12e-07, // WT
+        0.0, // WTT
+        1.64, // RBorn0 [A] - constrained by dGhydration
+        4.5e-04, // RBornT [A/K]
+        1, // ionic charge
+        -515.0 // hydration Gibbs energy [kJ/mol]
     ));
 
     // Na+ : Reference cation, moderate kosmotrope. dGhyd = -405 kJ/mol
     // W0 fitted to R&S (1959) NaCl gamma_pm data at 25C using corrected reference state
     ION_DATA.put("Na+", new AdvancedIonData(2.36, // sigma [A]
-	3.761e-03, // W0 - fitted to NaCl activity coefficient data (corrected ref state)
-	-8.50e-08, // WT
-	2.0e-10, // WTT
-	1.86, // RBorn0 [A]
-	3.8e-04, // RBornT
-	1, // charge
-	-405.0 // dGhyd
+        3.761e-03, // W0 - fitted to NaCl activity coefficient data (corrected ref state)
+        -8.50e-08, // WT
+        2.0e-10, // WTT
+        1.86, // RBorn0 [A]
+        3.8e-04, // RBornT
+        1, // charge
+        -405.0 // dGhyd
     ));
 
     // K+ : Weak chaotrope. dGhyd = -321 kJ/mol
     // W0 fitted to R&S (1959) KCl gamma_pm data using corrected reference state
     ION_DATA.put("K+", new AdvancedIonData(2.80, // sigma [A]
-	3.907e-03, // W0 - fitted to KCl activity coefficient data (corrected ref state)
-	-5.20e-08, // WT
-	0.0, // WTT
-	2.18, // RBorn0
-	3.2e-04, // RBornT
-	1, // charge
-	-321.0 // dGhyd
+        3.907e-03, // W0 - fitted to KCl activity coefficient data (corrected ref state)
+        -5.20e-08, // WT
+        0.0, // WTT
+        2.18, // RBorn0
+        3.2e-04, // RBornT
+        1, // charge
+        -321.0 // dGhyd
     ));
 
     // Rb+ : Chaotrope. dGhyd = -296 kJ/mol
     ION_DATA.put("Rb+", new AdvancedIonData(3.04, // sigma
-	-2.80e-06, // W0
-	-4.50e-08, // WT
-	0.0, // WTT
-	2.32, // RBorn0
-	3.0e-04, // RBornT
-	1, -296.0));
+        -2.80e-06, // W0
+        -4.50e-08, // WT
+        0.0, // WTT
+        2.32, // RBorn0
+        3.0e-04, // RBornT
+        1, -296.0));
 
     // Cs+ : Strong chaotrope. dGhyd = -276 kJ/mol
     ION_DATA.put("Cs+", new AdvancedIonData(3.37, // sigma
-	-1.50e-06, // W0
-	-3.80e-08, // WT
-	0.0, // WTT
-	2.50, // RBorn0
-	2.8e-04, // RBornT
-	1, -276.0));
+        -1.50e-06, // W0
+        -3.80e-08, // WT
+        0.0, // WTT
+        2.50, // RBorn0
+        2.8e-04, // RBornT
+        1, -276.0));
 
     // H+ (hydronium): Very strong kosmotrope. dGhyd = -1090 kJ/mol
     ION_DATA.put("H+", new AdvancedIonData(2.00, -5.20e-05, -1.50e-07, 0.0, 1.30, 5.0e-04, 1, -1090.0));
@@ -145,40 +145,40 @@ public final class IonParametersAdvanced implements Serializable {
     // --- Monovalent anions ---
     // F- : Strong kosmotrope. dGhyd = -465 kJ/mol
     ION_DATA.put("F-", new AdvancedIonData(2.64, // sigma
-	-4.20e-05, // W0 - strong interaction
-	6.80e-08, // WT - note: positive for anions (opposite T-trend)
-	0.0, // WTT
-	1.68, // RBorn0 - small Born radius (high hydration energy)
-	3.5e-04, // RBornT
-	-1, -465.0));
+        -4.20e-05, // W0 - strong interaction
+        6.80e-08, // WT - note: positive for anions (opposite T-trend)
+        0.0, // WTT
+        1.68, // RBorn0 - small Born radius (high hydration energy)
+        3.5e-04, // RBornT
+        -1, -465.0));
 
     // Cl- : Reference anion, mild chaotrope. dGhyd = -363 kJ/mol
     // W0 fitted to R&S (1959) NaCl gamma_pm data at 25C using corrected reference state
     ION_DATA.put("Cl-", new AdvancedIonData(3.19, // sigma
-	-3.469e-03, // W0 - fitted to NaCl activity coefficient data (corrected ref state)
-	4.50e-08, // WT
-	-1.5e-10, // WTT
-	2.26, // RBorn0
-	2.8e-04, // RBornT
-	-1, -363.0));
+        -3.469e-03, // W0 - fitted to NaCl activity coefficient data (corrected ref state)
+        4.50e-08, // WT
+        -1.5e-10, // WTT
+        2.26, // RBorn0
+        2.8e-04, // RBornT
+        -1, -363.0));
 
     // Br- : Chaotrope. dGhyd = -337 kJ/mol
     ION_DATA.put("Br-", new AdvancedIonData(3.46, // sigma
-	-1.68e-05, // W0
-	3.50e-08, // WT
-	0.0, // WTT
-	2.44, // RBorn0
-	2.5e-04, // RBornT
-	-1, -337.0));
+        -1.68e-05, // W0
+        3.50e-08, // WT
+        0.0, // WTT
+        2.44, // RBorn0
+        2.5e-04, // RBornT
+        -1, -337.0));
 
     // I- : Strong chaotrope. dGhyd = -283 kJ/mol
     ION_DATA.put("I-", new AdvancedIonData(3.82, // sigma
-	-1.05e-05, // W0
-	2.40e-08, // WT
-	0.0, // WTT
-	2.70, // RBorn0
-	2.2e-04, // RBornT
-	-1, -283.0));
+        -1.05e-05, // W0
+        2.40e-08, // WT
+        0.0, // WTT
+        2.70, // RBorn0
+        2.2e-04, // RBornT
+        -1, -283.0));
 
     // OH- : Strong kosmotrope. dGhyd = -430 kJ/mol
     ION_DATA.put("OH-", new AdvancedIonData(2.80, -3.50e-05, 5.50e-08, 0.0, 1.80, 3.2e-04, -1, -430.0));
@@ -195,40 +195,40 @@ public final class IonParametersAdvanced implements Serializable {
     // --- Divalent cations ---
     // Mg2+ : Very strong kosmotrope. dGhyd = -1922 kJ/mol
     ION_DATA.put("Mg++", new AdvancedIonData(2.10, // sigma - small due to high charge density
-	-8.50e-05, // W0 - very strong interaction
-	-2.80e-07, // WT
-	5.0e-10, // WTT
-	1.42, // RBorn0 - small (high solvation energy)
-	6.0e-04, // RBornT
-	2, -1922.0));
+        -8.50e-05, // W0 - very strong interaction
+        -2.80e-07, // WT
+        5.0e-10, // WTT
+        1.42, // RBorn0 - small (high solvation energy)
+        6.0e-04, // RBornT
+        2, -1922.0));
 
     // Ca2+ : Strong kosmotrope. dGhyd = -1592 kJ/mol
     // W0 fitted to R&S (1959) CaCl2 gamma_pm data using corrected reference state
     ION_DATA.put("Ca++", new AdvancedIonData(2.38, // sigma
-	-8.165e-03, // W0 - fitted to CaCl2 activity coefficient data (corrected ref state)
-	-2.30e-07, // WT
-	4.0e-10, // WTT
-	1.58, // RBorn0
-	5.5e-04, // RBornT
-	2, -1592.0));
+        -8.165e-03, // W0 - fitted to CaCl2 activity coefficient data (corrected ref state)
+        -2.30e-07, // WT
+        4.0e-10, // WTT
+        1.58, // RBorn0
+        5.5e-04, // RBornT
+        2, -1592.0));
 
     // Sr2+ : Moderate kosmotrope. dGhyd = -1445 kJ/mol
     ION_DATA.put("Sr++", new AdvancedIonData(2.68, // sigma
-	-5.00e-05, // W0
-	-1.95e-07, // WT
-	0.0, // WTT
-	1.74, // RBorn0
-	5.0e-04, // RBornT
-	2, -1445.0));
+        -5.00e-05, // W0
+        -1.95e-07, // WT
+        0.0, // WTT
+        1.74, // RBorn0
+        5.0e-04, // RBornT
+        2, -1445.0));
 
     // Ba2+ : Weaker kosmotrope. dGhyd = -1317 kJ/mol
     ION_DATA.put("Ba++", new AdvancedIonData(2.92, // sigma
-	-3.80e-05, // W0
-	-1.70e-07, // WT
-	0.0, // WTT
-	1.88, // RBorn0
-	4.5e-04, // RBornT
-	2, -1317.0));
+        -3.80e-05, // W0
+        -1.70e-07, // WT
+        0.0, // WTT
+        1.88, // RBorn0
+        4.5e-04, // RBornT
+        2, -1317.0));
 
     // Fe2+ : Strong kosmotrope. dGhyd = -1946 kJ/mol
     ION_DATA.put("Fe++", new AdvancedIonData(2.28, -7.80e-05, -2.50e-07, 0.0, 1.45, 5.8e-04, 2, -1946.0));
@@ -240,12 +240,12 @@ public final class IonParametersAdvanced implements Serializable {
     // SO4 2- : Strong kosmotrope. dGhyd = -1090 kJ/mol
     // W0 fitted to R&S (1959) Na2SO4 gamma_pm data using corrected reference state
     ION_DATA.put("SO4--", new AdvancedIonData(3.80, // sigma - large polyatomic
-	-6.909e-03, // W0 - fitted to Na2SO4 activity coefficient data (corrected ref state)
-	8.00e-08, // WT
-	-3.0e-10, // WTT
-	2.58, // RBorn0
-	4.0e-04, // RBornT
-	-2, -1090.0));
+        -6.909e-03, // W0 - fitted to Na2SO4 activity coefficient data (corrected ref state)
+        8.00e-08, // WT
+        -3.0e-10, // WTT
+        2.58, // RBorn0
+        4.0e-04, // RBornT
+        -2, -1090.0));
 
     // CO3 2- : Strong kosmotrope. dGhyd = -1315 kJ/mol
     ION_DATA.put("CO3--", new AdvancedIonData(3.60, -6.00e-05, 9.00e-08, 0.0, 2.45, 3.8e-04, -2, -1315.0));
@@ -269,8 +269,8 @@ public final class IonParametersAdvanced implements Serializable {
 
     // MgSO4: Strong ion pairing (K_IP ~ 160 at 25C)
     ION_PAIR_DATA.put("Mg++-SO4--", new IonPairData(160.0, // K0_IP [L/mol] at 298.15 K
-	12500.0, // dH_IP [J/mol] - enthalpy of ion pair formation
-	2.90 // d_IP [A] - contact distance
+        12500.0, // dH_IP [J/mol] - enthalpy of ion pair formation
+        2.90 // d_IP [A] - contact distance
     ));
 
     // CaSO4: Very strong ion pairing (K_IP ~ 200 at 25C)
@@ -306,7 +306,7 @@ public final class IonParametersAdvanced implements Serializable {
     AdvancedIonData old = ION_DATA.get(ionName);
     if (old != null) {
       ION_DATA.put(ionName,
-	  new AdvancedIonData(old.sigma, newW0, old.wT, old.wTT, old.rBorn0, old.rBornT, old.charge, old.dGhydration));
+          new AdvancedIonData(old.sigma, newW0, old.wT, old.wTT, old.rBorn0, old.rBornT, old.charge, old.dGhydration));
     }
   }
 
@@ -322,7 +322,7 @@ public final class IonParametersAdvanced implements Serializable {
     AdvancedIonData old = ION_DATA.get(ionName);
     if (old != null) {
       ION_DATA.put(ionName,
-	  new AdvancedIonData(old.sigma, newW0, newWT, newWTT, old.rBorn0, old.rBornT, old.charge, old.dGhydration));
+          new AdvancedIonData(old.sigma, newW0, newWT, newWTT, old.rBorn0, old.rBornT, old.charge, old.dGhydration));
     }
   }
 
@@ -493,7 +493,7 @@ public final class IonParametersAdvanced implements Serializable {
      * @param dGhydration hydration Gibbs energy in kJ/mol
      */
     public AdvancedIonData(double sigma, double w0, double wT, double wTT, double rBorn0, double rBornT, int charge,
-	double dGhydration) {
+        double dGhydration) {
       this.sigma = sigma;
       this.w0 = w0;
       this.wT = wT;

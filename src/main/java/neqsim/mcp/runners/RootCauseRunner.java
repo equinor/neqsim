@@ -71,17 +71,17 @@ public final class RootCauseRunner {
 
       Symptom symptom = parseSymptom(symptomStr);
       if (symptom == null) {
-	return errorJson(
-	    "Unknown symptom: " + symptomStr + ". Supported: TRIP, HIGH_VIBRATION, SEAL_FAILURE, HIGH_TEMPERATURE, "
-		+ "LOW_EFFICIENCY, PRESSURE_DEVIATION, FLOW_DEVIATION, HIGH_POWER, "
-		+ "SURGE_EVENT, FOULING, ABNORMAL_NOISE, LIQUID_CARRYOVER");
+        return errorJson(
+            "Unknown symptom: " + symptomStr + ". Supported: TRIP, HIGH_VIBRATION, SEAL_FAILURE, HIGH_TEMPERATURE, "
+                + "LOW_EFFICIENCY, PRESSURE_DEVIATION, FLOW_DEVIATION, HIGH_POWER, "
+                + "SURGE_EVENT, FOULING, ABNORMAL_NOISE, LIQUID_CARRYOVER");
       }
 
       // Build process from JSON
       String processJsonStr = getRequiredString(input, "processJson");
       SimulationResult simResult = ProcessSystem.fromJsonAndRun(processJsonStr);
       if (simResult.isError()) {
-	return errorJson("Process simulation failed: " + simResult.getErrors().toString());
+        return errorJson("Process simulation failed: " + simResult.getErrors().toString());
       }
       ProcessSystem process = simResult.getProcessSystem();
 
@@ -91,36 +91,36 @@ public final class RootCauseRunner {
 
       // Optional: simulation enabled
       if (input.has("simulationEnabled")) {
-	rca.setSimulationEnabled(input.get("simulationEnabled").getAsBoolean());
+        rca.setSimulationEnabled(input.get("simulationEnabled").getAsBoolean());
       }
 
       // Optional: historian CSV data
       if (input.has("historianCsv")) {
-	String csv = input.get("historianCsv").getAsString();
-	parseAndSetHistorianData(rca, csv);
+        String csv = input.get("historianCsv").getAsString();
+        parseAndSetHistorianData(rca, csv);
       }
 
       // Optional: design limits
       if (input.has("designLimits") && input.get("designLimits").isJsonObject()) {
-	JsonObject limits = input.getAsJsonObject("designLimits");
-	for (Map.Entry<String, JsonElement> entry : limits.entrySet()) {
-	  if (entry.getValue().isJsonArray()) {
-	    JsonArray arr = entry.getValue().getAsJsonArray();
-	    double min = arr.get(0).isJsonNull() ? Double.NaN : arr.get(0).getAsDouble();
-	    double max = arr.get(1).isJsonNull() ? Double.NaN : arr.get(1).getAsDouble();
-	    rca.setDesignLimit(entry.getKey(), min, max);
-	  }
-	}
+        JsonObject limits = input.getAsJsonObject("designLimits");
+        for (Map.Entry<String, JsonElement> entry : limits.entrySet()) {
+          if (entry.getValue().isJsonArray()) {
+            JsonArray arr = entry.getValue().getAsJsonArray();
+            double min = arr.get(0).isJsonNull() ? Double.NaN : arr.get(0).getAsDouble();
+            double max = arr.get(1).isJsonNull() ? Double.NaN : arr.get(1).getAsDouble();
+            rca.setDesignLimit(entry.getKey(), min, max);
+          }
+        }
       }
 
       // Optional: STID data
       if (input.has("stidData") && input.get("stidData").isJsonObject()) {
-	Map<String, String> stidMap = new HashMap<String, String>();
-	JsonObject stid = input.getAsJsonObject("stidData");
-	for (Map.Entry<String, JsonElement> entry : stid.entrySet()) {
-	  stidMap.put(entry.getKey(), entry.getValue().getAsString());
-	}
-	rca.setStidData(stidMap);
+        Map<String, String> stidMap = new HashMap<String, String>();
+        JsonObject stid = input.getAsJsonObject("stidData");
+        for (Map.Entry<String, JsonElement> entry : stid.entrySet()) {
+          stidMap.put(entry.getKey(), entry.getValue().getAsString());
+        }
+        rca.setStidData(stidMap);
       }
 
       // Run analysis
@@ -165,7 +165,7 @@ public final class RootCauseRunner {
     String line;
     while ((line = reader.readLine()) != null) {
       if (!line.trim().isEmpty()) {
-	rows.add(line.split(","));
+        rows.add(line.split(","));
       }
     }
 
@@ -185,11 +185,11 @@ public final class RootCauseRunner {
       String[] values = rows.get(row);
       timestamps[row] = Double.parseDouble(values[0].trim());
       for (int col = 1; col < headers.length && col < values.length; col++) {
-	String paramName = headers[col].trim();
-	double[] paramData = data.get(paramName);
-	if (paramData != null) {
-	  paramData[row] = Double.parseDouble(values[col].trim());
-	}
+        String paramName = headers[col].trim();
+        double[] paramData = data.get(paramName);
+        if (paramData != null) {
+          paramData[row] = Double.parseDouble(values[col].trim());
+        }
       }
     }
 

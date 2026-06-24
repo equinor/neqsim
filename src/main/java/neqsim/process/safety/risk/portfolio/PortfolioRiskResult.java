@@ -425,7 +425,7 @@ public class PortfolioRiskResult implements Serializable {
     sb.append("COMMON CAUSE ANALYSIS\n");
     sb.append(StringUtils.repeat("─", 40)).append("\n");
     sb.append(String.format("  Common Cause Loss: %,.0f boe (%.1f%% of total)%n", expectedCommonCauseLoss,
-	commonCauseFraction * 100));
+        commonCauseFraction * 100));
     sb.append(String.format("  Diversification:   %.1f%% benefit%n", diversificationBenefit * 100));
     sb.append("\n");
 
@@ -435,7 +435,7 @@ public class PortfolioRiskResult implements Serializable {
     sb.append(StringUtils.repeat("─", 60)).append("\n");
     for (AssetResult ar : assetResults) {
       sb.append(String.format("%-20s %,12.0f %,12.0f %11.1f%%%n", ar.getAssetName(), ar.getExpectedProduction(),
-	  ar.getExpectedLoss(), ar.getContributionToPortfolioRisk() * 100));
+          ar.getExpectedLoss(), ar.getContributionToPortfolioRisk() * 100));
     }
 
     return sb.toString();
@@ -444,6 +444,6 @@ public class PortfolioRiskResult implements Serializable {
   @Override
   public String toString() {
     return String.format("PortfolioRiskResult[%s: %.0f boe expected loss, %.1f%% availability]", analysisName,
-	expectedPortfolioLoss, portfolioAvailability * 100);
+        expectedPortfolioLoss, portfolioAvailability * 100);
   }
 }

@@ -190,14 +190,14 @@ class SystemKentEisenbergTest {
     testSystem.setMixingRule(4);
 
     neqsim.chemicalreactions.chemicalreaction.ChemicalReaction h2sReaction = testSystem.getChemicalReactionOperations()
-	.getReactionList().getReaction("water-H2S");
+        .getReactionList().getReaction("water-H2S");
     assertNotNull(h2sReaction, "water-H2S reaction should be loaded");
 
     double[] kCoefs = h2sReaction.getK();
     // K1 (constant term) must be the mole-fraction-converted value, not the raw molality value.
     assertEquals(210.565345, kCoefs[0], 1.0e-6,
-	"H2S first-dissociation K1 must be on the mole-fraction basis (Edwards molality value "
-	    + "214.582 minus ln(55.51)); a value near 214.582 indicates the conversion regressed");
+        "H2S first-dissociation K1 must be on the mole-fraction basis (Edwards molality value "
+            + "214.582 minus ln(55.51)); a value near 214.582 indicates the conversion regressed");
     // K2 and K3 (temperature-dependent terms) match Edwards (1978) and are unchanged.
     assertEquals(-12995.4, kCoefs[1], 1.0e-3, "H2S K2 (B/T term) should be unchanged");
     assertEquals(-33.5471, kCoefs[2], 1.0e-4, "H2S K3 (ln T term) should be unchanged");
@@ -207,7 +207,7 @@ class SystemKentEisenbergTest {
     double lnK = kCoefs[0] + kCoefs[1] / t + kCoefs[2] * Math.log(t) + kCoefs[3] * t;
     double legacyLnK = 214.582 + kCoefs[1] / t + kCoefs[2] * Math.log(t) + kCoefs[3] * t;
     assertEquals(Math.log(55.51), legacyLnK - lnK, 1.0e-2,
-	"Correction should reduce ln K by ln(55.51) relative to the legacy molality constant");
+        "Correction should reduce ln K by ln(55.51) relative to the legacy molality constant");
   }
 
   /**
@@ -291,8 +291,8 @@ class SystemKentEisenbergTest {
     assertTrue(h2sAbsorbed > 0.0, "H2S should be absorbed into the amine liquid");
 
     logger.printf(org.apache.logging.log4j.Level.INFO,
-	"Kent-Eisenberg CO2+H2S/MDEA absorber demo:%n" + "  Treated-gas pCO2 = %.4e bar, pH2S = %.4e bar%n"
-	    + "  CO2 loading = %.4f, H2S loading = %.4f (mol acid gas / mol total amine)%n",
-	pCO2, pH2S, co2Loading, h2sLoading);
+        "Kent-Eisenberg CO2+H2S/MDEA absorber demo:%n" + "  Treated-gas pCO2 = %.4e bar, pH2S = %.4e bar%n"
+            + "  CO2 loading = %.4f, H2S loading = %.4f (mol acid gas / mol total amine)%n",
+        pCO2, pH2S, co2Loading, h2sLoading);
   }
 }

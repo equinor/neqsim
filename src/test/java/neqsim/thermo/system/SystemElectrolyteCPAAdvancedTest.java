@@ -69,7 +69,7 @@ class SystemElectrolyteCPAAdvancedTest {
     // Check derivative
     double dwdT = IonParametersAdvanced.calcWdT("Na+", 298.15);
     double dwdT_numerical = (IonParametersAdvanced.calcW("Na+", 298.16) - IonParametersAdvanced.calcW("Na+", 298.14))
-	/ 0.02;
+        / 0.02;
     assertEquals(dwdT, dwdT_numerical, 1e-12, "Analytical and numerical dW/dT should match");
   }
 
@@ -101,7 +101,7 @@ class SystemElectrolyteCPAAdvancedTest {
     // Check fugacity coefficients are reasonable
     double fugCoeffWater = system.getPhase(0).getComponent("water").getFugacityCoefficient();
     assertTrue(fugCoeffWater > 0.0 && fugCoeffWater < 100.0,
-	"Water fugacity coefficient should be reasonable, got " + fugCoeffWater);
+        "Water fugacity coefficient should be reasonable, got " + fugCoeffWater);
   }
 
   @Test

@@ -91,8 +91,8 @@ public class ElectricalLoadList implements java.io.Serializable {
 
       // Reactive power
       if (item.getPowerFactor() > 0 && item.getPowerFactor() < 1.0) {
-	double phi = Math.acos(item.getPowerFactor());
-	totalReactivePowerKVAR += item.getMaxDemandKW() * Math.tan(phi);
+        double phi = Math.acos(item.getPowerFactor());
+        totalReactivePowerKVAR += item.getMaxDemandKW() * Math.tan(phi);
       }
     }
 

@@ -170,7 +170,7 @@ public class ChlorideSCCAssessment implements Serializable {
     String upperType = materialType.toUpperCase().trim();
 
     if (upperType.contains("625") || upperType.contains("C276") || upperType.contains("C-276")
-	|| upperType.contains("INCONEL") || upperType.contains("HASTELLOY")) {
+        || upperType.contains("INCONEL") || upperType.contains("HASTELLOY")) {
       evaluateNickelAlloy();
     } else if (upperType.contains("25CR") || upperType.contains("SUPER") || upperType.contains("2507")) {
       evaluate25CrSuperDuplex();
@@ -187,11 +187,11 @@ public class ChlorideSCCAssessment implements Serializable {
 
     if (oxygenPresent) {
       notes.add("WARNING: Dissolved oxygen present — reduces SCC threshold temperature by "
-	  + "approximately 20-30°C for austenitic grades.");
+          + "approximately 20-30°C for austenitic grades.");
       if ("316".contains(upperType) || "304".contains(upperType)) {
-	maxAllowableTemperatureC -= 25.0;
-	temperatureMarginC = temperatureC - maxAllowableTemperatureC;
-	determineRisk();
+        maxAllowableTemperatureC -= 25.0;
+        temperatureMarginC = temperatureC - maxAllowableTemperatureC;
+        determineRisk();
       }
     }
 
@@ -295,7 +295,7 @@ public class ChlorideSCCAssessment implements Serializable {
       sccAcceptable = false;
       riskLevel = "Very High";
       notes.add("ABOVE Cl-SCC limit by " + String.format("%.0f", temperatureMarginC) + "°C — upgrade to "
-	  + recommendedUpgrade);
+          + recommendedUpgrade);
     }
   }
 

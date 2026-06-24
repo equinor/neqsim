@@ -35,14 +35,14 @@ class SeparatorPublishedBenchmarkTest {
 
     // Choose flow conditions giving recommended momentum (below 6000 Pa max for inlet vane).
     vane.calculate(dsd, 50.0, 800.0, 0.18, // gas flow [m3/s]
-	0.015, // liquid flow [m3/s]
-	0.025);
+        0.015, // liquid flow [m3/s]
+        0.025);
 
     assertTrue(vane.getMomentumFlux() > 1000.0 && vane.getMomentumFlux() < 6000.0,
-	"Vane momentum should be in recommended published range, got: " + vane.getMomentumFlux());
+        "Vane momentum should be in recommended published range, got: " + vane.getMomentumFlux());
     assertTrue(vane.getBulkSeparationEfficiency() >= 0.70 && vane.getBulkSeparationEfficiency() <= 0.85,
-	"Inlet vane bulk efficiency should be within published 70-85% range, got: "
-	    + vane.getBulkSeparationEfficiency());
+        "Inlet vane bulk efficiency should be within published 70-85% range, got: "
+            + vane.getBulkSeparationEfficiency());
   }
 
   @Test
@@ -55,8 +55,8 @@ class SeparatorPublishedBenchmarkTest {
     cyclone.calculate(dsd, 50.0, 800.0, 0.20, 0.02, 0.025);
 
     assertTrue(cyclone.getBulkSeparationEfficiency() >= 0.90 && cyclone.getBulkSeparationEfficiency() <= 0.99,
-	"Inlet cyclone bulk efficiency should be in published 90-99% range, got: "
-	    + cyclone.getBulkSeparationEfficiency());
+        "Inlet cyclone bulk efficiency should be in published 90-99% range, got: "
+            + cyclone.getBulkSeparationEfficiency());
   }
 
   @Test
@@ -67,7 +67,7 @@ class SeparatorPublishedBenchmarkTest {
     // Brunazzi/Paglianti-type behavior: high capture for droplets above 10 um.
     double eta10um = wire.getEfficiency(10e-6);
     assertTrue(eta10um > 0.95,
-	"Wire mesh should capture >95% at 10 um for standard high-efficiency pad, got: " + eta10um);
+        "Wire mesh should capture >95% at 10 um for standard high-efficiency pad, got: " + eta10um);
 
     // At d50 (5 um default), efficiency should be approximately 50% of max by definition.
     double etaAtD50 = wire.getEfficiency(5e-6);
@@ -78,16 +78,16 @@ class SeparatorPublishedBenchmarkTest {
   void testApi12JThresholdBoundaryCases() {
     // API 12J threshold check: vertical, no mist eliminator, K limit = 0.107 m/s.
     DropletSettlingCalculator.ApiComplianceResult verticalBoundary = DropletSettlingCalculator.checkApi12JCompliance(
-	90e-6, // cut diameter <= 100 um
-	0.107, // exact boundary
-	false, 180.0, // 2-phase minimum
-	"vertical", false);
+        90e-6, // cut diameter <= 100 um
+        0.107, // exact boundary
+        false, 180.0, // 2-phase minimum
+        "vertical", false);
     assertTrue(verticalBoundary.isFullyCompliant(), "Case exactly at API 12J vertical K-threshold should be compliant");
 
     // Horizontal no-ME boundary K = 0.120 m/s should be compliant when other criteria pass.
     DropletSettlingCalculator.ApiComplianceResult horizontalBoundary = DropletSettlingCalculator
-	.checkApi12JCompliance(95e-6, 0.120, false, 180.0, "horizontal", false);
+        .checkApi12JCompliance(95e-6, 0.120, false, 180.0, "horizontal", false);
     assertTrue(horizontalBoundary.isFullyCompliant(),
-	"Case exactly at API 12J horizontal K-threshold should be compliant");
+        "Case exactly at API 12J horizontal K-threshold should be compliant");
   }
 }

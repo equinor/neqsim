@@ -64,7 +64,7 @@ public class GasLiftPerformanceCurve implements Serializable {
    */
   public GasLiftPerformanceCurve(double[] liftRatesSm3PerDay, double[] oilRatesSm3PerDay) {
     if (liftRatesSm3PerDay == null || oilRatesSm3PerDay == null || liftRatesSm3PerDay.length != oilRatesSm3PerDay.length
-	|| liftRatesSm3PerDay.length < 2) {
+        || liftRatesSm3PerDay.length < 2) {
       throw new IllegalArgumentException("lift and oil arrays must be equal length, >= 2 points");
     }
     this.parametric = false;
@@ -128,7 +128,7 @@ public class GasLiftPerformanceCurve implements Serializable {
   public double optimalLiftRate() {
     if (parametric) {
       if (coeffB <= 0.0) {
-	return maxLiftRate;
+        return maxLiftRate;
       }
       double qStar = (coeffA / (2.0 * coeffB)) * (coeffA / (2.0 * coeffB));
       return Math.max(0.0, Math.min(maxLiftRate, qStar));
@@ -137,8 +137,8 @@ public class GasLiftPerformanceCurve implements Serializable {
     double bestOil = oilRates[0];
     for (int i = 1; i < liftRates.length; i++) {
       if (oilRates[i] > bestOil) {
-	bestOil = oilRates[i];
-	best = liftRates[i];
+        bestOil = oilRates[i];
+        best = liftRates[i];
       }
     }
     return best;

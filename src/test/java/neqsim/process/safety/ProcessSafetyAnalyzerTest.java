@@ -33,7 +33,7 @@ public class ProcessSafetyAnalyzerTest extends NeqSimTest {
     ProcessSafetyAnalyzer analyzer = new ProcessSafetyAnalyzer(base, repository);
 
     ProcessSafetyScenario scenario = ProcessSafetyScenario.builder("Blocked pump").blockOutlet("pump1")
-	.controllerSetPoint("pump1", 5.0).build();
+        .controllerSetPoint("pump1", 5.0).build();
 
     ProcessSafetyAnalysisSummary summary = analyzer.analyze(scenario);
 

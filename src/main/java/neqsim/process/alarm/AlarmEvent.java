@@ -85,6 +85,6 @@ public final class AlarmEvent implements Serializable {
   @Override
   public String toString() {
     return "AlarmEvent{" + "source='" + source + '\'' + ", level=" + level + ", type=" + type + ", timestamp="
-	+ timestamp + ", value=" + value + '}';
+        + timestamp + ", value=" + value + '}';
   }
 }

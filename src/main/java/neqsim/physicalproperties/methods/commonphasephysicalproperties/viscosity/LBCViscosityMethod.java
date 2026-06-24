@@ -57,7 +57,7 @@ public class LBCViscosityMethod extends Viscosity {
 
       double temp2Gas = Math.pow(tc, 1.0 / 6.0) / (Math.pow(molarMass, 1.0 / 2.0) * Math.pow(pcAtm, 2.0 / 3.0));
       double lowPressureCorrelation = tr < 1.5 ? 34.0e-5 / temp2Gas * Math.pow(tr, 0.94)
-	  : 17.78e-5 / temp2Gas * Math.pow(4.58 * tr - 1.67, 5.0 / 8.0);
+          : 17.78e-5 / temp2Gas * Math.pow(4.58 * tr - 1.67, 5.0 / 8.0);
       lowPressureCorrelation *= 1.0e4; // cP -> micropoise
 
       double molarMassSqrt = Math.pow(molarMass, 1.0 / 2.0);
@@ -66,22 +66,22 @@ public class LBCViscosityMethod extends Viscosity {
     }
 
     double lowPressureViscosityMicropoise = selectReferenceViscosity(weightedGasViscosity,
-	mixtureMolarMassSqrt == 0.0 ? 1.0 : mixtureMolarMassSqrt);
+        mixtureMolarMassSqrt == 0.0 ? 1.0 : mixtureMolarMassSqrt);
 
     double pseudoCriticalVolume = volumeMixSum; // cm3/mol
     double critDens = pseudoCriticalVolume > 0.0 ? 1.0 / pseudoCriticalVolume : 0.0; // mol/cm3
     double epsilonMix = Math.pow(epsilonMixSum, 1.0 / 6.0);
     double reducedDensity = critDens > 0.0
-	? phase.getPhase().getPhysicalProperties().getDensity() / phase.getPhase().getMolarMass() / critDens / 1.0e6
-	: 0.0;
+        ? phase.getPhase().getPhysicalProperties().getDensity() / phase.getPhase().getMolarMass() / critDens / 1.0e6
+        : 0.0;
 
     PhaseType phaseType = phase.getPhase().getType();
     double denseContribution = 0.0;
     if (phaseType != PhaseType.AQUEOUS && epsilonMix > 0.0 && reducedDensity > 0.0) {
       double poly = denseContributionParameters[0] + denseContributionParameters[1] * reducedDensity
-	  + denseContributionParameters[2] * Math.pow(reducedDensity, 2.0)
-	  + denseContributionParameters[3] * Math.pow(reducedDensity, 3.0)
-	  + denseContributionParameters[4] * Math.pow(reducedDensity, 4.0);
+          + denseContributionParameters[2] * Math.pow(reducedDensity, 2.0)
+          + denseContributionParameters[3] * Math.pow(reducedDensity, 3.0)
+          + denseContributionParameters[4] * Math.pow(reducedDensity, 4.0);
       denseContribution = Math.max(0.0, (Math.pow(poly, 4.0) - 1.0e-4) / epsilonMix);
       denseContribution *= 1.0e4; // cP -> micropoise
     }
@@ -137,7 +137,7 @@ public class LBCViscosityMethod extends Viscosity {
   public void setDenseContributionParameters(double[] parameters) {
     if (parameters == null || parameters.length != DEFAULT_DENSE_CONTRIBUTION_PARAMETERS.length) {
       throw new IllegalArgumentException(
-	  "LBC dense contribution requires exactly " + DEFAULT_DENSE_CONTRIBUTION_PARAMETERS.length + " parameters");
+          "LBC dense contribution requires exactly " + DEFAULT_DENSE_CONTRIBUTION_PARAMETERS.length + " parameters");
     }
     denseContributionParameters = parameters.clone();
   }
@@ -151,7 +151,7 @@ public class LBCViscosityMethod extends Viscosity {
   public void setDenseContributionParameter(int index, double value) {
     if (index < 0 || index >= denseContributionParameters.length) {
       throw new IllegalArgumentException(
-	  "LBC dense contribution parameter index must be between 0 and " + (denseContributionParameters.length - 1));
+          "LBC dense contribution parameter index must be between 0 and " + (denseContributionParameters.length - 1));
     }
     denseContributionParameters[index] = value;
   }
@@ -224,7 +224,7 @@ public class LBCViscosityMethod extends Viscosity {
     }
 
     double criticalVolumeFt3PerLbmol = 21.573 + 0.015122 * molarMassGPerMol - 27.656 * liquidDensity
-	+ 0.070615 * molarMassGPerMol * liquidDensity;
+        + 0.070615 * molarMassGPerMol * liquidDensity;
     double criticalVolumeCm3PerMol = criticalVolumeFt3PerLbmol * FT3_PER_LBMOL_TO_CM3_PER_MOL;
 
     if (criticalVolumeCm3PerMol <= 0.0) {

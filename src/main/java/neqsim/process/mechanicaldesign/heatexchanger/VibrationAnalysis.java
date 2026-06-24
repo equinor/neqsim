@@ -242,7 +242,7 @@ public final class VibrationAnalysis {
 
     // 1. Natural frequency
     double fn = calcNaturalFrequency(tubeOD, tubeID, unsupportedSpan, tubeMaterialE, tubeDensity, tubeFluidDensity,
-	shellFluidDensity, "pinned");
+        shellFluidDensity, "pinned");
     result.naturalFrequencyHz = fn;
 
     // 2. Vortex shedding
@@ -258,8 +258,8 @@ public final class VibrationAnalysis {
     double vCrit = calcCriticalVelocityConnors(fn, tubeOD, dampingRatio, mEff, shellFluidDensity, triangularPitch);
     result.criticalVelocityMs = vCrit;
     result.velocityRatio = (vCrit > 0 && vCrit < Double.MAX_VALUE)
-	? crossflowVelocity / (vCrit * FLUIDELASTIC_SAFETY_FACTOR)
-	: 0.0;
+        ? crossflowVelocity / (vCrit * FLUIDELASTIC_SAFETY_FACTOR)
+        : 0.0;
     result.fluidElasticCritical = result.velocityRatio > 1.0;
 
     // 4. Acoustic resonance
@@ -330,11 +330,11 @@ public final class VibrationAnalysis {
       sb.append("Vibration Screening: ").append(passed ? "PASS" : "FAIL").append("\n");
       sb.append(String.format("  Natural frequency: %.1f Hz%n", naturalFrequencyHz));
       sb.append(String.format("  Vortex shedding: %.1f Hz (ratio=%.2f) %s%n", vortexSheddingFrequencyHz,
-	  vortexSheddingRatio, vortexSheddingCritical ? "CRITICAL" : "OK"));
+          vortexSheddingRatio, vortexSheddingCritical ? "CRITICAL" : "OK"));
       sb.append(String.format("  Fluid-elastic: V_crit=%.2f m/s (ratio=%.2f) %s%n", criticalVelocityMs, velocityRatio,
-	  fluidElasticCritical ? "CRITICAL" : "OK"));
+          fluidElasticCritical ? "CRITICAL" : "OK"));
       sb.append(String.format("  Acoustic: %.1f Hz (ratio=%.2f) %s%n", acousticFrequencyHz, acousticRatio,
-	  acousticCritical ? "CRITICAL" : "OK"));
+          acousticCritical ? "CRITICAL" : "OK"));
       return sb.toString();
     }
   }

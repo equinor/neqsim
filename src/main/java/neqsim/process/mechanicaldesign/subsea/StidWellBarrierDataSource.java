@@ -156,10 +156,10 @@ public class StidWellBarrierDataSource {
     JsonArray elements = firstArray(record, ELEMENT_ARRAY_KEYS);
     if (elements != null) {
       for (int i = 0; i < elements.size(); i++) {
-	JsonElement element = elements.get(i);
-	if (element.isJsonObject()) {
-	  envelope.addElement(buildElement(element.getAsJsonObject()));
-	}
+        JsonElement element = elements.get(i);
+        if (element.isJsonObject()) {
+          envelope.addElement(buildElement(element.getAsJsonObject()));
+        }
       }
     }
     return envelope;
@@ -175,7 +175,7 @@ public class StidWellBarrierDataSource {
     BarrierElement.ElementType type = parseElementType(optString(record, "type", ""));
     String name = optString(record, "name", type.name());
     double depthMD = record.has("depthMD") && !record.get("depthMD").isJsonNull() ? record.get("depthMD").getAsDouble()
-	: 0.0;
+        : 0.0;
     BarrierElement element = new BarrierElement(type, name, depthMD);
     element.setStatus(parseStatus(optString(record, "status", "")));
     if (record.has("verified") && !record.get("verified").isJsonNull()) {
@@ -258,7 +258,7 @@ public class StidWellBarrierDataSource {
   private static JsonObject firstObject(JsonObject object, String[] keys) {
     for (int i = 0; i < keys.length; i++) {
       if (object.has(keys[i]) && object.get(keys[i]).isJsonObject()) {
-	return object.getAsJsonObject(keys[i]);
+        return object.getAsJsonObject(keys[i]);
       }
     }
     return null;
@@ -274,7 +274,7 @@ public class StidWellBarrierDataSource {
   private static JsonArray firstArray(JsonObject object, String[] keys) {
     for (int i = 0; i < keys.length; i++) {
       if (object.has(keys[i]) && object.get(keys[i]).isJsonArray()) {
-	return object.getAsJsonArray(keys[i]);
+        return object.getAsJsonArray(keys[i]);
       }
     }
     return null;

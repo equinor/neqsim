@@ -235,7 +235,7 @@ public class SystemUMRPRUMCEosMatlabTest {
     // phase.
     SystemInterface scrubberFluid = gasFluid.clone();
     assertDoesNotThrow(() -> scrubberFluid.addFluid(oilFluid),
-	"addFluid should not throw when combining UMR-PRU fluids with different TBP components");
+        "addFluid should not throw when combining UMR-PRU fluids with different TBP components");
 
     ThermodynamicOperations scrubOps = new ThermodynamicOperations(scrubberFluid);
     scrubberFluid.setMultiPhaseCheck(true);
@@ -258,8 +258,8 @@ public class SystemUMRPRUMCEosMatlabTest {
       assertDoesNotThrow(() -> subOps.TPflash(), "TPflash should not throw at T=" + subcoolT + " C");
 
       if (subcooledFluid.hasPhaseType("oil")) {
-	double oilVolFrac = subcooledFluid.getPhase("oil").getVolume("litre");
-	assertTrue(oilVolFrac >= 0, "Oil volume should be non-negative at T=" + subcoolT);
+        double oilVolFrac = subcooledFluid.getPhase("oil").getVolume("litre");
+        assertTrue(oilVolFrac >= 0, "Oil volume should be non-negative at T=" + subcoolT);
       }
     }
   }
@@ -367,7 +367,7 @@ public class SystemUMRPRUMCEosMatlabTest {
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
       double rho = fluid.getPhase(i).getDensity("kg/m3");
       assertTrue(rho < 1000.0,
-	  "Phase " + i + " (" + fluid.getPhase(i).getType() + ") density " + rho + " kg/m3 is unphysical");
+          "Phase " + i + " (" + fluid.getPhase(i).getType() + ") density " + rho + " kg/m3 is unphysical");
     }
   }
 
@@ -409,14 +409,14 @@ public class SystemUMRPRUMCEosMatlabTest {
 
     // Same number of phases
     assertEquals(fluidCorrect.getNumberOfPhases(), fluidKgm3.getNumberOfPhases(),
-	"Auto-converted fluid should have same number of phases");
+        "Auto-converted fluid should have same number of phases");
 
     // Phase densities should match closely (within 1%)
     for (int i = 0; i < fluidCorrect.getNumberOfPhases(); i++) {
       double rhoCorrect = fluidCorrect.getPhase(i).getDensity("kg/m3");
       double rhoKgm3 = fluidKgm3.getPhase(i).getDensity("kg/m3");
       assertEquals(rhoCorrect, rhoKgm3, rhoCorrect * 0.01,
-	  "Phase " + i + " density should match after auto-conversion");
+          "Phase " + i + " density should match after auto-conversion");
     }
   }
 }

@@ -572,19 +572,19 @@ public class TrayHydraulicsCalculator implements Serializable {
     if (!designOk) {
       StringBuilder sb = new StringBuilder("Tray hydraulics issues: ");
       if (!weepingOk) {
-	sb.append("[WEEPING: vapor velocity below minimum] ");
+        sb.append("[WEEPING: vapor velocity below minimum] ");
       }
       if (!entrainmentOk) {
-	sb.append("[ENTRAINMENT: > 10%, tray spacing or diameter too small] ");
+        sb.append("[ENTRAINMENT: > 10%, tray spacing or diameter too small] ");
       }
       if (!downcommerBackupOk) {
-	sb.append("[DOWNCOMER BACKUP: > 50% of spacing, increase diameter or spacing] ");
+        sb.append("[DOWNCOMER BACKUP: > 50% of spacing, increase diameter or spacing] ");
       }
       if (percentFlood > 85.0) {
-	sb.append("[FLOODING: > 85%, increase column diameter] ");
+        sb.append("[FLOODING: > 85%, increase column diameter] ");
       }
       if (percentFlood < 50.0) {
-	sb.append("[LOW LOAD: < 50% flood, column oversized or turndown issue] ");
+        sb.append("[LOW LOAD: < 50% flood, column oversized or turndown issue] ");
       }
       logger.warn(sb.toString());
     }
@@ -631,10 +631,10 @@ public class TrayHydraulicsCalculator implements Serializable {
    */
   private double roundToStandardDiameter(double diameter) {
     double[] standardSizes = { 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.4, 1.5, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0,
-	3.2, 3.4, 3.6, 3.8, 4.0, 4.5, 5.0, 5.5, 6.0, 7.0, 8.0, 9.0, 10.0 };
+        3.2, 3.4, 3.6, 3.8, 4.0, 4.5, 5.0, 5.5, 6.0, 7.0, 8.0, 9.0, 10.0 };
     for (double stdSize : standardSizes) {
       if (stdSize >= diameter) {
-	return stdSize;
+        return stdSize;
       }
     }
     return Math.ceil(diameter * 2.0) / 2.0; // Round to nearest 0.5 m

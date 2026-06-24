@@ -302,14 +302,14 @@ public class WellIntegrityScreening implements Serializable {
       AnnulusClassification classification = classifyAnnulus(reading);
       annulusResults.put(reading.getId(), classification);
       if (classification == AnnulusClassification.EXCEEDS_MAASP
-	  || classification == AnnulusClassification.SUSTAINED_CASING_PRESSURE) {
-	anySevere = true;
+          || classification == AnnulusClassification.SUSTAINED_CASING_PRESSURE) {
+        anySevere = true;
       } else if (classification == AnnulusClassification.ELEVATED) {
-	anyElevated = true;
+        anyElevated = true;
       }
       if (!reading.isThermalEffectsExcluded()) {
-	findings.add("WARNING: Annulus " + reading.getId()
-	    + " readings do not exclude thermal effects; SCP diagnosis may be unreliable (API RP 90).");
+        findings.add("WARNING: Annulus " + reading.getId()
+            + " readings do not exclude thermal effects; SCP diagnosis may be unreliable (API RP 90).");
       }
     }
 
@@ -319,14 +319,14 @@ public class WellIntegrityScreening implements Serializable {
       int failed = countFailedElements(barrierSchematic);
       int degraded = countDegradedElements(barrierSchematic);
       if (!barrierPassed || failed > 0) {
-	anySevere = true;
-	findings.add("FAIL: Barrier schematic screening did not pass (" + failed
-	    + " failed element(s)); two-barrier principle review required (NORSOK D-010 Sec 5).");
+        anySevere = true;
+        findings.add("FAIL: Barrier schematic screening did not pass (" + failed
+            + " failed element(s)); two-barrier principle review required (NORSOK D-010 Sec 5).");
       }
       if (degraded > 0) {
-	anyElevated = true;
-	findings.add("WARNING: " + degraded
-	    + " degraded barrier element(s) detected; increased verification recommended (NORSOK D-010 Sec 5).");
+        anyElevated = true;
+        findings.add("WARNING: " + degraded
+            + " degraded barrier element(s) detected; increased verification recommended (NORSOK D-010 Sec 5).");
       }
     }
 
@@ -360,17 +360,17 @@ public class WellIntegrityScreening implements Serializable {
     }
     if (measured >= maasp) {
       findings.add("FAIL: Annulus " + reading.getId() + " pressure " + measured + " bara at/above MAASP " + maasp
-	  + " bara (API RP 90).");
+          + " bara (API RP 90).");
       return AnnulusClassification.EXCEEDS_MAASP;
     }
     if (!reading.isBleedsToZero() && reading.isRebuildsAfterBleed()) {
       findings.add("FAIL: Annulus " + reading.getId()
-	  + " rebuilds after bleed-down - sustained casing pressure indication (API RP 90).");
+          + " rebuilds after bleed-down - sustained casing pressure indication (API RP 90).");
       return AnnulusClassification.SUSTAINED_CASING_PRESSURE;
     }
     if (measured > ELEVATED_FRACTION * maasp) {
       findings.add("WARNING: Annulus " + reading.getId() + " pressure " + measured + " bara is elevated (> "
-	  + (ELEVATED_FRACTION * 100.0) + "% of MAASP " + maasp + " bara).");
+          + (ELEVATED_FRACTION * 100.0) + "% of MAASP " + maasp + " bara).");
       return AnnulusClassification.ELEVATED;
     }
     return AnnulusClassification.NORMAL;
@@ -406,15 +406,15 @@ public class WellIntegrityScreening implements Serializable {
   private static int countByStatus(WellBarrierSchematic schematic, BarrierElement.Status status) {
     int count = 0;
     BarrierEnvelope[] envelopes = new BarrierEnvelope[] { schematic.getPrimaryEnvelope(),
-	schematic.getSecondaryEnvelope() };
+        schematic.getSecondaryEnvelope() };
     for (BarrierEnvelope envelope : envelopes) {
       if (envelope == null) {
-	continue;
+        continue;
       }
       for (BarrierElement element : envelope.getElements()) {
-	if (element.getStatus() == status) {
-	  count++;
-	}
+        if (element.getStatus() == status) {
+          count++;
+        }
       }
     }
     return count;

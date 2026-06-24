@@ -112,10 +112,10 @@ public class StidProcessSafetySystemDataSource {
     for (int index = 0; index < array.size(); index++) {
       JsonElement element = array.get(index);
       if (element.isJsonObject()) {
-	ProcessSafetySystemReviewItem item = fromRecord(element.getAsJsonObject(), key);
-	ProcessSafetySystemReviewInput single = new ProcessSafetySystemReviewInput();
-	single.addItem(item);
-	input.mergeFrom(single);
+        ProcessSafetySystemReviewItem item = fromRecord(element.getAsJsonObject(), key);
+        ProcessSafetySystemReviewInput single = new ProcessSafetySystemReviewInput();
+        single.addItem(item);
+        input.mergeFrom(single);
       }
     }
   }
@@ -167,7 +167,7 @@ public class StidProcessSafetySystemDataSource {
     if (element.isJsonArray()) {
       List<Object> list = new ArrayList<Object>();
       for (JsonElement child : element.getAsJsonArray()) {
-	list.add(toObject(child));
+        list.add(toObject(child));
       }
       return list;
     }

@@ -34,7 +34,7 @@ public abstract class Packing extends NamedBaseClass implements PackingInterface
   public Packing(String name) {
     super(name);
     try (
-	neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
+        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
       // System.out.println("init packing");
       java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM packing WHERE name='" + name + "'"));
       dataSet.next();
@@ -57,10 +57,10 @@ public abstract class Packing extends NamedBaseClass implements PackingInterface
   public Packing(String name, String material, int size) {
     super(name);
     try (
-	neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
+        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
       System.out.println("init packing");
       java.sql.ResultSet dataSet = database.getResultSet(
-	  ("SELECT * FROM packing WHERE name='" + name + "' AND size=" + size + " AND material='" + material + "'"));
+          ("SELECT * FROM packing WHERE name='" + name + "' AND size=" + size + " AND material='" + material + "'"));
       dataSet.next();
       this.size = 1e-3 * Double.parseDouble(dataSet.getString("size")); // C
       surfaceAreaPrVolume = Double.parseDouble(dataSet.getString("surfaceAreaPrVolume"));

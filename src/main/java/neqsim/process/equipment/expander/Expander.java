@@ -110,18 +110,18 @@ public class Expander extends Compressor implements ExpanderInterface {
     if (ratedRecoveredPower > 0.0) {
       final double ratedKW = ratedRecoveredPower;
       addCapacityConstraint(new CapacityConstraint("recoveredPower", "kW", CapacityConstraint.ConstraintType.HARD)
-	  .setDesignValue(ratedKW).setMaxValue(ratedKW * 1.1).setWarningThreshold(0.9)
-	  .setDescription("Recovered shaft power vs rated recovered power").setDataSource("equipment")
-	  .setValueSupplier(() -> {
-	    if (getThermoSystem() == null) {
-	      return 0.0;
-	    }
-	    double recoveredKW = Math.abs(this.getPower("kW"));
-	    if (Double.isNaN(recoveredKW)) {
-	      return 0.0;
-	    }
-	    return recoveredKW;
-	  }));
+          .setDesignValue(ratedKW).setMaxValue(ratedKW * 1.1).setWarningThreshold(0.9)
+          .setDescription("Recovered shaft power vs rated recovered power").setDataSource("equipment")
+          .setValueSupplier(() -> {
+            if (getThermoSystem() == null) {
+              return 0.0;
+            }
+            double recoveredKW = Math.abs(this.getPower("kW"));
+            if (Double.isNaN(recoveredKW)) {
+              return 0.0;
+            }
+            return recoveredKW;
+          }));
     }
   }
 
@@ -173,12 +173,12 @@ public class Expander extends Compressor implements ExpanderInterface {
       double dp = (pressure - getThermoSystem().getPressure()) / (1.0 * numbersteps);
 
       for (int i = 0; i < numbersteps; i++) {
-	entropy = getThermoSystem().getEntropy();
-	double hinn_loc = getThermoSystem().getEnthalpy();
-	getThermoSystem().setPressure(getThermoSystem().getPressure() + dp);
-	thermoOps.PSflash(entropy);
-	hout = hinn_loc + (getThermoSystem().getEnthalpy() - hinn_loc) * polytropicEfficiency;
-	thermoOps.PHflash(hout, 0);
+        entropy = getThermoSystem().getEntropy();
+        double hinn_loc = getThermoSystem().getEnthalpy();
+        getThermoSystem().setPressure(getThermoSystem().getPressure() + dp);
+        thermoOps.PSflash(entropy);
+        hout = hinn_loc + (getThermoSystem().getEnthalpy() - hinn_loc) * polytropicEfficiency;
+        thermoOps.PHflash(hout, 0);
       }
 
       dH = hout - hinn;
@@ -201,7 +201,7 @@ public class Expander extends Compressor implements ExpanderInterface {
       thermoOps.PSflash(entropy);
       // double densOutIdeal = getThermoSystem().getDensity();
       if (!powerSet) {
-	dH = (getThermoSystem().getEnthalpy() - hinn) * isentropicEfficiency;
+        dH = (getThermoSystem().getEnthalpy() - hinn) * isentropicEfficiency;
       }
       hout = hinn + dH;
       isentropicEfficiency = dH / (getThermoSystem().getEnthalpy() - hinn);

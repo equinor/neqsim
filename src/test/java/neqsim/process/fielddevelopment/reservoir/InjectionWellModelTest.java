@@ -174,7 +174,7 @@ class InjectionWellModelTest {
 
     // Higher skin should give lower II
     assertTrue(noSkinResult.injectivityIndex > highSkinResult.injectivityIndex,
-	"Higher skin should reduce injectivity");
+        "Higher skin should reduce injectivity");
   }
 
   @Test
@@ -214,7 +214,7 @@ class InjectionWellModelTest {
   @DisplayName("Test injection pattern sweep efficiency")
   void testInjectionPatternSweep() {
     InjectionWellModel.InjectionPattern fiveSpot = new InjectionWellModel.InjectionPattern(
-	InjectionWellModel.InjectionPattern.PatternType.FIVE_SPOT);
+        InjectionWellModel.InjectionPattern.PatternType.FIVE_SPOT);
 
     // Favorable mobility ratio
     double sweepFavorable = fiveSpot.getArealSweepEfficiency(0.5);
@@ -231,7 +231,7 @@ class InjectionWellModelTest {
   @DisplayName("Test injection pattern configuration")
   void testInjectionPatternConfiguration() {
     InjectionWellModel.InjectionPattern pattern = new InjectionWellModel.InjectionPattern(
-	InjectionWellModel.InjectionPattern.PatternType.LINE_DRIVE);
+        InjectionWellModel.InjectionPattern.PatternType.LINE_DRIVE);
 
     pattern.setWellSpacing(400.0);
 

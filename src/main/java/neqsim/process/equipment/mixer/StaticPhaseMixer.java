@@ -30,56 +30,56 @@ public class StaticPhaseMixer extends StaticMixer {
 
     for (int k = 1; k < streams.size(); k++) {
       if (streams.get(k).getFlowRate("kg/hr") <= getMinimumFlow()) {
-	continue;
+        continue;
       }
       for (int i = 0; i < streams.get(k).getThermoSystem().getPhases()[0].getNumberOfComponents(); i++) {
-	boolean gotComponent = false;
-	String componentName = streams.get(k).getThermoSystem().getPhases()[0].getComponent(i).getName();
-	System.out.println("adding: " + componentName);
-	int numberOfPhases = streams.get(k).getThermoSystem().getNumberOfPhases();
-	double[] moles = new double[numberOfPhases];
-	PhaseType[] phaseType = new PhaseType[numberOfPhases];
+        boolean gotComponent = false;
+        String componentName = streams.get(k).getThermoSystem().getPhases()[0].getComponent(i).getName();
+        System.out.println("adding: " + componentName);
+        int numberOfPhases = streams.get(k).getThermoSystem().getNumberOfPhases();
+        double[] moles = new double[numberOfPhases];
+        PhaseType[] phaseType = new PhaseType[numberOfPhases];
 
-	// her maa man egentlig sjekke at phase typen er den samme !!! antar at begge er
-	// to fase elle gass - tofase
-	for (int p = 0; p < numberOfPhases; p++) {
-	  moles[p] = streams.get(k).getThermoSystem().getPhase(p).getComponent(i).getNumberOfMolesInPhase();
-	  phaseType[p] = streams.get(k).getThermoSystem().getPhase(p).getType();
-	}
-	if (k == 1) {
-	  phaseType[0] = PhaseType.LIQUID;
-	  mixedStream.getThermoSystem().getPhase(1).setTemperature(streams.get(k).getThermoSystem().getTemperature());
-	}
+        // her maa man egentlig sjekke at phase typen er den samme !!! antar at begge er
+        // to fase elle gass - tofase
+        for (int p = 0; p < numberOfPhases; p++) {
+          moles[p] = streams.get(k).getThermoSystem().getPhase(p).getComponent(i).getNumberOfMolesInPhase();
+          phaseType[p] = streams.get(k).getThermoSystem().getPhase(p).getType();
+        }
+        if (k == 1) {
+          phaseType[0] = PhaseType.LIQUID;
+          mixedStream.getThermoSystem().getPhase(1).setTemperature(streams.get(k).getThermoSystem().getTemperature());
+        }
 
-	for (int p = 0; p < mixedStream.getThermoSystem().getPhases()[0].getNumberOfComponents(); p++) {
-	  if (mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getName().equals(componentName)) {
-	    gotComponent = true;
-	    index = mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getComponentNumber();
-	    compName = mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getComponentName();
-	    break;
-	  }
-	}
+        for (int p = 0; p < mixedStream.getThermoSystem().getPhases()[0].getNumberOfComponents(); p++) {
+          if (mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getName().equals(componentName)) {
+            gotComponent = true;
+            index = mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getComponentNumber();
+            compName = mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getComponentName();
+            break;
+          }
+        }
 
-	if (gotComponent) {
-	  System.out.println("adding moles starting....");
-	  for (int p = 0; p < numberOfPhases; p++) {
-	    if (phaseType[p] == PhaseType.LIQUID) {
-	      System.out.println("adding liq");
-	      mixedStream.getThermoSystem().addComponent(index, moles[p], 1);
-	    } else if (phaseType[p] == PhaseType.GAS) {
-	      System.out.println("adding gas");
-	      mixedStream.getThermoSystem().addComponent(index, moles[p], 0);
-	    } else {
-	      System.out.println("not here....");
-	    }
-	  }
-	  System.out.println("adding moles finished");
-	} else {
-	  System.out.println("ikke gaa hit");
-	  for (int p = 0; p < numberOfPhases; p++) {
-	    mixedStream.getThermoSystem().addComponent(compName, moles[p], p);
-	  }
-	}
+        if (gotComponent) {
+          System.out.println("adding moles starting....");
+          for (int p = 0; p < numberOfPhases; p++) {
+            if (phaseType[p] == PhaseType.LIQUID) {
+              System.out.println("adding liq");
+              mixedStream.getThermoSystem().addComponent(index, moles[p], 1);
+            } else if (phaseType[p] == PhaseType.GAS) {
+              System.out.println("adding gas");
+              mixedStream.getThermoSystem().addComponent(index, moles[p], 0);
+            } else {
+              System.out.println("not here....");
+            }
+          }
+          System.out.println("adding moles finished");
+        } else {
+          System.out.println("ikke gaa hit");
+          for (int p = 0; p < numberOfPhases; p++) {
+            mixedStream.getThermoSystem().addComponent(compName, moles[p], p);
+          }
+        }
       }
     }
     mixedStream.getThermoSystem().init_x_y();
@@ -93,11 +93,11 @@ public class StaticPhaseMixer extends StaticMixer {
     int templateIndex = -1;
     for (int k = 0; k < streams.size(); k++) {
       if (streams.get(k).getFlowRate("kg/hr") <= getMinimumFlow()) {
-	continue;
+        continue;
       }
       streams.get(k).getThermoSystem().init(3);
       if (templateIndex < 0) {
-	templateIndex = k;
+        templateIndex = k;
       }
     }
     if (templateIndex < 0) {

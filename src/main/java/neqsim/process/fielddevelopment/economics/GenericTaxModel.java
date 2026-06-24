@@ -114,14 +114,14 @@ public class GenericTaxModel implements TaxModel {
     // Apply loss carry-forward for corporate tax
     if (parameters.isLossCarryForward()) {
       if (corporateTaxBase > 0 && corporateTaxLossCarryForward > 0) {
-	double usedLoss = Math.min(corporateTaxBase, corporateTaxLossCarryForward);
-	corporateTaxBase -= usedLoss;
-	corporateTaxLossCarryForward -= usedLoss;
+        double usedLoss = Math.min(corporateTaxBase, corporateTaxLossCarryForward);
+        corporateTaxBase -= usedLoss;
+        corporateTaxLossCarryForward -= usedLoss;
       } else if (corporateTaxBase < 0) {
-	// Apply interest to carried-forward losses
-	double interest = corporateTaxLossCarryForward * parameters.getLossCarryForwardInterest();
-	corporateTaxLossCarryForward += Math.abs(corporateTaxBase) + interest;
-	corporateTaxBase = 0;
+        // Apply interest to carried-forward losses
+        double interest = corporateTaxLossCarryForward * parameters.getLossCarryForwardInterest();
+        corporateTaxLossCarryForward += Math.abs(corporateTaxBase) + interest;
+        corporateTaxBase = 0;
       }
     }
 
@@ -133,13 +133,13 @@ public class GenericTaxModel implements TaxModel {
     // Apply loss carry-forward for resource tax
     if (parameters.isLossCarryForward()) {
       if (resourceTaxBase > 0 && resourceTaxLossCarryForward > 0) {
-	double usedLoss = Math.min(resourceTaxBase, resourceTaxLossCarryForward);
-	resourceTaxBase -= usedLoss;
-	resourceTaxLossCarryForward -= usedLoss;
+        double usedLoss = Math.min(resourceTaxBase, resourceTaxLossCarryForward);
+        resourceTaxBase -= usedLoss;
+        resourceTaxLossCarryForward -= usedLoss;
       } else if (resourceTaxBase < 0) {
-	double interest = resourceTaxLossCarryForward * parameters.getLossCarryForwardInterest();
-	resourceTaxLossCarryForward += Math.abs(resourceTaxBase) + interest;
-	resourceTaxBase = 0;
+        double interest = resourceTaxLossCarryForward * parameters.getLossCarryForwardInterest();
+        resourceTaxLossCarryForward += Math.abs(resourceTaxBase) + interest;
+        resourceTaxBase = 0;
       }
     }
 
@@ -150,7 +150,7 @@ public class GenericTaxModel implements TaxModel {
     if (parameters.getWindfallTaxRate() > 0 && parameters.getWindfallTaxThreshold() > 0) {
       double excessProfit = resourceTaxBase - parameters.getWindfallTaxThreshold();
       if (excessProfit > 0) {
-	windfallTax = excessProfit * parameters.getWindfallTaxRate();
+        windfallTax = excessProfit * parameters.getWindfallTaxRate();
       }
     }
 
@@ -158,7 +158,7 @@ public class GenericTaxModel implements TaxModel {
     double afterTaxIncome = grossRevenue - opex - royalty - totalTax;
 
     return new TaxResult(grossRevenue, opex, depreciation, uplift, royalty, corporateTaxBase, corporateTax,
-	resourceTaxBase, resourceTax + windfallTax, totalTax, afterTaxIncome);
+        resourceTaxBase, resourceTax + windfallTax, totalTax, afterTaxIncome);
   }
 
   @Override
@@ -170,7 +170,7 @@ public class GenericTaxModel implements TaxModel {
     switch (parameters.getDepreciationMethod()) {
     case STRAIGHT_LINE:
       if (year > parameters.getDepreciationYears()) {
-	return 0.0;
+        return 0.0;
       }
       return capex / parameters.getDepreciationYears();
 
@@ -185,7 +185,7 @@ public class GenericTaxModel implements TaxModel {
     case UNIT_OF_PRODUCTION:
       // Would need production profile - use straight-line as fallback
       if (year > parameters.getDepreciationYears()) {
-	return 0.0;
+        return 0.0;
       }
       return capex / parameters.getDepreciationYears();
 

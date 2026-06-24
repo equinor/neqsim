@@ -283,7 +283,7 @@ public class HydrocycloneMechanicalDesign extends SeparatorMechanicalDesign {
     double insideRadiusMm = vesselInnerDiameterM * 1000.0 / 2.0;
 
     double tRequired = (designPressureMPa * insideRadiusMm)
-	/ (allowableStressMPa * vesselJointEfficiency - 0.6 * designPressureMPa) + corrosionAllowanceMm;
+        / (allowableStressMPa * vesselJointEfficiency - 0.6 * designPressureMPa) + corrosionAllowanceMm;
 
     // Round up to nearest 0.5 mm
     vesselWallThicknessMm = Math.ceil(tRequired * 2.0) / 2.0;
@@ -295,7 +295,7 @@ public class HydrocycloneMechanicalDesign extends SeparatorMechanicalDesign {
 
     // Head thickness (2:1 ellipsoidal per ASME UG-32)
     headThicknessMm = (designPressureMPa * insideRadiusMm * 2.0)
-	/ (2.0 * allowableStressMPa * vesselJointEfficiency - 0.2 * designPressureMPa) + corrosionAllowanceMm;
+        / (2.0 * allowableStressMPa * vesselJointEfficiency - 0.2 * designPressureMPa) + corrosionAllowanceMm;
     headThicknessMm = Math.ceil(headThicknessMm * 2.0) / 2.0;
     if (headThicknessMm < vesselWallThicknessMm) {
       headThicknessMm = vesselWallThicknessMm;
@@ -347,7 +347,7 @@ public class HydrocycloneMechanicalDesign extends SeparatorMechanicalDesign {
     double[] standardSizes = { 25.0, 40.0, 50.0, 80.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0 };
     for (double size : standardSizes) {
       if (size >= idMm) {
-	return size;
+        return size;
       }
     }
     return standardSizes[standardSizes.length - 1];
@@ -390,7 +390,7 @@ public class HydrocycloneMechanicalDesign extends SeparatorMechanicalDesign {
 
     // Per-vessel totals
     double perVesselTotal = emptyVesselWeightKg + linerWeightPerVesselKg + nozzleWeight + pipingWeight
-	+ structuralWeight + eiWeight;
+        + structuralWeight + eiWeight;
 
     // Total package weight (all vessels)
     double totalWeight = perVesselTotal * numberOfVessels;

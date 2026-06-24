@@ -106,7 +106,7 @@ public class HAZOPTemplate implements Serializable {
   public HAZOPTemplate generateGrid(Parameter... parameters) {
     for (Parameter p : parameters) {
       for (GuideWord g : GuideWord.values()) {
-	deviations.add(new HAZOPDeviation(g, p, "TBD", "TBD", "TBD", null));
+        deviations.add(new HAZOPDeviation(g, p, "TBD", "TBD", "TBD", null));
       }
     }
     return this;
@@ -150,7 +150,7 @@ public class HAZOPTemplate implements Serializable {
       sb.append("     Consequence : ").append(d.consequence).append('\n');
       sb.append("     Safeguard   : ").append(d.safeguard).append('\n');
       if (d.recommendation != null) {
-	sb.append("     Recommend.  : ").append(d.recommendation).append('\n');
+        sb.append("     Recommend.  : ").append(d.recommendation).append('\n');
       }
       row++;
     }
@@ -184,7 +184,7 @@ public class HAZOPTemplate implements Serializable {
      * @param recommendation new recommendation (or null)
      */
     public HAZOPDeviation(GuideWord guideWord, Parameter parameter, String cause, String consequence, String safeguard,
-	String recommendation) {
+        String recommendation) {
       this.guideWord = guideWord;
       this.parameter = parameter;
       this.cause = cause;
@@ -225,7 +225,7 @@ public class HAZOPTemplate implements Serializable {
     int index = 1;
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       if (unit == null) {
-	continue;
+        continue;
       }
       String name = unit.getName();
       String type = unit.getClass().getSimpleName();
@@ -270,7 +270,7 @@ public class HAZOPTemplate implements Serializable {
     try {
       List<StreamInterface> streams = inlet ? unit.getInletStreams() : unit.getOutletStreams();
       if (streams == null) {
-	return new ArrayList<>();
+        return new ArrayList<>();
       }
       return streams;
     } catch (RuntimeException ex) {
@@ -288,14 +288,14 @@ public class HAZOPTemplate implements Serializable {
     StringBuilder sb = new StringBuilder();
     for (StreamInterface stream : streams) {
       if (stream == null) {
-	continue;
+        continue;
       }
       String streamName = stream.getName();
       if (streamName == null || streamName.trim().isEmpty()) {
-	continue;
+        continue;
       }
       if (sb.length() > 0) {
-	sb.append(", ");
+        sb.append(", ");
       }
       sb.append(streamName);
     }
@@ -329,7 +329,7 @@ public class HAZOPTemplate implements Serializable {
       addTbd(node, GuideWord.MORE, Parameter.FLOW);
       addTbd(node, GuideWord.LESS, Parameter.FLOW);
     } else if (t.contains("cooler") || t.contains("heater") || t.contains("heatexchanger") || t.contains("reboiler")
-	|| t.contains("condenser")) {
+        || t.contains("condenser")) {
       addTbd(node, GuideWord.MORE, Parameter.TEMPERATURE);
       addTbd(node, GuideWord.LESS, Parameter.TEMPERATURE);
       addTbd(node, GuideWord.NO, Parameter.FLOW);

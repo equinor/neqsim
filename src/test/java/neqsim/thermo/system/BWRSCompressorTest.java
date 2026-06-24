@@ -26,12 +26,12 @@ public class BWRSCompressorTest {
     bwrsFluid.setPhaseType(0, "GAS");
 
     neqsim.process.equipment.stream.Stream bwrsStream = new neqsim.process.equipment.stream.Stream("bwrs gas",
-	bwrsFluid);
+        bwrsFluid);
     bwrsStream.setFlowRate(10.0, "MSm3/day");
     bwrsStream.run();
 
     neqsim.process.equipment.compressor.Compressor bwrsComp = new neqsim.process.equipment.compressor.Compressor(
-	"bwrs compressor", bwrsStream);
+        "bwrs compressor", bwrsStream);
     bwrsComp.setOutletPressure(30.0, "bara");
     bwrsComp.setPolytropicEfficiency(0.75);
     bwrsComp.run();
@@ -51,12 +51,12 @@ public class BWRSCompressorTest {
     gergFluid.setPhaseType(0, "GAS");
 
     neqsim.process.equipment.stream.Stream gergStream = new neqsim.process.equipment.stream.Stream("gerg gas",
-	gergFluid);
+        gergFluid);
     gergStream.setFlowRate(10.0, "MSm3/day");
     gergStream.run();
 
     neqsim.process.equipment.compressor.Compressor gergComp = new neqsim.process.equipment.compressor.Compressor(
-	"gerg compressor", gergStream);
+        "gerg compressor", gergStream);
     gergComp.setOutletPressure(30.0, "bara");
     gergComp.setPolytropicEfficiency(0.75);
     gergComp.run();
@@ -98,12 +98,12 @@ public class BWRSCompressorTest {
     bwrsFluid.setPhaseType(0, "GAS");
 
     neqsim.process.equipment.stream.Stream bwrsStream = new neqsim.process.equipment.stream.Stream("bwrs gas",
-	bwrsFluid);
+        bwrsFluid);
     bwrsStream.setFlowRate(10.0, "MSm3/day");
     bwrsStream.run();
 
     neqsim.process.equipment.compressor.Compressor bwrsComp = new neqsim.process.equipment.compressor.Compressor(
-	"bwrs compressor", bwrsStream);
+        "bwrs compressor", bwrsStream);
     bwrsComp.setOutletPressure(30.0, "bara");
     bwrsComp.setPolytropicEfficiency(0.75);
     bwrsComp.run();
@@ -127,7 +127,7 @@ public class BWRSCompressorTest {
     srkStream.run();
 
     neqsim.process.equipment.compressor.Compressor srkComp = new neqsim.process.equipment.compressor.Compressor(
-	"srk compressor", srkStream);
+        "srk compressor", srkStream);
     srkComp.setOutletPressure(30.0, "bara");
     srkComp.setPolytropicEfficiency(0.75);
     srkComp.run();

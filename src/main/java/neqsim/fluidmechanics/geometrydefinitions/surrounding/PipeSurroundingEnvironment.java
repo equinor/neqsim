@@ -330,7 +330,7 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append(String.format("PipeSurroundingEnvironment[type=%s, T=%.1f K, h=%.1f W/(m²·K)]", environmentType,
-	getTemperature(), getHeatTransferCoefficient()));
+        getTemperature(), getHeatTransferCoefficient()));
 
     if (environmentType == EnvironmentType.BURIED) {
       sb.append(String.format(" (depth=%.2f m, soil=%s)", burialDepth, soilMaterial.getDisplayName()));

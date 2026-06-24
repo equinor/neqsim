@@ -153,7 +153,7 @@ public class ReactiveFlashBenchmarkTest {
 
     FormulaMatrix fm = new FormulaMatrix(system);
     assertEquals(2, fm.getNumberOfIndependentReactions(),
-	"CH4/H2O/CO/CO2/H2 system should have 2 independent reactions");
+        "CH4/H2O/CO/CO2/H2 system should have 2 independent reactions");
 
     ReactiveMultiphaseTPflash flash = new ReactiveMultiphaseTPflash(system);
     flash.run();
@@ -290,7 +290,7 @@ public class ReactiveFlashBenchmarkTest {
 
     // WGS is exothermic: lower T -> more products -> higher CO2
     assertTrue(xCO2_lowT > xCO2_highT, "CO2 should be higher at 500 K than 1000 K (Le Chatelier). " + "Got xCO2_500K="
-	+ xCO2_lowT + ", xCO2_1000K=" + xCO2_highT);
+        + xCO2_lowT + ", xCO2_1000K=" + xCO2_highT);
   }
 
   /**
@@ -332,7 +332,7 @@ public class ReactiveFlashBenchmarkTest {
 
     // Higher pressure favors NH3 formation (fewer moles on product side)
     assertTrue(xNH3_highP > xNH3_lowP, "NH3 should be higher at 300 bar than 10 bar (Le Chatelier). "
-	+ "Got xNH3_10bar=" + xNH3_lowP + ", xNH3_300bar=" + xNH3_highP);
+        + "Got xNH3_10bar=" + xNH3_lowP + ", xNH3_300bar=" + xNH3_highP);
   }
 
   /**
@@ -437,7 +437,7 @@ public class ReactiveFlashBenchmarkTest {
     // Element balances should be conserved in moles: bFinal * N_total = bInitial
     for (int k = 0; k < bInitial.length; k++) {
       assertEquals(bInitial[k], bFinal[k] * Ntot, 0.02, "Element " + fm.getElementNames()[k]
-	  + " balance should be conserved: " + "initial=" + bInitial[k] + ", final=" + (bFinal[k] * Ntot));
+          + " balance should be conserved: " + "initial=" + bInitial[k] + ", final=" + (bFinal[k] * Ntot));
     }
   }
 
@@ -503,7 +503,7 @@ public class ReactiveFlashBenchmarkTest {
 
     // 6 components, 3 elements -> 3 independent reactions
     assertEquals(3, fm.getNumberOfIndependentReactions(),
-	"6 components with 3 elements should have 3 independent reactions");
+        "6 components with 3 elements should have 3 independent reactions");
 
     ReactiveMultiphaseTPflash flash = new ReactiveMultiphaseTPflash(system);
     flash.run();
@@ -743,7 +743,7 @@ public class ReactiveFlashBenchmarkTest {
 
       // At high pressure, total moles should decrease (reaction favors fewer moles)
       if (P > 10.0) {
-	assertTrue(Ntot < 1.0, "Total moles should decrease due to Δν=-2. At P=" + P + " N=" + Ntot);
+        assertTrue(Ntot < 1.0, "Total moles should decrease due to Δν=-2. At P=" + P + " N=" + Ntot);
       }
     }
 
@@ -828,7 +828,7 @@ public class ReactiveFlashBenchmarkTest {
 
     assertTrue(flash.isConverged(), "WGS should converge");
     assertTrue(flash.getTotalIterations() < 200,
-	"RAND should converge quickly. Iterations: " + flash.getTotalIterations());
+        "RAND should converge quickly. Iterations: " + flash.getTotalIterations());
   }
 
   /**
@@ -962,9 +962,9 @@ public class ReactiveFlashBenchmarkTest {
     double[] dHf = { -110525.0, -241818.0, -393509.0, 0.0 };
     double[] S0 = { 197.7, 188.8, 213.8, 130.7 };
     double[][] cpCoeffs = { { 32.524368, -0.032532682, 9.8271e-5, -1.08e-7, 4.28171e-11 },
-	{ 36.54003, -0.034802404, 1.16811e-4, -1.3e-7, 5.254448e-11 },
-	{ 18.583021, 0.082379635, -7.93039e-5, 4.22218e-8, -9.5771e-12 },
-	{ 23.969262, 0.030603834, -6.4184e-5, 5.7e-8, -1.770882e-11 } };
+        { 36.54003, -0.034802404, 1.16811e-4, -1.3e-7, 5.254448e-11 },
+        { 18.583021, 0.082379635, -7.93039e-5, 4.22218e-8, -9.5771e-12 },
+        { 23.969262, 0.030603834, -6.4184e-5, 5.7e-8, -1.770882e-11 } };
     // stoichiometry: CO(-1) + H2O(-1) + CO2(+1) + H2(+1)
     double[] nu = { -1.0, -1.0, 1.0, 1.0 };
 
@@ -976,22 +976,22 @@ public class ReactiveFlashBenchmarkTest {
       // Compute ΔG_rxn(T)
       double dGrxn = 0.0;
       for (int i = 0; i < 4; i++) {
-	double dT = T - T0;
-	double dT2 = T * T - T0 * T0;
-	double dT3 = T * T * T - T0 * T0 * T0;
-	double dT4 = T * T * T * T - T0 * T0 * T0 * T0;
-	double dT5 = T * T * T * T * T - T0 * T0 * T0 * T0 * T0;
-	double lnTr = Math.log(T / T0);
+        double dT = T - T0;
+        double dT2 = T * T - T0 * T0;
+        double dT3 = T * T * T - T0 * T0 * T0;
+        double dT4 = T * T * T * T - T0 * T0 * T0 * T0;
+        double dT5 = T * T * T * T * T - T0 * T0 * T0 * T0 * T0;
+        double lnTr = Math.log(T / T0);
 
-	double deltaH = cpCoeffs[i][0] * dT + cpCoeffs[i][1] / 2.0 * dT2 + cpCoeffs[i][2] / 3.0 * dT3
-	    + cpCoeffs[i][3] / 4.0 * dT4 + cpCoeffs[i][4] / 5.0 * dT5;
-	double deltaS = cpCoeffs[i][0] * lnTr + cpCoeffs[i][1] * dT + cpCoeffs[i][2] / 2.0 * dT2
-	    + cpCoeffs[i][3] / 3.0 * dT3 + cpCoeffs[i][4] / 4.0 * dT4;
+        double deltaH = cpCoeffs[i][0] * dT + cpCoeffs[i][1] / 2.0 * dT2 + cpCoeffs[i][2] / 3.0 * dT3
+            + cpCoeffs[i][3] / 4.0 * dT4 + cpCoeffs[i][4] / 5.0 * dT5;
+        double deltaS = cpCoeffs[i][0] * lnTr + cpCoeffs[i][1] * dT + cpCoeffs[i][2] / 2.0 * dT2
+            + cpCoeffs[i][3] / 3.0 * dT3 + cpCoeffs[i][4] / 4.0 * dT4;
 
-	double hT = dHf[i] + deltaH;
-	double sT = S0[i] + deltaS;
-	double gT = hT - T * sT;
-	dGrxn += nu[i] * gT;
+        double hT = dHf[i] + deltaH;
+        double sT = S0[i] + deltaS;
+        double gT = hT - T * sT;
+        dGrxn += nu[i] * gT;
       }
 
       double lnKpExpected = -dGrxn / (R * T);
@@ -1034,7 +1034,7 @@ public class ReactiveFlashBenchmarkTest {
       // Allow 20% tolerance to account for EOS non-ideality correction
       double relError = Math.abs(KpSolver - KpExpected) / Math.max(KpExpected, 1.0e-10);
       assertTrue(relError < 0.30, "WGS Kp self-consistency at T=" + T + ": solver=" + KpSolver + " expected="
-	  + KpExpected + " relError=" + relError);
+          + KpExpected + " relError=" + relError);
     }
   }
 
@@ -1104,7 +1104,7 @@ public class ReactiveFlashBenchmarkTest {
       // (The Cp polynomial approximation introduces some error vs exact NIST tables)
       double error = Math.abs(log10Kx - nistLog10Kp[idx]);
       assertTrue(error < 1.5,
-	  "WGS at T=" + T + "K: log10(Kx)=" + log10Kx + " NIST log10(Kp)=" + nistLog10Kp[idx] + " error=" + error);
+          "WGS at T=" + T + "K: log10(Kx)=" + log10Kx + " NIST log10(Kp)=" + nistLog10Kp[idx] + " error=" + error);
     }
   }
 
@@ -1162,7 +1162,7 @@ public class ReactiveFlashBenchmarkTest {
       // Allow 2.0 log10 units tolerance for database Cp accuracy
       double error = Math.abs(log10Kx - nistLog10Kp[idx]);
       assertTrue(error < 2.0,
-	  "NH3 at T=" + T + "K: log10(Kx)=" + log10Kx + " NIST log10(Kp)=" + nistLog10Kp[idx] + " error=" + error);
+          "NH3 at T=" + T + "K: log10(Kx)=" + log10Kx + " NIST log10(Kp)=" + nistLog10Kp[idx] + " error=" + error);
     }
   }
 
@@ -1300,7 +1300,7 @@ public class ReactiveFlashBenchmarkTest {
 
     // DIIS should not increase iterations significantly
     assertTrue(itersDIIS <= itersNoDIIS + 10,
-	"DIIS should not dramatically increase iters. noDIIS=" + itersNoDIIS + " DIIS=" + itersDIIS);
+        "DIIS should not dramatically increase iters. noDIIS=" + itersNoDIIS + " DIIS=" + itersDIIS);
   }
 
   /**
@@ -1331,7 +1331,7 @@ public class ReactiveFlashBenchmarkTest {
 
     assertTrue(flash.isConverged(), "DIIS should converge for 6-component system");
     assertTrue(flash.getTotalIterations() < 300,
-	"Should converge in reasonable iterations. Got: " + flash.getTotalIterations());
+        "Should converge in reasonable iterations. Got: " + flash.getTotalIterations());
 
     // Verify DIIS was actually used
     assertTrue(flash.getDiisStepsAccepted() >= 0, "DIIS steps accepted should be reported");
@@ -1424,13 +1424,13 @@ public class ReactiveFlashBenchmarkTest {
     int waterIdx = -1;
     for (int i = 0; i < compNames.length; i++) {
       if ("Na+".equals(compNames[i])) {
-	naIdx = i;
+        naIdx = i;
       }
       if ("Cl-".equals(compNames[i])) {
-	clIdx = i;
+        clIdx = i;
       }
       if ("water".equals(compNames[i])) {
-	waterIdx = i;
+        waterIdx = i;
       }
     }
 
@@ -1491,14 +1491,14 @@ public class ReactiveFlashBenchmarkTest {
 
     FormulaMatrix fm = new FormulaMatrix(system);
     logger.info("DEBUG NaCl: NE=" + fm.getNumberOfElements() + " NC=" + fm.getNumberOfComponents() + " rank="
-	+ fm.getRank() + " NR=" + fm.getNumberOfIndependentReactions() + " hasIons=" + fm.hasIonicSpecies());
+        + fm.getRank() + " NR=" + fm.getNumberOfIndependentReactions() + " hasIons=" + fm.hasIonicSpecies());
     logger.info("DEBUG NaCl: elements=" + java.util.Arrays.toString(fm.getElementNames()));
     logger.info("DEBUG NaCl: numPhases=" + system.getNumberOfPhases());
 
     ReactiveMultiphaseTPflash flash = new ReactiveMultiphaseTPflash(system);
     flash.run();
     logger.info("DEBUG NaCl: converged=" + flash.isConverged() + " NR=" + flash.getNumberOfReactions() + " iters="
-	+ flash.getTotalIterations());
+        + flash.getTotalIterations());
 
     // Should converge (ions are conserved, no reactions needed)
     assertTrue(flash.isConverged(), "Na+/Cl-/water should converge");
@@ -1749,7 +1749,7 @@ public class ReactiveFlashBenchmarkTest {
 
     int ncAfter = system.getPhase(0).getNumberOfComponents();
     logger.info("chemicalReactionInit: before=" + ncBefore + " after=" + ncAfter + " converged=" + flash.isConverged()
-	+ " NR=" + flash.getNumberOfReactions());
+        + " NR=" + flash.getNumberOfReactions());
 
     // chemicalReactionInit should have added ionic species
     assertTrue(ncAfter > ncBefore, "chemicalReactionInit should add ionic species to CO2/water system");
@@ -1814,14 +1814,14 @@ public class ReactiveFlashBenchmarkTest {
     FormulaMatrix fm = new FormulaMatrix(system);
     int nReactions = fm.getNumberOfIndependentReactions();
     logger.info("NE=" + fm.getNumberOfElements() + " rank=" + fm.getRank() + " NR=" + nReactions + " hasIons="
-	+ fm.hasIonicSpecies());
+        + fm.hasIonicSpecies());
     assertTrue(nReactions >= 2, "Multi-component CO2/water/ions system should have >= 2 independent reactions");
 
     ReactiveMultiphaseTPflash flash = new ReactiveMultiphaseTPflash(system);
     flash.run();
 
     logger.info("converged=" + flash.isConverged() + " iterations=" + flash.getTotalIterations() + " phases="
-	+ system.getNumberOfPhases());
+        + system.getNumberOfPhases());
 
     assertTrue(flash.isConverged(), "Methane/CO2/nC7/water reactive flash should converge");
 
@@ -1830,7 +1830,7 @@ public class ReactiveFlashBenchmarkTest {
       String name = system.getPhase(0).getComponent(i).getComponentName();
       double xi = system.getPhase(0).getComponent(i).getx();
       if (xi > 1.0e-20) {
-	logger.printf(org.apache.logging.log4j.Level.INFO, "  %-12s  x=%.6e%n", name, xi);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  %-12s  x=%.6e%n", name, xi);
       }
     }
 
@@ -1877,7 +1877,7 @@ public class ReactiveFlashBenchmarkTest {
 
     int ncAfter = system.getPhase(0).getNumberOfComponents();
     logger.info("NC after = " + ncAfter + " converged=" + flash.isConverged() + " NR=" + flash.getNumberOfReactions()
-	+ " iters=" + flash.getTotalIterations());
+        + " iters=" + flash.getTotalIterations());
 
     // chemicalReactionInit should have added ionic species
     assertTrue(ncAfter > ncBefore, "chemicalReactionInit should add ionic species for CO2/water system");

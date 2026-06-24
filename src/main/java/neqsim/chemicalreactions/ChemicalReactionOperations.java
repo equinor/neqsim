@@ -72,7 +72,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
     for (int i = 0; i < nPhases; i++) {
       String phaseTypeName = system.getPhase(i).getPhaseTypeName();
       if ("aqueous".equalsIgnoreCase(phaseTypeName)) {
-	return i;
+        return i;
       }
     }
 
@@ -80,7 +80,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
     for (int i = 0; i < nPhases; i++) {
       String phaseTypeName = system.getPhase(i).getPhaseTypeName();
       if ("liquid".equalsIgnoreCase(phaseTypeName) || "oil".equalsIgnoreCase(phaseTypeName)) {
-	return i;
+        return i;
       }
     }
 
@@ -153,7 +153,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
     do {
       // if statement added by Procede
       if (!newcomps) {
-	break;
+        break;
       }
       componentNames = system.getComponentNames();
       reactionList.readReactions(system);
@@ -162,7 +162,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
       allComponentNames = reactionList.getAllComponents();
       this.addNewComponents();
       if (system.getPhase(0).getNumberOfComponents() == old) {
-	newcomps = false;
+        newcomps = false;
       }
       old = system.getPhase(0).getNumberOfComponents();
     } while (newcomps);
@@ -178,9 +178,9 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
       elements = getAllElements();
 
       try {
-	initCalc = new LinearProgrammingChemicalEquilibrium(chemRefPot, components, elements, this, phase);
+        initCalc = new LinearProgrammingChemicalEquilibrium(chemRefPot, components, elements, this, phase);
       } catch (Exception ex) {
-	logger.error(ex.getMessage(), ex);
+        logger.error(ex.getMessage(), ex);
       }
       setComponents();
       Amatrix = calcAmatrix();
@@ -265,11 +265,11 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
       // System.out.println("component " + componentNames[j]);
       String name = componentNames[j];
       for (int i = 0; i < allComponentNames.length; i++) {
-	if (name.equals(allComponentNames[i])) {
-	  components[k++] = system.getPhase(phase).getComponent(j);
-	  // System.out.println("reactive comp " +
-	  // system.getPhases()[1].getComponent(j).getName());
-	}
+        if (name.equals(allComponentNames[i])) {
+          components[k++] = system.getPhase(phase).getComponent(j);
+          // System.out.println("reactive comp " +
+          // system.getPhases()[1].getComponent(j).getName());
+        }
       }
     }
   }
@@ -300,12 +300,12 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
     ComponentInterface tempComp;
     for (int i = 0; i < components.length; i++) {
       for (int j = i + 1; j < components.length; j++) {
-	if (components[j].getGibbsEnergyOfFormation() < components[i].getGibbsEnergyOfFormation()) {
-	  tempComp = components[i];
-	  components[i] = components[j];
-	  components[j] = tempComp;
-	  // System.out.println("swich : " + i + " " + j);
-	}
+        if (components[j].getGibbsEnergyOfFormation() < components[i].getGibbsEnergyOfFormation()) {
+          tempComp = components[i];
+          components[i] = components[j];
+          components[j] = tempComp;
+          // System.out.println("swich : " + i + " " + j);
+        }
       }
     }
   }
@@ -328,18 +328,18 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
       newComp = true;
 
       for (int j = 0; j < componentNames.length; j++) {
-	if (name.equals(componentNames[j])) {
-	  newComp = false;
-	  break;
-	}
+        if (name.equals(componentNames[j])) {
+          newComp = false;
+          break;
+        }
       }
       if (newComp) {
-	// Add with a small non-zero initial amount for numerical stability.
-	// The equilibrium solver will redistribute moles according to reaction equilibrium.
-	// Using 1e-10 mol which is negligible compared to typical component amounts
-	// but large enough for the LP/Newton solvers to work numerically.
-	double initialMoles = 1.0e-10;
-	system.addComponent(name, initialMoles);
+        // Add with a small non-zero initial amount for numerical stability.
+        // The equilibrium solver will redistribute moles according to reaction equilibrium.
+        // Using 1e-10 mol which is negligible compared to typical component amounts
+        // but large enough for the LP/Newton solvers to work numerically.
+        double initialMoles = 1.0e-10;
+        system.addComponent(name, initialMoles);
       }
     }
   }
@@ -353,9 +353,9 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
     HashSet<String> elementsLocal = new HashSet<String>();
     for (int j = 0; j < components.length; j++) {
       for (int i = 0; i < components[j].getElements().getElementNames().length; i++) {
-	// System.out.println("elements: " +
-	// components[j].getElements().getElementNames()[i]);
-	elementsLocal.add(components[j].getElements().getElementNames()[i]);
+        // System.out.println("elements: " +
+        // components[j].getElements().getElementNames()[i]);
+        elementsLocal.add(components[j].getElements().getElementNames()[i]);
       }
     }
 
@@ -441,12 +441,12 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
       String[] compElements = components[j].getElements().getElementNames();
       double[] compCoefs = components[j].getElements().getElementCoefs();
       for (int i = 0; i < elements.length; i++) {
-	for (int k = 0; k < compElements.length; k++) {
-	  if (compElements[k].equals(elements[i])) {
-	    A[i][j] = compCoefs[k];
-	    break;
-	  }
-	}
+        for (int k = 0; k < compElements.length; k++) {
+          if (compElements[k].equals(elements[i])) {
+            A[i][j] = compCoefs[k];
+            break;
+          }
+        }
       }
     }
     // Add ionic charge row for electroneutrality constraint
@@ -478,7 +478,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
     if (potentials == null) {
       potentials = new double[components.length];
       for (int i = 0; i < components.length; i++) {
-	potentials[i] = components[i].getGibbsEnergyOfFormation();
+        potentials[i] = components[i].getGibbsEnergyOfFormation();
       }
     }
 
@@ -509,9 +509,9 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
 
     for (int i = 0; i < components.length; i++) {
       double currentMoles = system.getPhase(phaseNum).getComponents()[components[i].getComponentNumber()]
-	  .getNumberOfMolesInPhase();
+          .getNumberOfMolesInPhase();
       double targetMoles = Math.max(newMoles[i], 1e-45); // Ensure small positive value for
-							 // numerical stability
+      // numerical stability
       double delta = targetMoles - currentMoles;
 
       // Use addMolesChemReac(component, dn, 0) to ONLY change phase moles
@@ -587,21 +587,22 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
 
     if (firsttime || type == 0) {
       try {
-	calcInertMoles(phaseNum);
-	if (initCalc != null) {
-	  newMoles = initCalc.generateInitialEstimates(system, bVector, inertMoles, phaseNum);
-	}
+        calcInertMoles(phaseNum);
+        if (initCalc != null) {
+          newMoles = initCalc.generateInitialEstimates(system, bVector, inertMoles, phaseNum);
+        }
 
-	if (newMoles != null) {
-	  updateMoles(phaseNum);
-	  firsttime = false;
-	  // LP provides initial estimate - now fall through to Newton solver for refinement
-	} else {
-	  // LP solver failed - fall through to Newton solver
-	  logger.debug("LP initial estimate failed, falling back to Newton solver");
-	}
+        if (newMoles != null) {
+          updateMoles(phaseNum);
+          firsttime = false;
+          // LP provides initial estimate - now fall through to Newton solver for
+          // refinement
+        } else {
+          // LP solver failed - fall through to Newton solver
+          logger.debug("LP initial estimate failed, falling back to Newton solver");
+        }
       } catch (Exception ex) {
-	logger.error("error in chem eq", ex);
+        logger.error("error in chem eq", ex);
       }
     }
 

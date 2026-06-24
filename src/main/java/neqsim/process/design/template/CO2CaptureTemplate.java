@@ -305,8 +305,8 @@ public class CO2CaptureTemplate implements ProcessTemplate {
     case MDEA_PZ:
       fluid.addComponent("MDEA", concentration);
       if (type == AmineType.MDEA_PZ) {
-	// Add piperazine for activated MDEA
-	fluid.addComponent("piperazine", 0.05);
+        // Add piperazine for activated MDEA
+        fluid.addComponent("piperazine", 0.05);
       }
       break;
     default:
@@ -329,7 +329,7 @@ public class CO2CaptureTemplate implements ProcessTemplate {
     String upper = amineStr.toUpperCase().trim();
     for (AmineType type : AmineType.values()) {
       if (type.getAmineName().equalsIgnoreCase(upper)) {
-	return type;
+        return type;
       }
     }
     return AmineType.MDEA;
@@ -351,8 +351,8 @@ public class CO2CaptureTemplate implements ProcessTemplate {
     for (int i = 0; i < feedFluid.getNumberOfComponents(); i++) {
       String name = feedFluid.getComponent(i).getName().toLowerCase();
       if (name.equals("co2") || name.contains("carbon dioxide")) {
-	co2Fraction = feedFluid.getComponent(i).getz();
-	break;
+        co2Fraction = feedFluid.getComponent(i).getz();
+        break;
       }
     }
 
@@ -397,8 +397,8 @@ public class CO2CaptureTemplate implements ProcessTemplate {
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       String name = fluid.getComponent(i).getName().toLowerCase();
       if (name.equals("co2") || name.contains("carbon dioxide")) {
-	hasCO2 = true;
-	break;
+        hasCO2 = true;
+        break;
       }
     }
 
@@ -415,8 +415,8 @@ public class CO2CaptureTemplate implements ProcessTemplate {
   @Override
   public String[] getExpectedOutputs() {
     return new String[] { "Treated Gas - CO2-depleted gas stream",
-	"CO2 Product - High purity CO2 from regenerator overhead", "Flash Gas - Hydrocarbon-rich gas from flash drum",
-	"Heat Duty - Reboiler heat requirement" };
+        "CO2 Product - High purity CO2 from regenerator overhead", "Flash Gas - Hydrocarbon-rich gas from flash drum",
+        "Heat Duty - Reboiler heat requirement" };
   }
 
   /** {@inheritDoc} */
@@ -429,9 +429,9 @@ public class CO2CaptureTemplate implements ProcessTemplate {
   @Override
   public String getDescription() {
     return "Amine-based CO2 capture system with absorber, flash drum, "
-	+ "lean-rich heat exchanger, and regeneration column. "
-	+ "Supports MEA, DEA, MDEA, and activated MDEA solvents. "
-	+ "Suitable for flue gas treatment and natural gas sweetening.";
+        + "lean-rich heat exchanger, and regeneration column. "
+        + "Supports MEA, DEA, MDEA, and activated MDEA solvents. "
+        + "Suitable for flue gas treatment and natural gas sweetening.";
   }
 
   /**

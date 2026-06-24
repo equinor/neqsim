@@ -102,7 +102,7 @@ public class TorgManager {
     for (TorgDataSource source : dataSources) {
       Optional<TechnicalRequirementsDocument> torg = source.loadByProjectId(projectId);
       if (torg.isPresent()) {
-	return torg;
+        return torg;
       }
     }
     return Optional.empty();
@@ -119,7 +119,7 @@ public class TorgManager {
     for (TorgDataSource source : dataSources) {
       Optional<TechnicalRequirementsDocument> torg = source.loadByCompanyAndProject(companyIdentifier, projectName);
       if (torg.isPresent()) {
-	return torg;
+        return torg;
       }
     }
     return Optional.empty();
@@ -198,13 +198,13 @@ public class TorgManager {
     List<StandardType> appliedList = new ArrayList<>();
     for (StandardType standardType : standards) {
       try {
-	DesignStandard standard = StandardRegistry.createStandard(standardType, design);
-	String category = standardType.getDesignStandardCategory();
-	design.setDesignStandard(category, standard);
-	appliedList.add(standardType);
-	logger.debug("Applied {} to {}", standardType.getCode(), equipmentName);
+        DesignStandard standard = StandardRegistry.createStandard(standardType, design);
+        String category = standardType.getDesignStandardCategory();
+        design.setDesignStandard(category, standard);
+        appliedList.add(standardType);
+        logger.debug("Applied {} to {}", standardType.getCode(), equipmentName);
       } catch (Exception e) {
-	logger.warn("Failed to apply standard {} to {}: {}", standardType.getCode(), equipmentName, e.getMessage());
+        logger.warn("Failed to apply standard {} to {}: {}", standardType.getCode(), equipmentName, e.getMessage());
       }
     }
 
@@ -270,9 +270,9 @@ public class TorgManager {
     List<String> projects = new ArrayList<>();
     for (TorgDataSource source : dataSources) {
       for (String projectId : source.getAvailableProjectIds()) {
-	if (!projects.contains(projectId)) {
-	  projects.add(projectId);
-	}
+        if (!projects.contains(projectId)) {
+          projects.add(projectId);
+        }
       }
     }
     return projects;
@@ -301,7 +301,7 @@ public class TorgManager {
     for (Map.Entry<String, List<StandardType>> entry : appliedStandards.entrySet()) {
       sb.append(entry.getKey()).append(":\n");
       for (StandardType std : entry.getValue()) {
-	sb.append("  - ").append(std.getCode()).append(" (").append(std.getName()).append(")\n");
+        sb.append("  - ").append(std.getCode()).append(" (").append(std.getName()).append(")\n");
       }
     }
 

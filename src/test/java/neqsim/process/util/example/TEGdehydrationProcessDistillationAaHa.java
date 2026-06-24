@@ -67,11 +67,11 @@ public class TEGdehydrationProcessDistillationAaHa {
     Stream waterSaturatedFeedGas = new Stream("water saturated feed gas", saturatedFeedGas.getOutletStream());
 
     HydrateEquilibriumTemperatureAnalyser hydrateTAnalyser = new HydrateEquilibriumTemperatureAnalyser(
-	"hydrate temperature analyser", waterSaturatedFeedGas);
+        "hydrate temperature analyser", waterSaturatedFeedGas);
 
     neqsim.thermo.system.SystemInterface feedTEG = feedGas.clone();
     feedTEG.setMolarComposition(
-	new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.03, 0.97 });
+        new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.03, 0.97 });
 
     Heater feedTPsetterToAbsorber = new Heater("TP of gas to absorber", waterSaturatedFeedGas);
     feedTPsetterToAbsorber.setOutPressure(87.12, "bara");
@@ -98,7 +98,7 @@ public class TEGdehydrationProcessDistillationAaHa {
      * dehydratedGas);
      */
     HydrateEquilibriumTemperatureAnalyser waterDewPointAnalyser = new HydrateEquilibriumTemperatureAnalyser(
-	"water dew point analyser", dehydratedGas);
+        "water dew point analyser", dehydratedGas);
     waterDewPointAnalyser.setReferencePressure(70.0);
 
     ThrottlingValve glycol_flash_valve = new ThrottlingValve("Rich TEG HP flash valve", richTEG);
@@ -194,7 +194,7 @@ public class TEGdehydrationProcessDistillationAaHa {
 
     neqsim.thermo.system.SystemInterface pureTEG = feedGas.clone();
     pureTEG.setMolarComposition(
-	new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 });
+        new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 });
 
     Stream makeupTEG = new Stream("makeup TEG", pureTEG);
     makeupTEG.setFlowRate(1e-6, "kg/hr");
@@ -385,12 +385,12 @@ public class TEGdehydrationProcessDistillationAaHa {
 
     // Condition monitor TEG absorber
     double xcalc = ((SimpleTEGAbsorber) monitor.getProcess().getUnit("TEG absorber")).getGasOutStream().getFluid()
-	.getPhase("gas").getComponent("water").getx() * 1.1;
+        .getPhase("gas").getComponent("water").getx() * 1.1;
     ((SimpleTEGAbsorber) monitor.getProcess().getUnit("TEG absorber")).getGasOutStream().getFluid().getPhase("gas")
-	.getComponent("water").setx(xcalc);
+        .getComponent("water").setx(xcalc);
     monitor.conditionAnalysis("TEG absorber");
     logger.info("number of theoretical stages "
-	+ ((SimpleTEGAbsorber) monitor.getProcess().getUnit("TEG absorber")).getNumberOfTheoreticalStages());
+        + ((SimpleTEGAbsorber) monitor.getProcess().getUnit("TEG absorber")).getNumberOfTheoreticalStages());
 
     // Condition monitor rich TEG heat exchanger
     ((HeatExchanger) monitor.getProcess().getUnit("rich TEG heat exchanger 2")).getInStream(0).setTemperature(0.2, "C");
@@ -400,9 +400,9 @@ public class TEGdehydrationProcessDistillationAaHa {
 
     // Condition monitor water dew point analyser
     ((HydrateEquilibriumTemperatureAnalyser) monitor.getProcess().getMeasurementDevice("water dew point analyser"))
-	.setOnlineMeasurementValue(-23.5, "C");
+        .setOnlineMeasurementValue(-23.5, "C");
     ((HydrateEquilibriumTemperatureAnalyser) monitor.getProcess().getMeasurementDevice("water dew point analyser"))
-	.runConditionAnalysis();
+        .runConditionAnalysis();
 
     // Condition monitor TEG fine filter
     ((Filter) monitor.getProcess().getUnit("TEG fine filter")).setDeltaP(0.2, "bara");
@@ -410,7 +410,7 @@ public class TEGdehydrationProcessDistillationAaHa {
     logger.info("fine filter deltaP " + ((Filter) monitor.getProcess().getUnit("TEG fine filter")).getDeltaP());
     logger.info("fine filter deltaP2 " + ((Filter) operations.getUnit("TEG fine filter")).getDeltaP());
     double relativeCv = ((Filter) monitor.getProcess().getUnit("TEG fine filter")).getCvFactor()
-	/ ((Filter) operations.getUnit("TEG fine filter")).getCvFactor();
+        / ((Filter) operations.getUnit("TEG fine filter")).getCvFactor();
 
     double filterCv1 = ((Filter) operations.getUnit("TEG fine filter")).getCvFactor();
     double filterCv2 = ((Filter) operations.getUnit("activated carbon filter")).getCvFactor();

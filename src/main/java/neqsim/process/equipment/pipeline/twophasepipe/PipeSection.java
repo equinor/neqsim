@@ -169,7 +169,7 @@ public class PipeSection implements Cloneable, Serializable {
       double areaFrac = (theta - Math.sin(theta)) / (2.0 * Math.PI);
       double error = areaFrac - holdup;
       if (Math.abs(error) < 1e-6) {
-	break;
+        break;
       }
       // Derivative
       double dAdh = 4.0 / (D * Math.PI) * Math.sqrt(h * (D - h)) / D;
@@ -327,7 +327,7 @@ public class PipeSection implements Cloneable, Serializable {
     if (isInSlugBody || isInSlugBubble) {
       // Guard against uninitialized or invalid slugHoldup
       if (slugHoldup <= 0 || Double.isNaN(slugHoldup)) {
-	return liquidHoldup;
+        return liquidHoldup;
       }
       return slugHoldup;
     }

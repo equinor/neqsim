@@ -93,7 +93,7 @@ public class PSDValveDynamicTest extends neqsim.NeqSimTest {
 
     // Simulate normal operation at 50 bara
     logger.printf(org.apache.logging.log4j.Level.INFO, "Initial state: PSD outlet pressure = %.2f bara%n",
-	psdValve.getOutletStream().getPressure("bara"));
+        psdValve.getOutletStream().getPressure("bara"));
     pressureTransmitter.evaluateAlarm(50.0, dt, time);
     psdValve.runTransient(dt, UUID.randomUUID());
     assertFalse(psdValve.hasTripped(), "Valve should not trip at normal pressure");
@@ -114,30 +114,30 @@ public class PSDValveDynamicTest extends neqsim.NeqSimTest {
 
       String alarmStatus = "NONE";
       if (pressureTransmitter.getAlarmState().isActive()) {
-	alarmStatus = pressureTransmitter.getAlarmState().getActiveLevel().toString();
+        alarmStatus = pressureTransmitter.getAlarmState().getActiveLevel().toString();
       }
 
       logger.printf(org.apache.logging.log4j.Level.INFO,
-	  "Time: %5.1f s | Pressure: %5.2f bara | Alarm: %4s | " + "PSD Opening: %5.1f %% | Tripped: %3s%n", time,
-	  pressure, alarmStatus, psdValve.getPercentValveOpening(), psdValve.hasTripped() ? "YES" : "NO");
+          "Time: %5.1f s | Pressure: %5.2f bara | Alarm: %4s | " + "PSD Opening: %5.1f %% | Tripped: %3s%n", time,
+          pressure, alarmStatus, psdValve.getPercentValveOpening(), psdValve.hasTripped() ? "YES" : "NO");
 
       // Check if valve has tripped at HIHI limit
       if (pressure >= 55.0) {
-	// After alarm delay (0.5s), valve should trip
-	if (time >= 55.0 - 51.0 + 0.5) { // Time to reach 55 bara + alarm delay
-	  assertTrue(psdValve.hasTripped(),
-	      String.format("Valve should have tripped at %.2f bara (HIHI limit = 55 bara)", pressure));
-	  assertEquals(0.0, psdValve.getPercentValveOpening(), 0.1, "PSD valve should be fully closed after trip");
-	  assertTrue(pressureTransmitter.getAlarmState().isActive(), "Pressure transmitter should have active alarm");
-	  assertEquals(neqsim.process.alarm.AlarmLevel.HIHI, pressureTransmitter.getAlarmState().getActiveLevel(),
-	      "Active alarm should be HIHI");
+        // After alarm delay (0.5s), valve should trip
+        if (time >= 55.0 - 51.0 + 0.5) { // Time to reach 55 bara + alarm delay
+          assertTrue(psdValve.hasTripped(),
+              String.format("Valve should have tripped at %.2f bara (HIHI limit = 55 bara)", pressure));
+          assertEquals(0.0, psdValve.getPercentValveOpening(), 0.1, "PSD valve should be fully closed after trip");
+          assertTrue(pressureTransmitter.getAlarmState().isActive(), "Pressure transmitter should have active alarm");
+          assertEquals(neqsim.process.alarm.AlarmLevel.HIHI, pressureTransmitter.getAlarmState().getActiveLevel(),
+              "Active alarm should be HIHI");
 
-	  logger.info("\n✓ PSD valve successfully tripped on HIHI alarm!");
-	  logger.printf(org.apache.logging.log4j.Level.INFO, "Trip occurred when pressure reached %.2f bara%n",
-	      pressure);
-	  logger.info("======================================");
-	  return; // Test passed
-	}
+          logger.info("\n✓ PSD valve successfully tripped on HIHI alarm!");
+          logger.printf(org.apache.logging.log4j.Level.INFO, "Trip occurred when pressure reached %.2f bara%n",
+              pressure);
+          logger.info("======================================");
+          return; // Test passed
+        }
       }
     }
 
@@ -200,7 +200,7 @@ public class PSDValveDynamicTest extends neqsim.NeqSimTest {
 
       // Set pressure to simulate blocked outlet scenario
       if (!psdTripped) {
-	psdValve.getOutletStream().getThermoSystem().setPressure(pressure, "bara");
+        psdValve.getOutletStream().getThermoSystem().setPressure(pressure, "bara");
       }
 
       double measuredPressure = psdValve.getOutletStream().getPressure("bara");
@@ -210,16 +210,16 @@ public class PSDValveDynamicTest extends neqsim.NeqSimTest {
       psdValve.runTransient(dt, UUID.randomUUID());
 
       if (time % 5 < dt || psdValve.hasTripped() != psdTripped) {
-	logger.printf(org.apache.logging.log4j.Level.INFO,
-	    "Time: %5.1f s | Pressure: %5.2f bara | PSD: %5.1f %% | Tripped: %3s%n", time, measuredPressure,
-	    psdValve.getPercentValveOpening(), psdValve.hasTripped() ? "YES" : "NO");
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "Time: %5.1f s | Pressure: %5.2f bara | PSD: %5.1f %% | Tripped: %3s%n", time, measuredPressure,
+            psdValve.getPercentValveOpening(), psdValve.hasTripped() ? "YES" : "NO");
       }
 
       if (psdValve.hasTripped() && !psdTripped) {
-	psdTripped = true;
-	logger.printf(org.apache.logging.log4j.Level.INFO,
-	    "%n✓ PSD valve tripped at %.1f s when pressure reached %.2f bara%n", time, measuredPressure);
-	logger.info("Pressure rise stopped by PSD valve closure\n");
+        psdTripped = true;
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "%n✓ PSD valve tripped at %.1f s when pressure reached %.2f bara%n", time, measuredPressure);
+        logger.info("Pressure rise stopped by PSD valve closure\n");
       }
     }
 

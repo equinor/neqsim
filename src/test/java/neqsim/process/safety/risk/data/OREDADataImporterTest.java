@@ -96,7 +96,7 @@ class OREDADataImporterTest {
     assertFalse(results.isEmpty());
     for (OREDADataImporter.ReliabilityRecord r : results) {
       assertTrue(r.getEquipmentType().toLowerCase().contains("centrifugal")
-	  || r.getEquipmentClass().toLowerCase().contains("centrifugal"));
+          || r.getEquipmentClass().toLowerCase().contains("centrifugal"));
     }
   }
 
@@ -121,7 +121,7 @@ class OREDADataImporterTest {
   void testAddCustomRecord() {
     OREDADataImporter custom = new OREDADataImporter();
     custom.addRecord(new OREDADataImporter.ReliabilityRecord("CustomEquipment", "TypeA", "All modes", 1e-5, 100000, 24,
-	"Internal", "High"));
+        "Internal", "High"));
 
     OREDADataImporter.ReliabilityRecord retrieved = custom.getRecord("CustomEquipment", "TypeA");
     assertNotNull(retrieved);

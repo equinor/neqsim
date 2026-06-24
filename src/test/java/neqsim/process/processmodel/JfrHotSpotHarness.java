@@ -82,7 +82,7 @@ public class JfrHotSpotHarness {
     java.util.List<Compressor> compressors = new java.util.ArrayList<>();
     for (ProcessEquipmentInterface u : sys.getUnitOperations()) {
       if (u instanceof Compressor) {
-	compressors.add((Compressor) u);
+        compressors.add((Compressor) u);
       }
     }
     for (Compressor c : compressors) {
@@ -94,10 +94,10 @@ public class JfrHotSpotHarness {
     while (System.nanoTime() < deadline) {
       java.util.List<java.util.concurrent.Future<?>> futs = new java.util.ArrayList<>();
       for (final Compressor c : compressors) {
-	futs.add(neqsim.util.NeqSimThreadPool.submit(() -> c.run()));
+        futs.add(neqsim.util.NeqSimThreadPool.submit(() -> c.run()));
       }
       for (java.util.concurrent.Future<?> f : futs) {
-	f.get();
+        f.get();
       }
       iters++;
     }

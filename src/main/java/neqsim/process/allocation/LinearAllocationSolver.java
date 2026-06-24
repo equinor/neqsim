@@ -182,19 +182,19 @@ public class LinearAllocationSolver implements Serializable {
       SimpleMatrix b = new SimpleMatrix(n, numSources);
       boolean anyInjection = false;
       for (int j = 0; j < numSources; j++) {
-	int entry = sourceEntryUnits[j];
-	if (entry >= 0) {
-	  double inj = sourceInjections[j][k];
-	  if (inj != 0.0) {
-	    b.set(entry, j, inj);
-	    anyInjection = true;
-	  }
-	}
+        int entry = sourceEntryUnits[j];
+        if (entry >= 0) {
+          double inj = sourceInjections[j][k];
+          if (inj != 0.0) {
+            b.set(entry, j, inj);
+            anyInjection = true;
+          }
+        }
       }
 
       if (!anyInjection) {
-	diagnostics.add(new ComponentDiagnostics(k, "direct", 0.0, 0));
-	continue;
+        diagnostics.add(new ComponentDiagnostics(k, "direct", 0.0, 0));
+        continue;
       }
 
       SimpleMatrix mMatrix = SimpleMatrix.identity(n).minus(toSimple(a));
@@ -202,47 +202,47 @@ public class LinearAllocationSolver implements Serializable {
       String method = "direct";
       int iterations = 0;
       try {
-	v = mMatrix.solve(b);
-	if (!isFinite(v)) {
-	  v = null;
-	}
+        v = mMatrix.solve(b);
+        if (!isFinite(v)) {
+          v = null;
+        }
       } catch (RuntimeException e) {
-	logger.warn("Direct solve failed for component {} ({}); using iterative fallback.", k, e.getMessage());
-	v = null;
+        logger.warn("Direct solve failed for component {} ({}); using iterative fallback.", k, e.getMessage());
+        v = null;
       }
 
       if (v == null) {
-	SimpleMatrix aSimple = toSimple(a);
-	v = b.copy();
-	method = "iterative";
-	double bNorm = Math.max(b.normF(), 1.0e-30);
-	boolean converged = false;
-	for (iterations = 1; iterations <= maxIterations; iterations++) {
-	  SimpleMatrix next = b.plus(aSimple.mult(v));
-	  double change = next.minus(v).normF() / bNorm;
-	  v = next;
-	  if (change < tolerance) {
-	    converged = true;
-	    break;
-	  }
-	}
-	if (!converged) {
-	  logger.warn("Iterative fallback did not converge for component {} after {} iterations (tol={})", k,
-	      maxIterations, tolerance);
-	}
+        SimpleMatrix aSimple = toSimple(a);
+        v = b.copy();
+        method = "iterative";
+        double bNorm = Math.max(b.normF(), 1.0e-30);
+        boolean converged = false;
+        for (iterations = 1; iterations <= maxIterations; iterations++) {
+          SimpleMatrix next = b.plus(aSimple.mult(v));
+          double change = next.minus(v).normF() / bNorm;
+          v = next;
+          if (change < tolerance) {
+            converged = true;
+            break;
+          }
+        }
+        if (!converged) {
+          logger.warn("Iterative fallback did not converge for component {} after {} iterations (tol={})", k,
+              maxIterations, tolerance);
+        }
       }
 
       double residual = mMatrix.mult(v).minus(b).normF() / Math.max(b.normF(), 1.0e-30);
       diagnostics.add(new ComponentDiagnostics(k, method, residual, iterations));
 
       for (int u = 0; u < n; u++) {
-	for (int j = 0; j < numSources; j++) {
-	  double value = v.get(u, j);
-	  if (value < 0.0 && value > -negativeClipTolerance) {
-	    value = 0.0;
-	  }
-	  nodeFlow[k][u][j] = value;
-	}
+        for (int j = 0; j < numSources; j++) {
+          double value = v.get(u, j);
+          if (value < 0.0 && value > -negativeClipTolerance) {
+            value = 0.0;
+          }
+          nodeFlow[k][u][j] = value;
+        }
       }
     }
 
@@ -261,7 +261,7 @@ public class LinearAllocationSolver implements Serializable {
     SimpleMatrix m = new SimpleMatrix(rows, cols);
     for (int i = 0; i < rows; i++) {
       for (int j = 0; j < cols; j++) {
-	m.set(i, j, a[i][j]);
+        m.set(i, j, a[i][j]);
       }
     }
     return m;
@@ -276,9 +276,9 @@ public class LinearAllocationSolver implements Serializable {
   private static boolean isFinite(SimpleMatrix m) {
     for (int i = 0; i < m.numRows(); i++) {
       for (int j = 0; j < m.numCols(); j++) {
-	if (!Double.isFinite(m.get(i, j))) {
-	  return false;
-	}
+        if (!Double.isFinite(m.get(i, j))) {
+          return false;
+        }
       }
     }
     return true;

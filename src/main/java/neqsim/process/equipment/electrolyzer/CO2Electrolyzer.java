@@ -88,9 +88,9 @@ public class CO2Electrolyzer extends ProcessEquipmentBaseClass {
     double pressure = inlet.getPressure("bara");
 
     gasProductStream = new Stream(getName() + " gas product",
-	createSystem(new LinkedHashMap<>(), temperature, pressure));
+        createSystem(new LinkedHashMap<>(), temperature, pressure));
     liquidProductStream = new Stream(getName() + " liquid product",
-	createSystem(new LinkedHashMap<>(), temperature, pressure));
+        createSystem(new LinkedHashMap<>(), temperature, pressure));
   }
 
   /**
@@ -116,7 +116,7 @@ public class CO2Electrolyzer extends ProcessEquipmentBaseClass {
   public double getMassBalance(String unit) {
     double inletFlow = inletStream.getThermoSystem().getFlowRate(unit);
     double outletFlow = gasProductStream.getThermoSystem().getFlowRate(unit)
-	+ liquidProductStream.getThermoSystem().getFlowRate(unit);
+        + liquidProductStream.getThermoSystem().getFlowRate(unit);
     return outletFlow - inletFlow;
   }
 
@@ -207,15 +207,15 @@ public class CO2Electrolyzer extends ProcessEquipmentBaseClass {
 
   private SystemInterface createSystem(Map<String, Double> componentMoles, double temperature, double pressure) {
     SystemInterface system = inletStream != null ? inletStream.getThermoSystem().clone()
-	: new Fluid().create2(new String[] { "CO2" }, new double[] { 1e-12 }, "mole/sec");
+        : new Fluid().create2(new String[] { "CO2" }, new double[] { 1e-12 }, "mole/sec");
     system.setEmptyFluid();
     double totalMoles = 0.0;
     for (Map.Entry<String, Double> entry : componentMoles.entrySet()) {
       double amount = Math.max(entry.getValue(), 0.0);
       try {
-	system.addComponent(entry.getKey(), amount, "mole/sec");
+        system.addComponent(entry.getKey(), amount, "mole/sec");
       } catch (Exception ex) {
-	logger.warn("Unable to add component '{}' to product stream: {}", entry.getKey(), ex.getMessage());
+        logger.warn("Unable to add component '{}' to product stream: {}", entry.getKey(), ex.getMessage());
       }
       totalMoles += amount;
     }
@@ -239,20 +239,20 @@ public class CO2Electrolyzer extends ProcessEquipmentBaseClass {
 
     for (String name : inlet.getComponentNames()) {
       if (name.equalsIgnoreCase(co2ComponentName)) {
-	continue;
+        continue;
       }
       ComponentInterface comp = inlet.getComponent(name);
       if (comp == null) {
-	continue;
+        continue;
       }
       double flow = comp.getFlowRate("mole/sec");
       if (flow <= 0.0) {
-	continue;
+        continue;
       }
       if ("water".equalsIgnoreCase(name)) {
-	liquidMoles.merge(name, flow, Double::sum);
+        liquidMoles.merge(name, flow, Double::sum);
       } else {
-	gasMoles.merge(name, flow, Double::sum);
+        gasMoles.merge(name, flow, Double::sum);
       }
     }
 
@@ -260,7 +260,7 @@ public class CO2Electrolyzer extends ProcessEquipmentBaseClass {
     for (Map.Entry<String, Double> entry : gasSelectivities.entrySet()) {
       double moles = convertedCo2 * entry.getValue();
       if (moles <= 0.0) {
-	continue;
+        continue;
       }
       gasMoles.merge(entry.getKey(), moles, Double::sum);
       electronMoles += calculateElectronUsage(entry.getKey(), moles);
@@ -268,7 +268,7 @@ public class CO2Electrolyzer extends ProcessEquipmentBaseClass {
     for (Map.Entry<String, Double> entry : liquidSelectivities.entrySet()) {
       double moles = convertedCo2 * entry.getValue();
       if (moles <= 0.0) {
-	continue;
+        continue;
       }
       liquidMoles.merge(entry.getKey(), moles, Double::sum);
       electronMoles += calculateElectronUsage(entry.getKey(), moles);
@@ -306,7 +306,7 @@ public class CO2Electrolyzer extends ProcessEquipmentBaseClass {
       double outletMoles = gasMoles.getOrDefault(product, 0.0) + liquidMoles.getOrDefault(product, 0.0);
       double produced = Math.max(0.0, outletMoles - getInletComponentFlow(product));
       if (produced > 0.0) {
-	electronMoles += calculateElectronUsage(product, produced);
+        electronMoles += calculateElectronUsage(product, produced);
       }
     }
     return electronMoles;
@@ -321,7 +321,7 @@ public class CO2Electrolyzer extends ProcessEquipmentBaseClass {
       ComponentInterface component = phase.getComponent(i);
       double flow = component.getFlowRate("mole/sec");
       if (flow <= 0.0) {
-	continue;
+        continue;
       }
       accumulator.merge(component.getComponentName(), flow, Double::sum);
     }
@@ -335,14 +335,14 @@ public class CO2Electrolyzer extends ProcessEquipmentBaseClass {
     required.addAll(electronsPerProduct.keySet());
     for (String component : required) {
       if (component == null || component.isEmpty()) {
-	continue;
+        continue;
       }
       if (system.getComponent(component) == null) {
-	try {
-	  system.addComponent(component, 1e-9, "mole/sec");
-	} catch (Exception e) {
-	  logger.warn("Unable to add component '{}' to Gibbs reactor feed: {}", component, e.getMessage());
-	}
+        try {
+          system.addComponent(component, 1e-9, "mole/sec");
+        } catch (Exception e) {
+          logger.warn("Unable to add component '{}' to Gibbs reactor feed: {}", component, e.getMessage());
+        }
       }
     }
   }

@@ -44,7 +44,7 @@ public class DifferentialLiberationTest {
     // tempSystem.prettyPrint();
 
     double[] pressures = new double[] { 351.4, 323.2, 301.5, 275.9, 250.1, 226.1, 205.9, 179.1, 154.6, 132.1, 109.0,
-	78.6, 53.6, 22.0, 1.0 };
+        78.6, 53.6, 22.0, 1.0 };
     DifferentialLiberation differentialLiberation = new DifferentialLiberation(tempSystem);
     differentialLiberation.setPressures(pressures);
     differentialLiberation.setTemperature(97.5, "C");

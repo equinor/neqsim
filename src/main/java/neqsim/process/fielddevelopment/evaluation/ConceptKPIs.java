@@ -237,7 +237,7 @@ public final class ConceptKPIs implements Serializable {
    */
   public String getOneLiner() {
     return String.format("%s: CAPEX=%.0fM, CO2=%.1f kg/boe, FA=%s, Score=%.0f%%", conceptName, totalCapexMUSD,
-	co2IntensityKgPerBoe, flowAssuranceOverall.getDisplayName(), overallScore * 100);
+        co2IntensityKgPerBoe, flowAssuranceOverall.getDisplayName(), overallScore * 100);
   }
 
   /**
@@ -279,7 +279,7 @@ public final class ConceptKPIs implements Serializable {
     if (!warnings.isEmpty()) {
       sb.append("\nWARNINGS:\n");
       for (Map.Entry<String, String> entry : warnings.entrySet()) {
-	sb.append("  ⚠ ").append(entry.getValue()).append("\n");
+        sb.append("  ⚠ ").append(entry.getValue()).append("\n");
       }
     }
 
@@ -466,7 +466,7 @@ public final class ConceptKPIs implements Serializable {
     public ConceptKPIs build() {
       // Calculate overall score if not set
       if (overallScore == 0 && (technicalScore > 0 || economicScore > 0 || environmentalScore > 0)) {
-	overallScore = (technicalScore + economicScore + environmentalScore) / 3.0;
+        overallScore = (technicalScore + economicScore + environmentalScore) / 3.0;
       }
       return new ConceptKPIs(this);
     }

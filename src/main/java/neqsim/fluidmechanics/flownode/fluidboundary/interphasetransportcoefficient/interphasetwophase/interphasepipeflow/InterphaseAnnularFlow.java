@@ -51,9 +51,9 @@ public class InterphaseAnnularFlow extends InterphaseStratifiedFlow {
       // Gas core Sherwood number
       // Modified Dittus-Boelter for annular geometry
       if (reynoldsNumber < 2300) {
-	return 3.66;
+        return 3.66;
       } else {
-	return 0.023 * Math.pow(reynoldsNumber, 0.8) * Math.pow(schmidtNumber, 0.33);
+        return 0.023 * Math.pow(reynoldsNumber, 0.8) * Math.pow(schmidtNumber, 0.33);
       }
     } else {
       // Liquid film Sherwood number (Hewitt & Hall-Taylor correlation)
@@ -61,18 +61,18 @@ public class InterphaseAnnularFlow extends InterphaseStratifiedFlow {
       double filmReynolds = reynoldsNumber;
 
       if (filmReynolds < 300) {
-	// Laminar film
-	return 0.332 * Math.pow(filmReynolds, 0.5) * Math.pow(schmidtNumber, 0.33);
+        // Laminar film
+        return 0.332 * Math.pow(filmReynolds, 0.5) * Math.pow(schmidtNumber, 0.33);
       } else {
-	// Turbulent/wavy film - enhanced mass transfer
-	// Sh = 0.0265 * Re_film^0.8 * Sc^0.33 (Hewitt correlation)
-	double baseSh = 0.0265 * Math.pow(filmReynolds, 0.8) * Math.pow(schmidtNumber, 0.33);
+        // Turbulent/wavy film - enhanced mass transfer
+        // Sh = 0.0265 * Re_film^0.8 * Sc^0.33 (Hewitt correlation)
+        double baseSh = 0.0265 * Math.pow(filmReynolds, 0.8) * Math.pow(schmidtNumber, 0.33);
 
-	// Wave enhancement factor
-	double waveEnhancement = 1.0 + 0.3 * Math.log10(Math.max(filmReynolds / 300.0, 1.0));
-	waveEnhancement = Math.min(waveEnhancement, 1.5);
+        // Wave enhancement factor
+        double waveEnhancement = 1.0 + 0.3 * Math.log10(Math.max(filmReynolds / 300.0, 1.0));
+        waveEnhancement = Math.min(waveEnhancement, 1.5);
 
-	return baseSh * waveEnhancement;
+        return baseSh * waveEnhancement;
       }
     }
   }

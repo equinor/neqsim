@@ -58,7 +58,7 @@ public class HydrogenProductionReactorTest extends neqsim.NeqSimTest {
 
     assertNotNull(atr.getOutletStream());
     assertTrue(atr.getOxygenToCarbonRatio() > 0.55 && atr.getOxygenToCarbonRatio() < 0.65,
-	"O2/C=" + atr.getOxygenToCarbonRatio());
+        "O2/C=" + atr.getOxygenToCarbonRatio());
     assertTrue(atr.getSteamToCarbonRatio() > 1.45 && atr.getSteamToCarbonRatio() < 1.55);
     assertTrue(atr.getSootRiskIndex() >= 0.0 && atr.getSootRiskIndex() <= 1.0);
     assertTrue(atr.toJson().contains("burnerSafetyWarning"));

@@ -300,7 +300,7 @@ public class LogicBlock extends NamedBaseClass implements ControllerDeviceInterf
     }
     for (Boolean b : values) {
       if (!b) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -309,7 +309,7 @@ public class LogicBlock extends NamedBaseClass implements ControllerDeviceInterf
   private boolean evaluateOr(List<Boolean> values) {
     for (Boolean b : values) {
       if (b) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -326,7 +326,7 @@ public class LogicBlock extends NamedBaseClass implements ControllerDeviceInterf
     int trueCount = 0;
     for (Boolean b : values) {
       if (b) {
-	trueCount++;
+        trueCount++;
       }
     }
     return (trueCount % 2) == 1;
@@ -369,17 +369,17 @@ public class LogicBlock extends NamedBaseClass implements ControllerDeviceInterf
       double value = device.getMeasuredValue();
       switch (comparator) {
       case GREATER_THAN:
-	return value > threshold;
+        return value > threshold;
       case GREATER_EQUAL:
-	return value >= threshold;
+        return value >= threshold;
       case LESS_THAN:
-	return value < threshold;
+        return value < threshold;
       case LESS_EQUAL:
-	return value <= threshold;
+        return value <= threshold;
       case EQUAL:
-	return Math.abs(value - threshold) <= equalityTolerance;
+        return Math.abs(value - threshold) <= equalityTolerance;
       default:
-	return false;
+        return false;
       }
     }
 

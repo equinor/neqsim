@@ -271,16 +271,16 @@ public class ProcessLogicIntegratedExample {
     // ESD Logic (SIL-2) - Emergency shutdown without HIPPS
     setup.esdLogic = new ESDLogic("ESD Level 1");
     setup.esdLogic.addAction(new CloseValveAction(inletValve), 0.0); // Close inlet control
-								     // immediately
+    // immediately
     setup.esdLogic.addAction(new CloseValveAction(esdInletValve), 0.0); // Close ESD inlet
-									// isolation
+    // isolation
     setup.esdLogic.addAction(new SetSplitterAction(gasSplitter, new double[] { 0.0, 0.0, 1.0 }), 0.5); // Route
-												       // to
-												       // ESD
+    // to
+    // ESD
     setup.esdLogic.addAction(new EnergizeESDValveAction(bdValve, 100.0), 0.5); // Energize blowdown
-									       // after 0.5s
+    // after 0.5s
     setup.esdLogic.addAction(new SetSeparatorModeAction(separator, false), 1.0); // Switch to
-										 // transient
+    // transient
 
     // Link ESD button to logic
     instruments.esdButton.linkToLogic(setup.esdLogic);
@@ -298,7 +298,7 @@ public class ProcessLogicIntegratedExample {
     setup.startupLogic.addAction(new OpenValveAction(inletValve), 0.0); // Open inlet
     setup.startupLogic.addAction(new SetValveOpeningAction(inletValve, 50.0), 5.0); // 50% after 5s
     setup.startupLogic.addAction(new SetValveOpeningAction(inletValve, 80.0), 10.0); // 80% after
-										     // 10s
+    // 10s
     setup.startupLogic.addAction(new SetSeparatorModeAction(separator, true), 15.0); // Steady state
 
     logger.info("Process logic setup completed:");
@@ -321,23 +321,23 @@ public class ProcessLogicIntegratedExample {
 
     // Execute all scenarios in batch with automatic header and dashboard display
     testRunner.batch()
-	.add("Normal Startup", ProcessSafetyScenario.builder("Normal Startup").build(), "System Startup", 30.0, 1.0)
+        .add("Normal Startup", ProcessSafetyScenario.builder("Normal Startup").build(), "System Startup", 30.0, 1.0)
 
-	.addDelayed("Manual ESD", ProcessSafetyScenario.builder("Manual ESD").build(), "ESD Level 1", 5000,
-	    "OPERATOR ACTIVATES ESD BUTTON", 25.0, 0.5)
+        .addDelayed("Manual ESD", ProcessSafetyScenario.builder("Manual ESD").build(), "ESD Level 1", 5000,
+            "OPERATOR ACTIVATES ESD BUTTON", 25.0, 0.5)
 
-	.addDelayed("High Pressure",
-	    ProcessSafetyScenario.builder("High Pressure").customManipulator("HP Feed", equipment -> {
-	      if (equipment instanceof Stream) {
-		((Stream) equipment).setPressure(70.0, "bara");
-		System.out.println("  - Feed pressure increased to 70 bara (simulating upstream upset)");
-	      }
-	    }).build(), "ESD Level 1", 8000, "HIGH PRESSURE DETECTED - AUTO ESD TRIGGERED", 30.0, 1.0)
+        .addDelayed("High Pressure",
+            ProcessSafetyScenario.builder("High Pressure").customManipulator("HP Feed", equipment -> {
+              if (equipment instanceof Stream) {
+                ((Stream) equipment).setPressure(70.0, "bara");
+                System.out.println("  - Feed pressure increased to 70 bara (simulating upstream upset)");
+              }
+            }).build(), "ESD Level 1", 8000, "HIGH PRESSURE DETECTED - AUTO ESD TRIGGERED", 30.0, 1.0)
 
-	.add("Equip Failure", ProcessSafetyScenario.builder("Equipment Failure").utilityLoss("HP Separator").build(),
-	    null, 20.0, 1.0)
+        .add("Equip Failure", ProcessSafetyScenario.builder("Equipment Failure").utilityLoss("HP Separator").build(),
+            null, 20.0, 1.0)
 
-	.execute();
+        .execute();
   }
 
   /**
@@ -389,8 +389,8 @@ public class ProcessLogicIntegratedExample {
    * <pre>
    * // Create instance
    * ProcessLogic customLogic = new GradualPressureReductionLogic("Gradual Reduction", inletValve, 30.0, // target
-   * 												    // opening
-   * 												    // %
+   *     // opening
+   *     // %
    *     2.0 // step size %
    * );
    *
@@ -442,9 +442,9 @@ public class ProcessLogicIntegratedExample {
     @Override
     public void activate() {
       if (state == LogicState.IDLE || state == LogicState.COMPLETED) {
-	state = LogicState.RUNNING;
-	currentOpening = valve.getPercentValveOpening();
-	logger.info(name + " activated: Current=" + currentOpening + "%, Target=" + targetOpening + "%");
+        state = LogicState.RUNNING;
+        currentOpening = valve.getPercentValveOpening();
+        logger.info(name + " activated: Current=" + currentOpening + "%, Target=" + targetOpening + "%");
       }
     }
 
@@ -462,16 +462,16 @@ public class ProcessLogicIntegratedExample {
     @Override
     public void execute(double timeStep) {
       if (state == LogicState.RUNNING) {
-	// Gradually adjust valve opening
-	if (Math.abs(currentOpening - targetOpening) > step) {
-	  currentOpening += (targetOpening > currentOpening) ? step : -step;
-	  valve.setPercentValveOpening(currentOpening);
-	} else {
-	  // Reached target
-	  valve.setPercentValveOpening(targetOpening);
-	  state = LogicState.COMPLETED;
-	  logger.info(name + " completed at " + targetOpening + "%");
-	}
+        // Gradually adjust valve opening
+        if (Math.abs(currentOpening - targetOpening) > step) {
+          currentOpening += (targetOpening > currentOpening) ? step : -step;
+          valve.setPercentValveOpening(currentOpening);
+        } else {
+          // Reached target
+          valve.setPercentValveOpening(targetOpening);
+          state = LogicState.COMPLETED;
+          logger.info(name + " completed at " + targetOpening + "%");
+        }
       }
     }
 

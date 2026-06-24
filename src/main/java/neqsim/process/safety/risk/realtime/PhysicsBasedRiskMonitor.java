@@ -328,8 +328,8 @@ public class PhysicsBasedRiskMonitor implements Serializable {
       assessment.setSystemCapacityMargin(margin);
 
       if (margin < 0.1) {
-	assessment.getWarnings().add("System near capacity limit - bottleneck at " + bottleneck.getEquipment().getName()
-	    + " (" + bottleneck.getConstraintName() + ")");
+        assessment.getWarnings().add("System near capacity limit - bottleneck at " + bottleneck.getEquipment().getName()
+            + " (" + bottleneck.getConstraintName() + ")");
       }
     } else {
       assessment.setSystemCapacityMargin(1.0);
@@ -348,16 +348,16 @@ public class PhysicsBasedRiskMonitor implements Serializable {
     // Also include utilizations from equipment monitors for equipment not already covered
     for (Map.Entry<String, ProcessEquipmentMonitor> entry : equipmentMonitors.entrySet()) {
       if (!assessment.getEquipmentUtilizations().containsKey(entry.getKey())) {
-	double monitorUtil = entry.getValue().getCurrentCapacityUtilization();
-	assessment.getEquipmentUtilizations().put(entry.getKey(), monitorUtil);
+        double monitorUtil = entry.getValue().getCurrentCapacityUtilization();
+        assessment.getEquipmentUtilizations().put(entry.getKey(), monitorUtil);
       }
     }
 
     // Check for equipment near capacity
     for (Map.Entry<String, Double> entry : assessment.getEquipmentUtilizations().entrySet()) {
       if (entry.getValue() > 0.9) {
-	assessment.getWarnings()
-	    .add(entry.getKey() + " at " + String.format("%.1f%%", entry.getValue() * 100) + " utilization");
+        assessment.getWarnings()
+            .add(entry.getKey() + " at " + String.format("%.1f%%", entry.getValue() * 100) + " utilization");
       }
     }
   }
@@ -384,7 +384,7 @@ public class PhysicsBasedRiskMonitor implements Serializable {
 
       // Get capacity utilization from NeqSim
       double utilization = assessment.getEquipmentUtilizations().getOrDefault(name,
-	  monitor.getCurrentCapacityUtilization());
+          monitor.getCurrentCapacityUtilization());
 
       // Risk score = f(failure probability, utilization, consequence)
       // Higher utilization = higher consequence of failure (system impact)
@@ -392,20 +392,20 @@ public class PhysicsBasedRiskMonitor implements Serializable {
 
       // Bottleneck equipment has higher consequence
       if (name.equals(assessment.getBottleneckEquipment())) {
-	consequenceWeight *= 2.0;
+        consequenceWeight *= 2.0;
       }
 
       double riskScore = failureProb * consequenceWeight * 10; // Scale to 0-10
       assessment.getEquipmentRiskScores().put(name, riskScore);
 
       if (riskScore > maxRisk) {
-	maxRisk = riskScore;
-	maxRiskEquipment = name;
+        maxRisk = riskScore;
+        maxRiskEquipment = name;
       }
 
       // Track critical equipment
       if (riskScore > 5.0 || health < 0.5) {
-	assessment.getCriticalEquipment().add(name);
+        assessment.getCriticalEquipment().add(name);
       }
     }
 
@@ -427,7 +427,7 @@ public class PhysicsBasedRiskMonitor implements Serializable {
     double capacityRisk = assessment.getBottleneckUtilization() * 3; // 0-3 scale
 
     double avgHealth = assessment.getEquipmentHealthIndices().values().stream().mapToDouble(Double::doubleValue)
-	.average().orElse(1.0);
+        .average().orElse(1.0);
     double healthRisk = (1.0 - avgHealth) * 4; // 0-4 scale
 
     double maxEquipmentRisk = assessment.getHighestRiskScore() * 0.3; // 0-3 scale

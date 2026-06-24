@@ -63,7 +63,7 @@ public class BatchRunner {
   public static String run(String json) {
     if (json == null || json.trim().isEmpty()) {
       return errorJson("INPUT_ERROR", "JSON input is null or empty",
-	  "Provide a JSON batch specification with 'components' and 'cases' array");
+          "Provide a JSON batch specification with 'components' and 'cases' array");
     }
 
     JsonObject input;
@@ -78,7 +78,7 @@ public class BatchRunner {
     // --- Parse cases array ---
     if (!input.has("cases") || !input.get("cases").isJsonArray()) {
       return errorJson("MISSING_CASES", "'cases' array is required",
-	  "Provide an array of case objects, each with temperature and/or pressure overrides");
+          "Provide an array of case objects, each with temperature and/or pressure overrides");
     }
 
     JsonArray casesArray = input.getAsJsonArray("cases");
@@ -87,7 +87,7 @@ public class BatchRunner {
     }
     if (casesArray.size() > MAX_CASES) {
       return errorJson("TOO_MANY_CASES", "Batch has " + casesArray.size() + " cases, maximum is " + MAX_CASES,
-	  "Split into multiple batch calls with <= " + MAX_CASES + " cases each");
+          "Split into multiple batch calls with <= " + MAX_CASES + " cases each");
     }
 
     // --- Build base flash JSON template ---
@@ -114,14 +114,14 @@ public class BatchRunner {
     for (int i = 0; i < casesArray.size(); i++) {
       JsonElement caseEl = casesArray.get(i);
       if (!caseEl.isJsonObject()) {
-	JsonObject caseResult = new JsonObject();
-	caseResult.addProperty("caseIndex", i);
-	caseResult.addProperty("status", "error");
-	caseResult.addProperty("message", "Case " + i + " is not a JSON object");
-	results.add(caseResult);
-	errorCount++;
-	failedIndices.add(String.valueOf(i));
-	continue;
+        JsonObject caseResult = new JsonObject();
+        caseResult.addProperty("caseIndex", i);
+        caseResult.addProperty("status", "error");
+        caseResult.addProperty("message", "Case " + i + " is not a JSON object");
+        results.add(caseResult);
+        errorCount++;
+        failedIndices.add(String.valueOf(i));
+        continue;
       }
 
       // Merge base flash spec with case overrides
@@ -129,26 +129,26 @@ public class BatchRunner {
       JsonObject flashInput = mergeJsonObjects(baseFlash, caseObj);
 
       try {
-	String flashResult = FlashRunner.run(flashInput.toString());
-	JsonObject flashObj = JsonParser.parseString(flashResult).getAsJsonObject();
-	flashObj.addProperty("caseIndex", i);
-	results.add(flashObj);
+        String flashResult = FlashRunner.run(flashInput.toString());
+        JsonObject flashObj = JsonParser.parseString(flashResult).getAsJsonObject();
+        flashObj.addProperty("caseIndex", i);
+        results.add(flashObj);
 
-	String status = flashObj.has("status") ? flashObj.get("status").getAsString() : "ok";
-	if ("error".equals(status)) {
-	  errorCount++;
-	  failedIndices.add(String.valueOf(i));
-	} else {
-	  successCount++;
-	}
+        String status = flashObj.has("status") ? flashObj.get("status").getAsString() : "ok";
+        if ("error".equals(status)) {
+          errorCount++;
+          failedIndices.add(String.valueOf(i));
+        } else {
+          successCount++;
+        }
       } catch (Exception e) {
-	JsonObject caseResult = new JsonObject();
-	caseResult.addProperty("caseIndex", i);
-	caseResult.addProperty("status", "error");
-	caseResult.addProperty("message", "Case " + i + " failed: " + e.getMessage());
-	results.add(caseResult);
-	errorCount++;
-	failedIndices.add(String.valueOf(i));
+        JsonObject caseResult = new JsonObject();
+        caseResult.addProperty("caseIndex", i);
+        caseResult.addProperty("status", "error");
+        caseResult.addProperty("message", "Case " + i + " failed: " + e.getMessage());
+        results.add(caseResult);
+        errorCount++;
+        failedIndices.add(String.valueOf(i));
       }
     }
 
@@ -163,7 +163,7 @@ public class BatchRunner {
     if (!failedIndices.isEmpty()) {
       JsonArray failedArr = new JsonArray();
       for (String idx : failedIndices) {
-	failedArr.add(Integer.parseInt(idx));
+        failedArr.add(Integer.parseInt(idx));
       }
       summary.add("failedCaseIndices", failedArr);
     }
@@ -185,10 +185,10 @@ public class BatchRunner {
 
     String gateVerdict = errorCount == 0 ? "passed" : (successCount == 0 ? "failed" : "warning");
     String gateSummary = errorCount == 0 ? "All batch cases completed"
-	: (successCount == 0 ? "All batch cases failed" : "Batch completed with failed cases");
+        : (successCount == 0 ? "All batch cases failed" : "Batch completed with failed cases");
     ApiEnvelope.applyStandardFields(response, "runBatch", provenance,
-	ApiEnvelope.validationStatus(errorCount == 0, "calculation", gateSummary),
-	ApiEnvelope.qualityGate(gateVerdict, gateSummary, true));
+        ApiEnvelope.validationStatus(errorCount == 0, "calculation", gateSummary),
+        ApiEnvelope.qualityGate(gateVerdict, gateSummary, true));
 
     return GSON.toJson(response);
   }
@@ -236,7 +236,7 @@ public class BatchRunner {
     result.add("errors", errors);
 
     ApiEnvelope.applyStandardFields(result, "runBatch", null, ApiEnvelope.validationStatus(false, "input", message),
-	ApiEnvelope.qualityGate("failed", message, true));
+        ApiEnvelope.qualityGate("failed", message, true));
 
     return GSON.toJson(result);
   }

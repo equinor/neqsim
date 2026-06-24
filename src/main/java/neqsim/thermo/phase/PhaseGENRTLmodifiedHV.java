@@ -46,8 +46,8 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
     type = 0;
     for (int i = 0; i < alpha[0].length; i++) {
       componentArray[i] = new ComponentGENRTLmodifiedHV(phase.getComponent(i).getName(),
-	  phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
-	  phase.getComponent(i).getComponentNumber());
+          phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
+          phase.getComponent(i).getComponentNumber());
     }
   }
 
@@ -69,8 +69,8 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
     this.DijT = DijT;
     for (int i = 0; i < alpha[0].length; i++) {
       componentArray[i] = new ComponentGENRTLmodifiedHV(phase.getComponent(i).getName(),
-	  phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
-	  phase.getComponent(i).getComponentNumber());
+          phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
+          phase.getComponent(i).getComponentNumber());
     }
   }
 
@@ -119,11 +119,11 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
     GE = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       if (type == 0) {
-	GE += phase.getComponent(i).getx() * Math.log(((ComponentGEInterface) componentArray[i]).getGamma(phase,
-	    numberOfComponents, temperature, pressure, pt, alpha, Dij, intparam, mixRuleString));
+        GE += phase.getComponent(i).getx() * Math.log(((ComponentGEInterface) componentArray[i]).getGamma(phase,
+            numberOfComponents, temperature, pressure, pt, alpha, Dij, intparam, mixRuleString));
       } else if (type == 1) {
-	GE += phase.getComponent(i).getx() * Math.log(((ComponentGENRTLmodifiedHV) componentArray[i]).getGamma(phase,
-	    numberOfComponents, temperature, pressure, pt, alpha, Dij, DijT, intparam, mixRuleString));
+        GE += phase.getComponent(i).getx() * Math.log(((ComponentGENRTLmodifiedHV) componentArray[i]).getGamma(phase,
+            numberOfComponents, temperature, pressure, pt, alpha, Dij, DijT, intparam, mixRuleString));
       }
     }
     return R * phase.getTemperature() * phase.getNumberOfMolesInPhase() * GE;

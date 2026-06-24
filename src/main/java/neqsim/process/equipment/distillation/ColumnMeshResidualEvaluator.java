@@ -48,15 +48,15 @@ final class ColumnMeshResidualEvaluator {
     String[] componentNames = state.getComponentNames();
     for (int tray = 0; tray < state.getTrayCount(); tray++) {
       for (int comp = 0; comp < state.getComponentCount(); comp++) {
-	double vaporIn = tray > 0 ? state.getVaporComponentFlow(tray - 1, comp) : 0.0;
-	double liquidIn = tray < state.getTrayCount() - 1 ? state.getLiquidComponentFlow(tray + 1, comp) : 0.0;
-	double feedIn = state.getFeedComponentFlow(tray, comp);
-	double vaporOut = state.getVaporComponentFlow(tray, comp);
-	double liquidOut = state.getLiquidComponentFlow(tray, comp);
-	double inlet = vaporIn + liquidIn + feedIn;
-	double outlet = vaporOut + liquidOut;
-	double scale = Math.max(ColumnMeshState.getMinimumScale(), Math.abs(inlet) + Math.abs(outlet));
-	builder.add((outlet - inlet) / scale, ColumnMeshEquationType.MATERIAL, tray, componentNames[comp]);
+        double vaporIn = tray > 0 ? state.getVaporComponentFlow(tray - 1, comp) : 0.0;
+        double liquidIn = tray < state.getTrayCount() - 1 ? state.getLiquidComponentFlow(tray + 1, comp) : 0.0;
+        double feedIn = state.getFeedComponentFlow(tray, comp);
+        double vaporOut = state.getVaporComponentFlow(tray, comp);
+        double liquidOut = state.getLiquidComponentFlow(tray, comp);
+        double inlet = vaporIn + liquidIn + feedIn;
+        double outlet = vaporOut + liquidOut;
+        double scale = Math.max(ColumnMeshState.getMinimumScale(), Math.abs(inlet) + Math.abs(outlet));
+        builder.add((outlet - inlet) / scale, ColumnMeshEquationType.MATERIAL, tray, componentNames[comp]);
       }
     }
   }
@@ -74,31 +74,31 @@ final class ColumnMeshResidualEvaluator {
     for (int trayIndex = 0; trayIndex < state.getTrayCount(); trayIndex++) {
       SimpleTray tray = column.getTray(trayIndex);
       try {
-	SystemInterface system = tray.getThermoSystem().clone();
-	if (system.getNumberOfPhases() < 2) {
-	  continue;
-	}
-	system.init(1);
-	PhaseInterface vaporPhase = findPhase(system, "gas");
-	PhaseInterface liquidPhase = findLiquidPhase(system);
-	if (vaporPhase == null || liquidPhase == null || vaporPhase == liquidPhase) {
-	  continue;
-	}
-	for (int comp = 0; comp < state.getComponentCount(); comp++) {
-	  String componentName = componentNames[comp];
-	  double y = safePhaseFraction(vaporPhase, componentName);
-	  double x = safePhaseFraction(liquidPhase, componentName);
-	  double vaporPhi = safeFugacityCoefficient(vaporPhase, componentName);
-	  double liquidPhi = safeFugacityCoefficient(liquidPhase, componentName);
-	  double vaporFugacity = Math.max(MIN_LOG_ARGUMENT, y * vaporPhi);
-	  double liquidFugacity = Math.max(MIN_LOG_ARGUMENT, x * liquidPhi);
-	  builder.add(Math.log(vaporFugacity / liquidFugacity), ColumnMeshEquationType.EQUILIBRIUM, trayIndex,
-	      componentName);
-	}
+        SystemInterface system = tray.getThermoSystem().clone();
+        if (system.getNumberOfPhases() < 2) {
+          continue;
+        }
+        system.init(1);
+        PhaseInterface vaporPhase = findPhase(system, "gas");
+        PhaseInterface liquidPhase = findLiquidPhase(system);
+        if (vaporPhase == null || liquidPhase == null || vaporPhase == liquidPhase) {
+          continue;
+        }
+        for (int comp = 0; comp < state.getComponentCount(); comp++) {
+          String componentName = componentNames[comp];
+          double y = safePhaseFraction(vaporPhase, componentName);
+          double x = safePhaseFraction(liquidPhase, componentName);
+          double vaporPhi = safeFugacityCoefficient(vaporPhase, componentName);
+          double liquidPhi = safeFugacityCoefficient(liquidPhase, componentName);
+          double vaporFugacity = Math.max(MIN_LOG_ARGUMENT, y * vaporPhi);
+          double liquidFugacity = Math.max(MIN_LOG_ARGUMENT, x * liquidPhi);
+          builder.add(Math.log(vaporFugacity / liquidFugacity), ColumnMeshEquationType.EQUILIBRIUM, trayIndex,
+              componentName);
+        }
       } catch (Exception ex) {
-	for (int comp = 0; comp < state.getComponentCount(); comp++) {
-	  builder.add(Double.POSITIVE_INFINITY, ColumnMeshEquationType.EQUILIBRIUM, trayIndex, componentNames[comp]);
-	}
+        for (int comp = 0; comp < state.getComponentCount(); comp++) {
+          builder.add(Double.POSITIVE_INFINITY, ColumnMeshEquationType.EQUILIBRIUM, trayIndex, componentNames[comp]);
+        }
       }
     }
   }
@@ -114,14 +114,14 @@ final class ColumnMeshResidualEvaluator {
       double vaporSum = 0.0;
       double liquidSum = 0.0;
       for (int comp = 0; comp < state.getComponentCount(); comp++) {
-	vaporSum += state.getVaporMoleFraction(tray, comp);
-	liquidSum += state.getLiquidMoleFraction(tray, comp);
+        vaporSum += state.getVaporMoleFraction(tray, comp);
+        liquidSum += state.getLiquidMoleFraction(tray, comp);
       }
       if (state.getVaporFlow(tray) > ColumnMeshState.getMinimumScale()) {
-	builder.add(vaporSum - 1.0, ColumnMeshEquationType.SUMMATION, tray, "vapor");
+        builder.add(vaporSum - 1.0, ColumnMeshEquationType.SUMMATION, tray, "vapor");
       }
       if (state.getLiquidFlow(tray) > ColumnMeshState.getMinimumScale()) {
-	builder.add(liquidSum - 1.0, ColumnMeshEquationType.SUMMATION, tray, "liquid");
+        builder.add(liquidSum - 1.0, ColumnMeshEquationType.SUMMATION, tray, "liquid");
       }
     }
   }
@@ -136,14 +136,14 @@ final class ColumnMeshResidualEvaluator {
     for (int trayIndex = 0; trayIndex < column.getTrays().size(); trayIndex++) {
       SimpleTray tray = column.getTray(trayIndex);
       try {
-	double targetEnthalpy = finiteOrZero(tray.calcMixStreamEnthalpy());
-	SystemInterface traySystem = tray.getThermoSystem().clone();
-	traySystem.init(3);
-	double actualEnthalpy = finiteOrZero(traySystem.getEnthalpy());
-	double scale = Math.max(1.0, Math.abs(targetEnthalpy) + Math.abs(actualEnthalpy));
-	builder.add((actualEnthalpy - targetEnthalpy) / scale, ColumnMeshEquationType.ENERGY, trayIndex, null);
+        double targetEnthalpy = finiteOrZero(tray.calcMixStreamEnthalpy());
+        SystemInterface traySystem = tray.getThermoSystem().clone();
+        traySystem.init(3);
+        double actualEnthalpy = finiteOrZero(traySystem.getEnthalpy());
+        double scale = Math.max(1.0, Math.abs(targetEnthalpy) + Math.abs(actualEnthalpy));
+        builder.add((actualEnthalpy - targetEnthalpy) / scale, ColumnMeshEquationType.ENERGY, trayIndex, null);
       } catch (Exception ex) {
-	builder.add(Double.POSITIVE_INFINITY, ColumnMeshEquationType.ENERGY, trayIndex, null);
+        builder.add(Double.POSITIVE_INFINITY, ColumnMeshEquationType.ENERGY, trayIndex, null);
       }
     }
   }
@@ -210,7 +210,7 @@ final class ColumnMeshResidualEvaluator {
   private static void addDrawResidual(double publicDraw, double terminalDraw, double feedComponentFlow,
       ResidualBuilder builder, int trayIndex, String label) {
     double scale = Math.max(ColumnMeshState.getMinimumScale(),
-	Math.abs(publicDraw) + Math.abs(terminalDraw) + Math.abs(feedComponentFlow));
+        Math.abs(publicDraw) + Math.abs(terminalDraw) + Math.abs(feedComponentFlow));
     builder.add((publicDraw - terminalDraw) / scale, ColumnMeshEquationType.PRODUCT_DRAW, trayIndex, label);
   }
 
@@ -253,7 +253,7 @@ final class ColumnMeshResidualEvaluator {
   private static PhaseInterface findPhase(SystemInterface system, String phaseTypeName) {
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
       if (phaseTypeName.equals(system.getPhase(phaseIndex).getPhaseTypeName())) {
-	return system.getPhase(phaseIndex);
+        return system.getPhase(phaseIndex);
       }
     }
     return null;
@@ -269,12 +269,12 @@ final class ColumnMeshResidualEvaluator {
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
       String phaseTypeName = system.getPhase(phaseIndex).getPhaseTypeName();
       if ("liquid".equals(phaseTypeName) || "oil".equals(phaseTypeName) || "aqueous".equals(phaseTypeName)) {
-	return system.getPhase(phaseIndex);
+        return system.getPhase(phaseIndex);
       }
     }
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
       if (!"gas".equals(system.getPhase(phaseIndex).getPhaseTypeName())) {
-	return system.getPhase(phaseIndex);
+        return system.getPhase(phaseIndex);
       }
     }
     return null;
@@ -372,10 +372,10 @@ final class ColumnMeshResidualEvaluator {
       int[] residualTrayIndices = new int[values.size()];
       String[] residualComponentNames = new String[values.size()];
       for (int i = 0; i < values.size(); i++) {
-	residualValues[i] = values.get(i).doubleValue();
-	residualTypes[i] = equationTypes.get(i);
-	residualTrayIndices[i] = trayIndices.get(i).intValue();
-	residualComponentNames[i] = componentNames.get(i);
+        residualValues[i] = values.get(i).doubleValue();
+        residualTypes[i] = equationTypes.get(i);
+        residualTrayIndices[i] = trayIndices.get(i).intValue();
+        residualComponentNames[i] = componentNames.get(i);
       }
       return new ColumnMeshResidual(residualValues, residualTypes, residualTrayIndices, residualComponentNames);
     }

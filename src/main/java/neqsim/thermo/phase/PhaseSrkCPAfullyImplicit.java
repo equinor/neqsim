@@ -164,13 +164,13 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
     boolean needsInit = false;
     for (int i = 0; i < ns; i++) {
       if (xSite[i] <= 1.0e-15 || xSite[i] >= 1.0 || Double.isNaN(xSite[i])) {
-	needsInit = true;
-	break;
+        needsInit = true;
+        break;
       }
     }
     if (needsInit) {
       for (int i = 0; i < ns; i++) {
-	xSite[i] = 0.5;
+        xSite[i] = 0.5;
       }
       setXsiteOnComponents(xSite);
       solveX2(10);
@@ -217,11 +217,11 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
       // Update radial distribution function and derivatives
       gcpa = calc_g();
       if (gcpa < 0) {
-	setMolarVolume(Btemp / numberOfMolesInPhase);
-	gcpa = calc_g();
-	totalVol = getMolarVolume() * numberOfMolesInPhase;
-	zeta = Btemp / (numberOfMolesInPhase * getMolarVolume());
-	molarVol = getMolarVolume();
+        setMolarVolume(Btemp / numberOfMolesInPhase);
+        gcpa = calc_g();
+        totalVol = getMolarVolume() * numberOfMolesInPhase;
+        zeta = Btemp / (numberOfMolesInPhase * getMolarVolume());
+        molarVol = getMolarVolume();
       }
       gcpav = calc_lngV();
       gcpavv = calc_lngVV();
@@ -238,14 +238,14 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
       double sumFV = 0.0;
       double sumFVV = 0.0;
       for (int i = 0; i < ns; i++) {
-	for (int j = i; j < ns; j++) {
-	  double klk = siteMoles[i] * siteMoles[j] / totalVol * delta[i][j];
-	  double xixj = xSite[i] * xSite[j];
-	  double klkXiXj = klk * xixj;
-	  double symFactor = (i == j) ? 1.0 : 2.0;
-	  sumFV += symFactor * klkXiXj * gdv1;
-	  sumFVV += symFactor * klkXiXj * (gdv2 + gcpavv + 1.0 / totalVol2);
-	}
+        for (int j = i; j < ns; j++) {
+          double klk = siteMoles[i] * siteMoles[j] / totalVol * delta[i][j];
+          double xixj = xSite[i] * xSite[j];
+          double klkXiXj = klk * xixj;
+          double symFactor = (i == j) ? 1.0 : 2.0;
+          sumFV += symFactor * klkXiXj * gdv1;
+          sumFVV += symFactor * klkXiXj * (gdv2 + gcpavv + 1.0 / totalVol2);
+        }
       }
 
       dFCPAdV = -0.5 * sumFV;
@@ -253,111 +253,111 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
 
       // --- Build residual vector ---
       for (int k = 0; k < ns; k++) {
-	double sumKJ = 0.0;
-	for (int j = 0; j < ns; j++) {
-	  sumKJ += siteMoles[j] * delta[k][j] * xSite[j];
-	}
-	residual[k] = xSite[k] - 1.0 / (1.0 + sumKJ / totalVol);
+        double sumKJ = 0.0;
+        for (int j = 0; j < ns; j++) {
+          sumKJ += siteMoles[j] * delta[k][j] * xSite[j];
+        }
+        residual[k] = xSite[k] - 1.0 / (1.0 + sumKJ / totalVol);
       }
 
       double h = zeta - Btemp / numberOfMolesInPhase * dFdV()
-	  - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
+          - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
       residual[ns] = h;
 
       // --- Check convergence ---
       double maxResidual = 0.0;
       for (int i = 0; i < dim; i++) {
-	maxResidual = Math.max(maxResidual, Math.abs(residual[i]));
+        maxResidual = Math.max(maxResidual, Math.abs(residual[i]));
       }
       if (maxResidual < CONVERGENCE_TOL && iterations > 1) {
-	converged = true;
-	break;
+        converged = true;
+        break;
       }
 
       // Track best solution found
       if (maxResidual < bestMaxResidual) {
-	bestMaxResidual = maxResidual;
-	bestZeta = zeta;
-	System.arraycopy(xSite, 0, bestXsite, 0, ns);
+        bestMaxResidual = maxResidual;
+        bestZeta = zeta;
+        System.arraycopy(xSite, 0, bestXsite, 0, ns);
       }
 
       // --- Adaptive damping: track residual improvement ---
       if (maxResidual > prevMaxResidual * 0.999 && iterations > 2) {
-	stallCount++;
-	damping = Math.max(0.1, damping * 0.5);
+        stallCount++;
+        damping = Math.max(0.1, damping * 0.5);
       } else {
-	stallCount = 0;
-	damping = Math.min(1.0, damping * 1.5);
+        stallCount = 0;
+        damping = Math.min(1.0, damping * 1.5);
       }
       prevMaxResidual = maxResidual;
 
       // --- Stagnation recovery: SS iterations to re-stabilize ---
       if (stallCount >= 4 && ssRecoveryCount < 3) {
-	ssRecoveryCount++;
-	stallCount = 0;
-	damping = 1.0;
-	setXsiteOnComponents(xSite);
-	solveX2(5);
-	readXsiteFromComponents(xSite);
-	continue;
+        ssRecoveryCount++;
+        stallCount = 0;
+        damping = 1.0;
+        setXsiteOnComponents(xSite);
+        solveX2(5);
+        readXsiteFromComponents(xSite);
+        continue;
       }
 
       // --- Multi-restart with different initial guesses ---
       if (stallCount >= 6 && restartCount < 2) {
-	restartCount++;
-	stallCount = 0;
-	damping = 1.0;
-	prevMaxResidual = Double.MAX_VALUE;
-	if (restartCount == 1) {
-	  // Restart 1: opposite phase initial guess
-	  if (pt == PhaseType.GAS) {
-	    zeta = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
-	  } else {
-	    zeta = pressure * Btemp / (numberOfMolesInPhase * temperature * R);
-	  }
-	} else {
-	  // Restart 2: midpoint
-	  zeta = 0.3;
-	}
-	zeta = Math.max(1.0e-8, Math.min(1.0 - 1.0e-8, zeta));
-	for (int i = 0; i < ns; i++) {
-	  xSite[i] = 0.5;
-	}
-	molarVol = Btemp / (numberOfMolesInPhase * zeta);
-	setMolarVolume(molarVol);
-	setXsiteOnComponents(xSite);
-	solveX2(10);
-	readXsiteFromComponents(xSite);
-	continue;
+        restartCount++;
+        stallCount = 0;
+        damping = 1.0;
+        prevMaxResidual = Double.MAX_VALUE;
+        if (restartCount == 1) {
+          // Restart 1: opposite phase initial guess
+          if (pt == PhaseType.GAS) {
+            zeta = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+          } else {
+            zeta = pressure * Btemp / (numberOfMolesInPhase * temperature * R);
+          }
+        } else {
+          // Restart 2: midpoint
+          zeta = 0.3;
+        }
+        zeta = Math.max(1.0e-8, Math.min(1.0 - 1.0e-8, zeta));
+        for (int i = 0; i < ns; i++) {
+          xSite[i] = 0.5;
+        }
+        molarVol = Btemp / (numberOfMolesInPhase * zeta);
+        setMolarVolume(molarVol);
+        setXsiteOnComponents(xSite);
+        solveX2(10);
+        readXsiteFromComponents(xSite);
+        continue;
       }
 
       // --- Build Jacobian ---
       for (int k = 0; k < ns; k++) {
-	double xk2 = xSite[k] * xSite[k];
-	for (int j = 0; j < ns; j++) {
-	  double dkj = (k == j) ? 1.0 : 0.0;
-	  jacobian[k][j] = dkj + xk2 * siteMoles[j] * delta[k][j] / totalVol;
-	}
+        double xk2 = xSite[k] * xSite[k];
+        for (int j = 0; j < ns; j++) {
+          double dkj = (k == j) ? 1.0 : 0.0;
+          jacobian[k][j] = dkj + xk2 * siteMoles[j] * delta[k][j] / totalVol;
+        }
       }
 
       double dVdZeta = -Btemp / (numberOfMolesInPhase * zeta * zeta);
       for (int k = 0; k < ns; k++) {
-	double xk2 = xSite[k] * xSite[k];
-	double sumDeriv = 0.0;
-	for (int j = 0; j < ns; j++) {
-	  double deltaKJ = delta[k][j];
-	  double dDeltadV = deltaKJ * gcpav;
-	  sumDeriv += siteMoles[j] * xSite[j] * (dDeltadV * totalVol - deltaKJ) / (totalVol * totalVol);
-	}
-	jacobian[k][ns] = xk2 * sumDeriv * dVdZeta;
+        double xk2 = xSite[k] * xSite[k];
+        double sumDeriv = 0.0;
+        for (int j = 0; j < ns; j++) {
+          double deltaKJ = delta[k][j];
+          double dDeltadV = deltaKJ * gcpav;
+          sumDeriv += siteMoles[j] * xSite[j] * (dDeltadV * totalVol - deltaKJ) / (totalVol * totalVol);
+        }
+        jacobian[k][ns] = xk2 * sumDeriv * dVdZeta;
       }
 
       for (int k = 0; k < ns; k++) {
-	double sumJ = 0.0;
-	for (int j = 0; j < ns; j++) {
-	  sumJ += siteMoles[j] * delta[k][j] * xSite[j];
-	}
-	jacobian[ns][k] = Btemp / numberOfMolesInPhase * cpaon * (siteMoles[k] / totalVol) * gdv1 * sumJ;
+        double sumJ = 0.0;
+        for (int j = 0; j < ns; j++) {
+          sumJ += siteMoles[j] * delta[k][j] * xSite[j];
+        }
+        jacobian[ns][k] = Btemp / numberOfMolesInPhase * cpaon * (siteMoles[k] / totalVol) * gdv1 * sumJ;
       }
 
       double BonV2 = zeta * zeta;
@@ -365,51 +365,51 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
 
       // --- Solve J * dx = -R using Gaussian elimination ---
       for (int i = 0; i < dim; i++) {
-	dx[i] = -residual[i];
+        dx[i] = -residual[i];
       }
       boolean solveOk = solveLinearSystem(jacobian, dx, dim);
       if (!solveOk) {
-	// Singular Jacobian: try SS recovery before fallback
-	if (ssRecoveryCount < 3) {
-	  ssRecoveryCount++;
-	  setXsiteOnComponents(xSite);
-	  solveX2(10);
-	  readXsiteFromComponents(xSite);
-	  continue;
-	}
-	break;
+        // Singular Jacobian: try SS recovery before fallback
+        if (ssRecoveryCount < 3) {
+          ssRecoveryCount++;
+          setXsiteOnComponents(xSite);
+          solveX2(10);
+          readXsiteFromComponents(xSite);
+          continue;
+        }
+        break;
       }
 
       // --- Step limiting with adaptive damping ---
       double maxStep = damping;
       for (int k = 0; k < ns; k++) {
-	double proposedX = xSite[k] + maxStep * dx[k];
-	if (proposedX < 1.0e-15) {
-	  double limit = MAX_REL_STEP * xSite[k] / Math.abs(dx[k]);
-	  maxStep = Math.min(maxStep, limit);
-	}
-	if (proposedX > 1.0) {
-	  double limit = (1.0 - xSite[k]) / dx[k];
-	  maxStep = Math.min(maxStep, Math.max(0.1, limit));
-	}
+        double proposedX = xSite[k] + maxStep * dx[k];
+        if (proposedX < 1.0e-15) {
+          double limit = MAX_REL_STEP * xSite[k] / Math.abs(dx[k]);
+          maxStep = Math.min(maxStep, limit);
+        }
+        if (proposedX > 1.0) {
+          double limit = (1.0 - xSite[k]) / dx[k];
+          maxStep = Math.min(maxStep, Math.max(0.1, limit));
+        }
       }
       double proposedZeta = zeta + maxStep * dx[ns];
       if (proposedZeta < 1.0e-10) {
-	double limit = MAX_REL_STEP * zeta / Math.abs(dx[ns]);
-	maxStep = Math.min(maxStep, limit);
+        double limit = MAX_REL_STEP * zeta / Math.abs(dx[ns]);
+        maxStep = Math.min(maxStep, limit);
       }
       if (proposedZeta > 1.0 - 1.0e-10) {
-	double limit = (1.0 - 1.0e-10 - zeta) / dx[ns];
-	maxStep = Math.min(maxStep, Math.max(0.1, limit));
+        double limit = (1.0 - 1.0e-10 - zeta) / dx[ns];
+        maxStep = Math.min(maxStep, Math.max(0.1, limit));
       }
       if (Math.abs(dx[ns]) / Math.max(zeta, 1.0e-10) > 0.3) {
-	maxStep = Math.min(maxStep, 0.3 * zeta / Math.abs(dx[ns]));
+        maxStep = Math.min(maxStep, 0.3 * zeta / Math.abs(dx[ns]));
       }
 
       // --- Apply update ---
       for (int k = 0; k < ns; k++) {
-	xSite[k] += maxStep * dx[k];
-	xSite[k] = Math.max(1.0e-15, Math.min(1.0, xSite[k]));
+        xSite[k] += maxStep * dx[k];
+        xSite[k] = Math.max(1.0e-15, Math.min(1.0, xSite[k]));
       }
       zeta += maxStep * dx[ns];
       zeta = Math.max(1.0e-10, Math.min(1.0 - 1.0e-10, zeta));
@@ -419,8 +419,8 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
     if (!converged) {
       fallbackCount++;
       if (logger.isDebugEnabled()) {
-	logger.debug("Implicit non-convergence: ns=" + ns + " pt=" + pt + " iters=" + iterations + " zeta=" + zeta
-	    + " bestRes=" + bestMaxResidual + " P=" + pressure + " T=" + temperature);
+        logger.debug("Implicit non-convergence: ns=" + ns + " pt=" + pt + " iters=" + iterations + " zeta=" + zeta
+            + " bestRes=" + bestMaxResidual + " P=" + pressure + " T=" + temperature);
       }
       return super.molarVolume(pressure, temperature, A, B, pt);
     }
@@ -542,7 +542,7 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
     int temp = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
-	((ComponentCPAInterface) componentArray[i]).setXsite(j, xSite[temp + j]);
+        ((ComponentCPAInterface) componentArray[i]).setXsite(j, xSite[temp + j]);
       }
       temp += componentArray[i].getNumberOfAssociationSites();
     }
@@ -557,7 +557,7 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
     int temp = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
-	xSite[temp + j] = ((ComponentSrkCPA) componentArray[i]).getXsite()[j];
+        xSite[temp + j] = ((ComponentSrkCPA) componentArray[i]).getXsite()[j];
       }
       temp += componentArray[i].getNumberOfAssociationSites();
     }
@@ -592,8 +592,8 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
     int ns = getTotalNumberOfAccociationSites();
     for (int i = 0; i < ns; i++) {
       for (int j = i; j < ns; j++) {
-	delta[i][j] = deltaNog[i][j] * gcpa;
-	delta[j][i] = delta[i][j];
+        delta[i][j] = deltaNog[i][j] * gcpa;
+        delta[j][i] = delta[i][j];
       }
     }
   }
@@ -615,39 +615,39 @@ public class PhaseSrkCPAfullyImplicit extends PhaseSrkCPAs {
       int maxRow = col;
       double maxVal = Math.abs(a[col][col]);
       for (int row = col + 1; row < n; row++) {
-	double val = Math.abs(a[row][col]);
-	if (val > maxVal) {
-	  maxVal = val;
-	  maxRow = row;
-	}
+        double val = Math.abs(a[row][col]);
+        if (val > maxVal) {
+          maxVal = val;
+          maxRow = row;
+        }
       }
       if (maxVal < 1.0e-30) {
-	return false; // Singular
+        return false; // Singular
       }
       // Swap rows
       if (maxRow != col) {
-	double[] tempRow = a[col];
-	a[col] = a[maxRow];
-	a[maxRow] = tempRow;
-	double tempB = b[col];
-	b[col] = b[maxRow];
-	b[maxRow] = tempB;
+        double[] tempRow = a[col];
+        a[col] = a[maxRow];
+        a[maxRow] = tempRow;
+        double tempB = b[col];
+        b[col] = b[maxRow];
+        b[maxRow] = tempB;
       }
       // Eliminate
       double pivot = a[col][col];
       for (int row = col + 1; row < n; row++) {
-	double factor = a[row][col] / pivot;
-	for (int k = col + 1; k < n; k++) {
-	  a[row][k] -= factor * a[col][k];
-	}
-	b[row] -= factor * b[col];
+        double factor = a[row][col] / pivot;
+        for (int k = col + 1; k < n; k++) {
+          a[row][k] -= factor * a[col][k];
+        }
+        b[row] -= factor * b[col];
       }
     }
     // Back substitution
     for (int row = n - 1; row >= 0; row--) {
       double sum = b[row];
       for (int k = row + 1; k < n; k++) {
-	sum -= a[row][k] * b[k];
+        sum -= a[row][k] * b[k];
       }
       b[row] = sum / a[row][row];
     }

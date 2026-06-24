@@ -153,7 +153,7 @@ public abstract class Phase implements PhaseInterface {
       // shall use addMoles/addMolesChemreac to adding/subtracting moles for
       // component.
       throw new RuntimeException(new InvalidInputException(this, "addComponent", "name",
-	  "component with same name already exists in phase. Use addMoles or addMolesChemreac."));
+          "component with same name already exists in phase. Use addMoles or addMolesChemreac."));
     }
 
     if (moles < 0) {
@@ -162,12 +162,12 @@ public abstract class Phase implements PhaseInterface {
 
     if (compNumber < 0 || compNumber >= ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS) {
       throw new RuntimeException(new InvalidInputException(this, "addComponent", "compNumber",
-	  " must be valid index, i.e., between 0 and " + ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS + "."));
+          " must be valid index, i.e., between 0 and " + ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS + "."));
     }
 
     if (componentArray[compNumber] != null) {
       throw new RuntimeException(
-	  new InvalidInputException(this, "addComponent", "compNumber", "number is already in use."));
+          new InvalidInputException(this, "addComponent", "compNumber", "number is already in use."));
     }
 
     this.numberOfMolesInPhase += moles;
@@ -184,14 +184,14 @@ public abstract class Phase implements PhaseInterface {
 
     try {
       for (int i = 0; i < numberOfComponents; i++) {
-	if (!componentArray[i].getName().equals(name)) {
-	  temp.add(this.componentArray[i]);
-	}
+        if (!componentArray[i].getName().equals(name)) {
+          temp.add(this.componentArray[i]);
+        }
       }
       // logger.info("length " + temp.size());
       for (int i = 0; i < temp.size(); i++) {
-	this.componentArray[i] = temp.get(i);
-	this.getComponent(i).setComponentNumber(i);
+        this.componentArray[i] = temp.get(i);
+        this.getComponent(i).setComponentNumber(i);
       }
     } catch (Exception ex) {
       logger.error("not able to remove " + name, ex);
@@ -382,16 +382,16 @@ public abstract class Phase implements PhaseInterface {
 
     for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
       if (unit.equals("molefraction")) {
-	comp[compNumb] = getComponent(compNumb).getx();
+        comp[compNumb] = getComponent(compNumb).getx();
       }
       if (unit.equals("wtfraction")) {
-	comp[compNumb] = getWtFrac(compNumb);
+        comp[compNumb] = getWtFrac(compNumb);
       }
       if (unit.equals("molespersec")) {
-	comp[compNumb] = getWtFrac(compNumb);
+        comp[compNumb] = getWtFrac(compNumb);
       }
       if (unit.equals("volumefraction")) {
-	comp[compNumb] = getComponent(compNumb).getVoli() / getVolume();
+        comp[compNumb] = getComponent(compNumb).getVoli() / getVolume();
       }
     }
     return comp;
@@ -444,7 +444,7 @@ public abstract class Phase implements PhaseInterface {
   @Override
   public double getZvolcorr() {
     return getPressure("Pa") * getMolarMass() / neqsim.thermo.ThermodynamicConstantsInterface.R / temperature
-	/ getDensity("kg/m3");
+        / getDensity("kg/m3");
   }
 
   /** {@inheritDoc} */
@@ -479,7 +479,7 @@ public abstract class Phase implements PhaseInterface {
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
     if (totalNumberOfMoles < 0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "init", "totalNumberOfMoles",
-	  "must be larger than or equal to zero."));
+          "must be larger than or equal to zero."));
     }
 
     this.beta = beta;
@@ -1039,12 +1039,12 @@ public abstract class Phase implements PhaseInterface {
       // To get molar heat capacity, divide the total heat capacity by the number of
       // moles.
       if (getNumberOfMolesInPhase() == 0) {
-	throw new ArithmeticException("Number of moles in phase cannot be zero for J/molK conversion.");
+        throw new ArithmeticException("Number of moles in phase cannot be zero for J/molK conversion.");
       }
       return refCp / getNumberOfMolesInPhase();
     case "kJ/molK":
       if (getNumberOfMolesInPhase() == 0) {
-	throw new ArithmeticException("Number of moles in phase cannot be zero for kJ/molK conversion.");
+        throw new ArithmeticException("Number of moles in phase cannot be zero for kJ/molK conversion.");
       }
       return refCp / getNumberOfMolesInPhase() / 1000.0;
     case "J/kgK": {
@@ -1053,7 +1053,7 @@ public abstract class Phase implements PhaseInterface {
       // Total mass = moles in phase * molar mass (in kg/mol).
       double totalMass = getNumberOfMolesInPhase() * getMolarMass();
       if (totalMass == 0) {
-	throw new ArithmeticException("Total mass cannot be zero for J/kgK conversion.");
+        throw new ArithmeticException("Total mass cannot be zero for J/kgK conversion.");
       }
       return refCp / totalMass;
     }
@@ -1061,7 +1061,7 @@ public abstract class Phase implements PhaseInterface {
       // Same as J/kgK, but with an additional conversion from J to kJ.
       double totalMass = getNumberOfMolesInPhase() * getMolarMass();
       if (totalMass == 0) {
-	throw new ArithmeticException("Total mass cannot be zero for kJ/kgK conversion.");
+        throw new ArithmeticException("Total mass cannot be zero for kJ/kgK conversion.");
       }
       // Divide by total mass for specific heat capacity, and by 1000 for kJ.
       return refCp / totalMass / 1000.0;
@@ -1069,7 +1069,7 @@ public abstract class Phase implements PhaseInterface {
     case "btu/lbmole-F": {
       // This conversion is performed from the molar heat capacity (J/molK).
       if (getNumberOfMolesInPhase() == 0) {
-	throw new ArithmeticException("Number of moles in phase cannot be zero for btu/lbmole-F conversion.");
+        throw new ArithmeticException("Number of moles in phase cannot be zero for btu/lbmole-F conversion.");
       }
       double molarCp = refCp / getNumberOfMolesInPhase(); // Cp in J/molK
 
@@ -1109,12 +1109,12 @@ public abstract class Phase implements PhaseInterface {
       // To get molar heat capacity, divide the total heat capacity by the number of
       // moles.
       if (getNumberOfMolesInPhase() == 0) {
-	throw new ArithmeticException("Number of moles in phase cannot be zero for J/molK conversion.");
+        throw new ArithmeticException("Number of moles in phase cannot be zero for J/molK conversion.");
       }
       return refCv / getNumberOfMolesInPhase();
     case "kJ/molK":
       if (getNumberOfMolesInPhase() == 0) {
-	throw new ArithmeticException("Number of moles in phase cannot be zero for kJ/molK conversion.");
+        throw new ArithmeticException("Number of moles in phase cannot be zero for kJ/molK conversion.");
       }
       return refCv / getNumberOfMolesInPhase() / 1000.0;
     case "J/kgK": {
@@ -1123,7 +1123,7 @@ public abstract class Phase implements PhaseInterface {
       // Total mass = moles in phase * molar mass (in kg/mol).
       double totalMass = getNumberOfMolesInPhase() * getMolarMass();
       if (totalMass == 0) {
-	throw new ArithmeticException("Total mass cannot be zero for J/kgK conversion.");
+        throw new ArithmeticException("Total mass cannot be zero for J/kgK conversion.");
       }
       return refCv / totalMass;
     }
@@ -1131,7 +1131,7 @@ public abstract class Phase implements PhaseInterface {
       // Same as J/kgK, but with an additional conversion from J to kJ.
       double totalMass = getNumberOfMolesInPhase() * getMolarMass();
       if (totalMass == 0) {
-	throw new ArithmeticException("Total mass cannot be zero for kJ/kgK conversion.");
+        throw new ArithmeticException("Total mass cannot be zero for kJ/kgK conversion.");
       }
       // Divide by total mass for specific heat capacity, and by 1000 for kJ.
       return refCv / totalMass / 1000.0;
@@ -1139,7 +1139,7 @@ public abstract class Phase implements PhaseInterface {
     case "btu/lbmole-F": {
       // This conversion is performed from the molar heat capacity (J/molK).
       if (getNumberOfMolesInPhase() == 0) {
-	throw new ArithmeticException("Number of moles in phase cannot be zero for btu/lbmole-F conversion.");
+        throw new ArithmeticException("Number of moles in phase cannot be zero for btu/lbmole-F conversion.");
       }
       double molarCv = refCv / getNumberOfMolesInPhase(); // Cv in J/molK
 
@@ -1194,7 +1194,7 @@ public abstract class Phase implements PhaseInterface {
     case "J/mol":
     case "kJ/kmol": { // Note: J/mol and kJ/kmol are numerically equivalent units.
       if (getNumberOfMolesInPhase() == 0) {
-	throw new ArithmeticException("Number of moles in phase cannot be zero for molar enthalpy conversion.");
+        throw new ArithmeticException("Number of moles in phase cannot be zero for molar enthalpy conversion.");
       }
       return refEnthalpy / getNumberOfMolesInPhase();
     }
@@ -1203,21 +1203,21 @@ public abstract class Phase implements PhaseInterface {
       // Total mass = moles in phase * molar mass (in kg/mol).
       double totalMass = getNumberOfMolesInPhase() * getMolarMass();
       if (totalMass == 0) {
-	throw new ArithmeticException("Total mass cannot be zero for J/kg conversion.");
+        throw new ArithmeticException("Total mass cannot be zero for J/kg conversion.");
       }
       return refEnthalpy / totalMass;
     }
     case "kJ/kg": {
       double totalMass = getNumberOfMolesInPhase() * getMolarMass();
       if (totalMass == 0) {
-	throw new ArithmeticException("Total mass cannot be zero for kJ/kg conversion.");
+        throw new ArithmeticException("Total mass cannot be zero for kJ/kg conversion.");
       }
       // Divide by total mass for specific enthalpy, and by 1000 for kJ.
       return refEnthalpy / totalMass / 1000.0;
     }
     case "Btu/lbmol": {
       if (getNumberOfMolesInPhase() == 0) {
-	throw new ArithmeticException("Number of moles in phase cannot be zero for Btu/lbmol conversion.");
+        throw new ArithmeticException("Number of moles in phase cannot be zero for Btu/lbmol conversion.");
       }
       double molarEnthalpy = refEnthalpy / getNumberOfMolesInPhase(); // Enthalpy in J/mol
       // 1 J/mol = 0.429923 Btu/lbmol
@@ -1257,7 +1257,7 @@ public abstract class Phase implements PhaseInterface {
     case "J/mol":
     case "kJ/kmol": { // Note: J/mol and kJ/kmol are numerically equivalent units.
       if (getNumberOfMolesInPhase() == 0) {
-	throw new ArithmeticException("Number of moles in phase cannot be zero for molar internal energy conversion.");
+        throw new ArithmeticException("Number of moles in phase cannot be zero for molar internal energy conversion.");
       }
       return refInternalEnergy / getNumberOfMolesInPhase();
     }
@@ -1267,7 +1267,7 @@ public abstract class Phase implements PhaseInterface {
       // Total mass = moles in phase * molar mass (in kg/mol).
       double totalMass = getNumberOfMolesInPhase() * getMolarMass();
       if (totalMass == 0) {
-	throw new ArithmeticException("Total mass cannot be zero for J/kg conversion.");
+        throw new ArithmeticException("Total mass cannot be zero for J/kg conversion.");
       }
       return refInternalEnergy / totalMass;
     }
@@ -1275,7 +1275,7 @@ public abstract class Phase implements PhaseInterface {
     case "kJ/kg": {
       double totalMass = getNumberOfMolesInPhase() * getMolarMass();
       if (totalMass == 0) {
-	throw new ArithmeticException("Total mass cannot be zero for kJ/kg conversion.");
+        throw new ArithmeticException("Total mass cannot be zero for kJ/kg conversion.");
       }
       // Divide by total mass for specific enthalpy, and by 1000 for kJ.
       return refInternalEnergy / totalMass / 1000.0;
@@ -1283,11 +1283,11 @@ public abstract class Phase implements PhaseInterface {
 
     case "Btu/lbmol": {
       if (getNumberOfMolesInPhase() == 0) {
-	throw new ArithmeticException("Number of moles in phase cannot be zero for Btu/lbmol conversion.");
+        throw new ArithmeticException("Number of moles in phase cannot be zero for Btu/lbmol conversion.");
       }
       double molarInternalEnergy = refInternalEnergy / getNumberOfMolesInPhase(); // Internal
-										  // energy in
-										  // J/mol
+      // energy in
+      // J/mol
       // 1 J/mol = 0.429923 Btu/lbmol
       final double J_PER_MOL_TO_BTU_PER_LBMOL = 0.429923;
       return molarInternalEnergy * J_PER_MOL_TO_BTU_PER_LBMOL;
@@ -1323,7 +1323,7 @@ public abstract class Phase implements PhaseInterface {
     int mol = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	mol++;
+        mol++;
       }
     }
     return mol;
@@ -1335,7 +1335,7 @@ public abstract class Phase implements PhaseInterface {
     int ion = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() != 0) {
-	ion++;
+        ion++;
       }
     }
     return ion;
@@ -1352,12 +1352,12 @@ public abstract class Phase implements PhaseInterface {
     double tempVar2 = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getx() > 1e-100) {
-	tempVar2 += -R * componentArray[i].getx() * Math.log(componentArray[i].getx());
+        tempVar2 += -R * componentArray[i].getx() * Math.log(componentArray[i].getx());
       }
     }
 
     return tempVar * numberOfMolesInPhase - numberOfMolesInPhase * R * Math.log(pressure / referencePressure)
-	+ tempVar2 * numberOfMolesInPhase + this.getSresTP();
+        + tempVar2 * numberOfMolesInPhase + this.getSresTP();
   }
 
   /**
@@ -1376,7 +1376,7 @@ public abstract class Phase implements PhaseInterface {
     case "J/molK": {
       // To get molar entropy, divide the total entropy by the number of moles.
       if (getNumberOfMolesInPhase() == 0) {
-	throw new ArithmeticException("Number of moles in phase cannot be zero for J/molK conversion.");
+        throw new ArithmeticException("Number of moles in phase cannot be zero for J/molK conversion.");
       }
       return refEntropy / getNumberOfMolesInPhase();
     }
@@ -1386,7 +1386,7 @@ public abstract class Phase implements PhaseInterface {
       // Total mass = moles in phase * molar mass (in kg/mol).
       double totalMass = getNumberOfMolesInPhase() * getMolarMass();
       if (totalMass == 0) {
-	throw new ArithmeticException("Total mass cannot be zero for J/kgK conversion.");
+        throw new ArithmeticException("Total mass cannot be zero for J/kgK conversion.");
       }
       return refEntropy / totalMass;
     }
@@ -1394,7 +1394,7 @@ public abstract class Phase implements PhaseInterface {
     case "kJ/kgK": {
       double totalMass = getNumberOfMolesInPhase() * getMolarMass();
       if (totalMass == 0) {
-	throw new ArithmeticException("Total mass cannot be zero for kJ/kgK conversion.");
+        throw new ArithmeticException("Total mass cannot be zero for kJ/kgK conversion.");
       }
       // Divide by total mass for specific entropy, and by 1000 for kJ.
       return refEntropy / totalMass / 1000.0;
@@ -1404,7 +1404,7 @@ public abstract class Phase implements PhaseInterface {
       // This conversion is best performed from the specific entropy (J/kgK).
       double totalMass = getNumberOfMolesInPhase() * getMolarMass();
       if (totalMass == 0) {
-	throw new ArithmeticException("Total mass cannot be zero for btu/lb-F conversion.");
+        throw new ArithmeticException("Total mass cannot be zero for btu/lb-F conversion.");
       }
       double specificEntropySI = refEntropy / totalMass; // Entropy in J/kgK
 
@@ -1502,44 +1502,44 @@ public abstract class Phase implements PhaseInterface {
     refPhase = new PhaseInterface[numberOfComponents];
     for (int i = 0; i < numberOfComponents; i++) {
       try {
-	refPhase[i] = this.getClass().getDeclaredConstructor().newInstance();
+        refPhase[i] = this.getClass().getDeclaredConstructor().newInstance();
       } catch (Exception ex) {
-	logger.error(ex.getMessage(), ex);
+        logger.error(ex.getMessage(), ex);
       }
       refPhase[i].setTemperature(temperature);
       refPhase[i].setPressure(pressure);
       if (getComponent(i).getReferenceStateType().equals("solvent") || onlyPure) {
-	if (getComponent(i).isIsTBPfraction() || getComponent(i).isIsPlusFraction()) {
-	  refPhase[i].addComponent("default", 10.0, 10.0, 0);
-	  refPhase[i].getComponent(0).setMolarMass(this.getComponent(i).getMolarMass());
-	  refPhase[i].getComponent(0).setAcentricFactor(this.getComponent(i).getAcentricFactor());
-	  refPhase[i].getComponent(0).setTC(this.getComponent(i).getTC());
-	  refPhase[i].getComponent(0).setPC(this.getComponent(i).getPC());
-	  refPhase[i].getComponent(0).setComponentType("TBPfraction");
-	  refPhase[i].getComponent(0).setIsTBPfraction(true);
-	} else {
-	  refPhase[i].addComponent(getComponent(i).getComponentName(), 10.0, 10.0, 0);
-	}
-	refPhase[i].setAttractiveTerm(this.getComponent(i).getAttractiveTermNumber());
-	refPhase[i].setMixingRule(this.getMixingRuleType());
-	refPhase[i].setType(this.getType());
-	refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 1, 0, this.getType(), 1.0);
+        if (getComponent(i).isIsTBPfraction() || getComponent(i).isIsPlusFraction()) {
+          refPhase[i].addComponent("default", 10.0, 10.0, 0);
+          refPhase[i].getComponent(0).setMolarMass(this.getComponent(i).getMolarMass());
+          refPhase[i].getComponent(0).setAcentricFactor(this.getComponent(i).getAcentricFactor());
+          refPhase[i].getComponent(0).setTC(this.getComponent(i).getTC());
+          refPhase[i].getComponent(0).setPC(this.getComponent(i).getPC());
+          refPhase[i].getComponent(0).setComponentType("TBPfraction");
+          refPhase[i].getComponent(0).setIsTBPfraction(true);
+        } else {
+          refPhase[i].addComponent(getComponent(i).getComponentName(), 10.0, 10.0, 0);
+        }
+        refPhase[i].setAttractiveTerm(this.getComponent(i).getAttractiveTermNumber());
+        refPhase[i].setMixingRule(this.getMixingRuleType());
+        refPhase[i].setType(this.getType());
+        refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 1, 0, this.getType(), 1.0);
       } else {
-	if (getComponent(i).isIsTBPfraction() || getComponent(i).isIsPlusFraction()) {
-	  refPhase[i].addComponent("default", 10.0, 10.0, 0);
-	  refPhase[i].getComponent(0).setMolarMass(this.getComponent(i).getMolarMass());
-	  refPhase[i].getComponent(0).setAcentricFactor(this.getComponent(i).getAcentricFactor());
-	  refPhase[i].getComponent(0).setTC(this.getComponent(i).getTC());
-	  refPhase[i].getComponent(0).setPC(this.getComponent(i).getPC());
-	  refPhase[i].getComponent(0).setComponentType("TBPfraction");
-	  refPhase[i].getComponent(0).setIsTBPfraction(true);
-	} else {
-	  refPhase[i].addComponent(getComponent(i).getComponentName(), 1.0e-10, 1.0e-10, 0);
-	}
-	refPhase[i].addComponent(name, 10.0, 10.0, 1);
-	refPhase[i].setAttractiveTerm(this.getComponent(i).getAttractiveTermNumber());
-	refPhase[i].setMixingRule(this.getMixingRuleType());
-	refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 2, 0, this.getType(), 1.0);
+        if (getComponent(i).isIsTBPfraction() || getComponent(i).isIsPlusFraction()) {
+          refPhase[i].addComponent("default", 10.0, 10.0, 0);
+          refPhase[i].getComponent(0).setMolarMass(this.getComponent(i).getMolarMass());
+          refPhase[i].getComponent(0).setAcentricFactor(this.getComponent(i).getAcentricFactor());
+          refPhase[i].getComponent(0).setTC(this.getComponent(i).getTC());
+          refPhase[i].getComponent(0).setPC(this.getComponent(i).getPC());
+          refPhase[i].getComponent(0).setComponentType("TBPfraction");
+          refPhase[i].getComponent(0).setIsTBPfraction(true);
+        } else {
+          refPhase[i].addComponent(getComponent(i).getComponentName(), 1.0e-10, 1.0e-10, 0);
+        }
+        refPhase[i].addComponent(name, 10.0, 10.0, 1);
+        refPhase[i].setAttractiveTerm(this.getComponent(i).getAttractiveTermNumber());
+        refPhase[i].setMixingRule(this.getMixingRuleType());
+        refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 2, 0, this.getType(), 1.0);
       }
     }
   }
@@ -1662,12 +1662,12 @@ public abstract class Phase implements PhaseInterface {
       // contribution too weak.
       int waterIndex = -1;
       if (hasComponent("water")) {
-	waterIndex = getComponent("water").getComponentNumber();
+        waterIndex = getComponent("water").getComponentNumber();
       }
       if (waterIndex >= 0) {
-	fug = getLogInfiniteDiluteFugacity(k, waterIndex);
+        fug = getLogInfiniteDiluteFugacity(k, waterIndex);
       } else {
-	fug = getLogInfiniteDiluteFugacity(k);
+        fug = getLogInfiniteDiluteFugacity(k);
       }
     }
     return Math.exp(oldFug - fug);
@@ -1779,8 +1779,8 @@ public abstract class Phase implements PhaseInterface {
     int watNumb = 0;
     for (int j = 0; j < this.numberOfComponents; j++) {
       if (getComponent(j).getComponentName().equals("water")) {
-	watNumb = j;
-	break;
+        watNumb = j;
+        break;
       }
     }
 
@@ -1791,7 +1791,7 @@ public abstract class Phase implements PhaseInterface {
     // For electrolyte C_ν+ A_ν-: γ± = (γ+^ν+ * γ-^ν-)^(1/(ν+ + ν-))
     double nuPlus = Math.abs(getComponent(comp2).getIonicCharge()); // stoichiometric coeff of comp1
     double nuMinus = Math.abs(getComponent(comp1).getIonicCharge()); // stoichiometric coeff of
-								     // comp2
+    // comp2
 
     double act1 = Math.pow(getActivityCoefficient(comp1, watNumb), nuPlus);
     double act2 = Math.pow(getActivityCoefficient(comp2, watNumb), nuMinus);
@@ -1809,7 +1809,7 @@ public abstract class Phase implements PhaseInterface {
     int watNumb = 0;
     for (int j = 0; j < this.numberOfComponents; j++) {
       if (getComponent(j).getComponentName().equals("water")) {
-	watNumb = j;
+        watNumb = j;
       }
     }
     return getOsmoticCoefficient(watNumb);
@@ -1846,7 +1846,7 @@ public abstract class Phase implements PhaseInterface {
     double ions = 0.0;
     for (int j = 0; j < this.numberOfComponents; j++) {
       if (getComponent(j).getIonicCharge() != 0) {
-	ions += getComponent(j).getx();
+        ions += getComponent(j).getx();
       }
     }
     return -Math.log(oldFug * getComponent(watNumb).getx() / pureFug) * getComponent(watNumb).getx() / ions;
@@ -1858,8 +1858,8 @@ public abstract class Phase implements PhaseInterface {
     int watNumb = -1;
     for (int j = 0; j < this.numberOfComponents; j++) {
       if (getComponent(j).getComponentName().equals("water")) {
-	watNumb = j;
-	break;
+        watNumb = j;
+        break;
       }
     }
     if (watNumb < 0) {
@@ -1881,8 +1881,8 @@ public abstract class Phase implements PhaseInterface {
     double sumIonMolality = 0.0;
     for (int j = 0; j < this.numberOfComponents; j++) {
       if (getComponent(j).getIonicCharge() != 0) {
-	double molesIon = getComponent(j).getNumberOfMolesInPhase();
-	sumIonMolality += molesIon / massWaterKg; // mol/kg
+        double molesIon = getComponent(j).getNumberOfMolesInPhase();
+        sumIonMolality += molesIon / massWaterKg; // mol/kg
       }
     }
 
@@ -1904,14 +1904,14 @@ public abstract class Phase implements PhaseInterface {
 
     for (int j = 0; j < this.numberOfComponents; j++) {
       if (getComponent(j).getComponentName().equals("water")) {
-	watNumb = j;
+        watNumb = j;
       }
     }
 
     act1 = Math.pow(getActivityCoefficient(comp1, watNumb), Math.abs(getComponent(comp2).getIonicCharge()));
     act2 = Math.pow(getActivityCoefficient(comp2, watNumb), Math.abs(getComponent(comp1).getIonicCharge()));
     return Math.pow(act1 * act2,
-	1.0 / (Math.abs(getComponent(comp1).getIonicCharge()) + Math.abs(getComponent(comp2).getIonicCharge())));
+        1.0 / (Math.abs(getComponent(comp1).getIonicCharge()) + Math.abs(getComponent(comp2).getIonicCharge())));
   }
 
   /** {@inheritDoc} */
@@ -2173,24 +2173,25 @@ public abstract class Phase implements PhaseInterface {
   private double getpH_molarity() {
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getName().equals("H3O+")) {
-	initPhysicalProperties();
-	double h3oMoles = componentArray[i].getNumberOfMolesInPhase();
-	double density = getPhysicalProperties().getDensity(); // kg/m3
-	double molarMass = getMolarMass(); // kg/mol
-	double volume = numberOfMolesInPhase * molarMass / density; // m3
-	double h3oConcentration = h3oMoles / (volume * 1000.0); // mol/L (relative to c° = 1 mol/L)
-	double gammaMolarity = getActivityCoefficient(i, "molarity");
-	double activity = gammaMolarity * h3oConcentration;
-	if (activity <= 1e-20) {
-	  logger.debug("H3O+ molarity activity {} is too small for meaningful pH", activity);
-	  return Double.NaN;
-	}
-	double pH = -Math.log10(activity);
-	if (pH < -2.0 || pH > 16.0) {
-	  logger.debug("Calculated molarity pH {} is outside realistic range [-2, 16]", pH);
-	  return Double.NaN;
-	}
-	return pH;
+        initPhysicalProperties();
+        double h3oMoles = componentArray[i].getNumberOfMolesInPhase();
+        double density = getPhysicalProperties().getDensity(); // kg/m3
+        double molarMass = getMolarMass(); // kg/mol
+        double volume = numberOfMolesInPhase * molarMass / density; // m3
+        double h3oConcentration = h3oMoles / (volume * 1000.0); // mol/L (relative to c° = 1
+                                                                // mol/L)
+        double gammaMolarity = getActivityCoefficient(i, "molarity");
+        double activity = gammaMolarity * h3oConcentration;
+        if (activity <= 1e-20) {
+          logger.debug("H3O+ molarity activity {} is too small for meaningful pH", activity);
+          return Double.NaN;
+        }
+        double pH = -Math.log10(activity);
+        if (pH < -2.0 || pH > 16.0) {
+          logger.debug("Calculated molarity pH {} is outside realistic range [-2, 16]", pH);
+          return Double.NaN;
+        }
+        return pH;
       }
     }
     logger.info("no H3Oplus");
@@ -2205,33 +2206,33 @@ public abstract class Phase implements PhaseInterface {
   private double getpH_molality() {
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getName().equals("H3O+")) {
-	int waterIndex = -1;
-	if (hasComponent("water")) {
-	  waterIndex = getComponent("water").getComponentNumber();
-	}
-	if (waterIndex < 0) {
-	  logger.info("no water component for molality pH");
-	  return 7.0;
-	}
+        int waterIndex = -1;
+        if (hasComponent("water")) {
+          waterIndex = getComponent("water").getComponentNumber();
+        }
+        if (waterIndex < 0) {
+          logger.info("no water component for molality pH");
+          return 7.0;
+        }
 
-	double h3oMoles = componentArray[i].getNumberOfMolesInPhase();
-	double waterMoles = getComponent(waterIndex).getNumberOfMolesInPhase();
-	double waterMolarMass = 0.018015; // kg/mol
-	double waterMass = waterMoles * waterMolarMass; // kg
+        double h3oMoles = componentArray[i].getNumberOfMolesInPhase();
+        double waterMoles = getComponent(waterIndex).getNumberOfMolesInPhase();
+        double waterMolarMass = 0.018015; // kg/mol
+        double waterMass = waterMoles * waterMolarMass; // kg
 
-	double h3oMolality = h3oMoles / waterMass; // mol/kg (relative to m° = 1 mol/kg)
-	double gammaMolality = getActivityCoefficient(i, "molality");
-	double activity = gammaMolality * h3oMolality;
-	if (activity <= 1e-20) {
-	  logger.debug("H3O+ molality activity {} is too small for meaningful pH", activity);
-	  return Double.NaN;
-	}
-	double pH = -Math.log10(activity);
-	if (pH < -2.0 || pH > 16.0) {
-	  logger.debug("Calculated molality pH {} is outside realistic range [-2, 16]", pH);
-	  return Double.NaN;
-	}
-	return pH;
+        double h3oMolality = h3oMoles / waterMass; // mol/kg (relative to m° = 1 mol/kg)
+        double gammaMolality = getActivityCoefficient(i, "molality");
+        double activity = gammaMolality * h3oMolality;
+        if (activity <= 1e-20) {
+          logger.debug("H3O+ molality activity {} is too small for meaningful pH", activity);
+          return Double.NaN;
+        }
+        double pH = -Math.log10(activity);
+        if (pH < -2.0 || pH > 16.0) {
+          logger.debug("Calculated molality pH {} is outside realistic range [-2, 16]", pH);
+          return Double.NaN;
+        }
+        return pH;
       }
     }
     logger.info("no H3Oplus");
@@ -2246,26 +2247,26 @@ public abstract class Phase implements PhaseInterface {
   private double getpH_activity() {
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getName().equals("H3O+")) {
-	int watNumb = -1;
-	if (hasComponent("water")) {
-	  watNumb = getComponent("water").getComponentNumber();
-	}
+        int watNumb = -1;
+        if (hasComponent("water")) {
+          watNumb = getComponent("water").getComponentNumber();
+        }
 
-	double gamma = watNumb >= 0 ? getActivityCoefficient(i, watNumb) : getActivityCoefficient(i);
+        double gamma = watNumb >= 0 ? getActivityCoefficient(i, watNumb) : getActivityCoefficient(i);
 
-	double activity = componentArray[i].getx() * gamma;
-	// Check for numerically invalid activity (essentially zero or numerical noise)
-	if (activity <= 1e-20) {
-	  logger.debug("H3O+ activity {} is too small for meaningful pH", activity);
-	  return Double.NaN;
-	}
-	double pH = -Math.log10(activity);
-	// Clamp to physically realistic range
-	if (pH < -2.0 || pH > 16.0) {
-	  logger.debug("Calculated pH {} is outside realistic range [-2, 16]", pH);
-	  return Double.NaN;
-	}
-	return pH;
+        double activity = componentArray[i].getx() * gamma;
+        // Check for numerically invalid activity (essentially zero or numerical noise)
+        if (activity <= 1e-20) {
+          logger.debug("H3O+ activity {} is too small for meaningful pH", activity);
+          return Double.NaN;
+        }
+        double pH = -Math.log10(activity);
+        // Clamp to physically realistic range
+        if (pH < -2.0 || pH > 16.0) {
+          logger.debug("Calculated pH {} is outside realistic range [-2, 16]", pH);
+          return Double.NaN;
+        }
+        return pH;
       }
     }
     logger.info("no H3Oplus");
@@ -2283,7 +2284,7 @@ public abstract class Phase implements PhaseInterface {
   public ComponentInterface getComponent(String name) {
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getName().equals(name)) {
-	return componentArray[i];
+        return componentArray[i];
       }
     }
     logger.error("could not find component " + name + " in fluid, returning null");
@@ -2296,7 +2297,7 @@ public abstract class Phase implements PhaseInterface {
     if (componentNames == null) {
       componentNames = new String[numberOfComponents];
       for (int j = 0; j < numberOfComponents; j++) {
-	componentNames[j] = componentArray[j].getComponentName();
+        componentNames[j] = componentArray[j].getComponentName();
       }
     }
     return componentNames;
@@ -2307,15 +2308,15 @@ public abstract class Phase implements PhaseInterface {
   public boolean hasComponent(String name, boolean normalized) {
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray != null) {
-	if (normalized) {
-	  if (componentArray[i].getComponentName().equals(ComponentInterface.getComponentNameFromAlias(name))) {
-	    return true;
-	  }
-	} else {
-	  if (componentArray[i].getName().equals(name)) {
-	    return true;
-	  }
-	}
+        if (normalized) {
+          if (componentArray[i].getComponentName().equals(ComponentInterface.getComponentNameFromAlias(name))) {
+            return true;
+          }
+        } else {
+          if (componentArray[i].getName().equals(name)) {
+            return true;
+          }
+        }
       }
     }
     return false;
@@ -2395,33 +2396,33 @@ public abstract class Phase implements PhaseInterface {
       double boilpoint = getComponent(i).getNormalBoilingPoint("C");
 
       if (boilpoint >= 331.0) {
-	TPBfrac[19] += getComponent(i).getx();
+        TPBfrac[19] += getComponent(i).getx();
       } else if (boilpoint >= 317.0) {
-	TPBfrac[18] += getComponent(i).getx();
+        TPBfrac[18] += getComponent(i).getx();
       } else if (boilpoint >= 303.0) {
-	TPBfrac[17] += getComponent(i).getx();
+        TPBfrac[17] += getComponent(i).getx();
       } else if (boilpoint >= 287.0) {
-	TPBfrac[16] += getComponent(i).getx();
+        TPBfrac[16] += getComponent(i).getx();
       } else if (boilpoint >= 271.1) {
-	TPBfrac[15] += getComponent(i).getx();
+        TPBfrac[15] += getComponent(i).getx();
       } else if (boilpoint >= 253.9) {
-	TPBfrac[14] += getComponent(i).getx();
+        TPBfrac[14] += getComponent(i).getx();
       } else if (boilpoint >= 235.9) {
-	TPBfrac[13] += getComponent(i).getx();
+        TPBfrac[13] += getComponent(i).getx();
       } else if (boilpoint >= 216.8) {
-	TPBfrac[12] += getComponent(i).getx();
+        TPBfrac[12] += getComponent(i).getx();
       } else if (boilpoint >= 196.4) {
-	TPBfrac[11] += getComponent(i).getx();
+        TPBfrac[11] += getComponent(i).getx();
       } else if (boilpoint >= 174.6) {
-	TPBfrac[10] += getComponent(i).getx();
+        TPBfrac[10] += getComponent(i).getx();
       } else if (boilpoint >= 151.3) {
-	TPBfrac[9] += getComponent(i).getx();
+        TPBfrac[9] += getComponent(i).getx();
       } else if (boilpoint >= 126.1) {
-	TPBfrac[8] += getComponent(i).getx();
+        TPBfrac[8] += getComponent(i).getx();
       } else if (boilpoint >= 98.9) {
-	TPBfrac[7] += getComponent(i).getx();
+        TPBfrac[7] += getComponent(i).getx();
       } else if (boilpoint >= 69.2) {
-	TPBfrac[6] += getComponent(i).getx();
+        TPBfrac[6] += getComponent(i).getx();
       }
     }
     return TPBfrac;
@@ -2527,7 +2528,7 @@ public abstract class Phase implements PhaseInterface {
   public boolean hasPlusFraction() {
     for (int i = 0; i < numberOfComponents; i++) {
       if (getComponent(i).isIsPlusFraction()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -2538,7 +2539,7 @@ public abstract class Phase implements PhaseInterface {
   public boolean hasTBPFraction() {
     for (int i = 0; i < numberOfComponents; i++) {
       if (getComponent(i).isIsTBPfraction()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -2593,7 +2594,7 @@ public abstract class Phase implements PhaseInterface {
   public ComponentInterface getComponentWithIndex(int index) {
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIndex() == index) {
-	return componentArray[i];
+        return componentArray[i];
       }
     }
     return null;
@@ -2624,7 +2625,7 @@ public abstract class Phase implements PhaseInterface {
 
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].isWaxFormer()) {
-	wtFrac += componentArray[i].getx() * componentArray[i].getMolarMass() / getMolarMass();
+        wtFrac += componentArray[i].getx() * componentArray[i].getMolarMass() / getMolarMass();
       }
     }
     return wtFrac;
@@ -2718,7 +2719,7 @@ public abstract class Phase implements PhaseInterface {
   @Override
   public double getDensity_Leachman(String hydrogenType) {
     neqsim.thermo.util.leachman.NeqSimLeachman test = new neqsim.thermo.util.leachman.NeqSimLeachman(this,
-	hydrogenType);
+        hydrogenType);
     return test.getDensity();
   }
 
@@ -2736,13 +2737,13 @@ public abstract class Phase implements PhaseInterface {
     if (this.getNumberOfComponents() != 1) {
       StringBuilder compNames = new StringBuilder();
       for (int i = 0; i < this.getNumberOfComponents(); i++) {
-	compNames.append(this.getComponent(i).getComponentName());
-	if (i < this.getNumberOfComponents() - 1) {
-	  compNames.append(", ");
-	}
+        compNames.append(this.getComponent(i).getComponentName());
+        if (i < this.getNumberOfComponents() - 1) {
+          compNames.append(", ");
+        }
       }
       throw new IllegalArgumentException(
-	  "Leachman model only works for pure hydrogen streams. Found components: " + compNames.toString());
+          "Leachman model only works for pure hydrogen streams. Found components: " + compNames.toString());
     }
 
     // Retrieve the component name from the current phase
@@ -2764,7 +2765,7 @@ public abstract class Phase implements PhaseInterface {
   @Override
   public double[] getProperties_Leachman(String hydrogenType) {
     neqsim.thermo.util.leachman.NeqSimLeachman test = new neqsim.thermo.util.leachman.NeqSimLeachman(this,
-	hydrogenType);
+        hydrogenType);
     return test.propertiesLeachman();
   }
 
@@ -2782,13 +2783,13 @@ public abstract class Phase implements PhaseInterface {
     if (this.getNumberOfComponents() != 1) {
       StringBuilder compNames = new StringBuilder();
       for (int i = 0; i < this.getNumberOfComponents(); i++) {
-	compNames.append(this.getComponent(i).getComponentName());
-	if (i < this.getNumberOfComponents() - 1) {
-	  compNames.append(", ");
-	}
+        compNames.append(this.getComponent(i).getComponentName());
+        if (i < this.getNumberOfComponents() - 1) {
+          compNames.append(", ");
+        }
       }
       throw new IllegalArgumentException(
-	  "Leachman model only works for pure hydrogen streams. Found components: " + compNames.toString());
+          "Leachman model only works for pure hydrogen streams. Found components: " + compNames.toString());
     }
 
     // Retrieve the component name from the current phase
@@ -2810,7 +2811,7 @@ public abstract class Phase implements PhaseInterface {
   @Override
   public doubleW[] getAlpha0_Leachman(String hydrogenType) {
     neqsim.thermo.util.leachman.NeqSimLeachman test = new neqsim.thermo.util.leachman.NeqSimLeachman(this,
-	hydrogenType);
+        hydrogenType);
     return test.getAlpha0_Leachman();
   }
 
@@ -2828,13 +2829,13 @@ public abstract class Phase implements PhaseInterface {
     if (this.getNumberOfComponents() != 1) {
       StringBuilder compNames = new StringBuilder();
       for (int i = 0; i < this.getNumberOfComponents(); i++) {
-	compNames.append(this.getComponent(i).getComponentName());
-	if (i < this.getNumberOfComponents() - 1) {
-	  compNames.append(", ");
-	}
+        compNames.append(this.getComponent(i).getComponentName());
+        if (i < this.getNumberOfComponents() - 1) {
+          compNames.append(", ");
+        }
       }
       throw new IllegalArgumentException(
-	  "Leachman model only works for pure hydrogen streams. Found components: " + compNames.toString());
+          "Leachman model only works for pure hydrogen streams. Found components: " + compNames.toString());
     }
 
     // Retrieve the component name from the current phase
@@ -2856,7 +2857,7 @@ public abstract class Phase implements PhaseInterface {
   @Override
   public doubleW[][] getAlphares_Leachman(String hydrogenType) {
     neqsim.thermo.util.leachman.NeqSimLeachman test = new neqsim.thermo.util.leachman.NeqSimLeachman(this,
-	hydrogenType);
+        hydrogenType);
     return test.getAlphares_Leachman();
   }
 
@@ -2874,13 +2875,13 @@ public abstract class Phase implements PhaseInterface {
     if (this.getNumberOfComponents() != 1) {
       StringBuilder compNames = new StringBuilder();
       for (int i = 0; i < this.getNumberOfComponents(); i++) {
-	compNames.append(this.getComponent(i).getComponentName());
-	if (i < this.getNumberOfComponents() - 1) {
-	  compNames.append(", ");
-	}
+        compNames.append(this.getComponent(i).getComponentName());
+        if (i < this.getNumberOfComponents() - 1) {
+          compNames.append(", ");
+        }
       }
       throw new IllegalArgumentException(
-	  "Leachman model only works for pure hydrogen streams. Found components: " + compNames.toString());
+          "Leachman model only works for pure hydrogen streams. Found components: " + compNames.toString());
     }
 
     // Retrieve the component name from the current phase
@@ -2942,16 +2943,16 @@ public abstract class Phase implements PhaseInterface {
       return numberOfMolesInPhase * 3600.0 * 24.0 / 1000.0;
     } else if (flowunit.equals("Sm3/sec")) {
       return numberOfMolesInPhase * ThermodynamicConstantsInterface.R
-	  * ThermodynamicConstantsInterface.standardStateTemperature / ThermodynamicConstantsInterface.atm;
+          * ThermodynamicConstantsInterface.standardStateTemperature / ThermodynamicConstantsInterface.atm;
     } else if (flowunit.equals("Sm3/hr")) {
       return numberOfMolesInPhase * 3600.0 * ThermodynamicConstantsInterface.R
-	  * ThermodynamicConstantsInterface.standardStateTemperature / ThermodynamicConstantsInterface.atm;
+          * ThermodynamicConstantsInterface.standardStateTemperature / ThermodynamicConstantsInterface.atm;
     } else if (flowunit.equals("Sm3/day")) {
       return numberOfMolesInPhase * 3600.0 * 24.0 * ThermodynamicConstantsInterface.R
-	  * ThermodynamicConstantsInterface.standardStateTemperature / ThermodynamicConstantsInterface.atm;
+          * ThermodynamicConstantsInterface.standardStateTemperature / ThermodynamicConstantsInterface.atm;
     } else if (flowunit.equals("MSm3/day")) {
       return numberOfMolesInPhase * 3600.0 * 24.0 * ThermodynamicConstantsInterface.R
-	  * ThermodynamicConstantsInterface.standardStateTemperature / ThermodynamicConstantsInterface.atm / 1.0e6;
+          * ThermodynamicConstantsInterface.standardStateTemperature / ThermodynamicConstantsInterface.atm / 1.0e6;
     } else if (flowunit.equals("lbmole/hr") || flowunit.equals("lbmol/hr")) {
       return numberOfMolesInPhase * 3600.0 / 1000.0 * 2.20462262;
     } else if (flowunit.equals("lb/hr")) {
@@ -2960,10 +2961,10 @@ public abstract class Phase implements PhaseInterface {
       return numberOfMolesInPhase * getMolarMass() * 3600.0 * 24.0 * 2.20462262 * 0.068;
     } else {
       throw new RuntimeException("failed.. unit: " + flowunit + " not supported. Supported units: kg/sec, kg/min, "
-	  + "kg/hr, m3/sec, m3/min, m3/hr, ft3/sec, Sm3/sec, Sm3/hr, Sm3/day, MSm3/day, "
-	  + "mole/sec, mol/sec, mole/min, mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, "
-	  + "kmole/min, kmol/min, kmole/hr, kmol/hr, kmole/day, kmol/day, lbmole/hr, "
-	  + "lbmol/hr, lb/hr, barrel/day, bbl/day");
+          + "kg/hr, m3/sec, m3/min, m3/hr, ft3/sec, Sm3/sec, Sm3/hr, Sm3/day, MSm3/day, "
+          + "mole/sec, mol/sec, mole/min, mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, "
+          + "kmole/min, kmol/min, kmole/hr, kmol/hr, kmole/day, kmol/day, lbmole/hr, "
+          + "lbmol/hr, lb/hr, barrel/day, bbl/day");
     }
   }
 
@@ -3036,17 +3037,17 @@ public abstract class Phase implements PhaseInterface {
     }
     for (ComponentInterface c : this.getComponents()) {
       if (c == null) {
-	continue;
+        continue;
       }
       boolean found = false;
       for (int j = 0; j < other.numberOfComponents; j++) {
-	if (other.componentArray[j] != null && c.equals(other.componentArray[j])) {
-	  found = true;
-	  break;
-	}
+        if (other.componentArray[j] != null && c.equals(other.componentArray[j])) {
+          found = true;
+          break;
+        }
       }
       if (!found) {
-	return false;
+        return false;
       }
     }
     return true;

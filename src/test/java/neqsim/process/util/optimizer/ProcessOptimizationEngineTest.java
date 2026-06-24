@@ -450,7 +450,7 @@ class ProcessOptimizationEngineTest {
     double[] inletPressures = { 40.0, 50.0, 60.0 };
 
     neqsim.process.util.optimizer.FlowRateOptimizer optimizer = engine.generateComprehensiveLiftCurve("feed",
-	inletPressures, 10.0);
+        inletPressures, 10.0);
 
     assertNotNull(optimizer);
   }

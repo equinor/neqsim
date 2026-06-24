@@ -48,31 +48,31 @@ public class VHflash extends Flash {
       // System.out.println("Hwall " + wallHeat + " i " + i);
       iterations = 1;
       do {
-	iterations++;
+        iterations++;
 
-	this.pHFlash = new PHflash(system, Hspec + wallHeat, 0);
-	// System.out.println("Hspec " + Hspec);
-	this.pHFlash.run();
-	// pOldOld = pOld;
-	// pOld = system.getPressure();
-	// oldVol = newVol;
-	newVol = system.getVolume();
+        this.pHFlash = new PHflash(system, Hspec + wallHeat, 0);
+        // System.out.println("Hspec " + Hspec);
+        this.pHFlash.run();
+        // pOldOld = pOld;
+        // pOld = system.getPressure();
+        // oldVol = newVol;
+        newVol = system.getVolume();
 
-	err = (newVol - Vspec) / Vspec;
+        err = (newVol - Vspec) / Vspec;
 
-	// System.out.println("err................................................................................
-	// " + err);
-	if (iterations < -5) {
-	  system.setPressure(system.getPressure() + err / 10.0);
-	} else {
-	  // System.out.println("pres " + (system.getPressure()+0.1*dPdV*(newVol-Vspec)));
-	  system.setPressure(system.getPressure() - 0.6 * 1.0 / system.getdVdPtn() * (newVol - Vspec));
-	  // system.getdVdPtn()*(newVol-Vspec));
-	  // //dPdV*(newVol-Vspec));
-	}
-	// pNew = system.getPressure();
-	// dPdV = (pOld - pOldOld) / (newVol - oldVol);
-	// System.out.println("pressure " + system.getPressure());
+        // System.out.println("err................................................................................
+        // " + err);
+        if (iterations < -5) {
+          system.setPressure(system.getPressure() + err / 10.0);
+        } else {
+          // System.out.println("pres " + (system.getPressure()+0.1*dPdV*(newVol-Vspec)));
+          system.setPressure(system.getPressure() - 0.6 * 1.0 / system.getdVdPtn() * (newVol - Vspec));
+          // system.getdVdPtn()*(newVol-Vspec));
+          // //dPdV*(newVol-Vspec));
+        }
+        // pNew = system.getPressure();
+        // dPdV = (pOld - pOldOld) / (newVol - oldVol);
+        // System.out.println("pressure " + system.getPressure());
       } while ((Math.abs(err) > 1e-10 && iterations < 1000) || iterations < 7);
     }
     // System.out.println("enthalpy end " + system.getEnthalpy());

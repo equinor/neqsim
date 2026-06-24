@@ -20,9 +20,9 @@ public class TwoPhasePipeFlowVisualization extends
   double[][][] interphaseContactLength = new double[2][10][10];
   double[][][] interfaceTemperaturePoint = new double[2][10][10];
   public double[][][][] bulkComposition, interfaceComposition, effectiveMassTransferCoefficient; // phase,
-												 // time,
-												 // component,
-												 // node
+  // time,
+  // component,
+  // node
   public double[][][][] molarFlux, schmidtNumber;
   public double[][][][] totalMolarMassTransferRate;
   public double[][][][] totalVolumetricMassTransferRate;
@@ -47,7 +47,7 @@ public class TwoPhasePipeFlowVisualization extends
     absTime = new double[timeSteps];
     for (int i = 0; i < timeSteps; i++) {
       for (int j = 0; j < nodes; j++) {
-	flowNodes[i][j] = new TwoPhaseFlowNodeVisualization();
+        flowNodes[i][j] = new TwoPhaseFlowNodeVisualization();
       }
     }
     // System.out.println("nodes " + nodes);
@@ -66,7 +66,7 @@ public class TwoPhasePipeFlowVisualization extends
     interfaceTemperaturePoint = new double[2][time][flowNodes[0].length];
     bulkComposition = new double[2][flowNodes[0][0].getNumberOfComponents()][time][flowNodes[0].length];
     effectiveMassTransferCoefficient = new double[2][flowNodes[0][0]
-	.getNumberOfComponents()][time][flowNodes[0].length];
+        .getNumberOfComponents()][time][flowNodes[0].length];
     interfaceComposition = new double[2][flowNodes[0][0].getNumberOfComponents()][time][flowNodes[0].length];
     molarFlux = new double[2][flowNodes[0][0].getNumberOfComponents()][time][flowNodes[0].length];
     schmidtNumber = new double[2][flowNodes[0][0].getNumberOfComponents()][time][flowNodes[0].length];
@@ -77,27 +77,27 @@ public class TwoPhasePipeFlowVisualization extends
 
     for (int k = 0; k < 2; k++) {
       for (int j = 0; j < time; j++) {
-	timeArray[j] = j;
-	for (int i = 0; i < flowNodes[j].length; i++) {
-	  xPlace[i] = flowNodes[j][i].getDistanceToCenterOfNode();
-	  pressurePoint[k][j][i] = flowNodes[j][i].getPressure(k);
-	  interphaseContactLength[k][j][i] = flowNodes[j][i].getInterphaseContactLength();
-	  temperaturePoint[k][j][i] = flowNodes[j][i].getTemperature(k);
-	  velocityPoint[k][j][i] = flowNodes[j][i].getVelocity(k);
-	  reynoldsNumber[k][j][i] = flowNodes[j][i].getReynoldsNumber(k);
-	  phaseFraction[k][j][i] = flowNodes[j][i].getPhaseFraction(k);
-	  interfaceTemperaturePoint[k][j][i] = flowNodes[j][i].getInterfaceTemperature(k);
-	  for (int p = 0; p < flowNodes[0][0].getNumberOfComponents(); p++) {
-	    effectiveMassTransferCoefficient[k][p][j][i] = flowNodes[j][i].getEffectiveMassTransferCoefficient(p, k);
-	    bulkComposition[k][p][j][i] = flowNodes[j][i].getBulkComposition(p, k);
-	    interfaceComposition[k][p][j][i] = flowNodes[j][i].getInterfaceComposition(p, k);
-	    molarFlux[k][p][j][i] = flowNodes[j][i].getEffectiveSchmidtNumber(p, k);
-	    schmidtNumber[k][p][j][i] = flowNodes[j][i].getEffectiveSchmidtNumber(p, k);
-	    totalMolarMassTransferRate[k][p][j][i] = flowSystem[j].getTotalMolarMassTransferRate(p, i);
-	    totalVolumetricMassTransferRate[k][p][j][i] = totalMolarMassTransferRate[k][p][j][i] * 60.0 / 40.87631889
-		* 1000.0;
-	  }
-	}
+        timeArray[j] = j;
+        for (int i = 0; i < flowNodes[j].length; i++) {
+          xPlace[i] = flowNodes[j][i].getDistanceToCenterOfNode();
+          pressurePoint[k][j][i] = flowNodes[j][i].getPressure(k);
+          interphaseContactLength[k][j][i] = flowNodes[j][i].getInterphaseContactLength();
+          temperaturePoint[k][j][i] = flowNodes[j][i].getTemperature(k);
+          velocityPoint[k][j][i] = flowNodes[j][i].getVelocity(k);
+          reynoldsNumber[k][j][i] = flowNodes[j][i].getReynoldsNumber(k);
+          phaseFraction[k][j][i] = flowNodes[j][i].getPhaseFraction(k);
+          interfaceTemperaturePoint[k][j][i] = flowNodes[j][i].getInterfaceTemperature(k);
+          for (int p = 0; p < flowNodes[0][0].getNumberOfComponents(); p++) {
+            effectiveMassTransferCoefficient[k][p][j][i] = flowNodes[j][i].getEffectiveMassTransferCoefficient(p, k);
+            bulkComposition[k][p][j][i] = flowNodes[j][i].getBulkComposition(p, k);
+            interfaceComposition[k][p][j][i] = flowNodes[j][i].getInterfaceComposition(p, k);
+            molarFlux[k][p][j][i] = flowNodes[j][i].getEffectiveSchmidtNumber(p, k);
+            schmidtNumber[k][p][j][i] = flowNodes[j][i].getEffectiveSchmidtNumber(p, k);
+            totalMolarMassTransferRate[k][p][j][i] = flowSystem[j].getTotalMolarMassTransferRate(p, i);
+            totalVolumetricMassTransferRate[k][p][j][i] = totalMolarMassTransferRate[k][p][j][i] * 60.0 / 40.87631889
+                * 1000.0;
+          }
+        }
       }
     }
   }

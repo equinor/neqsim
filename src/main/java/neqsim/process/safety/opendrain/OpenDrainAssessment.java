@@ -78,7 +78,7 @@ public class OpenDrainAssessment implements Serializable {
    */
   public static OpenDrainAssessment pass(String requirementId, String clause, String message, String recommendation) {
     return new OpenDrainAssessment(requirementId, OpenDrainReviewEngine.NORSOK_S001, clause, Status.PASS, "LOW",
-	message, recommendation);
+        message, recommendation);
   }
 
   /**
@@ -94,7 +94,7 @@ public class OpenDrainAssessment implements Serializable {
   public static OpenDrainAssessment warning(String requirementId, String clause, String severity, String message,
       String recommendation) {
     return new OpenDrainAssessment(requirementId, OpenDrainReviewEngine.NORSOK_S001, clause, Status.WARNING, severity,
-	message, recommendation);
+        message, recommendation);
   }
 
   /**
@@ -110,7 +110,7 @@ public class OpenDrainAssessment implements Serializable {
   public static OpenDrainAssessment fail(String requirementId, String clause, String severity, String message,
       String recommendation) {
     return new OpenDrainAssessment(requirementId, OpenDrainReviewEngine.NORSOK_S001, clause, Status.FAIL, severity,
-	message, recommendation);
+        message, recommendation);
   }
 
   /**
@@ -124,7 +124,7 @@ public class OpenDrainAssessment implements Serializable {
    */
   public static OpenDrainAssessment info(String requirementId, String clause, String message, String recommendation) {
     return new OpenDrainAssessment(requirementId, OpenDrainReviewEngine.NORSOK_S001, clause, Status.INFO, "LOW",
-	message, recommendation);
+        message, recommendation);
   }
 
   /**
@@ -137,7 +137,7 @@ public class OpenDrainAssessment implements Serializable {
    */
   public static OpenDrainAssessment notApplicable(String requirementId, String clause, String message) {
     return new OpenDrainAssessment(requirementId, OpenDrainReviewEngine.NORSOK_S001, clause, Status.NOT_APPLICABLE,
-	"LOW", message, "No action required for this review item.");
+        "LOW", message, "No action required for this review item.");
   }
 
   /**

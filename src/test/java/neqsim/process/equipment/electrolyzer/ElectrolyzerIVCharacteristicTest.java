@@ -50,7 +50,7 @@ class ElectrolyzerIVCharacteristicTest {
     double pemVoltage = pem.getCellVoltage(1.0, 353.15);
     double soecVoltage = soec.getCellVoltage(1.0, 1073.15);
     assertTrue(soecVoltage < pemVoltage,
-	"SOEC voltage at 800 C should be below PEM voltage at 80 C, got " + soecVoltage + " vs " + pemVoltage);
+        "SOEC voltage at 800 C should be below PEM voltage at 80 C, got " + soecVoltage + " vs " + pemVoltage);
   }
 
   @Test

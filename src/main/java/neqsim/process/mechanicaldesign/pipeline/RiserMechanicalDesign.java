@@ -127,15 +127,15 @@ public class RiserMechanicalDesign extends PipelineMechanicalDesign {
 
       // TTR-specific
       if (riser.isTensionedType()) {
-	riserCalculator.setAppliedTopTension(riser.getAppliedTopTension());
-	riserCalculator.setTensionVariationFactor(riser.getTensionVariationFactor());
+        riserCalculator.setAppliedTopTension(riser.getAppliedTopTension());
+        riserCalculator.setTensionVariationFactor(riser.getTensionVariationFactor());
       }
 
       // Lazy-wave specific
       if (riser.hasBuoyancyModules()) {
-	riserCalculator.setBuoyancyModuleDepth(riser.getBuoyancyModuleDepth());
-	riserCalculator.setBuoyancyModuleLength(riser.getBuoyancyModuleLength());
-	riserCalculator.setBuoyancyPerMeter(riser.getBuoyancyPerMeter());
+        riserCalculator.setBuoyancyModuleDepth(riser.getBuoyancyModuleDepth());
+        riserCalculator.setBuoyancyModuleLength(riser.getBuoyancyModuleLength());
+        riserCalculator.setBuoyancyPerMeter(riser.getBuoyancyPerMeter());
       }
     }
   }
@@ -153,7 +153,7 @@ public class RiserMechanicalDesign extends PipelineMechanicalDesign {
       double innerDiam = riser.getDiameter();
       double wallThick = getWallThickness();
       if (wallThick <= 0) {
-	wallThick = 0.0127; // 0.5 inch default
+        wallThick = 0.0127; // 0.5 inch default
       }
       riserCalculator.setOuterDiameter(innerDiam + 2.0 * wallThick);
       riserCalculator.setNominalWallThickness(wallThick);
@@ -164,12 +164,12 @@ public class RiserMechanicalDesign extends PipelineMechanicalDesign {
 
       // Calculate riser-specific parameters
       if (riser.isCatenaryType()) {
-	riserCalculator.calculateCatenaryTopTension();
-	riserCalculator.calculateTouchdownPointStress();
-	riserCalculator.calculateTouchdownZoneLength();
+        riserCalculator.calculateCatenaryTopTension();
+        riserCalculator.calculateTouchdownPointStress();
+        riserCalculator.calculateTouchdownZoneLength();
       } else if (riser.isTensionedType()) {
-	riserCalculator.calculateTTRTension();
-	riserCalculator.calculateStrokeRequirement();
+        riserCalculator.calculateTTRTension();
+        riserCalculator.calculateStrokeRequirement();
       }
 
       // VIV analysis
@@ -185,9 +185,9 @@ public class RiserMechanicalDesign extends PipelineMechanicalDesign {
 
       // Collapse check for deep water
       if (riser.getWaterDepth() > 200) {
-	riserCalculator.calculateExternalPressure(riser.getWaterDepth());
-	riserCalculator.calculateCollapsePressure();
-	riserCalculator.calculateCollapseUtilization();
+        riserCalculator.calculateExternalPressure(riser.getWaterDepth());
+        riserCalculator.calculateCollapsePressure();
+        riserCalculator.calculateCollapseUtilization();
       }
     }
   }

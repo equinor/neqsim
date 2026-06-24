@@ -140,27 +140,27 @@ public class ColumnSpecification implements Serializable {
     }
     if (type == SpecificationType.PRODUCT_PURITY || type == SpecificationType.COMPONENT_RECOVERY) {
       if (componentName == null || componentName.trim().isEmpty()) {
-	throw new IllegalArgumentException(type + " specification requires a component name");
+        throw new IllegalArgumentException(type + " specification requires a component name");
       }
     }
     if (type == SpecificationType.PRODUCT_PURITY) {
       if (targetValue < 0.0 || targetValue > 1.0) {
-	throw new IllegalArgumentException("Product purity must be between 0 and 1, got: " + targetValue);
+        throw new IllegalArgumentException("Product purity must be between 0 and 1, got: " + targetValue);
       }
     }
     if (type == SpecificationType.COMPONENT_RECOVERY) {
       if (targetValue < 0.0 || targetValue > 1.0) {
-	throw new IllegalArgumentException("Component recovery must be between 0 and 1, got: " + targetValue);
+        throw new IllegalArgumentException("Component recovery must be between 0 and 1, got: " + targetValue);
       }
     }
     if (type == SpecificationType.REFLUX_RATIO) {
       if (targetValue < 0.0) {
-	throw new IllegalArgumentException("Reflux/boilup ratio must be non-negative, got: " + targetValue);
+        throw new IllegalArgumentException("Reflux/boilup ratio must be non-negative, got: " + targetValue);
       }
     }
     if (type == SpecificationType.PRODUCT_FLOW_RATE) {
       if (targetValue <= 0.0) {
-	throw new IllegalArgumentException("Product flow rate must be positive, got: " + targetValue);
+        throw new IllegalArgumentException("Product flow rate must be positive, got: " + targetValue);
       }
     }
   }

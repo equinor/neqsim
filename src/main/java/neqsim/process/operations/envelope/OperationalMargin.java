@@ -128,9 +128,9 @@ public final class OperationalMargin implements Serializable, Comparable<Operati
     }
     double current = constraint.getCurrentValue();
     return new OperationalMargin(equipmentName, constraint.getName(), current, constraint.getDisplayDesignValue(),
-	constraint.getUtilizationPercent(), constraint.getMarginPercent(), constraint.getUnit(),
-	constraint.getType().name(), constraint.getSeverity().name(), constraint.getDataSource(),
-	constraint.getDescription(), constraint.isMinimumConstraint(), constraint.isHardLimitExceeded());
+        constraint.getUtilizationPercent(), constraint.getMarginPercent(), constraint.getUnit(),
+        constraint.getType().name(), constraint.getSeverity().name(), constraint.getDataSource(),
+        constraint.getDescription(), constraint.isMinimumConstraint(), constraint.isHardLimitExceeded());
   }
 
   /**

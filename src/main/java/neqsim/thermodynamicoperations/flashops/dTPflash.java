@@ -48,27 +48,27 @@ public class dTPflash extends TPflash {
       iterations++;
       system.init(1);
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-	// boolean hasgot = false;
-	for (int j = 0; j < flashComp.length; j++) {
-	  if (flashComp[j].equals(system.getPhase(0).getComponent(i).getName())) {
-	    diff += Math.abs((system.getPhase(1).getComponent(i).getx()
-		* system.getPhase(1).getComponent(i).getFugacityCoefficient() * system.getPhase(1).getPressure())
-		- (system.getPhase(0).getComponent(i).getx()
-		    * system.getPhase(0).getComponent(i).getFugacityCoefficient() * system.getPhase(0).getPressure()));
-	    system.getPhase(1).getComponent(i).setx(system.getPhase(1).getComponent(i).getx()
-		* (system.getPhase(0).getComponent(i).getx()
-		    * system.getPhase(0).getComponent(i).getFugacityCoefficient() * system.getPhase(0).getPressure())
-		/ (system.getPhase(1).getComponent(i).getx()
-		    * system.getPhase(1).getComponent(i).getFugacityCoefficient() * system.getPhase(1).getPressure()));
+        // boolean hasgot = false;
+        for (int j = 0; j < flashComp.length; j++) {
+          if (flashComp[j].equals(system.getPhase(0).getComponent(i).getName())) {
+            diff += Math.abs((system.getPhase(1).getComponent(i).getx()
+                * system.getPhase(1).getComponent(i).getFugacityCoefficient() * system.getPhase(1).getPressure())
+                - (system.getPhase(0).getComponent(i).getx()
+                    * system.getPhase(0).getComponent(i).getFugacityCoefficient() * system.getPhase(0).getPressure()));
+            system.getPhase(1).getComponent(i).setx(system.getPhase(1).getComponent(i).getx()
+                * (system.getPhase(0).getComponent(i).getx()
+                    * system.getPhase(0).getComponent(i).getFugacityCoefficient() * system.getPhase(0).getPressure())
+                / (system.getPhase(1).getComponent(i).getx()
+                    * system.getPhase(1).getComponent(i).getFugacityCoefficient() * system.getPhase(1).getPressure()));
 
-	    // fracdiff += system.getPhase(1).getComponent(i).getz() -
-	    // system.getPhase(1).getComponent(i).getx();
+            // fracdiff += system.getPhase(1).getComponent(i).getz() -
+            // system.getPhase(1).getComponent(i).getx();
 
-	    // hasgot = true;
-	    // logger.info("x " + system.getPhase(1).getComponent(i).getx());
-	  }
-	}
-	// if(!hasgot) system.getPhase(1).getComponent(i).setx(1e-16);
+            // hasgot = true;
+            // logger.info("x " + system.getPhase(1).getComponent(i).getx());
+          }
+        }
+        // if(!hasgot) system.getPhase(1).getComponent(i).setx(1e-16);
       }
 
       system.getPhase(1).normalize();

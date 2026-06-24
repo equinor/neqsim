@@ -52,17 +52,17 @@ public class CompressorInstrumentDesign extends InstrumentDesign {
     // === Pressure instrumentation ===
     getInstrumentList().add(new InstrumentSpecification("PT", "Suction Pressure", 0.0, maxPressure, "bara", "AI"));
     getInstrumentList()
-	.add(new InstrumentSpecification("PT", "Discharge Pressure", 0.0, maxPressure * 1.2, "bara", "AI"));
+        .add(new InstrumentSpecification("PT", "Discharge Pressure", 0.0, maxPressure * 1.2, "bara", "AI"));
 
     if (includeAntiSurge) {
       getInstrumentList()
-	  .add(new InstrumentSpecification("PDT", "Differential Pressure (Surge)", 0.0, maxPressure, "bar", "AI"));
+          .add(new InstrumentSpecification("PDT", "Differential Pressure (Surge)", 0.0, maxPressure, "bar", "AI"));
     }
 
     // PSHH: Discharge overpressure trip
     if (isIncludeSafetyInstruments()) {
       getInstrumentList()
-	  .add(new InstrumentSpecification("PSHH", "Discharge Overpressure Trip", "DI", getDefaultSilLevel()));
+          .add(new InstrumentSpecification("PSHH", "Discharge Overpressure Trip", "DI", getDefaultSilLevel()));
     }
 
     // === Temperature instrumentation ===
@@ -72,13 +72,13 @@ public class CompressorInstrumentDesign extends InstrumentDesign {
     // Bearing temperatures
     for (int i = 1; i <= numberOfBearings; i++) {
       getInstrumentList()
-	  .add(new InstrumentSpecification("TT", "Bearing " + i + " Temperature", 0.0, 150.0, "degC", "AI"));
+          .add(new InstrumentSpecification("TT", "Bearing " + i + " Temperature", 0.0, 150.0, "degC", "AI"));
     }
 
     // TSHH: Discharge overtemperature trip
     if (isIncludeSafetyInstruments()) {
       getInstrumentList()
-	  .add(new InstrumentSpecification("TSHH", "Discharge Overtemperature Trip", "DI", getDefaultSilLevel()));
+          .add(new InstrumentSpecification("TSHH", "Discharge Overtemperature Trip", "DI", getDefaultSilLevel()));
     }
 
     // === Flow instrumentation ===
@@ -91,9 +91,9 @@ public class CompressorInstrumentDesign extends InstrumentDesign {
     // === Vibration monitoring (API 670) ===
     for (int i = 1; i <= numberOfBearings; i++) {
       getInstrumentList()
-	  .add(new InstrumentSpecification("VT", "Bearing " + i + " Vibration X", 0.0, 250.0, "um p-p", "AI"));
+          .add(new InstrumentSpecification("VT", "Bearing " + i + " Vibration X", 0.0, 250.0, "um p-p", "AI"));
       getInstrumentList()
-	  .add(new InstrumentSpecification("VT", "Bearing " + i + " Vibration Y", 0.0, 250.0, "um p-p", "AI"));
+          .add(new InstrumentSpecification("VT", "Bearing " + i + " Vibration Y", 0.0, 250.0, "um p-p", "AI"));
     }
 
     // Vibration high trip
@@ -108,7 +108,7 @@ public class CompressorInstrumentDesign extends InstrumentDesign {
     getInstrumentList().add(new InstrumentSpecification("PT", "Lube Oil Pressure", 0.0, 10.0, "bara", "AI"));
     if (isIncludeSafetyInstruments()) {
       getInstrumentList()
-	  .add(new InstrumentSpecification("PSLL", "Low Lube Oil Pressure Trip", "DI", getDefaultSilLevel()));
+          .add(new InstrumentSpecification("PSLL", "Low Lube Oil Pressure Trip", "DI", getDefaultSilLevel()));
     }
   }
 

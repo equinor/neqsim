@@ -82,25 +82,25 @@ public class LinearProgrammingChemicalEquilibrium implements neqsim.thermo.Therm
     if (operations.calcChemRefPot(phaseNum) != null) {
       System.arraycopy(operations.calcChemRefPot(phaseNum), 0, this.chemRefPot, 0, this.chemRefPot.length);
       for (int i = 0; i < components.length; i++) {
-	components[i].setReferencePotential(chemRefPot[i]);
-	// System.out.println("sorting....." + components[i].getComponentNumber());
+        components[i].setReferencePotential(chemRefPot[i]);
+        // System.out.println("sorting....." + components[i].getComponentNumber());
       }
     } else {
       int refPotIter = 0;
       int maxRefPotIter = 100;
       do {
-	System.out.println("shifting primary components.....");
-	this.changePrimaryComponents();
-	refPotIter++;
+        System.out.println("shifting primary components.....");
+        this.changePrimaryComponents();
+        refPotIter++;
       } while (operations.calcChemRefPot(phaseNum) == null && refPotIter < maxRefPotIter);
       // System.out.println("shifting components....." );
       System.arraycopy(operations.calcChemRefPot(phaseNum), 0, this.chemRefPot, 0, this.chemRefPot.length);
       for (int i = 0; i < components.length; i++) {
-	components[i].setReferencePotential(chemRefPot[i]);
+        components[i].setReferencePotential(chemRefPot[i]);
       }
       Arrays.sort(components, new ReferencePotComparator());
       for (int i = 0; i < components.length; i++) {
-	chemRefPot[i] = components[i].getReferencePotential();
+        chemRefPot[i] = components[i].getReferencePotential();
       }
     }
 
@@ -124,12 +124,12 @@ public class LinearProgrammingChemicalEquilibrium implements neqsim.thermo.Therm
 
     for (int k = 0; k < A_size; k++) {
       for (int i = 0; i < components.length; i++) {
-	for (int j = 0; j < components[i].getElements().getElementNames().length; j++) {
-	  if (components[i].getElements().getElementNames()[j].equals(elements[k])) {
-	    A[k][i] = components[i].getElements().getElementCoefs()[j];
-	    Am[k][i] = components[i].getElements().getElementCoefs()[j];
-	  }
-	}
+        for (int j = 0; j < components[i].getElements().getElementNames().length; j++) {
+          if (components[i].getElements().getElementNames()[j].equals(elements[k])) {
+            A[k][i] = components[i].getElements().getElementCoefs()[j];
+            Am[k][i] = components[i].getElements().getElementCoefs()[j];
+          }
+        }
       }
     }
 
@@ -317,7 +317,7 @@ public class LinearProgrammingChemicalEquilibrium implements neqsim.thermo.Therm
       double[] constraintCoeffs = new double[components.length + 1];
       constraintCoeffs[0] = 0.0; // Explicitly set to 0 - this variable is not used
       for (i = 0; i < components.length; i++) {
-	constraintCoeffs[i + 1] = Amatrix[j][i];
+        constraintCoeffs[i + 1] = Amatrix[j][i];
       }
       rhs = bVector[j];
       cons.add(new LinearConstraint(constraintCoeffs, Relationship.EQ, rhs));
@@ -347,8 +347,8 @@ public class LinearProgrammingChemicalEquilibrium implements neqsim.thermo.Therm
       double value = temp[i + 1];
       // Validate result: check for NaN, Inf, or negative values
       if (Double.isNaN(value) || Double.isInfinite(value) || value < 0) {
-	logger.warn("LP solution contains invalid value at index " + i + ": " + value + ", using MIN_MOLES");
-	value = MIN_MOLES;
+        logger.warn("LP solution contains invalid value at index " + i + ": " + value + ", using MIN_MOLES");
+        value = MIN_MOLES;
       }
       lp_solution[i] = Math.max(MIN_MOLES, value);
     }

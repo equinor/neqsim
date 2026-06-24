@@ -70,16 +70,16 @@ public class HPTphaseEnvelope extends BaseOperation {
     for (int i = 0; i < 10; i++) {
       system.setPressure(i * 0.5 + startPressure);
       for (int j = 0; j < 10; j++) {
-	np++;
-	if (np % 2 == 0) {
-	  monitor.setValue(np);
-	  monitor.setString("Calculated points: " + np);
-	}
+        np++;
+        if (np % 2 == 0) {
+          monitor.setValue(np);
+          monitor.setString("Calculated points: " + np);
+        }
 
-	system.setTemperature(startTemperature + j);
-	testOps.TPflash();
-	system.init(3);
-	points[i][j] = system.getEnthalpy();
+        system.setTemperature(startTemperature + j);
+        testOps.TPflash();
+        system.init(3);
+        points[i][j] = system.getEnthalpy();
       }
     }
   }

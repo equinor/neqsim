@@ -221,19 +221,19 @@ class JsonFluidReadWriteTest extends neqsim.NeqSimTest {
   void testE300ShortNames() {
     // Use E300 short names (C1, C2, N2) and verify they map correctly
     String json = "{\n" + "  \"eos\": \"SRK\",\n" + "  \"components\": [\n"
-	+ "    { \"name\": \"N2\", \"moleFraction\": 0.02,\n"
-	+ "      \"criticalTemperature\": 126.2, \"criticalPressure\": 33.94,\n"
-	+ "      \"acentricFactor\": 0.04, \"molarMass\": 28.014,\n"
-	+ "      \"normalBoilingPoint\": 77.4, \"criticalVolume\": 0.0895,\n"
-	+ "      \"volumeShift\": 0.0, \"parachor\": 41.0 },\n" + "    { \"name\": \"C1\", \"moleFraction\": 0.90,\n"
-	+ "      \"criticalTemperature\": 190.6, \"criticalPressure\": 46.0,\n"
-	+ "      \"acentricFactor\": 0.008, \"molarMass\": 16.043,\n"
-	+ "      \"normalBoilingPoint\": 111.6, \"criticalVolume\": 0.0986,\n"
-	+ "      \"volumeShift\": 0.0, \"parachor\": 77.3 },\n" + "    { \"name\": \"C2\", \"moleFraction\": 0.08,\n"
-	+ "      \"criticalTemperature\": 305.4, \"criticalPressure\": 48.8,\n"
-	+ "      \"acentricFactor\": 0.098, \"molarMass\": 30.07,\n"
-	+ "      \"normalBoilingPoint\": 184.6, \"criticalVolume\": 0.148,\n"
-	+ "      \"volumeShift\": 0.0, \"parachor\": 112.9 }\n" + "  ]\n" + "}";
+        + "    { \"name\": \"N2\", \"moleFraction\": 0.02,\n"
+        + "      \"criticalTemperature\": 126.2, \"criticalPressure\": 33.94,\n"
+        + "      \"acentricFactor\": 0.04, \"molarMass\": 28.014,\n"
+        + "      \"normalBoilingPoint\": 77.4, \"criticalVolume\": 0.0895,\n"
+        + "      \"volumeShift\": 0.0, \"parachor\": 41.0 },\n" + "    { \"name\": \"C1\", \"moleFraction\": 0.90,\n"
+        + "      \"criticalTemperature\": 190.6, \"criticalPressure\": 46.0,\n"
+        + "      \"acentricFactor\": 0.008, \"molarMass\": 16.043,\n"
+        + "      \"normalBoilingPoint\": 111.6, \"criticalVolume\": 0.0986,\n"
+        + "      \"volumeShift\": 0.0, \"parachor\": 77.3 },\n" + "    { \"name\": \"C2\", \"moleFraction\": 0.08,\n"
+        + "      \"criticalTemperature\": 305.4, \"criticalPressure\": 48.8,\n"
+        + "      \"acentricFactor\": 0.098, \"molarMass\": 30.07,\n"
+        + "      \"normalBoilingPoint\": 184.6, \"criticalVolume\": 0.148,\n"
+        + "      \"volumeShift\": 0.0, \"parachor\": 112.9 }\n" + "  ]\n" + "}";
 
     SystemInterface fluid = JsonFluidReadWrite.readString(json);
     assertEquals(3, fluid.getNumberOfComponents());
@@ -327,8 +327,8 @@ class JsonFluidReadWriteTest extends neqsim.NeqSimTest {
 
     for (int i = 0; i < original.getNumberOfComponents(); i++) {
       assertEquals(original.getComponent(i).getVolumeCorrectionConst(),
-	  loaded.getComponent(i).getVolumeCorrectionConst(), 1e-6,
-	  "Volume shift mismatch for " + original.getComponent(i).getComponentName());
+          loaded.getComponent(i).getVolumeCorrectionConst(), 1e-6,
+          "Volume shift mismatch for " + original.getComponent(i).getComponentName());
     }
   }
 
@@ -341,7 +341,7 @@ class JsonFluidReadWriteTest extends neqsim.NeqSimTest {
 
     for (int i = 0; i < original.getNumberOfComponents(); i++) {
       assertEquals(original.getComponent(i).getParachorParameter(), loaded.getComponent(i).getParachorParameter(), 1e-6,
-	  "Parachor mismatch for " + original.getComponent(i).getComponentName());
+          "Parachor mismatch for " + original.getComponent(i).getComponentName());
     }
   }
 }

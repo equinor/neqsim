@@ -548,10 +548,10 @@ public class LNGAgeingResult implements Serializable {
    */
   public String toSummaryString() {
     return String.format(
-	"t=%.1fh (%.1fd): T=%.2fK (%.2fC), P=%.3f bara, V=%.0f m3, rho=%.1f kg/m3, "
-	    + "WI=%.2f MJ/Sm3, BOR=%.4f %%/d, layers=%d, rollover=%b",
-	timeHours, getTimeDays(), temperature, getTemperatureCelsius(), pressure, liquidVolume, density, wobbeIndex,
-	boilOffRatePctPerDay, numberOfLayers, rolloverRisk);
+        "t=%.1fh (%.1fd): T=%.2fK (%.2fC), P=%.3f bara, V=%.0f m3, rho=%.1f kg/m3, "
+            + "WI=%.2f MJ/Sm3, BOR=%.4f %%/d, layers=%d, rollover=%b",
+        timeHours, getTimeDays(), temperature, getTemperatureCelsius(), pressure, liquidVolume, density, wobbeIndex,
+        boilOffRatePctPerDay, numberOfLayers, rolloverRisk);
   }
 
   /**

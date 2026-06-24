@@ -72,7 +72,7 @@ public final class DexpiTopologyResolver {
      * @param pipingSegmentId the piping segment ID carrying this connection (may be null)
      */
     public TopologyEdge(String sourceEquipmentId, String targetEquipmentId, String sourceNozzleId,
-	String targetNozzleId, String pipingSegmentId) {
+        String targetNozzleId, String pipingSegmentId) {
       this.sourceEquipmentId = sourceEquipmentId;
       this.targetEquipmentId = targetEquipmentId;
       this.sourceNozzleId = sourceNozzleId;
@@ -156,7 +156,7 @@ public final class DexpiTopologyResolver {
      * @param equipmentElements map from equipment ID to its XML element
      */
     public ResolvedTopology(List<String> orderedEquipmentIds, List<TopologyEdge> edges,
-	Map<String, String> nozzleToEquipment, Map<String, Element> equipmentElements) {
+        Map<String, String> nozzleToEquipment, Map<String, Element> equipmentElements) {
       this.orderedEquipmentIds = Collections.unmodifiableList(new ArrayList<>(orderedEquipmentIds));
       this.edges = Collections.unmodifiableList(new ArrayList<>(edges));
       this.nozzleToEquipment = Collections.unmodifiableMap(new HashMap<>(nozzleToEquipment));
@@ -208,9 +208,9 @@ public final class DexpiTopologyResolver {
     public List<TopologyEdge> getOutgoingEdges(String equipmentId) {
       List<TopologyEdge> result = new ArrayList<>();
       for (TopologyEdge edge : edges) {
-	if (edge.getSourceEquipmentId().equals(equipmentId)) {
-	  result.add(edge);
-	}
+        if (edge.getSourceEquipmentId().equals(equipmentId)) {
+          result.add(edge);
+        }
       }
       return result;
     }
@@ -224,9 +224,9 @@ public final class DexpiTopologyResolver {
     public List<TopologyEdge> getIncomingEdges(String equipmentId) {
       List<TopologyEdge> result = new ArrayList<>();
       for (TopologyEdge edge : edges) {
-	if (edge.getTargetEquipmentId().equals(equipmentId)) {
-	  result.add(edge);
-	}
+        if (edge.getTargetEquipmentId().equals(equipmentId)) {
+          result.add(edge);
+        }
       }
       return result;
     }
@@ -243,35 +243,35 @@ public final class DexpiTopologyResolver {
       Map<String, List<String>> adjacency = new HashMap<>();
 
       for (String id : orderedEquipmentIds) {
-	inDegree.put(id, 0);
-	adjacency.put(id, new ArrayList<String>());
+        inDegree.put(id, 0);
+        adjacency.put(id, new ArrayList<String>());
       }
 
       for (TopologyEdge edge : edges) {
-	if (inDegree.containsKey(edge.getSourceEquipmentId()) && inDegree.containsKey(edge.getTargetEquipmentId())) {
-	  adjacency.get(edge.getSourceEquipmentId()).add(edge.getTargetEquipmentId());
-	  inDegree.put(edge.getTargetEquipmentId(), inDegree.get(edge.getTargetEquipmentId()) + 1);
-	}
+        if (inDegree.containsKey(edge.getSourceEquipmentId()) && inDegree.containsKey(edge.getTargetEquipmentId())) {
+          adjacency.get(edge.getSourceEquipmentId()).add(edge.getTargetEquipmentId());
+          inDegree.put(edge.getTargetEquipmentId(), inDegree.get(edge.getTargetEquipmentId()) + 1);
+        }
       }
 
       Queue<String> queue = new LinkedList<>();
       for (Map.Entry<String, Integer> entry : inDegree.entrySet()) {
-	if (entry.getValue() == 0) {
-	  queue.add(entry.getKey());
-	}
+        if (entry.getValue() == 0) {
+          queue.add(entry.getKey());
+        }
       }
 
       int count = 0;
       while (!queue.isEmpty()) {
-	String current = queue.poll();
-	count++;
-	for (String neighbor : adjacency.get(current)) {
-	  int newDegree = inDegree.get(neighbor) - 1;
-	  inDegree.put(neighbor, newDegree);
-	  if (newDegree == 0) {
-	    queue.add(neighbor);
-	  }
-	}
+        String current = queue.poll();
+        count++;
+        for (String neighbor : adjacency.get(current)) {
+          int newDegree = inDegree.get(neighbor) - 1;
+          inDegree.put(neighbor, newDegree);
+          if (newDegree == 0) {
+            queue.add(neighbor);
+          }
+        }
       }
 
       return count < orderedEquipmentIds.size();
@@ -298,13 +298,13 @@ public final class DexpiTopologyResolver {
 
     // Step 3: Collapse piping-component-only paths to equipment-level edges
     List<TopologyEdge> equipmentEdges = collapseToEquipmentEdges(rawEdges, equipmentElements.keySet(),
-	pipingComponentIds);
+        pipingComponentIds);
 
     // Step 4: Topological sort
     List<String> ordered = topologicalSort(equipmentElements.keySet(), equipmentEdges);
 
     logger.info("Resolved topology: {} equipment, {} edges, {} in order", equipmentElements.size(),
-	equipmentEdges.size(), ordered.size());
+        equipmentEdges.size(), ordered.size());
     return new ResolvedTopology(ordered, equipmentEdges, nozzleToEquipment, equipmentElements);
   }
 
@@ -321,33 +321,33 @@ public final class DexpiTopologyResolver {
     for (int i = 0; i < equipmentNodes.getLength(); i++) {
       Node eqNode = equipmentNodes.item(i);
       if (eqNode.getNodeType() != Node.ELEMENT_NODE) {
-	continue;
+        continue;
       }
       Element eqParent = (Element) eqNode;
       // Equipment element is a wrapper; actual equipment is in child elements
       NodeList children = eqParent.getChildNodes();
       for (int j = 0; j < children.getLength(); j++) {
-	Node child = children.item(j);
-	if (child.getNodeType() != Node.ELEMENT_NODE) {
-	  continue;
-	}
-	Element childElement = (Element) child;
-	String componentClass = childElement.getAttribute("ComponentClass");
-	if (componentClass == null || componentClass.trim().isEmpty()) {
-	  continue;
-	}
-	// Skip sub-components like Chamber, TubeBundle, Impeller, etc
-	if (isSubComponent(componentClass)) {
-	  continue;
-	}
-	String equipId = childElement.getAttribute("ID");
-	if (equipId == null || equipId.trim().isEmpty()) {
-	  continue;
-	}
-	equipmentElements.put(equipId, childElement);
+        Node child = children.item(j);
+        if (child.getNodeType() != Node.ELEMENT_NODE) {
+          continue;
+        }
+        Element childElement = (Element) child;
+        String componentClass = childElement.getAttribute("ComponentClass");
+        if (componentClass == null || componentClass.trim().isEmpty()) {
+          continue;
+        }
+        // Skip sub-components like Chamber, TubeBundle, Impeller, etc
+        if (isSubComponent(componentClass)) {
+          continue;
+        }
+        String equipId = childElement.getAttribute("ID");
+        if (equipId == null || equipId.trim().isEmpty()) {
+          continue;
+        }
+        equipmentElements.put(equipId, childElement);
 
-	// Find nozzles owned by this equipment
-	collectNozzlesFrom(childElement, equipId, nozzleToEquipment);
+        // Find nozzles owned by this equipment
+        collectNozzlesFrom(childElement, equipId, nozzleToEquipment);
       }
     }
     logger.debug("Found {} equipment items, {} nozzles", equipmentElements.size(), nozzleToEquipment.size());
@@ -365,17 +365,17 @@ public final class DexpiTopologyResolver {
     for (int i = 0; i < children.getLength(); i++) {
       Node child = children.item(i);
       if (child.getNodeType() != Node.ELEMENT_NODE) {
-	continue;
+        continue;
       }
       Element childElement = (Element) child;
       if ("Nozzle".equals(childElement.getTagName())) {
-	String nozzleId = childElement.getAttribute("ID");
-	if (nozzleId != null && !nozzleId.trim().isEmpty()) {
-	  nozzleToEquipment.put(nozzleId, equipId);
-	}
+        String nozzleId = childElement.getAttribute("ID");
+        if (nozzleId != null && !nozzleId.trim().isEmpty()) {
+          nozzleToEquipment.put(nozzleId, equipId);
+        }
       } else {
-	// Recurse into sub-components (e.g. Chamber, TubeBundle)
-	collectNozzlesFrom(childElement, equipId, nozzleToEquipment);
+        // Recurse into sub-components (e.g. Chamber, TubeBundle)
+        collectNozzlesFrom(childElement, equipId, nozzleToEquipment);
       }
     }
   }
@@ -391,20 +391,20 @@ public final class DexpiTopologyResolver {
     for (int i = 0; i < pipingNodes.getLength(); i++) {
       Node pcNode = pipingNodes.item(i);
       if (pcNode.getNodeType() != Node.ELEMENT_NODE) {
-	continue;
+        continue;
       }
       Element pcParent = (Element) pcNode;
       NodeList children = pcParent.getChildNodes();
       for (int j = 0; j < children.getLength(); j++) {
-	Node child = children.item(j);
-	if (child.getNodeType() != Node.ELEMENT_NODE) {
-	  continue;
-	}
-	Element childElement = (Element) child;
-	String id = childElement.getAttribute("ID");
-	if (id != null && !id.trim().isEmpty()) {
-	  pipingComponentIds.add(id);
-	}
+        Node child = children.item(j);
+        if (child.getNodeType() != Node.ELEMENT_NODE) {
+          continue;
+        }
+        Element childElement = (Element) child;
+        String id = childElement.getAttribute("ID");
+        if (id != null && !id.trim().isEmpty()) {
+          pipingComponentIds.add(id);
+        }
       }
     }
   }
@@ -425,7 +425,7 @@ public final class DexpiTopologyResolver {
     for (int i = 0; i < segmentNodes.getLength(); i++) {
       Node segNode = segmentNodes.item(i);
       if (segNode.getNodeType() != Node.ELEMENT_NODE) {
-	continue;
+        continue;
       }
       Element segment = (Element) segNode;
       String segmentId = segment.getAttribute("ID");
@@ -433,45 +433,45 @@ public final class DexpiTopologyResolver {
       // Find Connection children (direct children only)
       NodeList children = segment.getChildNodes();
       for (int j = 0; j < children.getLength(); j++) {
-	Node child = children.item(j);
-	if (child.getNodeType() != Node.ELEMENT_NODE) {
-	  continue;
-	}
-	Element childEl = (Element) child;
-	if (!"Connection".equals(childEl.getTagName())) {
-	  continue;
-	}
-	String fromId = childEl.getAttribute("FromID");
-	String toId = childEl.getAttribute("ToID");
-	if (fromId == null || fromId.trim().isEmpty() || toId == null || toId.trim().isEmpty()) {
-	  continue;
-	}
+        Node child = children.item(j);
+        if (child.getNodeType() != Node.ELEMENT_NODE) {
+          continue;
+        }
+        Element childEl = (Element) child;
+        if (!"Connection".equals(childEl.getTagName())) {
+          continue;
+        }
+        String fromId = childEl.getAttribute("FromID");
+        String toId = childEl.getAttribute("ToID");
+        if (fromId == null || fromId.trim().isEmpty() || toId == null || toId.trim().isEmpty()) {
+          continue;
+        }
 
-	// Resolve from/to to equipment IDs where possible
-	String sourceEquip = resolveToEquipment(fromId, nozzleToEquipment);
-	String targetEquip = resolveToEquipment(toId, nozzleToEquipment);
+        // Resolve from/to to equipment IDs where possible
+        String sourceEquip = resolveToEquipment(fromId, nozzleToEquipment);
+        String targetEquip = resolveToEquipment(toId, nozzleToEquipment);
 
-	// If from/to is a piping component, use the component ID as-is
-	if (sourceEquip == null && pipingComponentIds.contains(fromId)) {
-	  sourceEquip = fromId;
-	}
-	if (targetEquip == null && pipingComponentIds.contains(toId)) {
-	  targetEquip = toId;
-	}
+        // If from/to is a piping component, use the component ID as-is
+        if (sourceEquip == null && pipingComponentIds.contains(fromId)) {
+          sourceEquip = fromId;
+        }
+        if (targetEquip == null && pipingComponentIds.contains(toId)) {
+          targetEquip = toId;
+        }
 
-	// Skip off-page connectors
-	if (sourceEquip == null || targetEquip == null) {
-	  logger.debug("Skipping connection {}->{} (unresolved)", fromId, toId);
-	  continue;
-	}
+        // Skip off-page connectors
+        if (sourceEquip == null || targetEquip == null) {
+          logger.debug("Skipping connection {}->{} (unresolved)", fromId, toId);
+          continue;
+        }
 
-	// Skip self-loops
-	if (sourceEquip.equals(targetEquip)) {
-	  continue;
-	}
+        // Skip self-loops
+        if (sourceEquip.equals(targetEquip)) {
+          continue;
+        }
 
-	edges.add(new TopologyEdge(sourceEquip, targetEquip, nozzleToEquipment.containsKey(fromId) ? fromId : null,
-	    nozzleToEquipment.containsKey(toId) ? toId : null, segmentId));
+        edges.add(new TopologyEdge(sourceEquip, targetEquip, nozzleToEquipment.containsKey(fromId) ? fromId : null,
+            nozzleToEquipment.containsKey(toId) ? toId : null, segmentId));
       }
     }
     logger.debug("Parsed {} raw connection edges", edges.size());
@@ -508,8 +508,8 @@ public final class DexpiTopologyResolver {
     for (TopologyEdge edge : rawEdges) {
       List<TopologyEdge> list = outgoing.get(edge.getSourceEquipmentId());
       if (list == null) {
-	list = new ArrayList<>();
-	outgoing.put(edge.getSourceEquipmentId(), list);
+        list = new ArrayList<>();
+        outgoing.put(edge.getSourceEquipmentId(), list);
       }
       list.add(edge);
     }
@@ -520,7 +520,7 @@ public final class DexpiTopologyResolver {
 
     for (TopologyEdge edge : rawEdges) {
       if (!equipmentIds.contains(edge.getSourceEquipmentId())) {
-	continue;
+        continue;
       }
 
       // BFS through piping components to find the next equipment
@@ -529,39 +529,39 @@ public final class DexpiTopologyResolver {
       Set<String> visited = new HashSet<>();
 
       while (!queue.isEmpty()) {
-	String current = queue.poll();
-	if (visited.contains(current)) {
-	  continue;
-	}
-	visited.add(current);
+        String current = queue.poll();
+        if (visited.contains(current)) {
+          continue;
+        }
+        visited.add(current);
 
-	if (equipmentIds.contains(current)) {
-	  String key = edge.getSourceEquipmentId() + "->" + current;
-	  if (!seen.contains(key)) {
-	    seen.add(key);
-	    result.add(new TopologyEdge(edge.getSourceEquipmentId(), current, edge.getSourceNozzleId(),
-		edge.getTargetNozzleId(), edge.getPipingSegmentId()));
-	  }
-	} else if (pipingComponentIds.contains(current)) {
-	  // Follow through piping component
-	  List<TopologyEdge> next = outgoing.get(current);
-	  if (next != null) {
-	    for (TopologyEdge nextEdge : next) {
-	      queue.add(nextEdge.getTargetEquipmentId());
-	    }
-	  }
-	}
+        if (equipmentIds.contains(current)) {
+          String key = edge.getSourceEquipmentId() + "->" + current;
+          if (!seen.contains(key)) {
+            seen.add(key);
+            result.add(new TopologyEdge(edge.getSourceEquipmentId(), current, edge.getSourceNozzleId(),
+                edge.getTargetNozzleId(), edge.getPipingSegmentId()));
+          }
+        } else if (pipingComponentIds.contains(current)) {
+          // Follow through piping component
+          List<TopologyEdge> next = outgoing.get(current);
+          if (next != null) {
+            for (TopologyEdge nextEdge : next) {
+              queue.add(nextEdge.getTargetEquipmentId());
+            }
+          }
+        }
       }
     }
 
     // Also add direct equipment-to-equipment edges
     for (TopologyEdge edge : rawEdges) {
       if (equipmentIds.contains(edge.getSourceEquipmentId()) && equipmentIds.contains(edge.getTargetEquipmentId())) {
-	String key = edge.getSourceEquipmentId() + "->" + edge.getTargetEquipmentId();
-	if (!seen.contains(key)) {
-	  seen.add(key);
-	  result.add(edge);
-	}
+        String key = edge.getSourceEquipmentId() + "->" + edge.getTargetEquipmentId();
+        if (!seen.contains(key)) {
+          seen.add(key);
+          result.add(edge);
+        }
       }
     }
 
@@ -587,15 +587,15 @@ public final class DexpiTopologyResolver {
 
     for (TopologyEdge edge : edges) {
       if (equipmentIds.contains(edge.getSourceEquipmentId()) && equipmentIds.contains(edge.getTargetEquipmentId())) {
-	adjacency.get(edge.getSourceEquipmentId()).add(edge.getTargetEquipmentId());
-	inDegree.put(edge.getTargetEquipmentId(), inDegree.get(edge.getTargetEquipmentId()) + 1);
+        adjacency.get(edge.getSourceEquipmentId()).add(edge.getTargetEquipmentId());
+        inDegree.put(edge.getTargetEquipmentId(), inDegree.get(edge.getTargetEquipmentId()) + 1);
       }
     }
 
     Queue<String> queue = new LinkedList<>();
     for (Map.Entry<String, Integer> entry : inDegree.entrySet()) {
       if (entry.getValue() == 0) {
-	queue.add(entry.getKey());
+        queue.add(entry.getKey());
       }
     }
 
@@ -604,11 +604,11 @@ public final class DexpiTopologyResolver {
       String current = queue.poll();
       sorted.add(current);
       for (String neighbor : adjacency.get(current)) {
-	int newDegree = inDegree.get(neighbor) - 1;
-	inDegree.put(neighbor, newDegree);
-	if (newDegree == 0) {
-	  queue.add(neighbor);
-	}
+        int newDegree = inDegree.get(neighbor) - 1;
+        inDegree.put(neighbor, newDegree);
+        if (newDegree == 0) {
+          queue.add(neighbor);
+        }
       }
     }
 
@@ -617,13 +617,13 @@ public final class DexpiTopologyResolver {
     List<String> unsorted = new ArrayList<>();
     for (String id : equipmentIds) {
       if (!sortedSet.contains(id)) {
-	unsorted.add(id);
-	sorted.add(id);
+        unsorted.add(id);
+        sorted.add(id);
       }
     }
     if (!unsorted.isEmpty()) {
       logger.warn("Cycle detected in topology: {} equipment nodes could not be topologically"
-	  + " sorted and were appended in discovery order: {}", unsorted.size(), unsorted);
+          + " sorted and were appended in discovery order: {}", unsorted.size(), unsorted);
     }
 
     return sorted;
@@ -638,8 +638,8 @@ public final class DexpiTopologyResolver {
    */
   private static boolean isSubComponent(String componentClass) {
     return "Chamber".equals(componentClass) || "TubeBundle".equals(componentClass) || "Impeller".equals(componentClass)
-	|| "NozzleShape".equals(componentClass) || "TaggedPlantItemShape".equals(componentClass)
-	|| "EquipmentShape".equals(componentClass) || "Shape".equals(componentClass)
-	|| componentClass.endsWith("Shape");
+        || "NozzleShape".equals(componentClass) || "TaggedPlantItemShape".equals(componentClass)
+        || "EquipmentShape".equals(componentClass) || "Shape".equals(componentClass)
+        || componentClass.endsWith("Shape");
   }
 }

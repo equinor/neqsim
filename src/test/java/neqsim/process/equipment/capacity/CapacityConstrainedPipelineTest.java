@@ -151,7 +151,7 @@ class CapacityConstrainedPipelineTest {
       // AutoSize may fail due to numerical issues with thermodynamics
       // This is acceptable - the test verifies the method exists and runs
       assertTrue(e.getMessage().contains("compressibility") || e.getMessage().contains("NaN"),
-	  "Exception should be related to thermodynamic calculation");
+          "Exception should be related to thermodynamic calculation");
     }
   }
 
@@ -183,7 +183,7 @@ class CapacityConstrainedPipelineTest {
     for (CapacityConstraint c : constraints.values()) {
       assertNotNull(c.getName(), "Constraint name should not be null");
       assertTrue(c.getDesignValue() > 0 || Double.isInfinite(c.getDesignValue()),
-	  "Design value should be set: " + c.getName());
+          "Design value should be set: " + c.getName());
     }
   }
 
@@ -380,7 +380,7 @@ class CapacityConstrainedPipelineTest {
 
     // Add a custom constraint
     CapacityConstraint customConstraint = new CapacityConstraint("customTest", "units",
-	CapacityConstraint.ConstraintType.SOFT).setDesignValue(100.0).setValueSupplier(() -> 50.0);
+        CapacityConstraint.ConstraintType.SOFT).setDesignValue(100.0).setValueSupplier(() -> 50.0);
     manifold.addCapacityConstraint(customConstraint);
 
     assertTrue(manifold.getCapacityConstraints().containsKey("customTest"), "Should contain custom constraint");
@@ -431,8 +431,8 @@ class CapacityConstrainedPipelineTest {
     boolean found = false;
     for (CapacityConstrainedEquipment equip : constrained) {
       if (equip instanceof PipeBeggsAndBrills) {
-	found = true;
-	break;
+        found = true;
+        break;
       }
     }
     assertTrue(found, "PipeBeggsAndBrills should be in constrained equipment list");
@@ -468,8 +468,8 @@ class CapacityConstrainedPipelineTest {
     boolean found = false;
     for (CapacityConstrainedEquipment equip : constrained) {
       if (equip instanceof AdiabaticPipe) {
-	found = true;
-	break;
+        found = true;
+        break;
       }
     }
     assertTrue(found, "AdiabaticPipe should be in constrained equipment list");
@@ -516,8 +516,8 @@ class CapacityConstrainedPipelineTest {
     boolean found = false;
     for (CapacityConstrainedEquipment equip : constrained) {
       if (equip instanceof Manifold) {
-	found = true;
-	break;
+        found = true;
+        break;
       }
     }
     assertTrue(found, "Manifold should be in constrained equipment list");
@@ -569,13 +569,13 @@ class CapacityConstrainedPipelineTest {
     boolean foundAdia = false;
     for (CapacityConstrainedEquipment equip : constrained) {
       if (equip instanceof Manifold) {
-	foundManifold = true;
+        foundManifold = true;
       }
       if (equip instanceof PipeBeggsAndBrills) {
-	foundBB = true;
+        foundBB = true;
       }
       if (equip instanceof AdiabaticPipe) {
-	foundAdia = true;
+        foundAdia = true;
       }
     }
     assertTrue(foundManifold, "Manifold should be in constrained list");
@@ -651,10 +651,10 @@ class CapacityConstrainedPipelineTest {
     boolean foundPipe = false;
     for (CapacityConstrainedEquipment equip : constrained) {
       if (equip instanceof Manifold) {
-	foundManifold = true;
+        foundManifold = true;
       }
       if (equip instanceof PipeBeggsAndBrills) {
-	foundPipe = true;
+        foundPipe = true;
       }
     }
     assertTrue(foundManifold, "Manifold should be in constrained list");
@@ -722,10 +722,10 @@ class CapacityConstrainedPipelineTest {
     boolean foundPipe = false;
     for (CapacityConstrainedEquipment equip : constrained) {
       if (equip instanceof Manifold) {
-	foundManifold = true;
+        foundManifold = true;
       }
       if (equip instanceof AdiabaticPipe) {
-	foundPipe = true;
+        foundPipe = true;
       }
     }
     assertTrue(foundManifold, "Should find manifold from nested module");

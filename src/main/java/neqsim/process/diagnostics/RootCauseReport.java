@@ -190,7 +190,7 @@ public class RootCauseReport implements Serializable {
     List<Hypothesis> filtered = new ArrayList<>();
     for (Hypothesis h : rankedHypotheses) {
       if (h.getConfidenceScore() >= minConfidence) {
-	filtered.add(h);
+        filtered.add(h);
       }
     }
     return filtered;
@@ -232,32 +232,32 @@ public class RootCauseReport implements Serializable {
       hypothesisJson.addProperty("verificationScore", hypothesis.getVerificationScore());
 
       if (hypothesis.getDescription() != null) {
-	hypothesisJson.addProperty("description", hypothesis.getDescription());
+        hypothesisJson.addProperty("description", hypothesis.getDescription());
       }
       if (hypothesis.getSimulationSummary() != null) {
-	hypothesisJson.addProperty("simulationSummary", hypothesis.getSimulationSummary());
+        hypothesisJson.addProperty("simulationSummary", hypothesis.getSimulationSummary());
       }
 
       JsonArray evidenceArray = new JsonArray();
       List<Hypothesis.Evidence> evidenceList = hypothesis.getEvidenceList();
       for (int j = 0; j < evidenceList.size(); j++) {
-	Hypothesis.Evidence evidence = evidenceList.get(j);
-	JsonObject evidenceJson = new JsonObject();
-	evidenceJson.addProperty("parameter", evidence.getParameter());
-	evidenceJson.addProperty("observation", evidence.getObservation());
-	evidenceJson.addProperty("strength", evidence.getStrength().name());
-	evidenceJson.addProperty("source", evidence.getSource());
-	evidenceJson.addProperty("supporting", evidence.isSupporting());
-	evidenceJson.addProperty("weight", evidence.getWeight());
-	evidenceJson.addProperty("sourceReference", evidence.getSourceReference());
-	evidenceArray.add(evidenceJson);
+        Hypothesis.Evidence evidence = evidenceList.get(j);
+        JsonObject evidenceJson = new JsonObject();
+        evidenceJson.addProperty("parameter", evidence.getParameter());
+        evidenceJson.addProperty("observation", evidence.getObservation());
+        evidenceJson.addProperty("strength", evidence.getStrength().name());
+        evidenceJson.addProperty("source", evidence.getSource());
+        evidenceJson.addProperty("supporting", evidence.isSupporting());
+        evidenceJson.addProperty("weight", evidence.getWeight());
+        evidenceJson.addProperty("sourceReference", evidence.getSourceReference());
+        evidenceArray.add(evidenceJson);
       }
       hypothesisJson.add("evidence", evidenceArray);
 
       JsonArray actionsArray = new JsonArray();
       List<String> actions = hypothesis.getRecommendedActions();
       for (int j = 0; j < actions.size(); j++) {
-	actionsArray.add(actions.get(j));
+        actionsArray.add(actions.get(j));
       }
       hypothesisJson.add("recommendedActions", actionsArray);
 
@@ -286,7 +286,7 @@ public class RootCauseReport implements Serializable {
     sb.append("Type:         ").append(equipmentType).append("\n");
     sb.append("Symptom:      ").append(symptom.name()).append(" - ").append(symptom.getDescription()).append("\n");
     sb.append("Timestamp:    ").append(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(analysisTimestamp)))
-	.append("\n");
+        .append("\n");
     sb.append("Data points:  ").append(dataPointsAnalyzed).append("\n");
     sb.append("Parameters:   ").append(parametersAnalyzed).append("\n\n");
 
@@ -303,32 +303,32 @@ public class RootCauseReport implements Serializable {
       sb.append(String.format("#%d  %s  (Confidence: %.1f%%)\n", i + 1, h.getName(), h.getConfidenceScore() * 100));
       sb.append(String.format("    Category: %s\n", h.getCategory().name()));
       sb.append(String.format("    Prior: %.3f | Likelihood: %.3f | Verification: %.3f\n", h.getPriorProbability(),
-	  h.getLikelihoodScore(), h.getVerificationScore()));
+          h.getLikelihoodScore(), h.getVerificationScore()));
 
       if (h.getDescription() != null) {
-	sb.append("    Description: ").append(h.getDescription()).append("\n");
+        sb.append("    Description: ").append(h.getDescription()).append("\n");
       }
 
       List<Hypothesis.Evidence> evList = h.getEvidenceList();
       if (!evList.isEmpty()) {
-	sb.append("    Evidence:\n");
-	for (Hypothesis.Evidence e : evList) {
-	  String direction = e.isSupporting() ? "supports" : "contradicts";
-	  sb.append(String.format("      [%s/%s w=%.1f] %s: %s (%s)\n", e.getStrength().name(), direction,
-	      e.getWeight(), e.getParameter(), e.getObservation(), e.getSource()));
-	}
+        sb.append("    Evidence:\n");
+        for (Hypothesis.Evidence e : evList) {
+          String direction = e.isSupporting() ? "supports" : "contradicts";
+          sb.append(String.format("      [%s/%s w=%.1f] %s: %s (%s)\n", e.getStrength().name(), direction,
+              e.getWeight(), e.getParameter(), e.getObservation(), e.getSource()));
+        }
       }
 
       if (h.getSimulationSummary() != null) {
-	sb.append("    Simulation: ").append(h.getSimulationSummary()).append("\n");
+        sb.append("    Simulation: ").append(h.getSimulationSummary()).append("\n");
       }
 
       List<String> actions = h.getRecommendedActions();
       if (!actions.isEmpty()) {
-	sb.append("    Recommended Actions:\n");
-	for (int j = 0; j < actions.size(); j++) {
-	  sb.append(String.format("      %d. %s\n", j + 1, actions.get(j)));
-	}
+        sb.append("    Recommended Actions:\n");
+        for (int j = 0; j < actions.size(); j++) {
+          sb.append(String.format("      %d. %s\n", j + 1, actions.get(j)));
+        }
       }
 
       sb.append("\n");
@@ -379,7 +379,7 @@ public class RootCauseReport implements Serializable {
     int count = 0;
     for (Hypothesis.Evidence evidence : hypothesis.getEvidenceList()) {
       if (!evidence.isSupporting() || evidence.getStrength() == Hypothesis.EvidenceStrength.CONTRADICTORY) {
-	count++;
+        count++;
       }
     }
     return count;

@@ -130,7 +130,7 @@ public final class SafetyAnalysisFunctionEvaluation implements Serializable {
      * @param coverageWarning screening flag: {@code "ok"}, {@code "watch"}, or {@code "gap"}
      */
     public Result(String componentType, List<String> requiredFunctions, List<String> providedFunctions,
-	List<String> missingFunctions, double coverageRatio, String coverageWarning) {
+        List<String> missingFunctions, double coverageRatio, String coverageWarning) {
       this.componentType = componentType;
       this.requiredFunctions = Collections.unmodifiableList(requiredFunctions);
       this.providedFunctions = Collections.unmodifiableList(providedFunctions);
@@ -214,7 +214,7 @@ public final class SafetyAnalysisFunctionEvaluation implements Serializable {
     for (int i = 0; i < required.size(); i++) {
       String code = required.get(i);
       if (!provided.contains(code)) {
-	missing.add(code);
+        missing.add(code);
       }
     }
 
@@ -222,7 +222,7 @@ public final class SafetyAnalysisFunctionEvaluation implements Serializable {
     String warning = warning(missing, coverageRatio);
 
     return new Result(normalizedType, required, provided, missing, Math.round(coverageRatio * 10000.0) / 10000.0,
-	warning);
+        warning);
   }
 
   /**
@@ -267,10 +267,10 @@ public final class SafetyAnalysisFunctionEvaluation implements Serializable {
     if (!REQUIRED_FUNCTIONS.containsKey(key)) {
       StringBuilder supported = new StringBuilder();
       for (String type : new TreeSet<String>(REQUIRED_FUNCTIONS.keySet())) {
-	if (supported.length() > 0) {
-	  supported.append(", ");
-	}
-	supported.append(type);
+        if (supported.length() > 0) {
+          supported.append(", ");
+        }
+        supported.append(type);
       }
       throw new IllegalArgumentException("componentType must be one of: " + supported.toString());
     }
@@ -291,11 +291,11 @@ public final class SafetyAnalysisFunctionEvaluation implements Serializable {
     List<String> normalized = new ArrayList<String>();
     for (String code : providedFunctions) {
       if (code == null || code.trim().isEmpty()) {
-	throw new IllegalArgumentException("providedFunctions must not contain blank codes");
+        throw new IllegalArgumentException("providedFunctions must not contain blank codes");
       }
       String token = code.trim().toUpperCase();
       if (!normalized.contains(token)) {
-	normalized.add(token);
+        normalized.add(token);
       }
     }
     return normalized;

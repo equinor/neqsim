@@ -145,22 +145,22 @@ public class FlashTable implements Serializable {
     // Fill the table
     for (int i = 0; i < nP; i++) {
       for (int j = 0; j < nT; j++) {
-	ThermoProperties props = coupling.flashPT(pressures[i], temperatures[j]);
+        ThermoProperties props = coupling.flashPT(pressures[i], temperatures[j]);
 
-	gasDensity[i][j] = props.gasDensity;
-	liquidDensity[i][j] = props.liquidDensity;
-	gasViscosity[i][j] = props.gasViscosity;
-	liquidViscosity[i][j] = props.liquidViscosity;
-	gasEnthalpy[i][j] = props.gasEnthalpy;
-	liquidEnthalpy[i][j] = props.liquidEnthalpy;
-	gasSoundSpeed[i][j] = props.gasSoundSpeed;
-	liquidSoundSpeed[i][j] = props.liquidSoundSpeed;
-	surfaceTension[i][j] = props.surfaceTension;
-	gasVaporFraction[i][j] = props.gasVaporFraction;
-	gasCp[i][j] = props.gasCp;
-	liquidCp[i][j] = props.liquidCp;
-	gasCompressibility[i][j] = props.gasCompressibility;
-	liquidCompressibility[i][j] = props.liquidCompressibility;
+        gasDensity[i][j] = props.gasDensity;
+        liquidDensity[i][j] = props.liquidDensity;
+        gasViscosity[i][j] = props.gasViscosity;
+        liquidViscosity[i][j] = props.liquidViscosity;
+        gasEnthalpy[i][j] = props.gasEnthalpy;
+        liquidEnthalpy[i][j] = props.liquidEnthalpy;
+        gasSoundSpeed[i][j] = props.gasSoundSpeed;
+        liquidSoundSpeed[i][j] = props.liquidSoundSpeed;
+        surfaceTension[i][j] = props.surfaceTension;
+        gasVaporFraction[i][j] = props.gasVaporFraction;
+        gasCp[i][j] = props.gasCp;
+        liquidCp[i][j] = props.liquidCp;
+        gasCompressibility[i][j] = props.gasCompressibility;
+        liquidCompressibility[i][j] = props.liquidCompressibility;
       }
     }
 

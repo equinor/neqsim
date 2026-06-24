@@ -608,13 +608,13 @@ public class VesselDepressurizationTest {
     assertTrue(result.getInitialPressure() > result.getFinalPressure(), "Pressure should decrease");
     assertTrue(result.getMassDischarged() > 0, "Some mass should be discharged");
     assertTrue(result.getMassDischargedFraction() > 0 && result.getMassDischargedFraction() < 1,
-	"Fraction discharged should be between 0 and 1");
+        "Fraction discharged should be between 0 and 1");
 
     // Verify arrays have same length
     assertEquals(result.getTime().size(), result.getPressure().size(),
-	"Time and pressure arrays should have same length");
+        "Time and pressure arrays should have same length");
     assertEquals(result.getTime().size(), result.getTemperature().size(),
-	"Time and temperature arrays should have same length");
+        "Time and temperature arrays should have same length");
   }
 
   @Test
@@ -705,7 +705,7 @@ public class VesselDepressurizationTest {
 
     // At 10 bar, propane saturation temp is around 300K
     assertTrue(propane.getTemperature() > 270 && propane.getTemperature() < 330,
-	"Temperature should be near saturation for propane at 10 bar (~300K)");
+        "Temperature should be near saturation for propane at 10 bar (~300K)");
 
     // Pressure should be maintained
     assertEquals(10.0, propane.getPressure(), 0.5, "Pressure should be 10 bar");
@@ -1070,9 +1070,9 @@ public class VesselDepressurizationTest {
     double finalMass = vessel.getMass();
 
     assertTrue(finalP > initialP,
-	"Pressure should increase during filling. Initial: " + initialP + ", Final: " + finalP);
+        "Pressure should increase during filling. Initial: " + initialP + ", Final: " + finalP);
     assertTrue(finalMass > initialMass,
-	"Mass should increase during filling. Initial: " + initialMass + ", Final: " + finalMass);
+        "Mass should increase during filling. Initial: " + initialMass + ", Final: " + finalMass);
   }
 
   @Test
@@ -1106,7 +1106,7 @@ public class VesselDepressurizationTest {
 
     assertTrue(vessel.isTargetPressureReached(), "Target pressure should be reached");
     assertTrue(vessel.getPressure("bar") >= 49.0,
-	"Final pressure should be near target. Actual: " + vessel.getPressure("bar"));
+        "Final pressure should be near target. Actual: " + vessel.getPressure("bar"));
   }
 
   @Test
@@ -1176,7 +1176,7 @@ public class VesselDepressurizationTest {
 
     assertEquals(expectedTotal, vessel.getVolume(), 0.01, "Volume should include cylinder + hemispheric caps");
     assertTrue(vessel.getVolume() > 14.0 && vessel.getVolume() < 16.0,
-	"Volume should be approximately 15.4 m3 for CNG tank geometry");
+        "Volume should be approximately 15.4 m3 for CNG tank geometry");
   }
 
   @Test
@@ -1207,7 +1207,7 @@ public class VesselDepressurizationTest {
 
     logger.info("=== CNG Filling Diagnostic (ADIABATIC) ===");
     logger.info("Initial: T=" + (vessel.getTemperature() - 273.15) + "C, P=" + vessel.getPressure("bar") + " bar, mass="
-	+ vessel.getMass() + " kg");
+        + vessel.getMass() + " kg");
 
     // Get access to the thermoSystem state via fluid properties
     SystemInterface sys = feed.getThermoSystem().clone();
@@ -1219,17 +1219,17 @@ public class VesselDepressurizationTest {
     tOps.TPflash();
     sys.init(3);
     logger.info("Feed fluid at 288K, 20bar: H=" + sys.getEnthalpy() + " J, U=" + sys.getInternalEnergy() + " J, mass="
-	+ (sys.getTotalNumberOfMoles() * sys.getMolarMass()) + " kg");
+        + (sys.getTotalNumberOfMoles() * sys.getMolarMass()) + " kg");
     logger.info("Feed specific h=" + sys.getEnthalpy() / (sys.getTotalNumberOfMoles() * sys.getMolarMass()) + " J/kg");
     logger.info(
-	"Feed specific u=" + sys.getInternalEnergy() / (sys.getTotalNumberOfMoles() * sys.getMolarMass()) + " J/kg");
+        "Feed specific u=" + sys.getInternalEnergy() / (sys.getTotalNumberOfMoles() * sys.getMolarMass()) + " J/kg");
 
     UUID id = UUID.randomUUID();
     for (int i = 0; i < 10; i++) {
       vessel.runTransient(10.0, id);
       logger.info("Step " + (i + 1) + ": T=" + String.format("%.2f", vessel.getTemperature() - 273.15) + "C, P="
-	  + String.format("%.4f", vessel.getPressure("bar")) + " bar, mass=" + String.format("%.4f", vessel.getMass())
-	  + " kg");
+          + String.format("%.4f", vessel.getPressure("bar")) + " bar, mass=" + String.format("%.4f", vessel.getMass())
+          + " kg");
     }
 
     double finalT = vessel.getTemperature() - 273.15;
@@ -1300,9 +1300,9 @@ public class VesselDepressurizationTest {
     assertTrue(finalMass > initialMass, "Mass should increase during CNG filling");
     // Temperature should be physically reasonable (10-80 C for filling from 15 C)
     assertTrue((finalT - 273.15) > 10.0 && (finalT - 273.15) < 80.0,
-	"Gas temperature " + (finalT - 273.15) + " C should be between 10 and 80 C");
+        "Gas temperature " + (finalT - 273.15) + " C should be between 10 and 80 C");
     assertTrue((wallT - 273.15) > 0.0 && (wallT - 273.15) < 50.0,
-	"Wall temperature " + (wallT - 273.15) + " C should be between 0 and 50 C");
+        "Wall temperature " + (wallT - 273.15) + " C should be between 0 and 50 C");
   }
 
   @Test
@@ -1335,11 +1335,11 @@ public class VesselDepressurizationTest {
     vessel.run();
 
     assertEquals(VesselDepressurization.FireModelType.STEFAN_BOLTZMANN, vessel.getFireModelType(),
-	"Fire model type should be STEFAN_BOLTZMANN");
+        "Fire model type should be STEFAN_BOLTZMANN");
     assertEquals(VesselDepressurization.FireType.SCANDPOWER_JET, vessel.getFireType(),
-	"Fire type should be SCANDPOWER_JET");
+        "Fire type should be SCANDPOWER_JET");
     assertTrue(vessel.getFlameTemperature() > 800.0,
-	"Flame temperature should be > 800 K, got " + vessel.getFlameTemperature());
+        "Flame temperature should be > 800 K, got " + vessel.getFlameTemperature());
     assertTrue(vessel.isFireCase(), "Fire case should be enabled");
 
     double initialP = vessel.getPressure("bar");
@@ -1356,7 +1356,7 @@ public class VesselDepressurizationTest {
 
     // Pressure should drop significantly during blowdown
     assertTrue(finalP < initialP * 0.85,
-	"Pressure should decrease significantly. Initial: " + initialP + ", Final: " + finalP);
+        "Pressure should decrease significantly. Initial: " + initialP + ", Final: " + finalP);
 
     // With S-B fire on wall, gas temp should remain physically reasonable (not 400+ C)
     assertTrue(finalT < 150.0, "S-B fire gas temp " + finalT + " C should be < 150 C (physically realistic)");
@@ -1381,7 +1381,7 @@ public class VesselDepressurizationTest {
     double fluxAtAmbient = vessel.calculateSBFireFlux(300.0);
     assertTrue(fluxAtAmbient > 50000.0, "Fire flux at 300 K wall should be > 50 kW/m2, got " + fluxAtAmbient / 1000.0);
     assertTrue(fluxAtAmbient < 150000.0,
-	"Fire flux at 300 K wall should be < 150 kW/m2, got " + fluxAtAmbient / 1000.0);
+        "Fire flux at 300 K wall should be < 150 kW/m2, got " + fluxAtAmbient / 1000.0);
 
     // At higher wall temperature, flux should decrease due to re-radiation
     double fluxAtHotWall = vessel.calculateSBFireFlux(600.0);
@@ -1406,14 +1406,14 @@ public class VesselDepressurizationTest {
     vessel.run();
 
     assertEquals(VesselDepressurization.FireType.CUSTOM, vessel.getFireType(),
-	"Fire type should be CUSTOM after setSBFireParameters");
+        "Fire type should be CUSTOM after setSBFireParameters");
     assertEquals(VesselDepressurization.FireModelType.STEFAN_BOLTZMANN, vessel.getFireModelType(),
-	"Model type should be STEFAN_BOLTZMANN");
+        "Model type should be STEFAN_BOLTZMANN");
 
     // Flame temperature should have been calculated
     double flameT = vessel.getFlameTemperature();
     assertTrue(flameT > 700.0 && flameT < 1500.0,
-	"Flame temperature " + flameT + " K should be between 700 and 1500 K");
+        "Flame temperature " + flameT + " K should be between 700 and 1500 K");
 
     // Setting flame temperature directly should work
     vessel.setFlameTemperature(1000.0);
@@ -1482,7 +1482,7 @@ public class VesselDepressurizationTest {
     // S-B model should produce more physically realistic (lower) gas temperature
     // because heat goes through the wall instead of directly to gas
     assertTrue(sbGasT < constGasT,
-	"S-B gas temp (" + sbGasT + " C) should be lower than constant flux (" + constGasT + " C)");
+        "S-B gas temp (" + sbGasT + " C) should be lower than constant flux (" + constGasT + " C)");
   }
 
   @Test
@@ -1491,8 +1491,8 @@ public class VesselDepressurizationTest {
     Stream feed = createTestStream(300.0, 50.0);
 
     VesselDepressurization.FireType[] presets = { VesselDepressurization.FireType.SCANDPOWER_JET,
-	VesselDepressurization.FireType.SCANDPOWER_POOL, VesselDepressurization.FireType.API_JET,
-	VesselDepressurization.FireType.API_POOL };
+        VesselDepressurization.FireType.SCANDPOWER_POOL, VesselDepressurization.FireType.API_JET,
+        VesselDepressurization.FireType.API_POOL };
 
     for (VesselDepressurization.FireType preset : presets) {
       VesselDepressurization vessel = new VesselDepressurization("preset_" + preset.name(), feed);
@@ -1501,10 +1501,10 @@ public class VesselDepressurizationTest {
       vessel.run();
 
       assertEquals(VesselDepressurization.FireModelType.STEFAN_BOLTZMANN, vessel.getFireModelType(),
-	  preset.name() + ": should set model to STEFAN_BOLTZMANN");
+          preset.name() + ": should set model to STEFAN_BOLTZMANN");
       assertTrue(vessel.isFireCase(), preset.name() + ": fire case should be enabled");
       assertTrue(vessel.getFlameTemperature() > 500.0,
-	  preset.name() + ": flame temp should be > 500 K, got " + vessel.getFlameTemperature());
+          preset.name() + ": flame temp should be > 500 K, got " + vessel.getFlameTemperature());
       assertTrue(vessel.calculateSBFireFlux(300.0) > 0, preset.name() + ": flux at 300 K wall should be positive");
     }
   }
@@ -1541,7 +1541,7 @@ public class VesselDepressurizationTest {
     // Temperature should decrease towards ambient (40 C -> towards 15 C)
     double finalTemp = temps.get(temps.size() - 1);
     assertTrue(finalTemp < initialTemp, "Temperature should decrease towards ambient in IDLE mode, was "
-	+ (initialTemp - 273.15) + " C, now " + (finalTemp - 273.15) + " C");
+        + (initialTemp - 273.15) + " C, now " + (finalTemp - 273.15) + " C");
     assertTrue(finalTemp > 273.15 + 15.0, "Temperature should still be above ambient after 1 hour");
   }
 
@@ -1563,6 +1563,6 @@ public class VesselDepressurizationTest {
 
     // The wall temperature should now be set to the new value
     assertEquals(newWallTemp, vessel.getWallTemperature(), 0.5,
-	"Wall temperature should be set to the specified value");
+        "Wall temperature should be set to the specified value");
   }
 }

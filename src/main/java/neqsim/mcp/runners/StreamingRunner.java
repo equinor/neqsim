@@ -71,25 +71,25 @@ public final class StreamingRunner {
       switch (action) {
       case "startSweep":
       case "startParametricSweep":
-	return startParametricSweep(input);
+        return startParametricSweep(input);
       case "startDynamic":
       case "startDynamicStreaming":
-	return startDynamicStreaming(input);
+        return startDynamicStreaming(input);
       case "startMonteCarlo":
-	return startMonteCarlo(input);
+        return startMonteCarlo(input);
       case "poll":
       case "pollResults":
-	return pollResults(input);
+        return pollResults(input);
       case "cancel":
       case "cancelOperation":
-	return cancelOperation(input);
+        return cancelOperation(input);
       case "list":
       case "listOperations":
-	return listOperations();
+        return listOperations();
       default:
-	return errorJson("UNKNOWN_ACTION", "Unknown streaming action: " + action,
-	    "Use: startSweep/startParametricSweep, startDynamic/startDynamicStreaming, "
-		+ "startMonteCarlo, poll/pollResults, cancel/cancelOperation, " + "list/listOperations");
+        return errorJson("UNKNOWN_ACTION", "Unknown streaming action: " + action,
+            "Use: startSweep/startParametricSweep, startDynamic/startDynamicStreaming, "
+                + "startMonteCarlo, poll/pollResults, cancel/cancelOperation, " + "list/listOperations");
       }
     } catch (Exception e) {
       return errorJson("STREAMING_ERROR", "Streaming operation failed: " + e.getMessage(), "Check JSON format");
@@ -132,56 +132,56 @@ public final class StreamingRunner {
     // Run in background
     EXECUTOR.submit(() -> {
       try {
-	for (int i = 0; i < points && !op.cancelled; i++) {
-	  double val = from + (to - from) * i / (Math.max(points - 1, 1));
+        for (int i = 0; i < points && !op.cancelled; i++) {
+          double val = from + (to - from) * i / (Math.max(points - 1, 1));
 
-	  double tempK;
-	  double pressBar;
+          double tempK;
+          double pressBar;
 
-	  if ("temperature".equalsIgnoreCase(sweepVar)) {
-	    tempK = convertToKelvin(val, unit);
-	    pressBar = convertToBara(fixedPressure, fixedPressureUnit);
-	  } else {
-	    tempK = convertToKelvin(fixedTemp, fixedTempUnit);
-	    pressBar = convertToBara(val, unit);
-	  }
+          if ("temperature".equalsIgnoreCase(sweepVar)) {
+            tempK = convertToKelvin(val, unit);
+            pressBar = convertToBara(fixedPressure, fixedPressureUnit);
+          } else {
+            tempK = convertToKelvin(fixedTemp, fixedTempUnit);
+            pressBar = convertToBara(val, unit);
+          }
 
-	  SystemInterface fluid = FlashRunner.createFluid(model, tempK, pressBar);
-	  for (Map.Entry<String, JsonElement> entry : components.entrySet()) {
-	    fluid.addComponent(entry.getKey(), entry.getValue().getAsDouble());
-	  }
-	  fluid.setMixingRule("classic");
-	  ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-	  ops.TPflash();
-	  fluid.initProperties();
+          SystemInterface fluid = FlashRunner.createFluid(model, tempK, pressBar);
+          for (Map.Entry<String, JsonElement> entry : components.entrySet()) {
+            fluid.addComponent(entry.getKey(), entry.getValue().getAsDouble());
+          }
+          fluid.setMixingRule("classic");
+          ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+          ops.TPflash();
+          fluid.initProperties();
 
-	  // Build result for this point
-	  JsonObject point = new JsonObject();
-	  point.addProperty("index", i);
-	  point.addProperty("sweepValue", val);
-	  point.addProperty("sweepUnit", unit);
-	  point.addProperty("temperature_K", fluid.getTemperature());
-	  point.addProperty("pressure_bara", fluid.getPressure());
-	  point.addProperty("density_kg_m3", fluid.getDensity("kg/m3"));
-	  point.addProperty("numberOfPhases", fluid.getNumberOfPhases());
-	  point.addProperty("compressibilityZ", fluid.getZ());
-	  point.addProperty("enthalpy_J_mol", fluid.getEnthalpy());
-	  point.addProperty("entropy_J_molK", fluid.getEntropy());
+          // Build result for this point
+          JsonObject point = new JsonObject();
+          point.addProperty("index", i);
+          point.addProperty("sweepValue", val);
+          point.addProperty("sweepUnit", unit);
+          point.addProperty("temperature_K", fluid.getTemperature());
+          point.addProperty("pressure_bara", fluid.getPressure());
+          point.addProperty("density_kg_m3", fluid.getDensity("kg/m3"));
+          point.addProperty("numberOfPhases", fluid.getNumberOfPhases());
+          point.addProperty("compressibilityZ", fluid.getZ());
+          point.addProperty("enthalpy_J_mol", fluid.getEnthalpy());
+          point.addProperty("entropy_J_molK", fluid.getEntropy());
 
-	  if (fluid.getNumberOfPhases() > 0) {
-	    point.addProperty("phase0_type", fluid.getPhase(0).getPhaseTypeName());
-	    point.addProperty("phase0_fraction", fluid.getPhase(0).getBeta());
-	  }
+          if (fluid.getNumberOfPhases() > 0) {
+            point.addProperty("phase0_type", fluid.getPhase(0).getPhaseTypeName());
+            point.addProperty("phase0_fraction", fluid.getPhase(0).getBeta());
+          }
 
-	  op.addResult(point);
-	  op.completedSteps = i + 1;
-	  op.status = "running";
-	}
+          op.addResult(point);
+          op.completedSteps = i + 1;
+          op.status = "running";
+        }
 
-	op.markFinished(op.cancelled ? "cancelled" : "completed");
+        op.markFinished(op.cancelled ? "cancelled" : "completed");
       } catch (Exception e) {
-	op.markFinished("failed");
-	op.errorMessage = e.getMessage();
+        op.markFinished("failed");
+        op.errorMessage = e.getMessage();
       }
     });
 
@@ -219,37 +219,37 @@ public final class StreamingRunner {
 
     EXECUTOR.submit(() -> {
       try {
-	SimulationResult buildResult = ProcessSystem.fromJsonAndRun(processJson);
-	if (buildResult.isError()) {
-	  op.status = "failed";
-	  op.errorMessage = "Failed to build process";
-	  return;
-	}
+        SimulationResult buildResult = ProcessSystem.fromJsonAndRun(processJson);
+        if (buildResult.isError()) {
+          op.status = "failed";
+          op.errorMessage = "Failed to build process";
+          return;
+        }
 
-	ProcessSystem process = buildResult.getProcessSystem();
-	op.status = "running";
+        ProcessSystem process = buildResult.getProcessSystem();
+        op.status = "running";
 
-	for (int i = 0; i < steps && !op.cancelled; i++) {
-	  process.runTransient(timeStep);
+        for (int i = 0; i < steps && !op.cancelled; i++) {
+          process.runTransient(timeStep);
 
-	  JsonObject point = new JsonObject();
-	  point.addProperty("timeStep", i);
-	  point.addProperty("time_s", (i + 1) * timeStep);
+          JsonObject point = new JsonObject();
+          point.addProperty("timeStep", i);
+          point.addProperty("time_s", (i + 1) * timeStep);
 
-	  // Report from process
-	  String report = process.getReport_json();
-	  if (report != null && !report.isEmpty()) {
-	    point.add("state", JsonParser.parseString(report));
-	  }
+          // Report from process
+          String report = process.getReport_json();
+          if (report != null && !report.isEmpty()) {
+            point.add("state", JsonParser.parseString(report));
+          }
 
-	  op.addResult(point);
-	  op.completedSteps = i + 1;
-	}
+          op.addResult(point);
+          op.completedSteps = i + 1;
+        }
 
-	op.markFinished(op.cancelled ? "cancelled" : "completed");
+        op.markFinished(op.cancelled ? "cancelled" : "completed");
       } catch (Exception e) {
-	op.markFinished("failed");
-	op.errorMessage = e.getMessage();
+        op.markFinished("failed");
+        op.errorMessage = e.getMessage();
       }
     });
 
@@ -292,69 +292,69 @@ public final class StreamingRunner {
 
     EXECUTOR.submit(() -> {
       try {
-	java.util.Random rng = new java.util.Random(42);
-	List<Double> densities = new ArrayList<Double>();
-	List<Double> zFactors = new ArrayList<Double>();
+        java.util.Random rng = new java.util.Random(42);
+        List<Double> densities = new ArrayList<Double>();
+        List<Double> zFactors = new ArrayList<Double>();
 
-	for (int i = 0; i < iterations && !op.cancelled; i++) {
-	  double temp = tempMean + tempStd * rng.nextGaussian();
-	  double pres = Math.max(1.0, presMean + presStd * rng.nextGaussian());
-	  double tempK = convertToKelvin(temp, "C");
+        for (int i = 0; i < iterations && !op.cancelled; i++) {
+          double temp = tempMean + tempStd * rng.nextGaussian();
+          double pres = Math.max(1.0, presMean + presStd * rng.nextGaussian());
+          double tempK = convertToKelvin(temp, "C");
 
-	  SystemInterface fluid = FlashRunner.createFluid(model, tempK, pres);
-	  for (Map.Entry<String, JsonElement> entry : baseComponents.entrySet()) {
-	    fluid.addComponent(entry.getKey(), entry.getValue().getAsDouble());
-	  }
-	  fluid.setMixingRule("classic");
-	  ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-	  ops.TPflash();
-	  fluid.initProperties();
+          SystemInterface fluid = FlashRunner.createFluid(model, tempK, pres);
+          for (Map.Entry<String, JsonElement> entry : baseComponents.entrySet()) {
+            fluid.addComponent(entry.getKey(), entry.getValue().getAsDouble());
+          }
+          fluid.setMixingRule("classic");
+          ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+          ops.TPflash();
+          fluid.initProperties();
 
-	  double density = fluid.getDensity("kg/m3");
-	  double z = fluid.getZ();
-	  densities.add(density);
-	  zFactors.add(z);
+          double density = fluid.getDensity("kg/m3");
+          double z = fluid.getZ();
+          densities.add(density);
+          zFactors.add(z);
 
-	  // Report every 10th iteration or last
-	  if (i % 10 == 0 || i == iterations - 1) {
-	    JsonObject point = new JsonObject();
-	    point.addProperty("iteration", i + 1);
-	    point.addProperty("temperature_C", temp);
-	    point.addProperty("pressure_bara", pres);
-	    point.addProperty("density_kg_m3", density);
-	    point.addProperty("Z", z);
+          // Report every 10th iteration or last
+          if (i % 10 == 0 || i == iterations - 1) {
+            JsonObject point = new JsonObject();
+            point.addProperty("iteration", i + 1);
+            point.addProperty("temperature_C", temp);
+            point.addProperty("pressure_bara", pres);
+            point.addProperty("density_kg_m3", density);
+            point.addProperty("Z", z);
 
-	    // Running statistics
-	    point.addProperty("mean_density", mean(densities));
-	    point.addProperty("std_density", stddev(densities));
-	    point.addProperty("mean_Z", mean(zFactors));
-	    point.addProperty("std_Z", stddev(zFactors));
-	    point.addProperty("samples", densities.size());
+            // Running statistics
+            point.addProperty("mean_density", mean(densities));
+            point.addProperty("std_density", stddev(densities));
+            point.addProperty("mean_Z", mean(zFactors));
+            point.addProperty("std_Z", stddev(zFactors));
+            point.addProperty("samples", densities.size());
 
-	    op.addResult(point);
-	  }
+            op.addResult(point);
+          }
 
-	  op.completedSteps = i + 1;
-	  op.status = "running";
-	}
+          op.completedSteps = i + 1;
+          op.status = "running";
+        }
 
-	// Final statistics
-	JsonObject summary = new JsonObject();
-	summary.addProperty("type", "summary");
-	summary.addProperty("totalIterations", densities.size());
-	summary.addProperty("density_mean", mean(densities));
-	summary.addProperty("density_std", stddev(densities));
-	summary.addProperty("density_p10", percentile(densities, 10));
-	summary.addProperty("density_p50", percentile(densities, 50));
-	summary.addProperty("density_p90", percentile(densities, 90));
-	summary.addProperty("Z_mean", mean(zFactors));
-	summary.addProperty("Z_std", stddev(zFactors));
-	op.addResult(summary);
+        // Final statistics
+        JsonObject summary = new JsonObject();
+        summary.addProperty("type", "summary");
+        summary.addProperty("totalIterations", densities.size());
+        summary.addProperty("density_mean", mean(densities));
+        summary.addProperty("density_std", stddev(densities));
+        summary.addProperty("density_p10", percentile(densities, 10));
+        summary.addProperty("density_p50", percentile(densities, 50));
+        summary.addProperty("density_p90", percentile(densities, 90));
+        summary.addProperty("Z_mean", mean(zFactors));
+        summary.addProperty("Z_std", stddev(zFactors));
+        op.addResult(summary);
 
-	op.markFinished(op.cancelled ? "cancelled" : "completed");
+        op.markFinished(op.cancelled ? "cancelled" : "completed");
       } catch (Exception e) {
-	op.markFinished("failed");
-	op.errorMessage = e.getMessage();
+        op.markFinished("failed");
+        op.errorMessage = e.getMessage();
       }
     });
 
@@ -504,7 +504,7 @@ public final class StreamingRunner {
     for (Map.Entry<String, StreamingOperation> entry : OPERATIONS.entrySet()) {
       StreamingOperation op = entry.getValue();
       if (op.isTerminal() && now - op.lastUpdatedAt > OPERATION_RETENTION_MS) {
-	toRemove.add(entry.getKey());
+        toRemove.add(entry.getKey());
       }
     }
     for (String operationId : toRemove) {
@@ -705,10 +705,10 @@ public final class StreamingRunner {
      */
     List<JsonObject> getResultsSince(int fromIndex) {
       synchronized (results) {
-	if (fromIndex >= results.size()) {
-	  return new ArrayList<JsonObject>();
-	}
-	return new ArrayList<JsonObject>(results.subList(fromIndex, results.size()));
+        if (fromIndex >= results.size()) {
+          return new ArrayList<JsonObject>();
+        }
+        return new ArrayList<JsonObject>(results.subList(fromIndex, results.size()));
       }
     }
 

@@ -76,21 +76,21 @@ public class DataSmoother {
       index[i] = 1;
       b[i] = 1.0;
       for (int j = 0; j < m + 1; j++) {
-	a[j][j] = 1.0;
+        a[j][j] = 1.0;
       }
     }
 
     for (int ipj = 0; ipj <= (m << 1); ipj++) {
       sum = !(ipj == 0) ? 0.0 : 1.0;
       for (int k = 1; k <= nr; k++) {
-	sum += Math.pow(k, ipj);
+        sum += Math.pow(k, ipj);
       }
       for (int k = 1; k <= nl; k++) {
-	sum += Math.pow(-k, ipj);
+        sum += Math.pow(-k, ipj);
       }
       mm = Math.min(ipj, 2 * m - ipj);
       for (imj = -mm; imj <= mm; imj += 2) {
-	a[(ipj + imj) / 2][(ipj - imj) / 2] = sum;
+        a[(ipj + imj) / 2][(ipj - imj) / 2] = sum;
       }
     }
 
@@ -114,7 +114,7 @@ public class DataSmoother {
       sum = b[0];
       fac = 1.0;
       for (mm = 0; mm < m; mm++) {
-	sum += b[mm + 1] * (fac *= k);
+        sum += b[mm + 1] * (fac *= k);
       }
       kk = ((nonSmoothedNumbers.length - k) % nonSmoothedNumbers.length);
       cCoef[kk] = sum;
@@ -130,10 +130,10 @@ public class DataSmoother {
       smoothedNumbers[i] = 0;
       smoothedNumbers[i] = cCoef[0] * nonSmoothedNumbers[i];
       for (int j = 0; j < nl; j++) {
-	smoothedNumbers[i] += cCoef[nonSmoothedNumbers.length - 1 - j] * nonSmoothedNumbers[i - j - 1];
+        smoothedNumbers[i] += cCoef[nonSmoothedNumbers.length - 1 - j] * nonSmoothedNumbers[i - j - 1];
       }
       for (int j = 0; j < nr; j++) {
-	smoothedNumbers[i] += cCoef[j + 1] * nonSmoothedNumbers[i + j - 1];
+        smoothedNumbers[i] += cCoef[j + 1] * nonSmoothedNumbers[i + j - 1];
       }
     }
   }

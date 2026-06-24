@@ -42,7 +42,7 @@ public class PropertyTableRunner {
 
   private static final List<String> AVAILABLE_PROPERTIES = Collections
       .unmodifiableList(Arrays.asList("density", "viscosity", "Cp", "Cv", "Z", "enthalpy", "entropy",
-	  "thermalConductivity", "molarMass", "soundSpeed", "jouleThomsonCoefficient", "numberOfPhases"));
+          "thermalConductivity", "molarMass", "soundSpeed", "jouleThomsonCoefficient", "numberOfPhases"));
 
   /**
    * Private constructor — all methods are static.
@@ -59,7 +59,7 @@ public class PropertyTableRunner {
   public static String run(String json) {
     if (json == null || json.trim().isEmpty()) {
       return errorJson("INPUT_ERROR", "JSON input is null or empty",
-	  "Provide a JSON property table specification with 'components' and 'sweep'");
+          "Provide a JSON property table specification with 'components' and 'sweep'");
     }
 
     long startTime = System.currentTimeMillis();
@@ -77,7 +77,7 @@ public class PropertyTableRunner {
     // --- Parse components ---
     if (!input.has("components")) {
       return errorJson("MISSING_COMPONENTS", "No 'components' specified",
-	  "Provide a components map, e.g. {\"methane\": 0.85, \"ethane\": 0.15}");
+          "Provide a components map, e.g. {\"methane\": 0.85, \"ethane\": 0.15}");
     }
     JsonObject componentsJson = input.getAsJsonObject("components");
     Map<String, Double> components = new HashMap<String, Double>();
@@ -92,7 +92,7 @@ public class PropertyTableRunner {
     String sweep = input.has("sweep") ? input.get("sweep").getAsString().toLowerCase() : "temperature";
     if (!"temperature".equals(sweep) && !"pressure".equals(sweep)) {
       return errorJson("INVALID_SWEEP", "Sweep must be 'temperature' or 'pressure'",
-	  "Specify sweep as 'temperature' (vary T at fixed P) or 'pressure' (vary P at fixed T)");
+          "Specify sweep as 'temperature' (vary T at fixed P) or 'pressure' (vary P at fixed T)");
     }
 
     // --- Parse sweep range ---
@@ -110,36 +110,36 @@ public class PropertyTableRunner {
 
     if ("temperature".equals(sweep)) {
       if (!input.has("sweepFrom") || !input.has("sweepTo")) {
-	return errorJson("MISSING_RANGE", "Temperature sweep requires 'sweepFrom' and 'sweepTo'",
-	    "Provide temperature range, e.g. {\"value\": -40, \"unit\": \"C\"}");
+        return errorJson("MISSING_RANGE", "Temperature sweep requires 'sweepFrom' and 'sweepTo'",
+            "Provide temperature range, e.g. {\"value\": -40, \"unit\": \"C\"}");
       }
       sweepFromK = FlashRunner.parseTemperature(input.get("sweepFrom"));
       sweepToK = FlashRunner.parseTemperature(input.get("sweepTo"));
       if (Double.isNaN(sweepFromK) || Double.isNaN(sweepToK)) {
-	return errorJson("TEMPERATURE_ERROR", "Invalid temperature range",
-	    "Provide {\"value\": 25.0, \"unit\": \"C\"}");
+        return errorJson("TEMPERATURE_ERROR", "Invalid temperature range",
+            "Provide {\"value\": 25.0, \"unit\": \"C\"}");
       }
       if (!input.has("fixedPressure")) {
-	return errorJson("MISSING_PRESSURE", "Temperature sweep requires 'fixedPressure'",
-	    "Provide pressure, e.g. {\"value\": 50.0, \"unit\": \"bara\"}");
+        return errorJson("MISSING_PRESSURE", "Temperature sweep requires 'fixedPressure'",
+            "Provide pressure, e.g. {\"value\": 50.0, \"unit\": \"bara\"}");
       }
       fixedPBara = FlashRunner.parsePressure(input.get("fixedPressure"));
       fixedTK = 0; // unused
     } else {
       if (!input.has("sweepFrom") || !input.has("sweepTo")) {
-	return errorJson("MISSING_RANGE", "Pressure sweep requires 'sweepFrom' and 'sweepTo'",
-	    "Provide pressure range, e.g. {\"value\": 10, \"unit\": \"bara\"}");
+        return errorJson("MISSING_RANGE", "Pressure sweep requires 'sweepFrom' and 'sweepTo'",
+            "Provide pressure range, e.g. {\"value\": 10, \"unit\": \"bara\"}");
       }
       double fromP = FlashRunner.parsePressure(input.get("sweepFrom"));
       double toP = FlashRunner.parsePressure(input.get("sweepTo"));
       if (Double.isNaN(fromP) || Double.isNaN(toP)) {
-	return errorJson("PRESSURE_ERROR", "Invalid pressure range", "Provide {\"value\": 50.0, \"unit\": \"bara\"}");
+        return errorJson("PRESSURE_ERROR", "Invalid pressure range", "Provide {\"value\": 50.0, \"unit\": \"bara\"}");
       }
       sweepFromK = fromP; // reuse variables (they're actually pressures for P sweep)
       sweepToK = toP;
       if (!input.has("fixedTemperature")) {
-	return errorJson("MISSING_TEMPERATURE", "Pressure sweep requires 'fixedTemperature'",
-	    "Provide temperature, e.g. {\"value\": 25.0, \"unit\": \"C\"}");
+        return errorJson("MISSING_TEMPERATURE", "Pressure sweep requires 'fixedTemperature'",
+            "Provide temperature, e.g. {\"value\": 25.0, \"unit\": \"C\"}");
       }
       fixedTK = FlashRunner.parseTemperature(input.get("fixedTemperature"));
       fixedPBara = 0; // unused
@@ -150,7 +150,7 @@ public class PropertyTableRunner {
     if (input.has("properties")) {
       JsonArray propsArray = input.getAsJsonArray("properties");
       for (JsonElement el : propsArray) {
-	requestedProps.add(el.getAsString());
+        requestedProps.add(el.getAsString());
       }
     }
     if (requestedProps.isEmpty()) {
@@ -163,53 +163,53 @@ public class PropertyTableRunner {
       int convergedCount = 0;
 
       for (int i = 0; i < points; i++) {
-	double fraction = (double) i / (double) (points - 1);
-	double sweepValue = sweepFromK + fraction * (sweepToK - sweepFromK);
+        double fraction = (double) i / (double) (points - 1);
+        double sweepValue = sweepFromK + fraction * (sweepToK - sweepFromK);
 
-	double tK;
-	double pBara;
-	if ("temperature".equals(sweep)) {
-	  tK = sweepValue;
-	  pBara = fixedPBara;
-	} else {
-	  tK = fixedTK;
-	  pBara = sweepValue;
-	}
+        double tK;
+        double pBara;
+        if ("temperature".equals(sweep)) {
+          tK = sweepValue;
+          pBara = fixedPBara;
+        } else {
+          tK = fixedTK;
+          pBara = sweepValue;
+        }
 
-	// Create fresh fluid for each point
-	SystemInterface fluid = FlashRunner.createFluid(model, tK, pBara);
-	for (Map.Entry<String, Double> comp : components.entrySet()) {
-	  fluid.addComponent(comp.getKey(), comp.getValue());
-	}
-	fluid.setMixingRule(mixingRule);
+        // Create fresh fluid for each point
+        SystemInterface fluid = FlashRunner.createFluid(model, tK, pBara);
+        for (Map.Entry<String, Double> comp : components.entrySet()) {
+          fluid.addComponent(comp.getKey(), comp.getValue());
+        }
+        fluid.setMixingRule(mixingRule);
 
-	ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-	try {
-	  ops.TPflash();
-	  fluid.initProperties();
-	  convergedCount++;
-	} catch (Exception e) {
-	  // Skip non-converged points
-	  continue;
-	}
+        ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+        try {
+          ops.TPflash();
+          fluid.initProperties();
+          convergedCount++;
+        } catch (Exception e) {
+          // Skip non-converged points
+          continue;
+        }
 
-	JsonObject row = new JsonObject();
-	if ("temperature".equals(sweep)) {
-	  row.addProperty("temperature_C", tK - 273.15);
-	  row.addProperty("temperature_K", tK);
-	  row.addProperty("pressure_bara", fixedPBara);
-	} else {
-	  row.addProperty("temperature_C", fixedTK - 273.15);
-	  row.addProperty("pressure_bara", pBara);
-	}
+        JsonObject row = new JsonObject();
+        if ("temperature".equals(sweep)) {
+          row.addProperty("temperature_C", tK - 273.15);
+          row.addProperty("temperature_K", tK);
+          row.addProperty("pressure_bara", fixedPBara);
+        } else {
+          row.addProperty("temperature_C", fixedTK - 273.15);
+          row.addProperty("pressure_bara", pBara);
+        }
 
-	row.addProperty("numberOfPhases", fluid.getNumberOfPhases());
+        row.addProperty("numberOfPhases", fluid.getNumberOfPhases());
 
-	for (String prop : requestedProps) {
-	  addProperty(row, fluid, prop);
-	}
+        for (String prop : requestedProps) {
+          addProperty(row, fluid, prop);
+        }
 
-	tableRows.add(row);
+        tableRows.add(row);
       }
 
       // --- Build response with provenance ---
@@ -219,14 +219,14 @@ public class PropertyTableRunner {
       provenance.setBenchmarkTrustLevel(BenchmarkTrust.getMaturityLevel("getPropertyTable"));
       provenance.addValidationPassed("component_names_verified");
       if (convergedCount == points) {
-	provenance.addValidationPassed("all_points_converged");
+        provenance.addValidationPassed("all_points_converged");
       } else {
-	provenance.addLimitation((points - convergedCount) + " of " + points + " points failed to converge");
+        provenance.addLimitation((points - convergedCount) + " of " + points + " points failed to converge");
       }
 
       JsonArray warnings = new JsonArray();
       if (convergedCount < points) {
-	warnings.add((points - convergedCount) + " of " + points + " property-table points failed to converge");
+        warnings.add((points - convergedCount) + " of " + points + " property-table points failed to converge");
       }
 
       JsonObject result = new JsonObject();
@@ -247,15 +247,15 @@ public class PropertyTableRunner {
 
       String gateVerdict = convergedCount == points ? "passed" : "warning";
       String gateSummary = convergedCount == points ? "All property-table points converged"
-	  : "Property table completed with non-converged points";
+          : "Property table completed with non-converged points";
       ApiEnvelope.applyStandardFields(result, "getPropertyTable", provenance,
-	  ApiEnvelope.validationStatus(convergedCount > 0, "calculation", gateSummary),
-	  ApiEnvelope.qualityGate(gateVerdict, gateSummary, true));
+          ApiEnvelope.validationStatus(convergedCount > 0, "calculation", gateSummary),
+          ApiEnvelope.qualityGate(gateVerdict, gateSummary, true));
 
       return GSON.toJson(result);
     } catch (Exception e) {
       return errorJson("CALCULATION_ERROR", "Property table calculation failed: " + e.getMessage(),
-	  "Check component names and operating range");
+          "Check component names and operating range");
     }
   }
 
@@ -279,69 +279,69 @@ public class PropertyTableRunner {
     try {
       switch (property) {
       case "density":
-	double density = fluid.getDensity("kg/m3");
-	row.addProperty("density", density);
-	row.addProperty("density_kg_m3", density);
-	if (fluid.hasPhaseType("gas")) {
-	  row.addProperty("gasDensity_kg_m3", fluid.getPhase("gas").getDensity("kg/m3"));
-	}
-	if (fluid.hasPhaseType("oil") || fluid.hasPhaseType("liquid")) {
-	  String liqPhase = fluid.hasPhaseType("oil") ? "oil" : "liquid";
-	  row.addProperty("liquidDensity_kg_m3", fluid.getPhase(liqPhase).getDensity("kg/m3"));
-	}
-	break;
+        double density = fluid.getDensity("kg/m3");
+        row.addProperty("density", density);
+        row.addProperty("density_kg_m3", density);
+        if (fluid.hasPhaseType("gas")) {
+          row.addProperty("gasDensity_kg_m3", fluid.getPhase("gas").getDensity("kg/m3"));
+        }
+        if (fluid.hasPhaseType("oil") || fluid.hasPhaseType("liquid")) {
+          String liqPhase = fluid.hasPhaseType("oil") ? "oil" : "liquid";
+          row.addProperty("liquidDensity_kg_m3", fluid.getPhase(liqPhase).getDensity("kg/m3"));
+        }
+        break;
       case "viscosity":
-	if (fluid.hasPhaseType("gas")) {
-	  row.addProperty("gasViscosity_cP", fluid.getPhase("gas").getViscosity("cP"));
-	}
-	if (fluid.hasPhaseType("oil") || fluid.hasPhaseType("liquid")) {
-	  String liqPhase = fluid.hasPhaseType("oil") ? "oil" : "liquid";
-	  row.addProperty("liquidViscosity_cP", fluid.getPhase(liqPhase).getViscosity("cP"));
-	}
-	break;
+        if (fluid.hasPhaseType("gas")) {
+          row.addProperty("gasViscosity_cP", fluid.getPhase("gas").getViscosity("cP"));
+        }
+        if (fluid.hasPhaseType("oil") || fluid.hasPhaseType("liquid")) {
+          String liqPhase = fluid.hasPhaseType("oil") ? "oil" : "liquid";
+          row.addProperty("liquidViscosity_cP", fluid.getPhase(liqPhase).getViscosity("cP"));
+        }
+        break;
       case "Cp":
-	row.addProperty("Cp_J_kgK", fluid.getCp("J/kgK"));
-	break;
+        row.addProperty("Cp_J_kgK", fluid.getCp("J/kgK"));
+        break;
       case "Cv":
-	row.addProperty("Cv_J_kgK", fluid.getCv("J/kgK"));
-	break;
+        row.addProperty("Cv_J_kgK", fluid.getCv("J/kgK"));
+        break;
       case "Z":
-	row.addProperty("compressibilityFactor", fluid.getZ());
-	break;
+        row.addProperty("compressibilityFactor", fluid.getZ());
+        break;
       case "enthalpy":
-	row.addProperty("enthalpy_J_kg", fluid.getEnthalpy("J/kg"));
-	break;
+        row.addProperty("enthalpy_J_kg", fluid.getEnthalpy("J/kg"));
+        break;
       case "entropy":
-	row.addProperty("entropy_J_kgK", fluid.getEntropy("J/kgK"));
-	break;
+        row.addProperty("entropy_J_kgK", fluid.getEntropy("J/kgK"));
+        break;
       case "thermalConductivity":
-	if (fluid.hasPhaseType("gas")) {
-	  row.addProperty("gasThermalConductivity_W_mK", fluid.getPhase("gas").getThermalConductivity("W/mK"));
-	}
-	if (fluid.hasPhaseType("oil") || fluid.hasPhaseType("liquid")) {
-	  String liqPhase = fluid.hasPhaseType("oil") ? "oil" : "liquid";
-	  row.addProperty("liquidThermalConductivity_W_mK", fluid.getPhase(liqPhase).getThermalConductivity("W/mK"));
-	}
-	break;
+        if (fluid.hasPhaseType("gas")) {
+          row.addProperty("gasThermalConductivity_W_mK", fluid.getPhase("gas").getThermalConductivity("W/mK"));
+        }
+        if (fluid.hasPhaseType("oil") || fluid.hasPhaseType("liquid")) {
+          String liqPhase = fluid.hasPhaseType("oil") ? "oil" : "liquid";
+          row.addProperty("liquidThermalConductivity_W_mK", fluid.getPhase(liqPhase).getThermalConductivity("W/mK"));
+        }
+        break;
       case "molarMass":
-	row.addProperty("molarMass_kg_mol", fluid.getMolarMass("kg/mol"));
-	break;
+        row.addProperty("molarMass_kg_mol", fluid.getMolarMass("kg/mol"));
+        break;
       case "soundSpeed":
-	if (fluid.hasPhaseType("gas")) {
-	  row.addProperty("soundSpeed_m_s", fluid.getPhase("gas").getSoundSpeed("m/s"));
-	}
-	break;
+        if (fluid.hasPhaseType("gas")) {
+          row.addProperty("soundSpeed_m_s", fluid.getPhase("gas").getSoundSpeed("m/s"));
+        }
+        break;
       case "jouleThomsonCoefficient":
-	if (fluid.hasPhaseType("gas")) {
-	  row.addProperty("jouleThomsonCoefficient_K_bar", fluid.getPhase("gas").getJouleThomsonCoefficient("K/bar"));
-	}
-	break;
+        if (fluid.hasPhaseType("gas")) {
+          row.addProperty("jouleThomsonCoefficient_K_bar", fluid.getPhase("gas").getJouleThomsonCoefficient("K/bar"));
+        }
+        break;
       case "numberOfPhases":
-	// Already added above
-	break;
+        // Already added above
+        break;
       default:
-	row.addProperty(property + "_note", "unknown property: " + property);
-	break;
+        row.addProperty(property + "_note", "unknown property: " + property);
+        break;
       }
     } catch (Exception e) {
       row.addProperty(property + "_error", e.getMessage());
@@ -370,7 +370,7 @@ public class PropertyTableRunner {
     errors.add(issue);
     error.add("errors", errors);
     ApiEnvelope.applyStandardFields(error, "getPropertyTable", null,
-	ApiEnvelope.validationStatus(false, "input", message), ApiEnvelope.qualityGate("failed", message, true));
+        ApiEnvelope.validationStatus(false, "input", message), ApiEnvelope.qualityGate("failed", message, true));
     return GSON.toJson(error);
   }
 }

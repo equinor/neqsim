@@ -144,7 +144,7 @@ public class Standard_GPA2145 extends neqsim.standards.Standard {
    */
   public Standard_GPA2145(SystemInterface thermoSystem) {
     super("Standard_GPA2145",
-	"Table of Physical Constants of Paraffin Hydrocarbons and Other Components of Natural Gas", thermoSystem);
+        "Table of Physical Constants of Paraffin Hydrocarbons and Other Components of Natural Gas", thermoSystem);
   }
 
   /** {@inheritDoc} */
@@ -164,29 +164,29 @@ public class Standard_GPA2145 extends neqsim.standards.Standard {
       // Molar mass
       Double mw = MOLAR_MASS.get(name);
       if (mw != null) {
-	mixtureMolarMass += xi * mw.doubleValue();
-	matchedComponents++;
+        mixtureMolarMass += xi * mw.doubleValue();
+        matchedComponents++;
       } else {
-	// Use NeqSim value for unmatched components
-	mixtureMolarMass += xi * thermoSystem.getPhase(0).getComponent(i).getMolarMass() * 1000.0;
+        // Use NeqSim value for unmatched components
+        mixtureMolarMass += xi * thermoSystem.getPhase(0).getComponent(i).getMolarMass() * 1000.0;
       }
 
       // Gross heating value
       Double ghv = IDEAL_GROSS_HV_BTU.get(name);
       if (ghv != null) {
-	idealGrossHV += xi * ghv.doubleValue();
+        idealGrossHV += xi * ghv.doubleValue();
       }
 
       // Net heating value
       Double nhv = IDEAL_NET_HV_BTU.get(name);
       if (nhv != null) {
-	idealNetHV += xi * nhv.doubleValue();
+        idealNetHV += xi * nhv.doubleValue();
       }
 
       // Relative density
       Double rd = RELATIVE_DENSITY.get(name);
       if (rd != null) {
-	mixtureRelativeDensity += xi * rd.doubleValue();
+        mixtureRelativeDensity += xi * rd.doubleValue();
       }
     }
   }
@@ -198,10 +198,10 @@ public class Standard_GPA2145 extends neqsim.standards.Standard {
 
     if ("idealGrossHV".equals(returnParameter) || "idealNetHV".equals(returnParameter)) {
       if ("MJ/m3".equals(returnUnit)) {
-	return value * 0.037316; // BTU/ft3 to MJ/m3
+        return value * 0.037316; // BTU/ft3 to MJ/m3
       }
       if ("kJ/mol".equals(returnUnit)) {
-	return value * 0.001055 * 0.02832; // BTU/ft3 to kJ/mol (approx)
+        return value * 0.001055 * 0.02832; // BTU/ft3 to kJ/mol (approx)
       }
     }
     return value;
@@ -232,7 +232,7 @@ public class Standard_GPA2145 extends neqsim.standards.Standard {
   @Override
   public String getUnit(String returnParameter) {
     if ("idealGrossHV".equals(returnParameter) || "GHV".equals(returnParameter) || "idealNetHV".equals(returnParameter)
-	|| "NHV".equals(returnParameter)) {
+        || "NHV".equals(returnParameter)) {
       return "BTU/ft3";
     }
     if ("molarMass".equals(returnParameter)) {

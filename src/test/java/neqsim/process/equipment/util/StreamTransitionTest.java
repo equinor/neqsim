@@ -125,9 +125,9 @@ public class StreamTransitionTest {
   private void verifyTransitionResults() {
     // Verify temperature and pressure were transferred
     assertEquals(inletStream.getTemperature(), outletStream.getTemperature(),
-	"Temperature should be transferred from inlet to outlet stream");
+        "Temperature should be transferred from inlet to outlet stream");
     assertEquals(inletStream.getPressure(), outletStream.getPressure(),
-	"Pressure should be transferred from inlet to outlet stream");
+        "Pressure should be transferred from inlet to outlet stream");
 
     // Verify components were transferred correctly
     SystemInterface outSystem = outletStream.getFluid();
@@ -137,9 +137,9 @@ public class StreamTransitionTest {
     for (int i = 0; i < inSystem.getNumberOfComponents(); i++) {
       String componentName = inSystem.getComponent(i).getName();
       if (outSystem.getPhase(0).hasComponent(componentName)) {
-	assertEquals(inSystem.getComponent(i).getNumberOfmoles(),
-	    outSystem.getComponent(componentName).getNumberOfmoles(), 1e-10,
-	    "Moles of " + componentName + " should match between systems");
+        assertEquals(inSystem.getComponent(i).getNumberOfmoles(),
+            outSystem.getComponent(componentName).getNumberOfmoles(), 1e-10,
+            "Moles of " + componentName + " should match between systems");
       }
     }
   }

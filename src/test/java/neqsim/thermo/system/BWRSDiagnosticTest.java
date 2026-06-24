@@ -59,12 +59,12 @@ public class BWRSDiagnosticTest {
       double Hres = phase.getHresTP();
       double F = 0, dFdT = 0, dFdTdV = 0, dFdV = 0, dFdVdV = 0;
       if (phase instanceof neqsim.thermo.phase.PhaseEos) {
-	neqsim.thermo.phase.PhaseEos phaseEos = (neqsim.thermo.phase.PhaseEos) phase;
-	F = phaseEos.getF();
-	dFdT = phaseEos.dFdT();
-	dFdTdV = phaseEos.dFdTdV();
-	dFdV = phaseEos.dFdV();
-	dFdVdV = phaseEos.dFdVdV();
+        neqsim.thermo.phase.PhaseEos phaseEos = (neqsim.thermo.phase.PhaseEos) phase;
+        F = phaseEos.getF();
+        dFdT = phaseEos.dFdT();
+        dFdTdV = phaseEos.dFdTdV();
+        dFdV = phaseEos.dFdV();
+        dFdVdV = phaseEos.dFdVdV();
       }
 
       // Analytical JT (PhaseEos formula)

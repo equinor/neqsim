@@ -176,12 +176,12 @@ public class OffshoreProcess3 {
     exportGasCompressorCooler.setOutTemperature(35.0, "C");
 
     Compressor exportGasCompressor2 = new Compressor("2nd stage export compressor",
-	exportGasCompressorCooler.getOutletStream());
+        exportGasCompressorCooler.getOutletStream());
     exportGasCompressor2.setIsentropicEfficiency(0.75);
     exportGasCompressor2.setOutletPressure(exportGasCompressorCooler.getOutletStream().getPressure() * 2.5 * 2.5);
 
     Cooler exportGasCompressorCooler2 = new Cooler("2nd stage export gas cooler",
-	exportGasCompressor2.getOutletStream());
+        exportGasCompressor2.getOutletStream());
     exportGasCompressorCooler2.setOutTemperature(35.0, "C");
 
     Stream exportGas = new Stream("export gas", exportGasCompressorCooler2.getOutletStream());

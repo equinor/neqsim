@@ -37,8 +37,8 @@ public class StandardsRunner {
 
   private static final List<String> SUPPORTED_STANDARDS = Collections
       .unmodifiableList(Arrays.asList("ISO6976", "ISO6976_2016", "ISO12213", "ISO13443", "ISO18453", "ISO14687",
-	  "ISO15112", "ISO6578", "AGA3", "AGA7", "GPA2145", "GPA2172", "EN16723", "EN16726", "ASTM_D86", "ASTM_D445",
-	  "ASTM_D2500", "ASTM_D4052", "ASTM_D4294", "ASTM_D6377", "ASTM_D97", "BSW"));
+          "ISO15112", "ISO6578", "AGA3", "AGA7", "GPA2145", "GPA2172", "EN16723", "EN16726", "ASTM_D86", "ASTM_D445",
+          "ASTM_D2500", "ASTM_D4052", "ASTM_D4294", "ASTM_D6377", "ASTM_D97", "BSW"));
 
   /**
    * Private constructor — all methods are static.
@@ -64,7 +64,7 @@ public class StandardsRunner {
   public static String run(String json) {
     if (json == null || json.trim().isEmpty()) {
       return errorJson("INPUT_ERROR", "JSON input is null or empty",
-	  "Provide a valid JSON with 'standard', 'components', etc.");
+          "Provide a valid JSON with 'standard', 'components', etc.");
     }
 
     JsonObject input;
@@ -78,7 +78,7 @@ public class StandardsRunner {
 
     if (!input.has("standard")) {
       return errorJson("MISSING_STANDARD", "No 'standard' field specified",
-	  "Provide 'standard': one of " + SUPPORTED_STANDARDS);
+          "Provide 'standard': one of " + SUPPORTED_STANDARDS);
     }
     String standard = input.get("standard").getAsString();
     if (!SUPPORTED_STANDARDS.contains(standard)) {
@@ -96,25 +96,25 @@ public class StandardsRunner {
       double tempK = 288.15;
       double pBara = 1.01325;
       if (input.has("temperature")) {
-	tempK = parseTemperature(input.get("temperature"));
+        tempK = parseTemperature(input.get("temperature"));
       } else if (input.has("temperature_C")) {
-	tempK = input.get("temperature_C").getAsDouble() + 273.15;
+        tempK = input.get("temperature_C").getAsDouble() + 273.15;
       }
       if (input.has("pressure")) {
-	pBara = parsePressure(input.get("pressure"));
+        pBara = parsePressure(input.get("pressure"));
       } else if (input.has("pressure_bara")) {
-	pBara = input.get("pressure_bara").getAsDouble();
+        pBara = input.get("pressure_bara").getAsDouble();
       }
       fluid = createFluid(model, tempK, pBara);
       JsonObject comps = input.getAsJsonObject("components");
       for (Map.Entry<String, JsonElement> entry : comps.entrySet()) {
-	fluid.addComponent(entry.getKey(), entry.getValue().getAsDouble());
+        fluid.addComponent(entry.getKey(), entry.getValue().getAsDouble());
       }
       String mixingRule = input.has("mixingRule") ? input.get("mixingRule").getAsString() : "classic";
       fluid.setMixingRule(mixingRule);
     } catch (Exception e) {
       return errorJson("FLUID_ERROR", "Failed to create fluid: " + e.getMessage(),
-	  "Check component names and compositions");
+          "Check component names and compositions");
     }
 
     try {
@@ -140,7 +140,7 @@ public class StandardsRunner {
       return GSON.toJson(result);
     } catch (Exception e) {
       return errorJson("STANDARDS_ERROR", "Standards calculation failed: " + e.getMessage(),
-	  "Check fluid definition and standard-specific parameters");
+          "Check fluid definition and standard-specific parameters");
     }
   }
 
@@ -215,10 +215,10 @@ public class StandardsRunner {
    */
   private static JsonObject runISO6976(SystemInterface fluid, JsonObject input, boolean use2016) {
     double volRefT = input.has("volumeReferenceTemperature_C") ? input.get("volumeReferenceTemperature_C").getAsDouble()
-	: 15.0;
+        : 15.0;
     double energyRefT = input.has("energyReferenceTemperature_C")
-	? input.get("energyReferenceTemperature_C").getAsDouble()
-	: 15.0;
+        ? input.get("energyReferenceTemperature_C").getAsDouble()
+        : 15.0;
     String calcType = input.has("calculationType") ? input.get("calculationType").getAsString() : "volume";
 
     neqsim.standards.gasquality.Standard_ISO6976 iso;
@@ -261,11 +261,11 @@ public class StandardsRunner {
     JsonArray tableArr = new JsonArray();
     if (table != null) {
       for (String[] row : table) {
-	JsonArray rowArr = new JsonArray();
-	for (String cell : row) {
-	  rowArr.add(cell);
-	}
-	tableArr.add(rowArr);
+        JsonArray rowArr = new JsonArray();
+        for (String cell : row) {
+          rowArr.add(cell);
+        }
+        tableArr.add(rowArr);
       }
     }
     data.add("resultsTable", tableArr);
@@ -294,11 +294,11 @@ public class StandardsRunner {
     if (curve != null) {
       JsonArray curveArr = new JsonArray();
       for (int i = 0; i < curve.length; i++) {
-	JsonObject pt = new JsonObject();
-	pt.addProperty("volumePercent", curve[i][0]);
-	pt.addProperty("temperature_K", curve[i][1]);
-	pt.addProperty("temperature_C", curve[i][1] - 273.15);
-	curveArr.add(pt);
+        JsonObject pt = new JsonObject();
+        pt.addProperty("volumePercent", curve[i][0]);
+        pt.addProperty("temperature_K", curve[i][1]);
+        pt.addProperty("temperature_C", curve[i][1] - 273.15);
+        curveArr.add(pt);
       }
       data.add("distillationCurve", curveArr);
     }
@@ -326,11 +326,11 @@ public class StandardsRunner {
     if (table != null) {
       JsonArray tableArr = new JsonArray();
       for (String[] row : table) {
-	JsonArray rowArr = new JsonArray();
-	for (String cell : row) {
-	  rowArr.add(cell);
-	}
-	tableArr.add(rowArr);
+        JsonArray rowArr = new JsonArray();
+        for (String cell : row) {
+          rowArr.add(cell);
+        }
+        tableArr.add(rowArr);
       }
       data.add("resultsTable", tableArr);
     }
@@ -358,11 +358,11 @@ public class StandardsRunner {
     if (table != null) {
       JsonArray tableArr = new JsonArray();
       for (String[] row : table) {
-	JsonArray rowArr = new JsonArray();
-	for (String cell : row) {
-	  rowArr.add(cell);
-	}
-	tableArr.add(rowArr);
+        JsonArray rowArr = new JsonArray();
+        for (String cell : row) {
+          rowArr.add(cell);
+        }
+        tableArr.add(rowArr);
       }
       data.add("resultsTable", tableArr);
     }

@@ -76,12 +76,12 @@ public class ProcessModelResult {
     this.status = status;
     this.model = model;
     this.areaResults = areaResults != null ? new LinkedHashMap<String, SimulationResult>(areaResults)
-	: new LinkedHashMap<String, SimulationResult>();
+        : new LinkedHashMap<String, SimulationResult>();
     this.failedAreas = failedAreas != null ? new ArrayList<String>(failedAreas) : new ArrayList<String>();
     this.interAreaLinkWarnings = interAreaLinkWarnings != null ? new ArrayList<String>(interAreaLinkWarnings)
-	: new ArrayList<String>();
+        : new ArrayList<String>();
     this.errors = errors != null ? new ArrayList<SimulationResult.ErrorDetail>(errors)
-	: new ArrayList<SimulationResult.ErrorDetail>();
+        : new ArrayList<SimulationResult.ErrorDetail>();
     this.warnings = warnings != null ? new ArrayList<String>(warnings) : new ArrayList<String>();
     this.runStatusJson = runStatusJson;
   }
@@ -100,7 +100,7 @@ public class ProcessModelResult {
   public static ProcessModelResult success(ProcessModel model, Map<String, SimulationResult> areaResults,
       List<String> failedAreas, List<String> interAreaLinkWarnings, List<String> warnings, String runStatusJson) {
     return new ProcessModelResult(Status.SUCCESS, model, areaResults, failedAreas, interAreaLinkWarnings,
-	Collections.<SimulationResult.ErrorDetail>emptyList(), warnings, runStatusJson);
+        Collections.<SimulationResult.ErrorDetail>emptyList(), warnings, runStatusJson);
   }
 
   /**
@@ -254,12 +254,12 @@ public class ProcessModelResult {
       areaObj.addProperty("status", areaResult.isSuccess() ? "success" : "error");
       JsonArray areaErrors = new JsonArray();
       for (SimulationResult.ErrorDetail err : areaResult.getErrors()) {
-	areaErrors.add(err.toJsonObject());
+        areaErrors.add(err.toJsonObject());
       }
       areaObj.add("errors", areaErrors);
       JsonArray areaWarnings = new JsonArray();
       for (String warning : areaResult.getWarnings()) {
-	areaWarnings.add(warning);
+        areaWarnings.add(warning);
       }
       areaObj.add("warnings", areaWarnings);
       areas.add(entry.getKey(), areaObj);
@@ -286,9 +286,9 @@ public class ProcessModelResult {
 
     if (runStatusJson != null) {
       try {
-	obj.add("runStatus", com.google.gson.JsonParser.parseString(runStatusJson));
+        obj.add("runStatus", com.google.gson.JsonParser.parseString(runStatusJson));
       } catch (RuntimeException ex) {
-	obj.addProperty("runStatus", runStatusJson);
+        obj.addProperty("runStatus", runStatusJson);
       }
     }
     return obj;

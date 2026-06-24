@@ -77,14 +77,14 @@ public class SolutionGasWaterRatioVerificationTest {
 
     // Print comparison table
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-15s %-15s %-15s%n", "P (bara)", "McCain",
-	"Soreide-Whitson", "Electrolyte-CPA");
+        "Soreide-Whitson", "Electrolyte-CPA");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-15s %-15s %-15s%n", "", "(Sm3/Sm3)", "(Sm3/Sm3)",
-	"(Sm3/Sm3)");
+        "(Sm3/Sm3)");
     logger.info(SEPARATOR_DASH);
 
     for (int i = 0; i < pressures.length; i++) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-12.1f %-15.6f %-15.6f %-15.6f%n", pressures[i],
-	  rswMcCain[i], rswSoreide[i], rswCPA[i]);
+          rswMcCain[i], rswSoreide[i], rswCPA[i]);
     }
 
     logger.info("Analysis:");
@@ -122,9 +122,9 @@ public class SolutionGasWaterRatioVerificationTest {
     logger.info("Gas composition: 95% CH4, 5% CO2");
     logger.info(SEPARATOR_DASH);
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %-15s %-15s %-15s%n", "Salinity", "McCain",
-	"Soreide-Whitson", "Electrolyte-CPA");
+        "Soreide-Whitson", "Electrolyte-CPA");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %-15s %-15s %-15s%n", "(wt% NaCl)", "(Sm3/Sm3)",
-	"(Sm3/Sm3)", "(Sm3/Sm3)");
+        "(Sm3/Sm3)", "(Sm3/Sm3)");
     logger.info(SEPARATOR_DASH);
 
     for (double sal : salinities) {
@@ -143,7 +143,7 @@ public class SolutionGasWaterRatioVerificationTest {
       double rswCPA = rswCalc.getRsw(0);
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-15.1f %-15.6f %-15.6f %-15.6f%n", sal, rswMcCain,
-	  rswSoreide, rswCPA);
+          rswSoreide, rswCPA);
     }
 
     logger.info("Analysis:");
@@ -179,17 +179,17 @@ public class SolutionGasWaterRatioVerificationTest {
 
     // Test points from literature
     double[][] testPoints = {
-	// {T(K), P(bar), expected Rsw scf/STB low, expected Rsw scf/STB high}
-	{ 310.93, 68.9, 8.0, 12.0 }, // 100°F, 1000 psia
-	{ 366.48, 68.9, 10.0, 14.0 }, // 200°F, 1000 psia
-	{ 366.48, 137.9, 18.0, 25.0 }, // 200°F, 2000 psia
-	{ 366.48, 206.8, 25.0, 35.0 }, // 200°F, 3000 psia
+        // {T(K), P(bar), expected Rsw scf/STB low, expected Rsw scf/STB high}
+        { 310.93, 68.9, 8.0, 12.0 }, // 100°F, 1000 psia
+        { 366.48, 68.9, 10.0, 14.0 }, // 200°F, 1000 psia
+        { 366.48, 137.9, 18.0, 25.0 }, // 200°F, 2000 psia
+        { 366.48, 206.8, 25.0, 35.0 }, // 200°F, 3000 psia
     };
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-12s %-18s %-18s %-10s%n", "T (°F)", "P (psia)",
-	"Expected Range", "Calculated", "Status");
+        "Expected Range", "Calculated", "Status");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-12s %-18s %-18s %-10s%n", "", "", "(scf/STB)",
-	"(scf/STB)", "");
+        "(scf/STB)", "");
     logger.info(SEPARATOR_DASH);
 
     for (double[] point : testPoints) {
@@ -211,7 +211,7 @@ public class SolutionGasWaterRatioVerificationTest {
       String status = (rswScfStb >= expectedLow * 0.5 && rswScfStb <= expectedHigh * 2.0) ? "REASONABLE" : "CHECK";
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-12.0f %-12.0f %-8.1f - %-7.1f %-18.2f %-10s%n", tempF,
-	  presPsia, expectedLow, expectedHigh, rswScfStb, status);
+          presPsia, expectedLow, expectedHigh, rswScfStb, status);
     }
 
     logger.info("Note: Literature values are approximate ranges from various sources.");
@@ -247,7 +247,7 @@ public class SolutionGasWaterRatioVerificationTest {
     logger.info("\nConditions: P = 100 bara, Pure Water, Pure Methane");
     logger.info(SEPARATOR_DASH);
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-12s %-15s %-15s %-15s%n", "T (K)", "T (°C)", "McCain",
-	"Soreide-Whitson", "Electrolyte-CPA");
+        "Soreide-Whitson", "Electrolyte-CPA");
     logger.info(SEPARATOR_DASH);
 
     // McCain
@@ -268,7 +268,7 @@ public class SolutionGasWaterRatioVerificationTest {
     for (int i = 0; i < temps.length; i++) {
       double tempC = temps[i] - 273.15;
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-12.1f %-12.1f %-15.6f %-15.6f %-15.6f%n", temps[i], tempC,
-	  rswMcCain[i], rswSoreide[i], rswCPA[i]);
+          rswMcCain[i], rswSoreide[i], rswCPA[i]);
     }
 
     logger.info("Analysis:");
@@ -303,7 +303,7 @@ public class SolutionGasWaterRatioVerificationTest {
     logger.info("Gas composition: 50% CO2, 50% CH4");
     logger.info(SEPARATOR_DASH);
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-15s %-15s %-15s%n", "P (bara)", "McCain*",
-	"Soreide-Whitson", "Electrolyte-CPA");
+        "Soreide-Whitson", "Electrolyte-CPA");
     logger.info(SEPARATOR_DASH);
 
     // McCain
@@ -323,7 +323,7 @@ public class SolutionGasWaterRatioVerificationTest {
 
     for (int i = 0; i < pressures.length; i++) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-12.1f %-15.6f %-15.6f %-15.6f%n", pressures[i],
-	  rswMcCain[i], rswSoreide[i], rswCPA[i]);
+          rswMcCain[i], rswSoreide[i], rswCPA[i]);
     }
 
     logger.info("* McCain correlation is for pure methane - use with caution for CO2");
@@ -367,9 +367,9 @@ public class SolutionGasWaterRatioVerificationTest {
       totalTests++;
       boolean pass = rsw > 0;
       if (pass)
-	passCount++;
+        passCount++;
       logger.printf(org.apache.logging.log4j.Level.INFO, "  %-20s: Rsw = %.6f Sm3/Sm3 - %s%n", method.name(), rsw,
-	  pass ? "PASS" : "FAIL");
+          pass ? "PASS" : "FAIL");
     }
 
     // Test 2: Rsw increases with pressure (McCain)
@@ -387,7 +387,7 @@ public class SolutionGasWaterRatioVerificationTest {
     if (pressureTest)
       passCount++;
     logger.printf(org.apache.logging.log4j.Level.INFO, "  50 bar: %.6f, 100 bar: %.6f, 150 bar: %.6f - %s%n", rsw[0],
-	rsw[1], rsw[2], pressureTest ? "PASS" : "FAIL");
+        rsw[1], rsw[2], pressureTest ? "PASS" : "FAIL");
 
     // Test 3: Rsw decreases with salinity (McCain)
     logger.info("\nTest 3: Rsw decreases with salinity (McCain method)");
@@ -406,12 +406,12 @@ public class SolutionGasWaterRatioVerificationTest {
     if (salinityTest)
       passCount++;
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Pure water: %.6f, 5 wt%% NaCl: %.6f - %s%n", rswPure,
-	rswSaline, salinityTest ? "PASS" : "FAIL");
+        rswSaline, salinityTest ? "PASS" : "FAIL");
 
     // Summary
     logger.info("\n" + SEPARATOR_DASH);
     logger.printf(org.apache.logging.log4j.Level.INFO, "CONSISTENCY CHECK SUMMARY: %d/%d tests passed%n", passCount,
-	totalTests);
+        totalTests);
     logger.info(SEPARATOR_EQUALS);
   }
 }

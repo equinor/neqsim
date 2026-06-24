@@ -171,15 +171,15 @@ public class SachdevaChokeFlow extends MultiphaseChokeFlow {
       double calcMassFlow = calculateMassFlowRate(fluid, upstreamPressure, P2_mid);
 
       if (Math.abs(calcMassFlow - massFlowRate) / massFlowRate < tolerance) {
-	return P2_mid;
+        return P2_mid;
       }
 
       if (calcMassFlow > massFlowRate) {
-	// Calculated flow too high - need higher P2 (less pressure drop)
-	P2_low = P2_mid;
+        // Calculated flow too high - need higher P2 (less pressure drop)
+        P2_low = P2_mid;
       } else {
-	// Calculated flow too low - need lower P2 (more pressure drop)
-	P2_high = P2_mid;
+        // Calculated flow too low - need lower P2 (more pressure drop)
+        P2_high = P2_mid;
       }
     }
 

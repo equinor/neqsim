@@ -145,7 +145,7 @@ public class SensitivityAnalyzer implements Serializable {
     items.add(analyzeParameter("Oil Price (USD/bbl)", variationPercent, new ParameterSetter() {
       @Override
       public void set(CashFlowEngine engine, double factor) {
-	engine.setOilPrice(baseCase.getOilPrice() * factor);
+        engine.setOilPrice(baseCase.getOilPrice() * factor);
       }
     }));
 
@@ -153,7 +153,7 @@ public class SensitivityAnalyzer implements Serializable {
     items.add(analyzeParameter("Gas Price (USD/Sm3)", variationPercent, new ParameterSetter() {
       @Override
       public void set(CashFlowEngine engine, double factor) {
-	engine.setGasPrice(baseCase.getGasPrice() * factor);
+        engine.setGasPrice(baseCase.getGasPrice() * factor);
       }
     }));
 
@@ -161,7 +161,7 @@ public class SensitivityAnalyzer implements Serializable {
     items.add(analyzeParameter("CAPEX (MUSD)", variationPercent, new ParameterSetter() {
       @Override
       public void set(CashFlowEngine engine, double factor) {
-	scaleCapexSchedule(engine, factor);
+        scaleCapexSchedule(engine, factor);
       }
     }));
 
@@ -169,7 +169,7 @@ public class SensitivityAnalyzer implements Serializable {
     items.add(analyzeParameter("OPEX (%CAPEX)", variationPercent, new ParameterSetter() {
       @Override
       public void set(CashFlowEngine engine, double factor) {
-	engine.setOpexPercentOfCapex(baseCase.getOpexPercentOfCapex() * factor);
+        engine.setOpexPercentOfCapex(baseCase.getOpexPercentOfCapex() * factor);
       }
     }));
 
@@ -177,7 +177,7 @@ public class SensitivityAnalyzer implements Serializable {
     Collections.sort(items, new Comparator<TornadoItem>() {
       @Override
       public int compare(TornadoItem a, TornadoItem b) {
-	return Double.compare(b.getSwing(), a.getSwing());
+        return Double.compare(b.getSwing(), a.getSwing());
       }
     });
 
@@ -241,7 +241,7 @@ public class SensitivityAnalyzer implements Serializable {
     CashFlowEngine.CashFlowResult baseResult = baseCase.calculate(discountRate);
 
     return new ScenarioResult(lowNpv, lowResult.getIrr(), baseCaseNpv, baseResult.getIrr(), highNpv,
-	highResult.getIrr());
+        highResult.getIrr());
   }
 
   // ============================================================================
@@ -332,38 +332,38 @@ public class SensitivityAnalyzer implements Serializable {
 
       // Sample from distributions
       if (oilPriceMax > oilPriceMin) {
-	trial.setOilPrice(uniformRandom(oilPriceMin, oilPriceMax));
+        trial.setOilPrice(uniformRandom(oilPriceMin, oilPriceMax));
       }
       if (gasPriceMax > gasPriceMin) {
-	trial.setGasPrice(uniformRandom(gasPriceMin, gasPriceMax));
+        trial.setGasPrice(uniformRandom(gasPriceMin, gasPriceMax));
       }
       if (capexMax > capexMin) {
-	double sampledCapex = uniformRandom(capexMin, capexMax);
-	double baseCapex = baseCase.getTotalCapex();
-	if (baseCapex > 0.0) {
-	  scaleCapexSchedule(trial, sampledCapex / baseCapex);
-	}
+        double sampledCapex = uniformRandom(capexMin, capexMax);
+        double baseCapex = baseCase.getTotalCapex();
+        if (baseCapex > 0.0) {
+          scaleCapexSchedule(trial, sampledCapex / baseCapex);
+        }
       }
       if (opexFactorMax > opexFactorMin) {
-	double factor = uniformRandom(opexFactorMin, opexFactorMax);
-	trial.setOpexPercentOfCapex(baseCase.getOpexPercentOfCapex() * factor);
+        double factor = uniformRandom(opexFactorMin, opexFactorMax);
+        trial.setOpexPercentOfCapex(baseCase.getOpexPercentOfCapex() * factor);
       }
       if (productionFactorMax > productionFactorMin) {
-	scaleProductionProfile(trial, uniformRandom(productionFactorMin, productionFactorMax));
+        scaleProductionProfile(trial, uniformRandom(productionFactorMin, productionFactorMax));
       }
 
       // Calculate NPV and IRR
       try {
-	CashFlowEngine.CashFlowResult result = trial.calculate(discountRate);
-	npvValues[i] = result.getNpv();
-	irrValues[i] = result.getIrr();
-	if (npvValues[i] > 0) {
-	  positiveNpvCount++;
-	}
+        CashFlowEngine.CashFlowResult result = trial.calculate(discountRate);
+        npvValues[i] = result.getNpv();
+        irrValues[i] = result.getIrr();
+        if (npvValues[i] > 0) {
+          positiveNpvCount++;
+        }
       } catch (Exception e) {
-	// Use base case values if calculation fails
-	npvValues[i] = baseCaseNpv;
-	irrValues[i] = 0.1;
+        // Use base case values if calculation fails
+        npvValues[i] = baseCaseNpv;
+        irrValues[i] = 0.1;
       }
     }
 
@@ -386,7 +386,7 @@ public class SensitivityAnalyzer implements Serializable {
     double probabilityPositiveNpv = (double) positiveNpvCount / iterations;
 
     return new MonteCarloResult(iterations, npvMean, npvStdDev, npvP10, npvP50, npvP90, irrMean, irrP10, irrP50, irrP90,
-	probabilityPositiveNpv, npvValues);
+        probabilityPositiveNpv, npvValues);
   }
 
   // ============================================================================
@@ -444,8 +444,8 @@ public class SensitivityAnalyzer implements Serializable {
    */
   private void scaleProductionProfile(CashFlowEngine engine, double factor) {
     engine.setProductionProfile(scaleProfile(baseCase.getOilProductionProfile(), factor),
-	scaleProfile(baseCase.getGasProductionProfile(), factor),
-	scaleProfile(baseCase.getNglProductionProfile(), factor));
+        scaleProfile(baseCase.getGasProductionProfile(), factor),
+        scaleProfile(baseCase.getNglProductionProfile(), factor));
   }
 
   /**
@@ -554,8 +554,8 @@ public class SensitivityAnalyzer implements Serializable {
       sb.append("|-----------|---------|----------|-------|--------|\n");
 
       for (TornadoItem item : items) {
-	sb.append(String.format("| %s | %.1f | %.1f | %.1f | %s |\n", item.getParameterName(), item.getLowNpv(),
-	    item.getHighNpv(), item.getSwing(), item.getImpactLevel()));
+        sb.append(String.format("| %s | %.1f | %.1f | %.1f | %s |\n", item.getParameterName(), item.getLowNpv(),
+            item.getHighNpv(), item.getSwing(), item.getImpactLevel()));
       }
 
       return sb.toString();
@@ -618,9 +618,9 @@ public class SensitivityAnalyzer implements Serializable {
     public String getImpactLevel() {
       double swingPercent = getSwing() / Math.abs(baseCaseNpv) * 100;
       if (swingPercent > 50) {
-	return "HIGH";
+        return "HIGH";
       } else if (swingPercent > 20) {
-	return "MEDIUM";
+        return "MEDIUM";
       }
       return "LOW";
     }
@@ -712,8 +712,8 @@ public class SensitivityAnalyzer implements Serializable {
     private final double[] npvDistribution;
 
     MonteCarloResult(int iterations, double npvMean, double npvStdDev, double npvP10, double npvP50, double npvP90,
-	double irrMean, double irrP10, double irrP50, double irrP90, double probabilityPositiveNpv,
-	double[] npvDistribution) {
+        double irrMean, double irrP10, double irrP50, double irrP90, double probabilityPositiveNpv,
+        double[] npvDistribution) {
       this.iterations = iterations;
       this.npvMean = npvMean;
       this.npvStdDev = npvStdDev;
@@ -800,7 +800,7 @@ public class SensitivityAnalyzer implements Serializable {
       sb.append(String.format("    Probability NPV > 0: %.1f%%%n", probabilityPositiveNpv * 100));
       sb.append(String.format("  IRR Statistics:%n"));
       sb.append(String.format("    Mean: %.1f%%, P10: %.1f%%, P50: %.1f%%, P90: %.1f%%%n", irrMean * 100, irrP10 * 100,
-	  irrP50 * 100, irrP90 * 100));
+          irrP50 * 100, irrP90 * 100));
       return sb.toString();
     }
   }
@@ -836,8 +836,8 @@ public class SensitivityAnalyzer implements Serializable {
     @Override
     public String toString() {
       return String.format(
-	  "Breakeven Analysis @ %.1f%% discount rate:%n" + "  Oil: %.2f USD/bbl%n" + "  Gas: %.4f USD/Sm3%n",
-	  discountRate * 100, breakevenOilPrice, breakevenGasPrice);
+          "Breakeven Analysis @ %.1f%% discount rate:%n" + "  Oil: %.2f USD/bbl%n" + "  Gas: %.4f USD/Sm3%n",
+          discountRate * 100, breakevenOilPrice, breakevenGasPrice);
     }
   }
 }

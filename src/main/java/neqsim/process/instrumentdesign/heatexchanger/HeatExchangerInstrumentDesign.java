@@ -74,7 +74,7 @@ public class HeatExchangerInstrumentDesign extends InstrumentDesign {
     // === Process side temperature ===
     getInstrumentList().add(new InstrumentSpecification("TT", "Process Inlet Temperature", -50.0, 400.0, "degC", "AI"));
     getInstrumentList()
-	.add(new InstrumentSpecification("TT", "Process Outlet Temperature", -50.0, 400.0, "degC", "AI"));
+        .add(new InstrumentSpecification("TT", "Process Outlet Temperature", -50.0, 400.0, "degC", "AI"));
 
     // === Process side pressure ===
     getInstrumentList().add(new InstrumentSpecification("PT", "Process Inlet Pressure", 0.0, 200.0, "bara", "AI"));
@@ -110,7 +110,7 @@ public class HeatExchangerInstrumentDesign extends InstrumentDesign {
   private void addShellAndTubeInstruments() {
     getInstrumentList().add(new InstrumentSpecification("TT", "Utility Inlet Temperature", -50.0, 400.0, "degC", "AI"));
     getInstrumentList()
-	.add(new InstrumentSpecification("TT", "Utility Outlet Temperature", -50.0, 400.0, "degC", "AI"));
+        .add(new InstrumentSpecification("TT", "Utility Outlet Temperature", -50.0, 400.0, "degC", "AI"));
     getInstrumentList().add(new InstrumentSpecification("PT", "Utility Inlet Pressure", 0.0, 50.0, "bara", "AI"));
   }
 
@@ -134,7 +134,7 @@ public class HeatExchangerInstrumentDesign extends InstrumentDesign {
     // Overtemperature trip on element
     if (isIncludeSafetyInstruments()) {
       getInstrumentList()
-	  .add(new InstrumentSpecification("TSHH", "Element Overtemperature Trip", "DI", getDefaultSilLevel()));
+          .add(new InstrumentSpecification("TSHH", "Element Overtemperature Trip", "DI", getDefaultSilLevel()));
     }
   }
 

@@ -98,7 +98,7 @@ public class FrictionFactorCalculatorTest {
     double velocity = 2.0; // m/s
 
     double dpPerLength = FrictionFactorCalculator.calcPressureDropPerLength(frictionFactor, diameter, density,
-	velocity);
+        velocity);
 
     // Expected: 0.02 * 1000 * 4 / (2 * 0.1) = 400 Pa/m
     assertEquals(400.0, dpPerLength, TOLERANCE);

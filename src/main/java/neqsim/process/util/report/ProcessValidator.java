@@ -168,11 +168,11 @@ public class ProcessValidator implements Serializable {
     for (ProcessEquipmentInterface equip : processSystem.getUnitOperations()) {
       // Check inlet streams
       for (StreamInterface stream : equip.getInletStreams()) {
-	checkStream(stream);
+        checkStream(stream);
       }
       // Check outlet streams
       for (StreamInterface stream : equip.getOutletStreams()) {
-	checkStream(stream);
+        checkStream(stream);
       }
     }
   }
@@ -199,10 +199,10 @@ public class ProcessValidator implements Serializable {
 
     if (temp < minTemperature) {
       issues.add(new ValidationIssue(Severity.WARNING, name,
-	  "Temperature below limit (" + (minTemperature - 273.15) + " C)", temp - 273.15));
+          "Temperature below limit (" + (minTemperature - 273.15) + " C)", temp - 273.15));
     } else if (temp > maxTemperature) {
       issues.add(new ValidationIssue(Severity.WARNING, name,
-	  "Temperature above limit (" + (maxTemperature - 273.15) + " C)", temp - 273.15));
+          "Temperature above limit (" + (maxTemperature - 273.15) + " C)", temp - 273.15));
     }
 
     if (press < minPressure) {
@@ -221,36 +221,36 @@ public class ProcessValidator implements Serializable {
       List<StreamInterface> outlets = equip.getOutletStreams();
 
       if (inlets.isEmpty() || outlets.isEmpty()) {
-	continue;
+        continue;
       }
 
       // Only check equipment that should conserve mass (mixer, separator, splitter)
       // Heaters/coolers also conserve mass
       if (!(equip instanceof Mixer) && !(equip instanceof Separator) && !(equip instanceof Splitter)
-	  && !(equip instanceof Heater)) {
-	continue;
+          && !(equip instanceof Heater)) {
+        continue;
       }
 
       double inletMass = 0.0;
       for (StreamInterface s : inlets) {
-	if (s != null && s.getFluid() != null) {
-	  inletMass += s.getFluid().getFlowRate("kg/hr");
-	}
+        if (s != null && s.getFluid() != null) {
+          inletMass += s.getFluid().getFlowRate("kg/hr");
+        }
       }
 
       double outletMass = 0.0;
       for (StreamInterface s : outlets) {
-	if (s != null && s.getFluid() != null) {
-	  outletMass += s.getFluid().getFlowRate("kg/hr");
-	}
+        if (s != null && s.getFluid() != null) {
+          outletMass += s.getFluid().getFlowRate("kg/hr");
+        }
       }
 
       if (inletMass > 0) {
-	double error = Math.abs(inletMass - outletMass) / inletMass;
-	if (error > massBalanceTolerance) {
-	  issues.add(new ValidationIssue(Severity.ERROR, equip.getName(),
-	      "Mass balance error: " + String.format("%.2f%%", error * 100.0), error));
-	}
+        double error = Math.abs(inletMass - outletMass) / inletMass;
+        if (error > massBalanceTolerance) {
+          issues.add(new ValidationIssue(Severity.ERROR, equip.getName(),
+              "Mass balance error: " + String.format("%.2f%%", error * 100.0), error));
+        }
       }
     }
   }
@@ -266,7 +266,7 @@ public class ProcessValidator implements Serializable {
     }
     for (ValidationIssue issue : issues) {
       if (issue.severity == Severity.ERROR) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -296,7 +296,7 @@ public class ProcessValidator implements Serializable {
     int count = 0;
     for (ValidationIssue issue : issues) {
       if (issue.severity == Severity.ERROR) {
-	count++;
+        count++;
       }
     }
     return count;
@@ -314,7 +314,7 @@ public class ProcessValidator implements Serializable {
     int count = 0;
     for (ValidationIssue issue : issues) {
       if (issue.severity == Severity.WARNING) {
-	count++;
+        count++;
       }
     }
     return count;
@@ -344,7 +344,7 @@ public class ProcessValidator implements Serializable {
     List<ValidationIssue> errors = new ArrayList<>();
     for (ValidationIssue issue : issues) {
       if (issue.severity == Severity.ERROR) {
-	errors.add(issue);
+        errors.add(issue);
       }
     }
     return errors;

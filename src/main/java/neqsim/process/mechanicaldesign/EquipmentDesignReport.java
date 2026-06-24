@@ -163,9 +163,9 @@ public class EquipmentDesignReport implements java.io.Serializable {
     mechanicalDesign = equipment.getMechanicalDesign();
     if (mechanicalDesign != null) {
       try {
-	mechanicalDesign.calcDesign();
+        mechanicalDesign.calcDesign();
       } catch (Exception e) {
-	issues.add("Mechanical design calculation failed: " + e.getMessage());
+        issues.add("Mechanical design calculation failed: " + e.getMessage());
       }
     }
 
@@ -178,29 +178,29 @@ public class EquipmentDesignReport implements java.io.Serializable {
       electricalDesign.setMotorSizingMargin(motorSizingMargin);
       electricalDesign.setMotorStandard(motorStandard);
       if (electricalDesign.getPowerCable() != null) {
-	electricalDesign.getPowerCable().setLengthM(cableLengthM);
+        electricalDesign.getPowerCable().setLengthM(cableLengthM);
       }
       if (electricalDesign.getHazArea() != null) {
-	String zoneStr = hazardousZone < 0 ? "Safe area" : "Zone " + hazardousZone;
-	electricalDesign.getHazArea().setZone(zoneStr);
-	electricalDesign.getHazArea().setGasGroup(gasGroup);
+        String zoneStr = hazardousZone < 0 ? "Safe area" : "Zone " + hazardousZone;
+        electricalDesign.getHazArea().setZone(zoneStr);
+        electricalDesign.getHazArea().setGasGroup(gasGroup);
       }
 
       // Set shaft power from mechanical design if available
       if (mechanicalDesign != null && mechanicalDesign.getPower() > 0) {
-	electricalDesign.setShaftPowerKW(mechanicalDesign.getPower());
+        electricalDesign.setShaftPowerKW(mechanicalDesign.getPower());
       }
 
       try {
-	electricalDesign.calcDesign();
+        electricalDesign.calcDesign();
       } catch (Exception e) {
-	issues.add("Electrical design calculation failed: " + e.getMessage());
+        issues.add("Electrical design calculation failed: " + e.getMessage());
       }
     }
 
     // 3. Motor mechanical design (only if there's a motor)
     if (electricalDesign != null && electricalDesign.getMotor() != null
-	&& electricalDesign.getMotor().getRatedPowerKW() > 0) {
+        && electricalDesign.getMotor().getRatedPowerKW() > 0) {
       motorMechanicalDesign = new MotorMechanicalDesign(electricalDesign);
       motorMechanicalDesign.setAmbientTemperatureC(ambientTemperatureC);
       motorMechanicalDesign.setAltitudeM(altitudeM);
@@ -211,9 +211,9 @@ public class EquipmentDesignReport implements java.io.Serializable {
       motorMechanicalDesign.setHasVFD(useVFD);
 
       try {
-	motorMechanicalDesign.calcDesign();
+        motorMechanicalDesign.calcDesign();
       } catch (Exception e) {
-	issues.add("Motor mechanical design calculation failed: " + e.getMessage());
+        issues.add("Motor mechanical design calculation failed: " + e.getMessage());
       }
     }
 
@@ -231,43 +231,43 @@ public class EquipmentDesignReport implements java.io.Serializable {
     // Check motor noise vs NORSOK S-002
     if (motorMechanicalDesign != null) {
       if (!motorMechanicalDesign.isNoiseWithinNorsokLimit()) {
-	issues.add("WARNING: Motor noise exceeds NORSOK S-002 limit of 83 dB(A) at 1m");
-	hasWarning = true;
+        issues.add("WARNING: Motor noise exceeds NORSOK S-002 limit of 83 dB(A) at 1m");
+        hasWarning = true;
       }
 
       // Check bearing life
       if (motorMechanicalDesign.getBearingL10LifeHours() > 0
-	  && motorMechanicalDesign.getBearingL10LifeHours() < 26280) {
-	issues.add("WARNING: Bearing L10 life below IEEE 841 minimum of 3 years (26280 hours)");
-	hasWarning = true;
+          && motorMechanicalDesign.getBearingL10LifeHours() < 26280) {
+        issues.add("WARNING: Bearing L10 life below IEEE 841 minimum of 3 years (26280 hours)");
+        hasWarning = true;
       }
 
       // Check derating
       if (motorMechanicalDesign.getCombinedDeratingFactor() < 0.8) {
-	issues.add("WARNING: Significant motor derating ("
-	    + String.format("%.0f", motorMechanicalDesign.getCombinedDeratingFactor() * 100)
-	    + "%) due to altitude/temperature");
-	hasWarning = true;
+        issues.add("WARNING: Significant motor derating ("
+            + String.format("%.0f", motorMechanicalDesign.getCombinedDeratingFactor() * 100)
+            + "%) due to altitude/temperature");
+        hasWarning = true;
       }
 
       // Add motor-specific notes
       for (String note : motorMechanicalDesign.getDesignNotes()) {
-	issues.add("NOTE: " + note);
+        issues.add("NOTE: " + note);
       }
     }
 
     // Check electrical design
     if (electricalDesign != null) {
       if (electricalDesign.getElectricalInputKW() > 0 && electricalDesign.getMotor() != null
-	  && electricalDesign.getMotor().getRatedPowerKW() > 0) {
-	double loadFactor = electricalDesign.getShaftPowerKW() / electricalDesign.getMotor().getRatedPowerKW();
-	if (loadFactor > 1.0) {
-	  issues.add("BLOCKER: Motor undersized — shaft power exceeds motor rating");
-	  hasBlocker = true;
-	} else if (loadFactor < 0.5) {
-	  issues.add("WARNING: Motor oversized — operating below 50% load reduces efficiency");
-	  hasWarning = true;
-	}
+          && electricalDesign.getMotor().getRatedPowerKW() > 0) {
+        double loadFactor = electricalDesign.getShaftPowerKW() / electricalDesign.getMotor().getRatedPowerKW();
+        if (loadFactor > 1.0) {
+          issues.add("BLOCKER: Motor undersized — shaft power exceeds motor rating");
+          hasBlocker = true;
+        } else if (loadFactor < 0.5) {
+          issues.add("WARNING: Motor oversized — operating below 50% load reduces efficiency");
+          hasWarning = true;
+        }
       }
     }
 
@@ -336,32 +336,32 @@ public class EquipmentDesignReport implements java.io.Serializable {
 
       // Motor data
       if (electricalDesign.getMotor() != null) {
-	String motorJson = electricalDesign.getMotor().toJson();
-	elecObj.add("motor", JsonParser.parseString(motorJson));
+        String motorJson = electricalDesign.getMotor().toJson();
+        elecObj.add("motor", JsonParser.parseString(motorJson));
       }
 
       // VFD data
       if (electricalDesign.getVfd() != null) {
-	String vfdJson = electricalDesign.getVfd().toJson();
-	elecObj.add("vfd", JsonParser.parseString(vfdJson));
+        String vfdJson = electricalDesign.getVfd().toJson();
+        elecObj.add("vfd", JsonParser.parseString(vfdJson));
       }
 
       // Cable data
       if (electricalDesign.getPowerCable() != null) {
-	String cableJson = electricalDesign.getPowerCable().toJson();
-	elecObj.add("powerCable", JsonParser.parseString(cableJson));
+        String cableJson = electricalDesign.getPowerCable().toJson();
+        elecObj.add("powerCable", JsonParser.parseString(cableJson));
       }
 
       // Switchgear data
       if (electricalDesign.getSwitchgear() != null) {
-	String sgJson = electricalDesign.getSwitchgear().toJson();
-	elecObj.add("switchgear", JsonParser.parseString(sgJson));
+        String sgJson = electricalDesign.getSwitchgear().toJson();
+        elecObj.add("switchgear", JsonParser.parseString(sgJson));
       }
 
       // Hazardous area
       if (electricalDesign.getHazArea() != null) {
-	String hazJson = electricalDesign.getHazArea().toJson();
-	elecObj.add("hazardousArea", JsonParser.parseString(hazJson));
+        String hazJson = electricalDesign.getHazArea().toJson();
+        elecObj.add("hazardousArea", JsonParser.parseString(hazJson));
       }
 
       root.add("electricalDesign", elecObj);
@@ -388,7 +388,7 @@ public class EquipmentDesignReport implements java.io.Serializable {
 
     if (electricalDesign != null) {
       entry.put("ratedMotorPowerKW",
-	  electricalDesign.getMotor() != null ? electricalDesign.getMotor().getRatedPowerKW() : 0);
+          electricalDesign.getMotor() != null ? electricalDesign.getMotor().getRatedPowerKW() : 0);
       entry.put("absorbedPowerKW", electricalDesign.getShaftPowerKW());
       entry.put("electricalInputKW", electricalDesign.getElectricalInputKW());
       entry.put("apparentPowerKVA", electricalDesign.getApparentPowerKVA());

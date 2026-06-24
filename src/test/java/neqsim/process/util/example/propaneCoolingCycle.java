@@ -87,7 +87,7 @@ public class propaneCoolingCycle {
     stream_2.displayResult();
 
     logger.info("compressor work" + compressor1.getEnergy() / 1.0e3 + " kW " + " compressor temperature "
-	+ compressor1.getOutTemperature());
+        + compressor1.getOutTemperature());
     // logger.info("compressor isentropic ef " +
     // compressor1.getIsentropicEfficiency());
     logger.info("cooler duty " + cooler.getEnergyInput() / 1.0e3 + " kW");

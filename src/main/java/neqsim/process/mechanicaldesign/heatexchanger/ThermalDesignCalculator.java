@@ -233,7 +233,7 @@ public class ThermalDesignCalculator {
 
     // Kern correlation
     shellSideHTC = BellDelawareMethod.calcKernShellSideHTC(massFlux, De, shellViscosity, shellCp, shellConductivity,
-	muW);
+        muW);
   }
 
   /**
@@ -261,13 +261,13 @@ public class ThermalDesignCalculator {
 
     // Ideal crossflow HTC
     double hIdeal = BellDelawareMethod.calcIdealCrossflowHTC(massFlux, tubeOD, shellViscosity, shellCp,
-	shellConductivity, muW, triangularPitch ? 1.0 : 0.0);
+        shellConductivity, muW, triangularPitch ? 1.0 : 0.0);
 
     // Bell-Delaware correction factors
     Jc = BellDelawareMethod.calcJc(baffleCut);
 
     Jl = BellDelawareMethod.calcJl(tubeToBaffleClearance, shellToBaffleClearance, crossflowArea, tubeCount, tubeOD,
-	baffleSpacingm);
+        baffleSpacingm);
 
     if (bypassArea <= 0) {
       // Estimate bypass area
@@ -275,7 +275,7 @@ public class ThermalDesignCalculator {
       bypassArea = BellDelawareMethod.calcBypassArea(shellIDm, bundleDiam, baffleSpacingm);
     }
     int tubeRowsCrossflow = BellDelawareMethod.estimateTubeRowsCrossflow(shellIDm, baffleCut, tubePitch,
-	triangularPitch);
+        triangularPitch);
     Jb = BellDelawareMethod.calcJb(bypassArea, crossflowArea, hasSealing, sealingPairs, tubeRowsCrossflow);
 
     Js = BellDelawareMethod.calcJs(baffleSpacingm, baffleSpacingm, baffleSpacingm, baffleCount);
@@ -382,7 +382,7 @@ public class ThermalDesignCalculator {
     double muW = (shellViscosityWall > 0) ? shellViscosityWall : shellViscosity;
 
     shellSidePressureDrop = BellDelawareMethod.calcKernShellSidePressureDrop(massFlux, De, shellIDm, baffleCount,
-	shellDensity, shellViscosity, muW);
+        shellDensity, shellViscosity, muW);
   }
 
   /**
@@ -396,15 +396,15 @@ public class ThermalDesignCalculator {
 
     double massFlux = shellMassFlowRate / crossflowArea;
     int tubeRowsCrossflow = BellDelawareMethod.estimateTubeRowsCrossflow(shellIDm, baffleCut, tubePitchm,
-	triangularPitch);
+        triangularPitch);
 
     // Ideal crossflow DP per compartment
     double dpIdeal = BellDelawareMethod.calcIdealCrossflowDP(tubeRowsCrossflow, massFlux, shellDensity, shellSideRe,
-	triangularPitch);
+        triangularPitch);
 
     // Leakage and bypass correction
     double Rl = BellDelawareMethod.calcRl(tubeToBaffleClearance, shellToBaffleClearance, crossflowArea, tubeCount,
-	tubeODm, baffleSpacingm);
+        tubeODm, baffleSpacingm);
 
     if (bypassArea <= 0) {
       double bundleDiam = shellIDm * 0.9;
@@ -478,8 +478,8 @@ public class ThermalDesignCalculator {
       result.overallU = overallU;
       result.lmtd = zone.lmtd;
       result.requiredArea = (overallU > 0 && zone.lmtd > 0)
-	  ? zone.dutyFraction * zone.totalDuty / (overallU * zone.lmtd)
-	  : 0.0;
+          ? zone.dutyFraction * zone.totalDuty / (overallU * zone.lmtd)
+          : 0.0;
       results[i] = result;
 
       // Restore properties

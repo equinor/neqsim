@@ -303,17 +303,17 @@ public class LNGRolloverDetector implements Serializable {
 
       // Positive densityDiff means upper is heavier — potential inversion
       if (densityDiff > maxDensityDiff) {
-	maxDensityDiff = densityDiff;
-	worstLower = i;
-	worstUpper = i + 1;
+        maxDensityDiff = densityDiff;
+        worstLower = i;
+        worstUpper = i + 1;
       }
       if (densityDiff > 0) {
-	hasInversion = true;
+        hasInversion = true;
       }
 
       // Positive tempDiff means lower is warmer — buoyancy instability
       if (tempDiff > maxTempDiff) {
-	maxTempDiff = tempDiff;
+        maxTempDiff = tempDiff;
       }
     }
 
@@ -328,20 +328,20 @@ public class LNGRolloverDetector implements Serializable {
     if (hasInversion && maxDensityDiff > densityAlarmThreshold) {
       level = RolloverRiskLevel.CRITICAL;
       msg = String.format("CRITICAL: Density inversion %.1f kg/m3 exceeds alarm threshold %.1f. "
-	  + "Rollover imminent. Initiate emergency mixing.", maxDensityDiff, densityAlarmThreshold);
+          + "Rollover imminent. Initiate emergency mixing.", maxDensityDiff, densityAlarmThreshold);
     } else if (hasInversion && maxDensityDiff > densityWarningThreshold) {
       level = RolloverRiskLevel.HIGH;
       msg = String.format(
-	  "HIGH: Density inversion %.1f kg/m3 between layers %d and %d. " + "Initiate pump circulation or jet mixing.",
-	  maxDensityDiff, worstLower, worstUpper);
+          "HIGH: Density inversion %.1f kg/m3 between layers %d and %d. " + "Initiate pump circulation or jet mixing.",
+          maxDensityDiff, worstLower, worstUpper);
     } else if (ra > criticalRayleighNumber || maxTempDiff > temperatureThreshold) {
       level = RolloverRiskLevel.MEDIUM;
       msg = String.format("MEDIUM: Thermal stratification dT=%.2f K, Ra=%.0f. " + "Monitor closely, consider mixing.",
-	  maxTempDiff, ra);
+          maxTempDiff, ra);
     } else if (maxDensityDiff > densityWarningThreshold * 0.5) {
       level = RolloverRiskLevel.LOW;
       msg = String.format("LOW: Minor stratification detected. Density diff=%.2f kg/m3. " + "Continue monitoring.",
-	  maxDensityDiff);
+          maxDensityDiff);
     } else {
       level = RolloverRiskLevel.NONE;
       msg = "No rollover risk — layers well mixed or stable configuration.";

@@ -69,7 +69,7 @@ public class FMEAWorksheet implements Serializable {
     Collections.sort(copy, new Comparator<FMEAEntry>() {
       @Override
       public int compare(FMEAEntry a, FMEAEntry b) {
-	return Integer.compare(b.rpn(), a.rpn());
+        return Integer.compare(b.rpn(), a.rpn());
       }
     });
     return copy;
@@ -83,7 +83,7 @@ public class FMEAWorksheet implements Serializable {
     List<FMEAEntry> out = new ArrayList<>();
     for (FMEAEntry e : entries) {
       if (e.rpn() >= rpnThreshold) {
-	out.add(e);
+        out.add(e);
       }
     }
     return out;
@@ -104,7 +104,7 @@ public class FMEAWorksheet implements Serializable {
       sb.append("    Effect      : ").append(e.effect).append('\n');
       sb.append(String.format("    S=%d O=%d D=%d%n", e.severity, e.occurrence, e.detection));
       if (e.mitigation != null) {
-	sb.append("    Mitigation  : ").append(e.mitigation).append('\n');
+        sb.append("    Mitigation  : ").append(e.mitigation).append('\n');
       }
     }
     return sb.toString();
@@ -143,7 +143,7 @@ public class FMEAWorksheet implements Serializable {
      * @param mitigation mitigation
      */
     public FMEAEntry(String component, String failureMode, String effect, String cause, int severity, int occurrence,
-	int detection, String mitigation) {
+        int detection, String mitigation) {
       this.component = component;
       this.failureMode = failureMode;
       this.effect = effect;

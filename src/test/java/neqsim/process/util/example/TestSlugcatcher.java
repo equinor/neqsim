@@ -31,7 +31,7 @@ public class TestSlugcatcher {
     double reservoirPressureSnohvit = 5.0; // bar
 
     neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil(
-	reservoirTemperatureSnohvit, reservoirPressureSnohvit);
+        reservoirTemperatureSnohvit, reservoirPressureSnohvit);
 
     testSystem.addComponent("nitrogen", 40);
     testSystem.addComponent("methane", 10);
@@ -52,11 +52,11 @@ public class TestSlugcatcher {
     Stream stream_2 = new Stream("stream_2", separator2.getGasOutStream());
 
     VolumeFlowTransmitter volumeTransmitter3 = new VolumeFlowTransmitter("Gas Volume FLow From Slug Catcher",
-	separator2.getGasOutStream());
+        separator2.getGasOutStream());
     volumeTransmitter3.setMeasuredPhaseNumber(0);
 
     VolumeFlowTransmitter volumeTransmitter4 = new VolumeFlowTransmitter("Water Volume FLow From Slug Catcher",
-	separator2.getWaterOutStream());
+        separator2.getWaterOutStream());
     volumeTransmitter4.setMeasuredPhaseNumber(0);
 
     neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();

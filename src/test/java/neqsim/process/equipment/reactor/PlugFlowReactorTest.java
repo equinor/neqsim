@@ -99,7 +99,7 @@ public class PlugFlowReactorTest extends neqsim.NeqSimTest {
     // For exothermic reaction in adiabatic mode, outlet T should be >= inlet T
     // (could be equal if conversion is zero)
     assertTrue(outletT >= inletT - 1.0,
-	"Outlet T should be >= inlet T for exothermic adiabatic, got: " + outletT + " vs inlet: " + inletT);
+        "Outlet T should be >= inlet T for exothermic adiabatic, got: " + outletT + " vs inlet: " + inletT);
   }
 
   /**
@@ -343,7 +343,7 @@ public class PlugFlowReactorTest extends neqsim.NeqSimTest {
 
     // Both should give reasonable results; with sufficient steps they should be close
     assertTrue(Math.abs(convRK4 - convEuler) < 0.10,
-	"RK4 and Euler should give similar conversions with 100 steps: " + convRK4 + " vs " + convEuler);
+        "RK4 and Euler should give similar conversions with 100 steps: " + convRK4 + " vs " + convEuler);
   }
 
   /**

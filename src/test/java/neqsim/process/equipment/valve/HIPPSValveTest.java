@@ -402,7 +402,7 @@ class HIPPSValveTest {
 
     // Verify pressure is still below typical PSV setpoint (100 bara)
     assertTrue(feedStream.getPressure() < 100.0,
-	"Pressure (92 bara) is below PSV setpoint (100 bara) - HIPPS provides primary protection");
+        "Pressure (92 bara) is below PSV setpoint (100 bara) - HIPPS provides primary protection");
 
     // In a real system, the PSV would be backup protection at 100 bara
     // Since HIPPS trips at 90 bara, pressure never reaches PSV setpoint

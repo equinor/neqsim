@@ -254,14 +254,14 @@ public class KValueUnitProfile implements Serializable {
     for (int component = 0; component < componentNames.length; component++) {
       double feed = Math.max(0.0, inletComponentFlow[component]);
       if (feed <= MIN_FLOW) {
-	continue;
+        continue;
       }
       double z = feed / total;
       double vaporK = clampK(vaporLiquidKValues[component]);
       double waterK = clampK(waterLiquidKValues[component]);
       double denominator = liquidFraction + vaporFraction * vaporK + waterFraction * waterK;
       if (denominator < MIN_FLOW) {
-	return routeWithFrozenFactors(inletComponentFlow);
+        return routeWithFrozenFactors(inletComponentFlow);
       }
       double liquidMoleFraction = z / denominator;
       routed[gasOutletIndex][component] = vaporFraction * total * vaporK * liquidMoleFraction;
@@ -288,13 +288,13 @@ public class KValueUnitProfile implements Serializable {
     for (int k = 0; k < componentNames.length; k++) {
       double feed = Math.max(0.0, inletComponentFlow[k]);
       if (feed <= MIN_FLOW) {
-	continue;
+        continue;
       }
       double z = feed / total;
       double kValue = clampK(vaporLiquidKValues[k]);
       double denominator = 1.0 + vaporFraction * (kValue - 1.0);
       if (denominator < MIN_FLOW) {
-	denominator = MIN_FLOW;
+        denominator = MIN_FLOW;
       }
       double liquidMoleFraction = z / denominator;
       double vaporMoleFraction = kValue * liquidMoleFraction;
@@ -314,8 +314,8 @@ public class KValueUnitProfile implements Serializable {
     double[][] routed = new double[outletStreams.size()][componentNames.length];
     for (int outlet = 0; outlet < outletStreams.size(); outlet++) {
       for (int component = 0; component < componentNames.length; component++) {
-	routed[outlet][component] = Math.max(0.0, inletComponentFlow[component])
-	    * fallbackSplitFactors[outlet][component];
+        routed[outlet][component] = Math.max(0.0, inletComponentFlow[component])
+            * fallbackSplitFactors[outlet][component];
       }
     }
     return routed;
@@ -344,12 +344,12 @@ public class KValueUnitProfile implements Serializable {
       double middle = 0.5 * (lower + upper);
       double value = rachfordRiceFunction(middle, inletComponentFlow, total);
       if (Math.abs(value) < 1.0e-14 || upper - lower < 1.0e-12) {
-	return middle;
+        return middle;
       }
       if (value > 0.0) {
-	lower = middle;
+        lower = middle;
       } else {
-	upper = middle;
+        upper = middle;
       }
     }
     return 0.5 * (lower + upper);
@@ -372,15 +372,15 @@ public class KValueUnitProfile implements Serializable {
 
     for (int iteration = 0; iteration < 80; iteration++) {
       double[] residualAndJacobian = threePhaseResidualAndJacobian(vaporFraction, waterFraction, inletComponentFlow,
-	  total);
+          total);
       if (residualAndJacobian == null) {
-	return null;
+        return null;
       }
       double gasResidual = residualAndJacobian[0];
       double waterResidual = residualAndJacobian[1];
       double residualNorm = Math.max(Math.abs(gasResidual), Math.abs(waterResidual));
       if (residualNorm < 1.0e-12) {
-	return new double[] { vaporFraction, 1.0 - vaporFraction - waterFraction, waterFraction };
+        return new double[] { vaporFraction, 1.0 - vaporFraction - waterFraction, waterFraction };
       }
 
       double jgg = residualAndJacobian[2];
@@ -389,7 +389,7 @@ public class KValueUnitProfile implements Serializable {
       double jww = residualAndJacobian[5];
       double determinant = jgg * jww - jgw * jwg;
       if (Math.abs(determinant) < 1.0e-30) {
-	return null;
+        return null;
       }
 
       double deltaGas = (-gasResidual * jww + jgw * waterResidual) / determinant;
@@ -397,30 +397,30 @@ public class KValueUnitProfile implements Serializable {
       boolean accepted = false;
       double step = 1.0;
       while (step > 1.0e-8) {
-	double trialGas = vaporFraction + step * deltaGas;
-	double trialWater = waterFraction + step * deltaWater;
-	if (isValidThreePhaseFractions(trialGas, trialWater)
-	    && threePhaseDenominatorsArePositive(trialGas, trialWater, inletComponentFlow, total)) {
-	  double[] trialResidualAndJacobian = threePhaseResidualAndJacobian(trialGas, trialWater, inletComponentFlow,
-	      total);
-	  if (trialResidualAndJacobian != null && Math.max(Math.abs(trialResidualAndJacobian[0]),
-	      Math.abs(trialResidualAndJacobian[1])) < residualNorm) {
-	    vaporFraction = trialGas;
-	    waterFraction = trialWater;
-	    accepted = true;
-	    break;
-	  }
-	}
-	step *= 0.5;
+        double trialGas = vaporFraction + step * deltaGas;
+        double trialWater = waterFraction + step * deltaWater;
+        if (isValidThreePhaseFractions(trialGas, trialWater)
+            && threePhaseDenominatorsArePositive(trialGas, trialWater, inletComponentFlow, total)) {
+          double[] trialResidualAndJacobian = threePhaseResidualAndJacobian(trialGas, trialWater, inletComponentFlow,
+              total);
+          if (trialResidualAndJacobian != null && Math.max(Math.abs(trialResidualAndJacobian[0]),
+              Math.abs(trialResidualAndJacobian[1])) < residualNorm) {
+            vaporFraction = trialGas;
+            waterFraction = trialWater;
+            accepted = true;
+            break;
+          }
+        }
+        step *= 0.5;
       }
       if (!accepted) {
-	return null;
+        return null;
       }
     }
     double[] residualAndJacobian = threePhaseResidualAndJacobian(vaporFraction, waterFraction, inletComponentFlow,
-	total);
+        total);
     if (residualAndJacobian != null
-	&& Math.max(Math.abs(residualAndJacobian[0]), Math.abs(residualAndJacobian[1])) < 1.0e-8) {
+        && Math.max(Math.abs(residualAndJacobian[0]), Math.abs(residualAndJacobian[1])) < 1.0e-8) {
       return new double[] { vaporFraction, 1.0 - vaporFraction - waterFraction, waterFraction };
     }
     return null;
@@ -450,7 +450,7 @@ public class KValueUnitProfile implements Serializable {
       double waterDelta = clampK(waterLiquidKValues[component]) - 1.0;
       double denominator = 1.0 + vaporFraction * gasDelta + waterFraction * waterDelta;
       if (denominator <= MIN_FLOW) {
-	return null;
+        return null;
       }
       double denominatorSquared = denominator * denominator;
       gasResidual += z * gasDelta / denominator;
@@ -488,12 +488,12 @@ public class KValueUnitProfile implements Serializable {
     for (int component = 0; component < componentNames.length; component++) {
       double z = Math.max(0.0, inletComponentFlow[component]) / total;
       if (z <= MIN_FLOW) {
-	continue;
+        continue;
       }
       double denominator = 1.0 + vaporFraction * (clampK(vaporLiquidKValues[component]) - 1.0)
-	  + waterFraction * (clampK(waterLiquidKValues[component]) - 1.0);
+          + waterFraction * (clampK(waterLiquidKValues[component]) - 1.0);
       if (denominator <= MIN_FLOW) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -536,7 +536,7 @@ public class KValueUnitProfile implements Serializable {
       double km1 = kValue - 1.0;
       double denominator = 1.0 + vaporFraction * km1;
       if (Math.abs(denominator) < MIN_FLOW) {
-	denominator = denominator < 0.0 ? -MIN_FLOW : MIN_FLOW;
+        denominator = denominator < 0.0 ? -MIN_FLOW : MIN_FLOW;
       }
       value += z * km1 / denominator;
     }

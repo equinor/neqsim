@@ -65,7 +65,7 @@ public class AllDiffusivityModelsTest {
     assertTrue(gasSystem.hasPhaseType("gas"), "Gas phase should exist");
     // Default gas diffusion model is Chapman-Enskog
     double D = gasSystem.getPhase("gas").getPhysicalProperties().diffusivityCalc.calcBinaryDiffusionCoefficient(0, 1,
-	0);
+        0);
 
     // Gas diffusivities at 1 atm, 25C: typically 1e-6 to 1e-4 m2/s
     assertTrue(D > 1e-7, "Gas D should be > 1e-7 m2/s, got: " + D);
@@ -82,12 +82,12 @@ public class AllDiffusivityModelsTest {
     int nComps = gasSystem.getPhase("gas").getNumberOfComponents();
     for (int i = 0; i < nComps; i++) {
       for (int j = 0; j < nComps; j++) {
-	if (i != j) {
-	  double D = gasSystem.getPhase("gas").getPhysicalProperties().diffusivityCalc.calcBinaryDiffusionCoefficient(i,
-	      j, 0);
-	  assertTrue(D > 1e-7, "Fuller D[" + i + "][" + j + "] should be > 1e-7 m2/s, got: " + D);
-	  assertTrue(D < 1e-3, "Fuller D[" + i + "][" + j + "] should be < 1e-3 m2/s, got: " + D);
-	}
+        if (i != j) {
+          double D = gasSystem.getPhase("gas").getPhysicalProperties().diffusivityCalc.calcBinaryDiffusionCoefficient(i,
+              j, 0);
+          assertTrue(D > 1e-7, "Fuller D[" + i + "][" + j + "] should be > 1e-7 m2/s, got: " + D);
+          assertTrue(D < 1e-3, "Fuller D[" + i + "][" + j + "] should be < 1e-3 m2/s, got: " + D);
+        }
       }
     }
 
@@ -102,7 +102,7 @@ public class AllDiffusivityModelsTest {
     gasSystem.getPhase("gas").getPhysicalProperties().setDiffusionCoefficientModel("Wilke Lee");
 
     double D = gasSystem.getPhase("gas").getPhysicalProperties().diffusivityCalc.calcBinaryDiffusionCoefficient(0, 1,
-	0);
+        0);
 
     assertTrue(D > 1e-7, "Wilke-Lee D should be > 1e-7 m2/s, got: " + D);
     assertTrue(D < 1e-3, "Wilke-Lee D should be < 1e-3 m2/s, got: " + D);
@@ -117,17 +117,17 @@ public class AllDiffusivityModelsTest {
 
     // Chapman-Enskog (default)
     double dCE = gasSystem.getPhase("gas").getPhysicalProperties().diffusivityCalc.calcBinaryDiffusionCoefficient(0, 1,
-	0);
+        0);
 
     // Fuller-Schettler-Giddings
     gasSystem.getPhase("gas").getPhysicalProperties().setDiffusionCoefficientModel("Fuller-Schettler-Giddings");
     double dFSG = gasSystem.getPhase("gas").getPhysicalProperties().diffusivityCalc.calcBinaryDiffusionCoefficient(0, 1,
-	0);
+        0);
 
     // Wilke-Lee
     gasSystem.getPhase("gas").getPhysicalProperties().setDiffusionCoefficientModel("Wilke Lee");
     double dWL = gasSystem.getPhase("gas").getPhysicalProperties().diffusivityCalc.calcBinaryDiffusionCoefficient(0, 1,
-	0);
+        0);
 
     // Models should agree within an order of magnitude for methane-ethane
     // Fuller and Chapman-Enskog use different molecular parameters so larger differences expected
@@ -147,7 +147,7 @@ public class AllDiffusivityModelsTest {
     assertTrue(liquidSystem.hasPhaseType("oil"), "Oil phase should exist");
 
     double D = liquidSystem.getPhase("oil").getPhysicalProperties().diffusivityCalc.calcBinaryDiffusionCoefficient(0, 1,
-	0);
+        0);
 
     // Liquid diffusivities: typically 1e-10 to 1e-8 m2/s
     assertTrue(D > 1e-12, "Liquid D should be > 1e-12 m2/s, got: " + D);
@@ -159,7 +159,7 @@ public class AllDiffusivityModelsTest {
     assertTrue(aqueousSystem.hasPhaseType("aqueous"), "Aqueous phase should exist");
 
     double D = aqueousSystem.getPhase("aqueous").getPhysicalProperties().diffusivityCalc
-	.calcBinaryDiffusionCoefficient(0, 1, 0);
+        .calcBinaryDiffusionCoefficient(0, 1, 0);
 
     assertTrue(D > 1e-11, "Aqueous D should be > 1e-11 m2/s, got: " + D);
     assertTrue(D < 1e-7, "Aqueous D should be < 1e-7 m2/s, got: " + D);
@@ -174,12 +174,12 @@ public class AllDiffusivityModelsTest {
     int nComps = liquidSystem.getPhase("oil").getNumberOfComponents();
     for (int i = 0; i < nComps; i++) {
       for (int j = 0; j < nComps; j++) {
-	if (i != j) {
-	  double D = liquidSystem.getPhase("oil").getPhysicalProperties().diffusivityCalc
-	      .calcBinaryDiffusionCoefficient(i, j, 0);
-	  assertTrue(D > 1e-12, "Wilke-Chang D[" + i + "][" + j + "] should be > 1e-12 m2/s, got: " + D);
-	  assertTrue(D < 1e-6, "Wilke-Chang D[" + i + "][" + j + "] should be < 1e-6 m2/s, got: " + D);
-	}
+        if (i != j) {
+          double D = liquidSystem.getPhase("oil").getPhysicalProperties().diffusivityCalc
+              .calcBinaryDiffusionCoefficient(i, j, 0);
+          assertTrue(D > 1e-12, "Wilke-Chang D[" + i + "][" + j + "] should be > 1e-12 m2/s, got: " + D);
+          assertTrue(D < 1e-6, "Wilke-Chang D[" + i + "][" + j + "] should be < 1e-6 m2/s, got: " + D);
+        }
       }
     }
 
@@ -196,12 +196,12 @@ public class AllDiffusivityModelsTest {
     int nComps = liquidSystem.getPhase("oil").getNumberOfComponents();
     for (int i = 0; i < nComps; i++) {
       for (int j = 0; j < nComps; j++) {
-	if (i != j) {
-	  double D = liquidSystem.getPhase("oil").getPhysicalProperties().diffusivityCalc
-	      .calcBinaryDiffusionCoefficient(i, j, 0);
-	  assertTrue(D > 1e-12, "Tyn-Calus D[" + i + "][" + j + "] should be > 1e-12 m2/s, got: " + D);
-	  assertTrue(D < 1e-6, "Tyn-Calus D[" + i + "][" + j + "] should be < 1e-6 m2/s, got: " + D);
-	}
+        if (i != j) {
+          double D = liquidSystem.getPhase("oil").getPhysicalProperties().diffusivityCalc
+              .calcBinaryDiffusionCoefficient(i, j, 0);
+          assertTrue(D > 1e-12, "Tyn-Calus D[" + i + "][" + j + "] should be > 1e-12 m2/s, got: " + D);
+          assertTrue(D < 1e-6, "Tyn-Calus D[" + i + "][" + j + "] should be < 1e-6 m2/s, got: " + D);
+        }
       }
     }
 
@@ -215,17 +215,17 @@ public class AllDiffusivityModelsTest {
 
     // Siddiqi-Lucas (default)
     double dSL = liquidSystem.getPhase("oil").getPhysicalProperties().diffusivityCalc.calcBinaryDiffusionCoefficient(0,
-	1, 0);
+        1, 0);
 
     // Wilke-Chang
     liquidSystem.getPhase("oil").getPhysicalProperties().setDiffusionCoefficientModel("Wilke-Chang");
     double dWC = liquidSystem.getPhase("oil").getPhysicalProperties().diffusivityCalc.calcBinaryDiffusionCoefficient(0,
-	1, 0);
+        1, 0);
 
     // Tyn-Calus
     liquidSystem.getPhase("oil").getPhysicalProperties().setDiffusionCoefficientModel("Tyn-Calus");
     double dTC = liquidSystem.getPhase("oil").getPhysicalProperties().diffusivityCalc.calcBinaryDiffusionCoefficient(0,
-	1, 0);
+        1, 0);
 
     // Models should agree within a factor of 5
     if (dSL > 0 && dWC > 0) {
@@ -249,7 +249,7 @@ public class AllDiffusivityModelsTest {
 
     // CO2 (solute=0) in water (solvent=2)
     double D = aqueousSystem.getPhase("aqueous").getPhysicalProperties().diffusivityCalc
-	.calcBinaryDiffusionCoefficient(0, 2, 0);
+        .calcBinaryDiffusionCoefficient(0, 2, 0);
 
     assertTrue(D > 1e-11, "CO2/water D should be > 1e-11 m2/s, got: " + D);
     assertTrue(D < 1e-7, "CO2/water D should be < 1e-7 m2/s, got: " + D);
@@ -276,17 +276,17 @@ public class AllDiffusivityModelsTest {
       sys.initPhysicalProperties();
 
       if (sys.hasPhaseType("gas")) {
-	sys.getPhase("gas").getPhysicalProperties().setDiffusionCoefficientModel("Fuller-Schettler-Giddings");
-	dValues[t] = sys.getPhase("gas").getPhysicalProperties().diffusivityCalc.calcBinaryDiffusionCoefficient(0, 1,
-	    0);
+        sys.getPhase("gas").getPhysicalProperties().setDiffusionCoefficientModel("Fuller-Schettler-Giddings");
+        dValues[t] = sys.getPhase("gas").getPhysicalProperties().diffusivityCalc.calcBinaryDiffusionCoefficient(0, 1,
+            0);
       }
     }
 
     // Gas diffusivity should increase with temperature (D ~ T^1.75)
     for (int i = 1; i < dValues.length; i++) {
       if (dValues[i] > 0 && dValues[i - 1] > 0) {
-	assertTrue(dValues[i] > dValues[i - 1], "Gas D should increase with T: D[" + temps[i] + "]=" + dValues[i]
-	    + " <= D[" + temps[i - 1] + "]=" + dValues[i - 1]);
+        assertTrue(dValues[i] > dValues[i - 1], "Gas D should increase with T: D[" + temps[i] + "]=" + dValues[i]
+            + " <= D[" + temps[i - 1] + "]=" + dValues[i - 1]);
       }
     }
   }
@@ -307,17 +307,17 @@ public class AllDiffusivityModelsTest {
       sys.initPhysicalProperties();
 
       if (sys.hasPhaseType("gas")) {
-	sys.getPhase("gas").getPhysicalProperties().setDiffusionCoefficientModel("Fuller-Schettler-Giddings");
-	dValues[p] = sys.getPhase("gas").getPhysicalProperties().diffusivityCalc.calcBinaryDiffusionCoefficient(0, 1,
-	    0);
+        sys.getPhase("gas").getPhysicalProperties().setDiffusionCoefficientModel("Fuller-Schettler-Giddings");
+        dValues[p] = sys.getPhase("gas").getPhysicalProperties().diffusivityCalc.calcBinaryDiffusionCoefficient(0, 1,
+            0);
       }
     }
 
     // Gas diffusivity should decrease with pressure (D ~ 1/P)
     for (int i = 1; i < dValues.length; i++) {
       if (dValues[i] > 0 && dValues[i - 1] > 0) {
-	assertTrue(dValues[i] < dValues[i - 1], "Gas D should decrease with P: D[" + pressures[i] + "bar]=" + dValues[i]
-	    + " >= D[" + pressures[i - 1] + "bar]=" + dValues[i - 1]);
+        assertTrue(dValues[i] < dValues[i - 1], "Gas D should decrease with P: D[" + pressures[i] + "bar]=" + dValues[i]
+            + " >= D[" + pressures[i - 1] + "bar]=" + dValues[i - 1]);
       }
     }
   }
@@ -383,7 +383,7 @@ public class AllDiffusivityModelsTest {
     int nComps = gasSystem.getPhase("gas").getNumberOfComponents();
     for (int i = 0; i < nComps; i++) {
       double Deff = gasSystem.getPhase("gas").getPhysicalProperties().diffusivityCalc
-	  .getEffectiveDiffusionCoefficient(i);
+          .getEffectiveDiffusionCoefficient(i);
       assertTrue(Deff > 0, "Effective D[" + i + "] should be > 0, got: " + Deff);
       assertTrue(Deff < 1e-3, "Effective D[" + i + "] should be < 1e-3, got: " + Deff);
     }

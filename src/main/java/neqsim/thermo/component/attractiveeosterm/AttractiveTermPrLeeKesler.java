@@ -39,7 +39,7 @@ public class AttractiveTermPrLeeKesler extends AttractiveTermPr {
   public AttractiveTermPrLeeKesler(ComponentEosInterface component) {
     super(component);
     m = 0.480 + 1.574 * component.getAcentricFactor()
-	- 0.176 * component.getAcentricFactor() * component.getAcentricFactor();
+        - 0.176 * component.getAcentricFactor() * component.getAcentricFactor();
   }
 
   /** {@inheritDoc} */
@@ -58,7 +58,7 @@ public class AttractiveTermPrLeeKesler extends AttractiveTermPr {
   @Override
   public void init() {
     m = 0.480 + 1.574 * getComponent().getAcentricFactor()
-	- 0.176 * getComponent().getAcentricFactor() * getComponent().getAcentricFactor();
+        - 0.176 * getComponent().getAcentricFactor() * getComponent().getAcentricFactor();
   }
 
   /**

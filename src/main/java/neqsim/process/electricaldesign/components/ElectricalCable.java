@@ -92,14 +92,14 @@ public class ElectricalCable implements java.io.Serializable {
     baseAmpacityA = BASE_AMPACITY_XLPE_TRAY[0];
     for (int i = 0; i < STANDARD_CROSS_SECTIONS.length; i++) {
       if (BASE_AMPACITY_XLPE_TRAY[i] >= requiredAmpacity) {
-	crossSectionMM2 = STANDARD_CROSS_SECTIONS[i];
-	baseAmpacityA = BASE_AMPACITY_XLPE_TRAY[i];
-	break;
+        crossSectionMM2 = STANDARD_CROSS_SECTIONS[i];
+        baseAmpacityA = BASE_AMPACITY_XLPE_TRAY[i];
+        break;
       }
       if (i == STANDARD_CROSS_SECTIONS.length - 1) {
-	// Need parallel cables - select largest size
-	crossSectionMM2 = STANDARD_CROSS_SECTIONS[i];
-	baseAmpacityA = BASE_AMPACITY_XLPE_TRAY[i];
+        // Need parallel cables - select largest size
+        crossSectionMM2 = STANDARD_CROSS_SECTIONS[i];
+        baseAmpacityA = BASE_AMPACITY_XLPE_TRAY[i];
       }
     }
 
@@ -117,7 +117,7 @@ public class ElectricalCable implements java.io.Serializable {
 
     // Check voltage drop - may need to upsize
     while (voltageDropPercent > maxVoltageDropPercent
-	&& crossSectionMM2 < STANDARD_CROSS_SECTIONS[STANDARD_CROSS_SECTIONS.length - 1]) {
+        && crossSectionMM2 < STANDARD_CROSS_SECTIONS[STANDARD_CROSS_SECTIONS.length - 1]) {
       crossSectionMM2 = selectNextSizeUp(crossSectionMM2 + 1);
       voltageDropPercent = calculateVoltageDrop(loadCurrentA, voltageV);
     }
@@ -139,7 +139,7 @@ public class ElectricalCable implements java.io.Serializable {
   private double selectNextSizeUp(double minCrossSection) {
     for (double std : STANDARD_CROSS_SECTIONS) {
       if (std >= minCrossSection) {
-	return std;
+        return std;
       }
     }
     return STANDARD_CROSS_SECTIONS[STANDARD_CROSS_SECTIONS.length - 1];

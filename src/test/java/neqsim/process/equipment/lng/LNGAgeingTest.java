@@ -502,7 +502,7 @@ public class LNGAgeingTest {
     TankGeometry geom = TankGeometry.createQMax();
     assertEquals(TankGeometry.ContainmentType.MEMBRANE, geom.getContainmentType());
     assertTrue(geom.getTotalVolume() > 170000 && geom.getTotalVolume() < 180000,
-	"QMax volume should be ~174000 m3, got " + geom.getTotalVolume());
+        "QMax volume should be ~174000 m3, got " + geom.getTotalVolume());
     assertTrue(geom.getTotalSurfaceArea() > 5000, "Surface area should be significant");
     assertTrue(geom.getBottomArea() > 0);
     assertTrue(geom.getRoofArea() > 0);
@@ -689,7 +689,7 @@ public class LNGAgeingTest {
 
     // Mid fill levels should have more sloshing effect than extremes
     assertTrue(factorMid > factorLow || factorMid > factorHigh,
-	"Mid fill should have more mixing than at least one extreme");
+        "Mid fill should have more mixing than at least one extreme");
   }
 
   @Test
@@ -808,7 +808,7 @@ public class LNGAgeingTest {
   @Test
   public void testOperationalEvent() {
     LNGAgeingScenario.OperationalEvent event = new LNGAgeingScenario.OperationalEvent(
-	LNGAgeingScenario.OperationalEvent.EventType.LOADING, 0, 12.0);
+        LNGAgeingScenario.OperationalEvent.EventType.LOADING, 0, 12.0);
     event.setDescription("Loading at Ras Laffan");
     event.setRateM3PerHour(12000.0);
 
@@ -833,7 +833,7 @@ public class LNGAgeingTest {
     scenario.setTimeStepHours(8.0);
 
     scenario.addOperationalEvent(
-	new LNGAgeingScenario.OperationalEvent(LNGAgeingScenario.OperationalEvent.EventType.LADEN_VOYAGE, 0, 480.0));
+        new LNGAgeingScenario.OperationalEvent(LNGAgeingScenario.OperationalEvent.EventType.LADEN_VOYAGE, 0, 480.0));
 
     assertFalse(scenario.getOperationalEvents().isEmpty());
     assertEquals(1, scenario.getOperationalEvents().size());
@@ -865,7 +865,7 @@ public class LNGAgeingTest {
 
     LNGAgeingResult initial = results.get(0);
     assertTrue(initial.getTemperature() > 100 && initial.getTemperature() < 130,
-	"Initial temp should be near LNG boiling point");
+        "Initial temp should be near LNG boiling point");
 
     String summary = scenario.getResultsSummary();
     assertNotNull(summary);

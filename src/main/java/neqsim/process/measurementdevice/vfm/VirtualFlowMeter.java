@@ -62,7 +62,7 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
     private final double chokeOpening;
 
     public WellTestData(Instant timestamp, double oilRate, double gasRate, double waterRate, double pressure,
-	double temperature, double chokeOpening) {
+        double temperature, double chokeOpening) {
       this.timestamp = timestamp;
       this.oilRate = oilRate;
       this.gasRate = gasRate;
@@ -224,9 +224,9 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
     VFMResult.Quality quality = determineQuality(pressure, temperature);
 
     lastResult = VFMResult.builder().timestamp(Instant.now()).oilFlowRate(oilRate, oilStdDev, "Sm3/d")
-	.gasFlowRate(gasRate, gasStdDev, "Sm3/d").waterFlowRate(waterRate, waterStdDev, "Sm3/d").quality(quality)
-	.addProperty("pressure", pressure).addProperty("temperature", temperature)
-	.addProperty("chokeOpening", chokeOpening).build();
+        .gasFlowRate(gasRate, gasStdDev, "Sm3/d").waterFlowRate(waterRate, waterStdDev, "Sm3/d").quality(quality)
+        .addProperty("pressure", pressure).addProperty("temperature", temperature)
+        .addProperty("chokeOpening", chokeOpening).build();
 
     return lastResult;
   }
@@ -242,7 +242,7 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
   private double calculateUncertainty(double rate, double pressureUncert, double tempUncert) {
     // Simplified uncertainty model: combine relative uncertainties
     double relativeUncert = Math.sqrt(pressureUncert * pressureUncert + 0.02 * 0.02); // 2% model
-										      // uncertainty
+    // uncertainty
     return rate * relativeUncert;
   }
 
@@ -277,9 +277,9 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
     if (lastCalibration != null) {
       long daysSinceCalibration = java.time.Duration.between(lastCalibration, Instant.now()).toDays();
       if (daysSinceCalibration < 7) {
-	return VFMResult.Quality.HIGH;
+        return VFMResult.Quality.HIGH;
       } else if (daysSinceCalibration < 30) {
-	return VFMResult.Quality.NORMAL;
+        return VFMResult.Quality.NORMAL;
       }
     }
 
@@ -306,8 +306,8 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
       VFMResult calculated = calculateFlowRates(test.getPressure(), test.getPressure() * 0.1, test.getTemperature());
 
       if (calculated.isUsable() && calculated.getOilFlowRate() > 0 && test.getOilRate() > 0) {
-	sumError += test.getOilRate() / calculated.getOilFlowRate();
-	count++;
+        sumError += test.getOilRate() / calculated.getOilFlowRate();
+        count++;
       }
     }
 

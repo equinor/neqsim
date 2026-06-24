@@ -38,7 +38,7 @@ class PipelineRunnerTest {
     assertEquals("success", obj.get("status").getAsString(), "Water hammer failed: " + result);
     JsonObject keyResults = obj.getAsJsonObject("keyResults");
     assertTrue(
-	keyResults.get("maxPressure_bara").getAsDouble() >= keyResults.get("initialOutletPressure_bara").getAsDouble());
+        keyResults.get("maxPressure_bara").getAsDouble() >= keyResults.get("initialOutletPressure_bara").getAsDouble());
   }
 
   @Test

@@ -118,7 +118,7 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
       this.pipelineLength = pipe.getLength();
       this.outerDiameter = pipe.getDiameter() + 2 * pipe.getWallThickness();
       if (pipe.getWallThickness() > 0) {
-	this.wallThickness = pipe.getWallThickness() * 1000; // Convert to mm
+        this.wallThickness = pipe.getWallThickness() * 1000; // Convert to mm
       }
     }
   }
@@ -182,7 +182,7 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
   public void loadMaterialFromDatabase(String grade) {
     this.materialGrade = grade;
     java.util.Optional<PipelineMechanicalDesignDataSource.PipeMaterialData> materialOpt = getDataSource()
-	.loadMaterialProperties(grade);
+        .loadMaterialProperties(grade);
 
     if (materialOpt.isPresent()) {
       PipelineMechanicalDesignDataSource.PipeMaterialData material = materialOpt.get();
@@ -226,7 +226,7 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
 
     if (getDesignStandard().containsKey("material pipe design codes")) {
       MaterialPipeDesignStandard matStd = (MaterialPipeDesignStandard) getDesignStandard()
-	  .get("material pipe design codes");
+          .get("material pipe design codes");
       matStd.getDesignFactor();
       // Sync with calculator
       getCalculator().setDesignFactor(matStd.getDesignFactor());
@@ -476,8 +476,8 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
       // Try to get conditions from the outlet stream (post-simulation)
       StreamInterface outStream = pipe.getOutletStream();
       if (outStream != null && outStream.getFluid() != null) {
-	populateFromStream(model, outStream);
-	streamTempC = outStream.getFluid().getTemperature() - 273.15;
+        populateFromStream(model, outStream);
+        streamTempC = outStream.getFluid().getTemperature() - 273.15;
       }
     }
 
@@ -537,17 +537,17 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
     if (fluid.hasPhaseType("aqueous") || fluid.hasPhaseType("oil")) {
       String liquidType = fluid.hasPhaseType("aqueous") ? "aqueous" : "oil";
       try {
-	fluid.initPhysicalProperties();
-	double density = fluid.getPhase(liquidType).getDensity("kg/m3");
-	if (density > 0) {
-	  model.setLiquidDensityKgM3(density);
-	}
-	double viscosity = fluid.getPhase(liquidType).getViscosity("kg/msec");
-	if (viscosity > 0) {
-	  model.setLiquidViscosityPas(viscosity);
-	}
+        fluid.initPhysicalProperties();
+        double density = fluid.getPhase(liquidType).getDensity("kg/m3");
+        if (density > 0) {
+          model.setLiquidDensityKgM3(density);
+        }
+        double viscosity = fluid.getPhase(liquidType).getViscosity("kg/msec");
+        if (viscosity > 0) {
+          model.setLiquidViscosityPas(viscosity);
+        }
       } catch (Exception ex) {
-	// Use defaults if property extraction fails
+        // Use defaults if property extraction fails
       }
     }
   }
@@ -563,7 +563,7 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
   private double getMoleFractionSafe(SystemInterface fluid, int phaseNum, String componentName) {
     try {
       if (fluid.getPhase(phaseNum).hasComponent(componentName)) {
-	return fluid.getPhase(phaseNum).getComponent(componentName).getx();
+        return fluid.getPhase(phaseNum).getComponent(componentName).getx();
       }
     } catch (Exception ex) {
       // Component not present
@@ -619,7 +619,7 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
     // Merge calculator data into response
     com.google.gson.JsonObject jsonObj = com.google.gson.JsonParser.parseString(response.toJson()).getAsJsonObject();
     com.google.gson.JsonObject calcObj = com.google.gson.JsonParser.parseString(getCalculator().toJson())
-	.getAsJsonObject();
+        .getAsJsonObject();
 
     // Add pipeline-specific fields
     jsonObj.addProperty("pipelineLength_m", pipelineLength);
@@ -631,17 +631,17 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
     // Add corrosion analysis results if available
     if (corrosionModel != null) {
       com.google.gson.JsonObject corrosionObj = com.google.gson.JsonParser.parseString(corrosionModel.toJson())
-	  .getAsJsonObject();
+          .getAsJsonObject();
       jsonObj.add("corrosionAnalysis_NORSOK_M506", corrosionObj);
     }
     if (materialSelector != null) {
       com.google.gson.JsonObject materialObj = com.google.gson.JsonParser.parseString(materialSelector.toJson())
-	  .getAsJsonObject();
+          .getAsJsonObject();
       jsonObj.add("materialSelection_NORSOK_M001", materialObj);
     }
 
     return new com.google.gson.GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-	.toJson(jsonObj);
+        .toJson(jsonObj);
   }
 
   /**

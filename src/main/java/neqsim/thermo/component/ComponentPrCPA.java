@@ -31,7 +31,7 @@ public abstract class ComponentPrCPA extends ComponentPR implements ComponentCPA
       // System.out.println("aSRK " + a + " aCPA " + aCPA);
       // System.out.println("bSRK " + b + " bCPA " + bCPA);
       for (int j = 0; j < getNumberOfAssociationSites(); j++) {
-	setXsite(j, 0.0);
+        setXsite(j, 0.0);
       }
       a = aCPA;
       b = bCPA;
@@ -176,7 +176,7 @@ public abstract class ComponentPrCPA extends ComponentPR implements ComponentCPA
    */
   public double calc_lngi2(PhaseInterface phase) {
     return 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB())
-	/ ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()));
+        / ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()));
   }
 
   /** {@inheritDoc} */

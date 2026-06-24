@@ -349,10 +349,10 @@ public class PedersenAsphalteneCharacterizationTest {
     for (double p : pressures) {
       system.setPressure(p);
       try {
-	ops.TPflash();
-	logger.info(String.format("%12.0f | %8d | %12.4f", p, system.getNumberOfPhases(), system.getBeta()));
+        ops.TPflash();
+        logger.info(String.format("%12.0f | %8d | %12.4f", p, system.getNumberOfPhases(), system.getBeta()));
       } catch (Exception e) {
-	logger.info(String.format("%12.0f | Error: %s", p, e.getMessage()));
+        logger.info(String.format("%12.0f | Error: %s", p, e.getMessage()));
       }
     }
   }
@@ -411,7 +411,7 @@ public class PedersenAsphalteneCharacterizationTest {
 
     // Verify that characterization worked
     assertTrue(oil.getPhase(0).getNumberOfComponents() >= 18,
-	"Should have at least 18 components (10 defined + 7 TBP + 1 asphaltene)");
+        "Should have at least 18 components (10 defined + 7 TBP + 1 asphaltene)");
   }
 
   @Test
@@ -656,7 +656,7 @@ public class PedersenAsphalteneCharacterizationTest {
       omegaValues[i] = asphChar.getAcentricFactor();
 
       logger.info(
-	  String.format("%8.0f | %10.1f | %10.2f | %10.4f", mwValues[i], tcValues[i], pcValues[i], omegaValues[i]));
+          String.format("%8.0f | %10.1f | %10.2f | %10.4f", mwValues[i], tcValues[i], pcValues[i], omegaValues[i]));
     }
 
     // Verify trends
@@ -695,7 +695,7 @@ public class PedersenAsphalteneCharacterizationTest {
 
       // Tc should increase with density (more aromatic character)
       if (prevTc > 0) {
-	assertTrue(Tc >= prevTc - 20, "Tc should generally increase with density");
+        assertTrue(Tc >= prevTc - 20, "Tc should generally increase with density");
       }
       prevTc = Tc;
     }

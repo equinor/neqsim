@@ -82,7 +82,7 @@ class SafetyValveDynamicSizingTest extends neqsim.NeqSimTest {
     SafetyValve pressureSafetyValve = new SafetyValve("PSV-001", gasSplitter.getSplitStream(1));
     double setPressure = 55.0; // bara - PSV set pressure (10% above normal operating pressure)
     double fullOpenPressure = 60.5; // bara - PSV fully open at 110% of set pressure (10%
-				    // overpressure)
+    // overpressure)
     pressureSafetyValve.setPressureSpec(setPressure);
     pressureSafetyValve.setFullOpenPressure(fullOpenPressure);
     pressureSafetyValve.setOutletPressure(1.0, "bara");
@@ -117,14 +117,14 @@ class SafetyValveDynamicSizingTest extends neqsim.NeqSimTest {
 
       // Simulate blocked outlet at t=50s (PCV closes)
       if (currentTime >= 50.0 && currentTime < 51.0) {
-	// Sudden closure of control valve (blocked outlet scenario)
-	pressureControlValve.setPercentValveOpening(1.0);
+        // Sudden closure of control valve (blocked outlet scenario)
+        pressureControlValve.setPercentValveOpening(1.0);
       }
 
       // Simulate recovery at t=200s (PCV reopens) to show hysteresis
       if (currentTime >= 200.0 && currentTime < 201.0) {
-	// Reopen control valve to allow pressure to drop
-	pressureControlValve.setPercentValveOpening(50.0);
+        // Reopen control valve to allow pressure to drop
+        pressureControlValve.setPercentValveOpening(50.0);
       }
 
       // Run transient calculations
@@ -145,11 +145,11 @@ class SafetyValveDynamicSizingTest extends neqsim.NeqSimTest {
 
       // Optional: Print progress for key time points
       if (i % 40 == 0 || (currentTime >= 49.5 && currentTime <= 100.0 && i % 4 == 0)) {
-	logger.printf(org.apache.logging.log4j.Level.INFO,
-	    "Time: %6.1f s | Sep Press: %6.2f bara | PCV Opening: %5.1f %% | "
-		+ "PSV Opening: %5.1f %% | PCV Flow: %7.1f kg/hr | PSV Flow: %7.1f kg/hr%n",
-	    currentTime, separatorPressure, pressureControlValve.getPercentValveOpening(),
-	    pressureSafetyValve.getPercentValveOpening(), pcvFlowRates.get(i), psvFlowRates.get(i));
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "Time: %6.1f s | Sep Press: %6.2f bara | PCV Opening: %5.1f %% | "
+                + "PSV Opening: %5.1f %% | PCV Flow: %7.1f kg/hr | PSV Flow: %7.1f kg/hr%n",
+            currentTime, separatorPressure, pressureControlValve.getPercentValveOpening(),
+            pressureSafetyValve.getPercentValveOpening(), pcvFlowRates.get(i), psvFlowRates.get(i));
       }
     }
 
@@ -166,36 +166,36 @@ class SafetyValveDynamicSizingTest extends neqsim.NeqSimTest {
     // 4. Maximum pressure should not significantly exceed full open pressure
     // Allow for some overshoot but PSV should limit it
     Assertions.assertTrue(maxPressure < fullOpenPressure * 1.30,
-	"Maximum pressure should not exceed 130% of full open pressure. Max: " + maxPressure + " bara, Full open: "
-	    + fullOpenPressure + " bara");
+        "Maximum pressure should not exceed 130% of full open pressure. Max: " + maxPressure + " bara, Full open: "
+            + fullOpenPressure + " bara");
 
     // 5. PSV should have opened (flow > 0) at some point
     double maxPSVFlow = psvFlowRates.stream().mapToDouble(Double::doubleValue).max().orElse(0.0);
     Assertions.assertTrue(maxPSVFlow > 100.0,
-	"PSV should relieve significant flow during overpressure event. Max flow: " + maxPSVFlow + " kg/hr");
+        "PSV should relieve significant flow during overpressure event. Max flow: " + maxPSVFlow + " kg/hr");
 
     // 6. After PCV closes, pressure should rise
     int blockageIndex = (int) (50.0 / dt);
     int postBlockageIndex = blockageIndex + 40; // 20 seconds after blockage
     if (postBlockageIndex < separatorPressures.size()) {
       Assertions.assertTrue(separatorPressures.get(postBlockageIndex) > separatorPressures.get(blockageIndex - 1),
-	  "Pressure should rise after PCV blockage");
+          "Pressure should rise after PCV blockage");
     }
 
     // 7. PSV Cv sizing validation - PSV should have adequate capacity
     // The required PSV flow capacity is approximately the feed flow rate
     double feedFlowRate = feedStream.getFlowRate("kg/hr");
     Assertions.assertTrue(maxPSVFlow > feedFlowRate * 0.8,
-	"PSV should be sized to handle at least 80% of feed flow. Feed: " + feedFlowRate + " kg/hr, Max PSV relief: "
-	    + maxPSVFlow + " kg/hr");
+        "PSV should be sized to handle at least 80% of feed flow. Feed: " + feedFlowRate + " kg/hr, Max PSV relief: "
+            + maxPSVFlow + " kg/hr");
 
     // 8. Verify hysteresis behavior - PSV should not close immediately when P < Pset
     // Find when PSV first opens
     int firstOpenIndex = -1;
     for (int i = 0; i < psvOpenings.size(); i++) {
       if (psvOpenings.get(i) > 1.0) { // PSV opened
-	firstOpenIndex = i;
-	break;
+        firstOpenIndex = i;
+        break;
       }
     }
 
@@ -205,14 +205,14 @@ class SafetyValveDynamicSizingTest extends neqsim.NeqSimTest {
       boolean foundHysteresis = false;
 
       for (int i = firstOpenIndex + 5; i < psvOpenings.size(); i++) {
-	double pressure = separatorPressures.get(i);
-	double opening = psvOpenings.get(i);
+        double pressure = separatorPressures.get(i);
+        double opening = psvOpenings.get(i);
 
-	// If pressure is below set but above blowdown, PSV should still be open
-	if (pressure < setPressure && pressure > blowdownPressure && opening > 1.0) {
-	  foundHysteresis = true;
-	  break;
-	}
+        // If pressure is below set but above blowdown, PSV should still be open
+        if (pressure < setPressure && pressure > blowdownPressure && opening > 1.0) {
+          foundHysteresis = true;
+          break;
+        }
       }
 
       // Hysteresis check - this is a soft verification since the simulation may
@@ -220,8 +220,8 @@ class SafetyValveDynamicSizingTest extends neqsim.NeqSimTest {
       // of full hysteresis behavior. The key safety function (preventing overpressure)
       // is validated by the other assertions.
       if (!foundHysteresis) {
-	logger.info("Note: Hysteresis behavior not observed in this simulation run. "
-	    + "This may be due to separator emptying or other transient effects.");
+        logger.info("Note: Hysteresis behavior not observed in this simulation run. "
+            + "This may be due to separator emptying or other transient effects.");
       }
     }
 
@@ -233,14 +233,14 @@ class SafetyValveDynamicSizingTest extends neqsim.NeqSimTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "Maximum separator pressure: %.2f bara%n", maxPressure);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Maximum PSV relief flow: %.1f kg/hr%n", maxPSVFlow);
     logger.printf(org.apache.logging.log4j.Level.INFO, "PSV Cv required (from simulation): %.2f%n",
-	pressureSafetyValve.getCv());
+        pressureSafetyValve.getCv());
     logger.info("==============================");
 
     // Additional assertion: Verify PSV prevented catastrophic overpressure
     // PSV should keep pressure within reasonable limits (allow 35% overpressure max)
     Assertions.assertTrue(maxPressure < setPressure * 1.35,
-	"PSV should limit pressure to within 35% of set pressure. Max: " + maxPressure + " bara, Set: " + setPressure
-	    + " bara");
+        "PSV should limit pressure to within 35% of set pressure. Max: " + maxPressure + " bara, Set: " + setPressure
+            + " bara");
   }
 
   /**
@@ -283,19 +283,19 @@ class SafetyValveDynamicSizingTest extends neqsim.NeqSimTest {
       double pressure = testPressures[i];
       double opening;
       if (pressure < setPressure) {
-	opening = 0.0;
+        opening = 0.0;
       } else if (pressure >= fullOpenPressure) {
-	opening = 100.0;
+        opening = 100.0;
       } else {
-	opening = 100.0 * (pressure - setPressure) / (fullOpenPressure - setPressure);
+        opening = 100.0 * (pressure - setPressure) / (fullOpenPressure - setPressure);
       }
 
       psv.setPercentValveOpening(opening);
       psv.run();
 
       logger.printf(org.apache.logging.log4j.Level.INFO,
-	  "Pressure: %.1f bara | Expected Opening: %.1f %% | Actual Opening: %.1f %%%n", testPressures[i],
-	  expectedOpenings[i], opening);
+          "Pressure: %.1f bara | Expected Opening: %.1f %% | Actual Opening: %.1f %%%n", testPressures[i],
+          expectedOpenings[i], opening);
 
       Assertions.assertEquals(expectedOpenings[i], opening, 1.0, "PSV opening at " + testPressures[i] + " bara");
     }

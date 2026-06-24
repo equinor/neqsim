@@ -164,7 +164,7 @@ public class AcceleratedCPASolverTest {
     double densityBroy = broyden.getDensity("kg/m3");
 
     assertEquals(densityStd, densityBroy, Math.abs(densityStd) * REL_TOL,
-	"Broyden water density should match standard");
+        "Broyden water density should match standard");
   }
 
   /**
@@ -187,7 +187,7 @@ public class AcceleratedCPASolverTest {
     double densityAnd = anderson.getDensity("kg/m3");
 
     assertEquals(densityStd, densityAnd, Math.abs(densityStd) * REL_TOL,
-	"Anderson water density should match standard");
+        "Anderson water density should match standard");
   }
 
   /**
@@ -225,10 +225,10 @@ public class AcceleratedCPASolverTest {
 
     // Broyden should match implicit (same algorithm family: coupled)
     assertEquals(densityImpl, densityBroy, Math.abs(densityImpl) * REL_TOL,
-	"Broyden water-methanol density should match fully implicit");
+        "Broyden water-methanol density should match fully implicit");
     // Anderson should match standard (same algorithm family: nested)
     assertEquals(densityStd, densityAnd, Math.abs(densityStd) * REL_TOL,
-	"Anderson water-methanol density should match standard nested");
+        "Anderson water-methanol density should match standard nested");
   }
 
   /**
@@ -274,29 +274,29 @@ public class AcceleratedCPASolverTest {
 
     for (int t = 0; t < types.length; t++) {
       for (int i = 0; i < temps.length; i++) {
-	SystemInterface sys;
-	switch (types[t]) {
-	case "standard":
-	  sys = new SystemSrkCPAstatoil(temps[i], pressure);
-	  break;
-	case "implicit":
-	  sys = new SystemSrkCPAstatoilFullyImplicit(temps[i], pressure);
-	  break;
-	case "broyden":
-	  sys = new SystemSrkCPAstatoilBroydenImplicit(temps[i], pressure);
-	  break;
-	case "anderson":
-	  sys = new SystemSrkCPAstatoilAndersonMixing(temps[i], pressure);
-	  break;
-	default:
-	  throw new IllegalArgumentException();
-	}
-	sys.addComponent("water", 1.0);
-	sys.setMixingRule(10);
-	ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-	ops.TPflash();
-	sys.initProperties();
-	densities[t][i] = sys.getDensity("kg/m3");
+        SystemInterface sys;
+        switch (types[t]) {
+        case "standard":
+          sys = new SystemSrkCPAstatoil(temps[i], pressure);
+          break;
+        case "implicit":
+          sys = new SystemSrkCPAstatoilFullyImplicit(temps[i], pressure);
+          break;
+        case "broyden":
+          sys = new SystemSrkCPAstatoilBroydenImplicit(temps[i], pressure);
+          break;
+        case "anderson":
+          sys = new SystemSrkCPAstatoilAndersonMixing(temps[i], pressure);
+          break;
+        default:
+          throw new IllegalArgumentException();
+        }
+        sys.addComponent("water", 1.0);
+        sys.setMixingRule(10);
+        ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+        ops.TPflash();
+        sys.initProperties();
+        densities[t][i] = sys.getDensity("kg/m3");
       }
     }
 
@@ -305,9 +305,9 @@ public class AcceleratedCPASolverTest {
     // broyden (index 2) should match implicit (index 1)
     for (int i = 0; i < temps.length; i++) {
       assertEquals(densities[0][i], densities[3][i], Math.abs(densities[0][i]) * REL_TOL,
-	  "anderson should match standard at T=" + temps[i]);
+          "anderson should match standard at T=" + temps[i]);
       assertEquals(densities[1][i], densities[2][i], Math.abs(densities[1][i]) * REL_TOL,
-	  "broyden should match implicit at T=" + temps[i]);
+          "broyden should match implicit at T=" + temps[i]);
     }
 
     // Timing benchmark
@@ -317,16 +317,16 @@ public class AcceleratedCPASolverTest {
     for (String type : types) {
       // Warmup
       for (int w = 0; w < warmup; w++) {
-	for (double temp : temps) {
-	  runSingle(type, temp, pressure, "water");
-	}
+        for (double temp : temps) {
+          runSingle(type, temp, pressure, "water");
+        }
       }
       // Timed
       long start = System.nanoTime();
       for (int r = 0; r < repeats; r++) {
-	for (double temp : temps) {
-	  runSingle(type, temp, pressure, "water");
-	}
+        for (double temp : temps) {
+          runSingle(type, temp, pressure, "water");
+        }
       }
       long elapsed = System.nanoTime() - start;
       double ms = elapsed / 1.0e6;
@@ -351,15 +351,15 @@ public class AcceleratedCPASolverTest {
     logger.info("----------------------------");
     for (String type : types) {
       for (int w = 0; w < warmup; w++) {
-	for (double temp : temps) {
-	  runBinary(type, temp, pressure);
-	}
+        for (double temp : temps) {
+          runBinary(type, temp, pressure);
+        }
       }
       long start = System.nanoTime();
       for (int r = 0; r < repeats; r++) {
-	for (double temp : temps) {
-	  runBinary(type, temp, pressure);
-	}
+        for (double temp : temps) {
+          runBinary(type, temp, pressure);
+        }
       }
       long elapsed = System.nanoTime() - start;
       double ms = elapsed / 1.0e6;
@@ -484,16 +484,16 @@ public class AcceleratedCPASolverTest {
       int numPhases = sys.getNumberOfPhases();
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s: density=%.6f nPhases=%d%n", type, density, numPhases);
       for (int p = 0; p < numPhases; p++) {
-	double molarVol = sys.getPhase(p).getMolarVolume();
-	double phaseFrac = sys.getPhase(p).getBeta();
-	logger.printf(org.apache.logging.log4j.Level.INFO, "  Phase[%d] type=%s beta=%.6f molarVol=%.6f%n", p,
-	    sys.getPhase(p).getType(), phaseFrac, molarVol);
-	for (int c = 0; c < sys.getPhase(p).getNumberOfComponents(); c++) {
-	  double fugCoeff = sys.getPhase(p).getComponent(c).getFugacityCoefficient();
-	  double z = sys.getPhase(p).getComponent(c).getz();
-	  logger.printf(org.apache.logging.log4j.Level.INFO, "    comp[%d] %s z=%.6f fugCoeff=%.8f%n", c,
-	      sys.getPhase(p).getComponent(c).getComponentName(), z, fugCoeff);
-	}
+        double molarVol = sys.getPhase(p).getMolarVolume();
+        double phaseFrac = sys.getPhase(p).getBeta();
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  Phase[%d] type=%s beta=%.6f molarVol=%.6f%n", p,
+            sys.getPhase(p).getType(), phaseFrac, molarVol);
+        for (int c = 0; c < sys.getPhase(p).getNumberOfComponents(); c++) {
+          double fugCoeff = sys.getPhase(p).getComponent(c).getFugacityCoefficient();
+          double z = sys.getPhase(p).getComponent(c).getz();
+          logger.printf(org.apache.logging.log4j.Level.INFO, "    comp[%d] %s z=%.6f fugCoeff=%.8f%n", c,
+              sys.getPhase(p).getComponent(c).getComponentName(), z, fugCoeff);
+        }
       }
     }
   }
@@ -540,8 +540,8 @@ public class AcceleratedCPASolverTest {
 
     String[] solverTypes = { "standard", "implicit", "broyden", "anderson" };
     String[] systemNames = { "Pure water", "Pure methanol", "Pure ethanol", "Pure acetic acid", "Water-methanol",
-	"Water-ethanol", "Water-acetic acid", "Water-ethanol-acetic acid", "NG + water", "NG + water + MEG",
-	"NG + water + TEG" };
+        "Water-ethanol", "Water-acetic acid", "Water-ethanol-acetic acid", "NG + water", "NG + water + MEG",
+        "NG + water + TEG" };
 
     double[][] timesMs = new double[systemNames.length][solverTypes.length];
 
@@ -551,40 +551,40 @@ public class AcceleratedCPASolverTest {
       final int sIdx = s;
 
       for (int t = 0; t < solverTypes.length; t++) {
-	String solver = solverTypes[t];
+        String solver = solverTypes[t];
 
-	// Reset profiling counters
-	if ("broyden".equals(solver)) {
-	  PhaseSrkCPABroydenImplicit.resetProfileCounters();
-	} else if ("anderson".equals(solver)) {
-	  PhaseSrkCPAandersonMixing.resetProfileCounters();
-	}
+        // Reset profiling counters
+        if ("broyden".equals(solver)) {
+          PhaseSrkCPABroydenImplicit.resetProfileCounters();
+        } else if ("anderson".equals(solver)) {
+          PhaseSrkCPAandersonMixing.resetProfileCounters();
+        }
 
-	// Warmup
-	for (int w = 0; w < warmup; w++) {
-	  runSystemCase(solver, sIdx);
-	}
+        // Warmup
+        for (int w = 0; w < warmup; w++) {
+          runSystemCase(solver, sIdx);
+        }
 
-	// Reset again for timed runs
-	if ("broyden".equals(solver)) {
-	  PhaseSrkCPABroydenImplicit.resetProfileCounters();
-	} else if ("anderson".equals(solver)) {
-	  PhaseSrkCPAandersonMixing.resetProfileCounters();
-	}
+        // Reset again for timed runs
+        if ("broyden".equals(solver)) {
+          PhaseSrkCPABroydenImplicit.resetProfileCounters();
+        } else if ("anderson".equals(solver)) {
+          PhaseSrkCPAandersonMixing.resetProfileCounters();
+        }
 
-	// Timed runs
-	long start = System.nanoTime();
-	for (int r = 0; r < repeats; r++) {
-	  runSystemCase(solver, sIdx);
-	}
-	long elapsed = System.nanoTime() - start;
-	timesMs[s][t] = elapsed / 1.0e6;
+        // Timed runs
+        long start = System.nanoTime();
+        for (int r = 0; r < repeats; r++) {
+          runSystemCase(solver, sIdx);
+        }
+        long elapsed = System.nanoTime() - start;
+        timesMs[s][t] = elapsed / 1.0e6;
       }
     }
 
     // Print summary table
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %10s %10s %10s %10s | %7s %7s%n", "System", "Standard",
-	"Implicit", "Broyden", "Anderson", "SpB/Std", "SpA/Std");
+        "Implicit", "Broyden", "Anderson", "SpB/Std", "SpA/Std");
     logger.info("---------------------------------------------" + "-------------------------------------------");
 
     for (int s = 0; s < systemNames.length; s++) {
@@ -595,7 +595,7 @@ public class AcceleratedCPASolverTest {
       double speedupBroyden = tStd / tBroy;
       double speedupAnderson = tStd / tAndr;
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %8.1f ms %8.1f ms %8.1f ms %8.1f ms | %6.2fx %6.2fx%n",
-	  systemNames[s], tStd, tImpl, tBroy, tAndr, speedupBroyden, speedupAnderson);
+          systemNames[s], tStd, tImpl, tBroy, tAndr, speedupBroyden, speedupAnderson);
     }
 
     // Print profiling data for Broyden and Anderson (from last system)
@@ -609,10 +609,10 @@ public class AcceleratedCPASolverTest {
     for (int s = 0; s < systemNames.length; s++) {
       PhaseSrkCPABroydenImplicit.resetProfileCounters();
       for (int r = 0; r < repeats; r++) {
-	runSystemCase("broyden", s);
+        runSystemCase("broyden", s);
       }
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s | %s%n", systemNames[s],
-	  PhaseSrkCPABroydenImplicit.getProfileSummary());
+          PhaseSrkCPABroydenImplicit.getProfileSummary());
     }
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%n%-30s | %-60s%n", "System", "Anderson Profile");
@@ -620,10 +620,10 @@ public class AcceleratedCPASolverTest {
     for (int s = 0; s < systemNames.length; s++) {
       PhaseSrkCPAandersonMixing.resetProfileCounters();
       for (int r = 0; r < repeats; r++) {
-	runSystemCase("anderson", s);
+        runSystemCase("anderson", s);
       }
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s | %s%n", systemNames[s],
-	  PhaseSrkCPAandersonMixing.getProfileSummary());
+          PhaseSrkCPAandersonMixing.getProfileSummary());
     }
   }
 
@@ -733,7 +733,7 @@ public class AcceleratedCPASolverTest {
     double densityRed = reduced.getDensity("kg/m3");
 
     assertEquals(densityBroy, densityRed, Math.abs(densityBroy) * REL_TOL,
-	"Reduced solver water density should match Broyden");
+        "Reduced solver water density should match Broyden");
 
     // Verify site reduction occurred: water (4C) -> 2 unique types
     PhaseSrkCPAreduced phase = (PhaseSrkCPAreduced) reduced.getPhase(1);
@@ -767,7 +767,7 @@ public class AcceleratedCPASolverTest {
     double densityRed = reduced.getDensity("kg/m3");
 
     assertEquals(densityStd, densityRed, Math.abs(densityStd) * REL_TOL,
-	"Reduced solver water-methanol density should match standard");
+        "Reduced solver water-methanol density should match standard");
   }
 
   /**
@@ -789,7 +789,7 @@ public class AcceleratedCPASolverTest {
     double densityRed = reduced.getDensity("kg/m3");
 
     assertEquals(densityBroy, densityRed, Math.abs(densityBroy) * REL_TOL,
-	"Reduced solver NG+water+MEG density should match Broyden");
+        "Reduced solver NG+water+MEG density should match Broyden");
   }
 
   /**
@@ -818,7 +818,7 @@ public class AcceleratedCPASolverTest {
 
     String[] solverTypes = { "standard", "broyden", "reduced" };
     String[] systemNames = { "Pure water", "Pure methanol", "Water-methanol", "Water-ethanol", "Water-EtOH-AcOH",
-	"NG + water", "NG + water + MEG", "NG + water + TEG" };
+        "NG + water", "NG + water + MEG", "NG + water + TEG" };
     int[] systemIndices = { 0, 1, 4, 5, 7, 8, 9, 10 };
 
     double[][] timesMs = new double[systemIndices.length][solverTypes.length];
@@ -827,23 +827,23 @@ public class AcceleratedCPASolverTest {
 
     for (int s = 0; s < systemIndices.length; s++) {
       for (int t = 0; t < solverTypes.length; t++) {
-	String solver = solverTypes[t];
-	// Warmup
-	for (int w = 0; w < warmup; w++) {
-	  runSystemCase(solver, systemIndices[s]);
-	}
-	// Timed
-	long start = System.nanoTime();
-	for (int r = 0; r < repeats; r++) {
-	  runSystemCase(solver, systemIndices[s]);
-	}
-	long elapsed = System.nanoTime() - start;
-	timesMs[s][t] = elapsed / 1.0e6;
+        String solver = solverTypes[t];
+        // Warmup
+        for (int w = 0; w < warmup; w++) {
+          runSystemCase(solver, systemIndices[s]);
+        }
+        // Timed
+        long start = System.nanoTime();
+        for (int r = 0; r < repeats; r++) {
+          runSystemCase(solver, systemIndices[s]);
+        }
+        long elapsed = System.nanoTime() - start;
+        timesMs[s][t] = elapsed / 1.0e6;
       }
     }
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %10s %10s %10s | %8s %8s%n", "System", "Standard",
-	"Broyden", "Reduced", "SpR/Std", "SpR/Broy");
+        "Broyden", "Reduced", "SpR/Std", "SpR/Broy");
     logger.info("------------------------------------------------------------------------------------");
 
     for (int s = 0; s < systemIndices.length; s++) {
@@ -853,7 +853,7 @@ public class AcceleratedCPASolverTest {
       double spVsStd = tStd / tRed;
       double spVsBroy = tBroy / tRed;
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %8.1f ms %8.1f ms %8.1f ms | %7.2fx %7.2fx%n",
-	  systemNames[s], tStd, tBroy, tRed, spVsStd, spVsBroy);
+          systemNames[s], tStd, tBroy, tRed, spVsStd, spVsBroy);
     }
   }
 
@@ -928,7 +928,7 @@ public class AcceleratedCPASolverTest {
     double densityAR = andRed.getDensity("kg/m3");
 
     assertEquals(densityStd, densityAR, Math.abs(densityStd) * REL_TOL,
-	"Anderson-reduced water density should match standard nested");
+        "Anderson-reduced water density should match standard nested");
   }
 
   /**
@@ -951,7 +951,7 @@ public class AcceleratedCPASolverTest {
     double densityAR = andRed.getDensity("kg/m3");
 
     assertEquals(densityStd, densityAR, Math.abs(densityStd) * REL_TOL,
-	"Anderson-reduced water-methanol density should match standard nested");
+        "Anderson-reduced water-methanol density should match standard nested");
   }
 
   /**
@@ -974,9 +974,9 @@ public class AcceleratedCPASolverTest {
     double densityAR = andRed.getDensity("kg/m3");
 
     assertEquals(densityStd, densityAR, Math.abs(densityStd) * REL_TOL,
-	"Anderson-reduced NG+water+MEG density should match standard");
+        "Anderson-reduced NG+water+MEG density should match standard");
     assertEquals(densityAnd, densityAR, Math.abs(densityAnd) * REL_TOL,
-	"Anderson-reduced should match unreduced Anderson");
+        "Anderson-reduced should match unreduced Anderson");
   }
 
   /**
@@ -1004,7 +1004,7 @@ public class AcceleratedCPASolverTest {
 
     String[] solverTypes = { "standard", "anderson", "reduced", "anderson-reduced" };
     String[] systemNames = { "Pure water", "Pure methanol", "Water-methanol", "Water-ethanol", "Water-EtOH-AcOH",
-	"NG + water", "NG + water + MEG", "NG + water + TEG" };
+        "NG + water", "NG + water + MEG", "NG + water + TEG" };
     int[] systemIndices = { 0, 1, 4, 5, 7, 8, 9, 10 };
 
     double[][] timesMs = new double[systemIndices.length][solverTypes.length];
@@ -1013,23 +1013,23 @@ public class AcceleratedCPASolverTest {
 
     for (int s = 0; s < systemIndices.length; s++) {
       for (int t = 0; t < solverTypes.length; t++) {
-	String solver = solverTypes[t];
-	// Warmup
-	for (int w = 0; w < warmup; w++) {
-	  runSystemCase(solver, systemIndices[s]);
-	}
-	// Timed
-	long start = System.nanoTime();
-	for (int r = 0; r < repeats; r++) {
-	  runSystemCase(solver, systemIndices[s]);
-	}
-	long elapsed = System.nanoTime() - start;
-	timesMs[s][t] = elapsed / 1.0e6;
+        String solver = solverTypes[t];
+        // Warmup
+        for (int w = 0; w < warmup; w++) {
+          runSystemCase(solver, systemIndices[s]);
+        }
+        // Timed
+        long start = System.nanoTime();
+        for (int r = 0; r < repeats; r++) {
+          runSystemCase(solver, systemIndices[s]);
+        }
+        long elapsed = System.nanoTime() - start;
+        timesMs[s][t] = elapsed / 1.0e6;
       }
     }
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %10s %10s %10s %10s | %8s %8s%n", "System", "Standard",
-	"Anderson", "Reduced", "And+Red", "SpAR/Std", "SpAR/And");
+        "Anderson", "Reduced", "And+Red", "SpAR/Std", "SpAR/And");
     logger.info("------------------------------------------------------------------------------------" + "------");
 
     for (int s = 0; s < systemIndices.length; s++) {
@@ -1040,7 +1040,7 @@ public class AcceleratedCPASolverTest {
       double spVsStd = tStd / tAR;
       double spVsAnd = tAnd / tAR;
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %8.1f ms %8.1f ms %8.1f ms %8.1f ms | %7.2fx %7.2fx%n",
-	  systemNames[s], tStd, tAnd, tRed, tAR, spVsStd, spVsAnd);
+          systemNames[s], tStd, tAnd, tRed, tAR, spVsStd, spVsAnd);
     }
 
     // Print profiling data
@@ -1072,7 +1072,7 @@ public class AcceleratedCPASolverTest {
     double densityIR = implRed.getDensity("kg/m3");
 
     assertEquals(densityBroy, densityIR, Math.abs(densityBroy) * REL_TOL,
-	"Implicit-reduced water density should match Broyden");
+        "Implicit-reduced water density should match Broyden");
 
     // Verify site reduction: water (4C) -> 2 unique types
     PhaseSrkCPAfullyImplicitReduced phase = (PhaseSrkCPAfullyImplicitReduced) implRed.getPhase(1);
@@ -1100,7 +1100,7 @@ public class AcceleratedCPASolverTest {
     double densityIR = implRed.getDensity("kg/m3");
 
     assertEquals(densityRed, densityIR, Math.abs(densityRed) * REL_TOL,
-	"Implicit-reduced water-methanol density should match reduced");
+        "Implicit-reduced water-methanol density should match reduced");
   }
 
   /**
@@ -1121,7 +1121,7 @@ public class AcceleratedCPASolverTest {
     double densityIR = implRed.getDensity("kg/m3");
 
     assertEquals(densityRed, densityIR, Math.abs(densityRed) * REL_TOL,
-	"Implicit-reduced NG+water+MEG density should match reduced");
+        "Implicit-reduced NG+water+MEG density should match reduced");
   }
 
   /**
@@ -1150,7 +1150,7 @@ public class AcceleratedCPASolverTest {
 
     String[] solverTypes = { "standard", "implicit", "reduced", "anderson-reduced", "implicit-reduced" };
     String[] systemNames = { "Pure water", "Pure methanol", "Water-methanol", "Water-ethanol", "Water-EtOH-AcOH",
-	"NG + water", "NG + water + MEG", "NG + water + TEG" };
+        "NG + water", "NG + water + MEG", "NG + water + TEG" };
     int[] systemIndices = { 0, 1, 4, 5, 7, 8, 9, 10 };
 
     double[][] timesMs = new double[systemIndices.length][solverTypes.length];
@@ -1159,23 +1159,23 @@ public class AcceleratedCPASolverTest {
 
     for (int s = 0; s < systemIndices.length; s++) {
       for (int t = 0; t < solverTypes.length; t++) {
-	String solver = solverTypes[t];
-	// Warmup
-	for (int w = 0; w < warmup; w++) {
-	  runSystemCase(solver, systemIndices[s]);
-	}
-	// Timed
-	long start = System.nanoTime();
-	for (int r = 0; r < repeats; r++) {
-	  runSystemCase(solver, systemIndices[s]);
-	}
-	long elapsed = System.nanoTime() - start;
-	timesMs[s][t] = elapsed / 1.0e6;
+        String solver = solverTypes[t];
+        // Warmup
+        for (int w = 0; w < warmup; w++) {
+          runSystemCase(solver, systemIndices[s]);
+        }
+        // Timed
+        long start = System.nanoTime();
+        for (int r = 0; r < repeats; r++) {
+          runSystemCase(solver, systemIndices[s]);
+        }
+        long elapsed = System.nanoTime() - start;
+        timesMs[s][t] = elapsed / 1.0e6;
       }
     }
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-20s %8s %8s %8s %8s %8s | %7s %7s%n", "System", "Std", "Impl",
-	"Red", "And+R", "Impl+R", "IR/Std", "IR/Impl");
+        "Red", "And+R", "Impl+R", "IR/Std", "IR/Impl");
     logger.info("------------------------------------------------------------------------------------" + "-----------");
 
     for (int s = 0; s < systemIndices.length; s++) {
@@ -1187,8 +1187,8 @@ public class AcceleratedCPASolverTest {
       double spVsStd = tStd / tIR;
       double spVsImpl = tImpl / tIR;
       logger.printf(org.apache.logging.log4j.Level.INFO,
-	  "%-20s %6.1fms %6.1fms %6.1fms %6.1fms %6.1fms | %6.2fx %6.2fx%n", systemNames[s], tStd, tImpl, tRed, tAR,
-	  tIR, spVsStd, spVsImpl);
+          "%-20s %6.1fms %6.1fms %6.1fms %6.1fms %6.1fms | %6.2fx %6.2fx%n", systemNames[s], tStd, tImpl, tRed, tAR,
+          tIR, spVsStd, spVsImpl);
     }
   }
 
@@ -1320,25 +1320,25 @@ public class AcceleratedCPASolverTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %12s %12s%n", "Property", "Standard", "Implicit");
     logger.info("---------------------------------------------------");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %10.2f C %10.2f C%n", "Water dew point", stdResults[0],
-	implResults[0]);
+        implResults[0]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %10.4f   %10.4f%n", "Dry gas density (kg/m3)",
-	stdResults[1], implResults[1]);
+        stdResults[1], implResults[1]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %10.6f   %10.6f%n", "Rich TEG water x", stdResults[2],
-	implResults[2]);
+        implResults[2]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %10.6f   %10.6f%n", "Dry gas flow (MSm3/d)",
-	stdResults[3], implResults[3]);
+        stdResults[3], implResults[3]);
 
     // Water dew point should match within 0.5°C (process-level tolerance)
     assertEquals(stdResults[0], implResults[0], 0.5, "Water dew point should match within 0.5°C");
     // Gas density should match within 0.1%
     assertEquals(stdResults[1], implResults[1], Math.abs(stdResults[1]) * 1.0e-3,
-	"Dry gas density should match within 0.1%");
+        "Dry gas density should match within 0.1%");
     // Water mole fraction in rich TEG should match within 0.1%
     assertEquals(stdResults[2], implResults[2], Math.abs(stdResults[2]) * 1.0e-3,
-	"Rich TEG water fraction should match within 0.1%");
+        "Rich TEG water fraction should match within 0.1%");
     // Gas flow rate should match within 0.01%
     assertEquals(stdResults[3], implResults[3], Math.abs(stdResults[3]) * 1.0e-4,
-	"Dry gas flow rate should match within 0.01%");
+        "Dry gas flow rate should match within 0.01%");
   }
 
   /**
@@ -1359,21 +1359,21 @@ public class AcceleratedCPASolverTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %12s %12s%n", "Property", "Standard", "Impl+Red");
     logger.info("---------------------------------------------------");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %10.2f C %10.2f C%n", "Water dew point", stdResults[0],
-	irResults[0]);
+        irResults[0]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %10.4f   %10.4f%n", "Dry gas density (kg/m3)",
-	stdResults[1], irResults[1]);
+        stdResults[1], irResults[1]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %10.6f   %10.6f%n", "Rich TEG water x", stdResults[2],
-	irResults[2]);
+        irResults[2]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %10.6f   %10.6f%n", "Dry gas flow (MSm3/d)",
-	stdResults[3], irResults[3]);
+        stdResults[3], irResults[3]);
 
     assertEquals(stdResults[0], irResults[0], 0.5, "Water dew point should match within 0.5°C");
     assertEquals(stdResults[1], irResults[1], Math.abs(stdResults[1]) * 1.0e-3,
-	"Dry gas density should match within 0.1%");
+        "Dry gas density should match within 0.1%");
     assertEquals(stdResults[2], irResults[2], Math.abs(stdResults[2]) * 1.0e-3,
-	"Rich TEG water fraction should match within 0.1%");
+        "Rich TEG water fraction should match within 0.1%");
     assertEquals(stdResults[3], irResults[3], Math.abs(stdResults[3]) * 1.0e-4,
-	"Dry gas flow rate should match within 0.01%");
+        "Dry gas flow rate should match within 0.01%");
   }
 
   /**
@@ -1393,12 +1393,12 @@ public class AcceleratedCPASolverTest {
     for (int t = 0; t < solverTypes.length; t++) {
       // Warmup
       for (int w = 0; w < warmup; w++) {
-	runTEGDehydrationProcess(solverTypes[t]);
+        runTEGDehydrationProcess(solverTypes[t]);
       }
       // Timed
       long start = System.nanoTime();
       for (int r = 0; r < repeats; r++) {
-	runTEGDehydrationProcess(solverTypes[t]);
+        runTEGDehydrationProcess(solverTypes[t]);
       }
       long elapsed = System.nanoTime() - start;
       timesMs[t] = elapsed / 1.0e6;
@@ -1409,7 +1409,7 @@ public class AcceleratedCPASolverTest {
     for (int t = 0; t < solverTypes.length; t++) {
       double speedup = timesMs[0] / timesMs[t];
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-20s %8.0f ms | %6.2fx%n", solverTypes[t], timesMs[t],
-	  speedup);
+          speedup);
     }
   }
 }

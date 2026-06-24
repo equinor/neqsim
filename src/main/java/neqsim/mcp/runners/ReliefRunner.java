@@ -45,17 +45,17 @@ public final class ReliefRunner {
       String reliefCase = input.has("case") ? input.get("case").getAsString() : "gas";
       switch (reliefCase) {
       case "gas":
-	return sizeGas(input);
+        return sizeGas(input);
       case "liquid":
-	return sizeLiquid(input);
+        return sizeLiquid(input);
       case "twoPhase":
       case "two_phase":
-	return sizeTwoPhase(input);
+        return sizeTwoPhase(input);
       case "fireHeatInput":
       case "fire":
-	return fireHeatInput(input);
+        return fireHeatInput(input);
       default:
-	return errorJson("Unknown case: " + reliefCase + ". Supported: gas, liquid, twoPhase, fireHeatInput");
+        return errorJson("Unknown case: " + reliefCase + ". Supported: gas, liquid, twoPhase, fireHeatInput");
       }
     } catch (Exception e) {
       return errorJson("Relief sizing failed: " + e.getMessage());
@@ -72,7 +72,7 @@ public final class ReliefRunner {
     double massFlow = req(input, "massFlowRate_kg_s");
     double setPressureBara = req(input, "setPressure_bara");
     double overpressureFraction = input.has("overpressureFraction") ? input.get("overpressureFraction").getAsDouble()
-	: 0.21;
+        : 0.21;
     double backPressureBara = input.has("backPressure_bara") ? input.get("backPressure_bara").getAsDouble() : 1.0;
     double tempK = req(input, "temperature_K");
     double mwKgPerMol = req(input, "molecularWeight_kg_mol");
@@ -82,7 +82,7 @@ public final class ReliefRunner {
     boolean ruptureDisk = input.has("ruptureDisk") && input.get("ruptureDisk").getAsBoolean();
 
     PSVSizingResult res = ReliefValveSizing.calculateRequiredArea(massFlow, setPressureBara * 1.0e5,
-	overpressureFraction, backPressureBara * 1.0e5, tempK, mwKgPerMol, z, gamma, balancedBellows, ruptureDisk);
+        overpressureFraction, backPressureBara * 1.0e5, tempK, mwKgPerMol, z, gamma, balancedBellows, ruptureDisk);
 
     JsonObject out = new JsonObject();
     out.addProperty("status", "success");
@@ -121,13 +121,13 @@ public final class ReliefRunner {
     double rho = req(input, "liquidDensity_kg_m3");
     double setPressureBara = req(input, "setPressure_bara");
     double overpressureFraction = input.has("overpressureFraction") ? input.get("overpressureFraction").getAsDouble()
-	: 0.10;
+        : 0.10;
     double backPressureBara = input.has("backPressure_bara") ? input.get("backPressure_bara").getAsDouble() : 1.0;
     double mu = input.has("viscosity_Pa_s") ? input.get("viscosity_Pa_s").getAsDouble() : 1.0e-3;
     boolean balancedBellows = input.has("balancedBellows") && input.get("balancedBellows").getAsBoolean();
 
     LiquidPSVSizingResult res = ReliefValveSizing.calculateLiquidReliefArea(volFlow, rho, setPressureBara * 1.0e5,
-	overpressureFraction, backPressureBara * 1.0e5, mu, balancedBellows);
+        overpressureFraction, backPressureBara * 1.0e5, mu, balancedBellows);
 
     JsonObject out = new JsonObject();
     out.addProperty("status", "success");
@@ -162,7 +162,7 @@ public final class ReliefRunner {
     double massFlow = req(input, "massFlowRate_kg_s");
     double setPressureBara = req(input, "setPressure_bara");
     double overpressureFraction = input.has("overpressureFraction") ? input.get("overpressureFraction").getAsDouble()
-	: 0.10;
+        : 0.10;
     double backPressureBara = input.has("backPressure_bara") ? input.get("backPressure_bara").getAsDouble() : 1.0;
     double tempK = req(input, "temperature_K");
     double xGas = req(input, "gasMassFraction");
@@ -172,7 +172,7 @@ public final class ReliefRunner {
     double cpLiq = req(input, "liquidCp_J_kgK");
 
     double area = ReliefValveSizing.calculateTwoPhaseReliefArea(massFlow, setPressureBara * 1.0e5, overpressureFraction,
-	backPressureBara * 1.0e5, tempK, xGas, rhoGas, rhoLiq, latentHeat, cpLiq);
+        backPressureBara * 1.0e5, tempK, xGas, rhoGas, rhoLiq, latentHeat, cpLiq);
 
     JsonObject out = new JsonObject();
     out.addProperty("status", "success");

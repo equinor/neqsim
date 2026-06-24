@@ -109,16 +109,16 @@ public class PumpDensityCorrectionTest extends neqsim.NeqSimTest {
     chartNoDensity.setHeadUnit("meter");
 
     Assertions.assertFalse(chartNoDensity.hasDensityCorrection(),
-	"Density correction should be disabled when not specified");
+        "Density correction should be disabled when not specified");
     Assertions.assertEquals(-1.0, chartNoDensity.getReferenceDensity(), 0.01,
-	"Reference density should be -1.0 when not specified");
+        "Reference density should be -1.0 when not specified");
 
     // getCorrectedHead should return same as getHead
     double chartHead = chartNoDensity.getHead(40.0, 1000.0);
     double correctedHead = chartNoDensity.getCorrectedHead(40.0, 1000.0, 800.0);
 
     Assertions.assertEquals(chartHead, correctedHead, 0.01,
-	"Head should be unchanged when density correction is disabled");
+        "Head should be unchanged when density correction is disabled");
   }
 
   @Test

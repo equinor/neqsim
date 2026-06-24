@@ -169,17 +169,17 @@ public class MultiphaseFlowRegime implements Serializable {
     if (vsl < 0.01) {
       // Very low liquid rate — stratified
       if (vsg < 3.0) {
-	return FlowRegime.STRATIFIED_SMOOTH;
+        return FlowRegime.STRATIFIED_SMOOTH;
       } else if (vsg < 8.0) {
-	return FlowRegime.STRATIFIED_WAVY;
+        return FlowRegime.STRATIFIED_WAVY;
       } else {
-	return FlowRegime.ANNULAR;
+        return FlowRegime.ANNULAR;
       }
     }
 
     if (vsl > 3.0) {
       if (vsg > 10.0) {
-	return FlowRegime.ANNULAR_MIST;
+        return FlowRegime.ANNULAR_MIST;
       }
       return FlowRegime.DISPERSED_BUBBLE;
     }
@@ -194,7 +194,7 @@ public class MultiphaseFlowRegime implements Serializable {
 
     if (vsg < 15.0) {
       if (vsl < 0.1) {
-	return FlowRegime.STRATIFIED_WAVY;
+        return FlowRegime.STRATIFIED_WAVY;
       }
       return FlowRegime.SLUG;
     }

@@ -39,7 +39,7 @@ public class ConstantMassExpansionTest {
 
     ConstantMassExpansion CMEsim = new ConstantMassExpansion(tempSystem);
     double[] pressures = new double[] { 351.4, 323.2, 301.5, 275.9, 250.1, 226.1, 205.9, 197.3, 189.3, 183.3, 165.0,
-	131.2, 108.3, 85.3, 55.6 };
+        131.2, 108.3, 85.3, 55.6 };
 
     CMEsim.setPressures(pressures);
     double[][] expData = { { 0.95, 0.99, 1.12, 1.9 } };

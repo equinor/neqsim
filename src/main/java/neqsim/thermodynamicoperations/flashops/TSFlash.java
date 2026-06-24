@@ -117,7 +117,7 @@ public class TSFlash extends QfuncFlash {
 
       // Avoid division by zero
       if (Math.abs(dSdP) < 1e-20) {
-	dSdP = (dSdP >= 0) ? 1e-20 : -1e-20;
+        dSdP = (dSdP >= 0) ? 1e-20 : -1e-20;
       }
 
       // Newton step: P_new = P_old - residual / (d residual / dP)
@@ -126,7 +126,7 @@ public class TSFlash extends QfuncFlash {
       // Limit step size to avoid divergence
       double maxDeltaP = 0.3 * oldPres;
       if (Math.abs(deltaP) > maxDeltaP) {
-	deltaP = Math.signum(deltaP) * maxDeltaP;
+        deltaP = Math.signum(deltaP) * maxDeltaP;
       }
 
       // Apply damping factor that increases with iterations
@@ -135,10 +135,10 @@ public class TSFlash extends QfuncFlash {
 
       // Ensure pressure stays positive and physical
       if (nyPres <= 0.01) {
-	nyPres = 0.01;
+        nyPres = 0.01;
       }
       if (nyPres > 1000) {
-	nyPres = oldPres * 0.9;
+        nyPres = oldPres * 0.9;
       }
 
       system.setPressure(nyPres);

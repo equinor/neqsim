@@ -13,7 +13,7 @@ public class PhasePowBenchmarkTest {
 
   private static double calcLngVV_old(double t, double b) {
     return 2.0 * (640.0 * Math.pow(t, 3.0) - 216.0 * b * t * t + 24.0 * Math.pow(b, 2.0) * t - Math.pow(b, 3.0)) * b
-	/ (t * t) / Math.pow(8.0 * t - b, 2.0) / Math.pow(4.0 * t - b, 2.0);
+        / (t * t) / Math.pow(8.0 * t - b, 2.0) / Math.pow(4.0 * t - b, 2.0);
   }
 
   private static double calcLngVV_new(double t, double b) {
@@ -31,9 +31,9 @@ public class PhasePowBenchmarkTest {
 
   private static double calcLngVVV_old(double t, double b) {
     return 4.0
-	* (Math.pow(b, 5.0) + 17664.0 * Math.pow(t, 4.0) * b - 4192.0 * Math.pow(t, 3.0) * Math.pow(b, 2.0)
-	    + 528.0 * Math.pow(b, 3.0) * t * t - 36.0 * t * Math.pow(b, 4.0) - 30720.0 * Math.pow(t, 5.0))
-	* b / Math.pow(t, 3.0) / Math.pow(b - 8.0 * t, 3.0) / Math.pow(b - 4.0 * t, 3.0);
+        * (Math.pow(b, 5.0) + 17664.0 * Math.pow(t, 4.0) * b - 4192.0 * Math.pow(t, 3.0) * Math.pow(b, 2.0)
+            + 528.0 * Math.pow(b, 3.0) * t * t - 36.0 * t * Math.pow(b, 4.0) - 30720.0 * Math.pow(t, 5.0))
+        * b / Math.pow(t, 3.0) / Math.pow(b - 8.0 * t, 3.0) / Math.pow(b - 4.0 * t, 3.0);
   }
 
   private static double calcLngVVV_new(double t, double b) {

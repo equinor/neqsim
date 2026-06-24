@@ -411,7 +411,7 @@ public class NorsokM506CorrosionRate implements Serializable {
     glycolCorrectionFactor = calculateGlycolCorrectionFactor();
 
     correctedCorrosionRate = baselineCorrosionRate * phCorrectionFactor * scaleCorrectionFactor * flowCorrectionFactor
-	* glycolCorrectionFactor * (1.0 - inhibitorEfficiency);
+        * glycolCorrectionFactor * (1.0 - inhibitorEfficiency);
 
     hasBeenCalculated = true;
   }
@@ -521,7 +521,7 @@ public class NorsokM506CorrosionRate implements Serializable {
       double hPlus = (-hco3MolL + Math.sqrt(discriminant)) / 2.0;
 
       if (hPlus <= 0.0) {
-	return 7.0;
+        return 7.0;
       }
       return -Math.log10(hPlus);
     } else {

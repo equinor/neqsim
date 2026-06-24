@@ -50,11 +50,11 @@ public final class GasTurbineCatalog implements Serializable {
     Map<String, GasTurbineSpec> local = CACHE;
     if (local == null) {
       synchronized (GasTurbineCatalog.class) {
-	local = CACHE;
-	if (local == null) {
-	  local = loadFromResource();
-	  CACHE = local;
-	}
+        local = CACHE;
+        if (local == null) {
+          local = loadFromResource();
+          CACHE = local;
+        }
       }
     }
     return local;
@@ -74,7 +74,7 @@ public final class GasTurbineCatalog implements Serializable {
     String key = normalize(model);
     for (Map.Entry<String, GasTurbineSpec> e : all().entrySet()) {
       if (normalize(e.getKey()).equals(key)) {
-	return e.getValue();
+        return e.getValue();
       }
     }
     throw new IllegalArgumentException("Unknown gas turbine model: " + model + ". Available: " + all().keySet());
@@ -90,7 +90,7 @@ public final class GasTurbineCatalog implements Serializable {
     Collections.sort(list, new java.util.Comparator<GasTurbineSpec>() {
       @Override
       public int compare(GasTurbineSpec a, GasTurbineSpec b) {
-	return Double.compare(a.getRatedPowerW(), b.getRatedPowerW());
+        return Double.compare(a.getRatedPowerW(), b.getRatedPowerW());
       }
     });
     return list;
@@ -112,8 +112,8 @@ public final class GasTurbineCatalog implements Serializable {
     GasTurbineSpec best = null;
     for (GasTurbineSpec s : sortedByPower()) {
       if (s.getRatedPowerW() >= targetW) {
-	best = s;
-	break;
+        best = s;
+        break;
       }
     }
     return best;
@@ -159,44 +159,44 @@ public final class GasTurbineCatalog implements Serializable {
       reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
       String header = reader.readLine();
       if (header == null) {
-	return map;
+        return map;
       }
       String line;
       while ((line = reader.readLine()) != null) {
-	line = line.trim();
-	if (line.length() == 0 || line.startsWith("#")) {
-	  continue;
-	}
-	String[] parts = line.split(",");
-	if (parts.length < 9) {
-	  logger.warn("Skipping malformed catalog row: {}", line);
-	  continue;
-	}
-	try {
-	  String model = parts[0].trim();
-	  GasTurbineSpec.TurbineType type = GasTurbineSpec.TurbineType.valueOf(parts[1].trim().toUpperCase());
-	  double powerMW = Double.parseDouble(parts[2].trim());
-	  double heatRate = Double.parseDouble(parts[3].trim());
-	  double exhaustFlow = Double.parseDouble(parts[4].trim());
-	  double exhaustTC = Double.parseDouble(parts[5].trim());
-	  double nox = Double.parseDouble(parts[6].trim());
-	  double mass = Double.parseDouble(parts[7].trim());
-	  String desc = parts[8].trim();
-	  map.put(model, new GasTurbineSpec(model, type, powerMW * 1.0e6, heatRate, exhaustFlow, exhaustTC + 273.15,
-	      nox, mass, desc));
-	} catch (RuntimeException ex) {
-	  logger.warn("Failed to parse catalog row '{}': {}", line, ex.getMessage());
-	}
+        line = line.trim();
+        if (line.length() == 0 || line.startsWith("#")) {
+          continue;
+        }
+        String[] parts = line.split(",");
+        if (parts.length < 9) {
+          logger.warn("Skipping malformed catalog row: {}", line);
+          continue;
+        }
+        try {
+          String model = parts[0].trim();
+          GasTurbineSpec.TurbineType type = GasTurbineSpec.TurbineType.valueOf(parts[1].trim().toUpperCase());
+          double powerMW = Double.parseDouble(parts[2].trim());
+          double heatRate = Double.parseDouble(parts[3].trim());
+          double exhaustFlow = Double.parseDouble(parts[4].trim());
+          double exhaustTC = Double.parseDouble(parts[5].trim());
+          double nox = Double.parseDouble(parts[6].trim());
+          double mass = Double.parseDouble(parts[7].trim());
+          String desc = parts[8].trim();
+          map.put(model, new GasTurbineSpec(model, type, powerMW * 1.0e6, heatRate, exhaustFlow, exhaustTC + 273.15,
+              nox, mass, desc));
+        } catch (RuntimeException ex) {
+          logger.warn("Failed to parse catalog row '{}': {}", line, ex.getMessage());
+        }
       }
     } catch (IOException ex) {
       logger.error("Failed to read gas turbine catalog", ex);
     } finally {
       if (reader != null) {
-	try {
-	  reader.close();
-	} catch (IOException ignore) {
-	  // ignore close failures
-	}
+        try {
+          reader.close();
+        } catch (IOException ignore) {
+          // ignore close failures
+        }
       }
     }
     return Collections.unmodifiableMap(map);

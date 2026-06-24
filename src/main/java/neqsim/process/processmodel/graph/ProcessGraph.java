@@ -141,9 +141,9 @@ public class ProcessGraph implements Serializable {
     public List<List<ProcessNode>> getRecycleLoops() {
       List<List<ProcessNode>> loops = new ArrayList<>();
       for (List<ProcessNode> component : components) {
-	if (component.size() > 1) {
-	  loops.add(component);
-	}
+        if (component.size() > 1) {
+          loops.add(component);
+        }
       }
       return loops;
     }
@@ -190,7 +190,7 @@ public class ProcessGraph implements Serializable {
     public int getMaxParallelism() {
       int max = 0;
       for (List<ProcessNode> level : levels) {
-	max = Math.max(max, level.size());
+        max = Math.max(max, level.size());
       }
       return max;
     }
@@ -436,7 +436,7 @@ public class ProcessGraph implements Serializable {
 
     for (ProcessNode node : nodes) {
       if (!node.isVisited()) {
-	detectCyclesDFS(node, currentPath, cycles, backEdges);
+        detectCyclesDFS(node, currentPath, cycles, backEdges);
       }
     }
 
@@ -454,24 +454,24 @@ public class ProcessGraph implements Serializable {
       ProcessNode successor = edge.getTarget();
 
       if (!successor.isVisited()) {
-	detectCyclesDFS(successor, currentPath, cycles, backEdges);
+        detectCyclesDFS(successor, currentPath, cycles, backEdges);
       } else if (successor.isOnStack()) {
-	// Found a cycle - extract it
-	edge.setBackEdge(true);
-	backEdges.add(edge);
+        // Found a cycle - extract it
+        edge.setBackEdge(true);
+        backEdges.add(edge);
 
-	List<ProcessNode> cycle = new ArrayList<>();
-	boolean inCycle = false;
-	for (ProcessNode pathNode : currentPath) {
-	  if (pathNode == successor) {
-	    inCycle = true;
-	  }
-	  if (inCycle) {
-	    cycle.add(pathNode);
-	  }
-	}
-	Collections.reverse(cycle);
-	cycles.add(cycle);
+        List<ProcessNode> cycle = new ArrayList<>();
+        boolean inCycle = false;
+        for (ProcessNode pathNode : currentPath) {
+          if (pathNode == successor) {
+            inCycle = true;
+          }
+          if (inCycle) {
+            cycle.add(pathNode);
+          }
+        }
+        Collections.reverse(cycle);
+        cycles.add(cycle);
       }
     }
 
@@ -514,7 +514,7 @@ public class ProcessGraph implements Serializable {
     // Post-order DFS
     for (ProcessNode node : nodes) {
       if (!node.isVisited()) {
-	topologicalSortDFS(node, stack);
+        topologicalSortDFS(node, stack);
       }
     }
 
@@ -536,10 +536,10 @@ public class ProcessGraph implements Serializable {
     for (ProcessEdge edge : node.getOutgoingEdges()) {
       // Skip back edges to avoid infinite loops
       if (!edge.isBackEdge()) {
-	ProcessNode successor = edge.getTarget();
-	if (!successor.isVisited()) {
-	  topologicalSortDFS(successor, stack);
-	}
+        ProcessNode successor = edge.getTarget();
+        if (!successor.isVisited()) {
+          topologicalSortDFS(successor, stack);
+        }
       }
     }
 
@@ -591,7 +591,7 @@ public class ProcessGraph implements Serializable {
 
     for (ProcessNode node : nodes) {
       if (ids[node.getIndex()] == -1) {
-	tarjanDFS(node, ids, low, onStack, stack, components, idCounter);
+        tarjanDFS(node, ids, low, onStack, stack, components, idCounter);
       }
     }
 
@@ -599,8 +599,8 @@ public class ProcessGraph implements Serializable {
     Map<ProcessNode, Integer> nodeToComponent = new HashMap<>();
     for (int i = 0; i < components.size(); i++) {
       for (ProcessNode node : components.get(i)) {
-	nodeToComponent.put(node, i);
-	node.setSccIndex(i);
+        nodeToComponent.put(node, i);
+        node.setSccIndex(i);
       }
     }
 
@@ -620,10 +620,10 @@ public class ProcessGraph implements Serializable {
       int succIdx = successor.getIndex();
 
       if (ids[succIdx] == -1) {
-	tarjanDFS(successor, ids, low, onStack, stack, components, idCounter);
-	low[idx] = Math.min(low[idx], low[succIdx]);
+        tarjanDFS(successor, ids, low, onStack, stack, components, idCounter);
+        low[idx] = Math.min(low[idx], low[succIdx]);
       } else if (onStack[succIdx]) {
-	low[idx] = Math.min(low[idx], ids[succIdx]);
+        low[idx] = Math.min(low[idx], ids[succIdx]);
       }
     }
 
@@ -632,9 +632,9 @@ public class ProcessGraph implements Serializable {
       List<ProcessNode> component = new ArrayList<>();
       ProcessNode w;
       do {
-	w = stack.pop();
-	onStack[w.getIndex()] = false;
-	component.add(w);
+        w = stack.pop();
+        onStack[w.getIndex()] = false;
+        component.add(w);
       } while (w != node);
 
       components.add(component);
@@ -667,10 +667,10 @@ public class ProcessGraph implements Serializable {
 
     for (ProcessNode node : topoOrder) {
       for (ProcessEdge edge : node.getOutgoingEdges()) {
-	if (!edge.isBackEdge()) {
-	  int targetIdx = edge.getTarget().getIndex();
-	  longestPath[targetIdx] = Math.max(longestPath[targetIdx], longestPath[node.getIndex()] + 1);
-	}
+        if (!edge.isBackEdge()) {
+          int targetIdx = edge.getTarget().getIndex();
+          longestPath[targetIdx] = Math.max(longestPath[targetIdx], longestPath[node.getIndex()] + 1);
+        }
       }
     }
 
@@ -757,7 +757,7 @@ public class ProcessGraph implements Serializable {
     for (ProcessNode node : nodes) {
       List<Integer> successors = new ArrayList<>();
       for (ProcessEdge edge : node.getOutgoingEdges()) {
-	successors.add(edge.getTargetIndex());
+        successors.add(edge.getTargetIndex());
       }
       adj.put(node.getIndex(), successors);
     }
@@ -792,7 +792,7 @@ public class ProcessGraph implements Serializable {
     List<ProcessNode> sources = new ArrayList<>();
     for (ProcessNode node : nodes) {
       if (node.isSource()) {
-	sources.add(node);
+        sources.add(node);
       }
     }
     return sources;
@@ -807,7 +807,7 @@ public class ProcessGraph implements Serializable {
     List<ProcessNode> sinks = new ArrayList<>();
     for (ProcessNode node : nodes) {
       if (node.isSink()) {
-	sinks.add(node);
+        sinks.add(node);
       }
     }
     return sinks;
@@ -823,7 +823,7 @@ public class ProcessGraph implements Serializable {
     List<ProcessEdge> recycles = new ArrayList<>();
     for (ProcessEdge edge : edges) {
       if (edge.isRecycle() || edge.isBackEdge()) {
-	recycles.add(edge);
+        recycles.add(edge);
       }
     }
     return recycles;
@@ -854,7 +854,7 @@ public class ProcessGraph implements Serializable {
     // Check for isolated nodes
     for (ProcessNode node : nodes) {
       if (node.isSource() && node.isSink()) {
-	issues.add("Isolated node: " + node.getName());
+        issues.add("Isolated node: " + node.getName());
       }
     }
 
@@ -863,14 +863,14 @@ public class ProcessGraph implements Serializable {
     for (ProcessEdge edge : edges) {
       String key = edge.getSourceIndex() + "->" + edge.getTargetIndex();
       if (!edgeKeys.add(key)) {
-	issues.add("Duplicate edge: " + edge.getName());
+        issues.add("Duplicate edge: " + edge.getName());
       }
     }
 
     // Check for self-loops
     for (ProcessEdge edge : edges) {
       if (edge.getSource() == edge.getTarget()) {
-	issues.add("Self-loop: " + edge.getName());
+        issues.add("Self-loop: " + edge.getName());
       }
     }
 
@@ -896,7 +896,7 @@ public class ProcessGraph implements Serializable {
     private final int totalCyclesBroken;
 
     TearStreamResult(List<ProcessEdge> tearStreams, Map<List<ProcessNode>, ProcessEdge> sccToTearStream,
-	int totalCyclesBroken) {
+        int totalCyclesBroken) {
       this.tearStreams = Collections.unmodifiableList(tearStreams);
       this.sccToTearStream = Collections.unmodifiableMap(sccToTearStream);
       this.totalCyclesBroken = totalCyclesBroken;
@@ -972,7 +972,7 @@ public class ProcessGraph implements Serializable {
 
     for (List<ProcessNode> scc : recycleLoops) {
       if (scc.size() <= 1) {
-	continue; // Skip trivial SCCs
+        continue; // Skip trivial SCCs
       }
 
       // Find all edges within this SCC
@@ -980,19 +980,19 @@ public class ProcessGraph implements Serializable {
       List<ProcessEdge> sccEdges = new ArrayList<>();
 
       for (ProcessNode node : scc) {
-	for (ProcessEdge edge : node.getOutgoingEdges()) {
-	  if (sccNodes.contains(edge.getTarget())) {
-	    sccEdges.add(edge);
-	  }
-	}
+        for (ProcessEdge edge : node.getOutgoingEdges()) {
+          if (sccNodes.contains(edge.getTarget())) {
+            sccEdges.add(edge);
+          }
+        }
       }
 
       // Select best tear stream for this SCC
       ProcessEdge bestTear = selectBestTearStreamForSCC(scc, sccEdges);
       if (bestTear != null) {
-	allTearStreams.add(bestTear);
-	sccToTear.put(scc, bestTear);
-	totalCycles++; // At least one cycle per SCC
+        allTearStreams.add(bestTear);
+        sccToTear.put(scc, bestTear);
+        totalCycles++; // At least one cycle per SCC
       }
     }
 
@@ -1017,8 +1017,8 @@ public class ProcessGraph implements Serializable {
     for (ProcessEdge edge : sccEdges) {
       double score = computeTearStreamScore(edge, scc);
       if (score > bestScore) {
-	bestScore = score;
-	bestEdge = edge;
+        bestScore = score;
+        bestEdge = edge;
       }
     }
 
@@ -1100,7 +1100,7 @@ public class ProcessGraph implements Serializable {
     private final double totalSensitivity;
 
     SensitivityAnalysisResult(Map<ProcessEdge, Double> edgeSensitivities, List<ProcessEdge> rankedTearCandidates,
-	double totalSensitivity) {
+        double totalSensitivity) {
       this.edgeSensitivities = Collections.unmodifiableMap(edgeSensitivities);
       this.rankedTearCandidates = Collections.unmodifiableList(rankedTearCandidates);
       this.totalSensitivity = totalSensitivity;
@@ -1170,9 +1170,9 @@ public class ProcessGraph implements Serializable {
     List<ProcessEdge> tearCandidates = new ArrayList<>();
     for (ProcessNode node : scc) {
       for (ProcessEdge edge : node.getOutgoingEdges()) {
-	if (sccNodes.contains(edge.getTarget())) {
-	  tearCandidates.add(edge);
-	}
+        if (sccNodes.contains(edge.getTarget())) {
+          tearCandidates.add(edge);
+        }
       }
     }
 
@@ -1233,11 +1233,11 @@ public class ProcessGraph implements Serializable {
     // Factor 5: Flow rate if available (lower flow = lower sensitivity)
     if (edge.getStream() != null) {
       try {
-	double flowRate = edge.getStream().getFlowRate("kg/hr");
-	// Normalize by a typical flow rate (1000 kg/hr)
-	sensitivity *= Math.sqrt(flowRate / 1000.0);
+        double flowRate = edge.getStream().getFlowRate("kg/hr");
+        // Normalize by a typical flow rate (1000 kg/hr)
+        sensitivity *= Math.sqrt(flowRate / 1000.0);
       } catch (Exception e) {
-	// Flow rate not available, skip this factor
+        // Flow rate not available, skip this factor
       }
     }
 
@@ -1274,14 +1274,14 @@ public class ProcessGraph implements Serializable {
       int currentDist = distances.get(current);
 
       for (ProcessEdge edge : current.getOutgoingEdges()) {
-	ProcessNode next = edge.getTarget();
-	if (sccNodes.contains(next) && !distances.containsKey(next)) {
-	  distances.put(next, currentDist + 1);
-	  if (next == target) {
-	    return currentDist + 1;
-	  }
-	  queue.add(next);
-	}
+        ProcessNode next = edge.getTarget();
+        if (sccNodes.contains(next) && !distances.containsKey(next)) {
+          distances.put(next, currentDist + 1);
+          if (next == target) {
+            return currentDist + 1;
+          }
+          queue.add(next);
+        }
       }
     }
 
@@ -1304,21 +1304,21 @@ public class ProcessGraph implements Serializable {
 
       // Assign sensitivity weights based on equipment type
       if (type.contains("separator") || type.contains("flash")) {
-	weight = 2.0; // High sensitivity - phase equilibrium
+        weight = 2.0; // High sensitivity - phase equilibrium
       } else if (type.contains("column") || type.contains("distillation")) {
-	weight = 3.0; // Very high sensitivity - many stages
+        weight = 3.0; // Very high sensitivity - many stages
       } else if (type.contains("reactor")) {
-	weight = 2.5; // High sensitivity - reaction kinetics
+        weight = 2.5; // High sensitivity - reaction kinetics
       } else if (type.contains("compressor") || type.contains("expander")) {
-	weight = 1.5; // Medium sensitivity - thermodynamic calculations
+        weight = 1.5; // Medium sensitivity - thermodynamic calculations
       } else if (type.contains("heater") || type.contains("cooler") || type.contains("heat")) {
-	weight = 1.2; // Lower sensitivity - mostly energy balance
+        weight = 1.2; // Lower sensitivity - mostly energy balance
       } else if (type.contains("mixer") || type.contains("splitter")) {
-	weight = 0.8; // Low sensitivity - simple mixing/splitting
+        weight = 0.8; // Low sensitivity - simple mixing/splitting
       } else if (type.contains("valve") || type.contains("pump")) {
-	weight = 0.9; // Low sensitivity - pressure change only
+        weight = 0.9; // Low sensitivity - pressure change only
       } else if (type.contains("stream")) {
-	weight = 0.5; // Very low sensitivity - just passes values
+        weight = 0.5; // Very low sensitivity - just passes values
       }
 
       totalWeight += weight;
@@ -1342,13 +1342,13 @@ public class ProcessGraph implements Serializable {
     for (ProcessNode node : scc) {
       int outDegreeInSCC = 0;
       for (ProcessEdge edge : node.getOutgoingEdges()) {
-	if (sccNodes.contains(edge.getTarget())) {
-	  outDegreeInSCC++;
-	}
+        if (sccNodes.contains(edge.getTarget())) {
+          outDegreeInSCC++;
+        }
       }
       if (outDegreeInSCC > 1) {
-	totalBranches += outDegreeInSCC;
-	nodesWithBranches++;
+        totalBranches += outDegreeInSCC;
+        nodesWithBranches++;
       }
     }
 
@@ -1374,7 +1374,7 @@ public class ProcessGraph implements Serializable {
 
     for (List<ProcessNode> scc : recycleLoops) {
       if (scc.size() <= 1) {
-	continue;
+        continue;
       }
 
       // Use sensitivity analysis to select best tear
@@ -1382,12 +1382,12 @@ public class ProcessGraph implements Serializable {
       ProcessEdge bestTear = analysis.getBestTearStream();
 
       if (bestTear != null) {
-	allTearStreams.add(bestTear);
-	sccToTear.put(scc, bestTear);
-	totalCycles++;
+        allTearStreams.add(bestTear);
+        sccToTear.put(scc, bestTear);
+        totalCycles++;
 
-	logger.debug("SCC tear stream selected: {} with sensitivity {}", bestTear.getName(),
-	    analysis.getEdgeSensitivities().get(bestTear));
+        logger.debug("SCC tear stream selected: {} with sensitivity {}", bestTear.getName(),
+            analysis.getEdgeSensitivities().get(bestTear));
       }
     }
 
@@ -1414,7 +1414,7 @@ public class ProcessGraph implements Serializable {
     int sccIndex = 1;
     for (List<ProcessNode> scc : recycleLoops) {
       if (scc.size() <= 1) {
-	continue;
+        continue;
       }
 
       sb.append("Recycle Loop ").append(sccIndex++).append(" (").append(scc.size()).append(" nodes):\n");
@@ -1422,10 +1422,10 @@ public class ProcessGraph implements Serializable {
       // List nodes in SCC
       sb.append("  Nodes: ");
       for (int i = 0; i < scc.size(); i++) {
-	if (i > 0) {
-	  sb.append(" -> ");
-	}
-	sb.append(scc.get(i).getName());
+        if (i > 0) {
+          sb.append(" -> ");
+        }
+        sb.append(scc.get(i).getName());
       }
       sb.append("\n");
 
@@ -1435,19 +1435,19 @@ public class ProcessGraph implements Serializable {
       sb.append("  Tear stream candidates (ranked by sensitivity):\n");
       int rank = 1;
       for (ProcessEdge edge : analysis.getRankedTearCandidates()) {
-	double sensitivity = analysis.getEdgeSensitivities().get(edge);
-	sb.append("    ").append(rank++).append(". ").append(edge.getSource().getName()).append(" -> ")
-	    .append(edge.getTarget().getName());
-	sb.append(String.format(" [sensitivity=%.4f]", sensitivity));
-	if (edge.isRecycle() || edge.isBackEdge()) {
-	  sb.append(" (marked as recycle)");
-	}
-	sb.append("\n");
+        double sensitivity = analysis.getEdgeSensitivities().get(edge);
+        sb.append("    ").append(rank++).append(". ").append(edge.getSource().getName()).append(" -> ")
+            .append(edge.getTarget().getName());
+        sb.append(String.format(" [sensitivity=%.4f]", sensitivity));
+        if (edge.isRecycle() || edge.isBackEdge()) {
+          sb.append(" (marked as recycle)");
+        }
+        sb.append("\n");
       }
 
       sb.append("  Recommended tear: ")
-	  .append(analysis.getBestTearStream() != null ? analysis.getBestTearStream().getName() : "none")
-	  .append("\n\n");
+          .append(analysis.getBestTearStream() != null ? analysis.getBestTearStream().getName() : "none")
+          .append("\n\n");
     }
 
     return sb.toString();
@@ -1472,9 +1472,9 @@ public class ProcessGraph implements Serializable {
     // DFS to check for remaining cycles
     for (ProcessNode start : nodes) {
       if (!visited.contains(start)) {
-	if (hasCycleWithoutTears(start, visited, inStack, tearSet)) {
-	  return false;
-	}
+        if (hasCycleWithoutTears(start, visited, inStack, tearSet)) {
+          return false;
+        }
       }
     }
     return true;
@@ -1496,17 +1496,17 @@ public class ProcessGraph implements Serializable {
 
     for (ProcessEdge edge : node.getOutgoingEdges()) {
       if (tearSet.contains(edge)) {
-	continue; // Skip tear streams
+        continue; // Skip tear streams
       }
 
       ProcessNode target = edge.getTarget();
       if (inStack.contains(target)) {
-	return true; // Cycle found
+        return true; // Cycle found
       }
       if (!visited.contains(target)) {
-	if (hasCycleWithoutTears(target, visited, inStack, tearSet)) {
-	  return true;
-	}
+        if (hasCycleWithoutTears(target, visited, inStack, tearSet)) {
+          return true;
+        }
       }
     }
 

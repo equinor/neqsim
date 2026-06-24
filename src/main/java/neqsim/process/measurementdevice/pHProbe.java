@@ -53,14 +53,14 @@ public class pHProbe extends StreamMeasurementDeviceBaseClass {
       // reactiveThermoSystem = stream.getFluid().phaseToSystem("aqueous");
       reactiveThermoSystem = reactiveThermoSystem.setModel("Electrolyte-CPA-EOS-statoil");
       if (getAlkalinity() > 1e-10) {
-	double waterkg = reactiveThermoSystem.getComponent("water").getTotalFlowRate("kg/sec");
-	reactiveThermoSystem.addComponent("Na+", waterkg * getAlkalinity() / 1e3);
-	reactiveThermoSystem.addComponent("OH-", waterkg * getAlkalinity() / 1e3);
+        double waterkg = reactiveThermoSystem.getComponent("water").getTotalFlowRate("kg/sec");
+        reactiveThermoSystem.addComponent("Na+", waterkg * getAlkalinity() / 1e3);
+        reactiveThermoSystem.addComponent("OH-", waterkg * getAlkalinity() / 1e3);
       }
       if (!reactiveThermoSystem.isChemicalSystem()) {
-	reactiveThermoSystem.chemicalReactionInit();
-	reactiveThermoSystem.setMixingRule(10);
-	reactiveThermoSystem.setMultiPhaseCheck(false);
+        reactiveThermoSystem.chemicalReactionInit();
+        reactiveThermoSystem.setMixingRule(10);
+        reactiveThermoSystem.setMultiPhaseCheck(false);
       }
       thermoOps = new ThermodynamicOperations(reactiveThermoSystem);
       thermoOps.TPflash();
@@ -77,19 +77,19 @@ public class pHProbe extends StreamMeasurementDeviceBaseClass {
   public double getMeasuredValue(String unit) {
     if (!unit.equalsIgnoreCase("")) {
       throw new RuntimeException(
-	  new neqsim.util.exception.InvalidInputException(this, "getMeasuredValue", "unit", "can only be empty."));
+          new neqsim.util.exception.InvalidInputException(this, "getMeasuredValue", "unit", "can only be empty."));
     }
     if (stream != null) {
       if (stream.getFluid().hasPhaseType("aqueous")) {
-	if (hasCachedPH && stream == lastMeasuredStream && Double.compare(lastMeasuredAlkalinity, alkalinity) == 0) {
-	  return lastMeasuredPH;
-	}
+        if (hasCachedPH && stream == lastMeasuredStream && Double.compare(lastMeasuredAlkalinity, alkalinity) == 0) {
+          return lastMeasuredPH;
+        }
 
-	run();
-	return hasCachedPH ? lastMeasuredPH : Double.NaN;
+        run();
+        return hasCachedPH ? lastMeasuredPH : Double.NaN;
       } else {
-	System.out.println("no aqueous phase for pH analyser");
-	return 7.0;
+        System.out.println("no aqueous phase for pH analyser");
+        return 7.0;
       }
     } else {
       System.out.println("no stream connected to pH analyser");

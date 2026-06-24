@@ -110,7 +110,7 @@ public class Standard_EN16723 extends neqsim.standards.Standard {
    */
   public Standard_EN16723(SystemInterface thermoSystem, int part) {
     super("Standard_EN16723", "Natural gas and biomethane for use in transport and biomethane for injection",
-	thermoSystem);
+        thermoSystem);
     this.part = part;
     this.en16726 = new Standard_EN16726(thermoSystem);
   }
@@ -201,14 +201,14 @@ public class Standard_EN16723 extends neqsim.standards.Standard {
   @Override
   public String getUnit(String returnParameter) {
     if ("methane".equals(returnParameter) || "methaneContent".equals(returnParameter) || "CO2".equals(returnParameter)
-	|| "O2".equals(returnParameter) || "H2".equals(returnParameter) || "totalInerts".equals(returnParameter)) {
+        || "O2".equals(returnParameter) || "H2".equals(returnParameter) || "totalInerts".equals(returnParameter)) {
       return "mol%";
     }
     if ("WobbeIndex".equals(returnParameter) || "WI".equals(returnParameter)) {
       return "MJ/m3";
     }
     if ("siloxaneLimit".equals(returnParameter) || "ammoniaLimit".equals(returnParameter)
-	|| "amineLimit".equals(returnParameter)) {
+        || "amineLimit".equals(returnParameter)) {
       return "mg/m3";
     }
     return "MJ/m3";

@@ -60,7 +60,7 @@ public class PipelineRunner {
 
     String analysis = getString(input, "analysis", getString(input, "mode", "beggsAndBrill"));
     if ("waterHammer".equalsIgnoreCase(analysis) || "liquidHammer".equalsIgnoreCase(analysis)
-	|| "hydraulicTransient".equalsIgnoreCase(analysis)) {
+        || "hydraulicTransient".equalsIgnoreCase(analysis)) {
       return WaterHammerRunner.run(json);
     }
 
@@ -77,8 +77,8 @@ public class PipelineRunner {
       // --- Create feed stream ---
       Stream feed = new Stream("Pipeline Feed", fluid);
       if (input.has("flowRate")) {
-	JsonObject fr = input.getAsJsonObject("flowRate");
-	feed.setFlowRate(fr.get("value").getAsDouble(), fr.has("unit") ? fr.get("unit").getAsString() : "kg/hr");
+        JsonObject fr = input.getAsJsonObject("flowRate");
+        feed.setFlowRate(fr.get("value").getAsDouble(), fr.has("unit") ? fr.get("unit").getAsString() : "kg/hr");
       }
 
       // --- Create pipeline ---
@@ -120,7 +120,7 @@ public class PipelineRunner {
       return GSON.toJson(result);
     } catch (Exception e) {
       return errorJson("PIPELINE_ERROR", "Pipeline simulation failed: " + e.getMessage(),
-	  "Check fluid definition and pipeline parameters");
+          "Check fluid definition and pipeline parameters");
     }
   }
 
@@ -154,7 +154,7 @@ public class PipelineRunner {
     if (input.has("components")) {
       JsonObject comps = input.getAsJsonObject("components");
       for (Map.Entry<String, JsonElement> entry : comps.entrySet()) {
-	fluid.addComponent(entry.getKey(), entry.getValue().getAsDouble());
+        fluid.addComponent(entry.getKey(), entry.getValue().getAsDouble());
       }
     }
     String mixingRule = input.has("mixingRule") ? input.get("mixingRule").getAsString() : "classic";
@@ -204,7 +204,7 @@ public class PipelineRunner {
     }
 
     Integer numberOfSegments = getOptionalInt(input, pipeInput, "numberOfSegments", "numberOfIncrements",
-	"numberOfNodes");
+        "numberOfNodes");
     if (numberOfSegments != null) {
       pipe.setNumberOfIncrements(numberOfSegments.intValue());
     }
@@ -268,7 +268,7 @@ public class PipelineRunner {
     }
     for (String name : names) {
       if (object.has(name) && !object.get(name).isJsonNull()) {
-	return object.get(name);
+        return object.get(name);
       }
     }
     return null;

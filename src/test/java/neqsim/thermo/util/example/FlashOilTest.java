@@ -48,9 +48,9 @@ class FlashOilTest {
     fluid1 = new SystemSrkEos(298.0, 10.0);
     for (int i = 0; i < components.length; i++) {
       if (components[i].startsWith("CH")) {
-	fluid1.addTBPfraction(components[i], fractions1[i], molarmass[i], density[i]);
+        fluid1.addTBPfraction(components[i], fractions1[i], molarmass[i], density[i]);
       } else {
-	fluid1.addComponent(components[i], fractions1[i]);
+        fluid1.addComponent(components[i], fractions1[i]);
       }
     }
 

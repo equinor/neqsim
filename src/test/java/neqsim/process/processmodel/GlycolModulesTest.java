@@ -80,10 +80,10 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     saturatedFeedGasSmøbukk.setApprachToSaturation(0.93);
 
     Stream waterSaturatedFeedGasSmøbukk = new Stream("water saturated feed gas Smøbukk",
-	saturatedFeedGasSmøbukk.getOutletStream());
+        saturatedFeedGasSmøbukk.getOutletStream());
 
     HydrateEquilibriumTemperatureAnalyser hydrateTAnalyserSmøbukk = new HydrateEquilibriumTemperatureAnalyser(
-	"hydrate temperature analyser Smøbukk", waterSaturatedFeedGasSmøbukk);
+        "hydrate temperature analyser Smøbukk", waterSaturatedFeedGasSmøbukk);
 
     Splitter SmøbukkSplit = new Splitter("Smøbukk Splitter", waterSaturatedFeedGasSmøbukk);
     double[] splitSmøbukk = { 0.9999999999, 1e-10 };
@@ -97,10 +97,10 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     StreamSaturatorUtil saturatedFeedGasMidgard = new StreamSaturatorUtil("water saturator Midgard", dryFeedGasMidgard);
 
     Stream waterSaturatedFeedGasMidgard = new Stream("water saturated feed gas Midgard",
-	saturatedFeedGasMidgard.getOutletStream());
+        saturatedFeedGasMidgard.getOutletStream());
 
     HydrateEquilibriumTemperatureAnalyser hydrateTAnalyserMidgard = new HydrateEquilibriumTemperatureAnalyser(
-	"hydrate temperature analyser Midgard", waterSaturatedFeedGasMidgard);
+        "hydrate temperature analyser Midgard", waterSaturatedFeedGasMidgard);
 
     Splitter MidgardSplit = new Splitter("Midgard Splitter", waterSaturatedFeedGasMidgard);
     double[] splitMidgard = { 0.11245704038738272, 0.8875429596126173 };
@@ -117,16 +117,16 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     Stream feedToAbsorber = new Stream("feed to TEG absorber", feedTPsetterToAbsorber.getOutletStream());
 
     HydrateEquilibriumTemperatureAnalyser hydrateTAnalyser2 = new HydrateEquilibriumTemperatureAnalyser(
-	"hydrate temperature gas to absorber", feedToAbsorber);
+        "hydrate temperature gas to absorber", feedToAbsorber);
 
     WaterDewPointAnalyser waterDewPointAnalyserToAbsorber = new WaterDewPointAnalyser("water dew point gas to absorber",
-	feedToAbsorber);
+        feedToAbsorber);
     waterDewPointAnalyserToAbsorber.setMethod("multiphase");
     waterDewPointAnalyserToAbsorber.setReferencePressure(39.67967207899729);
 
     neqsim.thermo.system.SystemInterface feedTEG = (neqsim.thermo.system.SystemInterface) feedGas.clone();
     feedTEG.setMolarComposition(
-	new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.00, 0.0, 0.0, 0.0, 1.0 });
+        new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.00, 0.0, 0.0, 0.0, 1.0 });
 
     Stream TEGFeed = new Stream("TEG feed", feedTEG);
     TEGFeed.setFlowRate(8923.576745846813, "kg/hr");
@@ -144,7 +144,7 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     Stream richTEG = new Stream("rich TEG from absorber", absorber.getLiquidOutStream());
 
     HydrateEquilibriumTemperatureAnalyser waterDewPointAnalyser = new HydrateEquilibriumTemperatureAnalyser(
-	"hydrate dew point analyser", dehydratedGas);
+        "hydrate dew point analyser", dehydratedGas);
     waterDewPointAnalyser.setReferencePressure(70.0);
 
     WaterDewPointAnalyser waterDewPointAnalyser2 = new WaterDewPointAnalyser("water dew point analyser", dehydratedGas);
@@ -160,7 +160,7 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
 
     neqsim.thermo.system.SystemInterface feedWater = (neqsim.thermo.system.SystemInterface) feedGas.clone();
     feedWater.setMolarComposition(
-	new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.00, 0.0, 0.0, 1.0, 0.0 });
+        new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.00, 0.0, 0.0, 1.0, 0.0 });
 
     Stream waterFeed = new Stream("water to absorber", feedWater);
     waterFeed.setFlowRate(0.0, "kg/hr");
@@ -241,7 +241,7 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
 
     neqsim.thermo.system.SystemInterface pureTEG = (neqsim.thermo.system.SystemInterface) feedGas.clone();
     pureTEG.setMolarComposition(
-	new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 });
+        new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 });
 
     Stream makeupTEG = new Stream("makeup TEG", pureTEG);
     makeupTEG.setFlowRate(1e-6, "kg/hr");
@@ -356,7 +356,7 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     module4.add(operations5);
 
     neqsim.process.processmodel.ProcessModule modules = new neqsim.process.processmodel.ProcessModule(
-	"Modules wrapper");
+        "Modules wrapper");
     modules.add(module1);
     modules.add(module2);
     modules.add(module3);

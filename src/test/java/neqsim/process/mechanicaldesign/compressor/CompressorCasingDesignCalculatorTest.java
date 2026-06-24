@@ -53,10 +53,10 @@ public class CompressorCasingDesignCalculatorTest {
 
     // Wall thickness must be positive and above API 617 minimum of 12.7 mm
     assertTrue(calc.getSelectedWallThicknessMm() >= 12.7,
-	"Wall thickness should be >= API 617 min 12.7 mm, got: " + calc.getSelectedWallThicknessMm());
+        "Wall thickness should be >= API 617 min 12.7 mm, got: " + calc.getSelectedWallThicknessMm());
     assertTrue(calc.getRequiredWallThicknessMm() > 0, "Required wall thickness should be positive");
     assertTrue(calc.getMinimumWallThicknessMm() > calc.getRequiredWallThicknessMm(),
-	"Min thickness should include corrosion allowance");
+        "Min thickness should include corrosion allowance");
 
     // Verify MAWP is >= design pressure
     assertTrue(calc.getMawpMPa() >= 5.0, "MAWP should be >= design pressure, got: " + calc.getMawpMPa());
@@ -150,9 +150,9 @@ public class CompressorCasingDesignCalculatorTest {
 
     // Larger nozzle should have larger allowable loads
     assertTrue(calc.getSuctionNozzleAllowableForceN() > calc.getDischargeNozzleAllowableForceN(),
-	"Larger suction nozzle should have larger allowable force");
+        "Larger suction nozzle should have larger allowable force");
     assertTrue(calc.getSuctionNozzleAllowableMomentNm() > calc.getDischargeNozzleAllowableMomentNm(),
-	"Larger suction nozzle should have larger allowable moment");
+        "Larger suction nozzle should have larger allowable moment");
   }
 
   /**
@@ -170,7 +170,7 @@ public class CompressorCasingDesignCalculatorTest {
     calcLow.calculate();
 
     assertTrue(calcLow.getFlangeClass() <= 300,
-	"Low pressure should use Class 150 or 300, got: " + calcLow.getFlangeClass());
+        "Low pressure should use Class 150 or 300, got: " + calcLow.getFlangeClass());
     assertTrue(calcLow.isFlangeRatingAdequate(), "Flange should be adequate for low pressure");
 
     // High pressure - should select higher class
@@ -183,7 +183,7 @@ public class CompressorCasingDesignCalculatorTest {
     calcHigh.calculate();
 
     assertTrue(calcHigh.getFlangeClass() >= 600,
-	"High pressure should use Class 600+, got: " + calcHigh.getFlangeClass());
+        "High pressure should use Class 600+, got: " + calcHigh.getFlangeClass());
   }
 
   /**
@@ -323,9 +323,9 @@ public class CompressorCasingDesignCalculatorTest {
 
     // Split-line bolts should be calculated
     assertTrue(calc.getSplitLineBoltCount() >= 8,
-	"Should have at least 8 split-line bolts, got: " + calc.getSplitLineBoltCount());
+        "Should have at least 8 split-line bolts, got: " + calc.getSplitLineBoltCount());
     assertTrue(calc.getSplitLineBoltDiameterMm() >= 16.0,
-	"Bolt diameter should be >= M16, got: " + calc.getSplitLineBoltDiameterMm());
+        "Bolt diameter should be >= M16, got: " + calc.getSplitLineBoltDiameterMm());
     assertTrue(calc.isSplitLineBoltsAdequate(), "Bolt design should be adequate");
   }
 
@@ -349,11 +349,11 @@ public class CompressorCasingDesignCalculatorTest {
 
     // End cover should have reasonable thickness
     assertTrue(calc.getBarrelEndCoverThicknessMm() >= 25.0,
-	"End cover should be >= 25mm, got: " + calc.getBarrelEndCoverThicknessMm());
+        "End cover should be >= 25mm, got: " + calc.getBarrelEndCoverThicknessMm());
 
     // End cover bolts
     assertTrue(calc.getBarrelEndCoverBoltCount() >= 12,
-	"Should have >= 12 end cover bolts, got: " + calc.getBarrelEndCoverBoltCount());
+        "Should have >= 12 end cover bolts, got: " + calc.getBarrelEndCoverBoltCount());
   }
 
   /**

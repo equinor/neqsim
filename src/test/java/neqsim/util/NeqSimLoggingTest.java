@@ -24,6 +24,6 @@ public class NeqSimLoggingTest {
     neqsim.util.NeqSimLogging.setGlobalLogging("OFF");
     // Verify that the neqsim logger is set to OFF
     assertEquals("OFF", logger.getLevel().toString(),
-	"This logging should not be seen.....neqsim logger should be set to OFF.");
+        "This logging should not be seen.....neqsim logger should be set to OFF.");
   }
 }
