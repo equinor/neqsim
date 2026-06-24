@@ -9,6 +9,7 @@ import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
  * Salt-water viscosity using Laliberté (2007) with erratum coefficients.
+ *
  * <p>
  * Mixture rule (weight fractions): {@code η_m = η_w^{w_w} Π η_i^{w_i}}, where {@code η_w} is the pure-water viscosity
  * (from NeqSim's water correlation) and {@code η_i} are "solute viscosities" from Laliberté:
@@ -18,11 +19,14 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  *                 / ( ν5 (1 - w_w)^{ν6} + 1 )
  * </pre>
  *
+ * <p>
  * with {@code w_w} = mass fraction of water in the liquid phase.
+ *
  * <p>
  * Supported salts (coefficients ν1–ν6): NaCl, KCl, KCOOH (potassium formate), NaBr, CaCl2, KBr. If a salt is not
  * recognized, NaCl coefficients are used, as suggested in the supplementary info to the paper.
  *
+ * <p>
  * References: - G. Laliberté, Ind. Eng. Chem. Res., 2007, 46, 8865–8872 (+ erratum).
  *
  * @author Even Solbraa

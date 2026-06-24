@@ -371,6 +371,7 @@ public final class PseudoComponentCombiner {
    * X_i = sum_j Wgt(j) z_i^j X_i^j / sum_j Wgt(j) z_i^j ,
    * </pre>
    *
+   * <p>
    * where {@code Wgt(j)} is the per-fluid weight and {@code z_i^j} is the mole fraction of lump {@code i} in fluid
    * {@code j}. The lump density is reconstructed from the weighted molar mass and the weighted molar volume (Peneloux
    * basis, Eq. 5.6). The returned fluids therefore differ only in their lump mole fractions, exactly as required when a

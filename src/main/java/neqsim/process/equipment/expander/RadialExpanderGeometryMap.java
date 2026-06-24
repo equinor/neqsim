@@ -22,6 +22,7 @@ import neqsim.thermo.system.SystemInterface;
  * Working with the velocity ratio
  * </p>
  *
+ * <p>
  * $$ \nu = \frac{U_2}{c_0}, \qquad c_0 = \sqrt{2\,\Delta h_{0s}} $$
  *
  * <p>
@@ -29,12 +30,14 @@ import neqsim.thermo.system.SystemInterface;
  * (zero-incidence) velocity ratio is
  * </p>
  *
+ * <p>
  * $$ \nu_{opt} = \sqrt{1-R}\,\sin\alpha_2 $$
  *
  * <p>
  * where \(R\) is the stage degree of reaction. The total-to-static efficiency over a sweep of velocity ratio is then
  * </p>
  *
+ * <p>
  * $$ \eta_{ts}(\nu) = 1 - \Big[ f_i(\nu_{opt}-\nu)^2 + \zeta_n(1-R) + \zeta_r\big(r_r^2\nu^2 + (1-R)\cos^2\alpha_2\big)
  * + (1-R)\cos^2\alpha_2 \Big] $$
  *

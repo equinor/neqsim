@@ -329,6 +329,7 @@ public class MultiphaseFlowRegime implements Serializable {
    * Uses the Azzopardi (1997) correlation for Sauter mean diameter in annular flow:
    * </p>
    *
+   * <p>
    * $$ \frac{d_{32}}{D} = k \cdot We^{-0.6} \cdot Re_l^{0.1} $$
    *
    * <p>
@@ -422,6 +423,7 @@ public class MultiphaseFlowRegime implements Serializable {
    * Uses the Hinze (1955) maximum stable bubble diameter for turbulent breakup:
    * </p>
    *
+   * <p>
    * $$ d_{max} = 0.725 \cdot We^{-3/5} \cdot D $$
    *
    * @return bubble size distribution
@@ -445,6 +447,7 @@ public class MultiphaseFlowRegime implements Serializable {
    * Uses the Oliemans et al. (1986) correlation:
    * </p>
    *
+   * <p>
    * $$ E = \tanh\left(7.25 \times 10^{-7} \cdot We^{1.25} \cdot Re_l^{0.25}\right) $$
    *
    * @return entrained liquid fraction [0-1]

@@ -10,20 +10,24 @@ import java.io.Serializable;
  * The Schiller-Naumann correlation provides a smooth transition across flow regimes (Schiller and Naumann, 1935):
  * </p>
  *
+ * <p>
  * $$ C_D = \frac{24}{Re}\left(1 + 0.15 Re^{0.687}\right) \quad \text{for } Re &lt; 1000 $$
  *
+ * <p>
  * $$ C_D = 0.44 \quad \text{for } Re \geq 1000 $$
  *
  * <p>
  * The settling velocity is found by iterating the force balance:
  * </p>
  *
+ * <p>
  * $$ v_t = \sqrt{\frac{4 g d_p |\Delta\rho|}{3 C_D \rho_c}} $$
  *
  * <p>
  * For the Stokes regime ($Re \ll 1$), this reduces to:
  * </p>
  *
+ * <p>
  * $$ v_t = \frac{d_p^2 |\Delta\rho| g}{18 \mu_c} $$
  *
  * <p>
@@ -339,6 +343,7 @@ public class DropletSettlingCalculator implements Serializable {
    * the Stokes regime:
    * </p>
    *
+   * <p>
    * $$ d_{cut} = \sqrt{\frac{18 \mu_c H}{|\Delta\rho| g t_{res}}} $$
    *
    * <p>

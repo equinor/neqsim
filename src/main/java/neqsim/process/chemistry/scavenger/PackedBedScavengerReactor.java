@@ -26,6 +26,7 @@ import neqsim.process.chemistry.util.StandardsRegistry;
  * dq/dt = - r * Q * C / V_cell        (scavenger depletion)
  * </pre>
  *
+ * <p>
  * with stoichiometric ratio {@code r} (mol H2S per mol active sites, typical 1.0 for triazine, 0.5-0.7 for Fe2O3) and
  * volumetric rate constant {@code k_eff} fitted to bed geometry.
  *

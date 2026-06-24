@@ -361,8 +361,10 @@ public class PipeDesign {
    * Searches for and finds the nearest standard pipe size to a given specification. Acceptable inputs: - Outer diameter
    * Do - Inner diameter Di - NPS - optionally specify the schedule (default "40")
    *
+   * <p>
    * Returns an array {foundNPS, foundDi (m), foundDo (m), foundT (m)}.
    *
+   * <p>
    * If none is found (i.e. the diameter is bigger than the largest in the table), throws exception.
    *
    * @param Do a {@link java.lang.Double} object
@@ -490,6 +492,7 @@ public class PipeDesign {
 
   /**
    * Looks up the gauge of a given wire thickness for a chosen schedule.
+   *
    * <p>
    * If SI is true, input thickness t is in meters; otherwise, in inches. This returns the gauge number that best
    * matches. If t is out of range, it will throw an IllegalArgumentException.

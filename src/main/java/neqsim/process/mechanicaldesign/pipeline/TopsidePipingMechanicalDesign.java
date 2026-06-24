@@ -11,14 +11,17 @@ import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
 /**
  * Mechanical design class for topside (offshore platform and onshore facility) piping.
  *
+ * <p>
  * &lt;p&gt; This class provides mechanical design capabilities for topside process piping including: &lt;/p&gt;
  * &lt;ul&gt; &lt;li&gt;Wall thickness per ASME B31.3 Process Piping&lt;/li&gt; &lt;li&gt;Erosional velocity per API RP
  * 14E&lt;/li&gt; &lt;li&gt;Pipe support spacing per NORSOK L-002&lt;/li&gt; &lt;li&gt;Flow-induced vibration (FIV)
  * screening&lt;/li&gt; &lt;li&gt;Acoustic-induced vibration (AIV) analysis&lt;/li&gt; &lt;li&gt;Thermal expansion
  * stress analysis&lt;/li&gt; &lt;/ul&gt;
  *
+ * <p>
  * &lt;h2&gt;Usage Example&lt;/h2&gt;
  *
+ * <p>
  * &lt;pre&gt;{@code
  * // Create topside piping
  * TopsidePiping pipe = new TopsidePiping("HP Gas Header", stream);

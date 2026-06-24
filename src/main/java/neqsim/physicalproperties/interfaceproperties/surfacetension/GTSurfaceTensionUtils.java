@@ -8,7 +8,6 @@ import neqsim.thermo.system.SystemInterface;
  *
  * <p>
  * Collection of general utility functions used by the gradient theory classes.
- * </p>
  *
  * @author Olaf Trygve Berglihn olaf.trygve.berglihn@sintef.no
  * @version $Id: $Id

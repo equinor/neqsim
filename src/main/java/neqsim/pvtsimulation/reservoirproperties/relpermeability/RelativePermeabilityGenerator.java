@@ -14,11 +14,13 @@ import java.util.Map;
  * <p>
  * <b>Corey Model (1954):</b>
  *
+ * <p>
  * $$ K_{rw} = K_{rw,max} \cdot S_{wn}^{n_w}, \quad K_{row} = K_{ro,max} \cdot (1 - S_{wn})^{n_o} $$
  *
  * <p>
  * <b>LET Model (Lomeland, Ebeltoft, Thomas 2005):</b>
  *
+ * <p>
  * $$ K_r = K_{r,max} \cdot \frac{S_n^L}{S_n^L + E \cdot (1 - S_n)^T} $$
  *
  * <p>
@@ -388,6 +390,7 @@ public class RelativePermeabilityGenerator {
    * <p>
    * Calculates the normalized relative permeability using the Corey (1954) model:
    *
+   * <p>
    * $$ K_{r,norm} = S_n^n $$
    *
    * @param sn Normalized saturation in range [0, 1]
@@ -405,6 +408,7 @@ public class RelativePermeabilityGenerator {
    * <p>
    * Lomeland-Ebeltoft-Thomas (2005) model:
    *
+   * <p>
    * $$ K_{r,norm} = \frac{S_n^L}{S_n^L + E \cdot (1 - S_n)^T} $$
    *
    * @param sn Normalized saturation in range [0, 1]

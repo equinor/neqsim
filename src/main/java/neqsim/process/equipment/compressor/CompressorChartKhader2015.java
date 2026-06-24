@@ -297,6 +297,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   /**
    * {@inheritDoc}
    *
+   * <p>
    * The method first converts the input flow and speed to dimensionless numbers using the sound speed and impeller
    * diameter:
    * <ul>
@@ -325,6 +326,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   /**
    * {@inheritDoc}
    *
+   * <p>
    * The method first converts the input flow and speed to dimensionless numbers using the sound speed and impeller
    * diameter:
    * <ul>

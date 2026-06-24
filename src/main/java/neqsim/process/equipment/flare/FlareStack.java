@@ -10,17 +10,20 @@ import neqsim.thermo.system.SystemInterface;
 /**
  * FlareStack: Combusts relief gas and computes heat release, emissions, radiation and tip backpressure.
  *
+ * <p>
  * Radiation models:
  * <ul>
  * <li>POINT_SOURCE: q = chi_r * Q / (4 pi R^2)</li>
  * <li>CHAMBERLAIN: line-source style with emissive power, flame length, wind tilt, and atmospheric attenuation.</li>
  * </ul>
  *
+ * <p>
  * Tip ΔP/backpressure:
  * <ul>
  * <li>ΔP_tip = K_tip * 0.5 * rho_exit * u_exit^2</li>
  * </ul>
  *
+ * <p>
  * NOTES:
  * <ul>
  * <li>Coefficients for Chamberlain are exposed so you can calibrate to your standard/vendor.</li>

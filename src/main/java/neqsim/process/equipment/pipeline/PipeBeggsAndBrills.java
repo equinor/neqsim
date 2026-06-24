@@ -3100,6 +3100,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * V_e = C / sqrt(rho_mix)
    * </pre>
    *
+   * <p>
    * where C is typically 100-150 for continuous service.
    *
    * @param cFactor erosional C-factor (typically 100-150)

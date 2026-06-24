@@ -527,6 +527,7 @@ public class AdsorptionBed extends TwoPortEquipment {
    * The Ergun equation combines viscous (Blake-Kozeny) and inertial (Burke-Plummer) terms:
    * </p>
    *
+   * <p>
    * $$\frac{\Delta P}{L} = \frac{150 \mu u_s (1-\varepsilon)^2}{\varepsilon^3 d_p^2} + \frac{1.75 \rho u_s^2
    * (1-\varepsilon)}{\varepsilon^3 d_p}$$
    *

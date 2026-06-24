@@ -20,6 +20,7 @@ import neqsim.process.chemistry.util.StandardsRegistry;
  * log10(gamma_i) = -A * z_i ^ 2 * (sqrt(I) / (1 + sqrt(I)) - 0.3 * I)
  * </pre>
  *
+ * <p>
  * where {@code A} is the Debye-Hueckel constant for water at the operating temperature (computed from the
  * Helgeson-Kirkham-Flowers correlation, A = 0.5092 + 8.5e-4*(T-298.15) for 0..100 C). The activity-corrected saturation
  * index for a 1:1 mineral {@code MX(s) <-> M^z+(aq) + X^-z(aq)} is then

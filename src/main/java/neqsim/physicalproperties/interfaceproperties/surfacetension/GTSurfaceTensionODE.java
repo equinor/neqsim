@@ -21,7 +21,6 @@ import neqsim.thermo.system.SystemInterface;
  *
  * This method can only be used when the reference component density varies monotonically over the interface, and where
  * there are no binary interaction parameters for the attractive parameter in the EOS.
- * </p>
  *
  * @author Olaf Trygve Berglihn olaf.trygve.berglihn@sintef.no
  * @version $Id: $Id

@@ -13,17 +13,21 @@ import com.google.gson.GsonBuilder;
  * times needed for accurate separation performance prediction in both horizontal and vertical separators.
  * </p>
  *
+ * <p>
  * Horizontal Separator Geometry:
  * <p>
  * For a horizontal vessel with liquid level at height h in a cylinder of diameter D, the liquid and gas cross-sectional
  * areas are computed from circular segment geometry:
  * </p>
  *
+ * <p>
  * $$ A_{liq} = \frac{D^2}{4}\left[\cos^{-1}\left(\frac{D-2h}{D}\right) -
  * \frac{(D-2h)}{D}\sqrt{1-\left(\frac{D-2h}{D}\right)^2}\right] $$
  *
+ * <p>
  * $$ A_{gas} = \frac{\pi D^2}{4} - A_{liq} $$
  *
+ * <p>
  * Vertical Separator Geometry:
  * <p>
  * For vertical vessels, the gas and liquid occupy the full cross section at different heights. The gas residence time
@@ -277,6 +281,7 @@ public class SeparatorGeometryCalculator implements Serializable {
    * Uses the standard circular segment formula:
    * </p>
    *
+   * <p>
    * $$ A = \frac{R^2}{2}\left(\theta - \sin\theta\right) $$
    *
    * <p>
@@ -303,6 +308,7 @@ public class SeparatorGeometryCalculator implements Serializable {
   /**
    * Calculates the Souders-Brown K-factor for the current gas velocity and phase properties.
    *
+   * <p>
    * $$ K = V_g \sqrt{\frac{\rho_g}{\rho_l - \rho_g}} $$
    *
    * @param gasVelocity actual gas velocity in gas section [m/s]

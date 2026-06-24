@@ -71,6 +71,7 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
   /**
    * Calculate the value for a given experimental data point.
    *
+   * <p>
    * The dependentValues array contains:
    * <ul>
    * <li>[0] = pressure (bar)</li>

@@ -1247,6 +1247,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * κ² = (e² / (ε₀ε_r k_B T)) * Σ(ρ_i * z_i²)
    * </pre>
    *
+   * <p>
    * where ρ_i is number density [1/m³].
    *
    * @return kappa [1/m]
@@ -1480,6 +1481,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * A^DH / (V k_B T) = -κ³ / (12π)
    * </pre>
    *
+   * <p>
    * Converting to extensive F = A/(RT):
    *
    * <pre>
@@ -1550,6 +1552,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * F^Born = (N_A * e² / (8π * ε₀ * R * T)) * (1/ε_r - 1) * X_Born
    * </pre>
    *
+   * <p>
    * where X_Born = Σ(n_i * z_i² / R_Born,i). This is extensive (scales with n).
    *
    * @return F^Born contribution [-]
@@ -1600,6 +1603,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * ∂F^Born/∂ε = prefactor * (-1/ε²) * X_Born
    * </pre>
    *
+   * <p>
    * This is used for the composition derivative via chain rule: dF^Born/dn_i includes (∂F^Born/∂ε) * (∂ε/∂n_i).
    *
    * @return ∂F^Born/∂ε [-]

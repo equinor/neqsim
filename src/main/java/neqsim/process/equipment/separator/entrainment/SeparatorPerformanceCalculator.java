@@ -673,6 +673,7 @@ public class SeparatorPerformanceCalculator implements Serializable {
    * For each size class, the combined efficiency is:
    * </p>
    *
+   * <p>
    * $$ \eta_{combined}(d) = 1 - (1 - \eta_1(d)) \cdot (1 - \eta_2(d)) $$
    *
    * @param dsd droplet size distribution

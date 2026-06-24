@@ -29,6 +29,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * an arbitrary process fluid the head coefficient is scaled back by the actual fluid sound speed squared:
  * </p>
  *
+ * <p>
  * $$ \\psi = \\frac{\\Delta h_s}{c_s^2}, \\qquad \\Delta h_s = \\psi \\, c_{s,\\text{actual}}^2 $$
  *
  * <p>

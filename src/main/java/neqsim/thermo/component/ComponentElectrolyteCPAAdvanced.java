@@ -16,12 +16,14 @@ import neqsim.thermo.util.constants.IonParametersAdvanced;
  * In the parent model, the Born parameter is:
  * </p>
  *
+ * <p>
  * $$ X_{Born,i} = \frac{z_i^2}{\sigma_i} $$
  *
  * <p>
  * where sigma is the Lennard-Jones diameter. In this advanced model:
  * </p>
  *
+ * <p>
  * $$ X_{Born,i} = \frac{z_i^2}{2 \cdot r_{Born,i}(T)} $$
  *
  * <p>

@@ -377,6 +377,7 @@ public class PlusFractionModel implements java.io.Serializable {
      * Estimate the gamma shape parameter (alpha) based on plus fraction properties. Typical values: - Gas condensates:
      * 0.5 - 1.0 - Black oils: 1.0 - 2.0 - Heavy oils: 2.0 - 4.0
      *
+     * <p>
      * Uses Watson K-factor as indicator of fluid character.
      *
      * @param Mplus plus fraction molecular weight (kg/mol)
@@ -483,6 +484,7 @@ public class PlusFractionModel implements java.io.Serializable {
      * Calculate densities using Søreide (1989) correlation. More accurate for heavy fractions (C20+) compared to the
      * UOP method.
      *
+     * <p>
      * Reference: Søreide, I. (1989). "Improved Phase Behavior Predictions of Petroleum Reservoir Fluids from a Cubic
      * Equation of State." Dr.Ing. Thesis, Norwegian Institute of Technology.
      */

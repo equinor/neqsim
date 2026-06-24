@@ -259,7 +259,6 @@ public class GTSurfaceTensionFullGT {
    * length coordinate is in nm-units. Method: 1. Calculate delta_mu and its Jacobian 2. Call routine "directsolve" for
    * Newton step 3. Dampen the step if relative step too large 4. Iterate until convergence or max #iterations
    * (N_Newton)
-   * </p>
    *
    * @param cij an array of type double
    * @param L a double
@@ -513,7 +512,6 @@ public class GTSurfaceTensionFullGT {
    * <p>
    * The following integral is solved with the trapezoidal method: \f{equation}{ \sigma = \int_{-\infty}^{\infty}
    * \boldsymbol{n_z}^T \boldsymbol{C} \boldsymbol{n_z} \, dz \f}
-   * </p>
    *
    * @param h a double
    * @param rrho an array of type double
@@ -560,7 +558,6 @@ public class GTSurfaceTensionFullGT {
    * <p>
    * Estimate the width of interface by calculating the second moment of the surface tension integrand. Used to adjust
    * the domain size
-   * </p>
    *
    * @param z an array of type double
    * @param C an array of type double

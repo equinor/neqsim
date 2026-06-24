@@ -16,19 +16,23 @@ import neqsim.process.equipment.stream.StreamInterface;
 /**
  * Network of pipelines connected through manifolds using compositional PipeFlowSystem.
  *
+ * <p>
  * &lt;p&gt; This class models pipeline networks where multiple pipelines converge to manifolds (mixers) and pipelines
  * depart from manifolds. Unlike {@link WellFlowlineNetwork} which uses the simpler Beggs-Brill correlation, this class
  * uses the full {@link OnePhasePipeLine} with TDMA solvers supporting: &lt;/p&gt; &lt;ul&gt; &lt;li&gt;Compositional
  * tracking through the network&lt;/li&gt; &lt;li&gt;Steady-state solutions&lt;/li&gt; &lt;li&gt;Transient/dynamic
  * simulations&lt;/li&gt; &lt;li&gt;Energy balance and heat transfer&lt;/li&gt; &lt;/ul&gt;
  *
+ * <p>
  * &lt;h2&gt;Architecture&lt;/h2&gt; &lt;p&gt; The network is modeled as a directed graph where: &lt;/p&gt; &lt;ul&gt;
  * &lt;li&gt;Nodes are manifolds (implemented as {@link Mixer})&lt;/li&gt; &lt;li&gt;Edges are pipelines (implemented as
  * {@link OnePhasePipeLine})&lt;/li&gt; &lt;li&gt;Feed streams connect to source nodes&lt;/li&gt; &lt;li&gt;The final
  * node provides the network outlet&lt;/li&gt; &lt;/ul&gt;
  *
+ * <p>
  * &lt;h2&gt;Example Usage&lt;/h2&gt;
  *
+ * <p>
  * &lt;pre&gt;{@code
  * // Create feeds
  * Stream feed1 = new Stream("feed1", gas1);

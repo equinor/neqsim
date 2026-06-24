@@ -5875,6 +5875,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *   ln K_i = a_i + b_i / T
    * </pre>
    *
+   * <p>
    * where T is in Kelvin. The coefficients are fitted from rigorous flash results at two temperature points (the
    * current and previous outer-loop temperatures). Between outer-loop updates, compositions are estimated using this
    * simplified model instead of full PH-flash calculations, reducing computational cost by a factor of approximately
@@ -5910,6 +5911,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
      *   ln(K2) = a + b/T2
      * </pre>
      *
+     * <p>
      * yielding b = (ln(K2) - ln(K1)) / (1/T2 - 1/T1) and a = ln(K1) - b/T1.
      *
      * @param kvalues1 K-values at temperature T1 [tray][component]
@@ -9544,6 +9546,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * y_i^out = y_i^in + E_MV * (y_i^eq - y_i^in)
    * </pre>
    *
+   * <p>
    * where {@code E_MV} is the Murphree efficiency, {@code y_i^eq} is the equilibrium composition from the flash, and
    * {@code y_i^in} is the inlet vapor composition. When efficiency is 1.0, the tray is ideal and no correction is
    * applied. The correction is skipped for reboilers and condensers (first and last trays).

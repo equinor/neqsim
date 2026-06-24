@@ -536,7 +536,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * <p>
    * Gets value for heaviest phase.
-   * </p>
    *
    * @return Beta value
    */

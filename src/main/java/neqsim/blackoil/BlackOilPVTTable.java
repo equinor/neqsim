@@ -89,6 +89,13 @@ public class BlackOilPVTTable implements Serializable {
     return bubblePointP;
   }
 
+  /**
+   * Getter for the field <code>recs</code>.
+   *
+   * @param p
+   * @param f
+   * @return
+   */
   private double lin(double p, ToDoubleFunction<Record> f) {
     if (p <= recs.get(0).p) {
       return f.applyAsDouble(recs.get(0));

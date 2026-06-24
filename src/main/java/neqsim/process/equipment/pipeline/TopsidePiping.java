@@ -7,12 +7,14 @@ import neqsim.process.mechanicaldesign.pipeline.TopsidePipingMechanicalDesign;
 /**
  * Topside piping equipment class for offshore platforms and onshore facilities.
  *
+ * <p>
  * &lt;p&gt; This class extends PipeBeggsAndBrills to provide topside piping-specific functionality including:
  * &lt;/p&gt; &lt;ul&gt; &lt;li&gt;ASME B31.3 Process Piping design&lt;/li&gt; &lt;li&gt;Velocity limits for erosion and
  * vibration prevention&lt;/li&gt; &lt;li&gt;Pipe support spacing calculations&lt;/li&gt; &lt;li&gt;Flow-induced
  * vibration (FIV) analysis&lt;/li&gt; &lt;li&gt;Acoustic-induced vibration (AIV) screening&lt;/li&gt; &lt;li&gt;Thermal
  * expansion and stress analysis&lt;/li&gt; &lt;/ul&gt;
  *
+ * <p>
  * &lt;h2&gt;Service Types&lt;/h2&gt; &lt;p&gt; The class supports multiple service types: &lt;/p&gt; &lt;ul&gt;
  * &lt;li&gt;&lt;b&gt;PROCESS_GAS&lt;/b&gt;: High-pressure gas piping&lt;/li&gt;
  * &lt;li&gt;&lt;b&gt;PROCESS_LIQUID&lt;/b&gt;: Liquid hydrocarbon piping&lt;/li&gt;
@@ -22,8 +24,10 @@ import neqsim.process.mechanicaldesign.pipeline.TopsidePipingMechanicalDesign;
  * &lt;li&gt;&lt;b&gt;FLARE&lt;/b&gt;: Flare header and knockout drum piping&lt;/li&gt;
  * &lt;li&gt;&lt;b&gt;FUEL_GAS&lt;/b&gt;: Fuel gas distribution&lt;/li&gt; &lt;/ul&gt;
  *
+ * <p>
  * &lt;h2&gt;Usage Example&lt;/h2&gt;
  *
+ * <p>
  * &lt;pre&gt;{@code
  * // Create topside process piping
  * TopsidePiping gasHeader = new TopsidePiping("HP Gas Header", inletStream);

@@ -15,6 +15,7 @@ import java.io.Serializable;
  * The general correlation is:
  * </p>
  *
+ * <p>
  * $$V_{max} = C \cdot \rho^{-n}$$
  *
  * <p>

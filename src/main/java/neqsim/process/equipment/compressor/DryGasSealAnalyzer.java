@@ -396,6 +396,7 @@ public class DryGasSealAnalyzer {
    * Governing equation (Joule-Thomson coefficient):
    * </p>
    *
+   * <p>
    * $$\mu_{JT} = \left(\frac{\partial T}{\partial P}\right)_H = \frac{1}{C_p}\left[T \left(\frac{\partial V}{\partial
    * T}\right)_P - V\right]$$
    *
@@ -650,6 +651,7 @@ public class DryGasSealAnalyzer {
    * Governing equation (lumped thermal model):
    * </p>
    *
+   * <p>
    * $$(\rho C_p)_{eff} V \frac{dT}{dt} = -U A_{outer} (T - T_{amb})$$
    *
    * <p>
@@ -807,6 +809,7 @@ public class DryGasSealAnalyzer {
    * Forced convection uses the Churchill-Bernstein correlation for cross-flow over a cylinder:
    * </p>
    *
+   * <p>
    * $$Nu = 0.3 + \frac{0.62 Re^{1/2} Pr^{1/3}}{[1 + (0.4/Pr)^{2/3}]^{1/4}} \left[1 +
    * \left(\frac{Re}{282000}\right)^{5/8}\right]^{4/5}$$
    *
@@ -814,6 +817,7 @@ public class DryGasSealAnalyzer {
    * Radiation uses the Stefan-Boltzmann law with emissivity 0.9 (oxidised steel):
    * </p>
    *
+   * <p>
    * $$h_{rad} = \varepsilon \sigma (T_s^2 + T_{amb}^2)(T_s + T_{amb})$$
    *
    * @param outerRadius outer radius of pipe (including insulation) in metres
@@ -857,6 +861,7 @@ public class DryGasSealAnalyzer {
    * For cylindrical geometry:
    * </p>
    *
+   * <p>
    * $$\frac{1}{U} = \frac{r_{ins}}{r_i h_{int}} + \frac{r_{ins} \ln(r_o/r_i)}{k_{steel}} + \frac{r_{ins}
    * \ln(r_{ins}/r_o)}{k_{ins}} + \frac{1}{h_{ext}}$$
    *
@@ -903,6 +908,7 @@ public class DryGasSealAnalyzer {
    * The accumulation rate is:
    * </p>
    *
+   * <p>
    * $$\dot{V}_{liq} = \dot{n}_{leak} \cdot x_{liq} \cdot \frac{MW_{liq}}{\rho_{liq}}$$
    *
    * <p>
@@ -1165,12 +1171,14 @@ public class DryGasSealAnalyzer {
    * The required cooling duty is:
    * </p>
    *
+   * <p>
    * $$Q_{cool} = \dot{m} \cdot (h_{in} - h_{cooled})$$
    *
    * <p>
    * and the reheating duty is:
    * </p>
    *
+   * <p>
    * $$Q_{heat} = \dot{m}_{dry} \cdot (h_{out} - h_{separated})$$
    *
    * @return map with GCU sizing data: duties, temperatures, liquid production, and dry gas composition

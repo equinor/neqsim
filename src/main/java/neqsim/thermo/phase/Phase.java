@@ -133,7 +133,6 @@ public abstract class Phase implements PhaseInterface {
    *
    * <p>
    * NB! Does not actually add component to componentarray.
-   * </p>
    *
    * @param name Name of component to add.
    * @param moles Number of moles of component to add to phase.

@@ -500,6 +500,7 @@ public class InterfacialFriction implements Serializable {
    * The correlation is:
    * </p>
    *
+   * <p>
    * $$f_i = 0.0142 + 22.0 \cdot \left(\frac{h_L}{D}\right)^{1.5} \cdot \left(\frac{v_G - v_L}{v_G}\right)^{0.9}$$
    *
    * @param vG Gas velocity (m/s)

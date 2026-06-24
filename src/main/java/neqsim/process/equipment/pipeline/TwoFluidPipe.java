@@ -6831,6 +6831,7 @@ public class TwoFluidPipe extends Pipeline {
    * The API 14E erosional velocity is given by:
    * </p>
    *
+   * <p>
    * $$V_e = \frac{C}{\sqrt{\rho_{mix}}}$$
    *
    * <p>

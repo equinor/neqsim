@@ -39,7 +39,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * @see <a href="https://doi.org/10.21105/joss.03695">HydDown - JOSS Paper</a>
  *
- * <p>
  * Usage example:
  *
  * <pre>

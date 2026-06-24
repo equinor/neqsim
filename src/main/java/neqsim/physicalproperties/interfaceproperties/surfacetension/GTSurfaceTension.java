@@ -56,7 +56,6 @@ import neqsim.thermo.system.SystemInterface;
  * j\f$ the full set of equations for the gradient theory must solved in the domain of the interface thickness. This is
  * significantly more numerically intensive but handles the general case. To calculate the surface tension by this
  * method, set the variable this.useFullGT=1
- * </p>
  *
  * @author Olaf Trygve Berglihn olaf.trygve.berglihn@sintef.no
  * @author John C. Morud john.c.morud@sintef.no
@@ -137,7 +136,6 @@ public class GTSurfaceTension extends SurfaceTension {
    * described above. The equilibrium relations are solved as a set of algebraic equations for each evaluation of the
    * differential. The resulting ordinary differential equation is integrated with a non-stiff Runge-Kutta class Dormand
    * Prince method, similar to the MATLAB routine ode45.
-   * </p>
    *
    * @param system NeqSIM system interface
    * @param interface1 Index of the phase to consider for the surface
@@ -213,7 +211,6 @@ public class GTSurfaceTension extends SurfaceTension {
    * \mathbf{n}_i \f} where \f$\mathbf{J}=\frac{\partial \Delta \mu}{\partial \mathbf{n}_i}\f$ is a Jacobian matrix and
    * \f$\mathbf{F}_i=\mathbf{F}\left( \mathbf{n}_i \right)\f$ is the residual. \f$\beta \le 1\f$ is a damping factor.
    * This is a block tridiagonal system that can be solved using a band solver or a sparse matrix solver.
-   * </p>
    *
    * @param system NeqSIM system interface
    * @param interface1 Index of the phase to consider for the surface

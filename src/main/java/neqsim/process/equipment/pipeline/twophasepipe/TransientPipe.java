@@ -16,6 +16,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 /**
  * Transient multiphase pipe model using drift-flux formulation.
  *
+ * <p>
  * Implements a 1D transient multiphase flow simulator for gas-liquid flow in pipelines. The model is suitable for
  * analyzing terrain-induced slugging, liquid accumulation, and transient pressure behavior in production pipelines,
  * risers, and flowlines.
@@ -100,17 +101,20 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * <h2>Physical Model</h2>
  *
+ * <p>
  * The drift-flux model relates gas velocity to mixture velocity:
  *
  * <pre>
  * v_G = C₀ · v_m + v_d
  * </pre>
  *
+ * <p>
  * where C₀ is the distribution coefficient (typically 1.0-1.2) and v_d is the drift velocity. Flow regime-dependent
  * correlations from Bendiksen (1984) and Harmathy (1960) provide closure.
  *
  * <h2>Numerical Method</h2>
  *
+ * <p>
  * The model solves conservation equations using an explicit finite volume scheme with AUSM+ flux splitting. Time
  * stepping is adaptive based on CFL condition for numerical stability.
  *
@@ -215,6 +219,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Boundary condition types for inlet and outlet.
    *
    *
+   * <p>
    * Specifies how the boundary conditions are handled at the pipe inlet and outlet.
    *
    * <ul>
@@ -273,6 +278,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Constructor with name and inlet stream.
    *
    *
+   * <p>
    * This is the recommended constructor for typical usage. The inlet stream provides initial conditions (composition,
    * temperature, pressure, flow rate) for the simulation.
    *
@@ -299,11 +305,13 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Initialize the discretized pipe sections.
    *
    *
+   * <p>
    * Creates the computational mesh based on pipe length and number of sections. Also initializes elevation/inclination
    * profiles and identifies low points for liquid accumulation tracking.
    *
    *
    *
+   * <p>
    * This method is called automatically by {@link #run()} if sections have not been initialized. It can also be called
    * explicitly to inspect the mesh before running.
    *
@@ -623,6 +631,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Run transient simulation for a specified time step.
    *
    *
+   * <p>
    * This method advances the pipe simulation by the specified time step {@code dt}, making it suitable for use within a
    * {@link neqsim.process.processmodel.ProcessSystem#runTransient(double, java.util.UUID)} loop. Unlike {@link #run()},
    * which runs the complete simulation to {@code maxSimulationTime}, this method performs incremental time-stepping
@@ -630,6 +639,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    *
    *
    *
+   * <p>
    * On the first call, the pipe is initialized from the inlet stream. Subsequent calls advance the simulation state
    * incrementally. The method uses adaptive sub-stepping internally to maintain numerical stability (CFL condition)
    * while advancing by the requested {@code dt}.
@@ -743,6 +753,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Update inlet boundary conditions from the current inlet stream state.
    *
    *
+   * <p>
    * This method is called during {@link #runTransient(double, UUID)} to capture any changes in the inlet stream
    * conditions (flow rate, pressure, composition) that may have occurred since the last time step.
    *
@@ -798,6 +809,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * Updates the outlet boundary conditions from the current outlet stream state.
    *
+   * <p>
    * This method is called during {@link #runTransient(double, UUID)} to capture any changes in the outlet stream
    * conditions when using CONSTANT_FLOW outlet boundary condition. This allows external controllers or other process
    * equipment to set the outlet flow rate on the outlet stream, which is then read back into the pipe model.
@@ -944,6 +956,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Get the controlling mass flow rate for pressure profile calculation.
    *
    *
+   * <p>
    * Returns the appropriate mass flow rate based on boundary conditions:
    * <ul>
    * <li>CONSTANT_FLOW inlet: use inlet mass flow</li>
@@ -1158,6 +1171,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Calculate fluxes at cell interfaces using AUSM+ scheme.
    *
    *
+   * <p>
    * For interior interfaces, the AUSM+ upwind scheme is used. For boundary interfaces, the fluxes are set according to
    * the boundary conditions to ensure mass and momentum conservation:
    * <ul>
@@ -1420,6 +1434,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Add source terms (gravity and friction) to the momentum equation.
    *
    *
+   * <p>
    * The momentum equation in conservative form is:
    *
    *
@@ -1428,6 +1443,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * </pre>
    *
    *
+   * <p>
    * Where the source terms are:
    *
    * <ul>
@@ -1435,6 +1451,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * <li>Friction: S_f = -dP/dx_friction [kg/(m²·s²)]</li>
    * </ul>
    *
+   * <p>
    * These are integrated as: U[2]_new = U[2]_old + S × dt
    *
    * @param U conserved variable array to be modified in-place
@@ -1960,6 +1977,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Update outlet stream with final conditions including flow rate.
    *
    *
+   * <p>
    * This method updates the outlet stream with:
    *
    * <ul>
@@ -1968,6 +1986,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * <li>Mass flow rate calculated from outlet section velocity and density</li>
    * </ul>
    *
+   * <p>
    * The flow rate is computed directly from the conservation equations to maintain mass balance. During slug flow, the
    * increased liquid holdup naturally increases the outlet density, which is reflected in the mass flow calculation.
    *
@@ -2258,6 +2277,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Set pipe wall roughness.
    *
    *
+   * <p>
    * Used for friction factor calculation. Typical values:
    *
    * <ul>
@@ -2276,6 +2296,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Set number of computational cells (sections).
    *
    *
+   * <p>
    * More sections provide higher spatial resolution but require more computation. Guideline: dx ≈ 10-50 pipe diameters.
    * For slug tracking, use at least 20 sections.
    *
@@ -2290,6 +2311,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Set elevation profile along the pipe.
    *
    *
+   * <p>
    * Array of elevations (meters) at each section node. The array length should match the number of sections. Positive
    * values indicate upward elevation.
    *
@@ -2316,6 +2338,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Set inclination profile along the pipe.
    *
    *
+   * <p>
    * Array of inclination angles (radians) at each section. Positive values indicate upward inclination. Use this
    * instead of elevation profile for constant-inclination sections.
    *
@@ -2330,6 +2353,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Set maximum simulation time.
    *
    *
+   * <p>
    * The simulation runs until this time is reached or steady-state is achieved.
    *
    *
@@ -2414,11 +2438,13 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Set the outlet mass flow rate.
    *
    *
+   * <p>
    * Use this when the outlet flow is controlled by downstream equipment (e.g., a valve). When using CONSTANT_FLOW
    * outlet boundary condition, this value is used to calculate the pressure profile and outlet stream properties.
    *
    *
    *
+   * <p>
    * This can be called before each runTransient() call to update the outlet flow from downstream valve Cv calculations.
    *
    *
@@ -2476,6 +2502,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Get liquid holdup profile at end of simulation.
    *
    *
+   * <p>
    * Liquid holdup (α_L) is the fraction of pipe cross-section occupied by liquid. Values range from 0 (all gas) to 1
    * (all liquid).
    *
@@ -2508,6 +2535,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Get pressure history over simulation time.
    *
    *
+   * <p>
    * The history is stored at intervals specified by historyInterval. The array dimensions are
    * [time_index][position_index].
    *
@@ -2521,6 +2549,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Get all pipe sections with their state variables.
    *
    *
+   * <p>
    * Each section contains detailed state information including pressure, temperature, holdups, velocities, flow regime,
    * and other properties.
    *
@@ -2534,6 +2563,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Get the slug tracker for detailed slug analysis.
    *
    *
+   * <p>
    * The slug tracker contains information about active slugs, slug statistics, and slug history.
    *
    * <b>Example:</b>
@@ -2555,6 +2585,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Get the liquid accumulation tracker.
    *
    *
+   * <p>
    * Tracks liquid pooling at terrain low points. Useful for identifying potential liquid loading and slug initiation
    * locations.
    *
@@ -2587,6 +2618,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Set CFL number for adaptive time stepping.
    *
    *
+   * <p>
    * The CFL (Courant-Friedrichs-Lewy) number controls the time step size relative to the grid spacing and wave speeds.
    * Lower values (0.3-0.5) provide more stability but slower simulation. Higher values (0.7-0.9) are faster but may
    * become unstable.
@@ -2601,6 +2633,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Set interval for thermodynamic property updates.
    *
    *
+   * <p>
    * Flash calculations are computationally expensive. This setting controls how often phase properties are
    * recalculated. Higher values improve performance but may reduce accuracy for rapidly changing conditions.
    *
@@ -2614,6 +2647,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Enable or disable thermodynamic updates during simulation.
    *
    *
+   * <p>
    * When disabled, phase properties remain constant at initial values. This is appropriate for isothermal simulations
    * or when temperature/pressure changes are small.
    *
@@ -2640,6 +2674,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * {@inheritDoc}
    *
    *
+   * <p>
    * This transient model uses internal discretization, not FlowSystemInterface.
    */
   @Override

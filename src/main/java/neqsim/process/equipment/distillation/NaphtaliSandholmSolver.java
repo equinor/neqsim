@@ -92,6 +92,7 @@ public class NaphtaliSandholmSolver {
    * registered on the parent column via setMurphreeEfficiency(stage, value), defaulting to the global value when no
    * per-stage override is set.
    *
+   * <p>
    * The efficiency is embedded into the simultaneous MESH solution through the Edmister proxy K_eff[j][i] =
    * K[j][i]^trayEta[j]. At trayEta = 1.0 the stage is rigorous equilibrium; at trayEta -&gt; 0 the K-values approach
    * 1.0 and the tray becomes passive (vapor passes through ~ unchanged), matching the behaviour of a heavily de-rated
@@ -2939,6 +2940,7 @@ public class NaphtaliSandholmSolver {
    * vap[j-1], which would expand the Jacobian bandwidth.
    * </p>
    *
+   * <p>
    * The Edmister approximation K_eff = K^eta has the correct limits:
    * <ul>
    * <li>eta = 1.0 -&gt; K_eff = K (rigorous equilibrium)</li>
