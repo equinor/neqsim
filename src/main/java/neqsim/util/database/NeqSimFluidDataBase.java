@@ -2,9 +2,7 @@ package neqsim.util.database;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -12,21 +10,19 @@ import org.apache.logging.log4j.Logger;
  * NeqSimFluidDataBase class.
  *
  * @author esol
- * @version The database is used for storing fluid info and recreating a fluid it uses the database neqsimfluiddatabase
- * for storing fluid information
+ * @version The database is used for storing fluid info and recreating a fluid it uses the database FluidDatabase for
+ * storing fluid information
  */
-public class NeqSimFluidDataBase implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
+public class NeqSimFluidDataBase extends NeqSimDatabaseBase {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(NeqSimFluidDataBase.class);
 
   static boolean started = false;
-  protected transient Connection databaseConnection;
   /** Constant <code>useOnlineBase=false</code>. */
   public static boolean useOnlineBase = false;
   static int numb = 0;
-  transient Statement statement = null;
 
   /**
    * Constructor for NeqSimFluidDataBase.
@@ -41,12 +37,23 @@ public class NeqSimFluidDataBase implements neqsim.util.util.FileSystemSettings,
           Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
         }
       }
-      databaseConnection = this.openConnection("FluidDatabase");
-      statement = databaseConnection.createStatement();
+      initializeDatabaseConnection();
     } catch (Exception ex) {
       logger.error("error in FluidDatabase ", ex);
       logger.error("The database must be rgistered on the local DBMS to work.");
     }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected Logger getLogger() {
+    return logger;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Connection openConnection() throws SQLException, ClassNotFoundException {
+    return openConnection("FluidDatabase");
   }
 
   /**
@@ -71,61 +78,6 @@ public class NeqSimFluidDataBase implements neqsim.util.util.FileSystemSettings,
       return DriverManager
           .getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" + dir + "\\data\\" + database);
       // return DriverManager.getConnection("jdbc:odbc:FluidDatabase");
-    }
-  }
-
-  /**
-   * getConnection.
-   *
-   * @return a Connection object
-   */
-  public Connection getConnection() {
-    return databaseConnection;
-  }
-
-  /**
-   * getResultSet.
-   *
-   * @param database a {@link java.lang.String} object
-   * @param sqlString a {@link java.lang.String} object
-   * @return a ResultSet object
-   */
-  public ResultSet getResultSet(String database, String sqlString) {
-    try {
-      ResultSet result = statement.executeQuery(sqlString);
-      return result;
-    } catch (Exception ex) {
-      logger.error("error in FluidDatabase ", ex);
-      logger.error("The database must be rgistered on the local DBMS to work.");
-    }
-    return null;
-  }
-
-  /**
-   * getResultSet.
-   *
-   * @param sqlString a {@link java.lang.String} object
-   * @return a ResultSet object
-   */
-  public ResultSet getResultSet(String sqlString) {
-    return this.getResultSet("FluidDatabase", sqlString);
-  }
-
-  /**
-   * execute.
-   *
-   * @param sqlString a {@link java.lang.String} object
-   */
-  public void execute(String sqlString) {
-    try {
-      if (databaseConnection == null) {
-        databaseConnection = this.openConnection("FluidDatabase");
-        statement = databaseConnection.createStatement();
-      }
-      statement.execute(sqlString);
-    } catch (Exception ex) {
-      logger.error("error in FluidDatabase ", ex);
-      logger.error("The database must be rgistered on the local DBMS to work.");
     }
   }
 }

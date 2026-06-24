@@ -47,9 +47,7 @@ public class ComponentGEVanLaarAcid extends ComponentGE {
   private final int acidIndex;
 
   /**
-   * <p>
    * Constructor for ComponentGEVanLaarAcid.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -62,10 +60,8 @@ public class ComponentGEVanLaarAcid extends ComponentGE {
   }
 
   /**
-   * <p>
    * Map a component name onto the Taleb et al. (1996) acid index (1 = water, 2 = nitric acid, 3 = sulfuric acid).
    * Common synonyms and chemical formulae are recognised.
-   * </p>
    *
    * @param name component name (case-insensitive); may be {@code null}
    * @return the acid index 1, 2 or 3, or 0 if the name is not one of the three modelled species
@@ -88,11 +84,9 @@ public class ComponentGEVanLaarAcid extends ComponentGE {
   }
 
   /**
-   * <p>
    * Extract the acid-basis mole fractions {x_H2O, x_HNO3, x_H2SO4} from a phase. Any species that is not one of the
    * three modelled acids (for example a dissolved carrier gas) is ignored and the three acid mole fractions are
    * renormalised to sum to unity, so the Van Laar model is always evaluated on its native composition basis.
-   * </p>
    *
    * @param phase the phase to read mole fractions from
    * @return a three-element array {x1, x2, x3} that sums to one (defaults to pure water if no acid is present)
@@ -120,11 +114,9 @@ public class ComponentGEVanLaarAcid extends ComponentGE {
   }
 
   /**
-   * <p>
    * Compute, store and return the Van Laar activity coefficient of this component for the current composition and
    * temperature of the supplied phase. Species that are not one of the three modelled acids are assigned a very high
    * activity so the liquid phase rejects them.
-   * </p>
    *
    * @param phase the phase supplying composition and temperature
    * @return the activity coefficient (dimensionless)
@@ -152,11 +144,9 @@ public class ComponentGEVanLaarAcid extends ComponentGE {
   }
 
   /**
-   * <p>
    * Pure-component saturation vapour pressure of this component, expressed in bar (the internal NeqSim pressure unit).
    * For the three modelled acids the value comes from the Taleb et al. (1996) correlations; any other species falls
    * back to its database Antoine correlation.
-   * </p>
    *
    * @param temperature temperature in kelvin
    * @return the pure-component vapour pressure in bar
