@@ -1,7 +1,5 @@
 package neqsim.thermo.phase;
 
-// import org.ejml.data.DenseMatrix64F;
-
 import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.component.ComponentSrkCPAs;
 

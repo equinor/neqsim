@@ -2,154 +2,154 @@ package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Random;
-import org.ejml.data.DMatrixRMaj;
-import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
-import org.ejml.interfaces.linsol.LinearSolverDense;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.ojalgo.matrix.decomposition.LU;
+import org.ojalgo.matrix.store.Primitive64Store;
 import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import neqsim.util.math.LinearAlgebraOps;
 
 /**
  * Analysis tests for Newton solver improvements.
  *
  * <p>
- * Benchmarks JAMA vs EJML linear solve, init level costs, and measures the overhead of T/P derivatives vs
- * composition-only derivatives.
+ * Benchmarks JAMA vs ojAlgo linear solve, init level costs, and measures the overhead of T/P
+ * derivatives vs composition-only derivatives.
  * </p>
  *
  * @author benchmarking
  * @version 1.0
  */
+@Tag("LinearAlgebra")
 class NewtonSolverAnalysisTest {
   private static final Logger logger = LogManager.getLogger(NewtonSolverAnalysisTest.class);
 
   /**
-   * Benchmark JAMA vs EJML dense linear solve (Ax = b) for typical flash sizes.
+   * Benchmark JAMA vs ojAlgo dense linear solve (Ax = b) for typical flash sizes.
    *
    * <p>
-   * JAMA uses full LU decomposition via double[][] arrays. EJML uses optimized row-major storage with native-tuned
-   * operations.
+   * JAMA uses full LU decomposition via double[][] arrays. ojAlgo uses optimized dense storage with
+   * native-tuned operations.
    * </p>
    */
   @Test
   void benchmarkJAMAvsEJML() {
-    int[] sizes = { 3, 5, 10, 15, 20, 30 };
+    int[] sizes = {3, 5, 10, 15, 20, 30};
     int warmup = 2000;
     int N = 20000;
     Random rng = new Random(42);
 
-    logger.info("=== JAMA vs EJML Dense Linear Solve Benchmark ===");
-    logger.info(String.format("%-6s %-12s %-12s %-10s", "Size", "JAMA(ns)", "EJML(ns)", "Speedup"));
+    logger.info("=== JAMA vs ojAlgo Dense Linear Solve Benchmark ===");
+    logger
+        .info(String.format("%-6s %-12s %-12s %-10s", "Size", "JAMA(ns)", "ojAlgo(ns)", "Speedup"));
 
     for (int n : sizes) {
-      // Create random SPD matrix (typical Jacobian is SPD)
       double[][] aData = new double[n][n];
       double[] bData = new double[n];
       for (int i = 0; i < n; i++) {
-	bData[i] = rng.nextDouble();
-	for (int j = 0; j < n; j++) {
-	  aData[i][j] = rng.nextDouble();
-	}
-	aData[i][i] += n; // Make diagonally dominant
+        bData[i] = rng.nextDouble();
+        for (int j = 0; j < n; j++) {
+          aData[i][j] = rng.nextDouble();
+        }
+        aData[i][i] += n;
       }
 
-      // JAMA warmup
       Matrix jamaMat = new Matrix(aData);
       Matrix jamab = new Matrix(n, 1);
       for (int i = 0; i < n; i++) {
-	jamab.set(i, 0, bData[i]);
+        jamab.set(i, 0, bData[i]);
       }
       for (int w = 0; w < warmup; w++) {
-	jamaMat.solve(jamab);
+        jamaMat.solve(jamab);
       }
 
-      // EJML warmup
-      DMatrixRMaj ejmlMat = new DMatrixRMaj(aData);
-      DMatrixRMaj ejmlb = new DMatrixRMaj(n, 1);
+      Primitive64Store ojAlgoMat = Primitive64Store.FACTORY.rows(aData);
+      Primitive64Store ojAlgoB = Primitive64Store.FACTORY.make(n, 1);
       for (int i = 0; i < n; i++) {
-	ejmlb.set(i, 0, bData[i]);
+        ojAlgoB.set(i, 0, bData[i]);
       }
-      DMatrixRMaj ejmlx = new DMatrixRMaj(n, 1);
-      LinearSolverDense<DMatrixRMaj> solver = LinearSolverFactory_DDRM.lu(n);
+      Primitive64Store ojAlgoWork = Primitive64Store.FACTORY.make(n, n);
+      LU<Double> solver = LU.PRIMITIVE.make(n, n);
       for (int w = 0; w < warmup; w++) {
-	solver.setA(ejmlMat.copy());
-	solver.solve(ejmlb, ejmlx);
+        LinearAlgebraOps.copyDenseStore(ojAlgoMat, ojAlgoWork, n);
+        solver.decompose(ojAlgoWork);
+        solver.getSolution(ojAlgoB);
       }
 
-      // JAMA benchmark
       long start = System.nanoTime();
       for (int iter = 0; iter < N; iter++) {
-	jamaMat.solve(jamab);
+        jamaMat.solve(jamab);
       }
       long jamaTime = System.nanoTime() - start;
 
-      // EJML benchmark
       start = System.nanoTime();
       for (int iter = 0; iter < N; iter++) {
-	solver.setA(ejmlMat.copy());
-	solver.solve(ejmlb, ejmlx);
+        LinearAlgebraOps.copyDenseStore(ojAlgoMat, ojAlgoWork, n);
+        solver.decompose(ojAlgoWork);
+        solver.getSolution(ojAlgoB);
       }
-      long ejmlTime = System.nanoTime() - start;
+      long ojAlgoTime = System.nanoTime() - start;
 
       double jamaPerCall = (double) jamaTime / N;
-      double ejmlPerCall = (double) ejmlTime / N;
-      double speedup = jamaPerCall / ejmlPerCall;
+      double ojAlgoPerCall = (double) ojAlgoTime / N;
+      double speedup = jamaPerCall / ojAlgoPerCall;
 
-      logger.info(String.format("%-6d %-12.0f %-12.0f %-10.2fx", n, jamaPerCall, ejmlPerCall, speedup));
+      logger.info(
+          String.format("%-6d %-12.0f %-12.0f %-10.2fx", n, jamaPerCall, ojAlgoPerCall, speedup));
 
-      // Just verify both return reasonable values
       assertTrue(jamaPerCall > 0);
-      assertTrue(ejmlPerCall > 0);
+      assertTrue(ojAlgoPerCall > 0);
     }
 
-    // Also benchmark EJML with in-place solve (no copy)
-    logger.info("=== EJML In-Place vs Copy Solve ===");
-    for (int n : new int[] { 10, 20 }) {
+
+    // Also benchmark ojAlgo with explicit work copy.
+    logger.info("=== ojAlgo Work-Copy Solve ===");
+    for (int n : new int[] {10, 20}) {
       double[][] aData = new double[n][n];
       double[] bData = new double[n];
       for (int i = 0; i < n; i++) {
-	bData[i] = rng.nextDouble();
-	for (int j = 0; j < n; j++) {
-	  aData[i][j] = rng.nextDouble();
-	}
-	aData[i][i] += n;
+        bData[i] = rng.nextDouble();
+        for (int j = 0; j < n; j++) {
+          aData[i][j] = rng.nextDouble();
+        }
+        aData[i][i] += n;
       }
 
-      DMatrixRMaj ejmlMat = new DMatrixRMaj(aData);
-      DMatrixRMaj ejmlb = new DMatrixRMaj(n, 1);
+      Primitive64Store ojAlgoMat = Primitive64Store.FACTORY.rows(aData);
+      Primitive64Store ojAlgoB = Primitive64Store.FACTORY.make(n, 1);
       for (int i = 0; i < n; i++) {
-	ejmlb.set(i, 0, bData[i]);
+        ojAlgoB.set(i, 0, bData[i]);
       }
-      DMatrixRMaj ejmlx = new DMatrixRMaj(n, 1);
-      DMatrixRMaj ejmlMatCopy = new DMatrixRMaj(n, n);
-      LinearSolverDense<DMatrixRMaj> solver2 = LinearSolverFactory_DDRM.lu(n);
+      Primitive64Store ojAlgoWork = Primitive64Store.FACTORY.make(n, n);
+      LU<Double> solver2 = LU.PRIMITIVE.make(n, n);
 
-      // Warmup
       for (int w = 0; w < warmup; w++) {
-	ejmlMatCopy.setTo(ejmlMat);
-	solver2.setA(ejmlMatCopy);
-	solver2.solve(ejmlb, ejmlx);
+        LinearAlgebraOps.copyDenseStore(ojAlgoMat, ojAlgoWork, n);
+        solver2.decompose(ojAlgoWork);
+        solver2.getSolution(ojAlgoB);
       }
 
-      // With pre-allocated copy
       long start = System.nanoTime();
       for (int iter = 0; iter < N; iter++) {
-	ejmlMatCopy.setTo(ejmlMat);
-	solver2.setA(ejmlMatCopy);
-	solver2.solve(ejmlb, ejmlx);
+        LinearAlgebraOps.copyDenseStore(ojAlgoMat, ojAlgoWork, n);
+        solver2.decompose(ojAlgoWork);
+        solver2.getSolution(ojAlgoB);
       }
       long time = System.nanoTime() - start;
-      System.out.println(String.format("n=%d EJML pre-alloc copy: %.0f ns/call", n, (double) time / N));
+      System.out
+          .println(String.format("n=%d ojAlgo work-copy: %.0f ns/call", n, (double) time / N));
     }
 
   }
 
   /**
-   * Benchmark init(3) vs init(1) + logfugcoefdN only, to measure cost of unnecessary T/P derivative computation.
+   * Benchmark init(3) vs init(1) + logfugcoefdN only, to measure cost of unnecessary T/P derivative
+   * computation.
    */
   @Test
   void benchmarkInitLevelBreakdown() {
@@ -189,10 +189,14 @@ class NewtonSolverAnalysisTest {
 
     logger.info("=== Init Level Cost Breakdown (10-comp SRK) ===");
     logger.info(String.format("init(1) fugacities:       %6.1f us", init1us));
-    logger.info(String.format("init(2) + T,P derivs:    %6.1f us (delta: +%.1f us)", init2us, tpDerivCost));
-    logger.info(String.format("init(3) + comp derivs:   %6.1f us (delta: +%.1f us)", init3us, compDerivCost));
-    logger.info(String.format("T,P derivative cost:     %6.1f us (%.1f%% of init(3))", tpDerivCost, wastedPercent));
-    logger.info(String.format("Wasted per Newton iter:  %6.1f us (logfugcoefdT + dP)", tpDerivCost));
+    logger.info(
+        String.format("init(2) + T,P derivs:    %6.1f us (delta: +%.1f us)", init2us, tpDerivCost));
+    logger.info(String.format("init(3) + comp derivs:   %6.1f us (delta: +%.1f us)", init3us,
+        compDerivCost));
+    logger.info(String.format("T,P derivative cost:     %6.1f us (%.1f%% of init(3))", tpDerivCost,
+        wastedPercent));
+    logger
+        .info(String.format("Wasted per Newton iter:  %6.1f us (logfugcoefdT + dP)", tpDerivCost));
 
     // T/P derivatives should be a measurable fraction of init(3)
     assertTrue(tpDerivCost >= 0, "T,P derivative cost should be non-negative");
@@ -253,8 +257,8 @@ class NewtonSolverAnalysisTest {
       SystemInterface sysCopy = sys.clone();
       // Apply small perturbation to compositions
       for (int i = 0; i < sysCopy.getPhase(0).getNumberOfComponents(); i++) {
-	double x0 = sysCopy.getPhase(0).getComponent(i).getx();
-	sysCopy.getPhase(0).getComponent(i).setx(x0 * (1.0 + 0.01 * (i % 3 - 1)));
+        double x0 = sysCopy.getPhase(0).getComponent(i).getx();
+        sysCopy.getPhase(0).getComponent(i).setx(x0 * (1.0 + 0.01 * (i % 3 - 1)));
       }
       sysCopy.getPhase(0).normalize();
       sysCopy.init(1);
@@ -265,7 +269,7 @@ class NewtonSolverAnalysisTest {
       sysCopy.init(1, 1);
       long elapsed = System.nanoTime() - start;
       if (w >= warmup) {
-	totalSS += elapsed;
+        totalSS += elapsed;
       }
     }
 
@@ -275,14 +279,14 @@ class NewtonSolverAnalysisTest {
       SystemInterface sysCopy = sys.clone();
       sysCopy.init(1);
 
-      SysNewtonRhapsonTPflash solver = new SysNewtonRhapsonTPflash(sysCopy, 2,
-	  sysCopy.getPhase(0).getNumberOfComponents());
+      SysNewtonRhapsonTPflash solver =
+          new SysNewtonRhapsonTPflash(sysCopy, 2, sysCopy.getPhase(0).getNumberOfComponents());
 
       long start = System.nanoTime();
       solver.solve();
       long elapsed = System.nanoTime() - start;
       if (w >= warmup) {
-	totalNewton += elapsed;
+        totalNewton += elapsed;
       }
     }
 
@@ -295,7 +299,8 @@ class NewtonSolverAnalysisTest {
   }
 
   /**
-   * Measure allocation overhead: JAMA creates new Matrix objects each solve. EJML can reuse pre-allocated buffers.
+   * Measure allocation overhead: JAMA creates new Matrix objects each solve. ojAlgo can reuse
+   * pre-allocated buffers.
    */
   @Test
   void benchmarkAllocationOverhead() {
@@ -308,7 +313,7 @@ class NewtonSolverAnalysisTest {
     for (int i = 0; i < n; i++) {
       bData[i] = rng.nextDouble();
       for (int j = 0; j < n; j++) {
-	aData[i][j] = rng.nextDouble();
+        aData[i][j] = rng.nextDouble();
       }
       aData[i][i] += n;
     }
@@ -327,40 +332,38 @@ class NewtonSolverAnalysisTest {
 
     long start = System.nanoTime();
     for (int iter = 0; iter < N; iter++) {
-      Matrix result = jamaMat.solve(jamab);
+      jamaMat.solve(jamab);
     }
     long jamaTime = System.nanoTime() - start;
 
-    // EJML: pre-allocated solver and output buffer
-    DMatrixRMaj ejmlMat = new DMatrixRMaj(aData);
-    DMatrixRMaj ejmlb = new DMatrixRMaj(n, 1);
+    // ojAlgo: pre-allocated solver and work buffer
+    Primitive64Store ojAlgoMat = Primitive64Store.FACTORY.rows(aData);
+    Primitive64Store ojAlgoB = Primitive64Store.FACTORY.make(n, 1);
     for (int i = 0; i < n; i++) {
-      ejmlb.set(i, 0, bData[i]);
+      ojAlgoB.set(i, 0, bData[i]);
     }
-    DMatrixRMaj ejmlx = new DMatrixRMaj(n, 1);
-    DMatrixRMaj ejmlWork = new DMatrixRMaj(n, n);
-    LinearSolverDense<DMatrixRMaj> solver = LinearSolverFactory_DDRM.lu(n);
+    Primitive64Store ojAlgoWork = Primitive64Store.FACTORY.make(n, n);
+    LU<Double> solver = LU.PRIMITIVE.make(n, n);
 
     // Warmup
     for (int w = 0; w < 5000; w++) {
-      ejmlWork.setTo(ejmlMat);
-      solver.setA(ejmlWork);
-      solver.solve(ejmlb, ejmlx);
+      LinearAlgebraOps.copyDenseStore(ojAlgoMat, ojAlgoWork, n);
+      solver.decompose(ojAlgoWork);
+      solver.getSolution(ojAlgoB);
     }
 
-    start = System.nanoTime();
+    long ojAlgoStart = System.nanoTime();
     for (int iter = 0; iter < N; iter++) {
-      ejmlWork.setTo(ejmlMat);
-      solver.setA(ejmlWork);
-      solver.solve(ejmlb, ejmlx);
+      LinearAlgebraOps.copyDenseStore(ojAlgoMat, ojAlgoWork, n);
+      solver.decompose(ojAlgoWork);
+      solver.getSolution(ojAlgoB);
     }
-    long ejmlTime = System.nanoTime() - start;
+    long ojAlgoTime = System.nanoTime() - ojAlgoStart;
 
     logger.info("=== Allocation Overhead (n=10, " + N + " solves) ===");
     logger.info(String.format("JAMA (new alloc each): %.0f ns/call", (double) jamaTime / N));
-    logger.info(String.format("EJML (pre-allocated):  %.0f ns/call", (double) ejmlTime / N));
-    logger.info(String.format("Speedup:               %.2fx", (double) jamaTime / ejmlTime));
-
+    logger.info(String.format("ojAlgo (work-copy):     %.0f ns/call", (double) ojAlgoTime / N));
+    logger.info(String.format("Speedup:               %.2fx", (double) jamaTime / ojAlgoTime));
   }
 
   /**

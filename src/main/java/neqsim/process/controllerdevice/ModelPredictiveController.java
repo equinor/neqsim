@@ -13,20 +13,23 @@ import java.util.Set;
 import java.util.UUID;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.util.NamedBaseClass;
+import neqsim.util.math.LinearAlgebraOps;
 
 /**
  * General-purpose model predictive controller (MPC) for NeqSim process equipment.
  * <p>
- * The controller supports both single-input operation and multivariable configurations with linear quality constraints.
- * A first-order discrete process model is used internally to predict the future trajectory of the controlled variable
- * across a configurable prediction horizon. The controller minimises a quadratic objective consisting of tracking
- * error, absolute control effort and control movement. The optimal actuation is calculated analytically which keeps the
+ * The controller supports both single-input operation and multivariable configurations with linear
+ * quality constraints. A first-order discrete process model is used internally to predict the
+ * future trajectory of the controlled variable across a configurable prediction horizon. The
+ * controller minimises a quadratic objective consisting of tracking error, absolute control effort
+ * and control movement. The optimal actuation is calculated analytically which keeps the
  * implementation dependency free while still representing a full MPC formulation.
  * <p>
- * In addition to the control formulation the implementation exposes a receding horizon (moving horizon) estimation
- * routine. The estimator reuses the same first-order model to identify the process gain, time constant and bias from
- * historical measurement and actuation data. This allows automatic tuning of the internal model parameters when
- * operating on real process data without requiring external optimisation packages.
+ * In addition to the control formulation the implementation exposes a receding horizon (moving
+ * horizon) estimation routine. The estimator reuses the same first-order model to identify the
+ * process gain, time constant and bias from historical measurement and actuation data. This allows
+ * automatic tuning of the internal model parameters when operating on real process data without
+ * requiring external optimisation packages.
  * </p>
  */
 public class ModelPredictiveController extends NamedBaseClass implements ControllerDeviceInterface {
@@ -82,10 +85,11 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   private transient MovingHorizonEstimate lastMovingHorizonEstimate;
 
   /**
-   * Representation of a quality constraint handled by the MPC. Each constraint links a measurement device with linear
-   * sensitivities describing how the quality responds to control actions, feed composition shifts and feed rate
-   * changes. Inequality limits are enforced softly by the quadratic program to keep the process within specification
-   * while still penalising unnecessary control effort.
+   * Representation of a quality constraint handled by the MPC. Each constraint links a measurement
+   * device with linear sensitivities describing how the quality responds to control actions, feed
+   * composition shifts and feed rate changes. Inequality limits are enforced softly by the
+   * quadratic program to keep the process within specification while still penalising unnecessary
+   * control effort.
    */
   public static final class QualityConstraint {
     private final String name;
@@ -102,11 +106,14 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     private QualityConstraint(Builder builder) {
       this.name = builder.name;
       this.measurement = builder.measurement;
-      this.unit = builder.unit != null ? builder.unit : measurement != null ? measurement.getUnit() : "[?]";
+      this.unit =
+          builder.unit != null ? builder.unit : measurement != null ? measurement.getUnit() : "[?]";
       this.limit = builder.limit;
       this.margin = Math.max(0.0, builder.margin);
-      this.controlSensitivity = Arrays.copyOf(builder.controlSensitivity, builder.controlSensitivity.length);
-      this.compositionSensitivity = Collections.unmodifiableMap(new LinkedHashMap<>(builder.compositionSensitivity));
+      this.controlSensitivity =
+          Arrays.copyOf(builder.controlSensitivity, builder.controlSensitivity.length);
+      this.compositionSensitivity =
+          Collections.unmodifiableMap(new LinkedHashMap<>(builder.compositionSensitivity));
       this.rateSensitivity = builder.rateSensitivity;
     }
 
@@ -127,10 +134,10 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     double computeFeedEffect(Map<String, Double> deltaComposition, double deltaRate) {
       double effect = rateSensitivity * deltaRate;
       if (deltaComposition != null && !deltaComposition.isEmpty()) {
-	for (Map.Entry<String, Double> entry : compositionSensitivity.entrySet()) {
-	  double delta = deltaComposition.getOrDefault(entry.getKey(), 0.0);
-	  effect += entry.getValue() * delta;
-	}
+        for (Map.Entry<String, Double> entry : compositionSensitivity.entrySet()) {
+          double delta = deltaComposition.getOrDefault(entry.getKey(), 0.0);
+          effect += entry.getValue() * delta;
+        }
       }
       return effect;
     }
@@ -185,86 +192,89 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       private double rateSensitivity;
 
       private Builder(String name) {
-	if (name == null || name.trim().isEmpty()) {
-	  throw new IllegalArgumentException("Constraint name must be provided");
-	}
-	this.name = name;
+        if (name == null || name.trim().isEmpty()) {
+          throw new IllegalArgumentException("Constraint name must be provided");
+        }
+        this.name = name;
       }
 
       public Builder measurement(MeasurementDeviceInterface device) {
-	this.measurement = device;
-	return this;
+        this.measurement = device;
+        return this;
       }
 
       public Builder unit(String unit) {
-	this.unit = unit;
-	return this;
+        this.unit = unit;
+        return this;
       }
 
       public Builder limit(double limit) {
-	if (!Double.isFinite(limit)) {
-	  throw new IllegalArgumentException("Constraint limit must be finite");
-	}
-	this.limit = limit;
-	return this;
+        if (!Double.isFinite(limit)) {
+          throw new IllegalArgumentException("Constraint limit must be finite");
+        }
+        this.limit = limit;
+        return this;
       }
 
       public Builder margin(double margin) {
-	if (!Double.isFinite(margin) || margin < 0.0) {
-	  throw new IllegalArgumentException("Constraint margin must be non-negative and finite");
-	}
-	this.margin = margin;
-	return this;
+        if (!Double.isFinite(margin) || margin < 0.0) {
+          throw new IllegalArgumentException("Constraint margin must be non-negative and finite");
+        }
+        this.margin = margin;
+        return this;
       }
 
       public Builder controlSensitivity(double... sensitivity) {
-	if (sensitivity == null || sensitivity.length == 0) {
-	  throw new IllegalArgumentException("Control sensitivity must have at least one value");
-	}
-	this.controlSensitivity = Arrays.copyOf(sensitivity, sensitivity.length);
-	return this;
+        if (sensitivity == null || sensitivity.length == 0) {
+          throw new IllegalArgumentException("Control sensitivity must have at least one value");
+        }
+        this.controlSensitivity = Arrays.copyOf(sensitivity, sensitivity.length);
+        return this;
       }
 
       public Builder compositionSensitivity(String component, double sensitivity) {
-	if (component == null || component.trim().isEmpty()) {
-	  throw new IllegalArgumentException("Component name must be provided");
-	}
-	this.compositionSensitivity.put(component, sensitivity);
-	return this;
+        if (component == null || component.trim().isEmpty()) {
+          throw new IllegalArgumentException("Component name must be provided");
+        }
+        this.compositionSensitivity.put(component, sensitivity);
+        return this;
       }
 
       public Builder compositionSensitivities(Map<String, Double> sensitivities) {
-	if (sensitivities != null) {
-	  for (Map.Entry<String, Double> entry : sensitivities.entrySet()) {
-	    compositionSensitivity.put(entry.getKey(), entry.getValue());
-	  }
-	}
-	return this;
+        if (sensitivities != null) {
+          for (Map.Entry<String, Double> entry : sensitivities.entrySet()) {
+            compositionSensitivity.put(entry.getKey(), entry.getValue());
+          }
+        }
+        return this;
       }
 
       public Builder rateSensitivity(double sensitivity) {
-	this.rateSensitivity = sensitivity;
-	return this;
+        this.rateSensitivity = sensitivity;
+        return this;
       }
 
       public QualityConstraint build() {
-	if (measurement == null && (unit == null || unit.trim().isEmpty())) {
-	  unit = "[?]";
-	}
-	if (controlSensitivity.length == 0) {
-	  throw new IllegalStateException("Control sensitivity must be defined for constraint '" + name + "'");
-	}
-	if (!Double.isFinite(limit)) {
-	  throw new IllegalStateException("Constraint limit must be finite for constraint '" + name + "'");
-	}
-	return new QualityConstraint(this);
+        if (measurement == null && (unit == null || unit.trim().isEmpty())) {
+          unit = "[?]";
+        }
+        if (controlSensitivity.length == 0) {
+          throw new IllegalStateException(
+              "Control sensitivity must be defined for constraint '" + name + "'");
+        }
+        if (!Double.isFinite(limit)) {
+          throw new IllegalStateException(
+              "Constraint limit must be finite for constraint '" + name + "'");
+        }
+        return new QualityConstraint(this);
       }
     }
   }
 
   /**
-   * Result from the moving horizon estimation routine. The estimate captures the identified first-order process
-   * parameters together with a mean squared prediction error and the number of samples used.
+   * Result from the moving horizon estimation routine. The estimate captures the identified
+   * first-order process parameters together with a mean squared prediction error and the number of
+   * samples used.
    */
   public static final class MovingHorizonEstimate {
     private final double processGain;
@@ -273,8 +283,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     private final double meanSquaredError;
     private final int sampleCount;
 
-    private MovingHorizonEstimate(double processGain, double timeConstant, double processBias, double meanSquaredError,
-	int sampleCount) {
+    private MovingHorizonEstimate(double processGain, double timeConstant, double processBias,
+        double meanSquaredError, int sampleCount) {
       this.processGain = processGain;
       this.timeConstant = timeConstant;
       this.processBias = processBias;
@@ -304,8 +314,9 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   }
 
   /**
-   * Configuration options for the MPC auto-tuning routine. The parameters control how aggressive the closed-loop
-   * response should be as well as how the quadratic weights are scaled relative to the identified process model.
+   * Configuration options for the MPC auto-tuning routine. The parameters control how aggressive
+   * the closed-loop response should be as well as how the quadratic weights are scaled relative to
+   * the identified process model.
    */
   public static final class AutoTuneConfiguration {
     private final double closedLoopTimeConstantRatio;
@@ -382,94 +393,94 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       private Double sampleTimeOverride;
       private boolean applyImmediately = true;
 
-      private Builder() {
-      }
+      private Builder() {}
 
       public Builder closedLoopTimeConstantRatio(double ratio) {
-	if (!Double.isFinite(ratio) || ratio <= 0.0) {
-	  throw new IllegalArgumentException("Closed loop ratio must be positive and finite");
-	}
-	this.closedLoopTimeConstantRatio = ratio;
-	return this;
+        if (!Double.isFinite(ratio) || ratio <= 0.0) {
+          throw new IllegalArgumentException("Closed loop ratio must be positive and finite");
+        }
+        this.closedLoopTimeConstantRatio = ratio;
+        return this;
       }
 
       public Builder predictionHorizonMultiple(double multiple) {
-	if (!Double.isFinite(multiple) || multiple <= 0.0) {
-	  throw new IllegalArgumentException("Prediction horizon multiple must be positive");
-	}
-	this.predictionHorizonMultiple = multiple;
-	return this;
+        if (!Double.isFinite(multiple) || multiple <= 0.0) {
+          throw new IllegalArgumentException("Prediction horizon multiple must be positive");
+        }
+        this.predictionHorizonMultiple = multiple;
+        return this;
       }
 
       public Builder controlWeightFactor(double factor) {
-	if (factor < 0.0) {
-	  throw new IllegalArgumentException("Control weight factor must be non-negative");
-	}
-	this.controlWeightFactor = factor;
-	return this;
+        if (factor < 0.0) {
+          throw new IllegalArgumentException("Control weight factor must be non-negative");
+        }
+        this.controlWeightFactor = factor;
+        return this;
       }
 
       public Builder moveWeightFactor(double factor) {
-	if (factor < 0.0) {
-	  throw new IllegalArgumentException("Move weight factor must be non-negative");
-	}
-	this.moveWeightFactor = factor;
-	return this;
+        if (factor < 0.0) {
+          throw new IllegalArgumentException("Move weight factor must be non-negative");
+        }
+        this.moveWeightFactor = factor;
+        return this;
       }
 
       public Builder outputWeight(double weight) {
-	if (weight < 0.0) {
-	  throw new IllegalArgumentException("Output weight must be non-negative");
-	}
-	this.outputWeight = weight;
-	return this;
+        if (weight < 0.0) {
+          throw new IllegalArgumentException("Output weight must be non-negative");
+        }
+        this.outputWeight = weight;
+        return this;
       }
 
       public Builder minimumHorizon(int horizon) {
-	if (horizon <= 0) {
-	  throw new IllegalArgumentException("Minimum horizon must be positive");
-	}
-	this.minimumHorizon = horizon;
-	return this;
+        if (horizon <= 0) {
+          throw new IllegalArgumentException("Minimum horizon must be positive");
+        }
+        this.minimumHorizon = horizon;
+        return this;
       }
 
       public Builder maximumHorizon(int horizon) {
-	if (horizon <= 0) {
-	  throw new IllegalArgumentException("Maximum horizon must be positive");
-	}
-	this.maximumHorizon = horizon;
-	return this;
+        if (horizon <= 0) {
+          throw new IllegalArgumentException("Maximum horizon must be positive");
+        }
+        this.maximumHorizon = horizon;
+        return this;
       }
 
       public Builder sampleTimeOverride(Double sampleTime) {
-	if (sampleTime != null && (!Double.isFinite(sampleTime) || sampleTime <= 0.0)) {
-	  throw new IllegalArgumentException("Sample time override must be positive and finite");
-	}
-	this.sampleTimeOverride = sampleTime;
-	return this;
+        if (sampleTime != null && (!Double.isFinite(sampleTime) || sampleTime <= 0.0)) {
+          throw new IllegalArgumentException("Sample time override must be positive and finite");
+        }
+        this.sampleTimeOverride = sampleTime;
+        return this;
       }
 
       public Builder applyImmediately(boolean apply) {
-	this.applyImmediately = apply;
-	return this;
+        this.applyImmediately = apply;
+        return this;
       }
 
       public Builder defaults() {
-	return this;
+        return this;
       }
 
       public AutoTuneConfiguration build() {
-	if (maximumHorizon < minimumHorizon) {
-	  throw new IllegalStateException("Maximum horizon must be at least the minimum horizon");
-	}
-	return new AutoTuneConfiguration(this);
+        if (maximumHorizon < minimumHorizon) {
+          throw new IllegalStateException("Maximum horizon must be at least the minimum horizon");
+        }
+        return new AutoTuneConfiguration(this);
       }
     }
   }
 
   /**
-   * Result produced by the auto-tuning routine. The result captures the identified model parameters, recommended
-   * controller weights and diagnostic information about the estimation data that was used.
+   * Result produced by the auto-tuning routine. The result captures the identified model
+   * parameters, recommended controller weights and diagnostic information about the estimation data
+   * that was used.
    */
   public static final class AutoTuneResult {
     private final double processGain;
@@ -485,9 +496,10 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     private final int sampleCount;
     private final boolean applied;
 
-    private AutoTuneResult(double processGain, double timeConstant, double processBias, double outputWeight,
-	double controlWeight, double moveWeight, int predictionHorizon, double sampleTime,
-	double closedLoopTimeConstant, double meanSquaredError, int sampleCount, boolean applied) {
+    private AutoTuneResult(double processGain, double timeConstant, double processBias,
+        double outputWeight, double controlWeight, double moveWeight, int predictionHorizon,
+        double sampleTime, double closedLoopTimeConstant, double meanSquaredError, int sampleCount,
+        boolean applied) {
       this.processGain = processGain;
       this.timeConstant = timeConstant;
       this.processBias = processBias;
@@ -568,8 +580,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   }
 
   /**
-   * Configure the set of manipulated variables handled by the MPC. Existing quality constraints are cleared because
-   * their sensitivity dimensions may no longer match the new set of controls.
+   * Configure the set of manipulated variables handled by the MPC. Existing quality constraints are
+   * cleared because their sensitivity dimensions may no longer match the new set of controls.
    *
    * @param names ordered list of control names (e.g. pressure, temperature)
    */
@@ -581,7 +593,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     controlNames.clear();
     for (String name : names) {
       if (name == null || name.trim().isEmpty()) {
-	throw new IllegalArgumentException("Control names must be non-empty");
+        throw new IllegalArgumentException("Control names must be non-empty");
       }
       controlNames.add(name);
     }
@@ -610,8 +622,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
 
   private void ensureControlLength(int expectedLength) {
     if (controlVector.length != expectedLength) {
-      throw new IllegalStateException(
-	  "Controller configured for " + controlVector.length + " controls but received " + expectedLength);
+      throw new IllegalStateException("Controller configured for " + controlVector.length
+          + " controls but received " + expectedLength);
     }
   }
 
@@ -636,8 +648,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   }
 
   /**
-   * Choose which control variable is exposed via {@link #getResponse()} to maintain compatibility with the
-   * {@link ControllerDeviceInterface}.
+   * Choose which control variable is exposed via {@link #getResponse()} to maintain compatibility
+   * with the {@link ControllerDeviceInterface}.
    *
    * @param index index of the primary control variable
    */
@@ -665,8 +677,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   }
 
   /**
-   * Constrain the permitted change of a control variable relative to the previously applied value. Limits are
-   * interpreted as {@code minDelta <= u - u_prev <= maxDelta}.
+   * Constrain the permitted change of a control variable relative to the previously applied value.
+   * Limits are interpreted as {@code minDelta <= u - u_prev <= maxDelta}.
    *
    * @param index control index
    * @param minDelta minimum permitted change (may be {@link Double#NEGATIVE_INFINITY})
@@ -712,7 +724,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   }
 
   /**
-   * Set quadratic weights on the absolute value of each control variable. Values must be non-negative.
+   * Set quadratic weights on the absolute value of each control variable. Values must be
+   * non-negative.
    *
    * @param weights absolute control weights
    */
@@ -723,7 +736,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     ensureControlLength(weights.length);
     for (int i = 0; i < weights.length; i++) {
       if (weights[i] < 0.0) {
-	throw new IllegalArgumentException("Control weights must be non-negative");
+        throw new IllegalArgumentException("Control weights must be non-negative");
       }
       controlWeightsVector[i] = weights[i];
     }
@@ -741,15 +754,16 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     ensureControlLength(weights.length);
     for (int i = 0; i < weights.length; i++) {
       if (weights[i] < 0.0) {
-	throw new IllegalArgumentException("Move weights must be non-negative");
+        throw new IllegalArgumentException("Move weights must be non-negative");
       }
       moveWeightsVector[i] = weights[i];
     }
   }
 
   /**
-   * Define the preferred steady-state operating point for each control variable. This represents the control vector
-   * that minimises the absolute control penalty when no tracking error is present.
+   * Define the preferred steady-state operating point for each control variable. This represents
+   * the control vector that minimises the absolute control penalty when no tracking error is
+   * present.
    *
    * @param references preferred control levels
    */
@@ -762,8 +776,9 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   }
 
   /**
-   * @deprecated Use {@link #setPreferredControlVector(double...)} to configure the nominal control point. This method
-   * is retained for backwards compatibility with earlier snapshots of the MPC implementation.
+   * @deprecated Use {@link #setPreferredControlVector(double...)} to configure the nominal control
+   *             point. This method is retained for backwards compatibility with earlier snapshots
+   *             of the MPC implementation.
    *
    * @param references preferred control levels for the energy terms
    */
@@ -816,7 +831,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   }
 
   /**
-   * Register a new quality constraint. The sensitivity vector must match the number of configured controls.
+   * Register a new quality constraint. The sensitivity vector must match the number of configured
+   * controls.
    *
    * @param constraint quality constraint description
    */
@@ -837,10 +853,10 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   }
 
   /**
-   * Update the stored measurement for a named quality constraint. When integrating against a live plant this allows the
-   * MPC to use the latest analyser or laboratory sample even if the simulation does not contain a dedicated
-   * {@link MeasurementDeviceInterface}. The value is stored in the controller and will be used as the baseline for the
-   * next optimisation step.
+   * Update the stored measurement for a named quality constraint. When integrating against a live
+   * plant this allows the MPC to use the latest analyser or laboratory sample even if the
+   * simulation does not contain a dedicated {@link MeasurementDeviceInterface}. The value is stored
+   * in the controller and will be used as the baseline for the next optimisation step.
    *
    * @param name quality constraint identifier
    * @param measurement measured specification value in the constraint unit
@@ -852,9 +868,9 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     }
     for (QualityConstraint constraint : qualityConstraints) {
       if (name.equals(constraint.getName())) {
-	constraint.setLastMeasurement(Double.isFinite(measurement) ? measurement : Double.NaN);
-	predictedQualityValues.remove(name);
-	return true;
+        constraint.setLastMeasurement(Double.isFinite(measurement) ? measurement : Double.NaN);
+        predictedQualityValues.remove(name);
+        return true;
       }
     }
     return false;
@@ -875,8 +891,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   }
 
   /**
-   * Update the predicted incoming feed composition and flow rate. The values are used as feedforward information in the
-   * MPC optimisation.
+   * Update the predicted incoming feed composition and flow rate. The values are used as
+   * feedforward information in the MPC optimisation.
    *
    * @param composition component molar fractions (will be normalised outside the method)
    * @param feedRate molar feed rate
@@ -885,7 +901,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     Map<String, Double> copy = new LinkedHashMap<>();
     if (composition != null) {
       for (Map.Entry<String, Double> entry : composition.entrySet()) {
-	copy.put(entry.getKey(), entry.getValue());
+        copy.put(entry.getKey(), entry.getValue());
       }
     }
     pendingFeedComposition = copy;
@@ -911,17 +927,17 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   }
 
   /**
-   * Enable moving horizon (receding horizon) estimation of the internal first-order process model. The estimator
-   * analyses the most recent samples of measured output and applied control to update the process gain, time constant
-   * and bias.
+   * Enable moving horizon (receding horizon) estimation of the internal first-order process model.
+   * The estimator analyses the most recent samples of measured output and applied control to update
+   * the process gain, time constant and bias.
    *
    * @param windowSize number of recent samples to keep in the estimation window (minimum of
-   * {@value #MIN_ESTIMATION_SAMPLES})
+   *        {@value #MIN_ESTIMATION_SAMPLES})
    */
   public void enableMovingHorizonEstimation(int windowSize) {
     if (windowSize < MIN_ESTIMATION_SAMPLES) {
       throw new IllegalArgumentException(
-	  "Estimation window must contain at least " + MIN_ESTIMATION_SAMPLES + " samples");
+          "Estimation window must contain at least " + MIN_ESTIMATION_SAMPLES + " samples");
     }
     this.movingHorizonWindow = windowSize;
     this.movingHorizonEstimationEnabled = true;
@@ -929,8 +945,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   }
 
   /**
-   * Disable the moving horizon estimation routine. Existing history and the last estimate are retained so the method
-   * can be re-enabled later.
+   * Disable the moving horizon estimation routine. Existing history and the last estimate are
+   * retained so the method can be re-enabled later.
    */
   public void disableMovingHorizonEstimation() {
     this.movingHorizonEstimationEnabled = false;
@@ -955,8 +971,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   }
 
   /**
-   * Remove any stored estimation samples. The last estimate is cleared to make it explicit that a new identification
-   * cycle is required before accessing estimation results again.
+   * Remove any stored estimation samples. The last estimate is cleared to make it explicit that a
+   * new identification cycle is required before accessing estimation results again.
    */
   public void clearMovingHorizonHistory() {
     estimationMeasurements.clear();
@@ -966,9 +982,9 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   }
 
   /**
-   * Retrieve the latest moving horizon estimate. The result contains the identified model parameters along with a
-   * simple mean squared prediction error. {@code null} is returned until the estimator has processed a sufficient
-   * number of samples.
+   * Retrieve the latest moving horizon estimate. The result contains the identified model
+   * parameters along with a simple mean squared prediction error. {@code null} is returned until
+   * the estimator has processed a sufficient number of samples.
    *
    * @return most recent estimate or {@code null} when unavailable
    */
@@ -977,9 +993,10 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   }
 
   /**
-   * Automatically identify the internal first-order process model and configure the MPC weights using the most recent
-   * moving-horizon estimation history. The controller must have collected at least {@value #MIN_ESTIMATION_SAMPLES}
-   * valid samples via {@link #enableMovingHorizonEstimation(int)} before invoking auto-tune.
+   * Automatically identify the internal first-order process model and configure the MPC weights
+   * using the most recent moving-horizon estimation history. The controller must have collected at
+   * least {@value #MIN_ESTIMATION_SAMPLES} valid samples via
+   * {@link #enableMovingHorizonEstimation(int)} before invoking auto-tune.
    *
    * @return tuning result containing the identified parameters and applied configuration
    */
@@ -988,33 +1005,37 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   }
 
   /**
-   * Automatically identify the internal first-order process model and configure the MPC weights using the most recent
-   * moving-horizon estimation history.
+   * Automatically identify the internal first-order process model and configure the MPC weights
+   * using the most recent moving-horizon estimation history.
    *
-   * @param configuration optional tuning configuration; if {@code null} the default configuration is used
+   * @param configuration optional tuning configuration; if {@code null} the default configuration
+   *        is used
    * @return tuning result containing the identified parameters and applied configuration
    */
   public AutoTuneResult autoTune(AutoTuneConfiguration configuration) {
-    AutoTuneConfiguration config = configuration != null ? configuration : AutoTuneConfiguration.builder().build();
+    AutoTuneConfiguration config =
+        configuration != null ? configuration : AutoTuneConfiguration.builder().build();
 
     MovingHorizonEstimate estimate = lastMovingHorizonEstimate;
     if (estimate == null) {
       estimate = estimateFromHistory();
       if (estimate != null) {
-	lastMovingHorizonEstimate = estimate;
+        lastMovingHorizonEstimate = estimate;
       }
     }
     if (estimate == null) {
-      throw new IllegalStateException("Auto-tune requires at least " + MIN_ESTIMATION_SAMPLES + " valid samples");
+      throw new IllegalStateException(
+          "Auto-tune requires at least " + MIN_ESTIMATION_SAMPLES + " valid samples");
     }
 
     return autoTuneFromEstimate(estimate, config);
   }
 
   /**
-   * Auto-tune the controller using explicitly supplied measurement and actuation samples. This is useful when
-   * historical process data has been collected outside of the live controller instance. The provided lists must follow
-   * the same structure as the moving-horizon estimator where {@code measurements.size() == controls.size() + 1} and
+   * Auto-tune the controller using explicitly supplied measurement and actuation samples. This is
+   * useful when historical process data has been collected outside of the live controller instance.
+   * The provided lists must follow the same structure as the moving-horizon estimator where
+   * {@code measurements.size() == controls.size() + 1} and
    * {@code sampleTimes.size() == controls.size()}.
    *
    * @param measurements ordered list of measured process values
@@ -1023,22 +1044,25 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
    * @param configuration optional tuning configuration
    * @return tuning result containing the identified parameters and applied configuration
    */
-  public AutoTuneResult autoTune(List<Double> measurements, List<Double> controls, List<Double> sampleTimes,
-      AutoTuneConfiguration configuration) {
+  public AutoTuneResult autoTune(List<Double> measurements, List<Double> controls,
+      List<Double> sampleTimes, AutoTuneConfiguration configuration) {
     Objects.requireNonNull(measurements, "Measurement history must be supplied");
     Objects.requireNonNull(controls, "Control history must be supplied");
     Objects.requireNonNull(sampleTimes, "Sample time history must be supplied");
-    AutoTuneConfiguration config = configuration != null ? configuration : AutoTuneConfiguration.builder().build();
+    AutoTuneConfiguration config =
+        configuration != null ? configuration : AutoTuneConfiguration.builder().build();
 
     MovingHorizonEstimate estimate = estimateFromSamples(measurements, controls, sampleTimes);
     if (estimate == null) {
-      throw new IllegalArgumentException("Insufficient or invalid samples supplied for auto-tuning");
+      throw new IllegalArgumentException(
+          "Insufficient or invalid samples supplied for auto-tuning");
     }
     lastMovingHorizonEstimate = estimate;
     return autoTuneFromEstimate(estimate, config);
   }
 
-  private AutoTuneResult autoTuneFromEstimate(MovingHorizonEstimate estimate, AutoTuneConfiguration config) {
+  private AutoTuneResult autoTuneFromEstimate(MovingHorizonEstimate estimate,
+      AutoTuneConfiguration config) {
     Double override = config.getSampleTimeOverride();
     double sampleTime = override != null ? override : lastSampleTime;
     if (!Double.isFinite(sampleTime) || sampleTime <= 0.0) {
@@ -1049,7 +1073,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     double gain = estimate.getProcessGain();
     double bias = estimate.getProcessBias();
 
-    double closedLoopTimeConstant = Math.max(sampleTime, config.getClosedLoopTimeConstantRatio() * timeConstant);
+    double closedLoopTimeConstant =
+        Math.max(sampleTime, config.getClosedLoopTimeConstantRatio() * timeConstant);
 
     double horizonSeconds = config.getPredictionHorizonMultiple() * timeConstant;
     int horizon = (int) Math.ceil(horizonSeconds / sampleTime);
@@ -1057,7 +1082,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
 
     double outputWeight = config.getOutputWeight();
     double gainMagnitude = Math.max(Math.abs(gain), 1.0e-6);
-    double controlWeight = config.getControlWeightFactor() * sampleTime / (gainMagnitude * closedLoopTimeConstant);
+    double controlWeight =
+        config.getControlWeightFactor() * sampleTime / (gainMagnitude * closedLoopTimeConstant);
     double moveWeight = config.getMoveWeightFactor() * sampleTime / closedLoopTimeConstant;
     if (!Double.isFinite(controlWeight) || controlWeight < 0.0) {
       controlWeight = 0.0;
@@ -1076,8 +1102,9 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       applied = true;
     }
 
-    return new AutoTuneResult(gain, timeConstant, bias, outputWeight, controlWeight, moveWeight, horizon, sampleTime,
-	closedLoopTimeConstant, estimate.getMeanSquaredError(), estimate.getSampleCount(), applied);
+    return new AutoTuneResult(gain, timeConstant, bias, outputWeight, controlWeight, moveWeight,
+        horizon, sampleTime, closedLoopTimeConstant, estimate.getMeanSquaredError(),
+        estimate.getSampleCount(), applied);
   }
 
   /**
@@ -1098,8 +1125,9 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   }
 
   /**
-   * Configure the internal first order process model including dead time. Dead time is represented as an equivalent
-   * time constant increase because the simplified controller does not maintain an explicit delay line.
+   * Configure the internal first order process model including dead time. Dead time is represented
+   * as an equivalent time constant increase because the simplified controller does not maintain an
+   * explicit delay line.
    *
    * @param gain steady-state process gain relating control action to the measured variable
    * @param timeConstant dominant time constant of the process model (seconds)
@@ -1111,8 +1139,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   }
 
   /**
-   * Set the steady-state bias of the process model. The bias corresponds to the measured value when the manipulated
-   * variable is zero (for example ambient temperature).
+   * Set the steady-state bias of the process model. The bias corresponds to the measured value when
+   * the manipulated variable is zero (for example ambient temperature).
    *
    * @param bias process bias value
    */
@@ -1140,8 +1168,9 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   }
 
   /**
-   * Specify the preferred steady-state control level for the single-input MPC mode. This value represents the operating
-   * point that minimises the absolute control penalty when tracking is not active.
+   * Specify the preferred steady-state control level for the single-input MPC mode. This value
+   * represents the operating point that minimises the absolute control penalty when tracking is not
+   * active.
    *
    * @param reference preferred control level
    */
@@ -1167,8 +1196,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   }
 
   /**
-   * @deprecated Use {@link #setPreferredControlValue(double)} when configuring the MPC economic target. This method is
-   * kept for compatibility with earlier code samples.
+   * @deprecated Use {@link #setPreferredControlValue(double)} when configuring the MPC economic
+   *             target. This method is kept for compatibility with earlier code samples.
    *
    * @param reference preferred steady-state control value for the single-input controller
    */
@@ -1252,10 +1281,11 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   }
 
   /**
-   * Inject a measurement collected directly from a physical plant rather than the built-in transmitter abstraction.
-   * This is useful when the MPC is connected to a live facility where instrumentation values arrive asynchronously from
-   * the control system. The sample updates the diagnostic state of the controller and provides a fallback measurement
-   * if no transmitter is configured.
+   * Inject a measurement collected directly from a physical plant rather than the built-in
+   * transmitter abstraction. This is useful when the MPC is connected to a live facility where
+   * instrumentation values arrive asynchronously from the control system. The sample updates the
+   * diagnostic state of the controller and provides a fallback measurement if no transmitter is
+   * configured.
    *
    * @param measurement latest measured process value
    * @param appliedControl control signal that was active when the sample was taken
@@ -1275,8 +1305,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   }
 
   /**
-   * Convenience overload of {@link #ingestPlantSample(double, double, double)} when only the measurement and applied
-   * control are known.
+   * Convenience overload of {@link #ingestPlantSample(double, double, double)} when only the
+   * measurement and applied control are known.
    *
    * @param measurement measured process value
    * @param appliedControl applied control signal
@@ -1291,10 +1321,10 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     lastSampleTime = dt;
     if (!qualityConstraints.isEmpty()) {
       if (!isActive) {
-	clampControlVector();
-	response = controlVector[Math.min(primaryControlIndex, controlVector.length - 1)];
-	lastAppliedControl = response;
-	return;
+        clampControlVector();
+        response = controlVector[Math.min(primaryControlIndex, controlVector.length - 1)];
+        lastAppliedControl = response;
+        return;
       }
       runMultivariable();
       return;
@@ -1331,19 +1361,21 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     for (int i = 0; i < controlVector.length; i++) {
       double value = controlVector[i];
       if (!Double.isInfinite(minControlVector[i])) {
-	value = Math.max(minControlVector[i], value);
+        value = Math.max(minControlVector[i], value);
       }
       if (!Double.isInfinite(maxControlVector[i])) {
-	value = Math.min(maxControlVector[i], value);
+        value = Math.min(maxControlVector[i], value);
       }
-      double minMoveLimit = minControlMoveVector.length > i ? minControlMoveVector[i] : Double.NEGATIVE_INFINITY;
-      double maxMoveLimit = maxControlMoveVector.length > i ? maxControlMoveVector[i] : Double.POSITIVE_INFINITY;
+      double minMoveLimit =
+          minControlMoveVector.length > i ? minControlMoveVector[i] : Double.NEGATIVE_INFINITY;
+      double maxMoveLimit =
+          maxControlMoveVector.length > i ? maxControlMoveVector[i] : Double.POSITIVE_INFINITY;
       double previous = lastControlVector.length > i ? lastControlVector[i] : 0.0;
       if (!Double.isInfinite(minMoveLimit)) {
-	value = Math.max(previous + minMoveLimit, value);
+        value = Math.max(previous + minMoveLimit, value);
       }
       if (!Double.isInfinite(maxMoveLimit)) {
-	value = Math.min(previous + maxMoveLimit, value);
+        value = Math.min(previous + maxMoveLimit, value);
       }
       controlVector[i] = value;
     }
@@ -1364,12 +1396,12 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       keys.addAll(lastFeedComposition.keySet());
       keys.addAll(pendingFeedComposition.keySet());
       for (String key : keys) {
-	double future = pendingFeedComposition.getOrDefault(key, 0.0);
-	double past = lastFeedComposition.getOrDefault(key, 0.0);
-	double delta = future - past;
-	if (Math.abs(delta) > 1.0e-12) {
-	  deltaComposition.put(key, delta);
-	}
+        double future = pendingFeedComposition.getOrDefault(key, 0.0);
+        double past = lastFeedComposition.getOrDefault(key, 0.0);
+        double delta = future - past;
+        if (Math.abs(delta) > 1.0e-12) {
+          deltaComposition.put(key, delta);
+        }
       }
       deltaRate = pendingFeedRate - lastFeedRate;
     }
@@ -1384,22 +1416,22 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       double measurement = constraint.getLastMeasurement();
       MeasurementDeviceInterface device = constraint.getMeasurement();
       if (device != null) {
-	try {
-	  double measured = constraint.getUnit() == null ? device.getMeasuredValue()
-	      : device.getMeasuredValue(constraint.getUnit());
-	  if (Double.isFinite(measured)) {
-	    measurement = measured;
-	  }
-	} catch (Exception ex) {
-	  // ignore measurement exceptions and fall back to last value
-	}
+        try {
+          double measured = constraint.getUnit() == null ? device.getMeasuredValue()
+              : device.getMeasuredValue(constraint.getUnit());
+          if (Double.isFinite(measured)) {
+            measurement = measured;
+          }
+        } catch (Exception ex) {
+          // ignore measurement exceptions and fall back to last value
+        }
       }
       if (!Double.isFinite(measurement)) {
-	measurement = constraint.getLimit();
+        measurement = constraint.getLimit();
       }
       constraint.setLastMeasurement(measurement);
       if (idx == 0) {
-	lastSampledValue = measurement;
+        lastSampledValue = measurement;
       }
 
       double[] sensitivity = constraint.getControlSensitivity();
@@ -1409,25 +1441,26 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       double deviation = futureMeasurement - target;
       double normSquared = 0.0;
       for (double value : sensitivity) {
-	normSquared += value * value;
+        normSquared += value * value;
       }
       if (normSquared > 1.0e-12 && Math.abs(deviation) > 1.0e-9) {
-	double scale = deviation / normSquared;
-	for (int i = 0; i < controlCount; i++) {
-	  double desiredDelta = scale * sensitivity[i];
-	  double diagonalWeight = Math.max(controlWeightsVector[i], 0.0) + Math.max(moveWeightsVector[i], 0.0);
-	  if (diagonalWeight < 1.0e-9) {
-	    diagonalWeight = 1.0e-9;
-	  }
-	  feedForwardGradient[i] += diagonalWeight * desiredDelta;
-	}
+        double scale = deviation / normSquared;
+        for (int i = 0; i < controlCount; i++) {
+          double desiredDelta = scale * sensitivity[i];
+          double diagonalWeight =
+              Math.max(controlWeightsVector[i], 0.0) + Math.max(moveWeightsVector[i], 0.0);
+          if (diagonalWeight < 1.0e-9) {
+            diagonalWeight = 1.0e-9;
+          }
+          feedForwardGradient[i] += diagonalWeight * desiredDelta;
+        }
       }
       double rhs = constraint.getLimit() - constraint.getMargin() - futureMeasurement;
       double[] row = new double[controlCount];
       double dotPrev = 0.0;
       for (int i = 0; i < controlCount; i++) {
-	row[i] = sensitivity[i];
-	dotPrev += sensitivity[i] * previousControl[i];
+        row[i] = sensitivity[i];
+        dotPrev += sensitivity[i] * previousControl[i];
       }
       constraintRows.add(row);
       constraintBounds.add(rhs + dotPrev);
@@ -1435,30 +1468,32 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
 
     for (int i = 0; i < controlCount; i++) {
       if (!Double.isInfinite(minControlVector[i])) {
-	double[] row = new double[controlCount];
-	row[i] = -1.0;
-	constraintRows.add(row);
-	constraintBounds.add(-minControlVector[i]);
+        double[] row = new double[controlCount];
+        row[i] = -1.0;
+        constraintRows.add(row);
+        constraintBounds.add(-minControlVector[i]);
       }
       if (!Double.isInfinite(maxControlVector[i])) {
-	double[] row = new double[controlCount];
-	row[i] = 1.0;
-	constraintRows.add(row);
-	constraintBounds.add(maxControlVector[i]);
+        double[] row = new double[controlCount];
+        row[i] = 1.0;
+        constraintRows.add(row);
+        constraintBounds.add(maxControlVector[i]);
       }
-      double minMoveLimit = minControlMoveVector.length > i ? minControlMoveVector[i] : Double.NEGATIVE_INFINITY;
-      double maxMoveLimit = maxControlMoveVector.length > i ? maxControlMoveVector[i] : Double.POSITIVE_INFINITY;
+      double minMoveLimit =
+          minControlMoveVector.length > i ? minControlMoveVector[i] : Double.NEGATIVE_INFINITY;
+      double maxMoveLimit =
+          maxControlMoveVector.length > i ? maxControlMoveVector[i] : Double.POSITIVE_INFINITY;
       if (!Double.isInfinite(maxMoveLimit)) {
-	double[] row = new double[controlCount];
-	row[i] = 1.0;
-	constraintRows.add(row);
-	constraintBounds.add(previousControl[i] + maxMoveLimit);
+        double[] row = new double[controlCount];
+        row[i] = 1.0;
+        constraintRows.add(row);
+        constraintBounds.add(previousControl[i] + maxMoveLimit);
       }
       if (!Double.isInfinite(minMoveLimit)) {
-	double[] row = new double[controlCount];
-	row[i] = -1.0;
-	constraintRows.add(row);
-	constraintBounds.add(-(previousControl[i] + minMoveLimit));
+        double[] row = new double[controlCount];
+        row[i] = -1.0;
+        constraintRows.add(row);
+        constraintBounds.add(-(previousControl[i] + minMoveLimit));
       }
     }
 
@@ -1475,14 +1510,15 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       double moveWeight = Math.max(moveWeightsVector[i], 0.0);
       double diagonal = absoluteWeight + moveWeight;
       if (diagonal < 1.0e-9) {
-	diagonal = 1.0e-9;
+        diagonal = 1.0e-9;
       }
       hessian[i][i] = diagonal;
       gradient[i] = -absoluteWeight * preferredControlVector[i] - moveWeight * previousControl[i]
-	  + feedForwardGradient[i];
+          + feedForwardGradient[i];
     }
 
-    double[] solution = solveQuadraticProgram(hessian, gradient, constraintMatrix, constraintVector);
+    double[] solution =
+        solveQuadraticProgram(hessian, gradient, constraintMatrix, constraintVector);
     if (solution == null) {
       solution = Arrays.copyOf(previousControl, controlCount);
     }
@@ -1490,18 +1526,20 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     for (int i = 0; i < controlCount; i++) {
       double value = solution[i];
       if (!Double.isInfinite(minControlVector[i])) {
-	value = Math.max(minControlVector[i], value);
+        value = Math.max(minControlVector[i], value);
       }
       if (!Double.isInfinite(maxControlVector[i])) {
-	value = Math.min(maxControlVector[i], value);
+        value = Math.min(maxControlVector[i], value);
       }
-      double minMoveLimit = minControlMoveVector.length > i ? minControlMoveVector[i] : Double.NEGATIVE_INFINITY;
-      double maxMoveLimit = maxControlMoveVector.length > i ? maxControlMoveVector[i] : Double.POSITIVE_INFINITY;
+      double minMoveLimit =
+          minControlMoveVector.length > i ? minControlMoveVector[i] : Double.NEGATIVE_INFINITY;
+      double maxMoveLimit =
+          maxControlMoveVector.length > i ? maxControlMoveVector[i] : Double.POSITIVE_INFINITY;
       if (!Double.isInfinite(minMoveLimit)) {
-	value = Math.max(previousControl[i] + minMoveLimit, value);
+        value = Math.max(previousControl[i] + minMoveLimit, value);
       }
       if (!Double.isInfinite(maxMoveLimit)) {
-	value = Math.min(previousControl[i] + maxMoveLimit, value);
+        value = Math.min(previousControl[i] + maxMoveLimit, value);
       }
       controlVector[i] = value;
     }
@@ -1513,8 +1551,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       double dotNew = 0.0;
       double dotPrev = 0.0;
       for (int i = 0; i < controlCount; i++) {
-	dotNew += sensitivity[i] * controlVector[i];
-	dotPrev += sensitivity[i] * previousControl[i];
+        dotNew += sensitivity[i] * controlVector[i];
+        dotPrev += sensitivity[i] * previousControl[i];
       }
       double predicted = measurement + (dotNew - dotPrev) + feedEffect;
       constraint.setPredictedValue(predicted);
@@ -1533,7 +1571,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     if (!movingHorizonEstimationEnabled) {
       return;
     }
-    if (!Double.isFinite(measurement) || !Double.isFinite(appliedControl) || !Double.isFinite(dt) || dt <= 0.0) {
+    if (!Double.isFinite(measurement) || !Double.isFinite(appliedControl) || !Double.isFinite(dt)
+        || dt <= 0.0) {
       return;
     }
     if (estimationMeasurements.isEmpty()) {
@@ -1541,7 +1580,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       return;
     }
     if (estimationMeasurements.size() != estimationControls.size() + 1
-	|| estimationSampleTimes.size() != estimationControls.size()) {
+        || estimationSampleTimes.size() != estimationControls.size()) {
       clearMovingHorizonHistory();
       estimationMeasurements.add(measurement);
       return;
@@ -1555,7 +1594,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       estimationControls.remove(0);
       estimationSampleTimes.remove(0);
       if (!estimationMeasurements.isEmpty()) {
-	estimationMeasurements.remove(0);
+        estimationMeasurements.remove(0);
       }
     }
 
@@ -1565,8 +1604,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   }
 
   private void updateMovingHorizonEstimate() {
-    MovingHorizonEstimate estimate = estimateFromSamples(estimationMeasurements, estimationControls,
-	estimationSampleTimes);
+    MovingHorizonEstimate estimate =
+        estimateFromSamples(estimationMeasurements, estimationControls, estimationSampleTimes);
     if (estimate == null) {
       return;
     }
@@ -1579,12 +1618,12 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     timeConstant = estimatedTimeConstant;
     processBias = estimatedBias;
 
-    lastMovingHorizonEstimate = new MovingHorizonEstimate(estimatedGain, estimatedTimeConstant, estimatedBias,
-	estimate.getMeanSquaredError(), estimate.getSampleCount());
+    lastMovingHorizonEstimate = new MovingHorizonEstimate(estimatedGain, estimatedTimeConstant,
+        estimatedBias, estimate.getMeanSquaredError(), estimate.getSampleCount());
   }
 
-  private MovingHorizonEstimate estimateFromSamples(List<Double> measurements, List<Double> controls,
-      List<Double> sampleTimes) {
+  private MovingHorizonEstimate estimateFromSamples(List<Double> measurements,
+      List<Double> controls, List<Double> sampleTimes) {
     if (measurements == null || controls == null || sampleTimes == null) {
       return null;
     }
@@ -1614,16 +1653,16 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       double nextMeasurement = measurements.get(i + 1);
       double dt = sampleTimes.get(i);
       if (!Double.isFinite(dt) || dt <= 0.0) {
-	return null;
+        return null;
       }
       double rateOfChange = (nextMeasurement - measurement) / dt;
-      double[] row = { measurement / measurementScale, control / controlScale, 1.0 };
+      double[] row = {measurement / measurementScale, control / controlScale, 1.0};
       for (int rowIndex = 0; rowIndex < 3; rowIndex++) {
-	double value = row[rowIndex];
-	for (int colIndex = 0; colIndex < 3; colIndex++) {
-	  normal[rowIndex][colIndex] += value * row[colIndex];
-	}
-	rhs[rowIndex] += value * rateOfChange;
+        double value = row[rowIndex];
+        for (int colIndex = 0; colIndex < 3; colIndex++) {
+          normal[rowIndex][colIndex] += value * row[colIndex];
+        }
+        rhs[rowIndex] += value * rateOfChange;
       }
     }
 
@@ -1665,7 +1704,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       double nextMeasurement = measurements.get(i + 1);
       double dt = sampleTimes.get(i);
       if (!Double.isFinite(dt) || dt <= 0.0) {
-	return null;
+        return null;
       }
       double predictedRate = alpha * measurement + beta * control + gamma;
       double predictedNext = measurement + dt * predictedRate;
@@ -1683,20 +1722,20 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       return null;
     }
     if (estimationMeasurements.size() != estimationControls.size() + 1
-	|| estimationSampleTimes.size() != estimationControls.size()) {
+        || estimationSampleTimes.size() != estimationControls.size()) {
       return null;
     }
     return estimateFromSamples(estimationMeasurements, estimationControls, estimationSampleTimes);
   }
 
-  private double[] solveQuadraticProgram(double[][] hessian, double[] gradient, double[][] constraints,
-      double[] bounds) {
+  private double[] solveQuadraticProgram(double[][] hessian, double[] gradient,
+      double[][] constraints, double[] bounds) {
     int n = gradient.length;
     double[] inverseDiagonal = new double[n];
     for (int i = 0; i < n; i++) {
       double value = hessian[i][i];
       if (value < 1.0e-12) {
-	value = 1.0e-12;
+        value = 1.0e-12;
       }
       inverseDiagonal[i] = 1.0 / value;
     }
@@ -1715,23 +1754,24 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     if (constraintCount > 0) {
       int combinations = 1 << constraintCount;
       for (int mask = 1; mask < combinations; mask++) {
-	if (Integer.bitCount(mask) > n) {
-	  continue;
-	}
-	double[][] activeConstraints = buildActiveMatrix(constraints, mask);
-	double[] activeBounds = buildActiveVector(bounds, mask);
-	double[] candidate = solveEqualityConstrained(inverseDiagonal, gradient, activeConstraints, activeBounds);
-	if (candidate == null) {
-	  continue;
-	}
-	if (!isFeasible(candidate, constraints, bounds)) {
-	  continue;
-	}
-	double objective = objectiveValue(hessian, gradient, candidate);
-	if (objective < bestObjective) {
-	  bestObjective = objective;
-	  bestSolution = candidate;
-	}
+        if (Integer.bitCount(mask) > n) {
+          continue;
+        }
+        double[][] activeConstraints = buildActiveMatrix(constraints, mask);
+        double[] activeBounds = buildActiveVector(bounds, mask);
+        double[] candidate =
+            solveEqualityConstrained(inverseDiagonal, gradient, activeConstraints, activeBounds);
+        if (candidate == null) {
+          continue;
+        }
+        if (!isFeasible(candidate, constraints, bounds)) {
+          continue;
+        }
+        double objective = objectiveValue(hessian, gradient, candidate);
+        if (objective < bestObjective) {
+          bestObjective = objective;
+          bestSolution = candidate;
+        }
       }
     }
 
@@ -1742,24 +1782,24 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     double[] fallback = Arrays.copyOf(unconstrained, n);
     if (constraints != null && bounds != null) {
       for (int row = 0; row < constraints.length; row++) {
-	double[] constraint = constraints[row];
-	double violation = 0.0;
-	for (int i = 0; i < n; i++) {
-	  violation += constraint[i] * fallback[i];
-	}
-	violation -= bounds[row];
-	if (violation > 0.0) {
-	  double norm = 0.0;
-	  for (double coefficient : constraint) {
-	    norm += coefficient * coefficient;
-	  }
-	  if (norm > 1.0e-12) {
-	    double factor = violation / norm;
-	    for (int i = 0; i < n; i++) {
-	      fallback[i] -= factor * constraint[i];
-	    }
-	  }
-	}
+        double[] constraint = constraints[row];
+        double violation = 0.0;
+        for (int i = 0; i < n; i++) {
+          violation += constraint[i] * fallback[i];
+        }
+        violation -= bounds[row];
+        if (violation > 0.0) {
+          double norm = 0.0;
+          for (double coefficient : constraint) {
+            norm += coefficient * coefficient;
+          }
+          if (norm > 1.0e-12) {
+            double factor = violation / norm;
+            for (int i = 0; i < n; i++) {
+              fallback[i] -= factor * constraint[i];
+            }
+          }
+        }
       }
     }
     if (isFeasible(fallback, constraints, bounds)) {
@@ -1780,7 +1820,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     int index = 0;
     for (int row = 0; row < matrix.length; row++) {
       if ((mask & (1 << row)) != 0) {
-	active[index++] = Arrays.copyOf(matrix[row], matrix[row].length);
+        active[index++] = Arrays.copyOf(matrix[row], matrix[row].length);
       }
     }
     return active;
@@ -1795,20 +1835,20 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     int index = 0;
     for (int row = 0; row < vector.length; row++) {
       if ((mask & (1 << row)) != 0) {
-	active[index++] = vector[row];
+        active[index++] = vector[row];
       }
     }
     return active;
   }
 
-  private double[] solveEqualityConstrained(double[] inverseDiagonal, double[] gradient, double[][] constraints,
-      double[] bounds) {
+  private double[] solveEqualityConstrained(double[] inverseDiagonal, double[] gradient,
+      double[][] constraints, double[] bounds) {
     int n = gradient.length;
     int m = constraints.length;
     if (m == 0) {
       double[] solution = new double[n];
       for (int i = 0; i < n; i++) {
-	solution[i] = -inverseDiagonal[i] * gradient[i];
+        solution[i] = -inverseDiagonal[i] * gradient[i];
       }
       return solution;
     }
@@ -1816,11 +1856,11 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     double[][] reduced = new double[m][m];
     for (int row = 0; row < m; row++) {
       for (int col = 0; col < m; col++) {
-	double sum = 0.0;
-	for (int i = 0; i < n; i++) {
-	  sum += constraints[row][i] * inverseDiagonal[i] * constraints[col][i];
-	}
-	reduced[row][col] = sum;
+        double sum = 0.0;
+        for (int i = 0; i < n; i++) {
+          sum += constraints[row][i] * inverseDiagonal[i] * constraints[col][i];
+        }
+        reduced[row][col] = sum;
       }
     }
 
@@ -1828,7 +1868,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     for (int row = 0; row < m; row++) {
       double sum = 0.0;
       for (int i = 0; i < n; i++) {
-	sum += constraints[row][i] * inverseDiagonal[i] * gradient[i];
+        sum += constraints[row][i] * inverseDiagonal[i] * gradient[i];
       }
       rhs[row] = -bounds[row] - sum;
     }
@@ -1842,7 +1882,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     for (int i = 0; i < n; i++) {
       double sum = gradient[i];
       for (int row = 0; row < m; row++) {
-	sum += constraints[row][i] * multipliers[row];
+        sum += constraints[row][i] * multipliers[row];
       }
       solution[i] = -inverseDiagonal[i] * sum;
     }
@@ -1854,48 +1894,9 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     if (n == 0) {
       return new double[0];
     }
-    double[][] augmented = new double[n][n + 1];
-    for (int i = 0; i < n; i++) {
-      System.arraycopy(matrix[i], 0, augmented[i], 0, n);
-      augmented[i][n] = vector[i];
-    }
-
-    for (int pivot = 0; pivot < n; pivot++) {
-      int bestRow = pivot;
-      double bestValue = Math.abs(augmented[pivot][pivot]);
-      for (int row = pivot + 1; row < n; row++) {
-	double value = Math.abs(augmented[row][pivot]);
-	if (value > bestValue) {
-	  bestValue = value;
-	  bestRow = row;
-	}
-      }
-      if (bestValue < 1.0e-12) {
-	return null;
-      }
-      if (bestRow != pivot) {
-	double[] tmp = augmented[pivot];
-	augmented[pivot] = augmented[bestRow];
-	augmented[bestRow] = tmp;
-      }
-      double diagonal = augmented[pivot][pivot];
-      for (int col = pivot; col <= n; col++) {
-	augmented[pivot][col] /= diagonal;
-      }
-      for (int row = 0; row < n; row++) {
-	if (row == pivot) {
-	  continue;
-	}
-	double factor = augmented[row][pivot];
-	for (int col = pivot; col <= n; col++) {
-	  augmented[row][col] -= factor * augmented[pivot][col];
-	}
-      }
-    }
-
     double[] solution = new double[n];
-    for (int i = 0; i < n; i++) {
-      solution[i] = augmented[i][n];
+    if (!LinearAlgebraOps.solveLinearSystem(matrix, vector, solution)) {
+      return null;
     }
     return solution;
   }
@@ -1910,10 +1911,10 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     for (int row = 0; row < constraints.length; row++) {
       double lhs = 0.0;
       for (int i = 0; i < candidate.length; i++) {
-	lhs += constraints[row][i] * candidate[i];
+        lhs += constraints[row][i] * candidate[i];
       }
       if (lhs > bounds[row] + 1.0e-8) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -1947,13 +1948,13 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
 
     double quadratic = sumBetaSquared + controlWeight + moveWeight;
     double linear = 2.0 * sumBetaError - 2.0 * controlWeight * preferredControlValue
-	- 2.0 * moveWeight * previousControl;
+        - 2.0 * moveWeight * previousControl;
 
     if (quadratic < 1.0e-12) {
       if (controlWeight + moveWeight > 0.0) {
-	double weighted = (controlWeight * preferredControlValue + moveWeight * previousControl)
-	    / (controlWeight + moveWeight);
-	return clamp(weighted);
+        double weighted = (controlWeight * preferredControlValue + moveWeight * previousControl)
+            / (controlWeight + moveWeight);
+        return clamp(weighted);
       }
       return clamp(previousControl);
     }
@@ -1962,8 +1963,10 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     if (!Double.isFinite(candidate)) {
       candidate = previousControl;
     }
-    double minBound = Double.isInfinite(minMove) ? Double.NEGATIVE_INFINITY : previousControl + minMove;
-    double maxBound = Double.isInfinite(maxMove) ? Double.POSITIVE_INFINITY : previousControl + maxMove;
+    double minBound =
+        Double.isInfinite(minMove) ? Double.NEGATIVE_INFINITY : previousControl + minMove;
+    double maxBound =
+        Double.isInfinite(maxMove) ? Double.POSITIVE_INFINITY : previousControl + maxMove;
     if (!Double.isInfinite(minBound)) {
       candidate = Math.max(minBound, candidate);
     }
@@ -2012,8 +2015,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   }
 
   /**
-   * Predict future measurements using the internal first-order model assuming the most recent control signal is held
-   * constant.
+   * Predict future measurements using the internal first-order model assuming the most recent
+   * control signal is held constant.
    *
    * @param steps number of steps ahead to predict (must be positive)
    * @param dt sampling interval in seconds
@@ -2027,11 +2030,13 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       throw new IllegalArgumentException("Sample interval must be positive and finite");
     }
     double measurement = Double.isFinite(lastSampledValue) ? lastSampledValue : processBias;
-    double control = Double.isFinite(lastAppliedControl) ? lastAppliedControl : preferredControlValue;
+    double control =
+        Double.isFinite(lastAppliedControl) ? lastAppliedControl : preferredControlValue;
     double tau = Math.max(timeConstant, 1.0e-9);
     double decay = Math.exp(-dt / tau);
     double[] trajectory = new double[steps];
-    double steadyState = processBias + (reverseActing ? -Math.abs(processGain) : processGain) * control;
+    double steadyState =
+        processBias + (reverseActing ? -Math.abs(processGain) : processGain) * control;
     for (int i = 0; i < steps; i++) {
       measurement = decay * measurement + (1.0 - decay) * steadyState;
       trajectory[i] = measurement;

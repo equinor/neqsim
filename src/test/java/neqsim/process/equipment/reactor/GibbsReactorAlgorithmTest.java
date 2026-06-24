@@ -2,6 +2,7 @@ package neqsim.process.equipment.reactor;
 
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
@@ -21,6 +22,7 @@ import org.apache.logging.log4j.Logger;
  * @author Even Solbraa
  * @version $Id: $Id
  */
+@Tag("LinearAlgebra")
 public class GibbsReactorAlgorithmTest {
   private static final Logger logger = LogManager.getLogger(GibbsReactorAlgorithmTest.class);
 

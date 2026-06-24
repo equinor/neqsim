@@ -1,6 +1,7 @@
 package neqsim.process.equipment.network;
 
 import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test;
  * Verifies sparse, dense, and Gaussian methods produce consistent results.
  * </p>
  */
+@Tag("LinearAlgebra")
 class NetworkLinearSolverTest {
 
   @Test

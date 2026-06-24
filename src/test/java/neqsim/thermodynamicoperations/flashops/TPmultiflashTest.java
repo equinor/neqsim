@@ -2,6 +2,7 @@ package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
@@ -13,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 /**
  * @author ESOL
  */
+@Tag("LinearAlgebra")
 class TPmultiflashTest {
   private static final Logger logger = LogManager.getLogger(TPmultiflashTest.class);
 

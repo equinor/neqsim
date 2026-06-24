@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.util.math.LinearAlgebraOps;
 
 /**
  * Broyden's quasi-Newton acceleration method for multi-variable recycle convergence.
@@ -151,7 +152,7 @@ public class BroydenAccelerator implements Serializable {
     }
 
     // Check for sufficient change to update Jacobian
-    double deltaXNorm = vectorNorm(deltaX);
+    double deltaXNorm = LinearAlgebraOps.vectorNorm(deltaX);
     if (deltaXNorm > EPSILON) {
       // Update inverse Jacobian using Sherman-Morrison formula
       updateInverseJacobian(deltaX, deltaF);
@@ -166,7 +167,7 @@ public class BroydenAccelerator implements Serializable {
     }
 
     // Limit step size if needed
-    double stepNorm = vectorNorm(step);
+    double stepNorm = LinearAlgebraOps.vectorNorm(step);
     if (stepNorm > maxStepSize) {
       double scale = maxStepSize / stepNorm;
       for (int i = 0; i < n; i++) {
@@ -271,16 +272,6 @@ public class BroydenAccelerator implements Serializable {
   }
 
   /**
-   * Computes Euclidean norm of a vector.
-   *
-   * @param v the vector
-   * @return norm
-   */
-  private double vectorNorm(double[] v) {
-    return Math.sqrt(dotProduct(v, v));
-  }
-
-  /**
    * Gets the current iteration count.
    *
    * @return iteration count
@@ -381,6 +372,6 @@ public class BroydenAccelerator implements Serializable {
     if (previousF == null) {
       return -1.0;
     }
-    return vectorNorm(previousF);
+    return LinearAlgebraOps.vectorNorm(previousF);
   }
 }

@@ -4,13 +4,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.math.LinearAlgebraOps;
 
 /**
  * Direct cricondenbar calculation using the Michelsen simultaneous Newton method.
  *
  * <p>
- * Finds the maximum pressure point on the phase envelope by solving an (n+2)-dimensional Newton system simultaneously,
- * following the formulation of Michelsen (1980) and Michelsen &amp; Mollerup (2007), Chapter 12.
+ * Finds the maximum pressure point on the phase envelope by solving an (n+2)-dimensional Newton
+ * system simultaneously, following the formulation of Michelsen (1980) and Michelsen &amp; Mollerup
+ * (2007), Chapter 12.
  * </p>
  *
  * <p>
@@ -19,14 +21,14 @@ import neqsim.thermo.system.SystemInterface;
  * <ul>
  * <li>g_i = ln K_i + ln phi_i^V(y,T,P) - ln phi_i^L(x,T,P) = 0, i=1..n (equilibrium)</li>
  * <li>g_{n+1} = sum_i z_i*(K_i - 1)/(1 + beta*(K_i - 1)) = 0 (Rachford-Rice summation)</li>
- * <li>g_{n+2} = S_P = 0 (cricondenbar condition: dT/dP = 0 along envelope, which requires the sensitivity S_P of the
- * envelope equations w.r.t. ln P specification to vanish)</li>
+ * <li>g_{n+2} = S_P = 0 (cricondenbar condition: dT/dP = 0 along envelope, which requires the
+ * sensitivity S_P of the envelope equations w.r.t. ln P specification to vanish)</li>
  * </ul>
  *
  * <p>
- * The full (n+2)x(n+2) Jacobian is built analytically using fugacity coefficient derivatives (d ln phi/dT, d ln phi/dP,
- * d ln phi/dx_j) available from system.init(3). This gives quadratic convergence, typically converging in 3-8
- * iterations from a good initial estimate.
+ * The full (n+2)x(n+2) Jacobian is built analytically using fugacity coefficient derivatives (d ln
+ * phi/dT, d ln phi/dP, d ln phi/dx_j) available from system.init(3). This gives quadratic
+ * convergence, typically converging in 3-8 iterations from a good initial estimate.
  * </p>
  *
  * @author asmund
@@ -58,8 +60,8 @@ public class CricondenBarFlash extends PTphaseEnvelope {
    * @param cricondenBarX liquid phase mole fractions at the cricondenbar estimate
    * @param cricondenBarY vapor phase mole fractions at the cricondenbar estimate
    */
-  public CricondenBarFlash(SystemInterface system, String name, double phaseFraction, double[] cricondenBar,
-      double[] cricondenBarX, double[] cricondenBarY) {
+  public CricondenBarFlash(SystemInterface system, String name, double phaseFraction,
+      double[] cricondenBar, double[] cricondenBarX, double[] cricondenBarY) {
     this.system = system;
     this.nc = system.getPhase(0).getNumberOfComponents();
     this.cricondenBar = cricondenBar;
@@ -84,9 +86,9 @@ public class CricondenBarFlash extends PTphaseEnvelope {
     double[] lnK = new double[nc];
     for (int i = 0; i < nc; i++) {
       if (cricondenBarX[i] > 1.0e-100 && cricondenBarY[i] > 1.0e-100) {
-	lnK[i] = Math.log(cricondenBarY[i] / cricondenBarX[i]);
+        lnK[i] = Math.log(cricondenBarY[i] / cricondenBarX[i]);
       } else {
-	lnK[i] = 0.0;
+        lnK[i] = 0.0;
       }
     }
 
@@ -109,20 +111,21 @@ public class CricondenBarFlash extends PTphaseEnvelope {
       // Check convergence on the norm of g
       double norm = 0.0;
       for (int i = 0; i < nc + 2; i++) {
-	norm += g[i] * g[i];
+        norm += g[i] * g[i];
       }
       norm = Math.sqrt(norm);
 
       if (norm < TOLERANCE) {
-	cricondenBar[0] = T;
-	cricondenBar[1] = P;
-	// Update output compositions
-	for (int i = 0; i < nc; i++) {
-	  cricondenBarX[i] = system.getPhase(0).getComponent(i).getx();
-	  cricondenBarY[i] = system.getPhase(1).getComponent(i).getx();
-	}
-	logger.debug("CricondenBarFlash converged in {} iterations: T={} K, P={} bar, norm={}", iter, T, P, norm);
-	return;
+        cricondenBar[0] = T;
+        cricondenBar[1] = P;
+        // Update output compositions
+        for (int i = 0; i < nc; i++) {
+          cricondenBarX[i] = system.getPhase(0).getComponent(i).getx();
+          cricondenBarY[i] = system.getPhase(1).getComponent(i).getx();
+        }
+        logger.debug("CricondenBarFlash converged in {} iterations: T={} K, P={} bar, norm={}",
+            iter, T, P, norm);
+        return;
       }
 
       // Build the (n+2)x(n+2) Jacobian
@@ -131,42 +134,44 @@ public class CricondenBarFlash extends PTphaseEnvelope {
       // Solve J * delta = -g using Gaussian elimination
       double[] delta = solveLinearSystem(jac, g);
       if (delta == null) {
-	logger.warn("CricondenBarFlash: singular Jacobian at iter {}. Keeping envelope estimate.", iter);
-	break;
+        logger.warn("CricondenBarFlash: singular Jacobian at iter {}. Keeping envelope estimate.",
+            iter);
+        break;
       }
 
       // Damp the step if too large
       double maxDelta = 0.0;
       for (int i = 0; i < nc + 2; i++) {
-	if (Math.abs(delta[i]) > maxDelta) {
-	  maxDelta = Math.abs(delta[i]);
-	}
+        if (Math.abs(delta[i]) > maxDelta) {
+          maxDelta = Math.abs(delta[i]);
+        }
       }
       double damping = 1.0;
       if (maxDelta > MAX_STEP) {
-	damping = MAX_STEP / maxDelta;
+        damping = MAX_STEP / maxDelta;
       }
 
       // Apply updates
       for (int i = 0; i < nc; i++) {
-	lnK[i] += damping * delta[i];
+        lnK[i] += damping * delta[i];
       }
       lnT += damping * delta[nc];
       lnP += damping * delta[nc + 1];
 
       // Safety checks
       if (Math.exp(lnT) < 20.0 || Math.exp(lnT) > 2000.0) {
-	logger.warn("CricondenBarFlash: T out of range after update. Reverting.");
-	break;
+        logger.warn("CricondenBarFlash: T out of range after update. Reverting.");
+        break;
       }
       if (Math.exp(lnP) < 0.01 || Math.exp(lnP) > 5000.0) {
-	logger.warn("CricondenBarFlash: P out of range after update. Reverting.");
-	break;
+        logger.warn("CricondenBarFlash: P out of range after update. Reverting.");
+        break;
       }
     }
 
     // Did not converge - keep the best estimate from envelope tracing
-    logger.warn("CricondenBarFlash did not converge. Keeping envelope estimate T={} K, P={} bar", Tini, Pini);
+    logger.warn("CricondenBarFlash did not converge. Keeping envelope estimate T={} K, P={} bar",
+        Tini, Pini);
     cricondenBar[0] = Tini;
     cricondenBar[1] = Pini;
   }
@@ -205,9 +210,9 @@ public class CricondenBarFlash extends PTphaseEnvelope {
    * Build the (n+2) residual vector for the Michelsen cricondenbar formulation.
    *
    * <p>
-   * g_i = ln K_i + ln phi_i^V - ln phi_i^L, i=0..n-1 (equilibrium) g_n = sum_i z_i*(K_i-1)/(1+beta*(K_i-1))
-   * (Rachford-Rice) g_{n+1} = S_P = sum_i (dg_i/d(lnT)) * s_i (cricondenbar condition) where s_i = -dg_i/d(lnP) is the
-   * sensitivity coefficient
+   * g_i = ln K_i + ln phi_i^V - ln phi_i^L, i=0..n-1 (equilibrium) g_n = sum_i
+   * z_i*(K_i-1)/(1+beta*(K_i-1)) (Rachford-Rice) g_{n+1} = S_P = sum_i (dg_i/d(lnT)) * s_i
+   * (cricondenbar condition) where s_i = -dg_i/d(lnP) is the sensitivity coefficient
    * </p>
    *
    * @param lnK array of ln(K_i) values
@@ -267,7 +272,7 @@ public class CricondenBarFlash extends PTphaseEnvelope {
     snorm = Math.sqrt(snorm);
     if (snorm > 1.0e-30) {
       for (int i = 0; i < nc; i++) {
-	si[i] /= snorm;
+        si[i] /= snorm;
       }
     }
 
@@ -345,34 +350,34 @@ public class CricondenBarFlash extends PTphaseEnvelope {
 
       // dg_i/dlnK_j
       for (int j = 0; j < nc; j++) {
-	double dlnPhiV_dyj = system.getPhase(1).getComponent(i).getdfugdx(j);
-	double dlnPhiL_dxj = system.getPhase(0).getComponent(i).getdfugdx(j);
+        double dlnPhiV_dyj = system.getPhase(1).getComponent(i).getdfugdx(j);
+        double dlnPhiL_dxj = system.getPhase(0).getComponent(i).getdfugdx(j);
 
-	// dy_j/dlnK_j = y_j * (1 - y_j) for beta near 1 (dew point)
-	// dx_j/dlnK_j = -x_j * y_j for beta near 1 (from RR differentiation)
-	// General: dy_j/dlnK_j = K_j * z_j * (1-beta) / denom^2 = y_j * (1 - betaVal) * K_j / denom
-	double denomj = 1.0 - betaVal + betaVal * Ki[j];
-	double dyjdlnKj = Ki[j] * zi[j] * (1.0 - betaVal) / (denomj * denomj);
-	double dxjdlnKj = -Ki[j] * zi[j] * betaVal * Ki[j] / (denomj * denomj);
-	// Wait, let me be more careful:
-	// y_j = z_j * K_j / (1 - beta + beta*K_j)
-	// dy_j/dK_j = z_j * (1 - beta) / (1 - beta + beta*K_j)^2
-	// dy_j/dlnK_j = K_j * dy_j/dK_j = z_j * K_j * (1-beta) / denom^2
-	// x_j = z_j / (1 - beta + beta*K_j)
-	// dx_j/dK_j = -z_j * beta / (1 - beta + beta*K_j)^2
-	// dx_j/dlnK_j = K_j * dx_j/dK_j = -z_j * beta * K_j / denom^2
+        // dy_j/dlnK_j = y_j * (1 - y_j) for beta near 1 (dew point)
+        // dx_j/dlnK_j = -x_j * y_j for beta near 1 (from RR differentiation)
+        // General: dy_j/dlnK_j = K_j * z_j * (1-beta) / denom^2 = y_j * (1 - betaVal) * K_j / denom
+        double denomj = 1.0 - betaVal + betaVal * Ki[j];
+        double dyjdlnKj = Ki[j] * zi[j] * (1.0 - betaVal) / (denomj * denomj);
+        double dxjdlnKj = -Ki[j] * zi[j] * betaVal * Ki[j] / (denomj * denomj);
+        // Wait, let me be more careful:
+        // y_j = z_j * K_j / (1 - beta + beta*K_j)
+        // dy_j/dK_j = z_j * (1 - beta) / (1 - beta + beta*K_j)^2
+        // dy_j/dlnK_j = K_j * dy_j/dK_j = z_j * K_j * (1-beta) / denom^2
+        // x_j = z_j / (1 - beta + beta*K_j)
+        // dx_j/dK_j = -z_j * beta / (1 - beta + beta*K_j)^2
+        // dx_j/dlnK_j = K_j * dx_j/dK_j = -z_j * beta * K_j / denom^2
 
-	// Only j==j terms are non-zero for compositions (diagonal in K-space)
-	if (i == j) {
-	  jac[i][j] = 1.0 + dlnPhiV_dyj * dyjdlnKj - dlnPhiL_dxj * dxjdlnKj;
-	} else {
-	  // Cross-terms through composition dependence of fugacity coefficients
-	  // dy_j/dlnK_i = 0 for j != i (each K only affects its own component directly)
-	  // But: fugacity of component i depends on ALL mole fractions
-	  // The cross-term is:
-	  // dg_i/dlnK_j = dlnPhiV_i/dy_j * dy_j/dlnK_j - dlnPhiL_i/dx_j * dx_j/dlnK_j
-	  jac[i][j] = dlnPhiV_dyj * dyjdlnKj - dlnPhiL_dxj * dxjdlnKj;
-	}
+        // Only j==j terms are non-zero for compositions (diagonal in K-space)
+        if (i == j) {
+          jac[i][j] = 1.0 + dlnPhiV_dyj * dyjdlnKj - dlnPhiL_dxj * dxjdlnKj;
+        } else {
+          // Cross-terms through composition dependence of fugacity coefficients
+          // dy_j/dlnK_i = 0 for j != i (each K only affects its own component directly)
+          // But: fugacity of component i depends on ALL mole fractions
+          // The cross-term is:
+          // dg_i/dlnK_j = dlnPhiV_i/dy_j * dy_j/dlnK_j - dlnPhiL_i/dx_j * dx_j/dlnK_j
+          jac[i][j] = dlnPhiV_dyj * dyjdlnKj - dlnPhiL_dxj * dxjdlnKj;
+        }
       }
     }
 
@@ -400,7 +405,7 @@ public class CricondenBarFlash extends PTphaseEnvelope {
     snorm = Math.sqrt(snorm);
     if (snorm > 1.0e-30) {
       for (int i = 0; i < nc; i++) {
-	si[i] /= snorm;
+        si[i] /= snorm;
       }
     }
 
@@ -482,8 +487,8 @@ public class CricondenBarFlash extends PTphaseEnvelope {
   }
 
   /**
-   * Compute S_P = sum_i s_i * T * (dlnPhiV_i/dT - dlnPhiL_i/dT) where s_i = (y_i - x_i) normalized. This is the
-   * cricondenbar specification function.
+   * Compute S_P = sum_i s_i * T * (dlnPhiV_i/dT - dlnPhiL_i/dT) where s_i = (y_i - x_i) normalized.
+   * This is the cricondenbar specification function.
    *
    * @param T temperature in K
    * @return the value of S_P
@@ -498,7 +503,7 @@ public class CricondenBarFlash extends PTphaseEnvelope {
     snorm = Math.sqrt(snorm);
     if (snorm > 1.0e-30) {
       for (int i = 0; i < nc; i++) {
-	si[i] /= snorm;
+        si[i] /= snorm;
       }
     }
 
@@ -520,49 +525,13 @@ public class CricondenBarFlash extends PTphaseEnvelope {
    */
   private double[] solveLinearSystem(double[][] jac, double[] g) {
     int n = g.length;
-    double[][] a = new double[n][n + 1];
+    double[] rhs = new double[n];
     for (int i = 0; i < n; i++) {
-      System.arraycopy(jac[i], 0, a[i], 0, n);
-      a[i][n] = -g[i];
+      rhs[i] = -g[i];
     }
-
-    // Forward elimination with partial pivoting
-    for (int col = 0; col < n; col++) {
-      // Find pivot
-      int maxRow = col;
-      double maxVal = Math.abs(a[col][col]);
-      for (int row = col + 1; row < n; row++) {
-	if (Math.abs(a[row][col]) > maxVal) {
-	  maxVal = Math.abs(a[row][col]);
-	  maxRow = row;
-	}
-      }
-      if (maxVal < 1.0e-30) {
-	return null; // singular
-      }
-      // Swap rows
-      if (maxRow != col) {
-	double[] tmp = a[col];
-	a[col] = a[maxRow];
-	a[maxRow] = tmp;
-      }
-      // Eliminate
-      for (int row = col + 1; row < n; row++) {
-	double factor = a[row][col] / a[col][col];
-	for (int k = col; k <= n; k++) {
-	  a[row][k] -= factor * a[col][k];
-	}
-      }
-    }
-
-    // Back substitution
     double[] delta = new double[n];
-    for (int i = n - 1; i >= 0; i--) {
-      double sum = a[i][n];
-      for (int j = i + 1; j < n; j++) {
-	sum -= a[i][j] * delta[j];
-      }
-      delta[i] = sum / a[i][i];
+    if (!LinearAlgebraOps.solveLinearSystem(jac, rhs, delta)) {
+      return null;
     }
     return delta;
   }
