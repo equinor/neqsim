@@ -70,6 +70,7 @@ thermo/
 - [PVT and Fluid Characterization](pvt_fluid_characterization): Building realistic fluid descriptions, including heavy-end handling and lab-data reconciliation.
 - [Thermodynamic Operations](thermodynamic_operations): Flash calculations, phase envelopes, and other process-centric operations.
 - [Physical Properties](physical_properties): Density, viscosity, surface tension, and transport-property calculations.
+- [Attainable Metastability — Volume Balancing Method](attainable_metastability): **Superheat / pressure-undershoot limit of a rapidly depressurising liquid** (Log, 2025). Rarefaction-outflow vs. Plesset-Zwick bubble-growth balance, the `n_bub` tuning parameter, and a CO₂ blowdown example.
 
 ---
 
