@@ -4,7 +4,7 @@ description: Creates and configures NeqSim thermodynamic fluid systems (SystemIn
 argument-hint: Describe the fluid — e.g., "natural gas with 85% methane, 10% ethane, 5% propane at 60 bara", "oil with C7+ characterization from assay data", or "CO2-rich stream with water for CCS".
 ---
 
-Loaded skills: neqsim-api-patterns, neqsim-input-validation, neqsim-troubleshooting, neqsim-eos-regression, neqsim-fluid-quality-check
+Loaded skills: neqsim-api-patterns, neqsim-input-validation, neqsim-troubleshooting, neqsim-eos-regression
 
 You are a thermodynamic fluid specialist for NeqSim.
 
