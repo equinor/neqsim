@@ -11,10 +11,43 @@
 # Stages marked [SKIP:<types>] are skipped for those paper types.
 
 workflow_name: "new_paper"
-version: "2.0"
-description: "Create a scientific paper from idea to submission package"
+version: "2.1"
+description: "Create a professional scientific paper from opportunity discovery to submission package"
 
 stages:
+
+  # ------------------------------------------------------------------
+  # Stage 0: Opportunity and journal positioning
+  # ------------------------------------------------------------------
+  - name: "opportunity_mining"
+    agent: "paper_opportunity_miner"
+    description: "Mine NeqSim code, tests, books, and existing papers for ranked publication opportunities"
+    inputs:
+      - NeqSim source tree
+      - existing PaperLab papers and books
+      - changelog and recent commits
+    outputs:
+      - publication_opportunities.md
+      - opportunity_rankings.json
+      - recommended_pipeline.yaml
+    validation:
+      - opportunity_rankings.json contains ranked opportunities with novelty, evidence, and implementation impact
+      - Each recommended opportunity states the NeqSim improvement the paper would drive
+
+  - name: "journal_positioning"
+    agent: "journal_fit_strategist"
+    description: "Select target journals and position the strongest opportunity before detailed planning"
+    inputs:
+      - publication_opportunities.md
+      - opportunity_rankings.json
+      - journal profiles
+    outputs:
+      - journal_fit_report.md
+      - journal_ranking.json
+      - positioning_brief.md
+    validation:
+      - journal_ranking.json lists at least 3 target venues or documents why fewer are appropriate
+      - positioning_brief.md states audience, novelty angle, paper type, and risk factors
 
   # ------------------------------------------------------------------
   # Stage 1: Plan
@@ -27,6 +60,7 @@ stages:
       - journal: "from user"
       - novelty_angle: "from user"
       - paper_type: "from user (comparative|characterization|method|application)"
+      - positioning_brief.md
     outputs:
       - plan.json           # must include paper_type field
       - outline.md
@@ -35,6 +69,25 @@ stages:
       - plan.json exists and has research_questions and paper_type
       - benchmark_config.json has at least 3 test categories
       - All proposed components are in NeqSim database
+
+  # ------------------------------------------------------------------
+  # Stage 1.5: Hypothesis and benchmark matrix
+  # ------------------------------------------------------------------
+  - name: "hypothesis_benchmark_design"
+    agent: "hypothesis_benchmark_compiler"
+    description: "Turn research questions into falsifiable hypotheses, benchmark cases, and statistical tests"
+    inputs:
+      - plan.json
+      - outline.md
+      - benchmark_config.json
+    outputs:
+      - hypothesis_matrix.json
+      - benchmark_design.md
+      - statistical_test_plan.md
+    validation:
+      - Every research question maps to at least one hypothesis and one measurable output
+      - benchmark_design.md defines datasets, ranges, acceptance criteria, and failure handling
+      - statistical_test_plan.md defines comparison metrics and pass/fail thresholds before results are known
 
   # ------------------------------------------------------------------
   # Stage 2: Literature
@@ -61,6 +114,26 @@ stages:
       - gap_statement.md is specific and falsifiable (if produced)
 
   # ------------------------------------------------------------------
+  # Stage 2.5: Reference data curation
+  # ------------------------------------------------------------------
+  - name: "reference_data_curation"
+    agent: "dataset_and_reference_curator"
+    description: "Curate validation datasets, source provenance, and normalized reference data before benchmarking"
+    inputs:
+      - refs.bib
+      - literature_map.md
+      - benchmark_design.md
+      - statistical_test_plan.md
+    outputs:
+      - reference_data_manifest.json
+      - reference_data/
+      - reference_data_notes.md
+    validation:
+      - reference_data_manifest.json records source, license/access status, units, uncertainty, and transformation history
+      - Normalized reference data use SI units and retain raw-source traceability
+      - Any restricted or missing datasets are listed as explicit limitations
+
+  # ------------------------------------------------------------------
   # Stage 3: Algorithm Analysis  [SKIP: application]
   # ------------------------------------------------------------------
   - name: "algorithm_analysis"
@@ -78,6 +151,25 @@ stages:
       # comparative/method: at least one improvement proposed
       # characterization: analysis.md documents algorithm behavior and edge cases
       - analysis.md describes the algorithm under study
+
+  # ------------------------------------------------------------------
+  # Stage 3.5: Derivation verification
+  # ------------------------------------------------------------------
+  - name: "derivation_verification"
+    agent: "mathematical_derivation_verifier"
+    skip_for: ["application"]
+    description: "Verify equations, units, limiting cases, assumptions, and code linkage before implementation or writing"
+    inputs:
+      - algorithm/analysis.md
+      - algorithm/implementation_notes.md
+      - hypothesis_matrix.json
+      - reference_data_manifest.json
+    outputs:
+      - derivation_audit.json
+      - derivation_verification_report.md
+    validation:
+      - derivation_audit.json lists every core equation with symbol, unit, assumption, and code-reference status
+      - No BLOCKER derivation, dimensional, or notation findings remain before manuscript drafting
 
   # ------------------------------------------------------------------
   # Stage 4: Implementation  [SKIP: characterization, application]
@@ -111,6 +203,8 @@ stages:
     description: "Run computational experiments per benchmark_config"
     inputs:
       - benchmark_config.json
+      - hypothesis_matrix.json
+      - reference_data_manifest.json
       - plan.json                       # for paper_type
       - Git branch from implementation  # [only for comparative/method]
     outputs:
@@ -174,15 +268,15 @@ stages:
     inputs:
       - plan.json
       - refs.bib
+      - positioning_brief.md
+      - hypothesis_matrix.json
+      - derivation_verification_report.md
       - algorithm/analysis.md           # [if produced]
       - algorithm/implementation_notes.md  # [if produced]
       - approved_claims.json            # [comparative/method]
       - results.json                    # [characterization/application]
       - validation_report.md
-      - results.json                    # [characterization/application]
-      - validation_report.md
       - results/
-      - refs.bib
     outputs:
       - paper.md
       - claims_manifest.json  # [comparative: full tracing; others: summary only]
@@ -203,6 +297,46 @@ stages:
       # characterization/application: results.json key_results are referenced in text
 
   # ------------------------------------------------------------------
+  # Stage 8.5: Simulated review and replication package
+  # ------------------------------------------------------------------
+  - name: "simulated_review"
+    agent: "reviewer_simulator_panel"
+    description: "Run a multi-reviewer critique before journal formatting"
+    inputs:
+      - paper.md
+      - claims_manifest.json
+      - validation_report.md
+      - journal_fit_report.md
+      - figures/
+      - refs.bib
+    outputs:
+      - simulated_review_round.md
+      - required_fixes.json
+      - editorial_risk_score.json
+    validation:
+      - required_fixes.json contains zero unresolved BLOCKER items before formatting
+      - editorial_risk_score.json identifies novelty, rigor, reproducibility, and fit risks
+
+  - name: "replication_package"
+    agent: "replication_package_engineer"
+    description: "Build the reviewer-ready reproducibility capsule before final submission"
+    inputs:
+      - results/raw/
+      - results/summary.json
+      - benchmark_config.json
+      - benchmark_design.md
+      - figures/
+      - paper.md
+    outputs:
+      - replication_package/
+      - reproducibility_manifest.json
+      - replication_readme.md
+    validation:
+      - reproducibility_manifest.json lists raw data, scripts, notebooks, seeds, software versions, and git commit
+      - replication_readme.md explains how to regenerate core tables and figures from raw data
+      - Any non-redistributable data are represented by documented retrieval instructions or safe fixtures
+
+  # ------------------------------------------------------------------
   # Stage 9: Format
   # ------------------------------------------------------------------
   - name: "format"
@@ -213,6 +347,8 @@ stages:
       - journal profile YAML
       - figures/
       - refs.bib
+      - simulated_review_round.md
+      - reproducibility_manifest.json
     tools:
       - "paperflow.py validate-figures — check figure DPI, format, size, color"
       - "paperflow.py validate-bib — check bibliography completeness"
@@ -258,4 +394,6 @@ stages:
       # characterization: every key result traceable to results.json/results.jsonl
       - Git commit hashes match benchmark metadata
       - Random seeds documented (if applicable)
+      - No unresolved BLOCKER items remain in required_fixes.json
+      - Reproducibility manifest covers every table and figure used in the manuscript
     gate: "human_approval"  # Final sign-off before submission

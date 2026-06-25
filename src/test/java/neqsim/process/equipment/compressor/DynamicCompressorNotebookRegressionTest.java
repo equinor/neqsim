@@ -57,22 +57,22 @@ class DynamicCompressorNotebookRegressionTest {
   @Test
   void pressureControllerReachesDischargePressureSetpoint() {
     DynamicCompressorProcess model = createNotebookStyleProcess(true);
-    double pressureSetpoint = 19.5;
+    double pressureSetpoint = 22.0;
 
     PressureTransmitter dischargePressureTransmitter =
         new PressureTransmitter("PT discharge", model.dischargeSeparator.getGasOutStream());
     ControllerDeviceBaseClass pressureController = new ControllerDeviceBaseClass("PC discharge");
     pressureController.setTransmitter(dischargePressureTransmitter);
     pressureController.setControllerSetPoint(pressureSetpoint, "bara");
-    pressureController.setReverseActing(false);
+    pressureController.setReverseActing(true);
     pressureController.setOutputLimits(8600.0, 12200.0);
-    pressureController.setControllerParameters(650.0, 20.0, 0.0);
+    pressureController.setControllerParameters(300.0, 25.0, 0.0);
     model.compressor.addController("PC discharge", pressureController);
 
     runTransientSteps(model.process, 160);
     double controlledPressure = model.dischargeSeparator.getGasOutStream().getPressure("bara");
 
-    assertTrue(Math.abs(controlledPressure - pressureSetpoint) < 1.0,
+    assertTrue(Math.abs(controlledPressure - pressureSetpoint) < 0.5,
         "discharge pressure controller should reach setpoint: setpoint=" + pressureSetpoint
             + " bara, final=" + controlledPressure + " bara, speed=" + model.compressor.getSpeed());
   }
@@ -143,7 +143,7 @@ class DynamicCompressorNotebookRegressionTest {
     ThrottlingValve dischargeValve =
         new ThrottlingValve("discharge valve", dischargeSeparator.getGasOutStream());
     dischargeValve.setOutletPressure(15.0, "bara");
-    dischargeValve.setCv(2000.0);
+    dischargeValve.setCv(dynamicValvePressureCalculation ? 2000.0 : 1200.0);
     dischargeValve.setPercentValveOpening(55.0);
     dischargeValve.setIsCalcOutPressure(dynamicValvePressureCalculation);
 

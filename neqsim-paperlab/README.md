@@ -71,7 +71,10 @@ python paperflow.py iterate papers/my_paper/ --check all
 #   writing     — abstract word count, software-centric language
 ```
 
-**See [WALKTHROUGH.md](WALKTHROUGH.md) for a complete end-to-end example.**
+**See [WALKTHROUGH.md](WALKTHROUGH.md) for a complete end-to-end example.** For
+submission-grade manuscripts, use
+[PROFESSIONAL_PAPER_GOLDEN_PATH.md](PROFESSIONAL_PAPER_GOLDEN_PATH.md), which
+wires the specialist agents into the formal workflow gates.
 
 ## Architecture
 
