@@ -943,6 +943,9 @@ For advanced control, use the `CharacterizationOptions` builder:
 ```java
 import neqsim.thermo.characterization.CharacterizationOptions;
 import neqsim.thermo.characterization.CharacterizationOptions.NamingScheme;
+import neqsim.thermo.characterization.CharacterizationOptions.DelumpBinningBasis;
+import neqsim.thermo.characterization.CharacterizationOptions.DelumpGammaScope;
+import neqsim.thermo.characterization.CharacterizationOptions.DelumpConservation;
 
 CharacterizationOptions options = CharacterizationOptions.builder()
     .transferBinaryInteractionParameters(true)  // Copy BIPs from reference
@@ -952,6 +955,9 @@ CharacterizationOptions options = CharacterizationOptions.builder()
     .inheritReferenceProperties(true)           // Inherit reference lump properties
     .delumpBeforeRecharacterization(false)      // Split source lumps before re-binning
     .delumpResolution(12)                        // Sub-fractions per source lump
+    .delumpBinningBasis(DelumpBinningBasis.MOLAR_MASS)   // Bin sub-fractions on molar mass
+    .delumpGammaScope(DelumpGammaScope.NEIGHBOURS)       // Local Whitson gamma per lump
+    .delumpConservation(DelumpConservation.BOTH)         // Conserve moles and mass
     .sharedImaginaryBoundaries(false)           // Equal-mass reference cut points
     .build();
 
@@ -966,9 +972,13 @@ SystemInterface matched = PseudoComponentCombiner.characterizeToReference(
 | `namingScheme` | Use SOURCE, REFERENCE, or MERGED names | `REFERENCE` |
 | `generateValidationReport` | Generate validation report | `false` |
 | `inheritReferenceProperties` | Inherit the reference lump properties (molar mass, density, critical constants). When `false`, lump properties are recomputed from the source mass on the reference cut grid | `true` |
-| `delumpBeforeRecharacterization` | Split each coarse source lump into finer single-carbon-number sub-fractions before re-binning onto the reference cuts (Pedersen Ch. 5 delumping). Conserves source moles and mass exactly | `false` |
+| `delumpBeforeRecharacterization` | Split each coarse source lump into finer single-carbon-number sub-fractions before re-binning onto the reference cuts (Pedersen Ch. 5 delumping). Each parent lump is delumped only inside its own neighbour-bounded carbon range using a fitted Whitson gamma molar distribution | `false` |
 | `delumpResolution` | Number of sub-fractions per source lump when delumping (also the fine grid for equal-mass reference boundaries). Values ≤ 1 disable splitting | `12` |
+| `delumpBinningBasis` | Basis on which delumped sub-fractions are binned onto the reference cuts: `MOLAR_MASS` (the conserved, monotonic quantity on which the Pedersen molar distribution is defined) or `BOILING_POINT` (legacy sorting-key behaviour). Applied only when delumping is on | `MOLAR_MASS` |
+| `delumpGammaScope` | Scope of the Whitson gamma molar-distribution fit used to shape the delumping: `NEIGHBOURS` (a local gamma per lump fitted from its immediate neighbours) or `GLOBAL` (one gamma fitted to the whole C7+ slate) | `NEIGHBOURS` |
+| `delumpConservation` | Quantity conserved exactly per parent lump when delumping: `BOTH` (moles and mass), `MOLES` (moles only, mass floats), or `MASS` (mass only, moles float) | `BOTH` |
 | `sharedImaginaryBoundaries` | Place reference cut boundaries as carbon-number **equal-mass** cut points on the reference's imaginary (delumped) composition (Pedersen Ch. 5.6, Eqs. 5.58–5.59) instead of boiling-point midpoints | `false` |
+| `referenceBoundaryMode` | How each reference cut boundary is placed between adjacent cut keys: `MIDPOINT` (arithmetic midpoint of the two cut keys) or `CENTROID_SPAN` (each cut key is required to be the centroid of its own span). `CENTROID_SPAN` is linear in molar mass and therefore applied only on the `MOLAR_MASS` basis; the boiling-point basis falls back to `MIDPOINT` | `MIDPOINT` |
 
 #### Property inheritance vs. recomputation (`inheritReferenceProperties`)
 
@@ -976,13 +986,35 @@ The **Common EoS** slate of Pedersen Ch. 5.6 requires every fluid characterized 
 
 #### Delumping before re-characterization (`delumpBeforeRecharacterization`)
 
-When a field's native lumps already sit close to the reference grid, the naive source→reference mapping is effectively the identity: lump mole fractions are frozen and per-cut mass is not conserved against the reference molar masses. Enabling `delumpBeforeRecharacterization(true)` first splits each parent lump into `delumpResolution` single-carbon-number sub-fractions whose moles and mass **exactly** reproduce the parent (a single linear molar-mass rescale enforces $\sum_k n_k M_k = n_\text{parent} M_\text{parent}$). The boiling point spreads monotonically with molar mass so sub-fractions can cross reference cut boundaries; density and critical constants stay at the parent values. The sub-fractions are then re-lumped onto the reference grid, so each cut's molar mass = mass / moles is recomputed self-consistently. This is most effective with `inheritReferenceProperties(false)`; combining it with `inheritReferenceProperties(true)` logs a warning because the reference values still overwrite the redistributed lump properties.
+When a field's native lumps already sit close to the reference grid, the naive source→reference mapping is effectively the identity: lump mole fractions are frozen and per-cut mass is not conserved against the reference molar masses. Enabling `delumpBeforeRecharacterization(true)` first splits each parent lump into `delumpResolution` single-carbon-number sub-fractions, then re-lumps them onto the reference grid so each cut's molar mass = mass / moles is recomputed self-consistently. The delumping follows the Pedersen et al. (Chapter 5) scheme faithfully:
+
+1. **Neighbour-bounded carbon range, not a fixed window.** Each parent lump is mapped to a carbon number with the Pedersen molar-mass relation (Eq. 5.27 inverted), $C = (M_{[\text{g/mol}]} + 4)/14$. The sub-fraction interval runs from the carbon-number **midpoint to the lower neighbour** to the **midpoint to the upper neighbour** (first/last lumps mirror their one available gap to the open side). Sub-fractions therefore never cross into a neighbour's range and never fabricate material outside the lump — replacing the earlier arbitrary fixed ±40 % molar-mass window that smeared a lump across carbon numbers it does not contain.
+
+2. **Whitson gamma molar distribution on the molar-mass axis.** The mole split is shaped by a shifted gamma distribution (Whitson 1983; Pedersen Eq. 5.27) fitted by the method of moments — locally per lump from its immediate neighbours (`delumpGammaScope = NEIGHBOURS`, default) or once over the whole C7+ slate (`GLOBAL`). The gamma is sliced between the single-carbon-number cell molar-mass edges: each cell's mole weight is the gamma probability mass and its molar mass is the gamma conditional mean over the cell (closed form via the regularized lower incomplete gamma function). A fitted gamma is **unimodal** (rises to a mode, then decays) rather than strictly monotonic. When a gamma cannot be fitted (degenerate variance, isolated lump) the method falls back to Pedersen's exponential molar distribution (Eq. 5.15, $\ln z = A + B\,C$) on the cell-centred grid.
+
+3. **Molar mass and boiling point from non-linear correlations.** Sub-fraction molar masses come from the gamma fit (Eq. 5.27), and normal boiling points from the non-linear Katz–Firoozabadi correlation (Eq. 5.28), $T_b = 97.58\,M^{0.3323}\rho^{0.04609}$ — **not** a $T_b \propto M$ linear spread. When the parent has a boiling point its Katz–Firoozabadi shape is anchored to the parent value, $T_{b,k} = T_{b,\text{parent}}\,\kappa(M_k)/\kappa(M_\text{parent})$, keeping the sub-fractions on the parent/reference boiling-point scale while preserving the non-linear carbon-number dependence. Density and critical constants stay at the parent values.
+
+4. **User-selectable conservation closure (Eqs. 5.35–5.37).** `delumpConservation` selects what is conserved exactly per parent lump: `BOTH` (default) normalizes the mole weights ($\sum_k n_k = n_\text{parent}$) and rescales the gamma molar masses so $\sum_k n_k M_k = n_\text{parent} M_\text{parent}$ to $10^{-9}$; `MOLES` keeps the gamma molar masses unscaled and lets the mass float; `MASS` rescales the moles so the mass is conserved exactly and lets the moles float.
+
+The re-binning uses `delumpBinningBasis` (default `MOLAR_MASS`, the conserved monotonic quantity) to place sub-fractions onto the reference cuts. Delumping is most effective with `inheritReferenceProperties(false)`; combining it with `inheritReferenceProperties(true)` logs a warning because the reference values still overwrite the redistributed lump properties.
+
+The same neighbour-aware delumping also drives the imaginary-composition cut placement used by `sharedImaginaryBoundaries(true)`, so that path benefits from the gamma shape too.
 
 #### Equal-mass reference boundaries (`sharedImaginaryBoundaries`)
 
 By default the reference cut boundaries are the arithmetic boiling-point midpoints between adjacent reference lumps, which ignores how much mass each lump represents. With `sharedImaginaryBoundaries(true)` the reference is first rebuilt into a fine single-carbon-number "imaginary" composition (using `delumpResolution`) and the cut points are placed so each cut carries an **equal mass fraction** — the reference-only (NFLUID = 1) form of the Pedersen Ch. 5.6 common-slate rule (Eqs. 5.58–5.59 with §5.3 cut criterion). Each equal-mass cut is then *clamped* into the gap between the two adjacent reference pseudo-components, guaranteeing every reference lump stays inside its own cut so the one-to-one property inheritance is preserved even when the reference lumps carry unequal mass. With `delumpResolution ≤ 1` it falls back to boiling-point midpoints.
 
 > **Why reference-only here?** `characterizeToReference` inherits the trusted reference's lump properties one-to-one, so the reference fluid is the correct authority for the grid. The pooled multi-fluid imaginary composition of Eqs. 5.58–5.59 remains used by `characterizeToCommonSlate` (free new slate); applying it to the inherit-from-fixed-reference path would break the inherit alignment.
+
+#### Span-aware reference boundaries (`referenceBoundaryMode`)
+
+The default `MIDPOINT` rule places each cut edge at the arithmetic midpoint of the two adjacent reference cut keys. That midpoint of the means is the true span edge only when neighbouring cuts have *equal width*; when a narrow cut sits next to a much wider one, the midpoint is biased toward the wider cut and material that physically belongs to the heavy cut is mis-binned into the narrow neighbour. With `referenceBoundaryMode(ReferenceBoundaryMode.CENTROID_SPAN)` each cut key is instead required to be the **centroid of its own span**: walking light→heavy from the anchor $b_0 = \text{key}_0 - \tfrac{1}{2}(\text{key}_1 - \text{key}_0)$, each successive boundary follows the recurrence
+
+$$
+b_i = 2\,\text{key}_i - b_{i-1},
+$$
+
+so that $\text{key}_i = \tfrac{1}{2}(b_{i-1} + b_i)$ holds exactly. Every boundary is then *clamped* strictly between its two adjacent cut keys (falling back to the midpoint if the recurrence would overshoot a neighbour), preserving the one-to-one inheritance guarantee. The recurrence is linear in molar mass, so `CENTROID_SPAN` is only applied on the `MOLAR_MASS` basis (i.e. with delumping on and `delumpBinningBasis(MOLAR_MASS)`); the boiling-point basis falls back to the midpoint rule. The default stays `MIDPOINT`, so existing results are unchanged unless the mode is set explicitly.
 
 ### Common Slate for Multiple Fluids (`characterizeToCommonSlate`)
 

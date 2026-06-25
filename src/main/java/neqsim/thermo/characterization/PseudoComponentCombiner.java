@@ -9,8 +9,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.apache.commons.math3.special.Gamma;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.characterization.CharacterizationOptions.DelumpBinningBasis;
+import neqsim.thermo.characterization.CharacterizationOptions.DelumpConservation;
+import neqsim.thermo.characterization.CharacterizationOptions.DelumpGammaScope;
+import neqsim.thermo.characterization.CharacterizationOptions.ReferenceBoundaryMode;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface;
 import neqsim.thermo.phase.PhaseEos;
@@ -162,7 +167,8 @@ public final class PseudoComponentCombiner {
    * @return characterized fluid containing pseudo components compatible with the reference fluid
    */
   public static SystemInterface characterizeToReference(SystemInterface source, SystemInterface reference) {
-    return characterizeToReferenceCore(source, reference, false, false, 0, false);
+    return characterizeToReferenceCore(source, reference, false, false, 0, false, DelumpBinningBasis.MOLAR_MASS,
+	DelumpGammaScope.NEIGHBOURS, DelumpConservation.BOTH, ReferenceBoundaryMode.MIDPOINT);
   }
 
   /**
@@ -184,10 +190,19 @@ public final class PseudoComponentCombiner {
    * less disable splitting
    * @param sharedImaginaryBoundaries whether the reference cut boundaries are placed as equal-mass cuts on the
    * reference's imaginary (delumped) composition instead of boiling-point midpoints
+   * @param binningBasis basis on which delumped sub-fractions are binned onto the reference cuts; only applied when
+   * {@code delump} is {@code true} (otherwise the legacy boiling-point key is used to preserve backward compatibility)
+   * @param gammaScope scope of the Whitson gamma molar-distribution fit used to shape the delumping
+   * @param conservation quantity (moles, mass, or both) conserved exactly when a lump is delumped
+   * @param boundaryMode rule used to place the cut edges between adjacent reference pseudo-components; only the
+   * {@link ReferenceBoundaryMode#CENTROID_SPAN} mode on the {@link DelumpBinningBasis#MOLAR_MASS} basis changes the
+   * legacy midpoint placement
    * @return characterized fluid containing pseudo components compatible with the reference fluid
    */
   private static SystemInterface characterizeToReferenceCore(SystemInterface source, SystemInterface reference,
-      boolean inheritReferenceProperties, boolean delump, int delumpResolution, boolean sharedImaginaryBoundaries) {
+      boolean inheritReferenceProperties, boolean delump, int delumpResolution, boolean sharedImaginaryBoundaries,
+      DelumpBinningBasis binningBasis, DelumpGammaScope gammaScope, DelumpConservation conservation,
+      ReferenceBoundaryMode boundaryMode) {
     Objects.requireNonNull(source, "source");
     Objects.requireNonNull(reference, "reference");
 
@@ -212,16 +227,21 @@ public final class PseudoComponentCombiner {
       return characterized;
     }
 
+    // The molar-mass binning basis is applied only when delumping. With delumping off the legacy boiling-point sorting
+    // key is retained so the non-delumped and shared-imaginary paths reproduce their previous results exactly.
+    DelumpBinningBasis basis = delump ? binningBasis : DelumpBinningBasis.BOILING_POINT;
+
     List<PseudoComponentContribution> sourcePseudoComponents = sourceExtraction.pseudoComponents;
     if (delump) {
-      sourcePseudoComponents = delumpContributions(sourcePseudoComponents, delumpResolution);
+      sourcePseudoComponents = delumpContributions(sourcePseudoComponents, delumpResolution, gammaScope, conservation);
     }
 
     List<Double> boundaries = sharedImaginaryBoundaries
-	? determineReferenceEqualMassBoundaries(referenceExtraction.pseudoComponents, delumpResolution)
-	: determineReferenceBoundaries(referenceExtraction.pseudoComponents);
+	? determineReferenceEqualMassBoundaries(referenceExtraction.pseudoComponents, delumpResolution, basis,
+	    gammaScope, conservation)
+	: determineReferenceBoundaries(referenceExtraction.pseudoComponents, basis, boundaryMode);
     List<PseudoComponentProfile> profiles = distributeToProfiles(sourcePseudoComponents, boundaries,
-	referenceExtraction.pseudoComponents.size());
+	referenceExtraction.pseudoComponents.size(), basis);
 
     for (int i = 0; i < referenceExtraction.pseudoComponents.size(); i++) {
       PseudoComponentProfile profile = profiles.get(i);
@@ -270,7 +290,8 @@ public final class PseudoComponentCombiner {
 
     SystemInterface characterized = characterizeToReferenceCore(source, reference,
 	options.isInheritReferenceProperties(), options.isDelumpBeforeRecharacterization(),
-	options.getDelumpResolution(), options.isSharedImaginaryBoundaries());
+	options.getDelumpResolution(), options.isSharedImaginaryBoundaries(), options.getDelumpBinningBasis(),
+	options.getDelumpGammaScope(), options.getDelumpConservation(), options.getReferenceBoundaryMode());
 
     if (options.isTransferBinaryInteractionParameters()) {
       transferBinaryInteractionParameters(reference, characterized);
@@ -956,76 +977,271 @@ public final class PseudoComponentCombiner {
   }
 
   /**
-   * Split each coarse source pseudo-component into a grid of finer single-carbon-number (SCN) sub-fractions that
-   * conserve the parent moles and mass exactly.
+   * Equal-mass quantile boundary placement on an arbitrary binning basis.
    *
    * <p>
-   * This implements the delumping stage of the Pedersen et al. (Chapter 5) lumping/delumping scheme (Eqs. 5.35-5.37
-   * describe the inverse mass-weighted lumping). For every parent lump the method:
+   * Identical to {@link #determineQuantileBoundaries(List, int)} but the cut points are placed on the requested
+   * {@link DelumpBinningBasis} key (molar mass or boiling point) instead of always on the boiling-point sorting key.
+   * The contributions are sorted by the chosen key before the cumulative-mass scan so the boundaries are returned in
+   * ascending key order.
+   *
+   * @param contributions the contributions to cut
+   * @param targetPseudoComponents the number of groups (one fewer boundary is returned)
+   * @param basis the binning key on which equal-mass cut points are placed
+   * @return the ascending equal-mass boundaries (size {@code targetPseudoComponents - 1})
+   */
+  private static List<Double> determineQuantileBoundaries(List<PseudoComponentContribution> contributions,
+      int targetPseudoComponents, DelumpBinningBasis basis) {
+    if (targetPseudoComponents <= 1 || contributions.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<PseudoComponentContribution> sorted = new ArrayList<>(contributions);
+    sorted.sort(Comparator.comparingDouble(c -> c.binningKey(basis)));
+
+    double totalMass = 0.0;
+    for (PseudoComponentContribution contribution : sorted) {
+      totalMass += contribution.mass;
+    }
+
+    if (!(totalMass > MASS_TOLERANCE)) {
+      return Collections.emptyList();
+    }
+
+    double[] targets = new double[targetPseudoComponents - 1];
+    for (int i = 0; i < targets.length; i++) {
+      targets[i] = totalMass * (i + 1) / targetPseudoComponents;
+    }
+
+    List<Double> boundaries = new ArrayList<>(targets.length);
+    double cumulative = 0.0;
+    int targetIndex = 0;
+    for (PseudoComponentContribution contribution : sorted) {
+      double nextCumulative = cumulative + contribution.mass;
+      while (targetIndex < targets.length && nextCumulative >= targets[targetIndex] - MASS_TOLERANCE) {
+	boundaries.add(contribution.binningKey(basis));
+	targetIndex++;
+      }
+      cumulative = nextCumulative;
+    }
+
+    while (boundaries.size() < targets.length) {
+      boundaries.add(Double.POSITIVE_INFINITY);
+    }
+
+    return boundaries;
+  }
+
+  /** Slope of the Pedersen molar-mass / carbon-number relation (Eq. 5.27): M[g/mol] = 14&middot;C - 4. */
+  private static final double CARBON_MASS_SLOPE = 14.0;
+  /** Offset of the Pedersen molar-mass / carbon-number relation (Eq. 5.27): M[g/mol] = 14&middot;C - 4. */
+  private static final double CARBON_MASS_OFFSET = 4.0;
+  /** Leading factor of the Katz-Firoozabadi boiling-point correlation (Eq. 5.28). */
+  private static final double KATZ_FACTOR = 97.58;
+  /** Molar-mass exponent of the Katz-Firoozabadi boiling-point correlation (Eq. 5.28). */
+  private static final double KATZ_MASS_EXPONENT = 0.3323;
+  /** Density exponent of the Katz-Firoozabadi boiling-point correlation (Eq. 5.28). */
+  private static final double KATZ_DENSITY_EXPONENT = 0.04609;
+  /**
+   * Mild default molar-distribution slope B (Eq. 5.15, {@code ln z = A + B*C}) used only when a lump has no usable
+   * neighbour from which to estimate the local slope. A negative value gives the customary light-end bias.
+   */
+  private static final double DEFAULT_MOLAR_SLOPE = -0.25;
+  /** Clamp on the estimated molar-distribution slope B to guard against degenerate neighbour ratios. */
+  private static final double MAX_MOLAR_SLOPE = 2.0;
+  /** Fallback half-width (in carbon numbers) for a lump that has no neighbour on either side. */
+  private static final double DEFAULT_CARBON_HALF_WIDTH = 0.5;
+  /** Fallback liquid density (g/cm3) for the Katz-Firoozabadi correlation when a lump density is unavailable. */
+  private static final double DEFAULT_LIQUID_DENSITY = 0.8;
+  /** Lower clamp on the fitted Whitson gamma shape parameter &alpha; (Eq. 5.27 molar distribution). */
+  private static final double MIN_GAMMA_SHAPE = 0.5;
+  /** Upper clamp on the fitted Whitson gamma shape parameter &alpha; to guard against a near-delta distribution. */
+  private static final double MAX_GAMMA_SHAPE = 50.0;
+  /** Minimum cell probability mass below which a gamma slice is treated as empty. */
+  private static final double GAMMA_WEIGHT_TOLERANCE = 1e-12;
+
+  /**
+   * Split each coarse source pseudo-component into a grid of finer single-carbon-number (SCN) sub-fractions using a
+   * neighbour-bounded carbon-number interval and a Whitson gamma molar distribution, conserving the requested quantity
+   * (moles, mass, or both).
+   *
+   * <p>
+   * This implements the delumping stage of the Pedersen et al. (Chapter 5) lumping/delumping scheme. Unlike a fixed
+   * &plusmn;40&nbsp;% molar-mass window with a hard-coded exponential decay (which smears a lump over carbon numbers it
+   * does not contain and fabricates spurious light/heavy mass), every parent lump is delumped <em>only inside its own
+   * carbon-number interval</em>, inferred from its ordered neighbours in the sorted contribution list. For every parent
+   * lump <em>i</em> with carbon number {@code C_i = (M_i + 4)/14} (Eq. 5.27 inverted) the method:
    * <ol>
-   * <li>builds a molar-mass grid that brackets the parent molar mass over a symmetric &plusmn;{@code window}
-   * window;</li>
-   * <li>assigns normalized, light-end-biased sub-fraction mole weights (their sum is one, so the parent moles are
-   * conserved);</li>
-   * <li>rescales the molar-mass grid by a single factor so that &Sigma;<sub>k</sub> n<sub>k</sub> M<sub>k</sub> =
-   * n<sub>parent</sub> M<sub>parent</sub> exactly, conserving the parent mass;</li>
-   * <li>spreads the normal boiling point monotonically with molar mass so the sub-fractions can cross reference cut
-   * boundaries (this is what removes the identity source-to-reference mapping), while holding density and the critical
-   * constants at the parent values.</li>
+   * <li><b>Bounds the sub-fraction range by the neighbours, not a fixed window.</b> The lower edge is the carbon-number
+   * midpoint between lumps <em>i-1</em> and <em>i</em>, the upper edge the midpoint between <em>i</em> and
+   * <em>i+1</em>. The first and last lumps use a one-sided rule (the available neighbour gap is mirrored to the open
+   * side). This guarantees sub-fractions never cross into a neighbour's range and never invent material outside the
+   * lump.</li>
+   * <li><b>Shapes the molar distribution with a Whitson gamma fitted on molar mass.</b> When
+   * {@code gammaScope == GLOBAL} a single gamma is fitted by the method of moments to the whole C7+ lump set; when
+   * {@code gammaScope == NEIGHBOURS} (the default) a local gamma is fitted per lump from its immediate neighbours. The
+   * gamma is sliced between the SCN cell molar-mass edges: each cell's mole weight is the gamma probability mass and
+   * its molar mass is the gamma conditional mean over the cell (closed-form via the regularized lower incomplete gamma
+   * function). When a gamma cannot be fitted (degenerate variance, isolated lump) the method falls back to Pedersen's
+   * exponential molar distribution (Eq. 5.15, {@code ln z = A + B*C}) on the cell-centred grid. The mole weights are
+   * normalized, so the parent moles are conserved.</li>
+   * <li><b>Applies the conservation closure.</b> With {@code DelumpConservation.BOTH} (the default) the sub-fraction
+   * molar masses are rescaled so that &Sigma;<sub>k</sub> n<sub>k</sub> M<sub>k</sub> = n<sub>parent</sub>
+   * M<sub>parent</sub> exactly (parent moles and mass both conserved, Eqs. 5.35-5.37). With
+   * {@code DelumpConservation.MOLES} the gamma molar masses are kept and the mass is allowed to float; with
+   * {@code DelumpConservation.MASS} the moles are rescaled so the mass is conserved exactly and the moles float.</li>
+   * <li><b>Assigns the normal boiling point via the non-linear Katz-Firoozabadi correlation (Eq. 5.28)</b>,
+   * {@code Tb = 97.58*M^0.3323*rho^0.04609}. When the parent has a boiling point its Katz-Firoozabadi shape is anchored
+   * to the parent value ({@code Tb_k = Tb_parent * katz(M_k)/katz(M_parent)}) so the sub-fractions stay on the
+   * parent/reference boiling-point scale while following the non-linear carbon-number dependence; otherwise the
+   * absolute Eq. 5.28 value is used. Density and the critical constants are inherited from the parent.</li>
    * </ol>
    *
    * <p>
    * The expanded list is re-sorted by sorting key (normal boiling point, falling back to molar mass) so it can be fed
    * directly to {@link #distributeToProfiles}.
    *
-   * @param sourcePseudoComponents the coarse source pseudo-components to delump
+   * @param sourcePseudoComponents the coarse source pseudo-components to delump, sorted ascending by sorting key
    * @param resolution number of sub-fractions per parent lump; values of 1 or less return the input unchanged
+   * @param gammaScope scope of the Whitson gamma molar-distribution fit (global, or local per lump)
+   * @param conservation quantity conserved exactly (parent moles, parent mass, or both)
    * @return the delumped, sorted list of sub-fractions
    */
   private static List<PseudoComponentContribution> delumpContributions(
-      List<PseudoComponentContribution> sourcePseudoComponents, int resolution) {
+      List<PseudoComponentContribution> sourcePseudoComponents, int resolution, DelumpGammaScope gammaScope,
+      DelumpConservation conservation) {
     if (resolution <= 1) {
       return sourcePseudoComponents;
     }
 
-    final double window = 0.4;
-    final double decay = 1.5;
+    int lumpCount = sourcePseudoComponents.size();
+    double[] carbonNumbers = new double[lumpCount];
+    for (int i = 0; i < lumpCount; i++) {
+      carbonNumbers[i] = carbonNumberFromMolarMass(sourcePseudoComponents.get(i).molarMass);
+    }
 
-    List<PseudoComponentContribution> expanded = new ArrayList<>(sourcePseudoComponents.size() * resolution);
+    // Optional single global Whitson gamma fitted to the whole C7+ lump set (DelumpGammaScope.GLOBAL). The shift eta is
+    // the lower molar-mass edge of the lightest lump so every per-lump slice has a non-negative reduced variable.
+    double[] globalGamma = null;
+    if (gammaScope == DelumpGammaScope.GLOBAL) {
+      globalGamma = fitGlobalGamma(sourcePseudoComponents, carbonNumbers);
+    }
 
-    for (PseudoComponentContribution parent : sourcePseudoComponents) {
+    List<PseudoComponentContribution> expanded = new ArrayList<>(lumpCount * resolution);
+
+    for (int i = 0; i < lumpCount; i++) {
+      PseudoComponentContribution parent = sourcePseudoComponents.get(i);
       double parentMoles = parent.moles;
       double parentMolarMass = parent.molarMass;
-      if (!(parentMoles > 0.0) || !(parentMolarMass > 0.0)) {
+      double parentCarbon = carbonNumbers[i];
+      if (!(parentMoles > 0.0) || !(parentMolarMass > 0.0) || !Double.isFinite(parentCarbon)) {
 	expanded.add(parent);
 	continue;
       }
 
-      double[] weights = new double[resolution];
-      double weightSum = 0.0;
-      double[] molarMasses = new double[resolution];
-      for (int k = 0; k < resolution; k++) {
-	double t = (double) k / (resolution - 1);
-	weights[k] = Math.exp(-decay * t);
-	weightSum += weights[k];
-	molarMasses[k] = parentMolarMass * (1.0 - window + 2.0 * window * t);
+      // 1. Neighbour-bounded carbon-number range (sub-fractions never cross into a neighbour's interval).
+      boolean hasLower = i > 0 && Double.isFinite(carbonNumbers[i - 1]) && carbonNumbers[i - 1] < parentCarbon;
+      boolean hasUpper = i < lumpCount - 1 && Double.isFinite(carbonNumbers[i + 1])
+	  && carbonNumbers[i + 1] > parentCarbon;
+      double upperHalf = hasUpper ? 0.5 * (carbonNumbers[i + 1] - parentCarbon)
+	  : (hasLower ? 0.5 * (parentCarbon - carbonNumbers[i - 1]) : DEFAULT_CARBON_HALF_WIDTH);
+      double lowerHalf = hasLower ? 0.5 * (parentCarbon - carbonNumbers[i - 1])
+	  : (hasUpper ? 0.5 * (carbonNumbers[i + 1] - parentCarbon) : DEFAULT_CARBON_HALF_WIDTH);
+      double lowerCarbon = parentCarbon - lowerHalf;
+      double upperCarbon = parentCarbon + upperHalf;
+      if (!(upperCarbon > lowerCarbon)) {
+	expanded.add(parent);
+	continue;
       }
 
+      double width = upperCarbon - lowerCarbon;
+      double[] weights = new double[resolution];
+      double[] molarMasses = new double[resolution];
+      double weightSum = 0.0;
+
+      // 2. Pick the gamma shape: a single global fit, or a local fit over the {i-1, i, i+1} window.
+      double[] gamma = gammaScope == DelumpGammaScope.GLOBAL ? globalGamma
+	  : fitLocalGamma(sourcePseudoComponents, carbonNumbers, i, lowerCarbon);
+
+      boolean gammaUsable = false;
+      if (gamma != null) {
+	double alpha = gamma[0];
+	double beta = gamma[1];
+	double eta = gamma[2];
+	// 3a. Slice the gamma between the SCN cell edges; cell weight = probability mass, MW = conditional mean.
+	for (int k = 0; k < resolution; k++) {
+	  double edgeLoCarbon = lowerCarbon + width * k / resolution;
+	  double edgeHiCarbon = lowerCarbon + width * (k + 1) / resolution;
+	  double mwLoG = molarMassFromCarbonNumber(edgeLoCarbon) * 1000.0;
+	  double mwHiG = molarMassFromCarbonNumber(edgeHiCarbon) * 1000.0;
+	  double xLo = Math.max(0.0, (mwLoG - eta) / beta);
+	  double xHi = Math.max(0.0, (mwHiG - eta) / beta);
+	  double prob = Gamma.regularizedGammaP(alpha, xHi) - Gamma.regularizedGammaP(alpha, xLo);
+	  double condMeanG;
+	  if (prob > GAMMA_WEIGHT_TOLERANCE) {
+	    double firstMoment = alpha * beta
+		* (Gamma.regularizedGammaP(alpha + 1.0, xHi) - Gamma.regularizedGammaP(alpha + 1.0, xLo));
+	    condMeanG = eta + firstMoment / prob;
+	  } else {
+	    prob = 0.0;
+	    condMeanG = 0.5 * (mwLoG + mwHiG);
+	  }
+	  weights[k] = prob;
+	  molarMasses[k] = condMeanG / 1000.0;
+	  weightSum += prob;
+	}
+	gammaUsable = weightSum > GAMMA_WEIGHT_TOLERANCE;
+      }
+
+      if (!gammaUsable) {
+	// 3b. Exponential fallback (Eq. 5.15, ln z = A + B*C) on the cell-centred carbon grid.
+	double slope = estimateMolarSlope(sourcePseudoComponents, carbonNumbers, i, hasLower, hasUpper);
+	weightSum = 0.0;
+	for (int k = 0; k < resolution; k++) {
+	  double carbon = lowerCarbon + width * (k + 0.5) / resolution;
+	  double weight = Math.exp(slope * (carbon - parentCarbon));
+	  weights[k] = weight;
+	  molarMasses[k] = molarMassFromCarbonNumber(carbon);
+	  weightSum += weight;
+	}
+      }
+
+      if (!(weightSum > 0.0)) {
+	expanded.add(parent);
+	continue;
+      }
+
+      // 4. Mole weights (normalized => parent moles conserved) and the requested conservation closure.
+      double parentMass = parentMoles * parentMolarMass;
       double rawMass = 0.0;
       for (int k = 0; k < resolution; k++) {
-	double moleFraction = weights[k] / weightSum;
-	rawMass += parentMoles * moleFraction * molarMasses[k];
+	rawMass += parentMoles * (weights[k] / weightSum) * molarMasses[k];
       }
-      double parentMass = parentMoles * parentMolarMass;
-      double scale = rawMass > MASS_TOLERANCE ? parentMass / rawMass : 1.0;
+      double massScale = 1.0;
+      double moleScale = 1.0;
+      if (conservation == DelumpConservation.BOTH) {
+	massScale = rawMass > MASS_TOLERANCE ? parentMass / rawMass : 1.0;
+      } else if (conservation == DelumpConservation.MASS) {
+	moleScale = rawMass > MASS_TOLERANCE ? parentMass / rawMass : 1.0;
+      }
 
+      // 5. Build the sub-fractions with Katz-Firoozabadi (Eq. 5.28) boiling points anchored to the parent.
       boolean parentHasTb = Double.isFinite(parent.normalBoilingPoint) && parent.normalBoilingPoint > 0.0;
+      double parentKatz = katzFiroozabadiBoilingPoint(parentMolarMass, parent.density);
+      boolean anchorTb = parentHasTb && Double.isFinite(parentKatz) && parentKatz > 0.0;
       for (int k = 0; k < resolution; k++) {
 	double moleFraction = weights[k] / weightSum;
-	double subMoles = parentMoles * moleFraction;
-	double subMolarMass = molarMasses[k] * scale;
-	double ratio = subMolarMass / parentMolarMass;
-	double subTb = parentHasTb ? parent.normalBoilingPoint * ratio : parent.normalBoilingPoint;
+	double subMoles = parentMoles * moleFraction * moleScale;
+	double subMolarMass = molarMasses[k] * massScale;
+	double subKatz = katzFiroozabadiBoilingPoint(subMolarMass, parent.density);
+	double subTb;
+	if (anchorTb && Double.isFinite(subKatz)) {
+	  subTb = parent.normalBoilingPoint * (subKatz / parentKatz);
+	} else if (Double.isFinite(subKatz) && subKatz > 0.0) {
+	  subTb = subKatz;
+	} else {
+	  subTb = parent.normalBoilingPoint;
+	}
 
 	expanded.add(new PseudoComponentContribution(parent.name + "_d" + k, subMoles, subMolarMass, parent.density,
 	    subTb, parent.criticalTemperature, parent.criticalPressure, parent.acentricFactor, parent.criticalVolume,
@@ -1039,17 +1255,371 @@ public final class PseudoComponentCombiner {
     return expanded;
   }
 
-  private static List<Double> determineReferenceBoundaries(List<PseudoComponentContribution> referenceContributions) {
+  /**
+   * Package-private test seam that delumps a synthetic set of lumps and returns the resulting single-carbon-number
+   * sub-fractions as a plain numeric matrix, so unit tests can assert the neighbour-bounded ranges, the gamma molar
+   * decay, the Katz-Firoozabadi molar-mass / boiling-point relation, and the mole/mass conservation closures without
+   * needing access to the private {@link PseudoComponentContribution} type.
+   *
+   * <p>
+   * Each input lump is described by its moles, molar mass (kg/mol), liquid density (g/cm3), and normal boiling point
+   * (K); the critical constants and other component properties are inherited from the parent and are immaterial to the
+   * delumping arithmetic, so they are filled with {@link Double#NaN}. The returned matrix has one row per sub-fraction
+   * with columns {@code {moles, molarMass[kg/mol], normalBoilingPoint[K], parentIndex}}, sorted ascending by sorting
+   * key. The {@code parentIndex} is the index of the originating lump in the (sorting-key sorted) input, so a test can
+   * group the sub-fractions back to their parent without re-deriving the molar-mass interval edges.
+   *
+   * @param moles per-lump moles
+   * @param molarMass per-lump molar mass in kg/mol
+   * @param density per-lump liquid density in g/cm3
+   * @param boilingPoint per-lump normal boiling point in K (use {@link Double#NaN} for none)
+   * @param resolution number of sub-fractions per lump
+   * @param gammaScope scope of the Whitson gamma molar-distribution fit
+   * @param conservation quantity conserved exactly when a lump is delumped
+   * @return a matrix with one row per sub-fraction and columns {@code {moles, molarMass, normalBoilingPoint,
+   * parentIndex}}
+   */
+  static double[][] delumpForTesting(double[] moles, double[] molarMass, double[] density, double[] boilingPoint,
+      int resolution, CharacterizationOptions.DelumpGammaScope gammaScope,
+      CharacterizationOptions.DelumpConservation conservation) {
+    List<PseudoComponentContribution> lumps = new ArrayList<>(moles.length);
+    for (int i = 0; i < moles.length; i++) {
+      lumps.add(new PseudoComponentContribution("L" + i, moles[i], molarMass[i], density[i], boilingPoint[i],
+	  Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN,
+	  Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN));
+    }
+    lumps.sort(Comparator.comparingDouble(PseudoComponentContribution::sortingKey));
+    List<PseudoComponentContribution> result = delumpContributions(lumps, resolution, gammaScope, conservation);
+    double[][] out = new double[result.size()][4];
+    for (int i = 0; i < result.size(); i++) {
+      PseudoComponentContribution sub = result.get(i);
+      out[i][0] = sub.moles;
+      out[i][1] = sub.molarMass;
+      out[i][2] = sub.normalBoilingPoint;
+      out[i][3] = parseParentIndex(sub.name);
+    }
+    return out;
+  }
+
+  /**
+   * Parse the originating parent lump index from a {@link #delumpForTesting} sub-fraction name of the form
+   * {@code L<parent>_d<slice>}; returns {@code -1} when the name does not match.
+   *
+   * @param name the sub-fraction name
+   * @return the parent index, or {@code -1} when the name is not a delumping sub-fraction
+   */
+  private static double parseParentIndex(String name) {
+    if (name == null || name.length() < 2 || name.charAt(0) != 'L') {
+      return -1.0;
+    }
+    int suffix = name.indexOf("_d");
+    if (suffix <= 1) {
+      return -1.0;
+    }
+    try {
+      return Double.parseDouble(name.substring(1, suffix));
+    } catch (NumberFormatException ex) {
+      return -1.0;
+    }
+  }
+
+  /**
+   * Package-private test seam exposing the molar-mass / carbon-number conversion (Pedersen Eq. 5.27) so unit tests can
+   * compute the expected neighbour-bounded carbon-number midpoints.
+   *
+   * @param molarMass the molar mass in kg/mol
+   * @return the equivalent single-carbon number
+   */
+  static double carbonNumberFromMolarMassForTesting(double molarMass) {
+    return carbonNumberFromMolarMass(molarMass);
+  }
+
+  /**
+   * Package-private test seam exposing the carbon-number / molar-mass conversion (Pedersen Eq. 5.27) so unit tests can
+   * map carbon-number midpoints back onto molar-mass interval edges.
+   *
+   * @param carbonNumber the single-carbon number
+   * @return the equivalent molar mass in kg/mol
+   */
+  static double molarMassFromCarbonNumberForTesting(double carbonNumber) {
+    return molarMassFromCarbonNumber(carbonNumber);
+  }
+
+  /**
+   * Fit a single Whitson gamma molar distribution (Pedersen et al. Eq. 5.27 / Whitson 1983) to the whole set of valid
+   * C7+ lumps by the method of moments. The shift parameter &eta; is anchored at the lower molar-mass edge of the
+   * lightest lump's neighbour-bounded interval so that every per-lump gamma slice has a non-negative reduced variable.
+   *
+   * @param lumps the parent lumps
+   * @param carbonNumbers the carbon number of each lump (parallel to {@code lumps})
+   * @return {@code {alpha, beta, eta}} in g/mol units, or {@code null} when the distribution is degenerate
+   */
+  private static double[] fitGlobalGamma(List<PseudoComponentContribution> lumps, double[] carbonNumbers) {
+    int n = lumps.size();
+    double[] mwG = new double[n];
+    double[] moles = new double[n];
+    double minEdgeG = Double.POSITIVE_INFINITY;
+    int valid = 0;
+    for (int i = 0; i < n; i++) {
+      PseudoComponentContribution lump = lumps.get(i);
+      if (!(lump.moles > 0.0) || !(lump.molarMass > 0.0) || !Double.isFinite(carbonNumbers[i])) {
+	continue;
+      }
+      mwG[valid] = lump.molarMass * 1000.0;
+      moles[valid] = lump.moles;
+      double lowerCarbon = carbonNumbers[i] - DEFAULT_CARBON_HALF_WIDTH;
+      double edgeG = molarMassFromCarbonNumber(lowerCarbon) * 1000.0;
+      if (edgeG < minEdgeG) {
+	minEdgeG = edgeG;
+      }
+      valid++;
+    }
+    if (valid < 2 || !Double.isFinite(minEdgeG)) {
+      return null;
+    }
+    return fitGammaByMoments(mwG, moles, valid, minEdgeG);
+  }
+
+  /**
+   * Fit a local Whitson gamma molar distribution to lump {@code i} from its immediate neighbours ({@code i-1, i, i+1}).
+   * The shift parameter &eta; is anchored at the lump's lower molar-mass edge so the slice reduced variables are
+   * non-negative.
+   *
+   * @param lumps the parent lumps
+   * @param carbonNumbers the carbon number of each lump (parallel to {@code lumps})
+   * @param i the index of the lump being delumped
+   * @param lowerCarbon the lower carbon-number edge of the lump's neighbour-bounded interval
+   * @return {@code {alpha, beta, eta}} in g/mol units, or {@code null} when the local distribution is degenerate
+   */
+  private static double[] fitLocalGamma(List<PseudoComponentContribution> lumps, double[] carbonNumbers, int i,
+      double lowerCarbon) {
+    double[] mwG = new double[3];
+    double[] moles = new double[3];
+    int valid = 0;
+    for (int j = i - 1; j <= i + 1; j++) {
+      if (j < 0 || j >= lumps.size()) {
+	continue;
+      }
+      PseudoComponentContribution lump = lumps.get(j);
+      if (!(lump.moles > 0.0) || !(lump.molarMass > 0.0) || !Double.isFinite(carbonNumbers[j])) {
+	continue;
+      }
+      mwG[valid] = lump.molarMass * 1000.0;
+      moles[valid] = lump.moles;
+      valid++;
+    }
+    if (valid < 2) {
+      return null;
+    }
+    double etaG = molarMassFromCarbonNumber(lowerCarbon) * 1000.0;
+    return fitGammaByMoments(mwG, moles, valid, etaG);
+  }
+
+  /**
+   * Method-of-moments fit of a shifted gamma distribution to a mole-weighted set of molar masses.
+   *
+   * <p>
+   * Given the mole-weighted mean &mu; and variance &sigma;&sup2; of the molar masses, the shifted gamma with origin
+   * &eta; has shape &alpha; = (&mu;-&eta;)&sup2;/&sigma;&sup2; and scale &beta; = &sigma;&sup2;/(&mu;-&eta;). The shape
+   * is clamped to {@code [MIN_GAMMA_SHAPE, MAX_GAMMA_SHAPE]} with the scale recomputed from the mean to keep &mu; =
+   * &eta; + &alpha;&beta;.
+   *
+   * @param mwG the molar masses in g/mol (first {@code count} entries used)
+   * @param moles the mole weights (first {@code count} entries used)
+   * @param count the number of valid entries
+   * @param etaG the gamma origin (shift) in g/mol
+   * @return {@code {alpha, beta, eta}} in g/mol units, or {@code null} when the fit is degenerate
+   */
+  private static double[] fitGammaByMoments(double[] mwG, double[] moles, int count, double etaG) {
+    double z = 0.0;
+    double mean = 0.0;
+    for (int k = 0; k < count; k++) {
+      z += moles[k];
+      mean += moles[k] * mwG[k];
+    }
+    if (!(z > 0.0)) {
+      return null;
+    }
+    mean /= z;
+    double variance = 0.0;
+    for (int k = 0; k < count; k++) {
+      double d = mwG[k] - mean;
+      variance += moles[k] * d * d;
+    }
+    variance /= z;
+    double shifted = mean - etaG;
+    if (!(variance > MASS_TOLERANCE) || !(shifted > 0.0)) {
+      return null;
+    }
+    double alpha = shifted * shifted / variance;
+    if (alpha < MIN_GAMMA_SHAPE) {
+      alpha = MIN_GAMMA_SHAPE;
+    } else if (alpha > MAX_GAMMA_SHAPE) {
+      alpha = MAX_GAMMA_SHAPE;
+    }
+    double beta = shifted / alpha;
+    if (!(beta > 0.0)) {
+      return null;
+    }
+    return new double[] { alpha, beta, etaG };
+  }
+
+  /**
+   * Convert a molar mass to an equivalent single-carbon number using the Pedersen molar-mass relation (Eq. 5.27)
+   * inverted: {@code C = (M[g/mol] + 4) / 14}.
+   *
+   * @param molarMassKgPerMol molar mass in kg/mol (NeqSim's internal unit)
+   * @return the equivalent carbon number, or {@link Double#NaN} when the molar mass is non-finite or non-positive
+   */
+  private static double carbonNumberFromMolarMass(double molarMassKgPerMol) {
+    if (!Double.isFinite(molarMassKgPerMol) || molarMassKgPerMol <= 0.0) {
+      return Double.NaN;
+    }
+    double molarMassGramPerMol = molarMassKgPerMol * 1000.0;
+    return (molarMassGramPerMol + CARBON_MASS_OFFSET) / CARBON_MASS_SLOPE;
+  }
+
+  /**
+   * Convert a carbon number to a molar mass using the Pedersen molar-mass relation (Eq. 5.27):
+   * {@code M[g/mol] = 14*C - 4}.
+   *
+   * @param carbonNumber the (possibly fractional) carbon number
+   * @return the molar mass in kg/mol (NeqSim's internal unit)
+   */
+  private static double molarMassFromCarbonNumber(double carbonNumber) {
+    double molarMassGramPerMol = CARBON_MASS_SLOPE * carbonNumber - CARBON_MASS_OFFSET;
+    return molarMassGramPerMol / 1000.0;
+  }
+
+  /**
+   * Evaluate the Katz-Firoozabadi boiling-point correlation (Pedersen et al. Eq. 5.28):
+   * {@code Tb = 97.58*M^0.3323*rho^0.04609}, with the molar mass in g/mol and the density in g/cm3.
+   *
+   * @param molarMassKgPerMol molar mass in kg/mol (NeqSim's internal unit)
+   * @param density liquid density in g/cm3; a default of 0.8 is used when it is non-finite or non-positive
+   * @return the correlated normal boiling point in kelvin, or {@link Double#NaN} when the molar mass is invalid
+   */
+  private static double katzFiroozabadiBoilingPoint(double molarMassKgPerMol, double density) {
+    if (!Double.isFinite(molarMassKgPerMol) || molarMassKgPerMol <= 0.0) {
+      return Double.NaN;
+    }
+    double molarMassGramPerMol = molarMassKgPerMol * 1000.0;
+    double rho = Double.isFinite(density) && density > 0.0 ? density : DEFAULT_LIQUID_DENSITY;
+    return KATZ_FACTOR * Math.pow(molarMassGramPerMol, KATZ_MASS_EXPONENT) * Math.pow(rho, KATZ_DENSITY_EXPONENT);
+  }
+
+  /**
+   * Estimate the Pedersen molar-distribution slope {@code B} of Eq. 5.15 ({@code ln z = A + B*C}) for lump {@code i}
+   * from the local lump-to-lump mole ratio over the carbon-number gap to its neighbours. Using both neighbours gives a
+   * centred estimate; a single neighbour gives a one-sided estimate; with no usable neighbour the mild
+   * {@link #DEFAULT_MOLAR_SLOPE} is returned. The result is clamped to &plusmn;{@link #MAX_MOLAR_SLOPE} to guard
+   * against degenerate ratios.
+   *
+   * @param lumps the sorted parent lumps
+   * @param carbonNumbers the carbon number of each lump (parallel to {@code lumps})
+   * @param i the index of the lump whose slope is estimated
+   * @param hasLower whether lump {@code i-1} is a usable lighter neighbour
+   * @param hasUpper whether lump {@code i+1} is a usable heavier neighbour
+   * @return the estimated, clamped molar-distribution slope {@code B}
+   */
+  private static double estimateMolarSlope(List<PseudoComponentContribution> lumps, double[] carbonNumbers, int i,
+      boolean hasLower, boolean hasUpper) {
+    double slope = DEFAULT_MOLAR_SLOPE;
+    if (hasLower && hasUpper) {
+      double molesLow = lumps.get(i - 1).moles;
+      double molesHigh = lumps.get(i + 1).moles;
+      double deltaCarbon = carbonNumbers[i + 1] - carbonNumbers[i - 1];
+      if (molesLow > 0.0 && molesHigh > 0.0 && deltaCarbon > 0.0) {
+	slope = (Math.log(molesHigh) - Math.log(molesLow)) / deltaCarbon;
+      }
+    } else if (hasUpper) {
+      double molesMid = lumps.get(i).moles;
+      double molesHigh = lumps.get(i + 1).moles;
+      double deltaCarbon = carbonNumbers[i + 1] - carbonNumbers[i];
+      if (molesMid > 0.0 && molesHigh > 0.0 && deltaCarbon > 0.0) {
+	slope = (Math.log(molesHigh) - Math.log(molesMid)) / deltaCarbon;
+      }
+    } else if (hasLower) {
+      double molesLow = lumps.get(i - 1).moles;
+      double molesMid = lumps.get(i).moles;
+      double deltaCarbon = carbonNumbers[i] - carbonNumbers[i - 1];
+      if (molesLow > 0.0 && molesMid > 0.0 && deltaCarbon > 0.0) {
+	slope = (Math.log(molesMid) - Math.log(molesLow)) / deltaCarbon;
+      }
+    }
+    if (!Double.isFinite(slope)) {
+      slope = DEFAULT_MOLAR_SLOPE;
+    }
+    if (slope > MAX_MOLAR_SLOPE) {
+      slope = MAX_MOLAR_SLOPE;
+    } else if (slope < -MAX_MOLAR_SLOPE) {
+      slope = -MAX_MOLAR_SLOPE;
+    }
+    return slope;
+  }
+
+  private static List<Double> determineReferenceBoundaries(List<PseudoComponentContribution> referenceContributions,
+      DelumpBinningBasis basis, ReferenceBoundaryMode boundaryMode) {
     if (referenceContributions.size() <= 1) {
       return Collections.emptyList();
     }
 
+    if (boundaryMode == ReferenceBoundaryMode.CENTROID_SPAN && basis == DelumpBinningBasis.MOLAR_MASS) {
+      return determineReferenceCentroidSpanBoundaries(referenceContributions, basis);
+    }
+
     List<Double> boundaries = new ArrayList<>(referenceContributions.size() - 1);
     for (int i = 0; i < referenceContributions.size() - 1; i++) {
-      double key1 = referenceContributions.get(i).sortingKey();
-      double key2 = referenceContributions.get(i + 1).sortingKey();
+      double key1 = referenceContributions.get(i).binningKey(basis);
+      double key2 = referenceContributions.get(i + 1).binningKey(basis);
       double boundary = Double.isFinite(key1) && Double.isFinite(key2) ? 0.5 * (key1 + key2) : Math.max(key1, key2);
       boundaries.add(boundary);
+    }
+    return boundaries;
+  }
+
+  /**
+   * Place the reference cut boundaries so that each reference cut key is the centroid of its own span.
+   *
+   * <p>
+   * The default {@link #determineReferenceBoundaries} places each edge at the arithmetic midpoint of two adjacent cut
+   * keys, which implicitly assumes every cut is equally wide. When the reference slate mixes very narrow and very wide
+   * cuts (e.g. a one-carbon cut next to a fifteen-carbon cut) the midpoint of the means is not the true span edge, so
+   * material is mis-binned into the narrower neighbour. Requiring each key to sit at the centroid of its span gives the
+   * recurrence {@code b_i = 2*key_i - b_(i-1)}, anchored at {@code b_0 = key_0 - 0.5*(key_1 - key_0)} and walked from
+   * the lightest to the heaviest cut. Each candidate is clamped to lie strictly between its two adjacent keys (and to
+   * stay monotone), falling back to the arithmetic midpoint otherwise, so the strict one-to-one inheritance ordering is
+   * preserved. The recurrence is linear in the cut key, so it is only valid on a basis that is itself linear in the
+   * binning quantity ({@link DelumpBinningBasis#MOLAR_MASS}).
+   *
+   * @param referenceContributions the reference pseudo-components, sorted ascending by binning key
+   * @param basis the (molar-mass) binning key on which the centroid recurrence and clamping bounds are evaluated
+   * @return the clamped centroid-span cut boundaries (size {@code referenceContributions.size() - 1})
+   */
+  private static List<Double> determineReferenceCentroidSpanBoundaries(
+      List<PseudoComponentContribution> referenceContributions, DelumpBinningBasis basis) {
+    int n = referenceContributions.size();
+    double[] key = new double[n];
+    for (int i = 0; i < n; i++) {
+      key[i] = referenceContributions.get(i).binningKey(basis);
+    }
+    List<Double> boundaries = new ArrayList<>(n - 1);
+    double prev = Double.isFinite(key[0]) && Double.isFinite(key[1]) ? key[0] - 0.5 * (key[1] - key[0]) : key[0];
+    for (int i = 0; i < n - 1; i++) {
+      double midpoint = Double.isFinite(key[i]) && Double.isFinite(key[i + 1]) ? 0.5 * (key[i] + key[i + 1])
+	  : Math.max(key[i], key[i + 1]);
+      double candidate = 2.0 * key[i] - prev;
+      double boundary;
+      if (Double.isFinite(candidate) && candidate > key[i] && candidate < key[i + 1]) {
+	boundary = candidate;
+      } else {
+	boundary = midpoint;
+      }
+      if (!boundaries.isEmpty() && boundary <= boundaries.get(boundaries.size() - 1)) {
+	boundary = midpoint;
+      }
+      boundaries.add(boundary);
+      prev = boundary;
     }
     return boundaries;
   }
@@ -1077,25 +1647,30 @@ public final class PseudoComponentCombiner {
    * @param referenceContributions the reference pseudo-components, sorted ascending by sorting key
    * @param resolution number of single-carbon-number sub-fractions per reference lump used to rebuild the imaginary
    * composition; values of 1 or less fall back to boiling-point midpoints
+   * @param basis the binning key on which the equal-mass cut points and clamping bounds are evaluated
+   * @param gammaScope scope of the Whitson gamma fit used to rebuild the reference imaginary composition
+   * @param conservation quantity conserved when rebuilding the reference imaginary composition
    * @return the clamped equal-mass cut boundaries (size {@code referenceContributions.size() - 1})
    */
   private static List<Double> determineReferenceEqualMassBoundaries(
-      List<PseudoComponentContribution> referenceContributions, int resolution) {
+      List<PseudoComponentContribution> referenceContributions, int resolution, DelumpBinningBasis basis,
+      DelumpGammaScope gammaScope, DelumpConservation conservation) {
     int cuts = referenceContributions.size() - 1;
     if (cuts < 1) {
       return Collections.emptyList();
     }
     if (resolution <= 1) {
-      return determineReferenceBoundaries(referenceContributions);
+      return determineReferenceBoundaries(referenceContributions, basis, ReferenceBoundaryMode.MIDPOINT);
     }
 
-    List<PseudoComponentContribution> imaginary = delumpContributions(referenceContributions, resolution);
-    List<Double> equalMass = determineQuantileBoundaries(imaginary, referenceContributions.size());
+    List<PseudoComponentContribution> imaginary = delumpContributions(referenceContributions, resolution, gammaScope,
+	conservation);
+    List<Double> equalMass = determineQuantileBoundaries(imaginary, referenceContributions.size(), basis);
 
     List<Double> boundaries = new ArrayList<>(cuts);
     for (int i = 0; i < cuts; i++) {
-      double lower = referenceContributions.get(i).sortingKey();
-      double upper = referenceContributions.get(i + 1).sortingKey();
+      double lower = referenceContributions.get(i).binningKey(basis);
+      double upper = referenceContributions.get(i + 1).binningKey(basis);
       double midpoint = Double.isFinite(lower) && Double.isFinite(upper) ? 0.5 * (lower + upper)
 	  : Math.max(lower, upper);
 
@@ -1135,6 +1710,65 @@ public final class PseudoComponentCombiner {
 
     for (PseudoComponentContribution contribution : contributions) {
       double key = contribution.sortingKey();
+      while (groupIndex < targetPseudoComponents - 1 && key > currentBoundary) {
+	groupIndex++;
+	currentBoundary = groupIndex < boundaries.size() ? boundaries.get(groupIndex) : Double.POSITIVE_INFINITY;
+      }
+      builders.get(groupIndex).addContribution(contribution, contribution.mass);
+    }
+
+    List<PseudoComponentProfile> profiles = new ArrayList<>(targetPseudoComponents);
+    for (PseudoComponentGroupBuilder builder : builders) {
+      profiles.add(builder.buildWithOverrides(null, null, null, null));
+    }
+    return profiles;
+  }
+
+  /**
+   * Distribute contributions onto a fixed number of groups using an arbitrary binning basis.
+   *
+   * <p>
+   * Identical to {@link #distributeToProfiles(List, List, int)} but the contributions are binned on the requested
+   * {@link DelumpBinningBasis} key. With {@link DelumpBinningBasis#BOILING_POINT} the legacy boiling-point sorting key
+   * and the original (assumed pre-sorted) behaviour are retained exactly; with {@link DelumpBinningBasis#MOLAR_MASS} a
+   * copy is first sorted ascending by molar mass so the monotonic boundary scan bins on molar mass.
+   *
+   * @param contributions the contributions to distribute
+   * @param boundaries the ascending cut boundaries on the same key as {@code basis}
+   * @param targetPseudoComponents the number of groups
+   * @param basis the binning key
+   * @return one profile per group (size {@code targetPseudoComponents})
+   */
+  private static List<PseudoComponentProfile> distributeToProfiles(List<PseudoComponentContribution> contributions,
+      List<Double> boundaries, int targetPseudoComponents, DelumpBinningBasis basis) {
+    if (targetPseudoComponents <= 0) {
+      return Collections.emptyList();
+    }
+
+    List<PseudoComponentGroupBuilder> builders = new ArrayList<>(targetPseudoComponents);
+    for (int i = 0; i < targetPseudoComponents; i++) {
+      builders.add(new PseudoComponentGroupBuilder(MASS_TOLERANCE));
+    }
+
+    if (contributions.isEmpty()) {
+      List<PseudoComponentProfile> emptyProfiles = new ArrayList<>(targetPseudoComponents);
+      for (int i = 0; i < targetPseudoComponents; i++) {
+	emptyProfiles.add(PseudoComponentProfile.empty());
+      }
+      return emptyProfiles;
+    }
+
+    List<PseudoComponentContribution> ordered = contributions;
+    if (basis != DelumpBinningBasis.BOILING_POINT) {
+      ordered = new ArrayList<>(contributions);
+      ordered.sort(Comparator.comparingDouble(c -> c.binningKey(basis)));
+    }
+
+    int groupIndex = 0;
+    double currentBoundary = boundaries.isEmpty() ? Double.POSITIVE_INFINITY : boundaries.get(0);
+
+    for (PseudoComponentContribution contribution : ordered) {
+      double key = contribution.binningKey(basis);
       while (groupIndex < targetPseudoComponents - 1 && key > currentBoundary) {
 	groupIndex++;
 	currentBoundary = groupIndex < boundaries.size() ? boundaries.get(groupIndex) : Double.POSITIVE_INFINITY;
@@ -1316,6 +1950,21 @@ public final class PseudoComponentCombiner {
 	key = molarMass;
       }
       return key;
+    }
+
+    /**
+     * Return the key on which this contribution is binned for the requested basis. The molar-mass basis returns the
+     * molar mass directly (the conserved, monotonic quantity); the boiling-point basis returns the legacy
+     * {@link #sortingKey()} (normal boiling point, falling back to molar mass).
+     *
+     * @param basis the binning basis
+     * @return the binning key value
+     */
+    private double binningKey(DelumpBinningBasis basis) {
+      if (basis == DelumpBinningBasis.MOLAR_MASS) {
+	return molarMass;
+      }
+      return sortingKey();
     }
 
     /**

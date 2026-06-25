@@ -39,6 +39,66 @@ public class CharacterizationOptions {
     CARBON_NUMBER
   }
 
+  /**
+   * Basis on which delumped single-carbon-number sub-fractions are binned onto the reference cuts.
+   */
+  public enum DelumpBinningBasis {
+    /**
+     * Bin on molar mass (the conserved, monotonic quantity; the default). Preferred because molar mass is the basis on
+     * which the Pedersen molar distribution (Eq. 5.27) and the conservation closures (Eqs. 5.35-5.37) are defined.
+     */
+    MOLAR_MASS,
+    /** Bin on normal boiling point (the legacy sorting-key behaviour, with molar-mass fallback). */
+    BOILING_POINT
+  }
+
+  /**
+   * Scope of the Whitson gamma molar-distribution fit used to shape the delumping of a lump into sub-fractions.
+   */
+  public enum DelumpGammaScope {
+    /** Fit one global gamma to the whole C7+ lump set (smoother, more Whitson-faithful). */
+    GLOBAL,
+    /** Fit a local gamma to each lump from its immediate neighbours (the default). */
+    NEIGHBOURS
+  }
+
+  /**
+   * Quantity conserved exactly when a coarse lump is delumped into single-carbon-number sub-fractions.
+   */
+  public enum DelumpConservation {
+    /**
+     * Conserve both the parent moles and the parent mass (the default). Achieved by normalizing the sub-fraction mole
+     * weights (moles) and rescaling the gamma conditional-mean molar masses to the parent mass (mass).
+     */
+    BOTH,
+    /** Conserve the parent moles exactly and keep the sub-fraction molar masses unscaled; the parent mass may drift. */
+    MOLES,
+    /** Conserve the parent mass exactly by rescaling the sub-fraction moles; the parent moles may drift. */
+    MASS
+  }
+
+  /**
+   * Rule used to place the cut edges between adjacent reference pseudo-components when a source fluid is
+   * re-characterized onto a fixed reference slate.
+   */
+  public enum ReferenceBoundaryMode {
+    /**
+     * Place each cut edge at the arithmetic midpoint of the two adjacent cut keys (the default, legacy behaviour). This
+     * implicitly assumes the reference cuts are equally wide.
+     */
+    MIDPOINT,
+    /**
+     * Require each reference cut key to be the centroid of its own span, giving the recurrence
+     * {@code b_i = 2*key_i - b_(i-1)} anchored at {@code b_0 = key_0 - 0.5*(key_1 - key_0)} and walked from the
+     * lightest to the heaviest cut. Each candidate boundary is clamped strictly between its two adjacent keys (with a
+     * midpoint fallback when it would fall out of range or break monotonicity). The recurrence is linear in the cut
+     * key, so it is only applied on the {@link DelumpBinningBasis#MOLAR_MASS} basis; the boiling-point basis falls back
+     * to {@link #MIDPOINT}. Use this when the reference slate has very unequal cut widths, where the midpoint of the
+     * means mis-bins material into the narrower neighbour.
+     */
+    CENTROID_SPAN
+  }
+
   private final boolean transferBinaryInteractionParameters;
   private final boolean normalizeComposition;
   private final NamingScheme namingScheme;
@@ -48,6 +108,10 @@ public class CharacterizationOptions {
   private final boolean delumpBeforeRecharacterization;
   private final int delumpResolution;
   private final boolean sharedImaginaryBoundaries;
+  private final DelumpBinningBasis delumpBinningBasis;
+  private final DelumpGammaScope delumpGammaScope;
+  private final DelumpConservation delumpConservation;
+  private final ReferenceBoundaryMode referenceBoundaryMode;
 
   private CharacterizationOptions(Builder builder) {
     this.transferBinaryInteractionParameters = builder.transferBinaryInteractionParameters;
@@ -59,6 +123,10 @@ public class CharacterizationOptions {
     this.delumpBeforeRecharacterization = builder.delumpBeforeRecharacterization;
     this.delumpResolution = builder.delumpResolution;
     this.sharedImaginaryBoundaries = builder.sharedImaginaryBoundaries;
+    this.delumpBinningBasis = builder.delumpBinningBasis;
+    this.delumpGammaScope = builder.delumpGammaScope;
+    this.delumpConservation = builder.delumpConservation;
+    this.referenceBoundaryMode = builder.referenceBoundaryMode;
   }
 
   /**
@@ -177,6 +245,61 @@ public class CharacterizationOptions {
   }
 
   /**
+   * Returns the basis on which delumped single-carbon-number sub-fractions are binned onto the reference cuts.
+   *
+   * <p>
+   * Defaults to {@link DelumpBinningBasis#MOLAR_MASS}. Molar mass is the quantity on which the Pedersen molar
+   * distribution (Eq. 5.27) and the conservation closures are defined, so it gives a monotonic, conservation-faithful
+   * binning. {@link DelumpBinningBasis#BOILING_POINT} reproduces the legacy sorting-key behaviour.
+   *
+   * @return the delumping binning basis (never null)
+   */
+  public DelumpBinningBasis getDelumpBinningBasis() {
+    return delumpBinningBasis;
+  }
+
+  /**
+   * Returns the scope of the Whitson gamma molar-distribution fit used to shape the delumping.
+   *
+   * <p>
+   * Defaults to {@link DelumpGammaScope#NEIGHBOURS}, which fits a local gamma to each lump from its immediate
+   * neighbours. {@link DelumpGammaScope#GLOBAL} fits a single gamma to the whole C7+ lump set.
+   *
+   * @return the delumping gamma scope (never null)
+   */
+  public DelumpGammaScope getDelumpGammaScope() {
+    return delumpGammaScope;
+  }
+
+  /**
+   * Returns the quantity conserved exactly when a coarse lump is delumped into single-carbon-number sub-fractions.
+   *
+   * <p>
+   * Defaults to {@link DelumpConservation#BOTH}, which conserves both the parent moles and the parent mass.
+   * {@link DelumpConservation#MOLES} conserves moles only; {@link DelumpConservation#MASS} conserves mass only.
+   *
+   * @return the delumping conservation mode (never null)
+   */
+  public DelumpConservation getDelumpConservation() {
+    return delumpConservation;
+  }
+
+  /**
+   * Returns the rule used to place the cut edges between adjacent reference pseudo-components on the reference-only
+   * re-characterization path.
+   *
+   * <p>
+   * Defaults to {@link ReferenceBoundaryMode#MIDPOINT} (the legacy arithmetic-midpoint behaviour).
+   * {@link ReferenceBoundaryMode#CENTROID_SPAN} requires each reference cut key to be the centroid of its own span and
+   * is only applied on the {@link DelumpBinningBasis#MOLAR_MASS} basis.
+   *
+   * @return the reference boundary placement mode (never null)
+   */
+  public ReferenceBoundaryMode getReferenceBoundaryMode() {
+    return referenceBoundaryMode;
+  }
+
+  /**
    * Creates a new builder with default options.
    *
    * @return a new builder instance
@@ -216,6 +339,10 @@ public class CharacterizationOptions {
     private boolean delumpBeforeRecharacterization = false;
     private int delumpResolution = 12;
     private boolean sharedImaginaryBoundaries = false;
+    private DelumpBinningBasis delumpBinningBasis = DelumpBinningBasis.MOLAR_MASS;
+    private DelumpGammaScope delumpGammaScope = DelumpGammaScope.NEIGHBOURS;
+    private DelumpConservation delumpConservation = DelumpConservation.BOTH;
+    private ReferenceBoundaryMode referenceBoundaryMode = ReferenceBoundaryMode.MIDPOINT;
 
     /**
      * Set whether to transfer binary interaction parameters from the reference fluid.
@@ -348,6 +475,79 @@ public class CharacterizationOptions {
      */
     public Builder sharedImaginaryBoundaries(boolean shared) {
       this.sharedImaginaryBoundaries = shared;
+      return this;
+    }
+
+    /**
+     * Set the basis on which delumped single-carbon-number sub-fractions are binned onto the reference cuts.
+     *
+     * <p>
+     * Defaults to {@link DelumpBinningBasis#MOLAR_MASS}. Molar mass is the quantity on which the Pedersen molar
+     * distribution and the conservation closures are defined, giving a monotonic, conservation-faithful binning;
+     * {@link DelumpBinningBasis#BOILING_POINT} reproduces the legacy boiling-point sorting-key behaviour.
+     *
+     * @param basis the delumping binning basis (must not be null)
+     * @return this builder
+     */
+    public Builder delumpBinningBasis(DelumpBinningBasis basis) {
+      if (basis != null) {
+	this.delumpBinningBasis = basis;
+      }
+      return this;
+    }
+
+    /**
+     * Set the scope of the Whitson gamma molar-distribution fit used to shape the delumping.
+     *
+     * <p>
+     * Defaults to {@link DelumpGammaScope#NEIGHBOURS} (a local gamma fitted per lump from its immediate neighbours).
+     * {@link DelumpGammaScope#GLOBAL} fits a single gamma to the whole C7+ lump set.
+     *
+     * @param scope the delumping gamma scope (must not be null)
+     * @return this builder
+     */
+    public Builder delumpGammaScope(DelumpGammaScope scope) {
+      if (scope != null) {
+	this.delumpGammaScope = scope;
+      }
+      return this;
+    }
+
+    /**
+     * Set the quantity conserved exactly when a coarse lump is delumped into single-carbon-number sub-fractions.
+     *
+     * <p>
+     * Defaults to {@link DelumpConservation#BOTH} (parent moles and mass both conserved).
+     * {@link DelumpConservation#MOLES} conserves moles only; {@link DelumpConservation#MASS} conserves mass only.
+     *
+     * @param conservation the delumping conservation mode (must not be null)
+     * @return this builder
+     */
+    public Builder delumpConservation(DelumpConservation conservation) {
+      if (conservation != null) {
+	this.delumpConservation = conservation;
+      }
+      return this;
+    }
+
+    /**
+     * Set the rule used to place the cut edges between adjacent reference pseudo-components on the reference-only
+     * re-characterization path.
+     *
+     * <p>
+     * Defaults to {@link ReferenceBoundaryMode#MIDPOINT} (legacy arithmetic midpoint of the adjacent cut keys). Set to
+     * {@link ReferenceBoundaryMode#CENTROID_SPAN} to require each reference cut key to be the centroid of its own span,
+     * which avoids mis-binning material into a narrower neighbour when the reference cut widths are very unequal. The
+     * centroid-span rule is only applied on the {@link DelumpBinningBasis#MOLAR_MASS} basis; the boiling-point basis
+     * falls back to the midpoint rule.
+     *
+     * @param mode the reference boundary placement mode (must not be null)
+     * @return this builder
+     */
+    public Builder referenceBoundaryMode(ReferenceBoundaryMode mode) {
+      if (mode != null) {
+	this.referenceBoundaryMode = mode;
+      }
       return this;
     }
 
