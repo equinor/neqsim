@@ -18,7 +18,7 @@ class ReciprocatingCompressorPerformanceTest {
   @Test
   void basicScreeningOutputs() {
     ReciprocatingCompressorPerformance c = new ReciprocatingCompressorPerformance("K-101").setPressures(10.0, 30.0)
-	.setSuctionTemperature(313.15).setClearanceFraction(0.12).setPolytropicExponent(1.3).setDisplacementRate(0.5);
+        .setSuctionTemperature(313.15).setClearanceFraction(0.12).setPolytropicExponent(1.3).setDisplacementRate(0.5);
     c.calculate();
     assertEquals(3.0, c.getPressureRatio(), 1.0e-9);
     assertTrue(c.getVolumetricEfficiency() > 0.70 && c.getVolumetricEfficiency() < 0.85);
@@ -30,16 +30,16 @@ class ReciprocatingCompressorPerformanceTest {
   @Test
   void higherPressureRatioLowersVolumetricEfficiency() {
     ReciprocatingCompressorPerformance low = new ReciprocatingCompressorPerformance().setPressures(10.0, 20.0)
-	.setSuctionTemperature(313.15).setDisplacementRate(0.5).calculate();
+        .setSuctionTemperature(313.15).setDisplacementRate(0.5).calculate();
     ReciprocatingCompressorPerformance high = new ReciprocatingCompressorPerformance().setPressures(10.0, 50.0)
-	.setSuctionTemperature(313.15).setDisplacementRate(0.5).calculate();
+        .setSuctionTemperature(313.15).setDisplacementRate(0.5).calculate();
     assertTrue(high.getVolumetricEfficiency() < low.getVolumetricEfficiency());
   }
 
   @Test
   void rodLoadUtilisationAndWarning() {
     ReciprocatingCompressorPerformance c = new ReciprocatingCompressorPerformance().setPressures(10.0, 30.0)
-	.setSuctionTemperature(313.15).setDisplacementRate(0.5).setRodLoad(0.05, 0.005, 80000.0).calculate();
+        .setSuctionTemperature(313.15).setDisplacementRate(0.5).setRodLoad(0.05, 0.005, 80000.0).calculate();
     assertTrue(c.getRodLoadUtilization() > 1.0);
     assertFalse(c.getWarnings().isEmpty());
   }
@@ -47,7 +47,7 @@ class ReciprocatingCompressorPerformanceTest {
   @Test
   void highRatioRaisesDischargeTemperatureAlarm() {
     ReciprocatingCompressorPerformance c = new ReciprocatingCompressorPerformance().setPressures(5.0, 50.0)
-	.setSuctionTemperature(320.0).setPolytropicExponent(1.4).setDisplacementRate(0.3).calculate();
+        .setSuctionTemperature(320.0).setPolytropicExponent(1.4).setDisplacementRate(0.3).calculate();
     assertTrue(c.getDischargeTemperature() > 408.15);
     assertFalse(c.getWarnings().isEmpty());
   }
@@ -55,9 +55,9 @@ class ReciprocatingCompressorPerformanceTest {
   @Test
   void invalidSetupRejected() {
     assertThrows(IllegalStateException.class, () -> new ReciprocatingCompressorPerformance()
-	.setSuctionTemperature(300.0).setDisplacementRate(0.5).calculate());
+        .setSuctionTemperature(300.0).setDisplacementRate(0.5).calculate());
     assertThrows(IllegalStateException.class, () -> new ReciprocatingCompressorPerformance().setPressures(30.0, 10.0)
-	.setSuctionTemperature(300.0).setDisplacementRate(0.5).calculate());
+        .setSuctionTemperature(300.0).setDisplacementRate(0.5).calculate());
   }
 
   @Test
@@ -69,7 +69,7 @@ class ReciprocatingCompressorPerformanceTest {
   @Test
   void jsonExport() {
     ReciprocatingCompressorPerformance c = new ReciprocatingCompressorPerformance().setPressures(10.0, 30.0)
-	.setSuctionTemperature(313.15).setDisplacementRate(0.5).calculate();
+        .setSuctionTemperature(313.15).setDisplacementRate(0.5).calculate();
     String json = c.toJson();
     assertTrue(json.contains("volumetricEfficiency"));
     assertTrue(json.contains("dischargeTemperature"));

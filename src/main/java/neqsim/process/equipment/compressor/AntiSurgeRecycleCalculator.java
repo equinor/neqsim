@@ -127,7 +127,7 @@ public class AntiSurgeRecycleCalculator implements Serializable {
 
     if (!active) {
       lastResult = new Result(false, 0.0, null, compressor.getDistanceToSurge(), inletVol, surgeFlow, controlFlow, 0,
-	  true);
+          true);
       return lastResult;
     }
 
@@ -160,8 +160,8 @@ public class AntiSurgeRecycleCalculator implements Serializable {
       controlFlow = surgeFlow * (1.0 + surgeControlMargin);
       double error = controlFlow - inletVol;
       if (Math.abs(error) < tolerance * controlFlow) {
-	converged = true;
-	break;
+        converged = true;
+        break;
       }
       double totalMass = mixer.getOutletStream().getFlowRate("kg/hr");
       double volumePerMass = inletVol / Math.max(totalMass, 1.0e-6);
@@ -170,11 +170,11 @@ public class AntiSurgeRecycleCalculator implements Serializable {
 
     if (!converged) {
       logger.warn("AntiSurgeRecycleCalculator did not converge in {} iterations (residual on control flow)",
-	  maxIterations);
+          maxIterations);
     }
 
     lastResult = new Result(true, recycleMass, recycleStream, compressor.getDistanceToSurge(), inletVol, surgeFlow,
-	controlFlow, iterations, converged);
+        controlFlow, iterations, converged);
     return lastResult;
   }
 
@@ -339,7 +339,7 @@ public class AntiSurgeRecycleCalculator implements Serializable {
      * @param converged whether the iteration converged within the tolerance
      */
     public Result(boolean recycleActive, double recycleMassFlow, StreamInterface recycleStream, double distanceToSurge,
-	double inletVolumeFlow, double surgeFlow, double controlFlow, int iterations, boolean converged) {
+        double inletVolumeFlow, double surgeFlow, double controlFlow, int iterations, boolean converged) {
       this.recycleActive = recycleActive;
       this.recycleMassFlow = recycleMassFlow;
       this.recycleStream = recycleStream;

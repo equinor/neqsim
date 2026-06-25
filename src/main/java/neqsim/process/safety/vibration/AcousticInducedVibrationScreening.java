@@ -101,7 +101,7 @@ public class AcousticInducedVibrationScreening implements Serializable {
     double dOverT = outsideDiameter / wallThickness;
 
     double argument = Math.pow(pressureDropRatio, 3.6) * flowLbPerSec * flowLbPerSec
-	* Math.pow(tempRankine / molecularWeight, 1.2);
+        * Math.pow(tempRankine / molecularWeight, 1.2);
     double pwlDb = 10.0 * Math.log10(argument) + PWL_CONSTANT;
     double allowablePwlDb = DESIGN_LINE_INTERCEPT - DESIGN_LINE_SLOPE * dOverT;
     double marginDb = pwlDb - allowablePwlDb;
@@ -117,7 +117,7 @@ public class AcousticInducedVibrationScreening implements Serializable {
 
     PipingFivLikelihood band = bandFor(marginDb);
     return new AcousticInducedVibrationResult(circuitName, pwlDb, allowablePwlDb, marginDb, band, factors,
-	recommendation(band));
+        recommendation(band));
   }
 
   /**
@@ -153,10 +153,10 @@ public class AcousticInducedVibrationScreening implements Serializable {
       return "Manage small-bore connections; verify branch and weld quality.";
     case HIGH:
       return "Detailed acoustic-fatigue assessment required (increase wall thickness, "
-	  + "remove unbraced branches, or treat the source).";
+          + "remove unbraced branches, or treat the source).";
     case VERY_HIGH:
       return "Redesign required - reduce pressure-drop energy, stage the let-down, or "
-	  + "increase downstream pipe schedule.";
+          + "increase downstream pipe schedule.";
     default:
       return "Unknown";
     }
