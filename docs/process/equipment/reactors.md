@@ -1,6 +1,6 @@
 ---
 title: Reactors
-description: "Documentation for chemical reactor equipment in NeqSim: plug flow reactor (PFR), stirred tank reactor (CSTR), Gibbs equilibrium reactor, stoichiometric reactor, hydrogen production reformers, ammonia synthesis reactor, sulfur deposition analyser, and bio-processing reactors."
+description: "Documentation for chemical reactor equipment in NeqSim: plug flow reactor (PFR), stirred tank reactor (CSTR), Gibbs equilibrium reactor, stoichiometric reactor, sulfur oxidation reactor, sulfur deposition analyser, hydrogen production reformers, ammonia synthesis reactor, and bio-processing reactors."
 ---
 
 # Reactors
@@ -18,6 +18,7 @@ stoichiometric conversion, catalytic reactions, and bio-processing. All reactors
 - [Gibbs Reactor](#gibbs-reactor)
 - [Stoichiometric Reactor](#stoichiometric-reactor)
 - [Ammonia Synthesis Reactor](#ammonia-synthesis-reactor)
+- [Sulfur Oxidation Reactor](#sulfur-oxidation-reactor)
 - [Sulfur Deposition Analyser](#sulfur-deposition-analyser)
 - [Furnace Burner](#furnace-burner)
 - [Hydrogen Production Reactors](#hydrogen-production-reactors)
@@ -41,6 +42,7 @@ stoichiometric conversion, catalytic reactions, and bio-processing. All reactors
 | `GibbsReactorCO2` | Gibbs reactor variant specialized for CO2 reactions |
 | `StoichiometricReaction` | Fixed-conversion stoichiometric reactor |
 | `AmmoniaSynthesisReactor` | Specialized reactor for ammonia synthesis |
+| `SulfurOxidationReactor` | Partial oxidation of H2S and oxygen to elemental sulfur (`S8`) and water |
 | `SulfurDepositionAnalyser` | Sulfur solubility, deposition onset, corrosion assessment |
 | `FurnaceBurner` | Fired heater / furnace burner |
 | `CatalyticTubeReformer` | Tube-side SMR equilibrium model with duty and tube-wall screening |
@@ -67,6 +69,7 @@ stoichiometric conversion, catalytic reactions, and bio-processing. All reactors
 | `AutothermalReformer` | ATR concept studies with oxygen/steam ratio control and soot-risk screening |
 | `PartialOxidationReactor` | POX syngas route studies with quench and refractory-temperature screening |
 | `AmmoniaSynthesisReactor` | Haber-Bosch ammonia synthesis modeling |
+| `SulfurOxidationReactor` | Sour gas with oxygen ingress or controlled oxidation where generated `S8` should feed a downstream sulfur filter |
 | `SulfurDepositionAnalyser` | Sulfur precipitation, H2S reactions, corrosion assessment |
 
 ---
@@ -125,9 +128,9 @@ pfr.setNumberOfSteps(100);
 pfr.setKeyComponent("methane");
 pfr.run();
 
-System.out.println("Conversion: " + pfr.getConversion());
-System.out.println("Outlet T: " + (pfr.getOutletTemperature() - 273.15) + " C");
-System.out.println("Pressure drop: " + pfr.getPressureDrop() + " bar");
+double conversion = pfr.getConversion();
+double outletTemperatureC = pfr.getOutletTemperature() - 273.15;
+double pressureDropBar = pfr.getPressureDrop();
 ```
 
 > **Full documentation:** See the [Plug Flow Reactor Guide](plug_flow_reactor.md) for
@@ -211,6 +214,68 @@ import neqsim.process.equipment.reactor.AmmoniaSynthesisReactor;
 AmmoniaSynthesisReactor nh3 = new AmmoniaSynthesisReactor("NH3-Reactor", feedStream);
 nh3.run();
 ```
+
+---
+
+## Sulfur Oxidation Reactor
+
+`SulfurOxidationReactor` is a two-port process unit for screening elemental
+sulfur formation from hydrogen sulfide and oxygen in a methane-rich gas stream.
+It applies the stoichiometric reaction:
+
+$$
+2\,\mathrm{H_2S} + \mathrm{O_2} \rightarrow 2\,\mathrm{H_2O} + 0.25\,\mathrm{S_8}
+$$
+
+Methane and other hydrocarbons are treated as inert. The model consumes H2S up
+to the target conversion, then applies oxygen limitation. The product sulfur is
+added as the `S8` component, and the reactor can run a solid sulfur flash at the
+outlet so downstream equipment can detect solid `S8`.
+
+Use this reactor when chemistry should modify the stream composition before
+filtration. Use `SulfurDepositionAnalyser` when the task is solubility,
+temperature-sweep, corrosion, or blockage-risk analysis without modifying the
+outlet stream.
+
+```java
+SystemInterface gas = new SystemSrkEos(283.15, 20.0);
+gas.addComponent("methane", 80.0);
+gas.addComponent("H2S", 80.0);
+gas.addComponent("oxygen", 40.0);
+gas.addComponent("water", 1.0e-12);
+gas.addComponent("S8", 1.0e-12);
+gas.setMixingRule("classic");
+gas.setMultiPhaseCheck(true);
+gas.setSolidPhaseCheck("S8");
+
+Stream feed = new Stream("sour methane feed", gas);
+feed.setFlowRate(1000.0, "kg/hr");
+feed.run();
+
+SulfurOxidationReactor reactor = new SulfurOxidationReactor("sulfur reactor", feed);
+reactor.setH2SConversionTarget(1.0);
+reactor.setPressureDrop(0.0);
+reactor.run();
+
+double h2sConversion = reactor.getH2SConversion();
+double s8Moles = reactor.getS8ProducedMoles();
+boolean solidSulfur = reactor.isSolidSulfurPresent();
+```
+
+The reactor is designed to connect directly to `SulfurFilter`. The filter then
+captures solid `S8`, accumulates sulfur loading, and builds pressure drop during
+transient operation:
+
+```java
+SulfurFilter filter = new SulfurFilter("sulfur filter", reactor.getOutletStream());
+filter.setRemovalEfficiency(1.0);
+filter.setFilterElementCapacity(1000.0);
+filter.setPressureDropIncreaseAtCapacity(1.0);
+filter.setCalculateSteadyState(false);
+filter.runTransient(3600.0, UUID.randomUUID());
+```
+
+These examples are covered by `SulfurOxidationReactorTest` and `FilterTest`.
 
 ---
 

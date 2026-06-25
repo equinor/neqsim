@@ -45,8 +45,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author esol
  * @version $Id: $Id
  */
-public class Compressor extends TwoPortEquipment
-    implements CompressorInterface, StateVectorProvider, CapacityConstrainedEquipment, AutoSizeable {
+public class Compressor extends TwoPortEquipment implements CompressorInterface,
+    StateVectorProvider, CapacityConstrainedEquipment, AutoSizeable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -130,7 +130,8 @@ public class Compressor extends TwoPortEquipment
   private CompressorOperatingHistory operatingHistory = null;
   private StartupProfile startupProfile = null;
   private ShutdownProfile shutdownProfile = null;
-  private transient java.util.List<CompressorEventListener> eventListeners = new java.util.ArrayList<>();
+  private transient java.util.List<CompressorEventListener> eventListeners =
+      new java.util.ArrayList<>();
 
   // Inertia and acceleration modeling
   private double rotationalInertia = 10.0; // kg⋅m² combined rotor inertia
@@ -186,10 +187,12 @@ public class Compressor extends TwoPortEquipment
   private String polytropicMethod = "schultz";
 
   /**
-   * Capacity constraints map for this compressor. Marked transient because constraints contain lambdas/method
-   * references that are not serializable. Constraints are re-initialized after deserialization when needed.
+   * Capacity constraints map for this compressor. Marked transient because constraints contain
+   * lambdas/method references that are not serializable. Constraints are re-initialized after
+   * deserialization when needed.
    */
-  private transient Map<String, CapacityConstraint> capacityConstraints = new LinkedHashMap<String, CapacityConstraint>();
+  private transient Map<String, CapacityConstraint> capacityConstraints =
+      new LinkedHashMap<String, CapacityConstraint>();
 
   /**
    * Constructor for Compressor.
@@ -261,7 +264,8 @@ public class Compressor extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public void initInstrumentDesign() {
-    instrumentDesign = new neqsim.process.instrumentdesign.compressor.CompressorInstrumentDesign(this);
+    instrumentDesign =
+        new neqsim.process.instrumentdesign.compressor.CompressorInstrumentDesign(this);
   }
 
   /**
@@ -286,8 +290,8 @@ public class Compressor extends TwoPortEquipment
    * Initialize a default mechanical losses model based on current compressor configuration.
    *
    * <p>
-   * This creates a mechanical losses model with typical parameters for a centrifugal compressor with dry gas seals and
-   * tilting pad bearings.
+   * This creates a mechanical losses model with typical parameters for a centrifugal compressor
+   * with dry gas seals and tilting pad bearings.
    * </p>
    *
    * @return the initialized mechanical losses model
@@ -449,15 +453,17 @@ public class Compressor extends TwoPortEquipment
 
   /** {@inheritDoc} */
   @Override
-  public Map<String, Map<String, Object>> getEquipmentState(String temperatureUnit, String pressureUnit,
-      String flowUnit) {
+  public Map<String, Map<String, Object>> getEquipmentState(String temperatureUnit,
+      String pressureUnit, String flowUnit) {
     Map<String, Map<String, Object>> state = new LinkedHashMap<String, Map<String, Object>>();
     StreamInterface out = getOutletStream();
     if (out != null) {
-      state.put("flow", ProcessEquipmentInterface.createStateEntry(out.getFlowRate(flowUnit), flowUnit));
-      state.put("pressure", ProcessEquipmentInterface.createStateEntry(out.getPressure(pressureUnit), pressureUnit));
-      state.put("temperature",
-          ProcessEquipmentInterface.createStateEntry(out.getTemperature(temperatureUnit), temperatureUnit));
+      state.put("flow",
+          ProcessEquipmentInterface.createStateEntry(out.getFlowRate(flowUnit), flowUnit));
+      state.put("pressure",
+          ProcessEquipmentInterface.createStateEntry(out.getPressure(pressureUnit), pressureUnit));
+      state.put("temperature", ProcessEquipmentInterface
+          .createStateEntry(out.getTemperature(temperatureUnit), temperatureUnit));
     }
     state.put("power", ProcessEquipmentInterface.createStateEntry(getPower("kW"), "kW"));
     return state;
@@ -474,9 +480,10 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * Calculates polytropic or isentropic efficiency by iteratively matching the specified outlet temperature. The
-   * iteration continues until the temperature difference is within the tolerance set by
-   * {@link #setEfficiencySolveTolerance(double)} (default 0.01 K) or the maximum iteration count is reached.
+   * Calculates polytropic or isentropic efficiency by iteratively matching the specified outlet
+   * temperature. The iteration continues until the temperature difference is within the tolerance
+   * set by {@link #setEfficiencySolveTolerance(double)} (default 0.01 K) or the maximum iteration
+   * count is reached.
    *
    * @param outTemperature the target outlet temperature in Kelvin
    * @return the calculated efficiency (polytropic or isentropic depending on configuration)
@@ -515,8 +522,9 @@ public class Compressor extends TwoPortEquipment
       // System.out.println("temperature compressor " +
       // getThermoSystem().getTemperature() + " funk " + funk + " polytropic " +
       // polytropicEfficiency);
-    } while ((Math.abs((getThermoSystem().getTemperature() - outTemperature)) > efficiencySolveTolerance || iter < 3)
-        && (iter < 50));
+    } while ((Math
+        .abs((getThermoSystem().getTemperature() - outTemperature)) > efficiencySolveTolerance
+        || iter < 3) && (iter < 50));
     usePolytropicCalc = useOld;
     return newPoly;
   }
@@ -539,7 +547,8 @@ public class Compressor extends TwoPortEquipment
 
     double houtGuess = hinn + dH / polytropicEfficiency;
     thermoOps.PHflash(houtGuess, 0);
-    System.out.println("TEMPERATURE .." + getThermoSystem().getTemperature());
+    logger.debug("Compressor outlet temperature after PH flash: {}",
+        getThermoSystem().getTemperature());
     return getThermoSystem().getPressure();
   }
 
@@ -553,21 +562,26 @@ public class Compressor extends TwoPortEquipment
       return true;
     }
     SystemInterface inletSystem = inStream.getThermoSystem();
-    if (inletSystem.getTemperature() != lastInletTemperature || inletSystem.getPressure() != lastInletPressure
-        || pressure != lastOutletPressure || speed != lastSpeed || compressionRatio != lastCompressionRatio
+    if (inletSystem.getTemperature() != lastInletTemperature
+        || inletSystem.getPressure() != lastInletPressure || pressure != lastOutletPressure
+        || speed != lastSpeed || compressionRatio != lastCompressionRatio
         || outTemperature != lastOutTemperature || isentropicEfficiency != lastIsentropicEfficiency
         || polytropicEfficiency != lastPolytropicEfficiency || dH != lastPower
-        || numberOfCompressorCalcSteps != lastNumberOfCompressorCalcSteps || useOutTemperature != lastUseOutTemperature
-        || useCompressionRatio != lastUseCompressionRatio || usePolytropicCalc != lastUsePolytropicCalc
-        || powerSet != lastPowerSet || calcPressureOut != lastCalcPressureOut || solveSpeed != lastSolveSpeed
+        || numberOfCompressorCalcSteps != lastNumberOfCompressorCalcSteps
+        || useOutTemperature != lastUseOutTemperature
+        || useCompressionRatio != lastUseCompressionRatio
+        || usePolytropicCalc != lastUsePolytropicCalc || powerSet != lastPowerSet
+        || calcPressureOut != lastCalcPressureOut || solveSpeed != lastSolveSpeed
         || compressorChart.isUseCompressorChart() != lastUseCompressorChart
         || useEnergyEfficiencyChart != lastUseEnergyEfficiencyChart
-        || useRigorousPolytropicMethod != lastUseRigorousPolytropicMethod || useGERG2008 != lastUseGERG2008
-        || useLeachman != lastUseLeachman || useVega != lastUseVega) {
+        || useRigorousPolytropicMethod != lastUseRigorousPolytropicMethod
+        || useGERG2008 != lastUseGERG2008 || useLeachman != lastUseLeachman
+        || useVega != lastUseVega) {
       return true;
     }
     double flow = inletSystem.getFlowRate("kg/hr");
-    if (flow <= 0.0 || lastInletFlowRate <= 0.0 || Math.abs(flow - lastInletFlowRate) / flow >= 1e-6) {
+    if (flow <= 0.0 || lastInletFlowRate <= 0.0
+        || Math.abs(flow - lastInletFlowRate) / flow >= 1e-6) {
       return true;
     }
     neqsim.thermo.phase.PhaseInterface phase = inletSystem.getPhase(0);
@@ -624,13 +638,15 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * Run a PH flash and recover gracefully when the default first-order solver raises an IsNaN-derived RuntimeException.
-   * The default {@code PHflash} (type 0) damped Newton iteration on 1/T is fragile for low-flow, single-phase gas at
-   * high reduced pressure: an intermediate temperature can drive the cubic EOS into a region with no positive
-   * compressibility-factor root, producing {@code PhasePrEos:molarVolumeAnalytical} NaN. The second-order solver (type
-   * 1, {@code SysNewtonRhapsonPHflash}) re-initialises from a fresh TP flash and converges robustly on the same
-   * well-posed problem, so it is used as the primary recovery. A multi-phase-check-disabled retry is kept as a final
-   * fallback for systems that seed a non-physical 2-phase split near the cricondenbar (PR #2099).
+   * Run a PH flash and recover gracefully when the default first-order solver raises an
+   * IsNaN-derived RuntimeException. The default {@code PHflash} (type 0) damped Newton iteration on
+   * 1/T is fragile for low-flow, single-phase gas at high reduced pressure: an intermediate
+   * temperature can drive the cubic EOS into a region with no positive compressibility-factor root,
+   * producing {@code PhasePrEos:molarVolumeAnalytical} NaN. The second-order solver (type 1,
+   * {@code SysNewtonRhapsonPHflash}) re-initialises from a fresh TP flash and converges robustly on
+   * the same well-posed problem, so it is used as the primary recovery. A
+   * multi-phase-check-disabled retry is kept as a final fallback for systems that seed a
+   * non-physical 2-phase split near the cricondenbar (PR #2099).
    *
    * @param thermoOps thermodynamic operations bound to the compressor thermo system
    * @param hout target total enthalpy in J
@@ -716,8 +732,8 @@ public class Compressor extends TwoPortEquipment
    * @param targetEntropy target total entropy in J/K
    * @param initialTemperature starting temperature in K
    */
-  private void solveEntropyAtCurrentPressureWithTpFlash(ThermodynamicOperations thermoOps, double targetEntropy,
-      double initialTemperature) {
+  private void solveEntropyAtCurrentPressureWithTpFlash(ThermodynamicOperations thermoOps,
+      double targetEntropy, double initialTemperature) {
     double temperatureGuess = Math.max(initialTemperature, 50.0);
     double bestTemperature = temperatureGuess;
     double bestResidual = Double.MAX_VALUE;
@@ -739,8 +755,8 @@ public class Compressor extends TwoPortEquipment
 
       double heatCapacity = getThermoSystem().getCp();
       double entropyTemperatureDerivative = heatCapacity / temperatureGuess;
-      if (heatCapacity <= 0.0 || Math.abs(entropyTemperatureDerivative) < 1.0e-20 || !Double.isFinite(heatCapacity)
-          || !Double.isFinite(entropyTemperatureDerivative)) {
+      if (heatCapacity <= 0.0 || Math.abs(entropyTemperatureDerivative) < 1.0e-20
+          || !Double.isFinite(heatCapacity) || !Double.isFinite(entropyTemperatureDerivative)) {
         break;
       }
 
@@ -773,7 +789,8 @@ public class Compressor extends TwoPortEquipment
    * @return accepted absolute entropy residual in J/K
    */
   private double getEntropyFlashTolerance(double targetEntropy) {
-    return Math.max(MIN_ENTROPY_FLASH_TOLERANCE, Math.abs(targetEntropy) * RELATIVE_ENTROPY_FLASH_TOLERANCE);
+    return Math.max(MIN_ENTROPY_FLASH_TOLERANCE,
+        Math.abs(targetEntropy) * RELATIVE_ENTROPY_FLASH_TOLERANCE);
   }
 
   /** {@inheritDoc} */
@@ -796,7 +813,8 @@ public class Compressor extends TwoPortEquipment
       return;
     }
 
-    if (Math.abs(pressure - thermoSystem.getPressure(pressureUnit)) < 1e-6 && !compressorChart.isUseCompressorChart()) {
+    if (Math.abs(pressure - thermoSystem.getPressure(pressureUnit)) < 1e-6
+        && !compressorChart.isUseCompressorChart()) {
       thermoSystem.initProperties();
       outStream.setThermoSystem(getThermoSystem());
       outStream.setCalculationIdentifier(id);
@@ -900,10 +918,10 @@ public class Compressor extends TwoPortEquipment
         kappa = thermoSystem.getGamma2();
       }
       double n = 1.0 / (1.0 - (kappa - 1.0) / kappa * 1.0 / (getPolytropicEfficiency()));
-      double pressureRatio = Math.pow(
-          (polytropicFluidHead * 1000.0
-              + (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW))
-              / (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW),
+      double pressureRatio = Math.pow((polytropicFluidHead * 1000.0 + (n / (n - 1.0) * z_inlet
+          * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW))
+          / (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet)
+              / MW),
           n / (n - 1.0));
       setOutletPressure(pressureRatio * getInletPressure());
     }
@@ -912,9 +930,11 @@ public class Compressor extends TwoPortEquipment
     {
       if (useRigorousPolytropicMethod) {
         solveEfficiency(outTemperature);
-        polytropicHead = getPower() / getThermoSystem().getFlowRate("kg/sec") / 1000.0 * getPolytropicEfficiency();
+        polytropicHead = getPower() / getThermoSystem().getFlowRate("kg/sec") / 1000.0
+            * getPolytropicEfficiency();
         polytropicFluidHead = polytropicHead;
-        polytropicHeadMeter = polytropicFluidHead * 1000.0 / ThermodynamicConstantsInterface.gravity;
+        polytropicHeadMeter =
+            polytropicFluidHead * 1000.0 / ThermodynamicConstantsInterface.gravity;
         getThermoSystem().setMultiPhaseCheck(originalMultiPhaseCheck);
         return;
       } else {
@@ -937,19 +957,22 @@ public class Compressor extends TwoPortEquipment
           double[] gergProps;
           gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
           densOutIsentropic = getThermoSystem().getPhase(0).getDensity_GERG2008();
-          enthalpyOutIsentropic = gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+          enthalpyOutIsentropic =
+              gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
         }
         if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
           double[] LeachmanProps;
           LeachmanProps = getThermoSystem().getPhase(0).getProperties_Leachman();
           densOutIsentropic = getThermoSystem().getPhase(0).getDensity_Leachman();
-          enthalpyOutIsentropic = LeachmanProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+          enthalpyOutIsentropic =
+              LeachmanProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
         }
         if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
           double[] VegaProps;
           VegaProps = getThermoSystem().getPhase(0).getProperties_Vega();
           densOutIsentropic = getThermoSystem().getPhase(0).getDensity_Vega();
-          enthalpyOutIsentropic = VegaProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+          enthalpyOutIsentropic =
+              VegaProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
         }
         thermoSystem.setTemperature(outTemperature);
         thermoOps.TPflash();
@@ -981,7 +1004,8 @@ public class Compressor extends TwoPortEquipment
 
         double n = Math.log(getOutletPressure() / presinn) / Math.log(densOut / densInn);
         double CF = (enthalpyOutIsentropic - inletEnthalpy) / thermoSystem.getFlowRate("kg/sec")
-            / (n / (n - 1.0) * (getOutletPressure() * 1e5 / densOutIsentropic - presinn * 1e5 / densInn));
+            / (n / (n - 1.0)
+                * (getOutletPressure() * 1e5 / densOutIsentropic - presinn * 1e5 / densInn));
 
         double F1 = thermoSystem.getTotalNumberOfMoles();
         double polytropicPower = F1 * MW * (n / (n - 1.0)) * CF * presinn * 1e5 / densInn
@@ -1072,7 +1096,8 @@ public class Compressor extends TwoPortEquipment
             z_inlet = VegaProps[1];
           }
 
-          double polytropEff = getCompressorChart().getPolytropicEfficiency(actualFlowRate, currentSpeed);
+          double polytropEff =
+              getCompressorChart().getPolytropicEfficiency(actualFlowRate, currentSpeed);
           setPolytropicEfficiency(polytropEff / 100.0);
           if (polytropEff <= 0.0) {
             polytropEff = 0.01;
@@ -1086,32 +1111,34 @@ public class Compressor extends TwoPortEquipment
           polytropicHead = getCompressorChart().getPolytropicHead(actualFlowRate, currentSpeed);
           double temperature_inlet = thermoSystem.getTemperature();
           double n = 1.0 / (1.0 - (kappa - 1.0) / kappa * 1.0 / (polytropEff / 100.0));
-          polytropicFluidHead = (getCompressorChart().getHeadUnit().equals("meter")) ? polytropicHead / 1000.0 * 9.81
-              : polytropicHead;
+          polytropicFluidHead =
+              (getCompressorChart().getHeadUnit().equals("meter")) ? polytropicHead / 1000.0 * 9.81
+                  : polytropicHead;
           if (polytropicFluidHead <= 0.0) {
             polytropicFluidHead = 0.0001;
           }
-          double pressureRatio = Math.pow(
-              (polytropicFluidHead * 1000.0
-                  + (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW))
-                  / (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW),
+          double pressureRatio = Math.pow((polytropicFluidHead * 1000.0 + (n / (n - 1.0) * z_inlet
+              * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW))
+              / (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet)
+                  / MW),
               n / (n - 1.0));
           double currentPressure = thermoSystem.getPressure() * pressureRatio;
 
           // Calculate the derivative of pressure with respect to speed
           double polytropEffDelta = getCompressorChart().getPolytropicEfficiency(actualFlowRate,
               currentSpeed + deltaSpeed);
-          double polytropicHeadDelta = getCompressorChart().getPolytropicHead(actualFlowRate,
-              currentSpeed + deltaSpeed);
+          double polytropicHeadDelta =
+              getCompressorChart().getPolytropicHead(actualFlowRate, currentSpeed + deltaSpeed);
           double nDelta = 1.0 / (1.0 - (kappa - 1.0) / kappa * 1.0 / (polytropEffDelta / 100.0));
           double polytropicFluidHeadDelta = (getCompressorChart().getHeadUnit().equals("meter"))
               ? polytropicHeadDelta / 1000.0 * 9.81
               : polytropicHeadDelta;
-          double pressureRatioDelta = Math.pow(
-              (polytropicFluidHeadDelta * 1000.0
-                  + (nDelta / (nDelta - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW))
-                  / (nDelta / (nDelta - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW),
-              nDelta / (nDelta - 1.0));
+          double pressureRatioDelta =
+              Math.pow((polytropicFluidHeadDelta * 1000.0 + (nDelta / (nDelta - 1.0) * z_inlet
+                  * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW))
+                  / (nDelta / (nDelta - 1.0) * z_inlet * ThermodynamicConstantsInterface.R
+                      * (temperature_inlet) / MW),
+                  nDelta / (nDelta - 1.0));
           double pressureNew = thermoSystem.getPressure() * pressureRatioDelta;
 
           double dPressure_dSpeed = (pressureNew - currentPressure) / deltaSpeed;
@@ -1150,8 +1177,8 @@ public class Compressor extends TwoPortEquipment
           }
 
           powerSet = true;
-          dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass() / getPolytropicEfficiency()
-              * thermoSystem.getTotalNumberOfMoles();
+          dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass()
+              / getPolytropicEfficiency() * thermoSystem.getTotalNumberOfMoles();
           // Check if speed is within bounds
           if (currentSpeed < minSpeed || currentSpeed > maxSpeed) {
             if (limitSpeed) {
@@ -1210,16 +1237,18 @@ public class Compressor extends TwoPortEquipment
           surgeCheck = isSurge(polytropicHead, actualFlowRate);
           if (surgeCheck) {
             logger.info("Anti-surge activated in speed-solve mode. Surge flow: "
-                + getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicFluidHead) + " Am3/hr, actual flow: "
-                + actualFlowRate + " m3/hr");
-            thermoSystem.setTotalFlowRate(getAntiSurge().getSurgeControlFactor()
-                * getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicFluidHead), "Am3/hr");
+                + getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicFluidHead)
+                + " Am3/hr, actual flow: " + actualFlowRate + " m3/hr");
+            thermoSystem.setTotalFlowRate(
+                getAntiSurge().getSurgeControlFactor()
+                    * getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicFluidHead),
+                "Am3/hr");
             thermoSystem.init(3);
             fractionAntiSurge = thermoSystem.getTotalNumberOfMoles() / orginalMolarFLow - 1.0;
             getAntiSurge().setCurrentSurgeFraction(fractionAntiSurge);
             // Recompute dH with the updated flow
-            dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass() / getPolytropicEfficiency()
-                * thermoSystem.getTotalNumberOfMoles();
+            dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass()
+                / getPolytropicEfficiency() * thermoSystem.getTotalNumberOfMoles();
           }
         }
       } else {
@@ -1257,7 +1286,8 @@ public class Compressor extends TwoPortEquipment
             z_inlet = VegaProps[1];
           }
 
-          double polytropEff = getCompressorChart().getPolytropicEfficiency(actualFlowRate, getSpeed());
+          double polytropEff =
+              getCompressorChart().getPolytropicEfficiency(actualFlowRate, getSpeed());
           setPolytropicEfficiency(polytropEff / 100.0);
           polytropicHead = getCompressorChart().getPolytropicHead(actualFlowRate, getSpeed());
           double temperature_inlet = thermoSystem.getTemperature();
@@ -1270,14 +1300,15 @@ public class Compressor extends TwoPortEquipment
             polytropicFluidHead = polytropicHead;
             polytropicHeadMeter = polytropicHead * 1000.0 / 9.81;
           }
-          double pressureRatio = Math.pow(
-              (polytropicFluidHead * 1000.0
-                  + (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW))
-                  / (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW),
+          double pressureRatio = Math.pow((polytropicFluidHead * 1000.0 + (n / (n - 1.0) * z_inlet
+              * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW))
+              / (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet)
+                  / MW),
               n / (n - 1.0));
           setOutletPressure(thermoSystem.getPressure() * pressureRatio);
           if (getAntiSurge().isActive()) {
-            logger.info("surge flow " + getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHead) + " m3/hr");
+            logger.info("surge flow "
+                + getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHead) + " m3/hr");
             surgeCheck = isSurge(polytropicHead, actualFlowRate);
           }
           if (getCompressorChart().getStoneWallCurve().isActive()) {
@@ -1285,16 +1316,18 @@ public class Compressor extends TwoPortEquipment
             // thermoSystem.getFlowRate("m3/hr")));
           }
           if (surgeCheck && getAntiSurge().isActive()) {
-            thermoSystem.setTotalFlowRate(getAntiSurge().getSurgeControlFactor()
-                * getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicFluidHead), "Am3/hr");
+            thermoSystem.setTotalFlowRate(
+                getAntiSurge().getSurgeControlFactor()
+                    * getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicFluidHead),
+                "Am3/hr");
             thermoSystem.init(3);
             fractionAntiSurge = thermoSystem.getTotalNumberOfMoles() / orginalMolarFLow - 1.0;
             getAntiSurge().setCurrentSurgeFraction(fractionAntiSurge);
           }
 
           powerSet = true;
-          dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass() / getPolytropicEfficiency()
-              * thermoSystem.getTotalNumberOfMoles();
+          dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass()
+              / getPolytropicEfficiency() * thermoSystem.getTotalNumberOfMoles();
         } while (surgeCheck && getAntiSurge().isActive());
       }
     }
@@ -1385,8 +1418,11 @@ public class Compressor extends TwoPortEquipment
             }
           }
         } else if (polytropicMethod.equals("schultz")) {
-          double schultzX = thermoSystem.getTemperature() / thermoSystem.getVolume() * thermoSystem.getdVdTpn() - 1.0;
-          double schultzY = -thermoSystem.getPressure() / thermoSystem.getVolume() * thermoSystem.getdVdPtn();
+          double schultzX =
+              thermoSystem.getTemperature() / thermoSystem.getVolume() * thermoSystem.getdVdTpn()
+                  - 1.0;
+          double schultzY =
+              -thermoSystem.getPressure() / thermoSystem.getVolume() * thermoSystem.getdVdPtn();
           thermoSystem.setPressure(getOutletPressure(), pressureUnit);
           runRegularPsFlash(thermoOps, entropy);
           thermoSystem.initProperties();
@@ -1397,33 +1433,37 @@ public class Compressor extends TwoPortEquipment
             double[] gergProps;
             gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
             densOutIsentropic = getThermoSystem().getPhase(0).getDensity_GERG2008();
-            enthalpyOutIsentropic = gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+            enthalpyOutIsentropic =
+                gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
           }
           if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
             thermoOps.PSflashLeachman(entropy);
             double[] LeachmanProps;
             LeachmanProps = getThermoSystem().getPhase(0).getProperties_Leachman();
             densOutIsentropic = getThermoSystem().getPhase(0).getDensity_Leachman();
-            enthalpyOutIsentropic = LeachmanProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+            enthalpyOutIsentropic =
+                LeachmanProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
           }
           if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
             thermoOps.PSflashVega(entropy);
             double[] VegaProps;
             VegaProps = getThermoSystem().getPhase(0).getProperties_Vega();
             densOutIsentropic = getThermoSystem().getPhase(0).getDensity_Vega();
-            enthalpyOutIsentropic = VegaProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+            enthalpyOutIsentropic =
+                VegaProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
           }
-          double isenthalpicvolumeexponent = Math.log(getOutletPressure() / presinn)
-              / Math.log(densOutIsentropic / densInn);
-          double nV = (1.0 + schultzX) / (1.0 / isenthalpicvolumeexponent * (1.0 / polytropicEfficiency + schultzX)
-              - schultzY * (1.0 / polytropicEfficiency - 1.0));
+          double isenthalpicvolumeexponent =
+              Math.log(getOutletPressure() / presinn) / Math.log(densOutIsentropic / densInn);
+          double nV = (1.0 + schultzX)
+              / (1.0 / isenthalpicvolumeexponent * (1.0 / polytropicEfficiency + schultzX)
+                  - schultzY * (1.0 / polytropicEfficiency - 1.0));
           polytropicExponent = nV;
           double term = nV / (nV - 1.0);
           double term2 = 1e5 * (getOutletPressure() / densOutIsentropic - presinn / densInn);
           double term3 = isenthalpicvolumeexponent / (isenthalpicvolumeexponent - 1.0);
           double CF = (enthalpyOutIsentropic - inletEnthalpy) / (term2 * term3);
-          dH = term * CF * 1e5 * presinn / densInn * (Math.pow(getOutletPressure() / presinn, 1.0 / term) - 1.0)
-              / polytropicEfficiency;
+          dH = term * CF * 1e5 * presinn / densInn
+              * (Math.pow(getOutletPressure() / presinn, 1.0 / term) - 1.0) / polytropicEfficiency;
           double hout = hinn + dH;
           thermoOps = new ThermodynamicOperations(getThermoSystem());
           runPHflashWithNaNRetry(thermoOps, hout);
@@ -1447,33 +1487,38 @@ public class Compressor extends TwoPortEquipment
             double[] gergProps;
             gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
             densOutIsentropic = getThermoSystem().getPhase(0).getDensity_GERG2008();
-            enthalpyOutIsentropic = gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+            enthalpyOutIsentropic =
+                gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
           }
           if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
             thermoOps.PSflashLeachman(entropy);
             double[] LeachmanProps;
             LeachmanProps = getThermoSystem().getPhase(0).getProperties_Leachman();
             densOutIsentropic = getThermoSystem().getPhase(0).getDensity_Leachman();
-            enthalpyOutIsentropic = LeachmanProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+            enthalpyOutIsentropic =
+                LeachmanProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
           }
           if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
             thermoOps.PSflashVega(entropy);
             double[] VegaProps;
             VegaProps = getThermoSystem().getPhase(0).getProperties_Vega();
             densOutIsentropic = getThermoSystem().getPhase(0).getDensity_Vega();
-            enthalpyOutIsentropic = VegaProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+            enthalpyOutIsentropic =
+                VegaProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
           }
-          double isenthalpicvolumeexponent = Math.log(getOutletPressure() / presinn)
-              / Math.log(densOutIsentropic / densInn);
+          double isenthalpicvolumeexponent =
+              Math.log(getOutletPressure() / presinn) / Math.log(densOutIsentropic / densInn);
           // Calculate polytropic exponent from isentropic exponent and efficiency
           // n_poly = k_s / (1 - (k_s - 1) / k_s * (1 - eta_poly))
           // Simplified: use isenthalpicvolumeexponent as base
-          polytropicExponent = isenthalpicvolumeexponent
-              / (1.0 - (isenthalpicvolumeexponent - 1.0) / isenthalpicvolumeexponent * (1.0 - polytropicEfficiency));
-          double term = isenthalpicvolumeexponent / (isenthalpicvolumeexponent - 1.0) * (polytropicEfficiency);
+          polytropicExponent = isenthalpicvolumeexponent / (1.0 - (isenthalpicvolumeexponent - 1.0)
+              / isenthalpicvolumeexponent * (1.0 - polytropicEfficiency));
+          double term = isenthalpicvolumeexponent / (isenthalpicvolumeexponent - 1.0)
+              * (polytropicEfficiency);
           double term2 = 1e5 * (getOutletPressure() / densOutIsentropic - presinn / densInn);
           double CF = (enthalpyOutIsentropic - inletEnthalpy) / (term * term2);
-          dH = term * CF * 1e5 * presinn / densInn * (Math.pow(getOutletPressure() / presinn, 1.0 / term) - 1.0);
+          dH = term * CF * 1e5 * presinn / densInn
+              * (Math.pow(getOutletPressure() / presinn, 1.0 / term) - 1.0);
           double hout = hinn + dH;
           thermoOps = new ThermodynamicOperations(getThermoSystem());
           runPHflashWithNaNRetry(thermoOps, hout);
@@ -1557,7 +1602,8 @@ public class Compressor extends TwoPortEquipment
     thermoSystem.initProperties();
     outStream.setThermoSystem(getThermoSystem());
 
-    polytropicFluidHead = getPower() / getThermoSystem().getFlowRate("kg/sec") / 1000.0 * getPolytropicEfficiency();
+    polytropicFluidHead =
+        getPower() / getThermoSystem().getFlowRate("kg/sec") / 1000.0 * getPolytropicEfficiency();
     polytropicHeadMeter = polytropicFluidHead * 1000.0 / 9.81;
     actualCompressionRatio = getOutletPressure() / presinn;
 
@@ -1612,7 +1658,8 @@ public class Compressor extends TwoPortEquipment
 
     inStream.getThermoSystem().init(3);
     outStream.getThermoSystem().init(3);
-    double head = (outStream.getThermoSystem().getEnthalpy("kJ/kg") - inStream.getThermoSystem().getEnthalpy("kJ/kg"));
+    double head = (outStream.getThermoSystem().getEnthalpy("kJ/kg")
+        - inStream.getThermoSystem().getEnthalpy("kJ/kg"));
 
     // Use state memory for better initial guess - improves reversibility
     double guessFlow;
@@ -1626,8 +1673,9 @@ public class Compressor extends TwoPortEquipment
 
     double actualFlowRateNew = getCompressorChart().getFlow(head, getSpeed(), guessFlow);
     if (actualFlowRateNew < 0.0 || Double.isNaN(actualFlowRateNew)) {
-      logger.error("actual flow rate is negative or NaN and would lead to failure of calculation: actual flow rate "
-          + actualFlowRateNew + ", using previous flow rate: " + guessFlow);
+      logger.error(
+          "actual flow rate is negative or NaN and would lead to failure of calculation: actual flow rate "
+              + actualFlowRateNew + ", using previous flow rate: " + guessFlow);
       actualFlowRateNew = guessFlow > 0.0 ? guessFlow : 1.0; // Use previous flow or fallback
     }
 
@@ -1650,7 +1698,8 @@ public class Compressor extends TwoPortEquipment
     thermoSystem = outStream.getThermoSystem().clone();
     thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
-    polytropicEfficiency = compressorChart.getPolytropicEfficiency(inStream.getFlowRate("m3/hr"), speed) / 100.0;
+    polytropicEfficiency =
+        compressorChart.getPolytropicEfficiency(inStream.getFlowRate("m3/hr"), speed) / 100.0;
     if (polytropicEfficiency <= 0.0) {
       polytropicEfficiency = 0.0001; // Prevent division by zero
     }
@@ -1666,17 +1715,17 @@ public class Compressor extends TwoPortEquipment
   public void generateCompressorCurves() {
     double flowRef = getThermoSystem().getFlowRate("m3/hr");
     double factor = flowRef / 4000.0;
-    double[] chartConditions = new double[] { 0.3, 1.0, 1.0, 1.0 };
-    double[] speed = new double[] { 12913, 12298, 11683, 11098, 10453, 9224, 8609, 8200 };
+    double[] chartConditions = new double[] {0.3, 1.0, 1.0, 1.0};
+    double[] speed = new double[] {12913, 12298, 11683, 11098, 10453, 9224, 8609, 8200};
     double[][] flow = new double[][] {
-        { 2789.1285, 3174.0375, 3689.2288, 4179.4503, 4570.2768, 4954.7728, 5246.0329, 5661.0331 },
-        { 2571.1753, 2943.7254, 3440.2675, 3837.4448, 4253.0898, 4668.6643, 4997.1926, 5387.4952 },
-        { 2415.3793, 2763.0706, 3141.7095, 3594.7436, 4047.6467, 4494.1889, 4853.7353, 5138.7858 },
-        { 2247.2043, 2799.7342, 3178.3428, 3656.1551, 4102.778, 4394.1591, 4648.3224, 4840.4998 },
-        { 2072.8397, 2463.9483, 2836.4078, 3202.5266, 3599.6333, 3978.0203, 4257.0022, 4517.345 },
-        { 1835.9552, 2208.455, 2618.1322, 2940.8034, 3244.7852, 3530.1279, 3753.3738, 3895.9746 },
-        { 1711.3386, 1965.8848, 2356.9431, 2685.9247, 3008.5154, 3337.2855, 3591.5092 },
-        { 1636.5807, 2002.8708, 2338.0319, 2642.1245, 2896.4894, 3113.6264, 3274.8764, 3411.2977 } };
+        {2789.1285, 3174.0375, 3689.2288, 4179.4503, 4570.2768, 4954.7728, 5246.0329, 5661.0331},
+        {2571.1753, 2943.7254, 3440.2675, 3837.4448, 4253.0898, 4668.6643, 4997.1926, 5387.4952},
+        {2415.3793, 2763.0706, 3141.7095, 3594.7436, 4047.6467, 4494.1889, 4853.7353, 5138.7858},
+        {2247.2043, 2799.7342, 3178.3428, 3656.1551, 4102.778, 4394.1591, 4648.3224, 4840.4998},
+        {2072.8397, 2463.9483, 2836.4078, 3202.5266, 3599.6333, 3978.0203, 4257.0022, 4517.345},
+        {1835.9552, 2208.455, 2618.1322, 2940.8034, 3244.7852, 3530.1279, 3753.3738, 3895.9746},
+        {1711.3386, 1965.8848, 2356.9431, 2685.9247, 3008.5154, 3337.2855, 3591.5092},
+        {1636.5807, 2002.8708, 2338.0319, 2642.1245, 2896.4894, 3113.6264, 3274.8764, 3411.2977}};
 
     for (int i = 0; i < flow.length; i++) {
       for (int j = 0; j < flow[i].length; j++) {
@@ -1684,14 +1733,15 @@ public class Compressor extends TwoPortEquipment
       }
     }
 
-    double[][] head = new double[][] { { 80.0375, 78.8934, 76.2142, 71.8678, 67.0062, 60.6061, 53.0499, 39.728 },
-        { 72.2122, 71.8369, 68.9009, 65.8341, 60.7167, 54.702, 47.2749, 35.7471 },
-        { 65.1576, 64.5253, 62.6118, 59.1619, 54.0455, 47.0059, 39.195, 31.6387 },
-        { 58.6154, 56.9627, 54.6647, 50.4462, 44.4322, 38.4144, 32.9084, 28.8109 },
-        { 52.3295, 51.0573, 49.5283, 46.3326, 42.3685, 37.2502, 31.4884, 25.598 },
-        { 40.6578, 39.6416, 37.6008, 34.6603, 30.9503, 27.1116, 23.2713, 20.4546 },
-        { 35.2705, 34.6359, 32.7228, 31.0645, 27.0985, 22.7482, 18.0113 },
-        { 32.192, 31.1756, 29.1329, 26.833, 23.8909, 21.3324, 18.7726, 16.3403 }, };
+    double[][] head =
+        new double[][] {{80.0375, 78.8934, 76.2142, 71.8678, 67.0062, 60.6061, 53.0499, 39.728},
+            {72.2122, 71.8369, 68.9009, 65.8341, 60.7167, 54.702, 47.2749, 35.7471},
+            {65.1576, 64.5253, 62.6118, 59.1619, 54.0455, 47.0059, 39.195, 31.6387},
+            {58.6154, 56.9627, 54.6647, 50.4462, 44.4322, 38.4144, 32.9084, 28.8109},
+            {52.3295, 51.0573, 49.5283, 46.3326, 42.3685, 37.2502, 31.4884, 25.598},
+            {40.6578, 39.6416, 37.6008, 34.6603, 30.9503, 27.1116, 23.2713, 20.4546},
+            {35.2705, 34.6359, 32.7228, 31.0645, 27.0985, 22.7482, 18.0113},
+            {32.192, 31.1756, 29.1329, 26.833, 23.8909, 21.3324, 18.7726, 16.3403},};
 
     for (int i = 0; i < head.length; i++) {
       for (int j = 0; j < head[i].length; j++) {
@@ -1699,22 +1749,22 @@ public class Compressor extends TwoPortEquipment
       }
     }
     double[][] polyEff = new double[][] {
-        { 77.2452238409573, 79.4154186459363, 80.737960012489, 80.5229826589649, 79.2210931638144, 75.4719133864634,
-            69.6034181197298, 58.7322388482707 },
-        { 77.0107837113504, 79.3069974136389, 80.8941189021135, 80.7190194665918, 79.5313242980328, 75.5912622896367,
-            69.6846136362097, 60.0043057990909 },
-        { 77.0043065299874, 79.1690958847856, 80.8038169975675, 80.6543975614197, 78.8532389102705, 73.6664774270613,
-            66.2735600426727, 57.671664571658 },
-        { 77.0716623789093, 80.4629750233093, 81.1390811169072, 79.6374242667478, 75.380928428817, 69.5332969549779,
-            63.7997587622339, 58.8120614497758 },
-        { 76.9705872525642, 79.8335492585324, 80.9468133671171, 80.5806471927835, 78.0462158225426, 73.0403707523258,
-            66.5572286338589, 59.8624822515064 },
-        { 77.5063036680357, 80.2056198362559, 81.0339108025933, 79.6085962687939, 76.3814534404405, 70.8027503005902,
-            64.6437367160571, 60.5299349982342 },
-        { 77.8175271586685, 80.065165942218, 81.0631362122632, 79.8955051771299, 76.1983240929369, 69.289982774309,
-            60.8567149372229 },
-        { 78.0924334304045, 80.9353551568667, 80.7904437766234, 78.8639325223295, 75.2170936751143, 70.3105081673411,
-            65.5507568533569, 61.0391468300337 } };
+        {77.2452238409573, 79.4154186459363, 80.737960012489, 80.5229826589649, 79.2210931638144,
+            75.4719133864634, 69.6034181197298, 58.7322388482707},
+        {77.0107837113504, 79.3069974136389, 80.8941189021135, 80.7190194665918, 79.5313242980328,
+            75.5912622896367, 69.6846136362097, 60.0043057990909},
+        {77.0043065299874, 79.1690958847856, 80.8038169975675, 80.6543975614197, 78.8532389102705,
+            73.6664774270613, 66.2735600426727, 57.671664571658},
+        {77.0716623789093, 80.4629750233093, 81.1390811169072, 79.6374242667478, 75.380928428817,
+            69.5332969549779, 63.7997587622339, 58.8120614497758},
+        {76.9705872525642, 79.8335492585324, 80.9468133671171, 80.5806471927835, 78.0462158225426,
+            73.0403707523258, 66.5572286338589, 59.8624822515064},
+        {77.5063036680357, 80.2056198362559, 81.0339108025933, 79.6085962687939, 76.3814534404405,
+            70.8027503005902, 64.6437367160571, 60.5299349982342},
+        {77.8175271586685, 80.065165942218, 81.0631362122632, 79.8955051771299, 76.1983240929369,
+            69.289982774309, 60.8567149372229},
+        {78.0924334304045, 80.9353551568667, 80.7904437766234, 78.8639325223295, 75.2170936751143,
+            70.3105081673411, 65.5507568533569, 61.0391468300337}};
 
     getCompressorChart().setCurves(chartConditions, speed, flow, head, polyEff);
     getCompressorChart().setHeadUnit("kJ/kg");
@@ -1734,7 +1784,7 @@ public class Compressor extends TwoPortEquipment
 
     getThermoSystem().initPhysicalProperties();
     String[][] table = new String[50][5];
-    String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
+    String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
     table[0][0] = "";
     table[0][1] = "";
     table[0][2] = "";
@@ -1746,58 +1796,62 @@ public class Compressor extends TwoPortEquipment
       for (int j = 0; j < getThermoSystem().getPhases()[0].getNumberOfComponents(); j++) {
         table[j + 1][0] = getThermoSystem().getPhases()[0].getComponent(j).getName();
         buf = new StringBuffer();
-        table[j + 1][i + 1] = nf.format(getThermoSystem().getPhases()[i].getComponent(j).getx(), buf, test).toString();
+        table[j + 1][i + 1] = nf
+            .format(getThermoSystem().getPhases()[i].getComponent(j).getx(), buf, test).toString();
         table[j + 1][4] = "[-]";
       }
       buf = new StringBuffer();
       table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 2][0] = "Density";
       table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 2][i + 1] = nf
-          .format(getThermoSystem().getPhases()[i].getPhysicalProperties().getDensity(), buf, test).toString();
+          .format(getThermoSystem().getPhases()[i].getPhysicalProperties().getDensity(), buf, test)
+          .toString();
       table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 2][4] = "[kg/m^3]";
 
       // Double.longValue(thermoSystem.getPhases()[i].getBeta());
       buf = new StringBuffer();
       table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 3][0] = "PhaseFraction";
-      table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 3][i + 1] = nf
-          .format(getThermoSystem().getPhases()[i].getBeta(), buf, test).toString();
+      table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 3][i + 1] =
+          nf.format(getThermoSystem().getPhases()[i].getBeta(), buf, test).toString();
       table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 3][4] = "[-]";
 
       buf = new StringBuffer();
       table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 4][0] = "MolarMass";
-      table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 4][i + 1] = nf
-          .format(getThermoSystem().getPhases()[i].getMolarMass() * 1000, buf, test).toString();
+      table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 4][i + 1] =
+          nf.format(getThermoSystem().getPhases()[i].getMolarMass() * 1000, buf, test).toString();
       table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 4][4] = "[kg/kmol]";
 
       buf = new StringBuffer();
       table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 5][0] = "Cp";
-      table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 5][i + 1] = nf
-          .format((getThermoSystem().getPhases()[i].getCp() / getThermoSystem().getPhases()[i].getNumberOfMolesInPhase()
-              * 1.0 / getThermoSystem().getPhases()[i].getMolarMass() * 1000), buf, test)
-          .toString();
+      table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 5][i + 1] =
+          nf.format((getThermoSystem().getPhases()[i].getCp()
+              / getThermoSystem().getPhases()[i].getNumberOfMolesInPhase() * 1.0
+              / getThermoSystem().getPhases()[i].getMolarMass() * 1000), buf, test).toString();
       table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 5][4] = "[kJ/kg*K]";
 
       buf = new StringBuffer();
       table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 7][0] = "Viscosity";
-      table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 7][i + 1] = nf
-          .format((getThermoSystem().getPhases()[i].getPhysicalProperties().getViscosity()), buf, test).toString();
+      table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 7][i + 1] =
+          nf.format((getThermoSystem().getPhases()[i].getPhysicalProperties().getViscosity()), buf,
+              test).toString();
       table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 7][4] = "[kg/m*sec]";
 
       buf = new StringBuffer();
       table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 8][0] = "Conductivity";
-      table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 8][i + 1] = nf
-          .format(getThermoSystem().getPhases()[i].getPhysicalProperties().getConductivity(), buf, test).toString();
+      table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 8][i + 1] =
+          nf.format(getThermoSystem().getPhases()[i].getPhysicalProperties().getConductivity(), buf,
+              test).toString();
       table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 8][4] = "[W/m*K]";
 
       buf = new StringBuffer();
       table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 10][0] = "Pressure";
-      table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 10][i + 1] = Double
-          .toString(getThermoSystem().getPhases()[i].getPressure());
+      table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 10][i + 1] =
+          Double.toString(getThermoSystem().getPhases()[i].getPressure());
       table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 10][4] = "[bar]";
 
       buf = new StringBuffer();
       table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 11][0] = "Temperature";
-      table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 11][i + 1] = Double
-          .toString(getThermoSystem().getPhases()[i].getTemperature());
+      table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 11][i + 1] =
+          Double.toString(getThermoSystem().getPhases()[i].getTemperature());
       table[getThermoSystem().getPhases()[0].getNumberOfComponents() + 11][4] = "[K]";
       Double.toString(getThermoSystem().getPhases()[i].getTemperature());
 
@@ -1902,9 +1956,9 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * Set the temperature tolerance used for efficiency solving iterations. A larger tolerance provides faster
-   * convergence when using computationally expensive equations of state like GERG-2008, while still providing good
-   * engineering accuracy.
+   * Set the temperature tolerance used for efficiency solving iterations. A larger tolerance
+   * provides faster convergence when using computationally expensive equations of state like
+   * GERG-2008, while still providing good engineering accuracy.
    *
    * @param tolerance the temperature tolerance in Kelvin (default is 0.01 K)
    */
@@ -1930,7 +1984,8 @@ public class Compressor extends TwoPortEquipment
   /**
    * Setter for the field <code>compressorChart</code>.
    *
-   * @param compressorChart a {@link neqsim.process.equipment.compressor.CompressorChartInterface} object
+   * @param compressorChart a {@link neqsim.process.equipment.compressor.CompressorChartInterface}
+   *        object
    */
   public void setCompressorChart(CompressorChartInterface compressorChart) {
     this.compressorChart = compressorChart;
@@ -1970,8 +2025,8 @@ public class Compressor extends TwoPortEquipment
       for (int i = 0; i < speeds.length; i++) {
         if (flows != null && flows[i] != null) {
           for (int j = 0; j < flows[i].length; j++) {
-            writer.println(String.format(java.util.Locale.US, "%.2f;%.2f;%.2f;%.2f", speeds[i], flows[i][j],
-                heads[i][j], efficiencies[i][j]));
+            writer.println(String.format(java.util.Locale.US, "%.2f;%.2f;%.2f;%.2f", speeds[i],
+                flows[i][j], heads[i][j], efficiencies[i][j]));
           }
         }
       }
@@ -2013,7 +2068,8 @@ public class Compressor extends TwoPortEquipment
       json.append("{\n");
       json.append("  \"compressorName\": \"").append(getName()).append("\",\n");
       json.append("  \"headUnit\": \"").append(compressorChart.getHeadUnit()).append("\",\n");
-      json.append("  \"maxDesignPower_kW\": ").append(getMechanicalDesign().maxDesignPower).append(",\n");
+      json.append("  \"maxDesignPower_kW\": ").append(getMechanicalDesign().maxDesignPower)
+          .append(",\n");
       json.append("  \"speedCurves\": [\n");
 
       for (int i = 0; i < speeds.length; i++) {
@@ -2083,8 +2139,8 @@ public class Compressor extends TwoPortEquipment
    * Load compressor chart from a JSON file.
    *
    * <p>
-   * The JSON format should match the output of {@link #saveCompressorChartToJson(String)}. This method also restores
-   * the maxDesignPower if present in the JSON file.
+   * The JSON format should match the output of {@link #saveCompressorChartToJson(String)}. This
+   * method also restores the maxDesignPower if present in the JSON file.
    * </p>
    *
    * @param filePath the path to the JSON file
@@ -2130,9 +2186,11 @@ public class Compressor extends TwoPortEquipment
     StringBuilder json = new StringBuilder();
     json.append("{\n");
     json.append("  \"compressorName\": \"").append(getName()).append("\",\n");
-    json.append("  \"chartType\": \"").append(compressorChart.getClass().getSimpleName()).append("\",\n");
+    json.append("  \"chartType\": \"").append(compressorChart.getClass().getSimpleName())
+        .append("\",\n");
     json.append("  \"headUnit\": \"").append(compressorChart.getHeadUnit()).append("\",\n");
-    json.append("  \"maxDesignPower_kW\": ").append(getMechanicalDesign().maxDesignPower).append(",\n");
+    json.append("  \"maxDesignPower_kW\": ").append(getMechanicalDesign().maxDesignPower)
+        .append(",\n");
 
     // Reference conditions
     json.append("  \"referenceConditions\": {\n");
@@ -2195,9 +2253,11 @@ public class Compressor extends TwoPortEquipment
     json.append("  ],\n");
 
     // Surge and stonewall info
-    json.append("  \"surgeCurve\": { \"active\": ").append(compressorChart.getSurgeCurve() != null).append(" },\n");
+    json.append("  \"surgeCurve\": { \"active\": ").append(compressorChart.getSurgeCurve() != null)
+        .append(" },\n");
     json.append("  \"stonewallCurve\": { \"active\": ")
-        .append(compressorChart.getStoneWallCurve() != null && compressorChart.getStoneWallCurve().isActive())
+        .append(compressorChart.getStoneWallCurve() != null
+            && compressorChart.getStoneWallCurve().isActive())
         .append(" }\n");
 
     json.append("}");
@@ -2256,8 +2316,9 @@ public class Compressor extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public double getSurgeFlowRateStd() {
-    return getCompressorChart().getSurgeCurve().getSurgeFlow(getPolytropicFluidHead()) * getInletPressure() / 1.01325
-        * 288.15 / getInletTemperature() * 1.0 / getInletStream().getFluid().getZvolcorr();
+    return getCompressorChart().getSurgeCurve().getSurgeFlow(getPolytropicFluidHead())
+        * getInletPressure() / 1.01325 * 288.15 / getInletTemperature() * 1.0
+        / getInletStream().getFluid().getZvolcorr();
   }
 
   @Override
@@ -2278,13 +2339,14 @@ public class Compressor extends TwoPortEquipment
    * Calculate the distance to the stone wall (choke) limit.
    *
    * <p>
-   * Returns a positive value indicating the percentage margin to stone wall. For example, 0.5 means the stone wall is
-   * 50% above the current flow rate.
+   * Returns a positive value indicating the percentage margin to stone wall. For example, 0.5 means
+   * the stone wall is 50% above the current flow rate.
    * </p>
    *
    * <p>
-   * For single speed compressors where the stone wall curve is not active, this method uses the maximum flow point at
-   * the current speed. For multi-speed compressors, it uses the stone wall curve interpolation.
+   * For single speed compressors where the stone wall curve is not active, this method uses the
+   * maximum flow point at the current speed. For multi-speed compressors, it uses the stone wall
+   * curve interpolation.
    * </p>
    *
    * @return distance to stone wall as a ratio (stone wall flow / current flow - 1)
@@ -2300,7 +2362,8 @@ public class Compressor extends TwoPortEquipment
       return Double.POSITIVE_INFINITY; // No stone wall data available
     }
     // For multi-speed compressors, use the stone wall curve interpolation
-    double stoneWallFlow = getCompressorChart().getStoneWallCurve().getStoneWallFlow(getPolytropicFluidHead());
+    double stoneWallFlow =
+        getCompressorChart().getStoneWallCurve().getStoneWallFlow(getPolytropicFluidHead());
     if (stoneWallFlow > 0) {
       return stoneWallFlow / getInletStream().getFlowRate("m3/hr") - 1.0;
     }
@@ -2319,13 +2382,13 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * Safely evaluate a {@code double}-valued supplier, returning {@link Double#NaN} when the underlying calculation
-   * throws or is not yet initialised.
+   * Safely evaluate a {@code double}-valued supplier, returning {@link Double#NaN} when the
+   * underlying calculation throws or is not yet initialised.
    *
    * <p>
-   * This is intended for the machine-readable operating-point accessors, which are frequently called by automation/AI
-   * agents before every quantity has been initialised. Returning {@code NaN} instead of propagating an exception keeps
-   * the result object usable.
+   * This is intended for the machine-readable operating-point accessors, which are frequently
+   * called by automation/AI agents before every quantity has been initialised. Returning
+   * {@code NaN} instead of propagating an exception keeps the result object usable.
    * </p>
    *
    * @param supplier the calculation to evaluate
@@ -2340,7 +2403,8 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * Safely evaluate a {@code boolean}-valued supplier, returning {@code false} when the underlying calculation throws.
+   * Safely evaluate a {@code boolean}-valued supplier, returning {@code false} when the underlying
+   * calculation throws.
    *
    * @param supplier the calculation to evaluate
    * @return the evaluated value, or {@code false} if evaluation fails
@@ -2357,18 +2421,20 @@ public class Compressor extends TwoPortEquipment
    * Return a structured, machine-readable snapshot of the compressor operating point.
    *
    * <p>
-   * This is a single aggregation of the quantities an analyst or AI agent normally extracts one call at a time (flow,
-   * head, speed, efficiency, power) together with the compressor-map constraint picture ({@link #getDistanceToSurge()},
-   * {@link #getDistanceToStoneWall()}, {@link #isSurge()}, {@link #isStoneWall()}). The intent is that the question "is
-   * this machine feasible at this operating point?" becomes a field ({@code withinChart} / {@code limitingConstraint})
-   * instead of a re-implementation in client code.
+   * This is a single aggregation of the quantities an analyst or AI agent normally extracts one
+   * call at a time (flow, head, speed, efficiency, power) together with the compressor-map
+   * constraint picture ({@link #getDistanceToSurge()}, {@link #getDistanceToStoneWall()},
+   * {@link #isSurge()}, {@link #isStoneWall()}). The intent is that the question "is this machine
+   * feasible at this operating point?" becomes a field ({@code withinChart} /
+   * {@code limitingConstraint}) instead of a re-implementation in client code.
    * </p>
    *
    * <p>
-   * Keys carry their unit in the name (for example {@code flow_m3hr}, {@code head_kJkg}, {@code power_MW}). Values that
-   * cannot be evaluated are returned as {@link Double#NaN}. When no compressor chart is in use the chart-related fields
-   * are still present: {@code chartActive} is {@code false}, {@code withinChart} is {@code true} (no map limit to
-   * violate) and {@code limitingConstraint} is {@code "no_chart"}.
+   * Keys carry their unit in the name (for example {@code flow_m3hr}, {@code head_kJkg},
+   * {@code power_MW}). Values that cannot be evaluated are returned as {@link Double#NaN}. When no
+   * compressor chart is in use the chart-related fields are still present: {@code chartActive} is
+   * {@code false}, {@code withinChart} is {@code true} (no map limit to violate) and
+   * {@code limitingConstraint} is {@code "no_chart"}.
    * </p>
    *
    * <table>
@@ -2485,14 +2551,15 @@ public class Compressor extends TwoPortEquipment
    * Return {@link #getOperatingPoint()} serialised as a JSON string.
    *
    * <p>
-   * {@link Double#NaN} and infinite values are serialised (rather than rejected) so the response is always valid for an
-   * agent to parse.
+   * {@link Double#NaN} and infinite values are serialised (rather than rejected) so the response is
+   * always valid for an agent to parse.
    * </p>
    *
    * @return a JSON document describing the compressor operating point
    */
   public String getOperatingPointJson() {
-    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(getOperatingPoint());
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(getOperatingPoint());
   }
 
   /**
@@ -2507,14 +2574,14 @@ public class Compressor extends TwoPortEquipment
   /**
    * Get the safety-factor-corrected surge flow and head at the current compressor speed.
    * <p>
-   * This method returns the safe minimum operating point by applying the surge control factor (typically 1.05 for 5%
-   * margin) to the surge flow at the current speed. The head is calculated at this safe flow rate using the compressor
-   * chart. This is particularly useful for single speed compressors where speed cannot be adjusted to move away from
-   * surge.
+   * This method returns the safe minimum operating point by applying the surge control factor
+   * (typically 1.05 for 5% margin) to the surge flow at the current speed. The head is calculated
+   * at this safe flow rate using the compressor chart. This is particularly useful for single speed
+   * compressors where speed cannot be adjusted to move away from surge.
    * </p>
    *
-   * @return A double array with two elements: [0] = safe surge flow (m3/hr), [1] = head at safe flow (kJ/kg or meter
-   * depending on chart headUnit)
+   * @return A double array with two elements: [0] = safe surge flow (m3/hr), [1] = head at safe
+   *         flow (kJ/kg or meter depending on chart headUnit)
    */
   public double[] getSafetyFactorCorrectedFlowHeadAtCurrentSpeed() {
     double currentSpeed = getSpeed();
@@ -2527,7 +2594,7 @@ public class Compressor extends TwoPortEquipment
     // Get head at the safe flow rate
     double safeHead = getCompressorChart().getPolytropicHead(safeFlow, currentSpeed);
 
-    return new double[] { safeFlow, safeHead };
+    return new double[] {safeFlow, safeHead};
   }
 
   /**
@@ -2540,11 +2607,12 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * Check if the current compressor speed is higher than the maximum speed in the compressor curves.
+   * Check if the current compressor speed is higher than the maximum speed in the compressor
+   * curves.
    *
    * <p>
-   * This method is useful for detecting when the compressor is operating outside its design envelope (requires speed
-   * extrapolation beyond the defined curves).
+   * This method is useful for detecting when the compressor is operating outside its design
+   * envelope (requires speed extrapolation beyond the defined curves).
    * </p>
    *
    * @return true if the current speed exceeds the maximum curve speed, false otherwise
@@ -2602,8 +2670,8 @@ public class Compressor extends TwoPortEquipment
    * Check if the current compressor speed is lower than the minimum speed in the compressor curves.
    *
    * <p>
-   * This method is useful for detecting when the compressor is operating below its design envelope (requires speed
-   * extrapolation below the defined curves), which may indicate turndown issues.
+   * This method is useful for detecting when the compressor is operating below its design envelope
+   * (requires speed extrapolation below the defined curves), which may indicate turndown issues.
    * </p>
    *
    * @return true if the current speed is below the minimum curve speed, false otherwise
@@ -2881,7 +2949,8 @@ public class Compressor extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public double getEntropyProduction(String unit) {
-    return outStream.getThermoSystem().getEntropy(unit) - inStream.getThermoSystem().getEntropy(unit);
+    return outStream.getThermoSystem().getEntropy(unit)
+        - inStream.getThermoSystem().getEntropy(unit);
   }
 
   /** {@inheritDoc} */
@@ -2975,7 +3044,8 @@ public class Compressor extends TwoPortEquipment
   /**
    * Setter for the field <code>propertyProfile</code>.
    *
-   * @param propertyProfile a {@link neqsim.process.equipment.compressor.CompressorPropertyProfile} object
+   * @param propertyProfile a {@link neqsim.process.equipment.compressor.CompressorPropertyProfile}
+   *        object
    */
   public void setPropertyProfile(CompressorPropertyProfile propertyProfile) {
     this.propertyProfile = propertyProfile;
@@ -3008,10 +3078,11 @@ public class Compressor extends TwoPortEquipment
     final int prime = 31;
     int result = super.hashCode();
     result = prime * result + Objects.hash(antiSurge, compressorChart, dH, inletEnthalpy, inStream,
-        isentropicEfficiency, numberOfCompressorCalcSteps, outStream, outTemperature, polytropicEfficiency,
-        polytropicExponent, polytropicFluidHead, polytropicHead, polytropicHeadMeter, polytropicMethod, powerSet,
-        pressure, pressureUnit, speed, thermoSystem, useGERG2008, useLeachman, useVega, useOutTemperature,
-        usePolytropicCalc, useRigorousPolytropicMethod);
+        isentropicEfficiency, numberOfCompressorCalcSteps, outStream, outTemperature,
+        polytropicEfficiency, polytropicExponent, polytropicFluidHead, polytropicHead,
+        polytropicHeadMeter, polytropicMethod, powerSet, pressure, pressureUnit, speed,
+        thermoSystem, useGERG2008, useLeachman, useVega, useOutTemperature, usePolytropicCalc,
+        useRigorousPolytropicMethod);
     return result;
   }
 
@@ -3028,24 +3099,31 @@ public class Compressor extends TwoPortEquipment
       return false;
     }
     Compressor other = (Compressor) obj;
-    return Objects.equals(antiSurge, other.antiSurge) && Objects.equals(compressorChart, other.compressorChart)
+    return Objects.equals(antiSurge, other.antiSurge)
+        && Objects.equals(compressorChart, other.compressorChart)
         && Double.doubleToLongBits(dH) == Double.doubleToLongBits(other.dH)
         && Double.doubleToLongBits(inletEnthalpy) == Double.doubleToLongBits(other.inletEnthalpy)
         && Objects.equals(inStream, other.inStream)
-        && Double.doubleToLongBits(isentropicEfficiency) == Double.doubleToLongBits(other.isentropicEfficiency)
+        && Double.doubleToLongBits(isentropicEfficiency) == Double
+            .doubleToLongBits(other.isentropicEfficiency)
         && numberOfCompressorCalcSteps == other.numberOfCompressorCalcSteps
         && Objects.equals(outStream, other.outStream)
         && Double.doubleToLongBits(outTemperature) == Double.doubleToLongBits(other.outTemperature)
-        && Double.doubleToLongBits(polytropicEfficiency) == Double.doubleToLongBits(other.polytropicEfficiency)
-        && Double.doubleToLongBits(polytropicExponent) == Double.doubleToLongBits(other.polytropicExponent)
-        && Double.doubleToLongBits(polytropicFluidHead) == Double.doubleToLongBits(other.polytropicFluidHead)
+        && Double.doubleToLongBits(polytropicEfficiency) == Double
+            .doubleToLongBits(other.polytropicEfficiency)
+        && Double.doubleToLongBits(polytropicExponent) == Double
+            .doubleToLongBits(other.polytropicExponent)
+        && Double.doubleToLongBits(polytropicFluidHead) == Double
+            .doubleToLongBits(other.polytropicFluidHead)
         && Double.doubleToLongBits(polytropicHead) == Double.doubleToLongBits(other.polytropicHead)
-        && Double.doubleToLongBits(polytropicHeadMeter) == Double.doubleToLongBits(other.polytropicHeadMeter)
+        && Double.doubleToLongBits(polytropicHeadMeter) == Double
+            .doubleToLongBits(other.polytropicHeadMeter)
         && Objects.equals(polytropicMethod, other.polytropicMethod) && powerSet == other.powerSet
         && Double.doubleToLongBits(pressure) == Double.doubleToLongBits(other.pressure)
         && Objects.equals(pressureUnit, other.pressureUnit) && speed == other.speed
         && Objects.equals(thermoSystem, other.thermoSystem) && useGERG2008 == other.useGERG2008
-        && useLeachman == other.useLeachman && useVega == other.useVega && useOutTemperature == other.useOutTemperature
+        && useLeachman == other.useLeachman && useVega == other.useVega
+        && useOutTemperature == other.useOutTemperature
         && usePolytropicCalc == other.usePolytropicCalc
         && useRigorousPolytropicMethod == other.useRigorousPolytropicMethod;
   }
@@ -3096,7 +3174,8 @@ public class Compressor extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(new CompressorResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new CompressorResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -3175,8 +3254,9 @@ public class Compressor extends TwoPortEquipment
    * Sets the maximum discharge temperature constraint.
    *
    * <p>
-   * This value is used by the capacity constraint framework to track discharge temperature utilization. When the actual
-   * discharge temperature exceeds this limit, the compressor will be flagged as over-utilized.
+   * This value is used by the capacity constraint framework to track discharge temperature
+   * utilization. When the actual discharge temperature exceeds this limit, the compressor will be
+   * flagged as over-utilized.
    * </p>
    *
    * @param temp maximum discharge temperature
@@ -3241,8 +3321,9 @@ public class Compressor extends TwoPortEquipment
    * Generates a compressor chart based on the current operating point.
    *
    * <p>
-   * This is a convenience method that creates a single-speed compressor chart using the compressor's current speed and
-   * operating conditions. The chart type will match the compressor's current chart type setting.
+   * This is a convenience method that creates a single-speed compressor chart using the
+   * compressor's current speed and operating conditions. The chart type will match the compressor's
+   * current chart type setting.
    * </p>
    *
    * <p>
@@ -3263,8 +3344,8 @@ public class Compressor extends TwoPortEquipment
    * Generates a compressor chart with multiple speed curves.
    *
    * <p>
-   * Creates a multi-speed compressor chart centered around the current speed. The speeds are distributed from 80% to
-   * 120% of the current speed.
+   * Creates a multi-speed compressor chart centered around the current speed. The speeds are
+   * distributed from 80% to 120% of the current speed.
    * </p>
    *
    * @param numberOfSpeeds Number of speed curves to generate (must be at least 1)
@@ -3294,8 +3375,9 @@ public class Compressor extends TwoPortEquipment
    * Generates a compressor chart with specified options and number of speeds.
    *
    * <p>
-   * This is the main chart generation method that provides full control over the generated chart. The generated chart
-   * will automatically use the compressor's current chart type (simple, interpolate, or interpolate and extrapolate).
+   * This is the main chart generation method that provides full control over the generated chart.
+   * The generated chart will automatically use the compressor's current chart type (simple,
+   * interpolate, or interpolate and extrapolate).
    * </p>
    *
    * <p>
@@ -3318,7 +3400,8 @@ public class Compressor extends TwoPortEquipment
     // Use the current chart type
     String chartType = getCompressorChartType();
     generator.setChartType(chartType);
-    CompressorChartInterface newChart = generator.generateCompressorChart(generationOption, numberOfSpeeds);
+    CompressorChartInterface newChart =
+        generator.generateCompressorChart(generationOption, numberOfSpeeds);
     this.compressorChart = newChart;
   }
 
@@ -3326,8 +3409,8 @@ public class Compressor extends TwoPortEquipment
    * Generates a compressor chart from a predefined template.
    *
    * <p>
-   * Templates provide realistic compressor curve shapes based on typical compressor characteristics. Available
-   * templates:
+   * Templates provide realistic compressor curve shapes based on typical compressor
+   * characteristics. Available templates:
    * </p>
    * <ul>
    * <li>"CENTRIFUGAL_STANDARD" - Standard centrifugal compressor curves</li>
@@ -3350,7 +3433,8 @@ public class Compressor extends TwoPortEquipment
     CompressorChartGenerator generator = new CompressorChartGenerator(this);
     String chartType = getCompressorChartType();
     generator.setChartType(chartType);
-    CompressorChartInterface newChart = generator.generateFromTemplate(templateName, numberOfSpeeds);
+    CompressorChartInterface newChart =
+        generator.generateFromTemplate(templateName, numberOfSpeeds);
     this.compressorChart = newChart;
   }
 
@@ -3451,8 +3535,8 @@ public class Compressor extends TwoPortEquipment
    * {@inheritDoc}
    *
    * <p>
-   * For compressors, capacity duty is defined as the total shaft work (power consumption) in Watts. This is used in
-   * conjunction with {@link #getCapacityMax()} for bottleneck analysis via
+   * For compressors, capacity duty is defined as the total shaft work (power consumption) in Watts.
+   * This is used in conjunction with {@link #getCapacityMax()} for bottleneck analysis via
    * {@link neqsim.process.processmodel.ProcessSystem#getBottleneck()}.
    * </p>
    *
@@ -3475,9 +3559,9 @@ public class Compressor extends TwoPortEquipment
    * For compressors, maximum capacity is determined in priority order:
    * </p>
    * <ol>
-   * <li>Driver performance curve ({@link neqsim.process.equipment.compressor.driver.DriverCurve}), which models
-   * ambient-temperature and altitude derating, evaluated at the driver's rated speed (peak deliverable power) if
-   * set</li>
+   * <li>Driver performance curve ({@link neqsim.process.equipment.compressor.driver.DriverCurve}),
+   * which models ambient-temperature and altitude derating, evaluated at the driver's rated speed
+   * (peak deliverable power) if set</li>
    * <li>Driver speed-dependent max power curve (if {@link CompressorDriver} and speed are set)</li>
    * <li>Mechanical design maximum power</li>
    * <li>Driver rated power with 10% overload margin</li>
@@ -3608,8 +3692,8 @@ public class Compressor extends TwoPortEquipment
    * Set the compressor driver model.
    *
    * <p>
-   * Setting a new driver will reinitialize capacity constraints to incorporate the driver's rated speed limit into the
-   * speed constraint.
+   * Setting a new driver will reinitialize capacity constraints to incorporate the driver's rated
+   * speed limit into the speed constraint.
    * </p>
    *
    * @param driver the driver model
@@ -3624,8 +3708,8 @@ public class Compressor extends TwoPortEquipment
    * Create and set a new driver with specified type and rated power.
    *
    * <p>
-   * Setting a new driver will reinitialize capacity constraints to incorporate the driver's rated speed limit into the
-   * speed constraint.
+   * Setting a new driver will reinitialize capacity constraints to incorporate the driver's rated
+   * speed limit into the speed constraint.
    * </p>
    *
    * @param type driver type
@@ -3644,8 +3728,9 @@ public class Compressor extends TwoPortEquipment
    * The {@link neqsim.process.equipment.compressor.driver.DriverCurve} family
    * ({@link neqsim.process.equipment.compressor.driver.GasTurbineDriver},
    * {@link neqsim.process.equipment.compressor.driver.ElectricMotorDriver},
-   * {@link neqsim.process.equipment.compressor.driver.SteamTurbineDriver}) models ambient and altitude derating and is
-   * used as the highest-priority source in {@link #getCapacityMax()} when set.
+   * {@link neqsim.process.equipment.compressor.driver.SteamTurbineDriver}) models ambient and
+   * altitude derating and is used as the highest-priority source in {@link #getCapacityMax()} when
+   * set.
    * </p>
    *
    * @return the driver performance curve, or null if not set
@@ -3658,9 +3743,10 @@ public class Compressor extends TwoPortEquipment
    * Set the rich driver performance curve.
    *
    * <p>
-   * When set, the curve's speed- and ambient-dependent available power takes priority over the simpler
-   * {@link CompressorDriver} model in {@link #getCapacityMax()}. This lets gas-turbine, electric-motor, and
-   * steam-turbine drivers feed a physically derated power limit into capacity and bottleneck analysis.
+   * When set, the curve's speed- and ambient-dependent available power takes priority over the
+   * simpler {@link CompressorDriver} model in {@link #getCapacityMax()}. This lets gas-turbine,
+   * electric-motor, and steam-turbine drivers feed a physically derated power limit into capacity
+   * and bottleneck analysis.
    * </p>
    *
    * @param driverCurve the driver performance curve, or null to clear it
@@ -3842,8 +3928,8 @@ public class Compressor extends TwoPortEquipment
    * Check if auto-speed mode is enabled.
    *
    * <p>
-   * In auto-speed mode, the compressor automatically calculates the required speed from the current operating point
-   * (flow and head) using the compressor chart.
+   * In auto-speed mode, the compressor automatically calculates the required speed from the current
+   * operating point (flow and head) using the compressor chart.
    * </p>
    *
    * @return true if auto-speed mode is enabled
@@ -4113,8 +4199,8 @@ public class Compressor extends TwoPortEquipment
    * Update the compressor state during a transient simulation step.
    *
    * <p>
-   * This method should be called during dynamic simulation to update the compressor speed, state, and fire appropriate
-   * events.
+   * This method should be called during dynamic simulation to update the compressor speed, state,
+   * and fire appropriate events.
    * </p>
    *
    * @param timeStep the time step in seconds
@@ -4127,28 +4213,28 @@ public class Compressor extends TwoPortEquipment
 
     // Handle state-specific updates
     switch (operatingState) {
-    case STARTING:
-      updateStartup(timeStep);
-      break;
-    case SHUTDOWN:
-    case DEPRESSURIZING:
-      updateShutdown(timeStep);
-      break;
-    case RUNNING:
-    case SURGE_PROTECTION:
-      // Check limits during normal operation
-      checkSurgeMargin();
-      checkStoneWallMargin();
-      checkSpeedLimits();
-      checkPowerLimits();
+      case STARTING:
+        updateStartup(timeStep);
+        break;
+      case SHUTDOWN:
+      case DEPRESSURIZING:
+        updateShutdown(timeStep);
+        break;
+      case RUNNING:
+      case SURGE_PROTECTION:
+        // Check limits during normal operation
+        checkSurgeMargin();
+        checkStoneWallMargin();
+        checkSpeedLimits();
+        checkPowerLimits();
 
-      // Update speed if in auto-speed mode
-      if (autoSpeedMode) {
-        updateAutoSpeed();
-      }
-      break;
-    default:
-      break;
+        // Update speed if in auto-speed mode
+        if (autoSpeedMode) {
+          updateAutoSpeed();
+        }
+        break;
+      default:
+        break;
     }
 
     // Record to history if enabled
@@ -4190,7 +4276,8 @@ public class Compressor extends TwoPortEquipment
     shutdownElapsedTime += timeStep;
 
     if (shutdownProfile != null) {
-      double targetSpd = shutdownProfile.getTargetSpeedAtTime(shutdownElapsedTime, speedAtShutdownStart);
+      double targetSpd =
+          shutdownProfile.getTargetSpeedAtTime(shutdownElapsedTime, speedAtShutdownStart);
       updateSpeedWithInertia(targetSpd, timeStep);
 
       // Open antisurge if needed
@@ -4232,7 +4319,8 @@ public class Compressor extends TwoPortEquipment
     double maxChange;
     if (driver != null) {
       // Use driver model for acceleration limits
-      double newSpeed = driver.calculateSpeedChange(currentSpd, targetSpd, getPower("kW"), timeStep);
+      double newSpeed =
+          driver.calculateSpeedChange(currentSpd, targetSpd, getPower("kW"), timeStep);
       setSpeed(newSpeed);
     } else {
       // Use simple rate limits
@@ -4430,8 +4518,8 @@ public class Compressor extends TwoPortEquipment
    * Initializes default capacity constraints for this compressor.
    *
    * <p>
-   * Creates constraints for speed, power, and surge margin based on the compressor's design parameters. Additional
-   * constraints can be added after construction.
+   * Creates constraints for speed, power, and surge margin based on the compressor's design
+   * parameters. Additional constraints can be added after construction.
    * </p>
    */
   protected void initializeCapacityConstraints() {
@@ -4446,7 +4534,8 @@ public class Compressor extends TwoPortEquipment
     // distances are undefined (getDistanceToSurge() returns +Infinity, pinning utilization at a
     // degenerate flat 100%). Gate those constraints on chart availability so the utilization
     // observation stays smooth and power-driven for chartless compressors.
-    final boolean chartActive = getCompressorChart() != null && getCompressorChart().isUseCompressorChart();
+    final boolean chartActive =
+        getCompressorChart() != null && getCompressorChart().isUseCompressorChart();
     if (chartActive) {
       double curveMaxSpeed = getCompressorChart().getMaxSpeedCurve();
       double curveMinSpeed = getCompressorChart().getMinSpeedCurve();
@@ -4472,9 +4561,9 @@ public class Compressor extends TwoPortEquipment
     // Design value = max speed, so utilization = currentSpeed / maxSpeed
     // This gives proper utilization: 87% speed = 87% utilization
     final double maxSpeedLimit = effectiveMaxSpeed;
-    addCapacityConstraint(StandardConstraintType.COMPRESSOR_SPEED.createConstraint().setDesignValue(maxSpeedLimit)
-        .setMaxValue(maxSpeedLimit).setWarningThreshold(0.9).setValueSupplier(() -> this.speed)
-        .setEnabled(chartActive));
+    addCapacityConstraint(StandardConstraintType.COMPRESSOR_SPEED.createConstraint()
+        .setDesignValue(maxSpeedLimit).setMaxValue(maxSpeedLimit).setWarningThreshold(0.9)
+        .setValueSupplier(() -> this.speed).setEnabled(chartActive));
 
     // Min speed constraint (from curve minimum)
     // This constraint tracks if the compressor speed is above the minimum allowable
@@ -4484,122 +4573,126 @@ public class Compressor extends TwoPortEquipment
     // (bad)
     if (effectiveMinSpeed > 0) {
       final double minSpeedLimit = effectiveMinSpeed;
-      addCapacityConstraint(
-          StandardConstraintType.COMPRESSOR_MIN_SPEED.createConstraint().setDesignValue(Double.MAX_VALUE) // MAX_VALUE
-              // signals
-              // this is a
-              // min
-              // constraint
-              .setMinValue(minSpeedLimit).setWarningThreshold(0.95) // Warning when within 5%
-                                                                    // of minimum
-              .setValueSupplier(() -> this.speed).setEnabled(chartActive));
+      addCapacityConstraint(StandardConstraintType.COMPRESSOR_MIN_SPEED.createConstraint()
+          .setDesignValue(Double.MAX_VALUE) // MAX_VALUE
+          // signals
+          // this is a
+          // min
+          // constraint
+          .setMinValue(minSpeedLimit).setWarningThreshold(0.95) // Warning when within 5%
+                                                                // of minimum
+          .setValueSupplier(() -> this.speed).setEnabled(chartActive));
     }
 
     // Power constraint - dynamically evaluates against speed-dependent max power
     // from driver curve
     // This shows the actual operating margin at current speed
-    addCapacityConstraint(StandardConstraintType.COMPRESSOR_POWER.createConstraint().setDesignValue(100.0) // 100%
-        .setMaxValue(110.0) // 110% overload
-        .setWarningThreshold(0.9).setValueSupplier(() -> {
-          if (getThermoSystem() == null) {
-            return 0.0;
-          }
-          // Use kW to match maxDesignPower units
-          double currentPowerKW = this.getPower("kW");
-          if (currentPowerKW <= 0 || Double.isNaN(currentPowerKW)) {
-            return 0.0;
-          }
-          // Determine max power: driver speed-dependent > mechanical design > driver
-          // rated
-          double maxPowerLimitKW = 0.0;
-          if (driver != null && driver.getRatedSpeed() > 0 && this.speed > 0) {
-            // Use speed-dependent max power from driver curve
-            maxPowerLimitKW = driver.getMaxAvailablePowerAtSpeed(this.speed);
-          } else if (getMechanicalDesign().maxDesignPower > 0) {
-            maxPowerLimitKW = getMechanicalDesign().maxDesignPower;
-          } else if (driver != null && driver.getRatedPower() > 0) {
-            maxPowerLimitKW = driver.getRatedPower() * 1.1; // 10% overload margin
-          }
-          if (maxPowerLimitKW <= 0) {
-            return 0.0; // No limit defined
-          }
-          // Return utilization percentage (0-100+)
-          return (currentPowerKW / maxPowerLimitKW) * 100.0;
-        }));
+    addCapacityConstraint(
+        StandardConstraintType.COMPRESSOR_POWER.createConstraint().setDesignValue(100.0) // 100%
+            .setMaxValue(110.0) // 110% overload
+            .setWarningThreshold(0.9).setValueSupplier(() -> {
+              if (getThermoSystem() == null) {
+                return 0.0;
+              }
+              // Use kW to match maxDesignPower units
+              double currentPowerKW = this.getPower("kW");
+              if (currentPowerKW <= 0 || Double.isNaN(currentPowerKW)) {
+                return 0.0;
+              }
+              // Determine max power: driver speed-dependent > mechanical design > driver
+              // rated
+              double maxPowerLimitKW = 0.0;
+              if (driver != null && driver.getRatedSpeed() > 0 && this.speed > 0) {
+                // Use speed-dependent max power from driver curve
+                maxPowerLimitKW = driver.getMaxAvailablePowerAtSpeed(this.speed);
+              } else if (getMechanicalDesign().maxDesignPower > 0) {
+                maxPowerLimitKW = getMechanicalDesign().maxDesignPower;
+              } else if (driver != null && driver.getRatedPower() > 0) {
+                maxPowerLimitKW = driver.getRatedPower() * 1.1; // 10% overload margin
+              }
+              if (maxPowerLimitKW <= 0) {
+                return 0.0; // No limit defined
+              }
+              // Return utilization percentage (0-100+)
+              return (currentPowerKW / maxPowerLimitKW) * 100.0;
+            }));
 
     // Rated power constraint - compares against driver's rated power (for capacity
     // planning)
     // This shows utilization vs the full motor rating, regardless of current speed
-    addCapacityConstraint(new CapacityConstraint("ratedPower", "%", CapacityConstraint.ConstraintType.DESIGN)
-        .setDesignValue(100.0).setMaxValue(110.0).setWarningThreshold(0.9)
-        .setDescription("Power utilization vs driver rated power (capacity planning)").setValueSupplier(() -> {
-          if (getThermoSystem() == null) {
-            return 0.0;
-          }
-          double currentPowerKW = this.getPower("kW");
-          if (currentPowerKW <= 0 || Double.isNaN(currentPowerKW)) {
-            return 0.0;
-          }
-          // Use driver rated power or mechanical design power
-          double ratedPowerKW = 0.0;
-          if (driver != null && driver.getRatedPower() > 0) {
-            ratedPowerKW = driver.getRatedPower();
-          } else if (getMechanicalDesign().maxDesignPower > 0) {
-            ratedPowerKW = getMechanicalDesign().maxDesignPower;
-          }
-          if (ratedPowerKW <= 0) {
-            return 0.0;
-          }
-          return (currentPowerKW / ratedPowerKW) * 100.0;
-        }));
+    addCapacityConstraint(
+        new CapacityConstraint("ratedPower", "%", CapacityConstraint.ConstraintType.DESIGN)
+            .setDesignValue(100.0).setMaxValue(110.0).setWarningThreshold(0.9)
+            .setDescription("Power utilization vs driver rated power (capacity planning)")
+            .setValueSupplier(() -> {
+              if (getThermoSystem() == null) {
+                return 0.0;
+              }
+              double currentPowerKW = this.getPower("kW");
+              if (currentPowerKW <= 0 || Double.isNaN(currentPowerKW)) {
+                return 0.0;
+              }
+              // Use driver rated power or mechanical design power
+              double ratedPowerKW = 0.0;
+              if (driver != null && driver.getRatedPower() > 0) {
+                ratedPowerKW = driver.getRatedPower();
+              } else if (getMechanicalDesign().maxDesignPower > 0) {
+                ratedPowerKW = getMechanicalDesign().maxDesignPower;
+              }
+              if (ratedPowerKW <= 0) {
+                return 0.0;
+              }
+              return (currentPowerKW / ratedPowerKW) * 100.0;
+            }));
 
     // Surge margin constraint
     // getDistanceToSurge() returns a ratio: (currentFlow / surgeFlow) - 1
     // e.g., 0.5 means current flow is 50% above surge flow
     // For utilization: 0 margin = 100% utilized (at surge), large margin = low
     // utilization
-    addCapacityConstraint(
-        StandardConstraintType.COMPRESSOR_SURGE_MARGIN.createConstraint().setDesignValue(100.0).setMinValue(10.0) // Minimum
-            // 10%
-            // surge
-            // margin
-            // required
-            .setWarningThreshold(0.85) // Warning at 85% utilization (15% margin)
-            .setValueSupplier(() -> {
-              double marginRatio = this.getDistanceToSurge();
-              if (marginRatio <= 0 || Double.isNaN(marginRatio) || Double.isInfinite(marginRatio)) {
-                return 100.0; // At or below surge = 100% utilized
-              }
-              // Convert ratio to utilization: utilization = 1 / (1 + marginRatio)
-              // e.g., margin=0.5 -> utilization = 1/1.5 = 66.7%
-              return 100.0 / (1.0 + marginRatio);
-            }).setEnabled(chartActive));
+    addCapacityConstraint(StandardConstraintType.COMPRESSOR_SURGE_MARGIN.createConstraint()
+        .setDesignValue(100.0).setMinValue(10.0) // Minimum
+        // 10%
+        // surge
+        // margin
+        // required
+        .setWarningThreshold(0.85) // Warning at 85% utilization (15% margin)
+        .setValueSupplier(() -> {
+          double marginRatio = this.getDistanceToSurge();
+          if (marginRatio <= 0 || Double.isNaN(marginRatio) || Double.isInfinite(marginRatio)) {
+            return 100.0; // At or below surge = 100% utilized
+          }
+          // Convert ratio to utilization: utilization = 1 / (1 + marginRatio)
+          // e.g., margin=0.5 -> utilization = 1/1.5 = 66.7%
+          return 100.0 / (1.0 + marginRatio);
+        }).setEnabled(chartActive));
 
     // Stonewall margin constraint
     // getDistanceToStoneWall() returns a ratio: (stoneWallFlow / currentFlow) - 1
     // e.g., 0.5 means stonewall is 50% above current flow
-    addCapacityConstraint(
-        StandardConstraintType.COMPRESSOR_STONEWALL_MARGIN.createConstraint().setDesignValue(100.0).setMinValue(5.0) // Minimum
-            // 5%
-            // stonewall
-            // margin
-            .setWarningThreshold(0.90) // Warning at 90% utilization (10% margin)
-            .setValueSupplier(() -> {
-              double marginRatio = this.getDistanceToStoneWall();
-              if (marginRatio <= 0 || Double.isNaN(marginRatio) || Double.isInfinite(marginRatio)) {
-                return 100.0; // At or above stonewall = 100% utilized
-              }
-              // Convert ratio to utilization: utilization = 1 / (1 + marginRatio)
-              return 100.0 / (1.0 + marginRatio);
-            }).setEnabled(chartActive));
+    addCapacityConstraint(StandardConstraintType.COMPRESSOR_STONEWALL_MARGIN.createConstraint()
+        .setDesignValue(100.0).setMinValue(5.0) // Minimum
+        // 5%
+        // stonewall
+        // margin
+        .setWarningThreshold(0.90) // Warning at 90% utilization (10% margin)
+        .setValueSupplier(() -> {
+          double marginRatio = this.getDistanceToStoneWall();
+          if (marginRatio <= 0 || Double.isNaN(marginRatio) || Double.isInfinite(marginRatio)) {
+            return 100.0; // At or above stonewall = 100% utilized
+          }
+          // Convert ratio to utilization: utilization = 1 / (1 + marginRatio)
+          return 100.0 / (1.0 + marginRatio);
+        }).setEnabled(chartActive));
 
     // Discharge temperature constraint
     // Track actual discharge temperature vs maximum allowable
     if (isSetMaxDischargeTemperature) {
       final double maxTempC = maxDischargeTemperature - 273.15;
       addCapacityConstraint(new CapacityConstraint("dischargeTemperature").setDesignValue(maxTempC)
-          .setMaxValue(maxTempC * 1.1).setUnit("C").setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
-          .setWarningThreshold(0.9).setValueSupplier(() -> {
+          .setMaxValue(maxTempC * 1.1).setUnit("C")
+          .setSeverity(CapacityConstraint.ConstraintSeverity.HARD).setWarningThreshold(0.9)
+          .setValueSupplier(() -> {
             if (getOutletStream() == null || getOutletStream().getThermoSystem() == null) {
               return 0.0;
             }
@@ -4612,8 +4705,9 @@ public class Compressor extends TwoPortEquipment
    * Reinitializes capacity constraints with current configuration.
    *
    * <p>
-   * Call this method after setting compressor charts or changing speed limits to update the constraints with the new
-   * values. This clears existing constraints and recreates them based on current settings.
+   * Call this method after setting compressor charts or changing speed limits to update the
+   * constraints with the new values. This clears existing constraints and recreates them based on
+   * current settings.
    * </p>
    */
   public void reinitializeCapacityConstraints() {
@@ -4623,7 +4717,8 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * Ensures the capacity constraints map is initialized. Called after deserialization since the map is transient.
+   * Ensures the capacity constraints map is initialized. Called after deserialization since the map
+   * is transient.
    */
   private void ensureCapacityConstraintsInitialized() {
     if (capacityConstraints == null) {
@@ -4683,14 +4778,15 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * Evaluates all capacity constraints and logs warnings for any violations or near-limit conditions detected after a
-   * compressor run.
+   * Evaluates all capacity constraints and logs warnings for any violations or near-limit
+   * conditions detected after a compressor run.
    *
    * <p>
-   * This method is called automatically at the end of {@link #run(UUID)}. It iterates through all registered
-   * constraints, updates their current values via the value suppliers, and logs appropriate warnings. Violations at
-   * CRITICAL or HARD severity are logged as errors; SOFT and ADVISORY violations as warnings. Near-limit conditions
-   * (within warning threshold) are logged as info.
+   * This method is called automatically at the end of {@link #run(UUID)}. It iterates through all
+   * registered constraints, updates their current values via the value suppliers, and logs
+   * appropriate warnings. Violations at CRITICAL or HARD severity are logged as errors; SOFT and
+   * ADVISORY violations as warnings. Near-limit conditions (within warning threshold) are logged as
+   * info.
    * </p>
    */
   protected void evaluateCapacityConstraints() {
@@ -4703,8 +4799,9 @@ public class Compressor extends TwoPortEquipment
       if (constraint.isViolated()) {
         CapacityConstraint.ConstraintSeverity severity = constraint.getSeverity();
         String msg = getName() + ": capacity constraint '" + entry.getKey() + "' violated - "
-            + String.format("%.1f%% utilization (limit: %.1f %s)", constraint.getUtilization() * 100.0,
-                constraint.getDesignValue(), constraint.getUnit());
+            + String.format("%.1f%% utilization (limit: %.1f %s)",
+                constraint.getUtilization() * 100.0, constraint.getDesignValue(),
+                constraint.getUnit());
         if (severity == CapacityConstraint.ConstraintSeverity.CRITICAL
             || severity == CapacityConstraint.ConstraintSeverity.HARD) {
           logger.error(msg);
@@ -4772,8 +4869,8 @@ public class Compressor extends TwoPortEquipment
     double outletTemp = getOutletTemperature();
     double pressureRatio = getActualCompressionRatio();
 
-    if (Double.isNaN(power) || Double.isNaN(head) || Double.isNaN(inletTemp) || Double.isNaN(outletTemp)
-        || Double.isNaN(pressureRatio)) {
+    if (Double.isNaN(power) || Double.isNaN(head) || Double.isNaN(inletTemp)
+        || Double.isNaN(outletTemp) || Double.isNaN(pressureRatio)) {
       return false;
     }
 
@@ -4814,7 +4911,8 @@ public class Compressor extends TwoPortEquipment
       // Check if operating in surge region (if surge curve is defined)
       // Skip surge check if AntiSurge is active - the controller handles surge
       // protection
-      if (getCompressorChart().getSurgeCurve() != null && getCompressorChart().getSurgeCurve().isActive()
+      if (getCompressorChart().getSurgeCurve() != null
+          && getCompressorChart().getSurgeCurve().isActive()
           && !(getAntiSurge() != null && getAntiSurge().isActive())) {
         try {
           double actualFlow = getInletStream().getFlowRate("m3/hr");
@@ -4835,11 +4933,13 @@ public class Compressor extends TwoPortEquipment
 
       // Check if operating beyond stonewall (choke) region (if stonewall curve is
       // defined)
-      if (getCompressorChart().getStoneWallCurve() != null && getCompressorChart().getStoneWallCurve().isActive()) {
+      if (getCompressorChart().getStoneWallCurve() != null
+          && getCompressorChart().getStoneWallCurve().isActive()) {
         try {
           double actualFlow = getInletStream().getFlowRate("m3/hr");
           double polytropicHeadValue = getPolytropicFluidHead();
-          if (getCompressorChart().getStoneWallCurve().isStoneWall(polytropicHeadValue, actualFlow)) {
+          if (getCompressorChart().getStoneWallCurve().isStoneWall(polytropicHeadValue,
+              actualFlow)) {
             return false;
           }
         } catch (Exception e) {
@@ -4877,30 +4977,31 @@ public class Compressor extends TwoPortEquipment
     if (Double.isNaN(power)) {
       errors.add(getName() + ": Power calculation returned NaN");
     } else if (power < 0) {
-      errors.add(String.format("%s: Negative power (%.1f kW) - compressor beyond operating envelope", getName(),
-          power / 1000.0));
+      errors
+          .add(String.format("%s: Negative power (%.1f kW) - compressor beyond operating envelope",
+              getName(), power / 1000.0));
     }
 
     if (Double.isNaN(head)) {
       errors.add(getName() + ": Polytropic head calculation returned NaN");
     } else if (head <= 0) {
-      errors.add(
-          String.format("%s: Zero or negative polytropic head (%.2f J/kg) - compressor outside valid operating range",
-              getName(), head));
+      errors.add(String.format(
+          "%s: Zero or negative polytropic head (%.2f J/kg) - compressor outside valid operating range",
+          getName(), head));
     }
 
     if (Double.isNaN(pressureRatio)) {
       errors.add(getName() + ": Pressure ratio calculation returned NaN");
     } else if (pressureRatio < 0.99) {
-      errors.add(
-          String.format("%s: Pressure ratio (%.2f) less than 1.0 - indicates pressure drop", getName(), pressureRatio));
+      errors.add(String.format("%s: Pressure ratio (%.2f) less than 1.0 - indicates pressure drop",
+          getName(), pressureRatio));
     }
 
     if (Double.isNaN(outletTemp) || Double.isNaN(inletTemp)) {
       errors.add(getName() + ": Temperature calculation returned NaN");
     } else if (outletTemp < inletTemp - 1.0) {
-      errors.add(
-          String.format("%s: Outlet temperature (%.1f K) less than inlet (%.1f K)", getName(), outletTemp, inletTemp));
+      errors.add(String.format("%s: Outlet temperature (%.1f K) less than inlet (%.1f K)",
+          getName(), outletTemp, inletTemp));
     }
 
     // Check if operating within compressor chart speed limits
@@ -4908,16 +5009,19 @@ public class Compressor extends TwoPortEquipment
       double chartMinSpeed = getCompressorChart().getMinSpeedCurve();
       double chartMaxSpeed = getCompressorChart().getMaxSpeedCurve();
       if (chartMinSpeed > 0 && speed < chartMinSpeed * 0.95) {
-        errors.add(String.format("%s: Speed (%.0f RPM) below chart minimum (%.0f RPM) - outside valid operating range",
+        errors.add(String.format(
+            "%s: Speed (%.0f RPM) below chart minimum (%.0f RPM) - outside valid operating range",
             getName(), speed, chartMinSpeed));
       }
       if (chartMaxSpeed > 0 && speed > chartMaxSpeed * 1.05) {
-        errors.add(String.format("%s: Speed (%.0f RPM) above chart maximum (%.0f RPM) - outside valid operating range",
+        errors.add(String.format(
+            "%s: Speed (%.0f RPM) above chart maximum (%.0f RPM) - outside valid operating range",
             getName(), speed, chartMaxSpeed));
       }
 
       // Check surge condition (skip if AntiSurge is active - controller handles it)
-      if (getCompressorChart().getSurgeCurve() != null && getCompressorChart().getSurgeCurve().isActive()
+      if (getCompressorChart().getSurgeCurve() != null
+          && getCompressorChart().getSurgeCurve().isActive()
           && !(getAntiSurge() != null && getAntiSurge().isActive())) {
         try {
           double actualFlow = getInletStream().getFlowRate("m3/hr");
@@ -4939,12 +5043,15 @@ public class Compressor extends TwoPortEquipment
       }
 
       // Check stonewall condition
-      if (getCompressorChart().getStoneWallCurve() != null && getCompressorChart().getStoneWallCurve().isActive()) {
+      if (getCompressorChart().getStoneWallCurve() != null
+          && getCompressorChart().getStoneWallCurve().isActive()) {
         try {
           double actualFlow = getInletStream().getFlowRate("m3/hr");
           double polytropicHeadValue = getPolytropicFluidHead();
-          if (getCompressorChart().getStoneWallCurve().isStoneWall(polytropicHeadValue, actualFlow)) {
-            double stonewallFlow = getCompressorChart().getStoneWallCurve().getStoneWallFlow(polytropicHeadValue);
+          if (getCompressorChart().getStoneWallCurve().isStoneWall(polytropicHeadValue,
+              actualFlow)) {
+            double stonewallFlow =
+                getCompressorChart().getStoneWallCurve().getStoneWallFlow(polytropicHeadValue);
             errors.add(String.format(
                 "%s: Operating beyond STONEWALL (choke) - actual flow %.0f m3/hr > stonewall flow %.0f m3/hr",
                 getName(), actualFlow, stonewallFlow));
@@ -4990,7 +5097,8 @@ public class Compressor extends TwoPortEquipment
       if (!Double.isNaN(surgeMargin) && !Double.isInfinite(surgeMargin) && surgeMargin < 0) {
         return false;
       }
-      if (!Double.isNaN(stonewallMargin) && !Double.isInfinite(stonewallMargin) && stonewallMargin < 0) {
+      if (!Double.isNaN(stonewallMargin) && !Double.isInfinite(stonewallMargin)
+          && stonewallMargin < 0) {
         return false;
       }
     }
@@ -5026,7 +5134,8 @@ public class Compressor extends TwoPortEquipment
       if (!Double.isNaN(surgeMargin) && !Double.isInfinite(surgeMargin) && surgeMargin < 0) {
         return String.format("Below surge: margin = %.1f%%", surgeMargin);
       }
-      if (!Double.isNaN(stonewallMargin) && !Double.isInfinite(stonewallMargin) && stonewallMargin < 0) {
+      if (!Double.isNaN(stonewallMargin) && !Double.isInfinite(stonewallMargin)
+          && stonewallMargin < 0) {
         return String.format("Above stonewall: margin = %.1f%%", stonewallMargin);
       }
     }
@@ -5119,7 +5228,8 @@ public class Compressor extends TwoPortEquipment
     chartGenerator.setChartType("interpolate and extrapolate");
 
     // Select template based on application (can be overridden via setCurveTemplate)
-    CompressorChartInterface generatedChart = chartGenerator.generateFromTemplate(curveTemplate, numberOfSpeedCurves);
+    CompressorChartInterface generatedChart =
+        chartGenerator.generateFromTemplate(curveTemplate, numberOfSpeedCurves);
 
     // Set the chart on the compressor
     setCompressorChart(generatedChart);
@@ -5159,8 +5269,8 @@ public class Compressor extends TwoPortEquipment
       }
     }
     getMechanicalDesign().setMaxDesignPower(designPowerKW);
-    logger.debug("Set maxDesignPower to {} kW (current {} kW * safety factor {})", designPowerKW, currentPowerKW,
-        safetyFactor);
+    logger.debug("Set maxDesignPower to {} kW (current {} kW * safety factor {})", designPowerKW,
+        currentPowerKW, safetyFactor);
 
     // Set design volume flow with safety factor for capacity tracking
     double currentFlowM3h = inStream.getFlowRate("m3/hr");
@@ -5173,8 +5283,8 @@ public class Compressor extends TwoPortEquipment
     }
     getMechanicalDesign().setMaxDesignVolumeFlow(designFlowM3h);
     getMechanicalDesign().setMaxDesignGassVolumeFlow(designFlowM3h);
-    logger.debug("Set maxDesignVolumeFlow to {} m3/hr (current {} m3/hr * safety factor {})", designFlowM3h,
-        currentFlowM3h, safetyFactor);
+    logger.debug("Set maxDesignVolumeFlow to {} m3/hr (current {} m3/hr * safety factor {})",
+        designFlowM3h, currentFlowM3h, safetyFactor);
 
     // Enable speed solving - compressor will calculate speed from pressure ratio
     setSolveSpeed(true);
@@ -5183,7 +5293,8 @@ public class Compressor extends TwoPortEquipment
     reinitializeCapacityConstraints();
 
     autoSized = true;
-    logger.info("Compressor {} auto-sized with {} template, {} speed curves, solveSpeed=true, safety factor {}",
+    logger.info(
+        "Compressor {} auto-sized with {} template, {} speed curves, solveSpeed=true, safety factor {}",
         getName(), curveTemplate, numberOfSpeedCurves, safetyFactor);
   }
 
@@ -5230,16 +5341,22 @@ public class Compressor extends TwoPortEquipment
     sb.append("Solve Speed Mode: ").append(isSolveSpeed()).append("\n");
     sb.append("\n--- Operating Point ---\n");
     sb.append("Speed: ").append(String.format("%.0f RPM", getSpeed())).append("\n");
-    sb.append("Polytropic Efficiency: ").append(String.format("%.1f%%", getPolytropicEfficiency() * 100)).append("\n");
-    sb.append("Polytropic Head: ").append(String.format("%.2f kJ/kg", getPolytropicFluidHead())).append("\n");
+    sb.append("Polytropic Efficiency: ")
+        .append(String.format("%.1f%%", getPolytropicEfficiency() * 100)).append("\n");
+    sb.append("Polytropic Head: ").append(String.format("%.2f kJ/kg", getPolytropicFluidHead()))
+        .append("\n");
     sb.append("Power: ").append(String.format("%.2f kW", getPower("kW"))).append("\n");
 
     if (inStream != null) {
       sb.append("\n--- Design Basis ---\n");
-      sb.append("Inlet Flow: ").append(String.format("%.1f m3/hr", inStream.getFlowRate("m3/hr"))).append("\n");
-      sb.append("Inlet Pressure: ").append(String.format("%.2f bara", inStream.getPressure("bara"))).append("\n");
-      sb.append("Outlet Pressure: ").append(String.format("%.2f bara", getOutletPressure())).append("\n");
-      sb.append("Compression Ratio: ").append(String.format("%.2f", getActualCompressionRatio())).append("\n");
+      sb.append("Inlet Flow: ").append(String.format("%.1f m3/hr", inStream.getFlowRate("m3/hr")))
+          .append("\n");
+      sb.append("Inlet Pressure: ").append(String.format("%.2f bara", inStream.getPressure("bara")))
+          .append("\n");
+      sb.append("Outlet Pressure: ").append(String.format("%.2f bara", getOutletPressure()))
+          .append("\n");
+      sb.append("Compression Ratio: ").append(String.format("%.2f", getActualCompressionRatio()))
+          .append("\n");
     }
 
     if (getCompressorChart() != null && getCompressorChart().isUseCompressorChart()) {
@@ -5247,7 +5364,8 @@ public class Compressor extends TwoPortEquipment
       sb.append("Using Compressor Chart: Yes\n");
       double[] speeds = getCompressorChart().getSpeeds();
       if (speeds != null && speeds.length > 0) {
-        sb.append("Speed Range: ").append(String.format("%.0f - %.0f RPM", speeds[0], speeds[speeds.length - 1]))
+        sb.append("Speed Range: ")
+            .append(String.format("%.0f - %.0f RPM", speeds[0], speeds[speeds.length - 1]))
             .append("\n");
       }
     }
@@ -5256,8 +5374,10 @@ public class Compressor extends TwoPortEquipment
       sb.append("\n--- Mechanical Design ---\n");
       CompressorMechanicalDesign mechDesign = getMechanicalDesign();
       sb.append("Number of Stages: ").append(mechDesign.getNumberOfStages()).append("\n");
-      sb.append("Impeller Diameter: ").append(String.format("%.0f mm", mechDesign.getImpellerDiameter())).append("\n");
-      sb.append("Driver Power: ").append(String.format("%.0f kW", mechDesign.getDriverPower())).append("\n");
+      sb.append("Impeller Diameter: ")
+          .append(String.format("%.0f mm", mechDesign.getImpellerDiameter())).append("\n");
+      sb.append("Driver Power: ").append(String.format("%.0f kW", mechDesign.getDriverPower()))
+          .append("\n");
     }
 
     return sb.toString();
@@ -5348,8 +5468,8 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * Select an appropriate curve template based on operating conditions. Called during autoSize(company, trDocument) to
-   * pick a suitable template.
+   * Select an appropriate curve template based on operating conditions. Called during
+   * autoSize(company, trDocument) to pick a suitable template.
    */
   private void selectTemplateForApplication() {
     if (inStream == null) {
@@ -5396,8 +5516,9 @@ public class Compressor extends TwoPortEquipment
    * Builder class for constructing Compressor instances with a fluent API.
    *
    * <p>
-   * Provides a readable and maintainable way to construct complex compressor configurations. All configuration options
-   * available through setters on Compressor are accessible via builder methods.
+   * Provides a readable and maintainable way to construct complex compressor configurations. All
+   * configuration options available through setters on Compressor are accessible via builder
+   * methods.
    * </p>
    *
    * @author NeqSim

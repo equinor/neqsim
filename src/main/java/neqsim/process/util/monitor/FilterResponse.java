@@ -44,5 +44,13 @@ public class FilterResponse extends BaseResponse {
     data.put("pressure drop",
         new Value(Double.toString(filter.getDeltaP()), neqsim.util.unit.Units.getSymbol("pressure")));
     data.put("Cv factor", new Value(Double.toString(filter.getCvFactor()), ""));
+    data.put("holdup volume", new Value(Double.toString(filter.getHoldupVolume()), "m3"));
+    data.put("holdup residence time", new Value(Double.toString(filter.getHoldupResidenceTime()), "s"));
+    data.put("solids loading", new Value(Double.toString(filter.getSolidsLoading()), "kg"));
+    data.put("loading capacity", new Value(Double.toString(filter.getLoadingCapacity()), "kg"));
+    data.put("loading fraction", new Value(Double.toString(filter.getLoadingFraction()), ""));
+    data.put("breakthrough fraction", new Value(Double.toString(filter.getBreakthroughFraction()), ""));
+    data.put("backwash active", new Value(Boolean.toString(filter.isBackwashActive()), ""));
+    data.put("regeneration active", new Value(Boolean.toString(filter.isRegenerationActive()), ""));
   }
 }

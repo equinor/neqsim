@@ -110,6 +110,7 @@ public class SulfurFilter extends Filter {
    */
   public SulfurFilter(String name, StreamInterface inStream) {
     super(name, inStream);
+    synchronizeDynamicLoadingCapacity();
   }
 
   /** {@inheritDoc} */
@@ -124,11 +125,17 @@ public class SulfurFilter extends Filter {
 
     // Run TP flash with solid phase check to detect solid S8
     system.setMultiPhaseCheck(true);
+    boolean runSolidFlash = false;
     if (system.hasComponent("S8")) {
       system.setSolidPhaseCheck("S8");
+      runSolidFlash = true;
     }
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
-    ops.TPflash();
+    if (runSolidFlash) {
+      ops.TPSolidflash();
+    } else {
+      ops.TPflash();
+    }
     system.initProperties();
 
     gasFlowRate = inStream.getFlowRate("kg/hr");
@@ -154,11 +161,12 @@ public class SulfurFilter extends Filter {
       }
 
       // Calculate removal rate: mass flow * solid fraction * efficiency
-      solidSulfurRemovalRate = gasFlowRate * solidS8MassFractionInlet * removalEfficiency;
+      double effectiveRemovalEfficiency = removalEfficiency * (1.0 - getBreakthroughFraction());
+      solidSulfurRemovalRate = gasFlowRate * solidS8MassFractionInlet * effectiveRemovalEfficiency;
 
       // Remove solid S8 from outlet: reduce S8 component by removal efficiency
       // Set S8 content in outlet to only the fraction that passes through
-      if (system.hasComponent("S8") && removalEfficiency > 0) {
+      if (system.hasComponent("S8") && effectiveRemovalEfficiency > 0) {
         // Get current S8 moles in gas phase and reduce total S8
         double currentS8Moles = 0.0;
         double solidS8Moles = 0.0;
@@ -170,9 +178,8 @@ public class SulfurFilter extends Filter {
         }
 
         // Remove solid S8 from the system (filter captures it)
-        double molesToRemove = solidS8Moles * removalEfficiency;
+        double molesToRemove = solidS8Moles * effectiveRemovalEfficiency;
         if (molesToRemove > 0 && currentS8Moles > molesToRemove) {
-          double remainingMoles = currentS8Moles - molesToRemove;
           system.addComponent("S8", -molesToRemove);
         }
 
@@ -329,6 +336,7 @@ public class SulfurFilter extends Filter {
    */
   public void setFilterElementCapacity(double capacityKg) {
     this.filterElementCapacity = capacityKg;
+    synchronizeDynamicLoadingCapacity();
   }
 
   /**
@@ -347,6 +355,20 @@ public class SulfurFilter extends Filter {
    */
   public void setNumberOfElements(int count) {
     this.numberOfElements = Math.max(1, count);
+    synchronizeDynamicLoadingCapacity();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected double getCapturedSolidsRate() {
+    return super.getCapturedSolidsRate() + solidSulfurRemovalRate;
+  }
+
+  /**
+   * Synchronizes the generic dynamic filter capacity with the sulfur element capacity.
+   */
+  private void synchronizeDynamicLoadingCapacity() {
+    setLoadingCapacity(filterElementCapacity * numberOfElements);
   }
 
   /**
@@ -535,6 +557,18 @@ public class SulfurFilter extends Filter {
     elements.put("changeIntervalHours", getChangeIntervalHours());
     elements.put("changeIntervalDays", getChangeIntervalDays());
     result.put("filterElements", elements);
+
+    Map<String, Object> dynamicState = new LinkedHashMap<String, Object>();
+    dynamicState.put("holdupVolume_m3", getHoldupVolume());
+    dynamicState.put("holdupResidenceTime_s", getHoldupResidenceTime());
+    dynamicState.put("solidsLoading_kg", getSolidsLoading());
+    dynamicState.put("loadingCapacity_kg", getLoadingCapacity());
+    dynamicState.put("loadingFraction", getLoadingFraction());
+    dynamicState.put("breakthroughStartFraction", getBreakthroughStartFraction());
+    dynamicState.put("breakthroughFraction", getBreakthroughFraction());
+    dynamicState.put("backwashActive", isBackwashActive());
+    dynamicState.put("regenerationActive", isRegenerationActive());
+    result.put("dynamicState", dynamicState);
 
     // Particle size prediction results
     if (nucleationModel != null && nucleationModel.isCalculated()) {
