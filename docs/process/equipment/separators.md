@@ -227,6 +227,8 @@ void setEntrainment(double val, String specType, String specifiedStream,
 - **`"feed"`** - The fraction is relative to the feed stream composition
 - **`"product"`** - The fraction is relative to the outlet product stream composition
 
+> **Note:** When `specifiedStream` is `"product"`, `val` is clamped to the physical range: a value of `0` or less transfers nothing, and a value of `1` or more transfers the entire source phase. Use `"product"` when you want the entrainment expressed as a fraction of the receiving outlet stream (e.g., 0.5 mass% water-in-oil in the oil product).
+
 ### Two-Phase Separator Entrainment
 
 The `Separator` class supports three entrainment paths:

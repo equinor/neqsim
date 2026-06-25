@@ -227,6 +227,48 @@ String report = design.toJson();
 //          design.getWallThickness(), design.getInletNozzleID(), etc.
 ```
 
+### Separator Entrainment (Carry-Over)
+
+Imperfect separation is modelled with `setEntrainment()` on the `Separator` /
+`ThreePhaseSeparator` itself (not the mechanical design). It transfers a fraction
+of one phase into another outlet stream.
+
+```java
+// setEntrainment(double val, String specType, String specifiedStream,
+//                String phaseFrom, String phaseTo)
+//   specType        : "mole" | "mass" | "volume"
+//   specifiedStream : "feed" (fraction of feed) | "product" (fraction of receiving outlet)
+//   phaseFrom/To    : "gas" | "oil" | "aqueous"  (base Separator also accepts "liquid")
+
+ThreePhaseSeparator sep = new ThreePhaseSeparator("1st Stage", feed);
+
+// Liquid carry-over into gas (feed basis)
+sep.setEntrainment(0.001, "mole", "feed", "oil", "gas");      // oil-in-gas
+sep.setEntrainment(0.001, "mole", "feed", "aqueous", "gas");  // water-in-gas
+
+// Cross-contamination expressed on the receiving product stream
+sep.setEntrainment(0.005, "mass",   "product", "aqueous", "oil"); // 0.5 mass% BS&W in oil
+sep.setEntrainment(500e-6, "mass",   "product", "oil", "aqueous"); // 500 ppm oil-in-water
+sep.run();
+```
+
+- **Base `Separator`** supports 3 paths: `oil→gas`, `aqueous→gas`, `gas→liquid`.
+- **`ThreePhaseSeparator`** supports all 6 paths: `oil→gas`, `aqueous→gas`,
+  `gas→oil`, `gas→aqueous`, `oil→aqueous`, `aqueous→oil`.
+- With `specifiedStream="product"`, `val` is clamped: `≤0` transfers nothing,
+  `≥1` transfers the entire source phase.
+
+**Typical screening values** (indicative only — always defer to the project
+separation spec / datasheet; for rigorous physics use the enhanced entrainment
+model and `SeparatorMechanicalDesign`):
+
+| Carry-over path | Typical range | Basis | Notes |
+| --------------- | ------------- | ----- | ----- |
+| Liquid-in-gas (oil or water → gas) | 0.01 – 0.5 % | mole/mass, feed | Well-designed mist extractor; tighter (<0.01%) with high-efficiency internals |
+| Gas carry-under (gas → liquid) | 0.1 – 2 % | mole, feed | Higher with foaming / short retention |
+| Water-in-oil (BS&W, aqueous → oil) | 0.5 – 5 vol% | volume, product | Export crude spec often ≤ 0.5 vol%; inter-stage higher |
+| Oil-in-water (oil → aqueous) | 100 – 1000 ppm | mass, product | Produced-water inlet; overboard discharge typically ≤ 30 ppm (OSPAR) |
+
 ### Compressor
 
 ```java
