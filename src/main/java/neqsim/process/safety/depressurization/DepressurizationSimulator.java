@@ -417,17 +417,25 @@ public class DepressurizationSimulator implements Serializable {
       double halfP = 0.5 * p0Pa;
       double sevenBargPa = 8.0e5;
       for (int i = 0; i < time.size(); i++) {
-	double pPa = pressureBara.get(i) * 1.0e5;
-	if (Double.isNaN(timeToHalfPressure) && pPa <= halfP) {
-	  timeToHalfPressure = interpolatedCrossingTime(i, halfP);
-	}
-	if (Double.isNaN(timeTo7BargS) && pPa <= sevenBargPa) {
-	  timeTo7BargS = interpolatedCrossingTime(i, sevenBargPa);
-	}
+        double pPa = pressureBara.get(i) * 1.0e5;
+        if (Double.isNaN(timeToHalfPressure) && pPa <= halfP) {
+          timeToHalfPressure = interpolatedCrossingTime(i, halfP);
+        }
+        if (Double.isNaN(timeTo7BargS) && pPa <= sevenBargPa) {
+          timeTo7BargS = interpolatedCrossingTime(i, sevenBargPa);
+        }
       }
       halfPressureCriterionMet = !Double.isNaN(timeToHalfPressure) && timeToHalfPressure <= 900.0;
-     */
+      sevenBargCriterionMet = !Double.isNaN(timeTo7BargS) && timeTo7BargS <= 900.0;
+    }
 
+    /**
+     * Interpolates the time where pressure crosses a target pressure.
+     *
+     * @param index index of the first point at or below the target pressure
+     * @param targetPressurePa target pressure in Pa absolute
+     * @return linearly interpolated crossing time in seconds
+     */
     private double interpolatedCrossingTime(int index, double targetPressurePa) {
       if (index <= 0) {
         return time.get(index);
