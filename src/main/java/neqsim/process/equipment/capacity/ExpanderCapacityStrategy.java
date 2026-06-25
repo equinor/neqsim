@@ -7,7 +7,6 @@ import java.util.Map;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.expander.Expander;
 import neqsim.process.equipment.expander.ExpanderInterface;
-import neqsim.process.equipment.expander.TurboExpanderCompressor;
 
 /**
  * Capacity strategy for expander equipment.
@@ -68,8 +67,7 @@ public class ExpanderCapacityStrategy implements EquipmentCapacityStrategy {
   /** {@inheritDoc} */
   @Override
   public boolean supports(ProcessEquipmentInterface equipment) {
-    return equipment instanceof Expander || equipment instanceof ExpanderInterface
-        || equipment instanceof TurboExpanderCompressor;
+    return equipment instanceof Expander || equipment instanceof ExpanderInterface;
   }
 
   /** {@inheritDoc} */
