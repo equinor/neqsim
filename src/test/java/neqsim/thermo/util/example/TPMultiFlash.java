@@ -84,22 +84,22 @@ public class TPMultiFlash {
       testSystem.setMaxNumberOfPhases(1);
 
       for (int i = 0; i < 100000; i++) {
-	double[] x = testSystem.getMolarComposition();
-	testSystem.setMolarComposition(x);
-	testSystem.init(0, 0);
-	testSystem.setTemperature(298);
-	testSystem.setPressure(10);
+        double[] x = testSystem.getMolarComposition();
+        testSystem.setMolarComposition(x);
+        testSystem.init(0, 0);
+        testSystem.setTemperature(298);
+        testSystem.setPressure(10);
 
-	// Change phasetype each run
-	if (pt == PhaseType.GAS) {
-	  pt = PhaseType.LIQUID;
-	} else {
-	  pt = PhaseType.LIQUID;
-	}
+        // Change phasetype each run
+        if (pt == PhaseType.GAS) {
+          pt = PhaseType.LIQUID;
+        } else {
+          pt = PhaseType.LIQUID;
+        }
 
-	testSystem.setPhaseType(0, pt);
-	testSystem.init(2, 0);
-	testSystem.initPhysicalProperties();
+        testSystem.setPhaseType(0, pt);
+        testSystem.init(2, 0);
+        testSystem.initPhysicalProperties();
       }
       // testOps.TPflash();
       // testOps.saturateWithWater();

@@ -213,7 +213,7 @@ public class DepressurizationSimulator implements Serializable {
       double R = 8.314;
       double z = pPa * mw / (density * R * tempK);
       if (z <= 0.0 || Double.isNaN(z)) {
-	z = 1.0;
+        z = 1.0;
       }
 
       // Critical pressure ratio
@@ -221,26 +221,26 @@ public class DepressurizationSimulator implements Serializable {
       double pRatio = backPressure / pPa;
       double mDot;
       if (pRatio <= critRatio) {
-	// Choked
-	mDot = dischargeCoefficient * area * pPa * Math.sqrt(gamma * mw / (z * R * tempK))
-	    * Math.pow(2.0 / (gamma + 1.0), (gamma + 1.0) / (2.0 * (gamma - 1.0)));
+        // Choked
+        mDot = dischargeCoefficient * area * pPa * Math.sqrt(gamma * mw / (z * R * tempK))
+            * Math.pow(2.0 / (gamma + 1.0), (gamma + 1.0) / (2.0 * (gamma - 1.0)));
       } else {
-	// Subsonic
-	double term = (2.0 * gamma / (gamma - 1.0))
-	    * (Math.pow(pRatio, 2.0 / gamma) - Math.pow(pRatio, (gamma + 1.0) / gamma));
-	if (term < 0.0) {
-	  term = 0.0;
-	}
-	mDot = dischargeCoefficient * area * pPa * Math.sqrt(mw / (z * R * tempK)) * Math.sqrt(term);
+        // Subsonic
+        double term = (2.0 * gamma / (gamma - 1.0))
+            * (Math.pow(pRatio, 2.0 / gamma) - Math.pow(pRatio, (gamma + 1.0) / gamma));
+        if (term < 0.0) {
+          term = 0.0;
+        }
+        mDot = dischargeCoefficient * area * pPa * Math.sqrt(mw / (z * R * tempK)) * Math.sqrt(term);
       }
       if (mDot < 0.0 || Double.isNaN(mDot)) {
-	mDot = 0.0;
+        mDot = 0.0;
       }
 
       // Mass balance
       double dm = mDot * timeStep;
       if (dm > mass) {
-	dm = mass;
+        dm = mass;
       }
       double newMass = mass - dm;
 
@@ -256,10 +256,10 @@ public class DepressurizationSimulator implements Serializable {
 
       // Update wall temperature (if modelled)
       if (wallMass > 0.0) {
-	// Simple lumped-wall: external fire heat minus heat transferred from wall to fluid
-	double externalWallHeat = fireThroughWall ? fireHeatInput : 0.0;
-	double dWallTemp = (externalWallHeat - qWall) * timeStep / (wallMass * wallCp);
-	wallTemp += dWallTemp;
+        // Simple lumped-wall: external fire heat minus heat transferred from wall to fluid
+        double externalWallHeat = fireThroughWall ? fireHeatInput : 0.0;
+        double dWallTemp = (externalWallHeat - qWall) * timeStep / (wallMass * wallCp);
+        wallTemp += dWallTemp;
       }
 
       // New internal energy
@@ -269,21 +269,21 @@ public class DepressurizationSimulator implements Serializable {
       // Scale the remaining inventory by adding per-component mole deltas (preserving
       // composition) instead of setTotalNumberOfMoles, which would corrupt the molar mass.
       if (mass > 0.0) {
-	scaleMoles(newMass / mass);
+        scaleMoles(newMass / mass);
       }
       try {
-	ops.VUflash(vesselVolume, newU, "m3", "J");
-	fluid.initProperties();
+        ops.VUflash(vesselVolume, newU, "m3", "J");
+        fluid.initProperties();
       } catch (Exception ex) {
-	res.vuFlashFallbackCount++;
-	// Fallback: do an isothermal expansion approximation
-	pPa = newMass * R * tempK / (mw * vesselVolume) * z;
-	if (pPa < backPressure) {
-	  pPa = backPressure;
-	}
-	fluid.setPressure(pPa / 1.0e5);
-	ops.TPflash();
-	fluid.initProperties();
+        res.vuFlashFallbackCount++;
+        // Fallback: do an isothermal expansion approximation
+        pPa = newMass * R * tempK / (mw * vesselVolume) * z;
+        if (pPa < backPressure) {
+          pPa = backPressure;
+        }
+        fluid.setPressure(pPa / 1.0e5);
+        ops.TPflash();
+        fluid.initProperties();
       }
       tempK = fluid.getTemperature();
       pPa = fluid.getPressure() * 1.0e5;
@@ -376,19 +376,19 @@ public class DepressurizationSimulator implements Serializable {
 
     void append(double t, double pBara, double tempK, double mass, double wallTempK, double mDot) {
       if (!pressureBara.isEmpty()) {
-	double previousPressureBara = pressureBara.get(pressureBara.size() - 1);
-	double pressureToleranceBara = Math.max(PRESSURE_MONOTONIC_ABSOLUTE_TOLERANCE_BARA,
-	    Math.abs(previousPressureBara) * PRESSURE_MONOTONIC_RELATIVE_TOLERANCE);
-	if (pBara > previousPressureBara + pressureToleranceBara) {
-	  pressureMonotonicNonIncreasing = false;
-	}
+        double previousPressureBara = pressureBara.get(pressureBara.size() - 1);
+        double pressureToleranceBara = Math.max(PRESSURE_MONOTONIC_ABSOLUTE_TOLERANCE_BARA,
+            Math.abs(previousPressureBara) * PRESSURE_MONOTONIC_RELATIVE_TOLERANCE);
+        if (pBara > previousPressureBara + pressureToleranceBara) {
+          pressureMonotonicNonIncreasing = false;
+        }
       }
       if (!massKg.isEmpty()) {
-	double previousMassKg = massKg.get(massKg.size() - 1);
-	double massToleranceKg = Math.max(1.0e-8, Math.abs(previousMassKg) * MASS_MONOTONIC_RELATIVE_TOLERANCE);
-	if (mass > previousMassKg + massToleranceKg) {
-	  massMonotonicNonIncreasing = false;
-	}
+        double previousMassKg = massKg.get(massKg.size() - 1);
+        double massToleranceKg = Math.max(1.0e-8, Math.abs(previousMassKg) * MASS_MONOTONIC_RELATIVE_TOLERANCE);
+        if (mass > previousMassKg + massToleranceKg) {
+          massMonotonicNonIncreasing = false;
+        }
       }
       time.add(t);
       pressureBara.add(pBara);
@@ -397,19 +397,19 @@ public class DepressurizationSimulator implements Serializable {
       this.wallTempK.add(wallTempK);
       massFlowKgPerS.add(mDot);
       if (tempK < minFluidTemperatureK) {
-	minFluidTemperatureK = tempK;
+        minFluidTemperatureK = tempK;
       }
       if (wallTempK < minWallTemperatureK) {
-	minWallTemperatureK = wallTempK;
+        minWallTemperatureK = wallTempK;
       }
       if (pBara > maxPressureBara) {
-	maxPressureBara = pBara;
+        maxPressureBara = pBara;
       }
       if (tempK > maxFluidTemperatureK) {
-	maxFluidTemperatureK = tempK;
+        maxFluidTemperatureK = tempK;
       }
       if (wallTempK > maxWallTemperatureK) {
-	maxWallTemperatureK = wallTempK;
+        maxWallTemperatureK = wallTempK;
       }
     }
 
@@ -417,13 +417,13 @@ public class DepressurizationSimulator implements Serializable {
       double halfP = 0.5 * p0Pa;
       double sevenBargPa = 8.0e5;
       for (int i = 0; i < time.size(); i++) {
-	double pPa = pressureBara.get(i) * 1.0e5;
-	if (Double.isNaN(timeToHalfPressure) && pPa <= halfP) {
-	  timeToHalfPressure = interpolatedCrossingTime(i, halfP);
-	}
-	if (Double.isNaN(timeTo7BargS) && pPa <= sevenBargPa) {
-	  timeTo7BargS = interpolatedCrossingTime(i, sevenBargPa);
-	}
+        double pPa = pressureBara.get(i) * 1.0e5;
+        if (Double.isNaN(timeToHalfPressure) && pPa <= halfP) {
+          timeToHalfPressure = interpolatedCrossingTime(i, halfP);
+        }
+        if (Double.isNaN(timeTo7BargS) && pPa <= sevenBargPa) {
+          timeTo7BargS = interpolatedCrossingTime(i, sevenBargPa);
+        }
       }
       halfPressureCriterionMet = !Double.isNaN(timeToHalfPressure) && timeToHalfPressure <= 900.0;
       sevenBargCriterionMet = !Double.isNaN(timeTo7BargS) && timeTo7BargS <= 900.0;
@@ -438,7 +438,7 @@ public class DepressurizationSimulator implements Serializable {
      */
     private double interpolatedCrossingTime(int index, double targetPressurePa) {
       if (index <= 0) {
-	return time.get(index);
+        return time.get(index);
       }
       double previousPressurePa = pressureBara.get(index - 1) * 1.0e5;
       double currentPressurePa = pressureBara.get(index) * 1.0e5;
@@ -446,13 +446,13 @@ public class DepressurizationSimulator implements Serializable {
       double currentTime = time.get(index);
       double pressureDropPa = previousPressurePa - currentPressurePa;
       if (Math.abs(pressureDropPa) < 1.0e-12) {
-	return currentTime;
+        return currentTime;
       }
       double fraction = (previousPressurePa - targetPressurePa) / pressureDropPa;
       if (fraction < 0.0) {
-	fraction = 0.0;
+        fraction = 0.0;
       } else if (fraction > 1.0) {
-	fraction = 1.0;
+        fraction = 1.0;
       }
       return previousTime + fraction * (currentTime - previousTime);
     }
@@ -476,7 +476,7 @@ public class DepressurizationSimulator implements Serializable {
      */
     public STS0131AcceptanceResult evaluateSTS0131(STS0131AcceptanceCriteria criteria) {
       if (criteria == null) {
-	throw new IllegalArgumentException("criteria must not be null");
+        throw new IllegalArgumentException("criteria must not be null");
       }
       return criteria.evaluate(this);
     }

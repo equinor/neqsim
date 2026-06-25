@@ -282,8 +282,8 @@ public class LevelControlValve extends ControlValve {
   @Override
   public String toString() {
     return String.format(
-	"%s [Level Control Valve] - Mode: %s, Action: %s, SP: %.1f%%, PV: %.1f%%, Error: %.1f%%, Opening: %.1f%%",
-	getName(), autoMode ? "AUTO" : "MANUAL", controlAction, levelSetpoint, measuredLevel, controlError,
-	getPercentValveOpening());
+        "%s [Level Control Valve] - Mode: %s, Action: %s, SP: %.1f%%, PV: %.1f%%, Error: %.1f%%, Opening: %.1f%%",
+        getName(), autoMode ? "AUTO" : "MANUAL", controlAction, levelSetpoint, measuredLevel, controlError,
+        getPercentValveOpening());
   }
 }

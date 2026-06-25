@@ -34,9 +34,9 @@ public class ComponentKentEisenberg extends ComponentGeNRTL {
     } else {
       double activinf = 1.0;
       if (ionicCharge == 0) {
-	fugacityCoefficient = activinf * getHenryCoef(phase.getTemperature()) / phase.getPressure();
+        fugacityCoefficient = activinf * getHenryCoef(phase.getTemperature()) / phase.getPressure();
       } else {
-	fugacityCoefficient = 1e8;
+        fugacityCoefficient = 1e8;
       }
       gammaRefCor = activinf;
     }

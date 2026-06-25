@@ -68,7 +68,7 @@ class AdiabaticPipeTest {
 
     // Longer pipe should have more pressure drop
     assertTrue(longPipe.getPressureDrop() > shortPipe.getPressureDrop(),
-	"Longer pipe should have greater pressure drop");
+        "Longer pipe should have greater pressure drop");
   }
 
   @Test

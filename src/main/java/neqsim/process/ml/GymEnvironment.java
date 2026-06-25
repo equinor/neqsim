@@ -79,7 +79,7 @@ public abstract class GymEnvironment implements Serializable {
      * @param info additional info dictionary
      */
     public StepResult(double[] observation, double reward, boolean terminated, boolean truncated,
-	Map<String, Object> info) {
+        Map<String, Object> info) {
       this.observation = observation;
       this.reward = reward;
       this.terminated = terminated;

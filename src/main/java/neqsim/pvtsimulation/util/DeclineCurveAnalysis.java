@@ -358,7 +358,7 @@ public final class DeclineCurveAnalysis {
     for (int i = 0; i < nPoints; i++) {
       double t = tStart + i * tStep;
       if (t > tEnd) {
-	t = tEnd;
+        t = tEnd;
       }
       times[i] = t;
       rates[i] = rate(qi, di, b, t);
@@ -431,12 +431,12 @@ public final class DeclineCurveAnalysis {
       double r = Math.pow(q1 / q3, bTry);
       double dTry;
       if (Math.abs(r - 1.0) < 1e-12) {
-	dTry = diEst;
+        dTry = diEst;
       } else {
-	dTry = (r - 1.0) / (bTry * (t3 - t1) + 1e-30);
+        dTry = (r - 1.0) / (bTry * (t3 - t1) + 1e-30);
       }
       if (dTry <= 0) {
-	continue;
+        continue;
       }
       // qi from q1
       double qiTry = q1 * Math.pow(1.0 + bTry * dTry * t1, 1.0 / (bTry + 1e-30));
@@ -445,8 +445,8 @@ public final class DeclineCurveAnalysis {
       double q2Pred = rate(qiTry, dTry, bTry, t2);
       double error = Math.abs(q2Pred - q2) / q2;
       if (error < bestError) {
-	bestError = error;
-	bestB = bTry;
+        bestError = error;
+        bestB = bTry;
       }
     }
 

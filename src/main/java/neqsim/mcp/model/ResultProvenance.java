@@ -235,7 +235,7 @@ public class ResultProvenance {
     p.addAssumption("Cases share the base fluid definition unless overridden");
     if (succeededCases < totalCases) {
       p.addLimitation(
-	  (totalCases - succeededCases) + " of " + totalCases + " cases failed — check individual" + " case results");
+          (totalCases - succeededCases) + " of " + totalCases + " cases failed — check individual" + " case results");
     }
     return p;
   }
@@ -284,7 +284,7 @@ public class ResultProvenance {
   public void setConverged(boolean converged) {
     this.converged = converged;
     this.convergence = new Convergence(converged,
-	converged ? "Calculation converged" : "Calculation did not converge or returned an error");
+        converged ? "Calculation converged" : "Calculation did not converge or returned an error");
   }
 
   /**

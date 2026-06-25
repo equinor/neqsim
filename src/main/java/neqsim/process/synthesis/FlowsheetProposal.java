@@ -70,11 +70,11 @@ public final class FlowsheetProposal implements Serializable {
     this.rationale = rationale;
     this.processSystem = processSystem;
     this.topProductPredicted = topProductPredicted == null ? Collections.<String, Double>emptyMap()
-	: Collections.unmodifiableMap(new LinkedHashMap<String, Double>(topProductPredicted));
+        : Collections.unmodifiableMap(new LinkedHashMap<String, Double>(topProductPredicted));
     this.bottomProductPredicted = bottomProductPredicted == null ? Collections.<String, Double>emptyMap()
-	: Collections.unmodifiableMap(new LinkedHashMap<String, Double>(bottomProductPredicted));
+        : Collections.unmodifiableMap(new LinkedHashMap<String, Double>(bottomProductPredicted));
     this.alternatives = alternatives == null ? Collections.<String>emptyList()
-	: Collections.unmodifiableList(new ArrayList<String>(alternatives));
+        : Collections.unmodifiableList(new ArrayList<String>(alternatives));
     this.specsMet = specsMet;
   }
 

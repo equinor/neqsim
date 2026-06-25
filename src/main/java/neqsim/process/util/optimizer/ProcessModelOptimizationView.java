@@ -114,7 +114,7 @@ public class ProcessModelOptimizationView extends ProcessSystem {
     boolean converged = model.runUntilConverged(maxIterations, tolerance);
     if (!converged) {
       logger.warn("ProcessModel did not reach cross-area convergence within {} iterations (tolerance {})."
-	  + " Optimizer will evaluate the unconverged state.", maxIterations, tolerance);
+          + " Optimizer will evaluate the unconverged state.", maxIterations, tolerance);
     }
   }
 
@@ -167,7 +167,7 @@ public class ProcessModelOptimizationView extends ProcessSystem {
     for (ProcessSystem area : model.getAllProcesses()) {
       ProcessEquipmentInterface unit = area.getUnit(name);
       if (unit != null) {
-	return unit;
+        return unit;
       }
     }
     return null;

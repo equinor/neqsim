@@ -85,7 +85,7 @@ class EnergyEfficiencyCalculatorTest {
     // Low EEI should give good rating
     assertTrue(report.energyEfficiencyIndex < 1.0, "Should have EEI below reference");
     assertTrue(report.getEfficiencyRating().startsWith("A") || report.getEfficiencyRating().startsWith("B")
-	|| report.getEfficiencyRating().startsWith("C"), "Should have good efficiency rating");
+        || report.getEfficiencyRating().startsWith("C"), "Should have good efficiency rating");
   }
 
   @Test
@@ -151,7 +151,7 @@ class EnergyEfficiencyCalculatorTest {
 
     // Should identify waste heat sources
     assertTrue(report.wasteHeatSources.containsKey("Compressor discharge"),
-	"Should identify compressor discharge heat");
+        "Should identify compressor discharge heat");
     assertTrue(report.wasteHeatSources.containsKey("Gas turbine exhaust"), "Should identify turbine exhaust heat");
     assertTrue(report.totalAvailableWasteHeatKW > 0, "Should have available waste heat");
   }
@@ -192,7 +192,7 @@ class EnergyEfficiencyCalculatorTest {
 
     // Same SEC, different EEI due to different reference
     assertEquals(platformReport.specificEnergyConsumption, fpsoReport.specificEnergyConsumption, 0.1,
-	"SEC should be the same");
+        "SEC should be the same");
     assertTrue(platformReport.referenceSEC < fpsoReport.referenceSEC, "Platform reference should be lower than FPSO");
   }
 

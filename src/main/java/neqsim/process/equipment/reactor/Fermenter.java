@@ -253,15 +253,15 @@ public class Fermenter extends StirredTankReactor {
     // Apply all reactions to the system
     for (StoichiometricReaction rxn : getReactions()) {
       try {
-	rxn.react(system);
+        rxn.react(system);
       } catch (Exception ex) {
-	logger.warn("Reaction '{}' failed in fermenter '{}': {}", rxn.getName(), getName(), ex.getMessage());
+        logger.warn("Reaction '{}' failed in fermenter '{}': {}", rxn.getName(), getName(), ex.getMessage());
       }
     }
 
     // Set outlet conditions
     double outPressure = Double.isNaN(getReactorPressure()) ? system.getPressure() - getPressureDrop()
-	: getReactorPressure();
+        : getReactorPressure();
     system.setPressure(outPressure);
 
     if (isIsothermal() && !Double.isNaN(getReactorTemperature())) {
@@ -272,9 +272,9 @@ public class Fermenter extends StirredTankReactor {
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
     try {
       if (isIsothermal()) {
-	ops.TPflash();
+        ops.TPflash();
       } else {
-	ops.PHflash(inletEnthalpy, 0);
+        ops.PHflash(inletEnthalpy, 0);
       }
     } catch (Exception ex) {
       logger.error("Flash calculation failed in fermenter '{}': {}", getName(), ex.getMessage());

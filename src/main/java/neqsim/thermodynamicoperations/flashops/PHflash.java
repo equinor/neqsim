@@ -76,9 +76,9 @@ public class PHflash extends Flash {
 
     do {
       if (Math.abs(error) > Math.abs(errorOld) && factor > 0.1 && correctFactor) {
-	factor *= 0.5;
+        factor *= 0.5;
       } else if (Math.abs(error) < Math.abs(errorOld) && correctFactor) {
-	factor = iterations / (iterations + 1.0) * 1.0;
+        factor = iterations / (iterations + 1.0) * 1.0;
       }
       iterations++;
       oldTemp = nyTemp;
@@ -86,26 +86,26 @@ public class PHflash extends Flash {
       nyTemp = oldTemp - newCorr;
 
       if (iterations > 150 && Math.abs(error) < 10.0) {
-	nyTemp = 1.0
-	    / (system.getTemperature() - Math.signum(system.getTemperature() - 1.0 / nyTemp) * Math.abs(error));
-	correctFactor = false;
+        nyTemp = 1.0
+            / (system.getTemperature() - Math.signum(system.getTemperature() - 1.0 / nyTemp) * Math.abs(error));
+        correctFactor = false;
       } else if (Math.abs(system.getTemperature() - 1.0 / nyTemp) > 10.0) {
-	nyTemp = 1.0 / (system.getTemperature() - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
-	correctFactor = false;
+        nyTemp = 1.0 / (system.getTemperature() - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
+        correctFactor = false;
       } else if (nyTemp < 0) {
-	nyTemp = Math.abs(1.0 / (system.getTemperature() + 10.0));
-	correctFactor = false;
+        nyTemp = Math.abs(1.0 / (system.getTemperature() + 10.0));
+        correctFactor = false;
       } else if (Double.isNaN(nyTemp)) {
-	nyTemp = oldTemp + 0.1;
-	correctFactor = false;
+        nyTemp = oldTemp + 0.1;
+        correctFactor = false;
       } else {
-	correctFactor = true;
+        correctFactor = true;
       }
       system.setTemperature(1.0 / nyTemp);
       if (system.getTemperature() > maxTemperature) {
-	system.setTemperature(maxTemperature - 0.1);
+        system.setTemperature(maxTemperature - 0.1);
       } else if (system.getTemperature() < minTemperature) {
-	system.setTemperature(minTemperature + 0.1);
+        system.setTemperature(minTemperature + 0.1);
       }
       tpFlash.run();
       system.init(2);
@@ -113,9 +113,9 @@ public class PHflash extends Flash {
       error = calcdQdT();
 
       if (error > 0 && system.getTemperature() > maxTemperature) {
-	maxTemperature = system.getTemperature();
+        maxTemperature = system.getTemperature();
       } else if (error < 0 && system.getTemperature() < minTemperature) {
-	minTemperature = system.getTemperature();
+        minTemperature = system.getTemperature();
       }
     } while (((Math.abs(error) + Math.abs(errorOld)) > 1e-8 || iterations < 3) && iterations < 200);
     return 1.0 / nyTemp;
@@ -139,25 +139,25 @@ public class PHflash extends Flash {
     // System.out.println("temp start " + system.getTemperature());
     do {
       if (error > errorOld && factor > 0.1 && correctFactor) {
-	factor *= 0.5;
+        factor *= 0.5;
       } else if (error < errorOld && correctFactor) {
-	factor = iterations / (iterations + 1.0) * 1.0;
+        factor = iterations / (iterations + 1.0) * 1.0;
       }
       iterations++;
       oldTemp = nyTemp;
       newCorr = factor * calcdQdT() / calcdQdTT();
       nyTemp = oldTemp - newCorr;
       if (Math.abs(system.getTemperature() - 1.0 / nyTemp) > 10.0) {
-	nyTemp = 1.0 / (system.getTemperature() - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
-	correctFactor = false;
+        nyTemp = 1.0 / (system.getTemperature() - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
+        correctFactor = false;
       } else if (nyTemp < 0) {
-	nyTemp = Math.abs(1.0 / (system.getTemperature() + 10.0));
-	correctFactor = false;
+        nyTemp = Math.abs(1.0 / (system.getTemperature() + 10.0));
+        correctFactor = false;
       } else if (Double.isNaN(nyTemp)) {
-	nyTemp = oldTemp + 0.1;
-	correctFactor = false;
+        nyTemp = oldTemp + 0.1;
+        correctFactor = false;
       } else {
-	correctFactor = true;
+        correctFactor = true;
       }
       system.setTemperature(1.0 / nyTemp);
       tpFlash.run();
@@ -189,12 +189,12 @@ public class PHflash extends Flash {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
       // System.out.println("enthalpy start: " + system.getEnthalpy());
       if (type == 0) {
-	solveQ();
+        solveQ();
       } else {
-	SysNewtonRhapsonPHflash secondOrderSolver = new SysNewtonRhapsonPHflash(system, 2,
-	    system.getPhases()[0].getNumberOfComponents(), 0);
-	secondOrderSolver.setSpec(Hspec);
-	secondOrderSolver.solve(1);
+        SysNewtonRhapsonPHflash secondOrderSolver = new SysNewtonRhapsonPHflash(system, 2,
+            system.getPhases()[0].getNumberOfComponents(), 0);
+        secondOrderSolver.setSpec(Hspec);
+        secondOrderSolver.solve(1);
       }
     } finally {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);

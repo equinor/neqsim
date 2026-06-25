@@ -183,7 +183,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
       usl = fluid.getPhase(1).getFlowRate("m3/sec") / pipe.getArea();
     } else {
       usl = fluid.getPhase(1).getFlowRate("m3/sec") / pipe.getArea()
-	  + fluid.getPhase(2).getFlowRate("m3/sec") / pipe.getArea();
+          + fluid.getPhase(2).getFlowRate("m3/sec") / pipe.getArea();
     }
     usg = fluid.getPhase(0).getFlowRate("m3/sec") / pipe.getArea();
   }
@@ -201,7 +201,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   public SevereSlugAnalyser(String name, Stream stream, double internalDiameter, double leftLength, double rightLength,
       double angle) {
     this(name, stream, internalDiameter, leftLength, rightLength, angle, stream.getPressure("Pa"),
-	stream.getTemperature("C"), 500.0, 50000);
+        stream.getTemperature("C"), 500.0, 50000);
   }
 
   /**
@@ -219,7 +219,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   public SevereSlugAnalyser(String name, Stream stream, double internalDiameter, double leftLength, double rightLength,
       double angle, double simulationTime, int numberOfTimeSteps) {
     this(name, stream, internalDiameter, leftLength, rightLength, angle, stream.getPressure("Pa"),
-	stream.getTemperature("C"), simulationTime, numberOfTimeSteps);
+        stream.getTemperature("C"), simulationTime, numberOfTimeSteps);
   }
 
   /**
@@ -249,7 +249,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
       usl = fluid.getPhase(1).getFlowRate("m3/sec") / pipe.getArea();
     } else {
       usl = fluid.getPhase(1).getFlowRate("m3/sec") / pipe.getArea()
-	  + fluid.getPhase(2).getFlowRate("m3/sec") / pipe.getArea();
+          + fluid.getPhase(2).getFlowRate("m3/sec") / pipe.getArea();
     }
     fluidSevereS = new FluidSevereSlug(fluid);
     usg = fluid.getPhase(0).getFlowRate("m3/sec") / pipe.getArea();
@@ -425,7 +425,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
    */
   public double stratifiedHoldUp(FluidSevereSlug fluid, Pipe pipe, SevereSlugAnalyser severeSlug) {
     Re = fluid.getLiqDensity() * severeSlug.getSuperficialLiquidVelocity() * pipe.getInternalDiameter()
-	/ (fluid.getliqVisc());
+        / (fluid.getliqVisc());
     lambda = Math.max(0.34 * Math.pow(Re, -0.25), 64 / Re);
     if (0.34 * Math.pow(Re, -0.25) > 64 / Re) {
       n = 0.25;
@@ -433,7 +433,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
       n = 1;
     }
     friction = 0.5 * lambda * Math.pow(severeSlug.getSuperficialLiquidVelocity(), 2)
-	/ (gravAcc * Math.sin(pipe.getAngle("Radian")) * pipe.getInternalDiameter());
+        / (gravAcc * Math.sin(pipe.getAngle("Radian")) * pipe.getInternalDiameter());
 
     gamma1 = 0.1;
     gamma2 = 2.2;
@@ -447,18 +447,18 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
 
       gamma = gamma2 - function2 * (gamma2 - gamma1) / (function2 - function1);
       if (gamma < 0) {
-	if (gamma2 != 0.1) {
-	  gamma = 0.1;
-	} else {
-	  gamma = 0.2;
-	}
+        if (gamma2 != 0.1) {
+          gamma = 0.1;
+        } else {
+          gamma = 0.2;
+        }
       }
       if (gamma > 3.00) {
-	if (gamma2 != 2.99) {
-	  gamma = 2.99;
-	} else {
-	  gamma = 2.97;
-	}
+        if (gamma2 != 2.99) {
+          gamma = 2.99;
+        } else {
+          gamma = 2.97;
+        }
       }
 
       gamma1 = gamma2;
@@ -505,11 +505,11 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
       Re = fluid.getLiqDensity() * Math.abs(Um) * pipe.getInternalDiameter() / fluid.getliqVisc();
       lambda = Math.max(0.34 * Math.pow(Re, -0.25), 64 / Re); // friction factor
       friction = 0.5 * lambda * fluid.getLiqDensity() * Um * Math.abs(Um) * slugLength / pipe.getInternalDiameter(); // frictional
-														     // pressure
-														     // loss
+      // pressure
+      // loss
       // Oscillation Friction
       frictionStagnant = 0.5 * lambdaStagnant * fluid.getLiqDensity() * uLevel * Math.abs(uLevel) * slugLength
-	  / pipe.getInternalDiameter();
+          / pipe.getInternalDiameter();
       // Valve Friction
       frictionValve = valveConstant * fluid.getLiqDensity() * Um * Math.abs(Um);
       // Total Friction
@@ -522,13 +522,13 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
       // Momentum Balance
       UmOld = Um;
       Um = UmOld + deltaT * ((pressure - severeSlug.outletPressure) - friction - gravity)
-	  / (-z * fluid.getLiqDensity() + pipe.getRightLength() * mixDensity);
+          / (-z * fluid.getLiqDensity() + pipe.getRightLength() * mixDensity);
 
       // Slip Relation: Calculate translational velocity
       if (Re < 2300) {
-	flowDistCoeff = 2;
+        flowDistCoeff = 2;
       } else {
-	flowDistCoeff = 1.2;
+        flowDistCoeff = 1.2;
       }
 
       transVel = flowDistCoeff * Um + driftVel;
@@ -537,10 +537,10 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
       UsgL = (Um - severeSlug.getSuperficialLiquidVelocity()) * ((Um > 0) ? 1 : 0) * ((z > 0) ? 1 : 0);
 
       UslL = (severeSlug.getSuperficialLiquidVelocity() * ((z > 0) ? 1 : 0) + Um * ((z < 0) ? 1 : 0))
-	  * ((Um > 0) ? 1 : 0) + Um * ((Um < 0) ? 1 : 0);
+          * ((Um > 0) ? 1 : 0) + Um * ((Um < 0) ? 1 : 0);
 
       UsgR = (alfaRiser * transVel * ((z > 0) ? 1 : 0) + Um * ((z < 0) ? 1 : 0)) * ((Um > 0) ? 1 : 0)
-	  + Um * ((Um < 0) ? 1 : 0);
+          + Um * ((Um < 0) ? 1 : 0);
       UslR = (Um - alfaRiser * transVel) * ((Um > 0) ? 1 : 0) * ((z > 0) ? 1 : 0);
 
       U = UsgL - UsgR - UslL + UslR;
@@ -561,8 +561,8 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
       Lg = pipe.getLeftLength() + z;
       pressureOld = pressure;
       pressure = pressureOld
-	  + deltaT * (severeSlug.getSuperficialGasVelocity() * normalPressure - UsgL * pressureOld) / (Lg * alfaLeft)
-	  - deltaT * (pressureOld * uLevel) / (Lg * alfaLeft);
+          + deltaT * (severeSlug.getSuperficialGasVelocity() * normalPressure - UsgL * pressureOld) / (Lg * alfaLeft)
+          - deltaT * (pressureOld * uLevel) / (Lg * alfaLeft);
 
       gasDensity = pressure / (fluid.getGasConstant() * (273.15 + severeSlug.getTemperature()));
       mixDensity = alfaRiser * gasDensity + (1 - alfaRiser) * fluid.getLiqDensity();
@@ -606,17 +606,17 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
       flowPattern = "Severe Slug 2. Small pressure variations";
     } else {
       if (slugHoldUp < stratifiedHoldUp) {
-	flowPattern = "Slug Flow";
+        flowPattern = "Slug Flow";
       } else {
-	if (stratifiedHoldUp < 0.1) {
-	  flowPattern = "Liquid droplets flow";
-	}
-	if (stratifiedHoldUp > 0.9) {
-	  flowPattern = "Gas droplets flow";
-	}
-	if (stratifiedHoldUp > 0.1 && stratifiedHoldUp < 0.9) {
-	  flowPattern = "Stratified Flow";
-	}
+        if (stratifiedHoldUp < 0.1) {
+          flowPattern = "Liquid droplets flow";
+        }
+        if (stratifiedHoldUp > 0.9) {
+          flowPattern = "Gas droplets flow";
+        }
+        if (stratifiedHoldUp > 0.1 && stratifiedHoldUp < 0.9) {
+          flowPattern = "Stratified Flow";
+        }
       }
     }
     logger.debug("Simulated flow regime is then: " + flowPattern);
@@ -628,7 +628,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   public double getMeasuredValue(String unit) {
     if (!unit.equalsIgnoreCase("m3/sec")) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getMeasuredValue", "unit",
-	  "currently only supports \"m3/sec\""));
+          "currently only supports \"m3/sec\""));
     }
 
     SystemInterface fluid = streamS.getThermoSystem();
@@ -639,12 +639,12 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
       usl = fluid.getPhase(1).getFlowRate("m3/sec") / pipe.getArea();
     } else {
       usl = fluid.getPhase(1).getFlowRate("m3/sec") / pipe.getArea()
-	  + fluid.getPhase(2).getFlowRate("m3/sec") / pipe.getArea();
+          + fluid.getPhase(2).getFlowRate("m3/sec") / pipe.getArea();
     }
     fluidSevereS = new FluidSevereSlug(fluid);
     usg = fluid.getPhase(0).getFlowRate("m3/sec") / pipe.getArea();
     severeSlug = new SevereSlugAnalyser("tmp", usl, usg, outletPressure, temperature, simulationTime,
-	numberOfTimeSteps);
+        numberOfTimeSteps);
     checkFlowRegime(fluidSevereS, pipe, severeSlug);
     return slugValue;
   }
@@ -678,15 +678,15 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
       flowPattern = "Regime cannot be detected (angle < or = 0.0). Severe slug is not possible";
     } else {
       if (fluid.getNumberOfPhases() == 2) {
-	usl = fluid.getPhase(1).getFlowRate("m3/sec") / pipe.getArea();
+        usl = fluid.getPhase(1).getFlowRate("m3/sec") / pipe.getArea();
       } else {
-	usl = fluid.getPhase(1).getFlowRate("m3/sec") / pipe.getArea()
-	    + fluid.getPhase(2).getFlowRate("m3/sec") / pipe.getArea();
+        usl = fluid.getPhase(1).getFlowRate("m3/sec") / pipe.getArea()
+            + fluid.getPhase(2).getFlowRate("m3/sec") / pipe.getArea();
       }
       fluidSevereS = new FluidSevereSlug(fluid);
       usg = fluid.getPhase(0).getFlowRate("m3/sec") / pipe.getArea();
       severeSlug = new SevereSlugAnalyser("tmp", usl, usg, outletPressure, temperature, simulationTime,
-	  numberOfTimeSteps);
+          numberOfTimeSteps);
       checkFlowRegime(fluidSevereS, pipe, severeSlug);
     }
     return flowPattern;
@@ -719,7 +719,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     testSystem.init(0);
     Stream inputStream = new Stream("inputStream", testSystem);
     SevereSlugAnalyser mySevereSlug4 = new SevereSlugAnalyser("tmp", inputStream, 0.05, 167, 7.7, 2, 100000.0, 20.0,
-	200.0, 20000);
+        200.0, 20000);
     logger.debug(inputStream.getFlowRate("kg/sec"));
     mySevereSlug4.getPredictedFlowRegime();
     // inputStream.setFlowRate(0.00001, "MSm^3/day");

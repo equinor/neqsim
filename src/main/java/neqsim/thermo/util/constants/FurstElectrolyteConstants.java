@@ -90,9 +90,9 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       // SR parameters for divalent (2+) cations [6-9] - refitted 2024-12
       // Optimized for CaCl2, MgCl2, BaCl2, SrCl2 (3-8% error)
       5.39970864968383560000e-05, -1.64491629343936460000e-04, // Wij(2+ cat-water): slope,
-							       // intercept
+      // intercept
       -5.29686946241836400000e-08, -6.01118737814586100000e-17 // Wij(2+ cat-anion): prefactor,
-							       // intercept
+      // intercept
   };
 
   /**
@@ -673,7 +673,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       // MEG-ion interactions - set to 0.0 to use default calculation (already works correctly)
       0.0, // [2] W_MEG-cation
       0.0, // [3] W_MEG-anion
-      // Ethanol-ion interactions
+           // Ethanol-ion interactions
       1.3e-4, // [4] W_EtOH-cation
       1.3e-4 // [5] W_EtOH-anion
   };

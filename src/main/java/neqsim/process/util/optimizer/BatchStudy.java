@@ -93,8 +93,8 @@ public class BatchStudy implements Serializable {
     if (parallelism <= 1) {
       // Sequential execution
       for (ParameterSet params : allCases) {
-	CaseResult caseResult = runCase(params);
-	result.addResult(caseResult);
+        CaseResult caseResult = runCase(params);
+        result.addResult(caseResult);
       }
     } else {
       // Parallel execution
@@ -102,21 +102,21 @@ public class BatchStudy implements Serializable {
       List<Future<CaseResult>> futures = new ArrayList<>();
 
       for (ParameterSet params : allCases) {
-	futures.add(executor.submit(() -> runCase(params)));
+        futures.add(executor.submit(() -> runCase(params)));
       }
 
       for (Future<CaseResult> future : futures) {
-	try {
-	  CaseResult caseResult = future.get();
-	  result.addResult(caseResult);
+        try {
+          CaseResult caseResult = future.get();
+          result.addResult(caseResult);
 
-	  if (caseResult.failed && stopOnFailure) {
-	    executor.shutdownNow();
-	    break;
-	  }
-	} catch (InterruptedException | ExecutionException e) {
-	  result.addResult(new CaseResult(null, true, e.getMessage()));
-	}
+          if (caseResult.failed && stopOnFailure) {
+            executor.shutdownNow();
+            break;
+          }
+        } catch (InterruptedException | ExecutionException e) {
+          result.addResult(new CaseResult(null, true, e.getMessage()));
+        }
       }
 
       executor.shutdown();
@@ -155,7 +155,7 @@ public class BatchStudy implements Serializable {
 
       // Apply parameter variations
       for (Map.Entry<String, Double> param : params.values.entrySet()) {
-	applyParameter(caseCopy, param.getKey(), param.getValue());
+        applyParameter(caseCopy, param.getKey(), param.getValue());
       }
 
       // Run simulation
@@ -166,12 +166,12 @@ public class BatchStudy implements Serializable {
       // Extract objectives
       Map<String, Double> objectiveValues = new HashMap<>();
       for (Map.Entry<String, Function<ProcessSystem, Double>> extractor : objectiveExtractors.entrySet()) {
-	try {
-	  double value = extractor.getValue().apply(caseCopy);
-	  objectiveValues.put(extractor.getKey(), value);
-	} catch (Exception e) {
-	  objectiveValues.put(extractor.getKey(), Double.NaN);
-	}
+        try {
+          double value = extractor.getValue().apply(caseCopy);
+          objectiveValues.put(extractor.getKey(), value);
+        } catch (Exception e) {
+          objectiveValues.put(extractor.getKey(), Double.NaN);
+        }
       }
 
       CaseResult result = new CaseResult(params, false, null);
@@ -205,12 +205,12 @@ public class BatchStudy implements Serializable {
     // Heater/Cooler properties
     case "duty":
       if (equipment instanceof neqsim.process.equipment.heatexchanger.Heater) {
-	((neqsim.process.equipment.heatexchanger.Heater) equipment).setDuty(value);
+        ((neqsim.process.equipment.heatexchanger.Heater) equipment).setDuty(value);
       }
       break;
     case "outlettemperature":
       if (equipment instanceof neqsim.process.equipment.heatexchanger.Heater) {
-	((neqsim.process.equipment.heatexchanger.Heater) equipment).setOutTemperature(value, "C");
+        ((neqsim.process.equipment.heatexchanger.Heater) equipment).setOutTemperature(value, "C");
       }
       break;
 
@@ -218,53 +218,53 @@ public class BatchStudy implements Serializable {
     case "pressure":
     case "outletpressure":
       if (equipment instanceof neqsim.process.equipment.valve.ThrottlingValve) {
-	((neqsim.process.equipment.valve.ThrottlingValve) equipment).setOutletPressure(value);
+        ((neqsim.process.equipment.valve.ThrottlingValve) equipment).setOutletPressure(value);
       } else if (equipment instanceof neqsim.process.equipment.compressor.Compressor) {
-	((neqsim.process.equipment.compressor.Compressor) equipment).setOutletPressure(value);
+        ((neqsim.process.equipment.compressor.Compressor) equipment).setOutletPressure(value);
       } else if (equipment instanceof neqsim.process.equipment.pump.Pump) {
-	((neqsim.process.equipment.pump.Pump) equipment).setOutletPressure(value);
+        ((neqsim.process.equipment.pump.Pump) equipment).setOutletPressure(value);
       }
       break;
     case "opening":
     case "percentvalveopening":
       if (equipment instanceof neqsim.process.equipment.valve.ValveInterface) {
-	((neqsim.process.equipment.valve.ValveInterface) equipment).setPercentValveOpening(value);
+        ((neqsim.process.equipment.valve.ValveInterface) equipment).setPercentValveOpening(value);
       }
       break;
     case "cv":
       if (equipment instanceof neqsim.process.equipment.valve.ThrottlingValve) {
-	((neqsim.process.equipment.valve.ThrottlingValve) equipment).setCv(value);
+        ((neqsim.process.equipment.valve.ThrottlingValve) equipment).setCv(value);
       }
       break;
 
     // Compressor properties
     case "polytropicefficiency":
       if (equipment instanceof neqsim.process.equipment.compressor.Compressor) {
-	((neqsim.process.equipment.compressor.Compressor) equipment).setPolytropicEfficiency(value);
+        ((neqsim.process.equipment.compressor.Compressor) equipment).setPolytropicEfficiency(value);
       }
       break;
     case "isentropicefficiency":
       if (equipment instanceof neqsim.process.equipment.compressor.Compressor) {
-	((neqsim.process.equipment.compressor.Compressor) equipment).setIsentropicEfficiency(value);
+        ((neqsim.process.equipment.compressor.Compressor) equipment).setIsentropicEfficiency(value);
       }
       break;
 
     // Stream properties
     case "temperature":
       if (equipment instanceof neqsim.process.equipment.stream.StreamInterface) {
-	((neqsim.process.equipment.stream.StreamInterface) equipment).setTemperature(value, "C");
+        ((neqsim.process.equipment.stream.StreamInterface) equipment).setTemperature(value, "C");
       }
       break;
     case "flowrate":
       if (equipment instanceof neqsim.process.equipment.stream.StreamInterface) {
-	((neqsim.process.equipment.stream.StreamInterface) equipment).setFlowRate(value, "kg/hr");
+        ((neqsim.process.equipment.stream.StreamInterface) equipment).setFlowRate(value, "kg/hr");
       }
       break;
 
     // Separator properties
     case "internaldiameter":
       if (equipment instanceof neqsim.process.equipment.separator.Separator) {
-	((neqsim.process.equipment.separator.Separator) equipment).setInternalDiameter(value);
+        ((neqsim.process.equipment.separator.Separator) equipment).setInternalDiameter(value);
       }
       break;
 
@@ -327,7 +327,7 @@ public class BatchStudy implements Serializable {
     public Builder vary(String parameterPath, double min, double max, int steps) {
       double[] values = new double[steps];
       for (int i = 0; i < steps; i++) {
-	values[i] = min + (max - min) * i / (steps - 1);
+        values[i] = min + (max - min) * i / (steps - 1);
       }
       variations.add(new ParameterVariation(parameterPath, values));
       return this;
@@ -473,9 +473,9 @@ public class BatchStudy implements Serializable {
     void addResult(CaseResult result) {
       results.add(result);
       if (result.failed) {
-	failureCount++;
+        failureCount++;
       } else {
-	successCount++;
+        successCount++;
       }
     }
 
@@ -500,7 +500,7 @@ public class BatchStudy implements Serializable {
      */
     public CaseResult getBestCase(String objectiveName) {
       return getSuccessfulResults().stream().filter(r -> r.objectiveValues.containsKey(objectiveName))
-	  .min(Comparator.comparingDouble(r -> r.objectiveValues.get(objectiveName))).orElse(null);
+          .min(Comparator.comparingDouble(r -> r.objectiveValues.get(objectiveName))).orElse(null);
     }
 
     /**
@@ -515,36 +515,36 @@ public class BatchStudy implements Serializable {
       // Header
       sb.append("CaseID,Status");
       if (!results.isEmpty() && results.get(0).parameters != null) {
-	for (String param : results.get(0).parameters.values.keySet()) {
-	  sb.append(",").append(param);
-	}
+        for (String param : results.get(0).parameters.values.keySet()) {
+          sb.append(",").append(param);
+        }
       }
       if (!results.isEmpty() && !results.get(0).objectiveValues.isEmpty()) {
-	for (String obj : results.get(0).objectiveValues.keySet()) {
-	  sb.append(",").append(obj);
-	}
+        for (String obj : results.get(0).objectiveValues.keySet()) {
+          sb.append(",").append(obj);
+        }
       }
       sb.append(",Runtime_ms\n");
 
       // Data
       for (CaseResult r : results) {
-	sb.append(r.parameters != null ? r.parameters.caseId : "N/A");
-	sb.append(",").append(r.failed ? "FAILED" : "SUCCESS");
+        sb.append(r.parameters != null ? r.parameters.caseId : "N/A");
+        sb.append(",").append(r.failed ? "FAILED" : "SUCCESS");
 
-	if (r.parameters != null) {
-	  for (Double val : r.parameters.values.values()) {
-	    sb.append(",").append(val);
-	  }
-	}
-	for (Double val : r.objectiveValues.values()) {
-	  sb.append(",").append(val);
-	}
-	sb.append(",").append(r.runtime != null ? r.runtime.toMillis() : "N/A");
-	sb.append("\n");
+        if (r.parameters != null) {
+          for (Double val : r.parameters.values.values()) {
+            sb.append(",").append(val);
+          }
+        }
+        for (Double val : r.objectiveValues.values()) {
+          sb.append(",").append(val);
+        }
+        sb.append(",").append(r.runtime != null ? r.runtime.toMillis() : "N/A");
+        sb.append("\n");
       }
 
       try (java.io.FileWriter writer = new java.io.FileWriter(filePath)) {
-	writer.write(sb.toString());
+        writer.write(sb.toString());
       }
     }
 
@@ -556,9 +556,9 @@ public class BatchStudy implements Serializable {
      */
     public void exportToJSON(String filePath) throws java.io.IOException {
       com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting()
-	  .serializeSpecialFloatingPointValues().create();
+          .serializeSpecialFloatingPointValues().create();
       try (java.io.FileWriter writer = new java.io.FileWriter(filePath)) {
-	gson.toJson(this, writer);
+        gson.toJson(this, writer);
       }
     }
 
@@ -569,7 +569,7 @@ public class BatchStudy implements Serializable {
      */
     public String toJson() {
       com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting()
-	  .serializeSpecialFloatingPointValues().create();
+          .serializeSpecialFloatingPointValues().create();
       return gson.toJson(this);
     }
 
@@ -585,34 +585,35 @@ public class BatchStudy implements Serializable {
      */
     public List<CaseResult> getParetoFront(String objective1, String objective2) {
       List<CaseResult> successful = getSuccessfulResults().stream()
-	  .filter(r -> r.objectiveValues.containsKey(objective1) && r.objectiveValues.containsKey(objective2))
-	  .collect(Collectors.toList());
+          .filter(r -> r.objectiveValues.containsKey(objective1) && r.objectiveValues.containsKey(objective2))
+          .collect(Collectors.toList());
 
       List<CaseResult> paretoFront = new ArrayList<>();
 
       for (CaseResult candidate : successful) {
-	boolean isDominated = false;
-	double val1 = candidate.objectiveValues.get(objective1);
-	double val2 = candidate.objectiveValues.get(objective2);
+        boolean isDominated = false;
+        double val1 = candidate.objectiveValues.get(objective1);
+        double val2 = candidate.objectiveValues.get(objective2);
 
-	for (CaseResult other : successful) {
-	  if (candidate == other) {
-	    continue;
-	  }
-	  double otherVal1 = other.objectiveValues.get(objective1);
-	  double otherVal2 = other.objectiveValues.get(objective2);
+        for (CaseResult other : successful) {
+          if (candidate == other) {
+            continue;
+          }
+          double otherVal1 = other.objectiveValues.get(objective1);
+          double otherVal2 = other.objectiveValues.get(objective2);
 
-	  // Check if 'other' dominates 'candidate' (better or equal in both, strictly better in
-	  // one)
-	  if (otherVal1 <= val1 && otherVal2 <= val2 && (otherVal1 < val1 || otherVal2 < val2)) {
-	    isDominated = true;
-	    break;
-	  }
-	}
+          // Check if 'other' dominates 'candidate' (better or equal in both, strictly
+          // better in
+          // one)
+          if (otherVal1 <= val1 && otherVal2 <= val2 && (otherVal1 < val1 || otherVal2 < val2)) {
+            isDominated = true;
+            break;
+          }
+        }
 
-	if (!isDominated) {
-	  paretoFront.add(candidate);
-	}
+        if (!isDominated) {
+          paretoFront.add(candidate);
+        }
       }
 
       // Sort by first objective for easier visualization

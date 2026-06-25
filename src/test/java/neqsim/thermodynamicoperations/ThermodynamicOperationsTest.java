@@ -10,6 +10,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -21,8 +23,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemProperties;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations.FlashType;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
   private static final Logger logger = LogManager.getLogger(ThermodynamicOperationsTest.class);
@@ -63,14 +63,14 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     double[] fractions = new double[] { 98.0, 2.0 };
     List<Double> Sp1 = Arrays.asList(new Double[] { 22.1, 23.2, 24.23, 25.98, 25.23, 26.1, 27.3, 28.7, 23.5, 22.7 });
     List<Double> Sp2 = Arrays
-	.asList(new Double[] { 288.1, 290.1, 295.1, 301.2, 299.3, 310.2, 315.3, 310.0, 305.2, 312.7 });
+        .asList(new Double[] { 288.1, 290.1, 295.1, 301.2, 299.3, 310.2, 315.3, 310.0, 305.2, 312.7 });
     List<String> components = Arrays.asList(new String[] { "O2", "N2" });
     List<List<Double>> onlineFractions = new ArrayList<List<Double>>();
 
     for (double d : fractions) {
       ArrayList<Double> l = new ArrayList<Double>();
       for (int i = 0; i < Sp1.size(); i++) {
-	l.add(d);
+        l.add(d);
       }
       onlineFractions.add(l);
     }
@@ -88,7 +88,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
 
     for (String err : res_static.calculationError) {
       Assertions.assertEquals(err,
-	  "Sum of fractions must be approximately to 1 or 100, currently (0.0). Have you called init(0)?");
+          "Sum of fractions must be approximately to 1 or 100, currently (0.0). Have you called init(0)?");
     }
     // fluid_static.setTotalNumberOfMoles(1);
     fluid_static.init(0);
@@ -137,7 +137,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     List<Double> pressures = Arrays.asList(new Double[] { 22.0 });
     List<Double> temperatures = Arrays.asList(new Double[] { 298.15 });
     List<String> components = Arrays.asList(new String[] { new StringBuilder().append("N").append("2").toString(),
-	new StringBuilder().append("O").append("2").toString() });
+        new StringBuilder().append("O").append("2").toString() });
     List<List<Double>> onlineFractions = new ArrayList<List<Double>>();
     onlineFractions.add(Arrays.asList(new Double[] { 98.0 }));
     onlineFractions.add(Arrays.asList(new Double[] { 2.0 }));
@@ -175,7 +175,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
 
     CalculationResult res2 = thermoOps.propertyFlash(jP, jT, 0, null, null);
     Assertions.assertEquals(res2.calculationError[0],
-	"neqsim.util.exception.InvalidInputException: ThermodynamicOperations:propertyFlash - Input FlashMode must be 1, 2 or 3");
+        "neqsim.util.exception.InvalidInputException: ThermodynamicOperations:propertyFlash - Input FlashMode must be 1, 2 or 3");
 
     Assertions.assertFalse(res2 == null);
     Assertions.assertEquals(res2, res2);
@@ -192,10 +192,10 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
   void testNeqSimPython2() {
     String[] components = new String[] { "H2O", "N2", "CO2", "C1", "C2", "C3", "iC4", "nC4", "iC5", "nC5", "C6" };
     double[] fractions = new double[] { 0.0003, 1.299, 0.419, 94.990, 2.399, 0.355, 0.172, 0.088, 0.076, 0.036,
-	0.1656 };
+        0.1656 };
 
     double[] fractions2 = new double[] { 0.0003, 2.299, 0.419, 93.990, 2.399, 0.355, 0.172, 0.088, 0.076, 0.036,
-	0.1656 };
+        0.1656 };
 
     SystemInterface thermoSystem = new neqsim.thermo.system.SystemSrkEos(100 + 273.15, 60.0);
     thermoSystem.addComponents(components, fractions);
@@ -227,7 +227,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     // Assert all properties are the same with online fraction and without
     for (int i = 0; i < res.fluidProperties[0].length; i++) {
       Assertions.assertEquals(res.fluidProperties[0][i], res1.fluidProperties[0][i],
-	  "Property " + i + " : " + SystemProperties.getPropertyNames()[i]);
+          "Property " + i + " : " + SystemProperties.getPropertyNames()[i]);
     }
 
     Assertions.assertArrayEquals(res.fluidProperties[0], res1.fluidProperties[0]);
@@ -249,7 +249,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     // Assert all properties are the same with online fraction and without
     for (int i = 0; i < res.fluidProperties[0].length; i++) {
       Assertions.assertEquals(res.fluidProperties[0][i], res2.fluidProperties[0][i],
-	  "Property " + i + " : " + SystemProperties.getPropertyNames()[i]);
+          "Property " + i + " : " + SystemProperties.getPropertyNames()[i]);
     }
 
     // Verify stability
@@ -291,9 +291,9 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     SystemInterface fluid = new SystemSrkEos(273.15 + 45.0, 22.0);
 
     List<Double> Sp1 = Arrays.asList(new Double[] { 100000.0, 1000000.0, 10000000.0, 20000000.0, 100000.0, 1000000.0,
-	10000000.0, 20000000.0, 100000.0, 1000000.0, 10000000.0, 20000000.0 });
+        10000000.0, 20000000.0, 100000.0, 1000000.0, 10000000.0, 20000000.0 });
     List<Double> Sp2 = Arrays.asList(new Double[] { 288.15, 288.15, 288.15, 288.15, 303.15, 303.15, 303.15, 303.15,
-	423.15, 423.15, 423.15, 423.15 });
+        423.15, 423.15, 423.15, 423.15 });
 
     fluid.addComponent("water", 0.01);
     fluid.addComponent("nitrogen", 0.02);
@@ -307,7 +307,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     fluid.addComponent("n-pentane", 0.01);
     fluid.addComponent("n-hexane", 0.01);
     fluid.setMolarComposition(
-	new double[] { 0.054, 0.454, 1.514, 89.92, 5.324, 1.535, 0.232, 0.329, 0.094, 0.107, 0.437 });
+        new double[] { 0.054, 0.454, 1.514, 89.92, 5.324, 1.535, 0.232, 0.329, 0.094, 0.107, 0.437 });
 
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     CalculationResult s = ops.propertyFlash(Sp1, Sp2, 1, null, null);
@@ -315,7 +315,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     // Mix mole count and mix molecular weights shall be same for all passes
     for (int i = 1; i < s.fluidProperties.length; i++) {
       Assertions.assertEquals(Double.valueOf(100), s.fluidProperties[i][4],
-	  "Mix mole count didn't return expected result");
+          "Mix mole count didn't return expected result");
       Assertions.assertEquals(s.fluidProperties[0][9], s.fluidProperties[i][9], "Mix molecular weight not correct");
     }
   }
@@ -338,7 +338,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
 
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     CalculationResult s = ops.propertyFlash(Arrays.asList(pressure), Arrays.asList(temperature), 1,
-	Arrays.asList(components), onlineFractions);
+        Arrays.asList(components), onlineFractions);
     Assertions.assertEquals(len, s.fluidProperties.length);
   }
 
@@ -358,7 +358,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
 
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     CalculationResult s = ops.propertyFlash(Arrays.asList(pressure), Arrays.asList(temperature), 1,
-	Arrays.asList(components), onlineFractions);
+        Arrays.asList(components), onlineFractions);
     Assertions.assertEquals(len, s.fluidProperties.length);
   }
 
@@ -381,7 +381,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
 
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     CalculationResult s = ops.propertyFlash(Arrays.asList(pressure), Arrays.asList(temperature), 1,
-	Arrays.asList(components), onlineFractions);
+        Arrays.asList(components), onlineFractions);
     Assertions.assertEquals(len, s.fluidProperties.length);
     Assertions.assertNull(s.calculationError[0]);
   }
@@ -403,7 +403,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     fluid.addComponents(components);
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     CalculationResult s = ops.propertyFlash(Arrays.asList(pressure), Arrays.asList(temperature), 1,
-	Arrays.asList(components_too_many), onlineFractions_too_many);
+        Arrays.asList(components_too_many), onlineFractions_too_many);
     Assertions.assertEquals(len, s.fluidProperties.length);
     Assertions.assertEquals("Input component list does not match fluid component list.", s.calculationError[0]);
   }
@@ -427,15 +427,15 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
       ArrayList<Double> fractions = (ArrayList<Double>) inputData.get("fractions");
 
       if (compNames == null) {
-	// logger.info("Skips test " + test.toString());
-	/*
-	 * for (int k = 0; k < fractions.size(); k++) { fluid.addComponent(k, fractions.get(k)); }
-	 */
-	continue;
+        // logger.info("Skips test " + test.toString());
+        /*
+         * for (int k = 0; k < fractions.size(); k++) { fluid.addComponent(k, fractions.get(k)); }
+         */
+        continue;
       } else {
-	for (int k = 0; k < compNames.size(); k++) {
-	  fluid.addComponent(compNames.get(k), fractions.get(k));
-	}
+        for (int k = 0; k < compNames.size(); k++) {
+          fluid.addComponent(compNames.get(k), fractions.get(k));
+        }
       }
 
       fluid.init(0);
@@ -447,21 +447,21 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
       int flashMode = (int) inputData.get("FlashMode");
       CalculationResult s = ops.propertyFlash(sp1, sp2, flashMode, compNames, null);
       for (String errorMessage : s.calculationError) {
-	Assertions.assertNull(errorMessage, "Calculation returned: " + errorMessage);
+        Assertions.assertNull(errorMessage, "Calculation returned: " + errorMessage);
       }
 
       CalculationResult expected = test.getOutput();
 
       for (int nSamp = 0; nSamp < s.fluidProperties.length; nSamp++) {
-	for (int nProp = 0; nProp < s.fluidProperties[nSamp].length; nProp++) {
-	  if (Double.isNaN(expected.fluidProperties[nSamp][nProp])) {
-	    Assertions.assertEquals(expected.fluidProperties[nSamp][nProp], s.fluidProperties[nSamp][nProp],
-		"Test " + (nSamp + 1) + " Property " + SystemProperties.getPropertyNames()[nProp]);
-	  } else {
-	    Assertions.assertEquals(expected.fluidProperties[nSamp][nProp], s.fluidProperties[nSamp][nProp], 1e-5,
-		"Test " + (nSamp + 1) + " Property " + SystemProperties.getPropertyNames()[nProp]);
-	  }
-	}
+        for (int nProp = 0; nProp < s.fluidProperties[nSamp].length; nProp++) {
+          if (Double.isNaN(expected.fluidProperties[nSamp][nProp])) {
+            Assertions.assertEquals(expected.fluidProperties[nSamp][nProp], s.fluidProperties[nSamp][nProp],
+                "Test " + (nSamp + 1) + " Property " + SystemProperties.getPropertyNames()[nProp]);
+          } else {
+            Assertions.assertEquals(expected.fluidProperties[nSamp][nProp], s.fluidProperties[nSamp][nProp], 1e-5,
+                "Test " + (nSamp + 1) + " Property " + SystemProperties.getPropertyNames()[nProp]);
+          }
+        }
       }
       // Assertions.assertEquals(expected, s);
     }
@@ -480,7 +480,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     for (double d : fractions) {
       List<Double> l = new ArrayList<Double>();
       for (int i = 0; i < len; i++) {
-	l.add(d);
+        l.add(d);
       }
       onlineFractions.add(l);
     }
@@ -499,13 +499,13 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
       String[] n = child.getName().split("_");
 
       if (testData.get(n[0]) == null) {
-	testData.put(n[0], new TestData(n[0]));
+        testData.put(n[0], new TestData(n[0]));
       }
 
       if ("I.json".equals(n[1])) {
-	testData.get(n[0]).setInputFile(child.getAbsolutePath());
+        testData.get(n[0]).setInputFile(child.getAbsolutePath());
       } else if ("O.json".equals(n[1])) {
-	testData.get(n[0]).setOutputFile(child.getAbsolutePath());
+        testData.get(n[0]).setOutputFile(child.getAbsolutePath());
       }
     }
 
@@ -551,7 +551,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
       ArrayList<Double> sp1 = new ArrayList<Double>();
 
       for (int k = 0; k < sp_in_pa.size(); k++) {
-	sp1.add(sp_in_pa.get(k) / 1e5);
+        sp1.add(sp_in_pa.get(k) / 1e5);
       }
       input.replace("Sp1", sp1);
     }
@@ -572,14 +572,14 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
 
       Double[][] calcResult = new Double[calcresult.size()][];
       for (int kSample = 0; kSample < calcresult.size(); kSample++) {
-	calcResult[kSample] = new Double[calcresult.get(kSample).size()];
-	for (int kProp = 0; kProp < calcresult.get(kSample).size(); kProp++) {
-	  try {
-	    calcResult[kSample][kProp] = calcresult.get(kSample).get(kProp);
-	  } catch (Exception e) {
-	    calcResult[kSample][kProp] = Double.NaN;
-	  }
-	}
+        calcResult[kSample] = new Double[calcresult.get(kSample).size()];
+        for (int kProp = 0; kProp < calcresult.get(kSample).size(); kProp++) {
+          try {
+            calcResult[kSample][kProp] = calcresult.get(kSample).get(kProp);
+          } catch (Exception e) {
+            calcResult[kSample][kProp] = Double.NaN;
+          }
+        }
       }
 
       ArrayList<String> calcerrors = (ArrayList<String>) outputData.get("calcerrors");

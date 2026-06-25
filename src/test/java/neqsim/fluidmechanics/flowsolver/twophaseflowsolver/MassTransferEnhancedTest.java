@@ -1,10 +1,12 @@
 package neqsim.fluidmechanics.flowsolver.twophaseflowsolver;
 
-import static org.junit.jupiter.api.Assertions.*;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.flownode.FlowPattern;
 import neqsim.fluidmechanics.flownode.InterfacialAreaCalculator;
 import neqsim.fluidmechanics.flownode.MassTransferCoefficientCalculator;
@@ -138,9 +140,9 @@ public class MassTransferEnhancedTest {
 
     // Validate calculation is within expected literature range
     assertTrue(calculatedArea > minExpected,
-	"Stratified interfacial area (" + calculatedArea + ") should be > " + minExpected);
+        "Stratified interfacial area (" + calculatedArea + ") should be > " + minExpected);
     assertTrue(calculatedArea < maxExpected,
-	"Stratified interfacial area (" + calculatedArea + ") should be < " + maxExpected);
+        "Stratified interfacial area (" + calculatedArea + ") should be < " + maxExpected);
   }
 
   /**
@@ -224,7 +226,7 @@ public class MassTransferEnhancedTest {
     // Note: this gives VERY high values due to the high epsilon/nu^3 ratio
     // kL = 0.4 * (D * epsilon / nu^3)^0.25 * Sc^(-0.5)
     double kL_LamontScott = 0.4 * Math.pow(diffusivity * epsilon / Math.pow(kinematicViscosity, 3), 0.25)
-	* Math.pow(Sc, -0.5);
+        * Math.pow(Sc, -0.5);
 
     // The correlation can give wide range of values depending on turbulence level
     // High epsilon (0.01 m²/s³) is typical for very turbulent flow
@@ -453,7 +455,7 @@ public class MassTransferEnhancedTest {
 
     // Test stratified flow range
     double[] stratifiedRange = InterfacialAreaCalculator.getExpectedInterfacialAreaRange(FlowPattern.STRATIFIED,
-	diameter);
+        diameter);
     assertNotNull(stratifiedRange);
     assertEquals(3, stratifiedRange.length); // [min, typical, max]
     assertTrue(stratifiedRange[0] < stratifiedRange[1], "Min should be less than typical");
@@ -479,16 +481,16 @@ public class MassTransferEnhancedTest {
     // Phase: 0 = gas, 1 = liquid
     double kL = 5e-5; // m/s
     double[] expectedRange = MassTransferCoefficientCalculator
-	.getExpectedMassTransferCoefficientRange(FlowPattern.ANNULAR, 1); // 1 = liquid phase
+        .getExpectedMassTransferCoefficientRange(FlowPattern.ANNULAR, 1); // 1 = liquid phase
 
     assertNotNull(expectedRange);
     assertEquals(3, expectedRange.length); // [min, typical, max]
 
     // Validate against literature using range
     boolean valid = MassTransferCoefficientCalculator.validateAgainstLiterature(kL, FlowPattern.ANNULAR, 1); // 1
-													     // =
-													     // liquid
-													     // phase
+    // =
+    // liquid
+    // phase
     // kL of 5e-5 should be reasonable for annular flow liquid phase
     // This tests that the validation method works, not that this specific value passes
     assertNotNull(Boolean.valueOf(valid), "Validation method should return a result");
@@ -496,9 +498,9 @@ public class MassTransferEnhancedTest {
     // Very high kL should likely fail
     double kL_high = 1.0; // m/s - unrealistically high
     boolean validHigh = MassTransferCoefficientCalculator.validateAgainstLiterature(kL_high, FlowPattern.ANNULAR, 1); // 1
-														      // =
-														      // liquid
-														      // phase
+    // =
+    // liquid
+    // phase
     // May or may not fail depending on the range, but at least test the method runs
     assertNotNull(Boolean.valueOf(validHigh), "High kL validation should return a result");
   }

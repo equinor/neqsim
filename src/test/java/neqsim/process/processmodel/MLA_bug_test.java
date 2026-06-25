@@ -94,7 +94,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     p.add(feedToAbsorber);
 
     WaterDewPointAnalyser waterDewPointAnalyserToAbsorber = new WaterDewPointAnalyser("water dew point gas to absorber",
-	feedToAbsorber);
+        feedToAbsorber);
     waterDewPointAnalyserToAbsorber.setMethod("multiphase");
     waterDewPointAnalyserToAbsorber.setReferencePressure(85.0);
     p.add(waterDewPointAnalyserToAbsorber);
@@ -121,7 +121,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     p.add(absorberSetWater);
 
     StreamInterface dehydratedGasSetWater = new Stream("dry gas from absorber set water",
-	absorberSetWater.getGasOutStream());
+        absorberSetWater.getGasOutStream());
     p.add(dehydratedGasSetWater);
 
     Heater coolerDehydGas = new Heater("coolerDehydGas", dehydratedGasSetWater);
@@ -140,7 +140,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     p.add(pipelineSetTPStream);
 
     WaterDewPointAnalyser waterDewPointAnalyser3 = new WaterDewPointAnalyser("water dew point analyser3",
-	dehydratedGasSetWater);
+        dehydratedGasSetWater);
     waterDewPointAnalyser3.setReferencePressure(70.0);
     p.add(waterDewPointAnalyser3);
 
@@ -316,7 +316,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
 
     assertEquals(-19.1886678, p.getMeasurementDevice("water dew point analyser3").getMeasuredValue("C"), 1e-1);
     assertEquals(203.08,
-	((Reboiler) ((DistillationColumn) p.getUnit("TEG regeneration column")).getReboiler()).getDuty() / 1e3, 0.2);
+        ((Reboiler) ((DistillationColumn) p.getUnit("TEG regeneration column")).getReboiler()).getDuty() / 1e3, 0.2);
   }
 
   @Test

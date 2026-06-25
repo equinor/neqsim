@@ -36,12 +36,12 @@ public class BWRSComponentOrderTest {
     bwrs2.initProperties();
 
     assertEquals(bwrs1.getPhase(0).getDensity(), bwrs2.getPhase(0).getDensity(), 1e-10,
-	"Density should not depend on component order");
+        "Density should not depend on component order");
     assertEquals(bwrs1.getPhase(0).getZ(), bwrs2.getPhase(0).getZ(), 1e-10, "Z should not depend on component order");
     assertEquals(bwrs1.getPhase(0).getCp(), bwrs2.getPhase(0).getCp(), 1e-10,
-	"Cp should not depend on component order");
+        "Cp should not depend on component order");
     assertEquals(bwrs1.getPhase(0).getEnthalpy(), bwrs2.getPhase(0).getEnthalpy(), 1e-10,
-	"H should not depend on component order");
+        "H should not depend on component order");
 
     double fug1CH4 = bwrs1.getPhase(0).getComponent("methane").getFugacityCoefficient();
     double fug2CH4 = bwrs2.getPhase(0).getComponent("methane").getFugacityCoefficient();
@@ -87,7 +87,7 @@ public class BWRSComponentOrderTest {
     assertFalse(Double.isNaN(fug2C3), "C3H8 fugacity should not be NaN (order 2)");
 
     assertEquals(bwrs1.getPhase(0).getDensity(), bwrs2.getPhase(0).getDensity(), 1e-10,
-	"Density should not depend on component order");
+        "Density should not depend on component order");
     assertEquals(bwrs1.getPhase(0).getZ(), bwrs2.getPhase(0).getZ(), 1e-10, "Z should not depend on component order");
     assertEquals(fug1CH4, fug2CH4, 1e-10, "CH4 fugacity should not depend on order");
     assertEquals(fug1C3, fug2C3, 1e-10, "C3H8 fugacity should not depend on order");
@@ -118,9 +118,9 @@ public class BWRSComponentOrderTest {
     bwrs2.initProperties();
 
     assertEquals(bwrs1.getPhase(0).getDensity(), bwrs2.getPhase(0).getDensity(), 1e-10,
-	"Density should be order-independent for 3-component mixture");
+        "Density should be order-independent for 3-component mixture");
     assertEquals(bwrs1.getPhase(0).getZ(), bwrs2.getPhase(0).getZ(), 1e-10,
-	"Z should be order-independent for 3-component mixture");
+        "Z should be order-independent for 3-component mixture");
 
     for (String comp : new String[] { "methane", "ethane", "nitrogen" }) {
       double fug1 = bwrs1.getPhase(0).getComponent(comp).getFugacityCoefficient();
@@ -161,9 +161,9 @@ public class BWRSComponentOrderTest {
     for (int i = 0; i < bwrs.getPhase(0).getNumberOfComponents(); i++) {
       double fug = bwrs.getPhase(0).getComponent(i).getFugacityCoefficient();
       assertFalse(Double.isNaN(fug),
-	  "Fugacity of " + bwrs.getPhase(0).getComponent(i).getName() + " should not be NaN");
+          "Fugacity of " + bwrs.getPhase(0).getComponent(i).getName() + " should not be NaN");
       assertFalse(Double.isInfinite(fug),
-	  "Fugacity of " + bwrs.getPhase(0).getComponent(i).getName() + " should not be Infinite");
+          "Fugacity of " + bwrs.getPhase(0).getComponent(i).getName() + " should not be Infinite");
     }
   }
 }

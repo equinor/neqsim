@@ -90,8 +90,8 @@ public class HighPressureDiffusivity extends Diffusivity {
       double Vc = liquidPhase.getPhase().getComponent(i).getCriticalVolume(); // m³/mol
       double M = liquidPhase.getPhase().getComponent(i).getMolarMass(); // kg/mol
       if (Vc > 0 && M > 0) {
-	double rhoCi = M / Vc;
-	rhoCritMix += xi * rhoCi;
+        double rhoCi = M / Vc;
+        rhoCritMix += xi * rhoCi;
       }
     }
 
@@ -195,8 +195,8 @@ public class HighPressureDiffusivity extends Diffusivity {
 
     for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
       for (int j = 0; j < liquidPhase.getPhase().getNumberOfComponents(); j++) {
-	binaryDiffusionCoefficients[i][j] = baseDiffusivityModel.getMaxwellStefanBinaryDiffusionCoefficient(i, j)
-	    * correctionFactor;
+        binaryDiffusionCoefficients[i][j] = baseDiffusivityModel.getMaxwellStefanBinaryDiffusionCoefficient(i, j)
+            * correctionFactor;
       }
     }
 

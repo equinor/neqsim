@@ -273,7 +273,7 @@ public class Fittings implements Serializable {
     Double ldValue = STANDARD_LD_VALUES.get(type.toLowerCase());
     if (ldValue != null) {
       for (int i = 0; i < count; i++) {
-	fittingList.add(new Fitting(type + "_" + (i + 1), ldValue));
+        fittingList.add(new Fitting(type + "_" + (i + 1), ldValue));
       }
       return true;
     }
@@ -419,28 +419,28 @@ public class Fittings implements Serializable {
       this.fittingName = name;
 
       try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-	  java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM fittings WHERE name='" + name + "'"))) {
-	if (dataSet.next()) {
-	  LtoD = Double.parseDouble(dataSet.getString("LtoD"));
-	  logger.debug("Loaded fitting '{}' with L/D = {}", name, LtoD);
-	} else {
-	  // Try standard values as fallback
-	  Double stdValue = STANDARD_LD_VALUES.get(name.toLowerCase());
-	  if (stdValue != null) {
-	    LtoD = stdValue;
-	    logger.debug("Using standard L/D value for '{}': {}", name, LtoD);
-	  } else {
-	    logger.warn("Fitting '{}' not found in database or standard values. Using L/D = 1.0", name);
-	    LtoD = 1.0;
-	  }
-	}
+          java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM fittings WHERE name='" + name + "'"))) {
+        if (dataSet.next()) {
+          LtoD = Double.parseDouble(dataSet.getString("LtoD"));
+          logger.debug("Loaded fitting '{}' with L/D = {}", name, LtoD);
+        } else {
+          // Try standard values as fallback
+          Double stdValue = STANDARD_LD_VALUES.get(name.toLowerCase());
+          if (stdValue != null) {
+            LtoD = stdValue;
+            logger.debug("Using standard L/D value for '{}': {}", name, LtoD);
+          } else {
+            logger.warn("Fitting '{}' not found in database or standard values. Using L/D = 1.0", name);
+            LtoD = 1.0;
+          }
+        }
       } catch (Exception ex) {
-	logger.error("Error loading fitting '{}': {}", name, ex.getMessage());
-	// Try standard values as fallback
-	Double stdValue = STANDARD_LD_VALUES.get(name.toLowerCase());
-	if (stdValue != null) {
-	  LtoD = stdValue;
-	}
+        logger.error("Error loading fitting '{}': {}", name, ex.getMessage());
+        // Try standard values as fallback
+        Double stdValue = STANDARD_LD_VALUES.get(name.toLowerCase());
+        if (stdValue != null) {
+          LtoD = stdValue;
+        }
       }
     }
 

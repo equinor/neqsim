@@ -1,7 +1,7 @@
 package neqsim.process.operations.envelope;
 
-import com.google.gson.JsonObject;
 import java.io.Serializable;
+import com.google.gson.JsonObject;
 
 /**
  * Advisory prediction that a margin may reach its limit within a time horizon.

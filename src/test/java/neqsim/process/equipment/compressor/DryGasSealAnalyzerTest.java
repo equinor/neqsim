@@ -87,7 +87,7 @@ class DryGasSealAnalyzerTest {
 
     // Should detect condensation risk
     assertFalse(analyzer.isSafeToOperate(),
-	"System should NOT be safe — condensation expected with C3+ gas at 421 barg");
+        "System should NOT be safe — condensation expected with C3+ gas at 421 barg");
   }
 
   /**
@@ -149,7 +149,7 @@ class DryGasSealAnalyzerTest {
     // Should cool toward ambient
     assertTrue(finalTempC <= 44.0, "Final temperature should be below initial 44C");
     assertTrue(finalTempC - ambientC < 5.0,
-	"Should approach ambient within 48 hours, gap = " + (finalTempC - ambientC) + "C");
+        "Should approach ambient within 48 hours, gap = " + (finalTempC - ambientC) + "C");
 
     double standpipeVolume = (Double) cooldownResults.get("standpipe_volume_L");
     assertEquals(1.7, standpipeVolume, 0.2, "Standpipe volume should be approximately 1.7 L");

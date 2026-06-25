@@ -161,7 +161,7 @@ public class ExergyAnalysisReport implements Serializable {
     Collections.sort(sorted, new Comparator<Entry>() {
       @Override
       public int compare(Entry a, Entry b) {
-	return Double.compare(b.exergyDestructionJ, a.exergyDestructionJ);
+        return Double.compare(b.exergyDestructionJ, a.exergyDestructionJ);
       }
     });
     if (n <= 0 || n >= sorted.size()) {
@@ -204,7 +204,7 @@ public class ExergyAnalysisReport implements Serializable {
     Map<String, Double> out = new LinkedHashMap<String, Double>();
     for (Entry e : entries) {
       if (e.area == null) {
-	continue;
+        continue;
       }
       Double prev = out.get(e.area);
       double cur = prev == null ? 0.0 : prev.doubleValue();
@@ -239,19 +239,19 @@ public class ExergyAnalysisReport implements Serializable {
   public String toString(String unit) {
     StringBuilder sb = new StringBuilder();
     sb.append("Exergy analysis (T0 = ").append(String.format("%.2f", surroundingTemperatureK)).append(" K, unit = ")
-	.append(unit).append(")\n");
+        .append(unit).append(")\n");
     sb.append(String.format("%-30s %-20s %-15s %15s %15s%n", "Unit", "Type", "Area", "dE (" + unit + ")",
-	"Destr (" + unit + ")"));
+        "Destr (" + unit + ")"));
     sb.append(repeat('-', 100)).append('\n');
     List<Entry> sorted = getTopDestructionHotspots(0);
     for (Entry e : sorted) {
       sb.append(
-	  String.format("%-30s %-20s %-15s %15.3f %15.3f%n", clip(e.name, 30), clip(e.type == null ? "" : e.type, 20),
-	      clip(e.area == null ? "" : e.area, 15), e.getExergyChange(unit), e.getExergyDestruction(unit)));
+          String.format("%-30s %-20s %-15s %15.3f %15.3f%n", clip(e.name, 30), clip(e.type == null ? "" : e.type, 20),
+              clip(e.area == null ? "" : e.area, 15), e.getExergyChange(unit), e.getExergyDestruction(unit)));
     }
     sb.append(repeat('-', 100)).append('\n');
     sb.append(
-	String.format("%-67s %15.3f %15.3f%n", "TOTAL", getTotalExergyChange(unit), getTotalExergyDestruction(unit)));
+        String.format("%-67s %15.3f %15.3f%n", "TOTAL", getTotalExergyChange(unit), getTotalExergyDestruction(unit)));
     return sb.toString();
   }
 
@@ -275,13 +275,13 @@ public class ExergyAnalysisReport implements Serializable {
     for (int i = 0; i < entries.size(); i++) {
       Entry e = entries.get(i);
       if (i > 0) {
-	sb.append(',');
+        sb.append(',');
       }
       sb.append('{').append("\"name\":\"").append(escape(e.name)).append('\"').append(',').append("\"type\":\"")
-	  .append(escape(e.type == null ? "" : e.type)).append('\"').append(',').append("\"area\":")
-	  .append(e.area == null ? "null" : ("\"" + escape(e.area) + "\"")).append(',').append("\"exergyChangeJ\":")
-	  .append(e.exergyChangeJ).append(',').append("\"exergyDestructionJ\":").append(e.exergyDestructionJ)
-	  .append('}');
+          .append(escape(e.type == null ? "" : e.type)).append('\"').append(',').append("\"area\":")
+          .append(e.area == null ? "null" : ("\"" + escape(e.area) + "\"")).append(',').append("\"exergyChangeJ\":")
+          .append(e.exergyChangeJ).append(',').append("\"exergyDestructionJ\":").append(e.exergyDestructionJ)
+          .append('}');
     }
     sb.append("]}");
     return sb.toString();
@@ -361,22 +361,22 @@ public class ExergyAnalysisReport implements Serializable {
       char c = s.charAt(i);
       switch (c) {
       case '"':
-	sb.append("\\\"");
-	break;
+        sb.append("\\\"");
+        break;
       case '\\':
-	sb.append("\\\\");
-	break;
+        sb.append("\\\\");
+        break;
       case '\n':
-	sb.append("\\n");
-	break;
+        sb.append("\\n");
+        break;
       case '\r':
-	sb.append("\\r");
-	break;
+        sb.append("\\r");
+        break;
       case '\t':
-	sb.append("\\t");
-	break;
+        sb.append("\\t");
+        break;
       default:
-	sb.append(c);
+        sb.append(c);
       }
     }
     return sb.toString();

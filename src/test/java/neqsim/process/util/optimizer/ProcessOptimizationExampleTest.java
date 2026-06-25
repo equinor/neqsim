@@ -3,6 +3,8 @@ package neqsim.process.util.optimizer;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Collections;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -23,8 +25,6 @@ import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult;
 import neqsim.process.util.optimizer.ProductionOptimizer.UtilizationRecord;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Comprehensive example demonstrating process optimization with separators and compressors.
@@ -102,15 +102,15 @@ public class ProcessOptimizationExampleTest {
 
     // HP Separator - sized for gas capacity using K-factor
     hpSeparator = new Separator.Builder("HP Separator").inletStream(inletValve.getOutletStream())
-	.orientation("horizontal").length(6.0) // 6 meters long
-	.diameter(2.4) // 2.4 meters diameter
-	.designLiquidLevelFraction(0.5).build();
+        .orientation("horizontal").length(6.0) // 6 meters long
+        .diameter(2.4) // 2.4 meters diameter
+        .designLiquidLevelFraction(0.5).build();
     hpSeparator.setDesignGasLoadFactor(0.10); // K-factor for horizontal separator
     process.add(hpSeparator);
 
     // Gas Scrubber - removes liquid droplets before compression
     gasScrubber = new Separator.Builder("Gas Scrubber").inletStream(hpSeparator.getGasOutStream())
-	.orientation("vertical").length(4.0).diameter(1.5).designLiquidLevelFraction(0.3).build();
+        .orientation("vertical").length(4.0).diameter(1.5).designLiquidLevelFraction(0.3).build();
     gasScrubber.setDesignGasLoadFactor(0.07); // Lower K-factor for vertical scrubber
     process.add(gasScrubber);
 
@@ -162,7 +162,7 @@ public class ProcessOptimizationExampleTest {
 
       double utilization = 0.0;
       if (bottleneck.getCapacityMax() > 0) {
-	utilization = bottleneck.getCapacityDuty() / bottleneck.getCapacityMax();
+        utilization = bottleneck.getCapacityDuty() / bottleneck.getCapacityMax();
       }
       logger.printf(org.apache.logging.log4j.Level.INFO, "Utilization: %.1f%%%n", utilization * 100);
     }
@@ -188,30 +188,30 @@ public class ProcessOptimizationExampleTest {
     // HP Separator capacity analysis
     logger.info("\n--- HP Separator ---");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Internal diameter: %.2f m%n",
-	hpSeparator.getInternalDiameter());
+        hpSeparator.getInternalDiameter());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Length: %.2f m%n", hpSeparator.getSeparatorLength());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Design K-factor: %.3f m/s%n",
-	hpSeparator.getDesignGasLoadFactor());
+        hpSeparator.getDesignGasLoadFactor());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Max allowable gas velocity: %.3f m/s%n",
-	hpSeparator.getMaxAllowableGasVelocity());
+        hpSeparator.getMaxAllowableGasVelocity());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Max allowable gas flow: %.1f m³/s%n",
-	hpSeparator.getMaxAllowableGasFlowRate());
+        hpSeparator.getMaxAllowableGasFlowRate());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Current gas flow: %.1f m³/hr%n",
-	hpSeparator.getGasOutStream().getFlowRate("m3/hr"));
+        hpSeparator.getGasOutStream().getFlowRate("m3/hr"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Capacity utilization: %.1f%%%n",
-	hpSeparator.getCapacityUtilization() * 100);
+        hpSeparator.getCapacityUtilization() * 100);
 
     // Gas Scrubber capacity analysis
     logger.info("\n--- Gas Scrubber ---");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Internal diameter: %.2f m%n",
-	gasScrubber.getInternalDiameter());
+        gasScrubber.getInternalDiameter());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Length: %.2f m%n", gasScrubber.getSeparatorLength());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Design K-factor: %.3f m/s%n",
-	gasScrubber.getDesignGasLoadFactor());
+        gasScrubber.getDesignGasLoadFactor());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Max allowable gas velocity: %.3f m/s%n",
-	gasScrubber.getMaxAllowableGasVelocity());
+        gasScrubber.getMaxAllowableGasVelocity());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Capacity utilization: %.1f%%%n",
-	gasScrubber.getCapacityUtilization() * 100);
+        gasScrubber.getCapacityUtilization() * 100);
 
     // Verify utilization is reasonable
     double hpUtilization = hpSeparator.getCapacityUtilization();
@@ -219,7 +219,7 @@ public class ProcessOptimizationExampleTest {
       assertTrue(hpUtilization > 0.0, "HP Separator should have positive utilization");
       // Note: utilization can exceed 100% if separator is undersized for the flow
       logger.printf(org.apache.logging.log4j.Level.INFO,
-	  "HP Separator utilization: %.1f%% (may exceed 100%% if undersized)%n", hpUtilization * 100);
+          "HP Separator utilization: %.1f%% (may exceed 100%% if undersized)%n", hpUtilization * 100);
     }
   }
 
@@ -271,7 +271,7 @@ public class ProcessOptimizationExampleTest {
     Map<String, CapacityConstraint> constraints = firstStageCompressor.getCapacityConstraints();
     for (CapacityConstraint c : constraints.values()) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "  %s: current=%.2f, design=%.2f, utilization=%.1f%%%n",
-	  c.getName(), c.getCurrentValue(), c.getDesignValue(), c.getUtilization() * 100);
+          c.getName(), c.getCurrentValue(), c.getDesignValue(), c.getUtilization() * 100);
     }
   }
 
@@ -303,33 +303,33 @@ public class ProcessOptimizationExampleTest {
     // Use CapacityConstrainedEquipment interface for compressor utilization
     // This considers surge margin, stonewall margin, speed limits etc.
     CapacityRule compressorCapacityRule = new CapacityRule(
-	// Duty: return max utilization across all constraints (0-1 scale, 1.0 = 100%)
-	unit -> {
-	  if (unit instanceof CapacityConstrainedEquipment) {
-	    return ((CapacityConstrainedEquipment) unit).getMaxUtilization();
-	  }
-	  return unit.getCapacityDuty();
-	},
-	// Max: return 1.0 since getMaxUtilization already returns a ratio
-	unit -> 1.0);
+        // Duty: return max utilization across all constraints (0-1 scale, 1.0 = 100%)
+        unit -> {
+          if (unit instanceof CapacityConstrainedEquipment) {
+            return ((CapacityConstrainedEquipment) unit).getMaxUtilization();
+          }
+          return unit.getCapacityDuty();
+        },
+        // Max: return 1.0 since getMaxUtilization already returns a ratio
+        unit -> 1.0);
 
     OptimizationConfig config = new OptimizationConfig(lowerBound, upperBound).rateUnit("kg/hr").tolerance(100.0) // 100
-														  // kg/hr
-														  // tolerance
-	.maxIterations(50)
-	// Add capacity rule for compressors using multi-constraint utilization
-	.capacityRuleForType(Compressor.class, compressorCapacityRule)
-	// Allow compressors to operate at up to 100% of their capacity
-	// (surge margin, speed, power constraints)
-	.utilizationLimitForType(Compressor.class, 1.0);
+        // kg/hr
+        // tolerance
+        .maxIterations(50)
+        // Add capacity rule for compressors using multi-constraint utilization
+        .capacityRuleForType(Compressor.class, compressorCapacityRule)
+        // Allow compressors to operate at up to 100% of their capacity
+        // (surge margin, speed, power constraints)
+        .utilizationLimitForType(Compressor.class, 1.0);
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Initial feed rate: %.0f kg/hr%n",
-	feedStream.getFlowRate("kg/hr"));
+        feedStream.getFlowRate("kg/hr"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Search range: %.0f - %.0f kg/hr%n", lowerBound, upperBound);
 
     // Run optimization
     OptimizationResult result = optimizer.optimize(process, feedStream, config, Collections.emptyList(),
-	Collections.emptyList());
+        Collections.emptyList());
 
     // Print results
     logger.info("\n--- Optimization Results ---");
@@ -338,16 +338,16 @@ public class ProcessOptimizationExampleTest {
     if (result.getBottleneck() != null) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "Limiting equipment: %s%n", result.getBottleneck().getName());
       logger.printf(org.apache.logging.log4j.Level.INFO, "Bottleneck utilization: %.1f%%%n",
-	  result.getBottleneckUtilization() * 100);
+          result.getBottleneckUtilization() * 100);
     }
 
     logger.info("\n--- Equipment Utilization at Optimum ---");
     for (UtilizationRecord record : result.getUtilizationRecords()) {
       boolean isBottleneck = result.getBottleneck() != null
-	  && record.getEquipmentName().equals(result.getBottleneck().getName());
+          && record.getEquipmentName().equals(result.getBottleneck().getName());
       logger.printf(org.apache.logging.log4j.Level.INFO, "  %-20s: %6.1f%% (limit: %.0f%%) %s%n",
-	  record.getEquipmentName(), record.getUtilization() * 100, record.getUtilizationLimit() * 100,
-	  isBottleneck ? " <-- BOTTLENECK" : "");
+          record.getEquipmentName(), record.getUtilization() * 100, record.getUtilizationLimit() * 100,
+          isBottleneck ? " <-- BOTTLENECK" : "");
     }
 
     // Show compressor-specific metrics
@@ -360,9 +360,9 @@ public class ProcessOptimizationExampleTest {
     logger.info("========================================");
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Optimal Feed Rate:    %.0f kg/hr%n", result.getOptimalRate());
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Bottleneck Equipment: %s%n",
-	result.getBottleneck() != null ? result.getBottleneck().getName() : "None");
+        result.getBottleneck() != null ? result.getBottleneck().getName() : "None");
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Bottleneck Util:      %.1f%%%n",
-	result.getBottleneckUtilization() * 100);
+        result.getBottleneckUtilization() * 100);
     logger.info("========================================");
 
     // Verify optimization found a valid solution
@@ -377,9 +377,9 @@ public class ProcessOptimizationExampleTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "\n  %s:%n", compressor.getName());
     logger.printf(org.apache.logging.log4j.Level.INFO, "    Power:           %.1f kW%n", compressor.getPower("kW"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "    Inlet Flow:      %.1f m³/hr%n",
-	compressor.getInletStream().getFlowRate("m3/hr"));
+        compressor.getInletStream().getFlowRate("m3/hr"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "    Polytropic Head: %.2f kJ/kg%n",
-	compressor.getPolytropicFluidHead());
+        compressor.getPolytropicFluidHead());
     logger.printf(org.apache.logging.log4j.Level.INFO, "    Speed:           %.0f RPM%n", compressor.getSpeed());
 
     // Surge/stonewall margins
@@ -397,10 +397,10 @@ public class ProcessOptimizationExampleTest {
     if (!constraints.isEmpty()) {
       logger.info("    Constraints:");
       for (CapacityConstraint c : constraints.values()) {
-	double util = c.getUtilization();
-	if (!Double.isNaN(util) && !Double.isInfinite(util) && util > 0.01) {
-	  logger.printf(org.apache.logging.log4j.Level.INFO, "      %-15s: %6.1f%%%n", c.getName(), util * 100);
-	}
+        double util = c.getUtilization();
+        if (!Double.isNaN(util) && !Double.isInfinite(util) && util > 0.01) {
+          logger.printf(org.apache.logging.log4j.Level.INFO, "      %-15s: %6.1f%%%n", c.getName(), util * 100);
+        }
       }
     }
   }
@@ -433,11 +433,11 @@ public class ProcessOptimizationExampleTest {
 
       CapacityConstraint constraint = bottleneck.getConstraint();
       if (constraint != null) {
-	logger.printf(org.apache.logging.log4j.Level.INFO, "Constraint: %s%n", constraint.getName());
-	logger.printf(org.apache.logging.log4j.Level.INFO, "Current value: %.2f%n", constraint.getCurrentValue());
-	logger.printf(org.apache.logging.log4j.Level.INFO, "Design value: %.2f%n", constraint.getDesignValue());
-	logger.printf(org.apache.logging.log4j.Level.INFO, "Utilization: %.1f%%%n", constraint.getUtilization() * 100);
-	logger.printf(org.apache.logging.log4j.Level.INFO, "Is violated: %b%n", constraint.isViolated());
+        logger.printf(org.apache.logging.log4j.Level.INFO, "Constraint: %s%n", constraint.getName());
+        logger.printf(org.apache.logging.log4j.Level.INFO, "Current value: %.2f%n", constraint.getCurrentValue());
+        logger.printf(org.apache.logging.log4j.Level.INFO, "Design value: %.2f%n", constraint.getDesignValue());
+        logger.printf(org.apache.logging.log4j.Level.INFO, "Utilization: %.1f%%%n", constraint.getUtilization() * 100);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "Is violated: %b%n", constraint.isViolated());
       }
     }
 
@@ -445,10 +445,10 @@ public class ProcessOptimizationExampleTest {
     logger.info("\n--- Equipment Status (> 50% utilization) ---");
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       if (unit.getCapacityMax() > 0 && unit.getCapacityDuty() > 0) {
-	double util = unit.getCapacityDuty() / unit.getCapacityMax();
-	if (util > 0.5 && !Double.isInfinite(util) && !Double.isNaN(util)) {
-	  logger.printf(org.apache.logging.log4j.Level.INFO, "  %s: %.1f%%%n", unit.getName(), util * 100);
-	}
+        double util = unit.getCapacityDuty() / unit.getCapacityMax();
+        if (util > 0.5 && !Double.isInfinite(util) && !Double.isNaN(util)) {
+          logger.printf(org.apache.logging.log4j.Level.INFO, "  %s: %.1f%%%n", unit.getName(), util * 100);
+        }
       }
     }
   }
@@ -474,7 +474,7 @@ public class ProcessOptimizationExampleTest {
 
     logger.info("\n--- Effect of Inlet Pressure ---");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %-15s %-20s %-15s%n", "Inlet P (bara)",
-	"Max Rate (kg/hr)", "Bottleneck", "Utilization");
+        "Max Rate (kg/hr)", "Bottleneck", "Utilization");
     logger.info("----------------------------------------------------------------------");
 
     for (double pressure : inletPressures) {
@@ -485,12 +485,12 @@ public class ProcessOptimizationExampleTest {
 
       // Optimize
       OptimizationResult result = optimizer.optimize(process, feedStream, config, Collections.emptyList(),
-	  Collections.emptyList());
+          Collections.emptyList());
 
       String bottleneckName = result.getBottleneck() != null ? result.getBottleneck().getName() : "None";
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-15.0f %-15.0f %-20s %-15.1f%%%n", pressure,
-	  result.getOptimalRate(), bottleneckName, result.getBottleneckUtilization() * 100);
+          result.getOptimalRate(), bottleneckName, result.getBottleneckUtilization() * 100);
     }
   }
 
@@ -527,12 +527,12 @@ public class ProcessOptimizationExampleTest {
       double maxUtilization = getMaxSystemUtilization();
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "Iteration %2d: Rate=%.0f kg/hr, Max Util=%.1f%%%n", iteration,
-	  midRate, maxUtilization * 100);
+          midRate, maxUtilization * 100);
 
       if (maxUtilization > targetUtilization) {
-	highRate = midRate;
+        highRate = midRate;
       } else {
-	lowRate = midRate;
+        lowRate = midRate;
       }
 
       iteration++;
@@ -544,7 +544,7 @@ public class ProcessOptimizationExampleTest {
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%nOptimal rate: %.0f kg/hr%n", optimalRate);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Final max utilization: %.1f%%%n",
-	getMaxSystemUtilization() * 100);
+        getMaxSystemUtilization() * 100);
 
     // Print final equipment status
     logger.info("\n--- Final Equipment Status ---");
@@ -602,10 +602,10 @@ public class ProcessOptimizationExampleTest {
     double utilization = separator.getCapacityUtilization();
     if (Double.isNaN(utilization) || Double.isInfinite(utilization)) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "%s: N/A (single phase or calculation error)%n",
-	  separator.getName());
+          separator.getName());
     } else {
       logger.printf(org.apache.logging.log4j.Level.INFO, "%s: %.1f%% (K-factor based)%n", separator.getName(),
-	  utilization * 100);
+          utilization * 100);
     }
   }
 
@@ -620,11 +620,11 @@ public class ProcessOptimizationExampleTest {
 
     if (maxPower <= 0) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "%s: Power=%.1f kW (no design limit set)%n",
-	  compressor.getName(), power);
+          compressor.getName(), power);
     } else {
       double utilization = power / maxPower;
       logger.printf(org.apache.logging.log4j.Level.INFO, "%s: %.1f%% (%.1f / %.1f kW)%n", compressor.getName(),
-	  utilization * 100, power, maxPower);
+          utilization * 100, power, maxPower);
     }
 
     // Also print surge margin if available
@@ -642,17 +642,17 @@ public class ProcessOptimizationExampleTest {
    */
   private void printCompressorStatus(Compressor compressor, CompressorChartInterface chart) {
     logger.printf(org.apache.logging.log4j.Level.INFO, "Inlet flow: %.1f m³/hr%n",
-	compressor.getInletStream().getFlowRate("m3/hr"));
+        compressor.getInletStream().getFlowRate("m3/hr"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Polytropic head: %.2f kJ/kg%n",
-	compressor.getPolytropicFluidHead());
+        compressor.getPolytropicFluidHead());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Polytropic efficiency: %.1f%%%n",
-	compressor.getPolytropicEfficiency() * 100);
+        compressor.getPolytropicEfficiency() * 100);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Power: %.1f kW%n", compressor.getPower("kW"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Speed: %.0f RPM%n", compressor.getSpeed());
 
     // Chart limits
     logger.printf(org.apache.logging.log4j.Level.INFO, "Speed range: %.0f - %.0f RPM%n", chart.getMinSpeedCurve(),
-	chart.getMaxSpeedCurve());
+        chart.getMaxSpeedCurve());
 
     // Surge/stonewall margins
     double surgeMargin = compressor.getDistanceToSurge();
@@ -679,10 +679,10 @@ public class ProcessOptimizationExampleTest {
       double duty = unit.getCapacityDuty();
 
       if (capacity > 0 && duty > 0) {
-	double util = duty / capacity;
-	if (!Double.isNaN(util) && !Double.isInfinite(util) && util > maxUtil) {
-	  maxUtil = util;
-	}
+        double util = duty / capacity;
+        if (!Double.isNaN(util) && !Double.isInfinite(util) && util > maxUtil) {
+          maxUtil = util;
+        }
       }
     }
 

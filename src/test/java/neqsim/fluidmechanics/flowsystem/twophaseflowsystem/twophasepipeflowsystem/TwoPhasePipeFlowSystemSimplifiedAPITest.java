@@ -75,7 +75,7 @@ class TwoPhasePipeFlowSystemSimplifiedAPITest {
     assertNotNull(pipe, "Subsea pipe should be created");
     // Subsea should have convective boundary
     assertEquals(neqsim.fluidmechanics.flownode.WallHeatTransferModel.CONVECTIVE_BOUNDARY,
-	pipe.getWallHeatTransferModel());
+        pipe.getWallHeatTransferModel());
   }
 
   @Test
@@ -289,7 +289,7 @@ class TwoPhasePipeFlowSystemSimplifiedAPITest {
 
     assertThrows(IllegalStateException.class, () -> {
       TwoPhasePipeFlowSystem.builder().withFluid(emptyFluid).withDiameter(0.1, "m").withLength(100, "m").withNodes(10)
-	  .build();
+          .build();
     });
   }
 
@@ -335,13 +335,13 @@ class TwoPhasePipeFlowSystemSimplifiedAPITest {
 
     // Using builder with same parameters
     TwoPhasePipeFlowSystem pipeBuilder = TwoPhasePipeFlowSystem.builder().withFluid(fluid).withDiameter(0.025, "m")
-	.withLength(3, "m").withNodes(10).horizontal().withFlowPattern(FlowPattern.STRATIFIED).build();
+        .withLength(3, "m").withNodes(10).horizontal().withFlowPattern(FlowPattern.STRATIFIED).build();
     PipeFlowResult resultBuilder = pipeBuilder.solve();
 
     // Results should be very similar
     assertEquals(resultFactory.getInletPressure(), resultBuilder.getInletPressure(), 0.001,
-	"Inlet pressures should match");
+        "Inlet pressures should match");
     assertEquals(resultFactory.getTotalPressureDrop(), resultBuilder.getTotalPressureDrop(), 0.001,
-	"Pressure drops should match");
+        "Pressure drops should match");
   }
 }

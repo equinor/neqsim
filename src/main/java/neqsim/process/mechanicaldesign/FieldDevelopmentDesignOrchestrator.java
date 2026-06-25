@@ -379,13 +379,13 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
     try {
       java.util.Optional<TechnicalRequirementsDocument> optTorg = torgManager.load(torgProjectId);
       if (optTorg.isPresent()) {
-	TechnicalRequirementsDocument torg = optTorg.get();
-	logger.info("TORG loaded: {} - {}", torg.getProjectId(), torg.getProjectName());
-	step.complete(true, "TORG loaded: " + torg.getProjectName());
-	return true;
+        TechnicalRequirementsDocument torg = optTorg.get();
+        logger.info("TORG loaded: {} - {}", torg.getProjectId(), torg.getProjectName());
+        step.complete(true, "TORG loaded: " + torg.getProjectName());
+        return true;
       } else {
-	step.complete(false, "TORG not found: " + torgProjectId);
-	return false;
+        step.complete(false, "TORG not found: " + torgProjectId);
+        return false;
       }
     } catch (Exception e) {
       step.complete(false, "Error loading TORG: " + e.getMessage());
@@ -487,7 +487,7 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
     validationResult = new DesignValidationResult();
 
     step.complete(true,
-	String.format("Initialized for phase %s with %d design cases", designPhase, designCases.size()));
+        String.format("Initialized for phase %s with %d design cases", designPhase, designCases.size()));
   }
 
   /**
@@ -505,9 +505,9 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
 
       // For each design case, could apply load factors and re-run
       for (DesignCase designCase : designCases) {
-	DesignCaseResult result = new DesignCaseResult(designCase);
-	result.setConverged(true); // Simplified - in reality check convergence
-	caseResults.put(designCase, result);
+        DesignCaseResult result = new DesignCaseResult(designCase);
+        result.setConverged(true); // Simplified - in reality check convergence
+        caseResults.put(designCase, result);
       }
 
       step.complete(true, "Process simulation completed for " + designCases.size() + " cases");
@@ -516,7 +516,7 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
       step.complete(false, "Simulation failed: " + e.getMessage());
       logger.error("Process simulation failed", e);
       validationResult.addCritical("Simulation", "ProcessSystem", "Process simulation failed: " + e.getMessage(),
-	  "Check feed conditions and equipment setup");
+          "Check feed conditions and equipment setup");
       return false;
     }
   }
@@ -542,7 +542,7 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
       step.complete(false, "Error applying TORG: " + e.getMessage());
       logger.error("Error applying TORG", e);
       validationResult.addWarning("TORG", "ProcessSystem", "Failed to apply TORG: " + e.getMessage(),
-	  "Check TORG configuration and equipment compatibility");
+          "Check TORG configuration and equipment compatibility");
     }
   }
 
@@ -561,19 +561,19 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
 
       // Capture results for each design case
       for (DesignCaseResult caseResult : caseResults.values()) {
-	caseResult.setTotalWeight(systemMechanicalDesign.getTotalWeight());
-	caseResult.setTotalVolume(systemMechanicalDesign.getTotalVolume());
+        caseResult.setTotalWeight(systemMechanicalDesign.getTotalWeight());
+        caseResult.setTotalVolume(systemMechanicalDesign.getTotalVolume());
       }
 
       step.complete(true,
-	  String.format("Mechanical design completed. Total weight: %.0f kg", systemMechanicalDesign.getTotalWeight()));
+          String.format("Mechanical design completed. Total weight: %.0f kg", systemMechanicalDesign.getTotalWeight()));
       return true;
     } catch (Exception e) {
       step.complete(false, "Mechanical design failed: " + e.getMessage());
       logger.error("Mechanical design failed", e);
       validationResult.addCritical("Mechanical Design", "ProcessSystem",
-	  "Mechanical design calculation failed: " + e.getMessage(),
-	  "Check equipment configuration and input parameters");
+          "Mechanical design calculation failed: " + e.getMessage(),
+          "Check equipment configuration and input parameters");
       return false;
     }
   }
@@ -592,19 +592,19 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
       int success = deliverablesPackage.getSuccessCount();
       int total = deliverablesPackage.getStatusMap().size();
       step.complete(deliverablesPackage.isComplete(),
-	  String.format("Generated %d/%d deliverables for %s", success, total, studyClass));
+          String.format("Generated %d/%d deliverables for %s", success, total, studyClass));
 
       // Record any failures as validation warnings
       for (DeliverableType failed : deliverablesPackage.getFailedDeliverables()) {
-	validationResult.addWarning("Deliverables", failed.getDisplayName(),
-	    "Failed to generate: " + deliverablesPackage.getStatusMap().get(failed).getMessage(),
-	    "Check process system setup and re-run");
+        validationResult.addWarning("Deliverables", failed.getDisplayName(),
+            "Failed to generate: " + deliverablesPackage.getStatusMap().get(failed).getMessage(),
+            "Check process system setup and re-run");
       }
     } catch (Exception e) {
       step.complete(false, "Deliverable generation failed: " + e.getMessage());
       logger.error("Deliverable generation failed", e);
       validationResult.addWarning("Deliverables", "EngineeringDeliverablesPackage",
-	  "Deliverable generation failed: " + e.getMessage(), "Check process system configuration");
+          "Deliverable generation failed: " + e.getMessage(), "Check process system configuration");
     }
   }
 
@@ -635,11 +635,11 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
 
     warningCount = validationResult.getCount(DesignValidationResult.Severity.WARNING);
     errorCount = validationResult.getCount(DesignValidationResult.Severity.ERROR)
-	+ validationResult.getCount(DesignValidationResult.Severity.CRITICAL);
+        + validationResult.getCount(DesignValidationResult.Severity.CRITICAL);
 
     String status = validationResult.isValid() ? "PASSED" : "FAILED";
     step.complete(validationResult.isValid(),
-	String.format("Validation %s: %d errors, %d warnings", status, errorCount, warningCount));
+        String.format("Validation %s: %d errors, %d warnings", status, errorCount, warningCount));
   }
 
   /**
@@ -654,14 +654,14 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
     MechanicalDesign mechDesign = equipment.getMechanicalDesign();
     if (mechDesign == null) {
       validationResult.addWarning("Configuration", name, "No mechanical design generated",
-	  "Initialize mechanical design for this equipment");
+          "Initialize mechanical design for this equipment");
       return;
     }
 
     // Check for design standards
     if (!mechDesign.hasDesignStandard()) {
       validationResult.addWarning("Standards", name, "No design standard assigned",
-	  "Assign appropriate design standard from TORG or defaults");
+          "Assign appropriate design standard from TORG or defaults");
     }
 
     // Phase-specific checks
@@ -682,7 +682,7 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
     // Check weight is calculated
     if (mechDesign.getWeightTotal() <= 0) {
       validationResult.addWarning("Weight", name, "Total weight not calculated or is zero",
-	  "Run calcDesign() to calculate equipment weight");
+          "Run calcDesign() to calculate equipment weight");
     }
 
     // Check design pressure
@@ -691,10 +691,10 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
     if (designPressure > 0 && operatingPressure > 0) {
       double margin = (designPressure - operatingPressure) / operatingPressure;
       if (margin < 0.1) {
-	validationResult.addWarning(
-	    "Pressure", name, String.format("Low design margin: %.1f%% (design=%.1f, operating=%.1f barg)",
-		margin * 100, designPressure, operatingPressure),
-	    "Review design pressure and consider increasing margin per standards");
+        validationResult.addWarning(
+            "Pressure", name, String.format("Low design margin: %.1f%% (design=%.1f, operating=%.1f barg)",
+                margin * 100, designPressure, operatingPressure),
+            "Review design pressure and consider increasing margin per standards");
       }
     }
   }
@@ -708,9 +708,9 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
       MechanicalDesign mechDesign = equipment.getMechanicalDesign();
 
       if (mechDesign != null && !mechDesign.hasDesignStandard()) {
-	validationResult.addError("Compliance", equipment.getName(),
-	    "Missing required design standard for " + designPhase.getDisplayName() + " phase",
-	    "Assign design standard before proceeding to detailed design");
+        validationResult.addError("Compliance", equipment.getName(),
+            "Missing required design standard for " + designPhase.getDisplayName() + " phase",
+            "Assign design standard before proceeding to detailed design");
       }
     }
   }
@@ -729,15 +729,15 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
     if (env != null) {
       // Validate temperature ranges, etc.
       validationResult.addInfo("ProcessSystem", String.format("TORG environmental conditions: %.1f°C to %.1f°C ambient",
-	  env.getMinAmbientTemperature(), env.getMaxAmbientTemperature()));
+          env.getMinAmbientTemperature(), env.getMaxAmbientTemperature()));
     }
 
     // Check safety factors
     TechnicalRequirementsDocument.SafetyFactors safety = torg.getSafetyFactors();
     if (safety != null) {
       validationResult.addInfo("ProcessSystem",
-	  String.format("TORG safety factors: pressure=%.2f, temperature margin=%.2f°C",
-	      safety.getPressureSafetyFactor(), safety.getTemperatureSafetyMargin()));
+          String.format("TORG safety factors: pressure=%.2f, temperature margin=%.2f°C",
+              safety.getPressureSafetyFactor(), safety.getTemperatureSafetyMargin()));
     }
   }
 
@@ -919,7 +919,7 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
       report.append("WEIGHT BY EQUIPMENT TYPE\n");
       report.append(singleLine).append("\n");
       for (Map.Entry<String, Double> entry : systemMechanicalDesign.getWeightByEquipmentType().entrySet()) {
-	report.append(String.format("  %-25s %10.0f kg\n", entry.getKey(), entry.getValue()));
+        report.append(String.format("  %-25s %10.0f kg\n", entry.getKey(), entry.getValue()));
       }
       report.append("\n");
     }
@@ -929,22 +929,22 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
     report.append(singleLine).append("\n");
     report.append(String.format("Status: %s\n", validationResult.isValid() ? "PASSED" : "FAILED"));
     report.append(String.format("Critical: %d, Errors: %d, Warnings: %d, Info: %d\n",
-	validationResult.getCount(DesignValidationResult.Severity.CRITICAL),
-	validationResult.getCount(DesignValidationResult.Severity.ERROR),
-	validationResult.getCount(DesignValidationResult.Severity.WARNING),
-	validationResult.getCount(DesignValidationResult.Severity.INFO)));
+        validationResult.getCount(DesignValidationResult.Severity.CRITICAL),
+        validationResult.getCount(DesignValidationResult.Severity.ERROR),
+        validationResult.getCount(DesignValidationResult.Severity.WARNING),
+        validationResult.getCount(DesignValidationResult.Severity.INFO)));
     report.append("\n");
 
     if (validationResult.hasErrors() || validationResult.hasWarnings()) {
       report.append("VALIDATION MESSAGES\n");
       report.append(singleLine).append("\n");
       for (DesignValidationResult.ValidationMessage msg : validationResult.getMessages()) {
-	if (msg.getSeverity() != DesignValidationResult.Severity.INFO) {
-	  report.append(String.format("[%s] %s: %s\n", msg.getSeverity(), msg.getEquipmentName(), msg.getMessage()));
-	  if (msg.getRemediation() != null && !msg.getRemediation().isEmpty()) {
-	    report.append(String.format("  Fix: %s\n", msg.getRemediation()));
-	  }
-	}
+        if (msg.getSeverity() != DesignValidationResult.Severity.INFO) {
+          report.append(String.format("[%s] %s: %s\n", msg.getSeverity(), msg.getEquipmentName(), msg.getMessage()));
+          if (msg.getRemediation() != null && !msg.getRemediation().isEmpty()) {
+            report.append(String.format("  Fix: %s\n", msg.getRemediation()));
+          }
+        }
       }
       report.append("\n");
     }
@@ -955,14 +955,14 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
       report.append(singleLine).append("\n");
       report.append(String.format("Study Class:   %s\n", studyClass.getDisplayName()));
       report.append(String.format("Generated:     %d/%d deliverables\n", deliverablesPackage.getSuccessCount(),
-	  deliverablesPackage.getStatusMap().size()));
+          deliverablesPackage.getStatusMap().size()));
       report.append(String.format("Status:        %s\n", deliverablesPackage.isComplete() ? "COMPLETE" : "INCOMPLETE"));
       report.append("\n");
       for (Map.Entry<DeliverableType, EngineeringDeliverablesPackage.DeliverableStatus> entry : deliverablesPackage
-	  .getStatusMap().entrySet()) {
-	String dStatus = entry.getValue().isSuccess() ? "OK" : "FAIL";
-	report.append(String.format("  %s %-30s %5d ms\n", dStatus, entry.getKey().getDisplayName(),
-	    entry.getValue().getDurationMs()));
+          .getStatusMap().entrySet()) {
+        String dStatus = entry.getValue().isSuccess() ? "OK" : "FAIL";
+        report.append(String.format("  %s %-30s %5d ms\n", dStatus, entry.getKey().getDisplayName(),
+            entry.getValue().getDurationMs()));
       }
       report.append("\n");
     }

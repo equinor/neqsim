@@ -70,7 +70,7 @@ public class ProcessSafetySystemAssessment implements Serializable {
   public static ProcessSafetySystemAssessment pass(String requirementId, String clause, String message,
       String recommendation) {
     return new ProcessSafetySystemAssessment(requirementId, ProcessSafetySystemReviewEngine.NORSOK_S001, clause,
-	Status.PASS, "LOW", message, recommendation);
+        Status.PASS, "LOW", message, recommendation);
   }
 
   /**
@@ -86,7 +86,7 @@ public class ProcessSafetySystemAssessment implements Serializable {
   public static ProcessSafetySystemAssessment warning(String requirementId, String clause, String severity,
       String message, String recommendation) {
     return new ProcessSafetySystemAssessment(requirementId, ProcessSafetySystemReviewEngine.NORSOK_S001, clause,
-	Status.WARNING, severity, message, recommendation);
+        Status.WARNING, severity, message, recommendation);
   }
 
   /**
@@ -102,7 +102,7 @@ public class ProcessSafetySystemAssessment implements Serializable {
   public static ProcessSafetySystemAssessment fail(String requirementId, String clause, String severity, String message,
       String recommendation) {
     return new ProcessSafetySystemAssessment(requirementId, ProcessSafetySystemReviewEngine.NORSOK_S001, clause,
-	Status.FAIL, severity, message, recommendation);
+        Status.FAIL, severity, message, recommendation);
   }
 
   /**
@@ -117,7 +117,7 @@ public class ProcessSafetySystemAssessment implements Serializable {
   public static ProcessSafetySystemAssessment info(String requirementId, String clause, String message,
       String recommendation) {
     return new ProcessSafetySystemAssessment(requirementId, ProcessSafetySystemReviewEngine.NORSOK_S001, clause,
-	Status.INFO, "LOW", message, recommendation);
+        Status.INFO, "LOW", message, recommendation);
   }
 
   /**
@@ -130,7 +130,7 @@ public class ProcessSafetySystemAssessment implements Serializable {
    */
   public static ProcessSafetySystemAssessment notApplicable(String requirementId, String clause, String message) {
     return new ProcessSafetySystemAssessment(requirementId, ProcessSafetySystemReviewEngine.NORSOK_S001, clause,
-	Status.NOT_APPLICABLE, "LOW", message, "No action required for this review item.");
+        Status.NOT_APPLICABLE, "LOW", message, "No action required for this review item.");
   }
 
   /**

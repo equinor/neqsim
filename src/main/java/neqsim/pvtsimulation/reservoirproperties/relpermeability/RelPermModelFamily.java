@@ -19,10 +19,13 @@ public enum RelPermModelFamily {
    * <p>
    * For oil-water:
    *
+   * <p>
    * $$ K_{rw} = K_{rw,max} \cdot S_{wn}^{n_w} $$
    *
+   * <p>
    * $$ K_{row} = K_{ro,max} \cdot (1 - S_{wn})^{n_o} $$
    *
+   * <p>
    * where $S_{wn}$ is the normalized water saturation.
    */
   COREY,
@@ -34,8 +37,10 @@ public enum RelPermModelFamily {
    * Provides greater flexibility than Corey for matching laboratory core-flood data. Each phase curve uses three
    * parameters (L, E, T) controlling the shape of the relative permeability curve:
    *
+   * <p>
    * $$ K_r = K_{r,max} \cdot \frac{S_n^L}{S_n^L + E \cdot (1 - S_n)^T} $$
    *
+   * <p>
    * where $S_n$ is the normalized saturation for the relevant phase.
    *
    * @see <a href="https://doi.org/10.2118/108264-MS">Lomeland, Ebeltoft, Thomas - SPE 108264</a>

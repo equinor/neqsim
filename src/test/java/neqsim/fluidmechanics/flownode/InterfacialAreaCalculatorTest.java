@@ -81,7 +81,7 @@ class InterfacialAreaCalculatorTest {
 
     for (FlowPattern pattern : FlowPattern.values()) {
       double a = InterfacialAreaCalculator.calculateInterfacialArea(pattern, DIAMETER, holdup, RHO_G, RHO_L, usg, usl,
-	  SIGMA);
+          SIGMA);
       assertTrue(a >= 0, "Interfacial area should be non-negative for " + pattern);
     }
   }

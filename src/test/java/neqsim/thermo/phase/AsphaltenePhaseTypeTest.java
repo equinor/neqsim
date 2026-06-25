@@ -3,14 +3,14 @@ package neqsim.thermo.phase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Tests demonstrating asphaltene phase type in multi-phase flash calculations.
@@ -80,10 +80,10 @@ public class AsphaltenePhaseTypeTest {
 
       // Check if this solid phase is predominantly asphaltene
       if (phase instanceof PhaseSolid) {
-	PhaseSolid solidPhase = (PhaseSolid) phase;
-	if (solidPhase.isAsphaltenePhase()) {
-	  solidPhase.updatePhaseTypeForAsphaltene();
-	}
+        PhaseSolid solidPhase = (PhaseSolid) phase;
+        if (solidPhase.isAsphaltenePhase()) {
+          solidPhase.updatePhaseTypeForAsphaltene();
+        }
       }
 
       logger.info("\nPhase " + i + ":");
@@ -97,8 +97,8 @@ public class AsphaltenePhaseTypeTest {
     boolean hasAsphaltenePhase = false;
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
       if (fluid.getPhase(i).getType() == PhaseType.ASPHALTENE) {
-	hasAsphaltenePhase = true;
-	break;
+        hasAsphaltenePhase = true;
+        break;
       }
     }
 
@@ -249,33 +249,33 @@ public class AsphaltenePhaseTypeTest {
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
       PhaseInterface phase = fluid.getPhase(i);
       if (phase instanceof PhaseSolid) {
-	PhaseSolid solidPhase = (PhaseSolid) phase;
-	if (solidPhase.isAsphaltenePhase()) {
-	  // Get default (literature-based) density
-	  double litDensity = solidPhase.getDensity("kg/m3");
-	  logger.info("Literature-based density: " + litDensity + " kg/m3");
+        PhaseSolid solidPhase = (PhaseSolid) phase;
+        if (solidPhase.isAsphaltenePhase()) {
+          // Get default (literature-based) density
+          double litDensity = solidPhase.getDensity("kg/m3");
+          logger.info("Literature-based density: " + litDensity + " kg/m3");
 
-	  // By default, useEosProperties should be false
-	  assertFalse(solidPhase.isUseEosProperties(), "Default should be literature-based properties");
+          // By default, useEosProperties should be false
+          assertFalse(solidPhase.isUseEosProperties(), "Default should be literature-based properties");
 
-	  // Enable EOS properties
-	  solidPhase.setUseEosProperties(true);
-	  assertTrue(solidPhase.isUseEosProperties());
+          // Enable EOS properties
+          solidPhase.setUseEosProperties(true);
+          assertTrue(solidPhase.isUseEosProperties());
 
-	  // The density should now use EOS calculation
-	  double eosDensity = solidPhase.getDensity("kg/m3");
-	  logger.info("EOS-based density: " + eosDensity + " kg/m3");
+          // The density should now use EOS calculation
+          double eosDensity = solidPhase.getDensity("kg/m3");
+          logger.info("EOS-based density: " + eosDensity + " kg/m3");
 
-	  // EOS density may differ from literature value
-	  // (Just verify it returns a valid value)
-	  assertTrue(eosDensity > 0, "EOS density should be positive");
-	  assertFalse(Double.isNaN(eosDensity), "EOS density should not be NaN");
+          // EOS density may differ from literature value
+          // (Just verify it returns a valid value)
+          assertTrue(eosDensity > 0, "EOS density should be positive");
+          assertFalse(Double.isNaN(eosDensity), "EOS density should not be NaN");
 
-	  // Restore default behavior
-	  solidPhase.setUseEosProperties(false);
-	  double restoredDensity = solidPhase.getDensity("kg/m3");
-	  assertEquals(litDensity, restoredDensity, 0.1, "Should return to literature-based density");
-	}
+          // Restore default behavior
+          solidPhase.setUseEosProperties(false);
+          double restoredDensity = solidPhase.getDensity("kg/m3");
+          assertEquals(litDensity, restoredDensity, 0.1, "Should return to literature-based density");
+        }
       }
     }
   }

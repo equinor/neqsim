@@ -627,7 +627,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
 
     // Total dry weight
     totalDryWeightPerMeter = steelWeightPerMeter + coatingWeightPerMeter + insulationWeightPerMeter
-	+ concreteWeightPerMeter;
+        + concreteWeightPerMeter;
 
     // Total surface areas
     totalExternalSurfaceArea = externalSurfaceAreaPerMeter * pipelineLength;
@@ -654,7 +654,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
 
     // Total outer diameter with all coatings
     double totalOD = outerDiameter + 2.0 * coatingThickness + 2.0 * insulationThickness
-	+ 2.0 * concreteCoatingThickness;
+        + 2.0 * concreteCoatingThickness;
 
     // Displaced water weight (buoyancy)
     double displacedVolume = Math.PI * totalOD * totalOD / 4.0;
@@ -683,7 +683,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
       double submerged = calculateSubmergedWeight(contentDensity);
 
       if (submerged >= targetSubmergedWeight) {
-	return testThickness;
+        return testThickness;
       }
       testThickness += step;
     }
@@ -801,8 +801,8 @@ public class PipeMechanicalDesignCalculator implements Serializable {
     for (int cls : classes) {
       Double rating = FLANGE_CLASS_RATINGS.get(cls);
       if (rating != null && rating >= designPressure) {
-	flangeClass = cls;
-	return cls;
+        flangeClass = cls;
+        return cls;
       }
     }
 
@@ -905,7 +905,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
     double E = youngsModulus * 1e6; // Pa
     if (targetFn > 0) {
       allowableSpanLength = Math
-	  .pow(Math.PI * Math.PI * E * momentOfInertia / (4.0 * effectiveMass * targetFn * targetFn), 0.25);
+          .pow(Math.PI * Math.PI * E * momentOfInertia / (4.0 * effectiveMass * targetFn * targetFn), 0.25);
     } else {
       allowableSpanLength = 50.0; // Default maximum
     }
@@ -970,7 +970,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
       double heatLoss = U * 2.0 * Math.PI * r2 * LMTD;
 
       if (heatLoss <= allowableHeatLoss) {
-	break;
+        break;
       }
       thickness += 0.025;
     }
@@ -1010,8 +1010,8 @@ public class PipeMechanicalDesignCalculator implements Serializable {
 
     if (insulationThickness > 0) {
       double insulationVolume = Math.PI * ((outerDiameter + 2 * coatingThickness + 2 * insulationThickness)
-	  * (outerDiameter + 2 * coatingThickness + 2 * insulationThickness)
-	  - (outerDiameter + 2 * coatingThickness) * (outerDiameter + 2 * coatingThickness)) / 4.0 * pipelineLength;
+          * (outerDiameter + 2 * coatingThickness + 2 * insulationThickness)
+          - (outerDiameter + 2 * coatingThickness) * (outerDiameter + 2 * coatingThickness)) / 4.0 * pipelineLength;
       insulationCost = insulationVolume * insulationPricePerM3;
     } else {
       insulationCost = 0.0;
@@ -1036,7 +1036,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
 
     // Total direct cost
     totalDirectCost = steelMaterialCost + coatingCost + insulationCost + concreteCost + weldingCost
-	+ flangesAndFittingsCost + valvesCost + supportsAndAnchorsCost + installationCost;
+        + flangesAndFittingsCost + valvesCost + supportsAndAnchorsCost + installationCost;
 
     // Indirect costs
     engineeringCost = totalDirectCost * engineeringCostPercentage;
@@ -1066,7 +1066,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
       // Onshore conventional
       installationCostPerMeter = 300.0;
       if (burialDepth > 0) {
-	installationCostPerMeter += burialDepth * 50.0;
+        installationCostPerMeter += burialDepth * 50.0;
       }
     }
 
@@ -1105,8 +1105,8 @@ public class PipeMechanicalDesignCalculator implements Serializable {
     for (Map.Entry<String, Double> entry : STANDARD_PIPE_SIZES.entrySet()) {
       double diff = Math.abs(entry.getValue() - outerDiameter);
       if (diff < minDiff) {
-	minDiff = diff;
-	selectedSize = entry.getKey();
+        minDiff = diff;
+        selectedSize = entry.getKey();
       }
     }
 
@@ -1135,7 +1135,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
     Map<String, Object> pipe = new java.util.LinkedHashMap<String, Object>();
     pipe.put("item", "Line Pipe");
     pipe.put("description", String.format("API 5L %s, OD %.0fmm x %.1fmm WT", materialGrade, outerDiameter * 1000,
-	(nominalWallThickness > 0 ? nominalWallThickness : minimumWallThickness) * 1000));
+        (nominalWallThickness > 0 ? nominalWallThickness : minimumWallThickness) * 1000));
     pipe.put("quantity", numberOfJoints);
     pipe.put("unit", "joints");
     pipe.put("weight_kg", totalPipelineWeight);
@@ -1158,7 +1158,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
       Map<String, Object> insulation = new java.util.LinkedHashMap<String, Object>();
       insulation.put("item", "Insulation");
       insulation.put("description",
-	  String.format("%s insulation, %.0fmm thick", insulationType, insulationThickness * 1000));
+          String.format("%s insulation, %.0fmm thick", insulationType, insulationThickness * 1000));
       insulation.put("quantity", pipelineLength);
       insulation.put("unit", "m");
       insulation.put("totalCost_USD", insulationCost);
@@ -1315,15 +1315,15 @@ public class PipeMechanicalDesignCalculator implements Serializable {
     // Temperature derating per ASME B31.8
     if (designTemperature > 121) {
       if (designTemperature <= 149) {
-	temperatureDerating = 0.967;
+        temperatureDerating = 0.967;
       } else if (designTemperature <= 177) {
-	temperatureDerating = 0.933;
+        temperatureDerating = 0.933;
       } else if (designTemperature <= 204) {
-	temperatureDerating = 0.900;
+        temperatureDerating = 0.900;
       } else if (designTemperature <= 232) {
-	temperatureDerating = 0.867;
+        temperatureDerating = 0.867;
       } else {
-	temperatureDerating = 0.833;
+        temperatureDerating = 0.833;
       }
     } else {
       temperatureDerating = 1.0;
@@ -1338,19 +1338,19 @@ public class PipeMechanicalDesignCalculator implements Serializable {
       // Design factor F based on location class
       switch (locationClass) {
       case 1:
-	designFactor = 0.72;
-	break;
+        designFactor = 0.72;
+        break;
       case 2:
-	designFactor = 0.60;
-	break;
+        designFactor = 0.60;
+        break;
       case 3:
-	designFactor = 0.50;
-	break;
+        designFactor = 0.50;
+        break;
       case 4:
-	designFactor = 0.40;
-	break;
+        designFactor = 0.40;
+        break;
       default:
-	designFactor = 0.72;
+        designFactor = 0.72;
       }
     } else if (ASME_B31_4.equals(designCode)) {
       designFactor = 0.72; // Standard for liquid lines
@@ -1389,11 +1389,11 @@ public class PipeMechanicalDesignCalculator implements Serializable {
     sb.append(String.format("Minimum Wall Thickness: %.2f mm\n", minimumWallThickness * 1000));
     sb.append(String.format("MAOP: %.2f MPa (%.1f bar)\n", maop, maop * 10));
     sb.append(
-	String.format("Test Pressure: %.2f MPa (%.1f bar)\n", calculateTestPressure(), calculateTestPressure() * 10));
+        String.format("Test Pressure: %.2f MPa (%.1f bar)\n", calculateTestPressure(), calculateTestPressure() * 10));
     if (vonMisesStress > 0) {
       sb.append(String.format("Hoop Stress: %.1f MPa (%.1f%% SMYS)\n", hoopStress, 100 * hoopStress / smys));
       sb.append(
-	  String.format("Von Mises Stress: %.1f MPa (%.1f%% SMYS)\n", vonMisesStress, 100 * vonMisesStress / smys));
+          String.format("Von Mises Stress: %.1f MPa (%.1f%% SMYS)\n", vonMisesStress, 100 * vonMisesStress / smys));
       sb.append(String.format("Safety Margin: %.1f%%\n", 100 * calculateSafetyMargin()));
     }
     sb.append("==========================================\n");
@@ -2609,28 +2609,28 @@ public class PipeMechanicalDesignCalculator implements Serializable {
     this.materialGrade = grade;
 
     try (
-	neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
+        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
       String query = "SELECT * FROM MaterialPipeProperties WHERE grade='" + grade + "'";
       try (java.sql.ResultSet dataSet = database.getResultSet(query)) {
-	if (dataSet.next()) {
-	  String smysStr = dataSet.getString("minimumYeildStrength");
-	  if (smysStr != null && !smysStr.trim().isEmpty()) {
-	    // Convert from psi to MPa if needed (database may store in psi)
-	    double smysValue = Double.parseDouble(smysStr);
-	    // Assume database stores in psi, convert to MPa
-	    this.smys = smysValue * 0.00689476;
-	  }
-	  // Try to get SMTS if available
-	  try {
-	    String smtsStr = dataSet.getString("minimumTensileStrength");
-	    if (smtsStr != null && !smtsStr.trim().isEmpty()) {
-	      this.smts = Double.parseDouble(smtsStr) * 0.00689476;
-	    }
-	  } catch (java.sql.SQLException e) {
-	    // Column doesn't exist, use default calculation
-	    this.smts = smys * 1.15;
-	  }
-	}
+        if (dataSet.next()) {
+          String smysStr = dataSet.getString("minimumYeildStrength");
+          if (smysStr != null && !smysStr.trim().isEmpty()) {
+            // Convert from psi to MPa if needed (database may store in psi)
+            double smysValue = Double.parseDouble(smysStr);
+            // Assume database stores in psi, convert to MPa
+            this.smys = smysValue * 0.00689476;
+          }
+          // Try to get SMTS if available
+          try {
+            String smtsStr = dataSet.getString("minimumTensileStrength");
+            if (smtsStr != null && !smtsStr.trim().isEmpty()) {
+              this.smts = Double.parseDouble(smtsStr) * 0.00689476;
+            }
+          } catch (java.sql.SQLException e) {
+            // Column doesn't exist, use default calculation
+            this.smts = smys * 1.15;
+          }
+        }
       }
     } catch (Exception e) {
       // Fall back to built-in API 5L data
@@ -2653,28 +2653,30 @@ public class PipeMechanicalDesignCalculator implements Serializable {
   @Deprecated
   public void loadDesignFactorsFromDatabase(String company) {
     try (
-	neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
+        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
       String query = "SELECT * FROM TechnicalRequirements_Process WHERE EQUIPMENTTYPE='Pipeline'" + " AND Company='"
-	  + company + "'";
+          + company + "'";
       try (java.sql.ResultSet dataSet = database.getResultSet(query)) {
-	while (dataSet.next()) {
-	  String specName = dataSet.getString("SPECIFICATION");
-	  String maxValue = dataSet.getString("MAXVALUE");
-	  if (specName != null && maxValue != null) {
-	    if ("designFactor".equalsIgnoreCase(specName)) {
-	      this.designFactor = Double.parseDouble(maxValue);
-	    } else if ("jointFactor".equalsIgnoreCase(specName)) {
-	      this.jointFactor = Double.parseDouble(maxValue);
-	    } else if ("corrosionAllowance".equalsIgnoreCase(specName)) {
-	      this.corrosionAllowance = Double.parseDouble(maxValue) / 1000.0; // mm to m
-	    }
-	  }
-	}
+        while (dataSet.next()) {
+          String specName = dataSet.getString("SPECIFICATION");
+          String maxValue = dataSet.getString("MAXVALUE");
+          if (specName != null && maxValue != null) {
+            if ("designFactor".equalsIgnoreCase(specName)) {
+              this.designFactor = Double.parseDouble(maxValue);
+            } else if ("jointFactor".equalsIgnoreCase(specName)) {
+              this.jointFactor = Double.parseDouble(maxValue);
+            } else if ("corrosionAllowance".equalsIgnoreCase(specName)) {
+              this.corrosionAllowance = Double.parseDouble(maxValue) / 1000.0; // mm
+                                                                               // to
+                                                                               // m
+            }
+          }
+        }
       }
     } catch (Exception e) {
       // Fall back to defaults, log warning
       org.apache.logging.log4j.LogManager.getLogger(PipeMechanicalDesignCalculator.class)
-	  .warn("Could not load design factors from database for company: " + company, e);
+          .warn("Could not load design factors from database for company: " + company, e);
     }
   }
 

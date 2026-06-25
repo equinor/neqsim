@@ -1,5 +1,7 @@
 package neqsim.process.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.separator.Separator;
@@ -7,8 +9,6 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.VolumeFlowTransmitter;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * TestTransientFlow2 class.

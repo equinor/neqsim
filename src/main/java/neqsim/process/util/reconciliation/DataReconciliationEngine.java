@@ -123,7 +123,7 @@ public class DataReconciliationEngine implements java.io.Serializable {
   public DataReconciliationEngine addConstraint(double[] coefficients, String name) {
     if (coefficients.length != variables.size()) {
       throw new IllegalArgumentException(
-	  "Constraint length " + coefficients.length + " does not match variable count " + variables.size());
+          "Constraint length " + coefficients.length + " does not match variable count " + variables.size());
     }
     constraintRows.add(coefficients.clone());
     constraintNames.add(name);
@@ -285,7 +285,7 @@ public class DataReconciliationEngine implements java.io.Serializable {
     for (int i = 0; i < m; i++) {
       double[] row = constraintRows.get(i);
       for (int j = 0; j < n; j++) {
-	bigA.set(i, j, row[j]);
+        bigA.set(i, j, row[j]);
       }
     }
 
@@ -355,13 +355,13 @@ public class DataReconciliationEngine implements java.io.Serializable {
     // Collect gross errors
     for (ReconciliationVariable v : variables) {
       if (v.isGrossError()) {
-	result.addGrossError(v);
+        result.addGrossError(v);
       }
     }
 
     result.setComputeTimeMs(System.currentTimeMillis() - startTime);
     logger.info("Data reconciliation completed in {} ms. Objective: {}, Gross errors: {}", result.getComputeTimeMs(),
-	objectiveValue, result.getGrossErrors().size());
+        objectiveValue, result.getGrossErrors().size());
 
     return result;
   }
@@ -394,14 +394,14 @@ public class DataReconciliationEngine implements java.io.Serializable {
 
       double normalizedResidual = 0.0;
       if (denominator > 1e-20) {
-	normalizedResidual = (v.getReconciledValue() - v.getMeasuredValue()) / Math.sqrt(denominator);
+        normalizedResidual = (v.getReconciledValue() - v.getMeasuredValue()) / Math.sqrt(denominator);
       }
       v.setNormalizedResidual(normalizedResidual);
       v.setGrossError(Math.abs(normalizedResidual) > grossErrorThreshold);
 
       if (v.isGrossError()) {
-	logger.warn("Gross error detected: {} (|r|={} > {})", v.getName(), Math.abs(normalizedResidual),
-	    grossErrorThreshold);
+        logger.warn("Gross error detected: {} (|r|={} > {})", v.getName(), Math.abs(normalizedResidual),
+            grossErrorThreshold);
       }
     }
   }
@@ -451,21 +451,21 @@ public class DataReconciliationEngine implements java.io.Serializable {
     for (int iter = 0; iter < maxEliminations; iter++) {
       result = reconcile();
       if (!result.isConverged() || !result.hasGrossErrors()) {
-	break;
+        break;
       }
 
       // Find worst gross error
       ReconciliationVariable worst = null;
       double worstResidual = 0.0;
       for (ReconciliationVariable v : variables) {
-	if (v.isGrossError() && Math.abs(v.getNormalizedResidual()) > worstResidual) {
-	  worst = v;
-	  worstResidual = Math.abs(v.getNormalizedResidual());
-	}
+        if (v.isGrossError() && Math.abs(v.getNormalizedResidual()) > worstResidual) {
+          worst = v;
+          worstResidual = Math.abs(v.getNormalizedResidual());
+        }
       }
 
       if (worst == null) {
-	break;
+        break;
       }
 
       // Effectively remove this variable: set uncertainty very high
@@ -487,10 +487,10 @@ public class DataReconciliationEngine implements java.io.Serializable {
       result = reconcile();
       // Re-flag the eliminated variables
       for (ReconciliationVariable ge : allGrossErrors) {
-	ge.setGrossError(true);
-	if (!result.getGrossErrors().contains(ge)) {
-	  result.addGrossError(ge);
-	}
+        ge.setGrossError(true);
+        if (!result.getGrossErrors().contains(ge)) {
+          result.addGrossError(ge);
+        }
       }
     }
 
@@ -519,7 +519,7 @@ public class DataReconciliationEngine implements java.io.Serializable {
     for (String inlet : inletNames) {
       int idx = findVariableIndex(inlet);
       if (idx < 0) {
-	throw new IllegalArgumentException("Variable not found: " + inlet);
+        throw new IllegalArgumentException("Variable not found: " + inlet);
       }
       coefficients[idx] = 1.0;
     }
@@ -527,7 +527,7 @@ public class DataReconciliationEngine implements java.io.Serializable {
     for (String outlet : outletNames) {
       int idx = findVariableIndex(outlet);
       if (idx < 0) {
-	throw new IllegalArgumentException("Variable not found: " + outlet);
+        throw new IllegalArgumentException("Variable not found: " + outlet);
       }
       coefficients[idx] = -1.0;
     }
@@ -557,7 +557,7 @@ public class DataReconciliationEngine implements java.io.Serializable {
   private int findVariableIndex(String name) {
     for (int i = 0; i < variables.size(); i++) {
       if (variables.get(i).getName().equals(name)) {
-	return i;
+        return i;
       }
     }
     return -1;

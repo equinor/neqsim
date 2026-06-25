@@ -2,6 +2,8 @@ package neqsim.process.mechanicaldesign.compressor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.stream.Stream;
@@ -9,8 +11,6 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /** Tests for compressor mechanical design calculations. */
 public class CompressorMechanicalDesignTest {
@@ -75,7 +75,7 @@ public class CompressorMechanicalDesignTest {
 
     // High pressure should result in barrel casing
     assertEquals(CompressorMechanicalDesign.CasingType.BARREL, comp.getMechanicalDesign().getCasingType(),
-	"High pressure compressor should have barrel casing");
+        "High pressure compressor should have barrel casing");
   }
 
   @Test
@@ -103,7 +103,7 @@ public class CompressorMechanicalDesignTest {
 
     // High pressure ratio should require multiple stages
     assertTrue(comp.getMechanicalDesign().getNumberOfStages() > 1,
-	"High pressure ratio should require multiple stages");
+        "High pressure ratio should require multiple stages");
     assertTrue(comp.getMechanicalDesign().getHeadPerStage() > 0, "Head per stage should be positive");
     assertTrue(comp.getMechanicalDesign().getHeadPerStage() <= 30.0, "Head per stage should be <= 30 kJ/kg");
   }
@@ -311,7 +311,7 @@ public class CompressorMechanicalDesignTest {
     logger.info("Compressor validation valid: " + result.isValid());
     if (!result.isValid()) {
       for (String issue : result.getIssues()) {
-	logger.info("  Issue: " + issue);
+        logger.info("  Issue: " + issue);
       }
     }
   }

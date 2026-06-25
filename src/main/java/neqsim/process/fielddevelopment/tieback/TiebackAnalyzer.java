@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.fielddevelopment.concept.FieldConcept;
 import neqsim.process.fielddevelopment.concept.InfrastructureInput;
 import neqsim.process.fielddevelopment.concept.ReservoirInput;
@@ -18,7 +19,6 @@ import neqsim.process.fielddevelopment.network.MultiphaseFlowIntegrator.Pipeline
 import neqsim.process.fielddevelopment.network.TiebackRouteNetwork;
 import neqsim.process.fielddevelopment.screening.FlowAssuranceReport;
 import neqsim.process.fielddevelopment.screening.FlowAssuranceScreener;
-import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -188,7 +188,7 @@ public class TiebackAnalyzer implements Serializable {
     for (HostFacility host : hosts) {
       TiebackRouteNetwork routeNetwork = routeNetworksByHost == null ? null : routeNetworksByHost.get(host.getName());
       TiebackOption option = evaluateSingleTieback(discovery, host, routeNetwork, discoveryLatitude,
-	  discoveryLongitude);
+          discoveryLongitude);
       options.add(option);
     }
 
@@ -276,8 +276,8 @@ public class TiebackAnalyzer implements Serializable {
 
     // Check host capacity
     boolean isGasField = reservoir != null && (reservoir.getFluidType() == ReservoirInput.FluidType.LEAN_GAS
-	|| reservoir.getFluidType() == ReservoirInput.FluidType.RICH_GAS
-	|| reservoir.getFluidType() == ReservoirInput.FluidType.GAS_CONDENSATE);
+        || reservoir.getFluidType() == ReservoirInput.FluidType.RICH_GAS
+        || reservoir.getFluidType() == ReservoirInput.FluidType.GAS_CONDENSATE);
 
     double requiredRateMSm3d = 0;
     double requiredRateBopd = 0;
@@ -285,20 +285,20 @@ public class TiebackAnalyzer implements Serializable {
     if (isGasField) {
       // Convert to MSm3/d
       if (rateUnit.toLowerCase().contains("sm3")) {
-	requiredRateMSm3d = totalRate / 1.0e6;
+        requiredRateMSm3d = totalRate / 1.0e6;
       } else {
-	requiredRateMSm3d = totalRate / 1.0e6; // Assume Sm3/d
+        requiredRateMSm3d = totalRate / 1.0e6; // Assume Sm3/d
       }
 
       double producedWaterRateM3d = estimateProducedWaterRate(reservoir, requiredRateBopd);
       HostFacility.HostCapacityReport capacityReport = host.assessCapacity(requiredRateMSm3d, requiredRateBopd,
-	  producedWaterRateM3d, estimateTotalLiquidRateM3d(requiredRateBopd, producedWaterRateM3d));
+          producedWaterRateM3d, estimateTotalLiquidRateM3d(requiredRateBopd, producedWaterRateM3d));
       option.setHostCapacitySummary(capacityReport.getSummary());
 
       if (!capacityReport.isCapacityAvailable()) {
-	option.setFeasible(false);
-	option.setInfeasibilityReason("Insufficient host capacity: " + capacityReport.getSummary());
-	return option;
+        option.setFeasible(false);
+        option.setInfeasibilityReason("Insufficient host capacity: " + capacityReport.getSummary());
+        return option;
       }
 
       option.setMaxProductionRate(requiredRateMSm3d);
@@ -306,20 +306,20 @@ public class TiebackAnalyzer implements Serializable {
     } else {
       // Oil field
       if (rateUnit.toLowerCase().contains("bbl") || rateUnit.toLowerCase().contains("bopd")) {
-	requiredRateBopd = totalRate;
+        requiredRateBopd = totalRate;
       } else {
-	requiredRateBopd = totalRate / 0.159; // Convert m3 to bbl
+        requiredRateBopd = totalRate / 0.159; // Convert m3 to bbl
       }
 
       double producedWaterRateM3d = estimateProducedWaterRate(reservoir, requiredRateBopd);
       HostFacility.HostCapacityReport capacityReport = host.assessCapacity(requiredRateMSm3d, requiredRateBopd,
-	  producedWaterRateM3d, estimateTotalLiquidRateM3d(requiredRateBopd, producedWaterRateM3d));
+          producedWaterRateM3d, estimateTotalLiquidRateM3d(requiredRateBopd, producedWaterRateM3d));
       option.setHostCapacitySummary(capacityReport.getSummary());
 
       if (!capacityReport.isCapacityAvailable()) {
-	option.setFeasible(false);
-	option.setInfeasibilityReason("Insufficient host capacity: " + capacityReport.getSummary());
-	return option;
+        option.setFeasible(false);
+        option.setInfeasibilityReason("Insufficient host capacity: " + capacityReport.getSummary());
+        return option;
       }
 
       option.setMaxProductionRate(requiredRateBopd);
@@ -332,7 +332,7 @@ public class TiebackAnalyzer implements Serializable {
     // Pipeline diameter for both hydraulic screening and cost estimate.
     double routeDiameterInches = routeNetwork == null ? 0.0 : routeNetwork.getEquivalentDiameterInches();
     option.setPipelineDiameterInches(routeDiameterInches > 0.0 ? routeDiameterInches
-	: estimatePipelineDiameterInches(wellCount, totalRate, rateUnit, isGasField));
+        : estimatePipelineDiameterInches(wellCount, totalRate, rateUnit, isGasField));
 
     // Flow assurance screening with NeqSim hydraulics and thermodynamics.
     screenFlowAssurance(option, discovery, host, reservoir, wells, isGasField, totalRate, rateUnit, routeNetwork);
@@ -368,12 +368,12 @@ public class TiebackAnalyzer implements Serializable {
       TiebackRouteNetwork routeNetwork) {
     InfrastructureInput infrastructure = discovery.getInfrastructure();
     double routeSeabedTemperatureC = infrastructure != null ? infrastructure.getEstimatedSeabedTemperature()
-	: seabedTemperatureC;
+        : seabedTemperatureC;
     double heatTransferCoefficient = estimateFlowlineHeatTransferCoefficient(infrastructure);
     if (routeNetwork != null) {
       routeSeabedTemperatureC = routeNetwork.getEquivalentSeabedTemperatureC();
       if (routeNetwork.getEquivalentHeatTransferCoefficientWm2K() > 0.0) {
-	heatTransferCoefficient = routeNetwork.getEquivalentHeatTransferCoefficientWm2K();
+        heatTransferCoefficient = routeNetwork.getEquivalentHeatTransferCoefficientWm2K();
       }
     }
     option.setPipelineHeatTransferCoefficientWm2K(heatTransferCoefficient);
@@ -381,7 +381,7 @@ public class TiebackAnalyzer implements Serializable {
     double inletPressureBara = wells != null ? wells.getTubeheadPressure() : 100.0;
     double inletTemperatureC = reservoir != null ? reservoir.getReservoirTemperature() : 70.0;
     Stream stream = createRepresentativeWellheadStream(reservoir, inletPressureBara, inletTemperatureC, isGasField,
-	totalRate, rateUnit);
+        totalRate, rateUnit);
 
     PipelineResult hydraulicResult = null;
     try {
@@ -391,7 +391,7 @@ public class TiebackAnalyzer implements Serializable {
       integrator.setSeabedTemperature(routeSeabedTemperatureC);
       integrator.setOverallHeatTransferCoeff(heatTransferCoefficient);
       if (routeNetwork != null) {
-	integrator.setElevationChange(routeNetwork.getNetElevationChangeM());
+        integrator.setElevationChange(routeNetwork.getNetElevationChangeM());
       }
       integrator.setMinArrivalPressure(host.getMinTieInPressureBara());
       hydraulicResult = integrator.calculateHydraulics(stream, host.getMinTieInPressureBara());
@@ -401,19 +401,19 @@ public class TiebackAnalyzer implements Serializable {
       option.setHydraulicInfeasibilityReason("Hydraulic screening failed: " + e.getMessage());
       option.setArrivalPressureBara(Math.max(host.getMinTieInPressureBara(), inletPressureBara - 10.0));
       option.setArrivalTemperatureC(estimateArrivalTemperatureC(inletTemperatureC, routeSeabedTemperatureC,
-	  option.getDistanceKm(), infrastructure));
+          option.getDistanceKm(), infrastructure));
     }
 
     double flowAssuranceTemperatureC = option.getArrivalTemperatureC() != 0.0 ? option.getArrivalTemperatureC()
-	: routeSeabedTemperatureC;
+        : routeSeabedTemperatureC;
     double flowAssurancePressureBara = option.getArrivalPressureBara() > 0.0 ? option.getArrivalPressureBara()
-	: Math.max(host.getMinTieInPressureBara(), 30.0);
+        : Math.max(host.getMinTieInPressureBara(), 30.0);
     FlowAssuranceReport report = flowAssuranceScreener.screen(discovery, flowAssuranceTemperatureC,
-	flowAssurancePressureBara);
+        flowAssurancePressureBara);
     applyFlowAssuranceReport(option, report);
 
     option.setShutdownCooldownTimeToHydrateHours(
-	estimateShutdownCooldownHours(option, inletTemperatureC, routeSeabedTemperatureC, infrastructure));
+        estimateShutdownCooldownHours(option, inletTemperatureC, routeSeabedTemperatureC, infrastructure));
     option.setShutdownCooldownRiskScore(estimateShutdownCooldownRisk(option, infrastructure));
     option.setFlowAssuranceNotes(buildFlowAssuranceNotes(option, report, hydraulicResult, routeSeabedTemperatureC));
   }
@@ -455,7 +455,7 @@ public class TiebackAnalyzer implements Serializable {
 
   private void estimateCapex(TiebackOption option, int wellCount, double distanceKm, HostFacility host) {
     double installedRouteLengthKm = option.getRouteInstalledLengthKm() > 0.0 ? option.getRouteInstalledLengthKm()
-	: distanceKm;
+        : distanceKm;
     // Subsea equipment
     double subseaCost = wellCount * subseaTreeCostMusd + manifoldBaseCostMusd;
     option.setSubseaCapexMusd(subseaCost);
@@ -500,14 +500,14 @@ public class TiebackAnalyzer implements Serializable {
     ProductionProfileGenerator profileGenerator = new ProductionProfileGenerator();
     double peakRatePerDay = isGasField ? gasRateMSm3d * 1.0e6 : oilRateBopd;
     Map<Integer, Double> profile = profileGenerator.generateFullProfile(peakRatePerDay, 2, 5, isGasField ? 0.12 : 0.15,
-	0.5, isGasField ? DeclineType.EXPONENTIAL : DeclineType.HYPERBOLIC, 2026, 25, peakRatePerDay * 0.05);
+        0.5, isGasField ? DeclineType.EXPONENTIAL : DeclineType.HYPERBOLIC, 2026, 25, peakRatePerDay * 0.05);
     option.setFieldLifeYears(profile.size());
 
     for (Map.Entry<Integer, Double> entry : profile.entrySet()) {
       if (isGasField) {
-	engine.addAnnualProduction(entry.getKey(), 0, entry.getValue(), 0);
+        engine.addAnnualProduction(entry.getKey(), 0, entry.getValue(), 0);
       } else {
-	engine.addAnnualProduction(entry.getKey(), entry.getValue(), 0, 0);
+        engine.addAnnualProduction(entry.getKey(), entry.getValue(), 0, 0);
       }
     }
 
@@ -634,14 +634,14 @@ public class TiebackAnalyzer implements Serializable {
     if (isGasField) {
       double rateMSm3d = totalRate / 1.0e6;
       if (rateUnit != null && rateUnit.toLowerCase().contains("msm3")) {
-	rateMSm3d = totalRate;
+        rateMSm3d = totalRate;
       }
       if (rateMSm3d <= 1.0) {
-	return 8.0;
+        return 8.0;
       } else if (rateMSm3d <= 3.0) {
-	return 10.0;
+        return 10.0;
       } else if (rateMSm3d <= 6.0) {
-	return 12.0;
+        return 12.0;
       }
       return 16.0;
     }
@@ -705,7 +705,7 @@ public class TiebackAnalyzer implements Serializable {
       double pressureBara) {
     SystemInterface fluid = new SystemSrkEos(temperatureC + 273.15, pressureBara);
     ReservoirInput.FluidType fluidType = reservoir != null ? reservoir.getFluidType()
-	: ReservoirInput.FluidType.RICH_GAS;
+        : ReservoirInput.FluidType.RICH_GAS;
     switch (fluidType) {
     case LEAN_GAS:
       fluid.addComponent("methane", 0.90);
@@ -768,7 +768,7 @@ public class TiebackAnalyzer implements Serializable {
     if (isGasField) {
       double gasRateSm3d = totalRate;
       if (rateUnit != null && rateUnit.toLowerCase().contains("msm3")) {
-	gasRateSm3d = totalRate * 1.0e6;
+        gasRateSm3d = totalRate * 1.0e6;
       }
       return gasRateSm3d * 0.85 / 24.0;
     }
@@ -865,16 +865,16 @@ public class TiebackAnalyzer implements Serializable {
       PipelineResult hydraulicResult, double seabedTemperatureC) {
     StringBuilder notes = new StringBuilder();
     notes.append(String.format("Hydraulics: route %.1f km, seabed %.1f C, U %.1f W/m2K. ", option.getDistanceKm(),
-	seabedTemperatureC, option.getPipelineHeatTransferCoefficientWm2K()));
+        seabedTemperatureC, option.getPipelineHeatTransferCoefficientWm2K()));
     if (hydraulicResult != null) {
       notes.append(String.format("Arrival %.1f bara / %.1f C, regime %s, erosional ratio %.2f. ",
-	  option.getArrivalPressureBara(), option.getArrivalTemperatureC(), option.getFlowRegime(),
-	  option.getErosionalVelocityRatio()));
+          option.getArrivalPressureBara(), option.getArrivalTemperatureC(), option.getFlowRegime(),
+          option.getErosionalVelocityRatio()));
     }
     notes.append(String.format("Hydrate formation %.1f C, margin %.1f C. ", option.getHydrateFormationTemperatureC(),
-	option.getHydrateMarginC()));
+        option.getHydrateMarginC()));
     notes.append(String.format("Shutdown cooldown risk %.0f%%, time to hydrate %.1f h. ",
-	option.getShutdownCooldownRiskScore() * 100.0, option.getShutdownCooldownTimeToHydrateHours()));
+        option.getShutdownCooldownRiskScore() * 100.0, option.getShutdownCooldownTimeToHydrateHours()));
     for (String recommendation : report.getRecommendations().values()) {
       notes.append(recommendation).append(" ");
     }
@@ -1050,7 +1050,7 @@ public class TiebackAnalyzer implements Serializable {
     if (distance > maxTiebackDistanceKm) {
       result.setPassed(false);
       result.setFailureReason(
-	  "Distance " + String.format("%.1f", distance) + " km exceeds maximum " + maxTiebackDistanceKm + " km");
+          "Distance " + String.format("%.1f", distance) + " km exceeds maximum " + maxTiebackDistanceKm + " km");
       return result;
     }
 
@@ -1066,7 +1066,7 @@ public class TiebackAnalyzer implements Serializable {
     if (reservesMMboe < minReserves) {
       result.setPassed(false);
       result.setFailureReason("Reserves " + reservesMMboe + " MMboe below minimum " + String.format("%.1f", minReserves)
-	  + " MMboe for distance");
+          + " MMboe for distance");
       return result;
     }
 
@@ -1099,13 +1099,13 @@ public class TiebackAnalyzer implements Serializable {
     Collections.sort(results, new java.util.Comparator<TiebackScreeningResult>() {
       @Override
       public int compare(TiebackScreeningResult a, TiebackScreeningResult b) {
-	if (a.isPassed() && !b.isPassed()) {
-	  return -1;
-	}
-	if (!a.isPassed() && b.isPassed()) {
-	  return 1;
-	}
-	return Double.compare(b.getEstimatedNpvMusd(), a.getEstimatedNpvMusd());
+        if (a.isPassed() && !b.isPassed()) {
+          return -1;
+        }
+        if (!a.isPassed() && b.isPassed()) {
+          return 1;
+        }
+        return Double.compare(b.getEstimatedNpvMusd(), a.getEstimatedNpvMusd());
       }
     });
 
@@ -1273,10 +1273,10 @@ public class TiebackAnalyzer implements Serializable {
     @Override
     public String toString() {
       if (passed) {
-	return String.format("%s: PASS (%.0f km, CAPEX=%.0f, NPV=%.0f MUSD)", hostName, distanceKm, estimatedCapexMusd,
-	    estimatedNpvMusd);
+        return String.format("%s: PASS (%.0f km, CAPEX=%.0f, NPV=%.0f MUSD)", hostName, distanceKm, estimatedCapexMusd,
+            estimatedNpvMusd);
       } else {
-	return String.format("%s: FAIL - %s", hostName, failureReason);
+        return String.format("%s: FAIL - %s", hostName, failureReason);
       }
     }
   }

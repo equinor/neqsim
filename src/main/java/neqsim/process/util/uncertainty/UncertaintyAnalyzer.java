@@ -155,15 +155,15 @@ public class UncertaintyAnalyzer {
 
       // Run simulation
       try {
-	processSystem.run();
+        processSystem.run();
 
-	// Collect outputs
-	for (String output : outputVariables) {
-	  double value = getOutputValue(output);
-	  outputSamples.get(output).add(value);
-	}
+        // Collect outputs
+        for (String output : outputVariables) {
+          double value = getOutputValue(output);
+          outputSamples.get(output).add(value);
+        }
       } catch (Exception e) {
-	// Skip failed samples
+        // Skip failed samples
       }
     }
 
@@ -178,14 +178,14 @@ public class UncertaintyAnalyzer {
     for (String output : outputVariables) {
       List<Double> samples2 = outputSamples.get(output);
       if (!samples2.isEmpty()) {
-	double mean = samples2.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
-	double variance = samples2.stream().mapToDouble(v -> Math.pow(v - mean, 2)).average().orElse(0.0);
-	double stdDev = Math.sqrt(variance);
+        double mean = samples2.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+        double variance = samples2.stream().mapToDouble(v -> Math.pow(v - mean, 2)).average().orElse(0.0);
+        double stdDev = Math.sqrt(variance);
 
-	results.put(output, new UncertaintyBounds(mean, stdDev, ""));
+        results.put(output, new UncertaintyBounds(mean, stdDev, ""));
 
-	double cv = (Math.abs(mean) > 1e-10) ? stdDev / Math.abs(mean) : 0.0;
-	maxCv = Math.max(maxCv, cv);
+        double cv = (Math.abs(mean) > 1e-10) ? stdDev / Math.abs(mean) : 0.0;
+        maxCv = Math.max(maxCv, cv);
       }
     }
 
@@ -215,7 +215,7 @@ public class UncertaintyAnalyzer {
       double baseValue = getInputValue(inputs[j]);
       double perturbation = Math.abs(baseValue) * 0.001; // 0.1% perturbation
       if (perturbation < 1e-6) {
-	perturbation = 1e-6;
+        perturbation = 1e-6;
       }
 
       // Positive perturbation
@@ -223,9 +223,9 @@ public class UncertaintyAnalyzer {
       processSystem.run();
 
       for (int i = 0; i < outputs.length; i++) {
-	double perturbedOutput = getOutputValue(outputs[i]);
-	double sensitivity = (perturbedOutput - baselineOutputs[i]) / perturbation;
-	matrix.setSensitivity(outputs[i], inputs[j], sensitivity);
+        double perturbedOutput = getOutputValue(outputs[i]);
+        double sensitivity = (perturbedOutput - baselineOutputs[i]) / perturbation;
+        matrix.setSensitivity(outputs[i], inputs[j], sensitivity);
       }
 
       // Restore
@@ -248,20 +248,20 @@ public class UncertaintyAnalyzer {
 
       switch (uncert.getDistribution()) {
       case NORMAL:
-	perturbation = random.nextGaussian() * uncert.getStandardDeviation();
-	break;
+        perturbation = random.nextGaussian() * uncert.getStandardDeviation();
+        break;
       case UNIFORM:
-	double range = uncert.getStandardDeviation() * Math.sqrt(12) / 2;
-	perturbation = (random.nextDouble() - 0.5) * 2 * range;
-	break;
+        double range = uncert.getStandardDeviation() * Math.sqrt(12) / 2;
+        perturbation = (random.nextDouble() - 0.5) * 2 * range;
+        break;
       case LOGNORMAL:
-	double sigma = Math.sqrt(Math.log(1 + Math.pow(uncert.getStandardDeviation() / baseValue, 2)));
-	double mu = Math.log(baseValue) - sigma * sigma / 2;
-	double logValue = mu + sigma * random.nextGaussian();
-	perturbation = Math.exp(logValue) - baseValue;
-	break;
+        double sigma = Math.sqrt(Math.log(1 + Math.pow(uncert.getStandardDeviation() / baseValue, 2)));
+        double mu = Math.log(baseValue) - sigma * sigma / 2;
+        double logValue = mu + sigma * random.nextGaussian();
+        perturbation = Math.exp(logValue) - baseValue;
+        break;
       default:
-	perturbation = random.nextGaussian() * uncert.getStandardDeviation();
+        perturbation = random.nextGaussian() * uncert.getStandardDeviation();
       }
 
       setInputValue(uncert.getVariableName(), baseValue + perturbation);

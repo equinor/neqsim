@@ -120,7 +120,7 @@ public class SensitivityMatrix implements Serializable {
     for (int i = 0; i < outputVariables.length; i++) {
       double variance = 0.0;
       for (int j = 0; j < inputVariables.length; j++) {
-	variance += Math.pow(jacobian[i][j] * inputStdDevs[j], 2);
+        variance += Math.pow(jacobian[i][j] * inputStdDevs[j], 2);
       }
       outputStdDevs[i] = Math.sqrt(variance);
     }
@@ -147,9 +147,9 @@ public class SensitivityMatrix implements Serializable {
     double[][] temp = new double[m][n];
     for (int i = 0; i < m; i++) {
       for (int j = 0; j < n; j++) {
-	for (int k = 0; k < n; k++) {
-	  temp[i][j] += jacobian[i][k] * inputCovariance[k][j];
-	}
+        for (int k = 0; k < n; k++) {
+          temp[i][j] += jacobian[i][k] * inputCovariance[k][j];
+        }
       }
     }
 
@@ -157,9 +157,9 @@ public class SensitivityMatrix implements Serializable {
     double[][] result = new double[m][m];
     for (int i = 0; i < m; i++) {
       for (int j = 0; j < m; j++) {
-	for (int k = 0; k < n; k++) {
-	  result[i][j] += temp[i][k] * jacobian[j][k];
-	}
+        for (int k = 0; k < n; k++) {
+          result[i][j] += temp[i][k] * jacobian[j][k];
+        }
       }
     }
 
@@ -196,10 +196,10 @@ public class SensitivityMatrix implements Serializable {
       double maxSens = 0.0;
       int maxIdx = 0;
       for (int j = 0; j < inputVariables.length; j++) {
-	if (Math.abs(jacobian[i][j]) > Math.abs(maxSens)) {
-	  maxSens = jacobian[i][j];
-	  maxIdx = j;
-	}
+        if (Math.abs(jacobian[i][j]) > Math.abs(maxSens)) {
+          maxSens = jacobian[i][j];
+          maxIdx = j;
+        }
       }
       result.put(outputVariables[i], inputVariables[maxIdx]);
     }
@@ -219,9 +219,9 @@ public class SensitivityMatrix implements Serializable {
 
     for (int i = 0; i < outputVariables.length; i++) {
       for (int j = 0; j < inputVariables.length; j++) {
-	if (Math.abs(outputValues[i]) > 1e-10 && Math.abs(inputValues[j]) > 1e-10) {
-	  normalized[i][j] = jacobian[i][j] * inputValues[j] / outputValues[i];
-	}
+        if (Math.abs(outputValues[i]) > 1e-10 && Math.abs(inputValues[j]) > 1e-10) {
+          normalized[i][j] = jacobian[i][j] * inputValues[j] / outputValues[i];
+        }
       }
     }
 

@@ -162,7 +162,7 @@ public class NeqSimVega {
     doubleW[][] ar = new doubleW[rows][cols];
     for (int i = 0; i < rows; i++) {
       for (int j = 0; j < cols; j++) {
-	ar[i][j] = new doubleW(0.0);
+        ar[i][j] = new doubleW(0.0);
       }
     }
 
@@ -200,19 +200,19 @@ public class NeqSimVega {
     for (int i = 0; i < properties.length; i++) {
       switch (properties[i]) {
       case "density":
-	returnProperties[i] = allProperties[0];
-	break;
+        returnProperties[i] = allProperties[0];
+        break;
       case "Cp":
-	returnProperties[i] = allProperties[1];
-	break;
+        returnProperties[i] = allProperties[1];
+        break;
       case "Cv":
-	returnProperties[i] = allProperties[2];
-	break;
+        returnProperties[i] = allProperties[2];
+        break;
       case "soundSpeed":
-	returnProperties[i] = allProperties[3];
-	break;
+        returnProperties[i] = allProperties[3];
+        break;
       default:
-	break;
+        break;
       }
     }
     return returnProperties;
@@ -244,9 +244,9 @@ public class NeqSimVega {
     // neqsim.thermo.GERG.Densitygerg.densitygerg(0, 0, 0, arg3, 0, arg5, arg6,
     // arg7);
     Vega.propertiesVega(phase.getTemperature(), dens, p, z, dpdd, d2pdd2, d2pdtd, dpdt, u, h, s, cv, cp, w, g, jt,
-	kappa, A);
+        kappa, A);
     double[] properties = new double[] { p.val, z.val, dpdd.val, d2pdd2.val, d2pdtd.val, dpdt.val, u.val, h.val, s.val,
-	cv.val, cp.val, w.val, g.val, jt.val, kappa.val };
+        cv.val, cp.val, w.val, g.val, jt.val, kappa.val };
     return properties;
   }
 
@@ -259,7 +259,7 @@ public class NeqSimVega {
     // 1) Check if the phase contains ONLY hydrogen
     if (phase.getNumberOfComponents() != 1) {
       throw new IllegalArgumentException("Vega model requires exactly one component (helium). " + "Found "
-	  + phase.getNumberOfComponents() + " components.");
+          + phase.getNumberOfComponents() + " components.");
     }
 
     // 2) Check the name of that single component

@@ -14,11 +14,13 @@ import java.util.Map;
  * <p>
  * <b>Corey Model (1954):</b>
  *
+ * <p>
  * $$ K_{rw} = K_{rw,max} \cdot S_{wn}^{n_w}, \quad K_{row} = K_{ro,max} \cdot (1 - S_{wn})^{n_o} $$
  *
  * <p>
  * <b>LET Model (Lomeland, Ebeltoft, Thomas 2005):</b>
  *
+ * <p>
  * $$ K_r = K_{r,max} \cdot \frac{S_n^L}{S_n^L + E \cdot (1 - S_n)^T} $$
  *
  * <p>
@@ -188,7 +190,7 @@ public class RelativePermeabilityGenerator {
     sb.append("-- ");
     for (int c = 0; c < columns.length; c++) {
       if (c > 0) {
-	sb.append("       ");
+        sb.append("       ");
       }
       sb.append(columns[c]);
     }
@@ -198,10 +200,10 @@ public class RelativePermeabilityGenerator {
     for (int i = 0; i < nRows; i++) {
       sb.append("   ");
       for (int c = 0; c < columns.length; c++) {
-	if (c > 0) {
-	  sb.append("  ");
-	}
-	sb.append(String.format("%.8f", table.get(columns[c])[i]));
+        if (c > 0) {
+          sb.append("  ");
+        }
+        sb.append(String.format("%.8f", table.get(columns[c])[i]));
       }
       sb.append('\n');
     }
@@ -231,11 +233,11 @@ public class RelativePermeabilityGenerator {
       double swnKro = normalizeWaterForKrow(sw[i], swc, sorw);
 
       if (modelFamily == RelPermModelFamily.LET) {
-	krw[i] = krwMax * letCurve(swnKrw, Lw, Ew, Tw);
-	krow[i] = kroMax * letCurve(1.0 - swnKro, Lo, Eo, To);
+        krw[i] = krwMax * letCurve(swnKrw, Lw, Ew, Tw);
+        krow[i] = kroMax * letCurve(1.0 - swnKro, Lo, Eo, To);
       } else {
-	krw[i] = krwMax * coreyCurve(swnKrw, nw);
-	krow[i] = kroMax * coreyCurve(1.0 - swnKro, no);
+        krw[i] = krwMax * coreyCurve(swnKrw, nw);
+        krow[i] = kroMax * coreyCurve(1.0 - swnKro, no);
       }
       pcow[i] = 0.0;
     }
@@ -272,11 +274,11 @@ public class RelativePermeabilityGenerator {
       double sgnKro = normalizeGasForKrog(sg[i], sgcr, swc, sorg);
 
       if (modelFamily == RelPermModelFamily.LET) {
-	krg[i] = krgMax * letCurve(sgnKrg, Lg, Eg, Tg);
-	krog[i] = kroMax * letCurve(1.0 - sgnKro, Log, Eog, Tog);
+        krg[i] = krgMax * letCurve(sgnKrg, Lg, Eg, Tg);
+        krog[i] = kroMax * letCurve(1.0 - sgnKro, Log, Eog, Tog);
       } else {
-	krg[i] = krgMax * coreyCurve(sgnKrg, ng);
-	krog[i] = kroMax * coreyCurve(1.0 - sgnKro, nog);
+        krg[i] = krgMax * coreyCurve(sgnKrg, ng);
+        krog[i] = kroMax * coreyCurve(1.0 - sgnKro, nog);
       }
       pcog[i] = 0.0;
     }
@@ -317,11 +319,11 @@ public class RelativePermeabilityGenerator {
       sonG = clamp(sonG);
 
       if (modelFamily == RelPermModelFamily.LET) {
-	krow[i] = kroMax * letCurve(sonW, Lo, Eo, To);
-	krog[i] = kroMax * letCurve(sonG, Log, Eog, Tog);
+        krow[i] = kroMax * letCurve(sonW, Lo, Eo, To);
+        krog[i] = kroMax * letCurve(sonG, Log, Eog, Tog);
       } else {
-	krow[i] = kroMax * coreyCurve(sonW, no);
-	krog[i] = kroMax * coreyCurve(sonG, nog);
+        krow[i] = kroMax * coreyCurve(sonW, no);
+        krog[i] = kroMax * coreyCurve(sonG, nog);
       }
     }
 
@@ -357,11 +359,11 @@ public class RelativePermeabilityGenerator {
       double sgnKro = normalizeGasForKrog(sg, sgcr, swc, sorg);
 
       if (modelFamily == RelPermModelFamily.LET) {
-	krg[i] = krgMax * letCurve(sgnKrg, Lg, Eg, Tg);
-	krog[i] = kroMax * letCurve(1.0 - sgnKro, Log, Eog, Tog);
+        krg[i] = krgMax * letCurve(sgnKrg, Lg, Eg, Tg);
+        krog[i] = kroMax * letCurve(1.0 - sgnKro, Log, Eog, Tog);
       } else {
-	krg[i] = krgMax * coreyCurve(sgnKrg, ng);
-	krog[i] = kroMax * coreyCurve(1.0 - sgnKro, nog);
+        krg[i] = krgMax * coreyCurve(sgnKrg, ng);
+        krog[i] = kroMax * coreyCurve(1.0 - sgnKro, nog);
       }
       pcog[i] = 0.0;
     }
@@ -388,6 +390,7 @@ public class RelativePermeabilityGenerator {
    * <p>
    * Calculates the normalized relative permeability using the Corey (1954) model:
    *
+   * <p>
    * $$ K_{r,norm} = S_n^n $$
    *
    * @param sn Normalized saturation in range [0, 1]
@@ -405,6 +408,7 @@ public class RelativePermeabilityGenerator {
    * <p>
    * Lomeland-Ebeltoft-Thomas (2005) model:
    *
+   * <p>
    * $$ K_{r,norm} = \frac{S_n^L}{S_n^L + E \cdot (1 - S_n)^T} $$
    *
    * @param sn Normalized saturation in range [0, 1]

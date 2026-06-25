@@ -156,7 +156,7 @@ public final class TaxModelRegistry {
     FiscalParameters params = getParameters(countryCode);
     if (params == null) {
       throw new IllegalArgumentException(
-	  "Unknown country code: " + countryCode + ". Available: " + getAvailableCountries());
+          "Unknown country code: " + countryCode + ". Available: " + getAvailableCountries());
     }
     return new GenericTaxModel(params);
   }
@@ -244,7 +244,7 @@ public final class TaxModelRegistry {
       StringBuilder content = new StringBuilder();
       String line;
       while ((line = reader.readLine()) != null) {
-	content.append(line);
+        content.append(line);
       }
 
       return parseAndRegisterJson(content.toString());
@@ -265,8 +265,8 @@ public final class TaxModelRegistry {
   private static boolean loadFromResource() {
     try (InputStream is = TaxModelRegistry.class.getClassLoader().getResourceAsStream(JSON_RESOURCE_PATH)) {
       if (is == null) {
-	logger.debug("Fiscal parameters resource not found: {}", JSON_RESOURCE_PATH);
-	return false;
+        logger.debug("Fiscal parameters resource not found: {}", JSON_RESOURCE_PATH);
+        return false;
       }
 
       int count = loadFromJson(is);
@@ -295,11 +295,11 @@ public final class TaxModelRegistry {
     int count = 0;
     for (JsonElement element : countries) {
       try {
-	FiscalParameters params = parseCountryJson(element.getAsJsonObject());
-	register(params);
-	count++;
+        FiscalParameters params = parseCountryJson(element.getAsJsonObject());
+        register(params);
+        count++;
       } catch (Exception e) {
-	logger.warn("Failed to parse country entry: {}", e.getMessage());
+        logger.warn("Failed to parse country entry: {}", e.getMessage());
       }
     }
 
@@ -316,29 +316,29 @@ public final class TaxModelRegistry {
     String countryCode = getStringOrDefault(json, "countryCode", "UNKNOWN");
 
     FiscalParameters.Builder builder = FiscalParameters.builder(countryCode)
-	.countryName(getStringOrDefault(json, "countryName", countryCode))
-	.description(getStringOrDefault(json, "description", ""))
-	.validFromYear(getIntOrDefault(json, "validFromYear", 2024))
-	.fiscalSystemType(parseFiscalSystemType(getStringOrDefault(json, "fiscalSystemType", "CONCESSIONARY")))
-	.corporateTaxRate(getDoubleOrDefault(json, "corporateTaxRate", 0.25))
-	.resourceTaxRate(getDoubleOrDefault(json, "resourceTaxRate", 0.0))
-	.royaltyRate(getDoubleOrDefault(json, "royaltyRate", 0.0))
-	.windfallTax(getDoubleOrDefault(json, "windfallTaxRate", 0.0),
-	    getDoubleOrDefault(json, "windfallTaxThreshold", 0.0))
-	.stateParticipation(getDoubleOrDefault(json, "stateParticipation", 0.0))
-	.depreciation(parseDepreciationMethod(getStringOrDefault(json, "depreciationMethod", "STRAIGHT_LINE")),
-	    getIntOrDefault(json, "depreciationYears", 6))
-	.decliningBalanceRate(getDoubleOrDefault(json, "decliningBalanceRate", 0.25))
-	.uplift(getDoubleOrDefault(json, "upliftRate", 0.0), getIntOrDefault(json, "upliftYears", 0))
-	.investmentTaxCredit(getDoubleOrDefault(json, "investmentTaxCredit", 0.0))
-	.costRecoveryLimit(getDoubleOrDefault(json, "costRecoveryLimit", 1.0))
-	.profitSharing(getDoubleOrDefault(json, "profitShareGovernment", 0.0),
-	    getDoubleOrDefault(json, "profitShareContractor", 1.0))
-	.lossCarryForward(getIntOrDefault(json, "lossCarryForwardYears", 0),
-	    getDoubleOrDefault(json, "lossCarryForwardInterest", 0.0))
-	.ringFenced(parseRingFenceLevel(getStringOrDefault(json, "ringFenceLevel", "COMPANY")))
-	.decommissioning(getBooleanOrDefault(json, "decommissioningDeductible", true),
-	    getBooleanOrDefault(json, "decommissioningFundDeductible", false));
+        .countryName(getStringOrDefault(json, "countryName", countryCode))
+        .description(getStringOrDefault(json, "description", ""))
+        .validFromYear(getIntOrDefault(json, "validFromYear", 2024))
+        .fiscalSystemType(parseFiscalSystemType(getStringOrDefault(json, "fiscalSystemType", "CONCESSIONARY")))
+        .corporateTaxRate(getDoubleOrDefault(json, "corporateTaxRate", 0.25))
+        .resourceTaxRate(getDoubleOrDefault(json, "resourceTaxRate", 0.0))
+        .royaltyRate(getDoubleOrDefault(json, "royaltyRate", 0.0))
+        .windfallTax(getDoubleOrDefault(json, "windfallTaxRate", 0.0),
+            getDoubleOrDefault(json, "windfallTaxThreshold", 0.0))
+        .stateParticipation(getDoubleOrDefault(json, "stateParticipation", 0.0))
+        .depreciation(parseDepreciationMethod(getStringOrDefault(json, "depreciationMethod", "STRAIGHT_LINE")),
+            getIntOrDefault(json, "depreciationYears", 6))
+        .decliningBalanceRate(getDoubleOrDefault(json, "decliningBalanceRate", 0.25))
+        .uplift(getDoubleOrDefault(json, "upliftRate", 0.0), getIntOrDefault(json, "upliftYears", 0))
+        .investmentTaxCredit(getDoubleOrDefault(json, "investmentTaxCredit", 0.0))
+        .costRecoveryLimit(getDoubleOrDefault(json, "costRecoveryLimit", 1.0))
+        .profitSharing(getDoubleOrDefault(json, "profitShareGovernment", 0.0),
+            getDoubleOrDefault(json, "profitShareContractor", 1.0))
+        .lossCarryForward(getIntOrDefault(json, "lossCarryForwardYears", 0),
+            getDoubleOrDefault(json, "lossCarryForwardInterest", 0.0))
+        .ringFenced(parseRingFenceLevel(getStringOrDefault(json, "ringFenceLevel", "COMPANY")))
+        .decommissioning(getBooleanOrDefault(json, "decommissioningDeductible", true),
+            getBooleanOrDefault(json, "decommissioningFundDeductible", false));
 
     return builder.build();
   }
@@ -393,39 +393,39 @@ public final class TaxModelRegistry {
   private static void initializeHardcodedDefaults() {
     // Norway (Norwegian Continental Shelf)
     register(FiscalParameters.builder("NO").countryName("Norway")
-	.description("Norwegian Continental Shelf petroleum tax regime (2024)").validFromYear(2024)
-	.fiscalSystemType(FiscalParameters.FiscalSystemType.CONCESSIONARY).corporateTaxRate(0.22).resourceTaxRate(0.56)
-	.royaltyRate(0.0).depreciation(FiscalParameters.DepreciationMethod.STRAIGHT_LINE, 6).uplift(0.055, 4)
-	.lossCarryForward(0, 0.0).ringFenced(FiscalParameters.RingFenceLevel.COMPANY).decommissioning(true, false)
-	.build());
+        .description("Norwegian Continental Shelf petroleum tax regime (2024)").validFromYear(2024)
+        .fiscalSystemType(FiscalParameters.FiscalSystemType.CONCESSIONARY).corporateTaxRate(0.22).resourceTaxRate(0.56)
+        .royaltyRate(0.0).depreciation(FiscalParameters.DepreciationMethod.STRAIGHT_LINE, 6).uplift(0.055, 4)
+        .lossCarryForward(0, 0.0).ringFenced(FiscalParameters.RingFenceLevel.COMPANY).decommissioning(true, false)
+        .build());
 
     // United Kingdom (UKCS)
     register(FiscalParameters.builder("UK").countryName("United Kingdom")
-	.description("UK Continental Shelf petroleum tax regime (2024)").validFromYear(2024)
-	.fiscalSystemType(FiscalParameters.FiscalSystemType.CONCESSIONARY).corporateTaxRate(0.30).resourceTaxRate(0.10)
-	.royaltyRate(0.0).depreciation(FiscalParameters.DepreciationMethod.STRAIGHT_LINE, 6).lossCarryForward(0, 0.0)
-	.ringFenced(FiscalParameters.RingFenceLevel.LICENSE).decommissioning(true, true).build());
+        .description("UK Continental Shelf petroleum tax regime (2024)").validFromYear(2024)
+        .fiscalSystemType(FiscalParameters.FiscalSystemType.CONCESSIONARY).corporateTaxRate(0.30).resourceTaxRate(0.10)
+        .royaltyRate(0.0).depreciation(FiscalParameters.DepreciationMethod.STRAIGHT_LINE, 6).lossCarryForward(0, 0.0)
+        .ringFenced(FiscalParameters.RingFenceLevel.LICENSE).decommissioning(true, true).build());
 
     // United States - Gulf of Mexico
     register(FiscalParameters.builder("US-GOM").countryName("United States - Gulf of Mexico")
-	.description("US Gulf of Mexico federal waters (OCS)").validFromYear(2024)
-	.fiscalSystemType(FiscalParameters.FiscalSystemType.CONCESSIONARY).corporateTaxRate(0.21).resourceTaxRate(0.0)
-	.royaltyRate(0.1875).depreciation(FiscalParameters.DepreciationMethod.STRAIGHT_LINE, 7).lossCarryForward(0, 0.0)
-	.ringFenced(FiscalParameters.RingFenceLevel.COMPANY).decommissioning(true, false).build());
+        .description("US Gulf of Mexico federal waters (OCS)").validFromYear(2024)
+        .fiscalSystemType(FiscalParameters.FiscalSystemType.CONCESSIONARY).corporateTaxRate(0.21).resourceTaxRate(0.0)
+        .royaltyRate(0.1875).depreciation(FiscalParameters.DepreciationMethod.STRAIGHT_LINE, 7).lossCarryForward(0, 0.0)
+        .ringFenced(FiscalParameters.RingFenceLevel.COMPANY).decommissioning(true, false).build());
 
     // Brazil - Concession
     register(FiscalParameters.builder("BR").countryName("Brazil")
-	.description("Brazil concession regime - post-salt and conventional fields (2024)").validFromYear(2024)
-	.fiscalSystemType(FiscalParameters.FiscalSystemType.CONCESSIONARY).corporateTaxRate(0.34).resourceTaxRate(0.0)
-	.royaltyRate(0.10).depreciation(FiscalParameters.DepreciationMethod.STRAIGHT_LINE, 10).lossCarryForward(0, 0.0)
-	.ringFenced(FiscalParameters.RingFenceLevel.FIELD).decommissioning(true, false).build());
+        .description("Brazil concession regime - post-salt and conventional fields (2024)").validFromYear(2024)
+        .fiscalSystemType(FiscalParameters.FiscalSystemType.CONCESSIONARY).corporateTaxRate(0.34).resourceTaxRate(0.0)
+        .royaltyRate(0.10).depreciation(FiscalParameters.DepreciationMethod.STRAIGHT_LINE, 10).lossCarryForward(0, 0.0)
+        .ringFenced(FiscalParameters.RingFenceLevel.FIELD).decommissioning(true, false).build());
 
     // Angola
     register(FiscalParameters.builder("AO").countryName("Angola").description("Angola PSC regime (deep water)")
-	.validFromYear(2024).fiscalSystemType(FiscalParameters.FiscalSystemType.PSC).corporateTaxRate(0.30)
-	.royaltyRate(0.0).costRecoveryLimit(0.50).profitSharing(0.60, 0.40)
-	.depreciation(FiscalParameters.DepreciationMethod.STRAIGHT_LINE, 4).lossCarryForward(5, 0.0)
-	.ringFenced(FiscalParameters.RingFenceLevel.LICENSE).build());
+        .validFromYear(2024).fiscalSystemType(FiscalParameters.FiscalSystemType.PSC).corporateTaxRate(0.30)
+        .royaltyRate(0.0).costRecoveryLimit(0.50).profitSharing(0.60, 0.40)
+        .depreciation(FiscalParameters.DepreciationMethod.STRAIGHT_LINE, 4).lossCarryForward(5, 0.0)
+        .ringFenced(FiscalParameters.RingFenceLevel.LICENSE).build());
   }
 
   // ============================================================================
@@ -444,8 +444,8 @@ public final class TaxModelRegistry {
 
     for (FiscalParameters params : REGISTRY.values()) {
       sb.append(String.format("%-8s %-30s %8.1f %8.1f %8.1f %8.1f%n", params.getCountryCode(),
-	  truncate(params.getCountryName(), 30), params.getCorporateTaxRate() * 100, params.getResourceTaxRate() * 100,
-	  params.getTotalMarginalTaxRate() * 100, params.getRoyaltyRate() * 100));
+          truncate(params.getCountryName(), 30), params.getCorporateTaxRate() * 100, params.getResourceTaxRate() * 100,
+          params.getTotalMarginalTaxRate() * 100, params.getRoyaltyRate() * 100));
     }
 
     return sb.toString();

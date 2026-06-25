@@ -108,15 +108,15 @@ public class SeparatorInternalsDatabase implements Serializable {
     public GradeEfficiencyCurve toGradeEfficiencyCurve() {
       double d50_m = d50_um * 1e-6;
       if ("WIRE_MESH".equals(internalsType)) {
-	return GradeEfficiencyCurve.wireMesh(d50_m, sharpness, maxEfficiency);
+        return GradeEfficiencyCurve.wireMesh(d50_m, sharpness, maxEfficiency);
       } else if ("VANE_PACK".equals(internalsType)) {
-	return GradeEfficiencyCurve.vanePack(d50_m, sharpness, maxEfficiency);
+        return GradeEfficiencyCurve.vanePack(d50_m, sharpness, maxEfficiency);
       } else if ("AXIAL_CYCLONE".equals(internalsType)) {
-	return GradeEfficiencyCurve.axialCyclone(d50_m, sharpness, maxEfficiency);
+        return GradeEfficiencyCurve.axialCyclone(d50_m, sharpness, maxEfficiency);
       } else if ("PLATE_PACK".equals(internalsType)) {
-	return GradeEfficiencyCurve.platePack(d50_m, maxEfficiency);
+        return GradeEfficiencyCurve.platePack(d50_m, maxEfficiency);
       } else if ("GRAVITY".equals(internalsType)) {
-	return GradeEfficiencyCurve.gravity(d50_m);
+        return GradeEfficiencyCurve.gravity(d50_m);
       }
       return GradeEfficiencyCurve.wireMeshDefault();
     }
@@ -204,13 +204,13 @@ public class SeparatorInternalsDatabase implements Serializable {
      */
     public GradeEfficiencyCurve toGradeEfficiencyCurve() {
       if (diameterPoints_um == null || efficiencyPoints == null || diameterPoints_um.length < 2
-	  || diameterPoints_um.length != efficiencyPoints.length) {
-	// Fall back to a generic sigmoid if data is incomplete
-	return GradeEfficiencyCurve.wireMeshDefault();
+          || diameterPoints_um.length != efficiencyPoints.length) {
+        // Fall back to a generic sigmoid if data is incomplete
+        return GradeEfficiencyCurve.wireMeshDefault();
       }
       double[] diametersM = new double[diameterPoints_um.length];
       for (int i = 0; i < diameterPoints_um.length; i++) {
-	diametersM[i] = diameterPoints_um[i] * 1e-6;
+        diametersM[i] = diameterPoints_um[i] * 1e-6;
       }
       return GradeEfficiencyCurve.custom(diametersM, efficiencyPoints);
     }
@@ -231,9 +231,9 @@ public class SeparatorInternalsDatabase implements Serializable {
   public static SeparatorInternalsDatabase getInstance() {
     if (instance == null) {
       synchronized (SeparatorInternalsDatabase.class) {
-	if (instance == null) {
-	  instance = new SeparatorInternalsDatabase();
-	}
+        if (instance == null) {
+          instance = new SeparatorInternalsDatabase();
+        }
       }
     }
     return instance;
@@ -260,39 +260,39 @@ public class SeparatorInternalsDatabase implements Serializable {
     try {
       InputStream is = getClass().getResourceAsStream("/designdata/SeparatorInternals.csv");
       if (is == null) {
-	logger.warn("SeparatorInternals.csv not found in resources, using defaults");
-	createDefaultInternalsRecords();
-	return;
+        logger.warn("SeparatorInternals.csv not found in resources, using defaults");
+        createDefaultInternalsRecords();
+        return;
       }
       BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
       String header = reader.readLine(); // Skip header
       String line;
       while ((line = reader.readLine()) != null) {
-	line = line.trim();
-	if (line.isEmpty()) {
-	  continue;
-	}
-	String[] parts = line.split(",", -1);
-	if (parts.length < 15) {
-	  continue;
-	}
-	InternalsRecord rec = new InternalsRecord();
-	rec.internalsType = parts[0].trim();
-	rec.subType = parts[1].trim();
-	rec.manufacturer = parts[2].trim();
-	rec.d50_um = parseDouble(parts[3]);
-	rec.sharpness = parseDouble(parts[4]);
-	rec.maxEfficiency = parseDouble(parts[5]);
-	rec.maxKFactor = parseDouble(parts[6]);
-	rec.minKFactor = parseDouble(parts[7]);
-	rec.pressureDrop_mbar = parseDouble(parts[8]);
-	rec.designStandard = parts[9].trim();
-	rec.material = parts[10].trim();
-	rec.maxTemperature_C = parseDouble(parts[11]);
-	rec.minThickness_mm = parseDouble(parts[12]);
-	rec.weight_kg_m2 = parseDouble(parts[13]);
-	rec.reference = parts[14].trim();
-	internalsRecords.add(rec);
+        line = line.trim();
+        if (line.isEmpty()) {
+          continue;
+        }
+        String[] parts = line.split(",", -1);
+        if (parts.length < 15) {
+          continue;
+        }
+        InternalsRecord rec = new InternalsRecord();
+        rec.internalsType = parts[0].trim();
+        rec.subType = parts[1].trim();
+        rec.manufacturer = parts[2].trim();
+        rec.d50_um = parseDouble(parts[3]);
+        rec.sharpness = parseDouble(parts[4]);
+        rec.maxEfficiency = parseDouble(parts[5]);
+        rec.maxKFactor = parseDouble(parts[6]);
+        rec.minKFactor = parseDouble(parts[7]);
+        rec.pressureDrop_mbar = parseDouble(parts[8]);
+        rec.designStandard = parts[9].trim();
+        rec.material = parts[10].trim();
+        rec.maxTemperature_C = parseDouble(parts[11]);
+        rec.minThickness_mm = parseDouble(parts[12]);
+        rec.weight_kg_m2 = parseDouble(parts[13]);
+        rec.reference = parts[14].trim();
+        internalsRecords.add(rec);
       }
       reader.close();
     } catch (Exception ex) {
@@ -308,34 +308,34 @@ public class SeparatorInternalsDatabase implements Serializable {
     try {
       InputStream is = getClass().getResourceAsStream("/designdata/SeparatorInletDevices.csv");
       if (is == null) {
-	logger.warn("SeparatorInletDevices.csv not found in resources, using defaults");
-	createDefaultInletDeviceRecords();
-	return;
+        logger.warn("SeparatorInletDevices.csv not found in resources, using defaults");
+        createDefaultInletDeviceRecords();
+        return;
       }
       BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
       String header = reader.readLine(); // Skip header
       String line;
       while ((line = reader.readLine()) != null) {
-	line = line.trim();
-	if (line.isEmpty()) {
-	  continue;
-	}
-	String[] parts = line.split(",", -1);
-	if (parts.length < 10) {
-	  continue;
-	}
-	InletDeviceRecord rec = new InletDeviceRecord();
-	rec.deviceType = parts[0].trim();
-	rec.subType = parts[1].trim();
-	rec.minMomentum_Pa = parseDouble(parts[2]);
-	rec.maxMomentum_Pa = parseDouble(parts[3]);
-	rec.typicalBulkEfficiency = parseDouble(parts[4]);
-	rec.dsdMultiplier = parseDouble(parts[5]);
-	rec.pressureDropCoeff = parseDouble(parts[6]);
-	rec.maxCapacity = parseDouble(parts[7]);
-	rec.material = parts[8].trim();
-	rec.reference = parts[9].trim();
-	inletDeviceRecords.add(rec);
+        line = line.trim();
+        if (line.isEmpty()) {
+          continue;
+        }
+        String[] parts = line.split(",", -1);
+        if (parts.length < 10) {
+          continue;
+        }
+        InletDeviceRecord rec = new InletDeviceRecord();
+        rec.deviceType = parts[0].trim();
+        rec.subType = parts[1].trim();
+        rec.minMomentum_Pa = parseDouble(parts[2]);
+        rec.maxMomentum_Pa = parseDouble(parts[3]);
+        rec.typicalBulkEfficiency = parseDouble(parts[4]);
+        rec.dsdMultiplier = parseDouble(parts[5]);
+        rec.pressureDropCoeff = parseDouble(parts[6]);
+        rec.maxCapacity = parseDouble(parts[7]);
+        rec.material = parts[8].trim();
+        rec.reference = parts[9].trim();
+        inletDeviceRecords.add(rec);
       }
       reader.close();
     } catch (Exception ex) {
@@ -356,43 +356,43 @@ public class SeparatorInternalsDatabase implements Serializable {
     try {
       InputStream is = getClass().getResourceAsStream("/designdata/SeparatorVendorCurves.csv");
       if (is == null) {
-	logger.info("SeparatorVendorCurves.csv not found - vendor curves not loaded");
-	return;
+        logger.info("SeparatorVendorCurves.csv not found - vendor curves not loaded");
+        return;
       }
       BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
       String header = reader.readLine(); // Skip header
       String line;
       while ((line = reader.readLine()) != null) {
-	line = line.trim();
-	if (line.isEmpty()) {
-	  continue;
-	}
-	String[] parts = line.split(",", -1);
-	if (parts.length < 14) {
-	  continue;
-	}
-	VendorCurveRecord rec = new VendorCurveRecord();
-	rec.curveId = parts[0].trim();
-	rec.internalsType = parts[1].trim();
-	rec.vendorName = parts[2].trim();
-	rec.productFamily = parts[3].trim();
-	rec.testStandard = parts[4].trim();
-	rec.testFluid = parts[5].trim();
-	rec.testPressure_bar = parseDouble(parts[6]);
-	rec.testTemperature_C = parseDouble(parts[7]);
-	rec.diameterPoints_um = parseSemicolonDoubles(parts[8]);
-	rec.efficiencyPoints = parseSemicolonDoubles(parts[9]);
-	rec.maxKFactor = parseDouble(parts[10]);
-	rec.testDate = parts[11].trim();
-	rec.certificateRef = parts[12].trim();
-	rec.notes = parts.length > 13 ? parts[13].trim() : "";
+        line = line.trim();
+        if (line.isEmpty()) {
+          continue;
+        }
+        String[] parts = line.split(",", -1);
+        if (parts.length < 14) {
+          continue;
+        }
+        VendorCurveRecord rec = new VendorCurveRecord();
+        rec.curveId = parts[0].trim();
+        rec.internalsType = parts[1].trim();
+        rec.vendorName = parts[2].trim();
+        rec.productFamily = parts[3].trim();
+        rec.testStandard = parts[4].trim();
+        rec.testFluid = parts[5].trim();
+        rec.testPressure_bar = parseDouble(parts[6]);
+        rec.testTemperature_C = parseDouble(parts[7]);
+        rec.diameterPoints_um = parseSemicolonDoubles(parts[8]);
+        rec.efficiencyPoints = parseSemicolonDoubles(parts[9]);
+        rec.maxKFactor = parseDouble(parts[10]);
+        rec.testDate = parts[11].trim();
+        rec.certificateRef = parts[12].trim();
+        rec.notes = parts.length > 13 ? parts[13].trim() : "";
 
-	if (rec.diameterPoints_um != null && rec.efficiencyPoints != null && rec.diameterPoints_um.length >= 2
-	    && rec.diameterPoints_um.length == rec.efficiencyPoints.length) {
-	  vendorCurveRecords.add(rec);
-	} else {
-	  logger.warn("Skipping vendor curve " + rec.curveId + ": invalid data point arrays");
-	}
+        if (rec.diameterPoints_um != null && rec.efficiencyPoints != null && rec.diameterPoints_um.length >= 2
+            && rec.diameterPoints_um.length == rec.efficiencyPoints.length) {
+          vendorCurveRecords.add(rec);
+        } else {
+          logger.warn("Skipping vendor curve " + rec.curveId + ": invalid data point arrays");
+        }
       }
       reader.close();
     } catch (Exception ex) {
@@ -460,7 +460,7 @@ public class SeparatorInternalsDatabase implements Serializable {
     List<InternalsRecord> results = new ArrayList<InternalsRecord>();
     for (InternalsRecord rec : internalsRecords) {
       if (rec.internalsType.equalsIgnoreCase(type)) {
-	results.add(rec);
+        results.add(rec);
       }
     }
     return results;
@@ -476,7 +476,7 @@ public class SeparatorInternalsDatabase implements Serializable {
   public InternalsRecord findByTypeAndSubType(String type, String subType) {
     for (InternalsRecord rec : internalsRecords) {
       if (rec.internalsType.equalsIgnoreCase(type) && rec.subType.equalsIgnoreCase(subType)) {
-	return rec;
+        return rec;
       }
     }
     return null;
@@ -492,7 +492,7 @@ public class SeparatorInternalsDatabase implements Serializable {
     List<InletDeviceRecord> results = new ArrayList<InletDeviceRecord>();
     for (InletDeviceRecord rec : inletDeviceRecords) {
       if (rec.deviceType.equalsIgnoreCase(type)) {
-	results.add(rec);
+        results.add(rec);
       }
     }
     return results;
@@ -535,7 +535,7 @@ public class SeparatorInternalsDatabase implements Serializable {
     List<VendorCurveRecord> results = new ArrayList<VendorCurveRecord>();
     for (VendorCurveRecord rec : vendorCurveRecords) {
       if (rec.internalsType.equalsIgnoreCase(internalsType)) {
-	results.add(rec);
+        results.add(rec);
       }
     }
     return results;
@@ -551,7 +551,7 @@ public class SeparatorInternalsDatabase implements Serializable {
     List<VendorCurveRecord> results = new ArrayList<VendorCurveRecord>();
     for (VendorCurveRecord rec : vendorCurveRecords) {
       if (rec.vendorName.equalsIgnoreCase(vendorName)) {
-	results.add(rec);
+        results.add(rec);
       }
     }
     return results;
@@ -566,7 +566,7 @@ public class SeparatorInternalsDatabase implements Serializable {
   public VendorCurveRecord findVendorCurveById(String curveId) {
     for (VendorCurveRecord rec : vendorCurveRecords) {
       if (rec.curveId.equalsIgnoreCase(curveId)) {
-	return rec;
+        return rec;
       }
     }
     return null;
@@ -583,7 +583,7 @@ public class SeparatorInternalsDatabase implements Serializable {
     List<VendorCurveRecord> results = new ArrayList<VendorCurveRecord>();
     for (VendorCurveRecord rec : vendorCurveRecords) {
       if (rec.internalsType.equalsIgnoreCase(internalsType) && rec.vendorName.equalsIgnoreCase(vendorName)) {
-	results.add(rec);
+        results.add(rec);
       }
     }
     return results;
@@ -680,11 +680,11 @@ public class SeparatorInternalsDatabase implements Serializable {
     for (String token : tokens) {
       String t = token.trim();
       if (!t.isEmpty()) {
-	try {
-	  values.add(Double.parseDouble(t));
-	} catch (NumberFormatException e) {
-	  // skip invalid tokens
-	}
+        try {
+          values.add(Double.parseDouble(t));
+        } catch (NumberFormatException e) {
+          // skip invalid tokens
+        }
       }
     }
     if (values.isEmpty()) {

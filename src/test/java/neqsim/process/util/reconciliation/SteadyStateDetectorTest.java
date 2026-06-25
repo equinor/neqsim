@@ -277,7 +277,7 @@ public class SteadyStateDetectorTest {
       vals.put("temp", 80.0);
       SteadyStateResult result = detector.updateAndEvaluate(vals);
       if (i == 9) {
-	assertTrue(result.isAtSteadyState());
+        assertTrue(result.isAtSteadyState());
       }
     }
   }

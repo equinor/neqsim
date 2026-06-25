@@ -86,15 +86,15 @@ public class TimeSeriesExporter {
     for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       String tag = equipment.getName();
       if (tag == null) {
-	continue;
+        continue;
       }
 
       // For streams, collect key values
       if (equipment instanceof neqsim.process.equipment.stream.StreamInterface) {
-	neqsim.process.equipment.stream.StreamInterface stream = (neqsim.process.equipment.stream.StreamInterface) equipment;
-	point.addValue(tag + ".pressure", stream.getPressure(), "bara", "GOOD");
-	point.addValue(tag + ".temperature", stream.getTemperature() - 273.15, "C", "GOOD");
-	point.addValue(tag + ".flowrate", stream.getFlowRate("kg/hr"), "kg/hr", "GOOD");
+        neqsim.process.equipment.stream.StreamInterface stream = (neqsim.process.equipment.stream.StreamInterface) equipment;
+        point.addValue(tag + ".pressure", stream.getPressure(), "bara", "GOOD");
+        point.addValue(tag + ".temperature", stream.getTemperature() - 273.15, "C", "GOOD");
+        point.addValue(tag + ".flowrate", stream.getFlowRate("kg/hr"), "kg/hr", "GOOD");
       }
     }
 
@@ -138,15 +138,15 @@ public class TimeSeriesExporter {
 
     for (TimeSeriesPoint point : collectedData) {
       if (point.getTimestampMillis() >= startTime.toEpochMilli()) {
-	for (String tag : tags) {
-	  if (point.getValues().containsKey(tag)) {
-	    Map<String, Object> dataPoint = new HashMap<>();
-	    dataPoint.put("t", point.getTimestampMillis());
-	    dataPoint.put("v", point.getValues().get(tag));
-	    dataPoint.put("q", point.getQualities().get(tag));
-	    tagData.get(tag).add(dataPoint);
-	  }
-	}
+        for (String tag : tags) {
+          if (point.getValues().containsKey(tag)) {
+            Map<String, Object> dataPoint = new HashMap<>();
+            dataPoint.put("t", point.getTimestampMillis());
+            dataPoint.put("v", point.getValues().get(tag));
+            dataPoint.put("q", point.getQualities().get(tag));
+            tagData.get(tag).add(dataPoint);
+          }
+        }
       }
     }
 
@@ -178,8 +178,8 @@ public class TimeSeriesExporter {
     for (TimeSeriesPoint point : collectedData) {
       csv.append(point.getTimestampMillis());
       for (String tag : first.getValues().keySet()) {
-	Double value = point.getValues().get(tag);
-	csv.append(",").append(value != null ? value : "");
+        Double value = point.getValues().get(tag);
+        csv.append(",").append(value != null ? value : "");
       }
       csv.append("\n");
     }
@@ -199,8 +199,8 @@ public class TimeSeriesExporter {
     for (int i = 0; i < collectedData.size(); i++) {
       TimeSeriesPoint point = collectedData.get(i);
       for (int j = 0; j < tags.size(); j++) {
-	Double value = point.getValues().get(tags.get(j));
-	matrix[i][j] = (value != null) ? value : Double.NaN;
+        Double value = point.getValues().get(tags.get(j));
+        matrix[i][j] = (value != null) ? value : Double.NaN;
       }
     }
 
@@ -219,26 +219,26 @@ public class TimeSeriesExporter {
       Map<String, Object> imported = gson.fromJson(json, Map.class);
 
       if (imported.containsKey("data")) {
-	@SuppressWarnings("unchecked")
-	List<Map<String, Object>> dataPoints = (List<Map<String, Object>>) imported.get("data");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> dataPoints = (List<Map<String, Object>>) imported.get("data");
 
-	for (Map<String, Object> dp : dataPoints) {
-	  long timestamp = ((Number) dp.get("timestampMillis")).longValue();
-	  TimeSeriesPoint point = new TimeSeriesPoint(Instant.ofEpochMilli(timestamp));
+        for (Map<String, Object> dp : dataPoints) {
+          long timestamp = ((Number) dp.get("timestampMillis")).longValue();
+          TimeSeriesPoint point = new TimeSeriesPoint(Instant.ofEpochMilli(timestamp));
 
-	  @SuppressWarnings("unchecked")
-	  Map<String, Double> values = (Map<String, Double>) dp.get("values");
-	  @SuppressWarnings("unchecked")
-	  Map<String, String> units = (Map<String, String>) dp.get("units");
-	  @SuppressWarnings("unchecked")
-	  Map<String, String> qualities = (Map<String, String>) dp.get("qualities");
+          @SuppressWarnings("unchecked")
+          Map<String, Double> values = (Map<String, Double>) dp.get("values");
+          @SuppressWarnings("unchecked")
+          Map<String, String> units = (Map<String, String>) dp.get("units");
+          @SuppressWarnings("unchecked")
+          Map<String, String> qualities = (Map<String, String>) dp.get("qualities");
 
-	  for (String tag : values.keySet()) {
-	    point.addValue(tag, values.get(tag), units.getOrDefault(tag, ""), qualities.getOrDefault(tag, "GOOD"));
-	  }
+          for (String tag : values.keySet()) {
+            point.addValue(tag, values.get(tag), units.getOrDefault(tag, ""), qualities.getOrDefault(tag, "GOOD"));
+          }
 
-	  collectedData.add(point);
-	}
+          collectedData.add(point);
+        }
       }
     } catch (Exception e) {
       // Log error
@@ -258,14 +258,14 @@ public class TimeSeriesExporter {
     for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       String name = equipment.getName();
       if (name == null) {
-	continue;
+        continue;
       }
 
       if (equipment instanceof neqsim.process.equipment.stream.StreamInterface) {
-	neqsim.process.equipment.stream.StreamInterface stream = (neqsim.process.equipment.stream.StreamInterface) equipment;
-	snapshot.setMeasurement(name + ".pressure", stream.getPressure(), "bara");
-	snapshot.setMeasurement(name + ".temperature", stream.getTemperature() - 273.15, "C");
-	snapshot.setMeasurement(name + ".flowrate", stream.getFlowRate("kg/hr"), "kg/hr");
+        neqsim.process.equipment.stream.StreamInterface stream = (neqsim.process.equipment.stream.StreamInterface) equipment;
+        snapshot.setMeasurement(name + ".pressure", stream.getPressure(), "bara");
+        snapshot.setMeasurement(name + ".temperature", stream.getTemperature() - 273.15, "C");
+        snapshot.setMeasurement(name + ".flowrate", stream.getFlowRate("kg/hr"), "kg/hr");
       }
     }
 

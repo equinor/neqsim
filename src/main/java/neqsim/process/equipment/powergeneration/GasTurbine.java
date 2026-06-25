@@ -214,7 +214,7 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
     SystemInterface air = airStream.getThermoSystem();
     for (int i = 0; i < air.getNumberOfComponents(); i++) {
       if ("oxygen".equals(air.getComponent(i).getName())) {
-	return air.getComponent(i).getz();
+        return air.getComponent(i).getz();
       }
     }
     return 0.0;
@@ -234,9 +234,9 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
     double o2 = 0.0;
     for (int i = 0; i < thermoSystem.getNumberOfComponents(); i++) {
       if (thermoSystem.getComponent(i).isHydrocarbon()) {
-	double c = thermoSystem.getComponent(i).getElements().getNumberOfElements("C");
-	double h = thermoSystem.getComponent(i).getElements().getNumberOfElements("H");
-	o2 += thermoSystem.getComponent(i).getz() * (c + h / 4.0);
+        double c = thermoSystem.getComponent(i).getElements().getNumberOfElements("C");
+        double h = thermoSystem.getComponent(i).getElements().getNumberOfElements("H");
+        o2 += thermoSystem.getComponent(i).getz() * (c + h / 4.0);
       }
     }
     return o2;
@@ -258,13 +258,13 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
     int n = fluid.getNumberOfComponents();
     for (int i = 0; i < n; i++) {
       if ("oxygen".equals(fluid.getComponent(i).getName())) {
-	availableO2 = fluid.getComponent(i).getNumberOfmoles();
+        availableO2 = fluid.getComponent(i).getNumberOfmoles();
       }
       if (fluid.getComponent(i).isHydrocarbon()) {
-	double moles = fluid.getComponent(i).getNumberOfmoles();
-	double c = fluid.getComponent(i).getElements().getNumberOfElements("C");
-	double h = fluid.getComponent(i).getElements().getNumberOfElements("H");
-	requiredO2 += moles * (c + h / 4.0);
+        double moles = fluid.getComponent(i).getNumberOfmoles();
+        double c = fluid.getComponent(i).getElements().getNumberOfElements("C");
+        double h = fluid.getComponent(i).getElements().getNumberOfElements("H");
+        requiredO2 += moles * (c + h / 4.0);
       }
     }
     if (requiredO2 <= 0.0) {
@@ -279,15 +279,15 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
     List<Double> hcBurn = new ArrayList<Double>();
     for (int i = 0; i < n; i++) {
       if (fluid.getComponent(i).isHydrocarbon()) {
-	double moles = fluid.getComponent(i).getNumberOfmoles();
-	double c = fluid.getComponent(i).getElements().getNumberOfElements("C");
-	double h = fluid.getComponent(i).getElements().getNumberOfElements("H");
-	double burned = moles * burnFraction;
-	totalCO2 += burned * c;
-	totalH2O += burned * h / 2.0;
-	totalO2Consumed += burned * (c + h / 4.0);
-	hcNames.add(fluid.getComponent(i).getName());
-	hcBurn.add(burned);
+        double moles = fluid.getComponent(i).getNumberOfmoles();
+        double c = fluid.getComponent(i).getElements().getNumberOfElements("C");
+        double h = fluid.getComponent(i).getElements().getNumberOfElements("H");
+        double burned = moles * burnFraction;
+        totalCO2 += burned * c;
+        totalH2O += burned * h / 2.0;
+        totalO2Consumed += burned * (c + h / 4.0);
+        hcNames.add(fluid.getComponent(i).getName());
+        hcBurn.add(burned);
       }
     }
     for (int k = 0; k < hcNames.size(); k++) {
@@ -330,12 +330,12 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
     double wtFracHC = 0.0;
     for (int i = 0; i < thermoSystem.getNumberOfComponents(); i++) {
       if (thermoSystem.getComponent(i).isHydrocarbon()) {
-	sumHC += thermoSystem.getComponent(i).getz();
-	molMassHC += thermoSystem.getComponent(i).getz() * thermoSystem.getComponent(i).getMolarMass();
-	elementsC += thermoSystem.getComponent(i).getz()
-	    * thermoSystem.getComponent(i).getElements().getNumberOfElements("C");
-	elementsH += thermoSystem.getComponent(i).getz()
-	    * thermoSystem.getComponent(i).getElements().getNumberOfElements("H");
+        sumHC += thermoSystem.getComponent(i).getz();
+        molMassHC += thermoSystem.getComponent(i).getz() * thermoSystem.getComponent(i).getMolarMass();
+        elementsC += thermoSystem.getComponent(i).getz()
+            * thermoSystem.getComponent(i).getElements().getNumberOfElements("C");
+        elementsH += thermoSystem.getComponent(i).getz()
+            * thermoSystem.getComponent(i).getElements().getNumberOfElements("H");
       }
     }
 
@@ -452,9 +452,9 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
     capacityConstraints.clear();
     if (ratedPowerW > 0) {
       addCapacityConstraint(new CapacityConstraint("power", "kW", CapacityConstraint.ConstraintType.HARD)
-	  .setDesignValue(ratedPowerW / 1000.0).setMaxValue(ratedPowerW / 1000.0 * 1.1).setWarningThreshold(0.9)
-	  .setDescription("Gas turbine power output vs rated capacity")
-	  .setValueSupplier(() -> Math.abs(this.power) / 1000.0));
+          .setDesignValue(ratedPowerW / 1000.0).setMaxValue(ratedPowerW / 1000.0 * 1.1).setWarningThreshold(0.9)
+          .setDescription("Gas turbine power output vs rated capacity")
+          .setValueSupplier(() -> Math.abs(this.power) / 1000.0));
     }
   }
 
@@ -472,8 +472,8 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
     for (CapacityConstraint c : capacityConstraints.values()) {
       double util = c.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-	maxUtil = util;
-	bottleneck = c;
+        maxUtil = util;
+        bottleneck = c;
       }
     }
     return bottleneck;
@@ -484,7 +484,7 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
   public boolean isCapacityExceeded() {
     for (CapacityConstraint c : capacityConstraints.values()) {
       if (c.isViolated()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -495,7 +495,7 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
   public boolean isHardLimitExceeded() {
     for (CapacityConstraint c : capacityConstraints.values()) {
       if (c.isHardLimitExceeded()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -508,7 +508,7 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
     for (CapacityConstraint c : capacityConstraints.values()) {
       double util = c.getUtilization();
       if (!Double.isNaN(util)) {
-	maxUtil = Math.max(maxUtil, util);
+        maxUtil = Math.max(maxUtil, util);
       }
     }
     return maxUtil;

@@ -197,7 +197,7 @@ public class OffshoreEnergySystem extends ProcessEquipmentBaseClass {
       // Enforce minimum load
       double minLoad = gasTurbineCapacity * gasTurbineMinLoad;
       if (gtLoad < minLoad && remainingDemand > 0.0) {
-	gtLoad = minLoad;
+        gtLoad = minLoad;
       }
       gasTurbinePowerDelivered = Math.min(gtLoad, gasTurbineCapacity);
       remainingDemand -= gasTurbinePowerDelivered;
@@ -210,9 +210,9 @@ public class OffshoreEnergySystem extends ProcessEquipmentBaseClass {
     if (excessRenewable > 0.0 && batteryStorage != null) {
       double chargeCapacity = batteryStorage.getCapacity() - batteryStorage.getStateOfCharge();
       if (chargeCapacity > 0.0) {
-	windPowerToCharge = Math.min(excessRenewable, chargeCapacity / timeStepHours);
-	batteryStorage.charge(windPowerToCharge, timeStepHours);
-	excessRenewable -= windPowerToCharge;
+        windPowerToCharge = Math.min(excessRenewable, chargeCapacity / timeStepHours);
+        batteryStorage.charge(windPowerToCharge, timeStepHours);
+        excessRenewable -= windPowerToCharge;
       }
     }
     windPowerCurtailed = excessRenewable;
@@ -260,7 +260,7 @@ public class OffshoreEnergySystem extends ProcessEquipmentBaseClass {
     timeStepHours = 1.0;
     for (int i = 0; i < windSpeeds.length; i++) {
       if (windFarm != null) {
-	windFarm.setWindSpeed(windSpeeds[i]);
+        windFarm.setWindSpeed(windSpeeds[i]);
       }
       run();
     }

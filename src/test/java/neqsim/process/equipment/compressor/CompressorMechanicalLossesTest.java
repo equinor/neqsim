@@ -203,7 +203,7 @@ public class CompressorMechanicalLossesTest {
       double highSpeedLoss = largeLosses.getTotalBearingLoss();
 
       assertTrue(highSpeedLoss > lowSpeedLoss,
-	  "Bearing loss should increase with speed: low=" + lowSpeedLoss + ", high=" + highSpeedLoss);
+          "Bearing loss should increase with speed: low=" + lowSpeedLoss + ", high=" + highSpeedLoss);
     }
   }
 

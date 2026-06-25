@@ -85,7 +85,7 @@ public class StidMaterialsDataSource implements MaterialsReviewDataSource {
     for (int i = 0; i < array.size(); i++) {
       JsonElement element = array.get(i);
       if (element.isJsonObject()) {
-	mergeItem(input, fromRecord(element.getAsJsonObject(), key));
+        mergeItem(input, fromRecord(element.getAsJsonObject(), key));
       }
     }
   }
@@ -114,7 +114,7 @@ public class StidMaterialsDataSource implements MaterialsReviewDataSource {
     item.setTag(firstString(record, "tag", "lineNumber", "lineNo", "equipmentTag", "assetTag", "name"));
     item.setEquipmentType(firstString(record, "equipmentType", "type", "assetType", "service"));
     item.setExistingMaterial(firstString(record, "existingMaterial", "material", "materialGrade", "materialClass",
-	"pipingMaterialClass", "mds"));
+        "pipingMaterialClass", "mds"));
     item.addSourceReference(sourceKey);
     if (record.has("sourceDocument")) {
       item.addSourceReference(record.get("sourceDocument").getAsString());
@@ -149,11 +149,11 @@ public class StidMaterialsDataSource implements MaterialsReviewDataSource {
     if (record.has(sourceKey) && !record.get(sourceKey).isJsonNull()) {
       JsonElement value = record.get(sourceKey);
       if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isBoolean()) {
-	envelope.set(targetKey, Boolean.valueOf(value.getAsBoolean()));
+        envelope.set(targetKey, Boolean.valueOf(value.getAsBoolean()));
       } else if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isNumber()) {
-	envelope.set(targetKey, Double.valueOf(value.getAsDouble()));
+        envelope.set(targetKey, Double.valueOf(value.getAsDouble()));
       } else {
-	envelope.set(targetKey, value.getAsString());
+        envelope.set(targetKey, value.getAsString());
       }
     }
   }
@@ -173,11 +173,11 @@ public class StidMaterialsDataSource implements MaterialsReviewDataSource {
     for (java.util.Map.Entry<String, JsonElement> entry : object.entrySet()) {
       JsonElement value = entry.getValue();
       if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isBoolean()) {
-	envelope.set(entry.getKey(), Boolean.valueOf(value.getAsBoolean()));
+        envelope.set(entry.getKey(), Boolean.valueOf(value.getAsBoolean()));
       } else if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isNumber()) {
-	envelope.set(entry.getKey(), Double.valueOf(value.getAsDouble()));
+        envelope.set(entry.getKey(), Double.valueOf(value.getAsDouble()));
       } else if (!value.isJsonNull()) {
-	envelope.set(entry.getKey(), value.getAsString());
+        envelope.set(entry.getKey(), value.getAsString());
       }
     }
   }
@@ -192,7 +192,7 @@ public class StidMaterialsDataSource implements MaterialsReviewDataSource {
   private String firstString(JsonObject object, String... keys) {
     for (String key : keys) {
       if (object.has(key) && !object.get(key).isJsonNull()) {
-	return object.get(key).getAsString();
+        return object.get(key).getAsString();
       }
     }
     return "";

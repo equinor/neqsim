@@ -1,15 +1,15 @@
 package neqsim.mcp.runners;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import neqsim.mcp.model.ApiEnvelope;
 import neqsim.mcp.model.ResultProvenance;
 import neqsim.process.automation.AutomationDiagnostics;
@@ -60,8 +60,8 @@ public class AutomationRunner {
     try {
       SimulationResult simResult = ProcessSystem.fromJsonAndRun(processJson);
       if (simResult.isError()) {
-	return errorJson("listSimulationUnits", "SIMULATION_ERROR",
-	    "Process failed: " + simResult.getErrors().toString());
+        return errorJson("listSimulationUnits", "SIMULATION_ERROR",
+            "Process failed: " + simResult.getErrors().toString());
       }
       ProcessSystem process = simResult.getProcessSystem();
       ProcessAutomation auto = process.getAutomation();
@@ -71,10 +71,10 @@ public class AutomationRunner {
       result.addProperty("status", "success");
       JsonArray unitsArray = new JsonArray();
       for (String unit : units) {
-	JsonObject unitObj = new JsonObject();
-	unitObj.addProperty("name", unit);
-	unitObj.addProperty("type", auto.getEquipmentType(unit));
-	unitsArray.add(unitObj);
+        JsonObject unitObj = new JsonObject();
+        unitObj.addProperty("name", unit);
+        unitObj.addProperty("type", auto.getEquipmentType(unit));
+        unitsArray.add(unitObj);
       }
       result.add("units", unitsArray);
       result.addProperty("count", units.size());
@@ -102,8 +102,8 @@ public class AutomationRunner {
     try {
       SimulationResult simResult = ProcessSystem.fromJsonAndRun(processJson);
       if (simResult.isError()) {
-	return errorJson("listUnitVariables", "SIMULATION_ERROR",
-	    "Process failed: " + simResult.getErrors().toString());
+        return errorJson("listUnitVariables", "SIMULATION_ERROR",
+            "Process failed: " + simResult.getErrors().toString());
       }
       ProcessSystem process = simResult.getProcessSystem();
       ProcessAutomation auto = process.getAutomation();
@@ -113,51 +113,51 @@ public class AutomationRunner {
       String resolvedName = unitName;
       String autoCorrection = null;
       try {
-	vars = auto.getVariableList(unitName);
+        vars = auto.getVariableList(unitName);
       } catch (IllegalArgumentException e) {
-	// Fuzzy match the unit name
-	List<String> validUnits = auto.getUnitList();
-	AutomationDiagnostics diag = auto.getDiagnostics();
-	String corrected = diag.autoCorrectName(unitName, validUnits);
-	if (corrected != null) {
-	  vars = auto.getVariableList(corrected);
-	  resolvedName = corrected;
-	  autoCorrection = corrected;
-	  diag.recordFailure("list", unitName, AutomationDiagnostics.ErrorCategory.UNIT_NOT_FOUND, corrected);
-	} else {
-	  // Return diagnostic with suggestions
-	  AutomationDiagnostics.DiagnosticResult diagResult = diag.diagnoseUnitNotFound(unitName, validUnits);
-	  diag.recordFailure("list", unitName, AutomationDiagnostics.ErrorCategory.UNIT_NOT_FOUND, null);
-	  return standardResponse(diagResult.toJson(), "listUnitVariables", "automation variable discovery",
-	      "Variable discovery failed");
-	}
+        // Fuzzy match the unit name
+        List<String> validUnits = auto.getUnitList();
+        AutomationDiagnostics diag = auto.getDiagnostics();
+        String corrected = diag.autoCorrectName(unitName, validUnits);
+        if (corrected != null) {
+          vars = auto.getVariableList(corrected);
+          resolvedName = corrected;
+          autoCorrection = corrected;
+          diag.recordFailure("list", unitName, AutomationDiagnostics.ErrorCategory.UNIT_NOT_FOUND, corrected);
+        } else {
+          // Return diagnostic with suggestions
+          AutomationDiagnostics.DiagnosticResult diagResult = diag.diagnoseUnitNotFound(unitName, validUnits);
+          diag.recordFailure("list", unitName, AutomationDiagnostics.ErrorCategory.UNIT_NOT_FOUND, null);
+          return standardResponse(diagResult.toJson(), "listUnitVariables", "automation variable discovery",
+              "Variable discovery failed");
+        }
       }
 
       JsonObject result = new JsonObject();
       result.addProperty("status", autoCorrection != null ? "auto_corrected" : "success");
       result.addProperty("unitName", resolvedName);
       if (autoCorrection != null) {
-	result.addProperty("originalName", unitName);
-	result.addProperty("autoCorrection", autoCorrection);
-	result.addProperty("remediation", "Unit name auto-corrected from '" + unitName + "' to '" + autoCorrection
-	    + "'. Use the corrected name in future calls.");
+        result.addProperty("originalName", unitName);
+        result.addProperty("autoCorrection", autoCorrection);
+        result.addProperty("remediation", "Unit name auto-corrected from '" + unitName + "' to '" + autoCorrection
+            + "'. Use the corrected name in future calls.");
       }
       result.addProperty("equipmentType", auto.getEquipmentType(resolvedName));
       JsonArray varsArray = new JsonArray();
       for (SimulationVariable v : vars) {
-	JsonObject varObj = new JsonObject();
-	varObj.addProperty("address", v.getAddress());
-	varObj.addProperty("name", v.getName());
-	varObj.addProperty("type", v.getType().name());
-	varObj.addProperty("defaultUnit", v.getDefaultUnit());
-	varObj.addProperty("description", v.getDescription());
-	addVariableMetadata(varObj, v);
-	varsArray.add(varObj);
+        JsonObject varObj = new JsonObject();
+        varObj.addProperty("address", v.getAddress());
+        varObj.addProperty("name", v.getName());
+        varObj.addProperty("type", v.getType().name());
+        varObj.addProperty("defaultUnit", v.getDefaultUnit());
+        varObj.addProperty("description", v.getDescription());
+        addVariableMetadata(varObj, v);
+        varsArray.add(varObj);
       }
       result.add("variables", varsArray);
       result.addProperty("count", vars.size());
       return standardResponse(result, "listUnitVariables", "automation variable discovery",
-	  "Variable discovery completed");
+          "Variable discovery completed");
     } catch (Exception e) {
       return errorJson("listUnitVariables", "ERROR", "Failed to list variables: " + e.getMessage());
     }
@@ -182,15 +182,15 @@ public class AutomationRunner {
     try {
       SimulationResult simResult = ProcessSystem.fromJsonAndRun(processJson);
       if (simResult.isError()) {
-	return errorJson("getSimulationVariable", "SIMULATION_ERROR",
-	    "Process failed: " + simResult.getErrors().toString());
+        return errorJson("getSimulationVariable", "SIMULATION_ERROR",
+            "Process failed: " + simResult.getErrors().toString());
       }
       ProcessSystem process = simResult.getProcessSystem();
       ProcessAutomation auto = process.getAutomation();
 
       // Use safe accessor with self-healing
       return standardResponse(auto.getVariableValueSafe(address, unit), "getSimulationVariable",
-	  "automation variable read", "Variable read completed");
+          "automation variable read", "Variable read completed");
     } catch (Exception e) {
       return errorJson("getSimulationVariable", "ERROR", "Failed to get variable: " + e.getMessage());
     }
@@ -217,8 +217,8 @@ public class AutomationRunner {
     try {
       SimulationResult simResult = ProcessSystem.fromJsonAndRun(processJson);
       if (simResult.isError()) {
-	return errorJson("setSimulationVariable", "SIMULATION_ERROR",
-	    "Initial run failed: " + simResult.getErrors().toString());
+        return errorJson("setSimulationVariable", "SIMULATION_ERROR",
+            "Initial run failed: " + simResult.getErrors().toString());
       }
       ProcessSystem process = simResult.getProcessSystem();
       ProcessAutomation auto = process.getAutomation();
@@ -230,7 +230,7 @@ public class AutomationRunner {
 
       // If set failed (diagnostic returned), return the diagnostic
       if (!"success".equals(status) && !"auto_corrected".equals(status)) {
-	return standardResponse(safeObj, "setSimulationVariable", "automation variable write", "Variable write failed");
+        return standardResponse(safeObj, "setSimulationVariable", "automation variable write", "Variable write failed");
       }
 
       // Re-run the process after modification
@@ -239,11 +239,11 @@ public class AutomationRunner {
       // Augment result with simulation report
       String report = process.getReport_json();
       if (report != null && !report.isEmpty()) {
-	safeObj.add("simulationReport", JsonParser.parseString(report));
+        safeObj.add("simulationReport", JsonParser.parseString(report));
       }
 
       return standardResponse(safeObj, "setSimulationVariable", "automation variable write",
-	  "Variable write completed and process reran");
+          "Variable write completed and process reran");
     } catch (Exception e) {
       return errorJson("setSimulationVariable", "ERROR", "Failed to set variable: " + e.getMessage());
     }
@@ -264,16 +264,16 @@ public class AutomationRunner {
     try {
       SimulationResult simResult = ProcessSystem.fromJsonAndRun(processJson);
       if (simResult.isError()) {
-	return errorJson("saveSimulationState", "SIMULATION_ERROR",
-	    "Process failed: " + simResult.getErrors().toString());
+        return errorJson("saveSimulationState", "SIMULATION_ERROR",
+            "Process failed: " + simResult.getErrors().toString());
       }
       ProcessSystem process = simResult.getProcessSystem();
       ProcessSystemState state = ProcessSystemState.fromProcessSystem(process);
       if (stateName != null && !stateName.trim().isEmpty()) {
-	state.setName(stateName);
+        state.setName(stateName);
       }
       if (stateVersion != null && !stateVersion.trim().isEmpty()) {
-	state.setVersion(stateVersion);
+        state.setVersion(stateVersion);
       }
 
       String stateJson = state.toJson();
@@ -314,22 +314,22 @@ public class AutomationRunner {
       JsonObject diffObj = new JsonObject();
       JsonArray added = new JsonArray();
       for (String name : diff.getAddedEquipment()) {
-	added.add(name);
+        added.add(name);
       }
       diffObj.add("addedEquipment", added);
       JsonArray removed = new JsonArray();
       for (String name : diff.getRemovedEquipment()) {
-	removed.add(name);
+        removed.add(name);
       }
       diffObj.add("removedEquipment", removed);
       JsonObject modified = new JsonObject();
       for (Map.Entry<String, String> entry : diff.getModifiedParameters().entrySet()) {
-	modified.addProperty(entry.getKey(), entry.getValue());
+        modified.addProperty(entry.getKey(), entry.getValue());
       }
       diffObj.add("modifiedParameters", modified);
       result.add("diff", diffObj);
       return standardResponse(result, "compareSimulationStates", "simulation state comparison",
-	  "Simulation states compared");
+          "Simulation states compared");
     } catch (Exception e) {
       return errorJson("compareSimulationStates", "ERROR", "Failed to compare states: " + e.getMessage());
     }
@@ -354,8 +354,8 @@ public class AutomationRunner {
     try {
       SimulationResult simResult = ProcessSystem.fromJsonAndRun(processJson);
       if (simResult.isError()) {
-	return errorJson("diagnoseAutomation", "SIMULATION_ERROR",
-	    "Process failed: " + simResult.getErrors().toString());
+        return errorJson("diagnoseAutomation", "SIMULATION_ERROR",
+            "Process failed: " + simResult.getErrors().toString());
       }
       ProcessSystem process = simResult.getProcessSystem();
       ProcessAutomation auto = process.getAutomation();
@@ -365,7 +365,7 @@ public class AutomationRunner {
       String localAddress = failedAddress;
       int areaSepIdx = failedAddress.indexOf(ProcessAutomation.AREA_SEPARATOR);
       if (areaSepIdx >= 0) {
-	localAddress = failedAddress.substring(areaSepIdx + ProcessAutomation.AREA_SEPARATOR.length());
+        localAddress = failedAddress.substring(areaSepIdx + ProcessAutomation.AREA_SEPARATOR.length());
       }
       String[] parts = localAddress.split("\\.", 3);
       String unitName = parts.length > 0 ? parts[0] : "";
@@ -381,40 +381,40 @@ public class AutomationRunner {
       result.addProperty("operation", operation != null ? operation : "unknown");
 
       if (!unitResolved) {
-	// Unit-level failure
-	AutomationDiagnostics.DiagnosticResult unitDiag = diag.diagnoseUnitNotFound(unitName, validUnits);
-	result.add("diagnosis", JsonParser.parseString(unitDiag.toJson()));
+        // Unit-level failure
+        AutomationDiagnostics.DiagnosticResult unitDiag = diag.diagnoseUnitNotFound(unitName, validUnits);
+        result.add("diagnosis", JsonParser.parseString(unitDiag.toJson()));
       } else {
-	// Unit is fine, check property/port level
-	String resolvedUnit = correctedUnit != null ? correctedUnit : unitName;
-	List<SimulationVariable> vars = auto.getVariableList(resolvedUnit);
+        // Unit is fine, check property/port level
+        String resolvedUnit = correctedUnit != null ? correctedUnit : unitName;
+        List<SimulationVariable> vars = auto.getVariableList(resolvedUnit);
 
-	if (parts.length >= 2) {
-	  String property = parts[parts.length - 1];
-	  AutomationDiagnostics.DiagnosticResult propDiag = diag.diagnosePropertyNotFound(failedAddress, resolvedUnit,
-	      property, vars);
-	  result.add("diagnosis", JsonParser.parseString(propDiag.toJson()));
-	} else {
-	  // Just provide the list of valid variables as guidance
-	  JsonArray varsArray = new JsonArray();
-	  for (SimulationVariable v : vars) {
-	    JsonObject varObj = new JsonObject();
-	    varObj.addProperty("address", v.getAddress());
-	    varObj.addProperty("name", v.getName());
-	    varObj.addProperty("type", v.getType().name());
-	    addVariableMetadata(varObj, v);
-	    varsArray.add(varObj);
-	  }
-	  result.add("availableVariables", varsArray);
-	  result.addProperty("remediation",
-	      "Use one of the available variable addresses for unit '" + resolvedUnit + "'.");
-	}
+        if (parts.length >= 2) {
+          String property = parts[parts.length - 1];
+          AutomationDiagnostics.DiagnosticResult propDiag = diag.diagnosePropertyNotFound(failedAddress, resolvedUnit,
+              property, vars);
+          result.add("diagnosis", JsonParser.parseString(propDiag.toJson()));
+        } else {
+          // Just provide the list of valid variables as guidance
+          JsonArray varsArray = new JsonArray();
+          for (SimulationVariable v : vars) {
+            JsonObject varObj = new JsonObject();
+            varObj.addProperty("address", v.getAddress());
+            varObj.addProperty("name", v.getName());
+            varObj.addProperty("type", v.getType().name());
+            addVariableMetadata(varObj, v);
+            varsArray.add(varObj);
+          }
+          result.add("availableVariables", varsArray);
+          result.addProperty("remediation",
+              "Use one of the available variable addresses for unit '" + resolvedUnit + "'.");
+        }
 
-	if (correctedUnit != null) {
-	  result.addProperty("unitAutoCorrection", correctedUnit);
-	  result.addProperty("unitRemediaton",
-	      "Unit name '" + unitName + "' was auto-corrected to '" + correctedUnit + "'.");
-	}
+        if (correctedUnit != null) {
+          result.addProperty("unitAutoCorrection", correctedUnit);
+          result.addProperty("unitRemediaton",
+              "Unit name '" + unitName + "' was auto-corrected to '" + correctedUnit + "'.");
+        }
       }
 
       // Include the learning report
@@ -440,13 +440,13 @@ public class AutomationRunner {
     try {
       SimulationResult simResult = ProcessSystem.fromJsonAndRun(processJson);
       if (simResult.isError()) {
-	return errorJson("getAutomationLearningReport", "SIMULATION_ERROR",
-	    "Process failed: " + simResult.getErrors().toString());
+        return errorJson("getAutomationLearningReport", "SIMULATION_ERROR",
+            "Process failed: " + simResult.getErrors().toString());
       }
       ProcessSystem process = simResult.getProcessSystem();
       ProcessAutomation auto = process.getAutomation();
       return standardResponse(auto.getDiagnostics().getLearningReport(), "getAutomationLearningReport",
-	  "automation learning report", "Automation learning report generated");
+          "automation learning report", "Automation learning report generated");
     } catch (Exception e) {
       return errorJson("getAutomationLearningReport", "ERROR", "Failed to get learning report: " + e.getMessage());
     }
@@ -478,8 +478,8 @@ public class AutomationRunner {
     try {
       SimulationResult simResult = ProcessSystem.fromJsonAndRun(processJson);
       if (simResult.isError()) {
-	return errorJson("runProcessLoop", "SIMULATION_ERROR",
-	    "Initial run failed: " + simResult.getErrors().toString());
+        return errorJson("runProcessLoop", "SIMULATION_ERROR",
+            "Initial run failed: " + simResult.getErrors().toString());
       }
       ProcessSystem process = simResult.getProcessSystem();
       ProcessAutomation auto = process.getAutomation();
@@ -492,19 +492,19 @@ public class AutomationRunner {
       JsonArray trialResults = new JsonArray();
       int feasibleCount = 0;
       for (int i = 0; i < trials.size(); i++) {
-	JsonObject batch = trials.get(i).getAsJsonObject();
-	Map<String, Double> setpoints = new LinkedHashMap<String, Double>();
-	for (Map.Entry<String, JsonElement> e : batch.entrySet()) {
-	  setpoints.put(e.getKey(), e.getValue().getAsDouble());
-	}
-	// evaluate(...) never throws and returns schema-versioned JSON with a 'feasible' flag.
-	String evalJson = auto.evaluate(setpoints, spUnit, readbacks, rbUnit, 30, 5.0e-3);
-	JsonObject trialResult = JsonParser.parseString(evalJson).getAsJsonObject();
-	trialResult.addProperty("trialIndex", i);
-	if (trialResult.has("feasible") && trialResult.get("feasible").getAsBoolean()) {
-	  feasibleCount++;
-	}
-	trialResults.add(trialResult);
+        JsonObject batch = trials.get(i).getAsJsonObject();
+        Map<String, Double> setpoints = new LinkedHashMap<String, Double>();
+        for (Map.Entry<String, JsonElement> e : batch.entrySet()) {
+          setpoints.put(e.getKey(), e.getValue().getAsDouble());
+        }
+        // evaluate(...) never throws and returns schema-versioned JSON with a 'feasible' flag.
+        String evalJson = auto.evaluate(setpoints, spUnit, readbacks, rbUnit, 30, 5.0e-3);
+        JsonObject trialResult = JsonParser.parseString(evalJson).getAsJsonObject();
+        trialResult.addProperty("trialIndex", i);
+        if (trialResult.has("feasible") && trialResult.get("feasible").getAsBoolean()) {
+          feasibleCount++;
+        }
+        trialResults.add(trialResult);
       }
 
       JsonObject result = new JsonObject();
@@ -514,7 +514,7 @@ public class AutomationRunner {
       result.addProperty("feasibleCount", feasibleCount);
       result.add("trials", trialResults);
       return standardResponse(result, "runProcessLoop", "automation optimization loop",
-	  "Process loop completed with " + feasibleCount + "/" + trials.size() + " feasible trials");
+          "Process loop completed with " + feasibleCount + "/" + trials.size() + " feasible trials");
     } catch (Exception e) {
       return errorJson("runProcessLoop", "ERROR", "Process loop failed: " + e.getMessage());
     }
@@ -535,16 +535,16 @@ public class AutomationRunner {
     try {
       SimulationResult simResult = ProcessSystem.fromJsonAndRun(processJson);
       if (simResult.isError()) {
-	return errorJson("getAdjustableParameters", "SIMULATION_ERROR",
-	    "Process failed: " + simResult.getErrors().toString());
+        return errorJson("getAdjustableParameters", "SIMULATION_ERROR",
+            "Process failed: " + simResult.getErrors().toString());
       }
       ProcessSystem process = simResult.getProcessSystem();
       ProcessAutomation auto = process.getAutomation();
       return standardResponse(auto.getAdjustableParametersJson(), "getAdjustableParameters",
-	  "automation decision space", "Adjustable parameters enumerated");
+          "automation decision space", "Adjustable parameters enumerated");
     } catch (Exception e) {
       return errorJson("getAdjustableParameters", "ERROR",
-	  "Failed to enumerate adjustable parameters: " + e.getMessage());
+          "Failed to enumerate adjustable parameters: " + e.getMessage());
     }
   }
 
@@ -616,12 +616,12 @@ public class AutomationRunner {
     try {
       JsonElement parsed = JsonParser.parseString(rawJson);
       if (parsed != null && parsed.isJsonObject()) {
-	return standardResponse(parsed.getAsJsonObject(), toolName, calculationType, successMessage);
+        return standardResponse(parsed.getAsJsonObject(), toolName, calculationType, successMessage);
       }
       JsonObject result = new JsonObject();
       result.addProperty("status", "success");
       if (parsed != null && !parsed.isJsonNull()) {
-	result.add("value", parsed);
+        result.add("value", parsed);
       }
       return standardResponse(result, toolName, calculationType, successMessage);
     } catch (Exception e) {
@@ -651,9 +651,9 @@ public class AutomationRunner {
 
     ResultProvenance provenance = automationProvenance(toolName, calculationType, !errorResponse);
     JsonObject validation = ApiEnvelope.validationStatus(!errorResponse, "automation",
-	errorResponse ? responseMessage(result, "Automation operation failed") : successMessage);
+        errorResponse ? responseMessage(result, "Automation operation failed") : successMessage);
     JsonObject qualityGate = ApiEnvelope.qualityGate(qualityGateVerdict(result, errorResponse),
-	responseMessage(result, errorResponse ? "Automation operation failed" : successMessage), true);
+        responseMessage(result, errorResponse ? "Automation operation failed" : successMessage), true);
     ApiEnvelope.applyStandardFields(result, toolName, provenance, validation, qualityGate);
     return GSON.toJson(result);
   }
@@ -686,7 +686,7 @@ public class AutomationRunner {
     JsonObject data = new JsonObject();
     for (Map.Entry<String, JsonElement> entry : result.entrySet()) {
       if (!isStandardField(entry.getKey())) {
-	data.add(entry.getKey(), entry.getValue());
+        data.add(entry.getKey(), entry.getValue());
       }
     }
     return data;
@@ -700,8 +700,8 @@ public class AutomationRunner {
    */
   private static boolean isStandardField(String fieldName) {
     return "apiVersion".equals(fieldName) || "status".equals(fieldName) || "tool".equals(fieldName)
-	|| "data".equals(fieldName) || "provenance".equals(fieldName) || "validation".equals(fieldName)
-	|| "qualityGate".equals(fieldName) || "warnings".equals(fieldName) || "errors".equals(fieldName);
+        || "data".equals(fieldName) || "provenance".equals(fieldName) || "validation".equals(fieldName)
+        || "qualityGate".equals(fieldName) || "warnings".equals(fieldName) || "errors".equals(fieldName);
   }
 
   /**
@@ -732,7 +732,7 @@ public class AutomationRunner {
     if (result.has("status")) {
       String status = result.get("status").getAsString();
       if ("auto_corrected".equals(status) || "diagnostic".equals(status)) {
-	return "warning";
+        return "warning";
       }
     }
     return "passed";

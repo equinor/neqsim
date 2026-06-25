@@ -132,23 +132,23 @@ public class ThermalUtilitySummary implements Serializable {
       equipmentCount++;
 
       if (equip instanceof Heater) {
-	Heater heater = (Heater) equip;
-	double dutyW = heater.getDuty();
-	double dutyKW = dutyW / 1000.0;
+        Heater heater = (Heater) equip;
+        double dutyW = heater.getDuty();
+        double dutyKW = dutyW / 1000.0;
 
-	if (dutyKW < 0) {
-	  // Cooling duty
-	  double absDutyKW = Math.abs(dutyKW);
-	  totalCoolingDutyKW += absDutyKW;
-	  double cwFlow = calcCoolingWaterFlow(absDutyKW);
-	  coolingWaterFlowM3hr += cwFlow;
-	  consumers.add(new UtilityConsumer(equip.getName(), "Cooling Water", absDutyKW, cwFlow, "m3/hr"));
-	} else if (dutyKW > 0) {
-	  // Heating duty - classify by temperature
-	  totalHeatingDutyKW += dutyKW;
-	  double outTempC = heater.getOutletStream().getTemperature() - 273.15;
-	  classifyHeatingDuty(equip.getName(), dutyKW, outTempC);
-	}
+        if (dutyKW < 0) {
+          // Cooling duty
+          double absDutyKW = Math.abs(dutyKW);
+          totalCoolingDutyKW += absDutyKW;
+          double cwFlow = calcCoolingWaterFlow(absDutyKW);
+          coolingWaterFlowM3hr += cwFlow;
+          consumers.add(new UtilityConsumer(equip.getName(), "Cooling Water", absDutyKW, cwFlow, "m3/hr"));
+        } else if (dutyKW > 0) {
+          // Heating duty - classify by temperature
+          totalHeatingDutyKW += dutyKW;
+          double outTempC = heater.getOutletStream().getTemperature() - 273.15;
+          classifyHeatingDuty(equip.getName(), dutyKW, outTempC);
+        }
       }
     }
 

@@ -1,12 +1,12 @@
 package neqsim.process.safety.inventory;
 
-import com.google.gson.GsonBuilder;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import com.google.gson.GsonBuilder;
 import neqsim.process.safety.barrier.DocumentEvidence;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -174,7 +174,7 @@ public class TrappedInventoryCalculator implements Serializable {
   public TrappedInventoryCalculator addPipeSegment(String segmentId, double internalDiameter, String diameterUnit,
       double length, String lengthUnit, double liquidFillFraction, DocumentEvidence evidence) {
     return addPipeSegment(segmentId, toMeters(internalDiameter, diameterUnit), toMeters(length, lengthUnit),
-	liquidFillFraction, evidence);
+        liquidFillFraction, evidence);
   }
 
   /**
@@ -203,14 +203,14 @@ public class TrappedInventoryCalculator implements Serializable {
       double gasMass = gasVolume * gasDensity;
       double liquidMass = liquidVolume * liquidDensity;
       segmentResults.add(
-	  new InventorySegmentResult(segment, gasVolume, liquidVolume, gasMass, liquidMass, gasDensity, liquidDensity));
+          new InventorySegmentResult(segment, gasVolume, liquidVolume, gasMass, liquidMass, gasDensity, liquidDensity));
       totalVolume += segment.getVolumeM3();
       totalGasVolume += gasVolume;
       totalLiquidVolume += liquidVolume;
       totalGasMass += gasMass;
       totalLiquidMass += liquidMass;
       if (segment.getEvidence().isEmpty()) {
-	warnings.add("Segment " + segment.getId() + " has no traceable document evidence.");
+        warnings.add("Segment " + segment.getId() + " has no traceable document evidence.");
       }
     }
     if (totalLiquidVolume > 0.0 && liquidDensity == fallbackLiquidDensityKgPerM3) {
@@ -218,7 +218,7 @@ public class TrappedInventoryCalculator implements Serializable {
     }
 
     return new InventoryResult(pressureBara, temperatureK, gasDensity, liquidDensity, totalVolume, totalGasVolume,
-	totalLiquidVolume, totalGasMass, totalLiquidMass, segmentResults, warnings);
+        totalLiquidVolume, totalGasMass, totalLiquidMass, segmentResults, warnings);
   }
 
   /**
@@ -427,11 +427,11 @@ public class TrappedInventoryCalculator implements Serializable {
      */
     private InventorySegment(String id, String type, double volumeM3, double liquidFillFraction) {
       if (id == null || id.trim().isEmpty()) {
-	throw new IllegalArgumentException("segment id must not be empty");
+        throw new IllegalArgumentException("segment id must not be empty");
       }
       validatePositive(volumeM3, "volumeM3");
       if (liquidFillFraction < 0.0 || liquidFillFraction > 1.0) {
-	throw new IllegalArgumentException("liquidFillFraction must be in [0,1]");
+        throw new IllegalArgumentException("liquidFillFraction must be in [0,1]");
       }
       this.id = id.trim();
       this.type = type;
@@ -448,7 +448,7 @@ public class TrappedInventoryCalculator implements Serializable {
      */
     public InventorySegment addEvidence(DocumentEvidence evidence) {
       if (evidence == null) {
-	throw new IllegalArgumentException("evidence must not be null");
+        throw new IllegalArgumentException("evidence must not be null");
       }
       this.evidence.add(evidence);
       return this;
@@ -562,7 +562,7 @@ public class TrappedInventoryCalculator implements Serializable {
      * @param liquidDensityKgPerM3 liquid density in kg/m3
      */
     private InventorySegmentResult(InventorySegment segment, double gasVolumeM3, double liquidVolumeM3,
-	double gasMassKg, double liquidMassKg, double gasDensityKgPerM3, double liquidDensityKgPerM3) {
+        double gasMassKg, double liquidMassKg, double gasDensityKgPerM3, double liquidDensityKgPerM3) {
       this.segment = segment;
       this.gasVolumeM3 = gasVolumeM3;
       this.liquidVolumeM3 = liquidVolumeM3;
@@ -672,14 +672,14 @@ public class TrappedInventoryCalculator implements Serializable {
       map.put("liquidDensityKgPerM3", liquidDensityKgPerM3);
       map.put("liquidFillFraction", segment.getLiquidFillFraction());
       if (!Double.isNaN(segment.getInternalDiameterM())) {
-	map.put("internalDiameterM", segment.getInternalDiameterM());
+        map.put("internalDiameterM", segment.getInternalDiameterM());
       }
       if (!Double.isNaN(segment.getLengthM())) {
-	map.put("lengthM", segment.getLengthM());
+        map.put("lengthM", segment.getLengthM());
       }
       List<Map<String, Object>> evidenceMaps = new ArrayList<Map<String, Object>>();
       for (DocumentEvidence item : segment.getEvidence()) {
-	evidenceMaps.add(item.toMap());
+        evidenceMaps.add(item.toMap());
       }
       map.put("evidence", evidenceMaps);
       return map;
@@ -720,9 +720,9 @@ public class TrappedInventoryCalculator implements Serializable {
      * @param warnings calculation warnings
      */
     private InventoryResult(double pressureBara, double temperatureK, double gasDensityKgPerM3,
-	double liquidDensityKgPerM3, double totalVolumeM3, double totalGasVolumeM3, double totalLiquidVolumeM3,
-	double totalGasMassKg, double totalLiquidMassKg, List<InventorySegmentResult> segmentResults,
-	List<String> warnings) {
+        double liquidDensityKgPerM3, double totalVolumeM3, double totalGasVolumeM3, double totalLiquidVolumeM3,
+        double totalGasMassKg, double totalLiquidMassKg, List<InventorySegmentResult> segmentResults,
+        List<String> warnings) {
       this.pressureBara = pressureBara;
       this.temperatureK = temperatureK;
       this.gasDensityKgPerM3 = gasDensityKgPerM3;
@@ -863,7 +863,7 @@ public class TrappedInventoryCalculator implements Serializable {
       map.put("totalMassKg", getTotalMassKg());
       List<Map<String, Object>> segmentMaps = new ArrayList<Map<String, Object>>();
       for (InventorySegmentResult result : segmentResults) {
-	segmentMaps.add(result.toMap());
+        segmentMaps.add(result.toMap());
       }
       map.put("segments", segmentMaps);
       map.put("warnings", new ArrayList<String>(warnings));

@@ -209,8 +209,8 @@ public class ProcessDerivativeCalculatorTest {
   @Test
   public void testFluidMethodChaining() {
     ProcessDerivativeCalculator result = calculator.addInputVariable("Feed.flowRate", "kg/hr")
-	.addInputVariable("Feed.pressure", "bara").addOutputVariable("Separator.gasOutStream.flowRate", "kg/hr")
-	.setMethod(ProcessDerivativeCalculator.DerivativeMethod.CENTRAL_DIFFERENCE).setRelativeStepSize(1e-4);
+        .addInputVariable("Feed.pressure", "bara").addOutputVariable("Separator.gasOutStream.flowRate", "kg/hr")
+        .setMethod(ProcessDerivativeCalculator.DerivativeMethod.CENTRAL_DIFFERENCE).setRelativeStepSize(1e-4);
 
     assertSame(calculator, result);
   }

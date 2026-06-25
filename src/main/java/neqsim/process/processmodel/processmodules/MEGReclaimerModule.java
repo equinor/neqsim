@@ -131,7 +131,7 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
       getOperations().run(id);
       flashSeparator.displayResult();
       System.out.println(
-	  "flow to vacuum separator " + inletMixer.getOutletStream().getThermoSystem().getTotalNumberOfMoles());
+          "flow to vacuum separator " + inletMixer.getOutletStream().getThermoSystem().getTotalNumberOfMoles());
     }
 
     streamToWaterRemoval = flashSeparator.getGasOutStream();

@@ -58,16 +58,16 @@ public class GOR extends BasePVTsimulation {
       getThermoSystem().setTemperature(temperature[i]);
       thermoOps.TPflash();
       if (getThermoSystem().getNumberOfPhases() > 1) {
-	m3oil[i] = getThermoSystem().getPhase(1).getVolume();
+        m3oil[i] = getThermoSystem().getPhase(1).getVolume();
       } else {
-	m3oil[i] = getThermoSystem().getVolume();
+        m3oil[i] = getThermoSystem().getVolume();
       }
       if (getThermoSystem().getNumberOfPhases() > 1 && getThermoSystem().getPhase(0).getType() == PhaseType.GAS) {
-	getThermoSystem().getPhase(0).setPressure(ThermodynamicConstantsInterface.referencePressure);
-	getThermoSystem().getPhase(0).setTemperature(288.15);
-	getThermoSystem().init(1);
-	Sm3gas[i] = getThermoSystem().getPhase(0).getVolume();
-	// setThermoSystem(getThermoSystem().phaseToSystem(1));
+        getThermoSystem().getPhase(0).setPressure(ThermodynamicConstantsInterface.referencePressure);
+        getThermoSystem().getPhase(0).setTemperature(288.15);
+        getThermoSystem().init(1);
+        Sm3gas[i] = getThermoSystem().getPhase(0).getVolume();
+        // setThermoSystem(getThermoSystem().phaseToSystem(1));
       }
     }
     getThermoSystem().setPressure(ThermodynamicConstantsInterface.referencePressure);
@@ -77,8 +77,8 @@ public class GOR extends BasePVTsimulation {
 
     for (int i = 0; i < pressure.length; i++) {
       if (Sm3gas[i] > 1e-10) {
-	GOR[i] = Sm3gas[i] / oilVolumeStdCond;
-	Bofactor[i] = m3oil[i] / oilVolumeStdCond;
+        GOR[i] = Sm3gas[i] / oilVolumeStdCond;
+        Bofactor[i] = m3oil[i] / oilVolumeStdCond;
       }
       System.out.println("GOR " + getGOR()[i] + " Bo " + Bofactor[i]);
     }

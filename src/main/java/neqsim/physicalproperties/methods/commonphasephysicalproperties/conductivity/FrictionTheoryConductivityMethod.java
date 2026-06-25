@@ -90,13 +90,13 @@ public class FrictionTheoryConductivityMethod extends Conductivity implements Th
     for (int i = 0; i < numComp; i++) {
       double denominator = 0.0;
       for (int j = 0; j < numComp; j++) {
-	double aij = Math.pow(
-	    1.0 + Math.sqrt(pureComponentConductivity[i] / pureComponentConductivity[j])
-		* Math.pow(localPhase.getComponent(i).getMolarMass() / localPhase.getComponent(j).getMolarMass(), 0.25),
-	    2.0)
-	    / Math.sqrt(
-		8.0 * (1.0 + localPhase.getComponent(i).getMolarMass() / localPhase.getComponent(j).getMolarMass()));
-	denominator += localPhase.getComponent(j).getx() * aij;
+        double aij = Math.pow(
+            1.0 + Math.sqrt(pureComponentConductivity[i] / pureComponentConductivity[j])
+                * Math.pow(localPhase.getComponent(i).getMolarMass() / localPhase.getComponent(j).getMolarMass(), 0.25),
+            2.0)
+            / Math.sqrt(
+                8.0 * (1.0 + localPhase.getComponent(i).getMolarMass() / localPhase.getComponent(j).getMolarMass()));
+        denominator += localPhase.getComponent(j).getx() * aij;
       }
       lambda0 += localPhase.getComponent(i).getx() * pureComponentConductivity[i] / denominator;
     }
@@ -110,13 +110,13 @@ public class FrictionTheoryConductivityMethod extends Conductivity implements Th
     for (int i = 0; i < numComp; i++) {
       double denominator = 0.0;
       for (int j = 0; j < numComp; j++) {
-	double phiIJ = Math.pow(
-	    1.0 + Math.sqrt(pureComponentViscosity[i] / pureComponentViscosity[j])
-		* Math.pow(localPhase.getComponent(j).getMolarMass() / localPhase.getComponent(i).getMolarMass(), 0.25),
-	    2.0)
-	    / Math.sqrt(
-		8.0 * (1.0 + localPhase.getComponent(i).getMolarMass() / localPhase.getComponent(j).getMolarMass()));
-	denominator += localPhase.getComponent(j).getx() * phiIJ;
+        double phiIJ = Math.pow(
+            1.0 + Math.sqrt(pureComponentViscosity[i] / pureComponentViscosity[j])
+                * Math.pow(localPhase.getComponent(j).getMolarMass() / localPhase.getComponent(i).getMolarMass(), 0.25),
+            2.0)
+            / Math.sqrt(
+                8.0 * (1.0 + localPhase.getComponent(i).getMolarMass() / localPhase.getComponent(j).getMolarMass()));
+        denominator += localPhase.getComponent(j).getx() * phiIJ;
       }
       visc0 += localPhase.getComponent(i).getx() * pureComponentViscosity[i] / denominator;
     }
@@ -162,11 +162,11 @@ public class FrictionTheoryConductivityMethod extends Conductivity implements Th
 
       double tStar = 1.2593 * temperature / comp.getTC();
       omegaCond[i] = CHUNG_A / Math.pow(tStar, CHUNG_B) + CHUNG_C / Math.exp(CHUNG_D * tStar)
-	  + CHUNG_E / Math.exp(CHUNG_F * tStar);
+          + CHUNG_E / Math.exp(CHUNG_F * tStar);
 
       // Pure component viscosity in micropoise (Chung)
       double viscMicroP = 40.785 * Math.sqrt(comp.getMolarMass() * 1000.0 * temperature)
-	  / (Math.pow(comp.getCriticalVolume(), 2.0 / 3.0) * omegaCond[i]) * fc[i];
+          / (Math.pow(comp.getCriticalVolume(), 2.0 / 3.0) * omegaCond[i]) * fc[i];
 
       // Store in Pa*s for dilute mixing
       pureComponentViscosity[i] = viscMicroP * 1e-7;
@@ -177,17 +177,17 @@ public class FrictionTheoryConductivityMethod extends Conductivity implements Th
       // Alpha correction (modified Eucken, Chung formulation)
       double cvR = cv0 / R - 1.5;
       double beta = 0.7862 - 0.7109 * comp.getAcentricFactor()
-	  + 1.3168 * comp.getAcentricFactor() * comp.getAcentricFactor();
+          + 1.3168 * comp.getAcentricFactor() * comp.getAcentricFactor();
       double z = 2.0 + 10.5 * (temperature / comp.getTC()) * (temperature / comp.getTC());
       double alpha = 1.0
-	  + cvR * ((0.215 + 0.28288 * cvR - 1.061 * beta + 0.26665 * z) / (0.6366 + beta * z + 1.061 * cvR * beta));
+          + cvR * ((0.215 + 0.28288 * cvR - 1.061 * beta + 0.26665 * z) / (0.6366 + beta * z + 1.061 * cvR * beta));
 
       // Pure component conductivity in W/(m*K):
       // lambda = (eta_PaS / M_kg) * 3.75 * R * Psi
       pureComponentConductivity[i] = (pureComponentViscosity[i] / comp.getMolarMass()) * 3.75 * R * alpha;
 
       if (pureComponentConductivity[i] < 1e-50) {
-	pureComponentConductivity[i] = 1e-50;
+        pureComponentConductivity[i] = 1e-50;
       }
     }
   }

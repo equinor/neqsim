@@ -80,7 +80,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
   public void setfvec() {
     for (int i = 0; i < numberOfComponents; i++) {
       fvec.set(i, 0, u.get(i, 0) + Math.log(system.getPhases()[1].getComponent(i).getFugacityCoefficient()
-	  / system.getPhases()[0].getComponent(i).getFugacityCoefficient()));
+          / system.getPhases()[0].getComponent(i).getFugacityCoefficient()));
     }
     double fsum = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
@@ -101,14 +101,14 @@ public class SysNewtonRhapson implements java.io.Serializable {
 
     for (int i = 0; i < numberOfComponents; i++) {
       if (system.getPhases()[0].getComponent(i).getTC() > system.getPhases()[0].getComponent(speceq).getTC()) {
-	speceq = system.getPhases()[0].getComponent(i).getComponentNumber();
+        speceq = system.getPhases()[0].getComponent(i).getComponentNumber();
       }
       if (system.getPhases()[0].getComponent(i).getTC() < system.getPhases()[0].getComponent(speceq).getTC()) {
-	speceqmin = system.getPhases()[0].getComponent(i).getComponentNumber();
+        speceqmin = system.getPhases()[0].getComponent(i).getComponentNumber();
       }
     }
     avscp = (system.getPhases()[0].getComponent(speceq).getTC() - system.getPhases()[0].getComponent(speceqmin).getTC())
-	/ 2000;
+        / 2000;
     System.out.println("avscp: " + avscp);
     dTmax = avscp * 3;
     dPmax = avscp * 1.5;
@@ -122,7 +122,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
     double max = 0;
     for (int i = 0; i < numberOfComponents + 2; i++) {
       if (Math.abs(u.get(i, 0) - uold.get(i, 0) / uold.get(i, 0)) > max) {
-	max = Math.abs(u.get(i, 0) - uold.get(i, 0) / uold.get(i, 0));
+        max = Math.abs(u.get(i, 0) - uold.get(i, 0) / uold.get(i, 0));
       }
     }
   }
@@ -139,24 +139,24 @@ public class SysNewtonRhapson implements java.io.Serializable {
     int nofc = numberOfComponents;
     for (int i = 0; i < numberOfComponents; i++) {
       dxidlnk[i] = -system.getBeta() * system.getPhases()[0].getComponent(i).getx()
-	  * system.getPhases()[1].getComponent(i).getx() / system.getPhases()[0].getComponent(i).getz();
+          * system.getPhases()[1].getComponent(i).getx() / system.getPhases()[0].getComponent(i).getz();
       dyidlnk[i] = system.getPhases()[1].getComponent(i).getx()
-	  + system.getPhases()[0].getComponent(i).getK() * dxidlnk[i];
+          + system.getPhases()[0].getComponent(i).getK() * dxidlnk[i];
       // System.out.println("dxidlnk("+i+") "+dxidlnk[i]);
       // System.out.println("dyidlnk("+i+") "+dyidlnk[i]);
     }
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < numberOfComponents; j++) {
-	dij = i == j ? 1.0 : 0.0; // Kroneckers delta
-	tempJ = dij + system.getPhases()[1].getComponent(i).getdfugdx(j) * dyidlnk[j]
-	    - system.getPhases()[0].getComponent(i).getdfugdx(j) * dxidlnk[j];
-	Jac.set(i, j, tempJ);
+        dij = i == j ? 1.0 : 0.0; // Kroneckers delta
+        tempJ = dij + system.getPhases()[1].getComponent(i).getdfugdx(j) * dyidlnk[j]
+            - system.getPhases()[0].getComponent(i).getdfugdx(j) * dxidlnk[j];
+        Jac.set(i, j, tempJ);
       }
       tempJ = system.getTemperature()
-	  * (system.getPhases()[1].getComponent(i).getdfugdt() - system.getPhases()[0].getComponent(i).getdfugdt());
+          * (system.getPhases()[1].getComponent(i).getdfugdt() - system.getPhases()[0].getComponent(i).getdfugdt());
       Jac.set(i, nofc, tempJ);
       tempJ = system.getPressure()
-	  * (system.getPhases()[1].getComponent(i).getdfugdp() - system.getPhases()[0].getComponent(i).getdfugdp());
+          * (system.getPhases()[1].getComponent(i).getdfugdp() - system.getPhases()[0].getComponent(i).getdfugdp());
       Jac.set(i, nofc + 1, tempJ);
       Jac.set(nofc, i, dyidlnk[i] - dxidlnk[i]);
     }
@@ -217,46 +217,46 @@ public class SysNewtonRhapson implements java.io.Serializable {
     } else {
       // System.out.println("iter " +iter + " np " + np);
       if (iter > 6) {
-	ds *= 0.5;
-	System.out.println("ds > 6");
+        ds *= 0.5;
+        System.out.println("ds > 6");
       } else {
-	if (iter < 3) {
-	  ds *= 1.5;
-	}
-	if (iter == 3) {
-	  ds *= 1.1;
-	}
-	if (iter == 4) {
-	  ds *= 1.0;
-	}
-	if (iter > 4) {
-	  ds *= 0.5;
-	}
+        if (iter < 3) {
+          ds *= 1.5;
+        }
+        if (iter == 3) {
+          ds *= 1.1;
+        }
+        if (iter == 4) {
+          ds *= 1.0;
+        }
+        if (iter > 4) {
+          ds *= 0.5;
+        }
 
-	// Now we check wheater this ds is greater than dTmax and dPmax.
-	if (Math.abs(system.getTemperature() * dxds.get(nofc, 0) * ds) > dTmax) {
-	  // System.out.println("true T");
-	  ds = sign(dTmax / system.getTemperature() / Math.abs(dxds.get(nofc, 0)), ds);
-	}
+        // Now we check wheater this ds is greater than dTmax and dPmax.
+        if (Math.abs(system.getTemperature() * dxds.get(nofc, 0) * ds) > dTmax) {
+          // System.out.println("true T");
+          ds = sign(dTmax / system.getTemperature() / Math.abs(dxds.get(nofc, 0)), ds);
+        }
 
-	if (Math.abs(system.getPressure() * dxds.get(nofc + 1, 0) * ds) > dPmax) {
-	  ds = sign(dPmax / system.getPressure() / Math.abs(dxds.get(nofc + 1, 0)), ds);
-	  // System.out.println("true P");
-	}
-	if (etterCP2) {
-	  etterCP2 = false;
-	  ds = 0.5 * ds;
-	}
+        if (Math.abs(system.getPressure() * dxds.get(nofc + 1, 0) * ds) > dPmax) {
+          ds = sign(dPmax / system.getPressure() / Math.abs(dxds.get(nofc + 1, 0)), ds);
+          // System.out.println("true P");
+        }
+        if (etterCP2) {
+          etterCP2 = false;
+          ds = 0.5 * ds;
+        }
 
-	Xgij.setMatrix(0, nofc + 1, 0, 2, Xgij.getMatrix(0, nofc + 1, 1, 3));
-	Xgij.setMatrix(0, nofc + 1, 3, 3, u);
-	s.setMatrix(0, 0, 0, 3, Xgij.getMatrix(speceq, speceq, 0, 3));
-	// s.print(0,10);
-	// System.out.println("ds1 : " + ds);
-	calcInc2(np);
-	// System.out.println("ds2 : " + ds);
+        Xgij.setMatrix(0, nofc + 1, 0, 2, Xgij.getMatrix(0, nofc + 1, 1, 3));
+        Xgij.setMatrix(0, nofc + 1, 3, 3, u);
+        s.setMatrix(0, 0, 0, 3, Xgij.getMatrix(speceq, speceq, 0, 3));
+        // s.print(0,10);
+        // System.out.println("ds1 : " + ds);
+        calcInc2(np);
+        // System.out.println("ds2 : " + ds);
 
-	// Here we find the next point from the polynomial.
+        // Here we find the next point from the polynomial.
       }
     }
   }
@@ -270,10 +270,10 @@ public class SysNewtonRhapson implements java.io.Serializable {
     for (int j = 0; j < neq; j++) {
       xg = Xgij.getMatrix(j, j, 0, 3);
       for (int i = 0; i < 4; i++) {
-	a.set(i, 0, 1.0);
-	a.set(i, 1, s.get(0, i));
-	a.set(i, 2, s.get(0, i) * s.get(0, i));
-	a.set(i, 3, a.get(i, 2) * s.get(0, i));
+        a.set(i, 0, 1.0);
+        a.set(i, 1, s.get(0, i));
+        a.set(i, 2, s.get(0, i) * s.get(0, i));
+        a.set(i, 3, a.get(i, 2) * s.get(0, i));
       }
       xcoef = a.solve(xg.transpose());
       double sny = ds + s.get(0, 3);
@@ -287,8 +287,8 @@ public class SysNewtonRhapson implements java.io.Serializable {
 
     for (int i = 0; i < numberOfComponents; i++) {
       if (Math.abs(u.get(i, 0)) > xlnkmax) {
-	xlnkmax = Math.abs(u.get(i, 0));
-	numb = i;
+        xlnkmax = Math.abs(u.get(i, 0));
+        numb = i;
       }
     }
     // System.out.println("klnmax: " + u.get(numb,0) + " np " + np + " xlnmax " +
@@ -305,10 +305,10 @@ public class SysNewtonRhapson implements java.io.Serializable {
       xg = Xgij.getMatrix(numb, numb, 0, 3);
 
       for (int i = 0; i < 4; i++) {
-	a.set(i, 0, 1.0);
-	a.set(i, 1, s.get(0, i));
-	a.set(i, 2, s.get(0, i) * s.get(0, i));
-	a.set(i, 3, a.get(i, 2) * s.get(0, i));
+        a.set(i, 0, 1.0);
+        a.set(i, 1, s.get(0, i));
+        a.set(i, 2, s.get(0, i) * s.get(0, i));
+        a.set(i, 3, a.get(i, 2) * s.get(0, i));
       }
 
       Matrix xcoef = a.solve(xg.transpose());
@@ -343,10 +343,10 @@ public class SysNewtonRhapson implements java.io.Serializable {
       xg = Xgij.getMatrix(numb, numb, 0, 3);
 
       for (int i = 0; i < 4; i++) {
-	a.set(i, 0, 1.0);
-	a.set(i, 1, s.get(0, i));
-	a.set(i, 2, s.get(0, i) * s.get(0, i));
-	a.set(i, 3, a.get(i, 2) * s.get(0, i));
+        a.set(i, 0, 1.0);
+        a.set(i, 1, s.get(0, i));
+        a.set(i, 2, s.get(0, i) * s.get(0, i));
+        a.set(i, 3, a.get(i, 2) * s.get(0, i));
       }
       // a.print(0,10);
       // xg.print(0,10);
@@ -419,10 +419,10 @@ public class SysNewtonRhapson implements java.io.Serializable {
       dx = Jac.solve(fvec);
       u.minusEquals(dx);
       if (iter > 6) {
-	System.out.println("iter > " + iter);
-	calcInc(np);
-	solve(np);
-	break;
+        System.out.println("iter > " + iter);
+        calcInc(np);
+        solve(np);
+        break;
       }
       // System.out.println("feilen: "+dx.norm2());
     } while (dx.norm2() / u.norm2() > 1.e-8 && Double.isNaN(dx.norm2()));

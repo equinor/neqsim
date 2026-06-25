@@ -52,9 +52,9 @@ class TrappedLiquidFireRuptureStudyTest {
     InventoryResult inventory = createLiquidInventory(fluid);
 
     TrappedLiquidFireRuptureResult result = TrappedLiquidFireRuptureStudy.builder().segmentId("TL-001").fluid(fluid)
-	.inventory(inventory).pipeGeometry(0.10, "m", 3.0, "mm", 10.0, "m").api5lMaterial("X52")
-	.fireScenario(FireExposureScenario.fixedHeatFlux(3.4, 180000.0)).flangeClass(900).timeControls(600.0, 2.0)
-	.vaporPocketDetectionEnabled(false).build().run();
+        .inventory(inventory).pipeGeometry(0.10, "m", 3.0, "mm", 10.0, "m").api5lMaterial("X52")
+        .fireScenario(FireExposureScenario.fixedHeatFlux(3.4, 180000.0)).flangeClass(900).timeControls(600.0, 2.0)
+        .vaporPocketDetectionEnabled(false).build().run();
 
     assertTrue(result.isRupturePredicted());
     assertTrue(Double.isFinite(result.getMinimumFailureTimeSeconds()));
@@ -73,12 +73,12 @@ class TrappedLiquidFireRuptureStudyTest {
     FireExposureScenario baseFire = FireExposureScenario.fixedHeatFlux(3.4, 180000.0);
 
     TrappedLiquidFireRuptureResult unprotected = TrappedLiquidFireRuptureStudy.builder().segmentId("TL-002")
-	.fluid(fluid).inventory(inventory).pipeGeometry(0.10, 0.003, 10.0).api5lMaterial("X52").fireScenario(baseFire)
-	.timeControls(600.0, 2.0).vaporPocketDetectionEnabled(false).build().run();
+        .fluid(fluid).inventory(inventory).pipeGeometry(0.10, 0.003, 10.0).api5lMaterial("X52").fireScenario(baseFire)
+        .timeControls(600.0, 2.0).vaporPocketDetectionEnabled(false).build().run();
     TrappedLiquidFireRuptureResult protectedResult = TrappedLiquidFireRuptureStudy.builder().segmentId("TL-002")
-	.fluid(fluid).inventory(inventory).pipeGeometry(0.10, 0.003, 10.0).api5lMaterial("X52")
-	.fireScenario(baseFire.withPassiveProtectionFactor(0.35)).timeControls(600.0, 2.0)
-	.vaporPocketDetectionEnabled(false).build().run();
+        .fluid(fluid).inventory(inventory).pipeGeometry(0.10, 0.003, 10.0).api5lMaterial("X52")
+        .fireScenario(baseFire.withPassiveProtectionFactor(0.35)).timeControls(600.0, 2.0)
+        .vaporPocketDetectionEnabled(false).build().run();
 
     assertTrue(protectedResult.getMinimumFailureTimeSeconds() > unprotected.getMinimumFailureTimeSeconds());
   }
@@ -91,9 +91,9 @@ class TrappedLiquidFireRuptureStudyTest {
     SystemInterface fluid = createLiquidHydrocarbon();
     InventoryResult inventory = createLiquidInventory(fluid);
     TrappedLiquidFireRuptureResult result = TrappedLiquidFireRuptureStudy.builder().segmentId("TL-003").fluid(fluid)
-	.inventory(inventory).pipeGeometry(0.10, 0.003, 10.0).api5lMaterial("X52")
-	.fireScenario(FireExposureScenario.fixedHeatFlux(3.4, 180000.0)).timeControls(600.0, 2.0)
-	.vaporPocketDetectionEnabled(false).build().run();
+        .inventory(inventory).pipeGeometry(0.10, 0.003, 10.0).api5lMaterial("X52")
+        .fireScenario(FireExposureScenario.fixedHeatFlux(3.4, 180000.0)).timeControls(600.0, 2.0)
+        .vaporPocketDetectionEnabled(false).build().run();
 
     SafetySystemDemand demand = result.toPassiveFireProtectionDemand("PFP-TL-003", 1800.0);
     SourceTermResult sourceTerm = result.createRuptureSourceTerm(fluid, ReleaseOrientation.HORIZONTAL, 20.0, 5.0);
@@ -123,6 +123,6 @@ class TrappedLiquidFireRuptureStudyTest {
    */
   private InventoryResult createLiquidInventory(SystemInterface fluid) {
     return new TrappedInventoryCalculator().setFluid(fluid).setOperatingConditions(10.0, "bara", 25.0, "C")
-	.addPipeSegment("TL-PIPE", 0.10, 10.0, 1.0, null).calculate();
+        .addPipeSegment("TL-PIPE", 0.10, 10.0, 1.0, null).calculate();
   }
 }

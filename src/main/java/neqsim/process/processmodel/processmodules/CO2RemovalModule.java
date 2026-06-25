@@ -63,9 +63,9 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
 
     streamFromAbsorber = inletSeparator.getGasOutStream().clone();
     streamFromAbsorber.getThermoSystem().addComponent("CO2",
-	-streamFromAbsorber.getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfMolesInPhase() * 0.99);
+        -streamFromAbsorber.getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfMolesInPhase() * 0.99);
     streamFromAbsorber.getThermoSystem().addComponent("MEG",
-	-streamFromAbsorber.getThermoSystem().getPhase(0).getComponent("MEG").getNumberOfMolesInPhase() * 0.99);
+        -streamFromAbsorber.getThermoSystem().getPhase(0).getComponent("MEG").getNumberOfMolesInPhase() * 0.99);
     streamFromAbsorber.getThermoSystem().init(1);
     setCalculationIdentifier(id);
   }

@@ -279,10 +279,10 @@ public class LiquidLiquidExtractor extends ProcessEquipmentBaseClass {
       String compName = solventSys.getComponent(i).getComponentName();
       double moles = solventSys.getComponent(i).getNumberOfmoles();
       try {
-	combined.addComponent(compName, moles);
+        combined.addComponent(compName, moles);
       } catch (Exception ex) {
-	// Component may not exist in feed system - try skipping
-	logger.warn("Could not add solvent component '{}' to combined system: {}", compName, ex.getMessage());
+        // Component may not exist in feed system - try skipping
+        logger.warn("Could not add solvent component '{}' to combined system: {}", compName, ex.getMessage());
       }
     }
 
@@ -321,8 +321,8 @@ public class LiquidLiquidExtractor extends ProcessEquipmentBaseClass {
       SystemInterface emptySys = combined.clone();
       // Zero out raff phase
       for (int i = 0; i < emptySys.getNumberOfComponents(); i++) {
-	double moles = emptySys.getComponent(i).getNumberOfmoles();
-	emptySys.addComponent(i, -moles * 0.999);
+        double moles = emptySys.getComponent(i).getNumberOfmoles();
+        emptySys.addComponent(i, -moles * 0.999);
       }
       emptySys.initProperties();
       raffinateStream.setThermoSystem(emptySys);

@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.separator.Separator;
@@ -15,8 +17,6 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Unit tests for ProcessOptimizationEngine.
@@ -450,7 +450,7 @@ class ProcessOptimizationEngineTest {
     double[] inletPressures = { 40.0, 50.0, 60.0 };
 
     neqsim.process.util.optimizer.FlowRateOptimizer optimizer = engine.generateComprehensiveLiftCurve("feed",
-	inletPressures, 10.0);
+        inletPressures, 10.0);
 
     assertNotNull(optimizer);
   }

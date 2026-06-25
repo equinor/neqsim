@@ -108,14 +108,14 @@ public class ConstraintPenaltyCalculator implements Serializable {
       ProcessEquipmentInterface equipment = units.get(i);
       EquipmentCapacityStrategy strategy = registry.findStrategy(equipment);
       if (strategy != null) {
-	Map<String, CapacityConstraint> equipConstraints = strategy.getConstraints(equipment);
-	for (Map.Entry<String, CapacityConstraint> entry : equipConstraints.entrySet()) {
-	  CapacityConstraint cc = entry.getValue();
-	  if (cc.isEnabled()) {
-	    String qualifiedName = equipment.getName() + "/" + entry.getKey();
-	    constraints.add(new CapacityConstraintAdapter(qualifiedName, cc));
-	  }
-	}
+        Map<String, CapacityConstraint> equipConstraints = strategy.getConstraints(equipment);
+        for (Map.Entry<String, CapacityConstraint> entry : equipConstraints.entrySet()) {
+          CapacityConstraint cc = entry.getValue();
+          if (cc.isEnabled()) {
+            String qualifiedName = equipment.getName() + "/" + entry.getKey();
+            constraints.add(new CapacityConstraintAdapter(qualifiedName, cc));
+          }
+        }
       }
     }
     return this;
@@ -167,7 +167,7 @@ public class ConstraintPenaltyCalculator implements Serializable {
   public boolean isFeasible(ProcessSystem process) {
     for (ProcessConstraint c : constraints) {
       if (c.isHard() && !c.isSatisfied(process)) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -221,10 +221,10 @@ public class ConstraintPenaltyCalculator implements Serializable {
     for (ProcessConstraint c : constraints) {
       double m = c.margin(process);
       if (c.isHard()) {
-	hardList.add(m);
+        hardList.add(m);
       } else {
-	softList.add(m);
-	weightList.add(c.getPenaltyWeight());
+        softList.add(m);
+        weightList.add(c.getPenaltyWeight());
       }
     }
 
@@ -253,7 +253,7 @@ public class ConstraintPenaltyCalculator implements Serializable {
     for (ProcessConstraint c : constraints) {
       double m = c.margin(process);
       results.add(new ConstraintEvaluation(c.getName(), c.getSeverityLevel(), m, m >= 0.0, c.penalty(process),
-	  c.getDescription()));
+          c.getDescription()));
     }
     return results;
   }
@@ -293,14 +293,14 @@ public class ConstraintPenaltyCalculator implements Serializable {
 
     for (int i = 0; i < hardMargins.length; i++) {
       if (hardMargins[i] < 0.0) {
-	anyViolation = true;
-	penalty -= penaltyBase * (1.0 + Math.abs(hardMargins[i]));
+        anyViolation = true;
+        penalty -= penaltyBase * (1.0 + Math.abs(hardMargins[i]));
       }
     }
     for (int i = 0; i < softMargins.length; i++) {
       if (softMargins[i] < 0.0) {
-	anyViolation = true;
-	penalty -= penaltyBase * softWeights[i] * softMargins[i] * softMargins[i];
+        anyViolation = true;
+        penalty -= penaltyBase * softWeights[i] * softMargins[i] * softMargins[i];
       }
     }
     if (!anyViolation) {
@@ -340,7 +340,7 @@ public class ConstraintPenaltyCalculator implements Serializable {
      * @param description constraint description
      */
     public ConstraintEvaluation(String name, ConstraintSeverityLevel severity, double margin, boolean satisfied,
-	double penalty, String description) {
+        double penalty, String description) {
       this.name = name;
       this.severity = severity;
       this.margin = margin;
@@ -406,7 +406,7 @@ public class ConstraintPenaltyCalculator implements Serializable {
     @Override
     public String toString() {
       return name + " [" + severity + "] margin=" + String.format("%.4f", margin)
-	  + (satisfied ? " OK" : " VIOLATED penalty=" + String.format("%.2f", penalty));
+          + (satisfied ? " OK" : " VIOLATED penalty=" + String.format("%.2f", penalty));
     }
   }
 }

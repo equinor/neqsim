@@ -68,7 +68,7 @@ public final class TwoPhasePressureDrop {
       double vaporDensity, double liquidViscosity, double vaporViscosity, double surfaceTension) {
 
     if (massFlux <= 0 || tubeID <= 0 || liquidDensity <= 0 || vaporDensity <= 0 || liquidViscosity <= 0
-	|| vaporViscosity <= 0) {
+        || vaporViscosity <= 0) {
       return 0.0;
     }
 
@@ -95,7 +95,7 @@ public final class TwoPhasePressureDrop {
 
     // Friedel parameter H
     double H = Math.pow(liquidDensity / vaporDensity, 0.91) * Math.pow(vaporViscosity / liquidViscosity, 0.19)
-	* Math.pow(1.0 - vaporViscosity / liquidViscosity, 0.7);
+        * Math.pow(1.0 - vaporViscosity / liquidViscosity, 0.7);
 
     // Homogeneous density
     double rho_h = 1.0 / (x / vaporDensity + (1.0 - x) / liquidDensity);
@@ -106,11 +106,11 @@ public final class TwoPhasePressureDrop {
 
     // Weber number
     double We = (surfaceTension > 0) ? massFlux * massFlux * tubeID / (rho_h * surfaceTension) : 1e6; // Large
-												      // number
-												      // if
-												      // surface
-												      // tension
-												      // unknown
+    // number
+    // if
+    // surface
+    // tension
+    // unknown
 
     // Two-phase multiplier
     double FrWeFactor = Math.pow(Math.max(Fr, 1e-10), 0.045) * Math.pow(Math.max(We, 1e-10), 0.035);
@@ -137,7 +137,7 @@ public final class TwoPhasePressureDrop {
       double liquidDensity, double vaporDensity, double liquidViscosity, double vaporViscosity, double surfaceTension) {
 
     return calcFriedelGradient(massFlux, vaporQuality, tubeID, liquidDensity, vaporDensity, liquidViscosity,
-	vaporViscosity, surfaceTension) * tubeLength;
+        vaporViscosity, surfaceTension) * tubeLength;
   }
 
   /**
@@ -173,7 +173,7 @@ public final class TwoPhasePressureDrop {
 
     if (Math.abs(xIn - xOut) < 1e-10) {
       return calcFriedelPressureDrop(massFlux, xIn, tubeID, tubeLength, liquidDensity, vaporDensity, liquidViscosity,
-	  vaporViscosity, surfaceTension);
+          vaporViscosity, surfaceTension);
     }
 
     int n = Math.max(4, intervals);
@@ -185,14 +185,14 @@ public final class TwoPhasePressureDrop {
 
     // Simpson's rule on the gradient, then multiply by length
     double sum = calcFriedelGradient(massFlux, xIn, tubeID, liquidDensity, vaporDensity, liquidViscosity,
-	vaporViscosity, surfaceTension)
-	+ calcFriedelGradient(massFlux, xOut, tubeID, liquidDensity, vaporDensity, liquidViscosity, vaporViscosity,
-	    surfaceTension);
+        vaporViscosity, surfaceTension)
+        + calcFriedelGradient(massFlux, xOut, tubeID, liquidDensity, vaporDensity, liquidViscosity, vaporViscosity,
+            surfaceTension);
 
     for (int i = 1; i < n; i++) {
       double x = xIn + i * dx;
       double grad = calcFriedelGradient(massFlux, x, tubeID, liquidDensity, vaporDensity, liquidViscosity,
-	  vaporViscosity, surfaceTension);
+          vaporViscosity, surfaceTension);
       sum += (i % 2 == 0) ? 2.0 * grad : 4.0 * grad;
     }
 
@@ -232,7 +232,7 @@ public final class TwoPhasePressureDrop {
       double liquidDensity, double vaporDensity, double liquidViscosity, double vaporViscosity) {
 
     if (massFlux <= 0 || tubeID <= 0 || liquidDensity <= 0 || vaporDensity <= 0 || liquidViscosity <= 0
-	|| vaporViscosity <= 0) {
+        || vaporViscosity <= 0) {
       return 0.0;
     }
 

@@ -73,7 +73,7 @@ public class HIPPSExample {
     feedStream.run();
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Feed Stream: %.0f kg/hr @ %.1f bara, %.1f °C%n",
-	feedStream.getFlowRate("kg/hr"), feedStream.getPressure("bara"), feedStream.getTemperature("C"));
+        feedStream.getFlowRate("kg/hr"), feedStream.getPressure("bara"), feedStream.getTemperature("C"));
 
     // Create separator (MAWP = 100 bara)
     Separator separator = new Separator("HP Separator", feedStream);
@@ -83,7 +83,7 @@ public class HIPPSExample {
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Separator MAWP: 100.0 bara%n");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Normal operating pressure: %.1f bara%n",
-	separator.getPressure("bara"));
+        separator.getPressure("bara"));
 
     // ========================================
     // 2. CONFIGURE REDUNDANT PRESSURE TRANSMITTERS
@@ -96,9 +96,9 @@ public class HIPPSExample {
 
     // Configure HIHI alarm at 90 bara (10% below MAWP)
     AlarmConfig hippsAlarm = AlarmConfig.builder().highHighLimit(90.0) // HIPPS trip point
-	.deadband(2.0) // 2 bara deadband
-	.delay(0.5) // 500ms confirmation delay
-	.unit("bara").build();
+        .deadband(2.0) // 2 bara deadband
+        .delay(0.5) // 500ms confirmation delay
+        .unit("bara").build();
 
     PT1.setAlarmConfig(hippsAlarm);
     PT2.setAlarmConfig(hippsAlarm);
@@ -171,14 +171,14 @@ public class HIPPSExample {
       // Simulate blocked outlet scenario
       double currentPressure;
       if (time < blockedOutletTime) {
-	// Normal operation
-	currentPressure = 70.0;
+        // Normal operation
+        currentPressure = 70.0;
       } else if (!hippsTripped) {
-	// Pressure ramps up due to blocked outlet
-	currentPressure = 70.0 + (time - blockedOutletTime) * pressureRampRate;
+        // Pressure ramps up due to blocked outlet
+        currentPressure = 70.0 + (time - blockedOutletTime) * pressureRampRate;
       } else {
-	// HIPPS closed - pressure stabilizes
-	currentPressure = tripPressure;
+        // HIPPS closed - pressure stabilizes
+        currentPressure = tripPressure;
       }
 
       // Update system
@@ -197,29 +197,29 @@ public class HIPPSExample {
 
       // Record trip event
       if (!hippsTripped && hippsValve.hasTripped()) {
-	hippsTripped = true;
-	tripTime = time;
-	tripPressure = currentPressure;
+        hippsTripped = true;
+        tripTime = time;
+        tripPressure = currentPressure;
       }
 
       // Check if PSV lifted
       if (!psvLifted && psv.getPercentValveOpening() > 0.0) {
-	psvLifted = true;
+        psvLifted = true;
       }
 
       // Print status every second
       if (time % 1.0 < timeStep / 2.0
-	  || hippsValve.hasTripped() && time > tripTime - timeStep && time < tripTime + 2.0) {
-	logger.printf(org.apache.logging.log4j.Level.INFO,
-	    "  %5.1f  |   %6.2f    |    %d/%d    |   %5.1f%%   |  %5.1f%%  | %12s | %10s%n", time, currentPressure,
-	    hippsValve.getActiveTransmitterCount(), 3, hippsValve.getPercentValveOpening(),
-	    psv.getPercentValveOpening(), hippsValve.hasTripped() ? "TRIPPED" : "NORMAL",
-	    psv.getPercentValveOpening() > 0 ? "LIFTING" : "CLOSED");
+          || hippsValve.hasTripped() && time > tripTime - timeStep && time < tripTime + 2.0) {
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "  %5.1f  |   %6.2f    |    %d/%d    |   %5.1f%%   |  %5.1f%%  | %12s | %10s%n", time, currentPressure,
+            hippsValve.getActiveTransmitterCount(), 3, hippsValve.getPercentValveOpening(),
+            psv.getPercentValveOpening(), hippsValve.hasTripped() ? "TRIPPED" : "NORMAL",
+            psv.getPercentValveOpening() > 0 ? "LIFTING" : "CLOSED");
       }
 
       // Exit after HIPPS trip and valve closes
       if (hippsTripped && time > tripTime + 3.0) {
-	break;
+        break;
       }
     }
 
@@ -234,9 +234,9 @@ public class HIPPSExample {
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Trip Time: %.1f seconds%n", tripTime);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Trip Pressure: %.2f bara%n", tripPressure);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Active Transmitters at Trip: %d/3%n",
-	hippsValve.getActiveTransmitterCount());
+        hippsValve.getActiveTransmitterCount());
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Voting Logic: %s%n",
-	hippsValve.getVotingLogic().getNotation());
+        hippsValve.getVotingLogic().getNotation());
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Closure Time: %.1f seconds%n", hippsValve.getClosureTime());
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%nPSV Status:%n");

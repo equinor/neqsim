@@ -244,7 +244,7 @@ public class Costald extends LiquidPhysicalPropertyMethod implements DensityInte
       sumTcV += xi * Math.sqrt(tci * vstarI);
 
       if (usePolarCorrection) {
-	omegaPolarMix += xi * getPolarParameter(i);
+        omegaPolarMix += xi * getPolarParameter(i);
       }
     }
 
@@ -263,7 +263,7 @@ public class Costald extends LiquidPhysicalPropertyMethod implements DensityInte
 
     if (reducedTemperature < 0.25) {
       logger.warn("COSTALD: reduced temperature {} < 0.25, extrapolating below validated range (0.25-0.95)",
-	  reducedTemperature);
+          reducedTemperature);
     }
 
     // --- Saturated liquid molar volume (Hankinson-Thomson / NASTALD) ---

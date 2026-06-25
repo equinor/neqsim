@@ -194,9 +194,9 @@ public final class StandardRegistry {
       // Search by prefix
       List<StandardType> result = new ArrayList<StandardType>();
       for (StandardType type : StandardType.values()) {
-	if (type.getCode().toUpperCase().startsWith(org)) {
-	  result.add(type);
-	}
+        if (type.getCode().toUpperCase().startsWith(org)) {
+          result.add(type);
+        }
       }
       return result;
     }
@@ -267,7 +267,7 @@ public final class StandardRegistry {
     for (StandardType type : applicable) {
       String category = type.getDesignStandardCategory();
       if (!result.containsKey(category)) {
-	result.put(category, new ArrayList<StandardType>());
+        result.put(category, new ArrayList<StandardType>());
       }
       result.get(category).add(type);
     }
@@ -289,12 +289,12 @@ public final class StandardRegistry {
     for (String org : orgs) {
       List<StandardType> standards = getStandardsByOrganization(org);
       if (!standards.isEmpty()) {
-	sb.append(org).append(" Standards:\n");
-	for (StandardType std : standards) {
-	  sb.append("  - ").append(std.toString()).append("\n");
-	  sb.append("      Category: ").append(std.getDesignStandardCategory()).append("\n");
-	}
-	sb.append("\n");
+        sb.append(org).append(" Standards:\n");
+        for (StandardType std : standards) {
+          sb.append("  - ").append(std.toString()).append("\n");
+          sb.append("      Category: ").append(std.getDesignStandardCategory()).append("\n");
+        }
+        sb.append("\n");
       }
     }
 

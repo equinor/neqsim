@@ -1,6 +1,8 @@
 package neqsim.process.equipment.util;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
@@ -186,7 +188,7 @@ public class FuelGasSystemTest {
   @Test
   public void testConsumerEfficiency() {
     FuelGasSystem.FuelGasConsumer consumer = new FuelGasSystem.FuelGasConsumer("GT-1", ConsumerType.GAS_TURBINE,
-	1000.0);
+        1000.0);
 
     consumer.setEfficiencyPercent(35.0);
     double usefulPower = consumer.getUsefulThermalPowerKW(45.0);

@@ -107,9 +107,9 @@ public class PloadingCurve2 extends BaseOperation {
       system.initBeta();
       system.init_x_y();
       try {
-	testOps.bubblePointPressureFlash(false);
+        testOps.bubblePointPressureFlash(false);
       } catch (Exception ex) {
-	logger.info(ex.toString());
+        logger.info(ex.toString());
       }
       logger.info("beta " + system.getBeta());
       points[0][i] = (inscr * (i - 1)) / molMDEA;
@@ -117,9 +117,9 @@ public class PloadingCurve2 extends BaseOperation {
       points[2][i] = (system.getPressure() * system.getPhase(0).getComponent(0).getx());
 
       for (int k = 0; k < system.getPhases()[1].getNumberOfComponents(); k++) {
-	points[k + 3][i] = system.getPhases()[1].getComponent(k).getx();
-	points[k + 3 + system.getPhases()[1].getNumberOfComponents()][i] = system.getPhase(1).getActivityCoefficient(k,
-	    1); // ,1);
+        points[k + 3][i] = system.getPhases()[1].getComponent(k).getx();
+        points[k + 3 + system.getPhases()[1].getNumberOfComponents()][i] = system.getPhase(1).getActivityCoefficient(k,
+            1); // ,1);
       }
       logger.info("point: " + points[0][i] + " tot pres  " + points[1][i] + " CO2 pres  " + points[2][i]);
       system.setPressure(points[1][i]);

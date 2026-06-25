@@ -32,7 +32,7 @@ public class SeparatorFireExposureTest {
     separator.run();
 
     FireScenarioConfig config = new FireScenarioConfig().setEnvironmentalFactor(0.82).setWallThicknessM(0.018)
-	.setAllowableTensileStrengthPa(2.1e8);
+        .setAllowableTensileStrengthPa(2.1e8);
 
     FireExposureResult result = separator.evaluateFireExposure(config);
 

@@ -341,10 +341,10 @@ public final class DexpiEquipmentFactory {
     if (dexpiClass != null) {
       String lower = dexpiClass.toLowerCase(java.util.Locale.ROOT);
       if (lower.contains("absorb") || lower.contains("absorption")) {
-	hasCondenser = false;
-	hasReboiler = false;
+        hasCondenser = false;
+        hasReboiler = false;
       } else if (lower.contains("strip")) {
-	hasCondenser = false;
+        hasCondenser = false;
       }
     }
 
@@ -353,14 +353,14 @@ public final class DexpiEquipmentFactory {
     if (inletStream != null) {
       int feedTray = (int) unit.getSizingAttributeAsDouble(DexpiMetadata.FEED_TRAY, -1);
       if (feedTray > 0) {
-	column.addFeedStream(inletStream, feedTray);
+        column.addFeedStream(inletStream, feedTray);
       } else {
-	column.addFeedStream(inletStream, numberOfTrays / 2 + 1);
+        column.addFeedStream(inletStream, numberOfTrays / 2 + 1);
       }
     }
 
     logger.debug("Created DistillationColumn '{}' (trays={}, reboiler={}, condenser={})", name, numberOfTrays,
-	hasReboiler, hasCondenser);
+        hasReboiler, hasCondenser);
     return column;
   }
 

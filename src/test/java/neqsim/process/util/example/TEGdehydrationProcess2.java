@@ -1,5 +1,7 @@
 package neqsim.process.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
 import neqsim.process.equipment.absorber.WaterStripperColumn;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -13,8 +15,6 @@ import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * TEGdehydrationProcess2 class.
@@ -239,7 +239,7 @@ public class TEGdehydrationProcess2 {
     logger.info("Energy reboiler 2 " + heaterToReboiler.getDuty());
 
     logger.info("wt lean TEG after stripper " + ((WaterStripperColumn) operations.getUnit("TEG stripper"))
-	.getSolventOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG"));
+        .getSolventOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG"));
 
     operations.save("c:/temp/TEGprocessSimple.neqsim");
   }

@@ -113,7 +113,7 @@ public final class ReservesClassification implements Serializable {
      * @param maturityWarning screening flag: {@code "ok"}, {@code "watch"}, or {@code "unclassified"}
      */
     public Result(String resourceClass, ResourceCategory resourceCategory, String prmsClassRange,
-	String maturityWarning) {
+        String maturityWarning) {
       this.resourceClass = resourceClass;
       this.resourceCategory = resourceCategory;
       this.prmsClassRange = prmsClassRange;

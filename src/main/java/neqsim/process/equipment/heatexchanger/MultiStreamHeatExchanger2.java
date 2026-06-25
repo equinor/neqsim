@@ -171,7 +171,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     int undefinedCount = 0;
     for (Boolean unknownOutlet : unknownOutlets) {
       if (unknownOutlet) {
-	undefinedCount++;
+        undefinedCount++;
       }
     }
     if (undefinedCount == 0) {
@@ -208,9 +208,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     int idx = -1;
     for (int i = 0; i < unknownOutlets.size(); i++) {
       if ((Boolean) unknownOutlets.get(i)) {
-	idx = i;
-	unknownIndices.add(i);
-	break;
+        idx = i;
+        unknownIndices.add(i);
+        break;
       }
     }
     outletTemps.set(idx, initializeOutletGuess(idx));
@@ -219,14 +219,14 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       resetOfExtremesAndStalls(unknownIndices, stalled, false);
       double[] residuals = residualFunctionOneUnknown();
       if (Math.abs(residuals[0]) < tolerance) {
-	return;
+        return;
       }
       double[][] jacobian = numericalJacobiOneUnknown(unknownIndices);
       double[] delta;
       try {
-	delta = linearSystemOneUnknown(jacobian, residuals);
+        delta = linearSystemOneUnknown(jacobian, residuals);
       } catch (ArithmeticException e) {
-	throw new RuntimeException("Jacobian is singular or poorly conditioned.");
+        throw new RuntimeException("Jacobian is singular or poorly conditioned.");
       }
 
       outletTemps.set(idx, outletTemps.get(idx) - damping * delta[0]);
@@ -281,8 +281,8 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     List<Integer> unknownIndices = new ArrayList<>();
     for (int i = 0; i < unknownOutlets.size(); i++) {
       if ((Boolean) unknownOutlets.get(i)) {
-	unknownIndices.add(i);
-	outletTemps.set(i, initializeOutletGuess(i));
+        unknownIndices.add(i);
+        outletTemps.set(i, initializeOutletGuess(i));
       }
     }
     for (int iteration = 0; iteration < maxIterations; iteration++) {
@@ -290,20 +290,20 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       resetOfExtremesAndStalls(unknownIndices, stalled, false);
       double[] residuals = residualFunctionTwoUnknowns();
       if (Math.max(Math.abs(residuals[0]), Math.abs(residuals[1])) < tolerance) {
-	logger.debug("✓ OK With Streams" + outletTemps);
-	return;
+        logger.debug("✓ OK With Streams" + outletTemps);
+        return;
       }
       double[][] jacobian = numericalJacobiTwoUnknowns(unknownIndices);
       double[] delta;
       try {
-	delta = linearSystemTwoUnknowns(jacobian, residuals);
+        delta = linearSystemTwoUnknowns(jacobian, residuals);
       } catch (ArithmeticException e) {
-	throw new RuntimeException("Jacobian is singular or poorly conditioned.");
+        throw new RuntimeException("Jacobian is singular or poorly conditioned.");
       }
 
       for (int i = 0; i < unknownIndices.size(); i++) {
-	int idx = unknownIndices.get(i);
-	outletTemps.set(idx, outletTemps.get(idx) - damping * delta[i]);
+        int idx = unknownIndices.get(i);
+        outletTemps.set(idx, outletTemps.get(idx) - damping * delta[i]);
       }
     }
     throw new RuntimeException("twoUnknowns(): Failed to converge after maxIterations.");
@@ -325,7 +325,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       outletTemps.set(idx, baseTemps[i] + jacobiDelta);
       double[] perturbed = residualFunctionTwoUnknowns();
       for (int j = 0; j < 2; j++) {
-	J[j][i] = (perturbed[j] - baseResiduals[j]) / jacobiDelta;
+        J[j][i] = (perturbed[j] - baseResiduals[j]) / jacobiDelta;
       }
       outletTemps.set(idx, baseTemps[i]);
     }
@@ -341,7 +341,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       A[1][1] += eps;
       det = A[0][0] * A[1][1] - A[0][1] * A[1][0];
       if (Math.abs(det) < 1e-12) {
-	throw new ArithmeticException("Jacobian determinant is zero");
+        throw new ArithmeticException("Jacobian determinant is zero");
       }
     }
     double dx = b[0] * A[1][1] - b[1] * A[0][1];
@@ -360,8 +360,8 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     List<Integer> unknownIndices = new ArrayList<>();
     for (int i = 0; i < unknownOutlets.size(); i++) {
       if ((Boolean) unknownOutlets.get(i)) {
-	unknownIndices.add(i);
-	outletTemps.set(i, initializeOutletGuess(i));
+        unknownIndices.add(i);
+        outletTemps.set(i, initializeOutletGuess(i));
       }
     }
     logger.debug("Outlet temps before solving: " + outletTemps);
@@ -371,20 +371,20 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       resetOfExtremesAndStalls(unknownIndices, stalled, true);
       double[] residuals = residualFunctionThreeUnknowns();
       if (Math.max(Math.max(Math.abs(residuals[0]), Math.abs(residuals[1])), Math.abs(residuals[2])) < tolerance) {
-	return;
+        return;
       }
 
       double[][] jacobian = numericalJacobiThreeUnknowns(unknownIndices);
       double[] delta;
       try {
-	delta = linearSystemThreeUnknowns(jacobian, residuals);
+        delta = linearSystemThreeUnknowns(jacobian, residuals);
       } catch (ArithmeticException e) {
-	throw new RuntimeException("Jacobian is singular or poorly conditioned.");
+        throw new RuntimeException("Jacobian is singular or poorly conditioned.");
       }
 
       for (int i = 0; i < unknownIndices.size(); i++) {
-	int idx = unknownIndices.get(i);
-	outletTemps.set(idx, outletTemps.get(idx) - damping * delta[i]);
+        int idx = unknownIndices.get(i);
+        outletTemps.set(idx, outletTemps.get(idx) - damping * delta[i]);
       }
     }
 
@@ -409,7 +409,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       outletTemps.set(idx, baseTemps[i] + jacobiDelta);
       double[] perturbed = residualFunctionThreeUnknowns();
       for (int j = 0; j < 3; j++) {
-	J[j][i] = (perturbed[j] - baseResiduals[j]) / jacobiDelta;
+        J[j][i] = (perturbed[j] - baseResiduals[j]) / jacobiDelta;
       }
       outletTemps.set(idx, baseTemps[i]);
     }
@@ -419,19 +419,19 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
   private double[] linearSystemThreeUnknowns(double[][] A, double[] b) {
     double D = A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]) - A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0])
-	+ A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
+        + A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
     if (Math.abs(D) < 1e-12) {
       throw new ArithmeticException(SINGULAR_JACOBIAN_MSG);
     }
 
     double Dx = b[0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]) - A[0][1] * (b[1] * A[2][2] - A[1][2] * b[2])
-	+ A[0][2] * (b[1] * A[2][1] - A[1][1] * b[2]);
+        + A[0][2] * (b[1] * A[2][1] - A[1][1] * b[2]);
 
     double Dy = A[0][0] * (b[1] * A[2][2] - A[1][2] * b[2]) - b[0] * (A[1][0] * A[2][2] - A[1][2] * A[2][0])
-	+ A[0][2] * (A[1][0] * b[2] - b[1] * A[2][0]);
+        + A[0][2] * (A[1][0] * b[2] - b[1] * A[2][0]);
 
     double Dz = A[0][0] * (A[1][1] * b[2] - b[1] * A[2][1]) - A[0][1] * (A[1][0] * b[2] - b[1] * A[2][0])
-	+ b[0] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
+        + b[0] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
 
     return new double[] { Dx / D, Dy / D, Dz / D };
   }
@@ -454,9 +454,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       double load = (hOut - hIn) * massFlows.get(i);
       streamLoads.set(i, load);
       if ("hot".equals(streamTypes.get(i))) {
-	hotLoad += load;
+        hotLoad += load;
       } else if ("cold".equals(streamTypes.get(i))) {
-	coldLoad += load;
+        coldLoad += load;
       }
     }
     return hotLoad + coldLoad;
@@ -475,7 +475,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     java.util.Set<Double> loadSet = new java.util.TreeSet<>();
     for (String t : new String[] { "hot", "cold" }) {
       for (Map<String, Object> p : compositeCurvePoints.get(t)) {
-	loadSet.add((Double) p.get("load")); // cast because Map<String,Object>
+        loadSet.add((Double) p.get("load")); // cast because Map<String,Object>
       }
     }
 
@@ -485,7 +485,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     allLoad.add(sortedLoads.get(0));
     for (int i = 1; i < sortedLoads.size(); i++) {
       if (Math.abs(sortedLoads.get(i) - sortedLoads.get(i - 1)) > 1e-3) {
-	allLoad.add(sortedLoads.get(i));
+        allLoad.add(sortedLoads.get(i));
       }
     }
 
@@ -495,18 +495,18 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
     for (double load : allLoad) {
       for (int j = 0; j < 2; j++) {
-	String curveKey = j == 0 ? "hot" : "cold";
-	List<Map<String, Object>> points = compositeCurvePoints.get(curveKey);
-	List<Double> target = j == 0 ? hotTempAll : coldTempAll;
+        String curveKey = j == 0 ? "hot" : "cold";
+        List<Map<String, Object>> points = compositeCurvePoints.get(curveKey);
+        List<Double> target = j == 0 ? hotTempAll : coldTempAll;
 
-	Double exact = null;
-	for (Map<String, Object> p : points) {
-	  if (Math.abs((Double) p.get("load") - load) < 1e-3) {
-	    exact = (Double) p.get("temperature");
-	    break;
-	  }
-	}
-	target.add(exact != null ? exact : interpolateTemperature(points, load));
+        Double exact = null;
+        for (Map<String, Object> p : points) {
+          if (Math.abs((Double) p.get("load") - load) < 1e-3) {
+            exact = (Double) p.get("temperature");
+            break;
+          }
+        }
+        target.add(exact != null ? exact : interpolateTemperature(points, load));
       }
     }
 
@@ -545,15 +545,15 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       double UAinterval;
 
       if (Math.abs(deltaT1 - deltaT2) < 1e-4) {
-	LMTD = (deltaT1 + deltaT2) / 2.0;
-	UAinterval = 1000.0 * deltaQ / LMTD; // 1000 * kW/K -> W/K
+        LMTD = (deltaT1 + deltaT2) / 2.0;
+        UAinterval = 1000.0 * deltaQ / LMTD; // 1000 * kW/K -> W/K
       } else {
-	LMTD = (deltaT1 - deltaT2) / Math.log(deltaT1 / deltaT2);
-	if (LMTD < 0.01) {
-	  UAinterval = 0.0;
-	} else {
-	  UAinterval = 1000.0 * deltaQ / LMTD; // 1000 * kW/K -> W/K
-	}
+        LMTD = (deltaT1 - deltaT2) / Math.log(deltaT1 / deltaT2);
+        if (LMTD < 0.01) {
+          UAinterval = 0.0;
+        } else {
+          UAinterval = 1000.0 * deltaQ / LMTD; // 1000 * kW/K -> W/K
+        }
       }
 
       UAvalue += UAinterval;
@@ -592,10 +592,10 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       /* ---- collect every unique temperature seen on this curve ---- */
       java.util.Set<Double> tempSet = new java.util.HashSet<>();
       for (int i = 0; i < streamTypes.size(); i++) {
-	if (t.equals(streamTypes.get(i))) {
-	  tempSet.add(inletTemps.get(i));
-	  tempSet.add(outletTemps.get(i));
-	}
+        if (t.equals(streamTypes.get(i))) {
+          tempSet.add(inletTemps.get(i));
+          tempSet.add(outletTemps.get(i));
+        }
       }
 
       java.util.List<Double> tempPoints = new java.util.ArrayList<>(tempSet);
@@ -604,17 +604,18 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       /* ---- find the true lowest temperature on this curve --------- */
       double minTemp = Double.MAX_VALUE; // ← FIX: no default 0 °C
       for (int i = 0; i < streamTypes.size(); i++) {
-	if (t.equals(streamTypes.get(i))) {
-	  double candidate = t.equals("hot") ? outletTemps.get(i) // coldest point of a hot stream
-	      : inletTemps.get(i); // coldest point of a cold stream
-	  if (candidate < minTemp) {
-	    minTemp = candidate;
-	  }
-	}
+        if (t.equals(streamTypes.get(i))) {
+          double candidate = t.equals("hot") ? outletTemps.get(i) // coldest point of a
+                                                                  // hot stream
+              : inletTemps.get(i); // coldest point of a cold stream
+          if (candidate < minTemp) {
+            minTemp = candidate;
+          }
+        }
       }
       if (minTemp == Double.MAX_VALUE && !tempPoints.isEmpty()) {
-	/* should never happen, but fall back gracefully */
-	minTemp = tempPoints.get(0);
+        /* should never happen, but fall back gracefully */
+        minTemp = tempPoints.get(0);
       }
 
       /* ---- initialise the curve with (load=0 kW, temperature=min) -- */
@@ -628,30 +629,30 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
       /* ---- walk each temperature interval, accumulate its load ----- */
       for (int p = 0; p < tempPoints.size() - 1; p++) {
-	double tStart = tempPoints.get(p);
-	double tEnd = tempPoints.get(p + 1);
+        double tStart = tempPoints.get(p);
+        double tEnd = tempPoints.get(p + 1);
 
-	double intervalLoad = 0.0;
-	for (int j = 0; j < streamTypes.size(); j++) {
-	  if (t.equals(streamTypes.get(j))) {
-	    double inlet = inletTemps.get(j);
-	    double outlet = outletTemps.get(j);
-	    double low = Math.min(inlet, outlet);
-	    double high = Math.max(inlet, outlet);
+        double intervalLoad = 0.0;
+        for (int j = 0; j < streamTypes.size(); j++) {
+          if (t.equals(streamTypes.get(j))) {
+            double inlet = inletTemps.get(j);
+            double outlet = outletTemps.get(j);
+            double low = Math.min(inlet, outlet);
+            double high = Math.max(inlet, outlet);
 
-	    /* does this stream span the entire [tStart, tEnd] window? */
-	    if (tStart >= low && tEnd <= high) {
-	      intervalLoad += intervalLoad(j, tStart, tEnd);
-	    }
-	  }
-	}
+            /* does this stream span the entire [tStart, tEnd] window? */
+            if (tStart >= low && tEnd <= high) {
+              intervalLoad += intervalLoad(j, tStart, tEnd);
+            }
+          }
+        }
 
-	cumulativeLoad += intervalLoad;
+        cumulativeLoad += intervalLoad;
 
-	java.util.Map<String, Object> point = new java.util.HashMap<>();
-	point.put("temperature", tEnd);
-	point.put("load", cumulativeLoad);
-	curveData.add(point);
+        java.util.Map<String, Object> point = new java.util.HashMap<>();
+        point.put("temperature", tEnd);
+        point.put("load", cumulativeLoad);
+        curveData.add(point);
       }
 
       /* ---- save the finished curve -------------------------------- */
@@ -694,10 +695,10 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     for (Map<String, Object> point : points) {
       double l = (Double) point.get("load");
       if (l < load) {
-	below.add(point);
+        below.add(point);
       }
       if (l > load) {
-	above.add(point);
+        above.add(point);
       }
     }
 
@@ -731,122 +732,122 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
       // 1. Check stream direction
       for (int i : unknownIndices) {
-	double inT = inletTemps.get(i);
-	double outT = outletTemps.get(i);
-	String type = streamTypes.get(i);
-	if (type.equals("hot") && outT >= inT) {
-	  directionOk = false;
-	  msgs.add("hot outlet ≥ inlet");
-	} else if (type.equals("cold") && outT <= inT) {
-	  directionOk = false;
-	  msgs.add("cold outlet ≤ inlet");
-	}
+        double inT = inletTemps.get(i);
+        double outT = outletTemps.get(i);
+        String type = streamTypes.get(i);
+        if (type.equals("hot") && outT >= inT) {
+          directionOk = false;
+          msgs.add("hot outlet ≥ inlet");
+        } else if (type.equals("cold") && outT <= inT) {
+          directionOk = false;
+          msgs.add("cold outlet ≤ inlet");
+        }
       }
 
       // 2. Energy balance check (only if direction is OK)
       if (directionOk) {
-	try {
-	  energyDiff(); // may throw
-	  double imbalance = Math.abs(hotLoad / coldLoad);
-	  energyOk = (1 - extremeEnergy) <= imbalance && imbalance <= (1 + extremeEnergy);
-	  if (!energyOk) {
-	    msgs.add(String.format("energy ratio = %.3f", imbalance));
-	  }
-	} catch (Exception e) {
-	  energyOk = false;
-	  msgs.add("energyDiff() raised " + e.getClass().getSimpleName());
-	}
+        try {
+          energyDiff(); // may throw
+          double imbalance = Math.abs(hotLoad / coldLoad);
+          energyOk = (1 - extremeEnergy) <= imbalance && imbalance <= (1 + extremeEnergy);
+          if (!energyOk) {
+            msgs.add(String.format("energy ratio = %.3f", imbalance));
+          }
+        } catch (Exception e) {
+          energyOk = false;
+          msgs.add("energyDiff() raised " + e.getClass().getSimpleName());
+        }
       } else {
-	energyOk = false;
+        energyOk = false;
       }
 
       // 3. LMTD / pinch check (only if previous two are OK)
       if (directionOk && energyOk) {
-	pinch();
-	for (int i = 1; i < allLoad.size(); i++) {
-	  double dT1 = hotTempAll.get(i - 1) - coldTempAll.get(i - 1);
-	  double dT2 = hotTempAll.get(i) - coldTempAll.get(i);
-	  if (dT1 <= tolerance || dT2 <= tolerance) {
-	    heatFeasible = false;
-	    msgs.add(String.format("segment %d: ΔT1=%.2f °C, ΔT2=%.2f °C (must be > 0)", i, dT1, dT2));
-	  }
-	}
+        pinch();
+        for (int i = 1; i < allLoad.size(); i++) {
+          double dT1 = hotTempAll.get(i - 1) - coldTempAll.get(i - 1);
+          double dT2 = hotTempAll.get(i) - coldTempAll.get(i);
+          if (dT1 <= tolerance || dT2 <= tolerance) {
+            heatFeasible = false;
+            msgs.add(String.format("segment %d: ΔT1=%.2f °C, ΔT2=%.2f °C (must be > 0)", i, dT1, dT2));
+          }
+        }
       } else {
-	heatFeasible = false;
+        heatFeasible = false;
       }
 
       // 4. UA check (only if everything else is OK)
       boolean uaOk = true;
       if (UATest && directionOk && energyOk && heatFeasible) {
-	double uaVal = calculateUA();
-	double uaTol = UA * extremeUA;
-	uaOk = Math.abs(uaVal - UA) < uaTol;
-	if (!uaOk) {
-	  msgs.add(String.format("UA = %.2f (target %.2f ± %.2f)", uaVal, UA, uaTol));
-	}
+        double uaVal = calculateUA();
+        double uaTol = UA * extremeUA;
+        uaOk = Math.abs(uaVal - UA) < uaTol;
+        if (!uaOk) {
+          msgs.add(String.format("UA = %.2f (target %.2f ± %.2f)", uaVal, UA, uaTol));
+        }
       } else {
-	uaOk = false;
+        uaOk = false;
       }
 
       // 5. Final condition
       if (directionOk && energyOk && heatFeasible && (!UATest || uaOk) && !localMin) {
-	logger.debug("✓ No reset on attempt " + attempt);
-	logger.debug("With Streams " + outletTemps);
-	localMin = false; // once triggered, don't persist
-	return;
+        logger.debug("✓ No reset on attempt " + attempt);
+        logger.debug("With Streams " + outletTemps);
+        localMin = false; // once triggered, don't persist
+        return;
       } else {
-	logger.debug("✗ reset on attempt " + attempt + ": " + String.join("; ", msgs));
+        logger.debug("✗ reset on attempt " + attempt + ": " + String.join("; ", msgs));
 
-	// Randomize outlet temps within physical bounds
-	double hottestHot = Collections.max(inletTemps);
-	double coldestCold = Collections.min(inletTemps);
-	for (int idx : unknownIndices) {
-	  double inlet = inletTemps.get(idx);
-	  double lower;
-	  double upper;
-	  String type = streamTypes.get(idx);
-	  if (type.equals("hot")) {
-	    lower = coldestCold + approachTemperature;
-	    upper = inlet;
-	  } else {
-	    lower = inlet;
-	    upper = hottestHot - approachTemperature;
-	  }
-	  double guess = lower + Math.random() * (upper - lower);
-	  outletTemps.set(idx, guess);
-	}
+        // Randomize outlet temps within physical bounds
+        double hottestHot = Collections.max(inletTemps);
+        double coldestCold = Collections.min(inletTemps);
+        for (int idx : unknownIndices) {
+          double inlet = inletTemps.get(idx);
+          double lower;
+          double upper;
+          String type = streamTypes.get(idx);
+          if (type.equals("hot")) {
+            lower = coldestCold + approachTemperature;
+            upper = inlet;
+          } else {
+            lower = inlet;
+            upper = hottestHot - approachTemperature;
+          }
+          double guess = lower + Math.random() * (upper - lower);
+          outletTemps.set(idx, guess);
+        }
 
-	logger.debug("Outlet temps before solving: " + outletTemps);
-	logger.debug("Unknown flags: " + unknownOutlets);
+        logger.debug("Outlet temps before solving: " + outletTemps);
+        logger.debug("Unknown flags: " + unknownOutlets);
       }
     }
 
     // If all attempts fail
     throw new RuntimeException(
-	"resetOfExtremes: gave up after " + extremeAttempts + " attempts - last issues: " + String.join("; ", msgs));
+        "resetOfExtremes: gave up after " + extremeAttempts + " attempts - last issues: " + String.join("; ", msgs));
   }
 
   private boolean stallDetection(List<Integer> unknownIndices) {
     if (prevOutletTemps != null) {
       double maxDelta = 0.0;
       for (int i = 0; i < unknownIndices.size(); i++) {
-	int idx = unknownIndices.get(i);
-	double delta = Math.abs(outletTemps.get(idx) - prevOutletTemps.get(i));
-	if (delta > maxDelta) {
-	  maxDelta = delta;
-	}
+        int idx = unknownIndices.get(i);
+        double delta = Math.abs(outletTemps.get(idx) - prevOutletTemps.get(i));
+        if (delta > maxDelta) {
+          maxDelta = delta;
+        }
       }
 
       if (maxDelta <= localRange) {
-	stallCounter++;
+        stallCounter++;
       } else {
-	stallCounter = 0;
+        stallCounter = 0;
       }
 
       if (stallCounter >= stallLimit) {
-	logger.warn("Local Minimum Detected! Stall counter reached limit.");
-	stallCounter = 0;
-	return true;
+        logger.warn("Local Minimum Detected! Stall counter reached limit.");
+        stallCounter = 0;
+        return true;
       }
     }
 
@@ -1033,7 +1034,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   @Override
   public String toJson() {
     return new GsonBuilder().serializeSpecialFloatingPointValues().create()
-	.toJson(new MultiStreamHeatExchanger2Response(this));
+        .toJson(new MultiStreamHeatExchanger2Response(this));
   }
 
   /** {@inheritDoc} */

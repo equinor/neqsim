@@ -138,9 +138,9 @@ public class BLEVECalculator implements Serializable {
     for (int i = 0; i < 60; i++) {
       double mid = 0.5 * (lo + hi);
       if (incidentHeatFlux(mid) > targetFluxWperM2) {
-	lo = mid;
+        lo = mid;
       } else {
-	hi = mid;
+        hi = mid;
       }
     }
     return 0.5 * (lo + hi);

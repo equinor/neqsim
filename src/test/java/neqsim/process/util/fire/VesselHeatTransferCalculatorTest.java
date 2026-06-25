@@ -91,7 +91,7 @@ public class VesselHeatTransferCalculatorTest {
     boolean isVertical = true;
 
     double h = VesselHeatTransferCalculator.calculateInternalFilmCoefficient(L, Twall, Tfluid, k, Cp, mu, rho,
-	isVertical);
+        isVertical);
 
     assertTrue(h > 0, "Film coefficient should be positive");
     assertTrue(h < 50, "Film coefficient should be reasonable for natural convection");
@@ -113,13 +113,13 @@ public class VesselHeatTransferCalculatorTest {
     boolean isVertical = true;
 
     double hMixed = VesselHeatTransferCalculator.calculateMixedConvectionCoefficient(L, Twall, Tfluid, massFlowRate,
-	inletDiameter, vesselDiameter, k, Cp, mu, rho, isVertical);
+        inletDiameter, vesselDiameter, k, Cp, mu, rho, isVertical);
 
     assertTrue(hMixed > 0, "Mixed convection coefficient should be positive");
 
     // Also get pure natural convection for comparison
     double hNatural = VesselHeatTransferCalculator.calculateInternalFilmCoefficient(L, Twall, Tfluid, k, Cp, mu, rho,
-	isVertical);
+        isVertical);
 
     // Mixed should generally be higher, but with low flow rate it might be similar
     assertTrue(hMixed >= hNatural * 0.5, "Mixed should be comparable to or better than natural");
@@ -162,7 +162,7 @@ public class VesselHeatTransferCalculatorTest {
     boolean isVertical = true;
 
     VesselHeatTransferCalculator.HeatTransferResult result = VesselHeatTransferCalculator
-	.calculateCompleteHeatTransfer(L, Twall, Tfluid, k, Cp, mu, rho, isVertical);
+        .calculateCompleteHeatTransfer(L, Twall, Tfluid, k, Cp, mu, rho, isVertical);
 
     assertTrue(result.getGrashofNumber() > 0, "Gr should be positive");
     assertTrue(result.getPrandtlNumber() > 0, "Pr should be positive");
@@ -186,13 +186,13 @@ public class VesselHeatTransferCalculatorTest {
     boolean isVertical = true;
 
     double hIdeal = VesselHeatTransferCalculator.calculateInternalFilmCoefficient(L, Twall, Tfluid, k, Cp, mu, rho,
-	isVertical);
+        isVertical);
 
     // Simulate real-gas beta = 2x ideal-gas value
     double filmT = (Twall + Tfluid) / 2.0;
     double betaReal = 2.0 / filmT;
     double hReal = VesselHeatTransferCalculator.calculateInternalFilmCoefficient(L, Twall, Tfluid, k, Cp, mu, rho,
-	isVertical, betaReal);
+        isVertical, betaReal);
 
     assertTrue(hReal > hIdeal, "Higher beta should give higher film coefficient");
   }
@@ -239,10 +239,10 @@ public class VesselHeatTransferCalculatorTest {
     boolean isVertical = true;
 
     double hDischarge = VesselHeatTransferCalculator.calculateDischargeConvectionCoefficient(L, Twall, Tfluid,
-	massFlowRate, orificeDiameter, vesselDiameter, k, Cp, mu, rho, isVertical);
+        massFlowRate, orificeDiameter, vesselDiameter, k, Cp, mu, rho, isVertical);
 
     double hNatural = VesselHeatTransferCalculator.calculateInternalFilmCoefficient(L, Twall, Tfluid, k, Cp, mu, rho,
-	isVertical);
+        isVertical);
 
     assertTrue(hDischarge > 0, "Discharge HTC should be positive");
     assertTrue(hDischarge >= hNatural * 0.99, "Discharge HTC should be >= natural convection (mixed convection blend)");
@@ -263,12 +263,12 @@ public class VesselHeatTransferCalculatorTest {
     boolean isVertical = true;
 
     double hIdeal = VesselHeatTransferCalculator.calculateMixedConvectionCoefficient(L, Twall, Tfluid, massFlowRate,
-	inletDiameter, vesselDiameter, k, Cp, mu, rho, isVertical);
+        inletDiameter, vesselDiameter, k, Cp, mu, rho, isVertical);
 
     double filmT = (Twall + Tfluid) / 2.0;
     double betaReal = 3.0 / filmT;
     double hReal = VesselHeatTransferCalculator.calculateMixedConvectionCoefficient(L, Twall, Tfluid, massFlowRate,
-	inletDiameter, vesselDiameter, k, Cp, mu, rho, isVertical, betaReal);
+        inletDiameter, vesselDiameter, k, Cp, mu, rho, isVertical, betaReal);
 
     assertTrue(hReal > hIdeal, "Higher beta should increase mixed convection coefficient");
   }
@@ -287,7 +287,7 @@ public class VesselHeatTransferCalculatorTest {
     boolean isVertical = true;
 
     double hWetted = VesselHeatTransferCalculator.calculateWettedWallFilmCoefficient(Twall, Tfluid, Tsat, L, k, Cp, mu,
-	rho, isVertical);
+        rho, isVertical);
 
     assertTrue(hWetted > 100, "Boiling should give high heat transfer coefficient");
     assertTrue(hWetted <= 5000, "Should be capped at 5000 W/(m2*K)");

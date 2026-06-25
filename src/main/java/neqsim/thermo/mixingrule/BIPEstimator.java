@@ -195,8 +195,8 @@ public final class BIPEstimator {
       heavyComp = temp;
       name = methaneComp.getComponentName().toLowerCase();
       if (!name.equals("methane") && !name.equals("c1")) {
-	// Neither is methane - use Chueh-Prausnitz instead
-	return estimateChuehPrausnitz(methaneComp, heavyComp);
+        // Neither is methane - use Chueh-Prausnitz instead
+        return estimateChuehPrausnitz(methaneComp, heavyComp);
       }
     }
 
@@ -267,9 +267,9 @@ public final class BIPEstimator {
 
     if (usePR) {
       if (type == MercuryHydrocarbonType.PARAFFINIC) {
-	return HG_PR_A_PARAFFINIC * tb + HG_PR_B_PARAFFINIC * molarMass + HG_PR_C_PARAFFINIC;
+        return HG_PR_A_PARAFFINIC * tb + HG_PR_B_PARAFFINIC * molarMass + HG_PR_C_PARAFFINIC;
       } else if (type == MercuryHydrocarbonType.NAPHTHENIC) {
-	return HG_PR_A_NAPHTHENIC * tb + HG_PR_B_NAPHTHENIC * molarMass + HG_PR_C_NAPHTHENIC;
+        return HG_PR_A_NAPHTHENIC * tb + HG_PR_B_NAPHTHENIC * molarMass + HG_PR_C_NAPHTHENIC;
       }
       return HG_PR_A_AROMATIC * tb + HG_PR_B_AROMATIC * molarMass + HG_PR_C_AROMATIC;
     }
@@ -295,12 +295,12 @@ public final class BIPEstimator {
 
     String name = hydrocarbon.getComponentName().toLowerCase().replace(" ", "");
     if (name.contains("benz") || name.contains("xylene") || name.contains("toluene") || name.contains("naphth")
-	|| name.contains("phenyl") || name.contains("arom")) {
+        || name.contains("phenyl") || name.contains("arom")) {
       return MercuryHydrocarbonType.AROMATIC;
     }
 
     if (name.contains("cyclo") || name.contains("cy") || name.contains("m-c") || name.contains("c-")
-	|| name.contains("dm-cy")) {
+        || name.contains("dm-cy")) {
       return MercuryHydrocarbonType.NAPHTHENIC;
     }
 
@@ -372,13 +372,13 @@ public final class BIPEstimator {
 
     for (int i = 0; i < nComp; i++) {
       for (int j = i + 1; j < nComp; j++) {
-	ComponentInterface comp1 = fluid.getComponent(i);
-	ComponentInterface comp2 = fluid.getComponent(j);
+        ComponentInterface comp1 = fluid.getComponent(i);
+        ComponentInterface comp2 = fluid.getComponent(j);
 
-	double estimatedBIP = estimate(comp1, comp2, method);
+        double estimatedBIP = estimate(comp1, comp2, method);
 
-	// Apply the BIP using the system-level setter
-	fluid.setBinaryInteractionParameter(i, j, estimatedBIP);
+        // Apply the BIP using the system-level setter
+        fluid.setBinaryInteractionParameter(i, j, estimatedBIP);
       }
     }
   }
@@ -403,8 +403,8 @@ public final class BIPEstimator {
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       String name = fluid.getComponent(i).getComponentName().toLowerCase();
       if (name.equals("methane") || name.equals("c1")) {
-	methaneIndex = i;
-	break;
+        methaneIndex = i;
+        break;
       }
     }
 
@@ -417,7 +417,7 @@ public final class BIPEstimator {
     // Apply Katz-Firoozabadi for all C7+ components
     for (int j = 0; j < fluid.getNumberOfComponents(); j++) {
       if (j == methaneIndex) {
-	continue;
+        continue;
       }
 
       ComponentInterface comp = fluid.getComponent(j);
@@ -425,8 +425,8 @@ public final class BIPEstimator {
 
       // Only apply to C7+ (MW > 86 g/mol)
       if (molarMass > 86.0 || comp.isIsTBPfraction() || comp.isIsPlusFraction()) {
-	double kij = estimateKatzFiroozabadi(methane, comp);
-	fluid.setBinaryInteractionParameter(methaneIndex, j, kij);
+        double kij = estimateKatzFiroozabadi(methane, comp);
+        fluid.setBinaryInteractionParameter(methaneIndex, j, kij);
       }
     }
   }
@@ -452,9 +452,9 @@ public final class BIPEstimator {
 
     for (int i = 0; i < nComp; i++) {
       for (int j = i + 1; j < nComp; j++) {
-	double kij = estimate(fluid.getComponent(i), fluid.getComponent(j), method);
-	bipMatrix[i][j] = kij;
-	bipMatrix[j][i] = kij;
+        double kij = estimate(fluid.getComponent(i), fluid.getComponent(j), method);
+        bipMatrix[i][j] = kij;
+        bipMatrix[j][i] = kij;
       }
     }
 
@@ -483,7 +483,7 @@ public final class BIPEstimator {
     for (int i = 0; i < nComp; i++) {
       System.out.print(String.format("%15s", fluid.getComponent(i).getComponentName()));
       for (int j = 0; j < nComp; j++) {
-	System.out.print(String.format("%12.6f", bipMatrix[i][j]));
+        System.out.print(String.format("%12.6f", bipMatrix[i][j]));
       }
       System.out.println();
     }

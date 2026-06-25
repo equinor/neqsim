@@ -249,7 +249,7 @@ public class SulfurDepositionAnalyserTest {
 
     // At 40 C, H2S oxidation should be kinetically negligible
     Assertions.assertEquals(false, kinetics.get("H2S_oxidation_kineticallyFeasible"),
-	"H2S oxidation should be infeasible at 40 C");
+        "H2S oxidation should be infeasible at 40 C");
 
     // FeS corrosion rate should be calculated
     Object crRate = kinetics.get("FeS_corrosionRate_mmYear");
@@ -265,7 +265,7 @@ public class SulfurDepositionAnalyserTest {
     List<String> rootCauses = (List<String>) kinetics.get("rootCauseClassification");
     Assertions.assertFalse(rootCauses.isEmpty(), "Root causes should be identified");
     Assertions.assertTrue(rootCauses.get(0).contains("Thermodynamic precipitation"),
-	"Primary root cause at low T should be thermodynamic");
+        "Primary root cause at low T should be thermodynamic");
 
     // JSON should include kinetic analysis
     String json = analyser.getResultsAsJson();
@@ -340,7 +340,7 @@ public class SulfurDepositionAnalyserTest {
     // JSON should include the comparison
     String json = analyser.getResultsAsJson();
     Assertions.assertTrue(json.contains("gasVsLiquidSolubility"),
-	"JSON should contain gas-liquid solubility comparison");
+        "JSON should contain gas-liquid solubility comparison");
   }
 
   /**
@@ -478,6 +478,6 @@ public class SulfurDepositionAnalyserTest {
     // Dominant mechanism should be thermodynamic precipitation
     String dominant = String.valueOf(catalysis.get("dominantMechanism"));
     Assertions.assertTrue(dominant.contains("THERMODYNAMIC PRECIPITATION") || dominant.contains("SURFACE CATALYSIS"),
-	"Lean dry gas should identify thermodynamic precipitation or minimal " + "surface catalysis as dominant");
+        "Lean dry gas should identify thermodynamic precipitation or minimal " + "surface catalysis as dominant");
   }
 }

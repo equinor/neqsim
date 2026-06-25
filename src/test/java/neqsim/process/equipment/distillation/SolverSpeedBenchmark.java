@@ -4,13 +4,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Locale;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Speed and robustness profiling for representative distillation columns.
@@ -71,12 +71,12 @@ public class SolverSpeedBenchmark {
     String[] caseNames = { "deethanizer_5", "deethanizer_10", "depropanizer", "debutanizer", "lean_demethanizer" };
     for (int caseIndex = 0; caseIndex < caseNames.length; caseIndex++) {
       for (int solverIndex = 0; solverIndex < SOLVER_LABELS.length; solverIndex++) {
-	DistillationColumn column = createBenchmarkColumn(caseNames[caseIndex], SOLVER_TYPES[solverIndex],
-	    SOLVER_LABELS[solverIndex]);
-	long startTime = System.nanoTime();
-	column.run();
-	double wallTimeSeconds = (System.nanoTime() - startTime) / 1.0e9;
-	appendProfileRow(report, caseNames[caseIndex], SOLVER_LABELS[solverIndex], column, wallTimeSeconds);
+        DistillationColumn column = createBenchmarkColumn(caseNames[caseIndex], SOLVER_TYPES[solverIndex],
+            SOLVER_LABELS[solverIndex]);
+        long startTime = System.nanoTime();
+        column.run();
+        double wallTimeSeconds = (System.nanoTime() - startTime) / 1.0e9;
+        appendProfileRow(report, caseNames[caseIndex], SOLVER_LABELS[solverIndex], column, wallTimeSeconds);
       }
     }
 
@@ -93,13 +93,13 @@ public class SolverSpeedBenchmark {
    */
   private void appendHeader(StringBuilder report) {
     report.append("case\tsolver\ttrays\titers\twallTime_s\treportedTime_s\tsolved\tstatus")
-	.append("\tsolverUsed\tgas_kg_hr\tliquid_kg_hr\tmassResidual\tenergyResidual")
-	.append("\ttemperatureResidual_K\tinsideOutSweeps\tinsideOutInnerIterations")
-	.append("\tkResidual\tsurrogateResidual\tsurrogateResets\tmatrixWarmStartUsed")
-	.append("\tmatrixWarmStartBypassed\tmatrixTime_s\tnaphtaliAnalyticColumns")
-	.append("\tnaphtaliFiniteDifferenceColumns\tnaphtaliThermoEvaluations")
-	.append("\tnaphtaliThermoCacheHits\tnaphtaliJacobianBuild_s")
-	.append("\tnaphtaliBlockSolves\tnaphtaliDenseFallbacks\tnaphtaliLinearSolve_s\n");
+        .append("\tsolverUsed\tgas_kg_hr\tliquid_kg_hr\tmassResidual\tenergyResidual")
+        .append("\ttemperatureResidual_K\tinsideOutSweeps\tinsideOutInnerIterations")
+        .append("\tkResidual\tsurrogateResidual\tsurrogateResets\tmatrixWarmStartUsed")
+        .append("\tmatrixWarmStartBypassed\tmatrixTime_s\tnaphtaliAnalyticColumns")
+        .append("\tnaphtaliFiniteDifferenceColumns\tnaphtaliThermoEvaluations")
+        .append("\tnaphtaliThermoCacheHits\tnaphtaliJacobianBuild_s")
+        .append("\tnaphtaliBlockSolves\tnaphtaliDenseFallbacks\tnaphtaliLinearSolve_s\n");
   }
 
   /**
@@ -114,21 +114,21 @@ public class SolverSpeedBenchmark {
   private void appendProfileRow(StringBuilder report, String caseName, String solverLabel, DistillationColumn column,
       double wallTimeSeconds) {
     report.append(String.format(Locale.ROOT,
-	"%s\t%s\t%d\t%d\t%.6f\t%.6f\t%s\t%s\t%s\t%.6f\t%.6f\t%.6e\t%.6e\t%.6e"
-	    + "\t%d\t%d\t%.6e\t%.6e\t%d\t%s\t%s\t%.6f\t%d\t%d\t%d\t%d\t%.6f" + "\t%d\t%d\t%.6f%n",
-	caseName, solverLabel, column.getNumberOfTrays(), column.getLastIterationCount(), wallTimeSeconds,
-	column.getLastSolveTimeSeconds(), column.solved() ? "YES" : "NO", statusName(column.getLastSolveStatus()),
-	solverName(column.getLastSolverTypeUsed()), column.getGasOutStream().getFlowRate("kg/hr"),
-	column.getLiquidOutStream().getFlowRate("kg/hr"), column.getLastMassResidual(), column.getLastEnergyResidual(),
-	column.getLastTemperatureResidual(), column.getLastInsideOutOuterFlashSweeps(),
-	column.getLastInsideOutInnerLoopIterations(), column.getLastInsideOutKValueResidual(),
-	column.getLastInsideOutSurrogateResidual(), column.getLastInsideOutSurrogateResetCount(),
-	column.wasMatrixInsideOutWarmStartUsed() ? "YES" : "NO",
-	column.wasMatrixInsideOutWarmStartBypassed() ? "YES" : "NO", column.getLastMatrixInsideOutSolveTimeSeconds(),
-	column.getLastNaphtaliAnalyticJacobianColumns(), column.getLastNaphtaliFiniteDifferenceJacobianColumns(),
-	column.getLastNaphtaliThermoEvaluationCount(), column.getLastNaphtaliThermoCacheHitCount(),
-	column.getLastNaphtaliJacobianBuildTimeSeconds(), column.getLastNaphtaliBlockLinearSolveCount(),
-	column.getLastNaphtaliDenseLinearSolveCount(), column.getLastNaphtaliLinearSolveTimeSeconds()));
+        "%s\t%s\t%d\t%d\t%.6f\t%.6f\t%s\t%s\t%s\t%.6f\t%.6f\t%.6e\t%.6e\t%.6e"
+            + "\t%d\t%d\t%.6e\t%.6e\t%d\t%s\t%s\t%.6f\t%d\t%d\t%d\t%d\t%.6f" + "\t%d\t%d\t%.6f%n",
+        caseName, solverLabel, column.getNumberOfTrays(), column.getLastIterationCount(), wallTimeSeconds,
+        column.getLastSolveTimeSeconds(), column.solved() ? "YES" : "NO", statusName(column.getLastSolveStatus()),
+        solverName(column.getLastSolverTypeUsed()), column.getGasOutStream().getFlowRate("kg/hr"),
+        column.getLiquidOutStream().getFlowRate("kg/hr"), column.getLastMassResidual(), column.getLastEnergyResidual(),
+        column.getLastTemperatureResidual(), column.getLastInsideOutOuterFlashSweeps(),
+        column.getLastInsideOutInnerLoopIterations(), column.getLastInsideOutKValueResidual(),
+        column.getLastInsideOutSurrogateResidual(), column.getLastInsideOutSurrogateResetCount(),
+        column.wasMatrixInsideOutWarmStartUsed() ? "YES" : "NO",
+        column.wasMatrixInsideOutWarmStartBypassed() ? "YES" : "NO", column.getLastMatrixInsideOutSolveTimeSeconds(),
+        column.getLastNaphtaliAnalyticJacobianColumns(), column.getLastNaphtaliFiniteDifferenceJacobianColumns(),
+        column.getLastNaphtaliThermoEvaluationCount(), column.getLastNaphtaliThermoCacheHitCount(),
+        column.getLastNaphtaliJacobianBuildTimeSeconds(), column.getLastNaphtaliBlockLinearSolveCount(),
+        column.getLastNaphtaliDenseLinearSolveCount(), column.getLastNaphtaliLinearSolveTimeSeconds()));
   }
 
   /**
@@ -149,11 +149,11 @@ public class SolverSpeedBenchmark {
     }
     if ("depropanizer".equals(caseName)) {
       return createThreeComponentFractionator(caseName, solverType, solverLabel, "propane", "n-butane", "n-pentane",
-	  10.0, 318.15, 303.15, 363.15);
+          10.0, 318.15, 303.15, 363.15);
     }
     if ("debutanizer".equals(caseName)) {
       return createThreeComponentFractionator(caseName, solverType, solverLabel, "n-butane", "n-pentane", "n-hexane",
-	  6.0, 353.15, 318.15, 403.15);
+          6.0, 353.15, 318.15, 403.15);
     }
     return createLeanDemethanizer(caseName, solverType, solverLabel);
   }
@@ -270,7 +270,7 @@ public class SolverSpeedBenchmark {
   private void configureSolver(DistillationColumn column, DistillationColumn.SolverType solverType) {
     column.setSolverType(solverType);
     if (solverType == DistillationColumn.SolverType.INSIDE_OUT
-	|| solverType == DistillationColumn.SolverType.MATRIX_INSIDE_OUT) {
+        || solverType == DistillationColumn.SolverType.MATRIX_INSIDE_OUT) {
       column.setInnerLoopSteps(2);
     }
   }

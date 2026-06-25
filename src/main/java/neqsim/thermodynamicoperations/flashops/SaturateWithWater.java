@@ -66,7 +66,7 @@ public class SaturateWithWater extends QfuncFlash {
       restoreMoles(system, originalMoles);
       runFlashSafely(originalMoles);
       if (changedMultiPhase) {
-	system.setMultiPhaseCheck(false);
+        system.setMultiPhaseCheck(false);
       }
       return;
     }
@@ -80,7 +80,7 @@ public class SaturateWithWater extends QfuncFlash {
       restoreMoles(system, originalMoles);
       runFlashSafely(originalMoles);
       if (changedMultiPhase) {
-	system.setMultiPhaseCheck(false);
+        system.setMultiPhaseCheck(false);
       }
       return;
     }
@@ -92,7 +92,7 @@ public class SaturateWithWater extends QfuncFlash {
     double saturatedWaterMoles = 0.0;
     for (int p = 0; p < system.getNumberOfPhases(); p++) {
       if (p == aqueousIndex) {
-	continue;
+        continue;
       }
       saturatedWaterMoles += system.getPhase(p).getComponent("water").getNumberOfMolesInPhase();
     }
@@ -123,7 +123,7 @@ public class SaturateWithWater extends QfuncFlash {
   private static int indexOfAqueousPhase(SystemInterface sys) {
     for (int p = 0; p < sys.getNumberOfPhases(); p++) {
       if (sys.getPhase(p).getType() == PhaseType.AQUEOUS) {
-	return p;
+        return p;
       }
     }
     return -1;
@@ -148,12 +148,12 @@ public class SaturateWithWater extends QfuncFlash {
       return true;
     } catch (RuntimeException ex) {
       logger.warn("water saturation flash diverged near the saturation point; " + "restoring last converged state: "
-	  + ex.getMessage());
+          + ex.getMessage());
       restoreMoles(system, lastConvergedMoles);
       try {
-	tpFlash.run();
+        tpFlash.run();
       } catch (RuntimeException ex2) {
-	logger.warn("recovery flash after water saturation divergence failed: " + ex2.getMessage());
+        logger.warn("recovery flash after water saturation divergence failed: " + ex2.getMessage());
       }
       return false;
     }

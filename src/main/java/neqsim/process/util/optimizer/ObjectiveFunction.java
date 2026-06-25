@@ -80,22 +80,22 @@ public interface ObjectiveFunction {
     return new ObjectiveFunction() {
       @Override
       public String getName() {
-	return name;
+        return name;
       }
 
       @Override
       public Direction getDirection() {
-	return direction;
+        return direction;
       }
 
       @Override
       public double evaluate(ProcessSystem process) {
-	return evaluator.applyAsDouble(process);
+        return evaluator.applyAsDouble(process);
       }
 
       @Override
       public String getUnit() {
-	return unit;
+        return unit;
       }
     };
   }

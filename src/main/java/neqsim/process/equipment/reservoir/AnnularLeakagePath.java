@@ -196,11 +196,11 @@ public class AnnularLeakagePath extends ProcessEquipmentBaseClass {
     // Channel flow: cubic law
     if (mechanism == LeakageMechanism.CHANNEL_FLOW || mechanism == LeakageMechanism.COMBINED) {
       if (channelWidth > 0 && channelGap > 0) {
-	// q = w * delta^3 / (12 * mu) * (dP / L)
-	channelLeakageRate = channelWidth * Math.pow(channelGap, 3.0) / (12.0 * viscosityPas)
-	    * (deltaPpascal / pathLength);
+        // q = w * delta^3 / (12 * mu) * (dP / L)
+        channelLeakageRate = channelWidth * Math.pow(channelGap, 3.0) / (12.0 * viscosityPas)
+            * (deltaPpascal / pathLength);
       } else {
-	channelLeakageRate = 0.0;
+        channelLeakageRate = 0.0;
       }
     } else {
       channelLeakageRate = 0.0;
@@ -209,11 +209,11 @@ public class AnnularLeakagePath extends ProcessEquipmentBaseClass {
     // Porous cement: Darcy flow
     if (mechanism == LeakageMechanism.POROUS_CEMENT || mechanism == LeakageMechanism.COMBINED) {
       if (cementPermeability > 0 && cementCrossSectionArea > 0) {
-	double kSI = cementPermeability * 9.869e-16; // mD to m²
-	// q = k * A / (mu * L) * dP
-	cementLeakageRate = kSI * cementCrossSectionArea / (viscosityPas * pathLength) * deltaPpascal;
+        double kSI = cementPermeability * 9.869e-16; // mD to m²
+        // q = k * A / (mu * L) * dP
+        cementLeakageRate = kSI * cementCrossSectionArea / (viscosityPas * pathLength) * deltaPpascal;
       } else {
-	cementLeakageRate = 0.0;
+        cementLeakageRate = 0.0;
       }
     } else {
       cementLeakageRate = 0.0;
@@ -230,16 +230,16 @@ public class AnnularLeakagePath extends ProcessEquipmentBaseClass {
   private double getEffectiveViscosity() {
     if (fluid != null) {
       try {
-	fluid.initProperties();
-	if (fluid.hasPhaseType("aqueous")) {
-	  return fluid.getPhase("aqueous").getViscosity("cP");
-	} else if (fluid.hasPhaseType("oil")) {
-	  return fluid.getPhase("oil").getViscosity("cP");
-	} else if (fluid.getNumberOfPhases() > 0) {
-	  return fluid.getPhase(0).getViscosity("cP");
-	}
+        fluid.initProperties();
+        if (fluid.hasPhaseType("aqueous")) {
+          return fluid.getPhase("aqueous").getViscosity("cP");
+        } else if (fluid.hasPhaseType("oil")) {
+          return fluid.getPhase("oil").getViscosity("cP");
+        } else if (fluid.getNumberOfPhases() > 0) {
+          return fluid.getPhase(0).getViscosity("cP");
+        }
       } catch (Exception e) {
-	logger.debug("Could not get viscosity from fluid, using fallback: " + e.getMessage());
+        logger.debug("Could not get viscosity from fluid, using fallback: " + e.getMessage());
       }
     }
     return fluidViscosity;
@@ -402,8 +402,8 @@ public class AnnularLeakagePath extends ProcessEquipmentBaseClass {
     if (casingBurstRating > 0) {
       double burstLimit = casingBurstRating / maaspBurstSafetyFactor;
       if (burstLimit < maasp) {
-	maasp = burstLimit;
-	maaspLimitingCriterion = "Casing burst (API RP 90)";
+        maasp = burstLimit;
+        maaspLimitingCriterion = "Casing burst (API RP 90)";
       }
     }
 
@@ -411,8 +411,8 @@ public class AnnularLeakagePath extends ProcessEquipmentBaseClass {
     if (tubingCollapseRating > 0) {
       double collapseLimit = tubingCollapseRating / maaspCollapseSafetyFactor;
       if (collapseLimit < maasp) {
-	maasp = collapseLimit;
-	maaspLimitingCriterion = "Tubing collapse (API RP 90)";
+        maasp = collapseLimit;
+        maaspLimitingCriterion = "Tubing collapse (API RP 90)";
       }
     }
 
@@ -421,8 +421,8 @@ public class AnnularLeakagePath extends ProcessEquipmentBaseClass {
       double hydrostaticAtShoe = annularFluidGradient * shoeDepth;
       double fracLimit = fracPressureAtShoe - hydrostaticAtShoe;
       if (fracLimit < maasp) {
-	maasp = fracLimit;
-	maaspLimitingCriterion = "Fracture at shoe (NORSOK D-010)";
+        maasp = fracLimit;
+        maaspLimitingCriterion = "Fracture at shoe (NORSOK D-010)";
       }
     }
 

@@ -14,17 +14,20 @@ public final class BlackOilFlash implements Serializable {
   private static final long serialVersionUID = 1000L;
 
   private final BlackOilPVTTable pvt;
+  /* Density oil at standard conditions (kg/m3) */
   private final double rho_o_sc;
+  /* Density gas at standard conditions (kg/m3) */
   private final double rho_g_sc;
+  /* Density water at standard conditions (kg/m3) */
   private final double rho_w_sc;
 
   /**
    * Constructor for BlackOilFlash.
    *
    * @param pvt a {@link neqsim.blackoil.BlackOilPVTTable} object
-   * @param rho_o_sc a double
-   * @param rho_g_sc a double
-   * @param rho_w_sc a double
+   * @param rho_o_sc density of oil at standard conditions (kg/m3)
+   * @param rho_g_sc density of gas at standard conditions (kg/m3)
+   * @param rho_w_sc density of water at standard conditions (kg/m3)
    */
   public BlackOilFlash(BlackOilPVTTable pvt, double rho_o_sc, double rho_g_sc, double rho_w_sc) {
     this.pvt = pvt;
@@ -56,15 +59,15 @@ public final class BlackOilFlash implements Serializable {
     } else {
       double denom = 1.0 - Rs * Rv;
       if (Math.abs(denom) < 1e-12) {
-	denom = 1e-12;
+        denom = 1e-12;
       }
       Gf_std = (Gtot_std - Rs * Otot_std) / denom;
       if (Gf_std < 0) {
-	Gf_std = 0.0;
+        Gf_std = 0.0;
       }
       Ostd_liq = Otot_std - Rv * Gf_std;
       if (Ostd_liq < 0) {
-	Ostd_liq = 0.0;
+        Ostd_liq = 0.0;
       }
     }
 

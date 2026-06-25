@@ -146,7 +146,7 @@ public class Validator {
 
     if (json == null || json.trim().isEmpty()) {
       issues.add(Issue.error("INPUT_ERROR", "JSON input is null or empty",
-	  "Provide a valid JSON flash or process definition"));
+          "Provide a valid JSON flash or process definition"));
       return buildResponse(issues);
     }
 
@@ -155,7 +155,7 @@ public class Validator {
       root = JsonParser.parseString(json).getAsJsonObject();
     } catch (Exception e) {
       issues.add(
-	  Issue.error("JSON_PARSE_ERROR", "Failed to parse JSON: " + e.getMessage(), "Ensure the JSON is well-formed"));
+          Issue.error("JSON_PARSE_ERROR", "Failed to parse JSON: " + e.getMessage(), "Ensure the JSON is well-formed"));
       return buildResponse(issues);
     }
 
@@ -186,8 +186,8 @@ public class Validator {
     if (root.has("model")) {
       String model = root.get("model").getAsString().toUpperCase();
       if (!KNOWN_MODELS.contains(model)) {
-	issues.add(Issue.error("UNKNOWN_MODEL", "Unknown thermodynamic model: " + root.get("model").getAsString(),
-	    "Use one of: " + KNOWN_MODELS));
+        issues.add(Issue.error("UNKNOWN_MODEL", "Unknown thermodynamic model: " + root.get("model").getAsString(),
+            "Use one of: " + KNOWN_MODELS));
       }
     }
 
@@ -195,22 +195,22 @@ public class Validator {
     if (root.has("flashType")) {
       String flashType = root.get("flashType").getAsString();
       if (!KNOWN_FLASH_TYPES.contains(flashType)) {
-	issues.add(
-	    Issue.error("UNKNOWN_FLASH_TYPE", "Unknown flash type: " + flashType, "Use one of: " + KNOWN_FLASH_TYPES));
+        issues.add(
+            Issue.error("UNKNOWN_FLASH_TYPE", "Unknown flash type: " + flashType, "Use one of: " + KNOWN_FLASH_TYPES));
       } else {
-	// Check required specs for specific flash types
-	if ("PH".equals(flashType) && !root.has("enthalpy")) {
-	  issues.add(Issue.error("MISSING_SPEC", "PH flash requires 'enthalpy' specification",
-	      "Add: \"enthalpy\": {\"value\": -5000.0, \"unit\": \"J/mol\"}"));
-	}
-	if ("PS".equals(flashType) && !root.has("entropy")) {
-	  issues.add(Issue.error("MISSING_SPEC", "PS flash requires 'entropy' specification",
-	      "Add: \"entropy\": {\"value\": -30.0, \"unit\": \"J/molK\"}"));
-	}
-	if ("TV".equals(flashType) && !root.has("volume")) {
-	  issues.add(Issue.error("MISSING_SPEC", "TV flash requires 'volume' specification",
-	      "Add: \"volume\": {\"value\": 0.001, \"unit\": \"m3/mol\"}"));
-	}
+        // Check required specs for specific flash types
+        if ("PH".equals(flashType) && !root.has("enthalpy")) {
+          issues.add(Issue.error("MISSING_SPEC", "PH flash requires 'enthalpy' specification",
+              "Add: \"enthalpy\": {\"value\": -5000.0, \"unit\": \"J/mol\"}"));
+        }
+        if ("PS".equals(flashType) && !root.has("entropy")) {
+          issues.add(Issue.error("MISSING_SPEC", "PS flash requires 'entropy' specification",
+              "Add: \"entropy\": {\"value\": -30.0, \"unit\": \"J/molK\"}"));
+        }
+        if ("TV".equals(flashType) && !root.has("volume")) {
+          issues.add(Issue.error("MISSING_SPEC", "TV flash requires 'volume' specification",
+              "Add: \"volume\": {\"value\": 0.001, \"unit\": \"m3/mol\"}"));
+        }
       }
     }
 
@@ -223,7 +223,7 @@ public class Validator {
     // Components (required for flash)
     if (!root.has("components")) {
       issues.add(Issue.error("MISSING_COMPONENTS", "No 'components' specified",
-	  "Provide a components map, e.g. {\"methane\": 0.85, \"ethane\": 0.15}"));
+          "Provide a components map, e.g. {\"methane\": 0.85, \"ethane\": 0.15}"));
     } else {
       validateComponents(root.getAsJsonObject("components"), issues);
     }
@@ -241,27 +241,27 @@ public class Validator {
       validateFluidBlock(root.getAsJsonObject("fluid"), issues);
     } else if (!root.has("fluids")) {
       issues.add(Issue.warning("NO_FLUID", "No 'fluid' or 'fluids' block defined",
-	  "Most process definitions need a fluid. Add a 'fluid' block with model, " + "components, etc."));
+          "Most process definitions need a fluid. Add a 'fluid' block with model, " + "components, etc."));
     }
 
     // Process array
     if (!root.has("process")) {
       issues.add(Issue.error("MISSING_PROCESS", "No 'process' array defined",
-	  "Add a 'process' array with equipment definitions"));
+          "Add a 'process' array with equipment definitions"));
       return;
     }
 
     JsonElement processEl = root.get("process");
     if (!processEl.isJsonArray()) {
       issues.add(Issue.error("INVALID_PROCESS", "'process' must be a JSON array",
-	  "Change 'process' to an array of equipment objects"));
+          "Change 'process' to an array of equipment objects"));
       return;
     }
 
     JsonArray processArray = processEl.getAsJsonArray();
     if (processArray.size() == 0) {
       issues.add(
-	  Issue.warning("EMPTY_PROCESS", "Process array is empty", "Add equipment definitions to the process array"));
+          Issue.warning("EMPTY_PROCESS", "Process array is empty", "Add equipment definitions to the process array"));
       return;
     }
 
@@ -281,28 +281,28 @@ public class Validator {
   private static void validateProcessModelDefinition(JsonObject root, List<Issue> issues) {
     if (!root.get("areas").isJsonObject()) {
       issues.add(Issue.error("INVALID_AREAS", "'areas' must be a JSON object",
-	  "Use {\"areas\": {\"areaName\": {\"fluid\": {...}, \"process\": [...]}}}"));
+          "Use {\"areas\": {\"areaName\": {\"fluid\": {...}, \"process\": [...]}}}"));
       return;
     }
 
     JsonObject areas = root.getAsJsonObject("areas");
     if (areas.entrySet().isEmpty()) {
       issues.add(Issue.error("EMPTY_AREAS", "ProcessModel contains no process areas",
-	  "Add at least one named process area under the 'areas' object"));
+          "Add at least one named process area under the 'areas' object"));
       return;
     }
 
     for (Map.Entry<String, JsonElement> entry : areas.entrySet()) {
       String areaName = entry.getKey();
       if (!entry.getValue().isJsonObject()) {
-	issues.add(Issue.error("INVALID_AREA", "Area '" + areaName + "' must be a JSON object",
-	    "Provide each area as a standard process JSON object"));
-	continue;
+        issues.add(Issue.error("INVALID_AREA", "Area '" + areaName + "' must be a JSON object",
+            "Provide each area as a standard process JSON object"));
+        continue;
       }
       List<Issue> areaIssues = new ArrayList<Issue>();
       validateProcessDefinition(entry.getValue().getAsJsonObject(), areaIssues);
       for (Issue issue : areaIssues) {
-	issues.add(issue.withPrefix("Area '" + areaName + "': "));
+        issues.add(issue.withPrefix("Area '" + areaName + "': "));
       }
     }
   }
@@ -317,9 +317,9 @@ public class Validator {
     if (fluidDef.has("model")) {
       String model = fluidDef.get("model").getAsString().toUpperCase();
       if (!KNOWN_MODELS.contains(model)) {
-	issues.add(
-	    Issue.error("UNKNOWN_MODEL", "Unknown thermodynamic model in fluid: " + fluidDef.get("model").getAsString(),
-		"Use one of: " + KNOWN_MODELS));
+        issues.add(
+            Issue.error("UNKNOWN_MODEL", "Unknown thermodynamic model in fluid: " + fluidDef.get("model").getAsString(),
+                "Use one of: " + KNOWN_MODELS));
       }
     }
 
@@ -327,7 +327,7 @@ public class Validator {
       validateComponents(fluidDef.getAsJsonObject("components"), issues);
     } else {
       issues.add(Issue.error("MISSING_COMPONENTS", "Fluid block has no 'components'",
-	  "Add a components map to the fluid definition"));
+          "Add a components map to the fluid definition"));
     }
   }
 
@@ -342,7 +342,7 @@ public class Validator {
   private static void validateProcessUnit(JsonObject unit, int index, Set<String> definedNames, List<Issue> issues) {
     if (!unit.has("type")) {
       issues.add(Issue.error("MISSING_TYPE", "Unit at index " + index + " has no 'type' field",
-	  "Add a 'type' field (e.g., 'Stream', 'Separator', 'Compressor')"));
+          "Add a 'type' field (e.g., 'Stream', 'Separator', 'Compressor')"));
       return;
     }
 
@@ -352,23 +352,23 @@ public class Validator {
     boolean typeKnown = false;
     for (String known : KNOWN_EQUIPMENT_TYPES) {
       if (known.equalsIgnoreCase(type)
-	  || normalizeEquipmentType(known).equalsIgnoreCase(normalizeEquipmentType(type))) {
-	typeKnown = true;
-	break;
+          || normalizeEquipmentType(known).equalsIgnoreCase(normalizeEquipmentType(type))) {
+        typeKnown = true;
+        break;
       }
     }
     if (!typeKnown) {
       issues.add(Issue.warning("UNKNOWN_EQUIPMENT_TYPE", "Unknown equipment type '" + type + "' at index " + index,
-	  "Known types include: Stream, Separator, Compressor, Heater, Cooler, Mixer, "
-	      + "Splitter, Valve, Pump, Recycle, HeatExchanger, DistillationColumn, Pipe, "
-	      + "Expander, Tank, Flare, SimpleReservoir, and power equipment"));
+          "Known types include: Stream, Separator, Compressor, Heater, Cooler, Mixer, "
+              + "Splitter, Valve, Pump, Recycle, HeatExchanger, DistillationColumn, Pipe, "
+              + "Expander, Tank, Flare, SimpleReservoir, and power equipment"));
     }
 
     // Name uniqueness
     String name = unit.has("name") ? unit.get("name").getAsString() : type + "_" + (index + 1);
     if (definedNames.contains(name)) {
       issues.add(Issue.warning("DUPLICATE_NAME", "Duplicate equipment name '" + name + "' at index " + index,
-	  "Use unique names for each equipment to avoid confusion"));
+          "Use unique names for each equipment to avoid confusion"));
     }
     definedNames.add(name);
 
@@ -376,8 +376,8 @@ public class Validator {
     if (unit.has("inlet")) {
       String inlet = unit.get("inlet").getAsString();
       if (inlet.trim().isEmpty()) {
-	issues.add(Issue.warning("EMPTY_INLET", "Equipment '" + name + "' has empty 'inlet' reference",
-	    "Provide a valid inlet reference (equipment name or name.portName)"));
+        issues.add(Issue.warning("EMPTY_INLET", "Equipment '" + name + "' has empty 'inlet' reference",
+            "Provide a valid inlet reference (equipment name or name.portName)"));
       }
     }
   }
@@ -410,33 +410,33 @@ public class Validator {
 
       // Validate component name
       if (!ComponentQuery.isValid(name)) {
-	String suggestion = ComponentQuery.closestMatch(name);
-	String msg = "Unknown component: '" + name + "'";
-	if (suggestion != null) {
-	  msg += ". Did you mean '" + suggestion + "'?";
-	}
-	issues.add(Issue.error("UNKNOWN_COMPONENT", msg, "Use ComponentQuery.search() to find valid component names"));
+        String suggestion = ComponentQuery.closestMatch(name);
+        String msg = "Unknown component: '" + name + "'";
+        if (suggestion != null) {
+          msg += ". Did you mean '" + suggestion + "'?";
+        }
+        issues.add(Issue.error("UNKNOWN_COMPONENT", msg, "Use ComponentQuery.search() to find valid component names"));
       }
 
       // Validate value
       try {
-	double value = entry.getValue().getAsDouble();
-	if (value < 0.0) {
-	  issues.add(Issue.error("NEGATIVE_FRACTION", "Component '" + name + "' has negative mole fraction: " + value,
-	      "Mole fractions must be non-negative"));
-	}
-	sum += value;
+        double value = entry.getValue().getAsDouble();
+        if (value < 0.0) {
+          issues.add(Issue.error("NEGATIVE_FRACTION", "Component '" + name + "' has negative mole fraction: " + value,
+              "Mole fractions must be non-negative"));
+        }
+        sum += value;
       } catch (Exception e) {
-	issues.add(Issue.error("INVALID_FRACTION", "Component '" + name + "' has invalid mole fraction value",
-	    "Mole fractions must be numbers"));
+        issues.add(Issue.error("INVALID_FRACTION", "Component '" + name + "' has invalid mole fraction value",
+            "Mole fractions must be numbers"));
       }
     }
 
     // Check composition sum
     if (sum > 0 && Math.abs(sum - 1.0) > COMP_SUM_TOLERANCE) {
       issues.add(Issue.warning("COMPOSITION_SUM",
-	  "Component mole fractions sum to " + String.format("%.4f", sum) + " (expected ~1.0)",
-	  "NeqSim will normalize but this may indicate an error"));
+          "Component mole fractions sum to " + String.format("%.4f", sum) + " (expected ~1.0)",
+          "NeqSim will normalize but this may indicate an error"));
     }
   }
 
@@ -454,12 +454,12 @@ public class Validator {
     double tempK = FlashRunner.parseTemperature(root.get("temperature"));
     if (Double.isNaN(tempK)) {
       issues.add(Issue.error("INVALID_TEMPERATURE", "Cannot parse temperature specification",
-	  "Provide {\"value\": 25.0, \"unit\": \"C\"} or a number (Kelvin)"));
+          "Provide {\"value\": 25.0, \"unit\": \"C\"} or a number (Kelvin)"));
     } else if (tempK < MIN_TEMP_K || tempK > MAX_TEMP_K) {
       issues.add(Issue.warning(
-	  "TEMPERATURE_RANGE", "Temperature " + String.format("%.1f", tempK) + " K is outside typical range ("
-	      + MIN_TEMP_K + " - " + MAX_TEMP_K + " K)",
-	  "Check units — NeqSim expects Kelvin if no unit is specified"));
+          "TEMPERATURE_RANGE", "Temperature " + String.format("%.1f", tempK) + " K is outside typical range ("
+              + MIN_TEMP_K + " - " + MAX_TEMP_K + " K)",
+          "Check units — NeqSim expects Kelvin if no unit is specified"));
     }
   }
 
@@ -477,12 +477,12 @@ public class Validator {
     double pressBara = FlashRunner.parsePressure(root.get("pressure"));
     if (Double.isNaN(pressBara)) {
       issues.add(Issue.error("INVALID_PRESSURE", "Cannot parse pressure specification",
-	  "Provide {\"value\": 50.0, \"unit\": \"bara\"} or a number (bara)"));
+          "Provide {\"value\": 50.0, \"unit\": \"bara\"} or a number (bara)"));
     } else if (pressBara < MIN_PRESS_BARA || pressBara > MAX_PRESS_BARA) {
       issues.add(Issue.warning(
-	  "PRESSURE_RANGE", "Pressure " + String.format("%.4f", pressBara) + " bara is outside typical range ("
-	      + MIN_PRESS_BARA + " - " + MAX_PRESS_BARA + " bara)",
-	  "Check units — NeqSim expects bara if no unit is specified"));
+          "PRESSURE_RANGE", "Pressure " + String.format("%.4f", pressBara) + " bara is outside typical range ("
+              + MIN_PRESS_BARA + " - " + MAX_PRESS_BARA + " bara)",
+          "Check units — NeqSim expects bara if no unit is specified"));
     }
   }
 
@@ -498,8 +498,8 @@ public class Validator {
     boolean hasErrors = false;
     for (Issue issue : issues) {
       if ("error".equals(issue.severity)) {
-	hasErrors = true;
-	break;
+        hasErrors = true;
+        break;
       }
     }
 
@@ -583,7 +583,7 @@ public class Validator {
       obj.addProperty("code", code);
       obj.addProperty("message", message);
       if (remediation != null) {
-	obj.addProperty("remediation", remediation);
+        obj.addProperty("remediation", remediation);
       }
       return obj;
     }

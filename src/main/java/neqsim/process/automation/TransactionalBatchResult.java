@@ -73,7 +73,7 @@ public final class TransactionalBatchResult implements Serializable {
      * @param error the error message if the apply phase threw, otherwise null
      */
     public WriteOutcome(String address, double requestedValue, String unit, Double previousValue,
-	WriteValidationResult validation, boolean applied, String error) {
+        WriteValidationResult validation, boolean applied, String error) {
       this.address = address;
       this.requestedValue = requestedValue;
       this.unit = unit;
@@ -158,15 +158,15 @@ public final class TransactionalBatchResult implements Serializable {
       obj.addProperty("address", address);
       obj.addProperty("requestedValue", requestedValue);
       if (unit != null) {
-	obj.addProperty("unit", unit);
+        obj.addProperty("unit", unit);
       }
       if (previousValue != null) {
-	obj.addProperty("previousValue", previousValue);
+        obj.addProperty("previousValue", previousValue);
       }
       obj.add("validation", validation.toJson());
       obj.addProperty("applied", applied);
       if (error != null) {
-	obj.addProperty("error", error);
+        obj.addProperty("error", error);
       }
       return obj;
     }
@@ -191,7 +191,7 @@ public final class TransactionalBatchResult implements Serializable {
     this.rollbackCategory = rollbackCategory;
     this.rollbackReason = rollbackReason;
     this.writes = writes != null ? Collections.unmodifiableList(new ArrayList<WriteOutcome>(writes))
-	: Collections.<WriteOutcome>emptyList();
+        : Collections.<WriteOutcome>emptyList();
   }
 
   /**

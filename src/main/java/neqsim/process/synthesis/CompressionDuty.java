@@ -58,7 +58,7 @@ public final class CompressionDuty implements Serializable {
     }
     if (!(dischargePressureBara > feed.getPressure("bara"))) {
       throw new IllegalArgumentException("dischargePressureBara (" + dischargePressureBara
-	  + ") must be > feed pressure (" + feed.getPressure("bara") + ")");
+          + ") must be > feed pressure (" + feed.getPressure("bara") + ")");
     }
     this.name = name;
     this.feed = feed;

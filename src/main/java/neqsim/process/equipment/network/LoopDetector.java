@@ -208,61 +208,61 @@ public class LoopDetector implements Serializable {
       String current = stack.pop();
 
       if (visited.contains(current)) {
-	continue;
+        continue;
       }
       visited.add(current);
 
       List<Edge> edges = adjacencyList.get(current);
       if (edges == null) {
-	continue;
+        continue;
       }
 
       for (Edge edge : edges) {
-	// Only add to spanning tree if target is not yet discovered
-	if (!discovered.contains(edge.to)) {
-	  parent.put(edge.to, current);
-	  parentEdge.put(edge.to, edge);
-	  depth.put(edge.to, Integer.valueOf(depth.get(current).intValue() + 1));
-	  stack.push(edge.to);
-	  discovered.add(edge.to);
-	  // Mark pipe as in spanning tree using the Set
-	  spanningTreePipes.add(edge.pipeName);
-	}
+        // Only add to spanning tree if target is not yet discovered
+        if (!discovered.contains(edge.to)) {
+          parent.put(edge.to, current);
+          parentEdge.put(edge.to, edge);
+          depth.put(edge.to, Integer.valueOf(depth.get(current).intValue() + 1));
+          stack.push(edge.to);
+          discovered.add(edge.to);
+          // Mark pipe as in spanning tree using the Set
+          spanningTreePipes.add(edge.pipeName);
+        }
       }
     }
 
     // Handle disconnected components
     for (String node : nodes) {
       if (!discovered.contains(node)) {
-	stack.push(node);
-	parent.put(node, null);
-	depth.put(node, Integer.valueOf(0));
-	discovered.add(node);
+        stack.push(node);
+        parent.put(node, null);
+        depth.put(node, Integer.valueOf(0));
+        discovered.add(node);
 
-	while (!stack.isEmpty()) {
-	  String current = stack.pop();
+        while (!stack.isEmpty()) {
+          String current = stack.pop();
 
-	  if (visited.contains(current)) {
-	    continue;
-	  }
-	  visited.add(current);
+          if (visited.contains(current)) {
+            continue;
+          }
+          visited.add(current);
 
-	  List<Edge> edges = adjacencyList.get(current);
-	  if (edges == null) {
-	    continue;
-	  }
+          List<Edge> edges = adjacencyList.get(current);
+          if (edges == null) {
+            continue;
+          }
 
-	  for (Edge edge : edges) {
-	    if (!discovered.contains(edge.to)) {
-	      parent.put(edge.to, current);
-	      parentEdge.put(edge.to, edge);
-	      depth.put(edge.to, Integer.valueOf(depth.get(current).intValue() + 1));
-	      stack.push(edge.to);
-	      discovered.add(edge.to);
-	      spanningTreePipes.add(edge.pipeName);
-	    }
-	  }
-	}
+          for (Edge edge : edges) {
+            if (!discovered.contains(edge.to)) {
+              parent.put(edge.to, current);
+              parentEdge.put(edge.to, edge);
+              depth.put(edge.to, Integer.valueOf(depth.get(current).intValue() + 1));
+              stack.push(edge.to);
+              discovered.add(edge.to);
+              spanningTreePipes.add(edge.pipeName);
+            }
+          }
+        }
       }
     }
   }
@@ -276,7 +276,7 @@ public class LoopDetector implements Serializable {
     for (Edge edge : allEdges) {
       // Skip tree edges (using Set) and already processed pipes
       if (spanningTreePipes.contains(edge.pipeName) || processedPipes.contains(edge.pipeName)) {
-	continue;
+        continue;
       }
 
       processedPipes.add(edge.pipeName);
@@ -284,7 +284,7 @@ public class LoopDetector implements Serializable {
       // This chord creates a fundamental cycle
       NetworkLoop loop = traceFundamentalCycle(edge);
       if (loop != null && loop.size() >= 2) {
-	independentLoops.add(loop);
+        independentLoops.add(loop);
       }
     }
   }
@@ -315,9 +315,9 @@ public class LoopDetector implements Serializable {
 
     for (int i = 0; i < path2.size(); i++) {
       if (path1Set.contains(path2.get(i))) {
-	lca = path2.get(i);
-	lcaIndex2 = i;
-	break;
+        lca = path2.get(i);
+        lcaIndex2 = i;
+        break;
       }
     }
 
@@ -339,9 +339,9 @@ public class LoopDetector implements Serializable {
       String to = path1.get(i + 1);
       Edge treeEdge = findEdgeBetween(from, to);
       if (treeEdge != null) {
-	// Direction: we're going from node1 toward LCA (up the tree)
-	int direction = treeEdge.from.equals(from) ? 1 : -1;
-	loop.addMember(treeEdge.pipeName, direction);
+        // Direction: we're going from node1 toward LCA (up the tree)
+        int direction = treeEdge.from.equals(from) ? 1 : -1;
+        loop.addMember(treeEdge.pipeName, direction);
       }
     }
 
@@ -351,9 +351,9 @@ public class LoopDetector implements Serializable {
       String to = path2.get(i - 1);
       Edge treeEdge = findEdgeBetween(from, to);
       if (treeEdge != null) {
-	// Direction: we're going from LCA toward node2 (down the tree)
-	int direction = treeEdge.from.equals(from) ? 1 : -1;
-	loop.addMember(treeEdge.pipeName, direction);
+        // Direction: we're going from LCA toward node2 (down the tree)
+        int direction = treeEdge.from.equals(from) ? 1 : -1;
+        loop.addMember(treeEdge.pipeName, direction);
       }
     }
 
@@ -393,9 +393,9 @@ public class LoopDetector implements Serializable {
     List<Edge> edges = adjacencyList.get(from);
     if (edges != null) {
       for (Edge edge : edges) {
-	if (edge.to.equals(to)) {
-	  return edge;
-	}
+        if (edge.to.equals(to)) {
+          return edge;
+        }
       }
     }
     return null;

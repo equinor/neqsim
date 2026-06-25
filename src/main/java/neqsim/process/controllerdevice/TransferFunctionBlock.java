@@ -440,7 +440,7 @@ public class TransferFunctionBlock extends NamedBaseClass implements ControllerD
       deadTimeBuffer = new double[bufferSize];
       double steadyStateValue = gain * u;
       for (int i = 0; i < bufferSize; i++) {
-	deadTimeBuffer[i] = steadyStateValue;
+        deadTimeBuffer[i] = steadyStateValue;
       }
       deadTimeWriteIndex = 0;
     }

@@ -68,7 +68,7 @@ public class TextFile implements java.io.Serializable {
     // System.out.println("writing " + values[0][0] + " data");
     for (int i = 0; i < values.length; i++) {
       for (int j = 0; j < values[0].length; j++) {
-	values[i][j] = Double.toString(valuesloca[j][i]) + " ";
+        values[i][j] = Double.toString(valuesloca[j][i]) + " ";
       }
     }
   }
@@ -83,13 +83,13 @@ public class TextFile implements java.io.Serializable {
 
     try (FileWriter out = new FileWriter(new File(fileName), true)) {
       for (int i = 0; i < values.length; i++) {
-	for (int j = 0; j < values[0].length; j++) {
-	  if (values[i][j] != null) {
-	    out.write(values[i][j]);
-	  }
-	  out.write("\t");
-	}
-	out.write("\n");
+        for (int j = 0; j < values[0].length; j++) {
+          if (values[i][j] != null) {
+            out.write(values[i][j]);
+          }
+          out.write("\t");
+        }
+        out.write("\n");
       }
       out.flush();
     } catch (Exception ex) {

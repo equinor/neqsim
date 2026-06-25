@@ -35,8 +35,8 @@ public class Standard_ISO15403 extends neqsim.standards.Standard {
   @Override
   public void calculate() {
     MON = 137.78 * getMolefraction("methane") + 29.948 * getMolefraction("ethane") - 18.193 * getMolefraction("propane")
-	- 167.062 * (getMolefraction("n-butane") + getMolefraction("i-butane")) + 181.233 * getMolefraction("CO2")
-	+ 26.944 * getMolefraction("nitrogen");
+        - 167.062 * (getMolefraction("n-butane") + getMolefraction("i-butane")) + 181.233 * getMolefraction("CO2")
+        + 26.944 * getMolefraction("nitrogen");
 
     NM = 1.445 * MON - 103.42;
   }
@@ -50,7 +50,7 @@ public class Standard_ISO15403 extends neqsim.standards.Standard {
       return NM;
     } else {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getValue", "returnParameter",
-	  "parameter not supported"));
+          "parameter not supported"));
     }
   }
 

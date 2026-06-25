@@ -3,9 +3,9 @@ package neqsim.process.equipment.util;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import neqsim.process.util.uncertainty.SensitivityMatrix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.util.uncertainty.SensitivityMatrix;
 
 /**
  * RecycleController class for managing multiple recycle streams in process simulations.
@@ -54,10 +54,10 @@ public class RecycleController implements java.io.Serializable {
     for (Recycle recyc : recycleArray) {
       recyc.resetIterations();
       if (recyc.getPriority() < minimumPriorityLevel) {
-	minimumPriorityLevel = recyc.getPriority();
+        minimumPriorityLevel = recyc.getPriority();
       }
       if (recyc.getPriority() > maximumPriorityLevel) {
-	maximumPriorityLevel = recyc.getPriority();
+        maximumPriorityLevel = recyc.getPriority();
       }
     }
 
@@ -122,9 +122,9 @@ public class RecycleController implements java.io.Serializable {
   public boolean solvedCurrentPriorityLevel() {
     for (Recycle recyc : recycleArray) {
       if (recyc.getPriority() == currentPriorityLevel) {
-	if (!recyc.solved()) {
-	  return false;
-	}
+        if (!recyc.solved()) {
+          return false;
+        }
       }
     }
     return true;
@@ -171,10 +171,10 @@ public class RecycleController implements java.io.Serializable {
   public boolean solvedAll() {
     for (Recycle recyc : recycleArray) {
       if (logger.isDebugEnabled()) {
-	logger.debug(recyc.getName() + " solved " + recyc.solved());
+        logger.debug(recyc.getName() + " solved " + recyc.solved());
       }
       if (!recyc.solved()) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -229,8 +229,8 @@ public class RecycleController implements java.io.Serializable {
     }
     RecycleController other = (RecycleController) obj;
     return currentPriorityLevel == other.currentPriorityLevel && maximumPriorityLevel == other.maximumPriorityLevel
-	&& minimumPriorityLevel == other.minimumPriorityLevel && Objects.equals(priorityArray, other.priorityArray)
-	&& Objects.equals(recycleArray, other.recycleArray);
+        && minimumPriorityLevel == other.minimumPriorityLevel && Objects.equals(priorityArray, other.priorityArray)
+        && Objects.equals(recycleArray, other.recycleArray);
   }
 
   // ============ ACCELERATION METHOD SUPPORT ============
@@ -255,7 +255,7 @@ public class RecycleController implements java.io.Serializable {
   public void setAccelerationMethod(AccelerationMethod method, int priority) {
     for (Recycle recycle : recycleArray) {
       if (recycle.getPriority() == priority) {
-	recycle.setAccelerationMethod(method);
+        recycle.setAccelerationMethod(method);
       }
     }
   }
@@ -307,7 +307,7 @@ public class RecycleController implements java.io.Serializable {
     List<Recycle> result = new ArrayList<>();
     for (Recycle recycle : recycleArray) {
       if (recycle.getPriority() == currentPriorityLevel) {
-	result.add(recycle);
+        result.add(recycle);
       }
     }
     return result;
@@ -364,9 +364,9 @@ public class RecycleController implements java.io.Serializable {
     for (int i = 0; i < currentRecycles.size(); i++) {
       Recycle recycle = currentRecycles.get(i);
       if (recycle.getOutletStream() != null && recycle.getOutletStream().getThermoSystem() != null) {
-	int numComponents = recycle.getOutletStream().getThermoSystem().getPhase(0).getNumberOfComponents();
-	dimensions[i] = 3 + numComponents; // T, P, flow, compositions
-	totalDimension += dimensions[i];
+        int numComponents = recycle.getOutletStream().getThermoSystem().getPhase(0).getNumberOfComponents();
+        dimensions[i] = 3 + numComponents; // T, P, flow, compositions
+        totalDimension += dimensions[i];
       }
     }
 
@@ -386,8 +386,8 @@ public class RecycleController implements java.io.Serializable {
       Recycle recycle = currentRecycles.get(i);
       double[] values = extractRecycleInputValues(recycle);
       if (values != null) {
-	System.arraycopy(values, 0, combinedInput, offset, values.length);
-	offset += values.length;
+        System.arraycopy(values, 0, combinedInput, offset, values.length);
+        offset += values.length;
       }
     }
 
@@ -398,8 +398,8 @@ public class RecycleController implements java.io.Serializable {
       Recycle recycle = currentRecycles.get(i);
       double[] values = extractRecycleOutputValues(recycle);
       if (values != null) {
-	System.arraycopy(values, 0, combinedOutput, offset, values.length);
-	offset += values.length;
+        System.arraycopy(values, 0, combinedOutput, offset, values.length);
+        offset += values.length;
       }
     }
 
@@ -488,17 +488,17 @@ public class RecycleController implements java.io.Serializable {
     if (values.length >= 3 + numComponents) {
       double sum = 0.0;
       for (int i = 0; i < numComponents; i++) {
-	values[3 + i] = Math.max(0.0, values[3 + i]); // Ensure non-negative
-	sum += values[3 + i];
+        values[3 + i] = Math.max(0.0, values[3 + i]); // Ensure non-negative
+        sum += values[3 + i];
       }
 
       if (sum > 1e-15) {
-	for (int i = 0; i < numComponents; i++) {
-	  double normalizedX = values[3 + i] / sum;
-	  for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
-	    fluid.getPhase(phase).getComponent(i).setx(normalizedX);
-	  }
-	}
+        for (int i = 0; i < numComponents; i++) {
+          double normalizedX = values[3 + i] / sum;
+          for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
+            fluid.getPhase(phase).getComponent(i).setx(normalizedX);
+          }
+        }
       }
     }
   }
@@ -569,7 +569,7 @@ public class RecycleController implements java.io.Serializable {
 
     if (coordinatedAccelerator != null) {
       sb.append("  Coordinated accelerator residual norm: ")
-	  .append(String.format("%.2e", coordinatedAccelerator.getResidualNorm())).append("\n");
+          .append(String.format("%.2e", coordinatedAccelerator.getResidualNorm())).append("\n");
     }
 
     return sb.toString();
@@ -616,7 +616,7 @@ public class RecycleController implements java.io.Serializable {
     // Sensitivity is -invJ (since B ≈ I - dg/dx, B^{-1} ≈ dx*/dg)
     for (int i = 0; i < dim; i++) {
       for (int j = 0; j < dim; j++) {
-	matrix.setSensitivity(actualNames[i], actualNames[j], -invJ[i][j]);
+        matrix.setSensitivity(actualNames[i], actualNames[j], -invJ[i][j]);
       }
     }
 
@@ -661,6 +661,6 @@ public class RecycleController implements java.io.Serializable {
    */
   public boolean hasSensitivityData() {
     return coordinatedAccelerator != null && coordinatedAccelerator.getInverseJacobian() != null
-	&& coordinatedAccelerator.getIterationCount() > 2;
+        && coordinatedAccelerator.getIterationCount() > 2;
   }
 }

@@ -1,15 +1,15 @@
 package neqsim.process.safety.processsafetysystem;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 /**
  * Normalized input for a NORSOK S-001 Clause 10 process safety system review.
@@ -62,7 +62,7 @@ public class ProcessSafetySystemReviewInput implements Serializable {
     }
     for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
       if (!isCoreKey(entry.getKey())) {
-	input.putMetadata(entry.getKey(), toObject(entry.getValue()));
+        input.putMetadata(entry.getKey(), toObject(entry.getValue()));
       }
     }
     return input;
@@ -76,7 +76,7 @@ public class ProcessSafetySystemReviewInput implements Serializable {
    */
   public ProcessSafetySystemReviewInput setProjectName(String projectName) {
     this.projectName = projectName == null || projectName.trim().isEmpty() ? "process-safety-system-review"
-	: projectName.trim();
+        : projectName.trim();
     return this;
   }
 
@@ -140,9 +140,9 @@ public class ProcessSafetySystemReviewInput implements Serializable {
     for (ProcessSafetySystemReviewItem otherItem : other.getItems()) {
       ProcessSafetySystemReviewItem existing = findByFunctionId(otherItem.getFunctionId());
       if (existing == null || otherItem.getFunctionId().isEmpty()) {
-	addItem(otherItem);
+        addItem(otherItem);
       } else {
-	existing.mergeFrom(otherItem);
+        existing.mergeFrom(otherItem);
       }
     }
   }
@@ -173,7 +173,7 @@ public class ProcessSafetySystemReviewInput implements Serializable {
   private static void addTopLevelArrays(ProcessSafetySystemReviewInput input, JsonObject object) {
     for (String key : StidProcessSafetySystemDataSource.REVIEW_ARRAY_KEYS) {
       if (object.has(key) && object.get(key).isJsonArray()) {
-	addArray(input, object.getAsJsonArray(key), key);
+        addArray(input, object.getAsJsonArray(key), key);
       }
     }
   }
@@ -189,12 +189,12 @@ public class ProcessSafetySystemReviewInput implements Serializable {
     for (int index = 0; index < array.size(); index++) {
       JsonElement element = array.get(index);
       if (element.isJsonObject()) {
-	ProcessSafetySystemReviewItem item = ProcessSafetySystemReviewItem.fromMap(toMap(element.getAsJsonObject()));
-	item.put("sourceArray", sourceKey);
-	if (item.getFunctionType().isEmpty()) {
-	  item.setFunctionType(StidProcessSafetySystemDataSource.inferFunctionType(sourceKey));
-	}
-	input.addItem(item);
+        ProcessSafetySystemReviewItem item = ProcessSafetySystemReviewItem.fromMap(toMap(element.getAsJsonObject()));
+        item.put("sourceArray", sourceKey);
+        if (item.getFunctionType().isEmpty()) {
+          item.setFunctionType(StidProcessSafetySystemDataSource.inferFunctionType(sourceKey));
+        }
+        input.addItem(item);
       }
     }
   }
@@ -238,7 +238,7 @@ public class ProcessSafetySystemReviewInput implements Serializable {
     for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
       JsonElement value = entry.getValue();
       if (value != null && !value.isJsonNull() && !value.isJsonArray() && !value.isJsonObject()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -256,7 +256,7 @@ public class ProcessSafetySystemReviewInput implements Serializable {
     }
     for (ProcessSafetySystemReviewItem item : items) {
       if (functionId.equalsIgnoreCase(item.getFunctionId())) {
-	return item;
+        return item;
       }
     }
     return null;
@@ -304,7 +304,7 @@ public class ProcessSafetySystemReviewInput implements Serializable {
     if (element.isJsonArray()) {
       List<Object> list = new ArrayList<Object>();
       for (JsonElement child : element.getAsJsonArray()) {
-	list.add(toObject(child));
+        list.add(toObject(child));
       }
       return list;
     }
@@ -325,12 +325,12 @@ public class ProcessSafetySystemReviewInput implements Serializable {
    */
   private static boolean isCoreKey(String key) {
     if ("projectName".equals(key) || "stidData".equals(key) || "tagreaderData".equals(key)
-	|| "lifecycleEvidence".equals(key)) {
+        || "lifecycleEvidence".equals(key)) {
       return true;
     }
     for (String arrayKey : StidProcessSafetySystemDataSource.REVIEW_ARRAY_KEYS) {
       if (arrayKey.equals(key)) {
-	return true;
+        return true;
       }
     }
     return false;

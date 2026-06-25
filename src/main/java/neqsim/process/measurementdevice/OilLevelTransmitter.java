@@ -59,7 +59,7 @@ public class OilLevelTransmitter extends MeasurementDeviceBaseClass {
   public double getMeasuredValue(String unit) {
     if (!unit.equalsIgnoreCase("m") && !unit.equalsIgnoreCase("")) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getMeasuredValue", "unit",
-	  "currently only supports \"m\" or \"\""));
+          "currently only supports \"m\" or \"\""));
     }
     return separator.getOilLevel();
   }

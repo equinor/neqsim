@@ -82,24 +82,24 @@ public final class StatePersistenceRunner {
 
       switch (action) {
       case "save":
-	return saveState(input);
+        return saveState(input);
       case "load":
-	return loadState(input);
+        return loadState(input);
       case "list":
-	return listSaved(input);
+        return listSaved(input);
       case "delete":
-	return deleteSaved(input);
+        return deleteSaved(input);
       case "compare":
-	return compareVersions(input);
+        return compareVersions(input);
       case "export":
-	return exportSession(input);
+        return exportSession(input);
       case "setStorageDir":
-	return setStorageDirectory(input);
+        return setStorageDirectory(input);
       case "getInfo":
-	return getInfo();
+        return getInfo();
       default:
-	return errorJson("UNKNOWN_ACTION", "Unknown persistence action: " + action,
-	    "Use: save, load, list, delete, compare, export, setStorageDir, getInfo");
+        return errorJson("UNKNOWN_ACTION", "Unknown persistence action: " + action,
+            "Use: save, load, list, delete, compare, export, setStorageDir, getInfo");
       }
     } catch (Exception e) {
       return errorJson("PERSISTENCE_ERROR", e.getMessage(), "Check JSON format and file paths");
@@ -159,13 +159,13 @@ public final class StatePersistenceRunner {
       // Don't overwrite — append incrementing suffix
       int suffix = 1;
       while (Files.exists(filePath)) {
-	filename = safeName + "_v" + version + "_" + suffix + ".json";
-	filePath = resolveStorageFile(filename);
-	suffix++;
+        filename = safeName + "_v" + version + "_" + suffix + ".json";
+        filePath = resolveStorageFile(filename);
+        suffix++;
       }
 
       try (FileWriter writer = new FileWriter(filePath.toFile())) {
-	GSON.toJson(saveEnvelope, writer);
+        GSON.toJson(saveEnvelope, writer);
       }
 
       JsonObject response = new JsonObject();
@@ -179,7 +179,7 @@ public final class StatePersistenceRunner {
 
     } catch (IOException e) {
       return errorJson("SAVE_FAILED", "Failed to save state: " + e.getMessage(),
-	  "Check write permissions for: " + storageDir);
+          "Check write permissions for: " + storageDir);
     }
   }
 
@@ -196,14 +196,14 @@ public final class StatePersistenceRunner {
     Path path;
     if (filePath.isEmpty() && filename.isEmpty()) {
       return errorJson("MISSING_FILE", "filename or filePath is required",
-	  "Use 'list' action to see available saved states");
+          "Use 'list' action to see available saved states");
     }
 
     try {
       path = resolveReadableStoragePath(filename, filePath);
     } catch (IOException e) {
       return errorJson("INVALID_PATH", e.getMessage(),
-	  "Use a saved-state filename from the configured storage directory");
+          "Use a saved-state filename from the configured storage directory");
     }
 
     if (!Files.exists(path)) {
@@ -213,36 +213,36 @@ public final class StatePersistenceRunner {
     try {
       String content;
       try (FileReader reader = new FileReader(path.toFile())) {
-	StringBuilder sb = new StringBuilder();
-	char[] buffer = new char[4096];
-	int read;
-	while ((read = reader.read(buffer)) != -1) {
-	  sb.append(buffer, 0, read);
-	}
-	content = sb.toString();
+        StringBuilder sb = new StringBuilder();
+        char[] buffer = new char[4096];
+        int read;
+        while ((read = reader.read(buffer)) != -1) {
+          sb.append(buffer, 0, read);
+        }
+        content = sb.toString();
       }
 
       JsonObject envelope = JsonParser.parseString(content).getAsJsonObject();
 
       // If this has a processDefinition, use it to recreate the session
       if (envelope.has("processDefinition")) {
-	// Create session from the process definition
-	JsonObject createCmd = new JsonObject();
-	createCmd.addProperty("action", "create");
-	String savedName = envelope.has("name") ? envelope.get("name").getAsString() : "Restored";
-	createCmd.addProperty("name", savedName + " (restored)");
-	createCmd.add("processJson", envelope.get("processDefinition"));
+        // Create session from the process definition
+        JsonObject createCmd = new JsonObject();
+        createCmd.addProperty("action", "create");
+        String savedName = envelope.has("name") ? envelope.get("name").getAsString() : "Restored";
+        createCmd.addProperty("name", savedName + " (restored)");
+        createCmd.add("processJson", envelope.get("processDefinition"));
 
-	String createResult = SessionRunner.run(GSON.toJson(createCmd));
-	JsonObject createObj = JsonParser.parseString(createResult).getAsJsonObject();
+        String createResult = SessionRunner.run(GSON.toJson(createCmd));
+        JsonObject createObj = JsonParser.parseString(createResult).getAsJsonObject();
 
-	// Add metadata about the restore
-	createObj.addProperty("restoredFrom", path.toString());
-	createObj.addProperty("originalVersion",
-	    envelope.has("version") ? envelope.get("version").getAsString() : "unknown");
-	createObj.addProperty("originalSavedAt",
-	    envelope.has("savedAt") ? envelope.get("savedAt").getAsString() : "unknown");
-	return GSON.toJson(createObj);
+        // Add metadata about the restore
+        createObj.addProperty("restoredFrom", path.toString());
+        createObj.addProperty("originalVersion",
+            envelope.has("version") ? envelope.get("version").getAsString() : "unknown");
+        createObj.addProperty("originalSavedAt",
+            envelope.has("savedAt") ? envelope.get("savedAt").getAsString() : "unknown");
+        return GSON.toJson(createObj);
       }
 
       // Otherwise just return the saved content with metadata
@@ -276,45 +276,45 @@ public final class StatePersistenceRunner {
 
       JsonArray savedList = new JsonArray();
       if (files != null) {
-	for (File file : files) {
-	  JsonObject entry = new JsonObject();
-	  entry.addProperty("filename", file.getName());
-	  entry.addProperty("fileSize", file.length());
-	  entry.addProperty("lastModified", Instant.ofEpochMilli(file.lastModified()).toString());
+        for (File file : files) {
+          JsonObject entry = new JsonObject();
+          entry.addProperty("filename", file.getName());
+          entry.addProperty("fileSize", file.length());
+          entry.addProperty("lastModified", Instant.ofEpochMilli(file.lastModified()).toString());
 
-	  // Try to read metadata without loading full content
-	  try (FileReader reader = new FileReader(file)) {
-	    StringBuilder sb = new StringBuilder();
-	    char[] buffer = new char[2048]; // Read just header
-	    int read = reader.read(buffer);
-	    if (read > 0) {
-	      sb.append(buffer, 0, read);
-	      String partial = sb.toString();
-	      // Try to extract name and version
-	      if (partial.contains("\"name\"")) {
-		try {
-		  JsonObject obj = JsonParser.parseString(partial.endsWith("}") ? partial : partial + "}}}")
-		      .getAsJsonObject();
-		  if (obj.has("name")) {
-		    entry.addProperty("name", obj.get("name").getAsString());
-		  }
-		  if (obj.has("version")) {
-		    entry.addProperty("version", obj.get("version").getAsString());
-		  }
-		  if (obj.has("description")) {
-		    entry.addProperty("description", obj.get("description").getAsString());
-		  }
-		} catch (Exception e) {
-		  // Partial parse failed — that's okay
-		}
-	      }
-	    }
-	  } catch (IOException e) {
-	    entry.addProperty("readError", e.getMessage());
-	  }
+          // Try to read metadata without loading full content
+          try (FileReader reader = new FileReader(file)) {
+            StringBuilder sb = new StringBuilder();
+            char[] buffer = new char[2048]; // Read just header
+            int read = reader.read(buffer);
+            if (read > 0) {
+              sb.append(buffer, 0, read);
+              String partial = sb.toString();
+              // Try to extract name and version
+              if (partial.contains("\"name\"")) {
+                try {
+                  JsonObject obj = JsonParser.parseString(partial.endsWith("}") ? partial : partial + "}}}")
+                      .getAsJsonObject();
+                  if (obj.has("name")) {
+                    entry.addProperty("name", obj.get("name").getAsString());
+                  }
+                  if (obj.has("version")) {
+                    entry.addProperty("version", obj.get("version").getAsString());
+                  }
+                  if (obj.has("description")) {
+                    entry.addProperty("description", obj.get("description").getAsString());
+                  }
+                } catch (Exception e) {
+                  // Partial parse failed — that's okay
+                }
+              }
+            }
+          } catch (IOException e) {
+            entry.addProperty("readError", e.getMessage());
+          }
 
-	  savedList.add(entry);
-	}
+          savedList.add(entry);
+        }
       }
 
       response.add("saved", savedList);
@@ -323,7 +323,7 @@ public final class StatePersistenceRunner {
 
     } catch (IOException e) {
       return errorJson("LIST_FAILED", "Failed to list saved states: " + e.getMessage(),
-	  "Check storage directory permissions");
+          "Check storage directory permissions");
     }
   }
 
@@ -372,7 +372,7 @@ public final class StatePersistenceRunner {
 
     if (file1.isEmpty() || file2.isEmpty()) {
       return errorJson("MISSING_FILES", "Both file1 and file2 are required",
-	  "Provide filenames of two saved states to compare");
+          "Provide filenames of two saved states to compare");
     }
 
     try {
@@ -397,18 +397,18 @@ public final class StatePersistenceRunner {
       // Compare state
       boolean statesEqual = false;
       if (obj1.has("sessionState") && obj2.has("sessionState")) {
-	String state1 = GSON.toJson(obj1.get("sessionState"));
-	String state2 = GSON.toJson(obj2.get("sessionState"));
-	statesEqual = state1.equals(state2);
+        String state1 = GSON.toJson(obj1.get("sessionState"));
+        String state2 = GSON.toJson(obj2.get("sessionState"));
+        statesEqual = state1.equals(state2);
       }
       response.addProperty("statesEqual", statesEqual);
 
       // Compare process definitions
       boolean defsEqual = false;
       if (obj1.has("processDefinition") && obj2.has("processDefinition")) {
-	String def1 = GSON.toJson(obj1.get("processDefinition"));
-	String def2 = GSON.toJson(obj2.get("processDefinition"));
-	defsEqual = def1.equals(def2);
+        String def1 = GSON.toJson(obj1.get("processDefinition"));
+        String def2 = GSON.toJson(obj2.get("processDefinition"));
+        defsEqual = def1.equals(def2);
       }
       response.addProperty("processDefinitionsEqual", defsEqual);
 
@@ -420,7 +420,7 @@ public final class StatePersistenceRunner {
 
     } catch (IOException e) {
       return errorJson("COMPARE_FAILED", "Failed to compare: " + e.getMessage(),
-	  "Check that both files exist in " + storageDir);
+          "Check that both files exist in " + storageDir);
     }
   }
 
@@ -452,7 +452,7 @@ public final class StatePersistenceRunner {
 
     // Include instructions for importing
     exportDoc.addProperty("importInstructions",
-	"Load this file using the statePersistence tool with action 'load' and filePath.");
+        "Load this file using the statePersistence tool with action 'load' and filePath.");
 
     JsonObject response = new JsonObject();
     response.addProperty("status", "success");
@@ -476,9 +476,9 @@ public final class StatePersistenceRunner {
     try {
       requestedDir = Paths.get(dir).toAbsolutePath().normalize();
       if (!isStoragePathAllowed(requestedDir)) {
-	return errorJson("DIR_OUTSIDE_SANDBOX",
-	    "Storage directory is outside the NeqSim MCP state sandbox: " + requestedDir,
-	    "Use a path below " + storageRootPath() + " or set NEQSIM_MCP_ALLOW_EXTERNAL_STATE_DIR=true explicitly.");
+        return errorJson("DIR_OUTSIDE_SANDBOX",
+            "Storage directory is outside the NeqSim MCP state sandbox: " + requestedDir,
+            "Use a path below " + storageRootPath() + " or set NEQSIM_MCP_ALLOW_EXTERNAL_STATE_DIR=true explicitly.");
       }
       storageDir = requestedDir.toString();
     } catch (RuntimeException e) {
@@ -489,7 +489,7 @@ public final class StatePersistenceRunner {
       ensureStorageDir();
     } catch (IOException e) {
       return errorJson("DIR_CREATE_FAILED", "Cannot create directory: " + e.getMessage(),
-	  "Check permissions for: " + dir);
+          "Check permissions for: " + dir);
     }
 
     JsonObject response = new JsonObject();
@@ -515,11 +515,11 @@ public final class StatePersistenceRunner {
       File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
       response.addProperty("savedCount", files != null ? files.length : 0);
       if (files != null) {
-	long totalSize = 0;
-	for (File f : files) {
-	  totalSize += f.length();
-	}
-	response.addProperty("totalSizeBytes", totalSize);
+        long totalSize = 0;
+        for (File f : files) {
+          totalSize += f.length();
+        }
+        response.addProperty("totalSizeBytes", totalSize);
       }
     } catch (IOException e) {
       response.addProperty("error", e.getMessage());
@@ -597,7 +597,7 @@ public final class StatePersistenceRunner {
     if (filePath != null && !filePath.isEmpty()) {
       Path requested = Paths.get(filePath).toAbsolutePath().normalize();
       if (!requested.startsWith(base)) {
-	throw new IOException("filePath must remain inside the configured storage directory: " + base);
+        throw new IOException("filePath must remain inside the configured storage directory: " + base);
       }
       return requested;
     }
@@ -664,7 +664,7 @@ public final class StatePersistenceRunner {
     if (packageInfo != null) {
       String implementationVersion = packageInfo.getImplementationVersion();
       if (implementationVersion != null && !implementationVersion.trim().isEmpty()) {
-	return implementationVersion.trim();
+        return implementationVersion.trim();
       }
     }
 
@@ -672,11 +672,11 @@ public final class StatePersistenceRunner {
     ClassLoader classLoader = StatePersistenceRunner.class.getClassLoader();
     try (InputStream stream = classLoader.getResourceAsStream(MAVEN_PROPERTIES_RESOURCE)) {
       if (stream != null) {
-	properties.load(stream);
-	String version = properties.getProperty("version");
-	if (version != null && !version.trim().isEmpty()) {
-	  return version.trim();
-	}
+        properties.load(stream);
+        String version = properties.getProperty("version");
+        if (version != null && !version.trim().isEmpty()) {
+          return version.trim();
+        }
       }
     } catch (IOException e) {
       // Fall through to the development marker when packaged metadata cannot be read.

@@ -188,7 +188,7 @@ public class DexpiInstrumentTest extends NeqSimTest {
   @Test
   public void testDexpiInstrumentInfoDataClass() {
     DexpiInstrumentInfo info = new DexpiInstrumentInfo("PIF-1", "PICSA 4712.02", "P", "ICSA", "4712.02", "Loop-1",
-	"bara", "PV-4712.02");
+        "bara", "PV-4712.02");
 
     assertEquals("PIF-1", info.getId());
     assertEquals("PICSA 4712.02", info.getTagName());
@@ -269,30 +269,30 @@ public class DexpiInstrumentTest extends NeqSimTest {
 
   private String buildInstrumentXml() {
     return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
-	+ "  <ProcessInstrumentationFunction ComponentClass=\"ProcessInstrumentationFunction\"" + "    ID=\"PIF-4712\">"
-	+ "    <GenericAttributes>"
-	+ "      <GenericAttribute Name=\"ProcessInstrumentationFunctionCategoryAssignmentClass\""
-	+ "        Value=\"P\" />" + "      <GenericAttribute Name=\"ProcessInstrumentationFunctionsAssignmentClass\""
-	+ "        Value=\"ICSA\" />"
-	+ "      <GenericAttribute Name=\"ProcessInstrumentationFunctionNumberAssignmentClass\""
-	+ "        Value=\"4712.02\" />" + "    </GenericAttributes>" + "  </ProcessInstrumentationFunction>"
-	+ "</PlantModel>";
+        + "  <ProcessInstrumentationFunction ComponentClass=\"ProcessInstrumentationFunction\"" + "    ID=\"PIF-4712\">"
+        + "    <GenericAttributes>"
+        + "      <GenericAttribute Name=\"ProcessInstrumentationFunctionCategoryAssignmentClass\""
+        + "        Value=\"P\" />" + "      <GenericAttribute Name=\"ProcessInstrumentationFunctionsAssignmentClass\""
+        + "        Value=\"ICSA\" />"
+        + "      <GenericAttribute Name=\"ProcessInstrumentationFunctionNumberAssignmentClass\""
+        + "        Value=\"4712.02\" />" + "    </GenericAttributes>" + "  </ProcessInstrumentationFunction>"
+        + "</PlantModel>";
   }
 
   private String buildInstrumentWithLoopXml() {
     return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
-	+ "  <ProcessInstrumentationFunction ComponentClass=\"ProcessInstrumentationFunction\"" + "    ID=\"PIF-4712\">"
-	+ "    <GenericAttributes>"
-	+ "      <GenericAttribute Name=\"ProcessInstrumentationFunctionCategoryAssignmentClass\""
-	+ "        Value=\"P\" />" + "      <GenericAttribute Name=\"ProcessInstrumentationFunctionsAssignmentClass\""
-	+ "        Value=\"IC\" />"
-	+ "      <GenericAttribute Name=\"ProcessInstrumentationFunctionNumberAssignmentClass\""
-	+ "        Value=\"4712\" />" + "    </GenericAttributes>" + "  </ProcessInstrumentationFunction>"
-	+ "  <InstrumentationLoopFunction ComponentClass=\"InstrumentationLoopFunction\"" + "    ID=\"Loop-1\">"
-	+ "    <GenericAttributes>"
-	+ "      <GenericAttribute Name=\"InstrumentationLoopFunctionNumberAssignmentClass\""
-	+ "        Value=\"4712\" />" + "    </GenericAttributes>"
-	+ "    <Association Type=\"is a collection including\" ItemID=\"PIF-4712\" />"
-	+ "  </InstrumentationLoopFunction>" + "</PlantModel>";
+        + "  <ProcessInstrumentationFunction ComponentClass=\"ProcessInstrumentationFunction\"" + "    ID=\"PIF-4712\">"
+        + "    <GenericAttributes>"
+        + "      <GenericAttribute Name=\"ProcessInstrumentationFunctionCategoryAssignmentClass\""
+        + "        Value=\"P\" />" + "      <GenericAttribute Name=\"ProcessInstrumentationFunctionsAssignmentClass\""
+        + "        Value=\"IC\" />"
+        + "      <GenericAttribute Name=\"ProcessInstrumentationFunctionNumberAssignmentClass\""
+        + "        Value=\"4712\" />" + "    </GenericAttributes>" + "  </ProcessInstrumentationFunction>"
+        + "  <InstrumentationLoopFunction ComponentClass=\"InstrumentationLoopFunction\"" + "    ID=\"Loop-1\">"
+        + "    <GenericAttributes>"
+        + "      <GenericAttribute Name=\"InstrumentationLoopFunctionNumberAssignmentClass\""
+        + "        Value=\"4712\" />" + "    </GenericAttributes>"
+        + "    <Association Type=\"is a collection including\" ItemID=\"PIF-4712\" />"
+        + "  </InstrumentationLoopFunction>" + "</PlantModel>";
   }
 }

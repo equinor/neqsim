@@ -150,11 +150,11 @@ public class PipeHagedornBrown extends Pipeline {
   public void run(UUID id) {
     if (diameter <= 0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeHagedornBrown", "run", "diameter",
-	  "must be positive, got: " + diameter));
+          "must be positive, got: " + diameter));
     }
     if (numberOfIncrements <= 0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeHagedornBrown", "run",
-	  "numberOfIncrements", "must be positive, got: " + numberOfIncrements));
+          "numberOfIncrements", "must be positive, got: " + numberOfIncrements));
     }
 
     pressureProfileList = new ArrayList<Double>();
@@ -181,8 +181,8 @@ public class PipeHagedornBrown extends Pipeline {
       double dp = calcSegmentPressureDrop(system, segmentLength, segmentElevation);
       double pOut = system.getPressure() - dp;
       if (pOut < 0.1) {
-	logger.warn("Outlet pressure went below 0.1 bar at increment {}", i);
-	pOut = 0.1;
+        logger.warn("Outlet pressure went below 0.1 bar at increment {}", i);
+        pOut = 0.1;
       }
 
       system.setPressure(pOut);
@@ -231,9 +231,9 @@ public class PipeHagedornBrown extends Pipeline {
       muL = sys.getPhase("oil").getViscosity("kg/msec");
       muG = sys.getPhase("gas").getViscosity("kg/msec");
       sigmaL = sys.getInterphaseProperties().getSurfaceTension(sys.getPhaseNumberOfPhase("oil"),
-	  sys.getPhaseNumberOfPhase("gas"));
+          sys.getPhaseNumberOfPhase("gas"));
       if (sigmaL < 1e-6) {
-	sigmaL = 0.02; // Default 20 mN/m
+        sigmaL = 0.02; // Default 20 mN/m
       }
       volFlowL = sys.getPhase("oil").getFlowRate("m3/sec");
       volFlowG = sys.getPhase("gas").getFlowRate("m3/sec");
@@ -339,7 +339,7 @@ public class PipeHagedornBrown extends Pipeline {
       // Bubble flow regime: use Griffith correction
       double vSlip = 0.244; // m/s (Taylor bubble rise velocity)
       double hl = 1.0 - 0.5 * (1.0 + mixtureVelocity / vSlip
-	  - Math.sqrt(Math.pow(1.0 + mixtureVelocity / vSlip, 2) - 4.0 * superficialGasVelocity / vSlip));
+          - Math.sqrt(Math.pow(1.0 + mixtureVelocity / vSlip, 2) - 4.0 * superficialGasVelocity / vSlip));
       return Math.max(lambdaL, Math.min(1.0, hl));
     }
 

@@ -68,7 +68,7 @@ public class PipeFireRuptureMaterial implements Serializable {
       double correctionLimitTemperatureC, String dataSource) {
     validateName(materialName);
     validateCurves(temperatureC, heatCapacityJPerKgK, thermalConductivityWPerMK, ultimateTensileStrengthMPa,
-	strainEffectFactor, ruptureStrainLimit);
+        strainEffectFactor, ruptureStrainLimit);
     validatePositive(densityKgPerM3, "densityKgPerM3");
     validatePositive(sellarsTegartA, "sellarsTegartA");
     validatePositive(sellarsTegartAlpha, "sellarsTegartAlpha");
@@ -99,15 +99,15 @@ public class PipeFireRuptureMaterial implements Serializable {
    */
   public static PipeFireRuptureMaterial spreadsheetDuplex22Cr() {
     return new PipeFireRuptureMaterial("22Cr duplex", defaultTemperatureGrid(),
-	new double[] { 480.0, 500.0, 530.0, 550.0, 590.0, 635.0, 670.0, 710.0, 730.0, 750.0, 790.0, 840.0, 870.0, 879.9,
-	    900.0 },
-	new double[] { 15.0, 16.0, 17.0, 18.0, 20.0, 24.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0 },
-	new double[] { 650.0, 605.0, 553.0, 540.0, 533.0, 462.0, 371.0, 247.0, 202.0, 157.0, 78.0, 28.0, 12.0, 4.0,
-	    0.0 },
-	new double[] { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.9, 0.7, 1.0, 1.4, 2.3, 2.3, 2.3 },
-	new double[] { 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.23, 0.26, 0.33, 0.5, 0.5, 0.5 }, 7850.0,
-	12311757039.742393, 0.03, 2.156323825544742, 34115.772963646705, 0.03, 900.0,
-	"Fire rupture strain-rate workbook Rev4.02 material table");
+        new double[] { 480.0, 500.0, 530.0, 550.0, 590.0, 635.0, 670.0, 710.0, 730.0, 750.0, 790.0, 840.0, 870.0, 879.9,
+            900.0 },
+        new double[] { 15.0, 16.0, 17.0, 18.0, 20.0, 24.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0 },
+        new double[] { 650.0, 605.0, 553.0, 540.0, 533.0, 462.0, 371.0, 247.0, 202.0, 157.0, 78.0, 28.0, 12.0, 4.0,
+            0.0 },
+        new double[] { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.9, 0.7, 1.0, 1.4, 2.3, 2.3, 2.3 },
+        new double[] { 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.23, 0.26, 0.33, 0.5, 0.5, 0.5 }, 7850.0,
+        12311757039.742393, 0.03, 2.156323825544742, 34115.772963646705, 0.03, 900.0,
+        "Fire rupture strain-rate workbook Rev4.02 material table");
   }
 
   /**
@@ -117,16 +117,16 @@ public class PipeFireRuptureMaterial implements Serializable {
    */
   public static PipeFireRuptureMaterial spreadsheetSs316() {
     return new PipeFireRuptureMaterial("SS 316", defaultTemperatureGrid(),
-	new double[] { 479.81656050955417, 495.06496815286624, 511.3299363057325, 520.4789808917197, 528.6114649681529,
-	    538.7770700636943, 549.9592356687898, 560.1248407643312, 564.0, 568.2573248407643, 574.3566878980891,
-	    574.3566878980891, 574.3566878980891, 574.3566878980891, 574.0 },
-	new double[] { 13.5, 14.9, 16.7, 18.3, 19.8, 21.3, 22.7, 24.2, 24.8, 25.6, 27.1, 28.6, 30.5, 34.2, 34.2 },
-	new double[] { 485.0, 467.0, 429.0, 426.0, 421.0, 398.0, 363.0, 277.0, 208.5, 140.0, 80.0, 45.0, 20.0, 10.0,
-	    0.0 },
-	new double[] { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.7, 0.5, 0.3, 0.25, 0.3, 0.3, 0.3 },
-	new double[] { 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.16, 0.17, 0.18, 0.2, 0.23, 0.25, 0.3 }, 7850.0,
-	23449524917238.52, 0.015, 3.9045874502366082, 42315.65824131732, 0.05, 900.0,
-	"Fire rupture strain-rate workbook Rev4.02 material table");
+        new double[] { 479.81656050955417, 495.06496815286624, 511.3299363057325, 520.4789808917197, 528.6114649681529,
+            538.7770700636943, 549.9592356687898, 560.1248407643312, 564.0, 568.2573248407643, 574.3566878980891,
+            574.3566878980891, 574.3566878980891, 574.3566878980891, 574.0 },
+        new double[] { 13.5, 14.9, 16.7, 18.3, 19.8, 21.3, 22.7, 24.2, 24.8, 25.6, 27.1, 28.6, 30.5, 34.2, 34.2 },
+        new double[] { 485.0, 467.0, 429.0, 426.0, 421.0, 398.0, 363.0, 277.0, 208.5, 140.0, 80.0, 45.0, 20.0, 10.0,
+            0.0 },
+        new double[] { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.7, 0.5, 0.3, 0.25, 0.3, 0.3, 0.3 },
+        new double[] { 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.16, 0.17, 0.18, 0.2, 0.23, 0.25, 0.3 }, 7850.0,
+        23449524917238.52, 0.015, 3.9045874502366082, 42315.65824131732, 0.05, 900.0,
+        "Fire rupture strain-rate workbook Rev4.02 material table");
   }
 
   /**
@@ -136,14 +136,14 @@ public class PipeFireRuptureMaterial implements Serializable {
    */
   public static PipeFireRuptureMaterial spreadsheetCarbonSteel235() {
     return new PipeFireRuptureMaterial("CS 235 ASME A106-B", defaultTemperatureGrid(),
-	new double[] { 450.0, 480.0, 510.0, 550.0, 600.0, 660.0, 750.0, 900.0, 1450.0, 820.0, 540.0, 540.0, 540.0,
-	    540.0, 540.0 },
-	new double[] { 54.2, 50.95, 47.45, 43.7, 40.45, 37.2, 33.95, 30.7, 28.0, 27.4, 27.4, 27.4, 27.4, 27.4, 27.4 },
-	new double[] { 420.0, 407.0, 397.0, 382.0, 370.0, 308.0, 189.0, 92.0, 81.5, 71.0, 53.0, 29.0, 17.0, 4.0, 0.0 },
-	new double[] { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.7, 0.5, 0.5, 0.4, 0.4, 0.3, 0.3 },
-	new double[] { 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.2, 0.2, 0.2, 0.2, 0.3 }, 7850.0,
-	4425186183349.352, 0.03, 3.7222401933501312, 41462.45192432549, 0.05, 900.0,
-	"Fire rupture strain-rate workbook Rev4.02 material table");
+        new double[] { 450.0, 480.0, 510.0, 550.0, 600.0, 660.0, 750.0, 900.0, 1450.0, 820.0, 540.0, 540.0, 540.0,
+            540.0, 540.0 },
+        new double[] { 54.2, 50.95, 47.45, 43.7, 40.45, 37.2, 33.95, 30.7, 28.0, 27.4, 27.4, 27.4, 27.4, 27.4, 27.4 },
+        new double[] { 420.0, 407.0, 397.0, 382.0, 370.0, 308.0, 189.0, 92.0, 81.5, 71.0, 53.0, 29.0, 17.0, 4.0, 0.0 },
+        new double[] { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.7, 0.5, 0.5, 0.4, 0.4, 0.3, 0.3 },
+        new double[] { 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.2, 0.2, 0.2, 0.2, 0.3 }, 7850.0,
+        4425186183349.352, 0.03, 3.7222401933501312, 41462.45192432549, 0.05, 900.0,
+        "Fire rupture strain-rate workbook Rev4.02 material table");
   }
 
   /**
@@ -153,14 +153,14 @@ public class PipeFireRuptureMaterial implements Serializable {
    */
   public static PipeFireRuptureMaterial spreadsheetCarbonSteel360Api5lX52() {
     return new PipeFireRuptureMaterial("CS 360 API 5L-X52", defaultTemperatureGrid(),
-	new double[] { 450.0, 480.0, 510.0, 550.0, 600.0, 660.0, 750.0, 900.0, 1450.0, 820.0, 540.0, 540.0, 540.0,
-	    540.0, 540.0 },
-	new double[] { 54.2, 50.95, 47.45, 43.7, 40.45, 37.2, 33.95, 30.7, 28.0, 27.4, 27.4, 27.4, 27.4, 27.4, 27.4 },
-	new double[] { 545.0, 529.0, 515.0, 496.0, 480.0, 400.0, 245.0, 120.0, 99.0, 78.0, 60.0, 38.0, 22.0, 5.0, 0.0 },
-	new double[] { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.5, 0.4, 0.6, 0.8, 0.9, 1.0, 1.0 },
-	new double[] { 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.2, 0.2, 0.2, 0.2, 0.3 }, 7850.0,
-	7508371948335.949, 0.015, 4.346909864208215, 38301.22162583593, 0.05, 900.0,
-	"Fire rupture strain-rate workbook Rev4.02 material table");
+        new double[] { 450.0, 480.0, 510.0, 550.0, 600.0, 660.0, 750.0, 900.0, 1450.0, 820.0, 540.0, 540.0, 540.0,
+            540.0, 540.0 },
+        new double[] { 54.2, 50.95, 47.45, 43.7, 40.45, 37.2, 33.95, 30.7, 28.0, 27.4, 27.4, 27.4, 27.4, 27.4, 27.4 },
+        new double[] { 545.0, 529.0, 515.0, 496.0, 480.0, 400.0, 245.0, 120.0, 99.0, 78.0, 60.0, 38.0, 22.0, 5.0, 0.0 },
+        new double[] { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.5, 0.4, 0.6, 0.8, 0.9, 1.0, 1.0 },
+        new double[] { 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.2, 0.2, 0.2, 0.2, 0.3 }, 7850.0,
+        7508371948335.949, 0.015, 4.346909864208215, 38301.22162583593, 0.05, 900.0,
+        "Fire rupture strain-rate workbook Rev4.02 material table");
   }
 
   /**
@@ -170,15 +170,15 @@ public class PipeFireRuptureMaterial implements Serializable {
    */
   public static PipeFireRuptureMaterial spreadsheetSuperduplex() {
     return new PipeFireRuptureMaterial("Superduplex", defaultTemperatureGrid(),
-	new double[] { 480.0, 500.0, 530.0, 550.0, 590.0, 635.0, 670.0, 710.0, 730.0, 750.0, 790.0, 840.0, 870.0, 879.9,
-	    900.0 },
-	new double[] { 15.0, 16.0, 17.0, 18.0, 20.0, 24.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0 },
-	new double[] { 750.0, 698.0, 638.0, 638.0, 613.0, 531.0, 427.0, 284.0, 234.5, 185.0, 100.0, 31.0, 13.0, 5.0,
-	    0.0 },
-	new double[] { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.9, 0.7, 1.0, 1.2, 2.2, 2.3, 2.2 },
-	new double[] { 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.23, 0.26, 0.33, 0.5, 0.5, 0.5 }, 7850.0,
-	352941684892.5195, 0.03, 2.1486991997520266, 39301.04947184141, 0.03, 900.0,
-	"Fire rupture strain-rate workbook Rev4.02 material table");
+        new double[] { 480.0, 500.0, 530.0, 550.0, 590.0, 635.0, 670.0, 710.0, 730.0, 750.0, 790.0, 840.0, 870.0, 879.9,
+            900.0 },
+        new double[] { 15.0, 16.0, 17.0, 18.0, 20.0, 24.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0 },
+        new double[] { 750.0, 698.0, 638.0, 638.0, 613.0, 531.0, 427.0, 284.0, 234.5, 185.0, 100.0, 31.0, 13.0, 5.0,
+            0.0 },
+        new double[] { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.9, 0.7, 1.0, 1.2, 2.2, 2.3, 2.2 },
+        new double[] { 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.23, 0.26, 0.33, 0.5, 0.5, 0.5 }, 7850.0,
+        352941684892.5195, 0.03, 2.1486991997520266, 39301.04947184141, 0.03, 900.0,
+        "Fire rupture strain-rate workbook Rev4.02 material table");
   }
 
   /**
@@ -188,16 +188,16 @@ public class PipeFireRuptureMaterial implements Serializable {
    */
   public static PipeFireRuptureMaterial spreadsheet6Mo() {
     return new PipeFireRuptureMaterial("6Mo", defaultTemperatureGrid(),
-	new double[] { 479.81656050955417, 495.06496815286624, 511.3299363057325, 520.4789808917197, 528.6114649681529,
-	    538.7770700636943, 549.9592356687898, 560.1248407643312, 564.0, 568.2573248407643, 574.3566878980891,
-	    574.3566878980891, 574.3566878980891, 574.3566878980891, 574.0 },
-	new double[] { 13.5, 14.9, 16.7, 18.3, 19.8, 21.3, 22.7, 24.2, 24.8, 25.6, 27.1, 28.6, 30.5, 34.2, 34.2 },
-	new double[] { 650.0, 646.0, 589.0, 557.0, 546.0, 528.0, 480.0, 380.0, 315.0, 250.0, 135.0, 90.0, 40.0, 20.0,
-	    0.0 },
-	new double[] { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.7, 0.5, 0.3, 0.3, 0.3, 0.25, 0.3 },
-	new double[] { 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.2, 0.2, 0.2, 0.2, 0.3 }, 7850.0,
-	2443499691962.7837, 0.015, 3.0808262954383796, 41637.0426470313, 0.05, 900.0,
-	"Fire rupture strain-rate workbook Rev4.02 material table");
+        new double[] { 479.81656050955417, 495.06496815286624, 511.3299363057325, 520.4789808917197, 528.6114649681529,
+            538.7770700636943, 549.9592356687898, 560.1248407643312, 564.0, 568.2573248407643, 574.3566878980891,
+            574.3566878980891, 574.3566878980891, 574.3566878980891, 574.0 },
+        new double[] { 13.5, 14.9, 16.7, 18.3, 19.8, 21.3, 22.7, 24.2, 24.8, 25.6, 27.1, 28.6, 30.5, 34.2, 34.2 },
+        new double[] { 650.0, 646.0, 589.0, 557.0, 546.0, 528.0, 480.0, 380.0, 315.0, 250.0, 135.0, 90.0, 40.0, 20.0,
+            0.0 },
+        new double[] { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.7, 0.5, 0.3, 0.3, 0.3, 0.25, 0.3 },
+        new double[] { 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.2, 0.2, 0.2, 0.2, 0.3 }, 7850.0,
+        2443499691962.7837, 0.015, 3.0808262954383796, 41637.0426470313, 0.05, 900.0,
+        "Fire rupture strain-rate workbook Rev4.02 material table");
   }
 
   /**
@@ -325,7 +325,7 @@ public class PipeFireRuptureMaterial implements Serializable {
     }
     double absoluteTemperatureK = metalTemperatureC + 273.0;
     return absoluteTemperatureK / activationTemperatureK * (Math.log(hyperbolicSine) * sellarsTegartN
-	- Math.log(correctionStrainRatePerMinute) + Math.log(sellarsTegartA));
+        - Math.log(correctionStrainRatePerMinute) + Math.log(sellarsTegartA));
   }
 
   /**
@@ -341,7 +341,7 @@ public class PipeFireRuptureMaterial implements Serializable {
     double temperatureCorrection = temperatureCorrectionFactor(metalTemperatureC);
     double absoluteTemperatureK = metalTemperatureC + 273.0;
     return strainEffectAt(metalTemperatureC) * sellarsTegartA * Math.pow(hyperbolicSine, sellarsTegartN)
-	* Math.exp(-temperatureCorrection * activationTemperatureK / absoluteTemperatureK);
+        * Math.exp(-temperatureCorrection * activationTemperatureK / absoluteTemperatureK);
   }
 
   /**
@@ -385,7 +385,7 @@ public class PipeFireRuptureMaterial implements Serializable {
    */
   private static double[] defaultTemperatureGrid() {
     return new double[] { 0.0, 100.0, 200.0, 300.0, 400.0, 500.0, 600.0, 700.0, 750.0, 800.0, 900.0, 1000.0, 1100.0,
-	1150.0, 1350.0 };
+        1150.0, 1350.0 };
   }
 
   /**
@@ -402,8 +402,8 @@ public class PipeFireRuptureMaterial implements Serializable {
     }
     for (int index = 1; index < xValues.length; index++) {
       if (value <= xValues[index]) {
-	double fraction = (value - xValues[index - 1]) / (xValues[index] - xValues[index - 1]);
-	return yValues[index - 1] + fraction * (yValues[index] - yValues[index - 1]);
+        double fraction = (value - xValues[index - 1]) / (xValues[index] - xValues[index - 1]);
+        return yValues[index - 1] + fraction * (yValues[index] - yValues[index - 1]);
       }
     }
     return yValues[yValues.length - 1];
@@ -488,7 +488,7 @@ public class PipeFireRuptureMaterial implements Serializable {
     for (int index = 1; index < temperatureC.length; index++) {
       double current = temperatureC[index];
       if (Double.isNaN(current) || Double.isInfinite(current) || current <= previous) {
-	throw new IllegalArgumentException("temperatureC must be strictly increasing and finite");
+        throw new IllegalArgumentException("temperatureC must be strictly increasing and finite");
       }
       previous = current;
     }
@@ -509,7 +509,7 @@ public class PipeFireRuptureMaterial implements Serializable {
     }
     for (double value : values) {
       if (Double.isNaN(value) || Double.isInfinite(value)) {
-	throw new IllegalArgumentException(name + " values must be finite");
+        throw new IllegalArgumentException(name + " values must be finite");
       }
     }
   }

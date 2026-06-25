@@ -146,10 +146,10 @@ public final class IndustrialProfile {
    */
   private static final Set<String> INDUSTRIAL_CORE = Collections
       .unmodifiableSet(new HashSet<>(Arrays.asList("runFlash", "runProcess", "validateInput", "validateResults",
-	  "calculateStandard", "searchComponents", "getCapabilities", "getExample", "getSchema", "getPropertyTable",
-	  "getPhaseEnvelope", "getBenchmarkTrust", "checkToolAccess", "manageIndustrialProfile", "listSimulationUnits",
-	  "listUnitVariables", "getSimulationVariable", "compareSimulationStates", "diagnoseAutomation",
-	  "getAutomationLearningReport", "getProgress", "getAdjustableParameters")));
+          "calculateStandard", "searchComponents", "getCapabilities", "getExample", "getSchema", "getPropertyTable",
+          "getPhaseEnvelope", "getBenchmarkTrust", "checkToolAccess", "manageIndustrialProfile", "listSimulationUnits",
+          "listUnitVariables", "getSimulationVariable", "compareSimulationStates", "diagnoseAutomation",
+          "getAutomationLearningReport", "getProgress", "getAdjustableParameters")));
 
   /**
    * Tier 2 — Engineering advanced. Tested against literature/industry cases, suitable for screening studies and
@@ -157,11 +157,11 @@ public final class IndustrialProfile {
    */
   private static final Set<String> ENGINEERING_ADVANCED = Collections
       .unmodifiableSet(new HashSet<>(Arrays.asList("runPVT", "runPipeline", "runWaterHammer", "runRootCauseAnalysis",
-	  "runFlowAssurance", "runChemistry", "crossValidateModels", "runParametricStudy", "runBatch", "sizeEquipment",
-	  "compareProcesses", "generateReport", "generateVisualization", "queryDataCatalog", "setSimulationVariable",
-	  "saveSimulationState", "runMaterialsReview", "runOpenDrainReview", "runNorsokS001Clause10Review",
-	  "runOperationalStudy", "runRelief", "runLOPA", "runSIL", "runRiskMatrix", "runFlareNetwork", "runHAZOP",
-	  "runBarrierRegister", "runSafetySystemPerformance", "runAgenticEngineering", "runProcessLoop")));
+          "runFlowAssurance", "runChemistry", "crossValidateModels", "runParametricStudy", "runBatch", "sizeEquipment",
+          "compareProcesses", "generateReport", "generateVisualization", "queryDataCatalog", "setSimulationVariable",
+          "saveSimulationState", "runMaterialsReview", "runOpenDrainReview", "runNorsokS001Clause10Review",
+          "runOperationalStudy", "runRelief", "runLOPA", "runSIL", "runRiskMatrix", "runFlareNetwork", "runHAZOP",
+          "runBarrierRegister", "runSafetySystemPerformance", "runAgenticEngineering", "runProcessLoop")));
 
   /**
    * Tier 3 — Experimental/research. Functional but limited validation, or high-autonomy tools that are difficult to
@@ -169,8 +169,8 @@ public final class IndustrialProfile {
    */
   private static final Set<String> EXPERIMENTAL_TOOLS = Collections
       .unmodifiableSet(new HashSet<>(Arrays.asList("runReservoir", "runFieldEconomics", "runDynamic", "runBioprocess",
-	  "solveTask", "composeWorkflow", "manageSession", "streamSimulation", "composeMultiServerWorkflow",
-	  "manageSecurity", "manageState", "manageValidationProfile", "runPlugin", "bridgeTaskWorkflow")));
+          "solveTask", "composeWorkflow", "manageSession", "streamSimulation", "composeMultiServerWorkflow",
+          "manageSecurity", "manageState", "manageValidationProfile", "runPlugin", "bridgeTaskWorkflow")));
 
   /**
    * Builds the tool-to-category mapping.
@@ -342,25 +342,25 @@ public final class IndustrialProfile {
     String securityBlocked = SecurityRunner.checkAccess(null, toolName);
     if (securityBlocked != null) {
       return policyErrorJson("blocked", toolName, "SECURITY", "Security policy denied access",
-	  "Inspect manageSecurity/getStatus and provide valid credentials when security is enabled.");
+          "Inspect manageSecurity/getStatus and provide valid credentials when security is enabled.");
     }
     if (isToolAllowed(toolName)) {
       if (requiresApproval(toolName) && !consumeApproval(toolName)) {
-	return policyErrorJson("approval_required", toolName, "APPROVAL_REQUIRED",
-	    "Tool '" + toolName + "' requires explicit approval in " + activeMode.name() + " mode.",
-	    "Call manageIndustrialProfile with action approveTool using an admin token, then retry once.");
+        return policyErrorJson("approval_required", toolName, "APPROVAL_REQUIRED",
+            "Tool '" + toolName + "' requires explicit approval in " + activeMode.name() + " mode.",
+            "Call manageIndustrialProfile with action approveTool using an admin token, then retry once.");
       }
       return null;
     }
     ToolTier tier = getToolTier(toolName);
     String tierName = tier != null ? tier.name() : "UNKNOWN";
     return policyErrorJson("blocked", toolName, tierName, "Tool '" + toolName + "' is not available in "
-	+ activeMode.name() + " mode. This mode allows "
-	+ (activeMode == DeploymentMode.ENTERPRISE ? "Tier 1 (TRUSTED_CORE) only."
-	    : activeMode == DeploymentMode.STUDY_TEAM ? "Tier 1 (TRUSTED_CORE) and Tier 2 (ENGINEERING_ADVANCED) only."
-		: "a restricted subset of tools."),
-	"Switch the startup profile to DESKTOP_ENGINEER for local engineering, or request an "
-	    + "approved profile from the MCP administrator.");
+        + activeMode.name() + " mode. This mode allows "
+        + (activeMode == DeploymentMode.ENTERPRISE ? "Tier 1 (TRUSTED_CORE) only."
+            : activeMode == DeploymentMode.STUDY_TEAM ? "Tier 1 (TRUSTED_CORE) and Tier 2 (ENGINEERING_ADVANCED) only."
+                : "a restricted subset of tools."),
+        "Switch the startup profile to DESKTOP_ENGINEER for local engineering, or request an "
+            + "approved profile from the MCP administrator.");
   }
 
   /**
@@ -373,12 +373,12 @@ public final class IndustrialProfile {
   public static String approveNextInvocation(String toolName, String adminToken) {
     if (!isAdminAuthorized(adminToken)) {
       return policyErrorJson("blocked", toolName, "ADMIN_REQUIRED",
-	  "Admin authorization is required to approve governed tool execution.",
-	  "Set NEQSIM_MCP_ADMIN_TOKEN and pass it as adminToken.");
+          "Admin authorization is required to approve governed tool execution.",
+          "Set NEQSIM_MCP_ADMIN_TOKEN and pass it as adminToken.");
     }
     if (getToolCategory(toolName) == null) {
       return policyErrorJson("blocked", toolName, "UNKNOWN_TOOL", "Cannot approve unknown MCP tool '" + toolName + "'.",
-	  "Use checkToolAccess or getCapabilities to choose a valid tool name.");
+          "Use checkToolAccess or getCapabilities to choose a valid tool name.");
     }
     APPROVED_ONCE.add(toolName);
     JsonObject response = new JsonObject();
@@ -387,8 +387,8 @@ public final class IndustrialProfile {
     response.addProperty("approval", "next_invocation");
     response.addProperty("message", "Next invocation of " + toolName + " is approved once.");
     ApiEnvelope.applyStandardFields(response, "manageIndustrialProfile", null,
-	ApiEnvelope.validationStatus(true, "policy", "Approval recorded"),
-	ApiEnvelope.qualityGate("approved", "One-shot approval recorded", false));
+        ApiEnvelope.validationStatus(true, "policy", "Approval recorded"),
+        ApiEnvelope.qualityGate("approved", "One-shot approval recorded", false));
     return GSON.toJson(response);
   }
 
@@ -615,21 +615,21 @@ public final class IndustrialProfile {
     switch (mode) {
     case DESKTOP_ENGINEER:
       return "Full access for a single engineer. Core, advanced, and experimental "
-	  + "tools available with clear tier labeling. Auto-validation on. "
-	  + "No approval gates. Ideal for study work and exploration.";
+          + "tools available with clear tier labeling. Auto-validation on. "
+          + "No approval gates. Ideal for study work and exploration.";
     case STUDY_TEAM:
       return "Collaborative mode for engineering teams. Core and advanced tools "
-	  + "available. Session isolation and audit logging enabled. "
-	  + "Auto-validation enforced on all calculations.";
+          + "available. Session isolation and audit logging enabled. "
+          + "Auto-validation enforced on all calculations.";
     case DIGITAL_TWIN:
       return "Advisory-only mode for plant operations support. Advisory and "
-	  + "calculation tools only — no direct plant control, no write-back to "
-	  + "operational systems, no autonomous action execution without separate "
-	  + "approval architecture. Ideal for operator decision support and " + "what-if analysis.";
+          + "calculation tools only — no direct plant control, no write-back to "
+          + "operational systems, no autonomous action execution without separate "
+          + "approval architecture. Ideal for operator decision support and " + "what-if analysis.";
     case ENTERPRISE:
       return "Restricted mode for governed deployments. Approved industrial core "
-	  + "tools only. Approval gates on all state-modifying operations. "
-	  + "Rate limiting and full audit logging. Recommended for enterprise integration.";
+          + "tools only. Approval gates on all state-modifying operations. "
+          + "Rate limiting and full audit logging. Recommended for enterprise integration.";
     default:
       return "Unknown mode";
     }
@@ -645,7 +645,7 @@ public final class IndustrialProfile {
     int count = 0;
     for (String tool : TOOL_CATEGORIES.keySet()) {
       if (isToolAllowedInMode(tool, mode)) {
-	count++;
+        count++;
       }
     }
     return count;

@@ -103,9 +103,9 @@ class EnKFParameterEstimatorTest {
   private void setRouting(int[] routing) {
     for (int i = 0; i < NUM_WELLS; i++) {
       if (routing[i] == 0) {
-	splitters[i].setSplitFactors(new double[] { 1.0, 0.0 });
+        splitters[i].setSplitFactors(new double[] { 1.0, 0.0 });
       } else {
-	splitters[i].setSplitFactors(new double[] { 0.0, 1.0 });
+        splitters[i].setSplitFactors(new double[] { 0.0, 1.0 });
       }
     }
   }
@@ -194,13 +194,13 @@ class EnKFParameterEstimatorTest {
 
     // Routing schedule for observability
     int[][] routingSchedule = { { 0, 0, 1, 1 }, // Wells 1-2 HP, 3-4 LP
-	{ 1, 1, 0, 0 }, // Inverse
-	{ 0, 1, 0, 1 }, // Alternating
-	{ 1, 0, 1, 0 }, // Inverse alternating
-	{ 0, 1, 1, 1 }, // Only Well 1 at HP
-	{ 1, 0, 1, 1 }, // Only Well 2 at HP
-	{ 1, 1, 0, 1 }, // Only Well 3 at HP
-	{ 1, 1, 1, 0 } // Only Well 4 at HP
+        { 1, 1, 0, 0 }, // Inverse
+        { 0, 1, 0, 1 }, // Alternating
+        { 1, 0, 1, 0 }, // Inverse alternating
+        { 0, 1, 1, 1 }, // Only Well 1 at HP
+        { 1, 0, 1, 1 }, // Only Well 2 at HP
+        { 1, 1, 0, 1 }, // Only Well 3 at HP
+        { 1, 1, 1, 0 } // Only Well 4 at HP
     };
 
     // Run estimation with routing changes
@@ -219,17 +219,17 @@ class EnKFParameterEstimatorTest {
     // Validate estimates are in reasonable range (between bounds)
     for (int i = 0; i < NUM_WELLS; i++) {
       assertTrue(estimates[i] >= 1.0 && estimates[i] <= 100.0,
-	  "Estimate for Pipe" + (i + 1) + " should be within bounds: " + estimates[i]);
+          "Estimate for Pipe" + (i + 1) + " should be within bounds: " + estimates[i]);
       assertTrue(uncertainties[i] >= 0,
-	  "Uncertainty for Pipe" + (i + 1) + " should be non-negative: " + uncertainties[i]);
+          "Uncertainty for Pipe" + (i + 1) + " should be non-negative: " + uncertainties[i]);
     }
 
     // Verify filter is updating (estimates should have moved from initial guess of 15.0)
     boolean hasUpdated = false;
     for (int i = 0; i < NUM_WELLS; i++) {
       if (Math.abs(estimates[i] - 15.0) > 0.1) {
-	hasUpdated = true;
-	break;
+        hasUpdated = true;
+        break;
       }
     }
     assertTrue(hasUpdated, "EnKF should update estimates from initial values after routing changes");

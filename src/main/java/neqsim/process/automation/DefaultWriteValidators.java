@@ -151,45 +151,45 @@ public final class DefaultWriteValidators {
 
     @Override
     public WriteValidationResult validate(ProcessEquipmentInterface equipment, String propertyPath, double value,
-	String unit) {
+        String unit) {
       if (!(equipment instanceof Compressor)) {
-	return WriteValidationResult.ok();
+        return WriteValidationResult.ok();
       }
       Compressor c = (Compressor) equipment;
       if ("outletPressure".equals(propertyPath)) {
-	double bara = toBara(value, unit);
-	if (bara <= 0.0) {
-	  return WriteValidationResult.fail("OUTLET_PRESSURE_NOT_POSITIVE",
-	      "Compressor outlet pressure must be > 0 bara (got " + bara + " bara)");
-	}
-	double inlet = readStreamPressureBara(c.getInletStream());
-	if (!Double.isNaN(inlet) && bara < inlet) {
-	  return WriteValidationResult.fail("OUTLET_PRESSURE_BELOW_INLET", "Compressor outlet pressure " + bara
-	      + " bara is below inlet pressure " + inlet + " bara — a compressor cannot reduce pressure");
-	}
-	if (!Double.isNaN(inlet) && bara > 50.0 * inlet) {
-	  return WriteValidationResult.warn("PRESSURE_RATIO_VERY_HIGH",
-	      "Compressor pressure ratio " + (bara / inlet) + " is unusually high for a single body");
-	}
-	return WriteValidationResult.ok();
+        double bara = toBara(value, unit);
+        if (bara <= 0.0) {
+          return WriteValidationResult.fail("OUTLET_PRESSURE_NOT_POSITIVE",
+              "Compressor outlet pressure must be > 0 bara (got " + bara + " bara)");
+        }
+        double inlet = readStreamPressureBara(c.getInletStream());
+        if (!Double.isNaN(inlet) && bara < inlet) {
+          return WriteValidationResult.fail("OUTLET_PRESSURE_BELOW_INLET", "Compressor outlet pressure " + bara
+              + " bara is below inlet pressure " + inlet + " bara — a compressor cannot reduce pressure");
+        }
+        if (!Double.isNaN(inlet) && bara > 50.0 * inlet) {
+          return WriteValidationResult.warn("PRESSURE_RATIO_VERY_HIGH",
+              "Compressor pressure ratio " + (bara / inlet) + " is unusually high for a single body");
+        }
+        return WriteValidationResult.ok();
       }
       if ("polytropicEfficiency".equals(propertyPath) || "isentropicEfficiency".equals(propertyPath)) {
-	if (value <= 0.0 || value > 1.0) {
-	  return WriteValidationResult.fail("EFFICIENCY_OUT_OF_RANGE",
-	      propertyPath + " must be in (0,1] (got " + value + ")");
-	}
-	if (value < 0.4) {
-	  return WriteValidationResult.warn("EFFICIENCY_LOW",
-	      propertyPath + " " + value + " is unusually low for a compressor");
-	}
-	return WriteValidationResult.ok();
+        if (value <= 0.0 || value > 1.0) {
+          return WriteValidationResult.fail("EFFICIENCY_OUT_OF_RANGE",
+              propertyPath + " must be in (0,1] (got " + value + ")");
+        }
+        if (value < 0.4) {
+          return WriteValidationResult.warn("EFFICIENCY_LOW",
+              propertyPath + " " + value + " is unusually low for a compressor");
+        }
+        return WriteValidationResult.ok();
       }
       if ("speed".equals(propertyPath)) {
-	if (value < 0.0) {
-	  return WriteValidationResult.fail("SPEED_NEGATIVE",
-	      "Compressor speed must be non-negative (got " + value + ")");
-	}
-	return WriteValidationResult.ok();
+        if (value < 0.0) {
+          return WriteValidationResult.fail("SPEED_NEGATIVE",
+              "Compressor speed must be non-negative (got " + value + ")");
+        }
+        return WriteValidationResult.ok();
       }
       return WriteValidationResult.ok();
     }
@@ -215,33 +215,33 @@ public final class DefaultWriteValidators {
 
     @Override
     public WriteValidationResult validate(ProcessEquipmentInterface equipment, String propertyPath, double value,
-	String unit) {
+        String unit) {
       if (!(equipment instanceof Pump)) {
-	return WriteValidationResult.ok();
+        return WriteValidationResult.ok();
       }
       Pump p = (Pump) equipment;
       if ("outletPressure".equals(propertyPath)) {
-	double bara = toBara(value, unit);
-	if (bara <= 0.0) {
-	  return WriteValidationResult.fail("OUTLET_PRESSURE_NOT_POSITIVE",
-	      "Pump outlet pressure must be > 0 bara (got " + bara + " bara)");
-	}
-	double inlet = readStreamPressureBara(p.getInletStream());
-	if (!Double.isNaN(inlet) && bara < inlet) {
-	  return WriteValidationResult.fail("OUTLET_PRESSURE_BELOW_INLET", "Pump outlet pressure " + bara
-	      + " bara is below inlet pressure " + inlet + " bara — a pump cannot reduce pressure");
-	}
-	return WriteValidationResult.ok();
+        double bara = toBara(value, unit);
+        if (bara <= 0.0) {
+          return WriteValidationResult.fail("OUTLET_PRESSURE_NOT_POSITIVE",
+              "Pump outlet pressure must be > 0 bara (got " + bara + " bara)");
+        }
+        double inlet = readStreamPressureBara(p.getInletStream());
+        if (!Double.isNaN(inlet) && bara < inlet) {
+          return WriteValidationResult.fail("OUTLET_PRESSURE_BELOW_INLET", "Pump outlet pressure " + bara
+              + " bara is below inlet pressure " + inlet + " bara — a pump cannot reduce pressure");
+        }
+        return WriteValidationResult.ok();
       }
       if ("isentropicEfficiency".equals(propertyPath)) {
-	if (value <= 0.0 || value > 1.0) {
-	  return WriteValidationResult.fail("EFFICIENCY_OUT_OF_RANGE",
-	      "Pump efficiency must be in (0,1] (got " + value + ")");
-	}
-	return WriteValidationResult.ok();
+        if (value <= 0.0 || value > 1.0) {
+          return WriteValidationResult.fail("EFFICIENCY_OUT_OF_RANGE",
+              "Pump efficiency must be in (0,1] (got " + value + ")");
+        }
+        return WriteValidationResult.ok();
       }
       if ("speed".equals(propertyPath) && value < 0.0) {
-	return WriteValidationResult.fail("SPEED_NEGATIVE", "Pump speed must be non-negative (got " + value + ")");
+        return WriteValidationResult.fail("SPEED_NEGATIVE", "Pump speed must be non-negative (got " + value + ")");
       }
       return WriteValidationResult.ok();
     }
@@ -267,33 +267,33 @@ public final class DefaultWriteValidators {
 
     @Override
     public WriteValidationResult validate(ProcessEquipmentInterface equipment, String propertyPath, double value,
-	String unit) {
+        String unit) {
       if (!(equipment instanceof ThrottlingValve)) {
-	return WriteValidationResult.ok();
+        return WriteValidationResult.ok();
       }
       ThrottlingValve v = (ThrottlingValve) equipment;
       if ("outletPressure".equals(propertyPath)) {
-	double bara = toBara(value, unit);
-	if (bara <= 0.0) {
-	  return WriteValidationResult.fail("OUTLET_PRESSURE_NOT_POSITIVE",
-	      "Valve outlet pressure must be > 0 bara (got " + bara + " bara)");
-	}
-	double inlet = readStreamPressureBara(v.getInletStream());
-	if (!Double.isNaN(inlet) && bara > inlet + 1.0e-6) {
-	  return WriteValidationResult.fail("OUTLET_PRESSURE_ABOVE_INLET", "Valve outlet pressure " + bara
-	      + " bara is above inlet pressure " + inlet + " bara — a throttling valve cannot raise pressure");
-	}
-	return WriteValidationResult.ok();
+        double bara = toBara(value, unit);
+        if (bara <= 0.0) {
+          return WriteValidationResult.fail("OUTLET_PRESSURE_NOT_POSITIVE",
+              "Valve outlet pressure must be > 0 bara (got " + bara + " bara)");
+        }
+        double inlet = readStreamPressureBara(v.getInletStream());
+        if (!Double.isNaN(inlet) && bara > inlet + 1.0e-6) {
+          return WriteValidationResult.fail("OUTLET_PRESSURE_ABOVE_INLET", "Valve outlet pressure " + bara
+              + " bara is above inlet pressure " + inlet + " bara — a throttling valve cannot raise pressure");
+        }
+        return WriteValidationResult.ok();
       }
       if ("Cv".equals(propertyPath) && value < 0.0) {
-	return WriteValidationResult.fail("CV_NEGATIVE", "Valve Cv must be non-negative (got " + value + ")");
+        return WriteValidationResult.fail("CV_NEGATIVE", "Valve Cv must be non-negative (got " + value + ")");
       }
       if ("percentValveOpening".equals(propertyPath)) {
-	if (value < 0.0 || value > 100.0) {
-	  return WriteValidationResult.fail("VALVE_OPENING_OUT_OF_RANGE",
-	      "Valve opening must be in [0,100] %% (got " + value + ")");
-	}
-	return WriteValidationResult.ok();
+        if (value < 0.0 || value > 100.0) {
+          return WriteValidationResult.fail("VALVE_OPENING_OUT_OF_RANGE",
+              "Valve opening must be in [0,100] %% (got " + value + ")");
+        }
+        return WriteValidationResult.ok();
       }
       return WriteValidationResult.ok();
     }
@@ -318,22 +318,22 @@ public final class DefaultWriteValidators {
 
     @Override
     public WriteValidationResult validate(ProcessEquipmentInterface equipment, String propertyPath, double value,
-	String unit) {
+        String unit) {
       if (!(equipment instanceof Heater) || equipment instanceof Cooler) {
-	return WriteValidationResult.ok();
+        return WriteValidationResult.ok();
       }
       Heater h = (Heater) equipment;
       if ("outletTemperature".equals(propertyPath)) {
-	double tK = toKelvin(value, unit);
-	if (tK <= 0.0) {
-	  return WriteValidationResult.fail("OUTLET_TEMPERATURE_NOT_POSITIVE",
-	      "Outlet temperature must be > 0 K (got " + tK + " K)");
-	}
-	double inletK = readStreamTemperatureK(h.getInletStream());
-	if (!Double.isNaN(inletK) && tK < inletK - 1.0e-6) {
-	  return WriteValidationResult.fail("HEATER_COOLS_FLUID", "Heater outlet temperature " + tK
-	      + " K is below inlet temperature " + inletK + " K — use a Cooler for negative duty");
-	}
+        double tK = toKelvin(value, unit);
+        if (tK <= 0.0) {
+          return WriteValidationResult.fail("OUTLET_TEMPERATURE_NOT_POSITIVE",
+              "Outlet temperature must be > 0 K (got " + tK + " K)");
+        }
+        double inletK = readStreamTemperatureK(h.getInletStream());
+        if (!Double.isNaN(inletK) && tK < inletK - 1.0e-6) {
+          return WriteValidationResult.fail("HEATER_COOLS_FLUID", "Heater outlet temperature " + tK
+              + " K is below inlet temperature " + inletK + " K — use a Cooler for negative duty");
+        }
       }
       return WriteValidationResult.ok();
     }
@@ -358,22 +358,22 @@ public final class DefaultWriteValidators {
 
     @Override
     public WriteValidationResult validate(ProcessEquipmentInterface equipment, String propertyPath, double value,
-	String unit) {
+        String unit) {
       if (!(equipment instanceof Cooler)) {
-	return WriteValidationResult.ok();
+        return WriteValidationResult.ok();
       }
       Cooler c = (Cooler) equipment;
       if ("outletTemperature".equals(propertyPath)) {
-	double tK = toKelvin(value, unit);
-	if (tK <= 0.0) {
-	  return WriteValidationResult.fail("OUTLET_TEMPERATURE_NOT_POSITIVE",
-	      "Outlet temperature must be > 0 K (got " + tK + " K)");
-	}
-	double inletK = readStreamTemperatureK(c.getInletStream());
-	if (!Double.isNaN(inletK) && tK > inletK + 1.0e-6) {
-	  return WriteValidationResult.fail("COOLER_HEATS_FLUID", "Cooler outlet temperature " + tK
-	      + " K is above inlet temperature " + inletK + " K — use a Heater for positive duty");
-	}
+        double tK = toKelvin(value, unit);
+        if (tK <= 0.0) {
+          return WriteValidationResult.fail("OUTLET_TEMPERATURE_NOT_POSITIVE",
+              "Outlet temperature must be > 0 K (got " + tK + " K)");
+        }
+        double inletK = readStreamTemperatureK(c.getInletStream());
+        if (!Double.isNaN(inletK) && tK > inletK + 1.0e-6) {
+          return WriteValidationResult.fail("COOLER_HEATS_FLUID", "Cooler outlet temperature " + tK
+              + " K is above inlet temperature " + inletK + " K — use a Heater for positive duty");
+        }
       }
       return WriteValidationResult.ok();
     }
@@ -399,7 +399,7 @@ public final class DefaultWriteValidators {
 
     @Override
     public WriteValidationResult validate(ProcessEquipmentInterface equipment, String propertyPath, double value,
-	String unit) {
+        String unit) {
       return WriteValidationResult.ok();
     }
   }

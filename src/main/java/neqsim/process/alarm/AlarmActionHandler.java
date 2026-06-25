@@ -64,21 +64,21 @@ public interface AlarmActionHandler extends Serializable {
 
       @Override
       public boolean handle(AlarmEvent event) {
-	if (event.getSource().equals(sourceName) && event.getLevel() == level && event.getType() == eventType) {
-	  logic.activate();
-	  return true;
-	}
-	return false;
+        if (event.getSource().equals(sourceName) && event.getLevel() == level && event.getType() == eventType) {
+          logic.activate();
+          return true;
+        }
+        return false;
       }
 
       @Override
       public String getActionDescription() {
-	return String.format("Activate %s on %s %s %s", logic.getName(), sourceName, level, eventType);
+        return String.format("Activate %s on %s %s %s", logic.getName(), sourceName, level, eventType);
       }
 
       @Override
       public int getPriority() {
-	return 100; // High priority for safety logic
+        return 100; // High priority for safety logic
       }
     };
   }
@@ -117,18 +117,18 @@ public interface AlarmActionHandler extends Serializable {
 
       @Override
       public boolean handle(AlarmEvent event) {
-	boolean anyHandled = false;
-	for (AlarmActionHandler handler : handlers) {
-	  if (handler.handle(event)) {
-	    anyHandled = true;
-	  }
-	}
-	return anyHandled;
+        boolean anyHandled = false;
+        for (AlarmActionHandler handler : handlers) {
+          if (handler.handle(event)) {
+            anyHandled = true;
+          }
+        }
+        return anyHandled;
       }
 
       @Override
       public String getActionDescription() {
-	return "Composite handler with " + handlers.size() + " actions";
+        return "Composite handler with " + handlers.size() + " actions";
       }
     };
   }

@@ -159,8 +159,8 @@ public class STS0131AcceptanceCriteria implements Serializable {
     boolean acceptable = pressureCriterionMet && massCriterionMet && fireRateCriterionMet;
 
     return new STS0131AcceptanceResult(limitingTime, pressureBara, remainingMassKg, peakDischargeRateKgPerS,
-	pressureConfigured, pressureCriterionMet, massConfigured, massCriterionMet, fireRateConfigured,
-	fireRateCriterionMet, acceptable);
+        pressureConfigured, pressureCriterionMet, massConfigured, massCriterionMet, fireRateConfigured,
+        fireRateCriterionMet, acceptable);
   }
 
   /**
@@ -198,11 +198,11 @@ public class STS0131AcceptanceCriteria implements Serializable {
     for (int i = 1; i < time.size(); i++) {
       double upperTime = time.get(i);
       if (targetTime <= upperTime) {
-	double lowerTime = time.get(i - 1);
-	double lowerValue = values.get(i - 1);
-	double upperValue = values.get(i);
-	double fraction = upperTime > lowerTime ? (targetTime - lowerTime) / (upperTime - lowerTime) : 0.0;
-	return lowerValue + fraction * (upperValue - lowerValue);
+        double lowerTime = time.get(i - 1);
+        double lowerValue = values.get(i - 1);
+        double upperValue = values.get(i);
+        double fraction = upperTime > lowerTime ? (targetTime - lowerTime) / (upperTime - lowerTime) : 0.0;
+        return lowerValue + fraction * (upperValue - lowerValue);
       }
     }
     return values.get(values.size() - 1);
@@ -219,7 +219,7 @@ public class STS0131AcceptanceCriteria implements Serializable {
     double maxRate = 0.0;
     for (int i = 0; i < result.time.size(); i++) {
       if (result.time.get(i) <= limitingTime) {
-	maxRate = Math.max(maxRate, result.massFlowKgPerS.get(i));
+        maxRate = Math.max(maxRate, result.massFlowKgPerS.get(i));
       }
     }
     return maxRate;

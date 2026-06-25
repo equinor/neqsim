@@ -111,9 +111,9 @@ public class DriftFluxModel implements Serializable {
       // Void fraction from drift-flux: α_G = U_SG / (C0 * U_M + v_d)
       double denominator = params.C0 * U_M + params.driftVelocity;
       if (denominator > 1e-10) {
-	params.voidFraction = U_SG / denominator;
+        params.voidFraction = U_SG / denominator;
       } else {
-	params.voidFraction = U_SG > 0 ? 1.0 : 0.0;
+        params.voidFraction = U_SG > 0 ? 1.0 : 0.0;
       }
 
       params.voidFraction = Math.max(0, Math.min(1, params.voidFraction));
@@ -121,15 +121,15 @@ public class DriftFluxModel implements Serializable {
 
       // Phase velocities
       if (params.voidFraction > 1e-10) {
-	params.gasVelocity = U_SG / params.voidFraction;
+        params.gasVelocity = U_SG / params.voidFraction;
       }
       if (params.liquidHoldup > 1e-10) {
-	params.liquidVelocity = U_SL / params.liquidHoldup;
+        params.liquidVelocity = U_SL / params.liquidHoldup;
       }
 
       // Slip ratio
       if (params.liquidVelocity > 1e-10) {
-	params.slipRatio = params.gasVelocity / params.liquidVelocity;
+        params.slipRatio = params.gasVelocity / params.liquidVelocity;
       }
     }
 
@@ -311,7 +311,7 @@ public class DriftFluxModel implements Serializable {
       double alpha_G = 1.0 - alpha_L;
 
       if (alpha_L < 0.01 || alpha_G < 0.01) {
-	break;
+        break;
       }
 
       double A = Math.PI * D * D / 4.0;
@@ -760,7 +760,7 @@ public class DriftFluxModel implements Serializable {
 
     // Total temperature change
     double totalDeltaT = result.heatTransferDeltaT + result.jouleThomsonDeltaT + result.frictionHeatingDeltaT
-	+ result.elevationWorkDeltaT;
+        + result.elevationWorkDeltaT;
 
     // Limit temperature change per time step for stability
     double maxDeltaT = 10.0; // Maximum 10K change per step

@@ -1,7 +1,7 @@
 package neqsim.process.operations;
 
-import com.google.gson.GsonBuilder;
 import java.io.Serializable;
+import com.google.gson.GsonBuilder;
 
 /**
  * Quantitative result from a controller tuning or performance screening study.

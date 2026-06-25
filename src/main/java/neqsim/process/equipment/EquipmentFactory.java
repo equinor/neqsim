@@ -16,11 +16,15 @@ import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.pipeline.AdiabaticPipe;
+import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
+import neqsim.process.equipment.pipeline.WaterHammerPipe;
 import neqsim.process.equipment.powergeneration.FuelCell;
-import neqsim.process.equipment.powergeneration.SolarPanel;
 import neqsim.process.equipment.powergeneration.OffshoreEnergySystem;
+import neqsim.process.equipment.powergeneration.SolarPanel;
 import neqsim.process.equipment.powergeneration.WindFarm;
 import neqsim.process.equipment.powergeneration.WindTurbine;
+import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reactor.AmmoniaSynthesisReactor;
 import neqsim.process.equipment.reactor.AutothermalReformer;
 import neqsim.process.equipment.reactor.CatalyticTubeReformer;
@@ -29,15 +33,9 @@ import neqsim.process.equipment.reactor.PartialOxidationReactor;
 import neqsim.process.equipment.reactor.PlugFlowReactor;
 import neqsim.process.equipment.reactor.QuenchSection;
 import neqsim.process.equipment.reactor.ReformerFurnace;
-import neqsim.process.equipment.reactor.SyngasBurnerZone;
 import neqsim.process.equipment.reactor.StirredTankReactor;
+import neqsim.process.equipment.reactor.SyngasBurnerZone;
 import neqsim.process.equipment.reactor.WaterGasShiftReactor;
-import neqsim.process.equipment.subsea.SubseaPowerCable;
-import neqsim.process.equipment.pipeline.AdiabaticPipe;
-import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
-import neqsim.process.equipment.pipeline.WaterHammerPipe;
-import neqsim.process.equipment.util.StreamSaturatorUtil;
-import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reservoir.ReservoirCVDsim;
 import neqsim.process.equipment.reservoir.ReservoirDiffLibsim;
 import neqsim.process.equipment.reservoir.ReservoirTPsim;
@@ -51,6 +49,7 @@ import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.stream.VirtualStream;
+import neqsim.process.equipment.subsea.SubseaPowerCable;
 import neqsim.process.equipment.tank.Tank;
 import neqsim.process.equipment.util.Adjuster;
 import neqsim.process.equipment.util.Calculator;
@@ -59,6 +58,7 @@ import neqsim.process.equipment.util.GORfitter;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.util.SetPoint;
 import neqsim.process.equipment.util.SpreadsheetBlock;
+import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.process.equipment.util.UnisimCalculator;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
@@ -276,15 +276,15 @@ public final class EquipmentFactory {
       return new ComponentCaptureUnit(name);
     case ReservoirCVDsim:
       throw new IllegalArgumentException(
-	  "ReservoirCVDsim requires a reservoir fluid. Use createReservoirCVDsim instead.");
+          "ReservoirCVDsim requires a reservoir fluid. Use createReservoirCVDsim instead.");
     case ReservoirDiffLibsim:
       throw new IllegalArgumentException(
-	  "ReservoirDiffLibsim requires a reservoir fluid. Use createReservoirDiffLibsim instead.");
+          "ReservoirDiffLibsim requires a reservoir fluid. Use createReservoirDiffLibsim instead.");
     case VirtualStream:
       return new VirtualStream(name);
     case ReservoirTPsim:
       throw new IllegalArgumentException(
-	  "ReservoirTPsim requires a reservoir fluid. Use createReservoirTPsim instead.");
+          "ReservoirTPsim requires a reservoir fluid. Use createReservoirTPsim instead.");
     case SimpleReservoir:
       return new SimpleReservoir(name);
     case Manifold:
@@ -332,7 +332,7 @@ public final class EquipmentFactory {
     String sanitized = equipmentType.replaceAll("[\\s_-]", "");
     for (EquipmentEnum value : EquipmentEnum.values()) {
       if (value.name().equalsIgnoreCase(equipmentType) || value.name().equalsIgnoreCase(sanitized)) {
-	return value;
+        return value;
       }
     }
     throw new IllegalArgumentException("Unknown equipment type: " + equipmentType);

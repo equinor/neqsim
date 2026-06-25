@@ -77,7 +77,7 @@ public class SeparatorAgent extends ProcessAgent {
     // Observation space
     if (controlGasValve) {
       observationNames = new String[] { "liquid_level", "pressure", "level_error", "pressure_error", "liquid_valve_pos",
-	  "gas_valve_pos" };
+          "gas_valve_pos" };
     } else {
       observationNames = new String[] { "liquid_level", "pressure", "level_error", "liquid_valve_pos" };
     }
@@ -117,7 +117,7 @@ public class SeparatorAgent extends ProcessAgent {
 
     if (controlGasValve) {
       return new double[] { level, pressure / 100.0, levelError, pressureError, currentLiquidValvePos,
-	  currentGasValvePos };
+          currentGasValvePos };
     } else {
       return new double[] { level, pressure / 100.0, levelError, currentLiquidValvePos };
     }

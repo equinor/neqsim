@@ -83,8 +83,8 @@ public class NorsokM001MaterialSelectionTest {
     boolean hasNACE = false;
     for (String note : notes) {
       if (note.contains("NACE") || note.contains("ISO 15156")) {
-	hasNACE = true;
-	break;
+        hasNACE = true;
+        break;
       }
     }
     assertTrue(hasNACE, "Notes should reference NACE/ISO 15156 for sour service");
@@ -114,7 +114,7 @@ public class NorsokM001MaterialSelectionTest {
 
     String material = selector.getRecommendedMaterial();
     assertTrue(material.contains("C-276") || material.contains("625"),
-	"Severe sour + very high chlorides should recommend nickel alloy: " + material);
+        "Severe sour + very high chlorides should recommend nickel alloy: " + material);
   }
 
   @Test

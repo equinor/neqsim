@@ -1,14 +1,14 @@
 package neqsim.process.util.example;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills.HeatTransferMode;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Validation of Beggs and Brill pipeline model against literature data and analytical solutions.
@@ -129,7 +129,7 @@ public class BeggsAndBrillsValidationExample {
     logger.info("Input Parameters:");
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Pipe length: %.0f m%n", length);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Pipe diameter: %.3f m (%.0f mm)%n", diameter,
-	diameter * 1000);
+        diameter * 1000);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Roughness: %.2e m%n", roughness);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Flow rate: %.0f kg/hr%n", flowRate);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Inlet pressure: %.1f bara%n", pressure);
@@ -323,7 +323,7 @@ public class BeggsAndBrillsValidationExample {
     logger.info("Input Parameters:");
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Pipe length: %.0f m%n", length);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Pipe diameter: %.3f m (pipe reports: %.3f m)%n", diameter,
-	pipeInsideDiam);
+        pipeInsideDiam);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Heat transfer area: %.1f m²%n", area);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Flow rate: %.0f kg/hr (%.3f kg/s)%n", flowRate, massFlow);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  U-value: %.1f W/(m²·K)%n", U);
@@ -380,7 +380,7 @@ public class BeggsAndBrillsValidationExample {
     logger.info("Test Configuration:");
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Pipe length: %.0f m, diameter: %.3f m%n", length, diameter);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Pressure: %.0f bara, Temperature: %.0f °C%n", pressure,
-	temperature);
+        temperature);
 
     // Test multiple GOR (Gas-Oil Ratio) conditions
     double[] gasFlowRates = { 100, 500, 2000, 5000, 10000 }; // kg/hr gas
@@ -389,9 +389,9 @@ public class BeggsAndBrillsValidationExample {
     logger.info("Two-Phase Flow Results:");
     logger.info(StringUtils.repeat("─", 90));
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-10s %-8s %-10s %-12s %-10s %-12s %-10s%n", "Gas Flow",
-	"Liq Flow", "GOR", "λ_liquid", "Flow Regime", "Holdup El", "ΔP (bar)", "ΔP/km");
+        "Liq Flow", "GOR", "λ_liquid", "Flow Regime", "Holdup El", "ΔP (bar)", "ΔP/km");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-10s %-8s %-10s %-12s %-10s %-12s %-10s%n", "(kg/hr)",
-	"(kg/hr)", "(-)", "(-)", "(-)", "(-)", "(bar)", "(bar/km)");
+        "(kg/hr)", "(-)", "(-)", "(-)", "(-)", "(bar)", "(bar/km)");
     logger.info(StringUtils.repeat("─", 90));
 
     for (double gasFlow : gasFlowRates) {
@@ -425,24 +425,24 @@ public class BeggsAndBrillsValidationExample {
       process.add(pipe);
 
       try {
-	process.run();
+        process.run();
 
-	double pressureDrop = pipe.getPressureDrop();
-	double[] holdupProfile = pipe.getLiquidHoldupProfile();
-	double holdup = (holdupProfile == null || holdupProfile.length == 0) ? 0 : holdupProfile[0];
-	String regime = pipe.getFlowRegime();
+        double pressureDrop = pipe.getPressureDrop();
+        double[] holdupProfile = pipe.getLiquidHoldupProfile();
+        double holdup = (holdupProfile == null || holdupProfile.length == 0) ? 0 : holdupProfile[0];
+        String regime = pipe.getFlowRegime();
 
-	// Calculate input liquid volume fraction (λ)
-	double lambda = liquidFlowRate / totalFlow; // mass fraction approximation
+        // Calculate input liquid volume fraction (λ)
+        double lambda = liquidFlowRate / totalFlow; // mass fraction approximation
 
-	double gor = gasFlow / liquidFlowRate;
+        double gor = gasFlow / liquidFlowRate;
 
-	logger.printf(org.apache.logging.log4j.Level.INFO,
-	    "%-10.0f %-10.0f %-8.2f %-10.3f %-12s %-10.3f %-12.4f %-10.3f%n", gasFlow, liquidFlowRate, gor, lambda,
-	    regime, holdup, pressureDrop, pressureDrop / length * 1000);
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "%-10.0f %-10.0f %-8.2f %-10.3f %-12s %-10.3f %-12.4f %-10.3f%n", gasFlow, liquidFlowRate, gor, lambda,
+            regime, holdup, pressureDrop, pressureDrop / length * 1000);
       } catch (Exception e) {
-	logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.0f %-10.0f - Error: %s%n", gasFlow, liquidFlowRate,
-	    e.getMessage());
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.0f %-10.0f - Error: %s%n", gasFlow, liquidFlowRate,
+            e.getMessage());
       }
     }
 

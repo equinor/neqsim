@@ -315,21 +315,21 @@ public final class DexpiXmlReader {
     for (int i = 0; i < loopNodes.getLength(); i++) {
       Node node = loopNodes.item(i);
       if (node.getNodeType() != Node.ELEMENT_NODE) {
-	continue;
+        continue;
       }
       Element loopElement = (Element) node;
       String loopId = loopElement.getAttribute("ID");
       String loopNum = getGenericAttribute(loopElement, DexpiMetadata.LOOP_NUMBER);
       if (loopNum == null) {
-	loopNum = loopId;
+        loopNum = loopId;
       }
       // Find which instrument IDs are in this loop via Association elements
       List<Element> associations = directChildElements(loopElement, "Association");
       for (Element assoc : associations) {
-	String itemId = assoc.getAttribute("ItemID");
-	if (!isBlank(itemId)) {
-	  loopNumbers.put(itemId, loopNum);
-	}
+        String itemId = assoc.getAttribute("ItemID");
+        if (!isBlank(itemId)) {
+          loopNumbers.put(itemId, loopNum);
+        }
       }
     }
 
@@ -339,26 +339,26 @@ public final class DexpiXmlReader {
     for (int i = 0; i < allElements.getLength(); i++) {
       Node node = allElements.item(i);
       if (node.getNodeType() != Node.ELEMENT_NODE) {
-	continue;
+        continue;
       }
       Element element = (Element) node;
       if ("ActuatingFunction".equals(element.getTagName())
-	  || "ActuatingFunction".equals(element.getAttribute("ComponentClass"))) {
-	String afId = element.getAttribute("ID");
-	String afNumber = getGenericAttribute(element, DexpiMetadata.ACTUATING_FUNCTION_NUMBER);
-	if (afNumber == null) {
-	  afNumber = afId;
-	}
-	// Find parent instrument via traversal
-	Node parentNode = element.getParentNode();
-	while (parentNode != null && parentNode.getNodeType() == Node.ELEMENT_NODE) {
-	  Element parentEl = (Element) parentNode;
-	  if ("ProcessInstrumentationFunction".equals(parentEl.getTagName())) {
-	    actuatingTags.put(parentEl.getAttribute("ID"), afNumber);
-	    break;
-	  }
-	  parentNode = parentNode.getParentNode();
-	}
+          || "ActuatingFunction".equals(element.getAttribute("ComponentClass"))) {
+        String afId = element.getAttribute("ID");
+        String afNumber = getGenericAttribute(element, DexpiMetadata.ACTUATING_FUNCTION_NUMBER);
+        if (afNumber == null) {
+          afNumber = afId;
+        }
+        // Find parent instrument via traversal
+        Node parentNode = element.getParentNode();
+        while (parentNode != null && parentNode.getNodeType() == Node.ELEMENT_NODE) {
+          Element parentEl = (Element) parentNode;
+          if ("ProcessInstrumentationFunction".equals(parentEl.getTagName())) {
+            actuatingTags.put(parentEl.getAttribute("ID"), afNumber);
+            break;
+          }
+          parentNode = parentNode.getParentNode();
+        }
       }
     }
 
@@ -368,11 +368,11 @@ public final class DexpiXmlReader {
     for (int i = 0; i < pifNodes.getLength(); i++) {
       Node node = pifNodes.item(i);
       if (node.getNodeType() != Node.ELEMENT_NODE) {
-	continue;
+        continue;
       }
       // Skip shape definitions inside ShapeCatalogue
       if (isInsideShapeCatalogue(node)) {
-	continue;
+        continue;
       }
       Element pif = (Element) node;
       String id = pif.getAttribute("ID");
@@ -383,15 +383,15 @@ public final class DexpiXmlReader {
       String unit = getGenericAttribute(pif, "MeasurementUnit");
 
       if (tagName == null) {
-	tagName = (category != null ? category : "") + (functions != null ? functions : "") + " "
-	    + (number != null ? number : id);
+        tagName = (category != null ? category : "") + (functions != null ? functions : "") + " "
+            + (number != null ? number : id);
       }
 
       String loopNum = loopNumbers.get(id);
       String actuator = actuatingTags.get(id);
 
       instruments
-	  .add(new DexpiInstrumentInfo(id, tagName.trim(), category, functions, number, loopNum, unit, actuator));
+          .add(new DexpiInstrumentInfo(id, tagName.trim(), category, functions, number, loopNum, unit, actuator));
     }
 
     logger.info("Parsed {} instruments from DEXPI XML", instruments.size());
@@ -412,20 +412,20 @@ public final class DexpiXmlReader {
       factory.setXIncludeAware(false);
       DocumentBuilder builder = factory.newDocumentBuilder();
       builder.setErrorHandler(new org.xml.sax.ErrorHandler() {
-	@Override
-	public void warning(SAXParseException exception) throws SAXException {
-	  throw exception;
-	}
+        @Override
+        public void warning(SAXParseException exception) throws SAXException {
+          throw exception;
+        }
 
-	@Override
-	public void error(SAXParseException exception) throws SAXException {
-	  throw exception;
-	}
+        @Override
+        public void error(SAXParseException exception) throws SAXException {
+          throw exception;
+        }
 
-	@Override
-	public void fatalError(SAXParseException exception) throws SAXException {
-	  throw exception;
-	}
+        @Override
+        public void fatalError(SAXParseException exception) throws SAXException {
+          throw exception;
+        }
       });
       Document document = builder.parse(inputStream);
       document.getDocumentElement().normalize();
@@ -444,29 +444,29 @@ public final class DexpiXmlReader {
     for (int i = 0; i < parentNodes.getLength(); i++) {
       Node parentNode = parentNodes.item(i);
       if (parentNode.getNodeType() != Node.ELEMENT_NODE) {
-	continue;
+        continue;
       }
       Element parentElement = (Element) parentNode;
 
       // Look for all child elements of the parent (Equipment or PipingComponent)
       NodeList childNodes = parentElement.getChildNodes();
       for (int j = 0; j < childNodes.getLength(); j++) {
-	Node childNode = childNodes.item(j);
-	if (childNode.getNodeType() != Node.ELEMENT_NODE) {
-	  continue;
-	}
-	Element element = (Element) childNode;
-	String componentClass = element.getAttribute("ComponentClass");
-	EquipmentEnum equipmentEnum = equipmentMap.get(componentClass);
-	if (equipmentEnum == null) {
-	  logger.warn("Unsupported component class: {}", componentClass);
-	  continue;
-	}
+        Node childNode = childNodes.item(j);
+        if (childNode.getNodeType() != Node.ELEMENT_NODE) {
+          continue;
+        }
+        Element element = (Element) childNode;
+        String componentClass = element.getAttribute("ComponentClass");
+        EquipmentEnum equipmentEnum = equipmentMap.get(componentClass);
+        if (equipmentEnum == null) {
+          logger.warn("Unsupported component class: {}", componentClass);
+          continue;
+        }
 
-	String baseName = firstNonEmpty(attributeValue(element, nameAttribute),
-	    attributeValue(element, DexpiMetadata.TAG_NAME), element.getAttribute("ID"));
-	addDexpiUnit(processSystem, element, equipmentEnum, baseName, element.getAttribute("ComponentClass"));
-	totalUnits++;
+        String baseName = firstNonEmpty(attributeValue(element, nameAttribute),
+            attributeValue(element, DexpiMetadata.TAG_NAME), element.getAttribute("ID"));
+        addDexpiUnit(processSystem, element, equipmentEnum, baseName, element.getAttribute("ComponentClass"));
+        totalUnits++;
       }
     }
     logger.info("Added {} units from {} elements", totalUnits, tagName);
@@ -478,11 +478,11 @@ public final class DexpiXmlReader {
     for (int i = 0; i < segmentNodes.getLength(); i++) {
       Node node = segmentNodes.item(i);
       if (node.getNodeType() != Node.ELEMENT_NODE) {
-	continue;
+        continue;
       }
       Element element = (Element) node;
       String baseName = firstNonEmpty(attributeValue(element, DexpiMetadata.SEGMENT_NUMBER),
-	  element.getAttribute("ID"));
+          element.getAttribute("ID"));
       addDexpiStream(processSystem, element, templateStream, baseName);
     }
   }
@@ -498,12 +498,12 @@ public final class DexpiXmlReader {
     SystemInterface fluid = baseFluid == null ? createDefaultFluid() : baseFluid.clone();
 
     DexpiStream stream = new DexpiStream(uniqueName, fluid, element.getAttribute("ComponentClass"), lineNumber,
-	fluidCode);
+        fluidCode);
     stream.setSpecification(templateStream.getSpecification());
     stream.setPressure(templateStream.getPressure(DexpiMetadata.DEFAULT_PRESSURE_UNIT),
-	DexpiMetadata.DEFAULT_PRESSURE_UNIT);
+        DexpiMetadata.DEFAULT_PRESSURE_UNIT);
     stream.setTemperature(templateStream.getTemperature(DexpiMetadata.DEFAULT_TEMPERATURE_UNIT),
-	DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
+        DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
     stream.setFlowRate(templateStream.getFlowRate(DexpiMetadata.DEFAULT_FLOW_UNIT), DexpiMetadata.DEFAULT_FLOW_UNIT);
 
     applyStreamMetadata(element, stream);
@@ -523,7 +523,7 @@ public final class DexpiXmlReader {
     for (String sizingAttr : DexpiMetadata.sizingAttributes()) {
       String value = attributeValue(element, sizingAttr);
       if (value != null) {
-	unit.setSizingAttribute(sizingAttr, value);
+        unit.setSizingAttribute(sizingAttr, value);
       }
     }
 
@@ -589,20 +589,20 @@ public final class DexpiXmlReader {
     for (Element generic : genericNodes) {
       NodeList attributes = generic.getElementsByTagName("GenericAttribute");
       for (int i = 0; i < attributes.getLength(); i++) {
-	Node attributeNode = attributes.item(i);
-	if (attributeNode.getNodeType() != Node.ELEMENT_NODE) {
-	  continue;
-	}
-	Element attribute = (Element) attributeNode;
-	if (attributeName.equals(attribute.getAttribute("Name"))) {
-	  String value = attribute.getAttribute("Value");
-	  if (value == null || value.isEmpty()) {
-	    value = attribute.getAttribute("ValueURI");
-	  }
-	  if (value != null && !value.isEmpty()) {
-	    return value;
-	  }
-	}
+        Node attributeNode = attributes.item(i);
+        if (attributeNode.getNodeType() != Node.ELEMENT_NODE) {
+          continue;
+        }
+        Element attribute = (Element) attributeNode;
+        if (attributeName.equals(attribute.getAttribute("Name"))) {
+          String value = attribute.getAttribute("Value");
+          if (value == null || value.isEmpty()) {
+            value = attribute.getAttribute("ValueURI");
+          }
+          if (value != null && !value.isEmpty()) {
+            return value;
+          }
+        }
       }
     }
     return null;
@@ -614,23 +614,23 @@ public final class DexpiXmlReader {
 
   private static void applyStreamMetadata(Element element, DexpiStream stream) {
     applyNumericAttribute(element, DexpiMetadata.OPERATING_PRESSURE_VALUE, DexpiMetadata.OPERATING_PRESSURE_UNIT,
-	stream::setPressure, DexpiMetadata.DEFAULT_PRESSURE_UNIT);
+        stream::setPressure, DexpiMetadata.DEFAULT_PRESSURE_UNIT);
     applyNumericAttribute(element, DexpiMetadata.OPERATING_TEMPERATURE_VALUE, DexpiMetadata.OPERATING_TEMPERATURE_UNIT,
-	stream::setTemperature, DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
+        stream::setTemperature, DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
     applyNumericAttribute(element, DexpiMetadata.OPERATING_FLOW_VALUE, DexpiMetadata.OPERATING_FLOW_UNIT,
-	stream::setFlowRate, DexpiMetadata.DEFAULT_FLOW_UNIT);
+        stream::setFlowRate, DexpiMetadata.DEFAULT_FLOW_UNIT);
   }
 
   private static void applyNumericAttribute(Element element, String valueAttribute, String unitAttribute,
       BiConsumer<Double, String> consumer, String defaultUnit) {
     String valueText = firstNonEmpty(getGenericAttribute(element, valueAttribute),
-	findAttributeInAncestors(element, valueAttribute));
+        findAttributeInAncestors(element, valueAttribute));
     Double value = parseNumeric(valueText);
     if (value == null) {
       return;
     }
     String unit = firstNonEmpty(getGenericAttribute(element, unitAttribute),
-	findAttributeInAncestors(element, unitAttribute), defaultUnit);
+        findAttributeInAncestors(element, unitAttribute), defaultUnit);
     consumer.accept(value, unit);
   }
 
@@ -644,11 +644,11 @@ public final class DexpiXmlReader {
     } catch (NumberFormatException ex) {
       int spaceIndex = trimmed.indexOf(' ');
       if (spaceIndex > 0) {
-	String candidate = trimmed.substring(0, spaceIndex);
-	try {
-	  return Double.parseDouble(candidate);
-	} catch (NumberFormatException ignored) {
-	}
+        String candidate = trimmed.substring(0, spaceIndex);
+        try {
+          return Double.parseDouble(candidate);
+        } catch (NumberFormatException ignored) {
+        }
       }
       return null;
     }
@@ -663,7 +663,7 @@ public final class DexpiXmlReader {
     for (int i = 0; i < children.getLength(); i++) {
       Node child = children.item(i);
       if (child.getNodeType() == Node.ELEMENT_NODE && tagName.equals(((Element) child).getTagName())) {
-	result.add((Element) child);
+        result.add((Element) child);
       }
     }
     return result;
@@ -675,7 +675,7 @@ public final class DexpiXmlReader {
       Element element = (Element) current;
       String value = getGenericAttribute(element, attributeName);
       if (!isBlank(value)) {
-	return value;
+        return value;
       }
       current = current.getParentNode();
     }
@@ -688,7 +688,7 @@ public final class DexpiXmlReader {
     }
     for (String candidate : candidates) {
       if (!isBlank(candidate)) {
-	return candidate.trim();
+        return candidate.trim();
       }
     }
     return null;
@@ -704,7 +704,7 @@ public final class DexpiXmlReader {
     Node parent = node.getParentNode();
     while (parent != null && parent.getNodeType() == Node.ELEMENT_NODE) {
       if ("ShapeCatalogue".equals(((Element) parent).getTagName())) {
-	return true;
+        return true;
       }
       parent = parent.getParentNode();
     }

@@ -265,6 +265,6 @@ public class VFMResult implements Serializable {
   @Override
   public String toString() {
     return String.format("VFMResult{oil=%.1f, gas=%.1f, water=%.1f Sm3/d, GOR=%.1f, WC=%.1f%%, quality=%s}",
-	oilFlowRate, gasFlowRate, waterFlowRate, gasOilRatio, waterCut, quality);
+        oilFlowRate, gasFlowRate, waterFlowRate, gasOilRatio, waterCut, quality);
   }
 }

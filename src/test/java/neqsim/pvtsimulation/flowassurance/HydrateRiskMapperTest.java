@@ -43,7 +43,7 @@ public class HydrateRiskMapperTest extends neqsim.NeqSimTest {
     // At high temperatures, risk should be low
     HydrateRiskMapper.RiskPoint firstPoint = profile.getPoints().get(0);
     assertTrue(firstPoint.riskLevel == RiskLevel.LOW || firstPoint.riskLevel == RiskLevel.MEDIUM,
-	"At 60°C, risk should be low or medium");
+        "At 60°C, risk should be low or medium");
 
     String json = profile.toJson();
     assertNotNull(json);

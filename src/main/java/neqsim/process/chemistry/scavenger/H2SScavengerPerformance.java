@@ -188,26 +188,26 @@ public class H2SScavengerPerformance implements Serializable {
 
     // Warnings
     if ((chemistry == ScavengerChemistry.MEA_TRIAZINE || chemistry == ScavengerChemistry.MMA_TRIAZINE)
-	&& temperatureC > 80.0) {
+        && temperatureC > 80.0) {
       warnings.put("triazine_decomposition",
-	  "Triazines decompose above 80 C; reduces capacity and releases amine — relocate downstream of cooling");
+          "Triazines decompose above 80 C; reduces capacity and releases amine — relocate downstream of cooling");
     }
     if (chemistry == ScavengerChemistry.MEA_TRIAZINE && h2sInletPpm > 1000.0) {
       warnings.put("dithiazine_deposition",
-	  "Above 1000 ppm H2S, spent triazine forms dithiazine (solid) — risk of fouling");
+          "Above 1000 ppm H2S, spent triazine forms dithiazine (solid) — risk of fouling");
     }
     if (chemistry == ScavengerChemistry.IRON_CHELATE || chemistry == ScavengerChemistry.IRON_SPONGE) {
       warnings.put("iron_sulphide",
-	  "Spent iron scavenger contains FeS (pyrophoric on exposure to air); special handling required");
+          "Spent iron scavenger contains FeS (pyrophoric on exposure to air); special handling required");
     }
     if (chemistry == ScavengerChemistry.IRON_SPONGE && h2sInletPpm < 50.0) {
       warnings.put("oversized_solid_bed",
-	  "Iron sponge is only economic above ~50 ppm H2S; consider liquid scavenger for trace loads");
+          "Iron sponge is only economic above ~50 ppm H2S; consider liquid scavenger for trace loads");
     }
     if (h2sToRemoveKgPerDay > 100.0
-	&& (chemistry == ScavengerChemistry.MEA_TRIAZINE || chemistry == ScavengerChemistry.MMA_TRIAZINE)) {
+        && (chemistry == ScavengerChemistry.MEA_TRIAZINE || chemistry == ScavengerChemistry.MMA_TRIAZINE)) {
       warnings.put("high_load_economics",
-	  "Above ~100 kg H2S/day, liquid scavenger OPEX is high — evaluate amine treating or Sulfinol");
+          "Above ~100 kg H2S/day, liquid scavenger OPEX is high — evaluate amine treating or Sulfinol");
     }
     evaluated = true;
   }
@@ -348,8 +348,8 @@ public class H2SScavengerPerformance implements Serializable {
    */
   public java.util.List<java.util.Map<String, Object>> getStandardsApplied() {
     return neqsim.process.chemistry.util.StandardsRegistry.toMapList(
-	neqsim.process.chemistry.util.StandardsRegistry.GPSA_DB,
-	neqsim.process.chemistry.util.StandardsRegistry.ISO_13443,
-	neqsim.process.chemistry.util.StandardsRegistry.NACE_MR0175);
+        neqsim.process.chemistry.util.StandardsRegistry.GPSA_DB,
+        neqsim.process.chemistry.util.StandardsRegistry.ISO_13443,
+        neqsim.process.chemistry.util.StandardsRegistry.NACE_MR0175);
   }
 }

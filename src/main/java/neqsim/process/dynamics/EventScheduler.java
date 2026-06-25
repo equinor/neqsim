@@ -57,10 +57,10 @@ public class EventScheduler implements Serializable {
      */
     public ScheduledEvent(double time, String label, Runnable action) {
       if (Double.isNaN(time) || Double.isInfinite(time) || time < 0.0) {
-	throw new IllegalArgumentException("time must be finite and >= 0, got " + time);
+        throw new IllegalArgumentException("time must be finite and >= 0, got " + time);
       }
       if (action == null) {
-	throw new IllegalArgumentException("action must not be null");
+        throw new IllegalArgumentException("action must not be null");
       }
       this.time = time;
       this.label = (label == null) ? "" : label;
@@ -138,10 +138,10 @@ public class EventScheduler implements Serializable {
     while (!queue.isEmpty() && queue.get(0).time <= now) {
       ScheduledEvent e = queue.remove(0);
       try {
-	e.action.run();
+        e.action.run();
       } catch (RuntimeException ex) {
-	// surface but do not propagate — dynamic loop must keep running
-	System.err.println("EventScheduler: event '" + e.label + "' threw: " + ex.getMessage());
+        // surface but do not propagate — dynamic loop must keep running
+        System.err.println("EventScheduler: event '" + e.label + "' threw: " + ex.getMessage());
       }
       fired.add(e);
       count++;

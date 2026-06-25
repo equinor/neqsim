@@ -4,14 +4,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Benchmark tests for TPflash performance analysis.
@@ -141,13 +141,13 @@ class TPFlashBenchmarkTest {
 
     logger.info("=== Init Level Benchmark (10-comp SRK, " + N + " iterations) ===");
     logger.info("init(0): " + (init0Time / 1_000_000) + " ms total, " + String.format("%.1f", init0Time / 1000.0 / N)
-	+ " us/call");
+        + " us/call");
     logger.info("init(1): " + (init1Time / 1_000_000) + " ms total, " + String.format("%.1f", init1Time / 1000.0 / N)
-	+ " us/call");
+        + " us/call");
     logger.info("init(2): " + (init2Time / 1_000_000) + " ms total, " + String.format("%.1f", init2Time / 1000.0 / N)
-	+ " us/call");
+        + " us/call");
     logger.info("init(3): " + (init3Time / 1_000_000) + " ms total, " + String.format("%.1f", init3Time / 1000.0 / N)
-	+ " us/call");
+        + " us/call");
     System.out.println("Ratio init(1)/init(0): " + String.format("%.1f", (double) init1Time / init0Time));
     System.out.println("Ratio init(2)/init(1): " + String.format("%.1f", (double) init2Time / init1Time));
     System.out.println("Ratio init(3)/init(1): " + String.format("%.1f", (double) init3Time / init1Time));
@@ -190,11 +190,11 @@ class TPFlashBenchmarkTest {
 
     logger.info("=== Init Single Phase vs All Phases (10-comp SRK) ===");
     logger.info("init(1) all phases: " + (allPhaseTime / 1_000_000) + " ms, "
-	+ String.format("%.1f", allPhaseTime / 1000.0 / N) + " us/call");
+        + String.format("%.1f", allPhaseTime / 1000.0 / N) + " us/call");
     logger.info("init(1, 0) phase 0: " + (phase0Time / 1_000_000) + " ms, "
-	+ String.format("%.1f", phase0Time / 1000.0 / N) + " us/call");
+        + String.format("%.1f", phase0Time / 1000.0 / N) + " us/call");
     logger.info("init(1, 1) phase 1: " + (phase1Time / 1_000_000) + " ms, "
-	+ String.format("%.1f", phase1Time / 1000.0 / N) + " us/call");
+        + String.format("%.1f", phase1Time / 1000.0 / N) + " us/call");
     System.out.println("Ratio all/single: " + String.format("%.1f", (double) allPhaseTime / phase0Time));
 
   }
@@ -324,9 +324,9 @@ class TPFlashBenchmarkTest {
     String[] components3 = { "methane", "ethane", "propane" };
     String[] components6 = { "methane", "ethane", "propane", "n-butane", "n-pentane", "n-hexane" };
     String[] components10 = { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
-	"n-pentane", "n-hexane" };
+        "n-pentane", "n-hexane" };
     String[] components15 = { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
-	"n-pentane", "n-hexane", "n-heptane", "n-octane", "n-nonane", "nC10", "nC11" };
+        "n-pentane", "n-hexane", "n-heptane", "n-octane", "n-nonane", "nC10", "nC11" };
 
     String[][] allComponents = { components3, components6, components10, components15 };
 
@@ -334,29 +334,29 @@ class TPFlashBenchmarkTest {
     for (String[] comps : allComponents) {
       // Warmup
       for (int w = 0; w < 50; w++) {
-	SystemInterface sys = new SystemSrkEos(273.15 - 20.0, 30.0);
-	for (String c : comps) {
-	  sys.addComponent(c, 1.0);
-	}
-	sys.setMixingRule("classic");
-	ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-	ops.TPflash();
+        SystemInterface sys = new SystemSrkEos(273.15 - 20.0, 30.0);
+        for (String c : comps) {
+          sys.addComponent(c, 1.0);
+        }
+        sys.setMixingRule("classic");
+        ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+        ops.TPflash();
       }
 
       long start = System.nanoTime();
       for (int i = 0; i < N; i++) {
-	SystemInterface sys = new SystemSrkEos(273.15 - 20.0, 30.0);
-	for (String c : comps) {
-	  sys.addComponent(c, 1.0);
-	}
-	sys.setMixingRule("classic");
-	ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-	ops.TPflash();
+        SystemInterface sys = new SystemSrkEos(273.15 - 20.0, 30.0);
+        for (String c : comps) {
+          sys.addComponent(c, 1.0);
+        }
+        sys.setMixingRule("classic");
+        ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+        ops.TPflash();
       }
       long elapsed = System.nanoTime() - start;
 
       logger.info(comps.length + " components: " + (elapsed / 1_000_000) + " ms total, "
-	  + String.format("%.1f", elapsed / 1000.0 / N) + " us/flash");
+          + String.format("%.1f", elapsed / 1000.0 / N) + " us/flash");
     }
 
   }
@@ -527,37 +527,37 @@ class TPFlashBenchmarkTest {
 
       long start = System.nanoTime();
       for (int i = 0; i < N; i++) {
-	sys.init(0);
+        sys.init(0);
       }
       long init0Time = System.nanoTime() - start;
 
       start = System.nanoTime();
       for (int i = 0; i < N; i++) {
-	sys.init(1);
+        sys.init(1);
       }
       long init1Time = System.nanoTime() - start;
 
       start = System.nanoTime();
       for (int i = 0; i < N; i++) {
-	sys.init(2);
+        sys.init(2);
       }
       long init2Time = System.nanoTime() - start;
 
       start = System.nanoTime();
       for (int i = 0; i < N; i++) {
-	sys.init(3);
+        sys.init(3);
       }
       long init3Time = System.nanoTime() - start;
 
       sb.append("--- Init Level Benchmark (10-comp SRK, " + N + " iterations) ---\n");
       sb.append("init(0): " + (init0Time / 1_000_000) + " ms total, " + String.format("%.1f", init0Time / 1000.0 / N)
-	  + " us/call\n");
+          + " us/call\n");
       sb.append("init(1): " + (init1Time / 1_000_000) + " ms total, " + String.format("%.1f", init1Time / 1000.0 / N)
-	  + " us/call\n");
+          + " us/call\n");
       sb.append("init(2): " + (init2Time / 1_000_000) + " ms total, " + String.format("%.1f", init2Time / 1000.0 / N)
-	  + " us/call\n");
+          + " us/call\n");
       sb.append("init(3): " + (init3Time / 1_000_000) + " ms total, " + String.format("%.1f", init3Time / 1000.0 / N)
-	  + " us/call\n");
+          + " us/call\n");
       sb.append("Ratio init(1)/init(0): " + String.format("%.2f", (double) init1Time / init0Time) + "\n");
       sb.append("Ratio init(2)/init(1): " + String.format("%.2f", (double) init2Time / init1Time) + "\n");
       sb.append("Ratio init(3)/init(1): " + String.format("%.2f", (double) init3Time / init1Time) + "\n\n");
@@ -572,13 +572,13 @@ class TPFlashBenchmarkTest {
 
       long start = System.nanoTime();
       for (int i = 0; i < N; i++) {
-	sys.init(1);
+        sys.init(1);
       }
       long allPhaseTime = System.nanoTime() - start;
 
       start = System.nanoTime();
       for (int i = 0; i < N; i++) {
-	sys.init(1, 0);
+        sys.init(1, 0);
       }
       long phase0Time = System.nanoTime() - start;
 
@@ -595,105 +595,105 @@ class TPFlashBenchmarkTest {
 
       // Simple 3-comp two-phase
       for (int i = 0; i < warmup; i++) {
-	SystemInterface sys = createSimpleGas(273.15 - 40.0, 30.0);
-	ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-	ops.TPflash();
+        SystemInterface sys = createSimpleGas(273.15 - 40.0, 30.0);
+        ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+        ops.TPflash();
       }
       long start = System.nanoTime();
       for (int i = 0; i < N; i++) {
-	SystemInterface sys = createSimpleGas(273.15 - 40.0, 30.0);
-	ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-	ops.TPflash();
+        SystemInterface sys = createSimpleGas(273.15 - 40.0, 30.0);
+        ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+        ops.TPflash();
       }
       long simple2Phase = System.nanoTime() - start;
 
       // 10-comp single phase (high T, low P)
       for (int i = 0; i < warmup; i++) {
-	SystemInterface sys = createMediumGas(273.15 + 150.0, 5.0);
-	ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-	ops.TPflash();
+        SystemInterface sys = createMediumGas(273.15 + 150.0, 5.0);
+        ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+        ops.TPflash();
       }
       start = System.nanoTime();
       for (int i = 0; i < N; i++) {
-	SystemInterface sys = createMediumGas(273.15 + 150.0, 5.0);
-	ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-	ops.TPflash();
+        SystemInterface sys = createMediumGas(273.15 + 150.0, 5.0);
+        ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+        ops.TPflash();
       }
       long medium1Phase = System.nanoTime() - start;
 
       // 10-comp two-phase
       for (int i = 0; i < warmup; i++) {
-	SystemInterface sys = createMediumGas(273.15 + 25.0, 50.0);
-	ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-	ops.TPflash();
+        SystemInterface sys = createMediumGas(273.15 + 25.0, 50.0);
+        ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+        ops.TPflash();
       }
       start = System.nanoTime();
       for (int i = 0; i < N; i++) {
-	SystemInterface sys = createMediumGas(273.15 + 25.0, 50.0);
-	ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-	ops.TPflash();
+        SystemInterface sys = createMediumGas(273.15 + 25.0, 50.0);
+        ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+        ops.TPflash();
       }
       long medium2Phase = System.nanoTime() - start;
 
       // 20-comp well fluid
       int N2 = 500;
       for (int i = 0; i < 25; i++) {
-	SystemInterface sys = createWellFluid(273.15 + 80.0, 100.0);
-	ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-	ops.TPflash();
+        SystemInterface sys = createWellFluid(273.15 + 80.0, 100.0);
+        ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+        ops.TPflash();
       }
       start = System.nanoTime();
       for (int i = 0; i < N2; i++) {
-	SystemInterface sys = createWellFluid(273.15 + 80.0, 100.0);
-	ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-	ops.TPflash();
+        SystemInterface sys = createWellFluid(273.15 + 80.0, 100.0);
+        ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+        ops.TPflash();
       }
       long well2Phase = System.nanoTime() - start;
 
       sb.append("--- TPflash Scenario Performance ---\n");
       sb.append(
-	  "3-comp two-phase (-40C, 30bar):   " + String.format("%.0f", simple2Phase / 1000.0 / N) + " us/flash\n");
+          "3-comp two-phase (-40C, 30bar):   " + String.format("%.0f", simple2Phase / 1000.0 / N) + " us/flash\n");
       sb.append(
-	  "10-comp single-phase (150C, 5bar): " + String.format("%.0f", medium1Phase / 1000.0 / N) + " us/flash\n");
+          "10-comp single-phase (150C, 5bar): " + String.format("%.0f", medium1Phase / 1000.0 / N) + " us/flash\n");
       sb.append(
-	  "10-comp two-phase (25C, 50bar):   " + String.format("%.0f", medium2Phase / 1000.0 / N) + " us/flash\n");
+          "10-comp two-phase (25C, 50bar):   " + String.format("%.0f", medium2Phase / 1000.0 / N) + " us/flash\n");
       sb.append(
-	  "20-comp two-phase (80C, 100bar):  " + String.format("%.0f", well2Phase / 1000.0 / N2) + " us/flash\n\n");
+          "20-comp two-phase (80C, 100bar):  " + String.format("%.0f", well2Phase / 1000.0 / N2) + " us/flash\n\n");
     }
 
     // --- Component scaling ---
     {
       int N = 500;
       String[][] allComponents = { { "methane", "ethane", "propane" },
-	  { "methane", "ethane", "propane", "n-butane", "n-pentane", "n-hexane" },
-	  { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane", "n-pentane",
-	      "n-hexane" },
-	  { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane", "n-pentane",
-	      "n-hexane", "n-heptane", "n-octane", "n-nonane", "nC10", "nC11" } };
+          { "methane", "ethane", "propane", "n-butane", "n-pentane", "n-hexane" },
+          { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane", "n-pentane",
+              "n-hexane" },
+          { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane", "n-pentane",
+              "n-hexane", "n-heptane", "n-octane", "n-nonane", "nC10", "nC11" } };
 
       sb.append("--- Component Count Scaling (two-phase, -20C, 30bar) ---\n");
       for (String[] comps : allComponents) {
-	for (int w = 0; w < 50; w++) {
-	  SystemInterface sys = new SystemSrkEos(273.15 - 20.0, 30.0);
-	  for (String c : comps) {
-	    sys.addComponent(c, 1.0);
-	  }
-	  sys.setMixingRule("classic");
-	  ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-	  ops.TPflash();
-	}
-	long start = System.nanoTime();
-	for (int i = 0; i < N; i++) {
-	  SystemInterface sys = new SystemSrkEos(273.15 - 20.0, 30.0);
-	  for (String c : comps) {
-	    sys.addComponent(c, 1.0);
-	  }
-	  sys.setMixingRule("classic");
-	  ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-	  ops.TPflash();
-	}
-	long elapsed = System.nanoTime() - start;
-	sb.append(comps.length + " components: " + String.format("%.0f", elapsed / 1000.0 / N) + " us/flash\n");
+        for (int w = 0; w < 50; w++) {
+          SystemInterface sys = new SystemSrkEos(273.15 - 20.0, 30.0);
+          for (String c : comps) {
+            sys.addComponent(c, 1.0);
+          }
+          sys.setMixingRule("classic");
+          ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+          ops.TPflash();
+        }
+        long start = System.nanoTime();
+        for (int i = 0; i < N; i++) {
+          SystemInterface sys = new SystemSrkEos(273.15 - 20.0, 30.0);
+          for (String c : comps) {
+            sys.addComponent(c, 1.0);
+          }
+          sys.setMixingRule("classic");
+          ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+          ops.TPflash();
+        }
+        long elapsed = System.nanoTime() - start;
+        sb.append(comps.length + " components: " + String.format("%.0f", elapsed / 1000.0 / N) + " us/flash\n");
       }
       sb.append("\n");
     }
@@ -703,29 +703,29 @@ class TPFlashBenchmarkTest {
       int N = 1000;
       long start = System.nanoTime();
       for (int i = 0; i < N; i++) {
-	SystemInterface sys = new SystemSrkEos(273.15 + 25.0, 50.0);
-	sys.addComponent("methane", 80.0);
-	sys.addComponent("ethane", 6.0);
-	sys.addComponent("propane", 3.0);
-	sys.addComponent("n-butane", 2.0);
-	sys.addComponent("n-pentane", 1.0);
-	sys.setMixingRule("classic");
-	ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-	ops.TPflash();
+        SystemInterface sys = new SystemSrkEos(273.15 + 25.0, 50.0);
+        sys.addComponent("methane", 80.0);
+        sys.addComponent("ethane", 6.0);
+        sys.addComponent("propane", 3.0);
+        sys.addComponent("n-butane", 2.0);
+        sys.addComponent("n-pentane", 1.0);
+        sys.setMixingRule("classic");
+        ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+        ops.TPflash();
       }
       long srkTime = System.nanoTime() - start;
 
       start = System.nanoTime();
       for (int i = 0; i < N; i++) {
-	SystemInterface sys = new SystemPrEos(273.15 + 25.0, 50.0);
-	sys.addComponent("methane", 80.0);
-	sys.addComponent("ethane", 6.0);
-	sys.addComponent("propane", 3.0);
-	sys.addComponent("n-butane", 2.0);
-	sys.addComponent("n-pentane", 1.0);
-	sys.setMixingRule("classic");
-	ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-	ops.TPflash();
+        SystemInterface sys = new SystemPrEos(273.15 + 25.0, 50.0);
+        sys.addComponent("methane", 80.0);
+        sys.addComponent("ethane", 6.0);
+        sys.addComponent("propane", 3.0);
+        sys.addComponent("n-butane", 2.0);
+        sys.addComponent("n-pentane", 1.0);
+        sys.setMixingRule("classic");
+        ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+        ops.TPflash();
       }
       long prTime = System.nanoTime() - start;
 
@@ -749,9 +749,9 @@ class TPFlashBenchmarkTest {
       t0 = System.nanoTime();
       RachfordRice rr = new RachfordRice();
       try {
-	rr.calcBeta(sys.getKvector(), sys.getzvector());
+        rr.calcBeta(sys.getKvector(), sys.getzvector());
       } catch (Exception e) {
-	// ignore
+        // ignore
       }
       long tRR = System.nanoTime() - t0;
 
@@ -802,7 +802,7 @@ class TPFlashBenchmarkTest {
       double zi = sys.getPhase(0).getComponent(i).getz();
       double reconstructed = 0.0;
       for (int p = 0; p < sys.getNumberOfPhases(); p++) {
-	reconstructed += sys.getBeta(p) * sys.getPhase(p).getComponent(i).getx();
+        reconstructed += sys.getBeta(p) * sys.getPhase(p).getComponent(i).getx();
       }
       assertEquals(zi, reconstructed, 1e-6, "Material balance for " + sys.getPhase(0).getComponent(i).getName());
     }
@@ -810,13 +810,13 @@ class TPFlashBenchmarkTest {
     // Verify fugacity equality between phases
     if (sys.getNumberOfPhases() == 2) {
       for (int i = 0; i < sys.getPhase(0).getNumberOfComponents(); i++) {
-	double fug0 = sys.getPhase(0).getComponent(i).getFugacityCoefficient() * sys.getPhase(0).getComponent(i).getx();
-	double fug1 = sys.getPhase(1).getComponent(i).getFugacityCoefficient() * sys.getPhase(1).getComponent(i).getx();
-	if (fug0 > 1e-15 && fug1 > 1e-15) {
-	  double relErr = Math.abs(fug0 - fug1) / Math.max(fug0, fug1);
-	  assertTrue(relErr < 1e-6,
-	      "Fugacity equality for " + sys.getPhase(0).getComponent(i).getName() + " relErr=" + relErr);
-	}
+        double fug0 = sys.getPhase(0).getComponent(i).getFugacityCoefficient() * sys.getPhase(0).getComponent(i).getx();
+        double fug1 = sys.getPhase(1).getComponent(i).getFugacityCoefficient() * sys.getPhase(1).getComponent(i).getx();
+        if (fug0 > 1e-15 && fug1 > 1e-15) {
+          double relErr = Math.abs(fug0 - fug1) / Math.max(fug0, fug1);
+          assertTrue(relErr < 1e-6,
+              "Fugacity equality for " + sys.getPhase(0).getComponent(i).getName() + " relErr=" + relErr);
+        }
       }
     }
   }

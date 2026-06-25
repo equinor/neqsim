@@ -1,11 +1,11 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * OsmoticCoefficient class.
@@ -26,7 +26,7 @@ public class OsmoticCoefficient {
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     SystemInterface testSystem = new SystemElectrolyteCPAstatoil(298.0,
-	ThermodynamicConstantsInterface.referencePressure);
+        ThermodynamicConstantsInterface.referencePressure);
     // SystemInterface testSystem = new SystemElectrolyteCPA(298.15,1.01325201325);
     // SystemInterface testSystem = new
     // SystemSrkCPAs(298.15,ThermodynamicConstantsInterface.referencePressure);

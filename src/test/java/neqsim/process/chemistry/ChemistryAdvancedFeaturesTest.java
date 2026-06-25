@@ -158,8 +158,8 @@ public class ChemistryAdvancedFeaturesTest {
     mc.run(new java.util.function.ToDoubleFunction<double[]>() {
       @Override
       public double applyAsDouble(double[] x) {
-	// simple linear residual-rate model
-	return 1.0 - x[1] * (x[0] / (x[0] + 50.0));
+        // simple linear residual-rate model
+        return 1.0 - x[1] * (x[0] / (x[0] + 50.0));
       }
     });
     assertTrue(mc.isEvaluated());

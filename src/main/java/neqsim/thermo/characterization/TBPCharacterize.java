@@ -61,46 +61,46 @@ public class TBPCharacterize extends PlusCharacterize {
       double boilpoint = system.getPhase(0).getComponent(i).getNormalBoilingPoint("C");
 
       if (boilpoint >= 331.0) {
-	numb = 13;
+        numb = 13;
       } else if (boilpoint >= 317.0) {
-	numb = 12;
+        numb = 12;
       } else if (boilpoint >= 303.0) {
-	numb = 11;
+        numb = 11;
       } else if (boilpoint >= 287.0) {
-	numb = 10;
+        numb = 10;
       } else if (boilpoint >= 271.1) {
-	numb = 9;
+        numb = 9;
       } else if (boilpoint >= 253.9) {
-	numb = 8;
+        numb = 8;
       } else if (boilpoint >= 235.9) {
-	numb = 7;
+        numb = 7;
       } else if (boilpoint >= 216.8) {
-	numb = 6;
+        numb = 6;
       } else if (boilpoint >= 196.4) {
-	numb = 5;
+        numb = 5;
       } else if (boilpoint >= 174.6) {
-	numb = 4;
+        numb = 4;
       } else if (boilpoint >= 151.3) {
-	numb = 3;
+        numb = 3;
       } else if (boilpoint >= 126.1) {
-	numb = 2;
+        numb = 2;
       } else if (boilpoint >= 98.9) {
-	numb = 1;
+        numb = 1;
       } else if (boilpoint >= 69.2) {
-	numb = 0;
+        numb = 0;
       } else {
-	numb = 49;
+        numb = 49;
       }
       if (boilpoint > old) {
-	length = numb + 1;
-	old = boilpoint;
+        length = numb + 1;
+        old = boilpoint;
       }
       TBPmoles[numb] += system.getPhase(0).getComponent(i).getNumberOfmoles();
       TBPfractions[numb] += system.getPhase(0).getComponent(i).getz();
       TBP_Mnom[numb] += system.getPhase(0).getComponent(i).getz() * system.getPhase(0).getComponent(i).getMolarMass();
       TBPdensDenom[numb] += system.getPhase(0).getComponent(i).getz()
-	  * system.getPhase(0).getComponent(i).getMolarMass()
-	  / system.getPhase(0).getComponent(i).getNormalLiquidDensity();
+          * system.getPhase(0).getComponent(i).getMolarMass()
+          / system.getPhase(0).getComponent(i).getNormalLiquidDensity();
       // }
     }
     TBPdens = new double[length];

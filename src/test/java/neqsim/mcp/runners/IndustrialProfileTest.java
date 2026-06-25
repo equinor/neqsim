@@ -40,7 +40,7 @@ class IndustrialProfileTest {
   void tierSizes_matchContract() {
     assertEquals(22, IndustrialProfile.getIndustrialCore().size(), "Tier 1 (TRUSTED_CORE) should have 22 tools");
     assertEquals(30, IndustrialProfile.getEngineeringAdvanced().size(),
-	"Tier 2 (ENGINEERING_ADVANCED) should have 30 tools");
+        "Tier 2 (ENGINEERING_ADVANCED) should have 30 tools");
     assertEquals(14, IndustrialProfile.getExperimentalTools().size(), "Tier 3 (EXPERIMENTAL) should have 14 tools");
   }
 
@@ -319,7 +319,7 @@ class IndustrialProfileTest {
     assertTrue(error.get("reason").getAsString().contains("ENTERPRISE"), "Reason should mention ENTERPRISE mode");
     assertTrue(error.get("reason").getAsString().contains("Tier 1"), "Reason should reference Tier 1 restriction");
     assertTrue(error.get("remediation").getAsString().contains("DESKTOP_ENGINEER"),
-	"Remediation should suggest DESKTOP_ENGINEER");
+        "Remediation should suggest DESKTOP_ENGINEER");
 
     // Block a Tier 3 tool
     String result3 = IndustrialProfile.enforceAccess("solveTask");
@@ -351,14 +351,14 @@ class IndustrialProfileTest {
       JsonObject approvedJson = JsonParser.parseString(approved).getAsJsonObject();
       assertEquals("success", approvedJson.get("status").getAsString());
       assertNull(IndustrialProfile.enforceAccess("compareSimulationStates"),
-	  "One-shot approval should permit the next invocation");
+          "One-shot approval should permit the next invocation");
       assertNotNull(IndustrialProfile.enforceAccess("compareSimulationStates"),
-	  "One-shot approval should be consumed after one invocation");
+          "One-shot approval should be consumed after one invocation");
     } finally {
       if (previousToken == null) {
-	System.clearProperty("neqsim.mcp.adminToken");
+        System.clearProperty("neqsim.mcp.adminToken");
       } else {
-	System.setProperty("neqsim.mcp.adminToken", previousToken);
+        System.setProperty("neqsim.mcp.adminToken", previousToken);
       }
     }
   }
@@ -395,7 +395,7 @@ class IndustrialProfileTest {
     IndustrialProfile.setActiveMode(DeploymentMode.ENTERPRISE);
     assertTrue(IndustrialProfile.isAutoValidationEnabled());
     assertTrue(IndustrialProfile.requiresApproval("solveTask"),
-	"Enterprise: approval gate enabled for execution tools");
+        "Enterprise: approval gate enabled for execution tools");
   }
 
   // ─── solveTask is explicitly classified as EXPERIMENTAL ─────────────────────
@@ -403,13 +403,13 @@ class IndustrialProfileTest {
   @Test
   void solveTask_isExperimental() {
     assertEquals(ToolTier.EXPERIMENTAL, IndustrialProfile.getToolTier("solveTask"),
-	"solveTask MUST be Tier 3 EXPERIMENTAL");
+        "solveTask MUST be Tier 3 EXPERIMENTAL");
   }
 
   @Test
   void solveTask_isExecution() {
     assertEquals(ToolCategory.EXECUTION, IndustrialProfile.getToolCategory("solveTask"),
-	"solveTask MUST be classified as EXECUTION");
+        "solveTask MUST be classified as EXECUTION");
   }
 
   @Test

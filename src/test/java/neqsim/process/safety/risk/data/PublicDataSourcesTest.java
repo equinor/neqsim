@@ -18,7 +18,7 @@ class PublicDataSourcesTest {
     importer.loadIEEE493Data();
 
     assertTrue(importer.getRecordCount() > 50,
-	"Should have at least 50 IEEE 493 records, got: " + importer.getRecordCount());
+        "Should have at least 50 IEEE 493 records, got: " + importer.getRecordCount());
 
     // Verify specific IEEE 493 data - check for Transformer equipment type
     List<String> types = importer.getEquipmentTypes();
@@ -39,7 +39,7 @@ class PublicDataSourcesTest {
     importer.loadIOGPData();
 
     assertTrue(importer.getRecordCount() > 50,
-	"Should have at least 50 IOGP records, got: " + importer.getRecordCount());
+        "Should have at least 50 IOGP records, got: " + importer.getRecordCount());
 
     // Verify offshore equipment
     List<String> types = importer.getEquipmentTypes();
@@ -57,7 +57,7 @@ class PublicDataSourcesTest {
     importer.loadGenericLiteratureData();
 
     assertTrue(importer.getRecordCount() > 100,
-	"Should have at least 100 generic records, got: " + importer.getRecordCount());
+        "Should have at least 100 generic records, got: " + importer.getRecordCount());
 
     // Verify process equipment
     List<String> types = importer.getEquipmentTypes();
@@ -73,7 +73,7 @@ class PublicDataSourcesTest {
     importer.loadAllPublicDataSources();
 
     assertTrue(importer.getRecordCount() > 400,
-	"Combined sources should have 400+ records, got: " + importer.getRecordCount());
+        "Combined sources should have 400+ records, got: " + importer.getRecordCount());
 
     // Verify data from different sources is combined
     List<String> types = importer.getEquipmentTypes();
@@ -85,7 +85,7 @@ class PublicDataSourcesTest {
     OREDADataImporter importer = OREDADataImporter.createWithAllPublicData();
 
     assertTrue(importer.getRecordCount() > 400,
-	"Factory method should load all public data, got: " + importer.getRecordCount());
+        "Factory method should load all public data, got: " + importer.getRecordCount());
   }
 
   @Test
@@ -93,7 +93,7 @@ class PublicDataSourcesTest {
     OREDADataImporter importer = OREDADataImporter.createForElectricalEquipment();
 
     assertTrue(importer.getRecordCount() > 50,
-	"Electrical equipment importer should have 50+ records, got: " + importer.getRecordCount());
+        "Electrical equipment importer should have 50+ records, got: " + importer.getRecordCount());
 
     // Should have transformer data
     assertTrue(importer.getEquipmentTypes().contains("Transformer"), "Should have transformer data");
@@ -104,7 +104,7 @@ class PublicDataSourcesTest {
     OREDADataImporter importer = OREDADataImporter.createForOilAndGas();
 
     assertTrue(importer.getRecordCount() > 150,
-	"O&G importer should have 150+ records, got: " + importer.getRecordCount());
+        "O&G importer should have 150+ records, got: " + importer.getRecordCount());
 
     // Should have subsea data
     assertTrue(importer.getEquipmentTypes().contains("Subsea Tree"), "Should have subsea tree data");

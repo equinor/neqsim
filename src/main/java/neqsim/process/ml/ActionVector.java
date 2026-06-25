@@ -94,7 +94,7 @@ public class ActionVector implements Serializable {
     String[] names = values.keySet().toArray(new String[0]);
     if (normalizedValues.length != names.length) {
       throw new IllegalArgumentException(
-	  "Array length " + normalizedValues.length + " != action dimension " + names.length);
+          "Array length " + normalizedValues.length + " != action dimension " + names.length);
     }
     for (int i = 0; i < names.length; i++) {
       setNormalized(names[i], normalizedValues[i]);
@@ -178,7 +178,7 @@ public class ActionVector implements Serializable {
     boolean first = true;
     for (String name : values.keySet()) {
       if (!first) {
-	sb.append(", ");
+        sb.append(", ");
       }
       sb.append(name).append("=").append(String.format("%.4f", values.get(name)));
       sb.append(" ").append(units.get(name));

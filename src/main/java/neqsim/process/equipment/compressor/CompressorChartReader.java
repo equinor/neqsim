@@ -56,9 +56,9 @@ public class CompressorChartReader {
 
       String line;
       while ((line = reader.readLine()) != null) {
-	String[] parts = line.split(";");
-	Double speedVal = Double.parseDouble(parts[speedIdx]);
-	groupedData.computeIfAbsent(speedVal, k -> new ArrayList<>()).add(parts);
+        String[] parts = line.split(";");
+        Double speedVal = Double.parseDouble(parts[speedIdx]);
+        groupedData.computeIfAbsent(speedVal, k -> new ArrayList<>()).add(parts);
       }
 
       speeds = new double[groupedData.size()];
@@ -72,29 +72,29 @@ public class CompressorChartReader {
 
       int i = 0;
       for (Double speed : groupedData.keySet()) {
-	speeds[i] = speed;
-	List<String[]> group = groupedData.get(speed);
+        speeds[i] = speed;
+        List<String[]> group = groupedData.get(speed);
 
-	int groupSize = group.size();
-	flowLines[i] = new double[groupSize];
-	headLines[i] = new double[groupSize];
-	polyEffLines[i] = new double[groupSize];
+        int groupSize = group.size();
+        flowLines[i] = new double[groupSize];
+        headLines[i] = new double[groupSize];
+        polyEffLines[i] = new double[groupSize];
 
-	for (int j = 0; j < groupSize; j++) {
-	  flowLines[i][j] = Double.parseDouble(group.get(j)[flowIdx]);
-	  headLines[i][j] = Double.parseDouble(group.get(j)[headIdx]);
-	  polyEffLines[i][j] = Double.parseDouble(group.get(j)[polyEffIdx]);
-	}
+        for (int j = 0; j < groupSize; j++) {
+          flowLines[i][j] = Double.parseDouble(group.get(j)[flowIdx]);
+          headLines[i][j] = Double.parseDouble(group.get(j)[headIdx]);
+          polyEffLines[i][j] = Double.parseDouble(group.get(j)[polyEffIdx]);
+        }
 
-	int idxMinFlow = minIndex(flowLines[i]);
-	int idxMaxFlow = maxIndex(flowLines[i]);
+        int idxMinFlow = minIndex(flowLines[i]);
+        int idxMaxFlow = maxIndex(flowLines[i]);
 
-	surgeFlow[i] = flowLines[i][idxMinFlow];
-	surgeHead[i] = headLines[i][idxMinFlow];
-	chokeFlow[i] = flowLines[i][idxMaxFlow];
-	chokeHead[i] = headLines[i][idxMaxFlow];
+        surgeFlow[i] = flowLines[i][idxMinFlow];
+        surgeHead[i] = headLines[i][idxMinFlow];
+        chokeFlow[i] = flowLines[i][idxMaxFlow];
+        chokeHead[i] = headLines[i][idxMaxFlow];
 
-	i++;
+        i++;
       }
 
       stonewallCurve = stonewallList.stream().mapToDouble(Double::doubleValue).toArray();
@@ -105,8 +105,9 @@ public class CompressorChartReader {
   private int minIndex(double[] array) {
     int minIdx = 0;
     for (int i = 1; i < array.length; i++) {
-      if (array[i] < array[minIdx])
-	minIdx = i;
+      if (array[i] < array[minIdx]) {
+        minIdx = i;
+      }
     }
     return minIdx;
   }
@@ -114,8 +115,9 @@ public class CompressorChartReader {
   private int maxIndex(double[] array) {
     int maxIdx = 0;
     for (int i = 1; i < array.length; i++) {
-      if (array[i] > array[maxIdx])
-	maxIdx = i;
+      if (array[i] > array[maxIdx]) {
+        maxIdx = i;
+      }
     }
     return maxIdx;
   }

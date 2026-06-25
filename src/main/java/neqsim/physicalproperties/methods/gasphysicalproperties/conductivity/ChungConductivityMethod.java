@@ -58,14 +58,14 @@ public class ChungConductivityMethod extends Conductivity {
     for (int i = 0; i < gasPhase.getPhase().getNumberOfComponents(); i++) {
       tempVar = 0;
       for (int j = 0; j < gasPhase.getPhase().getNumberOfComponents(); j++) {
-	// Aij from Mason-Saxena method (Wassiljewa equation)
-	double Aij = 1.0
-	    * Math.pow(1.0 + Math.sqrt(pureComponentConductivity[i] / pureComponentConductivity[j]) * Math.pow(
-		gasPhase.getPhase().getComponent(i).getMolarMass() / gasPhase.getPhase().getComponent(j).getMolarMass(),
-		1.0 / 4.0), 2.0)
-	    / Math.sqrt(8.0 * (1.0 + gasPhase.getPhase().getComponent(i).getMolarMass()
-		/ gasPhase.getPhase().getComponent(j).getMolarMass()));
-	tempVar += gasPhase.getPhase().getComponent(j).getx() * Aij;
+        // Aij from Mason-Saxena method (Wassiljewa equation)
+        double Aij = 1.0
+            * Math.pow(1.0 + Math.sqrt(pureComponentConductivity[i] / pureComponentConductivity[j]) * Math.pow(
+                gasPhase.getPhase().getComponent(i).getMolarMass() / gasPhase.getPhase().getComponent(j).getMolarMass(),
+                1.0 / 4.0), 2.0)
+            / Math.sqrt(8.0 * (1.0 + gasPhase.getPhase().getComponent(i).getMolarMass()
+                / gasPhase.getPhase().getComponent(j).getMolarMass()));
+        tempVar += gasPhase.getPhase().getComponent(j).getx() * Aij;
       }
       conductivity += gasPhase.getPhase().getComponent(i).getx() * pureComponentConductivity[i] / tempVar;
     }
@@ -131,7 +131,7 @@ public class ChungConductivityMethod extends Conductivity {
       double beta = 0.7862 - 0.7109 * omega + 1.3168 * omega * omega;
       double Z = 2.0 + 10.5 * Math.pow(T / Tc, 2.0);
       double psi = 1.0 + alpha
-	  * ((0.215 + 0.28288 * alpha - 1.061 * beta + 0.26665 * Z) / (0.6366 + beta * Z + 1.061 * alpha * beta));
+          * ((0.215 + 0.28288 * alpha - 1.061 * beta + 0.26665 * Z) / (0.6366 + beta * Z + 1.061 * alpha * beta));
 
       // Chung dilute-gas viscosity in μP, convert to Pa·s (1 μP = 1e-7 Pa·s)
       double eta0_muP = calcChungDiluteGasViscosity(i);
@@ -141,7 +141,7 @@ public class ChungConductivityMethod extends Conductivity {
       pureComponentConductivity[i] = 3.75 * R * psi * eta0_Pas / Mw_kg;
 
       if (pureComponentConductivity[i] < 1e-50) {
-	pureComponentConductivity[i] = 1e-50;
+        pureComponentConductivity[i] = 1e-50;
       }
     }
   }

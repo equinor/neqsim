@@ -88,7 +88,7 @@ public class BarrierRegister implements Serializable {
     if (element != null) {
       safetyCriticalElements.put(element.getId(), element);
       for (SafetyBarrier barrier : element.getBarriers()) {
-	barriers.put(barrier.getId(), barrier);
+        barriers.put(barrier.getId(), barrier);
       }
     }
     return this;
@@ -218,7 +218,7 @@ public class BarrierRegister implements Serializable {
     List<SafetyBarrier> result = new ArrayList<SafetyBarrier>();
     for (SafetyBarrier barrier : barriers.values()) {
       if (barrier.getLinkedEquipmentTags().contains(normalizedTag)) {
-	result.add(barrier);
+        result.add(barrier);
       }
     }
     return result;
@@ -233,7 +233,7 @@ public class BarrierRegister implements Serializable {
     List<SafetyBarrier> result = new ArrayList<SafetyBarrier>();
     for (SafetyBarrier barrier : barriers.values()) {
       if (!barrier.isAvailable()) {
-	result.add(barrier);
+        result.add(barrier);
       }
     }
     return result;
@@ -255,19 +255,19 @@ public class BarrierRegister implements Serializable {
     for (SafetyCriticalElement element : safetyCriticalElements.values()) {
       List<String> elementFindings = element.validate();
       for (String finding : elementFindings) {
-	findings.add("SCE " + element.getId() + ": " + finding);
+        findings.add("SCE " + element.getId() + ": " + finding);
       }
     }
     for (SafetyBarrier barrier : barriers.values()) {
       boolean foundInSce = false;
       for (SafetyCriticalElement element : safetyCriticalElements.values()) {
-	if (element.getBarrier(barrier.getId()) != null) {
-	  foundInSce = true;
-	  break;
-	}
+        if (element.getBarrier(barrier.getId()) != null) {
+          foundInSce = true;
+          break;
+        }
       }
       if (!foundInSce) {
-	findings.add("Barrier " + barrier.getId() + " is not linked to an SCE.");
+        findings.add("Barrier " + barrier.getId() + " is not linked to an SCE.");
       }
     }
     return findings;

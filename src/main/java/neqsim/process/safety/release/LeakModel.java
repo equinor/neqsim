@@ -104,7 +104,7 @@ public class LeakModel implements Serializable {
       // Estimate density from ideal gas law as fallback
       double MW = flashedSystem.getMolarMass();
       if (Double.isNaN(MW) || MW <= 0) {
-	MW = 0.016; // Methane MW in kg/mol
+        MW = 0.016; // Methane MW in kg/mol
       }
       rho = (P * MW) / (8.314 * T);
     }
@@ -114,7 +114,7 @@ public class LeakModel implements Serializable {
     try {
       gamma = flashedSystem.getGamma();
       if (Double.isNaN(gamma) || gamma <= 1.0 || gamma > 2.0) {
-	gamma = 1.3; // Default for hydrocarbon gases
+        gamma = 1.3; // Default for hydrocarbon gases
       }
     } catch (Exception e) {
       gamma = 1.3;
@@ -144,7 +144,7 @@ public class LeakModel implements Serializable {
       // Subsonic flow
       double dP = P - backPressure;
       if (dP <= 0) {
-	return 0.0;
+        return 0.0;
       }
       massFlowRate = dischargeCoefficient * A * Math.sqrt(2 * rho * dP);
     }
@@ -187,7 +187,7 @@ public class LeakModel implements Serializable {
     try {
       gamma = flashedSystem.getGamma();
       if (Double.isNaN(gamma) || gamma <= 1.0 || gamma > 2.0) {
-	gamma = 1.3;
+        gamma = 1.3;
       }
     } catch (Exception e) {
       gamma = 1.3;
@@ -254,7 +254,7 @@ public class LeakModel implements Serializable {
 
     // SMD correlation (simplified Nukiyama-Tanasawa)
     double smd = 585.0 * holeDiameter / Math.sqrt(We) * Math.sqrt(rhoLiquid / rhoVapor)
-	* Math.pow(liquidFraction, 0.45);
+        * Math.pow(liquidFraction, 0.45);
 
     return Math.min(smd, holeDiameter / 2); // SMD cannot exceed half hole diameter
   }
@@ -316,7 +316,7 @@ public class LeakModel implements Serializable {
 
       // Record data point
       result.setDataPoint(i, t, mdot, system.getTemperature(), system.getPressure() * 1e5, vaporFraction, velocity,
-	  momentum, smd);
+          momentum, smd);
 
       peakRate = Math.max(peakRate, mdot);
 
@@ -326,38 +326,38 @@ public class LeakModel implements Serializable {
       totalReleased += massLost;
 
       if (mass > 0 && mass > 0.01 * initialMass) {
-	// Save current pressure before modifying
-	double currentPressure = system.getPressure();
+        // Save current pressure before modifying
+        double currentPressure = system.getPressure();
 
-	// Update pressure assuming isentropic expansion
-	double volumeFraction = mass / initialMass;
+        // Update pressure assuming isentropic expansion
+        double volumeFraction = mass / initialMass;
 
-	// Get gamma with default fallback
-	double gamma;
-	try {
-	  gamma = system.getGamma();
-	  if (Double.isNaN(gamma) || gamma <= 1.0 || gamma > 2.0) {
-	    gamma = 1.3;
-	  }
-	} catch (Exception e) {
-	  gamma = 1.3;
-	}
+        // Get gamma with default fallback
+        double gamma;
+        try {
+          gamma = system.getGamma();
+          if (Double.isNaN(gamma) || gamma <= 1.0 || gamma > 2.0) {
+            gamma = 1.3;
+          }
+        } catch (Exception e) {
+          gamma = 1.3;
+        }
 
-	// New pressure from isentropic relation: P * V^gamma = const
-	// P2 = P1 * (V1/V2)^gamma = P1 * (m1/m2)^gamma (since V is constant)
-	double newPressure = currentPressure * Math.pow(volumeFraction, gamma);
+        // New pressure from isentropic relation: P * V^gamma = const
+        // P2 = P1 * (V1/V2)^gamma = P1 * (m1/m2)^gamma (since V is constant)
+        double newPressure = currentPressure * Math.pow(volumeFraction, gamma);
 
-	// Ensure pressure doesn't go below back pressure (in bar)
-	newPressure = Math.max(newPressure, backPressure / 1e5);
+        // Ensure pressure doesn't go below back pressure (in bar)
+        newPressure = Math.max(newPressure, backPressure / 1e5);
 
-	// Adiabatic temperature drop: T2 = T1 * (P2/P1)^((gamma-1)/gamma)
-	double newTemp = system.getTemperature() * Math.pow(newPressure / currentPressure, (gamma - 1) / gamma);
+        // Adiabatic temperature drop: T2 = T1 * (P2/P1)^((gamma-1)/gamma)
+        double newTemp = system.getTemperature() * Math.pow(newPressure / currentPressure, (gamma - 1) / gamma);
 
-	// Apply new conditions
-	system.setPressure(newPressure);
-	system.setTemperature(newTemp);
+        // Apply new conditions
+        system.setPressure(newPressure);
+        system.setTemperature(newTemp);
 
-	ops.TPflash();
+        ops.TPflash();
       }
     }
 
@@ -420,11 +420,11 @@ public class LeakModel implements Serializable {
      */
     public Builder holeDiameter(double diameter, String unit) {
       if ("mm".equalsIgnoreCase(unit)) {
-	this.holeDiameter = diameter / 1000.0;
+        this.holeDiameter = diameter / 1000.0;
       } else if ("in".equalsIgnoreCase(unit)) {
-	this.holeDiameter = diameter * 0.0254;
+        this.holeDiameter = diameter * 0.0254;
       } else {
-	this.holeDiameter = diameter;
+        this.holeDiameter = diameter;
       }
       return this;
     }
@@ -490,11 +490,11 @@ public class LeakModel implements Serializable {
      */
     public Builder backPressure(double pressure, String unit) {
       if ("bar".equalsIgnoreCase(unit)) {
-	this.backPressure = pressure * 1e5;
+        this.backPressure = pressure * 1e5;
       } else if ("psi".equalsIgnoreCase(unit)) {
-	this.backPressure = pressure * 6894.76;
+        this.backPressure = pressure * 6894.76;
       } else {
-	this.backPressure = pressure;
+        this.backPressure = pressure;
       }
       return this;
     }
@@ -517,7 +517,7 @@ public class LeakModel implements Serializable {
      */
     public LeakModel build() {
       if (fluid == null) {
-	throw new IllegalStateException("Fluid system must be specified");
+        throw new IllegalStateException("Fluid system must be specified");
       }
       return new LeakModel(this);
     }

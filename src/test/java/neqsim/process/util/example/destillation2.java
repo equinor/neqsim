@@ -20,7 +20,7 @@ public class destillation2 {
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 30.0),
-	50.00);
+        50.00);
     testSystem.addComponent("methane", 1.00);
     testSystem.addComponent("water", 100e-6);
     testSystem.addComponent("TEG", 0.0);

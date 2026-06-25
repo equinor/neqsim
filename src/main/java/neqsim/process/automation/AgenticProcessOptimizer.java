@@ -195,12 +195,12 @@ public class AgenticProcessOptimizer implements Serializable {
       throw new IllegalArgumentException("variable address must not be null or empty");
     }
     if (Double.isNaN(lowerBound) || Double.isInfinite(lowerBound) || Double.isNaN(upperBound)
-	|| Double.isInfinite(upperBound)) {
+        || Double.isInfinite(upperBound)) {
       throw new IllegalArgumentException("variable bounds must be finite");
     }
     if (upperBound <= lowerBound) {
       throw new IllegalArgumentException(
-	  "upperBound (" + upperBound + ") must be greater than lowerBound (" + lowerBound + ")");
+          "upperBound (" + upperBound + ") must be greater than lowerBound (" + lowerBound + ")");
     }
     variables.add(new DecisionVariable(address, lowerBound, upperBound, unit));
     return this;
@@ -219,7 +219,7 @@ public class AgenticProcessOptimizer implements Serializable {
       Double lo = p.getLowerBound();
       Double hi = p.getUpperBound();
       if (lo == null || hi == null || hi.doubleValue() <= lo.doubleValue()) {
-	continue;
+        continue;
       }
       variables.add(new DecisionVariable(p.getAddress(), lo.doubleValue(), hi.doubleValue(), p.getUnit()));
       added++;
@@ -482,7 +482,7 @@ public class AgenticProcessOptimizer implements Serializable {
     }
     result.success = true;
     result.message = bestFeasible != null ? "converged to a feasible optimum"
-	: "no feasible point found; returning least-penalized point";
+        : "no feasible point found; returning least-penalized point";
     result.bestSetpoints = best.setpoints;
     result.bestObjective = best.objective;
     result.bestScore = best.score;
@@ -524,12 +524,12 @@ public class AgenticProcessOptimizer implements Serializable {
     for (int s = 1; s < nSeeds && evaluations < maxEvaluations; s++) {
       double[] cand = new double[n];
       for (int i = 0; i < n; i++) {
-	cand[i] = lo[i] + rng.nextDouble() * (hi[i] - lo[i]);
+        cand[i] = lo[i] + rng.nextDouble() * (hi[i] - lo[i]);
       }
       double candScore = score(cand);
       if (candScore < startScore) {
-	startScore = candScore;
-	start = cand;
+        startScore = candScore;
+        start = cand;
       }
     }
 
@@ -543,9 +543,9 @@ public class AgenticProcessOptimizer implements Serializable {
       double range = hi[i] - lo[i];
       double step = 0.05 * range;
       if (v[i] + step <= hi[i]) {
-	v[i] = v[i] + step;
+        v[i] = v[i] + step;
       } else {
-	v[i] = v[i] - step;
+        v[i] = v[i] - step;
       }
       clamp(v, lo, hi);
       simplex[i + 1] = v;
@@ -557,7 +557,7 @@ public class AgenticProcessOptimizer implements Serializable {
       sortSimplex(simplex, fvals);
 
       if (simplexSize(simplex, lo, hi) < convergenceTolerance) {
-	break;
+        break;
       }
 
       double[] centroid = centroidExcludingWorst(simplex);
@@ -572,49 +572,49 @@ public class AgenticProcessOptimizer implements Serializable {
       double fr = score(xr);
 
       if (fr < fBest) {
-	// Expansion
-	if (evaluations < maxEvaluations) {
-	  double[] xe = combine(centroid, xr, GAMMA - 1.0);
-	  clamp(xe, lo, hi);
-	  double fe = score(xe);
-	  if (fe < fr) {
-	    simplex[n] = xe;
-	    fvals[n] = fe;
-	  } else {
-	    simplex[n] = xr;
-	    fvals[n] = fr;
-	  }
-	} else {
-	  simplex[n] = xr;
-	  fvals[n] = fr;
-	}
+        // Expansion
+        if (evaluations < maxEvaluations) {
+          double[] xe = combine(centroid, xr, GAMMA - 1.0);
+          clamp(xe, lo, hi);
+          double fe = score(xe);
+          if (fe < fr) {
+            simplex[n] = xe;
+            fvals[n] = fe;
+          } else {
+            simplex[n] = xr;
+            fvals[n] = fr;
+          }
+        } else {
+          simplex[n] = xr;
+          fvals[n] = fr;
+        }
       } else if (fr < fSecondWorst) {
-	simplex[n] = xr;
-	fvals[n] = fr;
+        simplex[n] = xr;
+        fvals[n] = fr;
       } else {
-	// Contraction toward the better of (worst, reflection)
-	boolean outside = fr < fWorst;
-	double[] target = outside ? xr : worst;
-	double[] xc = combine(centroid, target, RHO);
-	clamp(xc, lo, hi);
-	double fc = evaluations < maxEvaluations ? score(xc) : fWorst;
-	double fCompare = outside ? fr : fWorst;
-	if (fc < fCompare) {
-	  simplex[n] = xc;
-	  fvals[n] = fc;
-	} else {
-	  // Shrink toward the best vertex.
-	  double[] xBest = simplex[0];
-	  for (int i = 1; i <= n && evaluations < maxEvaluations; i++) {
-	    double[] v = new double[n];
-	    for (int j = 0; j < n; j++) {
-	      v[j] = xBest[j] + SIGMA * (simplex[i][j] - xBest[j]);
-	    }
-	    clamp(v, lo, hi);
-	    simplex[i] = v;
-	    fvals[i] = score(v);
-	  }
-	}
+        // Contraction toward the better of (worst, reflection)
+        boolean outside = fr < fWorst;
+        double[] target = outside ? xr : worst;
+        double[] xc = combine(centroid, target, RHO);
+        clamp(xc, lo, hi);
+        double fc = evaluations < maxEvaluations ? score(xc) : fWorst;
+        double fCompare = outside ? fr : fWorst;
+        if (fc < fCompare) {
+          simplex[n] = xc;
+          fvals[n] = fc;
+        } else {
+          // Shrink toward the best vertex.
+          double[] xBest = simplex[0];
+          for (int i = 1; i <= n && evaluations < maxEvaluations; i++) {
+            double[] v = new double[n];
+            for (int j = 0; j < n; j++) {
+              v[j] = xBest[j] + SIGMA * (simplex[i][j] - xBest[j]);
+            }
+            clamp(v, lo, hi);
+            simplex[i] = v;
+            fvals[i] = score(v);
+          }
+        }
       }
     }
   }
@@ -640,10 +640,10 @@ public class AgenticProcessOptimizer implements Serializable {
       trial.setpoints.put(dv.address, x[i]);
       decisionMap.put(dv.address, x[i]);
       try {
-	automation.setVariableValue(dv.address, x[i], dv.unit);
+        automation.setVariableValue(dv.address, x[i], dv.unit);
       } catch (RuntimeException ex) {
-	anyRejected = true;
-	trial.rejected.put(dv.address, ex.getMessage());
+        anyRejected = true;
+        trial.rejected.put(dv.address, ex.getMessage());
       }
     }
 
@@ -651,11 +651,11 @@ public class AgenticProcessOptimizer implements Serializable {
     boolean runFeasible;
     try {
       String runJson = automation.evaluate(EMPTY_SETPOINTS, null, EMPTY_READBACKS, null, innerMaxIterations,
-	  innerTolerance);
+          innerTolerance);
       JsonObject root = JsonParser.parseString(runJson).getAsJsonObject();
       runFeasible = root.has("feasible") && root.get("feasible").getAsBoolean();
       if (root.has("iterations") && !root.get("iterations").isJsonNull()) {
-	trial.iterations = root.get("iterations").getAsInt();
+        trial.iterations = root.get("iterations").getAsInt();
       }
     } catch (RuntimeException ex) {
       runFeasible = false;
@@ -673,25 +673,25 @@ public class AgenticProcessOptimizer implements Serializable {
     for (Constraint c : constraints) {
       Double v = readSafe(c.address, c.unit);
       if (v == null) {
-	missingReadback = true;
-	constraintsOk = false;
-	penalty += MISSING_READBACK_PENALTY;
-	continue;
+        missingReadback = true;
+        constraintsOk = false;
+        penalty += MISSING_READBACK_PENALTY;
+        continue;
       }
       trial.readbacks.put(c.address, v);
       readMap.put(c.address, v);
       double violation = c.violation(v.doubleValue());
       if (violation > 0.0) {
-	constraintsOk = false;
-	penalty += c.penaltyWeight * violation * violation;
+        constraintsOk = false;
+        penalty += c.penaltyWeight * violation * violation;
       }
     }
 
     for (Map.Entry<String, String> w : watches.entrySet()) {
       Double v = readSafe(w.getKey(), w.getValue());
       if (v != null) {
-	trial.readbacks.put(w.getKey(), v);
-	readMap.put(w.getKey(), v);
+        trial.readbacks.put(w.getKey(), v);
+        readMap.put(w.getKey(), v);
       }
     }
 
@@ -701,28 +701,28 @@ public class AgenticProcessOptimizer implements Serializable {
     if (objectiveFunction != null) {
       Double fnVal;
       try {
-	fnVal = objectiveFunction.apply(readMap);
+        fnVal = objectiveFunction.apply(readMap);
       } catch (RuntimeException ex) {
-	fnVal = null;
+        fnVal = null;
       }
       if (fnVal == null || fnVal.isNaN() || fnVal.isInfinite()) {
-	objective = Double.NaN;
-	signedObjective = MISSING_READBACK_PENALTY;
-	missingReadback = true;
+        objective = Double.NaN;
+        signedObjective = MISSING_READBACK_PENALTY;
+        missingReadback = true;
       } else {
-	objective = fnVal.doubleValue();
-	signedObjective = objective;
+        objective = fnVal.doubleValue();
+        signedObjective = objective;
       }
     } else {
       Double v = readSafe(objectiveAddress, objectiveUnit);
       if (v == null) {
-	objective = Double.NaN;
-	signedObjective = MISSING_READBACK_PENALTY;
-	missingReadback = true;
+        objective = Double.NaN;
+        signedObjective = MISSING_READBACK_PENALTY;
+        missingReadback = true;
       } else {
-	trial.readbacks.put(objectiveAddress, v);
-	objective = v.doubleValue();
-	signedObjective = objectiveSense == Sense.MAXIMIZE ? -objective : objective;
+        trial.readbacks.put(objectiveAddress, v);
+        objective = v.doubleValue();
+        signedObjective = objectiveSense == Sense.MAXIMIZE ? -objective : objective;
       }
     }
 
@@ -744,11 +744,11 @@ public class AgenticProcessOptimizer implements Serializable {
       bestOverall = trial;
     }
     if (trial.feasible
-	&& (bestFeasible == null || trial.objective < bestFeasible.objective || (objectiveSense == Sense.MAXIMIZE
-	    && objectiveFunction == null && trial.objective > bestFeasible.objective))) {
+        && (bestFeasible == null || trial.objective < bestFeasible.objective || (objectiveSense == Sense.MAXIMIZE
+            && objectiveFunction == null && trial.objective > bestFeasible.objective))) {
       // For MAXIMIZE the lower score already corresponds to higher objective, so compare scores.
       if (bestFeasible == null || trial.score < bestFeasible.score) {
-	bestFeasible = trial;
+        bestFeasible = trial;
       }
     }
     return score;
@@ -765,7 +765,7 @@ public class AgenticProcessOptimizer implements Serializable {
     try {
       double v = automation.getVariableValue(address, unit);
       if (Double.isNaN(v) || Double.isInfinite(v)) {
-	return null;
+        return null;
       }
       return Double.valueOf(v);
     } catch (RuntimeException ex) {
@@ -790,9 +790,9 @@ public class AgenticProcessOptimizer implements Serializable {
   private static void clamp(double[] x, double[] lo, double[] hi) {
     for (int i = 0; i < x.length; i++) {
       if (x[i] < lo[i]) {
-	x[i] = lo[i];
+        x[i] = lo[i];
       } else if (x[i] > hi[i]) {
-	x[i] = hi[i];
+        x[i] = hi[i];
       }
     }
   }
@@ -826,9 +826,9 @@ public class AgenticProcessOptimizer implements Serializable {
       double[] keyV = simplex[i];
       int j = i - 1;
       while (j >= 0 && fvals[j] > key) {
-	fvals[j + 1] = fvals[j];
-	simplex[j + 1] = simplex[j];
-	j--;
+        fvals[j + 1] = fvals[j];
+        simplex[j + 1] = simplex[j];
+        j--;
       }
       fvals[j + 1] = key;
       simplex[j + 1] = keyV;
@@ -846,7 +846,7 @@ public class AgenticProcessOptimizer implements Serializable {
     double[] c = new double[n];
     for (int i = 0; i < simplex.length - 1; i++) {
       for (int j = 0; j < n; j++) {
-	c[j] += simplex[i][j];
+        c[j] += simplex[i][j];
       }
     }
     for (int j = 0; j < n; j++) {
@@ -871,17 +871,17 @@ public class AgenticProcessOptimizer implements Serializable {
       double min = simplex[0][j];
       double max = simplex[0][j];
       for (int i = 1; i < simplex.length; i++) {
-	if (simplex[i][j] < min) {
-	  min = simplex[i][j];
-	}
-	if (simplex[i][j] > max) {
-	  max = simplex[i][j];
-	}
+        if (simplex[i][j] < min) {
+          min = simplex[i][j];
+        }
+        if (simplex[i][j] > max) {
+          max = simplex[i][j];
+        }
       }
       double range = hi[j] - lo[j];
       double rel = range > 0.0 ? (max - min) / range : 0.0;
       if (rel > maxRel) {
-	maxRel = rel;
+        maxRel = rel;
       }
     }
     return maxRel;
@@ -902,30 +902,30 @@ public class AgenticProcessOptimizer implements Serializable {
 
     JsonArray caps = new JsonArray();
     caps.add(rating("never_throws", "full",
-	"optimize() and every trial are exception-safe; failures degrade a single trial"));
+        "optimize() and every trial are exception-safe; failures degrade a single trial"));
     caps.add(rating("deterministic", "full",
-	"fixed seed + fixed problem yields an identical trajectory for reproducible experiments"));
+        "fixed seed + fixed problem yields an identical trajectory for reproducible experiments"));
     caps.add(rating("bounded_action_space", "full",
-	"decision variables carry finite [lower, upper] bounds; useAdjustableParameters() auto-fills"));
+        "decision variables carry finite [lower, upper] bounds; useAdjustableParameters() auto-fills"));
     caps.add(rating("json_io", "full", "schema-versioned JSON for results, trajectory and this readiness report"));
     caps.add(rating("reward_shaping", "full",
-	"address-based min/max objective or a custom cost function over read-backs and decisions"));
+        "address-based min/max objective or a custom cost function over read-backs and decisions"));
     caps.add(rating("constraint_handling", "full",
-	"hard inequality constraints folded in as quadratic penalties with per-constraint weights"));
+        "hard inequality constraints folded in as quadratic penalties with per-constraint weights"));
     caps.add(rating("trajectory_logging", "full",
-	"full (setpoints, read-backs, objective, penalty, feasibility, score) tape for offline RL"));
+        "full (setpoints, read-backs, objective, penalty, feasibility, score) tape for offline RL"));
     caps.add(rating("feasibility_gating", "full",
-	"each trial is gated by evaluate(): run success + convergence + no failed unit"));
+        "each trial is gated by evaluate(): run success + convergence + no failed unit"));
     caps.add(rating("gradient_based", "none", "flowsheet is a noisy gated black box; no analytic gradient is used"));
     caps.add(rating("global_optimum_guarantee", "partial",
-	"random seeding mitigates but does not eliminate local-minimum risk for multimodal problems"));
+        "random seeding mitigates but does not eliminate local-minimum risk for multimodal problems"));
     caps.add(rating("parallel_evaluation", "none",
-	"trials are sequential; use ProcessSystem.copy() sweeps for parallelism"));
+        "trials are sequential; use ProcessSystem.copy() sweeps for parallelism"));
     root.add("capabilities", caps);
 
     root.addProperty("recommendedUse",
-	"closed-loop setpoint optimization, RL environment stepping, and agent-driven what-if search "
-	    + "over a converged NeqSim flowsheet");
+        "closed-loop setpoint optimization, RL environment stepping, and agent-driven what-if search "
+            + "over a converged NeqSim flowsheet");
     return root.toString();
   }
 
@@ -1054,7 +1054,7 @@ public class AgenticProcessOptimizer implements Serializable {
      */
     double violation(double value) {
       if (type == ConstraintType.LESS_OR_EQUAL) {
-	return Math.max(0.0, value - limit);
+        return Math.max(0.0, value - limit);
       }
       return Math.max(0.0, limit - value);
     }
@@ -1198,11 +1198,11 @@ public class AgenticProcessOptimizer implements Serializable {
       o.add("setpoints", mapToJson(setpoints));
       o.add("readbacks", mapToJson(readbacks));
       if (!rejected.isEmpty()) {
-	JsonObject r = new JsonObject();
-	for (Map.Entry<String, String> e : rejected.entrySet()) {
-	  r.addProperty(e.getKey(), e.getValue());
-	}
-	o.add("rejected", r);
+        JsonObject r = new JsonObject();
+        for (Map.Entry<String, String> e : rejected.entrySet()) {
+          r.addProperty(e.getKey(), e.getValue());
+        }
+        o.add("rejected", r);
       }
       addNumber(o, "objective", objective);
       o.addProperty("penalty", penalty);
@@ -1210,7 +1210,7 @@ public class AgenticProcessOptimizer implements Serializable {
       o.addProperty("runFeasible", runFeasible);
       o.addProperty("feasible", feasible);
       if (iterations >= 0) {
-	o.addProperty("iterations", iterations);
+        o.addProperty("iterations", iterations);
       }
       return o;
     }
@@ -1340,7 +1340,7 @@ public class AgenticProcessOptimizer implements Serializable {
       root.add("bestReadbacks", mapToJson(bestReadbacks));
       JsonArray traj = new JsonArray();
       for (Trial t : trajectory) {
-	traj.add(t.toJsonObject());
+        traj.add(t.toJsonObject());
       }
       root.add("trajectory", traj);
       return root.toString();

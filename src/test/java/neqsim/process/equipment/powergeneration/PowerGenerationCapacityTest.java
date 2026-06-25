@@ -221,7 +221,7 @@ class PowerGenerationCapacityTest {
 
     Map<String, CapacityConstraint> constraints = cc.getCapacityConstraints();
     assertTrue(constraints.containsKey("totalPower"),
-	"CombinedCycleSystem should have 'totalPower' capacity constraint");
+        "CombinedCycleSystem should have 'totalPower' capacity constraint");
   }
 
   @Test

@@ -1,12 +1,12 @@
 package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Tag;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Comprehensive test suite for hydrate calculations with electrolyte CPA EOS. Tests various fluid compositions
@@ -45,7 +45,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
 
     // At 100 bar, lean gas hydrate should form between 10-25°C
     assertTrue(hydrateTemp > 5.0 && hydrateTemp < 30.0,
-	"Hydrate temp for lean gas with inerts should be 5-30°C, got: " + hydrateTemp);
+        "Hydrate temp for lean gas with inerts should be 5-30°C, got: " + hydrateTemp);
 
     // Check phase distribution
     ops.TPflash();
@@ -78,7 +78,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
     logger.info("Pressure: 80 bara");
 
     assertTrue(hydrateTemp > 5.0 && hydrateTemp < 30.0,
-	"Hydrate temp for rich gas should be 5-30°C, got: " + hydrateTemp);
+        "Hydrate temp for rich gas should be 5-30°C, got: " + hydrateTemp);
 
     // Verify aqueous phase has reasonable hydrocarbon solubility
     ops.TPflash();
@@ -127,7 +127,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
     logger.info("Pressure: 120 bara");
 
     assertTrue(hydrateTemp > 5.0 && hydrateTemp < 35.0,
-	"Hydrate temp for gas-condensate should be 5-35°C, got: " + hydrateTemp);
+        "Hydrate temp for gas-condensate should be 5-35°C, got: " + hydrateTemp);
   }
 
   /**
@@ -390,7 +390,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
       // should ideally be in the range 1E-4 to 1E-3 for these conditions.
       // For now, just log the value without asserting.
       if (methaneInAq < 1E-10) {
-	logger.info("  NOTE: Methane solubility is very low - known limitation with electrolyte+HC");
+        logger.info("  NOTE: Methane solubility is very low - known limitation with electrolyte+HC");
       }
     }
   }
@@ -455,7 +455,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
 
       // H2S forms type I hydrate at higher temperatures than methane
       assertTrue(hydrateTemp > 5.0 && hydrateTemp < 40.0,
-	  "Sour gas hydrate temp should be 5-40°C, got: " + hydrateTemp);
+          "Sour gas hydrate temp should be 5-40°C, got: " + hydrateTemp);
 
     } catch (Exception e) {
       logger.info("H2S test skipped: " + e.getMessage());
@@ -559,10 +559,10 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
       double beta = fluid.getBeta(i);
       logger.info("  Phase " + i + ": " + phaseType + ", beta=" + beta);
       if (phaseType.contains("HYDRATE")) {
-	hasHydrate = true;
+        hasHydrate = true;
       }
       if (phaseType.contains("GAS")) {
-	hasGas = true;
+        hasGas = true;
       }
     }
 
@@ -579,7 +579,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
       double hydrateWaterFug = fluid.getPhase(4).getFugacity("water");
       logger.info("Hydrate phase water fugacity: " + hydrateWaterFug);
       assertTrue(hydrateWaterFug > 0 && !Double.isNaN(hydrateWaterFug),
-	  "Hydrate phase should have valid water fugacity");
+          "Hydrate phase should have valid water fugacity");
     }
 
     // The algorithm works - it calculates the gas-hydrate equilibrium temperature correctly
@@ -614,7 +614,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
       hydrateTemps[i] = fluid.getTemperature() - 273.15;
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "P = %.0f bara: Hydrate T = %.2f °C%n", pressures[i],
-	  hydrateTemps[i]);
+          hydrateTemps[i]);
     }
 
     // Verify hydrate temperature increases with pressure (thermodynamic expectation)

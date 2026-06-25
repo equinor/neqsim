@@ -21,9 +21,9 @@ import neqsim.thermo.component.attractiveeosterm.AttractiveTermMollerup;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermPr;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermPr1978;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrDanesh;
-import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrLeeKesler;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrDelft1998;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrGassem2001;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrLeeKesler;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermRk;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermSchwartzentruber;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermSoreideWhitson;
@@ -162,13 +162,13 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     }
     double totVol = phase.getMolarVolume() * phase.getNumberOfMolesInPhase();
     voli = -(-R * temp * dFdNdV(phase, numberOfComponents, temp, pres)
-	+ R * temp / (phase.getMolarVolume() * phase.getNumberOfMolesInPhase()))
-	/ (-R * temp * phase.dFdVdV() - phase.getNumberOfMolesInPhase() * R * temp / (totVol * totVol));
+        + R * temp / (phase.getMolarVolume() * phase.getNumberOfMolesInPhase()))
+        / (-R * temp * phase.dFdVdV() - phase.getNumberOfMolesInPhase() * R * temp / (totVol * totVol));
 
     if (initType >= 3) {
       for (int j = 0; j < numberOfComponents; j++) {
-	Aij[j] = phase.calcAij(componentNumber, j, phase, temp, pres, numberOfComponents);
-	Bij[j] = phase.calcBij(componentNumber, j, phase, temp, pres, numberOfComponents);
+        Aij[j] = phase.calcAij(componentNumber, j, phase, temp, pres, numberOfComponents);
+        Bij[j] = phase.calcBij(componentNumber, j, phase, temp, pres, numberOfComponents);
       }
     }
   }
@@ -215,9 +215,9 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
       setAttractiveParameter(new AttractiveTermMatCopPRUMR(this));
     } else if (i == 18) {
       if (componentName.equals("mercury")) {
-	setAttractiveParameter(new AttractiveTermTwuCoonStatoil(this, getTwuCoonParams()));
+        setAttractiveParameter(new AttractiveTermTwuCoonStatoil(this, getTwuCoonParams()));
       } else {
-	setAttractiveParameter(new AttractiveTermSrk(this));
+        setAttractiveParameter(new AttractiveTermSrk(this));
       }
     } else if (i == 19) {
       setAttractiveParameter(new AtractiveTermMatCopPRUMRNew(this, getMatiascopemanParamsUMRPRU()));
@@ -274,8 +274,8 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     ComponentEosInterface[] comp_Array = (ComponentEosInterface[]) phase.getcomponentArray();
     return phase.FnB() * (getBi() + comp_Array[j].getBi())
-	+ phase.FBD() * (getBi() * comp_Array[j].getAi() + comp_Array[j].getBi() * getAi()) + phase.FB() * getBij(j)
-	+ phase.FBB() * getBi() * comp_Array[j].getBi() + phase.FD() * getAij(j);
+        + phase.FBD() * (getBi() * comp_Array[j].getAi() + comp_Array[j].getBi() * getAi()) + phase.FB() * getBij(j)
+        + phase.FBB() * getBi() * comp_Array[j].getBi() + phase.FD() * getAij(j);
   }
 
   /** {@inheritDoc} */
@@ -332,7 +332,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     double temperature = phase.getTemperature();
     double pressure = phase.getPressure();
     double logFugacityCoefficient = dFdN(phase, phase.getNumberOfComponents(), temperature, pressure)
-	- Math.log(pressure * phase.getMolarVolume() / (R * temperature));
+        - Math.log(pressure * phase.getMolarVolume() / (R * temperature));
     fugacityCoefficient = Math.exp(logFugacityCoefficient);
     return fugacityCoefficient;
   }
@@ -353,7 +353,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     double pressure = phase.getPressure();
     int numberOfComponents = phase.getNumberOfComponents();
     dfugdt = (this.dFdNdT(phase, numberOfComponents, temperature, pressure) + 1.0 / temperature
-	- getVoli() / R / temperature * (-R * temperature * phase.dFdTdV() + pressure / temperature));
+        - getVoli() / R / temperature * (-R * temperature * phase.dFdTdV() + pressure / temperature));
     return dfugdt;
   }
 
@@ -371,10 +371,10 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
       // getVoli()/R/temperature + " dFdNdV " + comp_Array[i].dFdNdV(phase,
       // numberOfComponents, temperature, pressure));
       dfugdn[i] = (this.dFdNdN(i, phase, numberOfComponents, temperature, pressure)
-	  + 1.0 / phase.getNumberOfMolesInPhase()
-	  - getVoli() / R / temperature
-	      * (-R * temperature * comp_Array[i].dFdNdV(phase, numberOfComponents, temperature, pressure)
-		  + R * temperature / phase.getTotalVolume()));
+          + 1.0 / phase.getNumberOfMolesInPhase()
+          - getVoli() / R / temperature
+              * (-R * temperature * comp_Array[i].dFdNdV(phase, numberOfComponents, temperature, pressure)
+                  + R * temperature / phase.getTotalVolume()));
       // System.out.println("dfugdn " + dfugdn[i]);
       // System.out.println("dFdndn " + dFdNdN(i, phase, numberOfComponents,
       // temperature, pressure) + " voli " + voli + " dFdvdn " +
@@ -404,10 +404,10 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     voli = getVoli();
 
     dfugdn[k] = (this.dFdNdN(k, phase, numberOfComponents, temperature, pressure)
-	+ 1.0 / phase.getNumberOfMolesInPhase()
-	- voli / R / temperature
-	    * (-R * temperature * comp_Array[k].dFdNdV(phase, numberOfComponents, temperature, pressure)
-		+ R * temperature / (vol * phase.getNumberOfMolesInPhase())));
+        + 1.0 / phase.getNumberOfMolesInPhase()
+        - voli / R / temperature
+            * (-R * temperature * comp_Array[k].dFdNdV(phase, numberOfComponents, temperature, pressure)
+                + R * temperature / (vol * phase.getNumberOfMolesInPhase())));
     dfugdx[k] = dfugdn[k] * (phase.getNumberOfMolesInPhase());
     // System.out.println("Main dfugdn "+dfugdn[k]);
     return dfugdn[k];
@@ -673,7 +673,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    */
   public double getAresnTV(PhaseInterface phase) {
     return R * phase.getTemperature()
-	* dFdN(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
+        * dFdN(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
   }
 
   /** {@inheritDoc} */
@@ -692,9 +692,9 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     // double chempot2 = super.getChemicalPotential(phase);
     // System.out.println("d " + chempot + " " + chempot2);
     return ((entalp - phase.getTemperature() * entrop)
-	+ numberOfMolesInPhase * R * phase.getTemperature()
-	    * Math.log(numberOfMolesInPhase * R * phase.getTemperature() / phase.getVolume() / referencePressure)
-	+ getAresnTV(phase) * numberOfMolesInPhase) / numberOfMolesInPhase;
+        + numberOfMolesInPhase * R * phase.getTemperature()
+            * Math.log(numberOfMolesInPhase * R * phase.getTemperature() / phase.getVolume() / referencePressure)
+        + getAresnTV(phase) * numberOfMolesInPhase) / numberOfMolesInPhase;
     // return dF;
   }
 
@@ -716,7 +716,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    */
   public double getdUdSdnV(PhaseInterface phase) {
     return -1.0 / phase.FTT()
-	* dFdNdT(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
+        * dFdNdT(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
   }
 
   /**
@@ -727,7 +727,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    */
   public double getdUdVdnS(PhaseInterface phase) {
     return 1.0 / phase.FTT()
-	* dFdNdV(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
+        * dFdNdV(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
   }
 
   /**
@@ -740,7 +740,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    */
   public double getdUdndnSV(PhaseInterface phase, int compNumb1, int compNumb2) {
     return dFdNdN(compNumb2, phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure())
-	- dFdNdT(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure()) * 1.0 / phase.FTT();
+        - dFdNdT(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure()) * 1.0 / phase.FTT();
     // * phase.getComponent(compNumb2).getF;
   }
 
@@ -796,7 +796,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     result = result && java.util.Arrays.equals(dAdndn, other.dAdndn);
     result = result && java.util.Arrays.equals(dBdndn, other.dBdndn);
     result = result && (attractiveParameter == null ? other.attractiveParameter == null
-	: attractiveParameter.equals(other.attractiveParameter));
+        : attractiveParameter.equals(other.attractiveParameter));
     result = result && super.equals(obj);
     return result;
   }

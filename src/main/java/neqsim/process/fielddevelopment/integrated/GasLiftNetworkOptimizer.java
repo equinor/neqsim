@@ -64,7 +64,7 @@ public class GasLiftNetworkOptimizer implements Serializable {
      * @param totalLift total lift gas used in Sm3/day
      */
     public AllocationResult(Map<String, Double> liftRates, Map<String, Double> oilRates, double totalOil,
-	double totalLift) {
+        double totalLift) {
       this.liftRates = liftRates;
       this.oilRates = oilRates;
       this.totalOil = totalOil;
@@ -148,15 +148,15 @@ public class GasLiftNetworkOptimizer implements Serializable {
       lambda = 0.5 * (lambdaLow + lambdaHigh);
       double total = 0.0;
       for (LiftWell w : wells) {
-	total += liftForSlope(w.curve, lambda);
+        total += liftForSlope(w.curve, lambda);
       }
       if (total > totalLiftGasSm3PerDay) {
-	lambdaLow = lambda; // need higher slope -> less gas
+        lambdaLow = lambda; // need higher slope -> less gas
       } else {
-	lambdaHigh = lambda; // can afford lower slope -> more gas
+        lambdaHigh = lambda; // can afford lower slope -> more gas
       }
       if (Math.abs(lambdaHigh - lambdaLow) < 1.0e-9) {
-	break;
+        break;
       }
     }
 
@@ -194,9 +194,9 @@ public class GasLiftNetworkOptimizer implements Serializable {
       double mid = 0.5 * (lo + hi);
       double slope = curve.incrementalSlope(mid);
       if (slope > targetSlope) {
-	lo = mid; // slope decreases with lift, so move right
+        lo = mid; // slope decreases with lift, so move right
       } else {
-	hi = mid;
+        hi = mid;
       }
     }
     return 0.5 * (lo + hi);

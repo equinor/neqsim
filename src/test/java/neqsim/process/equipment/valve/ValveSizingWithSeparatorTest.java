@@ -2,6 +2,8 @@ package neqsim.process.equipment.valve;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
@@ -9,8 +11,6 @@ import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Tests to verify that Cv/Kv is calculated correctly for valves connected to separator outlets. This ensures proper
@@ -124,9 +124,9 @@ public class ValveSizingWithSeparatorTest {
 
     // Flow should remain approximately the same since conditions haven't changed
     assertEquals(gasFlowBefore, gasFlowAfter, gasFlowBefore * 0.01,
-	"Gas flow should remain stable after transient run");
+        "Gas flow should remain stable after transient run");
     assertEquals(liquidFlowBefore, liquidFlowAfter, liquidFlowBefore * 0.01,
-	"Liquid flow should remain stable after transient run");
+        "Liquid flow should remain stable after transient run");
   }
 
   /**
@@ -184,7 +184,7 @@ public class ValveSizingWithSeparatorTest {
     // Because Kv represents the valve coefficient at 100% opening
     // When sized at 50%, the 100%-equivalent Kv must be larger
     assertEquals(kvAt100 * 2.0, kvAt50, kvAt100 * 0.05,
-	"Kv sized at 50% opening should be 2x larger than Kv sized at 100%");
+        "Kv sized at 50% opening should be 2x larger than Kv sized at 100%");
   }
 
   /**
@@ -231,7 +231,7 @@ public class ValveSizingWithSeparatorTest {
 
     // Kv should be approximately 2x now (double the flow)
     assertEquals(kvInitial * 2.0, kvRecalculated, kvInitial * 0.1,
-	"Recalculated Kv should be ~2x for double flow rate");
+        "Recalculated Kv should be ~2x for double flow rate");
   }
 
   /**
@@ -301,7 +301,7 @@ public class ValveSizingWithSeparatorTest {
     // Flows should be similar (within 5%) since conditions haven't changed significantly
     assertEquals(gasFlowSteady, gasFlowTransient, gasFlowSteady * 0.05, "Transient gas flow should match steady state");
     assertEquals(liquidFlowSteady, liquidFlowTransient, liquidFlowSteady * 0.05,
-	"Transient liquid flow should match steady state");
+        "Transient liquid flow should match steady state");
   }
 
   /**

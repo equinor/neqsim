@@ -76,10 +76,10 @@ public class SubseaEquipmentCapacityStrategy implements EquipmentCapacityStrateg
     double maxUtil = 0.0;
     for (CapacityConstraint c : constraints.values()) {
       if (c.isEnabled()) {
-	double util = c.getUtilization();
-	if (!Double.isNaN(util) && util > maxUtil) {
-	  maxUtil = util;
-	}
+        double util = c.getUtilization();
+        if (!Double.isNaN(util) && util > maxUtil) {
+          maxUtil = util;
+        }
       }
     }
     return maxUtil;
@@ -121,8 +121,8 @@ public class SubseaEquipmentCapacityStrategy implements EquipmentCapacityStrateg
     double maxWhp = well.getMaxWellheadPressure();
     if (maxWhp > 0) {
       CapacityConstraint whpConstraint = new CapacityConstraint("wellheadPressure").setDesignValue(maxWhp)
-	  .setMaxValue(maxWhp * 1.1).setUnit("bara").setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
-	  .setWarningThreshold(0.9).setDescription("Wellhead pressure vs maximum design");
+          .setMaxValue(maxWhp * 1.1).setUnit("bara").setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
+          .setWarningThreshold(0.9).setDescription("Wellhead pressure vs maximum design");
       constraints.put("wellheadPressure", whpConstraint);
     }
   }
@@ -137,16 +137,16 @@ public class SubseaEquipmentCapacityStrategy implements EquipmentCapacityStrateg
     double designP = tree.getDesignPressure();
     if (designP > 0) {
       CapacityConstraint pressureConstraint = new CapacityConstraint("designPressure").setDesignValue(designP)
-	  .setMaxValue(designP * 1.1).setUnit("bara").setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
-	  .setWarningThreshold(0.9).setDescription("Operating pressure vs tree design pressure");
+          .setMaxValue(designP * 1.1).setUnit("bara").setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
+          .setWarningThreshold(0.9).setDescription("Operating pressure vs tree design pressure");
       constraints.put("designPressure", pressureConstraint);
     }
 
     // Choke opening constraint (1.0 = fully open = at capacity)
     CapacityConstraint chokeConstraint = new CapacityConstraint("chokeOpening").setDesignValue(0.8).setMaxValue(1.0)
-	.setMinValue(0.0).setUnit("fraction").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-	.setWarningThreshold(0.9).setDescription("Choke opening fraction")
-	.setValueSupplier(() -> tree.getChokeOpening());
+        .setMinValue(0.0).setUnit("fraction").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
+        .setWarningThreshold(0.9).setDescription("Choke opening fraction")
+        .setValueSupplier(() -> tree.getChokeOpening());
     constraints.put("chokeOpening", chokeConstraint);
   }
 
@@ -156,7 +156,7 @@ public class SubseaEquipmentCapacityStrategy implements EquipmentCapacityStrateg
     List<CapacityConstraint> violations = new ArrayList<CapacityConstraint>();
     for (CapacityConstraint c : getConstraints(equipment).values()) {
       if (c.isViolated()) {
-	violations.add(c);
+        violations.add(c);
       }
     }
     return violations;
@@ -170,8 +170,8 @@ public class SubseaEquipmentCapacityStrategy implements EquipmentCapacityStrateg
     for (CapacityConstraint c : getConstraints(equipment).values()) {
       double util = c.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-	maxUtil = util;
-	bottleneck = c;
+        maxUtil = util;
+        bottleneck = c;
       }
     }
     return bottleneck;
@@ -182,10 +182,10 @@ public class SubseaEquipmentCapacityStrategy implements EquipmentCapacityStrateg
   public boolean isWithinHardLimits(ProcessEquipmentInterface equipment) {
     for (CapacityConstraint c : getConstraints(equipment).values()) {
       if (c.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD
-	  || c.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
-	if (c.isHardLimitExceeded()) {
-	  return false;
-	}
+          || c.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
+        if (c.isHardLimitExceeded()) {
+          return false;
+        }
       }
     }
     return true;
@@ -196,7 +196,7 @@ public class SubseaEquipmentCapacityStrategy implements EquipmentCapacityStrateg
   public boolean isWithinSoftLimits(ProcessEquipmentInterface equipment) {
     for (CapacityConstraint c : getConstraints(equipment).values()) {
       if (c.isViolated()) {
-	return false;
+        return false;
       }
     }
     return true;

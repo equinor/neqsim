@@ -49,7 +49,7 @@ public class EquipmentFactoryTest extends neqsim.NeqSimTest {
   @Test
   public void gorfitterRequiresInletStream() {
     assertThrows(IllegalArgumentException.class,
-	() -> EquipmentFactory.createEquipment("gor", EquipmentEnum.GORfitter));
+        () -> EquipmentFactory.createEquipment("gor", EquipmentEnum.GORfitter));
 
     StreamInterface inlet = new Stream("inlet");
     GORfitter fitter = EquipmentFactory.createGORfitter("gor", inlet);
@@ -59,7 +59,7 @@ public class EquipmentFactoryTest extends neqsim.NeqSimTest {
   @Test
   public void reservoirSimRequiresFluid() {
     assertThrows(IllegalArgumentException.class,
-	() -> EquipmentFactory.createEquipment("cvd", EquipmentEnum.ReservoirCVDsim));
+        () -> EquipmentFactory.createEquipment("cvd", EquipmentEnum.ReservoirCVDsim));
 
     SystemInterface fluid = new SystemSrkEos(273.15, 100.0);
     fluid.addComponent("methane", 1.0);

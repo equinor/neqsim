@@ -211,53 +211,53 @@ public class Standard_ISO6974 extends GasChromotograpyhBase {
       int nComp = thermoSystem.getPhase(0).getNumberOfComponents();
 
       for (int i = 0; i < nComp; i++) {
-	String name = thermoSystem.getPhase(0).getComponent(i).getName();
-	double z = thermoSystem.getPhase(0).getComponent(i).getz();
-	double u = getStdUncertainty(name);
+        String name = thermoSystem.getPhase(0).getComponent(i).getName();
+        double z = thermoSystem.getPhase(0).getComponent(i).getz();
+        double u = getStdUncertainty(name);
 
-	if (u <= 0.0 || z <= 0.0) {
-	  continue;
-	}
+        if (u <= 0.0 || z <= 0.0) {
+          continue;
+        }
 
-	// Perturbation step
-	double delta = u;
-	if (delta > z * 0.5) {
-	  delta = z * 0.5;
-	}
+        // Perturbation step
+        double delta = u;
+        if (delta > z * 0.5) {
+          delta = z * 0.5;
+        }
 
-	// Forward perturbation
-	SystemInterface pertSys = thermoSystem.clone();
-	pertSys.getPhase(0).getComponent(i).setz(z + delta);
-	renormaliseAfterPerturbation(pertSys, i, z + delta);
-	Standard_ISO6976 pertCalc = new Standard_ISO6976(pertSys);
-	pertCalc.setReferenceType("volume");
-	pertCalc.calculate();
-	double gcvPlus = pertCalc.getValue("SuperiorCalorificValue");
-	double wobbePlus = pertCalc.getValue("SuperiorWobbeIndex");
-	double rdPlus = pertCalc.getValue("RelativeDensity");
+        // Forward perturbation
+        SystemInterface pertSys = thermoSystem.clone();
+        pertSys.getPhase(0).getComponent(i).setz(z + delta);
+        renormaliseAfterPerturbation(pertSys, i, z + delta);
+        Standard_ISO6976 pertCalc = new Standard_ISO6976(pertSys);
+        pertCalc.setReferenceType("volume");
+        pertCalc.calculate();
+        double gcvPlus = pertCalc.getValue("SuperiorCalorificValue");
+        double wobbePlus = pertCalc.getValue("SuperiorWobbeIndex");
+        double rdPlus = pertCalc.getValue("RelativeDensity");
 
-	// Backward perturbation
-	pertSys = thermoSystem.clone();
-	pertSys.getPhase(0).getComponent(i).setz(z - delta);
-	renormaliseAfterPerturbation(pertSys, i, z - delta);
-	pertCalc = new Standard_ISO6976(pertSys);
-	pertCalc.setReferenceType("volume");
-	pertCalc.calculate();
-	double gcvMinus = pertCalc.getValue("SuperiorCalorificValue");
-	double wobbeMinus = pertCalc.getValue("SuperiorWobbeIndex");
-	double rdMinus = pertCalc.getValue("RelativeDensity");
+        // Backward perturbation
+        pertSys = thermoSystem.clone();
+        pertSys.getPhase(0).getComponent(i).setz(z - delta);
+        renormaliseAfterPerturbation(pertSys, i, z - delta);
+        pertCalc = new Standard_ISO6976(pertSys);
+        pertCalc.setReferenceType("volume");
+        pertCalc.calculate();
+        double gcvMinus = pertCalc.getValue("SuperiorCalorificValue");
+        double wobbeMinus = pertCalc.getValue("SuperiorWobbeIndex");
+        double rdMinus = pertCalc.getValue("RelativeDensity");
 
-	// Sensitivity coefficients (central difference)
-	double sensGCV = (gcvPlus - gcvMinus) / (2.0 * delta);
-	double sensWobbe = (wobbePlus - wobbeMinus) / (2.0 * delta);
-	double sensRD = (rdPlus - rdMinus) / (2.0 * delta);
+        // Sensitivity coefficients (central difference)
+        double sensGCV = (gcvPlus - gcvMinus) / (2.0 * delta);
+        double sensWobbe = (wobbePlus - wobbeMinus) / (2.0 * delta);
+        double sensRD = (rdPlus - rdMinus) / (2.0 * delta);
 
-	sumSqGCV += sensGCV * sensGCV * u * u;
-	sumSqWobbe += sensWobbe * sensWobbe * u * u;
-	sumSqRD += sensRD * sensRD * u * u;
+        sumSqGCV += sensGCV * sensGCV * u * u;
+        sumSqWobbe += sensWobbe * sensWobbe * u * u;
+        sumSqRD += sensRD * sensRD * u * u;
 
-	// Store expanded uncertainty for this component
-	expandedUncertainties.put(name, coverageFactor * u * 100.0); // in mol%
+        // Store expanded uncertainty for this component
+        expandedUncertainties.put(name, coverageFactor * u * 100.0); // in mol%
       }
 
       uncertaintyGCV = coverageFactor * Math.sqrt(sumSqGCV);
@@ -281,17 +281,17 @@ public class Standard_ISO6974 extends GasChromotograpyhBase {
     double sumOthers = 0.0;
     for (int j = 0; j < nComp; j++) {
       if (j != pertIndex) {
-	sumOthers += sys.getPhase(0).getComponent(j).getz();
+        sumOthers += sys.getPhase(0).getComponent(j).getz();
       }
     }
     double remaining = 1.0 - newZ;
     if (sumOthers > 0.0 && remaining > 0.0) {
       double scale = remaining / sumOthers;
       for (int j = 0; j < nComp; j++) {
-	if (j != pertIndex) {
-	  double oldZ = sys.getPhase(0).getComponent(j).getz();
-	  sys.getPhase(0).getComponent(j).setz(oldZ * scale);
-	}
+        if (j != pertIndex) {
+          double oldZ = sys.getPhase(0).getComponent(j).getz();
+          sys.getPhase(0).getComponent(j).setz(oldZ * scale);
+        }
       }
     }
   }
@@ -333,7 +333,7 @@ public class Standard_ISO6974 extends GasChromotograpyhBase {
   @Override
   public double getValue(String returnParameter, String returnUnit) {
     if (returnParameter.startsWith("uncertainty") || returnParameter.startsWith("U_")
-	|| "normalisationFactor".equals(returnParameter) || "coverageFactor".equals(returnParameter)) {
+        || "normalisationFactor".equals(returnParameter) || "coverageFactor".equals(returnParameter)) {
       return getValue(returnParameter);
     }
     return super.getValue(returnParameter, returnUnit);

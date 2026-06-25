@@ -237,7 +237,7 @@ public class PfpDemandCalculator implements Serializable {
     private final PfpRating rating;
 
     PfpDemandResult(double bareSteelTimeToCriticalS, double requiredSurvivalTimeS, boolean pfpRequired,
-	double requiredPfpThicknessM, PfpRating rating) {
+        double requiredPfpThicknessM, PfpRating rating) {
       this.bareSteelTimeToCriticalS = bareSteelTimeToCriticalS;
       this.requiredSurvivalTimeS = requiredSurvivalTimeS;
       this.pfpRequired = pfpRequired;
@@ -308,12 +308,12 @@ public class PfpDemandCalculator implements Serializable {
       StringBuilder sb = new StringBuilder();
       sb.append("PFP demand (API 521 / NORSOK S-001):\n");
       sb.append(String.format("  Bare-steel time to crit. : %.0f s (%.1f min)%n", bareSteelTimeToCriticalS,
-	  bareSteelTimeToCriticalS / 60.0));
+          bareSteelTimeToCriticalS / 60.0));
       sb.append(String.format("  Required survival time    : %.0f s (%.1f min)%n", requiredSurvivalTimeS,
-	  requiredSurvivalTimeS / 60.0));
+          requiredSurvivalTimeS / 60.0));
       sb.append("  PFP required             : ").append(pfpRequired).append('\n');
       if (pfpRequired) {
-	sb.append(String.format("  Required PFP thickness    : %.1f mm%n", getRequiredPfpThicknessMm()));
+        sb.append(String.format("  Required PFP thickness    : %.1f mm%n", getRequiredPfpThicknessMm()));
       }
       sb.append("  Rating                   : ").append(rating).append('\n');
       return sb.toString();

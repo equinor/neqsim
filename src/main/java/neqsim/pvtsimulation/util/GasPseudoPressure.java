@@ -199,9 +199,9 @@ public class GasPseudoPressure {
       double p = pLow + i * h;
       double f = evaluateIntegrandEOS(p);
       if (i % 2 == 0) {
-	sum += 2.0 * f;
+        sum += 2.0 * f;
       } else {
-	sum += 4.0 * f;
+        sum += 4.0 * f;
       }
     }
 
@@ -227,7 +227,7 @@ public class GasPseudoPressure {
       double muCP = muPaS * 1000.0;
 
       if (z <= 0.0 || muCP <= 0.0) {
-	return 0.0;
+        return 0.0;
       }
 
       return 2.0 * pBara / (muCP * z);
@@ -260,15 +260,15 @@ public class GasPseudoPressure {
 
     double h = (pHigh - pLow) / n;
     double sum = evaluateIntegrandCorrelation(pLow, temperatureK, gammaG, mw)
-	+ evaluateIntegrandCorrelation(pHigh, temperatureK, gammaG, mw);
+        + evaluateIntegrandCorrelation(pHigh, temperatureK, gammaG, mw);
 
     for (int i = 1; i < n; i++) {
       double p = pLow + i * h;
       double f = evaluateIntegrandCorrelation(p, temperatureK, gammaG, mw);
       if (i % 2 == 0) {
-	sum += 2.0 * f;
+        sum += 2.0 * f;
       } else {
-	sum += 4.0 * f;
+        sum += 4.0 * f;
       }
     }
 
@@ -342,25 +342,25 @@ public class GasPseudoPressure {
     double y = 0.001;
     for (int iter = 0; iter < 100; iter++) {
       double fy = a * pPR + (y + y * y + y * y * y - y * y * y * y) / Math.pow(1.0 - y, 3) - b * y * y
-	  + c * Math.pow(y, d);
+          + c * Math.pow(y, d);
       double dfy = (1.0 + 4.0 * y + 4.0 * y * y - 4.0 * y * y * y + y * y * y * y) / Math.pow(1.0 - y, 4) - 2.0 * b * y
-	  + c * d * Math.pow(y, d - 1.0);
+          + c * d * Math.pow(y, d - 1.0);
 
       if (Math.abs(dfy) < 1e-30) {
-	break;
+        break;
       }
 
       double yNew = y - fy / dfy;
       if (yNew < 0.0) {
-	yNew = y / 2.0;
+        yNew = y / 2.0;
       }
       if (yNew > 1.0) {
-	yNew = (y + 1.0) / 2.0;
+        yNew = (y + 1.0) / 2.0;
       }
 
       if (Math.abs(yNew - y) < 1e-12) {
-	y = yNew;
-	break;
+        y = yNew;
+        break;
       }
       y = yNew;
     }

@@ -3,14 +3,14 @@ package neqsim.thermodynamicoperations.flashops;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Test class for TPHydrateFlash.
@@ -442,11 +442,11 @@ public class TPHydrateFlashTest {
     for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
       double sumX = 0.0;
       for (int i = 0; i < fluid.getPhase(p).getNumberOfComponents(); i++) {
-	sumX += fluid.getPhase(p).getComponent(i).getx();
+        sumX += fluid.getPhase(p).getComponent(i).getx();
       }
       // Allow 10% tolerance for hydrate phase due to cavity occupancy model
       assertEquals(1.0, sumX, 0.15,
-	  "Phase " + p + " (" + fluid.getPhase(p).getType() + ") mole fractions should be ~1");
+          "Phase " + p + " (" + fluid.getPhase(p).getType() + ") mole fractions should be ~1");
     }
 
     // Check that phase fractions (beta) sum to 1
@@ -587,8 +587,8 @@ public class TPHydrateFlashTest {
     boolean hasGasPhase = false;
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
       if (fluid.getPhase(i).getType() == PhaseType.GAS) {
-	hasGasPhase = true;
-	break;
+        hasGasPhase = true;
+        break;
       }
     }
     assertTrue(hasGasPhase, "Should have a gas phase");
@@ -750,9 +750,9 @@ public class TPHydrateFlashTest {
     double aqueousFraction = 0.0;
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
       if (fluid.getPhase(i).getType() == PhaseType.AQUEOUS) {
-	hasAqueousPhase = true;
-	aqueousFraction = fluid.getBeta(i);
-	break;
+        hasAqueousPhase = true;
+        aqueousFraction = fluid.getBeta(i);
+        break;
       }
     }
     logger.info("Has aqueous phase: " + hasAqueousPhase + ", fraction: " + aqueousFraction);
@@ -811,8 +811,8 @@ public class TPHydrateFlashTest {
     boolean hasAqueousPhase = false;
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
       if (fluid.getPhase(i).getType() == PhaseType.AQUEOUS) {
-	hasAqueousPhase = true;
-	break;
+        hasAqueousPhase = true;
+        break;
       }
     }
     logger.info("Has aqueous phase: " + hasAqueousPhase);
@@ -850,7 +850,7 @@ public class TPHydrateFlashTest {
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
       logger.info("Phase " + i + ": " + fluid.getPhase(i).getType());
       if (fluid.getPhase(i).hasComponent("water")) {
-	logger.info("  Water x = " + fluid.getPhase(i).getComponent("water").getx());
+        logger.info("  Water x = " + fluid.getPhase(i).getComponent("water").getx());
       }
     }
 
@@ -872,12 +872,12 @@ public class TPHydrateFlashTest {
     double hydrateBeta = 0.0;
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
       if (fluid.getPhase(i).getType() == PhaseType.AQUEOUS) {
-	hasAqueousPhase = true;
-	aqueousBeta = fluid.getBeta(i);
+        hasAqueousPhase = true;
+        aqueousBeta = fluid.getBeta(i);
       }
       if (fluid.getPhase(i).getType() == PhaseType.HYDRATE) {
-	hasHydrate = true;
-	hydrateBeta = fluid.getBeta(i);
+        hasHydrate = true;
+        hydrateBeta = fluid.getBeta(i);
       }
     }
     logger.info("Has aqueous phase: " + hasAqueousPhase + ", beta = " + aqueousBeta);
@@ -938,16 +938,16 @@ public class TPHydrateFlashTest {
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
       logger.info("Phase " + i + ": " + fluid.getPhase(i).getType() + ", beta = " + fluid.getBeta(i));
       if (fluid.getPhase(i).getType() == PhaseType.GAS) {
-	hasGas = true;
-	gasBeta = fluid.getBeta(i);
+        hasGas = true;
+        gasBeta = fluid.getBeta(i);
       }
       if (fluid.getPhase(i).getType() == PhaseType.HYDRATE) {
-	hasHydrate = true;
-	hydrateBeta = fluid.getBeta(i);
+        hasHydrate = true;
+        hydrateBeta = fluid.getBeta(i);
       }
       if (fluid.getPhase(i).getType() == PhaseType.AQUEOUS) {
-	hasAqueous = true;
-	aqueousBeta = fluid.getBeta(i);
+        hasAqueous = true;
+        aqueousBeta = fluid.getBeta(i);
       }
     }
 
@@ -1009,10 +1009,10 @@ public class TPHydrateFlashTest {
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
       logger.info("Phase " + i + ": " + fluid.getPhase(i).getType() + ", beta = " + fluid.getBeta(i));
       if (fluid.getPhase(i).getType() == PhaseType.HYDRATE) {
-	hasHydrate = true;
+        hasHydrate = true;
       }
       if (fluid.getPhase(i).getType() == PhaseType.AQUEOUS) {
-	hasAqueous = true;
+        hasAqueous = true;
       }
     }
 
@@ -1066,7 +1066,7 @@ public class TPHydrateFlashTest {
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
       logger.info("Phase " + i + ": " + fluid.getPhase(i).getType() + ", beta = " + fluid.getBeta(i));
       if (fluid.getPhase(i).getType() == PhaseType.HYDRATE) {
-	hasHydrate = true;
+        hasHydrate = true;
       }
     }
 

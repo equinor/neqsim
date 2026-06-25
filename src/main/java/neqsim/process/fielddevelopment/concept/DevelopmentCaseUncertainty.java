@@ -48,10 +48,10 @@ public final class DevelopmentCaseUncertainty implements Serializable {
    */
   public static DevelopmentCaseUncertainty empty() {
     return builder().resource(UncertaintyRange.deterministic("Resource", "-", 0.0))
-	.capex(UncertaintyRange.deterministic("CAPEX", "MUSD", 0.0))
-	.scheduleMonths(UncertaintyRange.deterministic("Schedule", "months", 0.0))
-	.price(UncertaintyRange.deterministic("Price", "USD/unit", 0.0))
-	.productionFactor(UncertaintyRange.deterministic("Production factor", "-", 1.0)).build();
+        .capex(UncertaintyRange.deterministic("CAPEX", "MUSD", 0.0))
+        .scheduleMonths(UncertaintyRange.deterministic("Schedule", "months", 0.0))
+        .price(UncertaintyRange.deterministic("Price", "USD/unit", 0.0))
+        .productionFactor(UncertaintyRange.deterministic("Production factor", "-", 1.0)).build();
   }
 
   /**

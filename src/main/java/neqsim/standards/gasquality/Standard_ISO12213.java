@@ -107,10 +107,10 @@ public class Standard_ISO12213 extends neqsim.standards.Standard {
       tempSystem.init(1);
 
       if ("AGA8".equals(calculationMethod)) {
-	calculateAGA8(tempSystem);
+        calculateAGA8(tempSystem);
       } else {
-	// SGERG-88 simplified method - use GERG-2008 as best available
-	calculateAGA8(tempSystem);
+        // SGERG-88 simplified method - use GERG-2008 as best available
+        calculateAGA8(tempSystem);
       }
     } catch (Exception ex) {
       logger.error("ISO 12213 calculation failed", ex);
@@ -129,9 +129,9 @@ public class Standard_ISO12213 extends neqsim.standards.Standard {
       molarMass = system.getPhase(0).getMolarMass() * 1000.0; // kg/mol to g/mol
 
       if (molarMass > 0.0 && massDensity > 0.0) {
-	molarDensity = massDensity / (molarMass / 1000.0); // mol/m3
-	double R = 8.314510; // J/(mol*K)
-	compressionFactor = (calculationPressure * 1.0e6) / (molarDensity * R * calculationTemperature);
+        molarDensity = massDensity / (molarMass / 1000.0); // mol/m3
+        double R = 8.314510; // J/(mol*K)
+        compressionFactor = (calculationPressure * 1.0e6) / (molarDensity * R * calculationTemperature);
       }
     } catch (Exception ex) {
       logger.error("AGA8 calculation failed", ex);

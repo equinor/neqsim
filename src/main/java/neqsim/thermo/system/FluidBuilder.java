@@ -246,7 +246,7 @@ public class FluidBuilder implements Serializable {
 
     if (plusFraction != null) {
       system.addPlusFraction(plusFraction.name, plusFraction.moleFraction, plusFraction.molarMass,
-	  plusFraction.density);
+          plusFraction.density);
     }
 
     // Mixing rule must be set before characterization
@@ -320,8 +320,8 @@ public class FluidBuilder implements Serializable {
    */
   public static SystemInterface leanNaturalGas(double temperatureK, double pressureBara) {
     return create(temperatureK, pressureBara).addComponent("methane", 0.85).addComponent("ethane", 0.08)
-	.addComponent("propane", 0.03).addComponent("i-butane", 0.005).addComponent("n-butane", 0.01)
-	.addComponent("nitrogen", 0.015).addComponent("CO2", 0.01).withMixingRule("classic").build();
+        .addComponent("propane", 0.03).addComponent("i-butane", 0.005).addComponent("n-butane", 0.01)
+        .addComponent("nitrogen", 0.015).addComponent("CO2", 0.01).withMixingRule("classic").build();
   }
 
   /**
@@ -338,10 +338,10 @@ public class FluidBuilder implements Serializable {
    */
   public static SystemInterface richNaturalGas(double temperatureK, double pressureBara) {
     return create(temperatureK, pressureBara).addComponent("methane", 0.72).addComponent("ethane", 0.10)
-	.addComponent("propane", 0.06).addComponent("i-butane", 0.02).addComponent("n-butane", 0.03)
-	.addComponent("i-pentane", 0.01).addComponent("n-pentane", 0.01).addComponent("nitrogen", 0.01)
-	.addComponent("CO2", 0.02).addComponent("n-hexane", 0.01).addComponent("n-octane", 0.01)
-	.withMixingRule("classic").build();
+        .addComponent("propane", 0.06).addComponent("i-butane", 0.02).addComponent("n-butane", 0.03)
+        .addComponent("i-pentane", 0.01).addComponent("n-pentane", 0.01).addComponent("nitrogen", 0.01)
+        .addComponent("CO2", 0.02).addComponent("n-hexane", 0.01).addComponent("n-octane", 0.01)
+        .withMixingRule("classic").build();
   }
 
   /**
@@ -358,12 +358,12 @@ public class FluidBuilder implements Serializable {
    */
   public static SystemInterface typicalBlackOil(double temperatureK, double pressureBara) {
     return create(temperatureK, pressureBara).withEOS(EOSType.PR).addComponent("methane", 0.30)
-	.addComponent("ethane", 0.08).addComponent("propane", 0.06).addComponent("i-butane", 0.02)
-	.addComponent("n-butane", 0.04).addComponent("i-pentane", 0.02).addComponent("n-pentane", 0.03)
-	.addComponent("n-hexane", 0.04).addTBPFraction("C7", 0.06, 92.0 / 1000.0, 0.727)
-	.addTBPFraction("C8", 0.05, 104.0 / 1000.0, 0.749).addTBPFraction("C9", 0.04, 119.0 / 1000.0, 0.768)
-	.addTBPFraction("C10", 0.03, 133.0 / 1000.0, 0.786).addPlusFraction("C20", 0.23, 350.0 / 1000.0, 0.88)
-	.withLumpedComponents(6).withMixingRule("classic").build();
+        .addComponent("ethane", 0.08).addComponent("propane", 0.06).addComponent("i-butane", 0.02)
+        .addComponent("n-butane", 0.04).addComponent("i-pentane", 0.02).addComponent("n-pentane", 0.03)
+        .addComponent("n-hexane", 0.04).addTBPFraction("C7", 0.06, 92.0 / 1000.0, 0.727)
+        .addTBPFraction("C8", 0.05, 104.0 / 1000.0, 0.749).addTBPFraction("C9", 0.04, 119.0 / 1000.0, 0.768)
+        .addTBPFraction("C10", 0.03, 133.0 / 1000.0, 0.786).addPlusFraction("C20", 0.23, 350.0 / 1000.0, 0.88)
+        .withLumpedComponents(6).withMixingRule("classic").build();
   }
 
   /**
@@ -380,8 +380,8 @@ public class FluidBuilder implements Serializable {
    */
   public static SystemInterface co2Rich(double temperatureK, double pressureBara) {
     return create(temperatureK, pressureBara).withEOS(EOSType.SRK_CPA).addComponent("CO2", 0.95)
-	.addComponent("nitrogen", 0.02).addComponent("methane", 0.02).addComponent("H2S", 0.005)
-	.addComponent("water", 0.005).withMixingRule(10).withMultiPhaseCheck().build();
+        .addComponent("nitrogen", 0.02).addComponent("methane", 0.02).addComponent("H2S", 0.005)
+        .addComponent("water", 0.005).withMixingRule(10).withMultiPhaseCheck().build();
   }
 
   /**
@@ -398,9 +398,9 @@ public class FluidBuilder implements Serializable {
    */
   public static SystemInterface acidGas(double temperatureK, double pressureBara) {
     return create(temperatureK, pressureBara).withEOS(EOSType.SRK_CPA).addComponent("methane", 0.70)
-	.addComponent("CO2", 0.10).addComponent("H2S", 0.05).addComponent("ethane", 0.05).addComponent("propane", 0.03)
-	.addComponent("n-butane", 0.02).addComponent("water", 0.02).addComponent("nitrogen", 0.03).withMixingRule(10)
-	.withMultiPhaseCheck().build();
+        .addComponent("CO2", 0.10).addComponent("H2S", 0.05).addComponent("ethane", 0.05).addComponent("propane", 0.03)
+        .addComponent("n-butane", 0.02).addComponent("water", 0.02).addComponent("nitrogen", 0.03).withMixingRule(10)
+        .withMultiPhaseCheck().build();
   }
 
   /**
@@ -417,11 +417,11 @@ public class FluidBuilder implements Serializable {
    */
   public static SystemInterface gasCondensate(double temperatureK, double pressureBara) {
     return create(temperatureK, pressureBara).addComponent("methane", 0.75).addComponent("ethane", 0.07)
-	.addComponent("propane", 0.04).addComponent("i-butane", 0.015).addComponent("n-butane", 0.02)
-	.addComponent("i-pentane", 0.01).addComponent("n-pentane", 0.01).addComponent("n-hexane", 0.015)
-	.addTBPFraction("C7", 0.02, 92.0 / 1000.0, 0.727).addTBPFraction("C8", 0.015, 104.0 / 1000.0, 0.749)
-	.addTBPFraction("C9", 0.01, 119.0 / 1000.0, 0.768).addTBPFraction("C10", 0.008, 133.0 / 1000.0, 0.786)
-	.addPlusFraction("C15", 0.027, 220.0 / 1000.0, 0.84).withMixingRule("classic").build();
+        .addComponent("propane", 0.04).addComponent("i-butane", 0.015).addComponent("n-butane", 0.02)
+        .addComponent("i-pentane", 0.01).addComponent("n-pentane", 0.01).addComponent("n-hexane", 0.015)
+        .addTBPFraction("C7", 0.02, 92.0 / 1000.0, 0.727).addTBPFraction("C8", 0.015, 104.0 / 1000.0, 0.749)
+        .addTBPFraction("C9", 0.01, 119.0 / 1000.0, 0.768).addTBPFraction("C10", 0.008, 133.0 / 1000.0, 0.786)
+        .addPlusFraction("C15", 0.027, 220.0 / 1000.0, 0.84).withMixingRule("classic").build();
   }
 
   /**
@@ -438,8 +438,8 @@ public class FluidBuilder implements Serializable {
    */
   public static SystemInterface dryExportGas(double temperatureK, double pressureBara) {
     return create(temperatureK, pressureBara).addComponent("methane", 0.92).addComponent("ethane", 0.04)
-	.addComponent("propane", 0.015).addComponent("nitrogen", 0.015).addComponent("CO2", 0.01)
-	.withMixingRule("classic").build();
+        .addComponent("propane", 0.015).addComponent("nitrogen", 0.015).addComponent("CO2", 0.01)
+        .withMixingRule("classic").build();
   }
 
   // ============================================================

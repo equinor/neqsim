@@ -101,9 +101,9 @@ class EquipmentDesignDataTest {
     Map<String, CapacityConstraint> constraints = sep.getCapacityConstraints();
     if (!constraints.isEmpty()) {
       for (CapacityConstraint constraint : constraints.values()) {
-	// Constraints for equipment with design data should be tagged
-	assertEquals(EquipmentDesignData.DATA_SOURCE_DESIGN_CAPACITIES, constraint.getDataSource(),
-	    "Constraint '" + constraint.getName() + "' should have designCapacities data source");
+        // Constraints for equipment with design data should be tagged
+        assertEquals(EquipmentDesignData.DATA_SOURCE_DESIGN_CAPACITIES, constraint.getDataSource(),
+            "Constraint '" + constraint.getName() + "' should have designCapacities data source");
       }
     }
   }

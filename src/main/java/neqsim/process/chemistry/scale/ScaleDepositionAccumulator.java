@@ -200,7 +200,7 @@ public class ScaleDepositionAccumulator implements Serializable {
       double thicknessMm = thicknessM * 1000.0;
       segmentThicknessMm.add(thicknessMm);
       if (thicknessMm > maxThicknessMm) {
-	maxThicknessMm = thicknessMm;
+        maxThicknessMm = thicknessMm;
       }
     }
     // Time to blockage: 50% of inner radius blocked at the worst segment (linear extrapolation)

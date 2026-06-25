@@ -74,7 +74,7 @@ public class ProcessSuperstructureExporter {
     }
     for (ProcessResearchSpec.ProductTarget target : spec.getProductTargets()) {
       if (target.getMaterialName() != null && !target.getMaterialName().trim().isEmpty()) {
-	builder.append("    '").append(escape(target.getMaterialName())).append("',\n");
+        builder.append("    '").append(escape(target.getMaterialName())).append("',\n");
       }
     }
     builder.append("]\n");
@@ -118,14 +118,14 @@ public class ProcessSuperstructureExporter {
       JsonObject object = new JsonObject();
       object.addProperty("name", target.getName());
       if (target.getComponentName() != null) {
-	object.addProperty("componentName", target.getComponentName());
+        object.addProperty("componentName", target.getComponentName());
       }
       if (target.getMaterialName() != null) {
-	object.addProperty("materialName", target.getMaterialName());
+        object.addProperty("materialName", target.getMaterialName());
       }
       object.addProperty("streamRole", target.getStreamRole());
       if (target.getStreamReference() != null) {
-	object.addProperty("streamReference", target.getStreamReference());
+        object.addProperty("streamReference", target.getStreamReference());
       }
       object.addProperty("minPurity", target.getMinPurity());
       object.addProperty("minFlowRate_kg_hr", target.getMinFlowRate());
@@ -148,7 +148,7 @@ public class ProcessSuperstructureExporter {
       object.addProperty("name", node.getName());
       object.addProperty("description", node.getDescription());
       if (node.getComponentName() != null) {
-	object.addProperty("componentName", node.getComponentName());
+        object.addProperty("componentName", node.getComponentName());
       }
       array.add(object);
     }
@@ -189,11 +189,11 @@ public class ProcessSuperstructureExporter {
       object.addProperty("reactorType", reaction.getReactorType());
       object.addProperty("energyMode", reaction.getEnergyMode());
       if (reaction.getExpectedProductComponent() != null) {
-	object.addProperty("expectedProductComponent", reaction.getExpectedProductComponent());
+        object.addProperty("expectedProductComponent", reaction.getExpectedProductComponent());
       }
       JsonObject stoich = new JsonObject();
       for (Map.Entry<String, Double> entry : reaction.getStoichiometry().entrySet()) {
-	stoich.addProperty(entry.getKey(), entry.getValue());
+        stoich.addProperty(entry.getKey(), entry.getValue());
       }
       object.add("stoichiometry", stoich);
       array.add(object);
@@ -256,7 +256,7 @@ public class ProcessSuperstructureExporter {
     addFiniteOrNull(object, "maxCapitalCostProxy_USD", constraints.getMaxCapitalCostProxyUSD());
     addFiniteOrNull(object, "maxEmissions_kgCO2e_per_hr", constraints.getMaxEmissionsKgCO2ePerHr());
     addFiniteOrNull(object, "maxAnnualOperatingCostProxy_USD_per_yr",
-	constraints.getMaxAnnualOperatingCostProxyUSDPerYr());
+        constraints.getMaxAnnualOperatingCostProxyUSDPerYr());
     return object;
   }
 
@@ -288,7 +288,7 @@ public class ProcessSuperstructureExporter {
     object.addProperty("hotUtilityCost_USD_per_kWh", assumptions.getHotUtilityCostUsdPerKWh());
     object.addProperty("coldUtilityCost_USD_per_kWh", assumptions.getColdUtilityCostUsdPerKWh());
     object.addProperty("electricityEmissionFactor_kgCO2e_per_kWh",
-	assumptions.getElectricityEmissionFactorKgCO2PerKWh());
+        assumptions.getElectricityEmissionFactorKgCO2PerKWh());
     object.addProperty("carbonPrice_USD_per_tonne", assumptions.getCarbonPriceUsdPerTonne());
     return object;
   }

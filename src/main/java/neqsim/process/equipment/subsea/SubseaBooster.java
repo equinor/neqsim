@@ -329,12 +329,12 @@ public class SubseaBooster extends TwoPortEquipment {
   private void initializeInternalEquipment() {
     if (inStream != null) {
       if (isCompressor()) {
-	internalCompressor = new Compressor(getName() + " Compressor", inStream);
-	internalCompressor.setUsePolytropicCalc(true);
-	internalCompressor.setPolytropicEfficiency(efficiency);
+        internalCompressor = new Compressor(getName() + " Compressor", inStream);
+        internalCompressor.setUsePolytropicCalc(true);
+        internalCompressor.setPolytropicEfficiency(efficiency);
       } else {
-	internalPump = new Pump(getName() + " Pump", inStream);
-	// Configure pump
+        internalPump = new Pump(getName() + " Pump", inStream);
+        // Configure pump
       }
     }
   }
@@ -400,9 +400,9 @@ public class SubseaBooster extends TwoPortEquipment {
       // Calculate required pressure increase
       double inletPressure = inStream.getPressure();
       if (outletPressure > inletPressure) {
-	outFluid.setPressure(outletPressure);
+        outFluid.setPressure(outletPressure);
       } else {
-	outFluid.setPressure(inletPressure + differentialPressure);
+        outFluid.setPressure(inletPressure + differentialPressure);
       }
 
       // Estimate temperature rise (compression heating)

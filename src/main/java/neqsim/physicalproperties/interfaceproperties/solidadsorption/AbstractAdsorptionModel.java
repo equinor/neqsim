@@ -122,7 +122,7 @@ public abstract class AbstractAdsorptionModel implements AdsorptionInterface, Se
     }
     if (component < 0 || component >= surfaceExcess.length) {
       throw new IndexOutOfBoundsException(
-	  "Component index " + component + " out of range [0, " + (surfaceExcess.length - 1) + "]");
+          "Component index " + component + " out of range [0, " + (surfaceExcess.length - 1) + "]");
     }
     return surfaceExcess[component];
   }
@@ -200,11 +200,11 @@ public abstract class AbstractAdsorptionModel implements AdsorptionInterface, Se
 
     if (totalSurfaceExcess > 1e-20) {
       for (int comp = 0; comp < surfaceExcess.length; comp++) {
-	surfaceExcessMolFraction[comp] = surfaceExcess[comp] / totalSurfaceExcess;
+        surfaceExcessMolFraction[comp] = surfaceExcess[comp] / totalSurfaceExcess;
       }
     } else {
       for (int comp = 0; comp < surfaceExcess.length; comp++) {
-	surfaceExcessMolFraction[comp] = 0.0;
+        surfaceExcessMolFraction[comp] = 0.0;
       }
     }
   }
@@ -313,7 +313,7 @@ public abstract class AbstractAdsorptionModel implements AdsorptionInterface, Se
    */
   protected double getFugacity(int phaseNum, int compNum) {
     return system.getPhase(phaseNum).getComponent(compNum).getx()
-	* system.getPhase(phaseNum).getComponent(compNum).getFugacityCoefficient()
-	* system.getPhase(phaseNum).getPressure();
+        * system.getPhase(phaseNum).getComponent(compNum).getFugacityCoefficient()
+        * system.getPhase(phaseNum).getPressure();
   }
 }

@@ -193,7 +193,7 @@ public class TrainingDataCollector implements Serializable {
   public void recordStateAsInputs(StateVector state) {
     for (String name : state.getFeatureNames()) {
       if (inputDefs.containsKey(name)) {
-	recordInput(name, state.getValue(name));
+        recordInput(name, state.getValue(name));
       }
     }
   }
@@ -206,7 +206,7 @@ public class TrainingDataCollector implements Serializable {
   public void recordStateAsOutputs(StateVector state) {
     for (String name : state.getFeatureNames()) {
       if (outputDefs.containsKey(name)) {
-	recordOutput(name, state.getValue(name));
+        recordOutput(name, state.getValue(name));
       }
     }
   }
@@ -263,7 +263,7 @@ public class TrainingDataCollector implements Serializable {
     StringBuilder header = new StringBuilder();
     for (String name : inputDefs.keySet()) {
       if (header.length() > 0) {
-	header.append(",");
+        header.append(",");
       }
       header.append("input_").append(name);
     }
@@ -277,16 +277,16 @@ public class TrainingDataCollector implements Serializable {
     for (Map<String, Double> sample : samples) {
       StringBuilder row = new StringBuilder();
       for (String name : inputDefs.keySet()) {
-	if (row.length() > 0) {
-	  row.append(",");
-	}
-	Double val = sample.get("input_" + name);
-	row.append(val != null ? val : "");
+        if (row.length() > 0) {
+          row.append(",");
+        }
+        Double val = sample.get("input_" + name);
+        row.append(val != null ? val : "");
       }
       for (String name : outputDefs.keySet()) {
-	row.append(",");
-	Double val = sample.get("output_" + name);
-	row.append(val != null ? val : "");
+        row.append(",");
+        Double val = sample.get("output_" + name);
+        row.append(val != null ? val : "");
       }
       sw.write(row.toString());
       sw.write("\n");
@@ -371,7 +371,7 @@ public class TrainingDataCollector implements Serializable {
       FeatureDefinition def = inputDefs.get(name);
       RunningStats stats = inputStats.get(name);
       sb.append(String.format("  %s [%s]: mean=%.4f, std=%.4f, range=[%.4f, %.4f]\n", name, def.unit, stats.mean,
-	  stats.getStd(), stats.min, stats.max));
+          stats.getStd(), stats.min, stats.max));
     }
 
     sb.append("\nOutputs:\n");
@@ -379,7 +379,7 @@ public class TrainingDataCollector implements Serializable {
       FeatureDefinition def = outputDefs.get(name);
       RunningStats stats = outputStats.get(name);
       sb.append(String.format("  %s [%s]: mean=%.4f, std=%.4f, range=[%.4f, %.4f]\n", name, def.unit, stats.mean,
-	  stats.getStd(), stats.min, stats.max));
+          stats.getStd(), stats.min, stats.max));
     }
 
     return sb.toString();
@@ -388,6 +388,6 @@ public class TrainingDataCollector implements Serializable {
   @Override
   public String toString() {
     return String.format("TrainingDataCollector[%s, %d inputs, %d outputs, %d samples]", name, inputDefs.size(),
-	outputDefs.size(), samples.size());
+        outputDefs.size(), samples.size());
   }
 }

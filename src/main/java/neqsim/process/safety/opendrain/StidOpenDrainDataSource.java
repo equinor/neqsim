@@ -92,7 +92,7 @@ public class StidOpenDrainDataSource implements OpenDrainReviewDataSource {
     for (int i = 0; i < array.size(); i++) {
       JsonElement element = array.get(i);
       if (element.isJsonObject()) {
-	mergeItem(input, fromRecord(element.getAsJsonObject(), key));
+        mergeItem(input, fromRecord(element.getAsJsonObject(), key));
       }
     }
   }
@@ -152,7 +152,7 @@ public class StidOpenDrainDataSource implements OpenDrainReviewDataSource {
     if (element.isJsonArray()) {
       List<Object> list = new ArrayList<Object>();
       for (JsonElement child : element.getAsJsonArray()) {
-	list.add(toObject(child));
+        list.add(toObject(child));
       }
       return list;
     }

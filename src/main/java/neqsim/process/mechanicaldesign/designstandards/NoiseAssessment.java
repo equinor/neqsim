@@ -128,7 +128,7 @@ public class NoiseAssessment implements Serializable {
     // Jet noise: Lw = 126.154 + 10 * log10(D^2 * Uj^4 * rho / c^4)
     // Simplified: dominates at high velocities
     double lwJet = 86.0 + 40.0 * Math.log10(Math.max(exitVelocityMS, 1.0))
-	+ 20.0 * Math.log10(Math.max(tipDiameterM, 0.01));
+        + 20.0 * Math.log10(Math.max(tipDiameterM, 0.01));
 
     double totalLw = 10.0 * Math.log10(Math.pow(10.0, lwCombustion / 10.0) + Math.pow(10.0, lwJet / 10.0));
 
@@ -214,13 +214,13 @@ public class NoiseAssessment implements Serializable {
     // Oxygen and nitrogen relaxation frequencies (simplified)
     double frO = 24.0 + 4.04e4 * humidityFraction * (0.02 + humidityFraction) / (0.391 + humidityFraction);
     double frN = Math.pow(tempRatio, -0.5)
-	* (9.0 + 280.0 * humidityFraction * Math.exp(-4.170 * (Math.pow(tempRatio, -1.0 / 3.0) - 1.0)));
+        * (9.0 + 280.0 * humidityFraction * Math.exp(-4.170 * (Math.pow(tempRatio, -1.0 / 3.0) - 1.0)));
 
     double f2 = frequencyHz * frequencyHz;
     double alpha = 8.686 * f2
-	* (1.84e-11 / Math.sqrt(tempRatio)
-	    + Math.pow(tempRatio, -2.5) * (0.01275 * Math.exp(-2239.1 / tempK) / (frO + f2 / frO)
-		+ 0.1068 * Math.exp(-3352.0 / tempK) / (frN + f2 / frN)));
+        * (1.84e-11 / Math.sqrt(tempRatio)
+            + Math.pow(tempRatio, -2.5) * (0.01275 * Math.exp(-2239.1 / tempK) / (frO + f2 / frO)
+                + 0.1068 * Math.exp(-3352.0 / tempK) / (frN + f2 / frN)));
     return alpha; // dB/m
   }
 

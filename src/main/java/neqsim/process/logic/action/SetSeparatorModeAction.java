@@ -36,7 +36,7 @@ public class SetSeparatorModeAction implements LogicAction {
   @Override
   public String getDescription() {
     return String.format("Set separator %s to %s mode", separator.getName(),
-	steadyState ? "steady-state" : "transient");
+        steadyState ? "steady-state" : "transient");
   }
 
   @Override

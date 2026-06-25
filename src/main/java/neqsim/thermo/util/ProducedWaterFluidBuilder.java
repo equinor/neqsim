@@ -148,7 +148,7 @@ public class ProducedWaterFluidBuilder {
 
     for (Map.Entry<String, Double> entry : ions.entrySet()) {
       if (entry.getValue() > 0.0) {
-	system.addComponent(entry.getKey(), entry.getValue());
+        system.addComponent(entry.getKey(), entry.getValue());
       }
     }
 
@@ -194,7 +194,7 @@ public class ProducedWaterFluidBuilder {
     SystemElectrolyteCPAstatoil system = new SystemElectrolyteCPAstatoil(temperatureK, pressureBara);
     for (Map.Entry<String, Double> entry : moleFractions.entrySet()) {
       if (entry.getValue() > 0.0) {
-	system.addComponent(entry.getKey(), entry.getValue());
+        system.addComponent(entry.getKey(), entry.getValue());
       }
     }
 
@@ -304,7 +304,7 @@ public class ProducedWaterFluidBuilder {
       comp.put("Cl-", naclMoles / total);
     } else {
       throw new IllegalArgumentException("Unknown water type: " + waterType
-	  + ". Valid types: condensed_water, brackish, seawater, formation_low, formation_high");
+          + ". Valid types: condensed_water, brackish, seawater, formation_low, formation_high");
     }
     return comp;
   }
@@ -348,6 +348,6 @@ public class ProducedWaterFluidBuilder {
       return 55.845;
     }
     throw new IllegalArgumentException(
-	"Unknown ion: " + ionName + ". Supported: Na+, Cl-, Ca++, Mg++, HCO3-, SO4--, K+, Sr++, Ba++, Fe++");
+        "Unknown ion: " + ionName + ". Supported: Na+, Cl-, Ca++, Mg++, HCO3-, SO4--, K+, Sr++, Ba++, Fe++");
   }
 }

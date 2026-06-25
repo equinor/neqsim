@@ -233,31 +233,31 @@ public class ArtificialLiftScreener implements Serializable {
     if (gasLiftAvailable) {
       MethodResult gasLift = evaluateGasLift();
       if (gasLift != null) {
-	result.addMethod(gasLift);
+        result.addMethod(gasLift);
       }
     }
 
     if (electricityAvailable) {
       MethodResult esp = evaluateESP();
       if (esp != null) {
-	result.addMethod(esp);
+        result.addMethod(esp);
       }
 
       MethodResult rodPump = evaluateRodPump();
       if (rodPump != null) {
-	result.addMethod(rodPump);
+        result.addMethod(rodPump);
       }
 
       MethodResult pcp = evaluatePCP();
       if (pcp != null) {
-	result.addMethod(pcp);
+        result.addMethod(pcp);
       }
     }
 
     if (hydraulicPowerAvailable || gasLiftAvailable) {
       MethodResult jetPump = evaluateJetPump();
       if (jetPump != null) {
-	result.addMethod(jetPump);
+        result.addMethod(jetPump);
       }
     }
 
@@ -347,14 +347,14 @@ public class ArtificialLiftScreener implements Serializable {
 
     // Economics
     result.capex = LiftMethod.GAS_LIFT.getTypicalCapex() + glResult.getValveCount() * 5000; // $5000
-											    // per
-											    // valve
+    // per
+    // valve
     double gasConsumption = glResult.injectionRateAtOptimal * 1e6; // Sm3/day
     result.opex = LiftMethod.GAS_LIFT.getTypicalOpex() + gasConsumption * gasCost
-	+ glResult.compressionPower * 24 * electricityCost;
+        + glResult.compressionPower * 24 * electricityCost;
 
     result.additionalInfo = String.format("GLR=%.0f Sm3/Sm3, Inj=%.2f MSm3/d, Valves=%d", glResult.optimalGLR,
-	glResult.injectionRateAtOptimal, glResult.getValveCount());
+        glResult.injectionRateAtOptimal, glResult.getValveCount());
 
     result.calculateEconomics(oilPrice, discountRate, economicLife);
 
@@ -865,19 +865,19 @@ public class ArtificialLiftScreener implements Serializable {
       // Assign ranks
       int rank = 1;
       for (MethodResult method : methods) {
-	if (method.feasible) {
-	  method.rank = rank++;
-	} else {
-	  method.rank = 0; // Infeasible
-	}
+        if (method.feasible) {
+          method.rank = rank++;
+        } else {
+          method.rank = 0; // Infeasible
+        }
       }
 
       // Recommended is highest ranked feasible method
       for (MethodResult method : methods) {
-	if (method.feasible && method.productionRate > 0) {
-	  recommendedMethod = method;
-	  break;
-	}
+        if (method.feasible && method.productionRate > 0) {
+          recommendedMethod = method;
+          break;
+        }
       }
     }
 
@@ -916,9 +916,9 @@ public class ArtificialLiftScreener implements Serializable {
     public List<MethodResult> getFeasibleMethods() {
       List<MethodResult> feasible = new ArrayList<>();
       for (MethodResult m : methods) {
-	if (m.feasible) {
-	  feasible.add(m);
-	}
+        if (m.feasible) {
+          feasible.add(m);
+        }
       }
       return feasible;
     }
@@ -936,11 +936,11 @@ public class ArtificialLiftScreener implements Serializable {
       sb.append(String.format("Natural flow rate: %.0f Sm3/day%n", naturalFlowRate));
       sb.append("\n");
       sb.append(String.format("Recommended: %s%n",
-	  recommendedMethod != null ? recommendedMethod.method.getDisplayName() : "None"));
+          recommendedMethod != null ? recommendedMethod.method.getDisplayName() : "None"));
       sb.append("\n");
       sb.append("Method Rankings:\n");
       for (MethodResult method : methods) {
-	sb.append(String.format("  %s%n", method));
+        sb.append(String.format("  %s%n", method));
       }
       return sb.toString();
     }
@@ -993,8 +993,8 @@ public class ArtificialLiftScreener implements Serializable {
      */
     public void calculateEconomics(double oilPrice, double discountRate, int years) {
       if (!feasible || productionRate <= 0) {
-	this.npv = Double.NEGATIVE_INFINITY;
-	return;
+        this.npv = Double.NEGATIVE_INFINITY;
+        return;
       }
 
       // Convert Sm3/day to bbl/day (1 Sm3 ≈ 6.29 bbl)
@@ -1008,7 +1008,7 @@ public class ArtificialLiftScreener implements Serializable {
       // NPV calculation
       double npvSum = -capex;
       for (int year = 1; year <= years; year++) {
-	npvSum += annualCashFlow / Math.pow(1 + discountRate, year);
+        npvSum += annualCashFlow / Math.pow(1 + discountRate, year);
       }
 
       this.npv = npvSum;
@@ -1026,11 +1026,11 @@ public class ArtificialLiftScreener implements Serializable {
     @Override
     public String toString() {
       if (!feasible) {
-	return String.format("%s: INFEASIBLE - %s", method.getDisplayName(), infeasibilityReason);
+        return String.format("%s: INFEASIBLE - %s", method.getDisplayName(), infeasibilityReason);
       }
 
       return String.format("#%d %s: %.0f Sm3/d, %.0f kW, NPV=%.0f MUSD %s", rank, method.getDisplayName(),
-	  productionRate, powerConsumption, npv / 1e6, additionalInfo);
+          productionRate, powerConsumption, npv / 1e6, additionalInfo);
     }
   }
 }

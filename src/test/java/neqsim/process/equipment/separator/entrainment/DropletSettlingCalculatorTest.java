@@ -28,7 +28,7 @@ class DropletSettlingCalculatorTest {
     // At gasDensity=50, Re may be significant so Schiller-Naumann gives lower velocity
     // Just check it's in a physically reasonable range and positive
     assertTrue(vt > 0.05 * vStokes && vt <= vStokes,
-	"Terminal velocity should be between 5% and 100% of Stokes, got: " + vt);
+        "Terminal velocity should be between 5% and 100% of Stokes, got: " + vt);
   }
 
   @Test
@@ -46,7 +46,7 @@ class DropletSettlingCalculatorTest {
 
     // Speed should be physically reasonable (cm/s order)
     assertTrue(Math.abs(vt) > 0.001 && Math.abs(vt) < 1.0,
-	"Bubble velocity should be in reasonable range. Got: " + vt + " m/s");
+        "Bubble velocity should be in reasonable range. Got: " + vt + " m/s");
   }
 
   @Test
@@ -74,14 +74,14 @@ class DropletSettlingCalculatorTest {
     double gasViscosity = 1.5e-5; // Pa.s
 
     double dCut = DropletSettlingCalculator.calcCriticalDiameter(height, residenceTime, gasDensity, liquidDensity,
-	gasViscosity);
+        gasViscosity);
 
     // Critical diameter should be positive and physically reasonable
     assertTrue(dCut > 1e-6 && dCut < 1e-2, "Critical diameter should be in um-mm range. Got: " + dCut * 1e6 + " um");
 
     // Longer residence time should give smaller cut diameter
     double dCutLong = DropletSettlingCalculator.calcCriticalDiameter(height, 100.0, gasDensity, liquidDensity,
-	gasViscosity);
+        gasViscosity);
     assertTrue(dCutLong < dCut, "Longer residence time should give smaller cut diameter");
   }
 
@@ -103,21 +103,22 @@ class DropletSettlingCalculatorTest {
     // Csanady (1963) + Koenders et al. (2015) implementation should increase effective
     // cut diameter relative to pure gravity settling under turbulent conditions.
     double gravityCut = 40e-6; // 40 um
-    double corrected = DropletSettlingCalculator.calcTurbulenceCorrectedCutDiameter(gravityCut, 3.0, // gas velocity
-												     // [m/s]
-	1.0, // settling height [m]
-	0.10, // operating K-factor [m/s]
-	0.15, // design K-factor [m/s]
-	50.0, // gas density [kg/m3]
-	800.0, // liquid density [kg/m3]
-	1.5e-5); // gas viscosity [Pa.s]
+    double corrected = DropletSettlingCalculator.calcTurbulenceCorrectedCutDiameter(gravityCut, 3.0, // gas
+                                                                                                     // velocity
+        // [m/s]
+        1.0, // settling height [m]
+        0.10, // operating K-factor [m/s]
+        0.15, // design K-factor [m/s]
+        50.0, // gas density [kg/m3]
+        800.0, // liquid density [kg/m3]
+        1.5e-5); // gas viscosity [Pa.s]
 
     assertTrue(corrected >= gravityCut,
-	"Turbulence correction should not reduce cut diameter. gravity=" + gravityCut + " corrected=" + corrected);
+        "Turbulence correction should not reduce cut diameter. gravity=" + gravityCut + " corrected=" + corrected);
 
     // Physical cap in implementation: correction factor <= 3.0
     assertTrue(corrected <= gravityCut * 3.0,
-	"Correction should obey capped factor (<=3x). gravity=" + gravityCut + " corrected=" + corrected);
+        "Correction should obey capped factor (<=3x). gravity=" + gravityCut + " corrected=" + corrected);
   }
 
   @Test
@@ -127,11 +128,11 @@ class DropletSettlingCalculatorTest {
     // - Gravity cut diameter <= 100 um
     // - Two-phase liquid residence time >= 180 s
     DropletSettlingCalculator.ApiComplianceResult result = DropletSettlingCalculator.checkApi12JCompliance(80e-6, // 80
-														  // um
-	0.10, // below 0.120 m/s limit
-	false, // no mist eliminator
-	240.0, // > 180 s
-	"horizontal", false);
+                                                                                                                  // um
+        0.10, // below 0.120 m/s limit
+        false, // no mist eliminator
+        240.0, // > 180 s
+        "horizontal", false);
 
     assertTrue(result.gasLiquidSectionCompliant, "Gas section should be API 12J compliant");
     assertTrue(result.liquidSectionCompliant, "Liquid section should be API 12J compliant");
@@ -145,16 +146,16 @@ class DropletSettlingCalculatorTest {
     // - Cut diameter > 100 um (violated)
     // - Three-phase HRT < 300 s (violated)
     DropletSettlingCalculator.ApiComplianceResult result = DropletSettlingCalculator.checkApi12JCompliance(130e-6, // 130
-														   // um
-														   // (too
-														   // high)
-	0.13, // above vertical limit 0.107
-	false, // no mist eliminator
-	200.0, // below 300 s for 3-phase
-	"vertical", true);
+        // um
+        // (too
+        // high)
+        0.13, // above vertical limit 0.107
+        false, // no mist eliminator
+        200.0, // below 300 s for 3-phase
+        "vertical", true);
 
     assertTrue(!result.gasLiquidSectionCompliant,
-	"Gas section should be non-compliant for high cut diameter and K-factor");
+        "Gas section should be non-compliant for high cut diameter and K-factor");
     assertTrue(!result.liquidSectionCompliant, "Liquid section should be non-compliant for low 3-phase residence time");
     assertTrue(!result.isFullyCompliant(), "Overall API 12J status should be non-compliant");
   }

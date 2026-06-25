@@ -3,6 +3,8 @@ package neqsim.process.equipment.pipeline.twophasepipe;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,8 +12,6 @@ import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Integration tests for TwoFluidPipe transient multiphase flow solver.
@@ -323,9 +323,9 @@ class TwoFluidPipeIntegrationTest {
 
     // Debug output
     logger.printf(org.apache.logging.log4j.Level.INFO, "Low flow: vG=%.2f m/s, holdup=%.4f (%.2f%%)%n", avgLowVG,
-	avgLowHoldup, avgLowHoldup * 100);
+        avgLowHoldup, avgLowHoldup * 100);
     logger.printf(org.apache.logging.log4j.Level.INFO, "High flow: vG=%.2f m/s, holdup=%.4f (%.2f%%)%n", avgHighVG,
-	avgHighHoldup, avgHighHoldup * 100);
+        avgHighHoldup, avgHighHoldup * 100);
 
     // Get flow regimes
     PipeSection.FlowRegime[] lowRegimes = lowFlowPipe.getFlowRegimeProfile();
@@ -339,9 +339,9 @@ class TwoFluidPipeIntegrationTest {
 
     // For now, just verify both have reasonable holdups
     assertTrue(avgLowHoldup > 0 && avgLowHoldup < 0.5,
-	String.format("Low flow holdup should be reasonable: %.4f", avgLowHoldup));
+        String.format("Low flow holdup should be reasonable: %.4f", avgLowHoldup));
     assertTrue(avgHighHoldup > 0 && avgHighHoldup < 0.5,
-	String.format("High flow holdup should be reasonable: %.4f", avgHighHoldup));
+        String.format("High flow holdup should be reasonable: %.4f", avgHighHoldup));
 
     // Check liquid inventory is positive and reasonable
     double lowInventory = lowFlowPipe.getLiquidInventory("m3");
@@ -382,7 +382,7 @@ class TwoFluidPipeIntegrationTest {
 
     // Configure subsea thermal model with 50mm PU foam insulation
     thermalPipe.configureSubseaThermalModel(0.050, 0.040,
-	neqsim.process.equipment.pipeline.RadialThermalLayer.MaterialType.PU_FOAM);
+        neqsim.process.equipment.pipeline.RadialThermalLayer.MaterialType.PU_FOAM);
 
     // Verify multi-layer model is enabled
     assertTrue(thermalPipe.isUseMultilayerThermalModel(), "Multi-layer thermal model should be enabled");
@@ -399,7 +399,7 @@ class TwoFluidPipeIntegrationTest {
     double uValue = calc.calculateOverallUValue();
     logger.printf(org.apache.logging.log4j.Level.INFO, "Overall U-value: %.2f W/(m²·K)%n", uValue);
     assertTrue(uValue > 0.3 && uValue < 20.0,
-	String.format("U-value should be reasonable for insulated pipe: %.2f", uValue));
+        String.format("U-value should be reasonable for insulated pipe: %.2f", uValue));
 
     // Run and verify temperature drops along pipe
     thermalPipe.run();
@@ -412,7 +412,7 @@ class TwoFluidPipeIntegrationTest {
     double inletTemp = tempProfile[0];
     double outletTemp = tempProfile[tempProfile.length - 1];
     logger.printf(org.apache.logging.log4j.Level.INFO, "Inlet temp: %.1f K (%.1f °C), Outlet temp: %.1f K (%.1f °C)%n",
-	inletTemp, inletTemp - 273.15, outletTemp, outletTemp - 273.15);
+        inletTemp, inletTemp - 273.15, outletTemp, outletTemp - 273.15);
 
     assertTrue(outletTemp <= inletTemp, "Temperature should decrease or stay constant along pipe");
   }
@@ -446,7 +446,7 @@ class TwoFluidPipeIntegrationTest {
 
     // Configure with good insulation (60mm PU foam, 40mm concrete)
     subseaPipe.configureSubseaThermalModel(0.060, 0.040,
-	neqsim.process.equipment.pipeline.RadialThermalLayer.MaterialType.PU_FOAM);
+        neqsim.process.equipment.pipeline.RadialThermalLayer.MaterialType.PU_FOAM);
 
     // Set hydrate formation temperature (typical: 20°C at 100 bar for this composition)
     subseaPipe.setHydrateFormationTemperature(20.0, "C");
@@ -505,7 +505,7 @@ class TwoFluidPipeIntegrationTest {
     insulatedPipe.setNumberOfSections(10);
     insulatedPipe.setSurfaceTemperature(4.0, "C");
     insulatedPipe.configureSubseaThermalModel(0.050, 0,
-	neqsim.process.equipment.pipeline.RadialThermalLayer.MaterialType.PU_FOAM);
+        neqsim.process.equipment.pipeline.RadialThermalLayer.MaterialType.PU_FOAM);
 
     // Compare U-values
     double uBare = barePipe.getThermalCalculator().calculateOverallUValue();

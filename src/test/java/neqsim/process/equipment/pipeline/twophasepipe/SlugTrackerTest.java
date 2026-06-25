@@ -170,7 +170,7 @@ class SlugTrackerTest {
     for (int i = 0; i < 50; i++) {
       tracker.advanceSlugs(sections, 1.0);
       if (tracker.getSlugCount() == 1) {
-	break;
+        break;
       }
     }
 
@@ -241,8 +241,8 @@ class SlugTrackerTest {
     boolean foundSlugBody = false;
     for (PipeSection section : sections) {
       if (section.isInSlugBody()) {
-	foundSlugBody = true;
-	break;
+        foundSlugBody = true;
+        break;
       }
     }
     assertTrue(foundSlugBody, "Some section should be marked as in slug body");

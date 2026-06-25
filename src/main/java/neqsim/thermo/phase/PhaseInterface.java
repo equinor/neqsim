@@ -795,7 +795,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * <p>
    * NB! Phase fraction <code>beta</code> is not updated by this method. Must be done separately to keep consistency
    * between phase and component calculation of total number of moles in system.
-   * </p>
    *
    * @param component Component number to change
    * @param dn Number of moles of component added to phase
@@ -811,7 +810,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * <p>
    * NB! Phase fraction <code>beta</code> is not updated by this method. Must be done separately to keep consistency
    * between phase and component calculation of total number of moles in system.
-   * </p>
    *
    * @param component Component number to change
    * @param dn Number of moles of component added to phase and system
@@ -829,7 +827,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * <p>
    * NB! Phase fraction <code>beta</code> is not updated by this method. Must be done separately to keep consistency
    * between phase and component calculation of total number of moles in system.
-   * </p>
    *
    * @param component Component number to change
    * @param dn Number of moles of component to add to phase
@@ -1257,7 +1254,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public default boolean hasIons() {
     for (int i = 0; i < getNumberOfComponents(); i++) {
       if (getComponent(i).getIonicCharge() != 0 || getComponent(i).isIsIon()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -1705,6 +1702,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * φ = -ln(a_w) / (M_w * Σm_i)
    * </pre>
    *
+   * <p>
    * where:
    * <ul>
    * <li>a_w = water activity</li>
@@ -1911,7 +1909,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
       ComponentInterface comp = getComponent(i);
       String compName = comp.getComponentName();
       if (compName != null && compName.toLowerCase().contains("asphaltene")) {
-	asphalteneFraction += comp.getx();
+        asphalteneFraction += comp.getx();
       }
     }
 

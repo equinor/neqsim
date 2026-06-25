@@ -14,6 +14,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * P = \frac{R T}{v - b} - \frac{a \alpha}{v (v + b) + b (v - b)}
  * </pre>
  *
+ * <p>
  * where {@code R} is the gas constant, {@code T} is the temperature, {@code v} is the molar volume, and {@code a} and
  * {@code b} are component specific parameters. The temperature dependent parameter {@code \alpha} is calculated from
  * the acentric factor {@code \omega} and critical temperature {@code T_c} as

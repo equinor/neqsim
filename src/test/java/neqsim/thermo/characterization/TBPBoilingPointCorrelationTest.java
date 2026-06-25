@@ -63,7 +63,7 @@ public class TBPBoilingPointCorrelationTest {
 
     // Verify component was added
     assertEquals(initialComponentCount + 1, testSystem.getNumberOfComponents(),
-	"Component should have been added to system");
+        "Component should have been added to system");
 
     // Verify the component has the correct properties
     ComponentInterface addedComponent = testSystem.getComponent(testSystem.getNumberOfComponents() - 1);
@@ -100,7 +100,7 @@ public class TBPBoilingPointCorrelationTest {
 
     // Verify component was added
     assertEquals(initialComponentCount + 1, testSystem.getNumberOfComponents(),
-	"Component should have been added to system");
+        "Component should have been added to system");
 
     // Verify the component has the correct properties
     ComponentInterface addedComponent = testSystem.getComponent(testSystem.getNumberOfComponents() - 1);
@@ -108,7 +108,7 @@ public class TBPBoilingPointCorrelationTest {
     assertEquals(moles, addedComponent.getNumberOfmoles(), 1e-10, "Moles should match");
     // Optionally check molar mass is reasonable
     assertTrue(addedComponent.getMolarMass() > 0.05 && addedComponent.getMolarMass() < 0.5,
-	"Molar mass should be in a reasonable range");
+        "Molar mass should be in a reasonable range");
   }
 
   @Test
@@ -119,7 +119,7 @@ public class TBPBoilingPointCorrelationTest {
 
     // Calculate molar mass using TBP correlation
     double calculatedMolarMass = ((neqsim.thermo.system.SystemThermo) testSystem)
-	.calculateMolarMassFromDensityAndBoilingPoint(density, boilingPoint);
+        .calculateMolarMassFromDensityAndBoilingPoint(density, boilingPoint);
 
     // Verify molar mass is in reasonable range for nC10 (should be close to 0.142 kg/mol)
     assertTrue(calculatedMolarMass > 0.13, "Molar mass should be greater than 0.13");
@@ -141,7 +141,7 @@ public class TBPBoilingPointCorrelationTest {
 
     // Verify component was added
     assertEquals(initialComponentCount + 1, testSystem.getNumberOfComponents(),
-	"Component should have been added to system");
+        "Component should have been added to system");
 
     // Verify the component has the correct properties
     ComponentInterface addedComponent = testSystem.getComponent(testSystem.getNumberOfComponents() - 1);

@@ -326,33 +326,33 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
     // Find next available slot
     for (ValveSkid skid : valveSkids) {
       if (!skid.isActive()) {
-	skid.setWellName(wellName);
-	skid.setConnectedStream(wellStream);
-	skid.setActive(true);
+        skid.setWellName(wellName);
+        skid.setConnectedStream(wellStream);
+        skid.setActive(true);
 
-	// Create production valve
-	ThrottlingValve prodValve = new ThrottlingValve(getName() + " Slot " + skid.getSlotNumber() + " Prod",
-	    wellStream);
-	prodValve.setPercentValveOpening(100.0);
-	skid.setProductionValve(prodValve);
+        // Create production valve
+        ThrottlingValve prodValve = new ThrottlingValve(getName() + " Slot " + skid.getSlotNumber() + " Prod",
+            wellStream);
+        prodValve.setPercentValveOpening(100.0);
+        skid.setProductionValve(prodValve);
 
-	// Create test valve if test header exists
-	if (hasTestHeader) {
-	  ThrottlingValve testValve = new ThrottlingValve(getName() + " Slot " + skid.getSlotNumber() + " Test",
-	      wellStream);
-	  testValve.setPercentValveOpening(0.0); // Closed by default
-	  skid.setTestValve(testValve);
-	}
+        // Create test valve if test header exists
+        if (hasTestHeader) {
+          ThrottlingValve testValve = new ThrottlingValve(getName() + " Slot " + skid.getSlotNumber() + " Test",
+              wellStream);
+          testValve.setPercentValveOpening(0.0); // Closed by default
+          skid.setTestValve(testValve);
+        }
 
-	// Add to mixers based on routing
-	if ("production".equals(skid.getRouting())) {
-	  productionMixer.addStream(wellStream);
-	} else if ("test".equals(skid.getRouting()) && hasTestHeader) {
-	  testMixer.addStream(wellStream);
-	}
+        // Add to mixers based on routing
+        if ("production".equals(skid.getRouting())) {
+          productionMixer.addStream(wellStream);
+        } else if ("test".equals(skid.getRouting()) && hasTestHeader) {
+          testMixer.addStream(wellStream);
+        }
 
-	wellSlotMap.put(wellName, skid.getSlotNumber());
-	return skid.getSlotNumber();
+        wellSlotMap.put(wellName, skid.getSlotNumber());
+        return skid.getSlotNumber();
       }
     }
     throw new IllegalStateException("No available slots in manifold");
@@ -369,10 +369,10 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
       ValveSkid skid = valveSkids.get(slotNum - 1);
       skid.setRouting("production");
       if (skid.getProductionValve() != null) {
-	skid.getProductionValve().setPercentValveOpening(100.0);
+        skid.getProductionValve().setPercentValveOpening(100.0);
       }
       if (skid.getTestValve() != null) {
-	skid.getTestValve().setPercentValveOpening(0.0);
+        skid.getTestValve().setPercentValveOpening(0.0);
       }
     }
   }
@@ -391,10 +391,10 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
       ValveSkid skid = valveSkids.get(slotNum - 1);
       skid.setRouting("test");
       if (skid.getProductionValve() != null) {
-	skid.getProductionValve().setPercentValveOpening(0.0);
+        skid.getProductionValve().setPercentValveOpening(0.0);
       }
       if (skid.getTestValve() != null) {
-	skid.getTestValve().setPercentValveOpening(100.0);
+        skid.getTestValve().setPercentValveOpening(100.0);
       }
     }
   }
@@ -409,10 +409,10 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
     if (slotNum != null) {
       ValveSkid skid = valveSkids.get(slotNum - 1);
       if (skid.getProductionValve() != null) {
-	skid.getProductionValve().setPercentValveOpening(0.0);
+        skid.getProductionValve().setPercentValveOpening(0.0);
       }
       if (skid.getTestValve() != null) {
-	skid.getTestValve().setPercentValveOpening(0.0);
+        skid.getTestValve().setPercentValveOpening(0.0);
       }
     }
   }
@@ -426,21 +426,21 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
 
     for (ValveSkid skid : valveSkids) {
       if (skid.isActive() && skid.getConnectedStream() != null) {
-	if ("production".equals(skid.getRouting())) {
-	  // Run through production valve
-	  if (skid.getProductionValve() != null && skid.getProductionValve().getPercentValveOpening() > 0) {
-	    skid.getProductionValve().setInletStream(skid.getConnectedStream());
-	    skid.getProductionValve().run(id);
-	    productionMixer.addStream(skid.getProductionValve().getOutletStream());
-	  }
-	} else if ("test".equals(skid.getRouting()) && hasTestHeader) {
-	  // Run through test valve
-	  if (skid.getTestValve() != null && skid.getTestValve().getPercentValveOpening() > 0) {
-	    skid.getTestValve().setInletStream(skid.getConnectedStream());
-	    skid.getTestValve().run(id);
-	    testMixer.addStream(skid.getTestValve().getOutletStream());
-	  }
-	}
+        if ("production".equals(skid.getRouting())) {
+          // Run through production valve
+          if (skid.getProductionValve() != null && skid.getProductionValve().getPercentValveOpening() > 0) {
+            skid.getProductionValve().setInletStream(skid.getConnectedStream());
+            skid.getProductionValve().run(id);
+            productionMixer.addStream(skid.getProductionValve().getOutletStream());
+          }
+        } else if ("test".equals(skid.getRouting()) && hasTestHeader) {
+          // Run through test valve
+          if (skid.getTestValve() != null && skid.getTestValve().getPercentValveOpening() > 0) {
+            skid.getTestValve().setInletStream(skid.getConnectedStream());
+            skid.getTestValve().run(id);
+            testMixer.addStream(skid.getTestValve().getOutletStream());
+          }
+        }
       }
     }
 
@@ -492,7 +492,7 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
       SystemInterface fluid = stream.getFluid();
       double newPressure = fluid.getPressure() - pressureDrop;
       if (newPressure > 0) {
-	fluid.setPressure(newPressure);
+        fluid.setPressure(newPressure);
       }
     }
   }
@@ -521,9 +521,9 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
     java.util.List<StreamInterface> in = new java.util.ArrayList<>();
     if (valveSkids != null) {
       for (ValveSkid skid : valveSkids) {
-	if (skid != null && skid.getConnectedStream() != null) {
-	  in.add(skid.getConnectedStream());
-	}
+        if (skid != null && skid.getConnectedStream() != null) {
+          in.add(skid.getConnectedStream());
+        }
       }
     }
     return in;
@@ -551,7 +551,7 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
     int count = 0;
     for (ValveSkid skid : valveSkids) {
       if (skid.isActive()) {
-	count++;
+        count++;
       }
     }
     return count;

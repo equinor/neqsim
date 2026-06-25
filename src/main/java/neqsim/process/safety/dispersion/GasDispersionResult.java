@@ -119,9 +119,9 @@ public class GasDispersionResult implements Serializable {
       double toxicThresholdPpm, double toxicDistanceM, double windSpeedMPerS, char stabilityClass,
       String screeningBasis) {
     this(scenarioName, selectedModel, massReleaseRateKgPerS, flammableMassReleaseRateKgPerS, sourceDensityKgPerM3,
-	airDensityKgPerM3, fuelMoleFraction, fuelMassFraction, lowerFlammableLimitVolumeFraction, 0.5,
-	distanceToHalfLflM, distanceToHalfLflM, distanceToLflM, flammableCloudVolumeM3, toxicComponentName,
-	toxicThresholdPpm, toxicDistanceM, windSpeedMPerS, stabilityClass, screeningBasis);
+        airDensityKgPerM3, fuelMoleFraction, fuelMassFraction, lowerFlammableLimitVolumeFraction, 0.5,
+        distanceToHalfLflM, distanceToHalfLflM, distanceToLflM, flammableCloudVolumeM3, toxicComponentName,
+        toxicThresholdPpm, toxicDistanceM, windSpeedMPerS, stabilityClass, screeningBasis);
   }
 
   /**
@@ -415,6 +415,6 @@ public class GasDispersionResult implements Serializable {
   @Override
   public String toString() {
     return String.format(Locale.ROOT, "GasDispersionResult[%s, model=%s, rate=%.3f kg/s, LFL=%.1f m, 50%%LFL=%.1f m]",
-	scenarioName, selectedModel, massReleaseRateKgPerS, distanceToLflM, distanceToHalfLflM);
+        scenarioName, selectedModel, massReleaseRateKgPerS, distanceToLflM, distanceToHalfLflM);
   }
 }

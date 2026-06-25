@@ -192,21 +192,21 @@ public class Standard_AGA3 extends neqsim.standards.Standard {
       // qm = Cd * Ev * Y * (pi/4) * d^2 * sqrt(2 * rho * dP)
       double areaOrifice = (Math.PI / 4.0) * orificeDiameter * orificeDiameter;
       massFlowRate = dischargeCoefficient * velocityOfApproachFactor * expansionFactor * areaOrifice
-	  * Math.sqrt(2.0 * flowingDensity * differentialPressure);
+          * Math.sqrt(2.0 * flowingDensity * differentialPressure);
 
       // Iterate to refine Cd based on actual Reynolds number
       for (int iter = 0; iter < 5; iter++) {
-	if (viscosity > 0.0 && orificeDiameter > 0.0) {
-	  reynoldsNumber = 4.0 * massFlowRate / (Math.PI * orificeDiameter * viscosity);
-	}
-	dischargeCoefficient = calculateDischargeCoefficient(betaRatio, reynoldsNumber);
-	massFlowRate = dischargeCoefficient * velocityOfApproachFactor * expansionFactor * areaOrifice
-	    * Math.sqrt(2.0 * flowingDensity * differentialPressure);
+        if (viscosity > 0.0 && orificeDiameter > 0.0) {
+          reynoldsNumber = 4.0 * massFlowRate / (Math.PI * orificeDiameter * viscosity);
+        }
+        dischargeCoefficient = calculateDischargeCoefficient(betaRatio, reynoldsNumber);
+        massFlowRate = dischargeCoefficient * velocityOfApproachFactor * expansionFactor * areaOrifice
+            * Math.sqrt(2.0 * flowingDensity * differentialPressure);
       }
 
       // Step 5: Convert to standard volume flow rate
       if (standardDensity > 0.0) {
-	standardVolumeFlowRate = massFlowRate / standardDensity * 3600.0; // Sm3/h
+        standardVolumeFlowRate = massFlowRate / standardDensity * 3600.0; // Sm3/h
       }
 
     } catch (Exception ex) {
@@ -246,10 +246,10 @@ public class Standard_AGA3 extends neqsim.standards.Standard {
     double m2 = 2.0 * l2prime / (1.0 - beta);
 
     double upstreamTerm = (0.0188 + 0.0063 * a1) * beta * beta * beta * Math.sqrt(beta) * (1.0 - 0.11 * a1) * l1
-	/ (1.0 - beta);
+        / (1.0 - beta);
 
     double downstreamTerm = -0.031 * (m2 - 0.8 * Math.pow(m2, 1.1)) * beta * beta * beta * beta
-	* (1.0 + 0.8 * Math.exp(-10.0 * l1));
+        * (1.0 + 0.8 * Math.exp(-10.0 * l1));
 
     return cInf + upstreamTerm + downstreamTerm;
   }
@@ -267,7 +267,7 @@ public class Standard_AGA3 extends neqsim.standards.Standard {
     // ISO 5167 / AGA 3 expansion factor
     double tau = dp / p1;
     return 1.0
-	- (0.351 + 0.256 * Math.pow(beta, 4) + 0.93 * Math.pow(beta, 8)) * (1.0 - Math.pow(1.0 - tau, 1.0 / kappa));
+        - (0.351 + 0.256 * Math.pow(beta, 4) + 0.93 * Math.pow(beta, 8)) * (1.0 - Math.pow(1.0 - tau, 1.0 / kappa));
   }
 
   /** {@inheritDoc} */
@@ -276,18 +276,18 @@ public class Standard_AGA3 extends neqsim.standards.Standard {
     double value = getValue(returnParameter);
     if ("massFlowRate".equals(returnParameter)) {
       if ("kg/h".equals(returnUnit)) {
-	return value * 3600.0;
+        return value * 3600.0;
       }
       if ("lb/h".equals(returnUnit)) {
-	return value * 3600.0 * 2.20462;
+        return value * 3600.0 * 2.20462;
       }
     }
     if ("standardVolumeFlowRate".equals(returnParameter)) {
       if ("SCFD".equals(returnUnit) || "scf/d".equals(returnUnit)) {
-	return value * 24.0 * 35.3147; // Sm3/h to scf/d
+        return value * 24.0 * 35.3147; // Sm3/h to scf/d
       }
       if ("MMSCFD".equals(returnUnit)) {
-	return value * 24.0 * 35.3147 / 1.0e6;
+        return value * 24.0 * 35.3147 / 1.0e6;
       }
     }
     return value;
@@ -333,8 +333,8 @@ public class Standard_AGA3 extends neqsim.standards.Standard {
       return "Sm3/h";
     }
     if ("dischargeCoefficient".equals(returnParameter) || "Cd".equals(returnParameter)
-	|| "expansionFactor".equals(returnParameter) || "Y".equals(returnParameter)
-	|| "betaRatio".equals(returnParameter)) {
+        || "expansionFactor".equals(returnParameter) || "Y".equals(returnParameter)
+        || "betaRatio".equals(returnParameter)) {
       return "-";
     }
     if ("reynoldsNumber".equals(returnParameter) || "Re".equals(returnParameter)) {

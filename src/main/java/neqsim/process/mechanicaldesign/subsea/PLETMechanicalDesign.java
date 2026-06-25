@@ -346,7 +346,7 @@ public class PLETMechanicalDesign extends MechanicalDesign {
     costEstimator = new SubseaCostEstimator(SubseaCostEstimator.Region.NORWAY);
 
     costEstimator.calculatePLETCost(plet.getDryWeight(), plet.getNominalBoreInches(), plet.getWaterDepth(),
-	plet.hasIsolationValve(), plet.hasPiggingFacility());
+        plet.hasIsolationValve(), plet.hasPiggingFacility());
 
     totalCostUSD = costEstimator.getTotalCost();
     equipmentCostUSD = costEstimator.getEquipmentCost();

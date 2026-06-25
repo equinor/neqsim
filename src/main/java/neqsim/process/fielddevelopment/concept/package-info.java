@@ -31,10 +31,10 @@
  * <pre>
  * FieldConcept concept = FieldConcept.builder().name("North Sea Gas Development")
  *     .reservoir(ReservoirInput.builder().fluidType(FluidType.RICH_GAS).reservoirTempC(85.0)
- * 	.reservoirPressureBara(350.0).co2Percent(3.5).build())
+ *         .reservoirPressureBara(350.0).co2Percent(3.5).build())
  *     .wells(WellsInput.builder().producerCount(4).ratePerWellSm3d(500000.0).build())
  *     .infrastructure(InfrastructureInput.builder().processingLocation(ProcessingLocation.PLATFORM)
- * 	.exportType(ExportType.PIPELINE_GAS).waterDepthM(120.0).build())
+ *         .exportType(ExportType.PIPELINE_GAS).waterDepthM(120.0).build())
  *     .build();
  * </pre>
  *

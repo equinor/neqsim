@@ -111,27 +111,27 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
 
       // Override Lennard-Jones diameter if we have better data
       if (ionData.sigma > 0) {
-	this.setLennardJonesMolecularDiameter(ionData.sigma);
+        this.setLennardJonesMolecularDiameter(ionData.sigma);
 
-	// Calculate ion b parameter from ionic diameter (same approach as Furst)
-	// b = α × σ³ + β, using FurstElectrolyteConstants for CPA
-	double sigma = ionData.sigma;
-	double ionB = (neqsim.thermo.util.constants.FurstElectrolyteConstants.furstParamsCPA[0] * Math.pow(sigma, 3.0)
-	    + neqsim.thermo.util.constants.FurstElectrolyteConstants.furstParamsCPA[1]) * 1e5;
-	this.setb(ionB);
+        // Calculate ion b parameter from ionic diameter (same approach as Furst)
+        // b = α × σ³ + β, using FurstElectrolyteConstants for CPA
+        double sigma = ionData.sigma;
+        double ionB = (neqsim.thermo.util.constants.FurstElectrolyteConstants.furstParamsCPA[0] * Math.pow(sigma, 3.0)
+            + neqsim.thermo.util.constants.FurstElectrolyteConstants.furstParamsCPA[1]) * 1e5;
+        this.setb(ionB);
 
-	// Ion a parameter is essentially zero (no van der Waals attraction)
-	this.seta(1.0e-35);
+        // Ion a parameter is essentially zero (no van der Waals attraction)
+        this.seta(1.0e-35);
       }
     } else if (getIonicCharge() != 0) {
       // For ions without specific parameters, use empirical Born radius
       double sigma = getLennardJonesMolecularDiameter();
       if (sigma > 0) {
-	if (getIonicCharge() > 0) {
-	  this.bornRadius = 0.5 * sigma + 0.1;
-	} else {
-	  this.bornRadius = 0.5 * sigma + 0.85;
-	}
+        if (getIonicCharge() > 0) {
+          this.bornRadius = 0.5 * sigma + 0.1;
+        } else {
+          this.bornRadius = 0.5 * sigma + 0.85;
+        }
       }
     }
   }
@@ -149,7 +149,7 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
     double temperature = phase.getTemperature();
     double pressure = phase.getPressure();
     storedLogFugCoeff = dFdN(phase, phase.getNumberOfComponents(), temperature, pressure)
-	- Math.log(pressure * phase.getMolarVolume() / (ThermodynamicConstantsInterface.R * temperature));
+        - Math.log(pressure * phase.getMolarVolume() / (ThermodynamicConstantsInterface.R * temperature));
     fugacityCoefficient = Math.exp(storedLogFugCoeff);
     return fugacityCoefficient;
   }
@@ -366,7 +366,7 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
     for (int j = 0; j < numberOfComponents; j++) {
       double zj = phase.getComponent(j).getIonicCharge();
       if (zj != 0) {
-	S += phase.getComponent(j).getNumberOfMolesInPhase() * zj * zj;
+        S += phase.getComponent(j).getNumberOfMolesInPhase() * zj * zj;
       }
     }
 
@@ -504,7 +504,7 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
     double bornX = mmPhase.getBornX();
     // d(FBornD)/dT = prefactor/T² * X_Born / ε² - prefactor/T * X_Born * (-2/ε³) * dε/dT
     double dFBornDdT = prefactor / (temperature * temperature) * bornX / (eps * eps)
-	+ prefactor / temperature * bornX * 2.0 * epsdT / (eps * eps * eps);
+        + prefactor / temperature * bornX * 2.0 * epsdT / (eps * eps * eps);
     double term3 = dFBornDdT * dEpsdni + mmPhase.FBornD() * dEpsdnidT;
 
     return term1 + term2 + term3;
@@ -674,7 +674,7 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
       double zj = compJ.getIonicCharge();
       double rj = compJ.getBornRadius();
       if (rj > 0 && zj != 0) {
-	dXBorndnj = zj * zj / (rj * 1e-10);
+        dXBorndnj = zj * zj / (rj * 1e-10);
       }
     }
 

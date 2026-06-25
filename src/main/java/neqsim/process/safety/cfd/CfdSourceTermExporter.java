@@ -1,6 +1,5 @@
 package neqsim.process.safety.cfd;
 
-import com.google.gson.GsonBuilder;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -9,6 +8,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import com.google.gson.GsonBuilder;
 
 /**
  * Exports {@link CfdSourceTermCase} payloads to neutral JSON and CFD starter files.
@@ -124,7 +124,7 @@ public class CfdSourceTermExporter implements Serializable {
     text.append("(\n");
     for (Map<String, Object> row : rows) {
       text.append("  (").append(valueOrZero(row.get("timeS"))).append(' ').append(valueOrZero(row.get(field)))
-	  .append(")\n");
+          .append(")\n");
     }
     text.append(");\n");
     return text.toString();

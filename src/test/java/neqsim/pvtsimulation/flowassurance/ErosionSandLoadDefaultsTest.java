@@ -29,7 +29,7 @@ public class ErosionSandLoadDefaultsTest {
   @Test
   public void testNaturalFailureDefaults() {
     ErosionPredictionCalculator.SandLoadDefaults defaults = ErosionPredictionCalculator
-	.getSandLoadDefaults("natural_failure");
+        .getSandLoadDefaults("natural_failure");
     assertNotNull(defaults);
     assertEquals(10.0, defaults.getLiquidPpmWt(), 1e-10);
     assertEquals(0.5, defaults.getGasPpmWt(), 1e-10);
@@ -48,7 +48,7 @@ public class ErosionSandLoadDefaultsTest {
   @Test
   public void testOHGPCompleteDefaults() {
     ErosionPredictionCalculator.SandLoadDefaults defaults = ErosionPredictionCalculator
-	.getSandLoadDefaults("ohgp_complete");
+        .getSandLoadDefaults("ohgp_complete");
     assertNotNull(defaults);
     assertEquals(1.0, defaults.getLiquidPpmWt(), 1e-10);
     assertEquals(0.05, defaults.getGasPpmWt(), 1e-10);
@@ -58,7 +58,7 @@ public class ErosionSandLoadDefaultsTest {
   @Test
   public void testUnknownCompletionTypeReturnsNull() {
     ErosionPredictionCalculator.SandLoadDefaults defaults = ErosionPredictionCalculator
-	.getSandLoadDefaults("unknown_type");
+        .getSandLoadDefaults("unknown_type");
     assertNull(defaults);
   }
 

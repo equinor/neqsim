@@ -195,7 +195,7 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   public double getMassBalance(String unit) {
     double inletFlow = waterInlet.getThermoSystem().getFlowRate(unit);
     double outletFlow = hydrogenOutStream.getThermoSystem().getFlowRate(unit)
-	+ oxygenOutStream.getThermoSystem().getFlowRate(unit);
+        + oxygenOutStream.getThermoSystem().getFlowRate(unit);
     return outletFlow - inletFlow;
   }
 
@@ -212,34 +212,34 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
     if (operationMode == OperationMode.POWER) {
       double area = getStackActiveArea();
       if (area <= 0.0) {
-	throw new IllegalStateException("Power-driven mode requires stack geometry: call "
-	    + "sizeStack(...), setStackActiveArea(...), or setActiveCellArea(...) + "
-	    + "setNumberOfCells(...) before run().");
+        throw new IllegalStateException("Power-driven mode requires stack geometry: call "
+            + "sizeStack(...), setStackActiveArea(...), or setActiveCellArea(...) + "
+            + "setNumberOfCells(...) before run().");
       }
       double systemBudget = availablePower;
       double ratedSystem = ratedPower > 0.0 ? systemPowerFromStack(ratedPower) : Double.POSITIVE_INFINITY;
 
       // NIP-3: standby below minimum turndown.
       if (ratedPower > 0.0 && systemBudget < minimumLoadFraction * ratedSystem) {
-	standby = true;
-	currentDensity = 0.0;
-	stackCurrent = 0.0;
-	cellVoltage = ivCharacteristic != null ? ivCharacteristic.getReversibleVoltage(tempK) : cellVoltage;
-	stackPower = 0.0;
-	hydrogenFlow = 0.0;
-	waterInlet.setFlowRate(0.0, "mole/sec");
-	waterInlet.run(id);
-	setProductStreams(0.0, 0.0, inletPressure, inletPressure, tempK, id);
-	energyStream.setDuty(standbyPowerFraction * ratedPower);
-	setEnergyStream(true);
-	setCalculationIdentifier(id);
-	return;
+        standby = true;
+        currentDensity = 0.0;
+        stackCurrent = 0.0;
+        cellVoltage = ivCharacteristic != null ? ivCharacteristic.getReversibleVoltage(tempK) : cellVoltage;
+        stackPower = 0.0;
+        hydrogenFlow = 0.0;
+        waterInlet.setFlowRate(0.0, "mole/sec");
+        waterInlet.run(id);
+        setProductStreams(0.0, 0.0, inletPressure, inletPressure, tempK, id);
+        energyStream.setDuty(standbyPowerFraction * ratedPower);
+        setEnergyStream(true);
+        setCalculationIdentifier(id);
+        return;
       }
 
       // NIP-3: curtail any power above rated.
       if (ratedPower > 0.0 && systemBudget > ratedSystem) {
-	curtailedPower = systemBudget - ratedSystem;
-	systemBudget = ratedSystem;
+        curtailedPower = systemBudget - ratedSystem;
+        systemBudget = ratedSystem;
       }
 
       // NIP-5: convert system (AC) power budget into stack (DC) power.
@@ -259,7 +259,7 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
       double waterFlow = waterInlet.getFlowRate("mole/sec");
       hydrogenFlow = waterFlow * faradaicEfficiency;
       if (ivCharacteristic != null) {
-	cellVoltage = ivCharacteristic.getCellVoltage(currentDensity, tempK);
+        cellVoltage = ivCharacteristic.getCellVoltage(currentDensity, tempK);
       }
       stackCurrent = hydrogenFlow * 2.0 * FARADAY_CONSTANT;
       stackPower = stackCurrent * cellVoltage;
@@ -308,14 +308,14 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
     if (operationMode == OperationMode.POWER && maxRampRate > 0.0 && ratedPower > 0.0) {
       double target = availablePower;
       if (operatingPower < 0.0) {
-	operatingPower = 0.0; // cold start: ramp up from zero
+        operatingPower = 0.0; // cold start: ramp up from zero
       }
       double maxDelta = maxRampRate * ratedPower * dt;
       double ramped = target;
       if (target > operatingPower) {
-	ramped = Math.min(target, operatingPower + maxDelta);
+        ramped = Math.min(target, operatingPower + maxDelta);
       } else if (target < operatingPower) {
-	ramped = Math.max(target, operatingPower - maxDelta);
+        ramped = Math.max(target, operatingPower - maxDelta);
       }
       double commanded = availablePower;
       availablePower = ramped;
@@ -325,7 +325,7 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
     } else {
       run(id);
       if (operationMode == OperationMode.POWER) {
-	operatingPower = availablePower;
+        operatingPower = availablePower;
       }
     }
     increaseTime(dt);
@@ -565,12 +565,12 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
       double mid = 0.5 * (lo + hi);
       double power = mid * area * ivCharacteristic.getCellVoltage(mid, temperatureK);
       if (power < targetStackPower) {
-	lo = mid;
+        lo = mid;
       } else {
-	hi = mid;
+        hi = mid;
       }
       if (hi - lo < 1.0e-7) {
-	break;
+        break;
       }
     }
     return 0.5 * (lo + hi);

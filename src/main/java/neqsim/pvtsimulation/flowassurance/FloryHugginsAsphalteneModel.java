@@ -169,7 +169,7 @@ public class FloryHugginsAsphalteneModel {
     configuredFromAPI = true;
 
     logger.info("Configured FH asphaltene for API={}: MW={}, delta={}, Vm={}", apiGravity, asphalteneMW,
-	asphalteneSolubilityParameter, asphaltMolarVolume);
+        asphalteneSolubilityParameter, asphaltMolarVolume);
   }
 
   /**
@@ -257,7 +257,7 @@ public class FloryHugginsAsphalteneModel {
     if (calibratedA > 0.005 && calibratedA < 0.10) {
       deltaRhoCoeffA = calibratedA;
       logger.info("FH calibrated: A={}, oilDensity={}, criticalGap={}, targetGap={}", deltaRhoCoeffA, oilDensity,
-	  criticalDeltaGap, targetGap);
+          criticalDeltaGap, targetGap);
     } else {
       logger.warn("Calibrated A={} outside valid range [0.005, 0.10], keeping default", calibratedA);
     }
@@ -388,13 +388,13 @@ public class FloryHugginsAsphalteneModel {
       phiA = phiA - delta;
 
       if (phiA <= 0) {
-	phiA = 1e-20;
+        phiA = 1e-20;
       }
       if (phiA > 1.0) {
-	phiA = 0.99;
+        phiA = 0.99;
       }
       if (Math.abs(delta) < 1e-10) {
-	break;
+        break;
       }
     }
 
@@ -452,7 +452,7 @@ public class FloryHugginsAsphalteneModel {
 
     // Convert from volume fraction to weight fraction
     double maxDissolvedMass = maxDissolved * asphalteneDensity
-	/ (maxDissolved * asphalteneDensity + (1.0 - maxDissolved) * oilDensity);
+        / (maxDissolved * asphalteneDensity + (1.0 - maxDissolved) * oilDensity);
 
     if (asphalteneWeightFraction > maxDissolvedMass) {
       return asphalteneWeightFraction - maxDissolvedMass;
@@ -492,40 +492,40 @@ public class FloryHugginsAsphalteneModel {
 
       ThermodynamicOperations ops = new ThermodynamicOperations(workSystem);
       try {
-	ops.TPflash();
-	workSystem.initProperties();
+        ops.TPflash();
+        workSystem.initProperties();
       } catch (Exception e) {
-	continue;
+        continue;
       }
 
       double oilDensity;
       if (workSystem.hasPhaseType("oil")) {
-	oilDensity = workSystem.getPhase("oil").getDensity("kg/m3");
+        oilDensity = workSystem.getPhase("oil").getDensity("kg/m3");
       } else if (workSystem.getNumberOfPhases() > 0) {
-	oilDensity = workSystem.getPhase(0).getDensity("kg/m3");
+        oilDensity = workSystem.getPhase(0).getDensity("kg/m3");
       } else {
-	continue;
+        continue;
       }
 
       double deltaL = calculateLiquidSolubilityParameter(oilDensity);
       double precip = calculatePrecipitatedFraction(p, temperature);
 
       if (precip > 0.001 && !foundOnset) {
-	foundOnset = true;
-	// Refine by bisection
-	double high = previousP;
-	double low = p;
-	for (int i = 0; i < 15; i++) {
-	  double mid = (high + low) / 2.0;
-	  double midPrecip = calculatePrecipitatedFraction(mid, temperature);
-	  if (midPrecip > 0.001) {
-	    low = mid;
-	  } else {
-	    high = mid;
-	  }
-	}
-	onsetP = (high + low) / 2.0;
-	break;
+        foundOnset = true;
+        // Refine by bisection
+        double high = previousP;
+        double low = p;
+        for (int i = 0; i < 15; i++) {
+          double mid = (high + low) / 2.0;
+          double midPrecip = calculatePrecipitatedFraction(mid, temperature);
+          if (midPrecip > 0.001) {
+            low = mid;
+          } else {
+            high = mid;
+          }
+        }
+        onsetP = (high + low) / 2.0;
+        break;
       }
 
       previousDelta = deltaL;
@@ -586,28 +586,28 @@ public class FloryHugginsAsphalteneModel {
       results[2][i] = asphalteneSolubilityParameter;
 
       if (system != null) {
-	SystemInterface workSystem = system.clone();
-	workSystem.setPressure(p);
-	workSystem.setTemperature(temperature);
+        SystemInterface workSystem = system.clone();
+        workSystem.setPressure(p);
+        workSystem.setTemperature(temperature);
 
-	ThermodynamicOperations ops = new ThermodynamicOperations(workSystem);
-	try {
-	  ops.TPflash();
-	  workSystem.initProperties();
+        ThermodynamicOperations ops = new ThermodynamicOperations(workSystem);
+        try {
+          ops.TPflash();
+          workSystem.initProperties();
 
-	  double oilDensity;
-	  if (workSystem.hasPhaseType("oil")) {
-	    oilDensity = workSystem.getPhase("oil").getDensity("kg/m3");
-	  } else if (workSystem.getNumberOfPhases() > 0) {
-	    oilDensity = workSystem.getPhase(0).getDensity("kg/m3");
-	  } else {
-	    results[1][i] = Double.NaN;
-	    continue;
-	  }
-	  results[1][i] = calculateLiquidSolubilityParameter(oilDensity);
-	} catch (Exception e) {
-	  results[1][i] = Double.NaN;
-	}
+          double oilDensity;
+          if (workSystem.hasPhaseType("oil")) {
+            oilDensity = workSystem.getPhase("oil").getDensity("kg/m3");
+          } else if (workSystem.getNumberOfPhases() > 0) {
+            oilDensity = workSystem.getPhase(0).getDensity("kg/m3");
+          } else {
+            results[1][i] = Double.NaN;
+            continue;
+          }
+          results[1][i] = calculateLiquidSolubilityParameter(oilDensity);
+        } catch (Exception e) {
+          results[1][i] = Double.NaN;
+        }
       }
     }
 

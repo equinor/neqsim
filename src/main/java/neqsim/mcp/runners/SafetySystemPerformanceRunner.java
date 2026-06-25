@@ -62,11 +62,11 @@ public final class SafetySystemPerformanceRunner {
 
       List<SafetySystemDemand> demandCases = parseDemandCases(input, parsed);
       for (SafetySystemDemand demandCase : demandCases) {
-	analyzer.addDemandCase(demandCase);
+        analyzer.addDemandCase(demandCase);
       }
       List<MeasurementDeviceInterface> devices = parseMeasurementDevices(input);
       for (MeasurementDeviceInterface device : devices) {
-	analyzer.addMeasurementDevice(device);
+        analyzer.addMeasurementDevice(device);
       }
       addSafetyInstrumentedFunctions(input, analyzer);
 
@@ -114,7 +114,7 @@ public final class SafetySystemPerformanceRunner {
     JsonArray demandArray = mergedArray(input, "demands", "demandCases");
     for (JsonElement element : demandArray) {
       if (element.isJsonObject()) {
-	demands.add(parseDemandCase(element.getAsJsonObject(), parsed));
+        demands.add(parseDemandCase(element.getAsJsonObject(), parsed));
       }
     }
     return demands;
@@ -129,9 +129,9 @@ public final class SafetySystemPerformanceRunner {
    */
   private static SafetySystemDemand parseDemandCase(JsonObject input, BarrierRegisterRunner.ParsedRegister parsed) {
     SafetySystemDemand demand = new SafetySystemDemand(optString(input, "demandId", "D-UNNAMED"))
-	.setBarrierId(optString(input, "barrierId", "")).setEquipmentTag(optString(input, "equipmentTag", ""))
-	.setScenario(optString(input, "scenario", ""))
-	.setCategory(parseSafetySystemCategory(optString(input, "category", "UNKNOWN")));
+        .setBarrierId(optString(input, "barrierId", "")).setEquipmentTag(optString(input, "equipmentTag", ""))
+        .setScenario(optString(input, "scenario", ""))
+        .setCategory(parseSafetySystemCategory(optString(input, "category", "UNKNOWN")));
     setDemandNumber(input, "demandValue", demand, DemandNumber.DEMAND_VALUE);
     setDemandNumber(input, "capacityValue", demand, DemandNumber.CAPACITY_VALUE);
     demand.setDemandUnit(optString(input, "demandUnit", ""));
@@ -208,12 +208,12 @@ public final class SafetySystemPerformanceRunner {
     for (JsonElement ref : optArray(input, "evidenceRefs")) {
       DocumentEvidence evidence = parsed.evidenceById.get(ref.getAsString());
       if (evidence != null) {
-	demand.addEvidence(evidence);
+        demand.addEvidence(evidence);
       }
     }
     for (JsonElement element : optArray(input, "evidence")) {
       if (element.isJsonObject()) {
-	demand.addEvidence(parseEvidence(element.getAsJsonObject()));
+        demand.addEvidence(parseEvidence(element.getAsJsonObject()));
       }
     }
   }
@@ -229,7 +229,7 @@ public final class SafetySystemPerformanceRunner {
     JsonArray deviceArray = mergedArray(input, "measurementDevices", "detectors");
     for (JsonElement element : deviceArray) {
       if (element.isJsonObject()) {
-	devices.add(parseMeasurementDevice(element.getAsJsonObject()));
+        devices.add(parseMeasurementDevice(element.getAsJsonObject()));
       }
     }
     return devices;
@@ -249,19 +249,19 @@ public final class SafetySystemPerformanceRunner {
       FireDetector detector = new FireDetector(name, location);
       detector.setTag(optString(input, "tag", name));
       if (hasNumber(input, "detectionDelaySeconds")) {
-	detector.setDetectionDelay(input.get("detectionDelaySeconds").getAsDouble());
+        detector.setDetectionDelay(input.get("detectionDelaySeconds").getAsDouble());
       }
       if (hasNumber(input, "responseTimeSeconds")) {
-	detector.setDetectionDelay(input.get("responseTimeSeconds").getAsDouble());
+        detector.setDetectionDelay(input.get("responseTimeSeconds").getAsDouble());
       }
       if (hasNumber(input, "detectionThreshold")) {
-	detector.setDetectionThreshold(input.get("detectionThreshold").getAsDouble());
+        detector.setDetectionThreshold(input.get("detectionThreshold").getAsDouble());
       }
       if (hasNumber(input, "signalLevel")) {
-	detector.setSignalLevel(input.get("signalLevel").getAsDouble());
+        detector.setSignalLevel(input.get("signalLevel").getAsDouble());
       }
       if (optBoolean(input, "detected", false)) {
-	detector.detectFire();
+        detector.detectFire();
       }
       return detector;
     }
@@ -289,23 +289,23 @@ public final class SafetySystemPerformanceRunner {
   private static void addSafetyInstrumentedFunctions(JsonObject input, SafetySystemPerformanceAnalyzer analyzer) {
     for (JsonElement element : mergedArray(input, "logicSifs", "eventVotingSifs")) {
       if (element.isJsonObject()) {
-	analyzer.addSafetyInstrumentedFunction(parseLogicSif(element.getAsJsonObject()));
+        analyzer.addSafetyInstrumentedFunction(parseLogicSif(element.getAsJsonObject()));
       }
     }
     for (JsonElement element : mergedArray(input, "quantitativeSifs", "quantitativeSafetyInstrumentedFunctions")) {
       if (element.isJsonObject()) {
-	analyzer.addQuantitativeSafetyInstrumentedFunction(parseQuantitativeSif(element.getAsJsonObject()));
+        analyzer.addQuantitativeSafetyInstrumentedFunction(parseQuantitativeSif(element.getAsJsonObject()));
       }
     }
     for (JsonElement element : optArray(input, "safetyInstrumentedFunctions")) {
       if (!element.isJsonObject()) {
-	continue;
+        continue;
       }
       JsonObject sif = element.getAsJsonObject();
       if (isQuantitativeSif(sif)) {
-	analyzer.addQuantitativeSafetyInstrumentedFunction(parseQuantitativeSif(sif));
+        analyzer.addQuantitativeSafetyInstrumentedFunction(parseQuantitativeSif(sif));
       } else {
-	analyzer.addSafetyInstrumentedFunction(parseLogicSif(sif));
+        analyzer.addSafetyInstrumentedFunction(parseLogicSif(sif));
       }
     }
   }
@@ -318,14 +318,14 @@ public final class SafetySystemPerformanceRunner {
    */
   private static SafetyInstrumentedFunction parseLogicSif(JsonObject input) {
     SafetyInstrumentedFunction sif = new SafetyInstrumentedFunction(
-	optString(input, "name", optString(input, "id", "SIF-UNNAMED")),
-	parseVotingLogic(optString(input, "votingLogic", optString(input, "architecture", "1oo1"))));
+        optString(input, "name", optString(input, "id", "SIF-UNNAMED")),
+        parseVotingLogic(optString(input, "votingLogic", optString(input, "architecture", "1oo1"))));
     if (hasNumber(input, "maxBypassedDetectors")) {
       sif.setMaxBypassedDetectors(input.get("maxBypassedDetectors").getAsInt());
     }
     for (JsonElement element : optArray(input, "detectors")) {
       if (element.isJsonObject()) {
-	sif.addDetector(parseLogicDetector(element.getAsJsonObject()));
+        sif.addDetector(parseLogicDetector(element.getAsJsonObject()));
       }
     }
     if (optBoolean(input, "overridden", false) || optBoolean(input, "override", false)) {
@@ -342,8 +342,8 @@ public final class SafetySystemPerformanceRunner {
    */
   private static Detector parseLogicDetector(JsonObject input) {
     Detector detector = new Detector(optString(input, "name", optString(input, "tag", "DET")),
-	parseDetectorType(optString(input, "type", "GAS")), parseAlarmLevel(optString(input, "alarmLevel", "HIGH")),
-	optDouble(input, "setpoint", 1.0), optString(input, "unit", ""));
+        parseDetectorType(optString(input, "type", "GAS")), parseAlarmLevel(optString(input, "alarmLevel", "HIGH")),
+        optDouble(input, "setpoint", 1.0), optString(input, "unit", ""));
     if (hasNumber(input, "measuredValue")) {
       detector.update(input.get("measuredValue").getAsDouble());
     }
@@ -369,15 +369,15 @@ public final class SafetySystemPerformanceRunner {
     int claimedSil = input.has("claimedSIL") ? input.get("claimedSIL").getAsInt() : optInt(input, "sil", 1);
     String architecture = optString(input, "architecture", "1oo1");
     double testIntervalHours = optDouble(input, "proofTestInterval_hours",
-	optDouble(input, "proofTestIntervalHours", 8760.0));
+        optDouble(input, "proofTestIntervalHours", 8760.0));
     double pfd = parseQuantitativePfd(input, architecture, testIntervalHours);
     neqsim.process.safety.risk.sis.SafetyInstrumentedFunction.Builder builder = neqsim.process.safety.risk.sis.SafetyInstrumentedFunction
-	.builder().id(optString(input, "id", "")).name(optString(input, "name", "SIF-UNNAMED"))
-	.description(optString(input, "description", "Safety instrumented function")).sil(claimedSil).pfd(pfd)
-	.testIntervalHours(testIntervalHours).mttr(optDouble(input, "mttr", optDouble(input, "mttrHours", 0.0)))
-	.architecture(architecture).initiatingEvent(optString(input, "initiatingEvent", ""))
-	.safeState(optString(input, "safeState", "")).spuriousTripRate(optDouble(input, "spuriousTripRate", 0.0))
-	.notes(optString(input, "notes", ""));
+        .builder().id(optString(input, "id", "")).name(optString(input, "name", "SIF-UNNAMED"))
+        .description(optString(input, "description", "Safety instrumented function")).sil(claimedSil).pfd(pfd)
+        .testIntervalHours(testIntervalHours).mttr(optDouble(input, "mttr", optDouble(input, "mttrHours", 0.0)))
+        .architecture(architecture).initiatingEvent(optString(input, "initiatingEvent", ""))
+        .safeState(optString(input, "safeState", "")).spuriousTripRate(optDouble(input, "spuriousTripRate", 0.0))
+        .notes(optString(input, "notes", ""));
     builder.category(parseSifCategory(optString(input, "category", "OTHER")));
     builder.protectedEquipment(parseStringList(input, "protectedEquipment"));
     return builder.build();
@@ -406,13 +406,13 @@ public final class SafetySystemPerformanceRunner {
     for (JsonElement element : components) {
       JsonObject component = element.getAsJsonObject();
       if (hasNumber(component, "pfd")) {
-	total += component.get("pfd").getAsDouble();
+        total += component.get("pfd").getAsDouble();
       } else if (hasNumber(component, "lambdaDU_per_hr")) {
-	String componentArchitecture = optString(component, "architecture", architecture);
-	total += computePfdForArchitecture(componentArchitecture, component.get("lambdaDU_per_hr").getAsDouble(),
-	    testIntervalHours);
+        String componentArchitecture = optString(component, "architecture", architecture);
+        total += computePfdForArchitecture(componentArchitecture, component.get("lambdaDU_per_hr").getAsDouble(),
+            testIntervalHours);
       } else {
-	throw new IllegalArgumentException("Each quantitative SIF component must include pfd or lambdaDU_per_hr");
+        throw new IllegalArgumentException("Each quantitative SIF component must include pfd or lambdaDU_per_hr");
       }
     }
     return total;
@@ -434,7 +434,7 @@ public final class SafetySystemPerformanceRunner {
     summary.addProperty("assessmentCount", report.getAssessments().size());
     summary.addProperty("passCount", report.countAssessments(SafetySystemPerformanceReport.Verdict.PASS));
     summary.addProperty("warningCount",
-	report.countAssessments(SafetySystemPerformanceReport.Verdict.PASS_WITH_WARNINGS));
+        report.countAssessments(SafetySystemPerformanceReport.Verdict.PASS_WITH_WARNINGS));
     summary.addProperty("failCount", report.countAssessments(SafetySystemPerformanceReport.Verdict.FAIL));
     summary.addProperty("demandCaseCount", demandCount);
     summary.addProperty("measurementDeviceCount", deviceCount);
@@ -449,17 +449,17 @@ public final class SafetySystemPerformanceRunner {
   private static JsonObject buildStandardsTemplates() {
     JsonObject templates = new JsonObject();
     templates.add("NORSOK-S-001",
-	buildStandardTemplate("NORSOK-S-001", "Technical safety screening template for safety critical systems",
-	    new String[] { "safetyFunction", "barrierId", "equipmentTags", "availability", "responseTimeSeconds",
-		"demandCapacityMargin", "evidenceRefs" }));
+        buildStandardTemplate("NORSOK-S-001", "Technical safety screening template for safety critical systems",
+            new String[] { "safetyFunction", "barrierId", "equipmentTags", "availability", "responseTimeSeconds",
+                "demandCapacityMargin", "evidenceRefs" }));
     templates.add("ISO-13702",
-	buildStandardTemplate("ISO-13702", "Control and mitigation of fires and explosions screening template",
-	    new String[] { "fireScenario", "delugeZone", "detectorCoverage", "PFPFireRatingMinutes",
-		"firewaterCapacity", "impairmentStatus", "evidenceRefs" }));
+        buildStandardTemplate("ISO-13702", "Control and mitigation of fires and explosions screening template",
+            new String[] { "fireScenario", "delugeZone", "detectorCoverage", "PFPFireRatingMinutes",
+                "firewaterCapacity", "impairmentStatus", "evidenceRefs" }));
     templates.add("TR1055-STYLE",
-	buildStandardTemplate("TR1055-STYLE", "Barrier performance standard follow-up template",
-	    new String[] { "performanceRequirement", "acceptanceCriteria", "testInterval", "responsibleDiscipline",
-		"verificationMethod", "currentStatus", "gapAction" }));
+        buildStandardTemplate("TR1055-STYLE", "Barrier performance standard follow-up template",
+            new String[] { "performanceRequirement", "acceptanceCriteria", "testInterval", "responsibleDiscipline",
+                "verificationMethod", "currentStatus", "gapAction" }));
     return templates;
   }
 
@@ -488,9 +488,9 @@ public final class SafetySystemPerformanceRunner {
    */
   private static DocumentEvidence parseEvidence(JsonObject input) {
     return new DocumentEvidence(optString(input, "evidenceId", ""), optString(input, "documentId", ""),
-	optString(input, "documentTitle", ""), optString(input, "revision", ""), optString(input, "section", ""),
-	optInt(input, "page", 0), optString(input, "sourceReference", ""), optString(input, "excerpt", ""),
-	optDouble(input, "confidence", 0.0));
+        optString(input, "documentTitle", ""), optString(input, "revision", ""), optString(input, "section", ""),
+        optInt(input, "page", 0), optString(input, "sourceReference", ""), optString(input, "excerpt", ""),
+        optDouble(input, "confidence", 0.0));
   }
 
   /**
@@ -545,10 +545,10 @@ public final class SafetySystemPerformanceRunner {
     try {
       String normalized = value.trim().toUpperCase().replace('-', '_').replace(' ', '_');
       if (normalized.contains("TOXIC")) {
-	return GasDetector.GasType.TOXIC;
+        return GasDetector.GasType.TOXIC;
       }
       if (normalized.contains("OXYGEN")) {
-	return GasDetector.GasType.OXYGEN;
+        return GasDetector.GasType.OXYGEN;
       }
       return GasDetector.GasType.valueOf(normalized);
     } catch (Exception ex) {
@@ -565,7 +565,7 @@ public final class SafetySystemPerformanceRunner {
   private static VotingLogic parseVotingLogic(String value) {
     for (VotingLogic logic : VotingLogic.values()) {
       if (logic.getNotation().equalsIgnoreCase(value)) {
-	return logic;
+        return logic;
       }
     }
     try {
@@ -600,10 +600,10 @@ public final class SafetySystemPerformanceRunner {
       return AlarmLevel.valueOf(value.trim().toUpperCase().replace('-', '_'));
     } catch (Exception ex) {
       if ("HH".equalsIgnoreCase(value)) {
-	return AlarmLevel.HIGH_HIGH;
+        return AlarmLevel.HIGH_HIGH;
       }
       if ("LL".equalsIgnoreCase(value)) {
-	return AlarmLevel.LOW_LOW;
+        return AlarmLevel.LOW_LOW;
       }
       return AlarmLevel.HIGH;
     }
@@ -618,7 +618,7 @@ public final class SafetySystemPerformanceRunner {
   private static neqsim.process.safety.risk.sis.SafetyInstrumentedFunction.SIFCategory parseSifCategory(String value) {
     try {
       return neqsim.process.safety.risk.sis.SafetyInstrumentedFunction.SIFCategory
-	  .valueOf(value.trim().toUpperCase().replace('-', '_'));
+          .valueOf(value.trim().toUpperCase().replace('-', '_'));
     } catch (Exception ex) {
       return neqsim.process.safety.risk.sis.SafetyInstrumentedFunction.SIFCategory.OTHER;
     }
@@ -741,7 +741,7 @@ public final class SafetySystemPerformanceRunner {
    */
   private static boolean hasNumber(JsonObject input, String field) {
     return input.has(field) && !input.get(field).isJsonNull() && input.get(field).isJsonPrimitive()
-	&& input.get(field).getAsJsonPrimitive().isNumber();
+        && input.get(field).getAsJsonPrimitive().isNumber();
   }
 
   /**

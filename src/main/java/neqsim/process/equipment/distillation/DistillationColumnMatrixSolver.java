@@ -196,12 +196,12 @@ public class DistillationColumnMatrixSolver {
 
       double[][] liquidComponentFlows = solveComponentBalances();
       if (liquidComponentFlows == null) {
-	break;
+        break;
       }
 
       double residual = updateColumnState(liquidComponentFlows, id);
       if (!Double.isFinite(residual)) {
-	break;
+        break;
       }
 
       lastIterationCount = iteration;
@@ -210,8 +210,8 @@ public class DistillationColumnMatrixSolver {
       accepted = true;
 
       if (residual <= tolerance) {
-	lastConverged = true;
-	break;
+        lastConverged = true;
+        break;
       }
 
       updateDamping(residual, previousResidual);
@@ -221,7 +221,7 @@ public class DistillationColumnMatrixSolver {
     updateColumnProducts(id);
     lastSolveTimeSeconds = (System.nanoTime() - startTime) / 1.0e9;
     logger.debug("Matrix inside-out warm start iterations={} residual={} converged={}", lastIterationCount,
-	lastTemperatureResidual, lastConverged);
+        lastTemperatureResidual, lastConverged);
     return accepted && Double.isFinite(lastTemperatureResidual);
   }
 
@@ -286,7 +286,7 @@ public class DistillationColumnMatrixSolver {
     for (int trayIndex = 0; trayIndex < column.trays.size(); trayIndex++) {
       SystemInterface system = column.trays.get(trayIndex).getThermoSystem();
       if (system != null && system.getNumberOfComponents() > 0) {
-	return system;
+        return system;
       }
     }
     return null;
@@ -298,7 +298,7 @@ public class DistillationColumnMatrixSolver {
       feedVaporFlows[trayIndex] = getFeedVaporFlow(trayIndex);
       feedLiquidFlows[trayIndex] = getFeedLiquidFlow(trayIndex);
       for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
-	feedComponentFlows[trayIndex][componentIndex] = getFeedComponentFlow(trayIndex, componentIndex);
+        feedComponentFlows[trayIndex][componentIndex] = getFeedComponentFlow(trayIndex, componentIndex);
       }
     }
   }
@@ -319,23 +319,23 @@ public class DistillationColumnMatrixSolver {
       double temperature = system.getTemperature();
       double previousTemperature = previousTemperatures[trayIndex];
       for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
-	double oldK = kValues[trayIndex][componentIndex];
-	double newK = readKValue(system, trayIndex, componentIndex, oldK);
-	kValues[trayIndex][componentIndex] = newK;
+        double oldK = kValues[trayIndex][componentIndex];
+        double newK = readKValue(system, trayIndex, componentIndex, oldK);
+        kValues[trayIndex][componentIndex] = newK;
 
-	if (Double.isFinite(previousTemperature) && Math.abs(temperature - previousTemperature) > 1.0e-6
-	    && oldK > MIN_K_VALUE) {
-	  double derivative = (Math.log(newK) - Math.log(oldK)) / (temperature - previousTemperature);
-	  if (Double.isFinite(derivative) && Math.abs(derivative) <= MAX_ABS_DLN_K_DT
-	      && Math.abs(derivative) >= MIN_DLN_K_DT) {
-	    dLnKdTemperature[trayIndex][componentIndex] = derivative;
-	  }
-	}
+        if (Double.isFinite(previousTemperature) && Math.abs(temperature - previousTemperature) > 1.0e-6
+            && oldK > MIN_K_VALUE) {
+          double derivative = (Math.log(newK) - Math.log(oldK)) / (temperature - previousTemperature);
+          if (Double.isFinite(derivative) && Math.abs(derivative) <= MAX_ABS_DLN_K_DT
+              && Math.abs(derivative) >= MIN_DLN_K_DT) {
+            dLnKdTemperature[trayIndex][componentIndex] = derivative;
+          }
+        }
 
-	if (!Double.isFinite(dLnKdTemperature[trayIndex][componentIndex])
-	    || Math.abs(dLnKdTemperature[trayIndex][componentIndex]) < MIN_DLN_K_DT) {
-	  dLnKdTemperature[trayIndex][componentIndex] = estimateKDerivative(newK);
-	}
+        if (!Double.isFinite(dLnKdTemperature[trayIndex][componentIndex])
+            || Math.abs(dLnKdTemperature[trayIndex][componentIndex]) < MIN_DLN_K_DT) {
+          dLnKdTemperature[trayIndex][componentIndex] = estimateKDerivative(newK);
+        }
       }
       previousTemperatures[trayIndex] = temperature;
     }
@@ -354,12 +354,12 @@ public class DistillationColumnMatrixSolver {
     for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
       buildComponentBalance(componentIndex, vaporFlows, liquidFlows);
       if (!solveTridiagonalSystem()) {
-	return null;
+        return null;
       }
       for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
-	double oldFlow = getLiquidComponentFlow(trayIndex, componentIndex);
-	double solvedFlow = Math.max(MIN_FLOW, tridiagonalSolution[trayIndex]);
-	liquidComponentFlows[trayIndex][componentIndex] = blend(solvedFlow, oldFlow, dampingFactor);
+        double oldFlow = getLiquidComponentFlow(trayIndex, componentIndex);
+        double solvedFlow = Math.max(MIN_FLOW, tridiagonalSolution[trayIndex]);
+        liquidComponentFlows[trayIndex][componentIndex] = blend(solvedFlow, oldFlow, dampingFactor);
       }
     }
     return liquidComponentFlows;
@@ -376,8 +376,8 @@ public class DistillationColumnMatrixSolver {
     for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
       double currentStripping = getStrippingFactor(trayIndex, componentIndex, vaporFlows, liquidFlows);
       double previousStripping = trayIndex > 0
-	  ? getStrippingFactor(trayIndex - 1, componentIndex, vaporFlows, liquidFlows)
-	  : 0.0;
+          ? getStrippingFactor(trayIndex - 1, componentIndex, vaporFlows, liquidFlows)
+          : 0.0;
 
       lowerDiagonal[trayIndex] = trayIndex > 0 ? -previousStripping : 0.0;
       mainDiagonal[trayIndex] = 1.0 + currentStripping;
@@ -402,7 +402,7 @@ public class DistillationColumnMatrixSolver {
     for (int row = 1; row < numberOfTrays; row++) {
       pivot = mainDiagonal[row] - lowerDiagonal[row] * modifiedUpper[row - 1];
       if (!isUsablePivot(pivot)) {
-	return false;
+        return false;
       }
       modifiedUpper[row] = row < numberOfTrays - 1 ? upperDiagonal[row] / pivot : 0.0;
       modifiedRightHandSide[row] = (rightHandSide[row] - lowerDiagonal[row] * modifiedRightHandSide[row - 1]) / pivot;
@@ -431,7 +431,7 @@ public class DistillationColumnMatrixSolver {
       SystemInterface system = tray.getThermoSystem();
       double oldTemperature = system.getTemperature();
       double newTemperature = tray.isSetOutTemperature() ? oldTemperature
-	  : estimateUpdatedTemperature(trayIndex, oldTemperature, liquidComponentFlows[trayIndex]);
+          : estimateUpdatedTemperature(trayIndex, oldTemperature, liquidComponentFlows[trayIndex]);
       temperatureResidual += Math.abs(newTemperature - oldTemperature);
 
       system.setTemperature(newTemperature);
@@ -439,9 +439,9 @@ public class DistillationColumnMatrixSolver {
       updateTraySystemComposition(system, trayIndex, liquidComponentFlows[trayIndex], vaporComponentFlows[trayIndex]);
 
       StreamInterface liquidStream = createOutletStream(system, liquidPhaseIndices[trayIndex],
-	  liquidComponentFlows[trayIndex], id);
+          liquidComponentFlows[trayIndex], id);
       StreamInterface vaporStream = createOutletStream(system, vaporPhaseIndices[trayIndex],
-	  vaporComponentFlows[trayIndex], id);
+          vaporComponentFlows[trayIndex], id);
       tray.setCachedLiquidOutStream(liquidStream);
       tray.setCachedGasOutStream(vaporStream);
     }
@@ -461,10 +461,10 @@ public class DistillationColumnMatrixSolver {
 
     for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
       for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
-	double stripping = getStrippingFactor(trayIndex, componentIndex, vaporFlows, liquidFlows);
-	double oldFlow = getVaporComponentFlow(trayIndex, componentIndex);
-	double newFlow = Math.max(MIN_FLOW, stripping * liquidComponentFlows[trayIndex][componentIndex]);
-	vaporComponentFlows[trayIndex][componentIndex] = blend(newFlow, oldFlow, dampingFactor);
+        double stripping = getStrippingFactor(trayIndex, componentIndex, vaporFlows, liquidFlows);
+        double oldFlow = getVaporComponentFlow(trayIndex, componentIndex);
+        double newFlow = Math.max(MIN_FLOW, stripping * liquidComponentFlows[trayIndex][componentIndex]);
+        vaporComponentFlows[trayIndex][componentIndex] = blend(newFlow, oldFlow, dampingFactor);
       }
     }
     return vaporComponentFlows;
@@ -525,10 +525,10 @@ public class DistillationColumnMatrixSolver {
       system.getComponent(componentIndex).setNumberOfmoles(componentTotal);
       system.getComponent(componentIndex).setz(totalFlow > MIN_FLOW ? componentTotal / totalFlow : 0.0);
       if (liquidPhaseIndex >= 0) {
-	setPhaseComponent(system, liquidPhaseIndex, componentIndex, liquidFlow, totalLiquid);
+        setPhaseComponent(system, liquidPhaseIndex, componentIndex, liquidFlow, totalLiquid);
       }
       if (vaporPhaseIndex >= 0) {
-	setPhaseComponent(system, vaporPhaseIndex, componentIndex, vaporFlow, totalVapor);
+        setPhaseComponent(system, vaporPhaseIndex, componentIndex, vaporFlow, totalVapor);
       }
     }
     system.setTotalNumberOfMoles(Math.max(0.0, totalFlow));
@@ -574,8 +574,8 @@ public class DistillationColumnMatrixSolver {
     // default (gas) type, which would evaluate a liquid outlet on the vapour EOS root and
     // corrupt its enthalpy. The phase type is restored after init below.
     PhaseType outletPhaseType = (phaseIndex >= 0 && phaseIndex < template.getNumberOfPhases())
-	? template.getPhase(phaseIndex).getType()
-	: outletSystem.getPhase(0).getType();
+        ? template.getPhase(phaseIndex).getType()
+        : outletSystem.getPhase(0).getType();
     double totalFlow = sum(componentFlows);
     outletSystem.setNumberOfPhases(1);
     for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
@@ -585,7 +585,7 @@ public class DistillationColumnMatrixSolver {
       outletSystem.getPhase(0).getComponent(componentIndex).setNumberOfMolesInPhase(componentFlow);
       outletSystem.getPhase(0).getComponent(componentIndex).setNumberOfmoles(componentFlow);
       outletSystem.getPhase(0).getComponent(componentIndex)
-	  .setx(totalFlow > MIN_FLOW ? componentFlow / totalFlow : 0.0);
+          .setx(totalFlow > MIN_FLOW ? componentFlow / totalFlow : 0.0);
     }
     outletSystem.setTotalNumberOfMoles(Math.max(0.0, totalFlow));
     outletSystem.setTemperature(template.getTemperature());
@@ -616,9 +616,9 @@ public class DistillationColumnMatrixSolver {
   private SystemInterface createOutletSystemTemplate(SystemInterface template, int phaseIndex) {
     if (phaseIndex >= 0) {
       try {
-	return template.phaseToSystem(phaseIndex);
+        return template.phaseToSystem(phaseIndex);
       } catch (RuntimeException exception) {
-	logger.debug("Matrix inside-out phase extraction failed", exception);
+        logger.debug("Matrix inside-out phase extraction failed", exception);
       }
     }
     return template.clone();
@@ -634,7 +634,7 @@ public class DistillationColumnMatrixSolver {
       return;
     }
     column.gasOutStream
-	.setThermoSystem(column.trays.get(numberOfTrays - 1).getGasOutStream().getThermoSystem().clone());
+        .setThermoSystem(column.trays.get(numberOfTrays - 1).getGasOutStream().getThermoSystem().clone());
     column.liquidOutStream.setThermoSystem(column.trays.get(0).getLiquidOutStream().getThermoSystem().clone());
     column.gasOutStream.setCalculationIdentifier(id);
     column.liquidOutStream.setCalculationIdentifier(id);
@@ -656,7 +656,7 @@ public class DistillationColumnMatrixSolver {
       double x = system.getPhase(liquidPhaseIndex).getComponent(componentIndex).getx();
       double y = system.getPhase(vaporPhaseIndex).getComponent(componentIndex).getx();
       if (x > MIN_FLOW && y >= 0.0) {
-	return boundKValue(y / x);
+        return boundKValue(y / x);
       }
     }
     double kValue = system.getComponent(componentIndex).getK();
@@ -702,10 +702,10 @@ public class DistillationColumnMatrixSolver {
     for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
       int vaporPhaseIndex = vaporPhaseIndices[trayIndex];
       if (vaporPhaseIndex >= 0) {
-	vaporFlows[trayIndex] = Math.max(MIN_FLOW,
-	    column.trays.get(trayIndex).getThermoSystem().getPhase(vaporPhaseIndex).getNumberOfMolesInPhase());
+        vaporFlows[trayIndex] = Math.max(MIN_FLOW,
+            column.trays.get(trayIndex).getThermoSystem().getPhase(vaporPhaseIndex).getNumberOfMolesInPhase());
       } else {
-	vaporFlows[trayIndex] = Math.max(MIN_FLOW, feedVaporFlows[trayIndex]);
+        vaporFlows[trayIndex] = Math.max(MIN_FLOW, feedVaporFlows[trayIndex]);
       }
     }
     return vaporFlows;
@@ -721,10 +721,10 @@ public class DistillationColumnMatrixSolver {
     for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
       int liquidPhaseIndex = liquidPhaseIndices[trayIndex];
       if (liquidPhaseIndex >= 0) {
-	liquidFlows[trayIndex] = Math.max(MIN_FLOW,
-	    column.trays.get(trayIndex).getThermoSystem().getPhase(liquidPhaseIndex).getNumberOfMolesInPhase());
+        liquidFlows[trayIndex] = Math.max(MIN_FLOW,
+            column.trays.get(trayIndex).getThermoSystem().getPhase(liquidPhaseIndex).getNumberOfMolesInPhase());
       } else {
-	liquidFlows[trayIndex] = Math.max(MIN_FLOW, feedLiquidFlows[trayIndex]);
+        liquidFlows[trayIndex] = Math.max(MIN_FLOW, feedLiquidFlows[trayIndex]);
       }
     }
     return liquidFlows;
@@ -743,7 +743,7 @@ public class DistillationColumnMatrixSolver {
       return MIN_FLOW;
     }
     return Math.max(MIN_FLOW, column.trays.get(trayIndex).getThermoSystem().getPhase(liquidPhaseIndex)
-	.getComponent(componentIndex).getNumberOfMolesInPhase());
+        .getComponent(componentIndex).getNumberOfMolesInPhase());
   }
 
   /**
@@ -759,7 +759,7 @@ public class DistillationColumnMatrixSolver {
       return MIN_FLOW;
     }
     return Math.max(MIN_FLOW, column.trays.get(trayIndex).getThermoSystem().getPhase(vaporPhaseIndex)
-	.getComponent(componentIndex).getNumberOfMolesInPhase());
+        .getComponent(componentIndex).getNumberOfMolesInPhase());
   }
 
   /**
@@ -773,7 +773,7 @@ public class DistillationColumnMatrixSolver {
     for (StreamInterface feed : column.getExternalFeedStreams(trayIndex)) {
       SystemInterface feedSystem = feed.getThermoSystem();
       if (feedSystem != null && feedSystem.hasPhaseType("gas")) {
-	vaporFlow += feedSystem.getPhase("gas").getFlowRate("mole/sec");
+        vaporFlow += feedSystem.getPhase("gas").getFlowRate("mole/sec");
       }
     }
     return Math.max(0.0, vaporFlow);
@@ -790,14 +790,14 @@ public class DistillationColumnMatrixSolver {
     for (StreamInterface feed : column.getExternalFeedStreams(trayIndex)) {
       SystemInterface feedSystem = feed.getThermoSystem();
       if (feedSystem == null) {
-	continue;
+        continue;
       }
       double totalFlow = feedSystem.getFlowRate("mole/sec");
       if (feedSystem.hasPhaseType("gas")) {
-	totalFlow -= feedSystem.getPhase("gas").getFlowRate("mole/sec");
+        totalFlow -= feedSystem.getPhase("gas").getFlowRate("mole/sec");
       }
       if (Double.isFinite(totalFlow) && totalFlow > 0.0) {
-	liquidFlow += totalFlow;
+        liquidFlow += totalFlow;
       }
     }
     return Math.max(0.0, liquidFlow);
@@ -816,11 +816,11 @@ public class DistillationColumnMatrixSolver {
     for (StreamInterface feed : column.getExternalFeedStreams(trayIndex)) {
       SystemInterface feedSystem = feed.getThermoSystem();
       if (feedSystem == null || feedSystem.getComponent(componentName) == null) {
-	continue;
+        continue;
       }
       double flow = feedSystem.getComponent(componentName).getFlowRate("mole/sec");
       if (Double.isFinite(flow) && flow > 0.0) {
-	componentFlow += flow;
+        componentFlow += flow;
       }
     }
     return componentFlow;
@@ -837,7 +837,7 @@ public class DistillationColumnMatrixSolver {
     int numberOfPhases = Math.max(1, system.getNumberOfPhases());
     for (int phaseIndex = 0; phaseIndex < numberOfPhases; phaseIndex++) {
       if (phaseTypeName.equals(system.getPhase(phaseIndex).getPhaseTypeName())) {
-	return phaseIndex;
+        return phaseIndex;
       }
     }
     return -1;
@@ -854,12 +854,12 @@ public class DistillationColumnMatrixSolver {
     for (int phaseIndex = 0; phaseIndex < numberOfPhases; phaseIndex++) {
       String phaseTypeName = system.getPhase(phaseIndex).getPhaseTypeName();
       if ("liquid".equals(phaseTypeName) || "oil".equals(phaseTypeName) || "aqueous".equals(phaseTypeName)) {
-	return phaseIndex;
+        return phaseIndex;
       }
     }
     for (int phaseIndex = 0; phaseIndex < numberOfPhases; phaseIndex++) {
       if (!"gas".equals(system.getPhase(phaseIndex).getPhaseTypeName())) {
-	return phaseIndex;
+        return phaseIndex;
       }
     }
     return -1;
@@ -933,7 +933,7 @@ public class DistillationColumnMatrixSolver {
     double total = 0.0;
     for (int index = 0; index < values.length; index++) {
       if (Double.isFinite(values[index])) {
-	total += values[index];
+        total += values[index];
       }
     }
     return total;

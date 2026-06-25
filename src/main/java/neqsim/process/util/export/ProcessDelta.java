@@ -48,9 +48,9 @@ public class ProcessDelta implements Serializable {
       double fromValue = from.getMeasurement(name);
 
       if (Double.isNaN(fromValue) || Math.abs(toValue - fromValue) > 1e-10) {
-	changedValues.put(name, toValue);
-	previousValues.put(name, fromValue);
-	units.put(name, to.getMeasurementUnit(name));
+        changedValues.put(name, toValue);
+        previousValues.put(name, fromValue);
+        units.put(name, to.getMeasurementUnit(name));
       }
     }
   }

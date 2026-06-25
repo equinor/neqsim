@@ -66,7 +66,7 @@ public class WellTestMatcher implements Serializable {
      * @param model model name ("PI" or "Vogel")
      */
     public MatchResult(WellDeliverabilityCurve curve, double reservoirPressure, double deliverabilityParameter,
-	double rmsError, String model) {
+        double rmsError, String model) {
       this.curve = curve;
       this.reservoirPressure = reservoirPressure;
       this.deliverabilityParameter = deliverabilityParameter;
@@ -155,20 +155,20 @@ public class WellTestMatcher implements Serializable {
       double num = 0.0;
       double den = 0.0;
       for (TestPoint tp : points) {
-	double dp = pr - tp.flowingPressure;
-	num += tp.rate * dp;
-	den += dp * dp;
+        double dp = pr - tp.flowingPressure;
+        num += tp.rate * dp;
+        den += dp * dp;
       }
       double j = den > 0.0 ? num / den : 0.0;
       double err = 0.0;
       for (TestPoint tp : points) {
-	double pred = j * (pr - tp.flowingPressure);
-	err += (pred - tp.rate) * (pred - tp.rate);
+        double pred = j * (pr - tp.flowingPressure);
+        err += (pred - tp.rate) * (pred - tp.rate);
       }
       if (err < bestErr) {
-	bestErr = err;
-	bestPr = pr;
-	bestJ = j;
+        bestErr = err;
+        bestPr = pr;
+        bestJ = j;
       }
     }
     // Build a deliverability curve: rate at back pressure p = J*(pr - p).
@@ -205,22 +205,22 @@ public class WellTestMatcher implements Serializable {
       double num = 0.0;
       double den = 0.0;
       for (TestPoint tp : points) {
-	double r = tp.flowingPressure / pr;
-	double f = 1.0 - 0.2 * r - 0.8 * r * r;
-	num += tp.rate * f;
-	den += f * f;
+        double r = tp.flowingPressure / pr;
+        double f = 1.0 - 0.2 * r - 0.8 * r * r;
+        num += tp.rate * f;
+        den += f * f;
       }
       double qmax = den > 0.0 ? num / den : 0.0;
       double err = 0.0;
       for (TestPoint tp : points) {
-	double r = tp.flowingPressure / pr;
-	double pred = qmax * (1.0 - 0.2 * r - 0.8 * r * r);
-	err += (pred - tp.rate) * (pred - tp.rate);
+        double r = tp.flowingPressure / pr;
+        double pred = qmax * (1.0 - 0.2 * r - 0.8 * r * r);
+        err += (pred - tp.rate) * (pred - tp.rate);
       }
       if (err < bestErr) {
-	bestErr = err;
-	bestPr = pr;
-	bestQmax = qmax;
+        bestErr = err;
+        bestPr = pr;
+        bestQmax = qmax;
       }
     }
     WellDeliverabilityCurve curve = WellDeliverabilityCurve.fromVogel(bestQmax, bestPr);

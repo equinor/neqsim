@@ -1,8 +1,8 @@
 package neqsim.process.ml.multiagent;
 
+import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.ml.Constraint;
 import neqsim.process.ml.StateVector;
-import neqsim.process.equipment.compressor.Compressor;
 
 /**
  * RL agent for compressor control with anti-surge protection.
@@ -53,7 +53,7 @@ public class CompressorAgent extends ProcessAgent {
   private void initializeSpaces() {
     // Observation space
     observationNames = new String[] { "inlet_pressure", "outlet_pressure", "compression_ratio", "surge_fraction",
-	"speed", "power", "pressure_error" };
+        "speed", "power", "pressure_error" };
 
     // Action space: speed change [-0.05, 0.05] normalized
     actionNames = new String[] { "speed_delta" };
@@ -64,13 +64,14 @@ public class CompressorAgent extends ProcessAgent {
     setSetpoint("outlet_pressure", 50.0, 10.0);
 
     // Default constraints
-    localConstraints.addHardRange("surge_protection", "surge_fraction", 1.1, Double.MAX_VALUE, "fraction"); // Must stay
-													    // above
-													    // surge
-													    // line
+    localConstraints.addHardRange("surge_protection", "surge_fraction", 1.1, Double.MAX_VALUE, "fraction"); // Must
+                                                                                                            // stay
+    // above
+    // surge
+    // line
     localConstraints.addSoftRange("discharge_pressure", "outlet_pressure", 0.0, 100.0, "bar");
     localConstraints.add(new Constraint("power_limit", "Maximum power limit", Constraint.Type.HARD,
-	Constraint.Category.EQUIPMENT, "power", 0.0, 10000.0, "kW"));
+        Constraint.Category.EQUIPMENT, "power", 0.0, 10000.0, "kW"));
   }
 
   @Override
@@ -87,12 +88,12 @@ public class CompressorAgent extends ProcessAgent {
 
     // Normalize values
     return new double[] { inletP / 50.0, // Normalized inlet pressure
-	outletP / 100.0, // Normalized outlet pressure
-	(compRatio - 1.0) / 5.0, // Normalized compression ratio
-	surgeFrac / 2.0, // Normalized surge fraction
-	currentSpeedFraction, // Current speed [0-1]
-	power / 5000.0, // Normalized power
-	pressureError // Pressure error
+        outletP / 100.0, // Normalized outlet pressure
+        (compRatio - 1.0) / 5.0, // Normalized compression ratio
+        surgeFrac / 2.0, // Normalized surge fraction
+        currentSpeedFraction, // Current speed [0-1]
+        power / 5000.0, // Normalized power
+        pressureError // Pressure error
     };
   }
 

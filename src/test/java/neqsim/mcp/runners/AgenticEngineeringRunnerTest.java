@@ -2,9 +2,9 @@ package neqsim.mcp.runners;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link AgenticEngineeringRunner}.
@@ -20,7 +20,7 @@ class AgenticEngineeringRunnerTest {
   @Test
   void testRunnerAddsStandardEnvelope() {
     String result = AgenticEngineeringRunner
-	.run("{\"action\":\"plan\",\"task\":\"TEG dehydration with hydrate check\"}");
+        .run("{\"action\":\"plan\",\"task\":\"TEG dehydration with hydrate check\"}");
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
     assertEquals("success", root.get("status").getAsString());
     assertEquals("runAgenticEngineering", root.get("tool").getAsString());

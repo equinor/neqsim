@@ -26,7 +26,7 @@ public class FireSafetyCalculationsTest {
   @Test
   public void testWallTemperaturesForWettedZone() {
     SurfaceTemperatureResult result = FireHeatTransferCalculator.calculateWallTemperatures(300.0, 1200.0, 0.02, 45.0,
-	1500.0, 30.0);
+        1500.0, 30.0);
     assertEquals(2.6129e4, result.heatFlux(), 100.0);
     assertEquals(317.4, result.innerWallTemperatureK(), 0.2);
     assertEquals(329.0, result.outerWallTemperatureK(), 0.2);

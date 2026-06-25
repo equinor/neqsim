@@ -117,17 +117,17 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
       double[] machNumberCorrectedFlowFactorEfficiency = new double[flow[i].length];
       double[] polEff = new double[flow[i].length];
       for (int j = 0; j < flow[i].length; j++) {
-	machNumberCorrectedHeadFactor[j] = head[i][j] / fluidSoundSpeed / fluidSoundSpeed;
-	machNumberCorrectedFlowFactor[j] = flow[i][j] / 3600.0 / fluidSoundSpeed / impellerOuterDiameter
-	    / impellerOuterDiameter;
-	machNumberCorrectedFlowFactorEfficiency[j] = flowPolyEff[i][j] / fluidSoundSpeed / impellerOuterDiameter
-	    / impellerOuterDiameter;
-	polEff[j] = polyEff[i][j];
+        machNumberCorrectedHeadFactor[j] = head[i][j] / fluidSoundSpeed / fluidSoundSpeed;
+        machNumberCorrectedFlowFactor[j] = flow[i][j] / 3600.0 / fluidSoundSpeed / impellerOuterDiameter
+            / impellerOuterDiameter;
+        machNumberCorrectedFlowFactorEfficiency[j] = flowPolyEff[i][j] / fluidSoundSpeed / impellerOuterDiameter
+            / impellerOuterDiameter;
+        polEff[j] = polyEff[i][j];
       }
       double machineMachNumber = speed[i] / 60.0 * impellerOuterDiameter / fluidSoundSpeed;
 
       CompressorCurve curve = new CompressorCurve(machineMachNumber, machNumberCorrectedFlowFactor,
-	  machNumberCorrectedHeadFactor, machNumberCorrectedFlowFactorEfficiency, polEff);
+          machNumberCorrectedHeadFactor, machNumberCorrectedFlowFactorEfficiency, polEff);
       chartValues.add(curve);
       chartSpeeds.add(speed[i]);
     }
@@ -167,16 +167,16 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
       double[] machNumberCorrectedFlowFactorEfficiency = new double[flow[i].length];
       double[] polEff = new double[flow[i].length];
       for (int j = 0; j < flow[i].length; j++) {
-	machNumberCorrectedHeadFactor[j] = head[i][j] / fluidSoundSpeed / fluidSoundSpeed;
-	machNumberCorrectedFlowFactor[j] = flow[i][j] / 3600.0 / fluidSoundSpeed / impellerOuterDiameter
-	    / impellerOuterDiameter;
-	machNumberCorrectedFlowFactorEfficiency[j] = flowPolyEff[i][j] / fluidSoundSpeed / impellerOuterDiameter
-	    / impellerOuterDiameter;
-	polEff[j] = polyEff[i][j];
+        machNumberCorrectedHeadFactor[j] = head[i][j] / fluidSoundSpeed / fluidSoundSpeed;
+        machNumberCorrectedFlowFactor[j] = flow[i][j] / 3600.0 / fluidSoundSpeed / impellerOuterDiameter
+            / impellerOuterDiameter;
+        machNumberCorrectedFlowFactorEfficiency[j] = flowPolyEff[i][j] / fluidSoundSpeed / impellerOuterDiameter
+            / impellerOuterDiameter;
+        polEff[j] = polyEff[i][j];
       }
       double machineMachNumber = speed[i] / 60.0 * impellerOuterDiameter / fluidSoundSpeed;
       correctedCurves.add(new CorrectedCurve(machineMachNumber, machNumberCorrectedFlowFactor,
-	  machNumberCorrectedHeadFactor, machNumberCorrectedFlowFactorEfficiency, polEff));
+          machNumberCorrectedHeadFactor, machNumberCorrectedFlowFactorEfficiency, polEff));
     }
     return correctedCurves;
   }
@@ -196,11 +196,11 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
       double[] flowPolyEff = new double[corr.flowPolytropicEfficiency.length];
       double[] polEff = new double[corr.polytropicEfficiency.length];
       for (int j = 0; j < flow.length; j++) {
-	flow[j] = 3600.0 * corr.flow[j] * fluidSoundSpeed * impellerOuterDiameter * impellerOuterDiameter;
-	head[j] = corr.head[j] * fluidSoundSpeed * fluidSoundSpeed;
-	flowPolyEff[j] = 3600.0 * corr.flowPolytropicEfficiency[j] * fluidSoundSpeed * impellerOuterDiameter
-	    * impellerOuterDiameter;
-	polEff[j] = corr.polytropicEfficiency[j];
+        flow[j] = 3600.0 * corr.flow[j] * fluidSoundSpeed * impellerOuterDiameter * impellerOuterDiameter;
+        head[j] = corr.head[j] * fluidSoundSpeed * fluidSoundSpeed;
+        flowPolyEff[j] = 3600.0 * corr.flowPolytropicEfficiency[j] * fluidSoundSpeed * impellerOuterDiameter
+            * impellerOuterDiameter;
+        polEff[j] = corr.polytropicEfficiency[j];
       }
       realCurves.add(new RealCurve(chartSpeeds.get(i), flow, head, flowPolyEff, polEff));
     }
@@ -254,18 +254,18 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
       // Scale all fractions proportionally while preserving ratios between methane/ethane
       // Let x1 = a * methaneFrac, x2 = a * ethaneFrac, x3 = 1 - x1 - x2
       double a = (targetMolWeight - mwPropane)
-	  / (methaneFrac * (mwMethane - mwPropane) + ethaneFrac * (mwEthane - mwPropane));
+          / (methaneFrac * (mwMethane - mwPropane) + ethaneFrac * (mwEthane - mwPropane));
       x1 = a * methaneFrac;
       x2 = a * ethaneFrac;
       x3 = 1.0 - x1 - x2;
       // If x3 < 0, something is off
       if (x3 < 0.0 || x3 > 1.0) {
-	logger.warn("Target molecular weight not achievable with given component ratios.");
-	x3 = Math.max(0.0, Math.min(1.0, x3));
-	double total = x1 + x2 + x3;
-	x1 /= total;
-	x2 /= total;
-	x3 /= total;
+        logger.warn("Target molecular weight not achievable with given component ratios.");
+        x3 = Math.max(0.0, Math.min(1.0, x3));
+        double total = x1 + x2 + x3;
+        x1 /= total;
+        x2 /= total;
+        x3 /= total;
       }
       methaneFrac = x1;
       ethaneFrac = x2;
@@ -297,6 +297,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   /**
    * {@inheritDoc}
    *
+   * <p>
    * The method first converts the input flow and speed to dimensionless numbers using the sound speed and impeller
    * diameter:
    * <ul>
@@ -313,18 +314,19 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
     }
     // System.out.println("Sound speed of actiual fluid: " + fluid.getSoundSpeed() + " m/s");
     double machNumberCorrectedFlowFactor = flow / 3600.0 / fluid.getSoundSpeed() / impellerOuterDiameter
-	/ impellerOuterDiameter;
+        / impellerOuterDiameter;
     double machineMachNumber = speed / 60 * impellerOuterDiameter / fluid.getSoundSpeed();
     // System.out.println("mac numer corrected flow factor: " + machNumberCorrectedFlowFactor
     // + " machine Mach number: " + machineMachNumber + " impeller diameter: "
     // + impellerOuterDiameter);
     return super.getPolytropicHead(machNumberCorrectedFlowFactor, machineMachNumber) * fluid.getSoundSpeed()
-	* fluid.getSoundSpeed();
+        * fluid.getSoundSpeed();
   }
 
   /**
    * {@inheritDoc}
    *
+   * <p>
    * The method first converts the input flow and speed to dimensionless numbers using the sound speed and impeller
    * diameter:
    * <ul>
@@ -340,7 +342,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
       fluid = stream.getFluid();
     }
     double machNumberCorrectedFlowFactor = flow / 3600.0 / fluid.getSoundSpeed() / impellerOuterDiameter
-	/ impellerOuterDiameter;
+        / impellerOuterDiameter;
     double machineMachNumber = speed / 60 * impellerOuterDiameter / fluid.getSoundSpeed();
     return super.getPolytropicEfficiency(machNumberCorrectedFlowFactor, machineMachNumber);
   }
@@ -403,7 +405,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
      * @param polytropicEfficiency array of polytropic efficiencies
      */
     public CorrectedCurve(double machineMachNumber, double[] correctedFlowFactor, double[] correctedHeadFactor,
-	double[] correctedFlowFactorEfficiency, double[] polytropicEfficiency) {
+        double[] correctedFlowFactorEfficiency, double[] polytropicEfficiency) {
       this.machineMachNumber = machineMachNumber;
       this.correctedFlowFactor = correctedFlowFactor;
       this.correctedHeadFactor = correctedHeadFactor;
@@ -456,15 +458,15 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
       int minFlowIdx = 0;
       double minFlow = curve.flow[0];
       for (int i = 1; i < curve.flow.length; i++) {
-	if (curve.flow[i] < minFlow) {
-	  minFlow = curve.flow[i];
-	  minFlowIdx = i;
-	}
+        if (curve.flow[i] < minFlow) {
+          minFlow = curve.flow[i];
+          minFlowIdx = i;
+        }
       }
       double flowVal = curve.flow[minFlowIdx];
       double headVal = curve.head[minFlowIdx];
       if (!uniqueSurgePoints.containsKey(flowVal)) {
-	uniqueSurgePoints.put(flowVal, headVal);
+        uniqueSurgePoints.put(flowVal, headVal);
       }
     }
     double[] surgeFlow = new double[uniqueSurgePoints.size()];
@@ -494,15 +496,15 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
       int maxFlowIdx = 0;
       double maxFlow = curve.flow[0];
       for (int i = 1; i < curve.flow.length; i++) {
-	if (curve.flow[i] > maxFlow) {
-	  maxFlow = curve.flow[i];
-	  maxFlowIdx = i;
-	}
+        if (curve.flow[i] > maxFlow) {
+          maxFlow = curve.flow[i];
+          maxFlowIdx = i;
+        }
       }
       double flowVal = curve.flow[maxFlowIdx];
       double headVal = curve.head[maxFlowIdx];
       if (!uniqueStoneWallPoints.containsKey(flowVal)) {
-	uniqueStoneWallPoints.put(flowVal, headVal);
+        uniqueStoneWallPoints.put(flowVal, headVal);
       }
     }
     double[] stoneFlow = new double[uniqueStoneWallPoints.size()];
@@ -545,8 +547,8 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
     for (RealCurve curve : realCurves) {
       double speedDiff = Math.abs(curve.speed - speed);
       if (speedDiff < minSpeedDiff) {
-	minSpeedDiff = speedDiff;
-	closestCurve = curve;
+        minSpeedDiff = speedDiff;
+        closestCurve = curve;
       }
     }
 
@@ -554,7 +556,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
     double minFlow = closestCurve.flow[0];
     for (double flow : closestCurve.flow) {
       if (flow < minFlow) {
-	minFlow = flow;
+        minFlow = flow;
       }
     }
     return minFlow;
@@ -580,8 +582,8 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
     for (RealCurve curve : realCurves) {
       double speedDiff = Math.abs(curve.speed - speed);
       if (speedDiff < minSpeedDiff) {
-	minSpeedDiff = speedDiff;
-	closestCurve = curve;
+        minSpeedDiff = speedDiff;
+        closestCurve = curve;
       }
     }
 
@@ -590,8 +592,8 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
     double minFlow = closestCurve.flow[0];
     for (int i = 1; i < closestCurve.flow.length; i++) {
       if (closestCurve.flow[i] < minFlow) {
-	minFlow = closestCurve.flow[i];
-	minFlowIdx = i;
+        minFlow = closestCurve.flow[i];
+        minFlowIdx = i;
       }
     }
     return closestCurve.head[minFlowIdx];
@@ -617,8 +619,8 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
     for (RealCurve curve : realCurves) {
       double speedDiff = Math.abs(curve.speed - speed);
       if (speedDiff < minSpeedDiff) {
-	minSpeedDiff = speedDiff;
-	closestCurve = curve;
+        minSpeedDiff = speedDiff;
+        closestCurve = curve;
       }
     }
 
@@ -626,7 +628,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
     double maxFlow = closestCurve.flow[0];
     for (double flow : closestCurve.flow) {
       if (flow > maxFlow) {
-	maxFlow = flow;
+        maxFlow = flow;
       }
     }
     return maxFlow;
@@ -652,8 +654,8 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
     for (RealCurve curve : realCurves) {
       double speedDiff = Math.abs(curve.speed - speed);
       if (speedDiff < minSpeedDiff) {
-	minSpeedDiff = speedDiff;
-	closestCurve = curve;
+        minSpeedDiff = speedDiff;
+        closestCurve = curve;
       }
     }
 
@@ -662,8 +664,8 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
     double maxFlow = closestCurve.flow[0];
     for (int i = 1; i < closestCurve.flow.length; i++) {
       if (closestCurve.flow[i] > maxFlow) {
-	maxFlow = closestCurve.flow[i];
-	maxFlowIdx = i;
+        maxFlow = closestCurve.flow[i];
+        maxFlowIdx = i;
       }
     }
     return closestCurve.head[maxFlowIdx];

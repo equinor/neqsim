@@ -92,12 +92,12 @@ public class PackingHydraulicsCalculatorTest {
 
     // Structured packing should have lower HETP (better mass transfer)
     assertTrue(structCalc.getHETP() < randomCalc.getHETP(),
-	"Structured packing (Mellapak-250Y) should have lower HETP than Pall-Ring-50. Struct=" + structCalc.getHETP()
-	    + " Random=" + randomCalc.getHETP());
+        "Structured packing (Mellapak-250Y) should have lower HETP than Pall-Ring-50. Struct=" + structCalc.getHETP()
+            + " Random=" + randomCalc.getHETP());
 
     // Structured packing should give more theoretical stages for same bed height
     assertTrue(structCalc.getNumberOfTheoreticalStages() > randomCalc.getNumberOfTheoreticalStages(),
-	"Structured packing should give more stages");
+        "Structured packing should give more stages");
   }
 
   /**
@@ -224,6 +224,6 @@ public class PackingHydraulicsCalculatorTest {
     calcHigh.calculate();
 
     assertTrue(calcHigh.getPressureDropPerMeter() > calcLow.getPressureDropPerMeter(),
-	"Higher vapor flow should give higher DP");
+        "Higher vapor flow should give higher DP");
   }
 }

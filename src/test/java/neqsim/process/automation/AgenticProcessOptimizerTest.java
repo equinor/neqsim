@@ -84,8 +84,8 @@ class AgenticProcessOptimizerTest {
     opt.setObjectiveFunction(new Function<Map<String, Double>, Double>() {
       @Override
       public Double apply(Map<String, Double> readMap) {
-	double p = readMap.get("Compressor.outletPressure").doubleValue();
-	return Double.valueOf((p - 130.0) * (p - 130.0));
+        double p = readMap.get("Compressor.outletPressure").doubleValue();
+        return Double.valueOf((p - 130.0) * (p - 130.0));
       }
     });
     opt.setSeed(42L).setMaxEvaluations(80).setConvergenceTolerance(1.0e-4);
@@ -187,12 +187,12 @@ class AgenticProcessOptimizerTest {
       JsonObject cap = caps.get(i).getAsJsonObject();
       String name = cap.get("capability").getAsString();
       if ("never_throws".equals(name)) {
-	hasNeverThrows = true;
-	assertEquals("full", cap.get("level").getAsString());
+        hasNeverThrows = true;
+        assertEquals("full", cap.get("level").getAsString());
       }
       if ("bounded_action_space".equals(name)) {
-	hasBoundedAction = true;
-	assertEquals("full", cap.get("level").getAsString());
+        hasBoundedAction = true;
+        assertEquals("full", cap.get("level").getAsString());
       }
     }
     assertTrue(hasNeverThrows, "readiness must report never_throws capability");
@@ -226,8 +226,8 @@ class AgenticProcessOptimizerTest {
     opt.setObjectiveFunction(new Function<Map<String, Double>, Double>() {
       @Override
       public Double apply(Map<String, Double> readMap) {
-	double p = readMap.get("Compressor.outletPressure").doubleValue();
-	return Double.valueOf((p - 130.0) * (p - 130.0));
+        double p = readMap.get("Compressor.outletPressure").doubleValue();
+        return Double.valueOf((p - 130.0) * (p - 130.0));
       }
     });
     opt.setSeed(seed).setMaxEvaluations(80).setConvergenceTolerance(1.0e-4);

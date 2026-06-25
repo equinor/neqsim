@@ -61,9 +61,9 @@ public final class SeparationDuty implements Serializable {
     this.name = name;
     this.feed = feed;
     this.topProductSpecs = topProductSpecs == null ? Collections.<String, Double>emptyMap()
-	: Collections.unmodifiableMap(new LinkedHashMap<String, Double>(topProductSpecs));
+        : Collections.unmodifiableMap(new LinkedHashMap<String, Double>(topProductSpecs));
     this.bottomProductSpecs = bottomProductSpecs == null ? Collections.<String, Double>emptyMap()
-	: Collections.unmodifiableMap(new LinkedHashMap<String, Double>(bottomProductSpecs));
+        : Collections.unmodifiableMap(new LinkedHashMap<String, Double>(bottomProductSpecs));
     this.operatingPressureBara = operatingPressureBara;
   }
 

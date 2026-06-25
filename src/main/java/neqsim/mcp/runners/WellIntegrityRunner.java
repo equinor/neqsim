@@ -117,7 +117,7 @@ public final class WellIntegrityRunner {
     for (int i = 0; i < annuli.size(); i++) {
       JsonElement element = annuli.get(i);
       if (!element.isJsonObject()) {
-	continue;
+        continue;
       }
       JsonObject record = element.getAsJsonObject();
       String id = optString(record, "id", "A" + (i + 1));
@@ -141,7 +141,7 @@ public final class WellIntegrityRunner {
     JsonArray array = new JsonArray();
     if (values != null) {
       for (int i = 0; i < values.size(); i++) {
-	array.add(values.get(i));
+        array.add(values.get(i));
       }
     }
     return array;

@@ -229,7 +229,7 @@ public class EconomicsEstimator {
     this.regionalFactors = RegionalCostFactors.forRegion(regionCode);
     if (this.regionalFactors == null) {
       throw new IllegalArgumentException(
-	  "Unknown region: " + regionCode + ". Use RegionalCostFactors.getAllRegions() for list.");
+          "Unknown region: " + regionCode + ". Use RegionalCostFactors.getAllRegions() for list.");
     }
   }
 
@@ -364,7 +364,7 @@ public class EconomicsEstimator {
     this.regionalFactors = RegionalCostFactors.forRegion(regionCode);
     if (this.regionalFactors == null) {
       throw new IllegalArgumentException(
-	  "Unknown region: " + regionCode + ". Use RegionalCostFactors.getAllRegions() for list.");
+          "Unknown region: " + regionCode + ". Use RegionalCostFactors.getAllRegions() for list.");
     }
   }
 
@@ -437,7 +437,7 @@ public class EconomicsEstimator {
       return FPSO_BASE_MUSD * depthFactor;
     case SUBSEA:
       return SUBSEA_TEMPLATE_MUSD
-	  * Math.max(1, concept.getWells() != null ? concept.getWells().getProducerCount() / 2 : 2);
+          * Math.max(1, concept.getWells() != null ? concept.getWells().getProducerCount() / 2 : 2);
     case ONSHORE:
       return PLATFORM_BASE_MUSD * 0.6; // Onshore typically cheaper
     default:
@@ -462,23 +462,23 @@ public class EconomicsEstimator {
 
     if (facilityConfig != null) {
       for (BlockConfig block : facilityConfig.getBlocks()) {
-	capex += getBlockCAPEX(block);
+        capex += getBlockCAPEX(block);
       }
     } else {
       // Estimate from concept requirements
       capex += SEPARATION_TRAIN_MUSD; // Always have separation
 
       if (concept.needsCO2Removal()) {
-	double co2 = concept.getReservoir() != null ? concept.getReservoir().getCo2Percent() : 5.0;
-	if (co2 > 10) {
-	  capex += AMINE_UNIT_MUSD;
-	} else {
-	  capex += MEMBRANE_UNIT_MUSD;
-	}
+        double co2 = concept.getReservoir() != null ? concept.getReservoir().getCo2Percent() : 5.0;
+        if (co2 > 10) {
+          capex += AMINE_UNIT_MUSD;
+        } else {
+          capex += MEMBRANE_UNIT_MUSD;
+        }
       }
 
       if (concept.needsDehydration()) {
-	capex += TEG_UNIT_MUSD;
+        capex += TEG_UNIT_MUSD;
       }
 
       // Assume 2 compression stages
@@ -629,8 +629,8 @@ public class EconomicsEstimator {
 
     if (facilityConfig != null) {
       for (BlockConfig block : facilityConfig.getBlocksOfType(BlockType.COMPRESSION)) {
-	int stages = block.getIntParameter("stages", 1);
-	powerMW += stages * 5.0;
+        int stages = block.getIntParameter("stages", 1);
+        powerMW += stages * 5.0;
       }
     }
 
@@ -1000,8 +1000,8 @@ public class EconomicsEstimator {
        * @return this builder for chaining
        */
       public Builder facilityCapexMUSD(double value) {
-	this.facilityCapexMUSD = value;
-	return this;
+        this.facilityCapexMUSD = value;
+        return this;
       }
 
       /**
@@ -1011,8 +1011,8 @@ public class EconomicsEstimator {
        * @return this builder for chaining
        */
       public Builder equipmentCapexMUSD(double value) {
-	this.equipmentCapexMUSD = value;
-	return this;
+        this.equipmentCapexMUSD = value;
+        return this;
       }
 
       /**
@@ -1022,8 +1022,8 @@ public class EconomicsEstimator {
        * @return this builder for chaining
        */
       public Builder wellCapexMUSD(double value) {
-	this.wellCapexMUSD = value;
-	return this;
+        this.wellCapexMUSD = value;
+        return this;
       }
 
       /**
@@ -1033,8 +1033,8 @@ public class EconomicsEstimator {
        * @return this builder for chaining
        */
       public Builder infrastructureCapexMUSD(double value) {
-	this.infrastructureCapexMUSD = value;
-	return this;
+        this.infrastructureCapexMUSD = value;
+        return this;
       }
 
       /**
@@ -1044,8 +1044,8 @@ public class EconomicsEstimator {
        * @return this builder for chaining
        */
       public Builder totalCapexMUSD(double value) {
-	this.totalCapexMUSD = value;
-	return this;
+        this.totalCapexMUSD = value;
+        return this;
       }
 
       /**
@@ -1055,8 +1055,8 @@ public class EconomicsEstimator {
        * @return this builder for chaining
        */
       public Builder annualOpexMUSD(double value) {
-	this.annualOpexMUSD = value;
-	return this;
+        this.annualOpexMUSD = value;
+        return this;
       }
 
       /**
@@ -1066,8 +1066,8 @@ public class EconomicsEstimator {
        * @return this builder for chaining
        */
       public Builder capexPerBoeUSD(double value) {
-	this.capexPerBoeUSD = value;
-	return this;
+        this.capexPerBoeUSD = value;
+        return this;
       }
 
       /**
@@ -1077,8 +1077,8 @@ public class EconomicsEstimator {
        * @return this builder for chaining
        */
       public Builder opexPerBoeUSD(double value) {
-	this.opexPerBoeUSD = value;
-	return this;
+        this.opexPerBoeUSD = value;
+        return this;
       }
 
       /**
@@ -1088,8 +1088,8 @@ public class EconomicsEstimator {
        * @return this builder for chaining
        */
       public Builder accuracyRangePercent(double value) {
-	this.accuracyRangePercent = value;
-	return this;
+        this.accuracyRangePercent = value;
+        return this;
       }
 
       /**
@@ -1100,8 +1100,8 @@ public class EconomicsEstimator {
        * @return this builder for chaining
        */
       public Builder addCapexItem(String item, double value) {
-	this.capexBreakdown.put(item, value);
-	return this;
+        this.capexBreakdown.put(item, value);
+        return this;
       }
 
       /**
@@ -1112,8 +1112,8 @@ public class EconomicsEstimator {
        * @return this builder for chaining
        */
       public Builder addOpexItem(String item, double value) {
-	this.opexBreakdown.put(item, value);
-	return this;
+        this.opexBreakdown.put(item, value);
+        return this;
       }
 
       /**
@@ -1122,7 +1122,7 @@ public class EconomicsEstimator {
        * @return a new immutable EconomicsReport instance
        */
       public EconomicsReport build() {
-	return new EconomicsReport(this);
+        return new EconomicsReport(this);
       }
     }
   }

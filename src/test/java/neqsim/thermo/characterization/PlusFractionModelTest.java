@@ -20,7 +20,7 @@ public class PlusFractionModelTest {
     thermoSystem.addComponent("propane", 1.0);
 
     thermoSystem.getCharacterization().setTBPModel("PedersenSRK"); // this need to be set before
-								   // adding oil components
+    // adding oil components
 
     thermoSystem.addTBPfraction("C6", 1.0, 90.0 / 1000.0, 0.7);
     thermoSystem.addTBPfraction("C7", 1.0, 110.0 / 1000.0, 0.73);
@@ -33,18 +33,18 @@ public class PlusFractionModelTest {
      */
     thermoSystem.getCharacterization().setPlusFractionModel("Pedersen");
     thermoSystem.getCharacterization().setLumpingModel("PVTlumpingModel"); // this is default
-									   // lumping model in
-									   // neqsim. Needs to be
-									   // set before calling
-									   // characterisePlusFraction()
+    // lumping model in
+    // neqsim. Needs to be
+    // set before calling
+    // characterisePlusFraction()
 
     thermoSystem.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(9); // specif
-											 // numer
-											 // of
-											 // lumped
-											 // components
-											 // (C6-C80
-											 // components)
+    // numer
+    // of
+    // lumped
+    // components
+    // (C6-C80
+    // components)
     thermoSystem.getCharacterization().characterisePlusFraction();
     assertEquals(17, thermoSystem.getNumberOfComponents());
 
@@ -65,7 +65,7 @@ public class PlusFractionModelTest {
     thermoSystem.addComponent("propane", 1.0);
 
     thermoSystem.getCharacterization().setTBPModel("PedersenSRK"); // this need to be set before
-								   // adding oil components
+    // adding oil components
 
     thermoSystem.addTBPfraction("C6", 1.0, 90.0 / 1000.0, 0.7);
     thermoSystem.addTBPfraction("C7", 1.0, 110.0 / 1000.0, 0.73);
@@ -79,10 +79,10 @@ public class PlusFractionModelTest {
     thermoSystem.getCharacterization().setPlusFractionModel("Pedersen Heavy Oil");
 
     thermoSystem.getCharacterization().setLumpingModel("PVTlumpingModel"); // this is default
-									   // lumping model in
-									   // neqsim. Needs to be
-									   // set before calling
-									   // characterisePlusFraction()
+    // lumping model in
+    // neqsim. Needs to be
+    // set before calling
+    // characterisePlusFraction()
     thermoSystem.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(3);
     thermoSystem.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(8);
     // specify
@@ -137,9 +137,9 @@ public class PlusFractionModelTest {
     // illustration of how to set parameters for the gamma model
     ((WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel()).setGammaParameters(1.0, 90);
     double shape = ((WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel())
-	.getGammaParameters()[0];
+        .getGammaParameters()[0];
     double minMW = ((WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel())
-	.getGammaParameters()[1];
+        .getGammaParameters()[1];
     assertEquals(90.0, minMW, 1e-4);
   }
 
@@ -243,8 +243,8 @@ public class PlusFractionModelTest {
     boolean hasValidDensities = false;
     for (double dens : densities) {
       if (dens > 0.6 && dens < 1.2) {
-	hasValidDensities = true;
-	break;
+        hasValidDensities = true;
+        break;
       }
     }
     assertTrue(hasValidDensities, "Should have densities in valid range (0.6-1.2 g/cm³)");
@@ -261,7 +261,7 @@ public class PlusFractionModelTest {
     thermoSystem.addComponent("propane", 1.0);
 
     thermoSystem.getCharacterization().setTBPModel("PedersenSRK"); // this need to be set before
-								   // adding oil components
+    // adding oil components
 
     String[] componentNames = { "C7" };
     double[] molarComposition = { 0.15 };
@@ -284,7 +284,7 @@ public class PlusFractionModelTest {
     thermoSystem.addComponent("propane", 1.0);
 
     thermoSystem.getCharacterization().setTBPModel("PedersenSRK"); // this need to be set before
-								   // adding oil components
+    // adding oil components
 
     molarMasses = new double[] { 0.120 };
 

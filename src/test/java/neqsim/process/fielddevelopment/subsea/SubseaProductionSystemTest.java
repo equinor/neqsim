@@ -50,7 +50,7 @@ public class SubseaProductionSystemTest {
   public void testFluentConfiguration() {
     SubseaProductionSystem subsea = new SubseaProductionSystem("Configured Subsea");
     subsea.setArchitecture(SubseaArchitecture.DIRECT_TIEBACK).setWaterDepthM(450.0).setTiebackDistanceKm(30.0)
-	.setWellCount(6).setFlowlineDiameterInches(10.0);
+        .setWellCount(6).setFlowlineDiameterInches(10.0);
 
     assertEquals(SubseaArchitecture.DIRECT_TIEBACK, subsea.getArchitecture());
     assertEquals(450.0, subsea.getWaterDepthM(), 0.1);
@@ -63,7 +63,7 @@ public class SubseaProductionSystemTest {
   public void testSubseaCapexEstimation() {
     SubseaProductionSystem subsea = new SubseaProductionSystem("CAPEX Test");
     subsea.setArchitecture(SubseaArchitecture.MANIFOLD_CLUSTER).setWaterDepthM(350.0).setTiebackDistanceKm(25.0)
-	.setWellCount(4).setFlowlineDiameterInches(12.0).setReservoirFluid(gasFluid);
+        .setWellCount(4).setFlowlineDiameterInches(12.0).setReservoirFluid(gasFluid);
 
     subsea.build();
 
@@ -76,8 +76,8 @@ public class SubseaProductionSystemTest {
   public void testSubseaSystemResultCostBreakdown() {
     SubseaProductionSystem subsea = new SubseaProductionSystem("Cost Test");
     subsea.setArchitecture(SubseaArchitecture.MANIFOLD_CLUSTER).setWaterDepthM(350.0).setTiebackDistanceKm(25.0)
-	.setWellCount(4).setManifoldCount(1).setFlowlineDiameterInches(12.0).setRatePerWell(1.5e6)
-	.setWellheadConditions(180.0, 80.0).setReservoirFluid(gasFluid);
+        .setWellCount(4).setManifoldCount(1).setFlowlineDiameterInches(12.0).setRatePerWell(1.5e6)
+        .setWellheadConditions(180.0, 80.0).setReservoirFluid(gasFluid);
 
     subsea.build();
     subsea.run();
@@ -93,10 +93,10 @@ public class SubseaProductionSystemTest {
 
     // Verify total is sum of components
     double expectedTotal = result.getSubseaTreeCostMusd() + result.getManifoldCostMusd() + result.getPipelineCostMusd()
-	+ result.getUmbilicalCostMusd() + 4 * 3.0 + 1 * 5.0; // Control
-							     // system
-							     // cost
-							     // approximation
+        + result.getUmbilicalCostMusd() + 4 * 3.0 + 1 * 5.0; // Control
+    // system
+    // cost
+    // approximation
 
     assertEquals(expectedTotal, result.getTotalSubseaCapexMusd(), 5.0);
 
@@ -112,7 +112,7 @@ public class SubseaProductionSystemTest {
     for (SubseaArchitecture arch : SubseaArchitecture.values()) {
       SubseaProductionSystem subsea = new SubseaProductionSystem("Arch Test " + arch);
       subsea.setArchitecture(arch).setWaterDepthM(300.0).setTiebackDistanceKm(20.0).setWellCount(4)
-	  .setReservoirFluid(gasFluid);
+          .setReservoirFluid(gasFluid);
 
       subsea.build();
 
@@ -126,27 +126,27 @@ public class SubseaProductionSystemTest {
     // Shallow water
     SubseaProductionSystem shallow = new SubseaProductionSystem("Shallow");
     shallow.setWaterDepthM(200.0).setTiebackDistanceKm(25.0).setWellCount(4).setFlowlineDiameterInches(12.0)
-	.setReservoirFluid(gasFluid);
+        .setReservoirFluid(gasFluid);
     shallow.build();
     shallow.run();
 
     // Deep water
     SubseaProductionSystem deep = new SubseaProductionSystem("Deep");
     deep.setWaterDepthM(1200.0).setTiebackDistanceKm(25.0).setWellCount(4).setFlowlineDiameterInches(12.0)
-	.setReservoirFluid(gasFluid);
+        .setReservoirFluid(gasFluid);
     deep.build();
     deep.run();
 
     // Deep water should have higher pipeline cost
     assertTrue(deep.getResult().getPipelineCostMusd() > shallow.getResult().getPipelineCostMusd(),
-	"Deep water pipeline should cost more than shallow");
+        "Deep water pipeline should cost more than shallow");
   }
 
   @Test
   public void testResultSummaryFormat() {
     SubseaProductionSystem subsea = new SubseaProductionSystem("Summary Test");
     subsea.setArchitecture(SubseaArchitecture.MANIFOLD_CLUSTER).setWaterDepthM(350.0).setTiebackDistanceKm(25.0)
-	.setWellCount(4).setFlowlineDiameterInches(12.0).setReservoirFluid(gasFluid);
+        .setWellCount(4).setFlowlineDiameterInches(12.0).setReservoirFluid(gasFluid);
 
     subsea.build();
     subsea.run();

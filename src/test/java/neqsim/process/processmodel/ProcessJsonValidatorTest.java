@@ -92,8 +92,8 @@ class ProcessJsonValidatorTest {
   @Test
   void processModelAreasShouldValidate() {
     String json = "{\"areas\":{\"separation\":{\"process\":[{\"type\":\"Stream\",\"name\":\"feed\"}]},"
-	+ "\"compression\":{\"process\":[{\"type\":\"Stream\",\"name\":\"gas\"},"
-	+ "{\"type\":\"Compressor\",\"name\":\"comp\",\"inlet\":\"gas.outlet\"}]}}}";
+        + "\"compression\":{\"process\":[{\"type\":\"Stream\",\"name\":\"gas\"},"
+        + "{\"type\":\"Compressor\",\"name\":\"comp\",\"inlet\":\"gas.outlet\"}]}}}";
     ProcessJsonValidator.ValidationReport report = ProcessJsonValidator.validate(json);
     assertTrue(report.isValid());
   }

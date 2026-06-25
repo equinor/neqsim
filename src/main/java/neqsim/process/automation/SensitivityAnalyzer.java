@@ -177,26 +177,27 @@ public class SensitivityAnalyzer {
     double dydx;
     try {
       if (mode == Mode.CENTRAL) {
-	automation.setVariableValue(inputAddress, x0 + h, inputUnit);
-	automation.run();
-	double yPlus = automation.getVariableValue(outputAddress, outputUnit);
-	automation.setVariableValue(inputAddress, x0 - h, inputUnit);
-	automation.run();
-	double yMinus = automation.getVariableValue(outputAddress, outputUnit);
-	dydx = (yPlus - yMinus) / (2.0 * h);
+        automation.setVariableValue(inputAddress, x0 + h, inputUnit);
+        automation.run();
+        double yPlus = automation.getVariableValue(outputAddress, outputUnit);
+        automation.setVariableValue(inputAddress, x0 - h, inputUnit);
+        automation.run();
+        double yMinus = automation.getVariableValue(outputAddress, outputUnit);
+        dydx = (yPlus - yMinus) / (2.0 * h);
       } else {
-	automation.setVariableValue(inputAddress, x0 + h, inputUnit);
-	automation.run();
-	double yPlus = automation.getVariableValue(outputAddress, outputUnit);
-	dydx = (yPlus - y0) / h;
+        automation.setVariableValue(inputAddress, x0 + h, inputUnit);
+        automation.run();
+        double yPlus = automation.getVariableValue(outputAddress, outputUnit);
+        dydx = (yPlus - y0) / h;
       }
     } finally {
       // Always restore.
       try {
-	automation.setVariableValue(inputAddress, x0, inputUnit);
-	automation.run();
+        automation.setVariableValue(inputAddress, x0, inputUnit);
+        automation.run();
       } catch (RuntimeException ignored) {
-	// Suppress restore failures so the original exception (if any) is the one that surfaces.
+        // Suppress restore failures so the original exception (if any) is the one that
+        // surfaces.
       }
     }
     return dydx;
@@ -253,35 +254,35 @@ public class SensitivityAnalyzer {
       double x0 = automation.getVariableValue(in, inputUnit);
       double h = Math.max(absoluteStep, relativeStep * Math.abs(x0));
       if (h <= 0.0) {
-	h = absoluteStep;
+        h = absoluteStep;
       }
       try {
-	if (mode == Mode.CENTRAL) {
-	  automation.setVariableValue(in, x0 + h, inputUnit);
-	  automation.run();
-	  double[] yPlus = readAll(outputAddresses, outputUnit);
-	  automation.setVariableValue(in, x0 - h, inputUnit);
-	  automation.run();
-	  double[] yMinus = readAll(outputAddresses, outputUnit);
-	  for (int rowIdx = 0; rowIdx < nOut; rowIdx++) {
-	    j[rowIdx][colIdx] = (yPlus[rowIdx] - yMinus[rowIdx]) / (2.0 * h);
-	  }
-	} else {
-	  double[] y0 = readAll(outputAddresses, outputUnit);
-	  automation.setVariableValue(in, x0 + h, inputUnit);
-	  automation.run();
-	  double[] yPlus = readAll(outputAddresses, outputUnit);
-	  for (int rowIdx = 0; rowIdx < nOut; rowIdx++) {
-	    j[rowIdx][colIdx] = (yPlus[rowIdx] - y0[rowIdx]) / h;
-	  }
-	}
+        if (mode == Mode.CENTRAL) {
+          automation.setVariableValue(in, x0 + h, inputUnit);
+          automation.run();
+          double[] yPlus = readAll(outputAddresses, outputUnit);
+          automation.setVariableValue(in, x0 - h, inputUnit);
+          automation.run();
+          double[] yMinus = readAll(outputAddresses, outputUnit);
+          for (int rowIdx = 0; rowIdx < nOut; rowIdx++) {
+            j[rowIdx][colIdx] = (yPlus[rowIdx] - yMinus[rowIdx]) / (2.0 * h);
+          }
+        } else {
+          double[] y0 = readAll(outputAddresses, outputUnit);
+          automation.setVariableValue(in, x0 + h, inputUnit);
+          automation.run();
+          double[] yPlus = readAll(outputAddresses, outputUnit);
+          for (int rowIdx = 0; rowIdx < nOut; rowIdx++) {
+            j[rowIdx][colIdx] = (yPlus[rowIdx] - y0[rowIdx]) / h;
+          }
+        }
       } finally {
-	try {
-	  automation.setVariableValue(in, x0, inputUnit);
-	  automation.run();
-	} catch (RuntimeException ignored) {
-	  // Suppress restore failures.
-	}
+        try {
+          automation.setVariableValue(in, x0, inputUnit);
+          automation.run();
+        } catch (RuntimeException ignored) {
+          // Suppress restore failures.
+        }
       }
     }
     return j;
@@ -351,7 +352,7 @@ public class SensitivityAnalyzer {
     for (int rowIdx = 0; rowIdx < j.length; rowIdx++) {
       JsonArray row = new JsonArray();
       for (int colIdx = 0; colIdx < j[rowIdx].length; colIdx++) {
-	row.add(j[rowIdx][colIdx]);
+        row.add(j[rowIdx][colIdx]);
       }
       rows.add(row);
     }

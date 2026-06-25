@@ -469,7 +469,7 @@ public class AnaerobicDigester extends Fermenter {
     double effVstsRatio = Double.isNaN(vstsFraction) ? substrateType.getVstsRatio() : vstsFraction;
     actualVsDestruction = Double.isNaN(vsDestruction) ? substrateType.getVsDestruction() : vsDestruction;
     actualSpecificMethaneYield = Double.isNaN(specificMethaneYield) ? substrateType.getSpecificMethaneYield()
-	: specificMethaneYield;
+        : specificMethaneYield;
 
     // ── Step 2: Mass flow calculations ──
     double feedKgPerDay = feedRateKgPerHr * 24.0;
@@ -588,7 +588,7 @@ public class AnaerobicDigester extends Fermenter {
     sb.append(String.format("  Biogas = %.0f Nm3/day (%.0f%% CH4)%n", biogasFlowRateNm3PerDay, methaneFraction * 100));
     sb.append(String.format("  CH4 = %.0f Nm3/day%n", methaneProductionNm3PerDay));
     sb.append(String.format("  OLR = %.2f kg VS/(m3*day), HRT = %.1f days%n", organicLoadingRate,
-	hydraulicRetentionTimeDays));
+        hydraulicRetentionTimeDays));
     sb.append(String.format("  VS Destruction = %.0f%%%n", actualVsDestruction * 100));
     return sb.toString();
   }

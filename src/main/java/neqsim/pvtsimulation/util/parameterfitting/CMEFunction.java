@@ -38,9 +38,9 @@ public class CMEFunction extends LevenbergMarquardtFunction {
       system.setPressure((minPres + maxPres) / 2.0);
       thermoOps.TPflash();
       if (system.getNumberOfPhases() > 1) {
-	minPres = system.getPressure();
+        minPres = system.getPressure();
       } else {
-	maxPres = system.getPressure();
+        maxPres = system.getPressure();
       }
     } while (Math.abs(maxPres - minPres) > 1e-5);
     /*
@@ -58,7 +58,7 @@ public class CMEFunction extends LevenbergMarquardtFunction {
     molarMass = params[0];
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       if (system.getPhase(0).getComponent(i).isIsPlusFraction()) {
-	plusNumber = i;
+        plusNumber = i;
       }
     }
     SystemInterface tempSystem = system.clone();
@@ -92,7 +92,7 @@ public class CMEFunction extends LevenbergMarquardtFunction {
     int plusNumber = 0;
     for (int ii = 0; ii < system.getPhase(0).getNumberOfComponents(); ii++) {
       if (system.getPhase(0).getComponent(ii).isIsPlusFraction()) {
-	plusNumber = ii;
+        plusNumber = ii;
       }
     }
     system.getPhase(0).getComponent(plusNumber).setMolarMass(value);

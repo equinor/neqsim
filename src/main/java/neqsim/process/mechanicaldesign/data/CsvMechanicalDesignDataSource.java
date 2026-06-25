@@ -6,9 +6,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Optional;
-import neqsim.process.mechanicaldesign.DesignLimitData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.mechanicaldesign.DesignLimitData;
 
 /**
  * Loads mechanical design limits from a CSV file. The file is expected to contain the columns {@code EQUIPMENTTYPE},
@@ -41,23 +41,23 @@ public class CsvMechanicalDesignDataSource implements MechanicalDesignDataSource
     try (BufferedReader reader = Files.newBufferedReader(csvPath)) {
       String header = reader.readLine();
       if (header == null) {
-	return Optional.empty();
+        return Optional.empty();
       }
       String[] columns = header.split(",");
       ColumnIndex index = ColumnIndex.from(columns);
       String line;
       while ((line = reader.readLine()) != null) {
-	String[] tokens = line.split(",");
-	if (tokens.length < index.requiredLength()) {
-	  continue;
-	}
-	if (!normalize(tokens[index.equipmentTypeIndex]).equals(normalizedEquipment)) {
-	  continue;
-	}
-	if (!normalize(tokens[index.companyIndex]).equals(normalizedCompany)) {
-	  continue;
-	}
-	return Optional.of(parse(tokens, index));
+        String[] tokens = line.split(",");
+        if (tokens.length < index.requiredLength()) {
+          continue;
+        }
+        if (!normalize(tokens[index.equipmentTypeIndex]).equals(normalizedEquipment)) {
+          continue;
+        }
+        if (!normalize(tokens[index.companyIndex]).equals(normalizedCompany)) {
+          continue;
+        }
+        return Optional.of(parse(tokens, index));
       }
     } catch (IOException ex) {
       logger.error("Failed to read mechanical design CSV {}", csvPath, ex);
@@ -102,7 +102,7 @@ public class CsvMechanicalDesignDataSource implements MechanicalDesignDataSource
     private final int jointEfficiencyIndex;
 
     private ColumnIndex(int equipmentTypeIndex, int companyIndex, int maxPressureIndex, int minPressureIndex,
-	int maxTemperatureIndex, int minTemperatureIndex, int corrosionAllowanceIndex, int jointEfficiencyIndex) {
+        int maxTemperatureIndex, int minTemperatureIndex, int corrosionAllowanceIndex, int jointEfficiencyIndex) {
       this.equipmentTypeIndex = equipmentTypeIndex;
       this.companyIndex = companyIndex;
       this.maxPressureIndex = maxPressureIndex;
@@ -123,21 +123,21 @@ public class CsvMechanicalDesignDataSource implements MechanicalDesignDataSource
       int corrosionAllowance = indexOf(columns, "CORROSIONALLOWANCE");
       int jointEfficiency = indexOf(columns, "JOINTEFFICIENCY");
       return new ColumnIndex(equipment, company, maxPressure, minPressure, maxTemperature, minTemperature,
-	  corrosionAllowance, jointEfficiency);
+          corrosionAllowance, jointEfficiency);
     }
 
     int requiredLength() {
       return Math.max(Math.max(Math.max(
-	  Math.max(Math.max(Math.max(Math.max(equipmentTypeIndex, companyIndex), maxPressureIndex), minPressureIndex),
-	      maxTemperatureIndex),
-	  minTemperatureIndex), corrosionAllowanceIndex), jointEfficiencyIndex) + 1;
+          Math.max(Math.max(Math.max(Math.max(equipmentTypeIndex, companyIndex), maxPressureIndex), minPressureIndex),
+              maxTemperatureIndex),
+          minTemperatureIndex), corrosionAllowanceIndex), jointEfficiencyIndex) + 1;
     }
 
     private static int indexOf(String[] columns, String name) {
       for (int i = 0; i < columns.length; i++) {
-	if (name.equalsIgnoreCase(columns[i].trim())) {
-	  return i;
-	}
+        if (name.equalsIgnoreCase(columns[i].trim())) {
+          return i;
+        }
       }
       return -1;
     }

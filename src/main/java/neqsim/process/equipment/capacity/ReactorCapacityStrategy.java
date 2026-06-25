@@ -57,7 +57,7 @@ public class ReactorCapacityStrategy implements EquipmentCapacityStrategy {
   @Override
   public boolean supports(ProcessEquipmentInterface equipment) {
     return equipment instanceof GibbsReactor || equipment instanceof PlugFlowReactor
-	|| equipment instanceof StirredTankReactor;
+        || equipment instanceof StirredTankReactor;
   }
 
   /** {@inheritDoc} */
@@ -85,10 +85,10 @@ public class ReactorCapacityStrategy implements EquipmentCapacityStrategy {
     double maxUtil = 0.0;
     for (CapacityConstraint c : constraints.values()) {
       if (c.isEnabled()) {
-	double util = c.getUtilization();
-	if (!Double.isNaN(util) && util > maxUtil) {
-	  maxUtil = util;
-	}
+        double util = c.getUtilization();
+        if (!Double.isNaN(util) && util > maxUtil) {
+          maxUtil = util;
+        }
       }
     }
     return maxUtil;
@@ -125,15 +125,15 @@ public class ReactorCapacityStrategy implements EquipmentCapacityStrategy {
   private void addPlugFlowConstraints(Map<String, CapacityConstraint> constraints, PlugFlowReactor pfr) {
     // Heat duty constraint
     CapacityConstraint dutyConstraint = new CapacityConstraint("heatDuty").setDesignValue(maxDutyKW)
-	.setMaxValue(maxDutyKW * 1.1).setUnit("kW").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-	.setWarningThreshold(0.9).setDescription("Reactor heat duty vs design")
-	.setValueSupplier(() -> Math.abs(pfr.getHeatDuty("kW")));
+        .setMaxValue(maxDutyKW * 1.1).setUnit("kW").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
+        .setWarningThreshold(0.9).setDescription("Reactor heat duty vs design")
+        .setValueSupplier(() -> Math.abs(pfr.getHeatDuty("kW")));
     constraints.put("heatDuty", dutyConstraint);
 
     // Conversion constraint (target = 1.0 = 100%)
     CapacityConstraint convConstraint = new CapacityConstraint("conversion").setDesignValue(1.0).setMaxValue(1.0)
-	.setUnit("fraction").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT).setWarningThreshold(0.9)
-	.setDescription("Reactor conversion vs target").setValueSupplier(() -> pfr.getConversion());
+        .setUnit("fraction").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT).setWarningThreshold(0.9)
+        .setDescription("Reactor conversion vs target").setValueSupplier(() -> pfr.getConversion());
     constraints.put("conversion", convConstraint);
   }
 
@@ -146,18 +146,18 @@ public class ReactorCapacityStrategy implements EquipmentCapacityStrategy {
   private void addCSTRConstraints(Map<String, CapacityConstraint> constraints, StirredTankReactor cstr) {
     // Heat duty constraint
     CapacityConstraint dutyConstraint = new CapacityConstraint("heatDuty").setDesignValue(maxDutyKW)
-	.setMaxValue(maxDutyKW * 1.1).setUnit("kW").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-	.setWarningThreshold(0.9).setDescription("Reactor heat duty vs design")
-	.setValueSupplier(() -> Math.abs(cstr.getHeatDuty("kW")));
+        .setMaxValue(maxDutyKW * 1.1).setUnit("kW").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
+        .setWarningThreshold(0.9).setDescription("Reactor heat duty vs design")
+        .setValueSupplier(() -> Math.abs(cstr.getHeatDuty("kW")));
     constraints.put("heatDuty", dutyConstraint);
 
     // Agitator power constraint
     double agitatorPower = cstr.getAgitatorPower();
     if (agitatorPower > 0) {
       CapacityConstraint agitatorConstraint = new CapacityConstraint("agitatorPower").setDesignValue(agitatorPower)
-	  .setMaxValue(agitatorPower * 1.1).setUnit("W").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-	  .setWarningThreshold(0.9).setDescription("Agitator power vs design")
-	  .setValueSupplier(() -> cstr.getAgitatorPower());
+          .setMaxValue(agitatorPower * 1.1).setUnit("W").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
+          .setWarningThreshold(0.9).setDescription("Agitator power vs design")
+          .setValueSupplier(() -> cstr.getAgitatorPower());
       constraints.put("agitatorPower", agitatorConstraint);
     }
   }
@@ -171,9 +171,9 @@ public class ReactorCapacityStrategy implements EquipmentCapacityStrategy {
   private void addGibbsConstraints(Map<String, CapacityConstraint> constraints, GibbsReactor gibbs) {
     // Power (energy) constraint
     CapacityConstraint dutyConstraint = new CapacityConstraint("heatDuty").setDesignValue(maxDutyKW)
-	.setMaxValue(maxDutyKW * 1.1).setUnit("kW").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-	.setWarningThreshold(0.9).setDescription("Reactor energy balance vs design")
-	.setValueSupplier(() -> Math.abs(gibbs.getPower("kW")));
+        .setMaxValue(maxDutyKW * 1.1).setUnit("kW").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
+        .setWarningThreshold(0.9).setDescription("Reactor energy balance vs design")
+        .setValueSupplier(() -> Math.abs(gibbs.getPower("kW")));
     constraints.put("heatDuty", dutyConstraint);
   }
 
@@ -183,7 +183,7 @@ public class ReactorCapacityStrategy implements EquipmentCapacityStrategy {
     List<CapacityConstraint> violations = new ArrayList<CapacityConstraint>();
     for (CapacityConstraint c : getConstraints(equipment).values()) {
       if (c.isViolated()) {
-	violations.add(c);
+        violations.add(c);
       }
     }
     return violations;
@@ -197,8 +197,8 @@ public class ReactorCapacityStrategy implements EquipmentCapacityStrategy {
     for (CapacityConstraint c : getConstraints(equipment).values()) {
       double util = c.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-	maxUtil = util;
-	bottleneck = c;
+        maxUtil = util;
+        bottleneck = c;
       }
     }
     return bottleneck;
@@ -209,10 +209,10 @@ public class ReactorCapacityStrategy implements EquipmentCapacityStrategy {
   public boolean isWithinHardLimits(ProcessEquipmentInterface equipment) {
     for (CapacityConstraint c : getConstraints(equipment).values()) {
       if (c.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD
-	  || c.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
-	if (c.isHardLimitExceeded()) {
-	  return false;
-	}
+          || c.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
+        if (c.isHardLimitExceeded()) {
+          return false;
+        }
       }
     }
     return true;
@@ -223,7 +223,7 @@ public class ReactorCapacityStrategy implements EquipmentCapacityStrategy {
   public boolean isWithinSoftLimits(ProcessEquipmentInterface equipment) {
     for (CapacityConstraint c : getConstraints(equipment).values()) {
       if (c.isViolated()) {
-	return false;
+        return false;
       }
     }
     return true;

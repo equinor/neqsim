@@ -39,11 +39,11 @@ public class PumpNPSHCurveTest extends neqsim.NeqSimTest {
     // Set up pump performance curves
     double[] speed = new double[] { 1000.0, 1500.0 };
     double[][] flow = new double[][] { { 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0 },
-	{ 15.0, 30.0, 45.0, 60.0, 75.0, 90.0, 105.0, 120.0 } };
+        { 15.0, 30.0, 45.0, 60.0, 75.0, 90.0, 105.0, 120.0 } };
     double[][] head = new double[][] { { 120.0, 118.0, 115.0, 110.0, 103.0, 94.0, 83.0, 70.0 },
-	{ 270.0, 265.5, 258.8, 247.5, 231.8, 211.5, 186.8, 157.5 } };
+        { 270.0, 265.5, 258.8, 247.5, 231.8, 211.5, 186.8, 157.5 } };
     double[][] efficiency = new double[][] { { 60.0, 70.0, 78.0, 82.0, 81.0, 76.0, 68.0, 55.0 },
-	{ 62.0, 71.0, 79.0, 83.0, 82.0, 77.0, 69.0, 56.0 } };
+        { 62.0, 71.0, 79.0, 83.0, 82.0, 77.0, 69.0, 56.0 } };
 
     pump.getPumpChart().setCurves(new double[] {}, speed, flow, head, efficiency);
     pump.getPumpChart().setHeadUnit("meter");
@@ -53,7 +53,7 @@ public class PumpNPSHCurveTest extends neqsim.NeqSimTest {
   void testSetNPSHCurve() {
     // Test setting NPSH curve with valid data
     double[][] npsh = new double[][] { { 2.0, 2.2, 2.5, 3.0, 3.8, 4.8, 6.2, 8.0 }, // At 1000 rpm
-	{ 4.5, 4.95, 5.625, 6.75, 8.55, 10.8, 13.95, 18.0 } // At 1500 rpm (2.25x first row)
+        { 4.5, 4.95, 5.625, 6.75, 8.55, 10.8, 13.95, 18.0 } // At 1500 rpm (2.25x first row)
     };
 
     pump.getPumpChart().setNPSHCurve(npsh);
@@ -65,7 +65,7 @@ public class PumpNPSHCurveTest extends neqsim.NeqSimTest {
   void testNPSHAffinityLaw() {
     // NPSH should scale as N² (speed squared)
     double[][] npsh = new double[][] { { 2.0, 2.2, 2.5, 3.0, 3.8, 4.8, 6.2, 8.0 }, // At 1000 rpm
-	{ 4.5, 4.95, 5.625, 6.75, 8.55, 10.8, 13.95, 18.0 } // At 1500 rpm
+        { 4.5, 4.95, 5.625, 6.75, 8.55, 10.8, 13.95, 18.0 } // At 1500 rpm
     };
 
     pump.getPumpChart().setNPSHCurve(npsh);
@@ -93,7 +93,7 @@ public class PumpNPSHCurveTest extends neqsim.NeqSimTest {
   void testNPSHIncreasesWithFlow() {
     // NPSH typically increases with flow rate
     double[][] npsh = new double[][] { { 2.0, 2.2, 2.5, 3.0, 3.8, 4.8, 6.2, 8.0 },
-	{ 4.5, 4.95, 5.625, 6.75, 8.55, 10.8, 13.95, 18.0 } };
+        { 4.5, 4.95, 5.625, 6.75, 8.55, 10.8, 13.95, 18.0 } };
 
     pump.getPumpChart().setNPSHCurve(npsh);
 
@@ -110,7 +110,7 @@ public class PumpNPSHCurveTest extends neqsim.NeqSimTest {
   void testNPSHInterpolation() {
     // Test interpolation between data points
     double[][] npsh = new double[][] { { 2.0, 2.2, 2.5, 3.0, 3.8, 4.8, 6.2, 8.0 },
-	{ 4.5, 4.95, 5.625, 6.75, 8.55, 10.8, 13.95, 18.0 } };
+        { 4.5, 4.95, 5.625, 6.75, 8.55, 10.8, 13.95, 18.0 } };
 
     pump.getPumpChart().setNPSHCurve(npsh);
 
@@ -122,7 +122,7 @@ public class PumpNPSHCurveTest extends neqsim.NeqSimTest {
 
     // Should be between 2.5 and 3.0
     Assertions.assertTrue(npshInterpolated > 2.5 && npshInterpolated < 3.0,
-	"Interpolated NPSH should be between bounding values");
+        "Interpolated NPSH should be between bounding values");
 
     // Should be close to midpoint
     Assertions.assertEquals(2.75, npshInterpolated, 0.2, "Interpolated NPSH should be near expected value");
@@ -132,7 +132,7 @@ public class PumpNPSHCurveTest extends neqsim.NeqSimTest {
   void testPumpUsesChartNPSH() {
     // Test that Pump.getNPSHRequired() uses chart data when available
     double[][] npsh = new double[][] { { 2.0, 2.2, 2.5, 3.0, 3.8, 4.8, 6.2, 8.0 },
-	{ 4.5, 4.95, 5.625, 6.75, 8.55, 10.8, 13.95, 18.0 } };
+        { 4.5, 4.95, 5.625, 6.75, 8.55, 10.8, 13.95, 18.0 } };
 
     pump.getPumpChart().setNPSHCurve(npsh);
     pump.setSpeed(1000.0);
@@ -148,7 +148,7 @@ public class PumpNPSHCurveTest extends neqsim.NeqSimTest {
 
     // Should return value from NPSH curve (reasonable range 2-4 m for this flow/speed)
     Assertions.assertTrue(npshFromPump > 2.0 && npshFromPump < 4.0,
-	"Pump should return NPSH from chart data, got: " + npshFromPump + " m");
+        "Pump should return NPSH from chart data, got: " + npshFromPump + " m");
   }
 
   @Test
@@ -164,7 +164,7 @@ public class PumpNPSHCurveTest extends neqsim.NeqSimTest {
 
     // Should return reasonable estimate (2-10 m range)
     Assertions.assertTrue(npshEstimate >= 2.0 && npshEstimate <= 10.0,
-	"Without NPSH curve, should return reasonable estimate");
+        "Without NPSH curve, should return reasonable estimate");
   }
 
   @Test
@@ -194,7 +194,7 @@ public class PumpNPSHCurveTest extends neqsim.NeqSimTest {
   void testCavitationDetectionWithNPSHCurve() {
     // Test cavitation detection using chart NPSH
     double[][] npsh = new double[][] { { 2.0, 2.2, 2.5, 3.0, 3.8, 4.8, 6.2, 8.0 },
-	{ 4.5, 4.95, 5.625, 6.75, 8.55, 10.8, 13.95, 18.0 } };
+        { 4.5, 4.95, 5.625, 6.75, 8.55, 10.8, 13.95, 18.0 } };
 
     pump.getPumpChart().setNPSHCurve(npsh);
     pump.setSpeed(1000.0);
@@ -217,7 +217,7 @@ public class PumpNPSHCurveTest extends neqsim.NeqSimTest {
   void testNPSHExtrapolationWarning() {
     // Test that extrapolation beyond measured range logs warning
     double[][] npsh = new double[][] { { 2.0, 2.2, 2.5, 3.0, 3.8, 4.8, 6.2, 8.0 },
-	{ 4.5, 4.95, 5.625, 6.75, 8.55, 10.8, 13.95, 18.0 } };
+        { 4.5, 4.95, 5.625, 6.75, 8.55, 10.8, 13.95, 18.0 } };
 
     pump.getPumpChart().setNPSHCurve(npsh);
 
@@ -235,7 +235,7 @@ public class PumpNPSHCurveTest extends neqsim.NeqSimTest {
   void testNPSHWithDifferentSpeeds() {
     // Test NPSH calculation at various speeds
     double[][] npsh = new double[][] { { 2.0, 2.2, 2.5, 3.0, 3.8, 4.8, 6.2, 8.0 },
-	{ 4.5, 4.95, 5.625, 6.75, 8.55, 10.8, 13.95, 18.0 } };
+        { 4.5, 4.95, 5.625, 6.75, 8.55, 10.8, 13.95, 18.0 } };
 
     pump.getPumpChart().setNPSHCurve(npsh);
 
@@ -259,7 +259,7 @@ public class PumpNPSHCurveTest extends neqsim.NeqSimTest {
   void testNPSHNonNegative() {
     // Ensure NPSH is never negative even with bad curve fit
     double[][] npsh = new double[][] { { 2.0, 2.2, 2.5, 3.0, 3.8, 4.8, 6.2, 8.0 },
-	{ 4.5, 4.95, 5.625, 6.75, 8.55, 10.8, 13.95, 18.0 } };
+        { 4.5, 4.95, 5.625, 6.75, 8.55, 10.8, 13.95, 18.0 } };
 
     pump.getPumpChart().setNPSHCurve(npsh);
 

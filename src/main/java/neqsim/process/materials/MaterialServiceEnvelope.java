@@ -43,7 +43,7 @@ public class MaterialServiceEnvelope implements Serializable {
     MaterialServiceEnvelope envelope = new MaterialServiceEnvelope();
     if (source != null) {
       for (Map.Entry<String, Object> entry : source.entrySet()) {
-	envelope.set(entry.getKey(), entry.getValue());
+        envelope.set(entry.getKey(), entry.getValue());
       }
     }
     return envelope;
@@ -97,9 +97,9 @@ public class MaterialServiceEnvelope implements Serializable {
     }
     if (value instanceof String) {
       try {
-	return Double.parseDouble(((String) value).trim());
+        return Double.parseDouble(((String) value).trim());
       } catch (NumberFormatException ex) {
-	return defaultValue;
+        return defaultValue;
       }
     }
     return defaultValue;
@@ -135,12 +135,12 @@ public class MaterialServiceEnvelope implements Serializable {
     if (value instanceof String) {
       String text = ((String) value).trim();
       if ("true".equalsIgnoreCase(text) || "yes".equalsIgnoreCase(text) || "y".equalsIgnoreCase(text)
-	  || "1".equals(text)) {
-	return true;
+          || "1".equals(text)) {
+        return true;
       }
       if ("false".equalsIgnoreCase(text) || "no".equalsIgnoreCase(text) || "n".equalsIgnoreCase(text)
-	  || "0".equals(text)) {
-	return false;
+          || "0".equals(text)) {
+        return false;
       }
     }
     return defaultValue;
@@ -157,9 +157,9 @@ public class MaterialServiceEnvelope implements Serializable {
     if (value instanceof List<?>) {
       List<String> result = new ArrayList<String>();
       for (Object item : (List<?>) value) {
-	if (item != null) {
-	  result.add(String.valueOf(item));
-	}
+        if (item != null) {
+          result.add(String.valueOf(item));
+        }
       }
       return result;
     }

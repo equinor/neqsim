@@ -110,10 +110,10 @@ public final class BlackOilTableValidator {
     // Check for positive values
     for (int i = 0; i < Bo.length; i++) {
       if (Bo[i] <= 0) {
-	result.addError(String.format("Bo[%d] = %.4f is non-positive at P = %.2f bar", i, Bo[i], pressures[i]));
+        result.addError(String.format("Bo[%d] = %.4f is non-positive at P = %.2f bar", i, Bo[i], pressures[i]));
       }
       if (Bo[i] < 1.0) {
-	result.addWarning(String.format("Bo[%d] = %.4f is less than 1.0 at P = %.2f bar", i, Bo[i], pressures[i]));
+        result.addWarning(String.format("Bo[%d] = %.4f is less than 1.0 at P = %.2f bar", i, Bo[i], pressures[i]));
       }
     }
 
@@ -133,7 +133,7 @@ public final class BlackOilTableValidator {
     // Check for non-negative values
     for (int i = 0; i < Rs.length; i++) {
       if (Rs[i] < 0) {
-	result.addError(String.format("Rs[%d] = %.4f is negative at P = %.2f bar", i, Rs[i], pressures[i]));
+        result.addError(String.format("Rs[%d] = %.4f is negative at P = %.2f bar", i, Rs[i], pressures[i]));
       }
     }
 
@@ -141,7 +141,7 @@ public final class BlackOilTableValidator {
     int lastIdx = Rs.length - 1;
     if (pressures[lastIdx] < 2.0 && Rs[lastIdx] > 1.0) {
       result.addWarning(String.format("Rs = %.2f at P = %.2f bar; expected near zero at stock-tank conditions",
-	  Rs[lastIdx], pressures[lastIdx]));
+          Rs[lastIdx], pressures[lastIdx]));
     }
 
     // Check monotonicity (Rs should decrease with decreasing pressure)
@@ -160,7 +160,7 @@ public final class BlackOilTableValidator {
     // Check for positive values where Bg is defined
     for (int i = 0; i < Bg.length; i++) {
       if (Bg[i] < 0) {
-	result.addError(String.format("Bg[%d] = %.6f is negative at P = %.2f bar", i, Bg[i], pressures[i]));
+        result.addError(String.format("Bg[%d] = %.6f is negative at P = %.2f bar", i, Bg[i], pressures[i]));
       }
     }
 
@@ -169,15 +169,15 @@ public final class BlackOilTableValidator {
     for (int i = 1; i < Bg.length; i++) {
       // Only check where both values are positive (gas exists)
       if (Bg[i] > 0 && Bg[i - 1] > 0) {
-	if (pressures[i] < pressures[i - 1] && Bg[i] < Bg[i - 1]) {
-	  nonMonotonic++;
-	}
+        if (pressures[i] < pressures[i - 1] && Bg[i] < Bg[i - 1]) {
+          nonMonotonic++;
+        }
       }
     }
 
     if (nonMonotonic > 0) {
       result.addWarning(
-	  String.format("Bg has %d non-monotonic points (should increase as pressure decreases)", nonMonotonic));
+          String.format("Bg has %d non-monotonic points (should increase as pressure decreases)", nonMonotonic));
     } else {
       result.addInfo("Bg monotonicity: PASS");
     }
@@ -190,8 +190,8 @@ public final class BlackOilTableValidator {
     // Check for positive values
     for (int i = 0; i < oilVisc.length; i++) {
       if (oilVisc[i] <= 0) {
-	result.addError(
-	    String.format("Oil viscosity[%d] = %.4f is non-positive at P = %.2f bar", i, oilVisc[i], pressures[i]));
+        result.addError(
+            String.format("Oil viscosity[%d] = %.4f is non-positive at P = %.2f bar", i, oilVisc[i], pressures[i]));
       }
     }
 
@@ -199,13 +199,13 @@ public final class BlackOilTableValidator {
     int nonMonotonic = 0;
     for (int i = 1; i < oilVisc.length; i++) {
       if (pressures[i] < pressures[i - 1] && oilVisc[i] < oilVisc[i - 1]) {
-	nonMonotonic++;
+        nonMonotonic++;
       }
     }
 
     if (nonMonotonic > oilVisc.length / 4) { // Allow some tolerance
       result.addWarning(String
-	  .format("Oil viscosity has %d points where it decreases with pressure (usually increases)", nonMonotonic));
+          .format("Oil viscosity has %d points where it decreases with pressure (usually increases)", nonMonotonic));
     }
   }
 
@@ -220,8 +220,8 @@ public final class BlackOilTableValidator {
     // Check for positive values
     for (int i = 0; i < gasVisc.length; i++) {
       if (gasVisc[i] <= 0) {
-	result.addError(
-	    String.format("Gas viscosity[%d] = %.6f is non-positive at P = %.2f bar", i, gasVisc[i], pressures[i]));
+        result.addError(
+            String.format("Gas viscosity[%d] = %.6f is non-positive at P = %.2f bar", i, gasVisc[i], pressures[i]));
       }
     }
 
@@ -249,11 +249,11 @@ public final class BlackOilTableValidator {
       double dRs = Rs[i] - Rs[i - 1];
 
       if (dRs != 0) {
-	double dBodRs = dBo / dRs;
-	if (dBodRs < 0) {
-	  result.addWarning(
-	      String.format("Inconsistent Bo-Rs relationship at P = %.2f bar (dBo/dRs = %.6f)", pressures[i], dBodRs));
-	}
+        double dBodRs = dBo / dRs;
+        if (dBodRs < 0) {
+          result.addWarning(
+              String.format("Inconsistent Bo-Rs relationship at P = %.2f bar (dBo/dRs = %.6f)", pressures[i], dBodRs));
+        }
       }
     }
 
@@ -262,8 +262,8 @@ public final class BlackOilTableValidator {
     double minRs = Rs[0];
     for (int i = 1; i < Rs.length; i++) {
       if (Rs[i] < minRs) {
-	minRs = Rs[i];
-	minRsIdx = i;
+        minRs = Rs[i];
+        minRsIdx = i;
       }
     }
 
@@ -290,11 +290,11 @@ public final class BlackOilTableValidator {
       boolean valueDecreasing = values[i] < values[i - 1];
 
       if (pressureDecreasing) {
-	if (shouldDecrease && !valueDecreasing) {
-	  violations++;
-	} else if (!shouldDecrease && valueDecreasing) {
-	  violations++;
-	}
+        if (shouldDecrease && !valueDecreasing) {
+          violations++;
+        } else if (!shouldDecrease && valueDecreasing) {
+          violations++;
+        }
       }
     }
 
@@ -324,9 +324,9 @@ public final class BlackOilTableValidator {
       double p2 = pressures[i + 1];
 
       if ((p1 >= targetPressure && targetPressure >= p2) || (p2 >= targetPressure && targetPressure >= p1)) {
-	// Linear interpolation
-	double fraction = (targetPressure - p1) / (p2 - p1);
-	return values[i] + fraction * (values[i + 1] - values[i]);
+        // Linear interpolation
+        double fraction = (targetPressure - p1) / (p2 - p1);
+        return values[i] + fraction * (values[i + 1] - values[i]);
       }
     }
 
@@ -398,11 +398,11 @@ public final class BlackOilTableValidator {
       fullReport.append("=== Black-Oil Table Validation Report ===\n\n");
       fullReport.append("Status: ");
       if (hasErrors) {
-	fullReport.append("FAILED\n\n");
+        fullReport.append("FAILED\n\n");
       } else if (hasWarnings) {
-	fullReport.append("PASSED WITH WARNINGS\n\n");
+        fullReport.append("PASSED WITH WARNINGS\n\n");
       } else {
-	fullReport.append("PASSED\n\n");
+        fullReport.append("PASSED\n\n");
       }
       fullReport.append(report);
       return fullReport.toString();

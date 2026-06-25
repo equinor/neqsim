@@ -47,7 +47,7 @@ public final class ProductionProfileSeries implements Serializable {
     ProductionProfileSeries profile = new ProductionProfileSeries(name);
     if (gasRatesMSm3d != null) {
       for (int index = 0; index < gasRatesMSm3d.length; index++) {
-	profile.addPeriod(startYear + index, gasRatesMSm3d[index], 0.0, 0.0, 0.0);
+        profile.addPeriod(startYear + index, gasRatesMSm3d[index], 0.0, 0.0, 0.0);
       }
     }
     return profile;
@@ -65,7 +65,7 @@ public final class ProductionProfileSeries implements Serializable {
     ProductionProfileSeries profile = new ProductionProfileSeries(name);
     if (oilRatesBopd != null) {
       for (int index = 0; index < oilRatesBopd.length; index++) {
-	profile.addPeriod(startYear + index, 0.0, oilRatesBopd[index], 0.0, 0.0);
+        profile.addPeriod(startYear + index, 0.0, oilRatesBopd[index], 0.0, 0.0);
       }
     }
     return profile;
@@ -161,7 +161,7 @@ public final class ProductionProfileSeries implements Serializable {
   public ProductionLoad getLoadByYear(int year) {
     for (ProductionLoad load : loads) {
       if (load.getYear() == year) {
-	return load;
+        return load;
       }
     }
     return null;

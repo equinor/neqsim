@@ -186,10 +186,10 @@ public class TankCostEstimate extends UnitCostEstimateBaseClass {
     if (mechanicalEquipment != null) {
       TankMechanicalDesign tankMecDesign = (TankMechanicalDesign) mechanicalEquipment;
       if (tankMecDesign.getInnerDiameter() > 0) {
-	this.tankDiameter = tankMecDesign.getInnerDiameter();
+        this.tankDiameter = tankMecDesign.getInnerDiameter();
       }
       if (tankMecDesign.getTankHeight() > 0) {
-	this.tankHeight = tankMecDesign.getTankHeight();
+        this.tankHeight = tankMecDesign.getTankHeight();
       }
       this.tankVolume = Math.PI / 4.0 * tankDiameter * tankDiameter * tankHeight;
     }

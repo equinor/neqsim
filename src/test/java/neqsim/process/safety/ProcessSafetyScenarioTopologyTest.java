@@ -67,7 +67,7 @@ public class ProcessSafetyScenarioTopologyTest {
     boolean found = false;
     for (ProcessSafetyScenario s : scenarios) {
       if (s.getName().contains("hp-separator") && s.getBlockedOutletUnits().contains("hp-separator")) {
-	found = true;
+        found = true;
       }
     }
     assertTrue(found, "separator should yield a blocked-outlet scenario");
@@ -79,7 +79,7 @@ public class ProcessSafetyScenarioTopologyTest {
     boolean found = false;
     for (ProcessSafetyScenario s : scenarios) {
       if (s.getName().contains("export-compressor") && s.getUtilityLossUnits().contains("export-compressor")) {
-	found = true;
+        found = true;
       }
     }
     assertTrue(found, "compressor should yield a utility-loss scenario");
@@ -91,7 +91,7 @@ public class ProcessSafetyScenarioTopologyTest {
     boolean found = false;
     for (ProcessSafetyScenario s : scenarios) {
       if (s.getName().contains("export-cooler") && s.getUtilityLossUnits().contains("export-cooler")) {
-	found = true;
+        found = true;
       }
     }
     assertTrue(found, "cooler should yield a utility-loss scenario");
@@ -102,7 +102,7 @@ public class ProcessSafetyScenarioTopologyTest {
     assertThrows(IllegalArgumentException.class, new Executable() {
       @Override
       public void execute() {
-	ProcessSafetyScenario.generateFromTopology(null);
+        ProcessSafetyScenario.generateFromTopology(null);
       }
     });
   }

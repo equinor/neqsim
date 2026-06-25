@@ -2,10 +2,10 @@ package neqsim.process.mechanicaldesign.tank;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.tank.Tank;
 import neqsim.thermo.system.SystemInterface;
@@ -74,7 +74,7 @@ public class TankMechanicalDesignTest {
 
       // Each course should be >= the one above it
       for (int i = 1; i < thicknesses.length; i++) {
-	assertTrue(thicknesses[i - 1] >= thicknesses[i], "Lower courses should be thicker or equal");
+        assertTrue(thicknesses[i - 1] >= thicknesses[i], "Lower courses should be thicker or equal");
       }
       logger.info("Number of shell courses: " + thicknesses.length);
       logger.info("Bottom course thickness: " + bottomCourse + " mm");

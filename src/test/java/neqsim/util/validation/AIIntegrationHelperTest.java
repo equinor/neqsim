@@ -208,7 +208,7 @@ class AIIntegrationHelperTest {
       ValidationResult validation = new ValidationResult();
       validation.addWarning("minor issue");
       AIIntegrationHelper.ExecutionResult result = AIIntegrationHelper.ExecutionResult.warning("Some warning",
-	  validation);
+          validation);
 
       assertFalse(result.isSuccess());
       assertEquals(AIIntegrationHelper.ExecutionResult.Status.WARNING, result.getStatus());

@@ -353,7 +353,7 @@ public class FunctionalLocation implements Serializable, Comparable<FunctionalLo
      */
     public FunctionalLocation build() {
       FunctionalLocation loc = new FunctionalLocation(installationCode, equipmentTypeCode, sequentialNumber,
-	  trainSuffix);
+          trainSuffix);
       loc.setSystem(system);
       loc.setDescription(description);
       return loc;

@@ -62,8 +62,8 @@ public class AlarmState implements Serializable {
       pendingLevel = null;
       pendingTimer = 0.0;
       if (activeLevel != null && isClearedByValue(config, value, activeLevel)) {
-	events.add(AlarmEvent.cleared(source, activeLevel, currentTime, value));
-	clearActiveInternal();
+        events.add(AlarmEvent.cleared(source, activeLevel, currentTime, value));
+        clearActiveInternal();
       }
       return events;
     }
@@ -86,12 +86,12 @@ public class AlarmState implements Serializable {
     } else if (comparison < 0) {
       // Attempting to transition to a lower severity
       if (isClearedByValue(config, value, activeLevel)) {
-	events.add(AlarmEvent.cleared(source, activeLevel, currentTime, value));
-	clearActiveInternal();
-	handlePending(config, candidate, dt, currentTime, source, events);
+        events.add(AlarmEvent.cleared(source, activeLevel, currentTime, value));
+        clearActiveInternal();
+        handlePending(config, candidate, dt, currentTime, source, events);
       } else {
-	pendingLevel = null;
-	pendingTimer = 0.0;
+        pendingLevel = null;
+        pendingTimer = 0.0;
       }
     } else {
       pendingLevel = null;
@@ -110,7 +110,7 @@ public class AlarmState implements Serializable {
     pendingTimer += Math.max(0.0, dt);
     if (pendingTimer >= config.getDelay()) {
       if (activeLevel != null) {
-	events.add(AlarmEvent.cleared(source, activeLevel, currentTime, lastValue));
+        events.add(AlarmEvent.cleared(source, activeLevel, currentTime, lastValue));
       }
       activeLevel = candidate;
       acknowledged = false;

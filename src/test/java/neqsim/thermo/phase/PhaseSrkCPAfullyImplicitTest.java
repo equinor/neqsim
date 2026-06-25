@@ -2,13 +2,13 @@ package neqsim.thermo.phase;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkCPAstatoilFullyImplicit;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Tests comparing the fully implicit CPA algorithm against the standard nested approach. Verifies that both produce

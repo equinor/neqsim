@@ -55,8 +55,8 @@ public class PredictionResultTest {
   @Test
   void testAddViolation() {
     PredictionResult.ConstraintViolation violation = new PredictionResult.ConstraintViolation("pressure-limit",
-	"separator.pressure", 85.0, 80.0, "bara", Duration.ofMinutes(30),
-	PredictionResult.ConstraintViolation.Severity.MEDIUM);
+        "separator.pressure", 85.0, 80.0, "bara", Duration.ofMinutes(30),
+        PredictionResult.ConstraintViolation.Severity.MEDIUM);
 
     prediction.addViolation(violation);
 
@@ -74,7 +74,7 @@ public class PredictionResultTest {
   @Test
   void testViolationSummaryWithViolations() {
     prediction.addViolation(new PredictionResult.ConstraintViolation("test", "var", 10.0, 5.0, "bar",
-	Duration.ofMinutes(10), PredictionResult.ConstraintViolation.Severity.MEDIUM));
+        Duration.ofMinutes(10), PredictionResult.ConstraintViolation.Severity.MEDIUM));
 
     String summary = prediction.getViolationSummary();
     assertNotNull(summary);
@@ -92,7 +92,7 @@ public class PredictionResultTest {
   @Test
   void testAdvisoryRecommendationWithViolations() {
     prediction.addViolation(new PredictionResult.ConstraintViolation("pressure-limit", "separator.pressure", 85.0, 80.0,
-	"bara", Duration.ofMinutes(10), PredictionResult.ConstraintViolation.Severity.CRITICAL));
+        "bara", Duration.ofMinutes(10), PredictionResult.ConstraintViolation.Severity.CRITICAL));
 
     String advice = prediction.getAdvisoryRecommendation();
     assertNotNull(advice);
@@ -132,7 +132,7 @@ public class PredictionResultTest {
     assertEquals(PredictionResult.PredictionStatus.WARNING, PredictionResult.PredictionStatus.WARNING);
     assertEquals(PredictionResult.PredictionStatus.FAILED, PredictionResult.PredictionStatus.FAILED);
     assertEquals(PredictionResult.PredictionStatus.DATA_QUALITY_ISSUE,
-	PredictionResult.PredictionStatus.DATA_QUALITY_ISSUE);
+        PredictionResult.PredictionStatus.DATA_QUALITY_ISSUE);
   }
 
   @Test
@@ -166,18 +166,18 @@ public class PredictionResultTest {
   void testConstraintViolationSeverity() {
     assertEquals(PredictionResult.ConstraintViolation.Severity.LOW, PredictionResult.ConstraintViolation.Severity.LOW);
     assertEquals(PredictionResult.ConstraintViolation.Severity.MEDIUM,
-	PredictionResult.ConstraintViolation.Severity.MEDIUM);
+        PredictionResult.ConstraintViolation.Severity.MEDIUM);
     assertEquals(PredictionResult.ConstraintViolation.Severity.HIGH,
-	PredictionResult.ConstraintViolation.Severity.HIGH);
+        PredictionResult.ConstraintViolation.Severity.HIGH);
     assertEquals(PredictionResult.ConstraintViolation.Severity.CRITICAL,
-	PredictionResult.ConstraintViolation.Severity.CRITICAL);
+        PredictionResult.ConstraintViolation.Severity.CRITICAL);
   }
 
   @Test
   void testConstraintViolationWithSuggestedAction() {
     PredictionResult.ConstraintViolation violation = new PredictionResult.ConstraintViolation("pressure-limit",
-	"sep.pressure", 85.0, 80.0, "bara", Duration.ofMinutes(30),
-	PredictionResult.ConstraintViolation.Severity.MEDIUM);
+        "sep.pressure", 85.0, 80.0, "bara", Duration.ofMinutes(30),
+        PredictionResult.ConstraintViolation.Severity.MEDIUM);
     violation.setSuggestedAction("Reduce inlet flow");
 
     assertEquals("Reduce inlet flow", violation.getSuggestedAction());
@@ -186,8 +186,8 @@ public class PredictionResultTest {
   @Test
   void testConstraintViolationDescription() {
     PredictionResult.ConstraintViolation violation = new PredictionResult.ConstraintViolation("pressure-limit",
-	"sep.pressure", 85.0, 80.0, "bara", Duration.ofMinutes(30),
-	PredictionResult.ConstraintViolation.Severity.MEDIUM);
+        "sep.pressure", 85.0, 80.0, "bara", Duration.ofMinutes(30),
+        PredictionResult.ConstraintViolation.Severity.MEDIUM);
 
     String description = violation.getDescription();
     assertNotNull(description);
@@ -197,7 +197,7 @@ public class PredictionResultTest {
   @Test
   void testConstraintViolationGetters() {
     PredictionResult.ConstraintViolation violation = new PredictionResult.ConstraintViolation("pressure-limit",
-	"sep.pressure", 85.0, 80.0, "bara", Duration.ofMinutes(30), PredictionResult.ConstraintViolation.Severity.HIGH);
+        "sep.pressure", 85.0, 80.0, "bara", Duration.ofMinutes(30), PredictionResult.ConstraintViolation.Severity.HIGH);
 
     assertEquals("pressure-limit", violation.getConstraintName());
     assertEquals("sep.pressure", violation.getVariableName());
@@ -217,7 +217,7 @@ public class PredictionResultTest {
   @Test
   void testStatusChangesWithViolation() {
     prediction.addViolation(new PredictionResult.ConstraintViolation("test", "var", 10.0, 5.0, "bar",
-	Duration.ofMinutes(10), PredictionResult.ConstraintViolation.Severity.MEDIUM));
+        Duration.ofMinutes(10), PredictionResult.ConstraintViolation.Severity.MEDIUM));
 
     assertEquals(PredictionResult.PredictionStatus.WARNING, prediction.getStatus());
   }

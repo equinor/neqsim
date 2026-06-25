@@ -230,7 +230,7 @@ class StaticMixerTest {
     process.run();
 
     double totalIn = s1.getThermoSystem().getFlowRate("kg/hr") + s2.getThermoSystem().getFlowRate("kg/hr")
-	+ s3.getThermoSystem().getFlowRate("kg/hr");
+        + s3.getThermoSystem().getFlowRate("kg/hr");
     double totalOut = mixer.getOutletStream().getThermoSystem().getFlowRate("kg/hr");
     assertEquals(totalIn, totalOut, totalIn * 1e-4);
   }

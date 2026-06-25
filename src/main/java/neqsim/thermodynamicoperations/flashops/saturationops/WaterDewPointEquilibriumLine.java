@@ -44,9 +44,9 @@ public class WaterDewPointEquilibriumLine extends ConstantDutyTemperatureFlash {
     for (int i = 0; i < numberOfPoints; i++) {
       system.setPressure(minPressure + dp * i);
       try {
-	ops.waterDewPointTemperatureMultiphaseFlash();
+        ops.waterDewPointTemperatureMultiphaseFlash();
       } catch (Exception ex) {
-	logger.error(ex.getMessage(), ex);
+        logger.error(ex.getMessage(), ex);
       }
       hydratePoints[0][i] = system.getTemperature();
       hydratePoints[1][i] = system.getPressure();

@@ -79,27 +79,27 @@ public class PhysicalPropertyMixingRule
     Gij = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
     for (int l = 0; l < phase.getNumberOfComponents(); l++) {
       if (phase.getComponent(l).isIsTBPfraction() || phase.getComponent(l).getIonicCharge() != 0) {
-	break;
+        break;
       }
       String component_name = phase.getComponent(l).getComponentName();
       for (int k = l; k < phase.getNumberOfComponents(); k++) {
-	if (k == l || phase.getComponent(k).getIonicCharge() != 0 || phase.getComponent(k).isIsTBPfraction()) {
-	  break;
-	} else {
-	  try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-	      java.sql.ResultSet dataSet = database.getResultSet("SELECT gijvisc FROM inter WHERE (COMP1='"
-		  + component_name + "' AND COMP2='" + phase.getComponent(k).getComponentName() + "') OR (COMP1='"
-		  + phase.getComponent(k).getComponentName() + "' AND COMP2='" + component_name + "')")) {
-	    if (dataSet.next()) {
-	      Gij[l][k] = Double.parseDouble(dataSet.getString("gijvisc"));
-	    } else {
-	      Gij[l][k] = 0.0;
-	    }
-	    Gij[k][l] = Gij[l][k];
-	  } catch (Exception ex) {
-	    logger.error("err in phys prop.....", ex);
-	  }
-	}
+        if (k == l || phase.getComponent(k).getIonicCharge() != 0 || phase.getComponent(k).isIsTBPfraction()) {
+          break;
+        } else {
+          try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+              java.sql.ResultSet dataSet = database.getResultSet("SELECT gijvisc FROM inter WHERE (COMP1='"
+                  + component_name + "' AND COMP2='" + phase.getComponent(k).getComponentName() + "') OR (COMP1='"
+                  + phase.getComponent(k).getComponentName() + "' AND COMP2='" + component_name + "')")) {
+            if (dataSet.next()) {
+              Gij[l][k] = Double.parseDouble(dataSet.getString("gijvisc"));
+            } else {
+              Gij[l][k] = 0.0;
+            }
+            Gij[k][l] = Gij[l][k];
+          } catch (Exception ex) {
+            logger.error("err in phys prop.....", ex);
+          }
+        }
       }
     }
   }

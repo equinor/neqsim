@@ -65,7 +65,7 @@ public final class EnvelopeSegment implements Serializable {
     }
     if (temperatures.length != pressures.length) {
       throw new IllegalArgumentException(
-	  "temperatures and pressures must have equal length: " + temperatures.length + " vs " + pressures.length);
+          "temperatures and pressures must have equal length: " + temperatures.length + " vs " + pressures.length);
     }
     this.phaseType = phaseType;
     this.temperatures = temperatures.clone();

@@ -135,7 +135,7 @@ public class ATRHydrogenPlantBuilder extends HydrogenPlantBuilderBase {
   public ProcessSystem build() {
     ProcessSystem process = new ProcessSystem();
     Stream feed = createMethaneSteamOxygenFeed(name + " feed", methaneFeedMolePerSec, steamToCarbonRatio,
-	oxygenToCarbonRatio, feedTemperatureK, pressureBara);
+        oxygenToCarbonRatio, feedTemperatureK, pressureBara);
 
     AutothermalReformer reformer = new AutothermalReformer(name + " autothermal reformer", feed);
     reformer.setOxygenToCarbonTarget(oxygenToCarbonRatio);

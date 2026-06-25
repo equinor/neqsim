@@ -61,7 +61,7 @@ public class RunTransientEventSchedulerTest {
     s.scheduleEvent(1.5, "trip", new Runnable() {
       @Override
       public void run() {
-	count.incrementAndGet();
+        count.incrementAndGet();
       }
     });
 
@@ -92,7 +92,7 @@ public class RunTransientEventSchedulerTest {
     s.scheduleEvent(0.5, "esd", new Runnable() {
       @Override
       public void run() {
-	fired[0] = true;
+        fired[0] = true;
       }
     });
     p.runTransient(0.5, UUID.randomUUID());
@@ -115,7 +115,7 @@ public class RunTransientEventSchedulerTest {
 
     p.setIntegratorStrategy(null);
     assertTrue(p.getIntegratorStrategy() instanceof ExplicitEulerIntegrator,
-	"null must restore default explicit Euler");
+        "null must restore default explicit Euler");
   }
 
   /**
@@ -139,7 +139,7 @@ public class RunTransientEventSchedulerTest {
     shared.scheduleEvent(0.5, "ioa", new Runnable() {
       @Override
       public void run() {
-	count.incrementAndGet();
+        count.incrementAndGet();
       }
     });
 

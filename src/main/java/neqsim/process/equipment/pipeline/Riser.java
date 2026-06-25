@@ -822,7 +822,7 @@ public class Riser extends PipeBeggsAndBrills {
    */
   public boolean isCatenaryType() {
     return riserType == RiserType.STEEL_CATENARY_RISER || riserType == RiserType.FLEXIBLE_RISER
-	|| riserType == RiserType.LAZY_WAVE || riserType == RiserType.STEEP_WAVE;
+        || riserType == RiserType.LAZY_WAVE || riserType == RiserType.STEEP_WAVE;
   }
 
   /**
@@ -832,7 +832,7 @@ public class Riser extends PipeBeggsAndBrills {
    */
   public boolean isTensionedType() {
     return riserType == RiserType.TOP_TENSIONED_RISER || riserType == RiserType.HYBRID_RISER
-	|| riserType == RiserType.FREE_STANDING;
+        || riserType == RiserType.FREE_STANDING;
   }
 
   /**

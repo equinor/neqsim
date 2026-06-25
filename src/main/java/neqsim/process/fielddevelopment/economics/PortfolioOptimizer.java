@@ -217,11 +217,11 @@ public class PortfolioOptimizer implements Serializable {
      */
     public double getCapexForYear(int year) {
       if (capexProfile.isEmpty()) {
-	// Default: spread evenly over 2 years starting from startYear
-	if (year == startYear || year == startYear + 1) {
-	  return capexMusd / 2.0;
-	}
-	return 0.0;
+        // Default: spread evenly over 2 years starting from startYear
+        if (year == startYear || year == startYear + 1) {
+          return capexMusd / 2.0;
+        }
+        return 0.0;
       }
       Double value = capexProfile.get(Integer.valueOf(year));
       return value != null ? value.doubleValue() : 0.0;
@@ -457,27 +457,27 @@ public class PortfolioOptimizer implements Serializable {
       sb.append("--------------------------------------------------------------------------------\n");
 
       for (Project p : selectedProjects) {
-	sb.append(String.format("%-20s %10.1f %10.1f %10.2f %8.0f%%%n", p.getName(), p.getCapexMusd(), p.getNpvMusd(),
-	    p.getNpvCapexRatio(), p.getProbabilityOfSuccess() * 100));
+        sb.append(String.format("%-20s %10.1f %10.1f %10.2f %8.0f%%%n", p.getName(), p.getCapexMusd(), p.getNpvMusd(),
+            p.getNpvCapexRatio(), p.getProbabilityOfSuccess() * 100));
       }
 
       sb.append("--------------------------------------------------------------------------------\n");
       sb.append(String.format("%-20s %10.1f %10.1f %10.2f%n", "TOTAL", totalCapex, totalNpv, getCapitalEfficiency()));
 
       if (!deferredProjects.isEmpty()) {
-	sb.append("\nDEFERRED PROJECTS:\n");
-	for (Project p : deferredProjects) {
-	  sb.append(String.format("  - %s (CAPEX: %.1f, NPV: %.1f)%n", p.getName(), p.getCapexMusd(), p.getNpvMusd()));
-	}
+        sb.append("\nDEFERRED PROJECTS:\n");
+        for (Project p : deferredProjects) {
+          sb.append(String.format("  - %s (CAPEX: %.1f, NPV: %.1f)%n", p.getName(), p.getCapexMusd(), p.getNpvMusd()));
+        }
       }
 
       sb.append("\nANNUAL BUDGET UTILIZATION:\n");
       for (Map.Entry<Integer, Double> entry : annualCapexUsed.entrySet()) {
-	Double remaining = annualBudgetRemaining.get(entry.getKey());
-	double budget = entry.getValue().doubleValue() + (remaining != null ? remaining.doubleValue() : 0.0);
-	double utilization = budget > 0 ? entry.getValue().doubleValue() / budget * 100 : 0;
-	sb.append(String.format("  %d: %.1f / %.1f MUSD (%.0f%% utilized)%n", entry.getKey(), entry.getValue(), budget,
-	    utilization));
+        Double remaining = annualBudgetRemaining.get(entry.getKey());
+        double budget = entry.getValue().doubleValue() + (remaining != null ? remaining.doubleValue() : 0.0);
+        double utilization = budget > 0 ? entry.getValue().doubleValue() / budget * 100 : 0;
+        sb.append(String.format("  %d: %.1f / %.1f MUSD (%.0f%% utilized)%n", entry.getKey(), entry.getValue(), budget,
+            utilization));
       }
 
       return sb.toString();
@@ -668,7 +668,7 @@ public class PortfolioOptimizer implements Serializable {
     Collections.sort(sorted, new Comparator<Project>() {
       @Override
       public int compare(Project a, Project b) {
-	return Double.compare(b.getNpvCapexRatio(), a.getNpvCapexRatio());
+        return Double.compare(b.getNpvCapexRatio(), a.getNpvCapexRatio());
       }
     });
     return selectProjects(sorted, OptimizationStrategy.GREEDY_NPV_RATIO);
@@ -684,7 +684,7 @@ public class PortfolioOptimizer implements Serializable {
     Collections.sort(sorted, new Comparator<Project>() {
       @Override
       public int compare(Project a, Project b) {
-	return Double.compare(b.getNpvMusd(), a.getNpvMusd());
+        return Double.compare(b.getNpvMusd(), a.getNpvMusd());
       }
     });
     return selectProjects(sorted, OptimizationStrategy.GREEDY_ABSOLUTE_NPV);
@@ -700,7 +700,7 @@ public class PortfolioOptimizer implements Serializable {
     Collections.sort(sorted, new Comparator<Project>() {
       @Override
       public int compare(Project a, Project b) {
-	return Double.compare(b.getRiskWeightedRatio(), a.getRiskWeightedRatio());
+        return Double.compare(b.getRiskWeightedRatio(), a.getRiskWeightedRatio());
       }
     });
     return selectProjects(sorted, OptimizationStrategy.RISK_WEIGHTED);
@@ -716,7 +716,7 @@ public class PortfolioOptimizer implements Serializable {
     Collections.sort(sorted, new Comparator<Project>() {
       @Override
       public int compare(Project a, Project b) {
-	return Double.compare(b.getEmv(), a.getEmv());
+        return Double.compare(b.getEmv(), a.getEmv());
       }
     });
     return selectProjects(sorted, OptimizationStrategy.EMV_MAXIMIZATION);
@@ -733,8 +733,8 @@ public class PortfolioOptimizer implements Serializable {
     for (Project p : projects) {
       List<Project> list = byType.get(p.getType());
       if (list == null) {
-	list = new ArrayList<Project>();
-	byType.put(p.getType(), list);
+        list = new ArrayList<Project>();
+        byType.put(p.getType(), list);
       }
       list.add(p);
     }
@@ -742,10 +742,10 @@ public class PortfolioOptimizer implements Serializable {
     // Sort each group by NPV/CAPEX ratio
     for (List<Project> list : byType.values()) {
       Collections.sort(list, new Comparator<Project>() {
-	@Override
-	public int compare(Project a, Project b) {
-	  return Double.compare(b.getNpvCapexRatio(), a.getNpvCapexRatio());
-	}
+        @Override
+        public int compare(Project a, Project b) {
+          return Double.compare(b.getNpvCapexRatio(), a.getNpvCapexRatio());
+        }
       });
     }
 
@@ -756,11 +756,11 @@ public class PortfolioOptimizer implements Serializable {
     while (added) {
       added = false;
       for (ProjectType type : ProjectType.values()) {
-	List<Project> list = byType.get(type);
-	if (list != null && index < list.size()) {
-	  balanced.add(list.get(index));
-	  added = true;
-	}
+        List<Project> list = byType.get(type);
+        if (list != null && index < list.size()) {
+          balanced.add(list.get(index));
+          added = true;
+        }
       }
       index++;
     }
@@ -786,36 +786,36 @@ public class PortfolioOptimizer implements Serializable {
     // First add mandatory projects
     for (Project p : ranked) {
       if (p.isMandatory()) {
-	if (canAfford(p, remainingBudget, remainingTotal)) {
-	  result.getSelectedProjects().add(p);
-	  remainingTotal -= p.getCapexMusd();
-	  deductCapex(p, remainingBudget);
-	}
+        if (canAfford(p, remainingBudget, remainingTotal)) {
+          result.getSelectedProjects().add(p);
+          remainingTotal -= p.getCapexMusd();
+          deductCapex(p, remainingBudget);
+        }
       }
     }
 
     // Then add by ranking
     for (Project p : ranked) {
       if (p.isMandatory()) {
-	continue; // Already added
+        continue; // Already added
       }
       if (p.getNpvMusd() <= 0) {
-	result.getDeferredProjects().add(p);
-	continue; // Skip negative NPV projects
+        result.getDeferredProjects().add(p);
+        continue; // Skip negative NPV projects
       }
 
       // Check dependencies
       if (!dependenciesSatisfied(p, result.getSelectedProjects())) {
-	result.getDeferredProjects().add(p);
-	continue;
+        result.getDeferredProjects().add(p);
+        continue;
       }
 
       if (canAfford(p, remainingBudget, remainingTotal)) {
-	result.getSelectedProjects().add(p);
-	remainingTotal -= p.getCapexMusd();
-	deductCapex(p, remainingBudget);
+        result.getSelectedProjects().add(p);
+        remainingTotal -= p.getCapexMusd();
+        deductCapex(p, remainingBudget);
       } else {
-	result.getDeferredProjects().add(p);
+        result.getDeferredProjects().add(p);
       }
     }
 
@@ -842,7 +842,7 @@ public class PortfolioOptimizer implements Serializable {
     }
 
     logger.info("Portfolio optimization complete: {} projects selected, NPV = {} MUSD", result.getProjectCount(),
-	result.getTotalNpv());
+        result.getTotalNpv());
 
     return result;
   }
@@ -866,7 +866,7 @@ public class PortfolioOptimizer implements Serializable {
       double projectCapex = p.getCapexForYear(year);
       Double remaining = remainingBudget.get(entry.getKey());
       if (remaining != null && projectCapex > remaining.doubleValue()) {
-	return false;
+        return false;
       }
     }
 
@@ -884,10 +884,10 @@ public class PortfolioOptimizer implements Serializable {
       int year = entry.getKey().intValue();
       double projectCapex = p.getCapexForYear(year);
       if (projectCapex > 0) {
-	Double remaining = remainingBudget.get(entry.getKey());
-	if (remaining != null) {
-	  remainingBudget.put(entry.getKey(), Double.valueOf(remaining.doubleValue() - projectCapex));
-	}
+        Double remaining = remainingBudget.get(entry.getKey());
+        if (remaining != null) {
+          remainingBudget.put(entry.getKey(), Double.valueOf(remaining.doubleValue() - projectCapex));
+        }
       }
     }
   }
@@ -903,13 +903,13 @@ public class PortfolioOptimizer implements Serializable {
     for (String dep : p.getDependencies()) {
       boolean found = false;
       for (Project s : selected) {
-	if (s.getName().equals(dep)) {
-	  found = true;
-	  break;
-	}
+        if (s.getName().equals(dep)) {
+          found = true;
+          break;
+        }
       }
       if (!found) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -948,7 +948,7 @@ public class PortfolioOptimizer implements Serializable {
     for (Map.Entry<OptimizationStrategy, PortfolioResult> entry : results.entrySet()) {
       PortfolioResult r = entry.getValue();
       sb.append(String.format("%-25s %10d %10.1f %10.1f %8.2f%n", entry.getKey(), r.getProjectCount(),
-	  r.getTotalCapex(), r.getTotalNpv(), r.getCapitalEfficiency()));
+          r.getTotalCapex(), r.getTotalNpv(), r.getCapitalEfficiency()));
     }
 
     return sb.toString();

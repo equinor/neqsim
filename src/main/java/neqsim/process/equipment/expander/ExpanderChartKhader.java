@@ -29,6 +29,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * an arbitrary process fluid the head coefficient is scaled back by the actual fluid sound speed squared:
  * </p>
  *
+ * <p>
  * $$ \\psi = \\frac{\\Delta h_s}{c_s^2}, \\qquad \\Delta h_s = \\psi \\, c_{s,\\text{actual}}^2 $$
  *
  * <p>
@@ -110,7 +111,7 @@ public class ExpanderChartKhader implements Serializable {
     }
     if (igvPositions.length != uc.length || uc.length != eta.length || eta.length != headDropKjPerKg.length) {
       throw new IllegalArgumentException(
-	  "ExpanderChartKhader: igvPositions, uc, eta and headDrop must have matching outer length");
+          "ExpanderChartKhader: igvPositions, uc, eta and headDrop must have matching outer length");
     }
     int nIgv = igvPositions.length;
     this.igvPositions = Arrays.copyOf(igvPositions, nIgv);
@@ -123,29 +124,29 @@ public class ExpanderChartKhader implements Serializable {
     for (int i = 0; i < nIgv; i++) {
       int m = uc[i].length;
       if (eta[i].length != m || headDropKjPerKg[i].length != m) {
-	throw new IllegalArgumentException(
-	    "ExpanderChartKhader: inner arrays for IGV index " + i + " have inconsistent length");
+        throw new IllegalArgumentException(
+            "ExpanderChartKhader: inner arrays for IGV index " + i + " have inconsistent length");
       }
       // sort each curve by velocity ratio so interpolation is monotone
       double[][] rows = new double[m][3];
       for (int j = 0; j < m; j++) {
-	rows[j][0] = uc[i][j];
-	rows[j][1] = eta[i][j];
-	rows[j][2] = headDropKjPerKg[i][j] * 1000.0 / (csRef * csRef); // J/kg / (m/s)^2
+        rows[j][0] = uc[i][j];
+        rows[j][1] = eta[i][j];
+        rows[j][2] = headDropKjPerKg[i][j] * 1000.0 / (csRef * csRef); // J/kg / (m/s)^2
       }
       Arrays.sort(rows, new java.util.Comparator<double[]>() {
-	@Override
-	public int compare(double[] a, double[] b) {
-	  return Double.compare(a[0], b[0]);
-	}
+        @Override
+        public int compare(double[] a, double[] b) {
+          return Double.compare(a[0], b[0]);
+        }
       });
       this.velocityRatio[i] = new double[m];
       this.efficiency[i] = new double[m];
       this.headCoefficient[i] = new double[m];
       for (int j = 0; j < m; j++) {
-	this.velocityRatio[i][j] = rows[j][0];
-	this.efficiency[i][j] = rows[j][1];
-	this.headCoefficient[i][j] = rows[j][2];
+        this.velocityRatio[i][j] = rows[j][0];
+        this.efficiency[i][j] = rows[j][1];
+        this.headCoefficient[i][j] = rows[j][2];
       }
     }
     this.mapDefined = true;
@@ -214,12 +215,12 @@ public class ExpanderChartKhader implements Serializable {
     double cs = referenceSoundSpeed;
     if (processFluid != null) {
       try {
-	double localCs = processFluid.getSoundSpeed();
-	if (localCs > 0.0) {
-	  cs = localCs;
-	}
+        double localCs = processFluid.getSoundSpeed();
+        if (localCs > 0.0) {
+          cs = localCs;
+        }
       } catch (Exception ex) {
-	logger.debug("ExpanderChartKhader using reference sound speed for head scaling", ex);
+        logger.debug("ExpanderChartKhader using reference sound speed for head scaling", ex);
       }
     }
     return coeff * cs * cs / 1000.0; // back to kJ/kg
@@ -242,7 +243,7 @@ public class ExpanderChartKhader implements Serializable {
     int best = 0;
     for (int j = 1; j < eta.length; j++) {
       if (eta[j] > eta[best]) {
-	best = j;
+        best = j;
       }
     }
     return uc[best];
@@ -278,8 +279,8 @@ public class ExpanderChartKhader implements Serializable {
     int lo = 0;
     for (int i = 0; i < nIgv - 1; i++) {
       if (igv >= igvPositions[i] && igv <= igvPositions[i + 1]) {
-	lo = i;
-	break;
+        lo = i;
+        break;
       }
     }
     double v0 = interpolateCurve(uc, velocityRatio[lo], grid[lo]);
@@ -312,8 +313,8 @@ public class ExpanderChartKhader implements Serializable {
     }
     for (int i = 0; i < n - 1; i++) {
       if (uc >= x[i] && uc <= x[i + 1]) {
-	double t = (uc - x[i]) / (x[i + 1] - x[i]);
-	return y[i] + t * (y[i + 1] - y[i]);
+        double t = (uc - x[i]) / (x[i + 1] - x[i]);
+        return y[i] + t * (y[i + 1] - y[i]);
       }
     }
     return y[n - 1];
@@ -331,8 +332,8 @@ public class ExpanderChartKhader implements Serializable {
     for (int i = 1; i < igvPositions.length; i++) {
       double d = Math.abs(igvPositions[i] - igv);
       if (d < best) {
-	best = d;
-	idx = i;
+        best = d;
+        idx = i;
       }
     }
     return idx;

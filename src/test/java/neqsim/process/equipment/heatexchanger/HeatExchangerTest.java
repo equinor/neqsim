@@ -86,7 +86,7 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
     Stream stream_Cold = new Stream("Stream2", testSystem2);
 
     neqsim.process.equipment.heatexchanger.HeatExchanger heatExchanger1 = new neqsim.process.equipment.heatexchanger.HeatExchanger(
-	"heatEx", stream_Hot, stream_Cold);
+        "heatEx", stream_Hot, stream_Cold);
 
     neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_Hot);
@@ -129,7 +129,7 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
     coldStream.run();
 
     HeatExchanger hx = HeatExchanger.builder("E-100").hotStream(hotStream).coldStream(coldStream).UAvalue(2000.0)
-	.flowArrangement("counterflow").guessOutTemperature(60.0, "C").build();
+        .flowArrangement("counterflow").guessOutTemperature(60.0, "C").build();
 
     hx.run();
 

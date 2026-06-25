@@ -220,7 +220,7 @@ public class TiebackOption implements Serializable, Comparable<TiebackOption> {
    */
   public double calculateTotalCapex() {
     this.totalCapexMusd = subseaCapexMusd + pipelineCapexMusd + umbilicalCapexMusd + drillingCapexMusd
-	+ hostModificationCapexMusd;
+        + hostModificationCapexMusd;
     return totalCapexMusd;
   }
 
@@ -242,7 +242,7 @@ public class TiebackOption implements Serializable, Comparable<TiebackOption> {
    */
   public boolean hasFlowAssuranceIssues() {
     return hydrateResult == FlowAssuranceResult.FAIL || waxResult == FlowAssuranceResult.FAIL
-	|| corrosionResult == FlowAssuranceResult.FAIL;
+        || corrosionResult == FlowAssuranceResult.FAIL;
   }
 
   /**
@@ -252,11 +252,11 @@ public class TiebackOption implements Serializable, Comparable<TiebackOption> {
    */
   public FlowAssuranceResult getOverallFlowAssuranceResult() {
     if (hydrateResult == FlowAssuranceResult.FAIL || waxResult == FlowAssuranceResult.FAIL
-	|| corrosionResult == FlowAssuranceResult.FAIL) {
+        || corrosionResult == FlowAssuranceResult.FAIL) {
       return FlowAssuranceResult.FAIL;
     }
     if (hydrateResult == FlowAssuranceResult.MARGINAL || waxResult == FlowAssuranceResult.MARGINAL
-	|| corrosionResult == FlowAssuranceResult.MARGINAL) {
+        || corrosionResult == FlowAssuranceResult.MARGINAL) {
       return FlowAssuranceResult.MARGINAL;
     }
     return FlowAssuranceResult.PASS;
@@ -319,13 +319,13 @@ public class TiebackOption implements Serializable, Comparable<TiebackOption> {
       sb.append("Route: ").append(routeSummary).append("\n");
     }
     sb.append(
-	String.format("Production: %.2f %s, Field life: %.1f years\n", maxProductionRate, rateUnit, fieldLifeYears));
+        String.format("Production: %.2f %s, Field life: %.1f years\n", maxProductionRate, rateUnit, fieldLifeYears));
     sb.append(String.format("CAPEX: %.0f MUSD (%.1f MUSD/km)\n", totalCapexMusd, getCapexPerKm()));
     sb.append(String.format("NPV: %.0f MUSD, IRR: %.1f%%, Payback: %.1f years\n", npvMusd, irr * 100, paybackYears));
     sb.append(String.format("Arrival: %.1f bara, %.1f C, hydraulic=%s\n", arrivalPressureBara, arrivalTemperatureC,
-	hydraulicFeasible ? "PASS" : "CHECK"));
+        hydraulicFeasible ? "PASS" : "CHECK"));
     sb.append(
-	String.format("Flow Assurance: Hydrate=%s, Wax=%s, Corrosion=%s\n", hydrateResult, waxResult, corrosionResult));
+        String.format("Flow Assurance: Hydrate=%s, Wax=%s, Corrosion=%s\n", hydrateResult, waxResult, corrosionResult));
     sb.append(String.format("Feasible: %s", feasible ? "YES" : "NO - " + infeasibilityReason));
     return sb.toString();
   }
@@ -333,7 +333,7 @@ public class TiebackOption implements Serializable, Comparable<TiebackOption> {
   @Override
   public String toString() {
     return String.format("TiebackOption[%s, %.0fkm, NPV=%.0f MUSD, %s]", optionId, distanceKm, npvMusd,
-	feasible ? "FEASIBLE" : "INFEASIBLE");
+        feasible ? "FEASIBLE" : "INFEASIBLE");
   }
 
   // ============================================================================

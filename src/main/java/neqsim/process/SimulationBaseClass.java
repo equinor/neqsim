@@ -76,7 +76,7 @@ public abstract class SimulationBaseClass extends NamedBaseClass implements Simu
   public void increaseTime(double dt) {
     if (dt < 0) {
       throw new RuntimeException(new InvalidInputException(this, "increaseTime", "dt",
-	  "Negative values are not allowed. Not possible to go backwards in time."));
+          "Negative values are not allowed. Not possible to go backwards in time."));
     }
     this.time = this.time + dt;
   }

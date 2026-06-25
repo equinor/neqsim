@@ -225,75 +225,75 @@ public class ThermodynamicCoupling implements Serializable {
 
       // Extract phase fractions
       if (fluid.getNumberOfPhases() >= 2) {
-	props.gasVaporFraction = fluid.getPhase(0).getBeta();
-	props.liquidFraction = fluid.getPhase(1).getBeta();
+        props.gasVaporFraction = fluid.getPhase(0).getBeta();
+        props.liquidFraction = fluid.getPhase(1).getBeta();
       } else if (fluid.getNumberOfPhases() == 1) {
-	// Single phase - determine if gas or liquid
-	double density = fluid.getPhase(0).getDensity("kg/m3");
-	if (density < 100.0) {
-	  props.gasVaporFraction = 1.0;
-	  props.liquidFraction = 0.0;
-	} else {
-	  props.gasVaporFraction = 0.0;
-	  props.liquidFraction = 1.0;
-	}
+        // Single phase - determine if gas or liquid
+        double density = fluid.getPhase(0).getDensity("kg/m3");
+        if (density < 100.0) {
+          props.gasVaporFraction = 1.0;
+          props.liquidFraction = 0.0;
+        } else {
+          props.gasVaporFraction = 0.0;
+          props.liquidFraction = 1.0;
+        }
       }
 
       // Extract gas properties (phase 0 = vapor)
       if (fluid.hasPhaseType("gas")) {
-	int gasIndex = fluid.getPhaseIndex("gas");
-	props.gasDensity = fluid.getPhase(gasIndex).getDensity("kg/m3");
-	props.gasViscosity = fluid.getPhase(gasIndex).getViscosity("kg/msec");
-	props.gasEnthalpy = fluid.getPhase(gasIndex).getEnthalpy("J/kg");
-	props.gasSoundSpeed = fluid.getPhase(gasIndex).getSoundSpeed("m/s");
-	props.gasMolarMass = fluid.getPhase(gasIndex).getMolarMass() * 1000; // kg/kmol
-	props.gasCompressibility = fluid.getPhase(gasIndex).getZ();
-	props.gasCp = fluid.getPhase(gasIndex).getCp("J/kgK");
-	props.gasThermalConductivity = fluid.getPhase(gasIndex).getThermalConductivity("W/mK");
+        int gasIndex = fluid.getPhaseIndex("gas");
+        props.gasDensity = fluid.getPhase(gasIndex).getDensity("kg/m3");
+        props.gasViscosity = fluid.getPhase(gasIndex).getViscosity("kg/msec");
+        props.gasEnthalpy = fluid.getPhase(gasIndex).getEnthalpy("J/kg");
+        props.gasSoundSpeed = fluid.getPhase(gasIndex).getSoundSpeed("m/s");
+        props.gasMolarMass = fluid.getPhase(gasIndex).getMolarMass() * 1000; // kg/kmol
+        props.gasCompressibility = fluid.getPhase(gasIndex).getZ();
+        props.gasCp = fluid.getPhase(gasIndex).getCp("J/kgK");
+        props.gasThermalConductivity = fluid.getPhase(gasIndex).getThermalConductivity("W/mK");
       } else {
-	// Default gas properties for single-phase liquid
-	props.gasDensity = 1.0;
-	props.gasViscosity = 1e-5;
-	props.gasSoundSpeed = 340.0;
+        // Default gas properties for single-phase liquid
+        props.gasDensity = 1.0;
+        props.gasViscosity = 1e-5;
+        props.gasSoundSpeed = 340.0;
       }
 
       // Extract liquid properties (phase 1 = oil, or phase 2 = aqueous)
       if (fluid.hasPhaseType("oil")) {
-	int liqIndex = fluid.getPhaseIndex("oil");
-	props.liquidDensity = fluid.getPhase(liqIndex).getDensity("kg/m3");
-	props.liquidViscosity = fluid.getPhase(liqIndex).getViscosity("kg/msec");
-	props.liquidEnthalpy = fluid.getPhase(liqIndex).getEnthalpy("J/kg");
-	props.liquidSoundSpeed = fluid.getPhase(liqIndex).getSoundSpeed("m/s");
-	props.liquidMolarMass = fluid.getPhase(liqIndex).getMolarMass() * 1000;
-	props.liquidCompressibility = fluid.getPhase(liqIndex).getZ();
-	props.liquidCp = fluid.getPhase(liqIndex).getCp("J/kgK");
-	props.liquidThermalConductivity = fluid.getPhase(liqIndex).getThermalConductivity("W/mK");
+        int liqIndex = fluid.getPhaseIndex("oil");
+        props.liquidDensity = fluid.getPhase(liqIndex).getDensity("kg/m3");
+        props.liquidViscosity = fluid.getPhase(liqIndex).getViscosity("kg/msec");
+        props.liquidEnthalpy = fluid.getPhase(liqIndex).getEnthalpy("J/kg");
+        props.liquidSoundSpeed = fluid.getPhase(liqIndex).getSoundSpeed("m/s");
+        props.liquidMolarMass = fluid.getPhase(liqIndex).getMolarMass() * 1000;
+        props.liquidCompressibility = fluid.getPhase(liqIndex).getZ();
+        props.liquidCp = fluid.getPhase(liqIndex).getCp("J/kgK");
+        props.liquidThermalConductivity = fluid.getPhase(liqIndex).getThermalConductivity("W/mK");
       } else if (fluid.hasPhaseType("aqueous")) {
-	int liqIndex = fluid.getPhaseIndex("aqueous");
-	props.liquidDensity = fluid.getPhase(liqIndex).getDensity("kg/m3");
-	props.liquidViscosity = fluid.getPhase(liqIndex).getViscosity("kg/msec");
-	props.liquidEnthalpy = fluid.getPhase(liqIndex).getEnthalpy("J/kg");
-	props.liquidSoundSpeed = fluid.getPhase(liqIndex).getSoundSpeed("m/s");
-	props.liquidMolarMass = fluid.getPhase(liqIndex).getMolarMass() * 1000;
-	props.liquidCompressibility = fluid.getPhase(liqIndex).getZ();
-	props.liquidCp = fluid.getPhase(liqIndex).getCp("J/kgK");
-	props.liquidThermalConductivity = fluid.getPhase(liqIndex).getThermalConductivity("W/mK");
+        int liqIndex = fluid.getPhaseIndex("aqueous");
+        props.liquidDensity = fluid.getPhase(liqIndex).getDensity("kg/m3");
+        props.liquidViscosity = fluid.getPhase(liqIndex).getViscosity("kg/msec");
+        props.liquidEnthalpy = fluid.getPhase(liqIndex).getEnthalpy("J/kg");
+        props.liquidSoundSpeed = fluid.getPhase(liqIndex).getSoundSpeed("m/s");
+        props.liquidMolarMass = fluid.getPhase(liqIndex).getMolarMass() * 1000;
+        props.liquidCompressibility = fluid.getPhase(liqIndex).getZ();
+        props.liquidCp = fluid.getPhase(liqIndex).getCp("J/kgK");
+        props.liquidThermalConductivity = fluid.getPhase(liqIndex).getThermalConductivity("W/mK");
       } else {
-	// Default liquid properties for single-phase gas
-	props.liquidDensity = 800.0;
-	props.liquidViscosity = 1e-3;
-	props.liquidSoundSpeed = 1200.0;
+        // Default liquid properties for single-phase gas
+        props.liquidDensity = 800.0;
+        props.liquidViscosity = 1e-3;
+        props.liquidSoundSpeed = 1200.0;
       }
 
       // Surface tension
       if (fluid.getNumberOfPhases() >= 2) {
-	try {
-	  props.surfaceTension = fluid.getInterphaseProperties().getSurfaceTension(0, 1);
-	} catch (Exception e) {
-	  props.surfaceTension = 0.02; // Default 20 mN/m
-	}
+        try {
+          props.surfaceTension = fluid.getInterphaseProperties().getSurfaceTension(0, 1);
+        } catch (Exception e) {
+          props.surfaceTension = 0.02; // Default 20 mN/m
+        }
       } else {
-	props.surfaceTension = 0.02;
+        props.surfaceTension = 0.02;
       }
 
       props.converged = true;
@@ -405,7 +405,7 @@ public class ThermodynamicCoupling implements Serializable {
       ThermoProperties eqProps = flashPT(section.getPressure(), section.getTemperature());
 
       if (!eqProps.converged) {
-	return 0.0;
+        return 0.0;
       }
 
       // Calculate equilibrium liquid holdup from vapor fraction
@@ -415,7 +415,7 @@ public class ThermodynamicCoupling implements Serializable {
       double totalVolFrac = eqGasVolFrac + eqLiqVolFrac;
 
       if (totalVolFrac < 1e-10) {
-	return 0.0;
+        return 0.0;
       }
 
       double eqLiquidHoldup = eqLiqVolFrac / totalVolFrac;

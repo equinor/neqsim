@@ -174,7 +174,7 @@ public class RiskMLInterface implements Serializable {
     default List<MLPrediction> predictBatch(List<Map<String, Double>> featuresBatch) {
       List<MLPrediction> results = new ArrayList<>();
       for (Map<String, Double> features : featuresBatch) {
-	results.add(predict(features));
+        results.add(predict(features));
       }
       return results;
     }
@@ -447,11 +447,11 @@ public class RiskMLInterface implements Serializable {
 
     // Record prediction using the prediction's timestamp for later feedback lookup
     PredictionRecord record = new PredictionRecord(modelId, features, prediction.getPrediction(),
-	prediction.getTimestamp());
+        prediction.getTimestamp());
     synchronized (predictionHistory) {
       predictionHistory.add(record);
       while (predictionHistory.size() > maxHistorySize) {
-	predictionHistory.remove(0);
+        predictionHistory.remove(0);
       }
     }
 
@@ -485,10 +485,10 @@ public class RiskMLInterface implements Serializable {
   public void provideFeedback(Instant predictionTimestamp, double actualValue) {
     synchronized (predictionHistory) {
       for (PredictionRecord record : predictionHistory) {
-	if (record.getTimestamp().equals(predictionTimestamp)) {
-	  record.setActualValue(actualValue);
-	  break;
-	}
+        if (record.getTimestamp().equals(predictionTimestamp)) {
+          record.setActualValue(actualValue);
+          break;
+        }
       }
     }
   }
@@ -503,9 +503,9 @@ public class RiskMLInterface implements Serializable {
     List<PredictionRecord> validated = new ArrayList<>();
     synchronized (predictionHistory) {
       for (PredictionRecord record : predictionHistory) {
-	if (record.getModelId().equals(modelId) && record.isValidated()) {
-	  validated.add(record);
-	}
+        if (record.getModelId().equals(modelId) && record.isValidated()) {
+          validated.add(record);
+        }
       }
     }
 
@@ -530,22 +530,22 @@ public class RiskMLInterface implements Serializable {
       this.validatedPredictions = validated.size();
 
       if (!validated.isEmpty()) {
-	double sumAE = 0;
-	double sumSE = 0;
-	double sumAPE = 0;
+        double sumAE = 0;
+        double sumSE = 0;
+        double sumAPE = 0;
 
-	for (PredictionRecord record : validated) {
-	  double error = record.getPredictionError();
-	  sumAE += error;
-	  sumSE += error * error;
-	  if (record.getActualValue() != 0) {
-	    sumAPE += Math.abs(error / record.getActualValue());
-	  }
-	}
+        for (PredictionRecord record : validated) {
+          double error = record.getPredictionError();
+          sumAE += error;
+          sumSE += error * error;
+          if (record.getActualValue() != 0) {
+            sumAPE += Math.abs(error / record.getActualValue());
+          }
+        }
 
-	meanAbsoluteError = sumAE / validated.size();
-	rootMeanSquareError = Math.sqrt(sumSE / validated.size());
-	meanAbsolutePercentageError = sumAPE / validated.size() * 100;
+        meanAbsoluteError = sumAE / validated.size();
+        rootMeanSquareError = Math.sqrt(sumSE / validated.size());
+        meanAbsolutePercentageError = sumAPE / validated.size() * 100;
       }
     }
 
@@ -598,7 +598,7 @@ public class RiskMLInterface implements Serializable {
     List<MLModel> active = new ArrayList<>();
     for (MLModel model : models.values()) {
       if (model.isActive()) {
-	active.add(model);
+        active.add(model);
       }
     }
     return active;

@@ -128,8 +128,8 @@ public class AllocationUncertaintyEstimatorTest {
     int methaneIdx = -1;
     for (int k = 0; k < numComp; k++) {
       if ("methane".equals(allocator.getExtractor().getComponentNames().get(k))) {
-	methaneIdx = k;
-	break;
+        methaneIdx = k;
+        break;
       }
     }
     assertTrue(methaneIdx >= 0, "methane must be on the master slate");
@@ -147,15 +147,15 @@ public class AllocationUncertaintyEstimatorTest {
     // Variance must be positive on the gas custody outlet for Well-A and zero for Well-B
     // (independent metering, only Well-A has uncertainty).
     assertTrue(uncertainty.getAllocatedFlowVariance("Well-A", "ExportGas") > 0.0,
-	"Well-A gas variance must be positive when Well-A has metering noise");
+        "Well-A gas variance must be positive when Well-A has metering noise");
     assertEquals(0.0, uncertainty.getAllocatedFlowVariance("Well-B", "ExportGas"), TOL,
-	"Well-B variance must be zero when only Well-A is noisy");
+        "Well-B variance must be zero when only Well-A is noisy");
 
     // Sanity bound: one-sigma std-dev cannot exceed the deterministic allocated flow.
     double detGas = det.getAllocatedFlow("Well-A", "ExportGas", "mole/sec");
     double stdGas = uncertainty.getAllocatedFlowStdDevMoles("Well-A", "ExportGas");
     assertTrue(stdGas <= detGas + TOL,
-	"one-sigma std-dev " + stdGas + " must not exceed deterministic allocation " + detGas);
+        "one-sigma std-dev " + stdGas + " must not exceed deterministic allocation " + detGas);
 
     // The kg/hr standard deviation must also be positive and finite.
     double stdKg = uncertainty.getAllocatedFlowStdDevKgPerHr("Well-A", "ExportGas");
@@ -173,8 +173,8 @@ public class AllocationUncertaintyEstimatorTest {
     int methaneIdx = 0;
     for (int k = 0; k < numComp; k++) {
       if ("methane".equals(allocator.getExtractor().getComponentNames().get(k))) {
-	methaneIdx = k;
-	break;
+        methaneIdx = k;
+        break;
       }
     }
 

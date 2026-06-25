@@ -37,10 +37,10 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
 
     if (numberOfAssociationSites != 0 && cpaon == 1) {
       for (int j = 0; j < getNumberOfAssociationSites(); j++) {
-	setXsite(j, 1.0);
-	setXsiteOld(j, 1.0);
-	setXsitedV(j, 0.0);
-	setXsitedT(j, 0.0);
+        setXsite(j, 1.0);
+        setXsiteOld(j, 1.0);
+        setXsitedV(j, 0.0);
+        setXsitedT(j, 0.0);
       }
     }
   }
@@ -64,10 +64,10 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
 
     if (numberOfAssociationSites != 0 && cpaon == 1) {
       for (int j = 0; j < getNumberOfAssociationSites(); j++) {
-	setXsite(j, 1.0);
-	setXsiteOld(j, 1.0);
-	setXsitedV(j, 0.0);
-	setXsitedT(j, 0.0);
+        setXsite(j, 1.0);
+        setXsiteOld(j, 1.0);
+        setXsitedV(j, 0.0);
+        setXsitedT(j, 0.0);
       }
     }
   }
@@ -168,7 +168,7 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
   @Override
   public double dFCPAdVdXi(int site, PhaseInterface phase) {
     return 1.0 / (2.0 * phase.getTotalVolume())
-	* (1.0 - phase.getTotalVolume() * ((PhaseCPAInterface) phase).getGcpav()) * getNumberOfMolesInPhase();
+        * (1.0 - phase.getTotalVolume() * ((PhaseCPAInterface) phase).getGcpav()) * getNumberOfMolesInPhase();
   }
 
   /** {@inheritDoc} */

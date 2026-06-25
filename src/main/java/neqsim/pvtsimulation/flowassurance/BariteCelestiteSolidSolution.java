@@ -171,14 +171,14 @@ public class BariteCelestiteSolidSolution implements Serializable {
       double fMid = objectiveFunction(xMid);
 
       if (Math.abs(fMid) < 1e-12 || (xHi - xLo) < 1e-10) {
-	xBa = xMid;
-	break;
+        xBa = xMid;
+        break;
       }
 
       if (fMid * objectiveFunction(xLo) < 0) {
-	xHi = xMid;
+        xHi = xMid;
       } else {
-	xLo = xMid;
+        xLo = xMid;
       }
       xBa = xMid;
     }

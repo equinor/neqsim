@@ -74,13 +74,13 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = null;
       try {
-	dataSet = database.getResultSet(("SELECT * FROM unifacgroupparam WHERE Secondary=" + groupNumber + ""));
-	dataSet.next();
-	dataSet.getClob("name");
+        dataSet = database.getResultSet(("SELECT * FROM unifacgroupparam WHERE Secondary=" + groupNumber + ""));
+        dataSet.next();
+        dataSet.getClob("name");
       } catch (Exception ex) {
-	dataSet.close();
-	dataSet = database.getResultSet(("SELECT * FROM unifacgroupparam WHERE Secondary=" + groupNumber + ""));
-	dataSet.next();
+        dataSet.close();
+        dataSet = database.getResultSet(("SELECT * FROM unifacgroupparam WHERE Secondary=" + groupNumber + ""));
+        dataSet.next();
       }
       n = temp;
       R = Double.parseDouble(dataSet.getString("VolumeR"));
@@ -221,7 +221,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
     result = prime * result + Arrays.hashCode(QMixdN);
     result = prime * result + Arrays.hashCode(lnGammaMixdn);
     result = prime * result + Objects.hash(Q, QComp, QMix, R, groupIndex, groupName, lnGammaComp, lnGammaCompdT,
-	lnGammaCompdTdT, lnGammaMix, lnGammaMixdT, lnGammaMixdTdT, mainGroup, n, subGroup, xComp);
+        lnGammaCompdTdT, lnGammaMix, lnGammaMixdT, lnGammaMixdTdT, mainGroup, n, subGroup, xComp);
     return result;
   }
 
@@ -319,12 +319,12 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
       numberOfMoles = component.getNumberOfMolesInPhase();
       numberOfGrups = component.getNumberOfUNIFACgroups();
       for (int i = 0; i < numberOfGrups; i++) {
-	unifacGroup = component.getUnifacGroup(i);
-	tempVar = numberOfMoles * unifacGroup.getN() * unifacGroup.getQ();
-	temp += tempVar;
-	if (unifacGroup.getSubGroup() == subGroup) {
-	  temp2 += tempVar;
-	}
+        unifacGroup = component.getUnifacGroup(i);
+        tempVar = numberOfMoles * unifacGroup.getN() * unifacGroup.getQ();
+        temp += tempVar;
+        if (unifacGroup.getSubGroup() == subGroup) {
+          temp2 += tempVar;
+        }
       }
     }
     // System.out.println("xmix " + xMix);
@@ -355,23 +355,23 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
       tempdn = 0.0;
       temp2dn = 0.0;
       for (int j = 0; j < phase.getNumberOfComponents(); j++) {
-	component = ((ComponentGEUnifac) phase.getComponent(j));
-	for (int i = 0; i < component.getNumberOfUNIFACgroups(); i++) {
-	  unifacGroup = component.getUnifacGroup(i);
-	  tempVar = component.getNumberOfMolesInPhase() * component.getUnifacGroup(i).getN()
-	      * component.getUnifacGroup(i).getQ();
-	  temp += tempVar;
-	  if (k == j) {
-	    tempVardn = unifacGroup.getN() * unifacGroup.getQ();
-	    tempdn += tempVardn;
-	  }
-	  if (unifacGroup.getSubGroup() == subGroup) {
-	    temp2 += tempVar;
-	    if (k == j) {
-	      temp2dn += tempVardn;
-	    }
-	  }
-	}
+        component = ((ComponentGEUnifac) phase.getComponent(j));
+        for (int i = 0; i < component.getNumberOfUNIFACgroups(); i++) {
+          unifacGroup = component.getUnifacGroup(i);
+          tempVar = component.getNumberOfMolesInPhase() * component.getUnifacGroup(i).getN()
+              * component.getUnifacGroup(i).getQ();
+          temp += tempVar;
+          if (k == j) {
+            tempVardn = unifacGroup.getN() * unifacGroup.getQ();
+            tempdn += tempVardn;
+          }
+          if (unifacGroup.getSubGroup() == subGroup) {
+            temp2 += tempVar;
+            if (k == j) {
+              temp2dn += tempVardn;
+            }
+          }
+        }
       }
       getQMixdN()[k] = (temp2dn * temp - temp2 * tempdn) / (temp * temp);
     }

@@ -122,7 +122,7 @@ public class OilStabilizationDiagramTest {
     operations.add(oilHeater1);
 
     ThreePhaseSeparator secondStageSeparator = new ThreePhaseSeparator("2nd Stage Separator",
-	oilHeater1.getOutletStream());
+        oilHeater1.getOutletStream());
     secondStageSeparator.addStream(lpWellStream);
     operations.add(secondStageSeparator);
 
@@ -147,7 +147,7 @@ public class OilStabilizationDiagramTest {
     // Third Stage Separation (7 bara)
     // =========================================================================
     ThreePhaseSeparator thirdStageSeparator = new ThreePhaseSeparator("3rd Stage Separator",
-	secondStageMixer.getOutletStream());
+        secondStageMixer.getOutletStream());
     operations.add(thirdStageSeparator);
 
     ThrottlingValve oilValve3 = new ThrottlingValve("Oil Letdown V-103", thirdStageSeparator.getOilOutStream());

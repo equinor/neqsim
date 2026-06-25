@@ -46,7 +46,7 @@ class CharacterizeToReferenceDelumpTest {
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       ComponentInterface c = fluid.getComponent(i);
       if (c.isIsTBPfraction() || c.isIsPlusFraction()) {
-	moles += c.getNumberOfmoles();
+        moles += c.getNumberOfmoles();
       }
     }
     return moles;
@@ -57,7 +57,7 @@ class CharacterizeToReferenceDelumpTest {
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       ComponentInterface c = fluid.getComponent(i);
       if (c.isIsTBPfraction() || c.isIsPlusFraction()) {
-	mass += c.getNumberOfmoles() * c.getMolarMass();
+        mass += c.getNumberOfmoles() * c.getMolarMass();
       }
     }
     return mass;
@@ -68,8 +68,8 @@ class CharacterizeToReferenceDelumpTest {
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       ComponentInterface c = fluid.getComponent(i);
       if (c.isIsTBPfraction() || c.isIsPlusFraction()) {
-	double mass = c.getNumberOfmoles() * c.getMolarMass();
-	volume += mass / c.getNormalLiquidDensity();
+        double mass = c.getNumberOfmoles() * c.getMolarMass();
+        volume += mass / c.getNormalLiquidDensity();
       }
     }
     return volume;
@@ -80,7 +80,7 @@ class CharacterizeToReferenceDelumpTest {
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       ComponentInterface c = fluid.getComponent(i);
       if ((c.isIsTBPfraction() || c.isIsPlusFraction()) && c.getNumberOfmoles() > 0.0) {
-	count++;
+        count++;
       }
     }
     return count;
@@ -105,7 +105,7 @@ class CharacterizeToReferenceDelumpTest {
     double srcMw = srcMass / srcMoles;
 
     CharacterizationOptions options = CharacterizationOptions.builder().inheritReferenceProperties(false)
-	.delumpBeforeRecharacterization(true).delumpResolution(12).build();
+        .delumpBeforeRecharacterization(true).delumpResolution(12).build();
     SystemInterface result = PseudoComponentCombiner.characterizeToReference(source, reference, options);
 
     assertEquals(srcMoles, pseudoMoles(result), srcMoles * 1e-6, "total pseudo moles conserved");
@@ -124,7 +124,7 @@ class CharacterizeToReferenceDelumpTest {
     double srcDensity = pseudoMass(source) / pseudoVolume(source);
 
     CharacterizationOptions options = CharacterizationOptions.builder().inheritReferenceProperties(false)
-	.delumpBeforeRecharacterization(true).delumpResolution(12).build();
+        .delumpBeforeRecharacterization(true).delumpResolution(12).build();
     SystemInterface result = PseudoComponentCombiner.characterizeToReference(source, reference, options);
 
     double resDensity = pseudoMass(result) / pseudoVolume(result);
@@ -139,20 +139,20 @@ class CharacterizeToReferenceDelumpTest {
     SystemInterface reference = referenceFluid(6);
 
     CharacterizationOptions noDelump = CharacterizationOptions.builder().inheritReferenceProperties(false)
-	.delumpBeforeRecharacterization(false).build();
+        .delumpBeforeRecharacterization(false).build();
     SystemInterface resultNoDelump = PseudoComponentCombiner.characterizeToReference(coarseSource(), reference,
-	noDelump);
+        noDelump);
 
     CharacterizationOptions withDelump = CharacterizationOptions.builder().inheritReferenceProperties(false)
-	.delumpBeforeRecharacterization(true).delumpResolution(12).build();
+        .delumpBeforeRecharacterization(true).delumpResolution(12).build();
     SystemInterface resultDelump = PseudoComponentCombiner.characterizeToReference(coarseSource(), reference,
-	withDelump);
+        withDelump);
 
     int noDelumpCuts = validPseudoComponents(resultNoDelump);
     int delumpCuts = validPseudoComponents(resultDelump);
 
     assertTrue(delumpCuts > noDelumpCuts, "delumping should populate more reference cuts than the identity mapping ("
-	+ delumpCuts + " vs " + noDelumpCuts + ")");
+        + delumpCuts + " vs " + noDelumpCuts + ")");
   }
 
   @Test
@@ -163,7 +163,7 @@ class CharacterizeToReferenceDelumpTest {
     SystemInterface bare = PseudoComponentCombiner.characterizeToReference(coarseSource(), reference);
 
     CharacterizationOptions options = CharacterizationOptions.builder().inheritReferenceProperties(false)
-	.delumpBeforeRecharacterization(false).build();
+        .delumpBeforeRecharacterization(false).build();
     SystemInterface withOptions = PseudoComponentCombiner.characterizeToReference(coarseSource(), reference, options);
 
     assertEquals(bare.getNumberOfComponents(), withOptions.getNumberOfComponents(), "same number of components");
@@ -190,7 +190,7 @@ class CharacterizeToReferenceDelumpTest {
     double srcMass = pseudoMass(source);
 
     CharacterizationOptions options = CharacterizationOptions.builder().inheritReferenceProperties(false)
-	.delumpBeforeRecharacterization(true).delumpResolution(20).build();
+        .delumpBeforeRecharacterization(true).delumpResolution(20).build();
     SystemInterface result = PseudoComponentCombiner.characterizeToReference(source, reference, options);
 
     assertEquals(srcMoles, pseudoMoles(result), srcMoles * 1e-9, "single-lump moles conserved");

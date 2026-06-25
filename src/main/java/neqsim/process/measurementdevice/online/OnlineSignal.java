@@ -100,10 +100,10 @@ public class OnlineSignal implements java.io.Serializable {
       return 0;
     } finally {
       try {
-	dataSet.close();
+        dataSet.close();
       } catch (Exception ex) {
-	// dataSet.close();
-	return 0;
+        // dataSet.close();
+        return 0;
       }
     }
     dateStamp = new Date(); // read dateStamp

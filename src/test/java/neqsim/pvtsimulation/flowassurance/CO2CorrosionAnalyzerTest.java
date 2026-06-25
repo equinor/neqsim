@@ -77,7 +77,7 @@ public class CO2CorrosionAnalyzerTest {
     analyzerHigh.run();
 
     assertTrue(analyzerHigh.getBaselineCorrosionRate() > analyzerLow.getBaselineCorrosionRate(),
-	"Baseline rate at 70°C should exceed 30°C");
+        "Baseline rate at 70°C should exceed 30°C");
   }
 
   @Test
@@ -193,6 +193,6 @@ public class CO2CorrosionAnalyzerTest {
     withInhibitor.run();
 
     assertTrue(withInhibitor.getCorrosionRate() < noInhibitor.getCorrosionRate(),
-	"Inhibitor should reduce corrosion rate");
+        "Inhibitor should reduce corrosion rate");
   }
 }

@@ -50,34 +50,34 @@ public class SaturationTemperature extends BasePVTsimulation {
       boolean previousIsTwoPhase = isTwoPhaseAtTemperature(previousTemperature);
 
       for (double trialTemperature = previousTemperature
-	  + SEARCH_TEMPERATURE_STEP_K; trialTemperature <= MAXIMUM_SEARCH_TEMPERATURE_K; trialTemperature += SEARCH_TEMPERATURE_STEP_K) {
-	boolean trialIsTwoPhase = isTwoPhaseAtTemperature(trialTemperature);
-	if (previousIsTwoPhase && !trialIsTwoPhase) {
-	  twoPhaseTemperature = previousTemperature;
-	  singlePhaseTemperature = trialTemperature;
-	}
-	previousTemperature = trialTemperature;
-	previousIsTwoPhase = trialIsTwoPhase;
+          + SEARCH_TEMPERATURE_STEP_K; trialTemperature <= MAXIMUM_SEARCH_TEMPERATURE_K; trialTemperature += SEARCH_TEMPERATURE_STEP_K) {
+        boolean trialIsTwoPhase = isTwoPhaseAtTemperature(trialTemperature);
+        if (previousIsTwoPhase && !trialIsTwoPhase) {
+          twoPhaseTemperature = previousTemperature;
+          singlePhaseTemperature = trialTemperature;
+        }
+        previousTemperature = trialTemperature;
+        previousIsTwoPhase = trialIsTwoPhase;
       }
 
       if (previousTemperature < MAXIMUM_SEARCH_TEMPERATURE_K) {
-	boolean trialIsTwoPhase = isTwoPhaseAtTemperature(MAXIMUM_SEARCH_TEMPERATURE_K);
-	if (previousIsTwoPhase && !trialIsTwoPhase) {
-	  twoPhaseTemperature = previousTemperature;
-	  singlePhaseTemperature = MAXIMUM_SEARCH_TEMPERATURE_K;
-	}
+        boolean trialIsTwoPhase = isTwoPhaseAtTemperature(MAXIMUM_SEARCH_TEMPERATURE_K);
+        if (previousIsTwoPhase && !trialIsTwoPhase) {
+          twoPhaseTemperature = previousTemperature;
+          singlePhaseTemperature = MAXIMUM_SEARCH_TEMPERATURE_K;
+        }
       }
 
       if (Double.isNaN(twoPhaseTemperature) || Double.isNaN(singlePhaseTemperature)) {
-	getThermoSystem().setTemperature(MAXIMUM_SEARCH_TEMPERATURE_K);
-	thermoOps.TPflash();
-	return getThermoSystem().getTemperature();
+        getThermoSystem().setTemperature(MAXIMUM_SEARCH_TEMPERATURE_K);
+        thermoOps.TPflash();
+        return getThermoSystem().getTemperature();
       }
 
       return refineUpperSaturationTemperature(twoPhaseTemperature, singlePhaseTemperature);
     } finally {
       if (isMultiPhaseCheckChanged) {
-	getThermoSystem().setMultiPhaseCheck(false);
+        getThermoSystem().setMultiPhaseCheck(false);
       }
     }
   }
@@ -109,9 +109,9 @@ public class SaturationTemperature extends BasePVTsimulation {
       iteration++;
       double trialTemperature = (minTemp + maxTemp) / 2.0;
       if (isTwoPhaseAtTemperature(trialTemperature)) {
-	minTemp = trialTemperature;
+        minTemp = trialTemperature;
       } else {
-	maxTemp = trialTemperature;
+        maxTemp = trialTemperature;
       }
     } while (Math.abs(maxTemp - minTemp) > TEMPERATURE_TOLERANCE_K && iteration < MAXIMUM_BISECTION_ITERATIONS);
     getThermoSystem().setTemperature(maxTemp);

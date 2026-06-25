@@ -209,7 +209,7 @@ public class TieInCapacityPlanner implements Serializable {
       ProductionLoad scheduledSatellite = satelliteProductionProfile.getLoad(index);
       ProductionLoad baseRequest = getBaseLoad(scheduledSatellite.getYear(), index, scheduledSatellite.getPeriodName());
       ProductionLoad deferredIntoPeriod = deferredBacklog.withPeriod(scheduledSatellite.getPeriodName(),
-	  scheduledSatellite.getYear());
+          scheduledSatellite.getYear());
       ProductionLoad satelliteRequest = scheduledSatellite.plus(deferredIntoPeriod);
 
       AllocationResult allocation = allocateNameplate(baseRequest, satelliteRequest);
@@ -217,7 +217,7 @@ public class TieInCapacityPlanner implements Serializable {
 
       ProductionLoad heldBack = satelliteRequest.subtractNonNegative(adjusted.acceptedSatellite);
       ProductionLoad deferredToNext = holdbackPolicy == HoldbackPolicy.DEFER_TO_LATER_YEARS ? heldBack
-	  : ProductionLoad.zero(scheduledSatellite.getYear(), scheduledSatellite.getPeriodName());
+          : ProductionLoad.zero(scheduledSatellite.getYear(), scheduledSatellite.getPeriodName());
       deferredBacklog = deferredToNext;
 
       double deferredValueMusd = calculatePeriodValueMusd(heldBack);
@@ -225,16 +225,16 @@ public class TieInCapacityPlanner implements Serializable {
       String summary = buildPeriodSummary(scheduledSatellite, adjusted, heldBack);
 
       periods.add(new TieInPeriodResult(scheduledSatellite.getPeriodName(), scheduledSatellite.getYear(), baseRequest,
-	  adjusted.acceptedBase, scheduledSatellite, deferredIntoPeriod, satelliteRequest, adjusted.acceptedSatellite,
-	  heldBack, deferredToNext, adjusted.satelliteAllocationScale, allocation.bottleneckName,
-	  adjusted.processOutcome.processModelUsed, adjusted.processOutcome.capacityAvailable,
-	  adjusted.processOutcome.bottleneckName, adjusted.processOutcome.bottleneckUtilization,
-	  adjusted.processOutcome.utilizationSummary, deferredValueMusd, deferredValueNpvMusd, summary));
+          adjusted.acceptedBase, scheduledSatellite, deferredIntoPeriod, satelliteRequest, adjusted.acceptedSatellite,
+          heldBack, deferredToNext, adjusted.satelliteAllocationScale, allocation.bottleneckName,
+          adjusted.processOutcome.processModelUsed, adjusted.processOutcome.capacityAvailable,
+          adjusted.processOutcome.bottleneckName, adjusted.processOutcome.bottleneckUtilization,
+          adjusted.processOutcome.utilizationSummary, deferredValueMusd, deferredValueNpvMusd, summary));
     }
 
     List<DebottleneckDecision> decisions = buildDebottleneckDecisions(periods);
     return new TieInCapacityResult(hostFacility.getName(), allocationPolicy, holdbackPolicy, periods, decisions,
-	buildResultSummary(periods, decisions));
+        buildResultSummary(periods, decisions));
   }
 
   /**
@@ -271,9 +271,9 @@ public class TieInCapacityPlanner implements Serializable {
       return hostProductionProfile.getLoadByYearOrIndex(year, index, periodName);
     }
     return new ProductionLoad(periodName, year, hostFacility.getGasCapacityMSm3d() * hostFacility.getGasUtilization(),
-	hostFacility.getOilCapacityBopd() * hostFacility.getOilUtilization(),
-	hostFacility.getWaterCapacityM3d() * hostFacility.getWaterUtilization(),
-	hostFacility.getLiquidCapacityM3d() * hostFacility.getLiquidUtilization());
+        hostFacility.getOilCapacityBopd() * hostFacility.getOilUtilization(),
+        hostFacility.getWaterCapacityM3d() * hostFacility.getWaterUtilization(),
+        hostFacility.getLiquidCapacityM3d() * hostFacility.getLiquidUtilization());
   }
 
   /**
@@ -290,7 +290,7 @@ public class TieInCapacityPlanner implements Serializable {
       ProductionLoad acceptedBase = baseRequest.scale(scale);
       ProductionLoad acceptedSatellite = satelliteRequest.scale(scale);
       return new AllocationResult(acceptedBase, acceptedSatellite, scale,
-	  identifyNameplateBottleneck(baseRequest.plus(satelliteRequest), capacity));
+          identifyNameplateBottleneck(baseRequest.plus(satelliteRequest), capacity));
     }
 
     if (allocationPolicy == CapacityAllocationPolicy.SATELLITE_FIRST) {
@@ -299,17 +299,17 @@ public class TieInCapacityPlanner implements Serializable {
       ProductionLoad remainingCapacity = capacity.subtractNonNegative(acceptedSatellite);
       double baseScale = scaleAgainstCapacity(baseRequest, remainingCapacity);
       return new AllocationResult(baseRequest.scale(baseScale), acceptedSatellite, satelliteScale,
-	  identifyNameplateBottleneck(baseRequest.plus(satelliteRequest), capacity));
+          identifyNameplateBottleneck(baseRequest.plus(satelliteRequest), capacity));
     }
 
     if (allocationPolicy == CapacityAllocationPolicy.VALUE_WEIGHTED
-	&& calculateDailyValueUsd(satelliteRequest) > calculateDailyValueUsd(baseRequest)) {
+        && calculateDailyValueUsd(satelliteRequest) > calculateDailyValueUsd(baseRequest)) {
       double satelliteScale = scaleAgainstCapacity(satelliteRequest, capacity);
       ProductionLoad acceptedSatellite = satelliteRequest.scale(satelliteScale);
       ProductionLoad remainingCapacity = capacity.subtractNonNegative(acceptedSatellite);
       double baseScale = scaleAgainstCapacity(baseRequest, remainingCapacity);
       return new AllocationResult(baseRequest.scale(baseScale), acceptedSatellite, satelliteScale,
-	  identifyNameplateBottleneck(baseRequest.plus(satelliteRequest), capacity));
+          identifyNameplateBottleneck(baseRequest.plus(satelliteRequest), capacity));
     }
 
     double baseScale = scaleAgainstCapacity(baseRequest, capacity);
@@ -317,7 +317,7 @@ public class TieInCapacityPlanner implements Serializable {
     ProductionLoad remainingCapacity = capacity.subtractNonNegative(acceptedBase);
     double satelliteScale = scaleAgainstCapacity(satelliteRequest, remainingCapacity);
     return new AllocationResult(acceptedBase, satelliteRequest.scale(satelliteScale), satelliteScale,
-	identifyNameplateBottleneck(baseRequest.plus(satelliteRequest), capacity));
+        identifyNameplateBottleneck(baseRequest.plus(satelliteRequest), capacity));
   }
 
   /**
@@ -329,7 +329,7 @@ public class TieInCapacityPlanner implements Serializable {
    */
   private ProductionLoad getHostCapacityLoad(int year, String periodName) {
     return new ProductionLoad(periodName, year, hostFacility.getGasCapacityMSm3d(), hostFacility.getOilCapacityBopd(),
-	hostFacility.getWaterCapacityM3d(), hostFacility.getLiquidCapacityM3d());
+        hostFacility.getWaterCapacityM3d(), hostFacility.getLiquidCapacityM3d());
   }
 
   /**
@@ -348,7 +348,7 @@ public class TieInCapacityPlanner implements Serializable {
     }
     if (hostFacility.getLiquidCapacityM3d() > 0.0) {
       scale = Math.min(scale,
-	  requiredDimensionScale(request.getTotalLiquidRateM3d(), capacity.getTotalLiquidRateM3d()));
+          requiredDimensionScale(request.getTotalLiquidRateM3d(), capacity.getTotalLiquidRateM3d()));
     }
     return clampScale(scale);
   }
@@ -398,16 +398,16 @@ public class TieInCapacityPlanner implements Serializable {
     addUtilization(utilizations, "gas capacity", request.getGasRateMSm3d(), capacity.getGasRateMSm3d(), true);
     addUtilization(utilizations, "oil capacity", request.getOilRateBopd(), capacity.getOilRateBopd(), true);
     addUtilization(utilizations, "water capacity", request.getWaterRateM3d(), capacity.getWaterRateM3d(),
-	hostFacility.getWaterCapacityM3d() > 0.0);
+        hostFacility.getWaterCapacityM3d() > 0.0);
     addUtilization(utilizations, "liquid capacity", request.getTotalLiquidRateM3d(), capacity.getTotalLiquidRateM3d(),
-	hostFacility.getLiquidCapacityM3d() > 0.0);
+        hostFacility.getLiquidCapacityM3d() > 0.0);
 
     String bottleneck = "None";
     double highest = 0.0;
     for (Map.Entry<String, Double> entry : utilizations.entrySet()) {
       if (entry.getValue() > highest) {
-	highest = entry.getValue();
-	bottleneck = entry.getKey();
+        highest = entry.getValue();
+        bottleneck = entry.getKey();
       }
     }
     return bottleneck;
@@ -445,30 +445,30 @@ public class TieInCapacityPlanner implements Serializable {
     ProcessOutcome initialOutcome = evaluateProcessCapacity(allocation.acceptedBase, allocation.acceptedSatellite);
     if (!initialOutcome.processModelUsed || initialOutcome.capacityAvailable || allocation.acceptedSatellite.isZero()) {
       return new ProcessAdjustedAllocation(allocation.acceptedBase, allocation.acceptedSatellite,
-	  allocation.satelliteScale, initialOutcome);
+          allocation.satelliteScale, initialOutcome);
     }
 
     double low = 0.0;
     double high = 1.0;
     ProcessOutcome bestOutcome = evaluateProcessCapacity(allocation.acceptedBase,
-	allocation.acceptedSatellite.scale(0.0));
+        allocation.acceptedSatellite.scale(0.0));
     for (int iteration = 0; iteration < processSearchIterations; iteration++) {
       double mid = 0.5 * (low + high);
       ProductionLoad trialSatellite = allocation.acceptedSatellite.scale(mid);
       ProcessOutcome trialOutcome = evaluateProcessCapacity(allocation.acceptedBase, trialSatellite);
       if (trialOutcome.capacityAvailable) {
-	low = mid;
-	bestOutcome = trialOutcome;
+        low = mid;
+        bestOutcome = trialOutcome;
       } else {
-	high = mid;
+        high = mid;
       }
     }
 
     ProductionLoad processAcceptedSatellite = allocation.acceptedSatellite.scale(low);
     ProcessOutcome finalOutcome = low > 0.0 ? evaluateProcessCapacity(allocation.acceptedBase, processAcceptedSatellite)
-	: bestOutcome;
+        : bestOutcome;
     return new ProcessAdjustedAllocation(allocation.acceptedBase, processAcceptedSatellite,
-	allocation.satelliteScale * low, finalOutcome);
+        allocation.satelliteScale * low, finalOutcome);
   }
 
   /**
@@ -499,11 +499,11 @@ public class TieInCapacityPlanner implements Serializable {
       double utilization = bottleneck.hasBottleneck() ? bottleneck.getUtilization() : 0.0;
       boolean capacityAvailable = utilization <= processUtilizationLimit && !processSystem.isAnyHardLimitExceeded();
       return new ProcessOutcome(true, capacityAvailable, bottleneck.getEquipmentName(), utilization,
-	  utilizationSummary);
+          utilizationSummary);
     } catch (Exception exception) {
       Map<String, Double> utilizationSummary = new LinkedHashMap<String, Double>();
       return new ProcessOutcome(true, false, "process model error: " + exception.getMessage(), Double.POSITIVE_INFINITY,
-	  utilizationSummary);
+          utilizationSummary);
     } finally {
       restoreProcessStream(processSystem, stream, originalFlow);
     }
@@ -557,9 +557,9 @@ public class TieInCapacityPlanner implements Serializable {
     double oilValue = load.getOilValueUsdPerBbl() == 0.0 ? defaultOilValueUsdPerBbl : load.getOilValueUsdPerBbl();
     double waterValue = load.getWaterValueUsdPerM3() == 0.0 ? defaultWaterValueUsdPerM3 : load.getWaterValueUsdPerM3();
     double liquidValue = load.getLiquidValueUsdPerM3() == 0.0 ? defaultLiquidValueUsdPerM3
-	: load.getLiquidValueUsdPerM3();
+        : load.getLiquidValueUsdPerM3();
     return load.getGasRateMSm3d() * gasValue + load.getOilRateBopd() * oilValue + load.getWaterRateM3d() * waterValue
-	+ load.getTotalLiquidRateM3d() * liquidValue;
+        + load.getTotalLiquidRateM3d() * liquidValue;
   }
 
   /**
@@ -599,7 +599,7 @@ public class TieInCapacityPlanner implements Serializable {
       totalDeferredNpv += period.getDeferredValueNpvMusd();
       String bottleneck = period.getPrimaryBottleneck();
       if (period.getHeldBackSatellite().isZero() || bottleneck == null) {
-	continue;
+        continue;
       }
       Integer count = bottleneckCounts.get(bottleneck);
       bottleneckCounts.put(bottleneck, Integer.valueOf(count == null ? 1 : count.intValue() + 1));
@@ -611,12 +611,12 @@ public class TieInCapacityPlanner implements Serializable {
     String bottleneck = chooseMostFrequentBottleneck(bottleneckCounts);
     double npv = totalDeferredNpv - defaultDebottleneckCapexMusd;
     double paybackYears = totalDeferredNpv > 0.0
-	? defaultDebottleneckCapexMusd / Math.max(1.0e-12, totalDeferredNpv / Math.max(1, periods.size()))
-	: Double.POSITIVE_INFINITY;
+        ? defaultDebottleneckCapexMusd / Math.max(1.0e-12, totalDeferredNpv / Math.max(1, periods.size()))
+        : Double.POSITIVE_INFINITY;
     List<DebottleneckDecision> decisions = new ArrayList<DebottleneckDecision>();
     decisions.add(new DebottleneckDecision(bottleneck,
-	"Increase host capacity or debottleneck " + bottleneck + " to recover constrained satellite production.",
-	defaultDebottleneckCapexMusd, totalDeferredNpv, npv, paybackYears, npv > 0.0));
+        "Increase host capacity or debottleneck " + bottleneck + " to recover constrained satellite production.",
+        defaultDebottleneckCapexMusd, totalDeferredNpv, npv, paybackYears, npv > 0.0));
     return decisions;
   }
 
@@ -631,8 +631,8 @@ public class TieInCapacityPlanner implements Serializable {
     int selectedCount = 0;
     for (Map.Entry<String, Integer> entry : bottleneckCounts.entrySet()) {
       if (entry.getValue().intValue() > selectedCount) {
-	selected = entry.getKey();
-	selectedCount = entry.getValue().intValue();
+        selected = entry.getKey();
+        selectedCount = entry.getValue().intValue();
       }
     }
     return selected;
@@ -649,9 +649,9 @@ public class TieInCapacityPlanner implements Serializable {
   private String buildPeriodSummary(ProductionLoad scheduledSatellite, ProcessAdjustedAllocation adjusted,
       ProductionLoad heldBack) {
     return String.format("%s: accepted %.2f of %.2f MSm3/d gas, held back %.2f MSm3/d, bottleneck %s",
-	scheduledSatellite.getPeriodName(), adjusted.acceptedSatellite.getGasRateMSm3d(),
-	scheduledSatellite.getGasRateMSm3d(), heldBack.getGasRateMSm3d(),
-	adjusted.processOutcome.bottleneckName == null ? "nameplate" : adjusted.processOutcome.bottleneckName);
+        scheduledSatellite.getPeriodName(), adjusted.acceptedSatellite.getGasRateMSm3d(),
+        scheduledSatellite.getGasRateMSm3d(), heldBack.getGasRateMSm3d(),
+        adjusted.processOutcome.bottleneckName == null ? "nameplate" : adjusted.processOutcome.bottleneckName);
   }
 
   /**
@@ -671,10 +671,10 @@ public class TieInCapacityPlanner implements Serializable {
       deferredNpv += period.getDeferredValueNpvMusd();
     }
     String decisionText = decisions.isEmpty() ? "no debottleneck case generated"
-	: "best debottleneck NPV " + String.format("%.1f MUSD", decisions.get(0).getNpvMusd());
+        : "best debottleneck NPV " + String.format("%.1f MUSD", decisions.get(0).getNpvMusd());
     return String.format(
-	"Host %s accepted %.1f MSm3 gas and held back %.1f MSm3 gas; deferred value %.1f MUSD NPV; %s.",
-	hostFacility.getName(), acceptedGas, heldGas, deferredNpv, decisionText);
+        "Host %s accepted %.1f MSm3 gas and held back %.1f MSm3 gas; deferred value %.1f MUSD NPV; %s.",
+        hostFacility.getName(), acceptedGas, heldGas, deferredNpv, decisionText);
   }
 
   /**
@@ -702,7 +702,7 @@ public class TieInCapacityPlanner implements Serializable {
      * @param bottleneckName nameplate bottleneck name
      */
     private AllocationResult(ProductionLoad acceptedBase, ProductionLoad acceptedSatellite, double satelliteScale,
-	String bottleneckName) {
+        String bottleneckName) {
       this.acceptedBase = acceptedBase;
       this.acceptedSatellite = acceptedSatellite;
       this.satelliteScale = satelliteScale;
@@ -735,7 +735,7 @@ public class TieInCapacityPlanner implements Serializable {
      * @param processOutcome process-model outcome
      */
     private ProcessAdjustedAllocation(ProductionLoad acceptedBase, ProductionLoad acceptedSatellite,
-	double satelliteAllocationScale, ProcessOutcome processOutcome) {
+        double satelliteAllocationScale, ProcessOutcome processOutcome) {
       this.acceptedBase = acceptedBase;
       this.acceptedSatellite = acceptedSatellite;
       this.satelliteAllocationScale = satelliteAllocationScale;
@@ -772,7 +772,7 @@ public class TieInCapacityPlanner implements Serializable {
      * @param utilizationSummary utilization summary in percent
      */
     private ProcessOutcome(boolean processModelUsed, boolean capacityAvailable, String bottleneckName,
-	double bottleneckUtilization, Map<String, Double> utilizationSummary) {
+        double bottleneckUtilization, Map<String, Double> utilizationSummary) {
       this.processModelUsed = processModelUsed;
       this.capacityAvailable = capacityAvailable;
       this.bottleneckName = bottleneckName;

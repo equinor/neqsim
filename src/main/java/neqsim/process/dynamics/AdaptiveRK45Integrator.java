@@ -206,10 +206,10 @@ public class AdaptiveRK45Integrator implements IntegratorStrategy {
     double h = dt;
     for (int iter = 0; iter < maxSubSteps; iter++) {
       if (t >= tEnd) {
-	return x;
+        return x;
       }
       if (t + h > tEnd) {
-	h = tEnd - t;
+        h = tEnd - t;
       }
       double k1 = slope.dxdt(t, x);
       double k2 = slope.dxdt(t + A2 * h, x + h * (B21 * k1));
@@ -224,19 +224,19 @@ public class AdaptiveRK45Integrator implements IntegratorStrategy {
       double errNorm = Math.abs(errEst) / scale;
 
       if (errNorm <= 1.0 || h <= 1.0e-12 * dt) {
-	// accept
-	t += h;
-	x = xNew;
-	lastSubSteps++;
-	double factor = (errNorm <= 1.0e-12) ? maxScale : Math.min(maxScale, safety * Math.pow(errNorm, -0.2));
-	h *= factor;
+        // accept
+        t += h;
+        x = xNew;
+        lastSubSteps++;
+        double factor = (errNorm <= 1.0e-12) ? maxScale : Math.min(maxScale, safety * Math.pow(errNorm, -0.2));
+        h *= factor;
       } else {
-	// reject, shrink
-	double factor = Math.max(minScale, safety * Math.pow(errNorm, -0.25));
-	h *= factor;
+        // reject, shrink
+        double factor = Math.max(minScale, safety * Math.pow(errNorm, -0.25));
+        h *= factor;
       }
     }
     throw new RuntimeException("AdaptiveRK45Integrator exceeded maxSubSteps=" + maxSubSteps + " for outer dt=" + dt
-	+ " starting at t=" + time);
+        + " starting at t=" + time);
   }
 }

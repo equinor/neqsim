@@ -187,9 +187,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     if (flowRate < 1e-5) {
       final double minimumFlowRate = 1e-50;
       if (flowRate < minimumFlowRate) {
-	system.setTotalNumberOfMoles(minimumFlowRate);
+        system.setTotalNumberOfMoles(minimumFlowRate);
       } else {
-	system.setTotalNumberOfMoles(flowRate);
+        system.setTotalNumberOfMoles(flowRate);
       }
       system.init(1);
     }
@@ -211,16 +211,16 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     while (rerun) {
       operation = new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
       if (!isRunAsThread()) {
-	getOperation().run();
+        getOperation().run();
       } else {
-	run();
+        run();
       }
       rerun = ((neqsim.thermo.system.SystemSoreideWhitson) system).calcSalinity();
       iterationCount++;
       if (iterationCount >= 10) {
-	System.err.println(
-	    "Warning: Maximum number of iterations (10) reached in TPflash salinity loop. Stopping further execution.");
-	break;
+        System.err.println(
+            "Warning: Maximum number of iterations (10) reached in TPflash salinity loop. Stopping further execution.");
+        break;
       }
     }
     // --- End salinity logic ---
@@ -228,9 +228,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     if (flowRate < 1e-5) {
       final double minimumFlowRate = 1e-50;
       if (flowRate < minimumFlowRate) {
-	system.setTotalNumberOfMoles(minimumFlowRate);
+        system.setTotalNumberOfMoles(minimumFlowRate);
       } else {
-	system.setTotalNumberOfMoles(flowRate);
+        system.setTotalNumberOfMoles(flowRate);
       }
       system.init(1);
     }
@@ -329,7 +329,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void gasHydrateTPflash() {
     neqsim.thermodynamicoperations.flashops.TPHydrateFlash hydrateFlash = new neqsim.thermodynamicoperations.flashops.TPHydrateFlash(
-	system);
+        system);
     hydrateFlash.setGasHydrateOnlyMode(true);
     operation = hydrateFlash;
     getOperation().run();
@@ -412,7 +412,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void reactivePHflash(double Hspec, int type) {
     operation = new neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphasePHflash(system, Hspec,
-	type);
+        type);
     getOperation().run();
   }
 
@@ -424,7 +424,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void reactivePSflash(double Sspec) {
     neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphasePHflash phflash = new neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphasePHflash(
-	system, 0.0, 0);
+        system, 0.0, 0);
     phflash.setEntropySpec(Sspec);
     operation = phflash;
     getOperation().run();
@@ -459,22 +459,22 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     try {
       ops.TPflash();
       if (tmpSystem.getPhase(0).getType() == PhaseType.GAS) {
-	try {
-	  ops.dewPointTemperatureFlash();
-	} catch (Exception e) {
-	  return false;
-	}
+        try {
+          ops.dewPointTemperatureFlash();
+        } catch (Exception e) {
+          return false;
+        }
       } else {
-	ops.bubblePointTemperatureFlash();
+        ops.bubblePointTemperatureFlash();
       }
     } catch (Exception ex) {
       return false;
     }
     tmpSystem.init(3);
     double gasEnthalpy = tmpSystem.getPhase(0).getEnthalpy() / tmpSystem.getPhase(0).getNumberOfMolesInPhase()
-	* tmpSystem.getTotalNumberOfMoles();
+        * tmpSystem.getTotalNumberOfMoles();
     double liqEnthalpy = tmpSystem.getPhase(1).getEnthalpy() / tmpSystem.getPhase(1).getNumberOfMolesInPhase()
-	* tmpSystem.getTotalNumberOfMoles();
+        * tmpSystem.getTotalNumberOfMoles();
     return Hspec >= liqEnthalpy && Hspec <= gasEnthalpy;
   }
 
@@ -1106,13 +1106,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     try {
       ops.TPflash();
       if (tmpSystem.getPhase(0).getType() == PhaseType.GAS) {
-	try {
-	  ops.dewPointTemperatureFlash();
-	} catch (Exception e) {
-	  return false;
-	}
+        try {
+          ops.dewPointTemperatureFlash();
+        } catch (Exception e) {
+          return false;
+        }
       } else {
-	ops.bubblePointTemperatureFlash();
+        ops.bubblePointTemperatureFlash();
       }
     } catch (Exception ex) {
       return false;
@@ -1147,7 +1147,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     getOperation().run();
     if (Double.isNaN(system.getTemperature())) {
       throw new neqsim.util.exception.IsNaNException(this, "freezingPointTemperatureFlash",
-	  "Could not find solution - possible no freezing point exists");
+          "Could not find solution - possible no freezing point exists");
     }
   }
 
@@ -1162,7 +1162,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     getOperation().run();
     if (Double.isNaN(system.getTemperature())) {
       throw new neqsim.util.exception.IsNaNException(this, "freezingPointTemperatureFlash",
-	  "Could not find solution - possible no freezing point exists");
+          "Could not find solution - possible no freezing point exists");
     }
   }
 
@@ -1176,7 +1176,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     getOperation().run();
     if (Double.isNaN(system.getTemperature())) {
       throw new neqsim.util.exception.IsNaNException(this, "waterDewPointTemperatureFlash",
-	  "Could not find solution - possible no dew point exists");
+          "Could not find solution - possible no dew point exists");
     }
   }
 
@@ -1223,7 +1223,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
     if (Double.isNaN(system.getTemperature())) {
       throw new neqsim.util.exception.IsNaNException(this, "waterPrecipitationTemperature",
-	  "Could not find solution - possible no dew point exists");
+          "Could not find solution - possible no dew point exists");
     }
   }
 
@@ -1238,7 +1238,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     getOperation().run();
     if (Double.isNaN(system.getTemperature())) {
       throw new neqsim.util.exception.IsNaNException(this, "calcSaltSaturation",
-	  "Could not find solution - possible no dew point exists");
+          "Could not find solution - possible no dew point exists");
     }
   }
 
@@ -1254,7 +1254,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     resultTable = getOperation().getResultTable();
     if (Double.isNaN(system.getTemperature())) {
       throw new neqsim.util.exception.IsNaNException(this, "checkScalePotential",
-	  "Could not find solution - possible no dew point exists");
+          "Could not find solution - possible no dew point exists");
     }
   }
 
@@ -1273,7 +1273,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     resultTable = getOperation().getResultTable();
     if (Double.isNaN(system.getTemperature())) {
       throw new neqsim.util.exception.IsNaNException(this, "addIonToScaleSaturation",
-	  "Could not find solution - possible no dew point exists");
+          "Could not find solution - possible no dew point exists");
     }
   }
 
@@ -1287,7 +1287,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     getOperation().run();
     if (Double.isNaN(system.getTemperature())) {
       throw new neqsim.util.exception.IsNaNException(this, "hydrateFormationPressure",
-	  "Could not find solution - possible no dew point exists");
+          "Could not find solution - possible no dew point exists");
     }
   }
 
@@ -1301,7 +1301,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     getOperation().run();
     if (Double.isNaN(system.getTemperature())) {
       throw new neqsim.util.exception.IsNaNException(this, "calcWAT",
-	  "Could not find solution - possible no dew point exists");
+          "Could not find solution - possible no dew point exists");
     }
   }
 
@@ -1352,7 +1352,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     getOperation().run();
     if (Double.isNaN(system.getTemperature())) {
       throw new neqsim.util.exception.IsNaNException(this, "calcSolidComlexTemperature",
-	  "error in WAT() - could not find solution - possible no dew point exists");
+          "error in WAT() - could not find solution - possible no dew point exists");
     }
   }
 
@@ -1370,7 +1370,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     getOperation().run();
     if (Double.isNaN(system.getTemperature())) {
       throw new neqsim.util.exception.IsNaNException(this, "calcSolidComlexTemperature",
-	  "error in WAT() - could not find solution - possible no dew point exists");
+          "error in WAT() - could not find solution - possible no dew point exists");
     }
   }
 
@@ -1488,7 +1488,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     double factor = 1.0;
     if (system.getPhase(0).hasComponent("methanol")) {
       factor -= 2 * system.getPhase(0).getComponent("methanol").getz()
-	  / system.getPhase(0).getComponent("water").getz();
+          / system.getPhase(0).getComponent("water").getz();
     }
     if (system.getPhase(0).hasComponent("MEG")) {
       factor -= 2 * system.getPhase(0).getComponent("MEG").getz() / system.getPhase(0).getComponent("water").getz();
@@ -1547,7 +1547,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
     if (Double.isNaN(system.getTemperature())) {
       throw new neqsim.util.exception.IsNaNException(this, "hydrateFormationTemperature",
-	  "Could not find solution - possible no dew point exists");
+          "Could not find solution - possible no dew point exists");
     }
   }
 
@@ -1592,7 +1592,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     double phasefraction = 1.0 - 1e-10;
 
     operation = new CricondenThermFlash(system, fileName, phasefraction, cricondenTherm, cricondenThermX,
-	cricondenThermY);
+        cricondenThermY);
 
     getOperation().run();
   }
@@ -1733,7 +1733,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       system.addComponent(componentName, dn);
     } else {
       throw new neqsim.util.exception.IsNaNException(this, "dewPointMach",
-	  "Specified component is not present in mixture: " + componentName);
+          "Specified component is not present in mixture: " + componentName);
     }
     double newTemperature = system.getTemperature();
     double oldTemperature = newTemperature;
@@ -1741,29 +1741,29 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     if (specification.equals("dewPointTemperature")) {
       // logger.info("new temperature " + newTemperature);
       do {
-	iterations++;
-	system.init(0);
-	dewPointTemperatureFlash();
-	newTemperature = system.getTemperature();
-	// logger.info("new temperature " + newTemperature);
-	double oldMoles = system.getPhase(0).getComponent(componentName).getNumberOfmoles();
-	if (iterations > 1) {
-	  system.addComponent(componentName,
-	      -(iterations / (30.0 + iterations)) * (newTemperature - spec) / ((newTemperature - oldTemperature) / dn));
-	} else {
-	  system.addComponent(componentName, system.getNumberOfMoles() / 1.0e6);
-	}
-	dn = system.getPhase(0).getComponent(componentName).getNumberOfmoles() - oldMoles;
-	oldTemperature = newTemperature;
+        iterations++;
+        system.init(0);
+        dewPointTemperatureFlash();
+        newTemperature = system.getTemperature();
+        // logger.info("new temperature " + newTemperature);
+        double oldMoles = system.getPhase(0).getComponent(componentName).getNumberOfmoles();
+        if (iterations > 1) {
+          system.addComponent(componentName,
+              -(iterations / (30.0 + iterations)) * (newTemperature - spec) / ((newTemperature - oldTemperature) / dn));
+        } else {
+          system.addComponent(componentName, system.getNumberOfMoles() / 1.0e6);
+        }
+        dn = system.getPhase(0).getComponent(componentName).getNumberOfmoles() - oldMoles;
+        oldTemperature = newTemperature;
       } while (Math.abs(dn / system.getPhase(0).getComponent(componentName).getNumberOfmoles()) > 1e-9 || iterations < 5
-	  || iterations > 105);
+          || iterations > 105);
 
       dewPointTemperatureFlash();
     }
 
     if (Double.isNaN(system.getPressure())) {
       throw new neqsim.util.exception.IsNaNException(this, "dewPointMach",
-	  "Could not find solution - possible no dew point exists");
+          "Could not find solution - possible no dew point exists");
     }
   }
 
@@ -1774,7 +1774,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void dewPointTemperatureFlash() throws IsNaNException {
     ConstantDutyFlashInterface operation = new neqsim.thermodynamicoperations.flashops.saturationops.DewPointTemperatureFlash(
-	system);
+        system);
     operation.run();
     if (Double.isNaN(system.getTemperature()) || operation.isSuperCritical()) {
       // throw new neqsim.util.exception.IsNaNException(this, "dewPointTemperatureFlash",
@@ -1790,7 +1790,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void dewPointTemperatureFlash(boolean derivatives) throws IsNaNException {
     ConstantDutyFlashInterface operation = new neqsim.thermodynamicoperations.flashops.saturationops.DewPointTemperatureFlash(
-	system);
+        system);
     if (derivatives) {
       operation = new DewPointTemperatureFlashDer(system);
     }
@@ -2066,7 +2066,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
       ((OLGApropertyTableGeneratorWaterKeywordFormat) operation).setPressureRange(minPres, maxPres, pressureSteps);
       ((OLGApropertyTableGeneratorWaterKeywordFormat) operation).setTemperatureRange(minTemp, maxTemp,
-	  temperatureSteps);
+          temperatureSteps);
       ((OLGApropertyTableGeneratorWaterKeywordFormat) operation).run();
       ((OLGApropertyTableGeneratorWaterKeywordFormat) operation).writeOLGAinpFile(filename);
     } else {
@@ -2150,7 +2150,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     String[][] str = new String[getOperation().getPoints(0).length][getOperation().getPoints(0)[0].length];
     for (int i = 0; i < getOperation().getPoints(0).length; i++) {
       for (int j = 0; j < getOperation().getPoints(0)[0].length; j++) {
-	str[i][j] = Double.toString(getOperation().getPoints(0)[i][j]);
+        str[i][j] = Double.toString(getOperation().getPoints(0)[i][j]);
       }
     }
     return str;
@@ -2273,7 +2273,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     OperationInterface op = getOperation();
     if (op instanceof neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTPhaseEnvelopeMichelsen) {
       return ((neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTPhaseEnvelopeMichelsen) op)
-	  .getSegments();
+          .getSegments();
     }
     return java.util.Collections.emptyList();
   }
@@ -2414,11 +2414,11 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     String[] systemComponents = this.system.getComponentNames();
     if (components != null) {
       for (String inputCompName : components) {
-	if (!this.system.hasComponent(inputCompName)) {
-	  for (int t = 0; t < Spec1.size(); t++) {
-	    calculationError[t] = "Input component list does not match fluid component list.";
-	  }
-	}
+        if (!this.system.hasComponent(inputCompName)) {
+          for (int t = 0; t < Spec1.size(); t++) {
+            calculationError[t] = "Input component list does not match fluid component list.";
+          }
+        }
       }
     } else {
       components = Arrays.asList(systemComponents);
@@ -2430,19 +2430,19 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     if (hasOnlineFractions) {
       double range = 5;
       for (int t = 0; t < sum.length; t++) {
-	sum[t] = 0.0;
-	for (int comp = 0; comp < onlineFractions.size(); comp++) {
-	  sum[t] = sum[t] + onlineFractions.get(comp).get(t).doubleValue();
-	}
-	if (!((sum[t] >= 1 - range / 100 && sum[t] <= 1 + range / 100)
-	    || (sum[t] >= 100 - range && sum[t] <= 100 + range))) {
-	  calculationError[t] = "Sum of fractions must be approximately 1 or 100, currently (" + String.valueOf(sum[t])
-	      + ")";
-	}
+        sum[t] = 0.0;
+        for (int comp = 0; comp < onlineFractions.size(); comp++) {
+          sum[t] = sum[t] + onlineFractions.get(comp).get(t).doubleValue();
+        }
+        if (!((sum[t] >= 1 - range / 100 && sum[t] <= 1 + range / 100)
+            || (sum[t] >= 100 - range && sum[t] <= 100 + range))) {
+          calculationError[t] = "Sum of fractions must be approximately 1 or 100, currently (" + String.valueOf(sum[t])
+              + ")";
+        }
       }
 
       if (this.system.getTotalNumberOfMoles() == 0) {
-	this.system.setTotalNumberOfMoles(1);
+        this.system.setTotalNumberOfMoles(1);
       }
     } else {
       /*
@@ -2456,86 +2456,86 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       double[] fraction = this.system.getMolarComposition();
       sum[0] = 0.0;
       for (int comp = 0; comp < fraction.length; comp++) {
-	sum[0] = sum[0] + fraction[comp];
+        sum[0] = sum[0] + fraction[comp];
       }
 
       double range = 1e-8;
       if (!((sum[0] >= 1 - range && sum[0] <= 1 + range) || (sum[0] >= 100 - range && sum[0] <= 100 + range))) {
-	for (int t = 0; t < Spec1.size(); t++) {
-	  calculationError[t] = "Sum of fractions must be approximately to 1 or 100, currently ("
-	      + String.valueOf(sum[0]) + ")";
-	  if (sum[0] == 0.0) {
-	    calculationError[t] = calculationError[t] + ". Have you called init(0)?";
-	  }
-	}
+        for (int t = 0; t < Spec1.size(); t++) {
+          calculationError[t] = "Sum of fractions must be approximately to 1 or 100, currently ("
+              + String.valueOf(sum[0]) + ")";
+          if (sum[0] == 0.0) {
+            calculationError[t] = calculationError[t] + ". Have you called init(0)?";
+          }
+        }
       }
     }
 
     for (int t = 0; t < Spec1.size(); t++) {
       try {
-	if (flashType == null) {
-	  throw new RuntimeException(new neqsim.util.exception.InvalidInputException("ThermodynamicOperations",
-	      "propertyFlash", "FlashMode", "must be 1, 2 or 3"));
-	}
+        if (flashType == null) {
+          throw new RuntimeException(new neqsim.util.exception.InvalidInputException("ThermodynamicOperations",
+              "propertyFlash", "FlashMode", "must be 1, 2 or 3"));
+        }
 
-	Double Sp1 = Spec1.get(t);
-	Double Sp2 = Spec2.get(t);
+        Double Sp1 = Spec1.get(t);
+        Double Sp2 = Spec2.get(t);
 
-	if (Sp1 == null || Sp2 == null || Double.isNaN(Sp1) || Double.isNaN(Sp2)) {
-	  calculationError[t] = "Sp1 or Sp2 is NaN";
-	  logger.info("Sp1 or Sp2 is NULL for datapoint {}", t);
-	  continue;
-	}
+        if (Sp1 == null || Sp2 == null || Double.isNaN(Sp1) || Double.isNaN(Sp2)) {
+          calculationError[t] = "Sp1 or Sp2 is NaN";
+          logger.info("Sp1 or Sp2 is NULL for datapoint {}", t);
+          continue;
+        }
 
-	// Skip if sum is not similar to 100%
-	if (calculationError[t] != null) {
-	  logger.info("{}", calculationError[t]);
-	  continue;
-	}
+        // Skip if sum is not similar to 100%
+        if (calculationError[t] != null) {
+          logger.info("{}", calculationError[t]);
+          continue;
+        }
 
-	if (hasOnlineFractions) {
-	  // Ensure that fraction is inserted for the correct component (in case of
-	  // mismatch of component input and fluid component list)
-	  double[] fraction = new double[this.system.getNumberOfComponents()];
-	  // For all components defined in system
-	  for (int compIndex = 0; compIndex < fraction.length; compIndex++) {
-	    // Loop all input component names / fractions
-	    for (int index = 0; index < components.size(); index++) {
-	      if (systemComponents[compIndex]
-		  .equals(ComponentInterface.getComponentNameFromAlias(components.get(index)))) {
-		fraction[compIndex] = onlineFractions.get(index).get(t).doubleValue();
-		break;
-	      }
-	    }
-	  }
+        if (hasOnlineFractions) {
+          // Ensure that fraction is inserted for the correct component (in case of
+          // mismatch of component input and fluid component list)
+          double[] fraction = new double[this.system.getNumberOfComponents()];
+          // For all components defined in system
+          for (int compIndex = 0; compIndex < fraction.length; compIndex++) {
+            // Loop all input component names / fractions
+            for (int index = 0; index < components.size(); index++) {
+              if (systemComponents[compIndex]
+                  .equals(ComponentInterface.getComponentNameFromAlias(components.get(index)))) {
+                fraction[compIndex] = onlineFractions.get(index).get(t).doubleValue();
+                break;
+              }
+            }
+          }
 
-	  this.system.setMolarComposition(fraction);
-	  this.system.init(0);
-	}
+          this.system.setMolarComposition(fraction);
+          this.system.init(0);
+        }
 
-	this.system.setPressure(Sp1);
-	switch (flashType) {
-	case PT:
-	  this.system.setTemperature(Sp2);
-	  this.TPflash();
-	  break;
-	case PH:
-	  this.PHflash(Sp2, "J/mol");
-	  break;
-	case PS:
-	  this.PSflash(Sp2, "J/molK");
-	  break;
-	default:
-	  throw new RuntimeException(new neqsim.util.exception.InvalidInputException("ThermodynamicOperations",
-	      "propertyFlash", "FlashMode", "must be 1, 2 or 3"));
-	}
-	this.system.init(2);
-	this.system.initPhysicalProperties();
+        this.system.setPressure(Sp1);
+        switch (flashType) {
+        case PT:
+          this.system.setTemperature(Sp2);
+          this.TPflash();
+          break;
+        case PH:
+          this.PHflash(Sp2, "J/mol");
+          break;
+        case PS:
+          this.PSflash(Sp2, "J/molK");
+          break;
+        default:
+          throw new RuntimeException(new neqsim.util.exception.InvalidInputException("ThermodynamicOperations",
+              "propertyFlash", "FlashMode", "must be 1, 2 or 3"));
+        }
+        this.system.init(2);
+        this.system.initPhysicalProperties();
 
-	fluidProperties[t] = this.system.getProperties().getValues();
+        fluidProperties[t] = this.system.getProperties().getValues();
       } catch (Exception ex) {
-	calculationError[t] = ex.getMessage();
-	logger.warn(calculationError[t]);
+        calculationError[t] = ex.getMessage();
+        logger.warn(calculationError[t]);
       }
     }
 
@@ -2603,7 +2603,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public double asphalteneOnsetTemperature(double startTemperature, double minTemperature, double maxTemperature) {
     AsphalteneOnsetTemperatureFlash flash = new AsphalteneOnsetTemperatureFlash(system, startTemperature,
-	minTemperature, maxTemperature);
+        minTemperature, maxTemperature);
     flash.run();
     return flash.getOnsetTemperature();
   }

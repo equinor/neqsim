@@ -7,8 +7,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.separator.Separator;
-import neqsim.process.equipment.separator.entrainment.InletDeviceModel;
 import neqsim.process.equipment.separator.SeparatorInterface;
+import neqsim.process.equipment.separator.entrainment.InletDeviceModel;
 import neqsim.process.equipment.separator.sectiontype.SeparatorSection;
 import neqsim.process.mechanicaldesign.designstandards.GasScrubberDesignStandard;
 import neqsim.process.mechanicaldesign.separator.conformity.ConformityReport;
@@ -125,11 +125,11 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
 
     if (getDesignStandard().containsKey("gas scrubber process design")) {
       logger.info("gas scrubber process design: {}",
-	  getDesignStandard().get("gas scrubber process design").getStandardName());
+          getDesignStandard().get("gas scrubber process design").getStandardName());
       gasLoadFactor = ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
-	  .getGasLoadFactor();
+          .getGasLoadFactor();
       volumeSafetyFactor = ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
-	  .getVolumetricDesignFactor();
+          .getVolumetricDesignFactor();
     } else {
       logger.info("no gas scrubber process design specified");
     }
@@ -156,9 +156,9 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     // double moduleWidth = 0.0, moduleHeight = 0.0, moduleLength = 0.0;
     double materialsCost = 0.0;
     double gasDensity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(0)
-	.getPhysicalProperties().getDensity();
+        .getPhysicalProperties().getDensity();
     double liqDensity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(1)
-	.getPhysicalProperties().getDensity();
+        .getPhysicalProperties().getDensity();
     if (((SeparatorInterface) getProcessEquipment()).getThermoSystem().getNumberOfPhases() == 1) {
       liqDensity = getDefaultLiquidDensity();
     }
@@ -167,11 +167,11 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     // getOperatingVolumeFlow() (also m3/hr). The diameter calculation below converts back
     // to m3/s so the sized diameter is unchanged.
     maxDesignVolumeFlow = volumeSafetyFactor
-	* ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(0).getVolume() / 1e5 * 3600.0;
+        * ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(0).getVolume() / 1e5 * 3600.0;
 
     double maxGasVelocity = gasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
     innerDiameter = Math.sqrt(4.0 * (getMaxDesignVolumeFlow() / 3600.0)
-	/ (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * Fg));
+        / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * Fg));
     tantanLength = innerDiameter * 5.0;
     // System.out.println("inner Diameter " + innerDiameter);
 
@@ -304,14 +304,14 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     InletDeviceModel.InletDeviceType matched = null;
     for (InletDeviceModel.InletDeviceType t : InletDeviceModel.InletDeviceType.values()) {
       if (t.name().equalsIgnoreCase(deviceTypeName) || t.getDisplayName().equalsIgnoreCase(deviceTypeName)) {
-	matched = t;
-	break;
+        matched = t;
+        break;
       }
     }
     if (matched == null) {
       throw new IllegalArgumentException(
-	  "Unknown inlet device type: " + deviceTypeName + ". Use one of: schoepentoeter, inlet_vane, inlet_cyclone, "
-	      + "deflector_plate, half_pipe, impingement_plate, none");
+          "Unknown inlet device type: " + deviceTypeName + ". Use one of: schoepentoeter, inlet_vane, inlet_cyclone, "
+              + "deflector_plate, half_pipe, impingement_plate, none");
     }
     setInletDeviceType(matched);
   }
@@ -796,7 +796,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
       mesh.put("area_m2", meshPadAreaM2);
       mesh.put("thickness_mm", meshPadThicknessMm);
       if (meshPadElevationM > 0) {
-	mesh.put("elevation_mm", meshPadElevationM * 1000.0);
+        mesh.put("elevation_mm", meshPadElevationM * 1000.0);
       }
       resp.addSpecificParameter("meshPad", mesh);
     }

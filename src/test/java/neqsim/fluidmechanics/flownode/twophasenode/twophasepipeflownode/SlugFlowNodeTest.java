@@ -52,7 +52,7 @@ public class SlugFlowNodeTest {
     // Verify slug flow uses correct transport coefficient class
     String transportClassName = node.getInterphaseTransportCoefficient().getClass().getSimpleName();
     assertEquals("InterphaseSlugFlow", transportClassName,
-	"SlugFlowNode should use InterphaseSlugFlow transport coefficients");
+        "SlugFlowNode should use InterphaseSlugFlow transport coefficients");
   }
 
   @Test

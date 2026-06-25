@@ -104,12 +104,12 @@ class ProcessAutomationTest {
     boolean hasLiquidFlow = false;
     for (SimulationVariable v : vars) {
       if (v.getAddress().equals("HP Sep.gasOutStream.temperature")) {
-	hasGasTemp = true;
-	assertEquals(VariableType.OUTPUT, v.getType());
+        hasGasTemp = true;
+        assertEquals(VariableType.OUTPUT, v.getType());
       }
       if (v.getAddress().equals("HP Sep.liquidOutStream.flowRate")) {
-	hasLiquidFlow = true;
-	assertEquals(VariableType.OUTPUT, v.getType());
+        hasLiquidFlow = true;
+        assertEquals(VariableType.OUTPUT, v.getType());
       }
     }
     assertTrue(hasGasTemp, "Separator should expose gasOutStream.temperature");
@@ -125,18 +125,18 @@ class ProcessAutomationTest {
     boolean hasPower = false;
     for (SimulationVariable v : vars) {
       if (v.getName().equals("outletPressure")) {
-	hasOutletPressure = true;
-	assertEquals(VariableType.INPUT, v.getType());
-	assertEquals("pressure", v.getUnitFamily());
-	assertEquals("equipment_input", v.getCategory());
-	assertTrue(v.isWritable());
-	assertTrue(v.isInvalidatesProcess());
-	assertNotNull(v.getMinimumValue());
-	assertNotNull(v.getMaximumValue());
+        hasOutletPressure = true;
+        assertEquals(VariableType.INPUT, v.getType());
+        assertEquals("pressure", v.getUnitFamily());
+        assertEquals("equipment_input", v.getCategory());
+        assertTrue(v.isWritable());
+        assertTrue(v.isInvalidatesProcess());
+        assertNotNull(v.getMinimumValue());
+        assertNotNull(v.getMaximumValue());
       }
       if (v.getName().equals("power")) {
-	hasPower = true;
-	assertEquals(VariableType.OUTPUT, v.getType());
+        hasPower = true;
+        assertEquals(VariableType.OUTPUT, v.getType());
       }
     }
     assertTrue(hasOutletPressure, "Compressor should expose outletPressure as INPUT");
@@ -167,12 +167,12 @@ class ProcessAutomationTest {
     boolean hasMaxPressure = false;
     for (SimulationVariable variable : variables) {
       if ("valveOpeningPercent".equals(variable.getName())) {
-	hasValveOpening = true;
-	assertEquals(VariableType.INPUT, variable.getType());
+        hasValveOpening = true;
+        assertEquals(VariableType.INPUT, variable.getType());
       }
       if ("maxPressure".equals(variable.getName())) {
-	hasMaxPressure = true;
-	assertEquals(VariableType.OUTPUT, variable.getType());
+        hasMaxPressure = true;
+        assertEquals(VariableType.OUTPUT, variable.getType());
       }
     }
     assertTrue(hasValveOpening, "WaterHammerPipe should expose valveOpeningPercent");
@@ -201,7 +201,7 @@ class ProcessAutomationTest {
     boolean hasTempInput = false;
     for (SimulationVariable v : vars) {
       if (v.getName().equals("temperature") && v.getType() == VariableType.INPUT) {
-	hasTempInput = true;
+        hasTempInput = true;
       }
     }
     assertTrue(hasTempInput, "Stream should have temperature as INPUT");
@@ -325,12 +325,12 @@ class ProcessAutomationTest {
     boolean hasOutTemp = false;
     for (SimulationVariable v : vars) {
       if (v.getName().equals("duty")) {
-	hasDuty = true;
-	assertEquals(VariableType.OUTPUT, v.getType());
+        hasDuty = true;
+        assertEquals(VariableType.OUTPUT, v.getType());
       }
       if (v.getName().equals("outletTemperature")) {
-	hasOutTemp = true;
-	assertEquals(VariableType.INPUT, v.getType());
+        hasOutTemp = true;
+        assertEquals(VariableType.INPUT, v.getType());
       }
     }
     assertTrue(hasDuty, "Heater should expose duty");
@@ -347,12 +347,12 @@ class ProcessAutomationTest {
     boolean hasOutletPressure = false;
     for (SimulationVariable v : vars) {
       if (v.getName().equals("Cv")) {
-	hasCv = true;
-	assertEquals(VariableType.INPUT, v.getType());
+        hasCv = true;
+        assertEquals(VariableType.INPUT, v.getType());
       }
       if (v.getName().equals("outletPressure")) {
-	hasOutletPressure = true;
-	assertEquals(VariableType.INPUT, v.getType());
+        hasOutletPressure = true;
+        assertEquals(VariableType.INPUT, v.getType());
       }
     }
     assertTrue(hasCv, "Valve should expose Cv as INPUT");
@@ -465,10 +465,10 @@ class ProcessAutomationTest {
     boolean hasPower = false;
     for (SimulationVariable v : vars) {
       if (v.getName().equals("power")) {
-	hasPower = true;
-	assertEquals(VariableType.OUTPUT, v.getType());
-	// Address should include area prefix
-	assertTrue(v.getAddress().startsWith("Compression::"));
+        hasPower = true;
+        assertEquals(VariableType.OUTPUT, v.getType());
+        // Address should include area prefix
+        assertTrue(v.getAddress().startsWith("Compression::"));
       }
     }
     assertTrue(hasPower, "Compressor should expose power");
@@ -659,12 +659,12 @@ class ProcessAutomationTest {
     boolean hasPower = false;
     for (SimulationVariable v : vars) {
       if (v.getName().equals("outletPressure")) {
-	hasOutletPressure = true;
-	assertEquals(VariableType.INPUT, v.getType());
+        hasOutletPressure = true;
+        assertEquals(VariableType.INPUT, v.getType());
       }
       if (v.getName().equals("power")) {
-	hasPower = true;
-	assertEquals(VariableType.OUTPUT, v.getType());
+        hasPower = true;
+        assertEquals(VariableType.OUTPUT, v.getType());
       }
     }
     assertTrue(hasOutletPressure, "Expander should expose outletPressure as INPUT");
@@ -705,16 +705,16 @@ class ProcessAutomationTest {
     boolean hasPressureDrop = false;
     for (SimulationVariable v : vars) {
       if (v.getName().equals("length")) {
-	hasLength = true;
-	assertEquals(VariableType.INPUT, v.getType());
+        hasLength = true;
+        assertEquals(VariableType.INPUT, v.getType());
       }
       if (v.getName().equals("diameter")) {
-	hasDiameter = true;
-	assertEquals(VariableType.INPUT, v.getType());
+        hasDiameter = true;
+        assertEquals(VariableType.INPUT, v.getType());
       }
       if (v.getName().equals("pressureDrop")) {
-	hasPressureDrop = true;
-	assertEquals(VariableType.OUTPUT, v.getType());
+        hasPressureDrop = true;
+        assertEquals(VariableType.OUTPUT, v.getType());
       }
     }
     assertTrue(hasLength, "Pipeline should expose length as INPUT");
@@ -789,12 +789,12 @@ class ProcessAutomationTest {
     boolean hasLiquidLevel = false;
     for (SimulationVariable v : vars) {
       if (v.getName().equals("volume")) {
-	hasVolume = true;
-	assertEquals(VariableType.INPUT, v.getType());
+        hasVolume = true;
+        assertEquals(VariableType.INPUT, v.getType());
       }
       if (v.getName().equals("liquidLevel")) {
-	hasLiquidLevel = true;
-	assertEquals(VariableType.OUTPUT, v.getType());
+        hasLiquidLevel = true;
+        assertEquals(VariableType.OUTPUT, v.getType());
       }
     }
     assertTrue(hasVolume, "Tank should expose volume as INPUT");
@@ -858,12 +858,12 @@ class ProcessAutomationTest {
     boolean hasErrorFlow = false;
     for (SimulationVariable v : vars) {
       if (v.getName().equals("errorTemperature")) {
-	hasErrorTemp = true;
-	assertEquals(VariableType.OUTPUT, v.getType());
+        hasErrorTemp = true;
+        assertEquals(VariableType.OUTPUT, v.getType());
       }
       if (v.getName().equals("errorFlow")) {
-	hasErrorFlow = true;
-	assertEquals(VariableType.OUTPUT, v.getType());
+        hasErrorFlow = true;
+        assertEquals(VariableType.OUTPUT, v.getType());
       }
     }
     assertTrue(hasErrorTemp, "Recycle should expose errorTemperature as OUTPUT");
@@ -927,16 +927,16 @@ class ProcessAutomationTest {
     boolean hasThermalEffectiveness = false;
     for (SimulationVariable v : vars) {
       if (v.getName().equals("UAvalue")) {
-	hasUAvalue = true;
-	assertEquals(VariableType.INPUT, v.getType());
+        hasUAvalue = true;
+        assertEquals(VariableType.INPUT, v.getType());
       }
       if (v.getName().equals("duty")) {
-	hasDuty = true;
-	assertEquals(VariableType.OUTPUT, v.getType());
+        hasDuty = true;
+        assertEquals(VariableType.OUTPUT, v.getType());
       }
       if (v.getName().equals("thermalEffectiveness")) {
-	hasThermalEffectiveness = true;
-	assertEquals(VariableType.OUTPUT, v.getType());
+        hasThermalEffectiveness = true;
+        assertEquals(VariableType.OUTPUT, v.getType());
       }
     }
     assertTrue(hasUAvalue, "HeatExchanger should expose UAvalue as INPUT");
@@ -974,13 +974,13 @@ class ProcessAutomationTest {
     boolean hasWaterOut = false;
     for (SimulationVariable v : vars) {
       if (v.getAddress().contains("gasOutStream.temperature")) {
-	hasGasOut = true;
+        hasGasOut = true;
       }
       if (v.getAddress().contains("oilOutStream.temperature")) {
-	hasOilOut = true;
+        hasOilOut = true;
       }
       if (v.getAddress().contains("waterOutStream.temperature")) {
-	hasWaterOut = true;
+        hasWaterOut = true;
       }
     }
     assertTrue(hasGasOut, "3P separator should expose gasOutStream");
@@ -1022,7 +1022,7 @@ class ProcessAutomationTest {
     boolean hasOutletTemp = false;
     for (SimulationVariable v : vars) {
       if (v.getAddress().contains("outletStream.temperature")) {
-	hasOutletTemp = true;
+        hasOutletTemp = true;
       }
     }
     assertTrue(hasOutletTemp, "Mixer should expose outletStream properties");
@@ -1055,10 +1055,10 @@ class ProcessAutomationTest {
     boolean hasSplit1 = false;
     for (SimulationVariable v : vars) {
       if (v.getAddress().contains("splitStream_0.")) {
-	hasSplit0 = true;
+        hasSplit0 = true;
       }
       if (v.getAddress().contains("splitStream_1.")) {
-	hasSplit1 = true;
+        hasSplit1 = true;
       }
     }
     assertTrue(hasSplit0, "Splitter should expose splitStream_0");
@@ -1090,12 +1090,12 @@ class ProcessAutomationTest {
     boolean hasPower = false;
     for (SimulationVariable v : vars) {
       if (v.getName().equals("outletPressure")) {
-	hasOutletPressure = true;
-	assertEquals(VariableType.INPUT, v.getType());
+        hasOutletPressure = true;
+        assertEquals(VariableType.INPUT, v.getType());
       }
       if (v.getName().equals("power")) {
-	hasPower = true;
-	assertEquals(VariableType.OUTPUT, v.getType());
+        hasPower = true;
+        assertEquals(VariableType.OUTPUT, v.getType());
       }
     }
     assertTrue(hasOutletPressure, "Pump should expose outletPressure as INPUT");
@@ -1116,7 +1116,7 @@ class ProcessAutomationTest {
     boolean hasOutletStreamTemp = false;
     for (SimulationVariable v : vars) {
       if (v.getAddress().contains("outletStream.temperature")) {
-	hasOutletStreamTemp = true;
+        hasOutletStreamTemp = true;
       }
     }
     assertTrue(hasOutletStreamTemp, "Cooler should expose outletStream.temperature");
@@ -1175,13 +1175,13 @@ class ProcessAutomationTest {
       // due to un-populated internal state (e.g., separator without liquid outlet)
       boolean readOne = false;
       for (SimulationVariable v : vars) {
-	try {
-	  double val = auto.getVariableValue(v.getAddress(), null);
-	  readOne = true;
-	  break;
-	} catch (Exception e) {
-	  // try next variable
-	}
+        try {
+          double val = auto.getVariableValue(v.getAddress(), null);
+          readOne = true;
+          break;
+        } catch (Exception e) {
+          // try next variable
+        }
       }
       assertTrue(readOne, name + " should have at least one readable variable");
     }
@@ -1196,7 +1196,7 @@ class ProcessAutomationTest {
     ProcessAutomation a1 = process.getAutomation();
     ProcessAutomation a2 = process.getAutomation();
     assertTrue(a1 == a2,
-	"getAutomation() must return the cached instance for diagnostics " + "and dirty-state persistence");
+        "getAutomation() must return the cached instance for diagnostics " + "and dirty-state persistence");
   }
 
   @Test
@@ -1227,7 +1227,7 @@ class ProcessAutomationTest {
   @Test
   void testGetValuesBatch() {
     java.util.List<String> addrs = java.util.Arrays.asList("Compressor.outletPressure",
-	"Cooler.outletStream.temperature", "Valve.outletStream.pressure");
+        "Cooler.outletStream.temperature", "Valve.outletStream.pressure");
     java.util.Map<String, Double> values = automation.getValues(addrs, null);
     assertEquals(3, values.size());
     assertTrue(values.containsKey("Compressor.outletPressure"));
@@ -1359,8 +1359,8 @@ class ProcessAutomationTest {
       // Either READ_ONLY_VARIABLE or PROPERTY_NOT_FOUND is acceptable depending on
       // how the underlying setter rejects the attempt.
       assertTrue(
-	  "READ_ONLY_VARIABLE".equals(cat) || "PROPERTY_NOT_FOUND".equals(cat) || "INVALID_ADDRESS_FORMAT".equals(cat),
-	  "Expected error category for read-only set, got " + cat);
+          "READ_ONLY_VARIABLE".equals(cat) || "PROPERTY_NOT_FOUND".equals(cat) || "INVALID_ADDRESS_FORMAT".equals(cat),
+          "Expected error category for read-only set, got " + cat);
     }
   }
 
@@ -1420,7 +1420,7 @@ class ProcessAutomationTest {
     setpoints.put("Compressor.outletPressure", 140.0);
     setpoints.put("Valve.outletPressure", 45.0);
     java.util.List<String> readbacks = java.util.Arrays.asList("Compressor.outletStream.pressure",
-	"Valve.outletStream.pressure", "Compressor.power");
+        "Valve.outletStream.pressure", "Compressor.power");
 
     String json = automation.evaluate(setpoints, "bara", readbacks, "bara", 30, 5.0e-3);
     com.google.gson.JsonObject root = com.google.gson.JsonParser.parseString(json).getAsJsonObject();
@@ -1443,13 +1443,13 @@ class ProcessAutomationTest {
     setpoints.put("Compressor.outletPressure", 140.0);
     setpoints.put("Cooler.outletTemperature", 273.15 + 25.0);
     String json = automation.evaluate(setpoints, null, java.util.Arrays.asList("Cooler.outletStream.temperature"), null,
-	30, 5.0e-3);
+        30, 5.0e-3);
     com.google.gson.JsonObject root = com.google.gson.JsonParser.parseString(json).getAsJsonObject();
     assertEquals(2, root.getAsJsonObject("setpointsApplied").size());
     assertEquals(0, root.getAsJsonObject("setpointsRejected").size());
     assertTrue(root.get("feasible").getAsBoolean(), "Mixed-unit default batch should be feasible");
     assertEquals(273.15 + 25.0, root.getAsJsonObject("readbacks").get("Cooler.outletStream.temperature").getAsDouble(),
-	1.0);
+        1.0);
   }
 
   @Test
@@ -1491,7 +1491,7 @@ class ProcessAutomationTest {
     java.util.Map<String, Double> setpoints = new java.util.LinkedHashMap<String, Double>();
     setpoints.put("Compression::Export Compressor.outletPressure", 150.0);
     String json = auto.evaluate(setpoints, "bara", java.util.Arrays.asList("Compression::Export Compressor.power"),
-	"kW", 30, 5.0e-3);
+        "kW", 30, 5.0e-3);
     com.google.gson.JsonObject root = com.google.gson.JsonParser.parseString(json).getAsJsonObject();
     assertTrue(root.has("converged"));
     assertTrue(root.has("iterations"), "Multi-area evaluate should report iteration count");

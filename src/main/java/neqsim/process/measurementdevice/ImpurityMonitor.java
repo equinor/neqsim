@@ -291,7 +291,7 @@ public class ImpurityMonitor extends StreamMeasurementDeviceBaseClass {
       System.out.println("  Liquid x = " + String.format("%.6f", getLiquidPhaseMoleFraction(comp)));
       System.out.println("  Enrichment = " + String.format("%.2f", getEnrichmentFactor(comp)) + "x");
       if (isAlarmExceeded(comp)) {
-	System.out.println("  *** ALARM: exceeds " + trackedComponents.get(comp) + " threshold");
+        System.out.println("  *** ALARM: exceeds " + trackedComponents.get(comp) + " threshold");
       }
     }
   }

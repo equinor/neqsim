@@ -499,7 +499,7 @@ public class PTPhaseEnvelopeRobustnessTest {
     // Pressure should be within 5%
     double pDiff = Math.abs(ccb1[1] - ccb2[1]) / Math.max(ccb1[1], 1.0) * 100;
     assertTrue(pDiff < 5.0, "Dew-first and bubble-first cricondenbar should agree within 5%, diff=" + pDiff + "%"
-	+ " (dew=" + ccb1[1] + ", bub=" + ccb2[1] + ")");
+        + " (dew=" + ccb1[1] + ", bub=" + ccb2[1] + ")");
 
     // Temperature should be within 5%
     double tDiff = Math.abs(cct1[0] - cct2[0]) / cct1[0] * 100;
@@ -536,8 +536,8 @@ public class PTPhaseEnvelopeRobustnessTest {
     // and restart passes so plotters render disjoint polylines).
     for (int i = 0; i < dewT.length; i++) {
       if (Double.isNaN(dewT[i])) {
-	assertTrue(Double.isNaN(dewP[i]), "dewT[" + i + "] and dewP[" + i + "] must both be NaN at branch breaks");
-	continue;
+        assertTrue(Double.isNaN(dewP[i]), "dewT[" + i + "] and dewP[" + i + "] must both be NaN at branch breaks");
+        continue;
       }
       assertTrue(dewT[i] > 50.0 && dewT[i] < 600.0, "dewT[" + i + "]=" + dewT[i] + " should be in 50-600 K range");
       assertTrue(dewP[i] > 0.0 && dewP[i] < 2000.0, "dewP[" + i + "]=" + dewP[i] + " should be in 0-2000 bar range");
@@ -579,13 +579,13 @@ public class PTPhaseEnvelopeRobustnessTest {
     // Density should be positive (NaN entries are branch-break sentinels).
     for (int i = 0; i < dewDens.length; i++) {
       if (Double.isNaN(dewDens[i])) {
-	continue;
+        continue;
       }
       assertTrue(dewDens[i] > 0.0, "Dew density[" + i + "]=" + dewDens[i] + " should be positive");
     }
     for (int i = 0; i < bubDens.length; i++) {
       if (Double.isNaN(bubDens[i])) {
-	continue;
+        continue;
       }
       assertTrue(bubDens[i] > 0.0, "Bubble density[" + i + "]=" + bubDens[i] + " should be positive");
     }
@@ -612,7 +612,7 @@ public class PTPhaseEnvelopeRobustnessTest {
     double maxP = -1;
     for (double p : dewP) {
       if (p > maxP) {
-	maxP = p;
+        maxP = p;
       }
     }
 
@@ -692,10 +692,10 @@ public class PTPhaseEnvelopeRobustnessTest {
       double[] qualP = ops.get("qualityP_" + key);
 
       if (qualT != null && qualT.length > 0) {
-	for (int i = 0; i < qualT.length; i++) {
-	  assertTrue(qualP[i] <= cricondenbar[1] * 1.05, "Quality line P at beta=" + beta
-	      + " should be <= cricondenbar +" + " 5% margin, got " + qualP[i] + " vs ccb=" + cricondenbar[1]);
-	}
+        for (int i = 0; i < qualT.length; i++) {
+          assertTrue(qualP[i] <= cricondenbar[1] * 1.05, "Quality line P at beta=" + beta
+              + " should be <= cricondenbar +" + " 5% margin, got " + qualP[i] + " vs ccb=" + cricondenbar[1]);
+        }
       }
     }
   }
@@ -863,7 +863,7 @@ public class PTPhaseEnvelopeRobustnessTest {
     // Very lean gas cricondentherm should be only slightly above Tc_CH4
     double cctT = cricondentherm[0];
     assertTrue(cctT > 185.0 && cctT < 230.0,
-	"Very lean gas cricondentherm should be 185-230 K (just above Tc_CH4), got " + cctT);
+        "Very lean gas cricondentherm should be 185-230 K (just above Tc_CH4), got " + cctT);
   }
 
   /**
@@ -1029,7 +1029,7 @@ public class PTPhaseEnvelopeRobustnessTest {
 
     if (numCPs >= 1) {
       assertTrue(crit1[0] > 0 && crit1[1] > 0,
-	  "Critical point 1 should have positive T and P, got T=" + crit1[0] + " P=" + crit1[1]);
+          "Critical point 1 should have positive T and P, got T=" + crit1[0] + " P=" + crit1[1]);
     }
 
     // For a normal mixture, should typically detect exactly 1 CP
@@ -1203,7 +1203,7 @@ public class PTPhaseEnvelopeRobustnessTest {
     // Gas condensate typically has critical point at relatively high T and P
     double[] cricondenbar = ops.get("cricondenbar");
     assertTrue(cricondenbar[1] >= crit1[1],
-	"Cricondenbar (" + cricondenbar[1] + ") should be >= CP pressure (" + crit1[1] + ")");
+        "Cricondenbar (" + cricondenbar[1] + ") should be >= CP pressure (" + crit1[1] + ")");
   }
 
   /**

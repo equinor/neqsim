@@ -85,24 +85,24 @@ public class ProcessModelOptimizationViewTest {
 
     ProductionOptimizer optimizer = new ProductionOptimizer();
     OptimizationConfig config = new OptimizationConfig(500.0, 12_000.0).rateUnit("kg/hr").tolerance(50.0)
-	.defaultUtilizationLimit(0.95);
+        .defaultUtilizationLimit(0.95);
 
     OptimizationObjective maximizeFeed = new OptimizationObjective("feed throughput", proc -> feed.getFlowRate("kg/hr"),
-	1.0);
+        1.0);
 
     OptimizationResult result = optimizer.optimize(plant, feed, config, Collections.singletonList(maximizeFeed),
-	Collections.<OptimizationConstraint>emptyList());
+        Collections.<OptimizationConstraint>emptyList());
 
     Assertions.assertNotNull(result, "Optimizer should return a result for a ProcessModel");
     Assertions.assertTrue(result.isFeasible(), "Whole-plant optimum should be feasible");
     Assertions.assertNotNull(result.getBottleneck(), "A bottleneck should be identified");
     Assertions.assertTrue(result.getOptimalRate() >= 500.0 && result.getOptimalRate() <= 12_000.0,
-	"Optimal rate should be within configured bounds");
+        "Optimal rate should be within configured bounds");
     // The bottleneck must be a real unit drawn from one of the two areas.
     Assertions.assertFalse(view(plant).getUnitOperations().isEmpty(), "Adapter view should expose plant units");
     // Sanity check the compressor was actually exercised during optimization.
     Assertions.assertTrue(exportCompressor.getPower() > 0.0,
-	"Export compressor should have a computed power after optimization");
+        "Export compressor should have a computed power after optimization");
   }
 
   /**
@@ -143,14 +143,14 @@ public class ProcessModelOptimizationViewTest {
 
     ProductionOptimizer optimizer = new ProductionOptimizer();
     OptimizationConfig config = new OptimizationConfig(500.0, 12_000.0).rateUnit("kg/hr").tolerance(50.0)
-	.defaultUtilizationLimit(0.95).paretoGridSize(4);
+        .defaultUtilizationLimit(0.95).paretoGridSize(4);
     OptimizationObjective maximizeFeed = new OptimizationObjective("feed throughput", proc -> feed.getFlowRate("kg/hr"),
-	1.0, ObjectiveType.MAXIMIZE);
+        1.0, ObjectiveType.MAXIMIZE);
     OptimizationObjective minimizePower = new OptimizationObjective("compressor power",
-	proc -> exportCompressor.getPower(), 1.0, ObjectiveType.MINIMIZE);
+        proc -> exportCompressor.getPower(), 1.0, ObjectiveType.MINIMIZE);
 
     ParetoResult pareto = optimizer.optimizePareto(plant, feed, config, Arrays.asList(maximizeFeed, minimizePower),
-	Collections.<OptimizationConstraint>emptyList());
+        Collections.<OptimizationConstraint>emptyList());
 
     Assertions.assertNotNull(pareto, "Pareto optimization should return a result for a ProcessModel");
     Assertions.assertFalse(pareto.getParetoFront().isEmpty(), "Pareto front should contain at least one point");
@@ -169,14 +169,14 @@ public class ProcessModelOptimizationViewTest {
 
     ProductionOptimizer optimizer = new ProductionOptimizer();
     OptimizationConfig config = new OptimizationConfig(500.0, 12_000.0).rateUnit("kg/hr").tolerance(50.0)
-	.defaultUtilizationLimit(0.95);
+        .defaultUtilizationLimit(0.95);
     OptimizationObjective objA = new OptimizationObjective("throughput", proc -> feedA.getFlowRate("kg/hr"), 1.0);
     OptimizationObjective objB = new OptimizationObjective("throughput", proc -> feedB.getFlowRate("kg/hr"), 1.0);
 
     ScenarioRequest scenarioA = new ScenarioRequest("base case", plantA, feedA, config, Collections.singletonList(objA),
-	Collections.<OptimizationConstraint>emptyList());
+        Collections.<OptimizationConstraint>emptyList());
     ScenarioRequest scenarioB = new ScenarioRequest("high limit", plantB, feedB, config,
-	Collections.singletonList(objB), Collections.<OptimizationConstraint>emptyList());
+        Collections.singletonList(objB), Collections.<OptimizationConstraint>emptyList());
 
     List<ScenarioResult> results = optimizer.optimizeScenarios(Arrays.asList(scenarioA, scenarioB));
 

@@ -41,7 +41,7 @@ public class SysNewtonRhapsonPHflashTest {
     }
 
     assertEquals(targetEnthalpy, testSystem.getEnthalpy(), Math.abs(targetEnthalpy) * 1e-4,
-	"Enthalpy should match target");
+        "Enthalpy should match target");
     assertEquals(initialTemperature, testSystem.getTemperature(), 1e-2, "Temperature should be recovered");
   }
 
@@ -74,7 +74,7 @@ public class SysNewtonRhapsonPHflashTest {
     }
 
     assertEquals(targetEnthalpy, testSystem.getEnthalpy(), Math.abs(targetEnthalpy) * 1e-4,
-	"Enthalpy should match target in two-phase");
+        "Enthalpy should match target in two-phase");
     assertEquals(initialTemperature, testSystem.getTemperature(), 0.2, "Temperature should be recovered in two-phase");
   }
 
@@ -107,8 +107,8 @@ public class SysNewtonRhapsonPHflashTest {
     }
 
     assertEquals(targetEnthalpy, testSystem.getEnthalpy(), Math.abs(targetEnthalpy) * 1e-4,
-	"Enthalpy should match target in single phase");
+        "Enthalpy should match target in single phase");
     assertEquals(initialTemperature, testSystem.getTemperature(), 1e-2,
-	"Temperature should be recovered in single phase");
+        "Temperature should be recovered in single phase");
   }
 }

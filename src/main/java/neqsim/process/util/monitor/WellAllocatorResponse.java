@@ -21,10 +21,10 @@ public class WellAllocatorResponse {
   public WellAllocatorResponse(WellAllocator inputAllocator) {
     name = inputAllocator.getName();
     data.put("gas export rate",
-	new Value(Double.toString(inputAllocator.getMeasuredValue("gas export rate", "kg/hr")), "kg/hr"));
+        new Value(Double.toString(inputAllocator.getMeasuredValue("gas export rate", "kg/hr")), "kg/hr"));
     data.put("oil export rate",
-	new Value(Double.toString(inputAllocator.getMeasuredValue("oil export rate", "kg/hr")), "kg/hr"));
+        new Value(Double.toString(inputAllocator.getMeasuredValue("oil export rate", "kg/hr")), "kg/hr"));
     data.put("total export rate",
-	new Value(Double.toString(inputAllocator.getMeasuredValue("total export rate", "kg/hr")), "kg/hr"));
+        new Value(Double.toString(inputAllocator.getMeasuredValue("total export rate", "kg/hr")), "kg/hr"));
   }
 }

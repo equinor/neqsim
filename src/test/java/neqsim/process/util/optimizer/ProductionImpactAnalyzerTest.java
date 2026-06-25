@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,8 +19,6 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.optimizer.ProductionImpactResult.RecommendedAction;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for ProductionImpactAnalyzer.
@@ -164,9 +164,9 @@ public class ProductionImpactAnalyzerTest {
   @DisplayName("Equipment failure mode builder")
   void testEquipmentFailureModeBuilder() {
     EquipmentFailureMode customMode = EquipmentFailureMode.builder().name("Partial Failure")
-	.description("Bearing damage causing reduced speed").type(EquipmentFailureMode.FailureType.PARTIAL_FAILURE)
-	.capacityFactor(0.7).efficiencyFactor(0.85).mttr(48.0).failureFrequency(0.5).requiresImmediateAction(false)
-	.build();
+        .description("Bearing damage causing reduced speed").type(EquipmentFailureMode.FailureType.PARTIAL_FAILURE)
+        .capacityFactor(0.7).efficiencyFactor(0.85).mttr(48.0).failureFrequency(0.5).requiresImmediateAction(false)
+        .build();
 
     assertEquals("Partial Failure", customMode.getName());
     assertEquals(0.7, customMode.getCapacityFactor(), 0.001);
@@ -219,7 +219,7 @@ public class ProductionImpactAnalyzerTest {
     for (int i = 0; i < ranking.size(); i++) {
       ProductionImpactResult result = ranking.get(i);
       logger.printf(org.apache.logging.log4j.Level.INFO, "%d. %s: %.1f%% loss%n", i + 1, result.getEquipmentName(),
-	  result.getPercentLoss());
+          result.getPercentLoss());
     }
 
     // First item should have highest loss

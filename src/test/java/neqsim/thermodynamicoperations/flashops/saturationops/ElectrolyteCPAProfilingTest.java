@@ -1,13 +1,13 @@
 package neqsim.thermodynamicoperations.flashops.saturationops;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Profiling test to identify bottlenecks in electrolyte CPA TPflash.
@@ -60,9 +60,9 @@ public class ElectrolyteCPAProfilingTest {
     logger.info("=== Regular CPA (7 components, no ions) ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "  TPflash (no multiPhaseCheck):   %8.1f ms%n", cpaNoMPC / 1e6);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  TPflash (with multiPhaseCheck): %8.1f ms%n",
-	cpaWithMPC / 1e6);
+        cpaWithMPC / 1e6);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Ratio multiPhaseCheck/noCheck:  %8.1fx%n",
-	(double) cpaWithMPC / cpaNoMPC);
+        (double) cpaWithMPC / cpaNoMPC);
 
     // ===== Electrolyte CPA (with ions) =====
     SystemInterface ecpa = new SystemElectrolyteCPAstatoil(273.15 + 10.0, 50.0);
@@ -102,15 +102,15 @@ public class ElectrolyteCPAProfilingTest {
     logger.info("\n=== Electrolyte CPA (9 components, with Na+/Cl-) ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "  TPflash (no multiPhaseCheck):   %8.1f ms%n", ecpaNoMPC / 1e6);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  TPflash (with multiPhaseCheck): %8.1f ms%n",
-	ecpaWithMPC / 1e6);
+        ecpaWithMPC / 1e6);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Ratio multiPhaseCheck/noCheck:  %8.1fx%n",
-	(double) ecpaWithMPC / ecpaNoMPC);
+        (double) ecpaWithMPC / ecpaNoMPC);
 
     logger.info("\n=== Cross Comparison ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Electrolyte/CPA ratio (no MPC):   %8.1fx%n",
-	(double) ecpaNoMPC / cpaNoMPC);
+        (double) ecpaNoMPC / cpaNoMPC);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Electrolyte/CPA ratio (with MPC): %8.1fx%n",
-	(double) ecpaWithMPC / cpaWithMPC);
+        (double) ecpaWithMPC / cpaWithMPC);
 
     // ===== Breakdown: measure init(1) cost =====
     logger.info("\n=== init(1) Breakdown ===");
@@ -129,7 +129,7 @@ public class ElectrolyteCPAProfilingTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "  CPA init(1):          %8.1f ms%n", cpaInit1 / 1e6);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Electrolyte CPA init(1): %8.1f ms%n", ecpaInit1 / 1e6);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Ratio:                %8.1fx%n",
-	(double) ecpaInit1 / cpaInit1);
+        (double) ecpaInit1 / cpaInit1);
 
     // init(2)
     t0 = System.nanoTime();
@@ -147,7 +147,7 @@ public class ElectrolyteCPAProfilingTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "  CPA init(2):          %8.1f ms%n", cpaInit2 / 1e6);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Electrolyte CPA init(2): %8.1f ms%n", ecpaInit2 / 1e6);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Ratio:                %8.1fx%n",
-	(double) ecpaInit2 / cpaInit2);
+        (double) ecpaInit2 / cpaInit2);
 
     // ===== Phase count comparison =====
     logger.info("\n=== Phase Information ===");
@@ -155,7 +155,7 @@ public class ElectrolyteCPAProfilingTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Electrolyte CPA phases: %d%n", ecpa.getNumberOfPhases());
     for (int p = 0; p < ecpa.getNumberOfPhases(); p++) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "    Phase %d: %s (beta=%.4f)%n", p,
-	  ecpa.getPhase(p).getPhaseTypeName(), ecpa.getBeta(p));
+          ecpa.getPhase(p).getPhaseTypeName(), ecpa.getBeta(p));
     }
   }
 }

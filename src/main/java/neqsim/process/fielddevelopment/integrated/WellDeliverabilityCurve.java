@@ -69,15 +69,15 @@ public class WellDeliverabilityCurve implements Serializable {
     this.rate = Arrays.copyOf(rateSm3PerDay, rateSm3PerDay.length);
     for (int i = 1; i < this.pressure.length; i++) {
       if (this.pressure[i] <= this.pressure[i - 1]) {
-	throw new IllegalArgumentException("pressure array must be strictly ascending");
+        throw new IllegalArgumentException("pressure array must be strictly ascending");
       }
     }
     // Shut-in pressure: first pressure where rate reaches zero, else top of table.
     double shutIn = this.pressure[this.pressure.length - 1];
     for (int i = 0; i < this.rate.length; i++) {
       if (this.rate[i] <= 0.0) {
-	shutIn = this.pressure[i];
-	break;
+        shutIn = this.pressure[i];
+        break;
       }
     }
     this.shutInPressure = shutIn;
@@ -122,7 +122,7 @@ public class WellDeliverabilityCurve implements Serializable {
       double ratio = p[i] / shutInPressureBara;
       q[i] = aofpSm3PerDay * (1.0 - 0.2 * ratio - 0.8 * ratio * ratio);
       if (q[i] < 0.0) {
-	q[i] = 0.0;
+        q[i] = 0.0;
       }
     }
     return new WellDeliverabilityCurve(p, q);
@@ -156,21 +156,21 @@ public class WellDeliverabilityCurve implements Serializable {
       p[i] = whp;
       double rateSample = 0.0;
       try {
-	well.setWellheadPressure(whp, "bara");
-	well.run();
-	rateSample = well.getOperatingFlowRate("Sm3/day");
-	if (Double.isNaN(rateSample) || rateSample < 0.0) {
-	  rateSample = 0.0;
-	}
+        well.setWellheadPressure(whp, "bara");
+        well.run();
+        rateSample = well.getOperatingFlowRate("Sm3/day");
+        if (Double.isNaN(rateSample) || rateSample < 0.0) {
+          rateSample = 0.0;
+        }
       } catch (RuntimeException ex) {
-	rateSample = 0.0;
+        rateSample = 0.0;
       }
       q[i] = rateSample;
     }
     // Enforce monotone non-increasing rate with pressure to keep the network solve well-posed.
     for (int i = 1; i < nPoints; i++) {
       if (q[i] > q[i - 1]) {
-	q[i] = q[i - 1];
+        q[i] = q[i - 1];
       }
     }
     return new WellDeliverabilityCurve(p, q);

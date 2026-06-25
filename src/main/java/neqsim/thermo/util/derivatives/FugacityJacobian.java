@@ -80,7 +80,7 @@ public class FugacityJacobian implements Serializable {
       this.dlnPhidn[i] = Arrays.copyOf(dlnPhidn[i], numberOfComponents);
     }
     this.componentNames = componentNames != null ? Arrays.copyOf(componentNames, componentNames.length)
-	: new String[numberOfComponents];
+        : new String[numberOfComponents];
   }
 
   /**
@@ -224,13 +224,13 @@ public class FugacityJacobian implements Serializable {
   public boolean checkSymmetry(double[] moles, double tolerance) {
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = i + 1; j < numberOfComponents; j++) {
-	double lhs = moles[i] * dlnPhidn[i][j];
-	double rhs = moles[j] * dlnPhidn[j][i];
-	double diff = Math.abs(lhs - rhs);
-	double scale = Math.max(Math.abs(lhs), Math.abs(rhs));
-	if (scale > 1e-10 && diff / scale > tolerance) {
-	  return false;
-	}
+        double lhs = moles[i] * dlnPhidn[i][j];
+        double rhs = moles[j] * dlnPhidn[j][i];
+        double diff = Math.abs(lhs - rhs);
+        double scale = Math.max(Math.abs(lhs), Math.abs(rhs));
+        if (scale > 1e-10 && diff / scale > tolerance) {
+          return false;
+        }
       }
     }
     return true;
@@ -249,7 +249,7 @@ public class FugacityJacobian implements Serializable {
     double result = dlnPhidT[componentIndex] * deltaT + dlnPhidP[componentIndex] * deltaP;
     if (deltaN != null) {
       for (int j = 0; j < Math.min(numberOfComponents, deltaN.length); j++) {
-	result += dlnPhidn[componentIndex][j] * deltaN[j];
+        result += dlnPhidn[componentIndex][j] * deltaN[j];
       }
     }
     return result;

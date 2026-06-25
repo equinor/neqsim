@@ -202,7 +202,7 @@ public class StateVector implements Serializable {
     boolean first = true;
     for (String name : values.keySet()) {
       if (!first) {
-	sb.append(", ");
+        sb.append(", ");
       }
       sb.append(name).append("=").append(String.format("%.4f", values.get(name)));
       sb.append(" ").append(units.get(name));

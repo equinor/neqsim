@@ -142,7 +142,7 @@ public class ThreeStageSeparationTemplate implements ProcessTemplate {
       testFluid.setTemperature(DEFAULT_INLET_TEMP_K, "K");
       testFluid.setPressure(DEFAULT_HP_PRESSURE, "bara");
       neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	  testFluid);
+          testFluid);
       ops.TPflash();
 
       // Check if we have both gas and liquid phases
@@ -165,9 +165,9 @@ public class ThreeStageSeparationTemplate implements ProcessTemplate {
   @Override
   public String[] getExpectedOutputs() {
     return new String[] { "HP Gas - Gas stream from HP separator",
-	"HP Liquid - Liquid stream from HP separator to MP valve", "MP Gas - Gas stream from MP separator",
-	"MP Liquid - Liquid stream from MP separator to LP valve", "LP Gas - Gas stream from LP separator",
-	"LP Liquid - Stabilized oil from LP separator" };
+        "HP Liquid - Liquid stream from HP separator to MP valve", "MP Gas - Gas stream from MP separator",
+        "MP Liquid - Liquid stream from MP separator to LP valve", "LP Gas - Gas stream from LP separator",
+        "LP Liquid - Stabilized oil from LP separator" };
   }
 
   /** {@inheritDoc} */
@@ -180,6 +180,6 @@ public class ThreeStageSeparationTemplate implements ProcessTemplate {
   @Override
   public String getDescription() {
     return "Standard three-stage oil/gas separation train with HP, MP, and LP separators. "
-	+ "Suitable for oil stabilization and flash gas recovery.";
+        + "Suitable for oil stabilization and flash gas recovery.";
   }
 }

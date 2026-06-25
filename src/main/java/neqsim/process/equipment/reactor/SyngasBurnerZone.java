@@ -77,7 +77,7 @@ public class SyngasBurnerZone extends TwoPortEquipment {
    */
   public void setOxygenToCarbonEnvelope(double minimumRatio, double maximumRatio) {
     if (!Double.isFinite(minimumRatio) || !Double.isFinite(maximumRatio) || minimumRatio < 0.0
-	|| maximumRatio <= minimumRatio) {
+        || maximumRatio <= minimumRatio) {
       throw new IllegalArgumentException("oxygen-to-carbon envelope must be finite and ordered");
     }
     this.minimumOxygenToCarbonRatio = minimumRatio;
@@ -153,7 +153,7 @@ public class SyngasBurnerZone extends TwoPortEquipment {
     burnerFeed.run(id);
 
     equilibriumReactor = HydrogenProductionUtils.createSyngasGibbsReactor(getName() + " Gibbs equilibrium", burnerFeed,
-	GibbsReactor.EnergyMode.ADIABATIC);
+        GibbsReactor.EnergyMode.ADIABATIC);
     equilibriumReactor.run(id);
 
     SystemInterface outletSystem = equilibriumReactor.getOutletStream().getThermoSystem().clone();
@@ -180,7 +180,7 @@ public class SyngasBurnerZone extends TwoPortEquipment {
     results.put("safetyWarning", safetyWarning);
     if (outStream != null && outStream.getThermoSystem() != null) {
       results.put("syngasComposition_molFrac",
-	  HydrogenProductionUtils.extractSyngasComposition(outStream.getThermoSystem()));
+          HydrogenProductionUtils.extractSyngasComposition(outStream.getThermoSystem()));
     }
     return results;
   }

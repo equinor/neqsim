@@ -2,6 +2,8 @@ package neqsim.process.fielddevelopment.economics;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.reservoir.SimpleReservoir;
@@ -11,8 +13,6 @@ import neqsim.process.fielddevelopment.economics.CashFlowEngine.CashFlowResult;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Field development NPV calculation test.
@@ -168,29 +168,29 @@ class FieldDevelopmentNPVTest {
       double pOutAtMax = pipeline2.getOutletStream().getPressure("bara");
 
       if (pOutAtMax < INLET_PRESSURE || inDecline) {
-	// Decline phase: bisection search for rate giving P_out = INLET_PRESSURE
-	// Once decline starts, it never reverts to plateau
-	inDecline = true;
-	double lo = 0.1;
-	double hi = currentMaxRate;
-	for (int bisect = 0; bisect < 30; bisect++) {
-	  double mid = (lo + hi) / 2.0;
-	  producedGasStream.setFlowRate(mid, "MSm3/day");
-	  process.run();
-	  double pOut = pipeline2.getOutletStream().getPressure("bara");
-	  if (pOut > INLET_PRESSURE) {
-	    lo = mid; // Can sustain higher flow
-	  } else {
-	    hi = mid; // Need lower flow
-	  }
-	}
-	producedGasStream.setFlowRate(lo, "MSm3/day");
-	process.run();
-	currentMaxRate = lo; // Cap future years at this rate (monotonic decline)
+        // Decline phase: bisection search for rate giving P_out = INLET_PRESSURE
+        // Once decline starts, it never reverts to plateau
+        inDecline = true;
+        double lo = 0.1;
+        double hi = currentMaxRate;
+        for (int bisect = 0; bisect < 30; bisect++) {
+          double mid = (lo + hi) / 2.0;
+          producedGasStream.setFlowRate(mid, "MSm3/day");
+          process.run();
+          double pOut = pipeline2.getOutletStream().getPressure("bara");
+          if (pOut > INLET_PRESSURE) {
+            lo = mid; // Can sustain higher flow
+          } else {
+            hi = mid; // Need lower flow
+          }
+        }
+        producedGasStream.setFlowRate(lo, "MSm3/day");
+        process.run();
+        currentMaxRate = lo; // Cap future years at this rate (monotonic decline)
 
-	if (lo < 0.5) {
-	  break; // Below economic limit
-	}
+        if (lo < 0.5) {
+          break; // Below economic limit
+        }
       }
 
       // 2. Record production at this year's rate
@@ -200,13 +200,13 @@ class FieldDevelopmentNPVTest {
       productionYears = t + 1;
 
       logger.info(
-	  String.format("Year %2d: Pres=%.1f bara, Qgas=%.2f MSm3/d, Yearly=%.2f GSm3, P_out=%.2f bara, StreamQ=%.2f",
-	      t, reservoirPressureBara[t], gasProductionMSm3Day[t], yearlyGasProductionGSm3[t],
-	      pipeline2.getOutletStream().getPressure("bara"), producedGasStream.getFlowRate("MSm3/day")));
+          String.format("Year %2d: Pres=%.1f bara, Qgas=%.2f MSm3/d, Yearly=%.2f GSm3, P_out=%.2f bara, StreamQ=%.2f",
+              t, reservoirPressureBara[t], gasProductionMSm3Day[t], yearlyGasProductionGSm3[t],
+              pipeline2.getOutletStream().getPressure("bara"), producedGasStream.getFlowRate("MSm3/day")));
 
       // 3. Run transient depletion at this year's determined rate
       for (int k = 0; k < 10; k++) {
-	reservoirOps.runTransient(deltat / 10.0);
+        reservoirOps.runTransient(deltat / 10.0);
       }
 
       totalProducedOe[t] = reservoirOps.getProductionTotal("MSm3 oe");
@@ -245,7 +245,7 @@ class FieldDevelopmentNPVTest {
     int projectStartYear = 2020;
     for (int i = 0; i < capexSchedule.length; i++) {
       if (capexSchedule[i] > 0) {
-	engine.addCapex(capexSchedule[i], projectStartYear + i);
+        engine.addCapex(capexSchedule[i], projectStartYear + i);
       }
     }
 
@@ -255,7 +255,7 @@ class FieldDevelopmentNPVTest {
     for (int t = 0; t < productionYears; t++) {
       double annualGasSm3 = gasProductionMSm3Day[t] * 1e6 * 365.0 * PRODUCTION_EFFICIENCY;
       if (annualGasSm3 > 0) {
-	engine.addAnnualProduction(productionStartYear + t, 0, annualGasSm3, 0);
+        engine.addAnnualProduction(productionStartYear + t, 0, annualGasSm3, 0);
       }
     }
 
@@ -277,7 +277,7 @@ class FieldDevelopmentNPVTest {
 
     // Total revenue should be substantial
     assertTrue(result.getTotalRevenue() > 1000,
-	"Total revenue should be > 1000 MNOK, got: " + result.getTotalRevenue());
+        "Total revenue should be > 1000 MNOK, got: " + result.getTotalRevenue());
 
     // Print summary for inspection
     logger.info("=== Field Development NPV Results ===");
@@ -303,7 +303,7 @@ class FieldDevelopmentNPVTest {
     double breakevenGasPrice = engine.calculateBreakevenGasPrice(DISCOUNT_RATE);
     logger.info(String.format("Breakeven gas price: %.4f NOK/Sm3", breakevenGasPrice));
     assertTrue(breakevenGasPrice > 0 && breakevenGasPrice < GAS_PRICE_NOK_PER_SM3,
-	"Breakeven price should be between 0 and gas price, got: " + breakevenGasPrice);
+        "Breakeven price should be between 0 and gas price, got: " + breakevenGasPrice);
   }
 
   /**
@@ -397,10 +397,10 @@ class FieldDevelopmentNPVTest {
     double[] depreciation = new double[totalYears];
     for (int capexYear = 0; capexYear < totalYears; capexYear++) {
       if (capex[capexYear] > 0) {
-	double annualDep = capex[capexYear] / 6.0;
-	for (int d = 0; d < 6 && (capexYear + d) < totalYears; d++) {
-	  depreciation[capexYear + d] += annualDep;
-	}
+        double annualDep = capex[capexYear] / 6.0;
+        for (int d = 0; d < 6 && (capexYear + d) < totalYears; d++) {
+          depreciation[capexYear + d] += annualDep;
+        }
       }
     }
 

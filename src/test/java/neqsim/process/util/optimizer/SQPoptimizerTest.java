@@ -16,7 +16,7 @@ public class SQPoptimizerTest {
     sqp.setObjectiveFunction(new SQPoptimizer.ObjectiveFunc() {
       @Override
       public double evaluate(double[] x) {
-	return (x[0] - 3.0) * (x[0] - 3.0) + (x[1] - 5.0) * (x[1] - 5.0);
+        return (x[0] - 3.0) * (x[0] - 3.0) + (x[1] - 5.0) * (x[1] - 5.0);
       }
     });
 
@@ -38,14 +38,14 @@ public class SQPoptimizerTest {
     sqp.setObjectiveFunction(new SQPoptimizer.ObjectiveFunc() {
       @Override
       public double evaluate(double[] x) {
-	return x[0] * x[0] + x[1] * x[1];
+        return x[0] * x[0] + x[1] * x[1];
       }
     });
 
     sqp.addInequalityConstraint(new SQPoptimizer.ConstraintFunc() {
       @Override
       public double evaluate(double[] x) {
-	return x[0] + x[1] - 4.0; // h(x) >= 0 convention: x0 + x1 >= 4
+        return x[0] + x[1] - 4.0; // h(x) >= 0 convention: x0 + x1 >= 4
       }
     });
 
@@ -67,14 +67,14 @@ public class SQPoptimizerTest {
     sqp.setObjectiveFunction(new SQPoptimizer.ObjectiveFunc() {
       @Override
       public double evaluate(double[] x) {
-	return (x[0] - 1.0) * (x[0] - 1.0) + (x[1] - 2.0) * (x[1] - 2.0);
+        return (x[0] - 1.0) * (x[0] - 1.0) + (x[1] - 2.0) * (x[1] - 2.0);
       }
     });
 
     sqp.addEqualityConstraint(new SQPoptimizer.ConstraintFunc() {
       @Override
       public double evaluate(double[] x) {
-	return x[0] + x[1] - 5.0;
+        return x[0] + x[1] - 5.0;
       }
     });
 
@@ -95,7 +95,7 @@ public class SQPoptimizerTest {
     sqp.setObjectiveFunction(new SQPoptimizer.ObjectiveFunc() {
       @Override
       public double evaluate(double[] x) {
-	return (x[0] - 10.0) * (x[0] - 10.0);
+        return (x[0] - 10.0) * (x[0] - 10.0);
       }
     });
 
@@ -114,7 +114,7 @@ public class SQPoptimizerTest {
     sqp.setObjectiveFunction(new SQPoptimizer.ObjectiveFunc() {
       @Override
       public double evaluate(double[] x) {
-	return x[0] * x[0];
+        return x[0] * x[0];
       }
     });
     sqp.setInitialPoint(new double[] { 5.0 });

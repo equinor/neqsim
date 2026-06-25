@@ -68,9 +68,9 @@ final class ColumnSolveResult {
    */
   static ColumnSolveResult from(DistillationColumn column, DistillationColumn.SolverType solverType) {
     return new ColumnSolveResult(solverType, column.solved(), column.getLastIterationCount(),
-	column.getLastTemperatureResidual(), column.getLastMassResidual(), column.getLastEnergyResidual(),
-	column.getLastMeshResidualNorm(), column.getLastMeshProductDrawResidualNorm(),
-	column.getLastSolveTimeSeconds());
+        column.getLastTemperatureResidual(), column.getLastMassResidual(), column.getLastEnergyResidual(),
+        column.getLastMeshResidualNorm(), column.getLastMeshProductDrawResidualNorm(),
+        column.getLastSolveTimeSeconds());
   }
 
   /**

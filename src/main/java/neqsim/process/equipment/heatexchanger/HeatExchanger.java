@@ -11,13 +11,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import com.google.gson.GsonBuilder;
-import neqsim.process.ml.StateVector;
-import neqsim.process.ml.StateVectorProvider;
 import neqsim.process.conditionmonitor.ConditionMonitorSpecifications;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerMechanicalDesign;
+import neqsim.process.ml.StateVector;
+import neqsim.process.ml.StateVectorProvider;
 import neqsim.process.util.monitor.HXResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -348,7 +348,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
 
     if (getSpecification().equals("out stream")) {
       outStream[outStreamSpecificationNumber]
-	  .setFlowRate(getInStream(outStreamSpecificationNumber).getFlowRate("kg/sec"), "kg/sec");
+          .setFlowRate(getInStream(outStreamSpecificationNumber).getFlowRate("kg/sec"), "kg/sec");
       outStream[outStreamSpecificationNumber].run(id);
       temperatureOut = outStream[outStreamSpecificationNumber].getTemperature();
       // system =
@@ -356,7 +356,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     }
 
     double deltaEnthalpy = outStream[outStreamSpecificationNumber].getFluid().getEnthalpy()
-	- inStream[outStreamSpecificationNumber].getFluid().getEnthalpy();
+        - inStream[outStreamSpecificationNumber].getFluid().getEnthalpy();
     double enthalpyOutRef = inStream[nonOutStreamSpecifiedStreamNumber].getFluid().getEnthalpy() - deltaEnthalpy;
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(systemOut0);
@@ -384,7 +384,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
       int streamToCalculate = 0;
 
       for (StreamInterface stream : inStream) {
-	stream.run();
+        stream.run();
       }
 
       int streamToSet = 1;
@@ -396,52 +396,52 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
       outStream[streamToCalculate].setThermoSystem(systemOut1);
       outStream[streamToSet].setTemperature(inStream[streamToCalculate].getTemperature() + sign * deltaT, "K");
       if (!outStream[streamToSet].getSpecification().equals("TP")) {
-	outStream[streamToSet].runTPflash();
+        outStream[streamToSet].runTPflash();
       }
       outStream[streamToSet].run(id);
       double dEntalphy1 = outStream[streamToSet].getThermoSystem().getEnthalpy()
-	  - inStream[streamToSet].getThermoSystem().getEnthalpy();
+          - inStream[streamToSet].getThermoSystem().getEnthalpy();
       double C1 = Math.abs(dEntalphy1) / Math.abs((outStream[streamToSet].getThermoSystem().getTemperature()
-	  - inStream[streamToSet].getThermoSystem().getTemperature()));
+          - inStream[streamToSet].getThermoSystem().getTemperature()));
 
       outStream[streamToCalculate]
-	  .setTemperature(inStream[streamToSet].getThermoSystem().getTemperature() - sign * deltaT, "K");
+          .setTemperature(inStream[streamToSet].getThermoSystem().getTemperature() - sign * deltaT, "K");
       if (!outStream[streamToCalculate].getSpecification().equals("TP")) {
-	outStream[streamToCalculate].runTPflash();
+        outStream[streamToCalculate].runTPflash();
       }
       outStream[streamToCalculate].run(id);
       double dEntalphy2 = outStream[streamToCalculate].getThermoSystem().getEnthalpy()
-	  - inStream[streamToCalculate].getThermoSystem().getEnthalpy();
+          - inStream[streamToCalculate].getThermoSystem().getEnthalpy();
       double C2 = Math.abs(dEntalphy2) / Math.abs(outStream[streamToCalculate].getThermoSystem().getTemperature()
-	  - inStream[streamToCalculate].getThermoSystem().getTemperature());
+          - inStream[streamToCalculate].getThermoSystem().getTemperature());
       double Cmin = C1;
       double Cmax = C2;
       if (C2 < C1) {
-	Cmin = C2;
-	Cmax = C1;
+        Cmin = C2;
+        Cmax = C1;
       }
       double Cr = Cmin / Cmax;
       if (Math.abs(dEntalphy1) < Math.abs(dEntalphy2)) {
-	int streamCHange = streamToCalculate;
-	streamToCalculate = streamToSet;
-	streamToSet = streamCHange;
+        int streamCHange = streamToCalculate;
+        streamToCalculate = streamToSet;
+        streamToSet = streamCHange;
       }
 
       double dEntalphy = outStream[streamToSet].getThermoSystem().getEnthalpy()
-	  - inStream[streamToSet].getThermoSystem().getEnthalpy();
+          - inStream[streamToSet].getThermoSystem().getEnthalpy();
       // System.out.println("dent " + dEntalphy);
       ThermodynamicOperations testOps = new ThermodynamicOperations(outStream[streamToCalculate].getThermoSystem());
       testOps.PHflash(inStream[streamToCalculate].getThermoSystem().getEnthalpy() - dEntalphy, 0);
 
       if (Math.abs(thermalEffectiveness - 1.0) > 1e-10) {
-	testOps = new ThermodynamicOperations(outStream[streamToSet].getThermoSystem());
-	testOps.PHflash(inStream[streamToSet].getThermoSystem().getEnthalpy() + dEntalphy, 0);
+        testOps = new ThermodynamicOperations(outStream[streamToSet].getThermoSystem());
+        testOps.PHflash(inStream[streamToSet].getThermoSystem().getEnthalpy() + dEntalphy, 0);
       }
       duty = dEntalphy;
       hotColdDutyBalance = 1.0;
 
       UAvalue = dEntalphy / (outStream[streamToSet].getThermoSystem().getTemperature()
-	  - inStream[streamToSet].getThermoSystem().getTemperature());
+          - inStream[streamToSet].getThermoSystem().getTemperature());
     }
 
     updateLastState();
@@ -462,7 +462,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     }
     SystemInterface sys2 = inStream[1].getThermoSystem();
     if (sys2.getTemperature() != lastInStream2Temperature || sys2.getPressure() != lastInStream2Pressure
-	|| UAvalue != lastUAvalue) {
+        || UAvalue != lastUAvalue) {
       return true;
     }
     double flow2 = sys2.getFlowRate("kg/hr");
@@ -480,7 +480,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     }
     for (int i = 0; i < n; i++) {
       if (ph0.getComponent(i).getz() != lastInStream2Composition[i]) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -549,7 +549,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
       // Make sure these streams to run because of the issues with enthalpy
       // calculations if not run
       for (StreamInterface stream : inStream) {
-	stream.run();
+        stream.run();
       }
 
       int streamToSet = 1;
@@ -561,47 +561,47 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
       outStream[streamToCalculate].setThermoSystem(systemOut1);
       outStream[streamToSet].setTemperature(inStream[streamToCalculate].getTemperature(), "K");
       if (!outStream[streamToSet].getSpecification().equals("TP")) {
-	outStream[streamToSet].runTPflash();
+        outStream[streamToSet].runTPflash();
       }
       outStream[streamToSet].run(id);
       double dEntalphy1 = outStream[streamToSet].getThermoSystem().getEnthalpy()
-	  - inStream[streamToSet].getThermoSystem().getEnthalpy();
+          - inStream[streamToSet].getThermoSystem().getEnthalpy();
       double C1 = Math.abs(dEntalphy1) / Math.abs((outStream[streamToSet].getThermoSystem().getTemperature()
-	  - inStream[streamToSet].getThermoSystem().getTemperature()));
+          - inStream[streamToSet].getThermoSystem().getTemperature()));
 
       outStream[streamToCalculate].setTemperature(inStream[streamToSet].getThermoSystem().getTemperature(), "K");
       if (!outStream[streamToCalculate].getSpecification().equals("TP")) {
-	outStream[streamToCalculate].runTPflash();
+        outStream[streamToCalculate].runTPflash();
       }
       outStream[streamToCalculate].run(id);
       double dEntalphy2 = outStream[streamToCalculate].getThermoSystem().getEnthalpy()
-	  - inStream[streamToCalculate].getThermoSystem().getEnthalpy();
+          - inStream[streamToCalculate].getThermoSystem().getEnthalpy();
       double C2 = Math.abs(dEntalphy2) / Math.abs(outStream[streamToCalculate].getThermoSystem().getTemperature()
-	  - inStream[streamToCalculate].getThermoSystem().getTemperature());
+          - inStream[streamToCalculate].getThermoSystem().getTemperature());
       double Cmin = C1;
       double Cmax = C2;
       if (C2 < C1) {
-	Cmin = C2;
-	Cmax = C1;
+        Cmin = C2;
+        Cmax = C1;
       }
       double Cr = Cmin / Cmax;
       if (Math.abs(dEntalphy1) > Math.abs(dEntalphy2)) {
-	int streamCHange = streamToCalculate;
-	streamToCalculate = streamToSet;
-	streamToSet = streamCHange;
+        int streamCHange = streamToCalculate;
+        streamToCalculate = streamToSet;
+        streamToSet = streamCHange;
       }
 
       double dEntalphy = outStream[streamToSet].getThermoSystem().getEnthalpy()
-	  - inStream[streamToSet].getThermoSystem().getEnthalpy();
+          - inStream[streamToSet].getThermoSystem().getEnthalpy();
 
       // Rating mode: compute UA from correlations instead of using user-supplied value
       if (designMode == DesignMode.RATING && ratingCalculator != null && ratingArea > 0) {
-	updateRatingCalculatorFromStreams();
-	ratingCalculator.calculate();
-	ratingU = ratingCalculator.getOverallU();
-	if (ratingU > 0) {
-	  UAvalue = ratingU * ratingArea;
-	}
+        updateRatingCalculatorFromStreams();
+        ratingCalculator.calculate();
+        ratingU = ratingCalculator.getOverallU();
+        if (ratingU > 0) {
+          UAvalue = ratingU * ratingArea;
+        }
       }
 
       NTU = UAvalue / Cmin;
@@ -616,8 +616,8 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
       testOps.PHflash(inStream[streamToCalculate].getThermoSystem().getEnthalpy() - dEntalphy, 0);
 
       if (Math.abs(thermalEffectiveness - 1.0) > 1e-10) {
-	testOps = new ThermodynamicOperations(outStream[streamToSet].getThermoSystem());
-	testOps.PHflash(inStream[streamToSet].getThermoSystem().getEnthalpy() + dEntalphy, 0);
+        testOps = new ThermodynamicOperations(outStream[streamToSet].getThermoSystem());
+        testOps.PHflash(inStream[streamToSet].getThermoSystem().getEnthalpy() + dEntalphy, 0);
       }
       duty = dEntalphy;
       hotColdDutyBalance = 1.0;
@@ -732,7 +732,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
       stream1 = 1;
     }
     double heatTransferEntropyProd = Math.abs(getDuty())
-	* (1.0 / inStream[stream2].getTemperature() - 1.0 / (inStream[stream1].getTemperature()));
+        * (1.0 / inStream[stream2].getTemperature() - 1.0 / (inStream[stream1].getTemperature()));
     // System.out.println("heat entropy " + heatTransferEntropyProd);
 
     return entrop + heatTransferEntropyProd;
@@ -765,15 +765,15 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
       heatBalanceError += outStream[i].getThermoSystem().getEnthalpy() - inStream[i].getThermoSystem().getEnthalpy();
 
       if (Math.abs(refEx.getInStream(i).getTemperature("C")
-	  - getInStream(i).getTemperature("C")) > ConditionMonitorSpecifications.HXmaxDeltaT) {
-	conditionAnalysisMessage += ConditionMonitorSpecifications.HXmaxDeltaT_ErrorMsg;
+          - getInStream(i).getTemperature("C")) > ConditionMonitorSpecifications.HXmaxDeltaT) {
+        conditionAnalysisMessage += ConditionMonitorSpecifications.HXmaxDeltaT_ErrorMsg;
       } else if (Math.abs(refEx.getOutStream(i).getTemperature("C")
-	  - getOutStream(i).getTemperature("C")) > ConditionMonitorSpecifications.HXmaxDeltaT) {
-	conditionAnalysisMessage += ConditionMonitorSpecifications.HXmaxDeltaT_ErrorMsg;
+          - getOutStream(i).getTemperature("C")) > ConditionMonitorSpecifications.HXmaxDeltaT) {
+        conditionAnalysisMessage += ConditionMonitorSpecifications.HXmaxDeltaT_ErrorMsg;
       }
     }
     heatBalanceError = heatBalanceError
-	/ (outStream[0].getThermoSystem().getEnthalpy() - inStream[0].getThermoSystem().getEnthalpy()) * 100.0;
+        / (outStream[0].getThermoSystem().getEnthalpy() - inStream[0].getThermoSystem().getEnthalpy()) * 100.0;
     if (Math.abs(heatBalanceError) > 10.0) {
       String error = "Heat balance not fulfilled. Error: " + heatBalanceError + " ";
       conditionAnalysisMessage += error;
@@ -788,7 +788,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     double duty1 = Math.abs(outStream[0].getThermoSystem().getEnthalpy() - inStream[0].getThermoSystem().getEnthalpy());
     double duty2 = Math.abs(outStream[1].getThermoSystem().getEnthalpy() - inStream[1].getThermoSystem().getEnthalpy());
     thermalEffectiveness = ((HeatExchanger) refExchanger).getThermalEffectiveness() * (duty1 + duty2) / 2.0
-	/ Math.abs(((HeatExchanger) refExchanger).getDuty());
+        / Math.abs(((HeatExchanger) refExchanger).getDuty());
     hotColdDutyBalance = duty1 / duty2;
   }
 
@@ -971,9 +971,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     }
     if (flowArrangement.equals("concentric tube counterflow")) {
       if (Cr == 1.0) {
-	return NTU / (1.0 + NTU);
+        return NTU / (1.0 + NTU);
       } else {
-	return (1.0 - Math.exp(-NTU * (1 - Cr))) / (1.0 - Cr * Math.exp(-NTU * (1 - Cr)));
+        return (1.0 - Math.exp(-NTU * (1 - Cr))) / (1.0 - Cr * Math.exp(-NTU * (1 - Cr)));
       }
     } else if (flowArrangement.equals("concentric tube paralellflow")) {
       return (1.0 - Math.exp(-NTU * (1 + Cr))) / ((1 + Cr));
@@ -1088,19 +1088,19 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     if (inStream[0] != null && inStream[1] != null) {
       sb.append("\n--- Hot Side (Stream 0) ---\n");
       sb.append("Inlet Temperature: ").append(String.format(Locale.US, "%.2f C", inStream[0].getTemperature("C")))
-	  .append("\n");
+          .append("\n");
       sb.append("Outlet Temperature: ").append(String.format(Locale.US, "%.2f C", outStream[0].getTemperature("C")))
-	  .append("\n");
+          .append("\n");
       sb.append("Flow Rate: ").append(String.format(Locale.US, "%.3f kg/s", inStream[0].getFlowRate("kg/sec")))
-	  .append("\n");
+          .append("\n");
 
       sb.append("\n--- Cold Side (Stream 1) ---\n");
       sb.append("Inlet Temperature: ").append(String.format(Locale.US, "%.2f C", inStream[1].getTemperature("C")))
-	  .append("\n");
+          .append("\n");
       sb.append("Outlet Temperature: ").append(String.format(Locale.US, "%.2f C", outStream[1].getTemperature("C")))
-	  .append("\n");
+          .append("\n");
       sb.append("Flow Rate: ").append(String.format(Locale.US, "%.3f kg/s", inStream[1].getFlowRate("kg/sec")))
-	  .append("\n");
+          .append("\n");
 
       sb.append("\n--- Heat Transfer ---\n");
       sb.append("Duty: ").append(String.format(Locale.US, "%.2f kW", duty / 1000.0)).append("\n");
@@ -1115,16 +1115,16 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
       double deltaT1 = hotIn - coldOut;
       double deltaT2 = hotOut - coldIn;
       double lmtd = (Math.abs(deltaT1 - deltaT2) < 1e-6) ? (deltaT1 + deltaT2) / 2.0
-	  : (deltaT1 - deltaT2) / Math.log(deltaT1 / deltaT2);
+          : (deltaT1 - deltaT2) / Math.log(deltaT1 / deltaT2);
       sb.append("LMTD: ").append(String.format(Locale.US, "%.2f K", lmtd)).append("\n");
 
       HeatExchangerMechanicalDesign mechDesign = getMechanicalDesign();
       if (mechDesign != null) {
-	sb.append("\n--- Mechanical Design ---\n");
-	sb.append("Max Design Duty: ").append(String.format(Locale.US, "%.2f kW", mechDesign.maxDesignDuty / 1000.0))
-	    .append("\n");
-	sb.append("Duty Utilization: ")
-	    .append(String.format(Locale.US, "%.1f%%", Math.abs(duty) / mechDesign.maxDesignDuty * 100)).append("\n");
+        sb.append("\n--- Mechanical Design ---\n");
+        sb.append("Max Design Duty: ").append(String.format(Locale.US, "%.2f kW", mechDesign.maxDesignDuty / 1000.0))
+            .append("\n");
+        sb.append("Duty Utilization: ")
+            .append(String.format(Locale.US, "%.1f%%", Math.abs(duty) / mechDesign.maxDesignDuty * 100)).append("\n");
       }
     }
 
@@ -1339,7 +1339,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     // Duty utilization constraint
     if (designDuty > 0) {
       neqsim.process.equipment.capacity.CapacityConstraint dutyConstraint = new neqsim.process.equipment.capacity.CapacityConstraint(
-	  "dutyUtilization", "W", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN);
+          "dutyUtilization", "W", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN);
       dutyConstraint.setDesignValue(designDuty);
       dutyConstraint.setDescription("Heat duty utilization");
       dutyConstraint.setValueSupplier(() -> Math.abs(this.duty));
@@ -1349,7 +1349,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     // UA utilization constraint
     if (designUAValue > 0) {
       neqsim.process.equipment.capacity.CapacityConstraint uaConstraint = new neqsim.process.equipment.capacity.CapacityConstraint(
-	  "uaUtilization", "W/K", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+          "uaUtilization", "W/K", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
       uaConstraint.setDesignValue(designUAValue);
       uaConstraint.setDescription("UA value utilization");
       uaConstraint.setValueSupplier(() -> this.UAvalue);
@@ -1359,13 +1359,13 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     // Approach temperature constraint (inverse - we want to be above minimum)
     if (minApproachTemperature > 0) {
       neqsim.process.equipment.capacity.CapacityConstraint approachConstraint = new neqsim.process.equipment.capacity.CapacityConstraint(
-	  "approachTemperature", "K", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+          "approachTemperature", "K", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
       approachConstraint.setDesignValue(minApproachTemperature);
       approachConstraint.setDescription("Minimum temperature approach");
       // Utilization is inverted: approaches 100% as we get close to minimum
       approachConstraint.setValueSupplier(() -> {
-	double approach = getApproachTemperature();
-	return approach > 0 ? minApproachTemperature / approach : 1.0;
+        double approach = getApproachTemperature();
+        return approach > 0 ? minApproachTemperature / approach : 1.0;
       });
       hxCapacityConstraints.put("approachTemperature", approachConstraint);
     }
@@ -1396,11 +1396,11 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     double maxUtil = 0.0;
     for (neqsim.process.equipment.capacity.CapacityConstraint constraint : hxCapacityConstraints.values()) {
       if (constraint.isEnabled()) {
-	double util = constraint.getUtilization();
-	if (util > maxUtil) {
-	  maxUtil = util;
-	  bottleneck = constraint;
-	}
+        double util = constraint.getUtilization();
+        if (util > maxUtil) {
+          maxUtil = util;
+          bottleneck = constraint;
+        }
       }
     }
     return bottleneck;
@@ -1411,7 +1411,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   public boolean isCapacityExceeded() {
     for (neqsim.process.equipment.capacity.CapacityConstraint constraint : hxCapacityConstraints.values()) {
       if (constraint.isEnabled() && constraint.getUtilization() > 1.0) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -1422,9 +1422,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   public boolean isHardLimitExceeded() {
     for (neqsim.process.equipment.capacity.CapacityConstraint constraint : hxCapacityConstraints.values()) {
       if (constraint.isEnabled()
-	  && constraint.getType() == neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD
-	  && constraint.getUtilization() > 1.0) {
-	return true;
+          && constraint.getType() == neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD
+          && constraint.getUtilization() > 1.0) {
+        return true;
       }
     }
     return false;
@@ -1436,7 +1436,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     double maxUtil = 0.0;
     for (neqsim.process.equipment.capacity.CapacityConstraint constraint : hxCapacityConstraints.values()) {
       if (constraint.isEnabled()) {
-	maxUtil = Math.max(maxUtil, constraint.getUtilization());
+        maxUtil = Math.max(maxUtil, constraint.getUtilization());
       }
     }
     return maxUtil;
@@ -1668,17 +1668,17 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     double tShellForWall = tShellIn; // default: no holdup → use inlet T
     if (shellHoldupVolume > 0.0) {
       if (Double.isNaN(shellFluidTemperature)) {
-	shellFluidTemperature = tShellIn;
+        shellFluidTemperature = tShellIn;
       }
       double shellRho = inStream[0].getThermoSystem().getDensity("kg/m3");
       double shellCp = inStream[0].getThermoSystem().getCp("J/kgK");
       double shellFluidMass = shellRho * shellHoldupVolume;
       if (shellFluidMass > 0.0 && shellCp > 0.0) {
-	double shellMassFlow = inStream[0].getThermoSystem().getFlowRate("kg/sec");
-	double qInletMixing = shellMassFlow * shellCp * (tShellIn - shellFluidTemperature);
-	double qFluidToWall = shellSideHtc * heatTransferArea * (shellFluidTemperature - wallTemperature);
-	double dTshellFluid = (qInletMixing - qFluidToWall) / (shellFluidMass * shellCp);
-	shellFluidTemperature += dTshellFluid * dt;
+        double shellMassFlow = inStream[0].getThermoSystem().getFlowRate("kg/sec");
+        double qInletMixing = shellMassFlow * shellCp * (tShellIn - shellFluidTemperature);
+        double qFluidToWall = shellSideHtc * heatTransferArea * (shellFluidTemperature - wallTemperature);
+        double dTshellFluid = (qInletMixing - qFluidToWall) / (shellFluidMass * shellCp);
+        shellFluidTemperature += dTshellFluid * dt;
       }
       tShellForWall = shellFluidTemperature;
     }
@@ -1687,17 +1687,17 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     double tTubeForWall = tTubeIn; // default: no holdup → use inlet T
     if (tubeHoldupVolume > 0.0) {
       if (Double.isNaN(tubeFluidTemperature)) {
-	tubeFluidTemperature = tTubeIn;
+        tubeFluidTemperature = tTubeIn;
       }
       double tubeRho = inStream[1].getThermoSystem().getDensity("kg/m3");
       double tubeCp = inStream[1].getThermoSystem().getCp("J/kgK");
       double tubeFluidMass = tubeRho * tubeHoldupVolume;
       if (tubeFluidMass > 0.0 && tubeCp > 0.0) {
-	double tubeMassFlow = inStream[1].getThermoSystem().getFlowRate("kg/sec");
-	double qInletMixing = tubeMassFlow * tubeCp * (tTubeIn - tubeFluidTemperature);
-	double qWallToFluid = tubeSideHtc * heatTransferArea * (wallTemperature - tubeFluidTemperature);
-	double dTtubeFluid = (qInletMixing + qWallToFluid) / (tubeFluidMass * tubeCp);
-	tubeFluidTemperature += dTtubeFluid * dt;
+        double tubeMassFlow = inStream[1].getThermoSystem().getFlowRate("kg/sec");
+        double qInletMixing = tubeMassFlow * tubeCp * (tTubeIn - tubeFluidTemperature);
+        double qWallToFluid = tubeSideHtc * heatTransferArea * (wallTemperature - tubeFluidTemperature);
+        double dTtubeFluid = (qInletMixing + qWallToFluid) / (tubeFluidMass * tubeCp);
+        tubeFluidTemperature += dTtubeFluid * dt;
       }
       tTubeForWall = tubeFluidTemperature;
     }
@@ -1714,7 +1714,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     double shellInletH = inStream[0].getThermoSystem().getEnthalpy();
     double shellOutH = shellInletH - qShellToWall;
     neqsim.thermodynamicoperations.ThermodynamicOperations shellOps = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	shellOut);
+        shellOut);
     shellOps.PHflash(shellOutH);
     outStream[0].setThermoSystem(shellOut);
     outStream[0].setCalculationIdentifier(id);
@@ -1724,7 +1724,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     double tubeInletH = inStream[1].getThermoSystem().getEnthalpy();
     double tubeOutH = tubeInletH + qWallToTube;
     neqsim.thermodynamicoperations.ThermodynamicOperations tubeOps = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	tubeOut);
+        tubeOut);
     tubeOps.PHflash(tubeOutH);
     outStream[1].setThermoSystem(tubeOut);
     outStream[1].setCalculationIdentifier(id);
@@ -1871,14 +1871,14 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
      */
     public HeatExchanger build() {
       if (hotStream == null) {
-	throw new IllegalStateException("Hot stream must be set. Use hotStream(stream)");
+        throw new IllegalStateException("Hot stream must be set. Use hotStream(stream)");
       }
 
       HeatExchanger hx;
       if (coldStream != null) {
-	hx = new HeatExchanger(name, hotStream, coldStream);
+        hx = new HeatExchanger(name, hotStream, coldStream);
       } else {
-	hx = new HeatExchanger(name, hotStream);
+        hx = new HeatExchanger(name, hotStream);
       }
 
       hx.setUAvalue(uaValue);
@@ -1887,16 +1887,16 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
       hx.guessOutTemperatureUnit = guessOutTemperatureUnit;
 
       if (thermalEffectiveness > 0) {
-	hx.setThermalEffectiveness(thermalEffectiveness);
+        hx.setThermalEffectiveness(thermalEffectiveness);
       }
 
       if (deltaT > 0) {
-	hx.setUseDeltaT(true);
-	hx.setDeltaT(deltaT);
+        hx.setUseDeltaT(true);
+        hx.setDeltaT(deltaT);
       }
 
       if (outStreamSpecificationNumber >= 0 && outTemperature > 0) {
-	hx.setOutTemperature(outTemperature);
+        hx.setOutTemperature(outTemperature);
       }
 
       return hx;

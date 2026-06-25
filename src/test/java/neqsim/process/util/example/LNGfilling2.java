@@ -32,7 +32,7 @@ public class LNGfilling2 {
     testSystem.setMixingRule(2);
 
     neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	testSystem);
+        testSystem);
     ops.TPflash();
     testSystem.display();
 

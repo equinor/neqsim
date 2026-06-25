@@ -106,8 +106,8 @@ public class OilWaterFlowRegimeDetector implements Serializable {
      * @param waterDropoutRisk whether there is risk of water dropout
      */
     public OilWaterResult(OilWaterFlowRegime regime, boolean waterWetting, double effectiveViscosity,
-	double inversionWaterFraction, double criticalDispersionVelocity, double maxDropletDiameter,
-	boolean oilContinuous, boolean waterDropoutRisk) {
+        double inversionWaterFraction, double criticalDispersionVelocity, double maxDropletDiameter,
+        boolean oilContinuous, boolean waterDropoutRisk) {
       this.regime = regime;
       this.waterWetting = waterWetting;
       this.effectiveViscosity = effectiveViscosity;
@@ -197,26 +197,26 @@ public class OilWaterFlowRegimeDetector implements Serializable {
     } else if (absVel < criticalVelocity) {
       // Transition: near-inversion, dual dispersion possible
       if (Math.abs(waterCut - inversionWC) < 0.1) {
-	regime = OilWaterFlowRegime.DUAL_DISPERSION;
-	waterWetting = true; // Conservative for corrosion
-	waterDropoutRisk = false;
+        regime = OilWaterFlowRegime.DUAL_DISPERSION;
+        waterWetting = true; // Conservative for corrosion
+        waterDropoutRisk = false;
       } else if (oilContinuous) {
-	regime = OilWaterFlowRegime.DISPERSED_WATER_IN_OIL;
-	waterWetting = false; // Oil wets the wall
-	waterDropoutRisk = dMax > 0.5 * pipeDiameter; // Droplets too large to suspend
+        regime = OilWaterFlowRegime.DISPERSED_WATER_IN_OIL;
+        waterWetting = false; // Oil wets the wall
+        waterDropoutRisk = dMax > 0.5 * pipeDiameter; // Droplets too large to suspend
       } else {
-	regime = OilWaterFlowRegime.DISPERSED_OIL_IN_WATER;
-	waterWetting = true;
-	waterDropoutRisk = false;
+        regime = OilWaterFlowRegime.DISPERSED_OIL_IN_WATER;
+        waterWetting = true;
+        waterDropoutRisk = false;
       }
     } else {
       // High velocity: fully dispersed
       if (oilContinuous) {
-	regime = OilWaterFlowRegime.DISPERSED_WATER_IN_OIL;
-	waterWetting = false;
+        regime = OilWaterFlowRegime.DISPERSED_WATER_IN_OIL;
+        waterWetting = false;
       } else {
-	regime = OilWaterFlowRegime.DISPERSED_OIL_IN_WATER;
-	waterWetting = true;
+        regime = OilWaterFlowRegime.DISPERSED_OIL_IN_WATER;
+        waterWetting = true;
       }
       waterDropoutRisk = false;
     }
@@ -230,7 +230,7 @@ public class OilWaterFlowRegimeDetector implements Serializable {
     double muEff = calcEffectiveViscosity(waterCut, muOil, muWater, oilContinuous);
 
     return new OilWaterResult(regime, waterWetting, muEff, inversionWC, criticalVelocity, dMax, oilContinuous,
-	waterDropoutRisk);
+        waterDropoutRisk);
   }
 
   /**

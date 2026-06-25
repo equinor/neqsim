@@ -239,25 +239,25 @@ public class AmmoniaCompatibility implements Serializable {
     String upperType = materialType.toUpperCase().trim();
 
     if (upperType.contains("COPPER") || upperType.contains("BRASS") || upperType.contains("BRONZE")
-	|| upperType.contains("CU")) {
+        || upperType.contains("CU")) {
       evaluateCopperAlloy();
     } else if (upperType.contains("316") || upperType.contains("304") || upperType.contains("AUSTENITIC")) {
       evaluateAusteniticSS();
     } else if (upperType.contains("22CR") || upperType.contains("DUPLEX")) {
       evaluateDuplexSS();
     } else if (upperType.contains("625") || upperType.contains("C276") || upperType.contains("C-276")
-	|| upperType.contains("NICKEL")) {
+        || upperType.contains("NICKEL")) {
       evaluateNickelAlloy();
     } else {
       evaluateCarbonSteel();
     }
 
     if (temperatureC > 300.0 && !upperType.contains("625") && !upperType.contains("C276")
-	&& !upperType.contains("C-276")) {
+        && !upperType.contains("C-276")) {
       notes.add("WARNING: Nitridation risk at T > 300°C. "
-	  + "Consider alloy 625 or specialized nitridation-resistant material.");
+          + "Consider alloy 625 or specialized nitridation-resistant material.");
       if (primaryMechanism.isEmpty()) {
-	primaryMechanism = "Nitridation";
+        primaryMechanism = "Nitridation";
       }
     }
 
@@ -295,7 +295,7 @@ public class AmmoniaCompatibility implements Serializable {
       compatible = false;
       riskLevel = "Very High";
       notes.add("CRITICAL: O2 inhibitor required at >= 0.1 wt% for anhydrous NH3 with CS. " + "Current: "
-	  + o2InhibitorWtPct + " wt%.");
+          + o2InhibitorWtPct + " wt%.");
     } else if (!hardnessOk) {
       compatible = false;
       riskLevel = "High";
@@ -308,14 +308,14 @@ public class AmmoniaCompatibility implements Serializable {
       compatible = true;
       riskLevel = "High";
       notes.add(
-	  "PWHT strongly recommended for CS in anhydrous NH3 to reduce " + "residual stress and SCC susceptibility.");
+          "PWHT strongly recommended for CS in anhydrous NH3 to reduce " + "residual stress and SCC susceptibility.");
     } else {
       compatible = true;
       riskLevel = "Low";
     }
 
     recommendedMaterial = compatible ? "Carbon steel with O2 inhibitor + PWHT"
-	: "316L stainless steel (immune to NH3 SCC)";
+        : "316L stainless steel (immune to NH3 SCC)";
   }
 
   /**
@@ -352,8 +352,8 @@ public class AmmoniaCompatibility implements Serializable {
     requiredO2InhibitorWtPct = Double.POSITIVE_INFINITY;
     recommendedMaterial = "316L stainless steel or carbon steel";
     notes.add("PROHIBITED: Copper and copper alloys are incompatible with ammonia. "
-	+ "NH3 forms soluble copper-ammine complexes causing rapid dissolution and SCC. "
-	+ "Replace with stainless steel or carbon steel.");
+        + "NH3 forms soluble copper-ammine complexes causing rapid dissolution and SCC. "
+        + "Replace with stainless steel or carbon steel.");
   }
 
   /**

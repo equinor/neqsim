@@ -64,23 +64,23 @@ public class ViscositySim extends BasePVTsimulation {
       System.out.println("adding....");
 
       for (int i = 0; i < experimentalData[0].length; i++) {
-	ViscosityFunction function = new ViscosityFunction();
-	double[] guess = { 1.0 }; // getThermoSystem().getPhase(0).getComponent(0).getCriticalViscosity()};
-	function.setInitialGuess(guess);
+        ViscosityFunction function = new ViscosityFunction();
+        double[] guess = { 1.0 }; // getThermoSystem().getPhase(0).getComponent(0).getCriticalViscosity()};
+        function.setInitialGuess(guess);
 
-	SystemInterface tempSystem = getThermoSystem().clone();
+        SystemInterface tempSystem = getThermoSystem().clone();
 
-	tempSystem.setTemperature(temperature[i]);
-	tempSystem.setPressure(pressure[i]);
-	thermoOps.TPflash();
-	// tempSystem.display();
-	double[] sample1 = { temperature[i] };
-	double viscosity = experimentalData[0][i];
-	double[] standardDeviation1 = { 1.5 };
-	SampleValue sample = new SampleValue(viscosity, viscosity / 50.0, sample1, standardDeviation1);
-	sample.setFunction(function);
-	sample.setThermodynamicSystem(tempSystem);
-	sampleList.add(sample);
+        tempSystem.setTemperature(temperature[i]);
+        tempSystem.setPressure(pressure[i]);
+        thermoOps.TPflash();
+        // tempSystem.display();
+        double[] sample1 = { temperature[i] };
+        double viscosity = experimentalData[0][i];
+        double[] standardDeviation1 = { 1.5 };
+        SampleValue sample = new SampleValue(viscosity, viscosity / 50.0, sample1, standardDeviation1);
+        sample.setFunction(function);
+        sample.setThermodynamicSystem(tempSystem);
+        sampleList.add(sample);
       }
     } catch (Exception ex) {
       logger.error("database error", ex);
@@ -113,13 +113,13 @@ public class ViscositySim extends BasePVTsimulation {
       getThermoSystem().initPhysicalProperties();
 
       if (getThermoSystem().hasPhaseType("gas")) {
-	gasViscosity[i] = getThermoSystem().getPhase("gas").getPhysicalProperties().getViscosity();
+        gasViscosity[i] = getThermoSystem().getPhase("gas").getPhysicalProperties().getViscosity();
       }
       if (getThermoSystem().hasPhaseType("oil")) {
-	oilViscosity[i] = getThermoSystem().getPhase("oil").getPhysicalProperties().getViscosity();
+        oilViscosity[i] = getThermoSystem().getPhase("oil").getPhysicalProperties().getViscosity();
       }
       if (getThermoSystem().hasPhaseType("aqueous")) {
-	aqueousViscosity[i] = getThermoSystem().getPhase("aqueous").getPhysicalProperties().getViscosity();
+        aqueousViscosity[i] = getThermoSystem().getPhase("aqueous").getPhysicalProperties().getViscosity();
       }
     }
   }

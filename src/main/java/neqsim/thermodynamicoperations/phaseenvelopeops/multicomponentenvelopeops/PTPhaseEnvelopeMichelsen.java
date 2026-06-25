@@ -209,40 +209,40 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
     // === Two-pass loop: primary trace + optional restart ===
     for (int pass = 0; pass < 2; pass++) {
       if (pass == 1) {
-	if (!needRestart) {
-	  break;
-	}
+        if (!needRestart) {
+          break;
+        }
 
-	// Save first-pass cricondentherm/bar for later merge
-	cricondenThermFirst = cricondenTherm.clone();
-	cricondenBarFirst = cricondenBar.clone();
-	cricondenThermXFirst = cricondenThermX.clone();
-	cricondenThermYFirst = cricondenThermY.clone();
-	cricondenBarXFirst = cricondenBarX.clone();
-	cricondenBarYFirst = cricondenBarY.clone();
+        // Save first-pass cricondentherm/bar for later merge
+        cricondenThermFirst = cricondenTherm.clone();
+        cricondenBarFirst = cricondenBar.clone();
+        cricondenThermXFirst = cricondenThermX.clone();
+        cricondenThermYFirst = cricondenThermY.clone();
+        cricondenBarXFirst = cricondenBarX.clone();
+        cricondenBarYFirst = cricondenBarY.clone();
 
-	// Reset tracking for second pass
-	cricondenTherm = new double[3];
-	cricondenBar = new double[3];
-	cricondenThermX = new double[100];
-	cricondenThermY = new double[100];
-	cricondenBarX = new double[100];
-	cricondenBarY = new double[100];
+        // Reset tracking for second pass
+        cricondenTherm = new double[3];
+        cricondenBar = new double[3];
+        cricondenThermX = new double[100];
+        cricondenThermY = new double[100];
+        cricondenBarX = new double[100];
+        cricondenBarY = new double[100];
 
-	// Flip conditions for second pass
-	phaseFraction = 1.0 - phaseFraction;
-	bubblePointFirst = !bubblePointFirst;
-	isDewPhase = false;
-	kValuesDivergedAfterCP = false;
+        // Flip conditions for second pass
+        phaseFraction = 1.0 - phaseFraction;
+        bubblePointFirst = !bubblePointFirst;
+        isDewPhase = false;
+        kValuesDivergedAfterCP = false;
 
-	// Insert NaN "break" markers so plotters do not draw a straight line
-	// from the last first-pass point to the first second-pass point
-	// (the two passes cover disjoint parts of the envelope and must be
-	// rendered as separate polylines).
-	addBranchBreak();
+        // Insert NaN "break" markers so plotters do not draw a straight line
+        // from the last first-pass point to the first second-pass point
+        // (the two passes cover disjoint parts of the envelope and must be
+        // rendered as separate polylines).
+        addBranchBreak();
 
-	// Reset K-values using Wilson correlation
-	resetKValuesWithWilson();
+        // Reset K-values using Wilson correlation
+        resetKValuesWithWilson();
       }
 
       // === Standard initialization ===
@@ -250,25 +250,25 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
       system.init(0);
 
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-	if (system.getComponent(i).getz() < 1e-10) {
-	  continue;
-	}
-	if (system.getPhase(0).getComponent(i).getIonicCharge() == 0) {
-	  if (bubblePointFirst
-	      && system.getPhase(0).getComponent(speceq).getTC() > system.getPhase(0).getComponent(i).getTC()) {
-	    speceq = system.getPhase(0).getComponent(i).getComponentNumber();
-	  }
-	  if (!bubblePointFirst
-	      && system.getPhase(0).getComponent(speceq).getTC() < system.getPhase(0).getComponent(i).getTC()) {
-	    speceq = system.getPhase(0).getComponent(i).getComponentNumber();
-	  }
-	}
+        if (system.getComponent(i).getz() < 1e-10) {
+          continue;
+        }
+        if (system.getPhase(0).getComponent(i).getIonicCharge() == 0) {
+          if (bubblePointFirst
+              && system.getPhase(0).getComponent(speceq).getTC() > system.getPhase(0).getComponent(i).getTC()) {
+            speceq = system.getPhase(0).getComponent(i).getComponentNumber();
+          }
+          if (!bubblePointFirst
+              && system.getPhase(0).getComponent(speceq).getTC() < system.getPhase(0).getComponent(i).getTC()) {
+            speceq = system.getPhase(0).getComponent(i).getComponentNumber();
+          }
+        }
       }
 
       // Estimate initial temperature using Wilson correlation
       double temp = tempKWilson(phaseFraction, lowPres);
       if (Double.isNaN(temp)) {
-	temp = system.getPhase(0).getComponent(speceq).getTC() - 20.0;
+        temp = system.getPhase(0).getComponent(speceq).getTC() - 20.0;
       }
       system.setTemperature(temp);
       system.setPressure(lowPres);
@@ -277,29 +277,29 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
       ThermodynamicOperations testOps = new ThermodynamicOperations(system);
       boolean firstPointConverged = false;
       for (int attempt = 0; attempt < FIRST_POINT_ATTEMPTS; attempt++) {
-	try {
-	  if (phaseFraction < 0.5) {
-	    temp += attempt * FIRST_POINT_STEP;
-	    system.setTemperature(temp);
-	    testOps.bubblePointTemperatureFlash();
-	  } else {
-	    temp += attempt * FIRST_POINT_STEP;
-	    system.setTemperature(temp);
-	    testOps.dewPointTemperatureFlash();
-	  }
-	} catch (Exception ex) {
-	  continue;
-	}
-	double tempNy = system.getTemperature();
-	if (!Double.isNaN(tempNy)) {
-	  temp = tempNy;
-	  firstPointConverged = true;
-	  break;
-	}
+        try {
+          if (phaseFraction < 0.5) {
+            temp += attempt * FIRST_POINT_STEP;
+            system.setTemperature(temp);
+            testOps.bubblePointTemperatureFlash();
+          } else {
+            temp += attempt * FIRST_POINT_STEP;
+            system.setTemperature(temp);
+            testOps.dewPointTemperatureFlash();
+          }
+        } catch (Exception ex) {
+          continue;
+        }
+        double tempNy = system.getTemperature();
+        if (!Double.isNaN(tempNy)) {
+          temp = tempNy;
+          firstPointConverged = true;
+          break;
+        }
       }
       if (!firstPointConverged) {
-	logger.warn("Could not converge first envelope point for pass={}, beta={}", pass, phaseFraction);
-	continue;
+        logger.warn("Could not converge first envelope point for pass={}, beta={}", pass, phaseFraction);
+        continue;
       }
 
       // Set up for continuation
@@ -308,7 +308,7 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
       system.setTemperature(temp);
 
       SysNewtonRhapsonPhaseEnvelope nonLinSolver = new SysNewtonRhapsonPhaseEnvelope(system, 2,
-	  system.getPhase(0).getNumberOfComponents());
+          system.getPhase(0).getNumberOfComponents());
       nonLinSolver.dTmax = this.dTmax;
       nonLinSolver.dPmax = this.dPmax;
       nonLinSolver.setu();
@@ -317,130 +317,132 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
       // === Main continuation loop ===
       int np;
       for (np = 1; np < MAX_ENVELOPE_ITERATIONS; np++) {
-	try {
-	  nonLinSolver.calcInc(np);
-	  nonLinSolver.solve(np);
-	} catch (Exception e0) {
-	  if (pass == 0) {
-	    // Primary trace crashed: schedule restart from opposite side
-	    needRestart = true;
-	    if (np > 2) {
-	      // Use recent stored temperature as Tmin for second pass
-	      ArrayList<Double> tempList = isDewPhase ? dewPointTemperatures : bubblePointTemperatures;
-	      if (!tempList.isEmpty()) {
-		restartTmin = tempList.get(tempList.size() - 1);
-	      } else {
-		restartTmin = system.getTemperature();
-	      }
-	    } else {
-	      restartTmin = system.getTemperature();
-	    }
-	  }
-	  np = np - 1;
-	  break;
-	}
+        try {
+          nonLinSolver.calcInc(np);
+          nonLinSolver.solve(np);
+        } catch (Exception e0) {
+          if (pass == 0) {
+            // Primary trace crashed: schedule restart from opposite side
+            needRestart = true;
+            if (np > 2) {
+              // Use recent stored temperature as Tmin for second pass
+              ArrayList<Double> tempList = isDewPhase ? dewPointTemperatures : bubblePointTemperatures;
+              if (!tempList.isEmpty()) {
+                restartTmin = tempList.get(tempList.size() - 1);
+              } else {
+                restartTmin = system.getTemperature();
+              }
+            } else {
+              restartTmin = system.getTemperature();
+            }
+          }
+          np = np - 1;
+          break;
+        }
 
-	double currentT = system.getTemperature();
-	double currentP = system.getPressure();
+        double currentT = system.getTemperature();
+        double currentP = system.getPressure();
 
-	// === Critical point detection via K-value convergence ===
-	double Kvallc = system.getPhase(0).getComponent(nonLinSolver.lc).getx()
-	    / system.getPhase(1).getComponent(nonLinSolver.lc).getx();
-	double Kvalhc = system.getPhase(0).getComponent(nonLinSolver.hc).getx()
-	    / system.getPhase(1).getComponent(nonLinSolver.hc).getx();
+        // === Critical point detection via K-value convergence ===
+        double Kvallc = system.getPhase(0).getComponent(nonLinSolver.lc).getx()
+            / system.getPhase(1).getComponent(nonLinSolver.lc).getx();
+        double Kvalhc = system.getPhase(0).getComponent(nonLinSolver.hc).getx()
+            / system.getPhase(1).getComponent(nonLinSolver.hc).getx();
 
-	if (!nonLinSolver.etterCP) {
-	  if (Kvallc < 1.05 && Kvalhc > 0.95) {
-	    nonLinSolver.npCrit = np;
-	    system.invertPhaseTypes();
-	    nonLinSolver.etterCP = true;
-	    isDewPhase = !isDewPhase;
-	    nonLinSolver.calcCrit();
-	    criticalPoints.add(new double[] { system.getTC(), system.getPC() });
-	    kValuesDivergedAfterCP = false;
-	    addBranchBreak();
-	  }
-	} else {
-	  // Track K-value divergence after CP: K-values must move significantly
-	  // away from 1 before we allow re-detection. This prevents false triggers
-	  // when K-values linger near 1 just past the first CP, or naturally
-	  // approach 1 at low pressures at the tail end of the envelope.
-	  if (!kValuesDivergedAfterCP) {
-	    if (Kvallc < 0.5 || Kvalhc > 2.0) {
-	      kValuesDivergedAfterCP = true;
-	    }
-	  } else {
-	    // K-values have diverged strongly and are now re-converging — second CP.
-	    // Additional safety guards: must be far enough from first CP (>50 steps)
-	    // and at pressure above 5 bar (not at the tail end of the envelope).
-	    if (Kvallc < 1.05 && Kvalhc > 0.95 && (np - nonLinSolver.npCrit) > 50 && currentP > 5.0) {
-	      nonLinSolver.npCrit = np;
-	      system.invertPhaseTypes();
-	      isDewPhase = !isDewPhase;
-	      nonLinSolver.calcCrit();
-	      criticalPoints.add(new double[] { system.getTC(), system.getPC() });
-	      kValuesDivergedAfterCP = false;
-	      addBranchBreak();
-	    }
-	  }
-	}
+        if (!nonLinSolver.etterCP) {
+          if (Kvallc < 1.05 && Kvalhc > 0.95) {
+            nonLinSolver.npCrit = np;
+            system.invertPhaseTypes();
+            nonLinSolver.etterCP = true;
+            isDewPhase = !isDewPhase;
+            nonLinSolver.calcCrit();
+            criticalPoints.add(new double[] { system.getTC(), system.getPC() });
+            kValuesDivergedAfterCP = false;
+            addBranchBreak();
+          }
+        } else {
+          // Track K-value divergence after CP: K-values must move significantly
+          // away from 1 before we allow re-detection. This prevents false triggers
+          // when K-values linger near 1 just past the first CP, or naturally
+          // approach 1 at low pressures at the tail end of the envelope.
+          if (!kValuesDivergedAfterCP) {
+            if (Kvallc < 0.5 || Kvalhc > 2.0) {
+              kValuesDivergedAfterCP = true;
+            }
+          } else {
+            // K-values have diverged strongly and are now re-converging — second
+            // CP.
+            // Additional safety guards: must be far enough from first CP (>50
+            // steps)
+            // and at pressure above 5 bar (not at the tail end of the envelope).
+            if (Kvallc < 1.05 && Kvalhc > 0.95 && (np - nonLinSolver.npCrit) > 50 && currentP > 5.0) {
+              nonLinSolver.npCrit = np;
+              system.invertPhaseTypes();
+              isDewPhase = !isDewPhase;
+              nonLinSolver.calcCrit();
+              criticalPoints.add(new double[] { system.getTC(), system.getPC() });
+              kValuesDivergedAfterCP = false;
+              addBranchBreak();
+            }
+          }
+        }
 
-	// === Cricondentherm tracking (maximum temperature) ===
-	if (currentT > cricondenTherm[0]) {
-	  cricondenTherm[1] = currentP;
-	  cricondenTherm[0] = currentT;
-	  for (int ii = 0; ii < nonLinSolver.numberOfComponents; ii++) {
-	    cricondenThermX[ii] = system.getPhase(1).getComponent(ii).getx();
-	    cricondenThermY[ii] = system.getPhase(0).getComponent(ii).getx();
-	  }
-	} else {
-	  nonLinSolver.ettercricoT = true;
-	  passedCricoT = true;
-	}
+        // === Cricondentherm tracking (maximum temperature) ===
+        if (currentT > cricondenTherm[0]) {
+          cricondenTherm[1] = currentP;
+          cricondenTherm[0] = currentT;
+          for (int ii = 0; ii < nonLinSolver.numberOfComponents; ii++) {
+            cricondenThermX[ii] = system.getPhase(1).getComponent(ii).getx();
+            cricondenThermY[ii] = system.getPhase(0).getComponent(ii).getx();
+          }
+        } else {
+          nonLinSolver.ettercricoT = true;
+          passedCricoT = true;
+        }
 
-	// === Cricondenbar tracking (maximum pressure) ===
-	if (currentP > cricondenBar[1]) {
-	  cricondenBar[0] = currentT;
-	  cricondenBar[1] = currentP;
-	  for (int ii = 0; ii < nonLinSolver.numberOfComponents; ii++) {
-	    cricondenBarX[ii] = system.getPhase(1).getComponent(ii).getx();
-	    cricondenBarY[ii] = system.getPhase(0).getComponent(ii).getx();
-	  }
-	}
+        // === Cricondenbar tracking (maximum pressure) ===
+        if (currentP > cricondenBar[1]) {
+          cricondenBar[0] = currentT;
+          cricondenBar[1] = currentP;
+          for (int ii = 0; ii < nonLinSolver.numberOfComponents; ii++) {
+            cricondenBarX[ii] = system.getPhase(1).getComponent(ii).getx();
+            cricondenBarY[ii] = system.getPhase(0).getComponent(ii).getx();
+          }
+        }
 
-	// === Exit criteria ===
-	if (currentP < minPressure && passedCricoT) {
-	  break;
-	}
-	if (currentP > maxPressure) {
-	  break;
-	}
-	if (pass == 1 && restartTmin > 0 && currentT > restartTmin) {
-	  break;
-	}
+        // === Exit criteria ===
+        if (currentP < minPressure && passedCricoT) {
+          break;
+        }
+        if (currentP > maxPressure) {
+          break;
+        }
+        if (pass == 1 && restartTmin > 0 && currentT > restartTmin) {
+          break;
+        }
 
-	// === Store the point ===
-	if (currentT > 1e-6 && currentP > 1e-6 && !Double.isNaN(currentT) && !Double.isNaN(currentP)) {
-	  double enthalpy = system.getPhase(1).getEnthalpy() / system.getPhase(1).getNumberOfMolesInPhase()
-	      / system.getPhase(1).getMolarMass() / 1e3;
-	  double density = system.getPhase(1).getDensity();
-	  double entropy = system.getPhase(1).getEntropy() / system.getPhase(1).getNumberOfMolesInPhase()
-	      / system.getPhase(1).getMolarMass() / 1e3;
+        // === Store the point ===
+        if (currentT > 1e-6 && currentP > 1e-6 && !Double.isNaN(currentT) && !Double.isNaN(currentP)) {
+          double enthalpy = system.getPhase(1).getEnthalpy() / system.getPhase(1).getNumberOfMolesInPhase()
+              / system.getPhase(1).getMolarMass() / 1e3;
+          double density = system.getPhase(1).getDensity();
+          double entropy = system.getPhase(1).getEntropy() / system.getPhase(1).getNumberOfMolesInPhase()
+              / system.getPhase(1).getMolarMass() / 1e3;
 
-	  if (isDewPhase) {
-	    dewPointTemperatures.add(currentT);
-	    dewPointPressures.add(currentP);
-	    dewPointEnthalpies.add(enthalpy);
-	    dewPointDensities.add(density);
-	    dewPointEntropies.add(entropy);
-	  } else {
-	    bubblePointTemperatures.add(currentT);
-	    bubblePointPressures.add(currentP);
-	    bubblePointEnthalpies.add(enthalpy);
-	    bubblePointDensities.add(density);
-	    bubblePointEntropies.add(entropy);
-	  }
-	}
+          if (isDewPhase) {
+            dewPointTemperatures.add(currentT);
+            dewPointPressures.add(currentP);
+            dewPointEnthalpies.add(enthalpy);
+            dewPointDensities.add(density);
+            dewPointEntropies.add(entropy);
+          } else {
+            bubblePointTemperatures.add(currentT);
+            bubblePointPressures.add(currentP);
+            bubblePointEnthalpies.add(enthalpy);
+            bubblePointDensities.add(density);
+            bubblePointEntropies.add(entropy);
+          }
+        }
       }
 
       // Set critical point on the system
@@ -451,25 +453,25 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
     // === Merge cricondentherm/bar from first and second passes ===
     if (needRestart) {
       if (cricondenThermFirst[0] > cricondenTherm[0]) {
-	cricondenTherm = cricondenThermFirst;
-	cricondenThermX = cricondenThermXFirst;
-	cricondenThermY = cricondenThermYFirst;
+        cricondenTherm = cricondenThermFirst;
+        cricondenThermX = cricondenThermXFirst;
+        cricondenThermY = cricondenThermYFirst;
       }
       if (cricondenBarFirst[1] > cricondenBar[1]) {
-	cricondenBar = cricondenBarFirst;
-	cricondenBarX = cricondenBarXFirst;
-	cricondenBarY = cricondenBarYFirst;
+        cricondenBar = cricondenBarFirst;
+        cricondenBarX = cricondenBarXFirst;
+        cricondenBarY = cricondenBarYFirst;
       }
     }
 
     // Validate final cricondenbar and cricondentherm
     if (!Double.isFinite(cricondenBar[0]) || !Double.isFinite(cricondenBar[1])
-	|| (cricondenBar[0] == 0.0 && cricondenBar[1] == 0.0)) {
+        || (cricondenBar[0] == 0.0 && cricondenBar[1] == 0.0)) {
       cricondenBar[0] = initialTemp;
       cricondenBar[1] = initialPres;
     }
     if (!Double.isFinite(cricondenTherm[0]) || !Double.isFinite(cricondenTherm[1])
-	|| (cricondenTherm[0] == 0.0 && cricondenTherm[1] == 0.0)) {
+        || (cricondenTherm[0] == 0.0 && cricondenTherm[1] == 0.0)) {
       cricondenTherm[0] = initialTemp;
       cricondenTherm[1] = initialPres;
     }
@@ -522,7 +524,7 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
 
     for (double beta : betaValues) {
       if (beta <= 0.0 || beta >= 1.0) {
-	continue;
+        continue;
       }
 
       SystemInterface clonedSystem = system.clone();
@@ -530,7 +532,7 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
       // Estimate initial temperature at low pressure for this beta
       double temp = tempKWilsonForSystem(clonedSystem, beta, lowPres);
       if (Double.isNaN(temp)) {
-	continue;
+        continue;
       }
       clonedSystem.setTemperature(temp);
       clonedSystem.setPressure(lowPres);
@@ -539,27 +541,27 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
       ThermodynamicOperations flashOps = new ThermodynamicOperations(clonedSystem);
       boolean converged = false;
       for (int attempt = 0; attempt < FIRST_POINT_ATTEMPTS; attempt++) {
-	try {
-	  double tempAttempt = temp + attempt * FIRST_POINT_STEP;
-	  clonedSystem.setTemperature(tempAttempt);
-	  if (beta < 0.5) {
-	    flashOps.bubblePointTemperatureFlash();
-	  } else {
-	    flashOps.dewPointTemperatureFlash();
-	  }
-	} catch (Exception ex) {
-	  continue;
-	}
-	double tempNy = clonedSystem.getTemperature();
-	if (!Double.isNaN(tempNy)) {
-	  temp = tempNy;
-	  converged = true;
-	  break;
-	}
+        try {
+          double tempAttempt = temp + attempt * FIRST_POINT_STEP;
+          clonedSystem.setTemperature(tempAttempt);
+          if (beta < 0.5) {
+            flashOps.bubblePointTemperatureFlash();
+          } else {
+            flashOps.dewPointTemperatureFlash();
+          }
+        } catch (Exception ex) {
+          continue;
+        }
+        double tempNy = clonedSystem.getTemperature();
+        if (!Double.isNaN(tempNy)) {
+          temp = tempNy;
+          converged = true;
+          break;
+        }
       }
       if (!converged) {
-	logger.debug("Could not converge first quality line point for beta={}", beta);
-	continue;
+        logger.debug("Could not converge first quality line point for beta={}", beta);
+        continue;
       }
 
       clonedSystem.setBeta(beta);
@@ -567,7 +569,7 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
       clonedSystem.setTemperature(temp);
 
       SysNewtonRhapsonPhaseEnvelope solver = new SysNewtonRhapsonPhaseEnvelope(clonedSystem, 2,
-	  clonedSystem.getPhase(0).getNumberOfComponents());
+          clonedSystem.getPhase(0).getNumberOfComponents());
       solver.dTmax = this.dTmax;
       solver.dPmax = this.dPmax;
       solver.setu();
@@ -581,64 +583,64 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
       double peakP = 0.0;
 
       for (int np = 1; np < MAX_QUALITY_LINE_POINTS; np++) {
-	try {
-	  solver.calcInc(np);
-	  solver.solve(np);
-	} catch (Exception e) {
-	  break;
-	}
+        try {
+          solver.calcInc(np);
+          solver.solve(np);
+        } catch (Exception e) {
+          break;
+        }
 
-	double currentT = clonedSystem.getTemperature();
-	double currentP = clonedSystem.getPressure();
+        double currentT = clonedSystem.getTemperature();
+        double currentP = clonedSystem.getPressure();
 
-	if (Double.isNaN(currentT) || Double.isNaN(currentP) || currentT < 1e-6 || currentP < 1e-6) {
-	  break;
-	}
+        if (Double.isNaN(currentT) || Double.isNaN(currentP) || currentT < 1e-6 || currentP < 1e-6) {
+          break;
+        }
 
-	// Track pressure peak for exit criteria
-	if (currentP > peakP) {
-	  peakP = currentP;
-	} else {
-	  pastPeak = true;
-	}
+        // Track pressure peak for exit criteria
+        if (currentP > peakP) {
+          peakP = currentP;
+        } else {
+          pastPeak = true;
+        }
 
-	// Exit if pressure exceeds envelope maximum
-	if (currentP > maxEnvelopeP * 1.05) {
-	  break;
-	}
-	// Exit if pressure drops below minimum after passing peak
-	if (pastPeak && currentP < minPressure) {
-	  break;
-	}
+        // Exit if pressure exceeds envelope maximum
+        if (currentP > maxEnvelopeP * 1.05) {
+          break;
+        }
+        // Exit if pressure drops below minimum after passing peak
+        if (pastPeak && currentP < minPressure) {
+          break;
+        }
 
-	qTemps.add(currentT);
-	qPress.add(currentP);
+        qTemps.add(currentT);
+        qPress.add(currentP);
 
-	// Compute volume fraction: betaV = beta * Vm_vap / (beta * Vm_vap + (1-beta) * Vm_liq)
-	double mwVap = clonedSystem.getPhase(0).getMolarMass();
-	double mwLiq = clonedSystem.getPhase(1).getMolarMass();
-	double densVap = clonedSystem.getPhase(0).getDensity();
-	double densLiq = clonedSystem.getPhase(1).getDensity();
+        // Compute volume fraction: betaV = beta * Vm_vap / (beta * Vm_vap + (1-beta) * Vm_liq)
+        double mwVap = clonedSystem.getPhase(0).getMolarMass();
+        double mwLiq = clonedSystem.getPhase(1).getMolarMass();
+        double densVap = clonedSystem.getPhase(0).getDensity();
+        double densLiq = clonedSystem.getPhase(1).getDensity();
 
-	double volFrac = 0.5;
-	if (densVap > 1e-10 && densLiq > 1e-10) {
-	  double vmVap = mwVap / densVap;
-	  double vmLiq = mwLiq / densLiq;
-	  volFrac = beta * vmVap / (beta * vmVap + (1.0 - beta) * vmLiq);
-	}
-	qVolFracs.add(volFrac);
+        double volFrac = 0.5;
+        if (densVap > 1e-10 && densLiq > 1e-10) {
+          double vmVap = mwVap / densVap;
+          double vmLiq = mwLiq / densLiq;
+          volFrac = beta * vmVap / (beta * vmVap + (1.0 - beta) * vmLiq);
+        }
+        qVolFracs.add(volFrac);
 
-	// Compute mass fraction: betaW = beta * Mw_vap / (beta * Mw_vap + (1-beta) * Mw_liq)
-	double massFrac = beta * mwVap / (beta * mwVap + (1.0 - beta) * mwLiq);
-	qMassFracs.add(massFrac);
+        // Compute mass fraction: betaW = beta * Mw_vap / (beta * Mw_vap + (1-beta) * Mw_liq)
+        double massFrac = beta * mwVap / (beta * mwVap + (1.0 - beta) * mwLiq);
+        qMassFracs.add(massFrac);
       }
 
       if (!qTemps.isEmpty()) {
-	String betaKey = formatBetaKey(beta);
-	qualityLineData.put("qualityT_" + betaKey, toDoubleArray(qTemps));
-	qualityLineData.put("qualityP_" + betaKey, toDoubleArray(qPress));
-	qualityLineData.put("qualityVolFrac_" + betaKey, toDoubleArray(qVolFracs));
-	qualityLineData.put("qualityMassFrac_" + betaKey, toDoubleArray(qMassFracs));
+        String betaKey = formatBetaKey(beta);
+        qualityLineData.put("qualityT_" + betaKey, toDoubleArray(qTemps));
+        qualityLineData.put("qualityP_" + betaKey, toDoubleArray(qPress));
+        qualityLineData.put("qualityVolFrac_" + betaKey, toDoubleArray(qVolFracs));
+        qualityLineData.put("qualityMassFrac_" + betaKey, toDoubleArray(qMassFracs));
       }
     }
   }
@@ -678,12 +680,12 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
 
     for (int i = 0; i < numberOfComponents; i++) {
       if (sys.getPhase(0).getComponent(i).getTC() > maxTc) {
-	maxTc = sys.getPhase(0).getComponent(i).getTC();
-	hcIdx = i;
+        maxTc = sys.getPhase(0).getComponent(i).getTC();
+        hcIdx = i;
       }
       if (sys.getPhase(0).getComponent(i).getTC() < minTc) {
-	minTc = sys.getPhase(0).getComponent(i).getTC();
-	lcIdx = i;
+        minTc = sys.getPhase(0).getComponent(i).getTC();
+        lcIdx = i;
       }
     }
 
@@ -699,35 +701,35 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
     try {
       double[] kw = new double[numberOfComponents];
       for (int iter = 0; iter < MAX_WILSON_ITERATIONS; iter++) {
-	double f = 0;
-	double df = 0;
-	for (int j = 0; j < numberOfComponents; j++) {
-	  kw[j] = sys.getPhase(0).getComponent(j).getPC() / pressure
-	      * Math.exp(WILSON_CONST * (1.0 + sys.getPhase(0).getComponent(j).getAcentricFactor())
-		  * (1.0 - sys.getPhase(0).getComponent(j).getTC() / tEst));
-	}
-	for (int j = 0; j < numberOfComponents; j++) {
-	  double zj = sys.getPhase(0).getComponent(j).getz();
-	  double tc = sys.getPhase(0).getComponent(j).getTC();
-	  double ac = sys.getPhase(0).getComponent(j).getAcentricFactor();
-	  if (beta < 0.5) {
-	    f += zj * kw[j];
-	    df += zj * kw[j] * WILSON_CONST * (1 + ac) * tc / (tEst * tEst);
-	  } else {
-	    f += zj / kw[j];
-	    df -= zj / kw[j] * WILSON_CONST * (1 + ac) * tc / (tEst * tEst);
-	  }
-	}
-	f -= 1.0;
-	if (Math.abs(f / df) > 0.1 * tEst) {
-	  tEst -= 0.001 * f / df;
-	} else {
-	  tEst -= f / df;
-	}
-	if (Math.abs(tEst - tOld) < 1e-5) {
-	  return tEst;
-	}
-	tOld = tEst;
+        double f = 0;
+        double df = 0;
+        for (int j = 0; j < numberOfComponents; j++) {
+          kw[j] = sys.getPhase(0).getComponent(j).getPC() / pressure
+              * Math.exp(WILSON_CONST * (1.0 + sys.getPhase(0).getComponent(j).getAcentricFactor())
+                  * (1.0 - sys.getPhase(0).getComponent(j).getTC() / tEst));
+        }
+        for (int j = 0; j < numberOfComponents; j++) {
+          double zj = sys.getPhase(0).getComponent(j).getz();
+          double tc = sys.getPhase(0).getComponent(j).getTC();
+          double ac = sys.getPhase(0).getComponent(j).getAcentricFactor();
+          if (beta < 0.5) {
+            f += zj * kw[j];
+            df += zj * kw[j] * WILSON_CONST * (1 + ac) * tc / (tEst * tEst);
+          } else {
+            f += zj / kw[j];
+            df -= zj / kw[j] * WILSON_CONST * (1 + ac) * tc / (tEst * tEst);
+          }
+        }
+        f -= 1.0;
+        if (Math.abs(f / df) > 0.1 * tEst) {
+          tEst -= 0.001 * f / df;
+        } else {
+          tEst -= f / df;
+        }
+        if (Math.abs(tEst - tOld) < 1e-5) {
+          return tEst;
+        }
+        tOld = tEst;
       }
     } catch (Exception ex) {
       lnPr = Math.log(pressure / refPc);
@@ -803,8 +805,8 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
     for (int i = 0; i < dewTempArray.length; i += dewStep) {
       int phases = checkPhaseCount(dewTempArray[i], dewPresArray[i]);
       if (phases > 2) {
-	threePhaseTemps.add(dewTempArray[i]);
-	threePhasePress.add(dewPresArray[i]);
+        threePhaseTemps.add(dewTempArray[i]);
+        threePhasePress.add(dewPresArray[i]);
       }
     }
 
@@ -812,8 +814,8 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
     for (int i = 0; i < bubTempArray.length; i += bubStep) {
       int phases = checkPhaseCount(bubTempArray[i], bubPresArray[i]);
       if (phases > 2) {
-	threePhaseTemps.add(bubTempArray[i]);
-	threePhasePress.add(bubPresArray[i]);
+        threePhaseTemps.add(bubTempArray[i]);
+        threePhasePress.add(bubPresArray[i]);
       }
     }
 
@@ -874,8 +876,8 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
     }
     for (int ic = 0; ic < system.getPhase(0).getNumberOfComponents(); ic++) {
       double Kwil = system.getPhase(0).getComponent(ic).getPC() / lowPres
-	  * Math.exp(WILSON_CONST * (1.0 + system.getPhase(0).getComponent(ic).getAcentricFactor())
-	      * (1.0 - system.getPhase(0).getComponent(ic).getTC() / restartTemp));
+          * Math.exp(WILSON_CONST * (1.0 + system.getPhase(0).getComponent(ic).getAcentricFactor())
+              * (1.0 - system.getPhase(0).getComponent(ic).getTC() / restartTemp));
       system.getPhase(0).getComponent(ic).setK(Kwil);
       system.getPhase(1).getComponent(ic).setK(Kwil);
     }
@@ -927,9 +929,9 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
   private List<EnvelopeSegment> buildSegments() {
     ArrayList<EnvelopeSegment> out = new ArrayList<EnvelopeSegment>();
     extractSegmentsInto(out, EnvelopeSegment.PhaseType.DEW, dewTempArray, dewPresArray, dewEnthalpyArray,
-	dewDensityArray, dewEntropyArray);
+        dewDensityArray, dewEntropyArray);
     extractSegmentsInto(out, EnvelopeSegment.PhaseType.BUBBLE, bubTempArray, bubPresArray, bubEnthalpyArray,
-	bubDensityArray, bubEntropyArray);
+        bubDensityArray, bubEntropyArray);
     return Collections.unmodifiableList(out);
   }
 
@@ -951,15 +953,15 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
     while (i < n) {
       // skip leading NaN sentinels
       while (i < n && Double.isNaN(T[i])) {
-	i++;
+        i++;
       }
       int start = i;
       while (i < n && !Double.isNaN(T[i])) {
-	i++;
+        i++;
       }
       int len = i - start;
       if (len <= 0) {
-	continue;
+        continue;
       }
       double[] segT = new double[len];
       double[] segP = new double[len];
@@ -1010,12 +1012,12 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
 
     for (int i = 0; i < numberOfComponents; i++) {
       if (system.getPhase(0).getComponent(i).getTC() > max) {
-	max = system.getPhase(0).getComponent(i).getTC();
-	hc = i;
+        max = system.getPhase(0).getComponent(i).getTC();
+        hc = i;
       }
       if (system.getPhase(0).getComponent(i).getTC() < min) {
-	min = system.getPhase(0).getComponent(i).getTC();
-	lc = i;
+        min = system.getPhase(0).getComponent(i).getTC();
+        lc = i;
       }
     }
 
@@ -1039,38 +1041,38 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
     try {
       double[] Kwil = new double[numberOfComponents];
       for (int i = 0; i < MAX_WILSON_ITERATIONS; i++) {
-	double initT = 0;
-	double dinitT = 0;
-	for (int j = 0; j < numberOfComponents; j++) {
-	  Kwil[j] = system.getPhase(0).getComponent(j).getPC() / P
-	      * Math.exp(WILSON_CONST * (1.0 + system.getPhase(0).getComponent(j).getAcentricFactor())
-		  * (1.0 - system.getPhase(0).getComponent(j).getTC() / Tstart));
-	}
+        double initT = 0;
+        double dinitT = 0;
+        for (int j = 0; j < numberOfComponents; j++) {
+          Kwil[j] = system.getPhase(0).getComponent(j).getPC() / P
+              * Math.exp(WILSON_CONST * (1.0 + system.getPhase(0).getComponent(j).getAcentricFactor())
+                  * (1.0 - system.getPhase(0).getComponent(j).getTC() / Tstart));
+        }
 
-	for (int j = 0; j < numberOfComponents; j++) {
-	  if (beta < 0.5) {
-	    initT += system.getPhase(0).getComponent(j).getz() * Kwil[j];
-	    dinitT += system.getPhase(0).getComponent(j).getz() * Kwil[j] * WILSON_CONST
-		* (1 + system.getPhase(0).getComponent(j).getAcentricFactor())
-		* system.getPhase(0).getComponent(j).getTC() / (Tstart * Tstart);
-	  } else {
-	    initT += system.getPhase(0).getComponent(j).getz() / Kwil[j];
-	    dinitT -= system.getPhase(0).getComponent(j).getz() / Kwil[j] * WILSON_CONST
-		* (1 + system.getPhase(0).getComponent(j).getAcentricFactor())
-		* system.getPhase(0).getComponent(j).getTC() / (Tstart * Tstart);
-	  }
-	}
+        for (int j = 0; j < numberOfComponents; j++) {
+          if (beta < 0.5) {
+            initT += system.getPhase(0).getComponent(j).getz() * Kwil[j];
+            dinitT += system.getPhase(0).getComponent(j).getz() * Kwil[j] * WILSON_CONST
+                * (1 + system.getPhase(0).getComponent(j).getAcentricFactor())
+                * system.getPhase(0).getComponent(j).getTC() / (Tstart * Tstart);
+          } else {
+            initT += system.getPhase(0).getComponent(j).getz() / Kwil[j];
+            dinitT -= system.getPhase(0).getComponent(j).getz() / Kwil[j] * WILSON_CONST
+                * (1 + system.getPhase(0).getComponent(j).getAcentricFactor())
+                * system.getPhase(0).getComponent(j).getTC() / (Tstart * Tstart);
+          }
+        }
 
-	initT -= 1.0;
-	if (Math.abs(initT / dinitT) > 0.1 * Tstart) {
-	  Tstart -= 0.001 * initT / dinitT;
-	} else {
-	  Tstart -= initT / dinitT;
-	}
-	if (Math.abs(Tstart - Tstartold) < 1e-5) {
-	  return Tstart;
-	}
-	Tstartold = Tstart;
+        initT -= 1.0;
+        if (Math.abs(initT / dinitT) > 0.1 * Tstart) {
+          Tstart -= 0.001 * initT / dinitT;
+        } else {
+          Tstart -= initT / dinitT;
+        }
+        if (Math.abs(Tstart - Tstartold) < 1e-5) {
+          return Tstart;
+        }
+        Tstartold = Tstart;
       }
     } catch (Exception ex) {
       lnPratio = Math.log(P / initPc);
@@ -1290,19 +1292,19 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
     }
     if (name.equals("criticalPoint1")) {
       if (!criticalPoints.isEmpty()) {
-	return criticalPoints.get(0);
+        return criticalPoints.get(0);
       }
       return new double[] { system.getTC(), system.getPC() };
     }
     if (name.equals("criticalPoint2")) {
       if (criticalPoints.size() >= 2) {
-	return criticalPoints.get(1);
+        return criticalPoints.get(1);
       }
       return new double[] { 0, 0 };
     }
     if (name.equals("criticalPoint3")) {
       if (criticalPoints.size() >= 3) {
-	return criticalPoints.get(2);
+        return criticalPoints.get(2);
       }
       return new double[] { 0, 0 };
     }

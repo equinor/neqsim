@@ -62,7 +62,7 @@ public class ProcessVariableAccessor {
     try {
       String[] parts = parsePath(path);
       if (parts.length < 2) {
-	throw new IllegalArgumentException("Invalid path format: " + path);
+        throw new IllegalArgumentException("Invalid path format: " + path);
       }
 
       Object target = resolveTarget(parts, parts.length - 1);
@@ -71,10 +71,10 @@ public class ProcessVariableAccessor {
       // Handle indexed access
       int arrayIndex = -1;
       if (propertyName.contains("[")) {
-	int bracketStart = propertyName.indexOf('[');
-	int bracketEnd = propertyName.indexOf(']');
-	arrayIndex = Integer.parseInt(propertyName.substring(bracketStart + 1, bracketEnd));
-	propertyName = propertyName.substring(0, bracketStart);
+        int bracketStart = propertyName.indexOf('[');
+        int bracketEnd = propertyName.indexOf(']');
+        arrayIndex = Integer.parseInt(propertyName.substring(bracketStart + 1, bracketEnd));
+        propertyName = propertyName.substring(0, bracketStart);
       }
 
       String getterName = "get" + capitalize(propertyName);
@@ -82,16 +82,16 @@ public class ProcessVariableAccessor {
       // First try getter without parameters
       Method getter = findMethodNoParams(target.getClass(), getterName);
       if (getter != null) {
-	Object result = getter.invoke(target);
-	return extractNumericValue(result, arrayIndex, path);
+        Object result = getter.invoke(target);
+        return extractNumericValue(result, arrayIndex, path);
       }
 
       // Try getter with String parameter (unit) using default unit
       Method unitGetter = findMethod(target.getClass(), getterName, String.class);
       if (unitGetter != null) {
-	String defaultUnit = getDefaultUnit(propertyName);
-	Object result = unitGetter.invoke(target, defaultUnit);
-	return extractNumericValue(result, arrayIndex, path);
+        String defaultUnit = getDefaultUnit(propertyName);
+        Object result = unitGetter.invoke(target, defaultUnit);
+        return extractNumericValue(result, arrayIndex, path);
       }
 
       throw new IllegalArgumentException("Cannot find getter for: " + propertyName);
@@ -114,7 +114,7 @@ public class ProcessVariableAccessor {
       return (Double) result;
     } else if (result instanceof double[]) {
       if (arrayIndex >= 0) {
-	return ((double[]) result)[arrayIndex];
+        return ((double[]) result)[arrayIndex];
       }
       throw new IllegalArgumentException("Array access requires index: " + path);
     } else if (result instanceof Number) {
@@ -133,7 +133,7 @@ public class ProcessVariableAccessor {
     String lowerName = propertyName.toLowerCase();
     for (Map.Entry<String, String> entry : DEFAULT_UNITS.entrySet()) {
       if (lowerName.contains(entry.getKey())) {
-	return entry.getValue();
+        return entry.getValue();
       }
     }
     return "";
@@ -166,7 +166,7 @@ public class ProcessVariableAccessor {
     try {
       String[] parts = parsePath(path);
       if (parts.length < 2) {
-	throw new IllegalArgumentException("Invalid path format: " + path);
+        throw new IllegalArgumentException("Invalid path format: " + path);
       }
 
       Object target = resolveTarget(parts, parts.length - 1);
@@ -176,10 +176,10 @@ public class ProcessVariableAccessor {
       // Try getter with String parameter (unit)
       Method unitGetter = findMethod(target.getClass(), getterName, String.class);
       if (unitGetter != null) {
-	Object result = unitGetter.invoke(target, unit);
-	if (result instanceof Number) {
-	  return ((Number) result).doubleValue();
-	}
+        Object result = unitGetter.invoke(target, unit);
+        if (result instanceof Number) {
+          return ((Number) result).doubleValue();
+        }
       }
 
       // Fall back to getter without unit
@@ -200,7 +200,7 @@ public class ProcessVariableAccessor {
     try {
       String[] parts = parsePath(path);
       if (parts.length < 2) {
-	throw new IllegalArgumentException("Invalid path format: " + path);
+        throw new IllegalArgumentException("Invalid path format: " + path);
       }
 
       Object target = resolveTarget(parts, parts.length - 1);
@@ -209,10 +209,10 @@ public class ProcessVariableAccessor {
       // Handle indexed access
       int arrayIndex = -1;
       if (propertyName.contains("[")) {
-	int bracketStart = propertyName.indexOf('[');
-	int bracketEnd = propertyName.indexOf(']');
-	arrayIndex = Integer.parseInt(propertyName.substring(bracketStart + 1, bracketEnd));
-	propertyName = propertyName.substring(0, bracketStart);
+        int bracketStart = propertyName.indexOf('[');
+        int bracketEnd = propertyName.indexOf(']');
+        arrayIndex = Integer.parseInt(propertyName.substring(bracketStart + 1, bracketEnd));
+        propertyName = propertyName.substring(0, bracketStart);
       }
 
       // Find setter method
@@ -221,23 +221,23 @@ public class ProcessVariableAccessor {
       // First try setter with just double parameter
       Method setter = findMethod(target.getClass(), setterName, double.class);
       if (setter != null) {
-	setter.invoke(target, value);
-	return;
+        setter.invoke(target, value);
+        return;
       }
 
       // Try Double
       setter = findMethod(target.getClass(), setterName, Double.class);
       if (setter != null) {
-	setter.invoke(target, value);
-	return;
+        setter.invoke(target, value);
+        return;
       }
 
       // Try setter with (double, String) parameter using default unit
       setter = findMethod(target.getClass(), setterName, double.class, String.class);
       if (setter != null) {
-	String defaultUnit = getDefaultUnit(propertyName);
-	setter.invoke(target, value, defaultUnit);
-	return;
+        String defaultUnit = getDefaultUnit(propertyName);
+        setter.invoke(target, value, defaultUnit);
+        return;
       }
 
       throw new IllegalArgumentException("Cannot find setter for: " + propertyName);
@@ -260,7 +260,7 @@ public class ProcessVariableAccessor {
     try {
       String[] parts = parsePath(path);
       if (parts.length < 2) {
-	throw new IllegalArgumentException("Invalid path format: " + path);
+        throw new IllegalArgumentException("Invalid path format: " + path);
       }
 
       Object target = resolveTarget(parts, parts.length - 1);
@@ -271,10 +271,10 @@ public class ProcessVariableAccessor {
       Method setter = findMethod(target.getClass(), setterName, double.class, String.class);
 
       if (setter != null) {
-	setter.invoke(target, value, unit);
+        setter.invoke(target, value, unit);
       } else {
-	// Fall back to setter without unit
-	setValue(path, value);
+        // Fall back to setter without unit
+        setValue(path, value);
       }
     } catch (Exception e) {
       throw new RuntimeException("Failed to set value for path: " + path + " with unit: " + unit, e);
@@ -328,10 +328,10 @@ public class ProcessVariableAccessor {
 
       // Handle indexed access in intermediate parts
       if (part.contains("[")) {
-	int bracketStart = part.indexOf('[');
-	int bracketEnd = part.indexOf(']');
-	int index = Integer.parseInt(part.substring(bracketStart + 1, bracketEnd));
-	part = part.substring(0, bracketStart);
+        int bracketStart = part.indexOf('[');
+        int bracketEnd = part.indexOf(']');
+        int index = Integer.parseInt(part.substring(bracketStart + 1, bracketEnd));
+        part = part.substring(0, bracketStart);
       }
 
       // Try getter
@@ -339,18 +339,18 @@ public class ProcessVariableAccessor {
       Method getter = findMethodNoParams(current.getClass(), getterName);
 
       if (getter == null) {
-	// Try direct method
-	getter = findMethodNoParams(current.getClass(), part);
+        // Try direct method
+        getter = findMethodNoParams(current.getClass(), part);
       }
 
       if (getter == null) {
-	throw new IllegalArgumentException("Cannot resolve path part: " + part);
+        throw new IllegalArgumentException("Cannot resolve path part: " + part);
       }
 
       try {
-	current = getter.invoke(current);
+        current = getter.invoke(current);
       } catch (Exception e) {
-	throw new RuntimeException("Failed to navigate path at: " + part, e);
+        throw new RuntimeException("Failed to navigate path at: " + part, e);
       }
     }
 
@@ -371,11 +371,11 @@ public class ProcessVariableAccessor {
     } catch (NoSuchMethodException e) {
       // Try superclasses and interfaces
       for (Method m : clazz.getMethods()) {
-	if (m.getName().equalsIgnoreCase(name)) {
-	  if (paramTypes.length == 0 || matchesParams(m, paramTypes)) {
-	    return m;
-	  }
-	}
+        if (m.getName().equalsIgnoreCase(name)) {
+          if (paramTypes.length == 0 || matchesParams(m, paramTypes)) {
+            return m;
+          }
+        }
       }
       return null;
     }
@@ -395,7 +395,7 @@ public class ProcessVariableAccessor {
     }
     for (int i = 0; i < paramTypes.length; i++) {
       if (!methodParams[i].isAssignableFrom(paramTypes[i]) && !isBoxedEquivalent(methodParams[i], paramTypes[i])) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -410,7 +410,7 @@ public class ProcessVariableAccessor {
    */
   private boolean isBoxedEquivalent(Class<?> a, Class<?> b) {
     return (a == double.class && b == Double.class) || (a == Double.class && b == double.class)
-	|| (a == int.class && b == Integer.class) || (a == Integer.class && b == int.class);
+        || (a == int.class && b == Integer.class) || (a == Integer.class && b == int.class);
   }
 
   /**

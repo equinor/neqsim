@@ -30,7 +30,7 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
   @Override
   public void run() {
     if (system.getPhase(0).getNumberOfComponents() == 1
-	&& system.getPressure() >= system.getPhase(0).getComponent(0).getPC()) {
+        && system.getPressure() >= system.getPhase(0).getComponent(0).getPC()) {
       // throw new IllegalStateException("System is supercritical");
     }
 
@@ -44,16 +44,16 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
     system.setBeta(0, 1e-10);
     // need to fix this close to critical point
     if (system.getPhase(0).getNumberOfComponents() == 1
-	&& system.getPressure() < system.getPhase(0).getComponent(0).getPC()) {
+        && system.getPressure() < system.getPhase(0).getComponent(0).getPC()) {
       double tGuess = system.getPhase(0).getComponent(0).getAntoineVaporTemperature(system.getPressure());
       ComponentInterface comp = system.getPhase(0).getComponent(0);
       if (Double.isNaN(tGuess) || tGuess < comp.getTriplePointTemperature() || tGuess > comp.getTC()) {
-	double tTrip = comp.getTriplePointTemperature();
-	double tCrit = comp.getTC();
-	double pTrip = comp.getTriplePointPressure();
-	double pCrit = comp.getPC();
-	double frac = (system.getPressure() - pTrip) / (pCrit - pTrip);
-	tGuess = tTrip + frac * (tCrit - tTrip);
+        double tTrip = comp.getTriplePointTemperature();
+        double tCrit = comp.getTC();
+        double pTrip = comp.getTriplePointPressure();
+        double pCrit = comp.getPC();
+        double frac = (system.getPressure() - pTrip) / (pCrit - pTrip);
+        tGuess = tTrip + frac * (tCrit - tTrip);
       }
       system.setTemperature(tGuess);
     }
@@ -66,10 +66,10 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
     for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
       system.getPhases()[1].getComponent(i).setx(system.getPhases()[0].getComponent(i).getz());
       if (system.getPhases()[0].getComponent(i).getIonicCharge() != 0) {
-	system.getPhases()[0].getComponent(i).setx(1e-40);
+        system.getPhases()[0].getComponent(i).setx(1e-40);
       } else {
-	system.getPhases()[0].getComponent(i)
-	    .setx(system.getPhases()[0].getComponent(i).getK() * system.getPhases()[1].getComponent(i).getz());
+        system.getPhases()[0].getComponent(i)
+            .setx(system.getPhases()[0].getComponent(i).getK() * system.getPhases()[1].getComponent(i).getz());
       }
     }
     ytotal = 0.0;
@@ -82,43 +82,43 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
     do {
       iterations++;
       for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-	system.getPhases()[0].getComponent(i).setx(system.getPhases()[0].getComponent(i).getx() / ytotal);
+        system.getPhases()[0].getComponent(i).setx(system.getPhases()[0].getComponent(i).getx() / ytotal);
       }
       if (system.isChemicalSystem() && (iterations % 2) == 0) {
-	system.getChemicalReactionOperations().solveChemEq(1);
+        system.getChemicalReactionOperations().solveChemEq(1);
       }
       system.init(1);
       oldTemp = system.getTemperature();
       ktot = 0.0;
       for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
-	do {
-	  yold = system.getPhases()[0].getComponent(i).getx();
-	  if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-	      || system.getPhase(0).getComponent(i).isIsIon()) {
-	    system.getPhases()[0].getComponent(i).setK(1e-40);
-	  } else {
-	    system.getPhases()[0].getComponent(i)
-		.setK(Math.exp(Math.log(system.getPhases()[1].getComponent(i).getFugacityCoefficient())
-		    - Math.log(system.getPhases()[0].getComponent(i).getFugacityCoefficient())));
-	  }
-	  system.getPhases()[1].getComponent(i).setK(system.getPhases()[0].getComponent(i).getK());
-	  system.getPhases()[0].getComponent(i)
-	      .setx(system.getPhases()[0].getComponent(i).getK() * system.getPhases()[1].getComponent(i).getz());
-	  // logger.info("y err " +
-	  // Math.abs(system.getPhases()[0].getComponent(i).getx()-yold));
-	} while (Math.abs(system.getPhases()[0].getComponent(i).getx() - yold) > 1e-4);
+        do {
+          yold = system.getPhases()[0].getComponent(i).getx();
+          if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
+              || system.getPhase(0).getComponent(i).isIsIon()) {
+            system.getPhases()[0].getComponent(i).setK(1e-40);
+          } else {
+            system.getPhases()[0].getComponent(i)
+                .setK(Math.exp(Math.log(system.getPhases()[1].getComponent(i).getFugacityCoefficient())
+                    - Math.log(system.getPhases()[0].getComponent(i).getFugacityCoefficient())));
+          }
+          system.getPhases()[1].getComponent(i).setK(system.getPhases()[0].getComponent(i).getK());
+          system.getPhases()[0].getComponent(i)
+              .setx(system.getPhases()[0].getComponent(i).getK() * system.getPhases()[1].getComponent(i).getz());
+          // logger.info("y err " +
+          // Math.abs(system.getPhases()[0].getComponent(i).getx()-yold));
+        } while (Math.abs(system.getPhases()[0].getComponent(i).getx() - yold) > 1e-4);
 
-	ktot += Math.abs(system.getPhases()[1].getComponent(i).getK() - 1.0);
+        ktot += Math.abs(system.getPhases()[1].getComponent(i).getK() - 1.0);
       }
       ytotal = 0.0;
       for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-	ytotal += system.getPhases()[0].getComponent(i).getx();
+        ytotal += system.getPhases()[0].getComponent(i).getx();
       }
       if (ytotal > 1.2) {
-	ytotal = 1.2;
+        ytotal = 1.2;
       }
       if (ytotal < 0.8) {
-	ytotal = 0.8;
+        ytotal = 0.8;
       }
       // logger.info("y tot " + ytotal);
 
@@ -133,7 +133,7 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
       // }
       // logger.info("temperature " + system.getTemperature());
     } while ((((Math.abs(ytotal) - 1.0) > 1e-9) || Math.abs(oldTemp - system.getTemperature()) / oldTemp > 1e-8)
-	&& (iterations < maxNumberOfIterations));
+        && (iterations < maxNumberOfIterations));
     // logger.info("iter " + iterations + " ktot " + ktot);
     if (Math.abs(ytotal - 1.0) >= 1e-5 || ktot < 1e-3 && system.getPhase(0).getNumberOfComponents() > 1) {
       setSuperCritical(true);
@@ -141,7 +141,7 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
     if (system.getPhase(0).getNumberOfComponents() == 1) {
       ComponentInterface comp = system.getPhase(0).getComponent(0);
       if (system.getPressure() >= comp.getPC() || system.getTemperature() >= comp.getTC()) {
-	setSuperCritical(true);
+        setSuperCritical(true);
       }
     }
     if (isSuperCritical()) {

@@ -74,18 +74,18 @@ public class PFCTViscosityMethod extends Viscosity {
     double Mmtemp = 0.0;
     for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
       for (int j = 0; j < phase.getPhase().getNumberOfComponents(); j++) {
-	double tempVar = phase.getPhase().getComponent(i).getx() * phase.getPhase().getComponent(j).getx()
-	    * Math.pow(
-		Math.pow(phase.getPhase().getComponent(i).getTC() / phase.getPhase().getComponent(i).getPC(), 1.0 / 3.0)
-		    + Math.pow(phase.getPhase().getComponent(j).getTC() / phase.getPhase().getComponent(j).getPC(),
-			1.0 / 3.0),
-		3.0);
-	tempTC1 += tempVar
-	    * Math.sqrt(phase.getPhase().getComponent(i).getTC() * phase.getPhase().getComponent(j).getTC());
-	tempTC2 += tempVar;
+        double tempVar = phase.getPhase().getComponent(i).getx() * phase.getPhase().getComponent(j).getx()
+            * Math.pow(
+                Math.pow(phase.getPhase().getComponent(i).getTC() / phase.getPhase().getComponent(i).getPC(), 1.0 / 3.0)
+                    + Math.pow(phase.getPhase().getComponent(j).getTC() / phase.getPhase().getComponent(j).getPC(),
+                        1.0 / 3.0),
+                3.0);
+        tempTC1 += tempVar
+            * Math.sqrt(phase.getPhase().getComponent(i).getTC() * phase.getPhase().getComponent(j).getTC());
+        tempTC2 += tempVar;
       }
       Mwtemp += phase.getPhase().getComponent(i).getx()
-	  * Math.pow(phase.getPhase().getComponent(i).getMolarMass(), 2.0);
+          * Math.pow(phase.getPhase().getComponent(i).getMolarMass(), 2.0);
       Mmtemp += phase.getPhase().getComponent(i).getx() * phase.getPhase().getComponent(i).getMolarMass();
     }
 
@@ -94,9 +94,9 @@ public class PFCTViscosityMethod extends Viscosity {
     Mmix = (Mmtemp + 0.291 * (Mwtemp / Mmtemp - Mmtemp)) * 1e3; // phase.getPhase().getMolarMass();
 
     referenceSystem.setTemperature(
-	phase.getPhase().getTemperature() * referenceSystem.getPhase(0).getComponent(0).getTC() / TCmix);
+        phase.getPhase().getTemperature() * referenceSystem.getPhase(0).getComponent(0).getTC() / TCmix);
     referenceSystem
-	.setPressure(phase.getPhase().getPressure() * referenceSystem.getPhase(0).getComponent(0).getPC() / PCmix);
+        .setPressure(phase.getPhase().getPressure() * referenceSystem.getPhase(0).getComponent(0).getPC() / PCmix);
     referenceSystem.init(1);
 
     PhaseType phaseType = phase.getPhase().getType();
@@ -111,15 +111,15 @@ public class PFCTViscosityMethod extends Viscosity {
     alfa0 = 1.0 + 8.374e-4 * Math.pow(redDens, 4.265);
     // System.out.println("func " + 7.475e-5*Math.pow(16.043, 0.8579));
     double T0 = phase.getPhase().getTemperature() * referenceSystem.getPhase(0).getComponent(0).getTC() / TCmix * alfa0
-	/ alfaMix;
+        / alfaMix;
     double P0 = phase.getPhase().getPressure() * referenceSystem.getPhase(0).getComponent(0).getPC() / PCmix * alfa0
-	/ alfaMix;
+        / alfaMix;
 
     double refVisosity = getRefComponentViscosity(T0, P0);
     // System.out.println("m/mix " + Mmix/M0);
     // System.out.println("a/amix " + alfaMix/alfa0);
     double viscosity = calculateCorrespondingStatesViscosity(refVisosity, TCmix, Tc0, PCmix, Pc0, Mmix, M0, alfaMix,
-	alfa0);
+        alfa0);
     return viscosity;
   }
 
@@ -141,11 +141,11 @@ public class PFCTViscosityMethod extends Viscosity {
       double referenceCriticalTemperature, double mixtureCriticalPressure, double referenceCriticalPressure,
       double mixtureMolarMass, double referenceMolarMass, double mixtureAlpha, double referenceAlpha) {
     return referenceViscosity
-	* Math.pow(mixtureCriticalTemperature / referenceCriticalTemperature,
-	    -1.0 / 6.0 * cspViscosityCorrectionFactors[0])
-	* Math.pow(mixtureCriticalPressure / referenceCriticalPressure, 2.0 / 3.0 * cspViscosityCorrectionFactors[1])
-	* Math.pow(mixtureMolarMass / referenceMolarMass, 0.5 * cspViscosityCorrectionFactors[2])
-	* Math.pow(mixtureAlpha / referenceAlpha, cspViscosityCorrectionFactors[3]);
+        * Math.pow(mixtureCriticalTemperature / referenceCriticalTemperature,
+            -1.0 / 6.0 * cspViscosityCorrectionFactors[0])
+        * Math.pow(mixtureCriticalPressure / referenceCriticalPressure, 2.0 / 3.0 * cspViscosityCorrectionFactors[1])
+        * Math.pow(mixtureMolarMass / referenceMolarMass, 0.5 * cspViscosityCorrectionFactors[2])
+        * Math.pow(mixtureAlpha / referenceAlpha, cspViscosityCorrectionFactors[3]);
   }
 
   /**
@@ -243,9 +243,9 @@ public class PFCTViscosityMethod extends Viscosity {
     molDens = referenceSystem.getPhase(phaseType).getDensity() * 1e-3;
 
     double viscRefO = GVcoef[0] * Math.pow(temp, -1.0) + GVcoef[1] * Math.pow(temp, -2.0 / 3.0)
-	+ GVcoef[2] * Math.pow(temp, -1.0 / 3.0) + GVcoef[3] + GVcoef[4] * Math.pow(temp, 1.0 / 3.0)
-	+ GVcoef[5] * Math.pow(temp, 2.0 / 3.0) + GVcoef[6] * temp + GVcoef[7] * Math.pow(temp, 4.0 / 3.0)
-	+ GVcoef[8] * Math.pow(temp, 5.0 / 3.0);
+        + GVcoef[2] * Math.pow(temp, -1.0 / 3.0) + GVcoef[3] + GVcoef[4] * Math.pow(temp, 1.0 / 3.0)
+        + GVcoef[5] * Math.pow(temp, 2.0 / 3.0) + GVcoef[6] * temp + GVcoef[7] * Math.pow(temp, 4.0 / 3.0)
+        + GVcoef[8] * Math.pow(temp, 5.0 / 3.0);
 
     // System.out.println("ref visc0 " + viscRefO);
 
@@ -254,7 +254,7 @@ public class PFCTViscosityMethod extends Viscosity {
 
     double temp1 = Math.pow(molDens, 0.1) * (viscRefJ[1] + viscRefJ[2] / Math.pow(temp, 3.0 / 2.0));
     double temp2 = redMolDens * Math.pow(molDens, 0.5)
-	* (viscRefJ[4] + viscRefJ[5] / temp + viscRefJ[6] / Math.pow(temp, 2.0));
+        * (viscRefJ[4] + viscRefJ[5] / temp + viscRefJ[6] / Math.pow(temp, 2.0));
     double temp3 = Math.exp(temp1 + temp2);
     double viscRef2 = visRefE * Math.exp(viscRefJ[0] + viscRefJ[3] / temp) * (temp3 - 1.0);
     // System.out.println("ref visc2 " + viscRef2);

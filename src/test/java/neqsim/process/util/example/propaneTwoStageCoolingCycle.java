@@ -1,5 +1,7 @@
 package neqsim.process.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -9,8 +11,6 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * propaneTwoStageCoolingCycle class.
@@ -127,7 +127,7 @@ public class propaneTwoStageCoolingCycle {
     logger.info("cooler3 mass flow " + cooler3.getOutletStream().getFluid().getFlowRate("kg/hr") + " kg/hr");
 
     logger.info(
-	"delta enthalpy " + (stream_3.getFluid().getEnthalpy() - JTvalve2.getOutletStream().getFluid().getEnthalpy()));
+        "delta enthalpy " + (stream_3.getFluid().getEnthalpy() - JTvalve2.getOutletStream().getFluid().getEnthalpy()));
 
     logger.info("cooler2 duty " + cooler2.getEnergyInput() / 1.0e3 + " kW");
     logger.info("cooler3 duty " + cooler3.getEnergyInput() / 1.0e3 + " kW");

@@ -50,9 +50,9 @@ public class GasTurbineUnitTest {
     GasTurbineSpec lm2500 = GasTurbineCatalog.get("LM2500");
     assertNotNull(lm2500);
     assertTrue(lm2500.getRatedPowerMW() > 15.0 && lm2500.getRatedPowerMW() < 40.0,
-	"LM2500 power " + lm2500.getRatedPowerMW() + " MW out of expected range");
+        "LM2500 power " + lm2500.getRatedPowerMW() + " MW out of expected range");
     assertTrue(lm2500.getHeatRateKJPerKWh() > 8000.0 && lm2500.getHeatRateKJPerKWh() < 12000.0,
-	"LM2500 heat rate out of expected range");
+        "LM2500 heat rate out of expected range");
   }
 
   @Test
@@ -67,11 +67,11 @@ public class GasTurbineUnitTest {
     GasTurbineSpec spec = GasTurbineCatalog.get("LM2500");
     GasTurbinePerformanceMap map = GasTurbinePerformanceMap.fromSpec(spec);
     double powerAtIso = map.getAvailablePower(spec.getRatedPowerW(), GasTurbinePerformanceMap.T_ISO_K,
-	GasTurbinePerformanceMap.P_ISO_BARA);
+        GasTurbinePerformanceMap.P_ISO_BARA);
     assertEquals(spec.getRatedPowerW(), powerAtIso, 1.0e-3, "At ISO conditions available power should equal rated");
     double hrAt100 = map.getHeatRate(spec.getHeatRateKJPerKWh(), 1.0, GasTurbinePerformanceMap.T_ISO_K);
     assertEquals(spec.getHeatRateKJPerKWh(), hrAt100, spec.getHeatRateKJPerKWh() * 0.02,
-	"Heat rate at 100% load should be near ISO value");
+        "Heat rate at 100% load should be near ISO value");
   }
 
   @Test
@@ -116,11 +116,11 @@ public class GasTurbineUnitTest {
     gt.setDemandedPower(15.0e6); // 15 MW
     gt.run();
     assertTrue(gt.getLoadFraction() > 0.4 && gt.getLoadFraction() < 1.0,
-	"Load fraction " + gt.getLoadFraction() + " out of range");
+        "Load fraction " + gt.getLoadFraction() + " out of range");
     assertTrue(gt.getFuelMassFlowKgPerS() > 0.0);
     assertTrue(gt.getCO2EmissionKgPerS() > 0.0);
     assertTrue(gt.getThermalEfficiency() > 0.25 && gt.getThermalEfficiency() < 0.45,
-	"Efficiency " + gt.getThermalEfficiency() + " out of plausible range");
+        "Efficiency " + gt.getThermalEfficiency() + " out of plausible range");
   }
 
   @Test
@@ -186,7 +186,7 @@ public class GasTurbineUnitTest {
     int feasibleYears = 0;
     for (LateLifeRetrofitStudy.YearResult yr : res.years) {
       if (yr.baselineFeasible && yr.retrofitFeasible) {
-	feasibleYears++;
+        feasibleYears++;
       }
     }
     assertTrue(feasibleYears >= 5, "Need at least 5 mutually feasible years for the comparison, got " + feasibleYears);

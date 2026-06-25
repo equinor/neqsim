@@ -107,15 +107,15 @@ public class LNGTankLayer implements Serializable {
       // Extract composition
       composition.clear();
       for (int i = 0; i < liqPhase.getNumberOfComponents(); i++) {
-	String name = liqPhase.getComponent(i).getComponentName();
-	double xFrac = liqPhase.getComponent(i).getx();
-	composition.put(name, xFrac);
+        String name = liqPhase.getComponent(i).getComponentName();
+        double xFrac = liqPhase.getComponent(i).getx();
+        composition.put(name, xFrac);
       }
 
       // Calculate volume from mass and density
       if (density > 0) {
-	double mass = totalMoles * molarMass;
-	this.volume = mass / density;
+        double mass = totalMoles * molarMass;
+        this.volume = mass / density;
       }
     }
   }
@@ -176,7 +176,7 @@ public class LNGTankLayer implements Serializable {
       double yVap = vaporComposition.containsKey(comp) ? vaporComposition.get(comp) : 0.0;
       double newX = (xOld * totalMoles - yVap * molesToRemove) / remainingMoles;
       if (newX < 0) {
-	newX = 0;
+        newX = 0;
       }
       newComp.put(comp, newX);
       sumX += newX;
@@ -185,7 +185,7 @@ public class LNGTankLayer implements Serializable {
     // Normalize
     if (sumX > 0) {
       for (Map.Entry<String, Double> entry : newComp.entrySet()) {
-	entry.setValue(entry.getValue() / sumX);
+        entry.setValue(entry.getValue() / sumX);
       }
     }
 

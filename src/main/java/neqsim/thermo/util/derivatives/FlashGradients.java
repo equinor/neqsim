@@ -107,7 +107,7 @@ public class FlashGradients implements Serializable {
     this.dBetadP = dBetadP;
     this.dBetadz = Arrays.copyOf(dBetadz, dBetadz.length);
     this.componentNames = componentNames != null ? Arrays.copyOf(componentNames, componentNames.length)
-	: new String[numberOfComponents];
+        : new String[numberOfComponents];
     this.valid = true;
     this.errorMessage = null;
   }
@@ -383,7 +383,7 @@ public class FlashGradients implements Serializable {
     // dK/dz (flattened)
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < numberOfComponents; j++) {
-	result[idx++] = dKdz[i][j];
+        result[idx++] = dKdz[i][j];
       }
     }
     // dβ/dz

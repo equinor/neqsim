@@ -101,7 +101,7 @@ public final class ExperimentalDataSet implements Serializable {
   public ExperimentalDataSet addPoint(double measuredValue, double standardDeviation, double[] dependentValues,
       String reference, String description) {
     return addPoint(
-	new ExperimentalDataPoint(measuredValue, standardDeviation, dependentValues, reference, description));
+        new ExperimentalDataPoint(measuredValue, standardDeviation, dependentValues, reference, description));
   }
 
   /**
@@ -140,9 +140,9 @@ public final class ExperimentalDataSet implements Serializable {
     ExperimentalDataSet validation = createEmptyCopy(name + " validation");
     for (int i = 0; i < points.size(); i++) {
       if (i < trainingCount) {
-	training.addPoint(points.get(i));
+        training.addPoint(points.get(i));
       } else {
-	validation.addPoint(points.get(i));
+        validation.addPoint(points.get(i));
       }
     }
     return new ExperimentalDataSet[] { training, validation };
@@ -246,7 +246,7 @@ public final class ExperimentalDataSet implements Serializable {
   public static ExperimentalDataSet fromCsv(File file, String name, String responseName, String responseUnit,
       String[] dependentVariableNames, String[] dependentVariableUnits) throws IOException {
     return ExperimentalDataReader.fromCsv(file, name, responseName, responseUnit, dependentVariableNames,
-	dependentVariableUnits);
+        dependentVariableUnits);
   }
 
   /**

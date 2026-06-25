@@ -260,8 +260,8 @@ public class BowTieModel implements Serializable {
     public void setSif(SafetyInstrumentedFunction sif) {
       this.sif = sif;
       if (sif != null) {
-	this.pfd = sif.getPfdAvg();
-	this.effectiveness = 1.0 - pfd;
+        this.pfd = sif.getPfdAvg();
+        this.effectiveness = 1.0 - pfd;
       }
     }
 
@@ -295,8 +295,8 @@ public class BowTieModel implements Serializable {
       map.put("rrf", getRRF());
       map.put("functional", functional);
       if (sif != null) {
-	map.put("sifName", sif.getName());
-	map.put("sil", sif.getSil());
+        map.put("sifName", sif.getName());
+        map.put("sil", sif.getSil());
       }
       map.put("owner", owner);
       map.put("verificationStatus", verificationStatus);
@@ -354,8 +354,8 @@ public class BowTieModel implements Serializable {
   public void linkBarrierToThreat(String threatId, String barrierId) {
     for (Threat threat : threats) {
       if (threat.getId().equals(threatId)) {
-	threat.linkBarrier(barrierId);
-	break;
+        threat.linkBarrier(barrierId);
+        break;
       }
     }
   }
@@ -369,8 +369,8 @@ public class BowTieModel implements Serializable {
   public void linkBarrierToConsequence(String consequenceId, String barrierId) {
     for (Consequence consequence : consequences) {
       if (consequence.getId().equals(consequenceId)) {
-	consequence.linkBarrier(barrierId);
-	break;
+        consequence.linkBarrier(barrierId);
+        break;
       }
     }
   }
@@ -383,7 +383,7 @@ public class BowTieModel implements Serializable {
     unmitigatedFrequency = 0;
     for (Threat threat : threats) {
       if (threat.isActive()) {
-	unmitigatedFrequency += threat.getFrequency();
+        unmitigatedFrequency += threat.getFrequency();
       }
     }
 
@@ -391,9 +391,9 @@ public class BowTieModel implements Serializable {
     mitigatedFrequency = unmitigatedFrequency;
     for (Barrier barrier : barriers) {
       if (barrier.getBarrierType() == BarrierType.PREVENTION || barrier.getBarrierType() == BarrierType.BOTH) {
-	if (barrier.isFunctional()) {
-	  mitigatedFrequency *= barrier.getPfd();
-	}
+        if (barrier.isFunctional()) {
+          mitigatedFrequency *= barrier.getPfd();
+        }
       }
     }
 
@@ -401,7 +401,7 @@ public class BowTieModel implements Serializable {
     maxSeverity = 0;
     for (Consequence consequence : consequences) {
       if (consequence.getSeverity() > maxSeverity) {
-	maxSeverity = consequence.getSeverity();
+        maxSeverity = consequence.getSeverity();
       }
     }
   }
@@ -415,7 +415,7 @@ public class BowTieModel implements Serializable {
     List<Barrier> prevention = new ArrayList<>();
     for (Barrier barrier : barriers) {
       if (barrier.getBarrierType() == BarrierType.PREVENTION || barrier.getBarrierType() == BarrierType.BOTH) {
-	prevention.add(barrier);
+        prevention.add(barrier);
       }
     }
     return prevention;
@@ -430,7 +430,7 @@ public class BowTieModel implements Serializable {
     List<Barrier> mitigation = new ArrayList<>();
     for (Barrier barrier : barriers) {
       if (barrier.getBarrierType() == BarrierType.MITIGATION || barrier.getBarrierType() == BarrierType.BOTH) {
-	mitigation.add(barrier);
+        mitigation.add(barrier);
       }
     }
     return mitigation;
@@ -517,54 +517,54 @@ public class BowTieModel implements Serializable {
 
       // Threat
       if (i < threats.size()) {
-	String threatText = threats.get(i).getDescription();
-	if (threatText.length() > 22) {
-	  threatText = threatText.substring(0, 19) + "...";
-	}
-	sb.append(String.format("%-22s", threatText));
+        String threatText = threats.get(i).getDescription();
+        if (threatText.length() > 22) {
+          threatText = threatText.substring(0, 19) + "...";
+        }
+        sb.append(String.format("%-22s", threatText));
       } else {
-	sb.append(String.format("%-22s", ""));
+        sb.append(String.format("%-22s", ""));
       }
 
       // Arrow and barriers
       if (i == 0) {
-	sb.append(" ──▶");
-	if (!prevention.isEmpty()) {
-	  sb.append(" [B] ");
-	} else {
-	  sb.append("     ");
-	}
-	sb.append("──▶ ");
+        sb.append(" ──▶");
+        if (!prevention.isEmpty()) {
+          sb.append(" [B] ");
+        } else {
+          sb.append("     ");
+        }
+        sb.append("──▶ ");
       } else if (i == 1) {
-	sb.append("              ◆       ");
+        sb.append("              ◆       ");
       } else if (i == 2) {
-	sb.append("          (HAZARD)    ");
+        sb.append("          (HAZARD)    ");
       } else {
-	sb.append("                      ");
+        sb.append("                      ");
       }
 
       // Arrow to consequences
       if (i == 0) {
-	sb.append("──▶");
-	if (!mitigation.isEmpty()) {
-	  sb.append(" [B] ");
-	} else {
-	  sb.append("     ");
-	}
-	sb.append("──▶ ");
+        sb.append("──▶");
+        if (!mitigation.isEmpty()) {
+          sb.append(" [B] ");
+        } else {
+          sb.append("     ");
+        }
+        sb.append("──▶ ");
       } else {
-	sb.append("          ");
+        sb.append("          ");
       }
 
       // Consequence
       if (i < consequences.size()) {
-	String consText = consequences.get(i).getDescription();
-	if (consText.length() > 18) {
-	  consText = consText.substring(0, 15) + "...";
-	}
-	sb.append(String.format("%-18s", consText));
+        String consText = consequences.get(i).getDescription();
+        if (consText.length() > 18) {
+          consText = consText.substring(0, 15) + "...";
+        }
+        sb.append(String.format("%-18s", consText));
       } else {
-	sb.append(String.format("%-18s", ""));
+        sb.append(String.format("%-18s", ""));
       }
 
       sb.append("│\n");
@@ -577,7 +577,7 @@ public class BowTieModel implements Serializable {
     for (Barrier b : prevention) {
       String status = b.isFunctional() ? "✓" : "✗";
       sb.append(
-	  String.format("│   %s %-40s PFD=%.2e  RRF=%.0f │%n", status, b.getDescription(), b.getPfd(), b.getRRF()));
+          String.format("│   %s %-40s PFD=%.2e  RRF=%.0f │%n", status, b.getDescription(), b.getPfd(), b.getRRF()));
     }
     if (prevention.isEmpty()) {
       sb.append("│   (none)                                                            │\n");
@@ -588,7 +588,7 @@ public class BowTieModel implements Serializable {
     for (Barrier b : mitigation) {
       String status = b.isFunctional() ? "✓" : "✗";
       sb.append(
-	  String.format("│   %s %-40s PFD=%.2e  RRF=%.0f │%n", status, b.getDescription(), b.getPfd(), b.getRRF()));
+          String.format("│   %s %-40s PFD=%.2e  RRF=%.0f │%n", status, b.getDescription(), b.getPfd(), b.getRRF()));
     }
     if (mitigation.isEmpty()) {
       sb.append("│   (none)                                                            │\n");
@@ -596,7 +596,7 @@ public class BowTieModel implements Serializable {
 
     sb.append("├─────────────────────────────────────────────────────────────────────┤\n");
     sb.append(String.format("│ Unmitigated Freq: %.2e /yr    Mitigated Freq: %.2e /yr   RRF: %.0f │%n",
-	unmitigatedFrequency, mitigatedFrequency, getTotalRRF()));
+        unmitigatedFrequency, mitigatedFrequency, getTotalRRF()));
     sb.append("└─────────────────────────────────────────────────────────────────────┘\n");
 
     return sb.toString();
@@ -657,6 +657,6 @@ public class BowTieModel implements Serializable {
   @Override
   public String toString() {
     return String.format("BowTieModel[%s: threats=%d, consequences=%d, barriers=%d]", hazardId, threats.size(),
-	consequences.size(), barriers.size());
+        consequences.size(), barriers.size());
   }
 }

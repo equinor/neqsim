@@ -83,7 +83,7 @@ public class ParallelActionGroup implements LogicAction {
     // Complete only when ALL actions are complete
     for (LogicAction action : actions) {
       if (!action.isComplete()) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -99,7 +99,7 @@ public class ParallelActionGroup implements LogicAction {
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < actions.size(); i++) {
       if (i > 0) {
-	sb.append(", ");
+        sb.append(", ");
       }
       sb.append(actions.get(i).getTargetName());
     }
@@ -124,7 +124,7 @@ public class ParallelActionGroup implements LogicAction {
     int count = 0;
     for (LogicAction action : actions) {
       if (action.isComplete()) {
-	count++;
+        count++;
       }
     }
     return count;
@@ -154,6 +154,6 @@ public class ParallelActionGroup implements LogicAction {
   @Override
   public String toString() {
     return String.format("%s - %d/%d complete (%.0f%%)", description, getCompletedCount(), getTotalCount(),
-	getCompletionPercentage());
+        getCompletionPercentage());
   }
 }

@@ -378,10 +378,10 @@ public class Crystallizer extends ProcessEquipmentBaseClass {
 
       double crystalFraction;
       if (compName.equals(targetSolute)) {
-	crystalFraction = solidRecovery;
+        crystalFraction = solidRecovery;
       } else {
-	// Small amount of mother liquor gets trapped in crystal cake
-	crystalFraction = 0.02; // 2% entrainment
+        // Small amount of mother liquor gets trapped in crystal cake
+        crystalFraction = 0.02; // 2% entrainment
       }
 
       double crystalMoles = totalMoles * crystalFraction;

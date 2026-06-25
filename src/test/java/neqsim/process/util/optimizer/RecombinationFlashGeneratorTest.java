@@ -110,8 +110,8 @@ public class RecombinationFlashGeneratorTest {
     boolean hasWater = false;
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       if (fluid.getComponent(i).getName().equalsIgnoreCase("water")) {
-	hasWater = true;
-	break;
+        hasWater = true;
+        break;
       }
     }
     assertTrue(hasWater, "Fluid should contain water when WC > 0");
@@ -214,19 +214,19 @@ public class RecombinationFlashGeneratorTest {
     for (int t = 0; t < numThreads; t++) {
       final int threadId = t;
       futures.add(executor.submit(() -> {
-	try {
-	  for (int i = 0; i < numIterations; i++) {
-	    double gor = 200 + threadId * 200 + i * 50;
-	    double wc = 0.1 * threadId;
-	    SystemInterface fluid = generator.generateFluid(gor, wc, 1000.0, 353.15, 100.0);
-	    if (fluid == null || fluid.getNumberOfComponents() == 0) {
-	      return false;
-	    }
-	  }
-	  return true;
-	} catch (Exception e) {
-	  return false;
-	}
+        try {
+          for (int i = 0; i < numIterations; i++) {
+            double gor = 200 + threadId * 200 + i * 50;
+            double wc = 0.1 * threadId;
+            SystemInterface fluid = generator.generateFluid(gor, wc, 1000.0, 353.15, 100.0);
+            if (fluid == null || fluid.getNumberOfComponents() == 0) {
+              return false;
+            }
+          }
+          return true;
+        } catch (Exception e) {
+          return false;
+        }
       }));
     }
 
@@ -266,8 +266,8 @@ public class RecombinationFlashGeneratorTest {
     double waterMoles = 0;
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       if (fluid.getComponent(i).getName().equalsIgnoreCase("water")) {
-	waterMoles = fluid.getComponent(i).getNumberOfmoles();
-	break;
+        waterMoles = fluid.getComponent(i).getNumberOfmoles();
+        break;
       }
     }
 

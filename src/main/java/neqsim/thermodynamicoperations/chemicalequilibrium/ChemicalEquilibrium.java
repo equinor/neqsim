@@ -43,22 +43,22 @@ public class ChemicalEquilibrium extends BaseOperation {
     if (system.isChemicalSystem()) {
       double oldHeat = system.getChemicalReactionOperations().getReactionList().reacHeat(system.getPhase(1), "HCO3-");
       do {
-	iter++;
-	for (int phaseNum = 1; phaseNum < system.getNumberOfPhases(); phaseNum++) {
-	  chemdev = 0.0;
-	  double xchem[] = new double[system.getPhase(phaseNum).getNumberOfComponents()];
+        iter++;
+        for (int phaseNum = 1; phaseNum < system.getNumberOfPhases(); phaseNum++) {
+          chemdev = 0.0;
+          double xchem[] = new double[system.getPhase(phaseNum).getNumberOfComponents()];
 
-	  for (int i = 0; i < system.getPhase(phaseNum).getNumberOfComponents(); i++) {
-	    xchem[i] = system.getPhase(phaseNum).getComponent(i).getx();
-	  }
+          for (int i = 0; i < system.getPhase(phaseNum).getNumberOfComponents(); i++) {
+            xchem[i] = system.getPhase(phaseNum).getComponent(i).getx();
+          }
 
-	  system.init(1);
-	  system.getChemicalReactionOperations().solveChemEq(phaseNum);
+          system.init(1);
+          system.getChemicalReactionOperations().solveChemEq(phaseNum);
 
-	  for (int i = 0; i < system.getPhase(phaseNum).getNumberOfComponents(); i++) {
-	    chemdev += Math.abs(xchem[i] - system.getPhase(phaseNum).getComponent(i).getx());
-	  }
-	}
+          for (int i = 0; i < system.getPhase(phaseNum).getNumberOfComponents(); i++) {
+            chemdev += Math.abs(xchem[i] - system.getPhase(phaseNum).getComponent(i).getx());
+          }
+        }
       } while (Math.abs(chemdev) > 1e-4 && iter < 100);
       double newHeat = system.getChemicalReactionOperations().getReactionList().reacHeat(system.getPhase(1), "HCO3-");
       system.getChemicalReactionOperations().setDeltaReactionHeat(newHeat - oldHeat);

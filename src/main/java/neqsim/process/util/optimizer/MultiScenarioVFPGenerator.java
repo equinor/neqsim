@@ -61,9 +61,9 @@ import neqsim.thermo.system.SystemInterface;
  *
  * // Create VFP generator with process factory
  * MultiScenarioVFPGenerator vfpGen = new MultiScenarioVFPGenerator(() -&gt; createMyProcess(), // Factory
- * 											  // for
- * 											  // thread-safe
- * 											  // execution
+ *     // for
+ *     // thread-safe
+ *     // execution
  *     "Feed", "Export");
  * vfpGen.setFlashGenerator(flashGen);
  *
@@ -169,7 +169,7 @@ public class MultiScenarioVFPGenerator implements Serializable {
     int totalPoints = nRates * nTHP * nWC * nGOR;
 
     logger.info("Generating VFP table: {} rates × {} THP × {} WC × {} GOR = {} points", nRates, nTHP, nWC, nGOR,
-	totalPoints);
+        totalPoints);
 
     vfpTable = new VFPTable(flowRates, outletPressures, waterCuts, GORs);
     vfpTable.setFlowRateUnit(flowRateUnit);
@@ -178,11 +178,11 @@ public class MultiScenarioVFPGenerator implements Serializable {
     List<VFPTask> tasks = new ArrayList<>();
     for (int g = 0; g < nGOR; g++) {
       for (int w = 0; w < nWC; w++) {
-	for (int t = 0; t < nTHP; t++) {
-	  for (int r = 0; r < nRates; r++) {
-	    tasks.add(new VFPTask(flowRates[r], outletPressures[t], waterCuts[w], GORs[g], r, t, w, g));
-	  }
-	}
+        for (int t = 0; t < nTHP; t++) {
+          for (int r = 0; r < nRates; r++) {
+            tasks.add(new VFPTask(flowRates[r], outletPressures[t], waterCuts[w], GORs[g], r, t, w, g));
+          }
+        }
       }
     }
 
@@ -198,7 +198,7 @@ public class MultiScenarioVFPGenerator implements Serializable {
     int feasibleCount = vfpTable.getFeasibleCount();
 
     logger.info("VFP table complete: {}/{} feasible in {:.1f}s ({:.2f}s/point)", feasibleCount, totalPoints,
-	elapsed / 1000.0, elapsed / 1000.0 / totalPoints);
+        elapsed / 1000.0, elapsed / 1000.0 / totalPoints);
 
     if (flashGenerator != null) {
       logger.info("Fluid cache: {}", flashGenerator.getCacheStatistics());
@@ -220,7 +220,7 @@ public class MultiScenarioVFPGenerator implements Serializable {
       completed++;
 
       if (completed % 10 == 0 || completed == tasks.size()) {
-	logger.info("Progress: {}/{}", completed, tasks.size());
+        logger.info("Progress: {}/{}", completed, tasks.size());
       }
     }
   }
@@ -241,18 +241,18 @@ public class MultiScenarioVFPGenerator implements Serializable {
     int completed = 0;
     for (Future<VFPPoint> future : futures) {
       try {
-	VFPPoint point = future.get();
-	vfpTable.setPoint(point);
-	completed++;
+        VFPPoint point = future.get();
+        vfpTable.setPoint(point);
+        completed++;
 
-	if (completed % 20 == 0 || completed == tasks.size()) {
-	  String status = point.feasible ? String.format("P_in=%.1f bara", point.bhp) : "INFEASIBLE";
-	  logger.info("[{}/{}] Rate={:.0f}, THP={:.0f}, WC={:.0f}%, GOR={:.0f} → {}", completed, tasks.size(),
-	      point.flowRate, point.thp, point.waterCut * 100, point.gor, status);
-	}
+        if (completed % 20 == 0 || completed == tasks.size()) {
+          String status = point.feasible ? String.format("P_in=%.1f bara", point.bhp) : "INFEASIBLE";
+          logger.info("[{}/{}] Rate={:.0f}, THP={:.0f}, WC={:.0f}%, GOR={:.0f} → {}", completed, tasks.size(),
+              point.flowRate, point.thp, point.waterCut * 100, point.gor, status);
+        }
       } catch (Exception e) {
-	logger.error("Task execution failed", e);
-	completed++;
+        logger.error("Task execution failed", e);
+        completed++;
       }
     }
 
@@ -284,12 +284,12 @@ public class MultiScenarioVFPGenerator implements Serializable {
 
       // Generate fluid for this GOR and WC
       SystemInterface fluid = flashGenerator.generateFluid(task.gor, task.waterCut, task.flowRate, inletTemperature,
-	  maxInletPressure);
+          maxInletPressure);
 
       // Get feed stream
       StreamInterface feedStream = (StreamInterface) process.getUnit(feedStreamName);
       if (feedStream == null) {
-	throw new IllegalStateException("Feed stream not found: " + feedStreamName);
+        throw new IllegalStateException("Feed stream not found: " + feedStreamName);
       }
 
       // Binary search for minimum inlet pressure
@@ -298,21 +298,21 @@ public class MultiScenarioVFPGenerator implements Serializable {
 
       // First check if achievable at pHigh
       if (!tryInletPressure(process, feedStream, fluid, task.flowRate, task.thp, pHigh)) {
-	result.feasible = false;
-	return result;
+        result.feasible = false;
+        return result;
       }
 
       // Binary search for minimum P
       double bestP = pHigh;
       while ((pHigh - pLow) > pressureTolerance) {
-	double pTry = (pLow + pHigh) / 2.0;
+        double pTry = (pLow + pHigh) / 2.0;
 
-	if (tryInletPressure(process, feedStream, fluid, task.flowRate, task.thp, pTry)) {
-	  bestP = pTry;
-	  pHigh = pTry; // Can we go lower?
-	} else {
-	  pLow = pTry; // Need higher pressure
-	}
+        if (tryInletPressure(process, feedStream, fluid, task.flowRate, task.thp, pTry)) {
+          bestP = pTry;
+          pHigh = pTry; // Can we go lower?
+        } else {
+          pLow = pTry; // Need higher pressure
+        }
       }
 
       result.bhp = bestP;
@@ -320,7 +320,7 @@ public class MultiScenarioVFPGenerator implements Serializable {
 
     } catch (Exception e) {
       logger.debug("VFP point failed: GOR={}, WC={}, Rate={}: {}", task.gor, task.waterCut, task.flowRate,
-	  e.getMessage());
+          e.getMessage());
       result.feasible = false;
     }
 
@@ -353,7 +353,7 @@ public class MultiScenarioVFPGenerator implements Serializable {
       // Check outlet pressure
       StreamInterface outletStream = (StreamInterface) process.getUnit(outletStreamName);
       if (outletStream == null) {
-	return false;
+        return false;
       }
 
       double actualOutletP = outletStream.getPressure("bara");
@@ -449,7 +449,7 @@ public class MultiScenarioVFPGenerator implements Serializable {
     for (int i = 0; i < flowRates.length; i++) {
       sb.append(String.format("  %.1f", flowRates[i]));
       if ((i + 1) % 6 == 0) {
-	sb.append("\n");
+        sb.append("\n");
       }
     }
     if (flowRates.length % 6 != 0) {
@@ -490,19 +490,19 @@ public class MultiScenarioVFPGenerator implements Serializable {
     int lineIdx = 1;
     for (int t = 0; t < outletPressures.length; t++) {
       for (int w = 0; w < waterCuts.length; w++) {
-	for (int g = 0; g < GORs.length; g++) {
-	  sb.append(String.format("  %d  %d  %d  1", t + 1, w + 1, g + 1));
-	  for (int r = 0; r < flowRates.length; r++) {
-	    double val = bhp[r][t][w][g];
-	    if (Double.isNaN(val)) {
-	      sb.append("  1*"); // Eclipse default marker
-	    } else {
-	      sb.append(String.format("  %.2f", val));
-	    }
-	  }
-	  sb.append(" /\n");
-	  lineIdx++;
-	}
+        for (int g = 0; g < GORs.length; g++) {
+          sb.append(String.format("  %d  %d  %d  1", t + 1, w + 1, g + 1));
+          for (int r = 0; r < flowRates.length; r++) {
+            double val = bhp[r][t][w][g];
+            if (Double.isNaN(val)) {
+              sb.append("  1*"); // Eclipse default marker
+            } else {
+              sb.append(String.format("  %.2f", val));
+            }
+          }
+          sb.append(" /\n");
+          lineIdx++;
+        }
       }
     }
 
@@ -790,14 +790,14 @@ public class MultiScenarioVFPGenerator implements Serializable {
 
       // Initialize with NaN
       for (int r = 0; r < nR; r++) {
-	for (int t = 0; t < nT; t++) {
-	  for (int w = 0; w < nW; w++) {
-	    for (int g = 0; g < nG; g++) {
-	      bhpTable[r][t][w][g] = Double.NaN;
-	      feasible[r][t][w][g] = false;
-	    }
-	  }
-	}
+        for (int t = 0; t < nT; t++) {
+          for (int w = 0; w < nW; w++) {
+            for (int g = 0; g < nG; g++) {
+              bhpTable[r][t][w][g] = Double.NaN;
+              feasible[r][t][w][g] = false;
+            }
+          }
+        }
       }
     }
 
@@ -854,15 +854,15 @@ public class MultiScenarioVFPGenerator implements Serializable {
     public int getFeasibleCount() {
       int count = 0;
       for (int r = 0; r < flowRates.length; r++) {
-	for (int t = 0; t < outletPressures.length; t++) {
-	  for (int w = 0; w < waterCuts.length; w++) {
-	    for (int g = 0; g < GORs.length; g++) {
-	      if (feasible[r][t][w][g]) {
-		count++;
-	      }
-	    }
-	  }
-	}
+        for (int t = 0; t < outletPressures.length; t++) {
+          for (int w = 0; w < waterCuts.length; w++) {
+            for (int g = 0; g < GORs.length; g++) {
+              if (feasible[r][t][w][g]) {
+                count++;
+              }
+            }
+          }
+        }
       }
       return count;
     }
@@ -943,22 +943,22 @@ public class MultiScenarioVFPGenerator implements Serializable {
       // Header
       System.out.printf("%-12s", "Rate\\THP");
       for (double thp : outletPressures) {
-	System.out.printf("  %8.0f", thp);
+        System.out.printf("  %8.0f", thp);
       }
       System.out.println();
 
       // Data rows
       for (int r = 0; r < flowRates.length; r++) {
-	System.out.printf("%-12.0f", flowRates[r]);
-	for (int t = 0; t < outletPressures.length; t++) {
-	  double val = bhpTable[r][t][wcIdx][gorIdx];
-	  if (Double.isNaN(val)) {
-	    System.out.printf("  %8s", "---");
-	  } else {
-	    System.out.printf("  %8.1f", val);
-	  }
-	}
-	System.out.println();
+        System.out.printf("%-12.0f", flowRates[r]);
+        for (int t = 0; t < outletPressures.length; t++) {
+          double val = bhpTable[r][t][wcIdx][gorIdx];
+          if (Double.isNaN(val)) {
+            System.out.printf("  %8s", "---");
+          } else {
+            System.out.printf("  %8.1f", val);
+          }
+        }
+        System.out.println();
       }
     }
   }

@@ -46,7 +46,7 @@ public class SystemPrEoSTest extends neqsim.NeqSimTest {
     testOps.TPflash();
     testSystem.initProperties();
     assertEquals(testSystem.getMolarVolume("m3/mol"),
-	testSystem.getMolarMass("kg/mol") / testSystem.getDensity("kg/m3"));
+        testSystem.getMolarMass("kg/mol") / testSystem.getDensity("kg/m3"));
   }
 
   /**

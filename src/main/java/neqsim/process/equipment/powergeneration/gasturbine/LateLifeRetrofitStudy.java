@@ -119,18 +119,18 @@ public class LateLifeRetrofitStudy implements Serializable {
       yr.retrofitFeasible = retroDr.feasible;
 
       if (baseDr.feasible) {
-	yr.baselineFuelKgPerYr = baseDr.totalFuelKgPerHr * annualOperatingHours;
-	yr.baselineCO2TonneYr = baseDr.totalCO2KgPerHr * annualOperatingHours / 1.0e3;
-	yr.baselineCostMNOK = baseDr.totalCostNOKPerHr * annualOperatingHours / 1.0e6;
+        yr.baselineFuelKgPerYr = baseDr.totalFuelKgPerHr * annualOperatingHours;
+        yr.baselineCO2TonneYr = baseDr.totalCO2KgPerHr * annualOperatingHours / 1.0e3;
+        yr.baselineCostMNOK = baseDr.totalCostNOKPerHr * annualOperatingHours / 1.0e6;
       }
       if (retroDr.feasible) {
-	yr.retrofitFuelKgPerYr = retroDr.totalFuelKgPerHr * annualOperatingHours;
-	yr.retrofitCO2TonneYr = retroDr.totalCO2KgPerHr * annualOperatingHours / 1.0e3;
-	yr.retrofitCostMNOK = retroDr.totalCostNOKPerHr * annualOperatingHours / 1.0e6;
+        yr.retrofitFuelKgPerYr = retroDr.totalFuelKgPerHr * annualOperatingHours;
+        yr.retrofitCO2TonneYr = retroDr.totalCO2KgPerHr * annualOperatingHours / 1.0e3;
+        yr.retrofitCostMNOK = retroDr.totalCostNOKPerHr * annualOperatingHours / 1.0e6;
       }
       if (baseDr.feasible && retroDr.feasible) {
-	yr.savingsMNOK = yr.baselineCostMNOK - yr.retrofitCostMNOK;
-	yr.co2AvoidedTonne = yr.baselineCO2TonneYr - yr.retrofitCO2TonneYr;
+        yr.savingsMNOK = yr.baselineCostMNOK - yr.retrofitCostMNOK;
+        yr.co2AvoidedTonne = yr.baselineCO2TonneYr - yr.retrofitCO2TonneYr;
       }
       res.years.add(yr);
     }
@@ -149,7 +149,7 @@ public class LateLifeRetrofitStudy implements Serializable {
       res.npvMNOK += yr.savingsMNOK * disc;
       cum += yr.savingsMNOK;
       if (paybackYear < 0 && cum >= 0.0) {
-	paybackYear = startYear + i;
+        paybackYear = startYear + i;
       }
     }
     res.simplePaybackYear = paybackYear;

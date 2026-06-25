@@ -156,7 +156,7 @@ public class StartupLogic implements ProcessLogic {
     // Update timer conditions
     for (LogicCondition permissive : permissives) {
       if (permissive instanceof neqsim.process.logic.condition.TimerCondition) {
-	((neqsim.process.logic.condition.TimerCondition) permissive).update(timeStep);
+        ((neqsim.process.logic.condition.TimerCondition) permissive).update(timeStep);
       }
     }
 
@@ -164,8 +164,8 @@ public class StartupLogic implements ProcessLogic {
     boolean allMet = true;
     for (LogicCondition permissive : permissives) {
       if (!permissive.evaluate()) {
-	allMet = false;
-	break;
+        allMet = false;
+        break;
       }
     }
 
@@ -187,10 +187,10 @@ public class StartupLogic implements ProcessLogic {
     // Check if permissives are still met (abort if lost)
     for (LogicCondition permissive : permissives) {
       if (!permissive.evaluate()) {
-	state = LogicState.FAILED;
-	aborted = true;
-	abortReason = "Permissive lost: " + permissive.getDescription();
-	return;
+        state = LogicState.FAILED;
+        aborted = true;
+        abortReason = "Permissive lost: " + permissive.getDescription();
+        return;
       }
     }
 
@@ -200,8 +200,8 @@ public class StartupLogic implements ProcessLogic {
 
       // Wait for delay
       if (currentDelay < currentActionWithDelay.delay) {
-	currentDelay += timeStep;
-	return;
+        currentDelay += timeStep;
+        return;
       }
 
       // Execute action
@@ -209,12 +209,12 @@ public class StartupLogic implements ProcessLogic {
 
       // Check if action is complete
       if (currentActionWithDelay.action.isComplete()) {
-	currentActionIndex++;
-	currentDelay = 0.0;
+        currentActionIndex++;
+        currentDelay = 0.0;
 
-	if (currentActionIndex >= actions.size()) {
-	  state = LogicState.COMPLETED;
-	}
+        if (currentActionIndex >= actions.size()) {
+          state = LogicState.COMPLETED;
+        }
       }
     } else {
       state = LogicState.COMPLETED;
@@ -286,24 +286,24 @@ public class StartupLogic implements ProcessLogic {
       // Show which permissives are not met
       sb.append("\n  Permissives:");
       for (LogicCondition permissive : permissives) {
-	boolean met = permissive.evaluate();
-	sb.append(String.format("\n    %s %s: %s (current: %s)", met ? "✓" : "✗", permissive.getDescription(),
-	    met ? "MET" : "NOT MET", permissive.getCurrentValue()));
+        boolean met = permissive.evaluate();
+        sb.append(String.format("\n    %s %s: %s (current: %s)", met ? "✓" : "✗", permissive.getDescription(),
+            met ? "MET" : "NOT MET", permissive.getCurrentValue()));
       }
     } else if (state == LogicState.RUNNING) {
       if (currentActionIndex < actions.size()) {
-	ActionWithDelay current = actions.get(currentActionIndex);
-	sb.append(String.format("RUNNING (Step %d/%d: %s, delay: %.1fs)", currentActionIndex + 1, actions.size(),
-	    current.action.getDescription(), Math.max(0, current.delay - currentDelay)));
+        ActionWithDelay current = actions.get(currentActionIndex);
+        sb.append(String.format("RUNNING (Step %d/%d: %s, delay: %.1fs)", currentActionIndex + 1, actions.size(),
+            current.action.getDescription(), Math.max(0, current.delay - currentDelay)));
       } else {
-	sb.append("RUNNING (finalizing)");
+        sb.append("RUNNING (finalizing)");
       }
     } else if (state == LogicState.COMPLETED) {
       sb.append(String.format("COMPLETED (%.1fs)", elapsedTime));
     } else if (state == LogicState.FAILED) {
       sb.append("FAILED");
       if (aborted) {
-	sb.append(" - ").append(abortReason);
+        sb.append(" - ").append(abortReason);
       }
     } else {
       sb.append(state.toString());

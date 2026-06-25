@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,8 +14,6 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for OnePhasePipeLine transient compositional tracking.
@@ -262,7 +262,7 @@ public class OnePhasePipeLineCompositionalTest {
 
     for (AdvectionScheme scheme : AdvectionScheme.values()) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-23s | %5d | %7.1f | %dx%n", scheme.getDisplayName(),
-	  scheme.getOrder(), scheme.getMaxCFL(), Math.round(1.0 / scheme.getDispersionReductionFactor()));
+          scheme.getOrder(), scheme.getMaxCFL(), Math.round(1.0 / scheme.getDispersionReductionFactor()));
     }
 
     logger.info("RECOMMENDATION for gas switching:");

@@ -184,21 +184,21 @@ public class SpinodalDecompositionDetector {
 
     for (int i = 0; i < numComp; i++) {
       if (!(phase.getComponent(i) instanceof ComponentEosInterface)) {
-	eosAvailable = false;
-	break;
+        eosAvailable = false;
+        break;
       }
       ComponentEosInterface compI = (ComponentEosInterface) phase.getComponent(i);
 
       for (int j = 0; j < numComp; j++) {
-	try {
-	  hessianMatrix[i][j] = compI.dFdNdN(j, phase, numComp, system.getTemperature(), system.getPressure());
-	} catch (Exception e) {
-	  eosAvailable = false;
-	  break;
-	}
+        try {
+          hessianMatrix[i][j] = compI.dFdNdN(j, phase, numComp, system.getTemperature(), system.getPressure());
+        } catch (Exception e) {
+          eosAvailable = false;
+          break;
+        }
       }
       if (!eosAvailable) {
-	break;
+        break;
       }
     }
 
@@ -217,26 +217,26 @@ public class SpinodalDecompositionDetector {
     double minElement = Double.MAX_VALUE;
     for (int i = 0; i < numComp; i++) {
       for (int j = i; j < numComp; j++) {
-	if (hessianMatrix[i][j] < minElement) {
-	  minElement = hessianMatrix[i][j];
-	  unstableComponentI = i;
-	  unstableComponentJ = j;
-	}
+        if (hessianMatrix[i][j] < minElement) {
+          minElement = hessianMatrix[i][j];
+          unstableComponentI = i;
+          unstableComponentJ = j;
+        }
       }
     }
 
     if (unstableComponentI >= 0 && unstableComponentJ >= 0) {
       unstableComponentPair = phase.getComponent(unstableComponentI).getComponentName() + " / "
-	  + phase.getComponent(unstableComponentJ).getComponentName();
+          + phase.getComponent(unstableComponentJ).getComponentName();
     }
 
     // Determine stability state
     if (minEigenvalue > 0.0) {
       // Check if two phases exist (above binodal = metastable or stable)
       if (system.getNumberOfPhases() >= 2) {
-	stabilityState = StabilityState.METASTABLE;
+        stabilityState = StabilityState.METASTABLE;
       } else {
-	stabilityState = StabilityState.STABLE;
+        stabilityState = StabilityState.STABLE;
       }
     } else {
       stabilityState = StabilityState.UNSTABLE;
@@ -286,38 +286,38 @@ public class SpinodalDecompositionDetector {
     // Large deviations suggest proximity to or inside the spinodal
     if (system.getNumberOfPhases() >= 2) {
       try {
-	int gasIdx = system.getPhaseNumberOfPhase("gas");
-	int liqIdx = system.getPhaseNumberOfPhase("oil");
-	if (liqIdx < 0) {
-	  liqIdx = system.getPhaseNumberOfPhase("aqueous");
-	}
+        int gasIdx = system.getPhaseNumberOfPhase("gas");
+        int liqIdx = system.getPhaseNumberOfPhase("oil");
+        if (liqIdx < 0) {
+          liqIdx = system.getPhaseNumberOfPhase("aqueous");
+        }
 
-	if (gasIdx >= 0 && liqIdx >= 0) {
-	  double maxRatio = 0.0;
-	  for (int i = 0; i < numComp; i++) {
-	    double phiGas = system.getPhase(gasIdx).getComponent(i).getFugacityCoefficient();
-	    double phiLiq = system.getPhase(liqIdx).getComponent(i).getFugacityCoefficient();
-	    if (phiLiq > 0.0) {
-	      double ratio = phiGas / phiLiq;
-	      if (ratio > maxRatio) {
-		maxRatio = ratio;
-	      }
-	    }
-	  }
+        if (gasIdx >= 0 && liqIdx >= 0) {
+          double maxRatio = 0.0;
+          for (int i = 0; i < numComp; i++) {
+            double phiGas = system.getPhase(gasIdx).getComponent(i).getFugacityCoefficient();
+            double phiLiq = system.getPhase(liqIdx).getComponent(i).getFugacityCoefficient();
+            if (phiLiq > 0.0) {
+              double ratio = phiGas / phiLiq;
+              if (ratio > maxRatio) {
+                maxRatio = ratio;
+              }
+            }
+          }
 
-	  // Very large fugacity coefficient ratio suggests deep supersaturation
-	  if (maxRatio > 10.0) {
-	    stabilityState = StabilityState.UNSTABLE;
-	    stabilityMargin = -1.0;
-	  } else {
-	    stabilityState = StabilityState.METASTABLE;
-	    stabilityMargin = 1.0;
-	  }
-	} else {
-	  stabilityState = StabilityState.UNKNOWN;
-	}
+          // Very large fugacity coefficient ratio suggests deep supersaturation
+          if (maxRatio > 10.0) {
+            stabilityState = StabilityState.UNSTABLE;
+            stabilityMargin = -1.0;
+          } else {
+            stabilityState = StabilityState.METASTABLE;
+            stabilityMargin = 1.0;
+          }
+        } else {
+          stabilityState = StabilityState.UNKNOWN;
+        }
       } catch (Exception e) {
-	stabilityState = StabilityState.UNKNOWN;
+        stabilityState = StabilityState.UNKNOWN;
       }
     } else {
       stabilityState = StabilityState.STABLE;
@@ -350,7 +350,7 @@ public class SpinodalDecompositionDetector {
       double det = a * d - b * b;
       double discriminant = trace * trace - 4.0 * det;
       if (discriminant < 0.0) {
-	discriminant = 0.0;
+        discriminant = 0.0;
       }
       double lambda1 = (trace - Math.sqrt(discriminant)) / 2.0;
       double lambda2 = (trace + Math.sqrt(discriminant)) / 2.0;
@@ -363,13 +363,13 @@ public class SpinodalDecompositionDetector {
     for (int i = 0; i < n; i++) {
       double radius = 0.0;
       for (int j = 0; j < n; j++) {
-	if (j != i) {
-	  radius += Math.abs(matrix[i][j]);
-	}
+        if (j != i) {
+          radius += Math.abs(matrix[i][j]);
+        }
       }
       double lowerBound = matrix[i][i] - radius;
       if (lowerBound < minGershgorin) {
-	minGershgorin = lowerBound;
+        minGershgorin = lowerBound;
       }
     }
 
@@ -408,7 +408,7 @@ public class SpinodalDecompositionDetector {
     double sigma = 0.02; // Typical N/m
     try {
       if (system.getNumberOfPhases() >= 2) {
-	sigma = system.getInterphaseProperties().getSurfaceTension(0, 1);
+        sigma = system.getInterphaseProperties().getSurfaceTension(0, 1);
       }
     } catch (Exception e) {
       // Use default
@@ -554,8 +554,8 @@ public class SpinodalDecompositionDetector {
       return "System is metastable. Use ClassicalNucleationTheory for nucleation rate prediction.";
     case UNSTABLE:
       return "System is inside the spinodal. Barrierless spinodal decomposition will dominate. "
-	  + "CNT underestimates the phase separation rate. Dominant wavelength: "
-	  + String.format("%.1f nm", dominantWavelength * 1e9);
+          + "CNT underestimates the phase separation rate. Dominant wavelength: "
+          + String.format("%.1f nm", dominantWavelength * 1e9);
     default:
       return "Stability could not be determined. Try CNT as a conservative estimate.";
     }
@@ -613,6 +613,6 @@ public class SpinodalDecompositionDetector {
       return "SpinodalDecompositionDetector [not analyzed]";
     }
     return String.format("SpinodalDetector: state=%s, margin=%.4e, T=%.1f K, P=%.1f bar", stabilityState.name(),
-	stabilityMargin, system.getTemperature(), system.getPressure());
+        stabilityMargin, system.getTemperature(), system.getPressure());
   }
 }

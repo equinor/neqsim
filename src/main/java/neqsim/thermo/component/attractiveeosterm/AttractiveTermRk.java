@@ -55,15 +55,15 @@ public class AttractiveTermRk extends AttractiveTermBaseClass {
   @Override
   public double diffalphaT(double temperature) {
     return -0.5 * getComponent().getTC()
-	/ (Math.sqrt(getComponent().getTC() / temperature) * Math.pow(temperature, 2.0));
+        / (Math.sqrt(getComponent().getTC() / temperature) * Math.pow(temperature, 2.0));
   }
 
   /** {@inheritDoc} */
   @Override
   public double diffdiffalphaT(double temperature) {
     return -0.25 * getComponent().getTC() * getComponent().getTC()
-	/ (Math.pow(getComponent().getTC() / temperature, 3.0 / 2.0) * Math.pow(temperature, 4.0))
-	+ getComponent().getTC() / (Math.sqrt(getComponent().getTC() / temperature) * Math.pow(temperature, 3.0));
+        / (Math.pow(getComponent().getTC() / temperature, 3.0 / 2.0) * Math.pow(temperature, 4.0))
+        + getComponent().getTC() / (Math.sqrt(getComponent().getTC() / temperature) * Math.pow(temperature, 3.0));
   }
 
   /** {@inheritDoc} */

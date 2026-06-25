@@ -42,9 +42,9 @@ public enum StandardObjective implements ObjectiveFunction {
     public double evaluate(ProcessSystem process) {
       // Find feed stream (first stream in process)
       for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
-	if (unit instanceof StreamInterface) {
-	  return ((StreamInterface) unit).getFlowRate("kg/hr");
-	}
+        if (unit instanceof StreamInterface) {
+          return ((StreamInterface) unit).getFlowRate("kg/hr");
+        }
       }
       return 0.0;
     }
@@ -73,13 +73,13 @@ public enum StandardObjective implements ObjectiveFunction {
     public double evaluate(ProcessSystem process) {
       double totalPower = 0.0;
       for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
-	if (unit instanceof Compressor) {
-	  // getPower("kW") returns power in kW
-	  totalPower += ((Compressor) unit).getPower("kW");
-	} else if (unit instanceof Pump) {
-	  // getPower("kW") returns power in kW
-	  totalPower += ((Pump) unit).getPower("kW");
-	}
+        if (unit instanceof Compressor) {
+          // getPower("kW") returns power in kW
+          totalPower += ((Compressor) unit).getPower("kW");
+        } else if (unit instanceof Pump) {
+          // getPower("kW") returns power in kW
+          totalPower += ((Pump) unit).getPower("kW");
+        }
       }
       return totalPower;
     }
@@ -108,12 +108,12 @@ public enum StandardObjective implements ObjectiveFunction {
     public double evaluate(ProcessSystem process) {
       double totalDuty = 0.0;
       for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
-	if (unit instanceof Heater) {
-	  double duty = ((Heater) unit).getDuty();
-	  if (duty > 0) {
-	    totalDuty += duty;
-	  }
-	}
+        if (unit instanceof Heater) {
+          double duty = ((Heater) unit).getDuty();
+          if (duty > 0) {
+            totalDuty += duty;
+          }
+        }
       }
       return totalDuty / 1000.0; // Convert to kW
     }
@@ -142,10 +142,10 @@ public enum StandardObjective implements ObjectiveFunction {
     public double evaluate(ProcessSystem process) {
       double totalDuty = 0.0;
       for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
-	if (unit instanceof Cooler) {
-	  double duty = Math.abs(((Cooler) unit).getDuty());
-	  totalDuty += duty;
-	}
+        if (unit instanceof Cooler) {
+          double duty = Math.abs(((Cooler) unit).getDuty());
+          totalDuty += duty;
+        }
       }
       return totalDuty / 1000.0; // Convert to kW
     }
@@ -203,7 +203,7 @@ public enum StandardObjective implements ObjectiveFunction {
       double throughput = MAXIMIZE_THROUGHPUT.evaluate(process);
       double power = MINIMIZE_POWER.evaluate(process);
       if (power < 1.0) {
-	power = 1.0; // Avoid division by zero
+        power = 1.0; // Avoid division by zero
       }
       return throughput / power;
     }
@@ -255,7 +255,7 @@ public enum StandardObjective implements ObjectiveFunction {
     return ObjectiveFunction.create("Maximize " + streamName + " Flow", process -> {
       ProcessEquipmentInterface unit = process.getUnit(streamName);
       if (unit instanceof StreamInterface) {
-	return ((StreamInterface) unit).getFlowRate("kg/hr");
+        return ((StreamInterface) unit).getFlowRate("kg/hr");
       }
       return 0.0;
     }, Direction.MAXIMIZE, "kg/hr");
@@ -275,8 +275,8 @@ public enum StandardObjective implements ObjectiveFunction {
     return ObjectiveFunction.create("Minimize " + compressorName + " Power", process -> {
       ProcessEquipmentInterface unit = process.getUnit(compressorName);
       if (unit instanceof Compressor) {
-	// Return power in kW to match declared unit
-	return ((Compressor) unit).getPower("kW");
+        // Return power in kW to match declared unit
+        return ((Compressor) unit).getPower("kW");
       }
       return 0.0;
     }, Direction.MINIMIZE, "kW");
@@ -296,7 +296,7 @@ public enum StandardObjective implements ObjectiveFunction {
     return ObjectiveFunction.create("Minimize " + pumpName + " Power", process -> {
       ProcessEquipmentInterface unit = process.getUnit(pumpName);
       if (unit instanceof Pump) {
-	return ((Pump) unit).getPower("kW");
+        return ((Pump) unit).getPower("kW");
       }
       return 0.0;
     }, Direction.MINIMIZE, "kW");
@@ -316,7 +316,7 @@ public enum StandardObjective implements ObjectiveFunction {
     return ObjectiveFunction.create("Maximize " + pumpName + " Efficiency", process -> {
       ProcessEquipmentInterface unit = process.getUnit(pumpName);
       if (unit instanceof Pump) {
-	return ((Pump) unit).getIsentropicEfficiency() * 100.0; // Return as percentage
+        return ((Pump) unit).getIsentropicEfficiency() * 100.0; // Return as percentage
       }
       return 0.0;
     }, Direction.MAXIMIZE, "%");
@@ -340,10 +340,10 @@ public enum StandardObjective implements ObjectiveFunction {
     return ObjectiveFunction.create("Maximize " + pumpName + " NPSH Margin", process -> {
       ProcessEquipmentInterface unit = process.getUnit(pumpName);
       if (unit instanceof Pump) {
-	Pump pump = (Pump) unit;
-	double npsha = pump.getNPSHAvailable();
-	double npshr = pump.getNPSHRequired();
-	return npshr > 0 ? npsha / npshr : 10.0; // Return ratio, high value if no NPSHr
+        Pump pump = (Pump) unit;
+        double npsha = pump.getNPSHAvailable();
+        double npshr = pump.getNPSHRequired();
+        return npshr > 0 ? npsha / npshr : 10.0; // Return ratio, high value if no NPSHr
       }
       return 1.0;
     }, Direction.MAXIMIZE, "ratio");
@@ -365,7 +365,7 @@ public enum StandardObjective implements ObjectiveFunction {
     return ObjectiveFunction.create("Minimize " + streamName + " Flow", process -> {
       ProcessEquipmentInterface streamUnit = process.getUnit(streamName);
       if (streamUnit instanceof StreamInterface) {
-	return ((StreamInterface) streamUnit).getFlowRate(flowUnit);
+        return ((StreamInterface) streamUnit).getFlowRate(flowUnit);
       }
       return 0.0;
     }, Direction.MINIMIZE, flowUnit);
@@ -394,7 +394,7 @@ public enum StandardObjective implements ObjectiveFunction {
     return ObjectiveFunction.create("Minimize " + fivAnalyzerName + " LOF", process -> {
       MeasurementDeviceInterface device = process.getMeasurementDevice(fivAnalyzerName);
       if (device != null && device instanceof FlowInducedVibrationAnalyser) {
-	return device.getMeasuredValue("");
+        return device.getMeasuredValue("");
       }
       return Double.MAX_VALUE; // Return high value if not found
     }, Direction.MINIMIZE, "LOF");
@@ -418,7 +418,7 @@ public enum StandardObjective implements ObjectiveFunction {
     return ObjectiveFunction.create("Minimize " + fivAnalyzerName + " FRMS", process -> {
       MeasurementDeviceInterface device = process.getMeasurementDevice(fivAnalyzerName);
       if (device != null && device instanceof FlowInducedVibrationAnalyser) {
-	return device.getMeasuredValue("");
+        return device.getMeasuredValue("");
       }
       return Double.MAX_VALUE; // Return high value if not found
     }, Direction.MINIMIZE, "FRMS");
@@ -449,13 +449,13 @@ public enum StandardObjective implements ObjectiveFunction {
     return ObjectiveFunction.create("Minimize " + pipelineName + " " + vibMethod, process -> {
       ProcessEquipmentInterface unit = process.getUnit(pipelineName);
       if (unit instanceof PipeBeggsAndBrills) {
-	PipeBeggsAndBrills pipe = (PipeBeggsAndBrills) unit;
-	FlowInducedVibrationAnalyser fiv = new FlowInducedVibrationAnalyser("temp_fiv", pipe);
-	fiv.setMethod(vibMethod);
-	if (vibMethod.equals("LOF")) {
-	  fiv.setSupportArrangement(support);
-	}
-	return fiv.getMeasuredValue("");
+        PipeBeggsAndBrills pipe = (PipeBeggsAndBrills) unit;
+        FlowInducedVibrationAnalyser fiv = new FlowInducedVibrationAnalyser("temp_fiv", pipe);
+        fiv.setMethod(vibMethod);
+        if (vibMethod.equals("LOF")) {
+          fiv.setSupportArrangement(support);
+        }
+        return fiv.getMeasuredValue("");
       }
       return Double.MAX_VALUE;
     }, Direction.MINIMIZE, vibMethod);
@@ -479,11 +479,11 @@ public enum StandardObjective implements ObjectiveFunction {
     return ObjectiveFunction.create("Maximize " + manifoldName + " Throughput", process -> {
       ProcessEquipmentInterface unit = process.getUnit(manifoldName);
       if (unit instanceof Manifold) {
-	Manifold manifold = (Manifold) unit;
-	StreamInterface mixedStream = manifold.getMixedStream();
-	if (mixedStream != null && mixedStream.getThermoSystem() != null) {
-	  return mixedStream.getFlowRate("kg/hr");
-	}
+        Manifold manifold = (Manifold) unit;
+        StreamInterface mixedStream = manifold.getMixedStream();
+        if (mixedStream != null && mixedStream.getThermoSystem() != null) {
+          return mixedStream.getFlowRate("kg/hr");
+        }
       }
       return 0.0;
     }, Direction.MAXIMIZE, "kg/hr");
@@ -507,13 +507,13 @@ public enum StandardObjective implements ObjectiveFunction {
     return ObjectiveFunction.create("Minimize " + manifoldName + " ΔP", process -> {
       ProcessEquipmentInterface unit = process.getUnit(manifoldName);
       if (unit instanceof Manifold) {
-	Manifold manifold = (Manifold) unit;
-	StreamInterface mixedStream = manifold.getMixedStream();
-	if (mixedStream != null && mixedStream.getThermoSystem() != null) {
-	  // Pressure drop is calculated internally in manifold/mixer
-	  // Return outlet pressure (lower is worse, but we minimize pressure loss)
-	  return mixedStream.getPressure("bara");
-	}
+        Manifold manifold = (Manifold) unit;
+        StreamInterface mixedStream = manifold.getMixedStream();
+        if (mixedStream != null && mixedStream.getThermoSystem() != null) {
+          // Pressure drop is calculated internally in manifold/mixer
+          // Return outlet pressure (lower is worse, but we minimize pressure loss)
+          return mixedStream.getPressure("bara");
+        }
       }
       return 0.0;
     }, Direction.MAXIMIZE, "bara"); // Maximize outlet pressure = minimize pressure drop
@@ -537,36 +537,36 @@ public enum StandardObjective implements ObjectiveFunction {
     return ObjectiveFunction.create("Minimize " + manifoldName + " Imbalance", process -> {
       ProcessEquipmentInterface unit = process.getUnit(manifoldName);
       if (unit instanceof Manifold) {
-	Manifold manifold = (Manifold) unit;
-	int numOutputs = manifold.getNumberOfOutputStreams();
-	if (numOutputs <= 1) {
-	  return 0.0;
-	}
+        Manifold manifold = (Manifold) unit;
+        int numOutputs = manifold.getNumberOfOutputStreams();
+        if (numOutputs <= 1) {
+          return 0.0;
+        }
 
-	// Calculate actual flow distribution
-	double[] flows = new double[numOutputs];
-	double totalFlow = 0.0;
-	for (int i = 0; i < numOutputs; i++) {
-	  StreamInterface splitStream = manifold.getSplitStream(i);
-	  if (splitStream != null && splitStream.getThermoSystem() != null) {
-	    flows[i] = splitStream.getFlowRate("kg/hr");
-	    totalFlow += flows[i];
-	  }
-	}
+        // Calculate actual flow distribution
+        double[] flows = new double[numOutputs];
+        double totalFlow = 0.0;
+        for (int i = 0; i < numOutputs; i++) {
+          StreamInterface splitStream = manifold.getSplitStream(i);
+          if (splitStream != null && splitStream.getThermoSystem() != null) {
+            flows[i] = splitStream.getFlowRate("kg/hr");
+            totalFlow += flows[i];
+          }
+        }
 
-	if (totalFlow <= 0) {
-	  return 0.0;
-	}
+        if (totalFlow <= 0) {
+          return 0.0;
+        }
 
-	// Calculate standard deviation of flow fractions
-	double meanFraction = 1.0 / numOutputs;
-	double sumSqDiff = 0.0;
-	for (int i = 0; i < numOutputs; i++) {
-	  double fraction = flows[i] / totalFlow;
-	  double diff = fraction - meanFraction;
-	  sumSqDiff += diff * diff;
-	}
-	return Math.sqrt(sumSqDiff / numOutputs);
+        // Calculate standard deviation of flow fractions
+        double meanFraction = 1.0 / numOutputs;
+        double sumSqDiff = 0.0;
+        for (int i = 0; i < numOutputs; i++) {
+          double fraction = flows[i] / totalFlow;
+          double diff = fraction - meanFraction;
+          sumSqDiff += diff * diff;
+        }
+        return Math.sqrt(sumSqDiff / numOutputs);
       }
       return Double.MAX_VALUE;
     }, Direction.MINIMIZE, "σ");
@@ -591,9 +591,9 @@ public enum StandardObjective implements ObjectiveFunction {
     return ObjectiveFunction.create("Minimize " + manifoldName + " Header LOF", process -> {
       ProcessEquipmentInterface unit = process.getUnit(manifoldName);
       if (unit instanceof Manifold) {
-	Manifold manifold = (Manifold) unit;
-	double lof = manifold.calculateHeaderLOF();
-	return Double.isFinite(lof) ? lof : Double.MAX_VALUE;
+        Manifold manifold = (Manifold) unit;
+        double lof = manifold.calculateHeaderLOF();
+        return Double.isFinite(lof) ? lof : Double.MAX_VALUE;
       }
       return Double.MAX_VALUE;
     }, Direction.MINIMIZE, "LOF");
@@ -613,9 +613,9 @@ public enum StandardObjective implements ObjectiveFunction {
     return ObjectiveFunction.create("Minimize " + manifoldName + " Branch LOF", process -> {
       ProcessEquipmentInterface unit = process.getUnit(manifoldName);
       if (unit instanceof Manifold) {
-	Manifold manifold = (Manifold) unit;
-	double lof = manifold.calculateBranchLOF();
-	return Double.isFinite(lof) ? lof : Double.MAX_VALUE;
+        Manifold manifold = (Manifold) unit;
+        double lof = manifold.calculateBranchLOF();
+        return Double.isFinite(lof) ? lof : Double.MAX_VALUE;
       }
       return Double.MAX_VALUE;
     }, Direction.MINIMIZE, "LOF");
@@ -639,9 +639,9 @@ public enum StandardObjective implements ObjectiveFunction {
     return ObjectiveFunction.create("Minimize " + manifoldName + " Header FRMS", process -> {
       ProcessEquipmentInterface unit = process.getUnit(manifoldName);
       if (unit instanceof Manifold) {
-	Manifold manifold = (Manifold) unit;
-	double frms = manifold.calculateHeaderFRMS();
-	return Double.isFinite(frms) ? frms : Double.MAX_VALUE;
+        Manifold manifold = (Manifold) unit;
+        double frms = manifold.calculateHeaderFRMS();
+        return Double.isFinite(frms) ? frms : Double.MAX_VALUE;
       }
       return Double.MAX_VALUE;
     }, Direction.MINIMIZE, "FRMS");
@@ -665,12 +665,12 @@ public enum StandardObjective implements ObjectiveFunction {
     return ObjectiveFunction.create("Minimize " + manifoldName + " Velocity Ratio", process -> {
       ProcessEquipmentInterface unit = process.getUnit(manifoldName);
       if (unit instanceof Manifold) {
-	Manifold manifold = (Manifold) unit;
-	double headerVel = manifold.getHeaderVelocity();
-	double erosionalVel = manifold.getErosionalVelocity();
-	if (erosionalVel > 0) {
-	  return headerVel / erosionalVel;
-	}
+        Manifold manifold = (Manifold) unit;
+        double headerVel = manifold.getHeaderVelocity();
+        double erosionalVel = manifold.getErosionalVelocity();
+        if (erosionalVel > 0) {
+          return headerVel / erosionalVel;
+        }
       }
       return Double.MAX_VALUE;
     }, Direction.MINIMIZE, "V/Ve");

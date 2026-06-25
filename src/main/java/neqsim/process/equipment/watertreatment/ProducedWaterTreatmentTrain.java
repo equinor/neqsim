@@ -179,8 +179,8 @@ public class ProducedWaterTreatmentTrain extends ProcessEquipmentBaseClass {
   public void setStageEfficiency(String stageName, double efficiency) {
     for (WaterTreatmentStage stage : stages) {
       if (stage.getName().equalsIgnoreCase(stageName)) {
-	stage.setEfficiency(efficiency);
-	return;
+        stage.setEfficiency(efficiency);
+        return;
       }
     }
   }
@@ -232,15 +232,15 @@ public class ProducedWaterTreatmentTrain extends ProcessEquipmentBaseClass {
     if (inletStream != null && inletStream.getFluid() != null) {
       SystemInterface fluid = inletStream.getFluid();
       if (fluid.hasPhaseType("aqueous")) {
-	waterFlowRateM3h = fluid.getPhase("aqueous").getVolume("m3") * 3600.0;
+        waterFlowRateM3h = fluid.getPhase("aqueous").getVolume("m3") * 3600.0;
       }
       // Estimate oil content if we have oil phase
       if (fluid.hasPhaseType("oil") && fluid.hasPhaseType("aqueous")) {
-	double oilMass = fluid.getPhase("oil").getMass(); // kg
-	double waterVolume = fluid.getPhase("aqueous").getVolume("m3");
-	if (waterVolume > 0) {
-	  inletOilConcentrationMgL = (oilMass / waterVolume) * 1e6; // mg/L
-	}
+        double oilMass = fluid.getPhase("oil").getMass(); // kg
+        double waterVolume = fluid.getPhase("aqueous").getVolume("m3");
+        if (waterVolume > 0) {
+          inletOilConcentrationMgL = (oilMass / waterVolume) * 1e6; // mg/L
+        }
       }
     }
 
@@ -391,7 +391,7 @@ public class ProducedWaterTreatmentTrain extends ProcessEquipmentBaseClass {
     sb.append("|-------|------|--------------|---------------|------------|\n");
     for (WaterTreatmentStage stage : stages) {
       sb.append(String.format("| %s | %s | %.1f | %.1f | %.1f%% |\n", stage.getName(), stage.getType(),
-	  stage.getInletOIW(), stage.getOutletOIW(), stage.getEfficiency() * 100));
+          stage.getInletOIW(), stage.getOutletOIW(), stage.getEfficiency() * 100));
     }
 
     return sb.toString();

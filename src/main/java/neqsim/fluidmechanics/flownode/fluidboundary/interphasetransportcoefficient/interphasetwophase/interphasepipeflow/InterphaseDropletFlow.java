@@ -171,9 +171,9 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
       return 64.0 / node.getReynoldsNumber(phase);
     } else {
       return Math.pow(
-	  (1.0 / (-1.8 * Math.log10(
-	      6.9 / node.getReynoldsNumber(phase) + Math.pow(node.getGeometry().getRelativeRoughnes() / 3.7, 1.11)))),
-	  2.0);
+          (1.0 / (-1.8 * Math.log10(
+              6.9 / node.getReynoldsNumber(phase) + Math.pow(node.getGeometry().getRelativeRoughnes() / 3.7, 1.11)))),
+          2.0);
     }
   }
 
@@ -188,13 +188,13 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
   public double calcWallHeatTransferCoefficient(int phaseNum, double prandtlNumber, FlowNodeInterface node) {
     if (Math.abs(node.getReynoldsNumber(phaseNum)) < 2000) {
       return 3.66 / node.getHydraulicDiameter(phaseNum)
-	  * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getConductivity();
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getConductivity();
     } else {
       // if turbulent - use chilton colburn analogy
       double temp = node.getBulkSystem().getPhase(phaseNum).getCp()
-	  / node.getBulkSystem().getPhase(phaseNum).getMolarMass()
-	  / node.getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase()
-	  * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity() * node.getVelocity(phaseNum);
+          / node.getBulkSystem().getPhase(phaseNum).getMolarMass()
+          / node.getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase()
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity() * node.getVelocity(phaseNum);
       return 0.5 * this.calcWallFrictionFactor(phaseNum, node) * Math.pow(prandtlNumber, -2.0 / 3.0) * temp;
     }
   }
@@ -220,12 +220,12 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
       double relativeVelocity = Math.abs(node.getVelocity(continuousPhase) - node.getVelocity(dispersedPhase));
       double contVelocity = Math.abs(node.getVelocity(continuousPhase));
       if (relativeVelocity < 0.01 * contVelocity) {
-	relativeVelocity = Math.max(0.1 * contVelocity, 0.01);
+        relativeVelocity = Math.max(0.1 * contVelocity, 0.01);
       }
       double nuContinuous = node.getBulkSystem().getPhase(continuousPhase).getPhysicalProperties()
-	  .getKinematicViscosity();
+          .getKinematicViscosity();
       if (nuContinuous < 1e-15) {
-	nuContinuous = 1e-6;
+        nuContinuous = 1e-6;
       }
       double reParticle = relativeVelocity * particleDiameter / nuContinuous;
       double nusseltNumber = 2.0 + 0.6 * Math.pow(reParticle, 0.5) * Math.pow(prandtlNumber, 0.33);
@@ -241,7 +241,7 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
   public double calcWallMassTransferCoefficient(int phaseNum, double schmidtNumber, FlowNodeInterface node) {
     if (Math.abs(node.getReynoldsNumber(phaseNum)) < 2000) {
       return 3.66 / node.getHydraulicDiameter(phaseNum) / schmidtNumber
-	  * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity();
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity();
     } else {
       double temp = node.getVelocity(phaseNum);
       return 0.5 * this.calcWallFrictionFactor(phaseNum, node) * Math.pow(schmidtNumber, -2.0 / 3.0) * temp;
@@ -302,13 +302,13 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
       double relativeVelocity = Math.abs(node.getVelocity(continuousPhase) - node.getVelocity(dispersedPhase));
       double contVelocity = Math.abs(node.getVelocity(continuousPhase));
       if (relativeVelocity < 0.01 * contVelocity) {
-	relativeVelocity = Math.max(0.1 * contVelocity, 0.01);
+        relativeVelocity = Math.max(0.1 * contVelocity, 0.01);
       }
 
       double nuContinuous = node.getBulkSystem().getPhase(continuousPhase).getPhysicalProperties()
-	  .getKinematicViscosity();
+          .getKinematicViscosity();
       if (nuContinuous < 1e-15) {
-	nuContinuous = 1e-6;
+        nuContinuous = 1e-6;
       }
       double reParticle = relativeVelocity * particleDiameter / nuContinuous;
 
@@ -317,10 +317,10 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
 
       double sherwoodNumber = sh0;
       if (useAbramzonSirignano && spaldingMassTransferNumber > 1.0e-6) {
-	// Abramzon-Sirignano (1989) correction for Stefan flow:
-	// Sh* = 2 + (Sh_0 - 2) / F(B_M)
-	double fBm = calcAbramzonSirignanoF(spaldingMassTransferNumber);
-	sherwoodNumber = 2.0 + (sh0 - 2.0) / fBm;
+        // Abramzon-Sirignano (1989) correction for Stefan flow:
+        // Sh* = 2 + (Sh_0 - 2) / F(B_M)
+        double fBm = calcAbramzonSirignanoF(spaldingMassTransferNumber);
+        sherwoodNumber = 2.0 + (sh0 - 2.0) / fBm;
       }
 
       return sherwoodNumber * diffusivity / particleDiameter;

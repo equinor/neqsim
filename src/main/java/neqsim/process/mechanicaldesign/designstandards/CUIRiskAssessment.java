@@ -146,23 +146,23 @@ public class CUIRiskAssessment implements Serializable {
     if (isStainlessSteel) {
       // Stainless steel: susceptible to chloride SCC under insulation, 50-150 C
       if (operatingTempC >= 60 && operatingTempC <= 150) {
-	return 4.0;
+        return 4.0;
       } else if (operatingTempC >= 50 && operatingTempC <= 175) {
-	return 2.5;
+        return 2.5;
       } else if (operatingTempC >= -4 && operatingTempC <= 200) {
-	return 1.0;
+        return 1.0;
       }
       return 0.3;
     } else {
       // Carbon steel: aqueous corrosion under insulation
       if (operatingTempC >= 80 && operatingTempC <= 120) {
-	return 4.0; // Peak CUI zone
+        return 4.0; // Peak CUI zone
       } else if (operatingTempC >= 50 && operatingTempC <= 150) {
-	return 3.0;
+        return 3.0;
       } else if (operatingTempC >= -4 && operatingTempC <= 175) {
-	return 2.0;
+        return 2.0;
       } else if (operatingTempC > 175 && operatingTempC <= 200) {
-	return 1.0;
+        return 1.0;
       }
       return 0.3; // Below -4 C or above 200 C: low CUI risk
     }
@@ -199,13 +199,13 @@ public class CUIRiskAssessment implements Serializable {
     switch (risk) {
     case VERY_HIGH:
       return Arrays.asList("Strip insulation and visually inspect", "UT thickness measurement at CMLs",
-	  "Radiographic profile (RT)", "Pulsed eddy current (PEC)");
+          "Radiographic profile (RT)", "Pulsed eddy current (PEC)");
     case HIGH:
       return Arrays.asList("Pulsed eddy current (PEC) screening", "UT spot thickness measurements",
-	  "Infrared thermography for moisture detection", "Neutron backscatter for moisture mapping");
+          "Infrared thermography for moisture detection", "Neutron backscatter for moisture mapping");
     case MEDIUM:
       return Arrays.asList("Infrared thermography survey", "Visual inspection of jacketing and sealants",
-	  "UT spot checks at known vulnerable locations");
+          "UT spot checks at known vulnerable locations");
     default:
       return Arrays.asList("Visual inspection of jacketing condition", "Infrared thermography (opportunistic)");
     }

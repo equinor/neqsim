@@ -201,39 +201,39 @@ public enum DiagramStyle {
       // HYSYS uses a unified cyan/teal color palette
       // All equipment uses similar shades for visual consistency
       if (equipmentType.contains("Stream")) {
-	return "#FFFFFF"; // White for stream nodes
+        return "#FFFFFF"; // White for stream nodes
       }
       if (equipmentType.contains("Separator") || equipmentType.contains("Flash") || equipmentType.contains("Vessel")
-	  || equipmentType.contains("Drum")) {
-	return "#00B8B8"; // Cyan for vessels
+          || equipmentType.contains("Drum")) {
+        return "#00B8B8"; // Cyan for vessels
       }
       if (equipmentType.contains("Heater") || equipmentType.contains("Reboiler") || equipmentType.contains("Furnace")) {
-	return "#00A0A0"; // Slightly darker cyan for heaters
+        return "#00A0A0"; // Slightly darker cyan for heaters
       }
       if (equipmentType.contains("Cooler") || equipmentType.contains("Condenser")) {
-	return "#00C8C8"; // Lighter cyan for coolers
+        return "#00C8C8"; // Lighter cyan for coolers
       }
       if (equipmentType.contains("Compressor") || equipmentType.contains("Expander")) {
-	return "#009090"; // Darker teal for compressors
+        return "#009090"; // Darker teal for compressors
       }
       if (equipmentType.contains("Pump")) {
-	return "#00A8A8"; // Medium teal for pumps
+        return "#00A8A8"; // Medium teal for pumps
       }
       if (equipmentType.contains("Valve")) {
-	return "#80D0D0"; // Light cyan for valves
+        return "#80D0D0"; // Light cyan for valves
       }
       if (equipmentType.contains("Column") || equipmentType.contains("Distillation")
-	  || equipmentType.contains("Absorber") || equipmentType.contains("Stripper")) {
-	return "#00B0B0"; // Standard cyan for columns
+          || equipmentType.contains("Absorber") || equipmentType.contains("Stripper")) {
+        return "#00B0B0"; // Standard cyan for columns
       }
       if (equipmentType.contains("Mixer") || equipmentType.contains("Splitter")) {
-	return "#60C8C8"; // Pale cyan for mixers
+        return "#60C8C8"; // Pale cyan for mixers
       }
       if (equipmentType.contains("HeatExchanger") || equipmentType.contains("Exchanger")) {
-	return "#00B8B8"; // Standard cyan for exchangers
+        return "#00B8B8"; // Standard cyan for exchangers
       }
       if (equipmentType.contains("Recycle")) {
-	return "#40B8B8"; // Recycle blocks
+        return "#40B8B8"; // Recycle blocks
       }
       return "#00B8B8"; // Default cyan
 
@@ -246,47 +246,47 @@ public enum DiagramStyle {
       // Aspen Plus uses distinct colors for each equipment function
       // Colors match the actual Aspen Plus V12+ interface
       if (equipmentType.contains("Stream")) {
-	return "#FFFFFF";
+        return "#FFFFFF";
       }
       if (equipmentType.contains("Heater") || equipmentType.contains("Reboiler") || equipmentType.contains("Furnace")
-	  || equipmentType.contains("Fired")) {
-	return "#E74C3C"; // Aspen red for heating
+          || equipmentType.contains("Fired")) {
+        return "#E74C3C"; // Aspen red for heating
       }
       if (equipmentType.contains("Cooler") || equipmentType.contains("Condenser")
-	  || equipmentType.contains("Chiller")) {
-	return "#3498DB"; // Aspen blue for cooling
+          || equipmentType.contains("Chiller")) {
+        return "#3498DB"; // Aspen blue for cooling
       }
       if (equipmentType.contains("Column") || equipmentType.contains("Distillation")
-	  || equipmentType.contains("RadFrac") || equipmentType.contains("Absorber")
-	  || equipmentType.contains("Stripper")) {
-	return "#27AE60"; // Aspen green for columns
+          || equipmentType.contains("RadFrac") || equipmentType.contains("Absorber")
+          || equipmentType.contains("Stripper")) {
+        return "#27AE60"; // Aspen green for columns
       }
       if (equipmentType.contains("Reactor") || equipmentType.contains("RCSTR") || equipmentType.contains("RPlug")) {
-	return "#27AE60"; // Green for reactors too
+        return "#27AE60"; // Green for reactors too
       }
       if (equipmentType.contains("Separator") || equipmentType.contains("Flash") || equipmentType.contains("Vessel")
-	  || equipmentType.contains("Drum")) {
-	return "#95A5A6"; // Gray for vessels
+          || equipmentType.contains("Drum")) {
+        return "#95A5A6"; // Gray for vessels
       }
       if (equipmentType.contains("Compressor") || equipmentType.contains("Expander")
-	  || equipmentType.contains("MCompr")) {
-	return "#9B59B6"; // Purple for rotating equipment
+          || equipmentType.contains("MCompr")) {
+        return "#9B59B6"; // Purple for rotating equipment
       }
       if (equipmentType.contains("Pump")) {
-	return "#5DADE2"; // Light blue for pumps
+        return "#5DADE2"; // Light blue for pumps
       }
       if (equipmentType.contains("Valve")) {
-	return "#F39C12"; // Orange/yellow for valves
+        return "#F39C12"; // Orange/yellow for valves
       }
       if (equipmentType.contains("HeatExchanger") || equipmentType.contains("Exchanger")
-	  || equipmentType.contains("HeatX") || equipmentType.contains("MHeatX")) {
-	return "#E67E22"; // Orange for heat exchangers
+          || equipmentType.contains("HeatX") || equipmentType.contains("MHeatX")) {
+        return "#E67E22"; // Orange for heat exchangers
       }
       if (equipmentType.contains("Mixer") || equipmentType.contains("Splitter") || equipmentType.contains("FSplit")) {
-	return "#BDC3C7"; // Light gray for mixers/splitters
+        return "#BDC3C7"; // Light gray for mixers/splitters
       }
       if (equipmentType.contains("Recycle")) {
-	return "#1ABC9C"; // Teal for recycle blocks
+        return "#1ABC9C"; // Teal for recycle blocks
       }
       return "#95A5A6"; // Default gray
 

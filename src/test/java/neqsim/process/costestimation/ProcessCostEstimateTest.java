@@ -2,10 +2,10 @@ package neqsim.process.costestimation;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.separator.Separator;
@@ -155,7 +155,7 @@ public class ProcessCostEstimateTest {
   void testEquipmentSpecificCostEstimate() {
     // Get cost estimate for specific equipment
     neqsim.process.costestimation.UnitCostEstimateBaseClass compressorCost = process
-	.getEquipmentCostEstimate("MainCompressor");
+        .getEquipmentCostEstimate("MainCompressor");
 
     assertNotNull(compressorCost, "Compressor cost estimate should not be null");
     assertTrue(compressorCost.getPurchasedEquipmentCost() > 0, "Compressor PEC should be positive");
@@ -246,7 +246,7 @@ public class ProcessCostEstimateTest {
 
     // Adjusted should be higher
     assertTrue(adjustedGrassRoots > defaultGrassRoots,
-	"Adjusted grass roots should be higher with location and complexity factors");
+        "Adjusted grass roots should be higher with location and complexity factors");
 
     logger.info("\n=== Location/Complexity Factor Test ===");
     logger.info("Default Grass Roots: $" + String.format("%,.0f", defaultGrassRoots));

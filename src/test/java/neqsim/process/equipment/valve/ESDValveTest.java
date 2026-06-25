@@ -71,7 +71,7 @@ class ESDValveTest {
     // Valve should be approximately 50% open after half stroke time
     double opening = esdValve.getPercentValveOpening();
     assertTrue(opening > 40.0 && opening < 60.0,
-	"Valve should be ~50% open after half stroke time, but was " + opening + "%");
+        "Valve should be ~50% open after half stroke time, but was " + opening + "%");
     assertTrue(esdValve.isClosing(), "Valve should still be closing");
     assertFalse(esdValve.hasTripCompleted(), "Trip should not be completed yet");
   }
@@ -163,7 +163,7 @@ class ESDValveTest {
 
     double opening = esdValve.getPercentValveOpening();
     assertTrue(opening >= 80.0 && opening < 100.0,
-	"Valve should be between 80-100% during PST, but was " + opening + "%");
+        "Valve should be between 80-100% during PST, but was " + opening + "%");
 
     // Complete test
     esdValve.completePartialStrokeTest();

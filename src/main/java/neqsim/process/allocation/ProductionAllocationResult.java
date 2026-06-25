@@ -166,9 +166,9 @@ public class ProductionAllocationResult implements Serializable {
     double total = 0.0;
     for (int c = 0; c < custodyNames.length; c++) {
       if (custodyTypes[c] == productType) {
-	for (int k = 0; k < componentNames.length; k++) {
-	  total += convert(allocMole[j][c][k], k, unit);
-	}
+        for (int k = 0; k < componentNames.length; k++) {
+          total += convert(allocMole[j][c][k], k, unit);
+        }
       }
     }
     return total;
@@ -186,7 +186,7 @@ public class ProductionAllocationResult implements Serializable {
     double total = 0.0;
     for (int c = 0; c < custodyNames.length; c++) {
       for (int k = 0; k < componentNames.length; k++) {
-	total += convert(allocMole[j][c][k], k, unit);
+        total += convert(allocMole[j][c][k], k, unit);
       }
     }
     return total;
@@ -204,7 +204,7 @@ public class ProductionAllocationResult implements Serializable {
     double total = 0.0;
     for (int j = 0; j < sourceNames.length; j++) {
       for (int k = 0; k < componentNames.length; k++) {
-	total += convert(allocMole[j][c][k], k, unit);
+        total += convert(allocMole[j][c][k], k, unit);
       }
     }
     return total;
@@ -222,11 +222,11 @@ public class ProductionAllocationResult implements Serializable {
     double total = 0.0;
     for (int c = 0; c < custodyNames.length; c++) {
       if (custodyTypes[c] == productType) {
-	for (int j = 0; j < sourceNames.length; j++) {
-	  for (int k = 0; k < componentNames.length; k++) {
-	    total += convert(allocMole[j][c][k], k, unit);
-	  }
-	}
+        for (int j = 0; j < sourceNames.length; j++) {
+          for (int k = 0; k < componentNames.length; k++) {
+            total += convert(allocMole[j][c][k], k, unit);
+          }
+        }
       }
     }
     return total;
@@ -269,7 +269,7 @@ public class ProductionAllocationResult implements Serializable {
     for (int j = 0; j < sourceNames.length; j++) {
       here += allocMole[j][c][k];
       for (int cc = 0; cc < custodyNames.length; cc++) {
-	everywhere += allocMole[j][cc][k];
+        everywhere += allocMole[j][cc][k];
       }
     }
     if (everywhere <= 0.0) {
@@ -288,16 +288,16 @@ public class ProductionAllocationResult implements Serializable {
   public void renormalizeMassClosure(double[][] custodyComponentTargetMole) {
     for (int c = 0; c < custodyNames.length; c++) {
       for (int k = 0; k < componentNames.length; k++) {
-	double modelled = 0.0;
-	for (int j = 0; j < sourceNames.length; j++) {
-	  modelled += allocMole[j][c][k];
-	}
-	if (modelled > 0.0) {
-	  double scale = custodyComponentTargetMole[c][k] / modelled;
-	  for (int j = 0; j < sourceNames.length; j++) {
-	    allocMole[j][c][k] *= scale;
-	  }
-	}
+        double modelled = 0.0;
+        for (int j = 0; j < sourceNames.length; j++) {
+          modelled += allocMole[j][c][k];
+        }
+        if (modelled > 0.0) {
+          double scale = custodyComponentTargetMole[c][k] / modelled;
+          for (int j = 0; j < sourceNames.length; j++) {
+            allocMole[j][c][k] *= scale;
+          }
+        }
       }
     }
   }
@@ -339,7 +339,7 @@ public class ProductionAllocationResult implements Serializable {
   private int requireComponent(String component) {
     for (int k = 0; k < componentNames.length; k++) {
       if (componentNames[k].equals(component)) {
-	return k;
+        return k;
       }
     }
     throw new IllegalArgumentException("Unknown component: " + component);
@@ -419,21 +419,21 @@ public class ProductionAllocationResult implements Serializable {
 
       Map<String, Object> toCustody = new LinkedHashMap<>();
       for (int c = 0; c < custodyNames.length; c++) {
-	Map<String, Object> custodyEntry = new LinkedHashMap<>();
-	custodyEntry.put("molePerSec", getAllocatedFlow(sourceNames[j], custodyNames[c], "mole/sec"));
-	custodyEntry.put("kgPerHr", getAllocatedFlow(sourceNames[j], custodyNames[c], "kg/hr"));
-	custodyEntry.put("allocationFactor", getAllocationFactor(sourceNames[j], custodyNames[c]));
-	custodyEntry.put("productType", custodyTypes[c].name());
-	toCustody.put(custodyNames[c], custodyEntry);
+        Map<String, Object> custodyEntry = new LinkedHashMap<>();
+        custodyEntry.put("molePerSec", getAllocatedFlow(sourceNames[j], custodyNames[c], "mole/sec"));
+        custodyEntry.put("kgPerHr", getAllocatedFlow(sourceNames[j], custodyNames[c], "kg/hr"));
+        custodyEntry.put("allocationFactor", getAllocationFactor(sourceNames[j], custodyNames[c]));
+        custodyEntry.put("productType", custodyTypes[c].name());
+        toCustody.put(custodyNames[c], custodyEntry);
       }
       sourceEntry.put("custody", toCustody);
 
       Map<String, Object> products = new LinkedHashMap<>();
       for (ProductType type : ProductType.values()) {
-	double kg = getProductAllocation(sourceNames[j], type, "kg/hr");
-	if (kg != 0.0) {
-	  products.put(type.name(), kg);
-	}
+        double kg = getProductAllocation(sourceNames[j], type, "kg/hr");
+        if (kg != 0.0) {
+          products.put(type.name(), kg);
+        }
       }
       sourceEntry.put("productKgPerHr", products);
       allocations.add(sourceEntry);

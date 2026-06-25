@@ -208,7 +208,7 @@ public class PipeData extends GeometryDefinition {
       outerRadius = radius; // Use inner radius if no wall layers defined
     }
     setSurroundingEnvironment(
-	PipeSurroundingEnvironment.buriedPipe(groundTemperatureK, burialDepthM, outerRadius, soilType));
+        PipeSurroundingEnvironment.buriedPipe(groundTemperatureK, burialDepthM, outerRadius, soilType));
   }
 
   // ===== Accessor methods =====
@@ -285,7 +285,7 @@ public class PipeData extends GeometryDefinition {
 
     // Outer environment resistance per unit length
     double outerResistance = 1.0
-	/ (2.0 * Math.PI * outerRadius * getSurroundingEnvironment().getHeatTransferCoefficient());
+        / (2.0 * Math.PI * outerRadius * getSurroundingEnvironment().getHeatTransferCoefficient());
 
     // Total resistance per unit length
     double totalResistance = wallResistance + outerResistance;

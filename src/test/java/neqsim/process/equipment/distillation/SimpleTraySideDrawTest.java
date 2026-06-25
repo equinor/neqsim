@@ -72,7 +72,7 @@ public class SimpleTraySideDrawTest {
     column.addFeedStream(feed, 0);
 
     DistillationColumn.ColumnSideDrawSpecification specification = column.addSideDrawFlowSpecification(0,
-	DistillationColumn.SideDrawPhase.GAS, 25.0, "kg/hr");
+        DistillationColumn.SideDrawPhase.GAS, 25.0, "kg/hr");
     specification.setTolerance(1.0e-5);
     column.run(UUID.randomUUID());
 
@@ -125,7 +125,7 @@ public class SimpleTraySideDrawTest {
     assertFalse(column.isLastColumnTearConverged());
     assertTrue(column.getTray(0).getGasSideDrawFraction() <= 1.0);
     assertTrue(column.getSideDrawStream(0, DistillationColumn.SideDrawPhase.GAS)
-	.getFlowRate("kg/hr") <= maximumGasDrawFlow + 1.0e-8);
+        .getFlowRate("kg/hr") <= maximumGasDrawFlow + 1.0e-8);
   }
 
   /**

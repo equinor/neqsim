@@ -38,9 +38,9 @@ public class FieldDevelopmentReportExporter {
     }
     for (TiebackOption option : report.getOptions()) {
       table.append(String.format("| %s | %s | %.1f | %.1f | %.0f | %.0f | %s |%n", option.getHostName(),
-	  emptyAsDash(option.getRouteNetworkName()), option.getDistanceKm(),
-	  option.getRouteInstalledLengthKm() > 0.0 ? option.getRouteInstalledLengthKm() : option.getDistanceKm(),
-	  option.getTotalCapexMusd(), option.getNpvMusd(), option.isFeasible() ? "Yes" : "No"));
+          emptyAsDash(option.getRouteNetworkName()), option.getDistanceKm(),
+          option.getRouteInstalledLengthKm() > 0.0 ? option.getRouteInstalledLengthKm() : option.getDistanceKm(),
+          option.getTotalCapexMusd(), option.getNpvMusd(), option.isFeasible() ? "Yes" : "No"));
     }
     return table.toString();
   }
@@ -61,9 +61,9 @@ public class FieldDevelopmentReportExporter {
     for (DevelopmentCaseTemplate template : templates) {
       double lifecycleKt = template.getLifecycleEmissionsProfile().getTotalLifecycleEmissionsTonnes() / 1000.0;
       table.append(String.format("| %s | %s | %.0f | %.0f | %.1f | %.1f | %.2f %s |%n", template.getCaseName(),
-	  template.getCaseType(), template.getTotalCapexMusd(), template.getEconomics().getNpv(), template.getPowerMw(),
-	  lifecycleKt, template.getUncertainty().getResource().getP50(),
-	  template.getUncertainty().getResource().getUnit()));
+          template.getCaseType(), template.getTotalCapexMusd(), template.getEconomics().getNpv(), template.getPowerMw(),
+          lifecycleKt, template.getUncertainty().getResource().getP50(),
+          template.getUncertainty().getResource().getUnit()));
     }
     return table.toString();
   }
@@ -83,7 +83,7 @@ public class FieldDevelopmentReportExporter {
     }
     for (SensitivityAnalyzer.TornadoItem item : tornado.getItems()) {
       table.append(String.format("| %s | %.1f | %.1f | %.1f | %s |%n", item.getParameterName(), item.getLowNpv(),
-	  item.getHighNpv(), item.getSwing(), item.getImpactLevel()));
+          item.getHighNpv(), item.getSwing(), item.getImpactLevel()));
     }
     return table.toString();
   }
@@ -103,8 +103,8 @@ public class FieldDevelopmentReportExporter {
     }
     for (ConceptKPIs item : kpis) {
       table.append(String.format("| %s | %.0f | %.0f | %.1f | %s | %.2f |%n", item.getConceptName(),
-	  item.getTotalCapexMUSD(), item.getNpv10MUSD(), item.getCo2IntensityKgPerBoe(),
-	  item.getFlowAssuranceOverall().getDisplayName(), item.getOverallScore()));
+          item.getTotalCapexMUSD(), item.getNpv10MUSD(), item.getCo2IntensityKgPerBoe(),
+          item.getFlowAssuranceOverall().getDisplayName(), item.getOverallScore()));
     }
     return table.toString();
   }

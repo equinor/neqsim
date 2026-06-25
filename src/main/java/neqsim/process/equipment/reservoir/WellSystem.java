@@ -334,7 +334,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
       // Set initial conditions to wellhead targets
       outFluid.setPressure(targetWellheadPressure, "bara");
       if (tempModel == TubingPerformance.TemperatureModel.LINEAR_GRADIENT) {
-	outFluid.setTemperature(whTemperature, "K");
+        outFluid.setTemperature(whTemperature, "K");
       }
     }
   }
@@ -692,19 +692,19 @@ public class WellSystem extends ProcessEquipmentBaseClass {
 
       // Check convergence
       if (Math.abs(error) < tolerance) {
-	operatingFlowRate = flowGuess;
-	operatingBHP = bhpFromIPR;
-	converged = true;
-	break;
+        operatingFlowRate = flowGuess;
+        operatingBHP = bhpFromIPR;
+        converged = true;
+        break;
       }
 
       // Update bounds for bisection
       if (error * errorLow < 0) {
-	qHigh = flowGuess;
-	errorHigh = error;
+        qHigh = flowGuess;
+        errorHigh = error;
       } else {
-	qLow = flowGuess;
-	errorLow = error;
+        qLow = flowGuess;
+        errorLow = error;
       }
 
       // Use bisection step (very robust)
@@ -712,10 +712,10 @@ public class WellSystem extends ProcessEquipmentBaseClass {
 
       // Check if bounds have collapsed
       if (qHigh - qLow < 1.0) {
-	operatingFlowRate = flowGuess;
-	operatingBHP = bhpFromIPR;
-	converged = true;
-	break;
+        operatingFlowRate = flowGuess;
+        operatingBHP = bhpFromIPR;
+        converged = true;
+        break;
       }
     }
 
@@ -724,7 +724,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
       operatingFlowRate = Math.max(0.0, flowGuess);
       operatingBHP = bhpFromIPR > 0 ? bhpFromIPR : bhpFromVLP;
       logger.warn("WellSystem {} did not converge after {} iterations. Using last values: Q={} Sm3/day, BHP={} bara",
-	  getName(), maxIterations, operatingFlowRate, operatingBHP);
+          getName(), maxIterations, operatingFlowRate, operatingBHP);
     }
 
     // Create output stream at wellhead conditions
@@ -780,11 +780,11 @@ public class WellSystem extends ProcessEquipmentBaseClass {
       // Calculate rate from each layer at common BHP
       totalRate = 0.0;
       for (ReservoirLayer layer : layers) {
-	double layerRate = layer.productivityIndex * (Math.pow(layer.reservoirPressure, 2) - Math.pow(commonBHP, 2));
-	if (layerRate < 0)
-	  layerRate = 0;
-	layer.calculatedRate = layerRate;
-	totalRate += layerRate;
+        double layerRate = layer.productivityIndex * (Math.pow(layer.reservoirPressure, 2) - Math.pow(commonBHP, 2));
+        if (layerRate < 0)
+          layerRate = 0;
+        layer.calculatedRate = layerRate;
+        totalRate += layerRate;
       }
 
       // Calculate VLP BHP for total rate
@@ -793,9 +793,9 @@ public class WellSystem extends ProcessEquipmentBaseClass {
       // Check convergence
       double error = commonBHP - vlpBHP;
       if (Math.abs(error) < tolerance) {
-	operatingFlowRate = totalRate;
-	operatingBHP = commonBHP;
-	break;
+        operatingFlowRate = totalRate;
+        operatingBHP = commonBHP;
+        break;
       }
 
       // Adjust common BHP
@@ -835,7 +835,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
       double c = ratio - 1.0;
       double disc = b * b - 4 * a * c;
       if (disc < 0)
-	return 0.0;
+        return 0.0;
       double x = (-b + Math.sqrt(disc)) / (2 * a);
       return x * reservoirPressure;
 
@@ -926,7 +926,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
 
     // Friction pressure drop (bara)
     double frictionPressure = frictionFactor * (tubingLength / tubingDiameter) * avgDensity * Math.pow(velocity, 2)
-	/ (2.0 * 1e5);
+        / (2.0 * 1e5);
 
     // Total BHP
     double bhp = targetWellheadPressure + hydrostaticPressure + frictionPressure;
@@ -974,13 +974,13 @@ public class WellSystem extends ProcessEquipmentBaseClass {
       double error = calculatedWHP - targetWellheadPressure;
 
       if (Math.abs(error) < 0.5)
-	break;
+        break;
 
       bhpGuess += error * 0.8; // Damped update for stability
       if (bhpGuess < targetWellheadPressure)
-	bhpGuess = targetWellheadPressure + 10;
+        bhpGuess = targetWellheadPressure + 10;
       if (bhpGuess > 1000)
-	bhpGuess = 500;
+        bhpGuess = 500;
     }
 
     return bhpGuess;
@@ -1020,7 +1020,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
 
     if (tempFluid.hasPhaseType("aqueous") || tempFluid.hasPhaseType("oil")) {
       int liqPhase = tempFluid.hasPhaseType("oil") ? tempFluid.getPhaseIndex("oil")
-	  : tempFluid.getPhaseIndex("aqueous");
+          : tempFluid.getPhaseIndex("aqueous");
       rhoL = tempFluid.getPhase(liqPhase).getDensity("kg/m3");
       muL = tempFluid.getPhase(liqPhase).getViscosity("kg/msec");
     }
@@ -1051,7 +1051,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
       // Drift-flux: alpha = vsg / (C0 * vm + vd)
       double denominator = C0 * vm + driftVelocity;
       if (denominator > 0) {
-	alpha = vsg / denominator;
+        alpha = vsg / denominator;
       }
       alpha = Math.max(0.01, Math.min(0.99, alpha));
     }
@@ -1073,7 +1073,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
       frictionFactor = 64.0 / Re;
     }
     double frictionPressure = frictionFactor * (tubingLength / tubingDiameter) * rhoMix * Math.pow(mixVelocity, 2)
-	/ (2.0 * 1e5);
+        / (2.0 * 1e5);
 
     double bhp = targetWellheadPressure + hydrostaticPressure + frictionPressure;
     return Math.max(targetWellheadPressure, Math.min(bhp, reservoirPressure * 1.5));
@@ -1129,17 +1129,17 @@ public class WellSystem extends ProcessEquipmentBaseClass {
       double alphaG = 0.5;
 
       if (tempFluid.hasPhaseType("gas")) {
-	rhoG = tempFluid.getPhase("gas").getDensity("kg/m3");
-	alphaG = tempFluid.getPhase("gas").getBeta();
+        rhoG = tempFluid.getPhase("gas").getDensity("kg/m3");
+        alphaG = tempFluid.getPhase("gas").getBeta();
       }
       if (tempFluid.hasPhaseType("oil")) {
-	rhoL = tempFluid.getPhase("oil").getDensity("kg/m3");
-	muL = tempFluid.getPhase("oil").getViscosity("kg/msec");
-	alphaL = 1.0 - alphaG;
+        rhoL = tempFluid.getPhase("oil").getDensity("kg/m3");
+        muL = tempFluid.getPhase("oil").getViscosity("kg/msec");
+        alphaL = 1.0 - alphaG;
       } else if (tempFluid.hasPhaseType("aqueous")) {
-	rhoL = tempFluid.getPhase("aqueous").getDensity("kg/m3");
-	muL = tempFluid.getPhase("aqueous").getViscosity("kg/msec");
-	alphaL = 1.0 - alphaG;
+        rhoL = tempFluid.getPhase("aqueous").getDensity("kg/m3");
+        muL = tempFluid.getPhase("aqueous").getViscosity("kg/msec");
+        alphaL = 1.0 - alphaG;
       }
 
       // Superficial velocities
@@ -1224,7 +1224,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
       double drawdown = Math.pow(reservoirPressure, 2) - Math.pow(bhp, 2);
       // Solve a*q + b*q² = drawdown
       if (backpressureB == 0)
-	return drawdown / backpressureA;
+        return drawdown / backpressureA;
       double disc = Math.pow(backpressureA, 2) + 4 * backpressureB * drawdown;
       return (-backpressureA + Math.sqrt(disc)) / (2 * backpressureB);
     case PRODUCTION_INDEX:
@@ -1343,13 +1343,13 @@ public class WellSystem extends ProcessEquipmentBaseClass {
       double sm3day = layers.get(i).calculatedRate;
       switch (unit.toLowerCase()) {
       case "bbl/day":
-	rates[i] = sm3day / 0.158987;
-	break;
+        rates[i] = sm3day / 0.158987;
+        break;
       case "msm3/day":
-	rates[i] = sm3day / 1.0e6;
-	break;
+        rates[i] = sm3day / 1.0e6;
+        break;
       default:
-	rates[i] = sm3day;
+        rates[i] = sm3day;
       }
     }
     return rates;

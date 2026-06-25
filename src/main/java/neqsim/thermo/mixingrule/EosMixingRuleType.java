@@ -57,7 +57,7 @@ public enum EosMixingRuleType implements MixingRuleTypeInterface {
   public static EosMixingRuleType byName(String name) {
     for (EosMixingRuleType mr : copyOfValues) {
       if (mr.name().equals(name.toUpperCase())) {
-	return mr;
+        return mr;
       }
     }
     throw new RuntimeException(new InvalidInputException("EosMixingRuleType", "byName", "name", "is not valid."));
@@ -72,7 +72,7 @@ public enum EosMixingRuleType implements MixingRuleTypeInterface {
   public static EosMixingRuleType byValue(int value) {
     for (EosMixingRuleType mr : copyOfValues) {
       if (mr.getValue() == (value)) {
-	return mr;
+        return mr;
       }
     }
     throw new RuntimeException(new InvalidInputException("EosMixingRuleType", "byValue", "value", "is not valid."));

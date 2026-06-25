@@ -11,10 +11,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import neqsim.process.equipment.flare.Flare;
-import neqsim.process.safety.dto.DisposalNetworkSummaryDTO;
-import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.flare.Flare;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.safety.dto.DisposalNetworkSummaryDTO;
 
 /**
  * High level helper coordinating load case evaluation for disposal networks.
@@ -99,20 +99,21 @@ public class ProcessSafetyAnalyzer implements Serializable {
     for (String unitName : affectedUnits) {
       ProcessEquipmentInterface scenarioUnit = scenarioSystem.getUnit(unitName);
       if (scenarioUnit == null) {
-	continue;
+        continue;
       }
       ProcessEquipmentInterface referenceUnit = referenceSystem.getUnit(unitName);
       if (referenceUnit != null) {
-	try {
-	  scenarioUnit.runConditionAnalysis(referenceUnit);
-	} catch (RuntimeException ex) {
-	  // Ignore condition analysis failures for individual units while still capturing KPIs.
-	}
+        try {
+          scenarioUnit.runConditionAnalysis(referenceUnit);
+        } catch (RuntimeException ex) {
+          // Ignore condition analysis failures for individual units while still capturing
+          // KPIs.
+        }
       }
 
       String message = scenarioUnit.getConditionAnalysisMessage();
       if (message == null) {
-	message = "";
+        message = "";
       }
       conditionMessages.put(unitName, message);
 
@@ -123,10 +124,10 @@ public class ProcessSafetyAnalyzer implements Serializable {
     }
 
     String conditionReport = conditionMessages.values().stream()
-	.filter(message -> message != null && !message.isEmpty()).collect(Collectors.joining(System.lineSeparator()));
+        .filter(message -> message != null && !message.isEmpty()).collect(Collectors.joining(System.lineSeparator()));
 
     return new ProcessSafetyAnalysisSummary(scenario.getName(), affectedUnits, conditionReport, conditionMessages,
-	unitKpis);
+        unitKpis);
   }
 
   private double captureSafely(DoubleSupplierWithException supplier) {

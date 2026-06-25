@@ -228,7 +228,7 @@ public class NorwegianTaxModel implements TaxModel {
     double afterTaxIncome = grossRevenue - opex - totalTax;
 
     return new TaxModel.TaxResult(grossRevenue, opex, depreciation, uplift, corporateTaxBase, corporateTax,
-	petroleumTaxBase, petroleumTax, totalTax, afterTaxIncome);
+        petroleumTaxBase, petroleumTax, totalTax, afterTaxIncome);
   }
 
   /**
@@ -491,10 +491,10 @@ public class NorwegianTaxModel implements TaxModel {
   @Override
   public FiscalParameters getParameters() {
     return FiscalParameters.builder("NO").countryName("Norway")
-	.fiscalSystemType(FiscalParameters.FiscalSystemType.CONCESSIONARY).corporateTaxRate(corporateTaxRate)
-	.resourceTaxRate(petroleumTaxRate).royaltyRate(0.0)
-	.depreciation(FiscalParameters.DepreciationMethod.STRAIGHT_LINE, depreciationYears)
-	.uplift(upliftRate, upliftYears).build();
+        .fiscalSystemType(FiscalParameters.FiscalSystemType.CONCESSIONARY).corporateTaxRate(corporateTaxRate)
+        .resourceTaxRate(petroleumTaxRate).royaltyRate(0.0)
+        .depreciation(FiscalParameters.DepreciationMethod.STRAIGHT_LINE, depreciationYears)
+        .uplift(upliftRate, upliftYears).build();
   }
 
   /**
@@ -606,7 +606,7 @@ public class NorwegianTaxModel implements TaxModel {
      * @param afterTaxIncome after-tax income
      */
     public TaxResult(double grossRevenue, double opex, double depreciation, double uplift, double corporateTaxBase,
-	double corporateTax, double petroleumTaxBase, double petroleumTax, double totalTax, double afterTaxIncome) {
+        double corporateTax, double petroleumTaxBase, double petroleumTax, double totalTax, double afterTaxIncome) {
       this.grossRevenue = grossRevenue;
       this.opex = opex;
       this.depreciation = depreciation;
@@ -716,7 +716,7 @@ public class NorwegianTaxModel implements TaxModel {
      */
     public double getEffectiveTaxRate() {
       if (grossRevenue <= 0) {
-	return 0.0;
+        return 0.0;
       }
       return totalTax / grossRevenue;
     }
@@ -724,9 +724,9 @@ public class NorwegianTaxModel implements TaxModel {
     @Override
     public String toString() {
       return String.format(
-	  "TaxResult[revenue=%.2f, opex=%.2f, depreciation=%.2f, uplift=%.2f, "
-	      + "corporateTax=%.2f, petroleumTax=%.2f, totalTax=%.2f, afterTax=%.2f]",
-	  grossRevenue, opex, depreciation, uplift, corporateTax, petroleumTax, totalTax, afterTaxIncome);
+          "TaxResult[revenue=%.2f, opex=%.2f, depreciation=%.2f, uplift=%.2f, "
+              + "corporateTax=%.2f, petroleumTax=%.2f, totalTax=%.2f, afterTax=%.2f]",
+          grossRevenue, opex, depreciation, uplift, corporateTax, petroleumTax, totalTax, afterTaxIncome);
     }
   }
 }

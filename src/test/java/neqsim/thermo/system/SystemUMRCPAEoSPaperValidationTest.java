@@ -69,9 +69,9 @@ class SystemUMRCPAEoSPaperValidationTest extends neqsim.NeqSimTest {
       double ref = referencePbar[i];
       double relErr = Math.abs(ps - ref) / ref;
       assertTrue(relErr < 0.05, "water Psat at " + temperatures[i] + " K was " + ps
-	  + " bara, expected within 5% of steam-table value " + ref + " bara");
+          + " bara, expected within 5% of steam-table value " + ref + " bara");
       assertTrue(ps > previous,
-	  "water Psat should increase with temperature, was " + ps + " bara after " + previous + " bara");
+          "water Psat should increase with temperature, was " + ps + " bara after " + previous + " bara");
       previous = ps;
     }
   }
@@ -151,7 +151,7 @@ class SystemUMRCPAEoSPaperValidationTest extends neqsim.NeqSimTest {
     assertTrue(fluid.getNumberOfPhases() >= 2, "expected gas and aqueous phases");
     double waterInGas = fluid.getPhase(0).getComponent("water").getx();
     assertTrue(waterInGas > 1.0e-5 && waterInGas < 5.0e-3,
-	"gas-phase water mole fraction out of expected range: " + waterInGas);
+        "gas-phase water mole fraction out of expected range: " + waterInGas);
   }
 
   /**
@@ -183,7 +183,7 @@ class SystemUMRCPAEoSPaperValidationTest extends neqsim.NeqSimTest {
 
     assertTrue(methaneInGas > 0.9, "gas should be methane rich, was " + methaneInGas);
     assertTrue(tegInLiquid + waterInLiquid > 0.5,
-	"liquid should be TEG/water rich, was " + (tegInLiquid + waterInLiquid));
+        "liquid should be TEG/water rich, was " + (tegInLiquid + waterInLiquid));
   }
 
   /**
@@ -224,11 +224,11 @@ class SystemUMRCPAEoSPaperValidationTest extends neqsim.NeqSimTest {
     assertTrue(modelTest.checkFugacityCoefficients(), "residual Gibbs energy inconsistent with fugacity coefficients");
     assertTrue(modelTest.checkFugacityCoefficientsDP(), "pressure derivative of fugacity coefficients inconsistent");
     assertTrue(modelTest.checkFugacityCoefficientsDT(),
-	"temperature derivative of fugacity coefficients inconsistent (alpha dT)");
+        "temperature derivative of fugacity coefficients inconsistent (alpha dT)");
     assertTrue(modelTest.checkFugacityCoefficientsDn(),
-	"composition derivative of fugacity coefficients violates Gibbs-Duhem");
+        "composition derivative of fugacity coefficients violates Gibbs-Duhem");
     assertTrue(modelTest.checkFugacityCoefficientsDn2(),
-	"composition derivative of fugacity coefficients is not symmetric");
+        "composition derivative of fugacity coefficients is not symmetric");
   }
 
   /**
@@ -262,12 +262,12 @@ class SystemUMRCPAEoSPaperValidationTest extends neqsim.NeqSimTest {
 
     ThermodynamicModelTest modelTest = new ThermodynamicModelTest(fluid);
     assertTrue(modelTest.checkFugacityCoefficients(),
-	"residual Gibbs energy inconsistent with fugacity coefficients (association)");
+        "residual Gibbs energy inconsistent with fugacity coefficients (association)");
     assertTrue(modelTest.checkFugacityCoefficientsDP(),
-	"pressure derivative of fugacity coefficients inconsistent (association)");
+        "pressure derivative of fugacity coefficients inconsistent (association)");
     assertTrue(modelTest.checkFugacityCoefficientsDT(),
-	"temperature derivative of fugacity coefficients inconsistent (association)");
+        "temperature derivative of fugacity coefficients inconsistent (association)");
     assertTrue(modelTest.checkFugacityCoefficientsDn2(),
-	"composition derivative of fugacity coefficients is not symmetric (association)");
+        "composition derivative of fugacity coefficients is not symmetric (association)");
   }
 }

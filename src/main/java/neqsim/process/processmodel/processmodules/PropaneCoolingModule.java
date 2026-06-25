@@ -180,19 +180,19 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
     propaneModule.run();
 
     double compressorWork = ((CompressorInterface) propaneModule.getOperations().getUnit("propane compressor"))
-	.getEnergy();
+        .getEnergy();
 
     double evaporatorDuty = ((Cooler) propaneModule.getOperations().getUnit("propane evaporator")).getEnergyInput();
     double evaporatorPressure = ((Cooler) propaneModule.getOperations().getUnit("propane evaporator")).getOutletStream()
-	.getPressure();
+        .getPressure();
     double evaporatorTemperature = ((Cooler) propaneModule.getOperations().getUnit("propane evaporator"))
-	.getOutletStream().getTemperature();
+        .getOutletStream().getTemperature();
 
     double condenserDuty = ((Heater) propaneModule.getOperations().getUnit("propane condenser")).getEnergyInput();
     double condenserPressure = ((Heater) propaneModule.getOperations().getUnit("propane condenser")).getOutletStream()
-	.getPressure();
+        .getPressure();
     double condenserTemperature = ((Heater) propaneModule.getOperations().getUnit("propane condenser"))
-	.getOutletStream().getTemperature();
+        .getOutletStream().getTemperature();
 
     System.out.println("Compressor work " + compressorWork + " W");
 

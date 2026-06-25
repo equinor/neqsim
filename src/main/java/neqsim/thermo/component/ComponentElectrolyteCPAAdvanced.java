@@ -16,12 +16,14 @@ import neqsim.thermo.util.constants.IonParametersAdvanced;
  * In the parent model, the Born parameter is:
  * </p>
  *
+ * <p>
  * $$ X_{Born,i} = \frac{z_i^2}{\sigma_i} $$
  *
  * <p>
  * where sigma is the Lennard-Jones diameter. In this advanced model:
  * </p>
  *
+ * <p>
  * $$ X_{Born,i} = \frac{z_i^2}{2 \cdot r_{Born,i}(T)} $$
  *
  * <p>
@@ -92,10 +94,10 @@ public class ComponentElectrolyteCPAAdvanced extends ComponentElectrolyteCPAstat
     if (hasAdvancedParams && ionicCharge != 0) {
       double rBorn = IonParametersAdvanced.calcBornRadius(getComponentName(), temp);
       if (rBorn > 0.0) {
-	// XBorni = z^2 / (2 * rBorn_meters)
-	// Factor 2 converts from 1/(8*pi*eps0*rBorn) convention to parent's
-	// 1/(4*pi*eps0*sigma) convention
-	XBorni = ionicCharge * ionicCharge / (2.0 * rBorn * 1e-10);
+        // XBorni = z^2 / (2 * rBorn_meters)
+        // Factor 2 converts from 1/(8*pi*eps0*rBorn) convention to parent's
+        // 1/(4*pi*eps0*sigma) convention
+        XBorni = ionicCharge * ionicCharge / (2.0 * rBorn * 1e-10);
       }
     }
   }

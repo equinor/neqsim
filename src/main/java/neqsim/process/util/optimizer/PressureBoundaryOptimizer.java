@@ -184,7 +184,7 @@ import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
  * // Find operating point that minimizes power while achieving target flow
  * double targetFlow = 50000.0; // kg/hr
  * OptimizationResult minPowerResult = optimizer.findMinimumPowerOperatingPoint(50.0, // inlet
- * 										   // pressure
+ *     // pressure
  *     100.0, // outlet pressure
  *     "bara", targetFlow);
  *
@@ -406,7 +406,7 @@ public class PressureBoundaryOptimizer implements Serializable {
   private StreamInterface findStream(ProcessSystem process, String streamName) {
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       if (unit instanceof StreamInterface && unit.getName().equals(streamName)) {
-	return (StreamInterface) unit;
+        return (StreamInterface) unit;
       }
     }
     throw new IllegalArgumentException("Stream not found: " + streamName);
@@ -421,7 +421,7 @@ public class PressureBoundaryOptimizer implements Serializable {
     List<Compressor> result = new ArrayList<Compressor>();
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       if (unit instanceof Compressor) {
-	result.add((Compressor) unit);
+        result.add((Compressor) unit);
       }
     }
     return result;
@@ -442,19 +442,19 @@ public class PressureBoundaryOptimizer implements Serializable {
 
     for (Compressor comp : compressors) {
       if (comp.getCompressorChart() == null || !comp.getCompressorChart().isUseCompressorChart()) {
-	// Run to establish baseline
-	process.run();
+        // Run to establish baseline
+        process.run();
 
-	// Generate chart
-	CompressorChartGenerator generator = new CompressorChartGenerator(comp);
-	comp.setCompressorChart(generator.generateCompressorChart("interpolate"));
+        // Generate chart
+        CompressorChartGenerator generator = new CompressorChartGenerator(comp);
+        comp.setCompressorChart(generator.generateCompressorChart("interpolate"));
 
-	// Configure compressor
-	comp.setUsePolytropicCalc(true);
-	comp.setSolveSpeed(true);
-	comp.getCompressorChart().setUseCompressorChart(true);
+        // Configure compressor
+        comp.setUsePolytropicCalc(true);
+        comp.setSolveSpeed(true);
+        comp.getCompressorChart().setUseCompressorChart(true);
 
-	logger.info("Configured compressor chart for: {}", comp.getName());
+        logger.info("Configured compressor chart for: {}", comp.getName());
       }
     }
 
@@ -486,7 +486,7 @@ public class PressureBoundaryOptimizer implements Serializable {
 
     // Create outlet pressure constraint
     OptimizationConstraint outletPressureConstraint = createOutletPressureConstraint(targetOutletPressure, pressureUnit,
-	pressureTolerance);
+        pressureTolerance);
 
     // Create compressor constraints
     List<OptimizationConstraint> constraints = new ArrayList<OptimizationConstraint>();
@@ -495,12 +495,12 @@ public class PressureBoundaryOptimizer implements Serializable {
 
     // Create throughput objective
     OptimizationObjective throughputObjective = new OptimizationObjective("throughput",
-	proc -> feedStream.getFlowRate(rateUnit), 1.0, ObjectiveType.MAXIMIZE);
+        proc -> feedStream.getFlowRate(rateUnit), 1.0, ObjectiveType.MAXIMIZE);
 
     // Configure optimization
     OptimizationConfig config = new OptimizationConfig(minFlowRate, maxFlowRate).rateUnit(rateUnit)
-	.tolerance(tolerance * (maxFlowRate - minFlowRate)).maxIterations(maxIterations)
-	.searchMode(SearchMode.BINARY_FEASIBILITY).defaultUtilizationLimit(maxUtilization);
+        .tolerance(tolerance * (maxFlowRate - minFlowRate)).maxIterations(maxIterations)
+        .searchMode(SearchMode.BINARY_FEASIBILITY).defaultUtilizationLimit(maxUtilization);
 
     // Set inlet pressure before optimization
     double originalInletPressure = feedStream.getPressure(pressureUnit);
@@ -509,7 +509,7 @@ public class PressureBoundaryOptimizer implements Serializable {
     try {
       // Run optimization
       OptimizationResult result = productionOptimizer.optimize(process, feedStream, config,
-	  Collections.singletonList(throughputObjective), constraints);
+          Collections.singletonList(throughputObjective), constraints);
 
       // Add power information to decision variables
       Map<String, Double> decisionVars = new LinkedHashMap<String, Double>(result.getDecisionVariables());
@@ -518,9 +518,9 @@ public class PressureBoundaryOptimizer implements Serializable {
       decisionVars.put("outletPressure_" + pressureUnit, outletStream.getPressure(pressureUnit));
 
       return new OptimizationResult(result.getOptimalRate(), result.getRateUnit(), decisionVars, result.getBottleneck(),
-	  result.getBottleneckUtilization(), result.getUtilizationRecords(), result.getObjectiveValues(),
-	  result.getConstraintStatuses(), result.isFeasible(), result.getScore(), result.getIterations(),
-	  result.getIterationHistory());
+          result.getBottleneckUtilization(), result.getUtilizationRecords(), result.getObjectiveValues(),
+          result.getConstraintStatuses(), result.isFeasible(), result.getScore(), result.getIterations(),
+          result.getIterationHistory());
     } finally {
       // Restore original inlet pressure
       feedStream.setPressure(originalInletPressure, pressureUnit);
@@ -540,9 +540,9 @@ public class PressureBoundaryOptimizer implements Serializable {
     double pressureTol = targetPressure * tolerance;
 
     return new OptimizationConstraint("outletPressure",
-	proc -> Math.abs(outletStream.getPressure(pressureUnit) - targetPressure), pressureTol,
-	ConstraintDirection.LESS_THAN, ConstraintSeverity.HARD, 10.0,
-	"Outlet pressure must be within " + (tolerance * 100) + "% of target " + targetPressure + " " + pressureUnit);
+        proc -> Math.abs(outletStream.getPressure(pressureUnit) - targetPressure), pressureTol,
+        ConstraintDirection.LESS_THAN, ConstraintSeverity.HARD, 10.0,
+        "Outlet pressure must be within " + (tolerance * 100) + "% of target " + targetPressure + " " + pressureUnit);
   }
 
   /**
@@ -556,26 +556,26 @@ public class PressureBoundaryOptimizer implements Serializable {
     for (final Compressor comp : compressors) {
       // Surge margin constraint
       constraints.add(new OptimizationConstraint(comp.getName() + "_surgeMargin", proc -> comp.getDistanceToSurge(),
-	  minSurgeMargin, ConstraintDirection.GREATER_THAN, ConstraintSeverity.HARD, 10.0,
-	  "Compressor " + comp.getName() + " must maintain surge margin > " + minSurgeMargin));
+          minSurgeMargin, ConstraintDirection.GREATER_THAN, ConstraintSeverity.HARD, 10.0,
+          "Compressor " + comp.getName() + " must maintain surge margin > " + minSurgeMargin));
 
       // Power limit constraint
       if (maxPowerLimit < Double.MAX_VALUE) {
-	constraints.add(new OptimizationConstraint(comp.getName() + "_power", proc -> comp.getPower("kW"),
-	    maxPowerLimit, ConstraintDirection.LESS_THAN, ConstraintSeverity.HARD, 5.0,
-	    "Compressor " + comp.getName() + " power must be < " + maxPowerLimit + " kW"));
+        constraints.add(new OptimizationConstraint(comp.getName() + "_power", proc -> comp.getPower("kW"),
+            maxPowerLimit, ConstraintDirection.LESS_THAN, ConstraintSeverity.HARD, 5.0,
+            "Compressor " + comp.getName() + " power must be < " + maxPowerLimit + " kW"));
       }
 
       // Speed limits
       if (maxSpeedLimit < Double.MAX_VALUE) {
-	constraints.add(new OptimizationConstraint(comp.getName() + "_maxSpeed", proc -> comp.getSpeed(), maxSpeedLimit,
-	    ConstraintDirection.LESS_THAN, ConstraintSeverity.HARD, 5.0,
-	    "Compressor " + comp.getName() + " speed must be < " + maxSpeedLimit + " RPM"));
+        constraints.add(new OptimizationConstraint(comp.getName() + "_maxSpeed", proc -> comp.getSpeed(), maxSpeedLimit,
+            ConstraintDirection.LESS_THAN, ConstraintSeverity.HARD, 5.0,
+            "Compressor " + comp.getName() + " speed must be < " + maxSpeedLimit + " RPM"));
       }
       if (minSpeedLimit > 0) {
-	constraints.add(new OptimizationConstraint(comp.getName() + "_minSpeed", proc -> comp.getSpeed(), minSpeedLimit,
-	    ConstraintDirection.GREATER_THAN, ConstraintSeverity.HARD, 5.0,
-	    "Compressor " + comp.getName() + " speed must be > " + minSpeedLimit + " RPM"));
+        constraints.add(new OptimizationConstraint(comp.getName() + "_minSpeed", proc -> comp.getSpeed(), minSpeedLimit,
+            ConstraintDirection.GREATER_THAN, ConstraintSeverity.HARD, 5.0,
+            "Compressor " + comp.getName() + " speed must be > " + minSpeedLimit + " RPM"));
       }
     }
 
@@ -618,29 +618,29 @@ public class PressureBoundaryOptimizer implements Serializable {
 
     for (int i = 0; i < nInlet; i++) {
       for (int j = 0; j < nOutlet; j++) {
-	try {
-	  OptimizationResult result = findMaxFlowRate(inletPressures[i], outletPressures[j], pressureUnit);
+        try {
+          OptimizationResult result = findMaxFlowRate(inletPressures[i], outletPressures[j], pressureUnit);
 
-	  if (result.isFeasible()) {
-	    flowRates[i][j] = result.getOptimalRate();
-	    powers[i][j] = result.getDecisionVariables().getOrDefault("totalPower_kW", 0.0);
-	    bottlenecks[i][j] = result.getBottleneck() != null ? result.getBottleneck().getName() : "";
-	  } else {
-	    flowRates[i][j] = Double.NaN;
-	    powers[i][j] = Double.NaN;
-	    bottlenecks[i][j] = "INFEASIBLE";
-	  }
-	} catch (Exception e) {
-	  logger.warn("Failed at Pin={}, Pout={}: {}", inletPressures[i], outletPressures[j], e.getMessage());
-	  flowRates[i][j] = Double.NaN;
-	  powers[i][j] = Double.NaN;
-	  bottlenecks[i][j] = "ERROR";
-	}
+          if (result.isFeasible()) {
+            flowRates[i][j] = result.getOptimalRate();
+            powers[i][j] = result.getDecisionVariables().getOrDefault("totalPower_kW", 0.0);
+            bottlenecks[i][j] = result.getBottleneck() != null ? result.getBottleneck().getName() : "";
+          } else {
+            flowRates[i][j] = Double.NaN;
+            powers[i][j] = Double.NaN;
+            bottlenecks[i][j] = "INFEASIBLE";
+          }
+        } catch (Exception e) {
+          logger.warn("Failed at Pin={}, Pout={}: {}", inletPressures[i], outletPressures[j], e.getMessage());
+          flowRates[i][j] = Double.NaN;
+          powers[i][j] = Double.NaN;
+          bottlenecks[i][j] = "ERROR";
+        }
       }
     }
 
     return new LiftCurveTable("LiftCurve", inletPressures, outletPressures, flowRates, powers, bottlenecks,
-	pressureUnit, rateUnit);
+        pressureUnit, rateUnit);
   }
 
   /**
@@ -656,11 +656,11 @@ public class PressureBoundaryOptimizer implements Serializable {
 
     for (int i = 0; i < outletPressures.length; i++) {
       try {
-	OptimizationResult result = findMaxFlowRate(inletPressure, outletPressures[i], pressureUnit);
-	flowRates[i] = result.isFeasible() ? result.getOptimalRate() : Double.NaN;
+        OptimizationResult result = findMaxFlowRate(inletPressure, outletPressures[i], pressureUnit);
+        flowRates[i] = result.isFeasible() ? result.getOptimalRate() : Double.NaN;
       } catch (Exception e) {
-	logger.warn("Failed at Pout={}: {}", outletPressures[i], e.getMessage());
-	flowRates[i] = Double.NaN;
+        logger.warn("Failed at Pout={}: {}", outletPressures[i], e.getMessage());
+        flowRates[i] = Double.NaN;
       }
     }
 
@@ -690,17 +690,17 @@ public class PressureBoundaryOptimizer implements Serializable {
 
     // Create power minimization objective
     OptimizationObjective powerObjective = new OptimizationObjective("totalPower", proc -> calculateTotalPower(), 1.0,
-	ObjectiveType.MINIMIZE);
+        ObjectiveType.MINIMIZE);
 
     // Flow rate constraint - must achieve target flow
     constraints.add(new OptimizationConstraint("minFlowRate", proc -> feedStream.getFlowRate(rateUnit), targetFlowRate,
-	ConstraintDirection.GREATER_THAN, ConstraintSeverity.HARD, 10.0,
-	"Flow rate must be >= " + targetFlowRate + " " + rateUnit));
+        ConstraintDirection.GREATER_THAN, ConstraintSeverity.HARD, 10.0,
+        "Flow rate must be >= " + targetFlowRate + " " + rateUnit));
 
     // Configure optimization - search from target flow to max
     OptimizationConfig config = new OptimizationConfig(targetFlowRate, maxFlowRate).rateUnit(rateUnit)
-	.tolerance(tolerance * (maxFlowRate - targetFlowRate)).maxIterations(maxIterations)
-	.searchMode(SearchMode.GOLDEN_SECTION_SCORE).defaultUtilizationLimit(maxUtilization);
+        .tolerance(tolerance * (maxFlowRate - targetFlowRate)).maxIterations(maxIterations)
+        .searchMode(SearchMode.GOLDEN_SECTION_SCORE).defaultUtilizationLimit(maxUtilization);
 
     // Set inlet pressure
     double originalInletPressure = feedStream.getPressure(pressureUnit);
@@ -708,7 +708,7 @@ public class PressureBoundaryOptimizer implements Serializable {
 
     try {
       return productionOptimizer.optimize(process, feedStream, config, Collections.singletonList(powerObjective),
-	  constraints);
+          constraints);
     } finally {
       feedStream.setPressure(originalInletPressure, pressureUnit);
     }
@@ -905,7 +905,7 @@ public class PressureBoundaryOptimizer implements Serializable {
    * <pre>
    * // Generate table
    * LiftCurveTable table = optimizer.generateLiftCurveTable(new double[] { 50.0, 60.0, 70.0 }, // inlet
-   * 											   // pressures
+   *     // pressures
    *     new double[] { 90.0, 100.0, 110.0 }, // outlet pressures
    *     "bara");
    *
@@ -950,7 +950,7 @@ public class PressureBoundaryOptimizer implements Serializable {
      * @param rateUnit the rate unit
      */
     public LiftCurveTable(String tableName, double[] inletPressures, double[] outletPressures, double[][] flowRates,
-	double[][] powers, String[][] bottlenecks, String pressureUnit, String rateUnit) {
+        double[][] powers, String[][] bottlenecks, String pressureUnit, String rateUnit) {
       this.tableName = tableName;
       this.inletPressures = Arrays.copyOf(inletPressures, inletPressures.length);
       this.outletPressures = Arrays.copyOf(outletPressures, outletPressures.length);
@@ -964,7 +964,7 @@ public class PressureBoundaryOptimizer implements Serializable {
     private double[][] copyMatrix(double[][] matrix) {
       double[][] copy = new double[matrix.length][];
       for (int i = 0; i < matrix.length; i++) {
-	copy[i] = Arrays.copyOf(matrix[i], matrix[i].length);
+        copy[i] = Arrays.copyOf(matrix[i], matrix[i].length);
       }
       return copy;
     }
@@ -972,7 +972,7 @@ public class PressureBoundaryOptimizer implements Serializable {
     private String[][] copyMatrix(String[][] matrix) {
       String[][] copy = new String[matrix.length][];
       for (int i = 0; i < matrix.length; i++) {
-	copy[i] = Arrays.copyOf(matrix[i], matrix[i].length);
+        copy[i] = Arrays.copyOf(matrix[i], matrix[i].length);
       }
       return copy;
     }
@@ -1045,11 +1045,11 @@ public class PressureBoundaryOptimizer implements Serializable {
     public int countFeasiblePoints() {
       int count = 0;
       for (int i = 0; i < inletPressures.length; i++) {
-	for (int j = 0; j < outletPressures.length; j++) {
-	  if (!Double.isNaN(flowRates[i][j])) {
-	    count++;
-	  }
-	}
+        for (int j = 0; j < outletPressures.length; j++) {
+          if (!Double.isNaN(flowRates[i][j])) {
+            count++;
+          }
+        }
       }
       return count;
     }
@@ -1077,7 +1077,7 @@ public class PressureBoundaryOptimizer implements Serializable {
       sb.append("-- Table: ").append(tableName).append("\n");
       sb.append("-- THP values (").append(pressureUnit).append("): ");
       for (double p : outletPressures) {
-	sb.append(String.format("%.1f ", p));
+        sb.append(String.format("%.1f ", p));
       }
       sb.append("\n");
 
@@ -1085,21 +1085,21 @@ public class PressureBoundaryOptimizer implements Serializable {
       sb.append("-- BHP (").append(pressureUnit).append(") / RATE (").append(rateUnit).append(")\n");
       sb.append("-- Pin\\Pout");
       for (double p : outletPressures) {
-	sb.append(String.format("%12.1f", p));
+        sb.append(String.format("%12.1f", p));
       }
       sb.append("\n");
 
       // Data rows (one per inlet pressure)
       for (int i = 0; i < inletPressures.length; i++) {
-	sb.append(String.format("%10.1f", inletPressures[i]));
-	for (int j = 0; j < outletPressures.length; j++) {
-	  if (Double.isNaN(flowRates[i][j])) {
-	    sb.append(String.format("%12s", "1*"));
-	  } else {
-	    sb.append(String.format("%12.0f", flowRates[i][j]));
-	  }
-	}
-	sb.append("\n");
+        sb.append(String.format("%10.1f", inletPressures[i]));
+        for (int j = 0; j < outletPressures.length; j++) {
+          if (Double.isNaN(flowRates[i][j])) {
+            sb.append(String.format("%12s", "1*"));
+          } else {
+            sb.append(String.format("%12.0f", flowRates[i][j]));
+          }
+        }
+        sb.append("\n");
       }
 
       sb.append("/\n");
@@ -1108,20 +1108,20 @@ public class PressureBoundaryOptimizer implements Serializable {
       sb.append("\n-- Power Table (kW)\n");
       sb.append("-- Pin\\Pout");
       for (double p : outletPressures) {
-	sb.append(String.format("%12.1f", p));
+        sb.append(String.format("%12.1f", p));
       }
       sb.append("\n");
 
       for (int i = 0; i < inletPressures.length; i++) {
-	sb.append(String.format("%10.1f", inletPressures[i]));
-	for (int j = 0; j < outletPressures.length; j++) {
-	  if (Double.isNaN(powers[i][j])) {
-	    sb.append(String.format("%12s", "-"));
-	  } else {
-	    sb.append(String.format("%12.1f", powers[i][j]));
-	  }
-	}
-	sb.append("\n");
+        sb.append(String.format("%10.1f", inletPressures[i]));
+        for (int j = 0; j < outletPressures.length; j++) {
+          if (Double.isNaN(powers[i][j])) {
+            sb.append(String.format("%12s", "-"));
+          } else {
+            sb.append(String.format("%12.1f", powers[i][j]));
+          }
+        }
+        sb.append("\n");
       }
 
       return sb.toString();
@@ -1142,20 +1142,20 @@ public class PressureBoundaryOptimizer implements Serializable {
       sb.append("  \"outletPressures\": ").append(Arrays.toString(outletPressures)).append(",\n");
       sb.append("  \"flowRates\": [\n");
       for (int i = 0; i < flowRates.length; i++) {
-	sb.append("    ").append(Arrays.toString(flowRates[i]));
-	if (i < flowRates.length - 1) {
-	  sb.append(",");
-	}
-	sb.append("\n");
+        sb.append("    ").append(Arrays.toString(flowRates[i]));
+        if (i < flowRates.length - 1) {
+          sb.append(",");
+        }
+        sb.append("\n");
       }
       sb.append("  ],\n");
       sb.append("  \"powers\": [\n");
       for (int i = 0; i < powers.length; i++) {
-	sb.append("    ").append(Arrays.toString(powers[i]));
-	if (i < powers.length - 1) {
-	  sb.append(",");
-	}
-	sb.append("\n");
+        sb.append("    ").append(Arrays.toString(powers[i]));
+        if (i < powers.length - 1) {
+          sb.append(",");
+        }
+        sb.append("\n");
       }
       sb.append("  ],\n");
       sb.append("  \"feasiblePoints\": ").append(countFeasiblePoints()).append("\n");
@@ -1166,8 +1166,8 @@ public class PressureBoundaryOptimizer implements Serializable {
     @Override
     public String toString() {
       return "LiftCurveTable{" + "tableName='" + tableName + "'" + ", inletPressures=" + inletPressures.length
-	  + ", outletPressures=" + outletPressures.length + ", feasiblePoints=" + countFeasiblePoints() + "/"
-	  + (inletPressures.length * outletPressures.length) + "}";
+          + ", outletPressures=" + outletPressures.length + ", feasiblePoints=" + countFeasiblePoints() + "/"
+          + (inletPressures.length * outletPressures.length) + "}";
     }
   }
 }

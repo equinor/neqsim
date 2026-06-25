@@ -72,41 +72,41 @@ public class FlashSurrogateDataGenerator {
       double temp = tMin + (tMax - tMin) * i / (nTemp - 1);
 
       for (int j = 0; j < nPres; j++) {
-	double pres = pMin + (pMax - pMin) * j / (nPres - 1);
+        double pres = pMin + (pMax - pMin) * j / (nPres - 1);
 
-	// Run flash calculation
-	fluid.setTemperature(temp, "K");
-	fluid.setPressure(pres, "bar");
-	ops.TPflash();
-	fluid.init(2);
-	fluid.initPhysicalProperties();
+        // Run flash calculation
+        fluid.setTemperature(temp, "K");
+        fluid.setPressure(pres, "bar");
+        ops.TPflash();
+        fluid.init(2);
+        fluid.initPhysicalProperties();
 
-	// Record sample
-	collector.startSample();
-	collector.recordInput("temperature", temp);
-	collector.recordInput("pressure", pres);
+        // Record sample
+        collector.startSample();
+        collector.recordInput("temperature", temp);
+        collector.recordInput("pressure", pres);
 
-	// Record outputs
-	double vaporFrac = fluid.hasPhaseType("gas") ? fluid.getPhase("gas").getBeta() : 0.0;
-	collector.recordOutput("vapor_fraction", vaporFrac);
+        // Record outputs
+        double vaporFrac = fluid.hasPhaseType("gas") ? fluid.getPhase("gas").getBeta() : 0.0;
+        collector.recordOutput("vapor_fraction", vaporFrac);
 
-	if (fluid.hasPhaseType("gas")) {
-	  collector.recordOutput("gas_density", fluid.getPhase("gas").getDensity("kg/m3"));
-	  collector.recordOutput("gas_enthalpy", fluid.getPhase("gas").getEnthalpy("kJ/kg"));
-	} else {
-	  collector.recordOutput("gas_density", 0.0);
-	  collector.recordOutput("gas_enthalpy", 0.0);
-	}
+        if (fluid.hasPhaseType("gas")) {
+          collector.recordOutput("gas_density", fluid.getPhase("gas").getDensity("kg/m3"));
+          collector.recordOutput("gas_enthalpy", fluid.getPhase("gas").getEnthalpy("kJ/kg"));
+        } else {
+          collector.recordOutput("gas_density", 0.0);
+          collector.recordOutput("gas_enthalpy", 0.0);
+        }
 
-	if (fluid.hasPhaseType("oil")) {
-	  collector.recordOutput("liquid_density", fluid.getPhase("oil").getDensity("kg/m3"));
-	  collector.recordOutput("liquid_enthalpy", fluid.getPhase("oil").getEnthalpy("kJ/kg"));
-	} else {
-	  collector.recordOutput("liquid_density", 0.0);
-	  collector.recordOutput("liquid_enthalpy", 0.0);
-	}
+        if (fluid.hasPhaseType("oil")) {
+          collector.recordOutput("liquid_density", fluid.getPhase("oil").getDensity("kg/m3"));
+          collector.recordOutput("liquid_enthalpy", fluid.getPhase("oil").getEnthalpy("kJ/kg"));
+        } else {
+          collector.recordOutput("liquid_density", 0.0);
+          collector.recordOutput("liquid_enthalpy", 0.0);
+        }
 
-	collector.endSample();
+        collector.endSample();
       }
     }
 

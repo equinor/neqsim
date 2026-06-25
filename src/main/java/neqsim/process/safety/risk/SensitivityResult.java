@@ -140,10 +140,10 @@ public class SensitivityResult {
   public Map<String, double[]> getTornadoData() {
     // Sort by swing (descending)
     return tornadoData.entrySet().stream()
-	.sorted((a, b) -> Double.compare(Math.abs(b.getValue()[2] - b.getValue()[0]),
-	    Math.abs(a.getValue()[2] - a.getValue()[0])))
-	.collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1,
-	    LinkedHashMap::new));
+        .sorted((a, b) -> Double.compare(Math.abs(b.getValue()[2] - b.getValue()[0]),
+            Math.abs(a.getValue()[2] - a.getValue()[0])))
+        .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1,
+            LinkedHashMap::new));
   }
 
   /**
@@ -192,21 +192,21 @@ public class SensitivityResult {
       // Tornado data
       writer.println("Parameter,Low Risk,Base Risk,High Risk,Swing,Sensitivity Index");
       for (Map.Entry<String, double[]> entry : getTornadoData().entrySet()) {
-	double[] data = entry.getValue();
-	double swing = data[2] - data[0];
-	double sensitivity = getSensitivityIndex(entry.getKey());
-	writer.printf("%s,%.6e,%.6e,%.6e,%.6e,%.4f%n", entry.getKey(), data[0], data[1], data[2], swing, sensitivity);
+        double[] data = entry.getValue();
+        double swing = data[2] - data[0];
+        double sensitivity = getSensitivityIndex(entry.getKey());
+        writer.printf("%s,%.6e,%.6e,%.6e,%.6e,%.4f%n", entry.getKey(), data[0], data[1], data[2], swing, sensitivity);
       }
       writer.println();
 
       // Detailed sensitivity curves
       for (Map.Entry<String, double[][]> entry : parameterSensitivities.entrySet()) {
-	writer.println("# Parameter: " + entry.getKey());
-	writer.println("Value,Risk");
-	for (double[] point : entry.getValue()) {
-	  writer.printf("%.6e,%.6e%n", point[0], point[1]);
-	}
-	writer.println();
+        writer.println("# Parameter: " + entry.getKey());
+        writer.println("Value,Risk");
+        for (double[] point : entry.getValue()) {
+          writer.printf("%.6e,%.6e%n", point[0], point[1]);
+        }
+        writer.println();
       }
     } catch (IOException e) {
       throw new RuntimeException("Failed to export sensitivity results: " + e.getMessage(), e);
@@ -230,10 +230,10 @@ public class SensitivityResult {
       writer.println("  \"tornado\": {");
       String[] params = getTornadoData().keySet().toArray(new String[0]);
       for (int i = 0; i < params.length; i++) {
-	double[] data = tornadoData.get(params[i]);
-	String comma = (i < params.length - 1) ? "," : "";
-	writer.printf("    \"%s\": {\"low\": %.6e, \"base\": %.6e, \"high\": %.6e}%s%n", params[i], data[0], data[1],
-	    data[2], comma);
+        double[] data = tornadoData.get(params[i]);
+        String comma = (i < params.length - 1) ? "," : "";
+        writer.printf("    \"%s\": {\"low\": %.6e, \"base\": %.6e, \"high\": %.6e}%s%n", params[i], data[0], data[1],
+            data[2], comma);
       }
       writer.println("  },");
 
@@ -241,14 +241,14 @@ public class SensitivityResult {
       writer.println("  \"curves\": {");
       params = parameterSensitivities.keySet().toArray(new String[0]);
       for (int i = 0; i < params.length; i++) {
-	double[][] data = parameterSensitivities.get(params[i]);
-	String comma = (i < params.length - 1) ? "," : "";
-	writer.println("    \"" + params[i] + "\": [");
-	for (int j = 0; j < data.length; j++) {
-	  String ptComma = (j < data.length - 1) ? "," : "";
-	  writer.printf("      [%.6e, %.6e]%s%n", data[j][0], data[j][1], ptComma);
-	}
-	writer.println("    ]" + comma);
+        double[][] data = parameterSensitivities.get(params[i]);
+        String comma = (i < params.length - 1) ? "," : "";
+        writer.println("    \"" + params[i] + "\": [");
+        for (int j = 0; j < data.length; j++) {
+          String ptComma = (j < data.length - 1) ? "," : "";
+          writer.printf("      [%.6e, %.6e]%s%n", data[j][0], data[j][1], ptComma);
+        }
+        writer.println("    ]" + comma);
       }
       writer.println("  }");
 
@@ -262,6 +262,6 @@ public class SensitivityResult {
   @Override
   public String toString() {
     return String.format("SensitivityResult[%s, %d parameters, base risk=%.4e]", analysisName,
-	parameterSensitivities.size(), baseRiskIndex);
+        parameterSensitivities.size(), baseRiskIndex);
   }
 }

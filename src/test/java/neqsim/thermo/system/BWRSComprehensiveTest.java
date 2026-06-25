@@ -87,7 +87,7 @@ public class BWRSComprehensiveTest {
 
     private double relError(double calc, double ref) {
       if (Math.abs(ref) < 1e-20) {
-	return Math.abs(calc) < 1e-20 ? 0.0 : 100.0;
+        return Math.abs(calc) < 1e-20 ? 0.0 : 100.0;
       }
       return Math.abs((calc - ref) / ref) * 100.0;
     }
@@ -167,8 +167,8 @@ public class BWRSComprehensiveTest {
     logger.info("------  ------  -----  --------  ------  ------  ------  ------  ------  ------  ------");
     for (PropertyResult r : results) {
       logger.printf(org.apache.logging.log4j.Level.INFO,
-	  "%6.1f  %6.1f  %5.2f  %8.2f  %6.2f  %6.2f  %6.2f  %6.2f  %6.1f  %6.2f  %6.2f%n", r.temperature, r.pressure,
-	  r.xCH4, r.pctDensity(), r.pctZ(), r.pctCp(), r.pctCv(), r.pctSpeed(), r.pctJT(), r.pctH(), r.pctS());
+          "%6.1f  %6.1f  %5.2f  %8.2f  %6.2f  %6.2f  %6.2f  %6.2f  %6.1f  %6.2f  %6.2f%n", r.temperature, r.pressure,
+          r.xCH4, r.pctDensity(), r.pctZ(), r.pctCp(), r.pctCv(), r.pctSpeed(), r.pctJT(), r.pctH(), r.pctS());
     }
 
     // Compute max and average deviations
@@ -191,11 +191,11 @@ public class BWRSComprehensiveTest {
     }
     logger.info("\n--- Summary ---");
     logger.printf(org.apache.logging.log4j.Level.INFO,
-	"Max deviation:  Density=%.2f%%  Z=%.2f%%  Cp=%.2f%%  Cv=%.2f%%  Speed=%.2f%%  JT=%.1f%%%n", maxDens, maxZ,
-	maxCp, maxCv, maxSpd, maxJT);
+        "Max deviation:  Density=%.2f%%  Z=%.2f%%  Cp=%.2f%%  Cv=%.2f%%  Speed=%.2f%%  JT=%.1f%%%n", maxDens, maxZ,
+        maxCp, maxCv, maxSpd, maxJT);
     logger.printf(org.apache.logging.log4j.Level.INFO,
-	"Mean deviation: Density=%.2f%%  Z=%.2f%%  Cp=%.2f%%  Cv=%.2f%%  Speed=%.2f%%  JT=%.1f%%%n", sumDens / n,
-	sumZ / n, sumCp / n, sumCv / n, sumSpd / n, sumJT / n);
+        "Mean deviation: Density=%.2f%%  Z=%.2f%%  Cp=%.2f%%  Cv=%.2f%%  Speed=%.2f%%  JT=%.1f%%%n", sumDens / n,
+        sumZ / n, sumCp / n, sumCv / n, sumSpd / n, sumJT / n);
   }
 
   /**
@@ -209,13 +209,13 @@ public class BWRSComprehensiveTest {
 
     for (double T : TEMPERATURES) {
       for (double P : PRESSURES) {
-	// Skip conditions near or below methane critical point (190.6 K, 46 bar)
-	// that would give liquid phase
-	if (T < 200.0 && P > 30.0) {
-	  continue;
-	}
-	PropertyResult r = compareAt(T, P, 1.0);
-	results.add(r);
+        // Skip conditions near or below methane critical point (190.6 K, 46 bar)
+        // that would give liquid phase
+        if (T < 200.0 && P > 30.0) {
+          continue;
+        }
+        PropertyResult r = compareAt(T, P, 1.0);
+        results.add(r);
       }
     }
     printSummary(results);
@@ -223,9 +223,9 @@ public class BWRSComprehensiveTest {
     // Assert reasonable accuracy for pure methane
     for (PropertyResult r : results) {
       assertEquals(r.gergDensity, r.bwrsDensity, r.gergDensity * 0.05,
-	  String.format("Density at T=%.1fK P=%.1fbar", r.temperature, r.pressure));
+          String.format("Density at T=%.1fK P=%.1fbar", r.temperature, r.pressure));
       assertEquals(r.gergZ, r.bwrsZ, r.gergZ * 0.05,
-	  String.format("Z at T=%.1fK P=%.1fbar", r.temperature, r.pressure));
+          String.format("Z at T=%.1fK P=%.1fbar", r.temperature, r.pressure));
     }
   }
 
@@ -251,9 +251,9 @@ public class BWRSComprehensiveTest {
     // Assert moderate accuracy for pure ethane at safe conditions
     for (PropertyResult r : results) {
       assertEquals(r.gergDensity, r.bwrsDensity, r.gergDensity * 0.10,
-	  String.format("Density at T=%.1fK P=%.1fbar", r.temperature, r.pressure));
+          String.format("Density at T=%.1fK P=%.1fbar", r.temperature, r.pressure));
       assertEquals(r.gergZ, r.bwrsZ, r.gergZ * 0.10,
-	  String.format("Z at T=%.1fK P=%.1fbar", r.temperature, r.pressure));
+          String.format("Z at T=%.1fK P=%.1fbar", r.temperature, r.pressure));
     }
   }
 
@@ -273,14 +273,14 @@ public class BWRSComprehensiveTest {
 
     for (double T : mixTemps) {
       for (double P : mixPressures) {
-	PropertyResult r = compareAt(T, P, 0.8);
-	results.add(r);
-	// Check volume solver didn't converge to wrong root
-	// (density error > 100% indicates wrong root)
-	if (r.pctDensity() < 100.0) {
-	  assertEquals(r.gergDensity, r.bwrsDensity, r.gergDensity * 0.15,
-	      String.format("Density at T=%.1fK P=%.1fbar xCH4=0.8", r.temperature, r.pressure));
-	}
+        PropertyResult r = compareAt(T, P, 0.8);
+        results.add(r);
+        // Check volume solver didn't converge to wrong root
+        // (density error > 100% indicates wrong root)
+        if (r.pctDensity() < 100.0) {
+          assertEquals(r.gergDensity, r.bwrsDensity, r.gergDensity * 0.15,
+              String.format("Density at T=%.1fK P=%.1fbar xCH4=0.8", r.temperature, r.pressure));
+        }
       }
     }
     printSummary(results);
@@ -353,7 +353,7 @@ public class BWRSComprehensiveTest {
 
     // Cp from analytical derivatives should match numerical Cp within 0.1%
     assertEquals(numericalCp, analyticalCp, Math.abs(numericalCp) * 0.005,
-	"Analytical Cp should match numerical Cp from enthalpy within 0.5%");
+        "Analytical Cp should match numerical Cp from enthalpy within 0.5%");
   }
 
   /**
@@ -367,12 +367,12 @@ public class BWRSComprehensiveTest {
     for (double T : TEMPERATURES) {
       PropertyResult r = compareAt(T, 10.0, 1.0);
       logger.printf(org.apache.logging.log4j.Level.INFO, "T=%6.1fK: Cp_BWRS=%.2f  Cp_GERG=%.2f  err=%.2f%%%n", T,
-	  r.bwrsCp, r.gergCp, r.pctCp());
+          r.bwrsCp, r.gergCp, r.pctCp());
 
       assertTrue(r.bwrsCp > 0, "Cp should be positive at T=" + T);
       // Cp should be in reasonable range 25-200 J/(mol K) for methane
       assertTrue(r.bwrsCp > 20 && r.bwrsCp < 200,
-	  String.format("Cp=%.2f out of physical range at T=%.1f", r.bwrsCp, T));
+          String.format("Cp=%.2f out of physical range at T=%.1f", r.bwrsCp, T));
     }
   }
 
@@ -386,11 +386,11 @@ public class BWRSComprehensiveTest {
     for (double T : TEMPERATURES) {
       PropertyResult r = compareAt(T, 10.0, 1.0);
       logger.printf(org.apache.logging.log4j.Level.INFO, "T=%6.1fK: w_BWRS=%.1f  w_GERG=%.1f  err=%.2f%%%n", T,
-	  r.bwrsSpeed, r.gergSpeed, r.pctSpeed());
+          r.bwrsSpeed, r.gergSpeed, r.pctSpeed());
 
       assertTrue(r.bwrsSpeed > 0, "Speed of sound should be positive at T=" + T);
       assertTrue(r.bwrsSpeed > 100 && r.bwrsSpeed < 1000,
-	  String.format("Speed=%.1f out of physical range at T=%.1f", r.bwrsSpeed, T));
+          String.format("Speed=%.1f out of physical range at T=%.1f", r.bwrsSpeed, T));
     }
   }
 }

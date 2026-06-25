@@ -125,9 +125,9 @@
  * // Trade off throughput vs power
  * List&lt;OptimizationObjective&gt; objectives = Arrays.asList(
  *     new OptimizationObjective("throughput", proc -&gt; proc.getUnit("outlet").getFlowRate("kg/hr"), 1.0,
- * 	ObjectiveType.MAXIMIZE),
+ *         ObjectiveType.MAXIMIZE),
  *     new OptimizationObjective("power", proc -&gt; ((Compressor) proc.getUnit("comp")).getPower("kW"), 1.0,
- * 	ObjectiveType.MINIMIZE));
+ *         ObjectiveType.MINIMIZE));
  *
  * OptimizationConfig config = new OptimizationConfig(50000.0, 200000.0).paretoGridSize(20);
  *

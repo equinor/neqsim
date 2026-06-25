@@ -136,14 +136,14 @@ public class AdsorptionCycleControllerTest {
     AdsorptionCycleController controller = new AdsorptionCycleController(bed);
     controller.addStep(new AdsorptionCycleController.PhaseStep(AdsorptionCycleController.CyclePhase.ADSORPTION, 300));
     controller.addStep(new AdsorptionCycleController.PhaseStep(
-	AdsorptionCycleController.CyclePhase.COCURRENT_DEPRESSURISATION, 30, 5.0, -1.0));
+        AdsorptionCycleController.CyclePhase.COCURRENT_DEPRESSURISATION, 30, 5.0, -1.0));
     controller
-	.addStep(new AdsorptionCycleController.PhaseStep(AdsorptionCycleController.CyclePhase.BLOWDOWN, 60, 1.0, -1.0));
+        .addStep(new AdsorptionCycleController.PhaseStep(AdsorptionCycleController.CyclePhase.BLOWDOWN, 60, 1.0, -1.0));
     controller.addStep(new AdsorptionCycleController.PhaseStep(AdsorptionCycleController.CyclePhase.STANDBY, 30));
 
     assertEquals(4, controller.getSchedule().size());
     assertEquals(AdsorptionCycleController.CyclePhase.COCURRENT_DEPRESSURISATION,
-	controller.getSchedule().get(1).getPhase());
+        controller.getSchedule().get(1).getPhase());
   }
 
   /**

@@ -184,13 +184,13 @@ public class ProcessAutomation {
     } catch (IllegalArgumentException e) {
       AutomationDiagnostics.DiagnosticResult diag = diagnoseAndAttemptRecovery(address, e);
       if (diag.hasAutoCorrection()) {
-	try {
-	  double value = getVariableValue(diag.getAutoCorrection(), unitOfMeasure);
-	  diagnostics.recordFailure("get", address, diag.getCategory(), diag.getAutoCorrection());
-	  return buildAutoCorrectedJson(address, diag.getAutoCorrection(), value, unitOfMeasure, diag);
-	} catch (Exception retryEx) {
-	  // Auto-correction also failed
-	}
+        try {
+          double value = getVariableValue(diag.getAutoCorrection(), unitOfMeasure);
+          diagnostics.recordFailure("get", address, diag.getCategory(), diag.getAutoCorrection());
+          return buildAutoCorrectedJson(address, diag.getAutoCorrection(), value, unitOfMeasure, diag);
+        } catch (Exception retryEx) {
+          // Auto-correction also failed
+        }
       }
       diagnostics.recordFailure("get", address, diag.getCategory(), null);
       return diag.toJson();
@@ -210,10 +210,10 @@ public class ProcessAutomation {
     // Pre-validate physical bounds
     String propertyName = extractPropertyName(address);
     AutomationDiagnostics.DiagnosticResult boundsCheck = diagnostics.validatePhysicalBounds(propertyName, value,
-	unitOfMeasure);
+        unitOfMeasure);
     if (boundsCheck != null && boundsCheck.getCategory() == AutomationDiagnostics.ErrorCategory.VALUE_OUT_OF_BOUNDS
-	&& boundsCheck.getContext().containsKey("severity")
-	&& !"WARNING".equals(boundsCheck.getContext().get("severity"))) {
+        && boundsCheck.getContext().containsKey("severity")
+        && !"WARNING".equals(boundsCheck.getContext().get("severity"))) {
       diagnostics.recordFailure("set", address, AutomationDiagnostics.ErrorCategory.VALUE_OUT_OF_BOUNDS, null);
       return boundsCheck.toJson();
     }
@@ -226,13 +226,13 @@ public class ProcessAutomation {
     } catch (IllegalArgumentException e) {
       AutomationDiagnostics.DiagnosticResult diag = diagnoseAndAttemptRecovery(address, e);
       if (diag.hasAutoCorrection()) {
-	try {
-	  setVariableValue(diag.getAutoCorrection(), value, unitOfMeasure);
-	  diagnostics.recordFailure("set", address, diag.getCategory(), diag.getAutoCorrection());
-	  return buildAutoCorrectedSetJson(address, diag.getAutoCorrection(), value, unitOfMeasure, diag);
-	} catch (Exception retryEx) {
-	  // Auto-correction also failed
-	}
+        try {
+          setVariableValue(diag.getAutoCorrection(), value, unitOfMeasure);
+          diagnostics.recordFailure("set", address, diag.getCategory(), diag.getAutoCorrection());
+          return buildAutoCorrectedSetJson(address, diag.getAutoCorrection(), value, unitOfMeasure, diag);
+        } catch (Exception retryEx) {
+          // Auto-correction also failed
+        }
       }
       diagnostics.recordFailure("set", address, diag.getCategory(), null);
       return diag.toJson();
@@ -262,10 +262,10 @@ public class ProcessAutomation {
     if (processModel != null) {
       List<String> names = new ArrayList<String>();
       for (String areaName : processModel.getProcessSystemNames()) {
-	ProcessSystem area = processModel.get(areaName);
-	for (ProcessEquipmentInterface unit : area.getUnitOperations()) {
-	  names.add(areaName + AREA_SEPARATOR + unit.getName());
-	}
+        ProcessSystem area = processModel.get(areaName);
+        for (ProcessEquipmentInterface unit : area.getUnitOperations()) {
+          names.add(areaName + AREA_SEPARATOR + unit.getName());
+        }
       }
       return Collections.unmodifiableList(names);
     }
@@ -337,7 +337,7 @@ public class ProcessAutomation {
     List<SimulationVariable> filtered = new ArrayList<SimulationVariable>();
     for (SimulationVariable v : all) {
       if (v.getType() == type) {
-	filtered.add(v);
+        filtered.add(v);
       }
     }
     return Collections.unmodifiableList(filtered);
@@ -373,40 +373,40 @@ public class ProcessAutomation {
     for (String unitName : getUnitList()) {
       ProcessEquipmentInterface unit;
       try {
-	unit = resolveUnit(unitName).unit;
+        unit = resolveUnit(unitName).unit;
       } catch (RuntimeException e) {
-	continue;
+        continue;
       }
       if (unit instanceof Adjuster) {
-	Adjuster adj = (Adjuster) unit;
-	ProcessEquipmentInterface adjusted = adj.getAdjustedEquipment();
-	String targetUnitName = adjusted == null ? null : adjusted.getName();
-	String adjustedVar = emptyToNull(adj.getAdjustedVariable());
-	String unitStr = adj.getAdjustedVariableUnit();
-	Double lo = sanitizeBound(adj.getMinAdjustedValue());
-	Double hi = sanitizeBound(adj.getMaxAdjustedValue());
-	String address;
-	if (targetUnitName != null && adjustedVar != null) {
-	  address = targetUnitName + "." + adjustedVar;
-	} else {
-	  address = unitName;
-	}
-	params.add(new AdjustableParameter(unitName, address, unitStr, lo, hi, targetUnitName, adjustedVar,
-	    AdjustableParameter.Source.ADJUSTER));
+        Adjuster adj = (Adjuster) unit;
+        ProcessEquipmentInterface adjusted = adj.getAdjustedEquipment();
+        String targetUnitName = adjusted == null ? null : adjusted.getName();
+        String adjustedVar = emptyToNull(adj.getAdjustedVariable());
+        String unitStr = adj.getAdjustedVariableUnit();
+        Double lo = sanitizeBound(adj.getMinAdjustedValue());
+        Double hi = sanitizeBound(adj.getMaxAdjustedValue());
+        String address;
+        if (targetUnitName != null && adjustedVar != null) {
+          address = targetUnitName + "." + adjustedVar;
+        } else {
+          address = unitName;
+        }
+        params.add(new AdjustableParameter(unitName, address, unitStr, lo, hi, targetUnitName, adjustedVar,
+            AdjustableParameter.Source.ADJUSTER));
       } else {
-	List<SimulationVariable> inputs;
-	try {
-	  inputs = getVariableList(unitName, VariableType.INPUT);
-	} catch (RuntimeException e) {
-	  continue;
-	}
-	for (SimulationVariable v : inputs) {
-	  if (!v.isWritable()) {
-	    continue;
-	  }
-	  params.add(new AdjustableParameter(v.getName(), v.getAddress(), v.getDefaultUnit(), v.getMinimumValue(),
-	      v.getMaximumValue(), unitName, v.getName(), AdjustableParameter.Source.INPUT_VARIABLE));
-	}
+        List<SimulationVariable> inputs;
+        try {
+          inputs = getVariableList(unitName, VariableType.INPUT);
+        } catch (RuntimeException e) {
+          continue;
+        }
+        for (SimulationVariable v : inputs) {
+          if (!v.isWritable()) {
+            continue;
+          }
+          params.add(new AdjustableParameter(v.getName(), v.getAddress(), v.getDefaultUnit(), v.getMinimumValue(),
+              v.getMaximumValue(), unitName, v.getName(), AdjustableParameter.Source.INPUT_VARIABLE));
+        }
       }
     }
     return Collections.unmodifiableList(params);
@@ -520,12 +520,12 @@ public class ProcessAutomation {
     } else if (parts.length == 3) {
       StreamInterface stream = resolveStreamPort(unit, parts[1]);
       if (stream == null) {
-	throw new IllegalArgumentException("Stream port not found: " + parts[1] + " on unit " + unitName);
+        throw new IllegalArgumentException("Stream port not found: " + parts[1] + " on unit " + unitName);
       }
       return getStreamProperty(stream, parts[2], unitOfMeasure);
     } else {
       throw new IllegalArgumentException(
-	  "Invalid address format: " + address + ". Expected 'unitName.property' or 'unitName.port.property'");
+          "Invalid address format: " + address + ". Expected 'unitName.property' or 'unitName.port.property'");
     }
   }
 
@@ -568,12 +568,12 @@ public class ProcessAutomation {
     } else if (parts.length == 3) {
       StreamInterface stream = resolveStreamPort(unit, parts[1]);
       if (stream == null) {
-	throw new IllegalArgumentException("Stream port not found: " + parts[1] + " on unit " + unitName);
+        throw new IllegalArgumentException("Stream port not found: " + parts[1] + " on unit " + unitName);
       }
       setStreamProperty(stream, parts[2], value, unitOfMeasure);
     } else {
       throw new IllegalArgumentException(
-	  "Invalid address format: " + address + ". Expected 'unitName.property' or 'unitName.port.property'");
+          "Invalid address format: " + address + ". Expected 'unitName.property' or 'unitName.port.property'");
     }
     this.dirty = true;
   }
@@ -626,67 +626,67 @@ public class ProcessAutomation {
     if (unitName != null && (unitName.startsWith("=") || unitName.startsWith("-"))) {
       ProcessEquipmentInterface found = findByReferenceDesignation(areaName, unitName);
       if (found != null) {
-	return found;
+        return found;
       }
     }
 
     if (processModel != null) {
       if (areaName != null) {
-	ProcessSystem area = processModel.get(areaName);
-	if (area == null) {
-	  // Try fuzzy area matching
-	  List<String> areaNames = processModel.getProcessSystemNames();
-	  String corrected = diagnostics.autoCorrectName(areaName, areaNames);
-	  if (corrected != null) {
-	    area = processModel.get(corrected);
-	  }
-	  if (area == null) {
-	    List<String> suggestions = diagnostics.findClosestNames(areaName, areaNames, 3);
-	    throw new IllegalArgumentException(
-		"Area not found: " + areaName + (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
-	  }
-	}
-	ProcessEquipmentInterface unit = area.getUnit(unitName);
-	if (unit == null) {
-	  // Try fuzzy unit matching within the area
-	  List<String> unitNames = getPlainUnitNames(area);
-	  String corrected = diagnostics.autoCorrectName(unitName, unitNames);
-	  if (corrected != null) {
-	    unit = area.getUnit(corrected);
-	  }
-	  if (unit == null) {
-	    List<String> suggestions = diagnostics.findClosestNames(unitName, unitNames, 3);
-	    throw new IllegalArgumentException("Unit not found: " + unitName + " in area " + areaName
-		+ (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
-	  }
-	}
-	return unit;
+        ProcessSystem area = processModel.get(areaName);
+        if (area == null) {
+          // Try fuzzy area matching
+          List<String> areaNames = processModel.getProcessSystemNames();
+          String corrected = diagnostics.autoCorrectName(areaName, areaNames);
+          if (corrected != null) {
+            area = processModel.get(corrected);
+          }
+          if (area == null) {
+            List<String> suggestions = diagnostics.findClosestNames(areaName, areaNames, 3);
+            throw new IllegalArgumentException(
+                "Area not found: " + areaName + (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
+          }
+        }
+        ProcessEquipmentInterface unit = area.getUnit(unitName);
+        if (unit == null) {
+          // Try fuzzy unit matching within the area
+          List<String> unitNames = getPlainUnitNames(area);
+          String corrected = diagnostics.autoCorrectName(unitName, unitNames);
+          if (corrected != null) {
+            unit = area.getUnit(corrected);
+          }
+          if (unit == null) {
+            List<String> suggestions = diagnostics.findClosestNames(unitName, unitNames, 3);
+            throw new IllegalArgumentException("Unit not found: " + unitName + " in area " + areaName
+                + (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
+          }
+        }
+        return unit;
       }
       // Search all areas
       for (String name : processModel.getProcessSystemNames()) {
-	ProcessSystem area = processModel.get(name);
-	ProcessEquipmentInterface unit = area.getUnit(unitName);
-	if (unit != null) {
-	  return unit;
-	}
+        ProcessSystem area = processModel.get(name);
+        ProcessEquipmentInterface unit = area.getUnit(unitName);
+        if (unit != null) {
+          return unit;
+        }
       }
       // Fuzzy search across all areas
       List<String> allNames = new ArrayList<String>();
       for (String name : processModel.getProcessSystemNames()) {
-	allNames.addAll(getPlainUnitNames(processModel.get(name)));
+        allNames.addAll(getPlainUnitNames(processModel.get(name)));
       }
       String corrected = diagnostics.autoCorrectName(unitName, allNames);
       if (corrected != null) {
-	for (String name : processModel.getProcessSystemNames()) {
-	  ProcessEquipmentInterface u = processModel.get(name).getUnit(corrected);
-	  if (u != null) {
-	    return u;
-	  }
-	}
+        for (String name : processModel.getProcessSystemNames()) {
+          ProcessEquipmentInterface u = processModel.get(name).getUnit(corrected);
+          if (u != null) {
+            return u;
+          }
+        }
       }
       List<String> suggestions = diagnostics.findClosestNames(unitName, allNames, 3);
       throw new IllegalArgumentException("Unit not found in any area: " + unitName
-	  + (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
+          + (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
     }
 
     // Single ProcessSystem mode
@@ -696,12 +696,12 @@ public class ProcessAutomation {
       List<String> unitNames = getPlainUnitNames(processSystem);
       String corrected = diagnostics.autoCorrectName(unitName, unitNames);
       if (corrected != null) {
-	unit = processSystem.getUnit(corrected);
+        unit = processSystem.getUnit(corrected);
       }
       if (unit == null) {
-	List<String> suggestions = diagnostics.findClosestNames(unitName, unitNames, 3);
-	throw new IllegalArgumentException(
-	    "Unit not found: " + unitName + (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
+        List<String> suggestions = diagnostics.findClosestNames(unitName, unitNames, 3);
+        throw new IllegalArgumentException(
+            "Unit not found: " + unitName + (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
       }
     }
     return unit;
@@ -737,16 +737,16 @@ public class ProcessAutomation {
   private ProcessEquipmentInterface findByReferenceDesignation(String areaName, String refDesString) {
     if (processModel != null) {
       if (areaName != null) {
-	ProcessSystem area = processModel.get(areaName);
-	if (area != null) {
-	  return searchByRefDes(area, refDesString);
-	}
+        ProcessSystem area = processModel.get(areaName);
+        if (area != null) {
+          return searchByRefDes(area, refDesString);
+        }
       }
       for (String name : processModel.getProcessSystemNames()) {
-	ProcessEquipmentInterface found = searchByRefDes(processModel.get(name), refDesString);
-	if (found != null) {
-	  return found;
-	}
+        ProcessEquipmentInterface found = searchByRefDes(processModel.get(name), refDesString);
+        if (found != null) {
+          return found;
+        }
       }
       return null;
     }
@@ -764,7 +764,7 @@ public class ProcessAutomation {
     for (ProcessEquipmentInterface unit : ps.getUnitOperations()) {
       String unitRefDes = unit.getReferenceDesignationString();
       if (unitRefDes != null && !unitRefDes.isEmpty() && unitRefDes.equals(refDesString)) {
-	return unit;
+        return unit;
       }
     }
     return null;
@@ -783,9 +783,9 @@ public class ProcessAutomation {
 
     // Universal equipment-level outputs
     vars.add(new SimulationVariable(unitName + ".temperature", "temperature", VariableType.OUTPUT, "K",
-	"Equipment temperature"));
+        "Equipment temperature"));
     vars.add(
-	new SimulationVariable(unitName + ".pressure", "pressure", VariableType.OUTPUT, "bara", "Equipment pressure"));
+        new SimulationVariable(unitName + ".pressure", "pressure", VariableType.OUTPUT, "bara", "Equipment pressure"));
 
     // Stream-specific variables
     if (unit instanceof StreamInterface) {
@@ -808,29 +808,29 @@ public class ProcessAutomation {
     // Tank (gas/liquid outlets like separator)
     if (unit instanceof Tank) {
       vars.add(new SimulationVariable(unitName + ".liquidLevel", "liquidLevel", VariableType.OUTPUT, "",
-	  "Tank liquid level"));
+          "Tank liquid level"));
       vars.add(new SimulationVariable(unitName + ".volume", "volume", VariableType.INPUT, "m3", "Tank volume"));
       try {
-	addStreamOutputVariables(vars, unitName + ".gasOutStream",
-	    (StreamInterface) unit.getClass().getMethod("getGasOutStream").invoke(unit));
-	addStreamOutputVariables(vars, unitName + ".liquidOutStream",
-	    (StreamInterface) unit.getClass().getMethod("getLiquidOutStream").invoke(unit));
-	handledOutlets = true;
+        addStreamOutputVariables(vars, unitName + ".gasOutStream",
+            (StreamInterface) unit.getClass().getMethod("getGasOutStream").invoke(unit));
+        addStreamOutputVariables(vars, unitName + ".liquidOutStream",
+            (StreamInterface) unit.getClass().getMethod("getLiquidOutStream").invoke(unit));
+        handledOutlets = true;
       } catch (Exception e) {
-	// Tank may not have gas/liquid split
+        // Tank may not have gas/liquid split
       }
     }
 
     // Expander (extends Compressor, check before Compressor)
     if (unit instanceof Expander) {
       vars.add(new SimulationVariable(unitName + ".outletPressure", "outletPressure", VariableType.INPUT, "bara",
-	  "Expander outlet pressure"));
+          "Expander outlet pressure"));
       vars.add(new SimulationVariable(unitName + ".isentropicEfficiency", "isentropicEfficiency", VariableType.INPUT,
-	  "", "Isentropic efficiency (fraction)"));
+          "", "Isentropic efficiency (fraction)"));
       vars.add(new SimulationVariable(unitName + ".polytropicEfficiency", "polytropicEfficiency", VariableType.INPUT,
-	  "", "Polytropic efficiency (fraction)"));
+          "", "Polytropic efficiency (fraction)"));
       vars.add(
-	  new SimulationVariable(unitName + ".power", "power", VariableType.OUTPUT, "kW", "Expander power output"));
+          new SimulationVariable(unitName + ".power", "power", VariableType.OUTPUT, "kW", "Expander power output"));
       addOutletStreamVariables(vars, unitName, unit);
       handledOutlets = true;
     }
@@ -838,9 +838,9 @@ public class ProcessAutomation {
     // CompressorTrain (check before Compressor since it doesn't extend Compressor)
     if (unit instanceof CompressorTrain) {
       vars.add(new SimulationVariable(unitName + ".power", "power", VariableType.OUTPUT, "kW",
-	  "Compressor train total power"));
+          "Compressor train total power"));
       vars.add(new SimulationVariable(unitName + ".polytropicEfficiency", "polytropicEfficiency", VariableType.OUTPUT,
-	  "", "Overall polytropic efficiency"));
+          "", "Overall polytropic efficiency"));
       addOutletStreamVariables(vars, unitName, unit);
       handledOutlets = true;
     }
@@ -848,18 +848,18 @@ public class ProcessAutomation {
     // Compressor (not Expander)
     if (unit instanceof Compressor && !(unit instanceof Expander)) {
       vars.add(new SimulationVariable(unitName + ".outletPressure", "outletPressure", VariableType.INPUT, "bara",
-	  "Compressor outlet pressure"));
+          "Compressor outlet pressure"));
       vars.add(new SimulationVariable(unitName + ".polytropicEfficiency", "polytropicEfficiency", VariableType.INPUT,
-	  "", "Polytropic efficiency (fraction)"));
+          "", "Polytropic efficiency (fraction)"));
       vars.add(new SimulationVariable(unitName + ".isentropicEfficiency", "isentropicEfficiency", VariableType.OUTPUT,
-	  "", "Isentropic efficiency (fraction)"));
+          "", "Isentropic efficiency (fraction)"));
       vars.add(new SimulationVariable(unitName + ".power", "power", VariableType.OUTPUT, "kW",
-	  "Compressor power consumption"));
+          "Compressor power consumption"));
       vars.add(new SimulationVariable(unitName + ".speed", "speed", VariableType.INPUT, "rpm", "Compressor speed"));
       vars.add(new SimulationVariable(unitName + ".polytropicHead", "polytropicHead", VariableType.OUTPUT, "kJ/kg",
-	  "Polytropic head"));
+          "Polytropic head"));
       vars.add(new SimulationVariable(unitName + ".compressionRatio", "compressionRatio", VariableType.OUTPUT, "",
-	  "Compression ratio"));
+          "Compression ratio"));
       addOutletStreamVariables(vars, unitName, unit);
       handledOutlets = true;
     }
@@ -867,11 +867,11 @@ public class ProcessAutomation {
     // Pump
     if (unit instanceof Pump) {
       vars.add(new SimulationVariable(unitName + ".outletPressure", "outletPressure", VariableType.INPUT, "bara",
-	  "Pump outlet pressure"));
+          "Pump outlet pressure"));
       vars.add(
-	  new SimulationVariable(unitName + ".power", "power", VariableType.OUTPUT, "kW", "Pump power consumption"));
+          new SimulationVariable(unitName + ".power", "power", VariableType.OUTPUT, "kW", "Pump power consumption"));
       vars.add(new SimulationVariable(unitName + ".isentropicEfficiency", "isentropicEfficiency", VariableType.INPUT,
-	  "", "Isentropic efficiency (fraction)"));
+          "", "Isentropic efficiency (fraction)"));
       vars.add(new SimulationVariable(unitName + ".speed", "speed", VariableType.INPUT, "rpm", "Pump speed"));
       addOutletStreamVariables(vars, unitName, unit);
       handledOutlets = true;
@@ -880,17 +880,17 @@ public class ProcessAutomation {
     // Heat exchanger (HeatExchanger extends Heater, so check BEFORE Heater)
     if (unit instanceof HeatExchanger && !(unit instanceof Cooler)) {
       vars.add(new SimulationVariable(unitName + ".UAvalue", "UAvalue", VariableType.INPUT, "W/K",
-	  "Overall heat transfer coefficient times area"));
+          "Overall heat transfer coefficient times area"));
       vars.add(new SimulationVariable(unitName + ".duty", "duty", VariableType.OUTPUT, "W", "Heat exchanger duty"));
       vars.add(new SimulationVariable(unitName + ".thermalEffectiveness", "thermalEffectiveness", VariableType.OUTPUT,
-	  "", "Thermal effectiveness"));
+          "", "Thermal effectiveness"));
       handledOutlets = true;
     }
 
     // Cooler
     if (unit instanceof Cooler) {
       vars.add(new SimulationVariable(unitName + ".outletTemperature", "outletTemperature", VariableType.INPUT, "C",
-	  "Cooler outlet temperature"));
+          "Cooler outlet temperature"));
       vars.add(new SimulationVariable(unitName + ".duty", "duty", VariableType.OUTPUT, "W", "Cooler duty"));
       addOutletStreamVariables(vars, unitName, unit);
       handledOutlets = true;
@@ -899,7 +899,7 @@ public class ProcessAutomation {
     // Heater (not Cooler and not HeatExchanger)
     if (unit instanceof Heater && !(unit instanceof Cooler) && !(unit instanceof HeatExchanger)) {
       vars.add(new SimulationVariable(unitName + ".outletTemperature", "outletTemperature", VariableType.INPUT, "C",
-	  "Heater outlet temperature"));
+          "Heater outlet temperature"));
       vars.add(new SimulationVariable(unitName + ".duty", "duty", VariableType.OUTPUT, "W", "Heater duty"));
       addOutletStreamVariables(vars, unitName, unit);
       handledOutlets = true;
@@ -908,10 +908,10 @@ public class ProcessAutomation {
     // Valve
     if (unit instanceof ThrottlingValve) {
       vars.add(new SimulationVariable(unitName + ".outletPressure", "outletPressure", VariableType.INPUT, "bara",
-	  "Valve outlet pressure"));
+          "Valve outlet pressure"));
       vars.add(new SimulationVariable(unitName + ".Cv", "Cv", VariableType.INPUT, "", "Valve flow coefficient"));
       vars.add(new SimulationVariable(unitName + ".percentValveOpening", "percentValveOpening", VariableType.INPUT, "%",
-	  "Valve opening percentage"));
+          "Valve opening percentage"));
       addOutletStreamVariables(vars, unitName, unit);
       handledOutlets = true;
     }
@@ -920,34 +920,34 @@ public class ProcessAutomation {
     if (unit instanceof Pipeline) {
       vars.add(new SimulationVariable(unitName + ".length", "length", VariableType.INPUT, "m", "Pipe length"));
       vars.add(
-	  new SimulationVariable(unitName + ".diameter", "diameter", VariableType.INPUT, "m", "Pipe inner diameter"));
+          new SimulationVariable(unitName + ".diameter", "diameter", VariableType.INPUT, "m", "Pipe inner diameter"));
       vars.add(new SimulationVariable(unitName + ".pipeWallRoughness", "pipeWallRoughness", VariableType.INPUT, "m",
-	  "Pipe wall roughness"));
+          "Pipe wall roughness"));
       vars.add(new SimulationVariable(unitName + ".wallThickness", "wallThickness", VariableType.INPUT, "m",
-	  "Pipe wall thickness"));
+          "Pipe wall thickness"));
       vars.add(new SimulationVariable(unitName + ".elevation", "elevation", VariableType.INPUT, "m",
-	  "Pipe elevation change from inlet to outlet"));
+          "Pipe elevation change from inlet to outlet"));
       vars.add(new SimulationVariable(unitName + ".pressureDrop", "pressureDrop", VariableType.OUTPUT, "bara",
-	  "Pressure drop across pipe"));
+          "Pressure drop across pipe"));
       if (unit instanceof WaterHammerPipe) {
-	vars.add(new SimulationVariable(unitName + ".valveOpening", "valveOpening", VariableType.INPUT, "",
-	    "Water-hammer valve opening fraction"));
-	vars.add(new SimulationVariable(unitName + ".valveOpeningPercent", "valveOpeningPercent", VariableType.INPUT,
-	    "%", "Water-hammer valve opening percentage"));
-	vars.add(new SimulationVariable(unitName + ".waveSpeed", "waveSpeed", VariableType.INPUT, "m/s",
-	    "Acoustic wave speed override or calculated value"));
-	vars.add(new SimulationVariable(unitName + ".numberOfNodes", "numberOfNodes", VariableType.INPUT, "",
-	    "Water-hammer computational node count"));
-	vars.add(new SimulationVariable(unitName + ".courantNumber", "courantNumber", VariableType.INPUT, "",
-	    "Courant number for stable transient time steps"));
-	vars.add(new SimulationVariable(unitName + ".maxStableTimeStep", "maxStableTimeStep", VariableType.OUTPUT, "s",
-	    "Maximum stable time step from the Courant limit"));
-	vars.add(new SimulationVariable(unitName + ".waveRoundTripTime", "waveRoundTripTime", VariableType.OUTPUT, "s",
-	    "Pipe acoustic wave round-trip time"));
-	vars.add(new SimulationVariable(unitName + ".maxPressure", "maxPressure", VariableType.OUTPUT, "bara",
-	    "Maximum pressure envelope during transient"));
-	vars.add(new SimulationVariable(unitName + ".minPressure", "minPressure", VariableType.OUTPUT, "bara",
-	    "Minimum pressure envelope during transient"));
+        vars.add(new SimulationVariable(unitName + ".valveOpening", "valveOpening", VariableType.INPUT, "",
+            "Water-hammer valve opening fraction"));
+        vars.add(new SimulationVariable(unitName + ".valveOpeningPercent", "valveOpeningPercent", VariableType.INPUT,
+            "%", "Water-hammer valve opening percentage"));
+        vars.add(new SimulationVariable(unitName + ".waveSpeed", "waveSpeed", VariableType.INPUT, "m/s",
+            "Acoustic wave speed override or calculated value"));
+        vars.add(new SimulationVariable(unitName + ".numberOfNodes", "numberOfNodes", VariableType.INPUT, "",
+            "Water-hammer computational node count"));
+        vars.add(new SimulationVariable(unitName + ".courantNumber", "courantNumber", VariableType.INPUT, "",
+            "Courant number for stable transient time steps"));
+        vars.add(new SimulationVariable(unitName + ".maxStableTimeStep", "maxStableTimeStep", VariableType.OUTPUT, "s",
+            "Maximum stable time step from the Courant limit"));
+        vars.add(new SimulationVariable(unitName + ".waveRoundTripTime", "waveRoundTripTime", VariableType.OUTPUT, "s",
+            "Pipe acoustic wave round-trip time"));
+        vars.add(new SimulationVariable(unitName + ".maxPressure", "maxPressure", VariableType.OUTPUT, "bara",
+            "Maximum pressure envelope during transient"));
+        vars.add(new SimulationVariable(unitName + ".minPressure", "minPressure", VariableType.OUTPUT, "bara",
+            "Minimum pressure envelope during transient"));
       }
       addOutletStreamVariables(vars, unitName, unit);
       handledOutlets = true;
@@ -956,18 +956,18 @@ public class ProcessAutomation {
     // Ejector
     if (unit instanceof Ejector) {
       vars.add(new SimulationVariable(unitName + ".dischargePressure", "dischargePressure", VariableType.INPUT, "bara",
-	  "Ejector discharge pressure"));
+          "Ejector discharge pressure"));
       vars.add(new SimulationVariable(unitName + ".entrainmentRatio", "entrainmentRatio", VariableType.OUTPUT, "",
-	  "Ejector entrainment ratio"));
+          "Ejector entrainment ratio"));
       vars.add(new SimulationVariable(unitName + ".efficiencyIsentropic", "efficiencyIsentropic", VariableType.INPUT,
-	  "", "Isentropic efficiency"));
+          "", "Isentropic efficiency"));
       handledOutlets = true;
     }
 
     // Gibbs reactor (and other TwoPortEquipment reactors)
     if (unit instanceof GibbsReactor) {
       vars.add(new SimulationVariable(unitName + ".power", "power", VariableType.OUTPUT, "kW",
-	  "Reactor power (heat of reaction)"));
+          "Reactor power (heat of reaction)"));
       addOutletStreamVariables(vars, unitName, unit);
       handledOutlets = true;
     }
@@ -975,16 +975,16 @@ public class ProcessAutomation {
     // Distillation column
     if (unit instanceof DistillationColumn) {
       vars.add(new SimulationVariable(unitName + ".condenserRefluxRatio", "condenserRefluxRatio", VariableType.INPUT,
-	  "", "Condenser reflux ratio"));
+          "", "Condenser reflux ratio"));
       handledOutlets = true;
     }
 
     // Recycle
     if (unit instanceof Recycle) {
       vars.add(new SimulationVariable(unitName + ".errorTemperature", "errorTemperature", VariableType.OUTPUT, "",
-	  "Temperature convergence error"));
+          "Temperature convergence error"));
       vars.add(new SimulationVariable(unitName + ".errorFlow", "errorFlow", VariableType.OUTPUT, "",
-	  "Flow rate convergence error"));
+          "Flow rate convergence error"));
       addOutletStreamVariables(vars, unitName, unit);
       handledOutlets = true;
     }
@@ -1005,7 +1005,7 @@ public class ProcessAutomation {
     if (unit instanceof Splitter && !(unit instanceof ComponentSplitter)) {
       List<StreamInterface> splitStreams = unit.getOutletStreams();
       for (int i = 0; i < splitStreams.size(); i++) {
-	addStreamOutputVariables(vars, unitName + ".splitStream_" + i, splitStreams.get(i));
+        addStreamOutputVariables(vars, unitName + ".splitStream_" + i, splitStreams.get(i));
       }
       handledOutlets = true;
     }
@@ -1040,8 +1040,8 @@ public class ProcessAutomation {
    */
   private SimulationVariable enrichVariableMetadata(SimulationVariable variable) {
     SimulationVariable enriched = variable.withCategory(inferVariableCategory(variable))
-	.withWritableSafety(variable.getType() == VariableType.INPUT, variable.getType() == VariableType.INPUT)
-	.withApplicability(inferApplicability(variable));
+        .withWritableSafety(variable.getType() == VariableType.INPUT, variable.getType() == VariableType.INPUT)
+        .withApplicability(inferApplicability(variable));
     String name = variable.getName();
 
     if ("temperature".equals(name) || "outletTemperature".equals(name)) {
@@ -1060,8 +1060,8 @@ public class ProcessAutomation {
       return enriched.withBounds(Double.valueOf(0.0), Double.valueOf(100.0)).withUnitFamily("fraction");
     }
     if ("Cv".equals(name) || "UAvalue".equals(name) || "speed".equals(name) || "length".equals(name)
-	|| "diameter".equals(name) || "pipeWallRoughness".equals(name) || "volume".equals(name)
-	|| "condenserRefluxRatio".equals(name)) {
+        || "diameter".equals(name) || "pipeWallRoughness".equals(name) || "volume".equals(name)
+        || "condenserRefluxRatio".equals(name)) {
       return enriched.withBounds(Double.valueOf(0.0), null);
     }
     return enriched;
@@ -1126,7 +1126,7 @@ public class ProcessAutomation {
     vars.add(new SimulationVariable(prefix + ".flowRate", "flowRate", inputType, "kg/hr", "Stream mass flow rate"));
     vars.add(new SimulationVariable(prefix + ".density", "density", VariableType.OUTPUT, "kg/m3", "Stream density"));
     vars.add(
-	new SimulationVariable(prefix + ".molarMass", "molarMass", VariableType.OUTPUT, "kg/mol", "Stream molar mass"));
+        new SimulationVariable(prefix + ".molarMass", "molarMass", VariableType.OUTPUT, "kg/mol", "Stream molar mass"));
   }
 
   /**
@@ -1172,244 +1172,245 @@ public class ProcessAutomation {
     switch (property) {
     case "temperature":
       if (unit.getFluid() == null) {
-	return Double.NaN;
+        return Double.NaN;
       }
       return hasUnit ? unit.getTemperature(uom) : unit.getTemperature();
     case "pressure":
       if (unit.getFluid() == null) {
-	return Double.NaN;
+        return Double.NaN;
       }
       return hasUnit ? unit.getPressure(uom) : unit.getPressure();
     case "outletPressure":
       if (unit instanceof Compressor) {
-	return ((Compressor) unit).getOutletPressure();
+        return ((Compressor) unit).getOutletPressure();
       }
       if (unit instanceof Pump) {
-	return ((Pump) unit).getOutletPressure();
+        return ((Pump) unit).getOutletPressure();
       }
       if (unit instanceof ThrottlingValve) {
-	return ((ThrottlingValve) unit).getOutletPressure();
+        return ((ThrottlingValve) unit).getOutletPressure();
       }
       break;
     case "power":
       if (unit instanceof Compressor) {
-	return hasUnit ? ((Compressor) unit).getPower(uom) : ((Compressor) unit).getPower();
+        return hasUnit ? ((Compressor) unit).getPower(uom) : ((Compressor) unit).getPower();
       }
       if (unit instanceof Pump) {
-	return hasUnit ? ((Pump) unit).getPower(uom) : ((Pump) unit).getPower();
+        return hasUnit ? ((Pump) unit).getPower(uom) : ((Pump) unit).getPower();
       }
       if (unit instanceof CompressorTrain) {
-	return hasUnit ? ((CompressorTrain) unit).getPower(uom) : ((CompressorTrain) unit).getPower();
+        return hasUnit ? ((CompressorTrain) unit).getPower(uom) : ((CompressorTrain) unit).getPower();
       }
       if (unit instanceof GibbsReactor) {
-	return hasUnit ? ((GibbsReactor) unit).getPower(uom) : ((GibbsReactor) unit).getPower();
+        return hasUnit ? ((GibbsReactor) unit).getPower(uom) : ((GibbsReactor) unit).getPower();
       }
       break;
     case "duty":
-      if (unit instanceof Heater) {
-	return hasUnit ? ((Heater) unit).getDuty(uom) : ((Heater) unit).getDuty();
-      }
+      // Heater is a superclass of HeatExchanger, so check HeatExchanger first
       if (unit instanceof HeatExchanger) {
-	return ((HeatExchanger) unit).getDuty();
+        return ((HeatExchanger) unit).getDuty();
+      }
+      if (unit instanceof Heater) {
+        return hasUnit ? ((Heater) unit).getDuty(uom) : ((Heater) unit).getDuty();
       }
       break;
     case "polytropicEfficiency":
       if (unit instanceof Compressor) {
-	return ((Compressor) unit).getPolytropicEfficiency();
+        return ((Compressor) unit).getPolytropicEfficiency();
       }
       if (unit instanceof CompressorTrain) {
-	return ((CompressorTrain) unit).getPolytropicEfficiency();
+        return ((CompressorTrain) unit).getPolytropicEfficiency();
       }
       break;
     case "isentropicEfficiency":
       if (unit instanceof Compressor) {
-	return ((Compressor) unit).getIsentropicEfficiency();
+        return ((Compressor) unit).getIsentropicEfficiency();
       }
       if (unit instanceof Pump) {
-	return ((Pump) unit).getIsentropicEfficiency();
+        return ((Pump) unit).getIsentropicEfficiency();
       }
       break;
     case "Cv":
       if (unit instanceof ThrottlingValve) {
-	return hasUnit ? ((ThrottlingValve) unit).getCv(uom) : ((ThrottlingValve) unit).getCv();
+        return hasUnit ? ((ThrottlingValve) unit).getCv(uom) : ((ThrottlingValve) unit).getCv();
       }
       break;
     case "percentValveOpening":
       if (unit instanceof ThrottlingValve) {
-	return ((ThrottlingValve) unit).getPercentValveOpening();
+        return ((ThrottlingValve) unit).getPercentValveOpening();
       }
       if (unit instanceof WaterHammerPipe) {
-	return ((WaterHammerPipe) unit).getValveOpeningPercent();
+        return ((WaterHammerPipe) unit).getValveOpeningPercent();
       }
       break;
     case "valveOpening":
       if (unit instanceof WaterHammerPipe) {
-	return ((WaterHammerPipe) unit).getValveOpening();
+        return ((WaterHammerPipe) unit).getValveOpening();
       }
       break;
     case "valveOpeningPercent":
       if (unit instanceof WaterHammerPipe) {
-	return ((WaterHammerPipe) unit).getValveOpeningPercent();
+        return ((WaterHammerPipe) unit).getValveOpeningPercent();
       }
       break;
     case "UAvalue":
       if (unit instanceof HeatExchanger) {
-	return ((HeatExchanger) unit).getUAvalue();
+        return ((HeatExchanger) unit).getUAvalue();
       }
       break;
     case "thermalEffectiveness":
       if (unit instanceof HeatExchanger) {
-	return ((HeatExchanger) unit).getThermalEffectiveness();
+        return ((HeatExchanger) unit).getThermalEffectiveness();
       }
       break;
     case "outletTemperature":
       return hasUnit ? unit.getOutletTemperature(uom) : unit.getOutletTemperature("K");
     case "flowRate":
       if (unit instanceof StreamInterface) {
-	return hasUnit ? ((StreamInterface) unit).getFlowRate(uom) : ((StreamInterface) unit).getFlowRate("kg/hr");
+        return hasUnit ? ((StreamInterface) unit).getFlowRate(uom) : ((StreamInterface) unit).getFlowRate("kg/hr");
       }
       break;
     case "density":
       if (unit instanceof StreamInterface) {
-	StreamInterface s = (StreamInterface) unit;
-	return s.getFluid() != null ? s.getFluid().getDensity("kg/m3") : Double.NaN;
+        StreamInterface s = (StreamInterface) unit;
+        return s.getFluid() != null ? s.getFluid().getDensity("kg/m3") : Double.NaN;
       }
       break;
     case "molarMass":
       if (unit instanceof StreamInterface) {
-	StreamInterface s = (StreamInterface) unit;
-	return s.getFluid() != null ? s.getFluid().getMolarMass("kg/mol") : Double.NaN;
+        StreamInterface s = (StreamInterface) unit;
+        return s.getFluid() != null ? s.getFluid().getMolarMass("kg/mol") : Double.NaN;
       }
       break;
     case "speed":
       if (unit instanceof Compressor) {
-	return ((Compressor) unit).getSpeed();
+        return ((Compressor) unit).getSpeed();
       }
       if (unit instanceof Pump) {
-	return ((Pump) unit).getSpeed();
+        return ((Pump) unit).getSpeed();
       }
       break;
     case "polytropicHead":
       if (unit instanceof Compressor) {
-	return hasUnit ? ((Compressor) unit).getPolytropicHead(uom) : ((Compressor) unit).getPolytropicHead();
+        return hasUnit ? ((Compressor) unit).getPolytropicHead(uom) : ((Compressor) unit).getPolytropicHead();
       }
       break;
     case "compressionRatio":
       if (unit instanceof Compressor) {
-	return ((Compressor) unit).getCompressionRatio();
+        return ((Compressor) unit).getCompressionRatio();
       }
       break;
 
     case "condenserRefluxRatio":
       if (unit instanceof DistillationColumn) {
-	return ((DistillationColumn) unit).getCondenser().getRefluxRatio();
+        return ((DistillationColumn) unit).getCondenser().getRefluxRatio();
       }
       break;
     case "length":
       if (unit instanceof Pipeline) {
-	return ((Pipeline) unit).getLength();
+        return ((Pipeline) unit).getLength();
       }
       break;
     case "diameter":
       if (unit instanceof Pipeline) {
-	return ((Pipeline) unit).getDiameter();
+        return ((Pipeline) unit).getDiameter();
       }
       break;
     case "pipeWallRoughness":
       if (unit instanceof Pipeline) {
-	return ((Pipeline) unit).getPipeWallRoughness();
+        return ((Pipeline) unit).getPipeWallRoughness();
       }
       break;
     case "wallThickness":
       if (unit instanceof Pipeline) {
-	return ((Pipeline) unit).getWallThickness();
+        return ((Pipeline) unit).getWallThickness();
       }
       break;
     case "elevation":
       if (unit instanceof Pipeline) {
-	return ((Pipeline) unit).getElevation();
+        return ((Pipeline) unit).getElevation();
       }
       break;
     case "pressureDrop":
       if (unit instanceof Pipeline) {
-	return ((Pipeline) unit).getPressureDrop();
+        return ((Pipeline) unit).getPressureDrop();
       }
       break;
     case "numberOfNodes":
       if (unit instanceof WaterHammerPipe) {
-	return ((WaterHammerPipe) unit).getNumberOfNodes();
+        return ((WaterHammerPipe) unit).getNumberOfNodes();
       }
       break;
     case "courantNumber":
       if (unit instanceof WaterHammerPipe) {
-	return ((WaterHammerPipe) unit).getCourantNumber();
+        return ((WaterHammerPipe) unit).getCourantNumber();
       }
       break;
     case "waveSpeed":
       if (unit instanceof WaterHammerPipe) {
-	return ((WaterHammerPipe) unit).getWaveSpeed();
+        return ((WaterHammerPipe) unit).getWaveSpeed();
       }
       break;
     case "maxStableTimeStep":
       if (unit instanceof WaterHammerPipe) {
-	return ((WaterHammerPipe) unit).getMaxStableTimeStep();
+        return ((WaterHammerPipe) unit).getMaxStableTimeStep();
       }
       break;
     case "waveRoundTripTime":
       if (unit instanceof WaterHammerPipe) {
-	return ((WaterHammerPipe) unit).getWaveRoundTripTime();
+        return ((WaterHammerPipe) unit).getWaveRoundTripTime();
       }
       break;
     case "maxPressure":
       if (unit instanceof WaterHammerPipe) {
-	return ((WaterHammerPipe) unit).getMaxPressure(hasUnit ? uom : "bar");
+        return ((WaterHammerPipe) unit).getMaxPressure(hasUnit ? uom : "bar");
       }
       break;
     case "minPressure":
       if (unit instanceof WaterHammerPipe) {
-	return ((WaterHammerPipe) unit).getMinPressure(hasUnit ? uom : "bar");
+        return ((WaterHammerPipe) unit).getMinPressure(hasUnit ? uom : "bar");
       }
       break;
     case "dischargePressure":
       if (unit instanceof Ejector) {
-	return ((Ejector) unit).getOutStream().getPressure();
+        return ((Ejector) unit).getOutStream().getPressure();
       }
       break;
     case "entrainmentRatio":
       if (unit instanceof Ejector) {
-	return ((Ejector) unit).getEntrainmentRatio();
+        return ((Ejector) unit).getEntrainmentRatio();
       }
       break;
     case "efficiencyIsentropic":
       if (unit instanceof Ejector) {
-	return ((Ejector) unit).getEfficiencyIsentropic();
+        return ((Ejector) unit).getEfficiencyIsentropic();
       }
       break;
     case "liquidLevel":
       if (unit instanceof Tank) {
-	return ((Tank) unit).getLiquidLevel();
+        return ((Tank) unit).getLiquidLevel();
       }
       break;
     case "volume":
       if (unit instanceof Tank) {
-	return ((Tank) unit).getVolume();
+        return ((Tank) unit).getVolume();
       }
       break;
     case "errorTemperature":
       if (unit instanceof Recycle) {
-	return ((Recycle) unit).getErrorTemperature();
+        return ((Recycle) unit).getErrorTemperature();
       }
       break;
     case "errorFlow":
       if (unit instanceof Recycle) {
-	return ((Recycle) unit).getErrorFlow();
+        return ((Recycle) unit).getErrorFlow();
       }
       break;
     default:
       break;
     }
     throw new IllegalArgumentException("Unknown property '" + property + "' for unit " + unit.getName() + " ("
-	+ unit.getClass().getSimpleName() + ")");
+        + unit.getClass().getSimpleName() + ")");
   }
 
   /**
@@ -1426,208 +1427,208 @@ public class ProcessAutomation {
     switch (property) {
     case "outletPressure":
       if (unit instanceof Compressor) {
-	if (hasUnit) {
-	  ((Compressor) unit).setOutletPressure(value, uom);
-	} else {
-	  ((Compressor) unit).setOutletPressure(value);
-	}
-	return;
+        if (hasUnit) {
+          ((Compressor) unit).setOutletPressure(value, uom);
+        } else {
+          ((Compressor) unit).setOutletPressure(value);
+        }
+        return;
       }
       if (unit instanceof Pump) {
-	if (hasUnit) {
-	  ((Pump) unit).setOutletPressure(value, uom);
-	} else {
-	  ((Pump) unit).setOutletPressure(value);
-	}
-	return;
+        if (hasUnit) {
+          ((Pump) unit).setOutletPressure(value, uom);
+        } else {
+          ((Pump) unit).setOutletPressure(value);
+        }
+        return;
       }
       if (unit instanceof ThrottlingValve) {
-	if (hasUnit) {
-	  ((ThrottlingValve) unit).setOutletPressure(value, uom);
-	} else {
-	  ((ThrottlingValve) unit).setOutletPressure(value);
-	}
-	return;
+        if (hasUnit) {
+          ((ThrottlingValve) unit).setOutletPressure(value, uom);
+        } else {
+          ((ThrottlingValve) unit).setOutletPressure(value);
+        }
+        return;
       }
       break;
     case "outletTemperature":
       if (unit instanceof Heater) {
-	if (hasUnit) {
-	  ((Heater) unit).setOutletTemperature(value, uom);
-	} else {
-	  ((Heater) unit).setOutletTemperature(value);
-	}
-	return;
+        if (hasUnit) {
+          ((Heater) unit).setOutletTemperature(value, uom);
+        } else {
+          ((Heater) unit).setOutletTemperature(value);
+        }
+        return;
       }
       break;
     case "polytropicEfficiency":
       if (unit instanceof Compressor) {
-	((Compressor) unit).setPolytropicEfficiency(value);
-	return;
+        ((Compressor) unit).setPolytropicEfficiency(value);
+        return;
       }
       break;
     case "isentropicEfficiency":
       if (unit instanceof Compressor) {
-	((Compressor) unit).setIsentropicEfficiency(value);
-	return;
+        ((Compressor) unit).setIsentropicEfficiency(value);
+        return;
       }
       if (unit instanceof Pump) {
-	((Pump) unit).setIsentropicEfficiency(value);
-	return;
+        ((Pump) unit).setIsentropicEfficiency(value);
+        return;
       }
       break;
     case "speed":
       if (unit instanceof Compressor) {
-	((Compressor) unit).setSpeed(value);
-	return;
+        ((Compressor) unit).setSpeed(value);
+        return;
       }
       if (unit instanceof Pump) {
-	((Pump) unit).setSpeed(value);
-	return;
+        ((Pump) unit).setSpeed(value);
+        return;
       }
       break;
     case "Cv":
       if (unit instanceof ThrottlingValve) {
-	if (hasUnit) {
-	  ((ThrottlingValve) unit).setCv(value, uom);
-	} else {
-	  ((ThrottlingValve) unit).setCv(value);
-	}
-	return;
+        if (hasUnit) {
+          ((ThrottlingValve) unit).setCv(value, uom);
+        } else {
+          ((ThrottlingValve) unit).setCv(value);
+        }
+        return;
       }
       break;
     case "percentValveOpening":
       if (unit instanceof ThrottlingValve) {
-	((ThrottlingValve) unit).setPercentValveOpening(value);
-	return;
+        ((ThrottlingValve) unit).setPercentValveOpening(value);
+        return;
       }
       if (unit instanceof WaterHammerPipe) {
-	((WaterHammerPipe) unit).setValveOpeningPercent(value);
-	return;
+        ((WaterHammerPipe) unit).setValveOpeningPercent(value);
+        return;
       }
       break;
     case "UAvalue":
       if (unit instanceof HeatExchanger) {
-	((HeatExchanger) unit).setUAvalue(value);
-	return;
+        ((HeatExchanger) unit).setUAvalue(value);
+        return;
       }
       break;
     case "temperature":
       if (unit instanceof StreamInterface) {
-	if (hasUnit) {
-	  ((Stream) unit).setTemperature(value, uom);
-	} else {
-	  unit.setTemperature(value);
-	}
-	return;
+        if (hasUnit) {
+          ((Stream) unit).setTemperature(value, uom);
+        } else {
+          unit.setTemperature(value);
+        }
+        return;
       }
       break;
     case "pressure":
       if (unit instanceof StreamInterface) {
-	if (hasUnit) {
-	  ((Stream) unit).setPressure(value, uom);
-	} else {
-	  unit.setPressure(value);
-	}
-	return;
+        if (hasUnit) {
+          ((Stream) unit).setPressure(value, uom);
+        } else {
+          unit.setPressure(value);
+        }
+        return;
       }
       break;
     case "flowRate":
       if (unit instanceof StreamInterface) {
-	String flowUnit = hasUnit ? uom : "kg/hr";
-	((Stream) unit).setFlowRate(value, flowUnit);
-	return;
+        String flowUnit = hasUnit ? uom : "kg/hr";
+        ((Stream) unit).setFlowRate(value, flowUnit);
+        return;
       }
       break;
     case "length":
       if (unit instanceof Pipeline) {
-	((Pipeline) unit).setLength(value);
-	return;
+        ((Pipeline) unit).setLength(value);
+        return;
       }
       break;
     case "diameter":
       if (unit instanceof Pipeline) {
-	((Pipeline) unit).setDiameter(value);
-	return;
+        ((Pipeline) unit).setDiameter(value);
+        return;
       }
       break;
     case "pipeWallRoughness":
       if (unit instanceof Pipeline) {
-	((Pipeline) unit).setPipeWallRoughness(value);
-	return;
+        ((Pipeline) unit).setPipeWallRoughness(value);
+        return;
       }
       break;
     case "wallThickness":
       if (unit instanceof Pipeline) {
-	((Pipeline) unit).setWallThickness(value);
-	return;
+        ((Pipeline) unit).setWallThickness(value);
+        return;
       }
       break;
     case "elevation":
       if (unit instanceof Pipeline) {
-	((Pipeline) unit).setElevation(value);
-	return;
+        ((Pipeline) unit).setElevation(value);
+        return;
       }
       break;
     case "valveOpening":
       if (unit instanceof WaterHammerPipe) {
-	((WaterHammerPipe) unit).setValveOpening(value);
-	return;
+        ((WaterHammerPipe) unit).setValveOpening(value);
+        return;
       }
       break;
     case "valveOpeningPercent":
       if (unit instanceof WaterHammerPipe) {
-	((WaterHammerPipe) unit).setValveOpeningPercent(value);
-	return;
+        ((WaterHammerPipe) unit).setValveOpeningPercent(value);
+        return;
       }
       break;
     case "numberOfNodes":
       if (unit instanceof WaterHammerPipe) {
-	((WaterHammerPipe) unit).setNumberOfNodes((int) Math.round(value));
-	return;
+        ((WaterHammerPipe) unit).setNumberOfNodes((int) Math.round(value));
+        return;
       }
       break;
     case "courantNumber":
       if (unit instanceof WaterHammerPipe) {
-	((WaterHammerPipe) unit).setCourantNumber(value);
-	return;
+        ((WaterHammerPipe) unit).setCourantNumber(value);
+        return;
       }
       break;
     case "waveSpeed":
       if (unit instanceof WaterHammerPipe) {
-	((WaterHammerPipe) unit).setWaveSpeed(value);
-	return;
+        ((WaterHammerPipe) unit).setWaveSpeed(value);
+        return;
       }
       break;
     case "dischargePressure":
       if (unit instanceof Ejector) {
-	((Ejector) unit).setDischargePressure(value);
-	return;
+        ((Ejector) unit).setDischargePressure(value);
+        return;
       }
       break;
     case "efficiencyIsentropic":
       if (unit instanceof Ejector) {
-	((Ejector) unit).setEfficiencyIsentropic(value);
-	return;
+        ((Ejector) unit).setEfficiencyIsentropic(value);
+        return;
       }
       break;
     case "volume":
       if (unit instanceof Tank) {
-	((Tank) unit).setVolume(value);
-	return;
+        ((Tank) unit).setVolume(value);
+        return;
       }
       break;
     case "condenserRefluxRatio":
       if (unit instanceof DistillationColumn) {
-	((DistillationColumn) unit).setCondenserRefluxRatio(value);
-	return;
+        ((DistillationColumn) unit).setCondenserRefluxRatio(value);
+        return;
       }
       break;
     default:
       break;
     }
     throw new IllegalArgumentException("Cannot set property '" + property + "' on unit " + unit.getName() + " ("
-	+ unit.getClass().getSimpleName() + ")");
+        + unit.getClass().getSimpleName() + ")");
   }
 
   /**
@@ -1644,36 +1645,36 @@ public class ProcessAutomation {
       switch (normalizedPort) {
       case "gasoutstream":
       case "gasout":
-	return (StreamInterface) unit.getClass().getMethod("getGasOutStream").invoke(unit);
+        return (StreamInterface) unit.getClass().getMethod("getGasOutStream").invoke(unit);
       case "liquidoutstream":
       case "liquidout":
-	return (StreamInterface) unit.getClass().getMethod("getLiquidOutStream").invoke(unit);
+        return (StreamInterface) unit.getClass().getMethod("getLiquidOutStream").invoke(unit);
       case "oiloutstream":
       case "oilout":
-	return (StreamInterface) unit.getClass().getMethod("getOilOutStream").invoke(unit);
+        return (StreamInterface) unit.getClass().getMethod("getOilOutStream").invoke(unit);
       case "wateroutstream":
       case "waterout":
-	return (StreamInterface) unit.getClass().getMethod("getWaterOutStream").invoke(unit);
+        return (StreamInterface) unit.getClass().getMethod("getWaterOutStream").invoke(unit);
       case "outletstream":
       case "outlet":
-	return (StreamInterface) unit.getClass().getMethod("getOutletStream").invoke(unit);
+        return (StreamInterface) unit.getClass().getMethod("getOutletStream").invoke(unit);
       case "inletstream":
       case "inlet":
-	List<StreamInterface> inlets = unit.getInletStreams();
-	return inlets.isEmpty() ? null : inlets.get(0);
+        List<StreamInterface> inlets = unit.getInletStreams();
+        return inlets.isEmpty() ? null : inlets.get(0);
       default:
-	break;
+        break;
       }
     } catch (NoSuchMethodException e) {
       // Try fallback: some equipment uses getOutStream (e.g., Ejector) instead of getOutletStream
       if (normalizedPort.equals("outletstream") || normalizedPort.equals("outlet")) {
-	try {
-	  return (StreamInterface) unit.getClass().getMethod("getOutStream").invoke(unit);
-	} catch (Exception ex) {
-	  // Fall through to getOutletStreams fallback
-	}
-	List<StreamInterface> outlets = unit.getOutletStreams();
-	return outlets.isEmpty() ? null : outlets.get(0);
+        try {
+          return (StreamInterface) unit.getClass().getMethod("getOutStream").invoke(unit);
+        } catch (Exception ex) {
+          // Fall through to getOutletStreams fallback
+        }
+        List<StreamInterface> outlets = unit.getOutletStreams();
+        return outlets.isEmpty() ? null : outlets.get(0);
       }
     } catch (Exception e) {
       // reflection failure
@@ -1682,13 +1683,13 @@ public class ProcessAutomation {
     // Try indexed port: "outletStream0", "outletStream1", etc.
     if (normalizedPort.startsWith("outletstream") && normalizedPort.length() > 12) {
       try {
-	int idx = Integer.parseInt(normalizedPort.substring(12));
-	List<StreamInterface> outlets = unit.getOutletStreams();
-	if (idx >= 0 && idx < outlets.size()) {
-	  return outlets.get(idx);
-	}
+        int idx = Integer.parseInt(normalizedPort.substring(12));
+        List<StreamInterface> outlets = unit.getOutletStreams();
+        if (idx >= 0 && idx < outlets.size()) {
+          return outlets.get(idx);
+        }
       } catch (NumberFormatException e) {
-	// ignore
+        // ignore
       }
     }
 
@@ -1736,23 +1737,23 @@ public class ProcessAutomation {
 
     if (!(stream instanceof Stream)) {
       throw new IllegalArgumentException(
-	  "Cannot set properties on non-Stream type: " + stream.getClass().getSimpleName());
+          "Cannot set properties on non-Stream type: " + stream.getClass().getSimpleName());
     }
     Stream s = (Stream) stream;
 
     switch (property) {
     case "temperature":
       if (hasUnit) {
-	s.setTemperature(value, uom);
+        s.setTemperature(value, uom);
       } else {
-	s.setTemperature(value);
+        s.setTemperature(value);
       }
       return;
     case "pressure":
       if (hasUnit) {
-	s.setPressure(value, uom);
+        s.setPressure(value, uom);
       } else {
-	s.setPressure(value);
+        s.setPressure(value);
       }
       return;
     case "flowRate":
@@ -1798,7 +1799,7 @@ public class ProcessAutomation {
     // Stream port not found
     if (msg.contains("Stream port not found") || msg.contains("port")) {
       List<String> validPorts = java.util.Arrays.asList("gasOutStream", "liquidOutStream", "oilOutStream",
-	  "waterOutStream", "outletStream", "inletStream");
+          "waterOutStream", "outletStream", "inletStream");
       String portName = parts.length > 1 ? parts[1] : "";
       return diagnostics.diagnosePortNotFound(address, unitName, portName, validPorts);
     }
@@ -1806,50 +1807,50 @@ public class ProcessAutomation {
     // Property not found (Unknown property, Unknown stream property)
     if (msg.contains("Unknown property") || msg.contains("Unknown stream property")) {
       try {
-	List<SimulationVariable> vars = getVariableList(unitName);
-	String propertyName = parts.length > 1 ? parts[parts.length - 1] : "";
-	return diagnostics.diagnosePropertyNotFound(address, unitName, propertyName, vars);
+        List<SimulationVariable> vars = getVariableList(unitName);
+        String propertyName = parts.length > 1 ? parts[parts.length - 1] : "";
+        return diagnostics.diagnosePropertyNotFound(address, unitName, propertyName, vars);
       } catch (Exception e) {
-	// Can't get variable list - fall through
+        // Can't get variable list - fall through
       }
     }
 
     // Read-only variable (set attempted on an OUTPUT-type property)
     if (msg.contains("Cannot set property") || msg.contains("Cannot set stream")
-	|| msg.toLowerCase(java.util.Locale.ROOT).contains("read-only")
-	|| msg.toLowerCase(java.util.Locale.ROOT).contains("read only")) {
+        || msg.toLowerCase(java.util.Locale.ROOT).contains("read-only")
+        || msg.toLowerCase(java.util.Locale.ROOT).contains("read only")) {
       java.util.Map<String, Object> ctx = new java.util.LinkedHashMap<String, Object>();
       ctx.put("errorMessage", msg);
       return new AutomationDiagnostics.DiagnosticResult(AutomationDiagnostics.ErrorCategory.READ_ONLY_VARIABLE, address,
-	  msg, new ArrayList<String>(), null,
-	  "This variable is an OUTPUT (computed by the simulation) and cannot be set. "
-	      + "Use getVariableList() to discover INPUT-type variables that can be modified.",
-	  ctx);
+          msg, new ArrayList<String>(), null,
+          "This variable is an OUTPUT (computed by the simulation) and cannot be set. "
+              + "Use getVariableList() to discover INPUT-type variables that can be modified.",
+          ctx);
     }
 
     // Unknown unit-of-measure
     if (msg.toLowerCase(java.util.Locale.ROOT).contains("unknown unit")
-	|| msg.toLowerCase(java.util.Locale.ROOT).contains("unit not supported")
-	|| msg.toLowerCase(java.util.Locale.ROOT).contains("invalid unit")) {
+        || msg.toLowerCase(java.util.Locale.ROOT).contains("unit not supported")
+        || msg.toLowerCase(java.util.Locale.ROOT).contains("invalid unit")) {
       java.util.Map<String, Object> ctx = new java.util.LinkedHashMap<String, Object>();
       ctx.put("errorMessage", msg);
       return new AutomationDiagnostics.DiagnosticResult(AutomationDiagnostics.ErrorCategory.UNKNOWN_UNIT, address, msg,
-	  new ArrayList<String>(), null, "Unsupported unit of measure. Call getAllowedUnits(address) for a list of "
-	      + "valid UOM strings, or pass null to use the variable's default unit.",
-	  ctx);
+          new ArrayList<String>(), null, "Unsupported unit of measure. Call getAllowedUnits(address) for a list of "
+              + "valid UOM strings, or pass null to use the variable's default unit.",
+          ctx);
     }
 
     // Convergence failure during write+run
     String lower = msg.toLowerCase(java.util.Locale.ROOT);
     if (lower.contains("not converge") || lower.contains("did not converge") || lower.contains("convergence")
-	|| lower.contains("solver failed")) {
+        || lower.contains("solver failed")) {
       java.util.Map<String, Object> ctx = new java.util.LinkedHashMap<String, Object>();
       ctx.put("errorMessage", msg);
       return new AutomationDiagnostics.DiagnosticResult(AutomationDiagnostics.ErrorCategory.CONVERGENCE_FAILURE,
-	  address, msg, new ArrayList<String>(), null,
-	  "Solver did not converge after the change. Try a smaller step, relax recycle "
-	      + "tolerance, or revert the change. Inspect the diagnostics log for residuals.",
-	  ctx);
+          address, msg, new ArrayList<String>(), null,
+          "Solver did not converge after the change. Try a smaller step, relax recycle "
+              + "tolerance, or revert the change. Inspect the diagnostics log for residuals.",
+          ctx);
     }
 
     // Invalid address format or generic error
@@ -1857,10 +1858,10 @@ public class ProcessAutomation {
     context.put("errorMessage", msg);
     context.put("addressFormat", "unitName.property or unitName.port.property");
     return new AutomationDiagnostics.DiagnosticResult(AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT,
-	address, msg, new java.util.ArrayList<String>(), null,
-	"Check address format. Expected: 'unitName.property' or 'unitName.port.property'. "
-	    + "Use getUnitList() and getVariableList(unitName) to discover valid addresses.",
-	context);
+        address, msg, new java.util.ArrayList<String>(), null,
+        "Check address format. Expected: 'unitName.property' or 'unitName.port.property'. "
+            + "Use getUnitList() and getVariableList(unitName) to discover valid addresses.",
+        context);
   }
 
   /**
@@ -1922,7 +1923,7 @@ public class ProcessAutomation {
       result.addProperty("unit", unit);
     }
     result.addProperty("remediation", "Address was auto-corrected from '" + originalAddress + "' to '"
-	+ correctedAddress + "'. Use the corrected address in future calls.");
+        + correctedAddress + "'. Use the corrected address in future calls.");
     return result.toString();
   }
 
@@ -1970,7 +1971,7 @@ public class ProcessAutomation {
       result.addProperty("unit", unit);
     }
     result.addProperty("remediation", "Address was auto-corrected from '" + originalAddress + "' to '"
-	+ correctedAddress + "'. Use the corrected address in future calls.");
+        + correctedAddress + "'. Use the corrected address in future calls.");
     return result.toString();
   }
 
@@ -2132,30 +2133,30 @@ public class ProcessAutomation {
     boolean converged;
     if (processModel != null) {
       try {
-	converged = processModel.runUntilConverged(maxIterations, tolerance);
+        converged = processModel.runUntilConverged(maxIterations, tolerance);
       } catch (RuntimeException e) {
-	runSucceeded = false;
-	converged = false;
+        runSucceeded = false;
+        converged = false;
       }
       root.addProperty("converged", converged);
       root.addProperty("iterations", processModel.getLastIterationCount());
       root.addProperty("maxError", processModel.getError());
       // Embed the full structured convergence report for area-level diagnostics.
       try {
-	com.google.gson.JsonElement report = com.google.gson.JsonParser
-	    .parseString(processModel.getConvergenceReportJson());
-	root.add("convergence", report);
-	if (report.isJsonObject() && report.getAsJsonObject().has("areas")) {
-	  root.add("areas", report.getAsJsonObject().get("areas"));
-	}
+        com.google.gson.JsonElement report = com.google.gson.JsonParser
+            .parseString(processModel.getConvergenceReportJson());
+        root.add("convergence", report);
+        if (report.isJsonObject() && report.getAsJsonObject().has("areas")) {
+          root.add("areas", report.getAsJsonObject().get("areas"));
+        }
       } catch (RuntimeException e) {
-	// convergence report unavailable; primary fields above are sufficient
+        // convergence report unavailable; primary fields above are sufficient
       }
     } else {
       try {
-	processSystem.run();
+        processSystem.run();
       } catch (RuntimeException e) {
-	runSucceeded = false;
+        runSucceeded = false;
       }
       converged = runSucceeded && processSystem.getRunStatus().isSuccess();
       root.addProperty("converged", converged);
@@ -2223,14 +2224,14 @@ public class ProcessAutomation {
     com.google.gson.JsonObject rejected = new com.google.gson.JsonObject();
     if (setpoints != null) {
       for (Map.Entry<String, Double> e : setpoints.entrySet()) {
-	try {
-	  setVariableValue(e.getKey(), e.getValue(), setpointUnit);
-	  applied.addProperty(e.getKey(), e.getValue());
-	} catch (RuntimeException ex) {
-	  rejected.addProperty(e.getKey(), ex.getMessage());
-	  diagnostics.recordFailure("set", e.getKey(), AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT,
-	      null);
-	}
+        try {
+          setVariableValue(e.getKey(), e.getValue(), setpointUnit);
+          applied.addProperty(e.getKey(), e.getValue());
+        } catch (RuntimeException ex) {
+          rejected.addProperty(e.getKey(), ex.getMessage());
+          diagnostics.recordFailure("set", e.getKey(), AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT,
+              null);
+        }
       }
     }
     root.add("setpointsApplied", applied);
@@ -2241,18 +2242,18 @@ public class ProcessAutomation {
     boolean converged;
     if (processModel != null) {
       try {
-	converged = processModel.runUntilConverged(maxIterations, tolerance);
+        converged = processModel.runUntilConverged(maxIterations, tolerance);
       } catch (RuntimeException ex) {
-	runSucceeded = false;
-	converged = false;
+        runSucceeded = false;
+        converged = false;
       }
       root.addProperty("iterations", processModel.getLastIterationCount());
       root.addProperty("maxError", processModel.getError());
     } else {
       try {
-	processSystem.run();
+        processSystem.run();
       } catch (RuntimeException ex) {
-	runSucceeded = false;
+        runSucceeded = false;
       }
       converged = runSucceeded && processSystem.getRunStatus().isSuccess();
     }
@@ -2270,11 +2271,11 @@ public class ProcessAutomation {
     com.google.gson.JsonObject readErrors = new com.google.gson.JsonObject();
     if (readbacks != null) {
       for (String addr : readbacks) {
-	try {
-	  reads.addProperty(addr, getVariableValue(addr, readbackUnit));
-	} catch (RuntimeException ex) {
-	  readErrors.addProperty(addr, ex.getMessage());
-	}
+        try {
+          reads.addProperty(addr, getVariableValue(addr, readbackUnit));
+        } catch (RuntimeException ex) {
+          readErrors.addProperty(addr, ex.getMessage());
+        }
       }
     }
     root.add("readbacks", reads);
@@ -2306,7 +2307,7 @@ public class ProcessAutomation {
    */
   private void mergeRunStatus(com.google.gson.JsonObject root) {
     neqsim.process.processmodel.RunStatus status = processModel != null ? processModel.getRunStatus()
-	: processSystem.getRunStatus();
+        : processSystem.getRunStatus();
     if (status == null) {
       return;
     }
@@ -2347,9 +2348,9 @@ public class ProcessAutomation {
     Map<String, Double> out = new LinkedHashMap<String, Double>();
     for (String addr : addresses) {
       try {
-	out.put(addr, getVariableValue(addr, unitOfMeasure));
+        out.put(addr, getVariableValue(addr, unitOfMeasure));
       } catch (Exception e) {
-	diagnostics.recordFailure("get", addr, AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT, null);
+        diagnostics.recordFailure("get", addr, AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT, null);
       }
     }
     return out;
@@ -2372,10 +2373,10 @@ public class ProcessAutomation {
     int ok = 0;
     for (Map.Entry<String, Double> e : updates.entrySet()) {
       try {
-	setVariableValue(e.getKey(), e.getValue(), unitOfMeasure);
-	ok++;
+        setVariableValue(e.getKey(), e.getValue(), unitOfMeasure);
+        ok++;
       } catch (Exception ex) {
-	diagnostics.recordFailure("set", e.getKey(), AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT, null);
+        diagnostics.recordFailure("set", e.getKey(), AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT, null);
       }
     }
     if (runAfter && ok > 0) {
@@ -2497,7 +2498,7 @@ public class ProcessAutomation {
       String propertyPath = extractPropertyPath(address);
       vr = validatorRegistry.validate(eq, propertyPath, value, unitOfMeasure);
       if (!vr.isAllowed()) {
-	throw new IllegalArgumentException("Write rejected by validator [" + vr.getCode() + "]: " + vr.getMessage());
+        throw new IllegalArgumentException("Write rejected by validator [" + vr.getCode() + "]: " + vr.getMessage());
       }
     }
     setVariableValue(address, value, unitOfMeasure);
@@ -2540,7 +2541,7 @@ public class ProcessAutomation {
 
     // Phase 0 — snapshot + validate
     List<TransactionalBatchResult.WriteOutcome> outcomes = new ArrayList<TransactionalBatchResult.WriteOutcome>(
-	updates.size());
+        updates.size());
     boolean anyValidationError = false;
     String firstValidationFailure = null;
     for (Map.Entry<String, Double> e : updates.entrySet()) {
@@ -2550,22 +2551,22 @@ public class ProcessAutomation {
       ProcessEquipmentInterface eq = tryResolveEquipment(address);
       WriteValidationResult vr = WriteValidationResult.ok();
       if (eq != null) {
-	vr = validatorRegistry.validate(eq, extractPropertyPath(address), value, unitOfMeasure);
+        vr = validatorRegistry.validate(eq, extractPropertyPath(address), value, unitOfMeasure);
       }
       outcomes.add(new TransactionalBatchResult.WriteOutcome(address, value, unitOfMeasure, previous, vr, false, null));
       if (!vr.isAllowed() && !anyValidationError) {
-	anyValidationError = true;
-	firstValidationFailure = address + " — " + vr.getCode() + ": " + vr.getMessage();
+        anyValidationError = true;
+        firstValidationFailure = address + " — " + vr.getCode() + ": " + vr.getMessage();
       }
     }
     if (anyValidationError) {
       return TransactionalBatchResult.rolledBack(TransactionalBatchResult.RollbackCategory.VALIDATION_FAILED,
-	  "Validation failed: " + firstValidationFailure, outcomes);
+          "Validation failed: " + firstValidationFailure, outcomes);
     }
 
     // Phase 1 — apply
     List<TransactionalBatchResult.WriteOutcome> applied = new ArrayList<TransactionalBatchResult.WriteOutcome>(
-	outcomes.size());
+        outcomes.size());
     int idx = 0;
     String applyError = null;
     String applyErrorAddress = null;
@@ -2574,15 +2575,15 @@ public class ProcessAutomation {
       double value = e.getValue();
       TransactionalBatchResult.WriteOutcome existing = outcomes.get(idx++);
       try {
-	setVariableValue(address, value, unitOfMeasure);
-	applied.add(new TransactionalBatchResult.WriteOutcome(address, value, unitOfMeasure,
-	    existing.getPreviousValue(), existing.getValidation(), true, null));
+        setVariableValue(address, value, unitOfMeasure);
+        applied.add(new TransactionalBatchResult.WriteOutcome(address, value, unitOfMeasure,
+            existing.getPreviousValue(), existing.getValidation(), true, null));
       } catch (Exception ex) {
-	applyError = ex.getMessage();
-	applyErrorAddress = address;
-	applied.add(new TransactionalBatchResult.WriteOutcome(address, value, unitOfMeasure,
-	    existing.getPreviousValue(), existing.getValidation(), false, ex.getMessage()));
-	break;
+        applyError = ex.getMessage();
+        applyErrorAddress = address;
+        applied.add(new TransactionalBatchResult.WriteOutcome(address, value, unitOfMeasure,
+            existing.getPreviousValue(), existing.getValidation(), false, ex.getMessage()));
+        break;
       }
     }
     // Carry over any not-yet-attempted outcomes so the result lists every requested write
@@ -2593,7 +2594,7 @@ public class ProcessAutomation {
     if (applyError != null) {
       rollbackSnapshot(applied, unitOfMeasure);
       return TransactionalBatchResult.rolledBack(TransactionalBatchResult.RollbackCategory.APPLY_FAILED,
-	  "Apply failed at " + applyErrorAddress + ": " + applyError, applied);
+          "Apply failed at " + applyErrorAddress + ": " + applyError, applied);
     }
 
     // Phase 2 — run
@@ -2603,7 +2604,7 @@ public class ProcessAutomation {
       String runError = ex.getMessage();
       rollbackSnapshot(applied, unitOfMeasure);
       return TransactionalBatchResult.rolledBack(TransactionalBatchResult.RollbackCategory.RUN_FAILED,
-	  "Run failed after applying writes: " + runError, applied);
+          "Run failed after applying writes: " + runError, applied);
     }
 
     return TransactionalBatchResult.committed(applied);
@@ -2620,17 +2621,17 @@ public class ProcessAutomation {
   private void rollbackSnapshot(List<TransactionalBatchResult.WriteOutcome> snapshot, String unitOfMeasure) {
     for (TransactionalBatchResult.WriteOutcome wo : snapshot) {
       if (!wo.isApplied()) {
-	continue;
+        continue;
       }
       Double prev = wo.getPreviousValue();
       if (prev == null) {
-	continue;
+        continue;
       }
       try {
-	setVariableValue(wo.getAddress(), prev.doubleValue(), unitOfMeasure);
+        setVariableValue(wo.getAddress(), prev.doubleValue(), unitOfMeasure);
       } catch (Exception ex) {
-	diagnostics.recordFailure("rollback", wo.getAddress(),
-	    AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT, null);
+        diagnostics.recordFailure("rollback", wo.getAddress(),
+            AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT, null);
       }
     }
     try {
@@ -2662,29 +2663,29 @@ public class ProcessAutomation {
       com.google.gson.JsonObject u = new com.google.gson.JsonObject();
       u.addProperty("name", unitAddr);
       try {
-	u.addProperty("type", getEquipmentType(unitAddr));
+        u.addProperty("type", getEquipmentType(unitAddr));
       } catch (Exception e) {
-	// skip type if unresolvable
+        // skip type if unresolvable
       }
       com.google.gson.JsonObject vars = new com.google.gson.JsonObject();
       try {
-	List<SimulationVariable> vlist = getVariableList(unitAddr);
-	for (SimulationVariable v : vlist) {
-	  try {
-	    double val = getVariableValue(v.getAddress(), v.getDefaultUnit());
-	    com.google.gson.JsonObject vobj = new com.google.gson.JsonObject();
-	    vobj.addProperty("value", val);
-	    if (v.getDefaultUnit() != null) {
-	      vobj.addProperty("unit", v.getDefaultUnit());
-	    }
-	    vobj.addProperty("type", v.getType().name());
-	    vars.add(stripUnitPrefix(v.getAddress(), unitAddr), vobj);
-	  } catch (Exception e) {
-	    // skip individual variable read failures
-	  }
-	}
+        List<SimulationVariable> vlist = getVariableList(unitAddr);
+        for (SimulationVariable v : vlist) {
+          try {
+            double val = getVariableValue(v.getAddress(), v.getDefaultUnit());
+            com.google.gson.JsonObject vobj = new com.google.gson.JsonObject();
+            vobj.addProperty("value", val);
+            if (v.getDefaultUnit() != null) {
+              vobj.addProperty("unit", v.getDefaultUnit());
+            }
+            vobj.addProperty("type", v.getType().name());
+            vars.add(stripUnitPrefix(v.getAddress(), unitAddr), vobj);
+          } catch (Exception e) {
+            // skip individual variable read failures
+          }
+        }
       } catch (Exception e) {
-	// skip unit
+        // skip unit
       }
       u.add("variables", vars);
       unitsArr.add(u);
@@ -2736,7 +2737,7 @@ public class ProcessAutomation {
     if (processModel != null && !scope.contains(AREA_SEPARATOR) && !scope.contains(".")) {
       List<String> areas = processModel.getProcessSystemNames();
       if (areas.contains(scope)) {
-	return getUnitList(scope);
+        return getUnitList(scope);
       }
     }
     // Treat as a single unit address
@@ -2777,7 +2778,7 @@ public class ProcessAutomation {
     if (isMultiArea()) {
       com.google.gson.JsonArray areasArr = new com.google.gson.JsonArray();
       for (String a : getAreaList()) {
-	areasArr.add(a);
+        areasArr.add(a);
       }
       root.add("areas", areasArr);
     }
@@ -2787,33 +2788,33 @@ public class ProcessAutomation {
       com.google.gson.JsonObject u = new com.google.gson.JsonObject();
       u.addProperty("name", unitAddr);
       try {
-	u.addProperty("type", getEquipmentType(unitAddr));
+        u.addProperty("type", getEquipmentType(unitAddr));
       } catch (Exception e) {
-	// ignore
+        // ignore
       }
       com.google.gson.JsonArray varsArr = new com.google.gson.JsonArray();
       try {
-	for (SimulationVariable v : getVariableList(unitAddr)) {
-	  com.google.gson.JsonObject vo = new com.google.gson.JsonObject();
-	  vo.addProperty("address", v.getAddress());
-	  vo.addProperty("name", v.getName());
-	  vo.addProperty("type", v.getType().name());
-	  if (v.getDefaultUnit() != null) {
-	    vo.addProperty("unit", v.getDefaultUnit());
-	  }
-	  if (v.getDescription() != null) {
-	    vo.addProperty("description", v.getDescription());
-	  }
-	  if (v.getUnitFamily() != null) {
-	    vo.addProperty("unitFamily", v.getUnitFamily());
-	  }
-	  if (v.getCategory() != null) {
-	    vo.addProperty("category", v.getCategory());
-	  }
-	  varsArr.add(vo);
-	}
+        for (SimulationVariable v : getVariableList(unitAddr)) {
+          com.google.gson.JsonObject vo = new com.google.gson.JsonObject();
+          vo.addProperty("address", v.getAddress());
+          vo.addProperty("name", v.getName());
+          vo.addProperty("type", v.getType().name());
+          if (v.getDefaultUnit() != null) {
+            vo.addProperty("unit", v.getDefaultUnit());
+          }
+          if (v.getDescription() != null) {
+            vo.addProperty("description", v.getDescription());
+          }
+          if (v.getUnitFamily() != null) {
+            vo.addProperty("unitFamily", v.getUnitFamily());
+          }
+          if (v.getCategory() != null) {
+            vo.addProperty("category", v.getCategory());
+          }
+          varsArr.add(vo);
+        }
       } catch (Exception e) {
-	// ignore unit
+        // ignore unit
       }
       u.add("variables", varsArr);
       unitsArr.add(u);
@@ -2839,7 +2840,7 @@ public class ProcessAutomation {
     List<ProcessSystem> systems = new ArrayList<ProcessSystem>();
     if (processModel != null) {
       for (String a : processModel.getProcessSystemNames()) {
-	systems.add(processModel.get(a));
+        systems.add(processModel.get(a));
       }
     } else {
       systems.add(processSystem);
@@ -2847,32 +2848,32 @@ public class ProcessAutomation {
 
     for (ProcessSystem sys : systems) {
       for (ProcessEquipmentInterface unit : sys.getUnitOperations()) {
-	com.google.gson.JsonObject u = new com.google.gson.JsonObject();
-	u.addProperty("name", unit.getName());
-	u.addProperty("type", unit.getClass().getSimpleName());
-	com.google.gson.JsonArray inlets = new com.google.gson.JsonArray();
-	com.google.gson.JsonArray outlets = new com.google.gson.JsonArray();
-	try {
-	  for (StreamInterface s : unit.getInletStreams()) {
-	    if (s != null) {
-	      inlets.add(s.getName());
-	    }
-	  }
-	} catch (Exception e) {
-	  // ignore - not all equipment exposes inlets
-	}
-	try {
-	  for (StreamInterface s : unit.getOutletStreams()) {
-	    if (s != null) {
-	      outlets.add(s.getName());
-	    }
-	  }
-	} catch (Exception e) {
-	  // ignore
-	}
-	u.add("inlets", inlets);
-	u.add("outlets", outlets);
-	equipArr.add(u);
+        com.google.gson.JsonObject u = new com.google.gson.JsonObject();
+        u.addProperty("name", unit.getName());
+        u.addProperty("type", unit.getClass().getSimpleName());
+        com.google.gson.JsonArray inlets = new com.google.gson.JsonArray();
+        com.google.gson.JsonArray outlets = new com.google.gson.JsonArray();
+        try {
+          for (StreamInterface s : unit.getInletStreams()) {
+            if (s != null) {
+              inlets.add(s.getName());
+            }
+          }
+        } catch (Exception e) {
+          // ignore - not all equipment exposes inlets
+        }
+        try {
+          for (StreamInterface s : unit.getOutletStreams()) {
+            if (s != null) {
+              outlets.add(s.getName());
+            }
+          }
+        } catch (Exception e) {
+          // ignore
+        }
+        u.add("inlets", inlets);
+        u.add("outlets", outlets);
+        equipArr.add(u);
       }
     }
     root.add("equipment", equipArr);
@@ -2880,24 +2881,24 @@ public class ProcessAutomation {
     com.google.gson.JsonArray connsArr = new com.google.gson.JsonArray();
     try {
       List<neqsim.process.processmodel.ProcessConnection> conns = (processSystem != null)
-	  ? processSystem.getConnections()
-	  : null;
+          ? processSystem.getConnections()
+          : null;
       if (conns != null) {
-	for (neqsim.process.processmodel.ProcessConnection c : conns) {
-	  com.google.gson.JsonObject co = new com.google.gson.JsonObject();
-	  co.addProperty("source", c.getSourceEquipment());
-	  co.addProperty("target", c.getTargetEquipment());
-	  if (c.getType() != null) {
-	    co.addProperty("type", c.getType().name());
-	  }
-	  if (c.getSourcePort() != null) {
-	    co.addProperty("sourcePort", c.getSourcePort());
-	  }
-	  if (c.getTargetPort() != null) {
-	    co.addProperty("targetPort", c.getTargetPort());
-	  }
-	  connsArr.add(co);
-	}
+        for (neqsim.process.processmodel.ProcessConnection c : conns) {
+          com.google.gson.JsonObject co = new com.google.gson.JsonObject();
+          co.addProperty("source", c.getSourceEquipment());
+          co.addProperty("target", c.getTargetEquipment());
+          if (c.getType() != null) {
+            co.addProperty("type", c.getType().name());
+          }
+          if (c.getSourcePort() != null) {
+            co.addProperty("sourcePort", c.getSourcePort());
+          }
+          if (c.getTargetPort() != null) {
+            co.addProperty("targetPort", c.getTargetPort());
+          }
+          connsArr.add(co);
+        }
       }
     } catch (Exception e) {
       // ignore - connections are optional metadata
@@ -2929,18 +2930,18 @@ public class ProcessAutomation {
     java.util.Set<String> outletStreamNames = new java.util.LinkedHashSet<String>();
     try {
       for (StreamInterface s : target.getInletStreams()) {
-	if (s != null) {
-	  inletStreamNames.add(s.getName());
-	}
+        if (s != null) {
+          inletStreamNames.add(s.getName());
+        }
       }
     } catch (Exception e) {
       // ignore
     }
     try {
       for (StreamInterface s : target.getOutletStreams()) {
-	if (s != null) {
-	  outletStreamNames.add(s.getName());
-	}
+        if (s != null) {
+          outletStreamNames.add(s.getName());
+        }
       }
     } catch (Exception e) {
       // ignore
@@ -2955,7 +2956,7 @@ public class ProcessAutomation {
     List<ProcessSystem> systems = new ArrayList<ProcessSystem>();
     if (processModel != null) {
       for (String a : processModel.getProcessSystemNames()) {
-	systems.add(processModel.get(a));
+        systems.add(processModel.get(a));
       }
     } else {
       systems.add(processSystem);
@@ -2963,29 +2964,29 @@ public class ProcessAutomation {
 
     for (ProcessSystem sys : systems) {
       for (ProcessEquipmentInterface other : sys.getUnitOperations()) {
-	if (other == target) {
-	  continue;
-	}
-	try {
-	  for (StreamInterface s : other.getOutletStreams()) {
-	    if (s != null && inletStreamNames.contains(s.getName())) {
-	      up.add(other.getName());
-	      break;
-	    }
-	  }
-	} catch (Exception e) {
-	  // ignore
-	}
-	try {
-	  for (StreamInterface s : other.getInletStreams()) {
-	    if (s != null && outletStreamNames.contains(s.getName())) {
-	      down.add(other.getName());
-	      break;
-	    }
-	  }
-	} catch (Exception e) {
-	  // ignore
-	}
+        if (other == target) {
+          continue;
+        }
+        try {
+          for (StreamInterface s : other.getOutletStreams()) {
+            if (s != null && inletStreamNames.contains(s.getName())) {
+              up.add(other.getName());
+              break;
+            }
+          }
+        } catch (Exception e) {
+          // ignore
+        }
+        try {
+          for (StreamInterface s : other.getInletStreams()) {
+            if (s != null && outletStreamNames.contains(s.getName())) {
+              down.add(other.getName());
+              break;
+            }
+          }
+        } catch (Exception e) {
+          // ignore
+        }
       }
     }
     root.add("upstream", up);
@@ -3038,39 +3039,39 @@ public class ProcessAutomation {
       ProcessEquipmentInterface unit = findUnit(areaName, parts[0]);
       StreamInterface stream = resolveStreamPort(unit, parts[1]);
       if (stream == null) {
-	throw new IllegalArgumentException("Stream port not found: " + parts[1] + " on unit " + parts[0]);
+        throw new IllegalArgumentException("Stream port not found: " + parts[1] + " on unit " + parts[0]);
       }
       neqsim.thermo.system.SystemInterface fluid = stream.getFluid();
       if ("composition".equals(last) || "molarcomposition".equals(last)) {
-	return compositionJson(fluid, false);
+        return compositionJson(fluid, false);
       }
       if ("masscomposition".equals(last)) {
-	return compositionJson(fluid, true);
+        return compositionJson(fluid, true);
       }
       if ("components".equals(last)) {
-	com.google.gson.JsonArray arr = new com.google.gson.JsonArray();
-	for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
-	  arr.add(fluid.getComponent(i).getComponentName());
-	}
-	return arr;
+        com.google.gson.JsonArray arr = new com.google.gson.JsonArray();
+        for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+          arr.add(fluid.getComponent(i).getComponentName());
+        }
+        return arr;
       }
       if ("phasefractions".equals(last)) {
-	com.google.gson.JsonObject obj = new com.google.gson.JsonObject();
-	for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-	  obj.addProperty(fluid.getPhase(i).getPhaseTypeName(), fluid.getBeta(i));
-	}
-	return obj;
+        com.google.gson.JsonObject obj = new com.google.gson.JsonObject();
+        for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
+          obj.addProperty(fluid.getPhase(i).getPhaseTypeName(), fluid.getBeta(i));
+        }
+        return obj;
       }
       if ("kvalues".equals(last)) {
-	com.google.gson.JsonObject obj = new com.google.gson.JsonObject();
-	if (fluid.getNumberOfPhases() >= 2) {
-	  for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
-	    double yi = fluid.getPhase(0).getComponent(i).getx();
-	    double xi = fluid.getPhase(1).getComponent(i).getx();
-	    obj.addProperty(fluid.getComponent(i).getComponentName(), xi > 0.0 ? yi / xi : Double.NaN);
-	  }
-	}
-	return obj;
+        com.google.gson.JsonObject obj = new com.google.gson.JsonObject();
+        if (fluid.getNumberOfPhases() >= 2) {
+          for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+            double yi = fluid.getPhase(0).getComponent(i).getx();
+            double xi = fluid.getPhase(1).getComponent(i).getx();
+            obj.addProperty(fluid.getComponent(i).getComponentName(), xi > 0.0 ? yi / xi : Double.NaN);
+          }
+        }
+        return obj;
       }
     }
     // Fallback to scalar
@@ -3091,16 +3092,16 @@ public class ProcessAutomation {
     double totalMass = 0.0;
     if (mass) {
       for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
-	totalMass += fluid.getComponent(i).getNumberOfmoles() * fluid.getComponent(i).getMolarMass();
+        totalMass += fluid.getComponent(i).getNumberOfmoles() * fluid.getComponent(i).getMolarMass();
       }
     }
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       double frac;
       if (mass) {
-	double m = fluid.getComponent(i).getNumberOfmoles() * fluid.getComponent(i).getMolarMass();
-	frac = totalMass > 0.0 ? m / totalMass : 0.0;
+        double m = fluid.getComponent(i).getNumberOfmoles() * fluid.getComponent(i).getMolarMass();
+        frac = totalMass > 0.0 ? m / totalMass : 0.0;
       } else {
-	frac = totalMoles > 0.0 ? fluid.getComponent(i).getNumberOfmoles() / totalMoles : 0.0;
+        frac = totalMoles > 0.0 ? fluid.getComponent(i).getNumberOfmoles() / totalMoles : 0.0;
       }
       obj.addProperty(fluid.getComponent(i).getComponentName(), frac);
     }
@@ -3119,9 +3120,9 @@ public class ProcessAutomation {
   public AutomationDiagnostics.DiagnosticResult validateAddress(String address) {
     if (address == null || address.trim().isEmpty()) {
       return new AutomationDiagnostics.DiagnosticResult(AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT,
-	  address == null ? "" : address, "Address must not be null or empty", new ArrayList<String>(), null,
-	  "Pass a non-empty address of the form 'unit.property' or 'unit.port.property'.",
-	  new LinkedHashMap<String, Object>());
+          address == null ? "" : address, "Address must not be null or empty", new ArrayList<String>(), null,
+          "Pass a non-empty address of the form 'unit.property' or 'unit.port.property'.",
+          new LinkedHashMap<String, Object>());
     }
     try {
       // Resolve unit (and stream port if present) without touching property
@@ -3129,17 +3130,17 @@ public class ProcessAutomation {
       String areaName = null;
       int areaSepIdx = address.indexOf(AREA_SEPARATOR);
       if (areaSepIdx >= 0) {
-	areaName = address.substring(0, areaSepIdx);
-	localAddress = address.substring(areaSepIdx + AREA_SEPARATOR.length());
+        areaName = address.substring(0, areaSepIdx);
+        localAddress = address.substring(areaSepIdx + AREA_SEPARATOR.length());
       }
       String[] parts = localAddress.split("\\.", 3);
       ProcessEquipmentInterface unit = findUnit(areaName, parts[0]);
       if (parts.length == 3) {
-	StreamInterface s = resolveStreamPort(unit, parts[1]);
-	if (s == null) {
-	  return diagnoseAndAttemptRecovery(address,
-	      new IllegalArgumentException("Stream port not found: " + parts[1]));
-	}
+        StreamInterface s = resolveStreamPort(unit, parts[1]);
+        if (s == null) {
+          return diagnoseAndAttemptRecovery(address,
+              new IllegalArgumentException("Stream port not found: " + parts[1]));
+        }
       }
       return null;
     } catch (IllegalArgumentException e) {
@@ -3162,47 +3163,47 @@ public class ProcessAutomation {
       String areaName = null;
       int areaSepIdx = address.indexOf(AREA_SEPARATOR);
       if (areaSepIdx >= 0) {
-	areaName = address.substring(0, areaSepIdx);
-	localAddress = address.substring(areaSepIdx + AREA_SEPARATOR.length());
+        areaName = address.substring(0, areaSepIdx);
+        localAddress = address.substring(areaSepIdx + AREA_SEPARATOR.length());
       }
       String unitName = localAddress.split("\\.", 2)[0];
       String prefix = (areaName != null ? areaName + AREA_SEPARATOR : "") + unitName;
       for (SimulationVariable v : getVariableList(prefix)) {
-	if (v.getAddress().equals(address)) {
-	  String family = v.getUnitFamily();
-	  if (family == null) {
-	    return out;
-	  }
-	  if ("temperature".equalsIgnoreCase(family)) {
-	    out.add("K");
-	    out.add("C");
-	    out.add("F");
-	  } else if ("pressure".equalsIgnoreCase(family)) {
-	    out.add("bara");
-	    out.add("Pa");
-	    out.add("psi");
-	    out.add("barg");
-	  } else if ("massFlow".equalsIgnoreCase(family)) {
-	    out.add("kg/sec");
-	    out.add("kg/hr");
-	    out.add("tonnes/hr");
-	  } else if ("molarFlow".equalsIgnoreCase(family)) {
-	    out.add("mole/sec");
-	  } else if ("density".equalsIgnoreCase(family)) {
-	    out.add("kg/m3");
-	  } else if ("power".equalsIgnoreCase(family)) {
-	    out.add("W");
-	    out.add("kW");
-	    out.add("MW");
-	  } else if ("length".equalsIgnoreCase(family)) {
-	    out.add("m");
-	  } else if ("volume".equalsIgnoreCase(family)) {
-	    out.add("m3");
-	  } else if ("rotationalSpeed".equalsIgnoreCase(family)) {
-	    out.add("rpm");
-	  }
-	  return out;
-	}
+        if (v.getAddress().equals(address)) {
+          String family = v.getUnitFamily();
+          if (family == null) {
+            return out;
+          }
+          if ("temperature".equalsIgnoreCase(family)) {
+            out.add("K");
+            out.add("C");
+            out.add("F");
+          } else if ("pressure".equalsIgnoreCase(family)) {
+            out.add("bara");
+            out.add("Pa");
+            out.add("psi");
+            out.add("barg");
+          } else if ("massFlow".equalsIgnoreCase(family)) {
+            out.add("kg/sec");
+            out.add("kg/hr");
+            out.add("tonnes/hr");
+          } else if ("molarFlow".equalsIgnoreCase(family)) {
+            out.add("mole/sec");
+          } else if ("density".equalsIgnoreCase(family)) {
+            out.add("kg/m3");
+          } else if ("power".equalsIgnoreCase(family)) {
+            out.add("W");
+            out.add("kW");
+            out.add("MW");
+          } else if ("length".equalsIgnoreCase(family)) {
+            out.add("m");
+          } else if ("volume".equalsIgnoreCase(family)) {
+            out.add("m3");
+          } else if ("rotationalSpeed".equalsIgnoreCase(family)) {
+            out.add("rpm");
+          }
+          return out;
+        }
       }
     } catch (Exception e) {
       // fall through, return empty

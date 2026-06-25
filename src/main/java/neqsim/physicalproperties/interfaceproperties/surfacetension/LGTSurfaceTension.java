@@ -58,7 +58,7 @@ public class LGTSurfaceTension extends SurfaceTension {
 
     double[] mu_equi = new double[localSystem.getPhase(0).getNumberOfComponents()];
     double[][][] dmudn = new double[ite_step][localSystem.getPhase(0).getNumberOfComponents()][localSystem.getPhase(0)
-	.getNumberOfComponents()];
+        .getNumberOfComponents()];
 
     double[][] mu_inter = new double[ite_step][localSystem.getPhase(0).getNumberOfComponents()];
     // double[][][] dmudn_equi = new
@@ -70,18 +70,18 @@ public class LGTSurfaceTension extends SurfaceTension {
     for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
       mu_equi[i] = system.getPhase(interface1).getComponent(i).getChemicalPotential(system.getPhase(interface1));
       den_interface[0][i] = 1e5 * system.getPhase(interface1).getComponent(i).getx()
-	  / system.getPhase(interface1).getMolarVolume();
+          / system.getPhase(interface1).getMolarVolume();
       den_interface[ite_step - 1][i] = 1e5 * system.getPhase(interface2).getComponent(i).getx()
-	  / system.getPhase(interface2).getMolarVolume();
+          / system.getPhase(interface2).getMolarVolume();
       del_den_interface[i] = (1e5 * system.getPhase(interface2).getComponent(i).getx()
-	  / system.getPhase(interface2).getMolarVolume()
-	  - 1e5 * system.getPhase(interface1).getComponent(i).getx() / system.getPhase(interface1).getMolarVolume())
-	  / (ite_step * 1.0);
+          / system.getPhase(interface2).getMolarVolume()
+          - 1e5 * system.getPhase(interface1).getComponent(i).getx() / system.getPhase(interface1).getMolarVolume())
+          / (ite_step * 1.0);
       del_den_interface_old[i] = 0.0;
       localSystem.addComponent(localSystem.getPhase(0).getComponent(i).getName(),
-	  -system.getPhase(0).getComponent(i).getNumberOfmoles());
+          -system.getPhase(0).getComponent(i).getNumberOfmoles());
       localSystem.addComponent(localSystem.getPhase(0).getComponent(i).getName(),
-	  system.getPhase(interface1).getComponent(i).getx() / system.getPhase(interface1).getMolarVolume());
+          system.getPhase(interface1).getComponent(i).getx() / system.getPhase(interface1).getMolarVolume());
     }
 
     localSystem.init(0);
@@ -99,18 +99,18 @@ public class LGTSurfaceTension extends SurfaceTension {
 
     for (int j = 1; j < ite_step; j++) {
       for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
-	del_den_interface[i] = (1e5 * system.getPhase(interface2).getComponent(i).getx()
-	    / system.getPhase(interface2).getMolarVolume()
-	    - 1e5 * system.getPhase(interface1).getComponent(i).getx() / system.getPhase(interface1).getMolarVolume())
-	    / (ite_step * 1.0);
-	del_den_interface_old[i] = 0.0;
+        del_den_interface[i] = (1e5 * system.getPhase(interface2).getComponent(i).getx()
+            / system.getPhase(interface2).getMolarVolume()
+            - 1e5 * system.getPhase(interface1).getComponent(i).getx() / system.getPhase(interface1).getMolarVolume())
+            / (ite_step * 1.0);
+        del_den_interface_old[i] = 0.0;
       }
 
       for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
-	den_interface[j][i] = den_interface[j - 1][i] + del_den_interface[i];
-	localSystem.addComponent(localSystem.getPhase(0).getComponent(i).getName(),
-	    (del_den_interface[i] - del_den_interface_old[i]) / 1.0e5);
-	del_den_interface_old[i] = del_den_interface[i];
+        den_interface[j][i] = den_interface[j - 1][i] + del_den_interface[i];
+        localSystem.addComponent(localSystem.getPhase(0).getComponent(i).getName(),
+            (del_den_interface[i] - del_den_interface_old[i]) / 1.0e5);
+        del_den_interface_old[i] = del_den_interface[i];
       }
 
       localSystem.init_x_y();
@@ -118,10 +118,10 @@ public class LGTSurfaceTension extends SurfaceTension {
       // localSystem.init(3); //need to be fixed
       // System.out.println("pressure " + localSystem.getPressure());
       for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
-	mu_inter[j][i] = localSystem.getPhase(0).getComponent(i).getChemicalPotential(localSystem.getPhase(0));
-	for (int k = 0; k < localSystem.getPhase(0).getNumberOfComponents(); k++) {
-	  dmudn[j][i][k] = localSystem.getPhase(0).getComponent(i).getChemicalPotentialdNTV(k, localSystem.getPhase(0));
-	}
+        mu_inter[j][i] = localSystem.getPhase(0).getComponent(i).getChemicalPotential(localSystem.getPhase(0));
+        for (int k = 0; k < localSystem.getPhase(0).getNumberOfComponents(); k++) {
+          dmudn[j][i][k] = localSystem.getPhase(0).getComponent(i).getChemicalPotentialdNTV(k, localSystem.getPhase(0));
+        }
       }
 
       pressure_interface[j] = 1e5 * localSystem.getPhase(0).getPressure();
@@ -132,46 +132,46 @@ public class LGTSurfaceTension extends SurfaceTension {
       double kappak = 0.0;
       double interact = 1.0;
       for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
-	double infli = localSystem.getPhase(0).getComponent(i)
-	    .getSurfaceTenisionInfluenceParameter(localSystem.getPhase(0).getTemperature());
+        double infli = localSystem.getPhase(0).getComponent(i)
+            .getSurfaceTenisionInfluenceParameter(localSystem.getPhase(0).getTemperature());
 
-	if (i == referenceComponentNumber) {
-	  kappai = 1.0;
-	} else {
-	  kappai = del_den_interface[i] / del_den_interface[referenceComponentNumber];
-	}
+        if (i == referenceComponentNumber) {
+          kappai = 1.0;
+        } else {
+          kappai = del_den_interface[i] / del_den_interface[referenceComponentNumber];
+        }
 
-	mu_times_den[j] += den_interface[j][i] * (mu_inter[j][i] - mu_equi[i]);
-	for (int k = 0; k < localSystem.getPhase(0).getNumberOfComponents(); k++) {
-	  if ((localSystem.getPhase(0).getComponent(i).getName().equals("water")
-	      || localSystem.getPhase(0).getComponent(k).getName().equals("water")) && i != k) {
-	    if ((localSystem.getPhase(0).getComponent(i).getName().equals("MEG")
-		|| localSystem.getPhase(0).getComponent(k).getName().equals("MEG")) && i != k) {
-	      interact = 0.2;
-	    } else {
-	      interact = 0.35;
-	    }
-	  } else {
-	    interact = 0.0;
-	  }
+        mu_times_den[j] += den_interface[j][i] * (mu_inter[j][i] - mu_equi[i]);
+        for (int k = 0; k < localSystem.getPhase(0).getNumberOfComponents(); k++) {
+          if ((localSystem.getPhase(0).getComponent(i).getName().equals("water")
+              || localSystem.getPhase(0).getComponent(k).getName().equals("water")) && i != k) {
+            if ((localSystem.getPhase(0).getComponent(i).getName().equals("MEG")
+                || localSystem.getPhase(0).getComponent(k).getName().equals("MEG")) && i != k) {
+              interact = 0.2;
+            } else {
+              interact = 0.35;
+            }
+          } else {
+            interact = 0.0;
+          }
 
-	  double inflk = localSystem.getPhase(0).getComponent(k)
-	      .getSurfaceTenisionInfluenceParameter(localSystem.getPhase(0).getTemperature());
+          double inflk = localSystem.getPhase(0).getComponent(k)
+              .getSurfaceTenisionInfluenceParameter(localSystem.getPhase(0).getTemperature());
 
-	  if (k == referenceComponentNumber) {
-	    kappak = 1.0;
-	  } else {
-	    kappak = del_den_interface[k] / del_den_interface[referenceComponentNumber];
-	  }
+          if (k == referenceComponentNumber) {
+            kappak = 1.0;
+          } else {
+            kappak = del_den_interface[k] / del_den_interface[referenceComponentNumber];
+          }
 
-	  kappa += Math.sqrt(infli * inflk) * kappai * kappak * (1.0 - interact);
-	}
+          kappa += Math.sqrt(infli * inflk) * kappai * kappak * (1.0 - interact);
+        }
       }
       mu_times_den[j] += -(pressure_interface[j] - pressure_equi);
       z_step[j] = z_step[j - 1]
-	  + Math.sqrt(kappa / (2.0 * mu_times_den[j])) * del_den_interface[referenceComponentNumber];
+          + Math.sqrt(kappa / (2.0 * mu_times_den[j])) * del_den_interface[referenceComponentNumber];
       if (Double.isNaN(z_step[j])) {
-	break;
+        break;
       }
       surdenstemp += Math.sqrt(2.0 * kappa * mu_times_den[j]) * del_den_interface[referenceComponentNumber];
       // thermo.ThermodynamicConstantsInterface.avagadroNumber;
@@ -211,7 +211,7 @@ public class LGTSurfaceTension extends SurfaceTension {
     double[] temp = new double[ite_step];
     for (int i = 0; i < ite_step; i++) {
       for (int j = 0; j < system.getPhase(0).getNumberOfComponents(); j++) {
-	temp[i] += den_interface[i][j];
+        temp[i] += den_interface[i][j];
       }
     }
     return temp;

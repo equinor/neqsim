@@ -137,26 +137,26 @@ public class DemulsifierDoseResponseModel implements Serializable {
 
     for (double maxRemoval = 0.10; maxRemoval <= 0.951; maxRemoval += 0.05) {
       for (int halfIndex = 0; halfIndex < halfDoseCandidates.length; halfIndex++) {
-	for (int hillIndex = 0; hillIndex < hillCandidates.length; hillIndex++) {
-	  for (int optimumIndex = 0; optimumIndex < optimumCandidates.length; optimumIndex++) {
-	    for (int overdoseIndex = 0; overdoseIndex < overdoseCandidates.length; overdoseIndex++) {
-	      maxRemovalFraction = maxRemoval;
-	      halfEffectDosePpm = halfDoseCandidates[halfIndex];
-	      hillCoefficient = hillCandidates[hillIndex];
-	      optimumDosePpm = Math.max(minPositiveDose, optimumCandidates[optimumIndex]);
-	      overdoseSensitivity = overdoseCandidates[overdoseIndex];
-	      double error = calculateRootMeanSquareError(dosePpm, observedOilInWaterMgL, untreatedOilInWaterMgL);
-	      if (error < bestError) {
-		bestError = error;
-		bestMaxRemoval = maxRemovalFraction;
-		bestHalfDose = halfEffectDosePpm;
-		bestHill = hillCoefficient;
-		bestOptimum = optimumDosePpm;
-		bestOverdose = overdoseSensitivity;
-	      }
-	    }
-	  }
-	}
+        for (int hillIndex = 0; hillIndex < hillCandidates.length; hillIndex++) {
+          for (int optimumIndex = 0; optimumIndex < optimumCandidates.length; optimumIndex++) {
+            for (int overdoseIndex = 0; overdoseIndex < overdoseCandidates.length; overdoseIndex++) {
+              maxRemovalFraction = maxRemoval;
+              halfEffectDosePpm = halfDoseCandidates[halfIndex];
+              hillCoefficient = hillCandidates[hillIndex];
+              optimumDosePpm = Math.max(minPositiveDose, optimumCandidates[optimumIndex]);
+              overdoseSensitivity = overdoseCandidates[overdoseIndex];
+              double error = calculateRootMeanSquareError(dosePpm, observedOilInWaterMgL, untreatedOilInWaterMgL);
+              if (error < bestError) {
+                bestError = error;
+                bestMaxRemoval = maxRemovalFraction;
+                bestHalfDose = halfEffectDosePpm;
+                bestHill = hillCoefficient;
+                bestOptimum = optimumDosePpm;
+                bestOverdose = overdoseSensitivity;
+              }
+            }
+          }
+        }
       }
     }
 
@@ -281,7 +281,7 @@ public class DemulsifierDoseResponseModel implements Serializable {
     double minDose = Double.POSITIVE_INFINITY;
     for (int index = 0; index < dosePpm.length; index++) {
       if (dosePpm[index] > 0.0 && dosePpm[index] < minDose) {
-	minDose = dosePpm[index];
+        minDose = dosePpm[index];
       }
     }
     return Double.isInfinite(minDose) ? 1.0 : minDose;

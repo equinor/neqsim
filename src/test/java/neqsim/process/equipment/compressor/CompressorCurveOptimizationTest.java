@@ -4,10 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
@@ -82,13 +82,13 @@ public class CompressorCurveOptimizationTest {
     // First verify initial compressor calculations are reasonable
     logger.info("\n=== Initial Compressor Verification ===");
     logger.info("Inlet: " + feedStream.getFlowRate("kg/hr") + " kg/hr at " + feedStream.getPressure("bara") + " bara, "
-	+ feedStream.getTemperature("C") + " °C");
+        + feedStream.getTemperature("C") + " °C");
     logger.info("Outlet: " + compressor.getOutletPressure() + " bara, "
-	+ compressor.getOutletStream().getTemperature("C") + " °C");
+        + compressor.getOutletStream().getTemperature("C") + " °C");
     logger.info(
-	"Pressure ratio: " + String.format("%.2f", compressor.getOutletPressure() / feedStream.getPressure("bara")));
+        "Pressure ratio: " + String.format("%.2f", compressor.getOutletPressure() / feedStream.getPressure("bara")));
     logger.info("Volumetric flow (inlet): " + String.format("%.1f", compressor.getInletStream().getFlowRate("m3/hr"))
-	+ " m³/hr");
+        + " m³/hr");
     logger.info("Power: " + String.format("%.1f", compressor.getPower("kW")) + " kW");
     logger.info("Polytropic head: " + String.format("%.2f", compressor.getPolytropicFluidHead()) + " kJ/kg");
     logger.info("Polytropic efficiency: " + String.format("%.1f", compressor.getPolytropicEfficiency() * 100) + "%");
@@ -142,9 +142,9 @@ public class CompressorCurveOptimizationTest {
     logger.info("Stonewall curve active: " + chart.getStoneWallCurve().isActive());
     logger.info("Operating range: " + String.format("%.2f", (stoneWallFlowAtSpeed - surgeFlowAtSpeed)) + " m³/hr");
     logger.info(
-	"Surge margin: " + String.format("%.1f", (currentFlow - surgeFlowAtSpeed) / currentFlow * 100) + "% of flow");
+        "Surge margin: " + String.format("%.1f", (currentFlow - surgeFlowAtSpeed) / currentFlow * 100) + "% of flow");
     logger.info("Stonewall margin: " + String.format("%.1f", (stoneWallFlowAtSpeed - currentFlow) / currentFlow * 100)
-	+ "% of flow");
+        + "% of flow");
 
     // Verify chart min/max speeds
     double minSpeed = chart.getMinSpeedCurve();
@@ -181,8 +181,8 @@ public class CompressorCurveOptimizationTest {
     for (java.util.Map.Entry<String, CapacityConstraint> entry : constraints.entrySet()) {
       CapacityConstraint c = entry.getValue();
       logger.printf(org.apache.logging.log4j.Level.INFO,
-	  "%s: current=%.2f, design=%.2f, max=%.2f, utilization=%.1f%%%n", c.getName(), c.getCurrentValue(),
-	  c.getDesignValue(), c.getMaxValue(), c.getUtilization() * 100);
+          "%s: current=%.2f, design=%.2f, max=%.2f, utilization=%.1f%%%n", c.getName(), c.getCurrentValue(),
+          c.getDesignValue(), c.getMaxValue(), c.getUtilization() * 100);
     }
 
     // Check speed constraint uses curve limits
@@ -232,7 +232,7 @@ public class CompressorCurveOptimizationTest {
     bottleneck = compressor.getBottleneckConstraint();
     assertNotNull(bottleneck, "Should have a bottleneck near max speed");
     logger.info("\nAt 98% max speed - Bottleneck: " + bottleneck.getName() + " at "
-	+ String.format("%.1f", bottleneck.getUtilization() * 100) + "% utilization");
+        + String.format("%.1f", bottleneck.getUtilization() * 100) + "% utilization");
   }
 
   /**
@@ -321,14 +321,14 @@ public class CompressorCurveOptimizationTest {
       boolean surgeOk = surgeMargin >= minSurgeMargin;
 
       if (speedOk && surgeOk) {
-	maxAchievableFlow = feedStream.getFlowRate("kg/hr");
-	logger.printf(org.apache.logging.log4j.Level.INFO, "Flow factor %.1f: %.0f kg/hr - OK (surge margin: %.1f%%)%n",
-	    flowFactor, maxAchievableFlow, surgeMargin);
+        maxAchievableFlow = feedStream.getFlowRate("kg/hr");
+        logger.printf(org.apache.logging.log4j.Level.INFO, "Flow factor %.1f: %.0f kg/hr - OK (surge margin: %.1f%%)%n",
+            flowFactor, maxAchievableFlow, surgeMargin);
       } else {
-	logger.printf(org.apache.logging.log4j.Level.INFO,
-	    "Flow factor %.1f: %.0f kg/hr - LIMIT (speed OK: %b, surge OK: %b, margin: %.1f%%)%n", flowFactor,
-	    feedStream.getFlowRate("kg/hr"), speedOk, surgeOk, surgeMargin);
-	break;
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "Flow factor %.1f: %.0f kg/hr - LIMIT (speed OK: %b, surge OK: %b, margin: %.1f%%)%n", flowFactor,
+            feedStream.getFlowRate("kg/hr"), speedOk, surgeOk, surgeMargin);
+        break;
       }
     }
 
@@ -370,8 +370,8 @@ public class CompressorCurveOptimizationTest {
       double surgeMargin = compressor.getDistanceToSurge();
 
       logger.printf(org.apache.logging.log4j.Level.INFO,
-	  "Flow %.0f kg/hr: Speed=%.0f RPM, P=%.1f bara, " + "withinCurve=%b, surgeMargin=%.1f%%%n", flow, solvedSpeed,
-	  actualPressure, withinCurve, surgeMargin);
+          "Flow %.0f kg/hr: Speed=%.0f RPM, P=%.1f bara, " + "withinCurve=%b, surgeMargin=%.1f%%%n", flow, solvedSpeed,
+          actualPressure, withinCurve, surgeMargin);
 
       // Verify pressure is achieved
       assertEquals(targetPressure, actualPressure, 1.0, "Should achieve target pressure");
@@ -442,7 +442,7 @@ public class CompressorCurveOptimizationTest {
     for (CapacityConstraint c : compressor.getCapacityConstraints().values()) {
       String status = c.isViolated() ? "VIOLATED" : (c.isNearLimit() ? "WARNING" : "OK");
       logger.printf(org.apache.logging.log4j.Level.INFO, "  %-20s: %6.1f%% [%s]%n", c.getName(),
-	  c.getUtilization() * 100, status);
+          c.getUtilization() * 100, status);
     }
   }
 }

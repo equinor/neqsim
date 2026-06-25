@@ -21,8 +21,8 @@ class FlashRunnerTypedTest {
   @Test
   void testRunTyped_simpleGas() {
     FlashRequest request = new FlashRequest().setModel("SRK").setTemperature(new ValueWithUnit(25.0, "C"))
-	.setPressure(new ValueWithUnit(50.0, "bara")).setFlashType("TP").addComponent("methane", 0.85)
-	.addComponent("ethane", 0.10).addComponent("propane", 0.05);
+        .setPressure(new ValueWithUnit(50.0, "bara")).setFlashType("TP").addComponent("methane", 0.85)
+        .addComponent("ethane", 0.10).addComponent("propane", 0.05);
 
     ApiEnvelope<FlashResult> result = FlashRunner.runTyped(request);
 
@@ -37,7 +37,7 @@ class FlashRunnerTypedTest {
   @Test
   void testRunTyped_twoPhase() {
     FlashRequest request = new FlashRequest().setModel("SRK").setTemperature(new ValueWithUnit(-20.0, "C"))
-	.setPressure(new ValueWithUnit(10.0, "bara")).addComponent("methane", 0.50).addComponent("propane", 0.50);
+        .setPressure(new ValueWithUnit(10.0, "bara")).addComponent("methane", 0.50).addComponent("propane", 0.50);
 
     ApiEnvelope<FlashResult> result = FlashRunner.runTyped(request);
 
@@ -49,7 +49,7 @@ class FlashRunnerTypedTest {
   @Test
   void testRunTyped_prModel() {
     FlashRequest request = new FlashRequest().setModel("PR").setTemperature(new ValueWithUnit(300.0, "K"))
-	.setPressure(new ValueWithUnit(10.0, "bara")).addComponent("methane", 0.7).addComponent("propane", 0.3);
+        .setPressure(new ValueWithUnit(10.0, "bara")).addComponent("methane", 0.7).addComponent("propane", 0.3);
 
     ApiEnvelope<FlashResult> result = FlashRunner.runTyped(request);
 
@@ -99,7 +99,7 @@ class FlashRunnerTypedTest {
   @Test
   void testRunTyped_dewPointT() {
     FlashRequest request = new FlashRequest().setFlashType("dewPointT").setPressure(new ValueWithUnit(50.0, "bara"))
-	.addComponent("methane", 0.80).addComponent("ethane", 0.10).addComponent("propane", 0.10);
+        .addComponent("methane", 0.80).addComponent("ethane", 0.10).addComponent("propane", 0.10);
 
     ApiEnvelope<FlashResult> result = FlashRunner.runTyped(request);
 

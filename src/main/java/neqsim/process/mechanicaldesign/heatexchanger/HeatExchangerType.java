@@ -54,7 +54,7 @@ public enum HeatExchangerType {
 
   interface GeometryModel {
     HeatExchangerSizingResult size(HeatExchangerType type, HeatExchanger exchanger, double requiredArea,
-	double requiredUA, double approachTemperature);
+        double requiredUA, double approachTemperature);
   }
 
   private static final class ShellAndTubeGeometry implements GeometryModel {
@@ -66,9 +66,9 @@ public enum HeatExchangerType {
 
     @Override
     public HeatExchangerSizingResult size(HeatExchangerType type, HeatExchanger exchanger, double requiredArea,
-	double requiredUA, double approachTemperature) {
+        double requiredUA, double approachTemperature) {
       double tubeLength = Math.max(DEFAULT_TUBE_LENGTH,
-	  Math.min(requiredArea / (Math.PI * TUBE_OUTER_DIAMETER * 40.0), 12.0));
+          Math.min(requiredArea / (Math.PI * TUBE_OUTER_DIAMETER * 40.0), 12.0));
       int tubeCount = (int) Math.ceil(requiredArea / (Math.PI * TUBE_OUTER_DIAMETER * tubeLength));
       tubeCount = Math.max(tubeCount, 2);
       int tubePasses = tubeCount > 100 ? 4 : 2;
@@ -87,11 +87,11 @@ public enum HeatExchangerType {
       double moduleHeight = shellOuterDiameter + 0.8;
 
       return HeatExchangerSizingResult.builder().type(type).requiredArea(requiredArea).requiredUA(requiredUA)
-	  .overallHeatTransferCoefficient(type.getTypicalOverallHeatTransferCoefficient())
-	  .approachTemperature(approachTemperature).tubeCount(tubeCount).tubePasses(tubePasses)
-	  .innerDiameter(shellInnerDiameter).outerDiameter(shellOuterDiameter).wallThickness(SHELL_WALL_THICKNESS)
-	  .estimatedLength(tubeLength).estimatedPressureDrop(estimatedPressureDrop).estimatedWeight(estimatedWeight)
-	  .moduleLength(moduleLength).moduleWidth(moduleWidth).moduleHeight(moduleHeight).build();
+          .overallHeatTransferCoefficient(type.getTypicalOverallHeatTransferCoefficient())
+          .approachTemperature(approachTemperature).tubeCount(tubeCount).tubePasses(tubePasses)
+          .innerDiameter(shellInnerDiameter).outerDiameter(shellOuterDiameter).wallThickness(SHELL_WALL_THICKNESS)
+          .estimatedLength(tubeLength).estimatedPressureDrop(estimatedPressureDrop).estimatedWeight(estimatedWeight)
+          .moduleLength(moduleLength).moduleWidth(moduleWidth).moduleHeight(moduleHeight).build();
     }
   }
 
@@ -102,7 +102,7 @@ public enum HeatExchangerType {
 
     @Override
     public HeatExchangerSizingResult size(HeatExchangerType type, HeatExchanger exchanger, double requiredArea,
-	double requiredUA, double approachTemperature) {
+        double requiredUA, double approachTemperature) {
       int platePairs = (int) Math.ceil(requiredArea / AREA_PER_PLATE_PAIR);
       platePairs = Math.max(platePairs, 5);
       int plateCount = platePairs * 2 + 1;
@@ -116,11 +116,11 @@ public enum HeatExchangerType {
       double outerDiameter = equivalentDiameter + 2.0 * wallThickness;
 
       return HeatExchangerSizingResult.builder().type(type).requiredArea(requiredArea).requiredUA(requiredUA)
-	  .overallHeatTransferCoefficient(type.getTypicalOverallHeatTransferCoefficient())
-	  .approachTemperature(approachTemperature).tubeCount(plateCount).tubePasses(platePairs)
-	  .innerDiameter(equivalentDiameter).outerDiameter(outerDiameter).wallThickness(wallThickness)
-	  .estimatedLength(stackLength).estimatedPressureDrop(estimatedPressureDrop).estimatedWeight(estimatedWeight)
-	  .moduleLength(stackLength).moduleWidth(moduleWidth).moduleHeight(moduleHeight).build();
+          .overallHeatTransferCoefficient(type.getTypicalOverallHeatTransferCoefficient())
+          .approachTemperature(approachTemperature).tubeCount(plateCount).tubePasses(platePairs)
+          .innerDiameter(equivalentDiameter).outerDiameter(outerDiameter).wallThickness(wallThickness)
+          .estimatedLength(stackLength).estimatedPressureDrop(estimatedPressureDrop).estimatedWeight(estimatedWeight)
+          .moduleLength(stackLength).moduleWidth(moduleWidth).moduleHeight(moduleHeight).build();
     }
   }
 
@@ -130,7 +130,7 @@ public enum HeatExchangerType {
 
     @Override
     public HeatExchangerSizingResult size(HeatExchangerType type, HeatExchanger exchanger, double requiredArea,
-	double requiredUA, double approachTemperature) {
+        double requiredUA, double approachTemperature) {
       double fanPlanArea = Math.max(requiredArea / FIN_SURFACE_MULTIPLIER, 5.0);
       double moduleWidth = Math.sqrt(fanPlanArea);
       double moduleLength = fanPlanArea / moduleWidth;
@@ -143,11 +143,11 @@ public enum HeatExchangerType {
       double outerDiameter = equivalentDiameter + 2.0 * wallThickness;
 
       return HeatExchangerSizingResult.builder().type(type).requiredArea(requiredArea).requiredUA(requiredUA)
-	  .overallHeatTransferCoefficient(type.getTypicalOverallHeatTransferCoefficient())
-	  .approachTemperature(approachTemperature).tubeCount(0).tubePasses(0).innerDiameter(equivalentDiameter)
-	  .outerDiameter(outerDiameter).wallThickness(wallThickness).estimatedLength(moduleLength)
-	  .estimatedPressureDrop(estimatedPressureDrop).estimatedWeight(estimatedWeight).finSurfaceArea(finSurfaceArea)
-	  .moduleLength(moduleLength).moduleWidth(moduleWidth).moduleHeight(moduleHeight).build();
+          .overallHeatTransferCoefficient(type.getTypicalOverallHeatTransferCoefficient())
+          .approachTemperature(approachTemperature).tubeCount(0).tubePasses(0).innerDiameter(equivalentDiameter)
+          .outerDiameter(outerDiameter).wallThickness(wallThickness).estimatedLength(moduleLength)
+          .estimatedPressureDrop(estimatedPressureDrop).estimatedWeight(estimatedWeight).finSurfaceArea(finSurfaceArea)
+          .moduleLength(moduleLength).moduleWidth(moduleWidth).moduleHeight(moduleHeight).build();
     }
   }
 
@@ -159,7 +159,7 @@ public enum HeatExchangerType {
 
     @Override
     public HeatExchangerSizingResult size(HeatExchangerType type, HeatExchanger exchanger, double requiredArea,
-	double requiredUA, double approachTemperature) {
+        double requiredUA, double approachTemperature) {
       double effectivePerimeter = Math.PI * INNER_PIPE_OUTER_DIAMETER;
       double pipeLength = Math.max(requiredArea / effectivePerimeter, 2.5);
       int tubeCount = 2; // inner and annulus passes
@@ -175,11 +175,11 @@ public enum HeatExchangerType {
       double moduleHeight = outerDiameter + 0.6;
 
       return HeatExchangerSizingResult.builder().type(type).requiredArea(requiredArea).requiredUA(requiredUA)
-	  .overallHeatTransferCoefficient(type.getTypicalOverallHeatTransferCoefficient())
-	  .approachTemperature(approachTemperature).tubeCount(tubeCount).tubePasses(tubePasses)
-	  .innerDiameter(innerDiameter).outerDiameter(outerDiameter).wallThickness(PIPE_WALL_THICKNESS)
-	  .estimatedLength(pipeLength).estimatedPressureDrop(estimatedPressureDrop).estimatedWeight(estimatedWeight)
-	  .moduleLength(moduleLength).moduleWidth(moduleWidth).moduleHeight(moduleHeight).build();
+          .overallHeatTransferCoefficient(type.getTypicalOverallHeatTransferCoefficient())
+          .approachTemperature(approachTemperature).tubeCount(tubeCount).tubePasses(tubePasses)
+          .innerDiameter(innerDiameter).outerDiameter(outerDiameter).wallThickness(PIPE_WALL_THICKNESS)
+          .estimatedLength(pipeLength).estimatedPressureDrop(estimatedPressureDrop).estimatedWeight(estimatedWeight)
+          .moduleLength(moduleLength).moduleWidth(moduleWidth).moduleHeight(moduleHeight).build();
     }
   }
 
@@ -200,7 +200,7 @@ public enum HeatExchangerType {
 
     @Override
     public HeatExchangerSizingResult size(HeatExchangerType type, HeatExchanger exchanger, double requiredArea,
-	double requiredUA, double approachTemperature) {
+        double requiredUA, double approachTemperature) {
       double coreVolume = requiredArea / SURFACE_AREA_DENSITY;
       double wh = Math.pow(coreVolume / ASPECT_RATIO, 1.0 / 3.0);
       double coreLength = ASPECT_RATIO * wh;
@@ -215,12 +215,12 @@ public enum HeatExchangerType {
       double moduleHeight = coreHeight + 0.5;
 
       return HeatExchangerSizingResult.builder().type(type).requiredArea(requiredArea).requiredUA(requiredUA)
-	  .overallHeatTransferCoefficient(type.getTypicalOverallHeatTransferCoefficient())
-	  .approachTemperature(approachTemperature).tubeCount(0).tubePasses(0).innerDiameter(coreWidth)
-	  .outerDiameter(coreWidth + 2.0 * PLATE_WALL_THICKNESS).wallThickness(PLATE_WALL_THICKNESS)
-	  .estimatedLength(coreLength).estimatedPressureDrop(estimatedPressureDrop).estimatedWeight(estimatedWeight)
-	  .finSurfaceArea(requiredArea).moduleLength(moduleLength).moduleWidth(moduleWidth).moduleHeight(moduleHeight)
-	  .build();
+          .overallHeatTransferCoefficient(type.getTypicalOverallHeatTransferCoefficient())
+          .approachTemperature(approachTemperature).tubeCount(0).tubePasses(0).innerDiameter(coreWidth)
+          .outerDiameter(coreWidth + 2.0 * PLATE_WALL_THICKNESS).wallThickness(PLATE_WALL_THICKNESS)
+          .estimatedLength(coreLength).estimatedPressureDrop(estimatedPressureDrop).estimatedWeight(estimatedWeight)
+          .finSurfaceArea(requiredArea).moduleLength(moduleLength).moduleWidth(moduleWidth).moduleHeight(moduleHeight)
+          .build();
     }
   }
 }

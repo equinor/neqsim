@@ -90,7 +90,7 @@ public class SystemPCSAFT extends SystemSrkEos {
       // Approximate n-alkane specific gravity from Riazi-Daubert type fit (C5-C20)
       double sgAlkane = 1.07 - 3.5649 / Math.pow(mwG, 0.25);
       if (sgAlkane > 0.5 && sgAlkane < 1.0) {
-	msigm3 = msigm3 * (sgAlkane / density);
+        msigm3 = msigm3 * (sgAlkane / density);
       }
     }
 
@@ -99,7 +99,7 @@ public class SystemPCSAFT extends SystemSrkEos {
       getPhase(phaseIndex[i]).getComponent(componentName).setEpsikSAFT(epskSaftm / mSaft);
       getPhase(phaseIndex[i]).getComponent(componentName).setSigmaSAFTi(Math.pow(msigm3 / mSaft, 1.0 / 3.0) / 1.0e10);
       logger.info("PC-SAFT TBP params: m=" + mSaft + " eps/k=" + epskSaftm / mSaft + " sigma="
-	  + Math.pow(msigm3 / mSaft, 1.0 / 3.0) + " Angstrom (SG=" + density + ")");
+          + Math.pow(msigm3 / mSaft, 1.0 / 3.0) + " Angstrom (SG=" + density + ")");
     }
   }
 

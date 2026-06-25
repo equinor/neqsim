@@ -70,9 +70,9 @@ public final class DynamicBlowdownFlareStudyRunner implements Serializable {
    */
   public DynamicBlowdownFlareStudyHandoff run(DynamicBlowdownFlareStudyDataSource dataSource) {
     DynamicBlowdownFlareStudyDataSource source = dataSource == null
-	? DynamicBlowdownFlareStudyDataSource.builder("missing-data-source")
-	    .addGap("DynamicBlowdownFlareStudyDataSource was null.").build()
-	: dataSource;
+        ? DynamicBlowdownFlareStudyDataSource.builder("missing-data-source")
+            .addGap("DynamicBlowdownFlareStudyDataSource was null.").build()
+        : dataSource;
     SafetyStudyReadiness calculationReadiness = source.readiness();
     Map<String, Object> result = null;
     Map<String, Object> flareLoadHandoff = null;
@@ -82,7 +82,7 @@ public final class DynamicBlowdownFlareStudyRunner implements Serializable {
     }
     SafetyStudyReadiness standardsReadiness = standardsReadiness(source, result);
     return DynamicBlowdownFlareStudyHandoff.builder(source).calculationReadiness(calculationReadiness)
-	.standardsReadiness(standardsReadiness).result(result).flareLoadHandoff(flareLoadHandoff).build();
+        .standardsReadiness(standardsReadiness).result(result).flareLoadHandoff(flareLoadHandoff).build();
   }
 
   /**
@@ -94,10 +94,10 @@ public final class DynamicBlowdownFlareStudyRunner implements Serializable {
   private Map<String, Object> runCalculation(DynamicBlowdownFlareStudyDataSource dataSource) {
     Map<String, DepressurizationResult> sourceResults = new LinkedHashMap<String, DepressurizationResult>();
     MultiVesselBlowdownStudy multiVesselStudy = new MultiVesselBlowdownStudy().setGridStep(timeStepSeconds)
-	.setMaxAllowableMach(dataSource.getMaxAllowableHeaderMach());
+        .setMaxAllowableMach(dataSource.getMaxAllowableHeaderMach());
     if (Double.isFinite(dataSource.getHeaderDiameterM()) && dataSource.getHeaderDiameterM() > 0.0) {
       multiVesselStudy.setHeader(dataSource.getHeaderDiameterM(), dataSource.getHeaderPressureBara(),
-	  dataSource.getHeaderTemperatureK(), dataSource.getHeaderMolarMassKgPerMol(), dataSource.getHeaderGamma());
+          dataSource.getHeaderTemperatureK(), dataSource.getHeaderMolarMassKgPerMol(), dataSource.getHeaderGamma());
     }
     Map<String, Object> psvSizing = new LinkedHashMap<String, Object>();
     for (BlowdownSource source : dataSource.getSources()) {
@@ -131,12 +131,12 @@ public final class DynamicBlowdownFlareStudyRunner implements Serializable {
   private DepressurizationSimulator createSimulator(BlowdownSource source) {
     SystemInterface fluid = source.getFluid().clone();
     DepressurizationSimulator simulator = new DepressurizationSimulator(fluid, source.getVesselVolumeM3(),
-	source.getOrificeDiameterM(), source.getDischargeCoefficient(), source.getBackPressureBara() * 1.0e5)
-	.setTimeStep(timeStepSeconds).setMaxTime(maxTimeSeconds).setStopPressure(source.getStopPressureBara() * 1.0e5)
-	.setFireHeatInput(source.getEffectiveFireHeatInputW());
+        source.getOrificeDiameterM(), source.getDischargeCoefficient(), source.getBackPressureBara() * 1.0e5)
+        .setTimeStep(timeStepSeconds).setMaxTime(maxTimeSeconds).setStopPressure(source.getStopPressureBara() * 1.0e5)
+        .setFireHeatInput(source.getEffectiveFireHeatInputW());
     if (source.hasWallModel()) {
       simulator.setWall(source.getWallMassKg(), source.getWallAreaM2(), source.getWallSpecificHeatJPerKgK(),
-	  source.getWallHeatTransferCoeffWPerM2K());
+          source.getWallHeatTransferCoeffWPerM2K());
     }
     return simulator;
   }
@@ -153,7 +153,7 @@ public final class DynamicBlowdownFlareStudyRunner implements Serializable {
     map.put("sourceId", source.getSourceId());
     map.put("bdvEquivalentDiameterM", Double.valueOf(source.getOrificeDiameterM()));
     map.put("bdvEquivalentAreaM2",
-	Double.valueOf(Math.PI * source.getOrificeDiameterM() * source.getOrificeDiameterM() / 4.0));
+        Double.valueOf(Math.PI * source.getOrificeDiameterM() * source.getOrificeDiameterM() / 4.0));
     map.put("bdvDischargeCoefficient", Double.valueOf(source.getDischargeCoefficient()));
     if (!source.hasPsvSizingBasis()) {
       map.put("status", "not_sized_missing_set_pressure");
@@ -171,9 +171,9 @@ public final class DynamicBlowdownFlareStudyRunner implements Serializable {
       z = 1.0;
     }
     PSVSizingResult sizing = ReliefValveSizing.calculateRequiredArea(peakMassFlow,
-	source.getPsvSetPressureBara() * 1.0e5, source.getPsvOverpressureFraction(),
-	source.getBackPressureBara() * 1.0e5, fluid.getTemperature(), fluid.getMolarMass(), z, gamma,
-	source.isBalancedBellowsPsv(), source.isRuptureDiskInstalled());
+        source.getPsvSetPressureBara() * 1.0e5, source.getPsvOverpressureFraction(),
+        source.getBackPressureBara() * 1.0e5, fluid.getTemperature(), fluid.getMolarMass(), z, gamma,
+        source.isBalancedBellowsPsv(), source.isRuptureDiskInstalled());
     map.put("status", "sized");
     map.put("basisMassFlowKgPerS", Double.valueOf(peakMassFlow));
     map.put("setPressureBara", Double.valueOf(source.getPsvSetPressureBara()));
@@ -222,7 +222,7 @@ public final class DynamicBlowdownFlareStudyRunner implements Serializable {
     map.put("cumulativeCO2EmissionKg", Double.valueOf(totalMassKg * co2PerKg));
     map.put("radiationHeatFluxAt30mWPerM2", Double.valueOf(flare.estimateRadiationHeatFlux(peakHeatDutyW, 30.0)));
     map.put("radiationDistanceForThresholdM",
-	Double.valueOf(flare.radiationDistanceForFlux(peakHeatDutyW, radiationThresholdWPerM2)));
+        Double.valueOf(flare.radiationDistanceForFlux(peakHeatDutyW, radiationThresholdWPerM2)));
     map.put("radiationThresholdWPerM2", Double.valueOf(radiationThresholdWPerM2));
     map.put("capacity", capacityMap(capacity));
     return map;
@@ -254,7 +254,7 @@ public final class DynamicBlowdownFlareStudyRunner implements Serializable {
       flare.setDesignMassFlowCapacity(dataSource.getFlareDesignMassFlowKgPerS(), "kg/sec");
     }
     if (Double.isFinite(dataSource.getFlareDesignMolarFlowMolePerS())
-	&& dataSource.getFlareDesignMolarFlowMolePerS() > 0.0) {
+        && dataSource.getFlareDesignMolarFlowMolePerS() > 0.0) {
       flare.setDesignMolarFlowCapacity(dataSource.getFlareDesignMolarFlowMolePerS(), "mole/sec");
     }
     flare.run();
@@ -293,33 +293,33 @@ public final class DynamicBlowdownFlareStudyRunner implements Serializable {
     SafetyStudyReadiness.Builder readiness = SafetyStudyReadiness.builder();
     if (!dataSource.isStandardsReviewed()) {
       readiness.addWarning("standards", "Standards basis is not marked reviewed.",
-	  "Review API 520/521, ISO 23251, NORSOK S-001/P-002, piping specifications, and project flare design criteria.");
+          "Review API 520/521, ISO 23251, NORSOK S-001/P-002, piping specifications, and project flare design criteria.");
     }
     if (result == null) {
       readiness.addBlocker("calculation", "Dynamic calculation was not run.",
-	  "Resolve calculation-readiness blockers before standards validation.");
+          "Resolve calculation-readiness blockers before standards validation.");
       return readiness.build();
     }
     Map<String, Object> combined = mapValue(result.get("combinedLoad"));
     Object headerMachAcceptable = combined.get("headerMachAcceptable");
     if (Boolean.FALSE.equals(headerMachAcceptable)) {
       readiness.addWarning("flare_header", "Calculated flare-header Mach exceeds the configured limit.",
-	  "Increase header size, stagger blowdown, reduce BDV area, or verify detailed flare hydraulics.");
+          "Increase header size, stagger blowdown, reduce BDV area, or verify detailed flare hydraulics.");
     }
     if (combined.get("headerMach") == null) {
       readiness.addWarning("flare_header", "Header Mach was not calculated because header diameter is missing.",
-	  "Provide flare-header internal diameter and gas basis for API 521/NORSOK P-002 disposal-system checks.");
+          "Provide flare-header internal diameter and gas basis for API 521/NORSOK P-002 disposal-system checks.");
     }
     Map<String, Object> flareLoad = mapValue(result.get("flareLoad"));
     Map<String, Object> capacity = mapValue(flareLoad.get("capacity"));
     if (Boolean.TRUE.equals(capacity.get("overloaded"))) {
       readiness.addWarning("flare_capacity", "Configured flare design capacity is exceeded by the peak load.",
-	  "Check flare-tip capacity, radiation limits, and simultaneous-blowdown assumptions.");
+          "Check flare-tip capacity, radiation limits, and simultaneous-blowdown assumptions.");
     }
     Map<String, Object> psvSizing = mapValue(result.get("psvSizing"));
     if (!anyPsvSized(psvSizing)) {
       readiness.addWarning("psv", "No PSV orifice was sized because no source had a PSV set-pressure basis.",
-	  "Provide PSV set pressure and correction basis for API 520/521 relief-valve sizing output.");
+          "Provide PSV set pressure and correction basis for API 520/521 relief-valve sizing output.");
     }
     return readiness.build();
   }
@@ -460,7 +460,7 @@ public final class DynamicBlowdownFlareStudyRunner implements Serializable {
     for (int i = 1; i < timeS.size() && i < values.size(); i++) {
       double dt = timeS.get(i) - timeS.get(i - 1);
       if (dt > 0.0) {
-	sum += 0.5 * (values.get(i) + values.get(i - 1)) * dt;
+        sum += 0.5 * (values.get(i) + values.get(i - 1)) * dt;
       }
     }
     return sum;
@@ -476,7 +476,7 @@ public final class DynamicBlowdownFlareStudyRunner implements Serializable {
     double max = 0.0;
     for (Double value : values) {
       if (value != null && Double.isFinite(value.doubleValue())) {
-	max = Math.max(max, value.doubleValue());
+        max = Math.max(max, value.doubleValue());
       }
     }
     return max;
@@ -526,7 +526,7 @@ public final class DynamicBlowdownFlareStudyRunner implements Serializable {
     for (Object value : psvSizing.values()) {
       Map<String, Object> map = mapValue(value);
       if ("sized".equals(map.get("status"))) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -594,7 +594,7 @@ public final class DynamicBlowdownFlareStudyRunner implements Serializable {
       validatePositive(maxTimeSeconds, "maxTimeSeconds");
       validatePositive(radiationThresholdWPerM2, "radiationThresholdWPerM2");
       if (maxTimeSeconds < timeStepSeconds) {
-	throw new IllegalArgumentException("maxTimeSeconds must be at least timeStepSeconds");
+        throw new IllegalArgumentException("maxTimeSeconds must be at least timeStepSeconds");
       }
     }
 
@@ -607,7 +607,7 @@ public final class DynamicBlowdownFlareStudyRunner implements Serializable {
      */
     private static void validatePositive(double value, String name) {
       if (value <= 0.0 || !Double.isFinite(value)) {
-	throw new IllegalArgumentException(name + " must be positive and finite");
+        throw new IllegalArgumentException(name + " must be positive and finite");
       }
     }
   }

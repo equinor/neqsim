@@ -43,7 +43,7 @@ public final class EmergencyShutdownTestRunner {
   public static EmergencyShutdownTestResult run(ProcessSystem process, EmergencyShutdownTestPlan plan,
       ProcessLogic... logicSequences) {
     List<ProcessLogic> logicList = logicSequences == null ? new ArrayList<ProcessLogic>()
-	: Arrays.asList(logicSequences);
+        : Arrays.asList(logicSequences);
     return run(process, plan, logicList);
   }
 
@@ -66,7 +66,7 @@ public final class EmergencyShutdownTestRunner {
 
     EmergencyShutdownTestResult result = new EmergencyShutdownTestResult(plan);
     List<ProcessLogic> availableLogic = logicSequences == null ? new ArrayList<ProcessLogic>()
-	: new ArrayList<ProcessLogic>(logicSequences);
+        : new ArrayList<ProcessLogic>(logicSequences);
     List<ProcessLogic> enabledLogic = selectLogic(availableLogic, plan.getEnabledLogicNames(), result);
     List<ProcessLogic> triggerLogic = selectTriggerLogic(enabledLogic, plan, result);
 
@@ -156,15 +156,15 @@ public final class EmergencyShutdownTestRunner {
     UUID runId = UUID.randomUUID();
     while (time < plan.getDurationSeconds() - 1.0e-12) {
       if (!triggered && time >= plan.getTriggerTimeSeconds() - 1.0e-12) {
-	activateLogic(triggerLogic, result);
-	triggered = true;
+        activateLogic(triggerLogic, result);
+        triggered = true;
       }
       executeLogic(enabledLogic, plan.getTimeStepSeconds(), result);
       double step = Math.min(plan.getTimeStepSeconds(), plan.getDurationSeconds() - time);
       try {
-	process.runTransient(step, runId);
+        process.runTransient(step, runId);
       } catch (RuntimeException ex) {
-	result.addError("Transient simulation failed at t=" + time + " s: " + ex.getMessage());
+        result.addError("Transient simulation failed at t=" + time + " s: " + ex.getMessage());
       }
       time += step;
       result.addSample(captureSample(time, process, plan, result), plan.getMonitoredUnits());
@@ -188,13 +188,13 @@ public final class EmergencyShutdownTestRunner {
     Set<String> found = new LinkedHashSet<String>();
     for (ProcessLogic logic : availableLogic) {
       if (names.contains(logic.getName())) {
-	selected.add(logic);
-	found.add(logic.getName());
+        selected.add(logic);
+        found.add(logic.getName());
       }
     }
     for (String name : names) {
       if (!found.contains(name)) {
-	result.addWarning("Configured logic was not supplied: " + name);
+        result.addWarning("Configured logic was not supplied: " + name);
       }
     }
     return selected;
@@ -229,9 +229,9 @@ public final class EmergencyShutdownTestRunner {
     }
     for (ProcessLogic logic : triggerLogic) {
       try {
-	logic.activate();
+        logic.activate();
       } catch (RuntimeException ex) {
-	result.addError("Logic activation failed for " + logic.getName() + ": " + ex.getMessage());
+        result.addError("Logic activation failed for " + logic.getName() + ": " + ex.getMessage());
       }
     }
   }
@@ -247,12 +247,12 @@ public final class EmergencyShutdownTestRunner {
       EmergencyShutdownTestResult result) {
     for (ProcessLogic logic : enabledLogic) {
       if (!logic.isActive()) {
-	continue;
+        continue;
       }
       try {
-	logic.execute(timeStepSeconds);
+        logic.execute(timeStepSeconds);
       } catch (RuntimeException ex) {
-	result.addError("Logic execution failed for " + logic.getName() + ": " + ex.getMessage());
+        result.addError("Logic execution failed for " + logic.getName() + ": " + ex.getMessage());
       }
     }
   }
@@ -272,7 +272,7 @@ public final class EmergencyShutdownTestRunner {
     for (String tag : plan.getMonitoredLogicalTags()) {
       Double value = readMonitorValue(process, plan.getTagMap(), tag, plan.getMonitoredUnits(), result);
       if (value != null) {
-	values.put(tag, value);
+        values.put(tag, value);
       }
     }
     return new EmergencyShutdownTestResult.SignalSample(timeSeconds, values);
@@ -297,14 +297,14 @@ public final class EmergencyShutdownTestRunner {
       return Double.valueOf(process.getAutomation().getVariableValue(address, unit));
     } catch (RuntimeException ex) {
       if (binding != null && binding.hasHistorianTag()) {
-	try {
-	  Map<String, Double> values = tagMap.readValues(process);
-	  if (values.containsKey(tag)) {
-	    return values.get(tag);
-	  }
-	} catch (RuntimeException ignored) {
-	  // Report the primary automation error below.
-	}
+        try {
+          Map<String, Double> values = tagMap.readValues(process);
+          if (values.containsKey(tag)) {
+            return values.get(tag);
+          }
+        } catch (RuntimeException ignored) {
+          // Report the primary automation error below.
+        }
       }
       result.addWarning("Could not read monitored tag " + tag + ": " + ex.getMessage());
       return null;
@@ -335,9 +335,9 @@ public final class EmergencyShutdownTestRunner {
       EmergencyShutdownTestResult.SignalStats stats = result.getSignalStats().get(binding.getLogicalTag());
       Double modelValue = stats == null || !stats.hasSamples() ? null : Double.valueOf(stats.getFinalValue());
       if (fieldValue != null || modelValue != null) {
-	result.addFieldComparison(
-	    new EmergencyShutdownTestResult.FieldComparison(binding.getLogicalTag(), binding.getHistorianTag(),
-		binding.getUnit(), fieldValue, modelValue, plan.getDefaultFieldComparisonToleranceFraction()));
+        result.addFieldComparison(
+            new EmergencyShutdownTestResult.FieldComparison(binding.getLogicalTag(), binding.getHistorianTag(),
+                binding.getUnit(), fieldValue, modelValue, plan.getDefaultFieldComparisonToleranceFraction()));
       }
     }
   }
@@ -368,7 +368,7 @@ public final class EmergencyShutdownTestRunner {
   private static void evaluateCriteria(EmergencyShutdownTestPlan plan, EmergencyShutdownTestResult result) {
     for (EmergencyShutdownTestCriterion criterion : plan.getCriteria()) {
       result.addCriterionResult(criterion.evaluate(result.getSignalStats(), result.getLogicStates(), result.getErrors(),
-	  result.getFieldComparisons()));
+          result.getFieldComparisons()));
     }
   }
 }

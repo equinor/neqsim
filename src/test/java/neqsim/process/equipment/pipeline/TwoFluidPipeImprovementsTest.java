@@ -62,7 +62,7 @@ class TwoFluidPipeImprovementsTest {
 
       // IMEX should allow much larger timestep (no sound speed in denominator)
       assertTrue(dtIMEX > dtAcoustic,
-	  "IMEX timestep (" + dtIMEX + ") should be larger than acoustic (" + dtAcoustic + ")");
+          "IMEX timestep (" + dtIMEX + ") should be larger than acoustic (" + dtAcoustic + ")");
 
       // The ratio should be roughly c/v_max ~ 350/10 = 35x larger
       double ratio = dtIMEX / dtAcoustic;
@@ -83,34 +83,34 @@ class TwoFluidPipeImprovementsTest {
       // Uniform initial state
       final double[][] U0 = new double[n][neq];
       for (int i = 0; i < n; i++) {
-	U0[i][0] = 5.0; // gas mass
-	U0[i][1] = 50.0; // oil mass
-	U0[i][2] = 10.0; // water mass
-	U0[i][3] = 50.0; // gas momentum
-	U0[i][4] = 100.0; // oil momentum
-	U0[i][5] = 20.0; // water momentum
-	U0[i][6] = 1e6; // energy
+        U0[i][0] = 5.0; // gas mass
+        U0[i][1] = 50.0; // oil mass
+        U0[i][2] = 10.0; // water mass
+        U0[i][3] = 50.0; // gas momentum
+        U0[i][4] = 100.0; // oil momentum
+        U0[i][5] = 20.0; // water momentum
+        U0[i][6] = 1e6; // energy
       }
 
       // RHSFunction that returns a small perturbation
       RHSFunction rhsFunc = new RHSFunction() {
-	@Override
-	public double[][] evaluate(double[][] state, double time) {
-	  double[][] dUdt = new double[n][neq];
-	  for (int i = 0; i < n; i++) {
-	    dUdt[i][0] = 0.01;
-	    dUdt[i][3] = -0.1;
-	  }
-	  return dUdt;
-	}
+        @Override
+        public double[][] evaluate(double[][] state, double time) {
+          double[][] dUdt = new double[n][neq];
+          for (int i = 0; i < n; i++) {
+            dUdt[i][0] = 0.01;
+            dUdt[i][3] = -0.1;
+          }
+          return dUdt;
+        }
       };
 
       // Set IMEX properties
       double[] soundSpeeds = new double[n];
       double[] densities = new double[n];
       for (int i = 0; i < n; i++) {
-	soundSpeeds[i] = 350.0;
-	densities[i] = 100.0;
+        soundSpeeds[i] = 350.0;
+        densities[i] = 100.0;
       }
       integrator.setIMEXProperties(soundSpeeds, densities, dx, 50e5, true);
 
@@ -124,10 +124,10 @@ class TwoFluidPipeImprovementsTest {
 
       // Verify no NaN or Inf values
       for (int i = 0; i < n; i++) {
-	for (int j = 0; j < neq; j++) {
-	  assertFalse(Double.isNaN(Unew[i][j]), "NaN at cell " + i + " eq " + j);
-	  assertFalse(Double.isInfinite(Unew[i][j]), "Inf at cell " + i + " eq " + j);
-	}
+        for (int j = 0; j < neq; j++) {
+          assertFalse(Double.isNaN(Unew[i][j]), "NaN at cell " + i + " eq " + j);
+          assertFalse(Double.isInfinite(Unew[i][j]), "Inf at cell " + i + " eq " + j);
+        }
       }
     }
 
@@ -140,15 +140,15 @@ class TwoFluidPipeImprovementsTest {
       final int neq = 7;
       double[][] U0 = new double[n][neq];
       for (int i = 0; i < n; i++) {
-	U0[i][0] = 5.0; // gas mass per length
-	U0[i][1] = 50.0; // oil mass per length
-	U0[i][2] = 10.0; // water mass per length
+        U0[i][0] = 5.0; // gas mass per length
+        U0[i][1] = 50.0; // oil mass per length
+        U0[i][2] = 10.0; // water mass per length
       }
 
       RHSFunction rhsFunc = (state, time) -> {
-	double[][] dUdt = new double[n][neq];
-	dUdt[1][0] = 1.0; // localized mass imbalance to drive pressure correction
-	return dUdt;
+        double[][] dUdt = new double[n][neq];
+        dUdt[1][0] = 1.0; // localized mass imbalance to drive pressure correction
+        return dUdt;
       };
 
       double[] soundSpeeds = { 350.0, 350.0, 350.0 };
@@ -159,7 +159,7 @@ class TwoFluidPipeImprovementsTest {
       double[] waterDensities = { 1000.0, 1000.0, 1000.0 };
 
       integrator.setIMEXProperties(soundSpeeds, mixtureDensities, areas, gasDensities, oilDensities, waterDensities,
-	  100.0, 50e5, true);
+          100.0, 50e5, true);
 
       double[][] Unew = integrator.step(U0, rhsFunc, 0.5);
       double gasMomentumChange = Math.abs(Unew[1][3] - U0[1][3]);
@@ -222,7 +222,7 @@ class TwoFluidPipeImprovementsTest {
       ConservativeStateLimiter.enforceThreePhaseMassPositivity(state, previous);
 
       for (int i = 0; i < previous.length; i++) {
-	assertEquals(previous[i], state[i], 0.0);
+        assertEquals(previous[i], state[i], 0.0);
       }
     }
   }
@@ -280,7 +280,7 @@ class TwoFluidPipeImprovementsTest {
     void testSinglePhaseOil() {
       OilWaterFlowRegimeDetector detector = new OilWaterFlowRegimeDetector();
       OilWaterResult result = detector.detect(0.001, 2.0, RHO_OIL, RHO_WATER, MU_OIL, MU_WATER, SIGMA_OW, DIAMETER,
-	  INCLINATION);
+          INCLINATION);
 
       assertEquals(OilWaterFlowRegime.SINGLE_PHASE, result.regime);
       assertTrue(result.oilContinuous);
@@ -292,7 +292,7 @@ class TwoFluidPipeImprovementsTest {
     void testSinglePhaseWater() {
       OilWaterFlowRegimeDetector detector = new OilWaterFlowRegimeDetector();
       OilWaterResult result = detector.detect(0.999, 2.0, RHO_OIL, RHO_WATER, MU_OIL, MU_WATER, SIGMA_OW, DIAMETER,
-	  INCLINATION);
+          INCLINATION);
 
       assertEquals(OilWaterFlowRegime.SINGLE_PHASE, result.regime);
       assertFalse(result.oilContinuous);
@@ -304,7 +304,7 @@ class TwoFluidPipeImprovementsTest {
     void testStratifiedAtLowVelocity() {
       OilWaterFlowRegimeDetector detector = new OilWaterFlowRegimeDetector();
       OilWaterResult result = detector.detect(0.3, 0.05, RHO_OIL, RHO_WATER, MU_OIL, MU_WATER, SIGMA_OW, DIAMETER,
-	  INCLINATION);
+          INCLINATION);
 
       assertEquals(OilWaterFlowRegime.STRATIFIED, result.regime);
       assertTrue(result.waterWetting, "Water should wet the wall in stratified flow");
@@ -317,7 +317,7 @@ class TwoFluidPipeImprovementsTest {
       OilWaterFlowRegimeDetector detector = new OilWaterFlowRegimeDetector();
       // Low water cut (0.1), high velocity (5 m/s)
       OilWaterResult result = detector.detect(0.10, 5.0, RHO_OIL, RHO_WATER, MU_OIL, MU_WATER, SIGMA_OW, DIAMETER,
-	  INCLINATION);
+          INCLINATION);
 
       // At low water cut, oil is continuous
       assertTrue(result.oilContinuous, "Oil should be continuous at low water cut");
@@ -331,7 +331,7 @@ class TwoFluidPipeImprovementsTest {
       OilWaterFlowRegimeDetector detector = new OilWaterFlowRegimeDetector();
       // High water cut (0.8), high velocity (5 m/s)
       OilWaterResult result = detector.detect(0.80, 5.0, RHO_OIL, RHO_WATER, MU_OIL, MU_WATER, SIGMA_OW, DIAMETER,
-	  INCLINATION);
+          INCLINATION);
 
       assertFalse(result.oilContinuous, "Water should be continuous at high water cut");
       assertEquals(OilWaterFlowRegime.DISPERSED_OIL_IN_WATER, result.regime);
@@ -362,7 +362,7 @@ class TwoFluidPipeImprovementsTest {
 
       // Near 50% with small density correction
       assertTrue(inversionWC > 0.35 && inversionWC < 0.65,
-	  "Equal viscosity should give inversion near 0.5, got " + inversionWC);
+          "Equal viscosity should give inversion near 0.5, got " + inversionWC);
     }
 
     @Test
@@ -404,13 +404,13 @@ class TwoFluidPipeImprovementsTest {
 
       // Water dropout should occur at low velocity
       boolean dropout = detector.isWaterDropoutLikely(0.2, 0.1, // Low velocity
-	  RHO_OIL, RHO_WATER, MU_OIL, DIAMETER, 0.002);
+          RHO_OIL, RHO_WATER, MU_OIL, DIAMETER, 0.002);
 
       assertTrue(dropout, "Water dropout should be detected at low velocity");
 
       // No dropout at high velocity
       boolean noDropout = detector.isWaterDropoutLikely(0.2, 5.0, // High velocity
-	  RHO_OIL, RHO_WATER, MU_OIL, DIAMETER, 0.001);
+          RHO_OIL, RHO_WATER, MU_OIL, DIAMETER, 0.001);
 
       assertFalse(noDropout, "No water dropout at high velocity");
     }
@@ -452,7 +452,7 @@ class TwoFluidPipeImprovementsTest {
     void testResultCompleteness() {
       OilWaterFlowRegimeDetector detector = new OilWaterFlowRegimeDetector();
       OilWaterResult result = detector.detect(0.3, 2.0, RHO_OIL, RHO_WATER, MU_OIL, MU_WATER, SIGMA_OW, DIAMETER,
-	  INCLINATION);
+          INCLINATION);
 
       assertNotNull(result.regime);
       assertTrue(result.effectiveViscosity > 0);
@@ -469,15 +469,15 @@ class TwoFluidPipeImprovementsTest {
 
       // Horizontal pipe, moderate velocity, oil-continuous
       OilWaterResult horizontal = detector.detect(0.15, 1.5, RHO_OIL, RHO_WATER, MU_OIL, MU_WATER, SIGMA_OW, DIAMETER,
-	  0.0);
+          0.0);
 
       // Same conditions but steep uphill (5 degree)
       OilWaterResult uphill = detector.detect(0.15, 1.5, RHO_OIL, RHO_WATER, MU_OIL, MU_WATER, SIGMA_OW, DIAMETER,
-	  0.087); // ~5 degrees
+          0.087); // ~5 degrees
 
       // Uphill should have higher (or equal) dropout risk when oil-continuous
       if (uphill.oilContinuous) {
-	assertTrue(uphill.waterDropoutRisk, "Uphill should have water dropout risk when oil-continuous");
+        assertTrue(uphill.waterDropoutRisk, "Uphill should have water dropout risk when oil-continuous");
       }
     }
   }

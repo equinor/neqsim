@@ -18,23 +18,23 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.process.design.AutoSizeable;
+import neqsim.process.electricaldesign.separator.SeparatorElectricalDesign;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.StandardConstraintType;
 import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.separator.entrainment.InletDeviceModel;
+import neqsim.process.equipment.separator.entrainment.MultiphaseFlowRegime;
+import neqsim.process.equipment.separator.entrainment.SeparatorPerformanceCalculator;
 import neqsim.process.equipment.separator.sectiontype.ManwaySection;
 import neqsim.process.equipment.separator.sectiontype.MeshSection;
 import neqsim.process.equipment.separator.sectiontype.NozzleSection;
 import neqsim.process.equipment.separator.sectiontype.SeparatorSection;
 import neqsim.process.equipment.separator.sectiontype.ValveSection;
 import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.StreamInterface;
-import neqsim.process.electricaldesign.separator.SeparatorElectricalDesign;
-import neqsim.process.equipment.separator.entrainment.InletDeviceModel;
-import neqsim.process.equipment.separator.entrainment.MultiphaseFlowRegime;
-import neqsim.process.equipment.separator.entrainment.SeparatorPerformanceCalculator;
 import neqsim.process.instrumentdesign.separator.SeparatorInstrumentDesign;
 import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
 import neqsim.process.ml.StateVector;
@@ -123,15 +123,15 @@ public class Separator extends ProcessEquipmentBaseClass
     }
     if (inletStreamMixer.getNumberOfInputStreams() == 0) {
       throw new IllegalStateException(
-	  "Separator '" + getName() + "' has no inlet stream — gas/liquid outlet streams cannot be initialized. Wire an"
-	      + " inlet via setInletStream(...) (Java) or the 'inlet' field on the separator (JSON"
-	      + " process builder) before accessing gasOutStream/liquidOutStream or running transient.");
+          "Separator '" + getName() + "' has no inlet stream — gas/liquid outlet streams cannot be initialized. Wire an"
+              + " inlet via setInletStream(...) (Java) or the 'inlet' field on the separator (JSON"
+              + " process builder) before accessing gasOutStream/liquidOutStream or running transient.");
     }
     StreamInterface inlet = inletStreamMixer.getStream(0);
     SystemInterface inletFluid = inlet.getThermoSystem();
     if (inletFluid == null) {
       throw new IllegalStateException("Separator '" + getName() + "' inlet stream '" + inlet.getName()
-	  + "' has no thermo system — cannot initialize outlet streams.");
+          + "' has no thermo system — cannot initialize outlet streams.");
     }
     if (gasOutStream == null) {
       gasOutStream = new Stream("gasOutStream", inletFluid.clone());
@@ -154,31 +154,31 @@ public class Separator extends ProcessEquipmentBaseClass
       thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       thermoSystem2.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       for (int j = 0; j < thermoSystem.getNumberOfPhases(); j++) {
-	double relFact = 1.0;
-	if (thermoSystem.getPhase(j).getPhaseTypeName().equals("gas")) {
-	  relFact = gasVolume / (thermoSystem2.getPhase(j).getVolume("m3"));
-	} else {
-	  relFact = liquidVolume / (thermoSystem2.getPhase(j).getVolume("m3"));
-	}
-	for (int i = 0; i < thermoSystem.getPhase(j).getNumberOfComponents(); i++) {
-	  thermoSystem.addComponent(i,
-	      (relFact - 1.0) * thermoSystem2.getPhase(j).getComponent(i).getNumberOfMolesInPhase(), j);
-	}
+        double relFact = 1.0;
+        if (thermoSystem.getPhase(j).getPhaseTypeName().equals("gas")) {
+          relFact = gasVolume / (thermoSystem2.getPhase(j).getVolume("m3"));
+        } else {
+          relFact = liquidVolume / (thermoSystem2.getPhase(j).getVolume("m3"));
+        }
+        for (int i = 0; i < thermoSystem.getPhase(j).getNumberOfComponents(); i++) {
+          thermoSystem.addComponent(i,
+              (relFact - 1.0) * thermoSystem2.getPhase(j).getComponent(i).getNumberOfMolesInPhase(), j);
+        }
       }
       ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem);
       if (thermoSystem.getNumberOfComponents() > 1) {
-	ops.TPflash();
+        ops.TPflash();
       } else {
-	thermoSystem.setBeta(getFeedStream().getFluid().getBeta());
+        thermoSystem.setBeta(getFeedStream().getFluid().getBeta());
       }
       thermoSystem.init(3);
       thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
-	liquidLevel = levelFromVolume(thermoSystem.getPhase(1).getVolume("m3"));
-	liquidVolume = calcLiquidVolume();
+        liquidLevel = levelFromVolume(thermoSystem.getPhase(1).getVolume("m3"));
+        liquidVolume = calcLiquidVolume();
       } else {
-	liquidLevel = 0.0;
-	liquidVolume = 0.0;
+        liquidLevel = 0.0;
+        liquidVolume = 0.0;
       }
       enforceHeadspace();
     } catch (Exception ex) {
@@ -413,7 +413,7 @@ public class Separator extends ProcessEquipmentBaseClass
     ensureOutputStreamsInitialized();
     if (liquidOutStream.getFluid().getClass().getName().equals("neqsim.thermo.system.SystemSoreideWhitson")) {
       if (!liquidOutStream.getFluid().hasPhaseType("aqueous")) {
-	((SystemSoreideWhitson) liquidOutStream.getFluid()).setSalinity(0.0, "mole/sec");
+        ((SystemSoreideWhitson) liquidOutStream.getFluid()).setSalinity(0.0, "mole/sec");
       }
     }
     return liquidOutStream;
@@ -481,13 +481,13 @@ public class Separator extends ProcessEquipmentBaseClass
     }
     if (liquidOutStream != null) {
       state.put("liquid flow",
-	  ProcessEquipmentInterface.createStateEntry(liquidOutStream.getFlowRate(flowUnit), flowUnit));
+          ProcessEquipmentInterface.createStateEntry(liquidOutStream.getFlowRate(flowUnit), flowUnit));
     }
     if (gasOutStream != null) {
       state.put("pressure",
-	  ProcessEquipmentInterface.createStateEntry(gasOutStream.getPressure(pressureUnit), pressureUnit));
+          ProcessEquipmentInterface.createStateEntry(gasOutStream.getPressure(pressureUnit), pressureUnit));
       state.put("temperature",
-	  ProcessEquipmentInterface.createStateEntry(gasOutStream.getTemperature(temperatureUnit), temperatureUnit));
+          ProcessEquipmentInterface.createStateEntry(gasOutStream.getTemperature(temperatureUnit), temperatureUnit));
     }
     return state;
   }
@@ -596,12 +596,12 @@ public class Separator extends ProcessEquipmentBaseClass
     if (thermoSystem2.hasPhaseType("oil")) {
       int oilPhaseIdx = thermoSystem2.getPhaseIndex("oil");
       oilVolFlow = thermoSystem2.getPhase(oilPhaseIdx).getNumberOfMolesInPhase()
-	  * thermoSystem2.getPhase(oilPhaseIdx).getMolarVolume();
+          * thermoSystem2.getPhase(oilPhaseIdx).getMolarVolume();
     }
     if (thermoSystem2.hasPhaseType("aqueous")) {
       int aqPhaseIdx = thermoSystem2.getPhaseIndex("aqueous");
       waterVolFlow = thermoSystem2.getPhase(aqPhaseIdx).getNumberOfMolesInPhase()
-	  * thermoSystem2.getPhase(aqPhaseIdx).getMolarVolume();
+          * thermoSystem2.getPhase(aqPhaseIdx).getMolarVolume();
     }
     double totalLiqVol = oilVolFlow + waterVolFlow;
     if (totalLiqVol > 1e-30) {
@@ -609,7 +609,7 @@ public class Separator extends ProcessEquipmentBaseClass
     }
 
     performanceCalculator.calculate(gasDensity, oilDensity, waterDensity, gasViscosity, oilViscosity, waterViscosity,
-	gasVelocity, getInternalDiameter(), getSeparatorLength(), orientation, liquidLevelFrac);
+        gasVelocity, getInternalDiameter(), getSeparatorLength(), orientation, liquidLevelFrac);
 
     // Update entrainment fractions — use "volume" spec type for physics-based
     // results
@@ -640,7 +640,7 @@ public class Separator extends ProcessEquipmentBaseClass
     double flow = inletStreamMixer.getOutletStream().getFlowRate("kg/hr");
     double pres = inletStreamMixer.getOutletStream().getPressure();
     if (Math.abs((lastEnthalpy - enthalpy) / enthalpy) < 1e-6 && Math.abs((lastFlowRate - flow) / flow) < 1e-6
-	&& Math.abs((lastPressure - pres) / pres) < 1e-6) {
+        && Math.abs((lastPressure - pres) / pres) < 1e-6) {
       setCalculationIdentifier(id);
       return;
     }
@@ -682,11 +682,11 @@ public class Separator extends ProcessEquipmentBaseClass
       double waterMoles = thermoSystem2.getPhase("aqueous").getNumberOfMolesInPhase();
       double totalMoles = oilMoles + waterMoles;
       if (totalMoles > 0.0) {
-	double oilShare = oilMoles / totalMoles;
-	double waterShare = waterMoles / totalMoles;
-	thermoSystem2.addPhaseFractionToPhase(gasInLiquid * oilShare, gasInLiquidSpec, specifiedStream, "gas", "oil");
-	thermoSystem2.addPhaseFractionToPhase(gasInLiquid * waterShare, gasInLiquidSpec, specifiedStream, "gas",
-	    "aqueous");
+        double oilShare = oilMoles / totalMoles;
+        double waterShare = waterMoles / totalMoles;
+        thermoSystem2.addPhaseFractionToPhase(gasInLiquid * oilShare, gasInLiquidSpec, specifiedStream, "gas", "oil");
+        thermoSystem2.addPhaseFractionToPhase(gasInLiquid * waterShare, gasInLiquidSpec, specifiedStream, "gas",
+            "aqueous");
       }
     } else if (thermoSystem2.hasPhaseType("oil")) {
       thermoSystem2.addPhaseFractionToPhase(gasInLiquid, gasInLiquidSpec, specifiedStream, "gas", "oil");
@@ -715,13 +715,13 @@ public class Separator extends ProcessEquipmentBaseClass
       liquidOutStream.setThermoSystem(emptyLiquidSystem);
     }
     if (thermoSystem2.hasPhaseType("gas") && thermoSystem2.getNumberOfComponents() > 1
-	&& (oilInGas != 0.0 || waterInGas != 0.0)) {
+        && (oilInGas != 0.0 || waterInGas != 0.0)) {
       gasOutStream.run(id);
     } else {
       finalizePhaseOutlet(gasOutStream, id);
     }
     if (thermoSystem2.hasPhaseType("aqueous")
-	|| thermoSystem2.hasPhaseType("oil") && thermoSystem2.getNumberOfComponents() > 1) {
+        || thermoSystem2.hasPhaseType("oil") && thermoSystem2.getNumberOfComponents() > 1) {
       liquidOutStream.run(id);
     } else {
       finalizePhaseOutlet(liquidOutStream, id);
@@ -746,8 +746,8 @@ public class Separator extends ProcessEquipmentBaseClass
     }
     try {
       if (outletStream.getFluid().getNumberOfPhases() > 0) {
-	outletStream.getFluid().init(3);
-	outletStream.getFluid().initProperties();
+        outletStream.getFluid().init(3);
+        outletStream.getFluid().initProperties();
       }
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
@@ -804,18 +804,18 @@ public class Separator extends ProcessEquipmentBaseClass
     double gasVelocity = 0.0;
     if (gasDensity > 0 && gasOutStream != null) {
       try {
-	double gasVolFlow = gasOutStream.getFluid().getFlowRate("m3/sec");
-	double crossArea;
-	if (orientation.equals("horizontal")) {
-	  crossArea = getSepCrossArea() - liquidArea(liquidLevel);
-	} else {
-	  crossArea = getSepCrossArea();
-	}
-	if (crossArea > 1e-10) {
-	  gasVelocity = gasVolFlow / crossArea;
-	}
+        double gasVolFlow = gasOutStream.getFluid().getFlowRate("m3/sec");
+        double crossArea;
+        if (orientation.equals("horizontal")) {
+          crossArea = getSepCrossArea() - liquidArea(liquidLevel);
+        } else {
+          crossArea = getSepCrossArea();
+        }
+        if (crossArea > 1e-10) {
+          gasVelocity = gasVolFlow / crossArea;
+        }
       } catch (Exception ex) {
-	gasVelocity = 0.0;
+        gasVelocity = 0.0;
       }
     }
 
@@ -828,12 +828,12 @@ public class Separator extends ProcessEquipmentBaseClass
     if (thermoSystem.hasPhaseType("oil")) {
       int oilIdx = thermoSystem.getPhaseIndex("oil");
       oilVolFlow = thermoSystem.getPhase(oilIdx).getNumberOfMolesInPhase()
-	  * thermoSystem.getPhase(oilIdx).getMolarVolume();
+          * thermoSystem.getPhase(oilIdx).getMolarVolume();
     }
     if (thermoSystem.hasPhaseType("aqueous")) {
       int aqIdx = thermoSystem.getPhaseIndex("aqueous");
       waterVolFlow = thermoSystem.getPhase(aqIdx).getNumberOfMolesInPhase()
-	  * thermoSystem.getPhase(aqIdx).getMolarVolume();
+          * thermoSystem.getPhase(aqIdx).getMolarVolume();
     }
     double totalLiqVol = oilVolFlow + waterVolFlow;
     if (totalLiqVol > 1e-30) {
@@ -841,7 +841,7 @@ public class Separator extends ProcessEquipmentBaseClass
     }
 
     performanceCalculator.calculate(gasDensity, oilDensity, waterDensity, gasViscosity, oilViscosity, waterViscosity,
-	gasVelocity, getInternalDiameter(), getSeparatorLength(), orientation, liquidLevelFrac);
+        gasVelocity, getInternalDiameter(), getSeparatorLength(), orientation, liquidLevelFrac);
 
     if (performanceCalculator.getOilInGasFraction() > 0) {
       oilInGas = performanceCalculator.getOilInGasFraction();
@@ -870,74 +870,74 @@ public class Separator extends ProcessEquipmentBaseClass
       // (e.g. JSON/MCP runDynamic) that may have skipped that wiring.
       ensureOutputStreamsInitialized();
       if (!isInitTransient) {
-	initializeTransientCalculation();
+        initializeTransientCalculation();
       }
       inletStreamMixer.run(id);
 
       // Check if separator has enough moles for calculation
       if (thermoSystem.getTotalNumberOfMoles() < 1e-10) {
-	// Separator is essentially empty - just update time and return
-	increaseTime(dt);
-	setCalculationIdentifier(id);
-	return;
+        // Separator is essentially empty - just update time and return
+        increaseTime(dt);
+        setCalculationIdentifier(id);
+        return;
       }
 
       try {
-	thermoSystem.init(2);
+        thermoSystem.init(2);
       } catch (Exception e) {
-	// If init fails due to low moles, skip this step
-	logger.debug("Separator init(2) failed, likely due to low moles: " + e.getMessage());
-	increaseTime(dt);
-	setCalculationIdentifier(id);
-	return;
+        // If init fails due to low moles, skip this step
+        logger.debug("Separator init(2) failed, likely due to low moles: " + e.getMessage());
+        increaseTime(dt);
+        setCalculationIdentifier(id);
+        return;
       }
       thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       try {
-	gasOutStream.getThermoSystem().init(2);
-	if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
-	  liquidOutStream.getThermoSystem().init(2);
-	}
+        gasOutStream.getThermoSystem().init(2);
+        if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
+          liquidOutStream.getThermoSystem().init(2);
+        }
       } catch (Exception e) {
-	logger.error(e.getMessage());
+        logger.error(e.getMessage());
       }
       boolean hasliq = false;
       double deliq = 0.0;
       if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
-	hasliq = true;
-	deliq = -liquidOutStream.getThermoSystem().getEnthalpy();
+        hasliq = true;
+        deliq = -liquidOutStream.getThermoSystem().getEnthalpy();
       }
       double deltaEnergy = inletStreamMixer.getOutletStream().getThermoSystem().getEnthalpy()
-	  - gasOutStream.getThermoSystem().getEnthalpy() + deliq;
+          - gasOutStream.getThermoSystem().getEnthalpy() + deliq;
 
       // Add external heat input (e.g., from flare radiation)
       if (setHeatInput && heatInput != 0.0) {
-	deltaEnergy += heatInput; // Heat input in watts (J/s)
+        deltaEnergy += heatInput; // Heat input in watts (J/s)
       }
 
       double newEnergy = thermoSystem.getInternalEnergy() + dt * deltaEnergy;
       thermoSystem.init(0);
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
-	double dncomp = 0.0;
-	dncomp += inletStreamMixer.getOutletStream().getThermoSystem().getComponent(i).getNumberOfmoles();
-	double dniliq = 0.0;
-	if (hasliq) {
-	  dniliq = -liquidOutStream.getThermoSystem().getComponent(i).getNumberOfmoles();
-	}
-	dncomp += -gasOutStream.getThermoSystem().getComponent(i).getNumberOfmoles() + dniliq;
+        double dncomp = 0.0;
+        dncomp += inletStreamMixer.getOutletStream().getThermoSystem().getComponent(i).getNumberOfmoles();
+        double dniliq = 0.0;
+        if (hasliq) {
+          dniliq = -liquidOutStream.getThermoSystem().getComponent(i).getNumberOfmoles();
+        }
+        dncomp += -gasOutStream.getThermoSystem().getComponent(i).getNumberOfmoles() + dniliq;
 
-	double molesChange = dncomp * dt;
-	double currentMoles = thermoSystem.getComponent(i).getNumberOfmoles();
-	// Prevent negative moles - limit removal to what's available
-	if (currentMoles + molesChange < 1e-20) {
-	  molesChange = -currentMoles + 1e-20;
-	}
-	thermoSystem.addComponent(i, molesChange);
+        double molesChange = dncomp * dt;
+        double currentMoles = thermoSystem.getComponent(i).getNumberOfmoles();
+        // Prevent negative moles - limit removal to what's available
+        if (currentMoles + molesChange < 1e-20) {
+          molesChange = -currentMoles + 1e-20;
+        }
+        thermoSystem.addComponent(i, molesChange);
       }
 
       // Skip VU flash if system has too few moles (essentially empty separator)
       if (thermoSystem.getTotalNumberOfMoles() < 1e-10) {
-	setCalculationIdentifier(id);
-	return;
+        setCalculationIdentifier(id);
+        return;
       }
 
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
@@ -946,57 +946,57 @@ public class Separator extends ProcessEquipmentBaseClass
 
       // Update entrainment fractions from performance calculator during transient
       if (useDetailedEntrainmentCalculation && performanceCalculator != null && thermoSystem.getNumberOfPhases() >= 2) {
-	updateEntrainmentForTransient();
+        updateEntrainmentForTransient();
       }
 
       // Determine whether entrainment corrections apply to outlet compositions
       boolean applyEntrainment = (oilInGas > 1e-10 || waterInGas > 1e-10 || gasInLiquid > 1e-10)
-	  && thermoSystem.getNumberOfPhases() >= 2;
+          && thermoSystem.getNumberOfPhases() >= 2;
 
       if (thermoSystem.getNumberOfComponents() > 1) {
-	if (applyEntrainment) {
-	  // Clone the vessel state and redistribute moles to model imperfect separation.
-	  // The original thermoSystem (vessel inventory) remains unmodified.
-	  SystemInterface entrainedSystem = thermoSystem.clone();
-	  entrainedSystem.addPhaseFractionToPhase(oilInGas, oilInGasSpec, specifiedStream, "oil", "gas");
-	  entrainedSystem.addPhaseFractionToPhase(waterInGas, waterInGasSpec, specifiedStream, "aqueous", "gas");
-	  if (entrainedSystem.hasPhaseType("liquid")) {
-	    entrainedSystem.addPhaseFractionToPhase(gasInLiquid, gasInLiquidSpec, specifiedStream, "gas", "liquid");
-	  } else if (entrainedSystem.hasPhaseType("oil") && entrainedSystem.hasPhaseType("aqueous")) {
-	    double oilMoles = entrainedSystem.getPhase("oil").getNumberOfMolesInPhase();
-	    double waterMoles = entrainedSystem.getPhase("aqueous").getNumberOfMolesInPhase();
-	    double totalMoles = oilMoles + waterMoles;
-	    if (totalMoles > 0.0) {
-	      double oilShare = oilMoles / totalMoles;
-	      double waterShare = waterMoles / totalMoles;
-	      entrainedSystem.addPhaseFractionToPhase(gasInLiquid * oilShare, gasInLiquidSpec, specifiedStream, "gas",
-		  "oil");
-	      entrainedSystem.addPhaseFractionToPhase(gasInLiquid * waterShare, gasInLiquidSpec, specifiedStream, "gas",
-		  "aqueous");
-	    }
-	  } else if (entrainedSystem.hasPhaseType("oil")) {
-	    entrainedSystem.addPhaseFractionToPhase(gasInLiquid, gasInLiquidSpec, specifiedStream, "gas", "oil");
-	  } else if (entrainedSystem.hasPhaseType("aqueous")) {
-	    entrainedSystem.addPhaseFractionToPhase(gasInLiquid, gasInLiquidSpec, specifiedStream, "gas", "aqueous");
-	  }
-	  if (entrainedSystem.hasPhaseType("gas")) {
-	    gasOutStream.getFluid().setMolarComposition(entrainedSystem.getPhase("gas").getMolarComposition());
-	  }
-	  if (entrainedSystem.hasPhaseType("oil") || entrainedSystem.hasPhaseType("aqueous")) {
-	    if (entrainedSystem.getNumberOfPhases() > 1) {
-	      liquidOutStream.getFluid().setMolarComposition(entrainedSystem.getPhase(1).getMolarComposition());
-	    }
-	  }
-	} else {
-	  if (thermoSystem.hasPhaseType("gas")) {
-	    gasOutStream.getFluid().setMolarComposition(thermoSystem.getPhase("gas").getMolarComposition());
-	  }
-	  if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
-	    if (thermoSystem.getNumberOfPhases() > 1) {
-	      liquidOutStream.getFluid().setMolarComposition(thermoSystem.getPhase(1).getMolarComposition());
-	    }
-	  }
-	}
+        if (applyEntrainment) {
+          // Clone the vessel state and redistribute moles to model imperfect separation.
+          // The original thermoSystem (vessel inventory) remains unmodified.
+          SystemInterface entrainedSystem = thermoSystem.clone();
+          entrainedSystem.addPhaseFractionToPhase(oilInGas, oilInGasSpec, specifiedStream, "oil", "gas");
+          entrainedSystem.addPhaseFractionToPhase(waterInGas, waterInGasSpec, specifiedStream, "aqueous", "gas");
+          if (entrainedSystem.hasPhaseType("liquid")) {
+            entrainedSystem.addPhaseFractionToPhase(gasInLiquid, gasInLiquidSpec, specifiedStream, "gas", "liquid");
+          } else if (entrainedSystem.hasPhaseType("oil") && entrainedSystem.hasPhaseType("aqueous")) {
+            double oilMoles = entrainedSystem.getPhase("oil").getNumberOfMolesInPhase();
+            double waterMoles = entrainedSystem.getPhase("aqueous").getNumberOfMolesInPhase();
+            double totalMoles = oilMoles + waterMoles;
+            if (totalMoles > 0.0) {
+              double oilShare = oilMoles / totalMoles;
+              double waterShare = waterMoles / totalMoles;
+              entrainedSystem.addPhaseFractionToPhase(gasInLiquid * oilShare, gasInLiquidSpec, specifiedStream, "gas",
+                  "oil");
+              entrainedSystem.addPhaseFractionToPhase(gasInLiquid * waterShare, gasInLiquidSpec, specifiedStream, "gas",
+                  "aqueous");
+            }
+          } else if (entrainedSystem.hasPhaseType("oil")) {
+            entrainedSystem.addPhaseFractionToPhase(gasInLiquid, gasInLiquidSpec, specifiedStream, "gas", "oil");
+          } else if (entrainedSystem.hasPhaseType("aqueous")) {
+            entrainedSystem.addPhaseFractionToPhase(gasInLiquid, gasInLiquidSpec, specifiedStream, "gas", "aqueous");
+          }
+          if (entrainedSystem.hasPhaseType("gas")) {
+            gasOutStream.getFluid().setMolarComposition(entrainedSystem.getPhase("gas").getMolarComposition());
+          }
+          if (entrainedSystem.hasPhaseType("oil") || entrainedSystem.hasPhaseType("aqueous")) {
+            if (entrainedSystem.getNumberOfPhases() > 1) {
+              liquidOutStream.getFluid().setMolarComposition(entrainedSystem.getPhase(1).getMolarComposition());
+            }
+          }
+        } else {
+          if (thermoSystem.hasPhaseType("gas")) {
+            gasOutStream.getFluid().setMolarComposition(thermoSystem.getPhase("gas").getMolarComposition());
+          }
+          if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
+            if (thermoSystem.getNumberOfPhases() > 1) {
+              liquidOutStream.getFluid().setMolarComposition(thermoSystem.getPhase(1).getMolarComposition());
+            }
+          }
+        }
       }
       setTempPres(thermoSystem.getTemperature(), thermoSystem.getPressure());
 
@@ -1005,42 +1005,42 @@ public class Separator extends ProcessEquipmentBaseClass
       // Francis weir overflow rate. This models the physical constraint of liquid
       // flowing over the weir to the outlet nozzle.
       if (weirHeight > 0.0 && weirLength > 0.0
-	  && (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous"))) {
-	double weirFlowRate = getWeirOverflowRate(); // m3/s
-	if (weirFlowRate > 0.0) {
-	  double currentLiqOutRate = liquidOutStream.getThermoSystem().getFlowRate("m3/sec");
-	  if (currentLiqOutRate > weirFlowRate) {
-	    double scaleFactor = weirFlowRate / currentLiqOutRate;
-	    liquidOutStream.setFlowRate(liquidOutStream.getThermoSystem().getFlowRate("kg/hr") * scaleFactor, "kg/hr");
-	  }
-	} else {
-	  // Liquid below weir — no outflow
-	  liquidOutStream.setFlowRate(0.0, "kg/hr");
-	}
+          && (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous"))) {
+        double weirFlowRate = getWeirOverflowRate(); // m3/s
+        if (weirFlowRate > 0.0) {
+          double currentLiqOutRate = liquidOutStream.getThermoSystem().getFlowRate("m3/sec");
+          if (currentLiqOutRate > weirFlowRate) {
+            double scaleFactor = weirFlowRate / currentLiqOutRate;
+            liquidOutStream.setFlowRate(liquidOutStream.getThermoSystem().getFlowRate("kg/hr") * scaleFactor, "kg/hr");
+          }
+        } else {
+          // Liquid below weir — no outflow
+          liquidOutStream.setFlowRate(0.0, "kg/hr");
+        }
       }
 
       // --- Separator internals: mist eliminator pressure drop ---
       // When a mist eliminator is configured, apply a pressure drop to the gas outlet
       // stream. This gives the controller a realistic pressure signal.
       if (mistEliminatorDpCoeff > 0.0 && thermoSystem.hasPhaseType("gas")) {
-	double meDp = getMistEliminatorPressureDrop(); // Pa
-	double meDpBar = meDp / 1.0e5;
-	double gasPres = gasOutStream.getPressure();
-	if (meDpBar > 0.0 && meDpBar < gasPres * 0.5) {
-	  gasOutStream.setPressure(gasPres - meDpBar, "bara");
-	}
+        double meDp = getMistEliminatorPressureDrop(); // Pa
+        double meDpBar = meDp / 1.0e5;
+        double gasPres = gasOutStream.getPressure();
+        if (meDpBar > 0.0 && meDpBar < gasPres * 0.5) {
+          gasOutStream.setPressure(gasPres - meDpBar, "bara");
+        }
       }
 
       liquidLevel = 0.0;
       if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
-	double volumeLoc = 0.0;
-	if (thermoSystem.hasPhaseType("oil")) {
-	  volumeLoc += thermoSystem.getPhase("oil").getVolume("m3");
-	}
-	if (thermoSystem.hasPhaseType("aqueous")) {
-	  volumeLoc += thermoSystem.getPhase("aqueous").getVolume("m3");
-	}
-	liquidLevel = levelFromVolume(volumeLoc);
+        double volumeLoc = 0.0;
+        if (thermoSystem.hasPhaseType("oil")) {
+          volumeLoc += thermoSystem.getPhase("oil").getVolume("m3");
+        }
+        if (thermoSystem.hasPhaseType("aqueous")) {
+          volumeLoc += thermoSystem.getPhase("aqueous").getVolume("m3");
+        }
+        liquidLevel = levelFromVolume(volumeLoc);
       }
       liquidVolume = calcLiquidVolume();
       enforceHeadspace();
@@ -1073,14 +1073,14 @@ public class Separator extends ProcessEquipmentBaseClass
     if (getThermoSystem().getNumberOfComponents() > 1) {
       gasOutStream.run(id);
       if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
-	liquidOutStream.run(id);
+        liquidOutStream.run(id);
       }
     } else {
       gasOutStream.getFluid().init(2);
       gasOutStream.getFluid().initPhysicalProperties("density");
       if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
-	liquidOutStream.getFluid().init(2);
-	liquidOutStream.getFluid().initPhysicalProperties("density");
+        liquidOutStream.getFluid().init(2);
+        liquidOutStream.getFluid().initPhysicalProperties("density");
       }
     }
   }
@@ -1202,7 +1202,7 @@ public class Separator extends ProcessEquipmentBaseClass
    */
   public boolean isEnhancedEntrainmentCalculation() {
     return useDetailedEntrainmentCalculation && performanceCalculator != null
-	&& performanceCalculator.isUseEnhancedCalculation();
+        && performanceCalculator.isUseEnhancedCalculation();
   }
 
   /**
@@ -1415,7 +1415,7 @@ public class Separator extends ProcessEquipmentBaseClass
     double liquidDensity;
     // For dry gas (single phase), use default liquid density of 1000 kg/m3
     if (thermoSystem.getNumberOfPhases() < 2
-	|| !thermoSystem.hasPhaseType("oil") && !thermoSystem.hasPhaseType("aqueous")) {
+        || !thermoSystem.hasPhaseType("oil") && !thermoSystem.hasPhaseType("aqueous")) {
       liquidDensity = 1000.0; // Default liquid density for dry separators/scrubbers
     } else {
       liquidDensity = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
@@ -1459,13 +1459,13 @@ public class Separator extends ProcessEquipmentBaseClass
     if (thermoSystem.getNumberOfPhases() >= 2) {
       double surfaceTension = thermoSystem.getInterphaseProperties().getSurfaceTension(0, 1);
       if (surfaceTension < 10.0e-3) {
-	derating = 1.0 - 0.5 * (10.0e-3 - surfaceTension) / 10.0e-3;
+        derating = 1.0 - 0.5 * (10.0e-3 - surfaceTension) / 10.0e-3;
       }
     }
     double gasDensity = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
     double liquidDensity;
     if (thermoSystem.getNumberOfPhases() < 2
-	|| !thermoSystem.hasPhaseType("oil") && !thermoSystem.hasPhaseType("aqueous")) {
+        || !thermoSystem.hasPhaseType("oil") && !thermoSystem.hasPhaseType("aqueous")) {
       liquidDensity = DEFAULT_LIQUID_DENSITY_FOR_SIZING;
     } else {
       liquidDensity = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
@@ -1489,8 +1489,8 @@ public class Separator extends ProcessEquipmentBaseClass
     }
     // System.out.println("derating " + derating);
     double term1 = (thermoSystem.getPhase(phaseNum).getPhysicalProperties().getDensity()
-	- thermoSystem.getPhase(0).getPhysicalProperties().getDensity())
-	/ thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
+        - thermoSystem.getPhase(0).getPhysicalProperties().getDensity())
+        / thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
     return derating * getGasSuperficialVelocity() * Math.sqrt(1.0 / term1);
   }
 
@@ -1552,8 +1552,8 @@ public class Separator extends ProcessEquipmentBaseClass
     }
     thermoSystem.initPhysicalProperties();
     double gasDensity = thermoSystem.hasPhaseType("gas")
-	? thermoSystem.getPhase("gas").getPhysicalProperties().getDensity()
-	: 50.0; // Default gas density if no gas phase
+        ? thermoSystem.getPhase("gas").getPhysicalProperties().getDensity()
+        : 50.0; // Default gas density if no gas phase
 
     // Use actual liquid density if available, otherwise default to 1000 kg/m³
     double liqDensity = DEFAULT_LIQUID_DENSITY_FOR_SIZING;
@@ -1684,7 +1684,7 @@ public class Separator extends ProcessEquipmentBaseClass
     for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
       double phaseFraction = thermoSystem.getPhase(i).getBeta();
       if (Double.isNaN(phaseFraction) || phaseFraction < 0) {
-	return false;
+        return false;
       }
       totalFraction += phaseFraction;
     }
@@ -1719,9 +1719,9 @@ public class Separator extends ProcessEquipmentBaseClass
     for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
       double phaseFraction = thermoSystem.getPhase(i).getBeta();
       if (Double.isNaN(phaseFraction)) {
-	errors.add(getName() + ": Phase " + i + " fraction is NaN");
+        errors.add(getName() + ": Phase " + i + " fraction is NaN");
       } else if (phaseFraction < 0) {
-	errors.add(getName() + ": Phase " + i + " has negative fraction: " + phaseFraction);
+        errors.add(getName() + ": Phase " + i + " has negative fraction: " + phaseFraction);
       }
       totalFraction += phaseFraction;
     }
@@ -1768,7 +1768,7 @@ public class Separator extends ProcessEquipmentBaseClass
     if (!isSimulationValid()) {
       List<String> errors = getSimulationValidationErrors();
       if (!errors.isEmpty()) {
-	return errors.get(0);
+        return errors.get(0);
       }
       return "Invalid simulation result";
     }
@@ -1843,7 +1843,7 @@ public class Separator extends ProcessEquipmentBaseClass
 
     // Calculate diameter (assuming gas area fraction based on orientation)
     double gasAreaFraction = orientation.equals("horizontal") ? (1.0 - designLiquidLevelFraction)
-	: (1.0 - designLiquidLevelFraction);
+        : (1.0 - designLiquidLevelFraction);
     double requiredTotalArea = requiredGasArea / gasAreaFraction;
     double requiredDiameter = Math.sqrt(4.0 * requiredTotalArea / Math.PI);
 
@@ -1887,13 +1887,13 @@ public class Separator extends ProcessEquipmentBaseClass
     double liquidFlow = 0.0;
     if (thermoSystem != null) {
       if (thermoSystem.hasPhaseType("gas")) {
-	gasFlow = thermoSystem.getPhase("gas").getFlowRate("m3/hr");
+        gasFlow = thermoSystem.getPhase("gas").getFlowRate("m3/hr");
       }
       if (thermoSystem.hasPhaseType("oil")) {
-	liquidFlow += thermoSystem.getPhase("oil").getFlowRate("m3/hr");
+        liquidFlow += thermoSystem.getPhase("oil").getFlowRate("m3/hr");
       }
       if (thermoSystem.hasPhaseType("aqueous")) {
-	liquidFlow += thermoSystem.getPhase("aqueous").getFlowRate("m3/hr");
+        liquidFlow += thermoSystem.getPhase("aqueous").getFlowRate("m3/hr");
       }
     }
 
@@ -1918,7 +1918,7 @@ public class Separator extends ProcessEquipmentBaseClass
     java.util.Set<String> enabledConstraints = new java.util.HashSet<String>();
     for (Map.Entry<String, CapacityConstraint> entry : capacityConstraints.entrySet()) {
       if (entry.getValue().isEnabled()) {
-	enabledConstraints.add(entry.getKey());
+        enabledConstraints.add(entry.getKey());
       }
     }
 
@@ -1930,7 +1930,7 @@ public class Separator extends ProcessEquipmentBaseClass
     for (String constraintName : enabledConstraints) {
       CapacityConstraint constraint = capacityConstraints.get(constraintName);
       if (constraint != null) {
-	constraint.setEnabled(true);
+        constraint.setEnabled(true);
       }
     }
 
@@ -1942,7 +1942,7 @@ public class Separator extends ProcessEquipmentBaseClass
 
     autoSized = true;
     logger.info("Separator " + getName() + " auto-sized: diameter=" + String.format("%.3f", getInternalDiameter())
-	+ " m, length=" + String.format("%.3f", getSeparatorLength()) + " m");
+        + " m, length=" + String.format("%.3f", getSeparatorLength()) + " m");
   }
 
   /** {@inheritDoc} */
@@ -1968,9 +1968,9 @@ public class Separator extends ProcessEquipmentBaseClass
     // Get company-specific K-factor from design standards if available
     if (separatorMechanicalDesign.getDesignStandard().containsKey("separator process design")) {
       double companyKFactor = ((neqsim.process.mechanicaldesign.designstandards.SeparatorDesignStandard) separatorMechanicalDesign
-	  .getDesignStandard().get("separator process design")).getGasLoadFactor();
+          .getDesignStandard().get("separator process design")).getGasLoadFactor();
       if (companyKFactor > 0) {
-	setDesignGasLoadFactor(companyKFactor);
+        setDesignGasLoadFactor(companyKFactor);
       }
     }
 
@@ -2007,28 +2007,28 @@ public class Separator extends ProcessEquipmentBaseClass
       // Use actual liquid density if available, otherwise default to 1000 kg/m³
       double liqDensity = DEFAULT_LIQUID_DENSITY_FOR_SIZING;
       if (thermoSystem.hasPhaseType("oil")) {
-	liqDensity = thermoSystem.getPhase("oil").getPhysicalProperties().getDensity();
+        liqDensity = thermoSystem.getPhase("oil").getPhysicalProperties().getDensity();
       } else if (thermoSystem.hasPhaseType("aqueous")) {
-	liqDensity = thermoSystem.getPhase("aqueous").getPhysicalProperties().getDensity();
+        liqDensity = thermoSystem.getPhase("aqueous").getPhysicalProperties().getDensity();
       }
 
       double gasVolumeFlow = thermoSystem.getPhase("gas").getFlowRate("m3/hr");
       double maxVelocity = designGasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
       double actualVelocity = gasVolumeFlow / 3600.0
-	  / (Math.PI * Math.pow(getInternalDiameter() / 2, 2) * (1.0 - designLiquidLevelFraction));
+          / (Math.PI * Math.pow(getInternalDiameter() / 2, 2) * (1.0 - designLiquidLevelFraction));
 
       sb.append("\n--- Operating Conditions ---\n");
       sb.append("Gas Volume Flow: ").append(String.format("%.1f m3/hr", gasVolumeFlow)).append("\n");
       sb.append("Gas Density: ").append(String.format("%.2f kg/m3", gasDensity)).append("\n");
       sb.append("Liquid Density: ").append(String.format("%.2f kg/m3", liqDensity));
       if (!thermoSystem.hasPhaseType("oil") && !thermoSystem.hasPhaseType("aqueous")) {
-	sb.append(" (assumed - no liquid phase)");
+        sb.append(" (assumed - no liquid phase)");
       }
       sb.append("\n");
       sb.append("Max Gas Velocity: ").append(String.format("%.3f m/s", maxVelocity)).append("\n");
       sb.append("Actual Gas Velocity: ").append(String.format("%.3f m/s", actualVelocity)).append("\n");
       sb.append("K-factor Utilization: ").append(String.format("%.1f%%", actualVelocity / maxVelocity * 100))
-	  .append("\n");
+          .append("\n");
     }
 
     return sb.toString();
@@ -2053,17 +2053,17 @@ public class Separator extends ProcessEquipmentBaseClass
       double liqDensity = DEFAULT_LIQUID_DENSITY_FOR_SIZING;
       boolean liquidDensityAssumed = true;
       if (thermoSystem.hasPhaseType("oil")) {
-	liqDensity = thermoSystem.getPhase("oil").getPhysicalProperties().getDensity();
-	liquidDensityAssumed = false;
+        liqDensity = thermoSystem.getPhase("oil").getPhysicalProperties().getDensity();
+        liquidDensityAssumed = false;
       } else if (thermoSystem.hasPhaseType("aqueous")) {
-	liqDensity = thermoSystem.getPhase("aqueous").getPhysicalProperties().getDensity();
-	liquidDensityAssumed = false;
+        liqDensity = thermoSystem.getPhase("aqueous").getPhysicalProperties().getDensity();
+        liquidDensityAssumed = false;
       }
 
       double gasVolumeFlow = thermoSystem.getPhase("gas").getFlowRate("m3/hr");
       double maxVelocity = designGasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
       double actualVelocity = gasVolumeFlow / 3600.0
-	  / (Math.PI * Math.pow(getInternalDiameter() / 2, 2) * (1.0 - designLiquidLevelFraction));
+          / (Math.PI * Math.pow(getInternalDiameter() / 2, 2) * (1.0 - designLiquidLevelFraction));
 
       report.put("gasVolumeFlow_m3hr", gasVolumeFlow);
       report.put("gasDensity_kgm3", gasDensity);
@@ -2133,27 +2133,27 @@ public class Separator extends ProcessEquipmentBaseClass
 
     if (orientation.equals("horizontal")) {
       if (level < getInternalRadius()) {
-	double d = getInternalRadius() - level;
-	double theta = Math.acos(d / getInternalRadius());
-	double a = getInternalRadius() * Math.sin(theta);
-	double triArea = a * d;
-	double circArea = theta * Math.pow(getInternalRadius(), 2);
-	lArea = circArea - triArea;
-	// System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n",
-	// getInternalRadius(), d,
-	// theta, a, lArea);
+        double d = getInternalRadius() - level;
+        double theta = Math.acos(d / getInternalRadius());
+        double a = getInternalRadius() * Math.sin(theta);
+        double triArea = a * d;
+        double circArea = theta * Math.pow(getInternalRadius(), 2);
+        lArea = circArea - triArea;
+        // System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n",
+        // getInternalRadius(), d,
+        // theta, a, lArea);
       } else if (level > getInternalRadius()) {
-	double d = level - getInternalRadius();
-	double theta = Math.acos(d / getInternalRadius());
-	double a = getInternalRadius() * Math.sin(theta);
-	double triArea = a * d;
-	double circArea = (Math.PI - theta) * Math.pow(getInternalRadius(), 2);
-	lArea = circArea + triArea;
-	// System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n",
-	// getInternalRadius(), d,
-	// theta, a, lArea);
+        double d = level - getInternalRadius();
+        double theta = Math.acos(d / getInternalRadius());
+        double a = getInternalRadius() * Math.sin(theta);
+        double triArea = a * d;
+        double circArea = (Math.PI - theta) * Math.pow(getInternalRadius(), 2);
+        lArea = circArea + triArea;
+        // System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n",
+        // getInternalRadius(), d,
+        // theta, a, lArea);
       } else {
-	lArea = 0.5 * Math.PI * Math.pow(getInternalRadius(), 2);
+        lArea = 0.5 * Math.PI * Math.pow(getInternalRadius(), 2);
       }
     } else if (orientation.equals("vertical")) {
       lArea = getSepCrossArea();
@@ -2199,13 +2199,13 @@ public class Separator extends ProcessEquipmentBaseClass
     if (rawGasVolume < minGasVolume) {
       gasVolume = Math.max(minGasVolume, 0.0);
       if (getSeparatorVolume() > 0.0) {
-	double adjustedLiquidVolume = Math.max(getSeparatorVolume() - gasVolume, 0.0);
-	if (Math.abs(adjustedLiquidVolume - liquidVolume) > 1.0e-12) {
-	  liquidLevel = levelFromVolume(adjustedLiquidVolume);
-	  liquidVolume = calcLiquidVolume();
-	} else {
-	  liquidVolume = adjustedLiquidVolume;
-	}
+        double adjustedLiquidVolume = Math.max(getSeparatorVolume() - gasVolume, 0.0);
+        if (Math.abs(adjustedLiquidVolume - liquidVolume) > 1.0e-12) {
+          liquidLevel = levelFromVolume(adjustedLiquidVolume);
+          liquidVolume = calcLiquidVolume();
+        } else {
+          liquidVolume = adjustedLiquidVolume;
+        }
       }
     } else {
       gasVolume = rawGasVolume;
@@ -2278,7 +2278,7 @@ public class Separator extends ProcessEquipmentBaseClass
     if (orientation.equalsIgnoreCase("horizontal")) {
       double level = clampLiquidHeight(liquidLevel);
       if (level <= 0.0) {
-	return 0.0;
+        return 0.0;
       }
 
       double r = getInternalRadius();
@@ -2293,13 +2293,13 @@ public class Separator extends ProcessEquipmentBaseClass
     if (orientation.equalsIgnoreCase("vertical")) {
       double level = clampLiquidHeight(liquidLevel);
       if (level <= 0.0) {
-	return 0.0;
+        return 0.0;
       }
 
       double wettedShellArea = 2.0 * Math.PI * getInternalRadius() * level;
       double wettedHeadArea = getSepCrossArea(); // bottom head is always wetted when level > 0
       if (level >= getSeparatorLength()) {
-	wettedHeadArea += getSepCrossArea(); // top head becomes wetted when full
+        wettedHeadArea += getSepCrossArea(); // top head becomes wetted when full
       }
       return wettedShellArea + wettedHeadArea;
     }
@@ -2366,11 +2366,11 @@ public class Separator extends ProcessEquipmentBaseClass
 
     if (orientation.equalsIgnoreCase("horizontal")) {
       if (getInternalDiameter() <= 0.0) {
-	return 0.0;
+        return 0.0;
       }
 
       if (getSeparatorLength() <= 0.0) {
-	return 0.0;
+        return 0.0;
       }
 
       double areaTarget = limitedVolume / getSeparatorLength();
@@ -2379,40 +2379,40 @@ public class Separator extends ProcessEquipmentBaseClass
       double fb = liquidArea(b) - areaTarget;
 
       if (Math.abs(fa) < tol) {
-	return a;
+        return a;
       }
 
       if (Math.abs(fb) < tol) {
-	return b;
+        return b;
       }
 
       if (fa * fb > 0) {
-	throw new IllegalArgumentException("No root in interval — check volumeTarget");
+        throw new IllegalArgumentException("No root in interval — check volumeTarget");
       }
 
       double h = 0.0;
 
       for (int i = 0; i < maxIter; i++) {
-	h = 0.5 * (a + b);
-	double fh = liquidArea(h) - areaTarget;
+        h = 0.5 * (a + b);
+        double fh = liquidArea(h) - areaTarget;
 
-	if (Math.abs(fh) < tol) {
-	  return h;
-	}
+        if (Math.abs(fh) < tol) {
+          return h;
+        }
 
-	if (fa * fh < 0) {
-	  b = h;
-	  fb = fh;
-	} else {
-	  a = h;
-	  fa = fh;
-	}
+        if (fa * fh < 0) {
+          b = h;
+          fb = fh;
+        } else {
+          a = h;
+          fa = fh;
+        }
       }
 
       return 0.5 * (a + b);
     } else if (orientation.equalsIgnoreCase("vertical")) {
       if (getSepCrossArea() <= 0.0) {
-	return 0.0;
+        return 0.0;
       }
 
       return clampLiquidHeight(limitedVolume / getSepCrossArea());
@@ -2599,7 +2599,7 @@ public class Separator extends ProcessEquipmentBaseClass
   public SeparatorSection getSeparatorSection(String name) {
     for (SeparatorSection sec : separatorSection) {
       if (sec.getName().equals(name)) {
-	return sec;
+        return sec;
       }
     }
     // System.out.println("no section with name: " + name + " found.....");
@@ -2667,18 +2667,18 @@ public class Separator extends ProcessEquipmentBaseClass
     double entrop = 0.0;
     for (int i = 0; i < numberOfInputStreams; i++) {
       if (inletStreamMixer.getStream(i).getFlowRate(unit) > 1e-10) {
-	inletStreamMixer.getStream(i).getFluid().init(3);
-	entrop += inletStreamMixer.getStream(i).getFluid().getEntropy();
+        inletStreamMixer.getStream(i).getFluid().init(3);
+        entrop += inletStreamMixer.getStream(i).getFluid().getEntropy();
       }
     }
 
     double liquidEntropy = 0.0;
     if (thermoSystem.hasPhaseType("aqueous") || thermoSystem.hasPhaseType("oil")) {
       try {
-	getLiquidOutStream().getThermoSystem().init(3);
-	liquidEntropy = getLiquidOutStream().getThermoSystem().getEntropy();
+        getLiquidOutStream().getThermoSystem().init(3);
+        liquidEntropy = getLiquidOutStream().getThermoSystem().getEntropy();
       } catch (Exception ex) {
-	logger.error(ex.getMessage(), ex);
+        logger.error(ex.getMessage(), ex);
       }
     }
 
@@ -2697,8 +2697,8 @@ public class Separator extends ProcessEquipmentBaseClass
     double flow = 0.0;
     for (int i = 0; i < numberOfInputStreams; i++) {
       if (inletStreamMixer.getStream(i).getFlowRate(unit) > 1e-10) {
-	inletStreamMixer.getStream(i).getFluid().init(3);
-	flow += inletStreamMixer.getStream(i).getFluid().getFlowRate(unit);
+        inletStreamMixer.getStream(i).getFluid().init(3);
+        flow += inletStreamMixer.getStream(i).getFluid().getFlowRate(unit);
       }
     }
 
@@ -2707,7 +2707,7 @@ public class Separator extends ProcessEquipmentBaseClass
       getLiquidOutStream().getThermoSystem().init(3);
       liquidFlow = getLiquidOutStream().getThermoSystem().getFlowRate(unit);
       if (liquidFlow < 1e-10) {
-	liquidFlow = 0.0;
+        liquidFlow = 0.0;
       }
     }
 
@@ -2716,7 +2716,7 @@ public class Separator extends ProcessEquipmentBaseClass
       getGasOutStream().getThermoSystem().init(3);
       gasFlow = getGasOutStream().getThermoSystem().getFlowRate(unit);
       if (gasFlow < 1e-10) {
-	gasFlow = 0.0;
+        gasFlow = 0.0;
       }
     }
 
@@ -2729,8 +2729,8 @@ public class Separator extends ProcessEquipmentBaseClass
     double exergy = 0.0;
     for (int i = 0; i < numberOfInputStreams; i++) {
       if (inletStreamMixer.getStream(i).getFlowRate(unit) > 1e-10) {
-	inletStreamMixer.getStream(i).getFluid().init(3);
-	exergy += inletStreamMixer.getStream(i).getFluid().getExergy(surroundingTemperature, unit);
+        inletStreamMixer.getStream(i).getFluid().init(3);
+        exergy += inletStreamMixer.getStream(i).getFluid().getExergy(surroundingTemperature, unit);
       }
     }
 
@@ -2755,10 +2755,10 @@ public class Separator extends ProcessEquipmentBaseClass
     final int prime = 31;
     int result = super.hashCode();
     result = prime * result + Objects.hash(designLiquidLevelFraction, efficiency, gasCarryunderFraction, gasInLiquid,
-	gasInLiquidSpec, gasOutStream, gasSystem, gasVolume, inletStreamMixer, getInternalDiameter(),
-	liquidCarryoverFraction, liquidLevel, liquidOutStream, liquidSystem, liquidVolume, numberOfInputStreams,
-	oilInGas, oilInGasSpec, orientation, pressureDrop, getSeparatorLength(), separatorSection, specifiedStream,
-	thermoSystem, thermoSystem2, thermoSystemCloned, waterInGas, waterInGasSpec, waterSystem);
+        gasInLiquidSpec, gasOutStream, gasSystem, gasVolume, inletStreamMixer, getInternalDiameter(),
+        liquidCarryoverFraction, liquidLevel, liquidOutStream, liquidSystem, liquidVolume, numberOfInputStreams,
+        oilInGas, oilInGasSpec, orientation, pressureDrop, getSeparatorLength(), separatorSection, specifiedStream,
+        thermoSystem, thermoSystem2, thermoSystemCloned, waterInGas, waterInGasSpec, waterSystem);
     return result;
   }
 
@@ -2776,30 +2776,30 @@ public class Separator extends ProcessEquipmentBaseClass
     }
     Separator other = (Separator) obj;
     return Double.doubleToLongBits(designLiquidLevelFraction) == Double
-	.doubleToLongBits(other.designLiquidLevelFraction)
-	&& Double.doubleToLongBits(efficiency) == Double.doubleToLongBits(other.efficiency)
-	&& Double.doubleToLongBits(gasCarryunderFraction) == Double.doubleToLongBits(other.gasCarryunderFraction)
-	&& Double.doubleToLongBits(gasInLiquid) == Double.doubleToLongBits(other.gasInLiquid)
-	&& Objects.equals(gasInLiquidSpec, other.gasInLiquidSpec) && Objects.equals(gasOutStream, other.gasOutStream)
-	&& Objects.equals(gasSystem, other.gasSystem)
-	&& Double.doubleToLongBits(gasVolume) == Double.doubleToLongBits(other.gasVolume)
-	&& Objects.equals(inletStreamMixer, other.inletStreamMixer)
-	&& Double.doubleToLongBits(getInternalDiameter()) == Double.doubleToLongBits(other.getInternalDiameter())
-	&& Double.doubleToLongBits(liquidCarryoverFraction) == Double.doubleToLongBits(other.liquidCarryoverFraction)
-	&& Double.doubleToLongBits(liquidLevel) == Double.doubleToLongBits(other.liquidLevel)
-	&& Objects.equals(liquidOutStream, other.liquidOutStream) && Objects.equals(liquidSystem, other.liquidSystem)
-	&& Double.doubleToLongBits(liquidVolume) == Double.doubleToLongBits(other.liquidVolume)
-	&& numberOfInputStreams == other.numberOfInputStreams
-	&& Double.doubleToLongBits(oilInGas) == Double.doubleToLongBits(other.oilInGas)
-	&& Objects.equals(oilInGasSpec, other.oilInGasSpec) && Objects.equals(orientation, other.orientation)
-	&& Double.doubleToLongBits(pressureDrop) == Double.doubleToLongBits(other.pressureDrop)
-	&& Double.doubleToLongBits(getSeparatorLength()) == Double.doubleToLongBits(other.getSeparatorLength())
-	&& Objects.equals(separatorSection, other.separatorSection)
-	&& Objects.equals(specifiedStream, other.specifiedStream) && Objects.equals(thermoSystem, other.thermoSystem)
-	&& Objects.equals(thermoSystem2, other.thermoSystem2)
-	&& Objects.equals(thermoSystemCloned, other.thermoSystemCloned)
-	&& Double.doubleToLongBits(waterInGas) == Double.doubleToLongBits(other.waterInGas)
-	&& Objects.equals(waterInGasSpec, other.waterInGasSpec) && Objects.equals(waterSystem, other.waterSystem);
+        .doubleToLongBits(other.designLiquidLevelFraction)
+        && Double.doubleToLongBits(efficiency) == Double.doubleToLongBits(other.efficiency)
+        && Double.doubleToLongBits(gasCarryunderFraction) == Double.doubleToLongBits(other.gasCarryunderFraction)
+        && Double.doubleToLongBits(gasInLiquid) == Double.doubleToLongBits(other.gasInLiquid)
+        && Objects.equals(gasInLiquidSpec, other.gasInLiquidSpec) && Objects.equals(gasOutStream, other.gasOutStream)
+        && Objects.equals(gasSystem, other.gasSystem)
+        && Double.doubleToLongBits(gasVolume) == Double.doubleToLongBits(other.gasVolume)
+        && Objects.equals(inletStreamMixer, other.inletStreamMixer)
+        && Double.doubleToLongBits(getInternalDiameter()) == Double.doubleToLongBits(other.getInternalDiameter())
+        && Double.doubleToLongBits(liquidCarryoverFraction) == Double.doubleToLongBits(other.liquidCarryoverFraction)
+        && Double.doubleToLongBits(liquidLevel) == Double.doubleToLongBits(other.liquidLevel)
+        && Objects.equals(liquidOutStream, other.liquidOutStream) && Objects.equals(liquidSystem, other.liquidSystem)
+        && Double.doubleToLongBits(liquidVolume) == Double.doubleToLongBits(other.liquidVolume)
+        && numberOfInputStreams == other.numberOfInputStreams
+        && Double.doubleToLongBits(oilInGas) == Double.doubleToLongBits(other.oilInGas)
+        && Objects.equals(oilInGasSpec, other.oilInGasSpec) && Objects.equals(orientation, other.orientation)
+        && Double.doubleToLongBits(pressureDrop) == Double.doubleToLongBits(other.pressureDrop)
+        && Double.doubleToLongBits(getSeparatorLength()) == Double.doubleToLongBits(other.getSeparatorLength())
+        && Objects.equals(separatorSection, other.separatorSection)
+        && Objects.equals(specifiedStream, other.specifiedStream) && Objects.equals(thermoSystem, other.thermoSystem)
+        && Objects.equals(thermoSystem2, other.thermoSystem2)
+        && Objects.equals(thermoSystemCloned, other.thermoSystemCloned)
+        && Double.doubleToLongBits(waterInGas) == Double.doubleToLongBits(other.waterInGas)
+        && Objects.equals(waterInGasSpec, other.waterInGasSpec) && Objects.equals(waterSystem, other.waterSystem);
   }
 
   /**
@@ -3040,12 +3040,12 @@ public class Separator extends ProcessEquipmentBaseClass
     // Phase properties
     if (thermoSystem != null) {
       if (thermoSystem.hasPhaseType("gas")) {
-	state.add("gas_density", thermoSystem.getPhase("gas").getDensity("kg/m3"), 0.0, 300.0, "kg/m3");
+        state.add("gas_density", thermoSystem.getPhase("gas").getDensity("kg/m3"), 0.0, 300.0, "kg/m3");
       }
       if (thermoSystem.hasPhaseType("oil")) {
-	state.add("liquid_density", thermoSystem.getPhase("oil").getDensity("kg/m3"), 400.0, 1000.0, "kg/m3");
+        state.add("liquid_density", thermoSystem.getPhase("oil").getDensity("kg/m3"), 400.0, 1000.0, "kg/m3");
       } else if (thermoSystem.hasPhaseType("aqueous")) {
-	state.add("liquid_density", thermoSystem.getPhase("aqueous").getDensity("kg/m3"), 900.0, 1100.0, "kg/m3");
+        state.add("liquid_density", thermoSystem.getPhase("aqueous").getDensity("kg/m3"), 900.0, 1100.0, "kg/m3");
       }
     }
 
@@ -3091,49 +3091,49 @@ public class Separator extends ProcessEquipmentBaseClass
     // Check: Equipment has a valid name (from interface default)
     if (getName() == null || getName().trim().isEmpty()) {
       result.addError("equipment", "Separator has no name",
-	  "Set separator name in constructor: new Separator(\"MySeparator\")");
+          "Set separator name in constructor: new Separator(\"MySeparator\")");
     }
 
     // Check: At least one inlet stream is connected
     if (numberOfInputStreams == 0) {
       result.addError("stream", "No inlet stream connected",
-	  "Connect inlet stream: separator.setInletStream(stream) or separator.addStream(stream)");
+          "Connect inlet stream: separator.setInletStream(stream) or separator.addStream(stream)");
     }
 
     // Check: Inlet stream has valid fluid
     if (numberOfInputStreams > 0 && thermoSystem == null) {
       result.addError("stream", "Inlet stream has no fluid system",
-	  "Ensure inlet stream has a valid thermodynamic system");
+          "Ensure inlet stream has a valid thermodynamic system");
     }
 
     // Check: Separator dimensions are positive
     if (getSeparatorLength() <= 0) {
       result.addError("dimensions", "Separator length must be positive: " + getSeparatorLength() + " m",
-	  "Set positive length: separator.setSeparatorLength(5.0)");
+          "Set positive length: separator.setSeparatorLength(5.0)");
     }
 
     if (getInternalDiameter() <= 0) {
       result.addError("dimensions", "Separator diameter must be positive: " + getInternalDiameter() + " m",
-	  "Set positive diameter: separator.setInternalDiameter(1.0)");
+          "Set positive diameter: separator.setInternalDiameter(1.0)");
     }
 
     // Check: Liquid level is within valid range (0-1)
     if (liquidLevel < 0 || liquidLevel > getInternalDiameter()) {
       result.addWarning("level",
-	  "Liquid level may be outside valid range: " + liquidLevel + " m (diameter: " + getInternalDiameter() + " m)",
-	  "Set liquid level between 0 and separator diameter");
+          "Liquid level may be outside valid range: " + liquidLevel + " m (diameter: " + getInternalDiameter() + " m)",
+          "Set liquid level between 0 and separator diameter");
     }
 
     // Check: Pressure drop is non-negative
     if (pressureDrop < 0) {
       result.addWarning("pressure", "Negative pressure drop: " + pressureDrop + " bar",
-	  "Pressure drop should typically be >= 0");
+          "Pressure drop should typically be >= 0");
     }
 
     // Check: Efficiency is in valid range
     if (efficiency < 0 || efficiency > 1) {
       result.addError("efficiency", "Efficiency must be between 0 and 1: " + efficiency,
-	  "Set valid efficiency: separator.setEfficiency(0.95)");
+          "Set valid efficiency: separator.setEfficiency(0.95)");
     }
 
     return result;
@@ -3162,52 +3162,52 @@ public class Separator extends ProcessEquipmentBaseClass
     // Enable via useGasCapacityConstraints(), useEquinorConstraints(), or
     // useAllConstraints().
     addCapacityConstraint(StandardConstraintType.SEPARATOR_GAS_LOAD_FACTOR.createConstraint()
-	.setDesignValue(designGasLoadFactor).setWarningThreshold(0.9).setEnabled(false).setValueSupplier(() -> {
-	  try {
-	    return getGasLoadFactor();
-	  } catch (Exception e) {
-	    return 0.0;
-	  }
-	}));
+        .setDesignValue(designGasLoadFactor).setWarningThreshold(0.9).setEnabled(false).setValueSupplier(() -> {
+          try {
+            return getGasLoadFactor();
+          } catch (Exception e) {
+            return 0.0;
+          }
+        }));
 
     // K-value constraint per TR3500 (limit 0.15 m/s)
     // Disabled by default - enable via useEquinorConstraints() or
     // useAllConstraints()
     addCapacityConstraint(
-	StandardConstraintType.SEPARATOR_K_VALUE.createConstraint().setDesignValue(DEFAULT_K_VALUE_LIMIT)
-	    .setMaxValue(DEFAULT_K_VALUE_LIMIT).setWarningThreshold(0.9).setEnabled(false).setValueSupplier(() -> {
-	      try {
-		return calcKValueAtHLL();
-	      } catch (Exception e) {
-		return 0.0;
-	      }
-	    }));
+        StandardConstraintType.SEPARATOR_K_VALUE.createConstraint().setDesignValue(DEFAULT_K_VALUE_LIMIT)
+            .setMaxValue(DEFAULT_K_VALUE_LIMIT).setWarningThreshold(0.9).setEnabled(false).setValueSupplier(() -> {
+              try {
+                return calcKValueAtHLL();
+              } catch (Exception e) {
+                return 0.0;
+              }
+            }));
 
     // Droplet cut size constraint per TR3500 (limit 150 µm)
     // Disabled by default - enable via useEquinorConstraints() or
     // useAllConstraints()
     addCapacityConstraint(StandardConstraintType.SEPARATOR_DROPLET_CUTSIZE.createConstraint()
-	.setDesignValue(DEFAULT_DROPLET_CUTSIZE_LIMIT * 1e6).setMaxValue(DEFAULT_DROPLET_CUTSIZE_LIMIT * 1e6)
-	.setWarningThreshold(0.9).setEnabled(false).setValueSupplier(() -> {
-	  try {
-	    return calcDropletCutSizeAtHLL() * 1e6; // Convert to µm
-	  } catch (Exception e) {
-	    return 0.0;
-	  }
-	}));
+        .setDesignValue(DEFAULT_DROPLET_CUTSIZE_LIMIT * 1e6).setMaxValue(DEFAULT_DROPLET_CUTSIZE_LIMIT * 1e6)
+        .setWarningThreshold(0.9).setEnabled(false).setValueSupplier(() -> {
+          try {
+            return calcDropletCutSizeAtHLL() * 1e6; // Convert to µm
+          } catch (Exception e) {
+            return 0.0;
+          }
+        }));
 
     // Inlet momentum constraint (limit 16000 Pa)
     // Disabled by default - enable via useEquinorConstraints() or
     // useAllConstraints()
     addCapacityConstraint(StandardConstraintType.SEPARATOR_INLET_MOMENTUM.createConstraint()
-	.setDesignValue(DEFAULT_INLET_MOMENTUM_LIMIT).setMaxValue(DEFAULT_INLET_MOMENTUM_LIMIT).setWarningThreshold(0.9)
-	.setEnabled(false).setValueSupplier(() -> {
-	  try {
-	    return calcInletMomentumFlux();
-	  } catch (Exception e) {
-	    return 0.0;
-	  }
-	}));
+        .setDesignValue(DEFAULT_INLET_MOMENTUM_LIMIT).setMaxValue(DEFAULT_INLET_MOMENTUM_LIMIT).setWarningThreshold(0.9)
+        .setEnabled(false).setValueSupplier(() -> {
+          try {
+            return calcInletMomentumFlux();
+          } catch (Exception e) {
+            return 0.0;
+          }
+        }));
 
     // Oil retention time constraint per API 12J (minimum 3 minutes)
     // Note: For retention time, we want ABOVE the minimum, so utilization is
@@ -3215,30 +3215,32 @@ public class Separator extends ProcessEquipmentBaseClass
     // Disabled by default - enable via useEquinorConstraints() or
     // useAllConstraints()
     addCapacityConstraint(StandardConstraintType.SEPARATOR_OIL_RETENTION_TIME.createConstraint()
-	.setMinValue(DEFAULT_MIN_OIL_RETENTION_TIME) // Only set minValue for minimum constraints
-	.setWarningThreshold(1.2).setEnabled(false) // Warn if close to minimum
-	.setValueSupplier(() -> {
-	  try {
-	    double retention = calcOilRetentionTime();
-	    return Double.isInfinite(retention) ? 999.0 : retention;
-	  } catch (Exception e) {
-	    return 999.0; // Return high value if no oil
-	  }
-	}));
+        .setMinValue(DEFAULT_MIN_OIL_RETENTION_TIME) // Only set minValue for minimum
+                                                     // constraints
+        .setWarningThreshold(1.2).setEnabled(false) // Warn if close to minimum
+        .setValueSupplier(() -> {
+          try {
+            double retention = calcOilRetentionTime();
+            return Double.isInfinite(retention) ? 999.0 : retention;
+          } catch (Exception e) {
+            return 999.0; // Return high value if no oil
+          }
+        }));
 
     // Water retention time constraint per API 12J (minimum 3 minutes)
     // Disabled by default - enable via useEquinorConstraints() or
     // useAllConstraints()
     addCapacityConstraint(StandardConstraintType.SEPARATOR_WATER_RETENTION_TIME.createConstraint()
-	.setMinValue(DEFAULT_MIN_WATER_RETENTION_TIME) // Only set minValue for minimum constraints
-	.setWarningThreshold(1.2).setEnabled(false).setValueSupplier(() -> {
-	  try {
-	    double retention = calcWaterRetentionTime();
-	    return Double.isInfinite(retention) ? 999.0 : retention;
-	  } catch (Exception e) {
-	    return 999.0; // Return high value if no water
-	  }
-	}));
+        .setMinValue(DEFAULT_MIN_WATER_RETENTION_TIME) // Only set minValue for minimum
+                                                       // constraints
+        .setWarningThreshold(1.2).setEnabled(false).setValueSupplier(() -> {
+          try {
+            double retention = calcWaterRetentionTime();
+            return Double.isInfinite(retention) ? 999.0 : retention;
+          } catch (Exception e) {
+            return 999.0; // Return high value if no water
+          }
+        }));
   }
 
   /**
@@ -3311,12 +3313,12 @@ public class Separator extends ProcessEquipmentBaseClass
     sb.append("=== Separator Constraint Summary: ").append(getName()).append(" ===\n");
     for (CapacityConstraint constraint : capacityConstraints.values()) {
       if (!constraint.isEnabled()) {
-	continue;
+        continue;
       }
       double util = constraint.getUtilization();
       String status = constraint.isViolated() ? "VIOLATED" : (constraint.isNearLimit() ? "WARNING" : "OK");
       sb.append(String.format("%s: %.2f %s (%.1f%% utilization) - %s%n", constraint.getName(),
-	  constraint.getCurrentValue(), constraint.getUnit(), util * 100, status));
+          constraint.getCurrentValue(), constraint.getUnit(), util * 100, status));
     }
     return sb.toString();
   }
@@ -3334,12 +3336,12 @@ public class Separator extends ProcessEquipmentBaseClass
     double maxUtil = 0.0;
     for (CapacityConstraint constraint : capacityConstraints.values()) {
       if (!constraint.isEnabled()) {
-	continue;
+        continue;
       }
       double util = constraint.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-	maxUtil = util;
-	bottleneck = constraint;
+        maxUtil = util;
+        bottleneck = constraint;
       }
     }
     return bottleneck;
@@ -3350,7 +3352,7 @@ public class Separator extends ProcessEquipmentBaseClass
   public boolean isCapacityExceeded() {
     for (CapacityConstraint constraint : capacityConstraints.values()) {
       if (constraint.isEnabled() && constraint.isViolated()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -3361,7 +3363,7 @@ public class Separator extends ProcessEquipmentBaseClass
   public boolean isHardLimitExceeded() {
     for (CapacityConstraint constraint : capacityConstraints.values()) {
       if (constraint.isEnabled() && constraint.isHardLimitExceeded()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -3373,16 +3375,16 @@ public class Separator extends ProcessEquipmentBaseClass
     double maxUtil = 0.0;
     for (CapacityConstraint constraint : capacityConstraints.values()) {
       if (!constraint.isEnabled()) {
-	continue;
+        continue;
       }
       double util = constraint.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-	maxUtil = util;
+        maxUtil = util;
       }
       // Log constraint details if utilization is unusually high
       if (constraint.isEnabled() && util > 5.0) {
-	logger.warn("Separator {} constraint {} has high utilization: {}%, " + "currentValue={}, designValue={}",
-	    getName(), constraint.getName(), util * 100, constraint.getCurrentValue(), constraint.getDesignValue());
+        logger.warn("Separator {} constraint {} has high utilization: {}%, " + "currentValue={}, designValue={}",
+            getName(), constraint.getName(), util * 100, constraint.getCurrentValue(), constraint.getDesignValue());
       }
     }
     return maxUtil;
@@ -3449,7 +3451,7 @@ public class Separator extends ProcessEquipmentBaseClass
     for (String name : constraintNames) {
       CapacityConstraint constraint = capacityConstraints.get(name);
       if (constraint != null) {
-	constraint.setEnabled(true);
+        constraint.setEnabled(true);
       }
     }
   }
@@ -3467,7 +3469,7 @@ public class Separator extends ProcessEquipmentBaseClass
     for (String name : constraintNames) {
       CapacityConstraint constraint = capacityConstraints.get(name);
       if (constraint != null) {
-	constraint.setEnabled(false);
+        constraint.setEnabled(false);
       }
     }
   }
@@ -3478,7 +3480,7 @@ public class Separator extends ProcessEquipmentBaseClass
    */
   public void useEquinorConstraints() {
     enableConstraints("gasLoadFactor", "kValue", "dropletCutSize", "inletMomentum", "oilRetentionTime",
-	"waterRetentionTime");
+        "waterRetentionTime");
   }
 
   /**
@@ -3557,7 +3559,7 @@ public class Separator extends ProcessEquipmentBaseClass
     java.util.List<String> enabled = new java.util.ArrayList<String>();
     for (Map.Entry<String, CapacityConstraint> entry : capacityConstraints.entrySet()) {
       if (entry.getValue().isEnabled()) {
-	enabled.add(entry.getKey());
+        enabled.add(entry.getKey());
       }
     }
     return enabled;
@@ -3733,11 +3735,11 @@ public class Separator extends ProcessEquipmentBaseClass
 
     // Gas viscosity using Sutherland equation for methane (conservative)
     double gasViscosity = 11e-6 * (293.0 + 169.0) / (273.0 + temperature + 169.0)
-	* Math.pow((273.0 + temperature) / 293.0, 1.5);
+        * Math.pow((273.0 + temperature) / 293.0, 1.5);
 
     // Stokes law: D = 2 * sqrt(9/2 * v_terminal * µ / ((ρ_oil - ρ_gas) * g))
     double dropletDiameter = 2.0
-	* Math.sqrt(4.5 * terminalVelocity * gasViscosity / ((oilDensity - gasDensity) * 9.81));
+        * Math.sqrt(4.5 * terminalVelocity * gasViscosity / ((oilDensity - gasDensity) * 9.81));
 
     return dropletDiameter;
   }
@@ -4011,7 +4013,7 @@ public class Separator extends ProcessEquipmentBaseClass
    */
   public boolean isWithinAllLimits() {
     return isKValueWithinLimit() && isDropletCutSizeWithinLimit() && isInletMomentumWithinLimit()
-	&& isOilRetentionTimeAboveMinimum() && isWaterRetentionTimeAboveMinimum();
+        && isOilRetentionTimeAboveMinimum() && isWaterRetentionTimeAboveMinimum();
   }
 
   /**
@@ -4025,23 +4027,23 @@ public class Separator extends ProcessEquipmentBaseClass
 
     double kValue = calcKValueAtHLL();
     sb.append(String.format("K-value at HLL: %.4f m/s (limit: %.2f m/s) - %s%n", kValue, DEFAULT_K_VALUE_LIMIT,
-	isKValueWithinLimit() ? "OK" : "EXCEEDED"));
+        isKValueWithinLimit() ? "OK" : "EXCEEDED"));
 
     double cutSize = calcDropletCutSizeAtHLL() * 1e6;
     sb.append(String.format("Droplet cut size: %.1f µm (limit: %.0f µm) - %s%n", cutSize,
-	DEFAULT_DROPLET_CUTSIZE_LIMIT * 1e6, isDropletCutSizeWithinLimit() ? "OK" : "EXCEEDED"));
+        DEFAULT_DROPLET_CUTSIZE_LIMIT * 1e6, isDropletCutSizeWithinLimit() ? "OK" : "EXCEEDED"));
 
     double momentum = calcInletMomentumFlux();
     sb.append(String.format("Inlet momentum: %.0f Pa (limit: %.0f Pa) - %s%n", momentum, DEFAULT_INLET_MOMENTUM_LIMIT,
-	isInletMomentumWithinLimit() ? "OK" : "EXCEEDED"));
+        isInletMomentumWithinLimit() ? "OK" : "EXCEEDED"));
 
     double oilRetention = calcOilRetentionTime();
     sb.append(String.format("Oil retention time: %.1f min (min: %.1f min) - %s%n", oilRetention,
-	DEFAULT_MIN_OIL_RETENTION_TIME, isOilRetentionTimeAboveMinimum() ? "OK" : "BELOW MINIMUM"));
+        DEFAULT_MIN_OIL_RETENTION_TIME, isOilRetentionTimeAboveMinimum() ? "OK" : "BELOW MINIMUM"));
 
     double waterRetention = calcWaterRetentionTime();
     sb.append(String.format("Water retention time: %.1f min (min: %.1f min) - %s%n", waterRetention,
-	DEFAULT_MIN_WATER_RETENTION_TIME, isWaterRetentionTimeAboveMinimum() ? "OK" : "BELOW MINIMUM"));
+        DEFAULT_MIN_WATER_RETENTION_TIME, isWaterRetentionTimeAboveMinimum() ? "OK" : "BELOW MINIMUM"));
 
     sb.append(String.format("%nOverall: %s%n", isWithinAllLimits() ? "ALL WITHIN LIMITS" : "LIMITS EXCEEDED"));
 
@@ -4353,9 +4355,9 @@ public class Separator extends ProcessEquipmentBaseClass
     public Separator build() {
       Separator sep;
       if (inletStream != null) {
-	sep = new Separator(name, inletStream);
+        sep = new Separator(name, inletStream);
       } else {
-	sep = new Separator(name);
+        sep = new Separator(name);
       }
 
       sep.setOrientation(orientation);
@@ -4363,9 +4365,9 @@ public class Separator extends ProcessEquipmentBaseClass
       sep.setInternalDiameter(internalDiameter);
 
       if (liquidLevel >= 0) {
-	sep.setLiquidLevel(liquidLevel);
+        sep.setLiquidLevel(liquidLevel);
       } else {
-	sep.setLiquidLevel(designLiquidLevelFraction);
+        sep.setLiquidLevel(designLiquidLevelFraction);
       }
 
       sep.setDesignLiquidLevelFraction(designLiquidLevelFraction);
@@ -4375,17 +4377,17 @@ public class Separator extends ProcessEquipmentBaseClass
       sep.setGasCarryunderFraction(gasCarryunderFraction);
 
       if (oilInGas > 0) {
-	sep.setEntrainment(oilInGas, oilInGasSpec, specifiedStream, "oil", "gas");
+        sep.setEntrainment(oilInGas, oilInGasSpec, specifiedStream, "oil", "gas");
       }
       if (waterInGas > 0) {
-	sep.setEntrainment(waterInGas, waterInGasSpec, specifiedStream, "aqueous", "gas");
+        sep.setEntrainment(waterInGas, waterInGasSpec, specifiedStream, "aqueous", "gas");
       }
       if (gasInLiquid > 0) {
-	sep.setEntrainment(gasInLiquid, gasInLiquidSpec, specifiedStream, "gas", "liquid");
+        sep.setEntrainment(gasInLiquid, gasInLiquidSpec, specifiedStream, "gas", "liquid");
       }
 
       if (heatInput != 0.0) {
-	sep.setHeatInput(heatInput, "W");
+        sep.setHeatInput(heatInput, "W");
       }
 
       sep.setCalculateSteadyState(calculateSteadyState);

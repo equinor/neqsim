@@ -38,11 +38,11 @@ public final class ProcessSafetyReport {
     this.scenarioLabel = scenarioLabel;
     this.thresholds = thresholds == null ? new ProcessSafetyThresholds() : thresholds;
     this.conditionFindings = conditionFindings == null ? Collections.emptyList()
-	: Collections.unmodifiableList(new ArrayList<>(conditionFindings));
+        : Collections.unmodifiableList(new ArrayList<>(conditionFindings));
     this.safetyMargins = safetyMargins == null ? Collections.emptyList()
-	: Collections.unmodifiableList(new ArrayList<>(safetyMargins));
+        : Collections.unmodifiableList(new ArrayList<>(safetyMargins));
     this.reliefDeviceAssessments = reliefDeviceAssessments == null ? Collections.emptyList()
-	: Collections.unmodifiableList(new ArrayList<>(reliefDeviceAssessments));
+        : Collections.unmodifiableList(new ArrayList<>(reliefDeviceAssessments));
     this.systemKpis = systemKpis;
     this.equipmentSnapshotJson = equipmentSnapshotJson;
   }
@@ -93,10 +93,10 @@ public final class ProcessSafetyReport {
     root.add("reliefDevices", gson.toJsonTree(reliefDeviceAssessments));
     if (equipmentSnapshotJson != null && !equipmentSnapshotJson.trim().isEmpty()) {
       try {
-	JsonElement parsed = JsonParser.parseString(equipmentSnapshotJson);
-	root.add("equipment", parsed);
+        JsonElement parsed = JsonParser.parseString(equipmentSnapshotJson);
+        root.add("equipment", parsed);
       } catch (Exception parseException) {
-	root.addProperty("equipment", equipmentSnapshotJson);
+        root.addProperty("equipment", equipmentSnapshotJson);
       }
     }
     return gson.toJson(root);
@@ -113,25 +113,25 @@ public final class ProcessSafetyReport {
     sb.append("Category,Name,Metric,Value,Severity,Details\n");
     for (ConditionFinding finding : conditionFindings) {
       appendCsvRow(sb, "ConditionMonitor", finding.getUnitName(), "Message", "", finding.getSeverity(),
-	  finding.getMessage());
+          finding.getMessage());
     }
     for (SafetyMarginAssessment margin : safetyMargins) {
       appendCsvRow(sb, "SafetyMargin", margin.getUnitName(), "Margin", formatDouble(margin.getMarginFraction()),
-	  margin.getSeverity(), String.format(Locale.ROOT, "design=%.3f bara, operating=%.3f bara",
-	      margin.getDesignPressureBar(), margin.getOperatingPressureBar()));
+          margin.getSeverity(), String.format(Locale.ROOT, "design=%.3f bara, operating=%.3f bara",
+              margin.getDesignPressureBar(), margin.getOperatingPressureBar()));
     }
     for (ReliefDeviceAssessment relief : reliefDeviceAssessments) {
       appendCsvRow(sb, "ReliefDevice", relief.getUnitName(), "Utilisation",
-	  formatDouble(relief.getUtilisationFraction()), relief.getSeverity(),
-	  String.format(Locale.ROOT, "set=%.3f bara, relieving=%.3f bara, upstream=%.3f bara, massFlow=%.3f kg/hr",
-	      relief.getSetPressureBar(), relief.getRelievingPressureBar(), relief.getUpstreamPressureBar(),
-	      relief.getMassFlowRateKgPerHr()));
+          formatDouble(relief.getUtilisationFraction()), relief.getSeverity(),
+          String.format(Locale.ROOT, "set=%.3f bara, relieving=%.3f bara, upstream=%.3f bara, massFlow=%.3f kg/hr",
+              relief.getSetPressureBar(), relief.getRelievingPressureBar(), relief.getUpstreamPressureBar(),
+              relief.getMassFlowRateKgPerHr()));
     }
     if (systemKpis != null) {
       appendCsvRow(sb, "SystemKpi", scenarioLabel != null ? scenarioLabel : "process", "EntropyChange",
-	  formatDouble(systemKpis.getEntropyChangeKjPerK()), systemKpis.getEntropySeverity(), "kJ/K");
+          formatDouble(systemKpis.getEntropyChangeKjPerK()), systemKpis.getEntropySeverity(), "kJ/K");
       appendCsvRow(sb, "SystemKpi", scenarioLabel != null ? scenarioLabel : "process", "ExergyChange",
-	  formatDouble(systemKpis.getExergyChangeKj()), systemKpis.getExergySeverity(), "kJ");
+          formatDouble(systemKpis.getExergyChangeKj()), systemKpis.getExergySeverity(), "kJ");
     }
     return sb.toString();
   }
@@ -139,8 +139,8 @@ public final class ProcessSafetyReport {
   private static void appendCsvRow(StringBuilder sb, String category, String name, String metric, String value,
       SeverityLevel severity, String details) {
     sb.append(escapeCsv(category)).append(',').append(escapeCsv(name)).append(',').append(escapeCsv(metric)).append(',')
-	.append(escapeCsv(value)).append(',').append(severity == null ? "" : severity.name()).append(',')
-	.append(escapeCsv(details)).append('\n');
+        .append(escapeCsv(value)).append(',').append(severity == null ? "" : severity.name()).append(',')
+        .append(escapeCsv(details)).append('\n');
   }
 
   private static String escapeCsv(String value) {
@@ -217,7 +217,7 @@ public final class ProcessSafetyReport {
     private final String notes;
 
     public SafetyMarginAssessment(String unitName, double designPressureBar, double operatingPressureBar,
-	double marginFraction, SeverityLevel severity, String notes) {
+        double marginFraction, SeverityLevel severity, String notes) {
       this.unitName = unitName;
       this.designPressureBar = designPressureBar;
       this.operatingPressureBar = operatingPressureBar;
@@ -262,7 +262,7 @@ public final class ProcessSafetyReport {
     private final SeverityLevel severity;
 
     public ReliefDeviceAssessment(String unitName, double setPressureBar, double relievingPressureBar,
-	double upstreamPressureBar, double massFlowRateKgPerHr, double utilisationFraction, SeverityLevel severity) {
+        double upstreamPressureBar, double massFlowRateKgPerHr, double utilisationFraction, SeverityLevel severity) {
       this.unitName = unitName;
       this.setPressureBar = setPressureBar;
       this.relievingPressureBar = relievingPressureBar;
@@ -309,7 +309,7 @@ public final class ProcessSafetyReport {
     private final SeverityLevel exergySeverity;
 
     public SystemKpiSnapshot(double entropyChangeKjPerK, double exergyChangeKj, SeverityLevel entropySeverity,
-	SeverityLevel exergySeverity) {
+        SeverityLevel exergySeverity) {
       this.entropyChangeKjPerK = entropyChangeKjPerK;
       this.exergyChangeKj = exergyChangeKj;
       this.entropySeverity = entropySeverity;

@@ -51,11 +51,11 @@ public final class EquipmentSizingRunner {
 
       switch (equipmentType) {
       case "separator":
-	return sizeSeparator(input);
+        return sizeSeparator(input);
       case "compressor":
-	return sizeCompressor(input);
+        return sizeCompressor(input);
       default:
-	return errorJson("Unknown equipmentType: " + equipmentType + ". Supported: separator, compressor");
+        return errorJson("Unknown equipmentType: " + equipmentType + ". Supported: separator, compressor");
       }
     } catch (Exception e) {
       return errorJson("Equipment sizing failed: " + e.getMessage());
@@ -72,7 +72,7 @@ public final class EquipmentSizingRunner {
     SystemInterface fluid = buildFluid(input);
     double flowRateKgHr = extractFlowRate(input);
     double retentionTimeMin = input.has("liquidRetentionTime_min") ? input.get("liquidRetentionTime_min").getAsDouble()
-	: 5.0;
+        : 5.0;
     String orientation = input.has("orientation") ? input.get("orientation").getAsString() : "horizontal";
 
     // Build and run a simple stream + separator process

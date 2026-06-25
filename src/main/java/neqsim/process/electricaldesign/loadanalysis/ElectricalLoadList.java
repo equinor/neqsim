@@ -1,10 +1,10 @@
 package neqsim.process.electricaldesign.loadanalysis;
 
-import com.google.gson.GsonBuilder;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import com.google.gson.GsonBuilder;
 
 /**
  * Electrical load list aggregation for a process system.
@@ -91,8 +91,8 @@ public class ElectricalLoadList implements java.io.Serializable {
 
       // Reactive power
       if (item.getPowerFactor() > 0 && item.getPowerFactor() < 1.0) {
-	double phi = Math.acos(item.getPowerFactor());
-	totalReactivePowerKVAR += item.getMaxDemandKW() * Math.tan(phi);
+        double phi = Math.acos(item.getPowerFactor());
+        totalReactivePowerKVAR += item.getMaxDemandKW() * Math.tan(phi);
       }
     }
 

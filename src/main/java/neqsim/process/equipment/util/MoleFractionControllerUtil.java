@@ -86,7 +86,7 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
       // System.out.println("density .." +
       // thermoSystem.getPhase(0).getComponent(compName).getNormalLiquidDensity());
       this.moleFrac = rate * thermoSystem.getPhase(0).getComponent(compName).getNormalLiquidDensity()
-	  / thermoSystem.getPhase(0).getComponent(compName).getMolarMass() / 42294896.67;
+          / thermoSystem.getPhase(0).getComponent(compName).getMolarMass() / 42294896.67;
     } else {
       // System.out.println("error ..unit not defined..");
     }
@@ -115,7 +115,7 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
       thermoSystem.init(1);
       double deltaFrac = moleFrac - thermoSystem.getPhase(0).getComponent(compName).getz();
       if (moleFractionReduction) {
-	deltaFrac = (moleFractionReductionRatio) * thermoSystem.getPhase(0).getComponent(compName).getz();
+        deltaFrac = (moleFractionReductionRatio) * thermoSystem.getPhase(0).getComponent(compName).getz();
       }
       double molesChange = deltaFrac * thermoSystem.getTotalNumberOfMoles();
       thermoSystem.addComponent(compName, molesChange); // deltaFrac*thermoSystem.getTotalNumberOfMoles());

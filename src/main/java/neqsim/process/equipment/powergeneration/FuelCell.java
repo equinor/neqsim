@@ -142,10 +142,10 @@ public class FuelCell extends TwoPortEquipment {
     if (consumedH2 > 0) {
       system.addComponent("water", consumedH2);
       if (system.hasComponent("hydrogen")) {
-	system.addComponent("hydrogen", -consumedH2);
+        system.addComponent("hydrogen", -consumedH2);
       }
       if (system.hasComponent("oxygen")) {
-	system.addComponent("oxygen", -consumedO2);
+        system.addComponent("oxygen", -consumedO2);
       }
     }
 

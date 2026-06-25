@@ -328,9 +328,9 @@ class PostTripAnalysisTest {
     boolean found = false;
     for (RestartStep step : plan.getSteps()) {
       if ("Export Compressor".equals(step.getEquipmentName()) && step.getRecommendedDelaySeconds() > 0) {
-	assertEquals(300.0, step.getRecommendedDelaySeconds(), 0.001);
-	found = true;
-	break;
+        assertEquals(300.0, step.getRecommendedDelaySeconds(), 0.001);
+        found = true;
+        break;
       }
     }
     assertTrue(found, "Should have a restart step for Export Compressor with custom ramp-up time");
@@ -370,7 +370,7 @@ class PostTripAnalysisTest {
     RestartSequenceGenerator.RestartPlan plan = generator.generate(propagation);
     assertNotNull(plan);
     assertTrue(plan.getStepCount() > 3); // safety + root cause + utilities + at least one
-					 // equipment
+    // equipment
 
     // Verify the plan is reasonable
     assertTrue(plan.getEstimatedTotalTimeMinutes() > 0);

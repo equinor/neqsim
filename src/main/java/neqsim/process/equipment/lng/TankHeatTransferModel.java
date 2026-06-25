@@ -108,7 +108,7 @@ public class TankHeatTransferModel implements Serializable {
     for (HeatTransferZone zone : zones) {
       double q = zone.uValue * zone.area * (zone.boundaryTemperature - lngTemperature);
       if (q > 0) {
-	totalQ += q;
+        totalQ += q;
       }
     }
     return totalQ;
@@ -150,21 +150,21 @@ public class TankHeatTransferModel implements Serializable {
     for (HeatTransferZone zone : zones) {
       double q = zone.uValue * zone.area * (zone.boundaryTemperature - lngTemperature);
       if (q <= 0) {
-	continue;
+        continue;
       }
 
       if ("bottom".equals(zone.name)) {
-	// Bottom heat goes to bottom layer
-	layerQ[0] += q;
+        // Bottom heat goes to bottom layer
+        layerQ[0] += q;
       } else if ("roof".equals(zone.name) || "dome".equals(zone.name)) {
-	// Roof heat goes to top layer (through vapor space)
-	layerQ[numLayers - 1] += q * 0.3; // 30% reaches top liquid via radiation/convection
+        // Roof heat goes to top layer (through vapor space)
+        layerQ[numLayers - 1] += q * 0.3; // 30% reaches top liquid via radiation/convection
       } else {
-	// Sidewall heat distributed proportionally across all layers
-	double perLayer = q / numLayers;
-	for (int i = 0; i < numLayers; i++) {
-	  layerQ[i] += perLayer;
-	}
+        // Sidewall heat distributed proportionally across all layers
+        double perLayer = q / numLayers;
+        for (int i = 0; i < numLayers; i++) {
+          layerQ[i] += perLayer;
+        }
       }
     }
     return layerQ;
@@ -180,14 +180,14 @@ public class TankHeatTransferModel implements Serializable {
   public void updateBoundaryConditions(double ambientTemperature, double solarRadiation, double seaWaterTemperature) {
     for (HeatTransferZone zone : zones) {
       if ("bottom".equals(zone.name)) {
-	zone.boundaryTemperature = seaWaterTemperature;
+        zone.boundaryTemperature = seaWaterTemperature;
       } else if ("roof".equals(zone.name) || "dome".equals(zone.name)) {
-	// Roof temperature = ambient + solar gain
-	zone.boundaryTemperature = ambientTemperature + solarAbsorptivity * solarRadiation / 10.0;
+        // Roof temperature = ambient + solar gain
+        zone.boundaryTemperature = ambientTemperature + solarAbsorptivity * solarRadiation / 10.0;
       } else if ("cofferdam".equals(zone.name)) {
-	// Cofferdam unchanged (set by adjacent tank)
+        // Cofferdam unchanged (set by adjacent tank)
       } else {
-	zone.boundaryTemperature = ambientTemperature;
+        zone.boundaryTemperature = ambientTemperature;
       }
     }
   }

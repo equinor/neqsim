@@ -162,7 +162,7 @@ public class TripEvent implements Serializable {
     sb.append("\"simulationTimeSeconds\": ").append(simulationTimeSeconds).append(", ");
     sb.append("\"severity\": \"").append(severity.name()).append("\", ");
     sb.append("\"timestamp\": \"")
-	.append(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").format(new Date(timestampMillis))).append("\"");
+        .append(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").format(new Date(timestampMillis))).append("\"");
     sb.append("}");
     return sb.toString();
   }
@@ -170,7 +170,7 @@ public class TripEvent implements Serializable {
   @Override
   public String toString() {
     return String.format("TripEvent[%s: %s=%s %.2f (threshold %.2f) at t=%.1fs, severity=%s]", equipmentName,
-	parameterName, highTrip ? "HIGH" : "LOW", actualValue, threshold, simulationTimeSeconds, severity.name());
+        parameterName, highTrip ? "HIGH" : "LOW", actualValue, threshold, simulationTimeSeconds, severity.name());
   }
 
   /**

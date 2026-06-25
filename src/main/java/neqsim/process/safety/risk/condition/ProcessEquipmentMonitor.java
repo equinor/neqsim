@@ -105,7 +105,7 @@ public class ProcessEquipmentMonitor implements Serializable {
      * @param failureRate adjusted failure rate per hour
      */
     public MonitorReading(Instant timestamp, double temperature, double pressure, double capacityUtilization,
-	double healthIndex, double failureRate) {
+        double healthIndex, double failureRate) {
       this.timestamp = timestamp;
       this.temperature = temperature;
       this.pressure = pressure;
@@ -203,7 +203,7 @@ public class ProcessEquipmentMonitor implements Serializable {
 
       CapacityConstraint bottleneck = constrained.getBottleneckConstraint();
       if (bottleneck != null) {
-	bottleneckConstraint = bottleneck.getName();
+        bottleneckConstraint = bottleneck.getName();
       }
     }
 
@@ -213,7 +213,7 @@ public class ProcessEquipmentMonitor implements Serializable {
     // Record history
     lastUpdated = Instant.now();
     history.add(new MonitorReading(lastUpdated, currentTemperature, currentPressure, currentCapacityUtilization,
-	healthIndex, adjustedFailureRate));
+        healthIndex, adjustedFailureRate));
 
     // Limit history size
     while (history.size() > maxHistorySize) {
@@ -236,7 +236,7 @@ public class ProcessEquipmentMonitor implements Serializable {
 
     lastUpdated = Instant.now();
     history.add(new MonitorReading(lastUpdated, currentTemperature, currentPressure, currentCapacityUtilization,
-	healthIndex, adjustedFailureRate));
+        healthIndex, adjustedFailureRate));
 
     while (history.size() > maxHistorySize) {
       history.remove(0);
@@ -254,7 +254,7 @@ public class ProcessEquipmentMonitor implements Serializable {
     // Weighted average of health contributions
     double totalWeight = temperatureWeight + pressureWeight + capacityWeight;
     healthIndex = (tempHealth * temperatureWeight + pressHealth * pressureWeight + capHealth * capacityWeight)
-	/ totalWeight;
+        / totalWeight;
 
     // Adjust failure rate based on health
     // Lower health = higher failure rate (exponential relationship)
@@ -288,9 +288,9 @@ public class ProcessEquipmentMonitor implements Serializable {
       // Outside design range - health degrades rapidly
       double exceedance = 0;
       if (currentTemperature < minDesignTemperature) {
-	exceedance = (minDesignTemperature - currentTemperature) / range;
+        exceedance = (minDesignTemperature - currentTemperature) / range;
       } else {
-	exceedance = (currentTemperature - maxDesignTemperature) / range;
+        exceedance = (currentTemperature - maxDesignTemperature) / range;
       }
       return Math.max(0, 0.3 - exceedance);
     }
@@ -324,9 +324,9 @@ public class ProcessEquipmentMonitor implements Serializable {
       // Outside design range
       double exceedance = 0;
       if (currentPressure > maxDesignPressure) {
-	exceedance = (currentPressure - maxDesignPressure) / range;
+        exceedance = (currentPressure - maxDesignPressure) / range;
       } else {
-	exceedance = (minDesignPressure - currentPressure) / range;
+        exceedance = (minDesignPressure - currentPressure) / range;
       }
       return Math.max(0, 0.3 - exceedance * 2);
     }

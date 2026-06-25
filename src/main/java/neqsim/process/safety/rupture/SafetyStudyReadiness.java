@@ -55,7 +55,7 @@ public final class SafetyStudyReadiness implements Serializable {
     this.verdict = builder.explicitVerdict == null ? inferVerdict(builder.findings) : builder.explicitVerdict;
     this.findings = Collections.unmodifiableList(new ArrayList<Finding>(builder.findings));
     this.evidenceReferences = Collections
-	.unmodifiableList(new ArrayList<SafetyEvidenceReference>(builder.evidenceReferences));
+        .unmodifiableList(new ArrayList<SafetyEvidenceReference>(builder.evidenceReferences));
   }
 
   /**
@@ -155,10 +155,10 @@ public final class SafetyStudyReadiness implements Serializable {
     boolean warning = false;
     for (Finding finding : findings) {
       if (finding.getSeverity() == Severity.BLOCKER) {
-	return Verdict.NOT_READY;
+        return Verdict.NOT_READY;
       }
       if (finding.getSeverity() == Severity.WARNING) {
-	warning = true;
+        warning = true;
       }
     }
     return warning ? Verdict.SCREENING : Verdict.DESIGN_GRADE;
@@ -183,7 +183,7 @@ public final class SafetyStudyReadiness implements Serializable {
      */
     public Finding(Severity severity, String category, String message, String action) {
       if (severity == null) {
-	throw new IllegalArgumentException("severity must not be null");
+        throw new IllegalArgumentException("severity must not be null");
       }
       this.severity = severity;
       this.category = clean(category);
@@ -304,7 +304,7 @@ public final class SafetyStudyReadiness implements Serializable {
      */
     public Builder addEvidenceReference(SafetyEvidenceReference reference) {
       if (reference != null) {
-	evidenceReferences.add(reference);
+        evidenceReferences.add(reference);
       }
       return this;
     }
@@ -317,7 +317,7 @@ public final class SafetyStudyReadiness implements Serializable {
      */
     public Builder merge(SafetyStudyReadiness readiness) {
       if (readiness == null) {
-	return this;
+        return this;
       }
       findings.addAll(readiness.getFindings());
       evidenceReferences.addAll(readiness.getEvidenceReferences());

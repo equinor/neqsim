@@ -1,13 +1,13 @@
 package neqsim.process.equipment.pipeline;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Comparison test for gas pipeline pressure drop calculations.
@@ -143,7 +143,7 @@ class GasPipelinePressureDropComparisonTest {
     }
     logger.info("    ...");
     logger.info("    [" + (pressureProfile.length - 1) + "]: "
-	+ String.format("%.4f", pressureProfile[pressureProfile.length - 1] / 1e5));
+        + String.format("%.4f", pressureProfile[pressureProfile.length - 1] / 1e5));
 
     assertTrue(dp > 0, "Pressure drop should be positive");
     assertTrue(dp < inletP * 0.5, "Pressure drop should be less than 50% of inlet");

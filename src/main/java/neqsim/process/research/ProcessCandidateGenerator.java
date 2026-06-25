@@ -82,7 +82,7 @@ public class ProcessCandidateGenerator {
     root.addProperty("autoRun", true);
 
     ProcessCandidate candidate = new ProcessCandidate("candidate-separation", "Phase separation", "template-rule")
-	.setDescription("Feed followed by a two-phase separator.").setJsonDefinition(gson.toJson(root));
+        .setDescription("Feed followed by a two-phase separator.").setJsonDefinition(gson.toJson(root));
     candidate.addProductStreamReference("gas", "phase separator.gasOut");
     candidate.addProductStreamReference("liquid", "phase separator.liquidOut");
     candidate.addProductStreamReference("product", "phase separator.gasOut");
@@ -112,8 +112,8 @@ public class ProcessCandidateGenerator {
     root.addProperty("autoRun", true);
 
     ProcessCandidate candidate = new ProcessCandidate("candidate-compression", "Gas compression", "template-rule")
-	.setDescription("Gas product candidate with inlet separation and compression.")
-	.setJsonDefinition(gson.toJson(root));
+        .setDescription("Gas product candidate with inlet separation and compression.")
+        .setJsonDefinition(gson.toJson(root));
     candidate.addProductStreamReference("gas", "product compressor.outlet");
     candidate.addProductStreamReference("product", "product compressor.outlet");
     candidate.addAssumption("Compressor outlet pressure defaults to 1.5 times feed pressure.");
@@ -132,7 +132,7 @@ public class ProcessCandidateGenerator {
     int index = 1;
     for (OperationOption option : operationOptions) {
       if (!spec.allowsUnitType(option.getEquipmentType())) {
-	continue;
+        continue;
       }
       JsonObject root = createRoot(spec);
       JsonArray process = root.getAsJsonArray("process");
@@ -142,7 +142,7 @@ public class ProcessCandidateGenerator {
       root.addProperty("autoRun", true);
 
       ProcessCandidate candidate = new ProcessCandidate("candidate-operation-" + index, option.getName(),
-	  "process-network-option").setDescription(option.getDescription()).setJsonDefinition(gson.toJson(root));
+          "process-network-option").setDescription(option.getDescription()).setJsonDefinition(gson.toJson(root));
       candidate.addProductStreamReference("product", option.getName() + ".outlet");
       candidate.addProductStreamReference("gas", option.getName() + ".gasOut");
       candidate.addProductStreamReference("liquid", option.getName() + ".liquidOut");
@@ -167,21 +167,21 @@ public class ProcessCandidateGenerator {
       return;
     }
     List<List<OperationOption>> paths = graph.enumeratePaths(spec.getFeedMaterialName(), targetMaterials,
-	spec.getMaxSynthesisDepth(), spec.getMaxCandidates());
+        spec.getMaxSynthesisDepth(), spec.getMaxCandidates());
     int index = 1;
     for (List<OperationOption> path : paths) {
       ProcessSynthesisFeasibilityPruner.FeasibilityResult feasibility = pruner.checkOperationPath(path, spec);
       if (spec.isFeasibilityPruningEnabled() && !feasibility.isFeasible()) {
-	ProcessCandidate rejected = new ProcessCandidate("candidate-network-rejected-" + index,
-	    "Rejected process-network path " + index, "process-network-pruned");
-	for (String issue : feasibility.getIssues()) {
-	  rejected.addError(issue);
-	}
-	rejected.setFeasible(false);
-	rejected.setScore(Double.NEGATIVE_INFINITY);
-	candidates.add(rejected);
-	index++;
-	continue;
+        ProcessCandidate rejected = new ProcessCandidate("candidate-network-rejected-" + index,
+            "Rejected process-network path " + index, "process-network-pruned");
+        for (String issue : feasibility.getIssues()) {
+          rejected.addError(issue);
+        }
+        rejected.setFeasible(false);
+        rejected.setScore(Double.NEGATIVE_INFINITY);
+        candidates.add(rejected);
+        index++;
+        continue;
       }
       JsonObject root = createRoot(spec);
       JsonArray process = root.getAsJsonArray("process");
@@ -189,23 +189,23 @@ public class ProcessCandidateGenerator {
       String inletReference = "feed";
       String lastUnitName = "feed";
       for (int step = 0; step < path.size(); step++) {
-	OperationOption option = path.get(step);
-	lastUnitName = option.getName() + " path " + index + " step " + (step + 1);
-	process.add(createUnit(option.getEquipmentType(), lastUnitName, inletReference, option.propertiesToJson()));
-	inletReference = lastUnitName + ".outlet";
+        OperationOption option = path.get(step);
+        lastUnitName = option.getName() + " path " + index + " step " + (step + 1);
+        process.add(createUnit(option.getEquipmentType(), lastUnitName, inletReference, option.propertiesToJson()));
+        inletReference = lastUnitName + ".outlet";
       }
       root.addProperty("autoRun", true);
 
       ProcessCandidate candidate = new ProcessCandidate("candidate-network-" + index, "Process-network path " + index,
-	  "process-network-graph").setDescription("Graph-enumerated material-operation path.")
-	  .setJsonDefinition(gson.toJson(root));
+          "process-network-graph").setDescription("Graph-enumerated material-operation path.")
+          .setJsonDefinition(gson.toJson(root));
       addTerminalProductReferences(candidate, lastUnitName, path.get(path.size() - 1));
       candidate.addAssumption("Generated by bounded P-graph-style material-operation search.");
       if (spec.isIncludeSynthesisLibrary()) {
-	candidate.addAssumption("May include curated operation templates from the synthesis library.");
+        candidate.addAssumption("May include curated operation templates from the synthesis library.");
       }
       for (OperationOption option : path) {
-	candidate.addSynthesisPathStep(option.getName() + " (" + option.getEquipmentType() + ")");
+        candidate.addSynthesisPathStep(option.getName() + " (" + option.getEquipmentType() + ")");
       }
       candidates.add(candidate);
       index++;
@@ -240,7 +240,7 @@ public class ProcessCandidateGenerator {
    */
   private void addTerminalProductReferences(ProcessCandidate candidate, String unitName, OperationOption option) {
     if ("Separator".equalsIgnoreCase(option.getEquipmentType())
-	|| "GasScrubber".equalsIgnoreCase(option.getEquipmentType())) {
+        || "GasScrubber".equalsIgnoreCase(option.getEquipmentType())) {
       candidate.addProductStreamReference("product", unitName + ".gasOut");
       candidate.addProductStreamReference("gas", unitName + ".gasOut");
       candidate.addProductStreamReference("liquid", unitName + ".liquidOut");
@@ -266,7 +266,7 @@ public class ProcessCandidateGenerator {
     List<String> targets = new ArrayList<String>();
     for (ProcessResearchSpec.ProductTarget target : spec.getProductTargets()) {
       if (target.getMaterialName() != null && !target.getMaterialName().trim().isEmpty()) {
-	targets.add(target.getMaterialName());
+        targets.add(target.getMaterialName());
       }
     }
     return targets;
@@ -283,19 +283,19 @@ public class ProcessCandidateGenerator {
     for (ReactionOption reaction : spec.getReactionOptions()) {
       ProcessSynthesisFeasibilityPruner.FeasibilityResult feasibility = pruner.checkReaction(reaction, spec);
       if (spec.isFeasibilityPruningEnabled() && !feasibility.isFeasible()) {
-	ProcessCandidate rejected = new ProcessCandidate("candidate-reaction-rejected-" + index, reaction.getName(),
-	    "reaction-route-pruned");
-	for (String issue : feasibility.getIssues()) {
-	  rejected.addError(issue);
-	}
-	rejected.setFeasible(false);
-	rejected.setScore(Double.NEGATIVE_INFINITY);
-	candidates.add(rejected);
-	index++;
-	continue;
+        ProcessCandidate rejected = new ProcessCandidate("candidate-reaction-rejected-" + index, reaction.getName(),
+            "reaction-route-pruned");
+        for (String issue : feasibility.getIssues()) {
+          rejected.addError(issue);
+        }
+        rejected.setFeasible(false);
+        rejected.setScore(Double.NEGATIVE_INFINITY);
+        candidates.add(rejected);
+        index++;
+        continue;
       }
       if (!spec.allowsUnitType(reaction.getReactorType())) {
-	continue;
+        continue;
       }
       JsonObject root = createRoot(spec);
       JsonArray process = root.getAsJsonArray("process");
@@ -303,32 +303,32 @@ public class ProcessCandidateGenerator {
       String inletReference = "feed";
 
       if (!Double.isNaN(reaction.getReactorTemperatureK()) && spec.allowsUnitType("Heater")) {
-	JsonObject heaterProps = new JsonObject();
-	heaterProps.add("outletTemperature", createUnitArray(reaction.getReactorTemperatureK(), "K"));
-	if (!Double.isNaN(reaction.getReactorPressureBara())) {
-	  heaterProps.add("outletPressure", createUnitArray(reaction.getReactorPressureBara(), "bara"));
-	}
-	process.add(createUnit("Heater", "reaction preheater " + index, inletReference, heaterProps));
-	inletReference = "reaction preheater " + index + ".outlet";
+        JsonObject heaterProps = new JsonObject();
+        heaterProps.add("outletTemperature", createUnitArray(reaction.getReactorTemperatureK(), "K"));
+        if (!Double.isNaN(reaction.getReactorPressureBara())) {
+          heaterProps.add("outletPressure", createUnitArray(reaction.getReactorPressureBara(), "bara"));
+        }
+        process.add(createUnit("Heater", "reaction preheater " + index, inletReference, heaterProps));
+        inletReference = "reaction preheater " + index + ".outlet";
       }
 
       JsonObject reactorProps = new JsonObject();
       reactorProps.addProperty("energyMode", reaction.getEnergyMode());
       if (!Double.isNaN(reaction.getReactorPressureBara())) {
-	reactorProps.add("outletPressure", createUnitArray(reaction.getReactorPressureBara(), "bara"));
+        reactorProps.add("outletPressure", createUnitArray(reaction.getReactorPressureBara(), "bara"));
       }
       process.add(createUnit(reaction.getReactorType(), "reaction reactor " + index, inletReference, reactorProps));
       process
-	  .add(createUnit("Separator", "reaction separator " + index, "reaction reactor " + index + ".outlet", null));
+          .add(createUnit("Separator", "reaction separator " + index, "reaction reactor " + index + ".outlet", null));
       root.addProperty("autoRun", true);
 
       ProcessCandidate candidate = new ProcessCandidate("candidate-reaction-" + index, reaction.getName(),
-	  "reaction-route").setDescription("Reactor plus product flash.").setJsonDefinition(gson.toJson(root));
+          "reaction-route").setDescription("Reactor plus product flash.").setJsonDefinition(gson.toJson(root));
       candidate.addProductStreamReference("gas", "reaction separator " + index + ".gasOut");
       candidate.addProductStreamReference("liquid", "reaction separator " + index + ".liquidOut");
       candidate.addProductStreamReference("product", "reaction separator " + index + ".gasOut");
       if (reaction.getExpectedProductComponent() != null) {
-	candidate.addAssumption("Expected product component: " + reaction.getExpectedProductComponent());
+        candidate.addAssumption("Expected product component: " + reaction.getExpectedProductComponent());
       }
       candidates.add(candidate);
       index++;

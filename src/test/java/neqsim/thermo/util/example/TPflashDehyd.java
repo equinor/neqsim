@@ -58,7 +58,7 @@ public class TPflashDehyd {
       testSystem = testSystem.phaseToSystem(1);
       testOps = new ThermodynamicOperations(testSystem);
       logger.info("nuber of moles " + testSystem.getNumberOfMoles() + " moleFrac MEG "
-	  + testSystem.getPhase(0).getComponent("MEG").getx());
+          + testSystem.getPhase(0).getComponent("MEG").getx());
     }
 
     // testSystem.display();

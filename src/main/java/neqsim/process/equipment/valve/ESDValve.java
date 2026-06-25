@@ -329,18 +329,18 @@ public class ESDValve extends ThrottlingValve {
 
       // Check if closure is complete
       if (closureFraction >= 1.0) {
-	isClosing = false;
-	hasTripCompleted = true;
-	setPercentValveOpening(failSafePosition);
+        isClosing = false;
+        hasTripCompleted = true;
+        setPercentValveOpening(failSafePosition);
       }
     } else if (partialStrokeTestActive) {
       // Partial stroke test - close to test position then return
       double currentOpening = getPercentValveOpening();
       if (currentOpening > partialStrokeTestPosition) {
-	// Closing to test position
-	double closureRate = 100.0 / strokeTime; // Same rate as full closure
-	double newOpening = Math.max(partialStrokeTestPosition, currentOpening - closureRate * dt);
-	setPercentValveOpening(newOpening);
+        // Closing to test position
+        double closureRate = 100.0 / strokeTime; // Same rate as full closure
+        double newOpening = Math.max(partialStrokeTestPosition, currentOpening - closureRate * dt);
+        setPercentValveOpening(newOpening);
       }
       // Note: Test completion must be triggered externally via completePartialStrokeTest()
     }
@@ -366,6 +366,6 @@ public class ESDValve extends ThrottlingValve {
     }
 
     return String.format("%s [ESD Valve] - Status: %s, Opening: %.1f%%, Stroke Time: %.1fs%s", getName(), status,
-	getPercentValveOpening(), strokeTime, isClosing ? String.format(", Elapsed: %.1fs", timeElapsedSinceTrip) : "");
+        getPercentValveOpening(), strokeTime, isClosing ? String.format(", Elapsed: %.1fs", timeElapsedSinceTrip) : "");
   }
 }

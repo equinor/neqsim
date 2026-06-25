@@ -85,7 +85,7 @@ class EngineeringDeliverablesPackageTest {
       Set<DeliverableType> required = StudyClass.CLASS_A.getRequiredDeliverables();
       assertEquals(DeliverableType.values().length, required.size());
       for (DeliverableType type : DeliverableType.values()) {
-	assertTrue(StudyClass.CLASS_A.requires(type), "Class A should require " + type);
+        assertTrue(StudyClass.CLASS_A.requires(type), "Class A should require " + type);
       }
     }
 
@@ -121,8 +121,8 @@ class EngineeringDeliverablesPackageTest {
     @DisplayName("DeliverableType should have display names")
     void deliverableTypeShouldHaveDisplayNames() {
       for (DeliverableType type : DeliverableType.values()) {
-	assertNotNull(type.getDisplayName());
-	assertFalse(type.getDisplayName().trim().isEmpty());
+        assertNotNull(type.getDisplayName());
+        assertFalse(type.getDisplayName().trim().isEmpty());
       }
     }
 
@@ -294,9 +294,9 @@ class EngineeringDeliverablesPackageTest {
       Map<DeliverableType, EngineeringDeliverablesPackage.DeliverableStatus> statusMap = pkg.getStatusMap();
       assertEquals(8, statusMap.size());
       for (EngineeringDeliverablesPackage.DeliverableStatus status : statusMap.values()) {
-	assertTrue(status.isSuccess());
-	assertTrue(status.getDurationMs() >= 0);
-	assertNotNull(status.getMessage());
+        assertTrue(status.isSuccess());
+        assertTrue(status.getDurationMs() >= 0);
+        assertNotNull(status.getMessage());
       }
     }
 
@@ -364,10 +364,10 @@ class EngineeringDeliverablesPackageTest {
 
       boolean hasDeliverablesStep = false;
       for (FieldDevelopmentDesignOrchestrator.WorkflowStep step : orch.getWorkflowHistory()) {
-	if (step.getStepName().contains("Deliverables")) {
-	  hasDeliverablesStep = true;
-	  break;
-	}
+        if (step.getStepName().contains("Deliverables")) {
+          hasDeliverablesStep = true;
+          break;
+        }
       }
       assertTrue(hasDeliverablesStep, "Workflow history should contain an Engineering Deliverables step");
     }

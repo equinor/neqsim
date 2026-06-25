@@ -63,7 +63,7 @@ public class WaterDewPointAnalyser extends StreamMeasurementDeviceBaseClass {
     if (method.equals("Bukacek")) {
       SystemInterface tempFluid = stream.getThermoSystem().clone();
       tempFluid.setTemperature(
-	  BukacekWaterInGas.waterDewPointTemperature(tempFluid.getComponent("water").getx(), referencePressure));
+          BukacekWaterInGas.waterDewPointTemperature(tempFluid.getComponent("water").getx(), referencePressure));
       return tempFluid.getTemperature(unit);
     } else if (method.equals("multiphase")) {
       SystemInterface tempFluid = stream.getThermoSystem().clone();
@@ -71,9 +71,9 @@ public class WaterDewPointAnalyser extends StreamMeasurementDeviceBaseClass {
       tempFluid.setTemperature(0.1, "C");
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
       try {
-	thermoOps.waterDewPointTemperatureMultiphaseFlash();
+        thermoOps.waterDewPointTemperatureMultiphaseFlash();
       } catch (Exception ex) {
-	logger.error(ex.getMessage(), ex);
+        logger.error(ex.getMessage(), ex);
       }
       return tempFluid.getTemperature(unit);
     } else if (method.equals("CPA")) {
@@ -84,9 +84,9 @@ public class WaterDewPointAnalyser extends StreamMeasurementDeviceBaseClass {
       tempFluid2.setTemperature(0.1, "C");
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid2);
       try {
-	thermoOps.waterDewPointTemperatureMultiphaseFlash();
+        thermoOps.waterDewPointTemperatureMultiphaseFlash();
       } catch (Exception ex) {
-	logger.error(ex.getMessage(), ex);
+        logger.error(ex.getMessage(), ex);
       }
       return tempFluid2.getTemperature(unit);
     } else if (method.equals("CPA hydrate")) {
@@ -98,9 +98,9 @@ public class WaterDewPointAnalyser extends StreamMeasurementDeviceBaseClass {
       tempFluid2.setTemperature(0.1, "C");
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid2);
       try {
-	thermoOps.hydrateFormationTemperature();
+        thermoOps.hydrateFormationTemperature();
       } catch (Exception ex) {
-	logger.error(ex.getMessage(), ex);
+        logger.error(ex.getMessage(), ex);
       }
       return tempFluid2.getTemperature(unit);
     } else {
@@ -110,9 +110,9 @@ public class WaterDewPointAnalyser extends StreamMeasurementDeviceBaseClass {
       tempFluid2.setTemperature(-17.0, "C");
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid2);
       try {
-	thermoOps.waterDewPointTemperatureFlash();
+        thermoOps.waterDewPointTemperatureFlash();
       } catch (Exception ex) {
-	logger.error(ex.getMessage(), ex);
+        logger.error(ex.getMessage(), ex);
       }
       return tempFluid2.getTemperature(unit);
     }

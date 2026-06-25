@@ -172,7 +172,7 @@ public class BiomassCharacterization implements Serializable {
   private void calculateHHV() {
     double ashDaf = ash / (100.0 - moisture) * 100.0;
     hhv = 0.3491 * carbonWt + 1.1783 * hydrogenWt + 0.1005 * sulfurWt - 0.1034 * oxygenWt - 0.0151 * nitrogenWt
-	- 0.0211 * ashDaf;
+        - 0.0211 * ashDaf;
   }
 
   /**
@@ -233,7 +233,7 @@ public class BiomassCharacterization implements Serializable {
   private void calculateStoichiometricAir() {
     double factor = (100.0 - moisture) * (100.0 - ash) / 10000.0;
     double o2Required = ((carbonWt / MW_C) * MW_O * 2.0 + (hydrogenWt / MW_H / 2.0) * MW_O * 2.0
-	+ (sulfurWt / MW_S) * MW_O * 2.0 - oxygenWt) / 100.0;
+        + (sulfurWt / MW_S) * MW_O * 2.0 - oxygenWt) / 100.0;
     o2Required = o2Required * factor;
     stoichiometricAir = Math.max(0.0, o2Required / 0.233);
   }
@@ -536,7 +536,7 @@ public class BiomassCharacterization implements Serializable {
       break;
     default:
       throw new IllegalArgumentException("Unknown biomass feedstock: '" + feedstockName
-	  + "'. Supported: wood_chips, straw, corn_stover, bagasse, sewage_sludge, msw, " + "microalgae, rice_husk");
+          + "'. Supported: wood_chips, straw, corn_stover, bagasse, sewage_sludge, msw, " + "microalgae, rice_husk");
     }
     bc.calculate();
     return bc;
@@ -549,6 +549,6 @@ public class BiomassCharacterization implements Serializable {
    */
   public static java.util.List<String> getLibraryFeedstocks() {
     return Collections.unmodifiableList(Arrays.asList("wood_chips", "straw", "corn_stover", "bagasse", "sewage_sludge",
-	"msw", "microalgae", "rice_husk"));
+        "msw", "microalgae", "rice_husk"));
   }
 }

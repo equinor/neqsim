@@ -65,7 +65,7 @@ public class OilTankDrive implements ReservoirDrive {
     if (producedVolumeSm3 > 0.0) {
       cumulativeProduction += producedVolumeSm3;
       if (cumulativeProduction > stoiipSm3) {
-	cumulativeProduction = stoiipSm3;
+        cumulativeProduction = stoiipSm3;
       }
     }
   }

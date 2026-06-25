@@ -44,14 +44,14 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
       logger.info("aSRK " + a + " aCPA " + aCPA);
       logger.info("bSRK " + b + " bCPA " + bCPA);
       for (int j = 0; j < getNumberOfAssociationSites(); j++) {
-	setXsite(j, 1.0);
-	setXsiteOld(j, 1.0);
-	setXsitedV(j, 0.0);
-	setXsitedT(j, 0.0);
+        setXsite(j, 1.0);
+        setXsiteOld(j, 1.0);
+        setXsitedV(j, 0.0);
+        setXsitedT(j, 0.0);
       }
       if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
-	a = aCPA;
-	b = bCPA;
+        a = aCPA;
+        b = bCPA;
       }
       setAttractiveTerm(0);
     }
@@ -75,14 +75,14 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
     xsitedT = new double[numberOfAssociationSites];
     if (numberOfAssociationSites != 0 && cpaon == 1) {
       for (int j = 0; j < getNumberOfAssociationSites(); j++) {
-	setXsite(j, 1.0);
-	setXsiteOld(j, 1.0);
-	setXsitedV(j, 0.0);
-	setXsitedT(j, 0.0);
+        setXsite(j, 1.0);
+        setXsiteOld(j, 1.0);
+        setXsitedV(j, 0.0);
+        setXsitedT(j, 0.0);
       }
       if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
-	a = aCPA;
-	b = bCPA;
+        a = aCPA;
+        b = bCPA;
       }
       setAttractiveTerm(0);
     }
@@ -174,14 +174,14 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
   @Override
   public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     return super.dFdNdT(phase, numberOfComponents, temperature, pressure)
-	+ dFCPAdNdT(phase, numberOfComponents, temperature, pressure);
+        + dFCPAdNdT(phase, numberOfComponents, temperature, pressure);
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     return super.dFdNdV(phase, numberOfComponents, temperature, pressure)
-	+ dFCPAdNdV(phase, numberOfComponents, temperature, pressure);
+        + dFCPAdNdV(phase, numberOfComponents, temperature, pressure);
   }
 
   /** {@inheritDoc} */
@@ -247,19 +247,19 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
    */
   public double calc_lngidV(PhaseInterface phase) {
     return 2.0 * getBi() * (10.0)
-	/ ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()))
-	- 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB())
-	    * (32 * Math.pow(phase.getTotalVolume(), 2.0) - 12.0 * phase.getTotalVolume() * phase.getB()
-		+ Math.pow(phase.getB(), 2.0))
-	    / Math.pow(((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB())),
-		2.0);
+        / ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()))
+        - 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB())
+            * (32 * Math.pow(phase.getTotalVolume(), 2.0) - 12.0 * phase.getTotalVolume() * phase.getB()
+                + Math.pow(phase.getB(), 2.0))
+            / Math.pow(((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB())),
+                2.0);
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFCPAdVdXi(int site, PhaseInterface phase) {
     return 1.0 / (2.0 * phase.getTotalVolume())
-	* (1.0 - phase.getTotalVolume() * ((PhaseCPAInterface) phase).getGcpav()) * getNumberOfMolesInPhase();
+        * (1.0 - phase.getTotalVolume() * ((PhaseCPAInterface) phase).getGcpav()) * getNumberOfMolesInPhase();
   }
 
   /** {@inheritDoc} */

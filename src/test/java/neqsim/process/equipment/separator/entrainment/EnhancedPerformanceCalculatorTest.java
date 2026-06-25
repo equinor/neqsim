@@ -47,7 +47,7 @@ class EnhancedPerformanceCalculatorTest {
     calc.setGasBubbleDSD(DropletSizeDistribution.rosinRammler(500e-6, 2.0));
 
     calc.calculate(GAS_DENSITY, OIL_DENSITY, 0.0, GAS_VISCOSITY, OIL_VISCOSITY, 0.0, GAS_VELOCITY, DIAMETER, LENGTH,
-	"horizontal", LIQ_LEVEL);
+        "horizontal", LIQ_LEVEL);
 
     // Verify results are populated
     assertTrue(calc.getOverallGasLiquidEfficiency() > 0.0, "Overall efficiency should be positive");
@@ -78,20 +78,20 @@ class EnhancedPerformanceCalculatorTest {
     calc.setOilInWaterDSD(DropletSizeDistribution.logNormal(150e-6, 0.5));
 
     calc.calculate(GAS_DENSITY, OIL_DENSITY, WATER_DENSITY, GAS_VISCOSITY, OIL_VISCOSITY, WATER_VISCOSITY, GAS_VELOCITY,
-	DIAMETER, LENGTH, "horizontal", LIQ_LEVEL);
+        DIAMETER, LENGTH, "horizontal", LIQ_LEVEL);
 
     // Gas-liquid results
     assertTrue(calc.getOverallGasLiquidEfficiency() > 0.0, "Gas-liquid efficiency should be positive");
     assertTrue(calc.getOilInGasFraction() >= 0.0 && calc.getOilInGasFraction() <= 1.0,
-	"Oil-in-gas fraction should be valid");
+        "Oil-in-gas fraction should be valid");
     assertTrue(calc.getWaterInGasFraction() >= 0.0 && calc.getWaterInGasFraction() <= 1.0,
-	"Water-in-gas fraction should be valid");
+        "Water-in-gas fraction should be valid");
 
     // Liquid-liquid results
     assertTrue(calc.getWaterInOilFraction() >= 0.0 && calc.getWaterInOilFraction() <= 1.0,
-	"Water-in-oil fraction should be valid");
+        "Water-in-oil fraction should be valid");
     assertTrue(calc.getOilInWaterFraction() >= 0.0 && calc.getOilInWaterFraction() <= 1.0,
-	"Oil-in-water fraction should be valid");
+        "Oil-in-water fraction should be valid");
     assertTrue(calc.getLiquidLiquidGravityEfficiency() >= 0.0, "LL gravity efficiency should be non-negative");
   }
 
@@ -107,7 +107,7 @@ class EnhancedPerformanceCalculatorTest {
     calc.setMistEliminatorCurve(GradeEfficiencyCurve.wireMeshDefault());
 
     calc.calculate(GAS_DENSITY, OIL_DENSITY, 0.0, GAS_VISCOSITY, OIL_VISCOSITY, 0.0, GAS_VELOCITY, 1.5, 5.0, "vertical",
-	0.4);
+        0.4);
 
     assertTrue(calc.getOverallGasLiquidEfficiency() > 0.0, "Vertical efficiency should be positive");
     assertNotNull(calc.getInletFlowRegime(), "Flow regime should be determined");
@@ -124,7 +124,7 @@ class EnhancedPerformanceCalculatorTest {
     calcNone.setInletDeviceModel(new InletDeviceModel(InletDeviceModel.InletDeviceType.NONE));
     calcNone.setMistEliminatorCurve(GradeEfficiencyCurve.wireMeshDefault());
     calcNone.calculate(GAS_DENSITY, OIL_DENSITY, 0.0, GAS_VISCOSITY, OIL_VISCOSITY, 0.0, GAS_VELOCITY, DIAMETER, LENGTH,
-	"horizontal", LIQ_LEVEL);
+        "horizontal", LIQ_LEVEL);
     double effNone = calcNone.getOverallGasLiquidEfficiency();
 
     // With inlet cyclone
@@ -133,7 +133,7 @@ class EnhancedPerformanceCalculatorTest {
     calcCyclone.setInletDeviceModel(new InletDeviceModel(InletDeviceModel.InletDeviceType.INLET_CYCLONE));
     calcCyclone.setMistEliminatorCurve(GradeEfficiencyCurve.wireMeshDefault());
     calcCyclone.calculate(GAS_DENSITY, OIL_DENSITY, 0.0, GAS_VISCOSITY, OIL_VISCOSITY, 0.0, GAS_VELOCITY, DIAMETER,
-	LENGTH, "horizontal", LIQ_LEVEL);
+        LENGTH, "horizontal", LIQ_LEVEL);
     double effCyclone = calcCyclone.getOverallGasLiquidEfficiency();
 
     // Cyclone should improve separation
@@ -150,7 +150,7 @@ class EnhancedPerformanceCalculatorTest {
     calc.setMistEliminatorCurve(GradeEfficiencyCurve.wireMeshDefault());
 
     calc.calculate(GAS_DENSITY, OIL_DENSITY, 0.0, GAS_VISCOSITY, OIL_VISCOSITY, 0.0, GAS_VELOCITY, DIAMETER, LENGTH,
-	"horizontal", LIQ_LEVEL);
+        "horizontal", LIQ_LEVEL);
 
     String json = calc.toJson();
     assertNotNull(json);
@@ -172,10 +172,10 @@ class EnhancedPerformanceCalculatorTest {
 
     // Very high gas velocity should cause K-factor to exceed design
     calc.calculate(GAS_DENSITY, OIL_DENSITY, 0.0, GAS_VISCOSITY, OIL_VISCOSITY, 0.0, 15.0, // very
-											   // high
-											   // gas
-											   // velocity
-	DIAMETER, LENGTH, "horizontal", LIQ_LEVEL);
+        // high
+        // gas
+        // velocity
+        DIAMETER, LENGTH, "horizontal", LIQ_LEVEL);
 
     // K-factor utilization should be very high
     double utilization = calc.getKFactorUtilization();
@@ -194,7 +194,7 @@ class EnhancedPerformanceCalculatorTest {
     calc.setMistEliminatorCurve(GradeEfficiencyCurve.wireMeshDefault());
 
     calc.calculate(GAS_DENSITY, OIL_DENSITY, 0.0, GAS_VISCOSITY, OIL_VISCOSITY, 0.0, GAS_VELOCITY, DIAMETER, LENGTH,
-	"horizontal", LIQ_LEVEL);
+        "horizontal", LIQ_LEVEL);
 
     assertTrue(calc.getOverallGasLiquidEfficiency() > 0.0, "Standard path should still work");
     // Enhanced results should be zero/null

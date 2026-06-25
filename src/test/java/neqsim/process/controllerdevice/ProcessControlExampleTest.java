@@ -80,7 +80,7 @@ public class ProcessControlExampleTest extends neqsim.NeqSimTest {
     flowController.autoTuneStepResponse(1.0, 10.0, 2.0);
     flowController.addGainSchedulePoint(80.0, flowController.getKp(), flowController.getTi(), flowController.getTd());
     flowController.addGainSchedulePoint(120.0, flowController.getKp() * 0.5, flowController.getTi(),
-	flowController.getTd());
+        flowController.getTd());
     flowController.resetEventLog();
     flowController.resetPerformanceMetrics();
 

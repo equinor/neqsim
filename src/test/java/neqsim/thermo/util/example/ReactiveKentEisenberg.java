@@ -44,9 +44,9 @@ public class ReactiveKentEisenberg {
 
     try {
       for (int i = 0; i < 1; i++) {
-	testSystem.addComponent("H2S", 0.01);
-	ops.bubblePointPressureFlash(false);
-	logger.info("pres H2S " + testSystem.getPressure() * testSystem.getPhase(0).getComponent("H2S").getx());
+        testSystem.addComponent("H2S", 0.01);
+        ops.bubblePointPressureFlash(false);
+        logger.info("pres H2S " + testSystem.getPressure() * testSystem.getPhase(0).getComponent("H2S").getx());
       }
       // ops.TPflash();
     } catch (Exception ex) {

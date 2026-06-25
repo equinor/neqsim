@@ -8,6 +8,8 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -35,8 +37,6 @@ import neqsim.process.measurementdevice.VolumeFlowTransmitter;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for the graph-based process representation.
@@ -581,7 +581,7 @@ public class ProcessGraphTest {
     innerSystem.add(innerFeed);
 
     neqsim.process.processmodel.ProcessModule innerModule = new neqsim.process.processmodel.ProcessModule(
-	"Inner Module");
+        "Inner Module");
     innerModule.add(innerSystem);
 
     // Create outer module containing the inner module
@@ -592,7 +592,7 @@ public class ProcessGraphTest {
     outerSystem.add(outerFeed);
 
     neqsim.process.processmodel.ProcessModule outerModule = new neqsim.process.processmodel.ProcessModule(
-	"Outer Module");
+        "Outer Module");
     outerModule.add(outerSystem);
     outerModule.add(innerModule);
 
@@ -670,7 +670,7 @@ public class ProcessGraphTest {
 
     // Add to module
     neqsim.process.processmodel.ProcessModule module = new neqsim.process.processmodel.ProcessModule(
-	"Multi-Train Plant");
+        "Multi-Train Plant");
     module.add(system1);
     module.add(system2);
     module.add(system3);
@@ -682,7 +682,7 @@ public class ProcessGraphTest {
 
     // All three systems are independent - should all be at level 0
     assertTrue(modelGraph.isParallelSubSystemExecutionBeneficial(),
-	"Parallel should be beneficial with 3 independent systems");
+        "Parallel should be beneficial with 3 independent systems");
 
     ProcessModelGraph.ModuleParallelPartition partition = modelGraph.partitionSubSystemsForParallelExecution();
     assertEquals(1, partition.getLevelCount(), "All independent systems should be at same level");
@@ -721,7 +721,7 @@ public class ProcessGraphTest {
     system2.add(heater);
 
     neqsim.process.processmodel.ProcessModule module = new neqsim.process.processmodel.ProcessModule(
-	"Sequential Plant");
+        "Sequential Plant");
     module.add(system1);
     module.add(system2);
 
@@ -739,7 +739,7 @@ public class ProcessGraphTest {
 
     // Check that parallel is NOT beneficial
     assertFalse(modelGraph.isParallelSubSystemExecutionBeneficial(),
-	"Parallel should not be beneficial with sequential dependency");
+        "Parallel should not be beneficial with sequential dependency");
 
     // Check dependencies
     java.util.Map<String, java.util.Set<String>> deps = modelGraph.getSubSystemDependencies();
@@ -809,7 +809,7 @@ public class ProcessGraphTest {
     ProcessModelGraph.ModuleParallelPartition partition = modelGraph.partitionSubSystemsForParallelExecution();
 
     assertTrue(modelGraph.isParallelSubSystemExecutionBeneficial(),
-	"Parallel should be beneficial with diamond pattern");
+        "Parallel should be beneficial with diamond pattern");
     assertEquals(3, partition.getLevelCount(), "Diamond should have 3 levels");
     assertEquals(2, partition.getMaxParallelism(), "Max parallelism should be 2 (TrainA + TrainB)");
 
@@ -817,7 +817,7 @@ public class ProcessGraphTest {
     java.util.List<java.util.List<String>> levelNames = partition.getLevelNames();
     assertTrue(levelNames.get(0).contains("Feed System"), "Level 0 should contain Feed System");
     assertTrue(levelNames.get(1).contains("Train A") && levelNames.get(1).contains("Train B"),
-	"Level 1 should contain Train A and Train B");
+        "Level 1 should contain Train A and Train B");
     assertTrue(levelNames.get(2).contains("Merge System"), "Level 2 should contain Merge System");
 
     logger.info("========================================================\n");
@@ -1437,12 +1437,12 @@ public class ProcessGraphTest {
     process.setUseGraphBasedExecution(false);
     process.run();
     double resultInsertion = process.getUnitOperations().get(process.getUnitOperations().size() - 1).getFluid()
-	.getFlowRate("kg/hr");
+        .getFlowRate("kg/hr");
 
     process.setUseGraphBasedExecution(true);
     process.run();
     double resultGraph = process.getUnitOperations().get(process.getUnitOperations().size() - 1).getFluid()
-	.getFlowRate("kg/hr");
+        .getFlowRate("kg/hr");
 
     assertEquals(resultInsertion, resultGraph, 1e-6, "Both methods should produce same result");
   }
@@ -1694,7 +1694,7 @@ public class ProcessGraphTest {
       int inEdges = node != null ? node.getIncomingEdges().size() : -1;
       int outEdges = node != null ? node.getOutgoingEdges().size() : -1;
       logger.printf(org.apache.logging.log4j.Level.INFO, "  %s [%s]: in=%d, out=%d%n", unit.getName(),
-	  unit.getClass().getSimpleName(), inEdges, outEdges);
+          unit.getClass().getSimpleName(), inEdges, outEdges);
     }
     logger.info("===================================\n");
 
@@ -1825,7 +1825,7 @@ public class ProcessGraphTest {
       int in = node != null ? node.getIncomingEdges().size() : -1;
       int out = node != null ? node.getOutgoingEdges().size() : -1;
       logger.printf(org.apache.logging.log4j.Level.INFO, "  %s [%s]: in=%d, out=%d%n", unit.getName(),
-	  unit.getClass().getSimpleName(), in, out);
+          unit.getClass().getSimpleName(), in, out);
     }
     logger.info("==================================\n");
 
@@ -1879,7 +1879,7 @@ public class ProcessGraphTest {
       int in = node != null ? node.getIncomingEdges().size() : -1;
       int out = node != null ? node.getOutgoingEdges().size() : -1;
       logger.printf(org.apache.logging.log4j.Level.INFO, "  %s [%s]: in=%d, out=%d%n", unit.getName(),
-	  unit.getClass().getSimpleName(), in, out);
+          unit.getClass().getSimpleName(), in, out);
     }
     logger.info("===============================\n");
 
@@ -1890,7 +1890,7 @@ public class ProcessGraphTest {
     ProcessNode hxNode = graph.getNode(heatEx);
     assertNotNull(hxNode, "Heat exchanger should be in graph");
     assertEquals(2, hxNode.getIncomingEdges().size(),
-	"HeatExchanger should have 2 incoming edges (hot and cold streams)");
+        "HeatExchanger should have 2 incoming edges (hot and cold streams)");
   }
 
   /**
@@ -2048,7 +2048,7 @@ public class ProcessGraphTest {
     process.add(compressorFeed);
 
     neqsim.process.equipment.expander.TurboExpanderCompressor tec = new neqsim.process.equipment.expander.TurboExpanderCompressor(
-	"TEC", expanderFeed);
+        "TEC", expanderFeed);
     tec.setCompressorFeedStream(compressorFeed);
     tec.setExpanderOutPressure(40.0);
     process.add(tec);
@@ -2061,7 +2061,7 @@ public class ProcessGraphTest {
       int in = node != null ? node.getIncomingEdges().size() : -1;
       int out = node != null ? node.getOutgoingEdges().size() : -1;
       logger.printf(org.apache.logging.log4j.Level.INFO, "  %s [%s]: in=%d, out=%d%n", unit.getName(),
-	  unit.getClass().getSimpleName(), in, out);
+          unit.getClass().getSimpleName(), in, out);
     }
     logger.info("========================================\n");
 
@@ -2114,9 +2114,9 @@ public class ProcessGraphTest {
     process.add(stream3);
 
     java.util.List<neqsim.process.equipment.stream.StreamInterface> inStreams = java.util.Arrays.asList(stream1,
-	stream2, stream3);
+        stream2, stream3);
     neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger mshx = new neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger(
-	"MSHX", inStreams);
+        "MSHX", inStreams);
     process.add(mshx);
 
     ProcessGraph graph = process.buildGraph();
@@ -2127,7 +2127,7 @@ public class ProcessGraphTest {
       int in = node != null ? node.getIncomingEdges().size() : -1;
       int out = node != null ? node.getOutgoingEdges().size() : -1;
       logger.printf(org.apache.logging.log4j.Level.INFO, "  %s [%s]: in=%d, out=%d%n", unit.getName(),
-	  unit.getClass().getSimpleName(), in, out);
+          unit.getClass().getSimpleName(), in, out);
     }
     logger.info("=========================================\n");
 
@@ -2197,7 +2197,7 @@ public class ProcessGraphTest {
     for (java.util.List<ProcessNode> level : partition.getLevels()) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "  Level %d: ", levelNum++);
       for (ProcessNode node : level) {
-	System.out.print(node.getName() + " ");
+        System.out.print(node.getName() + " ");
       }
 
     }
@@ -2216,7 +2216,7 @@ public class ProcessGraphTest {
     assertTrue(sep2.getGasOutStream().getFlowRate("kg/hr") > 0);
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Parallel execution time: %.2f ms%n",
-	parallelTime / 1_000_000.0);
+        parallelTime / 1_000_000.0);
   }
 
   /**
@@ -2354,21 +2354,21 @@ public class ProcessGraphTest {
       ProcessSystem parallelProcess = new ProcessSystem("Parallel Process");
 
       for (int i = 1; i <= 4; i++) {
-	SystemInterface fluid = new SystemSrkEos(298.0, 50.0);
-	fluid.addComponent("methane", 0.90);
-	fluid.addComponent("ethane", 0.10);
-	fluid.setMixingRule("classic");
+        SystemInterface fluid = new SystemSrkEos(298.0, 50.0);
+        fluid.addComponent("methane", 0.90);
+        fluid.addComponent("ethane", 0.10);
+        fluid.setMixingRule("classic");
 
-	Stream feed = new Stream("feed" + i, fluid.clone());
-	feed.setFlowRate(5000, "kg/hr");
-	parallelProcess.add(feed);
+        Stream feed = new Stream("feed" + i, fluid.clone());
+        feed.setFlowRate(5000, "kg/hr");
+        parallelProcess.add(feed);
 
-	Heater heater = new Heater("heater" + i, feed);
-	heater.setOutTemperature(350.0);
-	parallelProcess.add(heater);
+        Heater heater = new Heater("heater" + i, feed);
+        heater.setOutTemperature(350.0);
+        parallelProcess.add(heater);
 
-	Separator sep = new Separator("sep" + i, heater.getOutletStream());
-	parallelProcess.add(sep);
+        Separator sep = new Separator("sep" + i, heater.getOutletStream());
+        parallelProcess.add(sep);
       }
 
       boolean beneficial = parallelProcess.isParallelExecutionBeneficial();
@@ -2603,7 +2603,7 @@ public class ProcessGraphTest {
     // No cycles means no tear streams needed
     assertTrue(graph.validateTearStreams(null), "Null tear streams should be valid for acyclic graph");
     assertTrue(graph.validateTearStreams(java.util.Collections.emptyList()),
-	"Empty tear streams should be valid for acyclic graph");
+        "Empty tear streams should be valid for acyclic graph");
   }
 
   @Test
@@ -2681,7 +2681,7 @@ public class ProcessGraphTest {
 
     for (ProcessEdge edge : analysis.getRankedTearCandidates()) {
       assertTrue(analysis.getEdgeSensitivities().get(best) <= analysis.getEdgeSensitivities().get(edge),
-	  "Best tear stream should have lowest or equal sensitivity");
+          "Best tear stream should have lowest or equal sensitivity");
     }
   }
 
@@ -2841,7 +2841,7 @@ public class ProcessGraphTest {
 
     if (graph.hasCycles()) {
       assertTrue(summary.contains("Suggested tear streams:"),
-	  "Summary should include tear stream info for cyclic graphs");
+          "Summary should include tear stream info for cyclic graphs");
     }
   }
 }

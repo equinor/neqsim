@@ -114,14 +114,14 @@ class RuptureDiskDynamicTest extends neqsim.NeqSimTest {
 
       // Simulate blocked outlet at t=50s (PCV closes)
       if (currentTime >= 50.0 && currentTime < 51.0) {
-	// Sudden closure of control valve (blocked outlet scenario)
-	pressureControlValve.setPercentValveOpening(1.0);
+        // Sudden closure of control valve (blocked outlet scenario)
+        pressureControlValve.setPercentValveOpening(1.0);
       }
 
       // Simulate recovery at t=200s (PCV reopens) - disk should stay open!
       if (currentTime >= 200.0 && currentTime < 201.0) {
-	// Reopen control valve to allow pressure to drop
-	pressureControlValve.setPercentValveOpening(50.0);
+        // Reopen control valve to allow pressure to drop
+        pressureControlValve.setPercentValveOpening(50.0);
       }
 
       // Run transient calculations
@@ -142,20 +142,20 @@ class RuptureDiskDynamicTest extends neqsim.NeqSimTest {
 
       // Optional: Print progress for key time points
       if (i % 40 == 0 || (currentTime >= 49.5 && currentTime <= 100.0 && i % 4 == 0)
-	  || (currentTime >= 199.5 && currentTime <= 250.0 && i % 4 == 0)) {
-	logger.printf(org.apache.logging.log4j.Level.INFO,
-	    "Time: %6.1f s | Sep Press: %6.2f bara | PCV Opening: %5.1f %% | "
-		+ "Disk Opening: %5.1f %% | PCV Flow: %7.1f kg/hr | Disk Flow: %7.1f kg/hr | Ruptured: %s%n",
-	    currentTime, separatorPressure, pressureControlValve.getPercentValveOpening(),
-	    ruptureDisk.getPercentValveOpening(), pcvFlowRates.get(i), diskFlowRates.get(i),
-	    ruptureDisk.hasRuptured() ? "YES" : "NO");
+          || (currentTime >= 199.5 && currentTime <= 250.0 && i % 4 == 0)) {
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "Time: %6.1f s | Sep Press: %6.2f bara | PCV Opening: %5.1f %% | "
+                + "Disk Opening: %5.1f %% | PCV Flow: %7.1f kg/hr | Disk Flow: %7.1f kg/hr | Ruptured: %s%n",
+            currentTime, separatorPressure, pressureControlValve.getPercentValveOpening(),
+            ruptureDisk.getPercentValveOpening(), pcvFlowRates.get(i), diskFlowRates.get(i),
+            ruptureDisk.hasRuptured() ? "YES" : "NO");
       }
     }
 
     // Verify rupture disk behavior
     // 1. Initial pressure should be below burst pressure
     Assertions.assertTrue(separatorPressures.get(0) < burstPressure,
-	"Initial pressure should be below rupture disk burst pressure");
+        "Initial pressure should be below rupture disk burst pressure");
 
     // 2. Disk should be closed initially
     Assertions.assertEquals(0.0, diskOpenings.get(0), 0.1, "Disk should be initially closed");
@@ -167,8 +167,8 @@ class RuptureDiskDynamicTest extends neqsim.NeqSimTest {
     int ruptureIndex = -1;
     for (int i = 0; i < diskOpenings.size(); i++) {
       if (diskOpenings.get(i) > 1.0) {
-	ruptureIndex = i;
-	break;
+        ruptureIndex = i;
+        break;
       }
     }
     Assertions.assertTrue(ruptureIndex > 0, "Disk should have ruptured during simulation");
@@ -177,8 +177,8 @@ class RuptureDiskDynamicTest extends neqsim.NeqSimTest {
     if (ruptureIndex > 0) {
       double pressureAtRupture = separatorPressures.get(ruptureIndex);
       Assertions.assertTrue(pressureAtRupture >= burstPressure,
-	  "Disk should rupture at or above burst pressure. Ruptured at: " + pressureAtRupture
-	      + " bara, Burst pressure: " + burstPressure + " bara");
+          "Disk should rupture at or above burst pressure. Ruptured at: " + pressureAtRupture
+              + " bara, Burst pressure: " + burstPressure + " bara");
     }
 
     // 6. KEY TEST: Verify disk does NOT close after pressure drops
@@ -192,33 +192,33 @@ class RuptureDiskDynamicTest extends neqsim.NeqSimTest {
 
       // Pressure should have dropped significantly
       Assertions.assertTrue(postRecoveryPressure < burstPressure,
-	  "Pressure should drop below burst pressure after recovery. Pressure: " + postRecoveryPressure
-	      + " bara, Burst: " + burstPressure + " bara");
+          "Pressure should drop below burst pressure after recovery. Pressure: " + postRecoveryPressure
+              + " bara, Burst: " + burstPressure + " bara");
 
       // BUT disk should still be fully open (100%)
       Assertions.assertEquals(100.0, postRecoveryOpening, 1.0,
-	  "Rupture disk should remain fully open even after pressure drops below burst pressure. "
-	      + "This is the key difference from a safety valve!");
+          "Rupture disk should remain fully open even after pressure drops below burst pressure. "
+              + "This is the key difference from a safety valve!");
     }
 
     // 8. Verify disk relieved significant flow
     double maxDiskFlow = diskFlowRates.stream().mapToDouble(Double::doubleValue).max().orElse(0.0);
     Assertions.assertTrue(maxDiskFlow > 100.0,
-	"Disk should relieve significant flow during overpressure event. Max flow: " + maxDiskFlow + " kg/hr");
+        "Disk should relieve significant flow during overpressure event. Max flow: " + maxDiskFlow + " kg/hr");
 
     // Print summary
     logger.info("\n===== RUPTURE DISK TEST SUMMARY =====");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Feed flow rate: %.1f kg/hr%n", feedStream.getFlowRate("kg/hr"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Rupture disk burst pressure: %.1f bara%n", burstPressure);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Rupture disk full open pressure: %.1f bara%n",
-	fullOpenPressure);
+        fullOpenPressure);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Maximum separator pressure: %.2f bara%n", maxPressure);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Maximum disk relief flow: %.1f kg/hr%n", maxDiskFlow);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Disk ruptured: %s%n", ruptureDisk.hasRuptured() ? "YES" : "NO");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Final disk opening: %.1f %%%n",
-	diskOpenings.get(diskOpenings.size() - 1));
+        diskOpenings.get(diskOpenings.size() - 1));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Final pressure: %.2f bara%n",
-	separatorPressures.get(separatorPressures.size() - 1));
+        separatorPressures.get(separatorPressures.size() - 1));
     logger.info("Key behavior: Disk remains FULLY OPEN even though pressure dropped below burst pressure!");
     logger.info("======================================");
   }
@@ -265,22 +265,22 @@ class RuptureDiskDynamicTest extends neqsim.NeqSimTest {
       disk.runTransient(0.5, id);
 
       logger.printf(org.apache.logging.log4j.Level.INFO,
-	  "Pressure: %5.1f bara | Disk Opening: %6.1f %% | Has Ruptured: %s%n", testPressures[i],
-	  disk.getPercentValveOpening(), disk.hasRuptured() ? "YES" : "NO");
+          "Pressure: %5.1f bara | Disk Opening: %6.1f %% | Has Ruptured: %s%n", testPressures[i],
+          disk.getPercentValveOpening(), disk.hasRuptured() ? "YES" : "NO");
 
       // Verify behavior
       if (i < 2) {
-	// Before burst pressure
-	Assertions.assertEquals(0.0, disk.getPercentValveOpening(), 1.0, "Disk should be closed below burst pressure");
-	Assertions.assertFalse(disk.hasRuptured(), "Disk should not be ruptured yet");
+        // Before burst pressure
+        Assertions.assertEquals(0.0, disk.getPercentValveOpening(), 1.0, "Disk should be closed below burst pressure");
+        Assertions.assertFalse(disk.hasRuptured(), "Disk should not be ruptured yet");
       } else if (i == 2) {
-	// At burst pressure - just starting to rupture
-	Assertions.assertTrue(disk.hasRuptured(), "Disk should be ruptured at burst pressure");
+        // At burst pressure - just starting to rupture
+        Assertions.assertTrue(disk.hasRuptured(), "Disk should be ruptured at burst pressure");
       } else {
-	// After burst pressure exceeded - disk should be fully open forever
-	Assertions.assertEquals(100.0, disk.getPercentValveOpening(), 1.0,
-	    "Disk should be fully open after rupturing at pressure: " + testPressures[i]);
-	Assertions.assertTrue(disk.hasRuptured(), "Disk should be marked as ruptured");
+        // After burst pressure exceeded - disk should be fully open forever
+        Assertions.assertEquals(100.0, disk.getPercentValveOpening(), 1.0,
+            "Disk should be fully open after rupturing at pressure: " + testPressures[i]);
+        Assertions.assertTrue(disk.hasRuptured(), "Disk should be marked as ruptured");
       }
     }
 

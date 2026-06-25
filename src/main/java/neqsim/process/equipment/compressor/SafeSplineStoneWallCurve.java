@@ -163,18 +163,18 @@ public class SafeSplineStoneWallCurve extends StoneWallCurve {
       double maxHead = sortedHead[sortedHead.length - 1];
 
       if (headValue >= minHead && headValue <= maxHead) {
-	return Math.max(0.0, flowFromHead.value(headValue));
+        return Math.max(0.0, flowFromHead.value(headValue));
       }
 
       double slope;
       double extrapolated;
       if (headValue < minHead) {
-	slope = (sortedFlow[1] - sortedFlow[0]) / (sortedHead[1] - sortedHead[0]);
-	extrapolated = sortedFlow[0] + slope * (headValue - sortedHead[0]);
+        slope = (sortedFlow[1] - sortedFlow[0]) / (sortedHead[1] - sortedHead[0]);
+        extrapolated = sortedFlow[0] + slope * (headValue - sortedHead[0]);
       } else {
-	slope = (sortedFlow[sortedFlow.length - 1] - sortedFlow[sortedFlow.length - 2])
-	    / (sortedHead[sortedHead.length - 1] - sortedHead[sortedHead.length - 2]);
-	extrapolated = sortedFlow[sortedFlow.length - 1] + slope * (headValue - sortedHead[sortedHead.length - 1]);
+        slope = (sortedFlow[sortedFlow.length - 1] - sortedFlow[sortedFlow.length - 2])
+            / (sortedHead[sortedHead.length - 1] - sortedHead[sortedHead.length - 2]);
+        extrapolated = sortedFlow[sortedFlow.length - 1] + slope * (headValue - sortedHead[sortedHead.length - 1]);
       }
 
       return Math.max(0.0, extrapolated);
@@ -220,23 +220,23 @@ public class SafeSplineStoneWallCurve extends StoneWallCurve {
       double minFlow = flow[0];
       double maxFlow = flow[flow.length - 1];
       if (minFlow > maxFlow) {
-	double temp = minFlow;
-	minFlow = maxFlow;
-	maxFlow = temp;
+        double temp = minFlow;
+        minFlow = maxFlow;
+        maxFlow = temp;
       }
 
       if (flowValue >= minFlow && flowValue <= maxFlow) {
-	return headFromFlow.value(flowValue);
+        return headFromFlow.value(flowValue);
       }
 
       double slope;
       double extrapolated;
       if (flowValue < minFlow) {
-	slope = (head[1] - head[0]) / (flow[1] - flow[0]);
-	extrapolated = head[0] + slope * (flowValue - flow[0]);
+        slope = (head[1] - head[0]) / (flow[1] - flow[0]);
+        extrapolated = head[0] + slope * (flowValue - flow[0]);
       } else {
-	slope = (head[head.length - 1] - head[head.length - 2]) / (flow[flow.length - 1] - flow[flow.length - 2]);
-	extrapolated = head[head.length - 1] + slope * (flowValue - flow[flow.length - 1]);
+        slope = (head[head.length - 1] - head[head.length - 2]) / (flow[flow.length - 1] - flow[flow.length - 2]);
+        extrapolated = head[head.length - 1] + slope * (flowValue - flow[flow.length - 1]);
       }
 
       return Math.max(0.0, extrapolated);

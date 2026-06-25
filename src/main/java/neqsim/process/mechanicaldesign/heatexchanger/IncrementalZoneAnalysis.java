@@ -249,7 +249,7 @@ public class IncrementalZoneAnalysis implements Serializable {
       double approach2 = Math.abs(zone.hotOutletTemp - zone.coldInletTemp);
       double minApproach = Math.min(approach1, approach2);
       if (minApproach < minimumApproachTemperature) {
-	minimumApproachTemperature = minApproach;
+        minimumApproachTemperature = minApproach;
       }
     }
 
@@ -270,18 +270,18 @@ public class IncrementalZoneAnalysis implements Serializable {
     case CONDENSING:
       // Shah condensation
       double hLo = ShahCondensation.calcLiquidOnlyHTC(massFlux, tubeIDm, zone.tubeLiquidDensity,
-	  zone.tubeLiquidViscosity, zone.tubeLiquidCp, zone.tubeLiquidConductivity);
+          zone.tubeLiquidViscosity, zone.tubeLiquidCp, zone.tubeLiquidConductivity);
       return ShahCondensation.calcAverageHTC(hLo, zone.tubeReducedPressure, zone.tubeQualityIn, zone.tubeQualityOut,
-	  10);
+          10);
 
     case EVAPORATING:
       // Gungor-Winterton boiling
       double heatFlux = (tubeCount > 0 && tubeIDm > 0)
-	  ? zone.duty / (tubeCount * Math.PI * tubeIDm * tubeLengthm / zones.size())
-	  : 0.0;
+          ? zone.duty / (tubeCount * Math.PI * tubeIDm * tubeLengthm / zones.size())
+          : 0.0;
       return BoilingHeatTransfer.calcAverageHTC(massFlux, tubeIDm, zone.tubeLiquidDensity, zone.tubeVaporDensity,
-	  zone.tubeLiquidViscosity, zone.tubeLiquidCp, zone.tubeLiquidConductivity, heatFlux,
-	  zone.tubeHeatOfVaporization, zone.tubeQualityIn, zone.tubeQualityOut, 10);
+          zone.tubeLiquidViscosity, zone.tubeLiquidCp, zone.tubeLiquidConductivity, heatFlux,
+          zone.tubeHeatOfVaporization, zone.tubeQualityIn, zone.tubeQualityOut, 10);
 
     default:
       // Single-phase (vapor or liquid)
@@ -308,7 +308,7 @@ public class IncrementalZoneAnalysis implements Serializable {
     double muW = zone.shellViscosity; // Assume bulk = wall for simplicity
 
     return BellDelawareMethod.calcKernShellSideHTC(massFlux, De, zone.shellViscosity, zone.shellCp,
-	zone.shellConductivity, muW);
+        zone.shellConductivity, muW);
   }
 
   /**
@@ -339,7 +339,7 @@ public class IncrementalZoneAnalysis implements Serializable {
       double NuLam = 3.66;
       double fTurb = ThermalDesignCalculator.calcDarcyFriction(3000);
       double NuTurb = (fTurb / 8.0) * 2000.0 * Pr
-	  / (1.0 + 12.7 * Math.sqrt(fTurb / 8.0) * (Math.pow(Pr, 2.0 / 3.0) - 1.0));
+          / (1.0 + 12.7 * Math.sqrt(fTurb / 8.0) * (Math.pow(Pr, 2.0 / 3.0) - 1.0));
       double frac = (Re - 2300.0) / 700.0;
       Nu = NuLam + frac * (NuTurb - NuLam);
     } else {
@@ -420,8 +420,8 @@ public class IncrementalZoneAnalysis implements Serializable {
       // Use Friedel for two-phase
       double avgQuality = (zone.tubeQualityIn + zone.tubeQualityOut) / 2.0;
       return TwoPhasePressureDrop.calcFriedelPressureDrop(massFlux, avgQuality, tubeIDm, zoneLength,
-	  zone.tubeLiquidDensity, zone.tubeVaporDensity, zone.tubeLiquidViscosity, zone.tubeVaporViscosity,
-	  zone.tubeSurfaceTension);
+          zone.tubeLiquidDensity, zone.tubeVaporDensity, zone.tubeLiquidViscosity, zone.tubeVaporViscosity,
+          zone.tubeSurfaceTension);
     }
 
     // Single-phase Fanning friction
@@ -456,7 +456,7 @@ public class IncrementalZoneAnalysis implements Serializable {
     int zoneBaffles = Math.max(1, (int) Math.round(tubeLengthm / baffleSpacingm / zones.size()));
 
     return BellDelawareMethod.calcKernShellSidePressureDrop(massFlux, De, shellIDm, zoneBaffles, zone.shellDensity,
-	zone.shellViscosity, muW);
+        zone.shellViscosity, muW);
   }
 
   /**
@@ -745,7 +745,7 @@ public class IncrementalZoneAnalysis implements Serializable {
      * @param regime phase regime
      */
     public void setTubeSideProperties(double density, double viscosity, double cp, double conductivity,
-	double massFlowRate, PhaseRegime regime) {
+        double massFlowRate, PhaseRegime regime) {
       this.tubeDensity = density;
       this.tubeViscosity = viscosity;
       this.tubeCp = cp;
@@ -765,7 +765,7 @@ public class IncrementalZoneAnalysis implements Serializable {
      * @param regime phase regime
      */
     public void setShellSideProperties(double density, double viscosity, double cp, double conductivity,
-	double massFlowRate, PhaseRegime regime) {
+        double massFlowRate, PhaseRegime regime) {
       this.shellDensity = density;
       this.shellViscosity = viscosity;
       this.shellCp = cp;

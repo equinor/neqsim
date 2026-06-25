@@ -190,13 +190,13 @@ public class TechnicalRequirementsDocument implements Serializable {
     // Add category-based standards for applicable categories
     for (StandardType type : StandardType.values()) {
       if (type.appliesTo(equipmentType)) {
-	String category = type.getDesignStandardCategory();
-	List<StandardType> categoryStandards = getStandardsForCategory(category);
-	for (StandardType std : categoryStandards) {
-	  if (!result.contains(std) && std.appliesTo(equipmentType)) {
-	    result.add(std);
-	  }
-	}
+        String category = type.getDesignStandardCategory();
+        List<StandardType> categoryStandards = getStandardsForCategory(category);
+        for (StandardType std : categoryStandards) {
+          if (!result.contains(std) && std.appliesTo(equipmentType)) {
+            result.add(std);
+          }
+        }
       }
     }
 
@@ -290,7 +290,7 @@ public class TechnicalRequirementsDocument implements Serializable {
       sb.append("    ").append(entry.getKey()).append(": ");
       List<String> codes = new ArrayList<>();
       for (StandardType st : entry.getValue()) {
-	codes.add(st.getCode());
+        codes.add(st.getCode());
       }
       sb.append(codes).append("\n");
     }
@@ -327,7 +327,7 @@ public class TechnicalRequirementsDocument implements Serializable {
      * @param location installation location
      */
     public EnvironmentalConditions(double minAmbientTemp, double maxAmbientTemp, double seawaterTemp,
-	String seismicZone, double windSpeed, double waveHeight, String location) {
+        String seismicZone, double windSpeed, double waveHeight, String location) {
       this.minAmbientTemperature = minAmbientTemp;
       this.maxAmbientTemperature = maxAmbientTemp;
       this.designSeawaterTemperature = seawaterTemp;
@@ -423,7 +423,7 @@ public class TechnicalRequirementsDocument implements Serializable {
      * @param loadFactor load factor (multiplier)
      */
     public SafetyFactors(double pressureSF, double tempMargin, double corrosion, double wallTolerance,
-	double loadFactor) {
+        double loadFactor) {
       this.pressureSafetyFactor = pressureSF;
       this.temperatureSafetyMargin = tempMargin;
       this.corrosionAllowance = corrosion;
@@ -501,7 +501,7 @@ public class TechnicalRequirementsDocument implements Serializable {
      * @param materialStd material standard (e.g., "ASTM", "EN")
      */
     public MaterialSpecifications(String plateMaterial, String pipeMaterial, double minTemp, double maxTemp,
-	boolean impactTesting, String materialStd) {
+        boolean impactTesting, String materialStd) {
       this.defaultPlateMaterial = plateMaterial;
       this.defaultPipeMaterial = pipeMaterial;
       this.minDesignTemperature = minTemp;
@@ -648,11 +648,11 @@ public class TechnicalRequirementsDocument implements Serializable {
     public Builder addStandard(String category, StandardType standard) {
       List<StandardType> list = designStandards.get(category);
       if (list == null) {
-	list = new ArrayList<>();
-	designStandards.put(category, list);
+        list = new ArrayList<>();
+        designStandards.put(category, list);
       }
       if (!list.contains(standard)) {
-	list.add(standard);
+        list.add(standard);
       }
       return this;
     }
@@ -679,11 +679,11 @@ public class TechnicalRequirementsDocument implements Serializable {
     public Builder addEquipmentStandard(String equipmentType, StandardType standard) {
       List<StandardType> list = equipmentStandards.get(equipmentType);
       if (list == null) {
-	list = new ArrayList<>();
-	equipmentStandards.put(equipmentType, list);
+        list = new ArrayList<>();
+        equipmentStandards.put(equipmentType, list);
       }
       if (!list.contains(standard)) {
-	list.add(standard);
+        list.add(standard);
       }
       return this;
     }

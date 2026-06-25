@@ -52,7 +52,7 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
   public double getConversionFactor(String name) {
     double mol_m3 = 0.0;
     double mol_Sm3 = ThermodynamicConstantsInterface.atm
-	/ (ThermodynamicConstantsInterface.R * standardStateTemperature);
+        / (ThermodynamicConstantsInterface.R * standardStateTemperature);
     if (boilp < 25) {
       mol_m3 = ThermodynamicConstantsInterface.atm / (ThermodynamicConstantsInterface.R * standardStateTemperature);
     } else {
@@ -123,13 +123,13 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
       factor = 1.0 / molarmass / (3600.0 * 24.0) / 2.20462262 / 0.068;
     } else {
       throw new RuntimeException(new InvalidInputException(this, "getConversionFactor", "unit",
-	  "'" + name + "' is not supported. Supported units: mole/sec, mol/sec, mole/min, "
-	      + "mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min, "
-	      + "kmole/hr, kmol/hr, kmole/day, kmol/day, kg/sec, kg/min, kg/hr, kg/day, "
-	      + "lb/hr, lbmole/hr, lbmol/hr, m3/sec, Am3/sec, m3/min, Am3/min, m3/hr, "
-	      + "Am3/hr, m3/day, Am3/day, Sm3/sec, Sm3/min, Sm3/hr, Sm3/day, MSm3/day, "
-	      + "MSm3/hr, idSm3/sec, idSm3/min, idSm3/hr, idSm3/day, Nlitre/min, "
-	      + "Nlitre/sec, gallons/min, barrel/day, bbl/day"));
+          "'" + name + "' is not supported. Supported units: mole/sec, mol/sec, mole/min, "
+              + "mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min, "
+              + "kmole/hr, kmol/hr, kmole/day, kmol/day, kg/sec, kg/min, kg/hr, kg/day, "
+              + "lb/hr, lbmole/hr, lbmol/hr, m3/sec, Am3/sec, m3/min, Am3/min, m3/hr, "
+              + "Am3/hr, m3/day, Am3/day, Sm3/sec, Sm3/min, Sm3/hr, Sm3/day, MSm3/day, "
+              + "MSm3/hr, idSm3/sec, idSm3/min, idSm3/hr, idSm3/day, Nlitre/min, "
+              + "Nlitre/sec, gallons/min, barrel/day, bbl/day"));
     }
 
     return factor;

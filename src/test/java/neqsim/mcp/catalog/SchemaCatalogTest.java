@@ -5,9 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
+import org.junit.jupiter.api.Test;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link SchemaCatalog}.

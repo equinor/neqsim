@@ -86,7 +86,7 @@ public final class ProgressTracker {
 
       // Keep only last 20 milestones to bound memory
       if (progress.milestones.size() > 20) {
-	progress.milestones.remove(0);
+        progress.milestones.remove(0);
       }
     }
   }
@@ -154,7 +154,7 @@ public final class ProgressTracker {
     JsonArray active = new JsonArray();
     for (OperationProgress op : OPERATIONS.values()) {
       if (!op.completed) {
-	active.add(op.toJson());
+        active.add(op.toJson());
       }
     }
     response.addProperty("activeCount", active.size());
@@ -171,7 +171,7 @@ public final class ProgressTracker {
     List<String> toRemove = new ArrayList<String>();
     for (java.util.Map.Entry<String, OperationProgress> entry : OPERATIONS.entrySet()) {
       if (entry.getValue().completed && entry.getValue().completedAt < cutoff) {
-	toRemove.add(entry.getKey());
+        toRemove.add(entry.getKey());
       }
     }
     for (String key : toRemove) {
@@ -242,14 +242,14 @@ public final class ProgressTracker {
       obj.addProperty("elapsedMs", System.currentTimeMillis() - startedAt);
 
       if (!milestones.isEmpty()) {
-	JsonArray ms = new JsonArray();
-	for (Milestone m : milestones) {
-	  JsonObject mObj = new JsonObject();
-	  mObj.addProperty("step", m.step);
-	  mObj.addProperty("message", m.message);
-	  ms.add(mObj);
-	}
-	obj.add("recentMilestones", ms);
+        JsonArray ms = new JsonArray();
+        for (Milestone m : milestones) {
+          JsonObject mObj = new JsonObject();
+          mObj.addProperty("step", m.step);
+          mObj.addProperty("message", m.message);
+          ms.add(mObj);
+        }
+        obj.add("recentMilestones", ms);
       }
 
       return obj;

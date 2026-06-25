@@ -71,7 +71,7 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
     for (int i = 0; i < names.length; i++) {
       // System.out.println("stoc coef: " + this.stocCoefs[i]);
       if (stocCoefs[i] < 0) {
-	numberOfReactants++;
+        numberOfReactants++;
       }
     }
 
@@ -83,11 +83,11 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
     int l = 0;
     for (int i = 0; i < names.length; i++) {
       if (stocCoefs[i] < 0) {
-	// reacCoefs[k] = stocCoefs[i];
-	reactantNames[k++] = this.names[i];
+        // reacCoefs[k] = stocCoefs[i];
+        reactantNames[k++] = this.names[i];
       } else {
-	// prodCoefs[l] = stocCoefs[i];
-	productNames[l++] = this.names[i];
+        // prodCoefs[l] = stocCoefs[i];
+        productNames[l++] = this.names[i];
       }
     }
   }
@@ -177,9 +177,9 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
     for (int i = 0; i < names.length; i++) {
       // System.out.println("name " + names[i] + " stcoc " + stocCoefs[i]);
       if (system.getPhase(phaseNumb).getComponent(names[i]).calcActivity()) {
-	kgamma *= Math.pow(system.getPhase(phaseNumb).getActivityCoefficient(
-	    system.getPhase(phaseNumb).getComponent(names[i]).getComponentNumber(),
-	    system.getPhase(phaseNumb).getComponent("water").getComponentNumber()), stocCoefs[i]);
+        kgamma *= Math.pow(system.getPhase(phaseNumb).getActivityCoefficient(
+            system.getPhase(phaseNumb).getComponent(names[i]).getComponentNumber(),
+            system.getPhase(phaseNumb).getComponent("water").getComponentNumber()), stocCoefs[i]);
       }
     }
     return kgamma;
@@ -197,7 +197,7 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
     for (int i = 0; i < names.length; i++) {
       // System.out.println("name " + names[i] + " stcoc " + stocCoefs[i]);
       if (stocCoefs[i] < 0) {
-	ksp *= Math.pow(system.getPhase(phaseNumb).getComponent(names[i]).getx(), -stocCoefs[i]);
+        ksp *= Math.pow(system.getPhase(phaseNumb).getComponent(names[i]).getx(), -stocCoefs[i]);
       }
     }
     ksp /= (getK(system.getPhase(phaseNumb)));
@@ -231,15 +231,15 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
 
     for (int i = 0; i < names.length; i++) {
       for (int j = 0; j < components.length; j++) {
-	// System.out.println("names: " + names[i] + " " +
-	// system.getPhases()[0].getComponent(j).getName());
-	if (this.names[i].equals(components[j].getName())) {
-	  for (int k = 0; k < Amatrix.length; k++) {
-	    tempAmatrix.set(k, i, Amatrix[k][j]);
-	  }
-	  tempNmatrix.set(i, 0, components[j].getNumberOfMolesInPhase());
-	  tempRefPotmatrix.set(i, 0, chemRefPot[j]);
-	}
+        // System.out.println("names: " + names[i] + " " +
+        // system.getPhases()[0].getComponent(j).getName());
+        if (this.names[i].equals(components[j].getName())) {
+          for (int k = 0; k < Amatrix.length; k++) {
+            tempAmatrix.set(k, i, Amatrix[k][j]);
+          }
+          tempNmatrix.set(i, 0, components[j].getNumberOfMolesInPhase());
+          tempRefPotmatrix.set(i, 0, chemRefPot[j]);
+        }
       }
     }
 
@@ -260,13 +260,13 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
 
     for (int i = 0; i < Amatrix.length; i++) {
       for (int k = 0; k < reactantNames.length; k++) {
-	tempAReacmatrix.set(i, k, tempAmatrix.get(i, k));
+        tempAReacmatrix.set(i, k, tempAmatrix.get(i, k));
       }
     }
 
     for (int i = 0; i < Amatrix.length; i++) {
       for (int k = 0; k < productNames.length; k++) {
-	tempAProdmatrix.set(i, k, tempAmatrix.get(i, names.length - 1 - k));
+        tempAProdmatrix.set(i, k, tempAmatrix.get(i, names.length - 1 - k));
       }
     }
 
@@ -295,9 +295,9 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
     }
     for (int i = 0; i < names.length; i++) {
       for (int j = 0; j < phase.getNumberOfComponents(); j++) {
-	if (this.names[i].equals(phase.getComponent(j).getName())) {
-	  moles[i] = phase.getComponent(j).getNumberOfMolesInPhase();
-	}
+        if (this.names[i].equals(phase.getComponent(j).getName())) {
+          moles[i] = phase.getComponent(j).getNumberOfMolesInPhase();
+        }
       }
     }
   }
@@ -330,31 +330,31 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
 
     for (int j = 0; j < reactantNames.length; j++) {
       for (int i = 0; i < names.length; i++) {
-	if (names[i].equals(reactantNames[j])) {
-	  test = true;
-	  break;
-	} else {
-	  test = false;
-	}
+        if (names[i].equals(reactantNames[j])) {
+          test = true;
+          break;
+        } else {
+          test = false;
+        }
       }
       if (!test) {
-	break;
+        break;
       }
     }
 
     if (!test) {
       for (int j = 0; j < productNames.length; j++) {
-	for (int i = 0; i < names.length; i++) {
-	  if (names[i].equals(productNames[j])) {
-	    test = true;
-	    break;
-	  } else {
-	    test = false;
-	  }
-	}
-	if (!test) {
-	  break;
-	}
+        for (int i = 0; i < names.length; i++) {
+          if (names[i].equals(productNames[j])) {
+            test = true;
+            break;
+          } else {
+            test = false;
+          }
+        }
+        if (!test) {
+          break;
+        }
       }
     }
 

@@ -2,14 +2,14 @@ package neqsim.process.equipment.pipeline;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Comparison tests for different pipeline pressure drop models with pure methane.
@@ -115,7 +115,7 @@ public class PipelinePressureDropComparisonTest {
       double sqrtF = Math.sqrt(f);
       double fNew = Math.pow(1.0 / (-2.0 * Math.log10(relativeRoughness / 3.7 + 2.51 / (reynoldsNumber * sqrtF))), 2.0);
       if (Math.abs(fNew - f) / f < 1e-8) {
-	break;
+        break;
       }
       f = fNew;
     }
@@ -169,7 +169,7 @@ public class PipelinePressureDropComparisonTest {
     // Convert to actual velocity and use Darcy-Weisbach conceptually
     // For gas: P1² - P2² = (16 * f * L * G * Z * T * Q²) / (π² * D⁵ * Tb) * Pb
     double K = (16.0 * frictionFactor * length * gasGravity * compressibilityZ * temperature * Pb)
-	/ (Math.PI * Math.PI * Math.pow(diameter, 5) * Tb);
+        / (Math.PI * Math.PI * Math.pow(diameter, 5) * Tb);
 
     double P2_squared = P1_Pa * P1_Pa - K * flowRateSm3Sec * flowRateSm3Sec;
     if (P2_squared < 0) {
@@ -215,7 +215,7 @@ public class PipelinePressureDropComparisonTest {
 
     // Using same K factor as General Flow with Weymouth friction factor
     double K = (16.0 * f_weymouth * length * gasGravity * compressibilityZ * temperature * Pb)
-	/ (Math.PI * Math.PI * Math.pow(diameter, 5) * Tb);
+        / (Math.PI * Math.PI * Math.pow(diameter, 5) * Tb);
 
     double P2_squared = P1_Pa * P1_Pa - K * flowRateSm3Sec * flowRateSm3Sec;
     if (P2_squared < 0) {
@@ -258,7 +258,7 @@ public class PipelinePressureDropComparisonTest {
 
     // Using same K factor approach
     double K = (16.0 * f_panhandle * length * gasGravity * compressibilityZ * temperature * Pb)
-	/ (Math.PI * Math.PI * Math.pow(diameter, 5) * Tb);
+        / (Math.PI * Math.PI * Math.pow(diameter, 5) * Tb);
 
     double P2_squared = P1_Pa * P1_Pa - K * flowRateSm3Sec * flowRateSm3Sec;
     if (P2_squared < 0) {
@@ -648,22 +648,22 @@ public class PipelinePressureDropComparisonTest {
 
     // 1. Darcy-Weisbach (fundamental)
     double dpDarcyPa = calcDarcyWeisbachPressureDrop(PIPE_LENGTH, PIPE_DIAMETER, PIPE_ROUGHNESS, density, velocity,
-	viscosity);
+        viscosity);
     double dpDarcyBar = dpDarcyPa / 100000;
 
     // 2. General Flow Equation
     double P2_general = calcGeneralFlowEquationOutletPressure(INLET_PRESSURE, flowRateSm3Sec, PIPE_LENGTH,
-	PIPE_DIAMETER, GAS_GRAVITY, temperature, compressibilityZ, frictionFactor);
+        PIPE_DIAMETER, GAS_GRAVITY, temperature, compressibilityZ, frictionFactor);
     double dpGeneralBar = INLET_PRESSURE - P2_general;
 
     // 3. Weymouth equation
     double P2_weymouth = calcWeymouthOutletPressure(INLET_PRESSURE, flowRateSm3Sec, PIPE_LENGTH, PIPE_DIAMETER,
-	GAS_GRAVITY, temperature, compressibilityZ);
+        GAS_GRAVITY, temperature, compressibilityZ);
     double dpWeymouthBar = INLET_PRESSURE - P2_weymouth;
 
     // 4. Panhandle A equation
     double P2_panhandle = calcPanhandleAOutletPressure(INLET_PRESSURE, flowRateSm3Sec, PIPE_LENGTH, PIPE_DIAMETER,
-	GAS_GRAVITY, temperature, compressibilityZ, reynoldsNumber);
+        GAS_GRAVITY, temperature, compressibilityZ, reynoldsNumber);
     double dpPanhandleBar = INLET_PRESSURE - P2_panhandle;
 
     // === NeqSim Model Calculations ===
@@ -716,27 +716,27 @@ public class PipelinePressureDropComparisonTest {
     // === Calculate deviations from Darcy-Weisbach reference ===
     logger.info("DEVIATION FROM DARCY-WEISBACH REFERENCE:");
     logger.info(
-	"  General Flow Equation:  " + String.format("%+.1f", (dpGeneralBar - dpDarcyBar) / dpDarcyBar * 100) + "%");
+        "  General Flow Equation:  " + String.format("%+.1f", (dpGeneralBar - dpDarcyBar) / dpDarcyBar * 100) + "%");
     logger.info(
-	"  Weymouth Equation:      " + String.format("%+.1f", (dpWeymouthBar - dpDarcyBar) / dpDarcyBar * 100) + "%");
+        "  Weymouth Equation:      " + String.format("%+.1f", (dpWeymouthBar - dpDarcyBar) / dpDarcyBar * 100) + "%");
     logger.info(
-	"  Panhandle A:            " + String.format("%+.1f", (dpPanhandleBar - dpDarcyBar) / dpDarcyBar * 100) + "%");
+        "  Panhandle A:            " + String.format("%+.1f", (dpPanhandleBar - dpDarcyBar) / dpDarcyBar * 100) + "%");
     logger.info(
-	"  AdiabaticPipe:          " + String.format("%+.1f", (dpAdiabaticBar - dpDarcyBar) / dpDarcyBar * 100) + "%");
+        "  AdiabaticPipe:          " + String.format("%+.1f", (dpAdiabaticBar - dpDarcyBar) / dpDarcyBar * 100) + "%");
     logger.info(
-	"  AdiabaticTwoPhasePipe:  " + String.format("%+.1f", (dpTwoPhaseBar - dpDarcyBar) / dpDarcyBar * 100) + "%");
+        "  AdiabaticTwoPhasePipe:  " + String.format("%+.1f", (dpTwoPhaseBar - dpDarcyBar) / dpDarcyBar * 100) + "%");
     logger.info(
-	"  PipeBeggsAndBrills:     " + String.format("%+.1f", (dpBeggsBar - dpDarcyBar) / dpDarcyBar * 100) + "%");
+        "  PipeBeggsAndBrills:     " + String.format("%+.1f", (dpBeggsBar - dpDarcyBar) / dpDarcyBar * 100) + "%");
 
     // === Assertions ===
     // NeqSim models should be within 50% of Darcy-Weisbach for single-phase gas
     // (allowing for different assumptions in compressibility treatment)
     assertTrue(Math.abs(dpAdiabaticBar - dpDarcyBar) / dpDarcyBar < 0.5,
-	"AdiabaticPipe should be within 50% of Darcy-Weisbach");
+        "AdiabaticPipe should be within 50% of Darcy-Weisbach");
     assertTrue(Math.abs(dpTwoPhaseBar - dpDarcyBar) / dpDarcyBar < 0.5,
-	"AdiabaticTwoPhasePipe should be within 50% of Darcy-Weisbach");
+        "AdiabaticTwoPhasePipe should be within 50% of Darcy-Weisbach");
     assertTrue(Math.abs(dpBeggsBar - dpDarcyBar) / dpDarcyBar < 0.5,
-	"PipeBeggsAndBrills should be within 50% of Darcy-Weisbach");
+        "PipeBeggsAndBrills should be within 50% of Darcy-Weisbach");
 
     // All pressure drops should be positive
     assertTrue(dpDarcyBar > 0, "Darcy-Weisbach pressure drop should be positive");
@@ -834,7 +834,7 @@ public class PipelinePressureDropComparisonTest {
 
     // Assertions
     assertTrue(outletPressure > 0 && outletPressure < inletPressureBara,
-	"Outlet pressure should be positive and less than inlet");
+        "Outlet pressure should be positive and less than inlet");
     assertTrue(pressureDrop > 0, "Pressure drop should be positive");
     assertTrue(deviation < 20, "Deviation from Darcy-Weisbach should be < 20%");
   }
@@ -867,7 +867,7 @@ public class PipelinePressureDropComparisonTest {
       double hazenWilliamsC) {
     // Head loss in meters: hf = 10.67 * L * Q^1.85 / (C^1.85 * D^4.87)
     double headLoss = 10.67 * length * Math.pow(flowRateM3s, 1.85)
-	/ (Math.pow(hazenWilliamsC, 1.85) * Math.pow(diameter, 4.87));
+        / (Math.pow(hazenWilliamsC, 1.85) * Math.pow(diameter, 4.87));
     // Convert to pressure: ΔP = ρ * g * hf (for water ρ = 1000 kg/m³)
     return 1000.0 * 9.81 * headLoss;
   }
@@ -955,7 +955,7 @@ public class PipelinePressureDropComparisonTest {
     // Calculate reference Darcy-Weisbach pressure drop
     double frictionFactor = calcColebrookFrictionFactor(reynoldsNumber, roughnessM / diameterM);
     double dpDarcyPa = calcDarcyWeisbachLiquidPressureDrop(lengthM, diameterM, roughnessM, density, velocity,
-	viscosity);
+        viscosity);
     double dpDarcyBar = dpDarcyPa / 100000;
 
     // Calculate Hazen-Williams (for water)
@@ -1023,7 +1023,7 @@ public class PipelinePressureDropComparisonTest {
     assertTrue(dpBeggsBar > 0, "PipeBeggsAndBrills pressure drop should be positive");
     assertTrue(dpTwoPhaseBar > 0, "AdiabaticTwoPhasePipe pressure drop should be positive");
     assertTrue(Math.abs(devTwoPhase) < 15,
-	"AdiabaticTwoPhasePipe should be within 15% of Darcy-Weisbach, got: " + devTwoPhase + "%");
+        "AdiabaticTwoPhasePipe should be within 15% of Darcy-Weisbach, got: " + devTwoPhase + "%");
     // Note: PipeBeggsAndBrills shows ~28% deviation for single-phase liquid (water)
     assertTrue(Math.abs(devBeggs) < 35, "PipeBeggsAndBrills deviation for liquid water: " + devBeggs + "%");
   }
@@ -1096,7 +1096,7 @@ public class PipelinePressureDropComparisonTest {
     // Calculate reference Darcy-Weisbach pressure drop
     double frictionFactor = calcColebrookFrictionFactor(reynoldsNumber, roughnessM / diameterM);
     double dpDarcyPa = calcDarcyWeisbachLiquidPressureDrop(lengthM, diameterM, roughnessM, density, velocity,
-	viscosity);
+        viscosity);
     double dpDarcyBar = dpDarcyPa / 100000;
 
     logger.info("  Colebrook Friction Factor: " + String.format("%.6f", frictionFactor));
@@ -1139,7 +1139,7 @@ public class PipelinePressureDropComparisonTest {
     assertTrue(dpBeggsBar > 0, "Pressure drop should be positive");
     assertTrue(dpTwoPhaseBar > 0, "Pressure drop should be positive");
     assertTrue(Math.abs(devTwoPhase) < 20,
-	"AdiabaticTwoPhasePipe should be within 20% of Darcy-Weisbach, got: " + devTwoPhase + "%");
+        "AdiabaticTwoPhasePipe should be within 20% of Darcy-Weisbach, got: " + devTwoPhase + "%");
     assertTrue(Math.abs(devBeggs) < 35, "PipeBeggsAndBrills deviation for crude oil: " + devBeggs + "%");
   }
 
@@ -1170,7 +1170,7 @@ public class PipelinePressureDropComparisonTest {
     logger.info("  Fluid: Water at " + temperatureC + "°C");
 
     logger.info(String.format("%-12s | %-12s | %-10s | %-12s | %-12s | %-10s", "Flow (kg/hr)", "Reynolds", "Regime",
-	"Darcy (bar)", "Beggs (bar)", "Deviation"));
+        "Darcy (bar)", "Beggs (bar)", "Deviation"));
     logger.info(new String(new char[80]).replace("\0", "-"));
 
     for (double massFlowKgHr : flowRatesKgHr) {
@@ -1196,16 +1196,16 @@ public class PipelinePressureDropComparisonTest {
 
       String regime;
       if (reynoldsNumber < 2300) {
-	regime = "Laminar";
+        regime = "Laminar";
       } else if (reynoldsNumber < 4000) {
-	regime = "Transition";
+        regime = "Transition";
       } else {
-	regime = "Turbulent";
+        regime = "Turbulent";
       }
 
       // Darcy-Weisbach reference
       double dpDarcyPa = calcDarcyWeisbachLiquidPressureDrop(lengthM, diameterM, roughnessM, density, velocity,
-	  viscosity);
+          viscosity);
       double dpDarcyBar = dpDarcyPa / 100000;
 
       // NeqSim PipeBeggsAndBrills
@@ -1221,7 +1221,7 @@ public class PipelinePressureDropComparisonTest {
       double deviation = (dpBeggsBar - dpDarcyBar) / dpDarcyBar * 100;
 
       logger.info(String.format("%12.0f | %12.2e | %-10s | %12.6f | %12.6f | %+9.1f%%", massFlowKgHr, reynoldsNumber,
-	  regime, dpDarcyBar, dpBeggsBar, deviation));
+          regime, dpDarcyBar, dpBeggsBar, deviation));
 
       // Note: PipeBeggsAndBrills shows larger deviations for single-phase liquid
       // Assertions relaxed to document behavior rather than enforce tight limits
@@ -1290,7 +1290,7 @@ public class PipelinePressureDropComparisonTest {
     // Darcy-Weisbach reference
     double frictionFactor = calcColebrookFrictionFactor(reynoldsNumber, roughnessM / diameterM);
     double dpDarcyPa = calcDarcyWeisbachLiquidPressureDrop(lengthM, diameterM, roughnessM, density, velocity,
-	viscosity);
+        viscosity);
     double dpDarcyBar = dpDarcyPa / 100000;
 
     logger.info("  Friction Factor: " + String.format("%.6f", frictionFactor));
@@ -1320,7 +1320,7 @@ public class PipelinePressureDropComparisonTest {
     assertTrue(dpBeggsBar > 0, "Pressure drop should be positive");
     // Document the deviation rather than enforce tight limit
     System.out.println("\n  NOTE: PipeBeggsAndBrills shows " + String.format("%.0f", Math.abs(deviation))
-	+ "% deviation for laminar liquid flow - this is a known limitation.");
+        + "% deviation for laminar liquid flow - this is a known limitation.");
   }
 
   // ==================== TWO-PHASE FLOW TESTS ====================
@@ -1445,7 +1445,7 @@ public class PipelinePressureDropComparisonTest {
     // Empirical liquid holdup correlation (Eaton et al.)
     // H_L = 1 / (1 + (V_sg/V_sl)^0.5 * (ρ_L/ρ_G)^0.25)
     double eatonHoldup = 1.0
-	/ (1.0 + Math.pow(vsg / Math.max(vsl, 0.001), 0.5) * Math.pow(rhoL / Math.max(rhoG, 1), 0.25));
+        / (1.0 + Math.pow(vsg / Math.max(vsl, 0.001), 0.5) * Math.pow(rhoL / Math.max(rhoG, 1), 0.25));
     logger.info("  Eaton Holdup Correlation: " + String.format("%.3f", eatonHoldup));
 
     // Assertions
@@ -1599,7 +1599,7 @@ public class PipelinePressureDropComparisonTest {
     logger.info("  Mixture Density: " + String.format("%.2f", mixtureDensity) + " kg/m³");
     logger.info("  Total Pressure Drop: " + String.format("%.4f", dpBeggsBar) + " bar");
     logger.info(
-	"  Est. Hydrostatic Component: " + String.format("%.4f", dpHydrostaticBar) + " bar (negative = pressure gain)");
+        "  Est. Hydrostatic Component: " + String.format("%.4f", dpHydrostaticBar) + " bar (negative = pressure gain)");
 
     // For downhill, outlet pressure might be higher than inlet (negative ΔP)
     // if hydrostatic gain exceeds friction loss
@@ -1716,7 +1716,7 @@ public class PipelinePressureDropComparisonTest {
     logger.info("  Oil Flow: " + oilFlowKgHr + " kg/hr (constant)");
 
     logger.info(String.format("%-12s | %-8s | %-15s | %-10s | %-10s | %-8s", "Gas (kg/hr)", "GOR", "Flow Regime",
-	"Holdup", "ΔP (bar)", "Vsg (m/s)"));
+        "Holdup", "ΔP (bar)", "Vsg (m/s)"));
     logger.info(new String(new char[75]).replace("\0", "-"));
 
     for (double gasFlowKgHr : gasFlowsKgHr) {
@@ -1751,7 +1751,7 @@ public class PipelinePressureDropComparisonTest {
       double vsg = beggsBrills.getSegmentGasSuperficialVelocity(beggsBrills.getNumberOfIncrements());
 
       logger.info(String.format("%12.0f | %8.1f | %-15s | %10.3f | %10.4f | %8.2f", gasFlowKgHr, gor, regime, holdup,
-	  dpBar, vsg));
+          dpBar, vsg));
 
       assertTrue(dpBar > 0, "Pressure drop should be positive");
     }
@@ -2027,8 +2027,8 @@ public class PipelinePressureDropComparisonTest {
       transientDp = pressureProfile[0] - pressureProfile[pressureProfile.length - 1];
 
       if (step > 10 && Math.abs(transientDp - prevDp) / Math.max(0.001, Math.abs(transientDp)) < 0.001) {
-	convergedAt = step;
-	break;
+        convergedAt = step;
+        break;
       }
       prevDp = transientDp;
     }
@@ -2155,20 +2155,20 @@ public class PipelinePressureDropComparisonTest {
       timeHistory[step] = (step + 1) * dt;
 
       if (Math.abs(outletChange) > maxOutletChange) {
-	maxOutletChange = Math.abs(outletChange);
+        maxOutletChange = Math.abs(outletChange);
       }
 
       // Detect when change first exceeds threshold
       if (detectionStep < 0 && Math.abs(outletChange) > threshold) {
-	detectionStep = step;
-	detectedTime = (step + 1) * dt;
+        detectionStep = step;
+        detectedTime = (step + 1) * dt;
       }
 
       // Print progress at key intervals
       if (step == 0 || step == 9 || step == 49 || step == 99 || step == 199 || step == 299) {
-	logger.info("  t=" + String.format("%5.0f", timeHistory[step]) + "s: " + "P_out="
-	    + String.format("%.4f", currentOutletPressure) + " bara, " + "ΔP=" + String.format("%+.4f", outletChange)
-	    + " bar");
+        logger.info("  t=" + String.format("%5.0f", timeHistory[step]) + "s: " + "P_out="
+            + String.format("%.4f", currentOutletPressure) + " bara, " + "ΔP=" + String.format("%+.4f", outletChange)
+            + " bar");
       }
     }
 
@@ -2284,14 +2284,14 @@ public class PipelinePressureDropComparisonTest {
       double flowChange = currentFlow - preChangeFlow;
 
       if (detectionStep < 0 && Math.abs(flowChange) > flowThreshold) {
-	detectionStep = step;
-	logger.info("  Flow change detected at step " + step + " (t=" + String.format("%.1f", (step + 1) * dt) + "s)");
-	logger.info("  Outlet flow: " + String.format("%.1f", currentFlow) + " kg/hr");
+        detectionStep = step;
+        logger.info("  Flow change detected at step " + step + " (t=" + String.format("%.1f", (step + 1) * dt) + "s)");
+        logger.info("  Outlet flow: " + String.format("%.1f", currentFlow) + " kg/hr");
       }
 
       if (step == 0 || step == 19 || step == 49 || step == 99 || step == 199) {
-	logger.info("  t=" + String.format("%5.1f", (step + 1) * dt) + "s: " + "Flow="
-	    + String.format("%.1f", currentFlow) + " kg/hr");
+        logger.info("  t=" + String.format("%5.1f", (step + 1) * dt) + "s: " + "Flow="
+            + String.format("%.1f", currentFlow) + " kg/hr");
       }
     }
 
@@ -2383,9 +2383,9 @@ public class PipelinePressureDropComparisonTest {
     logger.info("  Pressure error: " + String.format("%.6f", pressureError * 100) + "%");
 
     assertEquals(knownFlowRate, calculatedFlowRate, knownFlowRate * 0.01,
-	"Calculated flow rate should match known flow rate within 1%");
+        "Calculated flow rate should match known flow rate within 1%");
     assertEquals(calculatedOutletPressure, achievedOutletPressure, calculatedOutletPressure * 0.001,
-	"Achieved outlet pressure should match specified pressure within 0.1%");
+        "Achieved outlet pressure should match specified pressure within 0.1%");
   }
 
   /**
@@ -2423,10 +2423,10 @@ public class PipelinePressureDropComparisonTest {
       double pressureDrop = INLET_PRESSURE - achievedPressure;
 
       logger.info(String.format("  Target P_out=%.0f bara: Flow=%.0f kg/hr, " + "Achieved P_out=%.3f bara, ΔP=%.3f bar",
-	  targetPressure, flowRate, achievedPressure, pressureDrop));
+          targetPressure, flowRate, achievedPressure, pressureDrop));
 
       assertEquals(targetPressure, achievedPressure, 0.1,
-	  "Achieved outlet pressure should match target within 0.1 bar");
+          "Achieved outlet pressure should match target within 0.1 bar");
       assertTrue(flowRate > 0, "Flow rate should be positive");
     }
   }
@@ -2492,7 +2492,7 @@ public class PipelinePressureDropComparisonTest {
     logger.info("  Error: " + String.format("%.2f", flowRateError * 100) + "%");
 
     assertEquals(knownFlowRate, calculatedFlowRate, knownFlowRate * 0.02,
-	"Calculated flow rate should match known flow rate within 2%");
+        "Calculated flow rate should match known flow rate within 2%");
   }
 
   /**
@@ -2591,7 +2591,7 @@ public class PipelinePressureDropComparisonTest {
     // The important thing is that it calculates SOME positive flow rate and achieves the pressure
     assertTrue(calculatedFlowRate > 0, "Calculated flow rate should be positive");
     assertEquals(calculatedOutletPressure, achievedOutletPressure, 0.01,
-	"Achieved pressure should match specified pressure");
+        "Achieved pressure should match specified pressure");
 
     logger.info("\n  NOTE: AdiabaticPipe uses gas transmission equation - flow may differ");
     logger.info("        from PipeBeggsAndBrills due to different underlying model.");
@@ -2653,7 +2653,7 @@ public class PipelinePressureDropComparisonTest {
     // AdiabaticTwoPhasePipe uses a gas transmission formula that may give very different results
     assertTrue(calculatedFlowRate > 0, "Calculated flow rate should be positive");
     assertEquals(calculatedOutletPressure, achievedOutletPressure, 0.01,
-	"Achieved pressure should match specified pressure");
+        "Achieved pressure should match specified pressure");
 
     logger.info("\n  NOTE: AdiabaticTwoPhasePipe uses gas transmission equation.");
     logger.info("        For accurate flow-from-pressure, use PipeBeggsAndBrills.");
@@ -2730,9 +2730,9 @@ public class PipelinePressureDropComparisonTest {
     logger.info("\nResults:");
     logger.info(String.format("  PipeBeggsAndBrills:    Flow = %8.0f kg/hr, P_out = %.3f bara", flowBeggs, pOutBeggs));
     System.out.println(
-	String.format("  AdiabaticPipe:         Flow = %8.0f kg/hr, P_out = %.3f bara", flowAdiabatic, pOutAdiabatic));
+        String.format("  AdiabaticPipe:         Flow = %8.0f kg/hr, P_out = %.3f bara", flowAdiabatic, pOutAdiabatic));
     System.out.println(
-	String.format("  AdiabaticTwoPhasePipe: Flow = %8.0f kg/hr, P_out = %.3f bara", flowTwoPhase, pOutTwoPhase));
+        String.format("  AdiabaticTwoPhasePipe: Flow = %8.0f kg/hr, P_out = %.3f bara", flowTwoPhase, pOutTwoPhase));
 
     // All should achieve close to target pressure
     assertEquals(targetOutletPressure, pOutBeggs, 0.5, "BeggsBrills should achieve target pressure within 0.5 bar");

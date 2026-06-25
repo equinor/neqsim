@@ -1,9 +1,15 @@
 package neqsim.process.equipment.heatexchanger;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.costestimation.heatexchanger.BAHXCostEstimator;
 import neqsim.process.equipment.stream.Stream;
@@ -14,8 +20,6 @@ import neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerDesignFeasibil
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for {@link LNGHeatExchanger}.
@@ -78,7 +82,7 @@ class LNGHeatExchangerTest {
     Stream coldStream = createColdStream();
 
     LNGHeatExchanger lngHX = new LNGHeatExchanger("MCHE",
-	Arrays.asList((StreamInterface) hotStream, (StreamInterface) coldStream));
+        Arrays.asList((StreamInterface) hotStream, (StreamInterface) coldStream));
 
     lngHX.setNumberOfZones(10);
     assertEquals(10, lngHX.getNumberOfZones());
@@ -344,7 +348,7 @@ class LNGHeatExchangerTest {
 
     // Core thermal mass should be set after sizing
     assertTrue(hx.getCoreThermalMass() > 0.0,
-	"Thermal mass should be set after sizing, got: " + hx.getCoreThermalMass());
+        "Thermal mass should be set after sizing, got: " + hx.getCoreThermalMass());
   }
 
   // ══════════════════════════════════════════════════════════════════
@@ -432,7 +436,7 @@ class LNGHeatExchangerTest {
 
     // MITA with maldistribution should be tighter (smaller or equal)
     assertTrue(mitaMaldist <= mitaIdeal + 0.01,
-	"Maldistribution should not increase MITA: ideal=" + mitaIdeal + " maldist=" + mitaMaldist);
+        "Maldistribution should not increase MITA: ideal=" + mitaIdeal + " maldist=" + mitaMaldist);
   }
 
   // ══════════════════════════════════════════════════════════════════
@@ -572,7 +576,7 @@ class LNGHeatExchangerTest {
     logger.info("  MITA = " + String.format("%.2f", hx.getMITA()) + " C");
     System.out.println("  eta_II = " + String.format("%.1f", hx.getSecondLawEfficiency() * 100) + " %");
     logger.info(
-	"  Core: " + String.format("%.1f x %.1f x %.1f m", sized.getLength(), sized.getWidth(), sized.getHeight()));
+        "  Core: " + String.format("%.1f x %.1f x %.1f m", sized.getLength(), sized.getWidth(), sized.getHeight()));
     logger.info("  Weight: " + String.format("%.0f", sized.getWeight()) + " kg");
     System.out.println("  Thermal mass: " + String.format("%.0f", hx.getCoreThermalMass()) + " kJ/K");
     logger.info("  Cool-down steps: " + transientPts.size());
@@ -619,18 +623,18 @@ class LNGHeatExchangerTest {
 
     // Weights should be positive
     assertTrue(mechDesign.getCoreWeightKg() > 0.0,
-	"Core weight should be positive, got: " + mechDesign.getCoreWeightKg());
+        "Core weight should be positive, got: " + mechDesign.getCoreWeightKg());
     assertTrue(mechDesign.getWeightTotal() > 0.0,
-	"Total weight should be positive, got: " + mechDesign.getWeightTotal());
+        "Total weight should be positive, got: " + mechDesign.getWeightTotal());
     assertTrue(mechDesign.getWeightTotal() > mechDesign.getCoreWeightKg(), "Total weight should exceed core weight");
 
     // Core dimensions from LNGHeatExchanger
     assertTrue(mechDesign.getCoreLengthM() > 0.0,
-	"Core length should be positive, got: " + mechDesign.getCoreLengthM());
+        "Core length should be positive, got: " + mechDesign.getCoreLengthM());
 
     // Heat transfer area should be positive
     assertTrue(mechDesign.getHeatTransferAreaM2() > 0.0,
-	"HT area should be positive, got: " + mechDesign.getHeatTransferAreaM2());
+        "HT area should be positive, got: " + mechDesign.getHeatTransferAreaM2());
 
     // Material grades
     assertEquals("3003-H14", mechDesign.getCoreMaterialGrade());
@@ -692,7 +696,7 @@ class LNGHeatExchangerTest {
     // Specific cost typical range for BAHX: $200-3000/m2
     double specificCost = costEstimator.getSpecificCostPerM2();
     assertTrue(specificCost > 50.0 && specificCost < 10000.0,
-	"Specific cost should be in reasonable range, got: " + specificCost + " $/m2");
+        "Specific cost should be in reasonable range, got: " + specificCost + " $/m2");
 
     // Annual maintenance
     double maintenance = costEstimator.getAnnualMaintenanceCostUSD();
@@ -752,7 +756,7 @@ class LNGHeatExchangerTest {
     String verdict = report.getVerdict();
     assertNotNull(verdict, "Verdict should not be null");
     assertTrue("FEASIBLE".equals(verdict) || "FEASIBLE_WITH_WARNINGS".equals(verdict) || "NOT_FEASIBLE".equals(verdict),
-	"Verdict should be a valid value, got: " + verdict);
+        "Verdict should be a valid value, got: " + verdict);
 
     // Costs should be computed
     double pec = report.getPurchasedEquipmentCostUSD();

@@ -186,7 +186,7 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
      * @param sourceReference optional document, tag, or data-window reference
      */
     public Evidence(String parameter, String observation, EvidenceStrength strength, String source, boolean supporting,
-	double weight, String sourceReference) {
+        double weight, String sourceReference) {
       this.parameter = parameter;
       this.observation = observation;
       this.strength = strength;
@@ -602,7 +602,7 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
      * @return this builder
      */
     public Builder addExpectedSignal(String parameterPattern, ExpectedBehavior behavior, double weight,
-	String rationale) {
+        String rationale) {
       this.expectedSignals.add(new ExpectedSignal(parameterPattern, behavior, weight, rationale));
       return this;
     }

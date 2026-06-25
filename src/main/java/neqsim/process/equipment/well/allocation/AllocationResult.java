@@ -232,10 +232,10 @@ public class AllocationResult implements Serializable {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append(String.format("AllocationResult[%s, balanced=%s, error=%.4f%%]\n", timestamp.toString(), balanced,
-	allocationError * 100));
+        allocationError * 100));
     for (String well : oilRates.keySet()) {
       sb.append(String.format("  %s: Oil=%.1f, Gas=%.1f, Water=%.1f, GOR=%.1f, WC=%.2f%%\n", well, getOilRate(well),
-	  getGasRate(well), getWaterRate(well), getGOR(well), getWaterCut(well) * 100));
+          getGasRate(well), getWaterRate(well), getGOR(well), getWaterCut(well) * 100));
     }
     return sb.toString();
   }

@@ -14,8 +14,8 @@ class PhaseEnvelopeRunnerTest {
   @Test
   void testNaturalGasEnvelope() {
     String json = "{" + "\"model\": \"SRK\","
-	+ "\"components\": {\"methane\": 0.80, \"ethane\": 0.10, \"propane\": 0.05, \"n-butane\": 0.03, \"n-pentane\": 0.02}"
-	+ "}";
+        + "\"components\": {\"methane\": 0.80, \"ethane\": 0.10, \"propane\": 0.05, \"n-butane\": 0.03, \"n-pentane\": 0.02}"
+        + "}";
 
     String result = PhaseEnvelopeRunner.run(json);
     assertNotNull(result);

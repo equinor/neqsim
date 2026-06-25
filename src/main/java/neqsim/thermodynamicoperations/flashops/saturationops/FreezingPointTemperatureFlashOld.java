@@ -43,56 +43,56 @@ public class FreezingPointTemperatureFlashOld extends ConstantDutyTemperatureFla
     double oldTemperature = 0.0;
     for (int k = 0; k < system.getPhases()[0].getNumberOfComponents(); k++) {
       if (system.getPhase(3).getComponent(k).fugcoef(system.getPhase(3)) < 9e4
-	  && system.getPhase(3).getComponent(k).doSolidCheck()) {
-	// checks if solid can be formed from component k
-	system.setTemperature(system.getPhases()[0].getComponent(k).getMeltingPointTemperature());
-	system.init(0);
-	system.init(1);
-	iterations = 0;
-	do {
-	  funk = 0.0;
-	  deriv = 0.0;
-	  iterations++;
-	  system.setSolidPhaseCheck(false);
-	  ops.TPflash();
-	  system.getPhase(3).getComponent(k).fugcoef(system.getPhase(3));
+          && system.getPhase(3).getComponent(k).doSolidCheck()) {
+        // checks if solid can be formed from component k
+        system.setTemperature(system.getPhases()[0].getComponent(k).getMeltingPointTemperature());
+        system.init(0);
+        system.init(1);
+        iterations = 0;
+        do {
+          funk = 0.0;
+          deriv = 0.0;
+          iterations++;
+          system.setSolidPhaseCheck(false);
+          ops.TPflash();
+          system.getPhase(3).getComponent(k).fugcoef(system.getPhase(3));
 
-	  funk = system.getPhases()[0].getComponent(k).getz();
-	  logger.info("phase " + system.getNumberOfPhases());
+          funk = system.getPhases()[0].getComponent(k).getz();
+          logger.info("phase " + system.getNumberOfPhases());
 
-	  for (int i = 0; i < system.getNumberOfPhases(); i++) {
-	    funk -= system.getPhases()[i].getBeta()
-		* system.getPhase(PhaseType.SOLID).getComponent(k).getFugacityCoefficient()
-		/ system.getPhases()[i].getComponent(k).getFugacityCoefficient();
-	    deriv -= 0.01 * system.getPhases()[i].getBeta()
-		* (system.getPhase(PhaseType.SOLID).getComponent(k).getFugacityCoefficient()
-		    * Math.exp(system.getPhases()[i].getComponent(k).getdfugdt()) * -1.0
-		    / Math.pow(system.getPhases()[i].getComponent(k).getFugacityCoefficient(), 2.0)
-		    + Math.exp(system.getPhase(PhaseType.SOLID).getComponent(k).getdfugdt())
-			/ system.getPhases()[i].getComponent(k).getFugacityCoefficient());
-	  }
-	  if (iterations >= 2) {
-	    deriv = -(funk - funkOld) / (system.getTemperature() - oldTemperature);
-	  } else {
-	    deriv = -funk;
-	  }
+          for (int i = 0; i < system.getNumberOfPhases(); i++) {
+            funk -= system.getPhases()[i].getBeta()
+                * system.getPhase(PhaseType.SOLID).getComponent(k).getFugacityCoefficient()
+                / system.getPhases()[i].getComponent(k).getFugacityCoefficient();
+            deriv -= 0.01 * system.getPhases()[i].getBeta()
+                * (system.getPhase(PhaseType.SOLID).getComponent(k).getFugacityCoefficient()
+                    * Math.exp(system.getPhases()[i].getComponent(k).getdfugdt()) * -1.0
+                    / Math.pow(system.getPhases()[i].getComponent(k).getFugacityCoefficient(), 2.0)
+                    + Math.exp(system.getPhase(PhaseType.SOLID).getComponent(k).getdfugdt())
+                        / system.getPhases()[i].getComponent(k).getFugacityCoefficient());
+          }
+          if (iterations >= 2) {
+            deriv = -(funk - funkOld) / (system.getTemperature() - oldTemperature);
+          } else {
+            deriv = -funk;
+          }
 
-	  oldTemperature = system.getTemperature();
-	  funkOld = funk;
+          oldTemperature = system.getTemperature();
+          funkOld = funk;
 
-	  system.setTemperature(system.getTemperature() + 0.5 * (iterations / (10.0 + iterations)) * funk / deriv);
+          system.setTemperature(system.getTemperature() + 0.5 * (iterations / (10.0 + iterations)) * funk / deriv);
 
-	  logger.info("funk/deriv " + funk / deriv);
-	  logger.info("temperature " + system.getTemperature());
-	} while ((Math.abs(funk / deriv) >= 1e-6 && iterations < 100));
+          logger.info("funk/deriv " + funk / deriv);
+          logger.info("temperature " + system.getTemperature());
+        } while ((Math.abs(funk / deriv) >= 1e-6 && iterations < 100));
 
-	// logger.info("funk " + funk + k + " " + system.getTemperature());
-	if (system.getTemperature() < minTemperature) {
-	  minTemperature = system.getTemperature();
-	}
-	if (system.getTemperature() > maxTemperature) {
-	  maxTemperature = system.getTemperature();
-	}
+        // logger.info("funk " + funk + k + " " + system.getTemperature());
+        if (system.getTemperature() < minTemperature) {
+          minTemperature = system.getTemperature();
+        }
+        if (system.getTemperature() > maxTemperature) {
+          maxTemperature = system.getTemperature();
+        }
       }
     }
 

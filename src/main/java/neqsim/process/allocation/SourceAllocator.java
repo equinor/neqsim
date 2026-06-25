@@ -189,14 +189,14 @@ public class SourceAllocator implements Serializable {
       AllocationSource src = sources.get(j);
       entryUnits[j] = network.findEntryUnit(src.getFeedStream());
       if (entryUnits[j] < 0) {
-	logger.warn("Source '{}' feed stream is not connected to any node; it will allocate zero.", src.getName());
+        logger.warn("Source '{}' feed stream is not connected to any node; it will allocate zero.", src.getName());
       } else if (network.findProducer(src.getFeedStream()) != null) {
-	throw new IllegalArgumentException(
-	    "Source '" + src.getName() + "' feed stream is produced by a node inside the network (internal stream). "
-		+ "Register an external (terminal) feed stream instead.");
+        throw new IllegalArgumentException(
+            "Source '" + src.getName() + "' feed stream is produced by a node inside the network (internal stream). "
+                + "Register an external (terminal) feed stream instead.");
       }
       for (int k = 0; k < numComp; k++) {
-	injections[j][k] = RecoveryFactorExtractor.componentFlow(src.getFeedStream(), componentNames.get(k));
+        injections[j][k] = RecoveryFactorExtractor.componentFlow(src.getFeedStream(), componentNames.get(k));
       }
     }
 
@@ -208,23 +208,23 @@ public class SourceAllocator implements Serializable {
     for (int c = 0; c < numCustody; c++) {
       producers[c] = network.findProducer(custodyOutlets.get(c).getStream());
       if (producers[c] == null) {
-	logger.warn("Custody outlet '{}' is not produced by any node; it will receive zero.",
-	    custodyOutlets.get(c).getName());
+        logger.warn("Custody outlet '{}' is not produced by any node; it will receive zero.",
+            custodyOutlets.get(c).getName());
       }
     }
     for (int c = 0; c < numCustody; c++) {
       if (producers[c] == null) {
-	continue;
+        continue;
       }
       int w = producers[c][0];
       for (int k = 0; k < numComp; k++) {
-	double f = network.getCustodyFactor(producers[c], k);
-	if (f == 0.0) {
-	  continue;
-	}
-	for (int j = 0; j < numSources; j++) {
-	  allocMole[j][c][k] = f * solved.getNodeFlow(k, w, j);
-	}
+        double f = network.getCustodyFactor(producers[c], k);
+        if (f == 0.0) {
+          continue;
+        }
+        for (int j = 0; j < numSources; j++) {
+          allocMole[j][c][k] = f * solved.getNodeFlow(k, w, j);
+        }
       }
     }
 
@@ -244,21 +244,21 @@ public class SourceAllocator implements Serializable {
     }
 
     ProductionAllocationResult result = new ProductionAllocationResult(sourceNames, custodyNames, custodyTypes,
-	componentNames.toArray(new String[0]), molarMass, allocMole, solved.getDiagnostics());
+        componentNames.toArray(new String[0]), molarMass, allocMole, solved.getDiagnostics());
 
     if (enforceMassClosure) {
       double[][] targets = new double[numCustody][numComp];
       for (int c = 0; c < numCustody; c++) {
-	StreamInterface custodyStream = custodyOutlets.get(c).getStream();
-	for (int k = 0; k < numComp; k++) {
-	  targets[c][k] = RecoveryFactorExtractor.componentFlow(custodyStream, componentNames.get(k));
-	}
+        StreamInterface custodyStream = custodyOutlets.get(c).getStream();
+        for (int k = 0; k < numComp; k++) {
+          targets[c][k] = RecoveryFactorExtractor.componentFlow(custodyStream, componentNames.get(k));
+        }
       }
       result.renormalizeMassClosure(targets);
     }
 
     logger.info("Allocated {} sources to {} custody outlets ({} components); max residual {}", numSources, numCustody,
-	numComp, result.getMaxResidual());
+        numComp, result.getMaxResidual());
     return result;
   }
 
@@ -270,7 +270,7 @@ public class SourceAllocator implements Serializable {
     for (StreamInterface feed : network.findSourceStreams()) {
       String name = feed.getName();
       if (name == null || name.trim().isEmpty()) {
-	name = "Source-" + i;
+        name = "Source-" + i;
       }
       sources.add(new AllocationSource(name, feed));
       i++;
@@ -287,7 +287,7 @@ public class SourceAllocator implements Serializable {
     for (StreamInterface product : network.findCustodyStreams()) {
       String name = product.getName();
       if (name == null || name.trim().isEmpty()) {
-	name = "Custody-" + i;
+        name = "Custody-" + i;
       }
       custodyOutlets.add(new CustodyOutlet(name, product, inferProductType(product)));
       i++;
@@ -308,25 +308,25 @@ public class SourceAllocator implements Serializable {
       double oil = 0.0;
       double water = 0.0;
       for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
-	PhaseInterface phase = fluid.getPhase(p);
-	String type = phase.getPhaseTypeName();
-	double beta = phase.getBeta();
-	if (type == null) {
-	  continue;
-	}
-	if (type.contains("gas")) {
-	  gas += beta;
-	} else if (type.contains("aqueous")) {
-	  water += beta;
-	} else {
-	  oil += beta;
-	}
+        PhaseInterface phase = fluid.getPhase(p);
+        String type = phase.getPhaseTypeName();
+        double beta = phase.getBeta();
+        if (type == null) {
+          continue;
+        }
+        if (type.contains("gas")) {
+          gas += beta;
+        } else if (type.contains("aqueous")) {
+          water += beta;
+        } else {
+          oil += beta;
+        }
       }
       if (gas >= oil && gas >= water) {
-	return ProductType.GAS;
+        return ProductType.GAS;
       }
       if (water >= oil) {
-	return ProductType.WATER;
+        return ProductType.WATER;
       }
       return ProductType.OIL;
     } catch (Exception e) {

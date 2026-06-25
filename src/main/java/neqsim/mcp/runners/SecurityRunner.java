@@ -82,22 +82,22 @@ public final class SecurityRunner {
 
       switch (action) {
       case "createApiKey":
-	return createApiKey(input);
+        return createApiKey(input);
       case "revokeApiKey":
-	return revokeApiKey(input);
+        return revokeApiKey(input);
       case "authenticate":
-	return authenticate(input);
+        return authenticate(input);
       case "getAuditLog":
-	return getAuditLog(input);
+        return getAuditLog(input);
       case "getRateLimits":
-	return getRateLimits();
+        return getRateLimits();
       case "setConfig":
-	return setConfig(input);
+        return setConfig(input);
       case "getStatus":
-	return getStatus();
+        return getStatus();
       default:
-	return errorJson("UNKNOWN_ACTION", "Unknown security action: " + action,
-	    "Use: createApiKey, revokeApiKey, authenticate, getAuditLog, " + "getRateLimits, setConfig, getStatus");
+        return errorJson("UNKNOWN_ACTION", "Unknown security action: " + action,
+            "Use: createApiKey, revokeApiKey, authenticate, getAuditLog, " + "getRateLimits, setConfig, getStatus");
       }
     } catch (Exception e) {
       return errorJson("SECURITY_ERROR", e.getMessage(), "Check JSON format");
@@ -125,7 +125,7 @@ public final class SecurityRunner {
     if (apiKey == null || apiKey.isEmpty()) {
       logAudit("anonymous", tool, "denied", "Missing API key");
       return errorJson("AUTH_REQUIRED", "API key required",
-	  "Provide 'apiKey' field in request or disable security enforcement");
+          "Provide 'apiKey' field in request or disable security enforcement");
     }
 
     UserContext user = API_KEYS.get(apiKey);
@@ -138,7 +138,7 @@ public final class SecurityRunner {
     if (!checkRateLimit(apiKey, user.rateLimit)) {
       logAudit(user.userId, tool, "rate_limited", "Exceeded " + user.rateLimit + " requests/minute");
       return errorJson("RATE_LIMITED", "Rate limit exceeded: " + user.rateLimit + " requests/minute",
-	  "Wait and retry, or request a higher rate limit");
+          "Wait and retry, or request a higher rate limit");
     }
 
     logAudit(user.userId, tool, "allowed", null);
@@ -181,7 +181,7 @@ public final class SecurityRunner {
     response.addProperty("role", role);
     response.addProperty("rateLimit", rateLimit);
     response.addProperty("note",
-	"Store this API key securely. Include it as 'apiKey' in requests when security is enabled.");
+        "Store this API key securely. Include it as 'apiKey' in requests when security is enabled.");
     return GSON.toJson(response);
   }
 
@@ -258,18 +258,18 @@ public final class SecurityRunner {
     synchronized (AUDIT_LOG) {
       // Iterate in reverse to get newest first
       for (int i = AUDIT_LOG.size() - 1; i >= 0 && count < limit; i--) {
-	AuditEntry entry = AUDIT_LOG.get(i);
+        AuditEntry entry = AUDIT_LOG.get(i);
 
-	// Apply filters
-	if (filterUser != null && !entry.userId.equals(filterUser)) {
-	  continue;
-	}
-	if (filterTool != null && !entry.tool.equals(filterTool)) {
-	  continue;
-	}
+        // Apply filters
+        if (filterUser != null && !entry.userId.equals(filterUser)) {
+          continue;
+        }
+        if (filterTool != null && !entry.tool.equals(filterTool)) {
+          continue;
+        }
 
-	entries.add(entry.toJson());
-	count++;
+        entries.add(entry.toJson());
+        count++;
       }
     }
 
@@ -299,8 +299,8 @@ public final class SecurityRunner {
 
       RateState rate = RATE_LIMITS.get(entry.getKey());
       if (rate != null) {
-	long remaining = Math.max(0, user.rateLimit - rate.getRequestCount(RATE_WINDOW_MS));
-	userInfo.addProperty("remainingRequests", remaining);
+        long remaining = Math.max(0, user.rateLimit - rate.getRequestCount(RATE_WINDOW_MS));
+        userInfo.addProperty("remainingRequests", remaining);
       }
       users.add(userInfo);
     }
@@ -449,16 +449,16 @@ public final class SecurityRunner {
 
       // Remove expired entries
       synchronized (requests) {
-	while (!requests.isEmpty() && requests.get(0) < cutoff) {
-	  requests.remove(0);
-	}
+        while (!requests.isEmpty() && requests.get(0) < cutoff) {
+          requests.remove(0);
+        }
 
-	if (requests.size() >= maxRequests) {
-	  return false;
-	}
+        if (requests.size() >= maxRequests) {
+          return false;
+        }
 
-	requests.add(now);
-	return true;
+        requests.add(now);
+        return true;
       }
     }
 
@@ -471,13 +471,13 @@ public final class SecurityRunner {
     long getRequestCount(long windowMs) {
       long cutoff = System.currentTimeMillis() - windowMs;
       synchronized (requests) {
-	int count = 0;
-	for (Long ts : requests) {
-	  if (ts >= cutoff) {
-	    count++;
-	  }
-	}
-	return count;
+        int count = 0;
+        for (Long ts : requests) {
+          if (ts >= cutoff) {
+            count++;
+          }
+        }
+        return count;
       }
     }
   }
@@ -516,7 +516,7 @@ public final class SecurityRunner {
       obj.addProperty("tool", tool);
       obj.addProperty("result", result);
       if (details != null) {
-	obj.addProperty("details", details);
+        obj.addProperty("details", details);
       }
       obj.addProperty("requestId", requestId);
       return obj;

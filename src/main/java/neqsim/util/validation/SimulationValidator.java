@@ -83,7 +83,7 @@ public final class SimulationValidator {
     // Unknown type - return empty valid result
     ValidationResult result = new ValidationResult(obj.getClass().getSimpleName());
     result.addWarning("type", "No specific validator for " + obj.getClass().getSimpleName(),
-	"Consider using validateSetup() if available");
+        "Consider using validateSetup() if available");
     return result;
   }
 
@@ -152,9 +152,9 @@ public final class SimulationValidator {
     // Merge results
     for (ValidationResult.ValidationIssue issue : postResult.getIssues()) {
       if (issue.getSeverity() == ValidationResult.Severity.CRITICAL) {
-	preResult.addError(issue.getCategory(), issue.getMessage(), issue.getRemediation());
+        preResult.addError(issue.getCategory(), issue.getMessage(), issue.getRemediation());
       } else {
-	preResult.addWarning(issue.getCategory(), issue.getMessage(), issue.getRemediation());
+        preResult.addWarning(issue.getCategory(), issue.getMessage(), issue.getRemediation());
       }
     }
 
@@ -183,9 +183,9 @@ public final class SimulationValidator {
     ValidationResult postResult = validateOutput(processSystem);
     for (ValidationResult.ValidationIssue issue : postResult.getIssues()) {
       if (issue.getSeverity() == ValidationResult.Severity.CRITICAL) {
-	preResult.addError(issue.getCategory(), issue.getMessage(), issue.getRemediation());
+        preResult.addError(issue.getCategory(), issue.getMessage(), issue.getRemediation());
       } else {
-	preResult.addWarning(issue.getCategory(), issue.getMessage(), issue.getRemediation());
+        preResult.addWarning(issue.getCategory(), issue.getMessage(), issue.getRemediation());
       }
     }
 
@@ -244,7 +244,7 @@ public final class SimulationValidator {
     for (Object obj : objects) {
       ValidationResult result = validate(obj);
       if (!result.isValid()) {
-	allValid = false;
+        allValid = false;
       }
       sb.append(result.getReport()).append("\n");
     }

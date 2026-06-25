@@ -151,7 +151,7 @@ public class FlowRegimeDetector {
     // Very high gas rates entrain liquid as film or droplets
     if (isAnnularMist(kuG, frG, lambda)) {
       if (lambda > 0.99) {
-	return FlowRegime.DROPLET;
+        return FlowRegime.DROPLET;
       }
       return FlowRegime.ANNULAR;
     }
@@ -160,14 +160,14 @@ public class FlowRegimeDetector {
     if (isHorizontal) {
       // Check stratified vs intermittent boundary
       if (isStratified(frG, x, pipeDiameter, rhoG, rhoL, muG, muL)) {
-	// Stratified - check for waves
-	if (isStratifiedWavy(frG, rhoG, rhoL)) {
-	  return FlowRegime.STRATIFIED_WAVY;
-	}
-	return FlowRegime.STRATIFIED_SMOOTH;
+        // Stratified - check for waves
+        if (isStratifiedWavy(frG, rhoG, rhoL)) {
+          return FlowRegime.STRATIFIED_WAVY;
+        }
+        return FlowRegime.STRATIFIED_SMOOTH;
       } else {
-	// Intermittent (slug) flow
-	return FlowRegime.SLUG;
+        // Intermittent (slug) flow
+        return FlowRegime.SLUG;
       }
     }
 
@@ -175,7 +175,7 @@ public class FlowRegimeDetector {
     if (isUphill) {
       // Uphill flow favors slug and annular
       if (kuG > 3.1) {
-	return FlowRegime.ANNULAR;
+        return FlowRegime.ANNULAR;
       }
       return FlowRegime.SLUG;
     }
@@ -183,9 +183,9 @@ public class FlowRegimeDetector {
     if (isDownhill) {
       // Downhill flow favors stratified
       if (frG < 0.5) {
-	return FlowRegime.STRATIFIED_SMOOTH;
+        return FlowRegime.STRATIFIED_SMOOTH;
       } else if (frG < 2.0) {
-	return FlowRegime.STRATIFIED_WAVY;
+        return FlowRegime.STRATIFIED_WAVY;
       }
       return FlowRegime.ANNULAR;
     }

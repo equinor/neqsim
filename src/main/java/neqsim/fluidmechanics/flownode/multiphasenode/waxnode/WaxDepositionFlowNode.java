@@ -43,7 +43,7 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
     this.flowNodeType = "wax deposition node";
     this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
     this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-	this);
+        this);
   }
 
   /**
@@ -84,7 +84,7 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
   @Override
   public double calcContactLength() {
     double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
-	+ Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
+        + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
     wallContactLength[1] = phaseAngel * pipe.getDiameter();
     wallContactLength[0] = pi * pipe.getDiameter() - wallContactLength[1];
     interphaseContactLength[0] = pipe.getDiameter() * Math.sin(phaseAngel);

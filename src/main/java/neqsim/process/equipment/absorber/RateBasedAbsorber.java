@@ -485,7 +485,7 @@ public class RateBasedAbsorber extends SimpleAbsorber {
       double gasVelocity = gasInStream.getFlowRate("kg/hr") / 3600.0 / gasPhase.getDensity("kg/m3") / columnArea;
       heightOfTransferUnit = gasVelocity / overallKGa;
       if (heightOfTransferUnit > 0.0) {
-	numberOfTransferUnits = packedHeight / heightOfTransferUnit;
+        numberOfTransferUnits = packedHeight / heightOfTransferUnit;
       }
     }
 
@@ -567,7 +567,7 @@ public class RateBasedAbsorber extends SimpleAbsorber {
       String compName = gasPhase.getComponent(i).getName();
       // Check if this component exists in liquid phase
       if (!liquidPhase.hasComponent(compName)) {
-	continue;
+        continue;
       }
 
       // Mole fractions
@@ -575,21 +575,21 @@ public class RateBasedAbsorber extends SimpleAbsorber {
       double xBulk = 0.0;
       int liqIndex = liquidPhase.getPhase(0).getComponent(compName).getComponentNumber();
       if (liqIndex >= 0) {
-	xBulk = liquidPhase.getPhase(0).getComponent(liqIndex).getx();
+        xBulk = liquidPhase.getPhase(0).getComponent(liqIndex).getx();
       }
 
       // Equilibrium: y* = K * x (VLE K-value)
       double Ki = gasPhase.getPhase(0).getComponent(i).getFugacityCoefficient()
-	  / liquidPhase.getPhase(0).getComponent(liqIndex).getFugacityCoefficient();
+          / liquidPhase.getPhase(0).getComponent(liqIndex).getFugacityCoefficient();
       if (Ki <= 0.0) {
-	Ki = 1.0;
+        Ki = 1.0;
       }
       double yEquil = Ki * xBulk;
 
       // Overall driving force (gas-side)
       double drivingForce = yBulk - yEquil;
       if (Math.abs(drivingForce) < 1e-15) {
-	continue;
+        continue;
       }
 
       // Overall gas-phase mass transfer coefficient: 1/KOG = 1/kG + m/kL_enhanced
@@ -597,7 +597,7 @@ public class RateBasedAbsorber extends SimpleAbsorber {
       double mSlope = Ki;
       double koG = 0.0;
       if (kG > 0 && kLEnhanced > 0) {
-	koG = 1.0 / (1.0 / kG + mSlope / kLEnhanced);
+        koG = 1.0 / (1.0 / kG + mSlope / kLEnhanced);
       }
 
       // Molar flux [mol/(m2·s)]
@@ -611,13 +611,13 @@ public class RateBasedAbsorber extends SimpleAbsorber {
 
       // Update compositions: remove from gas, add to liquid
       if (molesTransferred > 0) {
-	// Positive = transfer from gas to liquid (absorption)
-	double maxRemovable = gasPhase.getComponent(i).getNumberOfmoles() * 0.9;
-	double actualTransfer = Math.min(molesTransferred, maxRemovable);
-	if (actualTransfer > 1e-20) {
-	  gasPhase.addComponent(i, -actualTransfer);
-	  liquidPhase.addComponent(liqIndex, actualTransfer);
-	}
+        // Positive = transfer from gas to liquid (absorption)
+        double maxRemovable = gasPhase.getComponent(i).getNumberOfmoles() * 0.9;
+        double actualTransfer = Math.min(molesTransferred, maxRemovable);
+        if (actualTransfer > 1e-20) {
+          gasPhase.addComponent(i, -actualTransfer);
+          liquidPhase.addComponent(liqIndex, actualTransfer);
+        }
       }
     }
 
@@ -693,7 +693,7 @@ public class RateBasedAbsorber extends SimpleAbsorber {
     double sigmaRatio = sigmaC / sigmaL;
     sigmaRatio = Math.min(sigmaRatio, 1.0); // Cap at 1.0 per Onda
     double awRatio = 1.0 - Math.exp(-1.45 * Math.pow(sigmaRatio, 0.75) * Math.pow(Math.max(reL, 0.01), 0.1)
-	* Math.pow(Math.max(frL, 1e-6), -0.05) * Math.pow(Math.max(weL, 1e-6), 0.2));
+        * Math.pow(Math.max(frL, 1e-6), -0.05) * Math.pow(Math.max(weL, 1e-6), 0.2));
     awRatio = Math.max(awRatio, 0.1);
     awRatio = Math.min(awRatio, 1.0);
     double aw = awRatio * ap;
@@ -702,13 +702,13 @@ public class RateBasedAbsorber extends SimpleAbsorber {
     // kG * R * T / (a_p * D_G) = C1 * Re_G^0.7 * Sc_G^(1/3) * (a_p * d_p)^(-2.0)
     double c1 = 5.23; // Onda constant for kG
     double kGDimensionless = c1 * Math.pow(Math.max(reG, 0.01), 0.7) * Math.pow(scG, 1.0 / 3.0)
-	* Math.pow(ap * dp, -2.0);
+        * Math.pow(ap * dp, -2.0);
     double kG = kGDimensionless * ap * dG; // [m/s] gas-side MTC
 
     // Liquid-phase mass transfer coefficient (Onda 1968)
     // kL * (rho_L / (mu_L * g))^(1/3) = 0.0051 * (Re_L)^(2/3) * (Sc_L)^(-0.5) * (a_p*d_p)^0.4
     double kLDimensionless = 0.0051 * Math.pow(Math.max(reL, 0.01), 2.0 / 3.0) * Math.pow(scL, -0.5)
-	* Math.pow(ap * dp, 0.4);
+        * Math.pow(ap * dp, 0.4);
     double kL = kLDimensionless * Math.pow(muL * g / rhoL, 1.0 / 3.0); // [m/s]
 
     return new double[] { kG, kL, aw };
@@ -752,11 +752,11 @@ public class RateBasedAbsorber extends SimpleAbsorber {
 
     // Billet-Schultes gas-side MTC
     double kG = billetCV / Math.pow(dh, 0.5) * Math.sqrt(dG) * Math.pow(Math.max(reG, 0.01), 0.75)
-	* Math.pow(scG, 1.0 / 3.0);
+        * Math.pow(scG, 1.0 / 3.0);
 
     // Billet-Schultes liquid-side MTC
     double kL = billetCL * Math.pow(12.0, 1.0 / 6.0) * Math.pow(dL / dh, 0.5) * Math.pow(uLe, 1.0 / 3.0)
-	* Math.pow(g, 1.0 / 6.0);
+        * Math.pow(g, 1.0 / 6.0);
 
     // Wetted area (simplified — same as Onda for random, or vendor data)
     double aw = 0.85 * ap; // Default fraction for structured packing
@@ -806,7 +806,7 @@ public class RateBasedAbsorber extends SimpleAbsorber {
       double cB = rhoL / 0.1; // Approximate reactant concentration [mol/m3]
       double ha = Math.sqrt(reactionRateConstant * cB * dL) / Math.max(kL, 1e-10);
       if (ha < 0.3) {
-	return 1.0; // Slow reaction regime
+        return 1.0; // Slow reaction regime
       }
       return ha / Math.tanh(ha);
     }

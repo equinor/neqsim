@@ -78,7 +78,7 @@ public final class EjectorDesignResult {
    */
   public static EjectorDesignResult empty() {
     return new EjectorDesignResult(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-	0.0);
+        0.0);
   }
 
   public double getMixingPressure() {

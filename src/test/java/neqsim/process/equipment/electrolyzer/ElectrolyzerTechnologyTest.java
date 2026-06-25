@@ -24,9 +24,9 @@ class ElectrolyzerTechnologyTest {
   void testAlkalineDefaults() {
     ElectrolyzerTechnology t = ElectrolyzerTechnology.ALKALINE;
     assertTrue(t.getDefaultCurrentDensity() < ElectrolyzerTechnology.PEM.getDefaultCurrentDensity(),
-	"Alkaline operates at lower current density than PEM");
+        "Alkaline operates at lower current density than PEM");
     assertTrue(t.getDefaultPressureBara() < ElectrolyzerTechnology.PEM.getDefaultPressureBara(),
-	"Alkaline pressure default should be below PEM");
+        "Alkaline pressure default should be below PEM");
   }
 
   @Test

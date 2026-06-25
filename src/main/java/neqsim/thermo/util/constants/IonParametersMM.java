@@ -458,9 +458,9 @@ public final class IonParametersMM {
      */
     public double getBornRadius() {
       if (charge > 0) {
-	return 0.5 * sigma + 0.1;
+        return 0.5 * sigma + 0.1;
       } else {
-	return 0.5 * sigma + 0.85;
+        return 0.5 * sigma + 0.85;
       }
     }
   }

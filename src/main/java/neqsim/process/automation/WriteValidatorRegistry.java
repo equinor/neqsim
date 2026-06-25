@@ -102,9 +102,9 @@ public class WriteValidatorRegistry implements Serializable {
     while (cls != null && ProcessEquipmentInterface.class.isAssignableFrom(cls)) {
       List<WriteValidator> list = validators.get(cls);
       if (list != null) {
-	synchronized (list) {
-	  out.addAll(list);
-	}
+        synchronized (list) {
+          out.addAll(list);
+        }
       }
       cls = cls.getSuperclass();
     }
@@ -132,13 +132,13 @@ public class WriteValidatorRegistry implements Serializable {
     for (WriteValidator v : applicable) {
       WriteValidationResult r = v.validate(equipment, propertyPath, value, unit);
       if (r == null) {
-	continue;
+        continue;
       }
       if (r.getSeverity() == WriteValidationResult.Severity.ERROR) {
-	return r;
+        return r;
       }
       if (r.getSeverity() == WriteValidationResult.Severity.WARNING) {
-	highest = r;
+        highest = r;
       }
     }
     return highest;

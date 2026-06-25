@@ -83,15 +83,15 @@ public class LNGVoyageProfile implements Serializable {
     // Find the segment containing this time
     for (Segment seg : segments) {
       if (timeHours >= seg.startTimeHours && timeHours < seg.endTimeHours) {
-	return new EnvironmentConditions(seg.ambientTemperature, seg.significantWaveHeight, seg.windSpeed,
-	    seg.solarRadiation);
+        return new EnvironmentConditions(seg.ambientTemperature, seg.significantWaveHeight, seg.windSpeed,
+            seg.solarRadiation);
       }
     }
 
     // If past last segment, use last segment's conditions
     Segment last = segments.get(segments.size() - 1);
     return new EnvironmentConditions(last.ambientTemperature, last.significantWaveHeight, last.windSpeed,
-	last.solarRadiation);
+        last.solarRadiation);
   }
 
   /**
@@ -198,7 +198,7 @@ public class LNGVoyageProfile implements Serializable {
     double maxEnd = 0;
     for (Segment seg : segments) {
       if (seg.endTimeHours > maxEnd) {
-	maxEnd = seg.endTimeHours;
+        maxEnd = seg.endTimeHours;
       }
     }
     this.totalDurationHours = maxEnd;
@@ -240,7 +240,7 @@ public class LNGVoyageProfile implements Serializable {
      * @param solarRadiation solar radiation (W/m2)
      */
     public Segment(double startTimeHours, double endTimeHours, double ambientTemperature, double significantWaveHeight,
-	double windSpeed, double solarRadiation) {
+        double windSpeed, double solarRadiation) {
       this.startTimeHours = startTimeHours;
       this.endTimeHours = endTimeHours;
       this.ambientTemperature = ambientTemperature;
@@ -341,7 +341,7 @@ public class LNGVoyageProfile implements Serializable {
      * @param solarRadiation solar radiation (W/m2)
      */
     public EnvironmentConditions(double ambientTemperature, double significantWaveHeight, double windSpeed,
-	double solarRadiation) {
+        double solarRadiation) {
       this.ambientTemperature = ambientTemperature;
       this.significantWaveHeight = significantWaveHeight;
       this.windSpeed = windSpeed;

@@ -2,7 +2,6 @@ package neqsim.process.mechanicaldesign.subsea;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.Test;
 
 /**
@@ -19,14 +18,14 @@ public class StidWellBarrierDataSourceTest {
   @Test
   void testProducerSchematicParses() {
     String json = "{" + "\"wellId\":\"WELL-A1\"," + "\"wellType\":\"OIL_PRODUCER\"," + "\"installationCode\":\"AAA\","
-	+ "\"primaryEnvelope\":{\"elements\":["
-	+ "{\"type\":\"TUBING\",\"name\":\"Tubing\",\"status\":\"INTACT\",\"verified\":true},"
-	+ "{\"type\":\"DHSV\",\"name\":\"SCSSV\",\"status\":\"INTACT\",\"verified\":true},"
-	+ "{\"type\":\"XMAS_TREE\",\"name\":\"Tree\",\"status\":\"INTACT\",\"verified\":true}]},"
-	+ "\"secondaryEnvelope\":{\"elements\":["
-	+ "{\"type\":\"CASING\",\"name\":\"Casing\",\"status\":\"INTACT\",\"verified\":true},"
-	+ "{\"type\":\"CEMENT\",\"name\":\"Cement\",\"status\":\"INTACT\",\"verified\":true},"
-	+ "{\"type\":\"WELLHEAD\",\"name\":\"Wellhead\",\"status\":\"INTACT\",\"verified\":true}]}}";
+        + "\"primaryEnvelope\":{\"elements\":["
+        + "{\"type\":\"TUBING\",\"name\":\"Tubing\",\"status\":\"INTACT\",\"verified\":true},"
+        + "{\"type\":\"DHSV\",\"name\":\"SCSSV\",\"status\":\"INTACT\",\"verified\":true},"
+        + "{\"type\":\"XMAS_TREE\",\"name\":\"Tree\",\"status\":\"INTACT\",\"verified\":true}]},"
+        + "\"secondaryEnvelope\":{\"elements\":["
+        + "{\"type\":\"CASING\",\"name\":\"Casing\",\"status\":\"INTACT\",\"verified\":true},"
+        + "{\"type\":\"CEMENT\",\"name\":\"Cement\",\"status\":\"INTACT\",\"verified\":true},"
+        + "{\"type\":\"WELLHEAD\",\"name\":\"Wellhead\",\"status\":\"INTACT\",\"verified\":true}]}}";
     StidWellBarrierDataSource source = new StidWellBarrierDataSource(json);
     assertEquals("WELL-A1", source.getWellId());
     assertEquals("AAA", source.getInstallationCode());
@@ -44,7 +43,7 @@ public class StidWellBarrierDataSourceTest {
   @Test
   void testUnknownTypeAndStatusDefaults() {
     String json = "{\"wellId\":\"WELL-B2\",\"primaryEnvelope\":{\"elements\":["
-	+ "{\"type\":\"NOT_A_TYPE\",\"name\":\"X\",\"status\":\"DEGRADED\"}]}}";
+        + "{\"type\":\"NOT_A_TYPE\",\"name\":\"X\",\"status\":\"DEGRADED\"}]}}";
     StidWellBarrierDataSource source = new StidWellBarrierDataSource(json);
     WellBarrierSchematic schematic = source.read();
     BarrierElement element = schematic.getPrimaryEnvelope().getElements().get(0);

@@ -1,8 +1,8 @@
 package neqsim.process.instrumentdesign.separator;
 
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.instrumentdesign.InstrumentDesign;
 import neqsim.process.instrumentdesign.InstrumentSpecification;
-import neqsim.process.equipment.ProcessEquipmentInterface;
 
 /**
  * Instrument design for separators.
@@ -51,21 +51,21 @@ public class SeparatorInstrumentDesign extends InstrumentDesign {
     // === Pressure instrumentation ===
     // PT-x001: Process pressure (control)
     getInstrumentList()
-	.add(new InstrumentSpecification("PT", "Process Pressure", 0.0, maxPressure * 1.2, "bara", "AI"));
+        .add(new InstrumentSpecification("PT", "Process Pressure", 0.0, maxPressure * 1.2, "bara", "AI"));
     // PT-x002: Process pressure (redundant for voting)
     getInstrumentList()
-	.add(new InstrumentSpecification("PT", "Process Pressure (Redundant)", 0.0, maxPressure * 1.2, "bara", "AI"));
+        .add(new InstrumentSpecification("PT", "Process Pressure (Redundant)", 0.0, maxPressure * 1.2, "bara", "AI"));
     // PSH: High pressure switch (safety)
     if (isIncludeSafetyInstruments()) {
       InstrumentSpecification psh = new InstrumentSpecification("PSH", "High Pressure Switch", "DI",
-	  getDefaultSilLevel());
+          getDefaultSilLevel());
       getInstrumentList().add(psh);
     }
 
     // === Temperature instrumentation ===
     // TT: Process temperature
     getInstrumentList()
-	.add(new InstrumentSpecification("TT", "Process Temperature", -50.0, maxTemp + 50.0, "degC", "AI"));
+        .add(new InstrumentSpecification("TT", "Process Temperature", -50.0, maxTemp + 50.0, "degC", "AI"));
 
     // === Level instrumentation ===
     // LT-x001: Liquid level (control)
@@ -94,7 +94,7 @@ public class SeparatorInstrumentDesign extends InstrumentDesign {
     getInstrumentList().add(new InstrumentSpecification("ZT", "Level Control Valve Position", 0.0, 100.0, "%", "AI"));
     // ZT: Pressure control valve position
     getInstrumentList()
-	.add(new InstrumentSpecification("ZT", "Pressure Control Valve Position", 0.0, 100.0, "%", "AI"));
+        .add(new InstrumentSpecification("ZT", "Pressure Control Valve Position", 0.0, 100.0, "%", "AI"));
   }
 
   /**

@@ -53,7 +53,7 @@ public final class DexpiMappingLoader {
     }
     synchronized (DexpiMappingLoader.class) {
       if (cachedEquipmentMapping != null) {
-	return cachedEquipmentMapping;
+        return cachedEquipmentMapping;
       }
       cachedEquipmentMapping = loadMapping(EQUIPMENT_RESOURCE, "equipment");
       return cachedEquipmentMapping;
@@ -72,7 +72,7 @@ public final class DexpiMappingLoader {
     }
     synchronized (DexpiMappingLoader.class) {
       if (cachedPipingMapping != null) {
-	return cachedPipingMapping;
+        return cachedPipingMapping;
       }
       cachedPipingMapping = loadMapping(PIPING_RESOURCE, "piping component");
       return cachedPipingMapping;
@@ -108,9 +108,9 @@ public final class DexpiMappingLoader {
       return Collections.emptyMap();
     } finally {
       try {
-	is.close();
+        is.close();
       } catch (IOException ignored) {
-	// ignore
+        // ignore
       }
     }
 
@@ -118,13 +118,13 @@ public final class DexpiMappingLoader {
     for (String key : props.stringPropertyNames()) {
       String value = props.getProperty(key);
       if (value == null || value.trim().isEmpty()) {
-	continue;
+        continue;
       }
       try {
-	EquipmentEnum enumVal = EquipmentEnum.valueOf(value.trim());
-	map.put(key.trim(), enumVal);
+        EquipmentEnum enumVal = EquipmentEnum.valueOf(value.trim());
+        map.put(key.trim(), enumVal);
       } catch (IllegalArgumentException e) {
-	logger.warn("Unknown EquipmentEnum '{}' for DEXPI class '{}' in {}", value, key, resourcePath);
+        logger.warn("Unknown EquipmentEnum '{}' for DEXPI class '{}' in {}", value, key, resourcePath);
       }
     }
 

@@ -81,7 +81,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   @Override
   public double calcf() {
     return (1.0 / (R * getB() * (delta1 - delta2)) * Math
-	.log((1.0 + (delta1 * getb() + getc()) / molarVolume) / (1.0 + (delta2 * getb() + getc()) / (molarVolume))));
+        .log((1.0 + (delta1 * getb() + getc()) / molarVolume) / (1.0 + (delta2 * getb() + getc()) / (molarVolume))));
   }
 
   /** {@inheritDoc} */
@@ -187,7 +187,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
     for (int i = 0; i < numbcomp; i++) {
       double CiVal = 0.0;
       for (int j = 0; j < numbcomp; j++) {
-	CiVal += compArray[j].getNumberOfMolesInPhase() * getcij(compArray[i], compArray[j]);
+        CiVal += compArray[j].getNumberOfMolesInPhase() * getcij(compArray[i], compArray[j]);
       }
       cachedCi[i] = (2.0 * CiVal - getC()) / totalMolesInPhase;
     }
@@ -204,7 +204,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
     for (int i = 0; i < numbcomp; i++) {
       double CiTVal = 0.0;
       for (int j = 0; j < numbcomp; j++) {
-	CiTVal += compArray[j].getNumberOfMolesInPhase() * getcijT(compArray[i], compArray[j]);
+        CiTVal += compArray[j].getNumberOfMolesInPhase() * getcijT(compArray[i], compArray[j]);
       }
       cachedCiT[i] = (2.0 * CiTVal - getCT()) / totalMolesInPhase;
     }
@@ -220,9 +220,9 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
     double totalMolesInPhase = getNumberOfMolesInPhase();
     for (int i = 0; i < numbcomp; i++) {
       for (int j = 0; j < numbcomp; j++) {
-	double cij = getcij(compArray[i], compArray[j]);
-	cachedCij[i][j] = (2.0 * cij - ((ComponentSrkvolcor) compArray[i]).getCi()
-	    - ((ComponentSrkvolcor) compArray[j]).getCi()) / totalMolesInPhase;
+        double cij = getcij(compArray[i], compArray[j]);
+        cachedCij[i][j] = (2.0 * cij - ((ComponentSrkvolcor) compArray[i]).getCi()
+            - ((ComponentSrkvolcor) compArray[j]).getCi()) / totalMolesInPhase;
       }
     }
   }
@@ -242,8 +242,8 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
 
     for (int i = 0; i < numbcomp; i++) {
       for (int j = 0; j < numbcomp; j++) {
-	locCT += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase()
-	    * getcijT(compArray[i], compArray[j]);
+        locCT += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase()
+            * getcijT(compArray[i], compArray[j]);
       }
     }
 
@@ -265,8 +265,8 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
 
     for (int i = 0; i < numbcomp; i++) {
       for (int j = 0; j < numbcomp; j++) {
-	C += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase()
-	    * getcij(compArray[i], compArray[j]); // (compArray[i].getb()+compArray[j].getb())/2;
+        C += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase()
+            * getcij(compArray[i], compArray[j]); // (compArray[i].getb()+compArray[j].getb())/2;
       }
     }
     C /= phase.getNumberOfMolesInPhase();
@@ -332,7 +332,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   @Override
   public double fv() {
     return -1.0 / (R * (numberOfMolesInPhase * molarVolume + delta1 * getB() + loc_C())
-	* (numberOfMolesInPhase * molarVolume + delta2 * getB() + loc_C()));
+        * (numberOfMolesInPhase * molarVolume + delta2 * getB() + loc_C()));
 
     // OLD IS--> return -1.0 / (R * (numberOfMolesInPhase * molarVolume + delta1 * loc_B)
     // * (numberOfMolesInPhase * molarVolume + delta2 * loc_B));
@@ -394,7 +394,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
    */
   public double fc() {
     return -1.0 / (R * (numberOfMolesInPhase * molarVolume + delta1 * getB() + loc_C())
-	* (numberOfMolesInPhase * molarVolume + delta2 * getB() + loc_C()));
+        * (numberOfMolesInPhase * molarVolume + delta2 * getB() + loc_C()));
   }
 
   /** {@inheritDoc} */
@@ -597,7 +597,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   @Override
   public double dFdTdT() {
     return FTT() + 2.0 * FDT() * getAT() + FD() * getATT() + 2 * FTC() * getCT() + FCC() * getCT() * getCT()
-	+ FC() * getCTT() + 2 * FCD() * getCT() * getAT();
+        + FC() * getCTT() + 2 * FCD() * getCT() * getAT();
   }
 
   /** {@inheritDoc} */

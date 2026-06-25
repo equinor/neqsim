@@ -238,15 +238,15 @@ public class RiskResult {
       // Frequency by category
       writer.println("Category,Severity,Frequency (per year)");
       for (ConsequenceCategory cat : ConsequenceCategory.values()) {
-	writer.printf("%s,%d,%.6e%n", cat.name(), cat.getSeverity(), frequencyByCategory.get(cat));
+        writer.printf("%s,%d,%.6e%n", cat.name(), cat.getSeverity(), frequencyByCategory.get(cat));
       }
       writer.println();
 
       // Event results
       writer.println("Event,Frequency,Probability,Risk Contribution,Category");
       for (EventResult er : eventResults) {
-	writer.printf("%s,%.6e,%.6f,%.6e,%s%n", er.eventName, er.frequency, er.probability, er.riskContribution,
-	    er.category.name());
+        writer.printf("%s,%.6e,%.6f,%.6e,%s%n", er.eventName, er.frequency, er.probability, er.riskContribution,
+            er.category.name());
       }
     } catch (IOException e) {
       throw new RuntimeException("Failed to export risk results: " + e.getMessage(), e);
@@ -276,22 +276,22 @@ public class RiskResult {
       writer.println("  \"frequencyByCategory\": {");
       ConsequenceCategory[] cats = ConsequenceCategory.values();
       for (int i = 0; i < cats.length; i++) {
-	String comma = (i < cats.length - 1) ? "," : "";
-	writer.printf("    \"%s\": %.6e%s%n", cats[i].name(), frequencyByCategory.get(cats[i]), comma);
+        String comma = (i < cats.length - 1) ? "," : "";
+        writer.printf("    \"%s\": %.6e%s%n", cats[i].name(), frequencyByCategory.get(cats[i]), comma);
       }
       writer.println("  },");
 
       writer.println("  \"events\": [");
       for (int i = 0; i < eventResults.size(); i++) {
-	EventResult er = eventResults.get(i);
-	String comma = (i < eventResults.size() - 1) ? "," : "";
-	writer.println("    {");
-	writer.println("      \"name\": \"" + er.eventName + "\",");
-	writer.printf("      \"frequency\": %.6e,%n", er.frequency);
-	writer.printf("      \"probability\": %.6f,%n", er.probability);
-	writer.printf("      \"riskContribution\": %.6e,%n", er.riskContribution);
-	writer.println("      \"category\": \"" + er.category.name() + "\"");
-	writer.println("    }" + comma);
+        EventResult er = eventResults.get(i);
+        String comma = (i < eventResults.size() - 1) ? "," : "";
+        writer.println("    {");
+        writer.println("      \"name\": \"" + er.eventName + "\",");
+        writer.printf("      \"frequency\": %.6e,%n", er.frequency);
+        writer.printf("      \"probability\": %.6f,%n", er.probability);
+        writer.printf("      \"riskContribution\": %.6e,%n", er.riskContribution);
+        writer.println("      \"category\": \"" + er.category.name() + "\"");
+        writer.println("    }" + comma);
       }
       writer.println("  ]");
 
@@ -326,6 +326,6 @@ public class RiskResult {
   @Override
   public String toString() {
     return String.format("RiskResult[%s, %d iterations, risk=%.4f, freq=%.4e/yr]", analysisName, iterations,
-	totalRiskIndex, getTotalFrequency());
+        totalRiskIndex, getTotalFrequency());
   }
 }

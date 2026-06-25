@@ -88,8 +88,8 @@ class EOSExporterTest {
   @Test
   void testEclipseExportWithConfig() {
     EclipseEOSExporter.ExportConfig config = new EclipseEOSExporter.ExportConfig()
-	.setUnits(EclipseEOSExporter.Units.FIELD).setIncludeHeader(true).setComment("Test export for validation")
-	.setPressureGrid(new double[] { 50, 100, 150, 200, 250, 300 });
+        .setUnits(EclipseEOSExporter.Units.FIELD).setIncludeHeader(true).setComment("Test export for validation")
+        .setPressureGrid(new double[] { 50, 100, 150, 200, 250, 300 });
 
     String result = EclipseEOSExporter.toString(testFluid, config);
 
@@ -131,7 +131,7 @@ class EOSExporterTest {
   @Test
   void testEclipseMetricUnits() {
     EclipseEOSExporter.ExportConfig config = new EclipseEOSExporter.ExportConfig()
-	.setUnits(EclipseEOSExporter.Units.METRIC);
+        .setUnits(EclipseEOSExporter.Units.METRIC);
 
     String result = EclipseEOSExporter.toString(testFluid, config);
 
@@ -142,7 +142,7 @@ class EOSExporterTest {
   @Test
   void testEclipseFieldUnits() {
     EclipseEOSExporter.ExportConfig config = new EclipseEOSExporter.ExportConfig()
-	.setUnits(EclipseEOSExporter.Units.FIELD);
+        .setUnits(EclipseEOSExporter.Units.FIELD);
 
     String result = EclipseEOSExporter.toString(testFluid, config);
 
@@ -153,7 +153,7 @@ class EOSExporterTest {
   @Test
   void testEclipseSelectiveKeywords() {
     EclipseEOSExporter.ExportConfig config = new EclipseEOSExporter.ExportConfig().setIncludePVTO(true)
-	.setIncludePVTG(false).setIncludePVTW(false).setIncludeDensity(true);
+        .setIncludePVTG(false).setIncludePVTW(false).setIncludeDensity(true);
 
     String result = EclipseEOSExporter.toString(testFluid, config);
 
@@ -235,8 +235,8 @@ class EOSExporterTest {
   @Test
   void testCMGExportWithCustomConfig() {
     CMGEOSExporter.ExportConfig config = new CMGEOSExporter.ExportConfig().setSimulator(CMGEOSExporter.Simulator.IMEX)
-	.setUnits(CMGEOSExporter.Units.FIELD).setModelName("MY_RESERVOIR_FLUID").setComment("Custom test fluid model")
-	.setPressureGrid(new double[] { 50, 100, 150, 200, 300 });
+        .setUnits(CMGEOSExporter.Units.FIELD).setModelName("MY_RESERVOIR_FLUID").setComment("Custom test fluid model")
+        .setPressureGrid(new double[] { 50, 100, 150, 200, 300 });
 
     String result = CMGEOSExporter.toString(testFluid, config);
 
@@ -285,7 +285,7 @@ class EOSExporterTest {
   void testExportWithDifferentPressureGrids() {
     // Test with few pressure points
     EclipseEOSExporter.ExportConfig sparseConfig = new EclipseEOSExporter.ExportConfig()
-	.setPressureGrid(new double[] { 50, 150, 300 });
+        .setPressureGrid(new double[] { 50, 150, 300 });
 
     String sparseResult = EclipseEOSExporter.toString(testFluid, sparseConfig);
     assertNotNull(sparseResult);
@@ -347,6 +347,6 @@ class EOSExporterTest {
     assertTrue(result.contains("823.4567") || result.contains("823.4568"), "Oil density should be formatted");
     // Gas density should have 6 decimal places
     assertTrue(result.contains("1.2345") || result.contains("1.234568"),
-	"Gas density should be formatted with more precision");
+        "Gas density should be formatted with more precision");
   }
 }

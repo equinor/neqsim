@@ -72,9 +72,9 @@ public class TransientWellModelTest {
     TransientWellModel.DrawdownResult result3 = model.calculateDrawdown(rate, 100.0);
 
     assertTrue(result1.radiusOfInvestigation < result2.radiusOfInvestigation,
-	"Radius of investigation should grow with time");
+        "Radius of investigation should grow with time");
     assertTrue(result2.radiusOfInvestigation < result3.radiusOfInvestigation,
-	"Radius of investigation should grow with time");
+        "Radius of investigation should grow with time");
   }
 
   @Test
@@ -146,7 +146,7 @@ public class TransientWellModelTest {
     // Verify monotonic pressure decline during constant rate production
     for (int i = 1; i < profile.size(); i++) {
       assertTrue(profile.get(i).pressure <= profile.get(i - 1).pressure,
-	  "Pressure should decline or stay constant during drawdown");
+          "Pressure should decline or stay constant during drawdown");
     }
   }
 
@@ -230,7 +230,7 @@ public class TransientWellModelTest {
 
     assertTrue(resultHigh.drawdown > resultLow.drawdown, "Higher skin should cause more pressure drop");
     assertTrue(resultHigh.flowingPressure < resultLow.flowingPressure,
-	"Higher skin should result in lower bottomhole pressure");
+        "Higher skin should result in lower bottomhole pressure");
   }
 
   @Test

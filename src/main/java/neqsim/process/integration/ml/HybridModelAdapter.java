@@ -95,7 +95,7 @@ public class HybridModelAdapter implements MLCorrectionInterface, Serializable {
 
     case REPLACEMENT:
       if (confidence >= confidenceThreshold) {
-	return mlOutput;
+        return mlOutput;
       }
       return physicsPrediction;
 
@@ -144,16 +144,16 @@ public class HybridModelAdapter implements MLCorrectionInterface, Serializable {
       String[] parts = payload.split(",");
 
       if (parts.length >= weights.length + 1) {
-	for (int i = 0; i < weights.length; i++) {
-	  weights[i] = Double.parseDouble(parts[i].trim());
-	}
-	bias = Double.parseDouble(parts[weights.length].trim());
+        for (int i = 0; i < weights.length; i++) {
+          weights[i] = Double.parseDouble(parts[i].trim());
+        }
+        bias = Double.parseDouble(parts[weights.length].trim());
 
-	if (parts.length > weights.length + 1) {
-	  modelVersion = parts[weights.length + 1].trim();
-	}
+        if (parts.length > weights.length + 1) {
+          modelVersion = parts[weights.length + 1].trim();
+        }
 
-	ready = true;
+        ready = true;
       }
     } catch (Exception e) {
       ready = false;
@@ -173,11 +173,11 @@ public class HybridModelAdapter implements MLCorrectionInterface, Serializable {
 
     for (double feature : features) {
       if (Double.isNaN(feature) || Double.isInfinite(feature)) {
-	return 0.0;
+        return 0.0;
       }
       // Reduce confidence for extreme values
       if (Math.abs(feature) > 100) {
-	confidence *= 0.9;
+        confidence *= 0.9;
       }
     }
 
@@ -264,20 +264,20 @@ public class HybridModelAdapter implements MLCorrectionInterface, Serializable {
       double gradientB = 0.0;
 
       for (int i = 0; i < n; i++) {
-	double pred = bias;
-	for (int j = 0; j < m; j++) {
-	  pred += weights[j] * featureMatrix[i][j];
-	}
-	double error = pred - targets[i];
+        double pred = bias;
+        for (int j = 0; j < m; j++) {
+          pred += weights[j] * featureMatrix[i][j];
+        }
+        double error = pred - targets[i];
 
-	for (int j = 0; j < m; j++) {
-	  gradientW[j] += error * featureMatrix[i][j] / n;
-	}
-	gradientB += error / n;
+        for (int j = 0; j < m; j++) {
+          gradientW[j] += error * featureMatrix[i][j] / n;
+        }
+        gradientB += error / n;
       }
 
       for (int j = 0; j < m; j++) {
-	weights[j] -= learningRate * gradientW[j];
+        weights[j] -= learningRate * gradientW[j];
       }
       bias -= learningRate * gradientB;
     }

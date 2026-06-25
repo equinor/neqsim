@@ -53,8 +53,8 @@ public class CompressorModuleTest extends neqsim.NeqSimTest {
     thermoSystem.setMixingRule("classic");
     thermoSystem.setMultiPhaseCheck(true);
     thermoSystem.setMolarComposition(new double[] { 0.034266, 0.005269, 0.039189, 0.700553, 0.091154, 0.050908,
-	0.007751, 0.014665, 0.004249, 0.004878, 0.004541, 0.007189, 0.006904, 0.004355, 0.007658, 0.003861, 0.003301,
-	0.002624, 0.001857, 0.001320, 0.001426, 0.001164, 0.000916 });
+        0.007751, 0.014665, 0.004249, 0.004878, 0.004541, 0.007189, 0.006904, 0.004355, 0.007658, 0.003861, 0.003301,
+        0.002624, 0.001857, 0.001320, 0.001426, 0.001164, 0.000916 });
 
     Stream feedStream = new Stream("feed stream", thermoSystem);
     feedStream.setFlowRate(604094, "kg/hr");
@@ -134,7 +134,7 @@ public class CompressorModuleTest extends neqsim.NeqSimTest {
     assertEquals(2048.7759843084377, recycleScrubberStream.getFlowRate("kg/hr"), 0.1);
 
     neqsim.process.equipment.compressor.CompressorChartGenerator compchartgenerator = new neqsim.process.equipment.compressor.CompressorChartGenerator(
-	seccondStageCompressor);
+        seccondStageCompressor);
     compchartgenerator.generateCompressorChart("mid range");
 
     seccondStageCompressor.setCompressorChart(compchartgenerator.generateCompressorChart("normal"));
@@ -152,7 +152,7 @@ public class CompressorModuleTest extends neqsim.NeqSimTest {
     operations.run();
 
     assertTrue(seccondStageCompressor.isSurge(seccondStageCompressor.getPolytropicFluidHead(),
-	seccondStageCompressor.getInletStream().getFlowRate("m3/hr")));
+        seccondStageCompressor.getInletStream().getFlowRate("m3/hr")));
 
     double pressurespeedclac = seccondStageCompressor.getOutletPressure();
     double speedcomp = seccondStageCompressor.getSpeed();
@@ -171,7 +171,7 @@ public class CompressorModuleTest extends neqsim.NeqSimTest {
     assertEquals(3526, seccondStageCompressor.getSpeed(), 10);
     assertEquals(389.69982, seccondStageCompressor.getInletStream().getFlowRate("m3/hr"), 10.2);
     assertTrue(seccondStageCompressor.isSurge(seccondStageCompressor.getPolytropicFluidHead(),
-	seccondStageCompressor.getInletStream().getFlowRate("m3/hr")));
+        seccondStageCompressor.getInletStream().getFlowRate("m3/hr")));
 
     feedStream.setFlowRate(704094, "kg/hr");
     operations.run();
@@ -179,6 +179,6 @@ public class CompressorModuleTest extends neqsim.NeqSimTest {
     assertEquals(pressurespeedclac, seccondStageCompressor.getOutletStream().getPressure("bara"), 0.5);
     assertEquals(3500.0, seccondStageCompressor.getSpeed(), 100);
     assertFalse(seccondStageCompressor.isSurge(seccondStageCompressor.getPolytropicFluidHead(),
-	seccondStageCompressor.getInletStream().getFlowRate("m3/hr")));
+        seccondStageCompressor.getInletStream().getFlowRate("m3/hr")));
   }
 }

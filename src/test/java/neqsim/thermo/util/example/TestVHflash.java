@@ -34,7 +34,7 @@ public class TestVHflash {
 
     double molesInjectedLNG = 200000.0;
     double molesInjecedVacumBreakerGas = 18 * pressureInTank * 1.0e5 / ThermodynamicConstantsInterface.R
-	/ temperatureInTank;
+        / temperatureInTank;
 
     SystemInterface testSystem = new SystemSrkEos(temperatureInTank, pressureInTank);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
@@ -75,11 +75,11 @@ public class TestVHflash {
       // testSystem.getPhase(0).getCp()/testSystem.getPhase(0).getNumberOfMolesInPhase());
 
       logger.info("Volume Nitrogen " + testSystem.getPhase(0).getMolarMass() * testSystem.getNumberOfMoles()
-	  / testSystem.getPhase(0).getPhysicalProperties().getDensity());
+          / testSystem.getPhase(0).getPhysicalProperties().getDensity());
       logger.info("Volume Liquid Methane " + testSystem2.getPhase(0).getMolarMass() * testSystem2.getNumberOfMoles()
-	  / testSystem2.getPhase(0).getPhysicalProperties().getDensity());
+          / testSystem2.getPhase(0).getPhysicalProperties().getDensity());
       logger.info("Volume Nitrogen from vacum breaker system " + testSystem4.getPhase(0).getMolarMass()
-	  * testSystem4.getNumberOfMoles() / testSystem4.getPhase(0).getPhysicalProperties().getDensity());
+          * testSystem4.getNumberOfMoles() / testSystem4.getPhase(0).getPhysicalProperties().getDensity());
 
       testOps3.VHflash(testSystem.getVolume(), testSystem.getEnthalpy() + testSystem2.getEnthalpy());
       testSystem3.display();

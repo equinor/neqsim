@@ -1,12 +1,12 @@
 package neqsim.process.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * TestNeqsim class.
@@ -27,7 +27,7 @@ public class TestNeqsim {
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     SystemInterface testFluid = new SystemSrkEos(298.15, 10.0); // SystemSrkCPAstatoil(298.1,
-								// 10.9); //298.15 K
+    // 10.9); //298.15 K
 
     testFluid.addComponent("methane", 8.8316);
     testFluid.addComponent("nitrogen", 0.0296682);
@@ -80,15 +80,15 @@ public class TestNeqsim {
     double Cpliquid = stream1.getThermoSystem().getPhase(2).getCp();
     double CpOil = stream1.getThermoSystem().getPhase(1).getCp();
     double Cpone = stream1.getThermoSystem().getPhase(0).getBeta() * CpVapour
-	+ stream1.getThermoSystem().getPhase(1).getBeta() * CpOil
-	+ stream1.getThermoSystem().getPhase(2).getBeta() * Cpliquid;
+        + stream1.getThermoSystem().getPhase(1).getBeta() * CpOil
+        + stream1.getThermoSystem().getPhase(2).getBeta() * Cpliquid;
 
     double DensityVapour = stream1.getThermoSystem().getPhase(0).getDensity();
     double Densityliquid = stream1.getThermoSystem().getPhase(2).getDensity();
     double DensityOil = stream1.getThermoSystem().getPhase(1).getDensity();
     double Density1 = stream1.getThermoSystem().getWtFraction(0) * DensityVapour
-	+ stream1.getThermoSystem().getWtFraction(1) * DensityOil
-	+ stream1.getThermoSystem().getWtFraction(2) * Densityliquid;
+        + stream1.getThermoSystem().getWtFraction(1) * DensityOil
+        + stream1.getThermoSystem().getWtFraction(2) * Densityliquid;
     // operations.run();
     // logger.info("work " + compressor1.getTotalWork() + " density " + Density1 + " Cp "
     // + Cpone + " SPEED OF SOUND " + stream1.getThermoSystem().getPhase(0).getSoundSpeed());
@@ -101,11 +101,11 @@ public class TestNeqsim {
     stream1.getThermoSystem().display();
 
     double massFlowGas = stream1.getThermoSystem().getPhase(0).getBeta()
-	* stream1.getThermoSystem().getPhase(0).getMolarMass();
+        * stream1.getThermoSystem().getPhase(0).getMolarMass();
     double massFlowLiq = stream1.getThermoSystem().getPhase(2).getBeta()
-	* stream1.getThermoSystem().getPhase(2).getMolarMass();
+        * stream1.getThermoSystem().getPhase(2).getMolarMass();
     double massFlowOil = stream1.getThermoSystem().getPhase(1).getBeta()
-	* stream1.getThermoSystem().getPhase(1).getMolarMass();
+        * stream1.getThermoSystem().getPhase(1).getMolarMass();
 
     double volFlowGas = massFlowGas / stream1.getThermoSystem().getPhase(0).getDensity();
     double volFlowLiq = massFlowLiq / stream1.getThermoSystem().getPhase(2).getDensity();
@@ -114,7 +114,7 @@ public class TestNeqsim {
     double GMF = massFlowGas / (massFlowGas + massFlowOil + massFlowLiq);
     double GVF = volFlowGas / (volFlowGas + volFlowOil + volFlowLiq);
     logger.info("inlet stream -  GMF " + GMF + "  GVF " + GVF + " Z IN " + stream1.getThermoSystem().getZ() + " Z OUT "
-	+ compressor1.getOutletStream().getThermoSystem().getZ());
+        + compressor1.getOutletStream().getThermoSystem().getZ());
     /*
      * temperature[i] = compressor1.getOutStream().getTemperature(); work [i] = compressor1.getTotalWork();
      *

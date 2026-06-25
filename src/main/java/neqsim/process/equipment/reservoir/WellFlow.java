@@ -231,9 +231,9 @@ public class WellFlow extends TwoPortEquipment {
      */
     public void setFracturePressure(double pressure, String unit) {
       if ("psia".equalsIgnoreCase(unit)) {
-	this.fracturePressure = pressure * 0.0689476;
+        this.fracturePressure = pressure * 0.0689476;
       } else {
-	this.fracturePressure = pressure;
+        this.fracturePressure = pressure;
       }
     }
 
@@ -245,11 +245,11 @@ public class WellFlow extends TwoPortEquipment {
      */
     public void setBarrierStressContrast(double contrast, String unit) {
       if ("psi".equalsIgnoreCase(unit)) {
-	this.barrierStressContrast = contrast * 0.0689476;
+        this.barrierStressContrast = contrast * 0.0689476;
       } else if ("MPa".equalsIgnoreCase(unit)) {
-	this.barrierStressContrast = contrast * 10.0;
+        this.barrierStressContrast = contrast * 10.0;
       } else {
-	this.barrierStressContrast = contrast;
+        this.barrierStressContrast = contrast;
       }
     }
 
@@ -266,7 +266,7 @@ public class WellFlow extends TwoPortEquipment {
      */
     public boolean isFractureContained(double bhp) {
       if (fracturePressure < 0) {
-	return true; // No fracture data set - assume contained
+        return true; // No fracture data set - assume contained
       }
       double netPressure = bhp - fracturePressure;
       return netPressure < barrierStressContrast;
@@ -280,7 +280,7 @@ public class WellFlow extends TwoPortEquipment {
      */
     public double getFractureContainmentMargin(double bhp) {
       if (fracturePressure < 0) {
-	return Double.MAX_VALUE;
+        return Double.MAX_VALUE;
       }
       double netPressure = bhp - fracturePressure;
       return barrierStressContrast - netPressure;
@@ -398,7 +398,7 @@ public class WellFlow extends TwoPortEquipment {
     for (int i = 0; i < layers.size(); i++) {
       ReservoirLayer layer = layers.get(i);
       if (layer.fracturePressure > 0) {
-	risks[i] = bhp > layer.fracturePressure;
+        risks[i] = bhp > layer.fracturePressure;
       }
     }
     return risks;
@@ -416,7 +416,7 @@ public class WellFlow extends TwoPortEquipment {
       double absRate = Math.abs(layer.calculatedRate);
       totalRate += absRate;
       if (layer.isTargetZone) {
-	targetRate += absRate;
+        targetRate += absRate;
       }
     }
     return totalRate > 0 ? targetRate / totalRate : 0.0;
@@ -432,7 +432,7 @@ public class WellFlow extends TwoPortEquipment {
     double oozRate = 0.0;
     for (ReservoirLayer layer : layers) {
       if (!layer.isTargetZone && layer.calculatedRate > 0) {
-	oozRate += layer.calculatedRate;
+        oozRate += layer.calculatedRate;
       }
     }
     if ("MSm3/day".equalsIgnoreCase(unit)) {
@@ -461,7 +461,7 @@ public class WellFlow extends TwoPortEquipment {
     for (int i = 0; i < layers.size(); i++) {
       double rate = layers.get(i).calculatedRate;
       if (unit.equalsIgnoreCase("MSm3/day")) {
-	rate /= 1.0e6;
+        rate /= 1.0e6;
       }
       rates[i] = rate;
     }
@@ -495,94 +495,94 @@ public class WellFlow extends TwoPortEquipment {
     switch (inflowModel) {
     case VOGEL:
       if (calcpressure) {
-	double q = getInletStream().getFlowRate("MSm3/day");
-	double term = q / vogelQmax;
-	double a = 0.8;
-	double b = 0.2;
-	double c = term - 1.0;
-	double disc = b * b - 4.0 * a * c;
-	if (disc < 0) {
-	  logger.error("pressure lower that 0");
-	  throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow",
-	      "run:calcOutletPressure", "pressure", "- Outlet pressure is negative" + pressureOut));
-	}
-	double x = (-b + Math.sqrt(disc)) / (2.0 * a);
-	outStream.setPressure(presRes * x, "bara");
+        double q = getInletStream().getFlowRate("MSm3/day");
+        double term = q / vogelQmax;
+        double a = 0.8;
+        double b = 0.2;
+        double c = term - 1.0;
+        double disc = b * b - 4.0 * a * c;
+        if (disc < 0) {
+          logger.error("pressure lower that 0");
+          throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow",
+              "run:calcOutletPressure", "pressure", "- Outlet pressure is negative" + pressureOut));
+        }
+        double x = (-b + Math.sqrt(disc)) / (2.0 * a);
+        outStream.setPressure(presRes * x, "bara");
       } else {
-	double pwf = thermoSystem.getPressure("bara");
-	double term = 1.0 - 0.2 * (pwf / presRes) - 0.8 * Math.pow(pwf / presRes, 2.0);
-	double flow = vogelQmax * term;
-	outStream.setFlowRate(flow, "MSm3/day");
+        double pwf = thermoSystem.getPressure("bara");
+        double term = 1.0 - 0.2 * (pwf / presRes) - 0.8 * Math.pow(pwf / presRes, 2.0);
+        double flow = vogelQmax * term;
+        outStream.setFlowRate(flow, "MSm3/day");
       }
       break;
     case FETKOVICH:
       if (calcpressure) {
-	double q = getInletStream().getFlowRate("MSm3/day");
-	double delta = Math.pow(q / fetkovichC, 1.0 / fetkovichN);
-	if (Math.pow(presRes, 2.0) - delta < 0) {
-	  logger.error("pressure lower that 0");
-	  throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow",
-	      "run:calcOutletPressure", "pressure", "- Outlet pressure is negative" + pressureOut));
-	}
-	outStream.setPressure(Math.sqrt(Math.pow(presRes, 2.0) - delta), "bara");
+        double q = getInletStream().getFlowRate("MSm3/day");
+        double delta = Math.pow(q / fetkovichC, 1.0 / fetkovichN);
+        if (Math.pow(presRes, 2.0) - delta < 0) {
+          logger.error("pressure lower that 0");
+          throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow",
+              "run:calcOutletPressure", "pressure", "- Outlet pressure is negative" + pressureOut));
+        }
+        outStream.setPressure(Math.sqrt(Math.pow(presRes, 2.0) - delta), "bara");
       } else {
-	double pwf = thermoSystem.getPressure("bara");
-	double flow = fetkovichC * Math.pow(Math.pow(presRes, 2.0) - Math.pow(pwf, 2.0), fetkovichN);
-	outStream.setFlowRate(flow, "MSm3/day");
+        double pwf = thermoSystem.getPressure("bara");
+        double flow = fetkovichC * Math.pow(Math.pow(presRes, 2.0) - Math.pow(pwf, 2.0), fetkovichN);
+        outStream.setFlowRate(flow, "MSm3/day");
       }
       break;
     case BACKPRESSURE:
       if (calcpressure) {
-	double q = getInletStream().getFlowRate("MSm3/day");
-	double delta = backpressureA * q + backpressureB * Math.pow(q, 2.0);
-	if (Math.pow(presRes, 2.0) - delta < 0) {
-	  logger.error("pressure lower that 0");
-	  throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow",
-	      "run:calcOutletPressure", "pressure", "- Outlet pressure is negative" + pressureOut));
-	}
-	outStream.setPressure(Math.sqrt(Math.pow(presRes, 2.0) - delta), "bara");
+        double q = getInletStream().getFlowRate("MSm3/day");
+        double delta = backpressureA * q + backpressureB * Math.pow(q, 2.0);
+        if (Math.pow(presRes, 2.0) - delta < 0) {
+          logger.error("pressure lower that 0");
+          throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow",
+              "run:calcOutletPressure", "pressure", "- Outlet pressure is negative" + pressureOut));
+        }
+        outStream.setPressure(Math.sqrt(Math.pow(presRes, 2.0) - delta), "bara");
       } else {
-	double pwf = thermoSystem.getPressure("bara");
-	double delta = Math.pow(presRes, 2.0) - Math.pow(pwf, 2.0);
-	double flow = computeBackpressureFlow(delta);
-	outStream.setFlowRate(flow, "MSm3/day");
+        double pwf = thermoSystem.getPressure("bara");
+        double delta = Math.pow(presRes, 2.0) - Math.pow(pwf, 2.0);
+        double flow = computeBackpressureFlow(delta);
+        outStream.setFlowRate(flow, "MSm3/day");
       }
       break;
     case TABLE:
       if (inflowTablePwf.length < 2 || inflowTableRate.length < 2) {
-	throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow", "run", "table",
-	    "- Table-driven inflow requires at least two points"));
+        throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow", "run", "table",
+            "- Table-driven inflow requires at least two points"));
       }
       if (calcpressure) {
-	double q = getInletStream().getFlowRate("MSm3/day");
-	outStream.setPressure(interpolatePressureForFlow(q), "bara");
+        double q = getInletStream().getFlowRate("MSm3/day");
+        outStream.setPressure(interpolatePressureForFlow(q), "bara");
       } else {
-	double pwf = thermoSystem.getPressure("bara");
-	outStream.setFlowRate(interpolateFlowForPressure(pwf), "MSm3/day");
+        double pwf = thermoSystem.getPressure("bara");
+        outStream.setFlowRate(interpolateFlowForPressure(pwf), "MSm3/day");
       }
       break;
     case PRODUCTION_INDEX:
     default:
       if (useWellProductionIndex) {
-	if (calcpressure) {
-	  double presout;
-	  if (Math.pow(presRes, 2.0) - getInletStream().getFlowRate("MSm3/day") / wellProductionIndex > 0) {
-	    presout = Math
-		.sqrt(Math.pow(presRes, 2.0) - getInletStream().getFlowRate("MSm3/day") / wellProductionIndex);
-	  } else {
-	    logger.error("pressure lower that 0");
-	    throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow",
-		"run:calcOutletPressure", "pressure", "- Outlet pressure is negative" + pressureOut));
-	  }
-	  outStream.setPressure(presout, "bara");
-	} else {
-	  double flow = wellProductionIndex
-	      * (Math.pow(presRes, 2.0) - Math.pow(thermoSystem.getPressure("bara"), 2.0));
-	  outStream.setFlowRate(flow, "MSm3/day");
-	}
+        if (calcpressure) {
+          double presout;
+          if (Math.pow(presRes, 2.0) - getInletStream().getFlowRate("MSm3/day") / wellProductionIndex > 0) {
+            presout = Math
+                .sqrt(Math.pow(presRes, 2.0) - getInletStream().getFlowRate("MSm3/day") / wellProductionIndex);
+          } else {
+            logger.error("pressure lower that 0");
+            throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow",
+                "run:calcOutletPressure", "pressure", "- Outlet pressure is negative" + pressureOut));
+          }
+          outStream.setPressure(presout, "bara");
+        } else {
+          double flow = wellProductionIndex
+              * (Math.pow(presRes, 2.0) - Math.pow(thermoSystem.getPressure("bara"), 2.0));
+          outStream.setFlowRate(flow, "MSm3/day");
+        }
       } else {
-	wellProductionIndex = getInletStream().getFlowRate("MSm3/day")
-	    / (Math.pow(presRes, 2.0) - Math.pow(thermoSystem.getPressure("bara"), 2.0));
+        wellProductionIndex = getInletStream().getFlowRate("MSm3/day")
+            / (Math.pow(presRes, 2.0) - Math.pow(thermoSystem.getPressure("bara"), 2.0));
       }
       break;
     }
@@ -603,7 +603,7 @@ public class WellFlow extends TwoPortEquipment {
   private void runMultiLayer(UUID id) {
     if (layers.isEmpty()) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow", "runMultiLayer", "layers",
-	  "- No layers defined for multi-layer well"));
+          "- No layers defined for multi-layer well"));
     }
 
     double pwf = pressureOut; // Common bottom-hole pressure
@@ -627,7 +627,7 @@ public class WellFlow extends TwoPortEquipment {
       double pi = layer.productivityIndex;
       double layerFlow = pi * (Math.pow(presRes, 2.0) - Math.pow(pwf, 2.0));
       if (layerFlow < 0) {
-	layerFlow = 0.0;
+        layerFlow = 0.0;
       }
       layer.calculatedRate = layerFlow;
       totalFlow += layerFlow;
@@ -659,7 +659,7 @@ public class WellFlow extends TwoPortEquipment {
       // Injection: flow from wellbore into reservoir (Pwf > Pres)
       double layerFlow = ii * (Math.pow(pwf, 2.0) - Math.pow(presRes, 2.0));
       if (layerFlow < 0) {
-	layerFlow = 0.0; // Zone not accepting fluid if Pres > Pwf
+        layerFlow = 0.0; // Zone not accepting fluid if Pres > Pwf
       }
       layer.calculatedRate = layerFlow;
       totalFlow += layerFlow;
@@ -681,7 +681,7 @@ public class WellFlow extends TwoPortEquipment {
       return;
     }
     double flow = wellProductionIndex
-	* (Math.pow(getInletStream().getPressure("bara"), 2.0) - Math.pow(thermoSystem.getPressure("bara"), 2.0));
+        * (Math.pow(getInletStream().getPressure("bara"), 2.0) - Math.pow(thermoSystem.getPressure("bara"), 2.0));
 
     outStream.setFlowRate(flow, "MSm3/day");
     outStream.run();
@@ -845,26 +845,26 @@ public class WellFlow extends TwoPortEquipment {
   private void addWellCapacityConstraints() {
     // Reservoir drawdown constraint (Pr - Pwf). Maximum-type: utilization = drawdown / maxDrawdown.
     addCapacityConstraint(new CapacityConstraint("well drawdown", "bar", ConstraintType.SOFT)
-	.setDesignValue(maxDrawdownBar).setWarningThreshold(0.9).setDataSource("equipment")
-	.setDescription("Reservoir drawdown Pr - Pwf (sand/coning deliverability limit)")
-	.setEnabled(wellConstraintsEnabled).setValueSupplier(new java.util.function.DoubleSupplier() {
-	  @Override
-	  public double getAsDouble() {
-	    return getDrawdown();
-	  }
-	}));
+        .setDesignValue(maxDrawdownBar).setWarningThreshold(0.9).setDataSource("equipment")
+        .setDescription("Reservoir drawdown Pr - Pwf (sand/coning deliverability limit)")
+        .setEnabled(wellConstraintsEnabled).setValueSupplier(new java.util.function.DoubleSupplier() {
+          @Override
+          public double getAsDouble() {
+            return getDrawdown();
+          }
+        }));
 
     // Minimum bottom-hole pressure constraint. Minimum-type: utilization = minBHP / Pwf.
     addCapacityConstraint(new CapacityConstraint("min BHP", "bara", ConstraintType.SOFT)
-	.setMinValue(minBottomHolePressureBara).setWarningThreshold(1.1).setDataSource("equipment")
-	.setDescription("Minimum flowing bottom-hole pressure (liquid loading / bubble point limit)")
-	.setEnabled(wellConstraintsEnabled && minBottomHolePressureBara > 0.0)
-	.setValueSupplier(new java.util.function.DoubleSupplier() {
-	  @Override
-	  public double getAsDouble() {
-	    return getBottomHolePressure();
-	  }
-	}));
+        .setMinValue(minBottomHolePressureBara).setWarningThreshold(1.1).setDataSource("equipment")
+        .setDescription("Minimum flowing bottom-hole pressure (liquid loading / bubble point limit)")
+        .setEnabled(wellConstraintsEnabled && minBottomHolePressureBara > 0.0)
+        .setValueSupplier(new java.util.function.DoubleSupplier() {
+          @Override
+          public double getAsDouble() {
+            return getBottomHolePressure();
+          }
+        }));
   }
 
   /**
@@ -921,7 +921,7 @@ public class WellFlow extends TwoPortEquipment {
     this.useWellProductionIndex = false;
     this.vogelRefPres = reservoirPressure;
     this.vogelQmax = qTest
-	/ (1.0 - 0.2 * (pwfTest / reservoirPressure) - 0.8 * Math.pow(pwfTest / reservoirPressure, 2.0));
+        / (1.0 - 0.2 * (pwfTest / reservoirPressure) - 0.8 * Math.pow(pwfTest / reservoirPressure, 2.0));
   }
 
   /**
@@ -964,9 +964,9 @@ public class WellFlow extends TwoPortEquipment {
    */
   public void setTableInflow(double[] bottomHolePressures, double[] flowRates) {
     if (bottomHolePressures == null || flowRates == null || bottomHolePressures.length != flowRates.length
-	|| bottomHolePressures.length < 2) {
+        || bottomHolePressures.length < 2) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow", "setTableInflow", "table",
-	  "- Provide matching pressure/flow arrays with at least two entries"));
+          "- Provide matching pressure/flow arrays with at least two entries"));
     }
 
     this.inflowModel = InflowPerformanceModel.TABLE;
@@ -999,7 +999,7 @@ public class WellFlow extends TwoPortEquipment {
   private double computeBackpressureFlow(double drawdown) {
     if (backpressureA == 0.0 && backpressureB == 0.0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow", "run:calcFlow", "flow",
-	  "- Backpressure parameters a and b must be specified"));
+          "- Backpressure parameters a and b must be specified"));
     }
     if (backpressureB == 0.0) {
       return drawdown / backpressureA;
@@ -1008,7 +1008,7 @@ public class WellFlow extends TwoPortEquipment {
     if (discriminant < 0) {
       logger.error("pressure lower that 0");
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow", "run:calcFlow", "flow",
-	  "- Drawdown is insufficient for backpressure calculation"));
+          "- Drawdown is insufficient for backpressure calculation"));
     }
     return (-backpressureA + Math.sqrt(discriminant)) / (2.0 * backpressureB);
   }
@@ -1025,8 +1025,8 @@ public class WellFlow extends TwoPortEquipment {
       double lowP = inflowTablePwf[i];
       double highP = inflowTablePwf[i + 1];
       if (pwf >= lowP && pwf <= highP) {
-	double fraction = (pwf - lowP) / (highP - lowP);
-	return inflowTableRate[i] + fraction * (inflowTableRate[i + 1] - inflowTableRate[i]);
+        double fraction = (pwf - lowP) / (highP - lowP);
+        return inflowTableRate[i] + fraction * (inflowTableRate[i + 1] - inflowTableRate[i]);
       }
     }
     return inflowTableRate[lastIndex];
@@ -1044,8 +1044,8 @@ public class WellFlow extends TwoPortEquipment {
       double lowQ = inflowTableRate[i];
       double highQ = inflowTableRate[i + 1];
       if (flow >= lowQ && flow <= highQ) {
-	double fraction = (flow - lowQ) / (highQ - lowQ);
-	return inflowTablePwf[i] + fraction * (inflowTablePwf[i + 1] - inflowTablePwf[i]);
+        double fraction = (flow - lowQ) / (highQ - lowQ);
+        return inflowTablePwf[i] + fraction * (inflowTablePwf[i + 1] - inflowTablePwf[i]);
       }
     }
     return inflowTablePwf[lastIndex];
@@ -1054,15 +1054,15 @@ public class WellFlow extends TwoPortEquipment {
   private void sortTableByPressure() {
     for (int i = 0; i < inflowTablePwf.length - 1; i++) {
       for (int j = 0; j < inflowTablePwf.length - i - 1; j++) {
-	if (inflowTablePwf[j] > inflowTablePwf[j + 1]) {
-	  double tempP = inflowTablePwf[j];
-	  inflowTablePwf[j] = inflowTablePwf[j + 1];
-	  inflowTablePwf[j + 1] = tempP;
+        if (inflowTablePwf[j] > inflowTablePwf[j + 1]) {
+          double tempP = inflowTablePwf[j];
+          inflowTablePwf[j] = inflowTablePwf[j + 1];
+          inflowTablePwf[j + 1] = tempP;
 
-	  double tempQ = inflowTableRate[j];
-	  inflowTableRate[j] = inflowTableRate[j + 1];
-	  inflowTableRate[j + 1] = tempQ;
-	}
+          double tempQ = inflowTableRate[j];
+          inflowTableRate[j] = inflowTableRate[j + 1];
+          inflowTableRate[j + 1] = tempQ;
+        }
       }
     }
   }
@@ -1113,31 +1113,31 @@ public class WellFlow extends TwoPortEquipment {
       boolean firstLine = true;
 
       while ((line = reader.readLine()) != null) {
-	line = line.trim();
-	if (line.isEmpty() || line.startsWith("#")) {
-	  continue; // Skip empty lines and comments
-	}
+        line = line.trim();
+        if (line.isEmpty() || line.startsWith("#")) {
+          continue; // Skip empty lines and comments
+        }
 
-	// Split by comma, semicolon, or tab
-	String[] parts = line.split("[,;\t]+");
-	if (parts.length < 2) {
-	  continue;
-	}
+        // Split by comma, semicolon, or tab
+        String[] parts = line.split("[,;\t]+");
+        if (parts.length < 2) {
+          continue;
+        }
 
-	try {
-	  double pressure = Double.parseDouble(parts[0].trim());
-	  double rate = Double.parseDouble(parts[1].trim());
-	  pressures.add(pressure);
-	  rates.add(rate);
-	} catch (NumberFormatException e) {
-	  if (firstLine) {
-	    // Skip header row
-	    firstLine = false;
-	    continue;
-	  }
-	  logger.warn("Skipping invalid line in IPR file: {}", line);
-	}
-	firstLine = false;
+        try {
+          double pressure = Double.parseDouble(parts[0].trim());
+          double rate = Double.parseDouble(parts[1].trim());
+          pressures.add(pressure);
+          rates.add(rate);
+        } catch (NumberFormatException e) {
+          if (firstLine) {
+            // Skip header row
+            firstLine = false;
+            continue;
+          }
+          logger.warn("Skipping invalid line in IPR file: {}", line);
+        }
+        firstLine = false;
       }
     }
 

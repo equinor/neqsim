@@ -96,8 +96,8 @@ public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
       flowController.setControllerSetPoint(65.0 + getRandomDistrurbanceFlowRate());
       p.runTransient();
       logger.info("flow rate " + valve_1.getOutletStream().getFluid().getPhase("gas").getFlowRate("kg/hr")
-	  + " controller response " + flowController.getResponse() + " valve opening "
-	  + valve_1.getPercentValveOpening() + " pressure " + separator_1.getGasOutStream().getPressure());
+          + " controller response " + flowController.getResponse() + " valve opening "
+          + valve_1.getPercentValveOpening() + " pressure " + separator_1.getGasOutStream().getPressure());
     }
 
     for (int i = 0; i < 100; i++) {
@@ -105,8 +105,8 @@ public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
       // stream_1.runTransient(1.0);
       p.runTransient();
       logger.info("flow rate " + valve_1.getOutletStream().getFluid().getPhase("gas").getFlowRate("kg/hr")
-	  + " controller response " + flowController.getResponse() + " valve opening "
-	  + valve_1.getPercentValveOpening() + " pressure " + separator_1.getGasOutStream().getPressure());
+          + " controller response " + flowController.getResponse() + " valve opening "
+          + valve_1.getPercentValveOpening() + " pressure " + separator_1.getGasOutStream().getPressure());
     }
 
     // transient behaviour
@@ -115,8 +115,8 @@ public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
       flowController.setControllerSetPoint(75.0 + getRandomDistrurbanceFlowRate());
       p.runTransient();
       logger.info("flow rate " + valve_1.getOutletStream().getFluid().getPhase("gas").getFlowRate("kg/hr")
-	  + " controller response " + flowController.getResponse() + " valve opening "
-	  + valve_1.getPercentValveOpening() + " pressure " + separator_1.getGasOutStream().getPressure());
+          + " controller response " + flowController.getResponse() + " valve opening "
+          + valve_1.getPercentValveOpening() + " pressure " + separator_1.getGasOutStream().getPressure());
       // p.runTransient();
     }
   }

@@ -1,12 +1,12 @@
 package neqsim.process.equipment.distillation;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.distillation.DistillationColumn.SolverType;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 @Tag("slow")
 public class DistillationSpeedTest {
@@ -32,7 +32,7 @@ public class DistillationSpeedTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "INSIDE_OUT avg time:          %.2f ms%n", insideOutTime);
     if (insideOutTime > 0) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "Speedup (IO vs Direct):       %.2fx%n",
-	  directTime / insideOutTime);
+          directTime / insideOutTime);
     }
   }
 
@@ -48,7 +48,7 @@ public class DistillationSpeedTest {
       long end = System.nanoTime();
 
       if (!column.solved()) {
-	logger.info("Warning: Solver " + solver + " did not converge in run " + i);
+        logger.info("Warning: Solver " + solver + " did not converge in run " + i);
       }
 
       totalTime += (end - start);

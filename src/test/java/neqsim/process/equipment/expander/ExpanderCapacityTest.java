@@ -59,7 +59,7 @@ public class ExpanderCapacityTest {
     // The compressor fallback used to return 1.5 (150%) for an expander; the override must not.
     double maxUtil = expander.getMaxUtilization();
     Assertions.assertTrue(maxUtil < 1.2,
-	"Expander max utilization should not hit the spurious 150% fallback, was " + maxUtil);
+        "Expander max utilization should not hit the spurious 150% fallback, was " + maxUtil);
     Assertions.assertNotEquals(1.5, maxUtil, 1.0e-9, "Expander max utilization must not equal the 1.5 fallback value");
   }
 
@@ -67,16 +67,16 @@ public class ExpanderCapacityTest {
   void testSimulationValidWithNegativePower() {
     Expander expander = buildRunExpander();
     Assertions.assertTrue(expander.isSimulationValid(),
-	"Expander simulation should be valid even though power is negative and gas cools");
+        "Expander simulation should be valid even though power is negative and gas cools");
   }
 
   @Test
   void testConsumedPowerConstraintsRemoved() {
     Expander expander = buildRunExpander();
     Assertions.assertFalse(expander.getCapacityConstraints().containsKey("power"),
-	"Inherited compressor 'power' constraint should be removed for an expander");
+        "Inherited compressor 'power' constraint should be removed for an expander");
     Assertions.assertFalse(expander.getCapacityConstraints().containsKey("ratedPower"),
-	"Inherited compressor 'ratedPower' constraint should be removed for an expander");
+        "Inherited compressor 'ratedPower' constraint should be removed for an expander");
   }
 
   @Test
@@ -85,7 +85,7 @@ public class ExpanderCapacityTest {
 
     // No recovered-power rating yet -> no recoveredPower constraint.
     Assertions.assertFalse(expander.getCapacityConstraints().containsKey("recoveredPower"),
-	"No recoveredPower constraint should exist before a rating is set");
+        "No recoveredPower constraint should exist before a rating is set");
 
     double recoveredKW = Math.abs(expander.getPower("kW"));
     // Rate the expander above its current recovered power so utilization is below 100%.
@@ -99,7 +99,7 @@ public class ExpanderCapacityTest {
 
     double util = c.getUtilization();
     Assertions.assertTrue(util > 0.0 && util < 1.0,
-	"recoveredPower utilization should be between 0 and 1, was " + util);
+        "recoveredPower utilization should be between 0 and 1, was " + util);
     Assertions.assertEquals(recoveredKW / rated, util, 1.0e-3);
   }
 
@@ -131,10 +131,10 @@ public class ExpanderCapacityTest {
 
     String json = process.getUtilizationSnapshotJson();
     Assertions.assertTrue(json.contains("recoveredPower"),
-	"Snapshot JSON should contain the recoveredPower constraint");
+        "Snapshot JSON should contain the recoveredPower constraint");
     Assertions.assertTrue(json.contains("\"dataSource\""),
-	"Snapshot JSON should surface constraint dataSource provenance");
+        "Snapshot JSON should surface constraint dataSource provenance");
     Assertions.assertTrue(json.contains("\"dataSource\":\"equipment\""),
-	"recoveredPower constraint dataSource should be reported as 'equipment'");
+        "recoveredPower constraint dataSource should be reported as 'equipment'");
   }
 }

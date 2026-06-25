@@ -156,11 +156,11 @@ public class ScenarioTestRunner {
     // Start background thread for delayed activation
     new Thread(() -> {
       try {
-	Thread.sleep(activationDelay);
-	System.out.println(">>> " + activationMessage + " <<<");
-	runner.activateLogic(logicToActivate);
+        Thread.sleep(activationDelay);
+        System.out.println(">>> " + activationMessage + " <<<");
+        runner.activateLogic(logicToActivate);
       } catch (InterruptedException e) {
-	Thread.currentThread().interrupt();
+        Thread.currentThread().interrupt();
       }
     }).start();
 
@@ -262,7 +262,7 @@ public class ScenarioTestRunner {
      * @return this batch executor for method chaining
      */
     public BatchExecutor add(String name, ProcessSafetyScenario scenario, String logicToActivate, double duration,
-	double timeStep) {
+        double timeStep) {
       scenarios.add(new ScenarioConfig(name, scenario, logicToActivate, duration, timeStep));
       return this;
     }
@@ -280,9 +280,9 @@ public class ScenarioTestRunner {
      * @return this batch executor for method chaining
      */
     public BatchExecutor addDelayed(String name, ProcessSafetyScenario scenario, String logicToActivate,
-	long activationDelay, String activationMessage, double duration, double timeStep) {
+        long activationDelay, String activationMessage, double duration, double timeStep) {
       scenarios.add(
-	  new ScenarioConfig(name, scenario, logicToActivate, duration, timeStep, activationDelay, activationMessage));
+          new ScenarioConfig(name, scenario, logicToActivate, duration, timeStep, activationDelay, activationMessage));
       return this;
     }
 
@@ -293,12 +293,12 @@ public class ScenarioTestRunner {
       printHeader();
 
       for (ScenarioConfig config : scenarios) {
-	if (config.isDelayed()) {
-	  executeScenarioWithDelayedActivation(config.name, config.scenario, config.logicToActivate,
-	      config.activationDelay, config.activationMessage, config.duration, config.timeStep);
-	} else {
-	  executeScenario(config.name, config.scenario, config.logicToActivate, config.duration, config.timeStep);
-	}
+        if (config.isDelayed()) {
+          executeScenarioWithDelayedActivation(config.name, config.scenario, config.logicToActivate,
+              config.activationDelay, config.activationMessage, config.duration, config.timeStep);
+        } else {
+          executeScenario(config.name, config.scenario, config.logicToActivate, config.duration, config.timeStep);
+        }
       }
 
       displayDashboard();
@@ -309,12 +309,12 @@ public class ScenarioTestRunner {
      */
     public void executeWithoutWrapper() {
       for (ScenarioConfig config : scenarios) {
-	if (config.isDelayed()) {
-	  executeScenarioWithDelayedActivation(config.name, config.scenario, config.logicToActivate,
-	      config.activationDelay, config.activationMessage, config.duration, config.timeStep);
-	} else {
-	  executeScenario(config.name, config.scenario, config.logicToActivate, config.duration, config.timeStep);
-	}
+        if (config.isDelayed()) {
+          executeScenarioWithDelayedActivation(config.name, config.scenario, config.logicToActivate,
+              config.activationDelay, config.activationMessage, config.duration, config.timeStep);
+        } else {
+          executeScenario(config.name, config.scenario, config.logicToActivate, config.duration, config.timeStep);
+        }
       }
     }
   }
@@ -333,7 +333,7 @@ public class ScenarioTestRunner {
 
     // Standard scenario constructor
     ScenarioConfig(String name, ProcessSafetyScenario scenario, String logicToActivate, double duration,
-	double timeStep) {
+        double timeStep) {
       this.name = name;
       this.scenario = scenario;
       this.logicToActivate = logicToActivate;
@@ -345,7 +345,7 @@ public class ScenarioTestRunner {
 
     // Delayed activation constructor
     ScenarioConfig(String name, ProcessSafetyScenario scenario, String logicToActivate, double duration,
-	double timeStep, long activationDelay, String activationMessage) {
+        double timeStep, long activationDelay, String activationMessage) {
       this.name = name;
       this.scenario = scenario;
       this.logicToActivate = logicToActivate;

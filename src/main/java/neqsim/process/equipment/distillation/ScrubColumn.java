@@ -184,12 +184,12 @@ public class ScrubColumn extends DistillationColumn {
 
     if (freezeOutRisk) {
       logger.warn(String.format("Scrub Column '%s': Freeze-out risk detected! Bottoms T=%.1f K, freeze-out T=%.1f K",
-	  getName(), liqOut != null ? liqOut.getTemperature() : 0.0, freezeOutTemperature));
+          getName(), liqOut != null ? liqOut.getTemperature() : 0.0, freezeOutTemperature));
     }
 
     if (heavyKeyInOverheadMolFrac > maxHeavyKeyInOverhead) {
       logger.warn(String.format("Scrub Column '%s': Heavy key %s in overhead = %.4f exceeds max %.4f", getName(),
-	  heavyKeyComponent, heavyKeyInOverheadMolFrac, maxHeavyKeyInOverhead));
+          heavyKeyComponent, heavyKeyInOverheadMolFrac, maxHeavyKeyInOverhead));
     }
 
     setCalculationIdentifier(id);
@@ -205,7 +205,7 @@ public class ScrubColumn extends DistillationColumn {
     heavyKeyInOverheadMolFrac = 0.0;
     try {
       if (gasSystem.getPhase(0).hasComponent(heavyKeyComponent)) {
-	heavyKeyInOverheadMolFrac = gasSystem.getPhase(0).getComponent(heavyKeyComponent).getz();
+        heavyKeyInOverheadMolFrac = gasSystem.getPhase(0).getComponent(heavyKeyComponent).getz();
       }
     } catch (Exception ex) {
       logger.debug("Heavy key component '" + heavyKeyComponent + "' not found in overhead", ex);
@@ -232,9 +232,9 @@ public class ScrubColumn extends DistillationColumn {
       ThermodynamicOperations ops = new ThermodynamicOperations(checkSystem);
       ops.TPSolidflash();
       if (checkSystem.hasPhaseType("solid")) {
-	freezeOutRisk = true;
-	freezeOutTemperature = bottomsTemp;
-	logger.info("Solid phase detected at bottoms temperature: " + bottomsTemp + " K");
+        freezeOutRisk = true;
+        freezeOutTemperature = bottomsTemp;
+        logger.info("Solid phase detected at bottoms temperature: " + bottomsTemp + " K");
       }
     } catch (Exception ex) {
       // Solid flash may not be available for all systems
@@ -263,15 +263,15 @@ public class ScrubColumn extends DistillationColumn {
 
     try {
       if (gasSystem.getPhase(0).hasComponent(heavyKeyComponent)
-	  && liqSystem.getPhase(0).hasComponent(heavyKeyComponent)) {
-	double molesInGas = gasSystem.getPhase(0).getComponent(heavyKeyComponent).getz()
-	    * gasSystem.getTotalNumberOfMoles();
-	double molesInLiq = liqSystem.getPhase(0).getComponent(heavyKeyComponent).getz()
-	    * liqSystem.getTotalNumberOfMoles();
-	double totalMoles = molesInGas + molesInLiq;
-	if (totalMoles > 0) {
-	  nglRecovery = molesInLiq / totalMoles;
-	}
+          && liqSystem.getPhase(0).hasComponent(heavyKeyComponent)) {
+        double molesInGas = gasSystem.getPhase(0).getComponent(heavyKeyComponent).getz()
+            * gasSystem.getTotalNumberOfMoles();
+        double molesInLiq = liqSystem.getPhase(0).getComponent(heavyKeyComponent).getz()
+            * liqSystem.getTotalNumberOfMoles();
+        double totalMoles = molesInGas + molesInLiq;
+        if (totalMoles > 0) {
+          nglRecovery = molesInLiq / totalMoles;
+        }
       }
     } catch (Exception ex) {
       logger.debug("NGL recovery calculation failed", ex);

@@ -380,6 +380,6 @@ public class SteadyStateVariable implements java.io.Serializable {
     String unitStr = unit.isEmpty() ? "" : " " + unit;
     String ssFlag = atSteadyState ? "SS" : "TRANSIENT";
     return String.format("%s: mean=%.4f%s, std=%.4f, R=%.4f, slope=%.4e [%s] (%d/%d samples)", name, mean, unitStr,
-	standardDeviation, rStatistic, slope, ssFlag, window.size(), windowSize);
+        standardDeviation, rStatistic, slope, ssFlag, window.size(), windowSize);
   }
 }

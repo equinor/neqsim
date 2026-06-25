@@ -122,33 +122,33 @@ public class CDFTSurfaceTension extends SurfaceTension {
 
       // In predictive mode, auto-set lambda from acentric factor
       if (usePredictiveMode && nc == 1) {
-	double omega = system.getPhase(0).getComponent(0).getAcentricFactor();
-	this.attractiveRangeFactor = Math.max(0.40, LAMBDA_A + LAMBDA_B * omega);
+        double omega = system.getPhase(0).getComponent(0).getAcentricFactor();
+        this.attractiveRangeFactor = Math.max(0.40, LAMBDA_A + LAMBDA_B * omega);
       }
 
       double sigmaRaw;
       if (nc == 1) {
-	sigmaRaw = solvePureComponent(interface1, interface2);
+        sigmaRaw = solvePureComponent(interface1, interface2);
       } else {
-	sigmaRaw = solveMixture(interface1, interface2);
+        sigmaRaw = solveMixture(interface1, interface2);
       }
 
       // Apply Ising critical-exponent correction in predictive mode
       if (usePredictiveMode) {
-	double tc;
-	if (nc == 1) {
-	  tc = system.getPhase(0).getComponent(0).getTC();
-	} else {
-	  // Pseudo-critical temperature from mole-fraction average
-	  tc = 0.0;
-	  for (int i = 0; i < nc; i++) {
-	    tc += system.getPhase(0).getComponent(i).getx() * system.getPhase(0).getComponent(i).getTC();
-	  }
-	}
-	double tr = system.getPhase(0).getTemperature() / tc;
-	if (tr < 0.999) {
-	  sigmaRaw *= Math.pow(1.0 - tr, DELTA_MU);
-	}
+        double tc;
+        if (nc == 1) {
+          tc = system.getPhase(0).getComponent(0).getTC();
+        } else {
+          // Pseudo-critical temperature from mole-fraction average
+          tc = 0.0;
+          for (int i = 0; i < nc; i++) {
+            tc += system.getPhase(0).getComponent(i).getx() * system.getPhase(0).getComponent(i).getTC();
+          }
+        }
+        double tr = system.getPhase(0).getTemperature() / tc;
+        if (tr < 0.999) {
+          sigmaRaw *= Math.pow(1.0 - tr, DELTA_MU);
+        }
       }
 
       return Math.max(sigmaRaw, 0.0);
@@ -236,10 +236,10 @@ public class CDFTSurfaceTension extends SurfaceTension {
     for (int k = 0; k < nScan; k++) {
       double delta = deltaLo + (deltaHi - deltaLo) * k / (nScan - 1);
       double sig = computeSigmaForDelta(rhoLiq, rhoVap, temperature, aSI, bSI, delta1, delta2, dMol, delta, muEq,
-	  pBulk);
+          pBulk);
       if (sig < bestSigma) {
-	bestSigma = sig;
-	bestDelta = delta;
+        bestSigma = sig;
+        bestDelta = delta;
       }
     }
 
@@ -254,18 +254,18 @@ public class CDFTSurfaceTension extends SurfaceTension {
       double fc = computeSigmaForDelta(rhoLiq, rhoVap, temperature, aSI, bSI, delta1, delta2, dMol, c, muEq, pBulk);
       double fd = computeSigmaForDelta(rhoLiq, rhoVap, temperature, aSI, bSI, delta1, delta2, dMol, d, muEq, pBulk);
       if (fc < fd) {
-	refHi = d;
+        refHi = d;
       } else {
-	refLo = c;
+        refLo = c;
       }
     }
 
     double optDelta = 0.5 * (refLo + refHi);
     double sigma = computeSigmaForDelta(rhoLiq, rhoVap, temperature, aSI, bSI, delta1, delta2, dMol, optDelta, muEq,
-	pBulk);
+        pBulk);
 
     logger.debug("cDFT: T={} K, rhoLiq={}, rhoVap={}, optDelta/dMol={}, sigma={} mN/m", temperature, rhoLiq, rhoVap,
-	optDelta / dMol, sigma * 1000.0);
+        optDelta / dMol, sigma * 1000.0);
 
     return Math.max(sigma, 0.0);
   }
@@ -319,10 +319,10 @@ public class CDFTSurfaceTension extends SurfaceTension {
     for (int i = 0; i < nGrid; i++) {
       double ri = rho[i];
       if (ri < 1.0e-10) {
-	ri = 1.0e-10;
+        ri = 1.0e-10;
       }
       if (b * ri >= 0.999) {
-	ri = 0.999 / b;
+        ri = 0.999 / b;
       }
 
       // f_rep = rho * RT * [ln(rho) - 1 - ln(1 - b*rho)]
@@ -357,14 +357,14 @@ public class CDFTSurfaceTension extends SurfaceTension {
     for (int i = 0; i < n; i++) {
       double sum = 0.0;
       for (int k = -nk; k <= nk; k++) {
-	int j = i + k;
-	if (j < 0) {
-	  j = 0;
-	}
-	if (j >= n) {
-	  j = n - 1;
-	}
-	sum += rho[j];
+        int j = i + k;
+        if (j < 0) {
+          j = 0;
+        }
+        if (j >= n) {
+          j = n - 1;
+        }
+        sum += rho[j];
       }
       result[i] = wv * sum * dz;
     }
@@ -564,7 +564,7 @@ public class CDFTSurfaceTension extends SurfaceTension {
     double[][] aij = new double[nc][nc];
     for (int i = 0; i < nc; i++) {
       for (int j = 0; j < nc; j++) {
-	aij[i][j] = Math.sqrt(aComp[i] * aComp[j]);
+        aij[i][j] = Math.sqrt(aComp[i] * aComp[j]);
       }
     }
 
@@ -574,7 +574,7 @@ public class CDFTSurfaceTension extends SurfaceTension {
     for (int i = 0; i < nc; i++) {
       bMixLiq += (rhoLiq[i] / totalRhoLiq) * bComp[i];
       for (int j = 0; j < nc; j++) {
-	aMixLiq += (rhoLiq[i] / totalRhoLiq) * (rhoLiq[j] / totalRhoLiq) * aij[i][j];
+        aMixLiq += (rhoLiq[i] / totalRhoLiq) * (rhoLiq[j] / totalRhoLiq) * aij[i][j];
       }
     }
 
@@ -624,10 +624,10 @@ public class CDFTSurfaceTension extends SurfaceTension {
     for (int k = 0; k < nScan; k++) {
       double delta = deltaLo + (deltaHi - deltaLo) * k / (nScan - 1);
       double sig = computeMixtureSigmaForDelta(rhoLiq, rhoVap, temperature, aij, bComp, delta1, delta2, dMol, delta,
-	  muEq, pBulk, nc);
+          muEq, pBulk, nc);
       if (sig < bestSigma) {
-	bestSigma = sig;
-	bestDelta = delta;
+        bestSigma = sig;
+        bestDelta = delta;
       }
     }
 
@@ -639,22 +639,22 @@ public class CDFTSurfaceTension extends SurfaceTension {
       double c = refHi - (refHi - refLo) / gr;
       double d = refLo + (refHi - refLo) / gr;
       double fc = computeMixtureSigmaForDelta(rhoLiq, rhoVap, temperature, aij, bComp, delta1, delta2, dMol, c, muEq,
-	  pBulk, nc);
+          pBulk, nc);
       double fd = computeMixtureSigmaForDelta(rhoLiq, rhoVap, temperature, aij, bComp, delta1, delta2, dMol, d, muEq,
-	  pBulk, nc);
+          pBulk, nc);
       if (fc < fd) {
-	refHi = d;
+        refHi = d;
       } else {
-	refLo = c;
+        refLo = c;
       }
     }
 
     double optDelta = 0.5 * (refLo + refHi);
     double sigma = computeMixtureSigmaForDelta(rhoLiq, rhoVap, temperature, aij, bComp, delta1, delta2, dMol, optDelta,
-	muEq, pBulk, nc);
+        muEq, pBulk, nc);
 
     logger.debug("cDFT mixture: T={} K, nc={}, optDelta/dMol={}, sigma={} mN/m", temperature, nc, optDelta / dMol,
-	sigma * 1000.0);
+        sigma * 1000.0);
     return Math.max(sigma, 0.0);
   }
 
@@ -690,12 +690,12 @@ public class CDFTSurfaceTension extends SurfaceTension {
       double avg = 0.5 * (rhoLiq[ic] + rhoVap[ic]);
       double diff = rhoLiq[ic] - rhoVap[ic];
       for (int i = 0; i < nGrid; i++) {
-	double z = -halfWidth + i * dz;
-	rhoProf[ic][i] = avg + 0.5 * diff * Math.tanh(-z / delta);
-	if (rhoProf[ic][i] < 1.0e-30) {
-	  rhoProf[ic][i] = 1.0e-30;
-	}
-	rhoTotal[i] += rhoProf[ic][i];
+        double z = -halfWidth + i * dz;
+        rhoProf[ic][i] = avg + 0.5 * diff * Math.tanh(-z / delta);
+        if (rhoProf[ic][i] < 1.0e-30) {
+          rhoProf[ic][i] = 1.0e-30;
+        }
+        rhoTotal[i] += rhoProf[ic][i];
       }
     }
 
@@ -704,18 +704,18 @@ public class CDFTSurfaceTension extends SurfaceTension {
     double[][] barRho = new double[nc][nGrid];
     for (int jc = 0; jc < nc; jc++) {
       for (int i = 0; i < nGrid; i++) {
-	double sum = 0.0;
-	for (int k = -nKernHalf; k <= nKernHalf; k++) {
-	  int idx = i + k;
-	  if (idx < 0) {
-	    idx = 0;
-	  }
-	  if (idx >= nGrid) {
-	    idx = nGrid - 1;
-	  }
-	  sum += rhoProf[jc][idx];
-	}
-	barRho[jc][i] = sum / nKernPoints;
+        double sum = 0.0;
+        for (int k = -nKernHalf; k <= nKernHalf; k++) {
+          int idx = i + k;
+          if (idx < 0) {
+            idx = 0;
+          }
+          if (idx >= nGrid) {
+            idx = nGrid - 1;
+          }
+          sum += rhoProf[jc][idx];
+        }
+        barRho[jc][i] = sum / nKernPoints;
       }
     }
 
@@ -724,31 +724,31 @@ public class CDFTSurfaceTension extends SurfaceTension {
     for (int i = 0; i < nGrid; i++) {
       double rhoT = rhoTotal[i];
       if (rhoT < 1.0e-10) {
-	rhoT = 1.0e-10;
+        rhoT = 1.0e-10;
       }
 
       // Mixture b and a at this grid point
       double bMix = 0.0;
       double aMix = 0.0;
       for (int ic = 0; ic < nc; ic++) {
-	double xi = rhoProf[ic][i] / rhoT;
-	bMix += xi * bComp[ic];
-	for (int jc = 0; jc < nc; jc++) {
-	  double xj = rhoProf[jc][i] / rhoT;
-	  aMix += xi * xj * aij[ic][jc];
-	}
+        double xi = rhoProf[ic][i] / rhoT;
+        bMix += xi * bComp[ic];
+        for (int jc = 0; jc < nc; jc++) {
+          double xj = rhoProf[jc][i] / rhoT;
+          aMix += xi * xj * aij[ic][jc];
+        }
       }
       if (bMix * rhoT >= 0.999) {
-	rhoT = 0.999 / bMix;
+        rhoT = 0.999 / bMix;
       }
 
       // f_ideal = RT * sum_i rho_i * (ln(rho_i) - 1)
       double fIdeal = 0.0;
       for (int ic = 0; ic < nc; ic++) {
-	double ri = rhoProf[ic][i];
-	if (ri > 1.0e-30) {
-	  fIdeal += ri * R * temp * (Math.log(ri) - 1.0);
-	}
+        double ri = rhoProf[ic][i];
+        if (ri > 1.0e-30) {
+          fIdeal += ri * R * temp * (Math.log(ri) - 1.0);
+        }
       }
 
       // f_rep_ex = -rhoT * RT * ln(1 - bMix*rhoT)
@@ -757,9 +757,9 @@ public class CDFTSurfaceTension extends SurfaceTension {
       // f_att_nonlocal = -sum_i sum_j a_ij * rho_i * barRho_j
       double fAttNL = 0.0;
       for (int ic = 0; ic < nc; ic++) {
-	for (int jc = 0; jc < nc; jc++) {
-	  fAttNL -= aij[ic][jc] * rhoProf[ic][i] * barRho[jc][i];
-	}
+        for (int jc = 0; jc < nc; jc++) {
+          fAttNL -= aij[ic][jc] * rhoProf[ic][i] * barRho[jc][i];
+        }
       }
 
       // f_corr = f_att_EOS_local + aMix * rhoT^2
@@ -771,7 +771,7 @@ public class CDFTSurfaceTension extends SurfaceTension {
       // Grand potential integrand: f - sum_i mu_i*rho_i + P
       double muRhoSum = 0.0;
       for (int ic = 0; ic < nc; ic++) {
-	muRhoSum += muEq[ic] * rhoProf[ic][i];
+        muRhoSum += muEq[ic] * rhoProf[ic][i];
       }
 
       sigma += (fTotal - muRhoSum + pBulk) * dz;
@@ -807,8 +807,8 @@ public class CDFTSurfaceTension extends SurfaceTension {
       double xi = rho[i] / rhoT;
       bMix += xi * bComp[i];
       for (int j = 0; j < nc; j++) {
-	double xj = rho[j] / rhoT;
-	aMix += xi * xj * aij[i][j];
+        double xj = rho[j] / rhoT;
+        aMix += xi * xj * aij[i][j];
       }
     }
     if (bMix * rhoT >= 0.999) {
@@ -819,7 +819,7 @@ public class CDFTSurfaceTension extends SurfaceTension {
     double fId = 0.0;
     for (int i = 0; i < nc; i++) {
       if (rho[i] > 1.0e-30) {
-	fId += rho[i] * R * temp * (Math.log(rho[i]) - 1.0);
+        fId += rho[i] * R * temp * (Math.log(rho[i]) - 1.0);
       }
     }
     // f_rep_ex = -rhoT * RT * ln(1 - bMix*rhoT)
@@ -853,8 +853,8 @@ public class CDFTSurfaceTension extends SurfaceTension {
       double xi = rho[i] / rhoT;
       bMix += xi * bComp[i];
       for (int j = 0; j < nc; j++) {
-	double xj = rho[j] / rhoT;
-	aMix += xi * xj * aij[i][j];
+        double xj = rho[j] / rhoT;
+        aMix += xi * xj * aij[i][j];
       }
     }
     return pressure(rhoT, temp, aMix, bMix, d1, d2);

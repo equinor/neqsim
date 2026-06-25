@@ -186,7 +186,7 @@ public class LangmuirAdsorptionTest {
 
     // Adsorption should decrease with temperature (exothermic process)
     assertTrue(lowTAds.getSurfaceExcess(0) > highTAds.getSurfaceExcess(0),
-	"Adsorption should decrease with increasing temperature");
+        "Adsorption should decrease with increasing temperature");
   }
 
   /**

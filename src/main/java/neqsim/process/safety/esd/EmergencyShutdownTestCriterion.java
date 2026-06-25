@@ -103,7 +103,7 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
    */
   public static EmergencyShutdownTestCriterion finalAtMost(String id, String logicalTag, double limit, String unit) {
     return signal(id, CriterionType.FINAL_LESS_OR_EQUAL, logicalTag, limit, unit,
-	"Final value must be at or below the specified limit.");
+        "Final value must be at or below the specified limit.");
   }
 
   /**
@@ -117,7 +117,7 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
    */
   public static EmergencyShutdownTestCriterion finalAtLeast(String id, String logicalTag, double limit, String unit) {
     return signal(id, CriterionType.FINAL_GREATER_OR_EQUAL, logicalTag, limit, unit,
-	"Final value must be at or above the specified limit.");
+        "Final value must be at or above the specified limit.");
   }
 
   /**
@@ -131,7 +131,7 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
    */
   public static EmergencyShutdownTestCriterion maxAtMost(String id, String logicalTag, double limit, String unit) {
     return signal(id, CriterionType.MAX_LESS_OR_EQUAL, logicalTag, limit, unit,
-	"Maximum value must be at or below the specified limit.");
+        "Maximum value must be at or below the specified limit.");
   }
 
   /**
@@ -145,7 +145,7 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
    */
   public static EmergencyShutdownTestCriterion maxAtLeast(String id, String logicalTag, double threshold, String unit) {
     return signal(id, CriterionType.MAX_GREATER_OR_EQUAL, logicalTag, threshold, unit,
-	"Maximum value must be at or above the specified threshold.");
+        "Maximum value must be at or above the specified threshold.");
   }
 
   /**
@@ -159,7 +159,7 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
    */
   public static EmergencyShutdownTestCriterion minAtMost(String id, String logicalTag, double limit, String unit) {
     return signal(id, CriterionType.MIN_LESS_OR_EQUAL, logicalTag, limit, unit,
-	"Minimum value must be at or below the specified limit.");
+        "Minimum value must be at or below the specified limit.");
   }
 
   /**
@@ -173,7 +173,7 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
    */
   public static EmergencyShutdownTestCriterion minAtLeast(String id, String logicalTag, double limit, String unit) {
     return signal(id, CriterionType.MIN_GREATER_OR_EQUAL, logicalTag, limit, unit,
-	"Minimum value must be at or above the specified limit.");
+        "Minimum value must be at or above the specified limit.");
   }
 
   /**
@@ -188,7 +188,7 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   public static EmergencyShutdownTestCriterion decreaseAtLeast(String id, String logicalTag, double minimumDecrease,
       String unit) {
     return signal(id, CriterionType.DECREASE_GREATER_OR_EQUAL, logicalTag, minimumDecrease, unit,
-	"Value must decrease by at least the specified amount.");
+        "Value must decrease by at least the specified amount.");
   }
 
   /**
@@ -203,7 +203,7 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   public static EmergencyShutdownTestCriterion increaseAtLeast(String id, String logicalTag, double minimumIncrease,
       String unit) {
     return signal(id, CriterionType.INCREASE_GREATER_OR_EQUAL, logicalTag, minimumIncrease, unit,
-	"Value must increase by at least the specified amount.");
+        "Value must increase by at least the specified amount.");
   }
 
   /**
@@ -218,7 +218,7 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   public static EmergencyShutdownTestCriterion fieldAbsoluteDeviationAtMost(String id, String logicalTag,
       double maximumDeviation, String unit) {
     return signal(id, CriterionType.FIELD_ABSOLUTE_DEVIATION_LESS_OR_EQUAL, logicalTag, maximumDeviation, unit,
-	"Model-to-field absolute deviation must be within tolerance.");
+        "Model-to-field absolute deviation must be within tolerance.");
   }
 
   /**
@@ -232,7 +232,7 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   public static EmergencyShutdownTestCriterion fieldRelativeDeviationAtMost(String id, String logicalTag,
       double maximumDeviationFraction) {
     return signal(id, CriterionType.FIELD_RELATIVE_DEVIATION_LESS_OR_EQUAL, logicalTag, maximumDeviationFraction, "",
-	"Model-to-field relative deviation must be within tolerance.");
+        "Model-to-field relative deviation must be within tolerance.");
   }
 
   /**
@@ -244,8 +244,8 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
    */
   public static EmergencyShutdownTestCriterion logicCompleted(String id, String logicName) {
     return new EmergencyShutdownTestCriterion(id, CriterionType.LOGIC_COMPLETED, "", logicName, Double.NaN, "", "",
-	"HIGH", "Logic sequence must complete during the test.",
-	"Check C&E delays, final-element action completion, and permissive status.");
+        "HIGH", "Logic sequence must complete during the test.",
+        "Check C&E delays, final-element action completion, and permissive status.");
   }
 
   /**
@@ -256,8 +256,8 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
    */
   public static EmergencyShutdownTestCriterion noSimulationErrors(String id) {
     return new EmergencyShutdownTestCriterion(id, CriterionType.NO_SIMULATION_ERRORS, "", "", Double.NaN, "", "",
-	"HIGH", "Transient simulation must finish without errors.",
-	"Resolve model convergence, missing equipment, or invalid action sequencing issues.");
+        "HIGH", "Transient simulation must finish without errors.",
+        "Resolve model convergence, missing equipment, or invalid action sequencing issues.");
   }
 
   /**
@@ -268,7 +268,7 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
    */
   public EmergencyShutdownTestCriterion withClause(String clause) {
     return new EmergencyShutdownTestCriterion(id, type, logicalTag, logicName, targetValue, unit, clause, severity,
-	description, recommendation);
+        description, recommendation);
   }
 
   /**
@@ -279,7 +279,7 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
    */
   public EmergencyShutdownTestCriterion withSeverity(String severity) {
     return new EmergencyShutdownTestCriterion(id, type, logicalTag, logicName, targetValue, unit, clause, severity,
-	description, recommendation);
+        description, recommendation);
   }
 
   /**
@@ -291,7 +291,7 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
    */
   public EmergencyShutdownTestCriterion withText(String description, String recommendation) {
     return new EmergencyShutdownTestCriterion(id, type, logicalTag, logicName, targetValue, unit, clause, severity,
-	description, recommendation);
+        description, recommendation);
   }
 
   /**
@@ -382,8 +382,8 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
       return evaluateLogic(logicStates);
     case NO_SIMULATION_ERRORS:
       return new Result(this, errors == null || errors.isEmpty(), errors == null ? 0.0 : errors.size(), 0.0,
-	  errors == null || errors.isEmpty() ? "No simulation errors were recorded."
-	      : "Simulation errors were recorded during the ESD test.");
+          errors == null || errors.isEmpty() ? "No simulation errors were recorded."
+              : "Simulation errors were recorded during the ESD test.");
     case FIELD_ABSOLUTE_DEVIATION_LESS_OR_EQUAL:
     case FIELD_RELATIVE_DEVIATION_LESS_OR_EQUAL:
       return evaluateFieldComparison(fieldComparisons);
@@ -426,7 +426,7 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   private static EmergencyShutdownTestCriterion signal(String id, CriterionType type, String logicalTag,
       double targetValue, String unit, String description) {
     return new EmergencyShutdownTestCriterion(id, type, logicalTag, "", targetValue, unit, "", "HIGH", description,
-	"Review ESD action sequence, final element response, and model input data.");
+        "Review ESD action sequence, final element response, and model input data.");
   }
 
   /**
@@ -439,12 +439,12 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
     EmergencyShutdownTestResult.SignalStats stats = signalStats.get(logicalTag);
     if (stats == null || !stats.hasSamples()) {
       return new Result(this, false, Double.NaN, targetValue,
-	  "No monitored samples were found for " + logicalTag + ".");
+          "No monitored samples were found for " + logicalTag + ".");
     }
     double value = valueFor(stats);
     boolean passed = compare(value);
     return new Result(this, passed, value, targetValue,
-	passed ? "Criterion satisfied." : "Criterion failed for " + logicalTag + ".");
+        passed ? "Criterion satisfied." : "Criterion failed for " + logicalTag + ".");
   }
 
   /**
@@ -457,7 +457,7 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
     String state = logicStates.get(logicName);
     boolean passed = "COMPLETED".equals(state);
     return new Result(this, passed, passed ? 1.0 : 0.0, 1.0,
-	state == null ? "Logic sequence was not present in the test." : "Final logic state: " + state);
+        state == null ? "Logic sequence was not present in the test." : "Final logic state: " + state);
   }
 
   /**
@@ -470,13 +470,13 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
     EmergencyShutdownTestResult.FieldComparison comparison = fieldComparisons.get(logicalTag);
     if (comparison == null || !comparison.hasBothValues()) {
       return new Result(this, false, Double.NaN, targetValue,
-	  "No complete model-to-field comparison was available for " + logicalTag + ".");
+          "No complete model-to-field comparison was available for " + logicalTag + ".");
     }
     double value = type == CriterionType.FIELD_ABSOLUTE_DEVIATION_LESS_OR_EQUAL ? comparison.getAbsoluteDeviation()
-	: comparison.getRelativeDeviationFraction();
+        : comparison.getRelativeDeviationFraction();
     boolean passed = value <= targetValue;
     return new Result(this, passed, value, targetValue,
-	passed ? "Model-to-field deviation is within tolerance." : "Model-to-field deviation exceeds tolerance.");
+        passed ? "Model-to-field deviation is within tolerance." : "Model-to-field deviation exceeds tolerance.");
   }
 
   /**
@@ -581,7 +581,7 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
      * @param message result message
      */
     private Result(EmergencyShutdownTestCriterion criterion, boolean passed, double observedValue, double targetValue,
-	String message) {
+        String message) {
       this.criterionId = criterion.id;
       this.type = criterion.type;
       this.passed = passed;

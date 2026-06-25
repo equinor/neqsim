@@ -14,6 +14,7 @@ import java.io.Serializable;
  * <b>Rosin-Rammler (Weibull) distribution</b>:
  * </p>
  *
+ * <p>
  * $$ F(d) = 1 - \exp\left(-\left(\frac{d}{d_{63.2}}\right)^q\right) $$
  *
  * <p>
@@ -26,6 +27,7 @@ import java.io.Serializable;
  * <b>Log-normal distribution</b>:
  * </p>
  *
+ * <p>
  * $$ F(d) = \Phi\left(\frac{\ln(d) - \mu}{\sigma}\right) $$
  *
  * <p>
@@ -106,6 +108,7 @@ public class DropletSizeDistribution implements Serializable {
    * The maximum stable droplet diameter in a turbulent pipe flow is estimated as:
    * </p>
    *
+   * <p>
    * $$ d_{max} = C \cdot We^{-3/5} \cdot D $$
    *
    * <p>
@@ -163,7 +166,7 @@ public class DropletSizeDistribution implements Serializable {
     if (type == DistributionType.ROSIN_RAMMLER) {
       double ratio = d / characteristicDiameter;
       return (spreadParameter / characteristicDiameter) * Math.pow(ratio, spreadParameter - 1.0)
-	  * Math.exp(-Math.pow(ratio, spreadParameter));
+          * Math.exp(-Math.pow(ratio, spreadParameter));
     } else {
       double z = (Math.log(d) - Math.log(characteristicDiameter)) / spreadParameter;
       return 1.0 / (d * spreadParameter * Math.sqrt(2.0 * Math.PI)) * Math.exp(-0.5 * z * z);

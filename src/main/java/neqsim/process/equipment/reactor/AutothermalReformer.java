@@ -215,9 +215,9 @@ public class AutothermalReformer extends TwoPortEquipment {
     }
 
     GibbsReactor.EnergyMode energyMode = isothermalReformingZone ? GibbsReactor.EnergyMode.ISOTHERMAL
-	: GibbsReactor.EnergyMode.ADIABATIC;
+        : GibbsReactor.EnergyMode.ADIABATIC;
     reformingReactor = HydrogenProductionUtils.createSyngasGibbsReactor(getName() + " catalytic equilibrium",
-	reformingFeed, energyMode);
+        reformingFeed, energyMode);
     reformingReactor.run(id);
 
     SystemInterface outletSystem = reformingReactor.getOutletStream().getThermoSystem().clone();
@@ -249,7 +249,7 @@ public class AutothermalReformer extends TwoPortEquipment {
     }
     if (outStream != null && outStream.getThermoSystem() != null) {
       results.put("syngasComposition_molFrac",
-	  HydrogenProductionUtils.extractSyngasComposition(outStream.getThermoSystem()));
+          HydrogenProductionUtils.extractSyngasComposition(outStream.getThermoSystem()));
     }
     return results;
   }
@@ -290,8 +290,8 @@ public class AutothermalReformer extends TwoPortEquipment {
     double oxygenPenalty = oxygenToCarbonRatio < 0.50 ? (0.50 - oxygenToCarbonRatio) / 0.50 : 0.0;
     double steamPenalty = steamToCarbonRatio < 1.0 ? (1.0 - steamToCarbonRatio) : 0.0;
     double temperaturePenalty = burnerZone != null && burnerZone.getFlameTemperature() > 1800.0
-	? (burnerZone.getFlameTemperature() - 1800.0) / 600.0
-	: 0.0;
+        ? (burnerZone.getFlameTemperature() - 1800.0) / 600.0
+        : 0.0;
     return HydrogenProductionUtils.clamp(oxygenPenalty + 0.5 * steamPenalty + temperaturePenalty, 0.0, 1.0);
   }
 

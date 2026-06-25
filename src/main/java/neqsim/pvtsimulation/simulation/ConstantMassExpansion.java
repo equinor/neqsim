@@ -70,9 +70,9 @@ public class ConstantMassExpansion extends BasePVTsimulation {
       getThermoSystem().setPressure((minPres + maxPres) / 2.0);
       thermoOps.TPflash();
       if (getThermoSystem().getNumberOfPhases() > 1) {
-	minPres = getThermoSystem().getPressure();
+        minPres = getThermoSystem().getPressure();
       } else {
-	maxPres = getThermoSystem().getPressure();
+        maxPres = getThermoSystem().getPressure();
       }
     } while (Math.abs(maxPres - minPres) > 1e-5);
     /*
@@ -85,7 +85,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
 
     getThermoSystem().initPhysicalProperties();
     saturationVolume = getThermoSystem().getPhase(0).getMass()
-	/ getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
+        / getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
     saturationPressure = getThermoSystem().getPressure();
     Zsaturation = getThermoSystem().getZ();
     saturationConditionFound = true;
@@ -122,9 +122,9 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     if (!saturationConditionFound) {
       calcSaturationConditions();
       try {
-	thermoOps.TPflash();
+        thermoOps.TPflash();
       } catch (Exception ex) {
-	logger.error(ex.getMessage(), ex);
+        logger.error(ex.getMessage(), ex);
       }
     }
     try {
@@ -137,15 +137,15 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     saturationPressure = getThermoSystem().getPressure();
     Zsaturation = getThermoSystem().getZ();
     saturationIsoThermalCompressibility = -1.0 / getThermoSystem().getPhase(0).getVolume()
-	/ getThermoSystem().getPhase(0).getdPdVTn();
+        / getThermoSystem().getPhase(0).getdPdVTn();
 
     for (int i = 0; i < pressures.length; i++) {
       // getThermoSystem().init(0);
       getThermoSystem().setPressure(pressures[i]);
       try {
-	thermoOps.TPflash();
+        thermoOps.TPflash();
       } catch (Exception ex) {
-	logger.error(ex.getMessage(), ex);
+        logger.error(ex.getMessage(), ex);
       }
       getThermoSystem().initPhysicalProperties();
       // getThermoSystem().display();
@@ -153,25 +153,25 @@ public class ConstantMassExpansion extends BasePVTsimulation {
       relativeVolume[i] = totalVolume[i] / saturationVolume;
       density[i] = getThermoSystem().getPhase(0).getDensity("kg/m3");
       gasVolume[i] = getThermoSystem().getPhase(0).getNumberOfMolesInPhase()
-	  * getThermoSystem().getPhase(0).getMolarMass() / density[i]; // getThermoSystem().getPhase(0).getVolume();
+          * getThermoSystem().getPhase(0).getMolarMass() / density[i]; // getThermoSystem().getPhase(0).getVolume();
       gasStandardVolume[i] = getThermoSystem().getPhase(0).getVolume() * getThermoSystem().getPhase(0).getPressure()
-	  / ThermodynamicConstantsInterface.referencePressure / getThermoSystem().getPhase(0).getZ() * 288.15
-	  / getThermoSystem().getTemperature();
+          / ThermodynamicConstantsInterface.referencePressure / getThermoSystem().getPhase(0).getZ() * 288.15
+          / getThermoSystem().getTemperature();
       Bg[i] = gasVolume[i] * 1e5 / gasStandardVolume[i];
       Zgas[i] = getThermoSystem().getPhase(0).getZ();
       if (getThermoSystem().getNumberOfPhases() == 1) {
-	viscosity[i] = getThermoSystem().getPhase(0).getViscosity();
-	isoThermalCompressibility[i] = -1.0 / getThermoSystem().getPhase(0).getVolume()
-	    / getThermoSystem().getPhase(0).getdPdVTn();
-	Yfactor[i] = Double.NaN;
-	liquidRelativeVolume[i] = Double.NaN;
+        viscosity[i] = getThermoSystem().getPhase(0).getViscosity();
+        isoThermalCompressibility[i] = -1.0 / getThermoSystem().getPhase(0).getVolume()
+            / getThermoSystem().getPhase(0).getdPdVTn();
+        Yfactor[i] = Double.NaN;
+        liquidRelativeVolume[i] = Double.NaN;
       }
       if (getThermoSystem().getNumberOfPhases() > 1) {
-	liquidRelativeVolume[i] = getThermoSystem().getPhase("oil").getVolume() / saturationVolume * 100;
-	Yfactor[i] = ((saturationPressure - pressures[i]) / pressures[i])
-	    / ((totalVolume[i] - saturationVolume) / saturationVolume);
-	viscosity[i] = Double.NaN;
-	isoThermalCompressibility[i] = Double.NaN;
+        liquidRelativeVolume[i] = getThermoSystem().getPhase("oil").getVolume() / saturationVolume * 100;
+        Yfactor[i] = ((saturationPressure - pressures[i]) / pressures[i])
+            / ((totalVolume[i] - saturationVolume) / saturationVolume);
+        viscosity[i] = Double.NaN;
+        isoThermalCompressibility[i] = Double.NaN;
       }
       // System.out.println("pressure " + getThermoSystem().getPressure() + " relative volume "
       // + relativeVolume[i] + " liquid rel vol " + liquidRelativeVolume[i] + " Zgas " + Zgas[i]
@@ -192,24 +192,24 @@ public class ConstantMassExpansion extends BasePVTsimulation {
       System.out.println("adding....");
 
       for (int i = 0; i < experimentalData[0].length; i++) {
-	CMEFunction function = new CMEFunction();
-	double[] guess = new double[] {
-	    getThermoSystem().getCharacterization().getPlusFractionModel().getMPlus() / 1000.0 };
-	function.setInitialGuess(guess);
+        CMEFunction function = new CMEFunction();
+        double[] guess = new double[] {
+            getThermoSystem().getCharacterization().getPlusFractionModel().getMPlus() / 1000.0 };
+        function.setInitialGuess(guess);
 
-	SystemInterface tempSystem = getThermoSystem(); // getThermoSystem().clone();
+        SystemInterface tempSystem = getThermoSystem(); // getThermoSystem().clone();
 
-	tempSystem.setTemperature(temperature);
-	tempSystem.setPressure(pressures[i]);
-	// thermoOps.TPflash();
-	// tempSystem.display();
-	double[] sample1 = { temperature, pressures[i] };
-	double relativeVolume = experimentalData[0][i];
-	double[] standardDeviation1 = { 1.5 };
-	SampleValue sample = new SampleValue(relativeVolume, relativeVolume / 50.0, sample1, standardDeviation1);
-	sample.setFunction(function);
-	sample.setThermodynamicSystem(tempSystem);
-	sampleList.add(sample);
+        tempSystem.setTemperature(temperature);
+        tempSystem.setPressure(pressures[i]);
+        // thermoOps.TPflash();
+        // tempSystem.display();
+        double[] sample1 = { temperature, pressures[i] };
+        double relativeVolume = experimentalData[0][i];
+        double[] standardDeviation1 = { 1.5 };
+        SampleValue sample = new SampleValue(relativeVolume, relativeVolume / 50.0, sample1, standardDeviation1);
+        sample.setFunction(function);
+        sample.setThermodynamicSystem(tempSystem);
+        sampleList.add(sample);
       }
     } catch (Exception ex) {
       logger.error("database error", ex);
@@ -271,8 +271,8 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     // double a = CMEsim.getSaturationPressure();
 
     CMEsim.setTemperaturesAndPressures(
-	new double[] { 273.15 + 73.9, 273.15 + 73.9, 273.15 + 73.9, 273.15 + 73.9, 273.15 + 73.9 },
-	new double[] { 400, 300.0, 250.0, 200.0, 100.0 });
+        new double[] { 273.15 + 73.9, 273.15 + 73.9, 273.15 + 73.9, 273.15 + 73.9, 273.15 + 73.9 },
+        new double[] { 400, 300.0, 250.0, 200.0, 100.0 });
     double[][] expData = { { 0.95, 0.99, 1.12, 1.9 } };
     CMEsim.setExperimentalData(expData);
     // CMEsim.runTuning();
@@ -399,10 +399,10 @@ public class ConstantMassExpansion extends BasePVTsimulation {
 
     for (int i = 0; i < relativeVolume.length; i++) {
       if (density[i] > 0 && relativeVolume[i] > 0) {
-	mass[i] = density[i] * relativeVolume[i];
-	if (referenceMass < 0) {
-	  referenceMass = mass[i];
-	}
+        mass[i] = density[i] * relativeVolume[i];
+        if (referenceMass < 0) {
+          referenceMass = mass[i];
+        }
       }
     }
 
@@ -413,11 +413,11 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     // Check that mass is constant within tolerance
     for (int i = 0; i < mass.length; i++) {
       if (mass[i] > 0) {
-	double relativeError = Math.abs(mass[i] - referenceMass) / referenceMass;
-	if (relativeError > tolerance) {
-	  logger.warn("CCE QC: Mass balance error at step " + i + ": " + (relativeError * 100) + "% deviation");
-	  return false;
-	}
+        double relativeError = Math.abs(mass[i] - referenceMass) / referenceMass;
+        if (relativeError > tolerance) {
+          logger.warn("CCE QC: Mass balance error at step " + i + ": " + (relativeError * 100) + "% deviation");
+          return false;
+        }
       }
     }
 
@@ -449,9 +449,9 @@ public class ConstantMassExpansion extends BasePVTsimulation {
 
     for (int i = 0; i < pressures.length; i++) {
       if (saturationVolume > 0 && relativeVolume[i] > 0) {
-	double P = pressures[i] * 1e5; // bar to Pa
-	double V = relativeVolume[i] * saturationVolume / 1e6; // L to m³
-	zFactor[i] = (P * V) / (n * R * T);
+        double P = pressures[i] * 1e5; // bar to Pa
+        double V = relativeVolume[i] * saturationVolume / 1e6; // L to m³
+        zFactor[i] = (P * V) / (n * R * T);
       }
     }
 
@@ -497,8 +497,8 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     int count = 0;
     for (int i = 0; i < relativeVolume.length; i++) {
       if (experimentalRelVol[i] > 0) {
-	sum += Math.abs((relativeVolume[i] - experimentalRelVol[i]) / experimentalRelVol[i]);
-	count++;
+        sum += Math.abs((relativeVolume[i] - experimentalRelVol[i]) / experimentalRelVol[i]);
+        count++;
       }
     }
 
@@ -538,14 +538,14 @@ public class ConstantMassExpansion extends BasePVTsimulation {
 
     if (pressures != null) {
       for (int i = 0; i < pressures.length; i++) {
-	double vrel = (relativeVolume != null && i < relativeVolume.length) ? relativeVolume[i] : Double.NaN;
-	double dens = (density != null && i < density.length) ? density[i] : Double.NaN;
-	double zg = (Zgas != null && i < Zgas.length) ? Zgas[i] : Double.NaN;
-	double comp = (isoThermalCompressibility != null && i < isoThermalCompressibility.length)
-	    ? isoThermalCompressibility[i]
-	    : Double.NaN;
+        double vrel = (relativeVolume != null && i < relativeVolume.length) ? relativeVolume[i] : Double.NaN;
+        double dens = (density != null && i < density.length) ? density[i] : Double.NaN;
+        double zg = (Zgas != null && i < Zgas.length) ? Zgas[i] : Double.NaN;
+        double comp = (isoThermalCompressibility != null && i < isoThermalCompressibility.length)
+            ? isoThermalCompressibility[i]
+            : Double.NaN;
 
-	sb.append(String.format("%10.2f %12.4f %12.2f %12.4f %12.6f\n", pressures[i], vrel, dens, zg, comp));
+        sb.append(String.format("%10.2f %12.4f %12.2f %12.4f %12.6f\n", pressures[i], vrel, dens, zg, comp));
       }
     }
     sb.append("\n");

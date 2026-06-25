@@ -55,7 +55,7 @@ public class PowerGenerationCapacityStrategy implements EquipmentCapacityStrateg
   @Override
   public boolean supports(ProcessEquipmentInterface equipment) {
     return equipment instanceof GasTurbine || equipment instanceof SteamTurbine || equipment instanceof HRSG
-	|| equipment instanceof CombinedCycleSystem;
+        || equipment instanceof CombinedCycleSystem;
   }
 
   /** {@inheritDoc} */
@@ -83,10 +83,10 @@ public class PowerGenerationCapacityStrategy implements EquipmentCapacityStrateg
     double maxUtil = 0.0;
     for (CapacityConstraint c : constraints.values()) {
       if (c.isEnabled()) {
-	double util = c.getUtilization();
-	if (!Double.isNaN(util) && util > maxUtil) {
-	  maxUtil = util;
-	}
+        double util = c.getUtilization();
+        if (!Double.isNaN(util) && util > maxUtil) {
+          maxUtil = util;
+        }
       }
     }
     return maxUtil;
@@ -127,9 +127,9 @@ public class PowerGenerationCapacityStrategy implements EquipmentCapacityStrateg
    */
   private void addGasTurbineConstraints(Map<String, CapacityConstraint> constraints, GasTurbine gt) {
     CapacityConstraint powerConstraint = new CapacityConstraint("power").setDesignValue(ratedPowerKW)
-	.setMaxValue(ratedPowerKW * 1.05).setUnit("kW").setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
-	.setWarningThreshold(0.9).setDescription("Gas turbine power output vs rated")
-	.setValueSupplier(() -> Math.abs(gt.getPower()));
+        .setMaxValue(ratedPowerKW * 1.05).setUnit("kW").setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
+        .setWarningThreshold(0.9).setDescription("Gas turbine power output vs rated")
+        .setValueSupplier(() -> Math.abs(gt.getPower()));
     constraints.put("power", powerConstraint);
   }
 
@@ -141,9 +141,9 @@ public class PowerGenerationCapacityStrategy implements EquipmentCapacityStrateg
    */
   private void addSteamTurbineConstraints(Map<String, CapacityConstraint> constraints, SteamTurbine st) {
     CapacityConstraint powerConstraint = new CapacityConstraint("power").setDesignValue(ratedPowerKW)
-	.setMaxValue(ratedPowerKW * 1.05).setUnit("kW").setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
-	.setWarningThreshold(0.9).setDescription("Steam turbine power output vs rated")
-	.setValueSupplier(() -> Math.abs(st.getPower("kW")));
+        .setMaxValue(ratedPowerKW * 1.05).setUnit("kW").setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
+        .setWarningThreshold(0.9).setDescription("Steam turbine power output vs rated")
+        .setValueSupplier(() -> Math.abs(st.getPower("kW")));
     constraints.put("power", powerConstraint);
   }
 
@@ -155,9 +155,9 @@ public class PowerGenerationCapacityStrategy implements EquipmentCapacityStrateg
    */
   private void addHRSGConstraints(Map<String, CapacityConstraint> constraints, HRSG hrsg) {
     CapacityConstraint heatConstraint = new CapacityConstraint("heatTransferred").setDesignValue(ratedPowerKW)
-	.setMaxValue(ratedPowerKW * 1.1).setUnit("kW").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-	.setWarningThreshold(0.9).setDescription("HRSG heat transfer vs design")
-	.setValueSupplier(() -> Math.abs(hrsg.getHeatTransferred("kW")));
+        .setMaxValue(ratedPowerKW * 1.1).setUnit("kW").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
+        .setWarningThreshold(0.9).setDescription("HRSG heat transfer vs design")
+        .setValueSupplier(() -> Math.abs(hrsg.getHeatTransferred("kW")));
     constraints.put("heatTransferred", heatConstraint);
   }
 
@@ -169,16 +169,16 @@ public class PowerGenerationCapacityStrategy implements EquipmentCapacityStrateg
    */
   private void addCombinedCycleConstraints(Map<String, CapacityConstraint> constraints, CombinedCycleSystem ccs) {
     CapacityConstraint powerConstraint = new CapacityConstraint("totalPower").setDesignValue(ratedPowerKW)
-	.setMaxValue(ratedPowerKW * 1.05).setUnit("kW").setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
-	.setWarningThreshold(0.9).setDescription("Combined cycle total power output vs rated")
-	.setValueSupplier(() -> Math.abs(ccs.getTotalPower("kW")));
+        .setMaxValue(ratedPowerKW * 1.05).setUnit("kW").setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
+        .setWarningThreshold(0.9).setDescription("Combined cycle total power output vs rated")
+        .setValueSupplier(() -> Math.abs(ccs.getTotalPower("kW")));
     constraints.put("totalPower", powerConstraint);
 
     // Efficiency constraint
     CapacityConstraint effConstraint = new CapacityConstraint("efficiency").setDesignValue(0.60).setMaxValue(1.0)
-	.setMinValue(0.20).setUnit("fraction").setSeverity(CapacityConstraint.ConstraintSeverity.ADVISORY)
-	.setWarningThreshold(0.9).setDescription("Overall thermal efficiency")
-	.setValueSupplier(() -> ccs.getOverallEfficiency());
+        .setMinValue(0.20).setUnit("fraction").setSeverity(CapacityConstraint.ConstraintSeverity.ADVISORY)
+        .setWarningThreshold(0.9).setDescription("Overall thermal efficiency")
+        .setValueSupplier(() -> ccs.getOverallEfficiency());
     constraints.put("efficiency", effConstraint);
   }
 
@@ -188,7 +188,7 @@ public class PowerGenerationCapacityStrategy implements EquipmentCapacityStrateg
     List<CapacityConstraint> violations = new ArrayList<CapacityConstraint>();
     for (CapacityConstraint c : getConstraints(equipment).values()) {
       if (c.isViolated()) {
-	violations.add(c);
+        violations.add(c);
       }
     }
     return violations;
@@ -202,8 +202,8 @@ public class PowerGenerationCapacityStrategy implements EquipmentCapacityStrateg
     for (CapacityConstraint c : getConstraints(equipment).values()) {
       double util = c.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-	maxUtil = util;
-	bottleneck = c;
+        maxUtil = util;
+        bottleneck = c;
       }
     }
     return bottleneck;
@@ -214,10 +214,10 @@ public class PowerGenerationCapacityStrategy implements EquipmentCapacityStrateg
   public boolean isWithinHardLimits(ProcessEquipmentInterface equipment) {
     for (CapacityConstraint c : getConstraints(equipment).values()) {
       if (c.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD
-	  || c.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
-	if (c.isHardLimitExceeded()) {
-	  return false;
-	}
+          || c.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
+        if (c.isHardLimitExceeded()) {
+          return false;
+        }
       }
     }
     return true;
@@ -228,7 +228,7 @@ public class PowerGenerationCapacityStrategy implements EquipmentCapacityStrateg
   public boolean isWithinSoftLimits(ProcessEquipmentInterface equipment) {
     for (CapacityConstraint c : getConstraints(equipment).values()) {
       if (c.isViolated()) {
-	return false;
+        return false;
       }
     }
     return true;

@@ -114,7 +114,7 @@ public class InstrumentDesign implements java.io.Serializable {
   public String toJson() {
     InstrumentDesignResponse response = new InstrumentDesignResponse(this);
     return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-	.toJson(JsonParser.parseString(response.toJson()));
+        .toJson(JsonParser.parseString(response.toJson()));
   }
 
   // === Getters and Setters ===

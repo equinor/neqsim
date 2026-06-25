@@ -121,7 +121,7 @@ public class InletDeviceModel implements Serializable {
     private final double pressureDropCoefficient;
 
     InletDeviceType(String displayName, double typicalBulkEfficiency, double dsdMultiplier,
-	double pressureDropCoefficient) {
+        double pressureDropCoefficient) {
       this.displayName = displayName;
       this.typicalBulkEfficiency = typicalBulkEfficiency;
       this.dsdMultiplier = dsdMultiplier;
@@ -361,8 +361,8 @@ public class InletDeviceModel implements Serializable {
     // Half-pipe and deflector can re-entrain, producing broader DSD
     if (deviceType == InletDeviceType.HALF_PIPE || deviceType == InletDeviceType.DEFLECTOR_PLATE) {
       if (momentumFlux > 3000) {
-	// High momentum re-atomization
-	newSpread = Math.max(newSpread * 0.8, 1.5); // Broader distribution
+        // High momentum re-atomization
+        newSpread = Math.max(newSpread * 0.8, 1.5); // Broader distribution
       }
     }
 

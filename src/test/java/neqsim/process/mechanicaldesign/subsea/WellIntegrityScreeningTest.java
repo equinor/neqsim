@@ -3,7 +3,6 @@ package neqsim.process.mechanicaldesign.subsea;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -48,11 +47,11 @@ public class WellIntegrityScreeningTest {
   void testSustainedCasingPressureDetected() {
     WellIntegrityScreening screening = new WellIntegrityScreening("WELL-A1");
     screening.addAnnulus(
-	new WellIntegrityScreening.AnnulusReading("A", 30.0, 80.0).setBleedsToZero(false).setRebuildsAfterBleed(true));
+        new WellIntegrityScreening.AnnulusReading("A", 30.0, 80.0).setBleedsToZero(false).setRebuildsAfterBleed(true));
     WellIntegrityScreening.IntegrityDisposition disposition = screening.screen();
     assertEquals(WellIntegrityScreening.IntegrityDisposition.INTERVENTION_REQUIRED, disposition);
     assertEquals(WellIntegrityScreening.AnnulusClassification.SUSTAINED_CASING_PRESSURE,
-	screening.getAnnulusResults().get("A"));
+        screening.getAnnulusResults().get("A"));
   }
 
   /**

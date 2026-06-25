@@ -114,7 +114,7 @@ public class AmmoniaSynthesisReactorTest extends neqsim.NeqSimTest {
   @Test
   public void testEquipmentFactory() {
     AmmoniaSynthesisReactor reactor = (AmmoniaSynthesisReactor) neqsim.process.equipment.EquipmentFactory
-	.createEquipment("reactor", "ammoniasynthesisreactor");
+        .createEquipment("reactor", "ammoniasynthesisreactor");
     assertTrue(reactor instanceof AmmoniaSynthesisReactor);
   }
 }

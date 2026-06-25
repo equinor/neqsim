@@ -62,7 +62,7 @@ class StandardTypeTest {
   void testFromCode() {
     assertEquals(StandardType.NORSOK_L_001, StandardType.fromCode("NORSOK-L-001"));
     assertEquals(StandardType.NORSOK_L_001, StandardType.fromCode("norsok-l-001")); // Case
-										    // insensitive
+    // insensitive
     assertEquals(StandardType.ASME_VIII_DIV1, StandardType.fromCode("ASME-VIII-Div1"));
     assertEquals(StandardType.API_617, StandardType.fromCode("API-617"));
     assertNull(StandardType.fromCode("INVALID-CODE"));

@@ -23,9 +23,9 @@ class CsvTorgDataSourceTest {
   @Test
   void testLoadStandardsFormatCsv() throws IOException {
     String csvContent = "PROJECT_ID,PROJECT_NAME,COMPANY,REVISION,DESIGN_CATEGORY,STANDARD_CODE,VERSION,MIN_AMBIENT_TEMP,MAX_AMBIENT_TEMP\n"
-	+ "PROJ-001,Test Platform,TestCo,1,pressure vessel design code,ASME-VIII-Div1,2021,-40,45\n"
-	+ "PROJ-001,Test Platform,TestCo,1,separator process design,API-12J,8th Ed,-40,45\n"
-	+ "PROJ-001,Test Platform,TestCo,1,pipeline design codes,NORSOK-L-001,Rev 6,-40,45\n";
+        + "PROJ-001,Test Platform,TestCo,1,pressure vessel design code,ASME-VIII-Div1,2021,-40,45\n"
+        + "PROJ-001,Test Platform,TestCo,1,separator process design,API-12J,8th Ed,-40,45\n"
+        + "PROJ-001,Test Platform,TestCo,1,pipeline design codes,NORSOK-L-001,Rev 6,-40,45\n";
 
     Path csvFile = tempDir.resolve("torg_standards.csv");
     Files.write(csvFile, csvContent.getBytes());
@@ -63,9 +63,9 @@ class CsvTorgDataSourceTest {
   @Test
   void testLoadMultipleProjects() throws IOException {
     String csvContent = "PROJECT_ID,PROJECT_NAME,COMPANY,REVISION,DESIGN_CATEGORY,STANDARD_CODE,VERSION\n"
-	+ "PROJ-001,Project One,CompanyA,1,pressure vessel design code,ASME-VIII-Div1,2021\n"
-	+ "PROJ-002,Project Two,CompanyB,2,pressure vessel design code,EN-13445,2021\n"
-	+ "PROJ-002,Project Two,CompanyB,2,pipeline design codes,DNV-ST-F101,2021\n";
+        + "PROJ-001,Project One,CompanyA,1,pressure vessel design code,ASME-VIII-Div1,2021\n"
+        + "PROJ-002,Project Two,CompanyB,2,pressure vessel design code,EN-13445,2021\n"
+        + "PROJ-002,Project Two,CompanyB,2,pipeline design codes,DNV-ST-F101,2021\n";
 
     Path csvFile = tempDir.resolve("multi_torg.csv");
     Files.write(csvFile, csvContent.getBytes());
@@ -90,7 +90,7 @@ class CsvTorgDataSourceTest {
   @Test
   void testLoadByCompanyAndProject() throws IOException {
     String csvContent = "PROJECT_ID,PROJECT_NAME,COMPANY,REVISION,DESIGN_CATEGORY,STANDARD_CODE,VERSION\n"
-	+ "PROJ-001,Offshore Platform,Equinor,1,pressure vessel design code,ASME-VIII-Div1,2021\n";
+        + "PROJ-001,Offshore Platform,Equinor,1,pressure vessel design code,ASME-VIII-Div1,2021\n";
 
     Path csvFile = tempDir.resolve("company_torg.csv");
     Files.write(csvFile, csvContent.getBytes());
@@ -106,9 +106,9 @@ class CsvTorgDataSourceTest {
   @Test
   void testGetAvailableProjectIds() throws IOException {
     String csvContent = "PROJECT_ID,PROJECT_NAME,COMPANY,REVISION,DESIGN_CATEGORY,STANDARD_CODE,VERSION\n"
-	+ "PROJ-001,Project One,CompanyA,1,pressure vessel design code,ASME-VIII-Div1,2021\n"
-	+ "PROJ-002,Project Two,CompanyB,2,pressure vessel design code,EN-13445,2021\n"
-	+ "PROJ-003,Project Three,CompanyA,1,pipeline design codes,NORSOK-L-001,Rev 6\n";
+        + "PROJ-001,Project One,CompanyA,1,pressure vessel design code,ASME-VIII-Div1,2021\n"
+        + "PROJ-002,Project Two,CompanyB,2,pressure vessel design code,EN-13445,2021\n"
+        + "PROJ-003,Project Three,CompanyA,1,pipeline design codes,NORSOK-L-001,Rev 6\n";
 
     Path csvFile = tempDir.resolve("ids_torg.csv");
     Files.write(csvFile, csvContent.getBytes());
@@ -125,9 +125,9 @@ class CsvTorgDataSourceTest {
   @Test
   void testGetAvailableCompanies() throws IOException {
     String csvContent = "PROJECT_ID,PROJECT_NAME,COMPANY,REVISION,DESIGN_CATEGORY,STANDARD_CODE,VERSION\n"
-	+ "PROJ-001,Project One,Equinor,1,pressure vessel design code,ASME-VIII-Div1,2021\n"
-	+ "PROJ-002,Project Two,Shell,2,pressure vessel design code,EN-13445,2021\n"
-	+ "PROJ-003,Project Three,Equinor,1,pipeline design codes,NORSOK-L-001,Rev 6\n";
+        + "PROJ-001,Project One,Equinor,1,pressure vessel design code,ASME-VIII-Div1,2021\n"
+        + "PROJ-002,Project Two,Shell,2,pressure vessel design code,EN-13445,2021\n"
+        + "PROJ-003,Project Three,Equinor,1,pipeline design codes,NORSOK-L-001,Rev 6\n";
 
     Path csvFile = tempDir.resolve("companies_torg.csv");
     Files.write(csvFile, csvContent.getBytes());
@@ -143,7 +143,7 @@ class CsvTorgDataSourceTest {
   @Test
   void testNonExistentProject() throws IOException {
     String csvContent = "PROJECT_ID,PROJECT_NAME,COMPANY,REVISION,DESIGN_CATEGORY,STANDARD_CODE,VERSION\n"
-	+ "PROJ-001,Project One,TestCo,1,pressure vessel design code,ASME-VIII-Div1,2021\n";
+        + "PROJ-001,Project One,TestCo,1,pressure vessel design code,ASME-VIII-Div1,2021\n";
 
     Path csvFile = tempDir.resolve("single_torg.csv");
     Files.write(csvFile, csvContent.getBytes());
@@ -166,7 +166,7 @@ class CsvTorgDataSourceTest {
   @Test
   void testHasProject() throws IOException {
     String csvContent = "PROJECT_ID,PROJECT_NAME,COMPANY,REVISION,DESIGN_CATEGORY,STANDARD_CODE,VERSION\n"
-	+ "PROJ-001,Project One,TestCo,1,pressure vessel design code,ASME-VIII-Div1,2021\n";
+        + "PROJ-001,Project One,TestCo,1,pressure vessel design code,ASME-VIII-Div1,2021\n";
 
     Path csvFile = tempDir.resolve("has_torg.csv");
     Files.write(csvFile, csvContent.getBytes());
@@ -180,7 +180,7 @@ class CsvTorgDataSourceTest {
   @Test
   void testQuotedFields() throws IOException {
     String csvContent = "PROJECT_ID,PROJECT_NAME,COMPANY,REVISION,DESIGN_CATEGORY,STANDARD_CODE,VERSION\n"
-	+ "\"PROJ-001\",\"Test, Platform\",\"Test Co, Inc.\",\"1\",\"pressure vessel design code\",\"ASME-VIII-Div1\",\"2021\"\n";
+        + "\"PROJ-001\",\"Test, Platform\",\"Test Co, Inc.\",\"1\",\"pressure vessel design code\",\"ASME-VIII-Div1\",\"2021\"\n";
 
     Path csvFile = tempDir.resolve("quoted_torg.csv");
     Files.write(csvFile, csvContent.getBytes());

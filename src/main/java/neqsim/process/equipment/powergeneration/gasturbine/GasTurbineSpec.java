@@ -167,6 +167,6 @@ public final class GasTurbineSpec implements Serializable {
   @Override
   public String toString() {
     return String.format("GasTurbineSpec[%s, %.1f MW, %.0f kJ/kWh, eta=%.1f%%]", model, getRatedPowerMW(),
-	heatRateKJPerKWh, getIsoEfficiency() * 100.0);
+        heatRateKJPerKWh, getIsoEfficiency() * 100.0);
   }
 }

@@ -125,9 +125,9 @@ public class ProcessEvent implements Serializable {
   public static ProcessEvent thresholdCrossed(String source, String variable, double value, double threshold,
       boolean above) {
     ProcessEvent event = new ProcessEvent(
-	generateId(), EventType.THRESHOLD_CROSSED, source, String.format("%s %s threshold: %.4f %s %.4f", variable,
-	    above ? "exceeded" : "fell below", value, above ? ">" : "<", threshold),
-	above ? Severity.WARNING : Severity.INFO);
+        generateId(), EventType.THRESHOLD_CROSSED, source, String.format("%s %s threshold: %.4f %s %.4f", variable,
+            above ? "exceeded" : "fell below", value, above ? ">" : "<", threshold),
+        above ? Severity.WARNING : Severity.INFO);
     event.setProperty("variable", variable);
     event.setProperty("value", value);
     event.setProperty("threshold", threshold);
@@ -147,9 +147,9 @@ public class ProcessEvent implements Serializable {
   public static ProcessEvent modelDeviation(String source, String variable, double measured, double predicted) {
     double deviation = (Math.abs(measured) > 1e-10) ? Math.abs(measured - predicted) / Math.abs(measured) : 0;
     ProcessEvent event = new ProcessEvent(generateId(), EventType.MODEL_DEVIATION, source,
-	String.format("Model deviation for %s: %.2f%% (measured=%.4f, predicted=%.4f)", variable, deviation * 100,
-	    measured, predicted),
-	deviation > 0.1 ? Severity.WARNING : Severity.INFO);
+        String.format("Model deviation for %s: %.2f%% (measured=%.4f, predicted=%.4f)", variable, deviation * 100,
+            measured, predicted),
+        deviation > 0.1 ? Severity.WARNING : Severity.INFO);
     event.setProperty("variable", variable);
     event.setProperty("measured", measured);
     event.setProperty("predicted", predicted);

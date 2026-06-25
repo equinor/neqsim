@@ -135,19 +135,19 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
     }
     try {
       if (gasPhysicalProperties != null) {
-	clonedHandler.gasPhysicalProperties = gasPhysicalProperties.clone();
+        clonedHandler.gasPhysicalProperties = gasPhysicalProperties.clone();
       }
       if (oilPhysicalProperties != null) {
-	clonedHandler.oilPhysicalProperties = oilPhysicalProperties.clone();
+        clonedHandler.oilPhysicalProperties = oilPhysicalProperties.clone();
       }
       if (aqueousPhysicalProperties != null) {
-	clonedHandler.aqueousPhysicalProperties = aqueousPhysicalProperties.clone();
+        clonedHandler.aqueousPhysicalProperties = aqueousPhysicalProperties.clone();
       }
       if (solidPhysicalProperties != null) {
-	clonedHandler.solidPhysicalProperties = solidPhysicalProperties.clone();
+        clonedHandler.solidPhysicalProperties = solidPhysicalProperties.clone();
       }
       if (mixingRule != null) {
-	clonedHandler.mixingRule = mixingRule.clone();
+        clonedHandler.mixingRule = mixingRule.clone();
       }
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);

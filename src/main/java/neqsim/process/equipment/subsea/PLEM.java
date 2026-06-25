@@ -223,11 +223,11 @@ public class PLEM extends ProcessEquipmentBaseClass {
     // Run branch valves if present
     if (branchIsolationValves) {
       for (int i = 0; i < branchValves.size(); i++) {
-	ThrottlingValve valve = branchValves.get(i);
-	valve.setInletStream(inletStreams.get(i));
-	valve.run(id);
-	// Update mixer with valve outlet
-	// Note: mixer already has original streams, we'd need to update for valved flow
+        ThrottlingValve valve = branchValves.get(i);
+        valve.setInletStream(inletStreams.get(i));
+        valve.run(id);
+        // Update mixer with valve outlet
+        // Note: mixer already has original streams, we'd need to update for valved flow
       }
     }
 
@@ -243,8 +243,8 @@ public class PLEM extends ProcessEquipmentBaseClass {
       SystemInterface fluid = outletStream.getFluid().clone();
       double outPressure = fluid.getPressure() - headerPressureDrop;
       if (outPressure > 0) {
-	fluid.setPressure(outPressure);
-	outletStream.setFluid(fluid);
+        fluid.setPressure(outPressure);
+        outletStream.setFluid(fluid);
       }
     }
 

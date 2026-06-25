@@ -100,15 +100,15 @@ public class NeqSimUnit extends TwoPortEquipment {
       test.initFlowCalc();
       test.calcFluxes();
       if (i > 1 && (i % 1) == 0) {
-	k++;
-	// test.display("length " + length);
-	// test.getBulkSystem().display("length " + length);
-	// test.getInterphaseSystem().display("length " + length);
-	// test.getFluidBounsdary().display("length " + length);
-	// test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
-	temperatures2[0][k] = length;
-	temperatures2[1][k] = test.getGeometry().getInnerWallTemperature();
-	// test.getFluidBoundary().display("test");
+        k++;
+        // test.display("length " + length);
+        // test.getBulkSystem().display("length " + length);
+        // test.getInterphaseSystem().display("length " + length);
+        // test.getFluidBounsdary().display("length " + length);
+        // test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
+        temperatures2[0][k] = length;
+        temperatures2[1][k] = test.getGeometry().getInnerWallTemperature();
+        // test.getFluidBoundary().display("test");
       }
 
       // test.getBulkSystem().display();
@@ -150,15 +150,15 @@ public class NeqSimUnit extends TwoPortEquipment {
       test.initFlowCalc();
       test.calcFluxes();
       if (i > 1 && (i % 1) == 0) {
-	k++;
-	// test.display("length " + length);
-	// test.getBulkSystem().display("length " + length);
-	// test.getInterphaseSystem().display("length " + length);
-	// test.getFluidBounsdary().display("length " + length);
-	// test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
-	temperatures2[0][k] = length;
-	temperatures2[1][k] = test.getGeometry().getInnerWallTemperature();
-	// test.getFluidBoundary().display("test");
+        k++;
+        // test.display("length " + length);
+        // test.getBulkSystem().display("length " + length);
+        // test.getInterphaseSystem().display("length " + length);
+        // test.getFluidBounsdary().display("length " + length);
+        // test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
+        temperatures2[0][k] = length;
+        temperatures2[1][k] = test.getGeometry().getInnerWallTemperature();
+        // test.getFluidBoundary().display("test");
       }
 
       // test.getBulkSystem().display();
@@ -200,15 +200,15 @@ public class NeqSimUnit extends TwoPortEquipment {
       test.initFlowCalc();
       test.calcFluxes();
       if (i > 1 && (i % 1) == 0) {
-	k++;
-	// test.display("length " + length);
-	// test.getBulkSystem().display("length " + length);
-	// test.getInterphaseSystem().display("length " + length);
-	// test.getFluidBounsdary().display("length " + length);
-	// test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
-	temperatures2[0][k] = length;
-	temperatures2[1][k] = test.getGeometry().getInnerWallTemperature();
-	// test.getFluidBoundary().display("test");
+        k++;
+        // test.display("length " + length);
+        // test.getBulkSystem().display("length " + length);
+        // test.getInterphaseSystem().display("length " + length);
+        // test.getFluidBounsdary().display("length " + length);
+        // test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
+        temperatures2[0][k] = length;
+        temperatures2[1][k] = test.getGeometry().getInnerWallTemperature();
+        // test.getFluidBoundary().display("test");
       }
 
       // test.getBulkSystem().display();

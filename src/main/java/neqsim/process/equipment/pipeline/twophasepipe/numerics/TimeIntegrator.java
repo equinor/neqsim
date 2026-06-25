@@ -205,7 +205,7 @@ public class TimeIntegrator implements Serializable {
     double[][] result = new double[nCells][nVars];
     for (int i = 0; i < nCells; i++) {
       for (int j = 0; j < nVars; j++) {
-	result[i][j] = U[i][j] + dt / 6.0 * (k1[i][j] + 2 * k2[i][j] + 2 * k3[i][j] + k4[i][j]);
+        result[i][j] = U[i][j] + dt / 6.0 * (k1[i][j] + 2 * k2[i][j] + 2 * k3[i][j] + k4[i][j]);
       }
     }
 
@@ -306,7 +306,7 @@ public class TimeIntegrator implements Serializable {
     double[][] C = new double[n][m];
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < m; j++) {
-	C[i][j] = A[i][j] + B[i][j];
+        C[i][j] = A[i][j] + B[i][j];
       }
     }
     return C;
@@ -325,7 +325,7 @@ public class TimeIntegrator implements Serializable {
     double[][] B = new double[n][m];
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < m; j++) {
-	B[i][j] = s * A[i][j];
+        B[i][j] = s * A[i][j];
       }
     }
     return B;
@@ -536,7 +536,7 @@ public class TimeIntegrator implements Serializable {
     double[][] Ustar = new double[nCells][nVars];
     for (int i = 0; i < nCells; i++) {
       for (int j = 0; j < nVars; j++) {
-	Ustar[i][j] = U[i][j] + dt * dUdt[i][j];
+        Ustar[i][j] = U[i][j] + dt * dUdt[i][j];
       }
     }
 
@@ -569,7 +569,7 @@ public class TimeIntegrator implements Serializable {
       // Sum of mass changes over all phases (indices 0, 1, 2)
       int nMassEq = Math.min(3, nVars);
       for (int k = 0; k < nMassEq; k++) {
-	massResidual[i] += (Ustar[i][k] - U[i][k]);
+        massResidual[i] += (Ustar[i][k] - U[i][k]);
       }
     }
 
@@ -621,17 +621,17 @@ public class TimeIntegrator implements Serializable {
     for (int i = 0; i < nCells; i++) {
       // Copy predicted state
       for (int j = 0; j < nVars; j++) {
-	Unew[i][j] = Ustar[i][j];
+        Unew[i][j] = Ustar[i][j];
       }
 
       // Compute pressure gradient (central difference, one-sided at boundaries)
       double dpdx;
       if (i == 0) {
-	dpdx = (dp[1] - dp[0]) / imexDx;
+        dpdx = (dp[1] - dp[0]) / imexDx;
       } else if (i == nCells - 1) {
-	dpdx = (dp[i] - dp[i - 1]) / imexDx;
+        dpdx = (dp[i] - dp[i - 1]) / imexDx;
       } else {
-	dpdx = (dp[i + 1] - dp[i - 1]) / (2.0 * imexDx);
+        dpdx = (dp[i + 1] - dp[i - 1]) / (2.0 * imexDx);
       }
 
       // Correct mass equations with implicit pressure contribution.
@@ -643,13 +643,13 @@ public class TimeIntegrator implements Serializable {
       double totalMass = 0;
       int nMassEq = Math.min(3, nVars);
       for (int k = 0; k < nMassEq; k++) {
-	totalMass += Math.max(Ustar[i][k], 0);
+        totalMass += Math.max(Ustar[i][k], 0);
       }
       if (totalMass > 1e-12) {
-	for (int k = 0; k < nMassEq; k++) {
-	  double fraction = Math.max(Ustar[i][k], 0) / totalMass;
-	  Unew[i][k] = Ustar[i][k] + fraction * massCorrectionTotal;
-	}
+        for (int k = 0; k < nMassEq; k++) {
+          double fraction = Math.max(Ustar[i][k], 0) / totalMass;
+          Unew[i][k] = Ustar[i][k] + fraction * massCorrectionTotal;
+        }
       }
 
       // Correct momentum equations using the two-fluid pressure source:
@@ -665,20 +665,20 @@ public class TimeIntegrator implements Serializable {
 
       double totalPhaseArea = gasArea + oilArea + waterArea;
       if (totalPhaseArea > area && totalPhaseArea > 1e-12) {
-	double areaScale = area / totalPhaseArea;
-	gasArea *= areaScale;
-	oilArea *= areaScale;
-	waterArea *= areaScale;
+        double areaScale = area / totalPhaseArea;
+        gasArea *= areaScale;
+        oilArea *= areaScale;
+        waterArea *= areaScale;
       }
 
       if (nVars > 3) {
-	Unew[i][3] = Ustar[i][3] - dt * gasArea * dpdx;
+        Unew[i][3] = Ustar[i][3] - dt * gasArea * dpdx;
       }
       if (nVars > 4) {
-	Unew[i][4] = Ustar[i][4] - dt * oilArea * dpdx;
+        Unew[i][4] = Ustar[i][4] - dt * oilArea * dpdx;
       }
       if (nVars > 5) {
-	Unew[i][5] = Ustar[i][5] - dt * waterArea * dpdx;
+        Unew[i][5] = Ustar[i][5] - dt * waterArea * dpdx;
       }
     }
 

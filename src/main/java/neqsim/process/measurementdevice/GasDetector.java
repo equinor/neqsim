@@ -355,7 +355,7 @@ public class GasDetector extends MeasurementDeviceBaseClass {
   @Override
   public double getMeasuredValue(String unit) {
     if (unit == null || unit.isEmpty() || unit.equalsIgnoreCase(this.unit)
-	|| unit.equalsIgnoreCase(gasType.getDefaultUnit())) {
+        || unit.equalsIgnoreCase(gasType.getDefaultUnit())) {
       return getMeasuredValue();
     }
 
@@ -368,7 +368,7 @@ public class GasDetector extends MeasurementDeviceBaseClass {
     }
 
     throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getMeasuredValue", "unit",
-	"GasDetector '" + getName() + "' only supports '" + this.unit + "' unit"));
+        "GasDetector '" + getName() + "' only supports '" + this.unit + "' unit"));
   }
 
   /**
@@ -389,23 +389,23 @@ public class GasDetector extends MeasurementDeviceBaseClass {
     if (gasType == GasType.COMBUSTIBLE) {
       System.out.println("  LEL: " + String.format("%.0f ppm", lowerExplosiveLimit));
       if (gasConcentration >= 60.0) {
-	System.out.println("  Status: HIGH ALARM - EVACUATE!");
+        System.out.println("  Status: HIGH ALARM - EVACUATE!");
       } else if (gasConcentration >= 20.0) {
-	System.out.println("  Status: WARNING - GAS DETECTED");
+        System.out.println("  Status: WARNING - GAS DETECTED");
       } else if (gasConcentration > 0.0) {
-	System.out.println("  Status: Low level detection");
+        System.out.println("  Status: Low level detection");
       } else {
-	System.out.println("  Status: NORMAL");
+        System.out.println("  Status: NORMAL");
       }
     } else if (gasType == GasType.TOXIC) {
       System.out.println("  Status: " + (gasConcentration > 0 ? "GAS DETECTED" : "NORMAL"));
     } else if (gasType == GasType.OXYGEN) {
       if (gasConcentration < 19.5) {
-	System.out.println("  Status: OXYGEN DEFICIENCY - DANGER!");
+        System.out.println("  Status: OXYGEN DEFICIENCY - DANGER!");
       } else if (gasConcentration > 23.5) {
-	System.out.println("  Status: OXYGEN ENRICHMENT - DANGER!");
+        System.out.println("  Status: OXYGEN ENRICHMENT - DANGER!");
       } else {
-	System.out.println("  Status: NORMAL");
+        System.out.println("  Status: NORMAL");
       }
     }
   }
@@ -427,9 +427,9 @@ public class GasDetector extends MeasurementDeviceBaseClass {
 
     if (gasType == GasType.COMBUSTIBLE) {
       if (gasConcentration >= 60.0) {
-	sb.append(" (HIGH ALARM)");
+        sb.append(" (HIGH ALARM)");
       } else if (gasConcentration >= 20.0) {
-	sb.append(" (WARNING)");
+        sb.append(" (WARNING)");
       }
     }
 

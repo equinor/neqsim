@@ -16,19 +16,23 @@ import neqsim.process.equipment.stream.StreamInterface;
 /**
  * Network of pipelines connected through manifolds using compositional PipeFlowSystem.
  *
+ * <p>
  * &lt;p&gt; This class models pipeline networks where multiple pipelines converge to manifolds (mixers) and pipelines
  * depart from manifolds. Unlike {@link WellFlowlineNetwork} which uses the simpler Beggs-Brill correlation, this class
  * uses the full {@link OnePhasePipeLine} with TDMA solvers supporting: &lt;/p&gt; &lt;ul&gt; &lt;li&gt;Compositional
  * tracking through the network&lt;/li&gt; &lt;li&gt;Steady-state solutions&lt;/li&gt; &lt;li&gt;Transient/dynamic
  * simulations&lt;/li&gt; &lt;li&gt;Energy balance and heat transfer&lt;/li&gt; &lt;/ul&gt;
  *
+ * <p>
  * &lt;h2&gt;Architecture&lt;/h2&gt; &lt;p&gt; The network is modeled as a directed graph where: &lt;/p&gt; &lt;ul&gt;
  * &lt;li&gt;Nodes are manifolds (implemented as {@link Mixer})&lt;/li&gt; &lt;li&gt;Edges are pipelines (implemented as
  * {@link OnePhasePipeLine})&lt;/li&gt; &lt;li&gt;Feed streams connect to source nodes&lt;/li&gt; &lt;li&gt;The final
  * node provides the network outlet&lt;/li&gt; &lt;/ul&gt;
  *
+ * <p>
  * &lt;h2&gt;Example Usage&lt;/h2&gt;
  *
+ * <p>
  * &lt;pre&gt;{@code
  * // Create feeds
  * Stream feed1 = new Stream("feed1", gas1);
@@ -249,7 +253,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
 
     // Create pipeline with mixer outlet as inlet stream
     OnePhasePipeLine pipeline = createPipeline(pipeName, sourceManifold.getMixer().getOutletStream(), length, diameter,
-	numberOfNodes);
+        numberOfNodes);
 
     PipelineSegment segment = new PipelineSegment(pipeName, pipeline, fromManifold, toManifold);
     sourceManifold.setOutboundPipeline(segment);
@@ -411,20 +415,20 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
     for (ManifoldNode manifold : manifolds.values()) {
       boolean hasOnlyInlets = true;
       for (PipelineSegment segment : manifold.getInboundPipelines()) {
-	if (!segment.isInletPipeline()) {
-	  hasOnlyInlets = false;
-	  break;
-	}
+        if (!segment.isInletPipeline()) {
+          hasOnlyInlets = false;
+          break;
+        }
       }
       if (hasOnlyInlets && !manifold.getInboundPipelines().isEmpty()) {
-	addToExecutionOrder(manifold, order, visited);
+        addToExecutionOrder(manifold, order, visited);
       }
     }
 
     // Add any remaining manifolds
     for (ManifoldNode manifold : manifolds.values()) {
       if (!visited.contains(manifold.getName())) {
-	addToExecutionOrder(manifold, order, visited);
+        addToExecutionOrder(manifold, order, visited);
       }
     }
 
@@ -441,7 +445,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
     if (node.getOutboundPipeline() != null) {
       ManifoldNode next = manifolds.get(node.getOutboundPipeline().getToManifold());
       if (next != null) {
-	addToExecutionOrder(next, order, visited);
+        addToExecutionOrder(next, order, visited);
       }
     }
   }
@@ -466,7 +470,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
     for (ManifoldNode manifold : executionOrder) {
       // Run all inbound pipelines to this manifold
       for (PipelineSegment segment : manifold.getInboundPipelines()) {
-	segment.getPipeline().run(id);
+        segment.getPipeline().run(id);
       }
 
       // Run the mixer
@@ -474,7 +478,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
 
       // Set up outbound pipeline inlet if exists
       if (manifold.getOutboundPipeline() != null) {
-	manifold.getOutboundPipeline().getPipeline().setInletStream(manifold.getMixer().getOutletStream());
+        manifold.getOutboundPipeline().getPipeline().setInletStream(manifold.getMixer().getOutletStream());
       }
     }
 
@@ -506,7 +510,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
     for (ManifoldNode manifold : executionOrder) {
       // Run transient for all inbound pipelines
       for (PipelineSegment segment : manifold.getInboundPipelines()) {
-	segment.getPipeline().runTransient(dt, id);
+        segment.getPipeline().runTransient(dt, id);
       }
 
       // Run the mixer
@@ -514,8 +518,8 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
 
       // Update outbound pipeline inlet
       if (manifold.getOutboundPipeline() != null) {
-	OnePhasePipeLine outPipe = manifold.getOutboundPipeline().getPipeline();
-	outPipe.setInletStream(manifold.getMixer().getOutletStream());
+        OnePhasePipeLine outPipe = manifold.getOutboundPipeline().getPipeline();
+        outPipe.setInletStream(manifold.getMixer().getOutletStream());
       }
     }
 
@@ -533,7 +537,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
   public double[] getPressureProfile(String pipeName, String unit) {
     for (PipelineSegment segment : allPipelines) {
       if (segment.getName().equals(pipeName)) {
-	return segment.getPipeline().getPressureProfile(unit);
+        return segment.getPipeline().getPressureProfile(unit);
       }
     }
     throw new IllegalArgumentException("Pipeline '" + pipeName + "' not found");
@@ -549,7 +553,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
   public double[] getTemperatureProfile(String pipeName, String unit) {
     for (PipelineSegment segment : allPipelines) {
       if (segment.getName().equals(pipeName)) {
-	return segment.getPipeline().getTemperatureProfile(unit);
+        return segment.getPipeline().getTemperatureProfile(unit);
       }
     }
     throw new IllegalArgumentException("Pipeline '" + pipeName + "' not found");
@@ -565,7 +569,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
   public double[] getCompositionProfile(String pipeName, String componentName) {
     for (PipelineSegment segment : allPipelines) {
       if (segment.getName().equals(pipeName)) {
-	return segment.getPipeline().getCompositionProfile(componentName);
+        return segment.getPipeline().getCompositionProfile(componentName);
       }
     }
     throw new IllegalArgumentException("Pipeline '" + pipeName + "' not found");
@@ -580,7 +584,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
   public double[] getVelocityProfile(String pipeName) {
     for (PipelineSegment segment : allPipelines) {
       if (segment.getName().equals(pipeName)) {
-	return segment.getPipeline().getVelocityProfile();
+        return segment.getPipeline().getVelocityProfile();
       }
     }
     throw new IllegalArgumentException("Pipeline '" + pipeName + "' not found");
@@ -597,7 +601,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
     for (PipelineSegment segment : allPipelines) {
       double[] profile = segment.getPipeline().getPressureProfile(unit);
       if (profile.length >= 2) {
-	totalDrop += profile[0] - profile[profile.length - 1];
+        totalDrop += profile[0] - profile[profile.length - 1];
       }
     }
     return totalDrop;

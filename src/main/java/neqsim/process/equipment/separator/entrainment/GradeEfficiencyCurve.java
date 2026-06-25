@@ -10,6 +10,7 @@ import java.io.Serializable;
  * separation efficiency is obtained by integrating the grade efficiency over the droplet size distribution:
  * </p>
  *
+ * <p>
  * $$ \eta_{overall} = \int_0^\infty \eta(d) \cdot f(d) \, dd = \sum_i \eta(d_i) \cdot \Delta F_i $$
  *
  * <p>
@@ -67,6 +68,7 @@ public class GradeEfficiencyCurve implements Serializable {
    * Gravity efficiency follows a squared relationship for the Stokes regime:
    * </p>
    *
+   * <p>
    * $$ \eta(d) = \min\left(1, \left(\frac{d}{d_{cut}}\right)^2\right) $$
    *
    * <p>
@@ -92,6 +94,7 @@ public class GradeEfficiencyCurve implements Serializable {
    * Modelled as a sigmoid (logistic) capture efficiency:
    * </p>
    *
+   * <p>
    * $$ \eta(d) = \eta_{max} \cdot \left[1 - \exp\left(-0.693 \cdot \left(\frac{d}{d_{50}}\right)^n\right)\right] $$
    *
    * <p>
@@ -139,6 +142,7 @@ public class GradeEfficiencyCurve implements Serializable {
    * $Stk = \rho_d d^2 V / (18 \mu_c W)$ where $W$ is the channel width. The efficiency is approximated as:
    * </p>
    *
+   * <p>
    * $$ \eta(d) = \eta_{max} \cdot \left[1 - \exp\left(-0.693 \cdot \left(\frac{d}{d_{50}}\right)^n\right)\right] $$
    *
    * <p>
@@ -250,7 +254,7 @@ public class GradeEfficiencyCurve implements Serializable {
   public static GradeEfficiencyCurve custom(double[] diametersM, double[] efficiencies) {
     if (diametersM.length != efficiencies.length || diametersM.length < 2) {
       throw new IllegalArgumentException(
-	  "Custom grade efficiency requires at least 2 matching diameter-efficiency pairs");
+          "Custom grade efficiency requires at least 2 matching diameter-efficiency pairs");
     }
     GradeEfficiencyCurve curve = new GradeEfficiencyCurve();
     curve.type = InternalsType.CUSTOM;
@@ -325,8 +329,8 @@ public class GradeEfficiencyCurve implements Serializable {
     }
     for (int i = 0; i < customCurve.length - 1; i++) {
       if (diameter >= customCurve[i][0] && diameter < customCurve[i + 1][0]) {
-	double frac = (diameter - customCurve[i][0]) / (customCurve[i + 1][0] - customCurve[i][0]);
-	return customCurve[i][1] + frac * (customCurve[i + 1][1] - customCurve[i][1]);
+        double frac = (diameter - customCurve[i][0]) / (customCurve[i + 1][0] - customCurve[i][0]);
+        return customCurve[i][1] + frac * (customCurve[i + 1][1] - customCurve[i][1]);
       }
     }
     return customCurve[customCurve.length - 1][1];

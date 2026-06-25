@@ -220,7 +220,7 @@ public class Leachman {
     if (D.val > -epsilon) {
       D.val = P / R_L / T; // Ideal gas estimate for vapor phase
       if (iFlag == 2) {
-	D.val = Dcx.val * 3;
+        D.val = Dcx.val * 3;
       } // Initial estimate for liquid phase
     } else {
       D.val = Math.abs(D.val); // If D<0, then use as initial estimate
@@ -230,73 +230,74 @@ public class Leachman {
     vlog = -Math.log(D.val);
     for (int it = 1; it <= 50; ++it) {
       if (vlog < -7 || vlog > 100 || it == 20 || it == 30 || it == 40 || iFail == 1) {
-	// Current state is bad or iteration is taking too long. Restart with completely
-	// different initial state
-	iFail = 0;
-	if (nFail > 2) {
-	  // Iteration failed (above loop did not find a solution or checks made below
-	  // indicate possible 2-phase state)
-	  ierr.val = 1;
-	  herr.val = "Calculation failed to converge in Leachman method, ideal gas density returned.";
-	  D.val = P / R_L / T;
-	}
-	nFail++;
-	if (nFail == 1) {
-	  D.val = Dcx.val * 3; // If vapor phase search fails, look for root in liquid
-			       // region
-	} else if (nFail == 2) {
-	  D.val = Dcx.val * 2.5; // If liquid phase search fails, look for root between
-				 // liquid and critical
-				 // regions
-	} else if (nFail == 3) {
-	  D.val = Dcx.val * 2; // If search fails, look for root in critical region
-	}
-	vlog = -Math.log(D.val);
+        // Current state is bad or iteration is taking too long. Restart with completely
+        // different initial state
+        iFail = 0;
+        if (nFail > 2) {
+          // Iteration failed (above loop did not find a solution or checks made below
+          // indicate possible 2-phase state)
+          ierr.val = 1;
+          herr.val = "Calculation failed to converge in Leachman method, ideal gas density returned.";
+          D.val = P / R_L / T;
+        }
+        nFail++;
+        if (nFail == 1) {
+          D.val = Dcx.val * 3; // If vapor phase search fails, look for root in liquid
+          // region
+        } else if (nFail == 2) {
+          D.val = Dcx.val * 2.5; // If liquid phase search fails, look for root between
+          // liquid and critical
+          // regions
+        } else if (nFail == 3) {
+          D.val = Dcx.val * 2; // If search fails, look for root in critical region
+        }
+        vlog = -Math.log(D.val);
       }
       D.val = Math.exp(-vlog);
       PressureLeachman(T, D.val, P2, Z);
       if (dPdDsave < epsilon || P2.val < epsilon) {
-	// Current state is 2-phase, try locating a different state that is single phase
-	vinc = 0.1;
-	if (D.val > Dcx.val) {
-	  vinc = -0.1;
-	}
-	if (it > 5) {
-	  vinc = vinc / 2;
-	}
-	if (it > 10 && it < 20) {
-	  vinc = vinc / 5;
-	}
-	vlog += vinc;
+        // Current state is 2-phase, try locating a different state that is single phase
+        vinc = 0.1;
+        if (D.val > Dcx.val) {
+          vinc = -0.1;
+        }
+        if (it > 5) {
+          vinc = vinc / 2;
+        }
+        if (it > 10 && it < 20) {
+          vinc = vinc / 5;
+        }
+        vlog += vinc;
       } else {
-	// Find the next density with a first order Newton's type iterative scheme, with
-	// log(P) as the known variable and log(v) as the unknown property.
-	// See AGA 8 publication for further information.
-	dpdlv = -D.val * dPdDsave; // d(p)/d[log(v)]
-	vdiff = (Math.log(P2.val) - plog) * P2.val / dpdlv;
-	vlog += -vdiff;
-	if (Math.abs(vdiff) < tolr) {
-	  // Check to see if state is possibly 2-phase, and if so restart
-	  if (dPdDsave < 0) {
-	    iFail = 1;
-	  } else {
-	    D.val = Math.exp(-vlog);
+        // Find the next density with a first order Newton's type iterative scheme, with
+        // log(P) as the known variable and log(v) as the unknown property.
+        // See AGA 8 publication for further information.
+        dpdlv = -D.val * dPdDsave; // d(p)/d[log(v)]
+        vdiff = (Math.log(P2.val) - plog) * P2.val / dpdlv;
+        vlog += -vdiff;
+        if (Math.abs(vdiff) < tolr) {
+          // Check to see if state is possibly 2-phase, and if so restart
+          if (dPdDsave < 0) {
+            iFail = 1;
+          } else {
+            D.val = Math.exp(-vlog);
 
-	    // If requested, check to see if point is possibly 2-phase
-	    if (iFlag > 0) {
-	      propertiesLeachman(T, D.val, PP, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa, A);
-	      if ((PP.val <= 0 || dPdD.val <= 0 || d2PdTD.val <= 0) || (Cv.val <= 0 || Cp.val <= 0 || W.val <= 0)) {
-		// Iteration failed (above loop did find a solution or checks made
-		// below
-		// indicate possible 2-phase state)
-		ierr.val = 1;
-		herr.val = "Calculation failed to converge in Leachman method, ideal gas density returned.";
-		D.val = P / R_L / T;
-	      }
-	    }
-	    return; // Iteration converged
-	  }
-	}
+            // If requested, check to see if point is possibly 2-phase
+            if (iFlag > 0) {
+              propertiesLeachman(T, D.val, PP, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa, A);
+              if ((PP.val <= 0 || dPdD.val <= 0 || d2PdTD.val <= 0) || (Cv.val <= 0 || Cp.val <= 0 || W.val <= 0)) {
+                // Iteration failed (above loop did find a solution or
+                // checks made
+                // below
+                // indicate possible 2-phase state)
+                ierr.val = 1;
+                herr.val = "Calculation failed to converge in Leachman method, ideal gas density returned.";
+                D.val = P / R_L / T;
+              }
+            }
+            return; // Iteration converged
+          }
+        }
       }
     }
     // Iteration failed (above loop did not find a solution or checks made below
@@ -318,7 +319,7 @@ public class Leachman {
     doubleW[][] ar = new doubleW[4][4];
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; j++) {
-	ar[i][j] = new doubleW(0.0d);
+        ar[i][j] = new doubleW(0.0d);
       }
     }
     AlpharLeachman(0, 0, T, D, ar);
@@ -356,7 +357,7 @@ public class Leachman {
     // Clear previous ar values
     for (int i = 0; i <= 3; ++i) {
       for (int j = 0; j <= 3; ++j) {
-	ar[i][j].val = 0;
+        ar[i][j].val = 0;
       }
     }
 
@@ -429,7 +430,7 @@ public class Leachman {
       ar[0][2].val += G * E;
       // d^3(alpha^r)/d(delta)^3
       double dGddelta = d3Bddelta3 + 2 * (d2Bddelta2 * deddelta + dBddelta * d2edDelta2) + dBddelta * d2edDelta2
-	  + B * d3edDelta3 + dBddelta * deddelta * deddelta + 2 * B * deddelta * d2edDelta2;
+          + B * d3edDelta3 + dBddelta * deddelta * deddelta + 2 * B * deddelta * d2edDelta2;
       ar[0][3].val += E * (dGddelta + G * deddelta);
       // d(alpha^r)/d(tau)
       ar[1][0].val += dBdTau * E + B * E * dedTau;
@@ -484,7 +485,7 @@ public class Leachman {
 
       // d^3(alpha^r)/d(delta)^3
       double dGddelta = d3Bddelta3 + 2 * (d2Bddelta2 * dedDelta + dBddelta * d2edDelta2) + dBddelta * d2edDelta2
-	  + B * d3edDelta3 + dBddelta * dedDelta * dedDelta + 2 * B * dedDelta * d2edDelta2;
+          + B * d3edDelta3 + dBddelta * dedDelta * dedDelta + 2 * B * dedDelta * d2edDelta2;
       ar[0][3].val += E * (dGddelta + G * dedDelta);
 
       // d(alpha^r)/d(tau)
@@ -495,7 +496,7 @@ public class Leachman {
 
       // d^2(alpha^r)/(d(delta)d(tau))
       ar[1][1].val += d2Bddeltadtau * E + dBdTau * E * dedDelta + dBddelta * E * dedTau + B * E * dedDelta * dedTau
-	  + B * E * d2edDeltadTau;
+          + B * E * d2edDeltadTau;
     }
     ar[0][1].val = delta * ar[0][1].val;
     ar[0][2].val = delta * delta * ar[0][2].val;
@@ -552,7 +553,7 @@ public class Leachman {
     a0[2].val = -1.5 / (tau * tau);
     for (int k = 2; k < K; k++) {
       a0[2].val += -a0k[k] * b0k[k] * b0k[k] * Math.exp(b0k[k] * tau)
-	  * (1 / (1 - Math.exp(b0k[k] * tau)) + Math.exp(b0k[k] * tau) / Math.pow(1 - Math.exp(b0k[k] * tau), 2));
+          * (1 / (1 - Math.exp(b0k[k] * tau)) + Math.exp(b0k[k] * tau) / Math.pow(1 - Math.exp(b0k[k] * tau), 2));
       // -a0k[k]*b0k[k]*b0k[k]*Math.exp(b0k[k]*tau)/Math.pow((-1+Math.exp(b0k[k]*tau)),2);
     }
     a0[1].val = tau * a0[1].val;
@@ -628,7 +629,7 @@ public class Leachman {
 
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; j++) {
-	ar[i][j] = new doubleW(0.0d);
+        ar[i][j] = new doubleW(0.0d);
       }
     }
 
@@ -662,8 +663,8 @@ public class Leachman {
       Cp.val = Cv.val + T * (dPdT.val / D) * (dPdT.val / D) / dPdD.val;
       d2PdD2.val = RT * (2 * ar[0][1].val + 4 * ar[0][2].val + ar[0][3].val) / D;
       JT.val = (T / D * dPdT.val / dPdD.val - 1) / Cp.val / D; // '=(dB/dT*T-B)/Cp for an
-							       // ideal gas, but dB/dT is
-							       // not known
+      // ideal gas, but dB/dT is
+      // not known
     } else {
       Cp.val = Cv.val + R;
       d2PdD2.val = 0;
@@ -716,9 +717,9 @@ public class Leachman {
       b0k = new double[] { 0, 0, -16.0205159149, -22.6580178006, -60.0090511389, -74.9434303817, -206.9392065168 };
       K = 7;
       N_i = new double[] { -6.93643, 0.01, 2.1101, 4.52059, 0.732564, -1.34086, 0.130985, -0.777414, 0.351944,
-	  -0.0211716, 0.0226312, 0.032187, -0.0231752, 0.0557346 };
+          -0.0211716, 0.0226312, 0.032187, -0.0231752, 0.0557346 };
       t_i = new double[] { 0.6844, 1, 0.989, 0.489, 0.803, 1.1444, 1.409, 1.754, 1.311, 4.187, 5.646, 0.791, 7.249,
-	  2.986 };
+          2.986 };
       d_i = new double[] { 1, 4, 1, 1, 2, 2, 3, 1, 3, 2, 1, 3, 1, 1 };
       p_i = new double[] { 0, 0, 0, 0, 0, 0, 0, 1, 1 };
       phi_i = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, -1.685, -0.489, -0.103, -2.506, -1.607 };
@@ -734,12 +735,12 @@ public class Leachman {
       // System.out.println("Hydrogen type used: Para.");
 
       a0k = new double[] { -1.4485891134, 1.884521239, 4.30256, 13.0289, -47.7365, 50.0013, -18.6261, 0.993973,
-	  0.536078 };
+          0.536078 };
       b0k = new double[] { 0, 0, -15.1496751472, -25.0925982148, -29.4735563787, -35.4059141417, -40.724998482,
-	  -163.7925799988, -309.2173173842 };
+          -163.7925799988, -309.2173173842 };
       K = 9;
       N_i = new double[] { -7.33375, 0.01, 2.60375, 4.66279, 0.68239, -1.47078, 0.135801, -1.05327, 0.328239, -0.057783,
-	  0.044974, 0.070346, -0.040176, 0.11951 };
+          0.044974, 0.070346, -0.040176, 0.11951 };
       t_i = new double[] { 0.6855, 1, 1, 0.489, 0.774, 1.133, 1.386, 1.619, 1.162, 3.96, 5.276, 0.99, 6.791, 3.19 };
       d_i = new double[] { 1, 4, 1, 1, 2, 2, 3, 1, 3, 2, 1, 3, 1, 1 };
       p_i = new double[] { 0, 0, 0, 0, 0, 0, 0, 1, 1 };
@@ -759,9 +760,9 @@ public class Leachman {
       b0k = new double[] { 0, 0, -25.7676098736, -43.4677904877, -66.0445514750, -209.7531607465 };
       K = 6;
       N_i = new double[] { -6.83148, 0.01, 2.11505, 4.38353, 0.211292, -1.00939, 0.142086, -0.87696, 0.804927,
-	  -0.710775, 0.0639688, 0.0710858, -0.087654, 0.647088 };
+          -0.710775, 0.0639688, 0.0710858, -0.087654, 0.647088 };
       t_i = new double[] { 0.7333, 1, 1.1372, 0.5136, 0.5638, 1.6248, 1.829, 2.404, 2.105, 4.1, 7.658, 1.259, 7.589,
-	  3.946 };
+          3.946 };
       d_i = new double[] { 1, 4, 1, 1, 2, 2, 3, 1, 3, 2, 1, 3, 1, 1 };
       p_i = new double[] { 0, 0, 0, 0, 0, 0, 0, 1, 1 };
       phi_i = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, -1.169, -0.894, -0.04, -2.072, -1.306 };

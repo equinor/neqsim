@@ -188,10 +188,10 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
     boolean dominated = false;
     for (int i = 0; i < objectiveValues.length; i++) {
       if (this.objectiveValues[i] < other.objectiveValues[i]) {
-	return false; // Worse on at least one objective
+        return false; // Worse on at least one objective
       }
       if (this.objectiveValues[i] > other.objectiveValues[i]) {
-	dominated = true; // Better on at least one objective
+        dominated = true; // Better on at least one objective
       }
     }
     return dominated;
@@ -243,7 +243,7 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
     for (int i = 0; i < objectiveValues.length; i++) {
       int cmp = Double.compare(this.objectiveValues[i], other.objectiveValues[i]);
       if (cmp != 0) {
-	return -cmp; // Higher is better, so reverse
+        return -cmp; // Higher is better, so reverse
       }
     }
     return 0;
@@ -271,10 +271,10 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
     StringBuilder sb = new StringBuilder("ParetoSolution{");
     for (int i = 0; i < objectiveNames.length; i++) {
       if (i > 0) {
-	sb.append(", ");
+        sb.append(", ");
       }
       sb.append(objectiveNames[i]).append("=").append(String.format("%.2f", rawObjectiveValues[i])).append(" ")
-	  .append(objectiveUnits[i]);
+          .append(objectiveUnits[i]);
     }
     sb.append(", feasible=").append(feasible);
     if (!decisionVariables.isEmpty()) {
@@ -352,11 +352,11 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
       String[] units = new String[n];
 
       for (int i = 0; i < n; i++) {
-	ObjectiveFunction obj = objectives.get(i);
-	names[i] = obj.getName();
-	units[i] = obj.getUnit();
-	// Normalize: higher is always better
-	normalizedValues[i] = obj.getDirection() == ObjectiveFunction.Direction.MAXIMIZE ? rawValues[i] : -rawValues[i];
+        ObjectiveFunction obj = objectives.get(i);
+        names[i] = obj.getName();
+        units[i] = obj.getUnit();
+        // Normalize: higher is always better
+        normalizedValues[i] = obj.getDirection() == ObjectiveFunction.Direction.MAXIMIZE ? rawValues[i] : -rawValues[i];
       }
 
       return new ParetoSolution(normalizedValues, rawValues, names, units, decisionVariables, feasible);

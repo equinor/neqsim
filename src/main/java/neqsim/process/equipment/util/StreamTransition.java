@@ -76,8 +76,8 @@ public class StreamTransition extends TwoPortEquipment {
 
     for (int i = 0; i < inStream.getFluid().getNumberOfComponents(); i++) {
       if (outThermoSystem.getPhase(0).hasComponent(inStream.getFluid().getComponent(i).getName())) {
-	outThermoSystem.addComponent(inStream.getFluid().getComponent(i).getName(),
-	    inStream.getFluid().getComponent(i).getNumberOfmoles());
+        outThermoSystem.addComponent(inStream.getFluid().getComponent(i).getName(),
+            inStream.getFluid().getComponent(i).getNumberOfmoles());
       }
     }
     outStream.setThermoSystem(outThermoSystem);
@@ -102,8 +102,8 @@ public class StreamTransition extends TwoPortEquipment {
     ProcessSystem offshoreProcessoperations = ProcessSystem.open("c:/temp/offshorePro.neqsim");
     ProcessSystem TEGprocess = ProcessSystem.open("c:/temp//TEGprocessHX.neqsim");
     StreamTransition trans = new StreamTransition("tmp",
-	(StreamInterface) offshoreProcessoperations.getUnit("rich gas"),
-	(StreamInterface) TEGprocess.getUnit("dry feed gas"));
+        (StreamInterface) offshoreProcessoperations.getUnit("rich gas"),
+        (StreamInterface) TEGprocess.getUnit("dry feed gas"));
 
     UUID id = UUID.randomUUID();
 

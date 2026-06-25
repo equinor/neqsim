@@ -182,10 +182,10 @@ public class AutomaticScenarioGenerator implements Serializable {
 
     for (EquipmentFailure failure : identifiedFailures) {
       if (enabledFailureModes.contains(failure.mode)) {
-	ProcessSafetyScenario scenario = createScenario(failure);
-	if (scenario != null) {
-	  scenarios.add(scenario);
-	}
+        ProcessSafetyScenario scenario = createScenario(failure);
+        if (scenario != null) {
+          scenarios.add(scenario);
+        }
       }
     }
 
@@ -206,32 +206,32 @@ public class AutomaticScenarioGenerator implements Serializable {
 
     // Add combinations
     List<EquipmentFailure> enabledFailures = identifiedFailures.stream()
-	.filter(f -> enabledFailureModes.contains(f.mode)).collect(Collectors.toList());
+        .filter(f -> enabledFailureModes.contains(f.mode)).collect(Collectors.toList());
 
     // Generate 2-failure combinations
     if (maxCombinationSize >= 2) {
       for (int i = 0; i < enabledFailures.size(); i++) {
-	for (int j = i + 1; j < enabledFailures.size(); j++) {
-	  ProcessSafetyScenario combo = createCombinationScenario(enabledFailures.get(i), enabledFailures.get(j));
-	  if (combo != null) {
-	    scenarios.add(combo);
-	  }
-	}
+        for (int j = i + 1; j < enabledFailures.size(); j++) {
+          ProcessSafetyScenario combo = createCombinationScenario(enabledFailures.get(i), enabledFailures.get(j));
+          if (combo != null) {
+            scenarios.add(combo);
+          }
+        }
       }
     }
 
     // Generate 3-failure combinations if requested
     if (maxCombinationSize >= 3) {
       for (int i = 0; i < enabledFailures.size(); i++) {
-	for (int j = i + 1; j < enabledFailures.size(); j++) {
-	  for (int k = j + 1; k < enabledFailures.size(); k++) {
-	    ProcessSafetyScenario combo = createCombinationScenario(enabledFailures.get(i), enabledFailures.get(j),
-		enabledFailures.get(k));
-	    if (combo != null) {
-	      scenarios.add(combo);
-	    }
-	  }
-	}
+        for (int j = i + 1; j < enabledFailures.size(); j++) {
+          for (int k = j + 1; k < enabledFailures.size(); k++) {
+            ProcessSafetyScenario combo = createCombinationScenario(enabledFailures.get(i), enabledFailures.get(j),
+                enabledFailures.get(k));
+            if (combo != null) {
+              scenarios.add(combo);
+            }
+          }
+        }
       }
     }
 
@@ -330,33 +330,33 @@ public class AutomaticScenarioGenerator implements Serializable {
     switch (failure.mode) {
     case VALVE_STUCK_CLOSED:
       builder.customManipulator(failure.equipmentName, eq -> {
-	if (eq instanceof ValveInterface) {
-	  ((ValveInterface) eq).setPercentValveOpening(0.0);
-	}
+        if (eq instanceof ValveInterface) {
+          ((ValveInterface) eq).setPercentValveOpening(0.0);
+        }
       });
       break;
 
     case VALVE_STUCK_OPEN:
       builder.customManipulator(failure.equipmentName, eq -> {
-	if (eq instanceof ValveInterface) {
-	  ((ValveInterface) eq).setPercentValveOpening(100.0);
-	}
+        if (eq instanceof ValveInterface) {
+          ((ValveInterface) eq).setPercentValveOpening(100.0);
+        }
       });
       break;
 
     case COOLING_LOSS:
       builder.customManipulator(failure.equipmentName, eq -> {
-	if (eq instanceof Cooler) {
-	  ((Cooler) eq).setDuty(0.0);
-	}
+        if (eq instanceof Cooler) {
+          ((Cooler) eq).setDuty(0.0);
+        }
       });
       break;
 
     case HEATING_LOSS:
       builder.customManipulator(failure.equipmentName, eq -> {
-	if (eq instanceof Heater) {
-	  ((Heater) eq).setDuty(0.0);
-	}
+        if (eq instanceof Heater) {
+          ((Heater) eq).setDuty(0.0);
+        }
       });
       break;
 
@@ -380,7 +380,7 @@ public class AutomaticScenarioGenerator implements Serializable {
     StringBuilder nameBuilder = new StringBuilder("Combination: ");
     for (int i = 0; i < failures.length; i++) {
       if (i > 0) {
-	nameBuilder.append(" + ");
+        nameBuilder.append(" + ");
       }
       nameBuilder.append(failures[i].equipmentName).append(" ").append(failures[i].mode.getDescription());
     }
@@ -509,21 +509,21 @@ public class AutomaticScenarioGenerator implements Serializable {
       long startTime = System.currentTimeMillis();
 
       try {
-	// Clone the process system
-	ProcessSystem copy = processSystem.copy();
+        // Clone the process system
+        ProcessSystem copy = processSystem.copy();
 
-	// Apply and run scenario
-	scenario.applyTo(copy);
-	copy.run();
+        // Apply and run scenario
+        scenario.applyTo(copy);
+        copy.run();
 
-	// Capture key results
-	Map<String, Double> resultValues = captureKeyResults(copy);
-	long elapsed = System.currentTimeMillis() - startTime;
-	results.add(new ScenarioRunResult(scenario, resultValues, elapsed));
+        // Capture key results
+        Map<String, Double> resultValues = captureKeyResults(copy);
+        long elapsed = System.currentTimeMillis() - startTime;
+        results.add(new ScenarioRunResult(scenario, resultValues, elapsed));
 
       } catch (Exception e) {
-	long elapsed = System.currentTimeMillis() - startTime;
-	results.add(new ScenarioRunResult(scenario, e.getMessage(), elapsed));
+        long elapsed = System.currentTimeMillis() - startTime;
+        results.add(new ScenarioRunResult(scenario, e.getMessage(), elapsed));
       }
     }
 
@@ -553,15 +553,15 @@ public class AutomaticScenarioGenerator implements Serializable {
 
       // Capture pressure and temperature for key equipment
       if (equipment instanceof Separator) {
-	Separator sep = (Separator) equipment;
-	results.put(name + ".pressure", sep.getPressure());
-	results.put(name + ".temperature", sep.getTemperature());
+        Separator sep = (Separator) equipment;
+        results.put(name + ".pressure", sep.getPressure());
+        results.put(name + ".temperature", sep.getTemperature());
       }
 
       if (equipment instanceof Compressor) {
-	Compressor comp = (Compressor) equipment;
-	results.put(name + ".outletPressure", comp.getOutletPressure());
-	results.put(name + ".power", comp.getPower("kW"));
+        Compressor comp = (Compressor) equipment;
+        results.put(name + ".outletPressure", comp.getOutletPressure());
+        results.put(name + ".power", comp.getPower("kW"));
       }
     }
 
@@ -589,10 +589,10 @@ public class AutomaticScenarioGenerator implements Serializable {
     if (failCount > 0) {
       sb.append("Failed Scenarios:\n");
       for (ScenarioRunResult result : results) {
-	if (!result.isSuccessful()) {
-	  sb.append("  - ").append(result.getScenario().getName()).append(": ").append(result.getErrorMessage())
-	      .append("\n");
-	}
+        if (!result.isSuccessful()) {
+          sb.append("  - ").append(result.getScenario().getName()).append(": ").append(result.getErrorMessage())
+              .append("\n");
+        }
       }
     }
 

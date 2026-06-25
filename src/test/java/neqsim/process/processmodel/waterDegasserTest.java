@@ -10,7 +10,7 @@ public class waterDegasserTest {
   @Test
   public void runProcess() throws InterruptedException {
     neqsim.thermo.system.SystemSrkCPAstatoil fluid1 = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0,
-	10.00);
+        10.00);
     fluid1.addComponent("water", 0.129064569343353);
     fluid1.addComponent("nitrogen", 2.08503464752491e-003);
     fluid1.addComponent("CO2", 5.18541155388192e-002);
@@ -22,53 +22,53 @@ public class waterDegasserTest {
     fluid1.addComponent("i-pentane", 3.68079747291908e-003);
     fluid1.addComponent("n-pentane", 5.22448994708524e-003);
     fluid1.addTBPfraction("nC6", 6.17521448341365e-003, 86.1800003051758 / 1000,
-	86.1800003051758 / (1000 * 0.131586722637079));
+        86.1800003051758 / (1000 * 0.131586722637079));
     fluid1.addTBPfraction("C7", 1.04929815621011e-002, 94.8470001220703 / 1000,
-	94.8470001220703 / (1000 * 0.130402631747591));
+        94.8470001220703 / (1000 * 0.130402631747591));
     fluid1.addTBPfraction("C8", 0.010589123136316, 106.220001220703 / 1000,
-	106.220001220703 / (1000 * 0.141086913827126));
+        106.220001220703 / (1000 * 0.141086913827126));
     fluid1.addTBPfraction("C9", 6.46674774929045e-003, 120.457000732422 / 1000,
-	120.457000732422 / (1000 * 0.156630031108116));
+        120.457000732422 / (1000 * 0.156630031108116));
     fluid1.addTBPfraction("C10-C11", 6.80218048553199e-003, 140.369003295898 / 1000,
-	140.369003295898 / (1000 * 0.178710051949529));
+        140.369003295898 / (1000 * 0.178710051949529));
     fluid1.addTBPfraction("C12-C13", 4.33960157130810e-003, 167.561996459961 / 1000,
-	167.561996459961 / (1000 * 0.208334072812978));
+        167.561996459961 / (1000 * 0.208334072812978));
     fluid1.addTBPfraction("C14-C15", 3.40122075476944e-003, 197.501007080078 / 1000,
-	197.501007080078 / (1000 * 0.240670271622303));
+        197.501007080078 / (1000 * 0.240670271622303));
     fluid1.addTBPfraction("C16-C17", 2.36077988165126e-003, 229.033996582031 / 1000,
-	229.033996582031 / (1000 * 0.274302534479916));
+        229.033996582031 / (1000 * 0.274302534479916));
     fluid1.addTBPfraction("C18-C20", 2.59750535903308e-003, 262.010986328125 / 1000,
-	262.010986328125 / (1000 * 0.308134346902454));
+        262.010986328125 / (1000 * 0.308134346902454));
     fluid1.addTBPfraction("C21-C23", 1.69428615721243e-003, 303.558990478516 / 1000,
-	303.558990478516 / (1000 * 0.350224115520606));
+        303.558990478516 / (1000 * 0.350224115520606));
     fluid1.addTBPfraction("C24-C28", 1.80310576675310e-003, 355.920013427734 / 1000,
-	355.920013427734 / (1000 * 0.402198101307449));
+        355.920013427734 / (1000 * 0.402198101307449));
     fluid1.addTBPfraction("C29-C35", 1.38447523691741e-003 + 1.29512096948304e-003, 437.281005859375 / 1000,
-	437.281005859375 / (1000.0 * 0.481715346021770));
+        437.281005859375 / (1000.0 * 0.481715346021770));
     // fluid1.addTBPfraction("C36-C80",1.29512096948304e-003,608.036010742188/1000,608.036010742188/(1000*0.642772477456171));
     fluid1.setMixingRule(10);
     fluid1.setMultiPhaseCheck(true);
     fluid1.init(0);
 
     neqsim.process.equipment.stream.Stream inlet_stream_VA_01 = new neqsim.process.equipment.stream.Stream(
-	"INLET_STREAM_1ST_SEPARATOR", fluid1);
+        "INLET_STREAM_1ST_SEPARATOR", fluid1);
     inlet_stream_VA_01.setTemperature(79.36872863769531, "C");
     inlet_stream_VA_01.setPressure(66.97672112018574, "bara");
     inlet_stream_VA_01.setFlowRate(273050.4311185292, "kg/hr");
 
     neqsim.process.equipment.separator.ThreePhaseSeparator separator_VA_01 = new neqsim.process.equipment.separator.ThreePhaseSeparator(
-	"FIRST_SEPARATOR", inlet_stream_VA_01);
+        "FIRST_SEPARATOR", inlet_stream_VA_01);
 
     neqsim.process.equipment.heatexchanger.Heater TP_setter_hydrocyclone = new neqsim.process.equipment.heatexchanger.Heater(
-	"TP_SETTER_HYDROCYCLONE_AFTER_1ST_SEPARATOR", separator_VA_01.getWaterOutStream());
+        "TP_SETTER_HYDROCYCLONE_AFTER_1ST_SEPARATOR", separator_VA_01.getWaterOutStream());
     TP_setter_hydrocyclone.setOutPressure(30.047772073489377, "bara");
 
     neqsim.process.equipment.separator.ThreePhaseSeparator hydrocyclone_main = new neqsim.process.equipment.separator.ThreePhaseSeparator(
-	"HYDROCYCLONE_AFTER_THE_1ST_SEPARATOR", TP_setter_hydrocyclone.getOutletStream());
+        "HYDROCYCLONE_AFTER_THE_1ST_SEPARATOR", TP_setter_hydrocyclone.getOutletStream());
     // hydrocyclone_main.setEntrainment(0.0, "mole", "feed", "aqueous", "gas");
 
     neqsim.process.equipment.heatexchanger.Heater heater_TP_setter_main_stream = new neqsim.process.equipment.heatexchanger.Heater(
-	"TP_SETTER_FOR_THE_DEGASSER_MAIN_STREAM", hydrocyclone_main.getWaterOutStream());
+        "TP_SETTER_FOR_THE_DEGASSER_MAIN_STREAM", hydrocyclone_main.getWaterOutStream());
     heater_TP_setter_main_stream.setOutPressure(4.076956398010254, "bara");
     heater_TP_setter_main_stream.setOutTemperature(76.51406860351562, "C");
 
@@ -87,7 +87,7 @@ public class waterDegasserTest {
   @Test
   public void runProcess2() throws InterruptedException {
     neqsim.thermo.system.SystemSrkCPAstatoil fluid1 = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0,
-	10.00);
+        10.00);
     fluid1.getCharacterization().setPlusFractionModel("heavyOil");
     fluid1.addComponent("water", 0.129064569343353);
     fluid1.addComponent("nitrogen", 2.08503464752491e-003);
@@ -101,53 +101,53 @@ public class waterDegasserTest {
     fluid1.addComponent("n-pentane", 5.22448994708524e-003);
 
     fluid1.addTBPfraction("nC6", 6.17521448341365e-003, 86.1800003051758 / 1000,
-	86.1800003051758 / (1000 * 0.131586722637079));
+        86.1800003051758 / (1000 * 0.131586722637079));
     fluid1.addTBPfraction("C7", 1.04929815621011e-002, 94.8470001220703 / 1000,
-	94.8470001220703 / (1000 * 0.130402631747591));
+        94.8470001220703 / (1000 * 0.130402631747591));
     fluid1.addTBPfraction("C8", 0.010589123136316, 106.220001220703 / 1000,
-	106.220001220703 / (1000 * 0.141086913827126));
+        106.220001220703 / (1000 * 0.141086913827126));
     fluid1.addTBPfraction("C9", 6.46674774929045e-003, 120.457000732422 / 1000,
-	120.457000732422 / (1000 * 0.156630031108116));
+        120.457000732422 / (1000 * 0.156630031108116));
     fluid1.addTBPfraction("C10-C11", 6.80218048553199e-003, 140.369003295898 / 1000,
-	140.369003295898 / (1000 * 0.178710051949529));
+        140.369003295898 / (1000 * 0.178710051949529));
     fluid1.addTBPfraction("C12-C13", 4.33960157130810e-003, 167.561996459961 / 1000,
-	167.561996459961 / (1000 * 0.208334072812978));
+        167.561996459961 / (1000 * 0.208334072812978));
     fluid1.addTBPfraction("C14-C15", 3.40122075476944e-003, 197.501007080078 / 1000,
-	197.501007080078 / (1000 * 0.240670271622303));
+        197.501007080078 / (1000 * 0.240670271622303));
     fluid1.addTBPfraction("C16-C17", 2.36077988165126e-003, 229.033996582031 / 1000,
-	229.033996582031 / (1000 * 0.274302534479916));
+        229.033996582031 / (1000 * 0.274302534479916));
     fluid1.addTBPfraction("C18-C20", 2.59750535903308e-003, 262.010986328125 / 1000,
-	262.010986328125 / (1000 * 0.308134346902454));
+        262.010986328125 / (1000 * 0.308134346902454));
     fluid1.addTBPfraction("C21-C23", 1.69428615721243e-003, 303.558990478516 / 1000,
-	303.558990478516 / (1000 * 0.350224115520606));
+        303.558990478516 / (1000 * 0.350224115520606));
     fluid1.addTBPfraction("C24-C28", 1.80310576675310e-003, 355.920013427734 / 1000,
-	355.920013427734 / (1000 * 0.402198101307449));
+        355.920013427734 / (1000 * 0.402198101307449));
     fluid1.addTBPfraction("C29-C35", 1.38447523691741e-003, 437.281005859375 / 1000,
-	437.281005859375 / (1000.0 * 0.481715346021770));
+        437.281005859375 / (1000.0 * 0.481715346021770));
     fluid1.addTBPfraction("C36-C80", 1.29512096948304e-003, 608.036010742188 / 1000,
-	608.036010742188 / (1000 * 0.642772477456171));
+        608.036010742188 / (1000 * 0.642772477456171));
     fluid1.setMixingRule(10);
     fluid1.setMultiPhaseCheck(true);
     fluid1.init(0);
 
     neqsim.process.equipment.stream.Stream inlet_stream_VA_01 = new neqsim.process.equipment.stream.Stream(
-	"INLET_STREAM_1ST_SEPARATOR", fluid1);
+        "INLET_STREAM_1ST_SEPARATOR", fluid1);
     inlet_stream_VA_01.setTemperature(79.21922658197582, "C");
     inlet_stream_VA_01.setPressure(62.3388000793457, "bara");
     inlet_stream_VA_01.setFlowRate(450261.1588574318, "kg/hr");
     inlet_stream_VA_01.run();
 
     neqsim.process.equipment.separator.ThreePhaseSeparator separator_VA_01 = new neqsim.process.equipment.separator.ThreePhaseSeparator(
-	"FIRST_SEPARATOR", inlet_stream_VA_01);
+        "FIRST_SEPARATOR", inlet_stream_VA_01);
     separator_VA_01.run();
 
     neqsim.process.equipment.heatexchanger.Heater TP_setter_hydrocyclone = new neqsim.process.equipment.heatexchanger.Heater(
-	"TP_SETTER_HYDROCYCLONE_AFTER_1ST_SEPARATOR", separator_VA_01.getWaterOutStream());
+        "TP_SETTER_HYDROCYCLONE_AFTER_1ST_SEPARATOR", separator_VA_01.getWaterOutStream());
     TP_setter_hydrocyclone.setOutPressure(61.0700675688386, "bara");
     TP_setter_hydrocyclone.run();
 
     neqsim.process.equipment.separator.ThreePhaseSeparator hydrocyclone_main = (new neqsim.process.equipment.separator.ThreePhaseSeparator(
-	"HYDROCYCLONE_AFTER_THE_1ST_SEPARATOR", TP_setter_hydrocyclone.getOutletStream()));
+        "HYDROCYCLONE_AFTER_THE_1ST_SEPARATOR", TP_setter_hydrocyclone.getOutletStream()));
     hydrocyclone_main.setEntrainment(0.01, "mole", "feed", "aqueous", "gas");
     hydrocyclone_main.run();
 

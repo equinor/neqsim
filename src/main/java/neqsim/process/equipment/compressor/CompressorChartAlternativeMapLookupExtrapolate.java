@@ -34,15 +34,15 @@ public class CompressorChartAlternativeMapLookupExtrapolate extends CompressorCh
     ArrayList<Double> result = new ArrayList<>();
     for (int i = 0; i < closestSpeeds.size(); i++) {
       if (speed == closestSpeeds.get(i)) {
-	result.add(speed);
-	return result;
+        result.add(speed);
+        return result;
       }
       if (speed < closestSpeeds.get(i)) {
-	if (i > 0) {
-	  result.add(closestSpeeds.get(i - 1));
-	}
-	result.add(closestSpeeds.get(i));
-	return result;
+        if (i > 0) {
+          result.add(closestSpeeds.get(i - 1));
+        }
+        result.add(closestSpeeds.get(i));
+        return result;
       }
     }
 
@@ -83,7 +83,7 @@ public class CompressorChartAlternativeMapLookupExtrapolate extends CompressorCh
 
     if (interpolatedHeads.size() == 1) {
       return interpolatedHeads.get(0) * (speed / speeds.get(0)); // Scale head proportionally to
-								 // speed
+      // speed
     }
 
     double speed1 = speeds.get(0);
@@ -124,7 +124,7 @@ public class CompressorChartAlternativeMapLookupExtrapolate extends CompressorCh
       CompressorCurve curve = getCurveAtRefSpeed(refSpeed);
 
       if (curve.flow.length == 0 || curve.polytropicEfficiency.length == 0) {
-	throw new IllegalArgumentException("Invalid curve data for speed: " + refSpeed);
+        throw new IllegalArgumentException("Invalid curve data for speed: " + refSpeed);
       }
 
       PolynomialSplineFunction spline = interpolator.interpolate(curve.flow, curve.polytropicEfficiency);

@@ -108,9 +108,9 @@ public class Standard_ASTM_D3230 extends neqsim.standards.Standard {
       d4052.calculate();
       double crudeDensity = d4052.getValue("density");
       if (!Double.isNaN(crudeDensity) && crudeDensity > 0.0) {
-	saltPpmw = saltMassPerCrudeVolume / crudeDensity * 1.0e6;
+        saltPpmw = saltMassPerCrudeVolume / crudeDensity * 1.0e6;
       } else {
-	saltPpmw = Double.NaN;
+        saltPpmw = Double.NaN;
       }
     } catch (Exception ex) {
       logger.error("Crude density unavailable for ppmw basis: {}", ex.getMessage());
@@ -123,10 +123,10 @@ public class Standard_ASTM_D3230 extends neqsim.standards.Standard {
   public double getValue(String returnParameter, String returnUnit) {
     if ("saltContent".equalsIgnoreCase(returnParameter)) {
       if ("PTB".equalsIgnoreCase(returnUnit)) {
-	return saltPtb;
+        return saltPtb;
       } else if ("mg/kg".equalsIgnoreCase(returnUnit) || "ppmw".equalsIgnoreCase(returnUnit)
-	  || "ppm".equalsIgnoreCase(returnUnit)) {
-	return saltPpmw;
+          || "ppm".equalsIgnoreCase(returnUnit)) {
+        return saltPpmw;
       }
     }
     return getValue(returnParameter);
@@ -136,10 +136,10 @@ public class Standard_ASTM_D3230 extends neqsim.standards.Standard {
   @Override
   public double getValue(String returnParameter) {
     if ("saltContentPTB".equalsIgnoreCase(returnParameter) || "PTB".equalsIgnoreCase(returnParameter)
-	|| "saltContent".equalsIgnoreCase(returnParameter)) {
+        || "saltContent".equalsIgnoreCase(returnParameter)) {
       return saltPtb;
     } else if ("saltContentPpmw".equalsIgnoreCase(returnParameter) || "ppmw".equalsIgnoreCase(returnParameter)
-	|| "mg/kg".equalsIgnoreCase(returnParameter)) {
+        || "mg/kg".equalsIgnoreCase(returnParameter)) {
       return saltPpmw;
     } else {
       logger.error("returnParameter not supported: {}", returnParameter);
@@ -151,7 +151,7 @@ public class Standard_ASTM_D3230 extends neqsim.standards.Standard {
   @Override
   public String getUnit(String returnParameter) {
     if ("saltContentPpmw".equalsIgnoreCase(returnParameter) || "ppmw".equalsIgnoreCase(returnParameter)
-	|| "mg/kg".equalsIgnoreCase(returnParameter)) {
+        || "mg/kg".equalsIgnoreCase(returnParameter)) {
       return "mg/kg";
     }
     return "PTB";

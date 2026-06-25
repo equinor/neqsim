@@ -82,7 +82,7 @@ public class SafetySystemPerformanceAnalyzer {
   public SafetySystemPerformanceAnalyzer addMeasurementDevices(ProcessSystem process) {
     if (process != null) {
       for (MeasurementDeviceInterface measurementDevice : process.getMeasurementDevices()) {
-	addMeasurementDevice(measurementDevice);
+        addMeasurementDevice(measurementDevice);
       }
     }
     return this;
@@ -124,15 +124,15 @@ public class SafetySystemPerformanceAnalyzer {
    */
   public SafetySystemPerformanceReport analyze() {
     SafetySystemPerformanceReport report = new SafetySystemPerformanceReport(register.getRegisterId())
-	.setName(register.getName());
+        .setName(register.getName());
     for (SafetyBarrier barrier : register.getBarriers()) {
       List<SafetySystemDemand> matchingDemandCases = getMatchingDemandCases(barrier);
       if (matchingDemandCases.isEmpty()) {
-	report.addAssessment(assessBarrier(barrier, null));
+        report.addAssessment(assessBarrier(barrier, null));
       } else {
-	for (SafetySystemDemand demandCase : matchingDemandCases) {
-	  report.addAssessment(assessBarrier(barrier, demandCase));
-	}
+        for (SafetySystemDemand demandCase : matchingDemandCases) {
+          report.addAssessment(assessBarrier(barrier, demandCase));
+        }
       }
     }
     return report;
@@ -148,7 +148,7 @@ public class SafetySystemPerformanceAnalyzer {
     List<SafetySystemDemand> matches = new ArrayList<SafetySystemDemand>();
     for (SafetySystemDemand demandCase : demandCases) {
       if (demandCase.matches(barrier)) {
-	matches.add(demandCase);
+        matches.add(demandCase);
       }
     }
     return matches;
@@ -164,7 +164,7 @@ public class SafetySystemPerformanceAnalyzer {
   private BarrierAssessment assessBarrier(SafetyBarrier barrier, SafetySystemDemand demandCase) {
     SafetySystemCategory category = determineCategory(barrier, demandCase);
     BarrierAssessment assessment = new BarrierAssessment(barrier.getId()).setBarrierName(barrier.getName())
-	.setCategory(category);
+        .setCategory(category);
     if (demandCase != null) {
       assessment.setDemandId(demandCase.getDemandId());
     }
@@ -191,12 +191,12 @@ public class SafetySystemPerformanceAnalyzer {
   private void evaluateBarrierCredit(SafetyBarrier barrier, BarrierAssessment assessment) {
     if (barrier.getStatus() != BarrierStatus.AVAILABLE) {
       assessment.addFinding(FindingSeverity.FAIL,
-	  "Barrier is not AVAILABLE and should not be credited without explicit impairment review.",
-	  "Restore the barrier, document compensating measures, or remove credit from LOPA/QRA.");
+          "Barrier is not AVAILABLE and should not be credited without explicit impairment review.",
+          "Restore the barrier, document compensating measures, or remove credit from LOPA/QRA.");
     }
     if (!barrier.hasTraceableEvidence()) {
       assessment.addFinding(FindingSeverity.WARNING, "Barrier has no traceable document evidence.",
-	  "Link STID, P&ID, C&E, SRS, inspection, or vendor evidence before claiming credit.");
+          "Link STID, P&ID, C&E, SRS, inspection, or vendor evidence before claiming credit.");
     }
   }
 
@@ -212,7 +212,7 @@ public class SafetySystemPerformanceAnalyzer {
     PerformanceStandard standard = barrier.getPerformanceStandard();
     if (standard == null) {
       assessment.addFinding(FindingSeverity.WARNING, "No performance standard is linked to the barrier.",
-	  "Create or link a performance standard with PFD, availability, response time, and acceptance criteria.");
+          "Create or link a performance standard with PFD, availability, response time, and acceptance criteria.");
       return;
     }
 
@@ -234,7 +234,7 @@ public class SafetySystemPerformanceAnalyzer {
   private void checkPfdRequirement(SafetyBarrier barrier, PerformanceStandard standard, SafetySystemDemand demandCase,
       BarrierAssessment assessment) {
     double targetPfd = selectFirstFinite(demandCase == null ? Double.NaN : demandCase.getRequiredPfd(),
-	standard.getTargetPfd());
+        standard.getTargetPfd());
     double actualPfd = selectFirstFinite(demandCase == null ? Double.NaN : demandCase.getActualPfd(), barrier.getPfd());
     if (Double.isNaN(targetPfd)) {
       return;
@@ -243,10 +243,10 @@ public class SafetySystemPerformanceAnalyzer {
     assessment.addMetric("actualPfd", actualPfd);
     if (Double.isNaN(actualPfd)) {
       assessment.addFinding(FindingSeverity.WARNING, "Target PFD is defined but actual barrier PFD is missing.",
-	  "Add SIL verification, vendor reliability data, or documented PFD to the barrier.");
+          "Add SIL verification, vendor reliability data, or documented PFD to the barrier.");
     } else if (actualPfd > targetPfd) {
       assessment.addFinding(FindingSeverity.FAIL, "Actual PFD exceeds the target PFD.",
-	  "Improve architecture, proof testing, diagnostics, or final-element reliability.");
+          "Improve architecture, proof testing, diagnostics, or final-element reliability.");
     }
   }
 
@@ -260,7 +260,7 @@ public class SafetySystemPerformanceAnalyzer {
   private void checkAvailabilityRequirement(PerformanceStandard standard, SafetySystemDemand demandCase,
       BarrierAssessment assessment) {
     double requiredAvailability = selectFirstFinite(
-	demandCase == null ? Double.NaN : demandCase.getRequiredAvailability(), standard.getRequiredAvailability());
+        demandCase == null ? Double.NaN : demandCase.getRequiredAvailability(), standard.getRequiredAvailability());
     double actualAvailability = demandCase == null ? Double.NaN : demandCase.getActualAvailability();
     if (Double.isNaN(requiredAvailability)) {
       return;
@@ -269,11 +269,11 @@ public class SafetySystemPerformanceAnalyzer {
     assessment.addMetric("actualAvailability", actualAvailability);
     if (Double.isNaN(actualAvailability)) {
       assessment.addFinding(FindingSeverity.WARNING,
-	  "Required availability is defined but actual availability is missing.",
-	  "Add uptime, impairment, bypass, proof-test, or inspection evidence for this barrier.");
+          "Required availability is defined but actual availability is missing.",
+          "Add uptime, impairment, bypass, proof-test, or inspection evidence for this barrier.");
     } else if (actualAvailability < requiredAvailability) {
       assessment.addFinding(FindingSeverity.FAIL, "Actual availability is below the required availability.",
-	  "Reduce impairment duration, improve maintenance, or add redundancy.");
+          "Reduce impairment duration, improve maintenance, or add redundancy.");
     }
   }
 
@@ -287,8 +287,8 @@ public class SafetySystemPerformanceAnalyzer {
   private void checkResponseTimeRequirement(PerformanceStandard standard, SafetySystemDemand demandCase,
       BarrierAssessment assessment) {
     double requiredResponse = selectFirstFinite(
-	demandCase == null ? Double.NaN : demandCase.getRequiredResponseTimeSeconds(),
-	standard.getResponseTimeSeconds());
+        demandCase == null ? Double.NaN : demandCase.getRequiredResponseTimeSeconds(),
+        standard.getResponseTimeSeconds());
     double actualResponse = demandCase == null ? Double.NaN : demandCase.getActualResponseTimeSeconds();
     if (Double.isNaN(requiredResponse)) {
       return;
@@ -297,11 +297,11 @@ public class SafetySystemPerformanceAnalyzer {
     assessment.addMetric("actualResponseTimeSeconds", actualResponse);
     if (Double.isNaN(actualResponse)) {
       assessment.addFinding(FindingSeverity.WARNING,
-	  "Required response time is defined but actual response time is missing.",
-	  "Add detector, logic, valve stroke, deluge valve, or PFP endurance response evidence.");
+          "Required response time is defined but actual response time is missing.",
+          "Add detector, logic, valve stroke, deluge valve, or PFP endurance response evidence.");
     } else if (actualResponse > requiredResponse) {
       assessment.addFinding(FindingSeverity.FAIL, "Actual response time exceeds the required response time.",
-	  "Reduce detection, logic, valve, or deluge activation time for this function.");
+          "Reduce detection, logic, valve, or deluge activation time for this function.");
     }
   }
 
@@ -322,11 +322,11 @@ public class SafetySystemPerformanceAnalyzer {
     assessment.addMetric("actualEffectiveness", actualEffectiveness);
     if (Double.isNaN(actualEffectiveness)) {
       assessment.addFinding(FindingSeverity.WARNING,
-	  "Required effectiveness is defined but actual effectiveness is missing.",
-	  "Document barrier effectiveness from test records, standards, simulations, or vendor data.");
+          "Required effectiveness is defined but actual effectiveness is missing.",
+          "Document barrier effectiveness from test records, standards, simulations, or vendor data.");
     } else if (actualEffectiveness < demandCase.getRequiredEffectiveness()) {
       assessment.addFinding(FindingSeverity.FAIL, "Actual effectiveness is below the required effectiveness.",
-	  "Improve coverage, capacity, reliability, or credited effectiveness for this barrier.");
+          "Improve coverage, capacity, reliability, or credited effectiveness for this barrier.");
     }
   }
 
@@ -350,8 +350,8 @@ public class SafetySystemPerformanceAnalyzer {
       double margin = demandCase.getCapacityValue() - demandCase.getDemandValue();
       assessment.addMetric("capacityMargin", margin);
       if (margin < 0.0) {
-	assessment.addFinding(FindingSeverity.FAIL, "Calculated demand exceeds documented barrier capacity.",
-	    remediationForCapacityFailure(category));
+        assessment.addFinding(FindingSeverity.FAIL, "Calculated demand exceeds documented barrier capacity.",
+            remediationForCapacityFailure(category));
       }
     }
   }
@@ -372,23 +372,23 @@ public class SafetySystemPerformanceAnalyzer {
       assessment.addInstrumentTag(instrumentIdentifier(device));
       double responseTime = getInstrumentResponseTime(device);
       if (!Double.isNaN(responseTime)) {
-	maxResponseTime = Double.isNaN(maxResponseTime) ? responseTime : Math.max(maxResponseTime, responseTime);
+        maxResponseTime = Double.isNaN(maxResponseTime) ? responseTime : Math.max(maxResponseTime, responseTime);
       }
     }
     assessment.addMetric("relatedInstrumentCount", devices.size());
     assessment.addMetric("maxInstrumentResponseTimeSeconds", maxResponseTime);
     if (category == SafetySystemCategory.FIRE_GAS_DETECTION && devices.isEmpty()) {
       assessment.addFinding(FindingSeverity.WARNING, "No linked fire or gas detector measurement device was found.",
-	  "Link FireDetector or GasDetector objects by instrument tag, detector name, or barrier equipment tags.");
+          "Link FireDetector or GasDetector objects by instrument tag, detector name, or barrier equipment tags.");
     }
 
     if (demandCase != null && Double.isNaN(demandCase.getActualResponseTimeSeconds())
-	&& !Double.isNaN(maxResponseTime)) {
+        && !Double.isNaN(maxResponseTime)) {
       double requiredResponse = demandCase.getRequiredResponseTimeSeconds();
       if (!Double.isNaN(requiredResponse) && maxResponseTime > requiredResponse) {
-	assessment.addFinding(FindingSeverity.FAIL,
-	    "Linked detector response time exceeds the demand-case requirement.",
-	    "Review detector selection, setpoints, voting delay, and cause-and-effect response time.");
+        assessment.addFinding(FindingSeverity.FAIL,
+            "Linked detector response time exceeds the demand-case requirement.",
+            "Review detector selection, setpoints, voting delay, and cause-and-effect response time.");
       }
     }
 
@@ -400,7 +400,7 @@ public class SafetySystemPerformanceAnalyzer {
     assessment.addMetric("relatedSafetyInstrumentedFunctionCount", sifs.size());
 
     List<neqsim.process.safety.risk.sis.SafetyInstrumentedFunction> quantitativeSifs = findRelatedQuantitativeSafetyInstrumentedFunctions(
-	barrier);
+        barrier);
     for (neqsim.process.safety.risk.sis.SafetyInstrumentedFunction sif : quantitativeSifs) {
       assessment.addSafetyInstrumentedFunction(quantitativeSifIdentifier(sif));
       evaluateQuantitativeSafetyInstrumentedFunction(sif, assessment);
@@ -422,8 +422,8 @@ public class SafetySystemPerformanceAnalyzer {
     }
     if (category == SafetySystemCategory.FIREWATER_DELUGE || category == SafetySystemCategory.PASSIVE_FIRE_PROTECTION) {
       assessment.addFinding(FindingSeverity.WARNING,
-	  "No scenario demand/capacity case is linked to this fire-protection barrier.",
-	  "Add NeqSim fire/explosion load or document-derived capacity data before checking margin.");
+          "No scenario demand/capacity case is linked to this fire-protection barrier.",
+          "Add NeqSim fire/explosion load or document-derived capacity data before checking margin.");
     }
   }
 
@@ -440,13 +440,13 @@ public class SafetySystemPerformanceAnalyzer {
     int tripped = 0;
     for (Detector detector : sif.getDetectors()) {
       if (detector.isBypassed()) {
-	bypassed++;
+        bypassed++;
       }
       if (detector.isFaulty()) {
-	faulty++;
+        faulty++;
       }
       if (detector.isTripped()) {
-	tripped++;
+        tripped++;
       }
     }
     assessment.addMetric(sif.getName() + ".votingLogic", sif.getVotingLogic().getNotation());
@@ -456,21 +456,21 @@ public class SafetySystemPerformanceAnalyzer {
     assessment.addMetric(sif.getName() + ".trippedDetectorCount", tripped);
     if (sif.isOverridden()) {
       assessment.addFinding(FindingSeverity.FAIL, "Safety instrumented function is overridden.",
-	  "Remove override or document approved compensating measures before claiming barrier credit.");
+          "Remove override or document approved compensating measures before claiming barrier credit.");
     }
     if (detectorCount != sif.getVotingLogic().getTotalSensors()) {
       assessment.addFinding(FindingSeverity.WARNING,
-	  "SIF detector count does not match configured voting logic total sensor count.",
-	  "Align detector list with the cause-and-effect or SIS voting architecture.");
+          "SIF detector count does not match configured voting logic total sensor count.",
+          "Align detector list with the cause-and-effect or SIS voting architecture.");
     }
     int healthyChannels = detectorCount - bypassed - faulty;
     if (healthyChannels < sif.getVotingLogic().getRequiredTrips()) {
       assessment.addFinding(FindingSeverity.FAIL,
-	  "Healthy detector channels are insufficient for the configured voting logic.",
-	  "Restore bypassed or faulty detectors, or place the system in a controlled impaired state.");
+          "Healthy detector channels are insufficient for the configured voting logic.",
+          "Restore bypassed or faulty detectors, or place the system in a controlled impaired state.");
     } else if (bypassed > 0 || faulty > 0) {
       assessment.addFinding(FindingSeverity.WARNING, "SIF has bypassed or faulty detector channels.",
-	  "Review impairment controls and confirm remaining voting architecture is acceptable.");
+          "Review impairment controls and confirm remaining voting architecture is acceptable.");
     }
   }
 
@@ -495,12 +495,12 @@ public class SafetySystemPerformanceAnalyzer {
     assessment.addMetric(prefix + ".protectedEquipment", sif.getProtectedEquipment());
     if (!verification.isSilAchieved() || verification.hasErrors()) {
       assessment.addFinding(FindingSeverity.FAIL,
-	  "Quantitative SIL/PFD verification does not meet the claimed safety integrity.",
-	  "Review component reliability, architecture, proof-test interval, and final-element data before claiming SIF credit.");
+          "Quantitative SIL/PFD verification does not meet the claimed safety integrity.",
+          "Review component reliability, architecture, proof-test interval, and final-element data before claiming SIF credit.");
     }
     for (SILVerificationResult.VerificationIssue issue : verification.getWarnings()) {
       assessment.addFinding(FindingSeverity.WARNING, "Quantitative SIF verification warning: " + issue.getDescription(),
-	  issue.getRecommendation());
+          issue.getRecommendation());
     }
   }
 
@@ -552,16 +552,16 @@ public class SafetySystemPerformanceAnalyzer {
   private SafetySystemCategory inferCategoryFromSafetyCriticalElement(SafetyBarrier barrier) {
     for (SafetyCriticalElement element : register.getSafetyCriticalElements()) {
       if (element.getBarrier(barrier.getId()) == null) {
-	continue;
+        continue;
       }
       if (element.getType() == SafetyCriticalElement.ElementType.INSTRUMENTED_FUNCTION) {
-	return SafetySystemCategory.ESD_BLOWDOWN;
+        return SafetySystemCategory.ESD_BLOWDOWN;
       }
       if (element.getType() == SafetyCriticalElement.ElementType.FIRE_PROTECTION) {
-	return SafetySystemCategory.FIREWATER_DELUGE;
+        return SafetySystemCategory.FIREWATER_DELUGE;
       }
       if (element.getType() == SafetyCriticalElement.ElementType.STRUCTURAL) {
-	return SafetySystemCategory.STRUCTURAL_FIREWALL;
+        return SafetySystemCategory.STRUCTURAL_FIREWALL;
       }
     }
     return SafetySystemCategory.UNKNOWN;
@@ -583,7 +583,7 @@ public class SafetySystemPerformanceAnalyzer {
       builder.append(barrier.getPerformanceStandard().getTitle()).append(' ');
       builder.append(barrier.getPerformanceStandard().getSafetyFunction()).append(' ');
       for (String criterion : barrier.getPerformanceStandard().getAcceptanceCriteria()) {
-	builder.append(criterion).append(' ');
+        builder.append(criterion).append(' ');
       }
     }
     return builder.toString().toLowerCase(Locale.ROOT);
@@ -599,7 +599,7 @@ public class SafetySystemPerformanceAnalyzer {
   private boolean containsAny(String text, String... keywords) {
     for (String keyword : keywords) {
       if (text.contains(keyword.toLowerCase(Locale.ROOT))) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -617,10 +617,10 @@ public class SafetySystemPerformanceAnalyzer {
     List<MeasurementDeviceInterface> related = new ArrayList<MeasurementDeviceInterface>();
     for (MeasurementDeviceInterface device : measurementDevices) {
       if (!isRelevantMeasurementDevice(device, category)) {
-	continue;
+        continue;
       }
       if (matchesBarrierTags(device, barrier)) {
-	related.add(device);
+        related.add(device);
       }
     }
     return related;
@@ -650,8 +650,8 @@ public class SafetySystemPerformanceAnalyzer {
   private boolean matchesBarrierTags(MeasurementDeviceInterface device, SafetyBarrier barrier) {
     for (String tag : barrier.getLinkedEquipmentTags()) {
       if (matchesText(device.getName(), tag) || matchesText(device.getTag(), tag)
-	  || matchesText(getDeviceLocation(device), tag)) {
-	return true;
+          || matchesText(getDeviceLocation(device), tag)) {
+        return true;
       }
     }
     return false;
@@ -709,7 +709,7 @@ public class SafetySystemPerformanceAnalyzer {
     List<SafetyInstrumentedFunction> related = new ArrayList<SafetyInstrumentedFunction>();
     for (SafetyInstrumentedFunction sif : safetyInstrumentedFunctions) {
       if (matchesSafetyInstrumentedFunction(sif, barrier)) {
-	related.add(sif);
+        related.add(sif);
       }
     }
     return related;
@@ -726,7 +726,7 @@ public class SafetySystemPerformanceAnalyzer {
     List<neqsim.process.safety.risk.sis.SafetyInstrumentedFunction> related = new ArrayList<neqsim.process.safety.risk.sis.SafetyInstrumentedFunction>();
     for (neqsim.process.safety.risk.sis.SafetyInstrumentedFunction sif : quantitativeSafetyInstrumentedFunctions) {
       if (matchesQuantitativeSafetyInstrumentedFunction(sif, barrier)) {
-	related.add(sif);
+        related.add(sif);
       }
     }
     return related;
@@ -745,9 +745,9 @@ public class SafetySystemPerformanceAnalyzer {
     }
     for (Detector detector : sif.getDetectors()) {
       for (String tag : barrier.getLinkedEquipmentTags()) {
-	if (matchesText(detector.getName(), tag)) {
-	  return true;
-	}
+        if (matchesText(detector.getName(), tag)) {
+          return true;
+        }
       }
     }
     return false;
@@ -763,15 +763,15 @@ public class SafetySystemPerformanceAnalyzer {
   private boolean matchesQuantitativeSafetyInstrumentedFunction(
       neqsim.process.safety.risk.sis.SafetyInstrumentedFunction sif, SafetyBarrier barrier) {
     if (matchesText(sif.getId(), barrier.getId()) || matchesText(sif.getName(), barrier.getId())
-	|| matchesText(sif.getName(), barrier.getName())
-	|| matchesText(sif.getDescription(), barrier.getSafetyFunction())) {
+        || matchesText(sif.getName(), barrier.getName())
+        || matchesText(sif.getDescription(), barrier.getSafetyFunction())) {
       return true;
     }
     for (String equipment : sif.getProtectedEquipment()) {
       for (String tag : barrier.getLinkedEquipmentTags()) {
-	if (matchesText(equipment, tag)) {
-	  return true;
-	}
+        if (matchesText(equipment, tag)) {
+          return true;
+        }
       }
     }
     return false;

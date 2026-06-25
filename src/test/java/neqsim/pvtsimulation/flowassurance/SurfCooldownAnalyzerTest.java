@@ -49,7 +49,7 @@ public class SurfCooldownAnalyzerTest extends neqsim.NeqSimTest {
     assertTrue(analyzer.getFluidDensity() > 0.0, "fluid density should be extracted");
     assertTrue(analyzer.getFluidSpecificHeat() > 0.0, "specific heat should be extracted");
     assertTrue(analyzer.getHydrateEquilibriumTemperatureK() > 273.0,
-	"hydrate equilibrium temperature should be computed");
+        "hydrate equilibrium temperature should be computed");
   }
 
   @Test
@@ -65,7 +65,7 @@ public class SurfCooldownAnalyzerTest extends neqsim.NeqSimTest {
     thin.calculate();
 
     assertTrue(thin.getNoTouchTimeHours() < thick.getNoTouchTimeHours(),
-	"higher U-value (poorer insulation) must give a shorter no-touch time");
+        "higher U-value (poorer insulation) must give a shorter no-touch time");
   }
 
   @Test
@@ -78,7 +78,7 @@ public class SurfCooldownAnalyzerTest extends neqsim.NeqSimTest {
     analyzer.calculate();
 
     assertEquals(SurfCooldownAnalyzer.VERDICT_CRITICAL, analyzer.getVerdict(),
-	"an unreachable required no-touch time must yield CRITICAL");
+        "an unreachable required no-touch time must yield CRITICAL");
   }
 
   @Test
@@ -95,6 +95,6 @@ public class SurfCooldownAnalyzerTest extends neqsim.NeqSimTest {
     analyzer.calculate();
 
     assertEquals(SurfCooldownAnalyzer.VERDICT_NO_HYDRATE_RISK, analyzer.getVerdict(),
-	"a dry gas without free water should report no hydrate risk");
+        "a dry gas without free water should report no hydrate risk");
   }
 }

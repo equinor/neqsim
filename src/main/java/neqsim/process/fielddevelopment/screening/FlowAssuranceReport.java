@@ -167,7 +167,7 @@ public final class FlowAssuranceReport implements Serializable {
   @Override
   public String toString() {
     return String.format("FlowAssuranceReport[overall=%s, hydrate=%s(%.1f°C), wax=%s(%.1f°C)]", getOverallResult(),
-	hydrateResult, hydrateMarginC, waxResult, waxMarginC);
+        hydrateResult, hydrateMarginC, waxResult, waxMarginC);
   }
 
   /**

@@ -229,7 +229,7 @@ public class LNGBOGHandlingNetwork implements Serializable {
     @Override
     public String toString() {
       return String.format("BOG=%.0f kg/hr [Fuel=%.0f, Reliq=%.0f, GCU=%.0f, Vent=%.0f], NetLoss=%.0f kg/hr",
-	  bogGenerated, bogToFuel, bogReliquefied, bogToGCU, bogVented, netCargoLoss);
+          bogGenerated, bogToFuel, bogReliquefied, bogToGCU, bogVented, netCargoLoss);
     }
   }
 

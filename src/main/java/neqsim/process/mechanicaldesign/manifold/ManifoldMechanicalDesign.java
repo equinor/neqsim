@@ -98,17 +98,17 @@ public class ManifoldMechanicalDesign extends MechanicalDesign {
     // Get flow properties from mixed stream if available
     if (manifold.getMixedStream() != null && manifold.getMixedStream().getFluid() != null) {
       try {
-	double density = manifold.getMixedStream().getFluid().getDensity("kg/m3");
-	double massFlow = manifold.getMixedStream().getFluid().getFlowRate("kg/sec");
-	double liquidFrac = manifold.getMixedStream().getFluid().getVolumeFraction(0);
+        double density = manifold.getMixedStream().getFluid().getDensity("kg/m3");
+        double massFlow = manifold.getMixedStream().getFluid().getFlowRate("kg/sec");
+        double liquidFrac = manifold.getMixedStream().getFluid().getVolumeFraction(0);
 
-	calculator.setMixtureDensity(density > 0 ? density : 100.0);
-	calculator.setMassFlowRate(massFlow > 0 ? massFlow : 10.0);
-	calculator.setLiquidFraction(liquidFrac);
+        calculator.setMixtureDensity(density > 0 ? density : 100.0);
+        calculator.setMassFlowRate(massFlow > 0 ? massFlow : 10.0);
+        calculator.setLiquidFraction(liquidFrac);
       } catch (Exception e) {
-	// Use defaults
-	calculator.setMixtureDensity(100.0);
-	calculator.setMassFlowRate(10.0);
+        // Use defaults
+        calculator.setMixtureDensity(100.0);
+        calculator.setMassFlowRate(10.0);
       }
     }
 

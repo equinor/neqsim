@@ -61,7 +61,7 @@ public class MaterialReviewItem implements Serializable {
     item.setTag(firstString(source, "tag", "lineNumber", "equipmentTag", "name"));
     item.setEquipmentType(firstString(source, "equipmentType", "type", "assetType"));
     item.setExistingMaterial(
-	firstString(source, "existingMaterial", "material", "materialGrade", "materialClass", "mds"));
+        firstString(source, "existingMaterial", "material", "materialGrade", "materialClass", "mds"));
     Object service = firstObject(source, "service", "serviceEnvelope", "environment");
     if (service instanceof Map<?, ?>) {
       item.setServiceEnvelope(MaterialServiceEnvelope.fromMap((Map<String, Object>) service));
@@ -69,16 +69,16 @@ public class MaterialReviewItem implements Serializable {
     Object references = firstObject(source, "sourceReferences", "sourceRefs", "evidenceRefs");
     if (references instanceof List<?>) {
       for (Object reference : (List<?>) references) {
-	if (reference != null) {
-	  item.addSourceReference(String.valueOf(reference));
-	}
+        if (reference != null) {
+          item.addSourceReference(String.valueOf(reference));
+        }
       }
     } else if (references != null) {
       item.addSourceReference(String.valueOf(references));
     }
     for (Map.Entry<String, Object> entry : source.entrySet()) {
       if (!isCoreKey(entry.getKey())) {
-	item.putMetadata(entry.getKey(), entry.getValue());
+        item.putMetadata(entry.getKey(), entry.getValue());
       }
     }
     return item;
@@ -275,7 +275,7 @@ public class MaterialReviewItem implements Serializable {
   private static Object firstObject(Map<String, Object> source, String... keys) {
     for (String key : keys) {
       if (source.containsKey(key) && source.get(key) != null) {
-	return source.get(key);
+        return source.get(key);
       }
     }
     return null;
@@ -289,10 +289,10 @@ public class MaterialReviewItem implements Serializable {
    */
   private static boolean isCoreKey(String key) {
     return "tag".equals(key) || "lineNumber".equals(key) || "equipmentTag".equals(key) || "name".equals(key)
-	|| "equipmentType".equals(key) || "type".equals(key) || "assetType".equals(key)
-	|| "existingMaterial".equals(key) || "material".equals(key) || "materialGrade".equals(key)
-	|| "materialClass".equals(key) || "mds".equals(key) || "service".equals(key) || "serviceEnvelope".equals(key)
-	|| "environment".equals(key) || "sourceReferences".equals(key) || "sourceRefs".equals(key)
-	|| "evidenceRefs".equals(key);
+        || "equipmentType".equals(key) || "type".equals(key) || "assetType".equals(key)
+        || "existingMaterial".equals(key) || "material".equals(key) || "materialGrade".equals(key)
+        || "materialClass".equals(key) || "mds".equals(key) || "service".equals(key) || "serviceEnvelope".equals(key)
+        || "environment".equals(key) || "sourceReferences".equals(key) || "sourceRefs".equals(key)
+        || "evidenceRefs".equals(key);
   }
 }

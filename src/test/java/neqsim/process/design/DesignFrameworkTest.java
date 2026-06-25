@@ -55,7 +55,7 @@ class DesignFrameworkTest {
   void testDesignSpecificationBuilder() {
     // Test creating a design specification
     DesignSpecification spec = DesignSpecification.forSeparator("Test-Sep").setKFactor(0.08).setDiameter(2.5, "m")
-	.setLength(7.0, "m").setMaterial("316L").setStandard("ASME-VIII").setSafetyFactor(1.25);
+        .setLength(7.0, "m").setMaterial("316L").setStandard("ASME-VIII").setSafetyFactor(1.25);
 
     assertEquals("Test-Sep", spec.getEquipmentName());
     assertEquals("Separator", spec.getEquipmentType());
@@ -78,7 +78,7 @@ class DesignFrameworkTest {
     Separator sep = new Separator("Spec-Test-Sep", feed);
 
     DesignSpecification spec = DesignSpecification.forSeparator("Spec-Test-Sep").setKFactor(0.10).setDiameter(3.0, "m")
-	.setLength(9.0, "m");
+        .setLength(9.0, "m");
 
     spec.applyTo(sep);
 
@@ -130,7 +130,7 @@ class DesignFrameworkTest {
 
     // Check compressor constraints
     List<EquipmentConstraintRegistry.ConstraintTemplate> compConstraints = registry
-	.getConstraintTemplates("Compressor");
+        .getConstraintTemplates("Compressor");
     assertFalse(compConstraints.isEmpty());
     assertTrue(compConstraints.stream().anyMatch(c -> c.getType().equals("surgeLine")));
 
@@ -143,9 +143,9 @@ class DesignFrameworkTest {
   @Test
   void testProcessBasisBuilder() {
     ProcessBasis basis = ProcessBasis.builder().setFeedFluid(testFluid).setFeedFlowRate(50000.0, "kg/hr")
-	.setFeedPressure(80.0, "bara").setFeedTemperature(40.0, "C").addStagePressure(1, 50.0, "bara")
-	.addStagePressure(2, 20.0, "bara").addStagePressure(3, 5.0, "bara").setCompanyStandard("Equinor", "TR2000")
-	.setSafetyFactor(1.15).setAmbientTemperature(15.0, "C").build();
+        .setFeedPressure(80.0, "bara").setFeedTemperature(40.0, "C").addStagePressure(1, 50.0, "bara")
+        .addStagePressure(2, 20.0, "bara").addStagePressure(3, 5.0, "bara").setCompanyStandard("Equinor", "TR2000")
+        .setSafetyFactor(1.15).setAmbientTemperature(15.0, "C").build();
 
     assertEquals(50000.0, basis.getFeedFlowRate(), 0.1);
     assertEquals(80.0, basis.getFeedPressure(), 0.001);
@@ -215,7 +215,7 @@ class DesignFrameworkTest {
 
     // Test the workflow
     DesignOptimizer optimizer = DesignOptimizer.forProcess(process).autoSizeEquipment(1.2).applyDefaultConstraints()
-	.setObjective(DesignOptimizer.ObjectiveType.MAXIMIZE_PRODUCTION);
+        .setObjective(DesignOptimizer.ObjectiveType.MAXIMIZE_PRODUCTION);
 
     // Just run validation (full optimization would require more setup)
     DesignResult result = optimizer.validate();
@@ -312,7 +312,7 @@ class DesignFrameworkTest {
     feed.run();
 
     neqsim.process.equipment.pipeline.PipeBeggsAndBrills pipeline = new neqsim.process.equipment.pipeline.PipeBeggsAndBrills(
-	"AutoSize-Pipeline", feed);
+        "AutoSize-Pipeline", feed);
     pipeline.setLength(10000.0); // 10 km
     pipeline.setElevation(0.0);
     pipeline.setDiameter(0.2); // Initial diameter 200mm
@@ -354,8 +354,8 @@ class DesignFrameworkTest {
 
     // Create process basis
     ProcessBasis basis = ProcessBasis.builder().setFeedFluid(oilGasFluid).setFeedFlowRate(50000.0, "kg/hr")
-	.setFeedPressure(85.0, "bara").setFeedTemperature(50.0, "C").addStagePressure(1, 80.0, "bara")
-	.addStagePressure(2, 20.0, "bara").addStagePressure(3, 2.0, "bara").build();
+        .setFeedPressure(85.0, "bara").setFeedTemperature(50.0, "C").addStagePressure(1, 80.0, "bara")
+        .addStagePressure(2, 20.0, "bara").addStagePressure(3, 2.0, "bara").build();
 
     // Create template
     neqsim.process.design.template.ThreeStageSeparationTemplate template = new neqsim.process.design.template.ThreeStageSeparationTemplate();
@@ -405,8 +405,8 @@ class DesignFrameworkTest {
 
     // Create process basis
     ProcessBasis basis = ProcessBasis.builder().setFeedFluid(oilGasFluid).setFeedFlowRate(30000.0, "kg/hr")
-	.setFeedPressure(85.0, "bara").setFeedTemperature(50.0, "C").addStagePressure(1, 80.0, "bara")
-	.addStagePressure(2, 20.0, "bara").addStagePressure(3, 2.0, "bara").build();
+        .setFeedPressure(85.0, "bara").setFeedTemperature(50.0, "C").addStagePressure(1, 80.0, "bara")
+        .addStagePressure(2, 20.0, "bara").addStagePressure(3, 2.0, "bara").build();
 
     // Create process using template through DesignOptimizer
     neqsim.process.design.template.ThreeStageSeparationTemplate template = new neqsim.process.design.template.ThreeStageSeparationTemplate();
@@ -443,7 +443,7 @@ class DesignFrameworkTest {
     inletSep.setSeparatorLength(4.0);
 
     neqsim.process.equipment.compressor.Compressor compressor = new neqsim.process.equipment.compressor.Compressor(
-	"Export-Comp", inletSep.getGasOutStream());
+        "Export-Comp", inletSep.getGasOutStream());
     compressor.setOutletPressure(80.0);
     compressor.setPolytropicEfficiency(0.77);
     compressor.setSpeed(8500);
@@ -461,7 +461,7 @@ class DesignFrameworkTest {
 
     // Use DesignOptimizer to auto-size all equipment
     DesignOptimizer optimizer = DesignOptimizer.forProcess(process).autoSizeEquipment(1.2).applyDefaultConstraints()
-	.setObjective(DesignOptimizer.ObjectiveType.MAXIMIZE_PRODUCTION);
+        .setObjective(DesignOptimizer.ObjectiveType.MAXIMIZE_PRODUCTION);
 
     DesignResult result = optimizer.optimize();
 
@@ -470,7 +470,7 @@ class DesignFrameworkTest {
     assertTrue(compressor.isAutoSized(), "Compressor should be auto-sized");
     assertTrue(compressor.isSolveSpeed(), "Compressor should have solveSpeed=true after auto-sizing");
     assertTrue(compressor.getCompressorChart().isUseCompressorChart(),
-	"Compressor should have curves enabled after auto-sizing");
+        "Compressor should have curves enabled after auto-sizing");
 
     // Verify result
     assertNotNull(result);

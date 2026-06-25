@@ -42,7 +42,7 @@ class DifferentialPressureFlowCalculatorTest {
     double[] fractions = { 1.0 };
 
     FlowCalculationResult result = DifferentialPressureFlowCalculator.calculate(pressureBarg, temperatureC,
-	differentialPressureMbar, "Simplified", flowData, components, fractions, true);
+        differentialPressureMbar, "Simplified", flowData, components, fractions, true);
 
     double[] massFlow = result.getMassFlowKgPerHour();
 
@@ -70,7 +70,7 @@ class DifferentialPressureFlowCalculatorTest {
     double[] fractions = { 1.0 };
 
     FlowCalculationResult result = DifferentialPressureFlowCalculator.calculate(pressureBarg, temperatureC,
-	differentialPressureMbar, "Venturi", flowData, components, fractions, true);
+        differentialPressureMbar, "Venturi", flowData, components, fractions, true);
 
     double massFlowKgPerHour = result.getMassFlowKgPerHour()[0];
 
@@ -98,16 +98,16 @@ class DifferentialPressureFlowCalculatorTest {
     double[] flowData = { 0.0 };
 
     assertThrows(IllegalArgumentException.class, () -> DifferentialPressureFlowCalculator.calculate(pressureBarg,
-	temperatureC, differentialPressureMbar, "Simplified", flowData, null, null, true));
+        temperatureC, differentialPressureMbar, "Simplified", flowData, null, null, true));
   }
 
   private static double runPythonVenturi(double dpPa, double pressurePa, double density, double kappa, double D,
       double d, double dischargeCoefficient) throws IOException, InterruptedException {
     Path script = Paths.get("src", "test", "resources", "diffpressure_reference.py").toAbsolutePath();
     ProcessBuilder processBuilder = new ProcessBuilder("python3", script.toString(), "venturi", "--dp",
-	Double.toString(dpPa), "--p", Double.toString(pressurePa), "--rho", Double.toString(density), "--kappa",
-	Double.toString(kappa), "--D", Double.toString(D), "--d", Double.toString(d), "--C",
-	Double.toString(dischargeCoefficient));
+        Double.toString(dpPa), "--p", Double.toString(pressurePa), "--rho", Double.toString(density), "--kappa",
+        Double.toString(kappa), "--D", Double.toString(D), "--d", Double.toString(d), "--C",
+        Double.toString(dischargeCoefficient));
     processBuilder.redirectErrorStream(true);
     Process process = processBuilder.start();
 

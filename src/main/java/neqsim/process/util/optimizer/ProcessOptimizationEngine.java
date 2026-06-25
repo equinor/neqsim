@@ -228,7 +228,7 @@ public class ProcessOptimizationEngine implements Serializable {
       allUnits.addAll(processSystem.getUnitOperations());
     } else if (processModule != null) {
       for (ProcessSystem sys : processModule.getAllProcessSystems()) {
-	allUnits.addAll(sys.getUnitOperations());
+        allUnits.addAll(sys.getUnitOperations());
       }
     }
 
@@ -256,7 +256,7 @@ public class ProcessOptimizationEngine implements Serializable {
     if (processModule != null) {
       List<ProcessSystem> systems = processModule.getAllProcessSystems();
       if (!systems.isEmpty()) {
-	return systems.get(0);
+        return systems.get(0);
       }
     }
     return null;
@@ -281,31 +281,31 @@ public class ProcessOptimizationEngine implements Serializable {
 
       switch (searchAlgorithm) {
       case GOLDEN_SECTION:
-	optimalFlow = goldenSectionSearch(inletPressure, outletPressure, minFlow, maxFlow);
-	break;
+        optimalFlow = goldenSectionSearch(inletPressure, outletPressure, minFlow, maxFlow);
+        break;
       case BINARY_SEARCH:
-	optimalFlow = binarySearch(inletPressure, outletPressure, minFlow, maxFlow);
-	break;
+        optimalFlow = binarySearch(inletPressure, outletPressure, minFlow, maxFlow);
+        break;
       case GRADIENT_DESCENT:
-	// Start gradient descent from middle of range
-	double initialFlow = (minFlow + maxFlow) / 2.0;
-	optimalFlow = gradientDescentSearch(inletPressure, outletPressure, initialFlow);
-	// Ensure result is within bounds
-	optimalFlow = Math.max(minFlow, Math.min(maxFlow, optimalFlow));
-	break;
+        // Start gradient descent from middle of range
+        double initialFlow = (minFlow + maxFlow) / 2.0;
+        optimalFlow = gradientDescentSearch(inletPressure, outletPressure, initialFlow);
+        // Ensure result is within bounds
+        optimalFlow = Math.max(minFlow, Math.min(maxFlow, optimalFlow));
+        break;
       case GRADIENT_DESCENT_ARMIJO_WOLFE:
-	// Gradient descent with Armijo-Wolfe line search
-	double initFlowAW = (minFlow + maxFlow) / 2.0;
-	optimalFlow = gradientDescentArmijoWolfeSearch(inletPressure, outletPressure, initFlowAW);
-	optimalFlow = Math.max(minFlow, Math.min(maxFlow, optimalFlow));
-	break;
+        // Gradient descent with Armijo-Wolfe line search
+        double initFlowAW = (minFlow + maxFlow) / 2.0;
+        optimalFlow = gradientDescentArmijoWolfeSearch(inletPressure, outletPressure, initFlowAW);
+        optimalFlow = Math.max(minFlow, Math.min(maxFlow, optimalFlow));
+        break;
       case BFGS:
-	// BFGS quasi-Newton method
-	double initFlowBFGS = (minFlow + maxFlow) / 2.0;
-	optimalFlow = bfgsSearch(inletPressure, outletPressure, initFlowBFGS, minFlow, maxFlow);
-	break;
+        // BFGS quasi-Newton method
+        double initFlowBFGS = (minFlow + maxFlow) / 2.0;
+        optimalFlow = bfgsSearch(inletPressure, outletPressure, initFlowBFGS, minFlow, maxFlow);
+        break;
       default:
-	optimalFlow = goldenSectionSearch(inletPressure, outletPressure, minFlow, maxFlow);
+        optimalFlow = goldenSectionSearch(inletPressure, outletPressure, minFlow, maxFlow);
       }
 
       result.setOptimalValue(optimalFlow);
@@ -315,19 +315,19 @@ public class ProcessOptimizationEngine implements Serializable {
 
       // Run at optimal and collect metrics
       if (hasProcess()) {
-	setFeedFlowRate(optimalFlow);
-	runSimulation();
-	result.setConstraintViolations(evaluateAllConstraintViolations());
-	result.setBottleneck(findBottleneckEquipment());
+        setFeedFlowRate(optimalFlow);
+        runSimulation();
+        result.setConstraintViolations(evaluateAllConstraintViolations());
+        result.setBottleneck(findBottleneckEquipment());
 
-	// Auto-generate sensitivity analysis
-	try {
-	  SensitivityResult sensitivity = analyzeSensitivity(optimalFlow, inletPressure, outletPressure);
-	  result.setSensitivity(sensitivity);
-	} catch (Exception sensEx) {
-	  logger.debug("Sensitivity analysis failed: {}", sensEx.getMessage());
-	  // Non-fatal - optimization result is still valid
-	}
+        // Auto-generate sensitivity analysis
+        try {
+          SensitivityResult sensitivity = analyzeSensitivity(optimalFlow, inletPressure, outletPressure);
+          result.setSensitivity(sensitivity);
+        } catch (Exception sensEx) {
+          logger.debug("Sensitivity analysis failed: {}", sensEx.getMessage());
+          // Non-fatal - optimization result is still valid
+        }
       }
     } catch (Exception e) {
       logger.error("Optimization failed", e);
@@ -360,7 +360,7 @@ public class ProcessOptimizationEngine implements Serializable {
 
       // Collect final metrics
       if (processSystem != null) {
-	result.setConstraintViolations(evaluateAllConstraintViolations());
+        result.setConstraintViolations(evaluateAllConstraintViolations());
       }
     } catch (Exception e) {
       logger.error("Pressure optimization failed", e);
@@ -389,24 +389,24 @@ public class ProcessOptimizationEngine implements Serializable {
       EquipmentCapacityStrategy strategy = getStrategyRegistry().findStrategy(equipment);
 
       if (strategy != null) {
-	Map<String, CapacityConstraint> constraintMap = strategy.getConstraints(equipment);
-	List<CapacityConstraint> constraints = new ArrayList<CapacityConstraint>(constraintMap.values());
-	double utilization = strategy.evaluateCapacity(equipment);
+        Map<String, CapacityConstraint> constraintMap = strategy.getConstraints(equipment);
+        List<CapacityConstraint> constraints = new ArrayList<CapacityConstraint>(constraintMap.values());
+        double utilization = strategy.evaluateCapacity(equipment);
 
-	EquipmentConstraintStatus status = new EquipmentConstraintStatus();
-	status.setEquipmentName(equipment.getName());
-	status.setEquipmentType(equipment.getClass().getSimpleName());
-	status.setUtilization(utilization);
-	status.setConstraints(constraints);
-	status.setWithinLimits(strategy.isWithinHardLimits(equipment));
+        EquipmentConstraintStatus status = new EquipmentConstraintStatus();
+        status.setEquipmentName(equipment.getName());
+        status.setEquipmentType(equipment.getClass().getSimpleName());
+        status.setUtilization(utilization);
+        status.setConstraints(constraints);
+        status.setWithinLimits(strategy.isWithinHardLimits(equipment));
 
-	// Check for bottleneck
-	CapacityConstraint bottleneck = strategy.getBottleneckConstraint(equipment);
-	if (bottleneck != null) {
-	  status.setBottleneckConstraint(bottleneck.getName());
-	}
+        // Check for bottleneck
+        CapacityConstraint bottleneck = strategy.getBottleneckConstraint(equipment);
+        if (bottleneck != null) {
+          status.setBottleneckConstraint(bottleneck.getName());
+        }
 
-	report.addEquipmentStatus(status);
+        report.addEquipmentStatus(status);
       }
     }
 
@@ -432,11 +432,11 @@ public class ProcessOptimizationEngine implements Serializable {
       EquipmentCapacityStrategy strategy = getStrategyRegistry().findStrategy(equipment);
 
       if (strategy != null) {
-	double utilization = strategy.evaluateCapacity(equipment);
-	if (utilization > highestUtilization) {
-	  highestUtilization = utilization;
-	  bottleneck = equipment.getName();
-	}
+        double utilization = strategy.evaluateCapacity(equipment);
+        if (utilization > highestUtilization) {
+          highestUtilization = utilization;
+          bottleneck = equipment.getName();
+        }
       }
     }
 
@@ -461,14 +461,14 @@ public class ProcessOptimizationEngine implements Serializable {
 
     for (double pressure : pressures) {
       for (double temperature : temperatures) {
-	for (double waterCut : waterCuts) {
-	  for (double gor : GORs) {
-	    LiftCurvePoint point = evaluateLiftCurvePoint(pressure, temperature, waterCut, gor);
-	    if (point != null) {
-	      liftCurve.addPoint(point);
-	    }
-	  }
-	}
+        for (double waterCut : waterCuts) {
+          for (double gor : GORs) {
+            LiftCurvePoint point = evaluateLiftCurvePoint(pressure, temperature, waterCut, gor);
+            if (point != null) {
+              liftCurve.addPoint(point);
+            }
+          }
+        }
       }
     }
 
@@ -529,15 +529,15 @@ public class ProcessOptimizationEngine implements Serializable {
       double fd = evaluateFlowObjective(inletPressure, outletPressure, d);
 
       if (fc < fd) {
-	// Maximum is between c and b
-	a = c;
-	c = d;
-	d = a + (b - a) / phi;
+        // Maximum is between c and b
+        a = c;
+        c = d;
+        d = a + (b - a) / phi;
       } else {
-	// Maximum is between a and d
-	b = d;
-	d = c;
-	c = b - (b - a) / phi;
+        // Maximum is between a and d
+        b = d;
+        d = c;
+        c = b - (b - a) / phi;
       }
     }
 
@@ -561,9 +561,9 @@ public class ProcessOptimizationEngine implements Serializable {
       double mid = (low + high) / 2.0;
 
       if (canAchieveFlow(inletPressure, outletPressure, mid)) {
-	low = mid; // Can achieve this flow, try higher
+        low = mid; // Can achieve this flow, try higher
       } else {
-	high = mid; // Cannot achieve, try lower
+        high = mid; // Cannot achieve, try lower
       }
     }
 
@@ -588,9 +588,9 @@ public class ProcessOptimizationEngine implements Serializable {
       double mid = (low + high) / 2.0;
 
       if (canAchieveFlowWithPressure(targetFlow, mid, outletPressure)) {
-	high = mid; // Can achieve with this pressure, try lower
+        high = mid; // Can achieve with this pressure, try lower
       } else {
-	low = mid; // Cannot achieve, need higher pressure
+        low = mid; // Cannot achieve, need higher pressure
       }
     }
 
@@ -633,12 +633,12 @@ public class ProcessOptimizationEngine implements Serializable {
       // Check outlet pressure
       double actualOutletPressure = getOutletPressure();
       if (actualOutletPressure < outletPressure * 0.99) {
-	return false;
+        return false;
       }
 
       // Check constraints if enabled
       if (enforceConstraints) {
-	return areAllConstraintsSatisfied();
+        return areAllConstraintsSatisfied();
       }
 
       return true;
@@ -690,7 +690,7 @@ public class ProcessOptimizationEngine implements Serializable {
       EquipmentCapacityStrategy strategy = getStrategyRegistry().findStrategy(equipment);
 
       if (strategy != null && !strategy.isWithinHardLimits(equipment)) {
-	return false;
+        return false;
       }
     }
 
@@ -715,16 +715,16 @@ public class ProcessOptimizationEngine implements Serializable {
       EquipmentCapacityStrategy strategy = getStrategyRegistry().findStrategy(equipment);
 
       if (strategy != null) {
-	List<CapacityConstraint> eqViolations = strategy.getViolations(equipment);
-	for (CapacityConstraint c : eqViolations) {
-	  if (c.isMinimumConstraint()) {
-	    violations.add(
-		equipment.getName() + ": " + c.getName() + " (" + c.getCurrentValue() + " < " + c.getMinValue() + ")");
-	  } else {
-	    violations.add(
-		equipment.getName() + ": " + c.getName() + " (" + c.getCurrentValue() + " > " + c.getMaxValue() + ")");
-	  }
-	}
+        List<CapacityConstraint> eqViolations = strategy.getViolations(equipment);
+        for (CapacityConstraint c : eqViolations) {
+          if (c.isMinimumConstraint()) {
+            violations.add(
+                equipment.getName() + ": " + c.getName() + " (" + c.getCurrentValue() + " < " + c.getMinValue() + ")");
+          } else {
+            violations.add(
+                equipment.getName() + ": " + c.getName() + " (" + c.getCurrentValue() + " > " + c.getMaxValue() + ")");
+          }
+        }
       }
     }
 
@@ -786,8 +786,8 @@ public class ProcessOptimizationEngine implements Serializable {
 
       // Check convergence
       if (Math.abs(gradient) < gradientTolerance || stepSize < minStepSize) {
-	logger.debug("Gradient descent converged at iter {} with flow {}", iter, flow);
-	break;
+        logger.debug("Gradient descent converged at iter {} with flow {}", iter, flow);
+        break;
       }
 
       // Take step in direction of gradient (maximize objective)
@@ -797,12 +797,12 @@ public class ProcessOptimizationEngine implements Serializable {
       double newObjective = evaluateConstrainedObjective(inletPressure, outletPressure, newFlow);
 
       if (newObjective > lastObjective + minImprovement) {
-	// Accept step
-	flow = newFlow;
-	lastObjective = newObjective;
+        // Accept step
+        flow = newFlow;
+        lastObjective = newObjective;
       } else {
-	// Reduce step size
-	stepSize *= beta;
+        // Reduce step size
+        stepSize *= beta;
       }
     }
 
@@ -883,13 +883,13 @@ public class ProcessOptimizationEngine implements Serializable {
       EquipmentCapacityStrategy strategy = getStrategyRegistry().findStrategy(equipment);
 
       if (strategy != null) {
-	List<CapacityConstraint> violations = strategy.getViolations(equipment);
-	for (CapacityConstraint c : violations) {
-	  double excess = c.getCurrentValue() - c.getMaxValue();
-	  if (excess > 0) {
-	    totalViolation += excess / c.getMaxValue(); // Normalized violation
-	  }
-	}
+        List<CapacityConstraint> violations = strategy.getViolations(equipment);
+        for (CapacityConstraint c : violations) {
+          double excess = c.getCurrentValue() - c.getMaxValue();
+          if (excess > 0) {
+            totalViolation += excess / c.getMaxValue(); // Normalized violation
+          }
+        }
       }
     }
 
@@ -928,22 +928,22 @@ public class ProcessOptimizationEngine implements Serializable {
 
       // Handle invalid objective values
       if (Double.isNaN(f0) || Double.isInfinite(f0)) {
-	logger.debug("Invalid objective at flow {}", flow);
-	return flow;
+        logger.debug("Invalid objective at flow {}", flow);
+        return flow;
       }
 
       double grad = estimateGradient(inletPressure, outletPressure, flow);
 
       // Handle invalid gradient
       if (Double.isNaN(grad) || Double.isInfinite(grad)) {
-	logger.debug("Invalid gradient at flow {}", flow);
-	return flow;
+        logger.debug("Invalid gradient at flow {}", flow);
+        return flow;
       }
 
       // Check convergence
       if (Math.abs(grad) < bfgsGradientTolerance) {
-	logger.debug("Armijo-Wolfe converged at iter {} with flow {}", iter, flow);
-	break;
+        logger.debug("Armijo-Wolfe converged at iter {} with flow {}", iter, flow);
+        break;
       }
 
       // Search direction (maximize, so use positive gradient)
@@ -954,9 +954,9 @@ public class ProcessOptimizationEngine implements Serializable {
       alpha = armijoWolfeLineSearch(inletPressure, outletPressure, flow, direction, f0, directionalDerivative, alpha);
 
       if (alpha <= 0 || Double.isNaN(alpha)) {
-	logger.debug("Line search failed at iter {}", iter);
-	// Fall back to simple step
-	alpha = Math.max(flow * 0.01, 10.0);
+        logger.debug("Line search failed at iter {}", iter);
+        // Fall back to simple step
+        alpha = Math.max(flow * 0.01, 10.0);
       }
 
       // Update flow
@@ -965,8 +965,8 @@ public class ProcessOptimizationEngine implements Serializable {
 
       // Check if we made progress
       if (Math.abs(newFlow - flow) < 1.0) {
-	logger.debug("Armijo-Wolfe: step too small at iter {}", iter);
-	break;
+        logger.debug("Armijo-Wolfe: step too small at iter {}", iter);
+        break;
       }
 
       flow = newFlow;
@@ -1000,27 +1000,27 @@ public class ProcessOptimizationEngine implements Serializable {
 
       // Ensure positive flow
       if (newFlow <= 0) {
-	alphaHi = alpha;
-	alpha = (alphaLo + alphaHi) / 2.0;
-	if (alpha < 1e-10) {
-	  break;
-	}
-	continue;
+        alphaHi = alpha;
+        alpha = (alphaLo + alphaHi) / 2.0;
+        if (alpha < 1e-10) {
+          break;
+        }
+        continue;
       }
 
       double fNew = evaluateConstrainedObjective(inletPressure, outletPressure, newFlow);
 
       // Handle invalid values
       if (Double.isNaN(fNew) || Double.isInfinite(fNew)) {
-	alphaHi = alpha;
-	alpha = (alphaLo + alphaHi) / 2.0;
-	continue;
+        alphaHi = alpha;
+        alpha = (alphaLo + alphaHi) / 2.0;
+        continue;
       }
 
       // Track best found
       if (fNew > bestObjective) {
-	bestAlpha = alpha;
-	bestObjective = fNew;
+        bestAlpha = alpha;
+        bestObjective = fNew;
       }
 
       // Check Armijo condition (sufficient decrease)
@@ -1028,10 +1028,10 @@ public class ProcessOptimizationEngine implements Serializable {
       boolean armijoSatisfied = fNew >= f0 + armijoC1 * alpha * directionalDerivative;
 
       if (!armijoSatisfied) {
-	// Step too large, reduce
-	alphaHi = alpha;
-	alpha = (alphaLo + alphaHi) / 2.0;
-	continue;
+        // Step too large, reduce
+        alphaHi = alpha;
+        alpha = (alphaLo + alphaHi) / 2.0;
+        continue;
       }
 
       // Check Wolfe curvature condition
@@ -1039,7 +1039,7 @@ public class ProcessOptimizationEngine implements Serializable {
 
       // Handle invalid gradient
       if (Double.isNaN(gradNew) || Double.isInfinite(gradNew)) {
-	return bestAlpha; // Return best found so far
+        return bestAlpha; // Return best found so far
       }
 
       double newDirectionalDerivative = gradNew * direction;
@@ -1048,23 +1048,23 @@ public class ProcessOptimizationEngine implements Serializable {
       boolean wolfeSatisfied = Math.abs(newDirectionalDerivative) <= wolfeC2 * Math.abs(directionalDerivative);
 
       if (wolfeSatisfied) {
-	return alpha; // Found acceptable step
+        return alpha; // Found acceptable step
       }
 
       // Curvature not satisfied
       if (newDirectionalDerivative * direction > 0) {
-	// Gradient still positive (for maximization), try larger step
-	alphaLo = alpha;
-	alpha = Math.min(2.0 * alpha, alphaHi);
+        // Gradient still positive (for maximization), try larger step
+        alphaLo = alpha;
+        alpha = Math.min(2.0 * alpha, alphaHi);
       } else {
-	// Overshot, reduce step
-	alphaHi = alpha;
-	alpha = (alphaLo + alphaHi) / 2.0;
+        // Overshot, reduce step
+        alphaHi = alpha;
+        alpha = (alphaLo + alphaHi) / 2.0;
       }
 
       // Check for convergence
       if (alphaHi - alphaLo < 1e-10) {
-	break;
+        break;
       }
     }
 
@@ -1104,14 +1104,14 @@ public class ProcessOptimizationEngine implements Serializable {
     for (int iter = 0; iter < maxIterations; iter++) {
       // Handle invalid gradient
       if (Double.isNaN(grad) || Double.isInfinite(grad)) {
-	logger.debug("BFGS: invalid gradient at iter {}", iter);
-	return bestFlow;
+        logger.debug("BFGS: invalid gradient at iter {}", iter);
+        return bestFlow;
       }
 
       // Check convergence
       if (Math.abs(grad) < bfgsGradientTolerance) {
-	logger.debug("BFGS converged at iter {} with flow {}", iter, flow);
-	break;
+        logger.debug("BFGS converged at iter {} with flow {}", iter, flow);
+        break;
       }
 
       // Compute search direction: d = H * grad (for maximization)
@@ -1131,16 +1131,16 @@ public class ProcessOptimizationEngine implements Serializable {
 
       // Track best solution
       if (newObjective > bestObjective) {
-	bestFlow = newFlow;
-	bestObjective = newObjective;
+        bestFlow = newFlow;
+        bestObjective = newObjective;
       }
 
       // Compute actual step taken
       double s = newFlow - flow;
 
       if (Math.abs(s) < 1e-6) {
-	logger.debug("BFGS: step too small at iter {}", iter);
-	break;
+        logger.debug("BFGS: step too small at iter {}", iter);
+        break;
       }
 
       // Compute new gradient
@@ -1148,8 +1148,8 @@ public class ProcessOptimizationEngine implements Serializable {
 
       // Handle invalid new gradient
       if (Double.isNaN(newGrad) || Double.isInfinite(newGrad)) {
-	logger.debug("BFGS: invalid new gradient at iter {}", iter);
-	return bestFlow;
+        logger.debug("BFGS: invalid new gradient at iter {}", iter);
+        return bestFlow;
       }
 
       // Gradient difference
@@ -1160,10 +1160,10 @@ public class ProcessOptimizationEngine implements Serializable {
       double sy = s * y;
 
       if (Math.abs(sy) > 1e-10) {
-	// Secant update
-	double newH = Math.abs(s / y);
-	// Blend with previous to avoid oscillation
-	H = 0.8 * newH + 0.2 * H;
+        // Secant update
+        double newH = Math.abs(s / y);
+        // Blend with previous to avoid oscillation
+        H = 0.8 * newH + 0.2 * H;
       }
 
       // Safeguard: bound H to prevent numerical issues
@@ -1171,8 +1171,8 @@ public class ProcessOptimizationEngine implements Serializable {
 
       // Backtracking if no improvement
       if (newObjective < bestObjective - 1e-6) {
-	// Not improving, reduce H
-	H *= 0.5;
+        // Not improving, reduce H
+        H *= 0.5;
       }
 
       // Update state
@@ -1265,19 +1265,19 @@ public class ProcessOptimizationEngine implements Serializable {
 
       List<ProcessEquipmentInterface> units = getAllUnitOperations();
       for (int i = 0; i < units.size(); i++) {
-	ProcessEquipmentInterface equipment = units.get(i);
-	EquipmentCapacityStrategy strategy = getStrategyRegistry().findStrategy(equipment);
+        ProcessEquipmentInterface equipment = units.get(i);
+        EquipmentCapacityStrategy strategy = getStrategyRegistry().findStrategy(equipment);
 
-	if (strategy != null) {
-	  double utilization = strategy.evaluateCapacity(equipment);
-	  double margin = 1.0 - utilization;
-	  margins.put(equipment.getName(), margin);
+        if (strategy != null) {
+          double utilization = strategy.evaluateCapacity(equipment);
+          double margin = 1.0 - utilization;
+          margins.put(equipment.getName(), margin);
 
-	  if (margin < smallestMargin && margin >= 0) {
-	    smallestMargin = margin;
-	    tightestConstraint = equipment.getName();
-	  }
-	}
+          if (margin < smallestMargin && margin >= 0) {
+            smallestMargin = margin;
+            tightestConstraint = equipment.getName();
+          }
+        }
       }
 
       result.setConstraintMargins(margins);
@@ -1351,7 +1351,7 @@ public class ProcessOptimizationEngine implements Serializable {
       ProcessEquipmentInterface equipment = units.get(i);
       EquipmentCapacityStrategy strategy = getStrategyRegistry().findStrategy(equipment);
       if (strategy != null) {
-	baselineUtil.put(equipment.getName(), strategy.evaluateCapacity(equipment));
+        baselineUtil.put(equipment.getName(), strategy.evaluateCapacity(equipment));
       }
     }
 
@@ -1365,22 +1365,22 @@ public class ProcessOptimizationEngine implements Serializable {
       ProcessEquipmentInterface equipment = units.get(i);
       EquipmentCapacityStrategy strategy = getStrategyRegistry().findStrategy(equipment);
       if (strategy != null) {
-	double baseUtil = baselineUtil.getOrDefault(equipment.getName(), 0.0);
-	double perturbedUtil = strategy.evaluateCapacity(equipment);
+        double baseUtil = baselineUtil.getOrDefault(equipment.getName(), 0.0);
+        double perturbedUtil = strategy.evaluateCapacity(equipment);
 
-	if (baseUtil > 0.85) {
-	  // Shadow price = change in utilization per unit change in flow,
-	  // normalized so that "fully binding at limit" yields a high value.
-	  double deltaUtil = perturbedUtil - baseUtil;
-	  double deltaFlow = perturbedFlow - optimalFlow;
-	  // Sensitivity: how fast utilization grows relative to flow increase
-	  double sensitivity = (deltaFlow > 0) ? (deltaUtil / deltaFlow) * optimalFlow : 0.0;
-	  // Scale by how close to the limit we already are (0.85-1.0 range)
-	  double bindingFactor = Math.max(0.0, (baseUtil - 0.85) / 0.15);
-	  shadowPrices.put(equipment.getName(), sensitivity * bindingFactor);
-	} else {
-	  shadowPrices.put(equipment.getName(), 0.0);
-	}
+        if (baseUtil > 0.85) {
+          // Shadow price = change in utilization per unit change in flow,
+          // normalized so that "fully binding at limit" yields a high value.
+          double deltaUtil = perturbedUtil - baseUtil;
+          double deltaFlow = perturbedFlow - optimalFlow;
+          // Sensitivity: how fast utilization grows relative to flow increase
+          double sensitivity = (deltaFlow > 0) ? (deltaUtil / deltaFlow) * optimalFlow : 0.0;
+          // Scale by how close to the limit we already are (0.85-1.0 range)
+          double bindingFactor = Math.max(0.0, (baseUtil - 0.85) / 0.15);
+          shadowPrices.put(equipment.getName(), sensitivity * bindingFactor);
+        } else {
+          shadowPrices.put(equipment.getName(), 0.0);
+        }
       }
     }
 
@@ -1455,10 +1455,10 @@ public class ProcessOptimizationEngine implements Serializable {
     // Generate lift curve points by running optimization at each pressure
     for (double pressure : inletPressures) {
       try {
-	// Use findFlowRate method
-	optimizer.findFlowRate(pressure, outletPressure, "bara");
+        // Use findFlowRate method
+        optimizer.findFlowRate(pressure, outletPressure, "bara");
       } catch (Exception e) {
-	logger.warn("Failed to evaluate pressure point: {}", pressure, e);
+        logger.warn("Failed to evaluate pressure point: {}", pressure, e);
       }
     }
 
@@ -1576,9 +1576,9 @@ public class ProcessOptimizationEngine implements Serializable {
     // If feed stream name is specified, find it
     if (feedStreamName != null && !feedStreamName.isEmpty()) {
       for (ProcessEquipmentInterface unit : units) {
-	if (feedStreamName.equals(unit.getName())) {
-	  return unit;
-	}
+        if (feedStreamName.equals(unit.getName())) {
+          return unit;
+        }
       }
       logger.warn("Feed stream '{}' not found, using first unit operation", feedStreamName);
     }
@@ -1650,9 +1650,9 @@ public class ProcessOptimizationEngine implements Serializable {
     // If outlet stream name is specified, find it
     if (outletStreamName != null && !outletStreamName.isEmpty()) {
       for (ProcessEquipmentInterface unit : units) {
-	if (outletStreamName.equals(unit.getName())) {
-	  return unit;
-	}
+        if (outletStreamName.equals(unit.getName())) {
+          return unit;
+        }
       }
       logger.warn("Outlet stream '{}' not found, using last unit operation", outletStreamName);
     }
@@ -2016,10 +2016,10 @@ public class ProcessOptimizationEngine implements Serializable {
       EquipmentConstraintStatus bottleneck = null;
       double highestUtilization = 0.0;
       for (EquipmentConstraintStatus status : equipmentStatuses) {
-	if (status.getUtilization() > highestUtilization) {
-	  highestUtilization = status.getUtilization();
-	  bottleneck = status;
-	}
+        if (status.getUtilization() > highestUtilization) {
+          highestUtilization = status.getUtilization();
+          bottleneck = status;
+        }
       }
       return bottleneck;
     }
@@ -2253,7 +2253,7 @@ public class ProcessOptimizationEngine implements Serializable {
     }
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       if (unit instanceof neqsim.process.equipment.util.Adjuster) {
-	adjusters.add((neqsim.process.equipment.util.Adjuster) unit);
+        adjusters.add((neqsim.process.equipment.util.Adjuster) unit);
       }
     }
     return adjusters;
@@ -2273,8 +2273,8 @@ public class ProcessOptimizationEngine implements Serializable {
     List<neqsim.process.equipment.util.Adjuster> disabled = new ArrayList<neqsim.process.equipment.util.Adjuster>();
     for (neqsim.process.equipment.util.Adjuster adj : getAdjusters()) {
       if (adj.isActive()) {
-	adj.setActive(false);
-	disabled.add(adj);
+        adj.setActive(false);
+        disabled.add(adj);
       }
     }
     return disabled;
@@ -2388,15 +2388,15 @@ public class ProcessOptimizationEngine implements Serializable {
       double highFlow = testFlow;
 
       for (int i = 0; i < maxIterations; i++) {
-	double midFlow = (lowFlow + highFlow) / 2.0;
-	if (checkAdjusterConvergence(midFlow)) {
-	  lowFlow = midFlow;
-	} else {
-	  highFlow = midFlow;
-	}
-	if ((highFlow - lowFlow) < tolerance) {
-	  break;
-	}
+        double midFlow = (lowFlow + highFlow) / 2.0;
+        if (checkAdjusterConvergence(midFlow)) {
+          lowFlow = midFlow;
+        } else {
+          highFlow = midFlow;
+        }
+        if ((highFlow - lowFlow) < tolerance) {
+          break;
+        }
       }
       result.setOptimalValue(lowFlow);
       result.setConverged(true);
@@ -2430,7 +2430,7 @@ public class ProcessOptimizationEngine implements Serializable {
     // Check if all Adjusters converged
     for (neqsim.process.equipment.util.Adjuster adj : getAdjusters()) {
       if (adj.isActive() && !adj.solved()) {
-	return false;
+        return false;
       }
     }
 

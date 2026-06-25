@@ -59,7 +59,7 @@ public class TwoPhasePipeFlowSolver extends neqsim.fluidmechanics.flowsolver.one
     solMatrix[1] = new Matrix(PbArray, 1).transpose();
     for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
       for (int i = 0; i < pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
-	solMolFracMatrix[phaseNum][i] = new Matrix(PbArray, 1).transpose();
+        solMolFracMatrix[phaseNum][i] = new Matrix(PbArray, 1).transpose();
       }
     }
     sol3Matrix[0] = new Matrix(PbArray, 1).transpose();

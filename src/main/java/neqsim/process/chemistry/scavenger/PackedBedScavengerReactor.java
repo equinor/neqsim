@@ -26,6 +26,7 @@ import neqsim.process.chemistry.util.StandardsRegistry;
  * dq/dt = - r * Q * C / V_cell        (scavenger depletion)
  * </pre>
  *
+ * <p>
  * with stoichiometric ratio {@code r} (mol H2S per mol active sites, typical 1.0 for triazine, 0.5-0.7 for Fe2O3) and
  * volumetric rate constant {@code k_eff} fitted to bed geometry.
  *
@@ -176,7 +177,7 @@ public class PackedBedScavengerReactor implements Serializable {
     double cellVolumeM3 = bedVolumeM3 / numberOfCells;
     double mediaMassPerCellKg = cellVolumeM3 * (1.0 - bedVoidage) * scavengerBulkDensityKgM3;
     double initialCapacityPerCellMol = mediaMassPerCellKg * scavengerLoadingMolPerKg
-	/ Math.max(stoichiometricRatio, 1e-6);
+        / Math.max(stoichiometricRatio, 1e-6);
     double totalCapacityMol = initialCapacityPerCellMol * numberOfCells;
 
     // Cell residence time tau = V_cell * voidage / Q
@@ -198,42 +199,42 @@ public class PackedBedScavengerReactor implements Serializable {
       double cellOutletC = cIn;
 
       for (int i = 0; i < numberOfCells; i++) {
-	if (remainingCapacity[i] <= 0.0) {
-	  // exhausted cell — no removal
-	  continue;
-	}
-	double activityFraction = remainingCapacity[i] / initialCapacityPerCellMol;
-	double kLocal = rateConstantPerS * activityFraction;
-	// Plug-flow first-order: C_out = C_in * exp(-k * tau)
-	cellOutletC = cellInletC * Math.exp(-kLocal * tauPerCellS);
-	double removedMolS = volumetricFlowM3PerS * (cellInletC - cellOutletC);
-	double consumedMol = removedMolS * dtS;
-	if (consumedMol > remainingCapacity[i]) {
-	  consumedMol = remainingCapacity[i];
-	  // partial breakthrough through this cell
-	  cellOutletC = cellInletC - consumedMol / (volumetricFlowM3PerS * dtS);
-	}
-	remainingCapacity[i] -= consumedMol;
-	totalRemovedMol += consumedMol;
-	cellInletC = cellOutletC;
+        if (remainingCapacity[i] <= 0.0) {
+          // exhausted cell — no removal
+          continue;
+        }
+        double activityFraction = remainingCapacity[i] / initialCapacityPerCellMol;
+        double kLocal = rateConstantPerS * activityFraction;
+        // Plug-flow first-order: C_out = C_in * exp(-k * tau)
+        cellOutletC = cellInletC * Math.exp(-kLocal * tauPerCellS);
+        double removedMolS = volumetricFlowM3PerS * (cellInletC - cellOutletC);
+        double consumedMol = removedMolS * dtS;
+        if (consumedMol > remainingCapacity[i]) {
+          consumedMol = remainingCapacity[i];
+          // partial breakthrough through this cell
+          cellOutletC = cellInletC - consumedMol / (volumetricFlowM3PerS * dtS);
+        }
+        remainingCapacity[i] -= consumedMol;
+        totalRemovedMol += consumedMol;
+        cellInletC = cellOutletC;
       }
       timeSeriesS.add(tNow);
       outletConcentrationProfile.add(cellOutletC);
       double consumedTotal = 0.0;
       for (int i = 0; i < numberOfCells; i++) {
-	consumedTotal += (initialCapacityPerCellMol - remainingCapacity[i]);
+        consumedTotal += (initialCapacityPerCellMol - remainingCapacity[i]);
       }
       double util = totalCapacityMol > 0.0 ? consumedTotal / totalCapacityMol : 0.0;
       bedUtilisationProfile.add(util);
 
       if (Double.isInfinite(breakthroughTimeS) && cellOutletC >= breakthroughFraction * cIn) {
-	breakthroughTimeS = tNow;
+        breakthroughTimeS = tNow;
       }
     }
 
     totalH2sRemovedKg = totalRemovedMol * MM_H2S / 1000.0;
     finalBedUtilisation = bedUtilisationProfile.isEmpty() ? 0.0
-	: bedUtilisationProfile.get(bedUtilisationProfile.size() - 1);
+        : bedUtilisationProfile.get(bedUtilisationProfile.size() - 1);
     evaluated = true;
     return this;
   }

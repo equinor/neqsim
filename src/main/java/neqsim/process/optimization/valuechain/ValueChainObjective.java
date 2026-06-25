@@ -75,7 +75,7 @@ public class ValueChainObjective implements Serializable {
      * @param netValueNokPerDay net value in currency per day
      */
     public ValueResult(double revenueNokPerDay, double energyCostNokPerDay, double carbonCostNokPerDay,
-	double co2TonnePerDay, double netValueNokPerDay) {
+        double co2TonnePerDay, double netValueNokPerDay) {
       this.revenueNokPerDay = revenueNokPerDay;
       this.energyCostNokPerDay = energyCostNokPerDay;
       this.carbonCostNokPerDay = carbonCostNokPerDay;

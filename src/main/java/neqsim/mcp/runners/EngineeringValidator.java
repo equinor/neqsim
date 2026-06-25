@@ -60,7 +60,7 @@ public final class EngineeringValidator {
 
     } catch (Exception e) {
       findings.add(new ValidationFinding("PARSE_ERROR", Severity.WARNING,
-	  "Could not parse results for validation: " + e.getMessage(), "Ensure results JSON is well-formed"));
+          "Could not parse results for validation: " + e.getMessage(), "Ensure results JSON is well-formed"));
     }
 
     return buildReport(findings, context);
@@ -80,20 +80,20 @@ public final class EngineeringValidator {
       JsonObject eq = JsonParser.parseString(equipmentJson).getAsJsonObject();
 
       if ("compressor".equalsIgnoreCase(equipmentType)) {
-	checkCompressorDesign(eq, findings);
+        checkCompressorDesign(eq, findings);
       } else if ("separator".equalsIgnoreCase(equipmentType)) {
-	checkSeparatorDesign(eq, findings);
+        checkSeparatorDesign(eq, findings);
       } else if ("heatExchanger".equalsIgnoreCase(equipmentType) || "cooler".equalsIgnoreCase(equipmentType)
-	  || "heater".equalsIgnoreCase(equipmentType)) {
-	checkHeatExchangerDesign(eq, findings);
+          || "heater".equalsIgnoreCase(equipmentType)) {
+        checkHeatExchangerDesign(eq, findings);
       } else if ("pipeline".equalsIgnoreCase(equipmentType) || "pipe".equalsIgnoreCase(equipmentType)) {
-	checkPipelineDesign(eq, findings);
+        checkPipelineDesign(eq, findings);
       } else if ("valve".equalsIgnoreCase(equipmentType)) {
-	checkValveDesign(eq, findings);
+        checkValveDesign(eq, findings);
       }
     } catch (Exception e) {
       findings.add(new ValidationFinding("VALIDATION_ERROR", Severity.WARNING, "Validation failed: " + e.getMessage(),
-	  "Check equipment JSON format"));
+          "Check equipment JSON format"));
     }
 
     return buildReport(findings, equipmentType);
@@ -111,25 +111,25 @@ public final class EngineeringValidator {
    */
   private static void checkTemperatureRanges(JsonObject results, List<ValidationFinding> findings) {
     checkNumericField(results, "temperature", -273.15, 1500.0, "C", findings, "Temperature out of physical range",
-	"Verify temperature input is in correct units (Kelvin vs Celsius)");
+        "Verify temperature input is in correct units (Kelvin vs Celsius)");
 
     checkNumericField(results, "outletTemperature", -273.15, 1500.0, "C", findings,
-	"Outlet temperature out of physical range", "Check heat exchange duty and flow rates");
+        "Outlet temperature out of physical range", "Check heat exchange duty and flow rates");
 
     // Check for very low temperatures that might indicate hydrate risk
     Double temp = findNumericValue(results, "temperature");
     if (temp != null && temp < -40.0) {
       findings.add(new ValidationFinding("LOW_TEMPERATURE", Severity.WARNING,
-	  "Temperature below -40C may require special metallurgy (low-temp carbon steel or SS)",
-	  "Check material selection per NORSOK M-001/ASTM A333"));
+          "Temperature below -40C may require special metallurgy (low-temp carbon steel or SS)",
+          "Check material selection per NORSOK M-001/ASTM A333"));
     }
 
     // Check for very high discharge temperature (compressor)
     Double dischargeTemp = findNumericValue(results, "outletTemperature");
     if (dischargeTemp != null && dischargeTemp > 200.0) {
       findings.add(new ValidationFinding("HIGH_DISCHARGE_TEMP", Severity.WARNING,
-	  "Discharge temperature " + String.format("%.1f", dischargeTemp) + "C exceeds typical limit of 200C",
-	  "Consider adding intercooling or reducing compression ratio"));
+          "Discharge temperature " + String.format("%.1f", dischargeTemp) + "C exceeds typical limit of 200C",
+          "Consider adding intercooling or reducing compression ratio"));
     }
   }
 
@@ -147,18 +147,18 @@ public final class EngineeringValidator {
     Double pressure = findNumericValue(results, "pressure");
     if (pressure != null) {
       if (pressure < 0.0) {
-	findings.add(new ValidationFinding("NEGATIVE_PRESSURE", Severity.ERROR,
-	    "Pressure is negative: " + pressure + " bara", "Pressure must be positive. Check units and input values."));
+        findings.add(new ValidationFinding("NEGATIVE_PRESSURE", Severity.ERROR,
+            "Pressure is negative: " + pressure + " bara", "Pressure must be positive. Check units and input values."));
       }
       if (pressure < 0.01 && pressure >= 0.0) {
-	findings
-	    .add(new ValidationFinding("NEAR_VACUUM", Severity.INFO, "Pressure is near-vacuum: " + pressure + " bara",
-		"Verify this is intentional. Near-vacuum conditions may cause convergence issues."));
+        findings
+            .add(new ValidationFinding("NEAR_VACUUM", Severity.INFO, "Pressure is near-vacuum: " + pressure + " bara",
+                "Verify this is intentional. Near-vacuum conditions may cause convergence issues."));
       }
       if (pressure > 1000.0) {
-	findings.add(new ValidationFinding("VERY_HIGH_PRESSURE", Severity.INFO,
-	    "Pressure " + pressure + " bara exceeds 1000 bar",
-	    "Ensure EOS is validated for ultra-high pressure conditions"));
+        findings.add(new ValidationFinding("VERY_HIGH_PRESSURE", Severity.INFO,
+            "Pressure " + pressure + " bara exceeds 1000 bar",
+            "Ensure EOS is validated for ultra-high pressure conditions"));
       }
     }
   }
@@ -180,30 +180,30 @@ public final class EngineeringValidator {
     }
     if (efficiency != null) {
       if (efficiency < 0.5) {
-	findings.add(new ValidationFinding("LOW_EFFICIENCY", Severity.WARNING,
-	    "Compressor efficiency " + String.format("%.1f%%", efficiency * 100) + " is unusually low",
-	    "Typical polytropic efficiency: 75-88%. Check efficiency input."));
+        findings.add(new ValidationFinding("LOW_EFFICIENCY", Severity.WARNING,
+            "Compressor efficiency " + String.format("%.1f%%", efficiency * 100) + " is unusually low",
+            "Typical polytropic efficiency: 75-88%. Check efficiency input."));
       }
       if (efficiency > 0.95) {
-	findings.add(new ValidationFinding("HIGH_EFFICIENCY", Severity.WARNING,
-	    "Compressor efficiency " + String.format("%.1f%%", efficiency * 100) + " exceeds practical limits",
-	    "Maximum practical efficiency is ~92% for centrifugal, ~88% for reciprocating"));
+        findings.add(new ValidationFinding("HIGH_EFFICIENCY", Severity.WARNING,
+            "Compressor efficiency " + String.format("%.1f%%", efficiency * 100) + " exceeds practical limits",
+            "Maximum practical efficiency is ~92% for centrifugal, ~88% for reciprocating"));
       }
     }
 
     Double compressionRatio = findNumericValue(results, "compressionRatio");
     if (compressionRatio != null && compressionRatio > 4.5) {
       findings.add(new ValidationFinding("HIGH_COMPRESSION_RATIO", Severity.WARNING,
-	  "Compression ratio " + String.format("%.2f", compressionRatio)
-	      + " exceeds typical single-stage limit (3.5-4.5)",
-	  "Consider multi-stage compression with intercooling per API 617"));
+          "Compression ratio " + String.format("%.2f", compressionRatio)
+              + " exceeds typical single-stage limit (3.5-4.5)",
+          "Consider multi-stage compression with intercooling per API 617"));
     }
 
     Double power = findNumericValue(results, "power");
     if (power != null && power > 50000.0) {
       findings.add(new ValidationFinding("HIGH_POWER", Severity.INFO,
-	  "Compressor power " + String.format("%.0f", power) + " kW — verify driver selection",
-	  "Consider gas turbine or electric motor driver per available power"));
+          "Compressor power " + String.format("%.0f", power) + " kW — verify driver selection",
+          "Consider gas turbine or electric motor driver per available power"));
     }
   }
 
@@ -220,15 +220,15 @@ public final class EngineeringValidator {
     Double dischargePressure = findNumericValue(eq, "outletPressure");
     if (suctionPressure != null && dischargePressure != null) {
       if (dischargePressure <= suctionPressure) {
-	findings.add(
-	    new ValidationFinding("PRESSURE_DECREASE", Severity.ERROR, "Compressor outlet pressure <= inlet pressure",
-		"Compressor must increase pressure. Check connections or use expander instead."));
+        findings.add(
+            new ValidationFinding("PRESSURE_DECREASE", Severity.ERROR, "Compressor outlet pressure <= inlet pressure",
+                "Compressor must increase pressure. Check connections or use expander instead."));
       }
       double ratio = dischargePressure / suctionPressure;
       if (ratio > 10.0) {
-	findings.add(new ValidationFinding("EXTREME_RATIO", Severity.ERROR,
-	    "Compression ratio " + String.format("%.1f", ratio) + " requires multi-stage compression",
-	    "Split into 2-4 stages with intercooling. Max single-stage ratio ~4.5"));
+        findings.add(new ValidationFinding("EXTREME_RATIO", Severity.ERROR,
+            "Compression ratio " + String.format("%.1f", ratio) + " requires multi-stage compression",
+            "Split into 2-4 stages with intercooling. Max single-stage ratio ~4.5"));
       }
     }
   }
@@ -247,18 +247,18 @@ public final class EngineeringValidator {
     Double residenceTime = findNumericValue(results, "liquidResidenceTime");
     if (residenceTime != null) {
       if (residenceTime < 60.0) {
-	findings.add(new ValidationFinding("LOW_RESIDENCE_TIME", Severity.WARNING,
-	    "Liquid residence time " + String.format("%.0f", residenceTime)
-		+ " seconds is below minimum (60s for 2-phase, 120-180s for 3-phase)",
-	    "Increase separator volume or reduce liquid flow rate per NORSOK P-001"));
+        findings.add(new ValidationFinding("LOW_RESIDENCE_TIME", Severity.WARNING,
+            "Liquid residence time " + String.format("%.0f", residenceTime)
+                + " seconds is below minimum (60s for 2-phase, 120-180s for 3-phase)",
+            "Increase separator volume or reduce liquid flow rate per NORSOK P-001"));
       }
     }
 
     Double gasVelocity = findNumericValue(results, "gasVelocity");
     if (gasVelocity != null && gasVelocity > 5.0) {
       findings.add(new ValidationFinding("HIGH_GAS_VELOCITY", Severity.WARNING,
-	  "Gas velocity " + String.format("%.2f", gasVelocity) + " m/s exceeds typical separator limit",
-	  "Maximum gas velocity ~3-5 m/s depending on demister type. Consider larger vessel."));
+          "Gas velocity " + String.format("%.2f", gasVelocity) + " m/s exceeds typical separator limit",
+          "Maximum gas velocity ~3-5 m/s depending on demister type. Consider larger vessel."));
     }
   }
 
@@ -286,21 +286,21 @@ public final class EngineeringValidator {
     Double approachTemp = findNumericValue(results, "approachTemperature");
     if (approachTemp != null) {
       if (approachTemp < 3.0) {
-	findings.add(new ValidationFinding("LOW_APPROACH_TEMP", Severity.WARNING,
-	    "Approach temperature " + String.format("%.1f", approachTemp) + "C is below practical minimum (3-5C)",
-	    "Minimum approach: ~3C for gas/gas, ~5C for gas/liquid per TEMA"));
+        findings.add(new ValidationFinding("LOW_APPROACH_TEMP", Severity.WARNING,
+            "Approach temperature " + String.format("%.1f", approachTemp) + "C is below practical minimum (3-5C)",
+            "Minimum approach: ~3C for gas/gas, ~5C for gas/liquid per TEMA"));
       }
       if (approachTemp < 1.0) {
-	findings.add(new ValidationFinding("INFEASIBLE_APPROACH", Severity.ERROR,
-	    "Approach temperature " + String.format("%.1f", approachTemp) + "C is thermodynamically infeasible",
-	    "Increase duty split or add heat exchange area. Check temperature cross."));
+        findings.add(new ValidationFinding("INFEASIBLE_APPROACH", Severity.ERROR,
+            "Approach temperature " + String.format("%.1f", approachTemp) + "C is thermodynamically infeasible",
+            "Increase duty split or add heat exchange area. Check temperature cross."));
       }
     }
 
     Double duty = findNumericValue(results, "duty");
     if (duty != null && duty < 0.0) {
       findings.add(new ValidationFinding("NEGATIVE_DUTY", Severity.INFO,
-	  "Heat duty is negative — heat is being removed (cooling)", "Verify that a cooler (not heater) is intended"));
+          "Heat duty is negative — heat is being removed (cooling)", "Verify that a cooler (not heater) is intended"));
     }
   }
 
@@ -331,15 +331,15 @@ public final class EngineeringValidator {
     }
     if (velocity != null) {
       if (velocity > 25.0) {
-	findings.add(new ValidationFinding("HIGH_VELOCITY", Severity.WARNING,
-	    "Pipeline velocity " + String.format("%.1f", velocity)
-		+ " m/s exceeds erosional velocity limit (~25 m/s for gas)",
-	    "Increase pipe diameter or reduce flow rate per API RP 14E"));
+        findings.add(new ValidationFinding("HIGH_VELOCITY", Severity.WARNING,
+            "Pipeline velocity " + String.format("%.1f", velocity)
+                + " m/s exceeds erosional velocity limit (~25 m/s for gas)",
+            "Increase pipe diameter or reduce flow rate per API RP 14E"));
       }
       if (velocity < 1.0 && velocity > 0.0) {
-	findings.add(new ValidationFinding("LOW_VELOCITY", Severity.INFO,
-	    "Pipeline velocity " + String.format("%.2f", velocity) + " m/s is low — risk of solids/liquid accumulation",
-	    "Ensure velocity is above minimum for liquid sweeping (~1-3 m/s)"));
+        findings.add(new ValidationFinding("LOW_VELOCITY", Severity.INFO,
+            "Pipeline velocity " + String.format("%.2f", velocity) + " m/s is low — risk of solids/liquid accumulation",
+            "Ensure velocity is above minimum for liquid sweeping (~1-3 m/s)"));
       }
     }
 
@@ -347,12 +347,12 @@ public final class EngineeringValidator {
     if (pressureDrop != null) {
       Double inletPressure = findNumericValue(results, "inletPressure");
       if (inletPressure != null && inletPressure > 0) {
-	double dpRatio = pressureDrop / inletPressure;
-	if (dpRatio > 0.2) {
-	  findings.add(new ValidationFinding("HIGH_DP_RATIO", Severity.WARNING,
-	      "Pressure drop is " + String.format("%.0f%%", dpRatio * 100) + " of inlet pressure",
-	      "Consider larger pipe diameter or shorter pipeline length"));
-	}
+        double dpRatio = pressureDrop / inletPressure;
+        if (dpRatio > 0.2) {
+          findings.add(new ValidationFinding("HIGH_DP_RATIO", Severity.WARNING,
+              "Pressure drop is " + String.format("%.0f%%", dpRatio * 100) + " of inlet pressure",
+              "Consider larger pipe diameter or shorter pipeline length"));
+        }
       }
     }
   }
@@ -378,14 +378,14 @@ public final class EngineeringValidator {
     Double outletP = findNumericValue(eq, "outletPressure");
     if (inletP != null && outletP != null) {
       if (outletP >= inletP) {
-	findings.add(new ValidationFinding("VALVE_NO_DP", Severity.ERROR, "Valve outlet pressure >= inlet pressure",
-	    "Valve must have a pressure drop. Check connections."));
+        findings.add(new ValidationFinding("VALVE_NO_DP", Severity.ERROR, "Valve outlet pressure >= inlet pressure",
+            "Valve must have a pressure drop. Check connections."));
       }
       double dpRatio = (inletP - outletP) / inletP;
       if (dpRatio > 0.5) {
-	findings.add(new ValidationFinding("HIGH_VALVE_DP", Severity.WARNING,
-	    "Valve pressure drop ratio " + String.format("%.0f%%", dpRatio * 100) + " is very high",
-	    "Check for choked flow conditions. Consider staged pressure reduction."));
+        findings.add(new ValidationFinding("HIGH_VALVE_DP", Severity.WARNING,
+            "Valve pressure drop ratio " + String.format("%.0f%%", dpRatio * 100) + " is very high",
+            "Check for choked flow conditions. Consider staged pressure reduction."));
       }
     }
   }
@@ -405,9 +405,9 @@ public final class EngineeringValidator {
     Double operatingTemp = findNumericValue(results, "temperature");
     if (waterDewPoint != null && operatingTemp != null) {
       if (operatingTemp < waterDewPoint) {
-	findings.add(new ValidationFinding("WATER_CONDENSATION", Severity.WARNING,
-	    "Operating temperature is below water dew point — free water will form",
-	    "Free water increases corrosion and hydrate risk. Consider dehydration."));
+        findings.add(new ValidationFinding("WATER_CONDENSATION", Severity.WARNING,
+            "Operating temperature is below water dew point — free water will form",
+            "Free water increases corrosion and hydrate risk. Consider dehydration."));
       }
     }
   }
@@ -422,8 +422,8 @@ public final class EngineeringValidator {
     Double massBalanceError = findNumericValue(results, "massBalanceError");
     if (massBalanceError != null && Math.abs(massBalanceError) > 0.01) {
       findings.add(new ValidationFinding("MASS_BALANCE", Severity.ERROR,
-	  "Mass balance error: " + String.format("%.4f%%", massBalanceError * 100),
-	  "Mass balance should close within 0.01%. Check for leaks in the process."));
+          "Mass balance error: " + String.format("%.4f%%", massBalanceError * 100),
+          "Mass balance should close within 0.01%. Check for leaks in the process."));
     }
   }
 
@@ -437,8 +437,8 @@ public final class EngineeringValidator {
     Double energyBalanceError = findNumericValue(results, "energyBalanceError");
     if (energyBalanceError != null && Math.abs(energyBalanceError) > 0.05) {
       findings.add(new ValidationFinding("ENERGY_BALANCE", Severity.WARNING,
-	  "Energy balance error: " + String.format("%.4f%%", energyBalanceError * 100),
-	  "Energy balance should close within 5%. Check heat duties and stream connections."));
+          "Energy balance error: " + String.format("%.4f%%", energyBalanceError * 100),
+          "Energy balance should close within 5%. Check heat duties and stream connections."));
     }
   }
 
@@ -452,8 +452,8 @@ public final class EngineeringValidator {
     if (results.has("converged")) {
       boolean converged = results.get("converged").getAsBoolean();
       if (!converged) {
-	findings.add(new ValidationFinding("NOT_CONVERGED", Severity.ERROR, "Simulation did not converge",
-	    "Try different initial conditions, relaxation, or a simpler thermodynamic model"));
+        findings.add(new ValidationFinding("NOT_CONVERGED", Severity.ERROR, "Simulation did not converge",
+            "Try different initial conditions, relaxation, or a simpler thermodynamic model"));
       }
     }
   }
@@ -477,10 +477,10 @@ public final class EngineeringValidator {
     // Search nested objects
     for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
       if (entry.getValue().isJsonObject()) {
-	Double found = findNumericValue(entry.getValue().getAsJsonObject(), fieldName);
-	if (found != null) {
-	  return found;
-	}
+        Double found = findNumericValue(entry.getValue().getAsJsonObject(), fieldName);
+        if (found != null) {
+          return found;
+        }
       }
     }
     return null;
@@ -503,8 +503,8 @@ public final class EngineeringValidator {
     Double value = findNumericValue(results, fieldName);
     if (value != null && (value < min || value > max)) {
       findings.add(new ValidationFinding("OUT_OF_RANGE", Severity.ERROR,
-	  errorMessage + ": " + fieldName + " = " + value + " " + unit + " (valid: " + min + " to " + max + ")",
-	  remediation));
+          errorMessage + ": " + fieldName + " = " + value + " " + unit + " (valid: " + min + " to " + max + ")",
+          remediation));
     }
   }
 
@@ -524,11 +524,11 @@ public final class EngineeringValidator {
     int infos = 0;
     for (ValidationFinding f : findings) {
       if (f.severity == Severity.ERROR) {
-	errors++;
+        errors++;
       } else if (f.severity == Severity.WARNING) {
-	warnings++;
+        warnings++;
       } else {
-	infos++;
+        infos++;
       }
     }
 

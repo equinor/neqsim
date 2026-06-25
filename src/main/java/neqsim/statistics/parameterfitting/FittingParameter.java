@@ -1,7 +1,7 @@
 package neqsim.statistics.parameterfitting;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * Definition of one fitted model parameter including bounds, transform and prior metadata.

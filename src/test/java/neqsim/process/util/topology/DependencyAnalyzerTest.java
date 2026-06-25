@@ -1,6 +1,8 @@
 package neqsim.process.util.topology;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -62,11 +64,11 @@ public class DependencyAnalyzerTest {
 
     // Downstream equipment should be directly affected
     assertTrue(result.getDirectlyAffected().contains("Export Compressor")
-	|| result.getIndirectlyAffected().contains("Export Compressor") || result.getDirectlyAffected().isEmpty()); // May
-														    // depend
-														    // on
-														    // stream
-														    // tracking
+        || result.getIndirectlyAffected().contains("Export Compressor") || result.getDirectlyAffected().isEmpty()); // May
+    // depend
+    // on
+    // stream
+    // tracking
   }
 
   @Test
@@ -78,7 +80,7 @@ public class DependencyAnalyzerTest {
     boolean hasDownstream = false;
     for (String key : toMonitor.keySet()) {
       if (toMonitor.get(key).contains("Direkte påvirket") || toMonitor.get(key).contains("HØY")) {
-	hasDownstream = true;
+        hasDownstream = true;
       }
     }
     // The exact result depends on topology detection
@@ -153,8 +155,8 @@ public class DependencyAnalyzerTest {
     // Verify priority strings are present
     for (String value : toMonitor.values()) {
       assertTrue(
-	  value.contains("KRITISK") || value.contains("HØY") || value.contains("MEDIUM") || value.contains("EKSTERN"),
-	  "Priority should be KRITISK, HØY, MEDIUM, or EKSTERN");
+          value.contains("KRITISK") || value.contains("HØY") || value.contains("MEDIUM") || value.contains("EKSTERN"),
+          "Priority should be KRITISK, HØY, MEDIUM, or EKSTERN");
     }
   }
 }

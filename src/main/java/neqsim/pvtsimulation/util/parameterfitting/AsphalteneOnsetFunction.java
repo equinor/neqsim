@@ -126,8 +126,8 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
       // params[1] = kappa (association volume, dimensionless)
       // Apply to all phases for consistency
       for (int phaseNum = 0; phaseNum < system.getNumberOfPhases(); phaseNum++) {
-	system.getPhase(phaseNum).getComponent(asphalteneIndex).setAssociationEnergy(params[0]);
-	system.getPhase(phaseNum).getComponent(asphalteneIndex).setAssociationVolume(params[1]);
+        system.getPhase(phaseNum).getComponent(asphalteneIndex).setAssociationEnergy(params[0]);
+        system.getPhase(phaseNum).getComponent(asphalteneIndex).setAssociationVolume(params[1]);
       }
       break;
 
@@ -139,7 +139,7 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
     case MOLAR_MASS:
       // params[0] = molar mass of asphaltene (g/mol)
       for (int phaseNum = 0; phaseNum < system.getNumberOfPhases(); phaseNum++) {
-	system.getPhase(phaseNum).getComponent(asphalteneIndex).setMolarMass(params[0] / 1000.0);
+        system.getPhase(phaseNum).getComponent(asphalteneIndex).setMolarMass(params[0] / 1000.0);
       }
       break;
 
@@ -147,9 +147,9 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
       // params[0] = epsilon/R
       // params[1] = kij (not implemented yet - uses fixed kappa)
       for (int phaseNum = 0; phaseNum < system.getNumberOfPhases(); phaseNum++) {
-	system.getPhase(phaseNum).getComponent(asphalteneIndex).setAssociationEnergy(params[0]);
-	system.getPhase(phaseNum).getComponent(asphalteneIndex).setAssociationVolume(0.005); // Fixed
-											     // kappa
+        system.getPhase(phaseNum).getComponent(asphalteneIndex).setAssociationEnergy(params[0]);
+        system.getPhase(phaseNum).getComponent(asphalteneIndex).setAssociationVolume(0.005); // Fixed
+        // kappa
       }
       break;
     }
@@ -164,7 +164,7 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       String name = system.getPhase(0).getComponent(i).getComponentName();
       if (name.equalsIgnoreCase(asphalteneComponentName) || name.toLowerCase().contains("asphaltene")) {
-	return i;
+        return i;
       }
     }
     return -1;
@@ -190,17 +190,17 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
       system.setPressure(currentPressure);
 
       try {
-	ops.TPflash();
+        ops.TPflash();
       } catch (Exception e) {
-	currentPressure -= pressureStep;
-	continue;
+        currentPressure -= pressureStep;
+        continue;
       }
 
       boolean hasAsphaltene = checkForAsphaltenePrecipitation();
 
       if (hasAsphaltene && wasStable) {
-	// Found transition - refine with bisection
-	return refinePressure(previousPressure, currentPressure, ops);
+        // Found transition - refine with bisection
+        return refinePressure(previousPressure, currentPressure, ops);
       }
 
       wasStable = !hasAsphaltene;
@@ -222,16 +222,16 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
       system.setPressure(mid);
 
       try {
-	ops.TPflash();
+        ops.TPflash();
       } catch (Exception e) {
-	high = mid;
-	continue;
+        high = mid;
+        continue;
       }
 
       if (checkForAsphaltenePrecipitation()) {
-	low = mid;
+        low = mid;
       } else {
-	high = mid;
+        high = mid;
       }
     }
 
@@ -244,11 +244,11 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
   private boolean checkForAsphaltenePrecipitation() {
     if (system.hasPhaseType("solid")) {
       try {
-	if (system.getPhaseOfType("solid").getNumberOfMolesInPhase() > 1e-10) {
-	  return true;
-	}
+        if (system.getPhaseOfType("solid").getNumberOfMolesInPhase() > 1e-10) {
+          return true;
+        }
       } catch (Exception e) {
-	// Phase check failed
+        // Phase check failed
       }
     }
     return false;

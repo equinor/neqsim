@@ -95,7 +95,7 @@ public class SubseaPowerCableTest extends neqsim.NeqSimTest {
   @Test
   public void testEquipmentFactory() {
     SubseaPowerCable cable = (SubseaPowerCable) neqsim.process.equipment.EquipmentFactory.createEquipment("cable",
-	"subseapowercable");
+        "subseapowercable");
     assertTrue(cable instanceof SubseaPowerCable);
   }
 }

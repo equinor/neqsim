@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.separator.Separator;
@@ -16,8 +18,6 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Integration-style tests exercising the dynamic Beggs & Brill pipeline together with a throttling valve and separator
@@ -55,7 +55,7 @@ public class PipeBeggsAndBrillsTransientSystemTest {
     Assertions.assertFalse(fluid.hasPhaseType("aqueous"));
 
     assertDelayedSeparatorResponse("single-phase gas", this::createSinglePhaseGasFluid,
-	Collections.singletonList(gasFlowProbe()));
+        Collections.singletonList(gasFlowProbe()));
   }
 
   @Test
@@ -66,7 +66,7 @@ public class PipeBeggsAndBrillsTransientSystemTest {
     Assertions.assertFalse(fluid.hasPhaseType("aqueous"));
 
     assertDelayedSeparatorResponse("single-phase oil", this::createSinglePhaseOilFluid,
-	Collections.singletonList(liquidFlowProbe()));
+        Collections.singletonList(liquidFlowProbe()));
   }
 
   // TODO: Re-enable after fixing pipeline transient delay model
@@ -80,7 +80,7 @@ public class PipeBeggsAndBrillsTransientSystemTest {
     Assertions.assertFalse(fluid.hasPhaseType("aqueous"));
 
     assertDelayedSeparatorResponse("two-phase gas-oil", this::createTwoPhaseGasOilFluid,
-	Arrays.asList(gasFlowProbe(), liquidFlowProbe()));
+        Arrays.asList(gasFlowProbe(), liquidFlowProbe()));
   }
 
   @Test
@@ -91,7 +91,7 @@ public class PipeBeggsAndBrillsTransientSystemTest {
     Assertions.assertTrue(fluid.hasPhaseType("aqueous"));
 
     assertDelayedSeparatorResponse("three-phase gas-oil-aqueous", this::createThreePhaseGasOilWaterFluid,
-	Arrays.asList(gasFlowProbe(), liquidFlowProbe()));
+        Arrays.asList(gasFlowProbe(), liquidFlowProbe()));
   }
 
   private void assertDelayedSeparatorResponse(String scenarioDescription, Supplier<SystemInterface> fluidSupplier,
@@ -114,19 +114,19 @@ public class PipeBeggsAndBrillsTransientSystemTest {
       Map<FlowProbe, Double> currentFlows = readFlows(steadyTarget.separator, probes);
       boolean stable = true;
       for (FlowProbe probe : probes) {
-	double previous = previousTargetFlows.get(probe);
-	double current = currentFlows.get(probe);
-	double tolerance = Math.max(TARGET_ABSOLUTE_TOLERANCE,
-	    TARGET_RELATIVE_TOLERANCE * Math.max(Math.abs(current), Math.abs(previous)));
-	if (Math.abs(current - previous) > tolerance) {
-	  stable = false;
-	  break;
-	}
+        double previous = previousTargetFlows.get(probe);
+        double current = currentFlows.get(probe);
+        double tolerance = Math.max(TARGET_ABSOLUTE_TOLERANCE,
+            TARGET_RELATIVE_TOLERANCE * Math.max(Math.abs(current), Math.abs(previous)));
+        if (Math.abs(current - previous) > tolerance) {
+          stable = false;
+          break;
+        }
       }
       previousTargetFlows = currentFlows;
       targetFlows = currentFlows;
       if (stable) {
-	break;
+        break;
       }
     }
 
@@ -150,17 +150,17 @@ public class PipeBeggsAndBrillsTransientSystemTest {
       double target = targetFlows.get(probe);
       double totalChange = Math.abs(target - baseline);
       Assertions.assertTrue(totalChange > 1e-6,
-	  scenarioDescription + " " + probe.description() + " change should be non-zero");
+          scenarioDescription + " " + probe.description() + " change should be non-zero");
 
       double firstStepChange = Math.abs(firstStepFlows.get(probe) - baseline);
       // Check if pipeline introduces delay - if first step captures nearly all the change,
       // the response is essentially instantaneous (which may indicate a model limitation).
       // This is a soft check since the transient model may not always show ideal delay behavior.
       if (firstStepChange >= 0.95 * totalChange) {
-	logger.info("Note: " + scenarioDescription + " " + probe.description()
-	    + " showed near-instant response (first step captured "
-	    + String.format("%.1f%%", 100.0 * firstStepChange / totalChange)
-	    + " of total change). Pipeline transient delay may not be working as expected.");
+        logger.info("Note: " + scenarioDescription + " " + probe.description()
+            + " showed near-instant response (first step captured "
+            + String.format("%.1f%%", 100.0 * firstStepChange / totalChange)
+            + " of total change). Pipeline transient delay may not be working as expected.");
       }
 
       double tolerance = Math.max(0.2 * totalChange, 0.02);
@@ -174,16 +174,16 @@ public class PipeBeggsAndBrillsTransientSystemTest {
     while (additionalSteps < MAX_TRANSIENT_STEPS) {
       boolean withinTolerance = true;
       for (FlowProbe probe : probes) {
-	double target = targetFlows.get(probe);
-	double current = latestFlows.get(probe);
-	double tolerance = tolerances.get(probe);
-	if (Math.abs(current - target) > tolerance) {
-	  withinTolerance = false;
-	  break;
-	}
+        double target = targetFlows.get(probe);
+        double current = latestFlows.get(probe);
+        double tolerance = tolerances.get(probe);
+        if (Math.abs(current - target) > tolerance) {
+          withinTolerance = false;
+          break;
+        }
       }
       if (withinTolerance) {
-	break;
+        break;
       }
       dynamic.process.runTransient();
       latestFlows = readFlows(dynamic.separator, probes);
@@ -194,7 +194,7 @@ public class PipeBeggsAndBrillsTransientSystemTest {
     // This may not always hold depending on the pipeline model behavior
     if (additionalSteps == 0) {
       logger.info(
-	  "Note: " + scenarioDescription + " converged in first step. Pipeline transient delay may not be active.");
+          "Note: " + scenarioDescription + " converged in first step. Pipeline transient delay may not be active.");
     }
 
     for (FlowProbe probe : probes) {
@@ -204,18 +204,18 @@ public class PipeBeggsAndBrillsTransientSystemTest {
       double finalFlow = latestFlows.get(probe);
 
       Assertions.assertTrue(Math.abs(finalFlow - baseline) > firstStepChange, scenarioDescription + " "
-	  + probe.description() + " should continue moving away from the original steady flow");
+          + probe.description() + " should continue moving away from the original steady flow");
       double totalChange = Math.abs(target - baseline);
       double finalDelta = Math.abs(finalFlow - baseline);
       Assertions.assertTrue(finalDelta >= Math.max(0.02 * totalChange, 0.01), scenarioDescription + " "
-	  + probe.description() + " should reflect a significant change after multiple steps");
+          + probe.description() + " should reflect a significant change after multiple steps");
       double initialTargetGap = Math.abs(baseline - target);
       double finalTargetGap = Math.abs(finalFlow - target);
       Assertions.assertTrue(finalTargetGap < initialTargetGap,
-	  scenarioDescription + " " + probe.description() + " should move closer to the final steady value over time");
+          scenarioDescription + " " + probe.description() + " should move closer to the final steady value over time");
       Assertions.assertTrue(Math.abs(firstStepFlows.get(probe) - target) > finalTargetGap,
-	  scenarioDescription + " " + probe.description()
-	      + " should be closer to the final value after the additional steps than after the" + " first step");
+          scenarioDescription + " " + probe.description()
+              + " should be closer to the final value after the additional steps than after the" + " first step");
     }
   }
 
@@ -353,7 +353,7 @@ public class PipeBeggsAndBrillsTransientSystemTest {
     private final Separator separator;
 
     private ProcessComponents(ProcessSystem process, ThrottlingValve valve, PipeBeggsAndBrills pipeline,
-	Separator separator) {
+        Separator separator) {
       this.process = process;
       this.valve = valve;
       this.pipeline = pipeline;

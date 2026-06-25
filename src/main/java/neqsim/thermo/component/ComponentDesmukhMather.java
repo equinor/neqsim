@@ -34,17 +34,17 @@ public class ComponentDesmukhMather extends ComponentGE {
 
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       if (!name.equals("default")) {
-	try {
-	  dataSet = database.getResultSet(("SELECT * FROM comptemp WHERE name='" + name + "'"));
-	  dataSet.next();
-	  dataSet.getString("FORMULA");
-	} catch (Exception ex) {
-	  dataSet.close();
-	  logger.info("no parameters in tempcomp -- trying comp.. " + name);
-	  dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
-	  dataSet.next();
-	}
-	deshMathIonicDiameter = Double.parseDouble(dataSet.getString("DeshMatIonicDiameter"));
+        try {
+          dataSet = database.getResultSet(("SELECT * FROM comptemp WHERE name='" + name + "'"));
+          dataSet.next();
+          dataSet.getString("FORMULA");
+        } catch (Exception ex) {
+          dataSet.close();
+          logger.info("no parameters in tempcomp -- trying comp.. " + name);
+          dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
+          dataSet.next();
+        }
+        deshMathIonicDiameter = Double.parseDouble(dataSet.getString("DeshMatIonicDiameter"));
       }
     } catch (Exception ex) {
       logger.error("error in comp");
@@ -79,15 +79,15 @@ public class ComponentDesmukhMather extends ComponentGE {
 
     for (int i = 0; i < phase.getNumberOfComponents(); i++) {
       if (!phase.getComponent(i).getComponentName().equals("water")) {
-	temp += 2.0 * ((PhaseDesmukhMather) phase).getBetaDesMatij(i, getComponentNumber())
-	    * phase.getComponent(i).getMolality(phase); // phase.getComponent(i).getMolarity(phase);
+        temp += 2.0 * ((PhaseDesmukhMather) phase).getBetaDesMatij(i, getComponentNumber())
+            * phase.getComponent(i).getMolality(phase); // phase.getComponent(i).getMolarity(phase);
       }
     }
     // System.out.println("molality MDEA "+
     // phase.getComponent("MDEA").getMolality(phase));
 
     lngamma = -A * Math.pow(getIonicCharge(), 2.0) * Math.sqrt(Iion)
-	/ (1.0 + B * deshMathIonicDiameter * 1e-10 * Math.sqrt(Iion)) + temp;
+        / (1.0 + B * deshMathIonicDiameter * 1e-10 * Math.sqrt(Iion)) + temp;
     // else lngamma = 0.0;
     // System.out.println("temp2 "+
     // -2.303*A*Math.pow(getIonicCharge(),2.0)*Math.sqrt(Iion)/(1.0+B*Math.sqrt(Iion)));
@@ -106,8 +106,8 @@ public class ComponentDesmukhMather extends ComponentGE {
       double watervol = 1.0 / 1000.0 * getMolarMass();
       double watervappres = getAntoineVaporPressure(phase.getTemperature());
       fugacityCoefficient = gamma * watervappres
-	  * Math.exp(watervol / (R * phase.getTemperature()) * (phase.getPressure() - watervappres) * 1e5)
-	  / phase.getPressure();
+          * Math.exp(watervol / (R * phase.getTemperature()) * (phase.getPressure() - watervappres) * 1e5)
+          / phase.getPressure();
     } else if (ionicCharge == 0 && referenceStateType.equals("solvent")) {
       fugacityCoefficient = gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();
     } else if (ionicCharge == 0 && referenceStateType.equals("solute")) {

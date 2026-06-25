@@ -61,18 +61,18 @@ public class ProcessResearcher {
     ProcessResearchResult result = new ProcessResearchResult();
     if (spec.isFeasibilityPruningEnabled()) {
       for (String issue : pruner.validateSpec(spec)) {
-	result.addMessage("Specification issue: " + issue);
+        result.addMessage("Specification issue: " + issue);
       }
     }
     List<ProcessCandidate> candidates = generator.generate(spec);
     if (candidates.isEmpty()) {
       result.addMessage("No candidates were generated. Add allowed units, operation options, or "
-	  + "reaction options that can produce the requested product targets.");
+          + "reaction options that can produce the requested product targets.");
       return result;
     }
     for (ProcessCandidate candidate : candidates) {
       if (spec.isEvaluateCandidates() && candidate.getErrors().isEmpty()) {
-	evaluator.evaluate(candidate, spec);
+        evaluator.evaluate(candidate, spec);
       }
       result.addCandidate(candidate);
     }
@@ -91,18 +91,18 @@ public class ProcessResearcher {
     List<ProcessCandidate> candidates = result.getCandidates();
     for (ProcessCandidate candidate : candidates) {
       if (!candidate.isFeasible()) {
-	continue;
+        continue;
       }
       for (ProcessCandidate other : candidates) {
-	if (candidate == other || !other.isFeasible()) {
-	  continue;
-	}
-	if (dominates(other, candidate)) {
-	  candidate.setDominated(true);
-	  candidate.setDominanceReason(
-	      "Dominated by " + other.getName() + " on score with no higher complexity or power demand");
-	  break;
-	}
+        if (candidate == other || !other.isFeasible()) {
+          continue;
+        }
+        if (dominates(other, candidate)) {
+          candidate.setDominated(true);
+          candidate.setDominanceReason(
+              "Dominated by " + other.getName() + " on score with no higher complexity or power demand");
+          break;
+        }
       }
     }
   }
@@ -119,20 +119,20 @@ public class ProcessResearcher {
       return false;
     }
     boolean noWorse = metricValue(left, "equipmentCount") <= metricValue(right, "equipmentCount")
-	&& metricValue(left, "totalPower_kW") <= metricValue(right, "totalPower_kW")
-	&& utilityValue(left, "hotUtility_kW", "heatingDuty_kW") <= utilityValue(right, "hotUtility_kW",
-	    "heatingDuty_kW")
-	&& utilityValue(left, "coldUtility_kW", "coolingDuty_kW") <= utilityValue(right, "coldUtility_kW",
-	    "coolingDuty_kW")
-	&& metricValue(left, "annualOperatingCostProxy_USD_per_yr") <= metricValue(right,
-	    "annualOperatingCostProxy_USD_per_yr")
-	&& metricValue(left, "emissions_kgCO2e_per_hr") <= metricValue(right, "emissions_kgCO2e_per_hr");
+        && metricValue(left, "totalPower_kW") <= metricValue(right, "totalPower_kW")
+        && utilityValue(left, "hotUtility_kW", "heatingDuty_kW") <= utilityValue(right, "hotUtility_kW",
+            "heatingDuty_kW")
+        && utilityValue(left, "coldUtility_kW", "coolingDuty_kW") <= utilityValue(right, "coldUtility_kW",
+            "coolingDuty_kW")
+        && metricValue(left, "annualOperatingCostProxy_USD_per_yr") <= metricValue(right,
+            "annualOperatingCostProxy_USD_per_yr")
+        && metricValue(left, "emissions_kgCO2e_per_hr") <= metricValue(right, "emissions_kgCO2e_per_hr");
     boolean strictlyBetter = left.getScore() > right.getScore()
-	|| metricValue(left, "equipmentCount") < metricValue(right, "equipmentCount")
-	|| metricValue(left, "totalPower_kW") < metricValue(right, "totalPower_kW")
-	|| metricValue(left, "annualOperatingCostProxy_USD_per_yr") < metricValue(right,
-	    "annualOperatingCostProxy_USD_per_yr")
-	|| metricValue(left, "emissions_kgCO2e_per_hr") < metricValue(right, "emissions_kgCO2e_per_hr");
+        || metricValue(left, "equipmentCount") < metricValue(right, "equipmentCount")
+        || metricValue(left, "totalPower_kW") < metricValue(right, "totalPower_kW")
+        || metricValue(left, "annualOperatingCostProxy_USD_per_yr") < metricValue(right,
+            "annualOperatingCostProxy_USD_per_yr")
+        || metricValue(left, "emissions_kgCO2e_per_hr") < metricValue(right, "emissions_kgCO2e_per_hr");
     return noWorse && strictlyBetter;
   }
 

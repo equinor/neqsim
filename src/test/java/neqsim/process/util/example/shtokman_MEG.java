@@ -28,7 +28,7 @@ public class shtokman_MEG {
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 42.0),
-	130.00);
+        130.00);
     testSystem.addComponent("methane", 1.0);
     // testSystem.addComponent("ethane", 10.039);
     // testSystem.addComponent("propane", 5.858);

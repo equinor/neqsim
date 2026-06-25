@@ -184,7 +184,7 @@ public class CompressorChartMWInterpolationTest {
     // Add a third map at MW = 20
     double[] speed20 = { 10000, 11000, 12000 };
     double[][] flow20 = { { 2900, 3400, 3900, 4400, 4900 }, { 3200, 3700, 4200, 4700, 5200 },
-	{ 3500, 4000, 4500, 5000, 5500 } };
+        { 3500, 4000, 4500, 5000, 5500 } };
     double[][] head20 = { { 110, 105, 99, 90, 78 }, { 126, 121, 113, 103, 90 }, { 145, 138, 130, 119, 103 } };
     double[][] polyEff20 = { { 74, 77, 79, 77, 72 }, { 73, 76, 78, 76, 71 }, { 72, 75, 77, 75, 70 } };
 
@@ -286,9 +286,9 @@ public class CompressorChartMWInterpolationTest {
 
     // Verify surge curves were generated
     assertTrue(autoChart.getChartAtMW(18.0).getSurgeCurve().isActive(),
-	"Surge curve should be auto-generated for MW=18");
+        "Surge curve should be auto-generated for MW=18");
     assertTrue(autoChart.getChartAtMW(22.0).getSurgeCurve().isActive(),
-	"Surge curve should be auto-generated for MW=22");
+        "Surge curve should be auto-generated for MW=22");
   }
 
   @Test
@@ -838,7 +838,7 @@ public class CompressorChartMWInterpolationTest {
     // The chart should now use the stream's MW
     double expectedMW = inletStream.getFluid().getMolarMass() * 1000.0;
     assertEquals(expectedMW, mwChart.getOperatingMW(), 0.1,
-	"Operating MW should be auto-updated from inlet stream after run()");
+        "Operating MW should be auto-updated from inlet stream after run()");
   }
 
   @Test

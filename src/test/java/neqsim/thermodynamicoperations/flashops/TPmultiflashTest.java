@@ -2,15 +2,17 @@ package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
+ * Test class for TPmultiflash.
+ *
  * @author ESOL
  */
 class TPmultiflashTest {
@@ -41,9 +43,9 @@ class TPmultiflashTest {
       logger.info("Pressure: " + p + " bara");
       // testSystem.prettyPrint();
       if (testSystem.getNumberOfPhases() == 1) {
-	logger.info("Single phase detected at pressure: " + p + " bara");
+        logger.info("Single phase detected at pressure: " + p + " bara");
       } else {
-	logger.info("Multiple phases detected at pressure: " + p + " bara");
+        logger.info("Multiple phases detected at pressure: " + p + " bara");
       }
     }
   }
@@ -92,14 +94,14 @@ class TPmultiflashTest {
       enhancedSystem.initProperties();
 
       assertEquals(ordinarySystem.getNumberOfPhases(), enhancedSystem.getNumberOfPhases(),
-	  "Enhanced flash should not change phase count at P=" + condition[0] + " bara, T=" + condition[1] + " K");
+          "Enhanced flash should not change phase count at P=" + condition[0] + " bara, T=" + condition[1] + " K");
       assertEquals(ordinarySystem.hasPhaseType("gas"), enhancedSystem.hasPhaseType("gas"));
       assertEquals(ordinarySystem.hasPhaseType("oil"), enhancedSystem.hasPhaseType("oil"));
       assertEquals(ordinarySystem.hasPhaseType("aqueous"), enhancedSystem.hasPhaseType("aqueous"));
 
       for (int phaseNumber = 0; phaseNumber < ordinarySystem.getNumberOfPhases(); phaseNumber++) {
-	assertEquals(ordinarySystem.getPhase(phaseNumber).getType(), enhancedSystem.getPhase(phaseNumber).getType());
-	assertEquals(ordinarySystem.getBeta(phaseNumber), enhancedSystem.getBeta(phaseNumber), 1.0e-10);
+        assertEquals(ordinarySystem.getPhase(phaseNumber).getType(), enhancedSystem.getPhase(phaseNumber).getType());
+        assertEquals(ordinarySystem.getBeta(phaseNumber), enhancedSystem.getBeta(phaseNumber), 1.0e-10);
       }
     }
   }
@@ -118,9 +120,9 @@ class TPmultiflashTest {
 
     methaneHeptaneSystem.setMixingRule("classic");
     ((EosMixingRulesInterface) methaneHeptaneSystem.getPhase(0).getMixingRule()).setBinaryInteractionParameter(0, 1,
-	binaryInteractionParameter);
+        binaryInteractionParameter);
     ((EosMixingRulesInterface) methaneHeptaneSystem.getPhase(1).getMixingRule()).setBinaryInteractionParameter(0, 1,
-	binaryInteractionParameter);
+        binaryInteractionParameter);
 
     methaneHeptaneSystem.setMultiPhaseCheck(true);
     if (enhancedCheck) {
@@ -154,7 +156,7 @@ class TPmultiflashTest {
     // At these conditions, we expect at least 2 phases (vapor + liquid)
     // The new sour gas seeding should help find additional phases if they exist
     assertTrue(sourGas.getNumberOfPhases() >= 2,
-	"Expected at least 2 phases for sour gas at low T, got " + sourGas.getNumberOfPhases());
+        "Expected at least 2 phases for sour gas at low T, got " + sourGas.getNumberOfPhases());
 
     // Print phase information for debugging
     logger.info("Sour gas flash at T=" + sourGas.getTemperature("C") + " C, P=" + sourGas.getPressure("bara") + " bar");
@@ -190,24 +192,25 @@ class TPmultiflashTest {
     // Pressure range: 20 to 100 bar
     for (double tempK = 180.0; tempK <= 230.0; tempK += 0.1) {
       for (double presBar = 30.0; presBar <= 80.0; presBar += 1.0) {
-	sourGas.setTemperature(tempK);
-	sourGas.setPressure(presBar);
+        sourGas.setTemperature(tempK);
+        sourGas.setPressure(presBar);
 
-	try {
-	  ops.TPflash();
-	  sourGas.initProperties();
+        try {
+          ops.TPflash();
+          sourGas.initProperties();
 
-	  if (sourGas.getNumberOfPhases() == 3) {
-	    threePhaseCount++;
-	    if (presBar > maxPressureThreePhase) {
-	      maxPressureThreePhase = presBar;
-	    }
-	    // logger.info(
-	    // "Three phases found at T=" + (tempK - 273.15) + " C, P=" + presBar + " bar");
-	  }
-	} catch (Exception e) {
-	  // Some conditions may fail near critical or unstable regions
-	}
+          if (sourGas.getNumberOfPhases() == 3) {
+            threePhaseCount++;
+            if (presBar > maxPressureThreePhase) {
+              maxPressureThreePhase = presBar;
+            }
+            // logger.info(
+            // "Three phases found at T=" + (tempK - 273.15) + " C, P=" + presBar +
+            // " bar");
+          }
+        } catch (Exception e) {
+          // Some conditions may fail near critical or unstable regions
+        }
       }
     }
 

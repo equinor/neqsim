@@ -213,7 +213,7 @@ public class CompressorDynamicSimulationTest {
 
     // After sufficient time, should be running
     assertTrue(compressor.getOperatingState() == CompressorState.RUNNING
-	|| compressor.getOperatingState() == CompressorState.STARTING);
+        || compressor.getOperatingState() == CompressorState.STARTING);
 
     // Verify history was recorded
     assertTrue(compressor.getOperatingHistory().getPointCount() > 0);
@@ -281,47 +281,47 @@ public class CompressorDynamicSimulationTest {
     CompressorEventListener listener = new CompressorEventListener() {
       @Override
       public void onSurgeApproach(Compressor compressor, double surgeMargin, boolean isCritical) {
-	callCount[0]++;
+        callCount[0]++;
       }
 
       @Override
       public void onSurgeOccurred(Compressor compressor, double surgeMargin) {
-	callCount[0]++;
+        callCount[0]++;
       }
 
       @Override
       public void onSpeedLimitExceeded(Compressor compressor, double currentSpeed, double ratio) {
-	callCount[0]++;
+        callCount[0]++;
       }
 
       @Override
       public void onSpeedBelowMinimum(Compressor compressor, double currentSpeed, double ratio) {
-	callCount[0]++;
+        callCount[0]++;
       }
 
       @Override
       public void onPowerLimitExceeded(Compressor compressor, double currentPower, double maxPower) {
-	callCount[0]++;
+        callCount[0]++;
       }
 
       @Override
       public void onStateChange(Compressor compressor, CompressorState oldState, CompressorState newState) {
-	callCount[0]++;
+        callCount[0]++;
       }
 
       @Override
       public void onStoneWallApproach(Compressor compressor, double stoneWallMargin) {
-	callCount[0]++;
+        callCount[0]++;
       }
 
       @Override
       public void onStartupComplete(Compressor compressor) {
-	callCount[0]++;
+        callCount[0]++;
       }
 
       @Override
       public void onShutdownComplete(Compressor compressor) {
-	callCount[0]++;
+        callCount[0]++;
       }
     };
 

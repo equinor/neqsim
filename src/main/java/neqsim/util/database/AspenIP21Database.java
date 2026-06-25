@@ -30,7 +30,7 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
   public AspenIP21Database() {
     try {
       if (dataBaseType.equals("Karsto")) {
-	Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").getDeclaredConstructor().newInstance();
+        Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").getDeclaredConstructor().newInstance();
       }
     } catch (Exception ex) {
       logger.error("error in Online Karsto ", ex);
@@ -63,11 +63,11 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
       logger.error("The Kaarsto database must be registered on the local DBMS to work.");
     } finally {
       try {
-	if (ctx != null) {
-	  ctx.close();
-	}
+        if (ctx != null) {
+          ctx.close();
+        }
       } catch (Exception ex) {
-	logger.error(ex.getMessage(), ex);
+        logger.error(ex.getMessage(), ex);
       }
     }
     return null;

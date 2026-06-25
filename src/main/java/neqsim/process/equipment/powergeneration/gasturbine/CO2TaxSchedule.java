@@ -68,42 +68,42 @@ public final class CO2TaxSchedule implements Serializable {
       reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
       String header = reader.readLine();
       if (header == null) {
-	return new CO2TaxSchedule(map);
+        return new CO2TaxSchedule(map);
       }
       String[] headers = header.split(",");
       int yearIdx = indexOf(headers, "year");
       int totalIdx = indexOf(headers, "total_NOK_per_tonne");
       if (yearIdx < 0 || totalIdx < 0) {
-	logger.warn("CO2 tax CSV missing year or total_NOK_per_tonne column");
-	return new CO2TaxSchedule(map);
+        logger.warn("CO2 tax CSV missing year or total_NOK_per_tonne column");
+        return new CO2TaxSchedule(map);
       }
       String line;
       while ((line = reader.readLine()) != null) {
-	line = line.trim();
-	if (line.length() == 0 || line.startsWith("#")) {
-	  continue;
-	}
-	String[] parts = line.split(",");
-	if (parts.length <= Math.max(yearIdx, totalIdx)) {
-	  continue;
-	}
-	try {
-	  int year = Integer.parseInt(parts[yearIdx].trim());
-	  double total = Double.parseDouble(parts[totalIdx].trim());
-	  map.put(year, total);
-	} catch (NumberFormatException ex) {
-	  logger.warn("Skipping invalid CO2 tax row: {}", line);
-	}
+        line = line.trim();
+        if (line.length() == 0 || line.startsWith("#")) {
+          continue;
+        }
+        String[] parts = line.split(",");
+        if (parts.length <= Math.max(yearIdx, totalIdx)) {
+          continue;
+        }
+        try {
+          int year = Integer.parseInt(parts[yearIdx].trim());
+          double total = Double.parseDouble(parts[totalIdx].trim());
+          map.put(year, total);
+        } catch (NumberFormatException ex) {
+          logger.warn("Skipping invalid CO2 tax row: {}", line);
+        }
       }
     } catch (IOException ex) {
       logger.error("Failed to read CO2 tax schedule", ex);
     } finally {
       if (reader != null) {
-	try {
-	  reader.close();
-	} catch (IOException ignore) {
-	  // ignore close failures
-	}
+        try {
+          reader.close();
+        } catch (IOException ignore) {
+          // ignore close failures
+        }
       }
     }
     return new CO2TaxSchedule(map);
@@ -149,7 +149,7 @@ public final class CO2TaxSchedule implements Serializable {
   private static int indexOf(String[] headers, String name) {
     for (int i = 0; i < headers.length; i++) {
       if (headers[i].trim().equalsIgnoreCase(name)) {
-	return i;
+        return i;
       }
     }
     return -1;

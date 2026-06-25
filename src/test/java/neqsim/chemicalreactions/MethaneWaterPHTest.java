@@ -57,30 +57,30 @@ public class MethaneWaterPHTest {
 
       // Print phase information
       for (int p = 0; p < system.getNumberOfPhases(); p++) {
-	String phaseType = system.getPhase(p).getPhaseTypeName();
-	logger.info("\nPhase " + p + " (" + phaseType + "):");
+        String phaseType = system.getPhase(p).getPhaseTypeName();
+        logger.info("\nPhase " + p + " (" + phaseType + "):");
 
-	// Check if this is the aqueous phase
-	boolean isAqueous = "aqueous".equalsIgnoreCase(phaseType);
-	if (!isAqueous && system.getPhase(p).hasComponent("water")) {
-	  double waterX = system.getPhase(p).getComponent("water").getx();
-	  isAqueous = waterX > 0.5;
-	}
+        // Check if this is the aqueous phase
+        boolean isAqueous = "aqueous".equalsIgnoreCase(phaseType);
+        if (!isAqueous && system.getPhase(p).hasComponent("water")) {
+          double waterX = system.getPhase(p).getComponent("water").getx();
+          isAqueous = waterX > 0.5;
+        }
 
-	// Print composition
-	for (int i = 0; i < system.getPhase(p).getNumberOfComponents(); i++) {
-	  double x = system.getPhase(p).getComponent(i).getx();
-	  if (x > 1e-10) {
-	    logger.printf(org.apache.logging.log4j.Level.INFO, "  %-15s x = %.6f%n",
-		system.getPhase(p).getComponent(i).getComponentName(), x);
-	  }
-	}
+        // Print composition
+        for (int i = 0; i < system.getPhase(p).getNumberOfComponents(); i++) {
+          double x = system.getPhase(p).getComponent(i).getx();
+          if (x > 1e-10) {
+            logger.printf(org.apache.logging.log4j.Level.INFO, "  %-15s x = %.6f%n",
+                system.getPhase(p).getComponent(i).getComponentName(), x);
+          }
+        }
 
-	// Print pH for aqueous phase
-	if (isAqueous) {
-	  double pH = system.getPhase(p).getpH();
-	  logger.printf(org.apache.logging.log4j.Level.INFO, "\n  >>> pH = %.4f <<<%n", pH);
-	}
+        // Print pH for aqueous phase
+        if (isAqueous) {
+          double pH = system.getPhase(p).getpH();
+          logger.printf(org.apache.logging.log4j.Level.INFO, "\n  >>> pH = %.4f <<<%n", pH);
+        }
       }
 
       logger.info("\n--------------------------------------------------");

@@ -39,15 +39,15 @@ class McpRunnerContractTest {
       JsonObject response = JsonParser.parseString(responseJson).getAsJsonObject();
 
       assertTrue(!"error".equals(response.get("status").getAsString()),
-	  toolName + " returned an error response: " + responseJson);
+          toolName + " returned an error response: " + responseJson);
       assertEquals(contract.get("apiVersion").getAsString(), response.get("apiVersion").getAsString(),
-	  toolName + " apiVersion mismatch");
+          toolName + " apiVersion mismatch");
       assertEquals(toolName, response.get("tool").getAsString(), toolName + " tool mismatch");
       assertRequiredFields(toolName, response, contract.getAsJsonArray("requiredFields"));
       assertRequiredFields(toolName, response.getAsJsonObject("validation"),
-	  contract.getAsJsonArray("requiredValidationFields"));
+          contract.getAsJsonArray("requiredValidationFields"));
       assertRequiredFields(toolName, response.getAsJsonObject("qualityGate"),
-	  contract.getAsJsonArray("requiredQualityGateFields"));
+          contract.getAsJsonArray("requiredQualityGateFields"));
     }
   }
 
@@ -111,11 +111,11 @@ class McpRunnerContractTest {
     }
     if ("getSimulationVariable".equals(toolName)) {
       return AutomationRunner.getVariable(ExampleCatalog.processSimpleSeparation(), "HP Sep.gasOutStream.temperature",
-	  "C");
+          "C");
     }
     if ("setSimulationVariable".equals(toolName)) {
       return AutomationRunner.setVariableAndRun(ExampleCatalog.processSimpleSeparation(), "feed.temperature", 35.0,
-	  "C");
+          "C");
     }
     if ("saveSimulationState".equals(toolName)) {
       return AutomationRunner.saveState(ExampleCatalog.processSimpleSeparation(), "base", "1.0");

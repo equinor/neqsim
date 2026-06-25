@@ -226,7 +226,7 @@ public class PushButton extends MeasurementDeviceBaseClass {
       return getMeasuredValue();
     }
     throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getMeasuredValue", "unit",
-	"PushButton only supports 'binary' unit"));
+        "PushButton only supports 'binary' unit"));
   }
 
   /**
@@ -261,11 +261,11 @@ public class PushButton extends MeasurementDeviceBaseClass {
     if (!linkedLogics.isEmpty()) {
       sb.append(", Linked Logic: [");
       for (int i = 0; i < linkedLogics.size(); i++) {
-	if (i > 0) {
-	  sb.append(", ");
-	}
-	ProcessLogic logic = linkedLogics.get(i);
-	sb.append(logic.getName()).append(" (").append(logic.getState()).append(")");
+        if (i > 0) {
+          sb.append(", ");
+        }
+        ProcessLogic logic = linkedLogics.get(i);
+        sb.append(logic.getName()).append(" (").append(logic.getState()).append(")");
       }
       sb.append("]");
     }

@@ -143,7 +143,7 @@ public class MDMTCalculator implements Serializable {
     sb.append(String.format("  MDMT (allowed coldest) : %.1f °C%n", mdmt));
     sb.append(String.format("  Min operating temp     : %.1f °C%n", minOperatingTempC));
     sb.append("  Verdict                : ")
-	.append(isAcceptable(minOperatingTempC) ? "PASS" : "FAIL — brittle fracture risk").append('\n');
+        .append(isAcceptable(minOperatingTempC) ? "PASS" : "FAIL — brittle fracture risk").append('\n');
     return sb.toString();
   }
 }

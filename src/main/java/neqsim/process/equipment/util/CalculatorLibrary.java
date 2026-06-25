@@ -103,23 +103,23 @@ public final class CalculatorLibrary {
       Stream targetStream = requireStream(output, "energy balance output");
 
       if (inputs == null || inputs.isEmpty()) {
-	throw new IllegalArgumentException("Energy balance requires at least one input stream");
+        throw new IllegalArgumentException("Energy balance requires at least one input stream");
       }
 
       double targetPressure = targetStream.getThermoSystem().getPressure();
       double totalEnthalpy = 0.0;
       for (ProcessEquipmentInterface equipment : inputs) {
-	Stream stream = requireStream(equipment, "energy balance input");
-	totalEnthalpy += stream.getThermoSystem().getEnthalpy();
+        Stream stream = requireStream(equipment, "energy balance input");
+        totalEnthalpy += stream.getThermoSystem().getEnthalpy();
       }
 
       ThermodynamicOperations ops = new ThermodynamicOperations(targetStream.getThermoSystem());
       ops.getSystem().setPressure(targetPressure);
       try {
-	ops.PHflash(totalEnthalpy);
+        ops.PHflash(totalEnthalpy);
       } catch (Exception ex) {
-	logger.error("Energy balance flash failed", ex);
-	throw new IllegalStateException("Energy balance flash failed", ex);
+        logger.error("Energy balance flash failed", ex);
+        throw new IllegalStateException("Energy balance flash failed", ex);
       }
 
       targetStream.setThermoSystem(ops.getSystem());
@@ -190,10 +190,10 @@ public final class CalculatorLibrary {
       double surgeMarginFactor) {
     return (inputs, output) -> {
       if (inputs == null || inputs.isEmpty() || !(inputs.get(0) instanceof Compressor)) {
-	throw new IllegalArgumentException("Anti-surge calculation requires a Compressor as first input");
+        throw new IllegalArgumentException("Anti-surge calculation requires a Compressor as first input");
       }
       if (!(output instanceof Splitter)) {
-	throw new IllegalArgumentException("Anti-surge calculation requires a Splitter as output");
+        throw new IllegalArgumentException("Anti-surge calculation requires a Splitter as output");
       }
 
       Compressor compressor = (Compressor) inputs.get(0);
@@ -203,8 +203,8 @@ public final class CalculatorLibrary {
       double currentRecycleFlow = splitter.getSplitStream(1).getFlowRate("m3/hr");
 
       if (!Double.isFinite(inletFlow) || !Double.isFinite(currentRecycleFlow)) {
-	logger.warn("Invalid flow rate detected during anti-surge calculation");
-	return;
+        logger.warn("Invalid flow rate detected during anti-surge calculation");
+        return;
       }
 
       double surgeFlow = compressor.getSurgeFlowRate() * surgeMarginFactor;

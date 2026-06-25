@@ -203,7 +203,7 @@ public class SafetyCriticalElement implements Serializable {
   public SafetyBarrier getBarrier(String barrierId) {
     for (SafetyBarrier barrier : barriers) {
       if (barrier.getId().equals(barrierId)) {
-	return barrier;
+        return barrier;
       }
     }
     return null;
@@ -245,7 +245,7 @@ public class SafetyCriticalElement implements Serializable {
     int count = 0;
     for (SafetyBarrier barrier : barriers) {
       if (barrier.isAvailable()) {
-	count++;
+        count++;
       }
     }
     return count;
@@ -259,7 +259,7 @@ public class SafetyCriticalElement implements Serializable {
   public boolean hasImpairedBarrier() {
     for (SafetyBarrier barrier : barriers) {
       if (!barrier.isAvailable()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -273,12 +273,12 @@ public class SafetyCriticalElement implements Serializable {
   public boolean hasTraceableEvidence() {
     for (DocumentEvidence item : evidence) {
       if (item.isTraceable()) {
-	return true;
+        return true;
       }
     }
     for (SafetyBarrier barrier : barriers) {
       if (barrier.hasTraceableEvidence()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -306,7 +306,7 @@ public class SafetyCriticalElement implements Serializable {
     for (SafetyBarrier barrier : barriers) {
       List<String> barrierFindings = barrier.validate();
       for (String finding : barrierFindings) {
-	findings.add("Barrier " + barrier.getId() + ": " + finding);
+        findings.add("Barrier " + barrier.getId() + ": " + finding);
       }
     }
     return findings;

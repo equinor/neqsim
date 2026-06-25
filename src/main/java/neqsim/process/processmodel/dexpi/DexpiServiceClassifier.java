@@ -175,18 +175,18 @@ final class DexpiServiceClassifier {
     String getFluidCode() {
       switch (this) {
       case FLARE:
-	return "FL";
+        return "FL";
       case DRAIN:
-	return "DR";
+        return "DR";
       case FUEL_GAS:
-	return "FG";
+        return "FG";
       case UTILITY:
-	return "UT";
+        return "UT";
       case SECONDARY_PROCESS:
-	return "PL";
+        return "PL";
       case MAIN_PROCESS:
       default:
-	return "PG";
+        return "PG";
       }
     }
   }
@@ -218,8 +218,8 @@ final class DexpiServiceClassifier {
       return ServiceType.FUEL_GAS;
     }
     if (n.contains("steam") || n.contains("cooling water") || n.contains("cw ") || n.contains("instrument air")
-	|| n.contains("utility") || n.contains("nitrogen") || n.contains(" n2") || n.startsWith("n2")
-	|| n.contains("glycol") || n.contains("seal gas") || n.contains("flush")) {
+        || n.contains("utility") || n.contains("nitrogen") || n.contains(" n2") || n.startsWith("n2")
+        || n.contains("glycol") || n.contains("seal gas") || n.contains("flush")) {
       return ServiceType.UTILITY;
     }
     return ServiceType.MAIN_PROCESS;
@@ -261,12 +261,12 @@ final class DexpiServiceClassifier {
     if (mainProcessFlowKgHr > 0.0) {
       double flow = 0.0;
       try {
-	flow = stream.getFlowRate("kg/hr");
+        flow = stream.getFlowRate("kg/hr");
       } catch (RuntimeException ex) {
-	flow = 0.0;
+        flow = 0.0;
       }
       if (flow > 0.0 && flow < 0.2 * mainProcessFlowKgHr) {
-	return ServiceType.SECONDARY_PROCESS;
+        return ServiceType.SECONDARY_PROCESS;
       }
     }
     return ServiceType.MAIN_PROCESS;
@@ -281,7 +281,7 @@ final class DexpiServiceClassifier {
   private static boolean isPredominantlyWater(SystemInterface fluid) {
     try {
       if (!fluid.getPhase(0).hasComponent("water")) {
-	return false;
+        return false;
       }
       double z = fluid.getPhase(0).getComponent("water").getz();
       return z > 0.5;

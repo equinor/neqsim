@@ -222,7 +222,7 @@ public class NetworkLoop implements Serializable {
     sb.append("Loop-").append(loopId).append(" [");
     for (int i = 0; i < members.size(); i++) {
       if (i > 0) {
-	sb.append(" -> ");
+        sb.append(" -> ");
       }
       LoopMember m = members.get(i);
       sb.append(m.getPipeName());

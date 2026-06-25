@@ -435,24 +435,24 @@ public class FlexiblePipe extends TwoPortEquipment {
       // Friction factor using Colebrook-White (simplified)
       double frictionFactor;
       if (reynolds < 2300) {
-	frictionFactor = 64 / reynolds;
+        frictionFactor = 64 / reynolds;
       } else {
-	// Explicit approximation of Colebrook-White
-	double A = (roughness / innerDiameter) / 3.7 + 5.74 / Math.pow(reynolds, 0.9);
-	frictionFactor = 0.25 / Math.pow(Math.log10(A), 2);
+        // Explicit approximation of Colebrook-White
+        double A = (roughness / innerDiameter) / 3.7 + 5.74 / Math.pow(reynolds, 0.9);
+        frictionFactor = 0.25 / Math.pow(Math.log10(A), 2);
       }
 
       // Darcy-Weisbach pressure drop
       frictionDrop = frictionFactor * (length / innerDiameter) * (density * velocity * velocity / 2) / 100000; // Convert
-													       // Pa
-													       // to
-													       // bar
+      // Pa
+      // to
+      // bar
 
       // Add elevation change for risers
       if (application == Application.DYNAMIC_RISER || application == Application.STATIC_RISER) {
-	// Approximate hydrostatic component
-	double elevationDrop = density * 9.81 * waterDepth / 100000; // bar
-	frictionDrop += elevationDrop;
+        // Approximate hydrostatic component
+        double elevationDrop = density * 9.81 * waterDepth / 100000; // bar
+        frictionDrop += elevationDrop;
       }
 
       // End fitting losses
@@ -473,11 +473,11 @@ public class FlexiblePipe extends TwoPortEquipment {
     if (sourService || h2sContentPercent > 0.05) {
       // Carcass must be suitable
       if (!"316L".equals(carcassMaterial) && !"Duplex".equals(carcassMaterial)) {
-	return false;
+        return false;
       }
       // Internal sheath must be suitable
       if (!"PVDF".equals(internalSheathMaterial) && !"PA11".equals(internalSheathMaterial)) {
-	return false;
+        return false;
       }
     }
     return true;

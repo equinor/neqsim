@@ -296,13 +296,13 @@ public class ControlValveSizing_MultiphaseChoke implements ControlValveSizingInt
       double calcQ = massFlow / density;
 
       if (Math.abs(calcQ - Q) / Q < tolerance) {
-	return openingMid;
+        return openingMid;
       }
 
       if (calcQ > Q) {
-	openingHigh = openingMid;
+        openingHigh = openingMid;
       } else {
-	openingLow = openingMid;
+        openingLow = openingMid;
       }
     }
 

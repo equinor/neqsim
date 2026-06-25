@@ -39,11 +39,11 @@ class HAZOPStudyRunnerTest {
   @Test
   void testTopLevelProcessInputRuns() {
     String json = "{\"studyId\":\"HAZOP-SIMPLE\"," + "\"runSimulations\":false,"
-	+ "\"failureModes\":[\"BLOCKED_OUTLET\"],"
-	+ "\"fluid\":{\"model\":\"SRK\",\"temperature\":298.15,\"pressure\":50.0,"
-	+ "\"mixingRule\":\"classic\",\"components\":{\"methane\":0.85," + "\"ethane\":0.10,\"propane\":0.05}},"
-	+ "\"process\":[{\"type\":\"Stream\",\"name\":\"feed\"," + "\"properties\":{\"flowRate\":[10000.0,\"kg/hr\"]}},"
-	+ "{\"type\":\"Separator\",\"name\":\"HP Sep\",\"inlet\":\"feed\"}]}";
+        + "\"failureModes\":[\"BLOCKED_OUTLET\"],"
+        + "\"fluid\":{\"model\":\"SRK\",\"temperature\":298.15,\"pressure\":50.0,"
+        + "\"mixingRule\":\"classic\",\"components\":{\"methane\":0.85," + "\"ethane\":0.10,\"propane\":0.05}},"
+        + "\"process\":[{\"type\":\"Stream\",\"name\":\"feed\"," + "\"properties\":{\"flowRate\":[10000.0,\"kg/hr\"]}},"
+        + "{\"type\":\"Separator\",\"name\":\"HP Sep\",\"inlet\":\"feed\"}]}";
     JsonObject obj = JsonParser.parseString(HAZOPStudyRunner.run(json)).getAsJsonObject();
 
     assertEquals("success", obj.get("status").getAsString());

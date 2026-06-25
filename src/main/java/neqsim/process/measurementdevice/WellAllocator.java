@@ -71,8 +71,8 @@ public class WellAllocator extends StreamMeasurementDeviceBaseClass {
     double oilExportFlow = 0.0;
     for (int i = 0; i < numberOfComps; i++) {
       splitFactors[i] = exportGasStream.getFluid().getComponent(i).getFlowRate("kg/hr")
-	  / (exportGasStream.getFluid().getComponent(i).getFlowRate("kg/hr")
-	      + exportOilStream.getFluid().getComponent(i).getFlowRate("kg/hr"));
+          / (exportGasStream.getFluid().getComponent(i).getFlowRate("kg/hr")
+              + exportOilStream.getFluid().getComponent(i).getFlowRate("kg/hr"));
       gasExportFlow += stream.getFluid().getComponent(i).getTotalFlowRate(unit) * splitFactors[i];
       oilExportFlow += stream.getFluid().getComponent(i).getTotalFlowRate(unit) * (1.0 - splitFactors[i]);
     }

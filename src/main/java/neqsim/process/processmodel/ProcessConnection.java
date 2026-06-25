@@ -160,8 +160,8 @@ public class ProcessConnection implements Serializable {
     }
     ProcessConnection other = (ProcessConnection) obj;
     return Objects.equals(sourceEquipment, other.sourceEquipment) && Objects.equals(sourcePort, other.sourcePort)
-	&& Objects.equals(targetEquipment, other.targetEquipment) && Objects.equals(targetPort, other.targetPort)
-	&& type == other.type;
+        && Objects.equals(targetEquipment, other.targetEquipment) && Objects.equals(targetPort, other.targetPort)
+        && type == other.type;
   }
 
   /** {@inheritDoc} */

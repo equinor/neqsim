@@ -94,7 +94,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
 
     StreamInterface htSplit = manifold.getSplitStream(1);
     assertTrue(htSplit.getFlowRate("kg/hr") < 1.0,
-	"HT split flow should be near zero, got " + htSplit.getFlowRate("kg/hr"));
+        "HT split flow should be near zero, got " + htSplit.getFlowRate("kg/hr"));
 
     Compressor htK1 = (Compressor) htTrain.getUnit("ht_injection_compressors_K1");
     Heater htIC = (Heater) htTrain.getUnit("ht_injection_compressors_IC");
@@ -258,7 +258,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
 
     // Train B should be auto-bypassed (received ~totalFlow * 5e-6 * 1e-4 << 1 kg/hr)
     assertFalse(((Compressor) htB.getUnit("HT_B_K1")).isActive(),
-	"HT train B K1 should be auto-bypassed (feed << 1 kg/hr)");
+        "HT train B K1 should be auto-bypassed (feed << 1 kg/hr)");
     assertFalse(((Compressor) htB.getUnit("HT_B_K2")).isActive(), "HT train B K2 should be auto-bypassed");
 
     // Train A may or may not bypass depending on htFractionOfTotal*aSplit*totalFlow; here it
@@ -266,7 +266,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
     double htAFeed = htManifold.getSplitStream(0).getFlowRate("kg/hr");
     if (htAFeed >= 1.0) {
       assertTrue(((Compressor) htA.getUnit("HT_A_K1")).isActive(),
-	  "HT train A should run (feed " + htAFeed + " kg/hr above threshold)");
+          "HT train A should run (feed " + htAFeed + " kg/hr above threshold)");
     }
 
     // Export branch must still run accurately — total mass balance preserved.
@@ -324,7 +324,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
 
       assertTrue(expK2.isActive(), "Export K2 must remain active during transient step " + step);
       assertEquals(150.0, expK2.getOutletStream().getPressure("bara"), 0.5,
-	  "Export discharge pressure must stay on spec during transient step " + step);
+          "Export discharge pressure must stay on spec during transient step " + step);
     }
 
     // Manual lock must also be honored during runTransient (not just auto-bypass).
@@ -332,7 +332,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
     manifoldArea.run();
     htTrain.run();
     assertTrue(htK1.isActive() || htK1.isLockedInactive() == false,
-	"after activateAll() + low feed, K1 is either active or low-flow-bypassed");
+        "after activateAll() + low feed, K1 is either active or low-flow-bypassed");
 
     htK1.setLockedInactive(true);
     htIC.setLockedInactive(true);

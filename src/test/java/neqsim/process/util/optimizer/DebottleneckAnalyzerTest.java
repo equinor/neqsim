@@ -1,6 +1,9 @@
 package neqsim.process.util.optimizer;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.separator.Separator;
@@ -8,7 +11,6 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import java.util.List;
 
 /**
  * Tests for DebottleneckAnalyzer.

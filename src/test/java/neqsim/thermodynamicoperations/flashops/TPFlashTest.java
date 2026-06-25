@@ -296,13 +296,13 @@ class TPFlashTest {
     int isolatedFlips = 0;
     for (int j = 1; j < nPoints - 1; j++) {
       if (phaseCount[j] != phaseCount[j - 1] && phaseCount[j] != phaseCount[j + 1]) {
-	isolatedFlips++;
+        isolatedFlips++;
       }
     }
 
     // Allow at most 1 isolated flip (the exact boundary point can be ambiguous)
     assertTrue(isolatedFlips <= 1, "Too many isolated phase flips (" + isolatedFlips + ") at P=" + pressure
-	+ " bara — stability analysis is inconsistent near boundary");
+        + " bara — stability analysis is inconsistent near boundary");
 
     // Scan temperature at fixed pressure 200 bara
     pressure = 200.0;
@@ -317,12 +317,12 @@ class TPFlashTest {
     isolatedFlips = 0;
     for (int j = 1; j < nPoints - 1; j++) {
       if (phaseCount[j] != phaseCount[j - 1] && phaseCount[j] != phaseCount[j + 1]) {
-	isolatedFlips++;
+        isolatedFlips++;
       }
     }
 
     assertTrue(isolatedFlips <= 1, "Too many isolated phase flips (" + isolatedFlips + ") at P=" + pressure
-	+ " bara — stability analysis is inconsistent near boundary");
+        + " bara — stability analysis is inconsistent near boundary");
   }
 
   /**
@@ -354,24 +354,24 @@ class TPFlashTest {
     for (int iT = 0; iT < nT; iT++) {
       double T = 110.0 + iT * (200.0 - 110.0) / (nT - 1);
       for (int iP = 0; iP < nP; iP++) {
-	double P = 50.0 + iP * (180.0 - 50.0) / (nP - 1);
-	fluid.setTemperature(T, "K");
-	fluid.setPressure(P, "bara");
-	try {
-	  ops.TPflash();
-	  if (fluid.getNumberOfPhases() >= 2) {
-	    twoPhaseCount++;
-	  }
-	} catch (Exception ignored) {
-	  // convergence failure counted as single-phase
-	}
+        double P = 50.0 + iP * (180.0 - 50.0) / (nP - 1);
+        fluid.setTemperature(T, "K");
+        fluid.setPressure(P, "bara");
+        try {
+          ops.TPflash();
+          if (fluid.getNumberOfPhases() >= 2) {
+            twoPhaseCount++;
+          }
+        } catch (Exception ignored) {
+          // convergence failure counted as single-phase
+        }
       }
     }
 
     // v3.7.0 baseline: 592/900. c91e99c regression dropped to 137/900.
     // Require at least 500 to flag any future regression of the same family.
     assertTrue(twoPhaseCount >= 500, "Low-T methane/nC7 two-phase region shrank: " + twoPhaseCount
-	+ "/900 cells 2-phase " + "(v3.7.0 baseline = 592). Possible TPflash stability regression.");
+        + "/900 cells 2-phase " + "(v3.7.0 baseline = 592). Possible TPflash stability regression.");
   }
 
   /**
@@ -392,16 +392,16 @@ class TPFlashTest {
     for (int pressureIndex = 0; pressureIndex < pressurePoints; pressureIndex++) {
       double pressure = 120.0 + pressureIndex * (230.0 - 120.0) / (pressurePoints - 1);
       for (int temperatureIndex = 0; temperatureIndex < temperaturePoints; temperatureIndex++) {
-	double temperature = 360.0 + temperatureIndex * (470.0 - 360.0) / (temperaturePoints - 1);
-	fluid.setPressure(pressure, "bara");
-	fluid.setTemperature(temperature, "K");
-	try {
-	  operations.TPflash();
-	  phaseSignatures[pressureIndex][temperatureIndex] = phaseMapSignature(fluid);
-	} catch (Exception ex) {
-	  failedFlashCount++;
-	  phaseSignatures[pressureIndex][temperatureIndex] = -1;
-	}
+        double temperature = 360.0 + temperatureIndex * (470.0 - 360.0) / (temperaturePoints - 1);
+        fluid.setPressure(pressure, "bara");
+        fluid.setTemperature(temperature, "K");
+        try {
+          operations.TPflash();
+          phaseSignatures[pressureIndex][temperatureIndex] = phaseMapSignature(fluid);
+        } catch (Exception ex) {
+          failedFlashCount++;
+          phaseSignatures[pressureIndex][temperatureIndex] = -1;
+        }
       }
     }
 
@@ -409,7 +409,7 @@ class TPFlashTest {
 
     assertEquals(0, failedFlashCount, "TPflash should not throw while scanning the methane/nC7 phase-map shoulder");
     assertEquals(0, isolatedSpots, "Phase-map failed spots increased: " + isolatedSpots
-	+ " isolated cells in the methane/nC7 gas-oil shoulder grid");
+        + " isolated cells in the methane/nC7 gas-oil shoulder grid");
   }
 
   /**
@@ -431,12 +431,12 @@ class TPFlashTest {
       operations.TPflash();
 
       assertEquals(1, fluid.getNumberOfPhases(),
-	  "Known methane/nC7 low-temperature spot should collapse to one phase at P="
-	      + singleOilConditions[spotIndex][0] + " bara, T=" + singleOilConditions[spotIndex][1] + " K");
+          "Known methane/nC7 low-temperature spot should collapse to one phase at P="
+              + singleOilConditions[spotIndex][0] + " bara, T=" + singleOilConditions[spotIndex][1] + " K");
       assertTrue(fluid.hasPhaseType(PhaseType.OIL),
-	  "Known methane/nC7 low-temperature spot should be the lower-Gibbs oil root");
+          "Known methane/nC7 low-temperature spot should be the lower-Gibbs oil root");
       assertEquals(1.0, phaseFractionSum(fluid), 1.0e-10,
-	  "Collapsed methane/nC7 low-temperature spot should have closed phase fractions");
+          "Collapsed methane/nC7 low-temperature spot should have closed phase fractions");
     }
 
     for (int spotIndex = 0; spotIndex < gasOilConditions.length; spotIndex++) {
@@ -448,11 +448,11 @@ class TPFlashTest {
       operations.TPflash();
 
       assertEquals(2, fluid.getNumberOfPhases(), "Known methane/nC7 phase-map spot should resolve to two phases at P="
-	  + gasOilConditions[spotIndex][0] + " bara, T=" + gasOilConditions[spotIndex][1] + " K");
+          + gasOilConditions[spotIndex][0] + " bara, T=" + gasOilConditions[spotIndex][1] + " K");
       assertTrue(fluid.hasPhaseType(PhaseType.GAS), "Known methane/nC7 phase-map spot should contain a gas phase");
       assertTrue(fluid.hasPhaseType(PhaseType.OIL), "Known methane/nC7 phase-map spot should contain an oil phase");
       assertEquals(1.0, phaseFractionSum(fluid), 1.0e-10,
-	  "Known methane/nC7 gas-oil spot should have closed phase fractions");
+          "Known methane/nC7 gas-oil spot should have closed phase fractions");
     }
   }
 
@@ -464,7 +464,7 @@ class TPFlashTest {
   @Test
   void testMethaneHeptaneSpuriousCollapseLeavesClosedPhaseSet() {
     double[][] collapsedCells = new double[][] { { 47.5, 180.0 }, { 55.0, 188.0 }, { 70.0, 192.0 }, { 78.5, 194.0 },
-	{ 81.0, 194.0 } };
+        { 81.0, 194.0 } };
 
     for (int i = 0; i < collapsedCells.length; i++) {
       SystemInterface fluid = createMethaneHeptanePhaseMapFluid();
@@ -476,13 +476,13 @@ class TPFlashTest {
       fluid.initPhysicalProperties("density");
 
       assertEquals(1.0, phaseFractionSum(fluid), 1.0e-10,
-	  "Phase fractions should close at P=" + collapsedCells[i][0] + " bara, T=" + collapsedCells[i][1] + " K");
+          "Phase fractions should close at P=" + collapsedCells[i][0] + " bara, T=" + collapsedCells[i][1] + " K");
       assertFalse(hasDuplicateActivePhaseCompositions(fluid),
-	  "Duplicate active phases at feed composition should be removed at P=" + collapsedCells[i][0] + " bara, T="
-	      + collapsedCells[i][1] + " K");
+          "Duplicate active phases at feed composition should be removed at P=" + collapsedCells[i][0] + " bara, T="
+              + collapsedCells[i][1] + " K");
       assertTrue(fluid.getDensity("kg/m3") > 400.0,
-	  "Collapsed methane/nC7 cell should not be a gas-like density hole at P=" + collapsedCells[i][0] + " bara, T="
-	      + collapsedCells[i][1] + " K");
+          "Collapsed methane/nC7 cell should not be a gas-like density hole at P=" + collapsedCells[i][0] + " bara, T="
+              + collapsedCells[i][1] + " K");
     }
   }
 
@@ -502,10 +502,10 @@ class TPFlashTest {
       operations.TPflash();
 
       assertEquals(1.0, phaseFractionSum(fluid), 1.0e-10,
-	  "Phase fractions should close at P=" + nonClosedCells[i][0] + " bara, T=" + nonClosedCells[i][1] + " K");
+          "Phase fractions should close at P=" + nonClosedCells[i][0] + " bara, T=" + nonClosedCells[i][1] + " K");
       assertFalse(hasDuplicateActivePhaseCompositions(fluid),
-	  "Closed phase set should not contain duplicate active compositions at P=" + nonClosedCells[i][0] + " bara, T="
-	      + nonClosedCells[i][1] + " K");
+          "Closed phase set should not contain duplicate active compositions at P=" + nonClosedCells[i][0] + " bara, T="
+              + nonClosedCells[i][1] + " K");
     }
   }
 
@@ -530,9 +530,9 @@ class TPFlashTest {
 
       double density = fluid.getDensity("kg/m3");
       assertTrue(density > 500.0, "Spurious low-density spike at P=" + spuriousCells[i][0] + " bara, T="
-	  + spuriousCells[i][1] + " K: density=" + density + " kg/m^3 (expected > 500 kg/m^3 after rescue collapse).");
+          + spuriousCells[i][1] + " K: density=" + density + " kg/m^3 (expected > 500 kg/m^3 after rescue collapse).");
       assertFalse(fluid.hasPhaseType(PhaseType.GAS), "Spurious GAS phase should be removed at P=" + spuriousCells[i][0]
-	  + " bara, T=" + spuriousCells[i][1] + " K after spurious-multiphase rescue.");
+          + " bara, T=" + spuriousCells[i][1] + " K after spurious-multiphase rescue.");
     }
   }
 
@@ -559,9 +559,9 @@ class TPFlashTest {
     flash.run();
 
     assertTrue(flash.hasLastStabilityAnalysisFailed(),
-	"Synthetic stability failure should be visible in TPflash diagnostics");
+        "Synthetic stability failure should be visible in TPflash diagnostics");
     assertTrue(flash.getLastStabilityOutcome().contains("continuing TPflash iteration"),
-	"TPflash should report the conservative iteration fallback");
+        "TPflash should report the conservative iteration fallback");
     assertTrue(gas.getNumberOfPhases() >= 1, "Fallback iteration should leave a valid phase set");
   }
 
@@ -577,9 +577,9 @@ class TPFlashTest {
     fluid.addComponent("n-heptane", 30.0);
     fluid.setMixingRule("classic");
     ((EosMixingRulesInterface) fluid.getPhase(0).getMixingRule()).setBinaryInteractionParameter(0, 1,
-	binaryInteractionParameter);
+        binaryInteractionParameter);
     ((EosMixingRulesInterface) fluid.getPhase(1).getMixingRule()).setBinaryInteractionParameter(0, 1,
-	binaryInteractionParameter);
+        binaryInteractionParameter);
     fluid.setMultiPhaseCheck(true);
     return fluid;
   }
@@ -595,15 +595,15 @@ class TPFlashTest {
     for (int phaseIndex = 0; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
       PhaseType phaseType = fluid.getPhase(phaseIndex).getType();
       if (phaseType == PhaseType.GAS) {
-	signature += 1;
+        signature += 1;
       } else if (phaseType == PhaseType.OIL) {
-	signature += 2;
+        signature += 2;
       } else if (phaseType == PhaseType.LIQUID) {
-	signature += 4;
+        signature += 4;
       } else if (phaseType == PhaseType.AQUEOUS) {
-	signature += 8;
+        signature += 8;
       } else {
-	signature += 16;
+        signature += 16;
       }
     }
     return signature;
@@ -632,14 +632,14 @@ class TPFlashTest {
   private boolean hasDuplicateActivePhaseCompositions(SystemInterface fluid) {
     for (int firstPhase = 0; firstPhase < fluid.getNumberOfPhases(); firstPhase++) {
       for (int secondPhase = firstPhase + 1; secondPhase < fluid.getNumberOfPhases(); secondPhase++) {
-	double compositionDifference = 0.0;
-	for (int componentIndex = 0; componentIndex < fluid.getPhase(0).getNumberOfComponents(); componentIndex++) {
-	  compositionDifference += Math.abs(fluid.getPhase(firstPhase).getComponent(componentIndex).getx()
-	      - fluid.getPhase(secondPhase).getComponent(componentIndex).getx());
-	}
-	if (compositionDifference < 1.0e-6) {
-	  return true;
-	}
+        double compositionDifference = 0.0;
+        for (int componentIndex = 0; componentIndex < fluid.getPhase(0).getNumberOfComponents(); componentIndex++) {
+          compositionDifference += Math.abs(fluid.getPhase(firstPhase).getComponent(componentIndex).getx()
+              - fluid.getPhase(secondPhase).getComponent(componentIndex).getx());
+        }
+        if (compositionDifference < 1.0e-6) {
+          return true;
+        }
       }
     }
     return false;
@@ -655,15 +655,15 @@ class TPFlashTest {
     int isolatedSpots = 0;
     for (int pressureIndex = 1; pressureIndex < phaseSignatures.length - 1; pressureIndex++) {
       for (int temperatureIndex = 1; temperatureIndex < phaseSignatures[pressureIndex].length - 1; temperatureIndex++) {
-	int center = phaseSignatures[pressureIndex][temperatureIndex];
-	int lowerPressure = phaseSignatures[pressureIndex - 1][temperatureIndex];
-	int higherPressure = phaseSignatures[pressureIndex + 1][temperatureIndex];
-	int lowerTemperature = phaseSignatures[pressureIndex][temperatureIndex - 1];
-	int higherTemperature = phaseSignatures[pressureIndex][temperatureIndex + 1];
-	if (center != lowerPressure && lowerPressure == higherPressure && lowerPressure == lowerTemperature
-	    && lowerPressure == higherTemperature) {
-	  isolatedSpots++;
-	}
+        int center = phaseSignatures[pressureIndex][temperatureIndex];
+        int lowerPressure = phaseSignatures[pressureIndex - 1][temperatureIndex];
+        int higherPressure = phaseSignatures[pressureIndex + 1][temperatureIndex];
+        int lowerTemperature = phaseSignatures[pressureIndex][temperatureIndex - 1];
+        int higherTemperature = phaseSignatures[pressureIndex][temperatureIndex + 1];
+        if (center != lowerPressure && lowerPressure == higherPressure && lowerPressure == lowerTemperature
+            && lowerPressure == higherTemperature) {
+          isolatedSpots++;
+        }
       }
     }
     return isolatedSpots;

@@ -148,10 +148,10 @@ class RootCauseAnalyzerTest {
   @Test
   void testHypothesisBuilder() {
     Hypothesis h = new Hypothesis.Builder().name("bearing_wear").description("Worn bearings causing vibration")
-	.category(Hypothesis.Category.MECHANICAL).priorProbability(0.3)
-	.addExpectedSignal("vibration|bearing", Hypothesis.ExpectedBehavior.INCREASE, 2.0,
-	    "Bearing wear should increase vibration")
-	.addAction("Inspect bearings").addAction("Check lubrication").build();
+        .category(Hypothesis.Category.MECHANICAL).priorProbability(0.3)
+        .addExpectedSignal("vibration|bearing", Hypothesis.ExpectedBehavior.INCREASE, 2.0,
+            "Bearing wear should increase vibration")
+        .addAction("Inspect bearings").addAction("Check lubrication").build();
 
     assertEquals("bearing_wear", h.getName());
     assertEquals("Worn bearings causing vibration", h.getDescription());
@@ -186,7 +186,7 @@ class RootCauseAnalyzerTest {
   @Test
   void testEvidenceMetadata() {
     Hypothesis.Evidence evidence = new Hypothesis.Evidence("vibration", "Increasing trend",
-	Hypothesis.EvidenceStrength.STRONG, "historian", true, 2.5, "PI:T-1234");
+        Hypothesis.EvidenceStrength.STRONG, "historian", true, 2.5, "PI:T-1234");
 
     assertTrue(evidence.isSupporting());
     assertEquals(2.5, evidence.getWeight(), 0.001);
@@ -220,8 +220,8 @@ class RootCauseAnalyzerTest {
     boolean foundTrend = false;
     for (Hypothesis.Evidence e : evidence) {
       if (e.getSource().contains("trend")) {
-	foundTrend = true;
-	assertEquals(Hypothesis.EvidenceStrength.STRONG, e.getStrength());
+        foundTrend = true;
+        assertEquals(Hypothesis.EvidenceStrength.STRONG, e.getStrength());
       }
     }
     assertTrue(foundTrend, "Should detect strong increasing trend");
@@ -239,7 +239,7 @@ class RootCauseAnalyzerTest {
     collector.setHistorianData(data, new double[] { 0, 1, 2, 3, 4 });
 
     Hypothesis h = new Hypothesis.Builder().name("bearing_degradation").description("Bearing").addExpectedSignal(
-	"vibration|bearing", Hypothesis.ExpectedBehavior.INCREASE, 3.0, "Bearing degradation raises vibration").build();
+        "vibration|bearing", Hypothesis.ExpectedBehavior.INCREASE, 3.0, "Bearing degradation raises vibration").build();
 
     List<Hypothesis.Evidence> evidence = collector.collectEvidence(h);
     assertFalse(evidence.isEmpty());
@@ -259,7 +259,7 @@ class RootCauseAnalyzerTest {
     collector.setHistorianData(data, new double[] { 0, 1, 2, 3, 4 });
 
     Hypothesis h = new Hypothesis.Builder().name("bearing_degradation").description("Bearing").addExpectedSignal(
-	"vibration|bearing", Hypothesis.ExpectedBehavior.INCREASE, 3.0, "Bearing degradation raises vibration").build();
+        "vibration|bearing", Hypothesis.ExpectedBehavior.INCREASE, 3.0, "Bearing degradation raises vibration").build();
 
     List<Hypothesis.Evidence> evidence = collector.collectEvidence(h);
     assertFalse(evidence.isEmpty());
@@ -278,7 +278,7 @@ class RootCauseAnalyzerTest {
     collector.setHistorianData(data, new double[] { 0, 1, 2, 3 });
 
     Hypothesis h = new Hypothesis.Builder().name("bearing_degradation").description("Bearing").addExpectedSignal(
-	"vibration|bearing", Hypothesis.ExpectedBehavior.INCREASE, 3.0, "Bearing degradation raises vibration").build();
+        "vibration|bearing", Hypothesis.ExpectedBehavior.INCREASE, 3.0, "Bearing degradation raises vibration").build();
 
     assertTrue(collector.collectEvidence(h).isEmpty());
   }
@@ -293,7 +293,7 @@ class RootCauseAnalyzerTest {
     Hypothesis.Evidence strong = new Hypothesis.Evidence("temp", "High", Hypothesis.EvidenceStrength.STRONG, "test");
     Hypothesis.Evidence moderate = new Hypothesis.Evidence("press", "OK", Hypothesis.EvidenceStrength.MODERATE, "test");
     Hypothesis.Evidence contradictory = new Hypothesis.Evidence("vibration", "Decreasing",
-	Hypothesis.EvidenceStrength.CONTRADICTORY, "test", false, 2.0, "source");
+        Hypothesis.EvidenceStrength.CONTRADICTORY, "test", false, 2.0, "source");
 
     List<Hypothesis.Evidence> evidence = Arrays.asList(strong, moderate);
     double score = collector.calculateLikelihoodScore(evidence);
@@ -320,8 +320,8 @@ class RootCauseAnalyzerTest {
     boolean foundBearing = false;
     for (Hypothesis h : hypotheses) {
       if (h.getName().toLowerCase().contains("bearing")) {
-	foundBearing = true;
-	assertFalse(h.getExpectedSignals().isEmpty());
+        foundBearing = true;
+        assertFalse(h.getExpectedSignals().isEmpty());
       }
     }
     assertTrue(foundBearing, "Should include bearing-related hypothesis for vibration");
@@ -496,7 +496,7 @@ class RootCauseAnalyzerTest {
 
     for (int i = 1; i < ranked.size(); i++) {
       assertTrue(ranked.get(i - 1).getConfidenceScore() >= ranked.get(i).getConfidenceScore(),
-	  "Hypotheses should be sorted in descending confidence order");
+          "Hypotheses should be sorted in descending confidence order");
     }
   }
 
@@ -506,12 +506,12 @@ class RootCauseAnalyzerTest {
   @Test
   void testBuilderCopyIsIndependent() {
     Hypothesis.Builder original = new Hypothesis.Builder().name("original").description("Original hypothesis")
-	.category(Hypothesis.Category.MECHANICAL).priorProbability(0.3)
-	.addExpectedSignal("temp", Hypothesis.ExpectedBehavior.INCREASE, 2.0, "temp rises");
+        .category(Hypothesis.Category.MECHANICAL).priorProbability(0.3)
+        .addExpectedSignal("temp", Hypothesis.ExpectedBehavior.INCREASE, 2.0, "temp rises");
 
     Hypothesis.Builder copy = original.copy();
     copy.name("copy").description("Copied hypothesis").priorProbability(0.5).addExpectedSignal("pressure",
-	Hypothesis.ExpectedBehavior.DECREASE, 1.5, "pressure drops");
+        Hypothesis.ExpectedBehavior.DECREASE, 1.5, "pressure drops");
 
     Hypothesis h1 = original.build();
     Hypothesis h2 = copy.build();
@@ -538,8 +538,8 @@ class RootCauseAnalyzerTest {
     // Verify all hypotheses have distinct names and independent signal lists
     for (int i = 0; i < hypotheses.size(); i++) {
       for (int j = i + 1; j < hypotheses.size(); j++) {
-	assertFalse(hypotheses.get(i).getName().equals(hypotheses.get(j).getName()),
-	    "Each hypothesis should have a unique name");
+        assertFalse(hypotheses.get(i).getName().equals(hypotheses.get(j).getName()),
+            "Each hypothesis should have a unique name");
       }
     }
   }
@@ -565,14 +565,14 @@ class RootCauseAnalyzerTest {
     collector.setHistorianData(data, timestamps);
 
     Hypothesis h = new Hypothesis.Builder().name("process_change").description("Test")
-	.addExpectedSignal("temperature", Hypothesis.ExpectedBehavior.INCREASE, 2.0, "temp rises").build();
+        .addExpectedSignal("temperature", Hypothesis.ExpectedBehavior.INCREASE, 2.0, "temp rises").build();
 
     List<Hypothesis.Evidence> evidence = collector.collectEvidence(h);
 
     boolean foundChangePoint = false;
     for (Hypothesis.Evidence e : evidence) {
       if (e.getSource().contains("changepoint")) {
-	foundChangePoint = true;
+        foundChangePoint = true;
       }
     }
     assertTrue(foundChangePoint, "Should detect change point in step data");
@@ -601,16 +601,16 @@ class RootCauseAnalyzerTest {
     collector.setHistorianData(data, timestamps);
 
     Hypothesis h = new Hypothesis.Builder().name("bearing_wear").description("Test")
-	.addExpectedSignal("vibration", Hypothesis.ExpectedBehavior.INCREASE, 2.0, "vibration up")
-	.addExpectedSignal("efficiency", Hypothesis.ExpectedBehavior.DECREASE, 2.0, "eff down").build();
+        .addExpectedSignal("vibration", Hypothesis.ExpectedBehavior.INCREASE, 2.0, "vibration up")
+        .addExpectedSignal("efficiency", Hypothesis.ExpectedBehavior.DECREASE, 2.0, "eff down").build();
 
     List<Hypothesis.Evidence> evidence = collector.collectEvidence(h);
 
     boolean foundPattern = false;
     for (Hypothesis.Evidence e : evidence) {
       if (e.getSource().contains("pattern")) {
-	foundPattern = true;
-	assertTrue(e.isSupporting());
+        foundPattern = true;
+        assertTrue(e.isSupporting());
       }
     }
     assertTrue(foundPattern, "Should detect multi-parameter fingerprint");
@@ -625,9 +625,9 @@ class RootCauseAnalyzerTest {
 
     // Create hypotheses with failure modes that don't exactly match OREDA names
     Hypothesis h1 = new Hypothesis.Builder().name("bearing_wear").failureMode("bearing wear damage")
-	.priorProbability(0.1).build();
+        .priorProbability(0.1).build();
     Hypothesis h2 = new Hypothesis.Builder().name("seal_failure").failureMode("seal leakage").priorProbability(0.1)
-	.build();
+        .build();
 
     List<Hypothesis> hypotheses = Arrays.asList(h1, h2);
 
@@ -654,7 +654,7 @@ class RootCauseAnalyzerTest {
     assertFalse(highVib.isEmpty());
     assertFalse(lowEff.isEmpty());
     assertFalse(highVib.get(0).getName().equals(lowEff.get(0).getName()),
-	"Different symptoms should produce different top hypotheses");
+        "Different symptoms should produce different top hypotheses");
   }
 
   /**

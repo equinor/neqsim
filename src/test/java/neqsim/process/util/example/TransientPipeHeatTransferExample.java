@@ -1,14 +1,14 @@
 package neqsim.process.util.example;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills.HeatTransferMode;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Example demonstrating transient heat transfer in PipeBeggsAndBrills.
@@ -89,7 +89,7 @@ public class TransientPipeHeatTransferExample {
     // Initial steady-state run
     process.run();
     logger.printf(org.apache.logging.log4j.Level.INFO, "Pipe: %.0f m long, %.3f m diameter%n", pipeLength,
-	pipeDiameter);
+        pipeDiameter);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Sea temperature: %.1f °C%n", seaTemperature);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Heat transfer coefficient: %.1f W/(m²·K)%n", heatTransferCoeff);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Flow rate: %.0f kg/hr%n", flowRate);
@@ -112,23 +112,23 @@ public class TransientPipeHeatTransferExample {
       // Determine current phase and inlet temperature
       String phase;
       if (step < rampUpSteps) {
-	// Ramp UP
-	double progress = (double) step / rampUpSteps;
-	currentInletTemp = initialInletTemp + progress * (maxInletTemp - initialInletTemp);
-	phase = "RAMP UP  ";
+        // Ramp UP
+        double progress = (double) step / rampUpSteps;
+        currentInletTemp = initialInletTemp + progress * (maxInletTemp - initialInletTemp);
+        phase = "RAMP UP  ";
       } else if (step < rampUpSteps + holdHighSteps) {
-	// Hold HIGH
-	currentInletTemp = maxInletTemp;
-	phase = "HOLD HIGH";
+        // Hold HIGH
+        currentInletTemp = maxInletTemp;
+        phase = "HOLD HIGH";
       } else if (step < rampUpSteps + holdHighSteps + rampDownSteps) {
-	// Ramp DOWN
-	double progress = (double) (step - rampUpSteps - holdHighSteps) / rampDownSteps;
-	currentInletTemp = maxInletTemp - progress * (maxInletTemp - minInletTemp);
-	phase = "RAMP DOWN";
+        // Ramp DOWN
+        double progress = (double) (step - rampUpSteps - holdHighSteps) / rampDownSteps;
+        currentInletTemp = maxInletTemp - progress * (maxInletTemp - minInletTemp);
+        phase = "RAMP DOWN";
       } else {
-	// Hold LOW
-	currentInletTemp = minInletTemp;
-	phase = "HOLD LOW ";
+        // Hold LOW
+        currentInletTemp = minInletTemp;
+        phase = "HOLD LOW ";
       }
 
       // Update inlet temperature
@@ -143,9 +143,9 @@ public class TransientPipeHeatTransferExample {
 
       // Print every 10 steps or at key transitions
       if (step % 10 == 0 || step == rampUpSteps || step == rampUpSteps + holdHighSteps
-	  || step == rampUpSteps + holdHighSteps + rampDownSteps) {
-	logger.printf(org.apache.logging.log4j.Level.INFO, "%7.0f    %8.2f     %8.2f      %6.2f    %s%n", currentTime,
-	    currentInletTemp, outletTemp, deltaT, phase);
+          || step == rampUpSteps + holdHighSteps + rampDownSteps) {
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%7.0f    %8.2f     %8.2f      %6.2f    %s%n", currentTime,
+            currentInletTemp, outletTemp, deltaT, phase);
       }
 
       currentTime += dt;
@@ -177,7 +177,7 @@ public class TransientPipeHeatTransferExample {
       double expectedTout = seaTemperature + (Tin - seaTemperature) * Math.exp(-NTU);
       double cooling = Tin - expectedTout;
       logger.printf(org.apache.logging.log4j.Level.INFO, "%.1f°C     %.2f°C              %.2f°C%n", Tin, expectedTout,
-	  cooling);
+          cooling);
     }
 
     logger.info("╔══════════════════════════════════════════════════════════════════════╗");

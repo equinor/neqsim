@@ -118,25 +118,25 @@ public class AsphalteneOnsetTemperatureFlash extends ConstantDutyFlash {
       system.setTemperature(currentTemp);
 
       try {
-	ops.TPflash();
+        ops.TPflash();
       } catch (Exception e) {
-	logger.error("Flash failed at T = {} K: {}", currentTemp, e.getMessage());
-	currentTemp += direction * temperatureStep;
-	continue;
+        logger.error("Flash failed at T = {} K: {}", currentTemp, e.getMessage());
+        currentTemp += direction * temperatureStep;
+        continue;
       }
 
       boolean hasAsphaltenePhase = checkForAsphaltenePrecipitation();
 
       if (hasAsphaltenePhase && wasStable) {
-	// Transition from stable to unstable
-	onsetFound = true;
-	onsetTemperature = refineTemperature(previousTemp, currentTemp, ops);
-	break;
+        // Transition from stable to unstable
+        onsetFound = true;
+        onsetTemperature = refineTemperature(previousTemp, currentTemp, ops);
+        break;
       } else if (!hasAsphaltenePhase && !wasStable) {
-	// Transition from unstable to stable (reverse direction case)
-	onsetFound = true;
-	onsetTemperature = refineTemperature(currentTemp, previousTemp, ops);
-	break;
+        // Transition from unstable to stable (reverse direction case)
+        onsetFound = true;
+        onsetTemperature = refineTemperature(currentTemp, previousTemp, ops);
+        break;
       }
 
       wasStable = !hasAsphaltenePhase;
@@ -149,7 +149,7 @@ public class AsphalteneOnsetTemperatureFlash extends ConstantDutyFlash {
       onsetTemperature = Double.NaN;
     } else {
       logger.info("Asphaltene onset temperature: {} K ({} C) at P = {} bara", onsetTemperature,
-	  onsetTemperature - 273.15, system.getPressure());
+          onsetTemperature - 273.15, system.getPressure());
     }
   }
 
@@ -173,18 +173,18 @@ public class AsphalteneOnsetTemperatureFlash extends ConstantDutyFlash {
       system.setTemperature(mid);
 
       try {
-	ops.TPflash();
+        ops.TPflash();
       } catch (Exception e) {
-	logger.debug("Flash failed during refinement at T = {}", mid);
-	// Assume unstable if flash fails
-	unstable = mid;
-	continue;
+        logger.debug("Flash failed during refinement at T = {}", mid);
+        // Assume unstable if flash fails
+        unstable = mid;
+        continue;
       }
 
       if (checkForAsphaltenePrecipitation()) {
-	unstable = mid;
+        unstable = mid;
       } else {
-	stable = mid;
+        stable = mid;
       }
     }
 
@@ -200,11 +200,11 @@ public class AsphalteneOnsetTemperatureFlash extends ConstantDutyFlash {
     // Check for asphaltene phase (PhaseType.ASPHALTENE)
     if (system.hasPhaseType("asphaltene")) {
       try {
-	if (system.getPhaseOfType("asphaltene").getNumberOfMolesInPhase() > 1e-10) {
-	  return true;
-	}
+        if (system.getPhaseOfType("asphaltene").getNumberOfMolesInPhase() > 1e-10) {
+          return true;
+        }
       } catch (Exception e) {
-	// Phase type check failed
+        // Phase type check failed
       }
     }
 
@@ -212,19 +212,19 @@ public class AsphalteneOnsetTemperatureFlash extends ConstantDutyFlash {
     if (system.hasPhaseType("solid")) {
       // Verify it contains asphaltene component
       try {
-	neqsim.thermo.phase.PhaseInterface solidPhase = system.getPhaseOfType("solid");
-	if (solidPhase.getNumberOfMolesInPhase() > 1e-10) {
-	  // Check if solid phase contains asphaltene component
-	  for (int i = 0; i < solidPhase.getNumberOfComponents(); i++) {
-	    String name = solidPhase.getComponent(i).getComponentName().toLowerCase();
-	    if ((name.contains("asphaltene") || name.contains("asphalten"))
-		&& solidPhase.getComponent(i).getNumberOfMolesInPhase() > 1e-10) {
-	      return true;
-	    }
-	  }
-	}
+        neqsim.thermo.phase.PhaseInterface solidPhase = system.getPhaseOfType("solid");
+        if (solidPhase.getNumberOfMolesInPhase() > 1e-10) {
+          // Check if solid phase contains asphaltene component
+          for (int i = 0; i < solidPhase.getNumberOfComponents(); i++) {
+            String name = solidPhase.getComponent(i).getComponentName().toLowerCase();
+            if ((name.contains("asphaltene") || name.contains("asphalten"))
+                && solidPhase.getComponent(i).getNumberOfMolesInPhase() > 1e-10) {
+              return true;
+            }
+          }
+        }
       } catch (Exception e) {
-	// Phase type check failed
+        // Phase type check failed
       }
     }
 

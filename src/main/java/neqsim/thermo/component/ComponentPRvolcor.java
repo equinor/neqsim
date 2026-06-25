@@ -129,7 +129,7 @@ public class ComponentPRvolcor extends ComponentPR {
 
     if (initType >= 3) {
       for (int j = 0; j < numberOfComponents; j++) {
-	Cij[j] = ((PhasePrEosvolcor) phase).calcCij(componentNumber, j, phase, temp, pres, numberOfComponents);
+        Cij[j] = ((PhasePrEosvolcor) phase).calcCij(componentNumber, j, phase, temp, pres, numberOfComponents);
       }
     }
   }
@@ -210,8 +210,8 @@ public class ComponentPRvolcor extends ComponentPR {
     double loc_FCC = ((PhasePrEosvolcor) phase).FCC();
 
     return loc_FnC * loc_CT + (phase.FBT() + phase.FBD() * phase.getAT() + loc_FBC * loc_CT) * getBi()
-	+ (loc_FCD * loc_CT + phase.FDT()) * getAi() + (loc_FCT + loc_FCC * loc_CT + loc_FCD * phase.getAT()) * getCi()
-	+ phase.FD() * getAiT() + loc_FC * getCiT();
+        + (loc_FCD * loc_CT + phase.FDT()) * getAi() + (loc_FCT + loc_FCC * loc_CT + loc_FCD * phase.getAT()) * getCi()
+        + phase.FD() * getAiT() + loc_FC * getCiT();
   }
 
   /** {@inheritDoc} */
@@ -230,12 +230,12 @@ public class ComponentPRvolcor extends ComponentPR {
     double loc_Cj = ((ComponentPRvolcor) comp_Array[j]).getCi();
     // double loc_Ci= ((ComponentPRvolcor))component.getCi();
     return phase.FnB() * comp_Array[j].getBi() + loc_FnC * loc_Cj
-	+ (phase.FnB() + phase.FBB() * comp_Array[j].getBi() + loc_FBC * loc_Cj + phase.FBD() * comp_Array[j].getAi())
-	    * getBi()
-	+ phase.FB() * getBij(j)
-	+ (loc_FnC + loc_FCC * loc_Cj + loc_FBC * comp_Array[j].getBi() + loc_FCD * comp_Array[j].getAi()) * getCi()
-	+ loc_FC * getCij(j) + (loc_FCD * loc_Cj + phase.FBD() * comp_Array[j].getBi()) * getAi()
-	+ phase.FD() * getAij(j);
+        + (phase.FnB() + phase.FBB() * comp_Array[j].getBi() + loc_FBC * loc_Cj + phase.FBD() * comp_Array[j].getAi())
+            * getBi()
+        + phase.FB() * getBij(j)
+        + (loc_FnC + loc_FCC * loc_Cj + loc_FBC * comp_Array[j].getBi() + loc_FCD * comp_Array[j].getAi()) * getCi()
+        + loc_FC * getCij(j) + (loc_FCD * loc_Cj + phase.FBD() * comp_Array[j].getBi()) * getAi()
+        + phase.FD() * getAij(j);
   }
 
   /** {@inheritDoc} */

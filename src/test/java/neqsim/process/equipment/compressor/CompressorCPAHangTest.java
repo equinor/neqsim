@@ -110,16 +110,16 @@ public class CompressorCPAHangTest extends neqsim.NeqSimTest {
     feedToCompressor.run();
 
     Assertions.assertEquals(2, feedToCompressor.getThermoSystem().getNumberOfPhases(),
-	"Feed should have 2 phases (gas + aqueous)");
+        "Feed should have 2 phases (gas + aqueous)");
 
     Compressor compressor1 = new Compressor("27AKA60", feedToCompressor);
     compressor1.setOutletPressure(compPout, "bara");
     compressor1.run();
 
     Assertions.assertTrue(compressor1.getOutletStream().getTemperature("C") > compTin,
-	"Outlet temperature should exceed inlet temperature");
+        "Outlet temperature should exceed inlet temperature");
     Assertions.assertEquals(compPout, compressor1.getOutletStream().getPressure("bara"), 0.1,
-	"Outlet pressure should match setpoint");
+        "Outlet pressure should match setpoint");
   }
 
   /**
@@ -175,7 +175,7 @@ public class CompressorCPAHangTest extends neqsim.NeqSimTest {
     compressor1.run();
 
     Assertions.assertEquals(compTout, compressor1.getOutletStream().getTemperature("C"), 1.0,
-	"Outlet temperature should match specified value");
+        "Outlet temperature should match specified value");
     Assertions.assertTrue(compressor1.getPolytropicEfficiency() > 0.5, "Polytropic efficiency should be reasonable");
   }
 }

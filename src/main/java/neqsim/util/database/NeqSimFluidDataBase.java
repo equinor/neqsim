@@ -34,12 +34,12 @@ public class NeqSimFluidDataBase implements neqsim.util.util.FileSystemSettings,
   public NeqSimFluidDataBase() {
     try {
       if (useOnlineBase) {
-	// Class.forName("org.gjt.mm.mysql.Driver");
+        // Class.forName("org.gjt.mm.mysql.Driver");
       } else {
-	numb++;
-	if (numb == 1) {
-	  Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
-	}
+        numb++;
+        if (numb == 1) {
+          Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
+        }
       }
       databaseConnection = this.openConnection("FluidDatabase");
       statement = databaseConnection.createStatement();
@@ -64,12 +64,12 @@ public class NeqSimFluidDataBase implements neqsim.util.util.FileSystemSettings,
     } else {
       String dir = "";
       if (System.getProperty("NeqSim.home") == null) {
-	dir = neqsim.util.util.FileSystemSettings.root + "\\java\\neqsim";
+        dir = neqsim.util.util.FileSystemSettings.root + "\\java\\neqsim";
       } else {
-	dir = System.getProperty("NeqSim.home");
+        dir = System.getProperty("NeqSim.home");
       }
       return DriverManager
-	  .getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" + dir + "\\data\\" + database);
+          .getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" + dir + "\\data\\" + database);
       // return DriverManager.getConnection("jdbc:odbc:FluidDatabase");
     }
   }
@@ -119,8 +119,8 @@ public class NeqSimFluidDataBase implements neqsim.util.util.FileSystemSettings,
   public void execute(String sqlString) {
     try {
       if (databaseConnection == null) {
-	databaseConnection = this.openConnection("FluidDatabase");
-	statement = databaseConnection.createStatement();
+        databaseConnection = this.openConnection("FluidDatabase");
+        statement = databaseConnection.createStatement();
       }
       statement.execute(sqlString);
     } catch (Exception ex) {

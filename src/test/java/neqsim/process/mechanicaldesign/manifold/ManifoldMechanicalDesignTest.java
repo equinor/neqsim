@@ -389,9 +389,9 @@ public class ManifoldMechanicalDesignTest {
     @DisplayName("JSON includes all location types")
     void testJsonLocationTypes() {
       for (ManifoldLocation loc : ManifoldLocation.values()) {
-	calculator.setLocation(loc);
-	String json = calculator.toJson();
-	assertTrue(json.contains(loc.name()));
+        calculator.setLocation(loc);
+        String json = calculator.toJson();
+        assertTrue(json.contains(loc.name()));
       }
     }
   }

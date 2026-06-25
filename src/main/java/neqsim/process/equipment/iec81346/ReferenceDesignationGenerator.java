@@ -258,7 +258,7 @@ public class ReferenceDesignationGenerator implements Serializable {
       generateForSystem(processSystem, functionPrefix, locationPrefix);
     } else {
       throw new IllegalStateException(
-	  "No process system or model bound. Use generate(ProcessSystem) or generate(ProcessModel).");
+          "No process system or model bound. Use generate(ProcessSystem) or generate(ProcessModel).");
     }
 
     generated = true;
@@ -302,17 +302,17 @@ public class ReferenceDesignationGenerator implements Serializable {
     for (String areaName : areaNames) {
       ProcessSystem areaSystem = processModel.get(areaName);
       if (areaSystem == null) {
-	continue;
+        continue;
       }
 
       // Each area gets a function sub-level
       String areaFunctionPrefix;
       if (useHierarchicalFunctions) {
-	// Hierarchical: A1.A1, A1.A2, A1.A3 (nested under top-level functionPrefix)
-	areaFunctionPrefix = functionPrefix + ".A" + areaIndex;
+        // Hierarchical: A1.A1, A1.A2, A1.A3 (nested under top-level functionPrefix)
+        areaFunctionPrefix = functionPrefix + ".A" + areaIndex;
       } else {
-	// Flat: A1, A2, A3 (default)
-	areaFunctionPrefix = "A" + areaIndex;
+        // Flat: A1, A2, A3 (default)
+        areaFunctionPrefix = "A" + areaIndex;
       }
       generateForSystem(areaSystem, areaFunctionPrefix, locationPrefix);
       areaIndex++;
@@ -333,7 +333,7 @@ public class ReferenceDesignationGenerator implements Serializable {
     for (ProcessEquipmentInterface unit : system.getUnitOperations()) {
       // Skip streams unless explicitly included
       if (!includeStreams && unit instanceof neqsim.process.equipment.stream.StreamInterface) {
-	continue;
+        continue;
       }
 
       IEC81346LetterCode letterCode = IEC81346LetterCode.fromEquipment(unit);
@@ -345,7 +345,7 @@ public class ReferenceDesignationGenerator implements Serializable {
       unit.setReferenceDesignation(refDes);
 
       entries.add(new DesignationEntry(unit.getName(), unit.getClass().getSimpleName(),
-	  refDes.toReferenceDesignationString(), letterCode, seq, funcPrefix));
+          refDes.toReferenceDesignationString(), letterCode, seq, funcPrefix));
     }
 
     // Process measurement devices if requested
@@ -369,18 +369,18 @@ public class ReferenceDesignationGenerator implements Serializable {
       // Resolve source equipment ref des
       ProcessEquipmentInterface sourceUnit = system.getUnit(conn.getSourceEquipment());
       if (sourceUnit != null) {
-	String srcRefDes = sourceUnit.getReferenceDesignationString();
-	if (srcRefDes != null && !srcRefDes.isEmpty()) {
-	  conn.setSourceReferenceDesignation(srcRefDes);
-	}
+        String srcRefDes = sourceUnit.getReferenceDesignationString();
+        if (srcRefDes != null && !srcRefDes.isEmpty()) {
+          conn.setSourceReferenceDesignation(srcRefDes);
+        }
       }
       // Resolve target equipment ref des
       ProcessEquipmentInterface targetUnit = system.getUnit(conn.getTargetEquipment());
       if (targetUnit != null) {
-	String tgtRefDes = targetUnit.getReferenceDesignationString();
-	if (tgtRefDes != null && !tgtRefDes.isEmpty()) {
-	  conn.setTargetReferenceDesignation(tgtRefDes);
-	}
+        String tgtRefDes = targetUnit.getReferenceDesignationString();
+        if (tgtRefDes != null && !tgtRefDes.isEmpty()) {
+          conn.setTargetReferenceDesignation(tgtRefDes);
+        }
       }
     }
   }
@@ -400,24 +400,24 @@ public class ReferenceDesignationGenerator implements Serializable {
 
     for (ProcessElementInterface element : allElements) {
       if (element instanceof MeasurementDeviceInterface) {
-	MeasurementDeviceInterface device = (MeasurementDeviceInterface) element;
+        MeasurementDeviceInterface device = (MeasurementDeviceInterface) element;
 
-	// Measurement devices are always classified as S (Sensing)
-	IEC81346LetterCode letterCode = IEC81346LetterCode.S;
-	int seq = incrementCounter(counters, letterCode);
+        // Measurement devices are always classified as S (Sensing)
+        IEC81346LetterCode letterCode = IEC81346LetterCode.S;
+        int seq = incrementCounter(counters, letterCode);
 
-	String productDes = letterCode.name() + seq;
-	ReferenceDesignation refDes = new ReferenceDesignation(funcPrefix, productDes, locPrefix, letterCode, seq);
+        String productDes = letterCode.name() + seq;
+        ReferenceDesignation refDes = new ReferenceDesignation(funcPrefix, productDes, locPrefix, letterCode, seq);
 
-	// Measurement devices don't implement ProcessEquipmentInterface,
-	// so we store the designation as the tag number if not already set
-	String existingTag = device.getTag();
-	if (existingTag == null || existingTag.trim().isEmpty()) {
-	  device.setTag(refDes.toReferenceDesignationString());
-	}
+        // Measurement devices don't implement ProcessEquipmentInterface,
+        // so we store the designation as the tag number if not already set
+        String existingTag = device.getTag();
+        if (existingTag == null || existingTag.trim().isEmpty()) {
+          device.setTag(refDes.toReferenceDesignationString());
+        }
 
-	entries.add(new DesignationEntry(device.getName(), device.getClass().getSimpleName(),
-	    refDes.toReferenceDesignationString(), letterCode, seq, funcPrefix));
+        entries.add(new DesignationEntry(device.getName(), device.getClass().getSimpleName(),
+            refDes.toReferenceDesignationString(), letterCode, seq, funcPrefix));
       }
     }
   }
@@ -472,7 +472,7 @@ public class ReferenceDesignationGenerator implements Serializable {
   public DesignationEntry findByName(String equipmentName) {
     for (DesignationEntry entry : entries) {
       if (entry.getEquipmentName().equals(equipmentName)) {
-	return entry;
+        return entry;
       }
     }
     return null;
@@ -487,7 +487,7 @@ public class ReferenceDesignationGenerator implements Serializable {
   public DesignationEntry findByDesignation(String referenceDesignation) {
     for (DesignationEntry entry : entries) {
       if (entry.getReferenceDesignation().equals(referenceDesignation)) {
-	return entry;
+        return entry;
       }
     }
     return null;
@@ -503,7 +503,7 @@ public class ReferenceDesignationGenerator implements Serializable {
     List<DesignationEntry> result = new ArrayList<DesignationEntry>();
     for (DesignationEntry entry : entries) {
       if (entry.getLetterCode() == letterCode) {
-	result.add(entry);
+        result.add(entry);
       }
     }
     return Collections.unmodifiableList(result);
@@ -644,7 +644,7 @@ public class ReferenceDesignationGenerator implements Serializable {
      * @param functionArea the function area identifier
      */
     public DesignationEntry(String equipmentName, String equipmentType, String referenceDesignation,
-	IEC81346LetterCode letterCode, int sequenceNumber, String functionArea) {
+        IEC81346LetterCode letterCode, int sequenceNumber, String functionArea) {
       this.equipmentName = equipmentName;
       this.equipmentType = equipmentType;
       this.referenceDesignation = referenceDesignation;
@@ -711,7 +711,7 @@ public class ReferenceDesignationGenerator implements Serializable {
     @Override
     public String toString() {
       return equipmentName + " -> " + referenceDesignation + " [" + letterCode.name() + ": "
-	  + letterCode.getDescription() + "]";
+          + letterCode.getDescription() + "]";
     }
   }
 }

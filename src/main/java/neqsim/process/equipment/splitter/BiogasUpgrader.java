@@ -426,12 +426,12 @@ public class BiogasUpgrader extends ProcessEquipmentBaseClass {
 
     // ── Step 1: Resolve technology parameters ──
     double effCO2Removal = Double.isNaN(co2RemovalEfficiency) ? technology.getCo2RemovalEfficiency()
-	: co2RemovalEfficiency;
+        : co2RemovalEfficiency;
     double effCH4Recovery = Double.isNaN(methaneRecovery) ? technology.getMethaneRecovery() : methaneRecovery;
     double effH2SRemoval = Double.isNaN(h2sRemovalEfficiency) ? technology.getH2sRemovalEfficiency()
-	: h2sRemovalEfficiency;
+        : h2sRemovalEfficiency;
     double effEnergy = Double.isNaN(specificEnergyKWhPerNm3) ? technology.getSpecificEnergyKWhPerNm3()
-	: specificEnergyKWhPerNm3;
+        : specificEnergyKWhPerNm3;
 
     // ── Step 2: Calculate raw biogas flow ──
     double totalMolesPerHr = inletFluid.getFlowRate("mole/hr");
@@ -444,29 +444,29 @@ public class BiogasUpgrader extends ProcessEquipmentBaseClass {
     for (int i = 0; i < numComp; i++) {
       String compName = inletFluid.getComponent(i).getComponentName();
       if ("CO2".equalsIgnoreCase(compName)) {
-	// CO2: most removed to off-gas, small fraction remains in biomethane
-	splitFactors[i] = 1.0 - effCO2Removal;
+        // CO2: most removed to off-gas, small fraction remains in biomethane
+        splitFactors[i] = 1.0 - effCO2Removal;
       } else if ("methane".equalsIgnoreCase(compName)) {
-	// Methane: high recovery to biomethane
-	splitFactors[i] = effCH4Recovery;
+        // Methane: high recovery to biomethane
+        splitFactors[i] = effCH4Recovery;
       } else if ("H2S".equalsIgnoreCase(compName)) {
-	// H2S: removed with CO2
-	splitFactors[i] = 1.0 - effH2SRemoval;
+        // H2S: removed with CO2
+        splitFactors[i] = 1.0 - effH2SRemoval;
       } else if ("water".equalsIgnoreCase(compName)) {
-	// Water: mostly removed during upgrading (dehydration)
-	splitFactors[i] = 0.05;
+        // Water: mostly removed during upgrading (dehydration)
+        splitFactors[i] = 0.05;
       } else if ("nitrogen".equalsIgnoreCase(compName)) {
-	// N2: partially removed depending on technology
-	splitFactors[i] = technology == UpgradingTechnology.PSA ? 0.20 : 0.85;
+        // N2: partially removed depending on technology
+        splitFactors[i] = technology == UpgradingTechnology.PSA ? 0.20 : 0.85;
       } else if ("oxygen".equalsIgnoreCase(compName)) {
-	// O2: partially removed
-	splitFactors[i] = 0.50;
+        // O2: partially removed
+        splitFactors[i] = 0.50;
       } else if ("hydrogen".equalsIgnoreCase(compName)) {
-	// H2: passes through most technologies
-	splitFactors[i] = 0.90;
+        // H2: passes through most technologies
+        splitFactors[i] = 0.90;
       } else {
-	// Other trace components: assume they follow methane
-	splitFactors[i] = effCH4Recovery;
+        // Other trace components: assume they follow methane
+        splitFactors[i] = effCH4Recovery;
       }
     }
 
@@ -551,7 +551,7 @@ public class BiogasUpgrader extends ProcessEquipmentBaseClass {
 
     // Specific gravity relative to air (MW_mix / MW_air)
     double mwMix = ch4Frac * 16.04 + co2Frac * 44.01 + n2Frac * 28.01 + h2Frac * 2.016
-	+ (1.0 - ch4Frac - co2Frac - n2Frac - h2Frac) * 18.015;
+        + (1.0 - ch4Frac - co2Frac - n2Frac - h2Frac) * 18.015;
     double sg = mwMix / 28.97;
     wobbeIndex = sg > 0 ? hhv / Math.sqrt(sg) : 0.0;
   }
@@ -566,7 +566,7 @@ public class BiogasUpgrader extends ProcessEquipmentBaseClass {
   private double getMoleFractionPercent(SystemInterface fluid, String componentName) {
     try {
       if (fluid != null && fluid.hasComponent(componentName)) {
-	return fluid.getPhase(0).getComponent(componentName).getz() * 100.0;
+        return fluid.getPhase(0).getComponent(componentName).getz() * 100.0;
       }
     } catch (Exception e) {
       logger.debug("Could not get mole fraction for {}: {}", componentName, e.getMessage());
@@ -618,7 +618,7 @@ public class BiogasUpgrader extends ProcessEquipmentBaseClass {
     sb.append(String.format("  Technology: %s%n", technology));
     sb.append(String.format("  Raw biogas: %.1f Nm3/hr%n", rawBiogasFlowNm3PerHr));
     sb.append(
-	String.format("  Biomethane: %.1f Nm3/hr (%.1f%% CH4)%n", biomethaneFlowNm3PerHr, biomethaneMethanePercent));
+        String.format("  Biomethane: %.1f Nm3/hr (%.1f%% CH4)%n", biomethaneFlowNm3PerHr, biomethaneMethanePercent));
     sb.append(String.format("  CO2 in product: %.2f%%%n", biomethaneCO2Percent));
     sb.append(String.format("  Wobbe index: %.1f MJ/Nm3%n", wobbeIndex));
     sb.append(String.format("  Methane slip: %.2f%%%n", methaneSlipPercent));

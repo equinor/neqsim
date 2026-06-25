@@ -67,7 +67,7 @@ public class EnvironmentalReporterTest {
     feed.setFlowRate(10000, "kg/hr");
 
     neqsim.process.equipment.compressor.Compressor comp = new neqsim.process.equipment.compressor.Compressor(
-	"Compressor", feed);
+        "Compressor", feed);
     comp.setOutletPressure(100.0);
 
     system.add(feed);

@@ -123,7 +123,7 @@ public class LOPAResult implements Serializable {
   public static double getSTS0131OverpressureTargetFrequency(double eventPressureBara, double designPressureBara,
       double testPressureBara) {
     STS0131PressureCategory category = getSTS0131PressureCategory(eventPressureBara, designPressureBara,
-	testPressureBara);
+        testPressureBara);
     if (category == STS0131PressureCategory.ABOVE_TWO_TIMES_DESIGN_PRESSURE) {
       return 1.0e-5;
     }
@@ -358,12 +358,12 @@ public class LOPAResult implements Serializable {
 
     for (ProtectionLayer layer : layers) {
       sb.append(String.format("%-25s %10.2e %15.2e %15.2e%n", layer.getName(), layer.getPfd(),
-	  layer.getFrequencyBefore(), layer.getFrequencyAfter()));
+          layer.getFrequencyBefore(), layer.getFrequencyAfter()));
     }
 
     sb.append(StringUtils.repeat("─", 60)).append("\n");
     sb.append(String.format("%-25s %10s %15s %15.2e%n", "TOTAL", String.format("%.0fx", getTotalRRF()), "",
-	mitigatedFrequency));
+        mitigatedFrequency));
     sb.append("\n");
 
     sb.append(String.format("Target Frequency: %.2e /year%n", targetFrequency));
@@ -371,7 +371,7 @@ public class LOPAResult implements Serializable {
 
     if (!targetMet) {
       sb.append(String.format("Required Additional RRF: %.0f (SIL %d)%n", getRequiredAdditionalRRF(),
-	  getRequiredAdditionalSIL()));
+          getRequiredAdditionalSIL()));
     }
 
     return sb.toString();
@@ -380,6 +380,6 @@ public class LOPAResult implements Serializable {
   @Override
   public String toString() {
     return String.format("LOPAResult[%s: %.2e → %.2e, target=%.2e, %s]", scenarioName, initiatingEventFrequency,
-	mitigatedFrequency, targetFrequency, targetMet ? "MET" : "GAP");
+        mitigatedFrequency, targetFrequency, targetMet ? "MET" : "GAP");
   }
 }

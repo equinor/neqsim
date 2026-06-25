@@ -79,45 +79,45 @@ public class ReactiveTray extends SimpleTray {
 
       mixStream();
       if (trayPressure > 0) {
-	mixedStream.setPressure(trayPressure, "bara");
+        mixedStream.setPressure(trayPressure, "bara");
       }
       enthalpy = calcMixStreamEnthalpy();
 
       if (isSetOutTemperature()) {
-	mixedStream.setTemperature(getOutTemperature(), "K");
+        mixedStream.setTemperature(getOutTemperature(), "K");
       }
     }
 
     if (isSetOutTemperature()) {
       // Temperature-specified tray: use reactive TP flash
       if (!Double.isNaN(getOutTemperature())) {
-	mixedStream.getThermoSystem().setTemperature(getOutTemperature());
+        mixedStream.getThermoSystem().setTemperature(getOutTemperature());
       }
       runReactiveTPflash(thermoSystem2);
     } else {
       // Standard tray: use reactive PH flash (enthalpy-specified)
       try {
-	runReactivePHflash(thermoSystem2, enthalpy);
+        runReactivePHflash(thermoSystem2, enthalpy);
       } catch (Exception ex) {
-	logger.warn(
-	    "ReactivePHflash failed on tray " + getName() + ", falling back to reactive TP flash: " + ex.getMessage());
-	try {
-	  if (!Double.isNaN(getOutTemperature())) {
-	    mixedStream.getThermoSystem().setTemperature(getOutTemperature());
-	  }
-	  runReactiveTPflash(thermoSystem2);
-	} catch (Exception ex2) {
-	  logger.warn("Reactive TPflash fallback also failed on tray " + getName(), ex2);
-	  // Last resort: standard non-reactive TP flash
-	  ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem2);
-	  testOps.TPflash();
-	}
+        logger.warn(
+            "ReactivePHflash failed on tray " + getName() + ", falling back to reactive TP flash: " + ex.getMessage());
+        try {
+          if (!Double.isNaN(getOutTemperature())) {
+            mixedStream.getThermoSystem().setTemperature(getOutTemperature());
+          }
+          runReactiveTPflash(thermoSystem2);
+        } catch (Exception ex2) {
+          logger.warn("Reactive TPflash fallback also failed on tray " + getName(), ex2);
+          // Last resort: standard non-reactive TP flash
+          ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem2);
+          testOps.TPflash();
+        }
       }
     }
 
     if (Double.isNaN(mixedStream.getTemperature())) {
       if (!Double.isNaN(getOutTemperature())) {
-	mixedStream.setTemperature(getOutTemperature());
+        mixedStream.setTemperature(getOutTemperature());
       }
     }
 
@@ -155,7 +155,7 @@ public class ReactiveTray extends SimpleTray {
 
     if (!phFlash.isConverged()) {
       logger.warn("Reactive PH flash did not converge on tray " + getName() + " after " + phFlash.getOuterIterations()
-	  + " iterations");
+          + " iterations");
     }
   }
 

@@ -3,7 +3,6 @@ package neqsim.process.chemistry.scale;
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
 import neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator;
 
 /**
@@ -63,7 +62,7 @@ public class ScaleControlAssessor implements Serializable {
    */
   public static ScaleControlAssessor fromStream(neqsim.process.equipment.stream.StreamInterface stream) {
     neqsim.process.chemistry.util.StreamChemistryAdapter ad = new neqsim.process.chemistry.util.StreamChemistryAdapter(
-	stream);
+        stream);
     ScalePredictionCalculator p = new ScalePredictionCalculator();
     p.setTemperatureCelsius(ad.getTemperatureCelsius());
     p.setPressureBara(ad.getPressureBara());
@@ -104,16 +103,16 @@ public class ScaleControlAssessor implements Serializable {
     for (Map.Entry<ScaleInhibitorPerformance.ScaleType, Double> entry : uninh.entrySet()) {
       double si = entry.getValue();
       if (Double.isNaN(si)) {
-	residualSI.put(entry.getKey(), Double.NaN);
-	continue;
+        residualSI.put(entry.getKey(), Double.NaN);
+        continue;
       }
       ScaleInhibitorPerformance perf = inhibitors.get(entry.getKey());
       if (perf == null) {
-	residualSI.put(entry.getKey(), si);
-	continue;
+        residualSI.put(entry.getKey(), si);
+        continue;
       }
       if (!perf.isEvaluated()) {
-	perf.evaluate();
+        perf.evaluate();
       }
       double eff = Math.min(0.999, Math.max(0.0, perf.getEfficiency()));
       double residual = si + Math.log10(Math.max(1.0e-6, 1.0 - eff));
@@ -142,7 +141,7 @@ public class ScaleControlAssessor implements Serializable {
     double worst = Double.NEGATIVE_INFINITY;
     for (Double v : residualSI.values()) {
       if (v != null && !Double.isNaN(v) && v.doubleValue() > worst) {
-	worst = v.doubleValue();
+        worst = v.doubleValue();
       }
     }
     return worst == Double.NEGATIVE_INFINITY ? Double.NaN : worst;
@@ -205,6 +204,6 @@ public class ScaleControlAssessor implements Serializable {
    */
   public java.util.List<java.util.Map<String, Object>> getStandardsApplied() {
     return neqsim.process.chemistry.util.StandardsRegistry
-	.toMapList(neqsim.process.chemistry.util.StandardsRegistry.NACE_TM0374);
+        .toMapList(neqsim.process.chemistry.util.StandardsRegistry.NACE_TM0374);
   }
 }

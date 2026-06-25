@@ -65,7 +65,7 @@ public class NeqSimXtreamTest {
       ProcessSystem loadedProcess = (ProcessSystem) loadedObject;
       assertEquals(testProcess.getName(), loadedProcess.getName(), "Process name should be preserved");
       assertEquals(testProcess.getUnitOperations().size(), loadedProcess.getUnitOperations().size(),
-	  "Number of units should be preserved");
+          "Number of units should be preserved");
     } catch (IOException e) {
       fail("Exception thrown: " + e.getMessage());
     }

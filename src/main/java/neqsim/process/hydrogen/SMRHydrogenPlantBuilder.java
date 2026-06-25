@@ -271,11 +271,11 @@ public class SMRHydrogenPlantBuilder extends HydrogenPlantBuilderBase {
   public ProcessSystem build() {
     ProcessSystem process = new ProcessSystem();
     Stream feed = createMethaneSteamFeed(name + " feed", methaneFeedMolePerSec, steamToCarbonRatio, feedTemperatureK,
-	pressureBara);
+        pressureBara);
     Stream fuel = createMethaneFuel(name + " furnace fuel", methaneFeedMolePerSec * fuelToFeedMethaneRatio, 298.15,
-	pressureBara);
+        pressureBara);
     Stream air = createAir(name + " combustion air", 2.0 * methaneFeedMolePerSec * fuelToFeedMethaneRatio, 298.15,
-	pressureBara);
+        pressureBara);
 
     ReformerFurnace furnace = new ReformerFurnace(name + " reformer furnace", feed);
     furnace.setFuelInletStream(fuel);

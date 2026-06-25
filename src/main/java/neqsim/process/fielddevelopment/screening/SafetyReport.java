@@ -152,7 +152,7 @@ public final class SafetyReport implements Serializable {
   @Override
   public String toString() {
     return String.format("SafetyReport[level=%s, blowdown=%.1fmin, minTemp=%.0f°C]", overallLevel,
-	estimatedBlowdownTimeMinutes, minimumMetalTempC);
+        estimatedBlowdownTimeMinutes, minimumMetalTempC);
   }
 
   /**

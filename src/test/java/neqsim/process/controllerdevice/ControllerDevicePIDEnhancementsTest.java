@@ -89,27 +89,27 @@ class ControllerDevicePIDEnhancementsTest {
       private double value = 0.0;
 
       ConvertingTransmitter(String name, String unit) {
-	super(name, unit);
+        super(name, unit);
       }
 
       @Override
       public double getMeasuredValue() {
-	return value;
+        return value;
       }
 
       @Override
       public double getMeasuredValue(String unit) {
-	if (unit.equals(getUnit())) {
-	  return value;
-	} else if (unit.equals("B")) {
-	  return value * 2.0;
-	} else {
-	  return value / 2.0;
-	}
+        if (unit.equals(getUnit())) {
+          return value;
+        } else if (unit.equals("B")) {
+          return value * 2.0;
+        } else {
+          return value / 2.0;
+        }
       }
 
       public void setValue(double value) {
-	this.value = value;
+        this.value = value;
       }
     }
 

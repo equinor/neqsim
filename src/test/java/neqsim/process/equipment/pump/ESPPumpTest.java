@@ -165,7 +165,7 @@ class ESPPumpTest {
     // Create a stream that will have some dissolved gas but mostly liquid
     // Use moderate conditions where solver is stable
     SystemInterface multiphaseFluid = new SystemSrkEos(293.15, 50.0); // Higher pressure to keep
-								      // mostly liquid
+    // mostly liquid
     multiphaseFluid.addComponent("methane", 0.1); // 10% methane (mostly dissolved)
     multiphaseFluid.addComponent("n-heptane", 0.9); // 90% heptane (liquid)
     multiphaseFluid.setMixingRule("classic");

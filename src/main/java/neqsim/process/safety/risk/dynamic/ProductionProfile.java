@@ -439,9 +439,9 @@ public class ProductionProfile implements Serializable {
     if (shutdownDuration > 0) {
       int shutdownSteps = Math.max(1, (int) (shutdownDuration / dt));
       for (int i = 1; i <= shutdownSteps; i++) {
-	double progress = (double) i / shutdownSteps;
-	double rate = baselineProduction - (baselineProduction - degradedProduction) * progress;
-	timeSeries.add(new TimePoint(t + progress * shutdownDuration, rate, "shutdown"));
+        double progress = (double) i / shutdownSteps;
+        double rate = baselineProduction - (baselineProduction - degradedProduction) * progress;
+        timeSeries.add(new TimePoint(t + progress * shutdownDuration, rate, "shutdown"));
       }
       t += shutdownDuration;
     }
@@ -450,8 +450,8 @@ public class ProductionProfile implements Serializable {
     if (steadyStateDuration > 0) {
       int steadySteps = Math.max(1, (int) (steadyStateDuration / dt));
       for (int i = 0; i <= steadySteps; i++) {
-	double progress = (double) i / steadySteps;
-	timeSeries.add(new TimePoint(t + progress * steadyStateDuration, degradedProduction, "degraded"));
+        double progress = (double) i / steadySteps;
+        timeSeries.add(new TimePoint(t + progress * steadyStateDuration, degradedProduction, "degraded"));
       }
       t += steadyStateDuration;
     }
@@ -460,9 +460,9 @@ public class ProductionProfile implements Serializable {
     if (rampUpDuration > 0) {
       int rampSteps = Math.max(1, (int) (rampUpDuration / dt));
       for (int i = 1; i <= rampSteps; i++) {
-	double progress = (double) i / rampSteps;
-	double rate = degradedProduction + (baselineProduction - degradedProduction) * progress;
-	timeSeries.add(new TimePoint(t + progress * rampUpDuration, rate, "rampup"));
+        double progress = (double) i / rampSteps;
+        double rate = degradedProduction + (baselineProduction - degradedProduction) * progress;
+        timeSeries.add(new TimePoint(t + progress * rampUpDuration, rate, "rampup"));
       }
       t += rampUpDuration;
     }
@@ -526,6 +526,6 @@ public class ProductionProfile implements Serializable {
   @Override
   public String toString() {
     return String.format("ProductionProfile[%s: %.1f%% loss, %.1f hrs, transient=%.1f%%]", equipmentName,
-	getProductionLossPercent(), repairDuration, transientLossFraction * 100);
+        getProductionLossPercent(), repairDuration, transientLossFraction * 100);
   }
 }

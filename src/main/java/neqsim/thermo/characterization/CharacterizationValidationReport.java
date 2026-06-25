@@ -95,14 +95,14 @@ public class CharacterizationValidationReport {
 
     // Calculate differences
     builder.massDifferencePercent = builder.sourceTotalMass > 0
-	? 100.0 * Math.abs(builder.resultTotalMass - builder.sourceTotalMass) / builder.sourceTotalMass
-	: 0;
+        ? 100.0 * Math.abs(builder.resultTotalMass - builder.sourceTotalMass) / builder.sourceTotalMass
+        : 0;
     builder.molesDifferencePercent = builder.sourceTotalMoles > 0
-	? 100.0 * Math.abs(builder.resultTotalMoles - builder.sourceTotalMoles) / builder.sourceTotalMoles
-	: 0;
+        ? 100.0 * Math.abs(builder.resultTotalMoles - builder.sourceTotalMoles) / builder.sourceTotalMoles
+        : 0;
     builder.mwDifferencePercent = builder.sourceAverageMW > 0
-	? 100.0 * Math.abs(builder.resultAverageMW - builder.sourceAverageMW) / builder.sourceAverageMW
-	: 0;
+        ? 100.0 * Math.abs(builder.resultAverageMW - builder.sourceAverageMW) / builder.sourceAverageMW
+        : 0;
 
     // Collect pseudo-component details
     builder.sourcePseudoComponentMoles = getPseudoComponentMoles(source);
@@ -112,15 +112,15 @@ public class CharacterizationValidationReport {
     builder.warnings = new ArrayList<>();
     if (builder.massDifferencePercent > 0.1) {
       builder.warnings
-	  .add(String.format("Mass difference %.4f%% exceeds 0.1%% threshold", builder.massDifferencePercent));
+          .add(String.format("Mass difference %.4f%% exceeds 0.1%% threshold", builder.massDifferencePercent));
     }
     if (builder.molesDifferencePercent > 0.1) {
       builder.warnings
-	  .add(String.format("Moles difference %.4f%% exceeds 0.1%% threshold", builder.molesDifferencePercent));
+          .add(String.format("Moles difference %.4f%% exceeds 0.1%% threshold", builder.molesDifferencePercent));
     }
     if (builder.resultPseudoComponentCount != builder.referencePseudoComponentCount) {
       builder.warnings.add(String.format("Result PC count (%d) differs from reference (%d)",
-	  builder.resultPseudoComponentCount, builder.referencePseudoComponentCount));
+          builder.resultPseudoComponentCount, builder.referencePseudoComponentCount));
     }
 
     builder.isValid = builder.warnings.isEmpty();
@@ -133,7 +133,7 @@ public class CharacterizationValidationReport {
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       ComponentInterface comp = fluid.getComponent(i);
       if (comp.isIsTBPfraction() || comp.isIsPlusFraction()) {
-	count++;
+        count++;
       }
     }
     return count;
@@ -153,7 +153,7 @@ public class CharacterizationValidationReport {
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       ComponentInterface comp = fluid.getComponent(i);
       if (comp.isIsTBPfraction() || comp.isIsPlusFraction()) {
-	result.put(comp.getComponentName(), comp.getNumberOfmoles());
+        result.put(comp.getComponentName(), comp.getNumberOfmoles());
       }
     }
     return result;
@@ -243,7 +243,7 @@ public class CharacterizationValidationReport {
     if (!warnings.isEmpty()) {
       sb.append("Warnings:\n");
       for (String warning : warnings) {
-	sb.append("  ⚠ ").append(warning).append("\n");
+        sb.append("  ⚠ ").append(warning).append("\n");
       }
     } else {
       sb.append("Status: ✓ Valid (no warnings)\n");

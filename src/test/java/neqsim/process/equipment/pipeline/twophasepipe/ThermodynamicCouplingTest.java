@@ -77,7 +77,7 @@ class ThermodynamicCouplingTest {
     // Liquid viscosity typically higher than gas viscosity
     if (props.liquidViscosity > 0 && props.gasViscosity > 0) {
       assertTrue(props.liquidViscosity > props.gasViscosity,
-	  "Liquid viscosity should typically be higher than gas viscosity");
+          "Liquid viscosity should typically be higher than gas viscosity");
     }
   }
 
@@ -117,6 +117,6 @@ class ThermodynamicCouplingTest {
 
     // Vapor fraction should typically increase with temperature
     assertTrue(propsHighT.gasVaporFraction >= propsLowT.gasVaporFraction,
-	"Vapor fraction should generally increase with temperature");
+        "Vapor fraction should generally increase with temperature");
   }
 }

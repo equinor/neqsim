@@ -103,7 +103,7 @@ class DesignStandardsUtilityTest {
     @DisplayName("AIV screening should return a risk level")
     void aivScreeningShouldReturnRisk() {
       VibrationAssessment.VibrationRisk risk = VibrationAssessment.aivScreening(10.0, 50.0, 5.0, 350.0, 20.0, 200.0,
-	  10.0);
+          10.0);
       assertNotNull(risk);
     }
 
@@ -126,7 +126,7 @@ class DesignStandardsUtilityTest {
     @DisplayName("FIV heat exchanger screening returns valid risk")
     void fivScreeningShouldReturnValidRisk() {
       VibrationAssessment.VibrationRisk risk = VibrationAssessment.fivHeatExchangerScreening(5.0, 19.05, 25.4, 0.015,
-	  1000.0, 1.2);
+          1000.0, 1.2);
       assertNotNull(risk);
     }
 
@@ -134,7 +134,7 @@ class DesignStandardsUtilityTest {
     @DisplayName("Reciprocating pulsation screening returns valid risk")
     void reciprocatingScreeningShouldReturnValidRisk() {
       VibrationAssessment.VibrationRisk risk = VibrationAssessment.reciprocatingPulsationScreening(40.0, 3.0, 10.0,
-	  200.0);
+          200.0);
       assertNotNull(risk);
     }
   }
@@ -150,7 +150,7 @@ class DesignStandardsUtilityTest {
     @DisplayName("Flat surface insulation thickness should be positive")
     void flatSurfaceThicknessShouldBePositive() {
       double thickness = InsulationDesign.flatSurfaceThickness(200.0, 20.0,
-	  InsulationDesign.InsulationMaterial.MINERAL_WOOL, InsulationDesign.InsulationPurpose.HEAT_CONSERVATION, 5.0);
+          InsulationDesign.InsulationMaterial.MINERAL_WOOL, InsulationDesign.InsulationPurpose.HEAT_CONSERVATION, 5.0);
       assertTrue(thickness > 0, "Insulation thickness should be positive");
     }
 
@@ -158,10 +158,10 @@ class DesignStandardsUtilityTest {
     @DisplayName("Personnel protection insulation is calculated correctly")
     void personnelProtectionThickerThanHeatConservation() {
       double heatCons = InsulationDesign.flatSurfaceThickness(200.0, 20.0,
-	  InsulationDesign.InsulationMaterial.MINERAL_WOOL, InsulationDesign.InsulationPurpose.HEAT_CONSERVATION, 5.0);
+          InsulationDesign.InsulationMaterial.MINERAL_WOOL, InsulationDesign.InsulationPurpose.HEAT_CONSERVATION, 5.0);
       double personnel = InsulationDesign.flatSurfaceThickness(200.0, 20.0,
-	  InsulationDesign.InsulationMaterial.MINERAL_WOOL, InsulationDesign.InsulationPurpose.PERSONNEL_PROTECTION,
-	  5.0);
+          InsulationDesign.InsulationMaterial.MINERAL_WOOL, InsulationDesign.InsulationPurpose.PERSONNEL_PROTECTION,
+          5.0);
       assertTrue(heatCons > 0, "Heat conservation thickness should be positive");
       assertTrue(personnel > 0, "Personnel protection thickness should be positive");
     }
@@ -170,8 +170,8 @@ class DesignStandardsUtilityTest {
     @DisplayName("Pipe insulation thickness should be positive")
     void pipeThicknessShouldBePositive() {
       double thickness = InsulationDesign.pipeThickness(150.0, 10.0, 219.1,
-	  InsulationDesign.InsulationMaterial.CALCIUM_SILICATE, InsulationDesign.InsulationPurpose.HEAT_CONSERVATION,
-	  3.0);
+          InsulationDesign.InsulationMaterial.CALCIUM_SILICATE, InsulationDesign.InsulationPurpose.HEAT_CONSERVATION,
+          3.0);
       assertTrue(thickness > 0, "Pipe insulation should be positive");
     }
 
@@ -179,7 +179,7 @@ class DesignStandardsUtilityTest {
     @DisplayName("Pipe heat loss should be positive for hot pipe")
     void pipeHeatLossShouldBePositive() {
       double heatLoss = InsulationDesign.pipeHeatLossPerMeter(150.0, 10.0, 219.1, 50.0,
-	  InsulationDesign.InsulationMaterial.MINERAL_WOOL, 3.0);
+          InsulationDesign.InsulationMaterial.MINERAL_WOOL, 3.0);
       assertTrue(heatLoss > 0, "Heat loss should be positive for hot pipe");
     }
 
@@ -187,7 +187,7 @@ class DesignStandardsUtilityTest {
     @DisplayName("Insulation weight per meter should be positive")
     void insulationWeightShouldBePositive() {
       double weight = InsulationDesign.pipeInsulationWeightPerMeter(219.1, 50.0,
-	  InsulationDesign.InsulationMaterial.MINERAL_WOOL);
+          InsulationDesign.InsulationMaterial.MINERAL_WOOL);
       assertTrue(weight > 0, "Insulation weight should be positive");
     }
 
@@ -195,11 +195,11 @@ class DesignStandardsUtilityTest {
     @DisplayName("Material selection should return non-null for valid temperatures")
     void materialSelectionShouldReturnValidMaterial() {
       InsulationDesign.InsulationMaterial matHot = InsulationDesign.selectMaterial(400.0,
-	  InsulationDesign.InsulationPurpose.HEAT_CONSERVATION);
+          InsulationDesign.InsulationPurpose.HEAT_CONSERVATION);
       assertNotNull(matHot);
 
       InsulationDesign.InsulationMaterial matCold = InsulationDesign.selectMaterial(-100.0,
-	  InsulationDesign.InsulationPurpose.FROST_PROTECTION);
+          InsulationDesign.InsulationPurpose.FROST_PROTECTION);
       assertNotNull(matCold);
     }
 
@@ -207,9 +207,9 @@ class DesignStandardsUtilityTest {
     @DisplayName("Insulation materials have valid properties")
     void insulationMaterialPropertiesShouldBeValid() {
       for (InsulationDesign.InsulationMaterial mat : InsulationDesign.InsulationMaterial.values()) {
-	double k = mat.getConductivity(100.0);
-	assertTrue(k > 0, mat.name() + " should have positive conductivity");
-	assertTrue(k < 1.0, mat.name() + " conductivity should be less than 1 W/mK");
+        double k = mat.getConductivity(100.0);
+        assertTrue(k > 0, mat.name() + " should have positive conductivity");
+        assertTrue(k < 1.0, mat.name() + " conductivity should be less than 1 W/mK");
       }
     }
   }
@@ -375,16 +375,16 @@ class DesignStandardsUtilityTest {
     @DisplayName("Temperature in peak CUI zone should give HIGH or VERY_HIGH risk")
     void peakCuiZoneShouldBeHighRisk() {
       CUIRiskAssessment.CUIRisk risk = CUIRiskAssessment.assessRisk(100.0, false,
-	  CUIRiskAssessment.InsulationType.MINERAL_WOOL, 12.0, true);
+          CUIRiskAssessment.InsulationType.MINERAL_WOOL, 12.0, true);
       assertTrue(risk == CUIRiskAssessment.CUIRisk.HIGH || risk == CUIRiskAssessment.CUIRisk.VERY_HIGH,
-	  "100°C with mineral wool + marine should be high risk");
+          "100°C with mineral wool + marine should be high risk");
     }
 
     @Test
     @DisplayName("Temperature above 200°C should give LOW risk for CS")
     void aboveCuiZoneShouldBeLowRisk() {
       CUIRiskAssessment.CUIRisk risk = CUIRiskAssessment.assessRisk(250.0, false,
-	  CUIRiskAssessment.InsulationType.CELLULAR_GLASS, 0.0, false);
+          CUIRiskAssessment.InsulationType.CELLULAR_GLASS, 0.0, false);
       assertEquals(CUIRiskAssessment.CUIRisk.LOW, risk);
     }
 
@@ -407,8 +407,8 @@ class DesignStandardsUtilityTest {
     @DisplayName("Recommended inspection methods should not be empty")
     void inspectionMethodsShouldNotBeEmpty() {
       for (CUIRiskAssessment.CUIRisk risk : CUIRiskAssessment.CUIRisk.values()) {
-	List<String> methods = CUIRiskAssessment.recommendedInspectionMethods(risk);
-	assertFalse(methods.isEmpty(), risk + " should have inspection methods");
+        List<String> methods = CUIRiskAssessment.recommendedInspectionMethods(risk);
+        assertFalse(methods.isEmpty(), risk + " should have inspection methods");
       }
     }
 
@@ -448,7 +448,7 @@ class DesignStandardsUtilityTest {
       assertTrue(CUIRiskAssessment.InsulationType.MINERAL_WOOL.absorbsMoisture());
       assertFalse(CUIRiskAssessment.InsulationType.CELLULAR_GLASS.absorbsMoisture());
       assertTrue(CUIRiskAssessment.InsulationType.MINERAL_WOOL
-	  .getCuiMultiplier() > CUIRiskAssessment.InsulationType.CELLULAR_GLASS.getCuiMultiplier());
+          .getCuiMultiplier() > CUIRiskAssessment.InsulationType.CELLULAR_GLASS.getCuiMultiplier());
     }
   }
 }

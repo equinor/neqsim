@@ -120,10 +120,10 @@ public final class BoilingHeatTransfer {
     if (wallSuperheat > 0 && satPressureDiff > 0 && surfaceTension > 0 && heatOfVaporization > 0) {
       double numerator = Math.pow(liquidConductivity, 0.79) * Math.pow(liquidCp, 0.45) * Math.pow(liquidDensity, 0.49);
       double denominator = Math.pow(surfaceTension, 0.5) * Math.pow(liquidViscosity, 0.29)
-	  * Math.pow(heatOfVaporization, 0.24) * Math.pow(vaporDensity, 0.24);
+          * Math.pow(heatOfVaporization, 0.24) * Math.pow(vaporDensity, 0.24);
 
       if (denominator > 0) {
-	h_mic = 0.00122 * (numerator / denominator) * Math.pow(wallSuperheat, 0.24) * Math.pow(satPressureDiff, 0.75);
+        h_mic = 0.00122 * (numerator / denominator) * Math.pow(wallSuperheat, 0.24) * Math.pow(satPressureDiff, 0.75);
       }
     }
 
@@ -219,7 +219,7 @@ public final class BoilingHeatTransfer {
       double heatFlux, double heatOfVaporization, boolean isHorizontal) {
 
     double h = calcGungorWintertonHTC(massFlux, vaporQuality, tubeID, liquidDensity, vaporDensity, liquidViscosity,
-	liquidCp, liquidConductivity, heatFlux, heatOfVaporization);
+        liquidCp, liquidConductivity, heatFlux, heatOfVaporization);
 
     if (isHorizontal && liquidDensity > 0) {
       // Froude number check for stratified flow
@@ -229,9 +229,9 @@ public final class BoilingHeatTransfer {
       double Fr_l = v_l * v_l / (g * tubeID);
 
       if (Fr_l < 0.05) {
-	// Stratified flow correction factor
-	double E2 = Math.pow(Fr_l, 0.1 - 2.0 * Fr_l);
-	h *= E2;
+        // Stratified flow correction factor
+        double E2 = Math.pow(Fr_l, 0.1 - 2.0 * Fr_l);
+        h *= E2;
       }
     }
 
@@ -259,7 +259,7 @@ public final class BoilingHeatTransfer {
     }
 
     return Math.pow((1.0 - x) / x, 0.9) * Math.pow(vaporDensity / liquidDensity, 0.5)
-	* Math.pow(liquidViscosity / vaporViscosity, 0.1);
+        * Math.pow(liquidViscosity / vaporViscosity, 0.1);
   }
 
   /**
@@ -347,7 +347,7 @@ public final class BoilingHeatTransfer {
 
     if (Math.abs(xIn - xOut) < 1e-10) {
       return calcGungorWintertonHTC(massFlux, xIn, tubeID, liquidDensity, vaporDensity, liquidViscosity, liquidCp,
-	  liquidConductivity, heatFlux, heatOfVaporization);
+          liquidConductivity, heatFlux, heatOfVaporization);
     }
 
     int n = Math.max(4, intervals);
@@ -357,14 +357,14 @@ public final class BoilingHeatTransfer {
 
     double dx = (xOut - xIn) / n;
     double sum = calcGungorWintertonHTC(massFlux, xIn, tubeID, liquidDensity, vaporDensity, liquidViscosity, liquidCp,
-	liquidConductivity, heatFlux, heatOfVaporization)
-	+ calcGungorWintertonHTC(massFlux, xOut, tubeID, liquidDensity, vaporDensity, liquidViscosity, liquidCp,
-	    liquidConductivity, heatFlux, heatOfVaporization);
+        liquidConductivity, heatFlux, heatOfVaporization)
+        + calcGungorWintertonHTC(massFlux, xOut, tubeID, liquidDensity, vaporDensity, liquidViscosity, liquidCp,
+            liquidConductivity, heatFlux, heatOfVaporization);
 
     for (int i = 1; i < n; i++) {
       double x = xIn + i * dx;
       double h = calcGungorWintertonHTC(massFlux, x, tubeID, liquidDensity, vaporDensity, liquidViscosity, liquidCp,
-	  liquidConductivity, heatFlux, heatOfVaporization);
+          liquidConductivity, heatFlux, heatOfVaporization);
       sum += (i % 2 == 0) ? 2.0 * h : 4.0 * h;
     }
 

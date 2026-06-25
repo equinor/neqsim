@@ -356,7 +356,7 @@ public class TubeInsertModel implements Serializable {
 
     // Ravigururajan-Bergles enhancement factor
     double A = 2.64 * Math.pow(Re, 0.036) * Math.pow(eOverD, 0.212) * Math.pow(Math.max(pOverD, 0.1), -0.21)
-	* Math.pow(alphaAngle / 90.0, 0.29) * Math.pow(Pr, -0.024);
+        * Math.pow(alphaAngle / 90.0, 0.29) * Math.pow(Pr, -0.024);
 
     return Math.pow(1.0 + Math.pow(A, 7), 1.0 / 7.0);
   }

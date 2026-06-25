@@ -108,7 +108,7 @@ class ProcessDiagramExporterTest {
 
     // Export to DOT
     ProcessDiagramExporter exporter = new ProcessDiagramExporter(process).setTitle("Gas Separation Process")
-	.setDetailLevel(DiagramDetailLevel.ENGINEERING).setVerticalLayout(true);
+        .setDetailLevel(DiagramDetailLevel.ENGINEERING).setVerticalLayout(true);
 
     String dot = exporter.toDOT();
 
@@ -116,7 +116,7 @@ class ProcessDiagramExporterTest {
     assertTrue(dot.contains("rankdir=LR"), "Should use left-to-right layout");
     // Verify phase-aware layout with zone comments
     assertTrue(dot.contains("Gas top") || dot.contains("Phase zone") || dot.contains("vertical phase"),
-	"Should contain phase zone layout");
+        "Should contain phase zone layout");
 
     // Verify phase-aware coloring
     assertTrue(dot.contains("#87CEEB") || dot.contains("87CEEB"), "Should contain gas stream color");
@@ -287,7 +287,7 @@ class ProcessDiagramExporterTest {
     assertEquals(PFDLayoutPolicy.StreamPhase.GAS, gasPhase);
     // Liquid can be classified as LIQUID, OIL, or AQUEOUS - all are valid liquid phases
     assertTrue(liquidPhase == PFDLayoutPolicy.StreamPhase.LIQUID || liquidPhase == PFDLayoutPolicy.StreamPhase.OIL
-	|| liquidPhase == PFDLayoutPolicy.StreamPhase.AQUEOUS, "Expected a liquid phase but was: " + liquidPhase);
+        || liquidPhase == PFDLayoutPolicy.StreamPhase.AQUEOUS, "Expected a liquid phase but was: " + liquidPhase);
   }
 
   @Test
@@ -368,7 +368,7 @@ class ProcessDiagramExporterTest {
 
     // Check for phase zone cluster subgraphs (Gas, Separation, Oil, Water)
     assertTrue(dot.contains("subgraph cluster_gas") || dot.contains("cluster_separation") || dot.contains("cluster_oil")
-	|| dot.contains("cluster_water") || dot.contains("Phase zone"), "Should contain phase zone clusters");
+        || dot.contains("cluster_water") || dot.contains("Phase zone"), "Should contain phase zone clusters");
   }
 
   @Test
@@ -452,7 +452,7 @@ class ProcessDiagramExporterTest {
 
     // Liquid outlet should be BOTTOM
     PFDLayoutPolicy.SeparatorOutlet liquidOutlet = policy.classifySeparatorOutlet(separator,
-	separator.getLiquidOutStream());
+        separator.getLiquidOutStream());
     assertEquals("s", liquidOutlet.getPort()); // South = bottom
   }
 
@@ -464,8 +464,8 @@ class ProcessDiagramExporterTest {
 
     // Test fluent API
     String dot = new ProcessDiagramExporter(process).setTitle("My Process")
-	.setDetailLevel(DiagramDetailLevel.ENGINEERING).setVerticalLayout(true).setUseClusters(false)
-	.setShowLegend(true).toDOT();
+        .setDetailLevel(DiagramDetailLevel.ENGINEERING).setVerticalLayout(true).setUseClusters(false)
+        .setShowLegend(true).toDOT();
 
     assertTrue(dot.contains("My Process"));
   }
@@ -509,14 +509,14 @@ class ProcessDiagramExporterTest {
     // Oil outlet should be MIDDLE (east)
     PFDLayoutPolicy.SeparatorOutlet oilOutlet = policy.classifySeparatorOutlet(separator, separator.getOilOutStream());
     assertEquals(PFDLayoutPolicy.SeparatorOutlet.OIL_MIDDLE, oilOutlet,
-	"Oil outlet should be classified as OIL_MIDDLE");
+        "Oil outlet should be classified as OIL_MIDDLE");
     assertEquals("e", oilOutlet.getPort(), "Oil should exit from middle (east)");
 
     // Water/Aqueous outlet should be BOTTOM (south)
     PFDLayoutPolicy.SeparatorOutlet waterOutlet = policy.classifySeparatorOutlet(separator,
-	separator.getWaterOutStream());
+        separator.getWaterOutStream());
     assertEquals(PFDLayoutPolicy.SeparatorOutlet.WATER_BOTTOM, waterOutlet,
-	"Water outlet should be classified as WATER_BOTTOM");
+        "Water outlet should be classified as WATER_BOTTOM");
     assertEquals("s", waterOutlet.getPort(), "Water should exit from bottom (south)");
   }
 
@@ -559,8 +559,8 @@ class ProcessDiagramExporterTest {
 
     // Export to DOT
     ProcessDiagramExporter exporter = new ProcessDiagramExporter(threePhaseProcess)
-	.setTitle("Three-Phase Separation Process").setDetailLevel(DiagramDetailLevel.ENGINEERING)
-	.setVerticalLayout(true);
+        .setTitle("Three-Phase Separation Process").setDetailLevel(DiagramDetailLevel.ENGINEERING)
+        .setVerticalLayout(true);
 
     String dot = exporter.toDOT();
 
@@ -595,7 +595,7 @@ class ProcessDiagramExporterTest {
     recycleProcess.add(compressor);
 
     neqsim.process.equipment.splitter.Splitter splitter = new neqsim.process.equipment.splitter.Splitter(
-	"Discharge Splitter", compressor.getOutletStream(), 2);
+        "Discharge Splitter", compressor.getOutletStream(), 2);
     splitter.setSplitFactors(new double[] { 0.9, 0.1 });
     recycleProcess.add(splitter);
 
@@ -609,7 +609,7 @@ class ProcessDiagramExporterTest {
 
     // Export with recycle highlighting enabled (default)
     ProcessDiagramExporter exporter = new ProcessDiagramExporter(recycleProcess)
-	.setTitle("Compressor Anti-Surge System").setHighlightRecycles(true);
+        .setTitle("Compressor Anti-Surge System").setHighlightRecycles(true);
 
     String dot = exporter.toDOT();
 
@@ -641,7 +641,7 @@ class ProcessDiagramExporterTest {
 
     // Export with stream tables enabled
     ProcessDiagramExporter exporter = new ProcessDiagramExporter(simpleProcess)
-	.setDetailLevel(DiagramDetailLevel.ENGINEERING).setShowStreamValues(true).setUseStreamTables(true);
+        .setDetailLevel(DiagramDetailLevel.ENGINEERING).setShowStreamValues(true).setUseStreamTables(true);
 
     String dot = exporter.toDOT();
 
@@ -679,7 +679,7 @@ class ProcessDiagramExporterTest {
     // Verify valve is excluded when showControlEquipment=false
     assertNotNull(dotHidden);
     assertFalse(dotHidden.contains("\"Control Valve\""),
-	"Control valve should be hidden when showControlEquipment=false");
+        "Control valve should be hidden when showControlEquipment=false");
 
     // Export with control equipment shown (default)
     ProcessDiagramExporter exporterShown = new ProcessDiagramExporter(controlProcess).setShowControlEquipment(true);
@@ -694,8 +694,8 @@ class ProcessDiagramExporterTest {
   void testEquipmentVisualStylesForAllCategories() {
     // Test that all major equipment categories have visual styles defined
     String[] equipmentTypes = { "Separator", "ThreePhaseSeparator", "Compressor", "Pump", "Expander", "HeatExchanger",
-	"Cooler", "Heater", "ThrottlingValve", "Mixer", "Splitter", "Stream", "DistillationColumn", "Reactor",
-	"Recycle", "Adjuster", "Calculator", "Flare", "Ejector", "Filter", "Membrane", "Tank", "Pipeline", "Well" };
+        "Cooler", "Heater", "ThrottlingValve", "Mixer", "Splitter", "Stream", "DistillationColumn", "Reactor",
+        "Recycle", "Adjuster", "Calculator", "Flare", "Ejector", "Filter", "Membrane", "Tank", "Pipeline", "Well" };
 
     for (String type : equipmentTypes) {
       EquipmentVisualStyle style = EquipmentVisualStyle.getStyle(type);
@@ -717,7 +717,7 @@ class ProcessDiagramExporterTest {
     process.run();
 
     ProcessDiagramExporter exporter = new ProcessDiagramExporter(process).setShowLegend(true)
-	.setHighlightRecycles(true);
+        .setHighlightRecycles(true);
 
     String dot = exporter.toDOT();
 
@@ -763,7 +763,7 @@ class ProcessDiagramExporterTest {
 
     // Test DEXPI heat exchanger
     DexpiProcessUnit dexpiHX = new DexpiProcessUnit("E-101", "PlateHeatExchanger", EquipmentEnum.HeatExchanger, "L-200",
-	"HC");
+        "HC");
 
     EquipmentVisualStyle hxStyle = EquipmentVisualStyle.getStyleForEquipment(dexpiHX);
     assertNotNull(hxStyle, "Should find style for DEXPI heat exchanger");
@@ -830,7 +830,7 @@ class ProcessDiagramExporterTest {
 
     // Export diagram
     ProcessDiagramExporter exporter = new ProcessDiagramExporter(threePhaseProcess)
-	.setTitle("Three-Phase Separation Process").setUseClusters(true);
+        .setTitle("Three-Phase Separation Process").setUseClusters(true);
 
     String dot = exporter.toDOT();
 
@@ -839,7 +839,7 @@ class ProcessDiagramExporterTest {
 
     // Verify phase-aware layout structure
     assertTrue(dot.contains("Phase zone") || dot.contains("vertical phase") || dot.contains("Gas top"),
-	"Should contain phase zone layout comments");
+        "Should contain phase zone layout comments");
 
     // Verify separator outlet port positioning (gravity-based)
     assertTrue(dot.contains("tailport=n"), "Gas outlet should exit from top (north)");
@@ -848,7 +848,7 @@ class ProcessDiagramExporterTest {
 
     // Verify phase zone comments are present
     assertTrue(dot.contains("Phase zone") || dot.contains("phase zone") || dot.contains("Gas top")
-	|| dot.contains("vertical phase"), "Should contain phase zone layout comments");
+        || dot.contains("vertical phase"), "Should contain phase zone layout comments");
   }
 
   @Test

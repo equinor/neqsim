@@ -155,18 +155,18 @@ final class IsaTagValidator {
     for (int i = 0; i < trimmed.length(); i++) {
       char c = trimmed.charAt(i);
       if (c == '-' || c == ' ' || c == '_') {
-	continue;
+        continue;
       }
       if (Character.isLetter(c) && !inNumber) {
-	letters.append(c);
+        letters.append(c);
       } else if (Character.isDigit(c)) {
-	inNumber = true;
-	number.append(c);
+        inNumber = true;
+        number.append(c);
       } else if (Character.isLetter(c) && inNumber) {
-	// Trailing suffix letter after the loop number (e.g. 101A) — accept.
-	number.append(c);
+        // Trailing suffix letter after the loop number (e.g. 101A) — accept.
+        number.append(c);
       } else {
-	return new ValidationResult(false, "Unexpected character '" + c + "' in tag");
+        return new ValidationResult(false, "Unexpected character '" + c + "' in tag");
       }
     }
     if (letters.length() == 0) {
@@ -191,7 +191,7 @@ final class IsaTagValidator {
     for (int i = idx; i < letters.length(); i++) {
       char c = letters.charAt(i);
       if (!SUCCEEDING_LETTERS.containsKey(c)) {
-	return new ValidationResult(false, "Succeeding letter '" + c + "' is not a valid ISA-5.1 function");
+        return new ValidationResult(false, "Succeeding letter '" + c + "' is not a valid ISA-5.1 function");
       }
       desc.append(" / ").append(SUCCEEDING_LETTERS.get(c));
     }

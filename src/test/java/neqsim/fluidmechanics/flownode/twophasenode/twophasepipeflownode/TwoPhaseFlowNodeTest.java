@@ -57,7 +57,7 @@ public class TwoPhaseFlowNodeTest {
     // Verify annular flow uses correct transport coefficient class
     String transportClassName = node.getInterphaseTransportCoefficient().getClass().getSimpleName();
     assertEquals("InterphaseAnnularFlow", transportClassName,
-	"AnnularFlow should use InterphaseAnnularFlow transport coefficients");
+        "AnnularFlow should use InterphaseAnnularFlow transport coefficients");
   }
 
   @Test
@@ -82,7 +82,7 @@ public class TwoPhaseFlowNodeTest {
     // Verify droplet flow uses correct transport coefficient class
     String transportClassName = node.getInterphaseTransportCoefficient().getClass().getSimpleName();
     assertEquals("InterphaseDropletFlow", transportClassName,
-	"DropletFlowNode should use InterphaseDropletFlow transport coefficients");
+        "DropletFlowNode should use InterphaseDropletFlow transport coefficients");
   }
 
   @Test
@@ -183,7 +183,7 @@ public class TwoPhaseFlowNodeTest {
 
     PipeData pipe = new PipeData(0.5);
     pipe.getWall().addMaterialLayer(
-	new neqsim.fluidmechanics.geometrydefinitions.internalgeometry.wall.MaterialLayer("steel", 0.02));
+        new neqsim.fluidmechanics.geometrydefinitions.internalgeometry.wall.MaterialLayer("steel", 0.02));
     pipe.getSurroundingEnvironment().setTemperature(273.15 + 4.0); // Cold surroundings
 
     FlowNodeInterface node = new AnnularFlow(testSystem, pipe);

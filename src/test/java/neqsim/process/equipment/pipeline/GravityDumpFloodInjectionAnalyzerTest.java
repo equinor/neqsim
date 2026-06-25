@@ -70,7 +70,7 @@ public class GravityDumpFloodInjectionAnalyzerTest {
     Map<String, Object> r = a.getResults();
     assertEquals(Boolean.TRUE, r.get("free_falling"));
     assertTrue(((Number) r.get("static_sandface_pressure_bara")).doubleValue() > 290.0,
-	"static sandface pressure should exceed 290 bara");
+        "static sandface pressure should exceed 290 bara");
   }
 
   /**
@@ -85,7 +85,7 @@ public class GravityDumpFloodInjectionAnalyzerTest {
     // The friction-dissipating ID (~69 mm, a ~2.7" tail-pipe) is much smaller than the 152 mm
     // (6") tubing, proving a full-bore string cannot burn the excess head by friction alone.
     assertTrue(idMm > 0.0 && idMm < 100.0,
-	"friction-only dissipation requires a sub-tubing ID (<100 mm), got " + idMm + " mm");
+        "friction-only dissipation requires a sub-tubing ID (<100 mm), got " + idMm + " mm");
     assertTrue(idMm < 152.0, "friction-dissipating ID must be smaller than the 6-inch tubing");
     // Larger depletion (180 bara) -> larger excess head than the 200 bara case.
     assertTrue(a.getDownholeBackPressureRequiredBar() > 70.0, "180 bara case should require >70 bar dissipation");
@@ -100,6 +100,6 @@ public class GravityDumpFloodInjectionAnalyzerTest {
     a.analyze();
     assertFalse(a.isFreeFalling(), "reservoir above column head should not free-fall");
     assertTrue(a.getWellheadPressureRequiredBara() > 0.0,
-	"required wellhead pressure should be positive when reservoir is strong");
+        "required wellhead pressure should be positive when reservoir is strong");
   }
 }

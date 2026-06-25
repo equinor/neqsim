@@ -108,7 +108,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
       double s = finPitch - finThickness;
       double h = finHeight - finThickness;
       return 4.0 * s * h * stripLength
-	  / (2.0 * (s * stripLength + h * stripLength + finThickness * h * s / stripLength) + finThickness * s);
+          / (2.0 * (s * stripLength + h * stripLength + finThickness * h * s / stripLength) + finThickness * s);
     }
 
     /**
@@ -919,7 +919,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     }
     for (boolean risk : freezeOutRiskPerZone) {
       if (risk) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -1014,7 +1014,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    */
   public neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerDesignFeasibilityReport generateFeasibilityReport() {
     neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerDesignFeasibilityReport report = new neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerDesignFeasibilityReport(
-	this);
+        this);
     report.generateReport();
     return report;
   }
@@ -1081,12 +1081,12 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     for (int i = 0; i < pendingStreams.size(); i++) {
       String type;
       if (pendingIsHot.get(i) != null) {
-	type = pendingIsHot.get(i) ? "hot" : "cold";
+        type = pendingIsHot.get(i) ? "hot" : "cold";
       } else {
-	type = temps.get(i) >= avgTemp ? "hot" : "cold";
-	if (pendingStreams.size() == 2 && Math.abs(temps.get(0) - temps.get(1)) < 0.01) {
-	  type = (i == 0) ? "hot" : "cold";
-	}
+        type = temps.get(i) >= avgTemp ? "hot" : "cold";
+        if (pendingStreams.size() == 2 && Math.abs(temps.get(0) - temps.get(1)) < 0.01) {
+          type = (i == 0) ? "hot" : "cold";
+        }
       }
       addInStreamMSHE(pendingStreams.get(i), type, null);
     }
@@ -1122,8 +1122,8 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     if (adaptiveRefinement) {
       List<Double> refinedFractions = computeAdaptiveFractions(zoneFractions);
       if (refinedFractions.size() - 1 <= maxAdaptiveZones) {
-	zoneFractions = refinedFractions;
-	effectiveZones = zoneFractions.size() - 1;
+        zoneFractions = refinedFractions;
+        effectiveZones = zoneFractions.size() - 1;
       }
     }
 
@@ -1151,39 +1151,39 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
       SystemInterface baseFluid = inStr.getFluid().clone();
 
       for (int z = 0; z < nPoints; z++) {
-	double frac = zoneFractions.get(z);
-	double temp = inletTempC[i] + frac * (outletTempC[i] - inletTempC[i]);
-	double pres = pIn - frac * deltaP;
-	if (pres < 0.01) {
-	  pres = 0.01;
-	}
+        double frac = zoneFractions.get(z);
+        double temp = inletTempC[i] + frac * (outletTempC[i] - inletTempC[i]);
+        double pres = pIn - frac * deltaP;
+        if (pres < 0.01) {
+          pres = 0.01;
+        }
 
-	SystemInterface zoneFluid = baseFluid.clone();
-	zoneFluid.setTemperature(temp, "C");
-	zoneFluid.setPressure(pres, "bara");
+        SystemInterface zoneFluid = baseFluid.clone();
+        zoneFluid.setTemperature(temp, "C");
+        zoneFluid.setPressure(pres, "bara");
 
-	ThermodynamicOperations ops = new ThermodynamicOperations(zoneFluid);
-	ops.TPflash();
-	zoneFluid.initThermoProperties();
+        ThermodynamicOperations ops = new ThermodynamicOperations(zoneFluid);
+        ops.TPflash();
+        zoneFluid.initThermoProperties();
 
-	streamH[i][z] = zoneFluid.getEnthalpy("kJ/kg");
-	streamS[i][z] = zoneFluid.getEntropy("kJ/kgK");
-	streamTempC[i][z] = temp;
+        streamH[i][z] = zoneFluid.getEnthalpy("kJ/kg");
+        streamS[i][z] = zoneFluid.getEntropy("kJ/kgK");
+        streamTempC[i][z] = temp;
 
-	// Capture phase info for two-phase DP (P6) and freeze-out (P9)
-	int nPhases = zoneFluid.getNumberOfPhases();
-	if (nPhases > 1 && zoneFluid.hasPhaseType("gas")) {
-	  int gasIdx = zoneFluid.getPhaseNumberOfPhase("gas");
-	  streamVapFrac[i][z] = zoneFluid.getPhase(gasIdx).getBeta();
-	} else if (nPhases == 1 && zoneFluid.hasPhaseType("gas")) {
-	  streamVapFrac[i][z] = 1.0;
-	} else {
-	  streamVapFrac[i][z] = 0.0;
-	}
-	streamDensity[i][z] = zoneFluid.getDensity("kg/m3");
-	if (nPhases > 0) {
-	  streamViscosity[i][z] = zoneFluid.getPhase(0).getViscosity("kg/msec");
-	}
+        // Capture phase info for two-phase DP (P6) and freeze-out (P9)
+        int nPhases = zoneFluid.getNumberOfPhases();
+        if (nPhases > 1 && zoneFluid.hasPhaseType("gas")) {
+          int gasIdx = zoneFluid.getPhaseNumberOfPhase("gas");
+          streamVapFrac[i][z] = zoneFluid.getPhase(gasIdx).getBeta();
+        } else if (nPhases == 1 && zoneFluid.hasPhaseType("gas")) {
+          streamVapFrac[i][z] = 1.0;
+        } else {
+          streamVapFrac[i][z] = 0.0;
+        }
+        streamDensity[i][z] = zoneFluid.getDensity("kg/m3");
+        if (nPhases > 0) {
+          streamViscosity[i][z] = zoneFluid.getPhase(0).getViscosity("kg/msec");
+        }
       }
     }
 
@@ -1222,11 +1222,11 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
       double hotZoneDuty = 0.0;
       double coldZoneDuty = 0.0;
       for (int i = 0; i < streamCount; i++) {
-	if (registeredIsHot.get(i)) {
-	  hotZoneDuty += massFlowKgS[i] * (streamH[i][hotZCurr] - streamH[i][hotZPrev]);
-	} else {
-	  coldZoneDuty += massFlowKgS[i] * (streamH[i][coldZCurr] - streamH[i][coldZPrev]);
-	}
+        if (registeredIsHot.get(i)) {
+          hotZoneDuty += massFlowKgS[i] * (streamH[i][hotZCurr] - streamH[i][hotZPrev]);
+        } else {
+          coldZoneDuty += massFlowKgS[i] * (streamH[i][coldZCurr] - streamH[i][coldZPrev]);
+        }
       }
 
       cumHotDuty += hotZoneDuty;
@@ -1256,42 +1256,42 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
 
       // P10: Flow maldistribution correction on MITA
       if (flowMaldistributionFactor < 1.0) {
-	minApproach = minApproach * flowMaldistributionFactor;
+        minApproach = minApproach * flowMaldistributionFactor;
       }
       mitaPerZone[p] = minApproach;
 
       if (minApproach < minimumInternalTemperatureApproach) {
-	minimumInternalTemperatureApproach = minApproach;
-	mitaZoneIndex = p;
+        minimumInternalTemperatureApproach = minApproach;
+        mitaZoneIndex = p;
       }
 
       // UA per zone via LMTD
       double zoneDuty = hotCompositeCurve[p + 1][0] - hotCompositeCurve[p][0];
       if (dT1 > 0.01 && dT2 > 0.01) {
-	double lmtd;
-	if (Math.abs(dT1 - dT2) < 0.01) {
-	  lmtd = (dT1 + dT2) / 2.0;
-	} else {
-	  lmtd = (dT1 - dT2) / Math.log(dT1 / dT2);
-	}
-	double uaRaw = Math.abs(zoneDuty) * 1000.0 / lmtd;
-	// P10: Maldistribution penalty on UA
-	uaPerZone[p] = uaRaw * flowMaldistributionFactor;
+        double lmtd;
+        if (Math.abs(dT1 - dT2) < 0.01) {
+          lmtd = (dT1 + dT2) / 2.0;
+        } else {
+          lmtd = (dT1 - dT2) / Math.log(dT1 / dT2);
+        }
+        double uaRaw = Math.abs(zoneDuty) * 1000.0 / lmtd;
+        // P10: Maldistribution penalty on UA
+        uaPerZone[p] = uaRaw * flowMaldistributionFactor;
       }
 
       // Exergy destruction
       double entropyGen = 0.0;
       for (int i = 0; i < streamCount; i++) {
-	int zIn;
-	int zOut;
-	if (registeredIsHot.get(i)) {
-	  zIn = effectiveZones - p - 1;
-	  zOut = effectiveZones - p;
-	} else {
-	  zIn = p;
-	  zOut = p + 1;
-	}
-	entropyGen += massFlowKgS[i] * (streamS[i][zOut] - streamS[i][zIn]);
+        int zIn;
+        int zOut;
+        if (registeredIsHot.get(i)) {
+          zIn = effectiveZones - p - 1;
+          zOut = effectiveZones - p;
+        } else {
+          zIn = p;
+          zOut = p + 1;
+        }
+        entropyGen += massFlowKgS[i] * (streamS[i][zOut] - streamS[i][zIn]);
       }
       exergyDestructionPerZone[p] = referenceTemperatureK * Math.abs(entropyGen);
       totalExergyDestruction += exergyDestructionPerZone[p];
@@ -1302,12 +1302,12 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
 
       // Thermal stress: gradient = |dT| / zone_length
       if (coreGeometry != null && coreGeometry.getLength() > 0.0) {
-	double zoneLength = coreGeometry.getLength() / effectiveZones;
-	double maxDT = Math.max(Math.abs(hotT2 - hotT1), Math.abs(coldT2 - coldT1));
-	thermalGradientPerZone[p] = maxDT / zoneLength;
-	if (thermalGradientPerZone[p] > maxAllowableThermalGradient) {
-	  thermalStressWarning = true;
-	}
+        double zoneLength = coreGeometry.getLength() / effectiveZones;
+        double maxDT = Math.max(Math.abs(hotT2 - hotT1), Math.abs(coldT2 - coldT1));
+        thermalGradientPerZone[p] = maxDT / zoneLength;
+        if (thermalGradientPerZone[p] > maxAllowableThermalGradient) {
+          thermalStressWarning = true;
+        }
       }
     }
 
@@ -1320,9 +1320,9 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
       double exergyChange = massFlowKgS[i] * (dH - referenceTemperatureK * dS);
 
       if (exergyChange < 0.0) {
-	exergyInput += Math.abs(exergyChange);
+        exergyInput += Math.abs(exergyChange);
       } else {
-	exergyOutput += exergyChange;
+        exergyOutput += exergyChange;
       }
     }
 
@@ -1334,10 +1334,10 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     computeDetailedPressureDrop(streamDensity, streamViscosity, streamVapFrac, massFlowKgS, effectiveZones);
 
     logger.info(String.format(
-	"LNG HX rigorous: zones=%d, MITA=%.2f C (zone %d), eta_II=%.1f%%, "
-	    + "exergy_dest=%.1f kW, freezeRisk=%b, thermalStress=%b",
-	effectiveZones, minimumInternalTemperatureApproach, mitaZoneIndex, secondLawEfficiency * 100.0,
-	totalExergyDestruction, hasFreezeOutRisk(), thermalStressWarning));
+        "LNG HX rigorous: zones=%d, MITA=%.2f C (zone %d), eta_II=%.1f%%, "
+            + "exergy_dest=%.1f kW, freezeRisk=%b, thermalStress=%b",
+        effectiveZones, minimumInternalTemperatureApproach, mitaZoneIndex, secondLawEfficiency * 100.0,
+        totalExergyDestruction, hasFreezeOutRisk(), thermalStressWarning));
   }
 
   // ════════════════════════════════════════════════════════════════════
@@ -1390,7 +1390,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
       double temp = tIn + frac * (tOut - tIn);
       double pres = pIn - frac * dp;
       if (pres < 0.01) {
-	pres = 0.01;
+        pres = 0.01;
       }
       SystemInterface zf = baseFluid.clone();
       zf.setTemperature(temp, "C");
@@ -1415,9 +1415,9 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     refined.add(uniformFracs.get(0));
     for (int z = 0; z < nUniform - 1; z++) {
       if (gradients[z] > adaptiveThresholdFactor * avgGradient && refined.size() + (nUniform - z) < maxAdaptiveZones) {
-	// Insert midpoint
-	double mid = (uniformFracs.get(z) + uniformFracs.get(z + 1)) / 2.0;
-	refined.add(mid);
+        // Insert midpoint
+        double mid = (uniformFracs.get(z) + uniformFracs.get(z + 1)) / 2.0;
+        refined.add(mid);
       }
       refined.add(uniformFracs.get(z + 1));
     }
@@ -1457,15 +1457,15 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
 
     // j-factor correlation (Manglik & Bergles 1995, Eq. 1)
     double j = 0.6522 * Math.pow(re, -0.5403) * Math.pow(alpha, -0.1541) * Math.pow(delta, 0.1499)
-	* Math.pow(gamma, -0.0678) * Math.pow(1.0 + 5.269e-5 * Math.pow(re, 1.340) * Math.pow(alpha, 0.504)
-	    * Math.pow(delta, 0.456) * Math.pow(gamma, -1.055), 0.1);
+        * Math.pow(gamma, -0.0678) * Math.pow(1.0 + 5.269e-5 * Math.pow(re, 1.340) * Math.pow(alpha, 0.504)
+            * Math.pow(delta, 0.456) * Math.pow(gamma, -1.055), 0.1);
 
     // f-factor correlation (Manglik & Bergles 1995, Eq. 2)
     double f = 9.6243 * Math.pow(re, -0.7422) * Math.pow(alpha, -0.1856) * Math.pow(delta, 0.3053)
-	* Math.pow(gamma, -0.2659)
-	* Math.pow(1.0
-	    + 7.669e-8 * Math.pow(re, 4.429) * Math.pow(alpha, 0.920) * Math.pow(delta, 3.767) * Math.pow(gamma, 0.236),
-	    0.1);
+        * Math.pow(gamma, -0.2659)
+        * Math.pow(1.0
+            + 7.669e-8 * Math.pow(re, 4.429) * Math.pow(alpha, 0.920) * Math.pow(delta, 3.767) * Math.pow(gamma, 0.236),
+            0.1);
 
     return new double[] { j, f };
   }
@@ -1524,7 +1524,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     for (int i = 0; i < streamCount; i++) {
       FinGeometry fin = (i < streamFinGeometry.size()) ? streamFinGeometry.get(i) : null;
       if (fin == null) {
-	continue; // No fin geometry set, skip correlation-based DP
+        continue; // No fin geometry set, skip correlation-based DP
       }
 
       double dh = fin.getHydraulicDiameter();
@@ -1537,43 +1537,43 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
       // Assume core frontal area from core geometry if available, else 1 m2
       double aFrontal = 1.0;
       if (coreGeometry.getWidth() > 0 && coreGeometry.getHeight() > 0) {
-	aFrontal = coreGeometry.getWidth() * coreGeometry.getHeight();
+        aFrontal = coreGeometry.getWidth() * coreGeometry.getHeight();
       }
       double aFreeFlow = sigma * aFrontal;
       double massVelocity = massFlowKgS[i] / aFreeFlow; // kg/(m2·s)
 
       for (int z = 0; z < effectiveZones; z++) {
-	double rho = (streamDensity[i][z] + streamDensity[i][z + 1]) / 2.0;
-	double mu = (streamViscosity[i][z] + streamViscosity[i][z + 1]) / 2.0;
-	if (rho < 0.01 || mu < 1e-12) {
-	  continue;
-	}
+        double rho = (streamDensity[i][z] + streamDensity[i][z + 1]) / 2.0;
+        double mu = (streamViscosity[i][z] + streamViscosity[i][z + 1]) / 2.0;
+        if (rho < 0.01 || mu < 1e-12) {
+          continue;
+        }
 
-	double re = massVelocity * dh / mu;
-	double[] jf = manglikBerglesOSF(re, fin);
-	jSum += jf[0];
-	fSum += jf[1];
+        double re = massVelocity * dh / mu;
+        double[] jf = manglikBerglesOSF(re, fin);
+        jSum += jf[0];
+        fSum += jf[1];
 
-	// Zone length
-	double zoneLength = (coreGeometry.getLength() > 0) ? coreGeometry.getLength() / effectiveZones
-	    : 1.0 / effectiveZones;
+        // Zone length
+        double zoneLength = (coreGeometry.getLength() > 0) ? coreGeometry.getLength() / effectiveZones
+            : 1.0 / effectiveZones;
 
-	// Single-phase friction DP for this zone
-	double dpZone = 2.0 * jf[1] * (zoneLength / dh) * massVelocity * massVelocity / rho;
+        // Single-phase friction DP for this zone
+        double dpZone = 2.0 * jf[1] * (zoneLength / dh) * massVelocity * massVelocity / rho;
 
-	// Two-phase correction (P6)
-	double x = (streamVapFrac[i][z] + streamVapFrac[i][z + 1]) / 2.0;
-	if (x > 0.001 && x < 0.999) {
-	  // Need liquid and gas properties — use simplified split
-	  double rhoL = rho / (1.0 - x + 0.001);
-	  double rhoG = rho * 0.1; // approximation for LNG conditions
-	  double muL = mu;
-	  double muG = mu * 0.05;
-	  double phiL2 = lockhartMartinelliPhiL2(x, rhoL, rhoG, muL, muG);
-	  dpZone *= phiL2;
-	}
+        // Two-phase correction (P6)
+        double x = (streamVapFrac[i][z] + streamVapFrac[i][z + 1]) / 2.0;
+        if (x > 0.001 && x < 0.999) {
+          // Need liquid and gas properties — use simplified split
+          double rhoL = rho / (1.0 - x + 0.001);
+          double rhoG = rho * 0.1; // approximation for LNG conditions
+          double muL = mu;
+          double muG = mu * 0.05;
+          double phiL2 = lockhartMartinelliPhiL2(x, rhoL, rhoG, muL, muG);
+          dpZone *= phiL2;
+        }
 
-	totalDP += dpZone;
+        totalDP += dpZone;
       }
 
       computedStreamDP[i] = totalDP / 1e5; // Pa to bar
@@ -1619,7 +1619,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     double totalUA_WK = 0.0;
     if (uaPerZone != null) {
       for (double ua : uaPerZone) {
-	totalUA_WK += ua;
+        totalUA_WK += ua;
       }
     }
     if (totalUA_WK <= 0.0) {
@@ -1648,7 +1648,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
       transientResults.add(new TransientPoint(step * dtHours, metalTemp, fluidOutTemp, duty));
 
       if (metalTemp <= targetTempC + 1.0) {
-	break; // Converged to target
+        break; // Converged to target
       }
     }
   }
@@ -1686,7 +1686,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     double totalUA_WK = 0.0;
     if (uaPerZone != null) {
       for (double ua : uaPerZone) {
-	totalUA_WK += ua;
+        totalUA_WK += ua;
       }
     }
     if (totalUA_WK <= 0.0) {
@@ -1699,9 +1699,9 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     int refIdx = -1;
     for (int i = 0; i < streamFinGeometry.size(); i++) {
       if (streamFinGeometry.get(i) != null) {
-	refFin = streamFinGeometry.get(i);
-	refIdx = i;
-	break;
+        refFin = streamFinGeometry.get(i);
+        refIdx = i;
+        break;
       }
     }
     if (refFin == null) {
@@ -1710,7 +1710,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
 
     // Average heat-transfer coefficient from j-factor
     double jAvg = (streamJFactor != null && refIdx >= 0 && refIdx < streamJFactor.length) ? streamJFactor[refIdx]
-	: 0.003; // default engineering estimate for BAHX
+        : 0.003; // default engineering estimate for BAHX
     if (jAvg < 1e-6) {
       jAvg = 0.003;
     }
@@ -1756,8 +1756,8 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     coreThermalMassKJK = weight * cpAluminium;
 
     logger.info(
-	String.format("BAHX core sized: L=%.2f m, W=%.2f m, H=%.2f m, weight=%.0f kg, " + "area=%.0f m2, layers=%d",
-	    coreLength, coreWidth, coreHeight, weight, requiredArea, nLayers));
+        String.format("BAHX core sized: L=%.2f m, W=%.2f m, H=%.2f m, weight=%.0f kg, " + "area=%.0f m2, layers=%d",
+            coreLength, coreWidth, coreHeight, weight, requiredArea, nLayers));
   }
 
   // ════════════════════════════════════════════════════════════════════
@@ -1784,9 +1784,9 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     if ("BAHX".equalsIgnoreCase(exchangerType) && mercuryPPB > MERCURY_SAFE_LIMIT_PPB) {
       mercuryRiskPresent = true;
       mercuryRiskMessage = String.format("CRITICAL: Mercury concentration %.1f ppb exceeds safe limit %.1f ppb for "
-	  + "aluminium BAHX. Risk of liquid metal embrittlement (LME). "
-	  + "Install mercury removal unit (activated carbon or metal sulfide bed) "
-	  + "upstream, or consider stainless steel PCHE alternative.", mercuryPPB, MERCURY_SAFE_LIMIT_PPB);
+          + "aluminium BAHX. Risk of liquid metal embrittlement (LME). "
+          + "Install mercury removal unit (activated carbon or metal sulfide bed) "
+          + "upstream, or consider stainless steel PCHE alternative.", mercuryPPB, MERCURY_SAFE_LIMIT_PPB);
       logger.warn(mercuryRiskMessage);
     } else {
       mercuryRiskPresent = false;
@@ -1814,13 +1814,13 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     double massSum = 0.0;
     for (int i = 0; i < streamCount; i++) {
       if (registeredIsHot.get(i) != hotSide) {
-	continue;
+        continue;
       }
       double frac;
       if (hotSide) {
-	frac = (double) (numberOfZones - posFromColdEnd) / numberOfZones;
+        frac = (double) (numberOfZones - posFromColdEnd) / numberOfZones;
       } else {
-	frac = (double) posFromColdEnd / numberOfZones;
+        frac = (double) posFromColdEnd / numberOfZones;
       }
       double temp = inletTempC[i] + frac * (outletTempC[i] - inletTempC[i]);
       weightedSum += massFlowKgS[i] * temp;
@@ -1849,13 +1849,13 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     double massSum = 0.0;
     for (int i = 0; i < streamCount; i++) {
       if (registeredIsHot.get(i) != hotSide) {
-	continue;
+        continue;
       }
       int zIdx;
       if (hotSide) {
-	zIdx = effectiveZones - posFromColdEnd;
+        zIdx = effectiveZones - posFromColdEnd;
       } else {
-	zIdx = posFromColdEnd;
+        zIdx = posFromColdEnd;
       }
       weightedSum += massFlowKgS[i] * streamTempC[i][zIdx];
       massSum += massFlowKgS[i];

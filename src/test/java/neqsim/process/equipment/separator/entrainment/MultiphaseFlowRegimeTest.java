@@ -51,8 +51,8 @@ class MultiphaseFlowRegimeTest {
     MultiphaseFlowRegime.FlowRegime regime = calc.getPredictedRegime();
     assertNotNull(regime);
     assertTrue(regime == MultiphaseFlowRegime.FlowRegime.STRATIFIED_SMOOTH
-	|| regime == MultiphaseFlowRegime.FlowRegime.STRATIFIED_WAVY || regime == MultiphaseFlowRegime.FlowRegime.SLUG,
-	"Low velocities should give stratified or slug regime, got: " + regime);
+        || regime == MultiphaseFlowRegime.FlowRegime.STRATIFIED_WAVY || regime == MultiphaseFlowRegime.FlowRegime.SLUG,
+        "Low velocities should give stratified or slug regime, got: " + regime);
   }
 
   /**
@@ -66,8 +66,8 @@ class MultiphaseFlowRegimeTest {
     MultiphaseFlowRegime.FlowRegime regime = calc.getPredictedRegime();
     assertNotNull(regime);
     assertTrue(
-	regime == MultiphaseFlowRegime.FlowRegime.ANNULAR || regime == MultiphaseFlowRegime.FlowRegime.ANNULAR_MIST,
-	"High gas velocity should give annular, got: " + regime);
+        regime == MultiphaseFlowRegime.FlowRegime.ANNULAR || regime == MultiphaseFlowRegime.FlowRegime.ANNULAR_MIST,
+        "High gas velocity should give annular, got: " + regime);
   }
 
   /**
@@ -81,8 +81,8 @@ class MultiphaseFlowRegimeTest {
     MultiphaseFlowRegime.FlowRegime regime = calc.getPredictedRegime();
     assertNotNull(regime);
     assertTrue(
-	regime == MultiphaseFlowRegime.FlowRegime.BUBBLE || regime == MultiphaseFlowRegime.FlowRegime.DISPERSED_BUBBLE,
-	"Low gas velocity vertical should give bubble, got: " + regime);
+        regime == MultiphaseFlowRegime.FlowRegime.BUBBLE || regime == MultiphaseFlowRegime.FlowRegime.DISPERSED_BUBBLE,
+        "Low gas velocity vertical should give bubble, got: " + regime);
   }
 
   /**
@@ -96,9 +96,9 @@ class MultiphaseFlowRegimeTest {
     MultiphaseFlowRegime.FlowRegime regime = calc.getPredictedRegime();
     assertNotNull(regime);
     assertTrue(
-	regime == MultiphaseFlowRegime.FlowRegime.ANNULAR || regime == MultiphaseFlowRegime.FlowRegime.CHURN
-	    || regime == MultiphaseFlowRegime.FlowRegime.ANNULAR_MIST,
-	"High gas vertical should give annular/churn, got: " + regime);
+        regime == MultiphaseFlowRegime.FlowRegime.ANNULAR || regime == MultiphaseFlowRegime.FlowRegime.CHURN
+            || regime == MultiphaseFlowRegime.FlowRegime.ANNULAR_MIST,
+        "High gas vertical should give annular/churn, got: " + regime);
   }
 
   /**

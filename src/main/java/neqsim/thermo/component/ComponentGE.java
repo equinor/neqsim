@@ -52,16 +52,16 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
     } else {
       double activinf = 1.0;
       if (phase.hasComponent("water")) {
-	int waternumb = phase.getComponent("water").getComponentNumber();
-	activinf = gamma / ((PhaseGE) phase).getActivityCoefficientInfDilWater(componentNumber, waternumb);
+        int waternumb = phase.getComponent("water").getComponentNumber();
+        activinf = gamma / ((PhaseGE) phase).getActivityCoefficientInfDilWater(componentNumber, waternumb);
       } else {
-	activinf = gamma / ((PhaseGE) phase).getActivityCoefficientInfDil(componentNumber);
+        activinf = gamma / ((PhaseGE) phase).getActivityCoefficientInfDil(componentNumber);
       }
       double henryCoef = getHenryCoef(phase.getTemperature());
       // Handle infinite or very large Henry coefficients (database error or insoluble component)
       // Use a large but finite value to represent essentially insoluble components
       if (Double.isInfinite(henryCoef) || henryCoef > 1.0e12 || isIsIon()) {
-	henryCoef = 1.0e12; // Cap at 1e12 bar - effectively insoluble
+        henryCoef = 1.0e12; // Cap at 1e12 bar - effectively insoluble
       }
       fugacityCoefficient = activinf * henryCoef / phase.getPressure();
       // gamma* benyttes ikke

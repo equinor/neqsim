@@ -283,7 +283,7 @@ public class WellCostEstimator {
 
     // ---- Contingency ----
     double subtotal = drillingCost + casingMaterialCost + cementCost + mudCost + bitsCost + completionCost
-	+ wellheadCost + safetyValveCost + loggingCost + wellTestCost;
+        + wellheadCost + safetyValveCost + loggingCost + wellTestCost;
     contingencyCost = subtotal * contingencyPct;
 
     // ---- Total ----
@@ -417,33 +417,33 @@ public class WellCostEstimator {
     // Conductor casing
     if (well.getConductorDepth() > 0) {
       bom.add(createBOMItem("Conductor Casing", String.format("%.0f\" conductor", well.getConductorOD()),
-	  "Casing - Conductor", well.getConductorDepth(), "m"));
+          "Casing - Conductor", well.getConductorDepth(), "m"));
     }
 
     // Surface casing
     if (well.getSurfaceCasingDepth() > 0) {
       bom.add(createBOMItem("Surface Casing", String.format("%.3f\" surface casing", well.getSurfaceCasingOD()),
-	  "Casing - Surface", well.getSurfaceCasingDepth(), "m"));
+          "Casing - Surface", well.getSurfaceCasingDepth(), "m"));
     }
 
     // Intermediate casing
     if (well.getIntermediateCasingDepth() > 0) {
       bom.add(createBOMItem("Intermediate Casing",
-	  String.format("%.3f\" intermediate casing", well.getIntermediateCasingOD()), "Casing - Intermediate",
-	  well.getIntermediateCasingDepth(), "m"));
+          String.format("%.3f\" intermediate casing", well.getIntermediateCasingOD()), "Casing - Intermediate",
+          well.getIntermediateCasingDepth(), "m"));
     }
 
     // Production casing
     if (well.getProductionCasingDepth() > 0) {
       bom.add(
-	  createBOMItem("Production Casing", String.format("%.3f\" production casing", well.getProductionCasingOD()),
-	      "Casing - Production", well.getProductionCasingDepth(), "m"));
+          createBOMItem("Production Casing", String.format("%.3f\" production casing", well.getProductionCasingOD()),
+              "Casing - Production", well.getProductionCasingDepth(), "m"));
     }
 
     // Tubing
     bom.add(
-	createBOMItem("Production Tubing", String.format("%.1f\" %s tubing", well.getTubingOD(), well.getTubingGrade()),
-	    "Tubing", well.getProductionCasingDepth(), "m"));
+        createBOMItem("Production Tubing", String.format("%.1f\" %s tubing", well.getTubingOD(), well.getTubingGrade()),
+            "Tubing", well.getProductionCasingDepth(), "m"));
 
     // Wellhead
     bom.add(createBOMItem("Subsea Wellhead", "18-3/4\" wellhead assembly", "Wellhead", 1, "ea"));
@@ -502,7 +502,7 @@ public class WellCostEstimator {
    */
   public String toJson() {
     return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-	.toJson(getCostBreakdown());
+        .toJson(getCostBreakdown());
   }
 
   // ============ Getters ============

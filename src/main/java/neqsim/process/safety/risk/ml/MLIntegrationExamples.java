@@ -111,12 +111,12 @@ public class MLIntegrationExamples {
     protected float[] prepareInput(Map<String, Double> features) {
       float[] input = new float[inputFeatures.size()];
       for (int i = 0; i < inputFeatures.size(); i++) {
-	String featureName = inputFeatures.get(i);
-	Double value = features.get(featureName);
-	if (value == null) {
-	  value = featureDefaults.getOrDefault(featureName, 0.0);
-	}
-	input[i] = value.floatValue();
+        String featureName = inputFeatures.get(i);
+        Double value = features.get(featureName);
+        if (value == null) {
+          value = featureDefaults.getOrDefault(featureName, 0.0);
+        }
+        input[i] = value.floatValue();
       }
       return input;
     }
@@ -192,7 +192,7 @@ public class MLIntegrationExamples {
     @Override
     public double predict(Map<String, Double> features) {
       if (!isLoaded) {
-	load();
+        load();
       }
 
       float[] input = prepareInput(features);
@@ -206,7 +206,7 @@ public class MLIntegrationExamples {
       // Placeholder: simple threshold model
       double sum = 0;
       for (float v : input) {
-	sum += v;
+        sum += v;
       }
       return Math.min(1.0, Math.max(0.0, sum / input.length / 100.0));
     }
@@ -255,7 +255,7 @@ public class MLIntegrationExamples {
      * @param outputTensorName name of output tensor
      */
     public TensorFlowAdapter(String modelDir, List<String> inputFeatures, String inputTensorName,
-	String outputTensorName) {
+        String outputTensorName) {
       super("TensorFlow:" + modelDir);
       this.modelDir = modelDir;
       this.inputFeatures = new ArrayList<>(inputFeatures);
@@ -284,7 +284,7 @@ public class MLIntegrationExamples {
     @Override
     public double predict(Map<String, Double> features) {
       if (!isLoaded) {
-	load();
+        load();
       }
 
       float[] input = prepareInput(features);
@@ -303,7 +303,7 @@ public class MLIntegrationExamples {
       // Placeholder
       double sum = 0;
       for (float v : input) {
-	sum += v;
+        sum += v;
       }
       return Math.min(1.0, Math.max(0.0, sum / input.length / 100.0));
     }
@@ -378,9 +378,9 @@ public class MLIntegrationExamples {
       // Placeholder
       double sum = 0;
       for (Double v : features.values()) {
-	if (v != null) {
-	  sum += v;
-	}
+        if (v != null) {
+          sum += v;
+        }
       }
       return Math.min(1.0, Math.max(0.0, sum / features.size() / 100.0));
     }
@@ -442,15 +442,15 @@ public class MLIntegrationExamples {
     public double predict(Map<String, Double> features) {
       double score = 0;
       for (String feature : inputFeatures) {
-	Double value = features.get(feature);
-	Double threshold = thresholds.get(feature);
-	Double weight = weights.get(feature);
+        Double value = features.get(feature);
+        Double threshold = thresholds.get(feature);
+        Double weight = weights.get(feature);
 
-	if (value != null && threshold != null && weight != null) {
-	  if (value > threshold) {
-	    score += weight;
-	  }
-	}
+        if (value != null && threshold != null && weight != null) {
+          if (value > threshold) {
+            score += weight;
+          }
+        }
       }
       return Math.min(1.0, Math.max(0.0, score));
     }
@@ -544,7 +544,7 @@ public class MLIntegrationExamples {
     // Register threshold-based models (for testing without actual ML)
     ThresholdModel failureModel = createTestFailurePredictor();
     RiskMLInterface.MLModel failureMlModel = mlInterface.createFailurePredictionModel("failure_predictor",
-	"Failure Predictor");
+        "Failure Predictor");
     failureMlModel.setPredictor(features -> {
       double score = failureModel.predict(features);
       RiskMLInterface.MLPrediction pred = new RiskMLInterface.MLPrediction(failureMlModel.getModelId());
@@ -556,7 +556,7 @@ public class MLIntegrationExamples {
 
     ThresholdModel anomalyModel = createTestAnomalyDetector();
     RiskMLInterface.MLModel anomalyMlModel = mlInterface.createAnomalyDetectionModel("anomaly_detector",
-	"Anomaly Detector");
+        "Anomaly Detector");
     anomalyMlModel.setPredictor(features -> {
       double score = anomalyModel.predict(features);
       RiskMLInterface.MLPrediction pred = new RiskMLInterface.MLPrediction(anomalyMlModel.getModelId());

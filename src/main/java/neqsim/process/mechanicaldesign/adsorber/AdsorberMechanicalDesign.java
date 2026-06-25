@@ -38,9 +38,9 @@ public class AdsorberMechanicalDesign extends MechanicalDesign {
 
     if (getDesignStandard().containsKey("pressure vessel design code")) {
       System.out.println(
-	  "pressure vessel code standard: " + getDesignStandard().get("pressure vessel design code").getStandardName());
+          "pressure vessel code standard: " + getDesignStandard().get("pressure vessel design code").getStandardName());
       wallThickness = ((PressureVesselDesignStandard) getDesignStandard().get("pressure vessel design code"))
-	  .calcWallThickness();
+          .calcWallThickness();
     } else {
       System.out.println("no pressure vessel code standard specified......");
       return;
@@ -119,7 +119,7 @@ public class AdsorberMechanicalDesign extends MechanicalDesign {
     System.out.println("separator dry weigth: " + emptyVesselWeight + " kg");
     System.out.println("total skid weigth: " + totalSkidWeight + " kg");
     System.out.println(
-	"foot print: width:" + moduleWidth + " length " + moduleLength + " height " + moduleHeight + " meter.");
+        "foot print: width:" + moduleWidth + " length " + moduleLength + " height " + moduleHeight + " meter.");
     System.out.println("mechanical price: " + materialsCost + " kNOK");
 
     setWeigthVesselShell(emptyVesselWeight);

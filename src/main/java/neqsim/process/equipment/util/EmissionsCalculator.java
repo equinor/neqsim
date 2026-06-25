@@ -180,7 +180,7 @@ public class EmissionsCalculator implements Serializable {
     for (int i = 0; i < gasPhase.getNumberOfComponents(); i++) {
       String name = gasPhase.getComponent(i).getComponentName().toLowerCase();
       if (isHeavierHydrocarbon(name)) {
-	heavierEmissionRate += gasPhase.getComponent(i).getFlowRate("kg/sec");
+        heavierEmissionRate += gasPhase.getComponent(i).getFlowRate("kg/sec");
       }
     }
   }
@@ -245,7 +245,7 @@ public class EmissionsCalculator implements Serializable {
    */
   public double getNMVOCEmissionRate(String unit) {
     double nmvoc = ethaneEmissionRate + propaneEmissionRate + butanesEmissionRate + pentanesEmissionRate
-	+ heavierEmissionRate;
+        + heavierEmissionRate;
     return convertRate(nmvoc, unit);
   }
 
@@ -281,7 +281,7 @@ public class EmissionsCalculator implements Serializable {
    */
   public double getCO2Equivalents(String unit) {
     double co2eq = co2EmissionRate * GWP_CO2 + methaneEmissionRate * GWP_METHANE
-	+ getNMVOCEmissionRate("kg/sec") * GWP_NMVOC;
+        + getNMVOCEmissionRate("kg/sec") * GWP_NMVOC;
     return convertRate(co2eq, unit);
   }
 
@@ -607,7 +607,7 @@ public class EmissionsCalculator implements Serializable {
     // Gas flow at standard conditions (Sm³/hr)
     // Using ideal gas approximation: n*R*T_std/P_std
     double totalGasMoles = fluid.getPhase("gas").getNumberOfMolesInPhase()
-	* fluid.getPhase("gas").getFlowRate("mole/sec") * 3600.0;
+        * fluid.getPhase("gas").getFlowRate("mole/sec") * 3600.0;
     double gasStdVolume = totalGasMoles * 22.414 / 1000.0; // Sm³/hr at 0°C, 1 atm
 
     return gasStdVolume / waterFlowRate_m3hr;
@@ -755,8 +755,8 @@ public class EmissionsCalculator implements Serializable {
     // TBP fractions
     if (name.matches("c\\d+.*") && !name.equals("co2")) {
       try {
-	int carbonNum = Integer.parseInt(name.replaceAll("[^0-9]", "").substring(0, 1));
-	return carbonNum >= 6;
+        int carbonNum = Integer.parseInt(name.replaceAll("[^0-9]", "").substring(0, 1));
+        return carbonNum >= 6;
       } catch (Exception e) {
       }
     }

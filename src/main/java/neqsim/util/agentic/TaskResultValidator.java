@@ -89,8 +89,8 @@ public final class TaskResultValidator implements Serializable {
     try {
       JsonElement element = JsonParser.parseString(jsonString);
       if (!element.isJsonObject()) {
-	report.addError("root", "results.json must be a JSON object, got: " + element.getClass().getSimpleName());
-	return report;
+        report.addError("root", "results.json must be a JSON object, got: " + element.getClass().getSimpleName());
+        return report;
       }
       root = element.getAsJsonObject();
     } catch (Exception e) {
@@ -101,14 +101,14 @@ public final class TaskResultValidator implements Serializable {
     // Check required keys
     for (String key : REQUIRED_KEYS) {
       if (!root.has(key)) {
-	report.addError(key, "Required key '" + key + "' is missing");
+        report.addError(key, "Required key '" + key + "' is missing");
       }
     }
 
     // Check recommended keys
     for (String key : RECOMMENDED_KEYS) {
       if (!root.has(key)) {
-	report.addWarning(key, "Recommended key '" + key + "' is missing");
+        report.addWarning(key, "Recommended key '" + key + "' is missing");
       }
     }
 
@@ -116,9 +116,9 @@ public final class TaskResultValidator implements Serializable {
     if (root.has("key_results")) {
       JsonElement krElem = root.get("key_results");
       if (krElem.isJsonObject()) {
-	validateKeyResults(krElem.getAsJsonObject(), report);
+        validateKeyResults(krElem.getAsJsonObject(), report);
       } else {
-	report.addError("key_results", "'key_results' must be a JSON object");
+        report.addError("key_results", "'key_results' must be a JSON object");
       }
     }
 
@@ -126,9 +126,9 @@ public final class TaskResultValidator implements Serializable {
     if (root.has("validation")) {
       JsonElement valElem = root.get("validation");
       if (valElem.isJsonObject()) {
-	validateValidationSection(valElem.getAsJsonObject(), report);
+        validateValidationSection(valElem.getAsJsonObject(), report);
       } else {
-	report.addError("validation", "'validation' must be a JSON object");
+        report.addError("validation", "'validation' must be a JSON object");
       }
     }
 
@@ -136,9 +136,9 @@ public final class TaskResultValidator implements Serializable {
     if (root.has("approach")) {
       JsonElement approach = root.get("approach");
       if (!approach.isJsonPrimitive() || !approach.getAsJsonPrimitive().isString()) {
-	report.addError("approach", "'approach' must be a string");
+        report.addError("approach", "'approach' must be a string");
       } else if (approach.getAsString().trim().isEmpty()) {
-	report.addWarning("approach", "'approach' is empty");
+        report.addWarning("approach", "'approach' is empty");
       }
     }
 
@@ -146,9 +146,9 @@ public final class TaskResultValidator implements Serializable {
     if (root.has("conclusions")) {
       JsonElement conclusions = root.get("conclusions");
       if (!conclusions.isJsonPrimitive() || !conclusions.getAsJsonPrimitive().isString()) {
-	report.addError("conclusions", "'conclusions' must be a string");
+        report.addError("conclusions", "'conclusions' must be a string");
       } else if (conclusions.getAsString().trim().isEmpty()) {
-	report.addWarning("conclusions", "'conclusions' is empty");
+        report.addWarning("conclusions", "'conclusions' is empty");
       }
     }
 
@@ -188,8 +188,8 @@ public final class TaskResultValidator implements Serializable {
     }
     for (Map.Entry<String, JsonElement> entry : keyResults.entrySet()) {
       if (!entry.getValue().isJsonPrimitive()) {
-	report.addWarning("key_results." + entry.getKey(),
-	    "Value should be a primitive (number or string), got: " + entry.getValue().getClass().getSimpleName());
+        report.addWarning("key_results." + entry.getKey(),
+            "Value should be a primitive (number or string), got: " + entry.getValue().getClass().getSimpleName());
       }
     }
   }
@@ -225,14 +225,14 @@ public final class TaskResultValidator implements Serializable {
     List<String> requiredUncKeys = Arrays.asList("method", "n_simulations", "p10", "p50", "p90");
     for (String key : requiredUncKeys) {
       if (!unc.has(key)) {
-	report.addWarning("uncertainty." + key, "Missing recommended key '" + key + "' in uncertainty section");
+        report.addWarning("uncertainty." + key, "Missing recommended key '" + key + "' in uncertainty section");
       }
     }
     if (unc.has("n_simulations") && unc.get("n_simulations").isJsonPrimitive()) {
       int nSim = unc.get("n_simulations").getAsInt();
       if (nSim < 100) {
-	report.addWarning("uncertainty.n_simulations",
-	    "n_simulations=" + nSim + " is low — recommend at least 200 for NeqSim simulations");
+        report.addWarning("uncertainty.n_simulations",
+            "n_simulations=" + nSim + " is low — recommend at least 200 for NeqSim simulations");
       }
     }
   }
@@ -254,21 +254,21 @@ public final class TaskResultValidator implements Serializable {
     } else {
       JsonElement risksElem = risk.get("risks");
       if (!risksElem.isJsonArray()) {
-	report.addError("risk_evaluation.risks", "'risks' must be a JSON array");
+        report.addError("risk_evaluation.risks", "'risks' must be a JSON array");
       } else {
-	JsonArray risksArr = risksElem.getAsJsonArray();
-	if (risksArr.size() == 0) {
-	  report.addWarning("risk_evaluation.risks", "risks array is empty");
-	}
-	for (int i = 0; i < risksArr.size(); i++) {
-	  if (risksArr.get(i).isJsonObject()) {
-	    JsonObject riskItem = risksArr.get(i).getAsJsonObject();
-	    if (!riskItem.has("id") || !riskItem.has("description") || !riskItem.has("risk_level")) {
-	      report.addWarning("risk_evaluation.risks[" + i + "]",
-		  "Risk item missing required fields (id, description, risk_level)");
-	    }
-	  }
-	}
+        JsonArray risksArr = risksElem.getAsJsonArray();
+        if (risksArr.size() == 0) {
+          report.addWarning("risk_evaluation.risks", "risks array is empty");
+        }
+        for (int i = 0; i < risksArr.size(); i++) {
+          if (risksArr.get(i).isJsonObject()) {
+            JsonObject riskItem = risksArr.get(i).getAsJsonObject();
+            if (!riskItem.has("id") || !riskItem.has("description") || !riskItem.has("risk_level")) {
+              report.addWarning("risk_evaluation.risks[" + i + "]",
+                  "Risk item missing required fields (id, description, risk_level)");
+            }
+          }
+        }
       }
     }
     if (!risk.has("overall_risk_level")) {
@@ -290,14 +290,14 @@ public final class TaskResultValidator implements Serializable {
     JsonArray arr = figDisc.getAsJsonArray();
     for (int i = 0; i < arr.size(); i++) {
       if (arr.get(i).isJsonObject()) {
-	JsonObject disc = arr.get(i).getAsJsonObject();
-	List<String> requiredFields = Arrays.asList("figure", "observation", "mechanism", "implication");
-	for (String field : requiredFields) {
-	  if (!disc.has(field)) {
-	    report.addWarning("figure_discussion[" + i + "]." + field,
-		"Missing '" + field + "' in figure discussion entry");
-	  }
-	}
+        JsonObject disc = arr.get(i).getAsJsonObject();
+        List<String> requiredFields = Arrays.asList("figure", "observation", "mechanism", "implication");
+        for (String field : requiredFields) {
+          if (!disc.has(field)) {
+            report.addWarning("figure_discussion[" + i + "]." + field,
+                "Missing '" + field + "' in figure discussion entry");
+          }
+        }
       }
     }
   }
@@ -324,20 +324,20 @@ public final class TaskResultValidator implements Serializable {
     }
     for (int i = 0; i < arr.size(); i++) {
       if (arr.get(i).isJsonObject()) {
-	JsonObject std = arr.get(i).getAsJsonObject();
-	List<String> requiredFields = Arrays.asList("code", "scope", "status");
-	for (String field : requiredFields) {
-	  if (!std.has(field)) {
-	    report.addWarning("standards_applied[" + i + "]." + field, "Missing '" + field + "' in standards entry");
-	  }
-	}
-	if (std.has("status") && std.get("status").isJsonPrimitive()) {
-	  String status = std.get("status").getAsString();
-	  if (!"PASS".equals(status) && !"FAIL".equals(status) && !"INFO".equals(status) && !"N/A".equals(status)) {
-	    report.addWarning("standards_applied[" + i + "].status",
-		"Unexpected status '" + status + "' — expected PASS, FAIL, INFO, or N/A");
-	  }
-	}
+        JsonObject std = arr.get(i).getAsJsonObject();
+        List<String> requiredFields = Arrays.asList("code", "scope", "status");
+        for (String field : requiredFields) {
+          if (!std.has(field)) {
+            report.addWarning("standards_applied[" + i + "]." + field, "Missing '" + field + "' in standards entry");
+          }
+        }
+        if (std.has("status") && std.get("status").isJsonPrimitive()) {
+          String status = std.get("status").getAsString();
+          if (!"PASS".equals(status) && !"FAIL".equals(status) && !"INFO".equals(status) && !"N/A".equals(status)) {
+            report.addWarning("standards_applied[" + i + "].status",
+                "Unexpected status '" + status + "' — expected PASS, FAIL, INFO, or N/A");
+          }
+        }
       }
     }
   }
@@ -437,19 +437,19 @@ public final class TaskResultValidator implements Serializable {
 
       List<Map<String, String>> errorList = new ArrayList<Map<String, String>>();
       for (Issue e : errors) {
-	Map<String, String> m = new LinkedHashMap<String, String>();
-	m.put("field", e.field);
-	m.put("message", e.message);
-	errorList.add(m);
+        Map<String, String> m = new LinkedHashMap<String, String>();
+        m.put("field", e.field);
+        m.put("message", e.message);
+        errorList.add(m);
       }
       map.put("errors", errorList);
 
       List<Map<String, String>> warningList = new ArrayList<Map<String, String>>();
       for (Issue w : warnings) {
-	Map<String, String> m = new LinkedHashMap<String, String>();
-	m.put("field", w.field);
-	m.put("message", w.message);
-	warningList.add(m);
+        Map<String, String> m = new LinkedHashMap<String, String>();
+        m.put("field", w.field);
+        m.put("message", w.message);
+        warningList.add(m);
       }
       map.put("warnings", warningList);
 
@@ -475,8 +475,8 @@ public final class TaskResultValidator implements Serializable {
        * @param message issue message
        */
       Issue(String field, String message) {
-	this.field = field;
-	this.message = message;
+        this.field = field;
+        this.message = message;
       }
     }
   }

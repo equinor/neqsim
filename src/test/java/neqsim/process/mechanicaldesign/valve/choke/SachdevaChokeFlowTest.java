@@ -143,13 +143,13 @@ public class SachdevaChokeFlowTest {
     double P2_subcritical = P1 * (criticalRatio + 0.15); // Above critical
     MultiphaseChokeFlow.FlowRegime regime_sub = chokeModel.determineFlowRegime(twoPhaseFluid, P1, P2_subcritical);
     assertEquals(MultiphaseChokeFlow.FlowRegime.SUBCRITICAL, regime_sub,
-	"Pressure ratio " + (P2_subcritical / P1) + " > critical ratio " + criticalRatio + " should be subcritical");
+        "Pressure ratio " + (P2_subcritical / P1) + " > critical ratio " + criticalRatio + " should be subcritical");
 
     // Test critical: pressure ratio below critical ratio
     double P2_critical = P1 * (criticalRatio - 0.15); // Below critical
     MultiphaseChokeFlow.FlowRegime regime_crit = chokeModel.determineFlowRegime(twoPhaseFluid, P1, P2_critical);
     assertEquals(MultiphaseChokeFlow.FlowRegime.CRITICAL, regime_crit,
-	"Pressure ratio " + (P2_critical / P1) + " < critical ratio " + criticalRatio + " should be critical");
+        "Pressure ratio " + (P2_critical / P1) + " < critical ratio " + criticalRatio + " should be critical");
   }
 
   @Test
@@ -220,7 +220,7 @@ public class SachdevaChokeFlowTest {
     } else {
       // Subcritical - should match
       assertEquals(P2_test, P2_calculated, P2_test * 0.15,
-	  "Calculated downstream pressure should match input for subcritical flow");
+          "Calculated downstream pressure should match input for subcritical flow");
     }
   }
 

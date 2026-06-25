@@ -250,9 +250,9 @@ class NeqSimThreadPoolTest {
     }
 
     logger.info("Sequential execution of " + numProcesses + " processes: " + seqDuration + " ms ("
-	+ (seqDuration / numProcesses) + " ms/process)");
+        + (seqDuration / numProcesses) + " ms/process)");
     logger.info("Parallel execution of " + numProcesses + " processes: " + parDuration + " ms (using "
-	+ NeqSimThreadPool.getPoolSize() + " threads)");
+        + NeqSimThreadPool.getPoolSize() + " threads)");
     System.out.println("Speedup factor: " + String.format("%.2f", (double) seqDuration / parDuration));
   }
 
@@ -281,8 +281,8 @@ class NeqSimThreadPoolTest {
       final int index = i;
       final ProcessSystem process = processes.get(i);
       completionService.submit(() -> {
-	process.run();
-	return index;
+        process.run();
+        return index;
       });
     }
 
@@ -301,7 +301,7 @@ class NeqSimThreadPoolTest {
       double gasFlow = sep.getGasOutStream().getFlowRate("kg/hr");
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "  Process %d completed: gas flow = %.2f kg/hr%n",
-	  completedIndex, gasFlow);
+          completedIndex, gasFlow);
     }
 
     // Verify all processes completed
@@ -340,22 +340,22 @@ class NeqSimThreadPoolTest {
     // Poll until all complete
     while (completedCount < numProcesses) {
       for (int i = 0; i < numProcesses; i++) {
-	if (!reported[i] && futures.get(i).isDone()) {
-	  // This one just completed - report it
-	  ProcessSystem process = processes.get(i);
-	  Separator sep = (Separator) process.getUnit("Separator-" + i);
-	  double gasFlow = sep.getGasOutStream().getFlowRate("kg/hr");
+        if (!reported[i] && futures.get(i).isDone()) {
+          // This one just completed - report it
+          ProcessSystem process = processes.get(i);
+          Separator sep = (Separator) process.getUnit("Separator-" + i);
+          double gasFlow = sep.getGasOutStream().getFlowRate("kg/hr");
 
-	  logger.printf(org.apache.logging.log4j.Level.INFO, "  Process %d done: gas flow = %.2f kg/hr%n", i, gasFlow);
+          logger.printf(org.apache.logging.log4j.Level.INFO, "  Process %d done: gas flow = %.2f kg/hr%n", i, gasFlow);
 
-	  reported[i] = true;
-	  completedCount++;
-	}
+          reported[i] = true;
+          completedCount++;
+        }
       }
 
       // Could do other work here while waiting
       if (completedCount < numProcesses) {
-	Thread.sleep(1); // Small sleep to avoid busy-waiting
+        Thread.sleep(1); // Small sleep to avoid busy-waiting
       }
     }
 
@@ -378,11 +378,11 @@ class NeqSimThreadPoolTest {
     List<Future<?>> futures = new ArrayList<>();
     for (int i = 0; i < 10; i++) {
       futures.add(NeqSimThreadPool.submit(() -> {
-	try {
-	  Thread.sleep(10);
-	} catch (InterruptedException e) {
-	  Thread.currentThread().interrupt();
-	}
+        try {
+          Thread.sleep(10);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
       }));
     }
 
@@ -474,46 +474,46 @@ class NeqSimThreadPoolTest {
       List<ProcessSystem> threadProcesses = new ArrayList<>();
       List<Thread> threads = new ArrayList<>();
       for (int i = 0; i < numProcesses; i++) {
-	threadProcesses.add(createSimpleProcess(i, 25.0 + i));
+        threadProcesses.add(createSimpleProcess(i, 25.0 + i));
       }
 
       long threadStart = System.nanoTime();
       for (ProcessSystem process : threadProcesses) {
-	Thread t = process.runAsThread(); // Deprecated - creates new thread each time
-	threads.add(t);
+        Thread t = process.runAsThread(); // Deprecated - creates new thread each time
+        threads.add(t);
       }
       for (Thread t : threads) {
-	t.join(); // Wait for all threads
+        t.join(); // Wait for all threads
       }
       long threadDuration = (System.nanoTime() - threadStart) / 1_000_000; // Convert to ms
       totalThreadTime += threadDuration;
 
       // Verify all completed
       for (ProcessSystem process : threadProcesses) {
-	assertTrue(process.solved(), "Thread-based process should be solved");
+        assertTrue(process.solved(), "Thread-based process should be solved");
       }
 
       // --- Test NEW WAY: runAsTask() ---
       List<ProcessSystem> taskProcesses = new ArrayList<>();
       List<Future<?>> futures = new ArrayList<>();
       for (int i = 0; i < numProcesses; i++) {
-	taskProcesses.add(createSimpleProcess(i + 1000, 25.0 + i));
+        taskProcesses.add(createSimpleProcess(i + 1000, 25.0 + i));
       }
 
       long taskStart = System.nanoTime();
       for (ProcessSystem process : taskProcesses) {
-	Future<?> future = process.runAsTask(); // Uses thread pool
-	futures.add(future);
+        Future<?> future = process.runAsTask(); // Uses thread pool
+        futures.add(future);
       }
       for (Future<?> future : futures) {
-	future.get(60, TimeUnit.SECONDS);
+        future.get(60, TimeUnit.SECONDS);
       }
       long taskDuration = (System.nanoTime() - taskStart) / 1_000_000; // Convert to ms
       totalTaskTime += taskDuration;
 
       // Verify all completed
       for (ProcessSystem process : taskProcesses) {
-	assertTrue(process.solved(), "Task-based process should be solved");
+        assertTrue(process.solved(), "Task-based process should be solved");
       }
 
       logger.info("Run " + (run + 1) + ": runAsThread=" + threadDuration + "ms, runAsTask=" + taskDuration + "ms");

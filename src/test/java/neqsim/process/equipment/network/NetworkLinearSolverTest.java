@@ -1,6 +1,7 @@
 package neqsim.process.equipment.network;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -43,7 +44,7 @@ class NetworkLinearSolverTest {
     for (int i = 0; i < 4; i++) {
       double sum = 0;
       for (int j = 0; j < 4; j++) {
-	sum += a[i][j] * x[j];
+        sum += a[i][j] * x[j];
       }
       assertEquals(b[i], sum, 1e-8, "Row " + i + " of Ax != b");
     }
@@ -57,10 +58,10 @@ class NetworkLinearSolverTest {
     for (int i = 0; i < n; i++) {
       a[i][i] = 4.0 + i * 0.1;
       if (i > 0) {
-	a[i][i - 1] = -1.0;
+        a[i][i - 1] = -1.0;
       }
       if (i < n - 1) {
-	a[i][i + 1] = -1.0;
+        a[i][i + 1] = -1.0;
       }
       b[i] = 1.0 + 0.1 * i;
     }
@@ -94,7 +95,7 @@ class NetworkLinearSolverTest {
     for (int i = 0; i < 5; i++) {
       double sum = 0;
       for (int j = 0; j < 5; j++) {
-	sum += a[i][j] * x[j];
+        sum += a[i][j] * x[j];
       }
       assertEquals(b[i], sum, 1e-8);
     }

@@ -197,13 +197,13 @@ public class SourceAllocatorTest {
 
     // The gas-rich Well-A must send a larger fraction of itself to gas than the oil-rich Well-B.
     assertTrue(result.getAllocationFactor("Well-A", "ExportGas") > result.getAllocationFactor("Well-B", "ExportGas"),
-	"gas-rich source should have a higher gas allocation factor");
+        "gas-rich source should have a higher gas allocation factor");
 
     // Component recovery factors of a component over all custody outlets sum to one.
     double methaneRf = result.getComponentRecoveryFactor("ExportGas", "methane")
-	+ result.getComponentRecoveryFactor("ExportOil", "methane");
+        + result.getComponentRecoveryFactor("ExportOil", "methane");
     double decaneRf = result.getComponentRecoveryFactor("ExportGas", "nC10")
-	+ result.getComponentRecoveryFactor("ExportOil", "nC10");
+        + result.getComponentRecoveryFactor("ExportOil", "nC10");
     assertEquals(1.0, methaneRf, 1.0e-6);
     assertEquals(1.0, decaneRf, 1.0e-6);
 
@@ -337,7 +337,7 @@ public class SourceAllocatorTest {
 
     // The master slate must contain pseudocomponents (more than the four light components added).
     assertTrue(result.getComponentNames().length > 4,
-	"expected pseudocomponents on the master slate, got " + result.getComponentNames().length);
+        "expected pseudocomponents on the master slate, got " + result.getComponentNames().length);
 
     // Overall mass balance closes within 0.5% even with characterised heavy ends.
     double totalIn = result.getSourceTotal("Well-A", "kg/hr") + result.getSourceTotal("Well-B", "kg/hr");
@@ -350,18 +350,18 @@ public class SourceAllocatorTest {
     for (String name : result.getComponentNames()) {
       double mw = allocator.getExtractor().getMolarMass(name);
       if (mw > heaviestMass) {
-	heaviestMass = mw;
-	heavy = name;
+        heaviestMass = mw;
+        heavy = name;
       }
     }
     assertNotNull(heavy, "expected a heavy pseudocomponent on the slate");
     double rfSum = result.getComponentRecoveryFactor("ExportGas", heavy)
-	+ result.getComponentRecoveryFactor("ExportOil", heavy);
+        + result.getComponentRecoveryFactor("ExportOil", heavy);
     assertEquals(1.0, rfSum, 1.0e-6);
 
     // The heaviest pseudocomponent must be recovered predominantly in the oil custody stream.
     assertTrue(result.getComponentRecoveryFactor("ExportOil", heavy) > 0.5,
-	"heaviest pseudocomponent should report mostly to oil");
+        "heaviest pseudocomponent should report mostly to oil");
 
     // Solver must remain well-posed on the larger pseudocomponent slate.
     assertTrue(result.getMaxResidual() < 1.0e-6, "residual too large: " + result.getMaxResidual());

@@ -78,8 +78,8 @@ public class SafetyBarrier implements Serializable {
    */
   public static SafetyBarrier fromBowTieBarrier(BowTieModel.Barrier bowTieBarrier) {
     SafetyBarrier barrier = new SafetyBarrier(bowTieBarrier.getId()).setName(bowTieBarrier.getDescription())
-	.setDescription(bowTieBarrier.getDescription()).setPfd(bowTieBarrier.getPfd())
-	.setOwner(bowTieBarrier.getOwner());
+        .setDescription(bowTieBarrier.getDescription()).setPfd(bowTieBarrier.getPfd())
+        .setOwner(bowTieBarrier.getOwner());
     if (bowTieBarrier.getBarrierType() == BowTieModel.BarrierType.MITIGATION) {
       barrier.setType(BarrierType.MITIGATION);
     } else if (bowTieBarrier.getBarrierType() == BowTieModel.BarrierType.BOTH) {
@@ -90,7 +90,7 @@ public class SafetyBarrier implements Serializable {
     barrier.setStatus(bowTieBarrier.isFunctional() ? BarrierStatus.AVAILABLE : BarrierStatus.OUT_OF_SERVICE);
     if (bowTieBarrier.getVerificationStatus() != null && !bowTieBarrier.getVerificationStatus().trim().isEmpty()) {
       barrier.addEvidence(new DocumentEvidence("verification-" + bowTieBarrier.getId(), "", "", "",
-	  "verificationStatus", 0, "BowTieModel", bowTieBarrier.getVerificationStatus(), 1.0));
+          "verificationStatus", 0, "BowTieModel", bowTieBarrier.getVerificationStatus(), 1.0));
     }
     return barrier;
   }
@@ -392,7 +392,7 @@ public class SafetyBarrier implements Serializable {
   public boolean hasTraceableEvidence() {
     for (DocumentEvidence item : evidence) {
       if (item.isTraceable()) {
-	return true;
+        return true;
       }
     }
     return performanceStandard != null && performanceStandard.hasTraceableEvidence();
@@ -428,7 +428,7 @@ public class SafetyBarrier implements Serializable {
     } else {
       List<String> standardFindings = performanceStandard.validate();
       for (String finding : standardFindings) {
-	findings.add("Performance standard " + performanceStandard.getId() + ": " + finding);
+        findings.add("Performance standard " + performanceStandard.getId() + ": " + finding);
       }
     }
     if (!hasTraceableEvidence()) {

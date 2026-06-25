@@ -167,10 +167,10 @@ class SystemThermoFixesTest {
     SystemInterface gasSystem = fluid.phaseToSystem("gas");
 
     assertEquals(referenceKappa, gasSystem.getPhase(0).getKappa(), 1e-10,
-	"Extracted gas kappa should match the source gas phase");
+        "Extracted gas kappa should match the source gas phase");
     assertEquals(referenceDensity, gasSystem.getPhase(0).getDensity("kg/m3"), 1e-8,
-	"Extracted gas density should match the source gas phase");
+        "Extracted gas density should match the source gas phase");
     assertEquals(referenceEnthalpy, gasSystem.getPhase(0).getEnthalpy(), 1e-6,
-	"Extracted gas enthalpy should match the source gas phase");
+        "Extracted gas enthalpy should match the source gas phase");
   }
 }

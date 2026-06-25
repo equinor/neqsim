@@ -43,15 +43,15 @@ public class ProcessModelSerializationTest {
     // Clean up temp files - ignore errors from locked files on Windows
     if (tempDir != null) {
       try {
-	Files.walk(tempDir).sorted((a, b) -> -a.compareTo(b)).forEach(p -> {
-	  try {
-	    Files.deleteIfExists(p);
-	  } catch (Exception ignored) {
-	    // Best-effort cleanup
-	  }
-	});
+        Files.walk(tempDir).sorted((a, b) -> -a.compareTo(b)).forEach(p -> {
+          try {
+            Files.deleteIfExists(p);
+          } catch (Exception ignored) {
+            // Best-effort cleanup
+          }
+        });
       } catch (Exception ignored) {
-	// Best-effort cleanup
+        // Best-effort cleanup
       }
     }
   }
@@ -159,7 +159,7 @@ public class ProcessModelSerializationTest {
 
     // Verify execution config was preserved
     assertEquals(25, loadedState.getExecutionConfig().getMaxIterations(),
-	"Max iterations should be preserved in state");
+        "Max iterations should be preserved in state");
   }
 
   @Test
@@ -318,10 +318,10 @@ public class ProcessModelSerializationTest {
     assertTrue(Files.exists(areaFiles.get("upstream")), "Upstream area DOT should exist");
     assertTrue(Files.exists(areaFiles.get("downstream")), "Downstream area DOT should exist");
     assertTrue(
-	new String(Files.readAllBytes(areaFiles.get("upstream")), StandardCharsets.UTF_8).contains("upstream-valve"),
-	"Upstream DOT should contain upstream equipment");
+        new String(Files.readAllBytes(areaFiles.get("upstream")), StandardCharsets.UTF_8).contains("upstream-valve"),
+        "Upstream DOT should contain upstream equipment");
     assertTrue(new String(Files.readAllBytes(areaFiles.get("downstream")), StandardCharsets.UTF_8)
-	.contains("downstream-valve"), "Downstream DOT should contain downstream equipment");
+        .contains("downstream-valve"), "Downstream DOT should contain downstream equipment");
   }
 
   @Test
@@ -331,7 +331,7 @@ public class ProcessModelSerializationTest {
     Separator upstreamSeparator = (Separator) upstream.getUnit("upstream-separator");
 
     ThrottlingValve downstreamValve = new ThrottlingValve("downstream-inlet-valve",
-	upstreamSeparator.getGasOutStream());
+        upstreamSeparator.getGasOutStream());
     downstreamValve.setOutletPressure(20.0, "bara");
     ProcessSystem downstream = new ProcessSystem("downstream");
     downstream.add(downstreamValve);
@@ -343,14 +343,14 @@ public class ProcessModelSerializationTest {
     String commonDot = linkedModel.toDOT();
 
     assertTrue(commonDot.contains("\"separation::upstream-separator\" -> " + "\"compression::downstream-inlet-valve\""),
-	"Common DOT should connect shared streams across ProcessSystem areas");
+        "Common DOT should connect shared streams across ProcessSystem areas");
     assertTrue(commonDot.contains("penwidth=2.0"), "Cross-area stream edges should be highlighted in the common DOT");
   }
 
   @Test
   public void testLoadFromNeqsimReturnsNullForNonExistent() {
     ProcessModel loaded = assertDoesNotThrow(() -> ProcessModel.loadFromNeqsim("non_existent_file.neqsim"),
-	"Should handle non-existent file gracefully");
+        "Should handle non-existent file gracefully");
     assertNull(loaded, "Should return null for non-existent file");
   }
 

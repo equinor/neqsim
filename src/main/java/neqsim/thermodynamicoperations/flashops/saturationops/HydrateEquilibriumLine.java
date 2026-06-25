@@ -49,14 +49,14 @@ public class HydrateEquilibriumLine extends ConstantDutyTemperatureFlash {
 
       // Set temperature to previous result as starting guess (hydrate T increases with P)
       if (i > 0 && previousTemp > 0) {
-	system.setTemperature(previousTemp);
+        system.setTemperature(previousTemp);
       }
 
       try {
-	ops.hydrateFormationTemperature();
-	previousTemp = system.getTemperature();
+        ops.hydrateFormationTemperature();
+        previousTemp = system.getTemperature();
       } catch (Exception ex) {
-	// logger.error(ex.getMessage(),e);
+        // logger.error(ex.getMessage(),e);
       }
       hydratePoints[0][i] = system.getTemperature();
       hydratePoints[1][i] = system.getPressure();

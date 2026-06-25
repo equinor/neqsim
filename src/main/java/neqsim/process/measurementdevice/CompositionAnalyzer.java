@@ -90,8 +90,8 @@ public class CompositionAnalyzer extends StreamMeasurementDeviceBaseClass {
     int idx = -1;
     for (int i = 0; i < stream.getThermoSystem().getNumberOfComponents(); i++) {
       if (stream.getThermoSystem().getComponent(i).getName().equals(componentName)) {
-	idx = i;
-	break;
+        idx = i;
+        break;
       }
     }
     if (idx < 0) {
@@ -104,13 +104,13 @@ public class CompositionAnalyzer extends StreamMeasurementDeviceBaseClass {
       break;
     case GAS:
       if (stream.getThermoSystem().getNumberOfPhases() < 1) {
-	return Double.NaN;
+        return Double.NaN;
       }
       value = stream.getThermoSystem().getPhase(0).getComponent(idx).getx();
       break;
     case LIQUID:
       if (stream.getThermoSystem().getNumberOfPhases() < 2) {
-	return Double.NaN;
+        return Double.NaN;
       }
       value = stream.getThermoSystem().getPhase(1).getComponent(idx).getx();
       break;

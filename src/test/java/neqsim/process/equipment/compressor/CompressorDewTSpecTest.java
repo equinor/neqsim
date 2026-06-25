@@ -53,7 +53,7 @@ class CompressorDewTSpecTest extends neqsim.NeqSimTest {
 
     // dewT should produce nearly all gas (beta close to 1)
     assertTrue(stream1.getFluid().getBeta() > 0.99,
-	"dewT should produce vapor (beta > 0.99) but was " + stream1.getFluid().getBeta());
+        "dewT should produce vapor (beta > 0.99) but was " + stream1.getFluid().getBeta());
 
     // Discharge temperature should be ~65C
     assertEquals(65.5, dischargeT, 5.0, "Discharge temperature should be ~65C but was " + dischargeT + " C");
@@ -91,7 +91,7 @@ class CompressorDewTSpecTest extends neqsim.NeqSimTest {
 
     // dewP should produce nearly all gas (beta close to 1)
     assertTrue(stream1.getFluid().getBeta() > 0.99,
-	"dewP should produce vapor (beta > 0.99) but was " + stream1.getFluid().getBeta());
+        "dewP should produce vapor (beta > 0.99) but was " + stream1.getFluid().getBeta());
 
     // Suction temperature should be dew point at 2.911 bara (~-15C)
     assertEquals(-15.0, suctionT, 3.0, "Suction temperature should be ~-15C but was " + suctionT + " C");

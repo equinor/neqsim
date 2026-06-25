@@ -153,23 +153,23 @@ public class GERG2008Test {
     gasstream_SKR.run();
 
     neqsim.process.equipment.compressor.Compressor compressor = new neqsim.process.equipment.compressor.Compressor(
-	"compressor 1", gasstream);
+        "compressor 1", gasstream);
     // compressor.setUseGERG2008(true);
     compressor.setOutletPressure(20.0);
     compressor.setPolytropicMethod("schultz");
     compressor.run();
 
     neqsim.process.equipment.compressor.Compressor compressor_SRK = new neqsim.process.equipment.compressor.Compressor(
-	"compressor 2", gasstream_SKR);
+        "compressor 2", gasstream_SKR);
     compressor_SRK.setUseGERG2008(true);
     compressor_SRK.setOutletPressure(20.0);
     compressor_SRK.run();
 
     assertEquals(compressor_SRK.getOutletStream().getTemperature("C"), compressor.getOutletStream().getTemperature("C"),
-	1e-5);
+        1e-5);
 
     neqsim.process.equipment.pipeline.PipeBeggsAndBrills pipeline = new neqsim.process.equipment.pipeline.PipeBeggsAndBrills(
-	"pipe 1", compressor.getOutletStream());
+        "pipe 1", compressor.getOutletStream());
     pipeline.setLength(5000.0);
     pipeline.setDiameter(0.2);
     pipeline.setElevation(0);
@@ -207,7 +207,7 @@ public class GERG2008Test {
     SRKfluid.getPhase("gas").getPhysicalProperties().setViscosityModel("PFCT");
 
     neqsim.process.equipment.stream.Stream GERG2008stream = new neqsim.process.equipment.stream.Stream("gas",
-	GERG2008fluid);
+        GERG2008fluid);
     GERG2008stream.setFlowRate(130.0, "MSm3/day");
     GERG2008stream.run();
 
@@ -216,20 +216,20 @@ public class GERG2008Test {
     SRKstream.run();
 
     neqsim.process.equipment.compressor.Compressor GERG2008compressor = new neqsim.process.equipment.compressor.Compressor(
-	"compressor 1", GERG2008stream);
+        "compressor 1", GERG2008stream);
     GERG2008compressor.setOutletPressure(20.0, "bara");
     GERG2008compressor.setPolytropicEfficiency(0.75);
     GERG2008compressor.run();
 
     neqsim.process.equipment.compressor.Compressor SRKcompressor = new neqsim.process.equipment.compressor.Compressor(
-	"compressor 2", SRKstream);
+        "compressor 2", SRKstream);
     SRKcompressor.setOutletPressure(20.0, "bara");
     SRKcompressor.setPolytropicEfficiency(0.75);
     SRKcompressor.setUseGERG2008(true);
     SRKcompressor.run();
 
     assertEquals(GERG2008compressor.getOutletStream().getTemperature("C"),
-	SRKcompressor.getOutletStream().getTemperature("C"), 1e-8);
+        SRKcompressor.getOutletStream().getTemperature("C"), 1e-8);
     assertEquals(GERG2008compressor.getPower("MW"), SRKcompressor.getPower("MW"), 1e-8);
     assertEquals(GERG2008compressor.getPolytropicHead(), SRKcompressor.getPolytropicHead(), 1e-5);
   }
@@ -253,18 +253,18 @@ public class GERG2008Test {
     GERG2008fluid.getPhase("gas").initPhysicalProperties();
 
     neqsim.process.equipment.stream.Stream gasstream_GERG2008 = new neqsim.process.equipment.stream.Stream("gas",
-	GERG2008fluid);
+        GERG2008fluid);
     gasstream_GERG2008.setFlowRate(60.0, "MSm3/day");
     gasstream_GERG2008.run();
 
     neqsim.process.equipment.compressor.Compressor compressor_GERG2008 = new neqsim.process.equipment.compressor.Compressor(
-	"compressor 1", gasstream_GERG2008);
+        "compressor 1", gasstream_GERG2008);
     compressor_GERG2008.setOutletPressure(120.0);
     compressor_GERG2008.setPolytropicEfficiency(0.77);
     compressor_GERG2008.run();
 
     neqsim.process.equipment.compressor.Compressor compressor_Schultz = new neqsim.process.equipment.compressor.Compressor(
-	"compressor 2", gasstream_GERG2008);
+        "compressor 2", gasstream_GERG2008);
     compressor_Schultz.setOutletPressure(120.0);
     compressor_Schultz.setPolytropicEfficiency(0.77);
     compressor_Schultz.setUsePolytropicCalc(true);

@@ -98,7 +98,7 @@ public class ProcessModelThroughputOptimizer implements Serializable {
      * @param unit unit used when reading and setting the value
      */
     public ProducerControl(String name, String address, double baseValue, double lowerMultiplier,
-	double upperMultiplier, String unit) {
+        double upperMultiplier, String unit) {
       this.name = name;
       this.address = address;
       this.baseValue = baseValue;
@@ -116,7 +116,7 @@ public class ProcessModelThroughputOptimizer implements Serializable {
      * @param multiplierSetter custom multiplier setter
      */
     public ProducerControl(String name, double lowerMultiplier, double upperMultiplier,
-	BiConsumer<ProcessModel, Double> multiplierSetter) {
+        BiConsumer<ProcessModel, Double> multiplierSetter) {
       this.name = name;
       this.address = name;
       this.unit = "-";
@@ -195,7 +195,7 @@ public class ProcessModelThroughputOptimizer implements Serializable {
      */
     private void resolveBaseValue(ProcessModel model) {
       if (!hasCustomSetter() && Double.isNaN(baseValue)) {
-	baseValue = model.getVariableValue(address, unit);
+        baseValue = model.getVariableValue(address, unit);
       }
     }
 
@@ -207,9 +207,9 @@ public class ProcessModelThroughputOptimizer implements Serializable {
      */
     private void applyMultiplier(ProcessModel model, double multiplier) {
       if (hasCustomSetter()) {
-	multiplierSetter.accept(model, Double.valueOf(multiplier));
+        multiplierSetter.accept(model, Double.valueOf(multiplier));
       } else {
-	model.setVariableValue(address, baseValue * multiplier, unit);
+        model.setVariableValue(address, baseValue * multiplier, unit);
       }
     }
   }
@@ -334,7 +334,7 @@ public class ProcessModelThroughputOptimizer implements Serializable {
 
     ProcessModelSimulationEvaluator evaluator = createScalarEvaluator(lower, upper);
     ProcessModelThroughputResult result = new ProcessModelThroughputResult("ProcessModel throughput-to-bottleneck",
-	objectiveName, objectiveUnit);
+        objectiveName, objectiveUnit);
 
     int caseNumber = 1;
     ThroughputCaseRow lowerCase = evaluateCase(evaluator, caseNumber++, lower);
@@ -359,9 +359,9 @@ public class ProcessModelThroughputOptimizer implements Serializable {
       ThroughputCaseRow trialCase = evaluateCase(evaluator, caseNumber++, trialMultiplier);
       result.addCase(trialCase);
       if (trialCase.isFeasible()) {
-	feasibleMultiplier = trialMultiplier;
+        feasibleMultiplier = trialMultiplier;
       } else {
-	infeasibleMultiplier = trialMultiplier;
+        infeasibleMultiplier = trialMultiplier;
       }
       iteration++;
     }
@@ -485,11 +485,11 @@ public class ProcessModelThroughputOptimizer implements Serializable {
       /** {@inheritDoc} */
       @Override
       public void accept(ProcessModel model, Double multiplier) {
-	applyScalarMultiplier(model, multiplier.doubleValue());
+        applyScalarMultiplier(model, multiplier.doubleValue());
       }
     }, lower, upper, "-");
     evaluator.addObjective(objectiveName, objectiveEvaluator,
-	ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
+        ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
     if (includeEquipmentCapacityConstraints) {
       evaluator.addEquipmentCapacityConstraints();
     }
@@ -507,7 +507,7 @@ public class ProcessModelThroughputOptimizer implements Serializable {
   private ThroughputCaseRow evaluateCase(ProcessModelSimulationEvaluator evaluator, int caseNumber, double multiplier) {
     ProcessModelSimulationEvaluator.EvaluationResult evaluation = evaluator.evaluate(new double[] { multiplier });
     return ThroughputCaseRow.fromEvaluation(caseNumber, multiplier, createProducerMultiplierMap(multiplier),
-	evaluation);
+        evaluation);
   }
 
   /**

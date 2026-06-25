@@ -91,8 +91,8 @@ public class OilInWaterMonthlyComplianceMonitor implements Serializable {
      * @param recommendation recommendation text
      */
     public MonthlyStatus(double weightedAverageMgL, double remainingAllowedAverageMgL,
-	double projectedMonthlyWaterVolumeM3, double remainingWaterVolumeM3, ComplianceStatus status,
-	String recommendation) {
+        double projectedMonthlyWaterVolumeM3, double remainingWaterVolumeM3, ComplianceStatus status,
+        String recommendation) {
       this.weightedAverageMgL = weightedAverageMgL;
       this.remainingAllowedAverageMgL = remainingAllowedAverageMgL;
       this.projectedMonthlyWaterVolumeM3 = projectedMonthlyWaterVolumeM3;
@@ -207,7 +207,7 @@ public class OilInWaterMonthlyComplianceMonitor implements Serializable {
     ComplianceStatus status = determineStatus(weightedAverage, remainingAllowedAverage);
     String recommendation = buildRecommendation(status);
     return new MonthlyStatus(weightedAverage, remainingAllowedAverage, projectedMonthlyVolume, remainingVolume, status,
-	recommendation);
+        recommendation);
   }
 
   /**

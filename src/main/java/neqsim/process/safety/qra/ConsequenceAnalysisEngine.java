@@ -87,9 +87,9 @@ public class ConsequenceAnalysisEngine implements Serializable {
     return addOutcome("Jet fire", probability, new Consequence() {
       @Override
       public double fatalityProbabilityAt(double distanceM) {
-	double I = model.incidentHeatFlux(distanceM);
-	double dose = exposureSeconds * Math.pow(I, 4.0 / 3.0) / 1.0e4;
-	return probit.probabilityFromDose(dose);
+        double I = model.incidentHeatFlux(distanceM);
+        double dose = exposureSeconds * Math.pow(I, 4.0 / 3.0) / 1.0e4;
+        return probit.probabilityFromDose(dose);
       }
     });
   }
@@ -108,9 +108,9 @@ public class ConsequenceAnalysisEngine implements Serializable {
     return addOutcome("Pool fire", probability, new Consequence() {
       @Override
       public double fatalityProbabilityAt(double distanceM) {
-	double I = model.incidentHeatFlux(distanceM);
-	double dose = exposureSeconds * Math.pow(I, 4.0 / 3.0) / 1.0e4;
-	return probit.probabilityFromDose(dose);
+        double I = model.incidentHeatFlux(distanceM);
+        double dose = exposureSeconds * Math.pow(I, 4.0 / 3.0) / 1.0e4;
+        return probit.probabilityFromDose(dose);
       }
     });
   }
@@ -127,7 +127,7 @@ public class ConsequenceAnalysisEngine implements Serializable {
     return addOutcome("VCE", probability, new Consequence() {
       @Override
       public double fatalityProbabilityAt(double distanceM) {
-	return probit.probabilityFromDose(model.overpressurePa(distanceM));
+        return probit.probabilityFromDose(model.overpressurePa(distanceM));
       }
     });
   }
@@ -150,14 +150,14 @@ public class ConsequenceAnalysisEngine implements Serializable {
     return addOutcome("Toxic dispersion", probability, new Consequence() {
       @Override
       public double fatalityProbabilityAt(double distanceM) {
-	double cKgPerM3 = plume.centerlineGroundConcentration(distanceM);
-	// Convert kg/m³ → ppm (mole basis) using ideal gas
-	double R = 8.314;
-	double pPa = pressureBara * 1.0e5;
-	double cMolPerM3 = cKgPerM3 / molarMassKgPerMol;
-	double cPpm = cMolPerM3 * R * tempK / pPa * 1.0e6;
-	double dose = Math.pow(cPpm, 1.0) * exposureMinutes; // probit absorbs the n
-	return probit.probabilityFromDose(dose);
+        double cKgPerM3 = plume.centerlineGroundConcentration(distanceM);
+        // Convert kg/m³ → ppm (mole basis) using ideal gas
+        double R = 8.314;
+        double pPa = pressureBara * 1.0e5;
+        double cMolPerM3 = cKgPerM3 / molarMassKgPerMol;
+        double cPpm = cMolPerM3 * R * tempK / pPa * 1.0e6;
+        double dose = Math.pow(cPpm, 1.0) * exposureMinutes; // probit absorbs the n
+        return probit.probabilityFromDose(dose);
       }
     });
   }
@@ -221,7 +221,7 @@ public class ConsequenceAnalysisEngine implements Serializable {
     double tot = 0.0;
     for (OutcomeResult r : evaluate(receiverDistanceM)) {
       sb.append(String.format("%-22s F=%.4e /yr  P_fatality=%.4f  IFR=%.4e /yr%n", r.outcomeName,
-	  r.outcomeFrequencyPerYear, r.fatalityProbability, r.fatalityFrequencyPerYear));
+          r.outcomeFrequencyPerYear, r.fatalityProbability, r.fatalityFrequencyPerYear));
       tot += r.fatalityFrequencyPerYear;
     }
     sb.append(String.format("Total individual fatality risk: %.4e /yr%n", tot));
@@ -266,7 +266,7 @@ public class ConsequenceAnalysisEngine implements Serializable {
     public final double fatalityFrequencyPerYear;
 
     OutcomeResult(String outcomeName, double outcomeFrequencyPerYear, double fatalityProbability,
-	double fatalityFrequencyPerYear) {
+        double fatalityFrequencyPerYear) {
       this.outcomeName = outcomeName;
       this.outcomeFrequencyPerYear = outcomeFrequencyPerYear;
       this.fatalityProbability = fatalityProbability;

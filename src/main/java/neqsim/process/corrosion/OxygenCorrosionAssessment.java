@@ -347,7 +347,7 @@ public class OxygenCorrosionAssessment implements Serializable {
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < treatments.size(); i++) {
       if (i > 0) {
-	sb.append("; ");
+        sb.append("; ");
       }
       sb.append(treatments.get(i));
     }

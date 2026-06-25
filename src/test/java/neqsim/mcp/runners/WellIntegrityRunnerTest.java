@@ -2,10 +2,9 @@ package neqsim.mcp.runners;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
+import org.junit.jupiter.api.Test;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for {@link WellIntegrityRunner}.
@@ -21,15 +20,15 @@ public class WellIntegrityRunnerTest {
   @Test
   void testSuccessfulScreening() {
     String json = "{" + "\"wellId\":\"WELL-A1\",\"wellType\":\"OIL_PRODUCER\",\"installationCode\":\"AAA\","
-	+ "\"primaryEnvelope\":{\"elements\":["
-	+ "{\"type\":\"TUBING\",\"name\":\"Tubing\",\"status\":\"INTACT\",\"verified\":true},"
-	+ "{\"type\":\"DHSV\",\"name\":\"SCSSV\",\"status\":\"INTACT\",\"verified\":true},"
-	+ "{\"type\":\"XMAS_TREE\",\"name\":\"Tree\",\"status\":\"INTACT\",\"verified\":true}]},"
-	+ "\"secondaryEnvelope\":{\"elements\":["
-	+ "{\"type\":\"CASING\",\"name\":\"Casing\",\"status\":\"INTACT\",\"verified\":true},"
-	+ "{\"type\":\"CEMENT\",\"name\":\"Cement\",\"status\":\"INTACT\",\"verified\":true},"
-	+ "{\"type\":\"WELLHEAD\",\"name\":\"Wellhead\",\"status\":\"INTACT\",\"verified\":true}]},"
-	+ "\"annuli\":[{\"id\":\"A\",\"measuredPressureBara\":2.0,\"maaspBara\":80.0,\"bleedsToZero\":true}]}";
+        + "\"primaryEnvelope\":{\"elements\":["
+        + "{\"type\":\"TUBING\",\"name\":\"Tubing\",\"status\":\"INTACT\",\"verified\":true},"
+        + "{\"type\":\"DHSV\",\"name\":\"SCSSV\",\"status\":\"INTACT\",\"verified\":true},"
+        + "{\"type\":\"XMAS_TREE\",\"name\":\"Tree\",\"status\":\"INTACT\",\"verified\":true}]},"
+        + "\"secondaryEnvelope\":{\"elements\":["
+        + "{\"type\":\"CASING\",\"name\":\"Casing\",\"status\":\"INTACT\",\"verified\":true},"
+        + "{\"type\":\"CEMENT\",\"name\":\"Cement\",\"status\":\"INTACT\",\"verified\":true},"
+        + "{\"type\":\"WELLHEAD\",\"name\":\"Wellhead\",\"status\":\"INTACT\",\"verified\":true}]},"
+        + "\"annuli\":[{\"id\":\"A\",\"measuredPressureBara\":2.0,\"maaspBara\":80.0,\"bleedsToZero\":true}]}";
     String result = WellIntegrityRunner.run(json);
     JsonObject out = JsonParser.parseString(result).getAsJsonObject();
     assertEquals("success", out.get("status").getAsString());
@@ -45,7 +44,7 @@ public class WellIntegrityRunnerTest {
   @Test
   void testInterventionDisposition() {
     String json = "{\"wellId\":\"WELL-A1\",\"wellType\":\"OIL_PRODUCER\","
-	+ "\"annuli\":[{\"id\":\"A\",\"measuredPressureBara\":90.0,\"maaspBara\":80.0}]}";
+        + "\"annuli\":[{\"id\":\"A\",\"measuredPressureBara\":90.0,\"maaspBara\":80.0}]}";
     String result = WellIntegrityRunner.run(json);
     JsonObject out = JsonParser.parseString(result).getAsJsonObject();
     assertEquals("success", out.get("status").getAsString());

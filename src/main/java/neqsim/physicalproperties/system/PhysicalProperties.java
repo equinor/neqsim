@@ -9,20 +9,19 @@ package neqsim.physicalproperties.system;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.PhysicalPropertyType;
-import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.ChungDenseConductivityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.CO2ConductivityMethod;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.ChungDenseConductivityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.FrictionTheoryConductivityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.HydrogenConductivityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.PFCTConductivityMethodMod86;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.WaterConductivityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.diffusivity.CorrespondingStatesDiffusivity;
-import neqsim.physicalproperties.methods.liquidphysicalproperties.conductivity.FilippovConductivityMethod;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.CO2ViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.FrictionTheoryViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.KTAViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.KTAViscosityMethodMod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.LBCViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.MethaneViscosityMethod;
-import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.CO2ViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.MuznyModViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.MuznyViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.PFCTViscosityMethod;
@@ -31,6 +30,7 @@ import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity
 import neqsim.physicalproperties.methods.gasphysicalproperties.conductivity.ChungConductivityMethod;
 import neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.FullerSchettlerGiddingsDiffusivity;
 import neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.WilkeLeeDiffusivity;
+import neqsim.physicalproperties.methods.liquidphysicalproperties.conductivity.FilippovConductivityMethod;
 import neqsim.physicalproperties.methods.liquidphysicalproperties.density.Costald;
 import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.AmineDiffusivity;
 import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.HaydukMinhasDiffusivity;
@@ -294,7 +294,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    */
   public boolean isPFCTViscosityModel() {
     return viscosityCalc instanceof PFCTViscosityMethod || viscosityCalc instanceof PFCTViscosityMethodMod86
-	|| viscosityCalc instanceof PFCTViscosityMethodHeavyOil;
+        || viscosityCalc instanceof PFCTViscosityMethodHeavyOil;
   }
 
   /**
@@ -394,7 +394,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
       diffusivityCalc = new CorrespondingStatesDiffusivity(this);
     } else if ("Chapman-Enskog".equals(model)) {
       neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity ceModel = new neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity(
-	  this);
+          this);
       ceModel.setUseDiffusionLJOverride(true);
       diffusivityCalc = ceModel;
     } else if ("Wilke Lee".equals(model)) {
@@ -558,8 +558,8 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    */
   public double getViscosityOfWaxyOil(double waxVolumeFraction, double shareRate) {
     return viscosity * (Math.exp(waxViscosityParameter[0] * waxVolumeFraction)
-	+ waxViscosityParameter[1] * waxVolumeFraction / Math.sqrt(shareRate)
-	+ waxViscosityParameter[2] * Math.pow(waxVolumeFraction, 4.0) / shareRate);
+        + waxViscosityParameter[1] * waxVolumeFraction / Math.sqrt(shareRate)
+        + waxViscosityParameter[2] * Math.pow(waxVolumeFraction, 4.0) / shareRate);
   }
 
   /**
@@ -646,7 +646,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    */
   public double getDiffusionCoefficient(String comp1, String comp2) {
     return diffusivityCalc.getMaxwellStefanBinaryDiffusionCoefficient(phase.getComponent(comp1).getComponentNumber(),
-	phase.getComponent(comp2).getComponentNumber());
+        phase.getComponent(comp2).getComponentNumber());
   }
 
   /**

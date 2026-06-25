@@ -44,10 +44,10 @@ public class TablePrinter implements Serializable {
 
     for (String[] row : table) {
       for (int i = 0; i < columns; i++) {
-	int width = row[i].length();
-	if (width > columnWidths[i]) {
-	  columnWidths[i] = width;
-	}
+        int width = row[i].length();
+        if (width > columnWidths[i]) {
+          columnWidths[i] = width;
+        }
       }
     }
 
@@ -63,7 +63,7 @@ public class TablePrinter implements Serializable {
     System.out.print("+");
     for (int width : columnWidths) {
       for (int i = 0; i < width + 2; i++) {
-	System.out.print("-");
+        System.out.print("-");
       }
       System.out.print("+");
     }
@@ -83,7 +83,7 @@ public class TablePrinter implements Serializable {
       int padding = columnWidths[i] - cell.length();
       System.out.print(" " + cell);
       for (int j = 0; j < padding; j++) {
-	System.out.print(" ");
+        System.out.print(" ");
       }
       System.out.print(" |");
     }
@@ -114,8 +114,8 @@ public class TablePrinter implements Serializable {
       stringArray[i] = new String[doubleArray[i].length];
 
       for (int j = 0; j < doubleArray[i].length; j++) {
-	// Convert each double value to string and store it
-	stringArray[i][j] = String.valueOf(doubleArray[i][j]);
+        // Convert each double value to string and store it
+        stringArray[i][j] = String.valueOf(doubleArray[i][j]);
       }
     }
 

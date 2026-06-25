@@ -154,7 +154,7 @@ public class ProcessLinkedMPC implements Serializable {
    */
   public ManipulatedVariable addMV(String equipmentName, String propertyName, double minValue, double maxValue) {
     ManipulatedVariable mv = new ManipulatedVariable(equipmentName + "." + propertyName,
-	processSystem.getUnit(equipmentName), propertyName);
+        processSystem.getUnit(equipmentName), propertyName);
     mv.setBounds(minValue, maxValue);
     manipulatedVariables.add(mv);
     return mv;
@@ -187,7 +187,7 @@ public class ProcessLinkedMPC implements Serializable {
    */
   public ControlledVariable addCV(String equipmentName, String propertyName, double setpoint) {
     ControlledVariable cv = new ControlledVariable(equipmentName + "." + propertyName,
-	processSystem.getUnit(equipmentName), propertyName);
+        processSystem.getUnit(equipmentName), propertyName);
     cv.setSetpoint(setpoint);
     controlledVariables.add(cv);
     return cv;
@@ -221,8 +221,8 @@ public class ProcessLinkedMPC implements Serializable {
     String fullName = equipmentName + "." + propertyName;
     for (ControlledVariable cv : controlledVariables) {
       if (cv.getName().equals(fullName)) {
-	cv.setHardConstraints(minValue, maxValue);
-	return;
+        cv.setHardConstraints(minValue, maxValue);
+        return;
       }
     }
     throw new IllegalArgumentException("CV not found: " + fullName);
@@ -237,7 +237,7 @@ public class ProcessLinkedMPC implements Serializable {
    */
   public DisturbanceVariable addDV(String equipmentName, String propertyName) {
     DisturbanceVariable dv = new DisturbanceVariable(equipmentName + "." + propertyName,
-	processSystem.getUnit(equipmentName), propertyName);
+        processSystem.getUnit(equipmentName), propertyName);
     disturbanceVariables.add(dv);
     return dv;
   }
@@ -256,7 +256,7 @@ public class ProcessLinkedMPC implements Serializable {
    */
   public StateVariable addSVR(String equipmentName, String propertyName) {
     StateVariable svr = new StateVariable(equipmentName + "." + propertyName, processSystem.getUnit(equipmentName),
-	propertyName);
+        propertyName);
     stateVariables.add(svr);
     return svr;
   }
@@ -384,8 +384,8 @@ public class ProcessLinkedMPC implements Serializable {
     for (int i = 0; i < manipulatedVariables.size(); i++) {
       ManipulatedVariable mv = manipulatedVariables.get(i);
       if (mv.getName().equals(mvName) || mv.getName().endsWith("." + mvName)) {
-	mv.setMoveWeight(weight);
-	return;
+        mv.setMoveWeight(weight);
+        return;
       }
     }
     throw new IllegalArgumentException("MV not found: " + mvName);
@@ -400,8 +400,8 @@ public class ProcessLinkedMPC implements Serializable {
   public void setErrorWeight(String cvName, double weight) {
     for (ControlledVariable cv : controlledVariables) {
       if (cv.getName().equals(cvName) || cv.getName().endsWith("." + cvName)) {
-	cv.setWeight(weight);
-	return;
+        cv.setWeight(weight);
+        return;
       }
     }
     throw new IllegalArgumentException("CV not found: " + cvName);
@@ -461,10 +461,10 @@ public class ProcessLinkedMPC implements Serializable {
       nonlinearPredictor.setPredictionHorizon(predictionHorizon);
       nonlinearPredictor.setSampleTime(sampleTimeSeconds);
       for (ManipulatedVariable mv : manipulatedVariables) {
-	nonlinearPredictor.addMV(mv);
+        nonlinearPredictor.addMV(mv);
       }
       for (ControlledVariable cv : controlledVariables) {
-	nonlinearPredictor.addCV(cv);
+        nonlinearPredictor.addCV(cv);
       }
     }
 
@@ -526,7 +526,7 @@ public class ProcessLinkedMPC implements Serializable {
     if (modelUpdateInterval > 0) {
       stepsSinceModelUpdate++;
       if (stepsSinceModelUpdate >= modelUpdateInterval) {
-	updateModel();
+        updateModel();
       }
     }
 
@@ -552,36 +552,36 @@ public class ProcessLinkedMPC implements Serializable {
       double totalGain = 0;
 
       for (int j = 0; j < controlledVariables.size(); j++) {
-	ControlledVariable cv = controlledVariables.get(j);
-	double error = cv.getSetpoint() - cv.readValue();
-	double gain = gains[j][i];
-	double weight = cv.getWeight();
+        ControlledVariable cv = controlledVariables.get(j);
+        double error = cv.getSetpoint() - cv.readValue();
+        double gain = gains[j][i];
+        double weight = cv.getWeight();
 
-	if (Math.abs(gain) > 1e-10) {
-	  totalError += weight * error / gain;
-	  totalGain += weight * Math.abs(1.0 / gain);
-	}
+        if (Math.abs(gain) > 1e-10) {
+          totalError += weight * error / gain;
+          totalGain += weight * Math.abs(1.0 / gain);
+        }
       }
 
       if (totalGain > 0) {
-	double delta = totalError / totalGain * 0.3; // Conservative gain factor
+        double delta = totalError / totalGain * 0.3; // Conservative gain factor
 
-	// Apply move suppression
-	double moveWeight = mv.getMoveWeight();
-	if (moveWeight > 0) {
-	  delta = delta / (1.0 + moveWeight);
-	}
+        // Apply move suppression
+        double moveWeight = mv.getMoveWeight();
+        if (moveWeight > 0) {
+          delta = delta / (1.0 + moveWeight);
+        }
 
-	// Apply rate limits
-	double maxRate = mv.getMaxRateOfChange();
-	if (Double.isFinite(maxRate)) {
-	  delta = Math.max(-maxRate, Math.min(maxRate, delta));
-	}
+        // Apply rate limits
+        double maxRate = mv.getMaxRateOfChange();
+        if (Double.isFinite(maxRate)) {
+          delta = Math.max(-maxRate, Math.min(maxRate, delta));
+        }
 
-	moves[i] = mvValue + delta;
+        moves[i] = mvValue + delta;
 
-	// Apply bounds
-	moves[i] = Math.max(mv.getMinValue(), Math.min(mv.getMaxValue(), moves[i]));
+        // Apply bounds
+        moves[i] = Math.max(mv.getMinValue(), Math.min(mv.getMaxValue(), moves[i]));
       }
     }
 
@@ -661,8 +661,8 @@ public class ProcessLinkedMPC implements Serializable {
   public void setSetpoint(String cvName, double setpoint) {
     for (ControlledVariable cv : controlledVariables) {
       if (cv.getName().equals(cvName) || cv.getName().endsWith("." + cvName)) {
-	cv.setSetpoint(setpoint);
-	return;
+        cv.setSetpoint(setpoint);
+        return;
       }
     }
     throw new IllegalArgumentException("CV not found: " + cvName);
@@ -719,7 +719,7 @@ public class ProcessLinkedMPC implements Serializable {
     sb.append("\n  MVs (").append(manipulatedVariables.size()).append("):\n");
     for (ManipulatedVariable mv : manipulatedVariables) {
       sb.append("    - ").append(mv.getName()).append(" [").append(mv.getMinValue()).append(", ")
-	  .append(mv.getMaxValue()).append("]\n");
+          .append(mv.getMaxValue()).append("]\n");
     }
     sb.append("\n  CVs (").append(controlledVariables.size()).append("):\n");
     for (ControlledVariable cv : controlledVariables) {
@@ -728,7 +728,7 @@ public class ProcessLinkedMPC implements Serializable {
     if (!disturbanceVariables.isEmpty()) {
       sb.append("\n  DVs (").append(disturbanceVariables.size()).append("):\n");
       for (DisturbanceVariable dv : disturbanceVariables) {
-	sb.append("    - ").append(dv.getName()).append("\n");
+        sb.append("    - ").append(dv.getName()).append("\n");
       }
     }
     return sb.toString();
@@ -790,6 +790,6 @@ public class ProcessLinkedMPC implements Serializable {
   @Override
   public String toString() {
     return "ProcessLinkedMPC[" + name + ", MVs=" + manipulatedVariables.size() + ", CVs=" + controlledVariables.size()
-	+ ", SVRs=" + stateVariables.size() + ", identified=" + modelIdentified + "]";
+        + ", SVRs=" + stateVariables.size() + ", identified=" + modelIdentified + "]";
   }
 }

@@ -60,9 +60,9 @@ public class OpenDrainReviewInput implements Serializable {
     JsonArray itemArray = getFirstArray(object, "items", "openDrainAreas", "drainAreas", "areas", "drainSystems");
     if (itemArray != null) {
       for (int i = 0; i < itemArray.size(); i++) {
-	if (itemArray.get(i).isJsonObject()) {
-	  input.addItem(OpenDrainReviewItem.fromMap(toMap(itemArray.get(i).getAsJsonObject())));
-	}
+        if (itemArray.get(i).isJsonObject()) {
+          input.addItem(OpenDrainReviewItem.fromMap(toMap(itemArray.get(i).getAsJsonObject())));
+        }
       }
     }
     if (object.has("stidData") && object.get("stidData").isJsonObject()) {
@@ -70,7 +70,7 @@ public class OpenDrainReviewInput implements Serializable {
     }
     for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
       if (!isCoreKey(entry.getKey())) {
-	input.putMetadata(entry.getKey(), toObject(entry.getValue()));
+        input.putMetadata(entry.getKey(), toObject(entry.getValue()));
       }
     }
     return input;
@@ -168,9 +168,9 @@ public class OpenDrainReviewInput implements Serializable {
     for (OpenDrainReviewItem otherItem : other.getItems()) {
       OpenDrainReviewItem existing = findByAreaId(otherItem.getAreaId());
       if (existing == null || otherItem.getAreaId().isEmpty()) {
-	addItem(otherItem);
+        addItem(otherItem);
       } else {
-	existing.mergeFrom(otherItem);
+        existing.mergeFrom(otherItem);
       }
     }
   }
@@ -205,7 +205,7 @@ public class OpenDrainReviewInput implements Serializable {
     }
     for (OpenDrainReviewItem item : items) {
       if (areaId.equalsIgnoreCase(item.getAreaId())) {
-	return item;
+        return item;
       }
     }
     return null;
@@ -245,7 +245,7 @@ public class OpenDrainReviewInput implements Serializable {
   private static JsonArray getFirstArray(JsonObject object, String... keys) {
     for (String key : keys) {
       if (object.has(key) && object.get(key).isJsonArray()) {
-	return object.getAsJsonArray(key);
+        return object.getAsJsonArray(key);
       }
     }
     return null;
@@ -281,7 +281,7 @@ public class OpenDrainReviewInput implements Serializable {
     if (element.isJsonArray()) {
       List<Object> list = new ArrayList<Object>();
       for (JsonElement child : element.getAsJsonArray()) {
-	list.add(toObject(child));
+        list.add(toObject(child));
       }
       return list;
     }
@@ -302,7 +302,7 @@ public class OpenDrainReviewInput implements Serializable {
    */
   private static boolean isCoreKey(String key) {
     return "projectName".equals(key) || "defaultLiquidLeakRateKgPerS".equals(key) || "items".equals(key)
-	|| "openDrainAreas".equals(key) || "drainAreas".equals(key) || "areas".equals(key) || "drainSystems".equals(key)
-	|| "stidData".equals(key);
+        || "openDrainAreas".equals(key) || "drainAreas".equals(key) || "areas".equals(key) || "drainSystems".equals(key)
+        || "stidData".equals(key);
   }
 }

@@ -129,7 +129,7 @@ public class GasTurbinePerformanceMap implements Serializable {
       // never better than ISO at full load
       partLoadMultiplier = 1.0 - 0.02 * (x - 1.0); // small bonus near rated
       if (partLoadMultiplier < 0.98) {
-	partLoadMultiplier = 0.98;
+        partLoadMultiplier = 0.98;
       }
     }
     double tCorr = 1.0 + heatRateRisePerKelvin * (ambientTemperatureK - T_ISO_K);

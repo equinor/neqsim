@@ -294,7 +294,7 @@ public class AsphalteneOnsetFitting {
       n++;
 
       System.out.printf("%9.2f | %11.1f | %12.1f | %+7.2f%%%n", point.temperatureK, point.pressureBara, calcPressure,
-	  error);
+          error);
     }
 
     System.out.println("----------|-------------|--------------|----------");

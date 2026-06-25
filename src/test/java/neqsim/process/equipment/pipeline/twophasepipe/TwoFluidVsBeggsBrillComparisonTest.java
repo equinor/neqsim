@@ -3,6 +3,8 @@ package neqsim.process.equipment.pipeline.twophasepipe;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,8 +13,6 @@ import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Comparison tests between Two-Fluid model and Beggs-Brill correlation.
@@ -90,11 +90,11 @@ class TwoFluidVsBeggsBrillComparisonTest {
     // Report results
     logger.info("=== Horizontal Gas Pipeline Comparison ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Beggs-Brill: Outlet P = %.3f bar, ΔP = %.3f bar%n",
-	bbOutletPressure, bbPressureDrop);
+        bbOutletPressure, bbPressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Two-Fluid:   Outlet P = %.3f bar, ΔP = %.3f bar%n",
-	tfOutletPressure, tfPressureDrop);
+        tfOutletPressure, tfPressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Difference:  %.1f%%%n",
-	percentDifference(bbPressureDrop, tfPressureDrop));
+        percentDifference(bbPressureDrop, tfPressureDrop));
 
     // Both should produce positive pressure drops
     assertTrue(bbPressureDrop > 0, "Beggs-Brill should calculate positive pressure drop");
@@ -157,12 +157,12 @@ class TwoFluidVsBeggsBrillComparisonTest {
 
     logger.info("\n=== Horizontal Two-Phase (Gas Dominant) Comparison ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Beggs-Brill: Outlet P = %.3f bar, ΔP = %.3f bar%n",
-	bbOutletPressure, bbPressureDrop);
+        bbOutletPressure, bbPressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Two-Fluid:   Outlet P = %.3f bar, ΔP = %.3f bar%n",
-	tfOutletPressure, tfPressureDrop);
+        tfOutletPressure, tfPressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Two-Fluid avg liquid holdup: %.4f%n", tfAvgHoldup);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Pressure drop difference: %.1f%%%n",
-	percentDifference(bbPressureDrop, tfPressureDrop));
+        percentDifference(bbPressureDrop, tfPressureDrop));
 
     assertTrue(bbPressureDrop > 0, "Beggs-Brill should calculate positive pressure drop");
     assertTrue(tfPressureDrop > 0, "Two-Fluid should calculate positive pressure drop");
@@ -223,13 +223,13 @@ class TwoFluidVsBeggsBrillComparisonTest {
 
     logger.info("\n=== Slightly Inclined Pipe Comparison ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Elevation change: %.0f m over %.0f m length%n", elevation,
-	pipeLength);
+        pipeLength);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Beggs-Brill: Outlet P = %.3f bar, ΔP = %.3f bar%n",
-	bbOutletPressure, bbPressureDrop);
+        bbOutletPressure, bbPressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Two-Fluid:   Outlet P = %.3f bar, ΔP = %.3f bar%n",
-	tfOutletPressure, tfPressureDrop);
+        tfOutletPressure, tfPressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Difference:  %.1f%%%n",
-	percentDifference(bbPressureDrop, tfPressureDrop));
+        percentDifference(bbPressureDrop, tfPressureDrop));
 
     // Both should show positive pressure drop
     assertTrue(bbPressureDrop > 0, "Beggs-Brill should show positive pressure drop");
@@ -291,13 +291,13 @@ class TwoFluidVsBeggsBrillComparisonTest {
 
     logger.info("\n=== Downward Inclined Pipe Comparison ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Elevation change: %.0f m over %.0f m length%n", elevation,
-	pipeLength);
+        pipeLength);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Beggs-Brill: Outlet P = %.3f bar, ΔP = %.3f bar%n",
-	bbOutletPressure, bbPressureDrop);
+        bbOutletPressure, bbPressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Two-Fluid:   Outlet P = %.3f bar, ΔP = %.3f bar%n",
-	tfOutletPressure, tfPressureDrop);
+        tfOutletPressure, tfPressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Difference:  %.1f%%%n",
-	percentDifference(bbPressureDrop, tfPressureDrop));
+        percentDifference(bbPressureDrop, tfPressureDrop));
 
     // Both should produce finite results
     assertTrue(Double.isFinite(bbPressureDrop), "Beggs-Brill pressure drop should be finite");
@@ -358,12 +358,12 @@ class TwoFluidVsBeggsBrillComparisonTest {
 
     logger.info("\n=== Higher Liquid Loading Comparison ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Beggs-Brill: Outlet P = %.3f bar, ΔP = %.3f bar%n",
-	bbOutletPressure, bbPressureDrop);
+        bbOutletPressure, bbPressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Two-Fluid:   Outlet P = %.3f bar, ΔP = %.3f bar%n",
-	tfOutletPressure, tfPressureDrop);
+        tfOutletPressure, tfPressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Two-Fluid avg liquid holdup: %.4f%n", avgHoldup);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Difference:  %.1f%%%n",
-	percentDifference(bbPressureDrop, tfPressureDrop));
+        percentDifference(bbPressureDrop, tfPressureDrop));
 
     assertTrue(bbPressureDrop > 0, "Beggs-Brill should show positive pressure drop");
     assertTrue(tfPressureDrop > 0, "Two-Fluid should show positive pressure drop");
@@ -424,8 +424,8 @@ class TwoFluidVsBeggsBrillComparisonTest {
       tfPressureDrops[i] = tfInlet - tfOutlet;
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "     %5.1f        %6.3f       %6.3f      %5.1f%n",
-	  flowRates[i], bbPressureDrops[i], tfPressureDrops[i],
-	  percentDifference(bbPressureDrops[i], tfPressureDrops[i]));
+          flowRates[i], bbPressureDrops[i], tfPressureDrops[i],
+          percentDifference(bbPressureDrops[i], tfPressureDrops[i]));
     }
 
     // Verify pressure drop increases with flow rate for both models
@@ -490,8 +490,8 @@ class TwoFluidVsBeggsBrillComparisonTest {
       tfPressureDrops[i] = tfInlet - tfOutlet;
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "     %5.0f        %6.3f       %6.3f      %5.1f%n",
-	  diameters[i] * 1000, bbPressureDrops[i], tfPressureDrops[i],
-	  percentDifference(bbPressureDrops[i], tfPressureDrops[i]));
+          diameters[i] * 1000, bbPressureDrops[i], tfPressureDrops[i],
+          percentDifference(bbPressureDrops[i], tfPressureDrops[i]));
     }
 
     // Verify pressure drop decreases with larger diameter for both models
@@ -564,8 +564,8 @@ class TwoFluidVsBeggsBrillComparisonTest {
     int maxHoldupLocation = 0;
     for (int i = 0; i < holdupProfile.length; i++) {
       if (holdupProfile[i] > maxHoldup) {
-	maxHoldup = holdupProfile[i];
-	maxHoldupLocation = i;
+        maxHoldup = holdupProfile[i];
+        maxHoldupLocation = i;
       }
     }
     double maxHoldupPosition = pipeLength * maxHoldupLocation / (nSections - 1);
@@ -573,13 +573,13 @@ class TwoFluidVsBeggsBrillComparisonTest {
     logger.info("\n=== Undulating Terrain Comparison ===");
     logger.info("Note: BB uses net elevation=0, TF uses full terrain profile");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Beggs-Brill: Outlet P = %.3f bar, ΔP = %.3f bar%n",
-	bbOutletPressure, bbPressureDrop);
+        bbOutletPressure, bbPressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Two-Fluid:   Outlet P = %.3f bar, ΔP = %.3f bar%n",
-	tfOutletPressure, tfPressureDrop);
+        tfOutletPressure, tfPressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Two-Fluid max holdup: %.4f at %.0f m%n", maxHoldup,
-	maxHoldupPosition);
+        maxHoldupPosition);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Difference:  %.1f%%%n",
-	percentDifference(bbPressureDrop, tfPressureDrop));
+        percentDifference(bbPressureDrop, tfPressureDrop));
 
     assertTrue(bbPressureDrop > 0, "Beggs-Brill should show positive pressure drop");
     assertTrue(tfPressureDrop > 0, "Two-Fluid should show positive pressure drop");
@@ -639,13 +639,13 @@ class TwoFluidVsBeggsBrillComparisonTest {
 
     logger.info("\n=== Pure Methane Gas Flow Comparison ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Beggs-Brill: Outlet P = %.3f bar, ΔP = %.3f bar%n",
-	bbOutletPressure, bbPressureDrop);
+        bbOutletPressure, bbPressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Two-Fluid:   Outlet P = %.3f bar, ΔP = %.3f bar%n",
-	tfOutletPressure, tfPressureDrop);
+        tfOutletPressure, tfPressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO,
-	"Two-Fluid avg liquid holdup: %.6f (should be ~0 for pure gas)%n", avgHoldup);
+        "Two-Fluid avg liquid holdup: %.6f (should be ~0 for pure gas)%n", avgHoldup);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Difference:  %.1f%%%n",
-	percentDifference(bbPressureDrop, tfPressureDrop));
+        percentDifference(bbPressureDrop, tfPressureDrop));
 
     assertTrue(bbPressureDrop > 0, "BB should calculate positive pressure drop for gas");
     assertTrue(tfPressureDrop > 0, "TF should calculate positive pressure drop for gas");
@@ -703,13 +703,13 @@ class TwoFluidVsBeggsBrillComparisonTest {
 
     logger.info("\n=== Pure n-Heptane Oil Flow Comparison ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Beggs-Brill: Outlet P = %.3f bar, ΔP = %.3f bar%n",
-	bbOutletPressure, bbPressureDrop);
+        bbOutletPressure, bbPressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Two-Fluid:   Outlet P = %.3f bar, ΔP = %.3f bar%n",
-	tfOutletPressure, tfPressureDrop);
+        tfOutletPressure, tfPressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO,
-	"Two-Fluid avg liquid holdup: %.4f (should be ~1.0 for pure liquid)%n", avgHoldup);
+        "Two-Fluid avg liquid holdup: %.4f (should be ~1.0 for pure liquid)%n", avgHoldup);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Difference:  %.1f%%%n",
-	percentDifference(bbPressureDrop, tfPressureDrop));
+        percentDifference(bbPressureDrop, tfPressureDrop));
 
     assertTrue(bbPressureDrop > 0, "BB should calculate positive pressure drop for oil");
     assertTrue(tfPressureDrop > 0, "TF should calculate positive pressure drop for oil");
@@ -766,13 +766,13 @@ class TwoFluidVsBeggsBrillComparisonTest {
 
     logger.info("\n=== Pure n-Pentane Oil Flow Comparison ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Beggs-Brill: Outlet P = %.3f bar, ΔP = %.3f bar%n",
-	bbOutletPressure, bbPressureDrop);
+        bbOutletPressure, bbPressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Two-Fluid:   Outlet P = %.3f bar, ΔP = %.3f bar%n",
-	tfOutletPressure, tfPressureDrop);
+        tfOutletPressure, tfPressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO,
-	"Two-Fluid avg liquid holdup: %.4f (should be ~1.0 for pure liquid)%n", avgHoldup);
+        "Two-Fluid avg liquid holdup: %.4f (should be ~1.0 for pure liquid)%n", avgHoldup);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Difference:  %.1f%%%n",
-	percentDifference(bbPressureDrop, tfPressureDrop));
+        percentDifference(bbPressureDrop, tfPressureDrop));
 
     assertTrue(bbPressureDrop > 0, "BB should calculate positive pressure drop");
     assertTrue(tfPressureDrop > 0, "TF should calculate positive pressure drop");
@@ -829,13 +829,13 @@ class TwoFluidVsBeggsBrillComparisonTest {
 
     logger.info("\n=== Pure Ethane Gas Flow Comparison ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Beggs-Brill: Outlet P = %.3f bar, ΔP = %.3f bar%n",
-	bbOutletPressure, bbPressureDrop);
+        bbOutletPressure, bbPressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Two-Fluid:   Outlet P = %.3f bar, ΔP = %.3f bar%n",
-	tfOutletPressure, tfPressureDrop);
+        tfOutletPressure, tfPressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Two-Fluid avg liquid holdup: %.6f (should be ~0 for gas)%n",
-	avgHoldup);
+        avgHoldup);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Difference:  %.1f%%%n",
-	percentDifference(bbPressureDrop, tfPressureDrop));
+        percentDifference(bbPressureDrop, tfPressureDrop));
 
     assertTrue(bbPressureDrop > 0, "BB should calculate positive pressure drop for gas");
     assertTrue(tfPressureDrop > 0, "TF should calculate positive pressure drop for gas");
@@ -912,7 +912,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
 
     logger.info("\n=== Gas vs Oil Pressure Drop Comparison ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Pipe: %.0f m length, %.0f mm diameter, %.1f kg/s flow%n",
-	pipeLength, pipeDiameter * 1000, massFlowRate);
+        pipeLength, pipeDiameter * 1000, massFlowRate);
 
     logger.info("Beggs-Brill:");
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Gas (CH4):      ΔP = %.4f bar%n", bbGasDp);
@@ -1007,20 +1007,20 @@ class TwoFluidVsBeggsBrillComparisonTest {
     for (int i = 1; i < nSections - 1 && valleyCount < 10 && peakCount < 10; i++) {
       // Detect valleys (local minima in elevation)
       if (elevations[i] < elevations[i - 1] && elevations[i] < elevations[i + 1]) {
-	valleyIndices[valleyCount++] = i;
+        valleyIndices[valleyCount++] = i;
       }
       // Detect peaks (local maxima in elevation)
       if (elevations[i] > elevations[i - 1] && elevations[i] > elevations[i + 1]) {
-	peakIndices[peakCount++] = i;
+        peakIndices[peakCount++] = i;
       }
 
       if (holdupProfile[i] > maxHoldup) {
-	maxHoldup = holdupProfile[i];
-	maxHoldupIdx = i;
+        maxHoldup = holdupProfile[i];
+        maxHoldupIdx = i;
       }
       if (holdupProfile[i] < minHoldup) {
-	minHoldup = holdupProfile[i];
-	minHoldupIdx = i;
+        minHoldup = holdupProfile[i];
+        minHoldupIdx = i;
       }
     }
 
@@ -1028,32 +1028,32 @@ class TwoFluidVsBeggsBrillComparisonTest {
     int[] samplePoints = { 0, 10, 25, 37, 50, 62, 75, 87, 99 };
     for (int i : samplePoints) {
       if (i < nSections) {
-	String note = "";
-	for (int v = 0; v < valleyCount; v++) {
-	  if (Math.abs(i - valleyIndices[v]) <= 1) {
-	    note = "<-- VALLEY";
-	    break;
-	  }
-	}
-	for (int p = 0; p < peakCount; p++) {
-	  if (Math.abs(i - peakIndices[p]) <= 1) {
-	    note = "<-- PEAK";
-	    break;
-	  }
-	}
-	logger.printf(org.apache.logging.log4j.Level.INFO, "%10.0f     %8.2f       %8.4f     %s%n", positions[i],
-	    elevations[i], holdupProfile[i], note);
+        String note = "";
+        for (int v = 0; v < valleyCount; v++) {
+          if (Math.abs(i - valleyIndices[v]) <= 1) {
+            note = "<-- VALLEY";
+            break;
+          }
+        }
+        for (int p = 0; p < peakCount; p++) {
+          if (Math.abs(i - peakIndices[p]) <= 1) {
+            note = "<-- PEAK";
+            break;
+          }
+        }
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%10.0f     %8.2f       %8.4f     %s%n", positions[i],
+            elevations[i], holdupProfile[i], note);
       }
     }
 
     logger.info("\n--- Slug Analysis Summary ---");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Total pressure drop: %.3f bar%n", tfPressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Max liquid holdup: %.4f at position %.0f m (elev: %.1f m)%n",
-	maxHoldup, positions[maxHoldupIdx], elevations[maxHoldupIdx]);
+        maxHoldup, positions[maxHoldupIdx], elevations[maxHoldupIdx]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Min liquid holdup: %.4f at position %.0f m (elev: %.1f m)%n",
-	minHoldup, positions[minHoldupIdx], elevations[minHoldupIdx]);
+        minHoldup, positions[minHoldupIdx], elevations[minHoldupIdx]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Holdup ratio (max/min): %.2f%n",
-	minHoldup > 0 ? maxHoldup / minHoldup : Double.POSITIVE_INFINITY);
+        minHoldup > 0 ? maxHoldup / minHoldup : Double.POSITIVE_INFINITY);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Number of valleys detected: %d%n", valleyCount);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Number of peaks detected: %d%n", peakCount);
 
@@ -1062,8 +1062,8 @@ class TwoFluidVsBeggsBrillComparisonTest {
     for (int v = 0; v < valleyCount; v++) {
       int idx = valleyIndices[v];
       logger.printf(org.apache.logging.log4j.Level.INFO,
-	  "  Valley %d: position=%.0f m, elevation=%.1f m, holdup=%.4f%n", v + 1, positions[idx], elevations[idx],
-	  holdupProfile[idx]);
+          "  Valley %d: position=%.0f m, elevation=%.1f m, holdup=%.4f%n", v + 1, positions[idx], elevations[idx],
+          holdupProfile[idx]);
     }
 
     // Print holdup at each peak
@@ -1071,7 +1071,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
     for (int p = 0; p < peakCount; p++) {
       int idx = peakIndices[p];
       logger.printf(org.apache.logging.log4j.Level.INFO, "  Peak %d: position=%.0f m, elevation=%.1f m, holdup=%.4f%n",
-	  p + 1, positions[idx], elevations[idx], holdupProfile[idx]);
+          p + 1, positions[idx], elevations[idx], holdupProfile[idx]);
     }
 
     double averageValleyHoldup = 0.0;
@@ -1091,7 +1091,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
     assertTrue(tfInletPressure > 0, "Inlet pressure should be positive");
     assertTrue(tfOutletPressure > 0, "Outlet pressure should be positive");
     assertTrue(Math.abs(tfPressureDrop) < tfInletPressure,
-	"Terrain pressure change should remain within the inlet pressure scale");
+        "Terrain pressure change should remain within the inlet pressure scale");
 
     // The model should complete without errors
     assertEquals(nSections, pressureProfile.length, "Pressure profile should match sections");
@@ -1135,11 +1135,11 @@ class TwoFluidVsBeggsBrillComparisonTest {
       double x = (double) i / (nSections - 1); // 0 to 1
       // Asymmetric valley: gradual down, steep up
       if (x < 0.6) {
-	// Gradual descent to valley bottom at x=0.5
-	elevations[i] = -50.0 * Math.sin(Math.PI * x / 0.6);
+        // Gradual descent to valley bottom at x=0.5
+        elevations[i] = -50.0 * Math.sin(Math.PI * x / 0.6);
       } else {
-	// Steep ascent back to original level
-	elevations[i] = -50.0 * Math.sin(Math.PI * 0.5) * (1.0 - (x - 0.6) / 0.4);
+        // Steep ascent back to original level
+        elevations[i] = -50.0 * Math.sin(Math.PI * 0.5) * (1.0 - (x - 0.6) / 0.4);
       }
     }
 
@@ -1163,28 +1163,28 @@ class TwoFluidVsBeggsBrillComparisonTest {
     double minElev = 0;
     for (int i = 0; i < nSections; i++) {
       if (elevations[i] < minElev) {
-	minElev = elevations[i];
-	valleyIdx = i;
+        minElev = elevations[i];
+        valleyIdx = i;
       }
     }
 
     logger.info("\n=== Severe Terrain Slugging - Deep Valley ===");
     logger.info("Pipeline: 3 km, 150 mm diameter, rich gas");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Valley depth: %.1f m at position %.0f m%n", -minElev,
-	pipeLength * valleyIdx / (nSections - 1));
+        pipeLength * valleyIdx / (nSections - 1));
     logger.info("\nProfile (every 10th point):");
     logger.info("Position [m]  Elevation [m]  Pressure [bar]  Holdup");
     logger.info("----------------------------------------------------------");
 
     for (int i = 0; i < nSections; i += 6) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "%10.0f     %8.1f       %8.2f       %.4f%n",
-	  pipeLength * i / (nSections - 1), elevations[i], pressureProfile[i] / 1e5, holdupProfile[i]);
+          pipeLength * i / (nSections - 1), elevations[i], pressureProfile[i] / 1e5, holdupProfile[i]);
     }
 
     // Print last point
     int last = nSections - 1;
     logger.printf(org.apache.logging.log4j.Level.INFO, "%10.0f     %8.1f       %8.2f       %.4f%n", pipeLength,
-	elevations[last], pressureProfile[last] / 1e5, holdupProfile[last]);
+        elevations[last], pressureProfile[last] / 1e5, holdupProfile[last]);
 
     logger.info("\n--- Deep Valley Summary ---");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Inlet pressure:  %.2f bar%n", tfInletPressure);
@@ -1203,7 +1203,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
     }
     valleyLiquidInventory /= (valleyEnd - valleyStart + 1);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Average holdup in valley region: %.4f%n",
-	valleyLiquidInventory);
+        valleyLiquidInventory);
 
     // Assertions
     assertTrue(tfPressureDrop > 0, "Pressure drop should be positive");
@@ -1215,7 +1215,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
     double pressureAfterValley = pressureProfile[Math.min(valleyIdx + 10, nSections - 1)];
     logger.printf(org.apache.logging.log4j.Level.INFO, "%nPressure at valley: %.2f bar%n", pressureAtValley / 1e5);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Pressure 500m after valley: %.2f bar%n",
-	pressureAfterValley / 1e5);
+        pressureAfterValley / 1e5);
   }
 
   @Test
@@ -1264,21 +1264,21 @@ class TwoFluidVsBeggsBrillComparisonTest {
       double x = positions[i];
 
       if (x <= flowlineLength) {
-	// Section 1: Horizontal flowline at seabed level (0m)
-	elevations[i] = 0.0;
+        // Section 1: Horizontal flowline at seabed level (0m)
+        elevations[i] = 0.0;
       } else if (x <= sagBendPosition) {
-	// Section 2: Descend to sag bend
-	double progress = (x - flowlineLength) / (sagBendPosition - flowlineLength);
-	// Smooth transition using sine curve
-	elevations[i] = sagDepth * Math.sin(progress * Math.PI / 2);
+        // Section 2: Descend to sag bend
+        double progress = (x - flowlineLength) / (sagBendPosition - flowlineLength);
+        // Smooth transition using sine curve
+        elevations[i] = sagDepth * Math.sin(progress * Math.PI / 2);
       } else if (x <= riserStartPosition) {
-	// Section 3: Sag bend (low point) - transition to riser
-	double progress = (x - sagBendPosition) / (riserStartPosition - sagBendPosition);
-	elevations[i] = sagDepth * Math.cos(progress * Math.PI / 2);
+        // Section 3: Sag bend (low point) - transition to riser
+        double progress = (x - sagBendPosition) / (riserStartPosition - sagBendPosition);
+        elevations[i] = sagDepth * Math.cos(progress * Math.PI / 2);
       } else {
-	// Section 4: Vertical riser to platform
-	double progress = (x - riserStartPosition) / (riserLength - riserStartPosition);
-	elevations[i] = platformHeight * progress;
+        // Section 4: Vertical riser to platform
+        double progress = (x - riserStartPosition) / (riserLength - riserStartPosition);
+        elevations[i] = platformHeight * progress;
       }
     }
 
@@ -1302,8 +1302,8 @@ class TwoFluidVsBeggsBrillComparisonTest {
     double minElev = 0;
     for (int i = 0; i < nSections; i++) {
       if (elevations[i] < minElev) {
-	minElev = elevations[i];
-	sagIdx = i;
+        minElev = elevations[i];
+        sagIdx = i;
       }
     }
 
@@ -1312,8 +1312,8 @@ class TwoFluidVsBeggsBrillComparisonTest {
     double maxHoldup = 0;
     for (int i = 0; i < nSections; i++) {
       if (holdupProfile[i] > maxHoldup) {
-	maxHoldup = holdupProfile[i];
-	maxHoldupIdx = i;
+        maxHoldup = holdupProfile[i];
+        maxHoldupIdx = i;
       }
     }
 
@@ -1329,18 +1329,18 @@ class TwoFluidVsBeggsBrillComparisonTest {
     int[] keyPoints = { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99 };
     for (int idx : keyPoints) {
       if (idx < nSections) {
-	String section;
-	if (positions[idx] <= flowlineLength) {
-	  section = "Flowline";
-	} else if (positions[idx] <= sagBendPosition) {
-	  section = "Descending";
-	} else if (positions[idx] <= riserStartPosition) {
-	  section = "Sag bend";
-	} else {
-	  section = "Riser";
-	}
-	logger.printf(org.apache.logging.log4j.Level.INFO, "%10.0f     %8.1f       %8.2f        %8.4f      %s%n",
-	    positions[idx], elevations[idx], pressureProfile[idx] / 1e5, holdupProfile[idx], section);
+        String section;
+        if (positions[idx] <= flowlineLength) {
+          section = "Flowline";
+        } else if (positions[idx] <= sagBendPosition) {
+          section = "Descending";
+        } else if (positions[idx] <= riserStartPosition) {
+          section = "Sag bend";
+        } else {
+          section = "Riser";
+        }
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%10.0f     %8.1f       %8.2f        %8.4f      %s%n",
+            positions[idx], elevations[idx], pressureProfile[idx] / 1e5, holdupProfile[idx], section);
       }
     }
 
@@ -1349,15 +1349,15 @@ class TwoFluidVsBeggsBrillComparisonTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "Outlet pressure (platform): %.2f bar%n", outletPressure);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Total pressure drop:        %.2f bar%n", pressureDrop);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Sag bend depth:             %.1f m at position %.0f m%n",
-	minElev, positions[sagIdx]);
+        minElev, positions[sagIdx]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Pressure at sag bend:       %.2f bar%n",
-	pressureProfile[sagIdx] / 1e5);
+        pressureProfile[sagIdx] / 1e5);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Holdup at sag bend:         %.4f%n", holdupProfile[sagIdx]);
     logger.printf(org.apache.logging.log4j.Level.INFO,
-	"Maximum holdup:             %.4f at position %.0f m (elev: %.1f m)%n", maxHoldup, positions[maxHoldupIdx],
-	elevations[maxHoldupIdx]);
+        "Maximum holdup:             %.4f at position %.0f m (elev: %.1f m)%n", maxHoldup, positions[maxHoldupIdx],
+        elevations[maxHoldupIdx]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Holdup at platform:         %.4f%n",
-	holdupProfile[nSections - 1]);
+        holdupProfile[nSections - 1]);
 
     // Calculate liquid inventory in different sections
     double flowlineInventory = 0;
@@ -1369,45 +1369,45 @@ class TwoFluidVsBeggsBrillComparisonTest {
 
     for (int i = 0; i < nSections; i++) {
       if (positions[i] <= flowlineLength) {
-	flowlineInventory += holdupProfile[i];
-	flowlineCount++;
+        flowlineInventory += holdupProfile[i];
+        flowlineCount++;
       } else if (positions[i] <= riserStartPosition) {
-	sagInventory += holdupProfile[i];
-	sagCount++;
+        sagInventory += holdupProfile[i];
+        sagCount++;
       } else {
-	riserInventory += holdupProfile[i];
-	riserCount++;
+        riserInventory += holdupProfile[i];
+        riserCount++;
       }
     }
 
     logger.info("\n--- Section-by-Section Liquid Distribution ---");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Average holdup in flowline:  %.4f%n",
-	flowlineCount > 0 ? flowlineInventory / flowlineCount : 0);
+        flowlineCount > 0 ? flowlineInventory / flowlineCount : 0);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Average holdup in sag bend:  %.4f%n",
-	sagCount > 0 ? sagInventory / sagCount : 0);
+        sagCount > 0 ? sagInventory / sagCount : 0);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Average holdup in riser:     %.4f%n",
-	riserCount > 0 ? riserInventory / riserCount : 0);
+        riserCount > 0 ? riserInventory / riserCount : 0);
 
     // Hydrostatic pressure analysis
     double hydrostaticHead = (platformHeight - sagDepth) * 9.81 * 800 / 1e5; // Assuming 800 kg/m3
-									     // liquid
+    // liquid
     logger.printf(org.apache.logging.log4j.Level.INFO, "\nEstimated hydrostatic head (sag to platform): ~%.1f bar%n",
-	hydrostaticHead);
+        hydrostaticHead);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Actual pressure increase (sag to outlet): %.2f bar%n",
-	pressureProfile[sagIdx] / 1e5 - outletPressure);
+        pressureProfile[sagIdx] / 1e5 - outletPressure);
 
     // Assertions
     assertTrue(outletPressure > 0, "Outlet pressure should be positive");
     assertTrue(outletPressure < inletPressure, "Outlet pressure should be less than inlet (overall pressure drop)");
     assertTrue(pressureProfile[sagIdx] > pressureProfile[0],
-	"Pressure at sag bend should be higher than inlet due to depth");
+        "Pressure at sag bend should be higher than inlet due to depth");
     assertTrue(holdupProfile.length == nSections, "Holdup profile should match sections");
 
     // Verify liquid tends to accumulate in sag bend region
     double avgSagHoldup = sagCount > 0 ? sagInventory / sagCount : 0;
     double avgRiserHoldup = riserCount > 0 ? riserInventory / riserCount : 0;
     logger.printf(org.apache.logging.log4j.Level.INFO,
-	"\nSag/Riser holdup ratio: %.2f (>1 indicates liquid accumulation at sag)%n", avgSagHoldup / avgRiserHoldup);
+        "\nSag/Riser holdup ratio: %.2f (>1 indicates liquid accumulation at sag)%n", avgSagHoldup / avgRiserHoldup);
   }
 
   @Test
@@ -1450,21 +1450,21 @@ class TwoFluidVsBeggsBrillComparisonTest {
       double x = positions[i];
 
       if (x <= flowlineEnd) {
-	// Horizontal flowline with slight downward slope
-	elevations[i] = -2.0 * x / flowlineEnd;
+        // Horizontal flowline with slight downward slope
+        elevations[i] = -2.0 * x / flowlineEnd;
       } else if (x <= sagStart) {
-	// Gradual descent to sag
-	double progress = (x - flowlineEnd) / (sagStart - flowlineEnd);
-	elevations[i] = -2.0 + (sagDepth + 2.0) * progress;
+        // Gradual descent to sag
+        double progress = (x - flowlineEnd) / (sagStart - flowlineEnd);
+        elevations[i] = -2.0 + (sagDepth + 2.0) * progress;
       } else if (x <= sagEnd) {
-	// Extended sag bend region (flat bottom)
-	elevations[i] = sagDepth;
+        // Extended sag bend region (flat bottom)
+        elevations[i] = sagDepth;
       } else {
-	// Riser section - gradual then steeper ascent
-	double progress = (x - sagEnd) / (riserLength - sagEnd);
-	// Use quadratic for accelerating ascent
-	elevations[i] = sagDepth + (platformHeight - sagDepth) * progress * progress
-	    + (platformHeight - sagDepth) * progress * (1 - progress);
+        // Riser section - gradual then steeper ascent
+        double progress = (x - sagEnd) / (riserLength - sagEnd);
+        // Use quadratic for accelerating ascent
+        elevations[i] = sagDepth + (platformHeight - sagDepth) * progress * progress
+            + (platformHeight - sagDepth) * progress * (1 - progress);
       }
     }
 
@@ -1490,12 +1490,12 @@ class TwoFluidVsBeggsBrillComparisonTest {
 
     for (int i = 0; i < nSections; i++) {
       if (positions[i] >= sagStart && positions[i] <= sagEnd) {
-	sagHoldupSum += holdupProfile[i];
-	sagCount++;
-	if (holdupProfile[i] > maxSagHoldup) {
-	  maxSagHoldup = holdupProfile[i];
-	  maxSagHoldupIdx = i;
-	}
+        sagHoldupSum += holdupProfile[i];
+        sagCount++;
+        if (holdupProfile[i] > maxSagHoldup) {
+          maxSagHoldup = holdupProfile[i];
+          maxSagHoldupIdx = i;
+        }
       }
     }
 
@@ -1503,7 +1503,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
     logger.info("Configuration: Extended sag bend, low flow rate (2 kg/s)");
     logger.info("Riser: 800m length, 150mm diameter");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Sag region: %.0f-%.0f m at depth %.0f m%n", sagStart, sagEnd,
-	sagDepth);
+        sagDepth);
 
     logger.info("\nProfile (every 8th section):");
     logger.info("Position [m]  Elevation [m]  Pressure [bar]  Holdup");
@@ -1511,21 +1511,21 @@ class TwoFluidVsBeggsBrillComparisonTest {
 
     for (int i = 0; i < nSections; i += 8) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "%10.0f     %8.1f       %8.2f       %.4f%n", positions[i],
-	  elevations[i], pressureProfile[i] / 1e5, holdupProfile[i]);
+          elevations[i], pressureProfile[i] / 1e5, holdupProfile[i]);
     }
     // Print last point
     int last = nSections - 1;
     logger.printf(org.apache.logging.log4j.Level.INFO, "%10.0f     %8.1f       %8.2f       %.4f%n", positions[last],
-	elevations[last], pressureProfile[last] / 1e5, holdupProfile[last]);
+        elevations[last], pressureProfile[last] / 1e5, holdupProfile[last]);
 
     logger.info("\n--- Slugging Indicators ---");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Inlet pressure:  %.2f bar%n", inletPressure);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Outlet pressure: %.2f bar%n", outletPressure);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Pressure drop:   %.2f bar%n", inletPressure - outletPressure);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Average holdup in sag region: %.4f%n",
-	sagCount > 0 ? sagHoldupSum / sagCount : 0);
+        sagCount > 0 ? sagHoldupSum / sagCount : 0);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Maximum holdup in sag: %.4f at position %.0f m%n", maxSagHoldup,
-	positions[maxSagHoldupIdx]);
+        positions[maxSagHoldupIdx]);
 
     // Severe slugging indicator: high holdup accumulation in sag
     double avgOverallHoldup = 0;
@@ -1537,7 +1537,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
     double sagHoldupRatio = sagCount > 0 ? (sagHoldupSum / sagCount) / avgOverallHoldup : 1.0;
     logger.printf(org.apache.logging.log4j.Level.INFO, "Sag holdup / overall holdup ratio: %.2f%n", sagHoldupRatio);
     logger
-	.info(sagHoldupRatio > 1.1 ? "⚠️  Potential severe slugging conditions detected" : "✓ Normal flow conditions");
+        .info(sagHoldupRatio > 1.1 ? "⚠️  Potential severe slugging conditions detected" : "✓ Normal flow conditions");
 
     // Assertions
     assertTrue(outletPressure > 0, "Outlet pressure should be positive");
@@ -1580,15 +1580,15 @@ class TwoFluidVsBeggsBrillComparisonTest {
     for (int i = 0; i < nSections; i++) {
       double x = pipeLength * i / (nSections - 1);
       if (x <= flowlineLength) {
-	// Slightly downward sloping flowline
-	elevations[i] = -5.0 * x / flowlineLength;
+        // Slightly downward sloping flowline
+        elevations[i] = -5.0 * x / flowlineLength;
       } else if (x <= flowlineLength + riserHeight) {
-	// Vertical riser
-	double riserProgress = (x - flowlineLength) / riserHeight;
-	elevations[i] = -5.0 + (riserHeight + 5.0) * riserProgress;
+        // Vertical riser
+        double riserProgress = (x - flowlineLength) / riserHeight;
+        elevations[i] = -5.0 + (riserHeight + 5.0) * riserProgress;
       } else {
-	// Horizontal at platform
-	elevations[i] = riserHeight;
+        // Horizontal at platform
+        elevations[i] = riserHeight;
       }
     }
 
@@ -1638,7 +1638,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Flowline length: %.0f m%n", flowlineLength);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Riser height:    %.0f m%n", riserHeight);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Pipe diameter:   %.0f mm (%.1f inch)%n", diameter * 1000,
-	diameter / 0.0254);
+        diameter / 0.0254);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Mass flow rate:  %.2f kg/s%n", massFlow);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Separator pressure: %.2f bar%n", P_sep / 1e5);
 
@@ -1658,9 +1658,9 @@ class TwoFluidVsBeggsBrillComparisonTest {
     logger.info("\n--- Holdup Distribution ---");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Holdup at flowline inlet:   %.4f%n", holdupProfile[0]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Holdup at riser base:       %.4f%n",
-	holdupProfile[Math.min(riserBaseIdx, nSections - 1)]);
+        holdupProfile[Math.min(riserBaseIdx, nSections - 1)]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Holdup at riser top:        %.4f%n",
-	holdupProfile[nSections - 1]);
+        holdupProfile[nSections - 1]);
 
     // Calculate liquid inventory
     double flowlineLiquidInventory = 0;
@@ -1669,14 +1669,14 @@ class TwoFluidVsBeggsBrillComparisonTest {
       double x = pipeLength * i / (nSections - 1);
       double sectionVolume = area * (pipeLength / (nSections - 1));
       if (x <= flowlineLength) {
-	flowlineLiquidInventory += holdupProfile[i] * sectionVolume * rhoL;
+        flowlineLiquidInventory += holdupProfile[i] * sectionVolume * rhoL;
       } else {
-	riserLiquidInventory += holdupProfile[i] * sectionVolume * rhoL;
+        riserLiquidInventory += holdupProfile[i] * sectionVolume * rhoL;
       }
     }
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%nLiquid inventory in flowline: %.1f kg%n",
-	flowlineLiquidInventory);
+        flowlineLiquidInventory);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Liquid inventory in riser:    %.1f kg%n", riserLiquidInventory);
 
     // Estimate slug cycle period (Taitel, 1986)
@@ -1695,10 +1695,10 @@ class TwoFluidVsBeggsBrillComparisonTest {
     int[] printPoints = { 0, 10, 20, 30, 40, 50, 55, 60, 64 };
     for (int idx : printPoints) {
       if (idx < nSections) {
-	String section = (pipeLength * idx / (nSections - 1) <= flowlineLength) ? "Flowline" : "Riser";
-	logger.printf(org.apache.logging.log4j.Level.INFO, "%10.0f     %8.1f       %8.2f       %.4f   %s%n",
-	    pipeLength * idx / (nSections - 1), elevations[idx], pressureProfile[idx] / 1e5, holdupProfile[idx],
-	    section);
+        String section = (pipeLength * idx / (nSections - 1) <= flowlineLength) ? "Flowline" : "Riser";
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%10.0f     %8.1f       %8.2f       %.4f   %s%n",
+            pipeLength * idx / (nSections - 1), elevations[idx], pressureProfile[idx] / 1e5, holdupProfile[idx],
+            section);
       }
     }
 
@@ -1739,10 +1739,10 @@ class TwoFluidVsBeggsBrillComparisonTest {
     for (int i = 0; i < nSections; i++) {
       double x = totalLength * i / (nSections - 1);
       if (x <= flowlineLength) {
-	elevations[i] = -3.0 * x / flowlineLength; // Slight downward slope
+        elevations[i] = -3.0 * x / flowlineLength; // Slight downward slope
       } else {
-	double riserProgress = (x - flowlineLength) / riserHeight;
-	elevations[i] = -3.0 + (riserHeight + 3.0) * riserProgress;
+        double riserProgress = (x - flowlineLength) / riserHeight;
+        elevations[i] = -3.0 + (riserHeight + 3.0) * riserProgress;
       }
     }
 
@@ -1787,7 +1787,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
     logger.info("Time [s]  Inlet P [bar]  Outlet P [bar]  Riser Base Holdup  ΔP [bar]");
     logger.info("------------------------------------------------------------------------");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%6.0f     %8.2f       %8.2f         %8.4f        %8.2f%n", 0.0,
-	inletPressures[0], outletPressures[0], riserBaseHoldups[0], inletPressures[0] - outletPressures[0]);
+        inletPressures[0], outletPressures[0], riserBaseHoldups[0], inletPressures[0] - outletPressures[0]);
 
     for (int step = 1; step <= nSteps; step++) {
       pipe.runTransient(dt, simId);
@@ -1802,9 +1802,9 @@ class TwoFluidVsBeggsBrillComparisonTest {
 
       // Print every 10 seconds
       if (step % 10 == 0) {
-	logger.printf(org.apache.logging.log4j.Level.INFO, "%6.0f     %8.2f       %8.2f         %8.4f        %8.2f%n",
-	    times[step], inletPressures[step], outletPressures[step], riserBaseHoldups[step],
-	    inletPressures[step] - outletPressures[step]);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%6.0f     %8.2f       %8.2f         %8.4f        %8.2f%n",
+            times[step], inletPressures[step], outletPressures[step], riserBaseHoldups[step],
+            inletPressures[step] - outletPressures[step]);
       }
     }
 
@@ -1827,11 +1827,11 @@ class TwoFluidVsBeggsBrillComparisonTest {
 
     logger.info("\n--- Transient Analysis ---");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Inlet pressure range:     %.2f - %.2f bar (Δ = %.2f bar)%n",
-	minInletP, maxInletP, maxInletP - minInletP);
+        minInletP, maxInletP, maxInletP - minInletP);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Outlet pressure range:    %.2f - %.2f bar (Δ = %.2f bar)%n",
-	minOutletP, maxOutletP, maxOutletP - minOutletP);
+        minOutletP, maxOutletP, maxOutletP - minOutletP);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Riser base holdup range:  %.4f - %.4f (Δ = %.4f)%n", minHoldup,
-	maxHoldup, maxHoldup - minHoldup);
+        maxHoldup, maxHoldup - minHoldup);
 
     // Detect oscillation amplitude
     double pressureOscillation = maxInletP - minInletP;
@@ -1862,7 +1862,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
 
     // Check pressure remained positive during simulation
     assertTrue(outletPressures[nSteps] > 0 || !Double.isNaN(outletPressures[nSteps]),
-	"Final outlet pressure should be positive or simulation became unstable");
+        "Final outlet pressure should be positive or simulation became unstable");
   }
 
   @Test
@@ -1895,10 +1895,10 @@ class TwoFluidVsBeggsBrillComparisonTest {
     for (int i = 0; i < nSections; i++) {
       double x = totalLength * i / (nSections - 1);
       if (x <= flowlineLength) {
-	elevations[i] = -4.0 * x / flowlineLength;
+        elevations[i] = -4.0 * x / flowlineLength;
       } else {
-	double riserProgress = (x - flowlineLength) / riserHeight;
-	elevations[i] = -4.0 + (riserHeight + 4.0) * riserProgress;
+        double riserProgress = (x - flowlineLength) / riserHeight;
+        elevations[i] = -4.0 + (riserHeight + 4.0) * riserProgress;
       }
     }
 
@@ -1939,15 +1939,15 @@ class TwoFluidVsBeggsBrillComparisonTest {
       double holdupGradient = riserBaseH - riserTopH;
       String stability;
       if (holdupGradient > 0.2 && flowRate < 2.0) {
-	stability = "⚠️ UNSTABLE";
+        stability = "⚠️ UNSTABLE";
       } else if (holdupGradient > 0.1) {
-	stability = "⚠️ MARGINAL";
+        stability = "⚠️ MARGINAL";
       } else {
-	stability = "✓ STABLE";
+        stability = "✓ STABLE";
       }
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%6.1f     %6.2f   %6.2f    %5.2f   %6.4f      %6.4f     %s%n",
-	  flowRate, inletP, outletP, deltaP, riserBaseH, riserTopH, stability);
+          flowRate, inletP, outletP, deltaP, riserBaseH, riserTopH, stability);
     }
 
     logger.info("\n--- Mitigation Recommendations ---");
@@ -1996,15 +1996,15 @@ class TwoFluidVsBeggsBrillComparisonTest {
 
     if (hasGas) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "Gas density:      %.2f kg/m³%n",
-	  runFluid.getPhase("gas").getDensity("kg/m3"));
+          runFluid.getPhase("gas").getDensity("kg/m3"));
     }
     if (hasOil) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "Oil density:      %.2f kg/m³%n",
-	  runFluid.getPhase("oil").getDensity("kg/m3"));
+          runFluid.getPhase("oil").getDensity("kg/m3"));
     }
     if (hasWater) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "Water density:    %.2f kg/m³%n",
-	  runFluid.getPhase("aqueous").getDensity("kg/m3"));
+          runFluid.getPhase("aqueous").getDensity("kg/m3"));
     }
 
     // Calculate water cut if we have both oil and water
@@ -2087,7 +2087,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
       fluid.addComponent("n-pentane", 0.12 * hydrocarbon);
       fluid.addComponent("n-heptane", 0.20 * hydrocarbon);
       if (waterMole > 0) {
-	fluid.addComponent("water", waterMole);
+        fluid.addComponent("water", waterMole);
       }
       fluid.setMixingRule("classic");
       fluid.setMultiPhaseCheck(true);
@@ -2113,18 +2113,18 @@ class TwoFluidVsBeggsBrillComparisonTest {
       double deltaP = inletP - outletP;
       double avgHoldup = 0;
       for (double h : H)
-	avgHoldup += h;
+        avgHoldup += h;
       avgHoldup /= H.length;
 
       SystemInterface runFluid = inlet.getFluid();
       int numPhases = runFluid.getNumberOfPhases();
       String phaseStr = numPhases + " phases";
       if (runFluid.hasPhaseType("aqueous")) {
-	phaseStr += " (w/ water)";
+        phaseStr += " (w/ water)";
       }
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%6.0f %%    %6.2f   %6.2f    %6.3f     %.4f    %s%n",
-	  waterMole * 100, inletP, outletP, deltaP, avgHoldup, phaseStr);
+          waterMole * 100, inletP, outletP, deltaP, avgHoldup, phaseStr);
 
       assertTrue(outletP > 0, "Outlet pressure should be positive");
     }
@@ -2187,28 +2187,28 @@ class TwoFluidVsBeggsBrillComparisonTest {
       double pos = pipeLength * i / (nSections - 1);
       String note = "";
       if (elevations[i] < -15)
-	note = "<-- VALLEY";
+        note = "<-- VALLEY";
       else if (elevations[i] > 20)
-	note = "<-- PEAK";
+        note = "<-- PEAK";
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%8.0f      %8.1f        %8.2f     %.4f  %s%n", pos,
-	  elevations[i], P[i] / 1e5, H[i], note);
+          elevations[i], P[i] / 1e5, H[i], note);
 
       if (H[i] > maxHoldup) {
-	maxHoldup = H[i];
-	maxHoldupIdx = i;
+        maxHoldup = H[i];
+        maxHoldupIdx = i;
       }
       if (H[i] < minHoldup) {
-	minHoldup = H[i];
-	minHoldupIdx = i;
+        minHoldup = H[i];
+        minHoldupIdx = i;
       }
     }
 
     logger.info("\n--- Analysis ---");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Maximum holdup: %.4f at position %.0f m (elevation %.1f m)%n",
-	maxHoldup, pipeLength * maxHoldupIdx / (nSections - 1), elevations[maxHoldupIdx]);
+        maxHoldup, pipeLength * maxHoldupIdx / (nSections - 1), elevations[maxHoldupIdx]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Minimum holdup: %.4f at position %.0f m (elevation %.1f m)%n",
-	minHoldup, pipeLength * minHoldupIdx / (nSections - 1), elevations[minHoldupIdx]);
+        minHoldup, pipeLength * minHoldupIdx / (nSections - 1), elevations[minHoldupIdx]);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Holdup variation: %.4f%n", maxHoldup - minHoldup);
 
     // Check that holdup varies with terrain (higher in valleys)
@@ -2234,7 +2234,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
     logger.info("Inlet fluid properties:");
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Density: %.1f kg/m³%n", inlet.getFluid().getDensity("kg/m3"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Number of phases: %d%n",
-	inlet.getFluid().getNumberOfPhases());
+        inlet.getFluid().getNumberOfPhases());
 
     TwoFluidPipe pipe = new TwoFluidPipe("Water-Pipe", inlet);
     pipe.setLength(1000.0);
@@ -2257,7 +2257,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "Outlet pressure:  %.2f bar%n", outletP);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Pressure drop:    %.3f bar%n", inletP - outletP);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Average holdup:   %.4f (should be ~1.0 for pure liquid)%n",
-	avgHoldup);
+        avgHoldup);
 
     assertTrue(outletP > 0, "Outlet pressure should be positive");
     assertTrue(avgHoldup > 0.9, "Pure water should have holdup close to 1.0");
@@ -2344,22 +2344,22 @@ class TwoFluidVsBeggsBrillComparisonTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "Number of phases: %d%n", runFluid.getNumberOfPhases());
     if (runFluid.hasPhaseType("gas")) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "Gas density:   %.1f kg/m³%n",
-	  runFluid.getPhase("gas").getDensity("kg/m3"));
+          runFluid.getPhase("gas").getDensity("kg/m3"));
     }
     if (runFluid.hasPhaseType("oil")) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "Oil density:   %.1f kg/m³%n",
-	  runFluid.getPhase("oil").getDensity("kg/m3"));
+          runFluid.getPhase("oil").getDensity("kg/m3"));
     }
     if (runFluid.hasPhaseType("aqueous")) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "Water density: %.1f kg/m³%n",
-	  runFluid.getPhase("aqueous").getDensity("kg/m3"));
+          runFluid.getPhase("aqueous").getDensity("kg/m3"));
 
       // Calculate water cut
       if (runFluid.hasPhaseType("oil")) {
-	double volOil = runFluid.getPhase("oil").getVolume("m3");
-	double volWater = runFluid.getPhase("aqueous").getVolume("m3");
-	logger.printf(org.apache.logging.log4j.Level.INFO, "Water cut:     %.1f %%%n",
-	    volWater / (volOil + volWater) * 100);
+        double volOil = runFluid.getPhase("oil").getVolume("m3");
+        double volWater = runFluid.getPhase("aqueous").getVolume("m3");
+        logger.printf(org.apache.logging.log4j.Level.INFO, "Water cut:     %.1f %%%n",
+            volWater / (volOil + volWater) * 100);
       }
     }
 
@@ -2379,19 +2379,19 @@ class TwoFluidVsBeggsBrillComparisonTest {
       // Valley 1 at 2 km
       double dist1 = Math.abs(x - 2000) / 500;
       if (dist1 < 2) {
-	baseElevation = Math.min(baseElevation, -30 * (1 - dist1 * dist1 / 4));
+        baseElevation = Math.min(baseElevation, -30 * (1 - dist1 * dist1 / 4));
       }
 
       // Valley 2 at 5 km (deepest)
       double dist2 = Math.abs(x - 5000) / 600;
       if (dist2 < 2) {
-	baseElevation = Math.min(baseElevation, -50 * (1 - dist2 * dist2 / 4));
+        baseElevation = Math.min(baseElevation, -50 * (1 - dist2 * dist2 / 4));
       }
 
       // Valley 3 at 8 km
       double dist3 = Math.abs(x - 8000) / 450;
       if (dist3 < 2) {
-	baseElevation = Math.min(baseElevation, -25 * (1 - dist3 * dist3 / 4));
+        baseElevation = Math.min(baseElevation, -25 * (1 - dist3 * dist3 / 4));
       }
 
       // Add some small undulations
@@ -2425,14 +2425,14 @@ class TwoFluidVsBeggsBrillComparisonTest {
       String note = "";
 
       if (Math.abs(pos - 2000) < 200)
-	note = "<-- Valley 1";
+        note = "<-- Valley 1";
       else if (Math.abs(pos - 5000) < 200)
-	note = "<-- Valley 2 (deepest)";
+        note = "<-- Valley 2 (deepest)";
       else if (Math.abs(pos - 8000) < 200)
-	note = "<-- Valley 3";
+        note = "<-- Valley 3";
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%8.1f       %8.1f        %8.2f     %.4f  %s%n", pos / 1000,
-	  elevations[i], P[i] / 1e5, H[i], note);
+          elevations[i], P[i] / 1e5, H[i], note);
     }
 
     // Find holdup at valley locations
@@ -2443,7 +2443,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
     // Find minimum holdup (at peaks)
     for (int i = 0; i < nSections; i++) {
       if (elevations[i] > -5) {
-	holdupPeak = Math.min(holdupPeak, H[i]);
+        holdupPeak = Math.min(holdupPeak, H[i]);
       }
     }
 
@@ -2453,7 +2453,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "Holdup at Valley 3 (8 km, -25m):  %.4f%n", holdupValley3);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Minimum holdup at peaks:          %.4f%n", holdupPeak);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Holdup increase ratio (deep valley/peak): %.2f%n",
-	holdupValley2 / holdupPeak);
+        holdupValley2 / holdupPeak);
 
     // Calculate liquid inventory in each valley region
     double invValley1 = 0, invValley2 = 0, invValley3 = 0;
@@ -2465,11 +2465,11 @@ class TwoFluidVsBeggsBrillComparisonTest {
       double liquidVol = H[i] * area * dx;
 
       if (Math.abs(pos - 2000) < 500)
-	invValley1 += liquidVol;
+        invValley1 += liquidVol;
       else if (Math.abs(pos - 5000) < 600)
-	invValley2 += liquidVol;
+        invValley2 += liquidVol;
       else if (Math.abs(pos - 8000) < 450)
-	invValley3 += liquidVol;
+        invValley3 += liquidVol;
     }
 
     logger.info("\n--- Liquid Inventory by Valley ---");
@@ -2521,9 +2521,9 @@ class TwoFluidVsBeggsBrillComparisonTest {
       double x = pipeLength * i / (nSections - 1);
       double dist = Math.abs(x - 1500) / 400;
       if (dist < 2) {
-	elevations[i] = -40 * (1 - dist * dist / 4);
+        elevations[i] = -40 * (1 - dist * dist / 4);
       } else {
-	elevations[i] = 0;
+        elevations[i] = 0;
       }
     }
 
@@ -2565,7 +2565,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
       double peakHoldup = Math.min(H[0], H[nSections - 1]);
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%6.1f     %6.2f   %6.2f      %.4f        %.4f     %.2f%n",
-	  flowRate, P[0] / 1e5, P[nSections - 1] / 1e5, valleyHoldup, peakHoldup, valleyHoldup / peakHoldup);
+          flowRate, P[0] / 1e5, P[nSections - 1] / 1e5, valleyHoldup, peakHoldup, valleyHoldup / peakHoldup);
     }
 
     logger.info("\n--- Interpretation ---");
@@ -2620,13 +2620,13 @@ class TwoFluidVsBeggsBrillComparisonTest {
       // Shallow valley at 1.5 km (depth -15m)
       double dist1 = Math.abs(x - 1500) / 350;
       if (dist1 < 2) {
-	elevations[i] = -15 * (1 - dist1 * dist1 / 4);
+        elevations[i] = -15 * (1 - dist1 * dist1 / 4);
       }
 
       // Deep valley at 3.5 km (depth -40m)
       double dist2 = Math.abs(x - 3500) / 400;
       if (dist2 < 2) {
-	elevations[i] = Math.min(elevations[i], -40 * (1 - dist2 * dist2 / 4));
+        elevations[i] = Math.min(elevations[i], -40 * (1 - dist2 * dist2 / 4));
       }
     }
 
@@ -2657,16 +2657,16 @@ class TwoFluidVsBeggsBrillComparisonTest {
       double pos = pipeLength * i / (nSections - 1);
       String note = "";
       if (i == valley1Idx)
-	note = "<- Shallow valley";
+        note = "<- Shallow valley";
       else if (i == valley2Idx)
-	note = "<- Deep valley";
+        note = "<- Deep valley";
       else if (i == 0)
-	note = "<- Inlet";
+        note = "<- Inlet";
       else if (i == nSections - 5)
-	note = "<- Outlet";
+        note = "<- Outlet";
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%6.0f m  %6.1f   %.4f   %.3f     %.4f   %.4f  %s%n", pos,
-	  elevations[i], H[i], waterCutProfile[i], waterHoldup[i], oilHoldup[i], note);
+          elevations[i], H[i], waterCutProfile[i], waterHoldup[i], oilHoldup[i], note);
     }
 
     double wcInlet = waterCutProfile[0];
@@ -2689,7 +2689,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
     double wcVariation = maxWC - minWC;
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "\nWater cut variation: min=%.1f%%, max=%.1f%%, range=%.1f%%%n",
-	minWC * 100, maxWC * 100, wcVariation * 100);
+        minWC * 100, maxWC * 100, wcVariation * 100);
 
     // Physical interpretation
     logger.info("\n--- Physical Interpretation ---");
@@ -2697,8 +2697,8 @@ class TwoFluidVsBeggsBrillComparisonTest {
       logger.info("✓ Water cut varies along the pipeline!");
       logger.info("  This indicates water-specific accumulation in low spots");
       if (wcDeepValley > wcInlet) {
-	logger.info("✓ Deep valley has higher water cut than inlet");
-	logger.info("  Water accumulates more in deep valleys due to higher density");
+        logger.info("✓ Deep valley has higher water cut than inlet");
+        logger.info("  Water accumulates more in deep valleys due to higher density");
       }
     } else {
       logger.info("⚠️ Water cut is constant along the pipeline");
@@ -2753,7 +2753,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
       elevations[i] = totalRise * i / (nSections - 1);
     }
     logger.printf(org.apache.logging.log4j.Level.INFO, "Pipeline: %.0f m long, %.0f m elevation rise (%.0f° slope)%n",
-	pipeLength, totalRise, 10.0);
+        pipeLength, totalRise, 10.0);
 
     TwoFluidPipe pipe = new TwoFluidPipe("UphillSlip", inlet);
     pipe.setLength(pipeLength);
@@ -2779,8 +2779,8 @@ class TwoFluidVsBeggsBrillComparisonTest {
     for (int i = 0; i < nSections; i += 3) {
       double pos = pipeLength * i / (nSections - 1);
       logger.printf(org.apache.logging.log4j.Level.INFO,
-	  "%6.0f m   %6.1f     %6.3f       %6.3f       %+6.3f     %.3f%n", pos, elevations[i], oilVel[i], waterVel[i],
-	  slip[i], waterCut[i]);
+          "%6.0f m   %6.1f     %6.3f       %6.3f       %+6.3f     %.3f%n", pos, elevations[i], oilVel[i], waterVel[i],
+          slip[i], waterCut[i]);
     }
 
     // Calculate average slip
@@ -2788,8 +2788,8 @@ class TwoFluidVsBeggsBrillComparisonTest {
     int countWithLiquid = 0;
     for (int i = 0; i < nSections; i++) {
       if (liqHoldup[i] > 0.02) {
-	avgSlip += slip[i];
-	countWithLiquid++;
+        avgSlip += slip[i];
+        countWithLiquid++;
       }
     }
     if (countWithLiquid > 0) {
@@ -2818,7 +2818,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
     double wcInlet = waterCut[0];
     double wcOutlet = waterCut[nSections - 1];
     logger.printf(org.apache.logging.log4j.Level.INFO, "\nWater cut: inlet=%.1f%%, outlet=%.1f%%%n", wcInlet * 100,
-	wcOutlet * 100);
+        wcOutlet * 100);
 
     if (wcOutlet < wcInlet) {
       logger.info("✓ Water cut decreases along uphill pipeline");
@@ -2828,8 +2828,8 @@ class TwoFluidVsBeggsBrillComparisonTest {
     // Assertions - velocities should be positive and reasonable
     for (int i = 0; i < nSections; i++) {
       if (liqHoldup[i] > 0.01) {
-	assertTrue(oilVel[i] >= 0, "Oil velocity should be positive at section " + i);
-	assertTrue(waterVel[i] >= 0, "Water velocity should be positive at section " + i);
+        assertTrue(oilVel[i] >= 0, "Oil velocity should be positive at section " + i);
+        assertTrue(waterVel[i] >= 0, "Water velocity should be positive at section " + i);
       }
     }
 

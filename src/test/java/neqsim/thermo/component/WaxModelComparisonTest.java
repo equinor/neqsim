@@ -38,7 +38,7 @@ public class WaxModelComparisonTest {
     // Set the wax component model on the wax phase
     for (int k = 0; k < system.getNumberOfPhases(); k++) {
       if (system.getPhase(k) instanceof PhaseWax) {
-	((PhaseWax) system.getPhase(k)).setWaxComponentModel(waxModelName);
+        ((PhaseWax) system.getPhase(k)).setWaxComponentModel(waxModelName);
       }
     }
 

@@ -164,39 +164,39 @@ public class HydrateRiskMapper implements Serializable {
     for (ProfilePoint point : profilePoints) {
       double hydrateTC;
       try {
-	SystemInterface fluid = baseFluid.clone();
-	fluid.setTemperature(point.temperatureC + 273.15);
-	fluid.setPressure(point.pressureBara);
-	ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-	ops.hydrateFormationTemperature();
-	hydrateTC = fluid.getTemperature("C");
+        SystemInterface fluid = baseFluid.clone();
+        fluid.setTemperature(point.temperatureC + 273.15);
+        fluid.setPressure(point.pressureBara);
+        ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+        ops.hydrateFormationTemperature();
+        hydrateTC = fluid.getTemperature("C");
       } catch (Exception e) {
-	logger.warn("Hydrate calculation failed at {} km, {} bara: {}", point.distanceKm, point.pressureBara,
-	    e.getMessage());
-	hydrateTC = Double.NaN;
+        logger.warn("Hydrate calculation failed at {} km, {} bara: {}", point.distanceKm, point.pressureBara,
+            e.getMessage());
+        hydrateTC = Double.NaN;
       }
 
       double subcooling = Double.isNaN(hydrateTC) ? Double.NaN : point.temperatureC - hydrateTC;
 
       RiskLevel risk;
       if (Double.isNaN(subcooling)) {
-	risk = RiskLevel.LOW; // assume safe if calculation failed
+        risk = RiskLevel.LOW; // assume safe if calculation failed
       } else if (subcooling < criticalSubcoolingK) {
-	risk = RiskLevel.CRITICAL;
-	criticalCount++;
+        risk = RiskLevel.CRITICAL;
+        criticalCount++;
       } else if (subcooling < highRiskSubcoolingK) {
-	risk = RiskLevel.HIGH;
+        risk = RiskLevel.HIGH;
       } else if (subcooling < mediumRiskSubcoolingK) {
-	risk = RiskLevel.MEDIUM;
+        risk = RiskLevel.MEDIUM;
       } else {
-	risk = RiskLevel.LOW;
+        risk = RiskLevel.LOW;
       }
 
       if (risk.ordinal() < worstRisk.ordinal()) {
-	worstRisk = risk;
+        worstRisk = risk;
       }
       if (!Double.isNaN(subcooling) && subcooling < minSubcooling) {
-	minSubcooling = subcooling;
+        minSubcooling = subcooling;
       }
 
       results.add(new RiskPoint(point.distanceKm, point.pressureBara, point.temperatureC, hydrateTC, subcooling, risk));
@@ -262,7 +262,7 @@ public class HydrateRiskMapper implements Serializable {
      * @param riskLevel risk classification
      */
     RiskPoint(double distanceKm, double pressureBara, double actualTemperatureC, double hydrateTemperatureC,
-	double subcoolingC, RiskLevel riskLevel) {
+        double subcoolingC, RiskLevel riskLevel) {
       this.distanceKm = distanceKm;
       this.pressureBara = pressureBara;
       this.actualTemperatureC = actualTemperatureC;
@@ -348,14 +348,14 @@ public class HydrateRiskMapper implements Serializable {
 
       JsonArray pointsArray = new JsonArray();
       for (RiskPoint rp : points) {
-	JsonObject pj = new JsonObject();
-	pj.addProperty("distance_km", rp.distanceKm);
-	pj.addProperty("pressure_bara", rp.pressureBara);
-	pj.addProperty("actualTemperature_C", rp.actualTemperatureC);
-	pj.addProperty("hydrateTemperature_C", rp.hydrateTemperatureC);
-	pj.addProperty("subcooling_C", rp.subcoolingC);
-	pj.addProperty("riskLevel", rp.riskLevel.name());
-	pointsArray.add(pj);
+        JsonObject pj = new JsonObject();
+        pj.addProperty("distance_km", rp.distanceKm);
+        pj.addProperty("pressure_bara", rp.pressureBara);
+        pj.addProperty("actualTemperature_C", rp.actualTemperatureC);
+        pj.addProperty("hydrateTemperature_C", rp.hydrateTemperatureC);
+        pj.addProperty("subcooling_C", rp.subcoolingC);
+        pj.addProperty("riskLevel", rp.riskLevel.name());
+        pointsArray.add(pj);
       }
       json.add("profile", pointsArray);
 
@@ -371,12 +371,12 @@ public class HydrateRiskMapper implements Serializable {
       StringBuilder sb = new StringBuilder();
       sb.append("Distance (km),Pressure (bara),Actual T (C),Hydrate T (C),Subcooling (C),Risk Level\n");
       for (RiskPoint rp : points) {
-	sb.append(rp.distanceKm).append(",");
-	sb.append(rp.pressureBara).append(",");
-	sb.append(rp.actualTemperatureC).append(",");
-	sb.append(rp.hydrateTemperatureC).append(",");
-	sb.append(rp.subcoolingC).append(",");
-	sb.append(rp.riskLevel.name()).append("\n");
+        sb.append(rp.distanceKm).append(",");
+        sb.append(rp.pressureBara).append(",");
+        sb.append(rp.actualTemperatureC).append(",");
+        sb.append(rp.hydrateTemperatureC).append(",");
+        sb.append(rp.subcoolingC).append(",");
+        sb.append(rp.riskLevel.name()).append("\n");
       }
       return sb.toString();
     }

@@ -202,7 +202,7 @@ public class BlowdownValve extends ThrottlingValve {
 
       // Check if fully open
       if (openingFraction >= 1.0) {
-	isOpening = false;
+        isOpening = false;
       }
     }
 
@@ -227,7 +227,7 @@ public class BlowdownValve extends ThrottlingValve {
   @Override
   public String toString() {
     return getName() + " [Blowdown Valve] - Opening: " + String.format("%.1f", getPercentValveOpening())
-	+ "%, Activated: " + (isActivated ? "YES" : "NO") + ", Opening: " + (isOpening ? "YES" : "NO")
-	+ ", Time Elapsed: " + String.format("%.1f", timeElapsed) + "s";
+        + "%, Activated: " + (isActivated ? "YES" : "NO") + ", Opening: " + (isOpening ? "YES" : "NO")
+        + ", Time Elapsed: " + String.format("%.1f", timeElapsed) + "s";
   }
 }

@@ -704,9 +704,9 @@ public class WaterHammerPipe extends Pipeline {
       // Cv = Q / (tau * sqrt(delta_H))
       double deltaH = head[numberOfNodes - 2] - downstreamHead;
       if (deltaH > 0) {
-	valveCv = volumeFlow / (valveOpening * Math.sqrt(deltaH));
+        valveCv = volumeFlow / (valveOpening * Math.sqrt(deltaH));
       } else {
-	valveCv = volumeFlow; // Simple coefficient
+        valveCv = volumeFlow; // Simple coefficient
       }
     }
 
@@ -714,7 +714,7 @@ public class WaterHammerPipe extends Pipeline {
     initialized = true;
 
     logger.info("WaterHammerPipe initialized: wave speed = " + waveSpeed + " m/s, " + "max time step = "
-	+ getMaxStableTimeStep() + " s");
+        + getMaxStableTimeStep() + " s");
   }
 
   /** {@inheritDoc} */
@@ -878,31 +878,31 @@ public class WaterHammerPipe extends Pipeline {
       Cp = HA + characteristicImpedance * QA - frictionA;
 
       if (valveOpening < 0.001) {
-	// Valve closed - no flow
-	flow[i] = 0;
-	head[i] = Cp;
+        // Valve closed - no flow
+        flow[i] = 0;
+        head[i] = Cp;
       } else {
-	// Solve valve equation with C+ characteristic
-	// Q = Cv * tau * sqrt(H - Hd) and H = Cp - B*Q
-	// Quadratic: B*Q^2 + 2*Cv^2*tau^2*Q + Cv^2*tau^2*(Hd-Cp) = 0
-	double tau = valveOpening;
-	double CvTau2 = valveCv * valveCv * tau * tau;
-	double a = characteristicImpedance;
-	double b = CvTau2;
-	double c = CvTau2 * (downstreamHead - Cp);
+        // Solve valve equation with C+ characteristic
+        // Q = Cv * tau * sqrt(H - Hd) and H = Cp - B*Q
+        // Quadratic: B*Q^2 + 2*Cv^2*tau^2*Q + Cv^2*tau^2*(Hd-Cp) = 0
+        double tau = valveOpening;
+        double CvTau2 = valveCv * valveCv * tau * tau;
+        double a = characteristicImpedance;
+        double b = CvTau2;
+        double c = CvTau2 * (downstreamHead - Cp);
 
-	// Solve quadratic: a*Q^2 + b*Q + c = 0
-	double discriminant = b * b - 4 * a * c;
-	if (discriminant < 0) {
-	  // No real solution - use previous flow
-	  flow[i] = flowOld[i] * valveOpening;
-	} else {
-	  flow[i] = (-b + Math.sqrt(discriminant)) / (2 * a);
-	  if (flow[i] < 0) {
-	    flow[i] = (-b - Math.sqrt(discriminant)) / (2 * a);
-	  }
-	}
-	head[i] = Cp - characteristicImpedance * flow[i];
+        // Solve quadratic: a*Q^2 + b*Q + c = 0
+        double discriminant = b * b - 4 * a * c;
+        if (discriminant < 0) {
+          // No real solution - use previous flow
+          flow[i] = flowOld[i] * valveOpening;
+        } else {
+          flow[i] = (-b + Math.sqrt(discriminant)) / (2 * a);
+          if (flow[i] < 0) {
+            flow[i] = (-b - Math.sqrt(discriminant)) / (2 * a);
+          }
+        }
+        head[i] = Cp - characteristicImpedance * flow[i];
       }
       break;
 
@@ -1259,8 +1259,8 @@ public class WaterHammerPipe extends Pipeline {
   public void resetEnvelopes() {
     if (maxPressureEnvelope != null && minPressureEnvelope != null) {
       for (int i = 0; i < numberOfNodes; i++) {
-	maxPressureEnvelope[i] = pressureProfile[i];
-	minPressureEnvelope[i] = pressureProfile[i];
+        maxPressureEnvelope[i] = pressureProfile[i];
+        minPressureEnvelope[i] = pressureProfile[i];
       }
     }
   }

@@ -68,7 +68,7 @@ public class ProcessScenarioRunner {
     try {
       // Validate system has units before running
       if (system.getUnitOperations().isEmpty()) {
-	throw new IllegalStateException("Process system has no unit operations");
+        throw new IllegalStateException("Process system has no unit operations");
       }
 
       system.run();
@@ -80,21 +80,21 @@ public class ProcessScenarioRunner {
       // Print initial process conditions
       System.out.println("Initial Process Conditions:");
       system.getUnitOperations().stream()
-	  .filter(unit -> unit.getName().contains("Separator") || unit.getName().contains("Stream")).forEach(unit -> {
-	    try {
-	      if (unit instanceof neqsim.process.equipment.separator.Separator) {
-		neqsim.process.equipment.separator.Separator sep = (neqsim.process.equipment.separator.Separator) unit;
-		System.out.printf("  %s: P=%.1f bara, T=%.1f °C%n", unit.getName(),
-		    sep.getGasOutStream().getPressure("bara"), sep.getGasOutStream().getTemperature("C"));
-	      } else if (unit instanceof neqsim.process.equipment.stream.Stream) {
-		neqsim.process.equipment.stream.Stream stream = (neqsim.process.equipment.stream.Stream) unit;
-		System.out.printf("  %s: P=%.1f bara, T=%.1f °C, Flow=%.1f kg/hr%n", unit.getName(),
-		    stream.getPressure("bara"), stream.getTemperature("C"), stream.getFlowRate("kg/hr"));
-	      }
-	    } catch (Exception e) {
-	      System.out.println("  " + unit.getName() + ": Unable to read conditions - " + e.getMessage());
-	    }
-	  });
+          .filter(unit -> unit.getName().contains("Separator") || unit.getName().contains("Stream")).forEach(unit -> {
+            try {
+              if (unit instanceof neqsim.process.equipment.separator.Separator) {
+                neqsim.process.equipment.separator.Separator sep = (neqsim.process.equipment.separator.Separator) unit;
+                System.out.printf("  %s: P=%.1f bara, T=%.1f °C%n", unit.getName(),
+                    sep.getGasOutStream().getPressure("bara"), sep.getGasOutStream().getTemperature("C"));
+              } else if (unit instanceof neqsim.process.equipment.stream.Stream) {
+                neqsim.process.equipment.stream.Stream stream = (neqsim.process.equipment.stream.Stream) unit;
+                System.out.printf("  %s: P=%.1f bara, T=%.1f °C, Flow=%.1f kg/hr%n", unit.getName(),
+                    stream.getPressure("bara"), stream.getTemperature("C"), stream.getFlowRate("kg/hr"));
+              }
+            } catch (Exception e) {
+              System.out.println("  " + unit.getName() + ": Unable to read conditions - " + e.getMessage());
+            }
+          });
       System.out.println();
     } catch (Exception e) {
       System.err.println("✗ Failed to initialize steady-state: " + e.getMessage());
@@ -108,21 +108,21 @@ public class ProcessScenarioRunner {
   private void validateProcessConditions() {
     for (Object unit : system.getUnitOperations()) {
       try {
-	if (unit instanceof neqsim.process.equipment.stream.Stream) {
-	  neqsim.process.equipment.stream.Stream stream = (neqsim.process.equipment.stream.Stream) unit;
-	  double pressure = stream.getPressure("bara");
-	  double temperature = stream.getTemperature("C");
+        if (unit instanceof neqsim.process.equipment.stream.Stream) {
+          neqsim.process.equipment.stream.Stream stream = (neqsim.process.equipment.stream.Stream) unit;
+          double pressure = stream.getPressure("bara");
+          double temperature = stream.getTemperature("C");
 
-	  if (Double.isNaN(pressure) || Double.isInfinite(pressure) || pressure <= 0) {
-	    throw new IllegalStateException("Invalid pressure in " + stream.getName() + ": " + pressure);
-	  }
-	  if (Double.isNaN(temperature) || Double.isInfinite(temperature)) {
-	    throw new IllegalStateException("Invalid temperature in " + stream.getName() + ": " + temperature);
-	  }
-	}
+          if (Double.isNaN(pressure) || Double.isInfinite(pressure) || pressure <= 0) {
+            throw new IllegalStateException("Invalid pressure in " + stream.getName() + ": " + pressure);
+          }
+          if (Double.isNaN(temperature) || Double.isInfinite(temperature)) {
+            throw new IllegalStateException("Invalid temperature in " + stream.getName() + ": " + temperature);
+          }
+        }
       } catch (Exception e) {
-	// Log warning but don't fail initialization for non-critical validation issues
-	System.out.println("Warning: Could not validate " + unit + ": " + e.getMessage());
+        // Log warning but don't fail initialization for non-critical validation issues
+        System.out.println("Warning: Could not validate " + unit + ": " + e.getMessage());
       }
     }
   }
@@ -237,13 +237,13 @@ public class ProcessScenarioRunner {
       // Filter to only enabled logic
       activeLogic = new ArrayList<>();
       for (ProcessLogic logic : logicSequences) {
-	if (enabledLogicNames.contains(logic.getName())) {
-	  activeLogic.add(logic);
-	}
+        if (enabledLogicNames.contains(logic.getName())) {
+          activeLogic.add(logic);
+        }
       }
       System.out.println("Running with " + activeLogic.size() + " of " + logicSequences.size() + " logic sequences:");
       for (ProcessLogic logic : activeLogic) {
-	System.out.println("  - " + logic.getName());
+        System.out.println("  - " + logic.getName());
       }
     }
 
@@ -256,13 +256,13 @@ public class ProcessScenarioRunner {
       scenario.applyTo(system);
       System.out.println("Applied scenario perturbations:");
       if (!scenario.getBlockedOutletUnits().isEmpty()) {
-	System.out.println("  - Blocked outlets: " + scenario.getBlockedOutletUnits());
+        System.out.println("  - Blocked outlets: " + scenario.getBlockedOutletUnits());
       }
       if (!scenario.getUtilityLossUnits().isEmpty()) {
-	System.out.println("  - Utility losses: " + scenario.getUtilityLossUnits());
+        System.out.println("  - Utility losses: " + scenario.getUtilityLossUnits());
       }
       if (!scenario.getControllerSetPointOverrides().isEmpty()) {
-	System.out.println("  - Controller overrides: " + scenario.getControllerSetPointOverrides());
+        System.out.println("  - Controller overrides: " + scenario.getControllerSetPointOverrides());
       }
       summary.setScenario(scenario);
     }
@@ -280,52 +280,52 @@ public class ProcessScenarioRunner {
     while (time < duration) {
       // Execute process logic (only enabled logic for this scenario)
       for (ProcessLogic logic : activeLogic) {
-	if (logic.isActive()) {
-	  try {
-	    logic.execute(timeStep);
-	  } catch (Exception e) {
-	    System.out.println("Logic execution error at t=" + time + "s: " + e.getMessage());
-	    summary.addError("Logic error (" + logic.getName() + "): " + e.getMessage());
-	  }
-	}
+        if (logic.isActive()) {
+          try {
+            logic.execute(timeStep);
+          } catch (Exception e) {
+            System.out.println("Logic execution error at t=" + time + "s: " + e.getMessage());
+            summary.addError("Logic error (" + logic.getName() + "): " + e.getMessage());
+          }
+        }
       }
 
       // Run transient simulation with enhanced error handling
       try {
-	system.runTransient(timeStep, simulationId);
-	consecutiveErrors = 0; // Reset counter on success
+        system.runTransient(timeStep, simulationId);
+        consecutiveErrors = 0; // Reset counter on success
       } catch (Exception e) {
-	errorCount++;
-	consecutiveErrors++;
+        errorCount++;
+        consecutiveErrors++;
 
-	String errorMsg = "Simulation error at t=" + String.format("%.1f", time) + "s: " + e.getMessage();
-	System.out.println(errorMsg);
-	summary.addError(errorMsg);
+        String errorMsg = "Simulation error at t=" + String.format("%.1f", time) + "s: " + e.getMessage();
+        System.out.println(errorMsg);
+        summary.addError(errorMsg);
 
-	// Stop simulation if too many consecutive errors
-	if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
-	  System.err.println("✗ Stopping simulation due to " + consecutiveErrors + " consecutive errors");
-	  summary.addError("Simulation stopped: Too many consecutive errors");
-	  break;
-	}
+        // Stop simulation if too many consecutive errors
+        if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+          System.err.println("✗ Stopping simulation due to " + consecutiveErrors + " consecutive errors");
+          summary.addError("Simulation stopped: Too many consecutive errors");
+          break;
+        }
 
-	// Try to recover by skipping this time step
-	System.out.println("  → Attempting to continue with next time step...");
+        // Try to recover by skipping this time step
+        System.out.println("  → Attempting to continue with next time step...");
       }
 
       // Validate process state periodically
       if (stepCount % 10 == 0) {
-	try {
-	  validateProcessConditions();
-	} catch (Exception e) {
-	  System.out.println("Warning: Process validation failed at t=" + time + "s: " + e.getMessage());
-	  summary.addWarning("Process validation warning: " + e.getMessage());
-	}
+        try {
+          validateProcessConditions();
+        } catch (Exception e) {
+          System.out.println("Warning: Process validation failed at t=" + time + "s: " + e.getMessage());
+          summary.addWarning("Process validation warning: " + e.getMessage());
+        }
       }
 
       // Print status every 5 seconds or when logic state changes
       if (time % 5.0 < timeStep || hasLogicStateChanged(activeLogic)) {
-	printStatus(time, activeLogic);
+        printStatus(time, activeLogic);
       }
 
       time += timeStep;
@@ -363,7 +363,7 @@ public class ProcessScenarioRunner {
     // Simple implementation - in practice, you'd track previous states
     for (ProcessLogic logic : logicList) {
       if (logic.getState() == LogicState.RUNNING) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -381,10 +381,10 @@ public class ProcessScenarioRunner {
 
     for (ProcessLogic logic : logicList) {
       if (logic.isActive()) {
-	if (activeCount > 0)
-	  activeLogic.append(", ");
-	activeLogic.append(logic.getName()).append("(").append(getShortState(logic.getState())).append(")");
-	activeCount++;
+        if (activeCount > 0)
+          activeLogic.append(", ");
+        activeLogic.append(logic.getName()).append("(").append(getShortState(logic.getState())).append(")");
+        activeCount++;
       }
     }
 
@@ -396,7 +396,7 @@ public class ProcessScenarioRunner {
     String processStatus = getProcessStatus();
 
     System.out.printf("%7.1f | %-22s | %s%n", time,
-	activeLogic.length() > 22 ? activeLogic.substring(0, 19) + "..." : activeLogic.toString(), processStatus);
+        activeLogic.length() > 22 ? activeLogic.substring(0, 19) + "..." : activeLogic.toString(), processStatus);
   }
 
   /**
@@ -408,22 +408,22 @@ public class ProcessScenarioRunner {
     try {
       // Find separator or key process unit for monitoring
       for (Object unit : system.getUnitOperations()) {
-	if (unit instanceof neqsim.process.equipment.separator.Separator) {
-	  neqsim.process.equipment.separator.Separator sep = (neqsim.process.equipment.separator.Separator) unit;
-	  double pressure = sep.getGasOutStream().getPressure("bara");
-	  double temperature = sep.getGasOutStream().getTemperature("C");
-	  return String.format("P=%.1f bara, T=%.1f°C", pressure, temperature);
-	}
+        if (unit instanceof neqsim.process.equipment.separator.Separator) {
+          neqsim.process.equipment.separator.Separator sep = (neqsim.process.equipment.separator.Separator) unit;
+          double pressure = sep.getGasOutStream().getPressure("bara");
+          double temperature = sep.getGasOutStream().getTemperature("C");
+          return String.format("P=%.1f bara, T=%.1f°C", pressure, temperature);
+        }
       }
 
       // Fallback to first stream
       for (Object unit : system.getUnitOperations()) {
-	if (unit instanceof neqsim.process.equipment.stream.Stream) {
-	  neqsim.process.equipment.stream.Stream stream = (neqsim.process.equipment.stream.Stream) unit;
-	  double pressure = stream.getPressure("bara");
-	  double flow = stream.getFlowRate("kg/hr");
-	  return String.format("P=%.1f bara, F=%.0f kg/hr", pressure, flow);
-	}
+        if (unit instanceof neqsim.process.equipment.stream.Stream) {
+          neqsim.process.equipment.stream.Stream stream = (neqsim.process.equipment.stream.Stream) unit;
+          double pressure = stream.getPressure("bara");
+          double flow = stream.getFlowRate("kg/hr");
+          return String.format("P=%.1f bara, F=%.0f kg/hr", pressure, flow);
+        }
       }
 
       return "Running";
@@ -479,7 +479,7 @@ public class ProcessScenarioRunner {
     } else {
       System.out.println("Status: COMPLETED WITH ERRORS");
       for (String error : summary.getErrors()) {
-	System.out.println("  Error: " + error);
+        System.out.println("  Error: " + error);
       }
     }
   }
@@ -541,8 +541,8 @@ public class ProcessScenarioRunner {
   public boolean activateLogic(String logicName) {
     for (ProcessLogic logic : logicSequences) {
       if (logic.getName().equals(logicName)) {
-	logic.activate();
-	return true;
+        logic.activate();
+        return true;
       }
     }
     return false;
@@ -557,7 +557,7 @@ public class ProcessScenarioRunner {
   public ProcessLogic findLogic(String logicName) {
     for (ProcessLogic logic : logicSequences) {
       if (logic.getName().equals(logicName)) {
-	return logic;
+        return logic;
       }
     }
     return null;

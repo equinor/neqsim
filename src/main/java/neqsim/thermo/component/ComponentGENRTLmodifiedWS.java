@@ -172,21 +172,21 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
       // System.out.println("hei");
 
       for (l = 0; l < numberOfComponents; l++) {
-	Dij = WSgij[l][j];
-	DijT = WSgijT[l][j];
-	alpha = WSalpha[l][j];
-	tau = Dij / (temperature) + DijT;
-	dtaudt = -tau / temperature + DijT / temperature;
+        Dij = WSgij[l][j];
+        DijT = WSgijT[l][j];
+        alpha = WSalpha[l][j];
+        tau = Dij / (temperature) + DijT;
+        dtaudt = -tau / temperature + DijT / temperature;
 
-	G = Math.exp(-alpha * tau);
-	dGdt = dtaudt * -alpha * G;
-	Gmatrix[l][j] = G;
-	tauMatrix[l][j] = tau;
+        G = Math.exp(-alpha * tau);
+        dGdt = dtaudt * -alpha * G;
+        Gmatrix[l][j] = G;
+        tauMatrix[l][j] = tau;
 
-	C += G * comp_Array[l].getx();
-	dCdT += dGdt * comp_Array[l].getx();
-	D += G * tau * comp_Array[l].getx();
-	dDdT += comp_Array[l].getx() * dGdt * tau + comp_Array[l].getx() * G * dtaudt;
+        C += G * comp_Array[l].getx();
+        dCdT += dGdt * comp_Array[l].getx();
+        D += G * tau * comp_Array[l].getx();
+        dDdT += comp_Array[l].getx() * dGdt * tau + comp_Array[l].getx() * G * dtaudt;
       }
       dA2dTetter += dA2dT / C;
       dA3dTetter += dA3dT * dCdT / (C * C);
@@ -196,7 +196,7 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
       dA6dTetter += dA6dT * dDdT / (C * C);
 
       if (mixRule[this.getComponentNumber()][j].equals("WS")) {
-	tau2 = WSgij[this.getComponentNumber()][j] / (temperature) + WSgijT[this.getComponentNumber()][j];
+        tau2 = WSgij[this.getComponentNumber()][j] / (temperature) + WSgijT[this.getComponentNumber()][j];
       }
       dtau2dt = -tau2 / temperature + WSgijT[this.getComponentNumber()][j] / temperature;
 
@@ -236,37 +236,37 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
       double Gtemp = 0;
 
       for (int p = 0; p < numberOfComponents; p++) {
-	dAdn = tauMatrix[p][this.getComponentNumber()] * Gmatrix[p][this.getComponentNumber()];
-	dBdn = Gmatrix[p][this.getComponentNumber()];
-	dEdn = Gmatrix[this.getComponentNumber()][p] * tauMatrix[this.getComponentNumber()][p];
-	// dFdn = Gmatrix[this.getComponentNumber()][p];
-	Dtemp = 0;
-	Ctemp = 0;
-	Etemp = 0;
-	Ftemp = 0;
-	Gtemp = 0;
-	double nt = 0;
-	for (int f = 0; f < numberOfComponents; f++) {
-	  nt += comp_Array[f].getNumberOfMolesInPhase();
-	  Ctemp += comp_Array[f].getx() * Gmatrix[f][p];
-	  Etemp += comp_Array[f].getx() * Gmatrix[f][p] * tauMatrix[f][p];
-	  double sum = 0.0;
-	  double sum2 = 0.0;
-	  for (int g = 0; g < numberOfComponents; g++) {
-	    sum += comp_Array[g].getx() * Gmatrix[g][f];
-	    sum2 += comp_Array[g].getx() * Gmatrix[g][f] * tauMatrix[g][f];
-	  }
-	  Dtemp += Gmatrix[p][f] * Gmatrix[this.getComponentNumber()][f] * tauMatrix[this.getComponentNumber()][f]
-	      * comp_Array[f].getx() / (sum * sum);
-	  Ftemp += comp_Array[f].getx() * Gmatrix[p][f] * sum2 * Gmatrix[this.getComponentNumber()][f]
-	      / (sum * sum * sum);
-	  Gtemp += comp_Array[f].getx() * Gmatrix[p][f] * tauMatrix[p][f] * Gmatrix[this.getComponentNumber()][f]
-	      / (sum * sum);
-	}
-	dlngammadn[p] = (dAdn / B - A / (B * B) * dBdn) + dEdn / Ctemp - Dtemp
-	    - Etemp * Gmatrix[this.getComponentNumber()][p] / (Ctemp * Ctemp) + 2.0 * Ftemp - Gtemp;
-	// E/(C*C)*dCdn[p]*(tau2-D/C) + E/C*(-dDdn[p]/C + D/(C*C)*dCdn[p]);
-	dlngammadn[p] /= (nt);
+        dAdn = tauMatrix[p][this.getComponentNumber()] * Gmatrix[p][this.getComponentNumber()];
+        dBdn = Gmatrix[p][this.getComponentNumber()];
+        dEdn = Gmatrix[this.getComponentNumber()][p] * tauMatrix[this.getComponentNumber()][p];
+        // dFdn = Gmatrix[this.getComponentNumber()][p];
+        Dtemp = 0;
+        Ctemp = 0;
+        Etemp = 0;
+        Ftemp = 0;
+        Gtemp = 0;
+        double nt = 0;
+        for (int f = 0; f < numberOfComponents; f++) {
+          nt += comp_Array[f].getNumberOfMolesInPhase();
+          Ctemp += comp_Array[f].getx() * Gmatrix[f][p];
+          Etemp += comp_Array[f].getx() * Gmatrix[f][p] * tauMatrix[f][p];
+          double sum = 0.0;
+          double sum2 = 0.0;
+          for (int g = 0; g < numberOfComponents; g++) {
+            sum += comp_Array[g].getx() * Gmatrix[g][f];
+            sum2 += comp_Array[g].getx() * Gmatrix[g][f] * tauMatrix[g][f];
+          }
+          Dtemp += Gmatrix[p][f] * Gmatrix[this.getComponentNumber()][f] * tauMatrix[this.getComponentNumber()][f]
+              * comp_Array[f].getx() / (sum * sum);
+          Ftemp += comp_Array[f].getx() * Gmatrix[p][f] * sum2 * Gmatrix[this.getComponentNumber()][f]
+              / (sum * sum * sum);
+          Gtemp += comp_Array[f].getx() * Gmatrix[p][f] * tauMatrix[p][f] * Gmatrix[this.getComponentNumber()][f]
+              / (sum * sum);
+        }
+        dlngammadn[p] = (dAdn / B - A / (B * B) * dBdn) + dEdn / Ctemp - Dtemp
+            - Etemp * Gmatrix[this.getComponentNumber()][p] / (Ctemp * Ctemp) + 2.0 * Ftemp - Gtemp;
+        // E/(C*C)*dCdn[p]*(tau2-D/C) + E/C*(-dDdn[p]/C + D/(C*C)*dCdn[p]);
+        dlngammadn[p] /= (nt);
       }
       // System.out.println("Dlngamdn: " + dlngammadn[p] + " x: " +
       // comp_Array[p].getx()+ " length: ");

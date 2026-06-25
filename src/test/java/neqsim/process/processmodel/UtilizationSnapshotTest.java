@@ -4,17 +4,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.junit.jupiter.api.Test;
 import neqsim.process.automation.ProcessAutomation;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.stream.Stream;
-import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Tests for the side-effect-free capacity utilization snapshot observation API
@@ -99,13 +99,13 @@ public class UtilizationSnapshotTest {
 
     // Not pinned to degenerate 100 % utilization
     assertTrue(comp.getMaxUtilization() < 0.999,
-	"Chartless compressor must not be pinned at 100% utilization, was " + comp.getMaxUtilization());
+        "Chartless compressor must not be pinned at 100% utilization, was " + comp.getMaxUtilization());
 
     java.util.Map<String, CapacityConstraint> constraints = comp.getCapacityConstraints();
     for (CapacityConstraint c : constraints.values()) {
       String name = c.getName().toLowerCase();
       if (name.contains("surge") || name.contains("speed") || name.contains("stonewall")) {
-	assertFalse(c.isEnabled(), "Chart-dependent constraint '" + c.getName() + "' must be disabled without a chart");
+        assertFalse(c.isEnabled(), "Chart-dependent constraint '" + c.getName() + "' must be disabled without a chart");
       }
     }
 
@@ -116,7 +116,7 @@ public class UtilizationSnapshotTest {
       String bn = bottleneck.getName().toLowerCase();
       assertTrue(bottleneck.isEnabled(), "Bottleneck constraint must be enabled");
       assertFalse(bn.contains("surge") || bn.contains("stonewall"),
-	  "Chartless compressor bottleneck must not be a disabled chart metric, was " + bottleneck.getName());
+          "Chartless compressor bottleneck must not be a disabled chart metric, was " + bottleneck.getName());
     }
   }
 

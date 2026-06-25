@@ -218,7 +218,7 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
     testSystem.setMultiPhaseCheck(true);
 
     neqsim.thermo.system.SystemInterface glycolTestSystem = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 15,
-	50);
+        50);
     glycolTestSystem.addComponent("methane", 0);
     glycolTestSystem.addComponent("propane", 0);
     glycolTestSystem.addComponent("nC10", 0);

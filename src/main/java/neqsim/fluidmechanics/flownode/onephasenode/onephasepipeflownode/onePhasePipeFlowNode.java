@@ -60,7 +60,7 @@ public class onePhasePipeFlowNode extends onePhaseFlowNode {
   @Override
   public double calcReynoldsNumber() {
     reynoldsNumber[0] = getVelocity() * pipe.getDiameter()
-	/ getBulkSystem().getPhases()[0].getPhysicalProperties().getKinematicViscosity();
+        / getBulkSystem().getPhases()[0].getPhysicalProperties().getKinematicViscosity();
     return reynoldsNumber[0];
   }
 
@@ -92,6 +92,6 @@ public class onePhasePipeFlowNode extends onePhaseFlowNode {
 
     // test[0].getVolumetricFlow();
     System.out.println("flow: " + test[0].getVolumetricFlow() + " velocity: " + test[0].getVelocity()
-	+ " reynolds number " + test[0].getReynoldsNumber() + "friction : " + test[0].getWallFrictionFactor());
+        + " reynolds number " + test[0].getReynoldsNumber() + "friction : " + test[0].getWallFrictionFactor());
   }
 }

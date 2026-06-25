@@ -156,7 +156,7 @@ class OptimizationResultBaseTest {
   @Test
   void testConstraintViolationClass() {
     OptimizationResultBase.ConstraintViolation violation = new OptimizationResultBase.ConstraintViolation("Compressor1",
-	"MaxPower", 15.0, 12.0, "MW", true);
+        "MaxPower", 15.0, 12.0, "MW", true);
 
     assertEquals("Compressor1", violation.getEquipmentName());
     assertEquals("MaxPower", violation.getConstraintName());

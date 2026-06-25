@@ -245,7 +245,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     // Only require adjustedStream when NOT using custom functional interfaces
     if (adjustedStream == null && adjustedValueGetter == null) {
       logger.error("Adjuster: Cannot get stream from adjusted equipment: "
-	  + (adjustedEquipment != null ? adjustedEquipment.getName() : "null"));
+          + (adjustedEquipment != null ? adjustedEquipment.getName() : "null"));
       setCalculationIdentifier(id);
       return;
     }
@@ -259,7 +259,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null && !adjustedVariableUnit.isEmpty()) {
       inputValue = adjustedStream.getPressure(adjustedVariableUnit);
     } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null
-	&& !adjustedVariableUnit.isEmpty()) {
+        && !adjustedVariableUnit.isEmpty()) {
       inputValue = adjustedStream.getTemperature(adjustedVariableUnit);
     } else {
       inputValue = adjustedStream.getThermoSystem().getNumberOfMoles();
@@ -270,7 +270,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
       targetValueCurrent = targetValueCalculator.apply(targetEquipment);
     } else if (targetStream == null) {
       logger.error("Adjuster: Cannot get stream from target equipment: "
-	  + (targetEquipment != null ? targetEquipment.getName() : "null"));
+          + (targetEquipment != null ? targetEquipment.getName() : "null"));
       setCalculationIdentifier(id);
       return;
     } else if (targetVariable.equals("mass fraction") && !targetPhase.equals("") && !targetComponent.equals("")) {
@@ -297,13 +297,13 @@ public class Adjuster extends ProcessEquipmentBaseClass {
 
     if (iterations >= 2 && Math.abs(inputValue - oldInputValue) < 1e-12) {
       if (Math.abs(error) < tolerance) {
-	return;
+        return;
       }
       // Value is at or near a bound and target is unreachable - accept current state
       if (isNearBound(inputValue)) {
-	error = tolerance * 0.9;
-	setCalculationIdentifier(id);
-	return;
+        error = tolerance * 0.9;
+        setCalculationIdentifier(id);
+        return;
       }
       iterations = 1;
     }
@@ -312,35 +312,35 @@ public class Adjuster extends ProcessEquipmentBaseClass {
 
     if (iterations < 2) {
       if (adjustedValueSetter != null) {
-	double perturbation = inputValue * 0.01 * Math.signum(deviation);
-	if (Math.abs(perturbation) < 1e-6) {
-	  perturbation = 1e-3 * Math.signum(deviation);
-	}
-	newAdjustedValue = inputValue + perturbation;
+        double perturbation = inputValue * 0.01 * Math.signum(deviation);
+        if (Math.abs(perturbation) < 1e-6) {
+          perturbation = 1e-3 * Math.signum(deviation);
+        }
+        newAdjustedValue = inputValue + perturbation;
       } else if (adjustedVariable.equals("mass flow")) {
-	newAdjustedValue = inputValue + deviation;
+        newAdjustedValue = inputValue + deviation;
       } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null && !adjustedVariableUnit.isEmpty()) {
-	newAdjustedValue = inputValue + Math.signum(deviation) * inputValue / 100.0;
+        newAdjustedValue = inputValue + Math.signum(deviation) * inputValue / 100.0;
       } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null
-	  && !adjustedVariableUnit.isEmpty()) {
-	newAdjustedValue = inputValue + deviation / 10.0;
+          && !adjustedVariableUnit.isEmpty()) {
+        newAdjustedValue = inputValue + deviation / 10.0;
       } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null
-	  && !adjustedVariableUnit.isEmpty()) {
-	newAdjustedValue = inputValue + deviation / 10.0;
+          && !adjustedVariableUnit.isEmpty()) {
+        newAdjustedValue = inputValue + deviation / 10.0;
       } else {
-	newAdjustedValue = inputValue + deviation;
+        newAdjustedValue = inputValue + deviation;
       }
     } else {
       double derivate = (error - oldError) / (inputValue - oldInputValue);
       if (Math.abs(derivate) < 1e-12) {
-	derivate = 1e-12;
+        derivate = 1e-12;
       }
       double newVal = error / derivate;
 
       // Apply step damping: limit the step to MAX_RELATIVE_STEP of the current value
       double maxStep = Math.max(Math.abs(inputValue) * MAX_RELATIVE_STEP, 1e-6);
       if (Math.abs(newVal) > maxStep) {
-	newVal = Math.signum(newVal) * maxStep;
+        newVal = Math.signum(newVal) * maxStep;
       }
 
       newAdjustedValue = inputValue - newVal;
@@ -360,9 +360,9 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     if (hitBound) {
       consecutiveBoundHits++;
       if (consecutiveBoundHits >= MAX_CONSECUTIVE_BOUND_HITS) {
-	// Target is unreachable within bounds - accept current state
-	error = tolerance * 0.9;
-	consecutiveBoundHits = 0;
+        // Target is unreachable within bounds - accept current state
+        error = tolerance * 0.9;
+        consecutiveBoundHits = 0;
       }
     } else {
       consecutiveBoundHits = 0;
@@ -378,7 +378,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null && !adjustedVariableUnit.isEmpty()) {
       adjustedStream.setPressure(newAdjustedValue, adjustedVariableUnit);
     } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null
-	&& !adjustedVariableUnit.isEmpty()) {
+        && !adjustedVariableUnit.isEmpty()) {
       adjustedStream.setTemperature(newAdjustedValue, adjustedVariableUnit);
     } else {
       adjustedStream.getThermoSystem().setTotalFlowRate(newAdjustedValue, "mol/sec");
@@ -674,46 +674,46 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     // Check: Equipment has a valid name
     if (getName() == null || getName().trim().isEmpty()) {
       result.addError("equipment", "Adjuster has no name",
-	  "Set adjuster name in constructor: new Adjuster(\"MyAdjuster\")");
+          "Set adjuster name in constructor: new Adjuster(\"MyAdjuster\")");
     }
 
     // Check: Adjusted equipment is set
     if (adjustedEquipment == null) {
       result.addError("adjusted", "No adjusted equipment set",
-	  "Set adjusted equipment: adjuster.setAdjustedVariable(equipment, \"variableName\")");
+          "Set adjusted equipment: adjuster.setAdjustedVariable(equipment, \"variableName\")");
     }
 
     // Check: Target equipment or calculator is set
     if (targetEquipment == null && targetValueCalculator == null) {
       result.addWarning("target", "No target equipment or value calculator set",
-	  "Set target: adjuster.setTargetVariable(equipment, \"variableName\", targetValue)");
+          "Set target: adjuster.setTargetVariable(equipment, \"variableName\", targetValue)");
     }
 
     // Check: Adjusted variable is specified (if not using custom getter/setter)
     if (adjustedEquipment != null && adjustedValueGetter == null
-	&& (adjustedVariable == null || adjustedVariable.trim().isEmpty())) {
+        && (adjustedVariable == null || adjustedVariable.trim().isEmpty())) {
       result.addWarning("adjusted", "Adjusted variable name not specified",
-	  "Specify variable: adjuster.setAdjustedVariable(equipment, \"variableName\")");
+          "Specify variable: adjuster.setAdjustedVariable(equipment, \"variableName\")");
     }
 
     // Check: Target variable is specified (if not using custom calculator)
     if (targetEquipment != null && targetValueCalculator == null
-	&& (targetVariable == null || targetVariable.trim().isEmpty())) {
+        && (targetVariable == null || targetVariable.trim().isEmpty())) {
       result.addWarning("target", "Target variable name not specified",
-	  "Specify variable: adjuster.setTargetVariable(equipment, \"variableName\", value)");
+          "Specify variable: adjuster.setTargetVariable(equipment, \"variableName\", value)");
     }
 
     // Check: Tolerance is positive
     if (tolerance <= 0) {
       result.addError("tolerance", "Tolerance must be positive: " + tolerance,
-	  "Set positive tolerance: adjuster.setTolerance(1e-6)");
+          "Set positive tolerance: adjuster.setTolerance(1e-6)");
     }
 
     // Check: Min/max adjusted value bounds are consistent
     if (maxAdjustedValue <= minAdjustedValue) {
       result.addWarning("bounds",
-	  "Max adjusted value (" + maxAdjustedValue + ") <= min adjusted value (" + minAdjustedValue + ")",
-	  "Set consistent bounds: adjuster.setMaxAdjustedValue(max); adjuster.setMinAdjustedValue(min)");
+          "Max adjusted value (" + maxAdjustedValue + ") <= min adjusted value (" + minAdjustedValue + ")",
+          "Set consistent bounds: adjuster.setMaxAdjustedValue(max); adjuster.setMinAdjustedValue(min)");
     }
 
     return result;

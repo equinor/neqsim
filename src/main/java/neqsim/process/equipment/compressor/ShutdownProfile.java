@@ -153,9 +153,9 @@ public class ShutdownProfile implements Serializable {
     profile.add(new ProfilePoint(0.0, currentSpeed, "Initiate shutdown, open antisurge valve"));
     profile.add(new ProfilePoint(antisurgeOpenDelay, currentSpeed * 0.9, "Begin ramp down"));
     profile.add(
-	new ProfilePoint(antisurgeOpenDelay + rampDownTime * 0.5, minimumIdleSpeed * 1.5, "Intermediate speed check"));
+        new ProfilePoint(antisurgeOpenDelay + rampDownTime * 0.5, minimumIdleSpeed * 1.5, "Intermediate speed check"));
     profile.add(
-	new ProfilePoint(antisurgeOpenDelay + rampDownTime, minimumIdleSpeed, "Idle speed reached, begin rundown"));
+        new ProfilePoint(antisurgeOpenDelay + rampDownTime, minimumIdleSpeed, "Idle speed reached, begin rundown"));
     profile.add(new ProfilePoint(antisurgeOpenDelay + rampDownTime + idleRundownTime, 0.0, "Stop complete"));
   }
 
@@ -216,10 +216,10 @@ public class ShutdownProfile implements Serializable {
     for (int i = 0; i < profile.size(); i++) {
       ProfilePoint point = profile.get(i);
       if (point.getTime() <= elapsedTime) {
-	current = point;
-	if (i + 1 < profile.size()) {
-	  next = profile.get(i + 1);
-	}
+        current = point;
+        if (i + 1 < profile.size()) {
+          next = profile.get(i + 1);
+        }
       }
     }
 
@@ -282,7 +282,7 @@ public class ShutdownProfile implements Serializable {
     for (int i = profile.size() - 1; i >= 0; i--) {
       ProfilePoint point = profile.get(i);
       if (point.getTime() <= elapsedTime) {
-	return point.getAction();
+        return point.getAction();
       }
     }
     return "Pre-shutdown";

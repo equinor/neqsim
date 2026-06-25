@@ -42,9 +42,9 @@ public class VSflash extends Flash {
    */
   public double calcdQdPP() {
     double dQdVV = (system.getVolume() - Vspec)
-	/ (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature())
-	+ system.getPressure() * (system.getdVdPtn())
-	    / (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature());
+        / (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature())
+        + system.getPressure() * (system.getdVdPtn())
+            / (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature());
 
     return dQdVV;
   }
@@ -83,7 +83,7 @@ public class VSflash extends Flash {
    */
   public double calcdQdP() {
     double dQdP = system.getPressure() * (system.getVolume() - Vspec)
-	/ (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature());
+        / (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature());
     return dQdP;
   }
 
@@ -99,7 +99,7 @@ public class VSflash extends Flash {
     // Cross derivative includes dV/dT contribution
     double dVdT = system.getdVdTpn();
     double dQdTP = system.getPressure() * dVdT / (R * T)
-	- system.getPressure() * (system.getVolume() - Vspec) / (R * T * T);
+        - system.getPressure() * (system.getVolume() - Vspec) / (R * T * T);
     return dQdTP;
   }
 
@@ -136,13 +136,13 @@ public class VSflash extends Flash {
       double deltaP;
 
       if (Math.abs(det) > 1e-20) {
-	// Coupled Newton solve
-	deltaT = (-dQdT * dQdPP + dQdP * dQdTP) / det;
-	deltaP = (-dQdP * dQdTT + dQdT * dQdTP) / det;
+        // Coupled Newton solve
+        deltaT = (-dQdT * dQdPP + dQdP * dQdTP) / det;
+        deltaP = (-dQdP * dQdTT + dQdT * dQdTP) / det;
       } else {
-	// Fall back to independent updates if matrix is singular
-	deltaT = (Math.abs(dQdTT) > 1e-20) ? -dQdT / dQdTT : 0.0;
-	deltaP = (Math.abs(dQdPP) > 1e-20) ? -dQdP / dQdPP : 0.0;
+        // Fall back to independent updates if matrix is singular
+        deltaT = (Math.abs(dQdTT) > 1e-20) ? -dQdT / dQdTT : 0.0;
+        deltaP = (Math.abs(dQdPP) > 1e-20) ? -dQdP / dQdPP : 0.0;
       }
 
       // Apply damping factor that increases with iterations
@@ -153,10 +153,10 @@ public class VSflash extends Flash {
       double maxDeltaP = 0.3 * oldPres;
 
       if (Math.abs(deltaT) > maxDeltaT) {
-	deltaT = Math.signum(deltaT) * maxDeltaT;
+        deltaT = Math.signum(deltaT) * maxDeltaT;
       }
       if (Math.abs(deltaP) > maxDeltaP) {
-	deltaP = Math.signum(deltaP) * maxDeltaP;
+        deltaP = Math.signum(deltaP) * maxDeltaP;
       }
 
       nyTemp = oldTemp + factor * deltaT;
@@ -164,17 +164,17 @@ public class VSflash extends Flash {
 
       // Ensure T and P stay positive and within physical bounds
       if (nyTemp <= 0 || nyTemp > 2000) {
-	nyTemp = (nyTemp <= 0) ? oldTemp * 0.9 : oldTemp * 1.1;
+        nyTemp = (nyTemp <= 0) ? oldTemp * 0.9 : oldTemp * 1.1;
       }
       if (nyPres <= 0 || nyPres > 1000) {
-	nyPres = (nyPres <= 0) ? oldPres * 0.9 : oldPres * 1.1;
+        nyPres = (nyPres <= 0) ? oldPres * 0.9 : oldPres * 1.1;
       }
 
       system.setPressure(nyPres);
       system.setTemperature(nyTemp);
       tpFlash.run();
     } while ((Math.abs((nyPres - oldPres) / nyPres) + Math.abs((nyTemp - oldTemp) / nyTemp) > 1e-9)
-	&& iterations < 500);
+        && iterations < 500);
 
     return nyPres;
   }

@@ -48,10 +48,10 @@ public class EsdResponseTimeSimulator implements Serializable {
      */
     public Contribution(String name, Stage stage, double timeS) {
       if (name == null || stage == null) {
-	throw new IllegalArgumentException("name and stage must not be null");
+        throw new IllegalArgumentException("name and stage must not be null");
       }
       if (timeS < 0.0) {
-	throw new IllegalArgumentException("contribution time must be non-negative");
+        throw new IllegalArgumentException("contribution time must be non-negative");
       }
       this.name = name;
       this.stage = stage;
@@ -192,7 +192,7 @@ public class EsdResponseTimeSimulator implements Serializable {
     boolean withinBudget = Double.isNaN(allowableResponseTimeS) || total <= allowableResponseTimeS;
     double margin = Double.isNaN(allowableResponseTimeS) ? Double.NaN : allowableResponseTimeS - total;
     return new EsdResponseTimeResult(sifTag, new ArrayList<Contribution>(contributions), detection, logic, finalElement,
-	total, allowableResponseTimeS, margin, withinBudget);
+        total, allowableResponseTimeS, margin, withinBudget);
   }
 
   /**
@@ -205,7 +205,7 @@ public class EsdResponseTimeSimulator implements Serializable {
     double sum = 0.0;
     for (Contribution c : contributions) {
       if (c.getStage() == stage) {
-	sum += c.getTimeS();
+        sum += c.getTimeS();
       }
     }
     return sum;
@@ -228,8 +228,8 @@ public class EsdResponseTimeSimulator implements Serializable {
     private final boolean withinBudget;
 
     EsdResponseTimeResult(String sifTag, List<Contribution> contributions, double detectionTimeS, double logicTimeS,
-	double finalElementTimeS, double totalResponseTimeS, double allowableResponseTimeS, double marginS,
-	boolean withinBudget) {
+        double finalElementTimeS, double totalResponseTimeS, double allowableResponseTimeS, double marginS,
+        boolean withinBudget) {
       this.sifTag = sifTag;
       this.contributions = contributions;
       this.detectionTimeS = detectionTimeS;
@@ -335,8 +335,8 @@ public class EsdResponseTimeSimulator implements Serializable {
       sb.append(String.format("  Final element  : %.2f s%n", finalElementTimeS));
       sb.append(String.format("  TOTAL          : %.2f s%n", totalResponseTimeS));
       if (!Double.isNaN(allowableResponseTimeS)) {
-	sb.append(String.format("  Allowable      : %.2f s (margin %.2f s) -> %s%n", allowableResponseTimeS, marginS,
-	    withinBudget ? "OK" : "EXCEEDED"));
+        sb.append(String.format("  Allowable      : %.2f s (margin %.2f s) -> %s%n", allowableResponseTimeS, marginS,
+            withinBudget ? "OK" : "EXCEEDED"));
       }
       return sb.toString();
     }

@@ -3,12 +3,12 @@ package neqsim.process.equipment.util;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for emissions calculation utilities.
@@ -62,7 +62,7 @@ public class EmissionsCalculatorTest {
 
     // Set gas composition (typical Gudrun)
     system.setDissolvedGasComposition(new String[] { "CO2", "methane", "ethane", "propane" },
-	new double[] { 0.51, 0.44, 0.04, 0.01 });
+        new double[] { 0.51, 0.44, 0.04, 0.01 });
 
     // Run simulation
     system.run();
@@ -217,7 +217,7 @@ public class EmissionsCalculatorTest {
 
     // Test combined emissions calculation
     Map<String, Double> convEmissions = EmissionsCalculator.calculateConventionalEmissions(annualWaterVolume,
-	pressureDrop);
+        pressureDrop);
     assertEquals(expectedCH4, convEmissions.get("CH4_tonnes"), 0.1);
     assertEquals(expectedNMVOC, convEmissions.get("nmVOC_tonnes"), 0.1);
 
@@ -261,7 +261,7 @@ public class EmissionsCalculatorTest {
     system.setCFUPressure(1.2, "bara");
     system.setSalinity(3.5, "wt%");
     system.setDissolvedGasComposition(new String[] { "CO2", "methane", "ethane", "propane" },
-	new double[] { 0.50, 0.45, 0.04, 0.01 });
+        new double[] { 0.50, 0.45, 0.04, 0.01 });
 
     // Enable tuned kij parameters
     system.setTunedInteractionParameters(true);
@@ -305,7 +305,7 @@ public class EmissionsCalculatorTest {
     system.setCaissonPressure(1.013, "bara");
     system.setSalinity(3.5, "wt%");
     system.setDissolvedGasComposition(new String[] { "CO2", "methane", "ethane", "propane" },
-	new double[] { 0.50, 0.45, 0.04, 0.01 });
+        new double[] { 0.50, 0.45, 0.04, 0.01 });
 
     // Run
     system.run();

@@ -129,8 +129,8 @@ public final class LifecycleEmissionsProfile implements Serializable {
      * @param ventedCo2Tonnes vented CO2 in tonnes
      */
     public AnnualEmissions(int year, double production, double productionBoe, double loadFactor, double powerMw,
-	String powerSource, double powerEmissionsTonnes, double flaringEmissionsTonnes, double fugitiveEmissionsTonnes,
-	double ventedCo2Tonnes) {
+        String powerSource, double powerEmissionsTonnes, double flaringEmissionsTonnes, double fugitiveEmissionsTonnes,
+        double ventedCo2Tonnes) {
       this.year = year;
       this.production = production;
       this.productionBoe = productionBoe;
@@ -142,7 +142,7 @@ public final class LifecycleEmissionsProfile implements Serializable {
       this.fugitiveEmissionsTonnes = fugitiveEmissionsTonnes;
       this.ventedCo2Tonnes = ventedCo2Tonnes;
       this.totalEmissionsTonnes = powerEmissionsTonnes + flaringEmissionsTonnes + fugitiveEmissionsTonnes
-	  + ventedCo2Tonnes;
+          + ventedCo2Tonnes;
     }
 
     /**

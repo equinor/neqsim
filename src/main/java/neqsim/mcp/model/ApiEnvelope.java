@@ -82,15 +82,15 @@ public class ApiEnvelope<T> {
     if (!response.has("validation")) {
       boolean success = isSuccessfulResponse(response);
       response.add("validation",
-	  validation != null ? validation
-	      : validationStatus(success, "runner",
-		  success ? "Runner input checks completed" : "Runner returned an error before validation completed"));
+          validation != null ? validation
+              : validationStatus(success, "runner",
+                  success ? "Runner input checks completed" : "Runner returned an error before validation completed"));
     }
 
     if (!response.has("qualityGate")) {
       boolean success = isSuccessfulResponse(response);
       response.add("qualityGate", qualityGate != null ? qualityGate
-	  : qualityGate(success ? "passed" : "failed", success ? "Calculation completed" : "Calculation failed", true));
+          : qualityGate(success ? "passed" : "failed", success ? "Calculation completed" : "Calculation failed", true));
     }
 
     if (!response.has("warnings")) {
@@ -364,7 +364,7 @@ public class ApiEnvelope<T> {
     if (!errors.isEmpty()) {
       JsonArray errArray = new JsonArray();
       for (DiagnosticIssue issue : errors) {
-	errArray.add(issue.toJson());
+        errArray.add(issue.toJson());
       }
       root.add("errors", errArray);
     }

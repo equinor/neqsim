@@ -79,52 +79,52 @@ public final class TaskSolverRunner {
 
       // Pass through the original fluid and parameters as base context
       if (input.has("fluid")) {
-	carryForward.add("fluid", input.get("fluid"));
+        carryForward.add("fluid", input.get("fluid"));
       }
       if (input.has("parameters")) {
-	carryForward.add("parameters", input.get("parameters"));
+        carryForward.add("parameters", input.get("parameters"));
       }
 
       for (PlanStep step : plan) {
-	long stepStart = System.currentTimeMillis();
-	String stepInput = buildStepInput(step, input, carryForward);
-	String stepOutput = executeStep(step, stepInput);
-	long stepTime = System.currentTimeMillis() - stepStart;
+        long stepStart = System.currentTimeMillis();
+        String stepInput = buildStepInput(step, input, carryForward);
+        String stepOutput = executeStep(step, stepInput);
+        long stepTime = System.currentTimeMillis() - stepStart;
 
-	StepResult result = new StepResult(step.name, step.runner, stepOutput, stepTime);
+        StepResult result = new StepResult(step.name, step.runner, stepOutput, stepTime);
 
-	// Parse output and carry forward key results
-	try {
-	  JsonObject parsed = JsonParser.parseString(stepOutput).getAsJsonObject();
-	  if (parsed.has("data")) {
-	    carryForward.add(step.name + "_result", parsed.get("data"));
-	  } else {
-	    carryForward.add(step.name + "_result", parsed);
-	  }
-	  result.success = !parsed.has("errors");
-	} catch (Exception e) {
-	  result.success = false;
-	  result.errorMessage = e.getMessage();
-	}
+        // Parse output and carry forward key results
+        try {
+          JsonObject parsed = JsonParser.parseString(stepOutput).getAsJsonObject();
+          if (parsed.has("data")) {
+            carryForward.add(step.name + "_result", parsed.get("data"));
+          } else {
+            carryForward.add(step.name + "_result", parsed);
+          }
+          result.success = !parsed.has("errors");
+        } catch (Exception e) {
+          result.success = false;
+          result.errorMessage = e.getMessage();
+        }
 
-	stepResults.add(result);
+        stepResults.add(result);
 
-	// Stop on error unless the step is optional
-	if (!result.success && !step.optional) {
-	  break;
-	}
+        // Stop on error unless the step is optional
+        if (!result.success && !step.optional) {
+          break;
+        }
       }
 
       // Step 4: Validate combined results
       boolean shouldValidate = !input.has("validate") || input.get("validate").getAsBoolean();
       String validationReport = null;
       if (shouldValidate) {
-	validationReport = EngineeringValidator.validate(GSON.toJson(carryForward), taskType);
+        validationReport = EngineeringValidator.validate(GSON.toJson(carryForward), taskType);
       }
 
       // Step 5: Build structured report
       return buildTaskReport(task, taskType, plan, stepResults, carryForward, validationReport,
-	  System.currentTimeMillis() - startTime);
+          System.currentTimeMillis() - startTime);
 
     } catch (Exception e) {
       return errorJson("TASK_ERROR", "Task solving failed: " + e.getMessage());
@@ -165,7 +165,7 @@ public final class TaskSolverRunner {
       String workflowName = input.has("workflow") ? input.get("workflow").getAsString() : "custom";
 
       if (!input.has("steps") || !input.get("steps").isJsonArray()) {
-	return errorJson("MISSING_STEPS", "No 'steps' array in workflow. Provide [{runner, input}, ...]");
+        return errorJson("MISSING_STEPS", "No 'steps' array in workflow. Provide [{runner, input}, ...]");
       }
 
       JsonArray steps = input.getAsJsonArray("steps");
@@ -173,45 +173,45 @@ public final class TaskSolverRunner {
       JsonObject carryForward = new JsonObject();
 
       if (input.has("fluid")) {
-	carryForward.add("fluid", input.get("fluid"));
+        carryForward.add("fluid", input.get("fluid"));
       }
 
       for (int i = 0; i < steps.size(); i++) {
-	JsonObject stepDef = steps.get(i).getAsJsonObject();
-	String runnerName = stepDef.has("runner") ? stepDef.get("runner").getAsString() : "";
-	String stepName = stepDef.has("name") ? stepDef.get("name").getAsString() : "step_" + (i + 1);
+        JsonObject stepDef = steps.get(i).getAsJsonObject();
+        String runnerName = stepDef.has("runner") ? stepDef.get("runner").getAsString() : "";
+        String stepName = stepDef.has("name") ? stepDef.get("name").getAsString() : "step_" + (i + 1);
 
-	// Build step input: merge step-specific input with carry-forward data
-	JsonObject stepInput = new JsonObject();
-	if (carryForward.has("fluid")) {
-	  stepInput.add("fluid", carryForward.get("fluid"));
-	}
-	if (stepDef.has("input")) {
-	  JsonObject specific = stepDef.getAsJsonObject("input");
-	  for (Map.Entry<String, JsonElement> entry : specific.entrySet()) {
-	    stepInput.add(entry.getKey(), entry.getValue());
-	  }
-	}
+        // Build step input: merge step-specific input with carry-forward data
+        JsonObject stepInput = new JsonObject();
+        if (carryForward.has("fluid")) {
+          stepInput.add("fluid", carryForward.get("fluid"));
+        }
+        if (stepDef.has("input")) {
+          JsonObject specific = stepDef.getAsJsonObject("input");
+          for (Map.Entry<String, JsonElement> entry : specific.entrySet()) {
+            stepInput.add(entry.getKey(), entry.getValue());
+          }
+        }
 
-	long stepStart = System.currentTimeMillis();
-	PlanStep ps = new PlanStep(stepName, runnerName, "User-defined step", false);
-	String output = executeStep(ps, GSON.toJson(stepInput));
-	long stepTime = System.currentTimeMillis() - stepStart;
+        long stepStart = System.currentTimeMillis();
+        PlanStep ps = new PlanStep(stepName, runnerName, "User-defined step", false);
+        String output = executeStep(ps, GSON.toJson(stepInput));
+        long stepTime = System.currentTimeMillis() - stepStart;
 
-	StepResult sr = new StepResult(stepName, runnerName, output, stepTime);
-	try {
-	  JsonObject parsed = JsonParser.parseString(output).getAsJsonObject();
-	  carryForward.add(stepName + "_result", parsed);
-	  sr.success = !parsed.has("errors");
-	} catch (Exception e) {
-	  sr.success = false;
-	  sr.errorMessage = e.getMessage();
-	}
-	results.add(sr);
+        StepResult sr = new StepResult(stepName, runnerName, output, stepTime);
+        try {
+          JsonObject parsed = JsonParser.parseString(output).getAsJsonObject();
+          carryForward.add(stepName + "_result", parsed);
+          sr.success = !parsed.has("errors");
+        } catch (Exception e) {
+          sr.success = false;
+          sr.errorMessage = e.getMessage();
+        }
+        results.add(sr);
 
-	if (!sr.success) {
-	  break;
-	}
+        if (!sr.success) {
+          break;
+        }
       }
 
       // Build response
@@ -224,7 +224,7 @@ public final class TaskSolverRunner {
 
       JsonArray stepsArray = new JsonArray();
       for (StepResult sr : results) {
-	stepsArray.add(sr.toJson());
+        stepsArray.add(sr.toJson());
       }
       response.add("steps", stepsArray);
       response.add("combinedData", carryForward);
@@ -311,7 +311,7 @@ public final class TaskSolverRunner {
     case "compression":
       plan.add(new PlanStep("flash_feed", "flash", "Flash the feed fluid to establish inlet conditions", false));
       plan.add(
-	  new PlanStep("process_simulation", "process", "Build and run compression process with intercooling", false));
+          new PlanStep("process_simulation", "process", "Build and run compression process with intercooling", false));
       plan.add(new PlanStep("validate", "validate", "Validate compressor design parameters", true));
       break;
 
@@ -389,7 +389,7 @@ public final class TaskSolverRunner {
     if (originalInput.has("parameters")) {
       JsonObject params = originalInput.getAsJsonObject("parameters");
       for (Map.Entry<String, JsonElement> entry : params.entrySet()) {
-	stepInput.add(entry.getKey(), entry.getValue());
+        stepInput.add(entry.getKey(), entry.getValue());
       }
     }
 
@@ -397,7 +397,7 @@ public final class TaskSolverRunner {
     if (originalInput.has(step.name)) {
       JsonObject overrides = originalInput.getAsJsonObject(step.name);
       for (Map.Entry<String, JsonElement> entry : overrides.entrySet()) {
-	stepInput.add(entry.getKey(), entry.getValue());
+        stepInput.add(entry.getKey(), entry.getValue());
       }
     }
 
@@ -425,29 +425,29 @@ public final class TaskSolverRunner {
     try {
       switch (step.runner) {
       case "flash":
-	return FlashRunner.run(inputJson);
+        return FlashRunner.run(inputJson);
       case "process":
-	return ProcessRunner.run(inputJson);
+        return ProcessRunner.run(inputJson);
       case "pvt":
-	return PVTRunner.run(inputJson);
+        return PVTRunner.run(inputJson);
       case "flow_assurance":
-	return FlowAssuranceRunner.run(inputJson);
+        return FlowAssuranceRunner.run(inputJson);
       case "pipeline":
-	return PipelineRunner.run(inputJson);
+        return PipelineRunner.run(inputJson);
       case "reservoir":
-	return ReservoirRunner.run(inputJson);
+        return ReservoirRunner.run(inputJson);
       case "economics":
-	return FieldDevelopmentRunner.run(inputJson);
+        return FieldDevelopmentRunner.run(inputJson);
       case "dynamic":
-	return DynamicRunner.run(inputJson);
+        return DynamicRunner.run(inputJson);
       case "standards":
-	return StandardsRunner.run(inputJson);
+        return StandardsRunner.run(inputJson);
       case "bioprocess":
-	return BioprocessRunner.run(inputJson);
+        return BioprocessRunner.run(inputJson);
       case "validate":
-	return EngineeringValidator.validate(inputJson, "task");
+        return EngineeringValidator.validate(inputJson, "task");
       default:
-	return errorJson("UNKNOWN_RUNNER", "Unknown runner: " + step.runner);
+        return errorJson("UNKNOWN_RUNNER", "Unknown runner: " + step.runner);
       }
     } catch (Exception e) {
       return errorJson("STEP_ERROR", "Step '" + step.name + "' failed: " + e.getMessage());
@@ -482,8 +482,8 @@ public final class TaskSolverRunner {
     boolean allSuccess = true;
     for (StepResult r : results) {
       if (!r.success) {
-	allSuccess = false;
-	break;
+        allSuccess = false;
+        break;
       }
     }
     report.addProperty("success", allSuccess);
@@ -510,9 +510,9 @@ public final class TaskSolverRunner {
     // Validation
     if (validationReport != null) {
       try {
-	report.add("validation", JsonParser.parseString(validationReport));
+        report.add("validation", JsonParser.parseString(validationReport));
       } catch (Exception e) {
-	report.addProperty("validationError", e.getMessage());
+        report.addProperty("validationError", e.getMessage());
       }
     }
 
@@ -618,12 +618,12 @@ public final class TaskSolverRunner {
       obj.addProperty("success", success);
       obj.addProperty("timeMs", timeMs);
       if (errorMessage != null) {
-	obj.addProperty("error", errorMessage);
+        obj.addProperty("error", errorMessage);
       }
       try {
-	obj.add("output", JsonParser.parseString(output));
+        obj.add("output", JsonParser.parseString(output));
       } catch (Exception e) {
-	obj.addProperty("rawOutput", output);
+        obj.addProperty("rawOutput", output);
       }
       return obj;
     }

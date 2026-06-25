@@ -261,7 +261,7 @@ public class PSACostEstimate extends UnitCostEstimateBaseClass {
       double dia = mech.getInnerDiameter();
       double len = mech.getTantanLength();
       if (dia > 0.0 && len > 0.0) {
-	bedVolume = Math.PI * 0.25 * dia * dia * len;
+        bedVolume = Math.PI * 0.25 * dia * dia * len;
       }
     }
 

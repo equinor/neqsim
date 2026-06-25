@@ -85,7 +85,7 @@ public enum FlowPattern {
     String lowerName = name.toLowerCase().trim();
     for (FlowPattern pattern : FlowPattern.values()) {
       if (pattern.name.equals(lowerName) || pattern.name().equalsIgnoreCase(lowerName)) {
-	return pattern;
+        return pattern;
       }
     }
     // Handle aliases

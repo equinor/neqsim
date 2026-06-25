@@ -83,7 +83,7 @@ public class CricondenbarAnalyser extends StreamMeasurementDeviceBaseClass {
       tempFluid.removeComponent("water");
     }
     neqsim.pvtsimulation.simulation.SaturationPressure thermoOps = new neqsim.pvtsimulation.simulation.SaturationPressure(
-	tempFluid);
+        tempFluid);
     try {
       thermoOps.run();
     } catch (Exception ex) {

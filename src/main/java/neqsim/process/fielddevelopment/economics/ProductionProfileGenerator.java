@@ -53,7 +53,7 @@ import neqsim.process.fielddevelopment.concept.ReservoirInput;
  *
  * // Generate exponential decline (typical for gas wells)
  * Map<Integer, Double> gasProfile = generator.generateExponentialDecline(10.0e6, // Initial rate:
- * 									       // 10 MSm3/d
+ *     // 10 MSm3/d
  *     0.15, // 15% annual decline
  *     2026, // Start year
  *     20, // 20 years
@@ -62,7 +62,7 @@ import neqsim.process.fielddevelopment.concept.ReservoirInput;
  *
  * // Generate hyperbolic decline (typical for oil wells)
  * Map<Integer, Double> oilProfile = generator.generateHyperbolicDecline(15000, // Initial rate:
- * 									     // 15,000 bbl/d
+ *     // 15,000 bbl/d
  *     0.20, // 20% initial decline
  *     0.5, // b-factor = 0.5
  *     2026, // Start year
@@ -174,7 +174,7 @@ public class ProductionProfileGenerator implements Serializable {
       double ratePerDay = initialRatePerDay * Math.exp(-annualDeclineRate * t);
 
       if (ratePerDay < economicLimit) {
-	break;
+        break;
       }
 
       double annualVolume = ratePerDay * DAYS_PER_YEAR;
@@ -239,7 +239,7 @@ public class ProductionProfileGenerator implements Serializable {
       double ratePerDay = initialRatePerDay / denominator;
 
       if (ratePerDay < economicLimit) {
-	break;
+        break;
       }
 
       double annualVolume = ratePerDay * DAYS_PER_YEAR;
@@ -298,7 +298,7 @@ public class ProductionProfileGenerator implements Serializable {
       double ratePerDay = initialRatePerDay / (1 + initialDeclineRate * t);
 
       if (ratePerDay < economicLimit) {
-	break;
+        break;
       }
 
       double annualVolume = ratePerDay * DAYS_PER_YEAR;
@@ -340,7 +340,7 @@ public class ProductionProfileGenerator implements Serializable {
   public Map<Integer, Double> generateWithPlateau(double plateauRatePerDay, int plateauYears, double declineRate,
       DeclineType declineType, int startYear, int totalYears) {
     return generateWithPlateau(plateauRatePerDay, plateauYears, declineRate, 0.5, declineType, startYear, totalYears,
-	0.0);
+        0.0);
   }
 
   /**
@@ -374,20 +374,20 @@ public class ProductionProfileGenerator implements Serializable {
       Map<Integer, Double> declineProfile;
       switch (declineType) {
       case EXPONENTIAL:
-	declineProfile = generateExponentialDecline(plateauRatePerDay, declineRate, declineStartYear, declineYears,
-	    economicLimit);
-	break;
+        declineProfile = generateExponentialDecline(plateauRatePerDay, declineRate, declineStartYear, declineYears,
+            economicLimit);
+        break;
       case HYPERBOLIC:
-	declineProfile = generateHyperbolicDecline(plateauRatePerDay, declineRate, bFactor, declineStartYear,
-	    declineYears, economicLimit);
-	break;
+        declineProfile = generateHyperbolicDecline(plateauRatePerDay, declineRate, bFactor, declineStartYear,
+            declineYears, economicLimit);
+        break;
       case HARMONIC:
-	declineProfile = generateHarmonicDecline(plateauRatePerDay, declineRate, declineStartYear, declineYears,
-	    economicLimit);
-	break;
+        declineProfile = generateHarmonicDecline(plateauRatePerDay, declineRate, declineStartYear, declineYears,
+            economicLimit);
+        break;
       default:
-	declineProfile = generateExponentialDecline(plateauRatePerDay, declineRate, declineStartYear, declineYears,
-	    economicLimit);
+        declineProfile = generateExponentialDecline(plateauRatePerDay, declineRate, declineStartYear, declineYears,
+            economicLimit);
       }
       profile.putAll(declineProfile);
     }
@@ -423,7 +423,7 @@ public class ProductionProfileGenerator implements Serializable {
   public Map<Integer, Double> generateFullProfile(double peakRatePerDay, int rampUpYears, int plateauYears,
       double declineRate, DeclineType declineType, int startYear, int totalYears) {
     return generateFullProfile(peakRatePerDay, rampUpYears, plateauYears, declineRate, 0.5, declineType, startYear,
-	totalYears, 0.0);
+        totalYears, 0.0);
   }
 
   /**
@@ -470,20 +470,20 @@ public class ProductionProfileGenerator implements Serializable {
       Map<Integer, Double> declineProfile;
       switch (declineType) {
       case EXPONENTIAL:
-	declineProfile = generateExponentialDecline(peakRatePerDay, declineRate, declineStartYear, remainingYears,
-	    economicLimit);
-	break;
+        declineProfile = generateExponentialDecline(peakRatePerDay, declineRate, declineStartYear, remainingYears,
+            economicLimit);
+        break;
       case HYPERBOLIC:
-	declineProfile = generateHyperbolicDecline(peakRatePerDay, declineRate, bFactor, declineStartYear,
-	    remainingYears, economicLimit);
-	break;
+        declineProfile = generateHyperbolicDecline(peakRatePerDay, declineRate, bFactor, declineStartYear,
+            remainingYears, economicLimit);
+        break;
       case HARMONIC:
-	declineProfile = generateHarmonicDecline(peakRatePerDay, declineRate, declineStartYear, remainingYears,
-	    economicLimit);
-	break;
+        declineProfile = generateHarmonicDecline(peakRatePerDay, declineRate, declineStartYear, remainingYears,
+            economicLimit);
+        break;
       default:
-	declineProfile = generateExponentialDecline(peakRatePerDay, declineRate, declineStartYear, remainingYears,
-	    economicLimit);
+        declineProfile = generateExponentialDecline(peakRatePerDay, declineRate, declineStartYear, remainingYears,
+            economicLimit);
       }
       profile.putAll(declineProfile);
     }
@@ -508,7 +508,7 @@ public class ProductionProfileGenerator implements Serializable {
   public Map<Integer, Double> generateFromReservoirInput(ReservoirInput reservoir, double peakRatePerDay,
       boolean gasProfile, int startYear, int totalYears) {
     Map<Integer, Double> unconstrained = generateFullProfile(peakRatePerDay, 2, 5, gasProfile ? 0.12 : 0.15, 0.5,
-	gasProfile ? DeclineType.EXPONENTIAL : DeclineType.HYPERBOLIC, startYear, totalYears, peakRatePerDay * 0.05);
+        gasProfile ? DeclineType.EXPONENTIAL : DeclineType.HYPERBOLIC, startYear, totalYears, peakRatePerDay * 0.05);
     double recoverableVolume = getRecoverableVolumeInProfileUnit(reservoir, gasProfile);
     return capProfileToCumulativeLimit(unconstrained, recoverableVolume);
   }
@@ -527,7 +527,7 @@ public class ProductionProfileGenerator implements Serializable {
   public Map<Integer, Double> generateFromSimpleReservoir(SimpleReservoir reservoir, boolean gasProfile,
       double recoveryFactor, double peakRatePerDay, int startYear, int totalYears) {
     Map<Integer, Double> profile = generateFullProfile(peakRatePerDay, 2, 5, gasProfile ? 0.12 : 0.15, 0.5,
-	gasProfile ? DeclineType.EXPONENTIAL : DeclineType.HYPERBOLIC, startYear, totalYears, peakRatePerDay * 0.05);
+        gasProfile ? DeclineType.EXPONENTIAL : DeclineType.HYPERBOLIC, startYear, totalYears, peakRatePerDay * 0.05);
     double inPlace = gasProfile ? reservoir.getGasInPlace("Sm3") : reservoir.getOilInPlace("Sm3") * 6.28981;
     return capProfileToCumulativeLimit(profile, Math.max(0.0, inPlace * recoveryFactor));
   }
@@ -548,7 +548,7 @@ public class ProductionProfileGenerator implements Serializable {
     for (Map.Entry<Integer, Double> entry : profile.entrySet()) {
       double remaining = cumulativeLimit - cumulative;
       if (remaining <= 0.0) {
-	break;
+        break;
       }
       double annual = Math.min(entry.getValue(), remaining);
       capped.put(entry.getKey(), annual);
@@ -574,13 +574,13 @@ public class ProductionProfileGenerator implements Serializable {
     int lastYear = sortedHistory.isEmpty() ? 0 : sortedHistory.lastKey();
     for (Map.Entry<Integer, Double> entry : sortedHistory.entrySet()) {
       if (entry.getValue() != null && entry.getValue() > 0.0) {
-	double x = entry.getKey() - firstYear;
-	double y = Math.log(entry.getValue() / DAYS_PER_YEAR);
-	sumX += x;
-	sumY += y;
-	sumXX += x * x;
-	sumXY += x * y;
-	count++;
+        double x = entry.getKey() - firstYear;
+        double y = Math.log(entry.getValue() / DAYS_PER_YEAR);
+        sumX += x;
+        sumY += y;
+        sumXX += x * x;
+        sumXY += x * y;
+        count++;
       }
     }
     if (count < 2) {
@@ -593,7 +593,7 @@ public class ProductionProfileGenerator implements Serializable {
     double initialRatePerDay = Math.exp(intercept);
     double declineRate = Math.max(0.0, -slope);
     return new HistoryMatchedDeclineCase(firstYear, lastYear, initialRatePerDay, declineRate,
-	calculateFitQuality(sortedHistory, firstYear, intercept, slope));
+        calculateFitQuality(sortedHistory, firstYear, intercept, slope));
   }
 
   /**
@@ -609,9 +609,9 @@ public class ProductionProfileGenerator implements Serializable {
       int forecastStartYear, int forecastYears, double economicLimit) {
     int yearOffset = Math.max(0, forecastStartYear - declineCase.getFirstHistoryYear());
     double forecastRate = declineCase.getInitialRatePerDay()
-	* Math.exp(-declineCase.getAnnualDeclineRate() * yearOffset);
+        * Math.exp(-declineCase.getAnnualDeclineRate() * yearOffset);
     return generateExponentialDecline(forecastRate, declineCase.getAnnualDeclineRate(), forecastStartYear,
-	forecastYears, economicLimit);
+        forecastYears, economicLimit);
   }
 
   /**
@@ -631,7 +631,7 @@ public class ProductionProfileGenerator implements Serializable {
     for (Map.Entry<Integer, Double> entry : new TreeMap<Integer, Double>(profile).entrySet()) {
       double annualProduction = entry.getValue() == null ? 0.0 : entry.getValue();
       csv.append(String.format("%d,%.6g,%.6g,%s,%.3f%n", entry.getKey(), annualProduction,
-	  annualProduction / DAYS_PER_YEAR, rateUnit, exportPressureBara));
+          annualProduction / DAYS_PER_YEAR, rateUnit, exportPressureBara));
     }
     return csv.toString();
   }
@@ -651,13 +651,13 @@ public class ProductionProfileGenerator implements Serializable {
     String unit = reservoir.getResourceUnit() == null ? "" : reservoir.getResourceUnit();
     if (gasProfile) {
       if (unit.equalsIgnoreCase("GSm3")) {
-	return recoverable * 1.0e9;
+        return recoverable * 1.0e9;
       }
       if (unit.equalsIgnoreCase("MSm3")) {
-	return recoverable * 1.0e6;
+        return recoverable * 1.0e6;
       }
       if (unit.equalsIgnoreCase("MMboe")) {
-	return recoverable * 1.0e6 * 6000.0;
+        return recoverable * 1.0e6 * 6000.0;
       }
       return recoverable;
     }
@@ -687,8 +687,8 @@ public class ProductionProfileGenerator implements Serializable {
     int count = 0;
     for (Double value : history.values()) {
       if (value != null && value > 0.0) {
-	mean += Math.log(value / DAYS_PER_YEAR);
-	count++;
+        mean += Math.log(value / DAYS_PER_YEAR);
+        count++;
       }
     }
     if (count == 0) {
@@ -699,11 +699,11 @@ public class ProductionProfileGenerator implements Serializable {
     double ssErr = 0.0;
     for (Map.Entry<Integer, Double> entry : history.entrySet()) {
       if (entry.getValue() != null && entry.getValue() > 0.0) {
-	double x = entry.getKey() - firstYear;
-	double y = Math.log(entry.getValue() / DAYS_PER_YEAR);
-	double predicted = intercept + slope * x;
-	ssTot += (y - mean) * (y - mean);
-	ssErr += (y - predicted) * (y - predicted);
+        double x = entry.getKey() - firstYear;
+        double y = Math.log(entry.getValue() / DAYS_PER_YEAR);
+        double predicted = intercept + slope * x;
+        ssTot += (y - mean) * (y - mean);
+        ssErr += (y - predicted) * (y - predicted);
       }
     }
     return ssTot > 0.0 ? 1.0 - ssErr / ssTot : 1.0;
@@ -731,7 +731,7 @@ public class ProductionProfileGenerator implements Serializable {
      * @param fitQuality coefficient of determination from zero to one
      */
     public HistoryMatchedDeclineCase(int firstHistoryYear, int lastHistoryYear, double initialRatePerDay,
-	double annualDeclineRate, double fitQuality) {
+        double annualDeclineRate, double fitQuality) {
       this.firstHistoryYear = firstHistoryYear;
       this.lastHistoryYear = lastHistoryYear;
       this.initialRatePerDay = initialRatePerDay;
@@ -835,7 +835,7 @@ public class ProductionProfileGenerator implements Serializable {
       // Hyperbolic EUR depends on abandonment, use practical estimate
       // EUR ≈ qi / ((1-b) * Di) for 0 < b < 1
       if (bFactor < 1) {
-	return qi / ((1 - bFactor) * declineRate);
+        return qi / ((1 - bFactor) * declineRate);
       }
       return qi * 10;
 
@@ -885,10 +885,10 @@ public class ProductionProfileGenerator implements Serializable {
 
     for (Map<Integer, Double> profile : profiles) {
       for (Map.Entry<Integer, Double> entry : profile.entrySet()) {
-	int year = entry.getKey();
-	double value = entry.getValue();
-	Double existing = combined.get(year);
-	combined.put(year, existing != null ? existing + value : value);
+        int year = entry.getKey();
+        double value = entry.getValue();
+        Double existing = combined.get(year);
+        combined.put(year, existing != null ? existing + value : value);
       }
     }
 

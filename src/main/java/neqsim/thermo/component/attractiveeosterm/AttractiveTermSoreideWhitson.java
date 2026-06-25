@@ -90,7 +90,7 @@ public class AttractiveTermSoreideWhitson extends AttractiveTermPr1978 {
 
     // Define A(Tr)
     double alpha_A = 1.0 + 0.453 * (1.0 - Tr * (1.0 - 0.0103 * Math.pow(salinityFromPhase, 1.1)))
-	+ 0.0034 * (Math.pow(1.0 / Tr, 3.0) - 1.0);
+        + 0.0034 * (Math.pow(1.0 / Tr, 3.0) - 1.0);
 
     return alpha_A * alpha_A;
   }

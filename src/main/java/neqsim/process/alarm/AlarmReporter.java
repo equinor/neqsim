@@ -42,10 +42,10 @@ public final class AlarmReporter {
       System.out.println("  │ Active Alarms: " + String.format("%-42d", activeAlarms.size()) + "│");
       System.out.println("  ├─────────────────────────────────────────────────────────┤");
       for (AlarmStatusSnapshot alarm : activeAlarms) {
-	String ackStatus = alarm.isAcknowledged() ? "[ACK]" : "[NEW]";
-	String info = String.format("%s %-4s - %-15s: %.2f", ackStatus, alarm.getLevel().toString(), alarm.getSource(),
-	    alarm.getValue());
-	System.out.println("  │ " + String.format("%-55s", info) + "│");
+        String ackStatus = alarm.isAcknowledged() ? "[ACK]" : "[NEW]";
+        String info = String.format("%s %-4s - %-15s: %.2f", ackStatus, alarm.getLevel().toString(), alarm.getSource(),
+            alarm.getValue());
+        System.out.println("  │ " + String.format("%-55s", info) + "│");
       }
     }
 
@@ -83,12 +83,12 @@ public final class AlarmReporter {
       // Display recent events
       int displayCount = Math.min(maxRecentEvents, history.size());
       System.out.println(
-	  "║  Recent Events (last " + String.format("%-2d", displayCount) + "):                                  ║");
+          "║  Recent Events (last " + String.format("%-2d", displayCount) + "):                                  ║");
 
       for (int i = history.size() - displayCount; i < history.size(); i++) {
-	AlarmEvent event = history.get(i);
-	String eventStr = formatAlarmEventCompact(event);
-	System.out.println("║  " + String.format("%-61s", eventStr) + "║");
+        AlarmEvent event = history.get(i);
+        String eventStr = formatAlarmEventCompact(event);
+        System.out.println("║  " + String.format("%-61s", eventStr) + "║");
       }
     }
 
@@ -117,13 +117,13 @@ public final class AlarmReporter {
 
     // Count by level
     long hihi = history.stream().filter(e -> e.getType() == AlarmEventType.ACTIVATED && e.getLevel() == AlarmLevel.HIHI)
-	.count();
+        .count();
     long hi = history.stream().filter(e -> e.getType() == AlarmEventType.ACTIVATED && e.getLevel() == AlarmLevel.HI)
-	.count();
+        .count();
     long lo = history.stream().filter(e -> e.getType() == AlarmEventType.ACTIVATED && e.getLevel() == AlarmLevel.LO)
-	.count();
+        .count();
     long lolo = history.stream().filter(e -> e.getType() == AlarmEventType.ACTIVATED && e.getLevel() == AlarmLevel.LOLO)
-	.count();
+        .count();
 
     System.out.println("║  By Level:                                                     ║");
     System.out.println("║    HIHI (Critical High): " + String.format("%-33d", hihi) + "║");
@@ -143,7 +143,7 @@ public final class AlarmReporter {
     String typeIcon = getEventTypeIcon(event.getType());
 
     return String.format("%s [t=%.1fs] %s %-15s %-4s: %.2f", typeIcon, event.getTimestamp(), event.getType(),
-	event.getSource(), event.getLevel(), event.getValue());
+        event.getSource(), event.getLevel(), event.getValue());
   }
 
   /**
@@ -156,7 +156,7 @@ public final class AlarmReporter {
     String typeIcon = getEventTypeIcon(event.getType());
 
     return String.format("%s %.1fs %-12s %-15s %-4s %.2f", typeIcon, event.getTimestamp(), event.getType(),
-	event.getSource(), event.getLevel(), event.getValue());
+        event.getSource(), event.getLevel(), event.getValue());
   }
 
   /**
@@ -206,7 +206,7 @@ public final class AlarmReporter {
       String formatted = formatAlarmEvent(event);
       // Truncate if too long
       if (formatted.length() > 53) {
-	formatted = formatted.substring(0, 50) + "...";
+        formatted = formatted.substring(0, 50) + "...";
       }
       System.out.println("  ║ " + String.format("%-53s", formatted) + "║");
     }

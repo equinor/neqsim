@@ -423,8 +423,8 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     nominalSizeInches = standardSizes[0];
     for (double size : standardSizes) {
       if (calculatedSize <= size * 1.2) {
-	nominalSizeInches = size;
-	break;
+        nominalSizeInches = size;
+        break;
       }
       nominalSizeInches = size;
     }

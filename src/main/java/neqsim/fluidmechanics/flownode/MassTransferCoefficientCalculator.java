@@ -553,7 +553,7 @@ public class MassTransferCoefficientCalculator {
 
     // Get base coefficient
     double kLBase = calculateLiquidMassTransferCoefficient(flowPattern, diameter, liquidHoldup, usg, usl, rhoL, muL,
-	diffL);
+        diffL);
 
     if (kLBase <= 0 || turbulentIntensity <= 0) {
       return Math.max(0.0, kLBase);
@@ -645,7 +645,7 @@ public class MassTransferCoefficientCalculator {
     // Apply turbulence enhancement if enabled
     if (includeTurbulence && turbulentIntensity > 0) {
       kL = calculateLiquidMassTransferCoefficientWithTurbulence(flowPattern, diameter, liquidHoldup, usg, usl, rhoL,
-	  muL, diffL, turbulentIntensity);
+          muL, diffL, turbulentIntensity);
     } else {
       kL = calculateLiquidMassTransferCoefficient(flowPattern, diameter, liquidHoldup, usg, usl, rhoL, muL, diffL);
     }
@@ -724,53 +724,53 @@ public class MassTransferCoefficientCalculator {
       switch (flowPattern) {
       case STRATIFIED:
       case STRATIFIED_WAVY:
-	// kL typically 10^-5 to 10^-4 m/s
-	range[0] = 1e-6;
-	range[1] = 5e-5;
-	range[2] = 2e-4;
-	break;
+        // kL typically 10^-5 to 10^-4 m/s
+        range[0] = 1e-6;
+        range[1] = 5e-5;
+        range[2] = 2e-4;
+        break;
       case ANNULAR:
-	// Higher due to thin film
-	range[0] = 5e-5;
-	range[1] = 2e-4;
-	range[2] = 1e-3;
-	break;
+        // Higher due to thin film
+        range[0] = 5e-5;
+        range[1] = 2e-4;
+        range[2] = 1e-3;
+        break;
       case SLUG:
-	// Variable but often high
-	range[0] = 1e-5;
-	range[1] = 1e-4;
-	range[2] = 5e-4;
-	break;
+        // Variable but often high
+        range[0] = 1e-5;
+        range[1] = 1e-4;
+        range[2] = 5e-4;
+        break;
       case BUBBLE:
       case DISPERSED_BUBBLE:
-	// Depends on bubble size
-	range[0] = 1e-5;
-	range[1] = 5e-5;
-	range[2] = 3e-4;
-	break;
+        // Depends on bubble size
+        range[0] = 1e-5;
+        range[1] = 5e-5;
+        range[2] = 3e-4;
+        break;
       default:
-	range[0] = 1e-6;
-	range[1] = 1e-5;
-	range[2] = 1e-4;
+        range[0] = 1e-6;
+        range[1] = 1e-5;
+        range[2] = 1e-4;
       }
     } else { // Gas side
       switch (flowPattern) {
       case STRATIFIED:
       case STRATIFIED_WAVY:
-	// kG typically 10^-3 to 10^-2 m/s
-	range[0] = 1e-4;
-	range[1] = 5e-3;
-	range[2] = 5e-2;
-	break;
+        // kG typically 10^-3 to 10^-2 m/s
+        range[0] = 1e-4;
+        range[1] = 5e-3;
+        range[2] = 5e-2;
+        break;
       case ANNULAR:
-	range[0] = 1e-3;
-	range[1] = 1e-2;
-	range[2] = 1e-1;
-	break;
+        range[0] = 1e-3;
+        range[1] = 1e-2;
+        range[2] = 1e-1;
+        break;
       default:
-	range[0] = 1e-4;
-	range[1] = 5e-3;
-	range[2] = 5e-2;
+        range[0] = 1e-4;
+        range[1] = 5e-3;
+        range[2] = 5e-2;
       }
     }
 

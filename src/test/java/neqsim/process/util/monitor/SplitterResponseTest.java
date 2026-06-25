@@ -2,6 +2,8 @@ package neqsim.process.util.monitor;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import com.google.gson.JsonElement;
@@ -9,8 +11,6 @@ import com.google.gson.JsonParser;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Test class for SplitterResponse JSON response handling.

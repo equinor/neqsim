@@ -46,11 +46,11 @@ public class FurnaceBurnerResponse extends BaseResponse {
     for (Map.Entry<String, Double> entry : burner.getEmissionRatesKgPerHr().entrySet()) {
       data.put("emission " + entry.getKey(), new Value(Double.toString(entry.getValue()), "kg/hr"));
       if (burner.getOutletStream() != null) {
-	SystemInterface system = burner.getOutletStream().getThermoSystem();
-	if (system.hasComponent(entry.getKey())) {
-	  double moleFraction = system.getComponent(entry.getKey()).getz();
-	  data.put("mole fraction " + entry.getKey(), new Value(Double.toString(moleFraction), "-"));
-	}
+        SystemInterface system = burner.getOutletStream().getThermoSystem();
+        if (system.hasComponent(entry.getKey())) {
+          double moleFraction = system.getComponent(entry.getKey()).getz();
+          data.put("mole fraction " + entry.getKey(), new Value(Double.toString(moleFraction), "-"));
+        }
       }
     }
   }

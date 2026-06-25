@@ -125,10 +125,10 @@ public class multiThreadTest {
       processThread2.start();
 
       try {
-	processThread1.join(1000);
-	processThread2.join(1000);
+        processThread1.join(1000);
+        processThread2.join(1000);
       } catch (Exception ex) {
-	logger.error(ex.getMessage(), ex);
+        logger.error(ex.getMessage(), ex);
       }
     }
     // } while (processThread1.isAlive()); // && processThread2.isAlive());

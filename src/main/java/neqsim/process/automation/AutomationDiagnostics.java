@@ -86,7 +86,7 @@ public class AutomationDiagnostics implements Serializable {
      * @param context additional context information
      */
     public DiagnosticResult(ErrorCategory category, String originalInput, String errorMessage, List<String> suggestions,
-	String autoCorrection, String remediation, Map<String, Object> context) {
+        String autoCorrection, String remediation, Map<String, Object> context) {
       this.category = category;
       this.originalInput = originalInput;
       this.errorMessage = errorMessage;
@@ -277,7 +277,7 @@ public class AutomationDiagnostics implements Serializable {
     int count = Math.min(maxResults, scored.size());
     for (int i = 0; i < count; i++) {
       if (scored.get(i).score > 0.0) {
-	results.add(scored.get(i).name);
+        results.add(scored.get(i).name);
       }
     }
     return results;
@@ -309,14 +309,14 @@ public class AutomationDiagnostics implements Serializable {
     // Exact match after trim
     for (String valid : validNames) {
       if (valid.equals(trimmed)) {
-	return valid;
+        return valid;
       }
     }
 
     // Case-insensitive match
     for (String valid : validNames) {
       if (valid.equalsIgnoreCase(trimmed)) {
-	return valid;
+        return valid;
       }
     }
 
@@ -324,7 +324,7 @@ public class AutomationDiagnostics implements Serializable {
     String normalized = trimmed.replaceAll("\\s+", " ");
     for (String valid : validNames) {
       if (valid.replaceAll("\\s+", " ").equalsIgnoreCase(normalized)) {
-	return valid;
+        return valid;
       }
     }
 
@@ -332,7 +332,7 @@ public class AutomationDiagnostics implements Serializable {
     List<String> substringMatches = new ArrayList<String>();
     for (String valid : validNames) {
       if (valid.toLowerCase().contains(trimmed.toLowerCase()) || trimmed.toLowerCase().contains(valid.toLowerCase())) {
-	substringMatches.add(valid);
+        substringMatches.add(valid);
       }
     }
     if (substringMatches.size() == 1) {
@@ -346,8 +346,8 @@ public class AutomationDiagnostics implements Serializable {
     for (String valid : validNames) {
       int dist = editDistance(trimmed.toLowerCase(), valid.toLowerCase());
       if (dist <= maxDist && dist < bestDist) {
-	bestDist = dist;
-	bestMatch = valid;
+        bestDist = dist;
+        bestMatch = valid;
       }
     }
     return bestMatch;
@@ -369,13 +369,13 @@ public class AutomationDiagnostics implements Serializable {
     String remediation;
     if (corrected != null) {
       remediation = "Auto-corrected to '" + corrected + "'. Use this name in future calls. Available units: "
-	  + validUnits;
+          + validUnits;
     } else if (!suggestions.isEmpty()) {
       remediation = "Unit '" + unitName + "' not found. Did you mean: " + suggestions
-	  + "? Use listSimulationUnits to discover valid names.";
+          + "? Use listSimulationUnits to discover valid names.";
     } else {
       remediation = "Unit '" + unitName + "' not found. Available units: " + validUnits
-	  + ". Use listSimulationUnits to discover names.";
+          + ". Use listSimulationUnits to discover names.";
     }
 
     Map<String, Object> context = new LinkedHashMap<String, Object>();
@@ -383,7 +383,7 @@ public class AutomationDiagnostics implements Serializable {
     context.put("unitCount", validUnits.size());
 
     return new DiagnosticResult(ErrorCategory.UNIT_NOT_FOUND, unitName,
-	"Unit '" + unitName + "' not found in the process", suggestions, corrected, remediation, context);
+        "Unit '" + unitName + "' not found in the process", suggestions, corrected, remediation, context);
   }
 
   /**
@@ -416,23 +416,23 @@ public class AutomationDiagnostics implements Serializable {
     if (corrected != null) {
       // Find the full address that uses this property name
       for (SimulationVariable v : validVariables) {
-	if (v.getName().equals(corrected)) {
-	  correctedAddress = v.getAddress();
-	  break;
-	}
+        if (v.getName().equals(corrected)) {
+          correctedAddress = v.getAddress();
+          break;
+        }
       }
     }
 
     String remediation;
     if (correctedAddress != null) {
       remediation = "Auto-corrected property to '" + correctedAddress + "'. Use listUnitVariables('" + unitName
-	  + "') to see all variables.";
+          + "') to see all variables.";
     } else if (!suggestions.isEmpty()) {
       remediation = "Property '" + propertyName + "' not found on unit '" + unitName + "'. Did you mean: " + suggestions
-	  + "? Use listUnitVariables('" + unitName + "') for valid addresses.";
+          + "? Use listUnitVariables('" + unitName + "') for valid addresses.";
     } else {
       remediation = "Property '" + propertyName + "' not found on unit '" + unitName + "'. Valid addresses: "
-	  + addressNames;
+          + addressNames;
     }
 
     Map<String, Object> context = new LinkedHashMap<String, Object>();
@@ -443,8 +443,8 @@ public class AutomationDiagnostics implements Serializable {
     }
 
     return new DiagnosticResult(ErrorCategory.PROPERTY_NOT_FOUND, address,
-	"Property '" + propertyName + "' not found on unit '" + unitName + "'", suggestions, correctedAddress,
-	remediation, context);
+        "Property '" + propertyName + "' not found on unit '" + unitName + "'", suggestions, correctedAddress,
+        remediation, context);
   }
 
   /**
@@ -466,7 +466,7 @@ public class AutomationDiagnostics implements Serializable {
       remediation = "Auto-corrected port to '" + corrected + "'. Valid ports for this unit: " + validPorts;
     } else {
       remediation = "Port '" + portName + "' not found on unit '" + unitName + "'. Valid ports: " + validPorts
-	  + ". Use listUnitVariables('" + unitName + "') to see all addresses.";
+          + ". Use listUnitVariables('" + unitName + "') to see all addresses.";
     }
 
     Map<String, Object> context = new LinkedHashMap<String, Object>();
@@ -474,8 +474,8 @@ public class AutomationDiagnostics implements Serializable {
     context.put("validPorts", validPorts);
 
     return new DiagnosticResult(ErrorCategory.PORT_NOT_FOUND, address,
-	"Stream port '" + portName + "' not found on unit '" + unitName + "'", suggestions, corrected, remediation,
-	context);
+        "Stream port '" + portName + "' not found on unit '" + unitName + "'", suggestions, corrected, remediation,
+        context);
   }
 
   /**
@@ -494,7 +494,7 @@ public class AutomationDiagnostics implements Serializable {
 
     if (value < bound.hardMin || value > bound.hardMax) {
       String remediation = "Value " + value + " " + unit + " for '" + propertyName + "' is outside physical limits ["
-	  + bound.hardMin + ", " + bound.hardMax + "] " + unit + ". Check the value and unit.";
+          + bound.hardMin + ", " + bound.hardMax + "] " + unit + ". Check the value and unit.";
       Map<String, Object> context = new LinkedHashMap<String, Object>();
       context.put("hardMin", bound.hardMin);
       context.put("hardMax", bound.hardMax);
@@ -502,13 +502,13 @@ public class AutomationDiagnostics implements Serializable {
       context.put("softMax", bound.softMax);
       context.put("unit", unit);
       return new DiagnosticResult(ErrorCategory.VALUE_OUT_OF_BOUNDS, String.valueOf(value),
-	  "Value " + value + " " + unit + " is outside physical limits for " + propertyName, new ArrayList<String>(),
-	  null, remediation, context);
+          "Value " + value + " " + unit + " is outside physical limits for " + propertyName, new ArrayList<String>(),
+          null, remediation, context);
     }
 
     if (value < bound.softMin || value > bound.softMax) {
       String remediation = "Value " + value + " " + unit + " for '" + propertyName + "' is unusual (typical range: ["
-	  + bound.softMin + ", " + bound.softMax + "] " + unit + "). This may be intentional for special cases.";
+          + bound.softMin + ", " + bound.softMax + "] " + unit + "). This may be intentional for special cases.";
       Map<String, Object> context = new LinkedHashMap<String, Object>();
       context.put("hardMin", bound.hardMin);
       context.put("hardMax", bound.hardMax);
@@ -517,8 +517,8 @@ public class AutomationDiagnostics implements Serializable {
       context.put("unit", unit);
       context.put("severity", "WARNING");
       return new DiagnosticResult(ErrorCategory.VALUE_OUT_OF_BOUNDS, String.valueOf(value),
-	  "Value " + value + " " + unit + " is unusual for " + propertyName, new ArrayList<String>(), null, remediation,
-	  context);
+          "Value " + value + " " + unit + " is unusual for " + propertyName, new ArrayList<String>(), null, remediation,
+          context);
     }
 
     return null;
@@ -559,13 +559,13 @@ public class AutomationDiagnostics implements Serializable {
   public double getSuccessRate() {
     synchronized (history) {
       if (history.isEmpty()) {
-	return 1.0;
+        return 1.0;
       }
       int successes = 0;
       for (OperationRecord r : history) {
-	if (r.success) {
-	  successes++;
-	}
+        if (r.success) {
+          successes++;
+        }
       }
       return (double) successes / history.size();
     }
@@ -580,10 +580,10 @@ public class AutomationDiagnostics implements Serializable {
     Map<String, Integer> counts = new LinkedHashMap<String, Integer>();
     synchronized (history) {
       for (OperationRecord r : history) {
-	if (!r.success && r.errorCategory != null) {
-	  Integer prev = counts.get(r.errorCategory);
-	  counts.put(r.errorCategory, prev != null ? prev + 1 : 1);
-	}
+        if (!r.success && r.errorCategory != null) {
+          Integer prev = counts.get(r.errorCategory);
+          counts.put(r.errorCategory, prev != null ? prev + 1 : 1);
+        }
       }
     }
     return counts;
@@ -667,15 +667,15 @@ public class AutomationDiagnostics implements Serializable {
     int commonTokens = 0;
     for (String it : inputTokens) {
       for (String vt : validTokens) {
-	if (it.equals(vt)) {
-	  commonTokens++;
-	  break;
-	}
+        if (it.equals(vt)) {
+          commonTokens++;
+          break;
+        }
       }
     }
     double tokenScore = inputTokens.length > 0
-	? (double) commonTokens / Math.max(inputTokens.length, validTokens.length)
-	: 0.0;
+        ? (double) commonTokens / Math.max(inputTokens.length, validTokens.length)
+        : 0.0;
 
     return Math.max(editScore, Math.max(substringBonus, tokenScore));
   }
@@ -699,8 +699,8 @@ public class AutomationDiagnostics implements Serializable {
     }
     for (int i = 1; i <= lenA; i++) {
       for (int j = 1; j <= lenB; j++) {
-	int cost = a.charAt(i - 1) == b.charAt(j - 1) ? 0 : 1;
-	dp[i][j] = Math.min(dp[i - 1][j] + 1, Math.min(dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost));
+        int cost = a.charAt(i - 1) == b.charAt(j - 1) ? 0 : 1;
+        dp[i][j] = Math.min(dp[i - 1][j] + 1, Math.min(dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost));
       }
     }
     return dp[lenA][lenB];
@@ -715,7 +715,7 @@ public class AutomationDiagnostics implements Serializable {
     synchronized (history) {
       history.add(record);
       while (history.size() > maxHistorySize) {
-	history.remove(0);
+        history.remove(0);
       }
     }
   }
@@ -731,18 +731,18 @@ public class AutomationDiagnostics implements Serializable {
     synchronized (history) {
       int added = 0;
       for (int i = history.size() - 1; i >= 0 && added < count; i--) {
-	OperationRecord r = history.get(i);
-	if (!r.success) {
-	  Map<String, String> entry = new LinkedHashMap<String, String>();
-	  entry.put("operation", r.operationType);
-	  entry.put("address", r.address);
-	  entry.put("errorCategory", r.errorCategory);
-	  if (r.correction != null) {
-	    entry.put("correction", r.correction);
-	  }
-	  failures.add(entry);
-	  added++;
-	}
+        OperationRecord r = history.get(i);
+        if (!r.success) {
+          Map<String, String> entry = new LinkedHashMap<String, String>();
+          entry.put("operation", r.operationType);
+          entry.put("address", r.address);
+          entry.put("errorCategory", r.errorCategory);
+          if (r.correction != null) {
+            entry.put("correction", r.correction);
+          }
+          failures.add(entry);
+          added++;
+        }
       }
     }
     return failures;
@@ -760,30 +760,30 @@ public class AutomationDiagnostics implements Serializable {
     Integer unitNotFound = errors.get(ErrorCategory.UNIT_NOT_FOUND.name());
     if (unitNotFound != null && unitNotFound > 2) {
       recommendations.add("Frequent unit-not-found errors (" + unitNotFound + "x). "
-	  + "Always call listSimulationUnits first to discover valid names.");
+          + "Always call listSimulationUnits first to discover valid names.");
     }
 
     Integer propNotFound = errors.get(ErrorCategory.PROPERTY_NOT_FOUND.name());
     if (propNotFound != null && propNotFound > 2) {
       recommendations.add("Frequent property-not-found errors (" + propNotFound + "x). "
-	  + "Call listUnitVariables(unitName) before accessing variables.");
+          + "Call listUnitVariables(unitName) before accessing variables.");
     }
 
     Integer outOfBounds = errors.get(ErrorCategory.VALUE_OUT_OF_BOUNDS.name());
     if (outOfBounds != null && outOfBounds > 1) {
       recommendations.add("Values out of bounds detected (" + outOfBounds + "x). "
-	  + "Check units match the expected unit (e.g., Kelvin vs Celsius).");
+          + "Check units match the expected unit (e.g., Kelvin vs Celsius).");
     }
 
     if (!learnedCorrections.isEmpty()) {
       recommendations.add("Learned " + learnedCorrections.size() + " corrections automatically. "
-	  + "These will be applied in future calls.");
+          + "These will be applied in future calls.");
     }
 
     if (recommendations.isEmpty() && !history.isEmpty()) {
       double rate = getSuccessRate();
       if (rate > 0.9) {
-	recommendations.add("Operations running well (success rate: " + String.format("%.0f%%", rate * 100) + ").");
+        recommendations.add("Operations running well (success rate: " + String.format("%.0f%%", rate * 100) + ").");
       }
     }
 
@@ -832,26 +832,26 @@ public class AutomationDiagnostics implements Serializable {
     // Temperature
     if (prop.contains("temperature")) {
       if ("c".equals(u)) {
-	return new PhysicalBound(-273.15, -100.0, 600.0, 3000.0);
+        return new PhysicalBound(-273.15, -100.0, 600.0, 3000.0);
       }
       if ("k".equals(u)) {
-	return new PhysicalBound(0.0, 173.15, 873.15, 3273.15);
+        return new PhysicalBound(0.0, 173.15, 873.15, 3273.15);
       }
       if ("f".equals(u)) {
-	return new PhysicalBound(-459.67, -148.0, 1112.0, 5432.0);
+        return new PhysicalBound(-459.67, -148.0, 1112.0, 5432.0);
       }
     }
 
     // Pressure
     if (prop.contains("pressure")) {
       if ("bara".equals(u) || "bar".equals(u)) {
-	return new PhysicalBound(0.0, 0.5, 700.0, 10000.0);
+        return new PhysicalBound(0.0, 0.5, 700.0, 10000.0);
       }
       if ("pa".equals(u)) {
-	return new PhysicalBound(0.0, 50000.0, 70000000.0, 1000000000.0);
+        return new PhysicalBound(0.0, 50000.0, 70000000.0, 1000000000.0);
       }
       if ("psi".equals(u)) {
-	return new PhysicalBound(0.0, 7.0, 10000.0, 145000.0);
+        return new PhysicalBound(0.0, 7.0, 10000.0, 145000.0);
       }
     }
 

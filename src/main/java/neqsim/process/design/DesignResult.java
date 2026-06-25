@@ -156,7 +156,7 @@ public class DesignResult {
       double utilized) {
     String key = equipmentName + "." + constraintName;
     constraintStatus.put(key,
-	new ConstraintStatus(constraintName, currentValue, limitValue, utilized, utilized <= 1.0));
+        new ConstraintStatus(constraintName, currentValue, limitValue, utilized, utilized <= 1.0));
   }
 
   /**
@@ -257,8 +257,8 @@ public class DesignResult {
     if (!optimizedFlowRates.isEmpty()) {
       sb.append("Optimized Flow Rates:\n");
       for (Map.Entry<String, Double> entry : optimizedFlowRates.entrySet()) {
-	sb.append("  ").append(entry.getKey()).append(": ").append(String.format("%.2f", entry.getValue()))
-	    .append(" kg/hr\n");
+        sb.append("  ").append(entry.getKey()).append(": ").append(String.format("%.2f", entry.getValue()))
+            .append(" kg/hr\n");
       }
       sb.append("\n");
     }
@@ -266,10 +266,10 @@ public class DesignResult {
     if (!constraintStatus.isEmpty()) {
       sb.append("Constraint Status:\n");
       for (Map.Entry<String, ConstraintStatus> entry : constraintStatus.entrySet()) {
-	ConstraintStatus status = entry.getValue();
-	sb.append("  ").append(entry.getKey()).append(": ")
-	    .append(String.format("%.1f%%", status.getUtilization() * 100))
-	    .append(status.isSatisfied() ? " [OK]" : " [VIOLATED]").append("\n");
+        ConstraintStatus status = entry.getValue();
+        sb.append("  ").append(entry.getKey()).append(": ")
+            .append(String.format("%.1f%%", status.getUtilization() * 100))
+            .append(status.isSatisfied() ? " [OK]" : " [VIOLATED]").append("\n");
       }
       sb.append("\n");
     }
@@ -277,7 +277,7 @@ public class DesignResult {
     if (!violations.isEmpty()) {
       sb.append("VIOLATIONS:\n");
       for (String v : violations) {
-	sb.append("  - ").append(v).append("\n");
+        sb.append("  - ").append(v).append("\n");
       }
       sb.append("\n");
     }
@@ -285,7 +285,7 @@ public class DesignResult {
     if (!warnings.isEmpty()) {
       sb.append("Warnings:\n");
       for (String w : warnings) {
-	sb.append("  - ").append(w).append("\n");
+        sb.append("  - ").append(w).append("\n");
       }
     }
 
@@ -312,7 +312,7 @@ public class DesignResult {
      * @param satisfied whether satisfied
      */
     public ConstraintStatus(String name, double currentValue, double limitValue, double utilization,
-	boolean satisfied) {
+        boolean satisfied) {
       this.name = name;
       this.currentValue = currentValue;
       this.limitValue = limitValue;

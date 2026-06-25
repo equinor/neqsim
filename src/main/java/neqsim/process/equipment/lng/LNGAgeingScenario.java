@@ -228,25 +228,25 @@ public class LNGAgeingScenario extends ProcessEquipmentBaseClass {
       double bogMassKg = stepResult.getBogMassFlowRate() * timeStepHours;
       double liquidVol = stepResult.getLiquidVolume();
       vaporSpaceModel.update(bogMassKg, bogMassKg, liquidVol, stepResult.getVaporComposition(),
-	  stepResult.getTemperature());
+          stepResult.getTemperature());
       stepResult.setPressure(vaporSpaceModel.getTankPressure());
 
       // Rollover assessment
       LNGRolloverDetector.RolloverAssessment rollover = rolloverDetector.assess(tankModel.getLayers());
       stepResult.setMaxLayerDensityDifference(rollover.getMaxDensityDifference());
       stepResult
-	  .setRolloverRisk(rollover.getRiskLevel().ordinal() >= LNGRolloverDetector.RolloverRiskLevel.MEDIUM.ordinal());
+          .setRolloverRisk(rollover.getRiskLevel().ordinal() >= LNGRolloverDetector.RolloverRiskLevel.MEDIUM.ordinal());
 
       // BOG handling disposition
       LNGBOGHandlingNetwork.BOGDisposition disposition = bogNetwork
-	  .calculateDisposition(stepResult.getBogMassFlowRate());
+          .calculateDisposition(stepResult.getBogMassFlowRate());
 
       results.add(stepResult);
 
       // Log warnings if rollover risk detected
       if (rollover.getRiskLevel().ordinal() >= LNGRolloverDetector.RolloverRiskLevel.MEDIUM.ordinal()) {
-	logger.warn(String.format("Rollover risk %s at t=%.1f h: max drho=%.2f kg/m3", rollover.getRiskLevel(),
-	    currentTime, rollover.getMaxDensityDifference()));
+        logger.warn(String.format("Rollover risk %s at t=%.1f h: max drho=%.2f kg/m3", rollover.getRiskLevel(),
+            currentTime, rollover.getMaxDensityDifference()));
       }
     }
 
@@ -254,7 +254,7 @@ public class LNGAgeingScenario extends ProcessEquipmentBaseClass {
     createOutletStreams(lngFluid);
 
     logger.info(String.format("LNG ageing simulation complete: %d steps, %.1f hours, %d results", numSteps,
-	simulationTime, results.size()));
+        simulationTime, results.size()));
   }
 
   /**
@@ -270,9 +270,9 @@ public class LNGAgeingScenario extends ProcessEquipmentBaseClass {
       // Create aged LNG stream
       SystemInterface agedFluid = baseFluid.clone();
       for (int i = 0; i < agedFluid.getNumberOfComponents(); i++) {
-	String compName = agedFluid.getComponent(i).getComponentName();
-	double moleFrac = liqComp.containsKey(compName) ? liqComp.get(compName) : 0;
-	agedFluid.addComponent(i, moleFrac - agedFluid.getComponent(i).getz());
+        String compName = agedFluid.getComponent(i).getComponentName();
+        double moleFrac = liqComp.containsKey(compName) ? liqComp.get(compName) : 0;
+        agedFluid.addComponent(i, moleFrac - agedFluid.getComponent(i).getz());
       }
       agedFluid.setTemperature(lastResult.getTemperature());
       agedFluid.setPressure(lastResult.getPressure());
@@ -674,7 +674,7 @@ public class LNGAgeingScenario extends ProcessEquipmentBaseClass {
     sb.append(String.format("Heat transfer coeff: %.4f W/m2/K\n", overallHeatTransferCoeff));
     sb.append("\n--- Initial vs Final ---\n");
     sb.append(String.format("Temperature: %.2f -> %.2f K (%.2f -> %.2f C)\n", first.getTemperature(),
-	last.getTemperature(), first.getTemperature() - 273.15, last.getTemperature() - 273.15));
+        last.getTemperature(), first.getTemperature() - 273.15, last.getTemperature() - 273.15));
     sb.append(String.format("Density: %.2f -> %.2f kg/m3\n", first.getDensity(), last.getDensity()));
     sb.append(String.format("Wobbe Index: %.2f -> %.2f MJ/Sm3\n", first.getWobbeIndex(), last.getWobbeIndex()));
     sb.append(String.format("GCV (vol): %.2f -> %.2f MJ/Sm3\n", first.getGcvVolumetric(), last.getGcvVolumetric()));

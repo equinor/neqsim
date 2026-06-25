@@ -61,7 +61,7 @@ public class MultiphaseChokeFlowFactoryTest {
   void testCreateModelWithDiameter() {
     double diameter = 0.0254; // 1 inch
     MultiphaseChokeFlow model = MultiphaseChokeFlowFactory.createModel(MultiphaseChokeFlowFactory.ModelType.SACHDEVA,
-	diameter);
+        diameter);
 
     assertNotNull(model);
     assertEquals(diameter, model.getChokeDiameter(), 1e-6);

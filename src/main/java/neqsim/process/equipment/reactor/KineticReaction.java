@@ -242,7 +242,7 @@ public class KineticReaction implements Serializable {
    */
   public double calculateEquilibriumConstant(double temperature) {
     double lnKeq = eqCoeffs[0] + eqCoeffs[1] / temperature + eqCoeffs[2] * Math.log(temperature)
-	+ eqCoeffs[3] * temperature;
+        + eqCoeffs[3] * temperature;
     return Math.exp(lnKeq);
   }
 
@@ -264,7 +264,7 @@ public class KineticReaction implements Serializable {
       double order = entry.getValue();
       double concentration = getConcentration(system, phaseIndex, comp);
       if (concentration <= 0.0 && order > 0.0) {
-	return 0.0;
+        return 0.0;
       }
       forwardRate *= Math.pow(Math.max(concentration, 0.0), order);
     }
@@ -307,7 +307,7 @@ public class KineticReaction implements Serializable {
       double order = entry.getValue();
       double concentration = getConcentration(system, phaseIndex, comp);
       if (concentration <= 0.0 && order > 0.0) {
-	return 0.0;
+        return 0.0;
       }
       numerator *= Math.pow(Math.max(concentration, 0.0), order);
     }

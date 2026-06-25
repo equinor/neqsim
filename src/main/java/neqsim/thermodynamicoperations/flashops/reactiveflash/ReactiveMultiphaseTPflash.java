@@ -148,24 +148,24 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
       // components, adds missing product species (e.g., ions from dissociation),
       // and sets up the chemical reaction framework.
       if (useChemicalReactionInit) {
-	int ncBefore = system.getPhase(0).getNumberOfComponents();
-	int savedMaxPhases = system.getMaxNumberOfPhases();
-	system.chemicalReactionInit();
-	int ncAfter = system.getPhase(0).getNumberOfComponents();
-	if (ncAfter > ncBefore) {
-	  // New components were added - must reinitialize the database and mixing rule
-	  // to size interaction parameter matrices for the new component count.
-	  system.createDatabase(true);
-	  system.setMixingRule(system.getMixingRule());
-	}
-	// Restore maxPhases — createDatabase/setMixingRule may reset it
-	system.setMaxNumberOfPhases(savedMaxPhases);
-	// Also enforce maxPhases on current number of phases
-	if (savedMaxPhases == 1) {
-	  system.setNumberOfPhases(1);
-	}
-	system.init(0);
-	system.init(1);
+        int ncBefore = system.getPhase(0).getNumberOfComponents();
+        int savedMaxPhases = system.getMaxNumberOfPhases();
+        system.chemicalReactionInit();
+        int ncAfter = system.getPhase(0).getNumberOfComponents();
+        if (ncAfter > ncBefore) {
+          // New components were added - must reinitialize the database and mixing rule
+          // to size interaction parameter matrices for the new component count.
+          system.createDatabase(true);
+          system.setMixingRule(system.getMixingRule());
+        }
+        // Restore maxPhases — createDatabase/setMixingRule may reset it
+        system.setMaxNumberOfPhases(savedMaxPhases);
+        // Also enforce maxPhases on current number of phases
+        if (savedMaxPhases == 1) {
+          system.setNumberOfPhases(1);
+        }
+        system.init(0);
+        system.init(1);
       }
 
       // Step 1: Build the formula matrix from component elemental composition
@@ -173,22 +173,22 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
       numberOfReactions = formulaMatrix.getNumberOfIndependentReactions();
 
       logger.debug("ReactiveMultiphaseTPflash: " + formulaMatrix.getNumberOfComponents() + " components, "
-	  + formulaMatrix.getNumberOfElements() + " elements, " + numberOfReactions + " independent reactions");
+          + formulaMatrix.getNumberOfElements() + " elements, " + numberOfReactions + " independent reactions");
 
       if (numberOfReactions == 0) {
-	// No chemical reactions - composition is fully determined by element balance.
-	// For systems with ionic species, init(1) may create multiple phases but
-	// the composition is still fully constrained (NR=0 means element balance
-	// uniquely determines all mole fractions). Mark as converged directly.
-	if (system.getNumberOfPhases() <= 1 || formulaMatrix.hasIonicSpecies()) {
-	  logger.debug("No reactions: composition is at equilibrium (NR=0)");
-	  converged = true;
-	  return;
-	}
-	// For non-ionic multi-phase: fall back to standard VLE flash
-	logger.debug("No independent reactions detected, running standard flash approach");
-	runNonReactiveFlash();
-	return;
+        // No chemical reactions - composition is fully determined by element balance.
+        // For systems with ionic species, init(1) may create multiple phases but
+        // the composition is still fully constrained (NR=0 means element balance
+        // uniquely determines all mole fractions). Mark as converged directly.
+        if (system.getNumberOfPhases() <= 1 || formulaMatrix.hasIonicSpecies()) {
+          logger.debug("No reactions: composition is at equilibrium (NR=0)");
+          converged = true;
+          return;
+        }
+        // For non-ionic multi-phase: fall back to standard VLE flash
+        logger.debug("No independent reactions detected, running standard flash approach");
+        runNonReactiveFlash();
+        return;
       }
 
       // Step 2: Initialize phase split with a conventional (non-reactive) VLE flash.
@@ -200,22 +200,22 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
       // Electrolyte CPA init may create 2 phases internally, but if user wants
       // single-phase CE (maxPhases=1), we should not honour those spurious phases.
       if (effectiveMaxPhases > 1) {
-	initializeWithVLEFlash();
+        initializeWithVLEFlash();
       }
 
       if (isTraceIonMultiphaseCase(effectiveMaxPhases)) {
-	converged = true;
-	totalIterations = 0;
-	equilibriumTotalMoles = system.getNumberOfMoles();
-	finalGibbsEnergy = computeGibbsEnergy();
-	return;
+        converged = true;
+        totalIterations = 0;
+        equilibriumTotalMoles = system.getNumberOfMoles();
+        finalGibbsEnergy = computeGibbsEnergy();
+        return;
       }
 
       // Enforce effectiveMaxPhases: electrolyte CPA init may have created extra phases
       if (effectiveMaxPhases == 1 && system.getNumberOfPhases() > 1) {
-	system.setNumberOfPhases(1);
-	system.setMaxNumberOfPhases(1);
-	system.init(0);
+        system.setNumberOfPhases(1);
+        system.setMaxNumberOfPhases(1);
+        system.init(0);
       }
 
       // Step 2.5: Reactive stability analysis
@@ -230,30 +230,30 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
       List<double[]> unstableTrials;
 
       if (skipStability) {
-	logger.debug("Skipping stability (already " + system.getNumberOfPhases() + " phases from VLE)");
-	isUnstable = true; // treat as unstable since we have multiple phases
-	unstableTrials = java.util.Collections.emptyList();
+        logger.debug("Skipping stability (already " + system.getNumberOfPhases() + " phases from VLE)");
+        isUnstable = true; // treat as unstable since we have multiple phases
+        unstableTrials = java.util.Collections.emptyList();
       } else {
-	logger.debug("Step 2.5: stability analysis, np=" + system.getNumberOfPhases());
-	ReactiveStabilityAnalysis stability = new ReactiveStabilityAnalysis(system, formulaMatrix);
-	isUnstable = stability.run();
-	logger.debug("Stability: unstable=" + isUnstable);
+        logger.debug("Step 2.5: stability analysis, np=" + system.getNumberOfPhases());
+        ReactiveStabilityAnalysis stability = new ReactiveStabilityAnalysis(system, formulaMatrix);
+        isUnstable = stability.run();
+        logger.debug("Stability: unstable=" + isUnstable);
 
-	if (!isUnstable) {
-	  // Single phase is stable - just solve homogeneous CE
-	  logger.debug("Phase-stable, solving single-phase CE");
-	  solveSinglePhaseChemicalEquilibrium();
-	  logger.debug("Single-phase CE done, converged=" + converged + " iters=" + totalIterations);
-	  converged = true;
-	  return;
-	}
-	unstableTrials = stability.getUnstableTrialCompositions();
+        if (!isUnstable) {
+          // Single phase is stable - just solve homogeneous CE
+          logger.debug("Phase-stable, solving single-phase CE");
+          solveSinglePhaseChemicalEquilibrium();
+          logger.debug("Single-phase CE done, converged=" + converged + " iters=" + totalIterations);
+          converged = true;
+          return;
+        }
+        unstableTrials = stability.getUnstableTrialCompositions();
       }
 
       // Step 3: Add trial phases from stability analysis (skip if already multi-phase)
       if (!unstableTrials.isEmpty()) {
-	logger.debug("Adding " + unstableTrials.size() + " trial phases");
-	addTrialPhases(unstableTrials);
+        logger.debug("Adding " + unstableTrials.size() + " trial phases");
+        addTrialPhases(unstableTrials);
       }
       logger.debug("Starting outer loop with np=" + system.getNumberOfPhases());
 
@@ -262,89 +262,90 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
       // - Remove negligible phases
       // - Re-check stability
       for (int outerIter = 0; outerIter < MAX_OUTER_ITER; outerIter++) {
-	logger.debug("Outer iter " + outerIter + " np=" + system.getNumberOfPhases());
-	// Step 4a: Solve the multiphase modified RAND system
-	ModifiedRANDSolver randSolver = new ModifiedRANDSolver(system, formulaMatrix);
-	randSolver.setUseDIIS(this.useDIIS);
-	boolean randConverged = randSolver.solve();
-	totalIterations += randSolver.getIterationsUsed();
-	equilibriumTotalMoles = randSolver.getTotalMoles();
-	this.solver = randSolver;
-	logger.debug("RAND: converged=" + randConverged + " iters=" + randSolver.getIterationsUsed() + " residual="
-	    + randSolver.getFinalResidual());
+        logger.debug("Outer iter " + outerIter + " np=" + system.getNumberOfPhases());
+        // Step 4a: Solve the multiphase modified RAND system
+        ModifiedRANDSolver randSolver = new ModifiedRANDSolver(system, formulaMatrix);
+        randSolver.setUseDIIS(this.useDIIS);
+        boolean randConverged = randSolver.solve();
+        totalIterations += randSolver.getIterationsUsed();
+        equilibriumTotalMoles = randSolver.getTotalMoles();
+        this.solver = randSolver;
+        logger.debug("RAND: converged=" + randConverged + " iters=" + randSolver.getIterationsUsed() + " residual="
+            + randSolver.getFinalResidual());
 
-	if (!randConverged) {
-	  logger.warn("Modified RAND solver did not converge at outer iteration " + outerIter);
-	  // Accept near-converged multi-phase solutions to prevent outer loop
-	  // from restarting and overshooting a good solution
-	  if (system.getNumberOfPhases() > 1 && randSolver.getFinalResidual() < 5.0e-3) {
-	    converged = true;
-	    logger.info("Accepted near-converged (residual=" + randSolver.getFinalResidual() + ")");
-	    break;
-	  }
-	}
+        if (!randConverged) {
+          logger.warn("Modified RAND solver did not converge at outer iteration " + outerIter);
+          // Accept near-converged multi-phase solutions to prevent outer loop
+          // from restarting and overshooting a good solution
+          if (system.getNumberOfPhases() > 1 && randSolver.getFinalResidual() < 5.0e-3) {
+            converged = true;
+            logger.info("Accepted near-converged (residual=" + randSolver.getFinalResidual() + ")");
+            break;
+          }
+        }
 
-	// Step 4b: Remove phases with negligible fractions
-	boolean phaseRemoved = removeNegligiblePhases();
-	logger.debug("phaseRemoved=" + phaseRemoved + " np=" + system.getNumberOfPhases());
+        // Step 4b: Remove phases with negligible fractions
+        boolean phaseRemoved = removeNegligiblePhases();
+        logger.debug("phaseRemoved=" + phaseRemoved + " np=" + system.getNumberOfPhases());
 
-	// Step 4c: Check convergence
-	if (randConverged && !phaseRemoved) {
-	  // If we can't add more phases (at maxPhases), accept the result.
-	  // Running stability analysis is expensive and can hang for immiscible
-	  // systems where single-phase CE is ill-posed (e.g., methane/water).
-	  if (system.getNumberOfPhases() >= effectiveMaxPhases) {
-	    converged = true;
-	    logger.debug("CONVERGED (at maxPhases=" + effectiveMaxPhases + ")");
-	    break;
-	  }
+        // Step 4c: Check convergence
+        if (randConverged && !phaseRemoved) {
+          // If we can't add more phases (at maxPhases), accept the result.
+          // Running stability analysis is expensive and can hang for immiscible
+          // systems where single-phase CE is ill-posed (e.g., methane/water).
+          if (system.getNumberOfPhases() >= effectiveMaxPhases) {
+            converged = true;
+            logger.debug("CONVERGED (at maxPhases=" + effectiveMaxPhases + ")");
+            break;
+          }
 
-	  // Do a final stability check to see if we need another phase
-	  logger.debug("RAND converged, checking stability...");
-	  ReactiveStabilityAnalysis recheck = new ReactiveStabilityAnalysis(system, formulaMatrix);
-	  boolean stillUnstable = recheck.run();
-	  logger.debug("Stability recheck: unstable=" + stillUnstable);
+          // Do a final stability check to see if we need another phase
+          logger.debug("RAND converged, checking stability...");
+          ReactiveStabilityAnalysis recheck = new ReactiveStabilityAnalysis(system, formulaMatrix);
+          boolean stillUnstable = recheck.run();
+          logger.debug("Stability recheck: unstable=" + stillUnstable);
 
-	  if (!stillUnstable) {
-	    converged = true;
-	    logger.debug("CONVERGED (stable after RAND)");
-	    break;
-	  }
+          if (!stillUnstable) {
+            converged = true;
+            logger.debug("CONVERGED (stable after RAND)");
+            break;
+          }
 
-	  // Add new trial phases and continue
-	  List<double[]> newTrials = recheck.getUnstableTrialCompositions();
-	  if (!newTrials.isEmpty()) {
-	    int phasesBefore = system.getNumberOfPhases();
-	    addTrialPhases(newTrials);
-	    if (system.getNumberOfPhases() == phasesBefore) {
-	      // Could not add phase (maxPhases reached) — accept current CE as converged
-	      converged = true;
-	      logger.debug("CONVERGED (maxPhases reached)");
-	      break;
-	    }
-	  } else {
-	    converged = true;
-	    logger.debug("CONVERGED (no trials)");
-	    break;
-	  }
-	}
+          // Add new trial phases and continue
+          List<double[]> newTrials = recheck.getUnstableTrialCompositions();
+          if (!newTrials.isEmpty()) {
+            int phasesBefore = system.getNumberOfPhases();
+            addTrialPhases(newTrials);
+            if (system.getNumberOfPhases() == phasesBefore) {
+              // Could not add phase (maxPhases reached) — accept current CE
+              // as converged
+              converged = true;
+              logger.debug("CONVERGED (maxPhases reached)");
+              break;
+            }
+          } else {
+            converged = true;
+            logger.debug("CONVERGED (no trials)");
+            break;
+          }
+        }
 
-	// Step 4d: If converged but a phase was removed, accept CE result
-	if (randConverged && phaseRemoved) {
-	  // Phase was negligible — CE is satisfied in remaining phases
-	  converged = true;
-	  break;
-	}
+        // Step 4d: If converged but a phase was removed, accept CE result
+        if (randConverged && phaseRemoved) {
+          // Phase was negligible — CE is satisfied in remaining phases
+          converged = true;
+          break;
+        }
       }
 
       // Compute final Gibbs energy
       finalGibbsEnergy = computeGibbsEnergy();
 
       if (!converged) {
-	logger.warn("ReactiveMultiphaseTPflash did not converge after " + totalIterations + " total iterations");
+        logger.warn("ReactiveMultiphaseTPflash did not converge after " + totalIterations + " total iterations");
       } else {
-	logger.debug("ReactiveMultiphaseTPflash converged: " + system.getNumberOfPhases() + " phases, "
-	    + totalIterations + " total iterations");
+        logger.debug("ReactiveMultiphaseTPflash converged: " + system.getNumberOfPhases() + " phases, "
+            + totalIterations + " total iterations");
       }
 
     } catch (Exception ex) {
@@ -369,8 +370,8 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
     for (int i = 0; i < nc; i++) {
       double tc = system.getPhase(0).getComponent(i).getTC();
       if (T < tc) {
-	allSupercritical = false;
-	break;
+        allSupercritical = false;
+        break;
       }
     }
     if (allSupercritical) {
@@ -400,9 +401,9 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
       double pc = system.getPhase(0).getComponent(i).getPC();
       double omega = system.getPhase(0).getComponent(i).getAcentricFactor();
       if (pc > 0 && tc > 0) {
-	lnK[i] = Math.log(pc / P) + 5.373 * (1.0 + omega) * (1.0 - tc / T);
+        lnK[i] = Math.log(pc / P) + 5.373 * (1.0 + omega) * (1.0 - tc / T);
       } else {
-	lnK[i] = 0.0;
+        lnK[i] = 0.0;
       }
     }
 
@@ -430,11 +431,11 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
       double err = 0.0;
       system.init(1);
       for (int i = 0; i < nc; i++) {
-	double lnPhiL = system.getPhase(liqIdx).getComponent(i).getLogFugacityCoefficient();
-	double lnPhiV = system.getPhase(gasIdx).getComponent(i).getLogFugacityCoefficient();
-	double lnKnew = lnPhiL - lnPhiV;
-	err += Math.abs(lnKnew - lnK[i]);
-	lnK[i] = lnKnew;
+        double lnPhiL = system.getPhase(liqIdx).getComponent(i).getLogFugacityCoefficient();
+        double lnPhiV = system.getPhase(gasIdx).getComponent(i).getLogFugacityCoefficient();
+        double lnKnew = lnPhiL - lnPhiV;
+        err += Math.abs(lnKnew - lnK[i]);
+        lnK[i] = lnKnew;
       }
 
       beta = system.getBeta(gasIdx);
@@ -442,12 +443,12 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
       beta = Math.max(1e-15, Math.min(1.0 - 1e-15, beta));
 
       for (int i = 0; i < nc; i++) {
-	z[i] = system.getPhase(0).getComponent(i).getz();
-	double Ki = Math.exp(lnK[i]);
-	double xi = z[i] / (1.0 + beta * (Ki - 1.0));
-	double yi = Ki * xi;
-	system.getPhase(liqIdx).getComponent(i).setx(Math.max(xi, MIN_MOLES));
-	system.getPhase(gasIdx).getComponent(i).setx(Math.max(yi, MIN_MOLES));
+        z[i] = system.getPhase(0).getComponent(i).getz();
+        double Ki = Math.exp(lnK[i]);
+        double xi = z[i] / (1.0 + beta * (Ki - 1.0));
+        double yi = Ki * xi;
+        system.getPhase(liqIdx).getComponent(i).setx(Math.max(xi, MIN_MOLES));
+        system.getPhase(gasIdx).getComponent(i).setx(Math.max(yi, MIN_MOLES));
       }
       system.getPhase(liqIdx).normalize();
       system.getPhase(gasIdx).normalize();
@@ -455,8 +456,8 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
       system.setBeta(gasIdx, beta);
 
       if (err < 1e-10) {
-	converged = true;
-	break;
+        converged = true;
+        break;
       }
     }
     system.init(1);
@@ -476,23 +477,23 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
       double f = 0.0;
       double df = 0.0;
       for (int i = 0; i < nc; i++) {
-	double zi = system.getPhase(0).getComponent(i).getz();
-	double Ki = Math.exp(lnK[i]);
-	double denom = 1.0 + beta * (Ki - 1.0);
-	if (Math.abs(denom) < 1e-30) {
-	  continue;
-	}
-	f += zi * (Ki - 1.0) / denom;
-	df -= zi * (Ki - 1.0) * (Ki - 1.0) / (denom * denom);
+        double zi = system.getPhase(0).getComponent(i).getz();
+        double Ki = Math.exp(lnK[i]);
+        double denom = 1.0 + beta * (Ki - 1.0);
+        if (Math.abs(denom) < 1e-30) {
+          continue;
+        }
+        f += zi * (Ki - 1.0) / denom;
+        df -= zi * (Ki - 1.0) * (Ki - 1.0) / (denom * denom);
       }
       if (Math.abs(df) < 1e-30) {
-	break;
+        break;
       }
       double step = f / df;
       beta -= step;
       beta = Math.max(1e-15, Math.min(1.0 - 1e-15, beta));
       if (Math.abs(step) < 1e-12) {
-	break;
+        break;
       }
     }
     return beta;
@@ -527,10 +528,10 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
       double pc = system.getPhase(0).getComponent(i).getPC();
       double omega = system.getPhase(0).getComponent(i).getAcentricFactor();
       if (pc > 0 && tc > 0) {
-	lnK[i] = Math.log(pc / P) + 5.373 * (1.0 + omega) * (1.0 - tc / T);
-	if (Math.abs(lnK[i]) > 0.1) {
-	  hasVolatile = true;
-	}
+        lnK[i] = Math.log(pc / P) + 5.373 * (1.0 + omega) * (1.0 - tc / T);
+        if (Math.abs(lnK[i]) > 0.1) {
+          hasVolatile = true;
+        }
       }
     }
 
@@ -550,19 +551,19 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
       double f = 0.0;
       double df = 0.0;
       for (int i = 0; i < nc; i++) {
-	double Ki = Math.exp(lnK[i]);
-	double denom = 1.0 + V * (Ki - 1.0);
-	if (Math.abs(denom) < 1e-30) {
-	  continue;
-	}
-	f += z[i] * (Ki - 1.0) / denom;
-	df -= z[i] * (Ki - 1.0) * (Ki - 1.0) / (denom * denom);
+        double Ki = Math.exp(lnK[i]);
+        double denom = 1.0 + V * (Ki - 1.0);
+        if (Math.abs(denom) < 1e-30) {
+          continue;
+        }
+        f += z[i] * (Ki - 1.0) / denom;
+        df -= z[i] * (Ki - 1.0) * (Ki - 1.0) / (denom * denom);
       }
       if (Math.abs(f) < 1e-10) {
-	break;
+        break;
       }
       if (Math.abs(df) > 1e-30) {
-	V -= f / df;
+        V -= f / df;
       }
       V = Math.max(0.0, Math.min(1.0, V));
     }
@@ -577,11 +578,11 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
       system.addPhase();
       int newIdx = system.getNumberOfPhases() - 1;
       try {
-	neqsim.thermo.phase.PhaseInterface newPhase = system.getPhase(0).clone();
-	system.setPhase(newPhase, newIdx);
+        neqsim.thermo.phase.PhaseInterface newPhase = system.getPhase(0).clone();
+        system.setPhase(newPhase, newIdx);
       } catch (Exception ex) {
-	logger.warn("Failed to create VLE trial phase: " + ex.getMessage());
-	return;
+        logger.warn("Failed to create VLE trial phase: " + ex.getMessage());
+        return;
       }
     }
 
@@ -592,7 +593,7 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
       double yi = Ki * xi; // vapor composition
       system.getPhase(0).getComponent(i).setx(Math.max(xi, 1e-30));
       if (system.getNumberOfPhases() > 1) {
-	system.getPhase(1).getComponent(i).setx(Math.max(yi, 1e-30));
+        system.getPhase(1).getComponent(i).setx(Math.max(yi, 1e-30));
       }
     }
     system.getPhase(0).normalize();
@@ -620,13 +621,13 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
    */
   private boolean isTraceIonMultiphaseCase(int effectiveMaxPhases) {
     if (effectiveMaxPhases < 2 || system.getNumberOfPhases() < 2 || formulaMatrix == null
-	|| !formulaMatrix.hasIonicSpecies()) {
+        || !formulaMatrix.hasIonicSpecies()) {
       return false;
     }
     double ionZTotal = 0.0;
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       if (system.getPhase(0).getComponent(i).getIonicCharge() != 0 || system.getPhase(0).getComponent(i).isIsIon()) {
-	ionZTotal += Math.abs(system.getPhase(0).getComponent(i).getz());
+        ionZTotal += Math.abs(system.getPhase(0).getComponent(i).getz());
       }
     }
     return ionZTotal < 1.0e-8;
@@ -690,7 +691,7 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
       neqsim.thermo.phase.PhaseInterface newPhase = system.getPhase(0).clone();
       // Set the composition of the new phase
       for (int i = 0; i < nc; i++) {
-	newPhase.getComponent(i).setx(trial[i]);
+        newPhase.getComponent(i).setx(trial[i]);
       }
       newPhase.normalize();
 
@@ -719,12 +720,12 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
     boolean removed = false;
     for (int j = system.getNumberOfPhases() - 1; j >= 0; j--) {
       if (system.getNumberOfPhases() <= 1) {
-	break; // Keep at least one phase
+        break; // Keep at least one phase
       }
       if (system.getBeta(j) < MIN_PHASE_FRACTION) {
-	system.removePhaseKeepTotalComposition(j);
-	removed = true;
-	logger.debug("Removed phase " + j + " (negligible fraction)");
+        system.removePhaseKeepTotalComposition(j);
+        removed = true;
+        logger.debug("Removed phase " + j + " (negligible fraction)");
       }
     }
     if (removed) {
@@ -745,11 +746,11 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
       PhaseInterface phase = system.getPhase(j);
       double beta = phase.getBeta();
       for (int i = 0; i < phase.getNumberOfComponents(); i++) {
-	double xi = phase.getComponent(i).getx();
-	if (xi > MIN_MOLES) {
-	  double lnPhi = phase.getComponent(i).getLogFugacityCoefficient();
-	  G += beta * xi * (Math.log(xi) + lnPhi);
-	}
+        double xi = phase.getComponent(i).getx();
+        if (xi > MIN_MOLES) {
+          double lnPhi = phase.getComponent(i).getLogFugacityCoefficient();
+          G += beta * xi * (Math.log(xi) + lnPhi);
+        }
       }
     }
     return G;
@@ -864,9 +865,9 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
     if (converged) {
       sb.append("  Equilibrium composition:\n");
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-	String name = system.getPhase(0).getComponent(i).getComponentName();
-	double xi = system.getPhase(0).getComponent(i).getx();
-	sb.append("    ").append(name).append(": ").append(String.format("%.6f", xi)).append("\n");
+        String name = system.getPhase(0).getComponent(i).getComponentName();
+        double xi = system.getPhase(0).getComponent(i).getx();
+        sb.append("    ").append(name).append(": ").append(String.format("%.6f", xi)).append("\n");
       }
     }
     return sb.toString();

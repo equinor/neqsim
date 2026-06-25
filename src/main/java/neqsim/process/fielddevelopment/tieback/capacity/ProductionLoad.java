@@ -278,7 +278,7 @@ public final class ProductionLoad implements Serializable {
    */
   public double getDailyValueUsd() {
     return gasRateMSm3d * gasValueUsdPerMSm3 + oilRateBopd * oilValueUsdPerBbl + waterRateM3d * waterValueUsdPerM3
-	+ getTotalLiquidRateM3d() * liquidValueUsdPerM3;
+        + getTotalLiquidRateM3d() * liquidValueUsdPerM3;
   }
 
   /**
@@ -308,7 +308,7 @@ public final class ProductionLoad implements Serializable {
    */
   public ProductionLoad withPeriod(String newPeriodName, int newYear) {
     return new ProductionLoad(newPeriodName, newYear, gasRateMSm3d, oilRateBopd, waterRateM3d, liquidRateM3d,
-	periodLengthDays, gasValueUsdPerMSm3, oilValueUsdPerBbl, waterValueUsdPerM3, liquidValueUsdPerM3);
+        periodLengthDays, gasValueUsdPerMSm3, oilValueUsdPerBbl, waterValueUsdPerM3, liquidValueUsdPerM3);
   }
 
   /**
@@ -323,7 +323,7 @@ public final class ProductionLoad implements Serializable {
   public ProductionLoad withCommodityValues(double gasUsdPerMSm3, double oilUsdPerBbl, double waterUsdPerM3,
       double liquidUsdPerM3) {
     return new ProductionLoad(periodName, year, gasRateMSm3d, oilRateBopd, waterRateM3d, liquidRateM3d,
-	periodLengthDays, gasUsdPerMSm3, oilUsdPerBbl, waterUsdPerM3, liquidUsdPerM3);
+        periodLengthDays, gasUsdPerMSm3, oilUsdPerBbl, waterUsdPerM3, liquidUsdPerM3);
   }
 
   /**
@@ -334,7 +334,7 @@ public final class ProductionLoad implements Serializable {
    */
   public ProductionLoad withPeriodLengthDays(double newPeriodLengthDays) {
     return new ProductionLoad(periodName, year, gasRateMSm3d, oilRateBopd, waterRateM3d, liquidRateM3d,
-	newPeriodLengthDays, gasValueUsdPerMSm3, oilValueUsdPerBbl, waterValueUsdPerM3, liquidValueUsdPerM3);
+        newPeriodLengthDays, gasValueUsdPerMSm3, oilValueUsdPerBbl, waterValueUsdPerM3, liquidValueUsdPerM3);
   }
 
   /**
@@ -346,8 +346,8 @@ public final class ProductionLoad implements Serializable {
   public ProductionLoad scale(double factor) {
     double safeFactor = Math.max(0.0, factor);
     return new ProductionLoad(periodName, year, gasRateMSm3d * safeFactor, oilRateBopd * safeFactor,
-	waterRateM3d * safeFactor, liquidRateM3d * safeFactor, periodLengthDays, gasValueUsdPerMSm3, oilValueUsdPerBbl,
-	waterValueUsdPerM3, liquidValueUsdPerM3);
+        waterRateM3d * safeFactor, liquidRateM3d * safeFactor, periodLengthDays, gasValueUsdPerMSm3, oilValueUsdPerBbl,
+        waterValueUsdPerM3, liquidValueUsdPerM3);
   }
 
   /**
@@ -361,8 +361,8 @@ public final class ProductionLoad implements Serializable {
       return this;
     }
     return new ProductionLoad(periodName, year, gasRateMSm3d + other.gasRateMSm3d, oilRateBopd + other.oilRateBopd,
-	waterRateM3d + other.waterRateM3d, combineLiquidRates(this, other), periodLengthDays, gasValueUsdPerMSm3,
-	oilValueUsdPerBbl, waterValueUsdPerM3, liquidValueUsdPerM3);
+        waterRateM3d + other.waterRateM3d, combineLiquidRates(this, other), periodLengthDays, gasValueUsdPerMSm3,
+        oilValueUsdPerBbl, waterValueUsdPerM3, liquidValueUsdPerM3);
   }
 
   /**
@@ -376,9 +376,9 @@ public final class ProductionLoad implements Serializable {
       return this;
     }
     return new ProductionLoad(periodName, year, Math.max(0.0, gasRateMSm3d - other.gasRateMSm3d),
-	Math.max(0.0, oilRateBopd - other.oilRateBopd), Math.max(0.0, waterRateM3d - other.waterRateM3d),
-	Math.max(0.0, getTotalLiquidRateM3d() - other.getTotalLiquidRateM3d()), periodLengthDays, gasValueUsdPerMSm3,
-	oilValueUsdPerBbl, waterValueUsdPerM3, liquidValueUsdPerM3);
+        Math.max(0.0, oilRateBopd - other.oilRateBopd), Math.max(0.0, waterRateM3d - other.waterRateM3d),
+        Math.max(0.0, getTotalLiquidRateM3d() - other.getTotalLiquidRateM3d()), periodLengthDays, gasValueUsdPerMSm3,
+        oilValueUsdPerBbl, waterValueUsdPerM3, liquidValueUsdPerM3);
   }
 
   /**
@@ -398,6 +398,6 @@ public final class ProductionLoad implements Serializable {
   @Override
   public String toString() {
     return String.format("ProductionLoad[%s: gas=%.3f MSm3/d, oil=%.0f bbl/d, water=%.0f m3/d]", periodName,
-	gasRateMSm3d, oilRateBopd, waterRateM3d);
+        gasRateMSm3d, oilRateBopd, waterRateM3d);
   }
 }

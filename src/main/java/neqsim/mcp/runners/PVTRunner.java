@@ -48,7 +48,7 @@ public class PVTRunner {
 
   private static final List<String> SUPPORTED_EXPERIMENTS = Collections
       .unmodifiableList(Arrays.asList("CME", "CVD", "differentialLiberation", "saturationPressure",
-	  "saturationTemperature", "separatorTest", "swellingTest", "GOR", "viscosity"));
+          "saturationTemperature", "separatorTest", "swellingTest", "GOR", "viscosity"));
 
   /**
    * Private constructor — all methods are static.
@@ -74,7 +74,7 @@ public class PVTRunner {
   public static String run(String json) {
     if (json == null || json.trim().isEmpty()) {
       return errorJson("INPUT_ERROR", "JSON input is null or empty",
-	  "Provide a valid JSON PVT specification with 'experiment', 'components', etc.");
+          "Provide a valid JSON PVT specification with 'experiment', 'components', etc.");
     }
 
     JsonObject input;
@@ -89,12 +89,12 @@ public class PVTRunner {
     // --- Parse experiment type ---
     if (!input.has("experiment")) {
       return errorJson("MISSING_EXPERIMENT", "No 'experiment' field specified",
-	  "Provide 'experiment': one of " + SUPPORTED_EXPERIMENTS);
+          "Provide 'experiment': one of " + SUPPORTED_EXPERIMENTS);
     }
     String experiment = input.get("experiment").getAsString();
     if (!SUPPORTED_EXPERIMENTS.contains(experiment)) {
       return errorJson("UNKNOWN_EXPERIMENT", "Unknown experiment type: " + experiment,
-	  "Use one of: " + SUPPORTED_EXPERIMENTS);
+          "Use one of: " + SUPPORTED_EXPERIMENTS);
     }
 
     // --- Parse model ---
@@ -118,7 +118,7 @@ public class PVTRunner {
     // --- Parse components ---
     if (!input.has("components")) {
       return errorJson("MISSING_COMPONENTS", "No 'components' specified",
-	  "Provide a components map, e.g. {\"methane\": 0.85, \"ethane\": 0.15}");
+          "Provide a components map, e.g. {\"methane\": 0.85, \"ethane\": 0.15}");
     }
     JsonObject componentsJson = input.getAsJsonObject("components");
     Map<String, Double> components = new HashMap<>();
@@ -131,13 +131,13 @@ public class PVTRunner {
     try {
       fluid = createFluid(model, temperatureK, pressureBara);
       for (Map.Entry<String, Double> comp : components.entrySet()) {
-	fluid.addComponent(comp.getKey(), comp.getValue());
+        fluid.addComponent(comp.getKey(), comp.getValue());
       }
       fluid.setMixingRule(mixingRule);
       fluid.setMultiPhaseCheck(true);
     } catch (Exception e) {
       return errorJson("FLUID_ERROR", "Failed to create fluid: " + e.getMessage(),
-	  "Check component names and compositions");
+          "Check component names and compositions");
     }
 
     // --- Parse pressures array ---
@@ -146,7 +146,7 @@ public class PVTRunner {
       JsonArray pArr = input.getAsJsonArray("pressures");
       pressures = new double[pArr.size()];
       for (int i = 0; i < pArr.size(); i++) {
-	pressures[i] = pArr.get(i).getAsDouble();
+        pressures[i] = pArr.get(i).getAsDouble();
       }
     }
 
@@ -159,34 +159,34 @@ public class PVTRunner {
       JsonObject data;
       switch (experiment) {
       case "CME":
-	data = runCME(fluid, temperatureK, pressures, input);
-	break;
+        data = runCME(fluid, temperatureK, pressures, input);
+        break;
       case "CVD":
-	data = runCVD(fluid, temperatureK, pressures, input);
-	break;
+        data = runCVD(fluid, temperatureK, pressures, input);
+        break;
       case "differentialLiberation":
-	data = runDL(fluid, temperatureK, pressures, input);
-	break;
+        data = runDL(fluid, temperatureK, pressures, input);
+        break;
       case "saturationPressure":
-	data = runSaturationPressure(fluid);
-	break;
+        data = runSaturationPressure(fluid);
+        break;
       case "saturationTemperature":
-	data = runSaturationTemperature(fluid);
-	break;
+        data = runSaturationTemperature(fluid);
+        break;
       case "separatorTest":
-	data = runSeparatorTest(fluid, input);
-	break;
+        data = runSeparatorTest(fluid, input);
+        break;
       case "swellingTest":
-	data = runSwellingTest(fluid, input);
-	break;
+        data = runSwellingTest(fluid, input);
+        break;
       case "GOR":
-	data = runGOR(fluid, input);
-	break;
+        data = runGOR(fluid, input);
+        break;
       case "viscosity":
-	data = runViscosity(fluid, temperatureK, pressures, input);
-	break;
+        data = runViscosity(fluid, temperatureK, pressures, input);
+        break;
       default:
-	return errorJson("UNKNOWN_EXPERIMENT", "Not implemented: " + experiment, "");
+        return errorJson("UNKNOWN_EXPERIMENT", "Not implemented: " + experiment, "");
       }
 
       result.add("data", data);
@@ -203,13 +203,13 @@ public class PVTRunner {
       result.add("provenance", GSON.toJsonTree(provenance));
 
       ApiEnvelope.applyStandardFields(result, "runPVT", provenance,
-	  ApiEnvelope.validationStatus(true, "calculation", "PVT experiment completed"),
-	  ApiEnvelope.qualityGate("passed", "PVT experiment completed", true));
+          ApiEnvelope.validationStatus(true, "calculation", "PVT experiment completed"),
+          ApiEnvelope.qualityGate("passed", "PVT experiment completed", true));
 
       return GSON.toJson(result);
     } catch (Exception e) {
       return errorJson("PVT_ERROR", "PVT calculation failed: " + e.getMessage(),
-	  "Check fluid definition and experiment parameters");
+          "Check fluid definition and experiment parameters");
     }
   }
 
@@ -354,10 +354,10 @@ public class PVTRunner {
       double[] temps = new double[conds.size()];
       double[] presses = new double[conds.size()];
       for (int i = 0; i < conds.size(); i++) {
-	JsonObject cond = conds.get(i).getAsJsonObject();
-	temps[i] = cond.has("temperature_C") ? cond.get("temperature_C").getAsDouble() + 273.15
-	    : cond.get("temperature_K").getAsDouble();
-	presses[i] = cond.get("pressure_bara").getAsDouble();
+        JsonObject cond = conds.get(i).getAsJsonObject();
+        temps[i] = cond.has("temperature_C") ? cond.get("temperature_C").getAsDouble() + 273.15
+            : cond.get("temperature_K").getAsDouble();
+        presses[i] = cond.get("pressure_bara").getAsDouble();
       }
       sepTest.setSeparatorConditions(temps, presses);
     }
@@ -382,7 +382,7 @@ public class PVTRunner {
       SystemInterface injGas = fluid.clone();
       injGas.reset();
       for (Map.Entry<String, JsonElement> entry : gasJson.entrySet()) {
-	injGas.addComponent(entry.getKey(), entry.getValue().getAsDouble());
+        injGas.addComponent(entry.getKey(), entry.getValue().getAsDouble());
       }
       swelling.setInjectionGas(injGas);
     }
@@ -390,7 +390,7 @@ public class PVTRunner {
       JsonArray molArr = input.getAsJsonArray("cumulativeMolePercInjected");
       double[] mols = new double[molArr.size()];
       for (int i = 0; i < molArr.size(); i++) {
-	mols[i] = molArr.get(i).getAsDouble();
+        mols[i] = molArr.get(i).getAsDouble();
       }
       swelling.setCummulativeMolePercentGasInjected(mols);
     }
@@ -415,10 +415,10 @@ public class PVTRunner {
       double[] temps = new double[conds.size()];
       double[] presses = new double[conds.size()];
       for (int i = 0; i < conds.size(); i++) {
-	JsonObject cond = conds.get(i).getAsJsonObject();
-	temps[i] = cond.has("temperature_C") ? cond.get("temperature_C").getAsDouble() + 273.15
-	    : cond.get("temperature_K").getAsDouble();
-	presses[i] = cond.get("pressure_bara").getAsDouble();
+        JsonObject cond = conds.get(i).getAsJsonObject();
+        temps[i] = cond.has("temperature_C") ? cond.get("temperature_C").getAsDouble() + 273.15
+            : cond.get("temperature_K").getAsDouble();
+        presses[i] = cond.get("pressure_bara").getAsDouble();
       }
       gor.setTemperaturesAndPressures(temps, presses);
     }
@@ -550,7 +550,7 @@ public class PVTRunner {
     JsonArray ja = new JsonArray();
     if (arr != null) {
       for (double v : arr) {
-	ja.add(v);
+        ja.add(v);
       }
     }
     return ja;
@@ -575,7 +575,7 @@ public class PVTRunner {
     errors.add(err);
     error.add("errors", errors);
     ApiEnvelope.applyStandardFields(error, "runPVT", null, ApiEnvelope.validationStatus(false, "input", message),
-	ApiEnvelope.qualityGate("failed", message, true));
+        ApiEnvelope.qualityGate("failed", message, true));
     return GSON.toJson(error);
   }
 }

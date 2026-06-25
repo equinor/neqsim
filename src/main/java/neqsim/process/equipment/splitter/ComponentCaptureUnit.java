@@ -268,11 +268,11 @@ public class ComponentCaptureUnit extends ProcessEquipmentBaseClass {
       double inletMoles = Math.max(0.0, feed.getComponent(componentIndex).getNumberOfmoles());
       double routedMoles = getRoutedMoles(feedComponentName, inletMoles, captured);
       if (routedMoles > 0.0) {
-	system.addComponent(componentIndex, routedMoles);
-	totalMoles += routedMoles;
-	if (isSelectedComponent(feedComponentName)) {
-	  selectedMoles += routedMoles;
-	}
+        system.addComponent(componentIndex, routedMoles);
+        totalMoles += routedMoles;
+        if (isSelectedComponent(feedComponentName)) {
+          selectedMoles += routedMoles;
+        }
       }
     }
     return new SplitResult(system, totalMoles, selectedMoles);
@@ -314,9 +314,9 @@ public class ComponentCaptureUnit extends ProcessEquipmentBaseClass {
     if (totalMoles > 0.0) {
       stream.getThermoSystem().init(0);
       try {
-	new ThermodynamicOperations(stream.getThermoSystem()).TPflash();
+        new ThermodynamicOperations(stream.getThermoSystem()).TPflash();
       } catch (Exception ex) {
-	stream.getThermoSystem().init(3);
+        stream.getThermoSystem().init(3);
       }
     }
     stream.run(id);

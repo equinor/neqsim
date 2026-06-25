@@ -2,14 +2,14 @@ package neqsim.process.mechanicaldesign.pump;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for PumpMechanicalDesign class.
@@ -67,7 +67,7 @@ public class PumpMechanicalDesignTest {
     double shaftDiam = mechDesign.getShaftDiameter();
     assertTrue(shaftDiam > 0, "Shaft diameter should be positive");
     assertTrue(shaftDiam < impellerDiameterUpperBound(mechDesign.getImpellerDiameter()),
-	"Shaft diameter should be smaller than impeller");
+        "Shaft diameter should be smaller than impeller");
     logger.info("Shaft diameter: " + shaftDiam + " mm");
   }
 
@@ -256,7 +256,7 @@ public class PumpMechanicalDesignTest {
     logger.info("Validation valid: " + result.isValid());
     if (!result.isValid()) {
       for (String issue : result.getIssues()) {
-	logger.info("  Issue: " + issue);
+        logger.info("  Issue: " + issue);
       }
     }
   }

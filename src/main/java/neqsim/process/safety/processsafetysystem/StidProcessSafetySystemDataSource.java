@@ -1,13 +1,13 @@
 package neqsim.process.safety.processsafetysystem;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 /**
  * Normalized STID, C&amp;E, SRS, PSV list, and tagreader JSON bridge for Clause 10 reviews.
@@ -112,10 +112,10 @@ public class StidProcessSafetySystemDataSource {
     for (int index = 0; index < array.size(); index++) {
       JsonElement element = array.get(index);
       if (element.isJsonObject()) {
-	ProcessSafetySystemReviewItem item = fromRecord(element.getAsJsonObject(), key);
-	ProcessSafetySystemReviewInput single = new ProcessSafetySystemReviewInput();
-	single.addItem(item);
-	input.mergeFrom(single);
+        ProcessSafetySystemReviewItem item = fromRecord(element.getAsJsonObject(), key);
+        ProcessSafetySystemReviewInput single = new ProcessSafetySystemReviewInput();
+        single.addItem(item);
+        input.mergeFrom(single);
       }
     }
   }
@@ -167,7 +167,7 @@ public class StidProcessSafetySystemDataSource {
     if (element.isJsonArray()) {
       List<Object> list = new ArrayList<Object>();
       for (JsonElement child : element.getAsJsonArray()) {
-	list.add(toObject(child));
+        list.add(toObject(child));
       }
       return list;
     }

@@ -109,7 +109,7 @@ public abstract class PhaseSolid extends PhaseSrkEos {
     double density = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       density += getWtFrac(i) * ((ComponentSolid) componentArray[i]).getPureComponentSolidDensity(getTemperature())
-	  * 1000.0;
+          * 1000.0;
     }
     molarVolume = density / getMolarMass() * 1e-5;
     return density;
@@ -125,7 +125,7 @@ public abstract class PhaseSolid extends PhaseSrkEos {
     for (int i = 0; i < numberOfComponents; i++) {
       String name = getComponent(i).getComponentName().toLowerCase();
       if (name.contains("asphaltene")) {
-	asphalteneTotal += getComponent(i).getx();
+        asphalteneTotal += getComponent(i).getx();
       }
     }
     return asphalteneTotal > 0.5;
@@ -154,17 +154,17 @@ public abstract class PhaseSolid extends PhaseSrkEos {
 
       // For asphaltene, use literature values since database values are unreliable
       if (compName.contains("asphaltene")) {
-	compDensity = 1150.0; // Typical asphaltene density kg/m3 (literature: 1100-1200)
+        compDensity = 1150.0; // Typical asphaltene density kg/m3 (literature: 1100-1200)
       } else if (compName.contains("resin")) {
-	compDensity = 1080.0; // Typical resin density kg/m3
+        compDensity = 1080.0; // Typical resin density kg/m3
       } else {
-	// Try database value for other components
-	compDensity = ((ComponentSolid) componentArray[i]).getPureComponentSolidDensity(getTemperature()) * 1000.0;
+        // Try database value for other components
+        compDensity = ((ComponentSolid) componentArray[i]).getPureComponentSolidDensity(getTemperature()) * 1000.0;
 
-	// Check for invalid values
-	if (compDensity <= 0.0 || Double.isNaN(compDensity) || compDensity > 2000.0 || compDensity < 500.0) {
-	  compDensity = 1100.0; // Default
-	}
+        // Check for invalid values
+        if (compDensity <= 0.0 || Double.isNaN(compDensity) || compDensity > 2000.0 || compDensity < 500.0) {
+          compDensity = 1100.0; // Default
+        }
       }
       density += getWtFrac(i) * compDensity;
     }

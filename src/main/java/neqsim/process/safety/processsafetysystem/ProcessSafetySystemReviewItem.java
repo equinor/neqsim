@@ -46,28 +46,28 @@ public class ProcessSafetySystemReviewItem implements Serializable {
       return item;
     }
     item.setFunctionId(
-	firstString(source, "functionId", "id", "tag", "sifId", "psvTag", "psdValveTag", "alarmTag", "name"));
+        firstString(source, "functionId", "id", "tag", "sifId", "psvTag", "psdValveTag", "alarmTag", "name"));
     item.setFunctionType(firstString(source, "functionType", "type", "category", "safetyType"));
     item.setEquipmentTag(
-	firstString(source, "equipmentTag", "protectedEquipmentTag", "protectedEquipment", "unitTag", "tag"));
+        firstString(source, "equipmentTag", "protectedEquipmentTag", "protectedEquipment", "unitTag", "tag"));
     addReferences(item, firstObject(source, "sourceReferences", "sourceRefs", "evidenceRefs"));
     Object sourceDocument = firstObject(source, "sourceDocument", "documentId", "stidDocument",
-	"causeAndEffectDocument", "srsDocument");
+        "causeAndEffectDocument", "srsDocument");
     if (sourceDocument != null) {
       item.addSourceReference(String.valueOf(sourceDocument));
     }
     for (String key : new String[] { "design", "requirements", "instrumentData", "tagreaderData", "operationalData",
-	"secondaryPressureProtection" }) {
+        "secondaryPressureProtection" }) {
       Object nested = source.get(key);
       if (nested instanceof Map<?, ?>) {
-	for (Map.Entry<String, Object> entry : ((Map<String, Object>) nested).entrySet()) {
-	  item.put(entry.getKey(), entry.getValue());
-	}
+        for (Map.Entry<String, Object> entry : ((Map<String, Object>) nested).entrySet()) {
+          item.put(entry.getKey(), entry.getValue());
+        }
       }
     }
     for (Map.Entry<String, Object> entry : source.entrySet()) {
       if (!isCoreKey(entry.getKey())) {
-	item.put(entry.getKey(), entry.getValue());
+        item.put(entry.getKey(), entry.getValue());
       }
     }
     return item;
@@ -188,7 +188,7 @@ public class ProcessSafetySystemReviewItem implements Serializable {
   public boolean hasAny(String... keys) {
     for (String key : keys) {
       if (has(key)) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -215,14 +215,14 @@ public class ProcessSafetySystemReviewItem implements Serializable {
     for (String key : keys) {
       Object value = get(key);
       if (value instanceof Number) {
-	return ((Number) value).doubleValue();
+        return ((Number) value).doubleValue();
       }
       if (value instanceof String) {
-	try {
-	  return Double.parseDouble(((String) value).trim());
-	} catch (NumberFormatException ex) {
-	  return defaultValue;
-	}
+        try {
+          return Double.parseDouble(((String) value).trim());
+        } catch (NumberFormatException ex) {
+          return defaultValue;
+        }
       }
     }
     return defaultValue;
@@ -238,18 +238,18 @@ public class ProcessSafetySystemReviewItem implements Serializable {
     for (String key : keys) {
       Object value = get(key);
       if (value instanceof Boolean) {
-	return (Boolean) value;
+        return (Boolean) value;
       }
       if (value instanceof String) {
-	String text = ((String) value).trim();
-	if ("true".equalsIgnoreCase(text) || "yes".equalsIgnoreCase(text) || "y".equalsIgnoreCase(text)
-	    || "1".equals(text)) {
-	  return Boolean.TRUE;
-	}
-	if ("false".equalsIgnoreCase(text) || "no".equalsIgnoreCase(text) || "n".equalsIgnoreCase(text)
-	    || "0".equals(text)) {
-	  return Boolean.FALSE;
-	}
+        String text = ((String) value).trim();
+        if ("true".equalsIgnoreCase(text) || "yes".equalsIgnoreCase(text) || "y".equalsIgnoreCase(text)
+            || "1".equals(text)) {
+          return Boolean.TRUE;
+        }
+        if ("false".equalsIgnoreCase(text) || "no".equalsIgnoreCase(text) || "n".equalsIgnoreCase(text)
+            || "0".equals(text)) {
+          return Boolean.FALSE;
+        }
       }
     }
     return null;
@@ -278,7 +278,7 @@ public class ProcessSafetySystemReviewItem implements Serializable {
     for (String key : keys) {
       Object value = get(key);
       if (value != null) {
-	return String.valueOf(value);
+        return String.valueOf(value);
       }
     }
     return defaultValue;
@@ -340,9 +340,9 @@ public class ProcessSafetySystemReviewItem implements Serializable {
   private static void addReferences(ProcessSafetySystemReviewItem item, Object references) {
     if (references instanceof List<?>) {
       for (Object reference : (List<?>) references) {
-	if (reference != null) {
-	  item.addSourceReference(String.valueOf(reference));
-	}
+        if (reference != null) {
+          item.addSourceReference(String.valueOf(reference));
+        }
       }
     } else if (references != null) {
       item.addSourceReference(String.valueOf(references));
@@ -371,7 +371,7 @@ public class ProcessSafetySystemReviewItem implements Serializable {
   private static Object firstObject(Map<String, Object> source, String... keys) {
     for (String key : keys) {
       if (source.containsKey(key) && source.get(key) != null) {
-	return source.get(key);
+        return source.get(key);
       }
     }
     return null;
@@ -385,13 +385,13 @@ public class ProcessSafetySystemReviewItem implements Serializable {
    */
   private static boolean isCoreKey(String key) {
     return "functionId".equals(key) || "id".equals(key) || "tag".equals(key) || "sifId".equals(key)
-	|| "psvTag".equals(key) || "psdValveTag".equals(key) || "alarmTag".equals(key) || "name".equals(key)
-	|| "functionType".equals(key) || "type".equals(key) || "category".equals(key) || "safetyType".equals(key)
-	|| "equipmentTag".equals(key) || "protectedEquipmentTag".equals(key) || "protectedEquipment".equals(key)
-	|| "unitTag".equals(key) || "sourceReferences".equals(key) || "sourceRefs".equals(key)
-	|| "evidenceRefs".equals(key) || "sourceDocument".equals(key) || "documentId".equals(key)
-	|| "stidDocument".equals(key) || "causeAndEffectDocument".equals(key) || "srsDocument".equals(key)
-	|| "design".equals(key) || "requirements".equals(key) || "instrumentData".equals(key)
-	|| "tagreaderData".equals(key) || "operationalData".equals(key) || "secondaryPressureProtection".equals(key);
+        || "psvTag".equals(key) || "psdValveTag".equals(key) || "alarmTag".equals(key) || "name".equals(key)
+        || "functionType".equals(key) || "type".equals(key) || "category".equals(key) || "safetyType".equals(key)
+        || "equipmentTag".equals(key) || "protectedEquipmentTag".equals(key) || "protectedEquipment".equals(key)
+        || "unitTag".equals(key) || "sourceReferences".equals(key) || "sourceRefs".equals(key)
+        || "evidenceRefs".equals(key) || "sourceDocument".equals(key) || "documentId".equals(key)
+        || "stidDocument".equals(key) || "causeAndEffectDocument".equals(key) || "srsDocument".equals(key)
+        || "design".equals(key) || "requirements".equals(key) || "instrumentData".equals(key)
+        || "tagreaderData".equals(key) || "operationalData".equals(key) || "secondaryPressureProtection".equals(key);
   }
 }

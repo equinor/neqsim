@@ -33,9 +33,9 @@ import neqsim.process.equipment.stream.StreamInterface;
  *
  * // Ambient temperature as disturbance
  * DisturbanceVariable ambientDV = new DisturbanceVariable("Ambient").setUnit("C").setCurrentValue(25.0); // Manual
- * 												       // update from
- * 												       // external
- * 												       // source
+ * // update from
+ * // external
+ * // source
  * }
  * </pre>
  *
@@ -243,29 +243,29 @@ public class DisturbanceVariable extends MPCVariable {
     if (equipment instanceof StreamInterface) {
       StreamInterface stream = (StreamInterface) equipment;
       if ("flowRate".equalsIgnoreCase(propertyName)) {
-	if (unit != null) {
-	  currentValue = stream.getFlowRate(unit);
-	} else {
-	  currentValue = stream.getFlowRate("kg/hr");
-	}
-	return currentValue;
+        if (unit != null) {
+          currentValue = stream.getFlowRate(unit);
+        } else {
+          currentValue = stream.getFlowRate("kg/hr");
+        }
+        return currentValue;
       }
       if ("temperature".equalsIgnoreCase(propertyName)) {
-	if ("C".equalsIgnoreCase(unit)) {
-	  currentValue = stream.getTemperature("C");
-	} else if ("K".equalsIgnoreCase(unit)) {
-	  currentValue = stream.getTemperature("K");
-	} else {
-	  currentValue = stream.getTemperature("C");
-	}
-	return currentValue;
+        if ("C".equalsIgnoreCase(unit)) {
+          currentValue = stream.getTemperature("C");
+        } else if ("K".equalsIgnoreCase(unit)) {
+          currentValue = stream.getTemperature("K");
+        } else {
+          currentValue = stream.getTemperature("C");
+        }
+        return currentValue;
       }
       if ("pressure".equalsIgnoreCase(propertyName)) {
-	if (unit != null) {
-	  currentValue = stream.getPressure(unit);
-	} else {
-	  currentValue = stream.getPressure("bara");
-	}
+        if (unit != null) {
+          currentValue = stream.getPressure(unit);
+        } else {
+          currentValue = stream.getPressure("bara");
+        }
       }
     }
 

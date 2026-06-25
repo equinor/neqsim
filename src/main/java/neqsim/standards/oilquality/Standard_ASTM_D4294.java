@@ -115,47 +115,47 @@ public class Standard_ASTM_D4294 extends neqsim.standards.Standard {
       // Find oil/liquid phase
       int oilPhase = -1;
       for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-	String phaseType = fluid.getPhase(i).getType().toString();
-	if ("oil".equals(phaseType) || "liquid".equals(phaseType)) {
-	  oilPhase = i;
-	  break;
-	}
+        String phaseType = fluid.getPhase(i).getType().toString();
+        if ("oil".equals(phaseType) || "liquid".equals(phaseType)) {
+          oilPhase = i;
+          break;
+        }
       }
       if (oilPhase < 0 && fluid.getNumberOfPhases() > 0) {
-	oilPhase = 0;
+        oilPhase = 0;
       }
 
       if (oilPhase >= 0) {
-	double totalMass = 0.0;
-	// Calculate total mass of the liquid phase
-	for (int j = 0; j < fluid.getPhase(oilPhase).getNumberOfComponents(); j++) {
-	  totalMass += fluid.getPhase(oilPhase).getComponent(j).getx()
-	      * fluid.getPhase(oilPhase).getComponent(j).getMolarMass() * 1000.0;
-	}
+        double totalMass = 0.0;
+        // Calculate total mass of the liquid phase
+        for (int j = 0; j < fluid.getPhase(oilPhase).getNumberOfComponents(); j++) {
+          totalMass += fluid.getPhase(oilPhase).getComponent(j).getx()
+              * fluid.getPhase(oilPhase).getComponent(j).getMolarMass() * 1000.0;
+        }
 
-	if (totalMass <= 0) {
-	  totalSulfurWtPct = 0.0;
-	  return;
-	}
+        if (totalMass <= 0) {
+          totalSulfurWtPct = 0.0;
+          return;
+        }
 
-	for (int j = 0; j < fluid.getPhase(oilPhase).getNumberOfComponents(); j++) {
-	  String compName = fluid.getPhase(oilPhase).getComponent(j).getName().toLowerCase();
-	  double moleFraction = fluid.getPhase(oilPhase).getComponent(j).getx();
-	  double compMolarMass = fluid.getPhase(oilPhase).getComponent(j).getMolarMass() * 1000.0; // g/mol
+        for (int j = 0; j < fluid.getPhase(oilPhase).getNumberOfComponents(); j++) {
+          String compName = fluid.getPhase(oilPhase).getComponent(j).getName().toLowerCase();
+          double moleFraction = fluid.getPhase(oilPhase).getComponent(j).getx();
+          double compMolarMass = fluid.getPhase(oilPhase).getComponent(j).getMolarMass() * 1000.0; // g/mol
 
-	  int sulfurAtoms = getSulfurAtoms(compName);
-	  if (sulfurAtoms > 0) {
-	    double sulfurMassContribution = moleFraction * sulfurAtoms * SULFUR_MOLAR_MASS;
-	    double sulfurWt = sulfurMassContribution / totalMass * 100.0;
-	    totalSulfurWtPct += sulfurWt;
+          int sulfurAtoms = getSulfurAtoms(compName);
+          if (sulfurAtoms > 0) {
+            double sulfurMassContribution = moleFraction * sulfurAtoms * SULFUR_MOLAR_MASS;
+            double sulfurWt = sulfurMassContribution / totalMass * 100.0;
+            totalSulfurWtPct += sulfurWt;
 
-	    if (compName.contains("h2s") || compName.contains("hydrogen sulfide")) {
-	      h2sSulfurWtPct += sulfurWt;
-	    } else if (compName.contains("mercaptan")) {
-	      mercaptanSulfurWtPct += sulfurWt;
-	    }
-	  }
-	}
+            if (compName.contains("h2s") || compName.contains("hydrogen sulfide")) {
+              h2sSulfurWtPct += sulfurWt;
+            } else if (compName.contains("mercaptan")) {
+              mercaptanSulfurWtPct += sulfurWt;
+            }
+          }
+        }
       }
     } catch (Exception ex) {
       logger.error("Sulfur calculation failed: {}", ex.getMessage());
@@ -172,7 +172,7 @@ public class Standard_ASTM_D4294 extends neqsim.standards.Standard {
   private int getSulfurAtoms(String componentName) {
     for (Object[] entry : SULFUR_COMPONENTS) {
       if (componentName.contains(((String) entry[0]).toLowerCase())) {
-	return (Integer) entry[1];
+        return (Integer) entry[1];
       }
     }
     return 0;

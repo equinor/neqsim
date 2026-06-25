@@ -207,7 +207,7 @@ public class GilbertChokeFlowTest {
 
     // Check that returned P2 is close to expected critical pressure
     assertEquals(expectedP2, P2, expectedP2 * 0.05,
-	"Downstream pressure should be approximately the critical pressure");
+        "Downstream pressure should be approximately the critical pressure");
   }
 
   @Test

@@ -328,9 +328,9 @@ public class CompressorCurveTemplate implements Serializable {
 
       double speedRatio = speeds[i] / referenceSpeed;
       for (int j = 0; j < numPoints; j++) {
-	// Normalize: reduced_flow = flow / speed, reduced_head = head / speed²
-	this.reducedFlows[i][j] = flows[i][j] / speeds[i];
-	this.reducedHeads[i][j] = heads[i][j] / (speedRatio * speedRatio);
+        // Normalize: reduced_flow = flow / speed, reduced_head = head / speed²
+        this.reducedFlows[i][j] = flows[i][j] / speeds[i];
+        this.reducedHeads[i][j] = heads[i][j] / (speedRatio * speedRatio);
       }
     }
   }
@@ -417,8 +417,8 @@ public class CompressorCurveTemplate implements Serializable {
     for (int i = 0; i < speeds.length; i++) {
       double diff = Math.abs(speeds[i] / referenceSpeed - 1.0);
       if (diff < minDiff) {
-	minDiff = diff;
-	refIndex = i;
+        minDiff = diff;
+        refIndex = i;
       }
     }
 
@@ -441,8 +441,8 @@ public class CompressorCurveTemplate implements Serializable {
       targetSpeeds[0] = designSpeed;
     } else {
       for (int i = 0; i < numberOfSpeeds; i++) {
-	double ratio = minRatio + (maxRatio - minRatio) * i / (numberOfSpeeds - 1);
-	targetSpeeds[i] = designSpeed * ratio;
+        double ratio = minRatio + (maxRatio - minRatio) * i / (numberOfSpeeds - 1);
+        targetSpeeds[i] = designSpeed * ratio;
       }
     }
 
@@ -463,9 +463,9 @@ public class CompressorCurveTemplate implements Serializable {
 
       double speedRatio = targetSpeeds[i] / designSpeed;
       for (int j = 0; j < numPoints; j++) {
-	// Scale using fan laws
-	scaledFlows[i][j] = reducedFlows[templateIndex][j] * flowScaleFactor * targetSpeeds[i];
-	scaledHeads[i][j] = reducedHeads[templateIndex][j] * headScaleFactor * speedRatio * speedRatio;
+        // Scale using fan laws
+        scaledFlows[i][j] = reducedFlows[templateIndex][j] * flowScaleFactor * targetSpeeds[i];
+        scaledHeads[i][j] = reducedHeads[templateIndex][j] * headScaleFactor * speedRatio * speedRatio;
       }
     }
 
@@ -532,8 +532,8 @@ public class CompressorCurveTemplate implements Serializable {
       double ratio = speeds[i] / referenceSpeed;
       double diff = Math.abs(ratio - targetRatio);
       if (diff < minDiff) {
-	minDiff = diff;
-	closestIndex = i;
+        minDiff = diff;
+        closestIndex = i;
       }
     }
     return closestIndex;
@@ -550,26 +550,26 @@ public class CompressorCurveTemplate implements Serializable {
     double[] speeds = { 7000, 7500, 8000, 8500, 9000, 9500, 9659, 10000, 10500 };
 
     double[][] flows = { { 4512.7, 5120.8, 5760.9, 6401, 6868.27 }, { 4862.47, 5486.57, 6172.39, 6858.21, 7550.89 },
-	{ 5237.84, 5852.34, 6583.88, 7315.43, 8046.97, 8266.43 },
-	{ 5642.94, 6218.11, 6995.38, 7772.64, 8549.9, 9000.72 },
-	{ 6221.77, 6583.88, 7406.87, 8229.85, 9052.84, 9768.84 },
-	{ 6888.85, 6949.65, 7818.36, 8687.07, 9555.77, 10424.5, 10546.1 },
-	{ 7109.83, 7948.87, 8832.08, 9715.29, 10598.5, 10801.6 },
-	{ 7598.9, 8229.85, 9144.28, 10058.7, 10973.1, 11338.9 },
-	{ 8334.1, 8641.35, 9601.5, 10561.6, 11521.8, 11963.5 } };
+        { 5237.84, 5852.34, 6583.88, 7315.43, 8046.97, 8266.43 },
+        { 5642.94, 6218.11, 6995.38, 7772.64, 8549.9, 9000.72 },
+        { 6221.77, 6583.88, 7406.87, 8229.85, 9052.84, 9768.84 },
+        { 6888.85, 6949.65, 7818.36, 8687.07, 9555.77, 10424.5, 10546.1 },
+        { 7109.83, 7948.87, 8832.08, 9715.29, 10598.5, 10801.6 },
+        { 7598.9, 8229.85, 9144.28, 10058.7, 10973.1, 11338.9 },
+        { 8334.1, 8641.35, 9601.5, 10561.6, 11521.8, 11963.5 } };
 
     double[][] heads = { { 61.885, 59.639, 56.433, 52.481, 49.132 }, { 71.416, 69.079, 65.589, 61.216, 55.858 },
-	{ 81.621, 79.311, 75.545, 70.727, 64.867, 62.879 }, { 92.493, 90.312, 86.3, 81.079, 74.658, 70.216 },
-	{ 103.512, 102.073, 97.83, 92.254, 85.292, 77.638 },
-	{ 114.891, 114.632, 110.169, 104.221, 96.727, 87.002, 85.262 },
-	{ 118.595, 114.252, 108.203, 100.55, 90.532, 87.54 }, { 126.747, 123.376, 117.113, 109.056, 98.369, 92.632 },
-	{ 139.082, 137.398, 130.867, 122.264, 110.548, 103.247 } };
+        { 81.621, 79.311, 75.545, 70.727, 64.867, 62.879 }, { 92.493, 90.312, 86.3, 81.079, 74.658, 70.216 },
+        { 103.512, 102.073, 97.83, 92.254, 85.292, 77.638 },
+        { 114.891, 114.632, 110.169, 104.221, 96.727, 87.002, 85.262 },
+        { 118.595, 114.252, 108.203, 100.55, 90.532, 87.54 }, { 126.747, 123.376, 117.113, 109.056, 98.369, 92.632 },
+        { 139.082, 137.398, 130.867, 122.264, 110.548, 103.247 } };
 
     double[][] efficiencies = { { 78.3, 78.2, 77.2, 75.4, 73.4 }, { 78.3, 78.3, 77.5, 75.8, 73.0 },
-	{ 78.2, 78.4, 77.7, 76.1, 73.5, 72.5 }, { 78.2, 78.4, 77.9, 76.4, 74.0, 71.9 },
-	{ 78.3, 78.4, 78.0, 76.7, 74.5, 71.2 }, { 78.3, 78.4, 78.1, 77.0, 74.9, 71.3, 70.5 },
-	{ 78.4, 78.1, 77.1, 75.0, 71.4, 70.2 }, { 78.3, 78.2, 77.2, 75.2, 71.7, 69.5 },
-	{ 78.2, 78.2, 77.3, 75.5, 72.2, 69.6 } };
+        { 78.2, 78.4, 77.7, 76.1, 73.5, 72.5 }, { 78.2, 78.4, 77.9, 76.4, 74.0, 71.9 },
+        { 78.3, 78.4, 78.0, 76.7, 74.5, 71.2 }, { 78.3, 78.4, 78.1, 77.0, 74.9, 71.3, 70.5 },
+        { 78.4, 78.1, 77.1, 75.0, 71.4, 70.2 }, { 78.3, 78.2, 77.2, 75.2, 71.7, 69.5 },
+        { 78.2, 78.2, 77.3, 75.5, 72.2, 69.6 } };
 
     return new CompressorCurveTemplate("CENTRIFUGAL_STANDARD", refSpeed, speeds, flows, heads, efficiencies);
   }
@@ -585,10 +585,10 @@ public class CompressorCurveTemplate implements Serializable {
     double[] speeds = { 7000, 8000, 9000, 10000 };
 
     double[][] flows = { { 5000, 6000, 7500, 9000, 10000 }, { 5700, 6850, 8550, 10250, 11400 },
-	{ 6400, 7700, 9600, 11500, 12800 }, { 7100, 8550, 10700, 12800, 14300 } };
+        { 6400, 7700, 9600, 11500, 12800 }, { 7100, 8550, 10700, 12800, 14300 } };
 
     double[][] heads = { { 50, 48, 44, 38, 32 }, { 65, 63, 57, 49, 41 }, { 82, 79, 72, 62, 52 },
-	{ 100, 96, 88, 76, 64 } };
+        { 100, 96, 88, 76, 64 } };
 
     double[][] efficiencies = repeatEfficiency(4, new double[] { 77, 78, 77.5, 75, 72 });
 
@@ -606,10 +606,10 @@ public class CompressorCurveTemplate implements Serializable {
     double[] speeds = { 7000, 8000, 9000, 10000 };
 
     double[][] flows = { { 3500, 4200, 5000, 5500, 5800 }, { 4000, 4800, 5700, 6300, 6600 },
-	{ 4500, 5400, 6400, 7100, 7500 }, { 5000, 6000, 7100, 7900, 8300 } };
+        { 4500, 5400, 6400, 7100, 7500 }, { 5000, 6000, 7100, 7900, 8300 } };
 
     double[][] heads = { { 85, 82, 75, 65, 55 }, { 110, 107, 98, 85, 72 }, { 140, 135, 124, 108, 92 },
-	{ 170, 165, 152, 132, 112 } };
+        { 170, 165, 152, 132, 112 } };
 
     double[][] efficiencies = repeatEfficiency(4, new double[] { 76, 78, 77, 74, 70 });
 
@@ -632,11 +632,11 @@ public class CompressorCurveTemplate implements Serializable {
 
     // High flow capacity (30,000-60,000 m³/hr actual)
     double[][] flows = { { 22000, 28000, 35000, 42000, 48000, 52000 }, { 24750, 31500, 39375, 47250, 54000, 58500 },
-	{ 27500, 35000, 43750, 52500, 60000, 65000 }, { 30250, 38500, 48125, 57750, 66000, 71500 } };
+        { 27500, 35000, 43750, 52500, 60000, 65000 }, { 30250, 38500, 48125, 57750, 66000, 71500 } };
 
     // Moderate head per stage (flatter curve for pipeline stability)
     double[][] heads = { { 42, 41, 39, 36, 32, 28 }, { 53, 52, 49, 46, 41, 35 }, { 65, 64, 61, 56, 50, 44 },
-	{ 79, 77, 73, 68, 60, 53 } };
+        { 79, 77, 73, 68, 60, 53 } };
 
     // High efficiency for large machines
     double[][] efficiencies = repeatEfficiency(4, new double[] { 80, 83, 85, 84, 82, 78 });
@@ -658,11 +658,11 @@ public class CompressorCurveTemplate implements Serializable {
 
     // Medium flow capacity
     double[][] flows = { { 4500, 5500, 6500, 7500, 8200 }, { 5200, 6350, 7500, 8650, 9500 },
-	{ 5700, 6970, 8230, 9500, 10400 }, { 6250, 7625, 9000, 10400, 11400 } };
+        { 5700, 6970, 8230, 9500, 10400 }, { 6250, 7625, 9000, 10400, 11400 } };
 
     // High head (multiple stages combined)
     double[][] heads = { { 95, 92, 87, 78, 68 }, { 125, 122, 115, 103, 90 }, { 152, 148, 140, 125, 109 },
-	{ 180, 175, 165, 148, 129 } };
+        { 180, 175, 165, 148, 129 } };
 
     // Good efficiency for optimized design
     double[][] efficiencies = repeatEfficiency(4, new double[] { 77, 79, 80, 78, 74 });
@@ -684,11 +684,11 @@ public class CompressorCurveTemplate implements Serializable {
 
     // Lower flow capacity for high pressure
     double[][] flows = { { 2500, 3000, 3600, 4100, 4400 }, { 2800, 3375, 4050, 4612, 4950 },
-	{ 3125, 3750, 4500, 5125, 5500 }, { 3438, 4125, 4950, 5638, 6050 } };
+        { 3125, 3750, 4500, 5125, 5500 }, { 3438, 4125, 4950, 5638, 6050 } };
 
     // Very high head (multiple stages with intercooling)
     double[][] heads = { { 130, 125, 115, 100, 85 }, { 165, 158, 146, 127, 108 }, { 203, 195, 180, 156, 133 },
-	{ 245, 236, 218, 189, 161 } };
+        { 245, 236, 218, 189, 161 } };
 
     // Moderate efficiency (high pressure challenges)
     double[][] efficiencies = repeatEfficiency(4, new double[] { 74, 76, 77, 75, 72 });
@@ -710,11 +710,11 @@ public class CompressorCurveTemplate implements Serializable {
 
     // Medium capacity with wide operating range
     double[][] flows = { { 3500, 4500, 5800, 7200, 8500, 9500 }, { 4100, 5250, 6770, 8400, 9920, 11080 },
-	{ 4530, 5810, 7490, 9290, 10970, 12260 }, { 4970, 6375, 8220, 10200, 12040, 13460 } };
+        { 4530, 5810, 7490, 9290, 10970, 12260 }, { 4970, 6375, 8220, 10200, 12040, 13460 } };
 
     // Moderate head with flatter curve for stability
     double[][] heads = { { 48, 47, 45, 41, 35, 28 }, { 65, 64, 61, 56, 48, 38 }, { 80, 78, 75, 68, 58, 47 },
-	{ 96, 94, 90, 82, 70, 56 } };
+        { 96, 94, 90, 82, 70, 56 } };
 
     // Slightly lower peak efficiency, but robust design
     double[][] efficiencies = repeatEfficiency(4, new double[] { 72, 74, 75, 74, 71, 66 });
@@ -736,11 +736,11 @@ public class CompressorCurveTemplate implements Serializable {
 
     // High flow for low-density refrigerants
     double[][] flows = { { 12000, 15000, 19000, 23000, 26000, 28000 }, { 13350, 16650, 21100, 25550, 28900, 31100 },
-	{ 14650, 18300, 23200, 28050, 31750, 34200 }, { 16000, 20000, 25300, 30600, 34600, 37300 } };
+        { 14650, 18300, 23200, 28050, 31750, 34200 }, { 16000, 20000, 25300, 30600, 34600, 37300 } };
 
     // Lower head per stage (lighter gases)
     double[][] heads = { { 28, 27, 25, 22, 19, 16 }, { 35, 33, 31, 27, 23, 20 }, { 42, 40, 37, 33, 28, 24 },
-	{ 50, 48, 45, 40, 34, 29 } };
+        { 50, 48, 45, 40, 34, 29 } };
 
     // Good efficiency across operating range
     double[][] efficiencies = repeatEfficiency(4, new double[] { 75, 77, 78, 77, 75, 72 });
@@ -762,11 +762,11 @@ public class CompressorCurveTemplate implements Serializable {
 
     // Medium capacity
     double[][] flows = { { 4000, 5000, 6200, 7400, 8300 }, { 4570, 5710, 7080, 8460, 9490 },
-	{ 5140, 6430, 7970, 9510, 10670 }, { 5710, 7140, 8850, 10570, 11860 } };
+        { 5140, 6430, 7970, 9510, 10670 }, { 5710, 7140, 8850, 10570, 11860 } };
 
     // Moderate head
     double[][] heads = { { 55, 53, 49, 43, 36 }, { 72, 69, 64, 56, 47 }, { 91, 87, 81, 71, 60 },
-	{ 112, 108, 100, 88, 74 } };
+        { 112, 108, 100, 88, 74 } };
 
     // Balanced efficiency
     double[][] efficiencies = repeatEfficiency(4, new double[] { 74, 76, 76, 74, 70 });
@@ -789,11 +789,11 @@ public class CompressorCurveTemplate implements Serializable {
 
     // Wide flow range
     double[][] flows = { { 3000, 4000, 5500, 7000, 8500, 9500 }, { 3430, 4570, 6290, 8000, 9710, 10860 },
-	{ 3860, 5140, 7070, 9000, 10930, 12220 }, { 4290, 5710, 7860, 10000, 12140, 13580 } };
+        { 3860, 5140, 7070, 9000, 10930, 12220 }, { 4290, 5710, 7860, 10000, 12140, 13580 } };
 
     // Low head (single stage limitation)
     double[][] heads = { { 25, 24, 22, 19, 15, 11 }, { 33, 32, 29, 25, 20, 15 }, { 42, 40, 36, 31, 25, 19 },
-	{ 52, 49, 45, 39, 31, 23 } };
+        { 52, 49, 45, 39, 31, 23 } };
 
     // Moderate efficiency
     double[][] efficiencies = repeatEfficiency(4, new double[] { 72, 74, 75, 73, 70, 65 });
@@ -814,11 +814,11 @@ public class CompressorCurveTemplate implements Serializable {
 
     // Medium-high capacity
     double[][] flows = { { 4200, 5200, 6400, 7500, 8300 }, { 4760, 5890, 7250, 8500, 9410 },
-	{ 5320, 6590, 8110, 9500, 10520 }, { 5880, 7290, 8960, 10500, 11630 } };
+        { 5320, 6590, 8110, 9500, 10520 }, { 5880, 7290, 8960, 10500, 11630 } };
 
     // High head (multiple stages)
     double[][] heads = { { 88, 85, 79, 70, 60 }, { 113, 109, 101, 90, 77 }, { 141, 136, 127, 112, 96 },
-	{ 172, 166, 155, 137, 118 } };
+        { 172, 166, 155, 137, 118 } };
 
     // Good efficiency for industrial design
     double[][] efficiencies = repeatEfficiency(4, new double[] { 75, 77, 78, 76, 73 });
@@ -839,11 +839,11 @@ public class CompressorCurveTemplate implements Serializable {
 
     // Variable capacity depending on application
     double[][] flows = { { 6000, 7500, 9500, 11500, 13000 }, { 6860, 8570, 10860, 13140, 14860 },
-	{ 7710, 9640, 12210, 14790, 16710 }, { 8570, 10710, 13570, 16430, 18570 } };
+        { 7710, 9640, 12210, 14790, 16710 }, { 8570, 10710, 13570, 16430, 18570 } };
 
     // Moderate head per stage (optimized staging)
     double[][] heads = { { 35, 34, 31, 27, 22 }, { 46, 44, 40, 35, 29 }, { 58, 56, 51, 44, 37 },
-	{ 72, 69, 63, 55, 46 } };
+        { 72, 69, 63, 55, 46 } };
 
     // High efficiency through optimized design
     double[][] efficiencies = repeatEfficiency(4, new double[] { 79, 81, 82, 80, 77 });
@@ -864,11 +864,11 @@ public class CompressorCurveTemplate implements Serializable {
 
     // Smaller capacity typical
     double[][] flows = { { 1800, 2300, 2900, 3500, 4000 }, { 2060, 2630, 3310, 4000, 4570 },
-	{ 2310, 2960, 3730, 4500, 5140 }, { 2570, 3290, 4140, 5000, 5710 } };
+        { 2310, 2960, 3730, 4500, 5140 }, { 2570, 3290, 4140, 5000, 5710 } };
 
     // Low-medium head
     double[][] heads = { { 32, 31, 28, 24, 19 }, { 42, 40, 37, 31, 25 }, { 53, 51, 46, 40, 32 },
-	{ 65, 63, 57, 49, 39 } };
+        { 65, 63, 57, 49, 39 } };
 
     // Moderate efficiency for simple design
     double[][] efficiencies = repeatEfficiency(4, new double[] { 71, 73, 74, 72, 68 });
@@ -919,7 +919,7 @@ public class CompressorCurveTemplate implements Serializable {
     if (upperName.contains("SINGLE_STAGE") || upperName.contains("SINGLESTAGE") || upperName.equals("SINGLE")) {
       return SINGLE_STAGE;
     } else if (upperName.contains("MULTISTAGE") || upperName.contains("MULTI_STAGE") || upperName.contains("BARREL")
-	|| upperName.contains("INLINE")) {
+        || upperName.contains("INLINE")) {
       return MULTISTAGE_INLINE;
     } else if (upperName.contains("INTEGRALLY") || upperName.contains("GEARED") || upperName.contains("IGC")) {
       return INTEGRALLY_GEARED;
@@ -938,12 +938,12 @@ public class CompressorCurveTemplate implements Serializable {
    */
   public static String[] getAvailableTemplates() {
     return new String[] {
-	// Basic variants
-	"CENTRIFUGAL_STANDARD", "CENTRIFUGAL_HIGH_FLOW", "CENTRIFUGAL_HIGH_HEAD",
-	// Application-based
-	"PIPELINE", "EXPORT", "INJECTION", "GAS_LIFT", "REFRIGERATION", "BOOSTER",
-	// Compressor types
-	"SINGLE_STAGE", "MULTISTAGE_INLINE", "INTEGRALLY_GEARED", "OVERHUNG" };
+        // Basic variants
+        "CENTRIFUGAL_STANDARD", "CENTRIFUGAL_HIGH_FLOW", "CENTRIFUGAL_HIGH_HEAD",
+        // Application-based
+        "PIPELINE", "EXPORT", "INJECTION", "GAS_LIFT", "REFRIGERATION", "BOOSTER",
+        // Compressor types
+        "SINGLE_STAGE", "MULTISTAGE_INLINE", "INTEGRALLY_GEARED", "OVERHUNG" };
   }
 
   /**
@@ -1003,9 +1003,9 @@ public class CompressorCurveTemplate implements Serializable {
 
       double speedRatio = speeds[i] / referenceSpeed;
       for (int j = 0; j < numPoints; j++) {
-	// Reverse the normalization
-	originalFlows[i][j] = reducedFlows[i][j] * speeds[i];
-	originalHeads[i][j] = reducedHeads[i][j] * speedRatio * speedRatio;
+        // Reverse the normalization
+        originalFlows[i][j] = reducedFlows[i][j] * speeds[i];
+        originalHeads[i][j] = reducedHeads[i][j] * speedRatio * speedRatio;
       }
     }
 
@@ -1070,9 +1070,9 @@ public class CompressorCurveTemplate implements Serializable {
 
       double speedRatio = speeds[i] / referenceSpeed;
       for (int j = 0; j < numPoints; j++) {
-	// Scale flow linearly with speed, head with speed²
-	scaledFlows[i][j] = reducedFlows[i][j] * scaledSpeeds[i];
-	scaledHeads[i][j] = reducedHeads[i][j] * speedRatio * speedRatio * speedScaleFactor * speedScaleFactor;
+        // Scale flow linearly with speed, head with speed²
+        scaledFlows[i][j] = reducedFlows[i][j] * scaledSpeeds[i];
+        scaledHeads[i][j] = reducedHeads[i][j] * speedRatio * speedRatio * speedScaleFactor * speedScaleFactor;
       }
     }
 

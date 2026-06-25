@@ -83,13 +83,13 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
       time[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i)).getTime();
       pressure[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i)).getPressure();
       inletLiquidTemperature[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
-	  .getInletLiquidTemperature();
+          .getInletLiquidTemperature();
       outletLiquidTemperature[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
-	  .getOutletLiquidTemperature();
+          .getOutletLiquidTemperature();
       columnWallTemperature[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
-	  .getColumnWallTemperature();
+          .getColumnWallTemperature();
       inletTotalGasFlowRate[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
-	  .getInletTotalGasFlow();
+          .getInletTotalGasFlow();
       co2SupplyRate[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i)).getCo2SupplyFlow();
       inletLiquidFlowRate[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i)).getInletLiquidFlow();
       i++;
@@ -157,14 +157,14 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
 
     do {
       for (int i = 1; i < (reader.getSampleObjectList().size() - 3); i++) {
-	system.setTemperature(smoothedInletLiquidTemperature[i]);
-	system.setPressure(smoothedPressure[i]);
-	system.getPhases()[0].addMoles(1, dNdt[i] * (time[i] - time[i - 1]));
-	system.getPhases()[1].addMoles(1, -dNdt[i] * (time[i] - time[i - 1]));
-	system.init(1);
-	// her bor det komme en funksjon som finer nummeret til Co2!
-	dPdt[i] = (smoothedPressure[i + 1] - smoothedPressure[i - 1]) / (time[i + 1] - time[i - 1]);
-	// dPdn[i] = system.getPhases()[1].getdPdn(1);
+        system.setTemperature(smoothedInletLiquidTemperature[i]);
+        system.setPressure(smoothedPressure[i]);
+        system.getPhases()[0].addMoles(1, dNdt[i] * (time[i] - time[i - 1]));
+        system.getPhases()[1].addMoles(1, -dNdt[i] * (time[i] - time[i - 1]));
+        system.init(1);
+        // her bor det komme en funksjon som finer nummeret til Co2!
+        dPdt[i] = (smoothedPressure[i + 1] - smoothedPressure[i - 1]) / (time[i + 1] - time[i - 1]);
+        // dPdn[i] = system.getPhases()[1].getdPdn(1);
       }
 
       dNdt[0] = 0;
@@ -172,13 +172,13 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
       err = 0;
 
       for (int i = 1; i < (reader.getSampleObjectList().size() - 3); i++) {
-	dNdtOld[i] = dNdt[i];
-	dNdt[i] = dPdt[i] * 1.0 / dPdn[i];
-	err += Math.abs((dNdtOld[i] - dNdt[i]));
-	// System.out.println("dndt: " + dNdt[i]);
-	dnVdt[i] = dNdt[i] * ThermodynamicConstantsInterface.R * 298.15 / ThermodynamicConstantsInterface.atm * 1000
-	    * 60;
-	System.out.println("dVdt: " + dnVdt[i]);
+        dNdtOld[i] = dNdt[i];
+        dNdt[i] = dPdt[i] * 1.0 / dPdn[i];
+        err += Math.abs((dNdtOld[i] - dNdt[i]));
+        // System.out.println("dndt: " + dNdt[i]);
+        dnVdt[i] = dNdt[i] * ThermodynamicConstantsInterface.R * 298.15 / ThermodynamicConstantsInterface.atm * 1000
+            * 60;
+        System.out.println("dVdt: " + dnVdt[i]);
       }
       System.out.println("err: " + err);
     } while (err > 1e-10);

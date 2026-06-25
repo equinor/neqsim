@@ -22,22 +22,22 @@ public enum RegressionParameter {
     public void applyToFluid(SystemInterface fluid, double value) {
       String methaneCompName = null;
       for (int i = 0; i < fluid.getPhase(0).getNumberOfComponents(); i++) {
-	String name = fluid.getPhase(0).getComponent(i).getComponentName().toLowerCase();
-	if (name.equals("methane") || name.equals("c1")) {
-	  methaneCompName = fluid.getPhase(0).getComponent(i).getComponentName();
-	  break;
-	}
+        String name = fluid.getPhase(0).getComponent(i).getComponentName().toLowerCase();
+        if (name.equals("methane") || name.equals("c1")) {
+          methaneCompName = fluid.getPhase(0).getComponent(i).getComponentName();
+          break;
+        }
       }
       if (methaneCompName == null) {
-	return;
+        return;
       }
 
       for (int i = 0; i < fluid.getPhase(0).getNumberOfComponents(); i++) {
-	if (fluid.getPhase(0).getComponent(i).isIsPlusFraction()
-	    || fluid.getPhase(0).getComponent(i).isIsTBPfraction()) {
-	  String plusCompName = fluid.getPhase(0).getComponent(i).getComponentName();
-	  fluid.setBinaryInteractionParameter(methaneCompName, plusCompName, value);
-	}
+        if (fluid.getPhase(0).getComponent(i).isIsPlusFraction()
+            || fluid.getPhase(0).getComponent(i).isIsTBPfraction()) {
+          String plusCompName = fluid.getPhase(0).getComponent(i).getComponentName();
+          fluid.setBinaryInteractionParameter(methaneCompName, plusCompName, value);
+        }
       }
     }
   },
@@ -50,21 +50,21 @@ public enum RegressionParameter {
     public void applyToFluid(SystemInterface fluid, double value) {
       // Find C2-C6 components
       for (int i = 0; i < fluid.getPhase(0).getNumberOfComponents(); i++) {
-	String name = fluid.getPhase(0).getComponent(i).getComponentName().toLowerCase();
-	boolean isC2C6 = name.equals("ethane") || name.equals("c2") || name.equals("propane") || name.equals("c3")
-	    || name.contains("butane") || name.equals("c4") || name.contains("pentane") || name.equals("c5")
-	    || name.contains("hexane") || name.equals("c6");
+        String name = fluid.getPhase(0).getComponent(i).getComponentName().toLowerCase();
+        boolean isC2C6 = name.equals("ethane") || name.equals("c2") || name.equals("propane") || name.equals("c3")
+            || name.contains("butane") || name.equals("c4") || name.contains("pentane") || name.equals("c5")
+            || name.contains("hexane") || name.equals("c6");
 
-	if (isC2C6) {
-	  String c2c6Name = fluid.getPhase(0).getComponent(i).getComponentName();
-	  for (int j = 0; j < fluid.getPhase(0).getNumberOfComponents(); j++) {
-	    if (fluid.getPhase(0).getComponent(j).isIsPlusFraction()
-		|| fluid.getPhase(0).getComponent(j).isIsTBPfraction()) {
-	      String plusName = fluid.getPhase(0).getComponent(j).getComponentName();
-	      fluid.setBinaryInteractionParameter(c2c6Name, plusName, value);
-	    }
-	  }
-	}
+        if (isC2C6) {
+          String c2c6Name = fluid.getPhase(0).getComponent(i).getComponentName();
+          for (int j = 0; j < fluid.getPhase(0).getNumberOfComponents(); j++) {
+            if (fluid.getPhase(0).getComponent(j).isIsPlusFraction()
+                || fluid.getPhase(0).getComponent(j).isIsTBPfraction()) {
+              String plusName = fluid.getPhase(0).getComponent(j).getComponentName();
+              fluid.setBinaryInteractionParameter(c2c6Name, plusName, value);
+            }
+          }
+        }
       }
     }
   },
@@ -77,21 +77,21 @@ public enum RegressionParameter {
     public void applyToFluid(SystemInterface fluid, double value) {
       String co2CompName = null;
       for (int i = 0; i < fluid.getPhase(0).getNumberOfComponents(); i++) {
-	String name = fluid.getPhase(0).getComponent(i).getComponentName().toLowerCase();
-	if (name.equals("co2") || name.equals("carbon dioxide")) {
-	  co2CompName = fluid.getPhase(0).getComponent(i).getComponentName();
-	  break;
-	}
+        String name = fluid.getPhase(0).getComponent(i).getComponentName().toLowerCase();
+        if (name.equals("co2") || name.equals("carbon dioxide")) {
+          co2CompName = fluid.getPhase(0).getComponent(i).getComponentName();
+          break;
+        }
       }
       if (co2CompName == null) {
-	return;
+        return;
       }
 
       for (int i = 0; i < fluid.getPhase(0).getNumberOfComponents(); i++) {
-	String compName = fluid.getPhase(0).getComponent(i).getComponentName();
-	if (!compName.equalsIgnoreCase(co2CompName)) {
-	  fluid.setBinaryInteractionParameter(co2CompName, compName, value);
-	}
+        String compName = fluid.getPhase(0).getComponent(i).getComponentName();
+        if (!compName.equalsIgnoreCase(co2CompName)) {
+          fluid.setBinaryInteractionParameter(co2CompName, compName, value);
+        }
       }
     }
   },
@@ -104,21 +104,21 @@ public enum RegressionParameter {
     public void applyToFluid(SystemInterface fluid, double value) {
       String n2CompName = null;
       for (int i = 0; i < fluid.getPhase(0).getNumberOfComponents(); i++) {
-	String name = fluid.getPhase(0).getComponent(i).getComponentName().toLowerCase();
-	if (name.equals("nitrogen") || name.equals("n2")) {
-	  n2CompName = fluid.getPhase(0).getComponent(i).getComponentName();
-	  break;
-	}
+        String name = fluid.getPhase(0).getComponent(i).getComponentName().toLowerCase();
+        if (name.equals("nitrogen") || name.equals("n2")) {
+          n2CompName = fluid.getPhase(0).getComponent(i).getComponentName();
+          break;
+        }
       }
       if (n2CompName == null) {
-	return;
+        return;
       }
 
       for (int i = 0; i < fluid.getPhase(0).getNumberOfComponents(); i++) {
-	String compName = fluid.getPhase(0).getComponent(i).getComponentName();
-	if (!compName.equalsIgnoreCase(n2CompName)) {
-	  fluid.setBinaryInteractionParameter(n2CompName, compName, value);
-	}
+        String compName = fluid.getPhase(0).getComponent(i).getComponentName();
+        if (!compName.equalsIgnoreCase(n2CompName)) {
+          fluid.setBinaryInteractionParameter(n2CompName, compName, value);
+        }
       }
     }
   },
@@ -130,13 +130,13 @@ public enum RegressionParameter {
     @Override
     public void applyToFluid(SystemInterface fluid, double value) {
       for (int i = 0; i < fluid.getPhase(0).getNumberOfComponents(); i++) {
-	if (fluid.getPhase(0).getComponent(i).isIsPlusFraction()
-	    || fluid.getPhase(0).getComponent(i).isIsTBPfraction()) {
-	  for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
-	    double currentShift = fluid.getPhase(p).getComponent(i).getVolumeCorrectionConst();
-	    fluid.getPhase(p).getComponent(i).setVolumeCorrectionConst(currentShift * value);
-	  }
-	}
+        if (fluid.getPhase(0).getComponent(i).isIsPlusFraction()
+            || fluid.getPhase(0).getComponent(i).isIsTBPfraction()) {
+          for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
+            double currentShift = fluid.getPhase(p).getComponent(i).getVolumeCorrectionConst();
+            fluid.getPhase(p).getComponent(i).setVolumeCorrectionConst(currentShift * value);
+          }
+        }
       }
     }
   },
@@ -148,13 +148,13 @@ public enum RegressionParameter {
     @Override
     public void applyToFluid(SystemInterface fluid, double value) {
       for (int i = 0; i < fluid.getPhase(0).getNumberOfComponents(); i++) {
-	if (fluid.getPhase(0).getComponent(i).isIsPlusFraction()
-	    || fluid.getPhase(0).getComponent(i).isIsTBPfraction()) {
-	  for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
-	    double currentTc = fluid.getPhase(p).getComponent(i).getTC();
-	    fluid.getPhase(p).getComponent(i).setTC(currentTc * value);
-	  }
-	}
+        if (fluid.getPhase(0).getComponent(i).isIsPlusFraction()
+            || fluid.getPhase(0).getComponent(i).isIsTBPfraction()) {
+          for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
+            double currentTc = fluid.getPhase(p).getComponent(i).getTC();
+            fluid.getPhase(p).getComponent(i).setTC(currentTc * value);
+          }
+        }
       }
     }
   },
@@ -166,13 +166,13 @@ public enum RegressionParameter {
     @Override
     public void applyToFluid(SystemInterface fluid, double value) {
       for (int i = 0; i < fluid.getPhase(0).getNumberOfComponents(); i++) {
-	if (fluid.getPhase(0).getComponent(i).isIsPlusFraction()
-	    || fluid.getPhase(0).getComponent(i).isIsTBPfraction()) {
-	  for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
-	    double currentPc = fluid.getPhase(p).getComponent(i).getPC();
-	    fluid.getPhase(p).getComponent(i).setPC(currentPc * value);
-	  }
-	}
+        if (fluid.getPhase(0).getComponent(i).isIsPlusFraction()
+            || fluid.getPhase(0).getComponent(i).isIsTBPfraction()) {
+          for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
+            double currentPc = fluid.getPhase(p).getComponent(i).getPC();
+            fluid.getPhase(p).getComponent(i).setPC(currentPc * value);
+          }
+        }
       }
     }
   },
@@ -184,13 +184,13 @@ public enum RegressionParameter {
     @Override
     public void applyToFluid(SystemInterface fluid, double value) {
       for (int i = 0; i < fluid.getPhase(0).getNumberOfComponents(); i++) {
-	if (fluid.getPhase(0).getComponent(i).isIsPlusFraction()
-	    || fluid.getPhase(0).getComponent(i).isIsTBPfraction()) {
-	  for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
-	    double currentOmega = fluid.getPhase(p).getComponent(i).getAcentricFactor();
-	    fluid.getPhase(p).getComponent(i).setAcentricFactor(currentOmega * value);
-	  }
-	}
+        if (fluid.getPhase(0).getComponent(i).isIsPlusFraction()
+            || fluid.getPhase(0).getComponent(i).isIsTBPfraction()) {
+          for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
+            double currentOmega = fluid.getPhase(p).getComponent(i).getAcentricFactor();
+            fluid.getPhase(p).getComponent(i).setAcentricFactor(currentOmega * value);
+          }
+        }
       }
     }
   },
@@ -202,12 +202,12 @@ public enum RegressionParameter {
     @Override
     public void applyToFluid(SystemInterface fluid, double value) {
       for (int i = 0; i < fluid.getPhase(0).getNumberOfComponents(); i++) {
-	if (fluid.getPhase(0).getComponent(i).isIsPlusFraction()) {
-	  for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
-	    double currentMW = fluid.getPhase(p).getComponent(i).getMolarMass();
-	    fluid.getPhase(p).getComponent(i).setMolarMass(currentMW * value);
-	  }
-	}
+        if (fluid.getPhase(0).getComponent(i).isIsPlusFraction()) {
+          for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
+            double currentMW = fluid.getPhase(p).getComponent(i).getMolarMass();
+            fluid.getPhase(p).getComponent(i).setMolarMass(currentMW * value);
+          }
+        }
       }
       // Re-characterize with new MW
       fluid.getCharacterization().characterisePlusFraction();
@@ -244,14 +244,14 @@ public enum RegressionParameter {
     @Override
     public void applyToFluid(SystemInterface fluid, double value) {
       for (int i = 0; i < fluid.getPhase(0).getNumberOfComponents(); i++) {
-	if (fluid.getPhase(0).getComponent(i).isIsPlusFraction()
-	    || fluid.getPhase(0).getComponent(i).isIsTBPfraction()) {
-	  for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
-	    // Adjust critical volume which affects LBC correlation
-	    double currentVc = fluid.getPhase(p).getComponent(i).getCriticalVolume();
-	    fluid.getPhase(p).getComponent(i).setCriticalVolume(currentVc * value);
-	  }
-	}
+        if (fluid.getPhase(0).getComponent(i).isIsPlusFraction()
+            || fluid.getPhase(0).getComponent(i).isIsTBPfraction()) {
+          for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
+            // Adjust critical volume which affects LBC correlation
+            double currentVc = fluid.getPhase(p).getComponent(i).getCriticalVolume();
+            fluid.getPhase(p).getComponent(i).setCriticalVolume(currentVc * value);
+          }
+        }
       }
     }
   },
@@ -265,13 +265,13 @@ public enum RegressionParameter {
     public void applyToFluid(SystemInterface fluid, double value) {
       // Adjust viscosity through parachor which affects corresponding states model
       for (int i = 0; i < fluid.getPhase(0).getNumberOfComponents(); i++) {
-	if (fluid.getPhase(0).getComponent(i).isIsPlusFraction()
-	    || fluid.getPhase(0).getComponent(i).isIsTBPfraction()) {
-	  for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
-	    double currentParachor = fluid.getPhase(p).getComponent(i).getParachorParameter();
-	    fluid.getPhase(p).getComponent(i).setParachorParameter(currentParachor * value);
-	  }
-	}
+        if (fluid.getPhase(0).getComponent(i).isIsPlusFraction()
+            || fluid.getPhase(0).getComponent(i).isIsTBPfraction()) {
+          for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
+            double currentParachor = fluid.getPhase(p).getComponent(i).getParachorParameter();
+            fluid.getPhase(p).getComponent(i).setParachorParameter(currentParachor * value);
+          }
+        }
       }
     }
   },
@@ -358,7 +358,7 @@ public enum RegressionParameter {
     for (int phaseIndex = 0; phaseIndex < fluid.getMaxNumberOfPhases(); phaseIndex++) {
       PhysicalProperties physicalProperties = fluid.getPhase(phaseIndex).getPhysicalProperties();
       if (!physicalProperties.isPFCTViscosityModel()) {
-	physicalProperties.setViscosityModel("PFCT");
+        physicalProperties.setViscosityModel("PFCT");
       }
       physicalProperties.setCspViscosityCorrectionFactor(index, value);
     }

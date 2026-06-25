@@ -1,9 +1,7 @@
 package neqsim.process.equipment.compressor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.junit.jupiter.api.Test;
-
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemIdealGas;
 

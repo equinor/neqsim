@@ -138,7 +138,7 @@ public class LNGHeelManager implements Serializable {
     // Add heel-only components
     for (Map.Entry<String, Double> entry : heelComposition.entrySet()) {
       if (!mixed.containsKey(entry.getKey())) {
-	mixed.put(entry.getKey(), entry.getValue() * heelMoles / totalMoles);
+        mixed.put(entry.getKey(), entry.getValue() * heelMoles / totalMoles);
       }
     }
 
@@ -183,7 +183,7 @@ public class LNGHeelManager implements Serializable {
     tankModel.addLayerOnTop(cargoLayer);
 
     logger.info(String.format("Created stratified initial condition: heel=%.0f m3 (rho=%.1f), cargo=%.0f m3",
-	heelVolume, heelDensity, newCargoVolume));
+        heelVolume, heelDensity, newCargoVolume));
   }
 
   /**

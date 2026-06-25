@@ -341,11 +341,11 @@ public class SubseaCostEstimator {
       // Rigid jumper cost
       double baseCost;
       if (lengthM < 30) {
-	baseCost = 200000;
+        baseCost = 200000;
       } else if (lengthM <= 60) {
-	baseCost = 400000;
+        baseCost = 400000;
       } else {
-	baseCost = 700000;
+        baseCost = 700000;
       }
 
       // Material cost
@@ -365,11 +365,11 @@ public class SubseaCostEstimator {
       // Flexible jumper - price per meter
       double pricePerMeter;
       if (diameterInches <= 4) {
-	pricePerMeter = 600;
+        pricePerMeter = 600;
       } else if (diameterInches <= 6) {
-	pricePerMeter = 800;
+        pricePerMeter = 800;
       } else {
-	pricePerMeter = 1200;
+        pricePerMeter = 1200;
       }
 
       equipmentCost = lengthM * pricePerMeter;
@@ -526,19 +526,19 @@ public class SubseaCostEstimator {
     double baseCost;
     if (isCompressor) {
       if (powerMW < 5) {
-	baseCost = 60000000;
+        baseCost = 60000000;
       } else if (powerMW <= 10) {
-	baseCost = 100000000;
+        baseCost = 100000000;
       } else {
-	baseCost = 150000000;
+        baseCost = 150000000;
       }
     } else {
       if (powerMW < 3) {
-	baseCost = 30000000;
+        baseCost = 30000000;
       } else if (powerMW <= 6) {
-	baseCost = 50000000;
+        baseCost = 50000000;
       } else {
-	baseCost = 80000000;
+        baseCost = 80000000;
       }
     }
 
@@ -772,7 +772,7 @@ public class SubseaCostEstimator {
    */
   public String toJson() {
     return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-	.toJson(getCostBreakdown());
+        .toJson(getCostBreakdown());
   }
 
   // Getters

@@ -133,7 +133,7 @@ public class MassTransferMeOHTest {
     // Verify all temperatures are finite
     for (int i = 0; i < 10; i++) {
       assertTrue(Double.isFinite(interphaseTempHistory[i]),
-	  "Interphase temperature at step " + i + " should be finite");
+          "Interphase temperature at step " + i + " should be finite");
       assertTrue(Double.isFinite(gasTempHistory[i]), "Gas temperature at step " + i + " should be finite");
     }
   }
@@ -154,9 +154,9 @@ public class MassTransferMeOHTest {
 
     // Get diffusion coefficients
     double diffTEGinMethane = node.getBulkSystem().getPhase(0).getPhysicalProperties()
-	.getDiffusionCoefficient("methane", "TEG");
+        .getDiffusionCoefficient("methane", "TEG");
     double diffWaterInMethane = node.getBulkSystem().getPhase(0).getPhysicalProperties()
-	.getDiffusionCoefficient("methane", "water");
+        .getDiffusionCoefficient("methane", "water");
 
     // Verify diffusion coefficients are positive and reasonable
     assertTrue(diffTEGinMethane > 0, "TEG diffusion coefficient should be positive");
@@ -224,7 +224,7 @@ public class MassTransferMeOHTest {
     // Verify TEG mole fractions are all valid
     for (int i = 0; i < lengths.length; i++) {
       assertTrue(Double.isFinite(tegInGasAtLength[i]),
-	  "TEG mole fraction at length " + lengths[i] + " should be finite");
+          "TEG mole fraction at length " + lengths[i] + " should be finite");
     }
   }
 

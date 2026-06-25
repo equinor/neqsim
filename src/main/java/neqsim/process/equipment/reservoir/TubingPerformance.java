@@ -443,19 +443,19 @@ public class TubingPerformance extends TwoPortEquipment {
       currentPressure -= dP;
 
       if (currentPressure < 1.0) {
-	currentPressure = 1.0; // Minimum pressure limit
-	logger.warn("Pressure dropped below 1 bara at depth {} m", depth);
+        currentPressure = 1.0; // Minimum pressure limit
+        logger.warn("Pressure dropped below 1 bara at depth {} m", depth);
       }
 
       pressureProfile[i] = currentPressure;
 
       // Store holdup if available
       if (fluid.hasPhaseType("gas") && fluid.hasPhaseType("oil")) {
-	holdupProfile[i] = fluid.getPhase("oil").getBeta();
+        holdupProfile[i] = fluid.getPhase("oil").getBeta();
       } else if (fluid.hasPhaseType("oil")) {
-	holdupProfile[i] = 1.0;
+        holdupProfile[i] = 1.0;
       } else {
-	holdupProfile[i] = 0.0;
+        holdupProfile[i] = 0.0;
       }
     }
 
@@ -640,10 +640,10 @@ public class TubingPerformance extends TwoPortEquipment {
       double c = 0.0868;
       HL = a * Math.pow(lambdaL, b) / Math.pow(NFr, c);
       if (HL > 1.0) {
-	HL = 1.0;
+        HL = 1.0;
       }
       if (HL < lambdaL) {
-	HL = lambdaL;
+        HL = lambdaL;
       }
     }
 
@@ -898,47 +898,47 @@ public class TubingPerformance extends TwoPortEquipment {
       double tolerance = 0.1; // bara
 
       for (int iter = 0; iter < 50; iter++) {
-	testFluid.setPressure(bhpGuess, "bara");
-	testFluid.setTotalFlowRate(flowSm3Day / 86400.0, "Sm3/sec");
-	ThermodynamicOperations ops = new ThermodynamicOperations(testFluid);
-	ops.TPflash();
-	testFluid.initProperties();
+        testFluid.setPressure(bhpGuess, "bara");
+        testFluid.setTotalFlowRate(flowSm3Day / 86400.0, "Sm3/sec");
+        ThermodynamicOperations ops = new ThermodynamicOperations(testFluid);
+        ops.TPflash();
+        testFluid.initProperties();
 
-	// Calculate pressure drop
-	double totalDP = 0.0;
-	double segmentLength = tubingLength / numberOfSegments;
-	double currentP = bhpGuess;
-	double currentT = bottomHoleTemperature;
+        // Calculate pressure drop
+        double totalDP = 0.0;
+        double segmentLength = tubingLength / numberOfSegments;
+        double currentP = bhpGuess;
+        double currentT = bottomHoleTemperature;
 
-	for (int s = 1; s <= numberOfSegments; s++) {
-	  double depth = tubingLength - s * segmentLength;
-	  currentT = calculateTemperatureAtDepth(depth, bottomHoleTemperature);
-	  testFluid.setTemperature(currentT, "K");
-	  testFluid.setPressure(currentP, "bara");
-	  ops.TPflash();
-	  testFluid.initProperties();
+        for (int s = 1; s <= numberOfSegments; s++) {
+          double depth = tubingLength - s * segmentLength;
+          currentT = calculateTemperatureAtDepth(depth, bottomHoleTemperature);
+          testFluid.setTemperature(currentT, "K");
+          testFluid.setPressure(currentP, "bara");
+          ops.TPflash();
+          testFluid.initProperties();
 
-	  double dP = calculateSegmentPressureDrop(testFluid, segmentLength);
-	  currentP -= dP;
-	  if (currentP < 1.0) {
-	    currentP = 1.0;
-	  }
-	}
+          double dP = calculateSegmentPressureDrop(testFluid, segmentLength);
+          currentP -= dP;
+          if (currentP < 1.0) {
+            currentP = 1.0;
+          }
+        }
 
-	double calculatedWHP = currentP;
+        double calculatedWHP = currentP;
 
-	if (Math.abs(calculatedWHP - targetWHP) < tolerance) {
-	  break;
-	}
+        if (Math.abs(calculatedWHP - targetWHP) < tolerance) {
+          break;
+        }
 
-	// Adjust BHP guess
-	bhpGuess += (targetWHP - calculatedWHP);
-	if (bhpGuess < targetWHP) {
-	  bhpGuess = targetWHP + 10.0;
-	}
-	if (bhpGuess > 1000.0) {
-	  bhpGuess = 1000.0;
-	}
+        // Adjust BHP guess
+        bhpGuess += (targetWHP - calculatedWHP);
+        if (bhpGuess < targetWHP) {
+          bhpGuess = targetWHP + 10.0;
+        }
+        if (bhpGuess > 1000.0) {
+          bhpGuess = 1000.0;
+        }
       }
 
       vlpFlowRates[i] = flowRates[i];
@@ -1012,13 +1012,13 @@ public class TubingPerformance extends TwoPortEquipment {
 
       // Check for crossing
       if ((vlpBHP1 - iprBHP1) * (vlpBHP2 - iprBHP2) <= 0) {
-	// Linear interpolation to find crossing
-	double diff1 = vlpBHP1 - iprBHP1;
-	double diff2 = vlpBHP2 - iprBHP2;
-	double fraction = diff1 / (diff1 - diff2);
-	double opFlow = testFlows[i] + fraction * (testFlows[i + 1] - testFlows[i]);
-	double opBHP = iprBHP1 + fraction * (iprBHP2 - iprBHP1);
-	return new double[] { opFlow, opBHP };
+        // Linear interpolation to find crossing
+        double diff1 = vlpBHP1 - iprBHP1;
+        double diff2 = vlpBHP2 - iprBHP2;
+        double fraction = diff1 / (diff1 - diff2);
+        double opFlow = testFlows[i] + fraction * (testFlows[i + 1] - testFlows[i]);
+        double opBHP = iprBHP1 + fraction * (iprBHP2 - iprBHP1);
+        return new double[] { opFlow, opBHP };
       }
     }
 
@@ -1043,7 +1043,7 @@ public class TubingPerformance extends TwoPortEquipment {
       // PI model: q = PI * (Pr² - Pwf²)
       double pwf2 = Math.pow(reservoirPressure, 2) - flowRate / pi;
       if (pwf2 > 0) {
-	return Math.sqrt(pwf2);
+        return Math.sqrt(pwf2);
       }
     }
     return 0.0;
@@ -1210,9 +1210,9 @@ public class TubingPerformance extends TwoPortEquipment {
    */
   public void setTableVLP(double[] flowRates, double[] bottomHolePressures, double wellheadPressure) {
     if (flowRates == null || bottomHolePressures == null || flowRates.length != bottomHolePressures.length
-	|| flowRates.length < 2) {
+        || flowRates.length < 2) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("TubingPerformance", "setTableVLP",
-	  "table", "- Provide matching flow/pressure arrays with at least two entries"));
+          "table", "- Provide matching flow/pressure arrays with at least two entries"));
     }
 
     this.tableVLPFlowRates = java.util.Arrays.copyOf(flowRates, flowRates.length);
@@ -1274,25 +1274,25 @@ public class TubingPerformance extends TwoPortEquipment {
     for (String line : lines) {
       line = line.trim();
       if (line.isEmpty() || line.startsWith("#")) {
-	continue;
+        continue;
       }
 
       String[] parts = line.split("[,;\t]+");
       if (parts.length < 2) {
-	continue;
+        continue;
       }
 
       try {
-	double flowRate = Double.parseDouble(parts[0].trim());
-	double bhp = Double.parseDouble(parts[1].trim());
-	flowRates.add(flowRate);
-	bhpValues.add(bhp);
+        double flowRate = Double.parseDouble(parts[0].trim());
+        double bhp = Double.parseDouble(parts[1].trim());
+        flowRates.add(flowRate);
+        bhpValues.add(bhp);
       } catch (NumberFormatException e) {
-	if (firstLine) {
-	  firstLine = false;
-	  continue;
-	}
-	logger.warn("Skipping invalid line in VLP file: {}", line);
+        if (firstLine) {
+          firstLine = false;
+          continue;
+        }
+        logger.warn("Skipping invalid line in VLP file: {}", line);
       }
       firstLine = false;
     }
@@ -1333,7 +1333,7 @@ public class TubingPerformance extends TwoPortEquipment {
   public double interpolateBHPFromTable(double flowRate) {
     if (!useTableVLP || tableVLPFlowRates.length < 2) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("TubingPerformance",
-	  "interpolateBHPFromTable", "table", "- No table VLP data loaded"));
+          "interpolateBHPFromTable", "table", "- No table VLP data loaded"));
     }
 
     // Extrapolate below minimum
@@ -1346,15 +1346,15 @@ public class TubingPerformance extends TwoPortEquipment {
     if (flowRate >= tableVLPFlowRates[lastIdx]) {
       // Linear extrapolation from last two points
       double slope = (tableVLPBHP[lastIdx] - tableVLPBHP[lastIdx - 1])
-	  / (tableVLPFlowRates[lastIdx] - tableVLPFlowRates[lastIdx - 1]);
+          / (tableVLPFlowRates[lastIdx] - tableVLPFlowRates[lastIdx - 1]);
       return tableVLPBHP[lastIdx] + slope * (flowRate - tableVLPFlowRates[lastIdx]);
     }
 
     // Interpolate
     for (int i = 0; i < tableVLPFlowRates.length - 1; i++) {
       if (flowRate >= tableVLPFlowRates[i] && flowRate <= tableVLPFlowRates[i + 1]) {
-	double fraction = (flowRate - tableVLPFlowRates[i]) / (tableVLPFlowRates[i + 1] - tableVLPFlowRates[i]);
-	return tableVLPBHP[i] + fraction * (tableVLPBHP[i + 1] - tableVLPBHP[i]);
+        double fraction = (flowRate - tableVLPFlowRates[i]) / (tableVLPFlowRates[i + 1] - tableVLPFlowRates[i]);
+        return tableVLPBHP[i] + fraction * (tableVLPBHP[i + 1] - tableVLPBHP[i]);
       }
     }
 
@@ -1391,15 +1391,15 @@ public class TubingPerformance extends TwoPortEquipment {
   private void sortVLPTableByFlowRate() {
     for (int i = 0; i < tableVLPFlowRates.length - 1; i++) {
       for (int j = 0; j < tableVLPFlowRates.length - i - 1; j++) {
-	if (tableVLPFlowRates[j] > tableVLPFlowRates[j + 1]) {
-	  double tempQ = tableVLPFlowRates[j];
-	  tableVLPFlowRates[j] = tableVLPFlowRates[j + 1];
-	  tableVLPFlowRates[j + 1] = tempQ;
+        if (tableVLPFlowRates[j] > tableVLPFlowRates[j + 1]) {
+          double tempQ = tableVLPFlowRates[j];
+          tableVLPFlowRates[j] = tableVLPFlowRates[j + 1];
+          tableVLPFlowRates[j + 1] = tempQ;
 
-	  double tempP = tableVLPBHP[j];
-	  tableVLPBHP[j] = tableVLPBHP[j + 1];
-	  tableVLPBHP[j + 1] = tempP;
-	}
+          double tempP = tableVLPBHP[j];
+          tableVLPBHP[j] = tableVLPBHP[j + 1];
+          tableVLPBHP[j + 1] = tempP;
+        }
       }
     }
   }

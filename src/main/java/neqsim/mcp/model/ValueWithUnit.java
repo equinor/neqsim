@@ -71,13 +71,13 @@ public class ValueWithUnit {
     }
     try {
       if (element.isJsonPrimitive()) {
-	return new ValueWithUnit(element.getAsDouble(), defaultUnit);
+        return new ValueWithUnit(element.getAsDouble(), defaultUnit);
       }
       if (element.isJsonObject()) {
-	JsonObject obj = element.getAsJsonObject();
-	double val = obj.get("value").getAsDouble();
-	String unit = obj.has("unit") ? obj.get("unit").getAsString() : defaultUnit;
-	return new ValueWithUnit(val, unit);
+        JsonObject obj = element.getAsJsonObject();
+        double val = obj.get("value").getAsDouble();
+        String unit = obj.has("unit") ? obj.get("unit").getAsString() : defaultUnit;
+        return new ValueWithUnit(val, unit);
       }
     } catch (Exception e) {
       // fall through to null
