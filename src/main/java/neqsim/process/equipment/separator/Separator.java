@@ -499,13 +499,37 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * setEntrainment.
+   * Sets a simple entrainment (carry-over) fraction describing imperfect phase separation, i.e. the separation
+   * efficiency of the vessel. A fraction of the {@code phaseFrom} phase is carried over into the {@code phaseTo} phase
+   * when the separator is run, instead of leaving in its own product stream. Calling this method repeatedly with
+   * different phase pairs accumulates independent entrainment paths; the fractions are applied during {@link #run()}.
    *
-   * @param val a double specifying the entrainment amount
-   * @param specType a {@link java.lang.String} object describing the specification unit
-   * @param specifiedStream a {@link java.lang.String} object describing the reference stream
-   * @param phaseFrom a {@link java.lang.String} object describing the phase entrained from
-   * @param phaseTo a {@link java.lang.String} object describing the phase entrained to
+   * <p>
+   * The meaning of {@code val} depends on {@code specifiedStream}:
+   * </p>
+   * <ul>
+   * <li><b>"feed"</b> — {@code val} is the fraction of the {@code phaseFrom} phase <i>in the feed</i> that is carried
+   * over to {@code phaseTo} (e.g. {@code val = 0.01} carries 1&nbsp;% of the inlet phase over).</li>
+   * <li><b>"product"</b> — {@code val} is the carry-over expressed relative to the receiving (<i>product</i>)
+   * {@code phaseTo} stream (e.g. {@code val = 0.01} means the carried-over amount equals 1&nbsp;% of the
+   * {@code phaseTo} product). The transferred amount is clamped to what is available in the {@code phaseFrom} phase:
+   * {@code val <= 0} transfers nothing and {@code val >= 1} transfers the entire {@code phaseFrom} phase.</li>
+   * </ul>
+   *
+   * <p>
+   * The base {@link Separator} (two-phase) supports the entrainment directions {@code oil&rarr;gas},
+   * {@code aqueous&rarr;gas} and {@code gas&rarr;liquid}. For full three-phase carry-over in all six directions use
+   * {@link ThreePhaseSeparator}. Phase pairs that are not supported are silently ignored.
+   * </p>
+   *
+   * @param val the entrainment fraction (typically in the range {@code 0.0}–{@code 1.0}); interpreted against the feed
+   * or the product stream according to {@code specifiedStream}
+   * @param specType the basis used to quantify {@code val}: {@code "mole"}, {@code "mass"} or {@code "volume"}
+   * @param specifiedStream the reference stream for {@code val}: {@code "feed"} or {@code "product"}
+   * @param phaseFrom the phase the entrained material originates from: {@code "gas"}, {@code "oil"}, {@code "aqueous"}
+   * (or {@code "liquid"})
+   * @param phaseTo the phase the entrained material is carried over into: {@code "gas"}, {@code "oil"},
+   * {@code "aqueous"} (or {@code "liquid"})
    */
   public void setEntrainment(double val, String specType, String specifiedStream, String phaseFrom, String phaseTo) {
     this.specifiedStream = specifiedStream;
@@ -631,7 +655,7 @@ public class Separator extends ProcessEquipmentBaseClass
       // Add heat input to the system enthalpy
       double currentEnthalpy = thermoSystem2.getEnthalpy(); // Default unit is J
       double newEnthalpy = currentEnthalpy + heatInput; // heatInput is in watts (J/s) - for steady
-							// state we add directly
+      // state we add directly
 
       // Perform HP flash (enthalpy-pressure flash) with heat input
       ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem2);
