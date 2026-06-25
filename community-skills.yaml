@@ -34,16 +34,9 @@ repositories:
     min_neqsim_version: "3.7.0"
 
 skills:
-  # ── Example entries (remove or replace with real community skills) ──
-
-  - name: neqsim-example-skill
-    description: "Example community skill — replace with a real contribution"
-    author: "equinor"
-    repo: "equinor/neqsim"
-    path: ".github/skills/neqsim-api-patterns/SKILL.md"
-    tags: [example, template]
-
-  # ── Add your community skill below this line ──
+  # ── Add direct community-skill entries below this line when they should be
+  # ── discoverable from the root NeqSim catalog without using the repository
+  # ── discovery entry above. Do not add template/example skills here.
   # - name: neqsim-my-topic
   #   description: "What it does and when to use it"
   #   author: "your-github-username"

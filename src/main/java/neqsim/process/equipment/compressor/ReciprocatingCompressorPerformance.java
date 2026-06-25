@@ -9,10 +9,10 @@ import java.util.List;
  * Screening-level reciprocating compressor performance calculator following API 618 conventions.
  *
  * <p>
- * Computes single-stage volumetric efficiency, actual inlet capacity, discharge temperature and (optionally) the
- * rod-load utilisation for a double-acting reciprocating compressor cylinder. These are preliminary-design screening
- * calculations; detailed performance and pulsation studies (API 618 Design Approach 2/3) require vendor cylinder data
- * and acoustic simulation.
+ * Computes single-stage volumetric efficiency, actual inlet capacity, discharge temperature and
+ * (optionally) the rod-load utilisation for a double-acting reciprocating compressor cylinder.
+ * These are preliminary-design screening calculations; detailed performance and pulsation studies
+ * (API 618 Design Approach 2/3) require vendor cylinder data and acoustic simulation.
  * </p>
  *
  * <p>
@@ -24,8 +24,8 @@ import java.util.List;
  * </pre>
  *
  * <p>
- * where {@code c} is the cylinder clearance fraction, {@code r} the pressure ratio, {@code n} the polytropic exponent
- * and {@code L} a slip/loss allowance.
+ * where {@code c} is the cylinder clearance fraction, {@code r} the pressure ratio, {@code n} the
+ * polytropic exponent and {@code L} a slip/loss allowance.
  * </p>
  *
  * <p>
@@ -78,8 +78,7 @@ public class ReciprocatingCompressorPerformance implements Serializable {
   private final List<String> warnings = new ArrayList<String>();
 
   /** Creates a reciprocating compressor performance calculator with default settings. */
-  public ReciprocatingCompressorPerformance() {
-  }
+  public ReciprocatingCompressorPerformance() {}
 
   /**
    * Creates a reciprocating compressor performance calculator with a name.
@@ -97,7 +96,8 @@ public class ReciprocatingCompressorPerformance implements Serializable {
    * @param dischargePressure discharge pressure, bara (must be &gt; suctionPressure)
    * @return this calculator
    */
-  public ReciprocatingCompressorPerformance setPressures(double suctionPressure, double dischargePressure) {
+  public ReciprocatingCompressorPerformance setPressures(double suctionPressure,
+      double dischargePressure) {
     this.suctionPressure = suctionPressure;
     this.dischargePressure = dischargePressure;
     this.calculated = false;
@@ -172,7 +172,8 @@ public class ReciprocatingCompressorPerformance implements Serializable {
    * @param allowableRodLoad continuous allowable rod load, N (must be &gt; 0)
    * @return this calculator
    */
-  public ReciprocatingCompressorPerformance setRodLoad(double pistonArea, double rodArea, double allowableRodLoad) {
+  public ReciprocatingCompressorPerformance setRodLoad(double pistonArea, double rodArea,
+      double allowableRodLoad) {
     this.rodLoadEnabled = true;
     this.pistonArea = pistonArea;
     this.rodArea = rodArea;
@@ -191,14 +192,15 @@ public class ReciprocatingCompressorPerformance implements Serializable {
     warnings.clear();
 
     pressureRatio = dischargePressure / suctionPressure;
-    volumetricEfficiency = VE_INTERCEPT - clearanceFraction * (Math.pow(pressureRatio, 1.0 / polytropicExponent) - 1.0)
-	- slipLossFraction;
+    volumetricEfficiency =
+        VE_INTERCEPT - clearanceFraction * (Math.pow(pressureRatio, 1.0 / polytropicExponent) - 1.0)
+            - slipLossFraction;
     if (volumetricEfficiency < 0.0) {
       volumetricEfficiency = 0.0;
     }
     actualInletCapacity = displacementRate * volumetricEfficiency;
     dischargeTemperature = suctionTemperature
-	* Math.pow(pressureRatio, (polytropicExponent - 1.0) / polytropicExponent);
+        * Math.pow(pressureRatio, (polytropicExponent - 1.0) / polytropicExponent);
 
     if (rodLoadEnabled) {
       double suctionPa = suctionPressure * 1.0e5;
@@ -210,18 +212,18 @@ public class ReciprocatingCompressorPerformance implements Serializable {
       double peakRodLoad = Math.max(Math.abs(compressionRodLoad), Math.abs(tensionRodLoad));
       rodLoadUtilization = peakRodLoad / allowableRodLoad;
       if (rodLoadUtilization > DEFAULT_ROD_LOAD_LIMIT) {
-	warnings.add("Peak gas rod load exceeds the allowable rod load (utilisation "
-	    + String.format("%.2f", rodLoadUtilization) + ").");
+        warnings.add("Peak gas rod load exceeds the allowable rod load (utilisation "
+            + String.format("%.2f", rodLoadUtilization) + ").");
       }
     }
 
     if (dischargeTemperature > DISCHARGE_TEMPERATURE_ALARM_K) {
       warnings.add("Discharge temperature " + String.format("%.1f", dischargeTemperature - 273.15)
-	  + " degC exceeds the screening alarm (135 degC); consider staging.");
+          + " degC exceeds the screening alarm (135 degC); consider staging.");
     }
     if (volumetricEfficiency < LOW_VE_ALARM) {
       warnings.add("Volumetric efficiency " + String.format("%.2f", volumetricEfficiency)
-	  + " is low; review clearance and pressure ratio.");
+          + " is low; review clearance and pressure ratio.");
     }
 
     calculated = true;
@@ -254,13 +256,13 @@ public class ReciprocatingCompressorPerformance implements Serializable {
     }
     if (rodLoadEnabled) {
       if (!(pistonArea > 0.0)) {
-	throw new IllegalStateException("pistonArea must be positive");
+        throw new IllegalStateException("pistonArea must be positive");
       }
       if (rodArea < 0.0 || rodArea >= pistonArea) {
-	throw new IllegalStateException("rodArea must be in [0, pistonArea)");
+        throw new IllegalStateException("rodArea must be in [0, pistonArea)");
       }
       if (!(allowableRodLoad > 0.0)) {
-	throw new IllegalStateException("allowableRodLoad must be positive");
+        throw new IllegalStateException("allowableRodLoad must be positive");
       }
     }
   }
@@ -366,6 +368,7 @@ public class ReciprocatingCompressorPerformance implements Serializable {
    */
   public String toJson() {
     requireCalculated();
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(this);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
+        .toJson(this);
   }
 }

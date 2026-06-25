@@ -18,6 +18,7 @@ loaded with `read_file` at the start of an agent invocation.
 | `consequence.analysis.agent.md` | analyze consequences and dispersion | `neqsim-consequence-analysis`, `neqsim-hazid-fmea-eta-fta`, `neqsim-depressurization-mdmt`, `neqsim-process-safety`, `neqsim-relief-flare-network`, `neqsim-standards-lookup`, `neqsim-agent-handoff`, `neqsim-professional-reporting` |
 | `control.system.agent.md` | design control systems | `neqsim-dynamic-simulation`, `neqsim-controllability-operability`, `neqsim-api-patterns`, `neqsim-standards-lookup`, `neqsim-pid-process-operations` |
 | `documentation.agent.md` | write neqsim documentation | _(none declared)_ |
+| `dynamic.equipment.agent.md` | implement neqsim dynamic equipment | `neqsim-dynamic-equipment-implementation`, `neqsim-dynamic-simulation`, `neqsim-api-patterns`, `neqsim-process-modeling`, `neqsim-java8-rules`, `neqsim-regression-baselines`, `neqsim-troubleshooting` |
 | `emissions.environmental.agent.md` | calculate emissions and environmental impact | _(none declared)_ |
 | `engineering.deliverables.agent.md` | generate engineering deliverables | _(none declared)_ |
 | `extract.process.agent.md` | extract process to neqsim json | `neqsim-process-extraction`, `neqsim-pid-process-operations`, `neqsim-water-hammer` |

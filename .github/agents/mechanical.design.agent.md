@@ -3,6 +3,9 @@ name: run neqsim mechanical design
 description: Performs mechanical design calculations for process equipment — wall thickness, material selection, weight estimation, and cost analysis per ASME, API, DNV, ISO, and NORSOK standards. Supports separators, pipelines, heat exchangers, compressors, valves, and vessels with company-specific TR document requirements.
 argument-hint: Describe the equipment for mechanical design — e.g., "design a 20-inch export pipeline for 150 bara per DNV-OS-F101", "size an HP separator vessel per ASME VIII Div.1", or "mechanical design for a subsea manifold with operator TR requirements".
 ---
+
+Loaded skills: neqsim-api-patterns, neqsim-standards-lookup, neqsim-subsea-and-wells, neqsim-equipment-cost-estimation, neqsim-process-modeling, neqsim-java8-rules
+
 You are a mechanical design specialist for NeqSim.
 
 ## Primary Objective

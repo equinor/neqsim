@@ -18,6 +18,26 @@
     "neqsim-controllability-operability",
     "neqsim-dynamic-simulation"
   ],
+  "implement runTransient": [
+    "neqsim-dynamic-equipment-implementation",
+    "neqsim-dynamic-simulation",
+    "neqsim-java8-rules"
+  ],
+  "dynamic equipment implementation": [
+    "neqsim-dynamic-equipment-implementation",
+    "neqsim-regression-baselines",
+    "neqsim-troubleshooting"
+  ],
+  "add dynamic volume to equipment": [
+    "neqsim-dynamic-equipment-implementation",
+    "neqsim-dynamic-simulation",
+    "neqsim-process-modeling"
+  ],
+  "test process equipment runTransient": [
+    "neqsim-dynamic-equipment-implementation",
+    "neqsim-dynamic-simulation",
+    "neqsim-regression-baselines"
+  ],
   "connect pid to plant data": [
     "neqsim-pid-process-operations",
     "neqsim-plant-data"
@@ -122,6 +142,9 @@
   ],
   "analyzing pressure/level dynamics": [
     "neqsim-dynamic-simulation"
+  ],
+  "adding volume for equipment": [
+    "neqsim-dynamic-equipment-implementation"
   ],
   "asme": [
     "neqsim-standards-lookup"
@@ -961,4 +984,68 @@
   "catalyst activity factor": ["neqsim-hydrogen-production", "neqsim-reaction-engineering"],
   "smr catalyst life": ["neqsim-hydrogen-production", "neqsim-reaction-engineering"],
   "ammonia cracking catalyst": ["neqsim-hydrogen-production", "neqsim-reaction-engineering"]
+  ,"agent organization": ["agent-org-builder", "agent-sync-validator"]
+  ,"build agent organization": ["agent-org-builder"]
+  ,"sync copilot agents": ["agent-sync-validator"]
+  ,"brand assets": ["communication-toolbox", "equinor-browser"]
+  ,"stid document retrieval": ["docret-stid-retrieval", "docret-workflows", "enterprise-stid-document-retrieval"]
+  ,"documentation retriever workflow": ["docret-workflows", "docret-stid-retrieval"]
+  ,"enterprise barrier register": ["enterprise-barrier-register"]
+  ,"enterprise ecalc compressor": ["enterprise-ecalc-compressor-performance"]
+  ,"enterprise hazop preparation": ["enterprise-hazop-preparation"]
+  ,"enterprise hydrate margin": ["enterprise-hydrate-margin-check"]
+  ,"enterprise lopa sil": ["enterprise-lopa-sil-screening"]
+  ,"enterprise maintenance api": ["enterprise-maintenance-api"]
+  ,"enterprise neqsim api": ["enterprise-neqsimapi-connect"]
+  ,"norsok s001 clause 10": ["enterprise-norsok-s001-clause10"]
+  ,"enterprise pdf ocr": ["enterprise-pdf-ocr"]
+  ,"enterprise pdf html": ["enterprise-pdf-to-html"]
+  ,"enterprise pid annotation": ["enterprise-pid-annotation"]
+  ,"enterprise pid completeness": ["enterprise-pid-completeness"]
+  ,"enterprise pid tag extraction": ["enterprise-pid-tag-extraction"]
+  ,"enterprise pid topology": ["enterprise-pid-topology"]
+  ,"enterprise plant data": ["enterprise-plant-data"]
+  ,"enterprise process model build verify": ["enterprise-process-model-build-verify"]
+  ,"enterprise process safety indicators": ["enterprise-process-safety-indicators"]
+  ,"enterprise seeq": ["enterprise-seeq-connect"]
+  ,"enterprise stid evidence": ["enterprise-stid-evidence", "enterprise-stid-safety-evidence"]
+  ,"enterprise live stid lookup": ["enterprise-stid-live-lookup"]
+  ,"enterprise stid neqsim operational study": ["enterprise-stid-neqsim-operational-study"]
+  ,"enterprise well barrier evidence": ["enterprise-well-barrier-evidence"]
+  ,"enterprise well barrier verification": ["enterprise-well-barrier-verification"]
+  ,"enterprise well integrity screening": ["enterprise-well-integrity-screening"]
+  ,"enterprise well intervention risk": ["enterprise-well-intervention-risk"]
+  ,"enterprise well operating envelope": ["enterprise-well-operating-envelope"]
+  ,"enterprise well production routing": ["enterprise-well-production-routing"]
+  ,"equinor html presentation": ["equinor-html-presentation"]
+  ,"equinor pptx presentation": ["equinor-pptx-presentation"]
+  ,"extract standard requirements": ["extract-standard-requirements"]
+  ,"organize folder files": ["folder-organizer"]
+  ,"interactive timeline": ["interactive-timeline"]
+  ,"knowledge graph": ["knowledge-graph-builder"]
+  ,"compressor operating window screening": ["neqsim-compressor-operating-window-check"]
+  ,"compressor power screening": ["neqsim-compressor-power-screening"]
+  ,"depressurization screening": ["neqsim-depressurization-screening"]
+  ,"fired heater duty screening": ["neqsim-fired-heater-duty-screening"]
+  ,"flare radiation screening": ["neqsim-flare-radiation-screening"]
+  ,"flow induced vibration screening": ["neqsim-flow-induced-vibration-screening"]
+  ,"fluid quality check": ["neqsim-fluid-quality-check"]
+  ,"hydrate margin check": ["neqsim-hydrate-margin-check"]
+  ,"hydrate screening": ["neqsim-hydrate-screening"]
+  ,"line velocity check": ["neqsim-line-velocity-check"]
+  ,"pipe wall thickness screening": ["neqsim-pipe-wall-thickness-screening"]
+  ,"pressure drop screening": ["neqsim-pressure-drop-screening"]
+  ,"psv orifice screening": ["neqsim-psv-orifice-screening"]
+  ,"relief load screening": ["neqsim-relief-load-screening"]
+  ,"resource classification screening": ["neqsim-resource-classification-screening"]
+  ,"safety function coverage screening": ["neqsim-safety-function-coverage-screening"]
+  ,"separator modelling screening": ["neqsim-separator-modelling"]
+  ,"water dewpoint dehydration screening": ["neqsim-water-dewpoint-dehydration-screening"]
+  ,"wax margin check": ["neqsim-wax-margin-check"]
+  ,"pdf to html": ["pdf-to-html"]
+  ,"pims downloader": ["pims-downloader"]
+  ,"powerpoint template builder": ["pptx-template-builder"]
+  ,"project documentation scaffold": ["project-documentation-scaffold"]
+  ,"safety moment": ["safety-moment"]
+  ,"sap navigator": ["sap-navigator"]
 }
