@@ -1,3 +1,8 @@
+---
+name: "paperlab_source_pdf_to_html"
+description: "Convert or plan conversion of source PDFs into clean, searchable HTML for"
+---
+
 # Skill: PaperLab Source PDF to HTML
 
 ## Purpose

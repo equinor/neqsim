@@ -1,3 +1,8 @@
+---
+name: "design_flash_benchmark"
+description: "Create a structured test matrix for comparing flash algorithm performance"
+---
+
 # Skill: Design Flash Benchmark
 
 ## Purpose

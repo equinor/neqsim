@@ -1,3 +1,8 @@
+---
+name: "paperlab_book_knowledge_graph"
+description: "Build a review graph for a PaperLab book so editors can see how chapters,"
+---
+
 # Skill: PaperLab Book Knowledge Graph
 
 ## Purpose

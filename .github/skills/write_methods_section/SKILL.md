@@ -1,3 +1,8 @@
+---
+name: "write_methods_section"
+description: "Draft a publication-quality Methods section for a computational thermodynamics"
+---
+
 # Skill: Write Methods Section
 
 ## Purpose

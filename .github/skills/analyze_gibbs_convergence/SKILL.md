@@ -1,3 +1,8 @@
+---
+name: "analyze_gibbs_convergence"
+description: "Interpret Gibbs energy minimization convergence metrics, analyze Jacobian"
+---
+
 # Skill: Analyze Gibbs Convergence
 
 ## Purpose

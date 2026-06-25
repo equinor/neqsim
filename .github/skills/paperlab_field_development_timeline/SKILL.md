@@ -1,3 +1,8 @@
+---
+name: "paperlab_field_development_timeline"
+description: "Create compact teaching timelines for field-development books. Use this when"
+---
+
 # Skill: PaperLab Field Development Timeline
 
 ## Purpose

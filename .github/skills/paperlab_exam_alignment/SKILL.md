@@ -1,3 +1,8 @@
+---
+name: "paperlab_exam_alignment"
+description: "Check whether a PaperLab course book prepares students for the associated"
+---
+
 # Skill: PaperLab Exam Alignment
 
 ## Purpose

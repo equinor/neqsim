@@ -1,3 +1,8 @@
+---
+name: "design_reactor_benchmark"
+description: "Create a structured test matrix for evaluating Gibbs energy minimization"
+---
+
 # Skill: Design Reactor / Chemical Equilibrium Benchmark
 
 ## Purpose

@@ -1,3 +1,8 @@
+---
+name: "analyze_convergence"
+description: "Interpret flash algorithm convergence metrics, identify patterns, and produce"
+---
+
 # Skill: Analyze Convergence
 
 ## Purpose

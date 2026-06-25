@@ -1,3 +1,8 @@
+---
+name: "run_flash_experiments"
+description: "Execute NeqSim flash calculations in batch mode, collect metrics, and produce"
+---
+
 # Skill: Run Flash Experiments
 
 ## Purpose

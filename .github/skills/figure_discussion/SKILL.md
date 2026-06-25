@@ -1,3 +1,8 @@
+---
+name: "figure_discussion"
+description: "PaperLab skill for figure discussion workflows in scientific writing and book production."
+---
+
 # Skill: Figure Discussion (observation → mechanism → implication → recommendation)
 
 ## When to Use

@@ -40,8 +40,67 @@ def _frontmatter_name(path, fallback):
         if stripped == "---":
             break
         if stripped.startswith("name:"):
-            return stripped.split(":", 1)[1].strip().strip('"\'') or fallback
+            value = stripped.split(":", 1)[1].strip()
+            return value.strip("\"'") or fallback
     return fallback
+
+
+def _has_frontmatter(text):
+    """Return True when the text starts with YAML frontmatter.
+
+    @param text the markdown text to inspect
+    @return True if YAML frontmatter exists
+    """
+    return text.startswith("---\n") or text.startswith("---\r\n")
+
+
+def _infer_description(text, name):
+    """Infer a VS Code skill description from PaperLab markdown.
+
+    @param text the skill markdown body
+    @param name the skill name
+    @return a description string suitable for YAML frontmatter
+    """
+    lines = text.splitlines()
+    for index, line in enumerate(lines):
+        if line.strip().lower() == "## purpose":
+            for candidate in lines[index + 1:]:
+                value = candidate.strip()
+                if value and not value.startswith("#"):
+                    return value
+        if line.strip().lower().startswith("description:"):
+            value = line.split(":", 1)[1].strip().strip("\"'")
+            if value:
+                return value
+    title = name.replace("_", " ").replace("-", " ")
+    return "PaperLab skill for {title} workflows in scientific writing and book production.".format(
+        title=title)
+
+
+def _yaml_quote(value):
+    """Quote a scalar value for the simple frontmatter used here.
+
+    @param value the scalar value to quote
+    @return a double-quoted YAML scalar
+    """
+    return '"{value}"'.format(value=value.replace('"', '\\"'))
+
+
+def _ensure_skill_frontmatter(skill_dir, name):
+    """Ensure an exported PaperLab skill has required YAML frontmatter.
+
+    @param skill_dir the exported skill directory
+    @param name the skill folder/name to write in frontmatter
+    @return None
+    """
+    skill_file = Path(skill_dir) / "SKILL.md"
+    text = skill_file.read_text(encoding="utf-8")
+    if _has_frontmatter(text):
+        return
+    description = _infer_description(text, name)
+    frontmatter = "---\nname: {name}\ndescription: {description}\n---\n\n".format(
+        name=_yaml_quote(name), description=_yaml_quote(description))
+    skill_file.write_text(frontmatter + text, encoding="utf-8")
 
 
 def iter_paperlab_agents():
@@ -117,7 +176,8 @@ def _export_skills(args):
             print("[DRY] skill {name} -> {target}".format(
                 name=name, target=target_dir / name))
         else:
-            install_skill.export_skill_to_vscode(name, source_dir, target_dir)
+            dest = install_skill.export_skill_to_vscode(name, source_dir, target_dir)
+            _ensure_skill_frontmatter(dest, name)
         count += 1
     print("[OK] PaperLab skills exported: {count} -> {target}".format(
         count=count, target=target_dir))

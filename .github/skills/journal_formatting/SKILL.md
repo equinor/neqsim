@@ -1,3 +1,8 @@
+---
+name: "journal_formatting"
+description: "Apply journal-specific formatting rules to transform a manuscript from Markdown"
+---
+
 # Skill: Journal Formatting
 
 ## Purpose

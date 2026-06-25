@@ -1,3 +1,8 @@
+---
+name: "technical_figure_understanding"
+description: "Read engineering figures deeply enough that a book, paper, or report can explain"
+---
+
 # Skill: Technical Figure Understanding
 
 ## Purpose
