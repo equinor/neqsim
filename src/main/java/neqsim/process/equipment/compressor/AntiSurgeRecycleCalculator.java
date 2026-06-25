@@ -12,21 +12,18 @@ import neqsim.thermo.system.SystemInterface;
  * Steady-state anti-surge recycle calculator for a charted {@link Compressor}.
  *
  * <p>
- * Given a compressor that already carries a performance map with an active surge curve and a
- * natural (offtake) suction stream, this helper computes the cooled recycle flow required to hold
- * the compressor inlet on the anti-surge control line in a converged steady-state flowsheet. It
- * mirrors the field recycle topology (a {@link Mixer} that combines the natural suction with a
- * cooled-gas recycle stream feeding the machine) and converges the recycle flow with a damped
- * fixed-point iteration so that the machine inlet sits at the configured fractional distance to
- * surge.
+ * Given a compressor that already carries a performance map with an active surge curve and a natural (offtake) suction
+ * stream, this helper computes the cooled recycle flow required to hold the compressor inlet on the anti-surge control
+ * line in a converged steady-state flowsheet. It mirrors the field recycle topology (a {@link Mixer} that combines the
+ * natural suction with a cooled-gas recycle stream feeding the machine) and converges the recycle flow with a damped
+ * fixed-point iteration so that the machine inlet sits at the configured fractional distance to surge.
  * </p>
  *
  * <p>
- * This is the steady-state companion to
- * {@link neqsim.process.controllerdevice.AntiSurgeController}, which performs transient
- * proportional-integral control of a recycle valve during dynamic runs. This class adds no new
- * compressor physics; it only reads {@link Compressor#getSurgeFlowRate()} and
- * {@link Compressor#getDistanceToSurge()} and re-runs the supplied compressor.
+ * This is the steady-state companion to {@link neqsim.process.controllerdevice.AntiSurgeController}, which performs
+ * transient proportional-integral control of a recycle valve during dynamic runs. This class adds no new compressor
+ * physics; it only reads {@link Compressor#getSurgeFlowRate()} and {@link Compressor#getDistanceToSurge()} and re-runs
+ * the supplied compressor.
  * </p>
  *
  * <p>
@@ -50,9 +47,9 @@ import neqsim.thermo.system.SystemInterface;
  * </pre>
  *
  * <p>
- * The recycle stream composition is cloned from the suction fluid. Because an ideal compressor does
- * not change composition, this is an accurate representation of a cooled-discharge recycle while
- * avoiding re-entrant coupling to the outlet stream during iteration.
+ * The recycle stream composition is cloned from the suction fluid. Because an ideal compressor does not change
+ * composition, this is an accurate representation of a cooled-discharge recycle while avoiding re-entrant coupling to
+ * the outlet stream during iteration.
  * </p>
  *
  * @author NeqSim
@@ -72,8 +69,8 @@ public class AntiSurgeRecycleCalculator implements Serializable {
   private final StreamInterface suctionStream;
 
   /**
-   * Surge-control margin as a fraction of the surge flow. The control line is
-   * {@code surgeFlow * (1 + margin)}. Default 0.05 = 5%.
+   * Surge-control margin as a fraction of the surge flow. The control line is {@code surgeFlow * (1 + margin)}. Default
+   * 0.05 = 5%.
    */
   private double surgeControlMargin = 0.05;
 
@@ -107,16 +104,14 @@ public class AntiSurgeRecycleCalculator implements Serializable {
   }
 
   /**
-   * Solve for the steady-state cooled recycle flow that holds the compressor inlet on the
-   * anti-surge control line.
+   * Solve for the steady-state cooled recycle flow that holds the compressor inlet on the anti-surge control line.
    *
    * <p>
-   * The supplied compressor is run first to establish the natural operating point. If the natural
-   * inlet volumetric flow already meets or exceeds the control flow, no recycle is required and the
-   * compressor is left untouched. Otherwise a {@link Mixer} of the natural suction and a cooled
-   * recycle {@link Stream} is wired to the compressor inlet and the recycle flow is converged with
-   * a damped fixed-point iteration. On return, the compressor inlet reflects the converged recycled
-   * state so that {@link Compressor#getPower(String)} and related getters describe the recycled
+   * The supplied compressor is run first to establish the natural operating point. If the natural inlet volumetric flow
+   * already meets or exceeds the control flow, no recycle is required and the compressor is left untouched. Otherwise a
+   * {@link Mixer} of the natural suction and a cooled recycle {@link Stream} is wired to the compressor inlet and the
+   * recycle flow is converged with a damped fixed-point iteration. On return, the compressor inlet reflects the
+   * converged recycled state so that {@link Compressor#getPower(String)} and related getters describe the recycled
    * machine.
    * </p>
    *
@@ -131,15 +126,14 @@ public class AntiSurgeRecycleCalculator implements Serializable {
     boolean active = inletVol < controlFlow;
 
     if (!active) {
-      lastResult = new Result(false, 0.0, null, compressor.getDistanceToSurge(), inletVol,
-          surgeFlow, controlFlow, 0, true);
+      lastResult = new Result(false, 0.0, null, compressor.getDistanceToSurge(), inletVol, surgeFlow, controlFlow, 0,
+	  true);
       return lastResult;
     }
 
     double feedMass = suctionStream.getFlowRate("kg/hr");
     double suctionPressureBara = suctionStream.getPressure("bara");
-    double recycleMass =
-        Math.max((controlFlow - inletVol) / Math.max(inletVol, 1.0e-6) * feedMass, 0.0);
+    double recycleMass = Math.max((controlFlow - inletVol) / Math.max(inletVol, 1.0e-6) * feedMass, 0.0);
 
     Stream recycleStream = null;
     int iterations = 0;
@@ -166,8 +160,8 @@ public class AntiSurgeRecycleCalculator implements Serializable {
       controlFlow = surgeFlow * (1.0 + surgeControlMargin);
       double error = controlFlow - inletVol;
       if (Math.abs(error) < tolerance * controlFlow) {
-        converged = true;
-        break;
+	converged = true;
+	break;
       }
       double totalMass = mixer.getOutletStream().getFlowRate("kg/hr");
       double volumePerMass = inletVol / Math.max(totalMass, 1.0e-6);
@@ -175,13 +169,12 @@ public class AntiSurgeRecycleCalculator implements Serializable {
     }
 
     if (!converged) {
-      logger.warn(
-          "AntiSurgeRecycleCalculator did not converge in {} iterations (residual on control flow)",
-          maxIterations);
+      logger.warn("AntiSurgeRecycleCalculator did not converge in {} iterations (residual on control flow)",
+	  maxIterations);
     }
 
-    lastResult = new Result(true, recycleMass, recycleStream, compressor.getDistanceToSurge(),
-        inletVol, surgeFlow, controlFlow, iterations, converged);
+    lastResult = new Result(true, recycleMass, recycleStream, compressor.getDistanceToSurge(), inletVol, surgeFlow,
+	controlFlow, iterations, converged);
     return lastResult;
   }
 
@@ -345,9 +338,8 @@ public class AntiSurgeRecycleCalculator implements Serializable {
      * @param iterations the number of fixed-point iterations performed
      * @param converged whether the iteration converged within the tolerance
      */
-    public Result(boolean recycleActive, double recycleMassFlow, StreamInterface recycleStream,
-        double distanceToSurge, double inletVolumeFlow, double surgeFlow, double controlFlow,
-        int iterations, boolean converged) {
+    public Result(boolean recycleActive, double recycleMassFlow, StreamInterface recycleStream, double distanceToSurge,
+	double inletVolumeFlow, double surgeFlow, double controlFlow, int iterations, boolean converged) {
       this.recycleActive = recycleActive;
       this.recycleMassFlow = recycleMassFlow;
       this.recycleStream = recycleStream;
