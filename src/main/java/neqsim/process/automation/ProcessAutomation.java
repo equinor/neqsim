@@ -1206,11 +1206,12 @@ public class ProcessAutomation {
       }
       break;
     case "duty":
-      if (unit instanceof Heater) {
-        return hasUnit ? ((Heater) unit).getDuty(uom) : ((Heater) unit).getDuty();
-      }
+      // Heater is a superclass of HeatExchanger, so check HeatExchanger first
       if (unit instanceof HeatExchanger) {
         return ((HeatExchanger) unit).getDuty();
+      }
+      if (unit instanceof Heater) {
+        return hasUnit ? ((Heater) unit).getDuty(uom) : ((Heater) unit).getDuty();
       }
       break;
     case "polytropicEfficiency":
