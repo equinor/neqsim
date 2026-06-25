@@ -88,7 +88,7 @@ public class ProcessSystemBypassRecycleTest extends neqsim.NeqSimTest {
     // The separator gas outlet should still carry roughly the fresh-feed gas inventory.
     StreamInterface gasProduct = gasSplit.getSplitStream(0);
     assertTrue(gasProduct.getFlowRate("kg/hr") > 500.0,
-	"main gas product should still carry meaningful flow, got " + gasProduct.getFlowRate("kg/hr"));
+        "main gas product should still carry meaningful flow, got " + gasProduct.getFlowRate("kg/hr"));
   }
 
   @Test

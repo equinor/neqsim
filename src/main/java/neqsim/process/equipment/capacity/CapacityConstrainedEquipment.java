@@ -176,7 +176,7 @@ public interface CapacityConstrainedEquipment {
     }
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.isEnabled() && constraint.isNearLimit()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -197,9 +197,9 @@ public interface CapacityConstrainedEquipment {
     java.util.Map<String, Double> summary = new java.util.LinkedHashMap<String, Double>();
     if (constraints != null) {
       for (Map.Entry<String, CapacityConstraint> entry : constraints.entrySet()) {
-	if (entry.getValue().isEnabled()) {
-	  summary.put(entry.getKey(), entry.getValue().getUtilizationPercent());
-	}
+        if (entry.getValue().isEnabled()) {
+          summary.put(entry.getKey(), entry.getValue().getUtilizationPercent());
+        }
       }
     }
     return summary;
@@ -250,10 +250,10 @@ public interface CapacityConstrainedEquipment {
     int count = 0;
     if (constraints != null) {
       for (CapacityConstraint constraint : constraints.values()) {
-	if (constraint.isEnabled()) {
-	  constraint.setEnabled(false);
-	  count++;
-	}
+        if (constraint.isEnabled()) {
+          constraint.setEnabled(false);
+          count++;
+        }
       }
     }
     return count;
@@ -274,10 +274,10 @@ public interface CapacityConstrainedEquipment {
     int count = 0;
     if (constraints != null) {
       for (CapacityConstraint constraint : constraints.values()) {
-	if (!constraint.isEnabled()) {
-	  constraint.setEnabled(true);
-	  count++;
-	}
+        if (!constraint.isEnabled()) {
+          constraint.setEnabled(true);
+          count++;
+        }
       }
     }
     return count;

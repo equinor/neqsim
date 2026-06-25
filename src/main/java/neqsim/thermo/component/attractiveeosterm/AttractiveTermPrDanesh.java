@@ -40,7 +40,7 @@ public class AttractiveTermPrDanesh extends AttractiveTermPr1978 {
   @Override
   public void init() {
     m = (0.37464 + 1.54226 * getComponent().getAcentricFactor()
-	- 0.26992 * getComponent().getAcentricFactor() * getComponent().getAcentricFactor());
+        - 0.26992 * getComponent().getAcentricFactor() * getComponent().getAcentricFactor());
   }
 
   /** {@inheritDoc} */
@@ -69,7 +69,7 @@ public class AttractiveTermPrDanesh extends AttractiveTermPr1978 {
       mMod = m;
     }
     return -(1.0 + mMod * (1.0 - Math.sqrt(temperature / getComponent().getTC()))) * mMod
-	/ Math.sqrt(temperature / getComponent().getTC()) / getComponent().getTC();
+        / Math.sqrt(temperature / getComponent().getTC()) / getComponent().getTC();
   }
 
   /** {@inheritDoc} */
@@ -82,9 +82,9 @@ public class AttractiveTermPrDanesh extends AttractiveTermPr1978 {
     }
 
     return mMod * mMod / temperature / getComponent().getTC() / 2.0
-	+ (1.0 + mMod * (1.0 - Math.sqrt(temperature / getComponent().getTC()))) * m
-	    / Math.sqrt(temperature * temperature * temperature / (Math.pow(getComponent().getTC(), 3.0)))
-	    / (getComponent().getTC() * getComponent().getTC()) / 2.0;
+        + (1.0 + mMod * (1.0 - Math.sqrt(temperature / getComponent().getTC()))) * m
+            / Math.sqrt(temperature * temperature * temperature / (Math.pow(getComponent().getTC(), 3.0)))
+            / (getComponent().getTC() * getComponent().getTC()) / 2.0;
   }
 
   /** {@inheritDoc} */

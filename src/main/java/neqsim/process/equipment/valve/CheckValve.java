@@ -148,11 +148,11 @@ public class CheckValve extends ThrottlingValve {
       setPercentValveOpening(0.0);
       // Set very high resistance when closed
       if (getCv() > 0) {
-	double tempCv = getCv();
-	setCv(CLOSED_RESISTANCE);
-	super.run();
-	setCv(tempCv); // Restore original Cv
-	return;
+        double tempCv = getCv();
+        setCv(CLOSED_RESISTANCE);
+        super.run();
+        setCv(tempCv); // Restore original Cv
+        return;
       }
     }
 
@@ -170,6 +170,6 @@ public class CheckValve extends ThrottlingValve {
   @Override
   public String toString() {
     return String.format("%s [Check Valve] - State: %s, Cracking P: %.3f bara, Cv: %.1f", getName(),
-	isOpen ? "OPEN" : "CLOSED", crackingPressure, getCv());
+        isOpen ? "OPEN" : "CLOSED", crackingPressure, getCv());
   }
 }

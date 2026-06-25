@@ -22,9 +22,9 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
   public AtractiveTermMatCopPRUMRNew(ComponentEosInterface component) {
     super(component);
     m = (0.384401 + 1.52276 * component.getAcentricFactor()
-	- 0.213808 * component.getAcentricFactor() * component.getAcentricFactor()
-	+ 0.034616 * Math.pow(component.getAcentricFactor(), 3.0)
-	- 0.001976 * Math.pow(component.getAcentricFactor(), 4.0));
+        - 0.213808 * component.getAcentricFactor() * component.getAcentricFactor()
+        + 0.034616 * Math.pow(component.getAcentricFactor(), 3.0)
+        - 0.001976 * Math.pow(component.getAcentricFactor(), 4.0));
   }
 
   /**
@@ -104,8 +104,8 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
     } else {
       double Tr = temperature / getComponent().getTC();
       return Math.pow(1.0 + parameters[0] * (1.0 - Math.sqrt(Tr)) + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
-	  + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0) + parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 4.0)
-	  + parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 5.0), 2.0);
+          + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0) + parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 4.0)
+          + parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 5.0), 2.0);
     }
   }
 
@@ -130,13 +130,13 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
     double TC = getComponent().getTC();
     double tcrizatr = TC * Math.sqrt(Tr);
     return 2.0
-	* (1.0 + parameters[0] * (1.0 - Math.sqrt(Tr)) + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
-	    + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0) + parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 4.0)
-	    + parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 5.0))
-	* (-1.0 / 2.0 * parameters[0] / tcrizatr - parameters[1] * (1.0 - Math.sqrt(Tr)) / tcrizatr
-	    - 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / tcrizatr
-	    - 2.0 * parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 3.0) / tcrizatr
-	    - 5.0 / 2.0 * parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 4.0) / tcrizatr);
+        * (1.0 + parameters[0] * (1.0 - Math.sqrt(Tr)) + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
+            + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0) + parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 4.0)
+            + parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 5.0))
+        * (-1.0 / 2.0 * parameters[0] / tcrizatr - parameters[1] * (1.0 - Math.sqrt(Tr)) / tcrizatr
+            - 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / tcrizatr
+            - 2.0 * parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 3.0) / tcrizatr
+            - 5.0 / 2.0 * parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 4.0) / tcrizatr);
   }
 
   /** {@inheritDoc} */
@@ -152,21 +152,21 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
     double TcT = TC * temperature;
     double Tc2Trpower32 = TC * TC * Math.pow(Tr, 1.5);
     return 2.0
-	* Math.pow(parameters[0] / tcrizatr / 2.0 + parameters[1] * (1.0 - Math.sqrt(Tr)) / tcrizatr
-	    + 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / tcrizatr
-	    + 2.0 * parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 3.0) / tcrizatr
-	    + 5.0 / 2.0 * parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 4.0) / tcrizatr, 2.0)
-	+ 2.0 * (1.0 + parameters[0] * (1.0 - Math.sqrt(Tr)) + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
-	    + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0) + parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 4.0)
-	    + parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 5.0))
-	    * (parameters[0] / Tc2Trpower32 / 4.0 + parameters[1] / TcT / 2.0
-		+ parameters[1] * (1.0 - Math.sqrt(Tr)) / Tc2Trpower32 / 2.0
-		+ 3.0 / 2.0 * parameters[2] * (1.0 - Math.sqrt(Tr)) / TcT
-		+ 3.0 / 4.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / Tc2Trpower32
-		+ 3 * parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / TcT
-		+ parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 3.0) / Tc2Trpower32
-		+ 5 * parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 3.0) / TcT
-		+ 5.0 / 4.0 * parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 4.0) / Tc2Trpower32);
+        * Math.pow(parameters[0] / tcrizatr / 2.0 + parameters[1] * (1.0 - Math.sqrt(Tr)) / tcrizatr
+            + 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / tcrizatr
+            + 2.0 * parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 3.0) / tcrizatr
+            + 5.0 / 2.0 * parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 4.0) / tcrizatr, 2.0)
+        + 2.0 * (1.0 + parameters[0] * (1.0 - Math.sqrt(Tr)) + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
+            + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0) + parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 4.0)
+            + parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 5.0))
+            * (parameters[0] / Tc2Trpower32 / 4.0 + parameters[1] / TcT / 2.0
+                + parameters[1] * (1.0 - Math.sqrt(Tr)) / Tc2Trpower32 / 2.0
+                + 3.0 / 2.0 * parameters[2] * (1.0 - Math.sqrt(Tr)) / TcT
+                + 3.0 / 4.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / Tc2Trpower32
+                + 3 * parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / TcT
+                + parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 3.0) / Tc2Trpower32
+                + 5 * parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 3.0) / TcT
+                + 5.0 / 4.0 * parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 4.0) / Tc2Trpower32);
   }
 
   /** {@inheritDoc} */

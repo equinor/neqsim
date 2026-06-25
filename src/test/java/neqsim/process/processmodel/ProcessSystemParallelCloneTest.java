@@ -90,22 +90,22 @@ class ProcessSystemParallelCloneTest {
     try {
       List<Future<Double>> futures = new ArrayList<Future<Double>>();
       for (int i = 0; i < scenarioCount; i++) {
-	final double outletPressure = 110.0 + i;
-	final ProcessSystem copy = base.copy();
-	((Compressor) copy.getUnit("Compressor")).setOutletPressure(outletPressure);
-	futures.add(pool.submit(new Callable<Double>() {
-	  @Override
-	  public Double call() {
-	    return runAndGetPower(copy);
-	  }
-	}));
+        final double outletPressure = 110.0 + i;
+        final ProcessSystem copy = base.copy();
+        ((Compressor) copy.getUnit("Compressor")).setOutletPressure(outletPressure);
+        futures.add(pool.submit(new Callable<Double>() {
+          @Override
+          public Double call() {
+            return runAndGetPower(copy);
+          }
+        }));
       }
       for (int i = 0; i < scenarioCount; i++) {
-	double parallelResult = futures.get(i).get();
-	double sequentialResult = sequential.get(i).doubleValue();
-	assertTrue(parallelResult > 0.0, "scenario " + i + " should produce positive power");
-	assertEquals(sequentialResult, parallelResult, Math.abs(sequentialResult) * 1.0e-9 + 1.0e-6,
-	    "parallel clone-and-run must match sequential for scenario " + i);
+        double parallelResult = futures.get(i).get();
+        double sequentialResult = sequential.get(i).doubleValue();
+        assertTrue(parallelResult > 0.0, "scenario " + i + " should produce positive power");
+        assertEquals(sequentialResult, parallelResult, Math.abs(sequentialResult) * 1.0e-9 + 1.0e-6,
+            "parallel clone-and-run must match sequential for scenario " + i);
       }
     } finally {
       pool.shutdownNow();

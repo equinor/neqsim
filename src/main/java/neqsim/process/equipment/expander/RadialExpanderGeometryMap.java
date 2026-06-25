@@ -22,6 +22,7 @@ import neqsim.thermo.system.SystemInterface;
  * Working with the velocity ratio
  * </p>
  *
+ * <p>
  * $$ \nu = \frac{U_2}{c_0}, \qquad c_0 = \sqrt{2\,\Delta h_{0s}} $$
  *
  * <p>
@@ -29,12 +30,14 @@ import neqsim.thermo.system.SystemInterface;
  * (zero-incidence) velocity ratio is
  * </p>
  *
+ * <p>
  * $$ \nu_{opt} = \sqrt{1-R}\,\sin\alpha_2 $$
  *
  * <p>
  * where \(R\) is the stage degree of reaction. The total-to-static efficiency over a sweep of velocity ratio is then
  * </p>
  *
+ * <p>
  * $$ \eta_{ts}(\nu) = 1 - \Big[ f_i(\nu_{opt}-\nu)^2 + \zeta_n(1-R) + \zeta_r\big(r_r^2\nu^2 + (1-R)\cos^2\alpha_2\big)
  * + (1-R)\cos^2\alpha_2 \Big] $$
  *
@@ -140,8 +143,8 @@ public class RadialExpanderGeometryMap implements Serializable {
     for (int i = 0; i < nIgv; i++) {
       double alpha2 = Math.toRadians(nozzleAngleDeg[i]);
       if (nozzleAngleDeg[i] <= 0.0 || nozzleAngleDeg[i] >= 90.0) {
-	throw new IllegalArgumentException(
-	    "nozzleAngleDeg must be in the open interval (0, 90); got " + nozzleAngleDeg[i]);
+        throw new IllegalArgumentException(
+            "nozzleAngleDeg must be in the open interval (0, 90); got " + nozzleAngleDeg[i]);
       }
       double cosA = Math.cos(alpha2);
       double sinA = Math.sin(alpha2);
@@ -154,16 +157,16 @@ public class RadialExpanderGeometryMap implements Serializable {
       double headAtIgv = designHeadDropKjPerKg * headScale;
 
       for (int j = 0; j < pointsPerCurve; j++) {
-	double nu = minVelocityRatio + (maxVelocityRatio - minVelocityRatio) * j / (double) (pointsPerCurve - 1);
-	double incidence = incidenceLossFactor * (nuOpt - nu) * (nuOpt - nu);
-	double rotorLoss = rotorLossCoefficient * (radiusRatio * radiusRatio * nu * nu + reactionTerm * cosA * cosA);
-	double efficiency = 1.0 - (incidence + constantLoss + rotorLoss);
-	if (efficiency < 0.0) {
-	  efficiency = 0.0;
-	}
-	uc[i][j] = nu;
-	eta[i][j] = efficiency;
-	headDrop[i][j] = headAtIgv;
+        double nu = minVelocityRatio + (maxVelocityRatio - minVelocityRatio) * j / (double) (pointsPerCurve - 1);
+        double incidence = incidenceLossFactor * (nuOpt - nu) * (nuOpt - nu);
+        double rotorLoss = rotorLossCoefficient * (radiusRatio * radiusRatio * nu * nu + reactionTerm * cosA * cosA);
+        double efficiency = 1.0 - (incidence + constantLoss + rotorLoss);
+        if (efficiency < 0.0) {
+          efficiency = 0.0;
+        }
+        uc[i][j] = nu;
+        eta[i][j] = efficiency;
+        headDrop[i][j] = headAtIgv;
       }
     }
 

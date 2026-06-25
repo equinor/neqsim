@@ -131,7 +131,7 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     double wtpWaterRichTEG = TEGtoRegenerator.getFluid().getPhase("aqueous").getWtFrac("water") * 100.0;
     double wtpWaterFromReboil = column.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("water") * 100.0;
     double wtpWaterFromStripper = stripper.getSolventOutStream().getFluid().getPhase("aqueous").getWtFrac("water")
-	* 100.0;
+        * 100.0;
     logger.info("wtpRichTEG " + wtpWaterRichTEG);
     logger.info("wtpWaterFromReboil " + wtpWaterFromReboil);
     logger.info("wtpWaterFromStripper " + wtpWaterFromStripper);
@@ -150,18 +150,18 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     // logger.info("oxygen to regenerator "
     // + TEGtoRegenerator.getFluid().getComponent("oxygen").getTotalFlowRate("kg/hr"));
     logger.info(
-	"nitrogen to regenerator " + TEGtoRegenerator.getFluid().getComponent("nitrogen").getTotalFlowRate("kg/hr"));
+        "nitrogen to regenerator " + TEGtoRegenerator.getFluid().getComponent("nitrogen").getTotalFlowRate("kg/hr"));
 
     logger.info("water liquid from regenerator "
-	+ column.getLiquidOutStream().getFluid().getComponent("water").getTotalFlowRate("kg/hr"));
+        + column.getLiquidOutStream().getFluid().getComponent("water").getTotalFlowRate("kg/hr"));
     logger.info("water gas from regenerator "
-	+ column.getGasOutStream().getFluid().getComponent("water").getTotalFlowRate("kg/hr"));
+        + column.getGasOutStream().getFluid().getComponent("water").getTotalFlowRate("kg/hr"));
     logger.info("water from stripping gas " + gasToReboiler.getFluid().getComponent("water").getTotalFlowRate("kg/hr"));
 
     double waterBalanceColumn = column.getLiquidOutStream().getFluid().getComponent("water").getTotalFlowRate("kg/hr")
-	+ column.getGasOutStream().getFluid().getComponent("water").getTotalFlowRate("kg/hr")
-	- TEGtoRegenerator.getFluid().getComponent("water").getTotalFlowRate("kg/hr")
-	- gasToReboiler.getFluid().getComponent("water").getTotalFlowRate("kg/hr");
+        + column.getGasOutStream().getFluid().getComponent("water").getTotalFlowRate("kg/hr")
+        - TEGtoRegenerator.getFluid().getComponent("water").getTotalFlowRate("kg/hr")
+        - gasToReboiler.getFluid().getComponent("water").getTotalFlowRate("kg/hr");
     logger.info("water balance " + waterBalanceColumn);
 
     logger.info("wt water to reboil " + TEGtoRegenerator.getFluid().getPhase("aqueous").getWtFrac("water") * 100.0);

@@ -2,7 +2,6 @@ package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.util.function.Supplier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -55,7 +54,7 @@ public class SaturateWithWaterRobustnessTest {
     double totalMoles = 0.0;
     for (int p = 0; p < sys.getNumberOfPhases(); p++) {
       if (sys.getPhase(p).getType() == PhaseType.AQUEOUS) {
-	continue;
+        continue;
       }
       waterMoles += sys.getPhase(p).getComponent("water").getNumberOfMolesInPhase();
       totalMoles += sys.getPhase(p).getNumberOfMolesInPhase();
@@ -88,7 +87,7 @@ public class SaturateWithWaterRobustnessTest {
     double reference = referenceWaterZ(factory);
     double relErr = Math.abs(waterZ - reference) / reference;
     logger.info("{}: waterZ={} reference={} relErr={}% time={} ms phases={}", name, waterZ, reference, relErr * 100.0,
-	elapsedMs, sys.getNumberOfPhases());
+        elapsedMs, sys.getNumberOfPhases());
 
     assertTrue(Double.isFinite(waterZ), name + ": water content is not finite");
     assertTrue(waterZ > 0.0, name + ": water content must be positive");
@@ -96,7 +95,7 @@ public class SaturateWithWaterRobustnessTest {
     // phase.
     assertFalse(sys.hasPhaseType(PhaseType.AQUEOUS), name + ": a free aqueous phase remained after saturation");
     assertTrue(relErr < REL_TOL, name + ": saturated water content " + waterZ + " deviates " + (relErr * 100.0)
-	+ "% from equilibrium oracle " + reference);
+        + "% from equilibrium oracle " + reference);
   }
 
   // ---------------------------------------------------------------------------------------------
@@ -108,14 +107,14 @@ public class SaturateWithWaterRobustnessTest {
     checkSaturation("gas-aq -10C/100bar", new Supplier<SystemInterface>() {
       @Override
       public SystemInterface get() {
-	SystemInterface s = new SystemSrkCPAstatoil(273.15 - 10.0, 100.0);
-	s.addComponent("nitrogen", 1.0);
-	s.addComponent("CO2", 2.0);
-	s.addComponent("methane", 90.0);
-	s.addComponent("ethane", 5.0);
-	s.addComponent("propane", 2.0);
-	s.setMixingRule(10);
-	return s;
+        SystemInterface s = new SystemSrkCPAstatoil(273.15 - 10.0, 100.0);
+        s.addComponent("nitrogen", 1.0);
+        s.addComponent("CO2", 2.0);
+        s.addComponent("methane", 90.0);
+        s.addComponent("ethane", 5.0);
+        s.addComponent("propane", 2.0);
+        s.setMixingRule(10);
+        return s;
       }
     });
   }
@@ -125,12 +124,12 @@ public class SaturateWithWaterRobustnessTest {
     checkSaturation("gas-aq 20C/70bar", new Supplier<SystemInterface>() {
       @Override
       public SystemInterface get() {
-	SystemInterface s = new SystemSrkCPAstatoil(273.15 + 20.0, 70.0);
-	s.addComponent("methane", 90.0);
-	s.addComponent("ethane", 7.0);
-	s.addComponent("propane", 3.0);
-	s.setMixingRule(10);
-	return s;
+        SystemInterface s = new SystemSrkCPAstatoil(273.15 + 20.0, 70.0);
+        s.addComponent("methane", 90.0);
+        s.addComponent("ethane", 7.0);
+        s.addComponent("propane", 3.0);
+        s.setMixingRule(10);
+        return s;
       }
     });
   }
@@ -140,11 +139,11 @@ public class SaturateWithWaterRobustnessTest {
     checkSaturation("gas-aq 90C/20bar", new Supplier<SystemInterface>() {
       @Override
       public SystemInterface get() {
-	SystemInterface s = new SystemSrkCPAstatoil(273.15 + 90.0, 20.0);
-	s.addComponent("methane", 95.0);
-	s.addComponent("ethane", 5.0);
-	s.setMixingRule(10);
-	return s;
+        SystemInterface s = new SystemSrkCPAstatoil(273.15 + 90.0, 20.0);
+        s.addComponent("methane", 95.0);
+        s.addComponent("ethane", 5.0);
+        s.setMixingRule(10);
+        return s;
       }
     });
   }
@@ -154,12 +153,12 @@ public class SaturateWithWaterRobustnessTest {
     checkSaturation("CO2-rich gas-aq 25C/80bar", new Supplier<SystemInterface>() {
       @Override
       public SystemInterface get() {
-	SystemInterface s = new SystemSrkCPAstatoil(273.15 + 25.0, 80.0);
-	s.addComponent("CO2", 70.0);
-	s.addComponent("methane", 28.0);
-	s.addComponent("nitrogen", 2.0);
-	s.setMixingRule(10);
-	return s;
+        SystemInterface s = new SystemSrkCPAstatoil(273.15 + 25.0, 80.0);
+        s.addComponent("CO2", 70.0);
+        s.addComponent("methane", 28.0);
+        s.addComponent("nitrogen", 2.0);
+        s.setMixingRule(10);
+        return s;
       }
     });
   }
@@ -173,12 +172,12 @@ public class SaturateWithWaterRobustnessTest {
     checkSaturation("oil-aq CPA 20C/150bar", new Supplier<SystemInterface>() {
       @Override
       public SystemInterface get() {
-	SystemInterface s = new SystemSrkCPAstatoil(273.15 + 20.0, 150.0);
-	s.addComponent("methane", 2.0);
-	s.addComponent("n-heptane", 75.0);
-	s.addComponent("nC10", 20.0);
-	s.setMixingRule(10);
-	return s;
+        SystemInterface s = new SystemSrkCPAstatoil(273.15 + 20.0, 150.0);
+        s.addComponent("methane", 2.0);
+        s.addComponent("n-heptane", 75.0);
+        s.addComponent("nC10", 20.0);
+        s.setMixingRule(10);
+        return s;
       }
     });
   }
@@ -188,11 +187,11 @@ public class SaturateWithWaterRobustnessTest {
     checkSaturation("oil-aq PR 20C/150bar", new Supplier<SystemInterface>() {
       @Override
       public SystemInterface get() {
-	SystemInterface s = new SystemPrEos(273.15 + 20.0, 150.0);
-	s.addComponent("methane", 2.0);
-	s.addComponent("n-heptane", 75.0);
-	s.setMixingRule("classic");
-	return s;
+        SystemInterface s = new SystemPrEos(273.15 + 20.0, 150.0);
+        s.addComponent("methane", 2.0);
+        s.addComponent("n-heptane", 75.0);
+        s.setMixingRule("classic");
+        return s;
       }
     });
   }
@@ -202,12 +201,12 @@ public class SaturateWithWaterRobustnessTest {
     checkSaturation("oil-aq 80C/50bar", new Supplier<SystemInterface>() {
       @Override
       public SystemInterface get() {
-	SystemInterface s = new SystemSrkCPAstatoil(273.15 + 80.0, 50.0);
-	s.addComponent("n-pentane", 30.0);
-	s.addComponent("n-heptane", 50.0);
-	s.addComponent("nC10", 20.0);
-	s.setMixingRule(10);
-	return s;
+        SystemInterface s = new SystemSrkCPAstatoil(273.15 + 80.0, 50.0);
+        s.addComponent("n-pentane", 30.0);
+        s.addComponent("n-heptane", 50.0);
+        s.addComponent("nC10", 20.0);
+        s.setMixingRule(10);
+        return s;
       }
     });
   }
@@ -221,15 +220,15 @@ public class SaturateWithWaterRobustnessTest {
     checkSaturation("gas-oil-aq 30C/80bar", new Supplier<SystemInterface>() {
       @Override
       public SystemInterface get() {
-	SystemInterface s = new SystemSrkCPAstatoil(273.15 + 30.0, 80.0);
-	s.addComponent("methane", 60.0);
-	s.addComponent("ethane", 5.0);
-	s.addComponent("propane", 3.0);
-	s.addComponent("n-butane", 2.0);
-	s.addComponent("n-heptane", 10.0);
-	s.addComponent("nC10", 20.0);
-	s.setMixingRule(10);
-	return s;
+        SystemInterface s = new SystemSrkCPAstatoil(273.15 + 30.0, 80.0);
+        s.addComponent("methane", 60.0);
+        s.addComponent("ethane", 5.0);
+        s.addComponent("propane", 3.0);
+        s.addComponent("n-butane", 2.0);
+        s.addComponent("n-heptane", 10.0);
+        s.addComponent("nC10", 20.0);
+        s.setMixingRule(10);
+        return s;
       }
     });
   }
@@ -239,15 +238,15 @@ public class SaturateWithWaterRobustnessTest {
     checkSaturation("gas-oil-aq 5C/40bar", new Supplier<SystemInterface>() {
       @Override
       public SystemInterface get() {
-	SystemInterface s = new SystemSrkCPAstatoil(273.15 + 5.0, 40.0);
-	s.addComponent("methane", 50.0);
-	s.addComponent("ethane", 4.0);
-	s.addComponent("propane", 3.0);
-	s.addComponent("n-pentane", 3.0);
-	s.addComponent("n-heptane", 15.0);
-	s.addComponent("nC10", 25.0);
-	s.setMixingRule(10);
-	return s;
+        SystemInterface s = new SystemSrkCPAstatoil(273.15 + 5.0, 40.0);
+        s.addComponent("methane", 50.0);
+        s.addComponent("ethane", 4.0);
+        s.addComponent("propane", 3.0);
+        s.addComponent("n-pentane", 3.0);
+        s.addComponent("n-heptane", 15.0);
+        s.addComponent("nC10", 25.0);
+        s.setMixingRule(10);
+        return s;
       }
     });
   }
@@ -291,6 +290,6 @@ public class SaturateWithWaterRobustnessTest {
     double relErr = Math.abs(second - first) / first;
     logger.info("idempotency: first={} second={} relErr={}%", first, second, relErr * 100.0);
     assertTrue(relErr < 0.05, "re-saturation changed water content by " + (relErr * 100.0) + "% (first=" + first
-	+ ", second=" + second + ")");
+        + ", second=" + second + ")");
   }
 }

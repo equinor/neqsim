@@ -121,11 +121,11 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
     for (double[] trial : trialPhases) {
       double tpd = runStabilityTrial(trial);
       if (tpd < TPD_THRESHOLD) {
-	// Unstable - this trial composition represents a new phase
-	double[] equilibratedTrial = solveTrialChemicalEquilibrium(trial);
-	unstableTrialCompositions.add(equilibratedTrial);
-	tpdValues.add(tpd);
-	logger.debug("ReactiveStabilityAnalysis: found unstable trial, TPD = " + tpd);
+        // Unstable - this trial composition represents a new phase
+        double[] equilibratedTrial = solveTrialChemicalEquilibrium(trial);
+        unstableTrialCompositions.add(equilibratedTrial);
+        tpdValues.add(tpd);
+        logger.debug("ReactiveStabilityAnalysis: found unstable trial, TPD = " + tpd);
       }
     }
 
@@ -162,7 +162,7 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
       // Update the feed composition in the main system with the CE result
       double[][] xCE = ceSolver.getMoleFractions();
       for (int i = 0; i < nc; i++) {
-	system.getPhase(0).getComponent(i).setx(xCE[0][i]);
+        system.getPhase(0).getComponent(i).setx(xCE[0][i]);
       }
       system.init(1);
       logger.debug("Homogeneous CE converged in " + ceSolver.getIterationsUsed() + " iterations");
@@ -180,13 +180,13 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
     for (int i = 0; i < nc; i++) {
       double xi = refPhase.getComponent(i).getx();
       if (xi > MIN_MOLES) {
-	d[i] = Math.log(xi) + refPhase.getComponent(i).getLogFugacityCoefficient();
+        d[i] = Math.log(xi) + refPhase.getComponent(i).getLogFugacityCoefficient();
       } else {
-	d[i] = -100.0; // effectively absent
+        d[i] = -100.0; // effectively absent
       }
       // Ions don't participate in phase equilibrium
       if (refPhase.getComponent(i).getIonicCharge() != 0) {
-	d[i] = -1000.0;
+        d[i] = -1000.0;
       }
     }
   }
@@ -214,13 +214,13 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
       double pc = system.getPhase(0).getComponent(i).getPC();
       double omega = system.getPhase(0).getComponent(i).getAcentricFactor();
       if (pc > 0 && tc > 0) {
-	wilsonK[i] = (pc / P) * Math.exp(5.373 * (1.0 + omega) * (1.0 - tc / T));
-	wilsonK[i] = Math.max(wilsonK[i], 1e-20);
+        wilsonK[i] = (pc / P) * Math.exp(5.373 * (1.0 + omega) * (1.0 - tc / T));
+        wilsonK[i] = Math.max(wilsonK[i], 1e-20);
       } else {
-	wilsonK[i] = 1.0;
+        wilsonK[i] = 1.0;
       }
       if (Math.abs(Math.log(wilsonK[i])) > 0.01) {
-	allKnearOne = false;
+        allKnearOne = false;
       }
     }
 
@@ -228,8 +228,8 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
     if (!allKnearOne) {
       double[] liquidTrial = new double[nc];
       for (int i = 0; i < nc; i++) {
-	double zi = system.getPhase(0).getComponent(i).getx();
-	liquidTrial[i] = zi > MIN_MOLES ? zi / wilsonK[i] : MIN_MOLES;
+        double zi = system.getPhase(0).getComponent(i).getx();
+        liquidTrial[i] = zi > MIN_MOLES ? zi / wilsonK[i] : MIN_MOLES;
       }
       trials.add(liquidTrial);
     }
@@ -238,8 +238,8 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
     if (!allKnearOne) {
       double[] vaporTrial = new double[nc];
       for (int i = 0; i < nc; i++) {
-	double zi = system.getPhase(0).getComponent(i).getx();
-	vaporTrial[i] = zi > MIN_MOLES ? wilsonK[i] * zi : MIN_MOLES;
+        double zi = system.getPhase(0).getComponent(i).getx();
+        vaporTrial[i] = zi > MIN_MOLES ? wilsonK[i] * zi : MIN_MOLES;
       }
       trials.add(vaporTrial);
     }
@@ -247,12 +247,12 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
     // Pure component trials
     for (int j = 0; j < nc; j++) {
       if (system.getPhase(0).getComponent(j).getx() > 1e-100
-	  && system.getPhase(0).getComponent(j).getIonicCharge() == 0) {
-	double[] pureTrial = new double[nc];
-	for (int i = 0; i < nc; i++) {
-	  pureTrial[i] = (i == j) ? 1.0 : 1e-12;
-	}
-	trials.add(pureTrial);
+          && system.getPhase(0).getComponent(j).getIonicCharge() == 0) {
+        double[] pureTrial = new double[nc];
+        for (int i = 0; i < nc; i++) {
+          pureTrial[i] = (i == j) ? 1.0 : 1e-12;
+        }
+        trials.add(pureTrial);
       }
     }
 
@@ -296,38 +296,38 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
     // Successive substitution
     for (int iter = 0; iter < MAX_SS_ITER; iter++) {
       for (int i = 0; i < nc; i++) {
-	oldLogW[i] = logW[i];
+        oldLogW[i] = logW[i];
       }
 
       try {
-	trialSystem.init(1);
+        trialSystem.init(1);
       } catch (Exception ex) {
-	logger.debug("Trial init failed: " + ex.getMessage());
-	return 10.0; // return positive (stable)
+        logger.debug("Trial init failed: " + ex.getMessage());
+        return 10.0; // return positive (stable)
       }
 
       double err = 0.0;
       sumW = 0.0;
       for (int i = 0; i < nc; i++) {
-	if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
-	  logW[i] = -1000.0;
-	  continue;
-	}
-	if (system.getPhase(0).getComponent(i).getx() > 1e-100) {
-	  logW[i] = d[i] - trialSystem.getPhase(0).getComponent(i).getLogFugacityCoefficient();
-	}
-	err += Math.abs(logW[i] - oldLogW[i]);
-	sumW += Math.exp(logW[i]);
+        if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
+          logW[i] = -1000.0;
+          continue;
+        }
+        if (system.getPhase(0).getComponent(i).getx() > 1e-100) {
+          logW[i] = d[i] - trialSystem.getPhase(0).getComponent(i).getLogFugacityCoefficient();
+        }
+        err += Math.abs(logW[i] - oldLogW[i]);
+        sumW += Math.exp(logW[i]);
       }
 
       // Update trial composition
       for (int i = 0; i < nc; i++) {
-	double w = Math.exp(logW[i]);
-	trialSystem.getPhase(0).getComponent(i).setx(w / sumW);
+        double w = Math.exp(logW[i]);
+        trialSystem.getPhase(0).getComponent(i).setx(w / sumW);
       }
 
       if (err < SS_TOL) {
-	break;
+        break;
       }
     }
 
@@ -335,8 +335,8 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
     double tpd = 1.0;
     for (int i = 0; i < nc; i++) {
       if (system.getPhase(0).getComponent(i).getIonicCharge() == 0
-	  && system.getPhase(0).getComponent(i).getx() > 1e-100) {
-	tpd -= Math.exp(logW[i]);
+          && system.getPhase(0).getComponent(i).getx() > 1e-100) {
+        tpd -= Math.exp(logW[i]);
       }
     }
 
@@ -344,7 +344,7 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
     double trivialCheck = 0.0;
     for (int i = 0; i < nc; i++) {
       trivialCheck += Math
-	  .abs(trialSystem.getPhase(0).getComponent(i).getx() - system.getPhase(0).getComponent(i).getx());
+          .abs(trialSystem.getPhase(0).getComponent(i).getx() - system.getPhase(0).getComponent(i).getx());
     }
     if (trivialCheck < 1e-4) {
       return 10.0; // trivial solution
@@ -450,8 +450,8 @@ public class ReactiveStabilityAnalysis implements java.io.Serializable {
     double bestTpd = tpdValues.get(0);
     for (int i = 1; i < tpdValues.size(); i++) {
       if (tpdValues.get(i) < bestTpd) {
-	bestTpd = tpdValues.get(i);
-	bestIdx = i;
+        bestTpd = tpdValues.get(i);
+        bestIdx = i;
       }
     }
     return unstableTrialCompositions.get(bestIdx);

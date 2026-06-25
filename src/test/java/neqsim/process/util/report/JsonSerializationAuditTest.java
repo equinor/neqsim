@@ -2,6 +2,8 @@ package neqsim.process.util.report;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
@@ -18,8 +20,6 @@ import neqsim.process.equipment.util.SetPoint;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Audit test to identify equipment classes that return null from toJson().
@@ -107,9 +107,9 @@ public class JsonSerializationAuditTest {
       String className = equipment.getClass().getSimpleName();
       String json = equipment.toJson();
       if (json == null) {
-	missingToJson.add(className + " (" + equipment.getName() + ")");
+        missingToJson.add(className + " (" + equipment.getName() + ")");
       } else {
-	hasToJson.add(className + " (" + equipment.getName() + ")");
+        hasToJson.add(className + " (" + equipment.getName() + ")");
       }
     }
 
@@ -133,48 +133,48 @@ public class JsonSerializationAuditTest {
     logger.info("EQUIPMENT CLASSES NEEDING toJson() IMPLEMENTATION:");
     logger.info("========================================");
     String[] missingClasses = {
-	// Adsorber
-	"SimpleAdsorber",
-	// Absorber
-	"SimpleAbsorber",
-	// Battery
-	"BatteryStorage",
-	// Diff pressure
-	"Orifice",
-	// Ejector
-	"Ejector",
-	// Electrolyzer
-	"CO2Electrolyzer", "Electrolyzer",
-	// Expander
-	"ExpanderOld",
-	// Filter
-	"Filter",
-	// Flare
-	"Flare", "FlareStack",
-	// Heat exchanger
-	"ReBoiler",
-	// Membrane
-	"MembraneSeparator",
-	// Pipeline
-	"Pipeline", "TransientPipe",
-	// Power generation
-	"FuelCell", "GasTurbine", "SolarPanel", "WindTurbine",
-	// Reactor
-	"GibbsReactor", "GibbsReactorCO2",
-	// Reservoir
-	"ReservoirCVDsim", "ReservoirDiffLibsim", "ReservoirTPsim", "SimpleReservoir", "TubingPerformance", "WellFlow",
-	"WellSystem",
-	// Separator subclasses
-	"GasScrubber", "GasScrubberSimple", "Hydrocyclone", "NeqGasScrubber", "TwoPhaseSeparator",
-	// Stream
-	"VirtualStream",
-	// Subsea
-	"SimpleFlowLine", "SubseaWell",
-	// Tank
-	"VesselDepressurization",
-	// Util
-	"Adjuster", "Calculator", "FlowRateAdjuster", "FlowSetter", "GORfitter", "MoleFractionControllerUtil",
-	"MPFMfitter", "NeqSimUnit", "SetPoint", "Setter", "StreamSaturatorUtil", "StreamTransition" };
+        // Adsorber
+        "SimpleAdsorber",
+        // Absorber
+        "SimpleAbsorber",
+        // Battery
+        "BatteryStorage",
+        // Diff pressure
+        "Orifice",
+        // Ejector
+        "Ejector",
+        // Electrolyzer
+        "CO2Electrolyzer", "Electrolyzer",
+        // Expander
+        "ExpanderOld",
+        // Filter
+        "Filter",
+        // Flare
+        "Flare", "FlareStack",
+        // Heat exchanger
+        "ReBoiler",
+        // Membrane
+        "MembraneSeparator",
+        // Pipeline
+        "Pipeline", "TransientPipe",
+        // Power generation
+        "FuelCell", "GasTurbine", "SolarPanel", "WindTurbine",
+        // Reactor
+        "GibbsReactor", "GibbsReactorCO2",
+        // Reservoir
+        "ReservoirCVDsim", "ReservoirDiffLibsim", "ReservoirTPsim", "SimpleReservoir", "TubingPerformance", "WellFlow",
+        "WellSystem",
+        // Separator subclasses
+        "GasScrubber", "GasScrubberSimple", "Hydrocyclone", "NeqGasScrubber", "TwoPhaseSeparator",
+        // Stream
+        "VirtualStream",
+        // Subsea
+        "SimpleFlowLine", "SubseaWell",
+        // Tank
+        "VesselDepressurization",
+        // Util
+        "Adjuster", "Calculator", "FlowRateAdjuster", "FlowSetter", "GORfitter", "MoleFractionControllerUtil",
+        "MPFMfitter", "NeqSimUnit", "SetPoint", "Setter", "StreamSaturatorUtil", "StreamTransition" };
 
     for (String cls : missingClasses) {
       logger.info("  - " + cls);

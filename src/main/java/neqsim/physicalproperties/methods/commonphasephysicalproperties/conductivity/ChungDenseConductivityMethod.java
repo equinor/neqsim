@@ -62,17 +62,17 @@ public class ChungDenseConductivityMethod extends Conductivity implements Thermo
       double sigI = Math.pow(vci, 1.0 / 3.0);
 
       for (int j = 0; j < ncomp; j++) {
-	double xj = phase.getPhase().getComponent(j).getx();
-	double tcj = phase.getPhase().getComponent(j).getTC();
-	double vcj = phase.getPhase().getComponent(j).getCriticalVolume();
-	double sigJ = Math.pow(vcj, 1.0 / 3.0);
+        double xj = phase.getPhase().getComponent(j).getx();
+        double tcj = phase.getPhase().getComponent(j).getTC();
+        double vcj = phase.getPhase().getComponent(j).getCriticalVolume();
+        double sigJ = Math.pow(vcj, 1.0 / 3.0);
 
-	double sigIJ = Math.sqrt(sigI * sigJ);
-	double epsKij = Math.sqrt(tci / 1.2593 * tcj / 1.2593);
-	double sigIJ3 = sigIJ * sigIJ * sigIJ;
+        double sigIJ = Math.sqrt(sigI * sigJ);
+        double epsKij = Math.sqrt(tci / 1.2593 * tcj / 1.2593);
+        double sigIJ3 = sigIJ * sigIJ * sigIJ;
 
-	sigMix3 += xi * xj * sigIJ3;
-	epskMix += xi * xj * epsKij * sigIJ3;
+        sigMix3 += xi * xj * sigIJ3;
+        epskMix += xi * xj * epsKij * sigIJ3;
       }
       omegaMix += xi * omi;
       muMix += xi * phase.getPhase().getComponent(i).getDebyeDipoleMoment();
@@ -99,7 +99,7 @@ public class ChungDenseConductivityMethod extends Conductivity implements Thermo
 
     // Neufeld collision integral
     double omegaV = 1.16145 * Math.pow(tStar, -0.14874) + 0.52487 * Math.exp(-0.77320 * tStar)
-	+ 2.16178 * Math.exp(-2.43787 * tStar);
+        + 2.16178 * Math.exp(-2.43787 * tStar);
 
     // Fc correction for polarity and association (Chung 1988 Eq 9-4.11)
     double fc = 1.0 - 0.2756 * omegaMix + 0.059035 * muR4 + kappaMix;
@@ -139,7 +139,7 @@ public class ChungDenseConductivityMethod extends Conductivity implements Thermo
 
       double[] G = new double[7];
       for (int k = 0; k < 7; k++) {
-	G[k] = aC[k] + bC[k] * omegaMix + cC[k] * muR4 + dC[k] * kappaMix;
+        G[k] = aC[k] + bC[k] * omegaMix + cC[k] * muR4 + dC[k] * kappaMix;
       }
 
       // Hard-sphere radial distribution function at contact
@@ -150,7 +150,7 @@ public class ChungDenseConductivityMethod extends Conductivity implements Thermo
       double h2Den = G[0] * G[3] + G[1] + G[2];
       double h2 = (Math.abs(h2Den) > 1e-30) ? h2Num / h2Den : 1.0;
       if (h2 < 0.01) {
-	h2 = 0.01;
+        h2 = 0.01;
       }
 
       // Dilute conductivity in Chung units: 7.452 * (eta0_uP / M_g) * Psi
@@ -169,7 +169,7 @@ public class ChungDenseConductivityMethod extends Conductivity implements Thermo
       // Dense contribution = total - dilute
       lambdaDenseSI = lambdaTotalSI - lambda0;
       if (lambdaDenseSI < 0.0) {
-	lambdaDenseSI = 0.0;
+        lambdaDenseSI = 0.0;
       }
     }
 
@@ -194,7 +194,7 @@ public class ChungDenseConductivityMethod extends Conductivity implements Thermo
     double beta = 0.7862 - 0.7109 * omega + 1.3168 * omega * omega;
     double z = 2.0 + 10.5 * (temp / tc) * (temp / tc);
     double psi = 1.0
-	+ cvR * ((0.215 + 0.28288 * cvR - 1.061 * beta + 0.26665 * z) / (0.6366 + beta * z + 1.061 * cvR * beta));
+        + cvR * ((0.215 + 0.28288 * cvR - 1.061 * beta + 0.26665 * z) / (0.6366 + beta * z + 1.061 * cvR * beta));
     return psi;
   }
 }

@@ -42,7 +42,7 @@ public class HeavyGasDispersion implements Serializable {
   public HeavyGasDispersion(double volumetricRateM3PerS, double sourceDensityKgPerM3, double airDensityKgPerM3,
       double windSpeedMperS) {
     if (volumetricRateM3PerS <= 0.0 || sourceDensityKgPerM3 <= 0.0 || airDensityKgPerM3 <= 0.0
-	|| windSpeedMperS <= 0.0) {
+        || windSpeedMperS <= 0.0) {
       throw new IllegalArgumentException("All inputs to HeavyGasDispersion must be positive");
     }
     this.volumetricRateM3PerS = volumetricRateM3PerS;

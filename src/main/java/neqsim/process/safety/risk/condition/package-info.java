@@ -28,8 +28,8 @@
  * <pre>
  * // Create model with base OREDA failure rate
  * ConditionBasedReliability pump = new ConditionBasedReliability("P-101", "Main Export Pump", 5e-5); // Base failure
- * 												   // rate from
- * 												   // OREDA
+ * // rate from
+ * // OREDA
  *
  * // Add condition indicators
  * pump.addVibrationIndicator("V1", "Drive End Bearing", 2.0, 4.0, 7.0); // mm/s RMS

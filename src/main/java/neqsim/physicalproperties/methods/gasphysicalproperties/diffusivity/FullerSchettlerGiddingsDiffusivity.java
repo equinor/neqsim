@@ -175,7 +175,7 @@ public class FullerSchettlerGiddingsDiffusivity extends Diffusivity {
     // Check special molecular volumes first (case-insensitive lookup)
     for (Map.Entry<String, Double> entry : MOLECULAR_DIFFUSION_VOLUMES.entrySet()) {
       if (entry.getKey().equalsIgnoreCase(name)) {
-	return entry.getValue();
+        return entry.getValue();
       }
     }
 

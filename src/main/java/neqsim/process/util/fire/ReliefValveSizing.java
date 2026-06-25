@@ -77,8 +77,8 @@ public final class ReliefValveSizing {
      * @param kc Combination correction factor
      */
     public PSVSizingResult(double requiredArea, double requiredAreaIn2, double massFlowCapacity,
-	String recommendedOrifice, double selectedArea, double selectedAreaIn2, double overpressureFraction,
-	double backPressureFraction, double kd, double kb, double kc) {
+        String recommendedOrifice, double selectedArea, double selectedAreaIn2, double overpressureFraction,
+        double backPressureFraction, double kd, double kb, double kc) {
       this.requiredArea = requiredArea;
       this.requiredAreaIn2 = requiredAreaIn2;
       this.massFlowCapacity = massFlowCapacity;
@@ -191,18 +191,18 @@ public final class ReliefValveSizing {
     if (isBalancedBellows) {
       // For balanced-bellows PSV, Kb depends on back pressure
       if (backPressureFraction > criticalRatio) {
-	// Subcritical flow correction
-	double r = backPressureFraction;
-	kb = Math.sqrt((specificHeatRatio / (specificHeatRatio - 1.0))
-	    * (Math.pow(r, 2.0 / specificHeatRatio) - Math.pow(r, (specificHeatRatio + 1.0) / specificHeatRatio))
-	    / (1.0 - criticalRatio));
-	kb = Math.min(kb, 1.0);
+        // Subcritical flow correction
+        double r = backPressureFraction;
+        kb = Math.sqrt((specificHeatRatio / (specificHeatRatio - 1.0))
+            * (Math.pow(r, 2.0 / specificHeatRatio) - Math.pow(r, (specificHeatRatio + 1.0) / specificHeatRatio))
+            / (1.0 - criticalRatio));
+        kb = Math.min(kb, 1.0);
       }
     } else {
       // Conventional PSV - back pressure reduces capacity
       if (backPressureFraction > 0.5) {
-	kb = 1.0 - (backPressureFraction - 0.5) * 2.0; // Linear reduction above 50%
-	kb = Math.max(kb, 0.1);
+        kb = 1.0 - (backPressureFraction - 0.5) * 2.0; // Linear reduction above 50%
+        kb = Math.max(kb, 0.1);
       }
     }
 
@@ -230,15 +230,15 @@ public final class ReliefValveSizing {
     double selectedArea_in2 = STANDARD_ORIFICE_AREAS_IN2[STANDARD_ORIFICE_AREAS_IN2.length - 1];
     for (int i = 0; i < STANDARD_ORIFICE_AREAS_IN2.length; i++) {
       if (STANDARD_ORIFICE_AREAS_IN2[i] >= A_in2) {
-	selectedOrifice = STANDARD_ORIFICE_LETTERS[i];
-	selectedArea_in2 = STANDARD_ORIFICE_AREAS_IN2[i];
-	break;
+        selectedOrifice = STANDARD_ORIFICE_LETTERS[i];
+        selectedArea_in2 = STANDARD_ORIFICE_AREAS_IN2[i];
+        break;
       }
     }
     double selectedArea_m2 = selectedArea_in2 * 6.4516e-4;
 
     return new PSVSizingResult(A_m2, A_in2, massFlowRate, selectedOrifice, selectedArea_m2, selectedArea_in2,
-	overpressureFraction, backPressureFraction, kd, kb, kc);
+        overpressureFraction, backPressureFraction, kd, kb, kc);
   }
 
   /**
@@ -276,7 +276,7 @@ public final class ReliefValveSizing {
 
     // Mass flow rate
     return dischargeCoefficient * orificeArea * P1 * C
-	* Math.sqrt(molecularWeight / (compressibility * R_GAS * temperature));
+        * Math.sqrt(molecularWeight / (compressibility * R_GAS * temperature));
   }
 
   /**
@@ -344,7 +344,7 @@ public final class ReliefValveSizing {
     double backPressure = 101325.0;
 
     return calculateRequiredArea(designMassFlow, setPressure, overpressureFraction, backPressure, relievingTemperature,
-	molecularWeight, compressibility, specificHeatRatio, false, false);
+        molecularWeight, compressibility, specificHeatRatio, false, false);
   }
 
   /**
@@ -418,7 +418,7 @@ public final class ReliefValveSizing {
   public static String getNextLargerOrifice(String currentOrifice) {
     for (int i = 0; i < STANDARD_ORIFICE_LETTERS.length - 1; i++) {
       if (STANDARD_ORIFICE_LETTERS[i].equals(currentOrifice)) {
-	return STANDARD_ORIFICE_LETTERS[i + 1];
+        return STANDARD_ORIFICE_LETTERS[i + 1];
       }
     }
     return "T";
@@ -433,7 +433,7 @@ public final class ReliefValveSizing {
   public static double getStandardOrificeArea(String orifice) {
     for (int i = 0; i < STANDARD_ORIFICE_LETTERS.length; i++) {
       if (STANDARD_ORIFICE_LETTERS[i].equals(orifice)) {
-	return STANDARD_ORIFICE_AREAS_IN2[i] * 6.4516e-4;
+        return STANDARD_ORIFICE_AREAS_IN2[i] * 6.4516e-4;
       }
     }
     throw new IllegalArgumentException("Unknown orifice designation: " + orifice);
@@ -471,7 +471,7 @@ public final class ReliefValveSizing {
      * @param kv Viscosity correction factor
      */
     public LiquidPSVSizingResult(double requiredAreaM2, double requiredAreaIn2, double massFlowRate,
-	double volumeFlowRate, String recommendedOrifice, double selectedAreaIn2, double kd, double kw, double kv) {
+        double volumeFlowRate, String recommendedOrifice, double selectedAreaIn2, double kd, double kw, double kv) {
       this.requiredAreaM2 = requiredAreaM2;
       this.requiredAreaIn2 = requiredAreaIn2;
       this.massFlowRate = massFlowRate;
@@ -617,8 +617,8 @@ public final class ReliefValveSizing {
     if (isBalancedBellows) {
       double bpRatio = backPressure / relievingPressure;
       if (bpRatio > 0.5) {
-	kw = 1.0 - 0.5 * (bpRatio - 0.5);
-	kw = Math.max(kw, 0.1);
+        kw = 1.0 - 0.5 * (bpRatio - 0.5);
+        kw = Math.max(kw, 0.1);
       }
     }
 
@@ -637,10 +637,10 @@ public final class ReliefValveSizing {
       double velocity = volumeFlowRate / areaSi;
       double reynolds = liquidDensity * velocity * equivalentDiameter / viscosity;
       if (reynolds > 0 && reynolds < 100000) {
-	// API 520 viscosity correction: Kv = (0.9935 + 2.878/Re^0.5 + 342.75/Re^1.5)^(-1)
-	kv = 1.0 / (0.9935 + 2.878 / Math.sqrt(reynolds) + 342.75 / Math.pow(reynolds, 1.5));
-	kv = Math.max(kv, 0.2);
-	kv = Math.min(kv, 1.0);
+        // API 520 viscosity correction: Kv = (0.9935 + 2.878/Re^0.5 + 342.75/Re^1.5)^(-1)
+        kv = 1.0 / (0.9935 + 2.878 / Math.sqrt(reynolds) + 342.75 / Math.pow(reynolds, 1.5));
+        kv = Math.max(kv, 0.2);
+        kv = Math.min(kv, 1.0);
       }
     }
 
@@ -660,14 +660,14 @@ public final class ReliefValveSizing {
     double selectedAreaIn2 = STANDARD_ORIFICE_AREAS_IN2[STANDARD_ORIFICE_AREAS_IN2.length - 1];
     for (int i = 0; i < STANDARD_ORIFICE_AREAS_IN2.length; i++) {
       if (STANDARD_ORIFICE_AREAS_IN2[i] >= aIn2) {
-	selectedOrifice = STANDARD_ORIFICE_LETTERS[i];
-	selectedAreaIn2 = STANDARD_ORIFICE_AREAS_IN2[i];
-	break;
+        selectedOrifice = STANDARD_ORIFICE_LETTERS[i];
+        selectedAreaIn2 = STANDARD_ORIFICE_AREAS_IN2[i];
+        break;
       }
     }
 
     return new LiquidPSVSizingResult(aM2, aIn2, massFlowRate, volumeFlowRate, selectedOrifice, selectedAreaIn2, kd, kw,
-	kv);
+        kv);
   }
 
   // ============================================================================
@@ -704,7 +704,7 @@ public final class ReliefValveSizing {
     double vG = 1.0 / gasDensity;
     double vL = 1.0 / liquidDensity;
     double omega = gasFraction * vG / (gasFraction * vG + (1.0 - gasFraction) * vL) + liquidCp * inletTemperature * P0
-	* Math.pow(vG - vL, 2) / (Math.pow(latentHeat, 2) * (gasFraction * vG + (1.0 - gasFraction) * vL));
+        * Math.pow(vG - vL, 2) / (Math.pow(latentHeat, 2) * (gasFraction * vG + (1.0 - gasFraction) * vL));
 
     // Critical pressure ratio
     double etaC;

@@ -233,9 +233,9 @@ public class InadvertentValveOperationAnalyzer {
       r.setOverpressureFactor(factor);
       r.setSeverity(severityFromOverpressure(factor));
       r.setDescription(String.format(java.util.Locale.ROOT,
-	  "Spurious opening of %s connects %.1f bara source to %.1f bara design segment "
-	      + "(overpressure factor %.2f)",
-	  role, p1, designP, factor));
+          "Spurious opening of %s connects %.1f bara source to %.1f bara design segment "
+              + "(overpressure factor %.2f)",
+          role, p1, designP, factor));
       return;
     }
     if (role == ValveRole.BLOWDOWN || role == ValveRole.ESD) {
@@ -252,7 +252,7 @@ public class InadvertentValveOperationAnalyzer {
       r.setLossOfReliefPath(true);
       r.setSeverity(ConsequenceSeverity.SAFETY_CRITICAL);
       r.setDescription("PSV isolation valve closed inadvertently — relief path defeated, overpressure"
-	  + " protection lost on next demand.");
+          + " protection lost on next demand.");
       return;
     }
     if (role == ValveRole.CHECK) {
@@ -270,7 +270,7 @@ public class InadvertentValveOperationAnalyzer {
       r.setSeverity(ConsequenceSeverity.MAJOR);
     }
     r.setDescription("Inadvertent closure creates blocked outlet — credible overpressure of upstream segment"
-	+ " unless a relief path or HIPPS is provided.");
+        + " unless a relief path or HIPPS is provided.");
   }
 
   private void classifyStuckOpen(InadvertentValveOperationResult r, double p1, double p2) {
@@ -278,7 +278,7 @@ public class InadvertentValveOperationAnalyzer {
       r.setReverseFlowRisk(true);
       r.setSeverity(ConsequenceSeverity.MAJOR);
       r.setDescription("Check valve stuck open — reverse flow possible if downstream pressure exceeds"
-	  + " upstream (currently p2=" + p2 + " bara, p1=" + p1 + " bara).");
+          + " upstream (currently p2=" + p2 + " bara, p1=" + p1 + " bara).");
       return;
     }
     if (role == ValveRole.ESD || role == ValveRole.BLOWDOWN || role == ValveRole.PSV_ISOLATION) {
@@ -294,7 +294,7 @@ public class InadvertentValveOperationAnalyzer {
   private void classifyPartialStroke(InadvertentValveOperationResult r) {
     r.setSeverity(ConsequenceSeverity.MINOR);
     r.setDescription("Partial stroke detected — degraded control / isolation; investigate"
-	+ " mechanical condition (hydrate, debris, wear).");
+        + " mechanical condition (hydrate, debris, wear).");
   }
 
   private ConsequenceSeverity severityFromOverpressure(double factor) {
@@ -313,16 +313,16 @@ public class InadvertentValveOperationAnalyzer {
   private void addBaselineRecommendations(InadvertentValveOperationResult r) {
     if (r.getSeverity() == ConsequenceSeverity.SAFETY_CRITICAL) {
       r.addRecommendation(
-	  "Provide an independent protection layer (PSV, HIPPS, or SIL-rated trip) " + "and verify SIL per IEC 61511.");
+          "Provide an independent protection layer (PSV, HIPPS, or SIL-rated trip) " + "and verify SIL per IEC 61511.");
     }
     if (r.isBlockedOutlet()) {
       r.addRecommendation("Confirm relief path (PSV) is sized for blocked-outlet contingency" + " per API 521 §4.4.2.");
     }
     if (r.isLossOfReliefPath()) {
       r.addRecommendation("Use car-seal-open (CSO) or key-locked-open (LO) administrative"
-	  + " controls on PSV isolation valves, with full bore matching the PSV inlet.");
+          + " controls on PSV isolation valves, with full bore matching the PSV inlet.");
       r.addRecommendation(
-	  "Consider mechanical interlock (Castell / Smith) between PSV inlet" + " and outlet isolation valves.");
+          "Consider mechanical interlock (Castell / Smith) between PSV inlet" + " and outlet isolation valves.");
     }
     if (r.isReverseFlowRisk()) {
       r.addRecommendation("Provide dual check valves in series (API 14C §A.7) or motor-operated isolation.");

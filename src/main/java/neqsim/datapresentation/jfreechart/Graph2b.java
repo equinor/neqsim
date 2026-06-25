@@ -67,13 +67,13 @@ public class Graph2b extends javax.swing.JFrame {
     for (int serLen = 0; serLen < points.length / 2; serLen++) {
       XYSeries series = new XYSeries(seriesNames[serLen]);
       for (int i = 0; i < points[2 * serLen].length; i++) {
-	series.add(points[2 * serLen][i], points[2 * serLen + 1][i]);
+        series.add(points[2 * serLen][i], points[2 * serLen + 1][i]);
       }
       seriesCol.addSeries(series);
     }
 
     chart = ChartFactory.createScatterPlot(tit, xaxtitle, yaxtitle, seriesCol,
-	org.jfree.chart.plot.PlotOrientation.VERTICAL, true, false, false);
+        org.jfree.chart.plot.PlotOrientation.VERTICAL, true, false, false);
     // StandardTitle title = (StandardTitle)chart.getTitle();
     // title.setTitle(titl);
     // chart.setBackgroundPaint(java.awt.P)ackgroundPaint(new GradientPaint(0, 0,
@@ -82,7 +82,7 @@ public class Graph2b extends javax.swing.JFrame {
 
     chartPanel4 = new ChartPanel(chart);
     chartPanel4.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4),
-	BorderFactory.createLineBorder(Color.darkGray, 1)));
+        BorderFactory.createLineBorder(Color.darkGray, 1)));
     initComponents();
     getContentPane().add(chartPanel4, java.awt.BorderLayout.WEST);
     pack();
@@ -103,13 +103,13 @@ public class Graph2b extends javax.swing.JFrame {
     for (int serLen = 0; serLen < points.length / 2; serLen++) {
       XYSeries series = new XYSeries(seriesNames[serLen]);
       for (int i = 0; i < points[2 * serLen].length; i++) {
-	series.add(points[2 * serLen][i], points[2 * serLen + 1][i]);
-	// System.out.println(points[2*serLen][i]+" "+points[2*serLen+1][i]);
+        series.add(points[2 * serLen][i], points[2 * serLen + 1][i]);
+        // System.out.println(points[2*serLen][i]+" "+points[2*serLen+1][i]);
       }
       seriesCol.addSeries(series);
     }
     chart = ChartFactory.createScatterPlot(tit, xaxis, yaxis, seriesCol, org.jfree.chart.plot.PlotOrientation.VERTICAL,
-	true, false, false);
+        true, false, false);
 
     // StandardTitle title = (StandardTitle)chart.getTitle();
     // title.setTitle(titl);
@@ -120,7 +120,7 @@ public class Graph2b extends javax.swing.JFrame {
 
     chartPanel4 = new ChartPanel(chart);
     chartPanel4.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4),
-	BorderFactory.createLineBorder(Color.darkGray, 1)));
+        BorderFactory.createLineBorder(Color.darkGray, 1)));
     chartPanel4.setBackground(Color.white);
     initComponents();
     getContentPane().add(chartPanel4, java.awt.BorderLayout.WEST);
@@ -143,13 +143,13 @@ public class Graph2b extends javax.swing.JFrame {
     for (int serLen = 0; serLen < points.length; serLen++) {
       XYSeries series = new XYSeries(seriesNames[serLen]);
       for (int i = 0; i < points[serLen].length; i++) {
-	series.add(xpoints[serLen][i], points[serLen][i]);
-	// System.out.println(points[2*serLen][i]+" "+points[2*serLen+1][i]);
+        series.add(xpoints[serLen][i], points[serLen][i]);
+        // System.out.println(points[2*serLen][i]+" "+points[2*serLen+1][i]);
       }
       seriesCol.addSeries(series);
     }
     chart = ChartFactory.createScatterPlot(tit, xaxis, yaxis, seriesCol, org.jfree.chart.plot.PlotOrientation.VERTICAL,
-	true, false, false);
+        true, false, false);
 
     // StandardTitle title = (StandardTitle)chart.getTitle();
     // title.setTitle(titl);
@@ -160,7 +160,7 @@ public class Graph2b extends javax.swing.JFrame {
 
     chartPanel4 = new ChartPanel(chart);
     chartPanel4.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4),
-	BorderFactory.createLineBorder(Color.darkGray, 1)));
+        BorderFactory.createLineBorder(Color.darkGray, 1)));
     chartPanel4.setBackground(Color.white);
     initComponents();
     getContentPane().add(chartPanel4, java.awt.BorderLayout.WEST);
@@ -210,12 +210,12 @@ public class Graph2b extends javax.swing.JFrame {
     addWindowListener(new java.awt.event.WindowAdapter() {
       @Override
       public void windowClosing(java.awt.event.WindowEvent evt) {
-	exitForm(evt);
+        exitForm(evt);
       }
 
       @Override
       public void windowClosed(java.awt.event.WindowEvent evt) {
-	exit(evt);
+        exit(evt);
       }
     });
 

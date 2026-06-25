@@ -45,7 +45,7 @@ public class CompressorDriver implements Serializable {
 
   // For VFD motors - efficiency vs speed curve coefficients
   private double[] vfdEfficiencyCoeffs = { 0.90, 0.05, -0.02 }; // η = a + b*(N/Nrated) +
-								// c*(N/Nrated)²
+  // c*(N/Nrated)²
 
   // For gas turbines - ambient temperature derating
   private double isoTemperature = 288.15; // K (ISO conditions)
@@ -153,13 +153,13 @@ public class CompressorDriver implements Serializable {
 
     // First priority: use tabular data if available
     if (useMaxPowerCurveTable && maxPowerCurveSpeeds != null && maxPowerCurvePowers != null
-	&& maxPowerCurveSpeeds.length > 0) {
+        && maxPowerCurveSpeeds.length > 0) {
       basePower = interpolateMaxPower(speed);
     } else if (useMaxPowerCurve && maxPowerCurveCoeffs != null && ratedSpeed > 0) {
       // Second priority: polynomial curve
       double speedRatio = speed / ratedSpeed;
       double curveFactor = maxPowerCurveCoeffs[0] + maxPowerCurveCoeffs[1] * speedRatio
-	  + maxPowerCurveCoeffs[2] * speedRatio * speedRatio;
+          + maxPowerCurveCoeffs[2] * speedRatio * speedRatio;
       // Ensure factor stays positive and reasonable (0.1 to 1.5)
       curveFactor = Math.max(0.1, Math.min(1.5, curveFactor));
       basePower = maxPower * curveFactor;
@@ -195,8 +195,8 @@ public class CompressorDriver implements Serializable {
     // Find the interval containing speed and interpolate
     for (int i = 0; i < n - 1; i++) {
       if (speed >= maxPowerCurveSpeeds[i] && speed <= maxPowerCurveSpeeds[i + 1]) {
-	double fraction = (speed - maxPowerCurveSpeeds[i]) / (maxPowerCurveSpeeds[i + 1] - maxPowerCurveSpeeds[i]);
-	return maxPowerCurvePowers[i] + fraction * (maxPowerCurvePowers[i + 1] - maxPowerCurvePowers[i]);
+        double fraction = (speed - maxPowerCurveSpeeds[i]) / (maxPowerCurveSpeeds[i + 1] - maxPowerCurveSpeeds[i]);
+        return maxPowerCurvePowers[i] + fraction * (maxPowerCurvePowers[i + 1] - maxPowerCurvePowers[i]);
       }
     }
 
@@ -236,7 +236,7 @@ public class CompressorDriver implements Serializable {
     if (driverType == DriverType.VFD_MOTOR && ratedSpeed > 0) {
       double speedRatio = speed / ratedSpeed;
       return vfdEfficiencyCoeffs[0] + vfdEfficiencyCoeffs[1] * speedRatio
-	  + vfdEfficiencyCoeffs[2] * speedRatio * speedRatio;
+          + vfdEfficiencyCoeffs[2] * speedRatio * speedRatio;
     }
     return driverEfficiency;
   }
@@ -373,7 +373,7 @@ public class CompressorDriver implements Serializable {
     if (currentPower > getMaxAvailablePower()) {
       currentOverloadTime += timeStep;
       if (currentOverloadTime >= overloadTripDelay) {
-	return true;
+        return true;
       }
     } else {
       currentOverloadTime = 0.0;
@@ -828,7 +828,7 @@ public class CompressorDriver implements Serializable {
     // Verify speeds are in ascending order
     for (int i = 1; i < speeds.length; i++) {
       if (speeds[i] <= speeds[i - 1]) {
-	throw new IllegalArgumentException("Speed values must be in strictly ascending order");
+        throw new IllegalArgumentException("Speed values must be in strictly ascending order");
       }
     }
 
@@ -933,27 +933,27 @@ public class CompressorDriver implements Serializable {
       String line;
       boolean headerSkipped = false;
       while ((line = reader.readLine()) != null) {
-	line = line.trim();
-	if (line.isEmpty() || line.startsWith("#")) {
-	  continue;
-	}
-	if (!headerSkipped) {
-	  headerSkipped = true;
-	  // Try to parse the first line — if it fails, it's a header
-	  try {
-	    String[] parts = line.split(",");
-	    Double.parseDouble(parts[0].trim());
-	    // It parsed, so this is data, not a header — process it below
-	  } catch (NumberFormatException e) {
-	    continue; // Skip header line
-	  }
-	}
-	String[] parts = line.split(",");
-	if (parts.length < 2) {
-	  continue;
-	}
-	speedList.add(Double.parseDouble(parts[0].trim()));
-	powerList.add(Double.parseDouble(parts[1].trim()));
+        line = line.trim();
+        if (line.isEmpty() || line.startsWith("#")) {
+          continue;
+        }
+        if (!headerSkipped) {
+          headerSkipped = true;
+          // Try to parse the first line — if it fails, it's a header
+          try {
+            String[] parts = line.split(",");
+            Double.parseDouble(parts[0].trim());
+            // It parsed, so this is data, not a header — process it below
+          } catch (NumberFormatException e) {
+            continue; // Skip header line
+          }
+        }
+        String[] parts = line.split(",");
+        if (parts.length < 2) {
+          continue;
+        }
+        speedList.add(Double.parseDouble(parts[0].trim()));
+        powerList.add(Double.parseDouble(parts[1].trim()));
       }
     } finally {
       reader.close();
@@ -999,25 +999,25 @@ public class CompressorDriver implements Serializable {
       String line;
       boolean headerSkipped = false;
       while ((line = reader.readLine()) != null) {
-	line = line.trim();
-	if (line.isEmpty() || line.startsWith("#")) {
-	  continue;
-	}
-	if (!headerSkipped) {
-	  headerSkipped = true;
-	  try {
-	    String[] parts = line.split(",");
-	    Double.parseDouble(parts[0].trim());
-	  } catch (NumberFormatException e) {
-	    continue;
-	  }
-	}
-	String[] parts = line.split(",");
-	if (parts.length < 2) {
-	  continue;
-	}
-	speedList.add(Double.parseDouble(parts[0].trim()));
-	powerList.add(Double.parseDouble(parts[1].trim()));
+        line = line.trim();
+        if (line.isEmpty() || line.startsWith("#")) {
+          continue;
+        }
+        if (!headerSkipped) {
+          headerSkipped = true;
+          try {
+            String[] parts = line.split(",");
+            Double.parseDouble(parts[0].trim());
+          } catch (NumberFormatException e) {
+            continue;
+          }
+        }
+        String[] parts = line.split(",");
+        if (parts.length < 2) {
+          continue;
+        }
+        speedList.add(Double.parseDouble(parts[0].trim()));
+        powerList.add(Double.parseDouble(parts[1].trim()));
       }
     } finally {
       reader.close();
@@ -1040,6 +1040,6 @@ public class CompressorDriver implements Serializable {
   @Override
   public String toString() {
     return String.format("CompressorDriver[%s, rated=%.0f kW, max=%.0f kW, η=%.1f%%, response=%.1f s]",
-	driverType.getDisplayName(), ratedPower, maxPower, driverEfficiency * 100, responseTime);
+        driverType.getDisplayName(), ratedPower, maxPower, driverEfficiency * 100, responseTime);
   }
 }

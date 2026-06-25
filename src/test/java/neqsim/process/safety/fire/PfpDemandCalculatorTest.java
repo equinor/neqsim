@@ -3,10 +3,10 @@ package neqsim.process.safety.fire;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
 import neqsim.process.safety.fire.PfpDemandCalculator.FireType;
 import neqsim.process.safety.fire.PfpDemandCalculator.PfpDemandResult;
 import neqsim.process.safety.fire.PfpDemandCalculator.PfpRating;
-import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for {@link PfpDemandCalculator}.

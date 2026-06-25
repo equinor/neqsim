@@ -2,12 +2,12 @@ package neqsim.process.equipment.distillation;
 
 import java.util.Arrays;
 import java.util.Locale;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Temporary warm-JVM A/B benchmark for the phase-split out-stream init level change. NOT part of the committed test
@@ -61,7 +61,7 @@ public class PhaseSplitInitBenchmark {
     column.setMaxNumberOfIterations(trayCount <= 5 ? 50 : 80);
     column.setSolverType(solverType);
     if (solverType == DistillationColumn.SolverType.INSIDE_OUT
-	|| solverType == DistillationColumn.SolverType.MATRIX_INSIDE_OUT) {
+        || solverType == DistillationColumn.SolverType.MATRIX_INSIDE_OUT) {
       column.setInnerLoopSteps(2);
     }
     return column;
@@ -101,8 +101,8 @@ public class PhaseSplitInitBenchmark {
     }
     double sd = Math.sqrt(variance / reps);
     logger.info(String.format(Locale.ROOT,
-	"BENCH %-16s trays=%2d reps=%d  mean=%8.2f ms  median=%8.2f ms  min=%8.2f ms  sd=%7.2f ms", label, trayCount,
-	reps, mean, median, min, sd));
+        "BENCH %-16s trays=%2d reps=%d  mean=%8.2f ms  median=%8.2f ms  min=%8.2f ms  sd=%7.2f ms", label, trayCount,
+        reps, mean, median, min, sd));
   }
 
   /**

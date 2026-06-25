@@ -123,7 +123,7 @@ public class OffshoreEnergySystemTest extends neqsim.NeqSimTest {
   @Test
   public void testEquipmentFactory() {
     OffshoreEnergySystem system = (OffshoreEnergySystem) neqsim.process.equipment.EquipmentFactory
-	.createEquipment("test", "offshoreenergysystem");
+        .createEquipment("test", "offshoreenergysystem");
     assertTrue(system instanceof OffshoreEnergySystem);
   }
 }

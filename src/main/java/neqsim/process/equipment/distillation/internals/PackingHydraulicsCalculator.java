@@ -252,7 +252,7 @@ public class PackingHydraulicsCalculator implements Serializable {
 
     // Dry pressure drop per meter
     double dryDp = a1 * packingFactor * vaporDensity * actualVelocity * actualVelocity / Math.pow(voidFraction, 3)
-	* 0.01; // Pa/m, empirical scale
+        * 0.01; // Pa/m, empirical scale
 
     // Wet correction factor (Leva): increases exponentially with liquid loading
     double levaC = 0.015; // Typical for metal packing
@@ -306,7 +306,7 @@ public class PackingHydraulicsCalculator implements Serializable {
     double sigmaRatio = criticalSurfaceTension / surfaceTension;
 
     double exponent = -1.45 * Math.pow(sigmaRatio, 0.75) * Math.pow(reL, 0.1) * Math.pow(frL, -0.05)
-	* Math.pow(weL, 0.2);
+        * Math.pow(weL, 0.2);
     double awRatio = 1.0 - Math.exp(exponent);
     awRatio = Math.max(awRatio, 0.2);
     awRatio = Math.min(awRatio, 1.0);
@@ -331,7 +331,7 @@ public class PackingHydraulicsCalculator implements Serializable {
 
     double lhsFactor = Math.pow(liquidDensity / (liquidViscosity * g), 1.0 / 3.0);
     kLa = 0.0051 * Math.pow(reL2, 2.0 / 3.0) * Math.pow(scL, -0.5) * Math.pow(specificSurfaceArea * dp, 0.4)
-	/ lhsFactor;
+        / lhsFactor;
     kLa = kLa * wettedArea; // volumetric coefficient [1/s]
   }
 
@@ -408,7 +408,7 @@ public class PackingHydraulicsCalculator implements Serializable {
       // Typical: 25mm Pall Ring → 0.42m, 50mm Pall Ring → 0.72m
       double hetpEst = 0.12 + 0.012 * nominalSize;
       if (columnDiameter > 1.0) {
-	hetpEst *= (1.0 + 0.1 * (columnDiameter - 1.0));
+        hetpEst *= (1.0 + 0.1 * (columnDiameter - 1.0));
       }
       return Math.max(hetpEst, 0.15);
     }
@@ -455,7 +455,7 @@ public class PackingHydraulicsCalculator implements Serializable {
     wettingOk = actualRate >= minimumWettingRate;
     if (!wettingOk) {
       logger.warn("Liquid rate below minimum wetting rate for packing. " + "Actual: " + actualRate + " m3/(m2.s), Min: "
-	  + minimumWettingRate);
+          + minimumWettingRate);
     }
   }
 
@@ -467,13 +467,13 @@ public class PackingHydraulicsCalculator implements Serializable {
     if (!designOk) {
       StringBuilder sb = new StringBuilder("Packing hydraulics issues: ");
       if (!wettingOk) {
-	sb.append("[WETTING: liquid rate below minimum for packing] ");
+        sb.append("[WETTING: liquid rate below minimum for packing] ");
       }
       if (percentFlood > 80.0) {
-	sb.append("[FLOODING: > 80% of packing flood, increase diameter] ");
+        sb.append("[FLOODING: > 80% of packing flood, increase diameter] ");
       }
       if (percentFlood < 40.0) {
-	sb.append("[LOW LOAD: < 40% flood, column oversized] ");
+        sb.append("[LOW LOAD: < 40% flood, column oversized] ");
       }
       logger.warn(sb.toString());
     }
@@ -511,10 +511,10 @@ public class PackingHydraulicsCalculator implements Serializable {
    */
   private double roundToStandardDiameter(double diameter) {
     double[] standardSizes = { 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.4, 1.5, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6,
-	2.8, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0, 4.5, 5.0, 5.5, 6.0, 7.0, 8.0 };
+        2.8, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0, 4.5, 5.0, 5.5, 6.0, 7.0, 8.0 };
     for (double stdSize : standardSizes) {
       if (stdSize >= diameter) {
-	return stdSize;
+        return stdSize;
       }
     }
     return Math.ceil(diameter * 2.0) / 2.0;

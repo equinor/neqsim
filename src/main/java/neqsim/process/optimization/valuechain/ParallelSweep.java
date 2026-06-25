@@ -110,22 +110,22 @@ public class ParallelSweep implements Serializable {
     try {
       List<Future<R>> futures = new ArrayList<Future<R>>(inputs.size());
       for (final double[] input : inputs) {
-	futures.add(pool.submit(new Callable<R>() {
-	  @Override
-	  public R call() {
-	    return evaluator.evaluate(input);
-	  }
-	}));
+        futures.add(pool.submit(new Callable<R>() {
+          @Override
+          public R call() {
+            return evaluator.evaluate(input);
+          }
+        }));
       }
       for (Future<R> future : futures) {
-	try {
-	  results.add(future.get());
-	} catch (InterruptedException ex) {
-	  Thread.currentThread().interrupt();
-	  throw new RuntimeException("Parallel sweep interrupted", ex);
-	} catch (ExecutionException ex) {
-	  throw new RuntimeException("Parallel sweep evaluation failed", ex.getCause());
-	}
+        try {
+          results.add(future.get());
+        } catch (InterruptedException ex) {
+          Thread.currentThread().interrupt();
+          throw new RuntimeException("Parallel sweep interrupted", ex);
+        } catch (ExecutionException ex) {
+          throw new RuntimeException("Parallel sweep evaluation failed", ex.getCause());
+        }
       }
     } finally {
       pool.shutdownNow();

@@ -168,7 +168,7 @@ public class MonteCarloSimulatorTest extends neqsim.NeqSimTest {
     // Tornado should be sorted by swing descending
     if (result.getTornado().size() >= 2) {
       assertTrue(result.getTornado().get(0).swing >= result.getTornado().get(1).swing,
-	  "Tornado should be sorted by swing descending");
+          "Tornado should be sorted by swing descending");
     }
   }
 }

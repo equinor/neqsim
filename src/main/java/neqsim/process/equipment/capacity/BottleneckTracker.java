@@ -87,7 +87,7 @@ public class BottleneckTracker implements Serializable {
      * @param hasBottleneck true if a bottleneck equipment/constraint was present
      */
     public Snapshot(double time, String label, String equipmentName, String constraintName, double utilizationPercent,
-	boolean exceeded, boolean hasBottleneck) {
+        boolean exceeded, boolean hasBottleneck) {
       this.time = time;
       this.label = label != null ? label : "";
       this.equipmentName = equipmentName;
@@ -174,7 +174,7 @@ public class BottleneckTracker implements Serializable {
     public String toString() {
       String prefix = label.isEmpty() ? String.format(Locale.ROOT, "t=%.3g", time) : label;
       return String.format(Locale.ROOT, "%s: %s -> %s @ %.1f%%%s", prefix, equipmentName, constraintName,
-	  utilizationPercent, exceeded ? " [EXCEEDED]" : "");
+          utilizationPercent, exceeded ? " [EXCEEDED]" : "");
     }
   }
 
@@ -206,7 +206,7 @@ public class BottleneckTracker implements Serializable {
       snapshot = new Snapshot(time, label, "None", "None", 0.0, false, false);
     } else {
       snapshot = new Snapshot(time, label, result.getEquipmentName(), result.getConstraintName(),
-	  result.getUtilizationPercent(), result.isExceeded(), true);
+          result.getUtilizationPercent(), result.isExceeded(), true);
     }
     snapshots.add(snapshot);
     return snapshot;
@@ -273,7 +273,7 @@ public class BottleneckTracker implements Serializable {
     for (Snapshot snapshot : snapshots) {
       String identity = snapshot.getIdentity();
       if (previousIdentity == null || !identity.equals(previousIdentity)) {
-	events.add(snapshot);
+        events.add(snapshot);
       }
       previousIdentity = identity;
     }
@@ -300,7 +300,7 @@ public class BottleneckTracker implements Serializable {
     for (Snapshot snapshot : snapshots) {
       String name = snapshot.getEquipmentName();
       if (!distinct.contains(name)) {
-	distinct.add(name);
+        distinct.add(name);
       }
     }
     return distinct;
@@ -315,7 +315,7 @@ public class BottleneckTracker implements Serializable {
     Snapshot peak = null;
     for (Snapshot snapshot : snapshots) {
       if (peak == null || snapshot.getUtilizationPercent() > peak.getUtilizationPercent()) {
-	peak = snapshot;
+        peak = snapshot;
       }
     }
     return peak;
@@ -339,7 +339,7 @@ public class BottleneckTracker implements Serializable {
   public String getTimelineSummary() {
     StringBuilder sb = new StringBuilder();
     sb.append("Bottleneck migration timeline (").append(getMigrationCount()).append(" transition(s) over ")
-	.append(size()).append(" steps):");
+        .append(size()).append(" steps):");
     for (Snapshot event : getMigrationEvents()) {
       sb.append(System.lineSeparator()).append("  ").append(event.toString());
     }
@@ -366,7 +366,7 @@ public class BottleneckTracker implements Serializable {
     List<String> distinct = getDistinctBottleneckEquipment();
     for (int i = 0; i < distinct.size(); i++) {
       if (i > 0) {
-	sb.append(",");
+        sb.append(",");
       }
       sb.append("\"").append(escape(distinct.get(i))).append("\"");
     }
@@ -389,7 +389,7 @@ public class BottleneckTracker implements Serializable {
     sb.append("[");
     for (int i = 0; i < items.size(); i++) {
       if (i > 0) {
-	sb.append(",");
+        sb.append(",");
       }
       Snapshot s = items.get(i);
       sb.append("{\"time\":").append(formatNumber(s.getTime()));
@@ -432,23 +432,23 @@ public class BottleneckTracker implements Serializable {
       char c = value.charAt(i);
       switch (c) {
       case '\\':
-	sb.append("\\\\");
-	break;
+        sb.append("\\\\");
+        break;
       case '"':
-	sb.append("\\\"");
-	break;
+        sb.append("\\\"");
+        break;
       case '\n':
-	sb.append("\\n");
-	break;
+        sb.append("\\n");
+        break;
       case '\r':
-	sb.append("\\r");
-	break;
+        sb.append("\\r");
+        break;
       case '\t':
-	sb.append("\\t");
-	break;
+        sb.append("\\t");
+        break;
       default:
-	sb.append(c);
-	break;
+        sb.append(c);
+        break;
       }
     }
     return sb.toString();

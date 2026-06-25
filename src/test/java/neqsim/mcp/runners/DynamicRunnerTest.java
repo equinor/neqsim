@@ -28,9 +28,9 @@ class DynamicRunnerTest {
   @Test
   void testRun_methaneDecaneSeparatorTransient() {
     String processJson = "{" + "\"fluid\": {\"model\": \"SRK\", \"temperature\": 298.15, \"pressure\": 50.0,"
-	+ "  \"mixingRule\": \"classic\"," + "  \"components\": {\"methane\": 0.9, \"nC10\": 0.1}}," + "\"process\": ["
-	+ "  {\"type\": \"Stream\", \"name\": \"feed\"," + "   \"properties\": {\"flowRate\": [1000.0, \"kg/hr\"]}},"
-	+ "  {\"type\": \"Separator\", \"name\": \"HP Sep\", \"inlet\": \"feed\"}" + "]}";
+        + "  \"mixingRule\": \"classic\"," + "  \"components\": {\"methane\": 0.9, \"nC10\": 0.1}}," + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"feed\"," + "   \"properties\": {\"flowRate\": [1000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"Separator\", \"name\": \"HP Sep\", \"inlet\": \"feed\"}" + "]}";
 
     JsonObject input = new JsonObject();
     input.addProperty("processJson", processJson);
@@ -41,7 +41,7 @@ class DynamicRunnerTest {
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
 
     assertEquals("success", root.get("status").getAsString(),
-	"runDynamic must succeed for a wired separator: " + result);
+        "runDynamic must succeed for a wired separator: " + result);
     assertTrue(root.has("apiVersion"));
     assertTrue(root.has("tool"));
     assertTrue(root.has("validation"));
@@ -53,7 +53,7 @@ class DynamicRunnerTest {
     assertTrue(data.has("transmitters"));
     JsonObject transmitters = data.getAsJsonObject("transmitters");
     assertTrue(transmitters.has("PT-HP Sep"),
-	"Pressure transmitter must be auto-instrumented on the separator gas outlet");
+        "Pressure transmitter must be auto-instrumented on the separator gas outlet");
   }
 
   /**
@@ -64,8 +64,8 @@ class DynamicRunnerTest {
   void testRun_orphanSeparatorGivesClearError() {
     // Separator declared with no 'inlet' \u2014 previously NPE'd at the first time step.
     String processJson = "{" + "\"fluid\": {\"model\": \"SRK\", \"temperature\": 298.15, \"pressure\": 50.0,"
-	+ "  \"mixingRule\": \"classic\"," + "  \"components\": {\"methane\": 0.9, \"nC10\": 0.1}}," + "\"process\": ["
-	+ "  {\"type\": \"Separator\", \"name\": \"OrphanSep\"}" + "]}";
+        + "  \"mixingRule\": \"classic\"," + "  \"components\": {\"methane\": 0.9, \"nC10\": 0.1}}," + "\"process\": ["
+        + "  {\"type\": \"Separator\", \"name\": \"OrphanSep\"}" + "]}";
 
     JsonObject input = new JsonObject();
     input.addProperty("processJson", processJson);

@@ -33,7 +33,7 @@ public class TestSeparationTrain {
     double thirdstagePressure = 1.50; // bar
 
     neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil(inletTemperatuure,
-	inletPressure);
+        inletPressure);
 
     testSystem.addComponent("methane", 50);
     testSystem.addComponent("propane", 5);
@@ -51,7 +51,7 @@ public class TestSeparationTrain {
     liquidOutHeater.setOutTemperature(273.15 + 55.0);
 
     ThreePhaseSeparator firstStageSeparator = new ThreePhaseSeparator("1st stage Separator",
-	liquidOutHeater.getOutletStream());
+        liquidOutHeater.getOutletStream());
 
     ThrottlingValve valve1 = new ThrottlingValve("snohvit valve", firstStageSeparator.getOilOutStream());
     valve1.setOutletPressure(secondstagePressure);
@@ -62,7 +62,7 @@ public class TestSeparationTrain {
     thirdStageValve.setOutletPressure(thirdstagePressure);
 
     ThreePhaseSeparator thirdStageSeparator = new ThreePhaseSeparator("3rd stage Separator",
-	thirdStageValve.getOutletStream());
+        thirdStageValve.getOutletStream());
 
     Compressor thirdStageCompressor = new Compressor("thirdStageCompressor", thirdStageSeparator.getGasOutStream());
     thirdStageCompressor.setOutletPressure(secondstagePressure);
@@ -75,7 +75,7 @@ public class TestSeparationTrain {
     thirdSstageCoooler.setOutTemperature(273.15 + 30.0);
 
     ThreePhaseSeparator thirdStageScrubber = new ThreePhaseSeparator("Third stage gas resirc scrubber",
-	thirdSstageCoooler.getOutletStream());
+        thirdSstageCoooler.getOutletStream());
     secondStageSeparator.addStream(thirdStageScrubber.getOilOutStream());
     secondStageSeparator.addStream(thirdStageScrubber.getWaterOutStream());
 

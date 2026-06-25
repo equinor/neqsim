@@ -74,10 +74,10 @@ public final class CO2FlowCorrections {
   public static double getCO2MoleFraction(SystemInterface system) {
     try {
       for (int i = 0; i < system.getNumberOfComponents(); i++) {
-	String name = system.getPhase(0).getComponent(i).getComponentName();
-	if ("CO2".equals(name)) {
-	  return system.getPhase(0).getComponent(i).getz();
-	}
+        String name = system.getPhase(0).getComponent(i).getComponentName();
+        if ("CO2".equals(name)) {
+          return system.getPhase(0).getComponent(i).getz();
+        }
       }
       return 0.0;
     } catch (Exception e) {

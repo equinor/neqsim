@@ -98,7 +98,7 @@ public class StateSpaceExporter implements Serializable {
     String[] cvNames = stepResponseMatrix.getCvNames();
 
     this.linearizationResult = new LinearizationResult(gains, new double[cvNames.length][0], new double[mvNames.length],
-	new double[cvNames.length], new double[0], mvNames, cvNames, new String[0], 0.0, 0);
+        new double[cvNames.length], new double[0], mvNames, cvNames, new String[0], 0.0, 0);
   }
 
   /**
@@ -163,18 +163,18 @@ public class StateSpaceExporter implements Serializable {
       // Each CV is a separate first-order state
       double tau = defaultTau;
       if (tauMatrix != null && tauMatrix[i].length > 0) {
-	// Use average time constant for this CV
-	double sum = 0;
-	int count = 0;
-	for (double t : tauMatrix[i]) {
-	  if (t > 0) {
-	    sum += t;
-	    count++;
-	  }
-	}
-	if (count > 0) {
-	  tau = sum / count;
-	}
+        // Use average time constant for this CV
+        double sum = 0;
+        int count = 0;
+        for (double t : tauMatrix[i]) {
+          if (t > 0) {
+            sum += t;
+            count++;
+          }
+        }
+        if (count > 0) {
+          tau = sum / count;
+        }
       }
 
       // Discrete-time state transition for first-order system
@@ -183,8 +183,8 @@ public class StateSpaceExporter implements Serializable {
 
       // Input matrix (discrete)
       for (int j = 0; j < numMV; j++) {
-	double K = gains[i][j];
-	B[i][j] = K * (1.0 - a);
+        double K = gains[i][j];
+        B[i][j] = K * (1.0 - a);
       }
 
       // Output matrix (states are outputs)
@@ -195,7 +195,7 @@ public class StateSpaceExporter implements Serializable {
     }
 
     stateSpaceModel = new StateSpaceModel(A, B, C, D, sampleTimeSeconds, linearizationResult.getMvNames(),
-	linearizationResult.getCvNames());
+        linearizationResult.getCvNames());
 
     return stateSpaceModel;
   }
@@ -251,7 +251,7 @@ public class StateSpaceExporter implements Serializable {
     // Also export step response coefficients if available
     if (stepResponseMatrix != null) {
       try (BufferedWriter writer = new BufferedWriter(new FileWriter(filenamePrefix + "step_response.csv"))) {
-	writer.write(stepResponseMatrix.toCSV());
+        writer.write(stepResponseMatrix.toCSV());
       }
     }
   }
@@ -259,15 +259,15 @@ public class StateSpaceExporter implements Serializable {
   private void exportMatrix(double[][] matrix, String filename) throws IOException {
     try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
       for (double[] row : matrix) {
-	StringBuilder sb = new StringBuilder();
-	for (int j = 0; j < row.length; j++) {
-	  if (j > 0) {
-	    sb.append(",");
-	  }
-	  sb.append(String.format("%.10g", row[j]));
-	}
-	writer.write(sb.toString());
-	writer.newLine();
+        StringBuilder sb = new StringBuilder();
+        for (int j = 0; j < row.length; j++) {
+          if (j > 0) {
+            sb.append(",");
+          }
+          sb.append(String.format("%.10g", row[j]));
+        }
+        writer.write(sb.toString());
+        writer.newLine();
       }
     }
   }
@@ -318,10 +318,10 @@ public class StateSpaceExporter implements Serializable {
       writer.write("InputNames = {");
       String[] mvNames = stateSpaceModel.getInputNames();
       for (int i = 0; i < mvNames.length; i++) {
-	if (i > 0) {
-	  writer.write(", ");
-	}
-	writer.write("'" + mvNames[i] + "'");
+        if (i > 0) {
+          writer.write(", ");
+        }
+        writer.write("'" + mvNames[i] + "'");
       }
       writer.write("};\n\n");
 
@@ -329,10 +329,10 @@ public class StateSpaceExporter implements Serializable {
       writer.write("OutputNames = {");
       String[] cvNames = stateSpaceModel.getOutputNames();
       for (int i = 0; i < cvNames.length; i++) {
-	if (i > 0) {
-	  writer.write(", ");
-	}
-	writer.write("'" + cvNames[i] + "'");
+        if (i > 0) {
+          writer.write(", ");
+        }
+        writer.write("'" + cvNames[i] + "'");
       }
       writer.write("};\n\n");
 
@@ -348,15 +348,15 @@ public class StateSpaceExporter implements Serializable {
     for (int i = 0; i < matrix.length; i++) {
       writer.write("  ");
       for (int j = 0; j < matrix[i].length; j++) {
-	if (j > 0) {
-	  writer.write("  ");
-	}
-	writer.write(String.format("%12.6g", matrix[i][j]));
+        if (j > 0) {
+          writer.write("  ");
+        }
+        writer.write(String.format("%12.6g", matrix[i][j]));
       }
       if (i < matrix.length - 1) {
-	writer.write(";\n");
+        writer.write(";\n");
       } else {
-	writer.write("\n");
+        writer.write("\n");
       }
     }
   }
@@ -371,7 +371,7 @@ public class StateSpaceExporter implements Serializable {
   public void exportStepCoefficients(String filename, int numCoefficients) throws IOException {
     if (stepResponseMatrix == null) {
       throw new IllegalStateException(
-	  "Step response matrix not available. " + "Use setStepResponseMatrix() or construct from StepResponseMatrix.");
+          "Step response matrix not available. " + "Use setStepResponseMatrix() or construct from StepResponseMatrix.");
     }
 
     String[] mvNames = stepResponseMatrix.getMvNames();
@@ -381,23 +381,23 @@ public class StateSpaceExporter implements Serializable {
       // Header
       writer.write("Step,");
       for (String cvName : cvNames) {
-	for (String mvName : mvNames) {
-	  writer.write(cvName + "_" + mvName + ",");
-	}
+        for (String mvName : mvNames) {
+          writer.write(cvName + "_" + mvName + ",");
+        }
       }
       writer.newLine();
 
       // Data rows
       for (int k = 0; k < numCoefficients; k++) {
-	writer.write(String.valueOf(k));
-	for (String cvName : cvNames) {
-	  for (String mvName : mvNames) {
-	    StepResponse resp = stepResponseMatrix.get(cvName, mvName);
-	    double[] coeffs = resp != null ? resp.getStepCoefficients(numCoefficients) : new double[numCoefficients];
-	    writer.write("," + String.format("%.6f", coeffs[k]));
-	  }
-	}
-	writer.newLine();
+        writer.write(String.valueOf(k));
+        for (String cvName : cvNames) {
+          for (String mvName : mvNames) {
+            StepResponse resp = stepResponseMatrix.get(cvName, mvName);
+            double[] coeffs = resp != null ? resp.getStepCoefficients(numCoefficients) : new double[numCoefficients];
+            writer.write("," + String.format("%.6f", coeffs[k]));
+          }
+        }
+        writer.newLine();
       }
     }
   }
@@ -428,7 +428,7 @@ public class StateSpaceExporter implements Serializable {
      * @param outputNames names of outputs (CVs)
      */
     public StateSpaceModel(double[][] A, double[][] B, double[][] C, double[][] D, double sampleTime,
-	String[] inputNames, String[] outputNames) {
+        String[] inputNames, String[] outputNames) {
       this.A = deepCopy(A);
       this.B = deepCopy(B);
       this.C = deepCopy(C);
@@ -440,11 +440,11 @@ public class StateSpaceExporter implements Serializable {
 
     private double[][] deepCopy(double[][] matrix) {
       if (matrix == null) {
-	return new double[0][0];
+        return new double[0][0];
       }
       double[][] copy = new double[matrix.length][];
       for (int i = 0; i < matrix.length; i++) {
-	copy[i] = matrix[i] != null ? matrix[i].clone() : new double[0];
+        copy[i] = matrix[i] != null ? matrix[i].clone() : new double[0];
       }
       return copy;
     }
@@ -554,12 +554,12 @@ public class StateSpaceExporter implements Serializable {
       // Simplified: For diagonal A near identity, approximate DC gain
       // G ≈ B / (1 - A) for first-order
       if (outputIndex >= 0 && outputIndex < A.length && inputIndex >= 0 && inputIndex < getNumInputs()) {
-	double a = A[outputIndex][outputIndex];
-	double b = B[outputIndex][inputIndex];
-	double d = D[outputIndex][inputIndex];
-	if (Math.abs(1 - a) > 1e-10) {
-	  return b / (1 - a) + d;
-	}
+        double a = A[outputIndex][outputIndex];
+        double b = B[outputIndex][inputIndex];
+        double d = D[outputIndex][inputIndex];
+        if (Math.abs(1 - a) > 1e-10) {
+          return b / (1 - a) + d;
+        }
       }
       return 0.0;
     }
@@ -572,11 +572,11 @@ public class StateSpaceExporter implements Serializable {
      */
     public double getDominantTimeConstant(int outputIndex) {
       if (outputIndex >= 0 && outputIndex < A.length) {
-	double a = A[outputIndex][outputIndex];
-	if (a > 0 && a < 1) {
-	  // τ = -Ts / ln(a)
-	  return -sampleTime / Math.log(a);
-	}
+        double a = A[outputIndex][outputIndex];
+        if (a > 0 && a < 1) {
+          // τ = -Ts / ln(a)
+          return -sampleTime / Math.log(a);
+        }
       }
       return sampleTime;
     }
@@ -592,12 +592,12 @@ public class StateSpaceExporter implements Serializable {
       int n = A.length;
       double[] xNext = new double[n];
       for (int i = 0; i < n; i++) {
-	for (int j = 0; j < n; j++) {
-	  xNext[i] += A[i][j] * x[j];
-	}
-	for (int j = 0; j < u.length && j < B[i].length; j++) {
-	  xNext[i] += B[i][j] * u[j];
-	}
+        for (int j = 0; j < n; j++) {
+          xNext[i] += A[i][j] * x[j];
+        }
+        for (int j = 0; j < u.length && j < B[i].length; j++) {
+          xNext[i] += B[i][j] * u[j];
+        }
       }
       return xNext;
     }
@@ -613,12 +613,12 @@ public class StateSpaceExporter implements Serializable {
       int p = C.length;
       double[] y = new double[p];
       for (int i = 0; i < p; i++) {
-	for (int j = 0; j < x.length && j < C[i].length; j++) {
-	  y[i] += C[i][j] * x[j];
-	}
-	for (int j = 0; j < u.length && j < D[i].length; j++) {
-	  y[i] += D[i][j] * u[j];
-	}
+        for (int j = 0; j < x.length && j < C[i].length; j++) {
+          y[i] += C[i][j] * x[j];
+        }
+        for (int j = 0; j < u.length && j < D[i].length; j++) {
+          y[i] += D[i][j] * u[j];
+        }
       }
       return y;
     }
@@ -647,11 +647,11 @@ public class StateSpaceExporter implements Serializable {
     private List<List<Double>> matrixToList(double[][] matrix) {
       List<List<Double>> list = new java.util.ArrayList<>();
       for (double[] row : matrix) {
-	List<Double> rowList = new java.util.ArrayList<>();
-	for (double v : row) {
-	  rowList.add(v);
-	}
-	list.add(rowList);
+        List<Double> rowList = new java.util.ArrayList<>();
+        for (double v : row) {
+          rowList.add(v);
+        }
+        list.add(rowList);
       }
       return list;
     }
@@ -663,9 +663,9 @@ public class StateSpaceExporter implements Serializable {
       sb.append("  sampleTime: ").append(sampleTime).append(" s\n");
       sb.append("  states: ").append(getNumStates()).append("\n");
       sb.append("  inputs: ").append(getNumInputs()).append(" ").append(java.util.Arrays.toString(inputNames))
-	  .append("\n");
+          .append("\n");
       sb.append("  outputs: ").append(getNumOutputs()).append(" ").append(java.util.Arrays.toString(outputNames))
-	  .append("\n");
+          .append("\n");
       sb.append("}");
       return sb.toString();
     }

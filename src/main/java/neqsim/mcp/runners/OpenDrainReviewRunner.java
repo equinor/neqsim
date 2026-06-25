@@ -40,22 +40,22 @@ public final class OpenDrainReviewRunner {
   public static String run(String json) {
     if (json == null || json.trim().isEmpty()) {
       return errorJson("INPUT_ERROR", "JSON input is null or empty",
-	  "Provide normalized open-drain items, openDrainAreas, drainAreas, or stidData.");
+          "Provide normalized open-drain items, openDrainAreas, drainAreas, or stidData.");
     }
     JsonObject input;
     try {
       input = JsonParser.parseString(json).getAsJsonObject();
     } catch (Exception ex) {
       return errorJson("JSON_PARSE_ERROR", "Failed to parse open-drain-review JSON input.",
-	  "Ensure the input JSON is well formed and does not contain comments or trailing commas.");
+          "Ensure the input JSON is well formed and does not contain comments or trailing commas.");
     }
     long startTime = System.currentTimeMillis();
     try {
       OpenDrainReviewInput reviewInput = OpenDrainReviewInput.fromJsonObject(input);
       if (reviewInput.getItems().isEmpty()) {
-	return errorJson("MISSING_OPEN_DRAIN_DATA",
-	    "No open-drain items, drainAreas, openDrainAreas, or stidData were supplied.",
-	    "Provide at least one normalized area or drain-system record from STID/P&ID evidence.");
+        return errorJson("MISSING_OPEN_DRAIN_DATA",
+            "No open-drain items, drainAreas, openDrainAreas, or stidData were supplied.",
+            "Provide at least one normalized area or drain-system record from STID/P&ID evidence.");
       }
       OpenDrainReviewReport report = new OpenDrainReviewEngine().evaluate(reviewInput);
       JsonObject root = JsonParser.parseString(report.toJson()).getAsJsonObject();
@@ -69,7 +69,7 @@ public final class OpenDrainReviewRunner {
       return GSON.toJson(root);
     } catch (Exception ex) {
       return errorJson("OPEN_DRAIN_REVIEW_ERROR", "Open-drain review failed during evaluation.",
-	  "Check normalized evidence keys, numeric units, and JSON shape.");
+          "Check normalized evidence keys, numeric units, and JSON shape.");
     }
   }
 

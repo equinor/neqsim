@@ -108,8 +108,8 @@ class CharacterizeToCommonSlateTest {
    */
   private static SystemInterface lightField() {
     return customField(new double[] { 350.0, 400.0, 450.0 }, new double[] { 0.10, 0.10, 0.10 },
-	new double[] { 0.090, 0.110, 0.130 }, new double[] { 0.72, 0.74, 0.76 }, new double[] { 480.0, 520.0, 560.0 },
-	new double[] { 32.0, 30.0, 28.0 }, new double[] { 0.28, 0.34, 0.40 });
+        new double[] { 0.090, 0.110, 0.130 }, new double[] { 0.72, 0.74, 0.76 }, new double[] { 480.0, 520.0, 560.0 },
+        new double[] { 32.0, 30.0, 28.0 }, new double[] { 0.28, 0.34, 0.40 });
   }
 
   /**
@@ -120,8 +120,8 @@ class CharacterizeToCommonSlateTest {
    */
   private static SystemInterface heavyField() {
     return customField(new double[] { 550.0, 600.0, 650.0 }, new double[] { 1.0, 1.0, 1.0 },
-	new double[] { 0.200, 0.240, 0.280 }, new double[] { 0.82, 0.85, 0.88 }, new double[] { 640.0, 700.0, 760.0 },
-	new double[] { 20.0, 17.0, 14.0 }, new double[] { 0.60, 0.75, 0.90 });
+        new double[] { 0.200, 0.240, 0.280 }, new double[] { 0.82, 0.85, 0.88 }, new double[] { 640.0, 700.0, 760.0 },
+        new double[] { 20.0, 17.0, 14.0 }, new double[] { 0.60, 0.75, 0.90 });
   }
 
   /**
@@ -171,7 +171,7 @@ class CharacterizeToCommonSlateTest {
     double weightA = 2.0;
     double weightB = 1.0;
     List<SystemInterface> slate = PseudoComponentCombiner.characterizeToCommonSlate(Arrays.asList(a, b),
-	new double[] { weightA, weightB }, 3);
+        new double[] { weightA, weightB }, 3);
 
     assertEquals(2, slate.size());
     SystemInterface resultA = slate.get(0);
@@ -196,7 +196,7 @@ class CharacterizeToCommonSlateTest {
       assertEquals(weightedMean(i, PC_A, PC_B, weightA, weightB), ca.getPC(), 1e-4, "Pc mean for " + name);
       // Acentric factor is re-derived internally by the EoS, so allow a small absolute tolerance.
       assertEquals(weightedMean(i, OMEGA_A, OMEGA_B, weightA, weightB), ca.getAcentricFactor(), 1e-3,
-	  "omega mean for " + name);
+          "omega mean for " + name);
 
       // Density is reconstructed from weighted MW and weighted molar volume (Eq. 5.6).
       assertEquals(weightedDensity(i, weightA, weightB), ca.getNormalLiquidDensity(), 1e-4, "rho mean for " + name);
@@ -210,7 +210,7 @@ class CharacterizeToCommonSlateTest {
     SystemInterface b = field(MOLES_B, MW_B, RHO_B, TC_B, PC_B, OMEGA_B);
 
     List<SystemInterface> slate = PseudoComponentCombiner.characterizeToCommonSlate(Arrays.asList(a, b),
-	new double[] { 2.0, 1.0 }, 3);
+        new double[] { 2.0, 1.0 }, 3);
     ComponentInterface lumpA = slate.get(0).getComponent("PC1_PC");
 
     // Differs from BOTH source fields' first-cut molar mass -> proves cross-field averaging.
@@ -253,16 +253,16 @@ class CharacterizeToCommonSlateTest {
     SystemInterface b2 = field(MOLES_B, MW_B, RHO_B, TC_B, PC_B, OMEGA_B);
 
     List<SystemInterface> nullWeighted = PseudoComponentCombiner.characterizeToCommonSlate(Arrays.asList(a1, b1), null,
-	3);
+        3);
     List<SystemInterface> equalWeighted = PseudoComponentCombiner.characterizeToCommonSlate(Arrays.asList(a2, b2),
-	new double[] { 1.0, 1.0 }, 3);
+        new double[] { 1.0, 1.0 }, 3);
 
     for (int i = 0; i < 3; i++) {
       String name = "PC" + (i + 1) + "_PC";
       assertEquals(equalWeighted.get(0).getComponent(name).getMolarMass(),
-	  nullWeighted.get(0).getComponent(name).getMolarMass(), 1e-12, "MW equal for " + name);
+          nullWeighted.get(0).getComponent(name).getMolarMass(), 1e-12, "MW equal for " + name);
       assertEquals(equalWeighted.get(0).getComponent(name).getTC(), nullWeighted.get(0).getComponent(name).getTC(),
-	  1e-9, "Tc equal for " + name);
+          1e-9, "Tc equal for " + name);
     }
   }
 
@@ -288,13 +288,13 @@ class CharacterizeToCommonSlateTest {
     SystemInterface b = field(MOLES_B, MW_B, RHO_B, TC_B, PC_B, OMEGA_B);
 
     assertThrows(IllegalArgumentException.class,
-	() -> PseudoComponentCombiner.characterizeToCommonSlate(Arrays.<SystemInterface>asList(), null));
+        () -> PseudoComponentCombiner.characterizeToCommonSlate(Arrays.<SystemInterface>asList(), null));
     assertThrows(IllegalArgumentException.class,
-	() -> PseudoComponentCombiner.characterizeToCommonSlate(Arrays.asList(a, b), new double[] { 1.0 }, 3));
+        () -> PseudoComponentCombiner.characterizeToCommonSlate(Arrays.asList(a, b), new double[] { 1.0 }, 3));
     assertThrows(IllegalArgumentException.class,
-	() -> PseudoComponentCombiner.characterizeToCommonSlate(Arrays.asList(a, b), new double[] { 0.0, 0.0 }, 3));
+        () -> PseudoComponentCombiner.characterizeToCommonSlate(Arrays.asList(a, b), new double[] { 0.0, 0.0 }, 3));
     assertThrows(IllegalArgumentException.class,
-	() -> PseudoComponentCombiner.characterizeToCommonSlate(Arrays.asList(a, b), null, 0));
+        () -> PseudoComponentCombiner.characterizeToCommonSlate(Arrays.asList(a, b), null, 0));
   }
 
   @Test
@@ -309,7 +309,7 @@ class CharacterizeToCommonSlateTest {
     // wholly into PC2. The buggy raw-pooling code, dominated by the ~20x heavier fluid, would push
     // the boundary up into the heavy cuts so the heavy fluid would also populate PC1.
     List<SystemInterface> slate = PseudoComponentCombiner.characterizeToCommonSlate(Arrays.asList(light, heavy), null,
-	2);
+        2);
 
     assertEquals(2, slate.size());
     SystemInterface resultLight = slate.get(0);
@@ -326,14 +326,14 @@ class CharacterizeToCommonSlateTest {
   void cutGridShiftsWithWeights() {
     // Equal weighting: the boundary sits between the two ranges, so the heavy fluid occupies only PC2.
     List<SystemInterface> equalWeighted = PseudoComponentCombiner
-	.characterizeToCommonSlate(Arrays.asList(lightField(), heavyField()), new double[] { 1.0, 1.0 }, 2);
+        .characterizeToCommonSlate(Arrays.asList(lightField(), heavyField()), new double[] { 1.0, 1.0 }, 2);
     assertNull(equalWeighted.get(1).getComponent("PC1_PC"), "under equal weights the heavy fluid stays in PC2 only");
 
     // Up-weighting the heavy fluid pulls the equal-mass boundary up into the heavy cuts, so the heavy
     // fluid now spans PC1 as well. This is only possible if the weights influence the cut grid.
     List<SystemInterface> heavyWeighted = PseudoComponentCombiner
-	.characterizeToCommonSlate(Arrays.asList(lightField(), heavyField()), new double[] { 1.0, 5.0 }, 2);
+        .characterizeToCommonSlate(Arrays.asList(lightField(), heavyField()), new double[] { 1.0, 5.0 }, 2);
     assertNotNull(heavyWeighted.get(1).getComponent("PC1_PC"),
-	"up-weighting the heavy fluid shifts the boundary so it also populates PC1");
+        "up-weighting the heavy fluid shifts the boundary so it also populates PC1");
   }
 }

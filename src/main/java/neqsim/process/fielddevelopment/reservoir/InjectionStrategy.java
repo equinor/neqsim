@@ -152,7 +152,7 @@ public class InjectionStrategy implements Serializable {
 
     // Calculate production voidage at reservoir conditions
     double productionVoidage = calculateProductionVoidage(reservoir, oilProductionRate, gasProductionRate,
-	waterProductionRate);
+        waterProductionRate);
 
     result.productionVoidage = productionVoidage;
 
@@ -192,7 +192,7 @@ public class InjectionStrategy implements Serializable {
 
     // Calculate actual VRR achieved
     double actualInjectionVolume = calculateInjectionVolume(reservoir, result.waterInjectionRate,
-	result.gasInjectionRate);
+        result.gasInjectionRate);
     result.achievedVRR = productionVoidage > 0 ? actualInjectionVolume / productionVoidage : 0.0;
 
     return result;
@@ -218,20 +218,20 @@ public class InjectionStrategy implements Serializable {
     try {
       SystemInterface oil = reservoirFluid.phaseToSystem("oil");
       if (oil != null) {
-	oil.setTemperature(reservoirTemperature);
-	oil.setPressure(reservoirPressure);
-	ThermodynamicOperations ops = new ThermodynamicOperations(oil);
-	ops.TPflash();
-	oil.initProperties();
-	double oilDensityRes = oil.getDensity("kg/m3");
+        oil.setTemperature(reservoirTemperature);
+        oil.setPressure(reservoirPressure);
+        ThermodynamicOperations ops = new ThermodynamicOperations(oil);
+        ops.TPflash();
+        oil.initProperties();
+        double oilDensityRes = oil.getDensity("kg/m3");
 
-	oil.setTemperature(288.15);
-	oil.setPressure(1.01325);
-	ops.TPflash();
-	oil.initProperties();
-	double oilDensityStd = oil.getDensity("kg/m3");
+        oil.setTemperature(288.15);
+        oil.setPressure(1.01325);
+        ops.TPflash();
+        oil.initProperties();
+        double oilDensityStd = oil.getDensity("kg/m3");
 
-	bo = oilDensityStd / oilDensityRes;
+        bo = oilDensityStd / oilDensityRes;
       }
     } catch (Exception e) {
       // Use default
@@ -407,7 +407,7 @@ public class InjectionStrategy implements Serializable {
     @Override
     public String toString() {
       return String.format("InjectionResult[water=%.0f Sm3/d, gas=%.0f Sm3/d, VRR=%.2f]", waterInjectionRate,
-	  gasInjectionRate, achievedVRR);
+          gasInjectionRate, achievedVRR);
     }
   }
 }

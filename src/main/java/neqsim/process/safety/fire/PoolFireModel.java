@@ -114,7 +114,7 @@ public class PoolFireModel implements Serializable {
     // Mudan vertical-cylinder closed-form approximation
     double A = (h * h + s * s + 1.0) / (2.0 * s);
     double F = (1.0 / Math.PI)
-	* (Math.atan(h / Math.sqrt(s * s - 1.0)) - (A - (s * s + 1.0) / (2.0 * s)) / Math.sqrt(A * A - 1.0));
+        * (Math.atan(h / Math.sqrt(s * s - 1.0)) - (A - (s * s + 1.0) / (2.0 * s)) / Math.sqrt(A * A - 1.0));
     if (F < 0.0) {
       F = 0.0;
     }
@@ -149,9 +149,9 @@ public class PoolFireModel implements Serializable {
     for (int i = 0; i < 60; i++) {
       double mid = 0.5 * (lo + hi);
       if (incidentHeatFlux(mid) > targetFluxWperM2) {
-	lo = mid;
+        lo = mid;
       } else {
-	hi = mid;
+        hi = mid;
       }
     }
     return 0.5 * (lo + hi);

@@ -138,7 +138,7 @@ public class StirredCellMassTransferTest {
       double xGas = node.getBulkSystem().getPhase(0).getComponent("methane").getx();
       double xLiq = node.getBulkSystem().getPhase(1).getComponent("methane").getx();
       if (xLiq > 0) {
-	kValueC1[i] = xGas / xLiq;
+        kValueC1[i] = xGas / xLiq;
       }
 
       gasFraction[i] = node.getBulkSystem().getBeta();
@@ -284,7 +284,7 @@ public class StirredCellMassTransferTest {
 
     // Get diffusion coefficient in gas phase
     double diffCoeff = node.getBulkSystem().getPhase(0).getPhysicalProperties().getDiffusionCoefficient("methane",
-	"propane");
+        "propane");
 
     assertTrue(diffCoeff > 0, "Diffusion coefficient should be positive");
     assertTrue(Double.isFinite(diffCoeff), "Diffusion coefficient should be finite");

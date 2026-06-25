@@ -69,6 +69,6 @@ public final class FireHeatLoadCalculator {
     }
 
     return emissivity * viewFactor * STEFAN_BOLTZMANN
-	* (Math.pow(flameTemperatureK, 4) - Math.pow(surfaceTemperatureK, 4));
+        * (Math.pow(flameTemperatureK, 4) - Math.pow(surfaceTemperatureK, 4));
   }
 }

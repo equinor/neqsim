@@ -138,12 +138,12 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
     if (output > maxOpening) {
       output = maxOpening;
       if (integralTime > 0.0) {
-	integralState -= proportionalGain / integralTime * error * dt;
+        integralState -= proportionalGain / integralTime * error * dt;
       }
     } else if (output < minOpening) {
       output = minOpening;
       if (integralTime > 0.0) {
-	integralState -= proportionalGain / integralTime * error * dt;
+        integralState -= proportionalGain / integralTime * error * dt;
       }
     }
 

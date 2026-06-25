@@ -103,13 +103,13 @@ public class ProcessSystemProgressCallbackTest extends neqsim.NeqSimTest {
     ProcessSystem.SimulationProgressListener listener = new ProcessSystem.SimulationProgressListener() {
       @Override
       public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber) {
-	unitCompleteCount.incrementAndGet();
-	receivedIndices.add(unitIndex);
+        unitCompleteCount.incrementAndGet();
+        receivedIndices.add(unitIndex);
       }
 
       @Override
       public void onIterationComplete(int iterationNumber, boolean converged, double recycleError) {
-	iterationCompleteCount.incrementAndGet();
+        iterationCompleteCount.incrementAndGet();
       }
     };
 
@@ -138,7 +138,7 @@ public class ProcessSystemProgressCallbackTest extends neqsim.NeqSimTest {
     ProcessSystem.SimulationProgressListener listener = new ProcessSystem.SimulationProgressListener() {
       @Override
       public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber) {
-	receivedTotal.set(totalUnits);
+        receivedTotal.set(totalUnits);
       }
     };
 
@@ -156,7 +156,7 @@ public class ProcessSystemProgressCallbackTest extends neqsim.NeqSimTest {
     ProcessSystem.SimulationProgressListener listener = new ProcessSystem.SimulationProgressListener() {
       @Override
       public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber) {
-	// No-op
+        // No-op
       }
     };
 
@@ -175,7 +175,7 @@ public class ProcessSystemProgressCallbackTest extends neqsim.NeqSimTest {
     ProcessSystem.SimulationProgressListener listener = new ProcessSystem.SimulationProgressListener() {
       @Override
       public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber) {
-	callCount.incrementAndGet();
+        callCount.incrementAndGet();
       }
     };
 
@@ -260,10 +260,10 @@ public class ProcessSystemProgressCallbackTest extends neqsim.NeqSimTest {
     ProcessSystem.SimulationProgressListener faultyListener = new ProcessSystem.SimulationProgressListener() {
       @Override
       public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber) {
-	callCount.incrementAndGet();
-	if (callCount.get() == 2) {
-	  throw new RuntimeException("Simulated listener error");
-	}
+        callCount.incrementAndGet();
+        if (callCount.get() == 2) {
+          throw new RuntimeException("Simulated listener error");
+        }
       }
     };
 

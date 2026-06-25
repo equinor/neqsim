@@ -5,10 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import org.junit.jupiter.api.Test;
-import neqsim.process.equipment.valve.ThrottlingValve;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.valve.ThrottlingValve;
 
 class ProcessLoaderTest {
   private static final Logger logger = LogManager.getLogger(ProcessLoaderTest.class);

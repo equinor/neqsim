@@ -224,7 +224,7 @@ public class MercuryRemovalBed extends TwoPortEquipment {
       double molesRemoved = efficiency * inletMoles;
       molesRemoved = Math.min(molesRemoved, inletMoles * 0.9999);
       if (molesRemoved > 1e-20) {
-	system.addComponent(mercuryIndex, -molesRemoved);
+        system.addComponent(mercuryIndex, -molesRemoved);
       }
     }
 
@@ -233,7 +233,7 @@ public class MercuryRemovalBed extends TwoPortEquipment {
       pressureDrop = calcErgunPressureDrop(system, superficialVelocity);
       double outPressure = system.getPressure("Pa") - pressureDrop;
       if (outPressure > 0) {
-	system.setPressure(outPressure, "Pa");
+        system.setPressure(outPressure, "Pa");
       }
     }
 
@@ -319,30 +319,30 @@ public class MercuryRemovalBed extends TwoPortEquipment {
       double[] newConc = new double[numberOfCells];
       double upstreamConc = inletHgConc * (1.0 - bypassFraction);
       for (int cell = 0; cell < numberOfCells; cell++) {
-	double convFlux = interstitialVelocity * (upstreamConc - cellHgConcentration[cell]) / cellLength;
-	newConc[cell] = cellHgConcentration[cell] + subDt * convFlux;
-	upstreamConc = cellHgConcentration[cell];
+        double convFlux = interstitialVelocity * (upstreamConc - cellHgConcentration[cell]) / cellLength;
+        newConc[cell] = cellHgConcentration[cell] + subDt * convFlux;
+        upstreamConc = cellHgConcentration[cell];
       }
 
       // 2) Chemisorption reaction in each cell
       for (int cell = 0; cell < numberOfCells; cell++) {
-	double theta = cellLoading[cell] / effectiveCapacity; // fractional saturation
-	theta = Math.min(theta, 1.0);
+        double theta = cellLoading[cell] / effectiveCapacity; // fractional saturation
+        theta = Math.min(theta, 1.0);
 
-	// Irreversible first-order: r = k * C * (1 - theta)
-	double reactionRate = kEff * newConc[cell] * (1.0 - theta);
+        // Irreversible first-order: r = k * C * (1 - theta)
+        double reactionRate = kEff * newConc[cell] * (1.0 - theta);
 
-	// Convert reaction rate from concentration to sorbent loading
-	// dq/dt in mg/kg/s = reactionRate (ug/Nm3/s) * cellVoidVolume / cellSorbentMass
-	// * 1e-3
-	double dqdt = reactionRate * cellVoidVolume / cellSorbentMass * 1e-3;
+        // Convert reaction rate from concentration to sorbent loading
+        // dq/dt in mg/kg/s = reactionRate (ug/Nm3/s) * cellVoidVolume / cellSorbentMass
+        // * 1e-3
+        double dqdt = reactionRate * cellVoidVolume / cellSorbentMass * 1e-3;
 
-	cellLoading[cell] += subDt * dqdt;
-	cellLoading[cell] = Math.min(cellLoading[cell], effectiveCapacity);
+        cellLoading[cell] += subDt * dqdt;
+        cellLoading[cell] = Math.min(cellLoading[cell], effectiveCapacity);
 
-	// Corresponding concentration decrease
-	newConc[cell] -= subDt * reactionRate;
-	newConc[cell] = Math.max(0.0, newConc[cell]);
+        // Corresponding concentration decrease
+        newConc[cell] -= subDt * reactionRate;
+        newConc[cell] = Math.max(0.0, newConc[cell]);
       }
 
       cellHgConcentration = newConc;
@@ -355,9 +355,9 @@ public class MercuryRemovalBed extends TwoPortEquipment {
     if (inletHgConc > 1e-15) {
       double ratio = outletHgConc / inletHgConc;
       if (ratio > breakthroughThreshold && !breakthroughOccurred) {
-	breakthroughOccurred = true;
-	breakthroughTimeHours = elapsedTimeHours;
-	logger.info("Mercury breakthrough at " + elapsedTimeHours + " hours (C/C0 = " + ratio + ")");
+        breakthroughOccurred = true;
+        breakthroughTimeHours = elapsedTimeHours;
+        logger.info("Mercury breakthrough at " + elapsedTimeHours + " hours (C/C0 = " + ratio + ")");
       }
     }
 
@@ -369,7 +369,7 @@ public class MercuryRemovalBed extends TwoPortEquipment {
       pressureDrop = calcErgunPressureDrop(system, superficialVelocity);
       double outPressure = system.getPressure("Pa") - pressureDrop;
       if (outPressure > 0) {
-	system.setPressure(outPressure, "Pa");
+        system.setPressure(outPressure, "Pa");
       }
     }
 
@@ -528,10 +528,10 @@ public class MercuryRemovalBed extends TwoPortEquipment {
     for (int cell = 0; cell < numberOfCells; cell++) {
       double cNorm = cellHgConcentration[cell] / inletConc;
       if (cNorm >= 0.05 && cellLow < 0) {
-	cellLow = cell;
+        cellLow = cell;
       }
       if (cNorm >= 0.95 && cellHigh < 0) {
-	cellHigh = cell;
+        cellHigh = cell;
       }
     }
     if (cellLow < 0 || cellHigh < 0 || cellHigh <= cellLow) {
@@ -641,8 +641,8 @@ public class MercuryRemovalBed extends TwoPortEquipment {
     for (int i = 0; i < sys.getPhase(0).getNumberOfComponents(); i++) {
       String name = sys.getPhase(0).getComponent(i).getComponentName();
       if ("mercury".equalsIgnoreCase(name) || "Hg".equalsIgnoreCase(name)) {
-	mercuryIndex = i;
-	return;
+        mercuryIndex = i;
+        return;
       }
     }
   }
@@ -781,7 +781,7 @@ public class MercuryRemovalBed extends TwoPortEquipment {
     if (cellLoading != null) {
       JsonArray loadingArr = new JsonArray();
       for (int i = 0; i < numberOfCells; i++) {
-	loadingArr.add(cellLoading[i]);
+        loadingArr.add(cellLoading[i]);
       }
       json.add("loadingProfile_mg_per_kg", loadingArr);
     }
@@ -809,15 +809,15 @@ public class MercuryRemovalBed extends TwoPortEquipment {
     }
     if (maxMercuryCapacity <= 0) {
       result.addError("sorbent", "Mercury capacity must be positive",
-	  "Set max mercury capacity: setMaxMercuryCapacity(value)");
+          "Set max mercury capacity: setMaxMercuryCapacity(value)");
     }
     if (degradationFactor < 0 || degradationFactor > 1) {
       result.addError("degradation", "Degradation factor must be between 0 and 1",
-	  "Set degradation factor: setDegradationFactor(value)");
+          "Set degradation factor: setDegradationFactor(value)");
     }
     if (bypassFraction < 0 || bypassFraction >= 1) {
       result.addError("degradation", "Bypass fraction must be between 0 and <1",
-	  "Set bypass fraction: setBypassFraction(value)");
+          "Set bypass fraction: setBypassFraction(value)");
     }
 
     return result;

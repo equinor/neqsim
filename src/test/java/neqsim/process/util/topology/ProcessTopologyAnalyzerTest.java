@@ -1,6 +1,10 @@
 package neqsim.process.util.topology;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -222,7 +226,7 @@ public class ProcessTopologyAnalyzerTest {
     List<String> recycleUpstream = loopAnalyzer.getUpstreamEquipment("Liquid Recycle");
     List<String> recycleDownstream = loopAnalyzer.getDownstreamEquipment("Liquid Recycle");
     assertTrue(recycleUpstream.contains("Loop Separator"),
-	"Recycle should receive the separator liquid outlet as an inlet");
+        "Recycle should receive the separator liquid outlet as an inlet");
     assertTrue(recycleDownstream.contains("Loop Mixer"), "Recycle outlet (tear seed) should feed the loop mixer");
 
     String dot = loopAnalyzer.toDotGraph();

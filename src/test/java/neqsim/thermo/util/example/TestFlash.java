@@ -45,7 +45,7 @@ public class TestFlash {
 
     // Fractions for use with fluid number 1
     double[] fractions = { 0.01, 0.02, 0.03, 0.01, 0.80, 0.04, 0.03, 0.02, 0.01, 0.01, 0.01, 0.01, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0 };
+        0, 0, 0, 0, 0, 0, 0, 0 };
     // double[] fractions={0.01, 0.02, +.03, 0.01, 0.70, 0.14, 0.03, 0.02, 0.01,
     // 0.01, 0.01, 0.01};
     // Normalize fractions sum fractions = 1
@@ -72,8 +72,8 @@ public class TestFlash {
       fluid.useVolumeCorrection(true);
       fluid.setMultiPhaseCheck(true);
     } else if (fluidNumber == 2) { // example to show property calc for pure phase
-				   // (without
-				   // flash)
+      // (without
+      // flash)
       // Fluid air
       fluid.addComponent("nitrogen", 0.79);
       fluid.addComponent("oxygen", 0.21);

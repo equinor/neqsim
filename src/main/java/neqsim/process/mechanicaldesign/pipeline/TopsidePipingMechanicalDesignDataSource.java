@@ -57,17 +57,17 @@ public class TopsidePipingMechanicalDesignDataSource {
    */
   public void loadDesignParameters(TopsidePipingMechanicalDesignCalculator calc, String company, String serviceType) {
     String sql = "SELECT ParameterName, MinValue, MaxValue, Unit, Standard " + "FROM TechnicalRequirements_Process "
-	+ "WHERE EquipmentType = 'TopsidePiping'";
+        + "WHERE EquipmentType = 'TopsidePiping'";
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
-	ResultSet rs = database.getResultSet(sql)) {
+        ResultSet rs = database.getResultSet(sql)) {
       while (rs.next()) {
-	String param = rs.getString("ParameterName");
-	double minVal = rs.getDouble("MinValue");
-	double maxVal = rs.getDouble("MaxValue");
-	String standard = rs.getString("Standard");
+        String param = rs.getString("ParameterName");
+        double minVal = rs.getDouble("MinValue");
+        double maxVal = rs.getDouble("MaxValue");
+        String standard = rs.getString("Standard");
 
-	applyParameter(calc, param, minVal, maxVal, standard);
+        applyParameter(calc, param, minVal, maxVal, standard);
       }
     } catch (Exception e) {
       logger.warn("Could not load topside piping parameters from database: " + e.getMessage());
@@ -84,17 +84,17 @@ public class TopsidePipingMechanicalDesignDataSource {
   public void loadFromStandard(TopsidePipingMechanicalDesignCalculator calc, String standardCode,
       String equipmentType) {
     String sql = "SELECT SPECIFICATION, MINVALUE, MAXVALUE, UNIT, DESCRIPTION "
-	+ "FROM asme_standards WHERE STANDARD_CODE = '" + standardCode + "' AND EQUIPMENTTYPE = '" + equipmentType
-	+ "'";
+        + "FROM asme_standards WHERE STANDARD_CODE = '" + standardCode + "' AND EQUIPMENTTYPE = '" + equipmentType
+        + "'";
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
-	ResultSet rs = database.getResultSet(sql)) {
+        ResultSet rs = database.getResultSet(sql)) {
       while (rs.next()) {
-	String param = rs.getString("SPECIFICATION");
-	double minVal = rs.getDouble("MINVALUE");
-	double maxVal = rs.getDouble("MAXVALUE");
+        String param = rs.getString("SPECIFICATION");
+        double minVal = rs.getDouble("MINVALUE");
+        double maxVal = rs.getDouble("MAXVALUE");
 
-	applyParameter(calc, param, minVal, maxVal, standardCode);
+        applyParameter(calc, param, minVal, maxVal, standardCode);
       }
     } catch (Exception e) {
       logger.debug("Could not load from asme_standards: " + e.getMessage());
@@ -110,21 +110,21 @@ public class TopsidePipingMechanicalDesignDataSource {
    */
   public void loadVelocityLimits(TopsidePipingMechanicalDesignCalculator calc, String company, String serviceType) {
     String sql = "SELECT ParameterName, MinValue, MaxValue, Standard " + "FROM TechnicalRequirements_Process "
-	+ "WHERE EquipmentType = 'TopsidePiping' AND ParameterName LIKE '%Velocity%'";
+        + "WHERE EquipmentType = 'TopsidePiping' AND ParameterName LIKE '%Velocity%'";
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
-	ResultSet rs = database.getResultSet(sql)) {
+        ResultSet rs = database.getResultSet(sql)) {
       while (rs.next()) {
-	String param = rs.getString("ParameterName");
-	double maxVal = rs.getDouble("MaxValue");
+        String param = rs.getString("ParameterName");
+        double maxVal = rs.getDouble("MaxValue");
 
-	if ("maxGasVelocity".equalsIgnoreCase(param)) {
-	  calc.setMaxGasVelocity(maxVal);
-	} else if ("maxLiquidVelocity".equalsIgnoreCase(param)) {
-	  calc.setMaxLiquidVelocity(maxVal);
-	} else if ("erosionalCFactor".equalsIgnoreCase(param)) {
-	  calc.setErosionalCFactor(maxVal);
-	}
+        if ("maxGasVelocity".equalsIgnoreCase(param)) {
+          calc.setMaxGasVelocity(maxVal);
+        } else if ("maxLiquidVelocity".equalsIgnoreCase(param)) {
+          calc.setMaxLiquidVelocity(maxVal);
+        } else if ("erosionalCFactor".equalsIgnoreCase(param)) {
+          calc.setErosionalCFactor(maxVal);
+        }
       }
     } catch (Exception e) {
       logger.debug("Could not load velocity limits: " + e.getMessage());
@@ -140,13 +140,13 @@ public class TopsidePipingMechanicalDesignDataSource {
   public void loadVibrationParameters(TopsidePipingMechanicalDesignCalculator calc, String company) {
     // Load from Energy Institute guidelines or company-specific
     String sql = "SELECT ParameterName, MinValue, MaxValue, Standard "
-	+ "FROM TechnicalRequirements_Process WHERE EquipmentType = 'TopsidePiping'";
+        + "FROM TechnicalRequirements_Process WHERE EquipmentType = 'TopsidePiping'";
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
-	ResultSet rs = database.getResultSet(sql)) {
+        ResultSet rs = database.getResultSet(sql)) {
       while (rs.next()) {
-	// Apply vibration-specific parameters if found
-	// These would be added to the calculator
+        // Apply vibration-specific parameters if found
+        // These would be added to the calculator
       }
     } catch (Exception e) {
       logger.debug("Could not load vibration parameters: " + e.getMessage());
@@ -211,12 +211,12 @@ public class TopsidePipingMechanicalDesignDataSource {
    */
   public double loadPipeScheduleThickness(String nominalSize, String schedule) {
     String sql = "SELECT WallThickness FROM PipeScheduleData WHERE NominalSize = '" + nominalSize + "' AND Schedule = '"
-	+ schedule + "'";
+        + schedule + "'";
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
-	ResultSet rs = database.getResultSet(sql)) {
+        ResultSet rs = database.getResultSet(sql)) {
       if (rs.next()) {
-	return rs.getDouble("WallThickness") / 1000.0; // mm to m
+        return rs.getDouble("WallThickness") / 1000.0; // mm to m
       }
     } catch (Exception e) {
       logger.debug("Could not load pipe schedule data: " + e.getMessage());
@@ -234,12 +234,12 @@ public class TopsidePipingMechanicalDesignDataSource {
    */
   public double loadAllowableStress(String materialGrade, double temperature) {
     String sql = "SELECT AllowableStress FROM MaterialAllowableStress WHERE MaterialGrade = '" + materialGrade
-	+ "' AND Temperature <= " + temperature + " ORDER BY Temperature DESC LIMIT 1";
+        + "' AND Temperature <= " + temperature + " ORDER BY Temperature DESC LIMIT 1";
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
-	ResultSet rs = database.getResultSet(sql)) {
+        ResultSet rs = database.getResultSet(sql)) {
       if (rs.next()) {
-	return rs.getDouble("AllowableStress");
+        return rs.getDouble("AllowableStress");
       }
     } catch (Exception e) {
       logger.debug("Could not load allowable stress: " + e.getMessage());
@@ -257,12 +257,12 @@ public class TopsidePipingMechanicalDesignDataSource {
    */
   public double loadFlangeRating(int flangeClass, double temperature) {
     String sql = "SELECT PressureRating FROM FlangeRatings WHERE FlangeClass = " + flangeClass + " AND Temperature >= "
-	+ temperature + " ORDER BY Temperature ASC LIMIT 1";
+        + temperature + " ORDER BY Temperature ASC LIMIT 1";
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
-	ResultSet rs = database.getResultSet(sql)) {
+        ResultSet rs = database.getResultSet(sql)) {
       if (rs.next()) {
-	return rs.getDouble("PressureRating");
+        return rs.getDouble("PressureRating");
       }
     } catch (Exception e) {
       logger.debug("Could not load flange rating: " + e.getMessage());

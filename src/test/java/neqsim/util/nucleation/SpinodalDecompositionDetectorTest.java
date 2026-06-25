@@ -37,7 +37,7 @@ class SpinodalDecompositionDetectorTest {
     assertTrue(detector.isAnalyzed());
     // Verify the detector produces a definite state (not UNKNOWN)
     assertFalse(detector.getStabilityState() == SpinodalDecompositionDetector.StabilityState.UNKNOWN,
-	"State should not be UNKNOWN for a valid system");
+        "State should not be UNKNOWN for a valid system");
     // Min eigenvalue should be finite
     assertTrue(Double.isFinite(detector.getMinEigenvalue()));
     // Recommendation should be non-empty
@@ -63,7 +63,7 @@ class SpinodalDecompositionDetectorTest {
     assertTrue(detector.isAnalyzed());
     // With two phases, should be metastable or unstable (depending on Hessian)
     assertFalse(detector.getStabilityState() == SpinodalDecompositionDetector.StabilityState.UNKNOWN,
-	"State should not be UNKNOWN for a valid two-phase system");
+        "State should not be UNKNOWN for a valid two-phase system");
   }
 
   @Test
@@ -167,8 +167,8 @@ class SpinodalDecompositionDetectorTest {
     assertNotNull(rec);
     assertFalse(rec.isEmpty());
     assertTrue(
-	rec.contains("stable") || rec.contains("metastable") || rec.contains("spinodal") || rec.contains("determined"),
-	"Recommendation should mention stability state");
+        rec.contains("stable") || rec.contains("metastable") || rec.contains("spinodal") || rec.contains("determined"),
+        "Recommendation should mention stability state");
   }
 
   @Test

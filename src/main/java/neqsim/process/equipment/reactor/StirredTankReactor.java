@@ -308,9 +308,9 @@ public class StirredTankReactor extends TwoPortEquipment {
     // Apply all reactions to the system
     for (StoichiometricReaction rxn : reactions) {
       try {
-	rxn.react(system);
+        rxn.react(system);
       } catch (Exception ex) {
-	logger.warn("Reaction '{}' failed: {}", rxn.getName(), ex.getMessage());
+        logger.warn("Reaction '{}' failed: {}", rxn.getName(), ex.getMessage());
       }
     }
 
@@ -329,10 +329,10 @@ public class StirredTankReactor extends TwoPortEquipment {
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
     try {
       if (isothermal) {
-	ops.TPflash();
+        ops.TPflash();
       } else {
-	// Adiabatic: use inlet enthalpy
-	ops.PHflash(inletEnthalpy, 0);
+        // Adiabatic: use inlet enthalpy
+        ops.PHflash(inletEnthalpy, 0);
       }
     } catch (Exception ex) {
       logger.error("Flash calculation failed in reactor '{}': {}", getName(), ex.getMessage());

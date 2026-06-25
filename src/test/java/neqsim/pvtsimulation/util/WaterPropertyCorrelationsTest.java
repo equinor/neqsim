@@ -107,9 +107,9 @@ class WaterPropertyCorrelationsTest {
   @Test
   void testSolutionGasWaterRatioIncreasesWithPressure() {
     double rsw1 = WaterPropertyCorrelations.solutionGasWaterRatioCulberson(TEMP_K, 34.47, 0.0); // ~500
-												// psia
+    // psia
     double rsw2 = WaterPropertyCorrelations.solutionGasWaterRatioCulberson(TEMP_K, PRESS_BARA, 0.0); // ~3000
-												     // psia
+    // psia
     assertTrue(rsw2 > rsw1, "Rsw should increase with pressure");
   }
 

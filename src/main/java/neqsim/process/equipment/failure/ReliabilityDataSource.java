@@ -212,7 +212,7 @@ public class ReliabilityDataSource implements Serializable {
     @Override
     public String toString() {
       return String.format("%s (%s): MTBF=%.0f hrs, MTTR=%.1f hrs, Availability=%.2f%%", equipmentType, subType, mtbf,
-	  mttr, availability * 100);
+          mttr, availability * 100);
     }
   }
 
@@ -314,11 +314,11 @@ public class ReliabilityDataSource implements Serializable {
       EquipmentFailureMode.FailureType type = mapToFailureType(failureMode);
 
       EquipmentFailureMode.Builder builder = EquipmentFailureMode.builder().name(equipmentName + " - " + failureMode)
-	  .description(description != null ? description : failureMode).type(type)
-	  .capacityFactor(mapCapacityFactor(type));
+          .description(description != null ? description : failureMode).type(type)
+          .capacityFactor(mapCapacityFactor(type));
 
       if (typicalMttr > 0) {
-	builder.mttr(typicalMttr);
+        builder.mttr(typicalMttr);
       }
 
       return builder.build();
@@ -326,17 +326,17 @@ public class ReliabilityDataSource implements Serializable {
 
     private EquipmentFailureMode.FailureType mapToFailureType(String mode) {
       if (mode == null) {
-	return EquipmentFailureMode.FailureType.TRIP;
+        return EquipmentFailureMode.FailureType.TRIP;
       }
       String lower = mode.toLowerCase();
       if (lower.contains("degrad") || lower.contains("reduced") || lower.contains("wear")) {
-	return EquipmentFailureMode.FailureType.DEGRADED;
+        return EquipmentFailureMode.FailureType.DEGRADED;
       } else if (lower.contains("partial") || lower.contains("intermittent")) {
-	return EquipmentFailureMode.FailureType.PARTIAL_FAILURE;
+        return EquipmentFailureMode.FailureType.PARTIAL_FAILURE;
       } else if (lower.contains("maintenance") || lower.contains("scheduled")) {
-	return EquipmentFailureMode.FailureType.MAINTENANCE;
+        return EquipmentFailureMode.FailureType.MAINTENANCE;
       } else {
-	return EquipmentFailureMode.FailureType.TRIP;
+        return EquipmentFailureMode.FailureType.TRIP;
       }
     }
 
@@ -346,13 +346,13 @@ public class ReliabilityDataSource implements Serializable {
       case FULL_FAILURE:
       case MAINTENANCE:
       case BYPASSED:
-	return 0.0;
+        return 0.0;
       case DEGRADED:
-	return 0.5;
+        return 0.5;
       case PARTIAL_FAILURE:
-	return 0.7;
+        return 0.7;
       default:
-	return 0.0;
+        return 0.0;
       }
     }
 
@@ -422,28 +422,28 @@ public class ReliabilityDataSource implements Serializable {
       String line;
       boolean header = true;
       while ((line = reader.readLine()) != null) {
-	if (header) {
-	  header = false;
-	  continue;
-	}
-	String[] parts = line.split(",");
-	if (parts.length >= 4) {
-	  String equipType = parts[0].trim();
-	  String subType = parts[1].trim();
-	  double mtbf = Double.parseDouble(parts[2].trim());
-	  double mttr = Double.parseDouble(parts[3].trim());
+        if (header) {
+          header = false;
+          continue;
+        }
+        String[] parts = line.split(",");
+        if (parts.length >= 4) {
+          String equipType = parts[0].trim();
+          String subType = parts[1].trim();
+          double mtbf = Double.parseDouble(parts[2].trim());
+          double mttr = Double.parseDouble(parts[3].trim());
 
-	  ReliabilityData data = new ReliabilityData(equipType, subType, mtbf, mttr);
-	  if (parts.length > 4) {
-	    data.setSource(parts[4].trim());
-	  }
-	  if (parts.length > 5) {
-	    data.setNotes(parts[5].trim());
-	  }
+          ReliabilityData data = new ReliabilityData(equipType, subType, mtbf, mttr);
+          if (parts.length > 4) {
+            data.setSource(parts[4].trim());
+          }
+          if (parts.length > 5) {
+            data.setNotes(parts[5].trim());
+          }
 
-	  String key = makeKey(equipType, subType);
-	  reliabilityData.put(key, data);
-	}
+          String key = makeKey(equipType, subType);
+          reliabilityData.put(key, data);
+        }
       }
     } catch (Exception e) {
       logger.warn("Error loading reliability CSV: {}", e.getMessage());
@@ -464,32 +464,32 @@ public class ReliabilityDataSource implements Serializable {
       String line;
       boolean header = true;
       while ((line = reader.readLine()) != null) {
-	if (header) {
-	  header = false;
-	  continue;
-	}
-	String[] parts = line.split(",");
-	if (parts.length >= 4) {
-	  String equipType = parts[0].trim();
-	  String subType = parts[1].trim();
-	  String failureMode = parts[2].trim();
-	  double probability = Double.parseDouble(parts[3].trim());
+        if (header) {
+          header = false;
+          continue;
+        }
+        String[] parts = line.split(",");
+        if (parts.length >= 4) {
+          String equipType = parts[0].trim();
+          String subType = parts[1].trim();
+          String failureMode = parts[2].trim();
+          double probability = Double.parseDouble(parts[3].trim());
 
-	  FailureModeData data = new FailureModeData(equipType, failureMode, probability);
-	  data.setSubType(subType);
-	  if (parts.length > 4) {
-	    data.setSeverity(parts[4].trim());
-	  }
-	  if (parts.length > 5) {
-	    data.setTypicalMttr(Double.parseDouble(parts[5].trim()));
-	  }
+          FailureModeData data = new FailureModeData(equipType, failureMode, probability);
+          data.setSubType(subType);
+          if (parts.length > 4) {
+            data.setSeverity(parts[4].trim());
+          }
+          if (parts.length > 5) {
+            data.setTypicalMttr(Double.parseDouble(parts[5].trim()));
+          }
 
-	  String key = makeKey(equipType, subType);
-	  if (!failureModes.containsKey(key)) {
-	    failureModes.put(key, new ArrayList<FailureModeData>());
-	  }
-	  failureModes.get(key).add(data);
-	}
+          String key = makeKey(equipType, subType);
+          if (!failureModes.containsKey(key)) {
+            failureModes.put(key, new ArrayList<FailureModeData>());
+          }
+          failureModes.get(key).add(data);
+        }
       }
     } catch (Exception e) {
       logger.warn("Error loading failure modes CSV: {}", e.getMessage());
@@ -527,38 +527,38 @@ public class ReliabilityDataSource implements Serializable {
       String line;
       int loaded = 0;
       while ((line = reader.readLine()) != null) {
-	line = line.trim();
-	if (line.isEmpty() || line.startsWith("#")) {
-	  continue;
-	}
-	String[] parts = line.split(",");
-	if (parts.length < 6) {
-	  continue;
-	}
-	String equipType = parts[0].trim();
-	String subType = parts[1].trim();
-	// parts[2] = FailureMode, parts[3] = FailureRate (per hour)
-	double mtbf;
-	double mttr;
-	try {
-	  mtbf = Double.parseDouble(parts[4].trim());
-	  mttr = Double.parseDouble(parts[5].trim());
-	} catch (NumberFormatException e) {
-	  continue;
-	}
+        line = line.trim();
+        if (line.isEmpty() || line.startsWith("#")) {
+          continue;
+        }
+        String[] parts = line.split(",");
+        if (parts.length < 6) {
+          continue;
+        }
+        String equipType = parts[0].trim();
+        String subType = parts[1].trim();
+        // parts[2] = FailureMode, parts[3] = FailureRate (per hour)
+        double mtbf;
+        double mttr;
+        try {
+          mtbf = Double.parseDouble(parts[4].trim());
+          mttr = Double.parseDouble(parts[5].trim());
+        } catch (NumberFormatException e) {
+          continue;
+        }
 
-	String source = parts.length > 6 ? parts[6].trim() : "";
+        String source = parts.length > 6 ? parts[6].trim() : "";
 
-	String key = makeKey(equipType, subType);
-	if (!reliabilityData.containsKey(key)) {
-	  ReliabilityData data = new ReliabilityData(equipType, subType, mtbf, mttr);
-	  data.setSource(source);
-	  reliabilityData.put(key, data);
-	  loaded++;
-	}
+        String key = makeKey(equipType, subType);
+        if (!reliabilityData.containsKey(key)) {
+          ReliabilityData data = new ReliabilityData(equipType, subType, mtbf, mttr);
+          data.setSource(source);
+          reliabilityData.put(key, data);
+          loaded++;
+        }
       }
       if (loaded > 0) {
-	logger.debug("Loaded {} entries from {}", loaded, resourcePath);
+        logger.debug("Loaded {} entries from {}", loaded, resourcePath);
       }
     } catch (Exception e) {
       logger.debug("Could not load supplementary CSV {}: {}", resourcePath, e.getMessage());
@@ -728,7 +728,7 @@ public class ReliabilityDataSource implements Serializable {
     for (String key : reliabilityData.keySet()) {
       String type = key.split("\\|")[0];
       if (!types.contains(type)) {
-	types.add(type);
+        types.add(type);
       }
     }
     return types;
@@ -744,10 +744,10 @@ public class ReliabilityDataSource implements Serializable {
     List<String> subTypes = new ArrayList<String>();
     for (String key : reliabilityData.keySet()) {
       if (key.startsWith(equipmentType + "|")) {
-	String subType = key.split("\\|")[1];
-	if (!"General".equals(subType) && !subTypes.contains(subType)) {
-	  subTypes.add(subType);
-	}
+        String subType = key.split("\\|")[1];
+        if (!"General".equals(subType) && !subTypes.contains(subType)) {
+          subTypes.add(subType);
+        }
       }
     }
     return subTypes;
@@ -768,8 +768,8 @@ public class ReliabilityDataSource implements Serializable {
     }
 
     return EquipmentFailureMode.builder().name(equipmentName + " Trip")
-	.description("Equipment trip for " + equipmentType).type(EquipmentFailureMode.FailureType.TRIP)
-	.capacityFactor(0.0).mttr(data.getMttr()).build();
+        .description("Equipment trip for " + equipmentType).type(EquipmentFailureMode.FailureType.TRIP)
+        .capacityFactor(0.0).mttr(data.getMttr()).build();
   }
 
   /**
@@ -782,7 +782,7 @@ public class ReliabilityDataSource implements Serializable {
     for (ReliabilityData data : reliabilityData.values()) {
       String src = data.getSource();
       if (src != null && !src.isEmpty() && !sources.contains(src)) {
-	sources.add(src);
+        sources.add(src);
       }
     }
     return sources;

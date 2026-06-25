@@ -114,14 +114,14 @@ class ProcessModelThroughputOptimizerTest {
    */
   private void addSeparatorCapacity(final ModelFixture fixture, double designValue) {
     CapacityConstraint installedCapacity = new CapacityConstraint("installedGasCapacity", "kg/hr", ConstraintType.HARD)
-	.setDesignValue(designValue).setMaxValue(designValue * 1.1).setSeverity(ConstraintSeverity.HARD)
-	.setValueSupplier(new DoubleSupplier() {
-	  /** {@inheritDoc} */
-	  @Override
-	  public double getAsDouble() {
-	    return fixture.feed.getFlowRate("kg/hr");
-	  }
-	});
+        .setDesignValue(designValue).setMaxValue(designValue * 1.1).setSeverity(ConstraintSeverity.HARD)
+        .setValueSupplier(new DoubleSupplier() {
+          /** {@inheritDoc} */
+          @Override
+          public double getAsDouble() {
+            return fixture.feed.getFlowRate("kg/hr");
+          }
+        });
     fixture.separator.clearCapacityConstraints();
     fixture.separator.addCapacityConstraint(installedCapacity);
   }
@@ -134,14 +134,14 @@ class ProcessModelThroughputOptimizerTest {
    */
   private ProcessModelThroughputOptimizer createOptimizer(ModelFixture fixture) {
     return new ProcessModelThroughputOptimizer(fixture.model)
-	.addProducer("feed", "wells::feed.flowRate", 1.0, 2.0, "kg/hr")
-	.setObjective("exportGas", new ToDoubleFunction<ProcessModel>() {
-	  /** {@inheritDoc} */
-	  @Override
-	  public double applyAsDouble(ProcessModel model) {
-	    return model.getVariableValue("separation::separator.gasOutStream.flowRate", "kg/hr");
-	  }
-	}, "kg/hr");
+        .addProducer("feed", "wells::feed.flowRate", 1.0, 2.0, "kg/hr")
+        .setObjective("exportGas", new ToDoubleFunction<ProcessModel>() {
+          /** {@inheritDoc} */
+          @Override
+          public double applyAsDouble(ProcessModel model) {
+            return model.getVariableValue("separation::separator.gasOutStream.flowRate", "kg/hr");
+          }
+        }, "kg/hr");
   }
 
   /**
@@ -174,13 +174,13 @@ class ProcessModelThroughputOptimizerTest {
     ModelFixture fixture = createModelFixture();
     Path capacityFile = temporaryDirectory.resolve("installed_capacity.csv");
     List<String> rows = Arrays.asList(
-	"area,equipment,constraint,currentValueAddress,designValue,maxValue,unit,severity,enabled",
-	"separation,separator,installedGasCapacity,wells::feed.flowRate,15000,16500,kg/hr,HARD,true");
+        "area,equipment,constraint,currentValueAddress,designValue,maxValue,unit,severity,enabled",
+        "separation,separator,installedGasCapacity,wells::feed.flowRate,15000,16500,kg/hr,HARD,true");
     Files.write(capacityFile, rows, StandardCharsets.UTF_8);
 
     ProcessModelThroughputOptimizer optimizer = createOptimizer(fixture);
     List<InstalledCapacityTableLoader.InstalledCapacityRecord> records = optimizer
-	.loadInstalledCapacities(capacityFile);
+        .loadInstalledCapacities(capacityFile);
     ProcessModelThroughputResult result = optimizer.findMaximumThroughput(1.0, 2.0, 0.01);
     Path caseTable = temporaryDirectory.resolve("throughput_trace.csv");
     result.exportToCSV(caseTable);
@@ -201,20 +201,20 @@ class ProcessModelThroughputOptimizerTest {
     final AtomicReference<Double> lastMultiplier = new AtomicReference<Double>();
 
     ProcessModelThroughputOptimizer optimizer = new ProcessModelThroughputOptimizer(fixture.model)
-	.addProducerMultiplier("producer scenario multiplier", 1.0, 2.0, new BiConsumer<ProcessModel, Double>() {
-	  /** {@inheritDoc} */
-	  @Override
-	  public void accept(ProcessModel model, Double multiplier) {
-	    lastMultiplier.set(multiplier);
-	    model.setVariableValue("wells::feed.flowRate", 10000.0 * multiplier.doubleValue(), "kg/hr");
-	  }
-	}).setObjective("exportGas", new ToDoubleFunction<ProcessModel>() {
-	  /** {@inheritDoc} */
-	  @Override
-	  public double applyAsDouble(ProcessModel model) {
-	    return model.getVariableValue("separation::separator.gasOutStream.flowRate", "kg/hr");
-	  }
-	}, "kg/hr");
+        .addProducerMultiplier("producer scenario multiplier", 1.0, 2.0, new BiConsumer<ProcessModel, Double>() {
+          /** {@inheritDoc} */
+          @Override
+          public void accept(ProcessModel model, Double multiplier) {
+            lastMultiplier.set(multiplier);
+            model.setVariableValue("wells::feed.flowRate", 10000.0 * multiplier.doubleValue(), "kg/hr");
+          }
+        }).setObjective("exportGas", new ToDoubleFunction<ProcessModel>() {
+          /** {@inheritDoc} */
+          @Override
+          public double applyAsDouble(ProcessModel model) {
+            return model.getVariableValue("separation::separator.gasOutStream.flowRate", "kg/hr");
+          }
+        }, "kg/hr");
 
     ProcessModelThroughputResult result = optimizer.findMaximumThroughput(1.0, 2.0, 0.01);
 

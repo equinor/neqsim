@@ -185,30 +185,30 @@ public class SteadyStateResult implements java.io.Serializable {
     sb.append("=== Steady-State Detection Report ===\n");
     sb.append(String.format("Overall: %s\n", atSteadyState ? "STEADY STATE" : "TRANSIENT"));
     sb.append(String.format("Variables: %d steady, %d transient (of %d total)\n", steadyCount, transientCount,
-	variables.size()));
+        variables.size()));
     sb.append(String.format("Thresholds: R >= %.4f, |slope| <= %.4e\n\n", rThreshold, slopeThreshold));
 
     sb.append(String.format("%-20s %10s %10s %12s %8s\n", "Variable", "R-stat", "Slope", "Std.Dev", "Status"));
     sb.append(String.format("%-20s %10s %10s %12s %8s\n", "--------", "------", "-----", "-------", "------"));
     for (SteadyStateVariable v : variables) {
       sb.append(String.format("%-20s %10.4f %10.4e %12.4f %8s\n", v.getName(), v.getRStatistic(), v.getSlope(),
-	  v.getStandardDeviation(), v.isAtSteadyState() ? "SS" : "**TRANS**"));
+          v.getStandardDeviation(), v.isAtSteadyState() ? "SS" : "**TRANS**"));
     }
 
     if (!transientVariables.isEmpty()) {
       sb.append("\nTransient Variables (blocking steady state):\n");
       for (SteadyStateVariable v : transientVariables) {
-	List<String> reasons = new ArrayList<String>();
-	if (v.getRStatistic() < rThreshold) {
-	  reasons.add(String.format("R=%.4f < %.4f", v.getRStatistic(), rThreshold));
-	}
-	if (slopeThreshold > 0 && Math.abs(v.getSlope()) > slopeThreshold) {
-	  reasons.add(String.format("|slope|=%.4e > %.4e", Math.abs(v.getSlope()), slopeThreshold));
-	}
-	if (!v.isWindowFull()) {
-	  reasons.add(String.format("window not full (%d/%d)", v.getCount(), v.getWindowSize()));
-	}
-	sb.append(String.format("  %s: %s\n", v.getName(), String.join(", ", reasons)));
+        List<String> reasons = new ArrayList<String>();
+        if (v.getRStatistic() < rThreshold) {
+          reasons.add(String.format("R=%.4f < %.4f", v.getRStatistic(), rThreshold));
+        }
+        if (slopeThreshold > 0 && Math.abs(v.getSlope()) > slopeThreshold) {
+          reasons.add(String.format("|slope|=%.4e > %.4e", Math.abs(v.getSlope()), slopeThreshold));
+        }
+        if (!v.isWindowFull()) {
+          reasons.add(String.format("window not full (%d/%d)", v.getCount(), v.getWindowSize()));
+        }
+        sb.append(String.format("  %s: %s\n", v.getName(), String.join(", ", reasons)));
       }
     }
     return sb.toString();
@@ -241,11 +241,11 @@ public class SteadyStateResult implements java.io.Serializable {
       sb.append("\"sampleCount\": ").append(v.getCount()).append(", ");
       sb.append("\"windowFull\": ").append(v.isWindowFull());
       if (!v.getUnit().isEmpty()) {
-	sb.append(", \"unit\": \"").append(v.getUnit()).append("\"");
+        sb.append(", \"unit\": \"").append(v.getUnit()).append("\"");
       }
       sb.append("}");
       if (i < variables.size() - 1) {
-	sb.append(",");
+        sb.append(",");
       }
       sb.append("\n");
     }
@@ -262,6 +262,6 @@ public class SteadyStateResult implements java.io.Serializable {
   @Override
   public String toString() {
     return String.format("SteadyStateResult[%s, %d/%d steady]", atSteadyState ? "STEADY" : "TRANSIENT", steadyCount,
-	variables.size());
+        variables.size());
   }
 }

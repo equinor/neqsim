@@ -113,60 +113,60 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
 
     for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
       for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
-	table[j + 1][0] = thermoSystem.getPhases()[0].getComponent(j).getName();
-	buf = new StringBuffer();
-	table[j + 1][i + 1] = nf.format(thermoSystem.getPhases()[i].getComponent(j).getx(), buf, test).toString();
-	table[j + 1][4] = "[-]";
+        table[j + 1][0] = thermoSystem.getPhases()[0].getComponent(j).getName();
+        buf = new StringBuffer();
+        table[j + 1][i + 1] = nf.format(thermoSystem.getPhases()[i].getComponent(j).getx(), buf, test).toString();
+        table[j + 1][4] = "[-]";
       }
       buf = new StringBuffer();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 2][0] = "Density";
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 2][i + 1] = nf
-	  .format(thermoSystem.getPhases()[i].getPhysicalProperties().getDensity(), buf, test).toString();
+          .format(thermoSystem.getPhases()[i].getPhysicalProperties().getDensity(), buf, test).toString();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 2][4] = "[kg/m^3]";
 
       // Double.longValue(thermoSystem.getPhases()[i].getBeta());
       buf = new StringBuffer();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 3][0] = "PhaseFraction";
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 3][i + 1] = nf
-	  .format(thermoSystem.getPhases()[i].getBeta(), buf, test).toString();
+          .format(thermoSystem.getPhases()[i].getBeta(), buf, test).toString();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 3][4] = "[-]";
 
       buf = new StringBuffer();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 4][0] = "MolarMass";
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 4][i + 1] = nf
-	  .format(thermoSystem.getPhases()[i].getMolarMass() * 1000, buf, test).toString();
+          .format(thermoSystem.getPhases()[i].getMolarMass() * 1000, buf, test).toString();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 4][4] = "[kg/kmol]";
 
       buf = new StringBuffer();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 5][0] = "Cp";
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 5][i + 1] = nf
-	  .format((thermoSystem.getPhases()[i].getCp() / thermoSystem.getPhases()[i].getNumberOfMolesInPhase() * 1.0
-	      / thermoSystem.getPhases()[i].getMolarMass() * 1000), buf, test)
-	  .toString();
+          .format((thermoSystem.getPhases()[i].getCp() / thermoSystem.getPhases()[i].getNumberOfMolesInPhase() * 1.0
+              / thermoSystem.getPhases()[i].getMolarMass() * 1000), buf, test)
+          .toString();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 5][4] = "[kJ/kg*K]";
 
       buf = new StringBuffer();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 7][0] = "Viscosity";
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 7][i + 1] = nf
-	  .format((thermoSystem.getPhases()[i].getPhysicalProperties().getViscosity()), buf, test).toString();
+          .format((thermoSystem.getPhases()[i].getPhysicalProperties().getViscosity()), buf, test).toString();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 7][4] = "[kg/m*sec]";
 
       buf = new StringBuffer();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 8][0] = "Conductivity";
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 8][i + 1] = nf
-	  .format(thermoSystem.getPhases()[i].getPhysicalProperties().getConductivity(), buf, test).toString();
+          .format(thermoSystem.getPhases()[i].getPhysicalProperties().getConductivity(), buf, test).toString();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 8][4] = "[W/m*K]";
 
       buf = new StringBuffer();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 10][0] = "Pressure";
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 10][i + 1] = Double
-	  .toString(thermoSystem.getPhases()[i].getPressure());
+          .toString(thermoSystem.getPhases()[i].getPressure());
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 10][4] = "[bar]";
 
       buf = new StringBuffer();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 11][0] = "Temperature";
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 11][i + 1] = Double
-	  .toString(thermoSystem.getPhases()[i].getTemperature());
+          .toString(thermoSystem.getPhases()[i].getTemperature());
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 11][4] = "[K]";
       Double.toString(thermoSystem.getPhases()[i].getTemperature());
 

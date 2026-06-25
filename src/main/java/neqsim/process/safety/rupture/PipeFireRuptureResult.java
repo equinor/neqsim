@@ -316,7 +316,7 @@ public class PipeFireRuptureResult implements Serializable {
      * @param basis calculation basis text
      */
     public ReleaseEstimate(double longPipeGasTwoSidesKgPerS, double longPipeGasOneSideKgPerS,
-	double shortPipeGasOneSideKgPerS, double liquidOneSideKgPerS, double gasTemperatureC, String basis) {
+        double shortPipeGasOneSideKgPerS, double liquidOneSideKgPerS, double gasTemperatureC, String basis) {
       this.longPipeGasTwoSidesKgPerS = longPipeGasTwoSidesKgPerS;
       this.longPipeGasOneSideKgPerS = longPipeGasOneSideKgPerS;
       this.shortPipeGasOneSideKgPerS = shortPipeGasOneSideKgPerS;
@@ -413,7 +413,7 @@ public class PipeFireRuptureResult implements Serializable {
      * @param pressureProfile pressure profile
      */
     private Builder(PipeFireRuptureInput input, PipeFireRuptureMaterial material, PipeFireRuptureScenario scenario,
-	BlowdownPressureProfile pressureProfile) {
+        BlowdownPressureProfile pressureProfile) {
       this.input = input;
       this.material = material;
       this.scenario = scenario;
@@ -434,7 +434,7 @@ public class PipeFireRuptureResult implements Serializable {
      * @param strainLimit rupture strain limit
      */
     void addPoint(double timeS, double pressure, double meanTemperature, double surfaceTemperature, double heatFlux,
-	double stress, double strainRate, double strain, double strainLimit) {
+        double stress, double strainRate, double strain, double strainLimit) {
       timeSeconds.add(Double.valueOf(timeS));
       pressureBarg.add(Double.valueOf(pressure));
       meanWallTemperatureC.add(Double.valueOf(meanTemperature));
@@ -457,15 +457,15 @@ public class PipeFireRuptureResult implements Serializable {
      * @param strainLimit rupture strain limit
      */
     void recordRupture(double timeS, double pressure, double meanTemperature, double surfaceTemperature, double strain,
-	double strainLimit) {
+        double strainLimit) {
       if (status == Status.NO_RUPTURE) {
-	status = Status.RUPTURE;
-	ruptureTimeSeconds = timeS;
-	rupturePressureBarg = pressure;
-	ruptureMeanWallTemperatureC = meanTemperature;
-	ruptureOuterSurfaceTemperatureC = surfaceTemperature;
-	ruptureAccumulatedStrain = strain;
-	ruptureStrainLimitValue = strainLimit;
+        status = Status.RUPTURE;
+        ruptureTimeSeconds = timeS;
+        rupturePressureBarg = pressure;
+        ruptureMeanWallTemperatureC = meanTemperature;
+        ruptureOuterSurfaceTemperatureC = surfaceTemperature;
+        ruptureAccumulatedStrain = strain;
+        ruptureStrainLimitValue = strainLimit;
       }
     }
 

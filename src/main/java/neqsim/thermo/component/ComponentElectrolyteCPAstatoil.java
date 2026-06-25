@@ -76,6 +76,6 @@ public class ComponentElectrolyteCPAstatoil extends ComponentElectrolyteCPA {
     // System.out.println("B " + phase.getB() + " Bi " + getBi() + " bij " +
     // getBij(j));
     return 0.475 * getBij(j) * 0 / temp
-	- 0.475 * getBi() * 1.0 / temp2 * (-0.475 * ((ComponentEosInterface) phase.getComponent(j)).getBi());
+        - 0.475 * getBi() * 1.0 / temp2 * (-0.475 * ((ComponentEosInterface) phase.getComponent(j)).getBi());
   }
 }

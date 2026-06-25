@@ -3,7 +3,6 @@ package neqsim.process.safety.vibration;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.Test;
 
 /**
@@ -51,9 +50,9 @@ class PipingFivScreeningTest {
   @Test
   void invalidGeometryRejected() {
     assertThrows(IllegalArgumentException.class,
-	() -> PipingFivScreening.screenGas("C1", 50.0, 5.0, 0.0, 0.005, 0, 1.0, 1.0));
+        () -> PipingFivScreening.screenGas("C1", 50.0, 5.0, 0.0, 0.005, 0, 1.0, 1.0));
     assertThrows(IllegalArgumentException.class,
-	() -> PipingFivScreening.screenLiquid("C1", -1.0, 0.15, 0.005, 0, 1.0));
+        () -> PipingFivScreening.screenLiquid("C1", -1.0, 0.15, 0.005, 0, 1.0));
   }
 
   @Test

@@ -78,7 +78,7 @@ public final class Iapws_if97 {
     double g = -724213.16703206 * beta * beta - 3232555.0322333 * beta + 405113.40542057;
     double d = 2 * g / (-f - Math.sqrt(f * f - 4 * e * g));
     double temp = (650.17534844798 + d
-	- Math.sqrt(Math.pow(650.17534844798 + d, 2) - 4 * (-0.23855557567849 + 650.17534844798 * d))) / 2.0;
+        - Math.sqrt(Math.pow(650.17534844798 + d, 2) - 4 * (-0.23855557567849 + 650.17534844798 * d))) / 2.0;
     return temp;
   }
 
@@ -338,7 +338,7 @@ public final class Iapws_if97 {
     double g0tt = gamma0_tautau(tau);
     double num = 1000.0 * R * T * (1.0 + 2.0 * pi * grPi + pi * pi * grPi * grPi);
     double denom = (1.0 - pi * pi * grPipi)
-	+ Math.pow(1.0 + pi * grPi - tau * pi * grPitau, 2.0) / (tau * tau * (g0tt + grTautau));
+        + Math.pow(1.0 + pi * grPi - tau * pi * grPitau, 2.0) / (tau * tau * (g0tt + grTautau));
     return Math.sqrt(num / denom);
   }
 

@@ -38,7 +38,7 @@ public class SetSplitterAction implements LogicAction {
     StringBuilder sb = new StringBuilder("Set splitter " + splitter.getName() + " to [");
     for (int i = 0; i < splitFactors.length; i++) {
       if (i > 0) {
-	sb.append(", ");
+        sb.append(", ");
       }
       sb.append(String.format("%.2f", splitFactors[i]));
     }

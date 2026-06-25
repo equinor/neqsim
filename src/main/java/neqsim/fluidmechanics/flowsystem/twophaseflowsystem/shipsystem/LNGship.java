@@ -94,11 +94,11 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
   public void useStandardVersion(String isoName, String version) {
     if (version.equals("2016")) {
       setStandardISO6976(new Standard_ISO6976_2016(thermoSystem, getStandardISO6976().getVolRefT(),
-	  getStandardISO6976().getEnergyRefT(), "volume"));
+          getStandardISO6976().getEnergyRefT(), "volume"));
       logger.info("using  ISO6976 version 2016");
     } else {
       setStandardISO6976(new Standard_ISO6976(thermoSystem, getStandardISO6976().getVolRefT(),
-	  getStandardISO6976().getEnergyRefT(), "volume"));
+          getStandardISO6976().getEnergyRefT(), "volume"));
       logger.info("using  ISO6976 version 1995");
     }
   }
@@ -110,9 +110,9 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
     thermoOperations = new ThermodynamicOperations(getThermoSystem());
     try {
       if (isSetInitialTemperature()) {
-	getThermoSystem().setTemperature(getInitialTemperature());
+        getThermoSystem().setTemperature(getInitialTemperature());
       } else {
-	thermoOperations.bubblePointTemperatureFlash();
+        thermoOperations.bubblePointTemperatureFlash();
       }
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
@@ -133,7 +133,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
 
     for (int i = 0; i < getThermoSystem().getPhase(0).getNumberOfComponents(); i++) {
       getThermoSystem().addComponent(getThermoSystem().getPhase(0).getComponent(i).getName(),
-	  (initialNumberOffMoles - oldMoles) * getThermoSystem().getPhase(0).getComponent(i).getz());
+          (initialNumberOffMoles - oldMoles) * getThermoSystem().getPhase(0).getComponent(i).getz());
     }
   }
 
@@ -148,7 +148,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
     // TODO: double[] times = {0.0}; ?
     try {
       if (!isSetInitialTemperature()) {
-	thermoOperations.bubblePointTemperatureFlash();
+        thermoOperations.bubblePointTemperatureFlash();
       }
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
@@ -198,7 +198,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
     }
     endVolume = totalTankVolume - mulitplicator * dailyBoilOffVolume * getEndTime() / 24.0;
     molarBoilOffRate = dailyBoilOffVolume * liquidDensity / getThermoSystem().getPhase(1).getMolarMass() / 24.0
-	* timeStep;
+        * timeStep;
     if (backCalculate) {
       molarBoilOffRate = -molarBoilOffRate;
     }
@@ -212,81 +212,81 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
       getStandardISO6976().setThermoSystem(getThermoSystem());
       iterations++;
       for (int j = 0; j < numberOffTimeSteps; j++) {
-	time[j] = j * timeStep;
-	try {
-	  if (!(j == 0 && isSetInitialTemperature())) {
-	    thermoOperations.bubblePointTemperatureFlash();
-	  }
-	} catch (Exception ex) {
-	  logger.error(ex.getMessage(), ex);
-	}
-	double[] xgas = new double[getThermoSystem().getPhase(0).getNumberOfComponents()];
+        time[j] = j * timeStep;
+        try {
+          if (!(j == 0 && isSetInitialTemperature())) {
+            thermoOperations.bubblePointTemperatureFlash();
+          }
+        } catch (Exception ex) {
+          logger.error(ex.getMessage(), ex);
+        }
+        double[] xgas = new double[getThermoSystem().getPhase(0).getNumberOfComponents()];
 
-	for (int kk = 0; kk < getThermoSystem().getPhase(0).getNumberOfComponents(); kk++) {
-	  xgas[kk] = getThermoSystem().getPhase(0).getComponent(kk).getx();
-	}
+        for (int kk = 0; kk < getThermoSystem().getPhase(0).getNumberOfComponents(); kk++) {
+          xgas[kk] = getThermoSystem().getPhase(0).getComponent(kk).getx();
+        }
 
-	if (getThermoSystem().getPhase(0).hasComponent("nitrogen")) {
-	  xnitrogen[j] = getThermoSystem().getPhase(1).getComponent("nitrogen").getx();
-	  ynitrogen[j] = getThermoSystem().getPhase(0).getComponent("nitrogen").getx();
-	}
-	if (getThermoSystem().getPhase(0).hasComponent("methane")) {
-	  xmethane[j] = getThermoSystem().getPhase(1).getComponent("methane").getx();
-	  ymethane[j] = getThermoSystem().getPhase(0).getComponent("methane").getx();
-	}
-	if (getThermoSystem().getPhase(0).hasComponent("ethane")) {
-	  xethane[j] = getThermoSystem().getPhase(1).getComponent("ethane").getx();
-	  yethane[j] = getThermoSystem().getPhase(0).getComponent("ethane").getx();
-	}
-	if (getThermoSystem().getPhase(0).hasComponent("propane")) {
-	  xpropane[j] = getThermoSystem().getPhase(1).getComponent("propane").getx();
-	  ypropane[j] = getThermoSystem().getPhase(0).getComponent("propane").getx();
-	}
-	if (getThermoSystem().getPhase(0).hasComponent("i-butane")) {
-	  xiC4[j] = getThermoSystem().getPhase(1).getComponent("i-butane").getx();
-	  yiC4[j] = getThermoSystem().getPhase(0).getComponent("i-butane").getx();
-	}
-	if (getThermoSystem().getPhase(0).hasComponent("n-butane")) {
-	  xnC4[j] = getThermoSystem().getPhase(1).getComponent("n-butane").getx();
-	  ynC4[j] = getThermoSystem().getPhase(0).getComponent("n-butane").getx();
-	}
-	if (getThermoSystem().getPhase(0).hasComponent("i-pentane")) {
-	  xiC5[j] = getThermoSystem().getPhase(1).getComponent("i-pentane").getx();
-	  yiC5[j] = getThermoSystem().getPhase(0).getComponent("i-pentane").getx();
-	}
-	if (getThermoSystem().getPhase(0).hasComponent("n-pentane")) {
-	  xnC5[j] = getThermoSystem().getPhase(1).getComponent("n-pentane").getx();
-	  ynC5[j] = getThermoSystem().getPhase(0).getComponent("n-pentane").getx();
-	}
-	if (getThermoSystem().getPhase(0).hasComponent("n-hexane")) {
-	  xnC6[j] = getThermoSystem().getPhase(1).getComponent("n-hexane").getx();
-	  ynC6[j] = getThermoSystem().getPhase(0).getComponent("n-hexane").getx();
-	}
-	// System.out.println("time " + time[j] + " Superior Wobbe " +
-	// getStandardISO6976().getValue("SuperiorWobbeIndex") + " temperature " +
-	// getThermoSystem().getTemperature() + " density " + density[j] + " volume " +
-	// volume[j] + " total energy " + totalEnergy[j]);
-	getThermoSystem().init(0);
+        if (getThermoSystem().getPhase(0).hasComponent("nitrogen")) {
+          xnitrogen[j] = getThermoSystem().getPhase(1).getComponent("nitrogen").getx();
+          ynitrogen[j] = getThermoSystem().getPhase(0).getComponent("nitrogen").getx();
+        }
+        if (getThermoSystem().getPhase(0).hasComponent("methane")) {
+          xmethane[j] = getThermoSystem().getPhase(1).getComponent("methane").getx();
+          ymethane[j] = getThermoSystem().getPhase(0).getComponent("methane").getx();
+        }
+        if (getThermoSystem().getPhase(0).hasComponent("ethane")) {
+          xethane[j] = getThermoSystem().getPhase(1).getComponent("ethane").getx();
+          yethane[j] = getThermoSystem().getPhase(0).getComponent("ethane").getx();
+        }
+        if (getThermoSystem().getPhase(0).hasComponent("propane")) {
+          xpropane[j] = getThermoSystem().getPhase(1).getComponent("propane").getx();
+          ypropane[j] = getThermoSystem().getPhase(0).getComponent("propane").getx();
+        }
+        if (getThermoSystem().getPhase(0).hasComponent("i-butane")) {
+          xiC4[j] = getThermoSystem().getPhase(1).getComponent("i-butane").getx();
+          yiC4[j] = getThermoSystem().getPhase(0).getComponent("i-butane").getx();
+        }
+        if (getThermoSystem().getPhase(0).hasComponent("n-butane")) {
+          xnC4[j] = getThermoSystem().getPhase(1).getComponent("n-butane").getx();
+          ynC4[j] = getThermoSystem().getPhase(0).getComponent("n-butane").getx();
+        }
+        if (getThermoSystem().getPhase(0).hasComponent("i-pentane")) {
+          xiC5[j] = getThermoSystem().getPhase(1).getComponent("i-pentane").getx();
+          yiC5[j] = getThermoSystem().getPhase(0).getComponent("i-pentane").getx();
+        }
+        if (getThermoSystem().getPhase(0).hasComponent("n-pentane")) {
+          xnC5[j] = getThermoSystem().getPhase(1).getComponent("n-pentane").getx();
+          ynC5[j] = getThermoSystem().getPhase(0).getComponent("n-pentane").getx();
+        }
+        if (getThermoSystem().getPhase(0).hasComponent("n-hexane")) {
+          xnC6[j] = getThermoSystem().getPhase(1).getComponent("n-hexane").getx();
+          ynC6[j] = getThermoSystem().getPhase(0).getComponent("n-hexane").getx();
+        }
+        // System.out.println("time " + time[j] + " Superior Wobbe " +
+        // getStandardISO6976().getValue("SuperiorWobbeIndex") + " temperature " +
+        // getThermoSystem().getTemperature() + " density " + density[j] + " volume " +
+        // volume[j] + " total energy " + totalEnergy[j]);
+        getThermoSystem().init(0);
 
-	standardDensity.calculate();
-	density[j] = standardDensity.getValue("density");
-	getStandardISO6976().calculate();
-	// getStandardISO6976().display("");
-	WI[j] = getStandardISO6976().getValue("SuperiorWobbeIndex");
-	GCV[j] = getStandardISO6976().getValue("SuperiorCalorificValue");
+        standardDensity.calculate();
+        density[j] = standardDensity.getValue("density");
+        getStandardISO6976().calculate();
+        // getStandardISO6976().display("");
+        WI[j] = getStandardISO6976().getValue("SuperiorWobbeIndex");
+        GCV[j] = getStandardISO6976().getValue("SuperiorCalorificValue");
 
-	tankTemperature[j] = getThermoSystem().getTemperature();
-	volume[j] = getThermoSystem().getNumberOfMoles() * getThermoSystem().getPhase(1).getMolarMass() / density[j]; // density[0];
+        tankTemperature[j] = getThermoSystem().getTemperature();
+        volume[j] = getThermoSystem().getNumberOfMoles() * getThermoSystem().getPhase(1).getMolarMass() / density[j]; // density[0];
 
-	this.standardISO6976.setReferenceType("mass");
-	totalEnergy[j] = getStandardISO6976().getValue("SuperiorCalorificValue") * volume[j] * density[j];
-	GCVmass[j] = getStandardISO6976().getValue("SuperiorCalorificValue");
-	this.standardISO6976.setReferenceType("volume");
+        this.standardISO6976.setReferenceType("mass");
+        totalEnergy[j] = getStandardISO6976().getValue("SuperiorCalorificValue") * volume[j] * density[j];
+        GCVmass[j] = getStandardISO6976().getValue("SuperiorCalorificValue");
+        this.standardISO6976.setReferenceType("volume");
 
-	for (int i = 0; i < getThermoSystem().getPhase(0).getNumberOfComponents(); i++) {
-	  getThermoSystem().addComponent(getThermoSystem().getPhase(0).getComponent(i).getName(),
-	      -xgas[i] * molarBoilOffRate);
-	}
+        for (int i = 0; i < getThermoSystem().getPhase(0).getNumberOfComponents(); i++) {
+          getThermoSystem().addComponent(getThermoSystem().getPhase(0).getComponent(i).getName(),
+              -xgas[i] * molarBoilOffRate);
+        }
       }
       double oldVolume = 0;
       double oldoldVolume = oldVolume;
@@ -298,10 +298,10 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
       double derrordn = (oldVolume - oldoldVolume) / (oldmolarBoilOffRate - oldoldmolarBoilOffRate);
       boilOffCorrection = (volume[numberOffTimeSteps - 1] - endVolume) / derrordn;
       if (iterations > 1) {
-	molarBoilOffRate += boilOffCorrection;
-	// (volume[numberOffTimeSteps - 1] - endVolume) / derrordn;
+        molarBoilOffRate += boilOffCorrection;
+        // (volume[numberOffTimeSteps - 1] - endVolume) / derrordn;
       } else {
-	molarBoilOffRate = molarBoilOffRate * volume[numberOffTimeSteps - 1] / endVolume;
+        molarBoilOffRate = molarBoilOffRate * volume[numberOffTimeSteps - 1] / endVolume;
       }
       // logger.info("error " + error + " iteration " + iterations + " molarboiloff "
       // + molarBoilOffRate + " endVolume " + endVolume + " orginalMolarBoilOff " +
@@ -336,7 +336,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
 
     for (int i = 0; i < 13; i++) {
       for (int j = 0; j < numberOffTimeSteps + 1; j++) {
-	table[j][i] = "";
+        table[j][i] = "";
       }
     }
 
@@ -395,7 +395,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
     // thermo.system.SystemInterface testSystem = new
     // thermo.system.SystemGERG2004Eos(273.15 - 161.4, 1.0);
     neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(273.15 - 161.4,
-	ThermodynamicConstantsInterface.referencePressure);
+        ThermodynamicConstantsInterface.referencePressure);
     /*
      * testSystem.addComponent("nitrogen", 0.0136); testSystem.addComponent("methane", 0.9186);
      * testSystem.addComponent("ethane", 0.0526); testSystem.addComponent("propane", 0.0115);
@@ -412,7 +412,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
     testSystem.setMixingRule(2);
 
     neqsim.fluidmechanics.flowsystem.twophaseflowsystem.shipsystem.LNGship ship = new neqsim.fluidmechanics.flowsystem.twophaseflowsystem.shipsystem.LNGship(
-	testSystem, 140000, 0.0015);
+        testSystem, 140000, 0.0015);
     // ship.setInitialTemperature(111.0);
     // ship.useStandardVersion("","2016");
     ship.useStandardVersion("", "2016");

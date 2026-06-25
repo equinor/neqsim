@@ -23,11 +23,11 @@ class StandardBasedCsvDataSourceTest {
   void testLoadStandardFormatCsv() throws IOException {
     // Create a test CSV file with standard format
     String csvContent = "STANDARD_CODE,VERSION,EQUIPMENTTYPE,SPECIFICATION,MINVALUE,MAXVALUE,UNIT,DESCRIPTION\n"
-	+ "NORSOK-L-001,Rev 6,Pipeline,MaxPressure,0,150,barg,Maximum design pressure\n"
-	+ "NORSOK-L-001,Rev 6,Pipeline,MinTemperature,-46,-46,C,Minimum design temperature\n"
-	+ "NORSOK-L-001,Rev 6,Pipeline,CorrosionAllowance,3,3,mm,Corrosion allowance\n"
-	+ "ASME-VIII-Div1,2021,Separator,MaxPressure,0,200,barg,Maximum design pressure\n"
-	+ "ASME-VIII-Div1,2021,Separator,JointEfficiency,0.7,1.0,-,Joint efficiency\n";
+        + "NORSOK-L-001,Rev 6,Pipeline,MaxPressure,0,150,barg,Maximum design pressure\n"
+        + "NORSOK-L-001,Rev 6,Pipeline,MinTemperature,-46,-46,C,Minimum design temperature\n"
+        + "NORSOK-L-001,Rev 6,Pipeline,CorrosionAllowance,3,3,mm,Corrosion allowance\n"
+        + "ASME-VIII-Div1,2021,Separator,MaxPressure,0,200,barg,Maximum design pressure\n"
+        + "ASME-VIII-Div1,2021,Separator,JointEfficiency,0.7,1.0,-,Joint efficiency\n";
 
     Path csvFile = tempDir.resolve("test_standards.csv");
     Files.write(csvFile, csvContent.getBytes());
@@ -44,7 +44,7 @@ class StandardBasedCsvDataSourceTest {
 
     // Test getting separator data
     Optional<DesignLimitData> separatorData = dataSource.getDesignLimitsByStandard("ASME-VIII-Div1", "2021",
-	"Separator");
+        "Separator");
 
     assertTrue(separatorData.isPresent());
     assertEquals(200.0, separatorData.get().getMaxPressure(), 0.01);
@@ -55,7 +55,7 @@ class StandardBasedCsvDataSourceTest {
   void testLoadLegacyFormatCsv() throws IOException {
     // Create a test CSV file with legacy format
     String csvContent = "EQUIPMENTTYPE,COMPANY,MAXPRESSURE,MINPRESSURE,MAXTEMPERATURE,MINTEMPERATURE,CORROSIONALLOWANCE,JOINTEFFICIENCY\n"
-	+ "Pipeline,StatoilTR,100,0,150,-50,3.0,0.85\n" + "Separator,StatoilTR,150,0,200,-40,2.5,0.90\n";
+        + "Pipeline,StatoilTR,100,0,150,-50,3.0,0.85\n" + "Separator,StatoilTR,150,0,200,-40,2.5,0.90\n";
 
     Path csvFile = tempDir.resolve("legacy_standards.csv");
     Files.write(csvFile, csvContent.getBytes());
@@ -77,9 +77,9 @@ class StandardBasedCsvDataSourceTest {
   @Test
   void testGetAvailableStandards() throws IOException {
     String csvContent = "STANDARD_CODE,VERSION,EQUIPMENTTYPE,SPECIFICATION,MINVALUE,MAXVALUE,UNIT,DESCRIPTION\n"
-	+ "NORSOK-L-001,Rev 6,Pipeline,MaxPressure,0,150,barg,Max pressure\n"
-	+ "ASME-VIII-Div1,2021,Separator,MaxPressure,0,200,barg,Max pressure\n"
-	+ "API-12J,8th Ed,Separator,GasLoadFactor,0.1,0.15,-,K-factor\n";
+        + "NORSOK-L-001,Rev 6,Pipeline,MaxPressure,0,150,barg,Max pressure\n"
+        + "ASME-VIII-Div1,2021,Separator,MaxPressure,0,200,barg,Max pressure\n"
+        + "API-12J,8th Ed,Separator,GasLoadFactor,0.1,0.15,-,K-factor\n";
 
     Path csvFile = tempDir.resolve("standards_list.csv");
     Files.write(csvFile, csvContent.getBytes());
@@ -104,9 +104,9 @@ class StandardBasedCsvDataSourceTest {
   @Test
   void testGetAvailableVersions() throws IOException {
     String csvContent = "STANDARD_CODE,VERSION,EQUIPMENTTYPE,SPECIFICATION,MINVALUE,MAXVALUE,UNIT,DESCRIPTION\n"
-	+ "ASME-VIII-Div1,2021,Separator,MaxPressure,0,200,barg,Max pressure\n"
-	+ "ASME-VIII-Div1,2019,Separator,MaxPressure,0,180,barg,Max pressure\n"
-	+ "ASME-VIII-Div1,2017,Separator,MaxPressure,0,175,barg,Max pressure\n";
+        + "ASME-VIII-Div1,2021,Separator,MaxPressure,0,200,barg,Max pressure\n"
+        + "ASME-VIII-Div1,2019,Separator,MaxPressure,0,180,barg,Max pressure\n"
+        + "ASME-VIII-Div1,2017,Separator,MaxPressure,0,175,barg,Max pressure\n";
 
     Path csvFile = tempDir.resolve("versions.csv");
     Files.write(csvFile, csvContent.getBytes());
@@ -132,7 +132,7 @@ class StandardBasedCsvDataSourceTest {
   @Test
   void testQuotedFields() throws IOException {
     String csvContent = "STANDARD_CODE,VERSION,EQUIPMENTTYPE,SPECIFICATION,MINVALUE,MAXVALUE,UNIT,DESCRIPTION\n"
-	+ "\"NORSOK-L-001\",\"Rev 6\",\"Pipeline\",\"MaxPressure\",0,150,\"barg\",\"Maximum design pressure\"\n";
+        + "\"NORSOK-L-001\",\"Rev 6\",\"Pipeline\",\"MaxPressure\",0,150,\"barg\",\"Maximum design pressure\"\n";
 
     Path csvFile = tempDir.resolve("quoted.csv");
     Files.write(csvFile, csvContent.getBytes());
@@ -148,7 +148,7 @@ class StandardBasedCsvDataSourceTest {
   @Test
   void testCaseInsensitiveMatching() throws IOException {
     String csvContent = "STANDARD_CODE,VERSION,EQUIPMENTTYPE,SPECIFICATION,MINVALUE,MAXVALUE,UNIT,DESCRIPTION\n"
-	+ "NORSOK-L-001,Rev 6,Pipeline,MaxPressure,0,150,barg,Max pressure\n";
+        + "NORSOK-L-001,Rev 6,Pipeline,MaxPressure,0,150,barg,Max pressure\n";
 
     Path csvFile = tempDir.resolve("case.csv");
     Files.write(csvFile, csvContent.getBytes());

@@ -42,7 +42,7 @@ public class FlowAssuranceRunner {
 
   private static final List<String> SUPPORTED_ANALYSES = Collections
       .unmodifiableList(Arrays.asList("hydrateRiskMap", "waxAppearance", "asphalteneStability", "CO2Corrosion",
-	  "scalePrediction", "erosion", "pipelineCooldown", "emulsionViscosity", "demulsifierDoseOptimization"));
+          "scalePrediction", "erosion", "pipelineCooldown", "emulsionViscosity", "demulsifierDoseOptimization"));
 
   /**
    * Private constructor — all methods are static.
@@ -68,7 +68,7 @@ public class FlowAssuranceRunner {
   public static String run(String json) {
     if (json == null || json.trim().isEmpty()) {
       return errorJson("INPUT_ERROR", "JSON input is null or empty",
-	  "Provide a valid JSON flow assurance specification");
+          "Provide a valid JSON flow assurance specification");
     }
 
     JsonObject input;
@@ -82,7 +82,7 @@ public class FlowAssuranceRunner {
 
     if (!input.has("analysis")) {
       return errorJson("MISSING_ANALYSIS", "No 'analysis' field specified",
-	  "Provide 'analysis': one of " + SUPPORTED_ANALYSES);
+          "Provide 'analysis': one of " + SUPPORTED_ANALYSES);
     }
     String analysis = input.get("analysis").getAsString();
     if (!SUPPORTED_ANALYSES.contains(analysis)) {
@@ -97,34 +97,34 @@ public class FlowAssuranceRunner {
       JsonObject data;
       switch (analysis) {
       case "hydrateRiskMap":
-	data = runHydrateRiskMap(input);
-	break;
+        data = runHydrateRiskMap(input);
+        break;
       case "waxAppearance":
-	data = runWaxAppearance(input);
-	break;
+        data = runWaxAppearance(input);
+        break;
       case "asphalteneStability":
-	data = runAsphalteneStability(input);
-	break;
+        data = runAsphalteneStability(input);
+        break;
       case "CO2Corrosion":
-	data = runCO2Corrosion(input);
-	break;
+        data = runCO2Corrosion(input);
+        break;
       case "scalePrediction":
-	data = runScalePrediction(input);
-	break;
+        data = runScalePrediction(input);
+        break;
       case "erosion":
-	data = runErosion(input);
-	break;
+        data = runErosion(input);
+        break;
       case "pipelineCooldown":
-	data = runPipelineCooldown(input);
-	break;
+        data = runPipelineCooldown(input);
+        break;
       case "emulsionViscosity":
-	data = runEmulsionViscosity(input);
-	break;
+        data = runEmulsionViscosity(input);
+        break;
       case "demulsifierDoseOptimization":
-	data = runDemulsifierDoseOptimization(input);
-	break;
+        data = runDemulsifierDoseOptimization(input);
+        break;
       default:
-	return errorJson("UNKNOWN_ANALYSIS", "Not implemented: " + analysis, "");
+        return errorJson("UNKNOWN_ANALYSIS", "Not implemented: " + analysis, "");
       }
 
       result.add("data", data);
@@ -138,7 +138,7 @@ public class FlowAssuranceRunner {
       return GSON.toJson(result);
     } catch (Exception e) {
       return errorJson("FLOW_ASSURANCE_ERROR", "Analysis failed: " + e.getMessage(),
-	  "Check input parameters for " + analysis);
+          "Check input parameters for " + analysis);
     }
   }
 
@@ -151,13 +151,13 @@ public class FlowAssuranceRunner {
   private static JsonObject runHydrateRiskMap(JsonObject input) {
     SystemInterface fluid = createFluidFromInput(input);
     neqsim.pvtsimulation.flowassurance.HydrateRiskMapper mapper = new neqsim.pvtsimulation.flowassurance.HydrateRiskMapper(
-	fluid);
+        fluid);
     if (input.has("profilePoints")) {
       JsonArray points = input.getAsJsonArray("profilePoints");
       for (int i = 0; i < points.size(); i++) {
-	JsonObject pt = points.get(i).getAsJsonObject();
-	mapper.addProfilePoint(pt.get("km").getAsDouble(), pt.get("pressure_bara").getAsDouble(),
-	    pt.get("temperature_C").getAsDouble());
+        JsonObject pt = points.get(i).getAsJsonObject();
+        mapper.addProfilePoint(pt.get("km").getAsDouble(), pt.get("pressure_bara").getAsDouble(),
+            pt.get("temperature_C").getAsDouble());
       }
     } else if (input.has("pressure_bara") && input.has("temperature_C")) {
       mapper.addProfilePoint(0.0, input.get("pressure_bara").getAsDouble(), input.get("temperature_C").getAsDouble());
@@ -175,14 +175,14 @@ public class FlowAssuranceRunner {
   private static JsonObject runWaxAppearance(JsonObject input) {
     SystemInterface fluid = createFluidFromInput(input);
     neqsim.pvtsimulation.flowassurance.WaxCurveCalculator wax = new neqsim.pvtsimulation.flowassurance.WaxCurveCalculator(
-	fluid);
+        fluid);
     if (input.has("pressure_bara")) {
       wax.setPressure(input.get("pressure_bara").getAsDouble());
     }
     if (input.has("temperatureRange")) {
       JsonObject range = input.getAsJsonObject("temperatureRange");
       wax.setTemperatureRange(range.get("startC").getAsDouble(), range.get("endC").getAsDouble(),
-	  range.has("stepC") ? range.get("stepC").getAsDouble() : 5.0);
+          range.has("stepC") ? range.get("stepC").getAsDouble() : 5.0);
     }
     wax.calculate();
     JsonObject data = new JsonObject();
@@ -208,12 +208,12 @@ public class FlowAssuranceRunner {
     if (input.has("SARA")) {
       JsonObject sara = input.getAsJsonObject("SARA");
       analyzer.setSARAFractions(sara.get("saturates").getAsDouble(), sara.get("aromatics").getAsDouble(),
-	  sara.get("resins").getAsDouble(), sara.get("asphaltenes").getAsDouble());
+          sara.get("resins").getAsDouble(), sara.get("asphaltenes").getAsDouble());
     }
     double resPressure = input.has("reservoirPressure_bara") ? input.get("reservoirPressure_bara").getAsDouble()
-	: 300.0;
+        : 300.0;
     double satPressure = input.has("saturationPressure_bara") ? input.get("saturationPressure_bara").getAsDouble()
-	: 200.0;
+        : 200.0;
     double density = input.has("density_kg_m3") ? input.get("density_kg_m3").getAsDouble() : 800.0;
 
     JsonObject data = new JsonObject();
@@ -429,7 +429,7 @@ public class FlowAssuranceRunner {
 
     if (input.has("minimumDosePpm") || input.has("maximumDosePpm") || input.has("doseStepPpm")) {
       optimizer.setDoseRange(getDouble(input, "minimumDosePpm", 0.0), getDouble(input, "maximumDosePpm", 120.0),
-	  getDouble(input, "doseStepPpm", 1.0));
+          getDouble(input, "doseStepPpm", 1.0));
     }
     optimizer.setSafetyMarginMgL(getDouble(input, "safetyMarginMgL", 3.0));
     optimizer.setOptimizationHorizonHours(getDouble(input, "optimizationHorizonHours", 1.0));
@@ -488,7 +488,7 @@ public class FlowAssuranceRunner {
     }
     if (input.has("currentEffectiveDosePpm")) {
       model.resetToSteadyState(input.get("currentEffectiveDosePpm").getAsDouble(),
-	  getDouble(input, "waterRate_m3_h", 100.0));
+          getDouble(input, "waterRate_m3_h", 100.0));
     }
   }
 
@@ -535,8 +535,8 @@ public class FlowAssuranceRunner {
     if (input.has("monthlySamples")) {
       JsonArray samples = input.getAsJsonArray("monthlySamples");
       for (int index = 0; index < samples.size(); index++) {
-	JsonObject sample = samples.get(index).getAsJsonObject();
-	monitor.addSample(getDouble(sample, "oiw_mgL", 0.0), getDouble(sample, "waterVolume_m3", 0.0));
+        JsonObject sample = samples.get(index).getAsJsonObject();
+        monitor.addSample(getDouble(sample, "oiw_mgL", 0.0), getDouble(sample, "waterVolume_m3", 0.0));
       }
     }
   }
@@ -577,7 +577,7 @@ public class FlowAssuranceRunner {
     if (input.has("components")) {
       JsonObject comps = input.getAsJsonObject("components");
       for (Map.Entry<String, JsonElement> entry : comps.entrySet()) {
-	fluid.addComponent(entry.getKey(), entry.getValue().getAsDouble());
+        fluid.addComponent(entry.getKey(), entry.getValue().getAsDouble());
       }
     }
     String mixingRule = input.has("mixingRule") ? input.get("mixingRule").getAsString() : "classic";
@@ -675,7 +675,7 @@ public class FlowAssuranceRunner {
     JsonArray ja = new JsonArray();
     if (arr != null) {
       for (double v : arr) {
-	ja.add(v);
+        ja.add(v);
       }
     }
     return ja;

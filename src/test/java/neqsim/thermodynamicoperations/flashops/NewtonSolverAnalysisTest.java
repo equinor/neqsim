@@ -2,6 +2,8 @@ package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Random;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
 import org.ejml.interfaces.linsol.LinearSolverDense;
@@ -10,8 +12,6 @@ import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Analysis tests for Newton solver improvements.
@@ -50,48 +50,48 @@ class NewtonSolverAnalysisTest {
       double[][] aData = new double[n][n];
       double[] bData = new double[n];
       for (int i = 0; i < n; i++) {
-	bData[i] = rng.nextDouble();
-	for (int j = 0; j < n; j++) {
-	  aData[i][j] = rng.nextDouble();
-	}
-	aData[i][i] += n; // Make diagonally dominant
+        bData[i] = rng.nextDouble();
+        for (int j = 0; j < n; j++) {
+          aData[i][j] = rng.nextDouble();
+        }
+        aData[i][i] += n; // Make diagonally dominant
       }
 
       // JAMA warmup
       Matrix jamaMat = new Matrix(aData);
       Matrix jamab = new Matrix(n, 1);
       for (int i = 0; i < n; i++) {
-	jamab.set(i, 0, bData[i]);
+        jamab.set(i, 0, bData[i]);
       }
       for (int w = 0; w < warmup; w++) {
-	jamaMat.solve(jamab);
+        jamaMat.solve(jamab);
       }
 
       // EJML warmup
       DMatrixRMaj ejmlMat = new DMatrixRMaj(aData);
       DMatrixRMaj ejmlb = new DMatrixRMaj(n, 1);
       for (int i = 0; i < n; i++) {
-	ejmlb.set(i, 0, bData[i]);
+        ejmlb.set(i, 0, bData[i]);
       }
       DMatrixRMaj ejmlx = new DMatrixRMaj(n, 1);
       LinearSolverDense<DMatrixRMaj> solver = LinearSolverFactory_DDRM.lu(n);
       for (int w = 0; w < warmup; w++) {
-	solver.setA(ejmlMat.copy());
-	solver.solve(ejmlb, ejmlx);
+        solver.setA(ejmlMat.copy());
+        solver.solve(ejmlb, ejmlx);
       }
 
       // JAMA benchmark
       long start = System.nanoTime();
       for (int iter = 0; iter < N; iter++) {
-	jamaMat.solve(jamab);
+        jamaMat.solve(jamab);
       }
       long jamaTime = System.nanoTime() - start;
 
       // EJML benchmark
       start = System.nanoTime();
       for (int iter = 0; iter < N; iter++) {
-	solver.setA(ejmlMat.copy());
-	solver.solve(ejmlb, ejmlx);
+        solver.setA(ejmlMat.copy());
+        solver.solve(ejmlb, ejmlx);
       }
       long ejmlTime = System.nanoTime() - start;
 
@@ -112,17 +112,17 @@ class NewtonSolverAnalysisTest {
       double[][] aData = new double[n][n];
       double[] bData = new double[n];
       for (int i = 0; i < n; i++) {
-	bData[i] = rng.nextDouble();
-	for (int j = 0; j < n; j++) {
-	  aData[i][j] = rng.nextDouble();
-	}
-	aData[i][i] += n;
+        bData[i] = rng.nextDouble();
+        for (int j = 0; j < n; j++) {
+          aData[i][j] = rng.nextDouble();
+        }
+        aData[i][i] += n;
       }
 
       DMatrixRMaj ejmlMat = new DMatrixRMaj(aData);
       DMatrixRMaj ejmlb = new DMatrixRMaj(n, 1);
       for (int i = 0; i < n; i++) {
-	ejmlb.set(i, 0, bData[i]);
+        ejmlb.set(i, 0, bData[i]);
       }
       DMatrixRMaj ejmlx = new DMatrixRMaj(n, 1);
       DMatrixRMaj ejmlMatCopy = new DMatrixRMaj(n, n);
@@ -130,17 +130,17 @@ class NewtonSolverAnalysisTest {
 
       // Warmup
       for (int w = 0; w < warmup; w++) {
-	ejmlMatCopy.setTo(ejmlMat);
-	solver2.setA(ejmlMatCopy);
-	solver2.solve(ejmlb, ejmlx);
+        ejmlMatCopy.setTo(ejmlMat);
+        solver2.setA(ejmlMatCopy);
+        solver2.solve(ejmlb, ejmlx);
       }
 
       // With pre-allocated copy
       long start = System.nanoTime();
       for (int iter = 0; iter < N; iter++) {
-	ejmlMatCopy.setTo(ejmlMat);
-	solver2.setA(ejmlMatCopy);
-	solver2.solve(ejmlb, ejmlx);
+        ejmlMatCopy.setTo(ejmlMat);
+        solver2.setA(ejmlMatCopy);
+        solver2.solve(ejmlb, ejmlx);
       }
       long time = System.nanoTime() - start;
       System.out.println(String.format("n=%d EJML pre-alloc copy: %.0f ns/call", n, (double) time / N));
@@ -253,8 +253,8 @@ class NewtonSolverAnalysisTest {
       SystemInterface sysCopy = sys.clone();
       // Apply small perturbation to compositions
       for (int i = 0; i < sysCopy.getPhase(0).getNumberOfComponents(); i++) {
-	double x0 = sysCopy.getPhase(0).getComponent(i).getx();
-	sysCopy.getPhase(0).getComponent(i).setx(x0 * (1.0 + 0.01 * (i % 3 - 1)));
+        double x0 = sysCopy.getPhase(0).getComponent(i).getx();
+        sysCopy.getPhase(0).getComponent(i).setx(x0 * (1.0 + 0.01 * (i % 3 - 1)));
       }
       sysCopy.getPhase(0).normalize();
       sysCopy.init(1);
@@ -265,7 +265,7 @@ class NewtonSolverAnalysisTest {
       sysCopy.init(1, 1);
       long elapsed = System.nanoTime() - start;
       if (w >= warmup) {
-	totalSS += elapsed;
+        totalSS += elapsed;
       }
     }
 
@@ -276,13 +276,13 @@ class NewtonSolverAnalysisTest {
       sysCopy.init(1);
 
       SysNewtonRhapsonTPflash solver = new SysNewtonRhapsonTPflash(sysCopy, 2,
-	  sysCopy.getPhase(0).getNumberOfComponents());
+          sysCopy.getPhase(0).getNumberOfComponents());
 
       long start = System.nanoTime();
       solver.solve();
       long elapsed = System.nanoTime() - start;
       if (w >= warmup) {
-	totalNewton += elapsed;
+        totalNewton += elapsed;
       }
     }
 
@@ -308,7 +308,7 @@ class NewtonSolverAnalysisTest {
     for (int i = 0; i < n; i++) {
       bData[i] = rng.nextDouble();
       for (int j = 0; j < n; j++) {
-	aData[i][j] = rng.nextDouble();
+        aData[i][j] = rng.nextDouble();
       }
       aData[i][i] += n;
     }

@@ -132,7 +132,7 @@ public class SubseaManifoldMechanicalDesign extends MechanicalDesign {
 
     // Test header (if present)
     if (manifold.getManifoldType() == SubseaManifold.ManifoldType.PRODUCTION_TEST
-	|| manifold.getManifoldType() == SubseaManifold.ManifoldType.FULL_SERVICE) {
+        || manifold.getManifoldType() == SubseaManifold.ManifoldType.FULL_SERVICE) {
       double testHeaderSize = manifold.getTestHeaderSizeInches() * 25.4;
       double testOD = testHeaderSize * 1.25;
       testHeaderWallThickness = (pressureMPa * testOD) / (2 * smys * designFactor);
@@ -231,10 +231,10 @@ public class SubseaManifoldMechanicalDesign extends MechanicalDesign {
     }
 
     boolean hasTestHeader = manifold.getManifoldType() == SubseaManifold.ManifoldType.PRODUCTION_TEST
-	|| manifold.getManifoldType() == SubseaManifold.ManifoldType.FULL_SERVICE;
+        || manifold.getManifoldType() == SubseaManifold.ManifoldType.FULL_SERVICE;
 
     costEstimator.calculateManifoldCost(manifold.getNumberOfSlots(), manifold.getDryWeight(), manifold.getWaterDepth(),
-	hasTestHeader);
+        hasTestHeader);
 
     totalCostUSD = costEstimator.getTotalCost();
     equipmentCostUSD = costEstimator.getEquipmentCost();

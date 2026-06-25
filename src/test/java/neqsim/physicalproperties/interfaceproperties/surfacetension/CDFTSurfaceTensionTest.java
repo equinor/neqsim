@@ -127,7 +127,7 @@ public class CDFTSurfaceTensionTest {
     if (sigmaGT > 0) {
       double ratio = sigmaCDFT / sigmaGT;
       assertTrue(ratio > 0.05 && ratio < 20.0,
-	  "cDFT/GT ratio=" + ratio + " cDFT=" + (sigmaCDFT * 1000) + " GT=" + (sigmaGT * 1000));
+          "cDFT/GT ratio=" + ratio + " cDFT=" + (sigmaCDFT * 1000) + " GT=" + (sigmaGT * 1000));
     }
   }
 }

@@ -75,9 +75,9 @@ public class EquipmentCostEstimateTest {
 
     assertTrue(costEstimate.getPurchasedEquipmentCost() > 0, "Purchased equipment cost should be positive");
     assertTrue(costEstimate.getBareModuleCost() > costEstimate.getPurchasedEquipmentCost(),
-	"Bare module cost should exceed PEC");
+        "Bare module cost should exceed PEC");
     assertTrue(costEstimate.getTotalModuleCost() > costEstimate.getBareModuleCost(),
-	"Total module cost should exceed bare module cost");
+        "Total module cost should exceed bare module cost");
     // Man-hours may be zero if weight is not calculated by mechanical design
     assertTrue(costEstimate.getInstallationManHours() >= 0, "Installation man-hours should not be negative");
 
@@ -112,7 +112,7 @@ public class EquipmentCostEstimateTest {
 
     // Reciprocating compressors are typically more expensive
     assertTrue(recipCost.getPurchasedEquipmentCost() > centrifugalCost.getPurchasedEquipmentCost(),
-	"Reciprocating compressor should cost more than centrifugal");
+        "Reciprocating compressor should cost more than centrifugal");
   }
 
   @Test
@@ -182,7 +182,7 @@ public class EquipmentCostEstimateTest {
 
     // Ball valves typically cost more than gate valves
     assertTrue(ballValve.getPurchasedEquipmentCost() > gateValve.getPurchasedEquipmentCost(),
-	"Ball valve should cost more than gate valve");
+        "Ball valve should cost more than gate valve");
   }
 
   @Test
@@ -232,7 +232,7 @@ public class EquipmentCostEstimateTest {
 
     // Schedule 80 should cost more
     assertTrue(sch80.getPurchasedEquipmentCost() > sch40.getPurchasedEquipmentCost(),
-	"Schedule 80 pipe should cost more than schedule 40");
+        "Schedule 80 pipe should cost more than schedule 40");
     assertTrue(sch80.calcPipeWeight() > sch40.calcPipeWeight(), "Schedule 80 pipe should weigh more than schedule 40");
   }
 
@@ -297,9 +297,9 @@ public class EquipmentCostEstimateTest {
     bubbleCapTray.calculateCostEstimate();
 
     assertTrue(valveTray.getPurchasedEquipmentCost() > sieveTray.getPurchasedEquipmentCost(),
-	"Valve trays should cost more than sieve trays");
+        "Valve trays should cost more than sieve trays");
     assertTrue(bubbleCapTray.getPurchasedEquipmentCost() > valveTray.getPurchasedEquipmentCost(),
-	"Bubble cap trays should cost more than valve trays");
+        "Bubble cap trays should cost more than valve trays");
   }
 
   @Test
@@ -328,7 +328,7 @@ public class EquipmentCostEstimateTest {
 
     assertTrue(costEstimate.getPurchasedEquipmentCost() > 0, "Pump cost should be positive");
     assertTrue(costEstimate.getBareModuleCost() > costEstimate.getPurchasedEquipmentCost(),
-	"Bare module cost should exceed PEC");
+        "Bare module cost should exceed PEC");
 
     Map<String, Object> breakdown = costEstimate.getCostBreakdown();
     assertNotNull(breakdown);
@@ -358,7 +358,7 @@ public class EquipmentCostEstimateTest {
     stainlessColumn.calculateCostEstimate();
 
     assertTrue(stainlessColumn.getPurchasedEquipmentCost() > carbonSteelColumn.getPurchasedEquipmentCost(),
-	"Stainless steel column should cost more than carbon steel");
+        "Stainless steel column should cost more than carbon steel");
     assertEquals(1.0, carbonSteelColumn.getMaterialFactor(), 0.01, "Carbon steel material factor should be 1.0");
     assertTrue(stainlessColumn.getMaterialFactor() > 1.5, "Stainless steel material factor should be > 1.5");
   }
@@ -385,7 +385,7 @@ public class EquipmentCostEstimateTest {
     costEstimate.calculateCostEstimate();
 
     double annualOperatingCost = costEstimate.calcAnnualOperatingCost(8000, 0.10, 5.0); // 8000 hrs,
-											// $0.10/kWh
+    // $0.10/kWh
     double maintenanceCost = costEstimate.calcAnnualMaintenanceCost();
 
     assertTrue(annualOperatingCost > 0, "Annual operating cost should be positive");
@@ -407,7 +407,7 @@ public class EquipmentCostEstimateTest {
     columnCost.calculateCostEstimate();
 
     double utilityCost = columnCost.calcAnnualUtilityCost(8000, 15.0, 0.05); // 8000 hrs, $15/tonne
-									     // steam, $0.05/m3 CW
+    // steam, $0.05/m3 CW
 
     assertTrue(utilityCost > 0, "Annual utility cost should be positive");
   }

@@ -3,8 +3,8 @@ package neqsim.mcp.model;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import com.google.gson.JsonObject;
 import org.junit.jupiter.api.Test;
+import com.google.gson.JsonObject;
 
 /**
  * Tests for {@link FlashRequest}.
@@ -30,8 +30,8 @@ class FlashRequestTest {
   @Test
   void testBuilderPattern() {
     FlashRequest req = new FlashRequest().setModel("PR").setTemperature(new ValueWithUnit(25.0, "C"))
-	.setPressure(new ValueWithUnit(50.0, "bara")).setFlashType("TP").addComponent("methane", 0.85)
-	.addComponent("ethane", 0.15).setMixingRule("classic");
+        .setPressure(new ValueWithUnit(50.0, "bara")).setFlashType("TP").addComponent("methane", 0.85)
+        .addComponent("ethane", 0.15).setMixingRule("classic");
 
     assertEquals("PR", req.getModel());
     assertEquals(25.0, req.getTemperature().getValue(), 1e-9);
@@ -115,7 +115,7 @@ class FlashRequestTest {
 
     // Verify chaining works (compile check + non-null)
     FlashRequest result = req.setModel("CPA").setFlashType("PH").setEnthalpy(new ValueWithUnit(-5000.0, "J/mol"))
-	.setEntropy(new ValueWithUnit(100.0, "J/molK")).setVolume(new ValueWithUnit(0.001, "m3/mol"));
+        .setEntropy(new ValueWithUnit(100.0, "J/molK")).setVolume(new ValueWithUnit(0.001, "m3/mol"));
 
     assertNotNull(result);
     assertEquals("CPA", result.getModel());

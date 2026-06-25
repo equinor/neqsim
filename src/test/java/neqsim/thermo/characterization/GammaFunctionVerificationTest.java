@@ -2,11 +2,11 @@ package neqsim.thermo.characterization;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Tests to verify correctness of the gamma function implementation in WhitsonGammaModel.
@@ -89,7 +89,7 @@ public class GammaFunctionVerificationTest {
 
       // The recurrence should hold: Gamma(x+1) = x * Gamma(x)
       assertEquals(expected, gammaXplus1, TOLERANCE * Math.abs(expected),
-	  "Recurrence relation Gamma(x+1) = x*Gamma(x) should hold for x = " + x);
+          "Recurrence relation Gamma(x+1) = x*Gamma(x) should hold for x = " + x);
     }
   }
 

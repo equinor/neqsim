@@ -66,23 +66,23 @@ public class SwellingTest extends BasePVTsimulation {
 
     for (int i = 0; i < getPressures().length; i++) {
       if (gasInjected[i] > 1e-10) {
-	injectionGas.setTotalFlowRate(oilMoles * (gasInjected[i] - oldInjected) / 100.0, "mol/sec");
-	injectionGas.init(0);
-	injectionGas.init(1);
-	oldInjected = gasInjected[i];
+        injectionGas.setTotalFlowRate(oilMoles * (gasInjected[i] - oldInjected) / 100.0, "mol/sec");
+        injectionGas.init(0);
+        injectionGas.init(1);
+        oldInjected = gasInjected[i];
 
-	getThermoSystem().init(0);
-	getThermoSystem().addFluid(injectionGas);
+        getThermoSystem().init(0);
+        getThermoSystem().addFluid(injectionGas);
       }
       getThermoSystem().init(0);
       if (i == 0) {
-	getThermoSystem().setPressure(10.0);
+        getThermoSystem().setPressure(10.0);
       }
       getThermoSystem().setTemperature(temperature);
       try {
-	thermoOps.bubblePointPressureFlash(false);
+        thermoOps.bubblePointPressureFlash(false);
       } catch (Exception ex) {
-	logger.error(ex.getMessage(), ex);
+        logger.error(ex.getMessage(), ex);
       }
       pressures[i] = getThermoSystem().getPressure();
       getRelativeOilVolume()[i] = getThermoSystem().getVolume() / orginalOilVolume;
@@ -118,7 +118,7 @@ public class SwellingTest extends BasePVTsimulation {
     test.setInjectionGas(gasSystem);
     test.setTemperature(298.15);
     test.setCummulativeMolePercentGasInjected(
-	new double[] { 0.0, 0.01, 0.02, 0.03, 0.05, 0.1, 0.2, 0.4, 0.5, 1.0, 10.3, 22.0 });
+        new double[] { 0.0, 0.01, 0.02, 0.03, 0.05, 0.1, 0.2, 0.4, 0.5, 1.0, 10.3, 22.0 });
     test.runCalc();
 
     test.getThermoSystem().display();

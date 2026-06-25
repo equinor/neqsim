@@ -61,9 +61,9 @@ public class PSFlashVega extends QfuncFlash {
     double[] VegaProps;
     do {
       if (error > errorOld && factor > 0.1 && correctFactor) {
-	factor *= 0.5;
+        factor *= 0.5;
       } else if (error < errorOld && correctFactor) {
-	factor = 1.0;
+        factor = 1.0;
       }
 
       iterations++;
@@ -74,16 +74,16 @@ public class PSFlashVega extends QfuncFlash {
       newCorr = factor * calcdQdT() / calcdQdTT();
       nyTemp = oldTemp - newCorr;
       if (Math.abs(system.getTemperature() - nyTemp) > 10.0) {
-	nyTemp = system.getTemperature() - Math.signum(system.getTemperature() - nyTemp) * 10.0;
-	correctFactor = false;
+        nyTemp = system.getTemperature() - Math.signum(system.getTemperature() - nyTemp) * 10.0;
+        correctFactor = false;
       } else if (nyTemp < 0) {
-	nyTemp = Math.abs(system.getTemperature() - 10.0);
-	correctFactor = false;
+        nyTemp = Math.abs(system.getTemperature() - 10.0);
+        correctFactor = false;
       } else if (Double.isNaN(nyTemp)) {
-	nyTemp = oldTemp + 1.0;
-	correctFactor = false;
+        nyTemp = oldTemp + 1.0;
+        correctFactor = false;
       } else {
-	correctFactor = true;
+        correctFactor = true;
       }
 
       system.setTemperature(nyTemp);

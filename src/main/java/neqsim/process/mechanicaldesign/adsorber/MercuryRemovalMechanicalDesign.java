@@ -86,7 +86,7 @@ public class MercuryRemovalMechanicalDesign extends MechanicalDesign {
       double allowableStress = 137.9; // MPa for SA-516-70 at moderate temperature
       double jointEfficiency = 0.85;
       wallThickness = (designPressureMPa * bedDiameter * 1000.0)
-	  / (2.0 * allowableStress * jointEfficiency - designPressureMPa);
+          / (2.0 * allowableStress * jointEfficiency - designPressureMPa);
       wallThickness = Math.max(wallThickness, 6.0); // minimum 6 mm
     }
 
@@ -223,11 +223,11 @@ public class MercuryRemovalMechanicalDesign extends MechanicalDesign {
     for (Map<String, Object> item : generateBillOfMaterials()) {
       JsonObject bomItem = new JsonObject();
       for (Map.Entry<String, Object> entry : item.entrySet()) {
-	if (entry.getValue() instanceof Number) {
-	  bomItem.addProperty(entry.getKey(), (Number) entry.getValue());
-	} else {
-	  bomItem.addProperty(entry.getKey(), String.valueOf(entry.getValue()));
-	}
+        if (entry.getValue() instanceof Number) {
+          bomItem.addProperty(entry.getKey(), (Number) entry.getValue());
+        } else {
+          bomItem.addProperty(entry.getKey(), String.valueOf(entry.getValue()));
+        }
       }
       bomArr.add(bomItem);
     }

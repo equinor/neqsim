@@ -231,7 +231,7 @@ public class StreamChemistryAdapter implements Serializable {
    */
   public double getTdsMgL() {
     return getSodiumMgL() + getCalciumMgL() + getChlorideMgL() + getSulphateMgL() + getBicarbonateMgL() + getBariumMgL()
-	+ getIronMgL();
+        + getIronMgL();
   }
 
   /**

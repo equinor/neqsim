@@ -208,7 +208,7 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
     String[] tracked = { "CO2", "CO", "NO", "NO2", "SO2", "SO3", "H2S", "oxygen", "water", "nitrogen" };
     for (String compName : tracked) {
       if (!fuelSystem.hasComponent(compName)) {
-	fuelSystem.addComponent(compName, 0.0, "mole/sec");
+        fuelSystem.addComponent(compName, 0.0, "mole/sec");
       }
     }
     fuelSystem.init(3);
@@ -242,7 +242,7 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
     boolean applyCooling = burnerDesign == BurnerDesign.COOLED || coolingFactor > 0.0;
     if (applyCooling) {
       double ambientTemp = Double.isNaN(surroundingsTemperatureK) ? airSystem.getTemperature()
-	  : surroundingsTemperatureK;
+          : surroundingsTemperatureK;
       double cooledTemperature = ambientTemp + (flameTemperature - ambientTemp) * (1.0 - coolingFactor);
 
       SystemInterface cooledFeed = mixedStream.getThermoSystem().clone();
@@ -270,8 +270,8 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
     emissionRatesKgPerHr.clear();
     for (String compName : tracked) {
       if (outletSystem.hasComponent(compName)) {
-	double rate = outletSystem.getComponent(compName).getFlowRate("kg/sec") * 3600.0;
-	emissionRatesKgPerHr.put(compName, rate);
+        double rate = outletSystem.getComponent(compName).getFlowRate("kg/sec") * 3600.0;
+        emissionRatesKgPerHr.put(compName, rate);
       }
     }
     if (emissionRatesKgPerHr.containsKey("NO") || emissionRatesKgPerHr.containsKey("NO2")) {

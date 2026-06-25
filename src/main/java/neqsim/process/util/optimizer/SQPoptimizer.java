@@ -312,8 +312,8 @@ public class SQPoptimizer implements Serializable {
       // Check KKT optimality (with Lagrange multiplier contributions)
       double kktError = computeKKTError(gradF, gEq, hIneq, jacEq, jacIneq, x);
       if (kktError < tolerance) {
-	converged = true;
-	break;
+        converged = true;
+        break;
       }
 
       // Solve QP sub-problem for search direction
@@ -328,7 +328,7 @@ public class SQPoptimizer implements Serializable {
 
       // Update x
       for (int i = 0; i < n; i++) {
-	x[i] = x[i] + alpha * dx[i];
+        x[i] = x[i] + alpha * dx[i];
       }
       projectToBounds(x);
 
@@ -344,21 +344,21 @@ public class SQPoptimizer implements Serializable {
       double[] gEqNew = evaluateConstraints(equalityConstraints, x);
       double[] hIneqNew = evaluateConstraints(inequalityConstraints, x);
       for (int i = 0; i < gEqNew.length; i++) {
-	if (Math.abs(gEqNew[i]) > tolerance * 100.0) {
-	  feasible = false;
-	  break;
-	}
+        if (Math.abs(gEqNew[i]) > tolerance * 100.0) {
+          feasible = false;
+          break;
+        }
       }
       if (feasible) {
-	for (int j = 0; j < hIneqNew.length; j++) {
-	  if (hIneqNew[j] < -tolerance * 100.0) {
-	    feasible = false;
-	    break;
-	  }
-	}
+        for (int j = 0; j < hIneqNew.length; j++) {
+          if (hIneqNew[j] < -tolerance * 100.0) {
+            feasible = false;
+            break;
+          }
+        }
       }
       if (feasible && fBest < objectiveFunction.evaluate(xBest)) {
-	xBest = Arrays.copyOf(x, n);
+        xBest = Arrays.copyOf(x, n);
       }
     }
 
@@ -373,9 +373,9 @@ public class SQPoptimizer implements Serializable {
     double fFinal = objectiveFunction.evaluate(xFinal);
 
     return new OptimizationResult(xFinal, fFinal, iterCount, converged,
-	computeKKTError(computeGradient(objectiveFunction, xFinal), evaluateConstraints(equalityConstraints, xFinal),
-	    evaluateConstraints(inequalityConstraints, xFinal), computeJacobian(equalityConstraints, xFinal),
-	    computeJacobian(inequalityConstraints, xFinal), xFinal));
+        computeKKTError(computeGradient(objectiveFunction, xFinal), evaluateConstraints(equalityConstraints, xFinal),
+            evaluateConstraints(inequalityConstraints, xFinal), computeJacobian(equalityConstraints, xFinal),
+            computeJacobian(inequalityConstraints, xFinal), xFinal));
   }
 
   /**
@@ -386,8 +386,8 @@ public class SQPoptimizer implements Serializable {
   private void projectToBounds(double[] x) {
     if (lowerBounds != null && upperBounds != null) {
       for (int i = 0; i < n; i++) {
-	x[i] = Math.max(x[i], lowerBounds[i]);
-	x[i] = Math.min(x[i], upperBounds[i]);
+        x[i] = Math.max(x[i], lowerBounds[i]);
+        x[i] = Math.min(x[i], upperBounds[i]);
       }
     }
   }
@@ -446,7 +446,7 @@ public class SQPoptimizer implements Serializable {
       double[] cp = evaluateConstraints(constraints, xp);
       double[] cm = evaluateConstraints(constraints, xm);
       for (int i = 0; i < m; i++) {
-	jac[i][j] = (cp[i] - cm[i]) / (2.0 * step);
+        jac[i][j] = (cp[i] - cm[i]) / (2.0 * step);
       }
     }
     return jac;
@@ -471,16 +471,16 @@ public class SQPoptimizer implements Serializable {
     double[] gradL = Arrays.copyOf(gradF, n);
     if (lambdaEq != null && jacEq != null) {
       for (int j = 0; j < lambdaEq.length; j++) {
-	for (int i = 0; i < n; i++) {
-	  gradL[i] -= jacEq[j][i] * lambdaEq[j];
-	}
+        for (int i = 0; i < n; i++) {
+          gradL[i] -= jacEq[j][i] * lambdaEq[j];
+        }
       }
     }
     if (lambdaIneq != null && jacIneq != null) {
       for (int j = 0; j < lambdaIneq.length; j++) {
-	for (int i = 0; i < n; i++) {
-	  gradL[i] -= jacIneq[j][i] * lambdaIneq[j];
-	}
+        for (int i = 0; i < n; i++) {
+          gradL[i] -= jacIneq[j][i] * lambdaIneq[j];
+        }
       }
     }
 
@@ -492,10 +492,10 @@ public class SQPoptimizer implements Serializable {
       boolean atUpper = upperBounds != null && Math.abs(x[i] - upperBounds[i]) < tolerance * 10.0;
 
       if (atLower && g >= 0.0) {
-	continue; // KKT satisfied at lower bound (gradient pushes into bound)
+        continue; // KKT satisfied at lower bound (gradient pushes into bound)
       }
       if (atUpper && g <= 0.0) {
-	continue; // KKT satisfied at upper bound (gradient pushes into bound)
+        continue; // KKT satisfied at upper bound (gradient pushes into bound)
       }
       maxError = Math.max(maxError, Math.abs(g));
     }
@@ -508,19 +508,19 @@ public class SQPoptimizer implements Serializable {
     // Primal feasibility: inequality constraints h(x) >= 0, violation when h < 0
     for (int j = 0; j < hIneq.length; j++) {
       if (hIneq[j] < 0) {
-	maxError = Math.max(maxError, -hIneq[j]);
+        maxError = Math.max(maxError, -hIneq[j]);
       }
     }
 
     // Bound feasibility
     if (lowerBounds != null && upperBounds != null) {
       for (int i = 0; i < n; i++) {
-	if (x[i] < lowerBounds[i]) {
-	  maxError = Math.max(maxError, lowerBounds[i] - x[i]);
-	}
-	if (x[i] > upperBounds[i]) {
-	  maxError = Math.max(maxError, x[i] - upperBounds[i]);
-	}
+        if (x[i] < lowerBounds[i]) {
+          maxError = Math.max(maxError, lowerBounds[i] - x[i]);
+        }
+        if (x[i] > upperBounds[i]) {
+          maxError = Math.max(maxError, x[i] - upperBounds[i]);
+        }
       }
     }
 
@@ -562,7 +562,7 @@ public class SQPoptimizer implements Serializable {
     List<Integer> activeIneq = new ArrayList<Integer>();
     for (int j = 0; j < mIneq; j++) {
       if (hIneq[j] < tolerance * 10.0) {
-	activeIneq.add(j);
+        activeIneq.add(j);
       }
     }
 
@@ -595,22 +595,22 @@ public class SQPoptimizer implements Serializable {
     double[][] hInvAt = new double[n][mActive];
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < mActive; j++) {
-	double sum = 0.0;
-	for (int k = 0; k < n; k++) {
-	  sum += hInv[i][k] * aMatrix[j][k];
-	}
-	hInvAt[i][j] = sum;
+        double sum = 0.0;
+        for (int k = 0; k < n; k++) {
+          sum += hInv[i][k] * aMatrix[j][k];
+        }
+        hInvAt[i][j] = sum;
       }
     }
 
     double[][] schur = new double[mActive][mActive];
     for (int i = 0; i < mActive; i++) {
       for (int j = 0; j < mActive; j++) {
-	double sum = 0.0;
-	for (int k = 0; k < n; k++) {
-	  sum += aMatrix[i][k] * hInvAt[k][j];
-	}
-	schur[i][j] = sum;
+        double sum = 0.0;
+        for (int k = 0; k < n; k++) {
+          sum += aMatrix[i][k] * hInvAt[k][j];
+        }
+        schur[i][j] = sum;
       }
     }
 
@@ -619,7 +619,7 @@ public class SQPoptimizer implements Serializable {
     for (int i = 0; i < mActive; i++) {
       double aDu = 0.0;
       for (int k = 0; k < n; k++) {
-	aDu += aMatrix[i][k] * dUnconstrained[k];
+        aDu += aMatrix[i][k] * dUnconstrained[k];
       }
       rhs[i] = residual[i] - aDu;
     }
@@ -640,7 +640,7 @@ public class SQPoptimizer implements Serializable {
     double[] dx = Arrays.copyOf(dUnconstrained, n);
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < mActive; j++) {
-	dx[i] += hInvAt[i][j] * lambdaActive[j];
+        dx[i] += hInvAt[i][j] * lambdaActive[j];
       }
     }
 
@@ -664,7 +664,7 @@ public class SQPoptimizer implements Serializable {
     for (int ls = 0; ls < maxLineSearchIterations; ls++) {
       double[] xTrial = new double[n];
       for (int i = 0; i < n; i++) {
-	xTrial[i] = x[i] + alpha * dx[i];
+        xTrial[i] = x[i] + alpha * dx[i];
       }
       projectToBounds(xTrial);
 
@@ -675,7 +675,7 @@ public class SQPoptimizer implements Serializable {
 
       // Armijo condition on merit function
       if (meritTrial <= merit0 - armijoC1 * alpha * merit0) {
-	return alpha;
+        return alpha;
       }
       alpha *= 0.5;
     }
@@ -698,7 +698,7 @@ public class SQPoptimizer implements Serializable {
     }
     for (int j = 0; j < hIneq.length; j++) {
       if (hIneq[j] < 0) {
-	merit += penaltyParameter * (-hIneq[j]);
+        merit += penaltyParameter * (-hIneq[j]);
       }
     }
     return merit;
@@ -746,7 +746,7 @@ public class SQPoptimizer implements Serializable {
     // BFGS update: H_new = H - (H*s*s^T*H)/(s^T*H*s) + (r*r^T)/(s^T*r)
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
-	hessian[i][j] = hessian[i][j] - hs[i] * hs[j] / shs + r[i] * r[j] / sr;
+        hessian[i][j] = hessian[i][j] - hs[i] * hs[j] / shs + r[i] * r[j] / sr;
       }
     }
   }
@@ -775,10 +775,10 @@ public class SQPoptimizer implements Serializable {
       int maxRow = col;
       double maxVal = Math.abs(aug[col][col]);
       for (int row = col + 1; row < dim; row++) {
-	if (Math.abs(aug[row][col]) > maxVal) {
-	  maxVal = Math.abs(aug[row][col]);
-	  maxRow = row;
-	}
+        if (Math.abs(aug[row][col]) > maxVal) {
+          maxVal = Math.abs(aug[row][col]);
+          maxRow = row;
+        }
       }
       // Swap
       double[] temp = aug[col];
@@ -786,20 +786,20 @@ public class SQPoptimizer implements Serializable {
       aug[maxRow] = temp;
 
       if (Math.abs(aug[col][col]) < 1e-14) {
-	// Near-singular: return gradient descent direction
-	double[] result = new double[dim];
-	for (int i = 0; i < dim; i++) {
-	  result[i] = -b[i];
-	}
-	return result;
+        // Near-singular: return gradient descent direction
+        double[] result = new double[dim];
+        for (int i = 0; i < dim; i++) {
+          result[i] = -b[i];
+        }
+        return result;
       }
 
       // Eliminate
       for (int row = col + 1; row < dim; row++) {
-	double factor = aug[row][col] / aug[col][col];
-	for (int k = col; k <= dim; k++) {
-	  aug[row][k] -= factor * aug[col][k];
-	}
+        double factor = aug[row][col] / aug[col][col];
+        for (int k = col; k <= dim; k++) {
+          aug[row][k] -= factor * aug[col][k];
+        }
       }
     }
 
@@ -808,7 +808,7 @@ public class SQPoptimizer implements Serializable {
     for (int i = dim - 1; i >= 0; i--) {
       result[i] = aug[i][dim];
       for (int j = i + 1; j < dim; j++) {
-	result[i] -= aug[i][j] * result[j];
+        result[i] -= aug[i][j] * result[j];
       }
       result[i] /= aug[i][i];
     }
@@ -834,9 +834,9 @@ public class SQPoptimizer implements Serializable {
       // Pivot
       int maxRow = col;
       for (int row = col + 1; row < dim; row++) {
-	if (Math.abs(aug[row][col]) > Math.abs(aug[maxRow][col])) {
-	  maxRow = row;
-	}
+        if (Math.abs(aug[row][col]) > Math.abs(aug[maxRow][col])) {
+          maxRow = row;
+        }
       }
       double[] temp = aug[col];
       aug[col] = aug[maxRow];
@@ -844,25 +844,25 @@ public class SQPoptimizer implements Serializable {
 
       double pivot = aug[col][col];
       if (Math.abs(pivot) < 1e-14) {
-	// Return identity for near-singular
-	double[][] identity = new double[dim][dim];
-	for (int i = 0; i < dim; i++) {
-	  identity[i][i] = 1.0;
-	}
-	return identity;
+        // Return identity for near-singular
+        double[][] identity = new double[dim][dim];
+        for (int i = 0; i < dim; i++) {
+          identity[i][i] = 1.0;
+        }
+        return identity;
       }
 
       for (int k = 0; k < 2 * dim; k++) {
-	aug[col][k] /= pivot;
+        aug[col][k] /= pivot;
       }
 
       for (int row = 0; row < dim; row++) {
-	if (row != col) {
-	  double factor = aug[row][col];
-	  for (int k = 0; k < 2 * dim; k++) {
-	    aug[row][k] -= factor * aug[col][k];
-	  }
-	}
+        if (row != col) {
+          double factor = aug[row][col];
+          for (int k = 0; k < 2 * dim; k++) {
+            aug[row][k] -= factor * aug[col][k];
+          }
+        }
       }
     }
 
@@ -915,7 +915,7 @@ public class SQPoptimizer implements Serializable {
     for (int i = 0; i < rows; i++) {
       double sum = 0.0;
       for (int j = 0; j < vec.length; j++) {
-	sum += matrix[i][j] * vec[j];
+        sum += matrix[i][j] * vec[j];
       }
       result[i] = sum;
     }
@@ -954,7 +954,7 @@ public class SQPoptimizer implements Serializable {
      * @param kktError final KKT error
      */
     public OptimizationResult(double[] optimalPoint, double optimalValue, int iterations, boolean converged,
-	double kktError) {
+        double kktError) {
       this.optimalPoint = Arrays.copyOf(optimalPoint, optimalPoint.length);
       this.optimalValue = optimalValue;
       this.iterations = iterations;

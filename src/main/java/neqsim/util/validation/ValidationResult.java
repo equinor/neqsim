@@ -202,7 +202,7 @@ public class ValidationResult {
     List<ValidationIssue> errors = new ArrayList<>();
     for (ValidationIssue issue : issues) {
       if (issue.getSeverity() == Severity.CRITICAL) {
-	errors.add(issue);
+        errors.add(issue);
       }
     }
     return errors;
@@ -217,7 +217,7 @@ public class ValidationResult {
     List<ValidationIssue> warnings = new ArrayList<>();
     for (ValidationIssue issue : issues) {
       if (issue.getSeverity() == Severity.MAJOR) {
-	warnings.add(issue);
+        warnings.add(issue);
       }
     }
     return warnings;
@@ -260,7 +260,7 @@ public class ValidationResult {
 
     if (!issues.isEmpty()) {
       for (ValidationIssue issue : issues) {
-	sb.append(issue).append("\n");
+        sb.append(issue).append("\n");
       }
     } else {
       sb.append("No issues found.\n");

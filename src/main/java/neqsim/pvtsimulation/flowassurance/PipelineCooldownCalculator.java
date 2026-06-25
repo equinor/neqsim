@@ -335,7 +335,7 @@ public class PipelineCooldownCalculator implements Serializable {
       // Resistance from insulation
       double rIns_res = 0.0;
       if (insulationThickness > 0.001) {
-	rIns_res = Math.log(rIns / ro) / (2.0 * Math.PI * insulationConductivity);
+        rIns_res = Math.log(rIns / ro) / (2.0 * Math.PI * insulationConductivity);
       }
       // External convection resistance
       double rExt = 1.0 / (2.0 * Math.PI * rOuter * externalHTC);
@@ -382,15 +382,15 @@ public class PipelineCooldownCalculator implements Serializable {
     }
     for (int i = 0; i < fluidTemperature.length; i++) {
       if (fluidTemperature[i] <= targetTemperatureK) {
-	if (i == 0) {
-	  return 0.0;
-	}
-	// Linear interpolation
-	double t1 = timeHours[i - 1];
-	double t2 = timeHours[i];
-	double T1 = fluidTemperature[i - 1];
-	double T2 = fluidTemperature[i];
-	return t1 + (t2 - t1) * (T1 - targetTemperatureK) / (T1 - T2);
+        if (i == 0) {
+          return 0.0;
+        }
+        // Linear interpolation
+        double t1 = timeHours[i - 1];
+        double t2 = timeHours[i];
+        double T1 = fluidTemperature[i - 1];
+        double T2 = fluidTemperature[i];
+        return t1 + (t2 - t1) * (T1 - targetTemperatureK) / (T1 - T2);
       }
     }
     return -1.0; // Not reached
@@ -411,8 +411,8 @@ public class PipelineCooldownCalculator implements Serializable {
     }
     for (int i = 0; i < timeHours.length - 1; i++) {
       if (hours >= timeHours[i] && hours <= timeHours[i + 1]) {
-	double frac = (hours - timeHours[i]) / (timeHours[i + 1] - timeHours[i]);
-	return fluidTemperature[i] + frac * (fluidTemperature[i + 1] - fluidTemperature[i]);
+        double frac = (hours - timeHours[i]) / (timeHours[i + 1] - timeHours[i]);
+        return fluidTemperature[i] + frac * (fluidTemperature[i + 1] - fluidTemperature[i]);
       }
     }
     return fluidTemperature[fluidTemperature.length - 1];
@@ -440,7 +440,7 @@ public class PipelineCooldownCalculator implements Serializable {
     } else {
       double rSteel = Math.log(ro / ri) / (2.0 * Math.PI * steelConductivity);
       double rInsRes = insulationThickness > 0.001 ? Math.log(rIns / ro) / (2.0 * Math.PI * insulationConductivity)
-	  : 0.0;
+          : 0.0;
       double rExt = 1.0 / (2.0 * Math.PI * rOuter * externalHTC);
       uPerLength = 1.0 / (rSteel + rInsRes + rExt);
     }
@@ -449,7 +449,7 @@ public class PipelineCooldownCalculator implements Serializable {
     double areaSteel = Math.PI * (ro * ro - ri * ri);
     double areaIns = Math.PI * (rIns * rIns - ro * ro);
     double totalMassCp = fluidDensity * areaFluid * fluidSpecificHeat + steelDensity * areaSteel * steelSpecificHeat
-	+ insulationDensity * areaIns * insulationSpecificHeat;
+        + insulationDensity * areaIns * insulationSpecificHeat;
 
     double tauSeconds = totalMassCp / uPerLength;
     return tauSeconds / 3600.0;

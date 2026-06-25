@@ -74,11 +74,11 @@ class PseudoComponentCombinerTest {
     assertEquals(0.05, combined.getComponent("n-butane").getNumberOfmoles(), TOLERANCE);
 
     List<ComponentInterface> pseudoComponents = Arrays.stream(combined.getComponentNames()).map(combined::getComponent)
-	.filter(component -> component.isIsTBPfraction() || component.isIsPlusFraction())
-	.sorted((c1, c2) -> Double.compare(
-	    c1.getNormalBoilingPoint() > 0.0 ? c1.getNormalBoilingPoint() : c1.getMolarMass(),
-	    c2.getNormalBoilingPoint() > 0.0 ? c2.getNormalBoilingPoint() : c2.getMolarMass()))
-	.collect(Collectors.toList());
+        .filter(component -> component.isIsTBPfraction() || component.isIsPlusFraction())
+        .sorted((c1, c2) -> Double.compare(
+            c1.getNormalBoilingPoint() > 0.0 ? c1.getNormalBoilingPoint() : c1.getMolarMass(),
+            c2.getNormalBoilingPoint() > 0.0 ? c2.getNormalBoilingPoint() : c2.getMolarMass()))
+        .collect(Collectors.toList());
 
     assertEquals(2, pseudoComponents.size());
 
@@ -101,7 +101,7 @@ class PseudoComponentCombinerTest {
     assertEquals(0.367044534, high.getAcentricFactor(), 5e-4);
 
     double expectedMass = mass(fluid1.getComponent("C7_PC")) + mass(fluid1.getComponent("C10_PC"))
-	+ mass(fluid2.getComponent("C8_PC")) + mass(fluid2.getComponent("C11_PC"));
+        + mass(fluid2.getComponent("C8_PC")) + mass(fluid2.getComponent("C11_PC"));
     double combinedMass = mass(low) + mass(high);
     assertEquals(expectedMass, combinedMass, 1e-12);
   }
@@ -176,12 +176,12 @@ class PseudoComponentCombinerTest {
     assertEquals(0.7, characterized.getComponent("methane").getNumberOfmoles(), TOLERANCE);
 
     List<ComponentInterface> pseudoComponents = Arrays.stream(characterized.getComponentNames())
-	.map(characterized::getComponent)
-	.filter(component -> component.isIsTBPfraction() || component.isIsPlusFraction())
-	.sorted((c1, c2) -> Double.compare(
-	    c1.getNormalBoilingPoint() > 0.0 ? c1.getNormalBoilingPoint() : c1.getMolarMass(),
-	    c2.getNormalBoilingPoint() > 0.0 ? c2.getNormalBoilingPoint() : c2.getMolarMass()))
-	.collect(Collectors.toList());
+        .map(characterized::getComponent)
+        .filter(component -> component.isIsTBPfraction() || component.isIsPlusFraction())
+        .sorted((c1, c2) -> Double.compare(
+            c1.getNormalBoilingPoint() > 0.0 ? c1.getNormalBoilingPoint() : c1.getMolarMass(),
+            c2.getNormalBoilingPoint() > 0.0 ? c2.getNormalBoilingPoint() : c2.getMolarMass()))
+        .collect(Collectors.toList());
 
     assertEquals(3, pseudoComponents.size());
 
@@ -215,7 +215,7 @@ class PseudoComponentCombinerTest {
     assertEquals(0.35, pc9.getAcentricFactor(), 5e-4);
 
     double expectedMass = mass(source.getComponent("S1_PC")) + mass(source.getComponent("S2_PC"))
-	+ mass(source.getComponent("S3_PC")) + mass(source.getComponent("S4_PC"));
+        + mass(source.getComponent("S3_PC")) + mass(source.getComponent("S4_PC"));
     double actualMass = mass(pc7) + mass(pc8) + mass(pc9);
     assertEquals(expectedMass, actualMass, 1e-12);
   }
@@ -224,7 +224,7 @@ class PseudoComponentCombinerTest {
   @DisplayName("invalid input throws exception")
   void testInvalidInput() {
     assertThrows(IllegalArgumentException.class,
-	() -> PseudoComponentCombiner.combineReservoirFluids(0, createFluid1()));
+        () -> PseudoComponentCombiner.combineReservoirFluids(0, createFluid1()));
     assertThrows(IllegalArgumentException.class, () -> PseudoComponentCombiner.combineReservoirFluids(3));
   }
 }

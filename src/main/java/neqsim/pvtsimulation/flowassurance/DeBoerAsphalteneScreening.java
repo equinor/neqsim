@@ -213,7 +213,7 @@ public class DeBoerAsphalteneScreening {
       // Typical adjustment: 5% asphaltenes doubles risk
       double asphalteneMultiplier = 1.0 + (asphalteneContent - 0.02) / 0.05;
       if (asphalteneMultiplier < 0.5) {
-	asphalteneMultiplier = 0.5;
+        asphalteneMultiplier = 0.5;
       }
       riskIndex *= asphalteneMultiplier;
     }
@@ -306,9 +306,9 @@ public class DeBoerAsphalteneScreening {
 
       // Get oil phase density (usually phase 0 or 1 depending on conditions)
       if (workSystem.hasPhaseType("oil")) {
-	inSituDensity = workSystem.getPhase("oil").getDensity("kg/m3");
+        inSituDensity = workSystem.getPhase("oil").getDensity("kg/m3");
       } else if (workSystem.getNumberOfPhases() > 0) {
-	inSituDensity = workSystem.getPhase(0).getDensity("kg/m3");
+        inSituDensity = workSystem.getPhase(0).getDensity("kg/m3");
       }
       return inSituDensity;
     } catch (Exception e) {
@@ -329,12 +329,12 @@ public class DeBoerAsphalteneScreening {
     // Calculate properties if system available
     if (system != null) {
       if (Double.isNaN(saturationPressure) || saturationPressure <= 0) {
-	result.append("Calculating saturation pressure...\n");
-	calculateSaturationPressure();
+        result.append("Calculating saturation pressure...\n");
+        calculateSaturationPressure();
       }
       if (Double.isNaN(inSituDensity) || inSituDensity <= 0) {
-	result.append("Calculating in-situ density...\n");
-	calculateInSituDensity();
+        result.append("Calculating in-situ density...\n");
+        calculateInSituDensity();
       }
     }
 

@@ -58,15 +58,15 @@ public class CriticalPointFlash extends Flash {
     double tempJ = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < numberOfComponents; j++) {
-	dij = i == j ? 1.0 : 0.0; // Kroneckers delta
+        dij = i == j ? 1.0 : 0.0; // Kroneckers delta
 
-	tempJ = (dij / system.getPhase(0).getComponent(i).getNumberOfMolesInPhase()
-	    - 1.0 / system.getPhase(0).getNumberOfMolesInPhase()
-	    + (system.getPhase(0).getComponent(i).getdfugdn(j) + system.getPhase(0).getComponent(i).getdfugdp()
-		* system.getPhase(0).getComponent(j).getVoli() * system.getPhase(0).getdPdVTn() * -1.0));
+        tempJ = (dij / system.getPhase(0).getComponent(i).getNumberOfMolesInPhase()
+            - 1.0 / system.getPhase(0).getNumberOfMolesInPhase()
+            + (system.getPhase(0).getComponent(i).getdfugdn(j) + system.getPhase(0).getComponent(i).getdfugdp()
+                * system.getPhase(0).getComponent(j).getVoli() * system.getPhase(0).getdPdVTn() * -1.0));
 
-	Mmatrix.set(i, j,
-	    Math.sqrt(system.getPhase(0).getComponent(i).getz() * system.getPhase(0).getComponent(j).getz()) * tempJ);
+        Mmatrix.set(i, j,
+            Math.sqrt(system.getPhase(0).getComponent(i).getz() * system.getPhase(0).getComponent(j).getz()) * tempJ);
       }
     }
     // Q is theoretically symmetric; symmetrize to guarantee real eigenvalues/eigenvectors.
@@ -99,13 +99,13 @@ public class CriticalPointFlash extends Flash {
     double smallestMagnitude = Double.POSITIVE_INFINITY;
     for (int idx = 0; idx < n; idx++) {
       if (evd.getEigenVector(idx) == null) {
-	continue;
+        continue;
       }
       Complex_F64 eigenvalue = evd.getEigenvalue(idx);
       double magnitude = Math.abs(eigenvalue.getReal());
       if (magnitude < smallestMagnitude) {
-	smallestMagnitude = magnitude;
-	bestIndex = idx;
+        smallestMagnitude = magnitude;
+        bestIndex = idx;
       }
     }
     if (bestIndex < 0) {
@@ -131,9 +131,9 @@ public class CriticalPointFlash extends Flash {
     double sperturb = 1e-3;
     for (int ii = 0; ii < numberOfComponents; ii++) {
       newz1[ii] = system.getPhase(0).getComponent(ii).getz()
-	  + sperturb * eigenVector.get(ii) * Math.sqrt(system.getPhase(0).getComponent(ii).getz());
+          + sperturb * eigenVector.get(ii) * Math.sqrt(system.getPhase(0).getComponent(ii).getz());
       newz2[ii] = system.getPhase(0).getComponent(ii).getz()
-	  - sperturb * eigenVector.get(ii) * Math.sqrt(system.getPhase(0).getComponent(ii).getz());
+          - sperturb * eigenVector.get(ii) * Math.sqrt(system.getPhase(0).getComponent(ii).getz());
     }
 
     system.setMolarComposition(newz1);
@@ -185,7 +185,7 @@ public class CriticalPointFlash extends Flash {
       calcMmatrix();
       SimpleMatrix eigenVector = getCriticalEigenVector();
       if (eigenVector == null) {
-	break;
+        break;
       }
       SimpleMatrix evalMatrix = eigenVector.transpose().mult(Mmatrix).mult(eigenVector);
       // Heidemann & Khalil (1980): the temperature is adjusted to drive the smallest eigenvalue of
@@ -200,29 +200,30 @@ public class CriticalPointFlash extends Flash {
       system.setTemperature(system.getTemperature() + dT);
 
       do {
-	system.init(3);
-	iter++;
-	olddetM = detM;
-	calcMmatrix();
-	eigenVector = getCriticalEigenVector();
-	if (eigenVector == null) {
-	  break;
-	}
-	evalMatrix = eigenVector.transpose().mult(Mmatrix).mult(eigenVector);
-	detM = evalMatrix.get(0, 0);
-	ddetdT = (detM - olddetM) / dT;
-	if (ddetdT == 0.0 || Double.isNaN(ddetdT)) {
-	  break;
-	}
-	dT = -detM / ddetdT;
-	// Limit the Newton step so the search does not jump into a non-physical region where the
-	// EOS returns NaN properties (which would make the Q matrix non-decomposable).
-	if (Math.abs(dT) > 5.0) {
-	  dT = Math.signum(dT) * 5.0;
-	}
-	double oldTemp = system.getTemperature();
-	system.setTemperature(oldTemp + dT);
-	logger.info("Temperature " + oldTemp + " dT " + dT + " evalMatrix " + evalMatrix.get(0, 0));
+        system.init(3);
+        iter++;
+        olddetM = detM;
+        calcMmatrix();
+        eigenVector = getCriticalEigenVector();
+        if (eigenVector == null) {
+          break;
+        }
+        evalMatrix = eigenVector.transpose().mult(Mmatrix).mult(eigenVector);
+        detM = evalMatrix.get(0, 0);
+        ddetdT = (detM - olddetM) / dT;
+        if (ddetdT == 0.0 || Double.isNaN(ddetdT)) {
+          break;
+        }
+        dT = -detM / ddetdT;
+        // Limit the Newton step so the search does not jump into a non-physical region where
+        // the
+        // EOS returns NaN properties (which would make the Q matrix non-decomposable).
+        if (Math.abs(dT) > 5.0) {
+          dT = Math.signum(dT) * 5.0;
+        }
+        double oldTemp = system.getTemperature();
+        system.setTemperature(oldTemp + dT);
+        logger.info("Temperature " + oldTemp + " dT " + dT + " evalMatrix " + evalMatrix.get(0, 0));
       } while (Math.abs(dT) > 1e-8 && iter < 112);
 
       double dVc = Vc0 / 100.0;
@@ -231,28 +232,28 @@ public class CriticalPointFlash extends Flash {
       system.init(3);
       double valstart = calcdpd();
       if (Double.isNaN(valstart)) {
-	break;
+        break;
       }
       iter = 0;
       system.getPhase(0).setTotalVolume(system.getPhase(0).getTotalVolume() + dVc);
       double dVOld = 1111110;
       do {
-	oldVal = valstart;
-	system.init(3);
-	iter++;
-	valstart = calcdpd();
-	if (Double.isNaN(valstart)) {
-	  break;
-	}
-	ddetdV = (valstart - oldVal) / dVc;
-	if (ddetdV == 0.0 || Double.isNaN(ddetdV)) {
-	  break;
-	}
-	dVOld = dVc;
-	dVc = -valstart / ddetdV;
-	system.getPhase(0).setTotalVolume(system.getPhase(0).getVolume() + 0.5 * dVc);
-	logger.info("Volume " + system.getPhase(0).getVolume() + " dVc " + dVc + " tddpp " + valstart + " pressure "
-	    + system.getPressure());
+        oldVal = valstart;
+        system.init(3);
+        iter++;
+        valstart = calcdpd();
+        if (Double.isNaN(valstart)) {
+          break;
+        }
+        ddetdV = (valstart - oldVal) / dVc;
+        if (ddetdV == 0.0 || Double.isNaN(ddetdV)) {
+          break;
+        }
+        dVOld = dVc;
+        dVc = -valstart / ddetdV;
+        system.getPhase(0).setTotalVolume(system.getPhase(0).getVolume() + 0.5 * dVc);
+        logger.info("Volume " + system.getPhase(0).getVolume() + " dVc " + dVc + " tddpp " + valstart + " pressure "
+            + system.getPressure());
       } while (Math.abs(dVc) > 1e-5 && iter < 112 && (Math.abs(dVc) < Math.abs(dVOld) || iter < 3));
     }
     system.setUseTVasIndependentVariables(false);

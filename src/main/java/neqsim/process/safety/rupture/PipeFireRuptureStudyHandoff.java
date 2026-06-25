@@ -40,7 +40,7 @@ public final class PipeFireRuptureStudyHandoff implements Serializable {
     this.result = builder.result;
     this.uncertaintySummary = builder.uncertaintySummary;
     this.sourceTermHandoff = builder.sourceTermHandoff == null ? null
-	: new LinkedHashMap<String, Object>(builder.sourceTermHandoff);
+        : new LinkedHashMap<String, Object>(builder.sourceTermHandoff);
   }
 
   /**

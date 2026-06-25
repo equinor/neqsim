@@ -80,7 +80,7 @@ public class ProcessRewardFunction implements Serializable {
     components.add(new RewardComponent("energy_minimization", weight) {
       @Override
       double computeRaw() {
-	return -energyEfficiency(process);
+        return -energyEfficiency(process);
       }
     });
     return this;
@@ -100,7 +100,7 @@ public class ProcessRewardFunction implements Serializable {
     components.add(new RewardComponent("quality_" + streamName + "_" + propertyName, weight) {
       @Override
       double computeRaw() {
-	return -productQuality(process, streamName, propertyName, target);
+        return -productQuality(process, streamName, propertyName, target);
       }
     });
     return this;
@@ -117,7 +117,7 @@ public class ProcessRewardFunction implements Serializable {
     components.add(new RewardComponent("throughput_" + streamName, weight) {
       @Override
       double computeRaw() {
-	return throughput(process, streamName);
+        return throughput(process, streamName);
       }
     });
     return this;
@@ -134,7 +134,7 @@ public class ProcessRewardFunction implements Serializable {
     components.add(new RewardComponent("constraint_penalty", weight) {
       @Override
       double computeRaw() {
-	return -constraintSatisfaction(process);
+        return -constraintSatisfaction(process);
       }
     });
     return this;
@@ -151,7 +151,7 @@ public class ProcessRewardFunction implements Serializable {
     components.add(new RewardComponent("specific_energy_" + productStreamName, weight) {
       @Override
       double computeRaw() {
-	return -specificEnergy(process, productStreamName);
+        return -specificEnergy(process, productStreamName);
       }
     });
     return this;
@@ -195,7 +195,7 @@ public class ProcessRewardFunction implements Serializable {
     int i = 0;
     for (Map.Entry<String, Double> entry : lastBreakdown.entrySet()) {
       if (i > 0) {
-	sb.append(",\n");
+        sb.append(",\n");
       }
       sb.append("  \"").append(entry.getKey()).append("\": ").append(String.format("%.6f", entry.getValue()));
       i++;
@@ -226,23 +226,23 @@ public class ProcessRewardFunction implements Serializable {
 
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof Compressor) {
-	Compressor comp = (Compressor) unit;
-	double power = comp.getPower();
-	if (!Double.isNaN(power) && !Double.isInfinite(power)) {
-	  totalEnergyW += Math.abs(power);
-	}
+        Compressor comp = (Compressor) unit;
+        double power = comp.getPower();
+        if (!Double.isNaN(power) && !Double.isInfinite(power)) {
+          totalEnergyW += Math.abs(power);
+        }
       } else if (unit instanceof Heater) {
-	Heater heater = (Heater) unit;
-	double duty = heater.getDuty();
-	if (!Double.isNaN(duty) && !Double.isInfinite(duty)) {
-	  totalEnergyW += Math.abs(duty);
-	}
+        Heater heater = (Heater) unit;
+        double duty = heater.getDuty();
+        if (!Double.isNaN(duty) && !Double.isInfinite(duty)) {
+          totalEnergyW += Math.abs(duty);
+        }
       } else if (unit instanceof Cooler) {
-	Cooler cooler = (Cooler) unit;
-	double duty = cooler.getDuty();
-	if (!Double.isNaN(duty) && !Double.isInfinite(duty)) {
-	  totalEnergyW += Math.abs(duty);
-	}
+        Cooler cooler = (Cooler) unit;
+        double duty = cooler.getDuty();
+        if (!Double.isNaN(duty) && !Double.isInfinite(duty)) {
+          totalEnergyW += Math.abs(duty);
+        }
       }
     }
 
@@ -268,7 +268,7 @@ public class ProcessRewardFunction implements Serializable {
     if (outlets == null || outlets.isEmpty()) {
       // The unit itself might be a stream
       if (unit instanceof StreamInterface) {
-	return computePropertyDeviation((StreamInterface) unit, propertyName, target);
+        return computePropertyDeviation((StreamInterface) unit, propertyName, target);
       }
       return 1.0;
     }
@@ -327,38 +327,38 @@ public class ProcessRewardFunction implements Serializable {
     for (ProcessEquipmentInterface unit : units) {
       List<StreamInterface> outlets = unit.getOutletStreams();
       if (outlets == null) {
-	continue;
+        continue;
       }
       for (StreamInterface stream : outlets) {
-	if (stream == null || stream.getThermoSystem() == null) {
-	  continue;
-	}
+        if (stream == null || stream.getThermoSystem() == null) {
+          continue;
+        }
 
-	double t = stream.getThermoSystem().getTemperature();
-	double p = stream.getThermoSystem().getPressure();
+        double t = stream.getThermoSystem().getTemperature();
+        double p = stream.getThermoSystem().getPressure();
 
-	if (Double.isNaN(t) || Double.isInfinite(t) || t <= 0.0) {
-	  penalty += 1.0;
-	}
-	if (Double.isNaN(p) || Double.isInfinite(p) || p <= 0.0) {
-	  penalty += 1.0;
-	}
+        if (Double.isNaN(t) || Double.isInfinite(t) || t <= 0.0) {
+          penalty += 1.0;
+        }
+        if (Double.isNaN(p) || Double.isInfinite(p) || p <= 0.0) {
+          penalty += 1.0;
+        }
 
-	// Check compositions
-	int numPhases = stream.getThermoSystem().getNumberOfPhases();
-	for (int phase = 0; phase < numPhases; phase++) {
-	  double sum = 0.0;
-	  for (int comp = 0; comp < stream.getThermoSystem().getPhase(phase).getNumberOfComponents(); comp++) {
-	    double x = stream.getThermoSystem().getPhase(phase).getComponent(comp).getx();
-	    if (Double.isNaN(x) || x < -0.001 || x > 1.001) {
-	      penalty += 0.1;
-	    }
-	    sum += x;
-	  }
-	  if (Math.abs(sum - 1.0) > 0.01) {
-	    penalty += 0.5;
-	  }
-	}
+        // Check compositions
+        int numPhases = stream.getThermoSystem().getNumberOfPhases();
+        for (int phase = 0; phase < numPhases; phase++) {
+          double sum = 0.0;
+          for (int comp = 0; comp < stream.getThermoSystem().getPhase(phase).getNumberOfComponents(); comp++) {
+            double x = stream.getThermoSystem().getPhase(phase).getComponent(comp).getx();
+            if (Double.isNaN(x) || x < -0.001 || x > 1.001) {
+              penalty += 0.1;
+            }
+            sum += x;
+          }
+          if (Math.abs(sum - 1.0) > 0.01) {
+            penalty += 0.5;
+          }
+        }
       }
     }
     return penalty;
@@ -406,13 +406,13 @@ public class ProcessRewardFunction implements Serializable {
       // Treat as component name — look up mole fraction in first phase
       int numPhases = stream.getThermoSystem().getNumberOfPhases();
       if (numPhases > 0) {
-	try {
-	  int compIdx = stream.getThermoSystem().getPhase(0).getComponent(propertyName).getComponentNumber();
-	  actual = stream.getThermoSystem().getPhase(0).getComponent(compIdx).getx();
-	  scale = 1.0;
-	} catch (Exception e) {
-	  return 1.0;
-	}
+        try {
+          int compIdx = stream.getThermoSystem().getPhase(0).getComponent(propertyName).getComponentNumber();
+          actual = stream.getThermoSystem().getPhase(0).getComponent(compIdx).getx();
+          scale = 1.0;
+        } catch (Exception e) {
+          return 1.0;
+        }
       }
     }
 

@@ -97,7 +97,7 @@ public class PipeFireRuptureScenario implements Serializable {
    */
   public PipeFireRuptureScenario withPassiveProtectionFactor(double heatFluxFactor) {
     return new PipeFireRuptureScenario(name, fireTemperatureC, gasTemperatureC,
-	convectiveHeatTransferCoefficientWPerM2K, fireEmissivity, metalEmissivity, metalAbsorptivity, heatFluxFactor);
+        convectiveHeatTransferCoefficientWPerM2K, fireEmissivity, metalEmissivity, metalAbsorptivity, heatFluxFactor);
   }
 
   /**
@@ -180,8 +180,8 @@ public class PipeFireRuptureScenario implements Serializable {
    */
   public double heatFluxWPerM2(double outerSurfaceTemperatureC) {
     double radiativeFlux = STEFAN_BOLTZMANN_W_PER_M2K4
-	* (fireEmissivity * metalAbsorptivity * Math.pow(fireTemperatureC + 273.0, 4.0)
-	    - metalEmissivity * Math.pow(outerSurfaceTemperatureC + 273.0, 4.0));
+        * (fireEmissivity * metalAbsorptivity * Math.pow(fireTemperatureC + 273.0, 4.0)
+            - metalEmissivity * Math.pow(outerSurfaceTemperatureC + 273.0, 4.0));
     double convectiveFlux = convectiveHeatTransferCoefficientWPerM2K * (gasTemperatureC - outerSurfaceTemperatureC);
     return Math.max(0.0, (radiativeFlux + convectiveFlux) * passiveProtectionHeatFluxFactor);
   }

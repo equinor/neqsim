@@ -61,7 +61,7 @@ class IntegratorsAndSchedulerTest {
     assertTrue(x > 0.0, "implicit Euler must remain positive for monotone decay, got " + x);
     assertTrue(x < 1.0e-3, "implicit Euler should have decayed below 1e-3, got " + x);
     assertFalse(((BDFIntegrator) bdf).lastStepFellBack(),
-	"BDF should converge on linear decay, not fall back to explicit");
+        "BDF should converge on linear decay, not fall back to explicit");
   }
 
   @Test
@@ -97,19 +97,19 @@ class IntegratorsAndSchedulerTest {
     sched.scheduleEvent(2.0, "B", new Runnable() {
       @Override
       public void run() {
-	counter[1] = 2;
+        counter[1] = 2;
       }
     });
     sched.scheduleEvent(1.0, "A", new Runnable() {
       @Override
       public void run() {
-	counter[0] = 1;
+        counter[0] = 1;
       }
     });
     sched.scheduleEvent(3.0, "C", new Runnable() {
       @Override
       public void run() {
-	counter[2] = 3;
+        counter[2] = 3;
       }
     });
 
@@ -155,7 +155,7 @@ class IntegratorsAndSchedulerTest {
     sched.scheduleEvent(1.0, "bad", new Runnable() {
       @Override
       public void run() {
-	throw new RuntimeException("boom");
+        throw new RuntimeException("boom");
       }
     });
     // Should not throw; should still log as fired.

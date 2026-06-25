@@ -1,5 +1,7 @@
 package neqsim.thermodynamicoperations.flashops.saturationops;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -7,8 +9,6 @@ import neqsim.thermo.phase.PhaseEos;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Test to check kij parameters between n-butane and ions.
@@ -47,7 +47,7 @@ public class NButaneKijTest {
     logger.info("Component indices:");
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       logger.info("  " + i + ": " + fluid.getComponent(i).getName() + " (ionic charge: "
-	  + fluid.getComponent(i).getIonicCharge() + ")");
+          + fluid.getComponent(i).getIonicCharge() + ")");
     }
 
     logger.info("\n=== Binary Interaction Parameters (kij) ===");
@@ -66,22 +66,22 @@ public class NButaneKijTest {
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       String name = fluid.getComponent(i).getName();
       if (name.equals("n-butane")) {
-	nButaneIdx = i;
+        nButaneIdx = i;
       }
       if (name.equals("Na+")) {
-	naIdx = i;
+        naIdx = i;
       }
       if (name.equals("Cl-")) {
-	clIdx = i;
+        clIdx = i;
       }
       if (name.equals("water")) {
-	waterIdx = i;
+        waterIdx = i;
       }
       if (name.equals("MEG")) {
-	megIdx = i;
+        megIdx = i;
       }
       if (name.equals("methane")) {
-	methaneIdx = i;
+        methaneIdx = i;
       }
     }
 
@@ -165,13 +165,13 @@ public class NButaneKijTest {
       // Check if fugacity coefficient is unreasonably large or small
       double phi = fluid.getPhase(p).getComponent("n-butane").getFugacityCoefficient();
       if (phi > 1e10) {
-	logger.info("    WARNING: Extremely large fugacity coefficient!");
+        logger.info("    WARNING: Extremely large fugacity coefficient!");
       }
       if (phi < 1e-10 && phi > 0) {
-	logger.info("    WARNING: Extremely small fugacity coefficient!");
+        logger.info("    WARNING: Extremely small fugacity coefficient!");
       }
       if (Double.isNaN(phi) || Double.isInfinite(phi)) {
-	logger.info("    ERROR: Invalid fugacity coefficient (NaN or Inf)!");
+        logger.info("    ERROR: Invalid fugacity coefficient (NaN or Inf)!");
       }
     }
   }
@@ -225,7 +225,7 @@ public class NButaneKijTest {
       double Kna = fluid2.getPhase(0).getComponent("Na+").getK();
       logger.info("  K(Na+) = " + Kna);
       if (Math.abs(Kna) > 1e-30) {
-	logger.info("  WARNING: K(Na+) should be ~0 for ions!");
+        logger.info("  WARNING: K(Na+) should be ~0 for ions!");
       }
     }
 

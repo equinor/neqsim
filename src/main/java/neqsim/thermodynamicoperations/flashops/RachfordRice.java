@@ -25,7 +25,7 @@ public class RachfordRice implements Serializable {
   private static final long serialVersionUID = 1000;
   private double[] beta = new double[2];
   private static volatile String method = "Nielsen2023"; // alternative use Nielsen2023 or
-							 // Michelsen2001
+  // Michelsen2001
   // Work arrays reused across iterations
   private double[] c = new double[0];
   private double[] d = new double[0];
@@ -91,15 +91,15 @@ public class RachfordRice implements Serializable {
     // Rachford-Rice phase fraction calculation.
     for (i = 0; i < K.length; i++) {
       if (K[i] < 1e-30) {
-	continue; // Skip ions
+        continue; // Skip ions
       }
       midler = (K[i] * z[i] - 1.0) / (K[i] - 1.0);
       if ((midler > minBeta) && (K[i] > 1.0)) {
-	minBeta = midler;
+        minBeta = midler;
       }
       midler = (1.0 - z[i]) / (1.0 - K[i]);
       if ((midler < maxBeta) && (K[i] < 1.0)) {
-	maxBeta = midler;
+        maxBeta = midler;
       }
       g0 += z[i] * K[i];
       g1 += -z[i] / K[i];
@@ -118,7 +118,7 @@ public class RachfordRice implements Serializable {
     double gtest = 0.0;
     for (i = 0; i < K.length; i++) {
       if (K[i] < 1e-30) {
-	continue; // Skip ions
+        continue; // Skip ions
       }
       gtest += z[i] * (K[i] - 1.0) / (1.0 - nybeta + nybeta * K[i]);
     }
@@ -144,59 +144,59 @@ public class RachfordRice implements Serializable {
     do {
       iterations++;
       if (gtest >= 0) {
-	deriv = 0.0;
-	gbeta = 0.0;
+        deriv = 0.0;
+        gbeta = 0.0;
 
-	for (i = 0; i < K.length; i++) {
-	  if (K[i] < 1e-30) {
-	    continue; // Skip ions
-	  }
-	  double temp1 = (K[i] - 1.0);
-	  double temp2 = 1.0 + temp1 * nybeta;
-	  deriv += -(z[i] * temp1 * temp1) / (temp2 * temp2);
-	  gbeta += z[i] * (K[i] - 1.0) / (1.0 + (K[i] - 1.0) * nybeta);
-	}
+        for (i = 0; i < K.length; i++) {
+          if (K[i] < 1e-30) {
+            continue; // Skip ions
+          }
+          double temp1 = (K[i] - 1.0);
+          double temp2 = 1.0 + temp1 * nybeta;
+          deriv += -(z[i] * temp1 * temp1) / (temp2 * temp2);
+          gbeta += z[i] * (K[i] - 1.0) / (1.0 + (K[i] - 1.0) * nybeta);
+        }
 
-	if (gbeta >= 0) {
-	  minBeta = nybeta;
-	} else {
-	  maxBeta = nybeta;
-	}
-	nybeta -= (gbeta / deriv);
+        if (gbeta >= 0) {
+          minBeta = nybeta;
+        } else {
+          maxBeta = nybeta;
+        }
+        nybeta -= (gbeta / deriv);
 
-	if (nybeta > maxBeta) {
-	  nybeta = maxBeta;
-	}
-	if (nybeta < minBeta) {
-	  nybeta = minBeta;
-	}
+        if (nybeta > maxBeta) {
+          nybeta = maxBeta;
+        }
+        if (nybeta < minBeta) {
+          nybeta = minBeta;
+        }
       } else {
-	deriv = 0.0;
-	gbeta = 0.0;
+        deriv = 0.0;
+        gbeta = 0.0;
 
-	for (i = 0; i < K.length; i++) {
-	  if (K[i] < 1e-30) {
-	    continue; // Skip ions
-	  }
-	  deriv -= (z[i] * (K[i] - 1.0) * (1.0 - K[i])) / Math.pow((betal + (1 - betal) * K[i]), 2);
-	  gbeta += z[i] * (K[i] - 1.0) / (betal + (-betal + 1.0) * K[i]);
-	}
+        for (i = 0; i < K.length; i++) {
+          if (K[i] < 1e-30) {
+            continue; // Skip ions
+          }
+          deriv -= (z[i] * (K[i] - 1.0) * (1.0 - K[i])) / Math.pow((betal + (1 - betal) * K[i]), 2);
+          gbeta += z[i] * (K[i] - 1.0) / (betal + (-betal + 1.0) * K[i]);
+        }
 
-	if (gbeta < 0) {
-	  minBeta = betal;
-	} else {
-	  maxBeta = betal;
-	}
+        if (gbeta < 0) {
+          minBeta = betal;
+        } else {
+          maxBeta = betal;
+        }
 
-	betal -= (gbeta / deriv);
+        betal -= (gbeta / deriv);
 
-	if (betal > maxBeta) {
-	  betal = maxBeta;
-	}
-	if (betal < minBeta) {
-	  betal = minBeta;
-	}
-	nybeta = 1.0 - betal;
+        if (betal > maxBeta) {
+          betal = maxBeta;
+        }
+        if (betal < minBeta) {
+          betal = minBeta;
+        }
+        nybeta = 1.0 - betal;
       }
       step = gbeta / deriv;
     } while (Math.abs(step) >= 1.0e-11 && iterations < maxIterations);
@@ -214,7 +214,7 @@ public class RachfordRice implements Serializable {
       logger.debug("K " + Arrays.toString(K));
       logger.debug("z " + Arrays.toString(z));
       throw new neqsim.util.exception.TooManyIterationsException(new RachfordRice(), "calcBetaMichelsen2001",
-	  maxIterations);
+          maxIterations);
     }
     if (Double.isNaN(nybeta)) {
       throw new neqsim.util.exception.IsNaNException(new RachfordRice(), "calcBetaMichelsen2001", "beta");
@@ -242,7 +242,7 @@ public class RachfordRice implements Serializable {
     // Rachford-Rice phase fraction calculation.
     for (int i = 0; i < K.length; i++) {
       if (K[i] < 1e-30) {
-	continue; // Skip ions
+        continue; // Skip ions
       }
       g0 += z[i] * K[i];
       g1 += -z[i] / K[i];
@@ -260,16 +260,16 @@ public class RachfordRice implements Serializable {
 
     for (int i = 0; i < K.length; i++) {
       if (K[i] < 1e-30) {
-	continue; // Skip ions
+        continue; // Skip ions
       }
       h += z[i] * (K[i] - 1.0) / (1.0 + V * (K[i] - 1.0));
     }
     if (h > 0) {
       for (int i = 0; i < K.length; i++) {
-	if (K[i] < 1e-30) {
-	  continue; // Skip ions
-	}
-	K[i] = 1.0 / K[i];
+        if (K[i] < 1e-30) {
+          continue; // Skip ions
+        }
+        K[i] = 1.0 / K[i];
       }
     }
 
@@ -279,18 +279,18 @@ public class RachfordRice implements Serializable {
 
     for (int i = 0; i < K.length; i++) {
       if (K[i] < 1e-30) {
-	continue; // Skip ions
+        continue; // Skip ions
       }
       if (!foundNonIon) {
-	Kmax = K[i];
-	Kmin = K[i];
-	foundNonIon = true;
+        Kmax = K[i];
+        Kmin = K[i];
+        foundNonIon = true;
       } else {
-	if (K[i] < Kmin) {
-	  Kmin = K[i];
-	} else if (K[i] > Kmax) {
-	  Kmax = K[i];
-	}
+        if (K[i] < Kmin) {
+          Kmin = K[i];
+        } else if (K[i] > Kmax) {
+          Kmax = K[i];
+        }
       }
     }
 
@@ -313,19 +313,19 @@ public class RachfordRice implements Serializable {
     }
     for (int i = 0; i < K.length; i++) {
       if (K[i] < 1e-30) {
-	c[i] = 0.0;
-	d[i] = 0.0;
-	continue; // Skip ions
+        c[i] = 0.0;
+        d[i] = 0.0;
+        continue; // Skip ions
       }
       double Ki = K[i];
       if (Ki < 1e-25) {
-	Ki = 1e-25;
+        Ki = 1e-25;
       } else if (Ki > 1e25) {
-	Ki = 1e25;
+        Ki = 1e25;
       }
       double denom = 1.0 - Ki;
       if (Math.abs(denom) < 1e-25) {
-	denom = denom < 0 ? -1e-25 : 1e-25;
+        denom = denom < 0 ? -1e-25 : 1e-25;
       }
       c[i] = 1.0 / denom;
       d[i] = (alphaMin - c[i]) / (alphaMax - alphaMin);
@@ -347,34 +347,34 @@ public class RachfordRice implements Serializable {
       hb = 0.0;
       double hbder = 0.0;
       for (int i = 0; i < K.length; i++) {
-	if (K[i] < 1e-30) {
-	  continue; // Skip ions
-	}
-	funk -= z[i] * a * (1.0 + a) / (d[i] + a * (1.0 + d[i]));
-	funkder -= z[i] * (a * a + (1.0 + a) * (1.0 + a) * d[i]) / Math.pow(d[i] + a * (1.0 + d[i]), 2.0);
-	hb += z[i] * b / (1.0 + b * (alphaMin - c[i]));
-	hbder += z[i] / Math.pow(1.0 + b * (alphaMin - c[i]), 2.0);
+        if (K[i] < 1e-30) {
+          continue; // Skip ions
+        }
+        funk -= z[i] * a * (1.0 + a) / (d[i] + a * (1.0 + d[i]));
+        funkder -= z[i] * (a * a + (1.0 + a) * (1.0 + a) * d[i]) / Math.pow(d[i] + a * (1.0 + d[i]), 2.0);
+        hb += z[i] * b / (1.0 + b * (alphaMin - c[i]));
+        hbder += z[i] / Math.pow(1.0 + b * (alphaMin - c[i]), 2.0);
       }
       if (Math.abs(funk) < tol && Math.abs(hb) < tol) {
-	break;
+        break;
       }
       if (funk > 0) {
-	amax = a;
+        amax = a;
       } else {
-	amin = a;
+        amin = a;
       }
       if (hb > 0) {
-	bmax = b;
+        bmax = b;
       } else {
-	bmin = b;
+        bmin = b;
       }
       a = a - funk / funkder;
       if (a > amax || a < amin) {
-	a = (amax + amin) / 2.0;
+        a = (amax + amin) / 2.0;
       }
       b = b - hb / hbder;
       if (b > bmax || b < bmin) {
-	b = (bmax + bmin) / 2.0;
+        b = (bmax + bmin) / 2.0;
       }
     } while (iter < maxIterations);
 
@@ -399,7 +399,7 @@ public class RachfordRice implements Serializable {
       logger.debug("z " + Arrays.toString(z));
 
       throw new neqsim.util.exception.TooManyIterationsException(new RachfordRice(), "calcBetaNielsen2023",
-	  maxIterations);
+          maxIterations);
     }
     if (Double.isNaN(V)) {
       throw new neqsim.util.exception.IsNaNException(new RachfordRice(), "calcBetaNielsen2023", "beta");
@@ -439,11 +439,11 @@ public class RachfordRice implements Serializable {
     for (i = 0; i < system.getNumberOfComponents(); i++) {
       midler = (compArray[i].getK() * compArray[i].getz() - 1.0) / (compArray[i].getK() - 1.0);
       if ((midler > minBeta) && (compArray[i].getK() > 1.0)) {
-	minBeta = midler;
+        minBeta = midler;
       }
       midler = (1.0 - compArray[i].getz()) / (1.0 - compArray[i].getK());
       if ((midler < maxBeta) && (compArray[i].getK() < 1.0)) {
-	maxBeta = midler;
+        maxBeta = midler;
       }
       g0 += compArray[i].getz() * compArray[i].getK();
       g1 += -compArray[i].getz() / compArray[i].getK();
@@ -489,55 +489,55 @@ public class RachfordRice implements Serializable {
     do {
       iterations++;
       if (gtest >= 0) {
-	deriv = 0.0;
-	gbeta = 0.0;
+        deriv = 0.0;
+        gbeta = 0.0;
 
-	for (i = 0; i < system.getNumberOfComponents(); i++) {
-	  double temp1 = (compArray[i].getK() - 1.0);
-	  double temp2 = 1.0 + temp1 * nybeta;
-	  deriv += -(compArray[i].getz() * temp1 * temp1) / (temp2 * temp2);
-	  gbeta += compArray[i].getz() * (compArray[i].getK() - 1.0) / (1.0 + (compArray[i].getK() - 1.0) * nybeta);
-	}
+        for (i = 0; i < system.getNumberOfComponents(); i++) {
+          double temp1 = (compArray[i].getK() - 1.0);
+          double temp2 = 1.0 + temp1 * nybeta;
+          deriv += -(compArray[i].getz() * temp1 * temp1) / (temp2 * temp2);
+          gbeta += compArray[i].getz() * (compArray[i].getK() - 1.0) / (1.0 + (compArray[i].getK() - 1.0) * nybeta);
+        }
 
-	if (gbeta >= 0) {
-	  minBeta = nybeta;
-	} else {
-	  maxBeta = nybeta;
-	}
-	nybeta -= (gbeta / deriv);
+        if (gbeta >= 0) {
+          minBeta = nybeta;
+        } else {
+          maxBeta = nybeta;
+        }
+        nybeta -= (gbeta / deriv);
 
-	if (nybeta > maxBeta) {
-	  nybeta = maxBeta;
-	}
-	if (nybeta < minBeta) {
-	  nybeta = minBeta;
-	}
+        if (nybeta > maxBeta) {
+          nybeta = maxBeta;
+        }
+        if (nybeta < minBeta) {
+          nybeta = minBeta;
+        }
       } else {
-	deriv = 0.0;
-	gbeta = 0.0;
+        deriv = 0.0;
+        gbeta = 0.0;
 
-	for (i = 0; i < system.getNumberOfComponents(); i++) {
-	  deriv -= (compArray[i].getz() * (compArray[i].getK() - 1.0) * (1.0 - compArray[i].getK()))
-	      / Math.pow((betal + (1 - betal) * compArray[i].getK()), 2);
-	  gbeta += compArray[i].getz() * (compArray[i].getK() - 1.0) / (betal + (-betal + 1.0) * compArray[i].getK());
-	}
+        for (i = 0; i < system.getNumberOfComponents(); i++) {
+          deriv -= (compArray[i].getz() * (compArray[i].getK() - 1.0) * (1.0 - compArray[i].getK()))
+              / Math.pow((betal + (1 - betal) * compArray[i].getK()), 2);
+          gbeta += compArray[i].getz() * (compArray[i].getK() - 1.0) / (betal + (-betal + 1.0) * compArray[i].getK());
+        }
 
-	if (gbeta < 0) {
-	  minBeta = betal;
-	} else {
-	  maxBeta = betal;
-	}
+        if (gbeta < 0) {
+          minBeta = betal;
+        } else {
+          maxBeta = betal;
+        }
 
-	betal -= (gbeta / deriv);
+        betal -= (gbeta / deriv);
 
-	if (betal > maxBeta) {
-	  betal = maxBeta;
-	}
-	if (betal < minBeta) {
-	  betal = minBeta;
-	}
+        if (betal > maxBeta) {
+          betal = maxBeta;
+        }
+        if (betal < minBeta) {
+          betal = minBeta;
+        }
 
-	nybeta = 1.0 - betal;
+        nybeta = 1.0 - betal;
       }
       step = gbeta / deriv;
     } while (Math.abs(step) >= 1.0e-10 && iterations < maxIterations); // &&

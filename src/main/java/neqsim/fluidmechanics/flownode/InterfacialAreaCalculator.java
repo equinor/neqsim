@@ -328,7 +328,7 @@ public class InterfacialAreaCalculator {
       double dfdh = 4.0 * Math.sin(theta / 2.0) / Math.PI; // Derivative
 
       if (Math.abs(dfdh) < 1e-10) {
-	break;
+        break;
       }
 
       double correction = f / dfdh;
@@ -338,7 +338,7 @@ public class InterfacialAreaCalculator {
       hOverD = Math.max(0.001, Math.min(0.999, hOverD));
 
       if (Math.abs(correction) < 1e-8) {
-	break;
+        break;
       }
     }
 
@@ -538,23 +538,23 @@ public class InterfacialAreaCalculator {
     switch (flowPattern) {
     case STRATIFIED_WAVY:
       if (includeWaveEnhancement) {
-	return calculateStratifiedWavyArea(diameter, liquidHoldup, usg, usl, rhoG, rhoL, sigma);
+        return calculateStratifiedWavyArea(diameter, liquidHoldup, usg, usl, rhoG, rhoL, sigma);
       }
       return calculateStratifiedArea(diameter, liquidHoldup);
 
     case STRATIFIED:
       // Smooth stratified - may still have small waves at higher velocities
       if (includeWaveEnhancement) {
-	// Apply reduced wave enhancement for nominally smooth stratified
-	double aBase = calculateStratifiedArea(diameter, liquidHoldup);
-	double aWavy = calculateStratifiedWavyArea(diameter, liquidHoldup, usg, usl, rhoG, rhoL, sigma);
-	return 0.3 * aWavy + 0.7 * aBase; // Blend
+        // Apply reduced wave enhancement for nominally smooth stratified
+        double aBase = calculateStratifiedArea(diameter, liquidHoldup);
+        double aWavy = calculateStratifiedWavyArea(diameter, liquidHoldup, usg, usl, rhoG, rhoL, sigma);
+        return 0.3 * aWavy + 0.7 * aBase; // Blend
       }
       return calculateStratifiedArea(diameter, liquidHoldup);
 
     case ANNULAR:
       if (includeEntrainment) {
-	return calculateAnnularAreaWithEntrainment(diameter, liquidHoldup, rhoG, rhoL, usg, muL, sigma);
+        return calculateAnnularAreaWithEntrainment(diameter, liquidHoldup, rhoG, rhoL, usg, muL, sigma);
       }
       return calculateAnnularArea(diameter, liquidHoldup);
 
@@ -572,8 +572,8 @@ public class InterfacialAreaCalculator {
       // Churn flow benefits from both wave and entrainment effects
       double aChurnBase = calculateChurnArea(diameter, liquidHoldup);
       if (includeEntrainment) {
-	double aEntrained = calculateAnnularAreaWithEntrainment(diameter, liquidHoldup, rhoG, rhoL, usg, muL, sigma);
-	return 0.5 * (aChurnBase + aEntrained);
+        double aEntrained = calculateAnnularAreaWithEntrainment(diameter, liquidHoldup, rhoG, rhoL, usg, muL, sigma);
+        return 0.5 * (aChurnBase + aEntrained);
       }
       return aChurnBase;
 

@@ -18,7 +18,7 @@ public class DisposalNetworkSummaryDTO implements Serializable {
   public DisposalNetworkSummaryDTO(List<DisposalLoadCaseResultDTO> loadCaseResults, double maxHeatDutyMW,
       double maxRadiationDistanceM, List<CapacityAlertDTO> alerts) {
     this.loadCaseResults = loadCaseResults == null ? Collections.emptyList()
-	: Collections.unmodifiableList(loadCaseResults);
+        : Collections.unmodifiableList(loadCaseResults);
     this.maxHeatDutyMW = maxHeatDutyMW;
     this.maxRadiationDistanceM = maxRadiationDistanceM;
     this.alerts = alerts == null ? Collections.emptyList() : Collections.unmodifiableList(alerts);

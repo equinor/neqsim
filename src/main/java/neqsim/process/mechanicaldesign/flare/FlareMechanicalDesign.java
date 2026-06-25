@@ -162,7 +162,7 @@ public class FlareMechanicalDesign extends MechanicalDesign {
     double allowableStressMPa = 103.0; // SS-310 at high temp
     double stackRadius = tipDiameter / 2.0 + 0.05; // stack OD > tip
     stackWallThickness = (internalPressureMPa * stackRadius * 1000.0)
-	/ (allowableStressMPa * getJointEfficiency() - 0.6 * internalPressureMPa);
+        / (allowableStressMPa * getJointEfficiency() - 0.6 * internalPressureMPa);
     stackWallThickness = Math.max(stackWallThickness, 6.0); // minimum 6mm
 
     // === Stack Weight Estimation ===

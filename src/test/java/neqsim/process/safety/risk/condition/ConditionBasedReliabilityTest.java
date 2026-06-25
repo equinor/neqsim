@@ -223,7 +223,7 @@ class ConditionBasedReliabilityTest {
   @Test
   void testAddCustomIndicator() {
     ConditionBasedReliability.ConditionIndicator efficiency = new ConditionBasedReliability.ConditionIndicator("E1",
-	"Pump Efficiency", ConditionBasedReliability.ConditionIndicator.IndicatorType.EFFICIENCY);
+        "Pump Efficiency", ConditionBasedReliability.ConditionIndicator.IndicatorType.EFFICIENCY);
     efficiency.setThresholds(85.0, 75.0, 65.0); // Lower is worse for efficiency
 
     pump.addIndicator(efficiency);

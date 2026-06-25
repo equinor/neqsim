@@ -46,7 +46,7 @@ public class SystemSrkCPAstatoilTest extends neqsim.NeqSimTest {
   public void testinitPhysicalProperties() {
     thermoSystem.initPhysicalProperties();
     assertEquals(thermoSystem.getPhase(0).getPhysicalProperties().getDensity(),
-	thermoSystem.getPhase(0).getPhysicalProperties().getDensity());
+        thermoSystem.getPhase(0).getPhysicalProperties().getDensity());
   }
 
   /**

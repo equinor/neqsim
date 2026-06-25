@@ -5,12 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import neqsim.process.instrumentdesign.compressor.CompressorInstrumentDesign;
-import neqsim.process.instrumentdesign.heatexchanger.HeatExchangerInstrumentDesign;
-import neqsim.process.instrumentdesign.pipeline.PipelineInstrumentDesign;
-import neqsim.process.instrumentdesign.separator.SeparatorInstrumentDesign;
-import neqsim.process.instrumentdesign.system.SystemInstrumentDesign;
-import neqsim.process.instrumentdesign.valve.ValveInstrumentDesign;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -18,6 +12,12 @@ import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.instrumentdesign.compressor.CompressorInstrumentDesign;
+import neqsim.process.instrumentdesign.heatexchanger.HeatExchangerInstrumentDesign;
+import neqsim.process.instrumentdesign.pipeline.PipelineInstrumentDesign;
+import neqsim.process.instrumentdesign.separator.SeparatorInstrumentDesign;
+import neqsim.process.instrumentdesign.system.SystemInstrumentDesign;
+import neqsim.process.instrumentdesign.valve.ValveInstrumentDesign;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -113,7 +113,7 @@ public class InstrumentDesignTest {
     assertTrue(list.getAll().size() >= 8, "Separator should have at least 8 instruments: " + list.getAll().size());
     assertTrue(list.getAnalogInputCount() >= 4, "Should have multiple analog inputs: " + list.getAnalogInputCount());
     assertTrue(list.getSafetyInstrumentCount() >= 2,
-	"Should have safety instruments: " + list.getSafetyInstrumentCount());
+        "Should have safety instruments: " + list.getSafetyInstrumentCount());
 
     String json = instrDesign.toJson();
     assertNotNull(json);
@@ -135,7 +135,7 @@ public class InstrumentDesignTest {
     assertNotNull(list);
     assertTrue(list.getAll().size() >= 10, "Compressor should have many instruments: " + list.getAll().size());
     assertTrue(list.getSafetyInstrumentCount() >= 3,
-	"Should have multiple safety instruments: " + list.getSafetyInstrumentCount());
+        "Should have multiple safety instruments: " + list.getSafetyInstrumentCount());
 
     String json = instrDesign.toJson();
     assertNotNull(json);
@@ -219,7 +219,7 @@ public class InstrumentDesignTest {
 
     InstrumentList list = instrDesign.getInstrumentList();
     assertEquals(0, list.getDigitalInputCount(),
-	"No pig/leak/safety detection should yield zero DI: " + list.getDigitalInputCount());
+        "No pig/leak/safety detection should yield zero DI: " + list.getDigitalInputCount());
   }
 
   @Test
@@ -281,7 +281,7 @@ public class InstrumentDesignTest {
     assertTrue(sysDesign.getTotalIO() > 0, "Total I/O should be positive: " + sysDesign.getTotalIO());
     assertTrue(sysDesign.getDcsCabinets() > 0, "DCS cabinets should be positive: " + sysDesign.getDcsCabinets());
     assertTrue(sysDesign.getTotalInstrumentCostUSD() > 0,
-	"Total cost should be positive: " + sysDesign.getTotalInstrumentCostUSD());
+        "Total cost should be positive: " + sysDesign.getTotalInstrumentCostUSD());
 
     String json = sysDesign.toJson();
     assertNotNull(json);
@@ -319,7 +319,7 @@ public class InstrumentDesignTest {
 
     // Should aggregate instruments from separator, compressor, and cooler
     assertTrue(sysDesign.getTotalIO() > 10,
-	"Multiple equipment should yield many I/O points: " + sysDesign.getTotalIO());
+        "Multiple equipment should yield many I/O points: " + sysDesign.getTotalIO());
     assertTrue(sysDesign.getTotalSafetyIO() > 0, "Should have safety I/O: " + sysDesign.getTotalSafetyIO());
   }
 }

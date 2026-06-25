@@ -64,8 +64,8 @@ public class BatchStudyTest {
   @Test
   void testAddObjective() {
     BatchStudy study = BatchStudy.builder(baseProcess).vary("pressure", 10.0, 50.0, 3)
-	.addObjective("power", BatchStudy.Objective.MINIMIZE, process -> 100.0)
-	.addObjective("throughput", BatchStudy.Objective.MAXIMIZE, process -> 50.0).build();
+        .addObjective("power", BatchStudy.Objective.MINIMIZE, process -> 100.0)
+        .addObjective("throughput", BatchStudy.Objective.MAXIMIZE, process -> 50.0).build();
 
     assertNotNull(study);
   }
@@ -94,10 +94,10 @@ public class BatchStudyTest {
   @Test
   void testRunStudy() {
     BatchStudy study = BatchStudy.builder(baseProcess).vary("separator.pressure", 10.0, 20.0, 2).parallelism(1) // Sequential
-														// for
-														// test
-														// stability
-	.build();
+        // for
+        // test
+        // stability
+        .build();
 
     BatchStudy.BatchStudyResult result = study.run();
 

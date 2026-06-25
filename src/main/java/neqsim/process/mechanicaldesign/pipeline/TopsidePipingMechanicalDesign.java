@@ -11,14 +11,17 @@ import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
 /**
  * Mechanical design class for topside (offshore platform and onshore facility) piping.
  *
+ * <p>
  * &lt;p&gt; This class provides mechanical design capabilities for topside process piping including: &lt;/p&gt;
  * &lt;ul&gt; &lt;li&gt;Wall thickness per ASME B31.3 Process Piping&lt;/li&gt; &lt;li&gt;Erosional velocity per API RP
  * 14E&lt;/li&gt; &lt;li&gt;Pipe support spacing per NORSOK L-002&lt;/li&gt; &lt;li&gt;Flow-induced vibration (FIV)
  * screening&lt;/li&gt; &lt;li&gt;Acoustic-induced vibration (AIV) analysis&lt;/li&gt; &lt;li&gt;Thermal expansion
  * stress analysis&lt;/li&gt; &lt;/ul&gt;
  *
+ * <p>
  * &lt;h2&gt;Usage Example&lt;/h2&gt;
  *
+ * <p>
  * &lt;pre&gt;{@code
  * // Create topside piping
  * TopsidePiping pipe = new TopsidePiping("HP Gas Header", stream);
@@ -124,13 +127,13 @@ public class TopsidePipingMechanicalDesign extends PipelineMechanicalDesign {
       numberOfExpansionLoops = pipe.getNumberOfExpansionLoops();
 
       if (pipe.getMaxOperatingPressure() > 0) {
-	setMaxOperationPressure(pipe.getMaxOperatingPressure());
+        setMaxOperationPressure(pipe.getMaxOperatingPressure());
       }
       if (pipe.getMaxOperatingTemperature() > -273) {
-	setMaxOperationTemperature(pipe.getMaxOperatingTemperature() + 273.15);
+        setMaxOperationTemperature(pipe.getMaxOperatingTemperature() + 273.15);
       }
       if (pipe.getMinOperatingTemperature() > -273) {
-	minOperationTemperature = pipe.getMinOperatingTemperature() + 273.15;
+        minOperationTemperature = pipe.getMinOperatingTemperature() + 273.15;
       }
     }
 
@@ -138,33 +141,33 @@ public class TopsidePipingMechanicalDesign extends PipelineMechanicalDesign {
     if (getProcessEquipment() instanceof PipeBeggsAndBrills) {
       PipeBeggsAndBrills pipe = (PipeBeggsAndBrills) getProcessEquipment();
       if (pipe.getInletStream() != null && pipe.getInletStream().getFluid() != null) {
-	try {
-	  double massFlow = pipe.getInletStream().getFlowRate("kg/sec");
-	  double density = pipe.getInletStream().getFluid().getDensity("kg/m3");
-	  topsideCalculator.setMassFlowRate(massFlow);
-	  topsideCalculator.setMixtureDensity(density);
+        try {
+          double massFlow = pipe.getInletStream().getFlowRate("kg/sec");
+          double density = pipe.getInletStream().getFluid().getDensity("kg/m3");
+          topsideCalculator.setMassFlowRate(massFlow);
+          topsideCalculator.setMixtureDensity(density);
 
-	  // Get phase fractions
-	  if (pipe.getInletStream().getFluid().hasPhaseType("gas")) {
-	    double gasDensity = pipe.getInletStream().getFluid().getPhase("gas").getDensity("kg/m3");
-	    topsideCalculator.setGasDensity(gasDensity);
-	  }
-	  if (pipe.getInletStream().getFluid().hasPhaseType("oil")
-	      || pipe.getInletStream().getFluid().hasPhaseType("aqueous")) {
-	    double liqFrac = 0.0;
-	    if (pipe.getInletStream().getFluid().hasPhaseType("oil")) {
-	      liqFrac += pipe.getInletStream().getFluid().getPhase("oil").getVolume()
-		  / pipe.getInletStream().getFluid().getVolume();
-	    }
-	    if (pipe.getInletStream().getFluid().hasPhaseType("aqueous")) {
-	      liqFrac += pipe.getInletStream().getFluid().getPhase("aqueous").getVolume()
-		  / pipe.getInletStream().getFluid().getVolume();
-	    }
-	    topsideCalculator.setLiquidFraction(liqFrac);
-	  }
-	} catch (Exception e) {
-	  // Stream not yet run - will update later
-	}
+          // Get phase fractions
+          if (pipe.getInletStream().getFluid().hasPhaseType("gas")) {
+            double gasDensity = pipe.getInletStream().getFluid().getPhase("gas").getDensity("kg/m3");
+            topsideCalculator.setGasDensity(gasDensity);
+          }
+          if (pipe.getInletStream().getFluid().hasPhaseType("oil")
+              || pipe.getInletStream().getFluid().hasPhaseType("aqueous")) {
+            double liqFrac = 0.0;
+            if (pipe.getInletStream().getFluid().hasPhaseType("oil")) {
+              liqFrac += pipe.getInletStream().getFluid().getPhase("oil").getVolume()
+                  / pipe.getInletStream().getFluid().getVolume();
+            }
+            if (pipe.getInletStream().getFluid().hasPhaseType("aqueous")) {
+              liqFrac += pipe.getInletStream().getFluid().getPhase("aqueous").getVolume()
+                  / pipe.getInletStream().getFluid().getVolume();
+            }
+            topsideCalculator.setLiquidFraction(liqFrac);
+          }
+        } catch (Exception e) {
+          // Stream not yet run - will update later
+        }
       }
     }
   }
@@ -185,7 +188,7 @@ public class TopsidePipingMechanicalDesign extends PipelineMechanicalDesign {
 
     // Load topside-specific parameters from database
     dataSource.loadIntoCalculator(topsideCalculator, getCompanySpecificDesignStandards(), getDesignStandardCode(),
-	serviceType);
+        serviceType);
 
     // Load velocity limits
     dataSource.loadVelocityLimits(topsideCalculator, getCompanySpecificDesignStandards(), serviceType);
@@ -214,7 +217,7 @@ public class TopsidePipingMechanicalDesign extends PipelineMechanicalDesign {
       double innerDia = pipe.getDiameter();
       double wallThick = pipe.getWallThickness();
       if (wallThick <= 0) {
-	wallThick = innerDia * 0.05; // Estimate if not set
+        wallThick = innerDia * 0.05; // Estimate if not set
       }
 
       topsideCalculator.setOuterDiameter(innerDia + 2 * wallThick);

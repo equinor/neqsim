@@ -119,9 +119,9 @@ public class PipeWallBuilder {
   public static PipeWallBuilder subseaPipe(double innerDiameter, double pipeThickness, double insulationThickness,
       double concreteThickness) {
     return carbonSteelPipe(innerDiameter, pipeThickness).addCoating(PipeMaterial.FUSION_BONDED_EPOXY, 0.0004) // ~0.4mm
-													      // FBE
-	.addInsulation(PipeMaterial.POLYPROPYLENE, insulationThickness)
-	.addCoating(PipeMaterial.CONCRETE, concreteThickness);
+        // FBE
+        .addInsulation(PipeMaterial.POLYPROPYLENE, insulationThickness)
+        .addCoating(PipeMaterial.CONCRETE, concreteThickness);
   }
 
   /**
@@ -142,7 +142,7 @@ public class PipeWallBuilder {
    */
   public static PipeWallBuilder buriedPipe(double innerDiameter, double pipeThickness) {
     return carbonSteelPipe(innerDiameter, pipeThickness).addCoating(PipeMaterial.FUSION_BONDED_EPOXY, 0.0004)
-	.addCoating(PipeMaterial.POLYETHYLENE, 0.003);
+        .addCoating(PipeMaterial.POLYETHYLENE, 0.003);
   }
 
   /**

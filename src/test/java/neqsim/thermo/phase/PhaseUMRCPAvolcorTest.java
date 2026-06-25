@@ -65,11 +65,11 @@ public class PhaseUMRCPAvolcorTest {
     }
 
     Assertions.assertEquals(expectedC, phase.getC(), Math.max(1e-10, 1e-9 * Math.abs(expectedC)),
-	"phase extensive translation C must equal sum_i n_i c_i");
+        "phase extensive translation C must equal sum_i n_i c_i");
     Assertions.assertEquals(expectedCT, phase.getCT(), Math.max(1e-10, 1e-9 * Math.abs(expectedCT)),
-	"phase translation derivative dC/dT must equal sum_i n_i dc_i/dT");
+        "phase translation derivative dC/dT must equal sum_i n_i dc_i/dT");
     Assertions.assertEquals(phase.getC() / totalMoles, phase.getc(), Math.max(1e-12, 1e-9 * Math.abs(phase.getc())),
-	"intensive translation c must equal C / n");
+        "intensive translation c must equal C / n");
   }
 
   @Test
@@ -78,7 +78,7 @@ public class PhaseUMRCPAvolcorTest {
     SystemInterface gas = prepareSystem("methane", 300.0, 50.0, true);
     double gasDensity = gas.getPhase(0).getDensity("kg/m3");
     Assertions.assertTrue(gasDensity > 0.0 && Double.isFinite(gasDensity),
-	"translated methane gas density must be positive and finite, was " + gasDensity);
+        "translated methane gas density must be positive and finite, was " + gasDensity);
 
     // Liquid-phase n-heptane: density must be positive, finite and physically reasonable.
     SystemInterface translated = prepareSystem("n-heptane", 300.0, 1.0, true);
@@ -86,7 +86,7 @@ public class PhaseUMRCPAvolcorTest {
     Assertions.assertTrue(translatedLiquidIndex >= 0, "Expected translated system to contain a liquid phase");
     double translatedDensity = translated.getPhase(translatedLiquidIndex).getDensity("kg/m3");
     Assertions.assertTrue(translatedDensity > 550.0 && translatedDensity < 760.0,
-	"translated n-heptane liquid density out of physical range: " + translatedDensity);
+        "translated n-heptane liquid density out of physical range: " + translatedDensity);
 
     // The volume translation must actually change the predicted density relative to the
     // untranslated UMR-CPA model evaluated at the same conditions.
@@ -94,7 +94,7 @@ public class PhaseUMRCPAvolcorTest {
     int baseLiquidIndex = findLiquidPhaseIndex(base);
     double baseDensity = base.getPhase(baseLiquidIndex).getDensity("kg/m3");
     Assertions.assertTrue(Math.abs(translatedDensity - baseDensity) > 1e-6,
-	"volume translation should shift the predicted liquid density");
+        "volume translation should shift the predicted liquid density");
   }
 
   @Test
@@ -115,7 +115,7 @@ public class PhaseUMRCPAvolcorTest {
 
     double soundSpeed = system.getPhase(0).getSoundSpeed();
     Assertions.assertTrue(soundSpeed > 0.0 && Double.isFinite(soundSpeed),
-	"speed of sound must be positive and finite");
+        "speed of sound must be positive and finite");
 
     double jt = system.getPhase(0).getJouleThomsonCoefficient();
     Assertions.assertTrue(Double.isFinite(jt), "Joule-Thomson coefficient must be finite");
@@ -133,7 +133,7 @@ public class PhaseUMRCPAvolcorTest {
     system.initProperties();
 
     Assertions.assertTrue(system.getNumberOfPhases() >= 2,
-	"methane/water at 298 K, 50 bara should split into at least two phases");
+        "methane/water at 298 K, 50 bara should split into at least two phases");
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       double rho = system.getPhase(i).getDensity("kg/m3");
       Assertions.assertTrue(rho > 0.0 && Double.isFinite(rho), "all phase densities must be positive and finite");
@@ -179,8 +179,8 @@ public class PhaseUMRCPAvolcorTest {
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
       double density = system.getPhase(phaseIndex).getDensity();
       if (density > densestDensity) {
-	densestDensity = density;
-	densestIndex = phaseIndex;
+        densestDensity = density;
+        densestIndex = phaseIndex;
       }
     }
     return densestIndex;
@@ -189,7 +189,7 @@ public class PhaseUMRCPAvolcorTest {
   private int findPhaseIndexByType(SystemInterface system, String phaseTypeName) {
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
       if (system.getPhase(phaseIndex).getPhaseTypeName().equals(phaseTypeName)) {
-	return phaseIndex;
+        return phaseIndex;
       }
     }
     return -1;

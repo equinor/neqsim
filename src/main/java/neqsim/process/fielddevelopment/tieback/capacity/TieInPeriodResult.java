@@ -279,7 +279,7 @@ public final class TieInPeriodResult implements Serializable {
    */
   public String getPrimaryBottleneck() {
     if (processBottleneck != null && !processBottleneck.trim().isEmpty()
-	&& !"None".equalsIgnoreCase(processBottleneck)) {
+        && !"None".equalsIgnoreCase(processBottleneck)) {
       return processBottleneck;
     }
     return nameplateBottleneck;

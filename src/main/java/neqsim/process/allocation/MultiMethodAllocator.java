@@ -233,7 +233,7 @@ public class MultiMethodAllocator {
     Map<AllocationMethod, Long> runtimeMillis = new LinkedHashMap<>();
 
     AllocationMethod[] order = new AllocationMethod[] { AllocationMethod.COMPONENT_RATIO, AllocationMethod.ALL_IN,
-	AllocationMethod.STAND_ALONE };
+        AllocationMethod.STAND_ALONE };
     for (AllocationMethod method : order) {
       long t0 = System.currentTimeMillis();
       ProductionAllocationResult result = allocate(method);
@@ -264,19 +264,19 @@ public class MultiMethodAllocator {
     double[] fieldIn = new double[numComp];
     for (int s = 0; s < numSources; s++) {
       for (int k = 0; k < numComp; k++) {
-	fieldIn[k] += injection[s][k];
+        fieldIn[k] += injection[s][k];
       }
     }
 
     double[][][] alloc = new double[numSources][numCustody][numComp];
     for (int c = 0; c < numCustody; c++) {
       for (int k = 0; k < numComp; k++) {
-	if (fieldIn[k] > 0.0) {
-	  double rf = metered[c][k] / fieldIn[k];
-	  for (int s = 0; s < numSources; s++) {
-	    alloc[s][c][k] = rf * injection[s][k];
-	  }
-	}
+        if (fieldIn[k] > 0.0) {
+          double rf = metered[c][k] / fieldIn[k];
+          for (int s = 0; s < numSources; s++) {
+            alloc[s][c][k] = rf * injection[s][k];
+          }
+        }
       }
     }
 
@@ -326,22 +326,22 @@ public class MultiMethodAllocator {
     double[][][] alloc = new double[numSources][numCustody][numComp];
     try {
       for (int active = 0; active < numSources; active++) {
-	for (int s = 0; s < numSources; s++) {
-	  double rate = (s == active) ? originalRate[s] : originalRate[s] * standaloneZeroFactor;
-	  sources.get(s).getFeedStream().setFlowRate(rate, MASS_FLOW_UNIT);
-	}
-	baseCase.run();
-	for (int c = 0; c < numCustody; c++) {
-	  StreamInterface custodyStream = custodyOutlets.get(c).getStream();
-	  for (int k = 0; k < numComp; k++) {
-	    alloc[active][c][k] = RecoveryFactorExtractor.componentFlow(custodyStream, componentNames[k]);
-	  }
-	}
-	logger.info("Stand-alone re-simulation for source {} completed", sources.get(active).getName());
+        for (int s = 0; s < numSources; s++) {
+          double rate = (s == active) ? originalRate[s] : originalRate[s] * standaloneZeroFactor;
+          sources.get(s).getFeedStream().setFlowRate(rate, MASS_FLOW_UNIT);
+        }
+        baseCase.run();
+        for (int c = 0; c < numCustody; c++) {
+          StreamInterface custodyStream = custodyOutlets.get(c).getStream();
+          for (int k = 0; k < numComp; k++) {
+            alloc[active][c][k] = RecoveryFactorExtractor.componentFlow(custodyStream, componentNames[k]);
+          }
+        }
+        logger.info("Stand-alone re-simulation for source {} completed", sources.get(active).getName());
       }
     } finally {
       for (int s = 0; s < numSources; s++) {
-	sources.get(s).getFeedStream().setFlowRate(originalRate[s], MASS_FLOW_UNIT);
+        sources.get(s).getFeedStream().setFlowRate(originalRate[s], MASS_FLOW_UNIT);
       }
       baseCase.run();
     }
@@ -363,7 +363,7 @@ public class MultiMethodAllocator {
     for (int c = 0; c < custodyOutlets.size(); c++) {
       StreamInterface stream = custodyOutlets.get(c).getStream();
       for (int k = 0; k < componentNames.length; k++) {
-	metered[c][k] = RecoveryFactorExtractor.componentFlow(stream, componentNames[k]);
+        metered[c][k] = RecoveryFactorExtractor.componentFlow(stream, componentNames[k]);
       }
     }
     return metered;
@@ -379,7 +379,7 @@ public class MultiMethodAllocator {
     for (int s = 0; s < sources.size(); s++) {
       StreamInterface stream = sources.get(s).getFeedStream();
       for (int k = 0; k < componentNames.length; k++) {
-	injection[s][k] = RecoveryFactorExtractor.componentFlow(stream, componentNames[k]);
+        injection[s][k] = RecoveryFactorExtractor.componentFlow(stream, componentNames[k]);
       }
     }
     return injection;
@@ -411,7 +411,7 @@ public class MultiMethodAllocator {
     }
 
     return new ProductionAllocationResult(sourceNames, custodyNames, custodyTypes, componentNames.clone(),
-	molarMass.clone(), alloc, diagnostics);
+        molarMass.clone(), alloc, diagnostics);
   }
 
   /**
@@ -433,13 +433,13 @@ public class MultiMethodAllocator {
     for (StreamInterface stream : all) {
       SystemInterface fluid = stream.getFluid();
       if (fluid == null) {
-	continue;
+        continue;
       }
       for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
-	String name = fluid.getComponent(i).getComponentName();
-	if (!mm.containsKey(name)) {
-	  mm.put(name, fluid.getComponent(i).getMolarMass());
-	}
+        String name = fluid.getComponent(i).getComponentName();
+        if (!mm.containsKey(name)) {
+          mm.put(name, fluid.getComponent(i).getMolarMass());
+        }
       }
     }
     componentNames = mm.keySet().toArray(new String[0]);

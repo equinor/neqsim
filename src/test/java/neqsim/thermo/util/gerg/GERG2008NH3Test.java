@@ -170,7 +170,7 @@ public class GERG2008NH3Test {
     assertEquals(0, ierr_nh3.val, "NH3 model should converge for pure CH4");
     assertEquals(0, ierr_std.val, "Standard model should converge for pure CH4");
     assertEquals(D_std.val, D_nh3.val, 1e-10,
-	"Pure CH4 density should be identical between standard and NH3-extended models");
+        "Pure CH4 density should be identical between standard and NH3-extended models");
   }
 
   /**
@@ -200,7 +200,7 @@ public class GERG2008NH3Test {
     gergStd.DensityGERG(0, T, P, x, D_std, ierr, herr);
 
     assertEquals(D_std.val, D_nh3.val, 1e-4,
-	"Natural gas density should be nearly identical when NH3 fraction is zero");
+        "Natural gas density should be nearly identical when NH3 fraction is zero");
   }
 
   /**

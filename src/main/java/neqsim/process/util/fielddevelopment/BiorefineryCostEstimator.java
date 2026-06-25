@@ -131,7 +131,7 @@ public class BiorefineryCostEstimator implements Serializable {
      * @param instFactor installation factor
      */
     BiorefineryEquipment(String name, double baseCapacity, String unit, double baseCost, double exponent,
-	double instFactor) {
+        double instFactor) {
       this.displayName = name;
       this.baseCapacity = baseCapacity;
       this.capacityUnit = unit;
@@ -465,7 +465,7 @@ public class BiorefineryCostEstimator implements Serializable {
     double insuranceCostUSD = totalCapexUSD * insuranceFraction;
 
     annualOpexUSD = annualFeedstockCostUSD + annualLabourCostUSD + annualMaintenanceCostUSD + annualUtilityCostUSD
-	+ insuranceCostUSD;
+        + insuranceCostUSD;
 
     // ── Revenue ──
     annualRevenueUSD = annualProduction * productPrice;

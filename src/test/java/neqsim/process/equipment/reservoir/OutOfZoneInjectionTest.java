@@ -1,6 +1,9 @@
 package neqsim.process.equipment.reservoir;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.process.fielddevelopment.reservoir.InjectionWellModel;
 
@@ -100,13 +103,13 @@ public class OutOfZoneInjectionTest {
     model.setWellboreRadius(0.1);
 
     InjectionWellModel.InjectionZone zone1 = new InjectionWellModel.InjectionZone("Target", 2500.0, 250.0, 100.0, 20.0,
-	350.0);
+        350.0);
     zone1.skinFactor = 2.0;
     zone1.isTargetZone = true;
     model.addZone(zone1);
 
     InjectionWellModel.InjectionZone zone2 = new InjectionWellModel.InjectionZone("Thief", 2400.0, 220.0, 200.0, 15.0,
-	300.0);
+        300.0);
     zone2.skinFactor = 0.0;
     zone2.isTargetZone = false;
     model.addZone(zone2);
@@ -116,7 +119,7 @@ public class OutOfZoneInjectionTest {
     assertNotNull(result);
     assertTrue(result.totalRate > 0, "Total injection rate should be positive");
     assertTrue(result.injectionEfficiency >= 0 && result.injectionEfficiency <= 1.0,
-	"Injection efficiency should be 0-1");
+        "Injection efficiency should be 0-1");
     assertTrue(result.commonBHP > 0, "Common BHP should be positive");
 
     // Thief zone has higher permeability and lower reservoir pressure,

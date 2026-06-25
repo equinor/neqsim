@@ -156,8 +156,8 @@ class PipeSectionTest {
     FlowRegime regime = detector.detectFlowRegime(section);
     // Could be slug, stratified or annular depending on exact conditions
     assertTrue(regime == FlowRegime.SLUG || regime == FlowRegime.STRATIFIED_WAVY
-	|| regime == FlowRegime.STRATIFIED_SMOOTH || regime == FlowRegime.ANNULAR,
-	"Expected slug, stratified, or annular flow regime but got: " + regime);
+        || regime == FlowRegime.STRATIFIED_SMOOTH || regime == FlowRegime.ANNULAR,
+        "Expected slug, stratified, or annular flow regime but got: " + regime);
   }
 
   @Test
@@ -259,8 +259,8 @@ class PipeSectionTest {
     // Should return a valid regime for upward flow
     assertNotNull(regime);
     assertTrue(
-	regime == FlowRegime.BUBBLE || regime == FlowRegime.SLUG || regime == FlowRegime.CHURN
-	    || regime == FlowRegime.ANNULAR || regime == FlowRegime.DISPERSED_BUBBLE,
-	"Expected upward flow regime but got: " + regime);
+        regime == FlowRegime.BUBBLE || regime == FlowRegime.SLUG || regime == FlowRegime.CHURN
+            || regime == FlowRegime.ANNULAR || regime == FlowRegime.DISPERSED_BUBBLE,
+        "Expected upward flow regime but got: " + regime);
   }
 }

@@ -94,17 +94,17 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
       init();
 
       double Fg = 0.5 * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity() * wallFrictionFactor[0]
-	  * Math.pow(velocity[0], 2.0) * wallContactLength[0] / (pipe.getArea() * 4.0);
+          * Math.pow(velocity[0], 2.0) * wallContactLength[0] / (pipe.getArea() * 4.0);
       double Fl = 0.5 * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity() * wallFrictionFactor[1]
-	  * Math.pow(velocity[1], 2.0) * wallContactLength[1] / (pipe.getArea() * 4.0);
+          * Math.pow(velocity[1], 2.0) * wallContactLength[1] / (pipe.getArea() * 4.0);
       double Fi = 0.5 * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity() * interphaseFrictionFactor[0]
-	  * Math.pow(velocity[0] - velocity[1], 2.0) * interphaseContactLength[0] / (pipe.getArea() * 4.0);
+          * Math.pow(velocity[0] - velocity[1], 2.0) * interphaseContactLength[0] / (pipe.getArea() * 4.0);
 
       f = -phaseFraction[0] * Fl + (1 - phaseFraction[0]) * Fg + Fi
-	  + (1.0 - phaseFraction[0]) * phaseFraction[0]
-	      * (bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
-		  - bulkSystem.getPhases()[0].getPhysicalProperties().getDensity())
-	      * gravity * inclination;
+          + (1.0 - phaseFraction[0]) * phaseFraction[0]
+              * (bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
+                  - bulkSystem.getPhases()[0].getPhysicalProperties().getDensity())
+              * gravity * inclination;
       /*
        * df = -Fl - Fg + (bulkSystem.getPhases()[1].getPhysicalProperties().getDensity() -
        * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()) gravity * inclination -
@@ -113,13 +113,13 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
        */
 
       if (f > 0) {
-	phaseFraction[0] += (betaOld - phaseFraction[0]);
-	if (fOld < 0) {
-	  step *= 5.0;
-	}
+        phaseFraction[0] += (betaOld - phaseFraction[0]);
+        if (fOld < 0) {
+          step *= 5.0;
+        }
       } else {
-	betaOld = phaseFraction[0];
-	phaseFraction[0] -= phaseFraction[0] / step;
+        betaOld = phaseFraction[0];
+        phaseFraction[0] -= phaseFraction[0] / step;
       }
       phaseFraction[1] = 1.0 - phaseFraction[0];
     } while (Math.abs(f) > 1e-2 && iterations < 100);
@@ -138,7 +138,7 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
    */
   public double calcHydraulicDiameter() {
     hydraulicDiameter[0] = 4.0 * phaseFraction[0] * pipe.getArea()
-	/ (wallContactLength[0] + interphaseContactLength[0]);
+        / (wallContactLength[0] + interphaseContactLength[0]);
     hydraulicDiameter[1] = 4.0 * phaseFraction[1] * pipe.getArea() / wallContactLength[1];
     return hydraulicDiameter[0];
   }
@@ -150,11 +150,11 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
    */
   public double calcReynoldNumber() {
     reynoldsNumber[1] = velocity[1] * hydraulicDiameter[1]
-	* bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
-	/ bulkSystem.getPhases()[1].getPhysicalProperties().getViscosity();
+        * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
+        / bulkSystem.getPhases()[1].getPhysicalProperties().getViscosity();
     reynoldsNumber[0] = velocity[0] * hydraulicDiameter[0]
-	* bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()
-	/ bulkSystem.getPhases()[0].getPhysicalProperties().getViscosity();
+        * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()
+        / bulkSystem.getPhases()[0].getPhysicalProperties().getViscosity();
     return reynoldsNumber[1];
   }
 
@@ -166,8 +166,8 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
   public double calcWallFrictionFactor() {
     for (int i = 0; i < 2; i++) {
       wallFrictionFactor[i] = Math.pow((1.0 / (-1.8 * Math.log10(
-	  6.9 / getReynoldsNumber(i) * Math.pow(pipe.getRelativeRoughnes(this.getHydraulicDiameter(i)) / 3.7, 1.11)))),
-	  2.0);
+          6.9 / getReynoldsNumber(i) * Math.pow(pipe.getRelativeRoughnes(this.getHydraulicDiameter(i)) / 3.7, 1.11)))),
+          2.0);
     }
     return wallFrictionFactor[0];
   }
@@ -189,8 +189,8 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
   public void updateMolarFlow() {
     for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
       for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
-	getBulkSystem().getPhase(phaseNum).addMoles(i, (getBulkSystem().getPhase(phaseNum).getComponent(i).getx()
-	    * (molarFlowRate[phaseNum] - getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase())));
+        getBulkSystem().getPhase(phaseNum).addMoles(i, (getBulkSystem().getPhase(phaseNum).getComponent(i).getx()
+            * (molarFlowRate[phaseNum] - getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase())));
       }
     }
     getBulkSystem().init(1);
@@ -210,9 +210,9 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
   public void init() {
     super.init();
     massFlowRate[0] = velocity[0] * getBulkSystem().getPhases()[0].getPhysicalProperties().getDensity() * pipe.getArea()
-	* phaseFraction[0];
+        * phaseFraction[0];
     massFlowRate[1] = velocity[1] * getBulkSystem().getPhases()[1].getPhysicalProperties().getDensity() * pipe.getArea()
-	* phaseFraction[1];
+        * phaseFraction[1];
     molarFlowRate[0] = massFlowRate[0] / getBulkSystem().getPhases()[0].getMolarMass();
     molarFlowRate[1] = massFlowRate[1] / getBulkSystem().getPhases()[1].getMolarMass();
     superficialVelocity[0] = velocity[0] * phaseFraction[0];
@@ -277,25 +277,25 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
     // getInterphaseContactArea();
 
     double liquid_dT = this.flowDirection[1] * heatFluxLiquid * getGeometry().getNodeLength() / getVelocity(1)
-	/ getBulkSystem().getPhase(1).getCp();
+        / getBulkSystem().getPhase(1).getCp();
     double gas_dT = this.flowDirection[0] * heatFluxGas * getGeometry().getNodeLength() / getVelocity(0)
-	/ getBulkSystem().getPhase(0).getCp();
+        / getBulkSystem().getPhase(0).getCp();
     liquid_dT -= getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(1, this)
-	* (getBulkSystem().getPhase(1).getTemperature() - pipe.getInnerWallTemperature()) * getWallContactLength(1)
-	* getGeometry().getNodeLength() / getBulkSystem().getPhase(1).getCp();
+        * (getBulkSystem().getPhase(1).getTemperature() - pipe.getInnerWallTemperature()) * getWallContactLength(1)
+        * getGeometry().getNodeLength() / getBulkSystem().getPhase(1).getCp();
     gas_dT -= getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(0, this)
-	* (getBulkSystem().getPhase(0).getTemperature() - pipe.getInnerWallTemperature()) * getWallContactLength(0)
-	* getGeometry().getNodeLength() / getBulkSystem().getPhase(0).getCp();
+        * (getBulkSystem().getPhase(0).getTemperature() - pipe.getInnerWallTemperature()) * getWallContactLength(0)
+        * getGeometry().getNodeLength() / getBulkSystem().getPhase(0).getCp();
     double fluxwallinternal = getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(1, this)
-	* (getBulkSystem().getPhase(1).getTemperature() - pipe.getInnerWallTemperature()) * getWallContactLength(1)
-	* getGeometry().getNodeLength()
-	+ getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(0, this)
-	    * (getBulkSystem().getPhase(0).getTemperature() - pipe.getInnerWallTemperature()) * getWallContactLength(0)
-	    * getGeometry().getNodeLength();
+        * (getBulkSystem().getPhase(1).getTemperature() - pipe.getInnerWallTemperature()) * getWallContactLength(1)
+        * getGeometry().getNodeLength()
+        + getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(0, this)
+            * (getBulkSystem().getPhase(0).getTemperature() - pipe.getInnerWallTemperature()) * getWallContactLength(0)
+            * getGeometry().getNodeLength();
 
     double JolprK = 3.14 * 0.2032 * 0.0094 * getGeometry().getNodeLength() * 7500 * 500;
     double fluxOut = -50.0 * 3.14 * (0.2032 + 0.01) * getGeometry().getNodeLength()
-	* (pipe.getInnerWallTemperature() - pipe.getSurroundingEnvironment().getTemperature());
+        * (pipe.getInnerWallTemperature() - pipe.getSurroundingEnvironment().getTemperature());
     double dTwall = (fluxOut + fluxwallinternal) / JolprK;
     pipe.setInnerWallTemperature(pipe.getInnerWallTemperature() + dTwall);
 
@@ -303,7 +303,7 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
     getBulkSystem().getPhase(0).setTemperature(getBulkSystem().getPhase(0).getTemperature() + gas_dT);
 
     for (int componentNumber = 0; componentNumber < getBulkSystem().getPhases()[0]
-	.getNumberOfComponents(); componentNumber++) {
+        .getNumberOfComponents(); componentNumber++) {
       double liquidMolarRate = getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
 
       double gasMolarRate = -getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();

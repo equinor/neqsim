@@ -2,17 +2,17 @@ package neqsim.process.equipment.valve;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import java.util.UUID;
 import neqsim.process.alarm.AlarmConfig;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.measurementdevice.PressureTransmitter;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Test class for simulating a choke valve collapse scenario where a throttle valve suddenly fails open (100%), causing
@@ -89,7 +89,7 @@ public class ChokeCollapsePSDProtectionTest {
 
     // Configure HIHI alarm at 55 bara with 1 second delay
     AlarmConfig alarmConfig = AlarmConfig.builder().highHighLimit(55.0).highLimit(52.0).deadband(0.5).delay(1.0)
-	.unit("bara").build();
+        .unit("bara").build();
     pressureTransmitter.setAlarmConfig(alarmConfig);
 
     // Link PSD valve to pressure transmitter
@@ -130,9 +130,9 @@ public class ChokeCollapsePSDProtectionTest {
     double initialPressure = chokeOutlet.getPressure("bara");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Initial steady state pressure: %.2f bara%n", initialPressure);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Initial choke opening: %.1f%%%n",
-	chokeValve.getPercentValveOpening());
+        chokeValve.getPercentValveOpening());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Initial PSD opening: %.1f%%%n",
-	psdValve.getPercentValveOpening());
+        psdValve.getPercentValveOpening());
 
     // Verify initial conditions
     assertTrue(initialPressure < 55.0, "Initial pressure should be below HIHI setpoint");
@@ -164,15 +164,15 @@ public class ChokeCollapsePSDProtectionTest {
       // Simulate pressure rise due to choke being fully open
       // Pressure rises toward feed pressure (100 bara) but is limited by PSD closure
       if (!psdValve.hasTripped()) {
-	// Before PSD trips: pressure rises rapidly toward feed pressure
-	double pressureRiseRate = 2.0; // 2 bara per second
-	double targetPressure = Math.min(100.0, initialPressure + pressureRiseRate * time);
-	chokeOutlet.setFluid(feedGas.clone());
-	chokeOutlet.setPressure(targetPressure, "bara");
+        // Before PSD trips: pressure rises rapidly toward feed pressure
+        double pressureRiseRate = 2.0; // 2 bara per second
+        double targetPressure = Math.min(100.0, initialPressure + pressureRiseRate * time);
+        chokeOutlet.setFluid(feedGas.clone());
+        chokeOutlet.setPressure(targetPressure, "bara");
       } else {
-	// After PSD trips: pressure stabilizes as PSD closes and blocks flow
-	// Pressure between choke and PSD rises to match feed pressure
-	chokeOutlet.setPressure(Math.min(95.0, chokeOutlet.getPressure("bara")), "bara");
+        // After PSD trips: pressure stabilizes as PSD closes and blocks flow
+        // Pressure between choke and PSD rises to match feed pressure
+        chokeOutlet.setPressure(Math.min(95.0, chokeOutlet.getPressure("bara")), "bara");
       }
 
       chokeOutlet.run();
@@ -186,23 +186,23 @@ public class ChokeCollapsePSDProtectionTest {
 
       String alarmState = "NONE";
       if (pressureTransmitter.getAlarmState().isActive()) {
-	alarmState = pressureTransmitter.getAlarmState().getActiveLevel().toString();
+        alarmState = pressureTransmitter.getAlarmState().getActiveLevel().toString();
       }
 
       // Check if PSD just tripped
       if (psdValve.hasTripped() && !psdHasTripped) {
-	psdHasTripped = true;
-	tripTime = time;
+        psdHasTripped = true;
+        tripTime = time;
       }
 
       logger.printf(org.apache.logging.log4j.Level.INFO,
-	  "%7.1f  |    %6.1f%%    |     %6.2f      |   %-6s    |   %6.1f%%   |    %s%n", time,
-	  chokeValve.getPercentValveOpening(), currentPressure, alarmState, psdValve.getPercentValveOpening(),
-	  psdValve.hasTripped() ? "YES" : "NO");
+          "%7.1f  |    %6.1f%%    |     %6.2f      |   %-6s    |   %6.1f%%   |    %s%n", time,
+          chokeValve.getPercentValveOpening(), currentPressure, alarmState, psdValve.getPercentValveOpening(),
+          psdValve.hasTripped() ? "YES" : "NO");
 
       // Stop if PSD has been tripped and closed for a while
       if (psdHasTripped && time > tripTime + 10.0) {
-	break;
+        break;
       }
     }
 
@@ -212,9 +212,9 @@ public class ChokeCollapsePSDProtectionTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "Maximum pressure reached: %.2f bara%n", maxPressure);
     logger.printf(org.apache.logging.log4j.Level.INFO, "HIHI setpoint: 55.0 bara%n");
     logger.printf(org.apache.logging.log4j.Level.INFO, "PSD valve status: %s%n",
-	psdValve.hasTripped() ? "TRIPPED (CLOSED)" : "OPEN");
+        psdValve.hasTripped() ? "TRIPPED (CLOSED)" : "OPEN");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Final PSD opening: %.1f%%%n",
-	psdValve.getPercentValveOpening());
+        psdValve.getPercentValveOpening());
 
     // Verify that PSD valve tripped
     assertTrue(psdHasTripped, "PSD valve should have tripped due to HIHI alarm");
@@ -223,7 +223,7 @@ public class ChokeCollapsePSDProtectionTest {
 
     // Verify trip occurred at or shortly after reaching HIHI setpoint
     assertTrue(tripTime >= 2.0 && tripTime <= 5.0,
-	"PSD should trip within reasonable time after pressure exceeds HIHI");
+        "PSD should trip within reasonable time after pressure exceeds HIHI");
 
     // Verify maximum pressure didn't exceed safe limits significantly
     assertTrue(maxPressure < 65.0, "Maximum pressure should be controlled by PSD closure (< 65 bara)");
@@ -262,8 +262,8 @@ public class ChokeCollapsePSDProtectionTest {
       time += 0.5;
 
       if (psdValve.hasTripped()) {
-	logger.printf(org.apache.logging.log4j.Level.INFO, "  PSD tripped at %.1f bara%n", pressure);
-	break;
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  PSD tripped at %.1f bara%n", pressure);
+        break;
       }
     }
 
@@ -300,7 +300,7 @@ public class ChokeCollapsePSDProtectionTest {
 
     assertEquals(100.0, psdValve.getPercentValveOpening(), 0.1, "PSD should open after reset");
     logger.printf(org.apache.logging.log4j.Level.INFO, "  ✓ PSD successfully opened to %.1f%%%n",
-	psdValve.getPercentValveOpening());
+        psdValve.getPercentValveOpening());
 
     logger.info("===== RESET TEST SUMMARY =====");
     logger.info("✓ Choke collapse triggered PSD trip");

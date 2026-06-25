@@ -271,16 +271,16 @@ public class AdsorptionCycleController implements Serializable {
       currentStepIndex = 0;
       completedCycles++;
       if (autoLoop) {
-	logger.info("Cycle " + completedCycles + " completed, starting new cycle");
-	// Reset breakthrough flag for next adsorption phase
-	bed.resetBed();
-	bed.initialiseTransientGrid();
+        logger.info("Cycle " + completedCycles + " completed, starting new cycle");
+        // Reset breakthrough flag for next adsorption phase
+        bed.resetBed();
+        bed.initialiseTransientGrid();
       }
     }
 
     PhaseStep newStep = schedule.get(currentStepIndex);
     logger.info("Transitioning to phase: " + newStep.getPhase() + " (step " + (currentStepIndex + 1) + "/"
-	+ schedule.size() + ")");
+        + schedule.size() + ")");
   }
 
   /**
@@ -298,10 +298,10 @@ public class AdsorptionCycleController implements Serializable {
     case PURGE:
       bed.setDesorptionMode(true);
       if (step.getTargetPressure() > 0) {
-	bed.setDesorptionPressure(step.getTargetPressure());
+        bed.setDesorptionPressure(step.getTargetPressure());
       }
       if (step.getTargetTemperature() > 0) {
-	bed.setDesorptionTemperature(step.getTargetTemperature());
+        bed.setDesorptionTemperature(step.getTargetTemperature());
       }
       break;
     case REPRESSURISATION:

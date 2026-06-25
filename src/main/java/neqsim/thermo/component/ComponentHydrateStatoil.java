@@ -56,34 +56,34 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
     if (componentName.equals("water")) {
       double solvol = getMolarVolumeHydrate(hydrateStructure, temp);
       if (hydrateStructure == -1) {
-	fugacityCoefficient = getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)
-	    * Math.exp(
-		solvol / (R * temp) * (pres - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)) * 1e5)
-	    / pres;
+        fugacityCoefficient = getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)
+            * Math.exp(
+                solvol / (R * temp) * (pres - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)) * 1e5)
+            / pres;
       } else {
-	double val = 0.0;
-	double tempy = 1.0;
+        double val = 0.0;
+        double tempy = 1.0;
 
-	for (int cavType = 0; cavType < 2; cavType++) {
-	  tempy = 0.0;
-	  for (int j = 0; j < phase.getNumberOfComponents(); j++) {
-	    double tee = ((ComponentHydrate) phase.getComponent(j)).calcYKI(hydrateStructure, cavType, phase);
-	    tempy += tee;
-	  }
-	  val += cavprwat[hydrateStructure][cavType] * Math.log(1.0 - tempy);
-	}
-	// System.out.println("val " + Math.exp(val));
+        for (int cavType = 0; cavType < 2; cavType++) {
+          tempy = 0.0;
+          for (int j = 0; j < phase.getNumberOfComponents(); j++) {
+            double tee = ((ComponentHydrate) phase.getComponent(j)).calcYKI(hydrateStructure, cavType, phase);
+            tempy += tee;
+          }
+          val += cavprwat[hydrateStructure][cavType] * Math.log(1.0 - tempy);
+        }
+        // System.out.println("val " + Math.exp(val));
 
-	// System.out.println("pointing "
-	// +(Math.exp(solvol/(R*temp)*((pres-getEmptyHydrateStructureVapourPressure(hydrateStruct,temp))*1e5))));
-	fugacityCoefficient = Math.exp(val) * getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)
-	    * Math.exp(
-		solvol / (R * temp) * (pres - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)) * 1e5)
-	    / pres;
-	// System.out.println("fugcoef " + tempfugcoef + "structure " +
-	// (hydrateStruct+1));
+        // System.out.println("pointing "
+        // +(Math.exp(solvol/(R*temp)*((pres-getEmptyHydrateStructureVapourPressure(hydrateStruct,temp))*1e5))));
+        fugacityCoefficient = Math.exp(val) * getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)
+            * Math.exp(
+                solvol / (R * temp) * (pres - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)) * 1e5)
+            / pres;
+        // System.out.println("fugcoef " + tempfugcoef + "structure " +
+        // (hydrateStruct+1));
 
-	// System.out.println("structure " + (hydrateStructure+1));
+        // System.out.println("structure " + (hydrateStructure+1));
       }
     } else {
       fugacityCoefficient = 1e50;
@@ -102,11 +102,11 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
     double temp = 1.0;
     for (int i = 0; i < phase.getNumberOfComponents(); i++) {
       if (phase.getComponent(i).isHydrateFormer()) {
-	temp += ((ComponentHydrate) phase.getComponent(i)).calcCKI(stucture, cavityType, phase) * 1.0e5 * reffug[i];
-	// System.out.println("yk2 "+
-	// ((ComponentHydrateBallard)phase.getComponent(i)).calcCKI(stucture,
-	// cavityType, phase)*reffug[i]);
-	// System.out.println("CYJI" +yki + " ref fug " +(1.0e5*reffug[i]));
+        temp += ((ComponentHydrate) phase.getComponent(i)).calcCKI(stucture, cavityType, phase) * 1.0e5 * reffug[i];
+        // System.out.println("yk2 "+
+        // ((ComponentHydrateBallard)phase.getComponent(i)).calcCKI(stucture,
+        // cavityType, phase)*reffug[i]);
+        // System.out.println("CYJI" +yki + " ref fug " +(1.0e5*reffug[i]));
       }
     }
 
@@ -135,8 +135,8 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
     x = step;
     for (int i = 1; i < numberOfSteps; i++) {
       val += step
-	  * ((getPot(x, stucture, cavityType, phase) + 4.0 * getPot((x + 0.5 * step), stucture, cavityType, phase)
-	      + getPot(x + step, stucture, cavityType, phase)) / 6.0);
+          * ((getPot(x, stucture, cavityType, phase) + 4.0 * getPot((x + 0.5 * step), stucture, cavityType, phase)
+              + getPot(x + step, stucture, cavityType, phase)) / 6.0);
       x = i * step;
       // System.out.println("step " + i + " " +
       // (step*getPot(x,stucture,cavityType,phase)));
@@ -155,14 +155,14 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
   @Override
   public double getPot(double radius, int struccture, int cavityType, PhaseInterface phase) {
     double pot = 2.0 * coordNumb[struccture][cavityType] * this.getLennardJonesEnergyParameterHydrate()
-	* ((Math.pow(this.getLennardJonesMolecularDiameterHydrate(), 12.0)
-	    / (Math.pow(cavRadius[struccture][cavityType], 11.0) * radius)
-	    * (delt(10.0, radius, struccture, cavityType) + getSphericalCoreRadiusHydrate()
-		/ cavRadius[struccture][cavityType] * delt(11.0, radius, struccture, cavityType)))
-	    - (Math.pow(this.getLennardJonesMolecularDiameterHydrate(), 6.0)
-		/ (Math.pow(cavRadius[struccture][cavityType], 5.0) * radius)
-		* (delt(4.0, radius, struccture, cavityType) + getSphericalCoreRadiusHydrate()
-		    / cavRadius[struccture][cavityType] * delt(5.0, radius, struccture, cavityType))));
+        * ((Math.pow(this.getLennardJonesMolecularDiameterHydrate(), 12.0)
+            / (Math.pow(cavRadius[struccture][cavityType], 11.0) * radius)
+            * (delt(10.0, radius, struccture, cavityType) + getSphericalCoreRadiusHydrate()
+                / cavRadius[struccture][cavityType] * delt(11.0, radius, struccture, cavityType)))
+            - (Math.pow(this.getLennardJonesMolecularDiameterHydrate(), 6.0)
+                / (Math.pow(cavRadius[struccture][cavityType], 5.0) * radius)
+                * (delt(4.0, radius, struccture, cavityType) + getSphericalCoreRadiusHydrate()
+                    / cavRadius[struccture][cavityType] * delt(5.0, radius, struccture, cavityType))));
 
     pot = Math.exp(-pot / (phase.getTemperature())) * radius * radius;
     // System.out.println("pot " + pot);

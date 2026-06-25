@@ -84,29 +84,29 @@ public class InterfacialFriction implements Serializable {
     switch (flowRegime) {
     case STRATIFIED_SMOOTH:
       return calcStratifiedSmooth(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
-	  liquidHoldup, diameter);
+          liquidHoldup, diameter);
 
     case STRATIFIED_WAVY:
       return calcStratifiedWavy(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
-	  liquidHoldup, diameter, surfaceTension);
+          liquidHoldup, diameter, surfaceTension);
 
     case ANNULAR:
     case MIST:
       return calcAnnular(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
-	  liquidHoldup, diameter, surfaceTension);
+          liquidHoldup, diameter, surfaceTension);
 
     case SLUG:
       return calcSlug(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
-	  liquidHoldup, diameter);
+          liquidHoldup, diameter);
 
     case CHURN:
       return calcChurn(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
-	  liquidHoldup, diameter, surfaceTension);
+          liquidHoldup, diameter, surfaceTension);
 
     case BUBBLE:
     case DISPERSED_BUBBLE:
       return calcBubble(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
-	  liquidHoldup, diameter);
+          liquidHoldup, diameter);
 
     case SINGLE_PHASE_GAS:
     case SINGLE_PHASE_LIQUID:
@@ -115,7 +115,7 @@ public class InterfacialFriction implements Serializable {
 
     default:
       return calcStratifiedSmooth(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
-	  liquidHoldup, diameter);
+          liquidHoldup, diameter);
     }
   }
 
@@ -479,7 +479,7 @@ public class InterfacialFriction implements Serializable {
       double gasDensity, double liquidDensity, double gasViscosity, double liquidViscosity, double liquidHoldup,
       double diameter, double surfaceTension) {
     InterfacialFrictionResult result = calculate(flowRegime, gasVelocity, liquidVelocity, gasDensity, liquidDensity,
-	gasViscosity, liquidViscosity, liquidHoldup, diameter, surfaceTension);
+        gasViscosity, liquidViscosity, liquidHoldup, diameter, surfaceTension);
 
     return result.interfacialShear * result.interfacialAreaPerLength;
   }
@@ -500,6 +500,7 @@ public class InterfacialFriction implements Serializable {
    * The correlation is:
    * </p>
    *
+   * <p>
    * $$f_i = 0.0142 + 22.0 \cdot \left(\frac{h_L}{D}\right)^{1.5} \cdot \left(\frac{v_G - v_L}{v_G}\right)^{0.9}$$
    *
    * @param vG Gas velocity (m/s)

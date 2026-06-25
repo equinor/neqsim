@@ -232,14 +232,14 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
     if (duty > 0.0 && effectiveness > 0.0 && effectiveness < 0.999) {
       double deltaTmax = Math.abs(exchanger.getInTemperature(0) - exchanger.getInTemperature(1));
       if (deltaTmax > 0.0) {
-	double cmin = duty / (effectiveness * deltaTmax);
-	double ntu = -Math.log(1.0 - effectiveness);
-	double uaFromEffectiveness = cmin * ntu;
-	if (Double.isFinite(uaFromEffectiveness) && uaFromEffectiveness > 0.0) {
-	  if (!(calculatedUA > 0.0) || uaFromEffectiveness > calculatedUA) {
-	    calculatedUA = uaFromEffectiveness;
-	  }
-	}
+        double cmin = duty / (effectiveness * deltaTmax);
+        double ntu = -Math.log(1.0 - effectiveness);
+        double uaFromEffectiveness = cmin * ntu;
+        if (Double.isFinite(uaFromEffectiveness) && uaFromEffectiveness > 0.0) {
+          if (!(calculatedUA > 0.0) || uaFromEffectiveness > calculatedUA) {
+            calculatedUA = uaFromEffectiveness;
+          }
+        }
       }
     }
   }
@@ -260,8 +260,8 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
       double processOut = heater.getOutletStream() != null ? heater.getOutletStream().getTemperature() : Double.NaN;
       double delta = Math.abs(processOut - processIn);
       if (delta > 0.0) {
-	logMeanTemperatureDifference = delta;
-	approachTemperature = delta;
+        logMeanTemperatureDifference = delta;
+        approachTemperature = delta;
       }
     }
 
@@ -277,11 +277,11 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
 
     if (Double.isNaN(logMeanTemperatureDifference) || logMeanTemperatureDifference <= 0.0) {
       if (approachTemperature > 0.0) {
-	logMeanTemperatureDifference = approachTemperature;
+        logMeanTemperatureDifference = approachTemperature;
       } else if (duty > 0.0 && usedOverallHeatTransferCoefficient > 0.0) {
-	logMeanTemperatureDifference = duty / usedOverallHeatTransferCoefficient;
+        logMeanTemperatureDifference = duty / usedOverallHeatTransferCoefficient;
       } else {
-	logMeanTemperatureDifference = 1.0;
+        logMeanTemperatureDifference = 1.0;
       }
     }
 
@@ -300,19 +300,19 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
 
     for (HeatExchangerType type : typesToEvaluate) {
       double typeApproach = approachTemperature > 0.0
-	  ? Math.max(approachTemperature, type.getAllowableApproachTemperature())
-	  : type.getAllowableApproachTemperature();
+          ? Math.max(approachTemperature, type.getAllowableApproachTemperature())
+          : type.getAllowableApproachTemperature();
 
       double uaForType = calculatedUA;
       if (!(uaForType > 0.0) && duty > 0.0) {
-	uaForType = duty / Math.max(typeApproach, 1.0);
+        uaForType = duty / Math.max(typeApproach, 1.0);
       }
       if (Double.isNaN(uaForType) || uaForType <= 0.0) {
-	uaForType = type.getTypicalOverallHeatTransferCoefficient();
+        uaForType = type.getTypicalOverallHeatTransferCoefficient();
       }
 
       double sizingCoefficient = useTypeSpecificCoefficient ? type.getTypicalOverallHeatTransferCoefficient()
-	  : Math.max(usedOverallHeatTransferCoefficient, type.getTypicalOverallHeatTransferCoefficient());
+          : Math.max(usedOverallHeatTransferCoefficient, type.getTypicalOverallHeatTransferCoefficient());
       double requiredArea = Math.max(uaForType / Math.max(sizingCoefficient, 1e-6), 0.1);
 
       HeatExchangerSizingResult result = type.createSizingResult(exchanger, requiredArea, uaForType, typeApproach);
@@ -339,12 +339,12 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
     }
     if (manualSelection != null) {
       selectedSizingResult = sizingResults.stream().filter(result -> result.getType() == manualSelection).findFirst()
-	  .orElse(sizingResults.get(0));
+          .orElse(sizingResults.get(0));
       return;
     }
     selectedSizingResult = sizingResults.stream()
-	.min((a, b) -> Double.compare(a.getMetric(selectionCriterion), b.getMetric(selectionCriterion)))
-	.orElse(sizingResults.get(0));
+        .min((a, b) -> Double.compare(a.getMetric(selectionCriterion), b.getMetric(selectionCriterion)))
+        .orElse(sizingResults.get(0));
   }
 
   private void applySelectedSizing() {
@@ -416,9 +416,9 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
       return "No sizing results available.";
     }
     return sizingResults.stream()
-	.map(result -> result.getType().getDisplayName() + ": area=" + String.format("%.2f", result.getRequiredArea())
-	    + " m2, weight=" + String.format("%.1f", result.getEstimatedWeight()) + " kg")
-	.collect(Collectors.joining("; "));
+        .map(result -> result.getType().getDisplayName() + ": area=" + String.format("%.2f", result.getRequiredArea())
+            + " m2, weight=" + String.format("%.1f", result.getEstimatedWeight()) + " kg")
+        .collect(Collectors.joining("; "));
   }
 
   /**
@@ -488,23 +488,23 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
 
     if (spec != null) {
       if (spec.hasSupplyTemperature()) {
-	utilitySupply = spec.getSupplyTemperature();
+        utilitySupply = spec.getSupplyTemperature();
       } else if (spec.hasApproachTemperature()) {
-	utilitySupply = heating ? processOut + spec.getApproachTemperature()
-	    : processOut - spec.getApproachTemperature();
+        utilitySupply = heating ? processOut + spec.getApproachTemperature()
+            : processOut - spec.getApproachTemperature();
       }
 
       if (spec.hasReturnTemperature()) {
-	utilityReturn = spec.getReturnTemperature();
+        utilityReturn = spec.getReturnTemperature();
       }
 
       if (Double.isNaN(utilityReturn) && spec.hasHeatCapacityRate() && duty > 0.0 && !Double.isNaN(utilitySupply)) {
-	double deltaUtility = duty / spec.getHeatCapacityRate();
-	utilityReturn = heating ? utilitySupply - deltaUtility : utilitySupply + deltaUtility;
+        double deltaUtility = duty / spec.getHeatCapacityRate();
+        utilityReturn = heating ? utilitySupply - deltaUtility : utilitySupply + deltaUtility;
       }
 
       if (Double.isNaN(utilityReturn) && !Double.isNaN(utilitySupply)) {
-	utilityReturn = utilitySupply;
+        utilityReturn = utilitySupply;
       }
     }
 
@@ -1090,20 +1090,20 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
     try {
       neqsim.process.equipment.stream.StreamInterface tubeStream = hx.getInStream(0);
       if (tubeStream != null && tubeStream.getThermoSystem() != null) {
-	neqsim.thermo.system.SystemInterface tubeFluid = tubeStream.getThermoSystem();
-	tubeFluid.initProperties();
-	double density = tubeFluid.getDensity("kg/m3");
-	double viscosity = tubeFluid.getViscosity("kg/msec");
-	double cp = tubeFluid.getCp("J/kgK");
-	double conductivity = tubeFluid.getThermalConductivity("W/mK");
-	double massFlow = tubeFluid.getFlowRate("kg/sec");
-	boolean heating = false;
-	if (hx.getOutStream(0) != null) {
-	  heating = hx.getOutStream(0).getTemperature() > tubeStream.getTemperature();
-	}
-	if (density > 0 && viscosity > 0 && cp > 0 && conductivity > 0 && massFlow > 0) {
-	  shellAndTubeCalculator.setTubeSideFluidProperties(density, viscosity, cp, conductivity, massFlow, heating);
-	}
+        neqsim.thermo.system.SystemInterface tubeFluid = tubeStream.getThermoSystem();
+        tubeFluid.initProperties();
+        double density = tubeFluid.getDensity("kg/m3");
+        double viscosity = tubeFluid.getViscosity("kg/msec");
+        double cp = tubeFluid.getCp("J/kgK");
+        double conductivity = tubeFluid.getThermalConductivity("W/mK");
+        double massFlow = tubeFluid.getFlowRate("kg/sec");
+        boolean heating = false;
+        if (hx.getOutStream(0) != null) {
+          heating = hx.getOutStream(0).getTemperature() > tubeStream.getTemperature();
+        }
+        if (density > 0 && viscosity > 0 && cp > 0 && conductivity > 0 && massFlow > 0) {
+          shellAndTubeCalculator.setTubeSideFluidProperties(density, viscosity, cp, conductivity, massFlow, heating);
+        }
       }
     } catch (Exception ex) {
       // Fluid property extraction can fail for unconfigured streams
@@ -1112,16 +1112,16 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
     try {
       neqsim.process.equipment.stream.StreamInterface shellStream = hx.getInStream(1);
       if (shellStream != null && shellStream.getThermoSystem() != null) {
-	neqsim.thermo.system.SystemInterface shellFluid = shellStream.getThermoSystem();
-	shellFluid.initProperties();
-	double density = shellFluid.getDensity("kg/m3");
-	double viscosity = shellFluid.getViscosity("kg/msec");
-	double cp = shellFluid.getCp("J/kgK");
-	double conductivity = shellFluid.getThermalConductivity("W/mK");
-	double massFlow = shellFluid.getFlowRate("kg/sec");
-	if (density > 0 && viscosity > 0 && cp > 0 && conductivity > 0 && massFlow > 0) {
-	  shellAndTubeCalculator.setShellSideFluidProperties(density, viscosity, cp, conductivity, massFlow);
-	}
+        neqsim.thermo.system.SystemInterface shellFluid = shellStream.getThermoSystem();
+        shellFluid.initProperties();
+        double density = shellFluid.getDensity("kg/m3");
+        double viscosity = shellFluid.getViscosity("kg/msec");
+        double cp = shellFluid.getCp("J/kgK");
+        double conductivity = shellFluid.getThermalConductivity("W/mK");
+        double massFlow = shellFluid.getFlowRate("kg/sec");
+        if (density > 0 && viscosity > 0 && cp > 0 && conductivity > 0 && massFlow > 0) {
+          shellAndTubeCalculator.setShellSideFluidProperties(density, viscosity, cp, conductivity, massFlow);
+        }
       }
     } catch (Exception ex) {
       // Fluid property extraction can fail for unconfigured streams
@@ -1236,57 +1236,57 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
    */
   public void loadProcessDesignParameters() {
     try (
-	neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase();
-	java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
-	    + "EQUIPMENTTYPE='HeatExchanger' AND Company='" + getCompanySpecificDesignStandards() + "'")) {
+        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase();
+        java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
+            + "EQUIPMENTTYPE='HeatExchanger' AND Company='" + getCompanySpecificDesignStandards() + "'")) {
 
       while (dataSet.next()) {
-	String spec = dataSet.getString("SPECIFICATION");
-	double minVal = dataSet.getDouble("MINVALUE");
-	double maxVal = dataSet.getDouble("MAXVALUE");
-	double value = (minVal + maxVal) / 2.0;
+        String spec = dataSet.getString("SPECIFICATION");
+        double minVal = dataSet.getDouble("MINVALUE");
+        double maxVal = dataSet.getDouble("MAXVALUE");
+        double value = (minVal + maxVal) / 2.0;
 
-	switch (spec) {
-	case "DesignPressureMargin":
-	  this.designPressureMargin = value;
-	  break;
-	case "DesignTemperatureMargin":
-	  this.designTemperatureMarginC = value;
-	  break;
-	case "MinApproachTemperature":
-	  this.minApproachTemperatureC = value;
-	  break;
-	case "FoulingResistanceShellWater":
-	  this.foulingResistanceShellWater = value;
-	  break;
-	case "FoulingResistanceShellHC":
-	  this.foulingResistanceShellHC = value;
-	  break;
-	case "FoulingResistanceTubeWater":
-	  this.foulingResistanceTubeWater = value;
-	  break;
-	case "FoulingResistanceTubeHC":
-	  this.foulingResistanceTubeHC = value;
-	  break;
-	case "MaxTubeVelocity":
-	  this.maxTubeVelocity = value;
-	  break;
-	case "MinTubeVelocity":
-	  this.minTubeVelocity = value;
-	  break;
-	case "MaxShellVelocity":
-	  this.maxShellVelocity = value;
-	  break;
-	case "MaxTubeLength":
-	  this.maxTubeLengthM = value;
-	  break;
-	case "AreaMargin":
-	  this.areaMargin = value;
-	  break;
-	default:
-	  // Ignore unknown parameters
-	  break;
-	}
+        switch (spec) {
+        case "DesignPressureMargin":
+          this.designPressureMargin = value;
+          break;
+        case "DesignTemperatureMargin":
+          this.designTemperatureMarginC = value;
+          break;
+        case "MinApproachTemperature":
+          this.minApproachTemperatureC = value;
+          break;
+        case "FoulingResistanceShellWater":
+          this.foulingResistanceShellWater = value;
+          break;
+        case "FoulingResistanceShellHC":
+          this.foulingResistanceShellHC = value;
+          break;
+        case "FoulingResistanceTubeWater":
+          this.foulingResistanceTubeWater = value;
+          break;
+        case "FoulingResistanceTubeHC":
+          this.foulingResistanceTubeHC = value;
+          break;
+        case "MaxTubeVelocity":
+          this.maxTubeVelocity = value;
+          break;
+        case "MinTubeVelocity":
+          this.minTubeVelocity = value;
+          break;
+        case "MaxShellVelocity":
+          this.maxShellVelocity = value;
+          break;
+        case "MaxTubeLength":
+          this.maxTubeLengthM = value;
+          break;
+        case "AreaMargin":
+          this.areaMargin = value;
+          break;
+        default:
+          // Ignore unknown parameters
+          break;
+        }
       }
     } catch (Exception ex) {
       // Use default values if database lookup fails
@@ -1375,19 +1375,19 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
     // Validate approach temperature
     if (approachTemperature > 0 && !validateApproachTemperature(approachTemperature)) {
       result.addIssue("Approach temperature " + String.format("%.1f", approachTemperature) + " °C below minimum "
-	  + String.format("%.1f", minApproachTemperatureC) + " °C");
+          + String.format("%.1f", minApproachTemperatureC) + " °C");
     }
 
     // Validate tube length if set
     if (tantanLength > 0 && !validateTubeLength(tantanLength)) {
       result.addIssue("Tube length " + String.format("%.1f", tantanLength) + " m exceeds maximum "
-	  + String.format("%.1f", maxTubeLengthM) + " m");
+          + String.format("%.1f", maxTubeLengthM) + " m");
     }
 
     // Validate design margins
     if (designPressureMargin < 1.05) {
       result.addIssue(
-	  "Design pressure margin " + String.format("%.2f", designPressureMargin) + " below recommended 1.05");
+          "Design pressure margin " + String.format("%.2f", designPressureMargin) + " below recommended 1.05");
     }
 
     result.setValid(result.getIssues().isEmpty());

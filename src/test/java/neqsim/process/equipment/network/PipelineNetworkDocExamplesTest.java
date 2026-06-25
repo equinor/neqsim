@@ -1,6 +1,9 @@
 package neqsim.process.equipment.network;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -121,10 +124,10 @@ class PipelineNetworkDocExamplesTest {
     for (int i = 0; i < n; i++) {
       matA[i][i] = 4.0;
       if (i > 0) {
-	matA[i][i - 1] = -1.0;
+        matA[i][i - 1] = -1.0;
       }
       if (i < n - 1) {
-	matA[i][i + 1] = -1.0;
+        matA[i][i + 1] = -1.0;
       }
       vecB[i] = 1.0;
     }

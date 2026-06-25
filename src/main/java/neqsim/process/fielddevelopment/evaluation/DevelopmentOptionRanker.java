@@ -363,7 +363,7 @@ public class DevelopmentOptionRanker implements Serializable {
       sb.append("------------------------------------------------\n");
 
       for (DevelopmentOption opt : rankedOptions) {
-	sb.append(String.format("%-5d %-25s %12.3f%n", opt.getRank(), opt.getName(), opt.getWeightedScore()));
+        sb.append(String.format("%-5d %-25s %12.3f%n", opt.getRank(), opt.getName(), opt.getWeightedScore()));
       }
 
       sb.append("\n");
@@ -371,9 +371,9 @@ public class DevelopmentOptionRanker implements Serializable {
       // Criteria weights
       sb.append("CRITERIA WEIGHTS:\n");
       for (Map.Entry<Criterion, Double> entry : weights.entrySet()) {
-	if (entry.getValue().doubleValue() > 0) {
-	  sb.append(String.format("  %-25s: %.0f%%%n", entry.getKey().getDisplayName(), entry.getValue() * 100));
-	}
+        if (entry.getValue().doubleValue() > 0) {
+          sb.append(String.format("  %-25s: %.0f%%%n", entry.getKey().getDisplayName(), entry.getValue() * 100));
+        }
       }
 
       sb.append("\n");
@@ -381,15 +381,15 @@ public class DevelopmentOptionRanker implements Serializable {
       // Detailed scores
       sb.append("DETAILED SCORES:\n");
       for (DevelopmentOption opt : rankedOptions) {
-	sb.append(String.format("\n%d. %s (Score: %.3f)%n", opt.getRank(), opt.getName(), opt.getWeightedScore()));
-	for (Map.Entry<Criterion, Double> entry : opt.getScores().entrySet()) {
-	  Criterion c = entry.getKey();
-	  Double weight = weights.get(c);
-	  if (weight != null && weight.doubleValue() > 0) {
-	    sb.append(String.format("   %-25s: %8.2f %s (normalized: %.2f)%n", c.getDisplayName(), entry.getValue(),
-		c.getUnit(), opt.getNormalizedScore(c)));
-	  }
-	}
+        sb.append(String.format("\n%d. %s (Score: %.3f)%n", opt.getRank(), opt.getName(), opt.getWeightedScore()));
+        for (Map.Entry<Criterion, Double> entry : opt.getScores().entrySet()) {
+          Criterion c = entry.getKey();
+          Double weight = weights.get(c);
+          if (weight != null && weight.doubleValue() > 0) {
+            sb.append(String.format("   %-25s: %8.2f %s (normalized: %.2f)%n", c.getDisplayName(), entry.getValue(),
+                c.getUnit(), opt.getNormalizedScore(c)));
+          }
+        }
       }
 
       return sb.toString();
@@ -516,7 +516,7 @@ public class DevelopmentOptionRanker implements Serializable {
     }
     if (sum > 0) {
       for (Map.Entry<Criterion, Double> entry : weights.entrySet()) {
-	entry.setValue(Double.valueOf(entry.getValue().doubleValue() / sum));
+        entry.setValue(Double.valueOf(entry.getValue().doubleValue() / sum));
       }
     }
   }
@@ -590,16 +590,16 @@ public class DevelopmentOptionRanker implements Serializable {
       double max = Double.MIN_VALUE;
 
       for (DevelopmentOption opt : options) {
-	double score = opt.getScore(c);
-	if (!Double.isNaN(score)) {
-	  min = Math.min(min, score);
-	  max = Math.max(max, score);
-	}
+        double score = opt.getScore(c);
+        if (!Double.isNaN(score)) {
+          min = Math.min(min, score);
+          max = Math.max(max, score);
+        }
       }
 
       if (min != Double.MAX_VALUE) {
-	minValues.put(c, Double.valueOf(min));
-	maxValues.put(c, Double.valueOf(max));
+        minValues.put(c, Double.valueOf(min));
+        maxValues.put(c, Double.valueOf(max));
       }
     }
 
@@ -612,48 +612,48 @@ public class DevelopmentOptionRanker implements Serializable {
       double totalWeight = 0.0;
 
       for (Map.Entry<Criterion, Double> entry : weights.entrySet()) {
-	Criterion c = entry.getKey();
-	double weight = entry.getValue().doubleValue();
+        Criterion c = entry.getKey();
+        double weight = entry.getValue().doubleValue();
 
-	if (weight <= 0) {
-	  continue;
-	}
+        if (weight <= 0) {
+          continue;
+        }
 
-	double rawScore = opt.getScore(c);
-	if (Double.isNaN(rawScore)) {
-	  continue;
-	}
+        double rawScore = opt.getScore(c);
+        if (Double.isNaN(rawScore)) {
+          continue;
+        }
 
-	// Normalize to 0-1
-	Double minVal = minValues.get(c);
-	Double maxVal = maxValues.get(c);
-	double normalized = 0.5; // default if no range
+        // Normalize to 0-1
+        Double minVal = minValues.get(c);
+        Double maxVal = maxValues.get(c);
+        double normalized = 0.5; // default if no range
 
-	if (minVal != null && maxVal != null) {
-	  double min = minVal.doubleValue();
-	  double max = maxVal.doubleValue();
-	  double range = max - min;
+        if (minVal != null && maxVal != null) {
+          double min = minVal.doubleValue();
+          double max = maxVal.doubleValue();
+          double range = max - min;
 
-	  if (range > 0) {
-	    normalized = (rawScore - min) / range;
-	  } else {
-	    normalized = 1.0; // all same value
-	  }
-	}
+          if (range > 0) {
+            normalized = (rawScore - min) / range;
+          } else {
+            normalized = 1.0; // all same value
+          }
+        }
 
-	// Invert if lower is better
-	if (!c.isHigherBetter()) {
-	  normalized = 1.0 - normalized;
-	}
+        // Invert if lower is better
+        if (!c.isHigherBetter()) {
+          normalized = 1.0 - normalized;
+        }
 
-	opt.setNormalizedScore(c, normalized);
-	weightedTotal += normalized * weight;
-	totalWeight += weight;
+        opt.setNormalizedScore(c, normalized);
+        weightedTotal += normalized * weight;
+        totalWeight += weight;
       }
 
       // Normalize by total weight used
       if (totalWeight > 0) {
-	opt.setWeightedScore(weightedTotal / totalWeight);
+        opt.setWeightedScore(weightedTotal / totalWeight);
       }
     }
 
@@ -662,7 +662,7 @@ public class DevelopmentOptionRanker implements Serializable {
     Collections.sort(sorted, new Comparator<DevelopmentOption>() {
       @Override
       public int compare(DevelopmentOption a, DevelopmentOption b) {
-	return Double.compare(b.getWeightedScore(), a.getWeightedScore());
+        return Double.compare(b.getWeightedScore(), a.getWeightedScore());
       }
     });
 
@@ -691,13 +691,13 @@ public class DevelopmentOptionRanker implements Serializable {
     Collections.sort(sorted, new Comparator<DevelopmentOption>() {
       @Override
       public int compare(DevelopmentOption a, DevelopmentOption b) {
-	double scoreA = a.getScore(criterion);
-	double scoreB = b.getScore(criterion);
-	if (higherBetter) {
-	  return Double.compare(scoreB, scoreA);
-	} else {
-	  return Double.compare(scoreA, scoreB);
-	}
+        double scoreA = a.getScore(criterion);
+        double scoreB = b.getScore(criterion);
+        if (higherBetter) {
+          return Double.compare(scoreB, scoreA);
+        } else {
+          return Double.compare(scoreA, scoreB);
+        }
       }
     });
 

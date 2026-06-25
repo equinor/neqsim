@@ -100,7 +100,7 @@ public class BlowdownPressureProfile implements Serializable {
       throw new IllegalArgumentException("result must not be null");
     }
     Builder builder = builder()
-	.interpolationMode(interpolationMode == null ? InterpolationMode.STEP_PREVIOUS : interpolationMode);
+        .interpolationMode(interpolationMode == null ? InterpolationMode.STEP_PREVIOUS : interpolationMode);
     int pointCount = Math.min(result.time.size(), result.pressureBara.size());
     for (int i = 0; i < pointCount; i++) {
       builder.addPoint(result.time.get(i).doubleValue(), "s", result.pressureBara.get(i).doubleValue(), "bara");
@@ -136,14 +136,14 @@ public class BlowdownPressureProfile implements Serializable {
     for (int i = 1; i < timeSeconds.size(); i++) {
       double upperTime = timeSeconds.get(i);
       if (nearlyEqual(timeSecondsRequested, upperTime)) {
-	return pressureBara.get(i);
+        return pressureBara.get(i);
       }
       if (timeSecondsRequested < upperTime) {
-	if (interpolationMode == InterpolationMode.LINEAR) {
-	  return interpolate(timeSecondsRequested, timeSeconds.get(i - 1), upperTime, pressureBara.get(i - 1),
-	      pressureBara.get(i));
-	}
-	return pressureBara.get(i - 1);
+        if (interpolationMode == InterpolationMode.LINEAR) {
+          return interpolate(timeSecondsRequested, timeSeconds.get(i - 1), upperTime, pressureBara.get(i - 1),
+              pressureBara.get(i));
+        }
+        return pressureBara.get(i - 1);
       }
     }
     return pressureBara.get(lastIndex);
@@ -257,7 +257,7 @@ public class BlowdownPressureProfile implements Serializable {
    */
   private static void validateProfile(List<Double> timeSeconds, List<Double> pressureBara, double gaugeOffsetBara) {
     if (timeSeconds == null || pressureBara == null || timeSeconds.size() != pressureBara.size()
-	|| timeSeconds.size() < 2) {
+        || timeSeconds.size() < 2) {
       throw new IllegalArgumentException("profile must contain at least two time/pressure points");
     }
     validateNonNegative(gaugeOffsetBara, "gaugeOffsetBara");
@@ -266,15 +266,15 @@ public class BlowdownPressureProfile implements Serializable {
       Double time = timeSeconds.get(i);
       Double pressure = pressureBara.get(i);
       if (time == null || pressure == null) {
-	throw new IllegalArgumentException("profile values must not be null");
+        throw new IllegalArgumentException("profile values must not be null");
       }
       validateNonNegative(time.doubleValue(), "timeSeconds");
       if (pressure.doubleValue() <= 0.0 || Double.isNaN(pressure.doubleValue())
-	  || Double.isInfinite(pressure.doubleValue())) {
-	throw new IllegalArgumentException("pressureBara must be positive and finite");
+          || Double.isInfinite(pressure.doubleValue())) {
+        throw new IllegalArgumentException("pressureBara must be positive and finite");
       }
       if (time.doubleValue() <= previousTime) {
-	throw new IllegalArgumentException("timeSeconds must be strictly increasing");
+        throw new IllegalArgumentException("timeSeconds must be strictly increasing");
       }
       previousTime = time.doubleValue();
     }
@@ -310,7 +310,7 @@ public class BlowdownPressureProfile implements Serializable {
      */
     public Builder interpolationMode(InterpolationMode interpolationMode) {
       if (interpolationMode == null) {
-	throw new IllegalArgumentException("interpolationMode must not be null");
+        throw new IllegalArgumentException("interpolationMode must not be null");
       }
       this.interpolationMode = interpolationMode;
       return this;
@@ -348,11 +348,11 @@ public class BlowdownPressureProfile implements Serializable {
       validateNonNegative(time, "time");
       String normalizedUnit = unit == null ? "s" : unit.trim().toLowerCase();
       if ("min".equals(normalizedUnit) || "minute".equals(normalizedUnit) || "minutes".equals(normalizedUnit)) {
-	return time * 60.0;
+        return time * 60.0;
       }
       if ("s".equals(normalizedUnit) || "sec".equals(normalizedUnit) || "second".equals(normalizedUnit)
-	  || "seconds".equals(normalizedUnit)) {
-	return time;
+          || "seconds".equals(normalizedUnit)) {
+        return time;
       }
       throw new IllegalArgumentException("Unsupported time unit: " + unit);
     }
@@ -367,10 +367,10 @@ public class BlowdownPressureProfile implements Serializable {
     private double convertPressureToBara(double pressure, String unit) {
       String normalizedUnit = unit == null ? "bara" : unit.trim().toLowerCase();
       if ("bara".equals(normalizedUnit) || "bar".equals(normalizedUnit)) {
-	return pressure;
+        return pressure;
       }
       if ("barg".equals(normalizedUnit)) {
-	return pressure + gaugeOffsetBara;
+        return pressure + gaugeOffsetBara;
       }
       throw new IllegalArgumentException("Unsupported pressure unit: " + unit);
     }

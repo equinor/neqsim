@@ -3,7 +3,6 @@ package neqsim.process.safety;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.util.EnumSet;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.separator.Separator;
@@ -102,8 +101,8 @@ public class DocSafetyComplianceExamplesTest {
   @Test
   public void testEsdResponseTimeExample() {
     EsdResponseTimeResult res = new EsdResponseTimeSimulator().setSifTag("ESD-1234")
-	.addDetection("PT-1001 high-pressure", 1.0).addLogic("Logic solver scan + 2oo3 vote", 0.5)
-	.addValve("ESDV-2001", 0.5, 8.0).setAllowableResponseTimeS(15.0).evaluate();
+        .addDetection("PT-1001 high-pressure", 1.0).addLogic("Logic solver scan + 2oo3 vote", 0.5)
+        .addValve("ESDV-2001", 0.5, 8.0).setAllowableResponseTimeS(15.0).evaluate();
 
     assertEquals(1.0, res.getDetectionTimeS(), 1.0e-9);
     assertEquals(0.5, res.getLogicTimeS(), 1.0e-9);
@@ -128,7 +127,7 @@ public class DocSafetyComplianceExamplesTest {
     process.run();
 
     Api14cSafeChartBuilder chart = new Api14cSafeChartBuilder()
-	.declarePresent("HP separator", EnumSet.of(Api14cDeviceType.PSH, Api14cDeviceType.PSV)).build(process);
+        .declarePresent("HP separator", EnumSet.of(Api14cDeviceType.PSH, Api14cDeviceType.PSV)).build(process);
 
     assertNotNull(chart.getItems());
     assertNotNull(chart.getGaps());
@@ -137,16 +136,16 @@ public class DocSafetyComplianceExamplesTest {
     // A separator requires more than PSH + PSV, so the chart is incomplete.
     assertEquals(false, chart.isComplete());
     assertTrue(chart.getItems().get(0).getCategory() == Api14cEquipmentCategory.PRESSURE_VESSEL
-	|| chart.getItems().size() >= 1);
+        || chart.getItems().size() >= 1);
   }
 
   /** Example: NORSOK P-002 process-design compliance screen. */
   @Test
   public void testNorsokP002Example() {
     NorsokP002ComplianceChecker c = new NorsokP002ComplianceChecker().checkFlareLineMach("Header", 0.5)
-	.checkBlowdownRhoV2("BDV-1", 150000.0).checkVentGasVelocity("Vent", 45.0).checkLiquidCarryOver("V-100", 1.0e-4)
-	.checkErosionalVelocity("Line-200", 80000.0).recordDepressurisationValve("BDV-2", true, "Sized for fire case")
-	.recordDrainSlope("CD-1", true, "1:100 slope OK");
+        .checkBlowdownRhoV2("BDV-1", 150000.0).checkVentGasVelocity("Vent", 45.0).checkLiquidCarryOver("V-100", 1.0e-4)
+        .checkErosionalVelocity("Line-200", 80000.0).recordDepressurisationValve("BDV-2", true, "Sized for fire case")
+        .recordDrainSlope("CD-1", true, "1:100 slope OK");
 
     assertTrue(c.isCompliant());
     assertEquals(0, c.countNonCompliant());
@@ -157,8 +156,8 @@ public class DocSafetyComplianceExamplesTest {
   @Test
   public void testMultiVesselBlowdownExample() {
     MultiVesselBlowdownStudy study = new MultiVesselBlowdownStudy().setGridStep(1.0)
-	.addSourceResult("HP-sep", linearDecay(40.0, 120.0, 1.0))
-	.addSourceResult("Inlet-sep", linearDecay(25.0, 90.0, 1.0)).setHeader(0.80, 1.5, 288.15, 0.020, 1.30);
+        .addSourceResult("HP-sep", linearDecay(40.0, 120.0, 1.0))
+        .addSourceResult("Inlet-sep", linearDecay(25.0, 90.0, 1.0)).setHeader(0.80, 1.5, 288.15, 0.020, 1.30);
 
     MultiVesselBlowdownResult res = study.run();
     assertEquals(65.0, res.getPeakTotalMassFlowKgPerS(), 1.0e-6);
@@ -200,7 +199,7 @@ public class DocSafetyComplianceExamplesTest {
   @Test
   public void testApi537FlareFlameExample() {
     Api537FlareFlameModel model = new Api537FlareFlameModel(50.0, 50.0e6, 0.20, 200.0).setStackHeightM(40.0)
-	.setWindSpeedMPerS(10.0);
+        .setWindSpeedMPerS(10.0);
 
     double length = model.flameLengthM();
     assertTrue(length > 20.0 && length < 200.0);
@@ -221,7 +220,7 @@ public class DocSafetyComplianceExamplesTest {
   @Test
   public void testHazardousAreaExample() {
     HazardousAreaCalculator calc = new HazardousAreaCalculator(0.1, 6.0, 340.0, 0.044, 0.01604)
-	.setReleaseGrade(ReleaseGrade.SECONDARY).setSafetyFactor(0.5);
+        .setReleaseGrade(ReleaseGrade.SECONDARY).setSafetyFactor(0.5);
 
     assertTrue(calc.hazardousDistanceM() > 0.0);
     assertEquals("Zone 2", calc.zoneClassification());

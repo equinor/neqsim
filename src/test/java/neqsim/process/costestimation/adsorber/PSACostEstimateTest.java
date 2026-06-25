@@ -20,7 +20,7 @@ class PSACostEstimateTest {
     est.setSorbentMassPerBedKg(20000.0);
     est.calculateCostEstimate();
     assertTrue(est.getPurchasedEquipmentCost() > 0.0,
-	"Default PSA cost must be positive, got " + est.getPurchasedEquipmentCost());
+        "Default PSA cost must be positive, got " + est.getPurchasedEquipmentCost());
   }
 
   @Test
@@ -36,8 +36,8 @@ class PSACostEstimateTest {
     twelve.calculateCostEstimate();
 
     assertTrue(twelve.getPurchasedEquipmentCost() > four.getPurchasedEquipmentCost(),
-	"12-bed cascade must cost more than 4-bed: 12=" + twelve.getPurchasedEquipmentCost() + ", 4="
-	    + four.getPurchasedEquipmentCost());
+        "12-bed cascade must cost more than 4-bed: 12=" + twelve.getPurchasedEquipmentCost() + ", 4="
+            + four.getPurchasedEquipmentCost());
   }
 
   @Test
@@ -55,7 +55,7 @@ class PSACostEstimateTest {
     zeo.calculateCostEstimate();
 
     assertTrue(zeo.getPurchasedEquipmentCost() > ac.getPurchasedEquipmentCost(),
-	"Zeolite 13X (~10 USD/kg) must exceed AC (~4 USD/kg) on equal sorbent mass");
+        "Zeolite 13X (~10 USD/kg) must exceed AC (~4 USD/kg) on equal sorbent mass");
   }
 
   @Test
@@ -73,8 +73,8 @@ class PSACostEstimateTest {
     noBop.calculateCostEstimate();
 
     assertTrue(noBop.getPurchasedEquipmentCost() < withBop.getPurchasedEquipmentCost(),
-	"BoP=false should give a lower CAPEX, got with=" + withBop.getPurchasedEquipmentCost() + ", no="
-	    + noBop.getPurchasedEquipmentCost());
+        "BoP=false should give a lower CAPEX, got with=" + withBop.getPurchasedEquipmentCost() + ", no="
+            + noBop.getPurchasedEquipmentCost());
     double ratio = noBop.getPurchasedEquipmentCost() / withBop.getPurchasedEquipmentCost();
     assertTrue(ratio > 0.70 && ratio < 0.80, "BoP strip should reduce CAPEX by ~25%, ratio=" + ratio);
   }

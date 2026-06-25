@@ -1,5 +1,7 @@
 package neqsim.process.mechanicaldesign;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.process.costestimation.CostEstimateBaseClass;
@@ -18,8 +20,6 @@ import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
 import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class SystemMechanicalDesignTest {
   private static final Logger logger = LogManager.getLogger(SystemMechanicalDesignTest.class);
@@ -56,8 +56,8 @@ public class SystemMechanicalDesignTest {
     thermoSystem.setMixingRule("classic");
     thermoSystem.setMultiPhaseCheck(true);
     thermoSystem.setMolarComposition(new double[] { 0.034266, 0.005269, 0.039189, 0.700553, 0.091154, 0.050908,
-	0.007751, 0.014665, 0.004249, 0.004878, 0.004541, 0.007189, 0.006904, 0.004355, 0.007658, 0.003861, 0.003301,
-	0.002624, 0.001857, 0.001320, 0.001426, 0.001164, 0.000916 });
+        0.007751, 0.014665, 0.004249, 0.004878, 0.004541, 0.007189, 0.006904, 0.004355, 0.007658, 0.003861, 0.003301,
+        0.002624, 0.001857, 0.001320, 0.001426, 0.001164, 0.000916 });
     // thermoSystem.prettyPrint();
 
     Stream feedStream = new Stream("feed stream", thermoSystem);
@@ -66,7 +66,7 @@ public class SystemMechanicalDesignTest {
     feedStream.setPressure(26.0, "bara");
 
     neqsim.process.equipment.separator.ThreePhaseSeparator seprator1stStage = new neqsim.process.equipment.separator.ThreePhaseSeparator(
-	"1st stage separator", feedStream);
+        "1st stage separator", feedStream);
 
     ThrottlingValve valve1 = new ThrottlingValve("valve1", seprator1stStage.getLiquidOutStream());
     valve1.setOutletPressure(19.0);
@@ -75,7 +75,7 @@ public class SystemMechanicalDesignTest {
     oilHeater.setOutTemperature(359.0);
 
     neqsim.process.equipment.separator.ThreePhaseSeparator seprator2ndStage = new neqsim.process.equipment.separator.ThreePhaseSeparator(
-	"2nd stage separator", oilHeater.getOutletStream());
+        "2nd stage separator", oilHeater.getOutletStream());
 
     ThrottlingValve valve2 = new ThrottlingValve("valve2", seprator2ndStage.getLiquidOutStream());
     valve2.setOutletPressure(2.7);
@@ -84,7 +84,7 @@ public class SystemMechanicalDesignTest {
     recircstream1.setFlowRate(1e-6, "kg/hr");
 
     neqsim.process.equipment.separator.ThreePhaseSeparator seprator3rdStage = new neqsim.process.equipment.separator.ThreePhaseSeparator(
-	"3rd stage separator");
+        "3rd stage separator");
     seprator3rdStage.addStream(valve2.getOutletStream());
     seprator3rdStage.addStream(recircstream1);
 
@@ -147,7 +147,7 @@ public class SystemMechanicalDesignTest {
     // Test to run design calculation for a process unit (separator using the
     // SeparatorMechanicalDesign class)
     SeparatorMechanicalDesign sepMechDesign = new SeparatorMechanicalDesign(
-	(Separator) operations.getUnit("sepregenGas"));
+        (Separator) operations.getUnit("sepregenGas"));
     sepMechDesign.calcDesign();
     /*
      * logger.info("separator inner diameter " + sepMechDesign.innerDiameter);
@@ -194,8 +194,8 @@ public class SystemMechanicalDesignTest {
   @Test
   void testRunDesignForPipeline() {
     AdiabaticPipe pipe = new AdiabaticPipe("pipe1",
-	((neqsim.process.equipment.separator.ThreePhaseSeparator) operations.getUnit("1st stage separator"))
-	    .getGasOutStream());
+        ((neqsim.process.equipment.separator.ThreePhaseSeparator) operations.getUnit("1st stage separator"))
+            .getGasOutStream());
     pipe.setDiameter(1.0);
     pipe.setLength(1000.0);
     pipe.setPipeWallRoughness(10e-6);

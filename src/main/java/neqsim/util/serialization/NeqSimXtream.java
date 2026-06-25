@@ -63,22 +63,22 @@ public class NeqSimXtream {
     XStream xstream = createConfiguredXStream();
 
     try (BufferedInputStream fin = new BufferedInputStream(new FileInputStream(filename));
-	ZipInputStream zin = new ZipInputStream(fin)) {
+        ZipInputStream zin = new ZipInputStream(fin)) {
       ZipEntry entry;
       while ((entry = zin.getNextEntry()) != null) {
-	if ("process.xml".equals(entry.getName())) {
-	  try (InputStreamReader reader = new InputStreamReader(zin, "UTF-8")) {
-	    Object result = xstream.fromXML(reader);
-	    logger.debug("Successfully loaded object from: " + filename);
-	    return result;
-	  }
-	}
+        if ("process.xml".equals(entry.getName())) {
+          try (InputStreamReader reader = new InputStreamReader(zin, "UTF-8")) {
+            Object result = xstream.fromXML(reader);
+            logger.debug("Successfully loaded object from: " + filename);
+            return result;
+          }
+        }
       }
       throw new FileNotFoundException("process.xml not found in zip file: " + filename);
     } catch (ExceptionInInitializerError e) {
       throw new IOException("Failed to deserialize: a class static initializer failed. "
-	  + "Ensure JVM has --add-opens flags for java.base modules. Caused by: "
-	  + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()), e);
+          + "Ensure JVM has --add-opens flags for java.base modules. Caused by: "
+          + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()), e);
     } catch (NoClassDefFoundError e) {
       throw new IOException("Failed to deserialize: required class not found: " + e.getMessage(), e);
     }
@@ -110,16 +110,16 @@ public class NeqSimXtream {
     File parentDir = file.getParentFile();
     if (parentDir != null && !parentDir.exists()) {
       if (!parentDir.mkdirs()) {
-	logger.error("Failed to create directory: " + parentDir.getAbsolutePath());
-	return false;
+        logger.error("Failed to create directory: " + parentDir.getAbsolutePath());
+        return false;
       }
     }
 
     XStream xstream = createConfiguredXStream();
 
     try (BufferedOutputStream fout = new BufferedOutputStream(new FileOutputStream(filename));
-	ZipOutputStream zout = new ZipOutputStream(fout);
-	OutputStreamWriter writer = new OutputStreamWriter(zout, "UTF-8")) {
+        ZipOutputStream zout = new ZipOutputStream(fout);
+        OutputStreamWriter writer = new OutputStreamWriter(zout, "UTF-8")) {
       ZipEntry entry = new ZipEntry("process.xml");
       zout.putNextEntry(entry);
 
@@ -150,7 +150,7 @@ public class NeqSimXtream {
     XStream xstream = new XStream() {
       @Override
       protected MapperWrapper wrapMapper(MapperWrapper next) {
-	return new ThreadLocalSkipMapper(new UnknownElementIgnorer(next));
+        return new ThreadLocalSkipMapper(new UnknownElementIgnorer(next));
       }
     };
     xstream.setMode(XStream.ID_REFERENCES);
@@ -176,7 +176,7 @@ public class NeqSimXtream {
     @Override
     public boolean shouldSerializeMember(Class definedIn, String fieldName) {
       if (isThreadLocalField(definedIn, fieldName)) {
-	return false;
+        return false;
       }
       return super.shouldSerializeMember(definedIn, fieldName);
     }
@@ -184,12 +184,12 @@ public class NeqSimXtream {
     private boolean isThreadLocalField(Class<?> definedIn, String fieldName) {
       Class<?> clazz = definedIn;
       while (clazz != null) {
-	try {
-	  java.lang.reflect.Field field = clazz.getDeclaredField(fieldName);
-	  return ThreadLocal.class.isAssignableFrom(field.getType());
-	} catch (NoSuchFieldException e) {
-	  clazz = clazz.getSuperclass();
-	}
+        try {
+          java.lang.reflect.Field field = clazz.getDeclaredField(fieldName);
+          return ThreadLocal.class.isAssignableFrom(field.getType());
+        } catch (NoSuchFieldException e) {
+          clazz = clazz.getSuperclass();
+        }
       }
       return false;
     }
@@ -212,17 +212,17 @@ public class NeqSimXtream {
     @Override
     public Class realClass(String elementName) {
       try {
-	return super.realClass(elementName);
+        return super.realClass(elementName);
       } catch (CannotResolveClassException e) {
-	logger.debug("Ignoring unknown class during deserialization: " + elementName);
-	return null;
+        logger.debug("Ignoring unknown class during deserialization: " + elementName);
+        return null;
       }
     }
 
     @Override
     public boolean shouldSerializeMember(Class definedIn, String fieldName) {
       if (definedIn == null) {
-	return false;
+        return false;
       }
       return super.shouldSerializeMember(definedIn, fieldName);
     }

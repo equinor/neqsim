@@ -31,7 +31,7 @@ public class DistillationColumnTimingTest {
     assertEquals(DistillationColumn.SolverType.DAMPED_SUBSTITUTION, column.getLastSolverTypeUsed());
     assertTrue(column.wasFallbackInvoked(), "The fallback solve path should be invoked");
     assertTrue(column.getLastSolveTimeSeconds() >= FORCED_ACCELERATOR_WORK_NANOS / 1.0e9,
-	"Reported solve time should include the failed accelerator before fallback");
+        "Reported solve time should include the failed accelerator before fallback");
   }
 
   /**
@@ -46,7 +46,7 @@ public class DistillationColumnTimingTest {
 
     assertTrue(column.wasFullFractionatorFastPathApplied(), column.getConvergenceDiagnostics());
     assertEquals(5, column.getFeedTrayNumber(column.getFeed()),
-	"Opt-in fast path should move the end feed to the mid-column tray");
+        "Opt-in fast path should move the end feed to the mid-column tray");
     assertTrue(column.wasMeshResidualInvoked(), "Opt-in fast path should invoke MESH residual");
     assertEquals(DistillationColumn.SolverType.MESH_RESIDUAL, column.getLastSolverTypeUsed());
   }
@@ -83,7 +83,7 @@ public class DistillationColumnTimingTest {
     void solveInsideOut(UUID id) {
       long startTime = System.nanoTime();
       while (System.nanoTime() - startTime < FORCED_ACCELERATOR_WORK_NANOS) {
-	// Keep the forced work local so the regression test stays deterministic and fast.
+        // Keep the forced work local so the regression test stays deterministic and fast.
       }
       throw new RuntimeException("forced accelerator failure");
     }

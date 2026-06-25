@@ -70,9 +70,9 @@ public class SurrogateModelRegistry implements Serializable {
   public static SurrogateModelRegistry getInstance() {
     if (instance == null) {
       synchronized (SurrogateModelRegistry.class) {
-	if (instance == null) {
-	  instance = new SurrogateModelRegistry();
-	}
+        if (instance == null) {
+          instance = new SurrogateModelRegistry();
+        }
       }
     }
     return instance;
@@ -155,7 +155,7 @@ public class SurrogateModelRegistry implements Serializable {
     if (!entry.metadata.isInputValid(input)) {
       entry.metadata.recordExtrapolation();
       if (enableFallback) {
-	return physicsFallback.apply(input);
+        return physicsFallback.apply(input);
       }
     }
 
@@ -166,7 +166,7 @@ public class SurrogateModelRegistry implements Serializable {
     } catch (Exception e) {
       entry.metadata.recordFailure();
       if (enableFallback) {
-	return physicsFallback.apply(input);
+        return physicsFallback.apply(input);
       }
       throw new RuntimeException("Surrogate model failed and fallback is disabled", e);
     }
@@ -323,13 +323,13 @@ public class SurrogateModelRegistry implements Serializable {
      */
     public boolean isInputValid(double[] input) {
       if (inputMin == null || inputMax == null) {
-	return true; // No bounds defined
+        return true; // No bounds defined
       }
 
       for (int i = 0; i < Math.min(input.length, inputMin.length); i++) {
-	if (input[i] < inputMin[i] || input[i] > inputMax[i]) {
-	  return false;
-	}
+        if (input[i] < inputMin[i] || input[i] > inputMax[i]) {
+          return false;
+        }
       }
       return true;
     }
@@ -354,7 +354,7 @@ public class SurrogateModelRegistry implements Serializable {
      */
     public double getFailureRate() {
       if (predictionCount == 0) {
-	return 0.0;
+        return 0.0;
       }
       return (double) failureCount / predictionCount;
     }
@@ -366,7 +366,7 @@ public class SurrogateModelRegistry implements Serializable {
      */
     public double getExtrapolationRate() {
       if (predictionCount == 0) {
-	return 0.0;
+        return 0.0;
       }
       return (double) extrapolationCount / predictionCount;
     }

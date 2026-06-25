@@ -156,7 +156,7 @@ public class EndFlash extends Separator {
       double liqMoles = liqOut.getThermoSystem().getTotalNumberOfMoles();
       double totalMoles = gasMoles + liqMoles;
       if (totalMoles > 0) {
-	flashGasRatio = gasMoles / totalMoles;
+        flashGasRatio = gasMoles / totalMoles;
       }
     }
 
@@ -165,12 +165,12 @@ public class EndFlash extends Separator {
 
     if (!lngSpecMet) {
       logger.warn(
-	  String.format("End Flash '%s': N2 in LNG = %.4f exceeds max %.4f", getName(), n2InLNGMolFrac, maxN2InLNG));
+          String.format("End Flash '%s': N2 in LNG = %.4f exceeds max %.4f", getName(), n2InLNGMolFrac, maxN2InLNG));
     }
 
     logger.info(
-	String.format("End Flash '%s': N2_LNG=%.4f, CH4_LNG=%.4f, N2_gas=%.4f, flash_ratio=%.4f, spec=%s", getName(),
-	    n2InLNGMolFrac, methaneInLNGMolFrac, n2InFlashGasMolFrac, flashGasRatio, lngSpecMet ? "MET" : "NOT MET"));
+        String.format("End Flash '%s': N2_LNG=%.4f, CH4_LNG=%.4f, N2_gas=%.4f, flash_ratio=%.4f, spec=%s", getName(),
+            n2InLNGMolFrac, methaneInLNGMolFrac, n2InFlashGasMolFrac, flashGasRatio, lngSpecMet ? "MET" : "NOT MET"));
 
     setCalculationIdentifier(id);
   }
@@ -184,7 +184,7 @@ public class EndFlash extends Separator {
     n2InFlashGasMolFrac = 0.0;
     try {
       if (gasSystem.getPhase(0).hasComponent("nitrogen")) {
-	n2InFlashGasMolFrac = gasSystem.getPhase(0).getComponent("nitrogen").getz();
+        n2InFlashGasMolFrac = gasSystem.getPhase(0).getComponent("nitrogen").getz();
       }
     } catch (Exception ex) {
       logger.debug("Nitrogen not found in flash gas", ex);
@@ -201,10 +201,10 @@ public class EndFlash extends Separator {
     methaneInLNGMolFrac = 0.0;
     try {
       if (liqSystem.getPhase(0).hasComponent("nitrogen")) {
-	n2InLNGMolFrac = liqSystem.getPhase(0).getComponent("nitrogen").getz();
+        n2InLNGMolFrac = liqSystem.getPhase(0).getComponent("nitrogen").getz();
       }
       if (liqSystem.getPhase(0).hasComponent("methane")) {
-	methaneInLNGMolFrac = liqSystem.getPhase(0).getComponent("methane").getz();
+        methaneInLNGMolFrac = liqSystem.getPhase(0).getComponent("methane").getz();
       }
     } catch (Exception ex) {
       logger.debug("Component analysis for LNG product failed", ex);

@@ -59,27 +59,27 @@ public final class PipeFireRuptureStudyRunner implements Serializable {
    */
   public PipeFireRuptureStudyHandoff run(PipeFireRuptureDataSource dataSource) {
     PipeFireRuptureDataSource source = dataSource == null
-	? PipeFireRuptureDataSource.builder("missing-data-source").addGap("PipeFireRuptureDataSource was null.").build()
-	: dataSource;
+        ? PipeFireRuptureDataSource.builder("missing-data-source").addGap("PipeFireRuptureDataSource was null.").build()
+        : dataSource;
     SafetyStudyReadiness calculationReadiness = source.readiness();
     PipeFireRuptureResult result = null;
     UncertaintySummary uncertaintySummary = null;
     Map<String, Object> sourceTerm = null;
     if (calculationReadiness.isReadyForCalculation()) {
       result = PipeFireRuptureStudy
-	  .builder(source.getInput(), source.getMaterial(), source.getScenario(), source.getPressureProfile())
-	  .timeStepSeconds(timeStepSeconds).maxTimeSeconds(maxTimeSeconds)
-	  .spreadsheetGasThermalMass(spreadsheetGasThermalMass).build().run();
+          .builder(source.getInput(), source.getMaterial(), source.getScenario(), source.getPressureProfile())
+          .timeStepSeconds(timeStepSeconds).maxTimeSeconds(maxTimeSeconds)
+          .spreadsheetGasThermalMass(spreadsheetGasThermalMass).build().run();
       sourceTerm = sourceTermHandoff(source, result);
       if (runUncertainty) {
-	uncertaintySummary = new PipeFireRuptureUncertaintyRunner(timeStepSeconds, maxTimeSeconds,
-	    spreadsheetGasThermalMass).run(source);
+        uncertaintySummary = new PipeFireRuptureUncertaintyRunner(timeStepSeconds, maxTimeSeconds,
+            spreadsheetGasThermalMass).run(source);
       }
     }
     SafetyStudyReadiness standardsReadiness = standardsValidator.validate(source, result);
     return PipeFireRuptureStudyHandoff.builder(source).calculationReadiness(calculationReadiness)
-	.standardsReadiness(standardsReadiness).result(result).uncertaintySummary(uncertaintySummary)
-	.sourceTermHandoff(sourceTerm).build();
+        .standardsReadiness(standardsReadiness).result(result).uncertaintySummary(uncertaintySummary)
+        .sourceTermHandoff(sourceTerm).build();
   }
 
   /**
@@ -179,7 +179,7 @@ public final class PipeFireRuptureStudyRunner implements Serializable {
      */
     public Builder standardsValidator(PipeFireRuptureStandardsValidator standardsValidator) {
       if (standardsValidator != null) {
-	this.standardsValidator = standardsValidator;
+        this.standardsValidator = standardsValidator;
       }
       return this;
     }
@@ -202,7 +202,7 @@ public final class PipeFireRuptureStudyRunner implements Serializable {
       validatePositive(timeStepSeconds, "timeStepSeconds");
       validatePositive(maxTimeSeconds, "maxTimeSeconds");
       if (maxTimeSeconds < timeStepSeconds) {
-	throw new IllegalArgumentException("maxTimeSeconds must be at least timeStepSeconds");
+        throw new IllegalArgumentException("maxTimeSeconds must be at least timeStepSeconds");
       }
     }
 
@@ -215,7 +215,7 @@ public final class PipeFireRuptureStudyRunner implements Serializable {
      */
     private static void validatePositive(double value, String name) {
       if (value <= 0.0 || Double.isNaN(value) || Double.isInfinite(value)) {
-	throw new IllegalArgumentException(name + " must be positive and finite");
+        throw new IllegalArgumentException(name + " must be positive and finite");
       }
     }
   }

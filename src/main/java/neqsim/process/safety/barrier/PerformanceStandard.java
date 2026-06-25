@@ -266,7 +266,7 @@ public class PerformanceStandard implements Serializable {
   public boolean hasTraceableEvidence() {
     for (DocumentEvidence item : evidence) {
       if (item.isTraceable()) {
-	return true;
+        return true;
       }
     }
     return false;

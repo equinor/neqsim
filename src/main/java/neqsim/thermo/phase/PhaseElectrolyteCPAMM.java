@@ -178,7 +178,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     // Resize xsitedni arrays for all CPA components
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i] instanceof ComponentSrkCPA) {
-	((ComponentSrkCPA) componentArray[i]).resizeXsitedni(numberOfComponents);
+        ((ComponentSrkCPA) componentArray[i]).resizeXsitedni(numberOfComponents);
       }
     }
   }
@@ -235,10 +235,10 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     for (int i = 0; i < numberOfComponents; i++) {
       double z = componentArray[i].getIonicCharge();
       if (z != 0) {
-	double n = componentArray[i].getNumberOfMolesInPhase();
-	double sigma = componentArray[i].getLennardJonesMolecularDiameter() * 1e-10; // Å to m
-	sumNZ2sigma += n * z * z * sigma;
-	sumNZ2 += n * z * z;
+        double n = componentArray[i].getNumberOfMolesInPhase();
+        double sigma = componentArray[i].getLennardJonesMolecularDiameter() * 1e-10; // Å to m
+        sumNZ2sigma += n * z * z * sigma;
+        sumNZ2 += n * z * z;
       }
     }
     if (sumNZ2 < 1e-30) {
@@ -354,26 +354,26 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     // Populate wij from component ΔU_iw parameters
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < numberOfComponents; j++) {
-	wij[i][j] = 0.0;
-	wijT[i][j] = 0.0;
+        wij[i][j] = 0.0;
+        wijT[i][j] = 0.0;
 
-	// Ion-solvent pairs: ion at i, solvent at j
-	if (componentArray[i].getIonicCharge() != 0 && componentArray[j].getIonicCharge() == 0) {
-	  if (componentArray[i] instanceof ComponentSrkCPAMM) {
-	    ComponentSrkCPAMM ionComp = (ComponentSrkCPAMM) componentArray[i];
-	    // wij(T) = ΔU_iw(T) = u⁰_iw + uᵀ_iw × (T - 298.15)
-	    wij[i][j] = ionComp.getIonSolventInteractionEnergy(temperature);
-	    wijT[i][j] = ionComp.getIonSolventInteractionEnergydT();
-	  }
-	} else if (componentArray[i].getIonicCharge() == 0
-	    // Solvent-ion pairs: solvent at i, ion at j (symmetric)
-	    && componentArray[j].getIonicCharge() != 0) {
-	  if (componentArray[j] instanceof ComponentSrkCPAMM) {
-	    ComponentSrkCPAMM ionComp = (ComponentSrkCPAMM) componentArray[j];
-	    wij[i][j] = ionComp.getIonSolventInteractionEnergy(temperature);
-	    wijT[i][j] = ionComp.getIonSolventInteractionEnergydT();
-	  }
-	}
+        // Ion-solvent pairs: ion at i, solvent at j
+        if (componentArray[i].getIonicCharge() != 0 && componentArray[j].getIonicCharge() == 0) {
+          if (componentArray[i] instanceof ComponentSrkCPAMM) {
+            ComponentSrkCPAMM ionComp = (ComponentSrkCPAMM) componentArray[i];
+            // wij(T) = ΔU_iw(T) = u⁰_iw + uᵀ_iw × (T - 298.15)
+            wij[i][j] = ionComp.getIonSolventInteractionEnergy(temperature);
+            wijT[i][j] = ionComp.getIonSolventInteractionEnergydT();
+          }
+        } else if (componentArray[i].getIonicCharge() == 0
+            // Solvent-ion pairs: solvent at i, ion at j (symmetric)
+            && componentArray[j].getIonicCharge() != 0) {
+          if (componentArray[j] instanceof ComponentSrkCPAMM) {
+            ComponentSrkCPAMM ionComp = (ComponentSrkCPAMM) componentArray[j];
+            wij[i][j] = ionComp.getIonSolventInteractionEnergy(temperature);
+            wijT[i][j] = ionComp.getIonSolventInteractionEnergydT();
+          }
+        }
       }
     }
   }
@@ -510,8 +510,8 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     double sumMoles = 1e-50;
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	sumEps += componentArray[i].getNumberOfMolesInPhase() * componentArray[i].getDielectricConstant(T);
-	sumMoles += componentArray[i].getNumberOfMolesInPhase();
+        sumEps += componentArray[i].getNumberOfMolesInPhase() * componentArray[i].getDielectricConstant(T);
+        sumMoles += componentArray[i].getNumberOfMolesInPhase();
       }
     }
     return sumEps / sumMoles;
@@ -540,26 +540,26 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     // First pass: calculate total molar volume
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	double moles = componentArray[i].getNumberOfMolesInPhase();
-	// Use critical volume as approximation for molar volume (Vc in L/mol)
-	double molarVolume = componentArray[i].getCriticalVolume();
-	if (molarVolume <= 0) {
-	  molarVolume = 18.0; // Default to water-like
-	}
-	totalVolume += moles * molarVolume;
+        double moles = componentArray[i].getNumberOfMolesInPhase();
+        // Use critical volume as approximation for molar volume (Vc in L/mol)
+        double molarVolume = componentArray[i].getCriticalVolume();
+        if (molarVolume <= 0) {
+          molarVolume = 18.0; // Default to water-like
+        }
+        totalVolume += moles * molarVolume;
       }
     }
 
     // Second pass: calculate volume-weighted average
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	double moles = componentArray[i].getNumberOfMolesInPhase();
-	double molarVolume = componentArray[i].getCriticalVolume();
-	if (molarVolume <= 0) {
-	  molarVolume = 18.0;
-	}
-	double volumeFraction = (moles * molarVolume) / totalVolume;
-	weightedSum += volumeFraction * componentArray[i].getDielectricConstant(T);
+        double moles = componentArray[i].getNumberOfMolesInPhase();
+        double molarVolume = componentArray[i].getCriticalVolume();
+        if (molarVolume <= 0) {
+          molarVolume = 18.0;
+        }
+        double volumeFraction = (moles * molarVolume) / totalVolume;
+        weightedSum += volumeFraction * componentArray[i].getDielectricConstant(T);
       }
     }
     return weightedSum;
@@ -586,26 +586,26 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     // First pass: calculate total volume
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	double moles = componentArray[i].getNumberOfMolesInPhase();
-	double molarVolume = componentArray[i].getCriticalVolume();
-	if (molarVolume <= 0) {
-	  molarVolume = 18.0;
-	}
-	totalVolume += moles * molarVolume;
+        double moles = componentArray[i].getNumberOfMolesInPhase();
+        double molarVolume = componentArray[i].getCriticalVolume();
+        if (molarVolume <= 0) {
+          molarVolume = 18.0;
+        }
+        totalVolume += moles * molarVolume;
       }
     }
 
     // Second pass: calculate Looyenga sum
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	double moles = componentArray[i].getNumberOfMolesInPhase();
-	double molarVolume = componentArray[i].getCriticalVolume();
-	if (molarVolume <= 0) {
-	  molarVolume = 18.0;
-	}
-	double volumeFraction = (moles * molarVolume) / totalVolume;
-	double eps_i = componentArray[i].getDielectricConstant(T);
-	cubicRootSum += volumeFraction * Math.pow(eps_i, 1.0 / 3.0);
+        double moles = componentArray[i].getNumberOfMolesInPhase();
+        double molarVolume = componentArray[i].getCriticalVolume();
+        if (molarVolume <= 0) {
+          molarVolume = 18.0;
+        }
+        double volumeFraction = (moles * molarVolume) / totalVolume;
+        double eps_i = componentArray[i].getDielectricConstant(T);
+        cubicRootSum += volumeFraction * Math.pow(eps_i, 1.0 / 3.0);
       }
     }
     return Math.pow(cubicRootSum, 3.0);
@@ -635,7 +635,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     int solventCount = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	solventCount++;
+        solventCount++;
       }
     }
     if (solventCount != 2) {
@@ -651,15 +651,15 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     // Calculate volumes
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0 && idx < 2) {
-	double moles = componentArray[i].getNumberOfMolesInPhase();
-	double molarVolume = componentArray[i].getCriticalVolume();
-	if (molarVolume <= 0) {
-	  molarVolume = 18.0;
-	}
-	eps[idx] = componentArray[i].getDielectricConstant(T);
-	phi[idx] = moles * molarVolume;
-	totalVolume += phi[idx];
-	idx++;
+        double moles = componentArray[i].getNumberOfMolesInPhase();
+        double molarVolume = componentArray[i].getCriticalVolume();
+        if (molarVolume <= 0) {
+          molarVolume = 18.0;
+        }
+        eps[idx] = componentArray[i].getDielectricConstant(T);
+        phi[idx] = moles * molarVolume;
+        totalVolume += phi[idx];
+        idx++;
       }
     }
 
@@ -695,28 +695,28 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     // First pass: calculate total volume
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	double moles = componentArray[i].getNumberOfMolesInPhase();
-	double molarVolume = componentArray[i].getCriticalVolume();
-	if (molarVolume <= 0) {
-	  molarVolume = 18.0;
-	}
-	totalVolume += moles * molarVolume;
+        double moles = componentArray[i].getNumberOfMolesInPhase();
+        double molarVolume = componentArray[i].getCriticalVolume();
+        if (molarVolume <= 0) {
+          molarVolume = 18.0;
+        }
+        totalVolume += moles * molarVolume;
       }
     }
 
     // Second pass: calculate log-weighted sum
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	double moles = componentArray[i].getNumberOfMolesInPhase();
-	double molarVolume = componentArray[i].getCriticalVolume();
-	if (molarVolume <= 0) {
-	  molarVolume = 18.0;
-	}
-	double volumeFraction = (moles * molarVolume) / totalVolume;
-	double eps_i = componentArray[i].getDielectricConstant(T);
-	if (eps_i > 0) {
-	  logSum += volumeFraction * Math.log(eps_i);
-	}
+        double moles = componentArray[i].getNumberOfMolesInPhase();
+        double molarVolume = componentArray[i].getCriticalVolume();
+        if (molarVolume <= 0) {
+          molarVolume = 18.0;
+        }
+        double volumeFraction = (moles * molarVolume) / totalVolume;
+        double eps_i = componentArray[i].getDielectricConstant(T);
+        if (eps_i > 0) {
+          logSum += volumeFraction * Math.log(eps_i);
+        }
       }
     }
     return Math.exp(logSum);
@@ -755,8 +755,8 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     double sumMoles = 1e-50;
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	sumEpsdT += componentArray[i].getNumberOfMolesInPhase() * componentArray[i].getDielectricConstantdT(T);
-	sumMoles += componentArray[i].getNumberOfMolesInPhase();
+        sumEpsdT += componentArray[i].getNumberOfMolesInPhase() * componentArray[i].getDielectricConstantdT(T);
+        sumMoles += componentArray[i].getNumberOfMolesInPhase();
       }
     }
     return sumEpsdT / sumMoles;
@@ -774,24 +774,24 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
 
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	double moles = componentArray[i].getNumberOfMolesInPhase();
-	double molarVolume = componentArray[i].getCriticalVolume();
-	if (molarVolume <= 0) {
-	  molarVolume = 18.0;
-	}
-	totalVolume += moles * molarVolume;
+        double moles = componentArray[i].getNumberOfMolesInPhase();
+        double molarVolume = componentArray[i].getCriticalVolume();
+        if (molarVolume <= 0) {
+          molarVolume = 18.0;
+        }
+        totalVolume += moles * molarVolume;
       }
     }
 
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	double moles = componentArray[i].getNumberOfMolesInPhase();
-	double molarVolume = componentArray[i].getCriticalVolume();
-	if (molarVolume <= 0) {
-	  molarVolume = 18.0;
-	}
-	double volumeFraction = (moles * molarVolume) / totalVolume;
-	weightedSumdT += volumeFraction * componentArray[i].getDielectricConstantdT(T);
+        double moles = componentArray[i].getNumberOfMolesInPhase();
+        double molarVolume = componentArray[i].getCriticalVolume();
+        if (molarVolume <= 0) {
+          molarVolume = 18.0;
+        }
+        double volumeFraction = (moles * molarVolume) / totalVolume;
+        weightedSumdT += volumeFraction * componentArray[i].getDielectricConstantdT(T);
       }
     }
     return weightedSumdT;
@@ -815,27 +815,27 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
 
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	double moles = componentArray[i].getNumberOfMolesInPhase();
-	double molarVolume = componentArray[i].getCriticalVolume();
-	if (molarVolume <= 0) {
-	  molarVolume = 18.0;
-	}
-	totalVolume += moles * molarVolume;
+        double moles = componentArray[i].getNumberOfMolesInPhase();
+        double molarVolume = componentArray[i].getCriticalVolume();
+        if (molarVolume <= 0) {
+          molarVolume = 18.0;
+        }
+        totalVolume += moles * molarVolume;
       }
     }
 
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	double moles = componentArray[i].getNumberOfMolesInPhase();
-	double molarVolume = componentArray[i].getCriticalVolume();
-	if (molarVolume <= 0) {
-	  molarVolume = 18.0;
-	}
-	double volumeFraction = (moles * molarVolume) / totalVolume;
-	double eps_i = componentArray[i].getDielectricConstant(T);
-	double eps_i_dT = componentArray[i].getDielectricConstantdT(T);
-	cubicRootSum += volumeFraction * Math.pow(eps_i, 1.0 / 3.0);
-	cubicRootSumdT += volumeFraction * (1.0 / 3.0) * Math.pow(eps_i, -2.0 / 3.0) * eps_i_dT;
+        double moles = componentArray[i].getNumberOfMolesInPhase();
+        double molarVolume = componentArray[i].getCriticalVolume();
+        if (molarVolume <= 0) {
+          molarVolume = 18.0;
+        }
+        double volumeFraction = (moles * molarVolume) / totalVolume;
+        double eps_i = componentArray[i].getDielectricConstant(T);
+        double eps_i_dT = componentArray[i].getDielectricConstantdT(T);
+        cubicRootSum += volumeFraction * Math.pow(eps_i, 1.0 / 3.0);
+        cubicRootSumdT += volumeFraction * (1.0 / 3.0) * Math.pow(eps_i, -2.0 / 3.0) * eps_i_dT;
       }
     }
 
@@ -861,29 +861,29 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
 
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	double moles = componentArray[i].getNumberOfMolesInPhase();
-	double molarVolume = componentArray[i].getCriticalVolume();
-	if (molarVolume <= 0) {
-	  molarVolume = 18.0;
-	}
-	totalVolume += moles * molarVolume;
+        double moles = componentArray[i].getNumberOfMolesInPhase();
+        double molarVolume = componentArray[i].getCriticalVolume();
+        if (molarVolume <= 0) {
+          molarVolume = 18.0;
+        }
+        totalVolume += moles * molarVolume;
       }
     }
 
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	double moles = componentArray[i].getNumberOfMolesInPhase();
-	double molarVolume = componentArray[i].getCriticalVolume();
-	if (molarVolume <= 0) {
-	  molarVolume = 18.0;
-	}
-	double volumeFraction = (moles * molarVolume) / totalVolume;
-	double eps_i = componentArray[i].getDielectricConstant(T);
-	double eps_i_dT = componentArray[i].getDielectricConstantdT(T);
-	if (eps_i > 0) {
-	  logSum += volumeFraction * Math.log(eps_i);
-	  logSumdT += volumeFraction * eps_i_dT / eps_i;
-	}
+        double moles = componentArray[i].getNumberOfMolesInPhase();
+        double molarVolume = componentArray[i].getCriticalVolume();
+        if (molarVolume <= 0) {
+          molarVolume = 18.0;
+        }
+        double volumeFraction = (moles * molarVolume) / totalVolume;
+        double eps_i = componentArray[i].getDielectricConstant(T);
+        double eps_i_dT = componentArray[i].getDielectricConstantdT(T);
+        if (eps_i > 0) {
+          logSum += volumeFraction * Math.log(eps_i);
+          logSumdT += volumeFraction * eps_i_dT / eps_i;
+        }
       }
     }
 
@@ -902,7 +902,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     int solventCount = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	solventCount++;
+        solventCount++;
       }
     }
     if (solventCount != 2) {
@@ -917,16 +917,16 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
 
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0 && idx < 2) {
-	double moles = componentArray[i].getNumberOfMolesInPhase();
-	double molarVolume = componentArray[i].getCriticalVolume();
-	if (molarVolume <= 0) {
-	  molarVolume = 18.0;
-	}
-	eps[idx] = componentArray[i].getDielectricConstant(T);
-	epsdT[idx] = componentArray[i].getDielectricConstantdT(T);
-	phi[idx] = moles * molarVolume;
-	totalVolume += phi[idx];
-	idx++;
+        double moles = componentArray[i].getNumberOfMolesInPhase();
+        double molarVolume = componentArray[i].getCriticalVolume();
+        if (molarVolume <= 0) {
+          molarVolume = 18.0;
+        }
+        eps[idx] = componentArray[i].getDielectricConstant(T);
+        epsdT[idx] = componentArray[i].getDielectricConstantdT(T);
+        phi[idx] = moles * molarVolume;
+        totalVolume += phi[idx];
+        idx++;
       }
     }
 
@@ -955,8 +955,8 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     double sumMoles = 1e-50;
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	sumEpsdTdT += componentArray[i].getNumberOfMolesInPhase() * componentArray[i].getDielectricConstantdTdT(T);
-	sumMoles += componentArray[i].getNumberOfMolesInPhase();
+        sumEpsdTdT += componentArray[i].getNumberOfMolesInPhase() * componentArray[i].getDielectricConstantdTdT(T);
+        sumMoles += componentArray[i].getNumberOfMolesInPhase();
       }
     }
     return sumEpsdTdT / sumMoles;
@@ -1010,7 +1010,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     double sumMoles = 1e-50;
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	sumMoles += componentArray[i].getNumberOfMolesInPhase();
+        sumMoles += componentArray[i].getNumberOfMolesInPhase();
       }
     }
     double eps_k = componentArray[k].getDielectricConstant(T);
@@ -1033,12 +1033,12 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     double totalVolume = 1e-50;
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	double moles = componentArray[i].getNumberOfMolesInPhase();
-	double molarVolume = componentArray[i].getCriticalVolume();
-	if (molarVolume <= 0) {
-	  molarVolume = 18.0;
-	}
-	totalVolume += moles * molarVolume;
+        double moles = componentArray[i].getNumberOfMolesInPhase();
+        double molarVolume = componentArray[i].getCriticalVolume();
+        if (molarVolume <= 0) {
+          molarVolume = 18.0;
+        }
+        totalVolume += moles * molarVolume;
       }
     }
 
@@ -1069,15 +1069,15 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
 
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	double moles = componentArray[i].getNumberOfMolesInPhase();
-	double molarVolume = componentArray[i].getCriticalVolume();
-	if (molarVolume <= 0) {
-	  molarVolume = 18.0;
-	}
-	totalVolume += moles * molarVolume;
-	double volumeFraction = moles * molarVolume; // Will normalize later
-	double eps_i = componentArray[i].getDielectricConstant(T);
-	cubicRootSum += volumeFraction * Math.pow(eps_i, 1.0 / 3.0) / totalVolume; // Placeholder
+        double moles = componentArray[i].getNumberOfMolesInPhase();
+        double molarVolume = componentArray[i].getCriticalVolume();
+        if (molarVolume <= 0) {
+          molarVolume = 18.0;
+        }
+        totalVolume += moles * molarVolume;
+        double volumeFraction = moles * molarVolume; // Will normalize later
+        double eps_i = componentArray[i].getDielectricConstant(T);
+        cubicRootSum += volumeFraction * Math.pow(eps_i, 1.0 / 3.0) / totalVolume; // Placeholder
       }
     }
 
@@ -1085,14 +1085,14 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     cubicRootSum = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	double moles = componentArray[i].getNumberOfMolesInPhase();
-	double molarVolume = componentArray[i].getCriticalVolume();
-	if (molarVolume <= 0) {
-	  molarVolume = 18.0;
-	}
-	double volumeFraction = (moles * molarVolume) / totalVolume;
-	double eps_i = componentArray[i].getDielectricConstant(T);
-	cubicRootSum += volumeFraction * Math.pow(eps_i, 1.0 / 3.0);
+        double moles = componentArray[i].getNumberOfMolesInPhase();
+        double molarVolume = componentArray[i].getCriticalVolume();
+        if (molarVolume <= 0) {
+          molarVolume = 18.0;
+        }
+        double volumeFraction = (moles * molarVolume) / totalVolume;
+        double eps_i = componentArray[i].getDielectricConstant(T);
+        cubicRootSum += volumeFraction * Math.pow(eps_i, 1.0 / 3.0);
       }
     }
 
@@ -1126,12 +1126,12 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     double totalVolume = 1e-50;
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	double moles = componentArray[i].getNumberOfMolesInPhase();
-	double molarVolume = componentArray[i].getCriticalVolume();
-	if (molarVolume <= 0) {
-	  molarVolume = 18.0;
-	}
-	totalVolume += moles * molarVolume;
+        double moles = componentArray[i].getNumberOfMolesInPhase();
+        double molarVolume = componentArray[i].getCriticalVolume();
+        if (molarVolume <= 0) {
+          molarVolume = 18.0;
+        }
+        totalVolume += moles * molarVolume;
       }
     }
 
@@ -1168,7 +1168,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     double sumMoles = 1e-50;
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	sumMoles += componentArray[i].getNumberOfMolesInPhase();
+        sumMoles += componentArray[i].getNumberOfMolesInPhase();
       }
     }
     double eps_k_dT = componentArray[k].getDielectricConstantdT(T);
@@ -1200,7 +1200,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     double sumMoles = 1e-50;
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
-	sumMoles += componentArray[i].getNumberOfMolesInPhase();
+        sumMoles += componentArray[i].getNumberOfMolesInPhase();
       }
     }
     double eps_k = componentArray[k].getDielectricConstant(T);
@@ -1233,8 +1233,8 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     double V = getMolarVolume() * numberOfMolesInPhase * 1e-5; // m³
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() != 0) {
-	double sigma = componentArray[i].getLennardJonesMolecularDiameter() * 1e-10; // m
-	eta += AVOGADRO * Math.PI / 6.0 * componentArray[i].getNumberOfMolesInPhase() * Math.pow(sigma, 3.0) / V;
+        double sigma = componentArray[i].getLennardJonesMolecularDiameter() * 1e-10; // m
+        eta += AVOGADRO * Math.PI / 6.0 * componentArray[i].getNumberOfMolesInPhase() * Math.pow(sigma, 3.0) / V;
       }
     }
     return eta;
@@ -1247,6 +1247,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * κ² = (e² / (ε₀ε_r k_B T)) * Σ(ρ_i * z_i²)
    * </pre>
    *
+   * <p>
    * where ρ_i is number density [1/m³].
    *
    * @return kappa [1/m]
@@ -1256,18 +1257,18 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     double V = getMolarVolume() * numberOfMolesInPhase * 1e-5; // m³
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() != 0) {
-	double ni = componentArray[i].getNumberOfMolesInPhase();
-	double zi = componentArray[i].getIonicCharge();
-	// ρ_i = n_i * N_A / V [1/m³]
-	double rhoI = ni * AVOGADRO / V;
-	sumRhoZ2 += rhoI * zi * zi;
+        double ni = componentArray[i].getNumberOfMolesInPhase();
+        double zi = componentArray[i].getIonicCharge();
+        // ρ_i = n_i * N_A / V [1/m³]
+        double rhoI = ni * AVOGADRO / V;
+        sumRhoZ2 += rhoI * zi * zi;
       }
     }
     if (sumRhoZ2 < 1e-30) {
       return 0.0;
     }
     double factor = ELECTRON_CHARGE * ELECTRON_CHARGE
-	/ (VACUUM_PERMITTIVITY * mixturePermittivity * BOLTZMANN * temperature);
+        / (VACUUM_PERMITTIVITY * mixturePermittivity * BOLTZMANN * temperature);
     return Math.sqrt(factor * sumRhoZ2);
   }
 
@@ -1305,17 +1306,17 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     for (int i = 0; i < numberOfComponents; i++) {
       int charge = (int) componentArray[i].getIonicCharge();
       if (charge != 0) {
-	double rBorn;
-	// Use MM component class if available for better Born radius
-	if (componentArray[i] instanceof ComponentSrkCPAMM) {
-	  rBorn = ((ComponentSrkCPAMM) componentArray[i]).getBornRadiusMeters();
-	} else {
-	  double sigma = componentArray[i].getLennardJonesMolecularDiameter() * 1e-10;
-	  rBorn = calcBornRadius(sigma, charge);
-	}
-	if (rBorn > 0) {
-	  sum += componentArray[i].getNumberOfMolesInPhase() * charge * charge / rBorn;
-	}
+        double rBorn;
+        // Use MM component class if available for better Born radius
+        if (componentArray[i] instanceof ComponentSrkCPAMM) {
+          rBorn = ((ComponentSrkCPAMM) componentArray[i]).getBornRadiusMeters();
+        } else {
+          double sigma = componentArray[i].getLennardJonesMolecularDiameter() * 1e-10;
+          rBorn = calcBornRadius(sigma, charge);
+        }
+        if (rBorn > 0) {
+          sum += componentArray[i].getNumberOfMolesInPhase() * charge * charge / rBorn;
+        }
       }
     }
     return sum;
@@ -1437,10 +1438,10 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     for (int i = 0; i < numberOfComponents; i++) {
       double ni = componentArray[i].getNumberOfMolesInPhase();
       for (int j = 0; j < numberOfComponents; j++) {
-	if (wij[i][j] != 0.0) {
-	  double nj = componentArray[j].getNumberOfMolesInPhase();
-	  sum += ni * nj * wij[i][j];
-	}
+        if (wij[i][j] != 0.0) {
+          double nj = componentArray[j].getNumberOfMolesInPhase();
+          sum += ni * nj * wij[i][j];
+        }
       }
     }
     return sum;
@@ -1461,10 +1462,10 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     for (int i = 0; i < numberOfComponents; i++) {
       double ni = componentArray[i].getNumberOfMolesInPhase();
       for (int j = 0; j < numberOfComponents; j++) {
-	if (wijT[i][j] != 0.0) {
-	  double nj = componentArray[j].getNumberOfMolesInPhase();
-	  sum += ni * nj * wijT[i][j];
-	}
+        if (wijT[i][j] != 0.0) {
+          double nj = componentArray[j].getNumberOfMolesInPhase();
+          sum += ni * nj * wijT[i][j];
+        }
       }
     }
     return sum;
@@ -1480,6 +1481,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * A^DH / (V k_B T) = -κ³ / (12π)
    * </pre>
    *
+   * <p>
    * Converting to extensive F = A/(RT):
    *
    * <pre>
@@ -1550,6 +1552,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * F^Born = (N_A * e² / (8π * ε₀ * R * T)) * (1/ε_r - 1) * X_Born
    * </pre>
    *
+   * <p>
    * where X_Born = Σ(n_i * z_i² / R_Born,i). This is extensive (scales with n).
    *
    * @return F^Born contribution [-]
@@ -1559,7 +1562,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
       return 0.0;
     }
     double prefactor = AVOGADRO * ELECTRON_CHARGE * ELECTRON_CHARGE
-	/ (8.0 * Math.PI * VACUUM_PERMITTIVITY * R * temperature);
+        / (8.0 * Math.PI * VACUUM_PERMITTIVITY * R * temperature);
     double solventTerm = 1.0 / solventPermittivity - 1.0;
     return prefactor * solventTerm * bornX;
   }
@@ -1600,6 +1603,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * ∂F^Born/∂ε = prefactor * (-1/ε²) * X_Born
    * </pre>
    *
+   * <p>
    * This is used for the composition derivative via chain rule: dF^Born/dn_i includes (∂F^Born/∂ε) * (∂ε/∂n_i).
    *
    * @return ∂F^Born/∂ε [-]
@@ -1609,7 +1613,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
       return 0.0;
     }
     double prefactor = AVOGADRO * ELECTRON_CHARGE * ELECTRON_CHARGE
-	/ (8.0 * Math.PI * VACUUM_PERMITTIVITY * R * temperature);
+        / (8.0 * Math.PI * VACUUM_PERMITTIVITY * R * temperature);
     return -prefactor * bornX / (solventPermittivity * solventPermittivity);
   }
 
@@ -1625,7 +1629,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    */
   public double FBornX() {
     double prefactor = AVOGADRO * ELECTRON_CHARGE * ELECTRON_CHARGE
-	/ (8.0 * Math.PI * VACUUM_PERMITTIVITY * R * temperature);
+        / (8.0 * Math.PI * VACUUM_PERMITTIVITY * R * temperature);
     double solventTerm = 1.0 / solventPermittivity - 1.0;
     return prefactor * solventTerm;
   }
@@ -1644,7 +1648,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
       return 0.0;
     }
     double prefactor = AVOGADRO * ELECTRON_CHARGE * ELECTRON_CHARGE
-	/ (8.0 * Math.PI * VACUUM_PERMITTIVITY * R * temperature);
+        / (8.0 * Math.PI * VACUUM_PERMITTIVITY * R * temperature);
     return 2.0 * prefactor * bornX / (solventPermittivity * solventPermittivity * solventPermittivity);
   }
 
@@ -1659,7 +1663,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    */
   public double FBornDX() {
     double prefactor = AVOGADRO * ELECTRON_CHARGE * ELECTRON_CHARGE
-	/ (8.0 * Math.PI * VACUUM_PERMITTIVITY * R * temperature);
+        / (8.0 * Math.PI * VACUUM_PERMITTIVITY * R * temperature);
     return -prefactor / (solventPermittivity * solventPermittivity);
   }
 
@@ -2172,8 +2176,8 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     double solventTerm = 1.0 / solventPermittivity - 1.0;
     double dSolventTermdT = -solventPermittivitydT / (solventPermittivity * solventPermittivity);
     double d2SolventTermdT2 = -solventPermittivitydTdT / (solventPermittivity * solventPermittivity)
-	+ 2.0 * solventPermittivitydT * solventPermittivitydT
-	    / (solventPermittivity * solventPermittivity * solventPermittivity);
+        + 2.0 * solventPermittivitydT * solventPermittivitydT
+            / (solventPermittivity * solventPermittivity * solventPermittivity);
 
     // d²F/dT² from product rule on dF/dT
     double term1 = d2SolventTermdT2 / temperature;
@@ -2423,7 +2427,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
       return 0.0;
     }
     double prefactor = AVOGADRO * ELECTRON_CHARGE * ELECTRON_CHARGE
-	/ (8.0 * Math.PI * VACUUM_PERMITTIVITY * R * temperature);
+        / (8.0 * Math.PI * VACUUM_PERMITTIVITY * R * temperature);
     double solventTerm = 1.0 / solventPermittivity - 1.0;
     return -prefactor * solventTerm * bornX / (numberOfMolesInPhase * numberOfMolesInPhase);
   }
@@ -2440,7 +2444,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     // ∂/∂T [prefactor * solventTerm / (T * n_T)]
     // = prefactor/(n_T) * [dSolventTerm/dT / T - solventTerm / T²]
     return prefactor / numberOfMolesInPhase
-	* (dSolventTermdT / temperature - solventTerm / (temperature * temperature));
+        * (dSolventTermdT / temperature - solventTerm / (temperature * temperature));
   }
 
   /**

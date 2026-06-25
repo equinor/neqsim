@@ -375,43 +375,43 @@ public class SystemMechanicalDesign implements java.io.Serializable {
     ArrayList<String> names = this.processSystem.getAllUnitNames();
     for (int i = 0; i < names.size(); i++) {
       try {
-	ProcessEquipmentInterface equipment = this.processSystem.getUnit(names.get(i));
-	if (equipment == null) {
-	  continue;
-	}
+        ProcessEquipmentInterface equipment = this.processSystem.getUnit(names.get(i));
+        if (equipment == null) {
+          continue;
+        }
 
-	equipment.initMechanicalDesign();
-	MechanicalDesign mecDesign = equipment.getMechanicalDesign();
-	mecDesign.calcDesign();
+        equipment.initMechanicalDesign();
+        MechanicalDesign mecDesign = equipment.getMechanicalDesign();
+        mecDesign.calcDesign();
 
-	// Accumulate totals
-	double plotSpace = mecDesign.getModuleHeight() * mecDesign.getModuleLength();
-	totalPlotSpace += plotSpace;
-	totalVolume += mecDesign.getVolumeTotal();
-	totalWeight += mecDesign.getWeightTotal();
-	numberOfModules++;
+        // Accumulate totals
+        double plotSpace = mecDesign.getModuleHeight() * mecDesign.getModuleLength();
+        totalPlotSpace += plotSpace;
+        totalVolume += mecDesign.getVolumeTotal();
+        totalWeight += mecDesign.getWeightTotal();
+        numberOfModules++;
 
-	// Track dimensions
-	totalFootprintLength += mecDesign.getModuleLength();
-	totalFootprintWidth = Math.max(totalFootprintWidth, mecDesign.getModuleWidth());
-	maxEquipmentHeight = Math.max(maxEquipmentHeight, mecDesign.getModuleHeight());
+        // Track dimensions
+        totalFootprintLength += mecDesign.getModuleLength();
+        totalFootprintWidth = Math.max(totalFootprintWidth, mecDesign.getModuleWidth());
+        maxEquipmentHeight = Math.max(maxEquipmentHeight, mecDesign.getModuleHeight());
 
-	// Classify equipment and accumulate by type
-	String equipmentType = classifyEquipment(equipment);
-	accumulateByType(equipmentType, mecDesign.getWeightTotal());
+        // Classify equipment and accumulate by type
+        String equipmentType = classifyEquipment(equipment);
+        accumulateByType(equipmentType, mecDesign.getWeightTotal());
 
-	// Accumulate by discipline
-	accumulateByDiscipline(mecDesign);
+        // Accumulate by discipline
+        accumulateByDiscipline(mecDesign);
 
-	// Accumulate utility requirements
-	accumulateUtilities(equipment);
+        // Accumulate utility requirements
+        accumulateUtilities(equipment);
 
-	// Create equipment summary
-	EquipmentDesignSummary summary = createEquipmentSummary(equipment, mecDesign);
-	equipmentList.add(summary);
+        // Create equipment summary
+        EquipmentDesignSummary summary = createEquipmentSummary(equipment, mecDesign);
+        equipmentList.add(summary);
 
       } catch (Exception ex) {
-	logger.error("Error processing equipment " + names.get(i) + ": " + ex.getMessage(), ex);
+        logger.error("Error processing equipment " + names.get(i) + ": " + ex.getMessage(), ex);
       }
     }
   }
@@ -508,20 +508,20 @@ public class SystemMechanicalDesign implements java.io.Serializable {
   private void accumulateByDiscipline(MechanicalDesign mecDesign) {
     // Mechanical equipment (vessels, rotating equipment)
     double mechWeight = mecDesign.getWeightTotal() - mecDesign.getWeightPiping()
-	- mecDesign.getWeightElectroInstrument() - mecDesign.getWeightStructualSteel();
+        - mecDesign.getWeightElectroInstrument() - mecDesign.getWeightStructualSteel();
     weightByDiscipline.put("Mechanical Equipment",
-	weightByDiscipline.get("Mechanical Equipment") + Math.max(0, mechWeight));
+        weightByDiscipline.get("Mechanical Equipment") + Math.max(0, mechWeight));
 
     // Piping
     weightByDiscipline.put("Piping", weightByDiscipline.get("Piping") + mecDesign.getWeightPiping());
 
     // E&I
     weightByDiscipline.put("Electrical & Instrumentation",
-	weightByDiscipline.get("Electrical & Instrumentation") + mecDesign.getWeightElectroInstrument());
+        weightByDiscipline.get("Electrical & Instrumentation") + mecDesign.getWeightElectroInstrument());
 
     // Structural
     weightByDiscipline.put("Structural Steel",
-	weightByDiscipline.get("Structural Steel") + mecDesign.getWeightStructualSteel());
+        weightByDiscipline.get("Structural Steel") + mecDesign.getWeightStructualSteel());
   }
 
   /**
@@ -532,22 +532,22 @@ public class SystemMechanicalDesign implements java.io.Serializable {
   private void accumulateUtilities(ProcessEquipmentInterface equipment) {
     try {
       if (equipment instanceof Compressor) {
-	Compressor comp = (Compressor) equipment;
-	totalPowerRequired += comp.getPower("kW");
+        Compressor comp = (Compressor) equipment;
+        totalPowerRequired += comp.getPower("kW");
       } else if (equipment instanceof Pump) {
-	Pump pump = (Pump) equipment;
-	totalPowerRequired += pump.getPower("kW");
+        Pump pump = (Pump) equipment;
+        totalPowerRequired += pump.getPower("kW");
       } else if (equipment instanceof Expander) {
-	Expander exp = (Expander) equipment;
-	totalPowerRecovered += Math.abs(exp.getPower("kW"));
+        Expander exp = (Expander) equipment;
+        totalPowerRecovered += Math.abs(exp.getPower("kW"));
       } else if (equipment instanceof Heater) {
-	Heater heater = (Heater) equipment;
-	double duty = heater.getDuty();
-	if (duty > 0) {
-	  totalHeatingDuty += duty / 1000.0; // Convert to kW
-	} else {
-	  totalCoolingDuty += Math.abs(duty) / 1000.0;
-	}
+        Heater heater = (Heater) equipment;
+        double duty = heater.getDuty();
+        if (duty > 0) {
+          totalHeatingDuty += duty / 1000.0; // Convert to kW
+        } else {
+          totalCoolingDuty += Math.abs(duty) / 1000.0;
+        }
       }
     } catch (Exception e) {
       // Ignore if equipment doesn't have power/duty
@@ -572,13 +572,13 @@ public class SystemMechanicalDesign implements java.io.Serializable {
     // Set power/duty based on equipment type
     try {
       if (equipment instanceof Compressor) {
-	summary.setPower(((Compressor) equipment).getPower("kW"));
+        summary.setPower(((Compressor) equipment).getPower("kW"));
       } else if (equipment instanceof Pump) {
-	summary.setPower(((Pump) equipment).getPower("kW"));
+        summary.setPower(((Pump) equipment).getPower("kW"));
       } else if (equipment instanceof Expander) {
-	summary.setPower(-Math.abs(((Expander) equipment).getPower("kW")));
+        summary.setPower(-Math.abs(((Expander) equipment).getPower("kW")));
       } else if (equipment instanceof Heater) {
-	summary.setDuty(((Heater) equipment).getDuty() / 1000.0);
+        summary.setDuty(((Heater) equipment).getDuty() / 1000.0);
       }
     } catch (Exception e) {
       // Ignore
@@ -586,7 +586,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
 
     // Set dimensions
     String dims = String.format("%.1fm x %.1fm x %.1fm", mecDesign.getModuleLength(), mecDesign.getModuleWidth(),
-	mecDesign.getModuleHeight());
+        mecDesign.getModuleHeight());
     summary.setDimensions(dims);
 
     return summary;
@@ -818,7 +818,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
       String powerStr = (item.getPower() != 0) ? String.format("%.0f", item.getPower()) : "-";
       String dutyStr = (item.getDuty() != 0) ? String.format("%.0f", item.getDuty()) : "-";
       sb.append(String.format("%-20s %-15s %12.0f %12s %12s\n", truncate(item.getName(), 20),
-	  truncate(item.getType(), 15), item.getWeight(), powerStr, dutyStr));
+          truncate(item.getType(), 15), item.getWeight(), powerStr, dutyStr));
     }
     sb.append("\n");
 
@@ -961,7 +961,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
     for (int i = 0; i < processSystem.getUnitOperations().size(); i++) {
       processSystem.getUnitOperations().get(i).getMechanicalDesign().calcDesign();
       System.out.println("Name " + processSystem.getUnitOperations().get(i).getName() + "  weight "
-	  + processSystem.getUnitOperations().get(i).getMechanicalDesign().getWeightTotal());
+          + processSystem.getUnitOperations().get(i).getMechanicalDesign().getWeightTotal());
       weight += processSystem.getUnitOperations().get(i).getMechanicalDesign().getWeightTotal();
     }
     return weight;
@@ -996,7 +996,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
    */
   public neqsim.process.costestimation.ProcessCostEstimate getCostEstimate() {
     neqsim.process.costestimation.ProcessCostEstimate costEstimate = new neqsim.process.costestimation.ProcessCostEstimate(
-	processSystem, this);
+        processSystem, this);
     costEstimate.calculateAllCosts();
     return costEstimate;
   }
@@ -1051,14 +1051,14 @@ public class SystemMechanicalDesign implements java.io.Serializable {
     combined.put("costByEquipmentType_USD", costEst.getCostByEquipmentType());
 
     return new com.google.gson.GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-	.toJson(combined);
+        .toJson(combined);
   }
 
   /** {@inheritDoc} */
   @Override
   public int hashCode() {
     return Objects.hash(numberOfModules, processSystem, totalPlotSpace, totalVolume, totalWeight, totalPowerRequired,
-	totalPowerRecovered, totalHeatingDuty, totalCoolingDuty);
+        totalPowerRecovered, totalHeatingDuty, totalCoolingDuty);
   }
 
   /** {@inheritDoc} */
@@ -1075,10 +1075,10 @@ public class SystemMechanicalDesign implements java.io.Serializable {
     }
     SystemMechanicalDesign other = (SystemMechanicalDesign) obj;
     return numberOfModules == other.numberOfModules && Objects.equals(processSystem, other.processSystem)
-	&& Double.doubleToLongBits(totalPlotSpace) == Double.doubleToLongBits(other.totalPlotSpace)
-	&& Double.doubleToLongBits(totalVolume) == Double.doubleToLongBits(other.totalVolume)
-	&& Double.doubleToLongBits(totalWeight) == Double.doubleToLongBits(other.totalWeight)
-	&& Double.doubleToLongBits(totalPowerRequired) == Double.doubleToLongBits(other.totalPowerRequired)
-	&& Double.doubleToLongBits(totalPowerRecovered) == Double.doubleToLongBits(other.totalPowerRecovered);
+        && Double.doubleToLongBits(totalPlotSpace) == Double.doubleToLongBits(other.totalPlotSpace)
+        && Double.doubleToLongBits(totalVolume) == Double.doubleToLongBits(other.totalVolume)
+        && Double.doubleToLongBits(totalWeight) == Double.doubleToLongBits(other.totalWeight)
+        && Double.doubleToLongBits(totalPowerRequired) == Double.doubleToLongBits(other.totalPowerRequired)
+        && Double.doubleToLongBits(totalPowerRecovered) == Double.doubleToLongBits(other.totalPowerRecovered);
   }
 }

@@ -138,7 +138,7 @@ public class VLSolidTray extends SimpleTray {
   private int findPhaseIndex(SystemInterface system, String phaseTypeName) {
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
       if (phaseTypeName.equals(system.getPhase(phaseIndex).getPhaseTypeName())) {
-	return phaseIndex;
+        return phaseIndex;
       }
     }
     return -1;
@@ -154,12 +154,12 @@ public class VLSolidTray extends SimpleTray {
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
       String phaseTypeName = system.getPhase(phaseIndex).getPhaseTypeName();
       if ("liquid".equals(phaseTypeName) || "oil".equals(phaseTypeName) || "aqueous".equals(phaseTypeName)) {
-	return phaseIndex;
+        return phaseIndex;
       }
     }
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
       if (!"gas".equals(system.getPhase(phaseIndex).getPhaseTypeName())) {
-	return phaseIndex;
+        return phaseIndex;
       }
     }
     return -1;

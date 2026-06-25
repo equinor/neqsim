@@ -107,7 +107,7 @@ public class BottleneckAnalyzer implements Serializable {
     for (ProcessEquipmentInterface equip : facility.getUnitOperations()) {
       BottleneckResult result = analyzeEquipment(equip);
       if (result != null) {
-	results.add(result);
+        results.add(result);
       }
     }
 
@@ -136,7 +136,7 @@ public class BottleneckAnalyzer implements Serializable {
     List<BottleneckResult> active = new ArrayList<>();
     for (BottleneckResult result : identifyBottlenecks()) {
       if (result.getUtilization() >= utilizationThreshold) {
-	active.add(result);
+        active.add(result);
       }
     }
     return active;
@@ -323,8 +323,8 @@ public class BottleneckAnalyzer implements Serializable {
     BottleneckResult bottleneck = null;
     for (BottleneckResult result : identifyBottlenecks()) {
       if (result.getEquipmentName().equals(equipmentName)) {
-	bottleneck = result;
-	break;
+        bottleneck = result;
+        break;
       }
     }
 
@@ -336,16 +336,16 @@ public class BottleneckAnalyzer implements Serializable {
     switch (bottleneck.getEquipmentType()) {
     case SEPARATOR:
       options
-	  .add(new DebottleneckOption("Add parallel separator", "Install additional separator train", 0.50, 15.0, 24));
+          .add(new DebottleneckOption("Add parallel separator", "Install additional separator train", 0.50, 15.0, 24));
       options.add(
-	  new DebottleneckOption("Upgrade internals", "Install high-efficiency internals (vane pack)", 0.25, 2.0, 6));
+          new DebottleneckOption("Upgrade internals", "Install high-efficiency internals (vane pack)", 0.25, 2.0, 6));
       options.add(new DebottleneckOption("Increase operating pressure", "Reduce gas volume by increasing pressure",
-	  0.15, 0.5, 3));
+          0.15, 0.5, 3));
       break;
 
     case COMPRESSOR:
       options.add(
-	  new DebottleneckOption("Add parallel compressor", "Install additional compression stage", 0.50, 25.0, 24));
+          new DebottleneckOption("Add parallel compressor", "Install additional compression stage", 0.50, 25.0, 24));
       options.add(new DebottleneckOption("Upgrade impeller", "Replace with higher capacity impeller", 0.20, 3.0, 12));
       options.add(new DebottleneckOption("Motor rerating", "Rerate motor for higher power", 0.15, 1.5, 6));
       break;
@@ -387,7 +387,7 @@ public class BottleneckAnalyzer implements Serializable {
     List<BottleneckResult> active = getActiveBottlenecks();
     sb.append(String.format("**Total Equipment Analyzed:** %d\n", bottlenecks.size()));
     sb.append(String.format("**Active Bottlenecks (>%.0f%% utilization):** %d\n\n", utilizationThreshold * 100,
-	active.size()));
+        active.size()));
 
     // Primary bottleneck
     if (!active.isEmpty()) {
@@ -406,7 +406,7 @@ public class BottleneckAnalyzer implements Serializable {
     for (BottleneckResult result : bottlenecks) {
       String status = result.getUtilization() >= utilizationThreshold ? "⚠️ BOTTLENECK" : "✓ OK";
       sb.append(String.format("| %s | %s | %.0f%% | %s | %s |\n", result.getEquipmentName(), result.getEquipmentType(),
-	  result.getUtilization() * 100, result.getConstraintType(), status));
+          result.getUtilization() * 100, result.getConstraintType(), status));
     }
 
     return sb.toString();
@@ -544,7 +544,7 @@ public class BottleneckAnalyzer implements Serializable {
     @Override
     public String toString() {
       return String.format("Option[%s, +%.0f%%, $%.1fM, %d mo]", name, capacityIncrease * 100, estimatedCostMUSD,
-	  implementationMonths);
+          implementationMonths);
     }
   }
 }

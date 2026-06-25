@@ -3,13 +3,13 @@ package neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosit
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.lang.reflect.Method;
-import org.junit.jupiter.api.Test;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Test;
 import neqsim.physicalproperties.system.PhysicalProperties;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class LBCViscosityMethodTest {
   private static final Logger logger = LogManager.getLogger(LBCViscosityMethodTest.class);
@@ -30,7 +30,7 @@ public class LBCViscosityMethodTest {
 
     double expectedGasViscosity = 0.021; // cP at 0 C and ~200 bar from literature charts
     assertEquals(expectedGasViscosity, viscosity, expectedGasViscosity * 0.25,
-	"Methane dense-gas viscosity should stay close to reference data");
+        "Methane dense-gas viscosity should stay close to reference data");
     System.out.println("Viscosity_LBC_methane: " + viscosity + "[cP], reference " + expectedGasViscosity);
   }
 
@@ -51,7 +51,7 @@ public class LBCViscosityMethodTest {
     assertTrue(viscosity > 0.0);
     assertEquals(expectedLiquidViscosity, viscosity, expectedLiquidViscosity * 0.25);
     logger.info(
-	"Viscosity_LBC_nHeptane: " + viscosity * Math.pow(10, 3) + "[mPa*s] vs " + expectedLiquidViscosity * 1.0e3);
+        "Viscosity_LBC_nHeptane: " + viscosity * Math.pow(10, 3) + "[mPa*s] vs " + expectedLiquidViscosity * 1.0e3);
   }
 
   @Test
@@ -84,9 +84,9 @@ public class LBCViscosityMethodTest {
     assertTrue(frictionVisc > 0.0 && lbcVisc > 0.0);
     double ratio = lbcVisc / frictionVisc;
     logger.info(
-	"nC7/nC10 mixture viscosities: frictionTheory=" + frictionVisc + " cP, LBC=" + lbcVisc + " cP, ratio=" + ratio);
+        "nC7/nC10 mixture viscosities: frictionTheory=" + frictionVisc + " cP, LBC=" + lbcVisc + " cP, ratio=" + ratio);
     assertTrue(ratio > 0.7 && ratio < 1.3,
-	"LBC viscosity for normal oils should closely follow friction-theory reference");
+        "LBC viscosity for normal oils should closely follow friction-theory reference");
   }
 
   @Test
@@ -105,9 +105,9 @@ public class LBCViscosityMethodTest {
     assertTrue(frictionVisc > 0.0 && lbcVisc > 0.0);
     double ratio = lbcVisc / frictionVisc;
     logger.info("Pseudo-component oil viscosities: frictionTheory=" + frictionVisc + " cP, LBC=" + lbcVisc
-	+ " cP, ratio=" + ratio);
+        + " cP, ratio=" + ratio);
     assertTrue(ratio > 0.2 && ratio < 2.0,
-	"Pseudo-component oils should be reproduced by LBC within reasonable range of friction-theory reference");
+        "Pseudo-component oils should be reproduced by LBC within reasonable range of friction-theory reference");
   }
 
   @Test
@@ -125,12 +125,12 @@ public class LBCViscosityMethodTest {
     assertTrue(lbcVisc > 0.0 && frictionVisc > 0.0);
     double ratio = lbcVisc / frictionVisc;
     logger.info(
-	"Heavy TBP oil viscosities: frictionTheory=" + frictionVisc + " cP, LBC=" + lbcVisc + " cP, ratio=" + ratio);
+        "Heavy TBP oil viscosities: frictionTheory=" + frictionVisc + " cP, LBC=" + lbcVisc + " cP, ratio=" + ratio);
     // LBC with Whitson correlation predicts lower viscosity than Friction Theory for these heavy
     // fractions
     // but it should be within an order of magnitude.
     assertTrue(ratio > 0.1 && ratio < 2.0,
-	"LBC should give physically reasonable viscosities for heavy TBP fractions relative to friction theory");
+        "LBC should give physically reasonable viscosities for heavy TBP fractions relative to friction theory");
   }
 
   @Test
@@ -152,7 +152,7 @@ public class LBCViscosityMethodTest {
     logger.info("Pseudo-decane viscosity (LBC): " + viscosity + " cP vs expected " + expectedViscosity + " cP");
     assertTrue(viscosity > 0.0);
     assertEquals(expectedViscosity, viscosity, expectedViscosity * 0.2,
-	"Pseudo-component viscosity should match LBC+Whitson prediction");
+        "Pseudo-component viscosity should match LBC+Whitson prediction");
   }
 
   @Test
@@ -175,11 +175,11 @@ public class LBCViscosityMethodTest {
     double molarMassGPerMol = tbpComponent.getMolarMass() * 1.0e3;
     double liquidDensity = tbpComponent.getNormalLiquidDensity();
     double expectedFt3PerLbmol = 21.573 + 0.015122 * molarMassGPerMol - 27.656 * liquidDensity
-	+ 0.070615 * molarMassGPerMol * liquidDensity;
+        + 0.070615 * molarMassGPerMol * liquidDensity;
     double expectedCm3PerMol = expectedFt3PerLbmol * 62.42796;
 
     assertEquals(expectedCm3PerMol, estimatedVolume, expectedCm3PerMol * 0.05,
-	"TBP critical volume should follow the Whitson ft3/lbmol correlation converted to cm3/mol");
+        "TBP critical volume should follow the Whitson ft3/lbmol correlation converted to cm3/mol");
   }
 
   @Test
@@ -194,7 +194,7 @@ public class LBCViscosityMethodTest {
 
     double expectedViscosity = 0.890; // cP at 25 C
     assertEquals(expectedViscosity, viscosity, expectedViscosity * 0.05,
-	"Water viscosity should match tabulated data within 5%");
+        "Water viscosity should match tabulated data within 5%");
     logger.info("Water viscosity (LBC): " + viscosity + " cP vs reference " + expectedViscosity + " cP");
   }
 
@@ -213,13 +213,13 @@ public class LBCViscosityMethodTest {
     assertTrue(frictionVisc > 0.0 && lbcVisc > 0.0);
     double ratio = lbcVisc / frictionVisc;
     logger.info("High pressure Methane+TBP mixture viscosities: frictionTheory=" + frictionVisc + " cP, LBC=" + lbcVisc
-	+ " cP, ratio=" + ratio);
+        + " cP, ratio=" + ratio);
 
     // LBC tends to underpredict viscosity for heavy mixtures compared to Friction Theory
     // without specific tuning. We accept a lower ratio here to ensure the test passes
     // with the current implementation.
     assertTrue(ratio > 0.5 && ratio < 1.5,
-	"LBC viscosity for high pressure Methane+TBP mixture should be within reasonable range of friction-theory reference");
+        "LBC viscosity for high pressure Methane+TBP mixture should be within reasonable range of friction-theory reference");
   }
 
   @Test
@@ -245,9 +245,9 @@ public class LBCViscosityMethodTest {
     double adjustedViscosity = system.getPhase("oil").getViscosity("cP");
 
     assertTrue(tunedViscosity > baseViscosity,
-	"Tuned LBC parameters should allow increasing the dense-fluid viscosity contribution");
+        "Tuned LBC parameters should allow increasing the dense-fluid viscosity contribution");
     assertTrue(adjustedViscosity < tunedViscosity,
-	"Adjusting a single LBC parameter should update the calculated viscosity");
+        "Adjusting a single LBC parameter should update the calculated viscosity");
   }
 
   private double oilViscosity(SystemInterface system, String model) {

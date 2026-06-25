@@ -82,7 +82,7 @@ public class DebottleneckingAdvisor implements Serializable {
      * @param constraint optional live constraint the upgrade relaxes; may be null
      */
     public DebottleneckCandidate(String name, String targetEquipment, double capexNok, int firstYear, int lastYear,
-	double annualIncrementalValueNok, CapacityConstraint constraint) {
+        double annualIncrementalValueNok, CapacityConstraint constraint) {
       this.name = name;
       this.targetEquipment = targetEquipment;
       this.capexNok = capexNok;
@@ -189,7 +189,7 @@ public class DebottleneckingAdvisor implements Serializable {
      * @param paybackYears simple payback in years
      */
     public Recommendation(DebottleneckCandidate candidate, double npvNok, double pvBenefitsNok, double benefitCostRatio,
-	double paybackYears) {
+        double paybackYears) {
       this.candidate = candidate;
       this.npvNok = npvNok;
       this.pvBenefitsNok = pvBenefitsNok;
@@ -303,7 +303,7 @@ public class DebottleneckingAdvisor implements Serializable {
     for (DebottleneckCandidate c : candidates) {
       double pvBenefits = 0.0;
       for (int y = c.getFirstYear(); y <= c.getLastYear(); y++) {
-	pvBenefits += c.getAnnualIncrementalValueNok() * econ.discountFactor(y);
+        pvBenefits += c.getAnnualIncrementalValueNok() * econ.discountFactor(y);
       }
       double pvCapex = c.getCapexNok() * econ.discountFactor(c.getFirstYear());
       double npv = pvBenefits - pvCapex;
@@ -314,11 +314,11 @@ public class DebottleneckingAdvisor implements Serializable {
     Collections.sort(out, new Comparator<Recommendation>() {
       @Override
       public int compare(Recommendation a, Recommendation b) {
-	int byNpv = Double.compare(b.getNpvNok(), a.getNpvNok());
-	if (byNpv != 0) {
-	  return byNpv;
-	}
-	return Double.compare(b.getBenefitCostRatio(), a.getBenefitCostRatio());
+        int byNpv = Double.compare(b.getNpvNok(), a.getNpvNok());
+        if (byNpv != 0) {
+          return byNpv;
+        }
+        return Double.compare(b.getBenefitCostRatio(), a.getBenefitCostRatio());
       }
     });
     return out;
@@ -356,8 +356,8 @@ public class DebottleneckingAdvisor implements Serializable {
     int updated = 0;
     for (DebottleneckCandidate c : candidates) {
       if (c.getConstraint() != null) {
-	c.getConstraint().setShadowPrice(c.getAnnualIncrementalValueNok());
-	updated++;
+        c.getConstraint().setShadowPrice(c.getAnnualIncrementalValueNok());
+        updated++;
       }
     }
     return updated;
@@ -375,7 +375,7 @@ public class DebottleneckingAdvisor implements Serializable {
     for (int i = 0; i < recs.size(); i++) {
       Recommendation r = recs.get(i);
       if (i > 0) {
-	sb.append(",");
+        sb.append(",");
       }
       sb.append("{");
       sb.append("\"name\":\"").append(esc(r.getCandidate().getName())).append("\",");

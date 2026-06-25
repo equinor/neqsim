@@ -34,7 +34,7 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
     flowNode = new neqsim.fluidmechanics.flownode.onephasenode.onephasepipeflownode.onePhasePipeFlowNode[totalNumberOfNodes];
     // System.out.println("nodes: " + totalNumberOfNodes);
     flowNode[0] = new neqsim.fluidmechanics.flownode.onephasenode.onephasepipeflownode.onePhasePipeFlowNode(
-	thermoSystem, this.equipmentGeometry[0]);
+        thermoSystem, this.equipmentGeometry[0]);
     flowNode[0].initFlowCalc();
     super.createSystem();
     this.setNodes();
@@ -68,7 +68,7 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
     // SteadystateOnePhasePipeFlowSolver(this, getSystemLength(),
     // getTotalNumberOfNodes());
     flowSolver = new neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFixedStaggeredGrid(
-	this, getSystemLength(), getTotalNumberOfNodes(), false);
+        this, getSystemLength(), getTotalNumberOfNodes(), false);
     flowSolver.setSolverType(type);
     flowSolver.solveTDMA();
     getTimeSeries().init(this);
@@ -117,24 +117,24 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
       flowNode[outletNodeIndex].setVelocity(0.0);
       flowNode[outletNodeIndex].setVelocityIn(0, 0.0);
       if (outletNodeIndex > 0) {
-	flowNode[outletNodeIndex - 1].setVelocityOut(0, 0.0);
+        flowNode[outletNodeIndex - 1].setVelocityOut(0, 0.0);
       }
     } else if (ts.isOutletFlowControlled()) {
       // Flow-controlled outlet: set specified velocity
       double outletVelocity = ts.getOutletVelocity(timeStepIndex);
       if (!Double.isNaN(outletVelocity)) {
-	flowNode[outletNodeIndex].setVelocity(outletVelocity);
-	flowNode[outletNodeIndex].setVelocityIn(0, outletVelocity);
-	if (outletNodeIndex > 0) {
-	  flowNode[outletNodeIndex - 1].setVelocityOut(0, outletVelocity);
-	}
+        flowNode[outletNodeIndex].setVelocity(outletVelocity);
+        flowNode[outletNodeIndex].setVelocityIn(0, outletVelocity);
+        if (outletNodeIndex > 0) {
+          flowNode[outletNodeIndex - 1].setVelocityOut(0, outletVelocity);
+        }
       }
     } else if (ts.isOutletPressureControlled()) {
       // Pressure-controlled outlet: set specified pressure
       double outletPressure = ts.getOutletPressure(timeStepIndex);
       if (!Double.isNaN(outletPressure) && outletPressure > 0) {
-	flowNode[outletNodeIndex].getBulkSystem().setPressure(outletPressure);
-	flowNode[outletNodeIndex].init();
+        flowNode[outletNodeIndex].getBulkSystem().setPressure(outletPressure);
+        flowNode[outletNodeIndex].init();
       }
     }
   }

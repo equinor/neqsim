@@ -71,7 +71,7 @@ public class AdvectionSchemeComparisonTest {
 
     // TVD Superbee should be least diffusive TVD
     assertTrue(AdvectionScheme.TVD_SUPERBEE.getDispersionReductionFactor() < AdvectionScheme.TVD_MINMOD
-	.getDispersionReductionFactor());
+        .getDispersionReductionFactor());
   }
 
   @Test
@@ -149,7 +149,7 @@ public class AdvectionSchemeComparisonTest {
       assertTrue(D_scheme <= D_upwind, "Scheme " + scheme + " should not increase dispersion");
 
       if (scheme != AdvectionScheme.FIRST_ORDER_UPWIND) {
-	assertTrue(D_scheme < D_upwind, "Higher-order scheme " + scheme + " should reduce dispersion");
+        assertTrue(D_scheme < D_upwind, "Higher-order scheme " + scheme + " should reduce dispersion");
       }
     }
   }
@@ -159,7 +159,7 @@ public class AdvectionSchemeComparisonTest {
   void testAdvectionSchemeDisplayNames() {
     for (AdvectionScheme scheme : AdvectionScheme.values()) {
       assertTrue(scheme.getDisplayName() != null && !scheme.getDisplayName().isEmpty(),
-	  "Scheme " + scheme + " should have a display name");
+          "Scheme " + scheme + " should have a display name");
       assertTrue(scheme.toString().equals(scheme.getDisplayName()), "toString should return display name");
     }
   }

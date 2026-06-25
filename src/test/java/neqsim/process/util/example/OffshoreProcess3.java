@@ -1,5 +1,7 @@
 package neqsim.process.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -14,8 +16,6 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * OffshoreProcess3 class.
@@ -176,12 +176,12 @@ public class OffshoreProcess3 {
     exportGasCompressorCooler.setOutTemperature(35.0, "C");
 
     Compressor exportGasCompressor2 = new Compressor("2nd stage export compressor",
-	exportGasCompressorCooler.getOutletStream());
+        exportGasCompressorCooler.getOutletStream());
     exportGasCompressor2.setIsentropicEfficiency(0.75);
     exportGasCompressor2.setOutletPressure(exportGasCompressorCooler.getOutletStream().getPressure() * 2.5 * 2.5);
 
     Cooler exportGasCompressorCooler2 = new Cooler("2nd stage export gas cooler",
-	exportGasCompressor2.getOutletStream());
+        exportGasCompressor2.getOutletStream());
     exportGasCompressorCooler2.setOutTemperature(35.0, "C");
 
     Stream exportGas = new Stream("export gas", exportGasCompressorCooler2.getOutletStream());

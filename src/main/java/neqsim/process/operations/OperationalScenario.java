@@ -82,7 +82,7 @@ public final class OperationalScenario implements Serializable {
      */
     public Builder addAction(OperationalAction action) {
       if (action == null) {
-	throw new IllegalArgumentException("action must not be null");
+        throw new IllegalArgumentException("action must not be null");
       }
       actions.add(action);
       return this;

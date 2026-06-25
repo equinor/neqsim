@@ -135,7 +135,7 @@ public class PipeWall extends Wall {
 
     // Calculate and store the outer radius for this layer
     double previousOuterRadius = layerOuterRadii.isEmpty() ? innerRadius
-	: layerOuterRadii.get(layerOuterRadii.size() - 1);
+        : layerOuterRadii.get(layerOuterRadii.size() - 1);
     double newOuterRadius = previousOuterRadius + layer.getThickness();
     layerOuterRadii.add(newOuterRadius);
 
@@ -188,7 +188,7 @@ public class PipeWall extends Wall {
   public double calcCylindricalHeatTransferCoefficient() {
     if (innerRadius <= 0) {
       throw new IllegalStateException(
-	  "Inner radius must be set before calculating cylindrical " + "heat transfer. Use setInnerRadius() first.");
+          "Inner radius must be set before calculating cylindrical " + "heat transfer. Use setInnerRadius() first.");
     }
 
     int layerCount = getNumberOfLayers();
@@ -269,7 +269,7 @@ public class PipeWall extends Wall {
   public double calcTemperatureAtRadius(double radius, double innerTemp, double outerTemp) {
     if (radius < innerRadius || radius > getOuterRadius()) {
       throw new IllegalArgumentException(
-	  String.format("Radius %.4f m is outside wall bounds [%.4f, %.4f] m", radius, innerRadius, getOuterRadius()));
+          String.format("Radius %.4f m is outside wall bounds [%.4f, %.4f] m", radius, innerRadius, getOuterRadius()));
     }
 
     if (radius == innerRadius) {
@@ -291,13 +291,13 @@ public class PipeWall extends Wall {
       double k = layer.getConductivity();
 
       if (radius <= rOuter) {
-	// This layer contains the target radius
-	resistanceToPoint += Math.log(radius / currentInnerRadius) / (2.0 * Math.PI * k);
-	break;
+        // This layer contains the target radius
+        resistanceToPoint += Math.log(radius / currentInnerRadius) / (2.0 * Math.PI * k);
+        break;
       } else {
-	// Add full resistance of this layer
-	resistanceToPoint += Math.log(rOuter / currentInnerRadius) / (2.0 * Math.PI * k);
-	currentInnerRadius = rOuter;
+        // Add full resistance of this layer
+        resistanceToPoint += Math.log(rOuter / currentInnerRadius) / (2.0 * Math.PI * k);
+        currentInnerRadius = rOuter;
       }
     }
 
@@ -320,12 +320,12 @@ public class PipeWall extends Wall {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append(String.format("PipeWall[innerRadius=%.4f m, outerRadius=%.4f m, layers=%d]%n", innerRadius,
-	getOuterRadius(), getNumberOfLayers()));
+        getOuterRadius(), getNumberOfLayers()));
 
     for (int i = 0; i < getNumberOfLayers(); i++) {
       MaterialLayer layer = getWallMaterialLayer(i);
       sb.append(String.format("  Layer %d: %s (r=%.4f to %.4f m)%n", i, layer.getMaterialName(), getLayerInnerRadius(i),
-	  getLayerOuterRadius(i)));
+          getLayerOuterRadius(i)));
     }
 
     if (innerRadius > 0 && getNumberOfLayers() > 0) {

@@ -1,10 +1,10 @@
 package neqsim.process.equipment.separator.entrainment;
 
-import java.io.Serializable;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -228,14 +228,14 @@ public class SeparatorPerformanceCalculator implements Serializable {
     // --- Enhanced calculation chain (if enabled) ---
     if (useEnhancedCalculation) {
       calculateEnhanced(gasDensity, oilDensity, waterDensity, gasViscosity, oilViscosity, waterViscosity, gasVelocity,
-	  vesselDiameter, vesselLength, orientation, liquidLevelFraction);
+          vesselDiameter, vesselLength, orientation, liquidLevelFraction);
       applyCalibrationFactors();
       return;
     }
 
     // --- Standard calculation (original path) ---
     calculateStandard(gasDensity, oilDensity, waterDensity, gasViscosity, oilViscosity, waterViscosity, gasVelocity,
-	vesselDiameter, vesselLength, orientation, liquidLevelFraction);
+        vesselDiameter, vesselLength, orientation, liquidLevelFraction);
     applyCalibrationFactors();
   }
 
@@ -291,19 +291,19 @@ public class SeparatorPerformanceCalculator implements Serializable {
       double liquidViscosity = (oilDensity > 0) ? oilViscosity : waterViscosity;
 
       calcGasLiquidSeparation(gasDensity, liquidDensity, gasViscosity, gasVelocity, vesselDiameter, vesselLength,
-	  orientation, liquidLevelFraction);
+          orientation, liquidLevelFraction);
 
       double totalEntrainmentFraction = 1.0 - overallGasLiquidEfficiency;
 
       // Split entrainment between oil and water based on relative liquid volumes
       if (oilDensity > 0 && waterDensity > 0) {
-	// Three-phase: split proportionally (simplified — in reality, feed composition matters)
-	oilInGasFraction = totalEntrainmentFraction;
-	waterInGasFraction = totalEntrainmentFraction;
+        // Three-phase: split proportionally (simplified — in reality, feed composition matters)
+        oilInGasFraction = totalEntrainmentFraction;
+        waterInGasFraction = totalEntrainmentFraction;
       } else if (oilDensity > 0) {
-	oilInGasFraction = totalEntrainmentFraction;
+        oilInGasFraction = totalEntrainmentFraction;
       } else {
-	waterInGasFraction = totalEntrainmentFraction;
+        waterInGasFraction = totalEntrainmentFraction;
       }
     }
 
@@ -312,23 +312,23 @@ public class SeparatorPerformanceCalculator implements Serializable {
       double liquidDensity = (oilDensity > 0) ? oilDensity : waterDensity;
       double liquidViscosity = (oilDensity > 0) ? oilViscosity : waterViscosity;
       calcGasBubbleCarryUnder(gasDensity, liquidDensity, liquidViscosity, gasVelocity, vesselDiameter, vesselLength,
-	  orientation, liquidLevelFraction);
+          orientation, liquidLevelFraction);
     }
 
     // --- Liquid-liquid separation (three-phase) ---
     if (oilDensity > 0 && waterDensity > 0) {
       calcLiquidLiquidSeparation(oilDensity, waterDensity, oilViscosity, waterViscosity, vesselDiameter, vesselLength,
-	  orientation, liquidLevelFraction);
+          orientation, liquidLevelFraction);
     }
 
     // --- Build API 12J compliance if enough info is available ---
     if (gravityCutDiameter > 0) {
       double liqResTime = estimateLiquidResidenceTime(vesselDiameter, vesselLength, orientation, liquidLevelFraction,
-	  gasVelocity);
+          gasVelocity);
       boolean hasMe = (mistEliminatorCurve != null);
       boolean isThreePhase = (oilDensity > 0 && waterDensity > 0);
       apiComplianceResult = DropletSettlingCalculator.checkApi12JCompliance(gravityCutDiameter, kFactor, hasMe,
-	  liqResTime, orientation, isThreePhase);
+          liqResTime, orientation, isThreePhase);
     }
   }
 
@@ -415,7 +415,7 @@ public class SeparatorPerformanceCalculator implements Serializable {
     inletDeviceModel.setInletNozzleDiameter(inletPipeDiameter);
     if (workingDSD != null) {
       inletDeviceModel.calculate(workingDSD, gasDensity, liquidDensity, gasVolumeFlow, liquidVolumeFlow,
-	  surfaceTension);
+          surfaceTension);
     }
 
     inletDeviceBulkEfficiency = inletDeviceModel.getBulkSeparationEfficiency();
@@ -445,7 +445,7 @@ public class SeparatorPerformanceCalculator implements Serializable {
       // Three-phase: use configured oil volume fraction (default 0.5; set via setOilVolumeFraction)
       double oilFrac = Math.max(0.01, Math.min(0.99, oilVolumeFraction));
       geometryCalc.calculateThreePhase(vesselGasFlow, vesselLiquidFlow * oilFrac, vesselLiquidFlow * (1.0 - oilFrac),
-	  oilFrac);
+          oilFrac);
     } else {
       geometryCalc.calculate(vesselGasFlow, vesselLiquidFlow);
     }
@@ -459,9 +459,9 @@ public class SeparatorPerformanceCalculator implements Serializable {
       String meType = mistEliminatorCurve.getType().name();
       List<SeparatorInternalsDatabase.InternalsRecord> records = db.findByType(meType);
       if (!records.isEmpty()) {
-	designKFactor = records.get(0).maxKFactor;
+        designKFactor = records.get(0).maxKFactor;
       } else {
-	designKFactor = 0.107; // GPSA default for wire mesh
+        designKFactor = 0.107; // GPSA default for wire mesh
       }
     }
     kFactorUtilization = (designKFactor > 0) ? kFactor / designKFactor : 0.0;
@@ -475,13 +475,13 @@ public class SeparatorPerformanceCalculator implements Serializable {
 
     if (includeGravitySection && gravityInletDSD != null) {
       gravityCutDiameter = DropletSettlingCalculator.calcCriticalDiameter(effectiveSettlingHeight, gasResidenceTime,
-	  gasDensity, liquidDensity, gasViscosity);
+          gasDensity, liquidDensity, gasViscosity);
 
       // Apply turbulence correction to cut diameter (Csanady 1963 / Koenders 2015)
       double effectiveCutDiam = gravityCutDiameter;
       if (applyTurbulenceCorrection) {
-	effectiveCutDiam = DropletSettlingCalculator.calcTurbulenceCorrectedCutDiameter(gravityCutDiameter, gasVelocity,
-	    effectiveSettlingHeight, kFactor, designKFactor, gasDensity, liquidDensity, gasViscosity);
+        effectiveCutDiam = DropletSettlingCalculator.calcTurbulenceCorrectedCutDiameter(gravityCutDiameter, gasVelocity,
+            effectiveSettlingHeight, kFactor, designKFactor, gasDensity, liquidDensity, gasViscosity);
       }
 
       GradeEfficiencyCurve gravityCurve = GradeEfficiencyCurve.gravity(effectiveCutDiam);
@@ -491,20 +491,20 @@ public class SeparatorPerformanceCalculator implements Serializable {
       // STAGE 5: Mist eliminator (with flooding check)
       // ============================================================
       if (mistEliminatorCurve != null && !mistEliminatorFlooded) {
-	mistEliminatorEfficiency = mistEliminatorCurve.calcOverallEfficiency(gravityInletDSD);
-	overallGasLiquidEfficiency = calcCombinedEfficiency(gravityInletDSD, gravityCurve, mistEliminatorCurve);
+        mistEliminatorEfficiency = mistEliminatorCurve.calcOverallEfficiency(gravityInletDSD);
+        overallGasLiquidEfficiency = calcCombinedEfficiency(gravityInletDSD, gravityCurve, mistEliminatorCurve);
       } else if (mistEliminatorCurve != null && mistEliminatorFlooded) {
-	// Partially flooded: efficiency degrades linearly with excess K-factor.
-	// At K_util = 1.0 (onset of flooding): efficiency = 50% of normal.
-	// At K_util >= 2.0: efficiency = 0 (complete flooding / re-entrainment).
-	// Based on: Fabian, P., et al. (1993). GPSA Engineering Data Book, Sec 7.
-	double floodPenalty = Math.max(0.0, 1.0 - (kFactorUtilization - 1.0));
-	double normalMeEff = mistEliminatorCurve.calcOverallEfficiency(gravityInletDSD);
-	mistEliminatorEfficiency = normalMeEff * floodPenalty * 0.5;
-	overallGasLiquidEfficiency = gravitySectionEfficiency
-	    + (1.0 - gravitySectionEfficiency) * mistEliminatorEfficiency;
+        // Partially flooded: efficiency degrades linearly with excess K-factor.
+        // At K_util = 1.0 (onset of flooding): efficiency = 50% of normal.
+        // At K_util >= 2.0: efficiency = 0 (complete flooding / re-entrainment).
+        // Based on: Fabian, P., et al. (1993). GPSA Engineering Data Book, Sec 7.
+        double floodPenalty = Math.max(0.0, 1.0 - (kFactorUtilization - 1.0));
+        double normalMeEff = mistEliminatorCurve.calcOverallEfficiency(gravityInletDSD);
+        mistEliminatorEfficiency = normalMeEff * floodPenalty * 0.5;
+        overallGasLiquidEfficiency = gravitySectionEfficiency
+            + (1.0 - gravitySectionEfficiency) * mistEliminatorEfficiency;
       } else {
-	overallGasLiquidEfficiency = gravitySectionEfficiency;
+        overallGasLiquidEfficiency = gravitySectionEfficiency;
       }
     } else if (mistEliminatorCurve != null && gravityInletDSD != null && !mistEliminatorFlooded) {
       mistEliminatorEfficiency = mistEliminatorCurve.calcOverallEfficiency(gravityInletDSD);
@@ -515,19 +515,19 @@ public class SeparatorPerformanceCalculator implements Serializable {
     if (gravityCutDiameter > 0) {
       double liqResTime = geometryCalc.getLiquidResidenceTime();
       if (liqResTime <= 0) {
-	liqResTime = estimateLiquidResidenceTime(vesselDiameter, vesselLength, orientation, liquidLevelFraction,
-	    gasVelocity);
+        liqResTime = estimateLiquidResidenceTime(vesselDiameter, vesselLength, orientation, liquidLevelFraction,
+            gasVelocity);
       }
       boolean hasMe = (mistEliminatorCurve != null);
       boolean isThreePhase = (oilDensity > 0 && waterDensity > 0);
       apiComplianceResult = DropletSettlingCalculator.checkApi12JCompliance(gravityCutDiameter, kFactor, hasMe,
-	  liqResTime, orientation, isThreePhase);
+          liqResTime, orientation, isThreePhase);
     }
 
     // Apply inlet device bulk efficiency (pre-gravity removal)
     // Total liquid removed = bulk + (1-bulk) * downstream_efficiency
     double combinedEfficiency = inletDeviceBulkEfficiency
-	+ (1.0 - inletDeviceBulkEfficiency) * overallGasLiquidEfficiency;
+        + (1.0 - inletDeviceBulkEfficiency) * overallGasLiquidEfficiency;
     overallGasLiquidEfficiency = Math.min(1.0, combinedEfficiency);
 
     // Set entrainment fractions
@@ -548,11 +548,11 @@ public class SeparatorPerformanceCalculator implements Serializable {
       double liquidHeight = geometryCalc.getEffectiveLiquidSettlingHeight();
       double liquidResidenceTime = geometryCalc.getLiquidResidenceTime();
       if (liquidResidenceTime <= 0) {
-	liquidResidenceTime = 120.0;
+        liquidResidenceTime = 120.0;
       }
 
       double bubbleCutDiameter = DropletSettlingCalculator.calcCriticalDiameter(liquidHeight, liquidResidenceTime,
-	  liquidDensity, gasDensity, liquidViscosity);
+          liquidDensity, gasDensity, liquidViscosity);
       GradeEfficiencyCurve bubbleGravity = GradeEfficiencyCurve.gravity(bubbleCutDiameter);
       double bubbleEff = bubbleGravity.calcOverallEfficiency(gasBubbleDSD);
       gasInOilFraction = 1.0 - bubbleEff;
@@ -564,46 +564,46 @@ public class SeparatorPerformanceCalculator implements Serializable {
     // ============================================================
     if (oilDensity > 0 && waterDensity > 0) {
       double llResidenceTime = (liquidLiquidResidenceTimeOverride > 0) ? liquidLiquidResidenceTimeOverride
-	  : geometryCalc.getLiquidResidenceTime();
+          : geometryCalc.getLiquidResidenceTime();
       if (llResidenceTime <= 0) {
-	llResidenceTime = 300.0;
+        llResidenceTime = 300.0;
       }
       double oilPadHeight = geometryCalc.getOilPadThickness();
       if (oilPadHeight <= 0) {
-	oilPadHeight = vesselDiameter * liquidLevelFraction / 2.0;
+        oilPadHeight = vesselDiameter * liquidLevelFraction / 2.0;
       }
 
       // Water droplets settling in oil
       if (waterInOilDSD != null) {
-	double dCut = DropletSettlingCalculator.calcCriticalDiameter(oilPadHeight, llResidenceTime, oilDensity,
-	    waterDensity, oilViscosity);
-	GradeEfficiencyCurve waterInOilGravity = GradeEfficiencyCurve.gravity(dCut);
-	double gravEff = waterInOilGravity.calcOverallEfficiency(waterInOilDSD);
-	if (oilWaterCoalescerCurve != null) {
-	  double coalEff = oilWaterCoalescerCurve.calcOverallEfficiency(waterInOilDSD);
-	  waterInOilFraction = (1.0 - gravEff) * (1.0 - coalEff);
-	} else {
-	  waterInOilFraction = 1.0 - gravEff;
-	}
+        double dCut = DropletSettlingCalculator.calcCriticalDiameter(oilPadHeight, llResidenceTime, oilDensity,
+            waterDensity, oilViscosity);
+        GradeEfficiencyCurve waterInOilGravity = GradeEfficiencyCurve.gravity(dCut);
+        double gravEff = waterInOilGravity.calcOverallEfficiency(waterInOilDSD);
+        if (oilWaterCoalescerCurve != null) {
+          double coalEff = oilWaterCoalescerCurve.calcOverallEfficiency(waterInOilDSD);
+          waterInOilFraction = (1.0 - gravEff) * (1.0 - coalEff);
+        } else {
+          waterInOilFraction = 1.0 - gravEff;
+        }
       }
 
       // Oil droplets rising in water
       if (oilInWaterDSD != null) {
-	double waterLayerHeight = geometryCalc.getWaterLayerHeight();
-	if (waterLayerHeight <= 0) {
-	  waterLayerHeight = oilPadHeight;
-	}
-	double dCut = DropletSettlingCalculator.calcCriticalDiameter(waterLayerHeight, llResidenceTime, waterDensity,
-	    oilDensity, waterViscosity);
-	GradeEfficiencyCurve oilInWaterGravity = GradeEfficiencyCurve.gravity(dCut);
-	double gravEff = oilInWaterGravity.calcOverallEfficiency(oilInWaterDSD);
-	if (oilWaterCoalescerCurve != null) {
-	  double coalEff = oilWaterCoalescerCurve.calcOverallEfficiency(oilInWaterDSD);
-	  oilInWaterFraction = (1.0 - gravEff) * (1.0 - coalEff);
-	} else {
-	  oilInWaterFraction = 1.0 - gravEff;
-	}
-	liquidLiquidGravityEfficiency = gravEff;
+        double waterLayerHeight = geometryCalc.getWaterLayerHeight();
+        if (waterLayerHeight <= 0) {
+          waterLayerHeight = oilPadHeight;
+        }
+        double dCut = DropletSettlingCalculator.calcCriticalDiameter(waterLayerHeight, llResidenceTime, waterDensity,
+            oilDensity, waterViscosity);
+        GradeEfficiencyCurve oilInWaterGravity = GradeEfficiencyCurve.gravity(dCut);
+        double gravEff = oilInWaterGravity.calcOverallEfficiency(oilInWaterDSD);
+        if (oilWaterCoalescerCurve != null) {
+          double coalEff = oilWaterCoalescerCurve.calcOverallEfficiency(oilInWaterDSD);
+          oilInWaterFraction = (1.0 - gravEff) * (1.0 - coalEff);
+        } else {
+          oilInWaterFraction = 1.0 - gravEff;
+        }
+        liquidLiquidGravityEfficiency = gravEff;
       }
     }
   }
@@ -641,7 +641,7 @@ public class SeparatorPerformanceCalculator implements Serializable {
 
     // Calculate gravity cut diameter
     gravityCutDiameter = DropletSettlingCalculator.calcCriticalDiameter(availableHeight, gasResidenceTime, gasDensity,
-	liquidDensity, gasViscosity);
+        liquidDensity, gasViscosity);
 
     // Create gravity grade efficiency
     GradeEfficiencyCurve gravityCurve = GradeEfficiencyCurve.gravity(gravityCutDiameter);
@@ -673,6 +673,7 @@ public class SeparatorPerformanceCalculator implements Serializable {
    * For each size class, the combined efficiency is:
    * </p>
    *
+   * <p>
    * $$ \eta_{combined}(d) = 1 - (1 - \eta_1(d)) \cdot (1 - \eta_2(d)) $$
    *
    * @param dsd droplet size distribution
@@ -743,13 +744,13 @@ public class SeparatorPerformanceCalculator implements Serializable {
 
     // Compute liquid residence time from vessel geometry and continuity (not hardcoded)
     double liquidResidenceTime = estimateLiquidResidenceTime(diameter, length, orientation, liquidLevelFrac,
-	gasVelocity);
+        gasVelocity);
     if (liquidHeight <= 0) {
       liquidResidenceTime = 0.0;
     }
 
     double bubbleCutDiameter = DropletSettlingCalculator.calcCriticalDiameter(liquidHeight, liquidResidenceTime,
-	liquidDensity, gasDensity, liquidViscosity);
+        liquidDensity, gasDensity, liquidViscosity);
 
     GradeEfficiencyCurve bubbleGravity = GradeEfficiencyCurve.gravity(bubbleCutDiameter);
     double bubbleEfficiency = bubbleGravity.calcOverallEfficiency(gasBubbleDSD);
@@ -788,32 +789,32 @@ public class SeparatorPerformanceCalculator implements Serializable {
     // Water droplets settling in oil (water-in-oil)
     if (waterInOilDSD != null) {
       double dCut = DropletSettlingCalculator.calcCriticalDiameter(settlingHeight, liquidResidenceTime, oilDensity,
-	  waterDensity, oilViscosity);
+          waterDensity, oilViscosity);
 
       GradeEfficiencyCurve gravityCurve = GradeEfficiencyCurve.gravity(dCut);
       double gravityEff = gravityCurve.calcOverallEfficiency(waterInOilDSD);
 
       if (oilWaterCoalescerCurve != null) {
-	double coalescerEff = oilWaterCoalescerCurve.calcOverallEfficiency(waterInOilDSD);
-	waterInOilFraction = (1.0 - gravityEff) * (1.0 - coalescerEff);
+        double coalescerEff = oilWaterCoalescerCurve.calcOverallEfficiency(waterInOilDSD);
+        waterInOilFraction = (1.0 - gravityEff) * (1.0 - coalescerEff);
       } else {
-	waterInOilFraction = 1.0 - gravityEff;
+        waterInOilFraction = 1.0 - gravityEff;
       }
     }
 
     // Oil droplets rising in water (oil-in-water)
     if (oilInWaterDSD != null) {
       double dCut = DropletSettlingCalculator.calcCriticalDiameter(settlingHeight, liquidResidenceTime, waterDensity,
-	  oilDensity, waterViscosity);
+          oilDensity, waterViscosity);
 
       GradeEfficiencyCurve gravityCurve = GradeEfficiencyCurve.gravity(dCut);
       double gravityEff = gravityCurve.calcOverallEfficiency(oilInWaterDSD);
 
       if (oilWaterCoalescerCurve != null) {
-	double coalescerEff = oilWaterCoalescerCurve.calcOverallEfficiency(oilInWaterDSD);
-	oilInWaterFraction = (1.0 - gravityEff) * (1.0 - coalescerEff);
+        double coalescerEff = oilWaterCoalescerCurve.calcOverallEfficiency(oilInWaterDSD);
+        oilInWaterFraction = (1.0 - gravityEff) * (1.0 - coalescerEff);
       } else {
-	oilInWaterFraction = 1.0 - gravityEff;
+        oilInWaterFraction = 1.0 - gravityEff;
       }
       liquidLiquidGravityEfficiency = gravityEff;
     }
@@ -887,31 +888,31 @@ public class SeparatorPerformanceCalculator implements Serializable {
       result.put("mistEliminatorFlooded", mistEliminatorFlooded);
       result.put("inletDeviceBulkEfficiency", inletDeviceBulkEfficiency);
       if (inletFlowRegime != null) {
-	result.put("inletFlowRegime", inletFlowRegime.name());
+        result.put("inletFlowRegime", inletFlowRegime.name());
       }
       if (postInletDeviceDSD != null) {
-	Map<String, Object> pidDsd = new LinkedHashMap<String, Object>();
-	pidDsd.put("type", postInletDeviceDSD.getType().name());
-	pidDsd.put("d50_um", postInletDeviceDSD.getD50() * 1e6);
-	pidDsd.put("d32_um", postInletDeviceDSD.getSauterMeanDiameter() * 1e6);
-	result.put("postInletDeviceDSD", pidDsd);
+        Map<String, Object> pidDsd = new LinkedHashMap<String, Object>();
+        pidDsd.put("type", postInletDeviceDSD.getType().name());
+        pidDsd.put("d50_um", postInletDeviceDSD.getD50() * 1e6);
+        pidDsd.put("d32_um", postInletDeviceDSD.getSauterMeanDiameter() * 1e6);
+        result.put("postInletDeviceDSD", pidDsd);
       }
       if (inletDeviceModel != null) {
-	Map<String, Object> idInfo = new LinkedHashMap<String, Object>();
-	idInfo.put("type", inletDeviceModel.getDeviceType().name());
-	idInfo.put("nozzleVelocity_m_s", inletDeviceModel.getNozzleVelocity());
-	idInfo.put("momentumFlux_Pa", inletDeviceModel.getMomentumFlux());
-	idInfo.put("pressureDrop_Pa", inletDeviceModel.getPressureDrop());
-	result.put("inletDevice", idInfo);
+        Map<String, Object> idInfo = new LinkedHashMap<String, Object>();
+        idInfo.put("type", inletDeviceModel.getDeviceType().name());
+        idInfo.put("nozzleVelocity_m_s", inletDeviceModel.getNozzleVelocity());
+        idInfo.put("momentumFlux_Pa", inletDeviceModel.getMomentumFlux());
+        idInfo.put("pressureDrop_Pa", inletDeviceModel.getPressureDrop());
+        result.put("inletDevice", idInfo);
       }
       if (geometryCalc != null) {
-	Map<String, Object> geomInfo = new LinkedHashMap<String, Object>();
-	geomInfo.put("gasResidenceTime_s", geometryCalc.getGasResidenceTime());
-	geomInfo.put("liquidResidenceTime_s", geometryCalc.getLiquidResidenceTime());
-	geomInfo.put("effectiveSettlingHeight_m", geometryCalc.getEffectiveGasSettlingHeight());
-	geomInfo.put("gasArea_m2", geometryCalc.getGasArea());
-	geomInfo.put("liquidArea_m2", geometryCalc.getLiquidArea());
-	result.put("vesselGeometry", geomInfo);
+        Map<String, Object> geomInfo = new LinkedHashMap<String, Object>();
+        geomInfo.put("gasResidenceTime_s", geometryCalc.getGasResidenceTime());
+        geomInfo.put("liquidResidenceTime_s", geometryCalc.getLiquidResidenceTime());
+        geomInfo.put("effectiveSettlingHeight_m", geometryCalc.getEffectiveGasSettlingHeight());
+        geomInfo.put("gasArea_m2", geometryCalc.getGasArea());
+        geomInfo.put("liquidArea_m2", geometryCalc.getLiquidArea());
+        result.put("vesselGeometry", geomInfo);
       }
     }
 
@@ -1216,7 +1217,7 @@ public class SeparatorPerformanceCalculator implements Serializable {
      * @param liqLiqPoints number of liquid-liquid points used
      */
     public CalibrationSummary(double prevLig, double prevGcu, double prevLiqLiq, double newLig, double newGcu,
-	double newLiqLiq, int ligPoints, int gcuPoints, int liqLiqPoints) {
+        double newLiqLiq, int ligPoints, int gcuPoints, int liqLiqPoints) {
       this.previousLiquidInGasFactor = prevLig;
       this.previousGasCarryUnderFactor = prevGcu;
       this.previousLiquidLiquidFactor = prevLiqLiq;
@@ -1273,7 +1274,7 @@ public class SeparatorPerformanceCalculator implements Serializable {
      * @param ewio measured water-in-oil
      */
     public CalibrationCase(String caseIdArg, double moig, double mwig, double mgio, double mgiw, double moiw,
-	double mwio, double eoig, double ewig, double egio, double egiw, double eoiw, double ewio) {
+        double mwio, double eoig, double ewig, double egio, double egiw, double eoiw, double ewio) {
       this.caseId = caseIdArg;
       this.modeledOilInGas = moig;
       this.modeledWaterInGas = mwig;
@@ -1316,8 +1317,8 @@ public class SeparatorPerformanceCalculator implements Serializable {
      */
     public BatchCalibrationSummary(CalibrationSummary base, int cases, double before, double after) {
       super(base.previousLiquidInGasFactor, base.previousGasCarryUnderFactor, base.previousLiquidLiquidFactor,
-	  base.newLiquidInGasFactor, base.newGasCarryUnderFactor, base.newLiquidLiquidFactor,
-	  base.liquidInGasPointsUsed, base.gasCarryUnderPointsUsed, base.liquidLiquidPointsUsed);
+          base.newLiquidInGasFactor, base.newGasCarryUnderFactor, base.newLiquidLiquidFactor,
+          base.liquidInGasPointsUsed, base.gasCarryUnderPointsUsed, base.liquidLiquidPointsUsed);
       this.casesProcessed = cases;
       this.mapeBefore = before;
       this.mapeAfter = after;
@@ -1352,43 +1353,43 @@ public class SeparatorPerformanceCalculator implements Serializable {
     try {
       String headerLine = reader.readLine();
       if (headerLine == null) {
-	throw new IOException("Calibration CSV is empty: " + filePath);
+        throw new IOException("Calibration CSV is empty: " + filePath);
       }
 
       String[] headers = headerLine.split(",");
       Map<String, Integer> idx = new HashMap<String, Integer>();
       for (int i = 0; i < headers.length; i++) {
-	idx.put(headers[i].trim().toLowerCase(), Integer.valueOf(i));
+        idx.put(headers[i].trim().toLowerCase(), Integer.valueOf(i));
       }
 
       String[] required = new String[] { "modeled_oil_in_gas", "modeled_water_in_gas", "modeled_gas_in_oil",
-	  "modeled_gas_in_water", "modeled_oil_in_water", "modeled_water_in_oil", "measured_oil_in_gas",
-	  "measured_water_in_gas", "measured_gas_in_oil", "measured_gas_in_water", "measured_oil_in_water",
-	  "measured_water_in_oil" };
+          "modeled_gas_in_water", "modeled_oil_in_water", "modeled_water_in_oil", "measured_oil_in_gas",
+          "measured_water_in_gas", "measured_gas_in_oil", "measured_gas_in_water", "measured_oil_in_water",
+          "measured_water_in_oil" };
       for (int i = 0; i < required.length; i++) {
-	if (!idx.containsKey(required[i])) {
-	  throw new IOException("Missing required CSV column: " + required[i]);
-	}
+        if (!idx.containsKey(required[i])) {
+          throw new IOException("Missing required CSV column: " + required[i]);
+        }
       }
 
       String line;
       int row = 1;
       while ((line = reader.readLine()) != null) {
-	row++;
-	if (line.trim().isEmpty() || line.trim().startsWith("#")) {
-	  continue;
-	}
-	String[] cols = line.split(",", -1);
+        row++;
+        if (line.trim().isEmpty() || line.trim().startsWith("#")) {
+          continue;
+        }
+        String[] cols = line.split(",", -1);
 
-	String caseId = getString(cols, idx, "case_id", "row-" + row);
-	CalibrationCase c = new CalibrationCase(caseId, getDouble(cols, idx, "modeled_oil_in_gas", row),
-	    getDouble(cols, idx, "modeled_water_in_gas", row), getDouble(cols, idx, "modeled_gas_in_oil", row),
-	    getDouble(cols, idx, "modeled_gas_in_water", row), getDouble(cols, idx, "modeled_oil_in_water", row),
-	    getDouble(cols, idx, "modeled_water_in_oil", row), getDouble(cols, idx, "measured_oil_in_gas", row),
-	    getDouble(cols, idx, "measured_water_in_gas", row), getDouble(cols, idx, "measured_gas_in_oil", row),
-	    getDouble(cols, idx, "measured_gas_in_water", row), getDouble(cols, idx, "measured_oil_in_water", row),
-	    getDouble(cols, idx, "measured_water_in_oil", row));
-	cases.add(c);
+        String caseId = getString(cols, idx, "case_id", "row-" + row);
+        CalibrationCase c = new CalibrationCase(caseId, getDouble(cols, idx, "modeled_oil_in_gas", row),
+            getDouble(cols, idx, "modeled_water_in_gas", row), getDouble(cols, idx, "modeled_gas_in_oil", row),
+            getDouble(cols, idx, "modeled_gas_in_water", row), getDouble(cols, idx, "modeled_oil_in_water", row),
+            getDouble(cols, idx, "modeled_water_in_oil", row), getDouble(cols, idx, "measured_oil_in_gas", row),
+            getDouble(cols, idx, "measured_water_in_gas", row), getDouble(cols, idx, "measured_gas_in_oil", row),
+            getDouble(cols, idx, "measured_gas_in_water", row), getDouble(cols, idx, "measured_oil_in_water", row),
+            getDouble(cols, idx, "measured_water_in_oil", row));
+        cases.add(c);
       }
     } finally {
       reader.close();
@@ -1439,7 +1440,7 @@ public class SeparatorPerformanceCalculator implements Serializable {
     }
 
     return new CalibrationSummary(prevLig, prevGcu, prevLiqLiq, liquidInGasCalibrationFactor,
-	gasCarryUnderCalibrationFactor, liquidLiquidCalibrationFactor, ligPoints, gcuPoints, liqLiqPoints);
+        gasCarryUnderCalibrationFactor, liquidLiquidCalibrationFactor, ligPoints, gcuPoints, liqLiqPoints);
   }
 
   /**
@@ -1452,8 +1453,8 @@ public class SeparatorPerformanceCalculator implements Serializable {
   public BatchCalibrationSummary calibrateFromCaseLibrary(List<CalibrationCase> cases, double modelFloor) {
     if (cases == null || cases.isEmpty()) {
       CalibrationSummary base = new CalibrationSummary(liquidInGasCalibrationFactor, gasCarryUnderCalibrationFactor,
-	  liquidLiquidCalibrationFactor, liquidInGasCalibrationFactor, gasCarryUnderCalibrationFactor,
-	  liquidLiquidCalibrationFactor, 0, 0, 0);
+          liquidLiquidCalibrationFactor, liquidInGasCalibrationFactor, gasCarryUnderCalibrationFactor,
+          liquidLiquidCalibrationFactor, 0, 0, 0);
       return new BatchCalibrationSummary(base, 0, 0.0, 0.0);
     }
 
@@ -1502,23 +1503,23 @@ public class SeparatorPerformanceCalculator implements Serializable {
     for (int i = 0; i < cases.size(); i++) {
       CalibrationCase c = cases.get(i);
       afterErrSum += pairMape(clamp01(c.modeledOilInGas * liquidInGasCalibrationFactor), c.measuredOilInGas,
-	  modelFloor);
+          modelFloor);
       afterErrSum += pairMape(clamp01(c.modeledWaterInGas * liquidInGasCalibrationFactor), c.measuredWaterInGas,
-	  modelFloor);
+          modelFloor);
       afterErrSum += pairMape(clamp01(c.modeledGasInOil * gasCarryUnderCalibrationFactor), c.measuredGasInOil,
-	  modelFloor);
+          modelFloor);
       afterErrSum += pairMape(clamp01(c.modeledGasInWater * gasCarryUnderCalibrationFactor), c.measuredGasInWater,
-	  modelFloor);
+          modelFloor);
       afterErrSum += pairMape(clamp01(c.modeledOilInWater * liquidLiquidCalibrationFactor), c.measuredOilInWater,
-	  modelFloor);
+          modelFloor);
       afterErrSum += pairMape(clamp01(c.modeledWaterInOil * liquidLiquidCalibrationFactor), c.measuredWaterInOil,
-	  modelFloor);
+          modelFloor);
       afterErrCount += 6;
     }
 
     CalibrationSummary base = new CalibrationSummary(prevLig, prevGcu, prevLiqLiq, liquidInGasCalibrationFactor,
-	gasCarryUnderCalibrationFactor, liquidLiquidCalibrationFactor, ligRatios.size(), gcuRatios.size(),
-	liqLiqRatios.size());
+        gasCarryUnderCalibrationFactor, liquidLiquidCalibrationFactor, ligRatios.size(), gcuRatios.size(),
+        liqLiqRatios.size());
 
     double mapeBefore = beforeErrCount > 0 ? beforeErrSum / beforeErrCount : 0.0;
     double mapeAfter = afterErrCount > 0 ? afterErrSum / afterErrCount : 0.0;
@@ -1541,11 +1542,11 @@ public class SeparatorPerformanceCalculator implements Serializable {
     report.put("mapeAfter", summary != null ? summary.mapeAfter : 0.0);
 
     report.put("previousLiquidInGasFactor",
-	summary != null ? summary.previousLiquidInGasFactor : liquidInGasCalibrationFactor);
+        summary != null ? summary.previousLiquidInGasFactor : liquidInGasCalibrationFactor);
     report.put("previousGasCarryUnderFactor",
-	summary != null ? summary.previousGasCarryUnderFactor : gasCarryUnderCalibrationFactor);
+        summary != null ? summary.previousGasCarryUnderFactor : gasCarryUnderCalibrationFactor);
     report.put("previousLiquidLiquidFactor",
-	summary != null ? summary.previousLiquidLiquidFactor : liquidLiquidCalibrationFactor);
+        summary != null ? summary.previousLiquidLiquidFactor : liquidLiquidCalibrationFactor);
 
     report.put("newLiquidInGasFactor", liquidInGasCalibrationFactor);
     report.put("newGasCarryUnderFactor", gasCarryUnderCalibrationFactor);
@@ -1554,54 +1555,54 @@ public class SeparatorPerformanceCalculator implements Serializable {
     List<Map<String, Object>> residuals = new ArrayList<Map<String, Object>>();
     if (cases != null) {
       for (int i = 0; i < cases.size(); i++) {
-	CalibrationCase c = cases.get(i);
-	Map<String, Object> r = new LinkedHashMap<String, Object>();
-	r.put("caseId", c.caseId);
+        CalibrationCase c = cases.get(i);
+        Map<String, Object> r = new LinkedHashMap<String, Object>();
+        r.put("caseId", c.caseId);
 
-	r.put("modeledOilInGas", c.modeledOilInGas);
-	r.put("modeledWaterInGas", c.modeledWaterInGas);
-	r.put("modeledGasInOil", c.modeledGasInOil);
-	r.put("modeledGasInWater", c.modeledGasInWater);
-	r.put("modeledOilInWater", c.modeledOilInWater);
-	r.put("modeledWaterInOil", c.modeledWaterInOil);
+        r.put("modeledOilInGas", c.modeledOilInGas);
+        r.put("modeledWaterInGas", c.modeledWaterInGas);
+        r.put("modeledGasInOil", c.modeledGasInOil);
+        r.put("modeledGasInWater", c.modeledGasInWater);
+        r.put("modeledOilInWater", c.modeledOilInWater);
+        r.put("modeledWaterInOil", c.modeledWaterInOil);
 
-	r.put("measuredOilInGas", c.measuredOilInGas);
-	r.put("measuredWaterInGas", c.measuredWaterInGas);
-	r.put("measuredGasInOil", c.measuredGasInOil);
-	r.put("measuredGasInWater", c.measuredGasInWater);
-	r.put("measuredOilInWater", c.measuredOilInWater);
-	r.put("measuredWaterInOil", c.measuredWaterInOil);
+        r.put("measuredOilInGas", c.measuredOilInGas);
+        r.put("measuredWaterInGas", c.measuredWaterInGas);
+        r.put("measuredGasInOil", c.measuredGasInOil);
+        r.put("measuredGasInWater", c.measuredGasInWater);
+        r.put("measuredOilInWater", c.measuredOilInWater);
+        r.put("measuredWaterInOil", c.measuredWaterInOil);
 
-	double calOilInGas = clamp01(c.modeledOilInGas * liquidInGasCalibrationFactor);
-	double calWaterInGas = clamp01(c.modeledWaterInGas * liquidInGasCalibrationFactor);
-	double calGasInOil = clamp01(c.modeledGasInOil * gasCarryUnderCalibrationFactor);
-	double calGasInWater = clamp01(c.modeledGasInWater * gasCarryUnderCalibrationFactor);
-	double calOilInWater = clamp01(c.modeledOilInWater * liquidLiquidCalibrationFactor);
-	double calWaterInOil = clamp01(c.modeledWaterInOil * liquidLiquidCalibrationFactor);
+        double calOilInGas = clamp01(c.modeledOilInGas * liquidInGasCalibrationFactor);
+        double calWaterInGas = clamp01(c.modeledWaterInGas * liquidInGasCalibrationFactor);
+        double calGasInOil = clamp01(c.modeledGasInOil * gasCarryUnderCalibrationFactor);
+        double calGasInWater = clamp01(c.modeledGasInWater * gasCarryUnderCalibrationFactor);
+        double calOilInWater = clamp01(c.modeledOilInWater * liquidLiquidCalibrationFactor);
+        double calWaterInOil = clamp01(c.modeledWaterInOil * liquidLiquidCalibrationFactor);
 
-	r.put("calibratedOilInGas", calOilInGas);
-	r.put("calibratedWaterInGas", calWaterInGas);
-	r.put("calibratedGasInOil", calGasInOil);
-	r.put("calibratedGasInWater", calGasInWater);
-	r.put("calibratedOilInWater", calOilInWater);
-	r.put("calibratedWaterInOil", calWaterInOil);
+        r.put("calibratedOilInGas", calOilInGas);
+        r.put("calibratedWaterInGas", calWaterInGas);
+        r.put("calibratedGasInOil", calGasInOil);
+        r.put("calibratedGasInWater", calGasInWater);
+        r.put("calibratedOilInWater", calOilInWater);
+        r.put("calibratedWaterInOil", calWaterInOil);
 
-	double mapeBefore = (pairMape(c.modeledOilInGas, c.measuredOilInGas, modelFloor)
-	    + pairMape(c.modeledWaterInGas, c.measuredWaterInGas, modelFloor)
-	    + pairMape(c.modeledGasInOil, c.measuredGasInOil, modelFloor)
-	    + pairMape(c.modeledGasInWater, c.measuredGasInWater, modelFloor)
-	    + pairMape(c.modeledOilInWater, c.measuredOilInWater, modelFloor)
-	    + pairMape(c.modeledWaterInOil, c.measuredWaterInOil, modelFloor)) / 6.0;
-	double mapeAfter = (pairMape(calOilInGas, c.measuredOilInGas, modelFloor)
-	    + pairMape(calWaterInGas, c.measuredWaterInGas, modelFloor)
-	    + pairMape(calGasInOil, c.measuredGasInOil, modelFloor)
-	    + pairMape(calGasInWater, c.measuredGasInWater, modelFloor)
-	    + pairMape(calOilInWater, c.measuredOilInWater, modelFloor)
-	    + pairMape(calWaterInOil, c.measuredWaterInOil, modelFloor)) / 6.0;
+        double mapeBefore = (pairMape(c.modeledOilInGas, c.measuredOilInGas, modelFloor)
+            + pairMape(c.modeledWaterInGas, c.measuredWaterInGas, modelFloor)
+            + pairMape(c.modeledGasInOil, c.measuredGasInOil, modelFloor)
+            + pairMape(c.modeledGasInWater, c.measuredGasInWater, modelFloor)
+            + pairMape(c.modeledOilInWater, c.measuredOilInWater, modelFloor)
+            + pairMape(c.modeledWaterInOil, c.measuredWaterInOil, modelFloor)) / 6.0;
+        double mapeAfter = (pairMape(calOilInGas, c.measuredOilInGas, modelFloor)
+            + pairMape(calWaterInGas, c.measuredWaterInGas, modelFloor)
+            + pairMape(calGasInOil, c.measuredGasInOil, modelFloor)
+            + pairMape(calGasInWater, c.measuredGasInWater, modelFloor)
+            + pairMape(calOilInWater, c.measuredOilInWater, modelFloor)
+            + pairMape(calWaterInOil, c.measuredWaterInOil, modelFloor)) / 6.0;
 
-	r.put("mapeBefore", mapeBefore);
-	r.put("mapeAfter", mapeAfter);
-	residuals.add(r);
+        r.put("mapeBefore", mapeBefore);
+        r.put("mapeAfter", mapeAfter);
+        residuals.add(r);
       }
     }
     report.put("caseResiduals", residuals);
@@ -1779,11 +1780,11 @@ public class SeparatorPerformanceCalculator implements Serializable {
     double prevLiqLiq = liquidLiquidCalibrationFactor;
 
     double[] ligRatios = new double[] { safeRatio(measuredOilInGas, oilInGasFraction, modelFloor),
-	safeRatio(measuredWaterInGas, waterInGasFraction, modelFloor) };
+        safeRatio(measuredWaterInGas, waterInGasFraction, modelFloor) };
     double[] gcuRatios = new double[] { safeRatio(measuredGasInOil, gasInOilFraction, modelFloor),
-	safeRatio(measuredGasInWater, gasInWaterFraction, modelFloor) };
+        safeRatio(measuredGasInWater, gasInWaterFraction, modelFloor) };
     double[] liqLiqRatios = new double[] { safeRatio(measuredOilInWater, oilInWaterFraction, modelFloor),
-	safeRatio(measuredWaterInOil, waterInOilFraction, modelFloor) };
+        safeRatio(measuredWaterInOil, waterInOilFraction, modelFloor) };
 
     int ligPoints = countFinite(ligRatios);
     int gcuPoints = countFinite(gcuRatios);
@@ -1800,7 +1801,7 @@ public class SeparatorPerformanceCalculator implements Serializable {
     }
 
     return new CalibrationSummary(prevLig, prevGcu, prevLiqLiq, liquidInGasCalibrationFactor,
-	gasCarryUnderCalibrationFactor, liquidLiquidCalibrationFactor, ligPoints, gcuPoints, liqLiqPoints);
+        gasCarryUnderCalibrationFactor, liquidLiquidCalibrationFactor, ligPoints, gcuPoints, liqLiqPoints);
   }
 
   /**
@@ -1829,7 +1830,7 @@ public class SeparatorPerformanceCalculator implements Serializable {
     int count = 0;
     for (int i = 0; i < values.length; i++) {
       if (!Double.isNaN(values[i]) && !Double.isInfinite(values[i])) {
-	count++;
+        count++;
       }
     }
     return count;
@@ -1847,8 +1848,8 @@ public class SeparatorPerformanceCalculator implements Serializable {
     int count = 0;
     for (int i = 0; i < values.length; i++) {
       if (!Double.isNaN(values[i]) && !Double.isInfinite(values[i])) {
-	sum += values[i];
-	count++;
+        sum += values[i];
+        count++;
       }
     }
     if (count == 0) {

@@ -37,7 +37,7 @@ public class CalculationResult {
     }
     CalculationResult other = (CalculationResult) obj;
     return Arrays.equals(calculationError, other.calculationError)
-	&& Arrays.deepEquals(fluidProperties, other.fluidProperties);
+        && Arrays.deepEquals(fluidProperties, other.fluidProperties);
   }
 
   /** {@inheritDoc} */

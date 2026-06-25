@@ -354,8 +354,8 @@ public class Dryer extends ProcessEquipmentBaseClass {
       driedProductStream.setThermoSystem(system);
       SystemInterface emptySys = system.clone();
       for (int i = 0; i < emptySys.getNumberOfComponents(); i++) {
-	double moles = emptySys.getComponent(i).getNumberOfmoles();
-	emptySys.addComponent(i, -moles * 0.999);
+        double moles = emptySys.getComponent(i).getNumberOfmoles();
+        emptySys.addComponent(i, -moles * 0.999);
       }
       emptySys.initProperties();
       vaporStream.setThermoSystem(emptySys);

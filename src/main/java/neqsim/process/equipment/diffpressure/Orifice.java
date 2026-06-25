@@ -112,9 +112,9 @@ public class Orifice extends TwoPortEquipment {
     double dP = pressureUpstream - pressureDownstream;
 
     double deltaW = (Math.sqrt(1.0 - beta4 * (1.0 - dischargeCoefficient * dischargeCoefficient))
-	- dischargeCoefficient * beta2)
-	/ (Math.sqrt(1.0 - beta4 * (1.0 - dischargeCoefficient * dischargeCoefficient)) + dischargeCoefficient * beta2)
-	* dP;
+        - dischargeCoefficient * beta2)
+        / (Math.sqrt(1.0 - beta4 * (1.0 - dischargeCoefficient * dischargeCoefficient)) + dischargeCoefficient * beta2)
+        * dP;
 
     return deltaW;
   }
@@ -158,11 +158,11 @@ public class Orifice extends TwoPortEquipment {
     double M2_prime = 2.0 * L2_prime / (1.0 - beta);
 
     double deltaCUpstream = ((0.043 + 0.08 * Math.exp(-10 * L1) - 0.123 * Math.exp(-7 * L1)) * (1.0 - 0.11 * A) * beta4
-	/ (1.0 - beta4));
+        / (1.0 - beta4));
 
     double deltaCDownstream = -0.031 * (M2_prime - 0.8 * Math.pow(M2_prime, 1.1)) * Math.pow(beta, 1.3);
     double C_inf_C_s = 0.5961 + 0.0261 * beta2 - 0.216 * beta8 + 0.000521 * Math.pow(1e6 * beta / Re_D, 0.7)
-	+ (0.0188 + 0.0063 * A) * Math.pow(beta, 3.5) * Math.pow(1e6 / Re_D, 0.3);
+        + (0.0188 + 0.0063 * A) * Math.pow(beta, 3.5) * Math.pow(1e6 / Re_D, 0.3);
 
     return C_inf_C_s + deltaCUpstream + deltaCDownstream;
   }
@@ -199,7 +199,7 @@ public class Orifice extends TwoPortEquipment {
     double beta4 = beta2 * beta2;
     double dP = P1 - P2;
     double deltaW = (Math.sqrt(1.0 - beta4 * (1.0 - C * C)) - C * beta2)
-	/ (Math.sqrt(1.0 - beta4 * (1.0 - C * C)) + C * beta2) * dP;
+        / (Math.sqrt(1.0 - beta4 * (1.0 - C * C)) + C * beta2) * dP;
     return deltaW;
   }
 
@@ -243,7 +243,7 @@ public class Orifice extends TwoPortEquipment {
       double beta2 = beta * beta;
       double mCalc = 0.25 * Math.PI * Do * Do * C * epsilon * Math.sqrt(2.0 * rho * (P1 - P2) / (1.0 - beta2 * beta2));
       if (Math.abs(mCalc - m) / m < 1e-8) {
-	break;
+        break;
       }
       m = mCalc;
     }

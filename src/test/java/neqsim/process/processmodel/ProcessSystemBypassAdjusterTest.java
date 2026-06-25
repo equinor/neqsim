@@ -61,7 +61,7 @@ public class ProcessSystemBypassAdjusterTest extends neqsim.NeqSimTest {
 
     // getBypassedUnits should report the heater.
     assertTrue(ps.getBypassedUnits().contains("heater"),
-	"bypassed-units report should include the locked heater, got " + ps.getBypassedUnits());
+        "bypassed-units report should include the locked heater, got " + ps.getBypassedUnits());
   }
 
   @Test

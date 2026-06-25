@@ -78,23 +78,23 @@ public class ConvergenceDiagnostics implements Serializable {
 
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       if (unit instanceof Recycle) {
-	Recycle recycle = (Recycle) unit;
-	RecycleStatus status = analyzeRecycle(recycle);
-	recycleStatuses.add(status);
-	if (!status.converged) {
-	  allConverged = false;
-	  suggestions.addAll(generateRecycleSuggestions(status));
-	}
+        Recycle recycle = (Recycle) unit;
+        RecycleStatus status = analyzeRecycle(recycle);
+        recycleStatuses.add(status);
+        if (!status.converged) {
+          allConverged = false;
+          suggestions.addAll(generateRecycleSuggestions(status));
+        }
       }
 
       if (unit instanceof Adjuster) {
-	Adjuster adjuster = (Adjuster) unit;
-	AdjusterStatus status = analyzeAdjuster(adjuster);
-	adjusterStatuses.add(status);
-	if (!status.converged) {
-	  allConverged = false;
-	  suggestions.addAll(generateAdjusterSuggestions(status));
-	}
+        Adjuster adjuster = (Adjuster) unit;
+        AdjusterStatus status = analyzeAdjuster(adjuster);
+        adjusterStatuses.add(status);
+        if (!status.converged) {
+          allConverged = false;
+          suggestions.addAll(generateAdjusterSuggestions(status));
+        }
       }
     }
 
@@ -138,7 +138,7 @@ public class ConvergenceDiagnostics implements Serializable {
     }
 
     return new RecycleStatus(recycle.getName(), converged, flowError, tempError, pressError, compError, iterations,
-	dominantError, flowTol, tempTol);
+        dominantError, flowTol, tempTol);
   }
 
   /**
@@ -168,13 +168,13 @@ public class ConvergenceDiagnostics implements Serializable {
 
     if ("flow".equals(status.dominantError)) {
       suggestions.add(
-	  "  -> Try increasing flow tolerance with setFlowTolerance() " + "(current: " + status.flowTolerance + ").");
+          "  -> Try increasing flow tolerance with setFlowTolerance() " + "(current: " + status.flowTolerance + ").");
       suggestions.add("  -> Check for accumulation or depletion in connected equipment.");
     }
 
     if ("temperature".equals(status.dominantError)) {
       suggestions.add("  -> Try increasing temperature tolerance with setTemperatureTolerance() " + "(current: "
-	  + status.tempTolerance + ").");
+          + status.tempTolerance + ").");
       suggestions.add("  -> Add or adjust heat exchangers in the recycle loop.");
     }
 
@@ -185,7 +185,7 @@ public class ConvergenceDiagnostics implements Serializable {
 
     if (status.iterations >= 10) {
       suggestions
-	  .add("  -> Max iterations reached (" + status.iterations + "). Try increasing maxIterations on the Recycle.");
+          .add("  -> Max iterations reached (" + status.iterations + "). Try increasing maxIterations on the Recycle.");
     }
 
     return suggestions;
@@ -201,7 +201,7 @@ public class ConvergenceDiagnostics implements Serializable {
     List<String> suggestions = new ArrayList<>();
 
     suggestions.add("Adjuster '" + status.name + "' did not converge (error: " + status.error + ", tolerance: "
-	+ status.tolerance + ").");
+        + status.tolerance + ").");
     suggestions.add("  -> Try widening the search range or increasing max iterations.");
     suggestions.add("  -> Verify that the adjusted variable actually affects the target variable.");
 
@@ -258,7 +258,7 @@ public class ConvergenceDiagnostics implements Serializable {
      * @param tempTolerance temperature tolerance
      */
     RecycleStatus(String name, boolean converged, double flowError, double tempError, double pressError,
-	double compError, int iterations, String dominantError, double flowTolerance, double tempTolerance) {
+        double compError, int iterations, String dominantError, double flowTolerance, double tempTolerance) {
       this.name = name;
       this.converged = converged;
       this.flowError = flowError;
@@ -327,7 +327,7 @@ public class ConvergenceDiagnostics implements Serializable {
      * @param suggestions list of remediation suggestions
      */
     DiagnosticReport(boolean allConverged, List<RecycleStatus> recycleStatuses, List<AdjusterStatus> adjusterStatuses,
-	List<String> suggestions) {
+        List<String> suggestions) {
       this.allConverged = allConverged;
       this.recycleStatuses = recycleStatuses;
       this.adjusterStatuses = adjusterStatuses;
@@ -381,34 +381,34 @@ public class ConvergenceDiagnostics implements Serializable {
 
       JsonArray recycleArray = new JsonArray();
       for (RecycleStatus rs : recycleStatuses) {
-	JsonObject rj = new JsonObject();
-	rj.addProperty("name", rs.name);
-	rj.addProperty("converged", rs.converged);
-	rj.addProperty("flowError", rs.flowError);
-	rj.addProperty("tempError", rs.tempError);
-	rj.addProperty("pressError", rs.pressError);
-	rj.addProperty("compError", rs.compError);
-	rj.addProperty("iterations", rs.iterations);
-	rj.addProperty("dominantError", rs.dominantError);
-	recycleArray.add(rj);
+        JsonObject rj = new JsonObject();
+        rj.addProperty("name", rs.name);
+        rj.addProperty("converged", rs.converged);
+        rj.addProperty("flowError", rs.flowError);
+        rj.addProperty("tempError", rs.tempError);
+        rj.addProperty("pressError", rs.pressError);
+        rj.addProperty("compError", rs.compError);
+        rj.addProperty("iterations", rs.iterations);
+        rj.addProperty("dominantError", rs.dominantError);
+        recycleArray.add(rj);
       }
       json.add("recycles", recycleArray);
 
       JsonArray adjArray = new JsonArray();
       for (AdjusterStatus as : adjusterStatuses) {
-	JsonObject aj = new JsonObject();
-	aj.addProperty("name", as.name);
-	aj.addProperty("converged", as.converged);
-	aj.addProperty("error", as.error);
-	aj.addProperty("tolerance", as.tolerance);
-	aj.addProperty("iterations", as.iterations);
-	adjArray.add(aj);
+        JsonObject aj = new JsonObject();
+        aj.addProperty("name", as.name);
+        aj.addProperty("converged", as.converged);
+        aj.addProperty("error", as.error);
+        aj.addProperty("tolerance", as.tolerance);
+        aj.addProperty("iterations", as.iterations);
+        adjArray.add(aj);
       }
       json.add("adjusters", adjArray);
 
       JsonArray sugArray = new JsonArray();
       for (String s : suggestions) {
-	sugArray.add(s);
+        sugArray.add(s);
       }
       json.add("suggestions", sugArray);
 

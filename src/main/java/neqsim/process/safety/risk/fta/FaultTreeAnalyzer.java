@@ -60,22 +60,22 @@ public class FaultTreeAnalyzer implements Serializable {
     case AND:
       double pAnd = 1.0;
       for (Double p : childProbs) {
-	pAnd *= p;
+        pAnd *= p;
       }
       return pAnd;
     case OR:
       double pOr = 1.0;
       for (Double p : childProbs) {
-	pOr *= (1.0 - p);
+        pOr *= (1.0 - p);
       }
       double pInd = 1.0 - pOr;
       // Apply β-factor common-cause if configured
       if (node.betaCCF > 0.0) {
-	double pBasicMax = 0.0;
-	for (Double p : childProbs) {
-	  pBasicMax = Math.max(pBasicMax, p);
-	}
-	return (1.0 - node.betaCCF) * pInd + node.betaCCF * pBasicMax;
+        double pBasicMax = 0.0;
+        for (Double p : childProbs) {
+          pBasicMax = Math.max(pBasicMax, p);
+        }
+        return (1.0 - node.betaCCF) * pInd + node.betaCCF * pBasicMax;
       }
       return pInd;
     case VOTING:
@@ -98,12 +98,12 @@ public class FaultTreeAnalyzer implements Serializable {
     for (int mask = 0; mask < (1 << n); mask++) {
       int count = Integer.bitCount(mask);
       if (count < k) {
-	continue;
+        continue;
       }
       double p = 1.0;
       for (int i = 0; i < n; i++) {
-	boolean fail = ((mask >> i) & 1) == 1;
-	p *= fail ? probs.get(i) : (1.0 - probs.get(i));
+        boolean fail = ((mask >> i) & 1) == 1;
+        p *= fail ? probs.get(i) : (1.0 - probs.get(i));
       }
       total += p;
     }
@@ -125,29 +125,29 @@ public class FaultTreeAnalyzer implements Serializable {
     int n = basics.size();
     for (int mask = 1; mask < (1 << n); mask++) {
       if (Integer.bitCount(mask) > maxCardinality) {
-	continue;
+        continue;
       }
       // Build temporary root where the selected basics are TRUE, others FALSE
       Set<String> selected = new HashSet<>();
       for (int i = 0; i < n; i++) {
-	if (((mask >> i) & 1) == 1) {
-	  selected.add(basics.get(i));
-	}
+        if (((mask >> i) & 1) == 1) {
+          selected.add(basics.get(i));
+        }
       }
       if (evaluateLogical(root, selected)) {
-	List<String> sorted = new ArrayList<>(selected);
-	java.util.Collections.sort(sorted);
-	// Drop supersets of existing cut sets
-	boolean isSuper = false;
-	for (List<String> existing : cutSets) {
-	  if (sorted.containsAll(existing)) {
-	    isSuper = true;
-	    break;
-	  }
-	}
-	if (!isSuper) {
-	  cutSets.add(sorted);
-	}
+        List<String> sorted = new ArrayList<>(selected);
+        java.util.Collections.sort(sorted);
+        // Drop supersets of existing cut sets
+        boolean isSuper = false;
+        for (List<String> existing : cutSets) {
+          if (sorted.containsAll(existing)) {
+            isSuper = true;
+            break;
+          }
+        }
+        if (!isSuper) {
+          cutSets.add(sorted);
+        }
       }
     }
     return cutSets;
@@ -156,7 +156,7 @@ public class FaultTreeAnalyzer implements Serializable {
   private void collectBasicNames(FaultTreeNode node, List<String> out) {
     if (node.isBasic()) {
       if (!out.contains(node.name)) {
-	out.add(node.name);
+        out.add(node.name);
       }
       return;
     }
@@ -172,7 +172,7 @@ public class FaultTreeAnalyzer implements Serializable {
     int trueCount = 0;
     for (FaultTreeNode c : node.children) {
       if (evaluateLogical(c, failedSet)) {
-	trueCount++;
+        trueCount++;
       }
     }
     switch (node.gate) {

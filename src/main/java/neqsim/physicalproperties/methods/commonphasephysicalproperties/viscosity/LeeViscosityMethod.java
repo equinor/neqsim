@@ -105,7 +105,7 @@ public class LeeViscosityMethod extends Viscosity {
 
     // Calculate correlation parameters
     double K = (9.4 + 0.02 * molarMassGMol) * Math.pow(temperatureR, 1.5)
-	/ (209.0 + 19.0 * molarMassGMol + temperatureR);
+        / (209.0 + 19.0 * molarMassGMol + temperatureR);
 
     double X = 3.5 + 986.0 / temperatureR + 0.01 * molarMassGMol;
 
@@ -135,7 +135,7 @@ public class LeeViscosityMethod extends Viscosity {
     double temperatureR = temperatureK * 9.0 / 5.0;
 
     double K = (9.4 + 0.02 * molarMassGMol) * Math.pow(temperatureR, 1.5)
-	/ (209.0 + 19.0 * molarMassGMol + temperatureR);
+        / (209.0 + 19.0 * molarMassGMol + temperatureR);
 
     // Low pressure: exp(X * ρ^Y) ≈ 1 when ρ → 0
     double viscosityCp = K * 1e-4;

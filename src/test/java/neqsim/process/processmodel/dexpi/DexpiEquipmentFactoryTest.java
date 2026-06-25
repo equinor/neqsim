@@ -74,7 +74,7 @@ public class DexpiEquipmentFactoryTest extends NeqSimTest {
   public void testCreateThreePhaseSeparator() {
     Stream feed = createTestStream();
     DexpiProcessUnit unit = new DexpiProcessUnit("3P-Sep", "ThreePhaseSeparator", EquipmentEnum.ThreePhaseSeparator,
-	null, null);
+        null, null);
 
     ProcessEquipmentInterface result = DexpiEquipmentFactory.create(unit, feed);
 
@@ -89,7 +89,7 @@ public class DexpiEquipmentFactoryTest extends NeqSimTest {
   public void testCreateCompressor() {
     Stream feed = createTestStream();
     DexpiProcessUnit unit = new DexpiProcessUnit("Comp-1", "CentrifugalCompressor", EquipmentEnum.Compressor, null,
-	null);
+        null);
     unit.setSizingAttribute(DexpiMetadata.DESIGN_PRESSURE, "100.0");
 
     ProcessEquipmentInterface result = DexpiEquipmentFactory.create(unit, feed);
@@ -119,7 +119,7 @@ public class DexpiEquipmentFactoryTest extends NeqSimTest {
   public void testCreateHeatExchanger() {
     Stream feed = createTestStream();
     DexpiProcessUnit unit = new DexpiProcessUnit("HX-1", "ShellAndTubeHeatExchanger", EquipmentEnum.HeatExchanger, null,
-	null);
+        null);
 
     ProcessEquipmentInterface result = DexpiEquipmentFactory.create(unit, feed);
 

@@ -3,8 +3,8 @@ package neqsim.thermodynamicoperations.flashops.reactiveflash;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseInterface;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
+import neqsim.thermo.system.SystemInterface;
 
 /**
  * Core solver for the Modified RAND method for simultaneous chemical and phase equilibrium.
@@ -175,7 +175,7 @@ public class ModifiedRANDSolver implements java.io.Serializable {
     if (hasIonicSpecies) {
       double[] charges = formulaMatrix.getIonicCharges();
       for (int i = 0; i < nc; i++) {
-	isIon[i] = (charges[i] != 0.0);
+        isIon[i] = (charges[i] != 0.0);
       }
     }
   }
@@ -246,9 +246,9 @@ public class ModifiedRANDSolver implements java.io.Serializable {
     if (logger.isDebugEnabled()) {
       logger.debug("RAND init: np=" + np + " nc=" + nc + " ne=" + ne + " nr=" + nr);
       for (int i = 0; i < nc; i++) {
-	logger.debug("  g0[" + system.getPhase(0).getComponent(i).getComponentName() + "]="
-	    + String.format("%.6e", g0[i]) + " lnPhi[0]=" + String.format("%.6e", lnPhi[0][i])
-	    + (np > 1 ? " lnPhi[1]=" + String.format("%.6e", lnPhi[1][i]) : ""));
+        logger.debug("  g0[" + system.getPhase(0).getComponent(i).getComponentName() + "]="
+            + String.format("%.6e", g0[i]) + " lnPhi[0]=" + String.format("%.6e", lnPhi[0][i])
+            + (np > 1 ? " lnPhi[1]=" + String.format("%.6e", lnPhi[1][i]) : ""));
       }
     }
 
@@ -259,15 +259,15 @@ public class ModifiedRANDSolver implements java.io.Serializable {
       // e[j][i] = g0_i + ln(x[j][i]) + ln(phi[j][i]) - sum_k lambda_k * A_ki
       double[][] e = errorWork;
       for (int j = 0; j < np; j++) {
-	for (int i = 0; i < nc; i++) {
-	  double xi = x[j][i] > EPS ? x[j][i] : EPS;
-	  double sumLA = 0.0;
-	  for (int k = 0; k < ne; k++) {
-	    sumLA += lambda[k] * A[k][i];
-	  }
-	  double ei = g0[i] + Math.log(xi) + lnPhi[j][i] - sumLA;
-	  e[j][i] = Double.isFinite(ei) ? ei : 0.0;
-	}
+        for (int i = 0; i < nc; i++) {
+          double xi = x[j][i] > EPS ? x[j][i] : EPS;
+          double sumLA = 0.0;
+          for (int k = 0; k < ne; k++) {
+            sumLA += lambda[k] * A[k][i];
+          }
+          double ei = g0[i] + Math.log(xi) + lnPhi[j][i] - sumLA;
+          e[j][i] = Double.isFinite(ei) ? ei : 0.0;
+        }
       }
 
       // Build RAND correction matrix summing over ALL phases
@@ -277,34 +277,34 @@ public class ModifiedRANDSolver implements java.io.Serializable {
       double[] rhs = rhsWork;
       clearMatrix(C, ne, ne);
       for (int k = 0; k < ne; k++) {
-	rhs[k] = 0.0;
+        rhs[k] = 0.0;
       }
 
       for (int k = 0; k < ne; k++) {
-	double elemSum = 0.0;
-	double elemErr = 0.0;
-	for (int j = 0; j < np; j++) {
-	  for (int i = 0; i < nc; i++) {
-	    elemSum += A[k][i] * n[j][i];
-	    elemErr += A[k][i] * n[j][i] * e[j][i];
-	  }
-	}
-	rhs[k] = (b[k] - elemSum) + elemErr;
+        double elemSum = 0.0;
+        double elemErr = 0.0;
+        for (int j = 0; j < np; j++) {
+          for (int i = 0; i < nc; i++) {
+            elemSum += A[k][i] * n[j][i];
+            elemErr += A[k][i] * n[j][i] * e[j][i];
+          }
+        }
+        rhs[k] = (b[k] - elemSum) + elemErr;
 
-	for (int l = 0; l < ne; l++) {
-	  double cval = 0.0;
-	  for (int j = 0; j < np; j++) {
-	    for (int i = 0; i < nc; i++) {
-	      cval += A[k][i] * A[l][i] * n[j][i];
-	    }
-	  }
-	  C[k][l] = cval;
-	}
-	// Tikhonov regularization: when NE > rank(A), the C matrix is singular
-	// because dependent rows of A contribute near-zero eigenvalues.
-	// Use a regularization proportional to the diagonal to stabilize while
-	// preserving the solution along the column space of A.
-	C[k][k] += Math.max(1.0e-10 * Math.abs(C[k][k]), 1.0e-14);
+        for (int l = 0; l < ne; l++) {
+          double cval = 0.0;
+          for (int j = 0; j < np; j++) {
+            for (int i = 0; i < nc; i++) {
+              cval += A[k][i] * A[l][i] * n[j][i];
+            }
+          }
+          C[k][l] = cval;
+        }
+        // Tikhonov regularization: when NE > rank(A), the C matrix is singular
+        // because dependent rows of A contribute near-zero eigenvalues.
+        // Use a regularization proportional to the diagonal to stabilize while
+        // preserving the solution along the column space of A.
+        C[k][k] += Math.max(1.0e-10 * Math.abs(C[k][k]), 1.0e-14);
       }
 
       // Symmetric diagonal scaling to fix ill-conditioning when ionic species
@@ -313,33 +313,33 @@ public class ModifiedRANDSolver implements java.io.Serializable {
       // element rows, giving condition number >1e10 and loss of precision.
       double[] cScale = matrixScaleWork;
       for (int k = 0; k < ne; k++) {
-	double d = Math.abs(C[k][k]);
-	cScale[k] = d > 1.0e-30 ? 1.0 / Math.sqrt(d) : 1.0;
+        double d = Math.abs(C[k][k]);
+        cScale[k] = d > 1.0e-30 ? 1.0 / Math.sqrt(d) : 1.0;
       }
       for (int k = 0; k < ne; k++) {
-	for (int l = 0; l < ne; l++) {
-	  C[k][l] *= cScale[k] * cScale[l];
-	}
-	rhs[k] *= cScale[k];
+        for (int l = 0; l < ne; l++) {
+          C[k][l] *= cScale[k] * cScale[l];
+        }
+        rhs[k] *= cScale[k];
       }
 
       // Solve for delta_lambda (in scaled space)
       double[] dl = solveLinear(C, rhs);
       if (dl == null) {
-	logger.warn("RAND solver: singular matrix at iter " + iter);
-	break;
+        logger.warn("RAND solver: singular matrix at iter " + iter);
+        break;
       }
 
       // Unscale delta_lambda
       for (int k = 0; k < ne; k++) {
-	dl[k] *= cScale[k];
+        dl[k] *= cScale[k];
       }
 
       // Save previous state for backtracking line search
       double[][] nOld = oldMolesWork;
       double[] lambdaOld = oldLambdaWork;
       for (int j = 0; j < np; j++) {
-	System.arraycopy(n[j], 0, nOld[j], 0, nc);
+        System.arraycopy(n[j], 0, nOld[j], 0, nc);
       }
       System.arraycopy(lambda, 0, lambdaOld, 0, ne);
 
@@ -348,73 +348,73 @@ public class ModifiedRANDSolver implements java.io.Serializable {
       boolean stepAccepted = false;
 
       for (int lineIter = 0; lineIter < 5; lineIter++) {
-	// Restore previous state
-	for (int j = 0; j < np; j++) {
-	  System.arraycopy(nOld[j], 0, n[j], 0, nc);
-	}
-	System.arraycopy(lambdaOld, 0, lambda, 0, ne);
+        // Restore previous state
+        for (int j = 0; j < np; j++) {
+          System.arraycopy(nOld[j], 0, n[j], 0, nc);
+        }
+        System.arraycopy(lambdaOld, 0, lambda, 0, ne);
 
-	// Apply damped mole correction
-	for (int j = 0; j < np; j++) {
-	  for (int i = 0; i < nc; i++) {
-	    double correction = alpha * (-e[j][i]);
-	    for (int k = 0; k < ne; k++) {
-	      correction += alpha * A[k][i] * dl[k];
-	    }
-	    if (!Double.isFinite(correction)) {
-	      correction = 0.0;
-	    }
-	    correction = Math.max(-3.0, Math.min(3.0, correction));
-	    n[j][i] = n[j][i] * Math.exp(correction);
-	    if (!Double.isFinite(n[j][i]) || n[j][i] < EPS) {
-	      n[j][i] = EPS;
-	    }
-	  }
-	}
+        // Apply damped mole correction
+        for (int j = 0; j < np; j++) {
+          for (int i = 0; i < nc; i++) {
+            double correction = alpha * (-e[j][i]);
+            for (int k = 0; k < ne; k++) {
+              correction += alpha * A[k][i] * dl[k];
+            }
+            if (!Double.isFinite(correction)) {
+              correction = 0.0;
+            }
+            correction = Math.max(-3.0, Math.min(3.0, correction));
+            n[j][i] = n[j][i] * Math.exp(correction);
+            if (!Double.isFinite(n[j][i]) || n[j][i] < EPS) {
+              n[j][i] = EPS;
+            }
+          }
+        }
 
-	// Update lambda with damping
-	for (int k = 0; k < ne; k++) {
-	  lambda[k] += alpha * dl[k];
-	}
+        // Update lambda with damping
+        for (int k = 0; k < ne; k++) {
+          lambda[k] += alpha * dl[k];
+        }
 
-	recalcTotals();
-	double newElemResid = computeElementResidual();
+        recalcTotals();
+        double newElemResid = computeElementResidual();
 
-	// Accept step if element residual decreased or damping is already small
-	if (newElemResid < prevResidual * 1.5 || alpha < 0.05) {
-	  stepAccepted = true;
-	  break;
-	}
-	alpha *= 0.5;
+        // Accept step if element residual decreased or damping is already small
+        if (newElemResid < prevResidual * 1.5 || alpha < 0.05) {
+          stepAccepted = true;
+          break;
+        }
+        alpha *= 0.5;
       }
 
       if (!stepAccepted) {
-	// Restore and apply minimum damped step
-	for (int j = 0; j < np; j++) {
-	  System.arraycopy(nOld[j], 0, n[j], 0, nc);
-	}
-	System.arraycopy(lambdaOld, 0, lambda, 0, ne);
-	alpha = 0.1;
-	for (int j = 0; j < np; j++) {
-	  for (int i = 0; i < nc; i++) {
-	    double correction = alpha * (-e[j][i]);
-	    for (int k = 0; k < ne; k++) {
-	      correction += alpha * A[k][i] * dl[k];
-	    }
-	    if (!Double.isFinite(correction)) {
-	      correction = 0.0;
-	    }
-	    correction = Math.max(-3.0, Math.min(3.0, correction));
-	    n[j][i] = n[j][i] * Math.exp(correction);
-	    if (!Double.isFinite(n[j][i]) || n[j][i] < EPS) {
-	      n[j][i] = EPS;
-	    }
-	  }
-	}
-	for (int k = 0; k < ne; k++) {
-	  lambda[k] += alpha * dl[k];
-	}
-	recalcTotals();
+        // Restore and apply minimum damped step
+        for (int j = 0; j < np; j++) {
+          System.arraycopy(nOld[j], 0, n[j], 0, nc);
+        }
+        System.arraycopy(lambdaOld, 0, lambda, 0, ne);
+        alpha = 0.1;
+        for (int j = 0; j < np; j++) {
+          for (int i = 0; i < nc; i++) {
+            double correction = alpha * (-e[j][i]);
+            for (int k = 0; k < ne; k++) {
+              correction += alpha * A[k][i] * dl[k];
+            }
+            if (!Double.isFinite(correction)) {
+              correction = 0.0;
+            }
+            correction = Math.max(-3.0, Math.min(3.0, correction));
+            n[j][i] = n[j][i] * Math.exp(correction);
+            if (!Double.isFinite(n[j][i]) || n[j][i] < EPS) {
+              n[j][i] = EPS;
+            }
+          }
+        }
+        for (int k = 0; k < ne; k++) {
+          lambda[k] += alpha * dl[k];
+        }
+        recalcTotals();
       }
 
       updateSystem();
@@ -425,30 +425,30 @@ public class ModifiedRANDSolver implements java.io.Serializable {
       int maxEcomp = -1;
       int maxEphase = -1;
       for (int j = 0; j < np; j++) {
-	for (int i = 0; i < nc; i++) {
-	  if (n[j][i] > 1.0e-10 * totalMoles) {
-	    if (Math.abs(e[j][i]) > maxE) {
-	      maxE = Math.abs(e[j][i]);
-	      maxEcomp = i;
-	      maxEphase = j;
-	    }
-	  }
-	}
+        for (int i = 0; i < nc; i++) {
+          if (n[j][i] > 1.0e-10 * totalMoles) {
+            if (Math.abs(e[j][i]) > maxE) {
+              maxE = Math.abs(e[j][i]);
+              maxEcomp = i;
+              maxEphase = j;
+            }
+          }
+        }
       }
       double elemResid = computeElementResidual();
       finalResidual = Math.max(maxE, elemResid);
 
       // Debug logging for first few and periodic iterations
       if (logger.isDebugEnabled() && (iter < 5 || iter % 50 == 0 || iter == MAX_ITER - 1)) {
-	String worstComp = maxEcomp >= 0 ? system.getPhase(0).getComponent(maxEcomp).getComponentName() : "?";
-	logger.debug("  RAND[" + np + "p] iter=" + iter + " maxE=" + String.format("%.3e", maxE) + " elemR="
-	    + String.format("%.3e", elemResid) + " damp=" + String.format("%.4f", damping) + " worst=" + worstComp + "["
-	    + maxEphase + "]");
+        String worstComp = maxEcomp >= 0 ? system.getPhase(0).getComponent(maxEcomp).getComponentName() : "?";
+        logger.debug("  RAND[" + np + "p] iter=" + iter + " maxE=" + String.format("%.3e", maxE) + " elemR="
+            + String.format("%.3e", elemResid) + " damp=" + String.format("%.4f", damping) + " worst=" + worstComp + "["
+            + maxEphase + "]");
       }
 
       if (maxE < TOL && elemResid < TOL) {
-	converged = true;
-	break;
+        converged = true;
+        break;
       }
 
       // Relaxed convergence for multi-phase reactive systems.
@@ -456,8 +456,8 @@ public class ModifiedRANDSolver implements java.io.Serializable {
       // balance is extremely difficult with damped iteration. Accept 1e-4 for
       // multi-phase — this is engineering-accurate (composition error < 0.01%).
       if (np > 1 && maxE < 1.0e-4 && elemResid < 1.0e-4) {
-	converged = true;
-	break;
+        converged = true;
+        break;
       }
 
       // Adaptive damping: uses two strategies depending on the number of phases.
@@ -470,112 +470,113 @@ public class ModifiedRANDSolver implements java.io.Serializable {
       // reaching the 10% threshold to trigger recovery. Use a sliding window to
       // detect the overall convergence trend and allow damping to recover.
       if (np == 1) {
-	// --- Single-phase: classic per-iteration damping ---
-	if (finalResidual < prevResidual * 0.9) {
-	  damping = Math.min(1.0, damping * 1.5);
-	  stagnationCount = 0;
-	} else if (finalResidual > prevResidual * 1.1) {
-	  damping = Math.max(0.01, damping * 0.5);
-	  stagnationCount++;
-	} else {
-	  stagnationCount++;
-	}
+        // --- Single-phase: classic per-iteration damping ---
+        if (finalResidual < prevResidual * 0.9) {
+          damping = Math.min(1.0, damping * 1.5);
+          stagnationCount = 0;
+        } else if (finalResidual > prevResidual * 1.1) {
+          damping = Math.max(0.01, damping * 0.5);
+          stagnationCount++;
+        } else {
+          stagnationCount++;
+        }
       } else {
-	// --- Multi-phase: hybrid (immediate decrease + window increase) ---
-	if (finalResidual > prevResidual * 1.5) {
-	  damping = Math.max(0.01, damping * 0.5);
-	  stagnationCount++;
-	} else if (finalResidual > prevResidual * 1.05) {
-	  stagnationCount++;
-	}
-	itersSinceWindowUpdate++;
-	if (itersSinceWindowUpdate >= WINDOW) {
-	  if (finalResidual < windowResidual * 0.5) {
-	    double maxDamp = finalResidual > 10.0 ? 0.3 : (finalResidual > 1.0 ? 0.5 : 1.0);
-	    damping = Math.min(maxDamp, damping * 2.0);
-	    stagnationCount = 0;
-	  } else if (finalResidual > windowResidual * 2.0) {
-	    damping = Math.max(0.01, damping * 0.25);
-	    stagnationCount += WINDOW;
-	  }
-	  windowResidual = finalResidual;
-	  itersSinceWindowUpdate = 0;
-	}
+        // --- Multi-phase: hybrid (immediate decrease + window increase) ---
+        if (finalResidual > prevResidual * 1.5) {
+          damping = Math.max(0.01, damping * 0.5);
+          stagnationCount++;
+        } else if (finalResidual > prevResidual * 1.05) {
+          stagnationCount++;
+        }
+        itersSinceWindowUpdate++;
+        if (itersSinceWindowUpdate >= WINDOW) {
+          if (finalResidual < windowResidual * 0.5) {
+            double maxDamp = finalResidual > 10.0 ? 0.3 : (finalResidual > 1.0 ? 0.5 : 1.0);
+            damping = Math.min(maxDamp, damping * 2.0);
+            stagnationCount = 0;
+          } else if (finalResidual > windowResidual * 2.0) {
+            damping = Math.max(0.01, damping * 0.25);
+            stagnationCount += WINDOW;
+          }
+          windowResidual = finalResidual;
+          itersSinceWindowUpdate = 0;
+        }
       }
 
       // If stagnating for many iterations at a small residual, accept
       if (stagnationCount > 50 && finalResidual < 1.0e-3) {
-	converged = true;
-	break;
+        converged = true;
+        break;
       }
 
       // DIIS acceleration on Lagrange multipliers
       if (useDIIS && diis != null) {
-	double[] elemResidVec = computeElementResidualVector();
-	diis.addEntry(lambda.clone(), elemResidVec);
+        double[] elemResidVec = computeElementResidualVector();
+        diis.addEntry(lambda.clone(), elemResidVec);
 
-	if (iter >= DIIS_START && diis.canExtrapolate()) {
-	  double[] lambdaDiis = diis.extrapolate();
-	  if (lambdaDiis != null) {
-	    // Save state for rollback
-	    double[][] nSave = diisMolesWork;
-	    double[] lambdaSave = diisLambdaWork;
-	    for (int j = 0; j < np; j++) {
-	      System.arraycopy(n[j], 0, nSave[j], 0, nc);
-	    }
-	    System.arraycopy(lambda, 0, lambdaSave, 0, ne);
+        if (iter >= DIIS_START && diis.canExtrapolate()) {
+          double[] lambdaDiis = diis.extrapolate();
+          if (lambdaDiis != null) {
+            // Save state for rollback
+            double[][] nSave = diisMolesWork;
+            double[] lambdaSave = diisLambdaWork;
+            for (int j = 0; j < np; j++) {
+              System.arraycopy(n[j], 0, nSave[j], 0, nc);
+            }
+            System.arraycopy(lambda, 0, lambdaSave, 0, ne);
 
-	    // Propagate lambda change to moles via exponential correction
-	    for (int j = 0; j < np; j++) {
-	      for (int i = 0; i < nc; i++) {
-		double corr = 0.0;
-		for (int k = 0; k < ne; k++) {
-		  corr += (lambdaDiis[k] - lambda[k]) * A[k][i];
-		}
-		corr = Math.max(-3.0, Math.min(3.0, corr));
-		n[j][i] = n[j][i] * Math.exp(corr);
-		if (!Double.isFinite(n[j][i]) || n[j][i] < EPS) {
-		  n[j][i] = EPS;
-		}
-	      }
-	    }
-	    System.arraycopy(lambdaDiis, 0, lambda, 0, ne);
-	    recalcTotals();
-	    updateSystem();
-	    updateLnPhi();
+            // Propagate lambda change to moles via exponential correction
+            for (int j = 0; j < np; j++) {
+              for (int i = 0; i < nc; i++) {
+                double corr = 0.0;
+                for (int k = 0; k < ne; k++) {
+                  corr += (lambdaDiis[k] - lambda[k]) * A[k][i];
+                }
+                corr = Math.max(-3.0, Math.min(3.0, corr));
+                n[j][i] = n[j][i] * Math.exp(corr);
+                if (!Double.isFinite(n[j][i]) || n[j][i] < EPS) {
+                  n[j][i] = EPS;
+                }
+              }
+            }
+            System.arraycopy(lambdaDiis, 0, lambda, 0, ne);
+            recalcTotals();
+            updateSystem();
+            updateLnPhi();
 
-	    // Evaluate DIIS state: check full residual (element + chemical potential)
-	    double diisMaxE = 0.0;
-	    for (int j = 0; j < np; j++) {
-	      for (int i = 0; i < nc; i++) {
-		if (n[j][i] > 1.0e-10 * totalMoles) {
-		  double xi = x[j][i] > EPS ? x[j][i] : EPS;
-		  double sumLA = 0.0;
-		  for (int k = 0; k < ne; k++) {
-		    sumLA += lambda[k] * A[k][i];
-		  }
-		  double ei = g0[i] + Math.log(xi) + lnPhi[j][i] - sumLA;
-		  diisMaxE = Math.max(diisMaxE, Math.abs(ei));
-		}
-	      }
-	    }
-	    double diisElemResid = computeElementResidual();
-	    double diisFullResid = Math.max(diisMaxE, diisElemResid);
-	    if (diisFullResid < finalResidual * 1.1) {
-	      finalResidual = Math.min(finalResidual, diisFullResid);
-	      diisStepsAccepted++;
-	    } else {
-	      // Reject DIIS, restore state
-	      for (int j = 0; j < np; j++) {
-		System.arraycopy(nSave[j], 0, n[j], 0, nc);
-	      }
-	      System.arraycopy(lambdaSave, 0, lambda, 0, ne);
-	      recalcTotals();
-	      updateSystem();
-	      updateLnPhi();
-	    }
-	  }
-	}
+            // Evaluate DIIS state: check full residual (element + chemical
+            // potential)
+            double diisMaxE = 0.0;
+            for (int j = 0; j < np; j++) {
+              for (int i = 0; i < nc; i++) {
+                if (n[j][i] > 1.0e-10 * totalMoles) {
+                  double xi = x[j][i] > EPS ? x[j][i] : EPS;
+                  double sumLA = 0.0;
+                  for (int k = 0; k < ne; k++) {
+                    sumLA += lambda[k] * A[k][i];
+                  }
+                  double ei = g0[i] + Math.log(xi) + lnPhi[j][i] - sumLA;
+                  diisMaxE = Math.max(diisMaxE, Math.abs(ei));
+                }
+              }
+            }
+            double diisElemResid = computeElementResidual();
+            double diisFullResid = Math.max(diisMaxE, diisElemResid);
+            if (diisFullResid < finalResidual * 1.1) {
+              finalResidual = Math.min(finalResidual, diisFullResid);
+              diisStepsAccepted++;
+            } else {
+              // Reject DIIS, restore state
+              for (int j = 0; j < np; j++) {
+                System.arraycopy(nSave[j], 0, n[j], 0, nc);
+              }
+              System.arraycopy(lambdaSave, 0, lambda, 0, ne);
+              recalcTotals();
+              updateSystem();
+              updateLnPhi();
+            }
+          }
+        }
       }
 
       prevResidual = finalResidual;
@@ -601,9 +602,9 @@ public class ModifiedRANDSolver implements java.io.Serializable {
     for (int k = 0; k < ne; k++) {
       double es = 0.0;
       for (int j = 0; j < np; j++) {
-	for (int i = 0; i < nc; i++) {
-	  es += A[k][i] * n[j][i];
-	}
+        for (int i = 0; i < nc; i++) {
+          es += A[k][i] * n[j][i];
+        }
       }
       double scale = Math.max(Math.abs(b[k]), scaleFloor);
       res += ((es - b[k]) / scale) * ((es - b[k]) / scale);
@@ -627,9 +628,9 @@ public class ModifiedRANDSolver implements java.io.Serializable {
     for (int k = 0; k < ne; k++) {
       double es = 0.0;
       for (int j = 0; j < np; j++) {
-	for (int i = 0; i < nc; i++) {
-	  es += A[k][i] * n[j][i];
-	}
+        for (int i = 0; i < nc; i++) {
+          es += A[k][i] * n[j][i];
+        }
       }
       double scale = Math.max(Math.abs(b[k]), scaleFloor);
       r[k] = (es - b[k]) / scale;
@@ -656,7 +657,7 @@ public class ModifiedRANDSolver implements java.io.Serializable {
   private void clearMatrix(double[][] matrix, int rows, int columns) {
     for (int row = 0; row < rows; row++) {
       for (int column = 0; column < columns; column++) {
-	matrix[row][column] = 0.0;
+        matrix[row][column] = 0.0;
       }
     }
   }
@@ -673,10 +674,10 @@ public class ModifiedRANDSolver implements java.io.Serializable {
     for (int j = 0; j < np; j++) {
       nPhase[j] = 0.0;
       for (int i = 0; i < nc; i++) {
-	nPhase[j] += n[j][i];
+        nPhase[j] += n[j][i];
       }
       if (nPhase[j] < EPS) {
-	nPhase[j] = EPS;
+        nPhase[j] = EPS;
       }
       totalMoles += nPhase[j];
     }
@@ -686,7 +687,7 @@ public class ModifiedRANDSolver implements java.io.Serializable {
     for (int j = 0; j < np; j++) {
       beta[j] = nPhase[j] / totalMoles;
       for (int i = 0; i < nc; i++) {
-	x[j][i] = n[j][i] / nPhase[j];
+        x[j][i] = n[j][i] / nPhase[j];
       }
     }
   }
@@ -705,11 +706,11 @@ public class ModifiedRANDSolver implements java.io.Serializable {
     }
     for (int j = 0; j < np; j++) {
       if (isGasPhase[j]) {
-	for (int i = 0; i < nc; i++) {
-	  if (isIon[i]) {
-	    n[j][i] = EPS;
-	  }
-	}
+        for (int i = 0; i < nc; i++) {
+          if (isIon[i]) {
+            n[j][i] = EPS;
+          }
+        }
       }
     }
   }
@@ -734,8 +735,8 @@ public class ModifiedRANDSolver implements java.io.Serializable {
     isGasPhase = new boolean[np];
     if (hasIonicSpecies) {
       for (int j = 0; j < np; j++) {
-	String phaseType = system.getPhase(j).getPhaseTypeName();
-	isGasPhase[j] = "gas".equalsIgnoreCase(phaseType);
+        String phaseType = system.getPhase(j).getPhaseTypeName();
+        isGasPhase[j] = "gas".equalsIgnoreCase(phaseType);
       }
     }
 
@@ -743,18 +744,18 @@ public class ModifiedRANDSolver implements java.io.Serializable {
       PhaseInterface phase = system.getPhase(j);
       beta[j] = phase.getBeta();
       if (beta[j] < EPS) {
-	beta[j] = EPS;
+        beta[j] = EPS;
       }
       for (int i = 0; i < nc; i++) {
-	x[j][i] = phase.getComponent(i).getx();
-	n[j][i] = x[j][i] * beta[j];
-	if (n[j][i] < EPS) {
-	  n[j][i] = EPS;
-	}
-	// Pin ions to EPS in gas phases
-	if (hasIonicSpecies && isIon[i] && isGasPhase[j]) {
-	  n[j][i] = EPS;
-	}
+        x[j][i] = phase.getComponent(i).getx();
+        n[j][i] = x[j][i] * beta[j];
+        if (n[j][i] < EPS) {
+          n[j][i] = EPS;
+        }
+        // Pin ions to EPS in gas phases
+        if (hasIonicSpecies && isIon[i] && isGasPhase[j]) {
+          n[j][i] = EPS;
+        }
       }
       nPhase[j] = beta[j];
     }
@@ -809,14 +810,14 @@ public class ModifiedRANDSolver implements java.io.Serializable {
     for (int i = 0; i < nc; i++) {
       // For ionic species, use aqueous-state Gibbs energy
       if (hasIonicSpecies && isIon[i]) {
-	double dGfAq = ph.getComponent(i).getGibbsEnergyOfFormation();
-	// With electrolyte EOS: subtract the infinite-dilution log fugacity coefficient
-	// so that g0 + ln(x) + ln(phi) gives the correct total chemical potential
-	// relative to the aqueous standard state:
-	// mu/RT = dGfAq/RT + ln(x * gamma*) = dGfAq/RT + ln(x) + ln(phi) - ln(phi_inf)
-	// => g0 = dGfAq/RT - ln(phi_inf)
-	g0[i] = dGfAq / RT - lnPhiRef[i];
-	continue;
+        double dGfAq = ph.getComponent(i).getGibbsEnergyOfFormation();
+        // With electrolyte EOS: subtract the infinite-dilution log fugacity coefficient
+        // so that g0 + ln(x) + ln(phi) gives the correct total chemical potential
+        // relative to the aqueous standard state:
+        // mu/RT = dGfAq/RT + ln(x * gamma*) = dGfAq/RT + ln(x) + ln(phi) - ln(phi_inf)
+        // => g0 = dGfAq/RT - ln(phi_inf)
+        g0[i] = dGfAq / RT - lnPhiRef[i];
+        continue;
       }
 
       double dHf = ph.getComponent(i).getIdealGasEnthalpyOfFormation();
@@ -833,30 +834,30 @@ public class ModifiedRANDSolver implements java.io.Serializable {
       boolean hasThermo = Math.abs(dHf) > 1.0e-10 || Math.abs(S0) > 1.0e-10;
 
       if (hasThermo && hasCpData) {
-	// Temperature-corrected g0 using Cp polynomial integration
-	double dT = TT - T0;
-	double dT2 = TT * TT - T0 * T0;
-	double dT3 = TT * TT * TT - T0 * T0 * T0;
-	double dT4 = TT * TT * TT * TT - T0 * T0 * T0 * T0;
-	double dT5 = TT * TT * TT * TT * TT - T0 * T0 * T0 * T0 * T0;
-	double lnTratio = Math.log(TT / T0);
+        // Temperature-corrected g0 using Cp polynomial integration
+        double dT = TT - T0;
+        double dT2 = TT * TT - T0 * T0;
+        double dT3 = TT * TT * TT - T0 * T0 * T0;
+        double dT4 = TT * TT * TT * TT - T0 * T0 * T0 * T0;
+        double dT5 = TT * TT * TT * TT * TT - T0 * T0 * T0 * T0 * T0;
+        double lnTratio = Math.log(TT / T0);
 
-	// integral(T0,T) Cp dT
-	double deltaH = cpA * dT + cpB / 2.0 * dT2 + cpC / 3.0 * dT3 + cpD / 4.0 * dT4 + cpE / 5.0 * dT5;
+        // integral(T0,T) Cp dT
+        double deltaH = cpA * dT + cpB / 2.0 * dT2 + cpC / 3.0 * dT3 + cpD / 4.0 * dT4 + cpE / 5.0 * dT5;
 
-	// integral(T0,T) Cp/T dT
-	double deltaS = cpA * lnTratio + cpB * dT + cpC / 2.0 * dT2 + cpD / 3.0 * dT3 + cpE / 4.0 * dT4;
+        // integral(T0,T) Cp/T dT
+        double deltaS = cpA * lnTratio + cpB * dT + cpC / 2.0 * dT2 + cpD / 3.0 * dT3 + cpE / 4.0 * dT4;
 
-	double hT = dHf + deltaH;
-	double sT = S0 + deltaS;
-	g0[i] = (hT - TT * sT) / RT + lnPP;
+        double hT = dHf + deltaH;
+        double sT = S0 + deltaS;
+        g0[i] = (hT - TT * sT) / RT + lnPP;
       } else if (hasThermo) {
-	// Fallback: constant Cp approximation (no polynomial data)
-	g0[i] = (dHf - TT * S0) / RT + lnPP;
+        // Fallback: constant Cp approximation (no polynomial data)
+        g0[i] = (dHf - TT * S0) / RT + lnPP;
       } else if (Math.abs(dGf298) > 1.0e-10) {
-	g0[i] = dGf298 / RT + lnPP;
+        g0[i] = dGf298 / RT + lnPP;
       } else {
-	g0[i] = lnPP;
+        g0[i] = lnPP;
       }
     }
   }
@@ -882,31 +883,31 @@ public class ModifiedRANDSolver implements java.io.Serializable {
     int solventIdx = -1;
     for (int i = 0; i < nc; i++) {
       if (!isIon[i] && "solvent".equals(ph.getComponent(i).getReferenceStateType())) {
-	solventIdx = i;
-	break;
+        solventIdx = i;
+        break;
       }
     }
     // Fallback: use first non-ionic component as solvent
     if (solventIdx < 0) {
       for (int i = 0; i < nc; i++) {
-	if (!isIon[i]) {
-	  solventIdx = i;
-	  break;
-	}
+        if (!isIon[i]) {
+          solventIdx = i;
+          break;
+        }
       }
     }
 
     for (int i = 0; i < nc; i++) {
       if (isIon[i] && solventIdx >= 0) {
-	try {
-	  lnPhiRef[i] = ph.getLogInfiniteDiluteFugacity(i, solventIdx);
-	} catch (Exception ex) {
-	  logger.debug(
-	      "Could not compute infinite-dilution fugacity for component " + i + ", using 0: " + ex.getMessage());
-	  lnPhiRef[i] = 0.0;
-	}
+        try {
+          lnPhiRef[i] = ph.getLogInfiniteDiluteFugacity(i, solventIdx);
+        } catch (Exception ex) {
+          logger.debug(
+              "Could not compute infinite-dilution fugacity for component " + i + ", using 0: " + ex.getMessage());
+          lnPhiRef[i] = 0.0;
+        }
       } else {
-	lnPhiRef[i] = 0.0;
+        lnPhiRef[i] = 0.0;
       }
     }
   }
@@ -924,10 +925,10 @@ public class ModifiedRANDSolver implements java.io.Serializable {
     int refPhase = 0;
     if (hasIonicSpecies && isGasPhase != null) {
       for (int j = 0; j < np; j++) {
-	if (!isGasPhase[j]) {
-	  refPhase = j;
-	  break;
-	}
+        if (!isGasPhase[j]) {
+          refPhase = j;
+          break;
+        }
       }
     }
 
@@ -941,12 +942,12 @@ public class ModifiedRANDSolver implements java.io.Serializable {
     double[] Ath = new double[ne];
     for (int k = 0; k < ne; k++) {
       for (int l = 0; l < ne; l++) {
-	for (int i = 0; i < nc; i++) {
-	  AtA[k][l] += A[k][i] * A[l][i];
-	}
+        for (int i = 0; i < nc; i++) {
+          AtA[k][l] += A[k][i] * A[l][i];
+        }
       }
       for (int i = 0; i < nc; i++) {
-	Ath[k] += A[k][i] * h[i];
+        Ath[k] += A[k][i] * h[i];
       }
     }
 
@@ -963,8 +964,8 @@ public class ModifiedRANDSolver implements java.io.Serializable {
     for (int j = 0; j < np; j++) {
       PhaseInterface ph = system.getPhase(j);
       for (int i = 0; i < nc; i++) {
-	double fc = ph.getComponent(i).getFugacityCoefficient();
-	lnPhi[j][i] = (fc > 0 && Double.isFinite(fc)) ? Math.log(fc) : 0.0;
+        double fc = ph.getComponent(i).getFugacityCoefficient();
+        lnPhi[j][i] = (fc > 0 && Double.isFinite(fc)) ? Math.log(fc) : 0.0;
       }
     }
   }
@@ -976,7 +977,7 @@ public class ModifiedRANDSolver implements java.io.Serializable {
     for (int j = 0; j < np; j++) {
       PhaseInterface ph = system.getPhase(j);
       for (int i = 0; i < nc; i++) {
-	ph.getComponent(i).setx(x[j][i]);
+        ph.getComponent(i).setx(x[j][i]);
       }
       ph.setBeta(beta[j]);
     }
@@ -999,7 +1000,7 @@ public class ModifiedRANDSolver implements java.io.Serializable {
     double[][] aug = linearAugWork;
     for (int i = 0; i < dim; i++) {
       for (int j = 0; j < dim; j++) {
-	aug[i][j] = aa[i][j];
+        aug[i][j] = aa[i][j];
       }
       aug[i][dim] = bb[i];
     }
@@ -1008,24 +1009,24 @@ public class ModifiedRANDSolver implements java.io.Serializable {
       int pr = c;
       double mx = Math.abs(aug[c][c]);
       for (int r = c + 1; r < dim; r++) {
-	if (Math.abs(aug[r][c]) > mx) {
-	  mx = Math.abs(aug[r][c]);
-	  pr = r;
-	}
+        if (Math.abs(aug[r][c]) > mx) {
+          mx = Math.abs(aug[r][c]);
+          pr = r;
+        }
       }
       if (mx < 1e-30) {
-	return null;
+        return null;
       }
       if (pr != c) {
-	double[] tmp = aug[c];
-	aug[c] = aug[pr];
-	aug[pr] = tmp;
+        double[] tmp = aug[c];
+        aug[c] = aug[pr];
+        aug[pr] = tmp;
       }
       for (int r = c + 1; r < dim; r++) {
-	double f = aug[r][c] / aug[c][c];
-	for (int jj = c; jj <= dim; jj++) {
-	  aug[r][jj] -= f * aug[c][jj];
-	}
+        double f = aug[r][c] / aug[c][c];
+        for (int jj = c; jj <= dim; jj++) {
+          aug[r][jj] -= f * aug[c][jj];
+        }
       }
     }
 
@@ -1033,10 +1034,10 @@ public class ModifiedRANDSolver implements java.io.Serializable {
     for (int i = dim - 1; i >= 0; i--) {
       s[i] = aug[i][dim];
       for (int j = i + 1; j < dim; j++) {
-	s[i] -= aug[i][j] * s[j];
+        s[i] -= aug[i][j] * s[j];
       }
       if (Math.abs(aug[i][i]) < 1e-30) {
-	return null;
+        return null;
       }
       s[i] /= aug[i][i];
     }

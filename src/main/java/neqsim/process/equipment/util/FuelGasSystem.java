@@ -301,7 +301,7 @@ public class FuelGasSystem extends ProcessEquipmentBaseClass {
       totalDemand = consumers.stream().mapToDouble(FuelGasConsumer::getDemandKgh).sum();
       // Set outlet pressure to most demanding consumer
       double maxPressure = consumers.stream().mapToDouble(c -> c.getType().getTypicalPressureBarg()).max()
-	  .orElse(outletPressure);
+          .orElse(outletPressure);
       outletPressure = maxPressure;
     }
   }
@@ -499,12 +499,12 @@ public class FuelGasSystem extends ProcessEquipmentBaseClass {
     if (!consumers.isEmpty()) {
       List<Map<String, Object>> consumerList = new ArrayList<>();
       for (FuelGasConsumer c : consumers) {
-	Map<String, Object> cmap = new LinkedHashMap<>();
-	cmap.put("name", c.getName());
-	cmap.put("type", c.getType().name());
-	cmap.put("demandKgh", c.getDemandKgh());
-	cmap.put("thermalPowerMW", c.getDemandKgh() * lowerHeatingValueMJkg / 3600.0);
-	consumerList.add(cmap);
+        Map<String, Object> cmap = new LinkedHashMap<>();
+        cmap.put("name", c.getName());
+        cmap.put("type", c.getType().name());
+        cmap.put("demandKgh", c.getDemandKgh());
+        cmap.put("thermalPowerMW", c.getDemandKgh() * lowerHeatingValueMJkg / 3600.0);
+        consumerList.add(cmap);
       }
       results.put("consumers", consumerList);
     }

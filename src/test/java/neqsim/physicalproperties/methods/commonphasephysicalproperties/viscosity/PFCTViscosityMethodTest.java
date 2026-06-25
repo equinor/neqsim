@@ -109,7 +109,7 @@ public class PFCTViscosityMethodTest extends neqsim.NeqSimTest {
 
     assertNotEquals(baseViscosity, correctedViscosity, 1.0e-12);
     assertArrayEquals(new double[] { 0.6232, 1.1507, 1.0, 1.0 }, properties.getCspViscosityCorrectionFactors(),
-	1.0e-12);
+        1.0e-12);
 
     properties.setCspViscosityParameters(new double[] { 1.0, 1.0, 1.0, 1.0 });
     properties.setCspViscosityParameter(0, 0.6232);
@@ -128,7 +128,7 @@ public class PFCTViscosityMethodTest extends neqsim.NeqSimTest {
     properties.setViscosityModel("PFCT");
 
     assertThrows(IllegalArgumentException.class,
-	() -> properties.setCspViscosityCorrectionFactors(new double[] { 1.0, 1.0, 1.0 }));
+        () -> properties.setCspViscosityCorrectionFactors(new double[] { 1.0, 1.0, 1.0 }));
     assertThrows(IllegalArgumentException.class, () -> properties.setCspViscosityCorrectionFactor(4, 1.0));
     assertThrows(IllegalArgumentException.class, () -> properties.setCspViscosityCorrectionFactor(0, Double.NaN));
   }

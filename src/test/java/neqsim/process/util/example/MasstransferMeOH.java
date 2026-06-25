@@ -60,7 +60,7 @@ public class MasstransferMeOH {
     mainMixer.addStream(MeOHFeed);
 
     neqsim.process.equipment.util.NeqSimUnit pipeline = new neqsim.process.equipment.util.NeqSimUnit(
-	mainMixer.getOutletStream(), "pipeline", "stratified");
+        mainMixer.getOutletStream(), "pipeline", "stratified");
     pipeline.setLength(123.01);
 
     GasScrubber scrubber = new GasScrubber("gas scrub", pipeline.getOutletStream());
@@ -88,8 +88,8 @@ public class MasstransferMeOH {
     // ((DistillationColumn)operations.getUnit("TEG regeneration
     // column")).setNumberOfTrays(2);
     logger.info("water in wet gas [kg/MSm3] "
-	+ ((Stream) operations.getUnit("water saturated feed gas")).getFluid().getPhase(0).getComponent("water").getz()
-	    * 1.0e6 * 0.01802 * ThermodynamicConstantsInterface.atm / (ThermodynamicConstantsInterface.R * 288.15));
+        + ((Stream) operations.getUnit("water saturated feed gas")).getFluid().getPhase(0).getComponent("water").getz()
+            * 1.0e6 * 0.01802 * ThermodynamicConstantsInterface.atm / (ThermodynamicConstantsInterface.R * 288.15));
     // mainMixer.getFluid().display();
     // scrubber.getGasOutStream().displayResult();
     logger.info("hydt " + gasFromScrubber.getHydrateEquilibriumTemperature());

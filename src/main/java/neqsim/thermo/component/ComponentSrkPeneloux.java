@@ -26,7 +26,7 @@ public class ComponentSrkPeneloux extends ComponentSrk {
     super(name, moles, molesInPhase, compIndex);
 
     a = 1.0 / (9.0 * (Math.pow(2.0, 1.0 / 3.0) - 1.0)) * R * R * criticalTemperature * criticalTemperature
-	/ criticalPressure;
+        / criticalPressure;
     b = (Math.pow(2.0, 1.0 / 3.0) - 1.0) / 3.0 * R * criticalTemperature / criticalPressure;
     // double volCorr = getVolumeCorrection() / 1.0e5 * 0.0;
     // b -= volCorr;

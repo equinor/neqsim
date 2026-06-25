@@ -357,7 +357,7 @@ public class ProcessResearchSpec {
     }
     for (String allowed : allowedUnitTypes) {
       if (allowed.equalsIgnoreCase(unitType)) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -383,7 +383,7 @@ public class ProcessResearchSpec {
      */
     public ProductTarget(String name) {
       if (name == null || name.trim().isEmpty()) {
-	throw new IllegalArgumentException("Product target name cannot be empty");
+        throw new IllegalArgumentException("Product target name cannot be empty");
       }
       this.name = name;
     }
@@ -559,7 +559,7 @@ public class ProcessResearchSpec {
      * @param unit unit string accepted by the equipment setter
      */
     public DecisionVariable(String equipmentName, String propertyName, double lowerBound, double upperBound,
-	String unit) {
+        String unit) {
       this.equipmentName = equipmentName;
       this.propertyName = propertyName;
       this.lowerBound = lowerBound;
@@ -1600,10 +1600,10 @@ public class ProcessResearchSpec {
      */
     public ProcessResearchSpec build() {
       if (spec.feedComponents.isEmpty()) {
-	throw new IllegalStateException("At least one feed component must be specified");
+        throw new IllegalStateException("At least one feed component must be specified");
       }
       if (spec.productTargets.isEmpty()) {
-	throw new IllegalStateException("At least one product target must be specified");
+        throw new IllegalStateException("At least one product target must be specified");
       }
       return spec;
     }

@@ -67,10 +67,10 @@ public class CricondenBarTemp implements java.io.Serializable {
   public void setfvec() {
     for (int i = 0; i < numberOfComponents; i++) {
       fvec.set(i, 0,
-	  Math.log(system.getPhases()[0].getComponent(i).getFugacityCoefficient()
-	      * system.getPhases()[0].getComponent(i).getx() * system.getPressure())
-	      - Math.log(system.getPhases()[1].getComponent(i).getFugacityCoefficient()
-		  * system.getPhases()[1].getComponent(i).getx() * system.getPressure()));
+          Math.log(system.getPhases()[0].getComponent(i).getFugacityCoefficient()
+              * system.getPhases()[0].getComponent(i).getx() * system.getPressure())
+              - Math.log(system.getPhases()[1].getComponent(i).getFugacityCoefficient()
+                  * system.getPhases()[1].getComponent(i).getx() * system.getPressure()));
     }
   }
 
@@ -84,13 +84,13 @@ public class CricondenBarTemp implements java.io.Serializable {
     double tempJ = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < numberOfComponents; j++) {
-	dij = i == j ? 1.0 : 0.0; // Kroneckers delta
-	tempJ = 1.0 / system.getBeta()
-	    * (dij / system.getPhases()[0].getComponent(i).getx() - 1.0
-		+ system.getPhases()[0].getComponent(i).getdfugdx(j))
-	    + 1.0 / (1.0 - system.getBeta()) * (dij / system.getPhases()[1].getComponent(i).getx() - 1.0
-		+ system.getPhases()[1].getComponent(i).getdfugdx(j));
-	Jac.set(i, j, tempJ);
+        dij = i == j ? 1.0 : 0.0; // Kroneckers delta
+        tempJ = 1.0 / system.getBeta()
+            * (dij / system.getPhases()[0].getComponent(i).getx() - 1.0
+                + system.getPhases()[0].getComponent(i).getdfugdx(j))
+            + 1.0 / (1.0 - system.getBeta()) * (dij / system.getPhases()[1].getComponent(i).getx() - 1.0
+                + system.getPhases()[1].getComponent(i).getdfugdx(j));
+        Jac.set(i, j, tempJ);
       }
     }
   }
@@ -118,9 +118,9 @@ public class CricondenBarTemp implements java.io.Serializable {
     for (int i = 0; i < numberOfComponents; i++) {
       system.getPhases()[0].getComponent(i).setx(u.get(i, 0) / system.getBeta());
       system.getPhases()[1].getComponent(i)
-	  .setx((system.getPhases()[0].getComponent(i).getz() - u.get(i, 0)) / (1.0 - system.getBeta()));
+          .setx((system.getPhases()[0].getComponent(i).getz() - u.get(i, 0)) / (1.0 - system.getBeta()));
       system.getPhases()[0].getComponent(i)
-	  .setK(system.getPhases()[0].getComponent(i).getx() / system.getPhases()[1].getComponent(i).getx());
+          .setK(system.getPhases()[0].getComponent(i).getx() / system.getPhases()[1].getComponent(i).getx());
       system.getPhases()[1].getComponent(i).setK(system.getPhases()[0].getComponent(i).getK());
     }
 

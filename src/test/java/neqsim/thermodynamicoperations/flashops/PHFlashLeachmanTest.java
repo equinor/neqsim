@@ -29,7 +29,7 @@ public class PHFlashLeachmanTest {
   void testRun() {
     double[] leachmanProps = testSystem.getPhase(0).getProperties_Leachman();
     double leachmanEnthalpy = leachmanProps[7] * testSystem.getPhase(0).getNumberOfMolesInPhase(); // J/mol
-												   // K
+    // K
     testSystem.setPressure(10.0);
     testOps.PHflashLeachman(leachmanEnthalpy);
     leachmanProps = testSystem.getPhase(0).getProperties_Leachman();

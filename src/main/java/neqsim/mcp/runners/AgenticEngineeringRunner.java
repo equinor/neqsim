@@ -49,10 +49,10 @@ public final class AgenticEngineeringRunner {
     provenance.addAssumption("Kernel is deterministic and side-effect free");
     provenance.addValidationPassed("Agentic engineering response contract applied");
     ApiEnvelope.applyStandardFields(response, "runAgenticEngineering", provenance,
-	ApiEnvelope.validationStatus(success, "agentic-kernel",
-	    success ? "Agentic engineering action completed" : "Agentic engineering action failed"),
-	ApiEnvelope.qualityGate(success ? "passed" : "failed",
-	    success ? "Agentic engineering kernel completed" : "Agentic engineering kernel failed", true));
+        ApiEnvelope.validationStatus(success, "agentic-kernel",
+            success ? "Agentic engineering action completed" : "Agentic engineering action failed"),
+        ApiEnvelope.qualityGate(success ? "passed" : "failed",
+            success ? "Agentic engineering kernel completed" : "Agentic engineering kernel failed", true));
     return GSON.toJson(response);
   }
 }

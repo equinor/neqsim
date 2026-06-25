@@ -193,7 +193,7 @@ class SeparatorInternalsDatabaseTest {
     List<SeparatorInternalsDatabase.VendorCurveRecord> wireMeshCurves = db.findVendorCurvesByType("WIRE_MESH");
     assertFalse(wireMeshCurves.isEmpty(), "Should have WIRE_MESH vendor curves");
     assertTrue(wireMeshCurves.size() >= 5,
-	"Should have at least 5 wire mesh vendor curves, got " + wireMeshCurves.size());
+        "Should have at least 5 wire mesh vendor curves, got " + wireMeshCurves.size());
 
     List<SeparatorInternalsDatabase.VendorCurveRecord> cycloneCurves = db.findVendorCurvesByType("AXIAL_CYCLONE");
     assertFalse(cycloneCurves.isEmpty(), "Should have AXIAL_CYCLONE vendor curves");
@@ -224,9 +224,9 @@ class SeparatorInternalsDatabaseTest {
     assertNotNull(rec.diameterPoints_um, "Should have diameter points");
     assertNotNull(rec.efficiencyPoints, "Should have efficiency points");
     assertTrue(rec.diameterPoints_um.length == rec.efficiencyPoints.length,
-	"Diameter and efficiency arrays should have same length");
+        "Diameter and efficiency arrays should have same length");
     assertTrue(rec.diameterPoints_um.length >= 10,
-	"Should have at least 10 data points, got " + rec.diameterPoints_um.length);
+        "Should have at least 10 data points, got " + rec.diameterPoints_um.length);
   }
 
   /**
@@ -236,7 +236,7 @@ class SeparatorInternalsDatabaseTest {
   void testFindVendorCurvesByTypeAndVendor() {
     SeparatorInternalsDatabase db = SeparatorInternalsDatabase.getInstance();
     List<SeparatorInternalsDatabase.VendorCurveRecord> results = db.findVendorCurvesByTypeAndVendor("AXIAL_CYCLONE",
-	"VendorA");
+        "VendorA");
     assertFalse(results.isEmpty(), "Should find VendorA cyclone curves");
     for (SeparatorInternalsDatabase.VendorCurveRecord rec : results) {
       assertTrue(rec.internalsType.equals("AXIAL_CYCLONE"), "Type should be AXIAL_CYCLONE");
@@ -276,7 +276,7 @@ class SeparatorInternalsDatabaseTest {
     assertTrue(hp.testPressure_bar > atm.testPressure_bar, "HP curve should have higher test pressure");
     // At high pressure the max K-factor is lower (flooding earlier)
     assertTrue(hp.maxKFactor < atm.maxKFactor,
-	"HP max K-factor should be lower: atm=" + atm.maxKFactor + " hp=" + hp.maxKFactor);
+        "HP max K-factor should be lower: atm=" + atm.maxKFactor + " hp=" + hp.maxKFactor);
     // Both should produce valid custom curves
     GradeEfficiencyCurve atmCurve = atm.toGradeEfficiencyCurve();
     GradeEfficiencyCurve hpCurve = hp.toGradeEfficiencyCurve();
@@ -307,9 +307,9 @@ class SeparatorInternalsDatabaseTest {
     SeparatorInternalsDatabase db = SeparatorInternalsDatabase.getInstance();
     for (SeparatorInternalsDatabase.InternalsRecord rec : db.getAllInternals()) {
       assertTrue(rec.d50_um > 0 && rec.d50_um < 10000,
-	  "D50 should be between 0 and 10000 um for " + rec.internalsType + "/" + rec.subType);
+          "D50 should be between 0 and 10000 um for " + rec.internalsType + "/" + rec.subType);
       assertTrue(rec.maxEfficiency > 0 && rec.maxEfficiency <= 1.0,
-	  "Max efficiency should be (0,1] for " + rec.internalsType);
+          "Max efficiency should be (0,1] for " + rec.internalsType);
       assertTrue(rec.maxKFactor >= rec.minKFactor, "Max K >= Min K for " + rec.internalsType);
     }
   }

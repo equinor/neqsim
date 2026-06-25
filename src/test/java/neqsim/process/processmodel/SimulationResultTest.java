@@ -49,7 +49,7 @@ class SimulationResultTest {
   @Test
   void testToJsonError() {
     SimulationResult result = SimulationResult.error("MISSING_INLET", "Inlet reference not found",
-	"Define the unit before referencing it");
+        "Define the unit before referencing it");
     String json = result.toJson();
     assertNotNull(json);
     assertTrue(json.contains("\"status\": \"error\""));
@@ -84,7 +84,7 @@ class SimulationResultTest {
   @Test
   void testErrorDetailToJsonObject() {
     SimulationResult.ErrorDetail detail = new SimulationResult.ErrorDetail("MISSING_INLET", "No inlet stream",
-	"Compressor-1", "Connect a stream");
+        "Compressor-1", "Connect a stream");
     com.google.gson.JsonObject jsonObj = detail.toJsonObject();
     assertEquals("MISSING_INLET", jsonObj.get("code").getAsString());
     assertEquals("No inlet stream", jsonObj.get("message").getAsString());

@@ -75,9 +75,9 @@ class ComponentSplitterTest {
     // ((StreamInterface)processOps.getUnit("stream 1")).displayResult();
     // ((StreamInterface)processOps.getUnit("stream 2")).displayResult();
     assertEquals(((StreamInterface) processOps.getUnit("stream 1")).getFluid().getComponent("methane").getx(), 1.0,
-	1e-6);
+        1e-6);
     assertEquals(((StreamInterface) processOps.getUnit("stream 2")).getFluid().getComponent("methane").getx(), 0.0,
-	1e-6);
+        1e-6);
   }
 
   @Test

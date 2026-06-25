@@ -131,7 +131,7 @@ class MulticomponentNucleationTest {
 
     // Heterogeneous reduces barrier so rate should be >= homogeneous
     assertTrue(mcn.getTotalNucleationRate() >= mcnHom.getTotalNucleationRate(),
-	"Heterogeneous rate should be >= homogeneous rate");
+        "Heterogeneous rate should be >= homogeneous rate");
   }
 
   @Test

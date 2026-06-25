@@ -258,7 +258,7 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
     // Run Monte Carlo iterations
     for (int iter = 0; iter < iterations; iter++) {
       DynamicIterationState state = simulateDynamicIteration(random, timeHorizonHours, baselineProduction,
-	  degradedRates, reliability);
+          degradedRates, reliability);
 
       totalProductions[iter] = state.totalProduction;
       transientLosses[iter] = state.transientLoss;
@@ -269,7 +269,7 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
 
       // Store representative profiles (first 10 iterations)
       if (iter < 10 && !state.profiles.isEmpty()) {
-	productionProfiles.addAll(state.profiles);
+        productionProfiles.addAll(state.profiles);
       }
     }
 
@@ -285,7 +285,7 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
 
     // Calculate statistics
     result.calculateStatistics(totalProductions, transientLosses, steadyStateLosses, availabilities, failureCounts,
-	transientCounts);
+        transientCounts);
 
     // Update transient stats
     transientStats.update(result);
@@ -317,14 +317,14 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
     if (simulateTransients) {
       // Shutdown transient
       double shutdownLoss = calculateTransientLoss(baselineProduction, degradedProduction, shutdownTimeHours,
-	  shutdownProfile);
+          shutdownProfile);
       profile.setShutdownTransientLoss(shutdownLoss);
       profile.setShutdownDuration(shutdownTimeHours);
 
       // Steady-state degraded period
       double steadyStateDuration = repairDurationHours - shutdownTimeHours - rampUpTimeHours;
       if (steadyStateDuration < 0) {
-	steadyStateDuration = 0;
+        steadyStateDuration = 0;
       }
       double steadyStateLoss = (baselineProduction - degradedProduction) * steadyStateDuration;
       profile.setSteadyStateLoss(steadyStateLoss);
@@ -332,7 +332,7 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
 
       // Ramp-up transient
       double rampUpLoss = calculateTransientLoss(degradedProduction, baselineProduction, rampUpTimeHours,
-	  rampUpProfile);
+          rampUpProfile);
       profile.setRampUpTransientLoss(rampUpLoss);
       profile.setRampUpDuration(rampUpTimeHours);
     } else {
@@ -375,48 +375,48 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
 
       // Check for new failures
       for (Map.Entry<String, EquipmentReliability> entry : reliability.entrySet()) {
-	String name = entry.getKey();
-	EquipmentReliability rel = entry.getValue();
-	EquipmentState eqState = equipmentStates.get(name);
+        String name = entry.getKey();
+        EquipmentReliability rel = entry.getValue();
+        EquipmentState eqState = equipmentStates.get(name);
 
-	if (eqState.isOperating()) {
-	  // Check for failure
-	  double failureProb = rel.getFailureRate() * stepDuration / 8760.0;
-	  if (random.nextDouble() < failureProb) {
-	    // Equipment fails
-	    eqState.setFailed(true);
-	    eqState.setRepairRemaining(sampleRepairTime(random, rel.getMttr()));
-	    eqState.setTransientRemaining(shutdownTimeHours);
-	    eqState.setInTransient(true);
-	    state.failureCount++;
-	    state.transientCount++;
+        if (eqState.isOperating()) {
+          // Check for failure
+          double failureProb = rel.getFailureRate() * stepDuration / 8760.0;
+          if (random.nextDouble() < failureProb) {
+            // Equipment fails
+            eqState.setFailed(true);
+            eqState.setRepairRemaining(sampleRepairTime(random, rel.getMttr()));
+            eqState.setTransientRemaining(shutdownTimeHours);
+            eqState.setInTransient(true);
+            state.failureCount++;
+            state.transientCount++;
 
-	    // Create production profile for this failure
-	    ProductionProfile profile = simulateFailureEvent(EquipmentFailureMode.trip(name),
-		eqState.getRepairRemaining());
-	    state.profiles.add(profile);
-	  }
-	} else {
-	  // Equipment is failed, check repair progress
-	  eqState.decrementRepair(stepDuration);
-	  if (eqState.isRepairComplete()) {
-	    // Equipment repaired, start ramp-up
-	    eqState.setFailed(false);
-	    eqState.setTransientRemaining(rampUpTimeHours);
-	    eqState.setInTransient(true);
-	    eqState.setRampingUp(true);
-	    state.transientCount++;
-	  }
-	}
+            // Create production profile for this failure
+            ProductionProfile profile = simulateFailureEvent(EquipmentFailureMode.trip(name),
+                eqState.getRepairRemaining());
+            state.profiles.add(profile);
+          }
+        } else {
+          // Equipment is failed, check repair progress
+          eqState.decrementRepair(stepDuration);
+          if (eqState.isRepairComplete()) {
+            // Equipment repaired, start ramp-up
+            eqState.setFailed(false);
+            eqState.setTransientRemaining(rampUpTimeHours);
+            eqState.setInTransient(true);
+            eqState.setRampingUp(true);
+            state.transientCount++;
+          }
+        }
 
-	// Update transient state
-	if (eqState.isInTransient()) {
-	  eqState.decrementTransient(stepDuration);
-	  if (eqState.isTransientComplete()) {
-	    eqState.setInTransient(false);
-	    eqState.setRampingUp(false);
-	  }
-	}
+        // Update transient state
+        if (eqState.isInTransient()) {
+          eqState.decrementTransient(stepDuration);
+          if (eqState.isTransientComplete()) {
+            eqState.setInTransient(false);
+            eqState.setRampingUp(false);
+          }
+        }
       }
 
       // Calculate production this step
@@ -425,44 +425,44 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
       boolean anyTransient = false;
 
       for (Map.Entry<String, EquipmentState> entry : equipmentStates.entrySet()) {
-	String name = entry.getKey();
-	EquipmentState eqState = entry.getValue();
+        String name = entry.getKey();
+        EquipmentState eqState = entry.getValue();
 
-	if (eqState.isFailed()) {
-	  anyFailed = true;
-	  double degradedRate = degradedRates.getOrDefault(name, Double.valueOf(0.0)).doubleValue();
-	  productionRate = Math.min(productionRate, degradedRate);
+        if (eqState.isFailed()) {
+          anyFailed = true;
+          double degradedRate = degradedRates.getOrDefault(name, Double.valueOf(0.0)).doubleValue();
+          productionRate = Math.min(productionRate, degradedRate);
 
-	  if (eqState.isInTransient()) {
-	    anyTransient = true;
-	    // Apply transient factor
-	    double transientFactor = calculateTransientFactor(eqState.getTransientRemaining(), shutdownTimeHours,
-		shutdownProfile);
-	    productionRate *= transientFactor;
-	  }
-	} else if (eqState.isRampingUp()) {
-	  anyTransient = true;
-	  double transientFactor = calculateTransientFactor(eqState.getTransientRemaining(), rampUpTimeHours,
-	      rampUpProfile);
-	  // Interpolate between degraded and baseline
-	  double degradedRate = degradedRates.getOrDefault(name, Double.valueOf(0.0)).doubleValue();
-	  productionRate = degradedRate + (baselineProduction - degradedRate) * transientFactor;
-	}
+          if (eqState.isInTransient()) {
+            anyTransient = true;
+            // Apply transient factor
+            double transientFactor = calculateTransientFactor(eqState.getTransientRemaining(), shutdownTimeHours,
+                shutdownProfile);
+            productionRate *= transientFactor;
+          }
+        } else if (eqState.isRampingUp()) {
+          anyTransient = true;
+          double transientFactor = calculateTransientFactor(eqState.getTransientRemaining(), rampUpTimeHours,
+              rampUpProfile);
+          // Interpolate between degraded and baseline
+          double degradedRate = degradedRates.getOrDefault(name, Double.valueOf(0.0)).doubleValue();
+          productionRate = degradedRate + (baselineProduction - degradedRate) * transientFactor;
+        }
       }
 
       double productionThisStep = productionRate * stepDuration;
       state.totalProduction += productionThisStep;
 
       if (anyFailed || anyTransient) {
-	double lostProduction = (baselineProduction * stepDuration) - productionThisStep;
-	if (anyTransient) {
-	  state.transientLoss += lostProduction;
-	} else {
-	  state.steadyStateLoss += lostProduction;
-	}
-	state.downtimeHours += stepDuration;
+        double lostProduction = (baselineProduction * stepDuration) - productionThisStep;
+        if (anyTransient) {
+          state.transientLoss += lostProduction;
+        } else {
+          state.steadyStateLoss += lostProduction;
+        }
+        state.downtimeHours += stepDuration;
       } else {
-	state.uptimeHours += stepDuration;
+        state.uptimeHours += stepDuration;
       }
 
       currentTime += stepDuration;
@@ -480,15 +480,15 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
   private Map<String, Double> calculateDegradedRates(Iterable<String> equipmentNames) {
     Map<String, Double> rates = new HashMap<>();
     ProductionImpactAnalyzer analyzer = new ProductionImpactAnalyzer(getProcessSystem(), getFeedStreamName(),
-	getProductStreamName());
+        getProductStreamName());
 
     for (String name : equipmentNames) {
       try {
-	double degradedRate = calculateDegradedProduction(name);
-	rates.put(name, Double.valueOf(degradedRate));
+        double degradedRate = calculateDegradedProduction(name);
+        rates.put(name, Double.valueOf(degradedRate));
       } catch (Exception e) {
-	logger.warn("Could not calculate degraded rate for {}: {}", name, e.getMessage());
-	rates.put(name, Double.valueOf(0.0));
+        logger.warn("Could not calculate degraded rate for {}: {}", name, e.getMessage());
+        rates.put(name, Double.valueOf(0.0));
       }
     }
     return rates;
@@ -502,7 +502,7 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
    */
   private double calculateDegradedProduction(String equipmentName) {
     ProductionImpactAnalyzer analyzer = new ProductionImpactAnalyzer(getProcessSystem(), getFeedStreamName(),
-	getProductStreamName());
+        getProductStreamName());
     try {
       return analyzer.analyzeFailureImpact(equipmentName).getProductionWithFailure();
     } catch (Exception e) {

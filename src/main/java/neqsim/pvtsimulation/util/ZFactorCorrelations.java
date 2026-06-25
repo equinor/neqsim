@@ -69,17 +69,17 @@ public final class ZFactorCorrelations {
     for (int i = 0; i < 200; i++) {
       double fy = a + (y + y * y + y * y * y - y * y * y * y) / Math.pow(1.0 - y, 3) - b * y * y + c * Math.pow(y, d);
       double dfy = (1.0 + 4.0 * y + 4.0 * y * y - 4.0 * y * y * y + y * y * y * y) / Math.pow(1.0 - y, 4) - 2.0 * b * y
-	  + c * d * Math.pow(y, d - 1.0);
+          + c * d * Math.pow(y, d - 1.0);
       double yNew = y - fy / dfy;
       if (yNew < 1.0e-12) {
-	yNew = 1.0e-12;
+        yNew = 1.0e-12;
       }
       if (yNew > 0.9999) {
-	yNew = 0.9999;
+        yNew = 0.9999;
       }
       if (Math.abs(yNew - y) < 1.0e-13) {
-	y = yNew;
-	break;
+        y = yNew;
+        break;
       }
       y = yNew;
     }
@@ -119,18 +119,18 @@ public final class ZFactorCorrelations {
       double c2 = a6 + a7 / tpr + a8 / (tpr * tpr);
       double c3 = a9 * (a7 / tpr + a8 / (tpr * tpr));
       double fz = 1.0 + c1 * rr + c2 * rr2 - c3 * rr2 * rr2 * rr
-	  + a10 * (1.0 + a11 * rr2) * (rr2 / (tpr * tpr * tpr)) * Math.exp(-a11 * rr2) - 0.27 * ppr / (rhoR * tpr);
+          + a10 * (1.0 + a11 * rr2) * (rr2 / (tpr * tpr * tpr)) * Math.exp(-a11 * rr2) - 0.27 * ppr / (rhoR * tpr);
       double dfz = c1 + 2.0 * c2 * rr - 5.0 * c3 * rr2 * rr2
-	  + a10 * (rr / (tpr * tpr * tpr))
-	      * ((2.0 + 4.0 * a11 * rr2 - 2.0 * a11 * a11 * rr2 * rr2) * Math.exp(-a11 * rr2))
-	  + 0.27 * ppr / (rhoR * rhoR * tpr);
+          + a10 * (rr / (tpr * tpr * tpr))
+              * ((2.0 + 4.0 * a11 * rr2 - 2.0 * a11 * a11 * rr2 * rr2) * Math.exp(-a11 * rr2))
+          + 0.27 * ppr / (rhoR * rhoR * tpr);
       double rhoNew = rhoR - fz / dfz;
       if (rhoNew < 1.0e-15) {
-	rhoNew = 1.0e-15;
+        rhoNew = 1.0e-15;
       }
       if (Math.abs(rhoNew - rhoR) < 1.0e-12) {
-	rhoR = rhoNew;
-	break;
+        rhoR = rhoNew;
+        break;
       }
       rhoR = rhoNew;
     }

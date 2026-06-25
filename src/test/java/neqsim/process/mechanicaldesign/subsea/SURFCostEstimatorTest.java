@@ -1,11 +1,13 @@
 package neqsim.process.mechanicaldesign.subsea;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
-import org.junit.jupiter.api.Test;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link SURFCostEstimator}.
@@ -80,7 +82,7 @@ class SURFCostEstimatorTest {
 
     // Sum of categories should equal total
     double categorySum = est.getSubseaCostUSD() + est.getUmbilicalCostUSD() + est.getRiserCostUSD()
-	+ est.getFlowlineCostUSD();
+        + est.getFlowlineCostUSD();
     assertEquals(totalUSD, categorySum, 1.0, "Category sum should equal total");
 
     // Flowlines typically dominate for long export pipelines (>50%)
@@ -161,7 +163,7 @@ class SURFCostEstimatorTest {
 
     // Norway should be more expensive than GOM (factor 1.35 vs 1.0)
     assertTrue(estNorway.getTotalSURFCostUSD() > estGOM.getTotalSURFCostUSD(),
-	"Norway SURF should be more expensive than GOM");
+        "Norway SURF should be more expensive than GOM");
   }
 
   /**

@@ -79,7 +79,7 @@ public class MonteCarloSimulation {
       reportMatrix[0][i] = i;
 
       for (int j = 0; j < statClasses[0].getSampleSet().getSample(0).getFunction().getNumberOfFittingParams(); j++) {
-	reportMatrix[j + 1][i] = statClasses[i].getSampleSet().getSample(0).getFunction().getFittingParams(j);
+        reportMatrix[j + 1][i] = statClasses[i].getSampleSet().getSample(0).getFunction().getFittingParams(j);
       }
     }
 

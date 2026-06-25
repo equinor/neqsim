@@ -28,12 +28,12 @@ public class Api537FlareFlameModelTest {
   @Test
   public void testWindTilt() {
     Api537FlareFlameModel noWind = new Api537FlareFlameModel(50.0, 50.0e6, 0.20, 200.0).setStackHeightM(40.0)
-	.setWindSpeedMPerS(0.0);
+        .setWindSpeedMPerS(0.0);
     assertEquals(0.0, noWind.flameTiltRad(), 1.0e-9);
     assertEquals(0.0, noWind.flameTipHorizontalM(), 1.0e-9);
 
     Api537FlareFlameModel windy = new Api537FlareFlameModel(50.0, 50.0e6, 0.20, 200.0).setStackHeightM(40.0)
-	.setWindSpeedMPerS(100.0);
+        .setWindSpeedMPerS(100.0);
     assertTrue(windy.flameTiltRad() > 0.0);
     assertTrue(windy.flameTipHorizontalM() > 0.0);
   }

@@ -3,6 +3,8 @@ package neqsim.process.util.report;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
@@ -30,8 +32,6 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Tests JSON serialization capability for all process equipment types.
@@ -388,8 +388,8 @@ public class JsonSerializationTest {
       // Note: Some equipment may return null if toJson() is not implemented
       // This test documents which equipment types need toJson() implementations
       if (equipmentJson == null) {
-	logger.info("WARNING: " + equipment.getClass().getSimpleName() + " (" + equipment.getName()
-	    + ") returns null from toJson()");
+        logger.info("WARNING: " + equipment.getClass().getSimpleName() + " (" + equipment.getName()
+            + ") returns null from toJson()");
       }
     }
   }
@@ -608,7 +608,7 @@ public class JsonSerializationTest {
 
     // Verify key equipment names are in JSON
     assertTrue(processJson.contains("feed stream") || processJson.contains("inlet separator"),
-	"JSON should contain equipment names");
+        "JSON should contain equipment names");
 
     // Count equipment that serialize properly
     int successCount = 0;
@@ -616,9 +616,9 @@ public class JsonSerializationTest {
     for (ProcessEquipmentInterface equipment : process.getUnitOperations()) {
       String equipmentJson = equipment.toJson();
       if (equipmentJson != null) {
-	successCount++;
+        successCount++;
       } else {
-	nullCount++;
+        nullCount++;
       }
     }
 
@@ -709,7 +709,7 @@ public class JsonSerializationTest {
 
     // Verify both processes are in the JSON
     assertTrue(modelJson.contains("GasProcessing") || modelJson.contains("gas"),
-	"JSON should contain gas processing data");
+        "JSON should contain gas processing data");
 
     logger.info("ProcessModel JSON length: " + modelJson.length() + " characters");
     logger.info("ProcessModel contains " + model.getAllProcesses().size() + " processes");
@@ -753,7 +753,7 @@ public class JsonSerializationTest {
     int jsonEquipmentCount = 0;
     for (ProcessEquipmentInterface equipment : process.getUnitOperations()) {
       if (equipment.toJson() != null) {
-	jsonEquipmentCount++;
+        jsonEquipmentCount++;
       }
     }
 
@@ -834,7 +834,7 @@ public class JsonSerializationTest {
     suctionStream.run();
 
     neqsim.process.equipment.ejector.Ejector ejector = new neqsim.process.equipment.ejector.Ejector("test ejector",
-	motiveStream, suctionStream);
+        motiveStream, suctionStream);
     ejector.setDischargePressure(15.0);
     ejector.run();
 
@@ -871,7 +871,7 @@ public class JsonSerializationTest {
     inlet.run();
 
     neqsim.process.equipment.pipeline.Pipeline pipeline = new neqsim.process.equipment.pipeline.Pipeline(
-	"test pipeline", inlet);
+        "test pipeline", inlet);
     // Note: Pipeline needs more setup for full run, just test basic serialization
 
     String json = pipeline.toJson();

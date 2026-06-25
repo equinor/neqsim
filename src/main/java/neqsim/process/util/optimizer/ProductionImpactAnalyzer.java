@@ -124,10 +124,10 @@ public class ProductionImpactAnalyzer implements Serializable {
     // Find first and last stream-like equipment
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof StreamInterface) {
-	if (feedStreamName == null) {
-	  feedStreamName = unit.getName();
-	}
-	productStreamName = unit.getName(); // Last stream becomes product
+        if (feedStreamName == null) {
+          feedStreamName = unit.getName();
+        }
+        productStreamName = unit.getName(); // Last stream becomes product
       }
     }
 
@@ -219,9 +219,9 @@ public class ProductionImpactAnalyzer implements Serializable {
       // Get the equipment
       ProcessEquipmentInterface equipment = processSystem.getUnit(equipmentName);
       if (equipment == null) {
-	result.setAnalysisNotes("Equipment not found: " + equipmentName);
-	result.setConverged(false);
-	return result;
+        result.setAnalysisNotes("Equipment not found: " + equipmentName);
+        result.setConverged(false);
+        return result;
       }
 
       result.setEquipmentType(equipment.getClass().getSimpleName());
@@ -237,30 +237,30 @@ public class ProductionImpactAnalyzer implements Serializable {
 
       // Run the failed process
       try {
-	failedProcess.run();
+        failedProcess.run();
 
-	// Get production with failure
-	double productionWithFailure = getProductionRate(failedProcess);
-	result.setProductionWithFailure(productionWithFailure);
-	result.setPowerWithFailure(getTotalPower(failedProcess));
+        // Get production with failure
+        double productionWithFailure = getProductionRate(failedProcess);
+        result.setProductionWithFailure(productionWithFailure);
+        result.setPowerWithFailure(getTotalPower(failedProcess));
 
-	// Find new bottleneck
-	BottleneckResult newBottleneck = findBottleneck(failedProcess);
-	if (newBottleneck != null && newBottleneck.hasBottleneck()) {
-	  result.setNewBottleneck(newBottleneck.getEquipmentName());
-	  result.setNewBottleneckUtilization(newBottleneck.getUtilization());
-	}
+        // Find new bottleneck
+        BottleneckResult newBottleneck = findBottleneck(failedProcess);
+        if (newBottleneck != null && newBottleneck.hasBottleneck()) {
+          result.setNewBottleneck(newBottleneck.getEquipmentName());
+          result.setNewBottleneckUtilization(newBottleneck.getUtilization());
+        }
 
       } catch (Exception e) {
-	logger.warn("Failed process did not converge: {}", e.getMessage());
-	result.setProductionWithFailure(0.0);
-	result.setPowerWithFailure(0.0);
-	result.setAnalysisNotes("Failed process did not converge: " + e.getMessage());
+        logger.warn("Failed process did not converge: {}", e.getMessage());
+        result.setProductionWithFailure(0.0);
+        result.setPowerWithFailure(0.0);
+        result.setAnalysisNotes("Failed process did not converge: " + e.getMessage());
       }
 
       // Optimize degraded operation if requested
       if (optimizeDegradedOperation && result.getProductionWithFailure() > 0) {
-	optimizeDegradedOperation(failedProcess, equipmentName, result);
+        optimizeDegradedOperation(failedProcess, equipmentName, result);
       }
 
       // Full shutdown comparison
@@ -271,7 +271,7 @@ public class ProductionImpactAnalyzer implements Serializable {
 
       // Set recovery time estimate
       if (failureMode != null) {
-	result.setEstimatedRecoveryTime(failureMode.getMttr());
+        result.setEstimatedRecoveryTime(failureMode.getMttr());
       }
 
       result.setConverged(true);
@@ -300,8 +300,8 @@ public class ProductionImpactAnalyzer implements Serializable {
 
       BottleneckResult bottleneck = findBottleneck(processSystem);
       if (bottleneck != null && bottleneck.hasBottleneck()) {
-	cachedBaselineBottleneck = bottleneck.getEquipmentName();
-	cachedBaselineBottleneckUtil = bottleneck.getUtilization();
+        cachedBaselineBottleneck = bottleneck.getEquipmentName();
+        cachedBaselineBottleneckUtil = bottleneck.getUtilization();
       }
     }
 
@@ -335,32 +335,32 @@ public class ProductionImpactAnalyzer implements Serializable {
 
       // For equipment that can be deactivated
       if (equipment instanceof neqsim.process.equipment.ProcessEquipmentBaseClass) {
-	((neqsim.process.equipment.ProcessEquipmentBaseClass) equipment).isActive(false);
+        ((neqsim.process.equipment.ProcessEquipmentBaseClass) equipment).isActive(false);
       }
 
       // Disable capacity analysis to avoid including in bottleneck detection
       if (equipment instanceof neqsim.process.equipment.ProcessEquipmentBaseClass) {
-	((neqsim.process.equipment.ProcessEquipmentBaseClass) equipment).setCapacityAnalysisEnabled(false);
+        ((neqsim.process.equipment.ProcessEquipmentBaseClass) equipment).setCapacityAnalysisEnabled(false);
       }
 
       // For compressors, set to bypass mode (no pressure increase)
       if (equipment instanceof Compressor) {
-	Compressor comp = (Compressor) equipment;
-	comp.setOutletPressure(comp.getInletStream().getPressure());
+        Compressor comp = (Compressor) equipment;
+        comp.setOutletPressure(comp.getInletStream().getPressure());
       }
 
       // For pumps, similar bypass
       if (equipment instanceof Pump) {
-	Pump pump = (Pump) equipment;
-	pump.setOutletPressure(pump.getInletStream().getPressure());
+        Pump pump = (Pump) equipment;
+        pump.setOutletPressure(pump.getInletStream().getPressure());
       }
 
       // For heaters/coolers, set to no heat transfer
       if (equipment instanceof Heater) {
-	((Heater) equipment).setOutTemperature(((Heater) equipment).getInletStream().getTemperature());
+        ((Heater) equipment).setOutTemperature(((Heater) equipment).getInletStream().getTemperature());
       }
       if (equipment instanceof Cooler) {
-	((Cooler) equipment).setOutTemperature(((Cooler) equipment).getInletStream().getTemperature());
+        ((Cooler) equipment).setOutTemperature(((Cooler) equipment).getInletStream().getTemperature());
       }
 
       result.addAffectedEquipment(equipmentName);
@@ -388,11 +388,11 @@ public class ProductionImpactAnalyzer implements Serializable {
     boolean foundFailed = false;
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       if (unit.getName().equals(failedEquipment)) {
-	foundFailed = true;
-	continue;
+        foundFailed = true;
+        continue;
       }
       if (foundFailed) {
-	result.addAffectedEquipment(unit.getName());
+        result.addAffectedEquipment(unit.getName());
       }
     }
   }
@@ -411,7 +411,7 @@ public class ProductionImpactAnalyzer implements Serializable {
       // Find the feed stream
       ProcessEquipmentInterface feedUnit = failedProcess.getUnit(feedStreamName);
       if (!(feedUnit instanceof StreamInterface)) {
-	return;
+        return;
       }
       StreamInterface feed = (StreamInterface) feedUnit;
 
@@ -424,23 +424,23 @@ public class ProductionImpactAnalyzer implements Serializable {
       double[] flowFactors = { 1.0, 0.9, 0.8, 0.7, 0.6, 0.5 };
 
       for (double factor : flowFactors) {
-	double testFlow = currentFlow * factor;
-	feed.setFlowRate(testFlow, "kg/hr");
+        double testFlow = currentFlow * factor;
+        feed.setFlowRate(testFlow, "kg/hr");
 
-	try {
-	  failedProcess.run();
-	  double production = getProductionRate(failedProcess);
+        try {
+          failedProcess.run();
+          double production = getProductionRate(failedProcess);
 
-	  // Check if this is better (higher production or more stable)
-	  if (production > maxProduction * 0.99) {
-	    // Similar production but potentially more stable
-	    optimalFlow = testFlow;
-	    maxProduction = production;
-	  }
-	} catch (Exception e) {
-	  // This flow rate doesn't work
-	  continue;
-	}
+          // Check if this is better (higher production or more stable)
+          if (production > maxProduction * 0.99) {
+            // Similar production but potentially more stable
+            optimalFlow = testFlow;
+            maxProduction = production;
+          }
+        } catch (Exception e) {
+          // This flow rate doesn't work
+          continue;
+        }
       }
 
       result.setOptimizedProductionWithFailure(maxProduction);
@@ -475,10 +475,10 @@ public class ProductionImpactAnalyzer implements Serializable {
     // Try to get outlet stream via TwoPortInterface
     try {
       if (unit instanceof neqsim.process.equipment.TwoPortInterface) {
-	StreamInterface outlet = ((neqsim.process.equipment.TwoPortInterface) unit).getOutletStream();
-	if (outlet != null) {
-	  return outlet.getFlowRate("kg/hr");
-	}
+        StreamInterface outlet = ((neqsim.process.equipment.TwoPortInterface) unit).getOutletStream();
+        if (outlet != null) {
+          return outlet.getFlowRate("kg/hr");
+        }
       }
     } catch (Exception e) {
       // Equipment doesn't have outlet stream
@@ -498,9 +498,9 @@ public class ProductionImpactAnalyzer implements Serializable {
 
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       if (unit instanceof Compressor) {
-	totalPower += ((Compressor) unit).getPower("kW");
+        totalPower += ((Compressor) unit).getPower("kW");
       } else if (unit instanceof Pump) {
-	totalPower += ((Pump) unit).getPower();
+        totalPower += ((Pump) unit).getPower();
       }
     }
 
@@ -519,12 +519,12 @@ public class ProductionImpactAnalyzer implements Serializable {
 
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       if (unit instanceof CapacityConstrainedEquipment) {
-	CapacityConstrainedEquipment constrained = (CapacityConstrainedEquipment) unit;
-	double util = constrained.getMaxUtilization();
-	if (util > maxUtilization) {
-	  maxUtilization = util;
-	  bottleneckEquip = unit;
-	}
+        CapacityConstrainedEquipment constrained = (CapacityConstrainedEquipment) unit;
+        double util = constrained.getMaxUtilization();
+        if (util > maxUtilization) {
+          maxUtilization = util;
+          bottleneckEquip = unit;
+        }
       }
     }
 
@@ -559,12 +559,12 @@ public class ProductionImpactAnalyzer implements Serializable {
       double lostProductionShutdown = baselineProduction * hoursToRecover;
 
       if (lostProductionDegraded < lostProductionShutdown) {
-	result.setRecommendedAction(RecommendedAction.REDUCE_THROUGHPUT);
-	result.setRecommendationReason(String.format("Degraded operation saves %.0f kg over %.1f hours vs shutdown",
-	    lostProductionShutdown - lostProductionDegraded, hoursToRecover));
+        result.setRecommendedAction(RecommendedAction.REDUCE_THROUGHPUT);
+        result.setRecommendationReason(String.format("Degraded operation saves %.0f kg over %.1f hours vs shutdown",
+            lostProductionShutdown - lostProductionDegraded, hoursToRecover));
       } else {
-	result.setRecommendedAction(RecommendedAction.FULL_SHUTDOWN);
-	result.setRecommendationReason("Shutdown and repair is more economical");
+        result.setRecommendedAction(RecommendedAction.FULL_SHUTDOWN);
+        result.setRecommendationReason("Shutdown and repair is more economical");
       }
     }
 
@@ -589,14 +589,14 @@ public class ProductionImpactAnalyzer implements Serializable {
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       // Skip streams (they represent connections, not equipment)
       if (unit instanceof StreamInterface) {
-	continue;
+        continue;
       }
 
       try {
-	ProductionImpactResult result = analyzeFailureImpact(unit.getName());
-	results.add(result);
+        ProductionImpactResult result = analyzeFailureImpact(unit.getName());
+        results.add(result);
       } catch (Exception e) {
-	logger.warn("Could not analyze {}: {}", unit.getName(), e.getMessage());
+        logger.warn("Could not analyze {}: {}", unit.getName(), e.getMessage());
       }
     }
 
@@ -604,7 +604,7 @@ public class ProductionImpactAnalyzer implements Serializable {
     Collections.sort(results, new Comparator<ProductionImpactResult>() {
       @Override
       public int compare(ProductionImpactResult a, ProductionImpactResult b) {
-	return Double.compare(b.getPercentLoss(), a.getPercentLoss());
+        return Double.compare(b.getPercentLoss(), a.getPercentLoss());
       }
     });
 
@@ -630,18 +630,18 @@ public class ProductionImpactAnalyzer implements Serializable {
       ProcessSystem failedProcess = processSystem.copy();
 
       for (String equipmentName : equipmentNames) {
-	applyFailure(failedProcess, equipmentName, EquipmentFailureMode.trip(equipmentName), result);
+        applyFailure(failedProcess, equipmentName, EquipmentFailureMode.trip(equipmentName), result);
       }
 
       // Run the multi-failed process
       try {
-	failedProcess.run();
-	result.setProductionWithFailure(getProductionRate(failedProcess));
-	result.setPowerWithFailure(getTotalPower(failedProcess));
+        failedProcess.run();
+        result.setProductionWithFailure(getProductionRate(failedProcess));
+        result.setPowerWithFailure(getTotalPower(failedProcess));
       } catch (Exception e) {
-	result.setProductionWithFailure(0.0);
-	result.setPowerWithFailure(0.0);
-	result.setAnalysisNotes("Multi-failure scenario did not converge");
+        result.setProductionWithFailure(0.0);
+        result.setPowerWithFailure(0.0);
+        result.setAnalysisNotes("Multi-failure scenario did not converge");
       }
 
       result.setFullShutdownProduction(0.0);

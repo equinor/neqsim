@@ -63,7 +63,7 @@ public class NewEquipmentCostEstimateTest {
     floatingRoof.calculateCostEstimate();
 
     assertTrue(floatingRoof.getPurchasedEquipmentCost() > coneRoof.getPurchasedEquipmentCost(),
-	"Floating roof should cost more than fixed cone roof");
+        "Floating roof should cost more than fixed cone roof");
   }
 
   @Test
@@ -127,7 +127,7 @@ public class NewEquipmentCostEstimateTest {
     cryoCost.calculateCostEstimate();
 
     assertTrue(cryoCost.getPurchasedEquipmentCost() > standardCost.getPurchasedEquipmentCost(),
-	"Cryogenic expander should cost more");
+        "Cryogenic expander should cost more");
   }
 
   // ============================================================================
@@ -174,9 +174,9 @@ public class NewEquipmentCostEstimateTest {
     teeMixer.calculateCostEstimate();
 
     assertTrue(inlineMixer.getPurchasedEquipmentCost() > staticMixer.getPurchasedEquipmentCost(),
-	"Inline mixer should cost more than static");
+        "Inline mixer should cost more than static");
     assertTrue(staticMixer.getPurchasedEquipmentCost() > teeMixer.getPurchasedEquipmentCost(),
-	"Static mixer should cost more than tee");
+        "Static mixer should cost more than tee");
   }
 
   // ============================================================================
@@ -220,7 +220,7 @@ public class NewEquipmentCostEstimateTest {
     withValves.calculateCostEstimate();
 
     assertTrue(withValves.getPurchasedEquipmentCost() > withoutValves.getPurchasedEquipmentCost(),
-	"Splitter with control valves should cost more");
+        "Splitter with control valves should cost more");
   }
 
   // ============================================================================
@@ -268,9 +268,9 @@ public class NewEquipmentCostEstimateTest {
     liquidEjector.calculateCostEstimate();
 
     assertTrue(gasEjector.getPurchasedEquipmentCost() > steamEjector.getPurchasedEquipmentCost(),
-	"Gas ejector should cost more than steam");
+        "Gas ejector should cost more than steam");
     assertTrue(steamEjector.getPurchasedEquipmentCost() > liquidEjector.getPurchasedEquipmentCost(),
-	"Steam ejector should cost more than liquid");
+        "Steam ejector should cost more than liquid");
   }
 
   // ============================================================================

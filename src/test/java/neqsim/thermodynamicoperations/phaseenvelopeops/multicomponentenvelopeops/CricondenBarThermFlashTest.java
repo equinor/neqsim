@@ -38,7 +38,7 @@ public class CricondenBarThermFlashTest {
     double[] cricondenbar = ops.get("cricondenbar");
     assertNotNull(cricondenbar, "cricondenbar should not be null");
     assertTrue(cricondenbar[1] > 40.0,
-	"Cricondenbar pressure should be > 40 bar for methane-dominated gas, got: " + cricondenbar[1]);
+        "Cricondenbar pressure should be > 40 bar for methane-dominated gas, got: " + cricondenbar[1]);
     assertTrue(cricondenbar[0] > 150.0, "Cricondenbar temperature should be > 150 K, got: " + cricondenbar[0]);
   }
 
@@ -79,11 +79,11 @@ public class CricondenBarThermFlashTest {
 
     // Cricondentherm temperature > cricondenbar temperature (therm is the max T)
     assertTrue(cricondentherm[0] >= cricondenbar[0],
-	"Cricondentherm T (" + cricondentherm[0] + ") should be >= cricondenbar T (" + cricondenbar[0] + ")");
+        "Cricondentherm T (" + cricondentherm[0] + ") should be >= cricondenbar T (" + cricondenbar[0] + ")");
 
     // Cricondenbar pressure > cricondentherm pressure (bar is the max P)
     assertTrue(cricondenbar[1] >= cricondentherm[1],
-	"Cricondenbar P (" + cricondenbar[1] + ") should be >= cricondentherm P (" + cricondentherm[1] + ")");
+        "Cricondenbar P (" + cricondenbar[1] + ") should be >= cricondentherm P (" + cricondentherm[1] + ")");
   }
 
   /**
@@ -124,9 +124,9 @@ public class CricondenBarThermFlashTest {
     if (refinedT > 0 && refinedP > 0) {
       // If converged, should be close to envelope estimate
       assertEquals(envelopeT, refinedT, envelopeT * 0.05,
-	  "Refined cricondenbar T should be within 5% of envelope estimate");
+          "Refined cricondenbar T should be within 5% of envelope estimate");
       assertEquals(envelopeP, refinedP, envelopeP * 0.05,
-	  "Refined cricondenbar P should be within 5% of envelope estimate");
+          "Refined cricondenbar P should be within 5% of envelope estimate");
     }
     // If not converged (T=-1, P=-1), the algorithm falls back to envelope estimate
   }
@@ -166,9 +166,9 @@ public class CricondenBarThermFlashTest {
 
     if (refinedT > 0 && refinedP > 0) {
       assertEquals(envelopeT, refinedT, envelopeT * 0.05,
-	  "Refined cricondentherm T should be within 5% of envelope estimate");
+          "Refined cricondentherm T should be within 5% of envelope estimate");
       assertEquals(envelopeP, refinedP, envelopeP * 0.05,
-	  "Refined cricondentherm P should be within 5% of envelope estimate");
+          "Refined cricondentherm P should be within 5% of envelope estimate");
     }
   }
 
@@ -246,7 +246,7 @@ public class CricondenBarThermFlashTest {
     double maxDewP = Double.NEGATIVE_INFINITY;
     for (double p : dewP) {
       if (p > maxDewP) {
-	maxDewP = p;
+        maxDewP = p;
       }
     }
 
@@ -254,9 +254,9 @@ public class CricondenBarThermFlashTest {
     double maxBubP = Double.NEGATIVE_INFINITY;
     if (bubP != null) {
       for (double p : bubP) {
-	if (p > maxBubP) {
-	  maxBubP = p;
-	}
+        if (p > maxBubP) {
+          maxBubP = p;
+        }
       }
     }
 
@@ -264,7 +264,7 @@ public class CricondenBarThermFlashTest {
 
     // Cricondenbar should be close to the maximum envelope pressure
     assertEquals(maxEnvelopeP, cricondenbar[1], maxEnvelopeP * 0.02,
-	"Cricondenbar pressure should match max envelope pressure within 2%");
+        "Cricondenbar pressure should match max envelope pressure within 2%");
   }
 
   /**
@@ -295,16 +295,16 @@ public class CricondenBarThermFlashTest {
     double maxDewT = Double.NEGATIVE_INFINITY;
     for (double t : dewT) {
       if (t > maxDewT) {
-	maxDewT = t;
+        maxDewT = t;
       }
     }
 
     double maxBubT = Double.NEGATIVE_INFINITY;
     if (bubT != null) {
       for (double t : bubT) {
-	if (t > maxBubT) {
-	  maxBubT = t;
-	}
+        if (t > maxBubT) {
+          maxBubT = t;
+        }
       }
     }
 
@@ -312,6 +312,6 @@ public class CricondenBarThermFlashTest {
 
     // Cricondentherm should be close to the maximum envelope temperature
     assertEquals(maxEnvelopeT, cricondentherm[0], maxEnvelopeT * 0.02,
-	"Cricondentherm temperature should match max envelope temperature within 2%");
+        "Cricondentherm temperature should match max envelope temperature within 2%");
   }
 }

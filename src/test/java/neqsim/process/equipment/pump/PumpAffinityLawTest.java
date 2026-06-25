@@ -67,7 +67,7 @@ public class PumpAffinityLawTest extends neqsim.NeqSimTest {
     double actualHeadRatio = head2 / head1;
 
     Assertions.assertEquals(expectedHeadRatio, actualHeadRatio, 0.01,
-	"Head should scale as square of speed ratio per affinity laws");
+        "Head should scale as square of speed ratio per affinity laws");
   }
 
   @Test
@@ -89,7 +89,7 @@ public class PumpAffinityLawTest extends neqsim.NeqSimTest {
     double actualHeadRatio = head2 / head1;
 
     Assertions.assertEquals(expectedHeadRatio, actualHeadRatio, 0.01,
-	"Head at same reduced flow should scale as (N₂/N₁)²");
+        "Head at same reduced flow should scale as (N₂/N₁)²");
   }
 
   @Test
@@ -120,7 +120,7 @@ public class PumpAffinityLawTest extends neqsim.NeqSimTest {
 
     // Allow larger tolerance due to efficiency variations and numerical effects
     Assertions.assertEquals(expectedPowerRatio, actualPowerRatio, 0.15,
-	"Power at same reduced flow should scale as (N₂/N₁)³");
+        "Power at same reduced flow should scale as (N₂/N₁)³");
   }
 
   @Test
@@ -146,7 +146,7 @@ public class PumpAffinityLawTest extends neqsim.NeqSimTest {
     double bepFlow = pump.getPumpChart().getBestEfficiencyFlowRate();
 
     Assertions.assertTrue(bepFlow > 30.0 && bepFlow < 60.0,
-	"BEP flow should be in the range where efficiency is highest");
+        "BEP flow should be in the range where efficiency is highest");
 
     double bepEfficiency = pump.getPumpChart().getEfficiency(bepFlow, 1000.0);
     Assertions.assertTrue(bepEfficiency > 80.0, "BEP efficiency should be above 80% based on input data");

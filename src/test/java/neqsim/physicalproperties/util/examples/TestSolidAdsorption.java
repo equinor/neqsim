@@ -46,8 +46,8 @@ public class TestSolidAdsorption {
     testSystem.getInterphaseProperties().calcAdsorption();
     // testSystem.initPhysicalProperties();
     logger.info("surface excess CO2 from gas "
-	+ testSystem.getInterphaseProperties().getAdsorptionCalc("gas").getSurfaceExcess("CO2") + " kg CO2/kg AC");
+        + testSystem.getInterphaseProperties().getAdsorptionCalc("gas").getSurfaceExcess("CO2") + " kg CO2/kg AC");
     logger.info("surface excess CO2 from oil "
-	+ testSystem.getInterphaseProperties().getAdsorptionCalc("oil").getSurfaceExcess("CO2") + " kg CO2/kg AC");
+        + testSystem.getInterphaseProperties().getAdsorptionCalc("oil").getSurfaceExcess("CO2") + " kg CO2/kg AC");
   }
 }

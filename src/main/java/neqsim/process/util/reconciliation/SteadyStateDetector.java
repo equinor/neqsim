@@ -279,10 +279,10 @@ public class SteadyStateDetector implements java.io.Serializable {
       v.setAtSteadyState(isSteady);
 
       if (isSteady) {
-	steadyCount++;
+        steadyCount++;
       } else {
-	transientCount++;
-	result.addTransientVariable(v);
+        transientCount++;
+        result.addTransientVariable(v);
       }
     }
 
@@ -300,7 +300,7 @@ public class SteadyStateDetector implements java.io.Serializable {
     result.setAtSteadyState(overall);
 
     logger.debug("SSD evaluation: {} ({}/{} steady)", overall ? "STEADY" : "TRANSIENT", steadyCount,
-	variableList.size());
+        variableList.size());
 
     return result;
   }
@@ -366,11 +366,11 @@ public class SteadyStateDetector implements java.io.Serializable {
     DataReconciliationEngine engine = new DataReconciliationEngine();
     for (SteadyStateVariable v : variableList) {
       if (v.isAtSteadyState() && !Double.isNaN(v.getUncertainty())) {
-	double value = v.getMean(); // use window mean for reconciliation
-	double sigma = v.getUncertainty();
-	ReconciliationVariable rv = new ReconciliationVariable(v.getName(), value, sigma);
-	rv.setUnit(v.getUnit());
-	engine.addVariable(rv);
+        double value = v.getMean(); // use window mean for reconciliation
+        double sigma = v.getUncertainty();
+        ReconciliationVariable rv = new ReconciliationVariable(v.getName(), value, sigma);
+        rv.setUnit(v.getUnit());
+        engine.addVariable(rv);
       }
     }
     return engine;
@@ -549,6 +549,6 @@ public class SteadyStateDetector implements java.io.Serializable {
   @Override
   public String toString() {
     return String.format("SteadyStateDetector[vars=%d, window=%d, R>=%.2f, |slope|<=%.2e, reqFrac=%.0f%%]",
-	variableList.size(), defaultWindowSize, rThreshold, slopeThreshold, requiredFraction * 100);
+        variableList.size(), defaultWindowSize, rThreshold, slopeThreshold, requiredFraction * 100);
   }
 }

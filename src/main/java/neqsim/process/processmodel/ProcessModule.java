@@ -167,10 +167,10 @@ public class ProcessModule extends SimulationBaseClass {
     ProcessSystem.SimulationProgressListener listenerWrapper = null;
     if (callback != null) {
       listenerWrapper = new ProcessSystem.SimulationProgressListener() {
-	@Override
-	public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber) {
-	  callback.accept(unit);
-	}
+        @Override
+        public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber) {
+          callback.accept(unit);
+        }
       };
     }
 
@@ -196,45 +196,46 @@ public class ProcessModule extends SimulationBaseClass {
       // No recycles - each ProcessSystem can use its own optimized execution
       // (parallel for feed-forward, sequential with recycle handling, etc.)
       for (int i = 0; i < unitIndex; i++) {
-	if (operationsIndex.contains(i)) {
-	  int index = operationsIndex.indexOf(i);
-	  ProcessSystem processSystem = addedUnitOperations.get(index);
-	  // Use runWithProgress if a listener is set, otherwise run normally
-	  if (processSystem.getProgressListener() != null) {
-	    processSystem.runWithProgress(id);
-	  } else {
-	    processSystem.run(id);
-	  }
-	} else if (modulesIndex.contains(i)) {
-	  int index = modulesIndex.indexOf(i);
-	  addedModules.get(index).run(id);
-	}
+        if (operationsIndex.contains(i)) {
+          int index = operationsIndex.indexOf(i);
+          ProcessSystem processSystem = addedUnitOperations.get(index);
+          // Use runWithProgress if a listener is set, otherwise run normally
+          if (processSystem.getProgressListener() != null) {
+            processSystem.runWithProgress(id);
+          } else {
+            processSystem.run(id);
+          }
+        } else if (modulesIndex.contains(i)) {
+          int index = modulesIndex.indexOf(i);
+          addedModules.get(index).run(id);
+        }
       }
     } else {
       // Has recycles - use flat unit-by-unit iteration for module-level convergence
       int iteration = 0;
       do {
-	for (int i = 0; i < unitIndex; i++) {
-	  if (operationsIndex.contains(i)) {
-	    int index = operationsIndex.indexOf(i);
-	    ProcessSystem processSystem = addedUnitOperations.get(index);
-	    // Use runWithProgress if a listener is set, otherwise run units directly
-	    if (processSystem.getProgressListener() != null) {
-	      processSystem.runWithProgress(id);
-	    } else {
-	      for (ProcessEquipmentInterface unitOperation : processSystem.getUnitOperations()) {
-		if (iteration == 0 || unitOperation.needRecalculation()) {
-		  unitOperation.run(id);
-		}
-	      }
-	    }
-	  } else if (modulesIndex.contains(i)) {
-	    int index = modulesIndex.indexOf(i);
-	    addedModules.get(index).run(id);
-	  }
-	}
-	iteration++;
-	logger.info("Iteration : " + iteration + "  module : " + getName() + " ");
+        for (int i = 0; i < unitIndex; i++) {
+          if (operationsIndex.contains(i)) {
+            int index = operationsIndex.indexOf(i);
+            ProcessSystem processSystem = addedUnitOperations.get(index);
+            // Use runWithProgress if a listener is set, otherwise run units
+            // directly
+            if (processSystem.getProgressListener() != null) {
+              processSystem.runWithProgress(id);
+            } else {
+              for (ProcessEquipmentInterface unitOperation : processSystem.getUnitOperations()) {
+                if (iteration == 0 || unitOperation.needRecalculation()) {
+                  unitOperation.run(id);
+                }
+              }
+            }
+          } else if (modulesIndex.contains(i)) {
+            int index = modulesIndex.indexOf(i);
+            addedModules.get(index).run(id);
+          }
+        }
+        iteration++;
+        logger.info("Iteration : " + iteration + "  module : " + getName() + " ");
       } while (!recyclesSolved() && iteration <= 100);
     }
     logger.info("Finished running module " + getName());
@@ -247,9 +248,9 @@ public class ProcessModule extends SimulationBaseClass {
   public void checkModulesRecycles() {
     for (ProcessSystem operation : addedUnitOperations) {
       for (ProcessEquipmentInterface unitOperation : operation.getUnitOperations()) {
-	if (unitOperation instanceof Recycle) {
-	  recycleModules.add(unitOperation);
-	}
+        if (unitOperation instanceof Recycle) {
+          recycleModules.add(unitOperation);
+        }
       }
     }
   }
@@ -262,7 +263,7 @@ public class ProcessModule extends SimulationBaseClass {
   public boolean recyclesSolved() {
     for (ProcessEquipmentInterface recycle : recycleModules) {
       if (!recycle.solved()) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -315,14 +316,14 @@ public class ProcessModule extends SimulationBaseClass {
     for (ProcessSystem processSystem : addedUnitOperations) {
       Object unit = processSystem.getUnit(name);
       if (unit != null) {
-	return unit;
+        return unit;
       }
     }
 
     for (ProcessModule processModule : addedModules) {
       Object unit = processModule.getUnit(name);
       if (unit != null) {
-	return unit;
+        return unit;
       }
     }
     return null; // no unit found with the given name
@@ -338,14 +339,14 @@ public class ProcessModule extends SimulationBaseClass {
     for (ProcessSystem processSystem : addedUnitOperations) {
       Object unit = processSystem.getMeasurementDevice(name);
       if (unit != null) {
-	return unit;
+        return unit;
       }
     }
 
     for (ProcessModule processModule : addedModules) {
       Object unit = processModule.getMeasurementDevice(name);
       if (unit != null) {
-	return unit;
+        return unit;
       }
     }
     return null; // no unit found with the given name
@@ -426,7 +427,7 @@ public class ProcessModule extends SimulationBaseClass {
     for (Map.Entry<String, ProcessSystem.MassBalanceResult> entry : allResults.entrySet()) {
       ProcessSystem.MassBalanceResult result = entry.getValue();
       if (Double.isNaN(result.getPercentError()) || Math.abs(result.getPercentError()) > percentThreshold) {
-	failedUnits.put(entry.getKey(), result);
+        failedUnits.put(entry.getKey(), result);
       }
     }
     return failedUnits;
@@ -543,7 +544,7 @@ public class ProcessModule extends SimulationBaseClass {
     if (modelGraph.hasCycles()) {
       neqsim.process.processmodel.graph.ProcessGraph.CycleAnalysisResult cycles = modelGraph.analyzeCycles();
       issues.add("Module contains " + cycles.getCycleCount()
-	  + " cycle(s) - ensure recycle operations are properly configured");
+          + " cycle(s) - ensure recycle operations are properly configured");
     }
 
     // Check for disconnected sub-systems
@@ -603,12 +604,12 @@ public class ProcessModule extends SimulationBaseClass {
     for (neqsim.process.equipment.capacity.CapacityConstrainedEquipment equip : getConstrainedEquipment()) {
       neqsim.process.equipment.capacity.CapacityConstraint constraint = equip.getBottleneckConstraint();
       if (constraint != null) {
-	double util = constraint.getUtilization();
-	if (!Double.isNaN(util) && util > maxUtil) {
-	  maxUtil = util;
-	  bottleneckEquipment = equip;
-	  limitingConstraint = constraint;
-	}
+        double util = constraint.getUtilization();
+        if (!Double.isNaN(util) && util > maxUtil) {
+          maxUtil = util;
+          bottleneckEquipment = equip;
+          limitingConstraint = constraint;
+        }
       }
     }
 
@@ -616,7 +617,7 @@ public class ProcessModule extends SimulationBaseClass {
       return neqsim.process.equipment.capacity.BottleneckResult.empty();
     }
     return new neqsim.process.equipment.capacity.BottleneckResult((ProcessEquipmentInterface) bottleneckEquipment,
-	limitingConstraint, maxUtil);
+        limitingConstraint, maxUtil);
   }
 
   /**
@@ -627,7 +628,7 @@ public class ProcessModule extends SimulationBaseClass {
   public boolean isAnyEquipmentOverloaded() {
     for (neqsim.process.equipment.capacity.CapacityConstrainedEquipment equip : getConstrainedEquipment()) {
       if (equip.isCapacityExceeded()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -646,7 +647,7 @@ public class ProcessModule extends SimulationBaseClass {
   public boolean isAnyHardLimitExceeded() {
     for (neqsim.process.equipment.capacity.CapacityConstrainedEquipment equip : getConstrainedEquipment()) {
       if (equip.isHardLimitExceeded()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -668,7 +669,7 @@ public class ProcessModule extends SimulationBaseClass {
       ProcessEquipmentInterface unit = (ProcessEquipmentInterface) equip;
       double util = equip.getMaxUtilization();
       if (!Double.isNaN(util)) {
-	summary.put(unit.getName(), util * 100.0);
+        summary.put(unit.getName(), util * 100.0);
       }
     }
     return summary;
@@ -688,7 +689,7 @@ public class ProcessModule extends SimulationBaseClass {
     java.util.List<String> nearLimit = new java.util.ArrayList<>();
     for (neqsim.process.equipment.capacity.CapacityConstrainedEquipment equip : getConstrainedEquipment()) {
       if (equip.isNearCapacityLimit()) {
-	nearLimit.add(((ProcessEquipmentInterface) equip).getName());
+        nearLimit.add(((ProcessEquipmentInterface) equip).getName());
       }
     }
     return nearLimit;

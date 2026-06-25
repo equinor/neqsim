@@ -384,7 +384,7 @@ public class SustainabilityMetrics implements Serializable {
     // ── 4. EROI ──
     double totalEnergyOutput = electricityProductionMWhPerYear + heatProductionMWhPerYear + biomethaneEnergyMWh;
     double totalEnergyConsumed = parasiticElectricityMWhPerYear + parasiticHeatMWhPerYear
-	+ importedElectricityMWhPerYear;
+        + importedElectricityMWhPerYear;
     energyReturnOnInvestment = totalEnergyConsumed > 0 ? totalEnergyOutput / totalEnergyConsumed : 0.0;
 
     // ── 5. Emissions calculation (tCO2eq/year) ──
@@ -392,17 +392,17 @@ public class SustainabilityMetrics implements Serializable {
     // 0.678 kg/Nm3 methane density at 0C
 
     double emissionsGridElectricity = importedElectricityMWhPerYear * gridElectricityEmissionFactor; // MWh
-												     // *
-												     // kgCO2/kWh
-												     // ->
-												     // tCO2
+    // *
+    // kgCO2/kWh
+    // ->
+    // tCO2
 
     double emissionsDiesel = dieselConsumptionLPerYear * 2.68 / 1000.0; // 2.68 kgCO2/L diesel
 
     double emissionsN2O = digestateNitrogenKgPerYear * n2oEmissionFraction * (44.0 / 28.0) * GWP_N2O / 1000.0;
 
     double emissionsTransport = feedstockTransportDistanceKm * feedstockTransportTonnesPerYear * transportEmissionFactor
-	* 2.0 / 1000.0; // round trip factor 2
+        * 2.0 / 1000.0; // round trip factor 2
 
     double emissionsCustom = 0.0;
     for (EmissionEntry entry : customEmissions) {
@@ -410,12 +410,12 @@ public class SustainabilityMetrics implements Serializable {
     }
 
     totalEmissionsTCO2eqPerYear = emissionsMethaneSlip + emissionsGridElectricity + emissionsDiesel + emissionsN2O
-	+ emissionsTransport + emissionsCustom;
+        + emissionsTransport + emissionsCustom;
 
     // ── 6. Carbon intensity ──
     carbonIntensityKgCO2PerMWh = netEnergyProductionMWhPerYear > 0
-	? totalEmissionsTCO2eqPerYear * 1000.0 / netEnergyProductionMWhPerYear
-	: 0.0;
+        ? totalEmissionsTCO2eqPerYear * 1000.0 / netEnergyProductionMWhPerYear
+        : 0.0;
 
     // ── 7. Fossil fuel displacement ──
     double displacedElectricity = netElectricity * fossilReferenceEmissionFactor; // MWh * kgCO2/kWh
@@ -533,11 +533,11 @@ public class SustainabilityMetrics implements Serializable {
     if (!customEmissions.isEmpty()) {
       List<Map<String, Object>> emissionList = new ArrayList<Map<String, Object>>();
       for (EmissionEntry entry : customEmissions) {
-	Map<String, Object> eMap = new LinkedHashMap<String, Object>();
-	eMap.put("source", entry.source.name());
-	eMap.put("description", entry.description);
-	eMap.put("tCO2eq_per_year", entry.tCO2eqPerYear);
-	emissionList.add(eMap);
+        Map<String, Object> eMap = new LinkedHashMap<String, Object>();
+        eMap.put("source", entry.source.name());
+        eMap.put("description", entry.description);
+        eMap.put("tCO2eq_per_year", entry.tCO2eqPerYear);
+        emissionList.add(eMap);
       }
       results.put("customEmissions", emissionList);
     }

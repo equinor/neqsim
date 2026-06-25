@@ -77,7 +77,7 @@ public class SILVerificationResult implements Serializable {
     }
 
     public VerificationIssue(IssueSeverity severity, IssueCategory category, String description,
-	String recommendation) {
+        String recommendation) {
       this.severity = severity;
       this.category = category;
       this.description = description;
@@ -226,37 +226,37 @@ public class SILVerificationResult implements Serializable {
     double targetPFD = SafetyInstrumentedFunction.getMaxPfdForSil(claimedSIL);
     if (pfdAverage > targetPFD) {
       issues.add(
-	  new VerificationIssue(VerificationIssue.IssueSeverity.ERROR, VerificationIssue.IssueCategory.PFD_EXCEEDED,
-	      String.format("Calculated PFD (%.2e) exceeds SIL %d target (%.2e)", pfdAverage, claimedSIL, targetPFD),
-	      "Consider upgrading architecture, improving component reliability, or reducing proof test interval"));
+          new VerificationIssue(VerificationIssue.IssueSeverity.ERROR, VerificationIssue.IssueCategory.PFD_EXCEEDED,
+              String.format("Calculated PFD (%.2e) exceeds SIL %d target (%.2e)", pfdAverage, claimedSIL, targetPFD),
+              "Consider upgrading architecture, improving component reliability, or reducing proof test interval"));
     }
 
     // Check architecture constraints per IEC 61511
     if (claimedSIL == 4 && hardwareFaultTolerance < 2) {
       issues.add(new VerificationIssue(VerificationIssue.IssueSeverity.ERROR,
-	  VerificationIssue.IssueCategory.ARCHITECTURE, "SIL 4 requires minimum hardware fault tolerance of 2",
-	  "Upgrade to 1oo3 or higher redundancy architecture"));
+          VerificationIssue.IssueCategory.ARCHITECTURE, "SIL 4 requires minimum hardware fault tolerance of 2",
+          "Upgrade to 1oo3 or higher redundancy architecture"));
     } else if (claimedSIL == 3 && hardwareFaultTolerance < 1) {
       issues.add(
-	  new VerificationIssue(VerificationIssue.IssueSeverity.WARNING, VerificationIssue.IssueCategory.ARCHITECTURE,
-	      "SIL 3 typically requires minimum hardware fault tolerance of 1",
-	      "Consider upgrading to redundant architecture or demonstrating additional measures"));
+          new VerificationIssue(VerificationIssue.IssueSeverity.WARNING, VerificationIssue.IssueCategory.ARCHITECTURE,
+              "SIL 3 typically requires minimum hardware fault tolerance of 1",
+              "Consider upgrading to redundant architecture or demonstrating additional measures"));
     }
 
     // Check proof test interval
     if (sif.getProofTestIntervalYears() > 5) {
       issues.add(new VerificationIssue(VerificationIssue.IssueSeverity.WARNING,
-	  VerificationIssue.IssueCategory.PROOF_TEST_INTERVAL, "Proof test interval exceeds 5 years",
-	  "Consider more frequent proof testing to maintain PFD requirements"));
+          VerificationIssue.IssueCategory.PROOF_TEST_INTERVAL, "Proof test interval exceeds 5 years",
+          "Consider more frequent proof testing to maintain PFD requirements"));
     }
 
     // Check diagnostic coverage for higher SILs
     if (claimedSIL >= 3 && diagnosticCoverage < 0.9) {
       issues.add(new VerificationIssue(VerificationIssue.IssueSeverity.WARNING,
-	  VerificationIssue.IssueCategory.DIAGNOSTIC_COVERAGE,
-	  String.format("Diagnostic coverage (%.0f%%) may be insufficient for SIL %d", diagnosticCoverage * 100,
-	      claimedSIL),
-	  "Implement enhanced diagnostics or online testing capabilities"));
+          VerificationIssue.IssueCategory.DIAGNOSTIC_COVERAGE,
+          String.format("Diagnostic coverage (%.0f%%) may be insufficient for SIL %d", diagnosticCoverage * 100,
+              claimedSIL),
+          "Implement enhanced diagnostics or online testing capabilities"));
     }
   }
 
@@ -323,7 +323,7 @@ public class SILVerificationResult implements Serializable {
     List<VerificationIssue> errors = new ArrayList<>();
     for (VerificationIssue issue : issues) {
       if (issue.getSeverity() == VerificationIssue.IssueSeverity.ERROR) {
-	errors.add(issue);
+        errors.add(issue);
       }
     }
     return errors;
@@ -333,7 +333,7 @@ public class SILVerificationResult implements Serializable {
     List<VerificationIssue> warnings = new ArrayList<>();
     for (VerificationIssue issue : issues) {
       if (issue.getSeverity() == VerificationIssue.IssueSeverity.WARNING) {
-	warnings.add(issue);
+        warnings.add(issue);
       }
     }
     return warnings;
@@ -346,7 +346,7 @@ public class SILVerificationResult implements Serializable {
   public boolean hasErrors() {
     for (VerificationIssue issue : issues) {
       if (issue.getSeverity() == VerificationIssue.IssueSeverity.ERROR) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -389,7 +389,7 @@ public class SILVerificationResult implements Serializable {
     if (!componentContributions.isEmpty()) {
       List<Map<String, Object>> contributions = new ArrayList<>();
       for (ComponentContribution cc : componentContributions) {
-	contributions.add(cc.toMap());
+        contributions.add(cc.toMap());
       }
       map.put("componentContributions", contributions);
     }
@@ -454,8 +454,8 @@ public class SILVerificationResult implements Serializable {
       sb.append("Issues Found:\n");
       sb.append(StringUtils.repeat("─", 40)).append("\n");
       for (VerificationIssue issue : issues) {
-	sb.append(String.format("  [%s] %s%n", issue.getSeverity(), issue.getDescription()));
-	sb.append(String.format("    → %s%n", issue.getRecommendation()));
+        sb.append(String.format("  [%s] %s%n", issue.getSeverity(), issue.getDescription()));
+        sb.append(String.format("    → %s%n", issue.getRecommendation()));
       }
     } else {
       sb.append("No issues found.\n");
@@ -467,6 +467,6 @@ public class SILVerificationResult implements Serializable {
   @Override
   public String toString() {
     return String.format("SILVerificationResult[%s: SIL %d claimed, SIL %d achieved, PFD=%.2e, %s]", sif.getName(),
-	claimedSIL, achievedSIL, pfdAverage, silAchieved ? "PASSED" : "FAILED");
+        claimedSIL, achievedSIL, pfdAverage, silAchieved ? "PASSED" : "FAILED");
   }
 }

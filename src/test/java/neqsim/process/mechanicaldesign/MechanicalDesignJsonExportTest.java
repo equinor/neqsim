@@ -207,7 +207,7 @@ public class MechanicalDesignJsonExportTest {
 
     // Verify it's the correct subtype
     assertTrue(response instanceof CompressorMechanicalDesignResponse,
-	"Should return CompressorMechanicalDesignResponse");
+        "Should return CompressorMechanicalDesignResponse");
 
     CompressorMechanicalDesignResponse compResponse = (CompressorMechanicalDesignResponse) response;
 
@@ -228,7 +228,7 @@ public class MechanicalDesignJsonExportTest {
 
     // Verify it's the correct subtype
     assertTrue(response instanceof SeparatorMechanicalDesignResponse,
-	"Should return SeparatorMechanicalDesignResponse");
+        "Should return SeparatorMechanicalDesignResponse");
 
     // Verify separator-specific fields are present
     String json = separator.getMechanicalDesign().toJson();
@@ -258,7 +258,7 @@ public class MechanicalDesignJsonExportTest {
   public void testSpecializedResponseInheritance() {
     compressor.getMechanicalDesign().calcDesign();
     CompressorMechanicalDesignResponse response = (CompressorMechanicalDesignResponse) compressor.getMechanicalDesign()
-	.getResponse();
+        .getResponse();
 
     // Verify inherited fields from base class are populated
     assertNotNull(response.getName());

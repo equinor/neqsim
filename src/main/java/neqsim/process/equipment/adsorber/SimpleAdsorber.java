@@ -183,28 +183,28 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
 
     double error = 1e5;
     error = absorptionEfficiency
-	- (outStream[1].getThermoSystem().getPhase(1).getComponent("CO2").getNumberOfMolesInPhase()
-	    + outStream[1].getThermoSystem().getPhase(1).getComponent("HCO3-").getNumberOfMolesInPhase())
-	    / (outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA").getNumberOfMolesInPhase()
-		+ outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA+").getNumberOfMolesInPhase());
+        - (outStream[1].getThermoSystem().getPhase(1).getComponent("CO2").getNumberOfMolesInPhase()
+            + outStream[1].getThermoSystem().getPhase(1).getComponent("HCO3-").getNumberOfMolesInPhase())
+            / (outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA").getNumberOfMolesInPhase()
+                + outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA+").getNumberOfMolesInPhase());
     int iter = 0;
     do {
       iter++;
       double factor = (outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA").getNumberOfMolesInPhase()
-	  + outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA+").getNumberOfMolesInPhase());
+          + outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA+").getNumberOfMolesInPhase());
       // outStream[1].getThermoSystem().addComponent("CO2",(20.0-outStream[1].getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfMolesInPhase()),0);
       outStream[1].getThermoSystem().addComponent("MDEA", -error * factor);
       outStream[1].getThermoSystem().addComponent("water", -error * 10.0 * factor);
       outStream[1].run(id);
       error = absorptionEfficiency
-	  - ((outStream[1].getThermoSystem().getPhase(1).getComponent("CO2").getNumberOfMolesInPhase()
-	      + outStream[1].getThermoSystem().getPhase(1).getComponent("HCO3-").getNumberOfMolesInPhase())
-	      / (outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA").getNumberOfMolesInPhase()
-		  + outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA+").getNumberOfMolesInPhase()));
+          - ((outStream[1].getThermoSystem().getPhase(1).getComponent("CO2").getNumberOfMolesInPhase()
+              + outStream[1].getThermoSystem().getPhase(1).getComponent("HCO3-").getNumberOfMolesInPhase())
+              / (outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA").getNumberOfMolesInPhase()
+                  + outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA+").getNumberOfMolesInPhase()));
 
       System.out.println("error " + error);
     } while (Math.abs(error) > 1e-4 && iter < 30 && outStream[1].getThermoSystem().getPhase(1).getBeta() > 0
-	&& outStream[0].getThermoSystem().getPhase(1).getBeta() > 0);
+        && outStream[0].getThermoSystem().getPhase(1).getBeta() > 0);
     outStream[1].setCalculationIdentifier(id);
     setCalculationIdentifier(id);
   }
@@ -320,9 +320,9 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   @Override
   public double getMassBalance(String unit) {
     double inletFlow = inStream[0].getThermoSystem().getFlowRate(unit)
-	+ inStream[1].getThermoSystem().getFlowRate(unit);
+        + inStream[1].getThermoSystem().getFlowRate(unit);
     double outletFlow = outStream[0].getThermoSystem().getFlowRate(unit)
-	+ outStream[1].getThermoSystem().getFlowRate(unit);
+        + outStream[1].getThermoSystem().getFlowRate(unit);
     return outletFlow - inletFlow;
   }
 

@@ -93,7 +93,7 @@ public class QfuncFlash extends Flash {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
       logger.info("entropy: " + system.getEntropy());
       SysNewtonRhapsonPHflash secondOrderSolver = new SysNewtonRhapsonPHflash(system, 2,
-	  system.getPhases()[0].getNumberOfComponents(), type);
+          system.getPhases()[0].getNumberOfComponents(), type);
       secondOrderSolver.setSpec(Hspec);
       secondOrderSolver.solve(1);
     } finally {

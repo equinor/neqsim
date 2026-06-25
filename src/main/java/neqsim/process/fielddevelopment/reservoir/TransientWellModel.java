@@ -387,13 +387,13 @@ public class TransientWellModel implements Serializable {
     for (int i = 0; i < rateHistory.size(); i++) {
       RateChange rc = rateHistory.get(i);
       if (rc.rate == 0 && lastRate > 0) {
-	// This is the shut-in
-	shutInStartTime = rc.time;
-	break;
+        // This is the shut-in
+        shutInStartTime = rc.time;
+        break;
       }
       if (rc.rate > 0 && lastRate == 0) {
-	// Start of production
-	producingTime = 0;
+        // Start of production
+        producingTime = 0;
       }
       lastRate = rc.rate;
     }
@@ -402,11 +402,11 @@ public class TransientWellModel implements Serializable {
     for (int i = rateHistory.size() - 1; i >= 0; i--) {
       RateChange rc = rateHistory.get(i);
       if (rc.rate > 0) {
-	result.rateBeforeShutIn = rc.rate;
-	if (shutInStartTime > rc.time) {
-	  producingTime = shutInStartTime - rc.time;
-	}
-	break;
+        result.rateBeforeShutIn = rc.rate;
+        if (shutInStartTime > rc.time) {
+          producingTime = shutInStartTime - rc.time;
+        }
+        break;
       }
     }
 
@@ -440,9 +440,9 @@ public class TransientWellModel implements Serializable {
     double pwfAtShutIn = calculatePressureWithSuperposition(shutInStartTime);
     if (m > 0) {
       double logTerm = Math
-	  .log10(permeability * 9.869233e-16
-	      / (porosity * fluidViscosity * 1e-3 * totalCompressibility / 1e5 * wellboreRadius * wellboreRadius))
-	  - 3.23;
+          .log10(permeability * 9.869233e-16
+              / (porosity * fluidViscosity * 1e-3 * totalCompressibility / 1e5 * wellboreRadius * wellboreRadius))
+          - 3.23;
       result.skinFromIntercept = 1.151 * ((p1hr - pwfAtShutIn) / m - logTerm);
     } else {
       result.skinFromIntercept = skinFactor;
@@ -469,14 +469,14 @@ public class TransientWellModel implements Serializable {
 
     for (RateChange rc : rateHistory) {
       if (rc.time >= timeHours) {
-	break;
+        break;
       }
 
       double deltaRate = rc.rate - previousRate;
       double deltaTime = (timeHours - rc.time) * 3600.0; // Convert to seconds
 
       if (deltaTime > 0 && deltaRate != 0) {
-	pressure -= calculatePressureDrop(deltaRate, deltaTime);
+        pressure -= calculatePressureDrop(deltaRate, deltaTime);
       }
 
       previousRate = rc.rate;
@@ -659,11 +659,11 @@ public class TransientWellModel implements Serializable {
       double sum = -EULER_GAMMA - Math.log(absX);
       double term = absX;
       for (int n = 1; n <= 50; n++) {
-	sum += term / n;
-	term *= -absX / (n + 1);
-	if (Math.abs(term / n) < 1e-15) {
-	  break;
-	}
+        sum += term / n;
+        term *= -absX / (n + 1);
+        if (Math.abs(term / n) < 1e-15) {
+          break;
+        }
       }
       return sum;
     } else {
@@ -671,12 +671,12 @@ public class TransientWellModel implements Serializable {
       double sum = 0;
       double term = 1;
       for (int n = 1; n <= 50; n++) {
-	double newTerm = term * n / absX;
-	if (newTerm > term) {
-	  break;
-	}
-	sum += term;
-	term = newTerm;
+        double newTerm = term * n / absX;
+        if (newTerm > term) {
+          break;
+        }
+        sum += term;
+        term = newTerm;
       }
       return -Math.exp(-absX) / absX * sum;
     }
@@ -692,9 +692,9 @@ public class TransientWellModel implements Serializable {
     double rate = 0;
     for (RateChange rc : rateHistory) {
       if (rc.time <= timeHours) {
-	rate = rc.rate;
+        rate = rc.rate;
       } else {
-	break;
+        break;
       }
     }
     return rate;

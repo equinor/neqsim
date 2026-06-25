@@ -299,25 +299,25 @@ public class SoftSensorExporter implements Serializable {
 
       // Data rows
       for (SoftSensorDefinition sensor : sensors) {
-	writer.write(sensor.getName());
-	writer.write("," + tagPrefix + sensor.getName());
-	writer.write("," + sensor.getSensorType().name());
-	writer.write("," + sensor.getEquipmentName());
+        writer.write(sensor.getName());
+        writer.write("," + tagPrefix + sensor.getName());
+        writer.write("," + sensor.getSensorType().name());
+        writer.write("," + sensor.getEquipmentName());
 
-	// Inputs as semicolon-separated list
-	StringBuilder inputs = new StringBuilder();
-	for (Map.Entry<String, String> input : sensor.getInputs().entrySet()) {
-	  if (inputs.length() > 0) {
-	    inputs.append(";");
-	  }
-	  inputs.append(input.getKey()).append("[").append(input.getValue()).append("]");
-	}
-	writer.write(",\"" + inputs.toString() + "\"");
+        // Inputs as semicolon-separated list
+        StringBuilder inputs = new StringBuilder();
+        for (Map.Entry<String, String> input : sensor.getInputs().entrySet()) {
+          if (inputs.length() > 0) {
+            inputs.append(";");
+          }
+          inputs.append(input.getKey()).append("[").append(input.getValue()).append("]");
+        }
+        writer.write(",\"" + inputs.toString() + "\"");
 
-	writer.write("," + sensor.getOutputUnit());
-	writer.write("," + sensor.getUpdateRateSeconds());
-	writer.write(",\"" + (sensor.getDescription() != null ? sensor.getDescription() : "") + "\"");
-	writer.newLine();
+        writer.write("," + sensor.getOutputUnit());
+        writer.write("," + sensor.getUpdateRateSeconds());
+        writer.write(",\"" + (sensor.getDescription() != null ? sensor.getDescription() : "") + "\"");
+        writer.newLine();
       }
     }
   }
@@ -561,28 +561,28 @@ public class SoftSensorExporter implements Serializable {
       map.put("type", sensorType.name());
       map.put("equipmentName", equipmentName);
       if (componentName != null) {
-	map.put("componentName", componentName);
+        map.put("componentName", componentName);
       }
       map.put("outputUnit", outputUnit);
       map.put("updateRateSeconds", updateRateSeconds);
       if (description != null) {
-	map.put("description", description);
+        map.put("description", description);
       }
 
       // Inputs
       List<Map<String, String>> inputList = new ArrayList<>();
       for (Map.Entry<String, String> entry : inputs.entrySet()) {
-	Map<String, String> input = new LinkedHashMap<>();
-	input.put("name", entry.getKey());
-	input.put("unit", entry.getValue());
-	input.put("tag", tagPrefix + equipmentName + "." + entry.getKey());
-	inputList.add(input);
+        Map<String, String> input = new LinkedHashMap<>();
+        input.put("name", entry.getKey());
+        input.put("unit", entry.getValue());
+        input.put("tag", tagPrefix + equipmentName + "." + entry.getKey());
+        inputList.add(input);
       }
       map.put("inputs", inputList);
 
       // Parameters
       if (!parameters.isEmpty()) {
-	map.put("parameters", parameters);
+        map.put("parameters", parameters);
       }
 
       return map;

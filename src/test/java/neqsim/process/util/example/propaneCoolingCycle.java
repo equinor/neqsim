@@ -1,5 +1,7 @@
 package neqsim.process.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -7,8 +9,6 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.util.SetPoint;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * propaneCoolingCycle class.
@@ -87,7 +87,7 @@ public class propaneCoolingCycle {
     stream_2.displayResult();
 
     logger.info("compressor work" + compressor1.getEnergy() / 1.0e3 + " kW " + " compressor temperature "
-	+ compressor1.getOutTemperature());
+        + compressor1.getOutTemperature());
     // logger.info("compressor isentropic ef " +
     // compressor1.getIsentropicEfficiency());
     logger.info("cooler duty " + cooler.getEnergyInput() / 1.0e3 + " kW");

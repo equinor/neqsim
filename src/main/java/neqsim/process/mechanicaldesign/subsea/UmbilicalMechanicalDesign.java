@@ -124,9 +124,9 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
 
     for (Umbilical.UmbilicalElement element : umbilical.getElements()) {
       if ("hydraulic".equals(element.getElementType())) {
-	maxHydraulicPressure = Math.max(maxHydraulicPressure, element.getDesignPressureBar());
+        maxHydraulicPressure = Math.max(maxHydraulicPressure, element.getDesignPressureBar());
       } else if ("chemical".equals(element.getElementType())) {
-	maxChemicalPressure = Math.max(maxChemicalPressure, element.getDesignPressureBar());
+        maxChemicalPressure = Math.max(maxChemicalPressure, element.getDesignPressureBar());
       }
     }
 
@@ -240,7 +240,7 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
     boolean isDynamic = false; // Default to static for cost calculation
 
     costEstimator.calculateUmbilicalCost(lengthKm, hydraulicLines, chemicalLines, electricalCables,
-	umbilical.getWaterDepth(), isDynamic);
+        umbilical.getWaterDepth(), isDynamic);
 
     totalCostUSD = costEstimator.getTotalCost();
     equipmentCostUSD = costEstimator.getEquipmentCost();
@@ -278,7 +278,7 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
       costEstimator = new SubseaCostEstimator();
     }
     return costEstimator.generateBOM("Umbilical", umbilical.getDryWeightPerMeter() * umbilical.getLength() / 1000,
-	umbilical.getWaterDepth());
+        umbilical.getWaterDepth());
   }
 
   /**

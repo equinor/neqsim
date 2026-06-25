@@ -123,16 +123,16 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     int errors = 0;
     if (sampleSet.getSample(0).getFunction().getBounds() != null) {
       for (int i = 0; i < newParameters.getColumnDimension(); i++) {
-	if (newParameters.get(0, i) < sampleSet.getSample(0).getFunction().getLowerBound(i)) {
-	  okstring += "parameter " + i + " lower than bound: " + newParameters.get(0, i) + "\n";
-	  errors++;
-	  newParameters.set(0, i, sampleSet.getSample(0).getFunction().getLowerBound(i));
-	}
-	if (newParameters.get(0, i) > sampleSet.getSample(0).getFunction().getUpperBound(i)) {
-	  okstring += "parameter " + i + " higher than bound: " + newParameters.get(0, i) + "\n";
-	  errors++;
-	  newParameters.set(0, i, sampleSet.getSample(0).getFunction().getUpperBound(i));
-	}
+        if (newParameters.get(0, i) < sampleSet.getSample(0).getFunction().getLowerBound(i)) {
+          okstring += "parameter " + i + " lower than bound: " + newParameters.get(0, i) + "\n";
+          errors++;
+          newParameters.set(0, i, sampleSet.getSample(0).getFunction().getLowerBound(i));
+        }
+        if (newParameters.get(0, i) > sampleSet.getSample(0).getFunction().getUpperBound(i)) {
+          okstring += "parameter " + i + " higher than bound: " + newParameters.get(0, i) + "\n";
+          errors++;
+          newParameters.set(0, i, sampleSet.getSample(0).getFunction().getUpperBound(i));
+        }
       }
       logger.debug("bounds checked - errors: {}{}", errors, okstring.trim().isEmpty() ? "" : "\n" + okstring);
     }
@@ -167,7 +167,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   public void setFittingParameters(double[] parameterVals) {
     for (int i = 0; i < sampleSet.getLength(); i++) {
       for (int k = 0; k < sampleSet.getSample(i).getFunction().getFittingParams().length; k++) {
-	sampleSet.getSample(i).getFunction().setFittingParams(k, parameterVals[k]);
+        sampleSet.getSample(i).getFunction().setFittingParams(k, parameterVals[k]);
       }
     }
   }
@@ -211,7 +211,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     for (int i = 0; i < sampleSet.getLength(); i++) {
       calcVal[i] = this.calcValue(sampleSet.getSample(i));
       chiSquare += Math.pow(
-	  (sampleSet.getSample(i).getSampleValue() - calcVal[i]) / sampleSet.getSample(i).getStandardDeviation(), 2.0);
+          (sampleSet.getSample(i).getSampleValue() - calcVal[i]) / sampleSet.getSample(i).getStandardDeviation(), 2.0);
     }
     return chiSquare;
   }
@@ -223,16 +223,16 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    */
   public double[][] calcAlphaMatrix() {
     double[][] alpha = new double[sampleSet.getSample(0).getFunction().getFittingParams().length][sampleSet.getSample(0)
-	.getFunction().getFittingParams().length];
+        .getFunction().getFittingParams().length];
     for (int i = 0; i < alpha.length; i++) {
       for (int j = 0; j < alpha[0].length; j++) {
-	alpha[i][j] = 0.0;
-	for (int k = 0; k < sampleSet.getLength(); k++) {
-	  alpha[i][j] += (dyda[k][i] * dyda[k][j]) / Math.pow(sampleSet.getSample(k).getStandardDeviation(), 2.0);
-	}
-	if (i == j) {
-	  alpha[i][j] *= (1.0 + multiFactor);
-	}
+        alpha[i][j] = 0.0;
+        for (int k = 0; k < sampleSet.getLength(); k++) {
+          alpha[i][j] += (dyda[k][i] * dyda[k][j]) / Math.pow(sampleSet.getSample(k).getStandardDeviation(), 2.0);
+        }
+        if (i == j) {
+          alpha[i][j] *= (1.0 + multiFactor);
+        }
       }
     }
     return alpha;
@@ -248,8 +248,8 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     for (int i = 0; i < beta.length; i++) {
       beta[i] = 0.0;
       for (int j = 0; j < sampleSet.getLength(); j++) {
-	beta[i] += (sampleSet.getSample(j).getSampleValue() - calcVal[j])
-	    / Math.pow(sampleSet.getSample(j).getStandardDeviation(), 2.0) * dyda[j][i];
+        beta[i] += (sampleSet.getSample(j).getSampleValue() - calcVal[j])
+            / Math.pow(sampleSet.getSample(j).getStandardDeviation(), 2.0) * dyda[j][i];
       }
     }
     return beta;
@@ -265,7 +265,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
 
     for (int i = 0; i < sampleSet.getLength(); i++) {
       for (int j = 0; j < sampleSet.getSample(0).getFunction().getNumberOfFittingParams(); j++) {
-	dyda[i][j] = NumericalDerivative.calcDerivative(this, i, j);
+        dyda[i][j] = NumericalDerivative.calcDerivative(this, i, j);
       }
     }
     return dyda;
@@ -320,11 +320,11 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    */
   public void calcCorrelationMatrix() {
     parameterCorrelationMatrix = new Matrix(sampleSet.getSample(0).getFunction().getNumberOfFittingParams(),
-	sampleSet.getSample(0).getFunction().getNumberOfFittingParams());
+        sampleSet.getSample(0).getFunction().getNumberOfFittingParams());
     for (int i = 0; i < sampleSet.getSample(0).getFunction().getNumberOfFittingParams(); i++) {
       for (int j = 0; j < sampleSet.getSample(0).getFunction().getNumberOfFittingParams(); j++) {
-	double temp = coVarianceMatrix.get(i, j) / Math.sqrt(coVarianceMatrix.get(j, j) * coVarianceMatrix.get(i, i));
-	parameterCorrelationMatrix.set(i, j, temp);
+        double temp = coVarianceMatrix.get(i, j) / Math.sqrt(coVarianceMatrix.get(j, j) * coVarianceMatrix.get(i, i));
+        parameterCorrelationMatrix.set(i, j, temp);
       }
     }
   }
@@ -342,7 +342,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    */
   public void runMonteCarloSimulation() {
     neqsim.statistics.montecarlosimulation.MonteCarloSimulation montCarlSim = new neqsim.statistics.montecarlosimulation.MonteCarloSimulation(
-	this, 10);
+        this, 10);
     montCarlSim.runSimulation();
   }
 
@@ -350,7 +350,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   @Override
   public void runMonteCarloSimulation(int numRuns) {
     neqsim.statistics.montecarlosimulation.MonteCarloSimulation montCarlSim = new neqsim.statistics.montecarlosimulation.MonteCarloSimulation(
-	this, numRuns);
+        this, numRuns);
     montCarlSim.runSimulation();
   }
 
@@ -382,9 +382,9 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
       absStdDev += dev;
       rmsDev += dev2;
       System.out.println("x " + sampleSet.getSample(i).getDependentValue(0) + "  val: " + calcVal[i] + " exp val "
-	  + expVal[i] + "  deviation " + dev);
+          + expVal[i] + "  deviation " + dev);
       for (int j = 0; j < sampleSet.getSample(0).getDependentValues().length; j++) {
-	xVal[j][i] = sampleSet.getSample(i).getDependentValue(j);
+        xVal[j][i] = sampleSet.getSample(i).getDependentValue(j);
       }
       biasdev += (calcVal[i] - expVal[i]) / expVal[i] * 100.0;
     }
@@ -437,8 +437,8 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
 
     for (int j = 0; j < sampleSet.getLength(); j++) {
       for (int i = 0; i < sampleSet.getSample(j).getDependentValues().length; i++) {
-	buf = new StringBuffer();
-	valTable[j + 1][7 + i] = nf.format(sampleSet.getSample(j).getDependentValue(i), buf, test).toString();
+        buf = new StringBuffer();
+        valTable[j + 1][7 + i] = nf.format(sampleSet.getSample(j).getDependentValue(i), buf, test).toString();
       }
     }
 
@@ -594,8 +594,8 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     for (int i = 0; i < m; i++) {
       names[i] = name + " " + i;
       for (int j = 0; j < n; j++) {
-	buf = new StringBuffer();
-	X[i][j] = form.format(coVarianceMatrix.get(i, j), buf, test).toString();
+        buf = new StringBuffer();
+        X[i][j] = form.format(coVarianceMatrix.get(i, j), buf, test).toString();
       }
     }
 
@@ -633,8 +633,8 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     calcCorrelationMatrix();
 
     incompleteGammaComplemented = cern.jet.stat.Gamma.incompleteGammaComplement(
-	(sampleSet.getLength() - sampleSet.getSample(0).getFunction().getFittingParams().length) / 2.0,
-	0.5 * chiSquare);
+        (sampleSet.getLength() - sampleSet.getSample(0).getFunction().getFittingParams().length) / 2.0,
+        0.5 * chiSquare);
   }
 
   /** {@inheritDoc} */

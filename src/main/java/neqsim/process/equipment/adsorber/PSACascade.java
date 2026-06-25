@@ -379,7 +379,7 @@ public class PSACascade extends TwoPortEquipment {
 
     if (logger.isDebugEnabled()) {
       logger.debug("PSACascade {} ({} beds): purity={}, recovery={}", getName(), configuration.getBeds(),
-	  cascadeH2Purity, cascadeH2Recovery);
+          cascadeH2Purity, cascadeH2Recovery);
     }
     setCalculationIdentifier(id);
   }
@@ -410,7 +410,7 @@ public class PSACascade extends TwoPortEquipment {
       double current = tailSys.getPhase(0).getComponent(i).getNumberOfmoles();
       double delta = tailMoles[i] - current;
       if (Math.abs(delta) > 1e-18) {
-	tailSys.addComponent(i, delta);
+        tailSys.addComponent(i, delta);
       }
     }
     tailSys.setPressure(1.2, "bara");

@@ -86,7 +86,7 @@ public class CapillaryDewPointFlashTest {
     double shiftSmall = tSmall - tBulk;
 
     assertTrue(shiftSmall > shiftLarge,
-	"Smaller pore should give larger shift: " + shiftSmall + " K vs " + shiftLarge + " K");
+        "Smaller pore should give larger shift: " + shiftSmall + " K vs " + shiftLarge + " K");
   }
 
   /**

@@ -81,10 +81,10 @@ public class ProcessFlowDiagramExporter implements Serializable {
 
     for (ProcessEquipmentInterface equip : units) {
       for (StreamInterface s : equip.getOutletStreams()) {
-	streamProducers.put(System.identityHashCode(s), equip.getName());
+        streamProducers.put(System.identityHashCode(s), equip.getName());
       }
       for (StreamInterface s : equip.getInletStreams()) {
-	streamConsumers.put(System.identityHashCode(s), equip.getName());
+        streamConsumers.put(System.identityHashCode(s), equip.getName());
       }
     }
 
@@ -100,7 +100,7 @@ public class ProcessFlowDiagramExporter implements Serializable {
       String nodeName = sanitizeId(equip.getName());
       String nodeShape = getShapeForEquipment(equip);
       sb.append("  ").append(nodeName).append(" [label=\"").append(escapeQuotes(equip.getName())).append("\", shape=")
-	  .append(nodeShape).append("];\n");
+          .append(nodeShape).append("];\n");
     }
     sb.append("\n");
 
@@ -111,11 +111,11 @@ public class ProcessFlowDiagramExporter implements Serializable {
       String producer = entry.getValue();
       String consumer = streamConsumers.get(streamId);
       if (consumer != null && !producer.equals(consumer)) {
-	String edgeKey = producer + " -> " + consumer;
-	if (!edgeSet.containsKey(edgeKey)) {
-	  edgeSet.put(edgeKey, Boolean.TRUE);
-	  sb.append("  ").append(sanitizeId(producer)).append(" -> ").append(sanitizeId(consumer)).append(";\n");
-	}
+        String edgeKey = producer + " -> " + consumer;
+        if (!edgeSet.containsKey(edgeKey)) {
+          edgeSet.put(edgeKey, Boolean.TRUE);
+          sb.append("  ").append(sanitizeId(producer)).append(" -> ").append(sanitizeId(consumer)).append(";\n");
+        }
       }
     }
 
@@ -123,12 +123,12 @@ public class ProcessFlowDiagramExporter implements Serializable {
     for (ProcessConnection conn : processSystem.getConnections()) {
       String edgeKey = conn.getSourceEquipment() + " -> " + conn.getTargetEquipment();
       if (!edgeSet.containsKey(edgeKey)) {
-	edgeSet.put(edgeKey, Boolean.TRUE);
-	String style = conn.getType() == ProcessConnection.ConnectionType.SIGNAL ? ", style=dashed, color=blue"
-	    : conn.getType() == ProcessConnection.ConnectionType.ENERGY ? ", style=dotted, color=red" : "";
-	sb.append("  ").append(sanitizeId(conn.getSourceEquipment())).append(" -> ")
-	    .append(sanitizeId(conn.getTargetEquipment())).append(" [label=\"")
-	    .append(escapeQuotes(conn.getSourcePort())).append("\"").append(style).append("];\n");
+        edgeSet.put(edgeKey, Boolean.TRUE);
+        String style = conn.getType() == ProcessConnection.ConnectionType.SIGNAL ? ", style=dashed, color=blue"
+            : conn.getType() == ProcessConnection.ConnectionType.ENERGY ? ", style=dotted, color=red" : "";
+        sb.append("  ").append(sanitizeId(conn.getSourceEquipment())).append(" -> ")
+            .append(sanitizeId(conn.getTargetEquipment())).append(" [label=\"")
+            .append(escapeQuotes(conn.getSourcePort())).append("\"").append(style).append("];\n");
       }
     }
 

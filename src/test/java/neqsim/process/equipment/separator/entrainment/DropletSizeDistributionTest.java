@@ -100,7 +100,7 @@ class DropletSizeDistributionTest {
     double surfaceTension = 0.02; // N/m (20 mN/m)
 
     DropletSizeDistribution dsd = DropletSizeDistribution.fromHinzeCorrelation(gasDensity, velocity, pipeDiameter,
-	surfaceTension, 2.6);
+        surfaceTension, 2.6);
 
     // Should produce a reasonable distribution
     double d50 = dsd.getD50();

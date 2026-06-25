@@ -183,9 +183,9 @@ public class MultiCompartmentReservoir extends ProcessEquipmentBaseClass {
     // Check if connection already exists and update
     for (TransmissibilityConnection conn : connections) {
       if ((conn.compartment1.equals(name1) && conn.compartment2.equals(name2))
-	  || (conn.compartment1.equals(name2) && conn.compartment2.equals(name1))) {
-	conn.transmissibility = transmissibility;
-	return;
+          || (conn.compartment1.equals(name2) && conn.compartment2.equals(name1))) {
+        conn.transmissibility = transmissibility;
+        return;
       }
     }
     connections.add(new TransmissibilityConnection(name1, name2, transmissibility));
@@ -264,9 +264,9 @@ public class MultiCompartmentReservoir extends ProcessEquipmentBaseClass {
       Integer idx1 = compartmentIndex.get(conn.compartment1);
       Integer idx2 = compartmentIndex.get(conn.compartment2);
       if (idx1 != null && idx2 != null) {
-	double p1 = compartments.get(idx1).pressure;
-	double p2 = compartments.get(idx2).pressure;
-	conn.currentFlowRate = conn.transmissibility * (p1 - p2); // Sm3/day
+        double p1 = compartments.get(idx1).pressure;
+        double p2 = compartments.get(idx2).pressure;
+        conn.currentFlowRate = conn.transmissibility * (p1 - p2); // Sm3/day
       }
     }
 
@@ -278,22 +278,24 @@ public class MultiCompartmentReservoir extends ProcessEquipmentBaseClass {
 
       // Add inter-zone flows
       for (TransmissibilityConnection conn : connections) {
-	Integer idx1 = compartmentIndex.get(conn.compartment1);
-	Integer idx2 = compartmentIndex.get(conn.compartment2);
-	if (idx1 != null && idx2 != null) {
-	  if (idx1 == i) {
-	    // Flow leaving compartment1 into compartment2 (positive reduces pressure)
-	    netFlow -= conn.currentFlowRate;
-	  } else if (idx2 == i) {
-	    // Flow entering compartment2 from compartment1 (positive increases pressure)
-	    netFlow += conn.currentFlowRate;
-	  }
-	}
+        Integer idx1 = compartmentIndex.get(conn.compartment1);
+        Integer idx2 = compartmentIndex.get(conn.compartment2);
+        if (idx1 != null && idx2 != null) {
+          if (idx1 == i) {
+            // Flow leaving compartment1 into compartment2 (positive reduces
+            // pressure)
+            netFlow -= conn.currentFlowRate;
+          } else if (idx2 == i) {
+            // Flow entering compartment2 from compartment1 (positive increases
+            // pressure)
+            netFlow += conn.currentFlowRate;
+          }
+        }
       }
 
       // dP/dt = netFlow / (V * ct) [bar/day]
       if (comp.poreVolume > 0 && comp.totalCompressibility > 0) {
-	dpdt[i] = netFlow / (comp.poreVolume * comp.totalCompressibility);
+        dpdt[i] = netFlow / (comp.poreVolume * comp.totalCompressibility);
       }
     }
 
@@ -334,9 +336,9 @@ public class MultiCompartmentReservoir extends ProcessEquipmentBaseClass {
   public double getInterZoneFlowRate(String name1, String name2, String unit) {
     for (TransmissibilityConnection conn : connections) {
       if (conn.compartment1.equals(name1) && conn.compartment2.equals(name2)) {
-	return conn.currentFlowRate;
+        return conn.currentFlowRate;
       } else if (conn.compartment1.equals(name2) && conn.compartment2.equals(name1)) {
-	return -conn.currentFlowRate;
+        return -conn.currentFlowRate;
       }
     }
     return 0.0;
@@ -413,9 +415,9 @@ public class MultiCompartmentReservoir extends ProcessEquipmentBaseClass {
       Integer idx1 = compartmentIndex.get(conn.compartment1);
       Integer idx2 = compartmentIndex.get(conn.compartment2);
       if (idx1 != null && idx2 != null) {
-	double p1 = compartments.get(idx1).pressure;
-	double p2 = compartments.get(idx2).pressure;
-	conn.currentFlowRate = conn.transmissibility * (p1 - p2);
+        double p1 = compartments.get(idx1).pressure;
+        double p2 = compartments.get(idx2).pressure;
+        conn.currentFlowRate = conn.transmissibility * (p1 - p2);
       }
     }
   }

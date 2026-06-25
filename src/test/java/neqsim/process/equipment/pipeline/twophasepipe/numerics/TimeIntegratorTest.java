@@ -96,7 +96,7 @@ public class TimeIntegratorTest {
 
     for (int i = 0; i < U0.length; i++) {
       for (int j = 0; j < U0[i].length; j++) {
-	assertEquals(U0[i][j], U1[i][j], 1e-10, "Constant solution should stay unchanged");
+        assertEquals(U0[i][j], U1[i][j], 1e-10, "Constant solution should stay unchanged");
       }
     }
   }
@@ -134,17 +134,17 @@ public class TimeIntegratorTest {
   void testMultipleVariables() {
     // Test with multiple cells and variables
     double[][] U0 = { { 1.0, 2.0, 3.0, 4.0 }, // Cell 0: 4 conservative vars
-	{ 5.0, 6.0, 7.0, 8.0 }, // Cell 1
-	{ 9.0, 10.0, 11.0, 12.0 } // Cell 2
+        { 5.0, 6.0, 7.0, 8.0 }, // Cell 1
+        { 9.0, 10.0, 11.0, 12.0 } // Cell 2
     };
     double dt = 0.01;
 
     TimeIntegrator.RHSFunction rhs = (U, t) -> {
       double[][] result = new double[U.length][U[0].length];
       for (int i = 0; i < U.length; i++) {
-	for (int j = 0; j < U[i].length; j++) {
-	  result[i][j] = 0.1 * U[i][j]; // Simple growth
-	}
+        for (int j = 0; j < U[i].length; j++) {
+          result[i][j] = 0.1 * U[i][j]; // Simple growth
+        }
       }
       return result;
     };
@@ -154,9 +154,9 @@ public class TimeIntegratorTest {
     // Verify all values are valid and have grown
     for (int i = 0; i < U1.length; i++) {
       for (int j = 0; j < U1[i].length; j++) {
-	assertFalse(Double.isNaN(U1[i][j]), "Result should not be NaN");
-	assertFalse(Double.isInfinite(U1[i][j]), "Result should not be infinite");
-	assertTrue(U1[i][j] > U0[i][j], "Values should grow");
+        assertFalse(Double.isNaN(U1[i][j]), "Result should not be NaN");
+        assertFalse(Double.isInfinite(U1[i][j]), "Result should not be infinite");
+        assertTrue(U1[i][j] > U0[i][j], "Values should grow");
       }
     }
   }

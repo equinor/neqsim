@@ -45,7 +45,7 @@ class EjectorTest {
 
     assertEquals(3.0, outStream.getPressure("bara"), 1.0e-4);
     assertEquals(motiveStream.getFlowRate("kg/sec") + suctionStream.getFlowRate("kg/sec"),
-	outStream.getFlowRate("kg/sec"), 1.0e-6);
+        outStream.getFlowRate("kg/sec"), 1.0e-6);
 
     EjectorMechanicalDesign design = ejector.getMechanicalDesign();
     double suctionPressure = suctionStream.getPressure("bara");
@@ -55,10 +55,10 @@ class EjectorTest {
     assertTrue(design.getMixingChamberArea() > 0.0);
     assertTrue(design.getDiffuserOutletArea() > 0.0);
     assertEquals(design.getEntrainmentRatio(), suctionStream.getFlowRate("kg/sec") / motiveStream.getFlowRate("kg/sec"),
-	1.0e-8);
+        1.0e-8);
     assertTrue(design.getSuctionInletVelocity() > 0.0);
     assertTrue(design.getSuctionInletVelocity() < 500.0,
-	"suction velocity should be below 500 m/s for practical ejector design");
+        "suction velocity should be below 500 m/s for practical ejector design");
     assertTrue(design.getDiffuserOutletVelocity() >= 10.0);
     assertTrue(design.getDiffuserOutletVelocity() <= 60.0);
     assertTrue(design.getBodyVolume() > 0.0);
@@ -144,7 +144,7 @@ class EjectorTest {
 
     EjectorMechanicalDesign design = ejector.getMechanicalDesign();
     assertEquals(suctionPressure, design.getMixingPressure(), 1.0e-8,
-	"mixing pressure should be limited to suction pressure");
+        "mixing pressure should be limited to suction pressure");
   }
 
   @Test

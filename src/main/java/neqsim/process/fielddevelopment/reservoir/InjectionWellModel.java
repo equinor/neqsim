@@ -383,18 +383,18 @@ public class InjectionWellModel implements Serializable {
 
     for (int i = 0; i < producerDistances.length; i++) {
       if (i < producerRates.length && producerDistances[i] > 0) {
-	// Simplified line source solution
-	double distance = producerDistances[i];
-	double rate = producerRates[i];
+        // Simplified line source solution
+        double distance = producerDistances[i];
+        double rate = producerRates[i];
 
-	// Pressure drawdown at injector due to producer
-	// Δp ∝ q × ln(re/r) / (2π k h)
-	double kSI = formationPermeability * 9.869e-16;
-	double viscosity = formationWaterViscosity * 1e-3;
+        // Pressure drawdown at injector due to producer
+        // Δp ∝ q × ln(re/r) / (2π k h)
+        double kSI = formationPermeability * 9.869e-16;
+        double viscosity = formationWaterViscosity * 1e-3;
 
-	double deltaPSI = rate / 86400.0 * viscosity * Math.log(drainageRadius / distance)
-	    / (2.0 * Math.PI * kSI * formationThickness);
-	interferencePressure += deltaPSI / 1e5; // Pa to bar
+        double deltaPSI = rate / 86400.0 * viscosity * Math.log(drainageRadius / distance)
+            / (2.0 * Math.PI * kSI * formationThickness);
+        interferencePressure += deltaPSI / 1e5; // Pa to bar
       }
     }
 
@@ -742,7 +742,7 @@ public class InjectionWellModel implements Serializable {
       sb.append(String.format("WHP: %.1f bara%n", wellheadPressure));
       sb.append(String.format("Limited by pressure: %s%n", limitedByPressure));
       if (needsPump) {
-	sb.append(String.format("Pump required: ΔP=%.1f bar, Power=%.0f kW%n", requiredPumpDeltaP, pumpPower));
+        sb.append(String.format("Pump required: ΔP=%.1f bar, Power=%.0f kW%n", requiredPumpDeltaP, pumpPower));
       }
       return sb.toString();
     }
@@ -786,7 +786,7 @@ public class InjectionWellModel implements Serializable {
      * @param fracturePressure fracture pressure (bara)
      */
     public InjectionZone(String name, double depth, double reservoirPressure, double permeability, double thickness,
-	double fracturePressure) {
+        double fracturePressure) {
       this.name = name;
       this.depth = depth;
       this.reservoirPressure = reservoirPressure;
@@ -851,8 +851,8 @@ public class InjectionWellModel implements Serializable {
       sb.append(String.format("Out-of-zone rate: %.0f Sm3/day%n", outOfZoneRate));
       sb.append("\nPer-zone breakdown:\n");
       for (InjectionZoneResult zr : zoneResults) {
-	sb.append(String.format("  %s: %.0f Sm3/day (%.1f%%)%s%s%n", zr.zoneName, zr.rate, zr.allocationFraction * 100,
-	    zr.isTargetZone ? " [TARGET]" : "", zr.fractureRisk ? " [FRACTURE RISK]" : ""));
+        sb.append(String.format("  %s: %.0f Sm3/day (%.1f%%)%s%s%n", zr.zoneName, zr.rate, zr.allocationFraction * 100,
+            zr.isTargetZone ? " [TARGET]" : "", zr.fractureRisk ? " [FRACTURE RISK]" : ""));
       }
       return sb.toString();
     }
@@ -939,7 +939,7 @@ public class InjectionWellModel implements Serializable {
     double minFracPressure = Double.MAX_VALUE;
     for (InjectionZone zone : zones) {
       if (zone.fracturePressure > 0 && zone.fracturePressure < minFracPressure) {
-	minFracPressure = zone.fracturePressure;
+        minFracPressure = zone.fracturePressure;
       }
     }
     double effectiveBHP = Math.min(requiredBHP, Math.min(maxBHP, minFracPressure));
@@ -955,7 +955,7 @@ public class InjectionWellModel implements Serializable {
       double ii = zoneIIs.get(i);
       double zoneRate = ii * (effectiveBHP - zone.reservoirPressure);
       if (zoneRate < 0) {
-	zoneRate = 0.0;
+        zoneRate = 0.0;
       }
 
       InjectionZoneResult zr = new InjectionZoneResult();
@@ -969,9 +969,9 @@ public class InjectionWellModel implements Serializable {
       result.zoneResults.add(zr);
       totalRate += zoneRate;
       if (zone.isTargetZone) {
-	targetRate += zoneRate;
+        targetRate += zoneRate;
       } else {
-	oozRate += zoneRate;
+        oozRate += zoneRate;
       }
     }
 
@@ -1141,28 +1141,28 @@ public class InjectionWellModel implements Serializable {
     private void setDefaultCounts() {
       switch (patternType) {
       case FIVE_SPOT:
-	injectorCount = 1;
-	producerCount = 4;
-	break;
+        injectorCount = 1;
+        producerCount = 4;
+        break;
       case INVERTED_FIVE_SPOT:
-	injectorCount = 4;
-	producerCount = 1;
-	break;
+        injectorCount = 4;
+        producerCount = 1;
+        break;
       case LINE_DRIVE:
-	injectorCount = 1;
-	producerCount = 1;
-	break;
+        injectorCount = 1;
+        producerCount = 1;
+        break;
       case SEVEN_SPOT:
-	injectorCount = 1;
-	producerCount = 6;
-	break;
+        injectorCount = 1;
+        producerCount = 6;
+        break;
       case NINE_SPOT:
-	injectorCount = 1;
-	producerCount = 8;
-	break;
+        injectorCount = 1;
+        producerCount = 8;
+        break;
       default:
-	injectorCount = 1;
-	producerCount = 4;
+        injectorCount = 1;
+        producerCount = 4;
       }
     }
 
@@ -1178,21 +1178,21 @@ public class InjectionWellModel implements Serializable {
 
       switch (patternType) {
       case FIVE_SPOT:
-	baseSweep = 0.72;
-	break;
+        baseSweep = 0.72;
+        break;
       case LINE_DRIVE:
-	baseSweep = 0.57;
-	break;
+        baseSweep = 0.57;
+        break;
       case STAGGERED_LINE_DRIVE:
-	baseSweep = 0.80;
-	break;
+        baseSweep = 0.80;
+        break;
       default:
-	baseSweep = 0.70;
+        baseSweep = 0.70;
       }
 
       // Mobility ratio correction
       if (mobilityRatio > 1.0) {
-	baseSweep *= Math.pow(mobilityRatio, -0.2);
+        baseSweep *= Math.pow(mobilityRatio, -0.2);
       }
 
       return Math.max(0.3, Math.min(baseSweep, 0.95));

@@ -102,7 +102,7 @@ public class MechanicalDesignReport implements java.io.Serializable {
       sb.append(String.format("\"%s\",", getEquipmentDescription(equip)));
       sb.append(String.format("%.1f,%.1f,", equip.getDesignPressure() - 1.01325, equip.getDesignTemperature()));
       sb.append(
-	  String.format("%.1f,%.1f,", equip.getDesignPressure() / 1.1 - 1.01325, equip.getDesignTemperature() - 30.0));
+          String.format("%.1f,%.1f,", equip.getDesignPressure() / 1.1 - 1.01325, equip.getDesignTemperature() - 30.0));
       sb.append(String.format("%.1f,%.1f,", equip.getPower(), equip.getDuty()));
       sb.append(String.format("%.0f,%.0f,", equip.getWeight(), equip.getWeight() * 1.1));
       sb.append(String.format("%.2f,%.2f,%.2f,", equip.getLength(), equip.getWidth(), equip.getHeight()));
@@ -139,7 +139,7 @@ public class MechanicalDesignReport implements java.io.Serializable {
       sb.append(String.format("L-%03d,", lineNumber++));
       sb.append(String.format("\"%s\",\"%s\",", seg.getFromEquipment(), seg.getToEquipment()));
       sb.append(String.format("%.0f,%.1f,%.1f,\"%s\",", seg.getNominalSizeInch(), seg.getOutsideDiameterMm(),
-	  seg.getWallThicknessMm(), seg.getSchedule()));
+          seg.getWallThicknessMm(), seg.getSchedule()));
       sb.append(String.format("%.1f,%.1f,", seg.getDesignPressureBara() - 1.01325, seg.getDesignTemperatureC()));
       sb.append(String.format("%.1f,%.0f,", seg.getLengthM(), seg.getWeightKg()));
       sb.append(String.format("\"%s\",", seg.getMaterial()));
@@ -176,11 +176,11 @@ public class MechanicalDesignReport implements java.io.Serializable {
     double pipingWeight = pipingDesign.getTotalPipingWeight();
     double totalWeight = equipWeight + pipingWeight;
     sb.append(
-	String.format("Equipment Weight:          %,12.0f kg (%,.1f tonnes)\n", equipWeight, equipWeight / 1000.0));
+        String.format("Equipment Weight:          %,12.0f kg (%,.1f tonnes)\n", equipWeight, equipWeight / 1000.0));
     sb.append(
-	String.format("Piping Weight:             %,12.0f kg (%,.1f tonnes)\n", pipingWeight, pipingWeight / 1000.0));
+        String.format("Piping Weight:             %,12.0f kg (%,.1f tonnes)\n", pipingWeight, pipingWeight / 1000.0));
     sb.append(
-	String.format("TOTAL DRY WEIGHT:          %,12.0f kg (%,.1f tonnes)\n", totalWeight, totalWeight / 1000.0));
+        String.format("TOTAL DRY WEIGHT:          %,12.0f kg (%,.1f tonnes)\n", totalWeight, totalWeight / 1000.0));
     sb.append("\n");
 
     // Weight by Equipment Type
@@ -209,7 +209,7 @@ public class MechanicalDesignReport implements java.io.Serializable {
     sb.append(String.format("%-15s %15s %15s\n", "Size", "Length (m)", "Weight (kg)"));
     for (String size : pipingDesign.getWeightBySize().keySet()) {
       sb.append(String.format("%-15s %,15.0f %,15.0f\n", size, pipingDesign.getLengthBySize().get(size),
-	  pipingDesign.getWeightBySize().get(size)));
+          pipingDesign.getWeightBySize().get(size)));
     }
     sb.append(String.format("%-15s %,15.0f %,15.0f\n", "Valves", 0.0, pipingDesign.getValveWeight()));
     sb.append(String.format("%-15s %,15.0f %,15.0f\n", "Flanges", 0.0, pipingDesign.getFlangeWeight()));
@@ -254,7 +254,7 @@ public class MechanicalDesignReport implements java.io.Serializable {
     for (String name : names) {
       ProcessEquipmentInterface equipment = processSystem.getUnit(name);
       if (equipment == null) {
-	continue;
+        continue;
       }
 
       sb.append(subSeparator).append("\n");
@@ -263,14 +263,14 @@ public class MechanicalDesignReport implements java.io.Serializable {
 
       // Get mechanical design if available
       try {
-	MechanicalDesign mechDesign = equipment.getMechanicalDesign();
-	if (mechDesign != null) {
-	  sb.append(String.format("Design Pressure:     %.1f barg\n", mechDesign.getMaxDesignPressure() - 1.01325));
-	  sb.append(String.format("Design Temperature:  %.0f °C\n", mechDesign.getDesignMaxTemperatureLimit()));
-	  sb.append(String.format("Dry Weight:          %.0f kg\n", mechDesign.getWeigthVesselShell()));
-	}
+        MechanicalDesign mechDesign = equipment.getMechanicalDesign();
+        if (mechDesign != null) {
+          sb.append(String.format("Design Pressure:     %.1f barg\n", mechDesign.getMaxDesignPressure() - 1.01325));
+          sb.append(String.format("Design Temperature:  %.0f °C\n", mechDesign.getDesignMaxTemperatureLimit()));
+          sb.append(String.format("Dry Weight:          %.0f kg\n", mechDesign.getWeigthVesselShell()));
+        }
       } catch (Exception e) {
-	// Equipment doesn't have mechanical design
+        // Equipment doesn't have mechanical design
       }
 
       sb.append("\n");
@@ -417,16 +417,16 @@ public class MechanicalDesignReport implements java.io.Serializable {
 
       // Try to get mechanical design JSON for this equipment
       try {
-	MechanicalDesign mechDesign = unit.getMechanicalDesign();
-	if (mechDesign != null) {
-	  String mechJson = mechDesign.toJson();
-	  if (mechJson != null && !mechJson.isEmpty()) {
-	    JsonObject mechObj = JsonParser.parseString(mechJson).getAsJsonObject();
-	    equipJson.add("mechanicalDesign", mechObj);
-	  }
-	}
+        MechanicalDesign mechDesign = unit.getMechanicalDesign();
+        if (mechDesign != null) {
+          String mechJson = mechDesign.toJson();
+          if (mechJson != null && !mechJson.isEmpty()) {
+            JsonObject mechObj = JsonParser.parseString(mechJson).getAsJsonObject();
+            equipJson.add("mechanicalDesign", mechObj);
+          }
+        }
       } catch (Exception e) {
-	// Equipment doesn't have mechanical design, skip
+        // Equipment doesn't have mechanical design, skip
       }
 
       equipmentArray.add(equipJson);

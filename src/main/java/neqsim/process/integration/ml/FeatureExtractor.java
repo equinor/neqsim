@@ -82,61 +82,61 @@ public class FeatureExtractor {
     try {
       switch (featureName.toLowerCase()) {
       case "pressure":
-	return stream.getPressure("bara");
+        return stream.getPressure("bara");
 
       case "temperature":
-	return stream.getTemperature("K");
+        return stream.getTemperature("K");
 
       case "totalflowrate":
-	return stream.getFlowRate("kg/hr");
+        return stream.getFlowRate("kg/hr");
 
       case "gasflowrate":
-	if (stream.getFluid().hasPhaseType("gas")) {
-	  return stream.getFluid().getPhase("gas").getFlowRate("kg/hr");
-	}
-	return 0.0;
+        if (stream.getFluid().hasPhaseType("gas")) {
+          return stream.getFluid().getPhase("gas").getFlowRate("kg/hr");
+        }
+        return 0.0;
 
       case "oilflowrate":
-	if (stream.getFluid().hasPhaseType("oil")) {
-	  return stream.getFluid().getPhase("oil").getFlowRate("kg/hr");
-	}
-	return 0.0;
+        if (stream.getFluid().hasPhaseType("oil")) {
+          return stream.getFluid().getPhase("oil").getFlowRate("kg/hr");
+        }
+        return 0.0;
 
       case "waterflowrate":
-	if (stream.getFluid().hasPhaseType("aqueous")) {
-	  return stream.getFluid().getPhase("aqueous").getFlowRate("kg/hr");
-	}
-	return 0.0;
+        if (stream.getFluid().hasPhaseType("aqueous")) {
+          return stream.getFluid().getPhase("aqueous").getFlowRate("kg/hr");
+        }
+        return 0.0;
 
       case "gor":
-	return calculateGOR(stream);
+        return calculateGOR(stream);
 
       case "watercut":
-	return calculateWaterCut(stream);
+        return calculateWaterCut(stream);
 
       case "density":
-	return stream.getFluid().getDensity("kg/m3");
+        return stream.getFluid().getDensity("kg/m3");
 
       case "viscosity":
-	return stream.getFluid().getViscosity("cP");
+        return stream.getFluid().getViscosity("cP");
 
       case "z-factor":
-	if (stream.getFluid().hasPhaseType("gas")) {
-	  return stream.getFluid().getPhase("gas").getZ();
-	}
-	return 1.0;
+        if (stream.getFluid().hasPhaseType("gas")) {
+          return stream.getFluid().getPhase("gas").getZ();
+        }
+        return 1.0;
 
       case "entropy":
-	return stream.getFluid().getEntropy();
+        return stream.getFluid().getEntropy();
 
       case "enthalpy":
-	return stream.getFluid().getEnthalpy();
+        return stream.getFluid().getEnthalpy();
 
       case "mw":
-	return stream.getFluid().getMolarMass("kg/mol") * 1000.0;
+        return stream.getFluid().getMolarMass("kg/mol") * 1000.0;
 
       default:
-	return Double.NaN;
+        return Double.NaN;
       }
     } catch (Exception e) {
       return Double.NaN;
@@ -184,9 +184,9 @@ public class FeatureExtractor {
     double[] normalized = new double[features.length];
     for (int i = 0; i < features.length; i++) {
       if (stds[i] > 1e-10) {
-	normalized[i] = (features[i] - means[i]) / stds[i];
+        normalized[i] = (features[i] - means[i]) / stds[i];
       } else {
-	normalized[i] = 0.0;
+        normalized[i] = 0.0;
       }
     }
     return normalized;
@@ -205,9 +205,9 @@ public class FeatureExtractor {
     for (int i = 0; i < features.length; i++) {
       double range = maxs[i] - mins[i];
       if (range > 1e-10) {
-	normalized[i] = (features[i] - mins[i]) / range;
+        normalized[i] = (features[i] - mins[i]) / range;
       } else {
-	normalized[i] = 0.5;
+        normalized[i] = 0.5;
       }
     }
     return normalized;

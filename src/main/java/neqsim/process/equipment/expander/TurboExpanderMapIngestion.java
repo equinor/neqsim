@@ -210,9 +210,9 @@ public class TurboExpanderMapIngestion implements Serializable {
       double predicted = chart.getEfficiency(a.getVelocityRatio(), a.getIgvOpening());
       double deviation = Math.abs(predicted - a.getExpanderEfficiency());
       if (deviation > tolerance) {
-	ok = false;
-	logger.warn("Anchor '" + a.getLabel() + "' deviates by " + deviation + " (predicted " + predicted
-	    + ", certified " + a.getExpanderEfficiency() + ")");
+        ok = false;
+        logger.warn("Anchor '" + a.getLabel() + "' deviates by " + deviation + " (predicted " + predicted
+            + ", certified " + a.getExpanderEfficiency() + ")");
       }
     }
     return ok;

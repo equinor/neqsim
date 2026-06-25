@@ -172,7 +172,7 @@ public class Standard_AGA7 extends neqsim.standards.Standard {
 
       // Speed of sound diagnostic
       if (measuredSpeedOfSound > 0.0 && calculatedSpeedOfSound > 0.0) {
-	sosDeviation = (measuredSpeedOfSound - calculatedSpeedOfSound) / calculatedSpeedOfSound * 100.0;
+        sosDeviation = (measuredSpeedOfSound - calculatedSpeedOfSound) / calculatedSpeedOfSound * 100.0;
       }
 
       // Calculate volume flow rate at line conditions
@@ -194,13 +194,13 @@ public class Standard_AGA7 extends neqsim.standards.Standard {
 
       // Standard volume flow rate
       if (standardDensity > 0.0) {
-	standardVolumeFlowRate = massFlowRate / standardDensity; // Sm3/h
+        standardVolumeFlowRate = massFlowRate / standardDensity; // Sm3/h
       }
 
       // Reynolds number
       if (viscosity > 0.0 && pipeDiameter > 0.0) {
-	double avgVelocity = measuredVelocity;
-	reynoldsNumber = flowingDensity * avgVelocity * pipeDiameter / viscosity;
+        double avgVelocity = measuredVelocity;
+        reynoldsNumber = flowingDensity * avgVelocity * pipeDiameter / viscosity;
       }
 
     } catch (Exception ex) {
@@ -214,10 +214,10 @@ public class Standard_AGA7 extends neqsim.standards.Standard {
     double value = getValue(returnParameter);
     if ("standardVolumeFlowRate".equals(returnParameter)) {
       if ("SCFD".equals(returnUnit) || "scf/d".equals(returnUnit)) {
-	return value * 24.0 * 35.3147;
+        return value * 24.0 * 35.3147;
       }
       if ("MMSCFD".equals(returnUnit)) {
-	return value * 24.0 * 35.3147 / 1.0e6;
+        return value * 24.0 * 35.3147 / 1.0e6;
       }
     }
     return value;
@@ -260,7 +260,7 @@ public class Standard_AGA7 extends neqsim.standards.Standard {
   @Override
   public String getUnit(String returnParameter) {
     if ("calculatedSpeedOfSound".equals(returnParameter) || "SOS".equals(returnParameter)
-	|| "measuredSpeedOfSound".equals(returnParameter)) {
+        || "measuredSpeedOfSound".equals(returnParameter)) {
       return "m/s";
     }
     if ("sosDeviation".equals(returnParameter)) {

@@ -111,28 +111,28 @@ public class ConditionBasedReliability implements Serializable {
      */
     public double getHealthContribution() {
       if (criticalThreshold == normalValue) {
-	return 1.0;
+        return 1.0;
       }
 
       double deviation;
       if (criticalThreshold > normalValue) {
-	// Higher is worse (e.g., temperature, vibration)
-	if (currentValue <= normalValue) {
-	  return 1.0;
-	}
-	if (currentValue >= criticalThreshold) {
-	  return 0.0;
-	}
-	deviation = (currentValue - normalValue) / (criticalThreshold - normalValue);
+        // Higher is worse (e.g., temperature, vibration)
+        if (currentValue <= normalValue) {
+          return 1.0;
+        }
+        if (currentValue >= criticalThreshold) {
+          return 0.0;
+        }
+        deviation = (currentValue - normalValue) / (criticalThreshold - normalValue);
       } else {
-	// Lower is worse (e.g., efficiency)
-	if (currentValue >= normalValue) {
-	  return 1.0;
-	}
-	if (currentValue <= criticalThreshold) {
-	  return 0.0;
-	}
-	deviation = (normalValue - currentValue) / (normalValue - criticalThreshold);
+        // Lower is worse (e.g., efficiency)
+        if (currentValue >= normalValue) {
+          return 1.0;
+        }
+        if (currentValue <= criticalThreshold) {
+          return 0.0;
+        }
+        deviation = (normalValue - currentValue) / (normalValue - criticalThreshold);
       }
 
       return Math.max(0, 1.0 - deviation);
@@ -300,8 +300,8 @@ public class ConditionBasedReliability implements Serializable {
   public void updateIndicator(String indicatorId, double value) {
     for (ConditionIndicator indicator : indicators) {
       if (indicator.getIndicatorId().equals(indicatorId)) {
-	indicator.updateValue(value);
-	break;
+        indicator.updateValue(value);
+        break;
       }
     }
     recalculateHealth();
@@ -315,10 +315,10 @@ public class ConditionBasedReliability implements Serializable {
   public void updateIndicators(Map<String, Double> values) {
     for (Map.Entry<String, Double> entry : values.entrySet()) {
       for (ConditionIndicator indicator : indicators) {
-	if (indicator.getIndicatorId().equals(entry.getKey())) {
-	  indicator.updateValue(entry.getValue());
-	  break;
-	}
+        if (indicator.getIndicatorId().equals(entry.getKey())) {
+          indicator.updateValue(entry.getValue());
+          break;
+        }
       }
     }
     recalculateHealth();
@@ -343,7 +343,7 @@ public class ConditionBasedReliability implements Serializable {
       weightedSum += indicator.getHealthContribution() * indicator.getWeight();
       totalWeight += indicator.getWeight();
       if (indicator.isCritical()) {
-	criticalCount++;
+        criticalCount++;
       }
     }
 
@@ -460,7 +460,7 @@ public class ConditionBasedReliability implements Serializable {
     List<ConditionIndicator> alarming = new ArrayList<>();
     for (ConditionIndicator indicator : indicators) {
       if (indicator.isAlarming()) {
-	alarming.add(indicator);
+        alarming.add(indicator);
       }
     }
     return alarming;
@@ -475,7 +475,7 @@ public class ConditionBasedReliability implements Serializable {
     List<ConditionIndicator> critical = new ArrayList<>();
     for (ConditionIndicator indicator : indicators) {
       if (indicator.isCritical()) {
-	critical.add(indicator);
+        critical.add(indicator);
       }
     }
     return critical;
@@ -552,7 +552,7 @@ public class ConditionBasedReliability implements Serializable {
     Map<String, Object> health = new HashMap<>();
     health.put("healthIndex", healthIndex);
     health.put("status",
-	healthIndex > 0.8 ? "GOOD" : healthIndex > 0.5 ? "FAIR" : healthIndex > 0.2 ? "POOR" : "CRITICAL");
+        healthIndex > 0.8 ? "GOOD" : healthIndex > 0.5 ? "FAIR" : healthIndex > 0.2 ? "POOR" : "CRITICAL");
     map.put("health", health);
 
     // Reliability metrics
@@ -612,7 +612,7 @@ public class ConditionBasedReliability implements Serializable {
 
     // Health
     String status = healthIndex > 0.8 ? "GOOD ✓"
-	: healthIndex > 0.5 ? "FAIR !" : healthIndex > 0.2 ? "POOR ⚠" : "CRITICAL ✗";
+        : healthIndex > 0.5 ? "FAIR !" : healthIndex > 0.2 ? "POOR ⚠" : "CRITICAL ✗";
     sb.append(String.format("Health Index: %.1f%% [%s]%n", healthIndex * 100, status));
     sb.append("\n");
 
@@ -621,7 +621,7 @@ public class ConditionBasedReliability implements Serializable {
     sb.append(StringUtils.repeat("─", 40)).append("\n");
     sb.append(String.format("  Base Failure Rate:     %.2e /hour%n", baseFailureRate));
     sb.append(String.format("  Adjusted Failure Rate: %.2e /hour (%.1fx)%n", adjustedFailureRate,
-	getFailureRateMultiplier()));
+        getFailureRateMultiplier()));
     sb.append(String.format("  MTTF:                  %.0f hours (%.1f days)%n", getMTTF(), getMTTF() / 24));
     sb.append(String.format("  P(fail in 24h):        %.2f%%%n", getProbabilityOfFailure(24) * 100));
     sb.append(String.format("  P(fail in 30d):        %.2f%%%n", getProbabilityOfFailure(720) * 100));
@@ -630,7 +630,7 @@ public class ConditionBasedReliability implements Serializable {
     // RUL
     if (!Double.isNaN(remainingUsefulLife) && !Double.isInfinite(remainingUsefulLife)) {
       sb.append(String.format("Remaining Useful Life: %.0f hours (%.0f days) [%.0f%% confidence]%n",
-	  remainingUsefulLife, remainingUsefulLife / 24, rulConfidence * 100));
+          remainingUsefulLife, remainingUsefulLife / 24, rulConfidence * 100));
       sb.append("\n");
     }
 
@@ -643,7 +643,7 @@ public class ConditionBasedReliability implements Serializable {
     for (ConditionIndicator ind : indicators) {
       String flag = ind.isCritical() ? "✗" : ind.isAlarming() ? "!" : "✓";
       sb.append(String.format("%-20s %10.2f %10.2f %10.2f %7.0f%% %s%n", ind.getName(), ind.getCurrentValue(),
-	  ind.getNormalValue(), ind.getCriticalThreshold(), ind.getHealthContribution() * 100, flag));
+          ind.getNormalValue(), ind.getCriticalThreshold(), ind.getHealthContribution() * 100, flag));
     }
 
     return sb.toString();
@@ -652,6 +652,6 @@ public class ConditionBasedReliability implements Serializable {
   @Override
   public String toString() {
     return String.format("ConditionBasedReliability[%s: health=%.0f%%, λ=%.2e]", equipmentName, healthIndex * 100,
-	adjustedFailureRate);
+        adjustedFailureRate);
   }
 }

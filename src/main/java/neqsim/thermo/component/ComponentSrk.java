@@ -27,7 +27,7 @@ public class ComponentSrk extends ComponentEos {
     super(name, moles, molesInPhase, compIndex);
 
     a = 1.0 / (9.0 * (Math.pow(2.0, 1.0 / 3.0) - 1.0)) * R * R * criticalTemperature * criticalTemperature
-	/ criticalPressure;
+        / criticalPressure;
     b = (Math.pow(2.0, 1.0 / 3.0) - 1.0) / 3.0 * R * criticalTemperature / criticalPressure;
     delta1 = 1.0;
     delta2 = 0.0;
@@ -137,14 +137,14 @@ public class ComponentSrk extends ComponentEos {
     double TR = 1.0 - temperature / getTC();
     if (TR < 0) {
       if (componentName.equals("CO2")) {
-	TR = 1.0 - 0.9;
+        TR = 1.0 - 0.9;
       } else {
-	TR = 0.6;
+        TR = 0.6;
       }
     }
     double AA = (surfTensInfluenceParam[0] + surfTensInfluenceParam[1] * getAcentricFactor());
     double BB = surfTensInfluenceParam[2] + surfTensInfluenceParam[3] * getAcentricFactor()
-	+ surfTensInfluenceParam[4] * getAcentricFactor() * getAcentricFactor();
+        + surfTensInfluenceParam[4] * getAcentricFactor() * getAcentricFactor();
 
     if (componentName.equals("water")) {
       return 0.000000000000000000019939776242117276;
@@ -160,6 +160,6 @@ public class ComponentSrk extends ComponentEos {
     // System.out.println("scale2 " +
     // Math.pow(ThermodynamicConstantsInterface.avagadroNumber, 2.0 / 3.0));
     return (aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * (AA * TR + BB))
-	/ Math.pow(ThermodynamicConstantsInterface.avagadroNumber, 2.0 / 3.0);
+        / Math.pow(ThermodynamicConstantsInterface.avagadroNumber, 2.0 / 3.0);
   }
 }

@@ -1,7 +1,10 @@
 package neqsim.integration;
 
+import neqsim.integration.ValidationFramework.CommonErrors;
+import neqsim.integration.ValidationFramework.ValidationBuilder;
+import neqsim.integration.ValidationFramework.ValidationError;
+import neqsim.integration.ValidationFramework.ValidationResult;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.integration.ValidationFramework.*;
 
 /**
  * Validators for thermodynamic systems (SystemInterface implementations).
@@ -38,8 +41,8 @@ public class ThermoValidator {
       // Try to detect if mixing rule is set (varies by implementation)
       // For now, add as warning - users should explicitly set it
       builder.addWarning("thermo", "Mixing rule not explicitly verified",
-	  "Explicitly call setMixingRule() to ensure correct mixing model: "
-	      + "system.setMixingRule(\"classic\") or system.setMixingRule(10)");
+          "Explicitly call setMixingRule() to ensure correct mixing model: "
+              + "system.setMixingRule(\"classic\") or system.setMixingRule(10)");
     } catch (Exception e) {
       // Silently skip if method not available
     }
@@ -58,20 +61,20 @@ public class ThermoValidator {
     double moleSum = 0.0;
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       try {
-	moleSum += system.getPhase(0).getComponent(i).getx();
+        moleSum += system.getPhase(0).getComponent(i).getx();
       } catch (Exception e) {
-	// Component access may vary by phase type
+        // Component access may vary by phase type
       }
     }
     if (moleSum > 0 && Math.abs(moleSum - 1.0) > 0.05) {
       builder.addWarning("thermo", "Composition does not sum to 1.0 (sum=" + String.format("%.4f", moleSum) + ")",
-	  "Normalize component mole fractions");
+          "Normalize component mole fractions");
     }
 
     // Check: Phase type expectations
     if (system.getNumberOfPhases() > 3) {
       builder.addWarning("thermo", "System has more than 3 phases (" + system.getNumberOfPhases() + ")",
-	  "Verify multi-phase handling in your equipment");
+          "Verify multi-phase handling in your equipment");
     }
 
     return builder.build();
@@ -97,12 +100,12 @@ public class ThermoValidator {
       // Attempt a test calculation to verify system is truly ready
       double testHEnthalpy = system.getEnthalpy();
       if (Double.isNaN(testHEnthalpy)) {
-	builder.checkTrue(false, "Enthalpy calculation returned NaN",
-	    "System state may be invalid. Verify pressure, temperature, and composition");
+        builder.checkTrue(false, "Enthalpy calculation returned NaN",
+            "System state may be invalid. Verify pressure, temperature, and composition");
       }
     } catch (Exception e) {
       builder.addWarning("thermo", "Could not verify enthalpy calculation: " + e.getMessage(),
-	  "System may not be fully initialized. Ensure init(0) was called.");
+          "System may not be fully initialized. Ensure init(0) was called.");
     }
 
     return builder.build();
@@ -126,12 +129,12 @@ public class ThermoValidator {
     // SRK-specific: check for problematic components at wide ranges
     try {
       if (system.getTemperature() < 200.0) {
-	builder.addWarning("thermo", "SRK-EOS at very low temperature (< 200 K)",
-	    "SRK may be inaccurate at cryogenic conditions. Consider CPA model.");
+        builder.addWarning("thermo", "SRK-EOS at very low temperature (< 200 K)",
+            "SRK may be inaccurate at cryogenic conditions. Consider CPA model.");
       }
       if (system.getPressure() > 500.0) {
-	builder.addWarning("thermo", "SRK-EOS at very high pressure (> 500 bar)",
-	    "SRK accuracy degrades at extreme pressures. Verify K-values.");
+        builder.addWarning("thermo", "SRK-EOS at very high pressure (> 500 bar)",
+            "SRK accuracy degrades at extreme pressures. Verify K-values.");
       }
     } catch (Exception e) {
       // Skip if temperature/pressure access fails
@@ -159,16 +162,16 @@ public class ThermoValidator {
     boolean hasPolarComponents = false;
     try {
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-	String compName = system.getPhase(0).getComponent(i).getComponentName().toLowerCase();
-	if (compName.contains("water") || compName.contains("glycol") || compName.contains("h2o")
-	    || compName.contains("methanol")) {
-	  hasPolarComponents = true;
-	  break;
-	}
+        String compName = system.getPhase(0).getComponent(i).getComponentName().toLowerCase();
+        if (compName.contains("water") || compName.contains("glycol") || compName.contains("h2o")
+            || compName.contains("methanol")) {
+          hasPolarComponents = true;
+          break;
+        }
       }
       if (!hasPolarComponents) {
-	builder.addWarning("thermo", "CPA-EOS used without polar components (water, glycol, etc.)",
-	    "Consider using SRK-EOS for non-polar systems (lighter and faster)");
+        builder.addWarning("thermo", "CPA-EOS used without polar components (water, glycol, etc.)",
+            "Consider using SRK-EOS for non-polar systems (lighter and faster)");
       }
     } catch (Exception e) {
       // Skip component iteration if not supported

@@ -24,7 +24,7 @@ public class ComponentRK extends ComponentEos {
     super(name, moles, molesInPhase, compIndex);
 
     a = 1.0 / (9.0 * (Math.pow(2.0, 1.0 / 3.0) - 1.0)) * R * R * criticalTemperature * criticalTemperature
-	/ criticalPressure;
+        / criticalPressure;
     b = (Math.pow(2.0, 1.0 / 3.0) - 1.0) / 3.0 * R * criticalTemperature / criticalPressure;
     delta1 = 1.0;
     delta2 = 0.0;
@@ -62,7 +62,7 @@ public class ComponentRK extends ComponentEos {
   @Override
   public double calca() {
     return 1.0 / (9.0 * (Math.pow(2.0, 1.0 / 3.0) - 1.0)) * R * R * criticalTemperature * criticalTemperature
-	/ criticalPressure;
+        / criticalPressure;
   }
 
   /** {@inheritDoc} */

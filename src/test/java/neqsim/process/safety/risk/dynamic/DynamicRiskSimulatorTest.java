@@ -226,8 +226,8 @@ class DynamicRiskSimulatorTest {
   void testMethodChaining() {
     // Test fluent API
     DynamicRiskSimulator configured = simulator.setTimestepHours(0.5).setRampUpTimeHours(2.0).setShutdownTimeHours(0.5)
-	.setSimulateTransients(true).setRampUpProfile(DynamicRiskSimulator.RampProfile.LINEAR)
-	.setShutdownProfile(DynamicRiskSimulator.RampProfile.EXPONENTIAL);
+        .setSimulateTransients(true).setRampUpProfile(DynamicRiskSimulator.RampProfile.LINEAR)
+        .setShutdownProfile(DynamicRiskSimulator.RampProfile.EXPONENTIAL);
 
     assertNotNull(configured, "Configured simulator should not be null");
     assertEquals(0.5, configured.getTimestepHours(), 0.001);

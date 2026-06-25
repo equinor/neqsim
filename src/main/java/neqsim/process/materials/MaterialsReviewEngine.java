@@ -45,9 +45,9 @@ public class MaterialsReviewEngine {
     MaterialsReviewReport report = new MaterialsReviewReport();
     report.setProjectName(effectiveInput.getProjectName());
     report.addLimitation("Screening-level review. Final material selection and integrity decisions "
-	+ "require discipline engineer approval and project-specific TR/STID evidence.");
+        + "require discipline engineer approval and project-specific TR/STID evidence.");
     report.addLimitation("STID and technical database records are consumed as normalized JSON; "
-	+ "database retrieval and document OCR are handled outside the Java core.");
+        + "database retrieval and document OCR are handled outside the Java core.");
     for (MaterialReviewItem item : effectiveInput.getItems()) {
       MaterialReviewResult result = evaluateItem(item, effectiveInput.getDesignLifeYears());
       result.finalizeVerdict();
@@ -82,32 +82,32 @@ public class MaterialsReviewEngine {
     MaterialServiceEnvelope service = item.getServiceEnvelope();
     double temperatureC = value(service, 25.0, "temperature_C", "operatingTemperatureC", "tempC");
     double designTemperatureC = value(service, temperatureC, "design_temperature_C", "designTemperatureC",
-	"maxDesignTemperatureC");
+        "maxDesignTemperatureC");
     double pressureBara = value(service, 1.01325, "pressure_bara", "operatingPressureBara", "pressureBar",
-	"pressure_barg");
+        "pressure_barg");
     double designLifeYears = value(service, defaultDesignLifeYears, "design_life_years", "designLifeYears");
     double co2MoleFraction = fractionValue(service, "co2_mole_fraction", "CO2", "co2", "co2MoleFraction");
     double h2sMoleFraction = fractionValue(service, "h2s_mole_fraction", "H2S", "h2s", "h2sMoleFraction");
     double h2MoleFraction = fractionValue(service, "h2_mole_fraction", "H2", "hydrogen", "h2MoleFraction");
     double chlorideMgL = value(service, 0.0, "chloride_mg_per_l", "chloride_mg_L", "chloride_mg_l", "chloride_mg_per_L",
-	"chlorideMgL", "chlorideConcentrationMgL");
+        "chlorideMgL", "chlorideConcentrationMgL");
     double pH = value(service, 6.5, "pH", "ph", "aqueous_pH", "aqueousPH");
     boolean freeWater = service.getBoolean("free_water", service.getBoolean("freeWater", false));
     String material = item.getExistingMaterial().isEmpty() ? service.getString("materialType", "Carbon Steel")
-	: item.getExistingMaterial();
+        : item.getExistingMaterial();
 
     NorsokM506CorrosionRate co2Corrosion = runCo2Corrosion(service, result, temperatureC, pressureBara, co2MoleFraction,
-	h2sMoleFraction, chlorideMgL, pH, freeWater);
+        h2sMoleFraction, chlorideMgL, pH, freeWater);
     runMaterialSelection(service, result, co2Corrosion, designTemperatureC, designLifeYears, chlorideMgL, pH,
-	freeWater);
+        freeWater);
     runSourService(service, result, material, temperatureC, pressureBara, co2MoleFraction, h2sMoleFraction, chlorideMgL,
-	pH, freeWater);
+        pH, freeWater);
     runChlorideScc(service, result, material, temperatureC, chlorideMgL, pH);
     runOxygenCorrosion(service, result, material, temperatureC, chlorideMgL);
     runDenseCo2(service, result, material, temperatureC, pressureBara, co2MoleFraction, h2sMoleFraction,
-	h2MoleFraction);
+        h2MoleFraction);
     runHydrogen(service, result, material, temperatureC, pressureBara, h2MoleFraction, h2sMoleFraction, chlorideMgL,
-	freeWater, designLifeYears);
+        freeWater, designLifeYears);
     runNelsonCurve(service, result, material, temperatureC, pressureBara, h2MoleFraction);
     runAmmonia(service, result, material, temperatureC, pressureBara);
     runCui(service, result, material, temperatureC);
@@ -142,7 +142,7 @@ public class MaterialsReviewEngine {
     corrosion.setActualPH(pH);
     corrosion.setBicarbonateConcentrationMgL(value(service, 0.0, "bicarbonate_mg_per_l", "bicarbonateMgL"));
     corrosion.setIonicStrengthMolL(
-	value(service, Math.max(0.0, chlorideMgL / 35450.0), "ionic_strength_mol_per_l", "ionicStrengthMolL"));
+        value(service, Math.max(0.0, chlorideMgL / 35450.0), "ionic_strength_mol_per_l", "ionicStrengthMolL"));
     corrosion.setFlowVelocityMs(value(service, 1.0, "flow_velocity_m_per_s", "flowVelocityMS", "velocityMS"));
     corrosion.setPipeDiameterM(value(service, 0.1, "pipe_diameter_m", "pipeDiameterM"));
     corrosion.setLiquidDensityKgM3(value(service, 1000.0, "liquid_density_kg_per_m3", "liquidDensityKgM3"));
@@ -152,27 +152,27 @@ public class MaterialsReviewEngine {
     corrosion.calculate();
     if (!freeWater && co2MoleFraction > 0.0) {
       result.addAssessment(DamageMechanismAssessment
-	  .pass("CO2 corrosion", "NORSOK M-506",
-	      "CO2 is present but free water was not indicated in the supplied service envelope.",
-	      "Confirm dry operation and water dew-point margin in the technical database.")
-	  .addDetail("co2PartialPressure_bar", corrosion.getCO2PartialPressureBar())
-	  .addDetail("calculatedRate_mm_per_year", corrosion.getCorrectedCorrosionRate()));
+          .pass("CO2 corrosion", "NORSOK M-506",
+              "CO2 is present but free water was not indicated in the supplied service envelope.",
+              "Confirm dry operation and water dew-point margin in the technical database.")
+          .addDetail("co2PartialPressure_bar", corrosion.getCO2PartialPressureBar())
+          .addDetail("calculatedRate_mm_per_year", corrosion.getCorrectedCorrosionRate()));
       return corrosion;
     }
     if (co2MoleFraction <= 1.0e-8 && !freeWater) {
       result.addAssessment(DamageMechanismAssessment.info("CO2 corrosion", "NORSOK M-506",
-	  "No CO2/free-water corrosion driver was identified.", "No CO2 corrosion action from the supplied data."));
+          "No CO2/free-water corrosion driver was identified.", "No CO2 corrosion action from the supplied data."));
       return corrosion;
     }
     double rate = corrosion.getCorrectedCorrosionRate();
     String severity = normalizeSeverity(corrosion.getCorrosionSeverity());
     String status = "LOW".equals(severity) ? "PASS" : ("MEDIUM".equals(severity) ? "WARNING" : "FAIL");
     DamageMechanismAssessment assessment = new DamageMechanismAssessment("CO2 corrosion", "NORSOK M-506", status,
-	severity, "Predicted CO2 corrosion rate is " + round(rate) + " mm/year.",
-	rate > 1.0
-	    ? "Consider corrosion-resistant alloy, cladding, inhibitor availability, or "
-		+ "increased corrosion allowance."
-	    : "Track corrosion allowance and confirm inhibition/water handling assumptions.");
+        severity, "Predicted CO2 corrosion rate is " + round(rate) + " mm/year.",
+        rate > 1.0
+            ? "Consider corrosion-resistant alloy, cladding, inhibitor availability, or "
+                + "increased corrosion allowance."
+            : "Track corrosion allowance and confirm inhibition/water handling assumptions.");
     assessment.addDetail("corrosionRate_mm_per_year", rate);
     assessment.addDetail("co2Fugacity_bar", corrosion.getCO2FugacityBar());
     assessment.addDetail("co2PartialPressure_bar", corrosion.getCO2PartialPressureBar());
@@ -203,7 +203,7 @@ public class MaterialsReviewEngine {
     selection.setH2SPartialPressureBar(co2Corrosion.getH2SPartialPressureBar());
     selection.setDesignTemperatureC(designTemperatureC);
     selection.setMaxDesignTemperatureC(
-	value(service, designTemperatureC, "max_design_temperature_C", "maxDesignTemperatureC"));
+        value(service, designTemperatureC, "max_design_temperature_C", "maxDesignTemperatureC"));
     selection.setChlorideConcentrationMgL(chlorideMgL);
     selection.setDesignLifeYears(designLifeYears);
     selection.setAqueousPH(pH);
@@ -214,7 +214,7 @@ public class MaterialsReviewEngine {
     recommendation.setRecommendedMaterial(selection.getRecommendedMaterial());
     recommendation.setRecommendedCorrosionAllowanceMm(selection.getRecommendedCorrosionAllowanceMm());
     recommendation.setRationale("NORSOK M-001 service category " + selection.getServiceCategory() + ", sour class "
-	+ selection.getSourClassification() + ", chloride SCC risk " + selection.getChlorideSCCRisk() + ".");
+        + selection.getSourClassification() + ", chloride SCC risk " + selection.getChlorideSCCRisk() + ".");
     List<String> alternatives = selection.getAlternativeMaterials();
     for (String alternative : alternatives) {
       recommendation.addAlternativeMaterial(alternative);
@@ -226,13 +226,13 @@ public class MaterialsReviewEngine {
     recommendation.addStandard("NORSOK M-506");
     result.setRecommendation(recommendation);
     result.addAssessment(DamageMechanismAssessment
-	.info("Material selection", "NORSOK M-001",
-	    "Recommended material: " + selection.getRecommendedMaterial() + ", corrosion allowance "
-		+ round(selection.getRecommendedCorrosionAllowanceMm()) + " mm.",
-	    "Verify selected MDS/material class against project TR and procurement constraints.")
-	.addDetail("serviceCategory", selection.getServiceCategory())
-	.addDetail("recommendedMaterial", selection.getRecommendedMaterial())
-	.addDetail("recommendedCorrosionAllowance_mm", selection.getRecommendedCorrosionAllowanceMm()));
+        .info("Material selection", "NORSOK M-001",
+            "Recommended material: " + selection.getRecommendedMaterial() + ", corrosion allowance "
+                + round(selection.getRecommendedCorrosionAllowanceMm()) + " mm.",
+            "Verify selected MDS/material class against project TR and procurement constraints.")
+        .addDetail("serviceCategory", selection.getServiceCategory())
+        .addDetail("recommendedMaterial", selection.getRecommendedMaterial())
+        .addDetail("recommendedCorrosionAllowance_mm", selection.getRecommendedCorrosionAllowanceMm()));
   }
 
   /**
@@ -255,8 +255,8 @@ public class MaterialsReviewEngine {
     double h2sPartialPressureBar = pressureBara * h2sMoleFraction;
     if (h2sPartialPressureBar <= 0.0003 && !freeWater) {
       result.addAssessment(DamageMechanismAssessment.info("Sour service", "ISO 15156 / NACE MR0175",
-	  "No sour-service driver was identified from the supplied H2S/free-water data.",
-	  "Confirm H2S units and free-water flag in the source register."));
+          "No sour-service driver was identified from the supplied H2S/free-water data.",
+          "Confirm H2S units and free-water flag in the source register."));
       return;
     }
     SourServiceAssessment sour = new SourServiceAssessment();
@@ -276,12 +276,12 @@ public class MaterialsReviewEngine {
     boolean acceptable = sour.isSSCAcceptable() && sour.isHICAcceptable() && sour.isSOHICAcceptable();
     String severity = normalizeSeverity(sour.getOverallRiskLevel());
     DamageMechanismAssessment assessment = acceptable
-	? DamageMechanismAssessment.pass("Sour service", "ISO 15156 / NACE MR0175",
-	    "Sour-service check is acceptable with overall risk " + sour.getOverallRiskLevel() + ".",
-	    "Maintain hardness, PWHT, and material certificate controls.")
-	: DamageMechanismAssessment.fail("Sour service", "ISO 15156 / NACE MR0175", severity,
-	    "Sour-service check is not acceptable with overall risk " + sour.getOverallRiskLevel() + ".",
-	    "Upgrade material or revise hardness/PWHT limits according to ISO 15156/NACE MR0175.");
+        ? DamageMechanismAssessment.pass("Sour service", "ISO 15156 / NACE MR0175",
+            "Sour-service check is acceptable with overall risk " + sour.getOverallRiskLevel() + ".",
+            "Maintain hardness, PWHT, and material certificate controls.")
+        : DamageMechanismAssessment.fail("Sour service", "ISO 15156 / NACE MR0175", severity,
+            "Sour-service check is not acceptable with overall risk " + sour.getOverallRiskLevel() + ".",
+            "Upgrade material or revise hardness/PWHT limits according to ISO 15156/NACE MR0175.");
     assessment.addDetail("h2sPartialPressure_bar", h2sPartialPressureBar);
     assessment.addDetail("sourRegion", sour.getSourRegion());
     assessment.addDetail("sscRisk", sour.getSSCRiskLevel());
@@ -311,17 +311,17 @@ public class MaterialsReviewEngine {
     scc.setMaterialType(material);
     scc.setStressRatio(value(service, 0.7, "stress_ratio", "stressRatio"));
     scc.setOxygenPresent(value(service, 0.0, "dissolved_o2_ppb", "dissolvedO2Ppb") > 10.0
-	|| service.getBoolean("oxygen_present", false));
+        || service.getBoolean("oxygen_present", false));
     scc.setAqueousPH(pH);
     scc.evaluate();
     DamageMechanismAssessment assessment = scc.isSCCAcceptable()
-	? DamageMechanismAssessment.pass("Chloride SCC", "NORSOK M-001 / ISO 21457",
-	    "Chloride SCC risk is " + scc.getRiskLevel() + ".",
-	    "Maintain chloride/temperature limits and oxygen control.")
-	: DamageMechanismAssessment.fail("Chloride SCC", "NORSOK M-001 / ISO 21457",
-	    normalizeSeverity(scc.getRiskLevel()),
-	    "Chloride SCC risk is " + scc.getRiskLevel() + " for the supplied service.",
-	    "Use a higher alloy material or lower chloride, oxygen, stress, or temperature exposure.");
+        ? DamageMechanismAssessment.pass("Chloride SCC", "NORSOK M-001 / ISO 21457",
+            "Chloride SCC risk is " + scc.getRiskLevel() + ".",
+            "Maintain chloride/temperature limits and oxygen control.")
+        : DamageMechanismAssessment.fail("Chloride SCC", "NORSOK M-001 / ISO 21457",
+            normalizeSeverity(scc.getRiskLevel()),
+            "Chloride SCC risk is " + scc.getRiskLevel() + " for the supplied service.",
+            "Use a higher alloy material or lower chloride, oxygen, stress, or temperature exposure.");
     assessment.addDetail("maxAllowableTemperature_C", scc.getMaxAllowableTemperatureC());
     assessment.addDetail("temperatureMargin_C", scc.getTemperatureMarginC());
     assessment.addDetail("recommendedUpgrade", scc.getRecommendedUpgrade());
@@ -356,12 +356,12 @@ public class MaterialsReviewEngine {
     String severity = normalizeSeverity(oxygen.getRiskLevel());
     String status = oxygen.isMeetsO2Target() && !"HIGH".equals(severity) ? "PASS" : "WARNING";
     result.addAssessment(new DamageMechanismAssessment("Oxygen corrosion", "NORSOK M-001", status, severity,
-	"Dissolved oxygen risk is " + oxygen.getRiskLevel() + ", pitting rate " + round(oxygen.getPittingRateMmYr())
-	    + " mm/year.",
-	oxygen.getRecommendedTreatment()).addDetail("dissolvedO2_ppb", o2Ppb)
-	.addDetail("corrosionRate_mm_per_year", oxygen.getCorrosionRateMmYr())
-	.addDetail("pittingRate_mm_per_year", oxygen.getPittingRateMmYr())
-	.addDetail("targetO2_ppb", oxygen.getTargetO2Ppb()));
+        "Dissolved oxygen risk is " + oxygen.getRiskLevel() + ", pitting rate " + round(oxygen.getPittingRateMmYr())
+            + " mm/year.",
+        oxygen.getRecommendedTreatment()).addDetail("dissolvedO2_ppb", o2Ppb)
+        .addDetail("corrosionRate_mm_per_year", oxygen.getCorrosionRateMmYr())
+        .addDetail("pittingRate_mm_per_year", oxygen.getPittingRateMmYr())
+        .addDetail("targetO2_ppb", oxygen.getTargetO2Ppb()));
   }
 
   /**
@@ -398,10 +398,10 @@ public class MaterialsReviewEngine {
     String severity = normalizeSeverity(dense.getRiskLevel());
     String status = dense.isMeetsImpuritySpecs() && !dense.isFreeWaterRisk() ? "PASS" : "WARNING";
     result.addAssessment(new DamageMechanismAssessment("Dense CO2 corrosion", "DNV-RP-F104 / ISO 27913", status,
-	severity, "Dense CO2 risk is " + dense.getRiskLevel() + ", phase state " + dense.getCo2PhaseState() + ".",
-	dense.getRecommendation()).addDetail("wetCorrosionRate_mm_per_year", dense.getWetCorrosionRateMmYr())
-	.addDetail("freeWaterRisk", Boolean.valueOf(dense.isFreeWaterRisk()))
-	.addDetail("waterMargin_ppmv", dense.getWaterMarginPpmv()));
+        severity, "Dense CO2 risk is " + dense.getRiskLevel() + ", phase state " + dense.getCo2PhaseState() + ".",
+        dense.getRecommendation()).addDetail("wetCorrosionRate_mm_per_year", dense.getWetCorrosionRateMmYr())
+        .addDetail("freeWaterRisk", Boolean.valueOf(dense.isFreeWaterRisk()))
+        .addDetail("waterMargin_ppmv", dense.getWaterMarginPpmv()));
   }
 
   /**
@@ -443,15 +443,15 @@ public class MaterialsReviewEngine {
     hydrogen.setCyclicService(service.getBoolean("cyclic_service", false));
     hydrogen.evaluate();
     boolean acceptable = hydrogen.isHydrogenEmbrittlementAcceptable() && hydrogen.isHTHAAcceptable()
-	&& hydrogen.isSourServiceOk();
+        && hydrogen.isSourServiceOk();
     DamageMechanismAssessment assessment = acceptable
-	? DamageMechanismAssessment.pass("Hydrogen service", "API 941 / ASME B31.12 / ISO 15156",
-	    "Hydrogen material assessment risk is " + hydrogen.getOverallRiskLevel() + ".",
-	    "Track hydrogen derating and material certification for the selected material.")
-	: DamageMechanismAssessment.fail("Hydrogen service", "API 941 / ASME B31.12 / ISO 15156",
-	    normalizeSeverity(hydrogen.getOverallRiskLevel()),
-	    "Hydrogen material assessment risk is " + hydrogen.getOverallRiskLevel() + ".",
-	    "Review material upgrade, hardness limits, PWHT, and hydrogen derating.");
+        ? DamageMechanismAssessment.pass("Hydrogen service", "API 941 / ASME B31.12 / ISO 15156",
+            "Hydrogen material assessment risk is " + hydrogen.getOverallRiskLevel() + ".",
+            "Track hydrogen derating and material certification for the selected material.")
+        : DamageMechanismAssessment.fail("Hydrogen service", "API 941 / ASME B31.12 / ISO 15156",
+            normalizeSeverity(hydrogen.getOverallRiskLevel()),
+            "Hydrogen material assessment risk is " + hydrogen.getOverallRiskLevel() + ".",
+            "Review material upgrade, hardness limits, PWHT, and hydrogen derating.");
     assessment.addDetail("h2PartialPressure_bar", hydrogen.getH2PartialPressureBar());
     assessment.addDetail("embrittlementRisk", hydrogen.getHydrogenEmbrittlementRisk());
     assessment.addDetail("hthaRisk", hydrogen.getHTHARisk());
@@ -482,12 +482,12 @@ public class MaterialsReviewEngine {
     nelson.setMaterialType(material);
     nelson.evaluate();
     DamageMechanismAssessment assessment = nelson.isBelowNelsonCurve()
-	? DamageMechanismAssessment.pass("High-temperature hydrogen attack", "API 941",
-	    "Service is below the selected Nelson curve.",
-	    "Maintain design temperature and hydrogen partial pressure envelope.")
-	: DamageMechanismAssessment.fail("High-temperature hydrogen attack", "API 941",
-	    normalizeSeverity(nelson.getRiskLevel()), "Service exceeds the selected Nelson curve.",
-	    nelson.getRecommendedUpgrade());
+        ? DamageMechanismAssessment.pass("High-temperature hydrogen attack", "API 941",
+            "Service is below the selected Nelson curve.",
+            "Maintain design temperature and hydrogen partial pressure envelope.")
+        : DamageMechanismAssessment.fail("High-temperature hydrogen attack", "API 941",
+            normalizeSeverity(nelson.getRiskLevel()), "Service exceeds the selected Nelson curve.",
+            nelson.getRecommendedUpgrade());
     assessment.addDetail("temperatureMargin_C", nelson.getTemperatureMarginC());
     assessment.addDetail("maxAllowableTemperature_C", nelson.getMaxAllowableTemperatureC());
     assessment.addDetail("recommendedUpgrade", nelson.getRecommendedUpgrade());
@@ -522,12 +522,12 @@ public class MaterialsReviewEngine {
     ammonia.setHardnessHRC(value(service, 22.0, "hardness_HRC", "hardnessHRC"));
     ammonia.evaluate();
     DamageMechanismAssessment assessment = ammonia.isCompatible()
-	? DamageMechanismAssessment.pass("Ammonia compatibility", "ISO 11120 / EIGA guidance",
-	    "Ammonia compatibility risk is " + ammonia.getRiskLevel() + ".",
-	    "Maintain inhibitor and stress-relief requirements.")
-	: DamageMechanismAssessment.fail("Ammonia compatibility", "ISO 11120 / EIGA guidance",
-	    normalizeSeverity(ammonia.getRiskLevel()), "Ammonia compatibility risk is " + ammonia.getRiskLevel() + ".",
-	    "Review material upgrade, O2 inhibitor, hardness, and stress relief.");
+        ? DamageMechanismAssessment.pass("Ammonia compatibility", "ISO 11120 / EIGA guidance",
+            "Ammonia compatibility risk is " + ammonia.getRiskLevel() + ".",
+            "Maintain inhibitor and stress-relief requirements.")
+        : DamageMechanismAssessment.fail("Ammonia compatibility", "ISO 11120 / EIGA guidance",
+            normalizeSeverity(ammonia.getRiskLevel()), "Ammonia compatibility risk is " + ammonia.getRiskLevel() + ".",
+            "Review material upgrade, O2 inhibitor, hardness, and stress relief.");
     assessment.addDetail("primaryMechanism", ammonia.getPrimaryMechanism());
     assessment.addDetail("recommendedMaterial", ammonia.getRecommendedMaterial());
     assessment.addDetail("requiredO2Inhibitor_wt_percent", ammonia.getRequiredO2InhibitorWtPct());
@@ -549,19 +549,19 @@ public class MaterialsReviewEngine {
       return;
     }
     InsulationType insulation = parseInsulation(
-	service.getString("insulation_type", service.getString("insulationType", "MINERAL_WOOL")));
+        service.getString("insulation_type", service.getString("insulationType", "MINERAL_WOOL")));
     CUIRisk risk = CUIRiskAssessment.assessRisk(temperatureC, looksStainless(material), insulation,
-	value(service, 0.0, "coating_age_years", "coatingAgeYears"),
-	service.getBoolean("marine_environment", service.getBoolean("marineEnvironment", false)));
+        value(service, 0.0, "coating_age_years", "coatingAgeYears"),
+        service.getBoolean("marine_environment", service.getBoolean("marineEnvironment", false)));
     String severity = risk == CUIRisk.VERY_HIGH ? "CRITICAL" : risk.name();
     String status = risk == CUIRisk.LOW ? "PASS" : (risk == CUIRisk.MEDIUM ? "WARNING" : "FAIL");
     result.addAssessment(new DamageMechanismAssessment("Corrosion under insulation", "API 581 / API 583 / NORSOK M-501",
-	status, normalizeSeverity(severity), "CUI screening risk is " + risk.name() + ".",
-	"Inspect every " + CUIRiskAssessment.recommendedInspectionIntervalYears(risk) + " years using "
-	    + CUIRiskAssessment.recommendedInspectionMethods(risk) + ".")
-	.addDetail("cuiRisk", risk.name()).addDetail("insulationType", insulation.name())
-	.addDetail("inspectionInterval_years", CUIRiskAssessment.recommendedInspectionIntervalYears(risk)).addDetail(
-	    "insulationSuitable", Boolean.valueOf(CUIRiskAssessment.isInsulationSuitable(insulation, temperatureC))));
+        status, normalizeSeverity(severity), "CUI screening risk is " + risk.name() + ".",
+        "Inspect every " + CUIRiskAssessment.recommendedInspectionIntervalYears(risk) + " years using "
+            + CUIRiskAssessment.recommendedInspectionMethods(risk) + ".")
+        .addDetail("cuiRisk", risk.name()).addDetail("insulationType", insulation.name())
+        .addDetail("inspectionInterval_years", CUIRiskAssessment.recommendedInspectionIntervalYears(risk)).addDetail(
+            "insulationSuitable", Boolean.valueOf(CUIRiskAssessment.isInsulationSuitable(insulation, temperatureC))));
   }
 
   /**
@@ -580,31 +580,31 @@ public class MaterialsReviewEngine {
     double sand = value(service, 0.0, "sand_mg_per_l", "sandMgL");
     if (velocity > 12.0 || sand > 10.0) {
       result.addAssessment(DamageMechanismAssessment
-	  .warning("Erosion-corrosion", "API RP 14E", velocity > 20.0 ? "HIGH" : "MEDIUM",
-	      "Velocity or sand loading indicates erosion-corrosion screening risk.",
-	      "Check erosional velocity, solids management, bends, reducers, and inspection locations.")
-	  .addDetail("velocity_m_per_s", velocity).addDetail("sand_mg_per_l", sand));
+          .warning("Erosion-corrosion", "API RP 14E", velocity > 20.0 ? "HIGH" : "MEDIUM",
+              "Velocity or sand loading indicates erosion-corrosion screening risk.",
+              "Check erosional velocity, solids management, bends, reducers, and inspection locations.")
+          .addDetail("velocity_m_per_s", velocity).addDetail("sand_mg_per_l", sand));
     }
     boolean stagnant = velocity < 0.3 || service.getBoolean("stagnant", false);
     if (freeWater && stagnant && temperatureC >= 5.0 && temperatureC <= 80.0) {
       result.addAssessment(DamageMechanismAssessment
-	  .warning("Microbiologically influenced corrosion", "NORSOK M-001 / AMPP guidance", "MEDIUM",
-	      "Free water and stagnant/moderate temperature conditions are favourable for MIC.",
-	      "Review biocide program, pigging/flushing, dead-leg register, and microbiological sampling.")
-	  .addDetail("stagnant", Boolean.valueOf(stagnant)).addDetail("temperature_C", temperatureC));
+          .warning("Microbiologically influenced corrosion", "NORSOK M-001 / AMPP guidance", "MEDIUM",
+              "Free water and stagnant/moderate temperature conditions are favourable for MIC.",
+              "Review biocide program, pigging/flushing, dead-leg register, and microbiological sampling.")
+          .addDetail("stagnant", Boolean.valueOf(stagnant)).addDetail("temperature_C", temperatureC));
     }
     if (service.getBoolean("dissimilar_metals", false)) {
       result.addAssessment(DamageMechanismAssessment
-	  .warning("Galvanic corrosion", "NORSOK M-001", "MEDIUM",
-	      "Dissimilar metals were identified in the supplied register.",
-	      "Verify electrical isolation, area ratio, coating continuity, and sacrificial protection.")
-	  .addDetail("baseMaterial", material)
-	  .addDetail("coupledMaterial", service.getString("coupled_material", "not specified")));
+          .warning("Galvanic corrosion", "NORSOK M-001", "MEDIUM",
+              "Dissimilar metals were identified in the supplied register.",
+              "Verify electrical isolation, area ratio, coating continuity, and sacrificial protection.")
+          .addDetail("baseMaterial", material)
+          .addDetail("coupledMaterial", service.getString("coupled_material", "not specified")));
     }
     if (service.getBoolean("cyclic_service", false) || service.getBoolean("vibration", false)) {
       result.addAssessment(DamageMechanismAssessment.warning("Fatigue and vibration", "DNV-RP-C203",
-	  chlorideMgL > 0.0 ? "HIGH" : "MEDIUM", "Cyclic service or vibration was indicated in the material register.",
-	  "Perform fatigue/FIV assessment, review supports, small-bore connections, and weld details."));
+          chlorideMgL > 0.0 ? "HIGH" : "MEDIUM", "Cyclic service or vibration was indicated in the material register.",
+          "Perform fatigue/FIV assessment, review supports, small-bore connections, and weld details."));
     }
   }
 
@@ -618,16 +618,16 @@ public class MaterialsReviewEngine {
   private void runIntegrityLife(MaterialServiceEnvelope service, MaterialReviewResult result,
       NorsokM506CorrosionRate co2Corrosion) {
     double nominal = value(service, Double.NaN, "nominal_wall_thickness_mm", "originalThicknessMm",
-	"nominalWallThicknessMm");
+        "nominalWallThicknessMm");
     double current = value(service, Double.NaN, "current_wall_thickness_mm", "currentThicknessMm");
     double minimum = value(service, Double.NaN, "minimum_required_thickness_mm", "minimumRequiredThicknessMm");
     double rate = value(service, co2Corrosion.getCorrectedCorrosionRate(), "corrosion_rate_mm_per_year",
-	"measuredCorrosionRateMmYr");
+        "measuredCorrosionRateMmYr");
     if (!Double.isNaN(nominal) && !Double.isNaN(current) && !Double.isNaN(minimum)) {
       result.setIntegrityLifeAssessment(IntegrityLifeAssessment.fromWallThickness(nominal, current, minimum, rate));
     } else {
       result.setIntegrityLifeAssessment(new IntegrityLifeAssessment().setVerdict("NOT_ASSESSED")
-	  .addNote("Wall thickness data were not sufficient for remaining-life calculation."));
+          .addNote("Wall thickness data were not sufficient for remaining-life calculation."));
     }
   }
 
@@ -672,7 +672,7 @@ public class MaterialsReviewEngine {
   private double value(MaterialServiceEnvelope service, double defaultValue, String... keys) {
     for (String key : keys) {
       if (service.has(key)) {
-	return service.getDouble(key, defaultValue);
+        return service.getDouble(key, defaultValue);
       }
     }
     return defaultValue;
@@ -725,7 +725,7 @@ public class MaterialsReviewEngine {
   private boolean looksStainless(String material) {
     String text = material == null ? "" : material.toLowerCase();
     return text.contains("stainless") || text.contains("316") || text.contains("304") || text.contains("duplex")
-	|| text.contains("22cr") || text.contains("25cr");
+        || text.contains("22cr") || text.contains("25cr");
   }
 
   /**
@@ -738,7 +738,7 @@ public class MaterialsReviewEngine {
     String text = insulation == null ? "" : insulation.trim().toUpperCase().replace('-', '_').replace(' ', '_');
     for (InsulationType type : InsulationType.values()) {
       if (type.name().equals(text)) {
-	return type;
+        return type;
       }
     }
     if (text.contains("CELL") || text.contains("FOAMGLAS")) {

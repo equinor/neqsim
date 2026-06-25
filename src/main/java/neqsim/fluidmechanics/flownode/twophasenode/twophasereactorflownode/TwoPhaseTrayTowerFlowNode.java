@@ -43,7 +43,7 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
     this.flowNodeType = "stratified";
     this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
     this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-	this);
+        this);
   }
 
   /**
@@ -59,7 +59,7 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
     this.flowNodeType = "stratified";
     this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
     this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-	this);
+        this);
   }
 
   /** {@inheritDoc} */
@@ -87,7 +87,7 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
   @Override
   public double calcContactLength() {
     double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
-	+ Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
+        + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
 
     wallContactLength[1] = phaseAngel * pipe.getDiameter();
     wallContactLength[0] = pi * pipe.getDiameter() - wallContactLength[1];
@@ -130,7 +130,7 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
      * testSystem.addComponent("water", 0.00862204876, 1);
      */
     SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3,
-	ThermodynamicConstantsInterface.referencePressure);
+        ThermodynamicConstantsInterface.referencePressure);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     PipeData pipe1 = new PipeData(10.0, 0.025);
 

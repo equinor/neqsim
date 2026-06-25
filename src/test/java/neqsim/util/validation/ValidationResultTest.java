@@ -118,7 +118,7 @@ class ValidationResultTest {
   @DisplayName("Exception getRemediation() - InvalidInputException provides hints")
   void testInvalidInputExceptionRemediation() {
     neqsim.util.exception.InvalidInputException ex = new neqsim.util.exception.InvalidInputException("TestClass",
-	"testMethod", "temperature", "must be positive");
+        "testMethod", "temperature", "must be positive");
 
     String remediation = ex.getRemediation();
 
@@ -130,7 +130,7 @@ class ValidationResultTest {
   @DisplayName("Exception getRemediation() - TooManyIterationsException provides hints")
   void testTooManyIterationsExceptionRemediation() {
     neqsim.util.exception.TooManyIterationsException ex = new neqsim.util.exception.TooManyIterationsException(
-	"TestClass", "testMethod", 100);
+        "TestClass", "testMethod", 100);
 
     String remediation = ex.getRemediation();
 
@@ -143,7 +143,7 @@ class ValidationResultTest {
   @DisplayName("Exception getRemediation() - IsNaNException provides hints")
   void testIsNaNExceptionRemediation() {
     neqsim.util.exception.IsNaNException ex = new neqsim.util.exception.IsNaNException("TestClass", "testMethod",
-	"compressibility");
+        "compressibility");
 
     String remediation = ex.getRemediation();
 
@@ -155,7 +155,7 @@ class ValidationResultTest {
   @DisplayName("Exception getRemediation() - InvalidOutputException provides context-specific hints")
   void testInvalidOutputExceptionRemediation() {
     neqsim.util.exception.InvalidOutputException ex = new neqsim.util.exception.InvalidOutputException("TestClass",
-	"testMethod", "temperature");
+        "testMethod", "temperature");
 
     String remediation = ex.getRemediation();
 
@@ -167,7 +167,7 @@ class ValidationResultTest {
   @DisplayName("Exception getRemediation() - NotInitializedException provides hints")
   void testNotInitializedExceptionRemediation() {
     neqsim.util.exception.NotInitializedException ex = new neqsim.util.exception.NotInitializedException("TestClass",
-	"testMethod", "thermoProperties", "init(1)");
+        "testMethod", "thermoProperties", "init(1)");
 
     String remediation = ex.getRemediation();
 

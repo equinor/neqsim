@@ -32,21 +32,21 @@ public class GasScrubberDesignStandard extends DesignStandard {
     super(name, equipmentInn);
 
     try (
-	neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase();
-	java.sql.ResultSet dataSet = database.getResultSet(
-	    ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Gas scrubber' AND Company='"
-		+ standardName + "'"))) {
+        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase();
+        java.sql.ResultSet dataSet = database.getResultSet(
+            ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Gas scrubber' AND Company='"
+                + standardName + "'"))) {
       while (dataSet.next()) {
-	String specName = dataSet.getString("SPECIFICATION");
-	if (specName.equals("GasLoadFactor")) {
-	  gasLoadFactor = Double.parseDouble(dataSet.getString("MAXVALUE"));
-	} else if (specName.equals("FlowDesignFactor")) {
-	  designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MAXVALUE"));
-	} else if (specName.equals("LengthGasInetToHHLL")) {
-	  designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MINVALUE"));
-	} else if (specName.equals("LengthMeshPadToDemistingCyclone")) {
-	  designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MINVALUE"));
-	}
+        String specName = dataSet.getString("SPECIFICATION");
+        if (specName.equals("GasLoadFactor")) {
+          gasLoadFactor = Double.parseDouble(dataSet.getString("MAXVALUE"));
+        } else if (specName.equals("FlowDesignFactor")) {
+          designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MAXVALUE"));
+        } else if (specName.equals("LengthGasInetToHHLL")) {
+          designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MINVALUE"));
+        } else if (specName.equals("LengthMeshPadToDemistingCyclone")) {
+          designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MINVALUE"));
+        }
       }
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);

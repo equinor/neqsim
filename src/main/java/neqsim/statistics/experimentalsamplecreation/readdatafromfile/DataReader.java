@@ -54,15 +54,15 @@ public class DataReader implements DataReaderInterface {
       long filepointer = 0;
       long length = file.length();
       for (int i = 0; i < 6; i++) {
-	file.readLine();
+        file.readLine();
       }
       do {
-	String s = file.readLine();
-	tokenizer = new StringTokenizer(s);
-	tokenizer.nextToken();
+        String s = file.readLine();
+        tokenizer = new StringTokenizer(s);
+        tokenizer.nextToken();
 
-	filepointer = file.getFilePointer();
-	tokenizer.nextToken();
+        filepointer = file.getFilePointer();
+        tokenizer.nextToken();
       } while (filepointer < length);
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);

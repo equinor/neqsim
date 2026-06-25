@@ -672,13 +672,13 @@ public class Hydrocyclone extends Separator {
     if (getInletStreams() != null && !getInletStreams().isEmpty()) {
       StreamInterface inlet = getInletStreams().get(0);
       if (inlet != null && inlet.getFluid() != null) {
-	SystemInterface fluid = inlet.getFluid();
-	try {
-	  double volM3s = fluid.getVolume("m3");
-	  feedFlowM3h = volM3s * 3600.0;
-	} catch (Exception ex) {
-	  // Use default
-	}
+        SystemInterface fluid = inlet.getFluid();
+        try {
+          double volM3s = fluid.getVolume("m3");
+          feedFlowM3h = volM3s * 3600.0;
+        } catch (Exception ex) {
+          // Use default
+        }
       }
     }
 
@@ -1078,14 +1078,14 @@ public class Hydrocyclone extends Separator {
 
     try {
       if (fluid.hasPhaseType("aqueous")) {
-	waterDensityKgm3 = fluid.getPhase("aqueous").getDensity("kg/m3");
-	waterViscosityPas = fluid.getPhase("aqueous").getViscosity("kg/msec");
-	if (waterViscosityPas <= 0.0) {
-	  waterViscosityPas = 1.0e-3;
-	}
+        waterDensityKgm3 = fluid.getPhase("aqueous").getDensity("kg/m3");
+        waterViscosityPas = fluid.getPhase("aqueous").getViscosity("kg/msec");
+        if (waterViscosityPas <= 0.0) {
+          waterViscosityPas = 1.0e-3;
+        }
       }
       if (fluid.hasPhaseType("oil")) {
-	oilDensityKgm3 = fluid.getPhase("oil").getDensity("kg/m3");
+        oilDensityKgm3 = fluid.getPhase("oil").getDensity("kg/m3");
       }
     } catch (Exception ex) {
       // Use defaults if property extraction fails
@@ -1225,13 +1225,13 @@ public class Hydrocyclone extends Separator {
 
     sb.append("--- Separation Performance ---\n");
     sb.append(String.format("d50 cut size:         %.1f microns%s\n", d50Microns,
-	d50UserSet ? " (user-set)" : " (calculated)"));
+        d50UserSet ? " (user-set)" : " (calculated)"));
     if (!d50UserSet) {
       sb.append(String.format("  Calc d50 (Stokes):  %.1f microns\n", calculatedD50));
     }
     sb.append(String.format("Sharpness index n:    %.1f\n", sharpnessIndex));
     sb.append(String.format("Oil removal eff:      %.1f%%%s\n", oilRemovalEfficiency * 100.0,
-	efficiencyUserSet ? " (user-set)" : " (calculated)"));
+        efficiencyUserSet ? " (user-set)" : " (calculated)"));
     if (!efficiencyUserSet) {
       sb.append(String.format("  DSD efficiency:     %.1f%%\n", calculatedEfficiency * 100.0));
       sb.append(String.format("  PDR eff. factor:    %.3f\n", getPDREfficiencyFactor()));
@@ -1240,7 +1240,7 @@ public class Hydrocyclone extends Separator {
 
     sb.append("--- Pressure & PDR ---\n");
     sb.append(String.format("Pressure drop:        %.1f bar (min: %.1f, recommended: %.1f)\n", pressureDrop,
-	MIN_DESIGN_DP_BAR, RECOMMENDED_DP_BAR));
+        MIN_DESIGN_DP_BAR, RECOMMENDED_DP_BAR));
     sb.append(String.format("dP adequate:          %s\n", isDifferentialPressureAdequate() ? "OK" : "INSUFFICIENT"));
     sb.append(String.format("PDR:                  %.2f\n", pdr));
     sb.append(String.format("Reject ratio:         %.1f%%\n", rejectRatio * 100.0));
@@ -1250,7 +1250,7 @@ public class Hydrocyclone extends Separator {
     sb.append(String.format("Inlet OIW:            %.0f mg/L\n", inletOilMgL));
     sb.append(String.format("Outlet OIW:           %.0f mg/L\n", outletOilMgL));
     sb.append(String.format("OSPAR compliant:      %s (limit: %.0f mg/L)\n", isOSPARCompliant() ? "YES" : "NO",
-	OSPAR_OIW_LIMIT_MGL));
+        OSPAR_OIW_LIMIT_MGL));
     sb.append('\n');
 
     sb.append("--- Fluid Properties ---\n");

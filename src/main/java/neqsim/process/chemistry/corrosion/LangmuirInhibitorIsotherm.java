@@ -15,6 +15,7 @@ import com.google.gson.GsonBuilder;
  * theta = (K_ads * C) / (1 + K_ads * C)
  * </pre>
  *
+ * <p>
  * where {@code C} is the inhibitor concentration in the bulk aqueous phase (mol/L) and {@code K_ads} is the adsorption
  * equilibrium constant. The temperature dependence of {@code K_ads} follows the van 't Hoff equation
  *
@@ -22,6 +23,7 @@ import com.google.gson.GsonBuilder;
  * K_ads(T) = K_ads_ref * exp(-dHads / R * (1 / T - 1 / T_ref))
  * </pre>
  *
+ * <p>
  * with adsorption enthalpy {@code dHads} typically in the range -20 to -60 kJ/mol for physisorption of imidazoline /
  * quaternary-ammonium inhibitors on carbon steel (Bentiss et al., 2002; Khaled, 2008).
  *

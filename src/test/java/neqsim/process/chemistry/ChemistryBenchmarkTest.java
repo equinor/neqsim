@@ -33,11 +33,11 @@ public class ChemistryBenchmarkTest {
     while ((line = r.readLine()) != null) {
       String t = line.trim();
       if (t.isEmpty() || t.startsWith("#")) {
-	continue;
+        continue;
       }
       if (header) {
-	header = false;
-	continue;
+        header = false;
+        continue;
       }
       rows.add(t.split(","));
     }
@@ -73,12 +73,12 @@ public class ChemistryBenchmarkTest {
       double rate = dw.calculateBaselineRate();
       // Wide order-of-magnitude tolerance for baseline (uninhibited, no scale correction)
       if (Math.abs(rate - ref) <= tol * 5.0 || (rate >= ref / 10.0 && rate <= ref * 10.0)) {
-	passed++;
+        passed++;
       }
     }
     assertTrue(passed >= rows.size() / 2,
-	"at least half the De Waard cases should fall within order-of-magnitude tolerance: " + passed + "/"
-	    + rows.size());
+        "at least half the De Waard cases should fall within order-of-magnitude tolerance: " + passed + "/"
+            + rows.size());
   }
 
   /**
@@ -121,10 +121,10 @@ public class ChemistryBenchmarkTest {
       double siCaCO3 = sc.getCaCO3SaturationIndex();
       double siBaSO4 = sc.getBaSO4SaturationIndex();
       if (Math.signum(siCaCO3) == Math.signum(refCaCO3SI) || Math.abs(siCaCO3 - refCaCO3SI) < 1.5) {
-	caCO3SignMatches++;
+        caCO3SignMatches++;
       }
       if (Math.signum(siBaSO4) == Math.signum(refBaSO4SI) || Math.abs(siBaSO4 - refBaSO4SI) < 1.5) {
-	baSO4SignMatches++;
+        baSO4SignMatches++;
       }
     }
     int threshold = (int) Math.ceil(rows.size() * 0.5);

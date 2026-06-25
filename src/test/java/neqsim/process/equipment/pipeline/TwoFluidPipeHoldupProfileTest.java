@@ -1,13 +1,13 @@
 package neqsim.process.equipment.pipeline;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Test to verify that TwoFluidPipe liquid holdup profile trends correctly.
@@ -85,7 +85,7 @@ public class TwoFluidPipeHoldupProfileTest {
     double inletPressure = pressureProfile[0];
     double outletPressure = pressureProfile[pressureProfile.length - 1];
     assertTrue(inletPressure > outletPressure, "Pressure should decrease along the pipe. Inlet: " + inletPressure / 1e5
-	+ " bara, Outlet: " + outletPressure / 1e5 + " bara");
+        + " bara, Outlet: " + outletPressure / 1e5 + " bara");
 
     // Calculate average holdup in first quarter vs last quarter
     int n = holdupProfile.length;
@@ -115,14 +115,14 @@ public class TwoFluidPipeHoldupProfileTest {
     int step = Math.max(1, n / 10);
     for (int i = 0; i < n; i += step) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "  Section %d: P=%.1f bara, HL=%.2f%%\n", i,
-	  pressureProfile[i] / 1e5, holdupProfile[i] * 100);
+          pressureProfile[i] / 1e5, holdupProfile[i] * 100);
     }
 
     // Holdup should increase toward outlet (as gas expands and slows down relatively)
     // Allow for small variation but trend should be clear
     assertTrue(avgHoldupLastQuarter >= avgHoldupFirstQuarter * 0.95,
-	"Holdup should increase or stay roughly constant toward outlet. " + "First quarter avg: "
-	    + (avgHoldupFirstQuarter * 100) + "%, " + "Last quarter avg: " + (avgHoldupLastQuarter * 100) + "%");
+        "Holdup should increase or stay roughly constant toward outlet. " + "First quarter avg: "
+            + (avgHoldupFirstQuarter * 100) + "%, " + "Last quarter avg: " + (avgHoldupLastQuarter * 100) + "%");
   }
 
   /**
@@ -178,7 +178,7 @@ public class TwoFluidPipeHoldupProfileTest {
       double outletP = tfPipe.getOutletStream().getPressure("bara");
       double error = targetOutletP - outletP;
       if (Math.abs(error) < 0.5) {
-	break;
+        break;
       }
       tfInlet.setPressure(tfInlet.getPressure("bara") + error * 0.6, "bara");
       tfInlet.run();
@@ -212,7 +212,7 @@ public class TwoFluidPipeHoldupProfileTest {
       double outletP = bbPipe.getOutletStream().getPressure("bara");
       double error = targetOutletP - outletP;
       if (Math.abs(error) < 0.5) {
-	break;
+        break;
       }
       bbInlet.setPressure(bbInlet.getPressure("bara") + error * 0.6, "bara");
       bbInlet.run();
@@ -246,7 +246,7 @@ public class TwoFluidPipeHoldupProfileTest {
     // For gas-dominant horizontal flow, both should show INCREASING holdup toward outlet
     boolean sameTrend = (tfTrend > 0 && bbTrend > 0) || (tfTrend < 0 && bbTrend < 0);
     assertTrue(sameTrend, "TwoFluidPipe and Beggs & Brills should have the same holdup trend. " + "TF trend: " + tfTrend
-	+ ", BB trend: " + bbTrend);
+        + ", BB trend: " + bbTrend);
   }
 
   /**
@@ -305,7 +305,7 @@ public class TwoFluidPipeHoldupProfileTest {
     tfFluid.setTemperature(inletTempC, "C");
     tfFluid.setPressure(targetOutletP + 35, "bara");
     neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	tfFluid);
+        tfFluid);
     ops.TPflash();
     logger.info("\nFlash at inlet conditions:");
     logger.info("  Phases: " + tfFluid.getNumberOfPhases());
@@ -315,7 +315,7 @@ public class TwoFluidPipeHoldupProfileTest {
       double lambdaL = 1.0 - volGas / volTotal;
       double rhoG = tfFluid.getPhase("gas").getDensity("kg/m3");
       double rhoL = tfFluid.hasPhaseType("oil") ? tfFluid.getPhase("oil").getDensity("kg/m3")
-	  : tfFluid.getPhase("aqueous").getDensity("kg/m3");
+          : tfFluid.getPhase("aqueous").getDensity("kg/m3");
       logger.info("  Gas vol: " + volGas + " m³, Total vol: " + volTotal + " m³");
       logger.info("  No-slip liquid fraction (λL): " + (lambdaL * 100) + "%");
       logger.info("  Gas density: " + rhoG + " kg/m³, Liquid density: " + rhoL + " kg/m³");
@@ -353,7 +353,7 @@ public class TwoFluidPipeHoldupProfileTest {
       double outletP = tfPipe.getOutletStream().getPressure("bara");
       double error = targetOutletP - outletP;
       if (Math.abs(error) < 0.3) {
-	break;
+        break;
       }
       tfInlet.setPressure(tfInlet.getPressure("bara") + error * 0.5, "bara");
       tfInlet.run();
@@ -387,7 +387,7 @@ public class TwoFluidPipeHoldupProfileTest {
       double outletP = bbPipe.getOutletStream().getPressure("bara");
       double error = targetOutletP - outletP;
       if (Math.abs(error) < 0.3) {
-	break;
+        break;
       }
       bbInlet.setPressure(bbInlet.getPressure("bara") + error * 0.5, "bara");
       bbInlet.run();
@@ -415,7 +415,7 @@ public class TwoFluidPipeHoldupProfileTest {
     logger.info("  Inlet holdup: " + (tfInletHL * 100) + "%");
     logger.info("  Outlet holdup: " + (tfOutletHL * 100) + "%");
     logger.info("  Trend: " + (tfTrend > 0 ? "INCREASING ✓" : "DECREASING ✗") + " ("
-	+ String.format("%.2f", tfTrend * 100) + "%)");
+        + String.format("%.2f", tfTrend * 100) + "%)");
 
     logger.info("\nBeggs & Brills:");
     logger.info("  Inlet P: " + bbInlet.getPressure("bara") + " bara");
@@ -423,7 +423,7 @@ public class TwoFluidPipeHoldupProfileTest {
     logger.info("  Inlet holdup: " + (bbInletHL * 100) + "%");
     logger.info("  Outlet holdup: " + (bbOutletHL * 100) + "%");
     logger.info("  Trend: " + (bbTrend > 0 ? "INCREASING ✓" : "DECREASING ✗") + " ("
-	+ String.format("%.2f", bbTrend * 100) + "%)");
+        + String.format("%.2f", bbTrend * 100) + "%)");
 
     // Profile samples
     logger.info("\nTwoFluidPipe profile samples (x, HL%):");
@@ -440,7 +440,7 @@ public class TwoFluidPipeHoldupProfileTest {
     for (int i = 0; i < Math.min(10, tfN); i += 3) {
       double x = i * pipeLength / numSections / 1000.0;
       logger.printf(org.apache.logging.log4j.Level.INFO, "  %.0f km: Oil=%.2f%%, Water=%.2f%%, Sum=%.2f%%\n", x,
-	  oilHoldup[i] * 100, waterHoldup[i] * 100, (oilHoldup[i] + waterHoldup[i]) * 100);
+          oilHoldup[i] * 100, waterHoldup[i] * 100, (oilHoldup[i] + waterHoldup[i]) * 100);
     }
 
     // Print flow regimes
@@ -448,17 +448,17 @@ public class TwoFluidPipeHoldupProfileTest {
     neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime[] regimes = tfPipe.getFlowRegimeProfile();
     if (regimes != null) {
       logger.info("  First 5: "
-	  + java.util.Arrays.toString(java.util.Arrays.copyOfRange(regimes, 0, Math.min(5, regimes.length))));
+          + java.util.Arrays.toString(java.util.Arrays.copyOfRange(regimes, 0, Math.min(5, regimes.length))));
     }
 
     // Both should have same trend direction
     boolean sameTrend = (tfTrend >= 0 && bbTrend >= 0) || (tfTrend < 0 && bbTrend < 0);
 
     assertTrue(sameTrend, "TwoFluidPipe and Beggs & Brills should have same holdup trend direction. " + "TF: "
-	+ String.format("%.2f", tfTrend * 100) + "%, BB: " + String.format("%.2f", bbTrend * 100) + "%");
+        + String.format("%.2f", tfTrend * 100) + "%, BB: " + String.format("%.2f", bbTrend * 100) + "%");
 
     // TwoFluidPipe should not decrease significantly
     assertTrue(tfTrend >= -0.03, "TwoFluidPipe holdup should not decrease more than 3%. Actual trend: "
-	+ String.format("%.2f", tfTrend * 100) + "%");
+        + String.format("%.2f", tfTrend * 100) + "%");
   }
 }

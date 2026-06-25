@@ -2,6 +2,8 @@ package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.separator.Separator;
@@ -12,8 +14,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class SingleComponentFlash {
   private static final Logger logger = LogManager.getLogger(SingleComponentFlash.class);
@@ -220,7 +220,7 @@ public class SingleComponentFlash {
     // liquidValve.getOutletStream().getFluid().prettyPrint();
 
     double initialOut = gasValve.getOutletStream().getFlowRate("kg/hr")
-	+ liquidValve.getOutletStream().getFlowRate("kg/hr");
+        + liquidValve.getOutletStream().getFlowRate("kg/hr");
     assertEquals(feed.getFlowRate("kg/hr"), initialOut, feed.getFlowRate("kg/hr") * 1e-6);
 
     // close inlet valve and run dynamic simulation
@@ -244,8 +244,8 @@ public class SingleComponentFlash {
       time[i] = process.getTime();
       temp[i] = separator.getThermoSystem().getTemperature("C");
       logger.info("time " + time[i] + " temp " + temp[i] + " sep height " + separator.getLiquidLevel() + " flow rate "
-	  + feedValve.getOutletStream().getFlowRate("kg/hr") + " pressure " + feedValve.getOutletStream().getPressure()
-	  + " temp_out " + liquidValve.getOutletStream().getTemperature("C"));
+          + feedValve.getOutletStream().getFlowRate("kg/hr") + " pressure " + feedValve.getOutletStream().getPressure()
+          + " temp_out " + liquidValve.getOutletStream().getTemperature("C"));
     }
 
     feedValve.setPercentValveOpening(50.0);
@@ -254,13 +254,13 @@ public class SingleComponentFlash {
       time[i] = process.getTime();
       temp[i] = separator.getThermoSystem().getTemperature("C");
       logger.info("time " + time[i] + " temp " + temp[i] + " sep height " + separator.getLiquidLevel() + " flow rate "
-	  + feedValve.getOutletStream().getFlowRate("kg/hr") + " pressure " + feedValve.getOutletStream().getPressure()
-	  + " temp_out " + liquidValve.getOutletStream().getTemperature("C"));
+          + feedValve.getOutletStream().getFlowRate("kg/hr") + " pressure " + feedValve.getOutletStream().getPressure()
+          + " temp_out " + liquidValve.getOutletStream().getTemperature("C"));
     }
 
     // liquidValve.getOutletStream().getFluid().prettyPrint();
     double finalOut = gasValve.getOutletStream().getFlowRate("kg/hr")
-	+ liquidValve.getOutletStream().getFlowRate("kg/hr");
+        + liquidValve.getOutletStream().getFlowRate("kg/hr");
     // assertTrue(finalOut < initialOut);
     // assertTrue(finalOut > 0.0);
   }

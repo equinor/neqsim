@@ -4,9 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.Test;
-
 import neqsim.process.chemistry.rca.RootCauseAnalyser;
 import neqsim.process.chemistry.rca.RootCauseCandidate;
 import neqsim.process.chemistry.rca.Symptom;
@@ -70,7 +68,7 @@ public class ChemistryRcaAndScaleControlTest {
     rca.setCalciumMgL(2500.0);
     rca.setCO2PartialPressureBar(2.0);
     rca.addSymptom(new Symptom(Symptom.Category.DEPOSIT, "White crystalline scale found in cooler tubes")
-	.withMeasurement("depositMassGrams", 250.0));
+        .withMeasurement("depositMassGrams", 250.0));
     rca.analyse();
 
     assertTrue(rca.isEvaluated());
@@ -92,7 +90,7 @@ public class ChemistryRcaAndScaleControlTest {
     rca.setCO2PartialPressureBar(3.0);
     rca.setMaterial("carbon_steel");
     rca.addSymptom(new Symptom(Symptom.Category.CORROSION, "Internal wall thinning observed in flowline")
-	.withMeasurement("corrosionRateMmYr", 1.2));
+        .withMeasurement("corrosionRateMmYr", 1.2));
     rca.analyse();
 
     RootCauseCandidate primary = rca.getPrimary();
@@ -109,14 +107,14 @@ public class ChemistryRcaAndScaleControlTest {
     rca.setOxygenPpb(800.0);
     rca.setMaterial("carbon_steel");
     rca.addSymptom(new Symptom(Symptom.Category.CORROSION, "Pitting found at injection line")
-	.withMeasurement("corrosionRateMmYr", 0.8));
+        .withMeasurement("corrosionRateMmYr", 0.8));
     rca.analyse();
 
     boolean foundOxygen = false;
     for (RootCauseCandidate c : rca.getCandidates()) {
       if ("OXYGEN_CORROSION".equals(c.getCode())) {
-	foundOxygen = true;
-	assertTrue(c.getScore() > 0.4);
+        foundOxygen = true;
+        assertTrue(c.getScore() > 0.4);
       }
     }
     assertTrue(foundOxygen, "Oxygen corrosion should be flagged at 800 ppb O2");
@@ -129,7 +127,7 @@ public class ChemistryRcaAndScaleControlTest {
   public void rcaFlagsScavengerBreakthrough() {
     RootCauseAnalyser rca = new RootCauseAnalyser();
     rca.addSymptom(new Symptom(Symptom.Category.H2S_BREAKTHROUGH, "H2S detected at sales gas above 4 ppm target")
-	.withMeasurement("h2sPpm", 12.0));
+        .withMeasurement("h2sPpm", 12.0));
     rca.analyse();
 
     RootCauseCandidate primary = rca.getPrimary();
@@ -161,7 +159,7 @@ public class ChemistryRcaAndScaleControlTest {
     boolean foundIncompat = false;
     for (RootCauseCandidate c : rca.getCandidates()) {
       if ("CHEMICAL_INCOMPATIBILITY".equals(c.getCode()) || "CHEMICAL_CAUTION".equals(c.getCode())) {
-	foundIncompat = true;
+        foundIncompat = true;
       }
     }
     // Whether it triggers depends on the loaded rules — but assessor should have produced a

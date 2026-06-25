@@ -140,18 +140,18 @@ public class ProcessSimulationSession {
 
     if (timeoutMinutes > 0) {
       cleanupExecutor = Executors.newSingleThreadScheduledExecutor(new java.util.concurrent.ThreadFactory() {
-	@Override
-	public Thread newThread(Runnable r) {
-	  Thread t = new Thread(r, "neqsim-session-cleanup");
-	  t.setDaemon(true);
-	  return t;
-	}
+        @Override
+        public Thread newThread(Runnable r) {
+          Thread t = new Thread(r, "neqsim-session-cleanup");
+          t.setDaemon(true);
+          return t;
+        }
       });
       cleanupExecutor.scheduleAtFixedRate(new Runnable() {
-	@Override
-	public void run() {
-	  cleanupExpiredSessions();
-	}
+        @Override
+        public void run() {
+          cleanupExpiredSessions();
+        }
       }, timeoutMinutes, Math.max(1, timeoutMinutes / 2), TimeUnit.MINUTES);
     }
   }
@@ -212,8 +212,8 @@ public class ProcessSimulationSession {
     if (sessions.size() >= maxSessions) {
       cleanupExpiredSessions();
       if (sessions.size() >= maxSessions) {
-	throw new IllegalStateException("Maximum number of sessions (" + maxSessions + ") reached. "
-	    + "Destroy existing sessions or increase the limit.");
+        throw new IllegalStateException("Maximum number of sessions (" + maxSessions + ") reached. "
+            + "Destroy existing sessions or increase the limit.");
       }
     }
 
@@ -239,7 +239,7 @@ public class ProcessSimulationSession {
     if (sessions.size() >= maxSessions) {
       cleanupExpiredSessions();
       if (sessions.size() >= maxSessions) {
-	throw new IllegalStateException("Maximum number of sessions (" + maxSessions + ") reached.");
+        throw new IllegalStateException("Maximum number of sessions (" + maxSessions + ") reached.");
       }
     }
 
@@ -260,8 +260,8 @@ public class ProcessSimulationSession {
     if (sessions.size() >= maxSessions) {
       cleanupExpiredSessions();
       if (sessions.size() >= maxSessions) {
-	return SimulationResult.error("MAX_SESSIONS", "Maximum number of sessions (" + maxSessions + ") reached",
-	    "Destroy existing sessions or increase the limit");
+        return SimulationResult.error("MAX_SESSIONS", "Maximum number of sessions (" + maxSessions + ") reached",
+            "Destroy existing sessions or increase the limit");
       }
     }
 
@@ -393,9 +393,9 @@ public class ProcessSimulationSession {
     int removed = 0;
     for (Map.Entry<String, SessionEntry> entry : sessions.entrySet()) {
       if (entry.getValue().isExpired(timeoutMs)) {
-	sessions.remove(entry.getKey());
-	removed++;
-	logger.info("Expired session '{}'", entry.getKey());
+        sessions.remove(entry.getKey());
+        removed++;
+        logger.info("Expired session '{}'", entry.getKey());
       }
     }
     return removed;

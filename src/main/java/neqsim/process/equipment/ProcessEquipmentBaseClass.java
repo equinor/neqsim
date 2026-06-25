@@ -375,7 +375,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
     int result = 1;
     result = prime * result + Arrays.deepHashCode(report);
     result = prime * result + Objects.hash(conditionAnalysisMessage, controller, controllerMap, energyStream,
-	flowValveController, hasController, isSetEnergyStream, name, properties, specification);
+        flowValveController, hasController, isSetEnergyStream, name, properties, specification);
     return result;
   }
 
@@ -393,12 +393,12 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
     }
     ProcessEquipmentBaseClass other = (ProcessEquipmentBaseClass) obj;
     return Objects.equals(conditionAnalysisMessage, other.conditionAnalysisMessage)
-	&& Objects.equals(controller, other.controller) && Objects.equals(controllerMap, other.controllerMap)
-	&& Objects.equals(energyStream, other.energyStream)
-	&& Objects.equals(flowValveController, other.flowValveController) && hasController == other.hasController
-	&& isSetEnergyStream == other.isSetEnergyStream && Objects.equals(name, other.name)
-	&& Objects.equals(properties, other.properties) && Arrays.deepEquals(report, other.report)
-	&& Objects.equals(specification, other.specification);
+        && Objects.equals(controller, other.controller) && Objects.equals(controllerMap, other.controllerMap)
+        && Objects.equals(energyStream, other.energyStream)
+        && Objects.equals(flowValveController, other.flowValveController) && hasController == other.hasController
+        && isSetEnergyStream == other.isSetEnergyStream && Objects.equals(name, other.name)
+        && Objects.equals(properties, other.properties) && Arrays.deepEquals(report, other.report)
+        && Objects.equals(specification, other.specification);
   }
 
   /** {@inheritDoc} */
@@ -535,15 +535,15 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
     }
     for (neqsim.process.equipment.stream.StreamInterface outlet : outlets) {
       if (outlet == null) {
-	continue;
+        continue;
       }
       try {
-	outlet.getThermoSystem().setTotalFlowRate(0.0, "kg/hr");
-	outlet.setCalculationIdentifier(id);
+        outlet.getThermoSystem().setTotalFlowRate(0.0, "kg/hr");
+        outlet.setCalculationIdentifier(id);
       } catch (NullPointerException ex) {
-	logger.debug(
-	    "Could not propagate zero flow from inactive '" + getName() + "' (outlet has no thermo system attached)",
-	    ex);
+        logger.debug(
+            "Could not propagate zero flow from inactive '" + getName() + "' (outlet has no thermo system attached)",
+            ex);
       }
     }
   }
@@ -793,15 +793,15 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
     try {
       MechanicalDesign design = getMechanicalDesign();
       if (design != null) {
-	List<CapacityConstraint> derived = design.getDesignCapacityConstraints();
-	if (derived != null) {
-	  for (CapacityConstraint constraint : derived) {
-	    if (constraint != null) {
-	      addCapacityConstraint(constraint);
-	      added++;
-	    }
-	  }
-	}
+        List<CapacityConstraint> derived = design.getDesignCapacityConstraints();
+        if (derived != null) {
+          for (CapacityConstraint constraint : derived) {
+            if (constraint != null) {
+              addCapacityConstraint(constraint);
+              added++;
+            }
+          }
+        }
       }
     } catch (RuntimeException ex) {
       logger.debug("Could not derive mechanical-design capacity constraints", ex);
@@ -817,11 +817,11 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
     double maxUtil = -1.0;
     for (CapacityConstraint c : capacityConstraints.values()) {
       if (c.isEnabled()) {
-	double util = c.getUtilization();
-	if (util > maxUtil) {
-	  maxUtil = util;
-	  bottleneck = c;
-	}
+        double util = c.getUtilization();
+        if (util > maxUtil) {
+          maxUtil = util;
+          bottleneck = c;
+        }
       }
     }
     return bottleneck;
@@ -833,7 +833,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
     ensureCapacityConstraintsInitialized();
     for (CapacityConstraint c : capacityConstraints.values()) {
       if (c.isEnabled() && c.isViolated()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -845,7 +845,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
     ensureCapacityConstraintsInitialized();
     for (CapacityConstraint c : capacityConstraints.values()) {
       if (c.isEnabled() && c.isHardLimitExceeded()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -858,10 +858,10 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
     double maxUtil = 0.0;
     for (CapacityConstraint c : capacityConstraints.values()) {
       if (c.isEnabled()) {
-	double util = c.getUtilization();
-	if (util > maxUtil) {
-	  maxUtil = util;
-	}
+        double util = c.getUtilization();
+        if (util > maxUtil) {
+          maxUtil = util;
+        }
       }
     }
     return maxUtil;
@@ -891,7 +891,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
     ensureCapacityConstraintsInitialized();
     for (CapacityConstraint c : capacityConstraints.values()) {
       if (c.isEnabled() && c.isNearLimit()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -905,7 +905,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
     for (Map.Entry<String, CapacityConstraint> entry : capacityConstraints.entrySet()) {
       CapacityConstraint c = entry.getValue();
       if (c.isEnabled()) {
-	summary.put(entry.getKey(), c.getUtilization() * 100.0);
+        summary.put(entry.getKey(), c.getUtilization() * 100.0);
       }
     }
     return summary;
@@ -928,14 +928,14 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
     for (Map.Entry<String, CapacityConstraint> entry : capacityConstraints.entrySet()) {
       CapacityConstraint c = entry.getValue();
       if (c.isEnabled()) {
-	sb.append("  ").append(entry.getKey());
-	sb.append(": ").append(String.format("%.1f%%", c.getUtilization() * 100.0));
-	if (c.isViolated()) {
-	  sb.append(" [VIOLATED]");
-	} else if (c.isNearLimit()) {
-	  sb.append(" [WARNING]");
-	}
-	sb.append("\n");
+        sb.append("  ").append(entry.getKey());
+        sb.append(": ").append(String.format("%.1f%%", c.getUtilization() * 100.0));
+        if (c.isViolated()) {
+          sb.append(" [VIOLATED]");
+        } else if (c.isNearLimit()) {
+          sb.append(" [WARNING]");
+        }
+        sb.append("\n");
       }
     }
     return sb.toString();

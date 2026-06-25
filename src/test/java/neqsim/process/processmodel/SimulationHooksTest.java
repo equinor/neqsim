@@ -58,32 +58,32 @@ class SimulationHooksTest {
     process.setProgressListener(new ProcessSystem.SimulationProgressListener() {
       @Override
       public void onSimulationStart(int totalUnits) {
-	events.add("SIM_START:" + totalUnits);
+        events.add("SIM_START:" + totalUnits);
       }
 
       @Override
       public void onBeforeIteration(int iterationNumber) {
-	events.add("BEFORE_ITER:" + iterationNumber);
+        events.add("BEFORE_ITER:" + iterationNumber);
       }
 
       @Override
       public void onBeforeUnit(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber) {
-	events.add("BEFORE_UNIT:" + unit.getName());
+        events.add("BEFORE_UNIT:" + unit.getName());
       }
 
       @Override
       public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber) {
-	events.add("AFTER_UNIT:" + unit.getName());
+        events.add("AFTER_UNIT:" + unit.getName());
       }
 
       @Override
       public void onIterationComplete(int iterationNumber, boolean converged, double recycleError) {
-	events.add("AFTER_ITER:" + iterationNumber + ":converged=" + converged);
+        events.add("AFTER_ITER:" + iterationNumber + ":converged=" + converged);
       }
 
       @Override
       public void onSimulationComplete(int totalIterations, boolean converged) {
-	events.add("SIM_COMPLETE:" + totalIterations + ":converged=" + converged);
+        events.add("SIM_COMPLETE:" + totalIterations + ":converged=" + converged);
       }
     });
 
@@ -121,12 +121,12 @@ class SimulationHooksTest {
     process.setProgressListener(new ProcessSystem.SimulationProgressListener() {
       @Override
       public void onBeforeUnit(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber) {
-	events.add("BEFORE:" + unit.getName());
+        events.add("BEFORE:" + unit.getName());
       }
 
       @Override
       public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber) {
-	events.add("AFTER:" + unit.getName());
+        events.add("AFTER:" + unit.getName());
       }
     });
 
@@ -161,7 +161,7 @@ class SimulationHooksTest {
     ProcessEventListener listener = new ProcessEventListener() {
       @Override
       public void onEvent(ProcessEvent event) {
-	captured.add(event);
+        captured.add(event);
       }
     };
 
@@ -172,7 +172,7 @@ class SimulationHooksTest {
       // Should have received at least start and complete events
       assertFalse(captured.isEmpty(), "Should have captured events via event bus");
       assertTrue(captured.stream().anyMatch(e -> e.getType() == ProcessEvent.EventType.SIMULATION_COMPLETE),
-	  "Should have a SIMULATION_COMPLETE event");
+          "Should have a SIMULATION_COMPLETE event");
     } finally {
       bus.unsubscribe(listener);
       bus.clearHistory();
@@ -195,7 +195,7 @@ class SimulationHooksTest {
     ProcessEventListener listener = new ProcessEventListener() {
       @Override
       public void onEvent(ProcessEvent event) {
-	captured.add(event);
+        captured.add(event);
       }
     };
 
@@ -240,7 +240,7 @@ class SimulationHooksTest {
     bus.subscribe(new ProcessEventListener() {
       @Override
       public void onEvent(ProcessEvent event) {
-	captured.add(event);
+        captured.add(event);
       }
     });
 
@@ -248,7 +248,7 @@ class SimulationHooksTest {
 
     // Should have completed successfully
     assertTrue(captured.stream().anyMatch(e -> e.getType() == ProcessEvent.EventType.SIMULATION_COMPLETE),
-	"Should have a SIMULATION_COMPLETE event");
+        "Should have a SIMULATION_COMPLETE event");
 
     bus.clearHistory();
   }
@@ -268,7 +268,7 @@ class SimulationHooksTest {
     ProcessEventListener listener = new ProcessEventListener() {
       @Override
       public void onEvent(ProcessEvent event) {
-	completionEvents.add(event);
+        completionEvents.add(event);
       }
     };
 
@@ -280,8 +280,8 @@ class SimulationHooksTest {
       // Should only have SIMULATION_COMPLETE events
       assertFalse(completionEvents.isEmpty(), "Should have captured SIMULATION_COMPLETE events");
       for (ProcessEvent event : completionEvents) {
-	assertEquals(ProcessEvent.EventType.SIMULATION_COMPLETE, event.getType(),
-	    "All captured events should be SIMULATION_COMPLETE");
+        assertEquals(ProcessEvent.EventType.SIMULATION_COMPLETE, event.getType(),
+            "All captured events should be SIMULATION_COMPLETE");
       }
     } finally {
       bus.unsubscribe(ProcessEvent.EventType.SIMULATION_COMPLETE, listener);
@@ -302,7 +302,7 @@ class SimulationHooksTest {
     process.setProgressListener(new ProcessSystem.SimulationProgressListener() {
       @Override
       public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber) {
-	events.add("COMPLETE:" + unit.getName());
+        events.add("COMPLETE:" + unit.getName());
       }
     });
 

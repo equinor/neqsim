@@ -1,13 +1,13 @@
 package neqsim.process.equipment.reactor;
 
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for the enhanced Gibbs reactor algorithmic features: Armijo backtracking line search, Tikhonov regularization,
@@ -70,12 +70,12 @@ public class GibbsReactorAlgorithmTest {
     double zCO2_armijo = outArmijo.getComponent("CO2").getz();
     double zCO2_fixed = outFixed.getComponent("CO2").getz();
     Assertions.assertEquals(zCO2_fixed, zCO2_armijo, 0.01,
-	"CO2 mole fraction should match between Armijo and fixed damping");
+        "CO2 mole fraction should match between Armijo and fixed damping");
 
     double zH2O_armijo = outArmijo.getComponent("water").getz();
     double zH2O_fixed = outFixed.getComponent("water").getz();
     Assertions.assertEquals(zH2O_fixed, zH2O_armijo, 0.01,
-	"Water mole fraction should match between Armijo and fixed damping");
+        "Water mole fraction should match between Armijo and fixed damping");
 
     // Mass balance should be conserved for both
     Assertions.assertTrue(reactorArmijo.getMassBalanceConverged(), "Armijo reactor mass balance should converge");

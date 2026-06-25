@@ -59,9 +59,9 @@ public class TPgradientFlashTest {
     double deltaT = 0.5;
     for (int i = 0; i < 10; i++) {
       try {
-	newSystem = testOps.TPgradientFlash(i * deltaHeight, temperature + i * deltaT);
+        newSystem = testOps.TPgradientFlash(i * deltaHeight, temperature + i * deltaT);
       } catch (Exception ex) {
-	logger.error(ex.getMessage(), ex);
+        logger.error(ex.getMessage(), ex);
       }
       x_h2.add(newSystem.getComponent("hydrogen").getx());
       p_depth.add(newSystem.getPressure());

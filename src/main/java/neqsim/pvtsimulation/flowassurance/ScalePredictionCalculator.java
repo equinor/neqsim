@@ -309,7 +309,7 @@ public class ScalePredictionCalculator implements Serializable {
     // Apply ion pairing corrections to get free ion concentrations
     // Ion pairs: CaSO4⁰, MgSO4⁰, NaSO4⁻, CaHCO3⁺, MgHCO3⁺, CaCO3⁰
     double[] freeConc = correctForIonPairing(cCa, cMg, cNa, cBa, cSr, cFe, cSO4, cCO3, cHCO3, TK, gammaDivalent,
-	gammaMonovalent);
+        gammaMonovalent);
     cCa = freeConc[0];
     cSO4 = freeConc[1];
     cCO3 = freeConc[2];
@@ -448,35 +448,35 @@ public class ScalePredictionCalculator implements Serializable {
 
       // Free concentrations
       freeCa = cCa / (1.0 + KCaSO4 * g2 * freeSO4 * g2 + KCaHCO3 * g2 * freeHCO3 * gammaMono / gammaMono
-	  + KCaCO3 * g2 * freeCO3 * g2);
+          + KCaCO3 * g2 * freeCO3 * g2);
       if (freeCa < 0) {
-	freeCa = cCa * 0.01;
+        freeCa = cCa * 0.01;
       }
 
       freeMg = cMg / (1.0 + KMgSO4 * g2 * freeSO4 * g2 + KMgHCO3 * g2 * freeHCO3 * gm2 / gm2);
       if (freeMg < 0) {
-	freeMg = cMg * 0.01;
+        freeMg = cMg * 0.01;
       }
 
       freeNa = cNa / (1.0 + KNaSO4 * gammaMono * freeSO4 * g2 / gammaMono);
       if (freeNa < 0) {
-	freeNa = cNa * 0.01;
+        freeNa = cNa * 0.01;
       }
 
       freeSO4 = cSO4 / (1.0 + KCaSO4 * freeCa * g2 * g2 + KMgSO4 * freeMg * g2 * g2
-	  + KNaSO4 * freeNa * gammaMono * g2 / gammaMono);
+          + KNaSO4 * freeNa * gammaMono * g2 / gammaMono);
       if (freeSO4 < 0) {
-	freeSO4 = cSO4 * 0.01;
+        freeSO4 = cSO4 * 0.01;
       }
 
       freeCO3 = cCO3 / (1.0 + KCaCO3 * freeCa * g2 * g2);
       if (freeCO3 < 0) {
-	freeCO3 = cCO3 * 0.01;
+        freeCO3 = cCO3 * 0.01;
       }
 
       freeHCO3 = cHCO3 / (1.0 + KCaHCO3 * freeCa * g2 * gammaMono / gammaMono + KMgHCO3 * freeMg * g2);
       if (freeHCO3 < 0) {
-	freeHCO3 = cHCO3 * 0.01;
+        freeHCO3 = cHCO3 * 0.01;
       }
     }
 
@@ -519,7 +519,7 @@ public class ScalePredictionCalculator implements Serializable {
     // Water density (g/cm³) from Kell (1975) simplified correlation
     double TC = TK - 273.15;
     double rho = 0.99983 + 5.0948e-5 * TC - 7.5722e-6 * TC * TC + 3.8907e-8 * TC * TC * TC
-	- 1.2e-10 * TC * TC * TC * TC;
+        - 1.2e-10 * TC * TC * TC * TC;
     if (rho < 0.85) {
       rho = 0.85; // lower bound for high T
     }

@@ -615,7 +615,7 @@ public class DeWaardMilliamsCorrosion implements Serializable {
     model.put("name", "de Waard-Milliams (1991)");
     model.put("reference", "de Waard, C. and Milliams, D.E., Carbonic acid corrosion of steel, Corrosion 31(5), 1975");
     model.put("revisedReference",
-	"de Waard, C., Lotz, U., and Milliams, D.E., Predictive model for CO2 corrosion, CORROSION/91, Paper 577, NACE, 1991");
+        "de Waard, C., Lotz, U., and Milliams, D.E., Predictive model for CO2 corrosion, CORROSION/91, Paper 577, NACE, 1991");
     model.put("applicableStandards", "NORSOK M-506, NACE SP0775");
     result.put("modelInfo", model);
 

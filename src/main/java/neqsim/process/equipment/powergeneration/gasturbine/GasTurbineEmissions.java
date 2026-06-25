@@ -74,10 +74,10 @@ public class GasTurbineEmissions implements Serializable {
     if (methaneSlipFraction > 0.0) {
       double methaneFraction = 0.0;
       for (int i = 0; i < n; i++) {
-	if ("methane".equalsIgnoreCase(fuel.getComponent(i).getComponentName())) {
-	  methaneFraction = fuel.getComponent(i).getz();
-	  break;
-	}
+        if ("methane".equalsIgnoreCase(fuel.getComponent(i).getComponentName())) {
+          methaneFraction = fuel.getComponent(i).getz();
+          break;
+        }
       }
       effectiveCarbon -= methaneSlipFraction * methaneFraction;
     }
@@ -104,8 +104,8 @@ public class GasTurbineEmissions implements Serializable {
     int n = fuel.getNumberOfComponents();
     for (int i = 0; i < n; i++) {
       if ("methane".equalsIgnoreCase(fuel.getComponent(i).getComponentName())) {
-	methaneFraction = fuel.getComponent(i).getz();
-	break;
+        methaneFraction = fuel.getComponent(i).getz();
+        break;
       }
     }
     return methaneFraction * methaneSlipFraction * fuelMolarFlowMolPerS * 1.0e-3 * MW_CH4;
@@ -177,19 +177,19 @@ public class GasTurbineEmissions implements Serializable {
     if (n.startsWith("c") && n.length() >= 2) {
       StringBuilder digits = new StringBuilder();
       for (int i = 1; i < n.length(); i++) {
-	char c = n.charAt(i);
-	if (Character.isDigit(c)) {
-	  digits.append(c);
-	} else if (digits.length() > 0) {
-	  break;
-	}
+        char c = n.charAt(i);
+        if (Character.isDigit(c)) {
+          digits.append(c);
+        } else if (digits.length() > 0) {
+          break;
+        }
       }
       if (digits.length() > 0) {
-	try {
-	  return Double.parseDouble(digits.toString());
-	} catch (NumberFormatException ignore) {
-	  return 0.0;
-	}
+        try {
+          return Double.parseDouble(digits.toString());
+        } catch (NumberFormatException ignore) {
+          return 0.0;
+        }
       }
     }
     return 0.0;

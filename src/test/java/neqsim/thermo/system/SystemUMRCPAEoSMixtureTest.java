@@ -57,7 +57,7 @@ class SystemUMRCPAEoSMixtureTest extends neqsim.NeqSimTest {
     double waterLowT = gasWaterMoleFraction(283.15, 70.0);
     double waterHighT = gasWaterMoleFraction(313.15, 70.0);
     assertTrue(waterHighT > waterLowT,
-	"gas water content should increase with temperature: " + waterLowT + " -> " + waterHighT);
+        "gas water content should increase with temperature: " + waterLowT + " -> " + waterHighT);
   }
 
   /**
@@ -68,7 +68,7 @@ class SystemUMRCPAEoSMixtureTest extends neqsim.NeqSimTest {
     double waterLowP = gasWaterMoleFraction(298.15, 30.0);
     double waterHighP = gasWaterMoleFraction(298.15, 120.0);
     assertTrue(waterHighP < waterLowP,
-	"gas water content should decrease with pressure: " + waterLowP + " -> " + waterHighP);
+        "gas water content should decrease with pressure: " + waterLowP + " -> " + waterHighP);
   }
 
   /**

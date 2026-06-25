@@ -194,11 +194,11 @@ public class PipeMukherjeeAndBrill extends Pipeline {
   public void run(UUID id) {
     if (diameter <= 0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeMukherjeeAndBrill", "run",
-	  "diameter", "must be positive, got: " + diameter));
+          "diameter", "must be positive, got: " + diameter));
     }
     if (numberOfIncrements <= 0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeMukherjeeAndBrill", "run",
-	  "numberOfIncrements", "must be positive, got: " + numberOfIncrements));
+          "numberOfIncrements", "must be positive, got: " + numberOfIncrements));
     }
 
     pressureProfileList = new ArrayList<Double>();
@@ -226,8 +226,8 @@ public class PipeMukherjeeAndBrill extends Pipeline {
       double dp = calcSegmentPressureDrop(system, segmentLength, segmentElevation);
       double pOut = system.getPressure() - dp;
       if (pOut < 0.1) {
-	logger.warn("Outlet pressure went below 0.1 bar at increment {}", i);
-	pOut = 0.1;
+        logger.warn("Outlet pressure went below 0.1 bar at increment {}", i);
+        pOut = 0.1;
       }
 
       system.setPressure(pOut);
@@ -277,9 +277,9 @@ public class PipeMukherjeeAndBrill extends Pipeline {
       muL = sys.getPhase("oil").getViscosity("kg/msec");
       muG = sys.getPhase("gas").getViscosity("kg/msec");
       sigmaL = sys.getInterphaseProperties().getSurfaceTension(sys.getPhaseNumberOfPhase("oil"),
-	  sys.getPhaseNumberOfPhase("gas"));
+          sys.getPhaseNumberOfPhase("gas"));
       if (sigmaL < 1e-6) {
-	sigmaL = 0.02;
+        sigmaL = 0.02;
       }
       volFlowL = sys.getPhase("oil").getFlowRate("m3/sec");
       volFlowG = sys.getPhase("gas").getFlowRate("m3/sec");
@@ -334,7 +334,7 @@ public class PipeMukherjeeAndBrill extends Pipeline {
 
     // Determine flow pattern
     currentFlowPattern = determineFlowPattern(superficialLiquidVelocity, superficialGasVelocity, rhoL, rhoG, muL,
-	sigmaL, theta);
+        sigmaL, theta);
 
     // Dimensionless numbers for holdup correlation
     double fourthRoot = Math.pow(rhoL / (GRAVITY * sigmaL), 0.25);
@@ -405,7 +405,7 @@ public class PipeMukherjeeAndBrill extends Pipeline {
       double b1 = Math.log10(frL + 1e-10);
       double b2 = -0.38 + 3.11 * sinT + 1.45 * sinT * sinT;
       if (b1 < b2) {
-	return FlowPattern.STRATIFIED;
+        return FlowPattern.STRATIFIED;
       }
     }
 
@@ -416,7 +416,7 @@ public class PipeMukherjeeAndBrill extends Pipeline {
     if (nlv > 0) {
       double bubbleLimit = 2.0 + 1.5 * Math.abs(sinT);
       if (ngv / nlv < 0.1 && nlv > bubbleLimit) {
-	return FlowPattern.BUBBLE;
+        return FlowPattern.BUBBLE;
       }
     }
 
@@ -459,66 +459,66 @@ public class PipeMukherjeeAndBrill extends Pipeline {
       // Uphill flow coefficients
       switch (currentFlowPattern) {
       case STRATIFIED:
-	// Stratified rarely occurs uphill, use slug coefficients
-	c1 = -0.380113;
-	c2 = 0.129875;
-	c3 = -0.119788;
-	c4 = 2.343227;
-	c5 = 0.475686;
-	c6 = 0.288657;
-	break;
+        // Stratified rarely occurs uphill, use slug coefficients
+        c1 = -0.380113;
+        c2 = 0.129875;
+        c3 = -0.119788;
+        c4 = 2.343227;
+        c5 = 0.475686;
+        c6 = 0.288657;
+        break;
       case ANNULAR:
-	c1 = -1.330282;
-	c2 = 4.808139;
-	c3 = 4.171584;
-	c4 = 56.262268;
-	c5 = 0.079951;
-	c6 = 0.504887;
-	break;
+        c1 = -1.330282;
+        c2 = 4.808139;
+        c3 = 4.171584;
+        c4 = 56.262268;
+        c5 = 0.079951;
+        c6 = 0.504887;
+        break;
       case BUBBLE:
-	c1 = -0.516644;
-	c2 = 0.789805;
-	c3 = 0.551627;
-	c4 = 15.519214;
-	c5 = 0.371771;
-	c6 = 0.393952;
-	break;
+        c1 = -0.516644;
+        c2 = 0.789805;
+        c3 = 0.551627;
+        c4 = 15.519214;
+        c5 = 0.371771;
+        c6 = 0.393952;
+        break;
       default: // SLUG
-	c1 = -0.380113;
-	c2 = 0.129875;
-	c3 = -0.119788;
-	c4 = 2.343227;
-	c5 = 0.475686;
-	c6 = 0.288657;
-	break;
+        c1 = -0.380113;
+        c2 = 0.129875;
+        c3 = -0.119788;
+        c4 = 2.343227;
+        c5 = 0.475686;
+        c6 = 0.288657;
+        break;
       }
     } else {
       // Downhill flow coefficients
       switch (currentFlowPattern) {
       case STRATIFIED:
-	c1 = -1.330282;
-	c2 = 4.808139;
-	c3 = 4.171584;
-	c4 = 56.262268;
-	c5 = 0.079951;
-	c6 = 0.504887;
-	break;
+        c1 = -1.330282;
+        c2 = 4.808139;
+        c3 = 4.171584;
+        c4 = 56.262268;
+        c5 = 0.079951;
+        c6 = 0.504887;
+        break;
       case ANNULAR:
-	c1 = -0.516644;
-	c2 = 0.789805;
-	c3 = 0.551627;
-	c4 = 15.519214;
-	c5 = 0.371771;
-	c6 = 0.393952;
-	break;
+        c1 = -0.516644;
+        c2 = 0.789805;
+        c3 = 0.551627;
+        c4 = 15.519214;
+        c5 = 0.371771;
+        c6 = 0.393952;
+        break;
       default: // SLUG, BUBBLE
-	c1 = -0.380113;
-	c2 = 0.129875;
-	c3 = -0.119788;
-	c4 = 2.343227;
-	c5 = 0.475686;
-	c6 = 0.288657;
-	break;
+        c1 = -0.380113;
+        c2 = 0.129875;
+        c3 = -0.119788;
+        c4 = 2.343227;
+        c5 = 0.475686;
+        c6 = 0.288657;
+        break;
       }
     }
 
@@ -551,7 +551,7 @@ public class PipeMukherjeeAndBrill extends Pipeline {
     }
     double logRatio = Math.log(holdupRatio);
     double s = logRatio / (-0.0523 + 3.182 * logRatio - 0.8725 * logRatio * logRatio
-	+ 0.01853 * logRatio * logRatio * logRatio * logRatio);
+        + 0.01853 * logRatio * logRatio * logRatio * logRatio);
     return Math.exp(s);
   }
 

@@ -111,12 +111,12 @@ public class PloadingCurve implements OperationInterface {
 
       points[0][i] = (inscr * (i - 1)) / molMDEA;
       points[1][i] = (system.getPhases()[1].getComponent(0).getFugacityCoefficient()
-	  * system.getPhases()[1].getComponent(0).getx() * system.getPressure());
+          * system.getPhases()[1].getComponent(0).getx() * system.getPressure());
 
       for (int k = 0; k < system.getPhases()[1].getNumberOfComponents(); k++) {
-	points[k + 2][i] = system.getPhases()[1].getComponent(k).getx();
-	points[k + 2 + system.getPhases()[1].getNumberOfComponents()][i] = system.getPhases()[1]
-	    .getActivityCoefficient(k, 1);
+        points[k + 2][i] = system.getPhases()[1].getComponent(k).getx();
+        points[k + 2 + system.getPhases()[1].getNumberOfComponents()][i] = system.getPhases()[1]
+            .getActivityCoefficient(k, 1);
       }
       logger.info("point: " + points[0][i] + "  " + points[1][i]);
       system.setPressure(points[1][i]);

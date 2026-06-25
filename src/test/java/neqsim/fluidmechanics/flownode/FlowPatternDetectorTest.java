@@ -24,10 +24,10 @@ class FlowPatternDetectorTest {
     double usl = 0.01; // m/s
 
     FlowPattern result = FlowPatternDetector.detectFlowPattern(FlowPatternModel.TAITEL_DUKLER, usg, usl, RHO_G, RHO_L,
-	MU_G, MU_L, SIGMA, DIAMETER, 0.0);
+        MU_G, MU_L, SIGMA, DIAMETER, 0.0);
 
     assertTrue(result == FlowPattern.STRATIFIED || result == FlowPattern.STRATIFIED_WAVY,
-	"Low velocities should give stratified flow, got: " + result);
+        "Low velocities should give stratified flow, got: " + result);
   }
 
   @Test
@@ -37,10 +37,10 @@ class FlowPatternDetectorTest {
     double usl = 0.01; // m/s - low liquid velocity
 
     FlowPattern result = FlowPatternDetector.detectFlowPattern(FlowPatternModel.TAITEL_DUKLER, usg, usl, RHO_G, RHO_L,
-	MU_G, MU_L, SIGMA, DIAMETER, 0.0);
+        MU_G, MU_L, SIGMA, DIAMETER, 0.0);
 
     assertTrue(result == FlowPattern.ANNULAR || result == FlowPattern.DROPLET,
-	"High gas velocity should give annular or droplet flow, got: " + result);
+        "High gas velocity should give annular or droplet flow, got: " + result);
   }
 
   @Test
@@ -50,10 +50,10 @@ class FlowPatternDetectorTest {
     double usl = 2.0; // m/s - high liquid velocity
 
     FlowPattern result = FlowPatternDetector.detectFlowPattern(FlowPatternModel.TAITEL_DUKLER, usg, usl, RHO_G, RHO_L,
-	MU_G, MU_L, SIGMA, DIAMETER, 0.0);
+        MU_G, MU_L, SIGMA, DIAMETER, 0.0);
 
     assertTrue(result == FlowPattern.BUBBLE || result == FlowPattern.DISPERSED_BUBBLE,
-	"Low gas, high liquid velocity should give bubble flow, got: " + result);
+        "Low gas, high liquid velocity should give bubble flow, got: " + result);
   }
 
   @Test
@@ -63,7 +63,7 @@ class FlowPatternDetectorTest {
     double usl = 0.5; // m/s
 
     FlowPattern result = FlowPatternDetector.detectFlowPattern(FlowPatternModel.TAITEL_DUKLER, usg, usl, RHO_G, RHO_L,
-	MU_G, MU_L, SIGMA, DIAMETER, 0.0);
+        MU_G, MU_L, SIGMA, DIAMETER, 0.0);
 
     // Slug is common for moderate velocities
     assertNotNull(result, "Should return a valid flow pattern");
@@ -76,7 +76,7 @@ class FlowPatternDetectorTest {
     double usl = 0.01; // m/s
 
     FlowPattern result = FlowPatternDetector.detectFlowPattern(FlowPatternModel.BAKER_CHART, usg, usl, RHO_G, RHO_L,
-	MU_G, MU_L, SIGMA, DIAMETER, 0.0);
+        MU_G, MU_L, SIGMA, DIAMETER, 0.0);
 
     assertNotNull(result, "Should return a valid flow pattern");
   }
@@ -89,7 +89,7 @@ class FlowPatternDetectorTest {
     double inclination = 0.0; // horizontal
 
     FlowPattern result = FlowPatternDetector.detectFlowPattern(FlowPatternModel.BARNEA, usg, usl, RHO_G, RHO_L, MU_G,
-	MU_L, SIGMA, DIAMETER, inclination);
+        MU_L, SIGMA, DIAMETER, inclination);
 
     assertNotNull(result, "Should return a valid flow pattern for horizontal pipe");
   }
@@ -102,7 +102,7 @@ class FlowPatternDetectorTest {
     double inclination = Math.PI / 2; // vertical upward
 
     FlowPattern result = FlowPatternDetector.detectFlowPattern(FlowPatternModel.BARNEA, usg, usl, RHO_G, RHO_L, MU_G,
-	MU_L, SIGMA, DIAMETER, inclination);
+        MU_L, SIGMA, DIAMETER, inclination);
 
     assertNotNull(result, "Should return a valid flow pattern for vertical pipe");
   }
@@ -113,7 +113,7 @@ class FlowPatternDetectorTest {
     double usl = 0.3; // m/s
 
     FlowPattern result = FlowPatternDetector.detectFlowPattern(FlowPatternModel.BEGGS_BRILL, usg, usl, RHO_G, RHO_L,
-	MU_G, MU_L, SIGMA, DIAMETER, 0.0);
+        MU_G, MU_L, SIGMA, DIAMETER, 0.0);
 
     assertNotNull(result, "Should return a valid flow pattern");
   }
@@ -121,7 +121,7 @@ class FlowPatternDetectorTest {
   @Test
   void testManualModel() {
     FlowPattern result = FlowPatternDetector.detectFlowPattern(FlowPatternModel.MANUAL, 1.0, 1.0, RHO_G, RHO_L, MU_G,
-	MU_L, SIGMA, DIAMETER, 0.0);
+        MU_L, SIGMA, DIAMETER, 0.0);
 
     assertEquals(FlowPattern.STRATIFIED, result, "Manual model should return default (stratified)");
   }
@@ -145,7 +145,7 @@ class FlowPatternDetectorTest {
     double inclination = 0.0;
 
     double holdupStratified = FlowPatternDetector.calculateLiquidHoldup(FlowPattern.STRATIFIED, lambdaL, nFr,
-	inclination);
+        inclination);
     double holdupSlug = FlowPatternDetector.calculateLiquidHoldup(FlowPattern.SLUG, lambdaL, nFr, inclination);
     double holdupAnnular = FlowPatternDetector.calculateLiquidHoldup(FlowPattern.ANNULAR, lambdaL, nFr, inclination);
 

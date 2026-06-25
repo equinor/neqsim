@@ -351,8 +351,8 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     for (double speed : standardSpeeds) {
       double diff = Math.abs(estimatedSpeed - speed);
       if (diff < minDiff) {
-	minDiff = diff;
-	closestSpeed = speed;
+        minDiff = diff;
+        closestSpeed = speed;
       }
     }
 
@@ -492,7 +492,7 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     double casingDiameterMm = casingID;
 
     casingWallThickness = (pressureMPa * casingDiameterMm)
-	/ (2.0 * allowableStressMPa * jointEfficiency - 0.6 * pressureMPa);
+        / (2.0 * allowableStressMPa * jointEfficiency - 0.6 * pressureMPa);
 
     // Add corrosion allowance
     casingWallThickness += 3.0; // mm
@@ -502,7 +502,7 @@ public class PumpMechanicalDesign extends MechanicalDesign {
 
     // Maximum allowable working pressure
     maxAllowableWorkingPressure = (2.0 * allowableStressMPa * jointEfficiency * (casingWallThickness - 3.0))
-	/ (casingDiameterMm + 0.6 * (casingWallThickness - 3.0)) * 10.0; // bara
+        / (casingDiameterMm + 0.6 * (casingWallThickness - 3.0)) * 10.0; // bara
   }
 
   /**
@@ -529,12 +529,12 @@ public class PumpMechanicalDesign extends MechanicalDesign {
 
     // Round up to standard motor sizes (IEC frame sizes)
     double[] standardPowers = { 0.75, 1.1, 1.5, 2.2, 3.0, 4.0, 5.5, 7.5, 11.0, 15.0, 18.5, 22.0, 30.0, 37.0, 45.0, 55.0,
-	75.0, 90.0, 110.0, 132.0, 160.0, 200.0, 250.0, 315.0, 400.0 };
+        75.0, 90.0, 110.0, 132.0, 160.0, 200.0, 250.0, 315.0, 400.0 };
 
     for (double standardPower : standardPowers) {
       if (standardPower >= driverPower) {
-	driverPower = standardPower;
-	break;
+        driverPower = standardPower;
+        break;
       }
     }
   }
@@ -582,15 +582,15 @@ public class PumpMechanicalDesign extends MechanicalDesign {
 
     for (double size : standardSizes) {
       if (size * 25.4 >= suctionDiameterMm) {
-	suctionNozzleSize = size;
-	break;
+        suctionNozzleSize = size;
+        break;
       }
     }
 
     for (double size : standardSizes) {
       if (size * 25.4 >= dischargeDiameterMm) {
-	dischargeNozzleSize = size;
-	break;
+        dischargeNozzleSize = size;
+        break;
       }
     }
 
@@ -598,13 +598,13 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     if (dischargeNozzleSize >= suctionNozzleSize) {
       int suctionIndex = 0;
       for (int i = 0; i < standardSizes.length; i++) {
-	if (standardSizes[i] == suctionNozzleSize) {
-	  suctionIndex = i;
-	  break;
-	}
+        if (standardSizes[i] == suctionNozzleSize) {
+          suctionIndex = i;
+          break;
+        }
       }
       if (suctionIndex > 0) {
-	dischargeNozzleSize = standardSizes[suctionIndex - 1];
+        dischargeNozzleSize = standardSizes[suctionIndex - 1];
       }
     }
   }
@@ -654,7 +654,7 @@ public class PumpMechanicalDesign extends MechanicalDesign {
 
     // Total weight
     double emptyWeight = casingWeight + impellerWeight + shaftWeight + motorWeight + baseplateWeight + sealWeight
-	+ couplingWeight;
+        + couplingWeight;
 
     // Add piping, supports, instrumentation (30% factor)
     weightPiping = emptyWeight * 0.15;
@@ -889,18 +889,18 @@ public class PumpMechanicalDesign extends MechanicalDesign {
 
     String[] columnNames = { "Parameter", "Value", "Unit" };
     String[][] data = { { "Pump Type", pumpType.toString(), "" },
-	{ "Number of Stages", String.valueOf(numberOfStages), "" },
-	{ "Rated Speed", String.format("%.0f", ratedSpeed), "rpm" },
-	{ "Specific Speed", String.format("%.1f", specificSpeed), "-" },
-	{ "Impeller Diameter", String.format("%.1f", impellerDiameter), "mm" },
-	{ "Shaft Diameter", String.format("%.1f", shaftDiameter), "mm" },
-	{ "Driver Power", String.format("%.1f", driverPower), "kW" },
-	{ "Design Pressure", String.format("%.1f", designPressure), "bara" },
-	{ "Design Temperature", String.format("%.1f", designTemperature), "°C" },
-	{ "NPSHr", String.format("%.1f", npshRequired), "m" },
-	{ "Suction Nozzle", String.format("%.0f", suctionNozzleSize), "inch" },
-	{ "Discharge Nozzle", String.format("%.0f", dischargeNozzleSize), "inch" },
-	{ "Total Weight", String.format("%.0f", getWeightTotal()), "kg" } };
+        { "Number of Stages", String.valueOf(numberOfStages), "" },
+        { "Rated Speed", String.format("%.0f", ratedSpeed), "rpm" },
+        { "Specific Speed", String.format("%.1f", specificSpeed), "-" },
+        { "Impeller Diameter", String.format("%.1f", impellerDiameter), "mm" },
+        { "Shaft Diameter", String.format("%.1f", shaftDiameter), "mm" },
+        { "Driver Power", String.format("%.1f", driverPower), "kW" },
+        { "Design Pressure", String.format("%.1f", designPressure), "bara" },
+        { "Design Temperature", String.format("%.1f", designTemperature), "°C" },
+        { "NPSHr", String.format("%.1f", npshRequired), "m" },
+        { "Suction Nozzle", String.format("%.0f", suctionNozzleSize), "inch" },
+        { "Discharge Nozzle", String.format("%.0f", dischargeNozzleSize), "inch" },
+        { "Total Weight", String.format("%.0f", getWeightTotal()), "kg" } };
 
     JTable table = new JTable(data, columnNames);
     JScrollPane scrollPane = new JScrollPane(table);
@@ -1151,8 +1151,8 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     // Validate NPSH margin
     if (npshRequired > 0 && npshAvailable > 0) {
       if (!validateNpshMargin(npshAvailable, npshRequired)) {
-	result.addIssue("NPSH margin " + String.format("%.2f", npshAvailable / npshRequired) + " below required "
-	    + String.format("%.2f", npshMarginFactor));
+        result.addIssue("NPSH margin " + String.format("%.2f", npshAvailable / npshRequired) + " below required "
+            + String.format("%.2f", npshMarginFactor));
       }
     }
 
@@ -1160,14 +1160,14 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     if (bepFlow > 0) {
       double operatingFlow = bepFlow; // Assuming design point = BEP
       if (!validateOperatingInPOR(operatingFlow, bepFlow)) {
-	result.addIssue("Operating point outside Preferred Operating Region (POR)");
+        result.addIssue("Operating point outside Preferred Operating Region (POR)");
       }
     }
 
     // Validate suction specific speed
     if (suctionSpecificSpeed > 0 && !validateSuctionSpecificSpeed(suctionSpecificSpeed)) {
       result.addIssue("Suction specific speed " + String.format("%.0f", suctionSpecificSpeed) + " exceeds maximum "
-	  + String.format("%.0f", maxSuctionSpecificSpeed));
+          + String.format("%.0f", maxSuctionSpecificSpeed));
     }
 
     // Validate design margins
@@ -1184,42 +1184,42 @@ public class PumpMechanicalDesign extends MechanicalDesign {
    */
   public void loadProcessDesignParameters() {
     try (
-	neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase();
-	java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
-	    + "EQUIPMENTTYPE='Pump' AND Company='" + getCompanySpecificDesignStandards() + "'")) {
+        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase();
+        java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
+            + "EQUIPMENTTYPE='Pump' AND Company='" + getCompanySpecificDesignStandards() + "'")) {
 
       while (dataSet.next()) {
-	String spec = dataSet.getString("SPECIFICATION");
-	double minVal = dataSet.getDouble("MINVALUE");
-	double maxVal = dataSet.getDouble("MAXVALUE");
-	double value = (minVal + maxVal) / 2.0;
+        String spec = dataSet.getString("SPECIFICATION");
+        double minVal = dataSet.getDouble("MINVALUE");
+        double maxVal = dataSet.getDouble("MAXVALUE");
+        double value = (minVal + maxVal) / 2.0;
 
-	switch (spec) {
-	case "NPSHMarginFactor":
-	  this.npshMarginFactor = value;
-	  break;
-	case "HydraulicPowerMargin":
-	  this.hydraulicPowerMargin = value;
-	  break;
-	case "PreferredOperatingRegionLow":
-	  this.porLowFraction = value;
-	  break;
-	case "PreferredOperatingRegionHigh":
-	  this.porHighFraction = value;
-	  break;
-	case "AllowableOperatingRegionLow":
-	  this.aorLowFraction = value;
-	  break;
-	case "AllowableOperatingRegionHigh":
-	  this.aorHighFraction = value;
-	  break;
-	case "SuctionSpecificSpeedMax":
-	  this.maxSuctionSpecificSpeed = value;
-	  break;
-	default:
-	  // Ignore unknown parameters
-	  break;
-	}
+        switch (spec) {
+        case "NPSHMarginFactor":
+          this.npshMarginFactor = value;
+          break;
+        case "HydraulicPowerMargin":
+          this.hydraulicPowerMargin = value;
+          break;
+        case "PreferredOperatingRegionLow":
+          this.porLowFraction = value;
+          break;
+        case "PreferredOperatingRegionHigh":
+          this.porHighFraction = value;
+          break;
+        case "AllowableOperatingRegionLow":
+          this.aorLowFraction = value;
+          break;
+        case "AllowableOperatingRegionHigh":
+          this.aorHighFraction = value;
+          break;
+        case "SuctionSpecificSpeedMax":
+          this.maxSuctionSpecificSpeed = value;
+          break;
+        default:
+          // Ignore unknown parameters
+          break;
+        }
       }
     } catch (Exception ex) {
       // Use default values if database lookup fails

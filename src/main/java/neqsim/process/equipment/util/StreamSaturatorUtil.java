@@ -78,8 +78,8 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
       return true;
     }
     if (inStream.getTemperature() == outStream.getTemperature() && inStream.getPressure() == outStream.getPressure()
-	&& Math.abs(inStream.getFlowRate("kg/hr") - oldInletFlowRate) / inStream.getFlowRate("kg/hr") < 1e-3
-	&& java.util.Arrays.equals(inStream.getThermoSystem().getMolarComposition(), lastComposition)) {
+        && Math.abs(inStream.getFlowRate("kg/hr") - oldInletFlowRate) / inStream.getFlowRate("kg/hr") < 1e-3
+        && java.util.Arrays.equals(inStream.getThermoSystem().getMolarComposition(), lastComposition)) {
       return false;
     } else {
       return true;
@@ -101,11 +101,11 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
 
     if (thermoSystem.getPhase(0).hasComponent("water") && approachToSaturation < 1.0) {
       try {
-	thermoSystem.addComponent("water",
-	    -thermoSystem.getComponent("water").getNumberOfmoles() * (1.0 - approachToSaturation));
-	thermoOps.TPflash();
+        thermoSystem.addComponent("water",
+            -thermoSystem.getComponent("water").getNumberOfmoles() * (1.0 - approachToSaturation));
+        thermoOps.TPflash();
       } catch (Exception e) {
-	logger.error(e.getMessage());
+        logger.error(e.getMessage());
       }
     }
 

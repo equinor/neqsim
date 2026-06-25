@@ -28,15 +28,15 @@ public class AdsorptionDehydrationDesignStandard extends DesignStandard {
     super(name, equipmentInn);
 
     try (
-	neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase();
-	java.sql.ResultSet dataSet = database.getResultSet(
-	    ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Adsorber Dehydration' AND Company='"
-		+ standardName + "'"))) {
+        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase();
+        java.sql.ResultSet dataSet = database.getResultSet(
+            ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Adsorber Dehydration' AND Company='"
+                + standardName + "'"))) {
       while (dataSet.next()) {
-	String specName = dataSet.getString("SPECIFICATION");
-	if (specName.equals("MolecularSieve3AWaterCapacity")) {
-	  molecularSieveWaterCapacity = Double.parseDouble(dataSet.getString("MAXVALUE"));
-	}
+        String specName = dataSet.getString("SPECIFICATION");
+        if (specName.equals("MolecularSieve3AWaterCapacity")) {
+          molecularSieveWaterCapacity = Double.parseDouble(dataSet.getString("MAXVALUE"));
+        }
       }
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);

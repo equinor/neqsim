@@ -212,7 +212,7 @@ public class SubseaPowerCable extends ProcessEquipmentBaseClass {
       double capPerKm = 0.2e-6;
       double tanDelta = 0.001;
       double dielectricPerCable = 2.0 * Math.PI * frequency * capPerKm * length * (voltage * 1000.0)
-	  * (voltage * 1000.0) * tanDelta * numberOfCores;
+          * (voltage * 1000.0) * tanDelta * numberOfCores;
       dielectricLoss = dielectricPerCable * numberOfCables / 1.0e6;
 
       // Reactive power from cable capacitance

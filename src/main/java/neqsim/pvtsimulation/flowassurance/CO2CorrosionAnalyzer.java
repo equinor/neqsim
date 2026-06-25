@@ -383,9 +383,9 @@ public class CO2CorrosionAnalyzer implements Serializable {
 
       // CO2 dissolved in aqueous phase
       if (thermoSystem.getPhase(PhaseType.AQUEOUS).hasComponent("CO2")) {
-	co2InAqueous = thermoSystem.getPhase(PhaseType.AQUEOUS).getComponent("CO2").getx();
+        co2InAqueous = thermoSystem.getPhase(PhaseType.AQUEOUS).getComponent("CO2").getx();
       } else {
-	co2InAqueous = 0.0;
+        co2InAqueous = 0.0;
       }
     } else {
       aqueousPH = Double.NaN;
@@ -447,10 +447,10 @@ public class CO2CorrosionAnalyzer implements Serializable {
     for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
       String phaseType = thermoSystem.getPhase(i).getPhaseTypeName();
       if (!phaseType.equals("aqueous")) {
-	double co2Frac = thermoSystem.getPhase(i).getComponent("CO2").getx();
-	// For dense CO2, the fugacity-based partial pressure is more appropriate
-	// but for the empirical de Waard model, we use pCO2 = xCO2 * P
-	return co2Frac * pressureBara;
+        double co2Frac = thermoSystem.getPhase(i).getComponent("CO2").getx();
+        // For dense CO2, the fugacity-based partial pressure is more appropriate
+        // but for the empirical de Waard model, we use pCO2 = xCO2 * P
+        return co2Frac * pressureBara;
       }
     }
     return co2MoleFraction * pressureBara;
@@ -467,8 +467,8 @@ public class CO2CorrosionAnalyzer implements Serializable {
     }
     if (thermoSystem.hasPhaseType(PhaseType.GAS)) {
       if (thermoSystem.getPhase(PhaseType.GAS).hasComponent("H2S")) {
-	double h2sInGas = thermoSystem.getPhase(PhaseType.GAS).getComponent("H2S").getx();
-	return h2sInGas * pressureBara;
+        double h2sInGas = thermoSystem.getPhase(PhaseType.GAS).getComponent("H2S").getx();
+        return h2sInGas * pressureBara;
       }
     }
     return h2sMoleFraction * pressureBara;

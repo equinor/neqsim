@@ -124,7 +124,7 @@ public class ComponentSAFTVRMie extends ComponentSrk {
     try {
       clonedComponent = (ComponentSAFTVRMie) super.clone();
       if (xsiteAssoc != null) {
-	clonedComponent.xsiteAssoc = xsiteAssoc.clone();
+        clonedComponent.xsiteAssoc = xsiteAssoc.clone();
       }
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
@@ -216,7 +216,7 @@ public class ComponentSAFTVRMie extends ComponentSrk {
       double sigk = ck.getSigmaSAFTi();
       sigma3x += xSk * xSk * sigk * sigk * sigk;
       if (epsRef == 0.0 && ck.getNumberOfAssociationSites() > 0 && ck.getAssociationEnergySAFTVRMie() != 0.0) {
-	epsRef = ck.getEpsikSAFT();
+        epsRef = ck.getEpsikSAFT();
       }
     }
     if (totalSegMoles > 0) {
@@ -287,7 +287,7 @@ public class ComponentSAFTVRMie extends ComponentSrk {
   public void recalcSAFTDiameter(double temperature) {
     componentTemperature = temperature;
     dSAFTi = calcEffectiveDiameter(getSigmaSAFTi(), getEpsikSAFT(), temperature, getLambdaRSAFTVRMie(),
-	getLambdaASAFTVRMie());
+        getLambdaASAFTVRMie());
   }
 
   /**
@@ -306,22 +306,22 @@ public class ComponentSAFTVRMie extends ComponentSrk {
 
     // 10-point Gauss-Legendre nodes and weights on [0,1]
     double[] glNodes10 = { 0.01304673574, 0.06746831665, 0.16029521585, 0.28330230294, 0.42556283050, 0.57443716950,
-	0.71669769706, 0.83970478415, 0.93253168335, 0.98695326426 };
+        0.71669769706, 0.83970478415, 0.93253168335, 0.98695326426 };
     double[] glWeights10 = { 0.03333567215, 0.07472567458, 0.10954318126, 0.13463335965, 0.14776211236, 0.14776211236,
-	0.13463335965, 0.10954318126, 0.07472567458, 0.03333567215 };
+        0.13463335965, 0.10954318126, 0.07472567458, 0.03333567215 };
 
     if (theta <= 1.0) {
       // Weak coupling: standard 10-point GL on [0, sigma]
       double sum = 0.0;
       for (int i = 0; i < 10; i++) {
-	double x = glNodes10[i];
-	if (x < 1.0e-20) {
-	  sum += glWeights10[i];
-	  continue;
-	}
-	double xInv = 1.0 / x;
-	double uRed = theta * (Math.pow(xInv, lr) - Math.pow(xInv, la));
-	sum += glWeights10[i] * (1.0 - Math.exp(-uRed));
+        double x = glNodes10[i];
+        if (x < 1.0e-20) {
+          sum += glWeights10[i];
+          continue;
+        }
+        double xInv = 1.0 / x;
+        double uRed = theta * (Math.pow(xInv, lr) - Math.pow(xInv, la));
+        sum += glWeights10[i] * (1.0 - Math.exp(-uRed));
       }
       return sum * sigma;
     }
@@ -344,8 +344,8 @@ public class ComponentSAFTVRMie extends ComponentSrk {
     for (int i = 0; i < 10; i++) {
       double x = midPoint + halfWidth * (2.0 * glNodes10[i] - 1.0);
       if (x < 1.0e-20) {
-	sumHigh += glWeights10[i] * (b - a);
-	continue;
+        sumHigh += glWeights10[i] * (b - a);
+        continue;
       }
       double xInv = 1.0 / x;
       double uRed = theta * (Math.pow(xInv, lr) - Math.pow(xInv, la));
@@ -415,8 +415,8 @@ public class ComponentSAFTVRMie extends ComponentSrk {
     // Mixture: analytical dF/dN_i = dF_HC/dN_i + dF_DISP/dN_i + dF_ASSOC/dN_i
     // Compute on-the-fly (not from cached fields) so this works on cloned phases
     return dF_HC_SAFTdN(phase, numberOfComponents, temperature, pressure)
-	+ dF_DISP_SAFTdN(phase, numberOfComponents, temperature, pressure)
-	+ dFCPAdN(phase, numberOfComponents, temperature, pressure);
+        + dF_DISP_SAFTdN(phase, numberOfComponents, temperature, pressure)
+        + dFCPAdN(phase, numberOfComponents, temperature, pressure);
   }
 
   /**
@@ -447,7 +447,7 @@ public class ComponentSAFTVRMie extends ComponentSrk {
     }
     pPlus.volInit();
     double dFdNplus = ((ComponentSAFTVRMie) pPlus.getComponent(getComponentNumber())).dFdN(pPlus, numberOfComponents,
-	temperature + dT, pressure);
+        temperature + dT, pressure);
 
     PhaseSAFTVRMie pMinus = sp.clone();
     pMinus.setTemperature(temperature - dT);
@@ -456,7 +456,7 @@ public class ComponentSAFTVRMie extends ComponentSrk {
     }
     pMinus.volInit();
     double dFdNminus = ((ComponentSAFTVRMie) pMinus.getComponent(getComponentNumber())).dFdN(pMinus, numberOfComponents,
-	temperature - dT, pressure);
+        temperature - dT, pressure);
 
     return (dFdNplus - dFdNminus) / (2.0 * dT);
   }
@@ -487,13 +487,13 @@ public class ComponentSAFTVRMie extends ComponentSrk {
     pPlus.setMolarVolume((totalVolume + dV) / n);
     pPlus.volInit();
     double dFdNplus = ((ComponentSAFTVRMie) pPlus.getComponent(getComponentNumber())).dFdN(pPlus, numberOfComponents,
-	temperature, pressure);
+        temperature, pressure);
 
     PhaseSAFTVRMie pMinus = sp.clone();
     pMinus.setMolarVolume((totalVolume - dV) / n);
     pMinus.volInit();
     double dFdNminus = ((ComponentSAFTVRMie) pMinus.getComponent(getComponentNumber())).dFdN(pMinus, numberOfComponents,
-	temperature, pressure);
+        temperature, pressure);
 
     return (dFdNplus - dFdNminus) / (2.0 * dV);
   }
@@ -523,7 +523,7 @@ public class ComponentSAFTVRMie extends ComponentSrk {
     plus.setMolarVolume(totalVolume / newTotalPlus);
     reinitSAFTOnPhase(plus, numberOfComponents, temperature, pressure);
     double dFdNplus = ((ComponentSAFTVRMie) plus.getComponent(getComponentNumber())).dFdN(plus, numberOfComponents,
-	temperature, pressure);
+        temperature, pressure);
 
     if (nj > h * 1.5) {
       // Central difference
@@ -534,12 +534,12 @@ public class ComponentSAFTVRMie extends ComponentSrk {
       minus.setMolarVolume(totalVolume / newTotalMinus);
       reinitSAFTOnPhase(minus, numberOfComponents, temperature, pressure);
       double dFdNminus = ((ComponentSAFTVRMie) minus.getComponent(getComponentNumber())).dFdN(minus, numberOfComponents,
-	  temperature, pressure);
+          temperature, pressure);
       return (dFdNplus - dFdNminus) / (2.0 * h);
     } else {
       // Forward difference (when nj is too small for central)
       double dFdNcenter = ((ComponentSAFTVRMie) phase.getComponent(getComponentNumber())).dFdN(phase,
-	  numberOfComponents, temperature, pressure);
+          numberOfComponents, temperature, pressure);
       return (dFdNplus - dFdNcenter) / h;
     }
   }
@@ -585,7 +585,7 @@ public class ComponentSAFTVRMie extends ComponentSrk {
     double term2 = 1.0 / sp.getVolumeSAFT() * sp.getDSAFT();
     double term3 = -nMoles / sp.getVolumeSAFT() * sp.getDSAFT() / nMoles;
     return ThermodynamicConstantsInterface.pi / 6.0 * ThermodynamicConstantsInterface.avagadroNumber
-	* (term1 + term2 + term3);
+        * (term1 + term2 + term3);
   }
 
   /**
@@ -645,7 +645,7 @@ public class ComponentSAFTVRMie extends ComponentSrk {
     PhaseSAFTVRMie sp = (PhaseSAFTVRMie) phase;
     double nMoles = phase.getNumberOfMolesInPhase();
     return sp.getF1dispVolTerm() / nMoles
-	+ nMoles / sp.getVolumeSAFT() * sp.getdDSAFTdTprime(getmSAFTi(), getdSAFTi(), nMoles);
+        + nMoles / sp.getVolumeSAFT() * sp.getdDSAFTdTprime(getmSAFTi(), getdSAFTi(), nMoles);
   }
 
   /**
@@ -729,16 +729,16 @@ public class ComponentSAFTVRMie extends ComponentSrk {
     double g1 = (8.0 + 20.0 * n - 4.0 * n * n) / Math.pow(1.0 - n, 5.0);
     double g2 = (20.0 - 54.0 * n + 36.0 * n * n) / Math.pow((1.0 - n) * (2.0 - n), 2.0);
     double g3 = (20.0 * n - 27.0 * n * n + 12.0 * Math.pow(n, 3.0) - 2.0 * Math.pow(n, 4.0)) * (-6.0 + 4.0 * n)
-	/ Math.pow((1.0 - n) * (2.0 - n), 3.0);
+        / Math.pow((1.0 - n) * (2.0 - n), 3.0);
 
     double F = m * g1 + (1.0 - m) * (g2 + g3);
     double Fp = m * (60.0 + 72.0 * n - 12.0 * n * n) / Math.pow(1.0 - n, 6.0)
-	+ (1.0 - m) * (2.0 * (-36.0 * Math.pow(n, 3.0) + 81.0 * n * n - 49.0 * n + 6.0)
-	    / (Math.pow(1.0 - n, 4.0) * Math.pow(2.0 - n, 4.0))
-	    + 2.0
-		* (4.0 * Math.pow(n, 6.0) - 36.0 * Math.pow(n, 5.0) + 140.0 * Math.pow(n, 4.0)
-		    - 244.0 * Math.pow(n, 3.0) + 123.0 * n * n + 124.0 * n - 120.0)
-		/ (Math.pow(1.0 - n, 4.0) * Math.pow(2.0 - n, 4.0)));
+        + (1.0 - m) * (2.0 * (-36.0 * Math.pow(n, 3.0) + 81.0 * n * n - 49.0 * n + 6.0)
+            / (Math.pow(1.0 - n, 4.0) * Math.pow(2.0 - n, 4.0))
+            + 2.0
+                * (4.0 * Math.pow(n, 6.0) - 36.0 * Math.pow(n, 5.0) + 140.0 * Math.pow(n, 4.0)
+                    - 244.0 * Math.pow(n, 3.0) + 123.0 * n * n + 124.0 * n - 120.0)
+                / (Math.pow(1.0 - n, 4.0) * Math.pow(2.0 - n, 4.0)));
 
     double ZHC = sp.getF2dispZHC();
     return -Math.pow(ZHC, 2.0) * (F * dnSAFTdi + (g1 - g2 - g3) * dmSAFTdi);
@@ -768,7 +768,7 @@ public class ComponentSAFTVRMie extends ComponentSrk {
     // Compute deta/dn_i = pi/6 * NA * mi * di^3 / V
     double volSAFT = sp.getVolumeSAFT();
     double dndi = ThermodynamicConstantsInterface.pi / 6.0 * ThermodynamicConstantsInterface.avagadroNumber * mi * di
-	* di * di / volSAFT;
+        * di * di / volSAFT;
 
     // dahsSAFTdi = (daHS/deta) * dndi
     double dahsdi = sp.getDaHSSAFTdN() * dndi;
@@ -801,7 +801,7 @@ public class ComponentSAFTVRMie extends ComponentSrk {
     // Compute deta/dn_i = pi/6 * NA * mi * di^3 / V
     double volSAFT = sp.getVolumeSAFT();
     double dndi = ThermodynamicConstantsInterface.pi / 6.0 * ThermodynamicConstantsInterface.avagadroNumber * mi * di
-	* di * di / volSAFT;
+        * di * di / volSAFT;
 
     return mi * (2.0 * aDispI - aDisp) + nMoles * sp.getmSAFT() * daDispDeta * dndi;
   }

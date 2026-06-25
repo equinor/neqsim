@@ -16,7 +16,7 @@ public class PhaseSrkCPAArrayScalingTest {
       comp.resizeXsitedni(getNumberOfComponents());
       componentArray[compNumber] = comp;
       for (int i = 0; i < getNumberOfComponents(); i++) {
-	((ComponentSrkCPA) componentArray[i]).resizeXsitedni(getNumberOfComponents());
+        ((ComponentSrkCPA) componentArray[i]).resizeXsitedni(getNumberOfComponents());
       }
     }
   }

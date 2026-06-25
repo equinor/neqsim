@@ -87,25 +87,25 @@ public class WallFriction implements Serializable {
     case STRATIFIED_SMOOTH:
     case STRATIFIED_WAVY:
       return calcStratifiedFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity,
-	  liquidViscosity, liquidHoldup, diameter, roughness);
+          liquidViscosity, liquidHoldup, diameter, roughness);
 
     case SLUG:
       return calcSlugFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
-	  liquidHoldup, diameter, roughness);
+          liquidHoldup, diameter, roughness);
 
     case ANNULAR:
     case MIST:
       return calcAnnularFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
-	  liquidHoldup, diameter, roughness);
+          liquidHoldup, diameter, roughness);
 
     case BUBBLE:
     case DISPERSED_BUBBLE:
       return calcBubbleFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
-	  liquidHoldup, diameter, roughness);
+          liquidHoldup, diameter, roughness);
 
     case CHURN:
       return calcChurnFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
-	  liquidHoldup, diameter, roughness);
+          liquidHoldup, diameter, roughness);
 
     case SINGLE_PHASE_GAS:
       return calcSinglePhaseGasFriction(gasVelocity, gasDensity, gasViscosity, diameter, roughness);
@@ -116,7 +116,7 @@ public class WallFriction implements Serializable {
     default:
       // Default to stratified
       return calcStratifiedFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity,
-	  liquidViscosity, liquidHoldup, diameter, roughness);
+          liquidViscosity, liquidHoldup, diameter, roughness);
     }
   }
 
@@ -242,9 +242,9 @@ public class WallFriction implements Serializable {
 
       // For thin films, use laminar or wavy film correlation
       if (result.liquidReynolds < 1000) {
-	result.liquidFrictionFactor = 16.0 / Math.max(result.liquidReynolds, 1.0);
+        result.liquidFrictionFactor = 16.0 / Math.max(result.liquidReynolds, 1.0);
       } else {
-	result.liquidFrictionFactor = calcFanningFrictionFactor(result.liquidReynolds, eps, delta);
+        result.liquidFrictionFactor = calcFanningFrictionFactor(result.liquidReynolds, eps, delta);
       }
       result.liquidWallShear = 0.5 * result.liquidFrictionFactor * rhoL * vL * Math.abs(vL);
     }
@@ -466,7 +466,7 @@ public class WallFriction implements Serializable {
       double fNew = 1.0 / (rhs * rhs);
 
       if (Math.abs(fNew - f) < 1e-10) {
-	break;
+        break;
       }
       f = fNew;
     }

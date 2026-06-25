@@ -13,13 +13,13 @@ public class AdjusterTest {
     fluid1.setMixingRule("classic");
 
     neqsim.process.equipment.stream.Stream stream1 = new neqsim.process.equipment.stream.Stream("light oil",
-	fluid1.clone());
+        fluid1.clone());
     stream1.setFlowRate(1.5, "MSm3/day");
     stream1.setPressure(bottomholepressure, "bara");
     stream1.setTemperature(75.0, "C");
 
     neqsim.process.equipment.pipeline.PipeBeggsAndBrills flowline1 = new neqsim.process.equipment.pipeline.PipeBeggsAndBrills(
-	"flowline", stream1);
+        "flowline", stream1);
     flowline1.setDiameter(0.25);
     flowline1.setPipeWallRoughness(15e-6);
     flowline1.setLength(1200);
@@ -52,13 +52,13 @@ public class AdjusterTest {
     fluid1.setMixingRule("classic");
 
     neqsim.process.equipment.stream.Stream stream1 = new neqsim.process.equipment.stream.Stream("light oil",
-	fluid1.clone());
+        fluid1.clone());
     stream1.setFlowRate(4.0, "MSm3/day");
     stream1.setPressure(170, "bara");
     stream1.setTemperature(75.0, "C");
 
     neqsim.process.equipment.pipeline.PipeBeggsAndBrills flowline1 = new neqsim.process.equipment.pipeline.PipeBeggsAndBrills(
-	"flowline", stream1);
+        "flowline", stream1);
     flowline1.setDiameter(0.25);
     flowline1.setPipeWallRoughness(15e-6);
     flowline1.setLength(1200);
@@ -89,7 +89,7 @@ public class AdjusterTest {
     testSystem.addComponent("methane", 100.0);
 
     neqsim.process.equipment.stream.Stream inletStream = new neqsim.process.equipment.stream.Stream("inlet stream",
-	testSystem);
+        testSystem);
     inletStream.setFlowRate(100.0, "kg/hr");
     inletStream.setTemperature(25.0, "C");
     inletStream.run();
@@ -127,7 +127,7 @@ public class AdjusterTest {
     testSystem.addComponent("methane", 100.0);
 
     neqsim.process.equipment.stream.Stream inletStream = new neqsim.process.equipment.stream.Stream("inlet stream",
-	testSystem);
+        testSystem);
     inletStream.setFlowRate(100.0, "kg/hr");
     inletStream.setTemperature(300.0, "K");
 
@@ -181,15 +181,15 @@ public class AdjusterTest {
     feed.setFlowRate(1000.0, "kg/hr"); // Total flow 1000 kg/hr
 
     neqsim.process.equipment.splitter.Splitter splitter = new neqsim.process.equipment.splitter.Splitter("splitter",
-	feed);
+        feed);
     splitter.setSplitNumber(2);
     splitter.setSplitFactors(new double[] { 0.5, 0.5 });
 
     // Initial guess: split 50/50
     neqsim.process.equipment.stream.Stream stream1 = new neqsim.process.equipment.stream.Stream("stream1",
-	splitter.getSplitStream(0));
+        splitter.getSplitStream(0));
     neqsim.process.equipment.stream.Stream stream2 = new neqsim.process.equipment.stream.Stream("stream2",
-	splitter.getSplitStream(1));
+        splitter.getSplitStream(1));
 
     // We want to adjust stream 2 flow rate (via splitter)
     // so that stream 1 flow rate becomes 800 kg/hr.

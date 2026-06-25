@@ -90,13 +90,13 @@ public class ConformityResult implements Serializable {
    */
   public static ConformityResult notApplicable(String checkName, String standard, String reason) {
     ConformityResult result = new ConformityResult(checkName, standard, "", Double.NaN, Double.NaN, "",
-	LimitDirection.MAXIMUM, reason);
+        LimitDirection.MAXIMUM, reason);
     return new ConformityResult(checkName, standard, "", Double.NaN, Double.NaN, "", LimitDirection.MAXIMUM, reason) {
       private static final long serialVersionUID = 1L;
 
       @Override
       public Status getStatus() {
-	return Status.NOT_APPLICABLE;
+        return Status.NOT_APPLICABLE;
       }
     };
   }
@@ -116,17 +116,17 @@ public class ConformityResult implements Serializable {
     double warningThreshold = 0.9;
     if (dir == LimitDirection.MAXIMUM) {
       if (actual > limit) {
-	return Status.FAIL;
+        return Status.FAIL;
       } else if (actual > limit * warningThreshold) {
-	return Status.WARNING;
+        return Status.WARNING;
       }
       return Status.PASS;
     } else {
       // MINIMUM: actual must be >= limit
       if (actual < limit) {
-	return Status.FAIL;
+        return Status.FAIL;
       } else if (actual < limit * (1.0 + (1.0 - warningThreshold))) {
-	return Status.WARNING;
+        return Status.WARNING;
       }
       return Status.PASS;
     }
@@ -226,6 +226,6 @@ public class ConformityResult implements Serializable {
   @Override
   public String toString() {
     return String.format("%-25s %10.4f %10.4f %-6s %-4s  %s", checkName, actualValue, limitValue, unit, status,
-	description);
+        description);
   }
 }

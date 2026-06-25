@@ -170,7 +170,7 @@ public class AdsorptionBedTest {
 
     // CO2 fraction should decrease more than methane fraction
     assertTrue(outletCO2Frac < inletCO2Frac,
-	"CO2 should be preferentially removed: inlet=" + inletCO2Frac + ", outlet=" + outletCO2Frac);
+        "CO2 should be preferentially removed: inlet=" + inletCO2Frac + ", outlet=" + outletCO2Frac);
   }
 
   /**
@@ -276,7 +276,7 @@ public class AdsorptionBedTest {
       secondHalf += loading[cell];
     }
     assertTrue(firstHalf >= secondHalf,
-	"First half of bed should have more loading than second half: " + firstHalf + " vs " + secondHalf);
+        "First half of bed should have more loading than second half: " + firstHalf + " vs " + secondHalf);
   }
 
   /**
@@ -367,7 +367,7 @@ public class AdsorptionBedTest {
     double[] loadingAfterDes = bed.getLoadingProfile(1);
     double firstCellAfterDes = loadingAfterDes[0];
     assertTrue(firstCellAfterDes < firstCellAfterAds, "First cell loading should decrease during desorption: before="
-	+ firstCellAfterAds + ", after=" + firstCellAfterDes);
+        + firstCellAfterAds + ", after=" + firstCellAfterDes);
   }
 
   // =============================================
@@ -414,7 +414,7 @@ public class AdsorptionBedTest {
     double fastOutletMoles = fastBed.getOutletStream().getThermoSystem().getTotalNumberOfMoles();
 
     assertTrue(fastOutletMoles < slowOutletMoles,
-	"Higher kLDF should remove more moles: fast=" + fastOutletMoles + ", slow=" + slowOutletMoles);
+        "Higher kLDF should remove more moles: fast=" + fastOutletMoles + ", slow=" + slowOutletMoles);
   }
 
   // =============================================

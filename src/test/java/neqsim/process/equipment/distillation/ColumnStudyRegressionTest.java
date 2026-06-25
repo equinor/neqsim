@@ -102,9 +102,9 @@ public class ColumnStudyRegressionTest {
   public void columnStudyCaseMatchesProfileAndClosesMassBalances() {
     SystemInterface baseFluid = createBaseFluid();
     StreamInterface feedStream = createStream("manual_column_feed", baseFluid, MAIN_FEED_COMPOSITION,
-	MAIN_FEED_TEMPERATURE_C, MAIN_FEED_PRESSURE_BARA, MAIN_FEED_MASS_FLOW_KG_HR);
+        MAIN_FEED_TEMPERATURE_C, MAIN_FEED_PRESSURE_BARA, MAIN_FEED_MASS_FLOW_KG_HR);
     StreamInterface topFeedStream = createStream("top_stage_reflux", baseFluid, TOP_FEED_COMPOSITION,
-	TOP_FEED_TEMPERATURE_C, TOP_FEED_PRESSURE_BARA, TOP_FEED_MASS_FLOW_KG_HR);
+        TOP_FEED_TEMPERATURE_C, TOP_FEED_PRESSURE_BARA, TOP_FEED_MASS_FLOW_KG_HR);
 
     DistillationColumn column = createColumn(feedStream, topFeedStream);
     column.run();
@@ -131,7 +131,7 @@ public class ColumnStudyRegressionTest {
     for (int pseudoIndex = 0; pseudoIndex < PSEUDO_MOLAR_MASSES_KG_PER_MOL.length; pseudoIndex++) {
       String componentName = COMPONENT_NAMES[NEQSIM_COMPONENT_NAMES.length + pseudoIndex];
       fluid.addTBPfraction(componentName, 1.0e-10, PSEUDO_MOLAR_MASSES_KG_PER_MOL[pseudoIndex],
-	  PSEUDO_DENSITIES_KG_PER_M3[pseudoIndex]);
+          PSEUDO_DENSITIES_KG_PER_M3[pseudoIndex]);
     }
     fluid.setMixingRule("classic");
     fluid.setMultiPhaseCheck(true);
@@ -236,7 +236,7 @@ public class ColumnStudyRegressionTest {
       int stage = answerTrayToNeqSimStage(answerTray);
       double actualTemperatureC = column.getTray(stage).getTemperature() - 273.15;
       assertEquals(ANSWER_TEMPERATURE_C_TOPDOWN[answerTray - 1], actualTemperatureC, TEMPERATURE_PROFILE_TOLERANCE_C,
-	  "temperature profile mismatch at answer tray " + answerTray);
+          "temperature profile mismatch at answer tray " + answerTray);
     }
   }
 
@@ -250,7 +250,7 @@ public class ColumnStudyRegressionTest {
       int stage = answerTrayToNeqSimStage(answerTray);
       double actualPressureBarg = column.getTray(stage).getPressure() - ATM_BARA;
       assertEquals(ANSWER_PRESSURE_BARG_TOPDOWN[answerTray - 1], actualPressureBarg, PRESSURE_PROFILE_TOLERANCE_BARG,
-	  "pressure profile mismatch at answer tray " + answerTray);
+          "pressure profile mismatch at answer tray " + answerTray);
     }
   }
 
@@ -265,11 +265,11 @@ public class ColumnStudyRegressionTest {
       DistillationColumn column) {
     double totalFeedMassFlow = feedStream.getFlowRate("kg/hr") + topFeedStream.getFlowRate("kg/hr");
     double totalProductMassFlow = column.getGasOutStream().getFlowRate("kg/hr")
-	+ column.getLiquidOutStream().getFlowRate("kg/hr");
+        + column.getLiquidOutStream().getFlowRate("kg/hr");
     assertEquals(totalFeedMassFlow, totalProductMassFlow, TOTAL_MASS_BALANCE_TOLERANCE_KG_HR,
-	"overall product mass balance should close");
+        "overall product mass balance should close");
     assertEquals(0.0, column.getMassBalance("kg/hr"), TOTAL_MASS_BALANCE_TOLERANCE_KG_HR,
-	"column mass balance helper should close");
+        "column mass balance helper should close");
   }
 
   /**
@@ -288,11 +288,11 @@ public class ColumnStudyRegressionTest {
 
     for (int componentIndex = 0; componentIndex < COMPONENT_NAMES.length; componentIndex++) {
       double componentIn = getComponentMassFlowKgPerHour(feedFluid, componentIndex)
-	  + getComponentMassFlowKgPerHour(topFeedFluid, componentIndex);
+          + getComponentMassFlowKgPerHour(topFeedFluid, componentIndex);
       double componentOut = getComponentMassFlowKgPerHour(overheadFluid, componentIndex)
-	  + getComponentMassFlowKgPerHour(bottomsFluid, componentIndex);
+          + getComponentMassFlowKgPerHour(bottomsFluid, componentIndex);
       assertEquals(componentIn, componentOut, COMPONENT_MASS_BALANCE_TOLERANCE_KG_HR,
-	  "component mass balance mismatch for " + COMPONENT_NAMES[componentIndex]);
+          "component mass balance mismatch for " + COMPONENT_NAMES[componentIndex]);
     }
   }
 
@@ -305,6 +305,6 @@ public class ColumnStudyRegressionTest {
    */
   private double getComponentMassFlowKgPerHour(SystemInterface fluid, int componentIndex) {
     return fluid.getFlowRate("mole/hr") * fluid.getComponent(componentIndex).getMolarMass()
-	* fluid.getMolarComposition()[componentIndex];
+        * fluid.getMolarComposition()[componentIndex];
   }
 }

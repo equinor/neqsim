@@ -10,17 +10,20 @@ import neqsim.thermo.system.SystemInterface;
 /**
  * FlareStack: Combusts relief gas and computes heat release, emissions, radiation and tip backpressure.
  *
+ * <p>
  * Radiation models:
  * <ul>
  * <li>POINT_SOURCE: q = chi_r * Q / (4 pi R^2)</li>
  * <li>CHAMBERLAIN: line-source style with emissive power, flame length, wind tilt, and atmospheric attenuation.</li>
  * </ul>
  *
+ * <p>
  * Tip ΔP/backpressure:
  * <ul>
  * <li>ΔP_tip = K_tip * 0.5 * rho_exit * u_exit^2</li>
  * </ul>
  *
+ * <p>
  * NOTES:
  * <ul>
  * <li>Coefficients for Chamberlain are exposed so you can calibrate to your standard/vendor.</li>
@@ -480,7 +483,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
 
     // Flame length (m)
     double Lf = ch_lfC * Math.pow(Math.max(1e-3, heatReleaseMW), ch_lfA)
-	/ Math.pow(Math.max(1e-6, tipDiameter_m), ch_lfB);
+        / Math.pow(Math.max(1e-6, tipDiameter_m), ch_lfB);
 
     // Tilt angle (rad), limit to < ~65 deg to avoid singular geometries
     double theta = Math.atan(ch_kTilt * windSpeed10m / Math.max(0.5, Vexit));
@@ -510,7 +513,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
       double view = ds / (4.0 * Math.PI * R * R);
       double cosTerm = dz / R; // crude projection toward ground
       if (cosTerm < 0) {
-	cosTerm = 0;
+        cosTerm = 0;
       }
 
       // Atmospheric attenuation
@@ -552,12 +555,12 @@ public class FlareStack extends ProcessEquipmentBaseClass {
 
       int nc = s.getPhase(0).getNumberOfComponents();
       for (int i = 0; i < nc; i++) {
-	neqsim.thermo.component.ComponentInterface comp = s.getPhase(0).getComponent(i);
-	String name = comp.getComponentName().toLowerCase();
-	double zi = comp.getz();
-	SpeciesData sd = SpeciesData.of(name);
-	LHV_J_per_kmol += zi * sd.LHV_J_per_kmol;
-	O2_kmol_per_kmolFuel += zi * sd.O2_stoich_per_kmolFuel;
+        neqsim.thermo.component.ComponentInterface comp = s.getPhase(0).getComponent(i);
+        String name = comp.getComponentName().toLowerCase();
+        double zi = comp.getz();
+        SpeciesData sd = SpeciesData.of(name);
+        LHV_J_per_kmol += zi * sd.LHV_J_per_kmol;
+        O2_kmol_per_kmolFuel += zi * sd.O2_stoich_per_kmolFuel;
       }
       p.LHV_J_per_kg = LHV_J_per_kmol / MWmix;
       p.O2Stoich_kmol_per_kg = O2_kmol_per_kmolFuel / MWmix;
@@ -584,7 +587,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
     }
 
     static EmissionResult compute(SystemInterface s, double mdot_kg_s, double etaEff, double fracTHC, double fracCO,
-	double fracSO2) {
+        double fracSO2) {
       EmissionResult r = new EmissionResult();
       double MWmix = s.getMolarMass();
       double kmolFuel_s = (MWmix > 1e-12) ? mdot_kg_s / MWmix : 0.0;
@@ -592,12 +595,12 @@ public class FlareStack extends ProcessEquipmentBaseClass {
       double C_kmol = 0.0, H_kmol = 0.0, S_kmol = 0.0;
       int nc = s.getPhase(0).getNumberOfComponents();
       for (int i = 0; i < nc; i++) {
-	neqsim.thermo.component.ComponentInterface c = s.getPhase(0).getComponent(i);
-	double z = c.getz() * kmolFuel_s;
-	ElementStoich es = ElementStoich.of(c.getComponentName().toLowerCase());
-	C_kmol += z * es.C;
-	H_kmol += z * es.H;
-	S_kmol += z * es.S;
+        neqsim.thermo.component.ComponentInterface c = s.getPhase(0).getComponent(i);
+        double z = c.getz() * kmolFuel_s;
+        ElementStoich es = ElementStoich.of(c.getComponentName().toLowerCase());
+        C_kmol += z * es.C;
+        H_kmol += z * es.H;
+        S_kmol += z * es.S;
       }
 
       double C_to_CO2 = etaEff * (1.0 - fracCO - fracTHC) * C_kmol;
@@ -633,26 +636,26 @@ public class FlareStack extends ProcessEquipmentBaseClass {
     static SpeciesData of(String name) {
       switch (name) {
       case "methane":
-	return new SpeciesData(802.3e6, 2.0);
+        return new SpeciesData(802.3e6, 2.0);
       case "ethane":
-	return new SpeciesData(1429e6, 3.5);
+        return new SpeciesData(1429e6, 3.5);
       case "propane":
-	return new SpeciesData(2043e6, 5.0);
+        return new SpeciesData(2043e6, 5.0);
       case "n-butane":
       case "butane":
-	return new SpeciesData(2658e6, 6.5);
+        return new SpeciesData(2658e6, 6.5);
       case "n-pentane":
       case "pentane":
-	return new SpeciesData(3273e6, 8.0);
+        return new SpeciesData(3273e6, 8.0);
       case "hydrogen":
-	return new SpeciesData(242e6, 0.5);
+        return new SpeciesData(242e6, 0.5);
       case "carbon monoxide":
       case "co":
-	return new SpeciesData(283e6, 0.5);
+        return new SpeciesData(283e6, 0.5);
       case "h2s":
-	return new SpeciesData(518e6, 1.5);
+        return new SpeciesData(518e6, 1.5);
       default:
-	return new SpeciesData(1200e6, 3.0); // generic CH1.8 proxy
+        return new SpeciesData(1200e6, 3.0); // generic CH1.8 proxy
       }
     }
 
@@ -674,26 +677,26 @@ public class FlareStack extends ProcessEquipmentBaseClass {
     static ElementStoich of(String name) {
       switch (name) {
       case "methane":
-	return new ElementStoich(1, 4, 0);
+        return new ElementStoich(1, 4, 0);
       case "ethane":
-	return new ElementStoich(2, 6, 0);
+        return new ElementStoich(2, 6, 0);
       case "propane":
-	return new ElementStoich(3, 8, 0);
+        return new ElementStoich(3, 8, 0);
       case "n-butane":
       case "butane":
-	return new ElementStoich(4, 10, 0);
+        return new ElementStoich(4, 10, 0);
       case "n-pentane":
       case "pentane":
-	return new ElementStoich(5, 12, 0);
+        return new ElementStoich(5, 12, 0);
       case "hydrogen":
-	return new ElementStoich(0, 2, 0);
+        return new ElementStoich(0, 2, 0);
       case "carbon monoxide":
       case "co":
-	return new ElementStoich(1, 0, 0);
+        return new ElementStoich(1, 0, 0);
       case "h2s":
-	return new ElementStoich(0, 2, 1);
+        return new ElementStoich(0, 2, 1);
       default:
-	return new ElementStoich(1, 1.8, 0);
+        return new ElementStoich(1, 1.8, 0);
       }
     }
   }

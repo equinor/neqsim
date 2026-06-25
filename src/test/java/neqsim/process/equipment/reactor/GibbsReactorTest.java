@@ -299,9 +299,9 @@ public class GibbsReactorTest {
 
     // Calculate and assert equilibrium constant K = (fug_NO2)^2 / (fug_N2O4)
     double fugNO2 = outlet.getPhase(0).getComponent("NO2").fugcoef(outlet.getPhase(0))
-	* outlet.getPhase(0).getComponent("NO2").getz() * outlet.getPressure();
+        * outlet.getPhase(0).getComponent("NO2").getz() * outlet.getPressure();
     double fugN2O4 = outlet.getPhase(0).getComponent("N2O4").fugcoef(outlet.getPhase(0))
-	* outlet.getPhase(0).getComponent("N2O4").getz() * outlet.getPressure();
+        * outlet.getPhase(0).getComponent("N2O4").getz() * outlet.getPressure();
 
     double K_equilibrium = (fugNO2 * fugNO2) / fugN2O4;
 
@@ -362,7 +362,7 @@ public class GibbsReactorTest {
 
     // Adaptive should use fewer iterations (NASA CEA-style step limiting allows larger steps)
     Assertions.assertTrue(adaptiveIters < baselineIters,
-	"Adaptive (" + adaptiveIters + ") should use fewer iterations than baseline (" + baselineIters + ")");
+        "Adaptive (" + adaptiveIters + ") should use fewer iterations than baseline (" + baselineIters + ")");
 
     // Results should match within engineering tolerance (1% relative for major species)
     SystemInterface out1 = baseline.getOutletStream().getThermoSystem();

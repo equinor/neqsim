@@ -1,6 +1,9 @@
 package neqsim.process.equipment.util;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.util.UtilityAirSystem.AirQualityClass;
@@ -187,7 +190,7 @@ public class UtilityAirSystemTest {
   @Test
   public void testAirConsumerClass() {
     UtilityAirSystem.AirConsumer consumer = new UtilityAirSystem.AirConsumer("Test Consumer", 100.0,
-	AirQualityClass.CLASS_3);
+        AirQualityClass.CLASS_3);
 
     assertEquals("Test Consumer", consumer.getName());
     assertEquals(100.0, consumer.getDemandNm3h(), 1e-6);

@@ -198,7 +198,7 @@ public enum StandardType {
     String normalizedType = equipmentType.trim().toLowerCase();
     for (String type : applicableEquipmentTypes) {
       if (type.toLowerCase().equals(normalizedType)) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -217,7 +217,7 @@ public enum StandardType {
     String normalizedCode = code.trim().toUpperCase().replace("_", "-");
     for (StandardType type : values()) {
       if (type.getCode().toUpperCase().replace("_", "-").equals(normalizedCode)) {
-	return type;
+        return type;
       }
     }
     return null;
@@ -233,7 +233,7 @@ public enum StandardType {
     List<StandardType> applicable = new ArrayList<StandardType>();
     for (StandardType type : values()) {
       if (type.appliesTo(equipmentType)) {
-	applicable.add(type);
+        applicable.add(type);
       }
     }
     return applicable;
@@ -248,7 +248,7 @@ public enum StandardType {
     List<StandardType> norsok = new ArrayList<StandardType>();
     for (StandardType type : values()) {
       if (type.getCode().startsWith("NORSOK")) {
-	norsok.add(type);
+        norsok.add(type);
       }
     }
     return norsok;
@@ -263,7 +263,7 @@ public enum StandardType {
     List<StandardType> asme = new ArrayList<StandardType>();
     for (StandardType type : values()) {
       if (type.getCode().startsWith("ASME")) {
-	asme.add(type);
+        asme.add(type);
       }
     }
     return asme;
@@ -278,7 +278,7 @@ public enum StandardType {
     List<StandardType> api = new ArrayList<StandardType>();
     for (StandardType type : values()) {
       if (type.getCode().startsWith("API")) {
-	api.add(type);
+        api.add(type);
       }
     }
     return api;
@@ -293,7 +293,7 @@ public enum StandardType {
     List<StandardType> dnv = new ArrayList<StandardType>();
     for (StandardType type : values()) {
       if (type.getCode().startsWith("DNV")) {
-	dnv.add(type);
+        dnv.add(type);
       }
     }
     return dnv;
@@ -318,7 +318,7 @@ public enum StandardType {
     String normalizedCategory = category.trim().toLowerCase();
     for (StandardType type : values()) {
       if (type.getDesignStandardCategory().toLowerCase().equals(normalizedCategory)) {
-	result.add(type);
+        result.add(type);
       }
     }
     return result;
@@ -333,7 +333,7 @@ public enum StandardType {
     List<StandardType> iso = new ArrayList<StandardType>();
     for (StandardType type : values()) {
       if (type.getCode().startsWith("ISO")) {
-	iso.add(type);
+        iso.add(type);
       }
     }
     return iso;
@@ -348,7 +348,7 @@ public enum StandardType {
     List<StandardType> astm = new ArrayList<StandardType>();
     for (StandardType type : values()) {
       if (type.getCode().startsWith("ASTM")) {
-	astm.add(type);
+        astm.add(type);
       }
     }
     return astm;
@@ -363,7 +363,7 @@ public enum StandardType {
     List<StandardType> en = new ArrayList<StandardType>();
     for (StandardType type : values()) {
       if (type.getCode().startsWith("EN")) {
-	en.add(type);
+        en.add(type);
       }
     }
     return en;
@@ -378,7 +378,7 @@ public enum StandardType {
     List<String> categories = new ArrayList<String>();
     for (StandardType type : values()) {
       if (!categories.contains(type.getDesignStandardCategory())) {
-	categories.add(type.getDesignStandardCategory());
+        categories.add(type.getDesignStandardCategory());
       }
     }
     return categories;

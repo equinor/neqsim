@@ -96,7 +96,7 @@ public class Constraint implements Serializable {
    */
   public static Constraint upperBound(String name, String variableName, double maxValue, String unit, Type type) {
     return new Constraint(name, name + " upper limit", type, Category.PHYSICAL, variableName, Double.NEGATIVE_INFINITY,
-	maxValue, unit);
+        maxValue, unit);
   }
 
   /**
@@ -111,7 +111,7 @@ public class Constraint implements Serializable {
    */
   public static Constraint lowerBound(String name, String variableName, double minValue, String unit, Type type) {
     return new Constraint(name, name + " lower limit", type, Category.PHYSICAL, variableName, minValue,
-	Double.POSITIVE_INFINITY, unit);
+        Double.POSITIVE_INFINITY, unit);
   }
 
   /**
@@ -257,6 +257,6 @@ public class Constraint implements Serializable {
   public String toString() {
     String status = violated ? "VIOLATED" : "OK";
     return String.format("Constraint[%s: %s in [%.2f, %.2f] %s = %.2f (%s)]", name, variableName, lowerBound,
-	upperBound, unit, currentValue, status);
+        upperBound, unit, currentValue, status);
   }
 }

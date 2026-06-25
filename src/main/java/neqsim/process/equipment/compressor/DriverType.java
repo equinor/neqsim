@@ -119,7 +119,7 @@ public enum DriverType {
     String upperName = name.toUpperCase().replace(" ", "_").replace("-", "_");
     for (DriverType type : values()) {
       if (type.name().equals(upperName) || type.displayName.toUpperCase().replace(" ", "_").equals(upperName)) {
-	return type;
+        return type;
       }
     }
     // Check partial matches

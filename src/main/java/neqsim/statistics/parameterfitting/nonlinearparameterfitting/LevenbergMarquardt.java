@@ -86,26 +86,26 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
       betaMatrix = new Matrix(beta, 1).transpose();
       double gradientNorm = betaMatrix.norm2();
       if (n >= MINIMUM_NUMBER_OF_ITERATIONS && Math.abs(chiSquare) <= CHI_SQUARE_TOLERANCE) {
-	convergenceReason = ConvergenceReason.CHI_SQUARE_TOLERANCE;
-	break;
+        convergenceReason = ConvergenceReason.CHI_SQUARE_TOLERANCE;
+        break;
       }
       if (n >= MINIMUM_NUMBER_OF_ITERATIONS && gradientNorm <= GRADIENT_TOLERANCE) {
-	convergenceReason = ConvergenceReason.GRADIENT_TOLERANCE;
-	break;
+        convergenceReason = ConvergenceReason.GRADIENT_TOLERANCE;
+        break;
       }
       if (n >= maxNumberOfIterations && n >= MINIMUM_NUMBER_OF_ITERATIONS) {
-	break;
+        break;
       }
 
       n++;
       Matrix alphaMatrix = new Matrix(alpha);
       Matrix solvedMatrix;
       try {
-	solvedMatrix = alphaMatrix.solve(betaMatrix);
+        solvedMatrix = alphaMatrix.solve(betaMatrix);
       } catch (RuntimeException ex) {
-	logger.warn("Levenberg-Marquardt stopped because the normal matrix could not be solved", ex);
-	convergenceReason = ConvergenceReason.SINGULAR_MATRIX;
-	break;
+        logger.warn("Levenberg-Marquardt stopped because the normal matrix could not be solved", ex);
+        convergenceReason = ConvergenceReason.SINGULAR_MATRIX;
+        break;
       }
 
       Matrix oldParameters = new Matrix(sampleSet.getSample(0).getFunction().getFittingParams(), 1).copy();
@@ -115,22 +115,22 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
       this.setFittingParameters(newParameters.copy().getArray()[0]);
       newChiSquare = calcChiSquare();
       if (newChiSquare >= oldChiSquare || Double.isNaN(newChiSquare) || Double.isInfinite(newChiSquare)) {
-	newChiSquare = oldChiSquare;
-	multiFactor *= 10.0;
-	this.setFittingParameters(oldParameters.getArray()[0]);
+        newChiSquare = oldChiSquare;
+        multiFactor *= 10.0;
+        this.setFittingParameters(oldParameters.getArray()[0]);
       } else {
-	multiFactor /= 10.0;
-	oldChiSquare = newChiSquare;
+        multiFactor /= 10.0;
+        oldChiSquare = newChiSquare;
       }
       logger.debug("LM iteration {} chi-square {} damping {}", n, newChiSquare, multiFactor);
       init();
     }
     updateParameterStatistics();
     result = new LevenbergMarquardtResult(convergenceReason, n, chiSquare, getGradientNorm(), coVarianceMatrix,
-	parameterCorrelationMatrix, parameterStandardDeviation);
+        parameterCorrelationMatrix, parameterStandardDeviation);
     solved = result.isConverged();
     logger.info("Levenberg-Marquardt stopped after {} iterations with reason {} and chi-square {}", n,
-	convergenceReason, chiSquare);
+        convergenceReason, chiSquare);
   }
 
   /**

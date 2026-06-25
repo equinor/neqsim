@@ -228,17 +228,17 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
     for (int j = 0; j < thermoSystem.getNumberOfPhases(); j++) {
       double relFact = gasVolume / (thermoSystem.getPhase(j).getVolume() * 1.0e-5);
       if (j == 1) {
-	relFact = liquidVolume / (thermoSystem.getPhase(j).getVolume() * 1.0e-5);
+        relFact = liquidVolume / (thermoSystem.getPhase(j).getVolume() * 1.0e-5);
       }
       for (int i = 0; i < thermoSystem.getPhase(j).getNumberOfComponents(); i++) {
-	thermoSystem.addComponent(thermoSystem.getPhase(j).getComponent(i).getComponentName(),
-	    relFact * thermoSystem.getPhase(j).getComponent(i).getNumberOfMolesInPhase(), j);
+        thermoSystem.addComponent(thermoSystem.getPhase(j).getComponent(i).getComponentName(),
+            relFact * thermoSystem.getPhase(j).getComponent(i).getNumberOfMolesInPhase(), j);
       }
     }
     if (thermoSystem2.getNumberOfPhases() == 2) {
       thermoSystem.setBeta(gasVolume / thermoSystem2.getPhase(0).getMolarVolume()
-	  / (gasVolume / thermoSystem2.getPhase(0).getMolarVolume()
-	      + liquidVolume / thermoSystem2.getPhase(1).getMolarVolume()));
+          / (gasVolume / thermoSystem2.getPhase(0).getMolarVolume()
+              + liquidVolume / thermoSystem2.getPhase(1).getMolarVolume()));
     } else {
       thermoSystem.setBeta(1.0 - 1e-10);
     }
@@ -290,10 +290,10 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
     double volume1 = thermoSystem.getVolume();
     System.out.println("volume1 " + volume1);
     double deltaEnergy = inletStreamMixer.getOutletStream().getThermoSystem().getEnthalpy()
-	- gasOutStream.getThermoSystem().getEnthalpy() - liquidOutStream.getThermoSystem().getEnthalpy();
+        - gasOutStream.getThermoSystem().getEnthalpy() - liquidOutStream.getThermoSystem().getEnthalpy();
     System.out.println("enthalph delta " + deltaEnergy);
     double wallHeatTransfer = heatTransferNumber * steelWallArea
-	* (steelWallTemperature - thermoSystem.getTemperature()) * dt;
+        * (steelWallTemperature - thermoSystem.getTemperature()) * dt;
     System.out.println("delta temp " + (steelWallTemperature - thermoSystem.getTemperature()));
     steelWallTemperature -= wallHeatTransfer / (steelCp * steelWallMass);
     System.out.println("wall Temperature " + steelWallTemperature);
@@ -306,14 +306,14 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
     for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
       double dn = 0.0;
       for (int k = 0; k < inletStreamMixer.getOutletStream().getThermoSystem().getNumberOfPhases(); k++) {
-	dn += inletStreamMixer.getOutletStream().getThermoSystem().getPhase(k).getComponent(i)
-	    .getNumberOfMolesInPhase();
+        dn += inletStreamMixer.getOutletStream().getThermoSystem().getPhase(k).getComponent(i)
+            .getNumberOfMolesInPhase();
       }
       dn = dn - gasOutStream.getThermoSystem().getPhase(0).getComponent(i).getNumberOfMolesInPhase()
-	  - liquidOutStream.getThermoSystem().getPhase(0).getComponent(i).getNumberOfMolesInPhase();
+          - liquidOutStream.getThermoSystem().getPhase(0).getComponent(i).getNumberOfMolesInPhase();
       System.out.println("dn " + dn);
       thermoSystem.addComponent(
-	  inletStreamMixer.getOutletStream().getThermoSystem().getPhase(0).getComponent(i).getComponentName(), dn * dt);
+          inletStreamMixer.getOutletStream().getThermoSystem().getPhase(0).getComponent(i).getComponentName(), dn * dt);
     }
     System.out.println("liquid level " + liquidLevel);
     liquidVolume = getLiquidLevel() * 3.14 / 4.0 * separatorDiameter * separatorDiameter * separatorLength;
@@ -346,12 +346,12 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
   public void setOutComposition(SystemInterface thermoSystem) {
     for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
       if (thermoSystem.hasPhaseType("gas")) {
-	getGasOutStream().getThermoSystem().getPhase(0).getComponent(i)
-	    .setx(thermoSystem.getPhase(thermoSystem.getPhaseNumberOfPhase("gas")).getComponent(i).getx());
+        getGasOutStream().getThermoSystem().getPhase(0).getComponent(i)
+            .setx(thermoSystem.getPhase(thermoSystem.getPhaseNumberOfPhase("gas")).getComponent(i).getx());
       }
       if (thermoSystem.hasPhaseType("oil")) {
-	getLiquidOutStream().getThermoSystem().getPhase(0).getComponent(i)
-	    .setx(thermoSystem.getPhase(thermoSystem.getPhaseNumberOfPhase("oil")).getComponent(i).getx());
+        getLiquidOutStream().getThermoSystem().getPhase(0).getComponent(i)
+            .setx(thermoSystem.getPhase(thermoSystem.getPhaseNumberOfPhase("oil")).getComponent(i).getx());
       }
     }
   }
@@ -466,7 +466,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
       inletFlow += inletStreamMixer.getStream(i).getThermoSystem().getFlowRate(unit);
     }
     double outletFlow = getGasOutStream().getThermoSystem().getFlowRate(unit)
-	+ getLiquidOutStream().getThermoSystem().getFlowRate(unit);
+        + getLiquidOutStream().getThermoSystem().getFlowRate(unit);
     return outletFlow - inletFlow;
   }
 
@@ -514,19 +514,19 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
     // thermoSystem is set when setInletStream() is called
     if (thermoSystem == null && numberOfInputStreams == 0) {
       result.addError("stream", "No inlet stream connected",
-	  "Connect inlet stream: tank.setInletStream(stream) or tank.addStream(stream)");
+          "Connect inlet stream: tank.setInletStream(stream) or tank.addStream(stream)");
     }
 
     // Check: Tank volume is positive
     if (volume <= 0) {
       result.addError("dimensions", "Tank volume must be positive: " + volume + " m3",
-	  "Set positive volume: tank.setVolume(100.0)");
+          "Set positive volume: tank.setVolume(100.0)");
     }
 
     // Check: Liquid level is in valid range (0-1)
     if (liquidLevel < 0 || liquidLevel > 1) {
       result.addWarning("level", "Liquid level outside 0-1 range: " + liquidLevel,
-	  "Liquid level should be between 0 and 1 (fraction)");
+          "Liquid level should be between 0 and 1 (fraction)");
     }
 
     // Check: Efficiency is in valid range
@@ -620,7 +620,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
       double liquidFlowRate = liquidSystem.getFlowRate("m3/hr") / 3600.0;
       double actualResidenceTime = liquidFlowRate > 0 ? liquidVolume / liquidFlowRate : 0;
       sb.append("Actual Residence Time: ")
-	  .append(String.format("%.0f s (%.1f min)", actualResidenceTime, actualResidenceTime / 60)).append("\n");
+          .append(String.format("%.0f s (%.1f min)", actualResidenceTime, actualResidenceTime / 60)).append("\n");
     }
 
     if (isAutoSized()) {
@@ -628,7 +628,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
       sb.append("Design Volume: ").append(String.format("%.1f m3", designVolume)).append("\n");
       sb.append("Design Liquid Level: ").append(String.format("%.1f%%", designLiquidLevel * 100)).append("\n");
       sb.append("Design Residence Time: ")
-	  .append(String.format("%.0f s (%.1f min)", designResidenceTime, designResidenceTime / 60)).append("\n");
+          .append(String.format("%.0f s (%.1f min)", designResidenceTime, designResidenceTime / 60)).append("\n");
     }
 
     return sb.toString();
@@ -683,7 +683,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
 
     // Liquid level constraint
     neqsim.process.equipment.capacity.CapacityConstraint levelConstraint = new neqsim.process.equipment.capacity.CapacityConstraint(
-	"liquidLevel", "-", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD);
+        "liquidLevel", "-", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD);
     levelConstraint.setDesignValue(designLiquidLevel);
     levelConstraint.setMinValue(minLiquidLevel);
     levelConstraint.setMaxValue(maxLiquidLevel);
@@ -694,15 +694,15 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
 
     // Residence time constraint
     neqsim.process.equipment.capacity.CapacityConstraint residenceConstraint = new neqsim.process.equipment.capacity.CapacityConstraint(
-	"residenceTime", "s", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+        "residenceTime", "s", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
     residenceConstraint.setDesignValue(designResidenceTime);
     residenceConstraint.setMinValue(minResidenceTime);
     residenceConstraint.setUnit("s");
     residenceConstraint.setDescription("Liquid residence time");
     residenceConstraint.setValueSupplier(() -> {
       if (liquidSystem != null) {
-	double liquidFlowRate = liquidSystem.getFlowRate("m3/hr") / 3600.0;
-	return liquidFlowRate > 0 ? liquidVolume / liquidFlowRate : Double.MAX_VALUE;
+        double liquidFlowRate = liquidSystem.getFlowRate("m3/hr") / 3600.0;
+        return liquidFlowRate > 0 ? liquidVolume / liquidFlowRate : Double.MAX_VALUE;
       }
       return Double.MAX_VALUE;
     });
@@ -711,7 +711,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
     // Volume utilization constraint
     if (designVolume > 0) {
       neqsim.process.equipment.capacity.CapacityConstraint volumeConstraint = new neqsim.process.equipment.capacity.CapacityConstraint(
-	  "volumeUtilization", "m3", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+          "volumeUtilization", "m3", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
       volumeConstraint.setDesignValue(designVolume);
       volumeConstraint.setMaxValue(designVolume);
       volumeConstraint.setUnit("m3");
@@ -844,11 +844,11 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
     double maxUtil = 0.0;
     for (neqsim.process.equipment.capacity.CapacityConstraint constraint : tankCapacityConstraints.values()) {
       if (constraint.isEnabled()) {
-	double util = constraint.getUtilization();
-	if (util > maxUtil) {
-	  maxUtil = util;
-	  bottleneck = constraint;
-	}
+        double util = constraint.getUtilization();
+        if (util > maxUtil) {
+          maxUtil = util;
+          bottleneck = constraint;
+        }
       }
     }
     return bottleneck;
@@ -859,7 +859,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
   public boolean isCapacityExceeded() {
     for (neqsim.process.equipment.capacity.CapacityConstraint constraint : tankCapacityConstraints.values()) {
       if (constraint.isEnabled() && constraint.getUtilization() > 1.0) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -870,9 +870,9 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
   public boolean isHardLimitExceeded() {
     for (neqsim.process.equipment.capacity.CapacityConstraint constraint : tankCapacityConstraints.values()) {
       if (constraint.isEnabled()
-	  && constraint.getType() == neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD
-	  && constraint.getUtilization() > 1.0) {
-	return true;
+          && constraint.getType() == neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD
+          && constraint.getUtilization() > 1.0) {
+        return true;
       }
     }
     return false;
@@ -884,7 +884,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
     double maxUtil = 0.0;
     for (neqsim.process.equipment.capacity.CapacityConstraint constraint : tankCapacityConstraints.values()) {
       if (constraint.isEnabled()) {
-	maxUtil = Math.max(maxUtil, constraint.getUtilization());
+        maxUtil = Math.max(maxUtil, constraint.getUtilization());
       }
     }
     return maxUtil;

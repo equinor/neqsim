@@ -47,7 +47,7 @@ public class EOSCG {
       doubleW d2pdd2, doubleW d2pdtd, doubleW dpdt, doubleW u, doubleW h, doubleW s, doubleW cv, doubleW cp, doubleW w,
       doubleW g, doubleW jt, doubleW kappa, doubleW A) {
     correlations.properties(temperature, density, composition, p, z, dpdd, d2pdd2, d2pdtd, dpdt, u, h, s, cv, cp, w, g,
-	jt, kappa, A);
+        jt, kappa, A);
   }
 
   public void alpha0(double temperature, double density, double[] composition, doubleW[] a0) {

@@ -142,7 +142,7 @@ public class ErosionPredictionCalculatorTest {
     calcInconel.calculate();
 
     assertTrue(calcInconel.getErosionRate() < calcSteel.getErosionRate(),
-	"Inconel should have lower erosion rate than carbon steel");
+        "Inconel should have lower erosion rate than carbon steel");
   }
 
   @Test

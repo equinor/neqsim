@@ -36,7 +36,7 @@ class GasPseudoCriticalPropertiesTest {
     double ppcBara = GasPseudoCriticalProperties.pseudoCriticalPressureStanding(0.554);
     // Standing in psia: ~666 => ~45.9 bara
     assertTrue(ppcBara > psiaToBara(650) && ppcBara < psiaToBara(700),
-	"Standing Ppc for methane should be ~45.9 bara, got " + ppcBara);
+        "Standing Ppc for methane should be ~45.9 bara, got " + ppcBara);
   }
 
   @Test
@@ -60,7 +60,7 @@ class GasPseudoCriticalPropertiesTest {
   void testSuttonPpcTypicalGas() {
     double ppcBara = GasPseudoCriticalProperties.pseudoCriticalPressureSutton(0.75);
     assertTrue(ppcBara > psiaToBara(620) && ppcBara < psiaToBara(700),
-	"Sutton Ppc for gamma_g=0.75 should be ~45.3 bara, got " + ppcBara);
+        "Sutton Ppc for gamma_g=0.75 should be ~45.3 bara, got " + ppcBara);
   }
 
   @Test
@@ -70,7 +70,7 @@ class GasPseudoCriticalPropertiesTest {
 
     double diff = Math.abs(tpcStanding - tpcSutton) / tpcStanding;
     assertTrue(diff < 0.10, "Standing and Sutton Tpc should differ by <10%, got " + diff * 100 + "% (Standing="
-	+ tpcStanding + ", Sutton=" + tpcSutton + ")");
+        + tpcStanding + ", Sutton=" + tpcSutton + ")");
   }
 
   @Test
@@ -213,9 +213,9 @@ class GasPseudoCriticalPropertiesTest {
     double[] corrected = GasPseudoCriticalProperties.wichertAzizCorrection(tpcK, ppcBara, yH2S, yCO2);
 
     assertTrue(corrected[0] > rToK(300) && corrected[0] < rToK(500),
-	"Corrected Tpc should be in range, got " + corrected[0]);
+        "Corrected Tpc should be in range, got " + corrected[0]);
     assertTrue(corrected[1] > psiaToBara(400) && corrected[1] < psiaToBara(800),
-	"Corrected Ppc should be in range, got " + corrected[1]);
+        "Corrected Ppc should be in range, got " + corrected[1]);
 
     // Step 3: Calculate reduced properties at reservoir conditions
     double T = 366.48; // K (200 F)

@@ -78,40 +78,40 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
 
     try {
       if (System.getenv("NEQSIMBLOBDB_CS") != null) {
-	return DriverManager.getConnection(System.getenv("NEQSIMBLOBDB_CS"), System.getenv("MYSQL_USER"),
-	    System.getenv("MYSQL_PASSWORD"));
+        return DriverManager.getConnection(System.getenv("NEQSIMBLOBDB_CS"), System.getenv("MYSQL_USER"),
+            System.getenv("MYSQL_PASSWORD"));
       } else if (dataBaseType.equals("MSAccess")) {
-	String dir = "";
-	if (System.getProperty("NeqSim.home") == null) {
-	  dir = neqsim.util.util.FileSystemSettings.root + "\\programming\\NeqSimSourceCode\\java\\neqsim";
-	} else {
-	  dir = System.getProperty("NeqSim.home");
-	}
-	return DriverManager
-	    .getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" + dir + "\\data\\NeqSimDatabase");
+        String dir = "";
+        if (System.getProperty("NeqSim.home") == null) {
+          dir = neqsim.util.util.FileSystemSettings.root + "\\programming\\NeqSimSourceCode\\java\\neqsim";
+        } else {
+          dir = System.getProperty("NeqSim.home");
+        }
+        return DriverManager
+            .getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" + dir + "\\data\\NeqSimDatabase");
       } else if (dataBaseType.equals("H2") || dataBaseType.equals("H2RT")) {
-	return DriverManager.getConnection(connectionString, "sa", "");
+        return DriverManager.getConnection(connectionString, "sa", "");
       } else if (dataBaseType.equals("MSAccessUCanAccess")) {
-	return DriverManager.getConnection(getConnectionString());
+        return DriverManager.getConnection(getConnectionString());
       } else if (dataBaseType.equals("mySQL") || dataBaseType.equals("mySQLNTNU") || dataBaseType.equals("Derby")) {
-	return DriverManager.getConnection(getConnectionString(), username, password);
+        return DriverManager.getConnection(getConnectionString(), username, password);
       } else if (dataBaseType.equals("mySQLNeqSimWeb")) {
-	ctx = new javax.naming.InitialContext();
-	ds = (javax.sql.DataSource) ctx.lookup("java:comp/env/jdbc/NeqsimThermoDatabase");
-	return ds.getConnection();
+        ctx = new javax.naming.InitialContext();
+        ds = (javax.sql.DataSource) ctx.lookup("java:comp/env/jdbc/NeqsimThermoDatabase");
+        return ds.getConnection();
       } else {
-	return DriverManager.getConnection(getConnectionString(), username, password);
+        return DriverManager.getConnection(getConnectionString(), username, password);
       }
     } catch (Exception ex) {
       logger.error("error loading NeqSimBlobDatabase... ", ex);
       throw new RuntimeException(ex);
     } finally {
       try {
-	if (ctx != null) {
-	  ctx.close();
-	}
+        if (ctx != null) {
+          ctx.close();
+        }
       } catch (Exception ex) {
-	logger.error(ex.getMessage(), ex);
+        logger.error(ex.getMessage(), ex);
       }
     }
   }
@@ -149,8 +149,8 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
   public void execute(String sqlString) {
     try {
       if (databaseConnection == null) {
-	databaseConnection = this.openConnection();
-	setStatement(databaseConnection.createStatement());
+        databaseConnection = this.openConnection();
+        setStatement(databaseConnection.createStatement());
       }
       getStatement().execute(sqlString);
     } catch (Exception ex) {
@@ -193,9 +193,9 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
 
     try {
       if (dataBaseType.equals("mySQL")) {
-	Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
+        Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
       } else {
-	Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
+        Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
       }
     } catch (Exception ex) {
       logger.error("error loading database driver.. ", ex);

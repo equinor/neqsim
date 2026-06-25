@@ -98,7 +98,7 @@ public class ProcessSafetyReportBuilder {
   public ProcessSafetyReport build() {
     ProcessSafetyThresholds appliedThresholds = new ProcessSafetyThresholds(thresholds);
     ConditionMonitor monitor = Optional.ofNullable(conditionMonitor)
-	.orElseGet(() -> new ConditionMonitor(processSystem));
+        .orElseGet(() -> new ConditionMonitor(processSystem));
 
     // Run the condition monitoring analysis if not already performed.
     try {
@@ -114,7 +114,7 @@ public class ProcessSafetyReportBuilder {
     String equipmentJson = generateEquipmentJson();
 
     return new ProcessSafetyReport(scenarioLabel, appliedThresholds, findings, safetyMargins, reliefs, kpis,
-	equipmentJson);
+        equipmentJson);
   }
 
   private List<ConditionFinding> collectConditionFindings(ConditionMonitor monitor) {
@@ -129,16 +129,16 @@ public class ProcessSafetyReportBuilder {
     for (String segment : segments) {
       String trimmed = segment == null ? null : segment.trim();
       if (trimmed == null || trimmed.isEmpty()) {
-	continue;
+        continue;
       }
       String lower = trimmed.toLowerCase(Locale.ROOT);
       if (lower.endsWith("analysis started")) {
-	currentUnit = trimmed.split(" ", 2)[0];
-	continue;
+        currentUnit = trimmed.split(" ", 2)[0];
+        continue;
       }
       if (lower.endsWith("analysis ended")) {
-	currentUnit = null;
-	continue;
+        currentUnit = null;
+        continue;
       }
 
       SeverityLevel severity = classifyConditionSeverity(lower);
@@ -152,7 +152,7 @@ public class ProcessSafetyReportBuilder {
       return SeverityLevel.NORMAL;
     }
     if (messageLower.contains("critical") || messageLower.contains("too high") || messageLower.contains("error")
-	|| messageLower.contains("fail")) {
+        || messageLower.contains("fail")) {
       return SeverityLevel.CRITICAL;
     }
     if (messageLower.contains("warn") || messageLower.contains("deviation") || messageLower.contains("monitor")) {
@@ -165,31 +165,31 @@ public class ProcessSafetyReportBuilder {
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       MechanicalDesign design;
       try {
-	design = unit.getMechanicalDesign();
+        design = unit.getMechanicalDesign();
       } catch (Exception ex) {
-	logger.debug("Mechanical design not available for {}", unit.getName(), ex);
-	continue;
+        logger.debug("Mechanical design not available for {}", unit.getName(), ex);
+        continue;
       }
       if (design == null) {
-	continue;
+        continue;
       }
       double designPressure = design.getMaxDesignPressure();
       double operatingPressure;
       try {
-	operatingPressure = unit.getPressure();
+        operatingPressure = unit.getPressure();
       } catch (Exception ex) {
-	logger.debug("Unable to obtain operating pressure for {}", unit.getName(), ex);
-	continue;
+        logger.debug("Unable to obtain operating pressure for {}", unit.getName(), ex);
+        continue;
       }
       if (Double.isNaN(designPressure) || Double.isInfinite(designPressure) || designPressure == 0.0
-	  || Double.isNaN(operatingPressure) || Double.isInfinite(operatingPressure)) {
-	continue;
+          || Double.isNaN(operatingPressure) || Double.isInfinite(operatingPressure)) {
+        continue;
       }
       double marginFraction = (designPressure - operatingPressure) / designPressure;
       SeverityLevel severity = gradeSafetyMargin(appliedThresholds, marginFraction);
       String notes = marginFraction < 0 ? "Operating pressure above design" : null;
       margins.add(new SafetyMarginAssessment(unit.getName(), designPressure, operatingPressure, marginFraction,
-	  severity, notes));
+          severity, notes));
     }
     return margins;
   }
@@ -211,9 +211,9 @@ public class ProcessSafetyReportBuilder {
     List<ReliefDeviceAssessment> reliefs = new ArrayList<>();
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       if (unit instanceof SafetyReliefValve) {
-	reliefs.add(buildReliefAssessment((SafetyReliefValve) unit, appliedThresholds));
+        reliefs.add(buildReliefAssessment((SafetyReliefValve) unit, appliedThresholds));
       } else if (unit instanceof SafetyValve) {
-	reliefs.add(buildReliefAssessment((SafetyValve) unit, appliedThresholds));
+        reliefs.add(buildReliefAssessment((SafetyValve) unit, appliedThresholds));
       }
     }
     return reliefs;
@@ -227,7 +227,7 @@ public class ProcessSafetyReportBuilder {
     double utilisation = normalizeOpenFraction(valve);
     SeverityLevel severity = gradeUtilisation(thresholds, utilisation);
     return new ReliefDeviceAssessment(valve.getName(), setPressure, relievingPressure, upstreamPressure, massFlow,
-	utilisation, severity);
+        utilisation, severity);
   }
 
   private ReliefDeviceAssessment buildReliefAssessment(SafetyValve valve, ProcessSafetyThresholds thresholds) {
@@ -238,7 +238,7 @@ public class ProcessSafetyReportBuilder {
     double utilisation = normalizeOpenFraction(valve);
     SeverityLevel severity = gradeUtilisation(thresholds, utilisation);
     return new ReliefDeviceAssessment(valve.getName(), setPressure, relievingPressure, upstreamPressure, massFlow,
-	utilisation, severity);
+        utilisation, severity);
   }
 
   private double safeDouble(DoubleSupplier supplier) {
@@ -297,9 +297,9 @@ public class ProcessSafetyReportBuilder {
     double entropy = safeDouble(() -> processSystem.getEntropyProduction("kJ/K"));
     double exergy = safeDouble(() -> processSystem.getExergyChange("kJ"));
     SeverityLevel entropySeverity = gradeHighIsBad(thresholds.getEntropyChangeWarning(),
-	thresholds.getEntropyChangeCritical(), Math.abs(entropy));
+        thresholds.getEntropyChangeCritical(), Math.abs(entropy));
     SeverityLevel exergySeverity = gradeHighIsBad(thresholds.getExergyChangeWarning(),
-	thresholds.getExergyChangeCritical(), Math.abs(exergy));
+        thresholds.getExergyChangeCritical(), Math.abs(exergy));
     return new SystemKpiSnapshot(entropy, exergy, entropySeverity, exergySeverity);
   }
 

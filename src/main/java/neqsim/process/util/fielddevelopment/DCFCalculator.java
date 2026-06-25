@@ -240,9 +240,9 @@ public class DCFCalculator implements Serializable {
 
       double opex;
       if (opexByYear.length > 0 && year < opexByYear.length) {
-	opex = opexByYear[year] * inflationFactor;
+        opex = opexByYear[year] * inflationFactor;
       } else {
-	opex = (production > 0) ? annualOpex * inflationFactor : 0.0;
+        opex = (production > 0) ? annualOpex * inflationFactor : 0.0;
       }
 
       double depreciation = (year < deprecationYears && deprecationYears > 0) ? annualDepreciation : 0.0;
@@ -252,12 +252,12 @@ public class DCFCalculator implements Serializable {
 
       // Apply loss carry-forward
       if (taxableIncome > 0 && lossCarryForward > 0) {
-	double deduction = Math.min(taxableIncome, lossCarryForward);
-	taxableIncome -= deduction;
-	lossCarryForward -= deduction;
+        double deduction = Math.min(taxableIncome, lossCarryForward);
+        taxableIncome -= deduction;
+        lossCarryForward -= deduction;
       } else if (taxableIncome < 0) {
-	lossCarryForward += Math.abs(taxableIncome);
-	taxableIncome = 0.0;
+        lossCarryForward += Math.abs(taxableIncome);
+        taxableIncome = 0.0;
       }
 
       double tax = taxableIncome * taxRate;
@@ -274,7 +274,7 @@ public class DCFCalculator implements Serializable {
       npv += discountedCashFlow[year];
 
       if (paybackYear == -1 && cumulative >= 0 && year > 0) {
-	paybackYear = year;
+        paybackYear = year;
       }
     }
 
@@ -314,14 +314,14 @@ public class DCFCalculator implements Serializable {
       double npvMid = calculateNPVAtRate(mid);
 
       if (Math.abs(npvMid) < tolerance || (high - low) < tolerance) {
-	return mid;
+        return mid;
       }
 
       if (npvMid * npvLow < 0) {
-	high = mid;
+        high = mid;
       } else {
-	low = mid;
-	npvLow = npvMid;
+        low = mid;
+        npvLow = npvMid;
       }
     }
     return (low + high) / 2.0;

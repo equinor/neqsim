@@ -163,8 +163,8 @@ public interface TaxModel extends Serializable {
      * @param afterTaxIncome after-tax income
      */
     public TaxResult(double grossRevenue, double opex, double depreciation, double uplift, double royalty,
-	double corporateTaxBase, double corporateTax, double resourceTaxBase, double resourceTax, double totalTax,
-	double afterTaxIncome) {
+        double corporateTaxBase, double corporateTax, double resourceTaxBase, double resourceTax, double totalTax,
+        double afterTaxIncome) {
       this.grossRevenue = grossRevenue;
       this.opex = opex;
       this.depreciation = depreciation;
@@ -194,9 +194,9 @@ public interface TaxModel extends Serializable {
      * @param afterTaxIncome after-tax income
      */
     public TaxResult(double grossRevenue, double opex, double depreciation, double uplift, double corporateTaxBase,
-	double corporateTax, double resourceTaxBase, double resourceTax, double totalTax, double afterTaxIncome) {
+        double corporateTax, double resourceTaxBase, double resourceTax, double totalTax, double afterTaxIncome) {
       this(grossRevenue, opex, depreciation, uplift, 0.0, corporateTaxBase, corporateTax, resourceTaxBase, resourceTax,
-	  totalTax, afterTaxIncome);
+          totalTax, afterTaxIncome);
     }
 
     // Getters
@@ -274,7 +274,7 @@ public interface TaxModel extends Serializable {
      */
     public double getEffectiveTaxRate() {
       if (grossRevenue <= 0) {
-	return 0.0;
+        return 0.0;
       }
       return totalTax / grossRevenue;
     }
@@ -286,7 +286,7 @@ public interface TaxModel extends Serializable {
      */
     public double getGovernmentTakePercentage() {
       if (grossRevenue <= 0) {
-	return 0.0;
+        return 0.0;
       }
       return governmentTake / grossRevenue;
     }
@@ -294,7 +294,7 @@ public interface TaxModel extends Serializable {
     @Override
     public String toString() {
       return String.format("TaxResult[revenue=%.2f, tax=%.2f (%.1f%%), afterTax=%.2f]", grossRevenue, totalTax,
-	  getEffectiveTaxRate() * 100, afterTaxIncome);
+          getEffectiveTaxRate() * 100, afterTaxIncome);
     }
   }
 }

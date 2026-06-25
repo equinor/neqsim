@@ -239,11 +239,11 @@ public class StepResponseGenerator implements Serializable {
       List<StepResponse> stepResponses = runStepTest(mv);
 
       for (StepResponse response : stepResponses) {
-	String cvName = response.getCvName();
-	if (!responses.containsKey(cvName)) {
-	  responses.put(cvName, new HashMap<>());
-	}
-	responses.get(cvName).put(mv.getName(), response);
+        String cvName = response.getCvName();
+        if (!responses.containsKey(cvName)) {
+          responses.put(cvName, new HashMap<>());
+        }
+        responses.get(cvName).put(mv.getName(), response);
       }
     }
 
@@ -271,9 +271,9 @@ public class StepResponseGenerator implements Serializable {
 
       // Average the responses
       for (int i = 0; i < positiveResponses.size() && i < negativeResponses.size(); i++) {
-	StepResponse pos = positiveResponses.get(i);
-	StepResponse neg = negativeResponses.get(i);
-	responses.add(averageResponses(pos, neg));
+        StepResponse pos = positiveResponses.get(i);
+        StepResponse neg = negativeResponses.get(i);
+        responses.add(averageResponses(pos, neg));
       }
     } else {
       double actualStep = positiveStep ? stepSize : -stepSize;
@@ -328,13 +328,13 @@ public class StepResponseGenerator implements Serializable {
       time[t] = t * sampleIntervalSeconds;
 
       try {
-	processSystem.run();
+        processSystem.run();
       } catch (Exception e) {
-	// Use last valid values on error
+        // Use last valid values on error
       }
 
       for (int i = 0; i < controlledVariables.size(); i++) {
-	cvData[i][t] = controlledVariables.get(i).readValue();
+        cvData[i][t] = controlledVariables.get(i).readValue();
       }
     }
 
@@ -350,7 +350,7 @@ public class StepResponseGenerator implements Serializable {
     for (int i = 0; i < controlledVariables.size(); i++) {
       ControlledVariable cv = controlledVariables.get(i);
       StepResponse response = new StepResponse(mv.getName(), cv.getName(), time, cvData[i], actualStep, cvBaseline[i],
-	  sampleIntervalSeconds, mv.getUnit(), cv.getUnit());
+          sampleIntervalSeconds, mv.getUnit(), cv.getUnit());
       response.fitFOPDT();
       responses.add(response);
     }
@@ -404,7 +404,7 @@ public class StepResponseGenerator implements Serializable {
     }
 
     StepResponse avg = new StepResponse(pos.getMvName(), pos.getCvName(), time, avgResponse, avgStepSize,
-	pos.getBaselineValue(), pos.getSampleTime(), null, null);
+        pos.getBaselineValue(), pos.getSampleTime(), null, null);
     avg.fitFOPDT();
     return avg;
   }
@@ -480,7 +480,7 @@ public class StepResponseGenerator implements Serializable {
     public StepResponse get(String cvName, String mvName) {
       Map<String, StepResponse> cvResponses = responses.get(cvName);
       if (cvResponses == null) {
-	return null;
+        return null;
       }
       return cvResponses.get(mvName);
     }
@@ -493,10 +493,10 @@ public class StepResponseGenerator implements Serializable {
     public double[][] getGainMatrix() {
       double[][] gains = new double[cvNames.length][mvNames.length];
       for (int i = 0; i < cvNames.length; i++) {
-	for (int j = 0; j < mvNames.length; j++) {
-	  StepResponse resp = get(cvNames[i], mvNames[j]);
-	  gains[i][j] = resp != null ? resp.getGain() : 0.0;
-	}
+        for (int j = 0; j < mvNames.length; j++) {
+          StepResponse resp = get(cvNames[i], mvNames[j]);
+          gains[i][j] = resp != null ? resp.getGain() : 0.0;
+        }
       }
       return gains;
     }
@@ -509,10 +509,10 @@ public class StepResponseGenerator implements Serializable {
     public double[][] getTimeConstantMatrix() {
       double[][] tau = new double[cvNames.length][mvNames.length];
       for (int i = 0; i < cvNames.length; i++) {
-	for (int j = 0; j < mvNames.length; j++) {
-	  StepResponse resp = get(cvNames[i], mvNames[j]);
-	  tau[i][j] = resp != null ? resp.getTimeConstant() : 1.0;
-	}
+        for (int j = 0; j < mvNames.length; j++) {
+          StepResponse resp = get(cvNames[i], mvNames[j]);
+          tau[i][j] = resp != null ? resp.getTimeConstant() : 1.0;
+        }
       }
       return tau;
     }
@@ -525,10 +525,10 @@ public class StepResponseGenerator implements Serializable {
     public double[][] getDeadTimeMatrix() {
       double[][] theta = new double[cvNames.length][mvNames.length];
       for (int i = 0; i < cvNames.length; i++) {
-	for (int j = 0; j < mvNames.length; j++) {
-	  StepResponse resp = get(cvNames[i], mvNames[j]);
-	  theta[i][j] = resp != null ? resp.getDeadTime() : 0.0;
-	}
+        for (int j = 0; j < mvNames.length; j++) {
+          StepResponse resp = get(cvNames[i], mvNames[j]);
+          theta[i][j] = resp != null ? resp.getDeadTime() : 0.0;
+        }
       }
       return theta;
     }
@@ -560,17 +560,17 @@ public class StepResponseGenerator implements Serializable {
       StringBuilder sb = new StringBuilder();
       sb.append("CV,MV,Gain,TimeConstant,DeadTime,SettlingTime\n");
       for (String cvName : cvNames) {
-	for (String mvName : mvNames) {
-	  StepResponse resp = get(cvName, mvName);
-	  if (resp != null) {
-	    sb.append(cvName).append(",");
-	    sb.append(mvName).append(",");
-	    sb.append(String.format("%.6f", resp.getGain())).append(",");
-	    sb.append(String.format("%.2f", resp.getTimeConstant())).append(",");
-	    sb.append(String.format("%.2f", resp.getDeadTime())).append(",");
-	    sb.append(String.format("%.2f", resp.getSettlingTime())).append("\n");
-	  }
-	}
+        for (String mvName : mvNames) {
+          StepResponse resp = get(cvName, mvName);
+          if (resp != null) {
+            sb.append(cvName).append(",");
+            sb.append(mvName).append(",");
+            sb.append(String.format("%.6f", resp.getGain())).append(",");
+            sb.append(String.format("%.2f", resp.getTimeConstant())).append(",");
+            sb.append(String.format("%.2f", resp.getDeadTime())).append(",");
+            sb.append(String.format("%.2f", resp.getSettlingTime())).append("\n");
+          }
+        }
       }
       return sb.toString();
     }
@@ -584,14 +584,14 @@ public class StepResponseGenerator implements Serializable {
       sb.append("  Gain Matrix:\n");
       double[][] gains = getGainMatrix();
       for (int i = 0; i < cvNames.length; i++) {
-	sb.append("    ").append(cvNames[i]).append(": ");
-	for (int j = 0; j < mvNames.length; j++) {
-	  sb.append(String.format("%.4f", gains[i][j]));
-	  if (j < mvNames.length - 1) {
-	    sb.append(", ");
-	  }
-	}
-	sb.append("\n");
+        sb.append("    ").append(cvNames[i]).append(": ");
+        for (int j = 0; j < mvNames.length; j++) {
+          sb.append(String.format("%.4f", gains[i][j]));
+          if (j < mvNames.length - 1) {
+            sb.append(", ");
+          }
+        }
+        sb.append("\n");
       }
       sb.append("]");
       return sb.toString();

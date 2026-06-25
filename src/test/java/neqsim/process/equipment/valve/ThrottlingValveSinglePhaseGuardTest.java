@@ -49,6 +49,6 @@ public class ThrottlingValveSinglePhaseGuardTest {
     assertTrue(Double.isFinite(outT), "valve outlet temperature must be finite (was " + outT + ")");
     assertTrue(Math.abs(outP - 20.0) < 1.0e-3, "valve outlet pressure must equal setpoint (was " + outP + ")");
     assertTrue(Double.isFinite(outRho) && outRho > 0.0,
-	"valve outlet density must be finite and positive (was " + outRho + ")");
+        "valve outlet density must be finite and positive (was " + outRho + ")");
   }
 }

@@ -61,7 +61,7 @@ public class MaterialBalanceGasDrive implements ReservoirDrive {
     if (producedVolumeSm3 > 0.0) {
       cumulativeProduction += producedVolumeSm3;
       if (cumulativeProduction > giipSm3) {
-	cumulativeProduction = giipSm3;
+        cumulativeProduction = giipSm3;
       }
     }
   }

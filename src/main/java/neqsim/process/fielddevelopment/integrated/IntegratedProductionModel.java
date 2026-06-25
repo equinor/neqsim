@@ -71,7 +71,7 @@ public class IntegratedProductionModel implements Serializable {
      * @param wellheadNode wellhead node name
      */
     WellUnit(String name, ReservoirDrive drive, WellBranch wellBranch, FlowlineBranch flowlineBranch,
-	String reservoirNode, String wellheadNode) {
+        String reservoirNode, String wellheadNode) {
       this.name = name;
       this.drive = drive;
       this.wellBranch = wellBranch;
@@ -163,7 +163,7 @@ public class IntegratedProductionModel implements Serializable {
    */
   public WellUnit addWell(String wellName, ReservoirDrive drive, WellDeliverabilityCurve curve) {
     FlowlineBranch defaultLine = new FlowlineBranch(wellName + "_line", wellName + "_WH", EXPORT_NODE, 0.0, 1.0e-10,
-	0.0);
+        0.0);
     return addWell(wellName, drive, curve, defaultLine);
   }
 
@@ -261,8 +261,8 @@ public class IntegratedProductionModel implements Serializable {
     Map<String, Double> wellRates = new LinkedHashMap<String, Double>();
     for (WellUnit w : wells) {
       double q = net.getBranchFlows().containsKey(w.flowlineBranch.getName())
-	  ? net.getBranchFlows().get(w.flowlineBranch.getName())
-	  : 0.0;
+          ? net.getBranchFlows().get(w.flowlineBranch.getName())
+          : 0.0;
       w.lastRate = q;
       wellRates.put(w.name, q);
       fieldRate += q;
@@ -271,7 +271,7 @@ public class IntegratedProductionModel implements Serializable {
     double energy = fieldRate * energyPerSm3;
     double emissions = fieldRate * co2PerSm3;
     return new IntegratedSolveResult(net.isConverged(), net.getIterations(), fieldRate, wellRates,
-	net.getNodePressures(), revenue, energy, emissions, net.getMethod());
+        net.getNodePressures(), revenue, energy, emissions, net.getMethod());
   }
 
   /**
@@ -292,12 +292,12 @@ public class IntegratedProductionModel implements Serializable {
       IntegratedSolveResult res = solve();
       double rate = res.getFieldRate();
       profile.add(t, rate, res.getRevenue(), res.getEnergyKWhPerDay(), res.getEmissionsKgPerDay(),
-	  avgReservoirPressure());
+          avgReservoirPressure());
       // Deplete each well's drive by the volume it produced over the step.
       for (WellUnit w : wells) {
-	double producedVol = w.lastRate * dtDays;
-	w.drive.produce(producedVol, dtDays);
-	cumulative += producedVol;
+        double producedVol = w.lastRate * dtDays;
+        w.drive.produce(producedVol, dtDays);
+        cumulative += producedVol;
       }
       cumulativeRevenue += rate * dtDays * hydrocarbonPrice;
     }
@@ -348,7 +348,7 @@ public class IntegratedProductionModel implements Serializable {
     int i = 0;
     for (Map.Entry<String, Double> e : res.getWellRates().entrySet()) {
       if (i++ > 0) {
-	sb.append(",");
+        sb.append(",");
       }
       sb.append("\"").append(e.getKey()).append("\":").append(fmt(e.getValue()));
     }

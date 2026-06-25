@@ -3,13 +3,13 @@ package neqsim.process.equipment.pipeline.twophasepipe.reporting;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import com.google.gson.JsonParser;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import com.google.gson.JsonParser;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.pipeline.twophasepipe.validation.TwoFluidBenchmarkHarness;
@@ -50,9 +50,9 @@ class TwoFluidPipeReportTest {
     assertTrue(events.contains("erosion_margin"));
 
     BenchmarkPoint point = new BenchmarkPoint("report", pipe.getSimulationTime(), pipe.getPositionProfile()[0],
-	"pressure_bara", pipe.getPressureProfile()[0] * 1e-5, 0.01, 0.001, "unit");
+        "pressure_bara", pipe.getPressureProfile()[0] * 1e-5, 0.01, 0.001, "unit");
     TwoFluidBenchmarkHarness.Comparison comparison = TwoFluidBenchmarkHarness
-	.compare(TwoFluidBenchmarkHarness.capture(pipe), java.util.Collections.singletonList(point));
+        .compare(TwoFluidBenchmarkHarness.capture(pipe), java.util.Collections.singletonList(point));
     String comparisonCsv = TwoFluidPipeReport.toComparisonCsv(comparison);
     assertTrue(comparisonCsv.startsWith("case,time_s,position_m,variable"));
     assertTrue(comparisonCsv.contains(",true,"));
@@ -80,7 +80,7 @@ class TwoFluidPipeReportTest {
     assertTrue(dpTf > 0.0);
     assertTrue(dpBb > 0.0);
     assertTrue(ratio > 0.5 && ratio < 2.0,
-	"One-phase gas pressure drop should be close to Beggs & Brill. Ratio=" + ratio);
+        "One-phase gas pressure drop should be close to Beggs & Brill. Ratio=" + ratio);
   }
 
   @Test
@@ -100,9 +100,9 @@ class TwoFluidPipeReportTest {
     assertTrue(dpTf > 0.0);
     assertTrue(dpBb > 0.0);
     assertTrue(ratio > 0.3 && ratio < 3.0,
-	"Two-phase pressure drop should be same order as Beggs & Brill. Ratio=" + ratio);
+        "Two-phase pressure drop should be same order as Beggs & Brill. Ratio=" + ratio);
     assertTrue(dpPerKm > 0.01 && dpPerKm < 5.0,
-	"Wet-gas pressure gradient should be within broad literature range. dP/km=" + dpPerKm);
+        "Wet-gas pressure gradient should be within broad literature range. dP/km=" + dpPerKm);
     assertTrue(avgHoldup >= 0.0 && avgHoldup <= 1.0);
   }
 
@@ -123,7 +123,7 @@ class TwoFluidPipeReportTest {
     assertTrue(dpTf > 0.0);
     assertTrue(dpBb > 0.0);
     assertTrue(dpTf / dpBb > 0.2 && dpTf / dpBb < 5.0,
-	"Three-phase dP should be same engineering order as Beggs & Brill");
+        "Three-phase dP should be same engineering order as Beggs & Brill");
     assertTrue(avgHoldup >= 0.0 && avgHoldup <= 1.0);
     assertTrue(avgWaterCut >= 0.0 && avgWaterCut <= 1.0);
     assertTrue(Math.abs(outletFlow - flowKgHr) / flowKgHr < 0.05);

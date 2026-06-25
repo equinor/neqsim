@@ -53,7 +53,7 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
   @Override
   public PVTRegressionFunction clone() {
     PVTRegressionFunction cloned = new PVTRegressionFunction(baseFluid.clone(), parameterConfigs,
-	new EnumMap<>(experimentWeights));
+        new EnumMap<>(experimentWeights));
     if (this.params != null) {
       cloned.params = new double[this.params.length];
       System.arraycopy(this.params, 0, cloned.params, 0, this.params.length);
@@ -61,8 +61,8 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
     if (this.bounds != null) {
       cloned.bounds = new double[this.bounds.length][2];
       for (int i = 0; i < this.bounds.length; i++) {
-	cloned.bounds[i][0] = this.bounds[i][0];
-	cloned.bounds[i][1] = this.bounds[i][1];
+        cloned.bounds[i][0] = this.bounds[i][0];
+        cloned.bounds[i][1] = this.bounds[i][1];
       }
     }
     return cloned;
@@ -71,6 +71,7 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
   /**
    * Calculate the value for a given experimental data point.
    *
+   * <p>
    * The dependentValues array contains:
    * <ul>
    * <li>[0] = pressure (bar)</li>
@@ -217,7 +218,7 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
     sepFluid.setPressure(separatorPressure);
     try {
       neqsim.thermodynamicoperations.ThermodynamicOperations thermoOps = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	  sepFluid);
+          sepFluid);
       thermoOps.TPflash();
     } catch (Exception e) {
       return 0.0;
@@ -228,16 +229,16 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
     switch (propertyIndex) {
     case 0: // GOR
       if (sepFluid.getNumberOfPhases() > 1) {
-	double gasVol = sepFluid.getPhase(0).getVolume(); // Gas phase
-	double oilVol = sepFluid.getPhase(1).getVolume(); // Oil phase
-	return gasVol / oilVol;
+        double gasVol = sepFluid.getPhase(0).getVolume(); // Gas phase
+        double oilVol = sepFluid.getPhase(1).getVolume(); // Oil phase
+        return gasVol / oilVol;
       }
       return 0.0;
     case 1: // Bo
       if (sepFluid.getNumberOfPhases() > 1) {
-	double oilVolRes = reservoirFluid.getPhase(1).getVolume();
-	double oilVolStd = sepFluid.getPhase(1).getVolume();
-	return oilVolRes / oilVolStd;
+        double oilVolRes = reservoirFluid.getPhase(1).getVolume();
+        double oilVolStd = sepFluid.getPhase(1).getVolume();
+        return oilVolRes / oilVolStd;
       }
       return 1.0;
     default:
@@ -260,7 +261,7 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
     fluid.setPressure(pressure);
     try {
       neqsim.thermodynamicoperations.ThermodynamicOperations thermoOps = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	  fluid);
+          fluid);
       thermoOps.TPflash();
       fluid.initProperties();
     } catch (Exception e) {
@@ -272,12 +273,12 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
       return fluid.hasPhaseType("gas") ? fluid.getPhase("gas").getPhysicalProperties().getViscosity() : 0.0;
     case 1:
       if (fluid.hasPhaseType("oil")) {
-	return fluid.getPhase("oil").getPhysicalProperties().getViscosity();
+        return fluid.getPhase("oil").getPhysicalProperties().getViscosity();
       }
       return fluid.hasPhaseType("liquid") ? fluid.getPhase("liquid").getPhysicalProperties().getViscosity() : 0.0;
     case 2:
       if (fluid.hasPhaseType("aqueous")) {
-	return fluid.getPhase("aqueous").getPhysicalProperties().getViscosity();
+        return fluid.getPhase("aqueous").getPhysicalProperties().getViscosity();
       }
       return fluid.hasPhaseType("water") ? fluid.getPhase("water").getPhysicalProperties().getViscosity() : 0.0;
     default:

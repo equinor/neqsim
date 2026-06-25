@@ -107,7 +107,7 @@ public class BatchResult implements Serializable {
   public BatchResult(String[] parameterNames, double[] estimates, double[] uncertainties, double chiSquare,
       int iterations, int dataPointCount, boolean converged) {
     this(parameterNames, estimates, uncertainties, chiSquare, iterations, dataPointCount, converged, null, null,
-	Double.NaN, Double.NaN, Double.NaN);
+        Double.NaN, Double.NaN, Double.NaN);
   }
 
   /**
@@ -183,7 +183,7 @@ public class BatchResult implements Serializable {
   public double getEstimate(String name) {
     for (int i = 0; i < parameterNames.length; i++) {
       if (parameterNames[i].equals(name)) {
-	return estimates[i];
+        return estimates[i];
       }
     }
     return Double.NaN;
@@ -367,7 +367,7 @@ public class BatchResult implements Serializable {
       return CalibrationResult.success(toMap(), rmse, iterations, dataPointCount);
     } else {
       return CalibrationResult
-	  .failure("Optimization did not converge after " + iterations + " iterations. Chi-square: " + chiSquare);
+          .failure("Optimization did not converge after " + iterations + " iterations. Chi-square: " + chiSquare);
     }
   }
 
@@ -400,7 +400,7 @@ public class BatchResult implements Serializable {
     printSeparator(86);
     for (int i = 0; i < parameterNames.length; i++) {
       System.out.printf("%-40s %12.6f %12.6f [%8.4f, %8.4f]%n", parameterNames[i], estimates[i], uncertainties[i],
-	  confidenceIntervalLower[i], confidenceIntervalUpper[i]);
+          confidenceIntervalLower[i], confidenceIntervalUpper[i]);
     }
   }
 
@@ -417,6 +417,6 @@ public class BatchResult implements Serializable {
   @Override
   public String toString() {
     return "BatchResult{converged=" + converged + ", iterations=" + iterations + ", chiSquare=" + chiSquare + ", rmse="
-	+ rmse + ", estimates=" + Arrays.toString(estimates) + "}";
+        + rmse + ", estimates=" + Arrays.toString(estimates) + "}";
   }
 }

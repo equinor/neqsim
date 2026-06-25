@@ -73,7 +73,7 @@ public class ProcessDataPublisher implements StreamingDataInterface {
     for (ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       String tagId = equipment.getName();
       if (tagId != null && !stateVectorTags.contains(tagId)) {
-	stateVectorTags.add(tagId);
+        stateVectorTags.add(tagId);
       }
     }
   }
@@ -114,16 +114,16 @@ public class ProcessDataPublisher implements StreamingDataInterface {
     for (ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       String tagId = equipment.getName();
       if (tagId != null) {
-	// For streams, publish pressure and temperature
-	if (equipment instanceof neqsim.process.equipment.stream.StreamInterface) {
-	  neqsim.process.equipment.stream.StreamInterface stream = (neqsim.process.equipment.stream.StreamInterface) equipment;
-	  batch.put(tagId + ".pressure",
-	      new TimestampedValue(stream.getPressure(), "bara", now, TimestampedValue.Quality.SIMULATED));
-	  batch.put(tagId + ".temperature",
-	      new TimestampedValue(stream.getTemperature() - 273.15, "C", now, TimestampedValue.Quality.SIMULATED));
-	  batch.put(tagId + ".flowrate",
-	      new TimestampedValue(stream.getFlowRate("kg/hr"), "kg/hr", now, TimestampedValue.Quality.SIMULATED));
-	}
+        // For streams, publish pressure and temperature
+        if (equipment instanceof neqsim.process.equipment.stream.StreamInterface) {
+          neqsim.process.equipment.stream.StreamInterface stream = (neqsim.process.equipment.stream.StreamInterface) equipment;
+          batch.put(tagId + ".pressure",
+              new TimestampedValue(stream.getPressure(), "bara", now, TimestampedValue.Quality.SIMULATED));
+          batch.put(tagId + ".temperature",
+              new TimestampedValue(stream.getTemperature() - 273.15, "C", now, TimestampedValue.Quality.SIMULATED));
+          batch.put(tagId + ".flowrate",
+              new TimestampedValue(stream.getFlowRate("kg/hr"), "kg/hr", now, TimestampedValue.Quality.SIMULATED));
+        }
       }
     }
 
@@ -153,22 +153,22 @@ public class ProcessDataPublisher implements StreamingDataInterface {
       // Add to history
       LinkedList<TimestampedValue> tagHistory = history.computeIfAbsent(tagId, k -> new LinkedList<>());
       synchronized (tagHistory) {
-	tagHistory.addLast(value);
-	while (tagHistory.size() > historyBufferSize) {
-	  tagHistory.removeFirst();
-	}
+        tagHistory.addLast(value);
+        while (tagHistory.size() > historyBufferSize) {
+          tagHistory.removeFirst();
+        }
       }
 
       // Notify subscribers
       List<Consumer<TimestampedValue>> tagSubscribers = subscribers.get(tagId);
       if (tagSubscribers != null) {
-	for (Consumer<TimestampedValue> callback : tagSubscribers) {
-	  try {
-	    callback.accept(value);
-	  } catch (Exception e) {
-	    // Log but don't propagate subscriber errors
-	  }
-	}
+        for (Consumer<TimestampedValue> callback : tagSubscribers) {
+          try {
+            callback.accept(value);
+          } catch (Exception e) {
+            // Log but don't propagate subscriber errors
+          }
+        }
       }
     }
   }
@@ -200,9 +200,9 @@ public class ProcessDataPublisher implements StreamingDataInterface {
 
     synchronized (tagHistory) {
       for (TimestampedValue tv : tagHistory) {
-	if (tv.getTimestamp().isAfter(cutoff)) {
-	  result.add(tv);
-	}
+        if (tv.getTimestamp().isAfter(cutoff)) {
+          result.add(tv);
+        }
       }
     }
     return result;
@@ -269,9 +269,9 @@ public class ProcessDataPublisher implements StreamingDataInterface {
     for (String tagId : tagIds) {
       LinkedList<TimestampedValue> tagHistory = history.get(tagId);
       if (tagHistory != null) {
-	minLength = Math.min(minLength, tagHistory.size());
+        minLength = Math.min(minLength, tagHistory.size());
       } else {
-	minLength = 0;
+        minLength = 0;
       }
     }
 
@@ -284,17 +284,17 @@ public class ProcessDataPublisher implements StreamingDataInterface {
     for (int col = 0; col < tagIds.size(); col++) {
       LinkedList<TimestampedValue> tagHistory = history.get(tagIds.get(col));
       if (tagHistory != null) {
-	synchronized (tagHistory) {
-	  int row = 0;
-	  int skipCount = tagHistory.size() - minLength;
-	  for (TimestampedValue tv : tagHistory) {
-	    if (skipCount > 0) {
-	      skipCount--;
-	      continue;
-	    }
-	    matrix[row++][col] = tv.getValue();
-	  }
-	}
+        synchronized (tagHistory) {
+          int row = 0;
+          int skipCount = tagHistory.size() - minLength;
+          for (TimestampedValue tv : tagHistory) {
+            if (skipCount > 0) {
+              skipCount--;
+              continue;
+            }
+            matrix[row++][col] = tv.getValue();
+          }
+        }
       }
     }
 

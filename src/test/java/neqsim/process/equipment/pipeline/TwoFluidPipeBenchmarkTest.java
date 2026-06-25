@@ -2,6 +2,8 @@ package neqsim.process.equipment.pipeline;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -9,8 +11,6 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Comprehensive benchmark tests for the TwoFluidPipe model against literature data and analytical solutions for
@@ -133,7 +133,7 @@ public class TwoFluidPipeBenchmarkTest {
       logger.info("  Ratio (TwoFluid/BB): " + String.format("%.3f", ratio));
 
       assertTrue(ratio > 0.5 && ratio < 2.0,
-	  "Single-phase: TwoFluidPipe and BB should agree within factor of 2. Ratio=" + ratio);
+          "Single-phase: TwoFluidPipe and BB should agree within factor of 2. Ratio=" + ratio);
     }
 
     /**
@@ -247,7 +247,7 @@ public class TwoFluidPipeBenchmarkTest {
 
       logger.info("=== 2.1 Gas-Dominated Horizontal (Wet Gas) ===");
       logger.info(
-	  "  TwoFluidPipe dP: " + String.format("%.3f", dpTF) + " bar (" + String.format("%.2f", dpPerKm) + " bar/km)");
+          "  TwoFluidPipe dP: " + String.format("%.3f", dpTF) + " bar (" + String.format("%.2f", dpPerKm) + " bar/km)");
       logger.info("  Beggs&Brill dP:  " + String.format("%.3f", dpBB) + " bar");
       logger.info("  Literature range: 0.5-3.0 bar/km (Oliemans 1986)");
 
@@ -261,7 +261,7 @@ public class TwoFluidPipeBenchmarkTest {
       double[] holdupProfile = pipe.getLiquidHoldupProfile();
       double avgHoldup = 0;
       for (double h : holdupProfile) {
-	avgHoldup += h;
+        avgHoldup += h;
       }
       avgHoldup /= holdupProfile.length;
 
@@ -333,16 +333,16 @@ public class TwoFluidPipeBenchmarkTest {
 
       // Both should give same order of magnitude
       if (dpBB > 0.01) {
-	double ratio = dpTF / dpBB;
-	logger.info("  Ratio (TwoFluid/BB): " + String.format("%.3f", ratio));
-	assertTrue(ratio > 0.2 && ratio < 5.0, "Two-phase: models should agree within factor of 5");
+        double ratio = dpTF / dpBB;
+        logger.info("  Ratio (TwoFluid/BB): " + String.format("%.3f", ratio));
+        assertTrue(ratio > 0.2 && ratio < 5.0, "Two-phase: models should agree within factor of 5");
       }
 
       // Holdup
       double[] holdupProfile = pipe.getLiquidHoldupProfile();
       double avgHoldup = 0;
       for (double h : holdupProfile) {
-	avgHoldup += h;
+        avgHoldup += h;
       }
       avgHoldup /= holdupProfile.length;
 
@@ -414,7 +414,7 @@ public class TwoFluidPipeBenchmarkTest {
       double[] holdupProfile = pipe.getLiquidHoldupProfile();
       double avgHoldup = 0;
       for (double h : holdupProfile) {
-	avgHoldup += h;
+        avgHoldup += h;
       }
       avgHoldup /= holdupProfile.length;
       logger.info("  Avg liquid holdup: " + String.format("%.3f", avgHoldup));
@@ -461,7 +461,7 @@ public class TwoFluidPipeBenchmarkTest {
       double pipeLength = 5000.0; // 5 km
       double[] elevations = new double[nSections];
       for (int i = 0; i < nSections; i++) {
-	elevations[i] = pipeLength * Math.sin(Math.toRadians(5.0)) * i / (nSections - 1);
+        elevations[i] = pipeLength * Math.sin(Math.toRadians(5.0)) * i / (nSections - 1);
       }
 
       TwoFluidPipe pipe = new TwoFluidPipe("uphill-pipe", inlet);
@@ -535,7 +535,7 @@ public class TwoFluidPipeBenchmarkTest {
       double elevDrop = pipeLength * Math.sin(Math.toRadians(5.0));
       double[] elevations = new double[nSections];
       for (int i = 0; i < nSections; i++) {
-	elevations[i] = elevDrop * (1.0 - (double) i / (nSections - 1));
+        elevations[i] = elevDrop * (1.0 - (double) i / (nSections - 1));
       }
 
       TwoFluidPipe pipe = new TwoFluidPipe("downhill-pipe", inlet);
@@ -579,7 +579,7 @@ public class TwoFluidPipeBenchmarkTest {
 
       // Downhill should have less pressure drop than horizontal
       assertTrue(dpDownhill < dpFlat,
-	  "Downhill dP (" + dpDownhill + ") should be less than horizontal dP (" + dpFlat + ")");
+          "Downhill dP (" + dpDownhill + ") should be less than horizontal dP (" + dpFlat + ")");
     }
 
     /**
@@ -613,7 +613,7 @@ public class TwoFluidPipeBenchmarkTest {
       double riserHeight = 200.0;
       double[] elevations = new double[nSections];
       for (int i = 0; i < nSections; i++) {
-	elevations[i] = riserHeight * i / (nSections - 1);
+        elevations[i] = riserHeight * i / (nSections - 1);
       }
 
       TwoFluidPipe pipe = new TwoFluidPipe("riser", inlet);
@@ -709,7 +709,7 @@ public class TwoFluidPipeBenchmarkTest {
       double[] holdupProfile = pipe.getLiquidHoldupProfile();
       double avgHoldup = 0;
       for (double h : holdupProfile) {
-	avgHoldup += h;
+        avgHoldup += h;
       }
       avgHoldup /= holdupProfile.length;
       logger.info("  Avg liquid holdup: " + String.format("%.4f", avgHoldup));
@@ -772,7 +772,7 @@ public class TwoFluidPipeBenchmarkTest {
       double[] holdupProfile = pipe.getLiquidHoldupProfile();
       double avgHoldup = 0;
       for (double h : holdupProfile) {
-	avgHoldup += h;
+        avgHoldup += h;
       }
       avgHoldup /= holdupProfile.length;
       logger.info("  Avg liquid holdup: " + String.format("%.3f", avgHoldup));
@@ -801,39 +801,39 @@ public class TwoFluidPipeBenchmarkTest {
       logger.info("Flow (kg/hr) | dP (bar)");
 
       for (double flowRate : flowRates) {
-	SystemInterface fluid = new SystemSrkEos(273.15 + 40.0, 60.0);
-	fluid.addComponent("methane", 0.85);
-	fluid.addComponent("n-pentane", 0.10);
-	fluid.addComponent("n-heptane", 0.05);
-	fluid.setMixingRule("classic");
-	fluid.setMultiPhaseCheck(true);
+        SystemInterface fluid = new SystemSrkEos(273.15 + 40.0, 60.0);
+        fluid.addComponent("methane", 0.85);
+        fluid.addComponent("n-pentane", 0.10);
+        fluid.addComponent("n-heptane", 0.05);
+        fluid.setMixingRule("classic");
+        fluid.setMultiPhaseCheck(true);
 
-	Stream inlet = new Stream("inlet", fluid);
-	inlet.setFlowRate(flowRate, "kg/hr");
-	inlet.run();
+        Stream inlet = new Stream("inlet", fluid);
+        inlet.setFlowRate(flowRate, "kg/hr");
+        inlet.run();
 
-	int nSections = 30;
-	TwoFluidPipe pipe = new TwoFluidPipe("pipe", inlet);
-	pipe.setLength(10000.0);
-	pipe.setDiameter(0.203);
-	pipe.setRoughness(4.6e-5);
-	pipe.setNumberOfSections(nSections);
-	double[] flatElev = new double[nSections];
-	pipe.setElevationProfile(flatElev);
+        int nSections = 30;
+        TwoFluidPipe pipe = new TwoFluidPipe("pipe", inlet);
+        pipe.setLength(10000.0);
+        pipe.setDiameter(0.203);
+        pipe.setRoughness(4.6e-5);
+        pipe.setNumberOfSections(nSections);
+        double[] flatElev = new double[nSections];
+        pipe.setElevationProfile(flatElev);
 
-	ProcessSystem proc = new ProcessSystem();
-	proc.add(inlet);
-	proc.add(pipe);
-	proc.run();
+        ProcessSystem proc = new ProcessSystem();
+        proc.add(inlet);
+        proc.add(pipe);
+        proc.run();
 
-	double dp = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
-	logger.printf(org.apache.logging.log4j.Level.INFO, "  %10.0f | %8.3f%n", flowRate, dp);
+        double dp = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  %10.0f | %8.3f%n", flowRate, dp);
 
-	if (prevDp > 0) {
-	  assertTrue(dp > prevDp * 0.5,
-	      "dP should generally increase with flow rate. Current: " + dp + ", Previous: " + prevDp);
-	}
-	prevDp = dp;
+        if (prevDp > 0) {
+          assertTrue(dp > prevDp * 0.5,
+              "dP should generally increase with flow rate. Current: " + dp + ", Previous: " + prevDp);
+        }
+        prevDp = dp;
       }
     }
 
@@ -874,9 +874,9 @@ public class TwoFluidPipeBenchmarkTest {
       // Check monotonic decrease for horizontal pipe
       int violations = 0;
       for (int i = 1; i < pressureProfile.length; i++) {
-	if (pressureProfile[i] > pressureProfile[i - 1] * 1.001) { // Allow 0.1% noise
-	  violations++;
-	}
+        if (pressureProfile[i] > pressureProfile[i - 1] * 1.001) { // Allow 0.1% noise
+          violations++;
+        }
       }
 
       logger.info("=== 5.2 Pressure Profile Smoothness ===");
@@ -886,7 +886,7 @@ public class TwoFluidPipeBenchmarkTest {
 
       // Allow a small number of violations (numerical noise)
       assertTrue(violations < pressureProfile.length * 0.1,
-	  "Pressure profile should be mostly monotonically decreasing for horizontal pipe. Violations: " + violations);
+          "Pressure profile should be mostly monotonically decreasing for horizontal pipe. Violations: " + violations);
     }
 
     /**
@@ -927,13 +927,13 @@ public class TwoFluidPipeBenchmarkTest {
       logger.info("=== 5.3 Holdup Consistency ===");
       int holdupViolations = 0;
       for (int i = 0; i < liquidHoldup.length; i++) {
-	double alphaL = liquidHoldup[i];
-	double alphaG = 1.0 - alphaL; // By definition
+        double alphaL = liquidHoldup[i];
+        double alphaG = 1.0 - alphaL; // By definition
 
-	if (alphaL < -0.01 || alphaL > 1.01) {
-	  holdupViolations++;
-	  logger.info("  Section " + i + ": holdup = " + alphaL + " (out of [0,1] range)");
-	}
+        if (alphaL < -0.01 || alphaL > 1.01) {
+          holdupViolations++;
+          logger.info("  Section " + i + ": holdup = " + alphaL + " (out of [0,1] range)");
+        }
       }
 
       logger.info("  Holdup violations: " + holdupViolations + " / " + liquidHoldup.length);
@@ -990,13 +990,13 @@ public class TwoFluidPipeBenchmarkTest {
       double[] initialHoldup = pipe.getLiquidHoldupProfile();
       double initialAvgHoldup = 0;
       for (double h : initialHoldup) {
-	initialAvgHoldup += h;
+        initialAvgHoldup += h;
       }
       initialAvgHoldup /= initialHoldup.length;
 
       logger.info("=== 6.1 Transient Step Change (200m pipe) ===");
       logger.info("  Initial outlet P: " + String.format("%.3f", initialOutletP) + " bara, avg holdup: "
-	  + String.format("%.4f", initialAvgHoldup));
+          + String.format("%.4f", initialAvgHoldup));
 
       // Step change: increase flow rate by 100%
       inlet.setFlowRate(30000.0, "kg/hr");
@@ -1010,38 +1010,38 @@ public class TwoFluidPipeBenchmarkTest {
 
       boolean anyChange = false;
       for (int step = 0; step < nSteps; step++) {
-	pipe.runTransient(dt, java.util.UUID.randomUUID());
+        pipe.runTransient(dt, java.util.UUID.randomUUID());
 
-	double outP = pipe.getOutletStream().getPressure("bara");
-	double[] pressProfile = pipe.getPressureProfile();
-	double inletP = pressProfile[0] / 1e5;
-	double dP = inletP - outP;
-	double[] holdup = pipe.getLiquidHoldupProfile();
-	double avgH = 0;
-	for (double h : holdup) {
-	  avgH += h;
-	}
-	avgH /= holdup.length;
+        double outP = pipe.getOutletStream().getPressure("bara");
+        double[] pressProfile = pipe.getPressureProfile();
+        double inletP = pressProfile[0] / 1e5;
+        double dP = inletP - outP;
+        double[] holdup = pipe.getLiquidHoldupProfile();
+        double avgH = 0;
+        for (double h : holdup) {
+          avgH += h;
+        }
+        avgH /= holdup.length;
 
-	if (step % 5 == 0 || step == nSteps - 1) {
-	  logger.printf(org.apache.logging.log4j.Level.INFO,
-	      "    t=%.1fs: P_in=%.3f, P_out=%.3f, dP=%.4f, avg_holdup=%.4f%n", (step + 1) * dt, inletP, outP, dP,
-	      avgH);
-	}
+        if (step % 5 == 0 || step == nSteps - 1) {
+          logger.printf(org.apache.logging.log4j.Level.INFO,
+              "    t=%.1fs: P_in=%.3f, P_out=%.3f, dP=%.4f, avg_holdup=%.4f%n", (step + 1) * dt, inletP, outP, dP,
+              avgH);
+        }
 
-	assertTrue(!Double.isNaN(outP), "Outlet pressure must not be NaN");
-	assertTrue(outP > 0.1, "Outlet pressure must be positive");
+        assertTrue(!Double.isNaN(outP), "Outlet pressure must not be NaN");
+        assertTrue(outP > 0.1, "Outlet pressure must be positive");
 
-	// Check if holdup or outlet are different from initial
-	if (Math.abs(avgH - initialAvgHoldup) > 0.0001) {
-	  anyChange = true;
-	}
+        // Check if holdup or outlet are different from initial
+        if (Math.abs(avgH - initialAvgHoldup) > 0.0001) {
+          anyChange = true;
+        }
       }
 
       // The simulation should complete without NaN or crash
       double[] finalHoldup = pipe.getLiquidHoldupProfile();
       for (double h : finalHoldup) {
-	assertTrue(h >= 0 && h <= 1.0, "Final holdup must be in [0,1]");
+        assertTrue(h >= 0 && h <= 1.0, "Final holdup must be in [0,1]");
       }
     }
   }
@@ -1071,71 +1071,71 @@ public class TwoFluidPipeBenchmarkTest {
       int matchCount = 0;
 
       for (double gasFrac : gasFractions) {
-	double liqFrac = 1.0 - gasFrac;
+        double liqFrac = 1.0 - gasFrac;
 
-	// TwoFluidPipe
-	SystemInterface fluid1 = new SystemSrkEos(273.15 + 45.0, 60.0);
-	fluid1.addComponent("methane", gasFrac);
-	fluid1.addComponent("n-heptane", liqFrac);
-	fluid1.setMixingRule("classic");
-	fluid1.setMultiPhaseCheck(true);
+        // TwoFluidPipe
+        SystemInterface fluid1 = new SystemSrkEos(273.15 + 45.0, 60.0);
+        fluid1.addComponent("methane", gasFrac);
+        fluid1.addComponent("n-heptane", liqFrac);
+        fluid1.setMixingRule("classic");
+        fluid1.setMultiPhaseCheck(true);
 
-	Stream inlet1 = new Stream("inlet1", fluid1);
-	inlet1.setFlowRate(25000.0, "kg/hr");
-	inlet1.run();
+        Stream inlet1 = new Stream("inlet1", fluid1);
+        inlet1.setFlowRate(25000.0, "kg/hr");
+        inlet1.run();
 
-	int nSections = 30;
-	TwoFluidPipe pipe1 = new TwoFluidPipe("tf-pipe", inlet1);
-	pipe1.setLength(10000.0);
-	pipe1.setDiameter(0.203);
-	pipe1.setRoughness(4.6e-5);
-	pipe1.setNumberOfSections(nSections);
-	double[] flatElev = new double[nSections];
-	pipe1.setElevationProfile(flatElev);
+        int nSections = 30;
+        TwoFluidPipe pipe1 = new TwoFluidPipe("tf-pipe", inlet1);
+        pipe1.setLength(10000.0);
+        pipe1.setDiameter(0.203);
+        pipe1.setRoughness(4.6e-5);
+        pipe1.setNumberOfSections(nSections);
+        double[] flatElev = new double[nSections];
+        pipe1.setElevationProfile(flatElev);
 
-	ProcessSystem proc1 = new ProcessSystem();
-	proc1.add(inlet1);
-	proc1.add(pipe1);
-	proc1.run();
+        ProcessSystem proc1 = new ProcessSystem();
+        proc1.add(inlet1);
+        proc1.add(pipe1);
+        proc1.run();
 
-	double dpTF = inlet1.getPressure("bara") - pipe1.getOutletStream().getPressure("bara");
+        double dpTF = inlet1.getPressure("bara") - pipe1.getOutletStream().getPressure("bara");
 
-	// PipeBeggsAndBrills
-	SystemInterface fluid2 = new SystemSrkEos(273.15 + 45.0, 60.0);
-	fluid2.addComponent("methane", gasFrac);
-	fluid2.addComponent("n-heptane", liqFrac);
-	fluid2.setMixingRule("classic");
-	fluid2.setMultiPhaseCheck(true);
+        // PipeBeggsAndBrills
+        SystemInterface fluid2 = new SystemSrkEos(273.15 + 45.0, 60.0);
+        fluid2.addComponent("methane", gasFrac);
+        fluid2.addComponent("n-heptane", liqFrac);
+        fluid2.setMixingRule("classic");
+        fluid2.setMultiPhaseCheck(true);
 
-	Stream inlet2 = new Stream("inlet2", fluid2);
-	inlet2.setFlowRate(25000.0, "kg/hr");
-	inlet2.run();
+        Stream inlet2 = new Stream("inlet2", fluid2);
+        inlet2.setFlowRate(25000.0, "kg/hr");
+        inlet2.run();
 
-	PipeBeggsAndBrills pipe2 = new PipeBeggsAndBrills("bb-pipe", inlet2);
-	pipe2.setLength(10000.0);
-	pipe2.setDiameter(0.203);
-	pipe2.setPipeWallRoughness(4.6e-5);
-	pipe2.setAngle(0.0);
-	pipe2.setNumberOfIncrements(30);
-	pipe2.run();
+        PipeBeggsAndBrills pipe2 = new PipeBeggsAndBrills("bb-pipe", inlet2);
+        pipe2.setLength(10000.0);
+        pipe2.setDiameter(0.203);
+        pipe2.setPipeWallRoughness(4.6e-5);
+        pipe2.setAngle(0.0);
+        pipe2.setNumberOfIncrements(30);
+        pipe2.run();
 
-	double dpBB = inlet2.getPressure("bara") - pipe2.getOutletStream().getPressure("bara");
+        double dpBB = inlet2.getPressure("bara") - pipe2.getOutletStream().getPressure("bara");
 
-	String status = "SKIP";
-	if (dpBB > 0.01 && dpTF > 0.01) {
-	  double ratio = dpTF / dpBB;
-	  boolean match = ratio > 0.2 && ratio < 5.0;
-	  status = match ? "OK" : "FAIL";
-	  if (match) {
-	    matchCount++;
-	  }
-	  logger.printf(org.apache.logging.log4j.Level.INFO, "  %.2f    | %11.3f | %11.3f | %5.2f | %s%n", gasFrac,
-	      dpTF, dpBB, ratio, status);
-	} else {
-	  matchCount++; // Skip counts as OK
-	  logger.printf(org.apache.logging.log4j.Level.INFO, "  %.2f    | %11.3f | %11.3f |   -   | %s%n", gasFrac,
-	      dpTF, dpBB, status);
-	}
+        String status = "SKIP";
+        if (dpBB > 0.01 && dpTF > 0.01) {
+          double ratio = dpTF / dpBB;
+          boolean match = ratio > 0.2 && ratio < 5.0;
+          status = match ? "OK" : "FAIL";
+          if (match) {
+            matchCount++;
+          }
+          logger.printf(org.apache.logging.log4j.Level.INFO, "  %.2f    | %11.3f | %11.3f | %5.2f | %s%n", gasFrac,
+              dpTF, dpBB, ratio, status);
+        } else {
+          matchCount++; // Skip counts as OK
+          logger.printf(org.apache.logging.log4j.Level.INFO, "  %.2f    | %11.3f | %11.3f |   -   | %s%n", gasFrac,
+              dpTF, dpBB, status);
+        }
       }
 
       logger.info("Matched: " + matchCount + "/" + gasFractions.length);
@@ -1192,10 +1192,10 @@ public class TwoFluidPipeBenchmarkTest {
       // Re ~2e6 (fully turbulent), eps/D = 1.8e-4
       // Analytically: dP/km ~ 0.08-0.3 bar/km depending on density/viscosity
       logger.info("  Gas-only 10'' pipe: dP = " + String.format("%.3f", dpBara) + " bar ("
-	  + String.format("%.2f", dpPerKm) + " bar/km)");
+          + String.format("%.2f", dpPerKm) + " bar/km)");
 
       assertTrue(dpPerKm > 0.01 && dpPerKm < 5.0,
-	  "Single-phase gas dP/km should be in physical range 0.01-5.0 bar/km, got " + dpPerKm);
+          "Single-phase gas dP/km should be in physical range 0.01-5.0 bar/km, got " + dpPerKm);
       assertTrue(dpBara > 0, "Pressure drop must be positive for forward flow");
     }
 
@@ -1217,46 +1217,46 @@ public class TwoFluidPipeBenchmarkTest {
       double[] avgHoldups = new double[flowRates.length];
 
       for (int i = 0; i < flowRates.length; i++) {
-	SystemInterface fluid = new SystemSrkEos(273.15 + 40.0, 60.0);
-	fluid.addComponent("methane", 0.85);
-	fluid.addComponent("n-pentane", 0.10);
-	fluid.addComponent("n-heptane", 0.05);
-	fluid.setMixingRule("classic");
-	fluid.setMultiPhaseCheck(true);
+        SystemInterface fluid = new SystemSrkEos(273.15 + 40.0, 60.0);
+        fluid.addComponent("methane", 0.85);
+        fluid.addComponent("n-pentane", 0.10);
+        fluid.addComponent("n-heptane", 0.05);
+        fluid.setMixingRule("classic");
+        fluid.setMultiPhaseCheck(true);
 
-	Stream inlet = new Stream("inlet", fluid);
-	inlet.setFlowRate(flowRates[i], "kg/hr");
-	inlet.run();
+        Stream inlet = new Stream("inlet", fluid);
+        inlet.setFlowRate(flowRates[i], "kg/hr");
+        inlet.run();
 
-	int nSec = 20;
-	TwoFluidPipe pipe = new TwoFluidPipe("pipe", inlet);
-	pipe.setLength(5000.0);
-	pipe.setDiameter(0.203);
-	pipe.setRoughness(4.6e-5);
-	pipe.setNumberOfSections(nSec);
-	double[] flat = new double[nSec];
-	pipe.setElevationProfile(flat);
+        int nSec = 20;
+        TwoFluidPipe pipe = new TwoFluidPipe("pipe", inlet);
+        pipe.setLength(5000.0);
+        pipe.setDiameter(0.203);
+        pipe.setRoughness(4.6e-5);
+        pipe.setNumberOfSections(nSec);
+        double[] flat = new double[nSec];
+        pipe.setElevationProfile(flat);
 
-	ProcessSystem proc = new ProcessSystem();
-	proc.add(inlet);
-	proc.add(pipe);
-	proc.run();
+        ProcessSystem proc = new ProcessSystem();
+        proc.add(inlet);
+        proc.add(pipe);
+        proc.run();
 
-	double[] holdups = pipe.getLiquidHoldupProfile();
-	double sumH = 0;
-	for (double h : holdups) {
-	  sumH += h;
-	}
-	avgHoldups[i] = sumH / holdups.length;
+        double[] holdups = pipe.getLiquidHoldupProfile();
+        double sumH = 0;
+        for (double h : holdups) {
+          sumH += h;
+        }
+        avgHoldups[i] = sumH / holdups.length;
 
-	logger.printf(org.apache.logging.log4j.Level.INFO, "  Flow=%5.0f kg/hr: avg holdup=%.4f%n", flowRates[i],
-	    avgHoldups[i]);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  Flow=%5.0f kg/hr: avg holdup=%.4f%n", flowRates[i],
+            avgHoldups[i]);
       }
 
       // Physical law: higher gas velocity sweeps liquid out → lower holdup
       // At very low flow, holdup should be higher; at high flow, lower
       assertTrue(avgHoldups[0] > avgHoldups[flowRates.length - 1], "Holdup at low flow (" + avgHoldups[0]
-	  + ") should exceed holdup at high flow (" + avgHoldups[flowRates.length - 1] + ")");
+          + ") should exceed holdup at high flow (" + avgHoldups[flowRates.length - 1] + ")");
     }
 
     /**
@@ -1300,7 +1300,7 @@ public class TwoFluidPipeBenchmarkTest {
       // Elevation profile is cumulative height (meters), not angles
       double[] vertElev = new double[nSec];
       for (int i = 0; i < nSec; i++) {
-	vertElev[i] = riserHeight * i / (nSec - 1);
+        vertElev[i] = riserHeight * i / (nSec - 1);
       }
       riser.setElevationProfile(vertElev);
 
@@ -1351,7 +1351,7 @@ public class TwoFluidPipeBenchmarkTest {
 
       // Vertical should have significantly more pressure drop than horizontal
       assertTrue(dpRiser > dpHoriz,
-	  "Vertical riser dP (" + dpRiser + ") should exceed horizontal dP (" + dpHoriz + ")");
+          "Vertical riser dP (" + dpRiser + ") should exceed horizontal dP (" + dpHoriz + ")");
       assertTrue(dpRiser > 0.1, "Riser dP must be positive and significant");
     }
 
@@ -1372,38 +1372,38 @@ public class TwoFluidPipeBenchmarkTest {
       double[] pressureDrops = new double[diameters.length];
 
       for (int i = 0; i < diameters.length; i++) {
-	SystemInterface gas = new SystemSrkEos(273.15 + 30.0, 50.0);
-	gas.addComponent("methane", 1.0);
-	gas.setMixingRule("classic");
+        SystemInterface gas = new SystemSrkEos(273.15 + 30.0, 50.0);
+        gas.addComponent("methane", 1.0);
+        gas.setMixingRule("classic");
 
-	Stream inlet = new Stream("gas", gas);
-	inlet.setFlowRate(10000.0, "kg/hr");
-	inlet.run();
+        Stream inlet = new Stream("gas", gas);
+        inlet.setFlowRate(10000.0, "kg/hr");
+        inlet.run();
 
-	int nSec = 20;
-	TwoFluidPipe pipe = new TwoFluidPipe("pipe", inlet);
-	pipe.setLength(5000.0);
-	pipe.setDiameter(diameters[i]);
-	pipe.setRoughness(4.6e-5);
-	pipe.setNumberOfSections(nSec);
-	double[] flat = new double[nSec];
-	pipe.setElevationProfile(flat);
+        int nSec = 20;
+        TwoFluidPipe pipe = new TwoFluidPipe("pipe", inlet);
+        pipe.setLength(5000.0);
+        pipe.setDiameter(diameters[i]);
+        pipe.setRoughness(4.6e-5);
+        pipe.setNumberOfSections(nSec);
+        double[] flat = new double[nSec];
+        pipe.setElevationProfile(flat);
 
-	ProcessSystem proc = new ProcessSystem();
-	proc.add(inlet);
-	proc.add(pipe);
-	proc.run();
+        ProcessSystem proc = new ProcessSystem();
+        proc.add(inlet);
+        proc.add(pipe);
+        proc.run();
 
-	pressureDrops[i] = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
-	logger.printf(org.apache.logging.log4j.Level.INFO, "  D=%.3fm (%.0f\"): dP=%.3f bar%n", diameters[i],
-	    diameters[i] / 0.0254, pressureDrops[i]);
+        pressureDrops[i] = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  D=%.3fm (%.0f\"): dP=%.3f bar%n", diameters[i],
+            diameters[i] / 0.0254, pressureDrops[i]);
       }
 
       // Larger diameter should give lower pressure drop (monotonically)
       for (int i = 1; i < pressureDrops.length; i++) {
-	assertTrue(pressureDrops[i] < pressureDrops[i - 1],
-	    "dP should decrease with increasing diameter: D=" + diameters[i] + " gave dP=" + pressureDrops[i] + " >= D="
-		+ diameters[i - 1] + " dP=" + pressureDrops[i - 1]);
+        assertTrue(pressureDrops[i] < pressureDrops[i - 1],
+            "dP should decrease with increasing diameter: D=" + diameters[i] + " gave dP=" + pressureDrops[i] + " >= D="
+                + diameters[i - 1] + " dP=" + pressureDrops[i - 1]);
       }
 
       // Check D^-5 scaling (approximate for turbulent flow with same mass rate)
@@ -1411,7 +1411,7 @@ public class TwoFluidPipeBenchmarkTest {
       double ratio_6to12 = pressureDrops[1] / pressureDrops[3]; // 6" vs 12"
       double expected_ratio = Math.pow(diameters[3] / diameters[1], 5.0); // (12/6)^5 = 32
       logger.printf(org.apache.logging.log4j.Level.INFO, "  6\"/12\" ratio: %.1f (expected ~%.0f for D^-5 scaling)%n",
-	  ratio_6to12, expected_ratio);
+          ratio_6to12, expected_ratio);
 
       // Ratio should be at least 5x (even though D^-5 would give 32x,
       // compressibility effects reduce the exponent for gas flow)
@@ -1451,7 +1451,7 @@ public class TwoFluidPipeBenchmarkTest {
       double[] retrieved = pipe.getSectionLengths();
       assertEquals(lengths.length, retrieved.length);
       for (int i = 0; i < lengths.length; i++) {
-	assertEquals(lengths[i], retrieved[i], 1e-10);
+        assertEquals(lengths[i], retrieved[i], 1e-10);
       }
     }
 
@@ -1499,7 +1499,7 @@ public class TwoFluidPipeBenchmarkTest {
       // Should be within 20% for a horizontal pipe with same total length
       double relDiff = Math.abs(dpNonUniform - dpUniform) / Math.max(dpUniform, 0.01);
       assertTrue(relDiff < 0.20, "Non-uniform and uniform mesh should agree within 20% for horizontal pipe. "
-	  + "Uniform dP=" + dpUniform + " bar, Non-uniform dP=" + dpNonUniform + " bar");
+          + "Uniform dP=" + dpUniform + " bar, Non-uniform dP=" + dpNonUniform + " bar");
       assertTrue(dpUniform > 0 && dpNonUniform > 0, "Both should have positive pressure drop");
     }
 
@@ -1524,10 +1524,10 @@ public class TwoFluidPipeBenchmarkTest {
       // Create elevation with a riser at the end
       double[] elev = new double[50];
       for (int i = 0; i < 40; i++) {
-	elev[i] = 0; // flat flowline
+        elev[i] = 0; // flat flowline
       }
       for (int i = 40; i < 50; i++) {
-	elev[i] = (i - 40) * 20.0; // 200m riser over last 1000m
+        elev[i] = (i - 40) * 20.0; // 200m riser over last 1000m
       }
       pipe.setElevationProfile(elev);
       pipe.generateRefinedMesh(50, 4.0);
@@ -1539,24 +1539,24 @@ public class TwoFluidPipeBenchmarkTest {
       // Sum should equal total length
       double sum = 0;
       for (double l : lengths) {
-	sum += l;
-	assertTrue(l > 0, "All section lengths must be positive");
+        sum += l;
+        assertTrue(l > 0, "All section lengths must be positive");
       }
       assertEquals(5000.0, sum, 0.01, "Lengths must sum to total pipe length");
 
       // Riser sections (last 10) should be shorter than flat sections (first 40)
       double avgFlat = 0;
       for (int i = 0; i < 40; i++) {
-	avgFlat += lengths[i];
+        avgFlat += lengths[i];
       }
       avgFlat /= 40;
       double avgRiser = 0;
       for (int i = 40; i < 50; i++) {
-	avgRiser += lengths[i];
+        avgRiser += lengths[i];
       }
       avgRiser /= 10;
       assertTrue(avgRiser < avgFlat, "Riser sections should be shorter than flat sections. " + "Avg flat=" + avgFlat
-	  + "m, Avg riser=" + avgRiser + "m");
+          + "m, Avg riser=" + avgRiser + "m");
     }
   }
 }

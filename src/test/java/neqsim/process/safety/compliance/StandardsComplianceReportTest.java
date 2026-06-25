@@ -32,13 +32,13 @@ class StandardsComplianceReportTest {
     int iec = 0;
     for (StandardsComplianceReport.Requirement q : r.getRequirements()) {
       if (q.standard.equals("API RP 14C")) {
-	api++;
+        api++;
       }
       if (q.standard.equals("NORSOK S-001")) {
-	norsok++;
+        norsok++;
       }
       if (q.standard.equals("IEC 61511")) {
-	iec++;
+        iec++;
       }
     }
     assertTrue(api > 0);
@@ -50,23 +50,23 @@ class StandardsComplianceReportTest {
   @Test
   void trAndNorsokIntegrationChecklistsLoad() {
     StandardsComplianceReport r = new StandardsComplianceReport("TR review").loadSTS0131().loadTR1965().loadNORSOKP002()
-	.loadTR2237();
+        .loadTR2237();
     int sts0131 = 0;
     int tr1965 = 0;
     int p002 = 0;
     int tr2237 = 0;
     for (StandardsComplianceReport.Requirement q : r.getRequirements()) {
       if (q.standard.equals("STS0131")) {
-	sts0131++;
+        sts0131++;
       }
       if (q.standard.equals("TR1965")) {
-	tr1965++;
+        tr1965++;
       }
       if (q.standard.equals("NORSOK P-002")) {
-	p002++;
+        p002++;
       }
       if (q.standard.equals("TR2237")) {
-	tr2237++;
+        tr2237++;
       }
     }
     assertTrue(sts0131 > 0);
@@ -82,11 +82,11 @@ class StandardsComplianceReportTest {
     boolean hasProcessSafetyClause = false;
     for (StandardsComplianceReport.Requirement q : r.getRequirements()) {
       if (q.standard.equals("NORSOK S-001") && q.clause.startsWith("10")) {
-	clause10++;
+        clause10++;
       }
       if (q.standard.equals("NORSOK S-001") && q.clause.equals("10")
-	  && q.description.contains("Process safety system")) {
-	hasProcessSafetyClause = true;
+          && q.description.contains("Process safety system")) {
+        hasProcessSafetyClause = true;
       }
     }
     assertTrue(hasProcessSafetyClause);

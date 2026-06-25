@@ -72,7 +72,7 @@ class AnaerobicDigesterTest {
     digester.run();
 
     assertEquals(AnaerobicDigester.TemperatureRegime.THERMOPHILIC, digester.getTemperatureRegime(),
-	"55 C should be thermophilic");
+        "55 C should be thermophilic");
     assertTrue(digester.getBiogasFlowRateNm3PerDay() > 0.0);
   }
 
@@ -81,7 +81,7 @@ class AnaerobicDigesterTest {
     AnaerobicDigester digester = new AnaerobicDigester("AD-meso");
     digester.setDigesterTemperature(37.0, "C");
     assertEquals(AnaerobicDigester.TemperatureRegime.MESOPHILIC, digester.getTemperatureRegime(),
-	"37 C should be mesophilic");
+        "37 C should be mesophilic");
   }
 
   @Test
@@ -197,7 +197,7 @@ class AnaerobicDigesterTest {
 
       assertTrue(digester.getBiogasFlowRateNm3PerDay() > 0.0, "Biogas flow should be positive for " + type.name());
       assertTrue(digester.getMethaneProductionNm3PerDay() > 0.0,
-	  "CH4 production should be positive for " + type.name());
+          "CH4 production should be positive for " + type.name());
     }
   }
 }

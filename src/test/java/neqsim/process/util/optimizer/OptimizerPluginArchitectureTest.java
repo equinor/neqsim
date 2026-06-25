@@ -105,7 +105,7 @@ public class OptimizerPluginArchitectureTest {
     CapacityConstraint powerConstraint = constraints.get("power");
     if (powerConstraint != null) {
       assertTrue(powerConstraint.getCurrentValue() > 0 || powerConstraint.getDesignValue() > 0,
-	  "Power values should exist");
+          "Power values should exist");
     }
   }
 
@@ -297,7 +297,7 @@ public class OptimizerPluginArchitectureTest {
   @Test
   void testCapacityConstraint() {
     CapacityConstraint constraint = new CapacityConstraint("Test Constraint", "kW",
-	CapacityConstraint.ConstraintType.SOFT);
+        CapacityConstraint.ConstraintType.SOFT);
     constraint.setMinValue(100.0);
     constraint.setMaxValue(1000.0);
     constraint.setDesignValue(800.0);

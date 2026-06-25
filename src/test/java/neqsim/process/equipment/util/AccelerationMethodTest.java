@@ -150,20 +150,20 @@ class AccelerationMethodTest {
       int maxIter = 50;
 
       for (int i = 0; i < maxIter; i++) {
-	double[] gx = { 0.5 * x[0] + 1.0 }; // g(x) = 0.5x + 1, fixed point at x=2
+        double[] gx = { 0.5 * x[0] + 1.0 }; // g(x) = 0.5x + 1, fixed point at x=2
 
-	// For 1D problems, direct substitution is more stable
-	// Just verify the accelerator doesn't crash and produces output
-	double[] next = acc.accelerate(x, gx);
-	assertNotNull(next);
-	assertEquals(1, next.length);
+        // For 1D problems, direct substitution is more stable
+        // Just verify the accelerator doesn't crash and produces output
+        double[] next = acc.accelerate(x, gx);
+        assertNotNull(next);
+        assertEquals(1, next.length);
 
-	lastX = x.clone();
-	x = gx.clone(); // Use direct substitution for convergence check
+        lastX = x.clone();
+        x = gx.clone(); // Use direct substitution for convergence check
 
-	if (Math.abs(x[0] - lastX[0]) < tolerance) {
-	  break;
-	}
+        if (Math.abs(x[0] - lastX[0]) < tolerance) {
+          break;
+        }
       }
 
       // Using direct substitution, should converge to 2.0
@@ -429,11 +429,11 @@ class AccelerationMethodTest {
       logger.info("Starting from x=0:");
       double x = 0.0;
       for (int i = 0; i < 5; i++) {
-	double gx = 0.5 * x + 1;
-	double xAccel = q * gx + (1 - q) * x;
-	logger.printf(org.apache.logging.log4j.Level.INFO, "  Iter %d: x=%.4f, g(x)=%.4f, x_accel=%.4f%n", i + 1, x, gx,
-	    xAccel);
-	x = xAccel;
+        double gx = 0.5 * x + 1;
+        double xAccel = q * gx + (1 - q) * x;
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  Iter %d: x=%.4f, g(x)=%.4f, x_accel=%.4f%n", i + 1, x, gx,
+            xAccel);
+        x = xAccel;
       }
 
       logger.info("Note: With damping bounds q∈[-5,0], Wegstein acts as a damper,");
@@ -534,11 +534,11 @@ class AccelerationMethodTest {
      */
     private neqsim.process.processmodel.ProcessSystem createSeparationTrain(AccelerationMethod method) {
       neqsim.process.processmodel.ProcessSystem process = new neqsim.process.processmodel.ProcessSystem(
-	  "Separation Train");
+          "Separation Train");
 
       // Feed stream
       neqsim.process.equipment.stream.Stream feed = new neqsim.process.equipment.stream.Stream("feed",
-	  createOilGasFluid());
+          createOilGasFluid());
       feed.setFlowRate(50000.0, "kg/hr");
       feed.setTemperature(50.0, "C");
       feed.setPressure(62.0, "bara");
@@ -546,18 +546,18 @@ class AccelerationMethodTest {
 
       // First stage separator
       neqsim.process.equipment.separator.ThreePhaseSeparator sep1 = new neqsim.process.equipment.separator.ThreePhaseSeparator(
-	  "1st stage sep", feed);
+          "1st stage sep", feed);
       process.add(sep1);
 
       // Oil valve to second stage
       neqsim.process.equipment.valve.ThrottlingValve valve1 = new neqsim.process.equipment.valve.ThrottlingValve(
-	  "valve1", sep1.getOilOutStream());
+          "valve1", sep1.getOilOutStream());
       valve1.setOutletPressure(20.0, "bara");
       process.add(valve1);
 
       // Recycle stream placeholder 1 (HP recycle)
       neqsim.process.equipment.stream.Stream recycleHP = (neqsim.process.equipment.stream.Stream) feed
-	  .clone("HP recycle");
+          .clone("HP recycle");
       recycleHP.setFlowRate(10.0, "kg/hr");
       recycleHP.setPressure(20.0, "bara");
       recycleHP.setTemperature(30.0, "C");
@@ -571,18 +571,18 @@ class AccelerationMethodTest {
 
       // Second stage separator
       neqsim.process.equipment.separator.ThreePhaseSeparator sep2 = new neqsim.process.equipment.separator.ThreePhaseSeparator(
-	  "2nd stage sep", mixer1.getOutletStream());
+          "2nd stage sep", mixer1.getOutletStream());
       process.add(sep2);
 
       // Oil valve to third stage
       neqsim.process.equipment.valve.ThrottlingValve valve2 = new neqsim.process.equipment.valve.ThrottlingValve(
-	  "valve2", sep2.getOilOutStream());
+          "valve2", sep2.getOilOutStream());
       valve2.setOutletPressure(7.0, "bara");
       process.add(valve2);
 
       // Recycle stream placeholder 2 (MP recycle)
       neqsim.process.equipment.stream.Stream recycleMP = (neqsim.process.equipment.stream.Stream) feed
-	  .clone("MP recycle");
+          .clone("MP recycle");
       recycleMP.setFlowRate(10.0, "kg/hr");
       recycleMP.setPressure(7.0, "bara");
       recycleMP.setTemperature(30.0, "C");
@@ -596,21 +596,21 @@ class AccelerationMethodTest {
 
       // Third stage separator
       neqsim.process.equipment.separator.ThreePhaseSeparator sep3 = new neqsim.process.equipment.separator.ThreePhaseSeparator(
-	  "3rd stage sep", mixer2.getOutletStream());
+          "3rd stage sep", mixer2.getOutletStream());
       process.add(sep3);
 
       // Gas compression train
       neqsim.process.equipment.heatexchanger.Cooler cooler1 = new neqsim.process.equipment.heatexchanger.Cooler(
-	  "cooler1", sep1.getGasOutStream());
+          "cooler1", sep1.getGasOutStream());
       cooler1.setOutTemperature(30.0, "C");
       process.add(cooler1);
 
       neqsim.process.equipment.separator.Separator scrubber1 = new neqsim.process.equipment.separator.Separator(
-	  "scrubber1", cooler1.getOutletStream());
+          "scrubber1", cooler1.getOutletStream());
       process.add(scrubber1);
 
       neqsim.process.equipment.compressor.Compressor comp1 = new neqsim.process.equipment.compressor.Compressor("comp1",
-	  sep2.getGasOutStream());
+          sep2.getGasOutStream());
       comp1.setOutletPressure(62.0, "bara");
       process.add(comp1);
 
@@ -629,17 +629,17 @@ class AccelerationMethodTest {
 
       // MP Recycle unit
       neqsim.process.equipment.compressor.Compressor comp2 = new neqsim.process.equipment.compressor.Compressor("comp2",
-	  sep3.getGasOutStream());
+          sep3.getGasOutStream());
       comp2.setOutletPressure(20.0, "bara");
       process.add(comp2);
 
       neqsim.process.equipment.heatexchanger.Cooler cooler2 = new neqsim.process.equipment.heatexchanger.Cooler(
-	  "cooler2", comp2.getOutletStream());
+          "cooler2", comp2.getOutletStream());
       cooler2.setOutTemperature(30.0, "C");
       process.add(cooler2);
 
       neqsim.process.equipment.separator.Separator scrubber2 = new neqsim.process.equipment.separator.Separator(
-	  "scrubber2", cooler2.getOutletStream());
+          "scrubber2", cooler2.getOutletStream());
       process.add(scrubber2);
 
       Recycle mpRecycle = new Recycle("MP recycle unit");
@@ -651,11 +651,11 @@ class AccelerationMethodTest {
 
       // Export streams
       neqsim.process.equipment.stream.Stream exportOil = new neqsim.process.equipment.stream.Stream("export oil",
-	  sep3.getOilOutStream());
+          sep3.getOilOutStream());
       process.add(exportOil);
 
       neqsim.process.equipment.stream.Stream exportGas = new neqsim.process.equipment.stream.Stream("export gas",
-	  gasMixer.getOutletStream());
+          gasMixer.getOutletStream());
       process.add(exportGas);
 
       return process;
@@ -682,60 +682,60 @@ class AccelerationMethodTest {
       long directTime = 0;
       int directIters = 0;
       for (int i = 0; i < runs; i++) {
-	neqsim.process.processmodel.ProcessSystem p = createSeparationTrain(AccelerationMethod.DIRECT_SUBSTITUTION);
-	long start = System.currentTimeMillis();
-	p.run();
-	directTime += System.currentTimeMillis() - start;
-	directIters += ((Recycle) p.getUnit("HP recycle unit")).getIterations();
-	directIters += ((Recycle) p.getUnit("MP recycle unit")).getIterations();
+        neqsim.process.processmodel.ProcessSystem p = createSeparationTrain(AccelerationMethod.DIRECT_SUBSTITUTION);
+        long start = System.currentTimeMillis();
+        p.run();
+        directTime += System.currentTimeMillis() - start;
+        directIters += ((Recycle) p.getUnit("HP recycle unit")).getIterations();
+        directIters += ((Recycle) p.getUnit("MP recycle unit")).getIterations();
       }
 
       // Wegstein
       long wegsteinTime = 0;
       int wegsteinIters = 0;
       for (int i = 0; i < runs; i++) {
-	neqsim.process.processmodel.ProcessSystem p = createSeparationTrain(AccelerationMethod.WEGSTEIN);
-	long start = System.currentTimeMillis();
-	p.run();
-	wegsteinTime += System.currentTimeMillis() - start;
-	wegsteinIters += ((Recycle) p.getUnit("HP recycle unit")).getIterations();
-	wegsteinIters += ((Recycle) p.getUnit("MP recycle unit")).getIterations();
+        neqsim.process.processmodel.ProcessSystem p = createSeparationTrain(AccelerationMethod.WEGSTEIN);
+        long start = System.currentTimeMillis();
+        p.run();
+        wegsteinTime += System.currentTimeMillis() - start;
+        wegsteinIters += ((Recycle) p.getUnit("HP recycle unit")).getIterations();
+        wegsteinIters += ((Recycle) p.getUnit("MP recycle unit")).getIterations();
       }
 
       // Broyden
       long broydenTime = 0;
       int broydenIters = 0;
       for (int i = 0; i < runs; i++) {
-	neqsim.process.processmodel.ProcessSystem p = createSeparationTrain(AccelerationMethod.BROYDEN);
-	long start = System.currentTimeMillis();
-	p.run();
-	broydenTime += System.currentTimeMillis() - start;
-	broydenIters += ((Recycle) p.getUnit("HP recycle unit")).getIterations();
-	broydenIters += ((Recycle) p.getUnit("MP recycle unit")).getIterations();
+        neqsim.process.processmodel.ProcessSystem p = createSeparationTrain(AccelerationMethod.BROYDEN);
+        long start = System.currentTimeMillis();
+        p.run();
+        broydenTime += System.currentTimeMillis() - start;
+        broydenIters += ((Recycle) p.getUnit("HP recycle unit")).getIterations();
+        broydenIters += ((Recycle) p.getUnit("MP recycle unit")).getIterations();
       }
 
       logger.info("Results (averaged over " + runs + " runs):");
       logger.info("=========================================");
       logger.printf(org.apache.logging.log4j.Level.INFO, "  DIRECT:   %6.0f ms, %d total recycle iterations%n",
-	  directTime / (double) runs, directIters / runs);
+          directTime / (double) runs, directIters / runs);
       logger.printf(org.apache.logging.log4j.Level.INFO, "  WEGSTEIN: %6.0f ms, %d total recycle iterations%n",
-	  wegsteinTime / (double) runs, wegsteinIters / runs);
+          wegsteinTime / (double) runs, wegsteinIters / runs);
       logger.printf(org.apache.logging.log4j.Level.INFO, "  BROYDEN:  %6.0f ms, %d total recycle iterations%n",
-	  broydenTime / (double) runs, broydenIters / runs);
+          broydenTime / (double) runs, broydenIters / runs);
 
       if (wegsteinTime < directTime) {
-	logger.printf(org.apache.logging.log4j.Level.INFO, "Wegstein speedup: %.2fx%n",
-	    directTime / (double) wegsteinTime);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "Wegstein speedup: %.2fx%n",
+            directTime / (double) wegsteinTime);
       } else {
-	logger.printf(org.apache.logging.log4j.Level.INFO, "Wegstein slowdown: %.2fx%n",
-	    wegsteinTime / (double) directTime);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "Wegstein slowdown: %.2fx%n",
+            wegsteinTime / (double) directTime);
       }
       if (broydenTime < directTime) {
-	logger.printf(org.apache.logging.log4j.Level.INFO, "Broyden speedup:  %.2fx%n",
-	    directTime / (double) broydenTime);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "Broyden speedup:  %.2fx%n",
+            directTime / (double) broydenTime);
       } else {
-	logger.printf(org.apache.logging.log4j.Level.INFO, "Broyden slowdown:  %.2fx%n",
-	    broydenTime / (double) directTime);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "Broyden slowdown:  %.2fx%n",
+            broydenTime / (double) directTime);
       }
 
       logger.info("=============================================\n");

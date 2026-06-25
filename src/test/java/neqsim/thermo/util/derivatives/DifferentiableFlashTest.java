@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -11,8 +13,6 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Unit tests for DifferentiableFlash and gradient computation.
@@ -22,7 +22,7 @@ class DifferentiableFlashTest {
 
   /** Relative tolerance for gradient comparison. */
   private static final double RELATIVE_TOLERANCE = 0.25; // 25% tolerance for analytical vs
-							 // numerical
+  // numerical
 
   /** Absolute tolerance for near-zero values. */
   private static final double ABSOLUTE_TOLERANCE = 1e-6;
@@ -110,14 +110,14 @@ class DifferentiableFlashTest {
       // Check that derivatives are finite
       double[] dKdT = grads.getDKdT();
       for (int i = 0; i < dKdT.length; i++) {
-	assertFalse(Double.isNaN(dKdT[i]), "dK/dT should be finite");
-	assertFalse(Double.isInfinite(dKdT[i]), "dK/dT should not be infinite");
+        assertFalse(Double.isNaN(dKdT[i]), "dK/dT should be finite");
+        assertFalse(Double.isInfinite(dKdT[i]), "dK/dT should not be infinite");
       }
 
       double[] dKdP = grads.getDKdP();
       for (int i = 0; i < dKdP.length; i++) {
-	assertFalse(Double.isNaN(dKdP[i]), "dK/dP should be finite");
-	assertFalse(Double.isInfinite(dKdP[i]), "dK/dP should not be infinite");
+        assertFalse(Double.isNaN(dKdP[i]), "dK/dP should be finite");
+        assertFalse(Double.isInfinite(dKdP[i]), "dK/dP should not be infinite");
       }
 
       assertFalse(Double.isNaN(grads.getDBetadT()), "dBeta/dT should be finite");
@@ -265,9 +265,9 @@ class DifferentiableFlashTest {
     // Should be reasonably close (allowing for flash re-convergence effects)
     // This is a sanity check, not a strict equality test
     assertTrue(
-	Math.abs(analyticalDT - numericalDT) < Math.abs(numericalDT) * 0.5
-	    || Math.abs(analyticalDT - numericalDT) < 1.0,
-	"Analytical and numerical derivatives should be in same ballpark");
+        Math.abs(analyticalDT - numericalDT) < Math.abs(numericalDT) * 0.5
+            || Math.abs(analyticalDT - numericalDT) < 1.0,
+        "Analytical and numerical derivatives should be in same ballpark");
 
     // Restore system
     system.setTemperature(T0);
@@ -298,9 +298,9 @@ class DifferentiableFlashTest {
       // Test flash gradients
       FlashGradients grads = diffFlash.computeFlashGradients();
       if (grads.isValid()) {
-	assertEquals(5, grads.getNumberOfComponents());
-	assertEquals(5, grads.getKValues().length);
-	assertEquals(5, grads.getDKdT().length);
+        assertEquals(5, grads.getNumberOfComponents());
+        assertEquals(5, grads.getKValues().length);
+        assertEquals(5, grads.getDKdT().length);
       }
     }
 
@@ -371,20 +371,20 @@ class DifferentiableFlashTest {
     int liquidIndex = -1;
     for (int p = 0; p < sys.getNumberOfPhases(); p++) {
       if (sys.getPhase(p).getType() == neqsim.thermo.phase.PhaseType.GAS) {
-	vaporIndex = p;
+        vaporIndex = p;
       } else {
-	liquidIndex = p;
+        liquidIndex = p;
       }
     }
 
     // Fallback: use density to identify phases
     if (vaporIndex < 0 || liquidIndex < 0) {
       if (sys.getPhase(0).getDensity() < sys.getPhase(1).getDensity()) {
-	vaporIndex = 0;
-	liquidIndex = 1;
+        vaporIndex = 0;
+        liquidIndex = 1;
       } else {
-	vaporIndex = 1;
-	liquidIndex = 0;
+        vaporIndex = 1;
+        liquidIndex = 0;
       }
     }
 
@@ -404,8 +404,8 @@ class DifferentiableFlashTest {
       // For non-zero values, use relative tolerance
       double relativeError = Math.abs((analytical - numerical) / numerical);
       assertTrue(relativeError < RELATIVE_TOLERANCE,
-	  String.format("%s: analytical=%.6f, numerical=%.6f, relative error=%.2f%%", description, analytical,
-	      numerical, relativeError * 100));
+          String.format("%s: analytical=%.6f, numerical=%.6f, relative error=%.2f%%", description, analytical,
+              numerical, relativeError * 100));
     }
   }
 
@@ -438,7 +438,7 @@ class DifferentiableFlashTest {
 
       // Numerical derivative using central difference
       double dRho_dT_numerical = (computeDensityFresh(T + EPSILON, P) - computeDensityFresh(T - EPSILON, P))
-	  / (2 * EPSILON);
+          / (2 * EPSILON);
 
       double dRho_dT_analytical = densityGrad.getDerivativeWrtTemperature();
 
@@ -448,7 +448,7 @@ class DifferentiableFlashTest {
 
       // Log the comparison for analysis
       logger.info(String.format("∂ρ/∂T: analytical=%.6f, numerical=%.6f, ratio=%.2f", dRho_dT_analytical,
-	  dRho_dT_numerical, dRho_dT_numerical != 0 ? dRho_dT_analytical / dRho_dT_numerical : Double.NaN));
+          dRho_dT_numerical, dRho_dT_numerical != 0 ? dRho_dT_analytical / dRho_dT_numerical : Double.NaN));
     }
 
     @Test
@@ -471,7 +471,7 @@ class DifferentiableFlashTest {
 
       // Numerical derivative using central difference
       double dRho_dP_numerical = (computeDensityFresh(T, P + EPSILON) - computeDensityFresh(T, P - EPSILON))
-	  / (2 * EPSILON);
+          / (2 * EPSILON);
 
       double dRho_dP_analytical = densityGrad.getDerivativeWrtPressure();
 
@@ -480,7 +480,7 @@ class DifferentiableFlashTest {
       assertFalse(Double.isNaN(dRho_dP_numerical), "Numerical ∂ρ/∂P should be finite");
 
       logger.info(String.format("∂ρ/∂P: analytical=%.6f, numerical=%.6f, ratio=%.2f", dRho_dP_analytical,
-	  dRho_dP_numerical, dRho_dP_numerical != 0 ? dRho_dP_analytical / dRho_dP_numerical : Double.NaN));
+          dRho_dP_numerical, dRho_dP_numerical != 0 ? dRho_dP_analytical / dRho_dP_numerical : Double.NaN));
     }
 
     @Test
@@ -498,7 +498,7 @@ class DifferentiableFlashTest {
       FlashGradients flashGrads = diffFlash.computeFlashGradients();
 
       if (!flashGrads.isValid()) {
-	return; // Skip if single phase
+        return; // Skip if single phase
       }
 
       double T = testSystem.getTemperature();
@@ -516,7 +516,7 @@ class DifferentiableFlashTest {
       assertGradientEquals("∂β/∂T", dBeta_dT_analytical, dBeta_dT_numerical);
 
       logger.info(String.format("∂β/∂T: analytical=%.6f, numerical=%.6f, ratio=%.2f", dBeta_dT_analytical,
-	  dBeta_dT_numerical, dBeta_dT_numerical != 0 ? dBeta_dT_analytical / dBeta_dT_numerical : Double.NaN));
+          dBeta_dT_numerical, dBeta_dT_numerical != 0 ? dBeta_dT_analytical / dBeta_dT_numerical : Double.NaN));
     }
 
     @Test
@@ -534,7 +534,7 @@ class DifferentiableFlashTest {
       FlashGradients flashGrads = diffFlash.computeFlashGradients();
 
       if (!flashGrads.isValid()) {
-	return;
+        return;
       }
 
       double T = testSystem.getTemperature();
@@ -552,7 +552,7 @@ class DifferentiableFlashTest {
       assertGradientEquals("∂β/∂P", dBeta_dP_analytical, dBeta_dP_numerical);
 
       logger.info(String.format("∂β/∂P: analytical=%.6f, numerical=%.6f, ratio=%.2f", dBeta_dP_analytical,
-	  dBeta_dP_numerical, dBeta_dP_numerical != 0 ? dBeta_dP_analytical / dBeta_dP_numerical : Double.NaN));
+          dBeta_dP_numerical, dBeta_dP_numerical != 0 ? dBeta_dP_analytical / dBeta_dP_numerical : Double.NaN));
     }
 
     @Test
@@ -583,7 +583,7 @@ class DifferentiableFlashTest {
 
       // Log the comparison for analysis
       logger.info(String.format("∂Cp/∂T: analytical=%.6f, numerical=%.6f, ratio=%.2f", dCp_dT_analytical,
-	  dCp_dT_numerical, dCp_dT_numerical != 0 ? dCp_dT_analytical / dCp_dT_numerical : Double.NaN));
+          dCp_dT_numerical, dCp_dT_numerical != 0 ? dCp_dT_analytical / dCp_dT_numerical : Double.NaN));
     }
 
     @Test
@@ -613,7 +613,7 @@ class DifferentiableFlashTest {
       assertFalse(Double.isNaN(dCp_dP_numerical), "Numerical ∂Cp/∂P should be finite");
 
       logger.info(String.format("∂Cp/∂P: analytical=%.6f, numerical=%.6f, ratio=%.2f", dCp_dP_analytical,
-	  dCp_dP_numerical, dCp_dP_numerical != 0 ? dCp_dP_analytical / dCp_dP_numerical : Double.NaN));
+          dCp_dP_numerical, dCp_dP_numerical != 0 ? dCp_dP_analytical / dCp_dP_numerical : Double.NaN));
     }
 
     @Test
@@ -631,7 +631,7 @@ class DifferentiableFlashTest {
       FlashGradients flashGrads = diffFlash.computeFlashGradients();
 
       if (!flashGrads.isValid()) {
-	return;
+        return;
       }
 
       double T = testSystem.getTemperature();
@@ -639,19 +639,19 @@ class DifferentiableFlashTest {
       double[] dK_dT_analytical = flashGrads.getDKdT();
 
       for (int i = 0; i < testSystem.getNumberOfComponents(); i++) {
-	double K_plus = computeKValueFresh(i, T + EPSILON, P);
-	double K_minus = computeKValueFresh(i, T - EPSILON, P);
+        double K_plus = computeKValueFresh(i, T + EPSILON, P);
+        double K_minus = computeKValueFresh(i, T - EPSILON, P);
 
-	if (Double.isNaN(K_plus) || Double.isNaN(K_minus)) {
-	  continue;
-	}
+        if (Double.isNaN(K_plus) || Double.isNaN(K_minus)) {
+          continue;
+        }
 
-	double dK_dT_numerical = (K_plus - K_minus) / (2 * EPSILON);
+        double dK_dT_numerical = (K_plus - K_minus) / (2 * EPSILON);
 
-	assertFalse(Double.isNaN(dK_dT_analytical[i]), "Analytical ∂K[" + i + "]/∂T should be finite");
+        assertFalse(Double.isNaN(dK_dT_analytical[i]), "Analytical ∂K[" + i + "]/∂T should be finite");
 
-	logger.info(String.format("∂K[%d]/∂T: analytical=%.6f, numerical=%.6f, ratio=%.2f", i, dK_dT_analytical[i],
-	    dK_dT_numerical, dK_dT_numerical != 0 ? dK_dT_analytical[i] / dK_dT_numerical : Double.NaN));
+        logger.info(String.format("∂K[%d]/∂T: analytical=%.6f, numerical=%.6f, ratio=%.2f", i, dK_dT_analytical[i],
+            dK_dT_numerical, dK_dT_numerical != 0 ? dK_dT_analytical[i] / dK_dT_numerical : Double.NaN));
       }
     }
 
@@ -670,7 +670,7 @@ class DifferentiableFlashTest {
       FlashGradients flashGrads = diffFlash.computeFlashGradients();
 
       if (!flashGrads.isValid()) {
-	return;
+        return;
       }
 
       double T = testSystem.getTemperature();
@@ -678,19 +678,19 @@ class DifferentiableFlashTest {
       double[] dK_dP_analytical = flashGrads.getDKdP();
 
       for (int i = 0; i < testSystem.getNumberOfComponents(); i++) {
-	double K_plus = computeKValueFresh(i, T, P + EPSILON);
-	double K_minus = computeKValueFresh(i, T, P - EPSILON);
+        double K_plus = computeKValueFresh(i, T, P + EPSILON);
+        double K_minus = computeKValueFresh(i, T, P - EPSILON);
 
-	if (Double.isNaN(K_plus) || Double.isNaN(K_minus)) {
-	  continue;
-	}
+        if (Double.isNaN(K_plus) || Double.isNaN(K_minus)) {
+          continue;
+        }
 
-	double dK_dP_numerical = (K_plus - K_minus) / (2 * EPSILON);
+        double dK_dP_numerical = (K_plus - K_minus) / (2 * EPSILON);
 
-	assertFalse(Double.isNaN(dK_dP_analytical[i]), "Analytical ∂K[" + i + "]/∂P should be finite");
+        assertFalse(Double.isNaN(dK_dP_analytical[i]), "Analytical ∂K[" + i + "]/∂P should be finite");
 
-	logger.info(String.format("∂K[%d]/∂P: analytical=%.6f, numerical=%.6f, ratio=%.2f", i, dK_dP_analytical[i],
-	    dK_dP_numerical, dK_dP_numerical != 0 ? dK_dP_analytical[i] / dK_dP_numerical : Double.NaN));
+        logger.info(String.format("∂K[%d]/∂P: analytical=%.6f, numerical=%.6f, ratio=%.2f", i, dK_dP_analytical[i],
+            dK_dP_numerical, dK_dP_numerical != 0 ? dK_dP_analytical[i] / dK_dP_numerical : Double.NaN));
       }
     }
   }

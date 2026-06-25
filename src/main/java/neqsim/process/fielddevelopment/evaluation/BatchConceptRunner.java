@@ -127,24 +127,24 @@ public class BatchConceptRunner {
 
       // Submit all concepts for evaluation
       for (FieldConcept concept : concepts) {
-	futures.add(executor.submit(new EvaluationTask(concept)));
+        futures.add(executor.submit(new EvaluationTask(concept)));
       }
 
       // Collect results
       int completed = 0;
       for (int i = 0; i < futures.size(); i++) {
-	try {
-	  ConceptKPIs kpis = futures.get(i).get();
-	  results.add(kpis);
-	} catch (Exception e) {
-	  String conceptName = concepts.get(i).getName();
-	  errors.add(conceptName + ": " + e.getMessage());
-	}
+        try {
+          ConceptKPIs kpis = futures.get(i).get();
+          results.add(kpis);
+        } catch (Exception e) {
+          String conceptName = concepts.get(i).getName();
+          errors.add(conceptName + ": " + e.getMessage());
+        }
 
-	completed++;
-	if (progressListener != null) {
-	  progressListener.onProgress(completed, concepts.size());
-	}
+        completed++;
+        if (progressListener != null) {
+          progressListener.onProgress(completed, concepts.size());
+        }
       }
     } finally {
       executor.shutdown();
@@ -173,14 +173,14 @@ public class BatchConceptRunner {
     int completed = 0;
     for (FieldConcept concept : concepts) {
       try {
-	ConceptKPIs kpis = evaluator.quickScreen(concept);
-	results.add(kpis);
+        ConceptKPIs kpis = evaluator.quickScreen(concept);
+        results.add(kpis);
       } catch (Exception e) {
-	// Skip failed concepts in quick screen
+        // Skip failed concepts in quick screen
       }
       completed++;
       if (progressListener != null) {
-	progressListener.onProgress(completed, concepts.size());
+        progressListener.onProgress(completed, concepts.size());
       }
     }
 
@@ -352,9 +352,9 @@ public class BatchConceptRunner {
     public List<ConceptKPIs> getViableConcepts() {
       List<ConceptKPIs> viable = new ArrayList<>();
       for (ConceptKPIs kpi : results) {
-	if (!kpi.hasBlockingIssues()) {
-	  viable.add(kpi);
-	}
+        if (!kpi.hasBlockingIssues()) {
+          viable.add(kpi);
+        }
       }
       return viable;
     }
@@ -369,20 +369,20 @@ public class BatchConceptRunner {
       sb.append("CONCEPT COMPARISON SUMMARY\n");
       sb.append(StringUtils.repeat("=", 80)).append("\n");
       sb.append(String.format("%-25s %10s %10s %12s %8s %8s\n", "Concept", "CAPEX(M$)", "CO2(kg/boe)", "FlowAssur",
-	  "Safety", "Score"));
+          "Safety", "Score"));
       sb.append(StringUtils.repeat("-", 80)).append("\n");
 
       for (ConceptKPIs kpi : getRankedResults()) {
-	sb.append(String.format("%-25s %10.0f %10.1f %12s %8s %7.0f%%\n", truncate(kpi.getConceptName(), 25),
-	    kpi.getTotalCapexMUSD(), kpi.getCo2IntensityKgPerBoe(), kpi.getFlowAssuranceOverall().getDisplayName(),
-	    kpi.getSafetyLevel().getDisplayName(), kpi.getOverallScore() * 100));
+        sb.append(String.format("%-25s %10.0f %10.1f %12s %8s %7.0f%%\n", truncate(kpi.getConceptName(), 25),
+            kpi.getTotalCapexMUSD(), kpi.getCo2IntensityKgPerBoe(), kpi.getFlowAssuranceOverall().getDisplayName(),
+            kpi.getSafetyLevel().getDisplayName(), kpi.getOverallScore() * 100));
       }
 
       sb.append(StringUtils.repeat("-", 80)).append("\n");
       ConceptKPIs best = getBestConcept();
       if (best != null) {
-	sb.append("RECOMMENDED: ").append(best.getConceptName());
-	sb.append(" (Score: ").append(String.format("%.0f%%", best.getOverallScore() * 100)).append(")\n");
+        sb.append("RECOMMENDED: ").append(best.getConceptName());
+        sb.append(" (Score: ").append(String.format("%.0f%%", best.getOverallScore() * 100)).append(")\n");
       }
 
       return sb.toString();
@@ -390,7 +390,7 @@ public class BatchConceptRunner {
 
     private String truncate(String s, int maxLen) {
       if (s.length() <= maxLen) {
-	return s;
+        return s;
       }
       return s.substring(0, maxLen - 3) + "...";
     }
@@ -398,7 +398,7 @@ public class BatchConceptRunner {
     @Override
     public String toString() {
       return String.format("BatchResults[%d concepts, %d errors, best=%s]", results.size(), errors.size(),
-	  getBestConcept() != null ? getBestConcept().getConceptName() : "none");
+          getBestConcept() != null ? getBestConcept().getConceptName() : "none");
     }
   }
 }

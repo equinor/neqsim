@@ -377,7 +377,7 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
     @Override
     public String toString() {
       return String.format("%s -> %s: %.0f\" x %.1fmm x %.1fm = %.0fkg", fromEquipment, toEquipment, nominalSizeInch,
-	  wallThicknessMm, lengthM, weightKg);
+          wallThicknessMm, lengthM, weightKg);
     }
   }
 
@@ -421,7 +421,7 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
     for (String name : names) {
       ProcessEquipmentInterface equipment = processSystem.getUnit(name);
       if (equipment == null) {
-	continue;
+        continue;
       }
 
       // Check if this equipment has output streams that connect to other equipment
@@ -444,15 +444,15 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
     try {
       // Check if equipment has an outlet stream
       if (equipment instanceof neqsim.process.equipment.TwoPortEquipment) {
-	neqsim.process.equipment.TwoPortEquipment twoPort = (neqsim.process.equipment.TwoPortEquipment) equipment;
-	StreamInterface outStream = twoPort.getOutletStream();
-	if (outStream != null && outStream.getThermoSystem() != null) {
-	  PipeSegment segment = createPipeSegment(equipment.getName(), "Downstream", outStream);
-	  if (segment != null) {
-	    pipeSegments.add(segment);
-	    accumulateSegment(segment);
-	  }
-	}
+        neqsim.process.equipment.TwoPortEquipment twoPort = (neqsim.process.equipment.TwoPortEquipment) equipment;
+        StreamInterface outStream = twoPort.getOutletStream();
+        if (outStream != null && outStream.getThermoSystem() != null) {
+          PipeSegment segment = createPipeSegment(equipment.getName(), "Downstream", outStream);
+          if (segment != null) {
+            pipeSegments.add(segment);
+            accumulateSegment(segment);
+          }
+        }
       }
     } catch (Exception e) {
       // Ignore equipment that doesn't have proper connections
@@ -470,7 +470,7 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
   private PipeSegment createPipeSegment(String fromEquip, String toEquip, StreamInterface stream) {
     try {
       if (stream.getThermoSystem() == null) {
-	return null;
+        return null;
       }
 
       double pressure = stream.getPressure("bara");
@@ -478,23 +478,23 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
       double volumeFlow = stream.getFlowRate("m3/hr");
 
       if (volumeFlow <= 0) {
-	return null;
+        return null;
       }
 
       // Determine if gas or liquid service
       boolean isGas = stream.getThermoSystem().hasPhaseType("gas");
       boolean isLiquid = stream.getThermoSystem().hasPhaseType("oil")
-	  || stream.getThermoSystem().hasPhaseType("aqueous");
+          || stream.getThermoSystem().hasPhaseType("aqueous");
       boolean isTwoPhase = isGas && isLiquid;
 
       // Select velocity limit
       double maxVelocity;
       if (isTwoPhase) {
-	maxVelocity = MAX_TWOPHASE_VELOCITY;
+        maxVelocity = MAX_TWOPHASE_VELOCITY;
       } else if (isGas) {
-	maxVelocity = MAX_GAS_VELOCITY;
+        maxVelocity = MAX_GAS_VELOCITY;
       } else {
-	maxVelocity = MAX_LIQUID_VELOCITY;
+        maxVelocity = MAX_LIQUID_VELOCITY;
       }
 
       // Calculate required pipe ID
@@ -506,17 +506,17 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
       double nominalSize = 0.0;
       double outsideDiameter = 0.0;
       for (int i = 0; i < STANDARD_PIPE_SIZES.length; i++) {
-	// Approximate ID = OD - 2 * wall (assume schedule 40)
-	double approxId = PIPE_OD_MM[i] * 0.85;
-	if (approxId >= requiredIdMm) {
-	  nominalSize = STANDARD_PIPE_SIZES[i];
-	  outsideDiameter = PIPE_OD_MM[i];
-	  break;
-	}
+        // Approximate ID = OD - 2 * wall (assume schedule 40)
+        double approxId = PIPE_OD_MM[i] * 0.85;
+        if (approxId >= requiredIdMm) {
+          nominalSize = STANDARD_PIPE_SIZES[i];
+          outsideDiameter = PIPE_OD_MM[i];
+          break;
+        }
       }
       if (nominalSize == 0.0) {
-	nominalSize = STANDARD_PIPE_SIZES[STANDARD_PIPE_SIZES.length - 1];
-	outsideDiameter = PIPE_OD_MM[PIPE_OD_MM.length - 1];
+        nominalSize = STANDARD_PIPE_SIZES[STANDARD_PIPE_SIZES.length - 1];
+        outsideDiameter = PIPE_OD_MM[PIPE_OD_MM.length - 1];
       }
 
       // Calculate wall thickness per ASME B31.3
@@ -566,7 +566,7 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
     // t = P * D / (2 * S * E + 0.8 * P)
     double pressureMPa = designPressureBara * 0.1;
     double thickness = (pressureMPa * outsideDiameterMm)
-	/ (2.0 * ALLOWABLE_STRESS * JOINT_EFFICIENCY + 0.8 * pressureMPa);
+        / (2.0 * ALLOWABLE_STRESS * JOINT_EFFICIENCY + 0.8 * pressureMPa);
 
     // Add corrosion allowance
     thickness += CORROSION_ALLOWANCE;
@@ -778,7 +778,7 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
     sb.append("SUMMARY\n");
     sb.append(subSeparator).append("\n");
     sb.append(String.format("Total Piping Weight:       %.0f kg (%.1f tonnes)\n", totalPipingWeight,
-	totalPipingWeight / 1000.0));
+        totalPipingWeight / 1000.0));
     sb.append(String.format("Total Piping Length:       %.0f m\n", totalPipingLength));
     sb.append(String.format("Number of Pipe Segments:   %d\n", pipeSegments.size()));
     sb.append(String.format("Number of Valves:          %d\n", totalValveCount));
@@ -798,7 +798,7 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
     sb.append("COMPONENT WEIGHTS\n");
     sb.append(subSeparator).append("\n");
     sb.append(String.format("Pipe:                      %.0f kg\n",
-	totalPipingWeight - valveWeight - flangeWeight - fittingWeight));
+        totalPipingWeight - valveWeight - flangeWeight - fittingWeight));
     sb.append(String.format("Valves:                    %.0f kg\n", valveWeight));
     sb.append(String.format("Flanges:                   %.0f kg\n", flangeWeight));
     sb.append(String.format("Fittings (Elbows/Tees):    %.0f kg\n", fittingWeight));

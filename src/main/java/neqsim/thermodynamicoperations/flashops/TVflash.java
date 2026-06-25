@@ -63,7 +63,7 @@ public class TVflash extends Flash {
       double dPdV = system.getPhase(i).getdPdVTn();
       // Check for near-zero derivative (can happen near critical point)
       if (Math.abs(dPdV) > 1e-20) {
-	dQdVP += 1.0 / dPdV;
+        dQdVP += 1.0 / dPdV;
       }
     }
     return dQdVP;
@@ -107,8 +107,8 @@ public class TVflash extends Flash {
       double estimatedPressure = tvSystem.getPressure();
 
       if (estimatedPressure > 0 && !Double.isNaN(estimatedPressure) && !Double.isInfinite(estimatedPressure)
-	  && estimatedPressure < 5000.0) {
-	return estimatedPressure;
+          && estimatedPressure < 5000.0) {
+        return estimatedPressure;
       }
     } catch (Exception ex) {
       // TV estimate failed — fall back to normal iteration
@@ -161,13 +161,13 @@ public class TVflash extends Flash {
 
       // Pressure safety bounds
       if (nyPres <= 0.0) {
-	nyPres = oldPres / 2.0;
+        nyPres = oldPres / 2.0;
       }
       if (nyPres >= oldPres * 2) {
-	nyPres = oldPres * 2.0;
+        nyPres = oldPres * 2.0;
       }
       if (nyPres > maxPressure) {
-	nyPres = maxPressure;
+        nyPres = maxPressure;
       }
 
       system.setPressure(nyPres);
@@ -185,45 +185,45 @@ public class TVflash extends Flash {
       int stallCount = 0;
 
       while (error > TOLERANCE && iterations < MAX_ITERATIONS && stallCount < 10) {
-	iterations++;
-	oldPres = nyPres;
+        iterations++;
+        oldPres = nyPres;
 
-	system.init(3);
-	nyPres = oldPres - (1.0 / 10.0) * calcdQdV() / calcdQdVdP();
+        system.init(3);
+        nyPres = oldPres - (1.0 / 10.0) * calcdQdV() / calcdQdVdP();
 
-	if (nyPres <= 0.0) {
-	  nyPres = oldPres / 2.0;
-	}
-	if (nyPres >= oldPres * 2) {
-	  nyPres = oldPres * 2.0;
-	}
-	if (nyPres > maxPressure) {
-	  nyPres = maxPressure;
-	}
+        if (nyPres <= 0.0) {
+          nyPres = oldPres / 2.0;
+        }
+        if (nyPres >= oldPres * 2) {
+          nyPres = oldPres * 2.0;
+        }
+        if (nyPres > maxPressure) {
+          nyPres = maxPressure;
+        }
 
-	system.setPressure(nyPres);
-	tpFlash.run();
-	error = Math.abs(calcdQdV());
+        system.setPressure(nyPres);
+        tpFlash.run();
+        error = Math.abs(calcdQdV());
 
-	if (error < bestError) {
-	  bestError = error;
-	  bestPressure = nyPres;
-	  stallCount = 0;
-	} else {
-	  stallCount++;
-	}
+        if (error < bestError) {
+          bestError = error;
+          bestPressure = nyPres;
+          stallCount = 0;
+        } else {
+          stallCount++;
+        }
       }
 
       // Restore the best solution found during retry
       if (bestError < error) {
-	system.setPressure(bestPressure);
-	tpFlash.run();
+        system.setPressure(bestPressure);
+        tpFlash.run();
       }
     }
 
     if (iterations >= MAX_ITERATIONS && error > TOLERANCE) {
       logger.warn("TVflash did not converge after {} iterations. Final error: {}, P: {} bar, V: {} cm³", iterations,
-	  error, nyPres, system.getVolume());
+          error, nyPres, system.getVolume());
     }
 
     return nyPres;

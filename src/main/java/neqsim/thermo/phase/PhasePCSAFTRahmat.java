@@ -90,18 +90,18 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     // System.out.println("saft volume " + getVolumeSAFT());
     // System.out.println("dsaft " + getDSAFT());
     setNSAFT(1.0 * ThermodynamicConstantsInterface.pi / 6.0 * ThermodynamicConstantsInterface.avagadroNumber
-	* getNumberOfMolesInPhase() / volumeSAFT * getDSAFT());
+        * getNumberOfMolesInPhase() / volumeSAFT * getDSAFT());
     dnSAFTdV = -1.0 * ThermodynamicConstantsInterface.pi / 6.0 * ThermodynamicConstantsInterface.avagadroNumber
-	* getNumberOfMolesInPhase() / Math.pow(volumeSAFT, 2.0) * getDSAFT();
+        * getNumberOfMolesInPhase() / Math.pow(volumeSAFT, 2.0) * getDSAFT();
     dnSAFTdVdV = 2.0 * ThermodynamicConstantsInterface.pi / 6.0 * ThermodynamicConstantsInterface.avagadroNumber
-	* getNumberOfMolesInPhase() / Math.pow(volumeSAFT, 3.0) * getDSAFT();
+        * getNumberOfMolesInPhase() / Math.pow(volumeSAFT, 3.0) * getDSAFT();
     // System.out.println("N SAFT " + getNSAFT());
     dnSAFTdVdVdV = -6.0 * ThermodynamicConstantsInterface.pi / 6.0 * ThermodynamicConstantsInterface.avagadroNumber
-	* getNumberOfMolesInPhase() / Math.pow(volumeSAFT, 4.0) * getDSAFT();
+        * getNumberOfMolesInPhase() / Math.pow(volumeSAFT, 4.0) * getDSAFT();
 
     // added by rahmat
     dNSAFTdT = 1.0 * ThermodynamicConstantsInterface.pi / 6.0 * ThermodynamicConstantsInterface.avagadroNumber
-	* getNumberOfMolesInPhase() / volumeSAFT * getdDSAFTdT();
+        * getNumberOfMolesInPhase() / volumeSAFT * getdDSAFTdT();
 
     setGhsSAFT((1.0 - nSAFT / 2.0) / Math.pow(1.0 - nSAFT, 3.0));
     setmSAFT(calcmSAFT());
@@ -109,41 +109,41 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     setmdSAFT(calcmdSAFT());
     setAHSSAFT((4.0 * getNSAFT() - 3.0 * Math.pow(getNSAFT(), 2.0)) / Math.pow(1.0 - getNSAFT(), 2.0));
     daHSSAFTdN = ((4.0 - 6.0 * getNSAFT()) * Math.pow(1.0 - getNSAFT(), 2.0)
-	- (4.0 * getNSAFT() - 3 * Math.pow(getNSAFT(), 2.0)) * 2.0 * (1.0 - getNSAFT()) * (-1.0))
-	/ Math.pow(1.0 - getNSAFT(), 4.0);
+        - (4.0 * getNSAFT() - 3 * Math.pow(getNSAFT(), 2.0)) * 2.0 * (1.0 - getNSAFT()) * (-1.0))
+        / Math.pow(1.0 - getNSAFT(), 4.0);
     daHSSAFTdNdN = (-6.0 * Math.pow(1.0 - getNSAFT(), 2.0) + 2.0 * (1.0 - getNSAFT()) * (4.0 - 6 * getNSAFT()))
-	/ Math.pow(1.0 - getNSAFT(), 4.0)
-	+ ((8.0 - 12.0 * getNSAFT()) * Math.pow(1.0 - getNSAFT(), 3.0)
-	    + (8.0 - 6.0 * Math.pow(getNSAFT(), 2.0)) * 3.0 * Math.pow(1.0 - getNSAFT(), 2.0))
-	    / Math.pow(1.0 - getNSAFT(), 6.0);
+        / Math.pow(1.0 - getNSAFT(), 4.0)
+        + ((8.0 - 12.0 * getNSAFT()) * Math.pow(1.0 - getNSAFT(), 3.0)
+            + (8.0 - 6.0 * Math.pow(getNSAFT(), 2.0)) * 3.0 * Math.pow(1.0 - getNSAFT(), 2.0))
+            / Math.pow(1.0 - getNSAFT(), 6.0);
     daHSSAFTdNdNdN = -36 / Math.pow((1 - getNSAFT()), 3)
-	+ (18.0 * (4.0 - 6.0 * getNSAFT())) / Math.pow((1 - getNSAFT()), 4.0)
-	+ (24.0 * (4.0 * getNSAFT() - 3.0 * Math.pow(getNSAFT(), 2.0))) / Math.pow((1 - getNSAFT()), 5.0);
+        + (18.0 * (4.0 - 6.0 * getNSAFT())) / Math.pow((1 - getNSAFT()), 4.0)
+        + (24.0 * (4.0 * getNSAFT() - 3.0 * Math.pow(getNSAFT(), 2.0))) / Math.pow((1 - getNSAFT()), 5.0);
 
     dgHSSAFTdN = (-0.5 * Math.pow(1.0 - getNSAFT(), 3.0)
-	- (1.0 - getNSAFT() / 2.0) * 3.0 * Math.pow(1.0 - nSAFT, 2.0) * (-1.0)) / Math.pow(1.0 - getNSAFT(), 6.0);
+        - (1.0 - getNSAFT() / 2.0) * 3.0 * Math.pow(1.0 - nSAFT, 2.0) * (-1.0)) / Math.pow(1.0 - getNSAFT(), 6.0);
     dgHSSAFTdNdN = -3.0 / 2.0 * Math.pow(1.0 - getNSAFT(), 2.0) / Math.pow(1.0 - getNSAFT(), 6.0)
-	+ (-3.0 / 2.0 * Math.pow(1.0 - getNSAFT(), 4.0)
-	    + 4.0 * Math.pow(1.0 - getNSAFT(), 3.0) * (3.0 - 3.0 / 2.0 * getNSAFT())) / Math.pow(1.0 - getNSAFT(), 8.0);
+        + (-3.0 / 2.0 * Math.pow(1.0 - getNSAFT(), 4.0)
+            + 4.0 * Math.pow(1.0 - getNSAFT(), 3.0) * (3.0 - 3.0 / 2.0 * getNSAFT())) / Math.pow(1.0 - getNSAFT(), 8.0);
     dgHSSAFTdNdNdN = -6.0 / Math.pow(1.0 - getNSAFT(), 5.0)
-	- (12.0 * (3.0 - 1.5 * getNSAFT())) / Math.pow(1.0 - getNSAFT(), 6.0)
-	+ (8 * (-1.5 * Math.pow(1.0 - getNSAFT(), 4) + 4.0 * Math.pow(1.0 - getNSAFT(), 3) * (3.0 - 1.5 * getNSAFT())))
-	    / Math.pow(1.0 - getNSAFT(), 9);
+        - (12.0 * (3.0 - 1.5 * getNSAFT())) / Math.pow(1.0 - getNSAFT(), 6.0)
+        + (8 * (-1.5 * Math.pow(1.0 - getNSAFT(), 4) + 4.0 * Math.pow(1.0 - getNSAFT(), 3) * (3.0 - 1.5 * getNSAFT())))
+            / Math.pow(1.0 - getNSAFT(), 9);
 
     setF1dispVolTerm(ThermodynamicConstantsInterface.avagadroNumber * getNumberOfMolesInPhase() / getVolumeSAFT());
     F1dispSumTerm = calcF1dispSumTerm();
     F1dispI1 = calcF1dispI1();
     F1dispVolTermdV = -ThermodynamicConstantsInterface.avagadroNumber * getNumberOfMolesInPhase()
-	/ Math.pow(getVolumeSAFT(), 2.0);
+        / Math.pow(getVolumeSAFT(), 2.0);
     F1dispVolTermdVdV = 2.0 * ThermodynamicConstantsInterface.avagadroNumber * getNumberOfMolesInPhase()
-	/ Math.pow(getVolumeSAFT(), 3.0);
+        / Math.pow(getVolumeSAFT(), 3.0);
     F1dispVolTermdVdVdV = -6.0 * ThermodynamicConstantsInterface.avagadroNumber * getNumberOfMolesInPhase()
-	/ Math.pow(getVolumeSAFT(), 4.0);
+        / Math.pow(getVolumeSAFT(), 4.0);
 
     dNSAFTdTdV = -1.0 * ThermodynamicConstantsInterface.pi / 6.0 * ThermodynamicConstantsInterface.avagadroNumber
-	* getNumberOfMolesInPhase() / Math.pow(volumeSAFT, 2.0) * getdDSAFTdT();
+        * getNumberOfMolesInPhase() / Math.pow(volumeSAFT, 2.0) * getdDSAFTdT();
     dNSAFTdTdT = 1.0 * ThermodynamicConstantsInterface.pi / 6.0 * ThermodynamicConstantsInterface.avagadroNumber
-	* getNumberOfMolesInPhase() / volumeSAFT * getd2DSAFTdTdT();
+        * getNumberOfMolesInPhase() / volumeSAFT * getd2DSAFTdTdT();
 
     // added by rahmat
     dF1dispI1dT = calcdF1dispI1dT();
@@ -170,7 +170,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
 
     // added by Rahmat
     F1dispI1dVdVdV = F1dispI1dNdNdN * getDnSAFTdV() * getDnSAFTdV() * getDnSAFTdV()
-	+ F1dispI1dN * 2.0 * getDnSAFTdV() * dnSAFTdVdV + F1dispI1dNdN * dnSAFTdVdV + F1dispI1dN * dnSAFTdVdVdV; // F1dispI1dNdN*dnSAFTdVdV;
+        + F1dispI1dN * 2.0 * getDnSAFTdV() * dnSAFTdVdV + F1dispI1dNdN * dnSAFTdVdV + F1dispI1dN * dnSAFTdVdVdV; // F1dispI1dNdN*dnSAFTdVdV;
 
     setF2dispSumTerm(calcF2dispSumTerm());
     setF2dispI2(calcF2dispI2());
@@ -186,7 +186,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
 
     // added by Rahmat
     F2dispI2dVdVdV = F2dispI2dNdNdN * getDnSAFTdV() * getDnSAFTdV() * getDnSAFTdV()
-	+ F2dispI2dN * 2.0 * getDnSAFTdV() * dnSAFTdVdV + F2dispI2dNdN * dnSAFTdVdV + F2dispI2dN * dnSAFTdVdVdV;
+        + F2dispI2dN * 2.0 * getDnSAFTdV() * dnSAFTdVdV + F2dispI2dNdN * dnSAFTdVdV + F2dispI2dN * dnSAFTdVdVdV;
 
     F2dispZHC = calcF2dispZHC();
     F2dispZHCdN = calcF2dispZHCdN();
@@ -198,16 +198,16 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     F2dispZHCdVdV = F2dispZHCdNdN * getDnSAFTdV() * getDnSAFTdV() + F2dispZHCdN * dnSAFTdVdV;
     // F2dispZHCdNdN*dnSAFTdVdV*0;
     F2dispZHCdVdVdV = F2dispZHCdNdNdN * getDnSAFTdV() * getDnSAFTdV() * getDnSAFTdV()
-	+ F2dispZHCdNdN * 2.0 * getDnSAFTdV() * dnSAFTdVdV + F2dispZHCdNdN * dnSAFTdVdV + F2dispZHCdN * dnSAFTdVdVdV;
+        + F2dispZHCdNdN * 2.0 * getDnSAFTdV() * dnSAFTdVdV + F2dispZHCdNdN * dnSAFTdVdV + F2dispZHCdN * dnSAFTdVdVdV;
   }
 
   /** {@inheritDoc} */
   @Override
   public double calcF2dispZHC() {
     double temp = 1.0
-	+ getmSAFT() * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2.0)) / Math.pow(1.0 - getNSAFT(), 4.0)
-	+ (1.0 - getmSAFT()) * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2.0) + 12 * Math.pow(getNSAFT(), 3.0)
-	    - 2 * Math.pow(getNSAFT(), 4.0)) / Math.pow((1.0 - getNSAFT()) * (2.0 - getNSAFT()), 2.0);
+        + getmSAFT() * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2.0)) / Math.pow(1.0 - getNSAFT(), 4.0)
+        + (1.0 - getmSAFT()) * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2.0) + 12 * Math.pow(getNSAFT(), 3.0)
+            - 2 * Math.pow(getNSAFT(), 4.0)) / Math.pow((1.0 - getNSAFT()) * (2.0 - getNSAFT()), 2.0);
     return 1.0 / temp;
   }
 
@@ -216,8 +216,8 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   public double calcF2dispZHCdm() {
     double temp = -Math.pow(F2dispZHC, 2.0);
     return temp * ((8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2.0)) / Math.pow(1.0 - getNSAFT(), 4.0)
-	- (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2.0) + 12 * Math.pow(getNSAFT(), 3.0)
-	    - 2 * Math.pow(getNSAFT(), 4.0)) / Math.pow((1.0 - getNSAFT()) * (2.0 - getNSAFT()), 2.0));
+        - (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2.0) + 12 * Math.pow(getNSAFT(), 3.0)
+            - 2 * Math.pow(getNSAFT(), 4.0)) / Math.pow((1.0 - getNSAFT()) * (2.0 - getNSAFT()), 2.0));
   }
 
   /** {@inheritDoc} */
@@ -226,17 +226,17 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     double temp0 = -Math.pow(F2dispZHC, 2.0);
     double temp1 = Math.pow((1.0 - getNSAFT()) * (2.0 - getNSAFT()), 2.0);
     double temp2 = 20.0 * getNSAFT() - 27.0 * Math.pow(getNSAFT(), 2.0) + 12.0 * Math.pow(getNSAFT(), 3.0)
-	- 2.0 * Math.pow(getNSAFT(), 4.0);
+        - 2.0 * Math.pow(getNSAFT(), 4.0);
     // ikke rett implementert
     return temp0 * (getmSAFT()
-	* ((8.0 - 4.0 * getNSAFT()) * Math.pow(1.0 - getNSAFT(), 4.0)
-	    - 4.0 * Math.pow(1.0 - getNSAFT(), 3.0) * (-1.0) * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2.0)))
-	/ Math.pow(1.0 - getNSAFT(), 8.0)
-	+ (1.0 - getmSAFT())
-	    * ((20.0 - (2.0 * 27.0) * getNSAFT() + (12.0 * 3.0) * Math.pow(getNSAFT(), 2.0)
-		- 8.0 * Math.pow(getNSAFT(), 3.0)) * temp1
-		- (2.0 * (2.0 - 3.0 * getNSAFT() + Math.pow(getNSAFT(), 2.0)) * (-3.0 + 2.0 * getNSAFT())) * temp2)
-	    / Math.pow(temp1, 2.0));
+        * ((8.0 - 4.0 * getNSAFT()) * Math.pow(1.0 - getNSAFT(), 4.0)
+            - 4.0 * Math.pow(1.0 - getNSAFT(), 3.0) * (-1.0) * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2.0)))
+        / Math.pow(1.0 - getNSAFT(), 8.0)
+        + (1.0 - getmSAFT())
+            * ((20.0 - (2.0 * 27.0) * getNSAFT() + (12.0 * 3.0) * Math.pow(getNSAFT(), 2.0)
+                - 8.0 * Math.pow(getNSAFT(), 3.0)) * temp1
+                - (2.0 * (2.0 - 3.0 * getNSAFT() + Math.pow(getNSAFT(), 2.0)) * (-3.0 + 2.0 * getNSAFT())) * temp2)
+            / Math.pow(temp1, 2.0));
   }
 
   /** {@inheritDoc} */
@@ -246,37 +246,37 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     double temp1 = Math.pow((1.0 - getNSAFT()) * (2.0 - getNSAFT()), 2.0);
     double temp11 = Math.pow((1.0 - getNSAFT()) * (2.0 - getNSAFT()), 3.0);
     double temp2 = 20.0 * getNSAFT() - 27.0 * Math.pow(getNSAFT(), 2.0) + 12.0 * Math.pow(getNSAFT(), 3.0)
-	- 2.0 * Math.pow(getNSAFT(), 4.0);
+        - 2.0 * Math.pow(getNSAFT(), 4.0);
 
     double temp1der = 2.0 * (2.0 - 3.0 * getNSAFT() + Math.pow(getNSAFT(), 2.0)) * (-3.0 + 2.0 * getNSAFT());
     double temp11der = 3.0 * Math.pow(2.0 - 3.0 * getNSAFT() + Math.pow(getNSAFT(), 2.0), 2.0)
-	* (-3.0 + 2.0 * getNSAFT());
+        * (-3.0 + 2.0 * getNSAFT());
     // ikke rett implementert
     double temp3 = (getmSAFT()
-	* ((8.0 - 4.0 * getNSAFT()) * Math.pow(1.0 - getNSAFT(), 4.0)
-	    - 4.0 * Math.pow(1.0 - getNSAFT(), 3.0) * (-1.0) * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2.0)))
-	/ Math.pow(1.0 - getNSAFT(), 8.0)
-	+ (1.0 - getmSAFT())
-	    * ((20.0 - (2.0 * 27.0) * getNSAFT() + (12.0 * 3.0) * Math.pow(getNSAFT(), 2.0)
-		- 8.0 * Math.pow(getNSAFT(), 3.0)) * temp1
-		- (2.0 * (2.0 - 3.0 * getNSAFT() + Math.pow(getNSAFT(), 2.0)) * (-3.0 + 2.0 * getNSAFT())) * temp2)
-	    / Math.pow(temp1, 2.0));
+        * ((8.0 - 4.0 * getNSAFT()) * Math.pow(1.0 - getNSAFT(), 4.0)
+            - 4.0 * Math.pow(1.0 - getNSAFT(), 3.0) * (-1.0) * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2.0)))
+        / Math.pow(1.0 - getNSAFT(), 8.0)
+        + (1.0 - getmSAFT())
+            * ((20.0 - (2.0 * 27.0) * getNSAFT() + (12.0 * 3.0) * Math.pow(getNSAFT(), 2.0)
+                - 8.0 * Math.pow(getNSAFT(), 3.0)) * temp1
+                - (2.0 * (2.0 - 3.0 * getNSAFT() + Math.pow(getNSAFT(), 2.0)) * (-3.0 + 2.0 * getNSAFT())) * temp2)
+            / Math.pow(temp1, 2.0));
 
     double temp4 = -Math.pow(F2dispZHC, 2.0);
     double dZdndn = getmSAFT()
-	* ((-4.0 * Math.pow(1.0 - getNSAFT(), 4.0)
-	    - 4.0 * Math.pow(1.0 - getNSAFT(), 3.0) * (-1.0) * (8.0 - 4.0 * getNSAFT()))
-	    / Math.pow(1.0 - getNSAFT(), 8.0)
-	    + ((32.0 - 16.0 * getNSAFT()) * Math.pow(1.0 - getNSAFT(), 5.0) - 5.0 * Math.pow(1.0 - getNSAFT(), 4.0)
-		* (-1.0) * (32.0 * getNSAFT() - 8.0 * Math.pow(getNSAFT(), 2.0))) / Math.pow(1.0 - getNSAFT(), 10.0))
-	+ (1.0 - getmSAFT()) * (((-54.0 + 72.0 * getNSAFT() - 24.0 * Math.pow(getNSAFT(), 2.0)) * temp1 - temp1der
-	    * (20.0 - 54.0 * getNSAFT() + 36.0 * Math.pow(getNSAFT(), 2.0) - 8.0 * Math.pow(getNSAFT(), 3.0)))
-	    / Math.pow(temp1, 2.0)
-	    - ((-40.0 * Math.pow(getNSAFT(), 4.0) + 240.0 * Math.pow(getNSAFT(), 3.0)
-		- 3.0 * 180.0 * Math.pow(getNSAFT(), 2.0) + 242.0 * 2.0 * getNSAFT() - 120.0) * temp11
-		- temp11der * (-8.0 * Math.pow(getNSAFT(), 5.0) + 60.0 * Math.pow(getNSAFT(), 4.0)
-		    - 180.0 * Math.pow(getNSAFT(), 3.0) + 242.0 * Math.pow(getNSAFT(), 2.0) - 120.0 * getNSAFT()))
-		/ Math.pow(temp11, 2.0));
+        * ((-4.0 * Math.pow(1.0 - getNSAFT(), 4.0)
+            - 4.0 * Math.pow(1.0 - getNSAFT(), 3.0) * (-1.0) * (8.0 - 4.0 * getNSAFT()))
+            / Math.pow(1.0 - getNSAFT(), 8.0)
+            + ((32.0 - 16.0 * getNSAFT()) * Math.pow(1.0 - getNSAFT(), 5.0) - 5.0 * Math.pow(1.0 - getNSAFT(), 4.0)
+                * (-1.0) * (32.0 * getNSAFT() - 8.0 * Math.pow(getNSAFT(), 2.0))) / Math.pow(1.0 - getNSAFT(), 10.0))
+        + (1.0 - getmSAFT()) * (((-54.0 + 72.0 * getNSAFT() - 24.0 * Math.pow(getNSAFT(), 2.0)) * temp1 - temp1der
+            * (20.0 - 54.0 * getNSAFT() + 36.0 * Math.pow(getNSAFT(), 2.0) - 8.0 * Math.pow(getNSAFT(), 3.0)))
+            / Math.pow(temp1, 2.0)
+            - ((-40.0 * Math.pow(getNSAFT(), 4.0) + 240.0 * Math.pow(getNSAFT(), 3.0)
+                - 3.0 * 180.0 * Math.pow(getNSAFT(), 2.0) + 242.0 * 2.0 * getNSAFT() - 120.0) * temp11
+                - temp11der * (-8.0 * Math.pow(getNSAFT(), 5.0) + 60.0 * Math.pow(getNSAFT(), 4.0)
+                    - 180.0 * Math.pow(getNSAFT(), 3.0) + 242.0 * Math.pow(getNSAFT(), 2.0) - 120.0 * getNSAFT()))
+                / Math.pow(temp11, 2.0));
 
     return temp0 * Math.pow(temp3, 2.0) + temp4 * dZdndn;
   }
@@ -288,102 +288,102 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
    */
   public double calcF2dispZHCdNdNdN() {
     double temp = -6
-	* Math.pow((getmSAFT() * (8.0 - 4.0 * getNSAFT()) / Math.pow((1.0 - getNSAFT()), 4) + 4 * getmSAFT()
-	    * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2) / Math.pow((1.0 - getNSAFT()), 5)
-		+ (1.0 - getmSAFT())
-		    * (20 - 54 * getNSAFT() + 36 * Math.pow(getNSAFT(), 2) - 8 * Math.pow(getNSAFT(), 3))
-		    / (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 2))
-		+ (2 * (1.0 - getmSAFT()))
-		    * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
-			- 2 * Math.pow(getNSAFT(), 4))
-		    / (Math.pow((1.0 - getNSAFT()), 3) * Math.pow((2.0 - getNSAFT()), 2))
-		+ (2 * (1.0 - getmSAFT()))
-		    * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
-			- 2 * Math.pow(getNSAFT(), 4))
-		    / (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 3)))),
-	    3)
-	/ Math.pow(
-	    (1.0 + getmSAFT() * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2)) / Math.pow((1.0 - getNSAFT()), 4)
-		+ (1.0 - getmSAFT())
-		    * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
-			- 2 * Math.pow(getNSAFT(), 4))
-		    / (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 2))),
-	    4)
-	+ (6 * (getmSAFT() * (8.0 - 4.0 * getNSAFT()) / Math.pow((1.0 - getNSAFT()), 4)
-	    + 4 * getmSAFT() * (8.0 * getNSAFT() - Math.pow(2.0 * getNSAFT(), 2)) / Math.pow((1.0 - getNSAFT()), 5)
-	    + (1.0 - getmSAFT()) * (20 - 54 * getNSAFT() + 36 * Math.pow(getNSAFT(), 2) - 8 * Math.pow(getNSAFT(), 3))
-		/ (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 2))
-	    + (2 * (1.0 - getmSAFT())) * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
-		- 2 * Math.pow(getNSAFT(), 4)) / (Math.pow((1.0 - getNSAFT()), 3) * Math.pow((2.0 - getNSAFT()), 2))
-	    + (2 * (1.0 - getmSAFT()))
-		* (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
-		    - 2 * Math.pow(getNSAFT(), 4))
-		/ (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 3))))
-	    * (-4.0 * getmSAFT() / Math.pow((1.0 - getNSAFT()), 4)
-		+ 8 * getmSAFT() * (8.0 - 4.0 * getNSAFT()) / Math.pow((1.0 - getNSAFT()), 5)
-		+ 20 * getmSAFT() * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2)) / Math.pow((1.0 - getNSAFT()), 6)
-		+ (1.0 - getmSAFT()) * (-54 + 72 * getNSAFT() - 24 * Math.pow(getNSAFT(), 2))
-		    / (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 2))
-		+ (4 * (1.0 - getmSAFT()))
-		    * (20 - 54 * getNSAFT() + 36 * Math.pow(getNSAFT(), 2) - 8 * Math.pow(getNSAFT(), 3))
-		    / (Math.pow((1.0 - getNSAFT()), 3) * Math.pow((2.0 - getNSAFT()), 2))
-		+ (4 * (1.0 - getmSAFT()))
-		    * (20 - 54 * getNSAFT() + 36 * Math.pow(getNSAFT(), 2) - 8 * Math.pow(getNSAFT(), 3))
-		    / (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 3))
-		+ (6 * (1.0 - getmSAFT()))
-		    * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
-			- 2 * Math.pow(getNSAFT(), 4))
-		    / (Math.pow((1.0 - getNSAFT()), 4) * Math.pow((2.0 - getNSAFT()), 2))
-		+ (8 * (1.0 - getmSAFT()))
-		    * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
-			- 2 * Math.pow(getNSAFT(), 4))
-		    / (Math.pow((1.0 - getNSAFT()), 3) * Math.pow((2.0 - getNSAFT()), 3))
-		+ (6 * (1.0 - getmSAFT()))
-		    * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
-			- 2 * Math.pow(getNSAFT(), 4))
-		    / (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 4)))
-	    / Math.pow(
-		1.0 + getmSAFT() * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2)) / Math.pow((1.0 - getNSAFT()), 4)
-		    + ((1.0 - getmSAFT())
-			* (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
-			    - 2 * Math.pow(getNSAFT(), 4))
-			/ (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 2))),
-		3)
-	- (-48.0 * getmSAFT() / Math.pow((1.0 - getNSAFT()), 5)
-	    + 60 * getmSAFT() * (8.0 - 4.0 * getNSAFT()) / Math.pow((1.0 - getNSAFT()), 6)
-	    + 120 * getmSAFT() * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2)) / Math.pow((1.0 - getNSAFT()), 7)
-	    + (1.0 - getmSAFT()) * (72 - 48 * getNSAFT())
-		/ (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 2))
-	    + (6 * (1.0 - getmSAFT())) * (-54 + 72 * getNSAFT() - 24 * Math.pow(getNSAFT(), 2))
-		/ (Math.pow((1.0 - getNSAFT()), 3) * Math.pow((2.0 - getNSAFT()), 2))
-	    + (6 * (1.0 - getmSAFT())) * (-54 + 72 * getNSAFT() - 24 * Math.pow(getNSAFT(), 2))
-		/ (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 3))
-	    + (18 * (1.0 - getmSAFT()))
-		* (20 - 54 * getNSAFT() + 36 * Math.pow(getNSAFT(), 2) - 8 * Math.pow(getNSAFT(), 3))
-		/ (Math.pow((1.0 - getNSAFT()), 4) * Math.pow((2.0 - getNSAFT()), 2))
-	    + (24 * (1.0 - getmSAFT()))
-		* (20 - 54 * getNSAFT() + 36 * Math.pow(getNSAFT(), 2) - 8 * Math.pow(getNSAFT(), 3))
-		/ (Math.pow((1.0 - getNSAFT()), 3) * Math.pow((2.0 - getNSAFT()), 3))
-	    + (18 * (1.0 - getmSAFT()))
-		* (20 - 54 * getNSAFT() + 36 * Math.pow(getNSAFT(), 2) - 8 * Math.pow(getNSAFT(), 3))
-		/ (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 4))
-	    + (24 * (1.0 - getmSAFT())) * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
-		- 2 * Math.pow(getNSAFT(), 4)) / (Math.pow((1.0 - getNSAFT()), 5) * Math.pow((2.0 - getNSAFT()), 2))
-	    + (36 * (1.0 - getmSAFT())) * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
-		- 2 * Math.pow(getNSAFT(), 4)) / (Math.pow((1.0 - getNSAFT()), 4) * Math.pow((2.0 - getNSAFT()), 3))
-	    + (36 * (1.0 - getmSAFT())) * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
-		- 2 * Math.pow(getNSAFT(), 4)) / (Math.pow((1.0 - getNSAFT()), 3) * Math.pow((2.0 - getNSAFT()), 4))
-	    + (24 * (1.0 - getmSAFT()))
-		* (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
-		    - 2 * Math.pow(getNSAFT(), 4))
-		/ (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 5)))
-	    / Math.pow(
-		(1.0 + getmSAFT() * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2)) / Math.pow((1.0 - getNSAFT()), 4)
-		    + (1.0 - getmSAFT())
-			* (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
-			    - 2 * Math.pow(getNSAFT(), 4))
-			/ (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 2))),
-		2);
+        * Math.pow((getmSAFT() * (8.0 - 4.0 * getNSAFT()) / Math.pow((1.0 - getNSAFT()), 4) + 4 * getmSAFT()
+            * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2) / Math.pow((1.0 - getNSAFT()), 5)
+                + (1.0 - getmSAFT())
+                    * (20 - 54 * getNSAFT() + 36 * Math.pow(getNSAFT(), 2) - 8 * Math.pow(getNSAFT(), 3))
+                    / (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 2))
+                + (2 * (1.0 - getmSAFT()))
+                    * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
+                        - 2 * Math.pow(getNSAFT(), 4))
+                    / (Math.pow((1.0 - getNSAFT()), 3) * Math.pow((2.0 - getNSAFT()), 2))
+                + (2 * (1.0 - getmSAFT()))
+                    * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
+                        - 2 * Math.pow(getNSAFT(), 4))
+                    / (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 3)))),
+            3)
+        / Math.pow(
+            (1.0 + getmSAFT() * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2)) / Math.pow((1.0 - getNSAFT()), 4)
+                + (1.0 - getmSAFT())
+                    * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
+                        - 2 * Math.pow(getNSAFT(), 4))
+                    / (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 2))),
+            4)
+        + (6 * (getmSAFT() * (8.0 - 4.0 * getNSAFT()) / Math.pow((1.0 - getNSAFT()), 4)
+            + 4 * getmSAFT() * (8.0 * getNSAFT() - Math.pow(2.0 * getNSAFT(), 2)) / Math.pow((1.0 - getNSAFT()), 5)
+            + (1.0 - getmSAFT()) * (20 - 54 * getNSAFT() + 36 * Math.pow(getNSAFT(), 2) - 8 * Math.pow(getNSAFT(), 3))
+                / (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 2))
+            + (2 * (1.0 - getmSAFT())) * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
+                - 2 * Math.pow(getNSAFT(), 4)) / (Math.pow((1.0 - getNSAFT()), 3) * Math.pow((2.0 - getNSAFT()), 2))
+            + (2 * (1.0 - getmSAFT()))
+                * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
+                    - 2 * Math.pow(getNSAFT(), 4))
+                / (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 3))))
+            * (-4.0 * getmSAFT() / Math.pow((1.0 - getNSAFT()), 4)
+                + 8 * getmSAFT() * (8.0 - 4.0 * getNSAFT()) / Math.pow((1.0 - getNSAFT()), 5)
+                + 20 * getmSAFT() * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2)) / Math.pow((1.0 - getNSAFT()), 6)
+                + (1.0 - getmSAFT()) * (-54 + 72 * getNSAFT() - 24 * Math.pow(getNSAFT(), 2))
+                    / (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 2))
+                + (4 * (1.0 - getmSAFT()))
+                    * (20 - 54 * getNSAFT() + 36 * Math.pow(getNSAFT(), 2) - 8 * Math.pow(getNSAFT(), 3))
+                    / (Math.pow((1.0 - getNSAFT()), 3) * Math.pow((2.0 - getNSAFT()), 2))
+                + (4 * (1.0 - getmSAFT()))
+                    * (20 - 54 * getNSAFT() + 36 * Math.pow(getNSAFT(), 2) - 8 * Math.pow(getNSAFT(), 3))
+                    / (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 3))
+                + (6 * (1.0 - getmSAFT()))
+                    * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
+                        - 2 * Math.pow(getNSAFT(), 4))
+                    / (Math.pow((1.0 - getNSAFT()), 4) * Math.pow((2.0 - getNSAFT()), 2))
+                + (8 * (1.0 - getmSAFT()))
+                    * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
+                        - 2 * Math.pow(getNSAFT(), 4))
+                    / (Math.pow((1.0 - getNSAFT()), 3) * Math.pow((2.0 - getNSAFT()), 3))
+                + (6 * (1.0 - getmSAFT()))
+                    * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
+                        - 2 * Math.pow(getNSAFT(), 4))
+                    / (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 4)))
+            / Math.pow(
+                1.0 + getmSAFT() * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2)) / Math.pow((1.0 - getNSAFT()), 4)
+                    + ((1.0 - getmSAFT())
+                        * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
+                            - 2 * Math.pow(getNSAFT(), 4))
+                        / (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 2))),
+                3)
+        - (-48.0 * getmSAFT() / Math.pow((1.0 - getNSAFT()), 5)
+            + 60 * getmSAFT() * (8.0 - 4.0 * getNSAFT()) / Math.pow((1.0 - getNSAFT()), 6)
+            + 120 * getmSAFT() * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2)) / Math.pow((1.0 - getNSAFT()), 7)
+            + (1.0 - getmSAFT()) * (72 - 48 * getNSAFT())
+                / (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 2))
+            + (6 * (1.0 - getmSAFT())) * (-54 + 72 * getNSAFT() - 24 * Math.pow(getNSAFT(), 2))
+                / (Math.pow((1.0 - getNSAFT()), 3) * Math.pow((2.0 - getNSAFT()), 2))
+            + (6 * (1.0 - getmSAFT())) * (-54 + 72 * getNSAFT() - 24 * Math.pow(getNSAFT(), 2))
+                / (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 3))
+            + (18 * (1.0 - getmSAFT()))
+                * (20 - 54 * getNSAFT() + 36 * Math.pow(getNSAFT(), 2) - 8 * Math.pow(getNSAFT(), 3))
+                / (Math.pow((1.0 - getNSAFT()), 4) * Math.pow((2.0 - getNSAFT()), 2))
+            + (24 * (1.0 - getmSAFT()))
+                * (20 - 54 * getNSAFT() + 36 * Math.pow(getNSAFT(), 2) - 8 * Math.pow(getNSAFT(), 3))
+                / (Math.pow((1.0 - getNSAFT()), 3) * Math.pow((2.0 - getNSAFT()), 3))
+            + (18 * (1.0 - getmSAFT()))
+                * (20 - 54 * getNSAFT() + 36 * Math.pow(getNSAFT(), 2) - 8 * Math.pow(getNSAFT(), 3))
+                / (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 4))
+            + (24 * (1.0 - getmSAFT())) * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
+                - 2 * Math.pow(getNSAFT(), 4)) / (Math.pow((1.0 - getNSAFT()), 5) * Math.pow((2.0 - getNSAFT()), 2))
+            + (36 * (1.0 - getmSAFT())) * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
+                - 2 * Math.pow(getNSAFT(), 4)) / (Math.pow((1.0 - getNSAFT()), 4) * Math.pow((2.0 - getNSAFT()), 3))
+            + (36 * (1.0 - getmSAFT())) * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
+                - 2 * Math.pow(getNSAFT(), 4)) / (Math.pow((1.0 - getNSAFT()), 3) * Math.pow((2.0 - getNSAFT()), 4))
+            + (24 * (1.0 - getmSAFT()))
+                * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
+                    - 2 * Math.pow(getNSAFT(), 4))
+                / (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 5)))
+            / Math.pow(
+                (1.0 + getmSAFT() * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2)) / Math.pow((1.0 - getNSAFT()), 4)
+                    + (1.0 - getmSAFT())
+                        * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
+                            - 2 * Math.pow(getNSAFT(), 4))
+                        / (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 2))),
+                2);
 
     return temp;
   }
@@ -398,15 +398,15 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   public double calcdF2dispZHCdT() {
     double temp0 = -Math.pow(F2dispZHC, 2.0);
     double temp1 = getmSAFT()
-	* ((8 - 4 * getNSAFT()) * dNSAFTdT * Math.pow(1 - getNSAFT(), 4)
-	    + 4 * Math.pow(1 - getNSAFT(), 3) * dNSAFTdT * (8 * getNSAFT() - 2 * Math.pow(getNSAFT(), 2)))
-	/ Math.pow(1 - getNSAFT(), 8);
+        * ((8 - 4 * getNSAFT()) * dNSAFTdT * Math.pow(1 - getNSAFT(), 4)
+            + 4 * Math.pow(1 - getNSAFT(), 3) * dNSAFTdT * (8 * getNSAFT() - 2 * Math.pow(getNSAFT(), 2)))
+        / Math.pow(1 - getNSAFT(), 8);
     double temp2a = (1 - getmSAFT())
-	* (20 - 54 * getNSAFT() + 36 * Math.pow(getNSAFT(), 2) + 8 * Math.pow(getNSAFT(), 3)) * dNSAFTdT
-	* Math.pow((1 - getNSAFT()) * (2 - getNSAFT()), 2);
+        * (20 - 54 * getNSAFT() + 36 * Math.pow(getNSAFT(), 2) + 8 * Math.pow(getNSAFT(), 3)) * dNSAFTdT
+        * Math.pow((1 - getNSAFT()) * (2 - getNSAFT()), 2);
     double temp2b = (1 - getmSAFT()) * 2 * ((1 - getNSAFT()) * (2 - getNSAFT()))
-	* (-1 * dNSAFTdT * (2 - getNSAFT()) + (-1) * dNSAFTdT * (1 - getNSAFT()))
-	* (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3) - 2 * Math.pow(getNSAFT(), 4));
+        * (-1 * dNSAFTdT * (2 - getNSAFT()) + (-1) * dNSAFTdT * (1 - getNSAFT()))
+        * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3) - 2 * Math.pow(getNSAFT(), 4));
     double temp2 = (temp2a - temp2b) / Math.pow((1 - getNSAFT()) * (2 - getNSAFT()), 4);
     return temp0 * (temp1 + temp2);
   }
@@ -429,11 +429,11 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
 
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < numberOfComponents; j++) {
-	temp1 += getComponent(i).getNumberOfMolesInPhase() * getComponent(j).getNumberOfMolesInPhase()
-	    * getComponent(i).getmSAFTi() * getComponent(j).getmSAFTi()
-	    * Math.sqrt(getComponent(i).getEpsikSAFT() / temperature * getComponent(j).getEpsikSAFT() / temperature)
-	    * (1.0 - mixRule.getBinaryInteractionParameter(i, j))
-	    * Math.pow(0.5 * (getComponent(i).getSigmaSAFTi() + getComponent(j).getSigmaSAFTi()), 3.0);
+        temp1 += getComponent(i).getNumberOfMolesInPhase() * getComponent(j).getNumberOfMolesInPhase()
+            * getComponent(i).getmSAFTi() * getComponent(j).getmSAFTi()
+            * Math.sqrt(getComponent(i).getEpsikSAFT() / temperature * getComponent(j).getEpsikSAFT() / temperature)
+            * (1.0 - mixRule.getBinaryInteractionParameter(i, j))
+            * Math.pow(0.5 * (getComponent(i).getSigmaSAFTi() + getComponent(j).getSigmaSAFTi()), 3.0);
       }
     }
     return temp1 / Math.pow(getNumberOfMolesInPhase(), 2.0);
@@ -450,12 +450,12 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     double temp1 = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < numberOfComponents; j++) {
-	temp1 += getComponent(i).getNumberOfMolesInPhase() * getComponent(j).getNumberOfMolesInPhase()
-	    * getComponent(i).getmSAFTi() * getComponent(j).getmSAFTi()
-	    * Math.sqrt(getComponent(i).getEpsikSAFT() / temperature * getComponent(j).getEpsikSAFT() / temperature)
-	    * (1.0 - mixRule.getBinaryInteractionParameter(i, j))
-	    * Math.pow(0.5 * (getComponent(i).getSigmaSAFTi() + getComponent(j).getSigmaSAFTi()), 3.0)
-	    * (-1 / temperature);
+        temp1 += getComponent(i).getNumberOfMolesInPhase() * getComponent(j).getNumberOfMolesInPhase()
+            * getComponent(i).getmSAFTi() * getComponent(j).getmSAFTi()
+            * Math.sqrt(getComponent(i).getEpsikSAFT() / temperature * getComponent(j).getEpsikSAFT() / temperature)
+            * (1.0 - mixRule.getBinaryInteractionParameter(i, j))
+            * Math.pow(0.5 * (getComponent(i).getSigmaSAFTi() + getComponent(j).getSigmaSAFTi()), 3.0)
+            * (-1 / temperature);
       }
     }
     return temp1 / Math.pow(getNumberOfMolesInPhase(), 2.0);
@@ -471,12 +471,12 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     double temp1 = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < numberOfComponents; j++) {
-	temp1 += getComponent(i).getNumberOfMolesInPhase() * getComponent(j).getNumberOfMolesInPhase()
-	    * getComponent(i).getmSAFTi() * getComponent(j).getmSAFTi()
-	    * (getComponent(i).getEpsikSAFT() / temperature * getComponent(j).getEpsikSAFT() / temperature)
-	    * Math.pow(1.0 - mixRule.getBinaryInteractionParameter(i, j), 2)
-	    * Math.pow(0.5 * (getComponent(i).getSigmaSAFTi() + getComponent(j).getSigmaSAFTi()), 3.0)
-	    * (-2 / temperature);
+        temp1 += getComponent(i).getNumberOfMolesInPhase() * getComponent(j).getNumberOfMolesInPhase()
+            * getComponent(i).getmSAFTi() * getComponent(j).getmSAFTi()
+            * (getComponent(i).getEpsikSAFT() / temperature * getComponent(j).getEpsikSAFT() / temperature)
+            * Math.pow(1.0 - mixRule.getBinaryInteractionParameter(i, j), 2)
+            * Math.pow(0.5 * (getComponent(i).getSigmaSAFTi() + getComponent(j).getSigmaSAFTi()), 3.0)
+            * (-2 / temperature);
       }
     }
     return temp1 / Math.pow(getNumberOfMolesInPhase(), 2.0);
@@ -488,11 +488,11 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     double temp1 = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < numberOfComponents; j++) {
-	temp1 += getComponent(i).getNumberOfMolesInPhase() * getComponent(j).getNumberOfMolesInPhase()
-	    * getComponent(i).getmSAFTi() * getComponent(j).getmSAFTi() * getComponent(i).getEpsikSAFT() / temperature
-	    * getComponent(j).getEpsikSAFT() / temperature
-	    * Math.pow((1.0 - mixRule.getBinaryInteractionParameter(i, j)), 2.0)
-	    * Math.pow(0.5 * (getComponent(i).getSigmaSAFTi() + getComponent(j).getSigmaSAFTi()), 3.0);
+        temp1 += getComponent(i).getNumberOfMolesInPhase() * getComponent(j).getNumberOfMolesInPhase()
+            * getComponent(i).getmSAFTi() * getComponent(j).getmSAFTi() * getComponent(i).getEpsikSAFT() / temperature
+            * getComponent(j).getEpsikSAFT() / temperature
+            * Math.pow((1.0 - mixRule.getBinaryInteractionParameter(i, j)), 2.0)
+            * Math.pow(0.5 * (getComponent(i).getSigmaSAFTi() + getComponent(j).getSigmaSAFTi()), 3.0);
       }
     }
     return temp1 / Math.pow(getNumberOfMolesInPhase(), 2.0);
@@ -644,7 +644,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   @Override
   public double getaSAFTdm(int i, double m, double[][] ab) {
     return (m - (m - 1.0)) / (m * m) * ab[1][i]
-	+ ((2.0 * m - 3.0) * m * m - 2 * m * (m * m - 3 * m + 2)) / Math.pow(m, 4.0) * ab[2][i];
+        + ((2.0 * m - 3.0) * m * m - 2 * m * (m * m - 3 * m + 2)) / Math.pow(m, 4.0) * ab[2][i];
   }
 
   /** {@inheritDoc} */
@@ -653,7 +653,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     double temp2 = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       temp2 += getComponent(i).getNumberOfMolesInPhase() / getNumberOfMolesInPhase() * getComponent(i).getmSAFTi()
-	  * Math.pow(((ComponentPCSAFT) getComponent(i)).getdSAFTi(), 3.0);
+          * Math.pow(((ComponentPCSAFT) getComponent(i)).getdSAFTi(), 3.0);
     }
 
     return temp2;
@@ -665,7 +665,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     double temp2 = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       temp2 += getComponent(i).getNumberOfMolesInPhase() / getNumberOfMolesInPhase()
-	  * (getComponent(i).getmSAFTi() - 1.0);
+          * (getComponent(i).getmSAFTi() - 1.0);
     }
 
     return temp2;
@@ -678,7 +678,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     double temp2 = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       temp += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getmSAFTi()
-	  * Math.pow(((ComponentPCSAFT) getComponent(i)).getdSAFTi(), 3.0);
+          * Math.pow(((ComponentPCSAFT) getComponent(i)).getdSAFTi(), 3.0);
       temp2 += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getmSAFTi();
     }
     return Math.pow(temp / temp2, 1.0 / 3.0);
@@ -691,7 +691,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     double temp1 = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       temp1 += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getmSAFTi()
-	  * Math.pow(((ComponentPCSAFT) getComponent(i)).getdSAFTi(), 3.0);
+          * Math.pow(((ComponentPCSAFT) getComponent(i)).getdSAFTi(), 3.0);
     }
     // System.out.println("d saft calc " + temp/getNumberOfMolesInPhase());
     return temp1 / getNumberOfMolesInPhase();
@@ -708,7 +708,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   @Override
   public double dF_HC_SAFTdV() {
     return getNumberOfMolesInPhase() * (getmSAFT() * daHSSAFTdN * getDnSAFTdV()
-	- getMmin1SAFT() * 1.0 / getGhsSAFT() * getDgHSSAFTdN() * getDnSAFTdV());
+        - getMmin1SAFT() * 1.0 / getGhsSAFT() * getDgHSSAFTdN() * getDnSAFTdV());
     // (ThermodynamicConstantsInterface.R*temperature);
   }
 
@@ -727,7 +727,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   @Override
   public double dF_HC_SAFTdT() {
     return getNumberOfMolesInPhase()
-	* (getmSAFT() * daHSSAFTdN * dNSAFTdT - getMmin1SAFT() * 1.0 / getGhsSAFT() * getDgHSSAFTdN() * dNSAFTdT);
+        * (getmSAFT() * daHSSAFTdN * dNSAFTdT - getMmin1SAFT() * 1.0 / getGhsSAFT() * getDgHSSAFTdN() * dNSAFTdT);
     // (ThermodynamicConstantsInterface.R*temperature);
   }
 
@@ -735,10 +735,10 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   @Override
   public double dF_HC_SAFTdVdV() {
     return getNumberOfMolesInPhase() * (getmSAFT() * daHSSAFTdNdN * getDnSAFTdV() * getDnSAFTdV()
-	+ getmSAFT() * daHSSAFTdN * dnSAFTdVdV
-	+ getMmin1SAFT() * Math.pow(getGhsSAFT(), -2.0) * Math.pow(getDgHSSAFTdN(), 2.0) * getDnSAFTdV() * getDnSAFTdV()
-	- getMmin1SAFT() * Math.pow(getGhsSAFT(), -1.0) * dgHSSAFTdNdN * dnSAFTdV * dnSAFTdV
-	- getMmin1SAFT() * 1.0 / getGhsSAFT() * getDgHSSAFTdN() * dnSAFTdVdV);
+        + getmSAFT() * daHSSAFTdN * dnSAFTdVdV
+        + getMmin1SAFT() * Math.pow(getGhsSAFT(), -2.0) * Math.pow(getDgHSSAFTdN(), 2.0) * getDnSAFTdV() * getDnSAFTdV()
+        - getMmin1SAFT() * Math.pow(getGhsSAFT(), -1.0) * dgHSSAFTdNdN * dnSAFTdV * dnSAFTdV
+        - getMmin1SAFT() * 1.0 / getGhsSAFT() * getDgHSSAFTdN() * dnSAFTdVdV);
     // (ThermodynamicConstantsInterface.R*temperature);
   }
   // additonal dF_HC_SAFTdVdVdV (by Rahmat)
@@ -747,46 +747,46 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   @Override
   public double dF_HC_SAFTdVdVdV() {
     return getNumberOfMolesInPhase() * (getmSAFT() * daHSSAFTdNdNdN * getDnSAFTdV() * getDnSAFTdV() * getDnSAFTdV()
-	+ getmSAFT() * daHSSAFTdNdN * 2.0 * dnSAFTdV * dnSAFTdVdV + getmSAFT() * daHSSAFTdNdN * dnSAFTdV * dnSAFTdVdV
-	+ getmSAFT() * daHSSAFTdN * dnSAFTdVdVdV
-	- 2.0 * getMmin1SAFT() * Math.pow(getGhsSAFT(), -3.0) * Math.pow(getDgHSSAFTdN(), 3.0) * getDnSAFTdV()
-	    * getDnSAFTdV() * getDnSAFTdV()
-	+ getMmin1SAFT() * Math.pow(getGhsSAFT(), -2.0) * 2.0 * getDgHSSAFTdN() * dgHSSAFTdNdN * getDnSAFTdV()
-	    * getDnSAFTdV() * getDnSAFTdV()
-	+ getMmin1SAFT() * Math.pow(getGhsSAFT(), -2.0) * Math.pow(getDgHSSAFTdN(), 2.0) * 2.0 * getDnSAFTdV()
-	    * dnSAFTdVdV
-	+ getMmin1SAFT() * Math.pow(getGhsSAFT(), -2.0) * getDgHSSAFTdN() * dgHSSAFTdNdN * dnSAFTdV * dnSAFTdV
-	    * dnSAFTdV
-	- getMmin1SAFT() * Math.pow(getGhsSAFT(), -1.0) * dgHSSAFTdNdNdN * dnSAFTdV * dnSAFTdV * dnSAFTdV
-	- getMmin1SAFT() * Math.pow(getGhsSAFT(), -1.0) * dgHSSAFTdNdN * 2.0 * dnSAFTdV * dnSAFTdVdV
-	+ getMmin1SAFT() * Math.pow(getGhsSAFT(), -2.0) * Math.pow(getDgHSSAFTdN(), 2) * dnSAFTdV * dnSAFTdVdV
-	- getMmin1SAFT() * Math.pow(getGhsSAFT(), -1.0) * dgHSSAFTdNdN * dnSAFTdV * dnSAFTdVdV
-	- getMmin1SAFT() * Math.pow(getGhsSAFT(), -1.0) * getDgHSSAFTdN() * dnSAFTdVdVdV);
+        + getmSAFT() * daHSSAFTdNdN * 2.0 * dnSAFTdV * dnSAFTdVdV + getmSAFT() * daHSSAFTdNdN * dnSAFTdV * dnSAFTdVdV
+        + getmSAFT() * daHSSAFTdN * dnSAFTdVdVdV
+        - 2.0 * getMmin1SAFT() * Math.pow(getGhsSAFT(), -3.0) * Math.pow(getDgHSSAFTdN(), 3.0) * getDnSAFTdV()
+            * getDnSAFTdV() * getDnSAFTdV()
+        + getMmin1SAFT() * Math.pow(getGhsSAFT(), -2.0) * 2.0 * getDgHSSAFTdN() * dgHSSAFTdNdN * getDnSAFTdV()
+            * getDnSAFTdV() * getDnSAFTdV()
+        + getMmin1SAFT() * Math.pow(getGhsSAFT(), -2.0) * Math.pow(getDgHSSAFTdN(), 2.0) * 2.0 * getDnSAFTdV()
+            * dnSAFTdVdV
+        + getMmin1SAFT() * Math.pow(getGhsSAFT(), -2.0) * getDgHSSAFTdN() * dgHSSAFTdNdN * dnSAFTdV * dnSAFTdV
+            * dnSAFTdV
+        - getMmin1SAFT() * Math.pow(getGhsSAFT(), -1.0) * dgHSSAFTdNdNdN * dnSAFTdV * dnSAFTdV * dnSAFTdV
+        - getMmin1SAFT() * Math.pow(getGhsSAFT(), -1.0) * dgHSSAFTdNdN * 2.0 * dnSAFTdV * dnSAFTdVdV
+        + getMmin1SAFT() * Math.pow(getGhsSAFT(), -2.0) * Math.pow(getDgHSSAFTdN(), 2) * dnSAFTdV * dnSAFTdVdV
+        - getMmin1SAFT() * Math.pow(getGhsSAFT(), -1.0) * dgHSSAFTdNdN * dnSAFTdV * dnSAFTdVdV
+        - getMmin1SAFT() * Math.pow(getGhsSAFT(), -1.0) * getDgHSSAFTdN() * dnSAFTdVdVdV);
   }
 
   /** {@inheritDoc} */
   @Override
   public double F_DISP1_SAFT() {
     return getNumberOfMolesInPhase()
-	* (-2.0 * ThermodynamicConstantsInterface.pi * getF1dispVolTerm() * getF1dispSumTerm() * getF1dispI1()); // (ThermodynamicConstantsInterface.R*temperature);
+        * (-2.0 * ThermodynamicConstantsInterface.pi * getF1dispVolTerm() * getF1dispSumTerm() * getF1dispI1()); // (ThermodynamicConstantsInterface.R*temperature);
   }
 
   /** {@inheritDoc} */
   @Override
   public double dF_DISP1_SAFTdV() {
     return getNumberOfMolesInPhase()
-	* (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTermdV * getF1dispSumTerm() * getF1dispI1()
-	    - 2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTerm * getF1dispSumTerm() * F1dispI1dV); // (ThermodynamicConstantsInterface.R*temperature);
+        * (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTermdV * getF1dispSumTerm() * getF1dispI1()
+            - 2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTerm * getF1dispSumTerm() * F1dispI1dV); // (ThermodynamicConstantsInterface.R*temperature);
   }
 
   /** {@inheritDoc} */
   @Override
   public double dF_DISP1_SAFTdVdV() {
     return getNumberOfMolesInPhase()
-	* ((-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTermdVdV * getF1dispSumTerm() * getF1dispI1())
-	    + (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTermdV * getF1dispSumTerm() * F1dispI1dV)
-	    + (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTermdV * getF1dispSumTerm() * F1dispI1dV)
-	    + (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTerm * getF1dispSumTerm() * F1dispI1dVdV));
+        * ((-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTermdVdV * getF1dispSumTerm() * getF1dispI1())
+            + (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTermdV * getF1dispSumTerm() * F1dispI1dV)
+            + (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTermdV * getF1dispSumTerm() * F1dispI1dV)
+            + (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTerm * getF1dispSumTerm() * F1dispI1dVdV));
   }
 
   // added by Rahmat
@@ -797,14 +797,14 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
    */
   public double dF_DISP1_SAFTdVdVdV() {
     return getNumberOfMolesInPhase()
-	* ((-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTermdVdVdV * getF1dispSumTerm() * getF1dispI1())
-	    + (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTermdVdV * getF1dispSumTerm() * F1dispI1dV)
-	    + (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTermdVdV * getF1dispSumTerm() * F1dispI1dV)
-	    + (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTermdV * getF1dispSumTerm() * F1dispI1dVdV)
-	    + (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTermdVdV * getF1dispSumTerm() * F1dispI1dV)
-	    + (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTermdV * getF1dispSumTerm() * F1dispI1dVdV)
-	    + (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTermdV * getF1dispSumTerm() * F1dispI1dVdV)
-	    + (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTerm * getF1dispSumTerm() * F1dispI1dVdVdV));
+        * ((-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTermdVdVdV * getF1dispSumTerm() * getF1dispI1())
+            + (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTermdVdV * getF1dispSumTerm() * F1dispI1dV)
+            + (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTermdVdV * getF1dispSumTerm() * F1dispI1dV)
+            + (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTermdV * getF1dispSumTerm() * F1dispI1dVdV)
+            + (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTermdVdV * getF1dispSumTerm() * F1dispI1dV)
+            + (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTermdV * getF1dispSumTerm() * F1dispI1dVdV)
+            + (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTermdV * getF1dispSumTerm() * F1dispI1dVdV)
+            + (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTerm * getF1dispSumTerm() * F1dispI1dVdVdV));
   }
 
   // added by Rahmat
@@ -816,8 +816,8 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   @Override
   public double dF_DISP1_SAFTdT() {
     return getNumberOfMolesInPhase() * (-2.0 * ThermodynamicConstantsInterface.pi
-	* (dF1dispVolTermdT * getF1dispSumTerm() * getF1dispI1() + dF1dispSumTermdT * getF1dispVolTerm() * getF1dispI1()
-	    + dF1dispI1dT * getF1dispVolTerm() * getF1dispSumTerm()));
+        * (dF1dispVolTermdT * getF1dispSumTerm() * getF1dispI1() + dF1dispSumTermdT * getF1dispVolTerm() * getF1dispI1()
+            + dF1dispI1dT * getF1dispVolTerm() * getF1dispSumTerm()));
   }
 
   /**
@@ -828,15 +828,15 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   @Override
   public double dF_DISP2_SAFTdT() {
     return getNumberOfMolesInPhase() * (-1 * ThermodynamicConstantsInterface.pi * getmSAFT()) * getF1dispVolTerm()
-	* (dF2dispSumTermdT * getF2dispI2() * getF2dispZHC() + dF2dispI2dT * getF2dispSumTerm() * getF2dispZHC()
-	    + dF2dispZHCdT * getF2dispSumTerm() * getF2dispI2());
+        * (dF2dispSumTermdT * getF2dispI2() * getF2dispZHC() + dF2dispI2dT * getF2dispSumTerm() * getF2dispZHC()
+            + dF2dispZHCdT * getF2dispSumTerm() * getF2dispI2());
   }
 
   /** {@inheritDoc} */
   @Override
   public double F_DISP2_SAFT() {
     return getNumberOfMolesInPhase() * (-ThermodynamicConstantsInterface.pi * getmSAFT() * getF1dispVolTerm()
-	* getF2dispSumTerm() * getF2dispI2() * getF2dispZHC());
+        * getF2dispSumTerm() * getF2dispI2() * getF2dispZHC());
     // (ThermodynamicConstantsInterface.R*temperature);
   }
 
@@ -844,34 +844,34 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   @Override
   public double dF_DISP2_SAFTdV() {
     return getNumberOfMolesInPhase() * (-ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV
-	* getF2dispSumTerm() * getF2dispI2() * getF2dispZHC()
-	- ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dV
-	    * getF2dispZHC()
-	- ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * getF2dispI2()
-	    * F2dispZHCdV); // (ThermodynamicConstantsInterface.R*temperature);
+        * getF2dispSumTerm() * getF2dispI2() * getF2dispZHC()
+        - ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dV
+            * getF2dispZHC()
+        - ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * getF2dispI2()
+            * F2dispZHCdV); // (ThermodynamicConstantsInterface.R*temperature);
   }
 
   /** {@inheritDoc} */
   @Override
   public double dF_DISP2_SAFTdVdV() {
     return getNumberOfMolesInPhase() * ((-ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdVdV
-	* getF2dispSumTerm() * getF2dispI2() * getF2dispZHC())
-	- (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * getF2dispZHC()
-	    * F2dispI2dV)
-	- (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * getF2dispI2()
-	    * F2dispZHCdV)
-	- ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * F2dispI2dV
-	    * getF2dispZHC()
-	- ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dVdV
-	    * getF2dispZHC()
-	- ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dV
-	    * F2dispZHCdV
-	- (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * getF2dispI2()
-	    * F2dispZHCdV)
-	- (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dV
-	    * F2dispZHCdV)
-	- (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * getF2dispI2()
-	    * F2dispZHCdVdV));
+        * getF2dispSumTerm() * getF2dispI2() * getF2dispZHC())
+        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * getF2dispZHC()
+            * F2dispI2dV)
+        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * getF2dispI2()
+            * F2dispZHCdV)
+        - ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * F2dispI2dV
+            * getF2dispZHC()
+        - ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dVdV
+            * getF2dispZHC()
+        - ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dV
+            * F2dispZHCdV
+        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * getF2dispI2()
+            * F2dispZHCdV)
+        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dV
+            * F2dispZHCdV)
+        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * getF2dispI2()
+            * F2dispZHCdVdV));
   }
 
   /**
@@ -881,77 +881,77 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
    */
   public double dF_DISP2_SAFTdVdVdV() {
     return getNumberOfMolesInPhase() * ((-ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdVdVdV
-	* getF2dispSumTerm() * getF2dispI2() * getF2dispZHC())
-	+ (-ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdVdV * getF2dispSumTerm() * F2dispI2dV
-	    * getF2dispZHC())
-	+ (-ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdVdV * getF2dispSumTerm() * getF2dispI2()
-	    * F2dispZHCdV)
-	+ -(ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdVdV * getF2dispSumTerm() * getF2dispZHC()
-	    * F2dispI2dV)
-	+ -(ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * F2dispZHCdV
-	    * F2dispI2dV)
-	+ -(ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * getF2dispZHC()
-	    * F2dispI2dVdV)
-	+ -(ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdVdV * getF2dispSumTerm() * getF2dispI2()
-	    * F2dispZHCdV)
-	- (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * F2dispI2dV
-	    * F2dispZHCdV)
-	- (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * getF2dispI2()
-	    * F2dispZHCdVdV)
-	- ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdVdV * getF2dispSumTerm() * F2dispI2dV
-	    * getF2dispZHC()
-	- ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * F2dispI2dVdV
-	    * getF2dispZHC()
-	- ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * F2dispI2dV
-	    * F2dispZHCdV
-	- ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * F2dispI2dVdV
-	    * getF2dispZHC()
-	- ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dVdVdV
-	    * getF2dispZHC()
-	- ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dVdV
-	    * F2dispZHCdV
-	- ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * F2dispI2dV
-	    * F2dispZHCdV
-	- ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dVdV
-	    * F2dispZHCdV
-	- ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dV
-	    * F2dispZHCdVdV
-	- (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdVdV * getF2dispSumTerm() * getF2dispI2()
-	    * F2dispZHCdV)
-	- (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * F2dispI2dV
-	    * F2dispZHCdV)
-	- (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * getF2dispI2()
-	    * F2dispZHCdVdV)
-	- (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * F2dispI2dV
-	    * F2dispZHCdV)
-	- (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dVdV
-	    * F2dispZHCdV)
-	- (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dV
-	    * F2dispZHCdVdV)
-	- (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * getF2dispI2()
-	    * F2dispZHCdVdV)
-	- (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dV
-	    * F2dispZHCdVdV)
-	- (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * getF2dispI2()
-	    * F2dispZHCdVdVdV)
-	- (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdVdV * getF2dispSumTerm() * getF2dispI2()
-	    * F2dispZHCdV)
-	- (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * F2dispI2dV
-	    * F2dispZHCdV)
-	- (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * getF2dispI2()
-	    * F2dispZHCdVdV)
-	- (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * F2dispI2dV
-	    * F2dispZHCdV)
-	- (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dVdV
-	    * F2dispZHCdV)
-	- (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dV
-	    * F2dispZHCdVdV)
-	- (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * getF2dispI2()
-	    * F2dispZHCdVdV)
-	- (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dV
-	    * F2dispZHCdVdV)
-	- (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * getF2dispI2()
-	    * F2dispZHCdVdVdV));
+        * getF2dispSumTerm() * getF2dispI2() * getF2dispZHC())
+        + (-ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdVdV * getF2dispSumTerm() * F2dispI2dV
+            * getF2dispZHC())
+        + (-ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdVdV * getF2dispSumTerm() * getF2dispI2()
+            * F2dispZHCdV)
+        + -(ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdVdV * getF2dispSumTerm() * getF2dispZHC()
+            * F2dispI2dV)
+        + -(ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * F2dispZHCdV
+            * F2dispI2dV)
+        + -(ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * getF2dispZHC()
+            * F2dispI2dVdV)
+        + -(ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdVdV * getF2dispSumTerm() * getF2dispI2()
+            * F2dispZHCdV)
+        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * F2dispI2dV
+            * F2dispZHCdV)
+        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * getF2dispI2()
+            * F2dispZHCdVdV)
+        - ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdVdV * getF2dispSumTerm() * F2dispI2dV
+            * getF2dispZHC()
+        - ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * F2dispI2dVdV
+            * getF2dispZHC()
+        - ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * F2dispI2dV
+            * F2dispZHCdV
+        - ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * F2dispI2dVdV
+            * getF2dispZHC()
+        - ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dVdVdV
+            * getF2dispZHC()
+        - ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dVdV
+            * F2dispZHCdV
+        - ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * F2dispI2dV
+            * F2dispZHCdV
+        - ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dVdV
+            * F2dispZHCdV
+        - ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dV
+            * F2dispZHCdVdV
+        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdVdV * getF2dispSumTerm() * getF2dispI2()
+            * F2dispZHCdV)
+        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * F2dispI2dV
+            * F2dispZHCdV)
+        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * getF2dispI2()
+            * F2dispZHCdVdV)
+        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * F2dispI2dV
+            * F2dispZHCdV)
+        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dVdV
+            * F2dispZHCdV)
+        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dV
+            * F2dispZHCdVdV)
+        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * getF2dispI2()
+            * F2dispZHCdVdV)
+        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dV
+            * F2dispZHCdVdV)
+        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * getF2dispI2()
+            * F2dispZHCdVdVdV)
+        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdVdV * getF2dispSumTerm() * getF2dispI2()
+            * F2dispZHCdV)
+        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * F2dispI2dV
+            * F2dispZHCdV)
+        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * getF2dispI2()
+            * F2dispZHCdVdV)
+        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * F2dispI2dV
+            * F2dispZHCdV)
+        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dVdV
+            * F2dispZHCdV)
+        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dV
+            * F2dispZHCdVdV)
+        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm() * getF2dispI2()
+            * F2dispZHCdVdV)
+        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * F2dispI2dV
+            * F2dispZHCdVdV)
+        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm() * getF2dispI2()
+            * F2dispZHCdVdVdV));
   }
 
   /** {@inheritDoc} */
@@ -1000,10 +1000,10 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     double temp = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       temp += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getmSAFTi() / getNumberOfMolesInPhase() * 3
-	  * Math.pow(((ComponentPCSAFT) getComponent(i)).getdSAFTi(), 2.0) * (-1.08 / Math.pow(temperature, 2))
-	  * Math.pow(getComponent(i).getSigmaSAFTi(), 3)
-	  * Math.pow(1 - 0.12 * Math.exp(-3 * getComponent(i).getEpsikSAFT() / temperature), 2)
-	  * getComponent(i).getEpsikSAFT() * Math.exp(-3 * getComponent(i).getEpsikSAFT() / temperature);
+          * Math.pow(((ComponentPCSAFT) getComponent(i)).getdSAFTi(), 2.0) * (-1.08 / Math.pow(temperature, 2))
+          * Math.pow(getComponent(i).getSigmaSAFTi(), 3)
+          * Math.pow(1 - 0.12 * Math.exp(-3 * getComponent(i).getEpsikSAFT() / temperature), 2)
+          * getComponent(i).getEpsikSAFT() * Math.exp(-3 * getComponent(i).getEpsikSAFT() / temperature);
     }
     return temp;
   }
@@ -1013,7 +1013,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
     double BonV = pt == PhaseType.GAS ? pressure * getB() / (numberOfMolesInPhase * temperature * R)
-	: 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+        : 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
     BonV = Math.max(1.0e-4, Math.min(1.0 - 1.0e-4, BonV));
     // double BonVold = BonV;
     double Btemp = 0;
@@ -1045,9 +1045,9 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
       d1 = -h / dh;
       double newVolume = getMolarVolume() + 0.9 * d1 / numberOfMolesInPhase;
       if (newVolume > 1e-100) {
-	setMolarVolume(newVolume);
+        setMolarVolume(newVolume);
       } else {
-	setMolarVolume(oldMolarVolume / 10.0);
+        setMolarVolume(oldMolarVolume / 10.0);
       }
 
       /*

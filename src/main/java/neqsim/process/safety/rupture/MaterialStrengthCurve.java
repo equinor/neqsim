@@ -1,6 +1,5 @@
 package neqsim.process.safety.rupture;
 
-import com.google.gson.GsonBuilder;
 import java.io.Serializable;
 import java.sql.ResultSet;
 import java.util.Arrays;
@@ -8,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.GsonBuilder;
 import neqsim.util.database.NeqSimProcessDesignDataBase;
 
 /**
@@ -76,7 +76,7 @@ public class MaterialStrengthCurve implements Serializable {
   public static MaterialStrengthCurve carbonSteel(String materialName, double yieldStrengthPa,
       double tensileStrengthPa) {
     return new MaterialStrengthCurve(materialName, yieldStrengthPa, tensileStrengthPa, defaultCarbonSteelTemperatures(),
-	defaultCarbonSteelFactors(), "Generic carbon-steel retained-strength curve for fire screening");
+        defaultCarbonSteelFactors(), "Generic carbon-steel retained-strength curve for fire screening");
   }
 
   /**
@@ -101,8 +101,8 @@ public class MaterialStrengthCurve implements Serializable {
       strengths = fallbackApi5LStrengths(normalizedGrade);
     }
     return new MaterialStrengthCurve("API 5L " + normalizedGrade, strengths[0], strengths[1],
-	defaultCarbonSteelTemperatures(), defaultCarbonSteelFactors(),
-	"API 5L ambient SMYS/SMTS with generic fire-temperature reduction");
+        defaultCarbonSteelTemperatures(), defaultCarbonSteelFactors(),
+        "API 5L ambient SMYS/SMTS with generic fire-temperature reduction");
   }
 
   /**
@@ -220,15 +220,15 @@ public class MaterialStrengthCurve implements Serializable {
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase()) {
       String safeGrade = grade.replace("'", "''");
       String query = "SELECT minimumYeildStrength, minimumTensileStrength "
-	  + "FROM MaterialPipeProperties WHERE grade='" + safeGrade + "'";
+          + "FROM MaterialPipeProperties WHERE grade='" + safeGrade + "'";
       try (ResultSet dataSet = database.getResultSet(query)) {
-	if (dataSet.next()) {
-	  double yieldPa = dataSet.getDouble("minimumYeildStrength") * PSI_TO_PA;
-	  double tensilePa = dataSet.getDouble("minimumTensileStrength") * PSI_TO_PA;
-	  if (yieldPa > 0.0 && tensilePa > 0.0) {
-	    return new double[] { yieldPa, tensilePa };
-	  }
-	}
+        if (dataSet.next()) {
+          double yieldPa = dataSet.getDouble("minimumYeildStrength") * PSI_TO_PA;
+          double tensilePa = dataSet.getDouble("minimumTensileStrength") * PSI_TO_PA;
+          if (yieldPa > 0.0 && tensilePa > 0.0) {
+            return new double[] { yieldPa, tensilePa };
+          }
+        }
       }
     } catch (Exception ex) {
       logger.debug("Could not load API 5L material grade {} from design database: {}", grade, ex.getMessage());
@@ -313,7 +313,7 @@ public class MaterialStrengthCurve implements Serializable {
       validatePositive(temperatures[i], "temperatureK[" + i + "]");
       validatePositive(factors[i], "retainedStrengthFactor[" + i + "]");
       if (i > 0 && temperatures[i] <= previous) {
-	throw new IllegalArgumentException("temperature grid must be strictly increasing");
+        throw new IllegalArgumentException("temperature grid must be strictly increasing");
       }
       previous = temperatures[i];
     }
@@ -350,8 +350,8 @@ public class MaterialStrengthCurve implements Serializable {
     }
     for (int i = 1; i < xs.length; i++) {
       if (x <= xs[i]) {
-	double fraction = (x - xs[i - 1]) / (xs[i] - xs[i - 1]);
-	return ys[i - 1] + fraction * (ys[i] - ys[i - 1]);
+        double fraction = (x - xs[i - 1]) / (xs[i] - xs[i - 1]);
+        return ys[i - 1] + fraction * (ys[i] - ys[i - 1]);
       }
     }
     return ys[last];

@@ -57,7 +57,7 @@ public class DesignValidationResult implements Serializable {
      * @param remediation suggested fix or action
      */
     public ValidationMessage(Severity severity, String category, String equipmentName, String message,
-	String remediation) {
+        String remediation) {
       this.severity = severity;
       this.category = category;
       this.equipmentName = equipmentName;
@@ -225,7 +225,7 @@ public class DesignValidationResult implements Serializable {
     List<ValidationMessage> filtered = new ArrayList<ValidationMessage>();
     for (ValidationMessage msg : messages) {
       if (msg.getSeverity() == severity) {
-	filtered.add(msg);
+        filtered.add(msg);
       }
     }
     return filtered;
@@ -248,7 +248,7 @@ public class DesignValidationResult implements Serializable {
   public boolean isValid() {
     for (ValidationMessage msg : messages) {
       if (msg.getSeverity() == Severity.ERROR || msg.getSeverity() == Severity.CRITICAL) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -262,7 +262,7 @@ public class DesignValidationResult implements Serializable {
   public boolean hasWarnings() {
     for (ValidationMessage msg : messages) {
       if (msg.getSeverity() == Severity.WARNING) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -276,7 +276,7 @@ public class DesignValidationResult implements Serializable {
   public boolean hasErrors() {
     for (ValidationMessage msg : messages) {
       if (msg.getSeverity() == Severity.ERROR || msg.getSeverity() == Severity.CRITICAL) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -301,7 +301,7 @@ public class DesignValidationResult implements Serializable {
     int count = 0;
     for (ValidationMessage msg : messages) {
       if (msg.getSeverity() == severity) {
-	count++;
+        count++;
       }
     }
     return count;
@@ -331,7 +331,7 @@ public class DesignValidationResult implements Serializable {
       messages.addAll(other.messages);
       metrics.putAll(other.metrics);
       if (other.hasRun) {
-	hasRun = true;
+        hasRun = true;
       }
     }
     return this;
@@ -347,7 +347,7 @@ public class DesignValidationResult implements Serializable {
     sb.append("Design Validation Results:\n");
     sb.append(String.format("  Status: %s\n", isValid() ? "VALID" : "INVALID"));
     sb.append(String.format("  Critical: %d, Errors: %d, Warnings: %d, Info: %d\n", getCount(Severity.CRITICAL),
-	getCount(Severity.ERROR), getCount(Severity.WARNING), getCount(Severity.INFO)));
+        getCount(Severity.ERROR), getCount(Severity.WARNING), getCount(Severity.INFO)));
     return sb.toString();
   }
 
@@ -358,10 +358,10 @@ public class DesignValidationResult implements Serializable {
     if (!messages.isEmpty()) {
       sb.append("\nMessages:\n");
       for (ValidationMessage msg : messages) {
-	sb.append("  ").append(msg.toString()).append("\n");
-	if (msg.getRemediation() != null && !msg.getRemediation().isEmpty()) {
-	  sb.append("    Fix: ").append(msg.getRemediation()).append("\n");
-	}
+        sb.append("  ").append(msg.toString()).append("\n");
+        if (msg.getRemediation() != null && !msg.getRemediation().isEmpty()) {
+          sb.append("    Fix: ").append(msg.getRemediation()).append("\n");
+        }
       }
     }
     return sb.toString();

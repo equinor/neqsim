@@ -308,10 +308,10 @@ public final class SaturationPressureCorrelation {
 
     for (double pb : results) {
       if (!Double.isNaN(pb)) {
-	sum += pb;
-	min = Math.min(min, pb);
-	max = Math.max(max, pb);
-	validCount++;
+        sum += pb;
+        min = Math.min(min, pb);
+        max = Math.max(max, pb);
+        validCount++;
       }
     }
 
@@ -325,7 +325,7 @@ public final class SaturationPressureCorrelation {
     double sumSq = 0;
     for (double pb : results) {
       if (!Double.isNaN(pb)) {
-	sumSq += (pb - avg) * (pb - avg);
+        sumSq += (pb - avg) * (pb - avg);
       }
     }
     double stdDev = Math.sqrt(sumSq / validCount);
@@ -353,13 +353,13 @@ public final class SaturationPressureCorrelation {
 
     sb.append("Correlation Results:\n");
     sb.append(String.format("  Standing (1947):        %.1f psia (%.2f bar)\n", standing(Rs, gammaG, API, T),
-	psiaToBar(standing(Rs, gammaG, API, T))));
+        psiaToBar(standing(Rs, gammaG, API, T))));
     sb.append(String.format("  Vasquez-Beggs (1980):   %.1f psia (%.2f bar)\n", vasquezBeggs(Rs, gammaG, API, T),
-	psiaToBar(vasquezBeggs(Rs, gammaG, API, T))));
+        psiaToBar(vasquezBeggs(Rs, gammaG, API, T))));
     sb.append(String.format("  Glaso (1980):           %.1f psia (%.2f bar)\n", glaso(Rs, gammaG, API, T),
-	psiaToBar(glaso(Rs, gammaG, API, T))));
+        psiaToBar(glaso(Rs, gammaG, API, T))));
     sb.append(String.format("  Petrosky-Farshad (1993):%.1f psia (%.2f bar)\n", petroskyFarshad(Rs, gammaG, API, T),
-	psiaToBar(petroskyFarshad(Rs, gammaG, API, T))));
+        psiaToBar(petroskyFarshad(Rs, gammaG, API, T))));
 
     double[] stats = estimateWithStatistics(Rs, gammaG, API, T);
     sb.append(String.format("\nStatistics:\n"));

@@ -140,7 +140,7 @@ public class ProcessSimulationEvaluator implements Serializable {
      * @param unit unit of measurement
      */
     public ParameterDefinition(String name, String equipmentName, String propertyName, double lowerBound,
-	double upperBound, String unit) {
+        double upperBound, String unit) {
       this.name = name;
       this.equipmentName = equipmentName;
       this.propertyName = propertyName;
@@ -397,7 +397,7 @@ public class ProcessSimulationEvaluator implements Serializable {
      * @param upperBound upper bound
      */
     public ConstraintDefinition(String name, ToDoubleFunction<ProcessSystem> evaluator, double lowerBound,
-	double upperBound) {
+        double upperBound) {
       this.name = name;
       this.evaluator = evaluator;
       this.lowerBound = lowerBound;
@@ -502,15 +502,15 @@ public class ProcessSimulationEvaluator implements Serializable {
       double value = evaluate(process);
       switch (type) {
       case LOWER_BOUND:
-	return value - lowerBound;
+        return value - lowerBound;
       case UPPER_BOUND:
-	return upperBound - value;
+        return upperBound - value;
       case RANGE:
-	return Math.min(value - lowerBound, upperBound - value);
+        return Math.min(value - lowerBound, upperBound - value);
       case EQUALITY:
-	return equalityTolerance - Math.abs(value - lowerBound);
+        return equalityTolerance - Math.abs(value - lowerBound);
       default:
-	return 0.0;
+        return 0.0;
       }
     }
 
@@ -535,7 +535,7 @@ public class ProcessSimulationEvaluator implements Serializable {
     public double penalty(ProcessSystem process) {
       double m = margin(process);
       if (m >= 0) {
-	return 0.0;
+        return 0.0;
       }
       return penaltyWeight * m * m;
     }
@@ -560,37 +560,37 @@ public class ProcessSimulationEvaluator implements Serializable {
      */
     public ProductionOptimizer.OptimizationConstraint toOptimizationConstraint() {
       if (evaluator == null) {
-	throw new IllegalStateException(
-	    "Cannot convert to OptimizationConstraint: evaluator is null (was this deserialized?)");
+        throw new IllegalStateException(
+            "Cannot convert to OptimizationConstraint: evaluator is null (was this deserialized?)");
       }
       ProductionOptimizer.ConstraintSeverity sev = isHard ? ProductionOptimizer.ConstraintSeverity.HARD
-	  : ProductionOptimizer.ConstraintSeverity.SOFT;
+          : ProductionOptimizer.ConstraintSeverity.SOFT;
       switch (type) {
       case UPPER_BOUND:
-	return ProductionOptimizer.OptimizationConstraint.lessThan(name, evaluator, upperBound, sev, penaltyWeight,
-	    "Converted from ConstraintDefinition");
+        return ProductionOptimizer.OptimizationConstraint.lessThan(name, evaluator, upperBound, sev, penaltyWeight,
+            "Converted from ConstraintDefinition");
       case LOWER_BOUND:
-	return ProductionOptimizer.OptimizationConstraint.greaterThan(name, evaluator, lowerBound, sev, penaltyWeight,
-	    "Converted from ConstraintDefinition");
+        return ProductionOptimizer.OptimizationConstraint.greaterThan(name, evaluator, lowerBound, sev, penaltyWeight,
+            "Converted from ConstraintDefinition");
       case RANGE:
-	// Convert to two one-sided constraints to enforce both bounds
-	logger.info(
-	    "RANGE constraint '{}' converted to upper-bound only; " + "lower bound ({}) not enforced via this path",
-	    name, lowerBound);
-	return ProductionOptimizer.OptimizationConstraint.lessThan(name + "_upper", evaluator, upperBound, sev,
-	    penaltyWeight, "Converted from range ConstraintDefinition (upper bound)");
+        // Convert to two one-sided constraints to enforce both bounds
+        logger.info(
+            "RANGE constraint '{}' converted to upper-bound only; " + "lower bound ({}) not enforced via this path",
+            name, lowerBound);
+        return ProductionOptimizer.OptimizationConstraint.lessThan(name + "_upper", evaluator, upperBound, sev,
+            penaltyWeight, "Converted from range ConstraintDefinition (upper bound)");
       case EQUALITY:
-	// Converts to upper-bound; the lower bound (value >= lowerBound - tolerance)
-	// is not enforced via this single-constraint path
-	logger.info(
-	    "EQUALITY constraint '{}' converted to upper-bound only; " + "lower bound not enforced via this path",
-	    name);
-	return ProductionOptimizer.OptimizationConstraint.lessThan(name + "_eq", evaluator,
-	    lowerBound + equalityTolerance, sev, penaltyWeight,
-	    "Converted from equality ConstraintDefinition (upper bound only)");
+        // Converts to upper-bound; the lower bound (value >= lowerBound - tolerance)
+        // is not enforced via this single-constraint path
+        logger.info(
+            "EQUALITY constraint '{}' converted to upper-bound only; " + "lower bound not enforced via this path",
+            name);
+        return ProductionOptimizer.OptimizationConstraint.lessThan(name + "_eq", evaluator,
+            lowerBound + equalityTolerance, sev, penaltyWeight,
+            "Converted from equality ConstraintDefinition (upper bound only)");
       default:
-	return ProductionOptimizer.OptimizationConstraint.lessThan(name, evaluator, upperBound, sev, penaltyWeight,
-	    "Converted from ConstraintDefinition");
+        return ProductionOptimizer.OptimizationConstraint.lessThan(name, evaluator, upperBound, sev, penaltyWeight,
+            "Converted from ConstraintDefinition");
       }
     }
   }
@@ -747,11 +747,11 @@ public class ProcessSimulationEvaluator implements Serializable {
      */
     public double getWeightedObjective(double[] weights) {
       if (objectives == null || weights == null) {
-	return Double.NaN;
+        return Double.NaN;
       }
       double sum = 0.0;
       for (int i = 0; i < Math.min(objectives.length, weights.length); i++) {
-	sum += weights[i] * objectives[i];
+        sum += weights[i] * objectives[i];
       }
       return sum;
     }
@@ -794,7 +794,7 @@ public class ProcessSimulationEvaluator implements Serializable {
       double upperBound, String unit) {
     String name = equipmentName + "." + propertyName;
     ParameterDefinition param = new ParameterDefinition(name, equipmentName, propertyName, lowerBound, upperBound,
-	unit);
+        unit);
     parameters.add(param);
     return this;
   }
@@ -1075,27 +1075,27 @@ public class ProcessSimulationEvaluator implements Serializable {
       ProcessEquipmentInterface equipment = units.get(i);
       EquipmentCapacityStrategy strategy = registry.findStrategy(equipment);
       if (strategy == null) {
-	continue;
+        continue;
       }
       Map<String, CapacityConstraint> equipConstraints = strategy.getConstraints(equipment);
       for (Map.Entry<String, CapacityConstraint> entry : equipConstraints.entrySet()) {
-	CapacityConstraint cc = entry.getValue();
-	if (!cc.isEnabled()) {
-	  continue;
-	}
-	String cName = equipment.getName() + "/" + entry.getKey();
-	// Create an upper-bound constraint: utilization <= 1.0
-	final CapacityConstraint capturedCc = cc;
-	ConstraintDefinition cd = new ConstraintDefinition();
-	cd.setName(cName);
-	cd.setUnit(cc.getUnit());
-	cd.setType(ConstraintDefinition.Type.UPPER_BOUND);
-	cd.setUpperBound(1.0);
-	cd.setEvaluator(proc -> capturedCc.getUtilization());
-	boolean isHardConstraint = cc.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL
-	    || cc.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD;
-	cd.setHard(isHardConstraint);
-	constraints.add(cd);
+        CapacityConstraint cc = entry.getValue();
+        if (!cc.isEnabled()) {
+          continue;
+        }
+        String cName = equipment.getName() + "/" + entry.getKey();
+        // Create an upper-bound constraint: utilization <= 1.0
+        final CapacityConstraint capturedCc = cc;
+        ConstraintDefinition cd = new ConstraintDefinition();
+        cd.setName(cName);
+        cd.setUnit(cc.getUnit());
+        cd.setType(ConstraintDefinition.Type.UPPER_BOUND);
+        cd.setUpperBound(1.0);
+        cd.setEvaluator(proc -> capturedCc.getUtilization());
+        boolean isHardConstraint = cc.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL
+            || cc.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD;
+        cd.setHard(isHardConstraint);
+        constraints.add(cd);
       }
     }
     return this;
@@ -1157,7 +1157,7 @@ public class ProcessSimulationEvaluator implements Serializable {
   public EvaluationResult evaluate(double[] x) {
     if (x == null || x.length != parameters.size()) {
       throw new IllegalArgumentException("Parameter array length (" + (x == null ? "null" : x.length)
-	  + ") must match parameter count (" + parameters.size() + ")");
+          + ") must match parameter count (" + parameters.size() + ")");
     }
 
     long startTime = System.currentTimeMillis();
@@ -1182,8 +1182,8 @@ public class ProcessSimulationEvaluator implements Serializable {
       double[] objValues = new double[objectives.size()];
       double[] objRaw = new double[objectives.size()];
       for (int i = 0; i < objectives.size(); i++) {
-	objRaw[i] = objectives.get(i).evaluateRaw(process);
-	objValues[i] = objectives.get(i).evaluate(process);
+        objRaw[i] = objectives.get(i).evaluateRaw(process);
+        objValues[i] = objectives.get(i).evaluate(process);
       }
       result.setObjectives(objValues);
       result.setObjectivesRaw(objRaw);
@@ -1194,12 +1194,12 @@ public class ProcessSimulationEvaluator implements Serializable {
       double penaltySum = 0.0;
       boolean feasible = true;
       for (int i = 0; i < constraints.size(); i++) {
-	constraintVals[i] = constraints.get(i).evaluate(process);
-	margins[i] = constraints.get(i).margin(process);
-	if (margins[i] < 0) {
-	  feasible = false;
-	  penaltySum += constraints.get(i).penalty(process);
-	}
+        constraintVals[i] = constraints.get(i).evaluate(process);
+        margins[i] = constraints.get(i).margin(process);
+        if (margins[i] < 0) {
+          feasible = false;
+          penaltySum += constraints.get(i).penalty(process);
+        }
       }
       result.setConstraintValues(constraintVals);
       result.setConstraintMargins(margins);
@@ -1243,11 +1243,11 @@ public class ProcessSimulationEvaluator implements Serializable {
       double value = param.clamp(x[i]); // Enforce bounds
 
       if (param.getSetter() != null) {
-	// Use custom setter
-	param.getSetter().accept(process, value);
+        // Use custom setter
+        param.getSetter().accept(process, value);
       } else {
-	// Use equipment property
-	setEquipmentProperty(process, param.getEquipmentName(), param.getPropertyName(), value, param.getUnit());
+        // Use equipment property
+        setEquipmentProperty(process, param.getEquipmentName(), param.getPropertyName(), value, param.getUnit());
       }
     }
   }
@@ -1273,32 +1273,32 @@ public class ProcessSimulationEvaluator implements Serializable {
     if (equipment instanceof StreamInterface) {
       StreamInterface stream = (StreamInterface) equipment;
       if (propLower.contains("flow")) {
-	stream.setFlowRate(value, unit);
+        stream.setFlowRate(value, unit);
       } else if (propLower.contains("press")) {
-	stream.setPressure(value, unit);
+        stream.setPressure(value, unit);
       } else if (propLower.contains("temp")) {
-	stream.setTemperature(value, unit);
+        stream.setTemperature(value, unit);
       } else {
-	throw new IllegalArgumentException("Unknown property: " + propertyName);
+        throw new IllegalArgumentException("Unknown property: " + propertyName);
       }
     } else {
       // Try reflection for other equipment types
       try {
-	String methodName = "set" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1);
-	java.lang.reflect.Method method = equipment.getClass().getMethod(methodName, double.class, String.class);
-	method.invoke(equipment, value, unit);
+        String methodName = "set" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1);
+        java.lang.reflect.Method method = equipment.getClass().getMethod(methodName, double.class, String.class);
+        method.invoke(equipment, value, unit);
       } catch (NoSuchMethodException e) {
-	// Try without unit
-	try {
-	  String methodName = "set" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1);
-	  java.lang.reflect.Method method = equipment.getClass().getMethod(methodName, double.class);
-	  method.invoke(equipment, value);
-	} catch (Exception ex) {
-	  throw new IllegalArgumentException(
-	      "Cannot set property " + propertyName + " on " + equipmentName + ": " + ex);
-	}
+        // Try without unit
+        try {
+          String methodName = "set" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1);
+          java.lang.reflect.Method method = equipment.getClass().getMethod(methodName, double.class);
+          method.invoke(equipment, value);
+        } catch (Exception ex) {
+          throw new IllegalArgumentException(
+              "Cannot set property " + propertyName + " on " + equipmentName + ": " + ex);
+        }
       } catch (Exception e) {
-	throw new IllegalArgumentException("Cannot set property " + propertyName + " on " + equipmentName + ": " + e);
+        throw new IllegalArgumentException("Cannot set property " + propertyName + " on " + equipmentName + ": " + e);
       }
     }
   }
@@ -1336,9 +1336,9 @@ public class ProcessSimulationEvaluator implements Serializable {
 
       // Enforce bounds
       if (xPlus[i] > parameters.get(i).getUpperBound()) {
-	xPlus[i] = x[i];
-	h = -h;
-	xPlus[i] += h;
+        xPlus[i] = x[i];
+        h = -h;
+        xPlus[i] += h;
       }
 
       double valuePlus = evaluate(xPlus).getObjectives()[objectiveIndex];
@@ -1366,15 +1366,15 @@ public class ProcessSimulationEvaluator implements Serializable {
 
       // Enforce bounds
       if (xPlus[i] > parameters.get(i).getUpperBound()) {
-	xPlus[i] = x[i];
-	h = -h;
-	xPlus[i] += h;
+        xPlus[i] = x[i];
+        h = -h;
+        xPlus[i] += h;
       }
 
       double[] marginsPlus = evaluate(xPlus).getConstraintMargins();
 
       for (int j = 0; j < constraints.size(); j++) {
-	jacobian[j][i] = (marginsPlus[j] - baseMargins[j]) / h;
+        jacobian[j][i] = (marginsPlus[j] - baseMargins[j]) / h;
       }
     }
 
@@ -1553,7 +1553,7 @@ public class ProcessSimulationEvaluator implements Serializable {
       sb.append("\"unit\": \"").append(p.get("unit")).append("\"");
       sb.append("}");
       if (i < params.size() - 1) {
-	sb.append(",");
+        sb.append(",");
       }
       sb.append("\n");
     }
@@ -1569,7 +1569,7 @@ public class ProcessSimulationEvaluator implements Serializable {
       sb.append("\"direction\": \"").append(o.get("direction")).append("\"");
       sb.append("}");
       if (i < objs.size() - 1) {
-	sb.append(",");
+        sb.append(",");
       }
       sb.append("\n");
     }
@@ -1585,7 +1585,7 @@ public class ProcessSimulationEvaluator implements Serializable {
       sb.append("\"type\": \"").append(c.get("type")).append("\"");
       sb.append("}");
       if (i < cons.size() - 1) {
-	sb.append(",");
+        sb.append(",");
       }
       sb.append("\n");
     }

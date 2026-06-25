@@ -110,7 +110,7 @@ public final class TiebackRouteNetwork implements Serializable {
     double length = 0.0;
     for (RouteSegment segment : segments) {
       if (segment.getType() != SegmentType.BRANCH) {
-	length += segment.getLengthKm();
+        length += segment.getLengthKm();
       }
     }
     return length > 0.0 ? length : getInstalledLengthKm();
@@ -125,7 +125,7 @@ public final class TiebackRouteNetwork implements Serializable {
     double length = 0.0;
     for (RouteSegment segment : segments) {
       if (segment.isShared() || segment.getType() == SegmentType.SHARED_CORRIDOR) {
-	length += segment.getLengthKm();
+        length += segment.getLengthKm();
       }
     }
     return length;
@@ -173,8 +173,8 @@ public final class TiebackRouteNetwork implements Serializable {
     double length = 0.0;
     for (RouteSegment segment : segments) {
       if (segment.getType() != SegmentType.BRANCH && segment.getDiameterInches() > 0.0) {
-	weighted += segment.getDiameterInches() * segment.getLengthKm();
-	length += segment.getLengthKm();
+        weighted += segment.getDiameterInches() * segment.getLengthKm();
+        length += segment.getLengthKm();
       }
     }
     if (length <= 0.0) {
@@ -193,8 +193,8 @@ public final class TiebackRouteNetwork implements Serializable {
     double length = 0.0;
     for (RouteSegment segment : segments) {
       if (segment.getType() != SegmentType.BRANCH && segment.getLengthKm() > 0.0) {
-	weighted += segment.getSeabedTemperatureC() * segment.getLengthKm();
-	length += segment.getLengthKm();
+        weighted += segment.getSeabedTemperatureC() * segment.getLengthKm();
+        length += segment.getLengthKm();
       }
     }
     if (length <= 0.0) {
@@ -213,8 +213,8 @@ public final class TiebackRouteNetwork implements Serializable {
     double length = 0.0;
     for (RouteSegment segment : segments) {
       if (segment.getType() != SegmentType.BRANCH && segment.getLengthKm() > 0.0) {
-	weighted += segment.getHeatTransferCoefficientWm2K() * segment.getLengthKm();
-	length += segment.getLengthKm();
+        weighted += segment.getHeatTransferCoefficientWm2K() * segment.getLengthKm();
+        length += segment.getLengthKm();
       }
     }
     if (length <= 0.0) {
@@ -236,10 +236,10 @@ public final class TiebackRouteNetwork implements Serializable {
     RouteSegment lastMain = null;
     for (RouteSegment segment : segments) {
       if (segment.getType() != SegmentType.BRANCH) {
-	if (firstMain == null) {
-	  firstMain = segment;
-	}
-	lastMain = segment;
+        if (firstMain == null) {
+          firstMain = segment;
+        }
+        lastMain = segment;
       }
     }
     if (firstMain == null || lastMain == null) {
@@ -282,7 +282,7 @@ public final class TiebackRouteNetwork implements Serializable {
     int count = 0;
     for (RouteSegment segment : segments) {
       if (segment.getType() == type) {
-	count++;
+        count++;
       }
     }
     return count;
@@ -331,10 +331,10 @@ public final class TiebackRouteNetwork implements Serializable {
      * @return this builder
      */
     public Builder addSegment(String name, SegmentType type, double lengthKm, double diameterInches,
-	double inletWaterDepthM, double outletWaterDepthM, double seabedTemperatureC,
-	double heatTransferCoefficientWm2K, boolean shared) {
+        double inletWaterDepthM, double outletWaterDepthM, double seabedTemperatureC,
+        double heatTransferCoefficientWm2K, boolean shared) {
       segments.add(new RouteSegment(name, type, lengthKm, diameterInches, inletWaterDepthM, outletWaterDepthM,
-	  seabedTemperatureC, heatTransferCoefficientWm2K, shared));
+          seabedTemperatureC, heatTransferCoefficientWm2K, shared));
       return this;
     }
 
@@ -349,7 +349,7 @@ public final class TiebackRouteNetwork implements Serializable {
      */
     public Builder addFlowline(String name, double lengthKm, double diameterInches, double waterDepthM) {
       return addSegment(name, SegmentType.FLOWLINE, lengthKm, diameterInches, waterDepthM, waterDepthM, 4.0, 5.0,
-	  false);
+          false);
     }
 
     /**
@@ -363,7 +363,7 @@ public final class TiebackRouteNetwork implements Serializable {
      */
     public Builder addSharedCorridor(String name, double lengthKm, double diameterInches, double waterDepthM) {
       return addSegment(name, SegmentType.SHARED_CORRIDOR, lengthKm, diameterInches, waterDepthM, waterDepthM, 4.0, 5.0,
-	  true);
+          true);
     }
 
     /**
@@ -432,7 +432,7 @@ public final class TiebackRouteNetwork implements Serializable {
      * @param shared true if shared by multiple fields or phases
      */
     private RouteSegment(String name, SegmentType type, double lengthKm, double diameterInches, double inletWaterDepthM,
-	double outletWaterDepthM, double seabedTemperatureC, double heatTransferCoefficientWm2K, boolean shared) {
+        double outletWaterDepthM, double seabedTemperatureC, double heatTransferCoefficientWm2K, boolean shared) {
       this.name = name == null ? "segment" : name;
       this.type = type == null ? SegmentType.FLOWLINE : type;
       this.lengthKm = Math.max(0.0, lengthKm);

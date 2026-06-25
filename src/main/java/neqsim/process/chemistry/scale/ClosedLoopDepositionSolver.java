@@ -105,53 +105,54 @@ public class ClosedLoopDepositionSolver implements Serializable {
 
     try {
       for (int k = 0; k < maxIterations; k++) {
-	iterationsTaken = k + 1;
-	pipe.setDiameter(currentD);
-	try {
-	  pipe.run();
-	} catch (Exception ignore) {
-	  // pipe may have already converged; tolerate failure and proceed with last profile
-	}
+        iterationsTaken = k + 1;
+        pipe.setDiameter(currentD);
+        try {
+          pipe.run();
+        } catch (Exception ignore) {
+          // pipe may have already converged; tolerate failure and proceed with last
+          // profile
+        }
 
-	accumulator.evaluate();
-	double thMm = accumulator.getMaxThicknessMm();
+        accumulator.evaluate();
+        double thMm = accumulator.getMaxThicknessMm();
 
-	diameterHistoryM.add(currentD);
-	maxThicknessHistoryMm.add(thMm);
+        diameterHistoryM.add(currentD);
+        maxThicknessHistoryMm.add(thMm);
 
-	double avgVelocity = 0.0;
-	try {
-	  List<Double> vProfile = pipe.getMixtureSuperficialVelocityProfile();
-	  if (vProfile != null && !vProfile.isEmpty()) {
-	    double sum = 0.0;
-	    for (Double v : vProfile) {
-	      sum += v;
-	    }
-	    avgVelocity = sum / vProfile.size();
-	  }
-	} catch (Exception ignore) {
-	  // velocity profile not always available; default 0
-	}
-	velocityHistoryMs.add(avgVelocity);
+        double avgVelocity = 0.0;
+        try {
+          List<Double> vProfile = pipe.getMixtureSuperficialVelocityProfile();
+          if (vProfile != null && !vProfile.isEmpty()) {
+            double sum = 0.0;
+            for (Double v : vProfile) {
+              sum += v;
+            }
+            avgVelocity = sum / vProfile.size();
+          }
+        } catch (Exception ignore) {
+          // velocity profile not always available; default 0
+        }
+        velocityHistoryMs.add(avgVelocity);
 
-	double newD = originalDiameter - 2.0 * thMm / 1000.0;
-	if (newD <= 0.0) {
-	  // pipe blocked
-	  finalEffectiveDiameterM = 0.0;
-	  converged = true;
-	  break;
-	}
+        double newD = originalDiameter - 2.0 * thMm / 1000.0;
+        if (newD <= 0.0) {
+          // pipe blocked
+          finalEffectiveDiameterM = 0.0;
+          converged = true;
+          break;
+        }
 
-	if (Math.abs(newD - previousD) < toleranceM) {
-	  converged = true;
-	  finalEffectiveDiameterM = newD;
-	  break;
-	}
-	previousD = currentD;
-	currentD = newD;
+        if (Math.abs(newD - previousD) < toleranceM) {
+          converged = true;
+          finalEffectiveDiameterM = newD;
+          break;
+        }
+        previousD = currentD;
+        currentD = newD;
       }
       if (!converged) {
-	finalEffectiveDiameterM = currentD;
+        finalEffectiveDiameterM = currentD;
       }
     } finally {
       // restore original geometry so process state is unchanged

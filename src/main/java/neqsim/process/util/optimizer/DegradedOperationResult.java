@@ -371,7 +371,7 @@ public class DegradedOperationResult implements Serializable {
     if (!optimizedSetpoints.isEmpty()) {
       sb.append("\nRecommended Setpoints:\n");
       for (Map.Entry<String, Double> entry : optimizedSetpoints.entrySet()) {
-	sb.append(String.format("  %s: %.2f%n", entry.getKey(), entry.getValue()));
+        sb.append(String.format("  %s: %.2f%n", entry.getKey(), entry.getValue()));
       }
     }
     return sb.toString();

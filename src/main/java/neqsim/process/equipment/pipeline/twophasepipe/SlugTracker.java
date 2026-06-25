@@ -121,7 +121,7 @@ public class SlugTracker implements Serializable {
     @Override
     public String toString() {
       return String.format("Slug#%d[front=%.1fm, body=%.1fm, bubble=%.1fm, vf=%.2fm/s]", id, frontPosition,
-	  slugBodyLength, bubbleLength, frontVelocity);
+          slugBodyLength, bubbleLength, frontVelocity);
     }
   }
 
@@ -179,15 +179,15 @@ public class SlugTracker implements Serializable {
       int startIdx = findSectionIndex(slug.tailPosition, sections);
       int endIdx = findSectionIndex(slug.frontPosition, sections);
       if (startIdx < 0) {
-	startIdx = 0;
+        startIdx = 0;
       }
       if (endIdx < 0) {
-	endIdx = sections.length - 1;
+        endIdx = sections.length - 1;
       }
       int numSections = endIdx - startIdx + 1;
       slug.borrowedFromSections = new int[numSections];
       for (int i = 0; i < numSections; i++) {
-	slug.borrowedFromSections[i] = startIdx + i;
+        slug.borrowedFromSections[i] = startIdx + i;
       }
     }
 
@@ -518,10 +518,10 @@ public class SlugTracker implements Serializable {
       boolean overlapsBody = sectionStart < slugBodyEnd && sectionEnd > slugBodyStart && slugBodyEnd > slugBodyStart;
 
       if (overlapsBody) {
-	section.setInSlugBody(true);
-	// Set slug holdup - this modifies effective properties but doesn't override
-	// the Eulerian liquid mass (which is in the conservative variables)
-	section.setSlugHoldup(slug.bodyHoldup);
+        section.setInSlugBody(true);
+        // Set slug holdup - this modifies effective properties but doesn't override
+        // the Eulerian liquid mass (which is in the conservative variables)
+        section.setSlugHoldup(slug.bodyHoldup);
       }
 
       // Bubble/film region is behind the tail
@@ -531,8 +531,8 @@ public class SlugTracker implements Serializable {
       boolean overlapsBubble = sectionStart < bubbleEnd && sectionEnd > bubbleStart && bubbleEnd > bubbleStart;
 
       if (overlapsBubble && !overlapsBody) {
-	section.setInSlugBubble(true);
-	section.setSlugHoldup(slug.filmHoldup);
+        section.setInSlugBubble(true);
+        section.setSlugHoldup(slug.filmHoldup);
       }
     }
   }
@@ -556,17 +556,17 @@ public class SlugTracker implements Serializable {
 
       // Check if front of back slug has caught tail of front slug
       if (back.frontPosition >= front.tailPosition - slugMergeDistance) {
-	// Merge: back slug absorbs front slug
-	back.frontPosition = front.frontPosition;
-	back.frontVelocity = front.frontVelocity;
-	back.slugBodyLength = back.frontPosition - back.tailPosition;
-	back.liquidVolume += front.liquidVolume;
+        // Merge: back slug absorbs front slug
+        back.frontPosition = front.frontPosition;
+        back.frontVelocity = front.frontVelocity;
+        back.slugBodyLength = back.frontPosition - back.tailPosition;
+        back.liquidVolume += front.liquidVolume;
 
-	// Combine borrowed mass for proper mass conservation tracking
-	back.borrowedLiquidMass += front.borrowedLiquidMass;
+        // Combine borrowed mass for proper mass conservation tracking
+        back.borrowedLiquidMass += front.borrowedLiquidMass;
 
-	toRemove.add(front);
-	totalSlugsMerged++;
+        toRemove.add(front);
+        totalSlugsMerged++;
       }
     }
 
@@ -596,19 +596,19 @@ public class SlugTracker implements Serializable {
 
       // Check if front has exited pipe
       if (slug.frontPosition > pipeLength + minimumSlugLength) {
-	// Slug exited at outlet - mass leaves the system via outlet flux
-	// Track as returned mass for conservation verification
-	totalMassReturnedToEulerian += slug.borrowedLiquidMass;
-	iter.remove();
-	continue;
+        // Slug exited at outlet - mass leaves the system via outlet flux
+        // Track as returned mass for conservation verification
+        totalMassReturnedToEulerian += slug.borrowedLiquidMass;
+        iter.remove();
+        continue;
       }
 
       // Check if slug has dissipated (too short after some time)
       if (slug.slugBodyLength < minimumSlugLength && slug.age > 10) {
-	// Dissipating slug - return mass to nearby cells
-	returnMassToEulerianCells(slug, sections);
-	totalMassReturnedToEulerian += slug.borrowedLiquidMass;
-	iter.remove();
+        // Dissipating slug - return mass to nearby cells
+        returnMassToEulerianCells(slug, sections);
+        totalMassReturnedToEulerian += slug.borrowedLiquidMass;
+        iter.remove();
       }
     }
   }
@@ -662,11 +662,11 @@ public class SlugTracker implements Serializable {
       double cellVolume = section.getArea() * section.getLength();
 
       if (rho_L > 0 && cellVolume > 0) {
-	double deltaHoldup = massToReturn / (rho_L * cellVolume);
-	double newLiquidHoldup = Math.min(1.0, section.getLiquidHoldup() + deltaHoldup);
-	section.setLiquidHoldup(newLiquidHoldup);
-	section.setGasHoldup(1.0 - newLiquidHoldup);
-	section.updateDerivedQuantities();
+        double deltaHoldup = massToReturn / (rho_L * cellVolume);
+        double newLiquidHoldup = Math.min(1.0, section.getLiquidHoldup() + deltaHoldup);
+        section.setLiquidHoldup(newLiquidHoldup);
+        section.setGasHoldup(1.0 - newLiquidHoldup);
+        section.updateDerivedQuantities();
       }
     }
   }
@@ -704,7 +704,7 @@ public class SlugTracker implements Serializable {
       double start = sections[i].getPosition();
       double end = start + sections[i].getLength();
       if (position >= start && position <= end) {
-	return i;
+        return i;
       }
     }
     return -1;

@@ -65,7 +65,7 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
     this.flowNodeType = "slug";
     this.interphaseTransportCoefficient = new InterphaseSlugFlow(this);
     this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-	this);
+        this);
   }
 
   /**
@@ -80,7 +80,7 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
     this.flowNodeType = "slug";
     this.interphaseTransportCoefficient = new InterphaseSlugFlow(this);
     this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-	this);
+        this);
   }
 
   /** {@inheritDoc} */
@@ -166,7 +166,7 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
     // Wall contact lengths based on average holdup
     // Simplified geometry assuming cylindrical pipe
     double phaseAngle = pi * avgLiquidHoldup + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * avgLiquidHoldup
-	+ Math.pow(avgLiquidHoldup, 1.0 / 3.0) - Math.pow(1 - avgLiquidHoldup, 1.0 / 3.0));
+        + Math.pow(avgLiquidHoldup, 1.0 / 3.0) - Math.pow(1 - avgLiquidHoldup, 1.0 / 3.0));
 
     wallContactLength[1] = phaseAngle * pipe.getDiameter();
     wallContactLength[0] = pi * pipe.getDiameter() - wallContactLength[1];

@@ -70,7 +70,7 @@ public class NelsonCurveAssessmentTest {
     assertTrue(nelson.isBelowNelsonCurve(), "220°C at 100 psia should be just below curve (~232°C limit)");
     // Should be High risk (close to curve, within 20°C)
     assertTrue("Medium".equals(nelson.getRiskLevel()) || "High".equals(nelson.getRiskLevel()),
-	"Borderline should be Medium or High risk: " + nelson.getRiskLevel());
+        "Borderline should be Medium or High risk: " + nelson.getRiskLevel());
   }
 
   @Test
@@ -265,7 +265,7 @@ public class NelsonCurveAssessmentTest {
     // Each material should have a higher limit than the previous
     for (int i = 1; i < maxTemps.length; i++) {
       assertTrue(maxTemps[i] > maxTemps[i - 1], materials[i] + " (" + maxTemps[i] + "°C) should have higher limit than "
-	  + materials[i - 1] + " (" + maxTemps[i - 1] + "°C)");
+          + materials[i - 1] + " (" + maxTemps[i - 1] + "°C)");
     }
   }
 
@@ -282,7 +282,7 @@ public class NelsonCurveAssessmentTest {
     double maxTemp = nelson.getMaxAllowableTemperatureC();
     // For carbon steel at very high pressure, max temp should be ~166°C (330°F)
     assertTrue(maxTemp > 100 && maxTemp < 200,
-	"At very high pressure, carbon steel max temp should be ~166°C: " + maxTemp);
+        "At very high pressure, carbon steel max temp should be ~166°C: " + maxTemp);
   }
 
   @Test

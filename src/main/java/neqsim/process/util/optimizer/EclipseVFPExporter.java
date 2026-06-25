@@ -128,7 +128,7 @@ public class EclipseVFPExporter implements Serializable {
    */
   public void exportVFPPROD(String filename) throws IOException {
     try (BufferedWriter writer = new BufferedWriter(
-	new OutputStreamWriter(new FileOutputStream(filename), StandardCharsets.UTF_8))) {
+        new OutputStreamWriter(new FileOutputStream(filename), StandardCharsets.UTF_8))) {
       writeVFPPROD(writer);
     }
     logger.info("Exported VFPPROD table {} to {}", tableNumber, filename);
@@ -142,7 +142,7 @@ public class EclipseVFPExporter implements Serializable {
    */
   public void exportVFPINJ(String filename) throws IOException {
     try (BufferedWriter writer = new BufferedWriter(
-	new OutputStreamWriter(new FileOutputStream(filename), StandardCharsets.UTF_8))) {
+        new OutputStreamWriter(new FileOutputStream(filename), StandardCharsets.UTF_8))) {
       writeVFPINJ(writer);
     }
     logger.info("Exported VFPINJ table {} to {}", tableNumber, filename);
@@ -156,7 +156,7 @@ public class EclipseVFPExporter implements Serializable {
    */
   public void exportVFPEXP(String filename) throws IOException {
     try (BufferedWriter writer = new BufferedWriter(
-	new OutputStreamWriter(new FileOutputStream(filename), StandardCharsets.UTF_8))) {
+        new OutputStreamWriter(new FileOutputStream(filename), StandardCharsets.UTF_8))) {
       writeVFPEXP(writer);
     }
     logger.info("Exported VFPEXP table {} to {}", tableNumber, filename);
@@ -238,7 +238,7 @@ public class EclipseVFPExporter implements Serializable {
 
     // Table header line - use quoted types for GAS systems with WGR/OGR
     out.append(String.format("  %d  %.0f  '%s'  '%s'  '%s'  /\n", tableNumber, datumDepth, flowRateType, waterCutType,
-	gorType));
+        gorType));
 
     // Flow rates (Sm3/d) - split across lines if many values
     writeArraySplitLines(out, flowRates, 6);
@@ -248,7 +248,7 @@ public class EclipseVFPExporter implements Serializable {
     out.append("  ");
     if (THPs != null) {
       for (double thp : THPs) {
-	out.append(String.format("%.0f  ", thp));
+        out.append(String.format("%.0f  ", thp));
       }
     }
     out.append("\n/\n");
@@ -325,7 +325,7 @@ public class EclipseVFPExporter implements Serializable {
     sb.append("VFPPROD\n");
 
     sb.append(String.format("  %d %.2f %s %s %s %s %s %s /\n", tableNumber, datumDepth, flowRateType, waterCutType,
-	gorType, "THP", "BHP", unitSystem));
+        gorType, "THP", "BHP", unitSystem));
 
     // Same structure as VFPPROD
     sb.append("-- Flow rates\n");
@@ -367,7 +367,7 @@ public class EclipseVFPExporter implements Serializable {
     for (int i = 0; i < values.length; i++) {
       out.append(String.format(" %.4f", values[i]));
       if ((i + 1) % 8 == 0 && i < values.length - 1) {
-	out.append("\n ");
+        out.append("\n ");
       }
     }
     out.append(" /\n");
@@ -389,11 +389,11 @@ public class EclipseVFPExporter implements Serializable {
 
     for (int i = 0; i < values.length; i++) {
       if (i % valuesPerLine == 0) {
-	out.append("  ");
+        out.append("  ");
       }
       out.append(String.format("%.2E  ", values[i]));
       if ((i + 1) % valuesPerLine == 0 && i < values.length - 1) {
-	out.append("\n");
+        out.append("\n");
       }
     }
     out.append("\n");
@@ -435,11 +435,11 @@ public class EclipseVFPExporter implements Serializable {
       boolean[] hasValue = new boolean[nFlow];
 
       for (int iFlow = 0; iFlow < nFlow; iFlow++) {
-	double bhp = getBHPValue(iFlow, iTHP, 0, 0, 0);
-	if (bhp > 0 && !Double.isNaN(bhp)) {
-	  rowValues[iFlow] = bhp;
-	  hasValue[iFlow] = true;
-	}
+        double bhp = getBHPValue(iFlow, iTHP, 0, 0, 0);
+        if (bhp > 0 && !Double.isNaN(bhp)) {
+          rowValues[iFlow] = bhp;
+          hasValue[iFlow] = true;
+        }
       }
 
       // Fill missing values with nearest valid value from same row
@@ -448,7 +448,7 @@ public class EclipseVFPExporter implements Serializable {
       // Write row with index prefix: rowIdx 1 1 1 values /
       out.append(String.format("  %d  1  1  1", rowIdx));
       for (int iFlow = 0; iFlow < nFlow; iFlow++) {
-	out.append(String.format("  %.2f", rowValues[iFlow]));
+        out.append(String.format("  %.2f", rowValues[iFlow]));
       }
       out.append(" /\n");
     }
@@ -466,7 +466,7 @@ public class EclipseVFPExporter implements Serializable {
     int validCount = 0;
     for (int i = 0; i < values.length; i++) {
       if (hasValue[i]) {
-	validIndices[validCount++] = i;
+        validIndices[validCount++] = i;
       }
     }
 
@@ -477,16 +477,16 @@ public class EclipseVFPExporter implements Serializable {
     // Fill each missing value with nearest valid value
     for (int i = 0; i < values.length; i++) {
       if (!hasValue[i]) {
-	int nearestIdx = validIndices[0];
-	int minDist = Math.abs(i - nearestIdx);
-	for (int j = 1; j < validCount; j++) {
-	  int dist = Math.abs(i - validIndices[j]);
-	  if (dist < minDist) {
-	    minDist = dist;
-	    nearestIdx = validIndices[j];
-	  }
-	}
-	values[i] = values[nearestIdx];
+        int nearestIdx = validIndices[0];
+        int minDist = Math.abs(i - nearestIdx);
+        for (int j = 1; j < validCount; j++) {
+          int dist = Math.abs(i - validIndices[j]);
+          if (dist < minDist) {
+            minDist = dist;
+            nearestIdx = validIndices[j];
+          }
+        }
+        values[i] = values[nearestIdx];
       }
     }
   }
@@ -515,17 +515,17 @@ public class EclipseVFPExporter implements Serializable {
 
     for (int iALQ = 0; iALQ < nALQ; iALQ++) {
       for (int iGOR = 0; iGOR < nGOR; iGOR++) {
-	for (int iWC = 0; iWC < nWC; iWC++) {
-	  out.append(String.format("-- ALQ=%d GOR=%d WCT=%d\n", iALQ + 1, iGOR + 1, iWC + 1));
-	  for (int iTHP = 0; iTHP < nTHP; iTHP++) {
-	    out.append(" ");
-	    for (int iFlow = 0; iFlow < nFlow; iFlow++) {
-	      double bhp = getBHPValue(iFlow, iTHP, iWC, iGOR, iALQ);
-	      out.append(String.format(" %.2f", bhp));
-	    }
-	    out.append(" /\n");
-	  }
-	}
+        for (int iWC = 0; iWC < nWC; iWC++) {
+          out.append(String.format("-- ALQ=%d GOR=%d WCT=%d\n", iALQ + 1, iGOR + 1, iWC + 1));
+          for (int iTHP = 0; iTHP < nTHP; iTHP++) {
+            out.append(" ");
+            for (int iFlow = 0; iFlow < nFlow; iFlow++) {
+              double bhp = getBHPValue(iFlow, iTHP, iWC, iGOR, iALQ);
+              out.append(String.format(" %.2f", bhp));
+            }
+            out.append(" /\n");
+          }
+        }
       }
     }
   }
@@ -543,8 +543,8 @@ public class EclipseVFPExporter implements Serializable {
     for (int iTHP = 0; iTHP < nTHP; iTHP++) {
       out.append(" ");
       for (int iFlow = 0; iFlow < nFlow; iFlow++) {
-	double bhp = getBHPValue(iFlow, iTHP, 0, 0, 0);
-	out.append(String.format(" %.2f", bhp));
+        double bhp = getBHPValue(iFlow, iTHP, 0, 0, 0);
+        out.append(String.format(" %.2f", bhp));
       }
       out.append(" /\n");
     }
@@ -562,8 +562,8 @@ public class EclipseVFPExporter implements Serializable {
    */
   private double getBHPValue(int iFlow, int iTHP, int iWC, int iGOR, int iALQ) {
     if (BHPTable != null && iFlow < BHPTable.length && iTHP < BHPTable[iFlow].length
-	&& iWC < BHPTable[iFlow][iTHP].length && iGOR < BHPTable[iFlow][iTHP][iWC].length
-	&& iALQ < BHPTable[iFlow][iTHP][iWC][iGOR].length) {
+        && iWC < BHPTable[iFlow][iTHP].length && iGOR < BHPTable[iFlow][iTHP][iWC].length
+        && iALQ < BHPTable[iFlow][iTHP][iWC][iGOR].length) {
       return BHPTable[iFlow][iTHP][iWC][iGOR][iALQ];
     }
 
@@ -601,15 +601,15 @@ public class EclipseVFPExporter implements Serializable {
       int iTHP = findIndex(THPs, point.getInletPressure());
 
       if (iWC >= 0 && iGOR >= 0 && iTHP >= 0) {
-	// Map max flow rate to BHP relationship
-	for (int iFlow = 0; iFlow < nFlow; iFlow++) {
-	  for (int iALQ = 0; iALQ < nALQ; iALQ++) {
-	    // Calculate BHP based on flow vs max flow
-	    double ratio = flowRates[iFlow] / point.getMaxFlowRate();
-	    double bhp = point.getInletPressure() * (1 + 0.1 * ratio);
-	    BHPTable[iFlow][iTHP][iWC][iGOR][iALQ] = bhp;
-	  }
-	}
+        // Map max flow rate to BHP relationship
+        for (int iFlow = 0; iFlow < nFlow; iFlow++) {
+          for (int iALQ = 0; iALQ < nALQ; iALQ++) {
+            // Calculate BHP based on flow vs max flow
+            double ratio = flowRates[iFlow] / point.getMaxFlowRate();
+            double bhp = point.getInletPressure() * (1 + 0.1 * ratio);
+            BHPTable[iFlow][iTHP][iWC][iGOR][iALQ] = bhp;
+          }
+        }
       }
     }
   }
@@ -632,8 +632,8 @@ public class EclipseVFPExporter implements Serializable {
     for (int i = 1; i < array.length; i++) {
       double diff = Math.abs(array[i] - value);
       if (diff < bestDiff) {
-	bestDiff = diff;
-	bestIndex = i;
+        bestDiff = diff;
+        bestIndex = i;
       }
     }
 
@@ -658,7 +658,7 @@ public class EclipseVFPExporter implements Serializable {
 
     sb.append("WCONPROD\n");
     sb.append(String.format("  '%s' 'OPEN' 'ORAT' 1* 4* %.2f /\n", wellName,
-	flowRates != null && flowRates.length > 0 ? flowRates[flowRates.length - 1] : 10000));
+        flowRates != null && flowRates.length > 0 ? flowRates[flowRates.length - 1] : 10000));
     sb.append("/\n\n");
 
     return sb.toString();

@@ -135,7 +135,7 @@ public class ComponentAmmoniaEos extends ComponentEos {
   @Override
   public double fugcoef(PhaseInterface phase) {
     double logFugacityCoefficient = dFdN(phase, phase.getNumberOfComponents(), phase.getTemperature(),
-	phase.getPressure()) - Math.log(phase.getZ());
+        phase.getPressure()) - Math.log(phase.getZ());
     return Math.exp(logFugacityCoefficient);
   }
 
@@ -172,10 +172,10 @@ public class ComponentAmmoniaEos extends ComponentEos {
     for (int i = 0; i < numberOfComponents; i++) {
       double ideal = -1.0 / nTot;
       if (getComponentNumber() == i) {
-	double n = getNumberOfMolesInPhase();
-	if (n > 0.0) {
-	  ideal += 1.0 / n;
-	}
+        double n = getNumberOfMolesInPhase();
+        if (n > 0.0) {
+          ideal += 1.0 / n;
+        }
       }
       double total = dFdNdN(i, phase, numberOfComponents, temperature, pressure);
       residual[i] = total - ideal;

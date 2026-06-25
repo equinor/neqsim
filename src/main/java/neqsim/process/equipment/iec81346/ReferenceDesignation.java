@@ -111,21 +111,21 @@ public class ReferenceDesignation implements Serializable {
     if (!prod.isEmpty()) {
       char firstChar = Character.toUpperCase(prod.charAt(0));
       try {
-	letterCode = IEC81346LetterCode.valueOf(String.valueOf(firstChar));
+        letterCode = IEC81346LetterCode.valueOf(String.valueOf(firstChar));
       } catch (IllegalArgumentException ignored) {
-	// Not a valid letter code — keep default A
+        // Not a valid letter code — keep default A
       }
       // Extract sequence number from remaining digits
       StringBuilder digits = new StringBuilder();
       for (int i = 1; i < prod.length(); i++) {
-	if (Character.isDigit(prod.charAt(i))) {
-	  digits.append(prod.charAt(i));
-	} else {
-	  break;
-	}
+        if (Character.isDigit(prod.charAt(i))) {
+          digits.append(prod.charAt(i));
+        } else {
+          break;
+        }
       }
       if (digits.length() > 0) {
-	seqNum = Integer.parseInt(digits.toString());
+        seqNum = Integer.parseInt(digits.toString());
       }
     }
 
@@ -144,7 +144,7 @@ public class ReferenceDesignation implements Serializable {
     for (int i = from; i < s.length(); i++) {
       char c = s.charAt(i);
       if (c == '=' || c == '-' || c == '+') {
-	return i;
+        return i;
       }
     }
     return s.length();
@@ -331,7 +331,7 @@ public class ReferenceDesignation implements Serializable {
    */
   public boolean isSet() {
     return !functionDesignation.trim().isEmpty() || !productDesignation.trim().isEmpty()
-	|| !locationDesignation.trim().isEmpty();
+        || !locationDesignation.trim().isEmpty();
   }
 
   /** {@inheritDoc} */
@@ -352,7 +352,7 @@ public class ReferenceDesignation implements Serializable {
     }
     ReferenceDesignation other = (ReferenceDesignation) obj;
     return functionDesignation.equals(other.functionDesignation) && productDesignation.equals(other.productDesignation)
-	&& locationDesignation.equals(other.locationDesignation);
+        && locationDesignation.equals(other.locationDesignation);
   }
 
   /** {@inheritDoc} */

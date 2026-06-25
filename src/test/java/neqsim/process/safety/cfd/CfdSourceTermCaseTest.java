@@ -3,14 +3,14 @@ package neqsim.process.safety.cfd;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.safety.BoundaryConditions;
@@ -70,8 +70,8 @@ class CfdSourceTermCaseTest {
     assertTrue(Files.exists(openFoamRoot.resolve("constant").resolve("sourceTimeSeries").resolve("massFlowRate")));
 
     String releaseSource = new String(
-	Files.readAllBytes(openFoamRoot.resolve("constant").resolve("releaseSourceProperties")),
-	StandardCharsets.UTF_8);
+        Files.readAllBytes(openFoamRoot.resolve("constant").resolve("releaseSourceProperties")),
+        StandardCharsets.UTF_8);
     String manifest = new String(Files.readAllBytes(manifestFile), StandardCharsets.UTF_8);
 
     assertTrue(releaseSource.contains("tabulatedMassMomentumTemperature"));
@@ -82,14 +82,14 @@ class CfdSourceTermCaseTest {
   private static CfdSourceTermCase createCfdCase() {
     ProcessSystem process = createProcess();
     List<ReleaseDispersionScenario> scenarios = new ReleaseDispersionScenarioGenerator(process)
-	.releaseCases(ReleaseCase.TEN_MM_HOLE).addWeatherCase("neutral-D", standardWeather()).releaseDuration(20.0, 5.0)
-	.generateScenarios();
+        .releaseCases(ReleaseCase.TEN_MM_HOLE).addWeatherCase("neutral-D", standardWeather()).releaseDuration(20.0, 5.0)
+        .generateScenarios();
     return scenarios.get(0).toCfdSourceTermCase();
   }
 
   private static BoundaryConditions standardWeather() {
     return BoundaryConditions.builder().ambientTemperature(15.0, "C").windSpeed(5.0).pasquillStabilityClass('D')
-	.isOffshore(false).surfaceRoughness(0.1).build();
+        .isOffshore(false).surfaceRoughness(0.1).build();
   }
 
   private static ProcessSystem createProcess() {

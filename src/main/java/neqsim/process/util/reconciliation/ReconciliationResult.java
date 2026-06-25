@@ -293,11 +293,11 @@ public class ReconciliationResult implements java.io.Serializable {
       sb.append("\"normalizedResidual\": ").append(v.getNormalizedResidual()).append(", ");
       sb.append("\"grossError\": ").append(v.isGrossError());
       if (!v.getUnit().isEmpty()) {
-	sb.append(", \"unit\": \"").append(v.getUnit()).append("\"");
+        sb.append(", \"unit\": \"").append(v.getUnit()).append("\"");
       }
       sb.append("}");
       if (i < variables.size() - 1) {
-	sb.append(",");
+        sb.append(",");
       }
       sb.append("\n");
     }
@@ -321,20 +321,20 @@ public class ReconciliationResult implements java.io.Serializable {
     sb.append(String.format("Compute time: %d ms\n\n", computeTimeMs));
 
     sb.append(String.format("%-20s %12s %12s %12s %8s %8s\n", "Variable", "Measured", "Reconciled", "Adjustment",
-	"|r_norm|", "Flag"));
+        "|r_norm|", "Flag"));
     sb.append(String.format("%-20s %12s %12s %12s %8s %8s\n", "--------", "--------", "----------", "----------",
-	"--------", "----"));
+        "--------", "----"));
     for (ReconciliationVariable v : variables) {
       sb.append(String.format("%-20s %12.4f %12.4f %12.4f %8.3f %8s\n", v.getName(), v.getMeasuredValue(),
-	  v.getReconciledValue(), v.getAdjustment(), Math.abs(v.getNormalizedResidual()),
-	  v.isGrossError() ? "**GE**" : "ok"));
+          v.getReconciledValue(), v.getAdjustment(), Math.abs(v.getNormalizedResidual()),
+          v.isGrossError() ? "**GE**" : "ok"));
     }
 
     if (!grossErrors.isEmpty()) {
       sb.append("\nGross Errors Detected:\n");
       for (ReconciliationVariable ge : grossErrors) {
-	sb.append(
-	    String.format("  %s: |r|=%.3f (threshold exceeded)\n", ge.getName(), Math.abs(ge.getNormalizedResidual())));
+        sb.append(
+            String.format("  %s: |r|=%.3f (threshold exceeded)\n", ge.getName(), Math.abs(ge.getNormalizedResidual())));
       }
     }
     return sb.toString();
@@ -348,6 +348,6 @@ public class ReconciliationResult implements java.io.Serializable {
   @Override
   public String toString() {
     return String.format("ReconciliationResult[converged=%s, obj=%.4f, chi2=%.4f, df=%d, grossErrors=%d]", converged,
-	objectiveValue, chiSquareStatistic, degreesOfFreedom, grossErrors.size());
+        objectiveValue, chiSquareStatistic, degreesOfFreedom, grossErrors.size());
   }
 }

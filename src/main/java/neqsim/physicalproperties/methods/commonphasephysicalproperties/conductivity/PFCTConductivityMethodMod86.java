@@ -108,21 +108,21 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
     double Mmtemp = 0.0;
     for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
       for (int j = 0; j < phase.getPhase().getNumberOfComponents(); j++) {
-	double tempVar = phase.getPhase().getComponent(i).getx() * phase.getPhase().getComponent(j).getx()
-	    * Math.pow(
-		Math.pow(phase.getPhase().getComponent(i).getTC() / phase.getPhase().getComponent(i).getPC(), 1.0 / 3.0)
-		    + Math.pow(phase.getPhase().getComponent(j).getTC() / phase.getPhase().getComponent(j).getPC(),
-			1.0 / 3.0),
-		3.0);
-	tempTC1 += tempVar
-	    * Math.sqrt(phase.getPhase().getComponent(i).getTC() * phase.getPhase().getComponent(j).getTC());
-	tempTC2 += tempVar;
-	tempPC1 += tempVar
-	    * Math.sqrt(phase.getPhase().getComponent(i).getTC() * phase.getPhase().getComponent(j).getTC());
-	tempPC2 += tempVar;
+        double tempVar = phase.getPhase().getComponent(i).getx() * phase.getPhase().getComponent(j).getx()
+            * Math.pow(
+                Math.pow(phase.getPhase().getComponent(i).getTC() / phase.getPhase().getComponent(i).getPC(), 1.0 / 3.0)
+                    + Math.pow(phase.getPhase().getComponent(j).getTC() / phase.getPhase().getComponent(j).getPC(),
+                        1.0 / 3.0),
+                3.0);
+        tempTC1 += tempVar
+            * Math.sqrt(phase.getPhase().getComponent(i).getTC() * phase.getPhase().getComponent(j).getTC());
+        tempTC2 += tempVar;
+        tempPC1 += tempVar
+            * Math.sqrt(phase.getPhase().getComponent(i).getTC() * phase.getPhase().getComponent(j).getTC());
+        tempPC2 += tempVar;
       }
       Mwtemp += phase.getPhase().getComponent(i).getx()
-	  * Math.pow(phase.getPhase().getComponent(i).getMolarMass(), 2.0);
+          * Math.pow(phase.getPhase().getComponent(i).getMolarMass(), 2.0);
       Mmtemp += phase.getPhase().getComponent(i).getx() * phase.getPhase().getComponent(i).getMolarMass();
     }
 
@@ -148,7 +148,7 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
     double TOref = phase.getPhase().getTemperature() * referenceSystem.getPhase(0).getComponent(0).getTC() / TCmix;
     referenceSystem.setTemperature(TOref);
     referenceSystem
-	.setPressure(phase.getPhase().getPressure() * referenceSystem.getPhase(0).getComponent(0).getPC() / PCmix);
+        .setPressure(phase.getPhase().getPressure() * referenceSystem.getPhase(0).getComponent(0).getPC() / PCmix);
     try {
       referenceSystem.init(1);
     } catch (Exception ex) {
@@ -161,14 +161,14 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
     double[] alphai = new double[phase.getPhase().getNumberOfComponents()];
     for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
       alphai[i] = 1.0 + 6.004e-4 * Math.pow(redDens, 2.043)
-	  * Math.pow(phase.getPhase().getComponent(i).getMolarMass() * 1e3, 1.086);
+          * Math.pow(phase.getPhase().getComponent(i).getMolarMass() * 1e3, 1.086);
     }
     alfaMix = 0.0;
     alfa0 = 1.0 + 6.004e-4 * Math.pow(redDens, 2.043) * Math.pow(referenceSystem.getMolarMass() * 1e3, 1.086);
     for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
       for (int j = 0; j < phase.getPhase().getNumberOfComponents(); j++) {
-	alfaMix += phase.getPhase().getComponent(i).getx() * phase.getPhase().getComponent(j).getx()
-	    * Math.sqrt(alphai[i] * alphai[j]);
+        alfaMix += phase.getPhase().getComponent(i).getx() * phase.getPhase().getComponent(j).getx()
+            * Math.sqrt(alphai[i] * alphai[j]);
       }
     }
     if (alfaMix < 1e-10) {
@@ -177,9 +177,9 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
     }
 
     double T0 = phase.getPhase().getTemperature() * referenceSystem.getPhase(0).getComponent(0).getTC() / TCmix * alfa0
-	/ alfaMix;
+        / alfaMix;
     double P0 = phase.getPhase().getPressure() * referenceSystem.getPhase(0).getComponent(0).getPC() / PCmix * alfa0
-	/ alfaMix;
+        / alfaMix;
 
     if (Double.isNaN(T0) || Double.isNaN(P0)) {
       P0 = 1.0;
@@ -190,18 +190,18 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
     double CpID = referenceSystem.getLowestGibbsEnergyPhase().getComponent(0).getCp0(T0);
     double Ffunc = 1.0 + 0.053432 * redDens - 0.030182 * redDens * redDens - 0.029725 * redDens * redDens * redDens;
     double condIntRef = (1.18653 * nstarRef * (CpID - 2.5 * neqsim.thermo.ThermodynamicConstantsInterface.R) * Ffunc)
-	/ (referenceSystem.getMolarMass()); // *1e3;
+        / (referenceSystem.getMolarMass()); // *1e3;
 
     double nstarMix = calcMixLPViscosity();
     double FfuncMix = 1.0 + 0.053432 * redDens - 0.030182 * redDens * redDens - 0.029725 * redDens * redDens * redDens;
     double CpIDmix = phase.getPhase().getCp0();
     double condIntMix = (1.18653 * nstarMix * (CpIDmix - 2.5 * neqsim.thermo.ThermodynamicConstantsInterface.R)
-	* FfuncMix) / (Mmix / 1.0e3); // *1e3;
+        * FfuncMix) / (Mmix / 1.0e3); // *1e3;
 
     double refConductivity = getRefComponentConductivity(T0, P0);
 
     conductivity = Math.pow(TCmix / Tc0, -1.0 / 6.0) * Math.pow(PCmix / Pc0, 2.0 / 3.0) * Math.pow(Mmix / M0, -0.5)
-	* alfaMix / alfa0 * (refConductivity - condIntRef) + condIntMix;
+        * alfaMix / alfa0 * (refConductivity - condIntRef) + condIntMix;
     return conductivity;
   }
 
@@ -224,15 +224,15 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
     molDens = referenceSystem.getLowestGibbsEnergyPhase().getDensity() * 1e-3;
 
     double viscRefO = GVcoef[0] * Math.pow(temp, -1.0) + GVcoef[1] * Math.pow(temp, -2.0 / 3.0)
-	+ GVcoef[2] * Math.pow(temp, -1.0 / 3.0) + GVcoef[3] + GVcoef[4] * Math.pow(temp, 1.0 / 3.0)
-	+ GVcoef[5] * Math.pow(temp, 2.0 / 3.0) + GVcoef[6] * temp + GVcoef[7] * Math.pow(temp, 4.0 / 3.0)
-	+ GVcoef[8] * Math.pow(temp, 5.0 / 3.0);
+        + GVcoef[2] * Math.pow(temp, -1.0 / 3.0) + GVcoef[3] + GVcoef[4] * Math.pow(temp, 1.0 / 3.0)
+        + GVcoef[5] * Math.pow(temp, 2.0 / 3.0) + GVcoef[6] * temp + GVcoef[7] * Math.pow(temp, 4.0 / 3.0)
+        + GVcoef[8] * Math.pow(temp, 5.0 / 3.0);
 
     double viscRef1 = (condRefA + condRefB * Math.pow(condRefC - Math.log(temp / condRefF), 2.0)) * molDens;
 
     double temp1 = Math.pow(molDens, 0.1) * (condRefJ[1] + condRefJ[2] / Math.pow(temp, 3.0 / 2.0));
     double temp2 = redMolDens * Math.pow(molDens, 0.5)
-	* (condRefJ[4] + condRefJ[5] / temp + condRefJ[6] / Math.pow(temp, 2.0));
+        * (condRefJ[4] + condRefJ[5] / temp + condRefJ[6] / Math.pow(temp, 2.0));
     double temp3 = Math.exp(temp1 + temp2);
 
     double dTfreeze = temp - 90.69;
@@ -245,7 +245,7 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
     }
     double temp4 = Math.pow(molDens, 0.1) * (condRefK[1] + condRefK[2] / Math.pow(temp, 3.0 / 2.0));
     double temp5 = redMolDens * Math.pow(molDens, 0.5)
-	* (condRefK[4] + condRefK[5] / temp + condRefK[6] / Math.pow(temp, 2.0));
+        * (condRefK[4] + condRefK[5] / temp + condRefK[6] / Math.pow(temp, 2.0));
     double temp6 = Math.exp(temp4 + temp5);
     condRefG = (1.0 - HTAN) / 2.0;
     double viscRef3 = condRefG * Math.exp(condRefK[0] + condRefK[3] / temp) * (temp6 - 1.0);
@@ -260,7 +260,7 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
     if (temp > HIGH_T_THRESHOLD) {
       double correction = 1.0 + HIGH_T_CORRECTION_SLOPE * (temp - HIGH_T_THRESHOLD);
       if (correction < 0.70) {
-	correction = 0.70;
+        correction = 0.70;
       }
       refCond *= correction;
     }
@@ -277,23 +277,23 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
    */
   public double getRefComponentViscosity(double temp, double pres) {
     double[] GVcoef = { -2.090975e5, 2.647269e5, -1.472818e5, 4.716740e4, -9.491872e3, 1.219979e3, -9.627993e1,
-	4.274152, -8.141531e-2 };
+        4.274152, -8.141531e-2 };
     double visRefE = 1.0;
     double[] viscRefJ = { -1.035060586e1, 1.7571599671e1, -3.0193918656e3, 1.8873011594e2, 4.2903609488e-2,
-	1.4529023444e2, 6.1276818706e3 };
+        1.4529023444e2, 6.1276818706e3 };
     // double viscRefK[] = {-9.74602, 18.0834, -4126.66, 44.6055, 0.9676544, 81.8134, 15649.9};
 
     double molDens = ThermodynamicConstantsInterface.atm / ThermodynamicConstantsInterface.R / temp / 1.0e3;
     double critMolDens = 10.15;
     double redMolDens = (molDens - critMolDens) / critMolDens;
     double viscRefO = GVcoef[0] * Math.pow(temp, -1.0) + GVcoef[1] * Math.pow(temp, -2.0 / 3.0)
-	+ GVcoef[2] * Math.pow(temp, -1.0 / 3.0) + GVcoef[3] + GVcoef[4] * Math.pow(temp, 1.0 / 3.0)
-	+ GVcoef[5] * Math.pow(temp, 2.0 / 3.0) + GVcoef[6] * temp + GVcoef[7] * Math.pow(temp, 4.0 / 3.0)
-	+ GVcoef[8] * Math.pow(temp, 5.0 / 3.0);
+        + GVcoef[2] * Math.pow(temp, -1.0 / 3.0) + GVcoef[3] + GVcoef[4] * Math.pow(temp, 1.0 / 3.0)
+        + GVcoef[5] * Math.pow(temp, 2.0 / 3.0) + GVcoef[6] * temp + GVcoef[7] * Math.pow(temp, 4.0 / 3.0)
+        + GVcoef[8] * Math.pow(temp, 5.0 / 3.0);
 
     double temp1 = Math.pow(molDens, 0.1) * (viscRefJ[1] + viscRefJ[2] / Math.pow(temp, 3.0 / 2.0));
     double temp2 = redMolDens * Math.pow(molDens, 0.5)
-	* (viscRefJ[4] + viscRefJ[5] / temp + viscRefJ[6] / Math.pow(temp, 2.0));
+        * (viscRefJ[4] + viscRefJ[5] / temp + viscRefJ[6] / Math.pow(temp, 2.0));
     double temp3 = Math.exp(temp1 + temp2);
 
     double dTfreeze = temp - 90.69;
@@ -341,25 +341,25 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
     double[] alphai = new double[phase.getPhase().getNumberOfComponents()];
     for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
       alphai[i] = 1.0 + 6.004e-4 * Math.pow(redDens, 2.043)
-	  * Math.pow(phase.getPhase().getComponent(i).getMolarMass() * 1e3, 1.086);
+          * Math.pow(phase.getPhase().getComponent(i).getMolarMass() * 1e3, 1.086);
     }
     alfaMix = 0.0;
     alfa0 = 1.0 + 6.004e-4 * Math.pow(redDens, 2.043) * Math.pow(referenceSystem.getMolarMass() * 1e3, 1.086);
     for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
       for (int j = 0; j < phase.getPhase().getNumberOfComponents(); j++) {
-	alfaMix += phase.getPhase().getComponent(i).getx() * phase.getPhase().getComponent(j).getx()
-	    * Math.sqrt(alphai[i] * alphai[j]);
+        alfaMix += phase.getPhase().getComponent(i).getx() * phase.getPhase().getComponent(j).getx()
+            * Math.sqrt(alphai[i] * alphai[j]);
       }
     }
 
     double T0 = phase.getPhase().getTemperature() * referenceSystem.getPhase(0).getComponent(0).getTC() / TCmix
-	* alfaMix / alfa0;
+        * alfaMix / alfa0;
     double P0 = ThermodynamicConstantsInterface.referencePressure * referenceSystem.getPhase(0).getComponent(0).getPC()
-	/ PCmix * alfaMix / alfa0;
+        / PCmix * alfaMix / alfa0;
 
     double refVisosity = getRefComponentViscosity(T0, P0);
     double viscosity = refVisosity * Math.pow(TCmix / Tc0, -1.0 / 6.0) * Math.pow(PCmix / Pc0, 2.0 / 3.0)
-	* Math.pow(Mmix / M0, 0.5) * alfaMix / alfa0;
+        * Math.pow(Mmix / M0, 0.5) * alfaMix / alfa0;
     return viscosity;
   }
 }

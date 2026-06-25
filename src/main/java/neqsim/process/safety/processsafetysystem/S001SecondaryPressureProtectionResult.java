@@ -1,10 +1,10 @@
 package neqsim.process.safety.processsafetysystem;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 /**
  * Result from NORSOK S-001 Clause 10.4.7 secondary pressure protection screening.

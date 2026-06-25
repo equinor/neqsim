@@ -150,8 +150,8 @@ class SafetyEnvelopeTest {
 
       // Higher pressure should result in lower MDMT
       if (i > 0) {
-	assertTrue(temps[i] <= temps[i - 1] + 1.0, // Allow small tolerance
-	    "MDMT should decrease with increasing pressure");
+        assertTrue(temps[i] <= temps[i - 1] + 1.0, // Allow small tolerance
+            "MDMT should decrease with increasing pressure");
       }
     }
   }

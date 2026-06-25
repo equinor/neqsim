@@ -110,9 +110,9 @@ public class ControlValveSizing_simple extends ControlValveSizing {
       double Y = Math.max(1.0 - xEffective / (3.0 * Fgamma * xT), 2.0 / 3.0);
 
       if (choked && allowChoked) {
-	Kv = flowM3hr_std / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / (xT * Fgamma));
+        Kv = flowM3hr_std / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / (xT * Fgamma));
       } else {
-	Kv = flowM3hr_std / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / x);
+        Kv = flowM3hr_std / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / x);
       }
 
       // Apply discharge coefficient for production chokes
@@ -175,9 +175,9 @@ public class ControlValveSizing_simple extends ControlValveSizing {
 
       double denominator;
       if (choked && allowChoked) {
-	denominator = Math.sqrt(MW * T * Z / (xT * Fgamma));
+        denominator = Math.sqrt(MW * T * Z / (xT * Fgamma));
       } else {
-	denominator = Math.sqrt(MW * T * Z / x);
+        denominator = Math.sqrt(MW * T * Z / x);
       }
 
       // IEC 60534 formula yields standard volumetric flow [m3/h at 273.15 K, 101.325 kPa]
@@ -247,9 +247,9 @@ public class ControlValveSizing_simple extends ControlValveSizing {
 
       double denominator;
       if (choked && allowChoked) {
-	denominator = Math.sqrt(MW * T * Z / (xT * Fgamma));
+        denominator = Math.sqrt(MW * T * Z / (xT * Fgamma));
       } else {
-	denominator = Math.sqrt(MW * T * Z / x);
+        denominator = Math.sqrt(MW * T * Z / x);
       }
 
       requiredKvAdjusted = Q_m3h_std / (N9 * P1_kPa * Y) * denominator / Cd;
@@ -307,33 +307,33 @@ public class ControlValveSizing_simple extends ControlValveSizing {
       int maxIter = 100;
 
       for (int i = 0; i < maxIter; i++) {
-	P2_mid = (P2_low + P2_high) / 2.0;
+        P2_mid = (P2_low + P2_high) / 2.0;
 
-	double P1_kPa = P1 * 100.0;
-	double dP_kPa = (P1 - P2_mid) * 100.0;
-	double x = dP_kPa / P1_kPa;
-	double xChoked = Fgamma * xT;
+        double P1_kPa = P1 * 100.0;
+        double dP_kPa = (P1 - P2_mid) * 100.0;
+        double x = dP_kPa / P1_kPa;
+        double xChoked = Fgamma * xT;
 
-	boolean choked = x >= xChoked;
-	double xEffective = choked && allowChoked ? xChoked : x;
-	double Y = Math.max(1.0 - xEffective / (3.0 * Fgamma * xT), 2.0 / 3.0);
+        boolean choked = x >= xChoked;
+        double xEffective = choked && allowChoked ? xChoked : x;
+        double Y = Math.max(1.0 - xEffective / (3.0 * Fgamma * xT), 2.0 / 3.0);
 
-	double calcKv;
-	if (choked && allowChoked) {
-	  calcKv = Q_m3_hr_std / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / (xT * Fgamma)) / Cd;
-	} else {
-	  calcKv = Q_m3_hr_std / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / x) / Cd;
-	}
+        double calcKv;
+        if (choked && allowChoked) {
+          calcKv = Q_m3_hr_std / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / (xT * Fgamma)) / Cd;
+        } else {
+          calcKv = Q_m3_hr_std / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / x) / Cd;
+        }
 
-	if (Math.abs(calcKv - KvAdjusted) / KvAdjusted < tolerance) {
-	  break;
-	}
+        if (Math.abs(calcKv - KvAdjusted) / KvAdjusted < tolerance) {
+          break;
+        }
 
-	if (calcKv > KvAdjusted) {
-	  P2_high = P2_mid;
-	} else {
-	  P2_low = P2_mid;
-	}
+        if (calcKv > KvAdjusted) {
+          P2_high = P2_mid;
+        } else {
+          P2_low = P2_mid;
+        }
       }
 
       return P2_mid * 1e5;

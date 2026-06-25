@@ -46,7 +46,7 @@ public class ProductionProfile implements Serializable {
      * @param reservoirPressureBara average reservoir pressure in bara
      */
     public Point(double timeYears, double rateSm3PerDay, double revenuePerDay, double energyKWhPerDay,
-	double emissionsKgPerDay, double reservoirPressureBara) {
+        double emissionsKgPerDay, double reservoirPressureBara) {
       this.timeYears = timeYears;
       this.rateSm3PerDay = rateSm3PerDay;
       this.revenuePerDay = revenuePerDay;
@@ -127,7 +127,7 @@ public class ProductionProfile implements Serializable {
   public void add(double timeYears, double rateSm3PerDay, double revenuePerDay, double energyKWhPerDay,
       double emissionsKgPerDay, double reservoirPressureBara) {
     points.add(
-	new Point(timeYears, rateSm3PerDay, revenuePerDay, energyKWhPerDay, emissionsKgPerDay, reservoirPressureBara));
+        new Point(timeYears, rateSm3PerDay, revenuePerDay, energyKWhPerDay, emissionsKgPerDay, reservoirPressureBara));
   }
 
   /**

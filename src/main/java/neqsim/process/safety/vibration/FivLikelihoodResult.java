@@ -1,9 +1,9 @@
 package neqsim.process.safety.vibration;
 
-import com.google.gson.GsonBuilder;
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import com.google.gson.GsonBuilder;
 
 /**
  * Result of an Energy Institute AVIFF flow-induced vibration screening for a single piping circuit.

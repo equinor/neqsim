@@ -55,7 +55,7 @@ public class TurboMachineryChartLibraryTest {
     new neqsim.thermodynamicoperations.ThermodynamicOperations(gas).TPflash();
     gas.initThermoProperties();
     CompressorChartKhader2015 chart = library.getCompressorChart(TurboMachineryChartLibrary.GENERIC_CENTRIFUGAL_3SPEED,
-	gas, 0.3);
+        gas, 0.3);
     double head = chart.getPolytropicHead(2600.0, 10500.0);
     double eff = chart.getPolytropicEfficiency(2600.0, 10500.0);
     assertTrue(head > 0.0, "head must be positive: " + head);
@@ -94,13 +94,13 @@ public class TurboMachineryChartLibraryTest {
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-	library.getCompressorChart("DOES_NOT_EXIST", gas, 0.3);
+        library.getCompressorChart("DOES_NOT_EXIST", gas, 0.3);
       }
     });
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-	library.getExpanderChart("DOES_NOT_EXIST", gas);
+        library.getExpanderChart("DOES_NOT_EXIST", gas);
       }
     });
   }

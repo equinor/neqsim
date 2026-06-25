@@ -52,7 +52,7 @@ public class TransientWallHeatTransferTest {
 
     // The mean should be between inner fluid and outer ambient
     assertTrue(T_mean > T_outer_ambient && T_mean < T_inner_fluid,
-	"Mean temp should be between boundaries. Mean: " + T_mean);
+        "Mean temp should be between boundaries. Mean: " + T_mean);
     // Inner should be hotter than outer (heat flows outward)
     assertTrue(T_in > T_out, "Inner should be hotter than outer. Inner: " + T_in + ", Outer: " + T_out);
   }
@@ -76,7 +76,7 @@ public class TransientWallHeatTransferTest {
     double T_out_final = wallModel.getOuterWallTemperature();
 
     assertTrue(T_in_final > T_in_initial,
-	"Inner wall should heat up when outside is hot. Initial: " + T_in_initial + ", Final: " + T_in_final);
+        "Inner wall should heat up when outside is hot. Initial: " + T_in_initial + ", Final: " + T_in_final);
     assertTrue(T_out_final > T_in_final, "Outer wall should be hotter than inner wall");
   }
 
@@ -112,7 +112,7 @@ public class TransientWallHeatTransferTest {
     // Profile should be increasing from inside (index 0) to outside (last index)
     for (int i = 1; i < profile.length; i++) {
       assertTrue(profile[i] >= profile[i - 1] - 0.5,
-	  "Temperature profile should be monotonically increasing from inside to outside");
+          "Temperature profile should be monotonically increasing from inside to outside");
     }
   }
 
@@ -121,13 +121,14 @@ public class TransientWallHeatTransferTest {
     // Create composite wall (e.g., Type III vessel with liner)
     // Inner layer: HDPE liner, k = 0.5 W/(m*K), 5mm thick
     // Outer layer: Carbon fiber composite, k = 5 W/(m*K), 20mm thick
-    TransientWallHeatTransfer compositeWall = new TransientWallHeatTransfer(0.005, 0.5, 950.0, 2000.0, // Inner layer
-												       // (HDPE):
-												       // thickness,
-												       // k, rho, Cp
-	0.020, 5.0, 1600.0, 1000.0, // Outer layer (CFRP): thickness, k, rho, Cp
-	293.0, // Initial temperature
-	20); // Total nodes
+    TransientWallHeatTransfer compositeWall = new TransientWallHeatTransfer(0.005, 0.5, 950.0, 2000.0, // Inner
+                                                                                                       // layer
+        // (HDPE):
+        // thickness,
+        // k, rho, Cp
+        0.020, 5.0, 1600.0, 1000.0, // Outer layer (CFRP): thickness, k, rho, Cp
+        293.0, // Initial temperature
+        20); // Total nodes
 
     // Fire scenario: cold gas inside, hot fire outside
     // advanceTimeStep(dt, innerFluidTemp, innerH, outerTemp, outerH)
@@ -139,7 +140,7 @@ public class TransientWallHeatTransferTest {
     double T_outer = compositeWall.getOuterWallTemperature();
 
     assertTrue(T_outer > T_inner,
-	"Outer should be hotter than inner for fire case. Inner: " + T_inner + ", Outer: " + T_outer);
+        "Outer should be hotter than inner for fire case. Inner: " + T_inner + ", Outer: " + T_outer);
     assertTrue(T_inner < 600.0, "Liner should provide thermal protection. Inner: " + T_inner);
   }
 
@@ -161,7 +162,7 @@ public class TransientWallHeatTransferTest {
 
     // With heat from outside and adiabatic inside, outer should be hotter
     assertTrue(T_outer > T_inner,
-	"Outer should be hotter than inner during heating. Outer: " + T_outer + ", Inner: " + T_inner);
+        "Outer should be hotter than inner during heating. Outer: " + T_outer + ", Inner: " + T_inner);
     // Wall should be heating up
     assertTrue(thickWall.getMeanWallTemperature() > 300.0, "Wall should be heating up from initial 300K");
   }

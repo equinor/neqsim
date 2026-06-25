@@ -9,6 +9,7 @@ import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
  * Salt-water viscosity using Laliberté (2007) with erratum coefficients.
+ *
  * <p>
  * Mixture rule (weight fractions): {@code η_m = η_w^{w_w} Π η_i^{w_i}}, where {@code η_w} is the pure-water viscosity
  * (from NeqSim's water correlation) and {@code η_i} are "solute viscosities" from Laliberté:
@@ -18,11 +19,14 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  *                 / ( ν5 (1 - w_w)^{ν6} + 1 )
  * </pre>
  *
+ * <p>
  * with {@code w_w} = mass fraction of water in the liquid phase.
+ *
  * <p>
  * Supported salts (coefficients ν1–ν6): NaCl, KCl, KCOOH (potassium formate), NaBr, CaCl2, KBr. If a salt is not
  * recognized, NaCl coefficients are used, as suggested in the supplementary info to the paper.
  *
+ * <p>
  * References: - G. Laliberté, Ind. Eng. Chem. Res., 2007, 46, 8865–8872 (+ erratum).
  *
  * @author Even Solbraa
@@ -37,7 +41,7 @@ public class Water extends Viscosity {
     LALIBERTE_COEFFS.put("NACL", new double[] { 16.2218, 1.3229, 1.4849, 0.0075, 30.7802, 2.0583 });
     LALIBERTE_COEFFS.put("KCL", new double[] { 6.4883, 1.3175, -0.7778, 0.0927, -1.3000, 2.0811 });
     LALIBERTE_COEFFS.put("KCOOH", new double[] { 15.0442, 4.5087, 1.5924, 0.0113, 81.0129, 11.8962 }); // potassium
-												       // formate
+    // formate
     LALIBERTE_COEFFS.put("NABR", new double[] { 13.0291, 1.7478, 0.6041, 0.0108, 17.6807, 2.3831 });
     LALIBERTE_COEFFS.put("CACL2", new double[] { 32.0276, 0.7879, -1.1495, 0.0027, 780860.75, 5.8442 });
     LALIBERTE_COEFFS.put("KBR", new double[] { 348.320, -0.0003, -349.1532, -0.0043, -1.1044, 0.7632 });
@@ -96,11 +100,11 @@ public class Water extends Viscosity {
     double covered = 0.0;
     for (int i = 0; i < n; i++) {
       if (i == waterIndex) {
-	continue;
+        continue;
       }
       String key = canonicalSaltKey(liquidPhase.getPhase().getComponent(i).getComponentName());
       if (key != null) {
-	covered += liquidPhase.getPhase().getWtFrac(i);
+        covered += liquidPhase.getPhase().getWtFrac(i);
       }
     }
     // tolerate tiny amounts of other species (e.g., dissolved gases)
@@ -112,10 +116,10 @@ public class Water extends Viscosity {
     for (int i = 0; i < n; i++) {
       String nm = liquidPhase.getPhase().getComponent(i).getComponentName();
       if (nm != null && nm.trim().equalsIgnoreCase("water")) {
-	return i;
+        return i;
       }
       if (nm != null && nm.trim().equalsIgnoreCase("H2O")) {
-	return i;
+        return i;
       }
     }
     return -1;
@@ -202,20 +206,20 @@ public class Water extends Viscosity {
 
     for (int i = 0; i < n; i++) {
       if (i == iw) {
-	continue;
+        continue;
       }
       double wi = liquidPhase.getPhase().getWtFrac(i);
       if (wi <= 0.0) {
-	continue;
+        continue;
       }
 
       String key = canonicalSaltKey(liquidPhase.getPhase().getComponent(i).getComponentName());
       double[] v = coeffsForSaltOrDefault(key);
 
       if (key == null) {
-	// If truly unknown and not negligible, log once and still fall back to NaCl set.
-	logger.debug("Viscosity (Water): component '{}' not recognized as salt – using NaCl coefficients.",
-	    liquidPhase.getPhase().getComponent(i).getComponentName());
+        // If truly unknown and not negligible, log once and still fall back to NaCl set.
+        logger.debug("Viscosity (Water): component '{}' not recognized as salt – using NaCl coefficients.",
+            liquidPhase.getPhase().getComponent(i).getComponentName());
       }
 
       double etaI_mPaS = soluteViscosity_mPaS(v, tempC, ww);

@@ -3,6 +3,8 @@ package neqsim.process.processmodel.diagram;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
@@ -18,8 +20,6 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Test class demonstrating HYSYS-style diagram generation.
@@ -122,7 +122,7 @@ public class HysysStyleDiagramTest {
     // Create exporter with HYSYS style
     ProcessDiagramExporter exporter = new ProcessDiagramExporter(processSystem);
     exporter.setTitle("Natural Gas Processing - HYSYS Style").setDiagramStyle(DiagramStyle.HYSYS)
-	.setDetailLevel(DiagramDetailLevel.ENGINEERING).setShowStreamValues(true);
+        .setDetailLevel(DiagramDetailLevel.ENGINEERING).setShowStreamValues(true);
 
     // Generate DOT output
     String dotContent = exporter.toDOT();
@@ -139,9 +139,9 @@ public class HysysStyleDiagramTest {
     // Verify content
     org.junit.jupiter.api.Assertions.assertTrue(dotContent.contains("digraph"), "Should contain digraph");
     org.junit.jupiter.api.Assertions.assertTrue(dotContent.contains("HYSYS style"),
-	"Should contain HYSYS style comment");
+        "Should contain HYSYS style comment");
     org.junit.jupiter.api.Assertions.assertTrue(dotContent.contains("#0066CC"),
-	"Should contain HYSYS blue stream color");
+        "Should contain HYSYS blue stream color");
   }
 
   /**
@@ -154,7 +154,7 @@ public class HysysStyleDiagramTest {
     // Create exporter with PRO/II style
     ProcessDiagramExporter exporter = new ProcessDiagramExporter(processSystem);
     exporter.setTitle("Natural Gas Processing - PRO/II Style").setDiagramStyle(DiagramStyle.PROII)
-	.setDetailLevel(DiagramDetailLevel.ENGINEERING);
+        .setDetailLevel(DiagramDetailLevel.ENGINEERING);
 
     // Generate DOT output
     String dotContent = exporter.toDOT();
@@ -169,9 +169,9 @@ public class HysysStyleDiagramTest {
     // Verify content
     org.junit.jupiter.api.Assertions.assertTrue(dotContent.contains("digraph"), "Should contain digraph");
     org.junit.jupiter.api.Assertions.assertTrue(dotContent.contains("PRO/II style"),
-	"Should contain PRO/II style comment");
+        "Should contain PRO/II style comment");
     org.junit.jupiter.api.Assertions.assertTrue(dotContent.contains("#F5F5F5"),
-	"Should contain PRO/II gray background");
+        "Should contain PRO/II gray background");
   }
 
   /**
@@ -184,7 +184,7 @@ public class HysysStyleDiagramTest {
     // Create exporter with Aspen Plus style
     ProcessDiagramExporter exporter = new ProcessDiagramExporter(processSystem);
     exporter.setTitle("Natural Gas Processing - Aspen Plus Style").setDiagramStyle(DiagramStyle.ASPEN_PLUS)
-	.setDetailLevel(DiagramDetailLevel.ENGINEERING);
+        .setDetailLevel(DiagramDetailLevel.ENGINEERING);
 
     // Generate DOT output
     String dotContent = exporter.toDOT();
@@ -199,7 +199,7 @@ public class HysysStyleDiagramTest {
     // Verify content
     org.junit.jupiter.api.Assertions.assertTrue(dotContent.contains("digraph"), "Should contain digraph");
     org.junit.jupiter.api.Assertions.assertTrue(dotContent.contains("Aspen Plus style"),
-	"Should contain Aspen Plus style comment");
+        "Should contain Aspen Plus style comment");
   }
 
   /**
@@ -215,7 +215,7 @@ public class HysysStyleDiagramTest {
     for (DiagramStyle style : DiagramStyle.values()) {
       ProcessDiagramExporter exporter = new ProcessDiagramExporter(processSystem);
       exporter.setTitle("Natural Gas Processing - " + style.getDisplayName()).setDiagramStyle(style)
-	  .setDetailLevel(DiagramDetailLevel.ENGINEERING);
+          .setDetailLevel(DiagramDetailLevel.ENGINEERING);
 
       String dotContent = exporter.toDOT();
       String filename = style.name().toLowerCase() + "-style.dot";

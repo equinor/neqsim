@@ -65,7 +65,7 @@ class NewMeasurementDevicesTest {
     assertEquals(CompositionAnalyzer.AnalyzerPhase.GAS, aiGas.getAnalyzerPhase());
 
     CompositionAnalyzer aiOverall = new CompositionAnalyzer("AI-002", s, "methane",
-	CompositionAnalyzer.AnalyzerPhase.OVERALL);
+        CompositionAnalyzer.AnalyzerPhase.OVERALL);
     assertEquals(0.6, aiOverall.getMeasuredValue(""), 1.0e-6);
   }
 
@@ -80,7 +80,7 @@ class NewMeasurementDevicesTest {
   void compositionAnalyzerRejectsBadInputs() {
     Stream s = makeStream("s", 30.0, 25.0, new String[] { "methane" }, new double[] { 1.0 });
     assertThrows(IllegalArgumentException.class,
-	() -> new CompositionAnalyzer(s, " ", CompositionAnalyzer.AnalyzerPhase.OVERALL));
+        () -> new CompositionAnalyzer(s, " ", CompositionAnalyzer.AnalyzerPhase.OVERALL));
     assertThrows(IllegalArgumentException.class, () -> new CompositionAnalyzer(s, "methane", null));
   }
 

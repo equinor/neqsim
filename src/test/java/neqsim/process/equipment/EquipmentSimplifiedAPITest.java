@@ -1,6 +1,8 @@
 package neqsim.process.equipment;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -100,7 +102,7 @@ class EquipmentSimplifiedAPITest {
   @Test
   void testCreateValve() {
     Stream feed = EquipmentFactory.createStream("ValveFeed", gasFluid.clone(), 5000.0, "kg/hr", 80.0, "bara", 25.0,
-	"C");
+        "C");
     ThrottlingValve valve = EquipmentFactory.createValve("Valve1", feed, 30.0, 50.0);
 
     assertEquals("Valve1", valve.getName());
@@ -135,14 +137,14 @@ class EquipmentSimplifiedAPITest {
   @Test
   void testCreateSeparator() {
     Separator sep = EquipmentFactory.createSeparator("Sep1",
-	EquipmentFactory.createStream("SepFeed", gasFluid.clone(), 5000.0, "kg/hr", 50.0, "bara", 25.0, "C"));
+        EquipmentFactory.createStream("SepFeed", gasFluid.clone(), 5000.0, "kg/hr", 50.0, "bara", 25.0, "C"));
     assertEquals("Sep1", sep.getName());
   }
 
   @Test
   void testCreateThreePhaseSeparator() {
     ThreePhaseSeparator sep = EquipmentFactory.createThreePhaseSeparator("3PSep",
-	EquipmentFactory.createStream("3PSepFeed", gasFluid.clone(), 5000.0, "kg/hr", 50.0, "bara", 25.0, "C"));
+        EquipmentFactory.createStream("3PSepFeed", gasFluid.clone(), 5000.0, "kg/hr", 50.0, "bara", 25.0, "C"));
     assertEquals("3PSep", sep.getName());
   }
 
@@ -195,7 +197,7 @@ class EquipmentSimplifiedAPITest {
   @Test
   void testGetEquipmentStateCompressor() {
     Stream feed = EquipmentFactory.createStream("StateFeed", gasFluid.clone(), 5000.0, "kg/hr", 50.0, "bara", 25.0,
-	"C");
+        "C");
     Compressor comp = EquipmentFactory.createCompressor("StateComp", feed, 80.0, 0.85);
 
     ProcessSystem process = new ProcessSystem();
@@ -222,7 +224,7 @@ class EquipmentSimplifiedAPITest {
   @Test
   void testGetEquipmentStateHeater() {
     Stream feed = EquipmentFactory.createStream("HStateFeed", gasFluid.clone(), 5000.0, "kg/hr", 50.0, "bara", 25.0,
-	"C");
+        "C");
     Heater heater = EquipmentFactory.createHeater("HStateHeater", feed, 80.0, "C");
 
     ProcessSystem process = new ProcessSystem();
@@ -266,7 +268,7 @@ class EquipmentSimplifiedAPITest {
   @Test
   void testGetEquipmentStateValve() {
     Stream feed = EquipmentFactory.createStream("VStateFeed", gasFluid.clone(), 5000.0, "kg/hr", 80.0, "bara", 25.0,
-	"C");
+        "C");
     ThrottlingValve valve = EquipmentFactory.createValve("VState", feed, 30.0, 50.0);
 
     ProcessSystem process = new ProcessSystem();
@@ -309,7 +311,7 @@ class EquipmentSimplifiedAPITest {
     // from TwoPortEquipment. Heater overrides getEquipmentState, so test via
     // the unified outlet property accessors on a compressor.
     Stream feed = EquipmentFactory.createStream("DefaultFeed", gasFluid.clone(), 5000.0, "kg/hr", 50.0, "bara", 25.0,
-	"C");
+        "C");
     Compressor comp = EquipmentFactory.createCompressor("DefaultComp", feed, 80.0, 0.85);
 
     ProcessSystem process = new ProcessSystem();

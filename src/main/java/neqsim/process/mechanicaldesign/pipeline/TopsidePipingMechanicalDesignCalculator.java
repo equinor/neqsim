@@ -219,7 +219,8 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
     ASME_B31_3_ALLOWABLE_STRESSES.put("A312-TP321", new double[] { 138.0, 115.0, 103.0, 93.0, 85.0 });
     ASME_B31_3_ALLOWABLE_STRESSES.put("A312-TP347", new double[] { 138.0, 127.0, 114.0, 105.0, 97.0 });
     ASME_B31_3_ALLOWABLE_STRESSES.put("A790-S31803", new double[] { 207.0, 192.0, 177.0, 165.0, 0.0 }); // Duplex
-    ASME_B31_3_ALLOWABLE_STRESSES.put("A790-S32750", new double[] { 241.0, 226.0, 211.0, 197.0, 0.0 }); // Super duplex
+    ASME_B31_3_ALLOWABLE_STRESSES.put("A790-S32750", new double[] { 241.0, 226.0, 211.0, 197.0, 0.0 }); // Super
+                                                                                                        // duplex
   }
 
   /**
@@ -310,17 +311,17 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
     if (liquidFraction < 0.01) {
       // Gas service
       if (actualVelocity > maxGasVelocity) {
-	velocityCheckPassed = false;
+        velocityCheckPassed = false;
       }
     } else if (liquidFraction > 0.99) {
       // Liquid service
       if (actualVelocity > maxLiquidVelocity) {
-	velocityCheckPassed = false;
+        velocityCheckPassed = false;
       }
     } else {
       // Multiphase
       if (actualVelocity > maxMultiphaseVelocity) {
-	velocityCheckPassed = false;
+        velocityCheckPassed = false;
       }
     }
 
@@ -438,7 +439,7 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
 
     double rhoV2 = mixtureDensity * actualVelocity * actualVelocity;
     fivScreeningNumber = rhoV2 * Math.pow(spanLength / getOuterDiameter(), 4)
-	/ (getYoungsModulus() * 1e6 * getNominalWallThickness() / getOuterDiameter());
+        / (getYoungsModulus() * 1e6 * getNominalWallThickness() / getOuterDiameter());
 
     appliedStandards.add("Energy Institute Guidelines - FIV Screening");
     return fivScreeningNumber;
@@ -621,8 +622,8 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
     requiredLoopLength = Math.sqrt(3.0 * getOuterDiameter() * deltaL / 0.03);
 
     double area = Math.PI
-	* (getOuterDiameter() * getOuterDiameter() - Math.pow(getOuterDiameter() - 2 * getNominalWallThickness(), 2))
-	/ 4.0;
+        * (getOuterDiameter() * getOuterDiameter() - Math.pow(getOuterDiameter() - 2 * getNominalWallThickness(), 2))
+        / 4.0;
     anchorForce = thermalExpansionStress * 1e6 * area / 1000;
 
     double Sc = allowableStress;

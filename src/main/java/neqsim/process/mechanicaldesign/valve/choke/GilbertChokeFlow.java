@@ -185,7 +185,7 @@ public class GilbertChokeFlow extends MultiphaseChokeFlow {
 
     // Gilbert equation: q_L = P * d^a / (C * GLR^b) in STB/day
     double q_stb_day = P_psig * Math.pow(d_64ths, diameterExponent)
-	/ (correlationConstant * Math.pow(GLR_scf_stb, glrExponent));
+        / (correlationConstant * Math.pow(GLR_scf_stb, glrExponent));
 
     // Convert STB/day to m3/s
     double q_m3_s = q_stb_day * 0.158987 / 86400.0;
@@ -299,7 +299,7 @@ public class GilbertChokeFlow extends MultiphaseChokeFlow {
 
     // Invert Gilbert: d = ((q * C * GLR^b) / P)^(1/a)
     double d_64ths = Math.pow(q_stb_day * correlationConstant * Math.pow(GLR_scf_stb, glrExponent) / P_psig,
-	1.0 / diameterExponent);
+        1.0 / diameterExponent);
 
     // Convert to meters
     return d_64ths / 64.0 * 0.0254;

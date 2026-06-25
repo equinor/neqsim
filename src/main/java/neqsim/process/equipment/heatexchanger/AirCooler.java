@@ -427,7 +427,7 @@ public class AirCooler extends Cooler {
    */
   public double getFanStaticPressure(double volumeFlow) {
     return fanCurveA0 + fanCurveA1 * volumeFlow + fanCurveA2 * volumeFlow * volumeFlow
-	+ fanCurveA3 * volumeFlow * volumeFlow * volumeFlow;
+        + fanCurveA3 * volumeFlow * volumeFlow * volumeFlow;
   }
 
   // ======================== Result getters ========================
@@ -636,7 +636,7 @@ public class AirCooler extends Cooler {
     if (dt1 <= 0 || dt2 <= 0) {
       lmtd = Math.max(dt1, dt2);
       if (lmtd <= 0) {
-	lmtd = 1.0;
+        lmtd = 1.0;
       }
       return;
     }
@@ -702,7 +702,7 @@ public class AirCooler extends Cooler {
     // Briggs-Young: Nu = 0.134 * Re^0.681 * Pr^(1/3) * (finSpacing/finHeight)^0.2 *
     // (finSpacing/finThickness)^0.1134
     double Nu = 0.134 * Math.pow(Re, 0.681) * Math.pow(prAir, 1.0 / 3.0) * Math.pow(finSpacing / finHeight, 0.2)
-	* Math.pow(finSpacing / finThickness, 0.1134);
+        * Math.pow(finSpacing / finThickness, 0.1134);
 
     double hAir = Nu * kAir / tubeOuterDiameter;
 
@@ -740,7 +740,7 @@ public class AirCooler extends Cooler {
 
     // Overall U (bare tube basis): 1/U = 1/h_air + R_air + R_process + 1/h_process
     double resistance = 1.0 / Math.max(airSideHTC, 1.0) + airFoulingResistance + processFoulingResistance
-	+ 1.0 / Math.max(processSideHTC, 1.0);
+        + 1.0 / Math.max(processSideHTC, 1.0);
     overallU = 1.0 / resistance;
 
     // Required area
@@ -759,7 +759,7 @@ public class AirCooler extends Cooler {
     double finOD = tubeOuterDiameter + 2.0 * finHeight;
     double nFinsPerMeter = 1.0 / finPitch;
     double aFinPerTube = 2.0 * Math.PI / 4.0 * (finOD * finOD - tubeOuterDiameter * tubeOuterDiameter) * nFinsPerMeter
-	* tubeLength;
+        * tubeLength;
     totalFinArea = aFinPerTube * totalTubes;
 
     if (faceArea > 0 && airVolumeFlow > 0) {
@@ -798,7 +798,7 @@ public class AirCooler extends Cooler {
 
     // Robinson-Briggs: f = 18.93 * Re^(-0.316) * (Pt/do)^(-0.927) * (Pt/finOD)^0.515
     double f = 18.93 * Math.pow(Re, -0.316) * Math.pow(transversePitch / tubeOuterDiameter, -0.927)
-	* Math.pow(transversePitch / finOD, 0.515);
+        * Math.pow(transversePitch / finOD, 0.515);
 
     airSidePressureDrop = f * numberOfTubeRows * gMax * gMax / (2.0 * rhoAir);
   }
@@ -893,12 +893,12 @@ public class AirCooler extends Cooler {
     try {
       SystemInterface fluid = getOutletStream().getFluid();
       if (fluid != null) {
-	fluid.initProperties();
-	if (fluid.hasPhaseType("gas") && !fluid.hasPhaseType("oil") && !fluid.hasPhaseType("aqueous")) {
-	  processSideHTC = 120.0;
-	} else if (fluid.hasPhaseType("oil") || fluid.hasPhaseType("aqueous")) {
-	  processSideHTC = 500.0;
-	}
+        fluid.initProperties();
+        if (fluid.hasPhaseType("gas") && !fluid.hasPhaseType("oil") && !fluid.hasPhaseType("aqueous")) {
+          processSideHTC = 120.0;
+        } else if (fluid.hasPhaseType("oil") || fluid.hasPhaseType("aqueous")) {
+          processSideHTC = 500.0;
+        }
       }
     } catch (Exception ex) {
       logger.debug("Could not estimate process HTC: " + ex.getMessage());

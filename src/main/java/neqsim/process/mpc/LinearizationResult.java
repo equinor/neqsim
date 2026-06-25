@@ -327,7 +327,7 @@ public class LinearizationResult implements Serializable {
     double[] column = new double[gainMatrix.length];
     for (int i = 0; i < gainMatrix.length; i++) {
       if (mvIndex >= 0 && mvIndex < gainMatrix[i].length) {
-	column[i] = gainMatrix[i][mvIndex];
+        column[i] = gainMatrix[i][mvIndex];
       }
     }
     return column;
@@ -339,7 +339,7 @@ public class LinearizationResult implements Serializable {
     }
     for (int i = 0; i < names.length; i++) {
       if (name.equals(names[i])) {
-	return i;
+        return i;
       }
     }
     return -1;
@@ -364,7 +364,7 @@ public class LinearizationResult implements Serializable {
     for (int i = 0; i < cvNames.length; i++) {
       sb.append(String.format("%20s", cvNames[i]));
       for (int j = 0; j < mvNames.length; j++) {
-	sb.append(String.format(" %12.4f", gainMatrix[i][j]));
+        sb.append(String.format(" %12.4f", gainMatrix[i][j]));
       }
       sb.append("\n");
     }

@@ -52,7 +52,7 @@ public class InterphaseTransportCoefficientBaseClass implements InterphaseTransp
       // Transition zone - interpolate between laminar and turbulent
       double fLaminar = 64.0 / 2300.0;
       double fTurbulent = Math.pow((1.0 / (-1.8 * Math.log10(6.9 / 4000.0 + Math.pow(relativeRoughness / 3.7, 1.11)))),
-	  2.0);
+          2.0);
       return fLaminar + (fTurbulent - fLaminar) * (reynolds - 2300.0) / 1700.0;
     } else {
       // Turbulent flow - Haaland equation

@@ -51,7 +51,7 @@ public class DynamicRunner {
   public static String run(String json) {
     if (json == null || json.trim().isEmpty()) {
       return errorJson("INPUT_ERROR", "JSON input is null or empty",
-	  "Provide a valid JSON dynamic simulation specification");
+          "Provide a valid JSON dynamic simulation specification");
     }
 
     JsonObject input;
@@ -66,25 +66,25 @@ public class DynamicRunner {
     try {
       // --- Build and run steady-state process first ---
       if (!input.has("processJson")) {
-	return errorJson("MISSING_PROCESS", "No 'processJson' provided",
-	    "Provide a 'processJson' field with the process specification");
+        return errorJson("MISSING_PROCESS", "No 'processJson' provided",
+            "Provide a 'processJson' field with the process specification");
       }
 
       String processJsonStr = input.get("processJson").isJsonObject()
-	  ? GSON.toJson(input.getAsJsonObject("processJson"))
-	  : input.get("processJson").getAsString();
+          ? GSON.toJson(input.getAsJsonObject("processJson"))
+          : input.get("processJson").getAsString();
       String normalizedProcessJson = ProcessRunner.normalizeProcessJson(processJsonStr);
 
       String ssResult = ProcessRunner.run(normalizedProcessJson);
       JsonObject ssResponse = JsonParser.parseString(ssResult).getAsJsonObject();
       if (!"success".equals(ssResponse.get("status").getAsString())) {
-	ssResponse.addProperty("tool", "runDynamic");
-	ssResponse.addProperty("upstreamTool", "runProcess");
-	ApiEnvelope.applyStandardFields(ssResponse, "runDynamic", null,
-	    ApiEnvelope.validationStatus(false, "steady-state",
-		"Steady-state process simulation failed before dynamic run"),
-	    ApiEnvelope.qualityGate("failed", "Dynamic run blocked by steady-state process failure", true));
-	return GSON.toJson(ssResponse);
+        ssResponse.addProperty("tool", "runDynamic");
+        ssResponse.addProperty("upstreamTool", "runProcess");
+        ApiEnvelope.applyStandardFields(ssResponse, "runDynamic", null,
+            ApiEnvelope.validationStatus(false, "steady-state",
+                "Steady-state process simulation failed before dynamic run"),
+            ApiEnvelope.qualityGate("failed", "Dynamic run blocked by steady-state process failure", true));
+        return GSON.toJson(ssResponse);
       }
 
       // Rebuild process for dynamic simulation
@@ -99,23 +99,23 @@ public class DynamicRunner {
 
       // Apply optional tuning
       if (input.has("tuning")) {
-	JsonObject tuning = input.getAsJsonObject("tuning");
-	if (tuning.has("pressure")) {
-	  JsonObject pt = tuning.getAsJsonObject("pressure");
-	  helper.setPressureTuning(pt.get("kp").getAsDouble(), pt.get("ti").getAsDouble());
-	}
-	if (tuning.has("level")) {
-	  JsonObject lt = tuning.getAsJsonObject("level");
-	  helper.setLevelTuning(lt.get("kp").getAsDouble(), lt.get("ti").getAsDouble());
-	}
-	if (tuning.has("flow")) {
-	  JsonObject ft = tuning.getAsJsonObject("flow");
-	  helper.setFlowTuning(ft.get("kp").getAsDouble(), ft.get("ti").getAsDouble());
-	}
-	if (tuning.has("temperature")) {
-	  JsonObject tt = tuning.getAsJsonObject("temperature");
-	  helper.setTemperatureTuning(tt.get("kp").getAsDouble(), tt.get("ti").getAsDouble());
-	}
+        JsonObject tuning = input.getAsJsonObject("tuning");
+        if (tuning.has("pressure")) {
+          JsonObject pt = tuning.getAsJsonObject("pressure");
+          helper.setPressureTuning(pt.get("kp").getAsDouble(), pt.get("ti").getAsDouble());
+        }
+        if (tuning.has("level")) {
+          JsonObject lt = tuning.getAsJsonObject("level");
+          helper.setLevelTuning(lt.get("kp").getAsDouble(), lt.get("ti").getAsDouble());
+        }
+        if (tuning.has("flow")) {
+          JsonObject ft = tuning.getAsJsonObject("flow");
+          helper.setFlowTuning(ft.get("kp").getAsDouble(), ft.get("ti").getAsDouble());
+        }
+        if (tuning.has("temperature")) {
+          JsonObject tt = tuning.getAsJsonObject("temperature");
+          helper.setTemperatureTuning(tt.get("kp").getAsDouble(), tt.get("ti").getAsDouble());
+        }
       }
 
       helper.instrumentAndControl();
@@ -126,31 +126,31 @@ public class DynamicRunner {
 
       // Collect time-series for all transmitters
       java.util.Map<String, neqsim.process.measurementdevice.MeasurementDeviceInterface> transmitters = helper
-	  .getTransmitters();
+          .getTransmitters();
 
       // Time-series arrays
       JsonArray timeArr = new JsonArray();
       java.util.Map<String, JsonArray> series = new java.util.LinkedHashMap<String, JsonArray>();
       for (String tag : transmitters.keySet()) {
-	series.put(tag, new JsonArray());
+        series.put(tag, new JsonArray());
       }
 
       // Record initial state
       timeArr.add(0.0);
       for (java.util.Map.Entry<String, neqsim.process.measurementdevice.MeasurementDeviceInterface> entry : transmitters
-	  .entrySet()) {
-	series.get(entry.getKey()).add(entry.getValue().getMeasuredValue());
+          .entrySet()) {
+        series.get(entry.getKey()).add(entry.getValue().getMeasuredValue());
       }
 
       // Run transient steps
       for (int step = 1; step <= maxSteps; step++) {
-	process.runTransient();
-	double t = step * timeStep;
-	timeArr.add(t);
-	for (java.util.Map.Entry<String, neqsim.process.measurementdevice.MeasurementDeviceInterface> entry : transmitters
-	    .entrySet()) {
-	  series.get(entry.getKey()).add(entry.getValue().getMeasuredValue());
-	}
+        process.runTransient();
+        double t = step * timeStep;
+        timeArr.add(t);
+        for (java.util.Map.Entry<String, neqsim.process.measurementdevice.MeasurementDeviceInterface> entry : transmitters
+            .entrySet()) {
+          series.get(entry.getKey()).add(entry.getValue().getMeasuredValue());
+        }
       }
 
       // --- Build response ---
@@ -162,22 +162,22 @@ public class DynamicRunner {
 
       JsonObject seriesObj = new JsonObject();
       for (java.util.Map.Entry<String, JsonArray> entry : series.entrySet()) {
-	JsonObject tagData = new JsonObject();
-	tagData.addProperty("unit", transmitters.get(entry.getKey()).getUnit());
-	tagData.add("values", entry.getValue());
-	seriesObj.add(entry.getKey(), tagData);
+        JsonObject tagData = new JsonObject();
+        tagData.addProperty("unit", transmitters.get(entry.getKey()).getUnit());
+        tagData.add("values", entry.getValue());
+        seriesObj.add(entry.getKey(), tagData);
       }
       data.add("transmitters", seriesObj);
 
       // Controller info
       java.util.Map<String, neqsim.process.controllerdevice.ControllerDeviceInterface> controllers = helper
-	  .getControllers();
+          .getControllers();
       JsonArray controllerArr = new JsonArray();
       for (java.util.Map.Entry<String, neqsim.process.controllerdevice.ControllerDeviceInterface> entry : controllers
-	  .entrySet()) {
-	JsonObject ctrl = new JsonObject();
-	ctrl.addProperty("tag", entry.getKey());
-	controllerArr.add(ctrl);
+          .entrySet()) {
+        JsonObject ctrl = new JsonObject();
+        ctrl.addProperty("tag", entry.getKey());
+        controllerArr.add(ctrl);
       }
       data.add("controllers", controllerArr);
 
@@ -195,20 +195,20 @@ public class DynamicRunner {
       response.add("provenance", GSON.toJsonTree(provenance));
 
       ApiEnvelope.applyStandardFields(response, "runDynamic", provenance,
-	  ApiEnvelope.validationStatus(true, "transient", "Dynamic simulation completed"),
-	  ApiEnvelope.qualityGate("passed", "Dynamic simulation completed", true));
+          ApiEnvelope.validationStatus(true, "transient", "Dynamic simulation completed"),
+          ApiEnvelope.qualityGate("passed", "Dynamic simulation completed", true));
 
       return GSON.toJson(response);
     } catch (Exception e) {
       String hint = "Ensure process is valid and converges in steady-state first";
       String msg = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
       if (msg != null
-	  && (msg.contains("gasOutStream") || msg.contains("liquidOutStream") || msg.contains("no inlet stream"))) {
-	hint = "A separator has no inlet stream wired — dynamic mode cannot initialize its gas/"
-	    + "liquid outlet streams. Add an 'inlet' field on every separator in the process JSON"
-	    + " (e.g. {\"type\":\"separator\",\"name\":\"sep\",\"inlet\":\"feed\"}). For pure"
-	    + " depressurization, use a low-flow feed stream to seed the separator inventory and"
-	    + " route the gas outlet to a throttling/blowdown valve.";
+          && (msg.contains("gasOutStream") || msg.contains("liquidOutStream") || msg.contains("no inlet stream"))) {
+        hint = "A separator has no inlet stream wired — dynamic mode cannot initialize its gas/"
+            + "liquid outlet streams. Add an 'inlet' field on every separator in the process JSON"
+            + " (e.g. {\"type\":\"separator\",\"name\":\"sep\",\"inlet\":\"feed\"}). For pure"
+            + " depressurization, use a low-flow feed stream to seed the separator inventory and"
+            + " route the gas outlet to a throttling/blowdown valve.";
       }
       return errorJson("DYNAMIC_ERROR", "Dynamic simulation failed: " + msg, hint);
     }
@@ -233,7 +233,7 @@ public class DynamicRunner {
     errors.add(err);
     error.add("errors", errors);
     ApiEnvelope.applyStandardFields(error, "runDynamic", null,
-	ApiEnvelope.validationStatus(false, "transient", message), ApiEnvelope.qualityGate("failed", message, true));
+        ApiEnvelope.validationStatus(false, "transient", message), ApiEnvelope.qualityGate("failed", message, true));
     return GSON.toJson(error);
   }
 }

@@ -70,7 +70,7 @@ public class AquiferDrive implements ReservoirDrive {
     if (producedVolumeSm3 > 0.0) {
       cumulativeProduction += producedVolumeSm3;
       if (cumulativeProduction > giipSm3) {
-	cumulativeProduction = giipSm3;
+        cumulativeProduction = giipSm3;
       }
     }
     // Aquifer pressure declines as it gives up voidage.

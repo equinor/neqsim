@@ -76,10 +76,10 @@ public final class FieldConcept implements Serializable {
    */
   public static FieldConcept gasTieback(String name, double tiebackKm, int wellCount, double ratePerWellMSm3d) {
     return builder(name).reservoir(ReservoirInput.richGas().build())
-	.wells(WellsInput.builder().producerCount(wellCount).ratePerWell(ratePerWellMSm3d * 1e6, "Sm3/d").build())
-	.infrastructure(InfrastructureInput.builder().tiebackLength(tiebackKm)
-	    .processingLocation(InfrastructureInput.ProcessingLocation.HOST_PLATFORM).build())
-	.build();
+        .wells(WellsInput.builder().producerCount(wellCount).ratePerWell(ratePerWellMSm3d * 1e6, "Sm3/d").build())
+        .infrastructure(InfrastructureInput.builder().tiebackLength(tiebackKm)
+            .processingLocation(InfrastructureInput.ProcessingLocation.HOST_PLATFORM).build())
+        .build();
   }
 
   /**
@@ -93,11 +93,11 @@ public final class FieldConcept implements Serializable {
    */
   public static FieldConcept oilDevelopment(String name, int wellCount, double ratePerWellBopd, double waterCut) {
     return builder(name).reservoir(ReservoirInput.blackOil().waterCut(waterCut).build())
-	.wells(WellsInput.builder().producerCount(wellCount).ratePerWell(ratePerWellBopd, "bbl/d").build())
-	.infrastructure(
-	    InfrastructureInput.builder().processingLocation(InfrastructureInput.ProcessingLocation.NEW_PLATFORM)
-		.exportType(InfrastructureInput.ExportType.STABILIZED_OIL).build())
-	.build();
+        .wells(WellsInput.builder().producerCount(wellCount).ratePerWell(ratePerWellBopd, "bbl/d").build())
+        .infrastructure(
+            InfrastructureInput.builder().processingLocation(InfrastructureInput.ProcessingLocation.NEW_PLATFORM)
+                .exportType(InfrastructureInput.ExportType.STABILIZED_OIL).build())
+        .build();
   }
 
   /**
@@ -227,7 +227,7 @@ public final class FieldConcept implements Serializable {
     // For LNG, check reservoir type
     ReservoirInput.FluidType fluidType = reservoir.getFluidType();
     return fluidType == ReservoirInput.FluidType.LEAN_GAS || fluidType == ReservoirInput.FluidType.RICH_GAS
-	|| fluidType == ReservoirInput.FluidType.GAS_CONDENSATE;
+        || fluidType == ReservoirInput.FluidType.GAS_CONDENSATE;
   }
 
   /**
@@ -237,7 +237,7 @@ public final class FieldConcept implements Serializable {
    */
   public boolean isSubseaTieback() {
     return wells.isSubsea()
-	&& infrastructure.getProcessingLocation() == InfrastructureInput.ProcessingLocation.HOST_PLATFORM;
+        && infrastructure.getProcessingLocation() == InfrastructureInput.ProcessingLocation.HOST_PLATFORM;
   }
 
   /**
@@ -275,7 +275,7 @@ public final class FieldConcept implements Serializable {
     sb.append(", THP=").append(String.format("%.0f", wells.getThp())).append(" bara");
     sb.append("\n");
     sb.append("Infrastructure: ").append(String.format("%.0f", infrastructure.getTiebackLength()))
-	.append(" km tieback");
+        .append(" km tieback");
     sb.append(", ").append(String.format("%.0f", infrastructure.getWaterDepth())).append(" m depth");
     sb.append(", ").append(infrastructure.getPowerSupply());
     return sb.toString();
@@ -284,7 +284,7 @@ public final class FieldConcept implements Serializable {
   @Override
   public String toString() {
     return String.format("FieldConcept[%s: %s, %d wells, %.0f km tieback]", name, reservoir.getFluidType(),
-	wells.getProducerCount(), infrastructure.getTiebackLength());
+        wells.getProducerCount(), infrastructure.getTiebackLength());
   }
 
   @Override
@@ -344,13 +344,13 @@ public final class FieldConcept implements Serializable {
 
     public FieldConcept build() {
       if (reservoir == null) {
-	reservoir = ReservoirInput.richGas().build();
+        reservoir = ReservoirInput.richGas().build();
       }
       if (wells == null) {
-	wells = WellsInput.builder().build();
+        wells = WellsInput.builder().build();
       }
       if (infrastructure == null) {
-	infrastructure = InfrastructureInput.builder().build();
+        infrastructure = InfrastructureInput.builder().build();
       }
       return new FieldConcept(this);
     }

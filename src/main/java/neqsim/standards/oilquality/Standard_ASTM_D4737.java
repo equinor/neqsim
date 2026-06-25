@@ -112,8 +112,8 @@ public class Standard_ASTM_D4737 extends neqsim.standards.Standard {
       density15C = d4052.getValue("density");
 
       if (Double.isNaN(t10C) || Double.isNaN(t50C) || Double.isNaN(t90C) || Double.isNaN(density15C)) {
-	logger.error("Cetane index inputs unavailable (T10/T50/T90/density)");
-	return;
+        logger.error("Cetane index inputs unavailable (T10/T50/T90/density)");
+        return;
       }
 
       // Density in g/mL at 15 C for both correlations.
@@ -125,7 +125,7 @@ public class Standard_ASTM_D4737 extends neqsim.standards.Standard {
       double t90n = t90C - 310.0;
       double b = Math.exp(-3.5 * (dGmL - 0.85)) - 1.0;
       cetaneIndexD4737 = 45.2 + 0.0892 * t10n + (0.131 + 0.901 * b) * t50n + (0.0523 - 0.420 * b) * t90n
-	  + 0.00049 * (t10n * t10n - t90n * t90n) + 107.0 * b + 60.0 * b * b;
+          + 0.00049 * (t10n * t10n - t90n * t90n) + 107.0 * b + 60.0 * b * b;
 
       // ASTM D976 (two-variable) using mid-boiling point T50.
       double logT50 = Math.log10(t50C);
@@ -140,7 +140,7 @@ public class Standard_ASTM_D4737 extends neqsim.standards.Standard {
   public double getValue(String returnParameter, String returnUnit) {
     // Cetane index and the underlying temperatures are reported on a fixed basis.
     if ("T10".equalsIgnoreCase(returnParameter) || "T50".equalsIgnoreCase(returnParameter)
-	|| "T90".equalsIgnoreCase(returnParameter)) {
+        || "T90".equalsIgnoreCase(returnParameter)) {
       return convertTempFromC(getValue(returnParameter), returnUnit);
     }
     return getValue(returnParameter);
@@ -178,7 +178,7 @@ public class Standard_ASTM_D4737 extends neqsim.standards.Standard {
       return "kg/m3";
     }
     if ("T10".equalsIgnoreCase(returnParameter) || "T50".equalsIgnoreCase(returnParameter)
-	|| "T90".equalsIgnoreCase(returnParameter)) {
+        || "T90".equalsIgnoreCase(returnParameter)) {
       return "C";
     }
     return "-";

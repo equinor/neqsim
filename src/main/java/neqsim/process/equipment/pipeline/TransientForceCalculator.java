@@ -192,7 +192,7 @@ public class TransientForceCalculator {
   public double[] computeForceHistory(double[] time, double[] inletPressurePa, double[] outletPressurePa,
       double[] inletVelocity, double[] outletVelocity) {
     if (time == null || inletPressurePa == null || outletPressurePa == null || inletVelocity == null
-	|| outletVelocity == null) {
+        || outletVelocity == null) {
       throw new IllegalArgumentException("input arrays must not be null");
     }
     int n = time.length;
@@ -200,7 +200,7 @@ public class TransientForceCalculator {
       throw new IllegalArgumentException("time series must contain at least 2 points");
     }
     if (inletPressurePa.length != n || outletPressurePa.length != n || inletVelocity.length != n
-	|| outletVelocity.length != n) {
+        || outletVelocity.length != n) {
       throw new IllegalArgumentException("all input arrays must have the same length");
     }
 
@@ -224,8 +224,8 @@ public class TransientForceCalculator {
     this.timeOfPeak = time[0];
     for (int i = 0; i < n; i++) {
       if (Math.abs(force[i]) > Math.abs(peakForce)) {
-	peakForce = force[i];
-	timeOfPeak = time[i];
+        peakForce = force[i];
+        timeOfPeak = time[i];
       }
     }
     logger.debug("Peak unbalanced force {} N at t={} s", peakForce, timeOfPeak);

@@ -86,7 +86,7 @@ public class SequentialFunctionChart implements Serializable {
     transitions.add(new SfcTransition(fromStep, toStep, new BooleanSupplier() {
       @Override
       public boolean getAsBoolean() {
-	return elapsedTimeInStep >= delay;
+        return elapsedTimeInStep >= delay;
       }
     }));
   }
@@ -130,7 +130,7 @@ public class SequentialFunctionChart implements Serializable {
     if (running && activeStepName != null) {
       SfcStep current = steps.get(activeStepName);
       if (current != null && current.getExitAction() != null) {
-	current.getExitAction().run();
+        current.getExitAction().run();
       }
     }
     running = false;
@@ -158,14 +158,14 @@ public class SequentialFunctionChart implements Serializable {
     // Check transitions
     for (SfcTransition transition : transitions) {
       if (transition.getFromStep().equals(activeStepName)) {
-	try {
-	  if (transition.getGuard().getAsBoolean()) {
-	    advanceTo(transition.getToStep());
-	    break;
-	  }
-	} catch (Exception e) {
-	  logger.warn("SFC {} transition guard evaluation failed: {}", name, e.getMessage());
-	}
+        try {
+          if (transition.getGuard().getAsBoolean()) {
+            advanceTo(transition.getToStep());
+            break;
+          }
+        } catch (Exception e) {
+          logger.warn("SFC {} transition guard evaluation failed: {}", name, e.getMessage());
+        }
       }
     }
   }

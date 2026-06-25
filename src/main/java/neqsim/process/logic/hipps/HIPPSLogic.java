@@ -100,7 +100,7 @@ public class HIPPSLogic implements ProcessLogic {
   public void addPressureSensor(Detector sensor) {
     if (pressureSensors.size() >= votingLogic.getTotalSensors()) {
       throw new IllegalStateException("Cannot add more than " + votingLogic.getTotalSensors() + " sensors for "
-	  + votingLogic.getNotation() + " voting");
+          + votingLogic.getNotation() + " voting");
     }
     pressureSensors.add(sensor);
   }
@@ -143,7 +143,7 @@ public class HIPPSLogic implements ProcessLogic {
   public void update(double... pressureValues) {
     if (pressureValues.length != pressureSensors.size()) {
       throw new IllegalArgumentException("Number of pressure values (" + pressureValues.length
-	  + ") doesn't match number of sensors (" + pressureSensors.size() + ")");
+          + ") doesn't match number of sensors (" + pressureSensors.size() + ")");
     }
 
     // Update each sensor
@@ -168,10 +168,10 @@ public class HIPPSLogic implements ProcessLogic {
     int faultyCount = 0;
     for (Detector sensor : pressureSensors) {
       if (sensor.isBypassed()) {
-	bypassedCount++;
+        bypassedCount++;
       }
       if (sensor.isFaulty()) {
-	faultyCount++;
+        faultyCount++;
       }
     }
 
@@ -190,7 +190,7 @@ public class HIPPSLogic implements ProcessLogic {
     int trippedCount = 0;
     for (Detector sensor : pressureSensors) {
       if (!sensor.isBypassed() && !sensor.isFaulty() && sensor.isTripped()) {
-	trippedCount++;
+        trippedCount++;
       }
     }
 
@@ -203,8 +203,8 @@ public class HIPPSLogic implements ProcessLogic {
       state = LogicState.RUNNING;
 
       if (isolationValve != null) {
-	// Rapid closure for HIPPS
-	isolationValve.setPercentValveOpening(0.0);
+        // Rapid closure for HIPPS
+        isolationValve.setPercentValveOpening(0.0);
       }
     }
   }
@@ -227,15 +227,15 @@ public class HIPPSLogic implements ProcessLogic {
       // Check if pressure is still high (voting still true)
       int trippedCount = 0;
       for (Detector sensor : pressureSensors) {
-	if (sensor.isTripped()) {
-	  trippedCount++;
-	}
+        if (sensor.isTripped()) {
+          trippedCount++;
+        }
       }
 
       if (votingLogic.evaluate(trippedCount)) {
-	// Pressure still high after delay - escalate to ESD
-	escalated = true;
-	escalationLogic.activate();
+        // Pressure still high after delay - escalate to ESD
+        escalated = true;
+        escalationLogic.activate();
       }
     }
   }
@@ -264,7 +264,7 @@ public class HIPPSLogic implements ProcessLogic {
     // Check if all sensors are clear
     for (Detector sensor : pressureSensors) {
       if (sensor.isTripped()) {
-	return false;
+        return false;
       }
     }
 
@@ -335,7 +335,7 @@ public class HIPPSLogic implements ProcessLogic {
       state = LogicState.RUNNING;
 
       if (isolationValve != null) {
-	isolationValve.setPercentValveOpening(0.0);
+        isolationValve.setPercentValveOpening(0.0);
       }
     }
   }
@@ -383,10 +383,10 @@ public class HIPPSLogic implements ProcessLogic {
     int bypassedCount = 0;
     for (Detector sensor : pressureSensors) {
       if (sensor.isTripped()) {
-	trippedCount++;
+        trippedCount++;
       }
       if (sensor.isBypassed()) {
-	bypassedCount++;
+        bypassedCount++;
       }
     }
 

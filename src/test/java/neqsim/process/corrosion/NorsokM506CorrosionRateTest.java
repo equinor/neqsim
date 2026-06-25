@@ -83,7 +83,7 @@ public class NorsokM506CorrosionRateTest {
 
     // Bicarbonate should raise pH
     assertTrue(pHWithBicarb > pHNoBicarb,
-	"Bicarbonate should raise pH: with=" + pHWithBicarb + " without=" + pHNoBicarb);
+        "Bicarbonate should raise pH: with=" + pHWithBicarb + " without=" + pHNoBicarb);
   }
 
   @Test
@@ -114,7 +114,7 @@ public class NorsokM506CorrosionRateTest {
 
     // Corrosion rate should increase with temperature (up to scaling temperature)
     assertTrue(rateHighTemp > rateLowTemp,
-	"Rate at 60°C should exceed rate at 10°C: " + rateHighTemp + " vs " + rateLowTemp);
+        "Rate at 60°C should exceed rate at 10°C: " + rateHighTemp + " vs " + rateLowTemp);
   }
 
   @Test
@@ -144,9 +144,9 @@ public class NorsokM506CorrosionRateTest {
     double rateWithInhibitor = model.getCorrectedCorrosionRate();
 
     assertTrue(rateWithInhibitor < rateNoInhibitor,
-	"Inhibitor should reduce rate: " + rateWithInhibitor + " vs " + rateNoInhibitor);
+        "Inhibitor should reduce rate: " + rateWithInhibitor + " vs " + rateNoInhibitor);
     assertEquals(rateNoInhibitor * 0.2, rateWithInhibitor, rateNoInhibitor * 0.01,
-	"80% inhibitor should give 20% of uninhibited rate");
+        "80% inhibitor should give 20% of uninhibited rate");
   }
 
   @Test
@@ -214,8 +214,8 @@ public class NorsokM506CorrosionRateTest {
     String severity = model.getCorrosionSeverity();
     assertNotNull(severity);
     assertTrue(
-	severity.equals("Low") || severity.equals("Medium") || severity.equals("High") || severity.equals("Very High"),
-	"Severity should be a valid category: " + severity);
+        severity.equals("Low") || severity.equals("Medium") || severity.equals("High") || severity.equals("Very High"),
+        "Severity should be a valid category: " + severity);
   }
 
   @Test
@@ -354,7 +354,7 @@ public class NorsokM506CorrosionRateTest {
 
     // Ionic strength correction should shift pH
     assertTrue(Math.abs(pHFreshWater - pHSeawater) > 0.01,
-	"Ionic strength should affect pH: fresh=" + pHFreshWater + " seawater=" + pHSeawater);
+        "Ionic strength should affect pH: fresh=" + pHFreshWater + " seawater=" + pHSeawater);
   }
 
   @Test

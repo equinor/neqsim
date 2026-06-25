@@ -71,12 +71,12 @@ public class ComponentWaxWilson extends ComponentSolid {
     double solidActivityCoefficient = getWilsonActivityCoefficient(phase1);
 
     SolidFug = getx() * liquidPhaseFugacity
-	* Math.exp(-getHeatOfFusion() / (R * phase1.getTemperature())
-	    * (1.0 - phase1.getTemperature() / getTriplePointTemperature())
-	    + deltaCpSL / R
-		* (getTriplePointTemperature() / phase1.getTemperature() - 1.0
-		    - Math.log(getTriplePointTemperature() / phase1.getTemperature()))
-	    - deltaSolVol * (phase1.getPressure() - 1.0) * 1e5 / (R * phase1.getTemperature()));
+        * Math.exp(-getHeatOfFusion() / (R * phase1.getTemperature())
+            * (1.0 - phase1.getTemperature() / getTriplePointTemperature())
+            + deltaCpSL / R
+                * (getTriplePointTemperature() / phase1.getTemperature() - 1.0
+                    - Math.log(getTriplePointTemperature() / phase1.getTemperature()))
+            - deltaSolVol * (phase1.getPressure() - 1.0) * 1e5 / (R * phase1.getTemperature()));
 
     fugacityCoefficient = solidActivityCoefficient * SolidFug / (phase1.getPressure() * getx());
     return fugacityCoefficient;
@@ -95,15 +95,15 @@ public class ComponentWaxWilson extends ComponentSolid {
 
     for (int i = 0; i < phase1.getNumberOfComponents(); i++) {
       sum1 += phase1.getComponent(i).getx()
-	  * ((ComponentWaxWilson) phase1.getComponent(i)).getCharEnergyParamter(phase1, this.getComponentNumber(), i);
+          * ((ComponentWaxWilson) phase1.getComponent(i)).getCharEnergyParamter(phase1, this.getComponentNumber(), i);
       tempSum = 0.0;
       for (int j = 0; j < phase1.getNumberOfComponents(); j++) {
-	tempSum += phase1.getComponent(j).getx()
-	    * ((ComponentWaxWilson) phase1.getComponent(j)).getCharEnergyParamter(phase1, i, j);
+        tempSum += phase1.getComponent(j).getx()
+            * ((ComponentWaxWilson) phase1.getComponent(j)).getCharEnergyParamter(phase1, i, j);
       }
       sum2 += phase1.getComponent(i).getx()
-	  * ((ComponentWaxWilson) phase1.getComponent(i)).getCharEnergyParamter(phase1, i, this.getComponentNumber())
-	  / tempSum;
+          * ((ComponentWaxWilson) phase1.getComponent(i)).getCharEnergyParamter(phase1, i, this.getComponentNumber())
+          / tempSum;
     }
 
     return Math.exp(1.0 - Math.log(sum1) - sum2);
@@ -160,11 +160,11 @@ public class ComponentWaxWilson extends ComponentSolid {
     // Vaporization enthalpy (Morgan-Kobayashi, 1982) using Pitzer correlation
     double x = 1.0 - phase1.getTemperature() / getTC();
     double deltaHvap0 = 5.2804 * Math.pow(x, 0.3333) + 12.865 * Math.pow(x, 0.8333) + 1.171 * Math.pow(x, 1.2083)
-	- 13.166 * x + 0.4858 * Math.pow(x, 2.0) - 1.088 * Math.pow(x, 3.0);
+        - 13.166 * x + 0.4858 * Math.pow(x, 2.0) - 1.088 * Math.pow(x, 3.0);
     double deltaHvap1 = 0.80022 * Math.pow(x, 0.3333) + 273.23 * Math.pow(x, 0.8333) + 465.08 * Math.pow(x, 1.2083)
-	- 638.51 * x - 145.12 * Math.pow(x, 2.0) - 74.049 * Math.pow(x, 3.0);
+        - 638.51 * x - 145.12 * Math.pow(x, 2.0) - 74.049 * Math.pow(x, 3.0);
     double deltaHvap2 = 7.2543 * Math.pow(x, 0.3333) - 346.45 * Math.pow(x, 0.8333) - 610.48 * Math.pow(x, 1.2083)
-	+ 839.89 * x + 160.05 * Math.pow(x, 2.0) - 50.711 * Math.pow(x, 3.0);
+        + 839.89 * x + 160.05 * Math.pow(x, 2.0) - 50.711 * Math.pow(x, 3.0);
 
     double omega = 0.0520750 + 0.0448946 * carbonnumber - 0.000185397 * carbonnumber * carbonnumber;
 

@@ -25,8 +25,8 @@ class BowTieTest {
 
     // Create HIPPS using builder pattern
     hipps = SafetyInstrumentedFunction.builder().id("SDV-001").name("Main HIPPS")
-	.description("High Integrity Pipeline Protection").category(SafetyInstrumentedFunction.SIFCategory.HIPPS).sil(2)
-	.pfd(0.005).architecture("1oo2").protectedEquipment(Arrays.asList("Separator", "Pipeline")).build();
+        .description("High Integrity Pipeline Protection").category(SafetyInstrumentedFunction.SIFCategory.HIPPS).sil(2)
+        .pfd(0.005).architecture("1oo2").protectedEquipment(Arrays.asList("Separator", "Pipeline")).build();
   }
 
   @Test

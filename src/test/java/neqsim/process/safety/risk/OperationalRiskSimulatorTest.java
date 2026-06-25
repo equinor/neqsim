@@ -100,7 +100,7 @@ class OperationalRiskSimulatorTest {
     simulator.addEquipmentMtbf("Export Compressor", 25000, 72);
 
     java.util.Map<String, OperationalRiskSimulator.EquipmentReliability> reliability = simulator
-	.getEquipmentReliability();
+        .getEquipmentReliability();
 
     assertNotNull(reliability.get("Export Compressor"));
     assertEquals(25000, reliability.get("Export Compressor").getMtbf(), 0.01);
@@ -110,7 +110,7 @@ class OperationalRiskSimulatorTest {
   @Test
   void testEquipmentAvailabilityCalculation() {
     OperationalRiskSimulator.EquipmentReliability rel = new OperationalRiskSimulator.EquipmentReliability("Test", 1.0,
-	24.0);
+        24.0);
 
     // MTBF = 8760 hours (1 failure/year), MTTR = 24 hours
     // Availability = 8760 / (8760 + 24) = 0.9973

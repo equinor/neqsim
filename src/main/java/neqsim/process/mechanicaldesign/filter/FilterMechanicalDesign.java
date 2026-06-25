@@ -261,12 +261,12 @@ public class FilterMechanicalDesign extends MechanicalDesign {
     double gasDensity = 50.0; // default kg/m3
     if (filter.getInletStream() != null && filter.getInletStream().getThermoSystem() != null) {
       try {
-	gasDensity = filter.getInletStream().getThermoSystem().getPhase(0).getDensity("kg/m3");
-	if (gasDensity < 0.1) {
-	  gasDensity = 50.0;
-	}
+        gasDensity = filter.getInletStream().getThermoSystem().getPhase(0).getDensity("kg/m3");
+        if (gasDensity < 0.1) {
+          gasDensity = 50.0;
+        }
       } catch (Exception e) {
-	gasDensity = 50.0;
+        gasDensity = 50.0;
       }
     }
 

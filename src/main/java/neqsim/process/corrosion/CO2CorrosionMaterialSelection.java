@@ -235,11 +235,11 @@ public class CO2CorrosionMaterialSelection implements Serializable {
     csCorrosionAllowanceMm = inhibitedRate * designLifeYears;
 
     carbonSteelViable = (csCorrosionAllowanceMm <= maxCorrosionAllowanceMm) && (h2sPartialPressureBar < 0.003)
-	&& (co2CorrosionRateMmyr < 10.0);
+        && (co2CorrosionRateMmyr < 10.0);
 
     if (carbonSteelViable) {
       notes.add("Carbon steel viable with " + String.format("%.1f", csCorrosionAllowanceMm)
-	  + " mm corrosion allowance (" + designLifeYears + " yr).");
+          + " mm corrosion allowance (" + designLifeYears + " yr).");
     }
   }
 
@@ -253,7 +253,7 @@ public class CO2CorrosionMaterialSelection implements Serializable {
 
     // 13Cr limits: T < 150°C, pH2S < 0.01 bar, Cl⁻ < 80000 mg/L
     boolean suit13Cr = temperatureC <= 150 && h2sPartialPressureBar <= 0.01 && chlorideConcentrationMgL <= 80000
-	&& inSituPH >= 3.5;
+        && inSituPH >= 3.5;
 
     // 22Cr duplex limits: T < 232°C, pH2S < 1.0 bar (EFC 17)
     boolean suit22Cr = temperatureC <= 232 && h2sPartialPressureBar <= 1.0 && !veryHighCl;
@@ -265,7 +265,7 @@ public class CO2CorrosionMaterialSelection implements Serializable {
       selectedMaterial = "Carbon steel + corrosion inhibition";
       relativeCostFactor = 1.0;
       selectionRationale = "CO2 corrosion rate manageable with inhibition and "
-	  + String.format("%.1f", csCorrosionAllowanceMm) + " mm CA.";
+          + String.format("%.1f", csCorrosionAllowanceMm) + " mm CA.";
       alternatives.add("13Cr (if inhibition reliability is a concern)");
     } else if (suit13Cr && !isSour) {
       selectedMaterial = "13Cr martensitic stainless steel";

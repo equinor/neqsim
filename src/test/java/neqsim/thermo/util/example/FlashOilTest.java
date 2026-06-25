@@ -1,13 +1,13 @@
 package neqsim.thermo.util.example;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 class FlashOilTest {
   private static final Logger logger = LogManager.getLogger(FlashOilTest.class);
@@ -48,9 +48,9 @@ class FlashOilTest {
     fluid1 = new SystemSrkEos(298.0, 10.0);
     for (int i = 0; i < components.length; i++) {
       if (components[i].startsWith("CH")) {
-	fluid1.addTBPfraction(components[i], fractions1[i], molarmass[i], density[i]);
+        fluid1.addTBPfraction(components[i], fractions1[i], molarmass[i], density[i]);
       } else {
-	fluid1.addComponent(components[i], fractions1[i]);
+        fluid1.addComponent(components[i], fractions1[i]);
       }
     }
 

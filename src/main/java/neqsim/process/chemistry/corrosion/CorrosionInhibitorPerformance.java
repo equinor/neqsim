@@ -184,7 +184,7 @@ public class CorrosionInhibitorPerformance implements Serializable {
   public static CorrosionInhibitorPerformance fromStream(neqsim.process.equipment.stream.StreamInterface stream,
       double pipeIdMeters, double velocityMps) {
     neqsim.process.chemistry.util.StreamChemistryAdapter ad = new neqsim.process.chemistry.util.StreamChemistryAdapter(
-	stream);
+        stream);
     CorrosionInhibitorPerformance p = new CorrosionInhibitorPerformance();
     p.setTemperatureCelsius(ad.getTemperatureCelsius());
     p.setH2SPartialPressureBar(ad.getPartialPressureBara("H2S"));
@@ -215,33 +215,33 @@ public class CorrosionInhibitorPerformance implements Serializable {
     double acidServicePenalty = acidicService && chemistry != InhibitorChemistry.PYRIDINE ? 0.6 : 1.0;
 
     efficiency = Math.max(0.0,
-	Math.min(0.999, rawEff * tempPenalty * shearPenalty * oxyPenalty * acidPenalty * acidServicePenalty));
+        Math.min(0.999, rawEff * tempPenalty * shearPenalty * oxyPenalty * acidPenalty * acidServicePenalty));
 
     inhibitedCorrosionRateMmYr = baseCorrosionRateMmYr * (1.0 - efficiency);
 
     // Warnings
     if (chemistry != InhibitorChemistry.PHOSPHATE_ESTER && chemistry != InhibitorChemistry.MERCAPTAN
-	&& temperatureC > 150.0) {
+        && temperatureC > 150.0) {
       warnings.put("thermal_degradation",
-	  "Most film-forming CIs degrade above 150 C; use phosphate ester or CRA upgrade");
+          "Most film-forming CIs degrade above 150 C; use phosphate ester or CRA upgrade");
     }
     if (wallShearStressPa > 150.0) {
       warnings.put("high_shear", "Shear stress above 150 Pa erodes inhibitor film; consider higher dose or CRA");
     }
     if (oxygenPpb > 50.0) {
       warnings.put("oxygen_ingress",
-	  "O2 above 50 ppb undermines film-forming CIs; eliminate O2 ingress or use scavenger");
+          "O2 above 50 ppb undermines film-forming CIs; eliminate O2 ingress or use scavenger");
     }
     if (acidicService && chemistry != InhibitorChemistry.PYRIDINE) {
       warnings.put("acidic_service",
-	  "Use a dedicated acid corrosion inhibitor (pyridine-based) during acid stimulation");
+          "Use a dedicated acid corrosion inhibitor (pyridine-based) during acid stimulation");
     }
     if (h2sPartialPressureBar > 1.0 && chemistry != InhibitorChemistry.MERCAPTAN) {
       warnings.put("sour_service", "H2S partial pressure above 1 bar — verify with sour-service compatible chemistry");
     }
     if (doseMgL < minimumEffectiveDoseMgL) {
       warnings.put("under_dose",
-	  "Dose below minimum effective level for this chemistry (" + minimumEffectiveDoseMgL + " mg/L)");
+          "Dose below minimum effective level for this chemistry (" + minimumEffectiveDoseMgL + " mg/L)");
     }
     evaluated = true;
   }
@@ -466,9 +466,9 @@ public class CorrosionInhibitorPerformance implements Serializable {
    */
   public java.util.List<java.util.Map<String, Object>> getStandardsApplied() {
     return neqsim.process.chemistry.util.StandardsRegistry.toMapList(
-	neqsim.process.chemistry.util.StandardsRegistry.NACE_TM0169,
-	neqsim.process.chemistry.util.StandardsRegistry.NACE_SP0775,
-	neqsim.process.chemistry.util.StandardsRegistry.NORSOK_M506,
-	neqsim.process.chemistry.util.StandardsRegistry.ASTM_G31);
+        neqsim.process.chemistry.util.StandardsRegistry.NACE_TM0169,
+        neqsim.process.chemistry.util.StandardsRegistry.NACE_SP0775,
+        neqsim.process.chemistry.util.StandardsRegistry.NORSOK_M506,
+        neqsim.process.chemistry.util.StandardsRegistry.ASTM_G31);
   }
 }

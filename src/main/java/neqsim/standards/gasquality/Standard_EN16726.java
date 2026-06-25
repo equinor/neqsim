@@ -177,7 +177,7 @@ public class Standard_EN16726 extends neqsim.standards.Standard {
       totalSulfur = h2sContent;
       double cosMolFrac = getMoleFraction("COS");
       if (cosMolFrac > 0.0) {
-	totalSulfur += cosMolFrac * 60.07 / molarVolumeStd * 1e6;
+        totalSulfur += cosMolFrac * 60.07 / molarVolumeStd * 1e6;
       }
 
       // Water content in mg/m3
@@ -232,7 +232,7 @@ public class Standard_EN16726 extends neqsim.standards.Standard {
   @Override
   public String getUnit(String returnParameter) {
     if ("WobbeIndex".equals(returnParameter) || "WI".equals(returnParameter) || "GCV".equals(returnParameter)
-	|| "grossCalorificValue".equals(returnParameter)) {
+        || "grossCalorificValue".equals(returnParameter)) {
       return "MJ/m3";
     }
     if ("relativeDensity".equals(returnParameter)) {

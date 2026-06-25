@@ -106,7 +106,7 @@ public final class TieInCapacityResult implements Serializable {
    */
   public boolean hasHoldback() {
     return getTotalHeldBackGasMSm3() > 0.0 || getTotalHeldBackOilBbl() > 0.0 || getTotalHeldBackWaterM3() > 0.0
-	|| getTotalHeldBackLiquidM3() > 0.0;
+        || getTotalHeldBackLiquidM3() > 0.0;
   }
 
   /**
@@ -223,8 +223,8 @@ public final class TieInCapacityResult implements Serializable {
     double highestUtilization = -1.0;
     for (TieInPeriodResult period : periodResults) {
       if (period.getProcessBottleneckUtilization() > highestUtilization) {
-	highestUtilization = period.getProcessBottleneckUtilization();
-	mostConstrained = period;
+        highestUtilization = period.getProcessBottleneckUtilization();
+        mostConstrained = period;
       }
     }
     if (mostConstrained != null && mostConstrained.getPrimaryBottleneck() != null) {
@@ -253,9 +253,9 @@ public final class TieInCapacityResult implements Serializable {
     builder.append("|------|-------------|-------------|----------|------------|--------------|\n");
     for (TieInPeriodResult period : periodResults) {
       builder.append(String.format("| %d | %.2f | %.2f | %.2f | %s | %.1f |\n", period.getYear(),
-	  period.getSatelliteRequest().getGasRateMSm3d(), period.getAcceptedSatellite().getGasRateMSm3d(),
-	  period.getHeldBackSatellite().getGasRateMSm3d(), period.getPrimaryBottleneck(),
-	  period.getDeferredValueNpvMusd()));
+          period.getSatelliteRequest().getGasRateMSm3d(), period.getAcceptedSatellite().getGasRateMSm3d(),
+          period.getHeldBackSatellite().getGasRateMSm3d(), period.getPrimaryBottleneck(),
+          period.getDeferredValueNpvMusd()));
     }
     return builder.toString();
   }
@@ -271,9 +271,9 @@ public final class TieInCapacityResult implements Serializable {
     builder.append("held_back_gas_MSm3d,bottleneck,deferred_value_npv_MUSD\n");
     for (TieInPeriodResult period : periodResults) {
       builder.append(
-	  String.format("%d,%.6f,%.6f,%.6f,%s,%.6f\n", period.getYear(), period.getSatelliteRequest().getGasRateMSm3d(),
-	      period.getAcceptedSatellite().getGasRateMSm3d(), period.getHeldBackSatellite().getGasRateMSm3d(),
-	      period.getPrimaryBottleneck(), period.getDeferredValueNpvMusd()));
+          String.format("%d,%.6f,%.6f,%.6f,%s,%.6f\n", period.getYear(), period.getSatelliteRequest().getGasRateMSm3d(),
+              period.getAcceptedSatellite().getGasRateMSm3d(), period.getHeldBackSatellite().getGasRateMSm3d(),
+              period.getPrimaryBottleneck(), period.getDeferredValueNpvMusd()));
     }
     return builder.toString();
   }

@@ -195,9 +195,9 @@ public class DesignOptimizer {
 
       // Step 2: Auto-size equipment if enabled
       if (autoSizeEnabled) {
-	logger.info("Auto-sizing equipment with safety factor: " + safetyFactor);
-	autoSizeAllEquipment();
-	runSimulation(); // Re-run after sizing
+        logger.info("Auto-sizing equipment with safety factor: " + safetyFactor);
+        autoSizeAllEquipment();
+        runSimulation(); // Re-run after sizing
       }
 
       // Step 3: Record results (simplified - full optimization will be added later)
@@ -207,8 +207,8 @@ public class DesignOptimizer {
       // Record flow rate
       StreamInterface productStream = findProductStream();
       if (productStream != null) {
-	result.addOptimizedFlowRate(productStream.getName(), productStream.getFlowRate("kg/hr"));
-	result.setObjectiveValue(productStream.getFlowRate("kg/hr"));
+        result.addOptimizedFlowRate(productStream.getName(), productStream.getFlowRate("kg/hr"));
+        result.setObjectiveValue(productStream.getFlowRate("kg/hr"));
       }
 
       // Record equipment sizes
@@ -280,7 +280,7 @@ public class DesignOptimizer {
     } else if (module != null) {
       // Collect from all process systems in the module
       for (ProcessSystem sys : module.getAllProcessSystems()) {
-	allUnits.addAll(sys.getUnitOperations());
+        allUnits.addAll(sys.getUnitOperations());
       }
     }
 
@@ -299,7 +299,7 @@ public class DesignOptimizer {
     if (module != null) {
       List<ProcessSystem> systems = module.getAllProcessSystems();
       if (!systems.isEmpty()) {
-	return systems.get(0);
+        return systems.get(0);
       }
     }
     return null;
@@ -308,9 +308,9 @@ public class DesignOptimizer {
   private void autoSizeAllEquipment() {
     for (ProcessEquipmentInterface equipment : getAllUnitOperations()) {
       if (equipment instanceof AutoSizeable && !excludedEquipment.contains(equipment.getName())) {
-	AutoSizeable sizeable = (AutoSizeable) equipment;
-	sizeable.autoSize(safetyFactor);
-	logger.debug("Auto-sized: " + equipment.getName());
+        AutoSizeable sizeable = (AutoSizeable) equipment;
+        sizeable.autoSize(safetyFactor);
+        logger.debug("Auto-sized: " + equipment.getName());
       }
     }
   }
@@ -321,7 +321,7 @@ public class DesignOptimizer {
     for (int i = units.size() - 1; i >= 0; i--) {
       ProcessEquipmentInterface equipment = units.get(i);
       if (equipment instanceof StreamInterface) {
-	return (StreamInterface) equipment;
+        return (StreamInterface) equipment;
       }
     }
     return null;
@@ -330,9 +330,9 @@ public class DesignOptimizer {
   private void recordEquipmentSizes(DesignResult result) {
     for (ProcessEquipmentInterface equipment : getAllUnitOperations()) {
       if (equipment instanceof Separator) {
-	Separator sep = (Separator) equipment;
-	result.addEquipmentSize(sep.getName(), "diameter", sep.getInternalDiameter());
-	result.addEquipmentSize(sep.getName(), "length", sep.getSeparatorLength());
+        Separator sep = (Separator) equipment;
+        result.addEquipmentSize(sep.getName(), "diameter", sep.getInternalDiameter());
+        result.addEquipmentSize(sep.getName(), "length", sep.getSeparatorLength());
       }
       // Add more equipment types as needed
     }
@@ -342,13 +342,13 @@ public class DesignOptimizer {
     // Record constraint utilizations from optimization result
     for (ProcessEquipmentInterface equipment : getAllUnitOperations()) {
       if (equipment instanceof CapacityConstrainedEquipment) {
-	CapacityConstrainedEquipment constrained = (CapacityConstrainedEquipment) equipment;
-	for (neqsim.process.equipment.capacity.CapacityConstraint constraint : constrained.getCapacityConstraints()
-	    .values()) {
-	  double utilized = constraint.getCurrentValue() / constraint.getMaxValue();
-	  result.addConstraintStatus(equipment.getName(), constraint.getName(), constraint.getCurrentValue(),
-	      constraint.getMaxValue(), utilized);
-	}
+        CapacityConstrainedEquipment constrained = (CapacityConstrainedEquipment) equipment;
+        for (neqsim.process.equipment.capacity.CapacityConstraint constraint : constrained.getCapacityConstraints()
+            .values()) {
+          double utilized = constraint.getCurrentValue() / constraint.getMaxValue();
+          result.addConstraintStatus(equipment.getName(), constraint.getName(), constraint.getCurrentValue(),
+              constraint.getMaxValue(), utilized);
+        }
       }
     }
   }
@@ -356,18 +356,18 @@ public class DesignOptimizer {
   private void checkViolations(DesignResult result) {
     for (ProcessEquipmentInterface equipment : getAllUnitOperations()) {
       if (equipment instanceof CapacityConstrainedEquipment) {
-	CapacityConstrainedEquipment constrained = (CapacityConstrainedEquipment) equipment;
-	for (neqsim.process.equipment.capacity.CapacityConstraint constraint : constrained.getCapacityConstraints()
-	    .values()) {
-	  double utilized = constraint.getCurrentValue() / constraint.getMaxValue();
-	  if (utilized > 1.0) {
-	    result.addViolation(equipment.getName() + ": " + constraint.getName() + " exceeded ("
-		+ String.format("%.1f%% utilization", utilized * 100) + ")");
-	  } else if (utilized > 0.9) {
-	    result.addWarning(equipment.getName() + ": " + constraint.getName() + " at "
-		+ String.format("%.1f%% utilization", utilized * 100));
-	  }
-	}
+        CapacityConstrainedEquipment constrained = (CapacityConstrainedEquipment) equipment;
+        for (neqsim.process.equipment.capacity.CapacityConstraint constraint : constrained.getCapacityConstraints()
+            .values()) {
+          double utilized = constraint.getCurrentValue() / constraint.getMaxValue();
+          if (utilized > 1.0) {
+            result.addViolation(equipment.getName() + ": " + constraint.getName() + " exceeded ("
+                + String.format("%.1f%% utilization", utilized * 100) + ")");
+          } else if (utilized > 0.9) {
+            result.addWarning(equipment.getName() + ": " + constraint.getName() + " at "
+                + String.format("%.1f%% utilization", utilized * 100));
+          }
+        }
       }
     }
   }

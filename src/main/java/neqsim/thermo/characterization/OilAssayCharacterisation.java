@@ -19,7 +19,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
   private static final double FRACTION_TOLERANCE = 1e-10;
   private static final double KELVIN_OFFSET = 273.15;
   private static final double WATER_DENSITY_60F_G_CC = 0.999016; // API definition reference
-								 // density.
+  // density.
 
   private transient SystemInterface system;
   private double totalAssayMass = 1.0; // kg basis when converting mass fraction to moles.
@@ -79,23 +79,23 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
       AssayCut cut = cuts.get(i);
       double massFraction = massFractions[i];
       if (!(massFraction > FRACTION_TOLERANCE)) {
-	continue;
+        continue;
       }
 
       double density = cut.resolveDensity();
       double molarMass;
       if (cut.hasMolarMass()) {
-	// Use explicit molar mass - no boiling point needed
-	molarMass = cut.resolveMolarMass(0.0, 0.0);
+        // Use explicit molar mass - no boiling point needed
+        molarMass = cut.resolveMolarMass(0.0, 0.0);
       } else {
-	// Calculate molar mass from density and boiling point
-	double boilingPoint = cut.resolveAverageBoilingPoint();
-	molarMass = cut.resolveMolarMass(density, boilingPoint);
+        // Calculate molar mass from density and boiling point
+        double boilingPoint = cut.resolveAverageBoilingPoint();
+        molarMass = cut.resolveMolarMass(density, boilingPoint);
       }
       double moles = totalAssayMass * massFraction / molarMass;
 
       if (moles <= 0.0 || Double.isNaN(moles) || Double.isInfinite(moles)) {
-	throw new IllegalStateException("Calculated mole amount for assay cut " + cut.getName() + " is not finite");
+        throw new IllegalStateException("Calculated mole amount for assay cut " + cut.getName() + " is not finite");
       }
 
       system.addTBPfraction(cut.getName(), moles, molarMass, density);
@@ -111,15 +111,15 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     for (int i = 0; i < cuts.size(); i++) {
       AssayCut cut = cuts.get(i);
       if (cut.hasMassFraction()) {
-	double massFraction = cut.getMassFraction();
-	specifiedMass += massFraction;
-	massFractions[i] = massFraction;
+        double massFraction = cut.getMassFraction();
+        specifiedMass += massFraction;
+        massFractions[i] = massFraction;
       } else if (cut.hasVolumeFraction()) {
-	hasVolumeFractions = true;
-	double density = cut.resolveDensity();
-	volumeMass += cut.getVolumeFraction() * density;
+        hasVolumeFractions = true;
+        double density = cut.resolveDensity();
+        volumeMass += cut.getVolumeFraction() * density;
       } else {
-	throw new IllegalStateException("Assay cut " + cut.getName() + " must define a mass or volume fraction");
+        throw new IllegalStateException("Assay cut " + cut.getName() + " must define a mass or volume fraction");
       }
     }
 
@@ -131,15 +131,15 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
 
     if (hasVolumeFractions) {
       if (!(volumeMass > 0.0)) {
-	throw new IllegalStateException("Unable to derive mass fractions from volume data");
+        throw new IllegalStateException("Unable to derive mass fractions from volume data");
       }
       for (int i = 0; i < cuts.size(); i++) {
-	AssayCut cut = cuts.get(i);
-	if (!cut.hasMassFraction() && cut.hasVolumeFraction()) {
-	  double density = cut.resolveDensity();
-	  double cutMass = cut.getVolumeFraction() * density;
-	  massFractions[i] = cutMass / volumeMass * remainingMass;
-	}
+        AssayCut cut = cuts.get(i);
+        if (!cut.hasMassFraction() && cut.hasVolumeFraction()) {
+          double density = cut.resolveDensity();
+          double cutMass = cut.getVolumeFraction() * density;
+          massFractions[i] = cutMass / volumeMass * remainingMass;
+        }
       }
     }
 
@@ -154,7 +154,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
 
     if (Math.abs(totalMassFraction - 1.0) > 1.0e-8) {
       for (int i = 0; i < massFractions.length; i++) {
-	massFractions[i] /= totalMassFraction;
+        massFractions[i] /= totalMassFraction;
       }
     }
     return massFractions;
@@ -166,7 +166,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
       OilAssayCharacterisation clone = (OilAssayCharacterisation) super.clone();
       clone.cuts = new ArrayList<>();
       for (AssayCut cut : cuts) {
-	clone.cuts.add(cut.clone());
+        clone.cuts.add(cut.clone());
       }
       clone.system = system;
       return clone;
@@ -215,7 +215,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
 
     public AssayCut withDensity(double density) {
       if (!(density > 0.0)) {
-	throw new IllegalArgumentException("Density must be positive");
+        throw new IllegalArgumentException("Density must be positive");
       }
       this.density = density;
       return this;
@@ -223,7 +223,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
 
     public AssayCut withApiGravity(double apiGravity) {
       if (!(apiGravity > 0.0)) {
-	throw new IllegalArgumentException("API gravity must be positive");
+        throw new IllegalArgumentException("API gravity must be positive");
       }
       this.apiGravity = apiGravity;
       return this;
@@ -231,7 +231,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
 
     public AssayCut withAverageBoilingPointKelvin(double temperatureKelvin) {
       if (!(temperatureKelvin > 0.0)) {
-	throw new IllegalArgumentException("Boiling point must be positive");
+        throw new IllegalArgumentException("Boiling point must be positive");
       }
       this.averageBoilingPointKelvin = temperatureKelvin;
       return this;
@@ -248,7 +248,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
 
     public AssayCut withMolarMass(double molarMass) {
       if (!(molarMass > 0.0)) {
-	throw new IllegalArgumentException("Molar mass must be positive");
+        throw new IllegalArgumentException("Molar mass must be positive");
       }
       this.molarMass = molarMass;
       return this;
@@ -260,7 +260,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
 
     public double getMassFraction() {
       if (massFraction == null) {
-	throw new IllegalStateException("Mass fraction not set");
+        throw new IllegalStateException("Mass fraction not set");
       }
       return massFraction;
     }
@@ -271,7 +271,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
 
     public double getVolumeFraction() {
       if (volumeFraction == null) {
-	throw new IllegalStateException("Volume fraction not set");
+        throw new IllegalStateException("Volume fraction not set");
       }
       return volumeFraction;
     }
@@ -282,28 +282,28 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
 
     public double resolveDensity() {
       if (density != null) {
-	return density;
+        return density;
       }
       if (apiGravity != null) {
-	double specificGravity = 141.5 / (apiGravity + 131.5);
-	return specificGravity * WATER_DENSITY_60F_G_CC;
+        double specificGravity = 141.5 / (apiGravity + 131.5);
+        return specificGravity * WATER_DENSITY_60F_G_CC;
       }
       throw new IllegalStateException("Density or API gravity required for cut " + name);
     }
 
     public double resolveAverageBoilingPoint() {
       if (averageBoilingPointKelvin == null) {
-	throw new IllegalStateException("Average boiling point missing for cut " + name);
+        throw new IllegalStateException("Average boiling point missing for cut " + name);
       }
       return averageBoilingPointKelvin;
     }
 
     public double resolveMolarMass(double density, double boilingPointKelvin) {
       if (molarMass != null) {
-	return molarMass;
+        return molarMass;
       }
       if (!(density > 0.0) || !(boilingPointKelvin > 0.0)) {
-	throw new IllegalStateException("Cannot derive molar mass without density and boiling point");
+        throw new IllegalStateException("Cannot derive molar mass without density and boiling point");
       }
       double exponent = 2.3776;
       double densityExponent = 0.9371;
@@ -318,14 +318,14 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
 
     private static double sanitiseFraction(double fraction) {
       if (fraction < 0.0) {
-	throw new IllegalArgumentException("Fraction cannot be negative");
+        throw new IllegalArgumentException("Fraction cannot be negative");
       }
       double candidate = fraction;
       if (candidate > 1.0 + 1e-9) {
-	candidate = candidate / 100.0;
+        candidate = candidate / 100.0;
       }
       if (candidate < 0.0 || candidate > 1.0 + 1e-9) {
-	throw new IllegalArgumentException("Fraction must be between 0 and 1");
+        throw new IllegalArgumentException("Fraction must be between 0 and 1");
       }
       return candidate;
     }

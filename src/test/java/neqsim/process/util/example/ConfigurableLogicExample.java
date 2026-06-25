@@ -1,5 +1,13 @@
 package neqsim.process.util.example;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
@@ -7,15 +15,10 @@ import neqsim.process.logic.LogicAction;
 import neqsim.process.logic.LogicCondition;
 import neqsim.process.logic.esd.ESDLogic;
 import neqsim.process.logic.startup.StartupLogic;
-import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
-
-import java.util.*;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Example demonstrating how to create process logic from external configuration without any pre-compilation - logic is
@@ -136,7 +139,7 @@ public class ConfigurableLogicExample {
 
     // Configuration string format: ACTION_TYPE:EQUIPMENT:PARAMETER:DELAY
     String[] esdConfig = { "VALVE_CLOSE:Control Valve:0:0.0", "VALVE_SET:Backup Valve:25.0:0.5",
-	"SEPARATOR_MODE:Test Separator:transient:1.0" };
+        "SEPARATOR_MODE:Test Separator:transient:1.0" };
 
     ESDLogic configuredESD = factory.createESDFromConfig("Configured ESD", esdConfig);
     logger.info("✓ Created ESD logic from configuration strings:");
@@ -144,13 +147,13 @@ public class ConfigurableLogicExample {
 
     // Configuration string format: CONDITION_TYPE:EQUIPMENT:VALUE:OPERATOR
     String[] startupConfig = { "VALVE_POSITION:Control Valve:10.0:<", "VALVE_POSITION:Backup Valve:95.0:>",
-	"TIMER:none:5.0:>" };
+        "TIMER:none:5.0:>" };
 
     String[] startupActions = { "VALVE_OPEN:Control Valve:100:0.0", "VALVE_SET:Control Valve:75.0:2.0",
-	"SEPARATOR_MODE:Test Separator:steady:5.0" };
+        "SEPARATOR_MODE:Test Separator:steady:5.0" };
 
     StartupLogic configuredStartup = factory.createStartupFromConfig("Configured Startup", startupConfig,
-	startupActions);
+        startupActions);
     logger.info("✓ Created startup logic from configuration strings:");
     logger.info("  - Name: " + configuredStartup.getName());
     logger.info("  - Conditions: " + startupConfig.length);
@@ -167,12 +170,12 @@ public class ConfigurableLogicExample {
 
     // Simulate reading from configuration file
     String configFileContent = "# Emergency Shutdown Logic Configuration\n" + "LOGIC_TYPE=ESD\n"
-	+ "LOGIC_NAME=File Based ESD\n" + "ACTION_1=VALVE_CLOSE:Control Valve:0:0.0\n"
-	+ "ACTION_2=VALVE_CLOSE:Backup Valve:0:0.2\n" + "ACTION_3=SEPARATOR_MODE:Test Separator:transient:0.5\n" + "\n"
-	+ "# Startup Logic Configuration  \n" + "LOGIC_TYPE=STARTUP\n" + "LOGIC_NAME=File Based Startup\n"
-	+ "CONDITION_1=VALVE_POSITION:Control Valve:5.0:<\n" + "CONDITION_2=VALVE_POSITION:Backup Valve:5.0:<\n"
-	+ "ACTION_1=VALVE_SET:Control Valve:50.0:0.0\n" + "ACTION_2=VALVE_SET:Backup Valve:80.0:1.0\n"
-	+ "ACTION_3=SEPARATOR_MODE:Test Separator:steady:3.0\n";
+        + "LOGIC_NAME=File Based ESD\n" + "ACTION_1=VALVE_CLOSE:Control Valve:0:0.0\n"
+        + "ACTION_2=VALVE_CLOSE:Backup Valve:0:0.2\n" + "ACTION_3=SEPARATOR_MODE:Test Separator:transient:0.5\n" + "\n"
+        + "# Startup Logic Configuration  \n" + "LOGIC_TYPE=STARTUP\n" + "LOGIC_NAME=File Based Startup\n"
+        + "CONDITION_1=VALVE_POSITION:Control Valve:5.0:<\n" + "CONDITION_2=VALVE_POSITION:Backup Valve:5.0:<\n"
+        + "ACTION_1=VALVE_SET:Control Valve:50.0:0.0\n" + "ACTION_2=VALVE_SET:Backup Valve:80.0:1.0\n"
+        + "ACTION_3=SEPARATOR_MODE:Test Separator:steady:3.0\n";
 
     List<ProcessLogicConfig> configs = parseConfigFile(configFileContent);
 
@@ -180,13 +183,13 @@ public class ConfigurableLogicExample {
 
     for (ProcessLogicConfig config : configs) {
       if ("ESD".equals(config.type)) {
-	ESDLogic esdFromFile = factory.createESDFromConfig(config.name, config.actions.toArray(new String[0]));
-	logger.info("  - Created ESD: " + esdFromFile.getName() + " (" + esdFromFile.getActionCount() + " actions)");
+        ESDLogic esdFromFile = factory.createESDFromConfig(config.name, config.actions.toArray(new String[0]));
+        logger.info("  - Created ESD: " + esdFromFile.getName() + " (" + esdFromFile.getActionCount() + " actions)");
       } else if ("STARTUP".equals(config.type)) {
-	StartupLogic startupFromFile = factory.createStartupFromConfig(config.name,
-	    config.conditions.toArray(new String[0]), config.actions.toArray(new String[0]));
-	logger.info("  - Created Startup: " + startupFromFile.getName() + " (conditions: " + config.conditions.size()
-	    + ", actions: " + config.actions.size() + ")");
+        StartupLogic startupFromFile = factory.createStartupFromConfig(config.name,
+            config.conditions.toArray(new String[0]), config.actions.toArray(new String[0]));
+        logger.info("  - Created Startup: " + startupFromFile.getName() + " (conditions: " + config.conditions.size()
+            + ", actions: " + config.actions.size() + ")");
       }
     }
   }
@@ -201,8 +204,8 @@ public class ConfigurableLogicExample {
 
     // Simulate user input (in real app, this might come from a GUI or command line)
     Scanner simulatedUserInput = new Scanner("My Custom Logic\n" + "3\n" + "Set Control Valve to 25%\n"
-	+ "VALVE_SET:Control Valve:25.0:0.0\n" + "Close Backup Valve\n" + "VALVE_CLOSE:Backup Valve:0:1.0\n"
-	+ "Switch separator to transient\n" + "SEPARATOR_MODE:Test Separator:transient:2.0\n");
+        + "VALVE_SET:Control Valve:25.0:0.0\n" + "Close Backup Valve\n" + "VALVE_CLOSE:Backup Valve:0:1.0\n"
+        + "Switch separator to transient\n" + "SEPARATOR_MODE:Test Separator:transient:2.0\n");
 
     logger.info("Collecting user input for custom logic...");
 
@@ -246,20 +249,20 @@ public class ConfigurableLogicExample {
     for (String line : lines) {
       line = line.trim();
       if (line.isEmpty() || line.startsWith("#"))
-	continue;
+        continue;
 
       if (line.startsWith("LOGIC_TYPE=")) {
-	if (currentConfig != null) {
-	  configs.add(currentConfig);
-	}
-	currentConfig = new ProcessLogicConfig();
-	currentConfig.type = line.split("=")[1];
+        if (currentConfig != null) {
+          configs.add(currentConfig);
+        }
+        currentConfig = new ProcessLogicConfig();
+        currentConfig.type = line.split("=")[1];
       } else if (line.startsWith("LOGIC_NAME=") && currentConfig != null) {
-	currentConfig.name = line.split("=")[1];
+        currentConfig.name = line.split("=")[1];
       } else if (line.startsWith("ACTION_") && currentConfig != null) {
-	currentConfig.actions.add(line.split("=")[1]);
+        currentConfig.actions.add(line.split("=")[1]);
       } else if (line.startsWith("CONDITION_") && currentConfig != null) {
-	currentConfig.conditions.add(line.split("=")[1]);
+        currentConfig.conditions.add(line.split("=")[1]);
       }
     }
 
@@ -284,9 +287,9 @@ public class ConfigurableLogicExample {
       ESDLogic logic = new ESDLogic(name);
 
       for (String config : actionConfigs) {
-	LogicAction action = createActionFromConfig(config);
-	double delay = extractDelayFromConfig(config);
-	logic.addAction(action, delay);
+        LogicAction action = createActionFromConfig(config);
+        double delay = extractDelayFromConfig(config);
+        logic.addAction(action, delay);
       }
 
       return logic;
@@ -297,15 +300,15 @@ public class ConfigurableLogicExample {
 
       // Add conditions
       for (String config : conditionConfigs) {
-	LogicCondition condition = createConditionFromConfig(config);
-	logic.addPermissive(condition);
+        LogicCondition condition = createConditionFromConfig(config);
+        logic.addPermissive(condition);
       }
 
       // Add actions
       for (String config : actionConfigs) {
-	LogicAction action = createActionFromConfig(config);
-	double delay = extractDelayFromConfig(config);
-	logic.addAction(action, delay);
+        LogicAction action = createActionFromConfig(config);
+        double delay = extractDelayFromConfig(config);
+        logic.addAction(action, delay);
       }
 
       return logic;
@@ -321,15 +324,15 @@ public class ConfigurableLogicExample {
 
       switch (actionType) {
       case "VALVE_CLOSE":
-	return createValveCloseAction((ThrottlingValve) targetEquipment);
+        return createValveCloseAction((ThrottlingValve) targetEquipment);
       case "VALVE_OPEN":
-	return createValveOpenAction((ThrottlingValve) targetEquipment);
+        return createValveOpenAction((ThrottlingValve) targetEquipment);
       case "VALVE_SET":
-	return createValveSetAction((ThrottlingValve) targetEquipment, Double.parseDouble(parameter));
+        return createValveSetAction((ThrottlingValve) targetEquipment, Double.parseDouble(parameter));
       case "SEPARATOR_MODE":
-	return createSeparatorModeAction((Separator) targetEquipment, "steady".equals(parameter));
+        return createSeparatorModeAction((Separator) targetEquipment, "steady".equals(parameter));
       default:
-	throw new IllegalArgumentException("Unknown action type: " + actionType);
+        throw new IllegalArgumentException("Unknown action type: " + actionType);
       }
     }
 
@@ -342,12 +345,12 @@ public class ConfigurableLogicExample {
 
       switch (conditionType) {
       case "VALVE_POSITION":
-	ProcessEquipmentInterface targetEquipment = equipment.get(equipmentName);
-	return createValvePositionCondition((ThrottlingValve) targetEquipment, Double.parseDouble(parameter), operator);
+        ProcessEquipmentInterface targetEquipment = equipment.get(equipmentName);
+        return createValvePositionCondition((ThrottlingValve) targetEquipment, Double.parseDouble(parameter), operator);
       case "TIMER":
-	return createTimerCondition(Double.parseDouble(parameter));
+        return createTimerCondition(Double.parseDouble(parameter));
       default:
-	throw new IllegalArgumentException("Unknown condition type: " + conditionType);
+        throw new IllegalArgumentException("Unknown condition type: " + conditionType);
       }
     }
 
@@ -359,197 +362,197 @@ public class ConfigurableLogicExample {
     // Action factory methods
     private LogicAction createValveCloseAction(ThrottlingValve valve) {
       return new LogicAction() {
-	private boolean executed = false;
+        private boolean executed = false;
 
-	@Override
-	public void execute() {
-	  if (!executed) {
-	    valve.setPercentValveOpening(0.0);
-	    executed = true;
-	  }
-	}
+        @Override
+        public void execute() {
+          if (!executed) {
+            valve.setPercentValveOpening(0.0);
+            executed = true;
+          }
+        }
 
-	@Override
-	public String getDescription() {
-	  return "Close valve " + valve.getName();
-	}
+        @Override
+        public String getDescription() {
+          return "Close valve " + valve.getName();
+        }
 
-	@Override
-	public boolean isComplete() {
-	  return executed && valve.getPercentValveOpening() < 1.0;
-	}
+        @Override
+        public boolean isComplete() {
+          return executed && valve.getPercentValveOpening() < 1.0;
+        }
 
-	@Override
-	public String getTargetName() {
-	  return valve.getName();
-	}
+        @Override
+        public String getTargetName() {
+          return valve.getName();
+        }
       };
     }
 
     private LogicAction createValveOpenAction(ThrottlingValve valve) {
       return new LogicAction() {
-	private boolean executed = false;
+        private boolean executed = false;
 
-	@Override
-	public void execute() {
-	  if (!executed) {
-	    valve.setPercentValveOpening(100.0);
-	    executed = true;
-	  }
-	}
+        @Override
+        public void execute() {
+          if (!executed) {
+            valve.setPercentValveOpening(100.0);
+            executed = true;
+          }
+        }
 
-	@Override
-	public String getDescription() {
-	  return "Open valve " + valve.getName();
-	}
+        @Override
+        public String getDescription() {
+          return "Open valve " + valve.getName();
+        }
 
-	@Override
-	public boolean isComplete() {
-	  return executed && valve.getPercentValveOpening() > 99.0;
-	}
+        @Override
+        public boolean isComplete() {
+          return executed && valve.getPercentValveOpening() > 99.0;
+        }
 
-	@Override
-	public String getTargetName() {
-	  return valve.getName();
-	}
+        @Override
+        public String getTargetName() {
+          return valve.getName();
+        }
       };
     }
 
     private LogicAction createValveSetAction(ThrottlingValve valve, double targetOpening) {
       return new LogicAction() {
-	private boolean executed = false;
+        private boolean executed = false;
 
-	@Override
-	public void execute() {
-	  if (!executed) {
-	    valve.setPercentValveOpening(targetOpening);
-	    executed = true;
-	  }
-	}
+        @Override
+        public void execute() {
+          if (!executed) {
+            valve.setPercentValveOpening(targetOpening);
+            executed = true;
+          }
+        }
 
-	@Override
-	public String getDescription() {
-	  return String.format("Set valve %s to %.1f%%", valve.getName(), targetOpening);
-	}
+        @Override
+        public String getDescription() {
+          return String.format("Set valve %s to %.1f%%", valve.getName(), targetOpening);
+        }
 
-	@Override
-	public boolean isComplete() {
-	  return executed && Math.abs(valve.getPercentValveOpening() - targetOpening) < 1.0;
-	}
+        @Override
+        public boolean isComplete() {
+          return executed && Math.abs(valve.getPercentValveOpening() - targetOpening) < 1.0;
+        }
 
-	@Override
-	public String getTargetName() {
-	  return valve.getName();
-	}
+        @Override
+        public String getTargetName() {
+          return valve.getName();
+        }
       };
     }
 
     private LogicAction createSeparatorModeAction(Separator separator, boolean steadyState) {
       return new LogicAction() {
-	private boolean executed = false;
+        private boolean executed = false;
 
-	@Override
-	public void execute() {
-	  if (!executed) {
-	    separator.setCalculateSteadyState(steadyState);
-	    executed = true;
-	  }
-	}
+        @Override
+        public void execute() {
+          if (!executed) {
+            separator.setCalculateSteadyState(steadyState);
+            executed = true;
+          }
+        }
 
-	@Override
-	public String getDescription() {
-	  return String.format("Set separator %s to %s mode", separator.getName(),
-	      steadyState ? "steady-state" : "transient");
-	}
+        @Override
+        public String getDescription() {
+          return String.format("Set separator %s to %s mode", separator.getName(),
+              steadyState ? "steady-state" : "transient");
+        }
 
-	@Override
-	public boolean isComplete() {
-	  return executed;
-	}
+        @Override
+        public boolean isComplete() {
+          return executed;
+        }
 
-	@Override
-	public String getTargetName() {
-	  return separator.getName();
-	}
+        @Override
+        public String getTargetName() {
+          return separator.getName();
+        }
       };
     }
 
     // Condition factory methods
     private LogicCondition createValvePositionCondition(ThrottlingValve valve, double value, String operator) {
       return new LogicCondition() {
-	@Override
-	public boolean evaluate() {
-	  double currentPosition = valve.getPercentValveOpening();
-	  switch (operator) {
-	  case "<":
-	    return currentPosition < value;
-	  case "<=":
-	    return currentPosition <= value;
-	  case ">":
-	    return currentPosition > value;
-	  case ">=":
-	    return currentPosition >= value;
-	  case "==":
-	    return Math.abs(currentPosition - value) < 1.0;
-	  case "!=":
-	    return Math.abs(currentPosition - value) >= 1.0;
-	  default:
-	    return false;
-	  }
-	}
+        @Override
+        public boolean evaluate() {
+          double currentPosition = valve.getPercentValveOpening();
+          switch (operator) {
+          case "<":
+            return currentPosition < value;
+          case "<=":
+            return currentPosition <= value;
+          case ">":
+            return currentPosition > value;
+          case ">=":
+            return currentPosition >= value;
+          case "==":
+            return Math.abs(currentPosition - value) < 1.0;
+          case "!=":
+            return Math.abs(currentPosition - value) >= 1.0;
+          default:
+            return false;
+          }
+        }
 
-	@Override
-	public String getDescription() {
-	  return String.format("Valve %s position %s %.1f%%", valve.getName(), operator, value);
-	}
+        @Override
+        public String getDescription() {
+          return String.format("Valve %s position %s %.1f%%", valve.getName(), operator, value);
+        }
 
-	@Override
-	public ProcessEquipmentInterface getTargetEquipment() {
-	  return valve;
-	}
+        @Override
+        public ProcessEquipmentInterface getTargetEquipment() {
+          return valve;
+        }
 
-	@Override
-	public String getCurrentValue() {
-	  return String.format("%.1f%%", valve.getPercentValveOpening());
-	}
+        @Override
+        public String getCurrentValue() {
+          return String.format("%.1f%%", valve.getPercentValveOpening());
+        }
 
-	@Override
-	public String getExpectedValue() {
-	  return operator + value + "%";
-	}
+        @Override
+        public String getExpectedValue() {
+          return operator + value + "%";
+        }
       };
     }
 
     private LogicCondition createTimerCondition(double seconds) {
       return new LogicCondition() {
-	private final long startTime = System.currentTimeMillis();
+        private final long startTime = System.currentTimeMillis();
 
-	@Override
-	public boolean evaluate() {
-	  double elapsed = (System.currentTimeMillis() - startTime) / 1000.0;
-	  return elapsed > seconds;
-	}
+        @Override
+        public boolean evaluate() {
+          double elapsed = (System.currentTimeMillis() - startTime) / 1000.0;
+          return elapsed > seconds;
+        }
 
-	@Override
-	public String getDescription() {
-	  return String.format("Timer > %.1f seconds", seconds);
-	}
+        @Override
+        public String getDescription() {
+          return String.format("Timer > %.1f seconds", seconds);
+        }
 
-	@Override
-	public ProcessEquipmentInterface getTargetEquipment() {
-	  return null;
-	}
+        @Override
+        public ProcessEquipmentInterface getTargetEquipment() {
+          return null;
+        }
 
-	@Override
-	public String getCurrentValue() {
-	  double elapsed = (System.currentTimeMillis() - startTime) / 1000.0;
-	  return String.format("%.1fs", elapsed);
-	}
+        @Override
+        public String getCurrentValue() {
+          double elapsed = (System.currentTimeMillis() - startTime) / 1000.0;
+          return String.format("%.1fs", elapsed);
+        }
 
-	@Override
-	public String getExpectedValue() {
-	  return ">" + seconds + "s";
-	}
+        @Override
+        public String getExpectedValue() {
+          return ">" + seconds + "s";
+        }
       };
     }
   }

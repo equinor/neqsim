@@ -32,9 +32,9 @@ public class PipeLeg extends FlowLeg {
   public void createFlowNodes(FlowNodeInterface initNode) {
     heightChangePerNode = (this.endHeightCoordinate - this.startHeightCoordinate) / this.getNumberOfNodes();
     longitudionalChangePerNode = (this.endLongitudionalCoordinate - this.startLongitudionalCoordinate)
-	/ (this.getNumberOfNodes() * 1.0);
+        / (this.getNumberOfNodes() * 1.0);
     temperatureChangePerNode = (this.endOuterTemperature - this.startOuterTemperature)
-	/ (this.getNumberOfNodes() * 1.0);
+        / (this.getNumberOfNodes() * 1.0);
 
     flowNode = new FlowNodeInterface[this.getNumberOfNodes()];
     this.flowNode[0] = initNode.getNextNode();

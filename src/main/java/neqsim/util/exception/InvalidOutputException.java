@@ -74,20 +74,20 @@ public class InvalidOutputException extends neqsim.util.exception.ThermoExceptio
 
     if (outputName.toLowerCase().contains("temperature")) {
       return hint + "1. Check if temperature is above absolute zero\n"
-	  + "2. Verify phase equilibrium was calculated correctly\n" + "3. Check for valid flash calculation";
+          + "2. Verify phase equilibrium was calculated correctly\n" + "3. Check for valid flash calculation";
     } else if (outputName.toLowerCase().contains("pressure")) {
       return hint + "1. Check if pressure is positive\n" + "2. Verify compressibility factor calculation\n"
-	  + "3. Check for valid vapor pressure calculation";
+          + "3. Check for valid vapor pressure calculation";
     } else if (outputName.toLowerCase().contains("density")) {
       return hint + "1. Check if density is positive\n" + "2. Verify volume calculation\n"
-	  + "3. Check equation of state parameters";
+          + "3. Check equation of state parameters";
     } else if (outputName.toLowerCase().contains("enthalpy") || outputName.toLowerCase().contains("entropy")) {
       return hint + "1. Check if reference state is set correctly\n" + "2. Verify thermodynamic consistency\n"
-	  + "3. Check for valid Cp/Cv values";
+          + "3. Check for valid Cp/Cv values";
     }
 
     return hint + "1. Verify input conditions are physically reasonable\n"
-	+ "2. Check that all required calculations have been performed\n"
-	+ "3. Review equation of state applicability for this system";
+        + "2. Check that all required calculations have been performed\n"
+        + "3. Review equation of state applicability for this system";
   }
 }

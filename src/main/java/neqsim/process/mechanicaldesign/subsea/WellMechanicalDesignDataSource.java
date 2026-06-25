@@ -278,10 +278,10 @@ public class WellMechanicalDesignDataSource implements Serializable {
   private StandardBasedCsvDataSource getNorsokSource() {
     if (norsokSource == null) {
       try {
-	norsokSource = new StandardBasedCsvDataSource(NORSOK_CSV);
+        norsokSource = new StandardBasedCsvDataSource(NORSOK_CSV);
       } catch (Exception e) {
-	logger.debug("Could not load NORSOK standards CSV: " + e.getMessage());
-	return null;
+        logger.debug("Could not load NORSOK standards CSV: " + e.getMessage());
+        return null;
       }
     }
     return norsokSource;
@@ -295,10 +295,10 @@ public class WellMechanicalDesignDataSource implements Serializable {
   private StandardBasedCsvDataSource getApiSource() {
     if (apiSource == null) {
       try {
-	apiSource = new StandardBasedCsvDataSource(API_CSV);
+        apiSource = new StandardBasedCsvDataSource(API_CSV);
       } catch (Exception e) {
-	logger.debug("Could not load API standards CSV: " + e.getMessage());
-	return null;
+        logger.debug("Could not load API standards CSV: " + e.getMessage());
+        return null;
       }
     }
     return apiSource;
@@ -312,10 +312,10 @@ public class WellMechanicalDesignDataSource implements Serializable {
   private StandardBasedCsvDataSource getIsoSource() {
     if (isoSource == null) {
       try {
-	isoSource = new StandardBasedCsvDataSource(ISO_CSV);
+        isoSource = new StandardBasedCsvDataSource(ISO_CSV);
       } catch (Exception e) {
-	logger.debug("Could not load ISO standards CSV: " + e.getMessage());
-	return null;
+        logger.debug("Could not load ISO standards CSV: " + e.getMessage());
+        return null;
       }
     }
     return isoSource;

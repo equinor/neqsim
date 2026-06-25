@@ -144,8 +144,8 @@ public class ReactorAxialProfile implements Serializable {
     }
     for (int i = 0; i < numberOfSteps - 1; i++) {
       if (x >= xArr[i] && x <= xArr[i + 1]) {
-	double fraction = (x - xArr[i]) / (xArr[i + 1] - xArr[i]);
-	return yArr[i] + fraction * (yArr[i + 1] - yArr[i]);
+        double fraction = (x - xArr[i]) / (xArr[i + 1] - xArr[i]);
+        return yArr[i] + fraction * (yArr[i + 1] - yArr[i]);
       }
     }
     return yArr[numberOfSteps - 1];
@@ -163,7 +163,7 @@ public class ReactorAxialProfile implements Serializable {
     sb.append("  \"components\": [");
     for (int i = 0; i < componentNames.length; i++) {
       if (i > 0) {
-	sb.append(", ");
+        sb.append(", ");
       }
       sb.append("\"").append(componentNames[i]).append("\"");
     }
@@ -179,7 +179,7 @@ public class ReactorAxialProfile implements Serializable {
     for (int i = 0; i < numberOfSteps; i++) {
       sb.append("    ").append(arrayToJson(molarFlows[i]));
       if (i < numberOfSteps - 1) {
-	sb.append(",");
+        sb.append(",");
       }
       sb.append("\n");
     }
@@ -207,9 +207,9 @@ public class ReactorAxialProfile implements Serializable {
     // Data rows
     for (int i = 0; i < numberOfSteps; i++) {
       sb.append(String.format(Locale.US, "%.6f,%.4f,%.6f,%.8f,%.6e", position[i], temperature[i], pressure[i],
-	  conversion[i], reactionRate[i]));
+          conversion[i], reactionRate[i]));
       for (int j = 0; j < componentNames.length; j++) {
-	sb.append(String.format(Locale.US, ",%.8e", molarFlows[i][j]));
+        sb.append(String.format(Locale.US, ",%.8e", molarFlows[i][j]));
       }
       sb.append("\n");
     }
@@ -228,12 +228,12 @@ public class ReactorAxialProfile implements Serializable {
     sb.append("[");
     for (int i = 0; i < arr.length; i++) {
       if (i > 0) {
-	sb.append(", ");
+        sb.append(", ");
       }
       if (Double.isNaN(arr[i]) || Double.isInfinite(arr[i])) {
-	sb.append("null");
+        sb.append("null");
       } else {
-	sb.append(String.format(Locale.US, "%.8g", arr[i]));
+        sb.append(String.format(Locale.US, "%.8g", arr[i]));
       }
     }
     sb.append("]");

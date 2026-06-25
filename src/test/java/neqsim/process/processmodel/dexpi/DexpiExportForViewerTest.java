@@ -3,6 +3,8 @@ package neqsim.process.processmodel.dexpi;
 import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.NeqSimTest;
 import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
@@ -19,8 +21,6 @@ import neqsim.process.measurementdevice.TemperatureTransmitter;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Generates DEXPI XML files for testing in external DEXPI viewers. Run this test then open the generated files from

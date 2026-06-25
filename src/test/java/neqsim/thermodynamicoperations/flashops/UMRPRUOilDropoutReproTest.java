@@ -51,8 +51,8 @@ public class UMRPRUOilDropoutReproTest {
     for (int p = 0; p < sys.getNumberOfPhases(); p++) {
       betaSum += sys.getBeta(p);
       if (sys.getPhase(p).getType() == neqsim.thermo.phase.PhaseType.OIL
-	  || sys.getPhase(p).getType() == neqsim.thermo.phase.PhaseType.LIQUID) {
-	oil += sys.getBeta(p);
+          || sys.getPhase(p).getType() == neqsim.thermo.phase.PhaseType.LIQUID) {
+        oil += sys.getBeta(p);
       }
     }
     // Mass balance must be preserved regardless of duplicate-phase handling.
@@ -70,8 +70,8 @@ public class UMRPRUOilDropoutReproTest {
     for (int t = 20; t >= 8; t--) {
       double b = oilBeta(t, 78.0);
       if (!Double.isNaN(prev)) {
-	// As temperature drops the retrograde oil dropout must not decrease.
-	assertTrue(b >= prev - 1.0e-9, "oil dropout decreased as T fell to " + t + "C: " + b + " < " + prev);
+        // As temperature drops the retrograde oil dropout must not decrease.
+        assertTrue(b >= prev - 1.0e-9, "oil dropout decreased as T fell to " + t + "C: " + b + " < " + prev);
       }
       prev = b;
     }

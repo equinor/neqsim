@@ -83,7 +83,7 @@ public class AUSMPlusFluxCalculator implements Serializable {
      * @param holdup volume fraction (0-1)
      */
     public PhaseState(double density, double velocity, double pressure, double soundSpeed, double enthalpy,
-	double holdup) {
+        double holdup) {
       this.density = density;
       this.velocity = velocity;
       this.pressure = pressure;
@@ -338,7 +338,7 @@ public class AUSMPlusFluxCalculator implements Serializable {
 
     flux.massFlux = upwind.holdup * upwind.density * upwind.velocity * area;
     flux.momentumFlux = upwind.holdup * upwind.density * upwind.velocity * upwind.velocity * area
-	+ upwind.holdup * upwind.pressure * area;
+        + upwind.holdup * upwind.pressure * area;
     flux.energyFlux = upwind.holdup * upwind.density * upwind.velocity * upwind.enthalpy * area;
     flux.holdupFlux = upwind.holdup * upwind.velocity;
 

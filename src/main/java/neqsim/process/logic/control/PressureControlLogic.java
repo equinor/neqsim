@@ -97,14 +97,14 @@ public class PressureControlLogic implements ProcessLogic {
 
       // Execute all actions immediately
       for (LogicAction action : actions) {
-	action.execute();
+        action.execute();
       }
 
       state = LogicState.COMPLETED;
 
       // Optionally run system after valve change to update pressures
       if (runSystemAfterChange && system != null) {
-	system.run();
+        system.run();
       }
     }
   }

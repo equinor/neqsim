@@ -1,11 +1,11 @@
 package neqsim.process.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * shtokman class.
@@ -47,7 +47,7 @@ public class shtokman {
     StreamInterface stream_2 = separator.getGasOutStream();
 
     neqsim.process.equipment.heatexchanger.Heater heater = new neqsim.process.equipment.heatexchanger.Heater("heater",
-	stream_2);
+        stream_2);
     heater.setOutTemperature(273.15 + 35);
     heater.setPressureDrop(134);
     neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();

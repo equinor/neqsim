@@ -164,7 +164,7 @@ public class CompressorChartMWInterpolation extends CompressorChart {
     // Default chart conditions if not specified
     double[] defaultConditions = new double[] { 25.0, 50.0, 50.0, molecularWeight };
     addMapAtMW(molecularWeight, defaultConditions, new double[] { speed }, new double[][] { flow },
-	new double[][] { head }, new double[][] { flowPolyEff }, new double[][] { polyEff });
+        new double[][] { head }, new double[][] { flowPolyEff }, new double[][] { polyEff });
   }
 
   /**
@@ -193,7 +193,7 @@ public class CompressorChartMWInterpolation extends CompressorChart {
     int insertIndex = 0;
     for (int i = 0; i < mapMolecularWeights.size(); i++) {
       if (molecularWeight > mapMolecularWeights.get(i).doubleValue()) {
-	insertIndex = i + 1;
+        insertIndex = i + 1;
       }
     }
 
@@ -212,10 +212,10 @@ public class CompressorChartMWInterpolation extends CompressorChart {
     if (mapCharts.size() == 1) {
       super.setCurves(chartConditions, speed, flow, head, flowPolyEff, polyEff);
       if (autoGenerateSurgeCurves) {
-	super.generateSurgeCurve();
+        super.generateSurgeCurve();
       }
       if (autoGenerateStoneWallCurves) {
-	super.generateStoneWallCurve();
+        super.generateStoneWallCurve();
       }
     }
 
@@ -425,10 +425,10 @@ public class CompressorChartMWInterpolation extends CompressorChart {
     for (int i = 0; i < mapMolecularWeights.size(); i++) {
       double mapMW = mapMolecularWeights.get(i).doubleValue();
       if (mapMW <= mw) {
-	lowerIdx = i;
+        lowerIdx = i;
       }
       if (mapMW >= mw && upperIdx == -1) {
-	upperIdx = i;
+        upperIdx = i;
       }
     }
 
@@ -436,11 +436,11 @@ public class CompressorChartMWInterpolation extends CompressorChart {
     if (lowerIdx == -1) {
       // MW is below all maps
       if (allowExtrapolation && mapMolecularWeights.size() >= 2) {
-	// Extrapolate using first two maps
-	double mw0 = mapMolecularWeights.get(0).doubleValue();
-	double mw1 = mapMolecularWeights.get(1).doubleValue();
-	double fraction = (mw - mw0) / (mw1 - mw0); // Will be negative for extrapolation below
-	return new InterpolationIndices(0, 1, fraction);
+        // Extrapolate using first two maps
+        double mw0 = mapMolecularWeights.get(0).doubleValue();
+        double mw1 = mapMolecularWeights.get(1).doubleValue();
+        double fraction = (mw - mw0) / (mw1 - mw0); // Will be negative for extrapolation below
+        return new InterpolationIndices(0, 1, fraction);
       }
       // Use lowest map (no extrapolation)
       return new InterpolationIndices(0, 0, 0.0);
@@ -449,12 +449,12 @@ public class CompressorChartMWInterpolation extends CompressorChart {
       // MW is above all maps
       int lastIdx = mapMolecularWeights.size() - 1;
       if (allowExtrapolation && mapMolecularWeights.size() >= 2) {
-	// Extrapolate using last two maps
-	double mwLast = mapMolecularWeights.get(lastIdx).doubleValue();
-	double mwSecondLast = mapMolecularWeights.get(lastIdx - 1).doubleValue();
-	double fraction = (mw - mwSecondLast) / (mwLast - mwSecondLast); // Will be > 1 for
-									 // extrapolation above
-	return new InterpolationIndices(lastIdx - 1, lastIdx, fraction);
+        // Extrapolate using last two maps
+        double mwLast = mapMolecularWeights.get(lastIdx).doubleValue();
+        double mwSecondLast = mapMolecularWeights.get(lastIdx - 1).doubleValue();
+        double fraction = (mw - mwSecondLast) / (mwLast - mwSecondLast); // Will be > 1 for
+        // extrapolation above
+        return new InterpolationIndices(lastIdx - 1, lastIdx, fraction);
       }
       // Use highest map (no extrapolation)
       return new InterpolationIndices(lastIdx, lastIdx, 0.0);
@@ -662,7 +662,7 @@ public class CompressorChartMWInterpolation extends CompressorChart {
     updateOperatingMWFromStream();
     if (!interpolationEnabled || mapCharts.size() < 2 || Double.isNaN(operatingMW)) {
       if (getStoneWallCurve() instanceof SafeSplineStoneWallCurve) {
-	return ((SafeSplineStoneWallCurve) getStoneWallCurve()).isStoneWall(head, flow);
+        return ((SafeSplineStoneWallCurve) getStoneWallCurve()).isStoneWall(head, flow);
       }
       return false;
     }
@@ -672,7 +672,7 @@ public class CompressorChartMWInterpolation extends CompressorChart {
     if (indices.lowerIndex == indices.upperIndex) {
       StoneWallCurve curve = mapCharts.get(indices.lowerIndex).getStoneWallCurve();
       if (curve instanceof SafeSplineStoneWallCurve) {
-	return ((SafeSplineStoneWallCurve) curve).isStoneWall(head, flow);
+        return ((SafeSplineStoneWallCurve) curve).isStoneWall(head, flow);
       }
       return false;
     }
@@ -725,7 +725,7 @@ public class CompressorChartMWInterpolation extends CompressorChart {
     updateOperatingMWFromStream();
     if (!interpolationEnabled || mapCharts.size() < 2 || Double.isNaN(operatingMW)) {
       if (getStoneWallCurve() instanceof SafeSplineStoneWallCurve) {
-	return ((SafeSplineStoneWallCurve) getStoneWallCurve()).getFlow(head);
+        return ((SafeSplineStoneWallCurve) getStoneWallCurve()).getFlow(head);
       }
       return Double.NaN;
     }
@@ -735,7 +735,7 @@ public class CompressorChartMWInterpolation extends CompressorChart {
     if (indices.lowerIndex == indices.upperIndex) {
       StoneWallCurve curve = mapCharts.get(indices.lowerIndex).getStoneWallCurve();
       if (curve instanceof SafeSplineStoneWallCurve) {
-	return ((SafeSplineStoneWallCurve) curve).getFlow(head);
+        return ((SafeSplineStoneWallCurve) curve).getFlow(head);
       }
       return Double.NaN;
     }
@@ -825,8 +825,8 @@ public class CompressorChartMWInterpolation extends CompressorChart {
     int idx = findMapIndex(molecularWeight);
     if (idx >= 0) {
       if (mapCharts.get(idx).getStoneWallCurve() instanceof SafeSplineStoneWallCurve) {
-	((SafeSplineStoneWallCurve) mapCharts.get(idx).getStoneWallCurve()).setCurve(chartConditions, stoneWallFlow,
-	    stoneWallHead);
+        ((SafeSplineStoneWallCurve) mapCharts.get(idx).getStoneWallCurve()).setCurve(chartConditions, stoneWallFlow,
+            stoneWallHead);
       }
     } else {
       logger.warn("No map found at MW = {} g/mol. Stone wall curve not set.", molecularWeight);
@@ -862,7 +862,7 @@ public class CompressorChartMWInterpolation extends CompressorChart {
   private int findMapIndex(double molecularWeight) {
     for (int i = 0; i < mapMolecularWeights.size(); i++) {
       if (Math.abs(mapMolecularWeights.get(i).doubleValue() - molecularWeight) < 0.001) {
-	return i;
+        return i;
       }
     }
     return -1;

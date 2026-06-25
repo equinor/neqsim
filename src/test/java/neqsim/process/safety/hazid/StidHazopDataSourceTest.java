@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -83,7 +82,7 @@ public class StidHazopDataSourceTest {
   @Test
   void skipsUnrecognizedDeviation() {
     String json = "{\"nodes\": [{\"nodeId\": \"N1\", \"designIntent\": \"x\","
-	+ "\"deviations\": [{\"guideWord\": \"BOGUS\", \"parameter\": \"FLOW\"}]}]}";
+        + "\"deviations\": [{\"guideWord\": \"BOGUS\", \"parameter\": \"FLOW\"}]}]}";
     List<HAZOPTemplate> nodes = new StidHazopDataSource(json).read();
     assertEquals(1, nodes.size());
     assertTrue(nodes.get(0).getDeviations().isEmpty());

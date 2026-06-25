@@ -26,20 +26,20 @@ public abstract class GasPhysicalPropertyMethod extends PhysicalPropertyMethod {
   public GasPhysicalPropertyMethod(PhysicalProperties gasPhase) {
     super(gasPhase);
     binaryMolecularDiameter = new double[gasPhase.getPhase().getNumberOfComponents()][gasPhase.getPhase()
-	.getNumberOfComponents()];
+        .getNumberOfComponents()];
     binaryMolecularMass = new double[gasPhase.getPhase().getNumberOfComponents()][gasPhase.getPhase()
-	.getNumberOfComponents()];
+        .getNumberOfComponents()];
     binaryEnergyParameter = new double[gasPhase.getPhase().getNumberOfComponents()][gasPhase.getPhase()
-	.getNumberOfComponents()];
+        .getNumberOfComponents()];
 
     for (int i = 0; i < gasPhase.getPhase().getNumberOfComponents(); i++) {
       for (int j = 0; j < gasPhase.getPhase().getNumberOfComponents(); j++) {
-	binaryMolecularMass[i][j] = 2.0 * Math.pow((1.0 / gasPhase.getPhase().getComponent(i).getMolarMass() / 1000.0
-	    + 1.0 / gasPhase.getPhase().getComponent(j).getMolarMass() / 1000.0), -1.0);
-	binaryMolecularDiameter[i][j] = (gasPhase.getPhase().getComponent(i).getLennardJonesMolecularDiameter()
-	    + gasPhase.getPhase().getComponent(j).getLennardJonesMolecularDiameter()) / 2.0;
-	binaryEnergyParameter[i][j] = Math.pow(gasPhase.getPhase().getComponent(i).getLennardJonesEnergyParameter()
-	    * gasPhase.getPhase().getComponent(j).getLennardJonesEnergyParameter(), 0.5);
+        binaryMolecularMass[i][j] = 2.0 * Math.pow((1.0 / gasPhase.getPhase().getComponent(i).getMolarMass() / 1000.0
+            + 1.0 / gasPhase.getPhase().getComponent(j).getMolarMass() / 1000.0), -1.0);
+        binaryMolecularDiameter[i][j] = (gasPhase.getPhase().getComponent(i).getLennardJonesMolecularDiameter()
+            + gasPhase.getPhase().getComponent(j).getLennardJonesMolecularDiameter()) / 2.0;
+        binaryEnergyParameter[i][j] = Math.pow(gasPhase.getPhase().getComponent(i).getLennardJonesEnergyParameter()
+            * gasPhase.getPhase().getComponent(j).getLennardJonesEnergyParameter(), 0.5);
       }
     }
   }

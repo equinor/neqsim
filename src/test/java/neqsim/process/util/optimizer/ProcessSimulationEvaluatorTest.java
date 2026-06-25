@@ -97,7 +97,7 @@ class ProcessSimulationEvaluatorTest {
   @Test
   void testAddMultipleParameters() {
     evaluator.addParameter("feed", "flowRate", 1000.0, 50000.0, "kg/hr")
-	.addParameter("feed", "pressure", 30.0, 80.0, "bara").addParameter("feed", "temperature", 273.15, 373.15, "K");
+        .addParameter("feed", "pressure", 30.0, 80.0, "bara").addParameter("feed", "temperature", 273.15, 373.15, "K");
 
     assertEquals(3, evaluator.getParameterCount());
   }
@@ -105,7 +105,7 @@ class ProcessSimulationEvaluatorTest {
   @Test
   void testGetBounds() {
     evaluator.addParameter("feed", "flowRate", 1000.0, 50000.0, "kg/hr").addParameter("feed", "pressure", 30.0, 80.0,
-	"bara");
+        "bara");
 
     double[][] bounds = evaluator.getBounds();
     assertEquals(2, bounds.length);
@@ -118,7 +118,7 @@ class ProcessSimulationEvaluatorTest {
   @Test
   void testGetLowerBounds() {
     evaluator.addParameter("feed", "flowRate", 1000.0, 50000.0, "kg/hr").addParameter("feed", "pressure", 30.0, 80.0,
-	"bara");
+        "bara");
 
     double[] lb = evaluator.getLowerBounds();
     assertEquals(2, lb.length);
@@ -129,7 +129,7 @@ class ProcessSimulationEvaluatorTest {
   @Test
   void testGetUpperBounds() {
     evaluator.addParameter("feed", "flowRate", 1000.0, 50000.0, "kg/hr").addParameter("feed", "pressure", 30.0, 80.0,
-	"bara");
+        "bara");
 
     double[] ub = evaluator.getUpperBounds();
     assertEquals(2, ub.length);
@@ -153,16 +153,16 @@ class ProcessSimulationEvaluatorTest {
     assertEquals(1, evaluator.getObjectiveCount());
     assertEquals("power", evaluator.getObjectives().get(0).getName());
     assertEquals(ProcessSimulationEvaluator.ObjectiveDefinition.Direction.MINIMIZE,
-	evaluator.getObjectives().get(0).getDirection());
+        evaluator.getObjectives().get(0).getDirection());
   }
 
   @Test
   void testAddObjectiveWithDirection() {
     evaluator.addObjective("throughput", process -> 10000.0,
-	ProcessSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
+        ProcessSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
 
     assertEquals(ProcessSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE,
-	evaluator.getObjectives().get(0).getDirection());
+        evaluator.getObjectives().get(0).getDirection());
   }
 
   @Test
@@ -216,7 +216,7 @@ class ProcessSimulationEvaluatorTest {
     evaluator.addParameter("feed", "flowRate", 1000.0, 50000.0, "kg/hr");
     evaluator.addObjective("flow", process -> ((StreamInterface) process.getUnit("feed")).getFlowRate("kg/hr"));
     evaluator.addConstraintLowerBound("minFlow",
-	process -> ((StreamInterface) process.getUnit("feed")).getFlowRate("kg/hr"), 5000.0);
+        process -> ((StreamInterface) process.getUnit("feed")).getFlowRate("kg/hr"), 5000.0);
 
     double[] x = { 15000.0 };
     ProcessSimulationEvaluator.EvaluationResult result = evaluator.evaluate(x);
@@ -278,7 +278,7 @@ class ProcessSimulationEvaluatorTest {
     evaluator.addParameter("feed", "flowRate", 1000.0, 50000.0, "kg/hr");
     evaluator.addObjective("flow", process -> ((StreamInterface) process.getUnit("feed")).getFlowRate("kg/hr"));
     evaluator.addConstraintLowerBound("minFlow",
-	process -> ((StreamInterface) process.getUnit("feed")).getFlowRate("kg/hr"), 5000.0);
+        process -> ((StreamInterface) process.getUnit("feed")).getFlowRate("kg/hr"), 5000.0);
 
     double[] x = { 20000.0 };
 
@@ -298,7 +298,7 @@ class ProcessSimulationEvaluatorTest {
   @Test
   void testParameterDefinitionBounds() {
     ProcessSimulationEvaluator.ParameterDefinition param = new ProcessSimulationEvaluator.ParameterDefinition("test",
-	"eq", "prop", 10.0, 100.0, "units");
+        "eq", "prop", 10.0, 100.0, "units");
 
     assertTrue(param.isWithinBounds(50.0));
     assertTrue(param.isWithinBounds(10.0));
@@ -315,7 +315,7 @@ class ProcessSimulationEvaluatorTest {
   void testConstraintDefinitionMargin() {
     // Lower bound: g(x) >= 20
     ProcessSimulationEvaluator.ConstraintDefinition lowerBound = new ProcessSimulationEvaluator.ConstraintDefinition(
-	"test", p -> 25.0, 20.0);
+        "test", p -> 25.0, 20.0);
     lowerBound.setType(ProcessSimulationEvaluator.ConstraintDefinition.Type.LOWER_BOUND);
     assertEquals(5.0, lowerBound.margin(processSystem), 0.01); // 25 - 20 = 5
     assertTrue(lowerBound.isSatisfied(processSystem));
@@ -330,7 +330,7 @@ class ProcessSimulationEvaluatorTest {
 
     // Range: 20 <= g(x) <= 30
     ProcessSimulationEvaluator.ConstraintDefinition range = new ProcessSimulationEvaluator.ConstraintDefinition("range",
-	p -> 25.0, 20.0, 30.0);
+        p -> 25.0, 20.0, 30.0);
     assertEquals(5.0, range.margin(processSystem), 0.01); // min(25-20, 30-25) = 5
     assertTrue(range.isSatisfied(processSystem));
   }
@@ -338,7 +338,7 @@ class ProcessSimulationEvaluatorTest {
   @Test
   void testConstraintPenalty() {
     ProcessSimulationEvaluator.ConstraintDefinition constraint = new ProcessSimulationEvaluator.ConstraintDefinition(
-	"test", p -> 15.0, 20.0); // violates
+        "test", p -> 15.0, 20.0); // violates
     constraint.setPenaltyWeight(100.0);
 
     double margin = constraint.margin(processSystem); // 15 - 20 = -5
@@ -395,9 +395,9 @@ class ProcessSimulationEvaluatorTest {
   void testConstraintJacobian() {
     evaluator.addParameter("feed", "flowRate", 1000.0, 50000.0, "kg/hr");
     evaluator.addConstraintLowerBound("minFlow",
-	process -> ((StreamInterface) process.getUnit("feed")).getFlowRate("kg/hr"), 5000.0);
+        process -> ((StreamInterface) process.getUnit("feed")).getFlowRate("kg/hr"), 5000.0);
     evaluator.addConstraintUpperBound("maxFlow",
-	process -> ((StreamInterface) process.getUnit("feed")).getFlowRate("kg/hr"), 40000.0);
+        process -> ((StreamInterface) process.getUnit("feed")).getFlowRate("kg/hr"), 40000.0);
 
     double[] x = { 20000.0 };
     double[][] jacobian = evaluator.estimateConstraintJacobian(x);
@@ -490,7 +490,7 @@ class ProcessSimulationEvaluatorTest {
   void testMaximizeObjective() {
     evaluator.addParameter("feed", "flowRate", 1000.0, 50000.0, "kg/hr");
     evaluator.addObjective("flow", process -> ((StreamInterface) process.getUnit("feed")).getFlowRate("kg/hr"),
-	ProcessSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
+        ProcessSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
 
     double[] x = { 20000.0 };
     ProcessSimulationEvaluator.EvaluationResult result = evaluator.evaluate(x);

@@ -318,9 +318,9 @@ public class RobustOptimizationStudy implements Serializable {
     for (double[] scenario : sc) {
       ScenarioOutcome outcome = evaluator.evaluate(decision, scenario);
       if (outcome.isFeasible()) {
-	feasibleCount++;
-	objectives.add(outcome.getObjective());
-	sum += outcome.getObjective();
+        feasibleCount++;
+        objectives.add(outcome.getObjective());
+        sum += outcome.getObjective();
       }
     }
     double feasibleFraction = sc.isEmpty() ? 0.0 : (double) feasibleCount / sc.size();
@@ -334,7 +334,7 @@ public class RobustOptimizationStudy implements Serializable {
     Arrays.sort(sorted);
     double mean = sum / objectives.size();
     return new RobustResult(decision, percentile(sorted, 10.0), percentile(sorted, 50.0), percentile(sorted, 90.0),
-	mean, feasibleFraction);
+        mean, feasibleFraction);
   }
 
   /**
@@ -359,12 +359,12 @@ public class RobustOptimizationStudy implements Serializable {
     for (double[] decision : candidates) {
       RobustResult r = evaluateDecision(decision, evaluator);
       if (mostFeasible == null || r.getFeasibleFraction() > mostFeasible.getFeasibleFraction()) {
-	mostFeasible = r;
+        mostFeasible = r;
       }
       if (r.getFeasibleFraction() >= requiredConfidence) {
-	if (best == null || r.getP50() > best.getP50()) {
-	  best = r;
-	}
+        if (best == null || r.getP50() > best.getP50()) {
+          best = r;
+        }
       }
     }
     return best != null ? best : mostFeasible;

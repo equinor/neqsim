@@ -41,7 +41,7 @@ public class PipeFlowVisualization extends
     absTime = new double[timeSteps];
     for (int i = 0; i < timeSteps; i++) {
       for (int j = 0; j < nodes; j++) {
-	flowNodes[i][j] = new neqsim.fluidmechanics.util.fluidmechanicsvisualization.flownodevisualization.onephaseflownodevisualization.onephasepipeflownodevisualization.OnePhasePipeFlowNodeVisualization();
+        flowNodes[i][j] = new neqsim.fluidmechanics.util.fluidmechanicsvisualization.flownodevisualization.onephaseflownodevisualization.onephasepipeflownodevisualization.OnePhasePipeFlowNodeVisualization();
       }
     }
     // System.out.println("nodes " + nodes);
@@ -61,13 +61,13 @@ public class PipeFlowVisualization extends
     for (int j = 0; j < time; j++) {
       timeArray[j] = absTime[j];
       for (int i = 0; i < flowNodes[j].length; i++) {
-	xPlace[i] = flowNodes[j][i].getDistanceToCenterOfNode();
-	pressurePoint[j][i] = flowNodes[j][i].getPressure(0);
-	temperaturePoint[j][i] = flowNodes[j][i].getTemperature(0);
-	velocityPoint[j][i] = flowNodes[j][i].getVelocity(0);
-	for (int p = 0; p < flowNodes[0][0].getNumberOfComponents(); p++) {
-	  bulkComposition[p][j][i] = flowNodes[j][i].getBulkComposition(p, 0);
-	}
+        xPlace[i] = flowNodes[j][i].getDistanceToCenterOfNode();
+        pressurePoint[j][i] = flowNodes[j][i].getPressure(0);
+        temperaturePoint[j][i] = flowNodes[j][i].getTemperature(0);
+        velocityPoint[j][i] = flowNodes[j][i].getVelocity(0);
+        for (int p = 0; p < flowNodes[0][0].getNumberOfComponents(); p++) {
+          bulkComposition[p][j][i] = flowNodes[j][i].getBulkComposition(p, 0);
+        }
       }
     }
   }

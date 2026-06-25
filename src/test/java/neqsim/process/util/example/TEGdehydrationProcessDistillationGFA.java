@@ -1,5 +1,7 @@
 package neqsim.process.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.conditionmonitor.ConditionMonitor;
 import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
 import neqsim.process.equipment.absorber.WaterStripperColumn;
@@ -21,8 +23,6 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.HydrateEquilibriumTemperatureAnalyser;
 import neqsim.process.measurementdevice.WaterDewPointAnalyser;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * TEGdehydrationProcessDistillationGFA class.
@@ -194,7 +194,7 @@ public class TEGdehydrationProcessDistillationGFA {
     Stream waterSaturatedFeedGas = new Stream("water saturated feed gas", saturatedFeedGas.getOutletStream());
 
     HydrateEquilibriumTemperatureAnalyser hydrateTAnalyser = new HydrateEquilibriumTemperatureAnalyser(
-	"hydrate temperature analyser", waterSaturatedFeedGas);
+        "hydrate temperature analyser", waterSaturatedFeedGas);
 
     neqsim.thermo.system.SystemInterface feedTEG = feedGas.clone();
     feedTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.03, 0.97 });
@@ -221,10 +221,10 @@ public class TEGdehydrationProcessDistillationGFA {
     Stream richTEG = new Stream("rich TEG from absorber", absorber.getSolventOutStream());
 
     WaterDewPointAnalyser waterDewPointAnalyser2 = new WaterDewPointAnalyser("water dew point analyser2",
-	dehydratedGas);
+        dehydratedGas);
 
     HydrateEquilibriumTemperatureAnalyser waterDewPointAnalyser = new HydrateEquilibriumTemperatureAnalyser(
-	"water dew point analyser", dehydratedGas);
+        "water dew point analyser", dehydratedGas);
 
     ThrottlingValve glycol_flash_valve = new ThrottlingValve("Rich TEG HP flash valve", richTEG);
     glycol_flash_valve.setOutletPressure(flashDrumPressure);
@@ -396,27 +396,27 @@ public class TEGdehydrationProcessDistillationGFA {
     // neqsim.processSimulation.processSystem.ProcessSystem.open("c:/temp/TEGprocessGFA.neqsim");
 
     double richTEGtemperature = ((Heater) operations.getUnit("rich TEG preheater")).getOutletStream()
-	.getTemperature("C");
+        .getTemperature("C");
     logger.info("temp rich TEG " + richTEGtemperature);
     logger.info("condenser duty (KW) "
-	+ ((Condenser) ((DistillationColumn) operations.getUnit("TEG regeneration column")).getCondenser()).getDuty()
-	    / 1.0e3);
+        + ((Condenser) ((DistillationColumn) operations.getUnit("TEG regeneration column")).getCondenser()).getDuty()
+            / 1.0e3);
     logger.info("reboiler duty (KW) "
-	+ ((Reboiler) ((DistillationColumn) operations.getUnit("TEG regeneration column")).getReboiler()).getDuty()
-	    / 1.0e3);
+        + ((Reboiler) ((DistillationColumn) operations.getUnit("TEG regeneration column")).getReboiler()).getDuty()
+            / 1.0e3);
 
     logger.info("temp out rich TEG " + richTEGtemperature);
 
     double rich2TEGtemperature = ((HeatExchanger) operations.getUnit("rich TEG heat exchanger 1")).getOutStream(0)
-	.getTemperature("C");
+        .getTemperature("C");
     logger.info("temp rich2 TEG " + rich2TEGtemperature);
 
     double rich22TEGtemperature = ((HeatExchanger) operations.getUnit("rich TEG heat exchanger 2")).getOutStream(0)
-	.getTemperature("C");
+        .getTemperature("C");
     logger.info("temp rich2 to reboil TEG " + rich22TEGtemperature);
 
     double lean22TEGtemperature = ((HeatExchanger) operations.getUnit("rich TEG heat exchanger 2")).getOutStream(1)
-	.getTemperature("C");
+        .getTemperature("C");
     logger.info("temp lean TEG to HX " + lean22TEGtemperature);
 
     // ((Stream)operations.getUnit("dry feed gas")).setFlowRate(10.23, "MSm3/day");
@@ -448,7 +448,7 @@ public class TEGdehydrationProcessDistillationGFA {
     // double prevTem= ((HeatExchanger)monitor.getProcess().getUnit("rich TEG heat exchanger
     // 2")).getInStream(0).getTemperature("C");
     ((HeatExchanger) monitor.getProcess().getUnit("rich TEG heat exchanger 2")).getInStream(0).setTemperature(84.93,
-	"C");
+        "C");
     monitor.conditionAnalysis("rich TEG heat exchanger 2");
     double eff3 = ((HeatExchanger) monitor.getProcess().getUnit("rich TEG heat exchanger 2")).getThermalEffectiveness();
     logger.info("ef3 " + eff3);

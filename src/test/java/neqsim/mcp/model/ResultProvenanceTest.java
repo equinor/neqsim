@@ -71,8 +71,8 @@ class ResultProvenanceTest {
     boolean hasRangeLimit = false;
     for (String lim : p.getLimitations()) {
       if (lim.contains("natural gas components")) {
-	hasRangeLimit = true;
-	break;
+        hasRangeLimit = true;
+        break;
       }
     }
     assertTrue(hasRangeLimit, "GERG2008 should note component limitations");

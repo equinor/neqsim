@@ -143,8 +143,8 @@ public class AgentSession implements Serializable {
     for (int i = phases.size() - 1; i >= 0; i--) {
       PhaseRecord record = phases.get(i);
       if (record.phase == phase && record.endTimeMillis == 0) {
-	record.endTimeMillis = System.currentTimeMillis();
-	return;
+        record.endTimeMillis = System.currentTimeMillis();
+        return;
       }
     }
   }
@@ -274,7 +274,7 @@ public class AgentSession implements Serializable {
     int count = 0;
     for (SimulationRun run : simulationRuns) {
       if (run.success) {
-	count++;
+        count++;
       }
     }
     return count;

@@ -34,7 +34,7 @@ public class PTPhaseEnvelopeTest {
     feedGas.setTemperature(0.0, "C");
 
     neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	feedGas);
+        feedGas);
     ops.TPflash();
 
     // Print summary of the system (replace with assertions as needed)
@@ -75,13 +75,13 @@ public class PTPhaseEnvelopeTest {
     double maxP = 0.0;
     for (double p : dewPointPressures) {
       if (Double.isNaN(p)) {
-	// NaN is a branch-break sentinel inserted by the tracer when the
-	// dew curve crosses a critical point or a restart pass begins.
-	continue;
+        // NaN is a branch-break sentinel inserted by the tracer when the
+        // dew curve crosses a critical point or a restart pass begins.
+        continue;
       }
       assertTrue(p > 0.0, "Pressure should be positive, got: " + p);
       if (p > maxP) {
-	maxP = p;
+        maxP = p;
       }
     }
     assertTrue(maxP > 30.0, "Max dew pressure should be > 30 bar, got: " + maxP);
@@ -340,28 +340,28 @@ public class PTPhaseEnvelopeTest {
     int totalPoints = 0;
     for (int idx = 0; idx < data.length; idx += 2) {
       if (data[idx] != null) {
-	totalPoints += data[idx].length;
+        totalPoints += data[idx].length;
       }
     }
 
     // The complete phase envelope should have significantly more than 31 points
     // (the old dew-only result). Both branches together should yield > 40.
     assertTrue(totalPoints > 40,
-	"Phase envelope should have both dew and bubble branches (> 40 points), got: " + totalPoints);
+        "Phase envelope should have both dew and bubble branches (> 40 points), got: " + totalPoints);
 
     // Also verify using the named accessors
     double[] dewT = ops.get("dewT");
     double[] bubT = ops.get("bubT");
 
     assertTrue(dewT != null && dewT.length > 10,
-	"Dew-point branch should have > 10 points, got: " + (dewT != null ? dewT.length : 0));
+        "Dew-point branch should have > 10 points, got: " + (dewT != null ? dewT.length : 0));
     assertTrue(bubT != null && bubT.length > 5,
-	"Bubble-point branch should have > 5 points, got: " + (bubT != null ? bubT.length : 0));
+        "Bubble-point branch should have > 5 points, got: " + (bubT != null ? bubT.length : 0));
 
     // Cricondenbar should be around 105 bar
     double[] cricondenbar = ops.get("cricondenbar");
     assertTrue(cricondenbar != null && cricondenbar[1] > 80.0,
-	"Cricondenbar pressure should be > 80 bar, got: " + (cricondenbar != null ? cricondenbar[1] : 0));
+        "Cricondenbar pressure should be > 80 bar, got: " + (cricondenbar != null ? cricondenbar[1] : 0));
   }
 
   @Test

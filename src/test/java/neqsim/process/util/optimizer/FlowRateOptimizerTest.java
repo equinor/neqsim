@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
@@ -12,8 +14,6 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Unit tests for FlowRateOptimizer and LiftCurveGenerator.
@@ -72,7 +72,7 @@ public class FlowRateOptimizerTest {
     double outletPressure = pipeline.getOutletPressure("bara");
 
     logger.info("Baseline: P_in=" + inletPressure + " bara, P_out=" + outletPressure + " bara, Flow="
-	+ testFluid.getFlowRate("kg/hr") + " kg/hr");
+        + testFluid.getFlowRate("kg/hr") + " kg/hr");
 
     // Create optimizer using ProcessSystem mode for pipeline
     FlowRateOptimizer optimizer = new FlowRateOptimizer(processSystem, "inlet", "testPipeline");
@@ -95,7 +95,7 @@ public class FlowRateOptimizerTest {
     assertTrue(result.isFeasible(), "Should find a feasible solution. Reason: " + result.getInfeasibilityReason());
     assertTrue(result.getFlowRate() > 0, "Flow rate should be positive");
     assertEquals(targetOutlet, result.getOutletPressure(), targetOutlet * 0.01,
-	"Outlet pressure should match target within 1%");
+        "Outlet pressure should match target within 1%");
   }
 
   @Test
@@ -251,13 +251,13 @@ public class FlowRateOptimizerTest {
   @Test
   public void testInfeasibleConstraintResult() {
     FlowRateOptimizationResult.ConstraintViolation violation = new FlowRateOptimizationResult.ConstraintViolation(
-	"velocity", "pipeline", 25.0, 20.0, "m/s", true);
+        "velocity", "pipeline", 25.0, 20.0, "m/s", true);
 
     java.util.List<FlowRateOptimizationResult.ConstraintViolation> violations = new java.util.ArrayList<FlowRateOptimizationResult.ConstraintViolation>();
     violations.add(violation);
 
     FlowRateOptimizationResult result = FlowRateOptimizationResult.infeasibleConstraint("Velocity limit exceeded",
-	violations);
+        violations);
 
     assertFalse(result.isFeasible());
     assertEquals(FlowRateOptimizationResult.Status.INFEASIBLE_CONSTRAINT, result.getStatus());
@@ -275,10 +275,10 @@ public class FlowRateOptimizerTest {
 
     // Generate with auto range
     LiftCurveTable table = generator.generateTableAutoRange(5, // 5 flow points
-	3, // 3 THP points
-	50.0, // min THP
-	90.0, // max THP
-	"bara", "kg/hr");
+        3, // 3 THP points
+        50.0, // min THP
+        90.0, // max THP
+        "bara", "kg/hr");
 
     logger.info("\nAuto-range table:");
     logger.info(table.toEclipseFormat());
@@ -349,7 +349,7 @@ public class FlowRateOptimizerTest {
     double[] inletPressures = { 70, 80, 90 }; // bara
 
     FlowRateOptimizer.ProcessLiftCurveTable liftCurve = optimizer.generateProcessLiftCurve(flowRates, "kg/hr",
-	inletPressures, "bara");
+        inletPressures, "bara");
 
     assertNotNull(liftCurve, "Lift curve table should not be null");
 
@@ -365,9 +365,9 @@ public class FlowRateOptimizerTest {
     int feasibleCount = 0;
     for (int i = 0; i < totalPower.length; i++) {
       for (int j = 0; j < totalPower[i].length; j++) {
-	if (!Double.isNaN(totalPower[i][j])) {
-	  feasibleCount++;
-	}
+        if (!Double.isNaN(totalPower[i][j])) {
+          feasibleCount++;
+        }
       }
     }
     assertTrue(feasibleCount > 0, "Should have at least some feasible points");
@@ -445,7 +445,7 @@ public class FlowRateOptimizerTest {
 
     // Generate performance table to see the power profile
     FlowRateOptimizer.ProcessPerformanceTable perfTable = optimizer
-	.generateProcessPerformanceTable(new double[] { 30000, 40000, 50000, 60000, 70000 }, "kg/hr", 80.0, "bara");
+        .generateProcessPerformanceTable(new double[] { 30000, 40000, 50000, 60000, 70000 }, "kg/hr", 80.0, "bara");
 
     logger.info("\n" + perfTable.toFormattedString());
 
@@ -460,11 +460,11 @@ public class FlowRateOptimizerTest {
 
       // Minimum power should be less than or equal to power at any other point
       for (int i = 0; i < perfTable.getFlowRates().length; i++) {
-	FlowRateOptimizer.ProcessOperatingPoint pt = perfTable.getOperatingPoint(i);
-	if (pt != null && pt.isFeasible()) {
-	  assertTrue(minPowerPoint.getTotalPower() <= pt.getTotalPower(),
-	      "Minimum power should be <= power at other points");
-	}
+        FlowRateOptimizer.ProcessOperatingPoint pt = perfTable.getOperatingPoint(i);
+        if (pt != null && pt.isFeasible()) {
+          assertTrue(minPowerPoint.getTotalPower() <= pt.getTotalPower(),
+              "Minimum power should be <= power at other points");
+        }
       }
     }
   }
@@ -522,7 +522,7 @@ public class FlowRateOptimizerTest {
 
     // Get utilization report
     java.util.Map<String, FlowRateOptimizer.EquipmentUtilizationData> report = optimizer
-	.getEquipmentUtilizationReport();
+        .getEquipmentUtilizationReport();
 
     logger.info("Equipment Utilization Report:");
     for (java.util.Map.Entry<String, FlowRateOptimizer.EquipmentUtilizationData> entry : report.entrySet()) {
@@ -536,9 +536,9 @@ public class FlowRateOptimizerTest {
     int compressorCount = 0;
     for (FlowRateOptimizer.EquipmentUtilizationData data : report.values()) {
       if (data.getEquipmentType().equals("Compressor")) {
-	compressorCount++;
-	assertTrue(data.getPower() > 0, "Compressor should have positive power");
-	assertTrue(data.getSpeed() > 0, "Compressor should have positive speed");
+        compressorCount++;
+        assertTrue(data.getPower() > 0, "Compressor should have positive power");
+        assertTrue(data.getSpeed() > 0, "Compressor should have positive speed");
       }
     }
     assertEquals(2, compressorCount, "Should have 2 compressors in report");
@@ -563,7 +563,7 @@ public class FlowRateOptimizerTest {
     double[] inletPressures = { 70, 80, 90 };
 
     FlowRateOptimizer.ProcessLiftCurveTable liftCurve = optimizer.generateProcessLiftCurve(flowRates, "kg/hr",
-	inletPressures, "bara");
+        inletPressures, "bara");
 
     // Get Eclipse format
     String eclipseFormat = liftCurve.toEclipseFormat();
@@ -599,7 +599,7 @@ public class FlowRateOptimizerTest {
     // First, test a single point at design flow
     logger.info("\nTesting single operating point at 50000 kg/hr, Pin=80 bara:");
     FlowRateOptimizer.ProcessOperatingPoint testPoint = optimizer.findProcessOperatingPoint(50000.0, "kg/hr", 80.0,
-	"bara");
+        "bara");
     if (testPoint != null) {
       logger.info("  Outlet pressure: " + testPoint.getOutletPressure() + " bara");
       logger.info("  Feasible: " + testPoint.isFeasible());
@@ -608,7 +608,7 @@ public class FlowRateOptimizerTest {
     // Find max flow rate with CURRENT outlet pressure as target (176.5 is within 2% of 180)
     // Use a target of 176 bara which should be achievable
     FlowRateOptimizer.ProcessOperatingPoint result = optimizer.findMaxFlowRateAtPressureBoundaries(80.0, 176.0, "bara",
-	1.0);
+        1.0);
 
     // Print debug info
     logger.info("\nFindMaxFlowRateAtPressureBoundaries(Pin=80, Pout=176):");
@@ -644,7 +644,7 @@ public class FlowRateOptimizerTest {
 
     // Generate capacity table (max flow for each pressure combination)
     FlowRateOptimizer.ProcessCapacityTable table = optimizer.generateProcessCapacityTable(inletPressures,
-	outletPressures, "bara", 1.0);
+        outletPressures, "bara", 1.0);
 
     assertNotNull(table, "Should generate capacity table");
 
@@ -688,7 +688,7 @@ public class FlowRateOptimizerTest {
     // Generate capacity table in parallel
     long startTime = System.currentTimeMillis();
     FlowRateOptimizer.ProcessCapacityTable parallelTable = optimizer.generateProcessCapacityTable(inletPressures,
-	outletPressures, "bara", 1.0);
+        outletPressures, "bara", 1.0);
     long parallelTime = System.currentTimeMillis() - startTime;
 
     assertNotNull(parallelTable, "Should generate capacity table in parallel");
@@ -697,7 +697,7 @@ public class FlowRateOptimizerTest {
     optimizer.setEnableParallelEvaluation(false);
     startTime = System.currentTimeMillis();
     FlowRateOptimizer.ProcessCapacityTable sequentialTable = optimizer.generateProcessCapacityTable(inletPressures,
-	outletPressures, "bara", 1.0);
+        outletPressures, "bara", 1.0);
     long sequentialTime = System.currentTimeMillis() - startTime;
 
     assertNotNull(sequentialTable, "Should generate capacity table sequentially");
@@ -737,7 +737,7 @@ public class FlowRateOptimizerTest {
 
     // Generate capacity table
     FlowRateOptimizer.ProcessCapacityTable table = optimizer.generateProcessCapacityTable(inletPressures,
-	outletPressures, "bara", 1.0);
+        outletPressures, "bara", 1.0);
 
     // Get Eclipse format
     String eclipse = table.toEclipseFormat();
@@ -764,7 +764,7 @@ public class FlowRateOptimizerTest {
     double[] outletPressures = { 140, 155, 170 };
 
     FlowRateOptimizer.ProcessOperatingPoint[] curve = optimizer.generateCapacityCurve(80.0, outletPressures, "bara",
-	1.0, "kg/hr");
+        1.0, "kg/hr");
 
     assertEquals(3, curve.length, "Should have 3 points");
 
@@ -772,10 +772,10 @@ public class FlowRateOptimizerTest {
     logger.info("\nCapacity Curve at Pin=80 bara:");
     for (int i = 0; i < outletPressures.length; i++) {
       if (curve[i] != null && curve[i].isFeasible()) {
-	logger.printf(org.apache.logging.log4j.Level.INFO, "Pout=%.0f: Max Flow=%.0f kg/hr, Power=%.0f kW\n",
-	    outletPressures[i], curve[i].getFlowRate(), curve[i].getTotalPower());
+        logger.printf(org.apache.logging.log4j.Level.INFO, "Pout=%.0f: Max Flow=%.0f kg/hr, Power=%.0f kW\n",
+            outletPressures[i], curve[i].getFlowRate(), curve[i].getTotalPower());
       } else {
-	logger.printf(org.apache.logging.log4j.Level.INFO, "Pout=%.0f: Infeasible\n", outletPressures[i]);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "Pout=%.0f: Infeasible\n", outletPressures[i]);
       }
     }
   }
@@ -823,7 +823,7 @@ public class FlowRateOptimizerTest {
 
     // Interstage Cooler
     neqsim.process.equipment.heatexchanger.Cooler interStageCooler = new neqsim.process.equipment.heatexchanger.Cooler(
-	"Interstage Cooler", firstStageCompressor.getOutletStream());
+        "Interstage Cooler", firstStageCompressor.getOutletStream());
     interStageCooler.setOutTemperature(273.15 + 40.0);
     process.add(interStageCooler);
 
@@ -854,16 +854,16 @@ public class FlowRateOptimizerTest {
 
     // Configure professional lift curve generation
     FlowRateOptimizer.LiftCurveConfiguration config = new FlowRateOptimizer.LiftCurveConfiguration()
-	.withInletPressureRange(70.0, 90.0, 3) // 3
-					       // inlet
-					       // pressures
-	.withOutletPressureRange(160.0, 180.0, 3) // 3 outlet pressures
-	.withFlowRateRange(30000.0, 70000.0, 3) // 3 flow rates
-	.withSurgeMargin(0.15) // 15% surge margin
-	.withMaxUtilization(0.95) // 95% max utilization
-	.withPressureUnit("bara").withFlowRateUnit("kg/hr").withProgressLogging(false).withTables(true, true, true); // Generate
-														     // all
-														     // tables
+        .withInletPressureRange(70.0, 90.0, 3) // 3
+        // inlet
+        // pressures
+        .withOutletPressureRange(160.0, 180.0, 3) // 3 outlet pressures
+        .withFlowRateRange(30000.0, 70000.0, 3) // 3 flow rates
+        .withSurgeMargin(0.15) // 15% surge margin
+        .withMaxUtilization(0.95) // 95% max utilization
+        .withPressureUnit("bara").withFlowRateUnit("kg/hr").withProgressLogging(false).withTables(true, true, true); // Generate
+    // all
+    // tables
 
     // Generate lift curves
     FlowRateOptimizer.LiftCurveResult result = optimizer.generateProfessionalLiftCurves(config);
@@ -901,10 +901,10 @@ public class FlowRateOptimizerTest {
 
     // Test builder pattern
     FlowRateOptimizer.LiftCurveConfiguration config = new FlowRateOptimizer.LiftCurveConfiguration()
-	.withInletPressureRange(50.0, 100.0, 6).withOutletPressureRange(140.0, 200.0, 5)
-	.withFlowRateRange(10000.0, 100000.0, 10).withSurgeMargin(0.20).withMaxPowerLimit(5000.0)
-	.withMaxTotalPowerLimit(15000.0).withSpeedLimits(7000.0, 12000.0).withMaxUtilization(0.90)
-	.withPressureUnit("bara").withFlowRateUnit("kg/hr");
+        .withInletPressureRange(50.0, 100.0, 6).withOutletPressureRange(140.0, 200.0, 5)
+        .withFlowRateRange(10000.0, 100000.0, 10).withSurgeMargin(0.20).withMaxPowerLimit(5000.0)
+        .withMaxTotalPowerLimit(15000.0).withSpeedLimits(7000.0, 12000.0).withMaxUtilization(0.90)
+        .withPressureUnit("bara").withFlowRateUnit("kg/hr");
 
     // Verify configuration
     assertEquals(0.20, config.getSurgeMargin(), 1e-6);
@@ -934,11 +934,11 @@ public class FlowRateOptimizerTest {
 
     logger.info("Configuration builder test passed!");
     logger.info("  Inlet pressures: " + inletPressures.length + " points from " + inletPressures[0] + " to "
-	+ inletPressures[inletPressures.length - 1] + " bara");
+        + inletPressures[inletPressures.length - 1] + " bara");
     logger.info("  Outlet pressures: " + outletPressures.length + " points from " + outletPressures[0] + " to "
-	+ outletPressures[outletPressures.length - 1] + " bara");
+        + outletPressures[outletPressures.length - 1] + " bara");
     logger.info("  Flow rates: " + flowRates.length + " points from " + flowRates[0] + " to "
-	+ flowRates[flowRates.length - 1] + " kg/hr");
+        + flowRates[flowRates.length - 1] + " kg/hr");
   }
 
   @Test
@@ -953,7 +953,7 @@ public class FlowRateOptimizerTest {
 
     // Use the simple convenience method
     FlowRateOptimizer.LiftCurveResult result = optimizer.generateProfessionalLiftCurves(70.0, 90.0, 160.0, 180.0,
-	"bara");
+        "bara");
 
     // Verify results
     assertNotNull(result, "Result should not be null");

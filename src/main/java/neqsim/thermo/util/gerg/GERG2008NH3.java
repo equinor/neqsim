@@ -513,33 +513,33 @@ public class GERG2008NH3 extends GERG2008 {
       double ndt = xi * gaoPowN[k] * delp[d] * Math.exp(t * lntau);
 
       if (l == 0) {
-	// Polynomial: n * delta^d * tau^t
-	ar[0][1].val += ndt * d;
-	ar[0][2].val += ndt * d * (d - 1);
-	if (itau > 0) {
-	  ar[0][0].val += ndt;
-	  ar[1][0].val += ndt * t;
-	  ar[2][0].val += ndt * t * (t - 1);
-	  ar[1][1].val += ndt * t * d;
-	  ar[1][2].val += ndt * t * d * (d - 1);
-	  ar[0][3].val += ndt * d * (d - 1) * (d - 2);
-	}
+        // Polynomial: n * delta^d * tau^t
+        ar[0][1].val += ndt * d;
+        ar[0][2].val += ndt * d * (d - 1);
+        if (itau > 0) {
+          ar[0][0].val += ndt;
+          ar[1][0].val += ndt * t;
+          ar[2][0].val += ndt * t * (t - 1);
+          ar[1][1].val += ndt * t * d;
+          ar[1][2].val += ndt * t * d * (d - 1);
+          ar[0][3].val += ndt * d * (d - 1) * (d - 2);
+        }
       } else {
-	// Exponential: n * delta^d * tau^t * exp(-delta^l)
-	ndt *= (l == 1) ? expDel1 : expDel2;
-	double ex = l * delp[l];
-	double ex2 = d - ex;
-	double ex3 = ex2 * (ex2 - 1);
-	ar[0][1].val += ndt * ex2;
-	ar[0][2].val += ndt * (ex3 - l * ex);
-	if (itau > 0) {
-	  ar[0][0].val += ndt;
-	  ar[1][0].val += ndt * t;
-	  ar[2][0].val += ndt * t * (t - 1);
-	  ar[1][1].val += ndt * t * ex2;
-	  ar[1][2].val += ndt * t * (ex3 - l * ex);
-	  ar[0][3].val += ndt * (ex3 * (ex2 - 2) - ex * (3 * ex2 - 3 + l) * l);
-	}
+        // Exponential: n * delta^d * tau^t * exp(-delta^l)
+        ndt *= (l == 1) ? expDel1 : expDel2;
+        double ex = l * delp[l];
+        double ex2 = d - ex;
+        double ex3 = ex2 * (ex2 - 1);
+        ar[0][1].val += ndt * ex2;
+        ar[0][2].val += ndt * (ex3 - l * ex);
+        if (itau > 0) {
+          ar[0][0].val += ndt;
+          ar[1][0].val += ndt * t;
+          ar[2][0].val += ndt * t * (t - 1);
+          ar[1][1].val += ndt * t * ex2;
+          ar[1][2].val += ndt * t * (ex3 - l * ex);
+          ar[0][3].val += ndt * (ex3 * (ex2 - 2) - ex * (3 * ex2 - 3 + l) * l);
+        }
       }
     }
 
@@ -569,15 +569,15 @@ public class GERG2008NH3 extends GERG2008 {
       ar[0][2].val += ndt * xi2d;
 
       if (itau > 0) {
-	double omega = t - 2.0 * bet * tau * tDiff;
-	double omega2 = omega * omega - t - 2.0 * bet * tau * tau;
+        double omega = t - 2.0 * bet * tau * tDiff;
+        double omega2 = omega * omega - t - 2.0 * bet * tau * tau;
 
-	ar[0][0].val += ndt;
-	ar[1][0].val += ndt * omega;
-	ar[2][0].val += ndt * omega2;
-	ar[1][1].val += ndt * omega * xid;
-	ar[1][2].val += ndt * omega * xi2d;
-	ar[0][3].val += ndt * (xid * (xi2d - 2.0 * (d + 2.0 * cij0)) + 2.0 * d);
+        ar[0][0].val += ndt;
+        ar[1][0].val += ndt * omega;
+        ar[2][0].val += ndt * omega2;
+        ar[1][1].val += ndt * omega * xid;
+        ar[1][2].val += ndt * omega * xi2d;
+        ar[0][3].val += ndt * (xid * (xi2d - 2.0 * (d + 2.0 * cij0)) + 2.0 * d);
       }
     }
 
@@ -609,21 +609,21 @@ public class GERG2008NH3 extends GERG2008 {
       ar[0][2].val += ndt * xi2d;
 
       if (itau > 0) {
-	// Tau-derivatives for GaoB: exp(1/D) where D = b + beta*(tau-gamma)^2
-	double bigD2 = bigD * bigD;
-	double bigD3 = bigD2 * bigD;
-	double dhdtau = -2.0 * bet * tDiff / bigD2;
-	double ct = t + tau * dhdtau;
-	double d2hdtau2 = -2.0 * bet / bigD2 + 8.0 * bet * bet * tDiff * tDiff / bigD3;
-	double dctdtau = dhdtau + tau * d2hdtau2;
-	double ct2 = ct * ct - ct + tau * dctdtau;
+        // Tau-derivatives for GaoB: exp(1/D) where D = b + beta*(tau-gamma)^2
+        double bigD2 = bigD * bigD;
+        double bigD3 = bigD2 * bigD;
+        double dhdtau = -2.0 * bet * tDiff / bigD2;
+        double ct = t + tau * dhdtau;
+        double d2hdtau2 = -2.0 * bet / bigD2 + 8.0 * bet * bet * tDiff * tDiff / bigD3;
+        double dctdtau = dhdtau + tau * d2hdtau2;
+        double ct2 = ct * ct - ct + tau * dctdtau;
 
-	ar[0][0].val += ndt;
-	ar[1][0].val += ndt * ct;
-	ar[2][0].val += ndt * ct2;
-	ar[1][1].val += ndt * ct * xid;
-	ar[1][2].val += ndt * ct * xi2d;
-	ar[0][3].val += ndt * (xid * (xi2d - 2.0 * (d + 2.0 * cij0)) + 2.0 * d);
+        ar[0][0].val += ndt;
+        ar[1][0].val += ndt * ct;
+        ar[2][0].val += ndt * ct2;
+        ar[1][1].val += ndt * ct * xid;
+        ar[1][2].val += ndt * ct * xi2d;
+        ar[0][3].val += ndt * (xid * (xi2d - 2.0 * (d + 2.0 * cij0)) + 2.0 * d);
       }
     }
   }
@@ -660,68 +660,68 @@ public class GERG2008NH3 extends GERG2008 {
     for (int p = 0; p < NH3_DEP_PAIRS; ++p) {
       int i = nh3DepI[p];
       if (x[i] <= epsilon || x[NH3_IDX] <= epsilon) {
-	continue;
+        continue;
       }
       double xijf = x[i] * x[NH3_IDX] * nh3DepFij[p];
 
       // Polynomial terms: n * delta^d * tau^t (non-integer d)
       for (int k = 0; k < nh3DepKpol[p]; ++k) {
-	double d = nh3PolD[p][k];
-	double t = nh3PolT[p][k];
-	double ndt = xijf * nh3PolN[p][k] * Math.exp(d * lndel + t * Math.log(tau));
+        double d = nh3PolD[p][k];
+        double t = nh3PolT[p][k];
+        double ndt = xijf * nh3PolN[p][k] * Math.exp(d * lndel + t * Math.log(tau));
 
-	ar[0][1].val += ndt * d;
-	ar[0][2].val += ndt * d * (d - 1);
-	if (itau > 0) {
-	  ar[0][0].val += ndt;
-	  ar[1][0].val += ndt * t;
-	  ar[2][0].val += ndt * t * (t - 1);
-	  ar[1][1].val += ndt * t * d;
-	  ar[1][2].val += ndt * t * d * (d - 1);
-	  ar[0][3].val += ndt * d * (d - 1) * (d - 2);
-	}
+        ar[0][1].val += ndt * d;
+        ar[0][2].val += ndt * d * (d - 1);
+        if (itau > 0) {
+          ar[0][0].val += ndt;
+          ar[1][0].val += ndt * t;
+          ar[2][0].val += ndt * t * (t - 1);
+          ar[1][1].val += ndt * t * d;
+          ar[1][2].val += ndt * t * d * (d - 1);
+          ar[0][3].val += ndt * d * (d - 1) * (d - 2);
+        }
       }
 
       // GBS terms: n * delta^d * tau^t * exp(-eta*(delta-eps)^2 - beta*(tau-gamma)^2)
       for (int k = 0; k < nh3DepKgbs[p]; ++k) {
-	double d = nh3GbsD[p][k];
-	double t = nh3GbsT[p][k];
-	double eta = nh3GbsEta[p][k];
-	double eps = nh3GbsEps[p][k];
-	double bet = nh3GbsBet[p][k];
-	double gam = nh3GbsGam[p][k];
+        double d = nh3GbsD[p][k];
+        double t = nh3GbsT[p][k];
+        double eta = nh3GbsEta[p][k];
+        double eps = nh3GbsEps[p][k];
+        double bet = nh3GbsBet[p][k];
+        double gam = nh3GbsGam[p][k];
 
-	// Delta and tau Gaussian damping factors
-	double dDiff = del - eps;
-	double tDiff = tau - gam;
-	double sigDel = Math.exp(-eta * dDiff * dDiff);
-	double sigTau = Math.exp(-bet * tDiff * tDiff);
+        // Delta and tau Gaussian damping factors
+        double dDiff = del - eps;
+        double tDiff = tau - gam;
+        double sigDel = Math.exp(-eta * dDiff * dDiff);
+        double sigTau = Math.exp(-bet * tDiff * tDiff);
 
-	double ndt = xijf * nh3GbsN[p][k] * Math.exp(d * lndel + t * Math.log(tau)) * sigDel * sigTau;
+        double ndt = xijf * nh3GbsN[p][k] * Math.exp(d * lndel + t * Math.log(tau)) * sigDel * sigTau;
 
-	// Delta-derivative multipliers (same structure as GERG exp with c=-eta, e=2*eta*eps)
-	double cEff = -eta;
-	double del2 = del * del;
-	double cij0 = cEff * del2;
-	double eij0 = 2.0 * eta * eps * del;
-	double xi = d + 2.0 * cij0 + eij0;
-	double xi2 = xi * xi - d + 2.0 * cij0;
+        // Delta-derivative multipliers (same structure as GERG exp with c=-eta, e=2*eta*eps)
+        double cEff = -eta;
+        double del2 = del * del;
+        double cij0 = cEff * del2;
+        double eij0 = 2.0 * eta * eps * del;
+        double xi = d + 2.0 * cij0 + eij0;
+        double xi2 = xi * xi - d + 2.0 * cij0;
 
-	ar[0][1].val += ndt * xi;
-	ar[0][2].val += ndt * xi2;
+        ar[0][1].val += ndt * xi;
+        ar[0][2].val += ndt * xi2;
 
-	if (itau > 0) {
-	  // Tau-derivative multipliers (GBS-specific: tau-Gaussian)
-	  double omega = t - 2.0 * bet * tau * tDiff;
-	  double omega2 = omega * omega - t - 2.0 * bet * tau * tau;
+        if (itau > 0) {
+          // Tau-derivative multipliers (GBS-specific: tau-Gaussian)
+          double omega = t - 2.0 * bet * tau * tDiff;
+          double omega2 = omega * omega - t - 2.0 * bet * tau * tau;
 
-	  ar[0][0].val += ndt;
-	  ar[1][0].val += ndt * omega;
-	  ar[2][0].val += ndt * omega2;
-	  ar[1][1].val += ndt * omega * xi;
-	  ar[1][2].val += ndt * omega * xi2;
-	  ar[0][3].val += ndt * (xi * (xi2 - 2.0 * (d + 2.0 * cij0)) + 2.0 * d);
-	}
+          ar[0][0].val += ndt;
+          ar[1][0].val += ndt * omega;
+          ar[2][0].val += ndt * omega2;
+          ar[1][1].val += ndt * omega * xi;
+          ar[1][2].val += ndt * omega * xi2;
+          ar[0][3].val += ndt * (xi * (xi2 - 2.0 * (d + 2.0 * cij0)) + 2.0 * d);
+        }
       }
     }
   }

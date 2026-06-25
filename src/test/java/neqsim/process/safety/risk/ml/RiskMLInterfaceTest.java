@@ -32,7 +32,7 @@ class RiskMLInterfaceTest {
   @Test
   void testCreateFailurePredictionModel() {
     RiskMLInterface.MLModel model = mlInterface.createFailurePredictionModel("pump-failure-v1",
-	"Pump Failure Predictor");
+        "Pump Failure Predictor");
 
     assertNotNull(model);
     assertEquals("pump-failure-v1", model.getModelId());

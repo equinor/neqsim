@@ -1,8 +1,8 @@
 package neqsim.process.instrumentdesign.pipeline;
 
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.instrumentdesign.InstrumentDesign;
 import neqsim.process.instrumentdesign.InstrumentSpecification;
-import neqsim.process.equipment.ProcessEquipmentInterface;
 
 /**
  * Instrument design for pipelines.
@@ -65,8 +65,8 @@ public class PipelineInstrumentDesign extends InstrumentDesign {
     if (includeLeakDetection) {
       // PSLL: Low pressure alarm for leak detection
       if (isIncludeSafetyInstruments()) {
-	getInstrumentList()
-	    .add(new InstrumentSpecification("PSLL", "Low Pressure (Leak Detection)", "DI", getDefaultSilLevel()));
+        getInstrumentList()
+            .add(new InstrumentSpecification("PSLL", "Low Pressure (Leak Detection)", "DI", getDefaultSilLevel()));
       }
     }
 

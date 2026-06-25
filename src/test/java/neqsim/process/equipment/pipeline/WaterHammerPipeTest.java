@@ -72,7 +72,7 @@ public class WaterHammerPipeTest {
     // Surge should be positive and significant
     // Exact value depends on EOS-calculated wave speed
     assertTrue(surgeBar > 1 && surgeBar < 50,
-	"Joukowsky surge for 1 m/s should be positive and reasonable, got: " + surgeBar);
+        "Joukowsky surge for 1 m/s should be positive and reasonable, got: " + surgeBar);
     assertEquals(surgePa / 1e5, surgeBar, 0.001);
   }
 
@@ -92,7 +92,7 @@ public class WaterHammerPipeTest {
 
     // Round trip time should be positive and reasonable
     assertTrue(roundTripTime > 0.1 && roundTripTime < 10,
-	"Round trip time should be reasonable for 1 km pipe, got: " + roundTripTime);
+        "Round trip time should be reasonable for 1 km pipe, got: " + roundTripTime);
   }
 
   @Test
@@ -161,9 +161,9 @@ public class WaterHammerPipeTest {
 
       // Close valve linearly over closureTime
       if (t < closureTime) {
-	pipe.setValveOpening(1.0 - t / closureTime);
+        pipe.setValveOpening(1.0 - t / closureTime);
       } else {
-	pipe.setValveOpening(0.0);
+        pipe.setValveOpening(0.0);
       }
 
       pipe.runTransient(dt, id);
@@ -274,7 +274,7 @@ public class WaterHammerPipeTest {
     double dt = pipe.getMaxStableTimeStep() * 0.5;
     for (int step = 0; step < 200; step++) {
       if (step == 50) {
-	pipe.setValveOpening(0.0); // Instant closure
+        pipe.setValveOpening(0.0); // Instant closure
       }
       pipe.runTransient(dt, id);
     }
@@ -287,8 +287,8 @@ public class WaterHammerPipeTest {
     boolean hasVariation = false;
     for (int i = 0; i < 50; i++) {
       if (maxEnv[i] > minEnv[i] + 1000) { // > 0.01 bar difference
-	hasVariation = true;
-	break;
+        hasVariation = true;
+        break;
       }
     }
     assertTrue(hasVariation, "Should have pressure variation after valve closure");

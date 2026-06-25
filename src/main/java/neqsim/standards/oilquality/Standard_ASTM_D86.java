@@ -131,7 +131,7 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
    */
   public Standard_ASTM_D86(SystemInterface thermoSystem) {
     super("Standard_ASTM_D86", "ASTM D86 - Distillation of Petroleum Products at Atmospheric " + "Pressure",
-	thermoSystem);
+        thermoSystem);
     initVolumeFractions();
   }
 
@@ -146,7 +146,7 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
     // IBP(~0.5%), 5%, 10%, 15%, 20%, 25%, 30%, 35%, 40%, 45%, 50%,
     // 55%, 60%, 65%, 70%, 75%, 80%, 85%, 90%, 95%
     double[] fracs = { 0.005, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75,
-	0.80, 0.85, 0.90, 0.95 };
+        0.80, 0.85, 0.90, 0.95 };
     for (int i = 0; i < numberOfPoints; i++) {
       volumeFractions[i] = fracs[i];
       temperatures[i] = Double.NaN;
@@ -187,9 +187,9 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
       zFeed[c] = comp.getz();
       double rho = 0.0;
       try {
-	rho = comp.getNormalLiquidDensity("kg/m3");
+        rho = comp.getNormalLiquidDensity("kg/m3");
       } catch (Exception e) {
-	rho = 0.0;
+        rho = 0.0;
       }
       vmFeed[c] = (rho > 1.0e-6) ? comp.getMolarMass() / rho : 0.0;
       sumVfeed += zFeed[c] * vmFeed[c];
@@ -205,20 +205,20 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
     ThermodynamicOperations flashOps = new ThermodynamicOperations(flashFluid);
     for (int i = 1; i < numberOfPoints; i++) {
       try {
-	flashOps.PVFflash(volumeFractions[i]);
-	double t = flashFluid.getTemperature();
-	if (Double.isNaN(t) || Double.isInfinite(t)) {
-	  temperatures[i] = Double.NaN;
-	  liquidVolumeFractions[i] = Double.NaN;
-	} else {
-	  temperatures[i] = t;
-	  liquidVolumeFractions[i] = computeRecoveredLiquidVolume(flashFluid, volumeFractions[i], vmFeed, sumVfeed,
-	      nComp);
-	}
+        flashOps.PVFflash(volumeFractions[i]);
+        double t = flashFluid.getTemperature();
+        if (Double.isNaN(t) || Double.isInfinite(t)) {
+          temperatures[i] = Double.NaN;
+          liquidVolumeFractions[i] = Double.NaN;
+        } else {
+          temperatures[i] = t;
+          liquidVolumeFractions[i] = computeRecoveredLiquidVolume(flashFluid, volumeFractions[i], vmFeed, sumVfeed,
+              nComp);
+        }
       } catch (Exception ex) {
-	logger.debug("PVF flash failed at {}%: {}", volumeFractions[i] * 100.0, ex.getMessage());
-	temperatures[i] = Double.NaN;
-	liquidVolumeFractions[i] = Double.NaN;
+        logger.debug("PVF flash failed at {}%: {}", volumeFractions[i] * 100.0, ex.getMessage());
+        temperatures[i] = Double.NaN;
+        liquidVolumeFractions[i] = Double.NaN;
       }
     }
 
@@ -280,12 +280,12 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
     default:
       // Try interpreting as "Txx" where xx is percentage
       if (returnParameter.startsWith("T") && returnParameter.length() > 1) {
-	try {
-	  double pct = Double.parseDouble(returnParameter.substring(1));
-	  return reportedTemperatureAtFractionK(pct / 100.0) - 273.15;
-	} catch (NumberFormatException e) {
-	  logger.error("Unsupported parameter: {}", returnParameter);
-	}
+        try {
+          double pct = Double.parseDouble(returnParameter.substring(1));
+          return reportedTemperatureAtFractionK(pct / 100.0) - 273.15;
+        } catch (NumberFormatException e) {
+          logger.error("Unsupported parameter: {}", returnParameter);
+        }
       }
       return Double.NaN;
     }
@@ -300,8 +300,8 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
     }
     // Dimensionless or non-temperature outputs are returned unchanged regardless of unit.
     if ("WatsonK".equalsIgnoreCase(returnParameter) || "watsonK".equalsIgnoreCase(returnParameter)
-	|| "UOPK".equalsIgnoreCase(returnParameter) || "residue".equalsIgnoreCase(returnParameter)
-	|| "loss".equalsIgnoreCase(returnParameter) || "slope".equalsIgnoreCase(returnParameter)) {
+        || "UOPK".equalsIgnoreCase(returnParameter) || "residue".equalsIgnoreCase(returnParameter)
+        || "loss".equalsIgnoreCase(returnParameter) || "slope".equalsIgnoreCase(returnParameter)) {
       return valueC;
     }
     if ("K".equalsIgnoreCase(returnUnit)) {
@@ -330,7 +330,7 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
     for (Map.Entry<String, Double> entry : specLimitsC.entrySet()) {
       double value = getValue(entry.getKey());
       if (Double.isNaN(value) || value > entry.getValue()) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -350,16 +350,16 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
     }
     for (int i = 1; i < numberOfPoints; i++) {
       if (Double.isNaN(temps[i]) || Double.isNaN(temps[i - 1]) || Double.isNaN(fractionAxis[i])
-	  || Double.isNaN(fractionAxis[i - 1])) {
-	continue;
+          || Double.isNaN(fractionAxis[i - 1])) {
+        continue;
       }
       if (fraction <= fractionAxis[i]) {
-	double dx = fractionAxis[i] - fractionAxis[i - 1];
-	if (Math.abs(dx) < 1.0e-12) {
-	  return temps[i];
-	}
-	double x = (fraction - fractionAxis[i - 1]) / dx;
-	return temps[i - 1] + x * (temps[i] - temps[i - 1]);
+        double dx = fractionAxis[i] - fractionAxis[i - 1];
+        if (Math.abs(dx) < 1.0e-12) {
+          return temps[i];
+        }
+        double x = (fraction - fractionAxis[i - 1]) / dx;
+        return temps[i - 1] + x * (temps[i] - temps[i - 1]);
       }
     }
     return temps[numberOfPoints - 1];
@@ -466,10 +466,10 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
     }
     for (int i = 1; i < CONV_PCT.length; i++) {
       if (percent <= CONV_PCT[i]) {
-	double t = (percent - CONV_PCT[i - 1]) / (CONV_PCT[i] - CONV_PCT[i - 1]);
-	double a = CONV_A[i - 1] + t * (CONV_A[i] - CONV_A[i - 1]);
-	double b = CONV_B[i - 1] + t * (CONV_B[i] - CONV_B[i - 1]);
-	return new double[] { a, b };
+        double t = (percent - CONV_PCT[i - 1]) / (CONV_PCT[i] - CONV_PCT[i - 1]);
+        double a = CONV_A[i - 1] + t * (CONV_A[i] - CONV_A[i - 1]);
+        double b = CONV_B[i - 1] + t * (CONV_B[i] - CONV_B[i - 1]);
+        return new double[] { a, b };
       }
     }
     return new double[] { CONV_A[last], CONV_B[last] };
@@ -526,14 +526,14 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
       PhaseInterface gas = fluid.getPhase("gas");
       double sumVgas = 0.0;
       for (int c = 0; c < nComp; c++) {
-	sumVgas += gas.getComponent(c).getx() * vmFeed[c];
+        sumVgas += gas.getComponent(c).getx() * vmFeed[c];
       }
       double lv = beta * sumVgas / sumVfeed;
       if (lv < 0.0) {
-	lv = 0.0;
+        lv = 0.0;
       }
       if (lv > 1.0) {
-	lv = 1.0;
+        lv = 1.0;
       }
       return lv;
     } catch (Exception e) {
@@ -554,10 +554,10 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
     double lossVol = 0.0;
     if (sumVfeed > 0.0 && !Double.isNaN(IBP)) {
       for (int c = 0; c < nComp; c++) {
-	double tb = thermoSystem.getComponent(c).getNormalBoilingPoint();
-	if (tb < IBP) {
-	  lossVol += zFeed[c] * vmFeed[c];
-	}
+        double tb = thermoSystem.getComponent(c).getNormalBoilingPoint();
+        if (tb < IBP) {
+          lossVol += zFeed[c] * vmFeed[c];
+        }
       }
       lossVol /= sumVfeed;
     }
@@ -597,14 +597,14 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
       wabpNum += mass * tb;
       double rho = 0.0;
       try {
-	rho = c.getNormalLiquidDensity("kg/m3");
+        rho = c.getNormalLiquidDensity("kg/m3");
       } catch (Exception e) {
-	rho = 0.0;
+        rho = 0.0;
       }
       if (rho > 1.0e-6) {
-	double vol = mass / rho;
-	sumVol += vol;
-	cabpNum += vol * Math.cbrt(tb);
+        double vol = mass / rho;
+        sumVol += vol;
+        cabpNum += vol * Math.cbrt(tb);
       }
     }
     double wabp = (sumMass > 0.0) ? wabpNum / sumMass : Double.NaN;

@@ -106,8 +106,8 @@ public class AmineAbsorberDesignTest {
 
     // Typical MDEA: density ~1050, molar mass ~0.119 kg/mol
     double rate = absorber.calcRequiredCirculationRate(10.0, // mol/s acid gas to remove
-	1050.0, // kg/m3
-	0.119); // kg/mol
+        1050.0, // kg/m3
+        0.119); // kg/mol
 
     assertTrue(rate > 0);
     assertEquals(rate, absorber.getRequiredCirculationRate(), 1e-10);

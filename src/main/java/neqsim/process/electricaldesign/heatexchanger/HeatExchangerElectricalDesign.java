@@ -103,18 +103,18 @@ public class HeatExchangerElectricalDesign extends ElectricalDesign {
     switch (heatExchangerType) {
     case ELECTRIC_HEATER:
       if (power > 200) {
-	setRatedVoltageV(6600);
+        setRatedVoltageV(6600);
       } else if (power > 75) {
-	setRatedVoltageV(690);
+        setRatedVoltageV(690);
       } else {
-	setRatedVoltageV(400);
+        setRatedVoltageV(400);
       }
       break;
     case AIR_COOLER:
       if (power > 200) {
-	setRatedVoltageV(690);
+        setRatedVoltageV(690);
       } else {
-	setRatedVoltageV(400);
+        setRatedVoltageV(400);
       }
       break;
     case SHELL_AND_TUBE:
@@ -141,8 +141,8 @@ public class HeatExchangerElectricalDesign extends ElectricalDesign {
     if (heatExchangerType == HeatExchangerType.SHELL_AND_TUBE) {
       setElectricalInputKW(totalAuxiliaryKW);
       if (totalAuxiliaryKW > 0 && getPowerFactor() > 0) {
-	setApparentPowerKVA(totalAuxiliaryKW / getPowerFactor());
-	setReactivePowerKVAR(getApparentPowerKVA() * Math.sin(Math.acos(getPowerFactor())));
+        setApparentPowerKVA(totalAuxiliaryKW / getPowerFactor());
+        setReactivePowerKVAR(getApparentPowerKVA() * Math.sin(Math.acos(getPowerFactor())));
       }
     }
   }

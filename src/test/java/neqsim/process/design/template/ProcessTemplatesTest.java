@@ -129,8 +129,8 @@ class ProcessTemplatesTest {
   @Test
   void testDehydrationTEGRateCalculation() {
     double tegRate = DehydrationTemplate.calculateTEGRate(10.0, // Gas flow MMscfd
-	100.0, // Inlet water lb/MMscf
-	7.0 // Target water lb/MMscf
+        100.0, // Inlet water lb/MMscf
+        7.0 // Target water lb/MMscf
     );
 
     assertTrue(tegRate > 0);
@@ -188,8 +188,8 @@ class ProcessTemplatesTest {
   @Test
   void testCO2CaptureSpecificReboilerDuty() {
     double duty = CO2CaptureTemplate.calculateSpecificReboilerDuty(CO2CaptureTemplate.AmineType.MDEA, 0.50, // Rich
-													    // loading
-	0.20 // Lean loading
+        // loading
+        0.20 // Lean loading
     );
 
     assertTrue(duty > 0);
@@ -199,8 +199,8 @@ class ProcessTemplatesTest {
   @Test
   void testCO2CaptureAmineLoss() {
     double loss = CO2CaptureTemplate.estimateAmineLoss(CO2CaptureTemplate.AmineType.MDEA, 100.0 // Gas
-												// flow
-												// MMscfd
+    // flow
+    // MMscfd
     );
 
     assertTrue(loss > 0);

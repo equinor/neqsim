@@ -1080,16 +1080,16 @@ public class CostEstimationCalculator implements java.io.Serializable {
     } else if (regionLower.contains("west coast") || regionLower.contains("california")) {
       this.locationFactor = LOC_US_WEST_COAST;
     } else if (regionLower.contains("north sea") || regionLower.contains("norway")
-	|| regionLower.contains("norwegian")) {
+        || regionLower.contains("norwegian")) {
       this.locationFactor = LOC_NORTH_SEA;
     } else if (regionLower.contains("western europe") || regionLower.contains("uk")
-	|| regionLower.contains("netherlands") || regionLower.contains("germany")) {
+        || regionLower.contains("netherlands") || regionLower.contains("germany")) {
       this.locationFactor = LOC_WESTERN_EUROPE;
     } else if (regionLower.contains("middle east") || regionLower.contains("qatar") || regionLower.contains("saudi")
-	|| regionLower.contains("uae") || regionLower.contains("abu dhabi")) {
+        || regionLower.contains("uae") || regionLower.contains("abu dhabi")) {
       this.locationFactor = LOC_MIDDLE_EAST;
     } else if (regionLower.contains("southeast asia") || regionLower.contains("singapore")
-	|| regionLower.contains("malaysia") || regionLower.contains("indonesia")) {
+        || regionLower.contains("malaysia") || regionLower.contains("indonesia")) {
       this.locationFactor = LOC_SOUTHEAST_ASIA;
     } else if (regionLower.contains("china")) {
       this.locationFactor = LOC_CHINA;
@@ -1098,7 +1098,7 @@ public class CostEstimationCalculator implements java.io.Serializable {
     } else if (regionLower.contains("brazil")) {
       this.locationFactor = LOC_BRAZIL;
     } else if (regionLower.contains("west africa") || regionLower.contains("nigeria")
-	|| regionLower.contains("angola")) {
+        || regionLower.contains("angola")) {
       this.locationFactor = LOC_WEST_AFRICA;
     } else {
       this.locationFactor = LOC_US_GULF_COAST; // Default

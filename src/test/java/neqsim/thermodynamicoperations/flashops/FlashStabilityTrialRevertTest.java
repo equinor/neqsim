@@ -49,12 +49,12 @@ public class FlashStabilityTrialRevertTest {
     ops.TPflash();
     gas.initProperties();
     assertEquals(1, gas.getNumberOfPhases(),
-	"single-phase gas should remain single-phase when multi-phase check is disabled");
+        "single-phase gas should remain single-phase when multi-phase check is disabled");
     double density = gas.getPhase(0).getDensity();
     assertTrue(Double.isFinite(density) && density > 0.0, "density must be finite and positive (was " + density + ")");
     double viscosity = gas.getPhase(0).getViscosity();
     assertTrue(Double.isFinite(viscosity) && viscosity > 0.0,
-	"viscosity must be finite and positive (was " + viscosity + ")");
+        "viscosity must be finite and positive (was " + viscosity + ")");
   }
 
   @Test
@@ -66,8 +66,8 @@ public class FlashStabilityTrialRevertTest {
     double[] k = gas.getKvector();
     if (k != null) {
       for (int i = 0; i < k.length; i++) {
-	assertTrue(Double.isFinite(k[i]), "K-value " + i + " must be finite (was " + k[i] + ")");
-	assertFalse(k[i] > 1.0e4, "K-value " + i + " (" + k[i] + ") suggests trial K-pollution leaked through");
+        assertTrue(Double.isFinite(k[i]), "K-value " + i + " must be finite (was " + k[i] + ")");
+        assertFalse(k[i] > 1.0e4, "K-value " + i + " (" + k[i] + ") suggests trial K-pollution leaked through");
       }
     }
   }

@@ -48,8 +48,8 @@ class BenchmarkValidationTest {
     double tolerancePct = 15.0; // Practical SRK envelope for dense methane
 
     String json = "{" + "\"model\": \"SRK\"," + "\"temperature\": {\"value\": 25.0, \"unit\": \"C\"},"
-	+ "\"pressure\": {\"value\": 100.0, \"unit\": \"bara\"}," + "\"flashType\": \"TP\","
-	+ "\"components\": {\"methane\": 1.0}," + "\"mixingRule\": \"classic\"" + "}";
+        + "\"pressure\": {\"value\": 100.0, \"unit\": \"bara\"}," + "\"flashType\": \"TP\","
+        + "\"components\": {\"methane\": 1.0}," + "\"mixingRule\": \"classic\"" + "}";
 
     String result = FlashRunner.run(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
@@ -60,8 +60,8 @@ class BenchmarkValidationTest {
 
     double errorPct = Math.abs(density - nistDensity) / nistDensity * 100.0;
     assertTrue(errorPct < tolerancePct,
-	String.format("Methane density at 25C/100bar: NeqSim=%.2f, NIST=%.2f, error=%.1f%% " + "(must be <%.1f%%)",
-	    density, nistDensity, errorPct, tolerancePct));
+        String.format("Methane density at 25C/100bar: NeqSim=%.2f, NIST=%.2f, error=%.1f%% " + "(must be <%.1f%%)",
+            density, nistDensity, errorPct, tolerancePct));
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -80,8 +80,8 @@ class BenchmarkValidationTest {
   @DisplayName("Flash: methane-ethane two-phase split at 50 bara, -20C")
   void testMethaneEthaneVLE() {
     String json = "{" + "\"model\": \"SRK\"," + "\"temperature\": {\"value\": -20.0, \"unit\": \"C\"},"
-	+ "\"pressure\": {\"value\": 50.0, \"unit\": \"bara\"}," + "\"flashType\": \"TP\","
-	+ "\"components\": {\"methane\": 0.5, \"ethane\": 0.5}," + "\"mixingRule\": \"classic\"" + "}";
+        + "\"pressure\": {\"value\": 50.0, \"unit\": \"bara\"}," + "\"flashType\": \"TP\","
+        + "\"components\": {\"methane\": 0.5, \"ethane\": 0.5}," + "\"mixingRule\": \"classic\"" + "}";
 
     String result = FlashRunner.run(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
@@ -104,9 +104,9 @@ class BenchmarkValidationTest {
   @DisplayName("Flash: natural gas dew point at 50 bara is physically reasonable")
   void testNaturalGasDewPoint() {
     String json = "{" + "\"model\": \"SRK\"," + "\"pressure\": {\"value\": 50.0, \"unit\": \"bara\"},"
-	+ "\"flashType\": \"dewPointTemperature\","
-	+ "\"components\": {\"methane\": 0.85, \"ethane\": 0.08, \"propane\": 0.04, "
-	+ "\"n-butane\": 0.02, \"n-pentane\": 0.01}," + "\"mixingRule\": \"classic\"" + "}";
+        + "\"flashType\": \"dewPointTemperature\","
+        + "\"components\": {\"methane\": 0.85, \"ethane\": 0.08, \"propane\": 0.04, "
+        + "\"n-butane\": 0.02, \"n-pentane\": 0.01}," + "\"mixingRule\": \"classic\"" + "}";
 
     String result = FlashRunner.run(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
@@ -119,7 +119,7 @@ class BenchmarkValidationTest {
 
     // Lean gas dew point at 50 bara should be roughly -30 to 0 C
     assertTrue(tempC > -80 && tempC < 20,
-	String.format("Dew point T = %.1f C is outside reasonable range [-80, 20] C", tempC));
+        String.format("Dew point T = %.1f C is outside reasonable range [-80, 20] C", tempC));
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -134,10 +134,10 @@ class BenchmarkValidationTest {
   @DisplayName("Process: separator mass balance closure < 0.1%")
   void testSeparatorMassBalance() {
     String json = "{" + "\"fluid\": {" + "  \"components\": {\"methane\": 0.6, \"propane\": 0.3, \"nC10\": 0.1},"
-	+ "  \"model\": \"SRK\"," + "  \"temperature_C\": 25.0," + "  \"pressure_bara\": 50.0" + "}," + "\"process\": {"
-	+ "  \"equipment\": ["
-	+ "    {\"type\": \"stream\", \"name\": \"feed\", \"flowRate\": {\"value\": 1000.0, \"unit\": \"kg/hr\"}},"
-	+ "    {\"type\": \"separator\", \"name\": \"sep\", \"inlet\": \"feed\"}" + "  ]" + "}" + "}";
+        + "  \"model\": \"SRK\"," + "  \"temperature_C\": 25.0," + "  \"pressure_bara\": 50.0" + "}," + "\"process\": {"
+        + "  \"equipment\": ["
+        + "    {\"type\": \"stream\", \"name\": \"feed\", \"flowRate\": {\"value\": 1000.0, \"unit\": \"kg/hr\"}},"
+        + "    {\"type\": \"separator\", \"name\": \"sep\", \"inlet\": \"feed\"}" + "  ]" + "}" + "}";
 
     String result = ProcessRunner.run(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
@@ -145,7 +145,7 @@ class BenchmarkValidationTest {
 
     // Extract stream flows - verify the simulation converged with reasonable results
     assertTrue(root.has("streams") || root.has("equipment") || root.has("processSystemName") || root.has("report"),
-	"Process result must contain process data");
+        "Process result must contain process data");
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -163,7 +163,7 @@ class BenchmarkValidationTest {
     double tolerancePct = 0.5;
 
     String json = "{" + "\"components\": {\"methane\": 1.0}," + "\"model\": \"SRK\"," + "\"temperature_C\": 15.0,"
-	+ "\"pressure_bara\": 1.01325," + "\"standard\": \"ISO6976\"" + "}";
+        + "\"pressure_bara\": 1.01325," + "\"standard\": \"ISO6976\"" + "}";
 
     String result = StandardsRunner.run(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
@@ -192,10 +192,10 @@ class BenchmarkValidationTest {
     JsonObject tools = root.getAsJsonObject("tools");
     // Verify all claimed tools are present
     String[] expectedTools = { "runFlash", "runProcess", "runPVT", "runFlowAssurance", "calculateStandard",
-	"runPipeline", "runWaterHammer", "runRootCauseAnalysis", "calculateStandard", "runPipeline", "runWaterHammer",
-	"runRootCauseAnalysis", "runMaterialsReview", "runReservoir", "runFieldEconomics", "runBatch", "runDynamic",
-	"runBioprocess", "crossValidateModels", "runParametricStudy", "getPhaseEnvelope", "getPropertyTable",
-	"sizeEquipment" };
+        "runPipeline", "runWaterHammer", "runRootCauseAnalysis", "calculateStandard", "runPipeline", "runWaterHammer",
+        "runRootCauseAnalysis", "runMaterialsReview", "runReservoir", "runFieldEconomics", "runBatch", "runDynamic",
+        "runBioprocess", "crossValidateModels", "runParametricStudy", "getPhaseEnvelope", "getPropertyTable",
+        "sizeEquipment" };
 
     for (String tool : expectedTools) {
       assertTrue(tools.has(tool), "Trust report must include entry for " + tool);
@@ -211,7 +211,7 @@ class BenchmarkValidationTest {
   @DisplayName("Each tool trust page has maturityLevel and knownLimitations")
   void testToolTrustPageStructure() {
     String[] calculationTools = { "runFlash", "runProcess", "runBatch", "runPVT", "runDynamic", "getPhaseEnvelope",
-	"getPropertyTable", "runParametricStudy", "crossValidateModels", "sizeEquipment" };
+        "getPropertyTable", "runParametricStudy", "crossValidateModels", "sizeEquipment" };
 
     for (String toolName : calculationTools) {
       String page = BenchmarkTrust.getToolTrust(toolName);

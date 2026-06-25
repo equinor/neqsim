@@ -22,7 +22,7 @@ public class SimpleAbsorberTest extends neqsim.NeqSimTest {
   void testRun() {
     Stream stream_Hot = new Stream("Stream1", testSystem);
     neqsim.process.equipment.absorber.SimpleAbsorber absorber1 = new neqsim.process.equipment.absorber.SimpleAbsorber(
-	"absorber", stream_Hot);
+        "absorber", stream_Hot);
     absorber1.setAproachToEquilibrium(0.75);
 
     // TODO: Test is not well behaved

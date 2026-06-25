@@ -107,18 +107,18 @@ public class SafetyEnvelopeCalculator {
       double pressure = minPressure + i * pressureStep;
 
       try {
-	SystemInterface tempFluid = fluid.clone();
-	tempFluid.setPressure(pressure);
-	tempFluid.setTemperature(280.0); // Initial guess
+        SystemInterface tempFluid = fluid.clone();
+        tempFluid.setPressure(pressure);
+        tempFluid.setTemperature(280.0); // Initial guess
 
-	ThermodynamicOperations ops = new ThermodynamicOperations(tempFluid);
-	ops.hydrateFormationTemperature(); // Modifies system temperature
-	double hydrateTemp = tempFluid.getTemperature();
+        ThermodynamicOperations ops = new ThermodynamicOperations(tempFluid);
+        ops.hydrateFormationTemperature(); // Modifies system temperature
+        double hydrateTemp = tempFluid.getTemperature();
 
-	envelope.setDataPoint(i, pressure, hydrateTemp, safetyMarginHydrate);
+        envelope.setDataPoint(i, pressure, hydrateTemp, safetyMarginHydrate);
       } catch (Exception e) {
-	// If calculation fails, use NaN
-	envelope.setDataPoint(i, pressure, Double.NaN, safetyMarginHydrate);
+        // If calculation fails, use NaN
+        envelope.setDataPoint(i, pressure, Double.NaN, safetyMarginHydrate);
       }
     }
 
@@ -143,18 +143,18 @@ public class SafetyEnvelopeCalculator {
       double pressure = minPressure + i * pressureStep;
 
       try {
-	SystemInterface tempFluid = fluid.clone();
-	tempFluid.setPressure(pressure);
-	tempFluid.setTemperature(320.0); // Start warm
+        SystemInterface tempFluid = fluid.clone();
+        tempFluid.setPressure(pressure);
+        tempFluid.setTemperature(320.0); // Start warm
 
-	ThermodynamicOperations ops = new ThermodynamicOperations(tempFluid);
-	ops.calcWAT(); // Modifies system temperature
-	double watTemp = tempFluid.getTemperature();
+        ThermodynamicOperations ops = new ThermodynamicOperations(tempFluid);
+        ops.calcWAT(); // Modifies system temperature
+        double watTemp = tempFluid.getTemperature();
 
-	envelope.setDataPoint(i, pressure, watTemp, safetyMarginWax);
+        envelope.setDataPoint(i, pressure, watTemp, safetyMarginWax);
       } catch (Exception e) {
-	// If calculation fails, use NaN (no wax at this pressure)
-	envelope.setDataPoint(i, pressure, Double.NaN, safetyMarginWax);
+        // If calculation fails, use NaN (no wax at this pressure)
+        envelope.setDataPoint(i, pressure, Double.NaN, safetyMarginWax);
       }
     }
 
@@ -188,14 +188,14 @@ public class SafetyEnvelopeCalculator {
       double freezeTemp;
 
       if (pressure < triplePointPressure) {
-	// Below triple point: sublimation curve
-	// Simplified: T decreases as P decreases
-	freezeTemp = triplePointTemp * Math.pow(pressure / triplePointPressure, 0.1);
+        // Below triple point: sublimation curve
+        // Simplified: T decreases as P decreases
+        freezeTemp = triplePointTemp * Math.pow(pressure / triplePointPressure, 0.1);
       } else {
-	// Above triple point: solid-liquid boundary
-	// CO2 has positive slope (unusual)
-	// dT/dP ≈ 0.004 K/bar for CO2
-	freezeTemp = triplePointTemp + 0.004 * (pressure - triplePointPressure);
+        // Above triple point: solid-liquid boundary
+        // CO2 has positive slope (unusual)
+        // dT/dP ≈ 0.004 K/bar for CO2
+        freezeTemp = triplePointTemp + 0.004 * (pressure - triplePointPressure);
       }
 
       envelope.setDataPoint(i, pressure, freezeTemp, safetyMarginCO2);
@@ -225,14 +225,14 @@ public class SafetyEnvelopeCalculator {
       double[][] points = ops.getOperation().getPoints(0);
 
       if (points != null && points.length >= 2) {
-	int dataPoints = Math.min(numPoints, points[0].length);
+        int dataPoints = Math.min(numPoints, points[0].length);
 
-	for (int i = 0; i < dataPoints; i++) {
-	  // points[0] = temperature, points[1] = pressure (typically)
-	  double temp = points[0][i];
-	  double pres = points[1][i];
-	  envelope.setDataPoint(i, pres, temp, 0.0);
-	}
+        for (int i = 0; i < dataPoints; i++) {
+          // points[0] = temperature, points[1] = pressure (typically)
+          double temp = points[0][i];
+          double pres = points[1][i];
+          envelope.setDataPoint(i, pres, temp, 0.0);
+        }
       }
     } catch (Exception e) {
       // Phase envelope calculation failed
@@ -271,34 +271,34 @@ public class SafetyEnvelopeCalculator {
       double pressure = minPressure + i * pressureStep;
 
       try {
-	SystemInterface tempFluid = fluid.clone();
-	tempFluid.setPressure(pressure);
-	tempFluid.setTemperature(designTemp);
+        SystemInterface tempFluid = fluid.clone();
+        tempFluid.setPressure(pressure);
+        tempFluid.setTemperature(designTemp);
 
-	ThermodynamicOperations ops = new ThermodynamicOperations(tempFluid);
-	ops.TPflash();
+        ThermodynamicOperations ops = new ThermodynamicOperations(tempFluid);
+        ops.TPflash();
 
-	// Calculate minimum temperature during isentropic expansion to atmospheric
-	double gamma = tempFluid.getGamma();
-	if (Double.isNaN(gamma) || gamma <= 1.0 || gamma > 2.0) {
-	  gamma = 1.3;
-	}
+        // Calculate minimum temperature during isentropic expansion to atmospheric
+        double gamma = tempFluid.getGamma();
+        if (Double.isNaN(gamma) || gamma <= 1.0 || gamma > 2.0) {
+          gamma = 1.3;
+        }
 
-	// Isentropic temperature drop to 1 bara
-	double atmosphericPressure = ThermodynamicConstantsInterface.referencePressure;
-	double minTemp;
-	if (pressure <= atmosphericPressure) {
-	  // No expansion cooling possible - already at or below atmospheric
-	  minTemp = designTemp;
-	} else {
-	  minTemp = designTemp * Math.pow(atmosphericPressure / pressure, (gamma - 1) / gamma);
-	}
+        // Isentropic temperature drop to 1 bara
+        double atmosphericPressure = ThermodynamicConstantsInterface.referencePressure;
+        double minTemp;
+        if (pressure <= atmosphericPressure) {
+          // No expansion cooling possible - already at or below atmospheric
+          minTemp = designTemp;
+        } else {
+          minTemp = designTemp * Math.pow(atmosphericPressure / pressure, (gamma - 1) / gamma);
+        }
 
-	// MDMT must be below minimum achievable temperature
-	envelope.setDataPoint(i, pressure, minTemp, safetyMarginMDMT);
+        // MDMT must be below minimum achievable temperature
+        envelope.setDataPoint(i, pressure, minTemp, safetyMarginMDMT);
       } catch (Exception e) {
-	// If calculation fails, use conservative estimate
-	envelope.setDataPoint(i, pressure, designTemp - 50, safetyMarginMDMT);
+        // If calculation fails, use conservative estimate
+        envelope.setDataPoint(i, pressure, designTemp - 50, safetyMarginMDMT);
       }
     }
 
@@ -315,9 +315,9 @@ public class SafetyEnvelopeCalculator {
    */
   public SafetyEnvelope[] calculateAllEnvelopes(double minPressure, double maxPressure, int numPoints) {
     return new SafetyEnvelope[] { calculateHydrateEnvelope(minPressure, maxPressure, numPoints),
-	calculateWaxEnvelope(minPressure, maxPressure, numPoints),
-	calculateCO2FreezingEnvelope(minPressure, maxPressure, numPoints),
-	calculateMDMTEnvelope(minPressure, maxPressure, 300.0, numPoints), calculatePhaseEnvelope(numPoints) };
+        calculateWaxEnvelope(minPressure, maxPressure, numPoints),
+        calculateCO2FreezingEnvelope(minPressure, maxPressure, numPoints),
+        calculateMDMTEnvelope(minPressure, maxPressure, 300.0, numPoints), calculatePhaseEnvelope(numPoints) };
   }
 
   /**
@@ -331,7 +331,7 @@ public class SafetyEnvelopeCalculator {
   public static boolean isOperatingPointSafe(SafetyEnvelope[] envelopes, double pressureBara, double temperatureK) {
     for (SafetyEnvelope env : envelopes) {
       if (!env.isOperatingPointSafe(pressureBara, temperatureK)) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -353,8 +353,8 @@ public class SafetyEnvelopeCalculator {
     for (SafetyEnvelope env : envelopes) {
       double margin = env.calculateMarginToLimit(pressureBara, temperatureK);
       if (!Double.isNaN(margin) && margin < smallestMargin) {
-	smallestMargin = margin;
-	mostLimiting = env;
+        smallestMargin = margin;
+        mostLimiting = env;
       }
     }
 
@@ -365,14 +365,14 @@ public class SafetyEnvelopeCalculator {
     StringBuilder sb = new StringBuilder();
     try {
       for (int i = 0; i < Math.min(5, fluid.getNumberOfComponents()); i++) {
-	if (i > 0) {
-	  sb.append(", ");
-	}
-	sb.append(fluid.getComponent(i).getComponentName());
-	sb.append(String.format(" (%.1f%%)", fluid.getComponent(i).getz() * 100));
+        if (i > 0) {
+          sb.append(", ");
+        }
+        sb.append(fluid.getComponent(i).getComponentName());
+        sb.append(String.format(" (%.1f%%)", fluid.getComponent(i).getz() * 100));
       }
       if (fluid.getNumberOfComponents() > 5) {
-	sb.append(", ...");
+        sb.append(", ...");
       }
     } catch (Exception e) {
       sb.append("Unknown composition");

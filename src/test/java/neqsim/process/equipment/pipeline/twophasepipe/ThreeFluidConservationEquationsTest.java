@@ -100,7 +100,7 @@ class ThreeFluidConservationEquationsTest {
 
     // With velocity differences, interfacial shear should be non-zero
     assertTrue(Math.abs(rhs.gasOilInterfacialShear) > 0 || section.getOilHoldup() < 1e-6,
-	"Gas-oil interfacial shear should be computed when phases present");
+        "Gas-oil interfacial shear should be computed when phases present");
   }
 
   @Test
@@ -161,7 +161,7 @@ class ThreeFluidConservationEquationsTest {
     // With same velocities, interfacial shear should be zero
     assertEquals(0.0, rhs.gasOilInterfacialShear, 1e-10, "Interfacial shear should be zero when velocities are equal");
     assertEquals(0.0, rhs.oilWaterInterfacialShear, 1e-10,
-	"Interfacial shear should be zero when velocities are equal");
+        "Interfacial shear should be zero when velocities are equal");
   }
 
   @Test
@@ -188,6 +188,6 @@ class ThreeFluidConservationEquationsTest {
 
     // Wall shear scales with velocity squared
     assertTrue(Math.abs(rhsHigh.gasWallShear) > Math.abs(rhsLow.gasWallShear),
-	"Higher velocity should give higher wall shear");
+        "Higher velocity should give higher wall shear");
   }
 }

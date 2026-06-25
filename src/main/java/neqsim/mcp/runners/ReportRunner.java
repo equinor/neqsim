@@ -74,7 +74,7 @@ public final class ReportRunner {
       report.addProperty("author", author);
       report.addProperty("reportType", reportType);
       report.addProperty("generatedAt",
-	  new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date()));
+          new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date()));
 
       // Generate markdown
       String markdown = generateMarkdown(reportType, title, author, data);
@@ -86,18 +86,18 @@ public final class ReportRunner {
 
       // Generate chart data arrays (for AI to render)
       if (includeChartData) {
-	JsonArray chartData = extractChartData(data, reportType);
-	report.add("chartData", chartData);
+        JsonArray chartData = extractChartData(data, reportType);
+        report.add("chartData", chartData);
       }
 
       // Include validation if requested
       if (includeValidation) {
-	String validation = EngineeringValidator.validate(GSON.toJson(data), reportType);
-	try {
-	  report.add("validation", JsonParser.parseString(validation));
-	} catch (Exception e) {
-	  report.addProperty("validationError", e.getMessage());
-	}
+        String validation = EngineeringValidator.validate(GSON.toJson(data), reportType);
+        try {
+          report.add("validation", JsonParser.parseString(validation));
+        } catch (Exception e) {
+          report.addProperty("validationError", e.getMessage());
+        }
       }
 
       // Summary statistics
@@ -130,7 +130,7 @@ public final class ReportRunner {
     md.append("# ").append(title).append("\n\n");
     md.append("**Author:** ").append(author).append("  \n");
     md.append("**Date:** ").append(new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()))
-	.append("  \n");
+        .append("  \n");
     md.append("**Engine:** NeqSim (Java-based thermodynamic simulator)  \n");
     md.append("**Report Type:** ").append(reportType).append("\n\n");
     md.append("---\n\n");
@@ -197,11 +197,11 @@ public final class ReportRunner {
       JsonElement val = entry.getValue();
       String displayVal;
       if (val.isJsonPrimitive()) {
-	displayVal = val.getAsString();
+        displayVal = val.getAsString();
       } else if (val.isJsonNull()) {
-	displayVal = "-";
+        displayVal = "-";
       } else {
-	displayVal = val.toString();
+        displayVal = val.toString();
       }
       md.append("| ").append(entry.getKey()).append(" | ").append(displayVal).append(" |\n");
     }
@@ -254,17 +254,17 @@ public final class ReportRunner {
       JsonElement val = entry.getValue();
 
       if (val.isJsonPrimitive() && val.getAsJsonPrimitive().isNumber()) {
-	JsonArray row = new JsonArray();
-	row.add(key);
-	row.add(val.getAsNumber());
+        JsonArray row = new JsonArray();
+        row.add(key);
+        row.add(val.getAsNumber());
 
-	// Try to infer unit from key name
-	String unit = inferUnit(entry.getKey());
-	row.add(unit);
-	rows.add(row);
+        // Try to infer unit from key name
+        String unit = inferUnit(entry.getKey());
+        row.add(unit);
+        rows.add(row);
       } else if (val.isJsonObject() && rows.size() < 100) {
-	// Limit depth to avoid huge tables
-	extractFlatValues(val.getAsJsonObject(), key, rows);
+        // Limit depth to avoid huge tables
+        extractFlatValues(val.getAsJsonObject(), key, rows);
       }
     }
   }
@@ -340,19 +340,19 @@ public final class ReportRunner {
       JsonElement val = entry.getValue();
 
       if (val.isJsonArray()) {
-	JsonArray arr = val.getAsJsonArray();
-	if (arr.size() > 1 && arr.get(0).isJsonPrimitive() && arr.get(0).getAsJsonPrimitive().isNumber()) {
-	  // Found a numeric array — wrap as chart data
-	  JsonObject chart = new JsonObject();
-	  chart.addProperty("name", key);
-	  chart.addProperty("type", "line");
-	  chart.addProperty("xLabel", "Index");
-	  chart.addProperty("yLabel", entry.getKey());
-	  chart.add("data", arr);
-	  charts.add(chart);
-	}
+        JsonArray arr = val.getAsJsonArray();
+        if (arr.size() > 1 && arr.get(0).isJsonPrimitive() && arr.get(0).getAsJsonPrimitive().isNumber()) {
+          // Found a numeric array — wrap as chart data
+          JsonObject chart = new JsonObject();
+          chart.addProperty("name", key);
+          chart.addProperty("type", "line");
+          chart.addProperty("xLabel", "Index");
+          chart.addProperty("yLabel", entry.getKey());
+          chart.add("data", arr);
+          charts.add(chart);
+        }
       } else if (val.isJsonObject() && charts.size() < 20) {
-	findPlottableArrays(val.getAsJsonObject(), key, charts);
+        findPlottableArrays(val.getAsJsonObject(), key, charts);
       }
     }
   }
@@ -376,11 +376,11 @@ public final class ReportRunner {
 
     for (Map.Entry<String, JsonElement> entry : data.entrySet()) {
       if (entry.getValue().isJsonPrimitive() && entry.getValue().getAsJsonPrimitive().isNumber()) {
-	numericFieldCount++;
+        numericFieldCount++;
       } else if (entry.getValue().isJsonObject()) {
-	objectFieldCount++;
+        objectFieldCount++;
       } else if (entry.getValue().isJsonArray()) {
-	arrayFieldCount++;
+        arrayFieldCount++;
       }
     }
 

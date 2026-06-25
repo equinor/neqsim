@@ -175,24 +175,24 @@ public class MonteCarloSimulator implements Serializable {
 
     for (int i = 0; i < iterations; i++) {
       if (i % 50 == 0) {
-	logger.info("Monte Carlo iteration {}/{}", i + 1, iterations);
+        logger.info("Monte Carlo iteration {}/{}", i + 1, iterations);
       }
 
       try {
-	ProcessSystem copy = baseProcess.copy();
+        ProcessSystem copy = baseProcess.copy();
 
-	for (UncertainParameter param : parameters) {
-	  double sampledValue = sampleValue(param);
-	  param.applier.apply(copy, sampledValue);
-	}
+        for (UncertainParameter param : parameters) {
+          double sampledValue = sampleValue(param);
+          param.applier.apply(copy, sampledValue);
+        }
 
-	copy.run();
-	double result = outputExtractor.apply(copy);
-	outputs[successCount] = result;
-	successCount++;
+        copy.run();
+        double result = outputExtractor.apply(copy);
+        outputs[successCount] = result;
+        successCount++;
       } catch (Exception e) {
-	failCount++;
-	logger.debug("Monte Carlo iteration {} failed: {}", i + 1, e.getMessage());
+        failCount++;
+        logger.debug("Monte Carlo iteration {} failed: {}", i + 1, e.getMessage());
       }
     }
 
@@ -251,16 +251,16 @@ public class MonteCarloSimulator implements Serializable {
       UncertainParameter param = parameters.get(i);
 
       try {
-	// Run with parameter at LOW
-	double lowResult = runWithSingleParamOverride(i, param.low);
-	// Run with parameter at HIGH
-	double highResult = runWithSingleParamOverride(i, param.high);
+        // Run with parameter at LOW
+        double lowResult = runWithSingleParamOverride(i, param.low);
+        // Run with parameter at HIGH
+        double highResult = runWithSingleParamOverride(i, param.high);
 
-	double swing = Math.abs(highResult - lowResult);
-	String label = param.name + " (" + param.low + "-" + param.high + ")";
-	tornado.add(new TornadoEntry(label, lowResult, highResult, swing));
+        double swing = Math.abs(highResult - lowResult);
+        String label = param.name + " (" + param.low + "-" + param.high + ")";
+        tornado.add(new TornadoEntry(label, lowResult, highResult, swing));
       } catch (Exception e) {
-	logger.warn("Tornado calc failed for {}: {}", param.name, e.getMessage());
+        logger.warn("Tornado calc failed for {}: {}", param.name, e.getMessage());
       }
     }
 
@@ -317,7 +317,7 @@ public class MonteCarloSimulator implements Serializable {
      * @param applier applier function
      */
     UncertainParameter(String name, double low, double mode, double high, String distribution,
-	ParameterApplier applier) {
+        ParameterApplier applier) {
       this.name = name;
       this.low = low;
       this.mode = mode;
@@ -384,7 +384,7 @@ public class MonteCarloSimulator implements Serializable {
      * @param parameters input parameters
      */
     MonteCarloResult(String outputName, double[] sortedValues, int totalIterations, int successCount, int failCount,
-	List<TornadoEntry> tornado, List<UncertainParameter> parameters) {
+        List<TornadoEntry> tornado, List<UncertainParameter> parameters) {
       this.outputName = outputName;
       this.sortedValues = sortedValues;
       this.totalIterations = totalIterations;
@@ -428,11 +428,11 @@ public class MonteCarloSimulator implements Serializable {
      */
     public double getMean() {
       if (sortedValues.length == 0) {
-	return Double.NaN;
+        return Double.NaN;
       }
       double sum = 0;
       for (double v : sortedValues) {
-	sum += v;
+        sum += v;
       }
       return sum / sortedValues.length;
     }
@@ -444,12 +444,12 @@ public class MonteCarloSimulator implements Serializable {
      */
     public double getStdDev() {
       if (sortedValues.length < 2) {
-	return Double.NaN;
+        return Double.NaN;
       }
       double mean = getMean();
       double sumSq = 0;
       for (double v : sortedValues) {
-	sumSq += (v - mean) * (v - mean);
+        sumSq += (v - mean) * (v - mean);
       }
       return Math.sqrt(sumSq / (sortedValues.length - 1));
     }
@@ -462,13 +462,13 @@ public class MonteCarloSimulator implements Serializable {
      */
     public double getProbabilityBelow(double threshold) {
       if (sortedValues.length == 0) {
-	return Double.NaN;
+        return Double.NaN;
       }
       int count = 0;
       for (double v : sortedValues) {
-	if (v < threshold) {
-	  count++;
-	}
+        if (v < threshold) {
+          count++;
+        }
       }
       return (double) count / sortedValues.length;
     }
@@ -481,13 +481,13 @@ public class MonteCarloSimulator implements Serializable {
      */
     public double getPercentile(double percentile) {
       if (sortedValues.length == 0) {
-	return Double.NaN;
+        return Double.NaN;
       }
       double index = (percentile / 100.0) * (sortedValues.length - 1);
       int lower = (int) Math.floor(index);
       int upper = (int) Math.ceil(index);
       if (lower == upper || upper >= sortedValues.length) {
-	return sortedValues[Math.min(lower, sortedValues.length - 1)];
+        return sortedValues[Math.min(lower, sortedValues.length - 1)];
       }
       double fraction = index - lower;
       return sortedValues[lower] + fraction * (sortedValues[upper] - sortedValues[lower]);
@@ -522,25 +522,25 @@ public class MonteCarloSimulator implements Serializable {
       // Input parameters
       JsonArray paramArray = new JsonArray();
       for (UncertainParameter p : parameters) {
-	JsonObject pj = new JsonObject();
-	pj.addProperty("name", p.name);
-	pj.addProperty("low", p.low);
-	pj.addProperty("mode", p.mode);
-	pj.addProperty("high", p.high);
-	pj.addProperty("distribution", p.distribution);
-	paramArray.add(pj);
+        JsonObject pj = new JsonObject();
+        pj.addProperty("name", p.name);
+        pj.addProperty("low", p.low);
+        pj.addProperty("mode", p.mode);
+        pj.addProperty("high", p.high);
+        pj.addProperty("distribution", p.distribution);
+        paramArray.add(pj);
       }
       json.add("inputParameters", paramArray);
 
       // Tornado
       JsonArray tornadoArray = new JsonArray();
       for (TornadoEntry te : tornado) {
-	JsonObject tj = new JsonObject();
-	tj.addProperty("parameter", te.parameter);
-	tj.addProperty("lowResult", te.lowResult);
-	tj.addProperty("highResult", te.highResult);
-	tj.addProperty("swing", te.swing);
-	tornadoArray.add(tj);
+        JsonObject tj = new JsonObject();
+        tj.addProperty("parameter", te.parameter);
+        tj.addProperty("lowResult", te.lowResult);
+        tj.addProperty("highResult", te.highResult);
+        tj.addProperty("swing", te.swing);
+        tornadoArray.add(tj);
       }
       json.add("tornado", tornadoArray);
 

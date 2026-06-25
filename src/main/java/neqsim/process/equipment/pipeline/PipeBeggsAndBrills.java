@@ -674,14 +674,14 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM pipedata where Size='" + nominalDiameter + "'");
       try {
-	if (dataSet.next()) {
-	  this.pipeThickness = Double.parseDouble(dataSet.getString(pipeSpecification)) / 1000;
-	  this.insideDiameter = (Double.parseDouble(dataSet.getString("OD"))) / 1000 - 2 * this.pipeThickness;
-	}
+        if (dataSet.next()) {
+          this.pipeThickness = Double.parseDouble(dataSet.getString(pipeSpecification)) / 1000;
+          this.insideDiameter = (Double.parseDouble(dataSet.getString("OD"))) / 1000 - 2 * this.pipeThickness;
+        }
       } catch (NumberFormatException e) {
-	logger.error(e.getMessage());
+        logger.error(e.getMessage());
       } catch (SQLException e) {
-	logger.error(e.getMessage());
+        logger.error(e.getMessage());
       }
     } catch (SQLException e) {
       logger.error(e.getMessage());
@@ -926,7 +926,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   public void setHeatTransferCoefficient(double heatTransferCoefficient) {
     if (heatTransferCoefficient < 0) {
       throw new IllegalArgumentException(
-	  "Heat transfer coefficient must be non-negative, got: " + heatTransferCoefficient);
+          "Heat transfer coefficient must be non-negative, got: " + heatTransferCoefficient);
     }
     super.setHeatTransferCoefficient(heatTransferCoefficient);
     this.heatTransferCoefficient = heatTransferCoefficient;
@@ -1084,12 +1084,12 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     }
     if (Math.abs(totalElevation) > Math.abs(totalLength)) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills",
-	  "calcMissingValue", "elevation", "- cannot be higher than length of the pipe" + length));
+          "calcMissingValue", "elevation", "- cannot be higher than length of the pipe" + length));
     }
     if (Double.isNaN(totalElevation) || Double.isNaN(totalLength) || Double.isNaN(angle)
-	|| Double.isNaN(insideDiameter)) {
+        || Double.isNaN(insideDiameter)) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills",
-	  "calcMissingValue", "elevation or length or angle or inlet diameter", "cannot be null"));
+          "calcMissingValue", "elevation or length or angle or inlet diameter", "cannot be null"));
     }
   }
 
@@ -1130,9 +1130,9 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     area = (Math.PI / 4.0) * Math.pow(insideDiameter, 2.0);
     if (system.getNumberOfPhases() != 1) {
       if (system.getNumberOfPhases() == 3) {
-	supLiquidVel = (system.getPhase(1).getFlowRate("ft3/sec") + system.getPhase(2).getFlowRate("ft3/sec")) / area;
+        supLiquidVel = (system.getPhase(1).getFlowRate("ft3/sec") + system.getPhase(2).getFlowRate("ft3/sec")) / area;
       } else {
-	supLiquidVel = system.getPhase(1).getFlowRate("ft3/sec") / area;
+        supLiquidVel = system.getPhase(1).getFlowRate("ft3/sec") / area;
       }
 
       supGasVel = system.getPhase(0).getFlowRate("ft3/sec") / area;
@@ -1142,16 +1142,16 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       inputVolumeFractionLiquid = supLiquidVel / supMixVel;
     } else {
       if (system.hasPhaseType("gas")) {
-	supGasVel = system.getPhase(0).getFlowRate("ft3/sec") / area;
-	supMixVel = supGasVel;
-	inputVolumeFractionLiquid = 0.0;
-	regime = FlowRegime.SINGLE_PHASE;
+        supGasVel = system.getPhase(0).getFlowRate("ft3/sec") / area;
+        supMixVel = supGasVel;
+        inputVolumeFractionLiquid = 0.0;
+        regime = FlowRegime.SINGLE_PHASE;
       } else {
-	// Single-phase liquid: only phase is at index 0
-	supLiquidVel = system.getPhase(0).getFlowRate("ft3/sec") / area;
-	supMixVel = supLiquidVel;
-	inputVolumeFractionLiquid = 1.0;
-	regime = FlowRegime.SINGLE_PHASE;
+        // Single-phase liquid: only phase is at index 0
+        supLiquidVel = system.getPhase(0).getFlowRate("ft3/sec") / area;
+        supMixVel = supLiquidVel;
+        inputVolumeFractionLiquid = 1.0;
+        regime = FlowRegime.SINGLE_PHASE;
       }
     }
 
@@ -1172,24 +1172,24 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
 
     if (regime != FlowRegime.SINGLE_PHASE) {
       if ((inputVolumeFractionLiquid < 0.01 && mixtureFroudeNumber < L1)
-	  || (inputVolumeFractionLiquid >= 0.01 && mixtureFroudeNumber < L2)) {
-	regime = FlowRegime.SEGREGATED;
+          || (inputVolumeFractionLiquid >= 0.01 && mixtureFroudeNumber < L2)) {
+        regime = FlowRegime.SEGREGATED;
       } else if ((inputVolumeFractionLiquid < 0.4 && inputVolumeFractionLiquid >= 0.01 && mixtureFroudeNumber <= L1
-	  && mixtureFroudeNumber > L3)
-	  || (inputVolumeFractionLiquid >= 0.4 && mixtureFroudeNumber <= L4 && mixtureFroudeNumber > L3)) {
-	regime = FlowRegime.INTERMITTENT;
+          && mixtureFroudeNumber > L3)
+          || (inputVolumeFractionLiquid >= 0.4 && mixtureFroudeNumber <= L4 && mixtureFroudeNumber > L3)) {
+        regime = FlowRegime.INTERMITTENT;
       } else if ((inputVolumeFractionLiquid < 0.4 && mixtureFroudeNumber >= L4)
-	  || (inputVolumeFractionLiquid >= 0.4 && mixtureFroudeNumber > L4)) {
-	regime = FlowRegime.DISTRIBUTED;
+          || (inputVolumeFractionLiquid >= 0.4 && mixtureFroudeNumber > L4)) {
+        regime = FlowRegime.DISTRIBUTED;
       } else if (mixtureFroudeNumber > L2 && mixtureFroudeNumber < L3) {
-	regime = FlowRegime.TRANSITION;
+        regime = FlowRegime.TRANSITION;
       } else if (inputVolumeFractionLiquid < 0.1 || inputVolumeFractionLiquid > 0.9) {
-	regime = FlowRegime.INTERMITTENT;
+        regime = FlowRegime.INTERMITTENT;
       } else if (mixtureFroudeNumber > 110) {
-	regime = FlowRegime.INTERMITTENT;
+        regime = FlowRegime.INTERMITTENT;
       } else {
-	throw new RuntimeException(new neqsim.util.exception.InvalidOutputException("PipeBeggsAndBrills",
-	    "run: calcFlowRegime", "FlowRegime", "Flow regime is not found"));
+        throw new RuntimeException(new neqsim.util.exception.InvalidOutputException("PipeBeggsAndBrills",
+            "run: calcFlowRegime", "FlowRegime", "Flow regime is not found"));
       }
     }
 
@@ -1217,7 +1217,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       El = 1.065 * Math.pow(inputVolumeFractionLiquid, 0.5824) / (Math.pow(mixtureFroudeNumber, 0.0609));
     } else if (regime == FlowRegime.TRANSITION) {
       El = A * 0.98 * Math.pow(inputVolumeFractionLiquid, 0.4846) / Math.pow(mixtureFroudeNumber, 0.0868)
-	  + B * 0.845 * Math.pow(inputVolumeFractionLiquid, 0.5351) / (Math.pow(mixtureFroudeNumber, 0.0173));
+          + B * 0.845 * Math.pow(inputVolumeFractionLiquid, 0.5351) / (Math.pow(mixtureFroudeNumber, 0.0173));
     } else if (regime == FlowRegime.SINGLE_PHASE) {
       // For single-phase flow, liquid holdup equals liquid volume fraction
       // Gas: El = 0, Liquid: El = 1
@@ -1227,20 +1227,20 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     if (regime != FlowRegime.SINGLE_PHASE) {
       double SG;
       if (system.getNumberOfPhases() == 3) {
-	mixtureOilMassFraction = system.getPhase(1).getFlowRate("kg/hr")
-	    / (system.getPhase(1).getFlowRate("kg/hr") + system.getPhase(2).getFlowRate("kg/hr"));
-	mixtureOilVolumeFraction = system.getPhase(1).getVolume()
-	    / (system.getPhase(1).getVolume() + system.getPhase(2).getVolume());
+        mixtureOilMassFraction = system.getPhase(1).getFlowRate("kg/hr")
+            / (system.getPhase(1).getFlowRate("kg/hr") + system.getPhase(2).getFlowRate("kg/hr"));
+        mixtureOilVolumeFraction = system.getPhase(1).getVolume()
+            / (system.getPhase(1).getVolume() + system.getPhase(2).getVolume());
 
-	mixtureLiquidViscosity = system.getPhase(1).getViscosity("cP") * mixtureOilVolumeFraction
-	    + (system.getPhase(2).getViscosity("cP")) * (1 - mixtureOilVolumeFraction);
+        mixtureLiquidViscosity = system.getPhase(1).getViscosity("cP") * mixtureOilVolumeFraction
+            + (system.getPhase(2).getViscosity("cP")) * (1 - mixtureOilVolumeFraction);
 
-	mixtureLiquidDensity = (system.getPhase(1).getDensity("lb/ft3") * mixtureOilMassFraction
-	    + system.getPhase(2).getDensity("lb/ft3") * (1 - mixtureOilMassFraction));
+        mixtureLiquidDensity = (system.getPhase(1).getDensity("lb/ft3") * mixtureOilMassFraction
+            + system.getPhase(2).getDensity("lb/ft3") * (1 - mixtureOilMassFraction));
 
-	SG = (mixtureLiquidDensity) / (1000 * 0.0624279606);
+        SG = (mixtureLiquidDensity) / (1000 * 0.0624279606);
       } else {
-	SG = system.getPhase(1).getDensity("lb/ft3") / (1000 * 0.0624279606);
+        SG = system.getPhase(1).getDensity("lb/ft3") / (1000 * 0.0624279606);
       }
 
       double APIgrav = (141.5 / (SG)) - 131.0;
@@ -1249,52 +1249,52 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       double sigma;
 
       if (system.getTemperature("C") * (9.0 / 5.0) + 32.0 > 100.0) {
-	sigma = sigma100;
+        sigma = sigma100;
       } else if (system.getTemperature("C") * (9.0 / 5.0) + 32.0 < 68.0) {
-	sigma = sigma68;
+        sigma = sigma68;
       } else {
-	sigma = sigma68
-	    + (system.getTemperature("C") * (9.0 / 5.0) + 32.0 - 68.0) * (sigma100 - sigma68) / (100.0 - 68.0);
+        sigma = sigma68
+            + (system.getTemperature("C") * (9.0 / 5.0) + 32.0 - 68.0) * (sigma100 - sigma68) / (100.0 - 68.0);
       }
       double pressureCorrection = 1.0 - 0.024 * Math.pow((system.getPressure("psi")), 0.45);
       sigma = sigma * pressureCorrection;
       double Nvl = 1.938 * supLiquidVel
-	  * Math.pow(system.getPhase(1).getDensity() * 0.0624279606 / (32.2 * sigma), 0.25);
+          * Math.pow(system.getPhase(1).getDensity() * 0.0624279606 / (32.2 * sigma), 0.25);
       double betta = 0;
 
       if (elevation > 0) {
-	if (regime == FlowRegime.SEGREGATED) {
-	  double logArg = 0.011 * Math.pow(Nvl, 3.539)
-	      / (Math.pow(inputVolumeFractionLiquid, 3.768) * Math.pow(mixtureFroudeNumber, 1.614));
-	  if (logArg > 0) {
-	    betta = (1 - inputVolumeFractionLiquid) * Math.log(logArg);
-	  }
-	} else if (regime == FlowRegime.INTERMITTENT) {
-	  double logArg = 2.96 * Math.pow(inputVolumeFractionLiquid, 0.305) * Math.pow(mixtureFroudeNumber, 0.0978)
-	      / (Math.pow(Nvl, 0.4473));
-	  if (logArg > 0) {
-	    betta = (1 - inputVolumeFractionLiquid) * Math.log(logArg);
-	  }
-	} else if (regime == FlowRegime.DISTRIBUTED) {
-	  betta = 0;
-	}
+        if (regime == FlowRegime.SEGREGATED) {
+          double logArg = 0.011 * Math.pow(Nvl, 3.539)
+              / (Math.pow(inputVolumeFractionLiquid, 3.768) * Math.pow(mixtureFroudeNumber, 1.614));
+          if (logArg > 0) {
+            betta = (1 - inputVolumeFractionLiquid) * Math.log(logArg);
+          }
+        } else if (regime == FlowRegime.INTERMITTENT) {
+          double logArg = 2.96 * Math.pow(inputVolumeFractionLiquid, 0.305) * Math.pow(mixtureFroudeNumber, 0.0978)
+              / (Math.pow(Nvl, 0.4473));
+          if (logArg > 0) {
+            betta = (1 - inputVolumeFractionLiquid) * Math.log(logArg);
+          }
+        } else if (regime == FlowRegime.DISTRIBUTED) {
+          betta = 0;
+        }
       } else {
-	double logArg = 4.70 * Math.pow(Nvl, 0.1244)
-	    / (Math.pow(inputVolumeFractionLiquid, 0.3692) * Math.pow(mixtureFroudeNumber, 0.5056));
-	if (logArg > 0) {
-	  betta = (1 - inputVolumeFractionLiquid) * Math.log(logArg);
-	}
+        double logArg = 4.70 * Math.pow(Nvl, 0.1244)
+            / (Math.pow(inputVolumeFractionLiquid, 0.3692) * Math.pow(mixtureFroudeNumber, 0.5056));
+        if (logArg > 0) {
+          betta = (1 - inputVolumeFractionLiquid) * Math.log(logArg);
+        }
       }
       betta = (betta > 0) ? betta : 0;
       BThetta = 1 + betta
-	  * (Math.sin(1.8 * angle * 0.01745329) - (1.0 / 3.0) * Math.pow(Math.sin(1.8 * angle * 0.01745329), 3.0));
+          * (Math.sin(1.8 * angle * 0.01745329) - (1.0 / 3.0) * Math.pow(Math.sin(1.8 * angle * 0.01745329), 3.0));
 
       El = BThetta * El;
       if (system.getNumberOfPhases() == 3) {
-	mixtureDensity = mixtureLiquidDensity * El + system.getPhase(0).getDensity("lb/ft3") * (1 - El);
+        mixtureDensity = mixtureLiquidDensity * El + system.getPhase(0).getDensity("lb/ft3") * (1 - El);
       } else {
-	mixtureDensity = system.getPhase(1).getDensity("lb/ft3") * El
-	    + system.getPhase(0).getDensity("lb/ft3") * (1 - El);
+        mixtureDensity = system.getPhase(1).getDensity("lb/ft3") * El
+            + system.getPhase(0).getDensity("lb/ft3") * (1 - El);
       }
     } else {
       // Single-phase: only phase is at index 0
@@ -1319,41 +1319,41 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
 
     if (system.getNumberOfPhases() != 1) {
       if (regime != FlowRegime.SINGLE_PHASE) {
-	double y = inputVolumeFractionLiquid / (Math.pow(El, 2));
-	if (1 < y && y < 1.2) {
-	  S = Math.log(2.2 * y - 1.2);
-	} else {
-	  S = Math.log(y) / (-0.0523 + 3.18 * Math.log(y) - 0.872 * Math.pow(Math.log(y), 2.0)
-	      + 0.01853 * Math.pow(Math.log(y), 4));
-	}
-	if (system.getNumberOfPhases() == 3) {
-	  rhoNoSlip = mixtureLiquidDensity * inputVolumeFractionLiquid
-	      + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
-	  muNoSlip = mixtureLiquidViscosity * inputVolumeFractionLiquid
-	      + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
-	  liquidDensityProfile.add(mixtureLiquidDensity * 16.01846);
-	} else {
-	  rhoNoSlip = (system.getPhase(1).getDensity("lb/ft3")) * inputVolumeFractionLiquid
-	      + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
-	  muNoSlip = system.getPhase(1).getViscosity("cP") * inputVolumeFractionLiquid
-	      + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
-	  liquidDensityProfile.add((system.getPhase(1).getDensity("lb/ft3")) * 16.01846);
-	}
+        double y = inputVolumeFractionLiquid / (Math.pow(El, 2));
+        if (1 < y && y < 1.2) {
+          S = Math.log(2.2 * y - 1.2);
+        } else {
+          S = Math.log(y) / (-0.0523 + 3.18 * Math.log(y) - 0.872 * Math.pow(Math.log(y), 2.0)
+              + 0.01853 * Math.pow(Math.log(y), 4));
+        }
+        if (system.getNumberOfPhases() == 3) {
+          rhoNoSlip = mixtureLiquidDensity * inputVolumeFractionLiquid
+              + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
+          muNoSlip = mixtureLiquidViscosity * inputVolumeFractionLiquid
+              + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
+          liquidDensityProfile.add(mixtureLiquidDensity * 16.01846);
+        } else {
+          rhoNoSlip = (system.getPhase(1).getDensity("lb/ft3")) * inputVolumeFractionLiquid
+              + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
+          muNoSlip = system.getPhase(1).getViscosity("cP") * inputVolumeFractionLiquid
+              + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
+          liquidDensityProfile.add((system.getPhase(1).getDensity("lb/ft3")) * 16.01846);
+        }
       } else {
-	rhoNoSlip = (system.getPhase(1).getDensity("lb/ft3")) * inputVolumeFractionLiquid
-	    + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
-	muNoSlip = system.getPhase(1).getViscosity("cP") * inputVolumeFractionLiquid
-	    + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
-	liquidDensityProfile.add((system.getPhase(1).getDensity("lb/ft3")) * 16.01846);
+        rhoNoSlip = (system.getPhase(1).getDensity("lb/ft3")) * inputVolumeFractionLiquid
+            + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
+        muNoSlip = system.getPhase(1).getViscosity("cP") * inputVolumeFractionLiquid
+            + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
+        liquidDensityProfile.add((system.getPhase(1).getDensity("lb/ft3")) * 16.01846);
       }
     } else {
       // Single-phase: only phase is at index 0
       rhoNoSlip = (system.getPhase(0).getDensity("lb/ft3"));
       muNoSlip = (system.getPhase(0).getViscosity("cP"));
       if (system.hasPhaseType("gas")) {
-	liquidDensityProfile.add(0.0);
+        liquidDensityProfile.add(0.0);
       } else {
-	liquidDensityProfile.add(rhoNoSlip * 16.01846);
+        liquidDensityProfile.add(rhoNoSlip * 16.01846);
       }
     }
 
@@ -1418,11 +1418,11 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     // Input validation
     if (insideDiameter <= 0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
-	  "insideDiameter", "must be positive, got: " + insideDiameter));
+          "insideDiameter", "must be positive, got: " + insideDiameter));
     }
     if (numberOfIncrements <= 0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
-	  "numberOfIncrements", "must be positive, got: " + numberOfIncrements));
+          "numberOfIncrements", "must be positive, got: " + numberOfIncrements));
     }
 
     if (calculationMode == CalculationMode.CALCULATE_FLOW_RATE) {
@@ -1500,32 +1500,32 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       pressureProfile.add(pressureOut);
 
       if (pressureOut < 0) {
-	throw new RuntimeException(new neqsim.util.exception.InvalidOutputException("PipeBeggsAndBrills",
-	    "run: calcOutletPressure", "pressure out", "- Outlet pressure is negative" + pressureOut));
+        throw new RuntimeException(new neqsim.util.exception.InvalidOutputException("PipeBeggsAndBrills",
+            "run: calcOutletPressure", "pressure out", "- Outlet pressure is negative" + pressureOut));
       }
 
       system.setPressure(pressureOut);
       if (!runIsothermal) {
-	double inletTempBeforeHeat = system.getTemperature();
-	double analyticalDeltaT = calcTemperatureDifference(system);
-	enthalpyInlet = calcHeatBalance(enthalpyInlet, system, testOps);
-	// Defensive guard: PHflash can diverge (clamping T to its 0.1 K minimum sentinel
-	// or to other unphysical values) on some JVM/locale combinations, e.g. for
-	// pure-water increments at borderline turbulent Re. If the enthalpy round-trip
-	// produced a temperature outside the physically allowed analytical band
-	// [Tin, Tin + dT_analytical], fall back to the analytical solution and re-init.
-	double Tafter = system.getTemperature();
-	double Tanalytical = inletTempBeforeHeat + analyticalDeltaT;
-	double bandLow = Math.min(inletTempBeforeHeat, Tanalytical) - 1.0;
-	double bandHigh = Math.max(inletTempBeforeHeat, Tanalytical) + 1.0;
-	if (Tafter < 100.0 || Tafter > 2000.0 || Tafter < bandLow || Tafter > bandHigh) {
-	  system.setTemperature(Tanalytical);
-	  testOps.TPflash();
-	  enthalpyInlet = system.getEnthalpy();
-	}
-	temperatureProfile.add(system.getTemperature());
+        double inletTempBeforeHeat = system.getTemperature();
+        double analyticalDeltaT = calcTemperatureDifference(system);
+        enthalpyInlet = calcHeatBalance(enthalpyInlet, system, testOps);
+        // Defensive guard: PHflash can diverge (clamping T to its 0.1 K minimum sentinel
+        // or to other unphysical values) on some JVM/locale combinations, e.g. for
+        // pure-water increments at borderline turbulent Re. If the enthalpy round-trip
+        // produced a temperature outside the physically allowed analytical band
+        // [Tin, Tin + dT_analytical], fall back to the analytical solution and re-init.
+        double Tafter = system.getTemperature();
+        double Tanalytical = inletTempBeforeHeat + analyticalDeltaT;
+        double bandLow = Math.min(inletTempBeforeHeat, Tanalytical) - 1.0;
+        double bandHigh = Math.max(inletTempBeforeHeat, Tanalytical) + 1.0;
+        if (Tafter < 100.0 || Tafter > 2000.0 || Tafter < bandLow || Tafter > bandHigh) {
+          system.setTemperature(Tanalytical);
+          testOps.TPflash();
+          enthalpyInlet = system.getEnthalpy();
+        }
+        temperatureProfile.add(system.getTemperature());
       } else {
-	testOps.TPflash();
+        testOps.TPflash();
       }
       system.initProperties();
     }
@@ -1548,7 +1548,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   private void runWithSpecifiedOutletPressure(UUID id) {
     if (Double.isNaN(specifiedOutletPressure)) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
-	  "specifiedOutletPressure", "must be set when using CALCULATE_FLOW_RATE mode"));
+          "specifiedOutletPressure", "must be set when using CALCULATE_FLOW_RATE mode"));
     }
 
     // Convert specified outlet pressure to bara
@@ -1563,11 +1563,11 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     double inletPressureBara = inStream.getThermoSystem().getPressure("bara");
     if (targetPressure >= inletPressureBara) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
-	  "specifiedOutletPressure", "must be less than inlet pressure (" + inletPressureBara + " bara)"));
+          "specifiedOutletPressure", "must be less than inlet pressure (" + inletPressureBara + " bara)"));
     }
     if (targetPressure <= 0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
-	  "specifiedOutletPressure", "must be positive"));
+          "specifiedOutletPressure", "must be positive"));
     }
 
     // Save original flow rate
@@ -1586,7 +1586,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       inStream.setFlowRate(originalFlowRate, flowUnit);
       inStream.run();
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
-	  "specifiedOutletPressure", "cannot be achieved - pressure drop too high even at minimum flow"));
+          "specifiedOutletPressure", "cannot be achieved - pressure drop too high even at minimum flow"));
     }
 
     // Find a valid high flow rate (where outlet pressure < target)
@@ -1609,7 +1609,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       inStream.setFlowRate(originalFlowRate, flowUnit);
       inStream.run();
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
-	  "specifiedOutletPressure", "cannot be achieved - requires extremely high flow rate"));
+          "specifiedOutletPressure", "cannot be achieved - requires extremely high flow rate"));
     }
 
     // Bisection iteration
@@ -1624,21 +1624,21 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       double relativeError = Math.abs(pressureMid - targetPressure) / targetPressure;
 
       if (relativeError < flowConvergenceTolerance) {
-	// Converged
-	break;
+        // Converged
+        break;
       }
 
       if (pressureMid > targetPressure) {
-	// Need more pressure drop, increase flow
-	flowLow = flowMid;
+        // Need more pressure drop, increase flow
+        flowLow = flowMid;
       } else {
-	// Need less pressure drop, decrease flow
-	flowHigh = flowMid;
+        // Need less pressure drop, decrease flow
+        flowHigh = flowMid;
       }
 
       // Check if bounds have converged
       if (Math.abs(flowHigh - flowLow) / flowMid < flowConvergenceTolerance) {
-	break;
+        break;
       }
 
       iterCount++;
@@ -2096,26 +2096,26 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     // dH_JT = m_dot * Cp * μ_JT * dP (where dP is pressure drop, positive value)
     if (includeJouleThomsonEffect) {
       try {
-	double jouleThomsonCoeff = 0.0;
-	double totalMassFlow = system.getFlowRate("kg/sec");
+        double jouleThomsonCoeff = 0.0;
+        double totalMassFlow = system.getFlowRate("kg/sec");
 
-	// Calculate mass-weighted average JT coefficient across all phases
-	for (int phaseNum = 0; phaseNum < system.getNumberOfPhases(); phaseNum++) {
-	  double phaseMassFlow = system.getPhase(phaseNum).getFlowRate("kg/sec");
-	  double phaseFraction = phaseMassFlow / totalMassFlow;
-	  double phaseJT = system.getPhase(phaseNum).getJouleThomsonCoefficient("K/Pa");
-	  if (!Double.isNaN(phaseJT) && !Double.isInfinite(phaseJT)) {
-	    jouleThomsonCoeff += phaseFraction * phaseJT;
-	  }
-	}
+        // Calculate mass-weighted average JT coefficient across all phases
+        for (int phaseNum = 0; phaseNum < system.getNumberOfPhases(); phaseNum++) {
+          double phaseMassFlow = system.getPhase(phaseNum).getFlowRate("kg/sec");
+          double phaseFraction = phaseMassFlow / totalMassFlow;
+          double phaseJT = system.getPhase(phaseNum).getJouleThomsonCoefficient("K/Pa");
+          if (!Double.isNaN(phaseJT) && !Double.isInfinite(phaseJT)) {
+            jouleThomsonCoeff += phaseFraction * phaseJT;
+          }
+        }
 
-	if (jouleThomsonCoeff > 0) {
-	  double pressureDropPa = pressureDrop * 1e5; // bar to Pa
-	  double dT_JT = -jouleThomsonCoeff * pressureDropPa; // Cooling for expansion
-	  enthalpy = enthalpy + massFlowRate * Cp * dT_JT;
-	}
+        if (jouleThomsonCoeff > 0) {
+          double pressureDropPa = pressureDrop * 1e5; // bar to Pa
+          double dT_JT = -jouleThomsonCoeff * pressureDropPa; // Cooling for expansion
+          enthalpy = enthalpy + massFlowRate * Cp * dT_JT;
+        }
       } catch (Exception ex) {
-	// Skip JT effect if calculation fails
+        // Skip JT effect if calculation fails
       }
     }
 
@@ -2220,12 +2220,12 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     if (transientTemperatureProfile.size() < numberOfIncrements + 1) {
       double fallbackTemperature;
       if (!transientTemperatureProfile.isEmpty()) {
-	fallbackTemperature = transientTemperatureProfile.get(transientTemperatureProfile.size() - 1);
+        fallbackTemperature = transientTemperatureProfile.get(transientTemperatureProfile.size() - 1);
       } else {
-	fallbackTemperature = getInletStream().getThermoSystem().getTemperature();
+        fallbackTemperature = getInletStream().getThermoSystem().getTemperature();
       }
       while (transientTemperatureProfile.size() < numberOfIncrements + 1) {
-	transientTemperatureProfile.add(fallbackTemperature);
+        transientTemperatureProfile.add(fallbackTemperature);
       }
     }
     transientMassFlowProfile = new ArrayList<>();
@@ -2248,24 +2248,24 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
 
     if (mixtureSuperficialVelocityProfile != null && !mixtureSuperficialVelocityProfile.isEmpty()) {
       for (int i = 0; i < numberOfIncrements; i++) {
-	double velocityFeetPerSecond = mixtureSuperficialVelocityProfile
-	    .get(Math.min(i, mixtureSuperficialVelocityProfile.size() - 1));
-	transientVelocityProfile.add(Math.max(MIN_TRANSIT_VELOCITY, velocityFeetPerSecond * 0.3048));
+        double velocityFeetPerSecond = mixtureSuperficialVelocityProfile
+            .get(Math.min(i, mixtureSuperficialVelocityProfile.size() - 1));
+        transientVelocityProfile.add(Math.max(MIN_TRANSIT_VELOCITY, velocityFeetPerSecond * 0.3048));
       }
     } else {
       for (int i = 0; i < numberOfIncrements; i++) {
-	transientVelocityProfile.add(baseVelocity);
+        transientVelocityProfile.add(baseVelocity);
       }
     }
 
     if (mixtureDensityProfile != null && !mixtureDensityProfile.isEmpty()) {
       for (int i = 0; i < numberOfIncrements; i++) {
-	transientDensityProfile
-	    .add(Math.max(MIN_DENSITY, mixtureDensityProfile.get(Math.min(i, mixtureDensityProfile.size() - 1))));
+        transientDensityProfile
+            .add(Math.max(MIN_DENSITY, mixtureDensityProfile.get(Math.min(i, mixtureDensityProfile.size() - 1))));
       }
     } else {
       for (int i = 0; i < numberOfIncrements; i++) {
-	transientDensityProfile.add(Math.max(MIN_DENSITY, steadyDensity));
+        transientDensityProfile.add(Math.max(MIN_DENSITY, steadyDensity));
       }
     }
 
@@ -2274,11 +2274,11 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
 
   private void ensureTransientState(UUID id) {
     if (!transientInitialized || transientPressureProfile == null
-	|| transientPressureProfile.size() != numberOfIncrements + 1 || transientTemperatureProfile == null
-	|| transientTemperatureProfile.size() != numberOfIncrements + 1 || transientMassFlowProfile == null
-	|| transientMassFlowProfile.size() != numberOfIncrements + 1 || transientVelocityProfile == null
-	|| transientVelocityProfile.size() != numberOfIncrements || transientDensityProfile == null
-	|| transientDensityProfile.size() != numberOfIncrements) {
+        || transientPressureProfile.size() != numberOfIncrements + 1 || transientTemperatureProfile == null
+        || transientTemperatureProfile.size() != numberOfIncrements + 1 || transientMassFlowProfile == null
+        || transientMassFlowProfile.size() != numberOfIncrements + 1 || transientVelocityProfile == null
+        || transientVelocityProfile.size() != numberOfIncrements || transientDensityProfile == null
+        || transientDensityProfile.size() != numberOfIncrements) {
       initializeTransientState(id);
       return;
     }
@@ -2419,7 +2419,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
 
       // Calculate pressure losses for this segment
       double dpFriction = calcTransientFrictionPressureDrop(segmentVelocity, segmentDensity, segmentViscosity,
-	  segmentLengthMeters);
+          segmentLengthMeters);
       double dpHydrostatic = calcTransientHydrostaticPressureDrop(segmentDensity, segmentElevation);
       double totalSegmentDp = dpFriction + dpHydrostatic;
 
@@ -2444,44 +2444,44 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
 
       // Apply heat transfer if not adiabatic and surface temperature is set
       if (heatTransferMode != HeatTransferMode.ADIABATIC && heatTransferMode != HeatTransferMode.ISOTHERMAL) {
-	// Calculate surface temperature at this segment position
-	double segmentElevationAtPosition = segmentElevation * segment;
-	double Twall;
-	if (formationTemperatureGradient != 0.0 && !Double.isNaN(surfaceTemperatureAtInlet)) {
-	  Twall = surfaceTemperatureAtInlet + formationTemperatureGradient * segmentElevationAtPosition;
-	} else if (!Double.isNaN(constantSurfaceTemperature) && constantSurfaceTemperature > 0) {
-	  Twall = constantSurfaceTemperature;
-	} else {
-	  Twall = Double.NaN;
-	}
-	if (!Double.isNaN(Twall) && Twall > 0) {
-	  // Calculate heat transfer using NTU-effectiveness method
-	  double Tin = advectedTemperature; // in Kelvin
+        // Calculate surface temperature at this segment position
+        double segmentElevationAtPosition = segmentElevation * segment;
+        double Twall;
+        if (formationTemperatureGradient != 0.0 && !Double.isNaN(surfaceTemperatureAtInlet)) {
+          Twall = surfaceTemperatureAtInlet + formationTemperatureGradient * segmentElevationAtPosition;
+        } else if (!Double.isNaN(constantSurfaceTemperature) && constantSurfaceTemperature > 0) {
+          Twall = constantSurfaceTemperature;
+        } else {
+          Twall = Double.NaN;
+        }
+        if (!Double.isNaN(Twall) && Twall > 0) {
+          // Calculate heat transfer using NTU-effectiveness method
+          double Tin = advectedTemperature; // in Kelvin
 
-	  // Get heat transfer coefficient (use specified or estimate)
-	  double U = heatTransferCoefficient;
-	  if (U <= 0 || Double.isNaN(U)) {
-	    U = 25.0; // Default reasonable value W/(m²·K) for subsea pipe
-	  }
+          // Get heat transfer coefficient (use specified or estimate)
+          double U = heatTransferCoefficient;
+          if (U <= 0 || Double.isNaN(U)) {
+            U = 25.0; // Default reasonable value W/(m²·K) for subsea pipe
+          }
 
-	  // Heat transfer area for this segment
-	  double A = Math.PI * insideDiameter * segmentLengthMeters;
+          // Heat transfer area for this segment
+          double A = Math.PI * insideDiameter * segmentLengthMeters;
 
-	  // Estimate Cp from inlet (simplified - full approach would need flash)
-	  double segmentCp = inletSystem.getCp("J/kgK");
-	  double segmentMassFlow = Math.max(1e-6, newMassFlow);
+          // Estimate Cp from inlet (simplified - full approach would need flash)
+          double segmentCp = inletSystem.getCp("J/kgK");
+          double segmentMassFlow = Math.max(1e-6, newMassFlow);
 
-	  // NTU = U*A / (m_dot * Cp)
-	  double NTU = U * A / (segmentMassFlow * segmentCp);
+          // NTU = U*A / (m_dot * Cp)
+          double NTU = U * A / (segmentMassFlow * segmentCp);
 
-	  // Analytical solution: T_out = T_wall + (T_in - T_wall) * exp(-NTU)
-	  advectedTemperature = Twall + (Tin - Twall) * Math.exp(-NTU);
-	}
+          // Analytical solution: T_out = T_wall + (T_in - T_wall) * exp(-NTU)
+          advectedTemperature = Twall + (Tin - Twall) * Math.exp(-NTU);
+        }
       }
 
       // Apply relaxation for wave propagation
       updatedTemperature.set(segment + 1,
-	  downstreamTemperature + relaxation * (advectedTemperature - downstreamTemperature));
+          downstreamTemperature + relaxation * (advectedTemperature - downstreamTemperature));
 
       // Update velocity based on updated mass flow and density
       double targetVelocity = newMassFlow / (Math.max(MIN_DENSITY, segmentDensity) * crossSectionArea);
@@ -2491,9 +2491,9 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       // Update density - use already-updated upstream density for consistency
       double upstreamDensity;
       if (segment == 0) {
-	upstreamDensity = inletDensityBoundary;
+        upstreamDensity = inletDensityBoundary;
       } else {
-	upstreamDensity = updatedDensity.get(segment - 1); // Use already-updated value
+        upstreamDensity = updatedDensity.get(segment - 1); // Use already-updated value
       }
       double relaxedDensity = segmentDensity + relaxation * (upstreamDensity - segmentDensity);
       updatedDensity.set(segment, Math.max(MIN_DENSITY, relaxedDensity));
@@ -2557,7 +2557,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    */
   public double getInletSuperficialVelocity() {
     return getInletStream().getThermoSystem().getFlowRate("kg/sec")
-	/ getInletStream().getThermoSystem().getDensity("kg/m3") / (Math.PI / 4.0 * Math.pow(insideDiameter, 2.0));
+        / getInletStream().getThermoSystem().getDensity("kg/m3") / (Math.PI / 4.0 * Math.pow(insideDiameter, 2.0));
   }
 
   /**
@@ -3100,6 +3100,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * V_e = C / sqrt(rho_mix)
    * </pre>
    *
+   * <p>
    * where C is typically 100-150 for continuous service.
    *
    * @param cFactor erosional C-factor (typically 100-150)
@@ -3109,8 +3110,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     if (mixtureDensity <= 0 || Double.isNaN(mixtureDensity)) {
       // Use inlet stream density if mixture density not yet calculated
       if (getInletStream() != null && getInletStream().getFluid() != null) {
-	double density = getInletStream().getFluid().getDensity("kg/m3");
-	return density > 0 ? cFactor / Math.sqrt(density) : 0.0;
+        double density = getInletStream().getFluid().getDensity("kg/m3");
+        return density > 0 ? cFactor / Math.sqrt(density) : 0.0;
       }
       return 0.0;
     }
@@ -3178,18 +3179,18 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     double FVF = 1.0;
     if (GVF > 0.88) {
       if (GVF > 0.99) {
-	// Gas-only: use viscosity-based correction
-	double viscosity = 0.001; // Default gas viscosity
-	if (getInletStream() != null && getInletStream().getFluid() != null) {
-	  try {
-	    viscosity = getInletStream().getFluid().getViscosity("kg/msec");
-	  } catch (Exception e) {
-	    // Use default
-	  }
-	}
-	FVF = Math.sqrt(viscosity / Math.sqrt(0.001));
+        // Gas-only: use viscosity-based correction
+        double viscosity = 0.001; // Default gas viscosity
+        if (getInletStream() != null && getInletStream().getFluid() != null) {
+          try {
+            viscosity = getInletStream().getFluid().getViscosity("kg/msec");
+          } catch (Exception e) {
+            // Use default
+          }
+        }
+        FVF = Math.sqrt(viscosity / Math.sqrt(0.001));
       } else {
-	FVF = -27.882 * GVF * GVF + 45.545 * GVF - 17.495;
+        FVF = -27.882 * GVF * GVF + 45.545 * GVF - 17.495;
       }
     } else if (GVF < 0.2) {
       FVF = 0.2 + 4 * GVF;
@@ -3420,7 +3421,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     result.put("mixtureVelocity_m_s", getMixtureVelocity());
     result.put("erosionalVelocity_m_s", getErosionalVelocity());
     result.put("velocityRatio",
-	getErosionalVelocity() > 0 ? getMixtureVelocity() / getErosionalVelocity() : Double.NaN);
+        getErosionalVelocity() > 0 ? getMixtureVelocity() / getErosionalVelocity() : Double.NaN);
 
     // Rhone-Poulenc max velocity (if enabled)
     result.put("maxVelocityMethod", getMaxVelocityMethod());
@@ -3471,7 +3472,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    */
   public String getFIVAnalysisJson() {
     return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-	.toJson(getFIVAnalysis());
+        .toJson(getFIVAnalysis());
   }
 
   // ============================================================================
@@ -3656,45 +3657,45 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   protected void initializeCapacityConstraints() {
     // Velocity constraint (SOFT limit - uses Rhone-Poulenc if enabled, else erosional)
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("velocity", "m/s",
-	neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT).setDesignValue(maxDesignVelocity)
-	.setMaxValue(getMaxAllowableVelocity()).setWarningThreshold(0.9)
-	.setDescription("Mixture velocity vs " + getMaxVelocityMethod() + " limit")
-	.setValueSupplier(() -> getMixtureVelocity()));
+        neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT).setDesignValue(maxDesignVelocity)
+        .setMaxValue(getMaxAllowableVelocity()).setWarningThreshold(0.9)
+        .setDescription("Mixture velocity vs " + getMaxVelocityMethod() + " limit")
+        .setValueSupplier(() -> getMixtureVelocity()));
 
     // LOF (Likelihood of Failure) - FIV constraint for multiphase flow
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("LOF", "-",
-	neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT).setDesignValue(maxDesignLOF)
-	.setMaxValue(1.5).setWarningThreshold(0.5).setDescription("FIV LOF - flow-induced vibration (>1.0 = high risk)")
-	.setValueSupplier(() -> calculateLOF()));
+        neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT).setDesignValue(maxDesignLOF)
+        .setMaxValue(1.5).setWarningThreshold(0.5).setDescription("FIV LOF - flow-induced vibration (>1.0 = high risk)")
+        .setValueSupplier(() -> calculateLOF()));
 
     // FRMS (Flow-induced vibration RMS) - for multiphase flow
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("FRMS", "-",
-	neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT).setDesignValue(maxDesignFRMS)
-	.setMaxValue(750.0).setWarningThreshold(0.8).setDescription("FIV FRMS - vibration intensity")
-	.setValueSupplier(() -> calculateFRMS()));
+        neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT).setDesignValue(maxDesignFRMS)
+        .setMaxValue(750.0).setWarningThreshold(0.8).setDescription("FIV FRMS - vibration intensity")
+        .setValueSupplier(() -> calculateFRMS()));
 
     // AIV (Acoustic-Induced Vibration) - for gas/high pressure drop
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("AIV", "kW",
-	neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT).setDesignValue(maxDesignAIV)
-	.setMaxValue(50.0).setWarningThreshold(0.4)
-	.setDescription("AIV acoustic power (<1kW=low, 1-10kW=medium, >25kW=very high risk)")
-	.setValueSupplier(() -> calculateAIV()));
+        neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT).setDesignValue(maxDesignAIV)
+        .setMaxValue(50.0).setWarningThreshold(0.4)
+        .setDescription("AIV acoustic power (<1kW=low, 1-10kW=medium, >25kW=very high risk)")
+        .setValueSupplier(() -> calculateAIV()));
 
     // Volume flow constraint from mechanical design
     if (getMechanicalDesign() != null && getMechanicalDesign().maxDesignVolumeFlow > 0) {
       addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("volumeFlow", "m3/hr",
-	  neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
-	  .setDesignValue(getMechanicalDesign().maxDesignVolumeFlow).setWarningThreshold(0.9)
-	  .setDescription("Volume flow vs mechanical design limit")
-	  .setValueSupplier(() -> getOutletStream() != null ? getOutletStream().getFlowRate("m3/hr") : 0.0));
+          neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
+          .setDesignValue(getMechanicalDesign().maxDesignVolumeFlow).setWarningThreshold(0.9)
+          .setDescription("Volume flow vs mechanical design limit")
+          .setValueSupplier(() -> getOutletStream() != null ? getOutletStream().getFlowRate("m3/hr") : 0.0));
     }
 
     // Pressure drop constraint
     if (getMechanicalDesign() != null && getMechanicalDesign().maxDesignPressureDrop > 0) {
       addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("pressureDrop", "bar",
-	  neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
-	  .setDesignValue(getMechanicalDesign().maxDesignPressureDrop).setWarningThreshold(0.9)
-	  .setDescription("Pressure drop vs mechanical design limit").setValueSupplier(() -> getPressureDrop()));
+          neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
+          .setDesignValue(getMechanicalDesign().maxDesignPressureDrop).setWarningThreshold(0.9)
+          .setDescription("Pressure drop vs mechanical design limit").setValueSupplier(() -> getPressureDrop()));
     }
   }
 
@@ -3781,7 +3782,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     // Target velocity depends on fluid type (gas vs liquid)
     double targetVelocity;
     if (getInletStream().getFluid().hasPhaseType("gas") && !getInletStream().getFluid().hasPhaseType("oil")
-	&& !getInletStream().getFluid().hasPhaseType("aqueous")) {
+        && !getInletStream().getFluid().hasPhaseType("aqueous")) {
       // Gas pipeline - typical 15-20 m/s
       targetVelocity = 15.0 / safetyFactor;
     } else if (!getInletStream().getFluid().hasPhaseType("gas")) {
@@ -3816,16 +3817,16 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
 
       // Set default values if current values are invalid
       if (Double.isNaN(currentVelocity) || currentVelocity <= 0) {
-	currentVelocity = targetVelocity;
+        currentVelocity = targetVelocity;
       }
       if (Double.isNaN(currentVolumeFlow) || currentVolumeFlow <= 0) {
-	currentVolumeFlow = volumetricFlowRate * 3600.0; // m3/sec to m3/hr
+        currentVolumeFlow = volumetricFlowRate * 3600.0; // m3/sec to m3/hr
       }
 
       getMechanicalDesign().maxDesignVelocity = currentVelocity * safetyFactor;
       getMechanicalDesign().maxDesignVolumeFlow = currentVolumeFlow * safetyFactor;
       if (!Double.isNaN(currentPressureDrop) && currentPressureDrop > 0) {
-	getMechanicalDesign().maxDesignPressureDrop = currentPressureDrop * safetyFactor;
+        getMechanicalDesign().maxDesignPressureDrop = currentPressureDrop * safetyFactor;
       }
 
       // Clear and reinitialize capacity constraints with new design values
@@ -3848,12 +3849,12 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     // Standard NPS sizes (nominal pipe size in inches) - using inside diameter
     // approximations
     double[] standardSizes = { 0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0,
-	20.0, 24.0, 30.0, 36.0, 42.0, 48.0 };
+        20.0, 24.0, 30.0, 36.0, 42.0, 48.0 };
 
     // Find the next size up that meets the requirement
     for (double size : standardSizes) {
       if (size >= calculatedDiameterInches) {
-	return size;
+        return size;
       }
     }
 
@@ -3907,14 +3908,14 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       report.append(String.format("  Inlet Pressure: %.2f bara\n", inletPressure));
       report.append(String.format("  Outlet Pressure: %.2f bara\n", pressureOut));
       report.append(String.format("  Pressure Drop: %.2f bar (%.1f%%)\n", totalPressureDrop,
-	  (totalPressureDrop / inletPressure) * 100));
+          (totalPressureDrop / inletPressure) * 100));
       report.append(String.format("  Flow Rate: %.2f kg/hr\n", getInletStream().getFlowRate("kg/hr")));
     }
 
     // Geometry
     report.append("\nGeometry:\n");
     report.append(
-	String.format("  Inside Diameter: %.1f mm (%.2f inch)\n", insideDiameter * 1000, insideDiameter / 0.0254));
+        String.format("  Inside Diameter: %.1f mm (%.2f inch)\n", insideDiameter * 1000, insideDiameter / 0.0254));
     report.append(String.format("  Length: %.1f m\n", totalLength));
     report.append(String.format("  Elevation: %.1f m\n", totalElevation));
 

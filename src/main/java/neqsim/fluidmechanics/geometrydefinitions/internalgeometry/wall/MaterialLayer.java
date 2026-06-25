@@ -415,6 +415,6 @@ public class MaterialLayer {
   @Override
   public String toString() {
     return String.format("MaterialLayer[%s: t=%.4f m, k=%.3f W/(m·K), ρ=%.0f kg/m³]", materialName, thickness,
-	conductivity, density);
+        conductivity, density);
   }
 }

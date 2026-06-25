@@ -223,12 +223,12 @@ class SystemThermoTest extends neqsim.NeqSimTest {
 
     double actualDensity = sys.getDensity("kg/m3");
     assertEquals(expectedDensity, actualDensity, 1e-6,
-	"getDensity(kg/m3) should equal total_mass / total_shifted_volume");
+        "getDensity(kg/m3) should equal total_mass / total_shifted_volume");
 
     // Verify Mw/getMolarVolume("m3/mol") is consistent with getDensity("kg/m3")
     double densityFromMolarVolume = sys.getMolarMass() / sys.getMolarVolume("m3/mol");
     assertEquals(actualDensity, densityFromMolarVolume, actualDensity * 0.001,
-	"getDensity(kg/m3) and Mw/getMolarVolume(m3/mol) should be consistent");
+        "getDensity(kg/m3) and Mw/getMolarVolume(m3/mol) should be consistent");
   }
 
   @SuppressWarnings("deprecation")

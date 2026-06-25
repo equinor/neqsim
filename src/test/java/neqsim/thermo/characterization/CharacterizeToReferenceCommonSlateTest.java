@@ -68,9 +68,9 @@ class CharacterizeToReferenceCommonSlateTest {
     CharacterizationOptions options = CharacterizationOptions.builder().build();
 
     SystemInterface a = PseudoComponentCombiner.characterizeToReference(source(0.05, 0.06, 0.07, 0.150), reference,
-	options);
+        options);
     SystemInterface b = PseudoComponentCombiner.characterizeToReference(source(0.10, 0.12, 0.15, 0.200), reference,
-	options);
+        options);
 
     String[] lumps = { "C7_PC", "C8_PC", "C9_PC" };
     double[] refTc = { 530.0, 550.0, 570.0 };
@@ -94,7 +94,7 @@ class CharacterizeToReferenceCommonSlateTest {
       assertEquals(ca.getAcentricFactor(), cb.getAcentricFactor(), TOLERANCE, lumps[i] + " omega A vs B");
 
       if (Math.abs(ca.getz() - cb.getz()) > 1e-4) {
-	someMoleFractionDiffers = true;
+        someMoleFractionDiffers = true;
       }
     }
     assertTrue(someMoleFractionDiffers, "mole fractions must differ between the two sources");

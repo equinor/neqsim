@@ -31,8 +31,8 @@ class DesignCaseTest {
     @DisplayName("Should have descriptions")
     void shouldHaveDescriptions() {
       for (DesignCase dc : DesignCase.values()) {
-	assertNotNull(dc.getDescription());
-	assertFalse(dc.getDescription().isEmpty());
+        assertNotNull(dc.getDescription());
+        assertFalse(dc.getDescription().isEmpty());
       }
     }
 

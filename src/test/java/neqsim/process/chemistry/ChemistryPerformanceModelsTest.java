@@ -3,9 +3,7 @@ package neqsim.process.chemistry;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.Test;
-
 import neqsim.process.chemistry.acid.AcidTreatmentSimulator;
 import neqsim.process.chemistry.corrosion.CorrosionInhibitorPerformance;
 import neqsim.process.chemistry.scale.ScaleInhibitorPerformance;

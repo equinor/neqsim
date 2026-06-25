@@ -5,11 +5,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.processmodel.ProcessSystem;
 
 /**
  * Scenario analyzer for production scheduling and what-if analysis.
@@ -118,16 +118,16 @@ public class ScenarioAnalyzer implements Serializable {
     try {
       // Apply parameters to feed stream if available
       if (feedStream != null) {
-	if (params.getOilRate() > 0) {
-	  // This is simplified - in practice would adjust composition
-	  feedStream.setFlowRate(params.getTotalMassRate(), "kg/hr");
-	}
-	if (params.getTemperature() > 0) {
-	  feedStream.setTemperature(params.getTemperature(), "C");
-	}
-	if (params.getPressure() > 0) {
-	  feedStream.setPressure(params.getPressure(), "bara");
-	}
+        if (params.getOilRate() > 0) {
+          // This is simplified - in practice would adjust composition
+          feedStream.setFlowRate(params.getTotalMassRate(), "kg/hr");
+        }
+        if (params.getTemperature() > 0) {
+          feedStream.setTemperature(params.getTemperature(), "C");
+        }
+        if (params.getPressure() > 0) {
+          feedStream.setPressure(params.getPressure(), "bara");
+        }
       }
 
       // Run process
@@ -162,9 +162,9 @@ public class ScenarioAnalyzer implements Serializable {
     for (int i = 0; i < processSystem.size(); i++) {
       Object unit = processSystem.getUnitOperations().get(i);
       if (unit instanceof Compressor) {
-	totalPower += ((Compressor) unit).getPower("MW");
+        totalPower += ((Compressor) unit).getPower("MW");
       } else if (unit instanceof Pump) {
-	totalPower += ((Pump) unit).getPower() / 1e6; // W to MW
+        totalPower += ((Pump) unit).getPower() / 1e6; // W to MW
       }
     }
 
@@ -201,10 +201,10 @@ public class ScenarioAnalyzer implements Serializable {
     for (int i = 0; i < processSystem.size(); i++) {
       Object unit = processSystem.getUnitOperations().get(i);
       if (unit instanceof Heater) {
-	double duty = ((Heater) unit).getDuty("MW");
-	if (duty > 0) {
-	  totalDuty += duty;
-	}
+        double duty = ((Heater) unit).getDuty("MW");
+        if (duty > 0) {
+          totalDuty += duty;
+        }
       }
     }
 
@@ -222,10 +222,10 @@ public class ScenarioAnalyzer implements Serializable {
     for (int i = 0; i < processSystem.size(); i++) {
       Object unit = processSystem.getUnitOperations().get(i);
       if (unit instanceof Heater) {
-	double duty = ((Heater) unit).getDuty("MW");
-	if (duty < 0) {
-	  totalDuty += Math.abs(duty);
-	}
+        double duty = ((Heater) unit).getDuty("MW");
+        if (duty < 0) {
+          totalDuty += Math.abs(duty);
+        }
       }
     }
 
@@ -241,7 +241,7 @@ public class ScenarioAnalyzer implements Serializable {
   public ScenarioResult getResult(String name) {
     for (ScenarioResult result : results) {
       if (result.getName().equals(name)) {
-	return result;
+        return result;
       }
     }
     return null;
@@ -266,12 +266,12 @@ public class ScenarioAnalyzer implements Serializable {
     sb.append("=== SCENARIO COMPARISON REPORT ===\n\n");
 
     sb.append(String.format("%-20s %-12s %-12s %-12s %-12s %-10s%n", "Scenario", "Power (MW)", "CO2 (t/d)", "Heat (MW)",
-	"Cool (MW)", "Converged"));
+        "Cool (MW)", "Converged"));
     sb.append("-------------------- ------------ ------------ ------------ ------------ ----------\n");
 
     for (ScenarioResult r : results) {
       sb.append(String.format("%-20s %-12.2f %-12.2f %-12.2f %-12.2f %-10s%n", r.getName(), r.getPowerMW(),
-	  r.getCO2TonnesPerDay(), r.getHeatingDutyMW(), r.getCoolingDutyMW(), r.isConverged() ? "Yes" : "No"));
+          r.getCO2TonnesPerDay(), r.getHeatingDutyMW(), r.getCoolingDutyMW(), r.isConverged() ? "Yes" : "No"));
     }
 
     return sb.toString();

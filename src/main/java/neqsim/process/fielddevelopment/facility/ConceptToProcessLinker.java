@@ -174,13 +174,13 @@ public class ConceptToProcessLinker implements Serializable {
       switch (concept.getReservoir().getFluidType()) {
       case LEAN_GAS:
       case RICH_GAS:
-	return ProcessTemplate.GAS_PROCESSING;
+        return ProcessTemplate.GAS_PROCESSING;
       case GAS_CONDENSATE:
-	return ProcessTemplate.GAS_CONDENSATE;
+        return ProcessTemplate.GAS_CONDENSATE;
       case HEAVY_OIL:
-	return ProcessTemplate.HEAVY_OIL;
+        return ProcessTemplate.HEAVY_OIL;
       default:
-	return ProcessTemplate.OIL_PROCESSING;
+        return ProcessTemplate.OIL_PROCESSING;
       }
     }
     return ProcessTemplate.OIL_PROCESSING;
@@ -251,7 +251,7 @@ public class ConceptToProcessLinker implements Serializable {
     // LP Separator
     StreamInterface oilFromHp = hpSep.getOilOutStream();
     neqsim.process.equipment.valve.ThrottlingValve toLP = new neqsim.process.equipment.valve.ThrottlingValve("To-LP",
-	oilFromHp);
+        oilFromHp);
     toLP.setOutletPressure(lpSeparatorPressureBar);
     process.add(toLP);
 
@@ -347,7 +347,7 @@ public class ConceptToProcessLinker implements Serializable {
     process.add(stabHeater);
 
     neqsim.process.equipment.valve.ThrottlingValve stabValve = new neqsim.process.equipment.valve.ThrottlingValve(
-	"Stab-Valve", stabHeater.getOutletStream());
+        "Stab-Valve", stabHeater.getOutletStream());
     stabValve.setOutletPressure(lpSeparatorPressureBar);
     process.add(stabValve);
 
@@ -374,9 +374,9 @@ public class ConceptToProcessLinker implements Serializable {
     for (int i = 0; i < process.size(); i++) {
       Object unit = process.getUnitOperations().get(i);
       if (unit instanceof Compressor) {
-	totalPower += Math.abs(((Compressor) unit).getPower("MW"));
+        totalPower += Math.abs(((Compressor) unit).getPower("MW"));
       } else if (unit instanceof Pump) {
-	totalPower += Math.abs(((Pump) unit).getPower("MW"));
+        totalPower += Math.abs(((Pump) unit).getPower("MW"));
       }
     }
 
@@ -395,10 +395,10 @@ public class ConceptToProcessLinker implements Serializable {
     for (int i = 0; i < process.size(); i++) {
       Object unit = process.getUnitOperations().get(i);
       if (unit instanceof Heater) {
-	double duty = ((Heater) unit).getDuty();
-	if (duty > 0) {
-	  totalHeating += duty / 1e6; // Convert to MW
-	}
+        double duty = ((Heater) unit).getDuty();
+        if (duty > 0) {
+          totalHeating += duty / 1e6; // Convert to MW
+        }
       }
     }
 
@@ -417,8 +417,8 @@ public class ConceptToProcessLinker implements Serializable {
     for (int i = 0; i < process.size(); i++) {
       Object unit = process.getUnitOperations().get(i);
       if (unit instanceof Cooler) {
-	double duty = ((Cooler) unit).getDuty();
-	totalCooling += Math.abs(duty) / 1e6; // Convert to MW
+        double duty = ((Cooler) unit).getDuty();
+        totalCooling += Math.abs(duty) / 1e6; // Convert to MW
       }
     }
 

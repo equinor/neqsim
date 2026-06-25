@@ -16,13 +16,13 @@ class BatchRunnerTest {
   @Test
   void testTemperatureSweepBatch() {
     String json = "{" + "\"model\": \"SRK\","
-	+ "\"components\": {\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05}," + "\"flashType\": \"TP\","
-	+ "\"cases\": [" + "  {\"temperature\": {\"value\": 0.0, \"unit\": \"C\"}, "
-	+ "   \"pressure\": {\"value\": 50.0, \"unit\": \"bara\"}},"
-	+ "  {\"temperature\": {\"value\": 25.0, \"unit\": \"C\"}, "
-	+ "   \"pressure\": {\"value\": 50.0, \"unit\": \"bara\"}},"
-	+ "  {\"temperature\": {\"value\": 50.0, \"unit\": \"C\"}, "
-	+ "   \"pressure\": {\"value\": 50.0, \"unit\": \"bara\"}}" + "]" + "}";
+        + "\"components\": {\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05}," + "\"flashType\": \"TP\","
+        + "\"cases\": [" + "  {\"temperature\": {\"value\": 0.0, \"unit\": \"C\"}, "
+        + "   \"pressure\": {\"value\": 50.0, \"unit\": \"bara\"}},"
+        + "  {\"temperature\": {\"value\": 25.0, \"unit\": \"C\"}, "
+        + "   \"pressure\": {\"value\": 50.0, \"unit\": \"bara\"}},"
+        + "  {\"temperature\": {\"value\": 50.0, \"unit\": \"C\"}, "
+        + "   \"pressure\": {\"value\": 50.0, \"unit\": \"bara\"}}" + "]" + "}";
 
     String result = BatchRunner.run(json);
     assertNotNull(result);
@@ -64,10 +64,10 @@ class BatchRunnerTest {
   @Test
   void testPressureSweepBatch() {
     String json = "{" + "\"model\": \"PR\"," + "\"components\": {\"methane\": 0.90, \"CO2\": 0.10},"
-	+ "\"flashType\": \"TP\"," + "\"cases\": [" + "  {\"temperature\": {\"value\": 25.0, \"unit\": \"C\"}, "
-	+ "   \"pressure\": {\"value\": 10.0, \"unit\": \"bara\"}},"
-	+ "  {\"temperature\": {\"value\": 25.0, \"unit\": \"C\"}, "
-	+ "   \"pressure\": {\"value\": 50.0, \"unit\": \"bara\"}}" + "]" + "}";
+        + "\"flashType\": \"TP\"," + "\"cases\": [" + "  {\"temperature\": {\"value\": 25.0, \"unit\": \"C\"}, "
+        + "   \"pressure\": {\"value\": 10.0, \"unit\": \"bara\"}},"
+        + "  {\"temperature\": {\"value\": 25.0, \"unit\": \"C\"}, "
+        + "   \"pressure\": {\"value\": 50.0, \"unit\": \"bara\"}}" + "]" + "}";
 
     String result = BatchRunner.run(json);
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
@@ -107,11 +107,11 @@ class BatchRunnerTest {
   void testPartialFailure() {
     // One case with valid components, one with invalid component
     String json = "{" + "\"model\": \"SRK\"," + "\"flashType\": \"TP\"," + "\"cases\": ["
-	+ "  {\"components\": {\"methane\": 0.85, \"ethane\": 0.15},"
-	+ "   \"temperature\": {\"value\": 25.0, \"unit\": \"C\"},"
-	+ "   \"pressure\": {\"value\": 50.0, \"unit\": \"bara\"}}," + "  {\"components\": {\"unobtanium\": 1.0},"
-	+ "   \"temperature\": {\"value\": 25.0, \"unit\": \"C\"},"
-	+ "   \"pressure\": {\"value\": 50.0, \"unit\": \"bara\"}}" + "]" + "}";
+        + "  {\"components\": {\"methane\": 0.85, \"ethane\": 0.15},"
+        + "   \"temperature\": {\"value\": 25.0, \"unit\": \"C\"},"
+        + "   \"pressure\": {\"value\": 50.0, \"unit\": \"bara\"}}," + "  {\"components\": {\"unobtanium\": 1.0},"
+        + "   \"temperature\": {\"value\": 25.0, \"unit\": \"C\"},"
+        + "   \"pressure\": {\"value\": 50.0, \"unit\": \"bara\"}}" + "]" + "}";
 
     String result = BatchRunner.run(json);
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
@@ -126,8 +126,8 @@ class BatchRunnerTest {
   @Test
   void testSingleCaseBatch() {
     String json = "{" + "\"model\": \"SRK\"," + "\"components\": {\"nitrogen\": 0.02, \"methane\": 0.98},"
-	+ "\"flashType\": \"TP\"," + "\"cases\": [" + "  {\"temperature\": {\"value\": 15.0, \"unit\": \"C\"}, "
-	+ "   \"pressure\": {\"value\": 100.0, \"unit\": \"bara\"}}" + "]" + "}";
+        + "\"flashType\": \"TP\"," + "\"cases\": [" + "  {\"temperature\": {\"value\": 15.0, \"unit\": \"C\"}, "
+        + "   \"pressure\": {\"value\": 100.0, \"unit\": \"bara\"}}" + "]" + "}";
 
     String result = BatchRunner.run(json);
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();

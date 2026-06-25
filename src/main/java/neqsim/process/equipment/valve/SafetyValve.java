@@ -139,8 +139,8 @@ public class SafetyValve extends ThrottlingValve {
       return;
     }
     RelievingScenario scenario = new RelievingScenario.Builder("default").fluidService(FluidService.GAS)
-	.relievingStream(getInletStream()).setPressure(pressureSpec).overpressureFraction(0.1).backPressure(0.0)
-	.build();
+        .relievingStream(getInletStream()).setPressure(pressureSpec).overpressureFraction(0.1).backPressure(0.0)
+        .build();
     addScenario(scenario);
   }
 
@@ -223,42 +223,42 @@ public class SafetyValve extends ThrottlingValve {
       // Set default blowdown pressure if not set (typically 90-95% of set pressure)
       double reseatPressure = blowdownPressure;
       if (reseatPressure <= 0.0) {
-	reseatPressure = pressureSpec * 0.93; // Default 7% blowdown
+        reseatPressure = pressureSpec * 0.93; // Default 7% blowdown
       }
 
       // Hysteresis logic: different behavior when opening vs closing
       if (!isValveOpen) {
-	// Valve is currently closed - check if it should open
-	if (inletPressure < pressureSpec) {
-	  // Below set pressure - stay closed
-	  opening = 0.0;
-	} else if (inletPressure >= fullOpenPressure) {
-	  // Fully open
-	  opening = 100.0;
-	  isValveOpen = true;
-	} else {
-	  // Proportional opening between set and full open pressure
-	  opening = 100.0 * (inletPressure - pressureSpec) / (fullOpenPressure - pressureSpec);
-	  isValveOpen = true;
-	}
+        // Valve is currently closed - check if it should open
+        if (inletPressure < pressureSpec) {
+          // Below set pressure - stay closed
+          opening = 0.0;
+        } else if (inletPressure >= fullOpenPressure) {
+          // Fully open
+          opening = 100.0;
+          isValveOpen = true;
+        } else {
+          // Proportional opening between set and full open pressure
+          opening = 100.0 * (inletPressure - pressureSpec) / (fullOpenPressure - pressureSpec);
+          isValveOpen = true;
+        }
       } else {
-	// Valve is currently open - check if it should close
-	if (inletPressure <= reseatPressure) {
-	  // Pressure dropped to reseat pressure - close valve
-	  opening = 0.0;
-	  isValveOpen = false;
-	} else if (inletPressure >= fullOpenPressure) {
-	  // Fully open
-	  opening = 100.0;
-	} else if (inletPressure < pressureSpec) {
-	  // Between reseat and set pressure - maintain minimum opening
-	  // Gradually reduce opening as pressure drops
-	  opening = 100.0 * (inletPressure - reseatPressure) / (pressureSpec - reseatPressure);
-	  opening = Math.max(opening, 0.0);
-	} else {
-	  // Between set and full open pressure
-	  opening = 100.0 * (inletPressure - pressureSpec) / (fullOpenPressure - pressureSpec);
-	}
+        // Valve is currently open - check if it should close
+        if (inletPressure <= reseatPressure) {
+          // Pressure dropped to reseat pressure - close valve
+          opening = 0.0;
+          isValveOpen = false;
+        } else if (inletPressure >= fullOpenPressure) {
+          // Fully open
+          opening = 100.0;
+        } else if (inletPressure < pressureSpec) {
+          // Between reseat and set pressure - maintain minimum opening
+          // Gradually reduce opening as pressure drops
+          opening = 100.0 * (inletPressure - reseatPressure) / (pressureSpec - reseatPressure);
+          opening = Math.max(opening, 0.0);
+        } else {
+          // Between set and full open pressure
+          opening = 100.0 * (inletPressure - pressureSpec) / (fullOpenPressure - pressureSpec);
+        }
       }
 
       // Set the calculated opening
@@ -361,60 +361,60 @@ public class SafetyValve extends ThrottlingValve {
       private Double installationCorrection;
 
       public Builder(String name) {
-	this.name = name;
+        this.name = name;
       }
 
       public Builder fluidService(FluidService fluidService) {
-	if (fluidService != null) {
-	  this.fluidService = fluidService;
-	}
-	return this;
+        if (fluidService != null) {
+          this.fluidService = fluidService;
+        }
+        return this;
       }
 
       public Builder relievingStream(StreamInterface relievingStream) {
-	this.relievingStream = relievingStream;
-	return this;
+        this.relievingStream = relievingStream;
+        return this;
       }
 
       public Builder setPressure(double setPressure) {
-	this.setPressure = setPressure;
-	return this;
+        this.setPressure = setPressure;
+        return this;
       }
 
       public Builder overpressureFraction(double overpressureFraction) {
-	this.overpressureFraction = overpressureFraction;
-	return this;
+        this.overpressureFraction = overpressureFraction;
+        return this;
       }
 
       public Builder backPressure(double backPressure) {
-	this.backPressure = backPressure;
-	return this;
+        this.backPressure = backPressure;
+        return this;
       }
 
       public Builder sizingStandard(SizingStandard sizingStandard) {
-	if (sizingStandard != null) {
-	  this.sizingStandard = sizingStandard;
-	}
-	return this;
+        if (sizingStandard != null) {
+          this.sizingStandard = sizingStandard;
+        }
+        return this;
       }
 
       public Builder dischargeCoefficient(double dischargeCoefficient) {
-	this.dischargeCoefficient = dischargeCoefficient;
-	return this;
+        this.dischargeCoefficient = dischargeCoefficient;
+        return this;
       }
 
       public Builder backPressureCorrection(double backPressureCorrection) {
-	this.backPressureCorrection = backPressureCorrection;
-	return this;
+        this.backPressureCorrection = backPressureCorrection;
+        return this;
       }
 
       public Builder installationCorrection(double installationCorrection) {
-	this.installationCorrection = installationCorrection;
-	return this;
+        this.installationCorrection = installationCorrection;
+        return this;
       }
 
       public RelievingScenario build() {
-	return new RelievingScenario(this);
+        return new RelievingScenario(this);
       }
     }
   }

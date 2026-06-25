@@ -302,7 +302,7 @@ public class CO2InjectionNIPsTest {
     fluid.setTemperature(273.15 + 10.0); // 10C, Tr ~ 0.93
     fluid.setPressure(50.0);
     neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	fluid);
+        fluid);
     ops.TPflash();
 
     double factor = CO2FlowCorrections.getLiquidHoldupCorrectionFactor(fluid);

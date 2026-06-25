@@ -538,7 +538,7 @@ class IEC81346Test {
 
     // Verify IEC 81346 attributes are present in the XML
     assertTrue(xml.contains("IEC81346ReferenceDesignation"),
-	"DEXPI XML should contain IEC81346ReferenceDesignation attribute");
+        "DEXPI XML should contain IEC81346ReferenceDesignation attribute");
     assertTrue(xml.contains("=A1-B1+P1"), "DEXPI XML should contain the actual reference designation value");
     assertTrue(xml.contains("IEC81346LetterCode"), "DEXPI XML should contain IEC81346LetterCode attribute");
   }
@@ -620,7 +620,7 @@ class IEC81346Test {
   @Test
   void testDesignationEntryToString() {
     ReferenceDesignationGenerator.DesignationEntry entry = new ReferenceDesignationGenerator.DesignationEntry("HP Sep",
-	"Separator", "=A1-B1+P1", IEC81346LetterCode.B, 1, "A1");
+        "Separator", "=A1-B1+P1", IEC81346LetterCode.B, 1, "A1");
     String str = entry.toString();
     assertTrue(str.contains("HP Sep"));
     assertTrue(str.contains("=A1-B1+P1"));
@@ -727,7 +727,7 @@ class IEC81346Test {
 
     // Capture state
     neqsim.process.processmodel.lifecycle.ProcessSystemState state = neqsim.process.processmodel.lifecycle.ProcessSystemState
-	.fromProcessSystem(process);
+        .fromProcessSystem(process);
     assertNotNull(state);
 
     String json = state.toJson();
@@ -821,7 +821,7 @@ class IEC81346Test {
   @Test
   void testProcessConnectionRefDesFields() {
     neqsim.process.processmodel.ProcessConnection conn = new neqsim.process.processmodel.ProcessConnection("Source",
-	"Target");
+        "Target");
 
     assertNull(conn.getSourceReferenceDesignation());
     assertNull(conn.getTargetReferenceDesignation());
@@ -840,7 +840,7 @@ class IEC81346Test {
   @Test
   void testControllerDeviceRefDes() {
     neqsim.process.controllerdevice.ControllerDeviceBaseClass controller = new neqsim.process.controllerdevice.ControllerDeviceBaseClass(
-	"PIC-100");
+        "PIC-100");
 
     assertNotNull(controller.getReferenceDesignation());
     assertFalse(controller.getReferenceDesignation().isSet());
@@ -959,17 +959,17 @@ class IEC81346Test {
     // Class A should include REFERENCE_DESIGNATION_SCHEDULE
     neqsim.process.mechanicaldesign.StudyClass classA = neqsim.process.mechanicaldesign.StudyClass.CLASS_A;
     assertTrue(
-	classA.requires(neqsim.process.mechanicaldesign.StudyClass.DeliverableType.REFERENCE_DESIGNATION_SCHEDULE));
+        classA.requires(neqsim.process.mechanicaldesign.StudyClass.DeliverableType.REFERENCE_DESIGNATION_SCHEDULE));
 
     // Class B should include it too
     neqsim.process.mechanicaldesign.StudyClass classB = neqsim.process.mechanicaldesign.StudyClass.CLASS_B;
     assertTrue(
-	classB.requires(neqsim.process.mechanicaldesign.StudyClass.DeliverableType.REFERENCE_DESIGNATION_SCHEDULE));
+        classB.requires(neqsim.process.mechanicaldesign.StudyClass.DeliverableType.REFERENCE_DESIGNATION_SCHEDULE));
 
     // Class C should NOT include it
     neqsim.process.mechanicaldesign.StudyClass classC = neqsim.process.mechanicaldesign.StudyClass.CLASS_C;
     assertFalse(
-	classC.requires(neqsim.process.mechanicaldesign.StudyClass.DeliverableType.REFERENCE_DESIGNATION_SCHEDULE));
+        classC.requires(neqsim.process.mechanicaldesign.StudyClass.DeliverableType.REFERENCE_DESIGNATION_SCHEDULE));
   }
 
   // ============================================================
@@ -990,7 +990,7 @@ class IEC81346Test {
     process.run();
 
     neqsim.process.mechanicaldesign.InstrumentScheduleGenerator instrGen = new neqsim.process.mechanicaldesign.InstrumentScheduleGenerator(
-	process);
+        process);
     instrGen.generate();
 
     Map<String, String> map = instrGen.getISAToIEC81346Map();
@@ -1015,7 +1015,7 @@ class IEC81346Test {
 
     // Generate instruments
     neqsim.process.mechanicaldesign.InstrumentScheduleGenerator instrGen = new neqsim.process.mechanicaldesign.InstrumentScheduleGenerator(
-	process);
+        process);
     instrGen.generate();
 
     Map<String, String> map = instrGen.getISAToIEC81346Map();
@@ -1024,8 +1024,8 @@ class IEC81346Test {
     boolean hasSepMapping = false;
     for (String refDes : map.values()) {
       if (refDes.contains("B1")) {
-	hasSepMapping = true;
-	break;
+        hasSepMapping = true;
+        break;
       }
     }
     assertTrue(hasSepMapping, "Expected to find separator ref des in ISA-IEC mapping");

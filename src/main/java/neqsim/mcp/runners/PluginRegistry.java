@@ -117,14 +117,14 @@ public final class PluginRegistry {
       StringBuilder suggestion = new StringBuilder("Available plugins: ");
       List<String> names = listNames();
       if (names.isEmpty()) {
-	suggestion.append("(none registered)");
+        suggestion.append("(none registered)");
       } else {
-	for (int i = 0; i < names.size(); i++) {
-	  if (i > 0) {
-	    suggestion.append(", ");
-	  }
-	  suggestion.append(names.get(i));
-	}
+        for (int i = 0; i < names.size(); i++) {
+          if (i > 0) {
+            suggestion.append(", ");
+          }
+          suggestion.append(names.get(i));
+        }
       }
       err.addProperty("remediation", suggestion.toString());
       errors.add(err);

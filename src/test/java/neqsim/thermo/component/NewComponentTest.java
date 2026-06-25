@@ -1,6 +1,8 @@
 package neqsim.thermo.component;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.physicalproperties.PhysicalPropertyType;
@@ -11,8 +13,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class NewComponentTest extends neqsim.NeqSimTest {
   private static final Logger logger = LogManager.getLogger(NewComponentTest.class);
@@ -26,31 +26,31 @@ public class NewComponentTest extends neqsim.NeqSimTest {
       p.addComponent("", 0, 0, 0);
     });
     Assertions.assertEquals(
-	"neqsim.util.exception.InvalidInputException: PhaseSrkEos:addcomponent - Input name can not be empty.",
-	thrown.getMessage());
+        "neqsim.util.exception.InvalidInputException: PhaseSrkEos:addcomponent - Input name can not be empty.",
+        thrown.getMessage());
 
     RuntimeException thrown_2 = Assertions.assertThrows(RuntimeException.class, () -> {
       p.addComponent(null, 0, 0, 0);
     });
     Assertions.assertEquals(
-	"neqsim.util.exception.InvalidInputException: PhaseSrkEos:addcomponent - Input name can not be null",
-	thrown_2.getMessage());
+        "neqsim.util.exception.InvalidInputException: PhaseSrkEos:addcomponent - Input name can not be null",
+        thrown_2.getMessage());
 
     RuntimeException thrown_3 = Assertions.assertThrows(RuntimeException.class, () -> {
       p.addComponent("ethane", 0, 0, -1);
     });
     Assertions.assertEquals(
-	"neqsim.util.exception.InvalidInputException: PhaseSrkEos:addComponent - Input compNumber  must be valid index, i.e., between 0 and "
-	    + ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS + ".",
-	thrown_3.getMessage());
+        "neqsim.util.exception.InvalidInputException: PhaseSrkEos:addComponent - Input compNumber  must be valid index, i.e., between 0 and "
+            + ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS + ".",
+        thrown_3.getMessage());
 
     p.addComponent("ethane", 0, 0, 0);
     RuntimeException thrown_4 = Assertions.assertThrows(RuntimeException.class, () -> {
       p.addComponent("methane", 0, 0, 0);
     });
     Assertions.assertEquals(
-	"neqsim.util.exception.InvalidInputException: PhaseSrkEos:addComponent - Input compNumber number is already in use.",
-	thrown_4.getMessage());
+        "neqsim.util.exception.InvalidInputException: PhaseSrkEos:addComponent - Input compNumber number is already in use.",
+        thrown_4.getMessage());
   }
 
   @Test

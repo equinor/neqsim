@@ -167,11 +167,11 @@ public class EOSComparison implements Serializable {
 
     for (EOSType type : eosTypes) {
       try {
-	EOSResult result = evaluateEOS(type);
-	results.add(result);
+        EOSResult result = evaluateEOS(type);
+        results.add(result);
       } catch (Exception e) {
-	logger.warn("EOS {} failed: {}", type.getLabel(), e.getMessage());
-	results.add(new EOSResult(type, e.getMessage()));
+        logger.warn("EOS {} failed: {}", type.getLabel(), e.getMessage());
+        results.add(new EOSResult(type, e.getMessage()));
       }
     }
 
@@ -366,9 +366,9 @@ public class EOSComparison implements Serializable {
      */
     public EOSResult getResult(EOSType type) {
       for (EOSResult r : results) {
-	if (r.eosType == type) {
-	  return r;
-	}
+        if (r.eosType == type) {
+          return r;
+        }
       }
       return null;
     }
@@ -382,30 +382,30 @@ public class EOSComparison implements Serializable {
     public double getMaxDeviation(String propertyName) {
       List<Double> values = new ArrayList<>();
       for (EOSResult r : results) {
-	if (!r.isSuccessful()) {
-	  continue;
-	}
-	double val = getPropertyValue(r, propertyName);
-	if (!Double.isNaN(val) && val != 0.0) {
-	  values.add(val);
-	}
+        if (!r.isSuccessful()) {
+          continue;
+        }
+        double val = getPropertyValue(r, propertyName);
+        if (!Double.isNaN(val) && val != 0.0) {
+          values.add(val);
+        }
       }
       if (values.size() < 2) {
-	return Double.NaN;
+        return Double.NaN;
       }
 
       double mean = 0;
       for (double v : values) {
-	mean += v;
+        mean += v;
       }
       mean /= values.size();
 
       double maxDev = 0;
       for (double v : values) {
-	double dev = Math.abs((v - mean) / mean) * 100.0;
-	if (dev > maxDev) {
-	  maxDev = dev;
-	}
+        double dev = Math.abs((v - mean) / mean) * 100.0;
+        if (dev > maxDev) {
+          maxDev = dev;
+        }
       }
       return maxDev;
     }
@@ -420,27 +420,27 @@ public class EOSComparison implements Serializable {
     private double getPropertyValue(EOSResult r, String name) {
       switch (name) {
       case "density":
-	return r.density_kgm3;
+        return r.density_kgm3;
       case "Z":
-	return r.compressibilityFactor;
+        return r.compressibilityFactor;
       case "gasDensity":
-	return r.gasDensity_kgm3;
+        return r.gasDensity_kgm3;
       case "gasViscosity":
-	return r.gasViscosity_cP;
+        return r.gasViscosity_cP;
       case "gasZ":
-	return r.gasZfactor;
+        return r.gasZfactor;
       case "gasCp":
-	return r.gasCp_JmolK;
+        return r.gasCp_JmolK;
       case "oilDensity":
-	return r.oilDensity_kgm3;
+        return r.oilDensity_kgm3;
       case "oilViscosity":
-	return r.oilViscosity_cP;
+        return r.oilViscosity_cP;
       case "enthalpy":
-	return r.enthalpy_Jmol;
+        return r.enthalpy_Jmol;
       case "entropy":
-	return r.entropy_JmolK;
+        return r.entropy_JmolK;
       default:
-	return Double.NaN;
+        return Double.NaN;
       }
     }
 
@@ -462,50 +462,50 @@ public class EOSComparison implements Serializable {
       // Composition
       JsonObject comp = new JsonObject();
       for (Map.Entry<String, Double> entry : components.entrySet()) {
-	comp.addProperty(entry.getKey(), entry.getValue());
+        comp.addProperty(entry.getKey(), entry.getValue());
       }
       json.add("composition", comp);
 
       // Results per EOS
       JsonArray eosArray = new JsonArray();
       for (EOSResult r : results) {
-	JsonObject eos = new JsonObject();
-	eos.addProperty("eosType", r.eosType.getLabel());
-	eos.addProperty("successful", r.isSuccessful());
-	if (!r.isSuccessful()) {
-	  eos.addProperty("error", r.error);
-	} else {
-	  eos.addProperty("numberOfPhases", r.numberOfPhases);
-	  eos.addProperty("compressibilityFactor", r.compressibilityFactor);
-	  eos.addProperty("density_kgm3", r.density_kgm3);
-	  eos.addProperty("molarMass_kgmol", r.molarMass_kgmol);
-	  eos.addProperty("enthalpy_Jmol", r.enthalpy_Jmol);
-	  eos.addProperty("entropy_JmolK", r.entropy_JmolK);
-	  eos.addProperty("vapourFraction", r.vapourFraction);
-	  if (!Double.isNaN(r.gasDensity_kgm3)) {
-	    eos.addProperty("gasDensity_kgm3", r.gasDensity_kgm3);
-	    eos.addProperty("gasViscosity_cP", r.gasViscosity_cP);
-	    eos.addProperty("gasZfactor", r.gasZfactor);
-	    eos.addProperty("gasCp_JmolK", r.gasCp_JmolK);
-	  }
-	  if (!Double.isNaN(r.oilDensity_kgm3)) {
-	    eos.addProperty("oilDensity_kgm3", r.oilDensity_kgm3);
-	    eos.addProperty("oilViscosity_cP", r.oilViscosity_cP);
-	  }
-	}
-	eosArray.add(eos);
+        JsonObject eos = new JsonObject();
+        eos.addProperty("eosType", r.eosType.getLabel());
+        eos.addProperty("successful", r.isSuccessful());
+        if (!r.isSuccessful()) {
+          eos.addProperty("error", r.error);
+        } else {
+          eos.addProperty("numberOfPhases", r.numberOfPhases);
+          eos.addProperty("compressibilityFactor", r.compressibilityFactor);
+          eos.addProperty("density_kgm3", r.density_kgm3);
+          eos.addProperty("molarMass_kgmol", r.molarMass_kgmol);
+          eos.addProperty("enthalpy_Jmol", r.enthalpy_Jmol);
+          eos.addProperty("entropy_JmolK", r.entropy_JmolK);
+          eos.addProperty("vapourFraction", r.vapourFraction);
+          if (!Double.isNaN(r.gasDensity_kgm3)) {
+            eos.addProperty("gasDensity_kgm3", r.gasDensity_kgm3);
+            eos.addProperty("gasViscosity_cP", r.gasViscosity_cP);
+            eos.addProperty("gasZfactor", r.gasZfactor);
+            eos.addProperty("gasCp_JmolK", r.gasCp_JmolK);
+          }
+          if (!Double.isNaN(r.oilDensity_kgm3)) {
+            eos.addProperty("oilDensity_kgm3", r.oilDensity_kgm3);
+            eos.addProperty("oilViscosity_cP", r.oilViscosity_cP);
+          }
+        }
+        eosArray.add(eos);
       }
       json.add("eosResults", eosArray);
 
       // Deviations
       JsonObject deviations = new JsonObject();
       String[] props = { "density", "Z", "gasDensity", "gasViscosity", "gasZ", "gasCp", "oilDensity", "oilViscosity",
-	  "enthalpy", "entropy" };
+          "enthalpy", "entropy" };
       for (String prop : props) {
-	double dev = getMaxDeviation(prop);
-	if (!Double.isNaN(dev)) {
-	  deviations.addProperty(prop + "_maxDevPct", Math.round(dev * 100.0) / 100.0);
-	}
+        double dev = getMaxDeviation(prop);
+        if (!Double.isNaN(dev)) {
+          deviations.addProperty(prop + "_maxDevPct", Math.round(dev * 100.0) / 100.0);
+        }
       }
       json.add("maxDeviations_pct", deviations);
 

@@ -178,7 +178,7 @@ public class StoichiometricReaction implements Serializable {
     Double limitingCoeff = stoichiometry.get(limitingReactant);
     if (limitingCoeff == null) {
       throw new IllegalStateException(
-	  "Limiting reactant '" + limitingReactant + "' not found in reaction stoichiometry");
+          "Limiting reactant '" + limitingReactant + "' not found in reaction stoichiometry");
     }
 
     // Get current moles of limiting reactant
@@ -204,10 +204,10 @@ public class StoichiometricReaction implements Serializable {
       double deltaMoles = molesReacted * (stoichCoeff / absLimitingCoeff);
 
       try {
-	system.addComponent(compName, deltaMoles);
+        system.addComponent(compName, deltaMoles);
       } catch (Exception ex) {
-	// Component might not exist in the system - skip silently
-	// This can happen for products not yet in the system
+        // Component might not exist in the system - skip silently
+        // This can happen for products not yet in the system
       }
     }
 
@@ -229,9 +229,9 @@ public class StoichiometricReaction implements Serializable {
       double absCoeff = Math.abs(coeff);
       String coeffStr = (absCoeff == 1.0) ? "" : String.valueOf(absCoeff) + " ";
       if (coeff < 0) {
-	reactantParts.add(coeffStr + compName);
+        reactantParts.add(coeffStr + compName);
       } else {
-	productParts.add(coeffStr + compName);
+        productParts.add(coeffStr + compName);
       }
     }
 
@@ -254,7 +254,7 @@ public class StoichiometricReaction implements Serializable {
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < parts.size(); i++) {
       if (i > 0) {
-	sb.append(delimiter);
+        sb.append(delimiter);
       }
       sb.append(parts.get(i));
     }

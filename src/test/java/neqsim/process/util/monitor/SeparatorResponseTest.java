@@ -57,7 +57,7 @@ public class SeparatorResponseTest {
     String pumpjson = pump1.toJson();
     JsonObject jsonObject = JsonParser.parseString(sep3json).getAsJsonObject();
     Double reldens = jsonObject.getAsJsonObject("feed").getAsJsonObject("properties").getAsJsonObject("oil")
-	.getAsJsonObject("relative density").get("value").getAsDouble();
+        .getAsJsonObject("relative density").get("value").getAsDouble();
     assertEquals(0.688292615281, reldens, 0.01);
   }
 }

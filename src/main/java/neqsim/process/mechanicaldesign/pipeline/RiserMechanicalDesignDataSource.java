@@ -118,19 +118,19 @@ public class RiserMechanicalDesignDataSource {
     String query = String.format(Locale.ROOT, RISER_DESIGN_FACTORS_QUERY, company);
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
-	ResultSet dataSet = database.getResultSet(query)) {
+        ResultSet dataSet = database.getResultSet(query)) {
       while (dataSet.next()) {
-	String spec = dataSet.getString("SPECIFICATION");
-	double minValue = dataSet.getDouble("MINVALUE");
-	double maxValue = dataSet.getDouble("MAXVALUE");
-	String documentId = dataSet.getString("DOCUMENTID");
+        String spec = dataSet.getString("SPECIFICATION");
+        double minValue = dataSet.getDouble("MINVALUE");
+        double maxValue = dataSet.getDouble("MAXVALUE");
+        String documentId = dataSet.getString("DOCUMENTID");
 
-	// Use max value for safety factors
-	applyParameter(params, spec, minValue, maxValue, documentId);
+        // Use max value for safety factors
+        applyParameter(params, spec, minValue, maxValue, documentId);
       }
     } catch (Exception e) {
       logger.warn("Failed to load riser design parameters for company '{}', using defaults: {}", company,
-	  e.getMessage());
+          e.getMessage());
     }
 
     return params;
@@ -148,11 +148,11 @@ public class RiserMechanicalDesignDataSource {
     String query = String.format(Locale.ROOT, RISER_STANDARDS_QUERY, standardCode);
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
-	ResultSet dataSet = database.getResultSet(query)) {
+        ResultSet dataSet = database.getResultSet(query)) {
       while (dataSet.next()) {
-	String spec = dataSet.getString("SPECIFICATION");
-	double maxValue = dataSet.getDouble("MAXVALUE");
-	params.put(spec, maxValue);
+        String spec = dataSet.getString("SPECIFICATION");
+        double maxValue = dataSet.getDouble("MAXVALUE");
+        params.put(spec, maxValue);
       }
     } catch (Exception e) {
       logger.warn("Failed to load standard '{}' parameters: {}", standardCode, e.getMessage());
@@ -185,19 +185,19 @@ public class RiserMechanicalDesignDataSource {
     Map<String, Double> standardParams = loadFromStandard(designCode);
     if (!standardParams.isEmpty()) {
       if (standardParams.containsKey("UsageFactor")) {
-	calculator.setDesignFactor(standardParams.get("UsageFactor"));
+        calculator.setDesignFactor(standardParams.get("UsageFactor"));
       }
       if (standardParams.containsKey("FatigueDesignFactor")) {
-	calculator.setFatigueDesignFactor(standardParams.get("FatigueDesignFactor"));
+        calculator.setFatigueDesignFactor(standardParams.get("FatigueDesignFactor"));
       }
       if (standardParams.containsKey("DynamicAmplificationFactor")) {
-	calculator.setDynamicAmplificationFactor(standardParams.get("DynamicAmplificationFactor"));
+        calculator.setDynamicAmplificationFactor(standardParams.get("DynamicAmplificationFactor"));
       }
       if (standardParams.containsKey("StrouhalNumber")) {
-	calculator.setStrouhalNumber(standardParams.get("StrouhalNumber"));
+        calculator.setStrouhalNumber(standardParams.get("StrouhalNumber"));
       }
       if (standardParams.containsKey("SCFGirthWeld")) {
-	calculator.setStressConcentrationFactor(standardParams.get("SCFGirthWeld"));
+        calculator.setStressConcentrationFactor(standardParams.get("SCFGirthWeld"));
       }
     }
 

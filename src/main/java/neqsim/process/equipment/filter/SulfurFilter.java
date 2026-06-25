@@ -142,15 +142,15 @@ public class SulfurFilter extends Filter {
 
       // Find the solid phase and get S8 mass
       for (int phaseIdx = 0; phaseIdx < system.getNumberOfPhases(); phaseIdx++) {
-	if (system.getPhase(phaseIdx).getType() == PhaseType.SOLID) {
-	  double solidPhaseMass = system.getPhase(phaseIdx).getMass();
-	  // S8 mass fraction in the total stream that is solid
-	  double totalMass = system.getMass("kg");
-	  if (totalMass > 0) {
-	    solidS8MassFractionInlet = solidPhaseMass / totalMass;
-	  }
-	  break;
-	}
+        if (system.getPhase(phaseIdx).getType() == PhaseType.SOLID) {
+          double solidPhaseMass = system.getPhase(phaseIdx).getMass();
+          // S8 mass fraction in the total stream that is solid
+          double totalMass = system.getMass("kg");
+          if (totalMass > 0) {
+            solidS8MassFractionInlet = solidPhaseMass / totalMass;
+          }
+          break;
+        }
       }
 
       // Calculate removal rate: mass flow * solid fraction * efficiency
@@ -159,26 +159,26 @@ public class SulfurFilter extends Filter {
       // Remove solid S8 from outlet: reduce S8 component by removal efficiency
       // Set S8 content in outlet to only the fraction that passes through
       if (system.hasComponent("S8") && removalEfficiency > 0) {
-	// Get current S8 moles in gas phase and reduce total S8
-	double currentS8Moles = 0.0;
-	double solidS8Moles = 0.0;
-	for (int phaseIdx = 0; phaseIdx < system.getNumberOfPhases(); phaseIdx++) {
-	  if (system.getPhase(phaseIdx).getType() == PhaseType.SOLID) {
-	    solidS8Moles = system.getPhase(phaseIdx).getComponent("S8").getNumberOfmoles();
-	  }
-	  currentS8Moles += system.getPhase(phaseIdx).getComponent("S8").getNumberOfmoles();
-	}
+        // Get current S8 moles in gas phase and reduce total S8
+        double currentS8Moles = 0.0;
+        double solidS8Moles = 0.0;
+        for (int phaseIdx = 0; phaseIdx < system.getNumberOfPhases(); phaseIdx++) {
+          if (system.getPhase(phaseIdx).getType() == PhaseType.SOLID) {
+            solidS8Moles = system.getPhase(phaseIdx).getComponent("S8").getNumberOfmoles();
+          }
+          currentS8Moles += system.getPhase(phaseIdx).getComponent("S8").getNumberOfmoles();
+        }
 
-	// Remove solid S8 from the system (filter captures it)
-	double molesToRemove = solidS8Moles * removalEfficiency;
-	if (molesToRemove > 0 && currentS8Moles > molesToRemove) {
-	  double remainingMoles = currentS8Moles - molesToRemove;
-	  system.addComponent("S8", -molesToRemove);
-	}
+        // Remove solid S8 from the system (filter captures it)
+        double molesToRemove = solidS8Moles * removalEfficiency;
+        if (molesToRemove > 0 && currentS8Moles > molesToRemove) {
+          double remainingMoles = currentS8Moles - molesToRemove;
+          system.addComponent("S8", -molesToRemove);
+        }
 
-	// Re-flash without solid check to get clean gas outlet
-	ops.TPflash();
-	system.initProperties();
+        // Re-flash without solid check to get clean gas outlet
+        ops.TPflash();
+        system.initProperties();
       }
     }
 
@@ -211,19 +211,19 @@ public class SulfurFilter extends Filter {
       double totalS8moles = 0;
       double solidS8moles = 0;
       for (int i = 0; i < system.getNumberOfPhases(); i++) {
-	if (system.getPhase(i).hasComponent("S8")) {
-	  double moles = system.getPhase(i).getComponent("S8").getNumberOfmoles();
-	  totalS8moles += moles;
-	  if (system.getPhase(i).getType() == PhaseType.SOLID) {
-	    solidS8moles = moles;
-	  }
-	}
+        if (system.getPhase(i).hasComponent("S8")) {
+          double moles = system.getPhase(i).getComponent("S8").getNumberOfmoles();
+          totalS8moles += moles;
+          if (system.getPhase(i).getType() == PhaseType.SOLID) {
+            solidS8moles = moles;
+          }
+        }
       }
       double gasS8moles = totalS8moles - solidS8moles;
       if (gasS8moles > 0 && solidS8moles > 0) {
-	supersaturationRatio = totalS8moles / gasS8moles;
+        supersaturationRatio = totalS8moles / gasS8moles;
       } else if (solidS8moles > 0) {
-	supersaturationRatio = 100.0; // very high if all S8 is solid
+        supersaturationRatio = 100.0; // very high if all S8 is solid
       }
     }
     nucleationModel.setSupersaturationRatio(supersaturationRatio);
@@ -232,7 +232,7 @@ public class SulfurFilter extends Filter {
     try {
       double gasVisc = system.getPhase("gas").getViscosity("kg/msec");
       if (gasVisc > 0) {
-	nucleationModel.setGasViscosity(gasVisc);
+        nucleationModel.setGasViscosity(gasVisc);
       }
     } catch (Exception ex) {
       nucleationModel.setGasViscosity(1.0e-5);

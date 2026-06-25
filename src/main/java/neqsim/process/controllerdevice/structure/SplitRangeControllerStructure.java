@@ -75,12 +75,12 @@ public class SplitRangeControllerStructure implements ControlStructureInterface 
 
     for (int i = 0; i < elementOutputs.length; i++) {
       if (rawOutput <= rangeLow[i]) {
-	elementOutputs[i] = 0.0;
+        elementOutputs[i] = 0.0;
       } else if (rawOutput >= rangeHigh[i]) {
-	elementOutputs[i] = 100.0;
+        elementOutputs[i] = 100.0;
       } else {
-	double span = rangeHigh[i] - rangeLow[i];
-	elementOutputs[i] = (rawOutput - rangeLow[i]) / span * 100.0;
+        double span = rangeHigh[i] - rangeLow[i];
+        elementOutputs[i] = (rawOutput - rangeLow[i]) / span * 100.0;
       }
     }
   }

@@ -80,7 +80,7 @@ public class AsphalteneStabilityAnalyzerTest {
     assertNotNull(risk);
     // With small undersaturation and moderate density, should be stable/low risk
     assertTrue(risk == AsphalteneStabilityAnalyzer.AsphalteneRisk.STABLE
-	|| risk == AsphalteneStabilityAnalyzer.AsphalteneRisk.LOW_RISK);
+        || risk == AsphalteneStabilityAnalyzer.AsphalteneRisk.LOW_RISK);
   }
 
   @Test

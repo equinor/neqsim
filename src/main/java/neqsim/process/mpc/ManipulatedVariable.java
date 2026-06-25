@@ -30,7 +30,7 @@ import neqsim.process.equipment.valve.ValveInterface;
  * {@code
  * // Valve opening as MV
  * ManipulatedVariable valveMV = new ManipulatedVariable("InletValve", valve, "opening").setBounds(0.0, 1.0) // Physical
- * 													  // limits
+ *     // limits
  *     .setRateLimit(-0.1, 0.1) // Max 10% change per step
  *     .setPreferredValue(0.7) // Preferred operating point
  *     .setCost(0.0); // No direct cost
@@ -294,37 +294,37 @@ public class ManipulatedVariable extends MPCVariable {
     if (equipment instanceof ValveInterface) {
       ValveInterface valve = (ValveInterface) equipment;
       if ("opening".equalsIgnoreCase(propertyName) || "percentValveOpening".equalsIgnoreCase(propertyName)) {
-	currentValue = valve.getPercentValveOpening() / 100.0;
-	return currentValue;
+        currentValue = valve.getPercentValveOpening() / 100.0;
+        return currentValue;
       }
     }
 
     if (equipment instanceof StreamInterface) {
       StreamInterface stream = (StreamInterface) equipment;
       if ("flowRate".equalsIgnoreCase(propertyName)) {
-	if (unit != null) {
-	  currentValue = stream.getFlowRate(unit);
-	} else {
-	  currentValue = stream.getFlowRate("kg/hr");
-	}
-	return currentValue;
+        if (unit != null) {
+          currentValue = stream.getFlowRate(unit);
+        } else {
+          currentValue = stream.getFlowRate("kg/hr");
+        }
+        return currentValue;
       }
       if ("temperature".equalsIgnoreCase(propertyName)) {
-	if ("C".equalsIgnoreCase(unit)) {
-	  currentValue = stream.getTemperature("C");
-	} else if ("K".equalsIgnoreCase(unit)) {
-	  currentValue = stream.getTemperature("K");
-	} else {
-	  currentValue = stream.getTemperature("C");
-	}
-	return currentValue;
+        if ("C".equalsIgnoreCase(unit)) {
+          currentValue = stream.getTemperature("C");
+        } else if ("K".equalsIgnoreCase(unit)) {
+          currentValue = stream.getTemperature("K");
+        } else {
+          currentValue = stream.getTemperature("C");
+        }
+        return currentValue;
       }
       if ("pressure".equalsIgnoreCase(propertyName)) {
-	if (unit != null) {
-	  currentValue = stream.getPressure(unit);
-	} else {
-	  currentValue = stream.getPressure("bara");
-	}
+        if (unit != null) {
+          currentValue = stream.getPressure(unit);
+        } else {
+          currentValue = stream.getPressure("bara");
+        }
       }
     }
 
@@ -351,10 +351,10 @@ public class ManipulatedVariable extends MPCVariable {
     if (Double.isFinite(currentValue)) {
       double delta = clampedValue - currentValue;
       if (!Double.isInfinite(minRateOfChange)) {
-	delta = Math.max(minRateOfChange, delta);
+        delta = Math.max(minRateOfChange, delta);
       }
       if (!Double.isInfinite(maxRateOfChange)) {
-	delta = Math.min(maxRateOfChange, delta);
+        delta = Math.min(maxRateOfChange, delta);
       }
       clampedValue = currentValue + delta;
     }
@@ -369,37 +369,37 @@ public class ManipulatedVariable extends MPCVariable {
     if (equipment instanceof ValveInterface) {
       ValveInterface valve = (ValveInterface) equipment;
       if ("opening".equalsIgnoreCase(propertyName) || "percentValveOpening".equalsIgnoreCase(propertyName)) {
-	valve.setPercentValveOpening(clampedValue * 100.0);
-	return;
+        valve.setPercentValveOpening(clampedValue * 100.0);
+        return;
       }
     }
 
     if (equipment instanceof StreamInterface) {
       StreamInterface stream = (StreamInterface) equipment;
       if ("flowRate".equalsIgnoreCase(propertyName)) {
-	if (unit != null) {
-	  stream.setFlowRate(clampedValue, unit);
-	} else {
-	  stream.setFlowRate(clampedValue, "kg/hr");
-	}
-	return;
+        if (unit != null) {
+          stream.setFlowRate(clampedValue, unit);
+        } else {
+          stream.setFlowRate(clampedValue, "kg/hr");
+        }
+        return;
       }
       if ("temperature".equalsIgnoreCase(propertyName)) {
-	if ("C".equalsIgnoreCase(unit)) {
-	  stream.setTemperature(clampedValue, "C");
-	} else if ("K".equalsIgnoreCase(unit)) {
-	  stream.setTemperature(clampedValue, "K");
-	} else {
-	  stream.setTemperature(clampedValue, "C");
-	}
-	return;
+        if ("C".equalsIgnoreCase(unit)) {
+          stream.setTemperature(clampedValue, "C");
+        } else if ("K".equalsIgnoreCase(unit)) {
+          stream.setTemperature(clampedValue, "K");
+        } else {
+          stream.setTemperature(clampedValue, "C");
+        }
+        return;
       }
       if ("pressure".equalsIgnoreCase(propertyName)) {
-	if (unit != null) {
-	  stream.setPressure(clampedValue, unit);
-	} else {
-	  stream.setPressure(clampedValue, "bara");
-	}
+        if (unit != null) {
+          stream.setPressure(clampedValue, unit);
+        } else {
+          stream.setPressure(clampedValue, "bara");
+        }
       }
     }
   }
@@ -432,10 +432,10 @@ public class ManipulatedVariable extends MPCVariable {
     if (Double.isFinite(currentValue)) {
       double delta = proposedValue - currentValue;
       if (!Double.isInfinite(minRateOfChange) && delta < minRateOfChange) {
-	return false;
+        return false;
       }
       if (!Double.isInfinite(maxRateOfChange) && delta > maxRateOfChange) {
-	return false;
+        return false;
       }
     }
     return true;

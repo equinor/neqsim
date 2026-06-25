@@ -26,23 +26,23 @@ public class methaneBWR32 {
     double pres = 0.0;
     double R = 0.08205616;
     pres = molDens * R * temp
-	+ molDens * molDens * (N[0] * temp + N[1] * Math.sqrt(temp) + N[2] + N[3] / temp + N[4] / temp / temp)
-	+ Math.pow(molDens, 3.0) * (N[5] * temp + N[6] + N[7] / temp + N[8] / temp / temp)
-	+ Math.pow(molDens, 4.0) * (N[9] * temp + N[10] + N[11] / temp) + Math.pow(molDens, 5.0) * N[12]
-	+ Math.pow(molDens, 6.0) * (N[13] / temp + N[14] / temp / temp) + Math.pow(molDens, 7.0) * N[15] / temp
-	+ Math.pow(molDens, 8.0) * (N[16] / temp + N[17] / temp / temp) + Math.pow(molDens, 9.0) * N[18] / temp / temp
-	+ Math.pow(molDens, 3.0) * (N[19] / temp / temp + N[20] / Math.pow(temp, 3.0))
-	    * Math.exp(-gamma * Math.pow(molDens, 2.0))
-	+ Math.pow(molDens, 5.0) * (N[21] / temp / temp + N[22] / Math.pow(temp, 4.0))
-	    * Math.exp(-gamma * Math.pow(molDens, 2.0))
-	+ Math.pow(molDens, 7.0) * (N[23] / temp / temp + N[24] / Math.pow(temp, 3.0))
-	    * Math.exp(-gamma * Math.pow(molDens, 2.0))
-	+ Math.pow(molDens, 9.0) * (N[25] / temp / temp + N[26] / Math.pow(temp, 4.0))
-	    * Math.exp(-gamma * Math.pow(molDens, 2.0))
-	+ Math.pow(molDens, 11.0) * (N[27] / temp / temp + N[28] / Math.pow(temp, 3.0))
-	    * Math.exp(-gamma * Math.pow(molDens, 2.0))
-	+ Math.pow(molDens, 13.0) * (N[29] / temp / temp + N[30] / Math.pow(temp, 3.0) + N[31] / Math.pow(temp, 4.0))
-	    * Math.exp(-gamma * Math.pow(molDens, 2.0));
+        + molDens * molDens * (N[0] * temp + N[1] * Math.sqrt(temp) + N[2] + N[3] / temp + N[4] / temp / temp)
+        + Math.pow(molDens, 3.0) * (N[5] * temp + N[6] + N[7] / temp + N[8] / temp / temp)
+        + Math.pow(molDens, 4.0) * (N[9] * temp + N[10] + N[11] / temp) + Math.pow(molDens, 5.0) * N[12]
+        + Math.pow(molDens, 6.0) * (N[13] / temp + N[14] / temp / temp) + Math.pow(molDens, 7.0) * N[15] / temp
+        + Math.pow(molDens, 8.0) * (N[16] / temp + N[17] / temp / temp) + Math.pow(molDens, 9.0) * N[18] / temp / temp
+        + Math.pow(molDens, 3.0) * (N[19] / temp / temp + N[20] / Math.pow(temp, 3.0))
+            * Math.exp(-gamma * Math.pow(molDens, 2.0))
+        + Math.pow(molDens, 5.0) * (N[21] / temp / temp + N[22] / Math.pow(temp, 4.0))
+            * Math.exp(-gamma * Math.pow(molDens, 2.0))
+        + Math.pow(molDens, 7.0) * (N[23] / temp / temp + N[24] / Math.pow(temp, 3.0))
+            * Math.exp(-gamma * Math.pow(molDens, 2.0))
+        + Math.pow(molDens, 9.0) * (N[25] / temp / temp + N[26] / Math.pow(temp, 4.0))
+            * Math.exp(-gamma * Math.pow(molDens, 2.0))
+        + Math.pow(molDens, 11.0) * (N[27] / temp / temp + N[28] / Math.pow(temp, 3.0))
+            * Math.exp(-gamma * Math.pow(molDens, 2.0))
+        + Math.pow(molDens, 13.0) * (N[29] / temp / temp + N[30] / Math.pow(temp, 3.0) + N[31] / Math.pow(temp, 4.0))
+            * Math.exp(-gamma * Math.pow(molDens, 2.0));
 
     return pres + 0.01325;
   }
@@ -69,9 +69,9 @@ public class methaneBWR32 {
     do {
       iter++;
       if (iter < 4) {
-	guessMolDens -= error / 1000.0;
+        guessMolDens -= error / 1000.0;
       } else {
-	guessMolDens -= error / derrordmolvol;
+        guessMolDens -= error / derrordmolvol;
       }
 
       molVol = guessMolDens;

@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
@@ -60,7 +60,7 @@ class AsphalteneMultiMethodBenchmarkTest {
     // Test solubility parameter from density
     double deltaL = fh.calculateLiquidSolubilityParameter(800.0);
     assertTrue(deltaL > 10.0 && deltaL < 20.0,
-	"Liquid solubility parameter should be in range 10-20 MPa^0.5, got " + deltaL);
+        "Liquid solubility parameter should be in range 10-20 MPa^0.5, got " + deltaL);
 
     // Test chi parameter
     double chi = fh.calculateChiParameter(16.0, 373.15);
@@ -102,9 +102,9 @@ class AsphalteneMultiMethodBenchmarkTest {
     RefractiveIndexAsphalteneScreening.RIStability stability = ri.evaluateStability();
     assertNotNull(stability);
     assertTrue(
-	stability == RefractiveIndexAsphalteneScreening.RIStability.VERY_STABLE
-	    || stability == RefractiveIndexAsphalteneScreening.RIStability.STABLE,
-	"With 0.03 margin should be STABLE or VERY_STABLE");
+        stability == RefractiveIndexAsphalteneScreening.RIStability.VERY_STABLE
+            || stability == RefractiveIndexAsphalteneScreening.RIStability.STABLE,
+        "With 0.03 margin should be STABLE or VERY_STABLE");
 
     // Test unstable case
     RefractiveIndexAsphalteneScreening riUnstable = new RefractiveIndexAsphalteneScreening();
@@ -112,7 +112,7 @@ class AsphalteneMultiMethodBenchmarkTest {
     riUnstable.setRiOnset(1.49);
     RefractiveIndexAsphalteneScreening.RIStability unstable = riUnstable.evaluateStability();
     assertEquals(RefractiveIndexAsphalteneScreening.RIStability.HIGHLY_UNSTABLE, unstable,
-	"Should be HIGHLY_UNSTABLE when RI < onset RI");
+        "Should be HIGHLY_UNSTABLE when RI < onset RI");
 
     // Test SARA-to-RI estimation
     double onsetRI = ri.estimateOnsetRIFromSARA(0.45, 0.25, 0.20, 0.10);
@@ -248,7 +248,7 @@ class AsphalteneMultiMethodBenchmarkTest {
   @Test
   void testLiteratureCasesAvailable() {
     java.util.List<AsphalteneMultiMethodBenchmark.LiteratureCase> cases = AsphalteneMultiMethodBenchmark
-	.getLiteratureCases();
+        .getLiteratureCases();
     assertNotNull(cases);
     assertTrue(cases.size() >= 7, "Should have at least 7 literature cases, got " + cases.size());
 
@@ -260,12 +260,12 @@ class AsphalteneMultiMethodBenchmarkTest {
       assertTrue(lc.measuredOnsetPressure > 0, "Measured onset P must be positive: " + lc.label);
       assertTrue(lc.bubblePointPressure > 0, "Bubble P must be positive: " + lc.label);
       assertTrue(lc.inSituDensity > 500 && lc.inSituDensity < 1200,
-	  "In-situ density must be 500-1200 kg/m3: " + lc.label);
+          "In-situ density must be 500-1200 kg/m3: " + lc.label);
       // Check onset is between bubble and reservoir pressure
       assertTrue(lc.measuredOnsetPressure > lc.bubblePointPressure,
-	  "Onset P should be above bubble point: " + lc.label);
+          "Onset P should be above bubble point: " + lc.label);
       assertTrue(lc.measuredOnsetPressure <= lc.reservoirPressure,
-	  "Onset P should not exceed reservoir P: " + lc.label);
+          "Onset P should not exceed reservoir P: " + lc.label);
     }
   }
 
@@ -326,7 +326,7 @@ class AsphalteneMultiMethodBenchmarkTest {
     // Light (paraffinic) oil should have HIGHER onset RI than heavy (aromatic) oil
     // because paraffinic solvent is worse at dissolving asphaltenes
     assertTrue(lightOnset > heavyOnset, "Light paraffinic oil onset RI (" + lightOnset
-	+ ") should be higher than heavy aromatic oil (" + heavyOnset + ")");
+        + ") should be higher than heavy aromatic oil (" + heavyOnset + ")");
   }
 
   @Test
@@ -335,22 +335,22 @@ class AsphalteneMultiMethodBenchmarkTest {
     FloryHugginsAsphalteneModel lightModel = new FloryHugginsAsphalteneModel();
     lightModel.configureFromAPIGravity(42.0);
     assertTrue(lightModel.getAsphalteneMW() < 600,
-	"Light oil asphaltene MW should be < 600, got " + lightModel.getAsphalteneMW());
+        "Light oil asphaltene MW should be < 600, got " + lightModel.getAsphalteneMW());
     assertTrue(lightModel.getAsphalteneSolubilityParameter() > 21.5,
-	"Light oil delta should be > 21.5, got " + lightModel.getAsphalteneSolubilityParameter());
+        "Light oil delta should be > 21.5, got " + lightModel.getAsphalteneSolubilityParameter());
 
     // Heavy oil (API < 25) should get higher MW and lower solubility parameter
     FloryHugginsAsphalteneModel heavyModel = new FloryHugginsAsphalteneModel();
     heavyModel.configureFromAPIGravity(22.0);
     assertTrue(heavyModel.getAsphalteneMW() > 1500,
-	"Heavy oil asphaltene MW should be > 1500, got " + heavyModel.getAsphalteneMW());
+        "Heavy oil asphaltene MW should be > 1500, got " + heavyModel.getAsphalteneMW());
     assertTrue(heavyModel.getAsphalteneSolubilityParameter() < 21.0,
-	"Heavy oil delta should be < 21.0, got " + heavyModel.getAsphalteneSolubilityParameter());
+        "Heavy oil delta should be < 21.0, got " + heavyModel.getAsphalteneSolubilityParameter());
 
     // Molar volume should be recalculated
     double expectedVm = (heavyModel.getAsphalteneMW() / heavyModel.getAsphalteneDensity()) * 1000.0;
     assertEquals(expectedVm, heavyModel.getAsphaltMolarVolume(), 1.0,
-	"Molar volume should be recalculated from MW and density");
+        "Molar volume should be recalculated from MW and density");
     assertTrue(heavyModel.isConfiguredFromAPI(), "Should be marked as configured from API");
   }
 
@@ -359,7 +359,7 @@ class AsphalteneMultiMethodBenchmarkTest {
   void testFloryHugginsWithAPIGravityImprovesLiteraturePredictions() {
     // Test that API-gravity-configured FH model produces onset for more cases
     java.util.List<AsphalteneMultiMethodBenchmark.LiteratureCase> cases = AsphalteneMultiMethodBenchmark
-	.getLiteratureCases();
+        .getLiteratureCases();
 
     int onsetFoundWithAPI = 0;
     int onsetFoundWithoutAPI = 0;
@@ -379,7 +379,7 @@ class AsphalteneMultiMethodBenchmarkTest {
 
       // Without API gravity configuration
       AsphalteneMultiMethodBenchmark benchNoAPI = new AsphalteneMultiMethodBenchmark(lc.reservoirPressure,
-	  lc.reservoirTemperature);
+          lc.reservoirTemperature);
       benchNoAPI.setCpaSystem(cpa);
       benchNoAPI.setSARAFractions(lc.saturates, lc.aromatics, lc.resins, lc.asphaltenes);
       benchNoAPI.setInSituDensity(lc.inSituDensity);
@@ -387,12 +387,12 @@ class AsphalteneMultiMethodBenchmarkTest {
       benchNoAPI.runAllMethods();
       AsphalteneMultiMethodBenchmark.MethodResult fhNoAPI = benchNoAPI.getMethodResult("FloryHuggins");
       if (fhNoAPI != null && !Double.isNaN(fhNoAPI.onsetPressure)) {
-	onsetFoundWithoutAPI++;
+        onsetFoundWithoutAPI++;
       }
 
       // With API gravity configuration
       AsphalteneMultiMethodBenchmark benchWithAPI = new AsphalteneMultiMethodBenchmark(lc.reservoirPressure,
-	  lc.reservoirTemperature);
+          lc.reservoirTemperature);
       benchWithAPI.setCpaSystem(cpa);
       benchWithAPI.setSARAFractions(lc.saturates, lc.aromatics, lc.resins, lc.asphaltenes);
       benchWithAPI.setInSituDensity(lc.inSituDensity);
@@ -401,7 +401,7 @@ class AsphalteneMultiMethodBenchmarkTest {
       benchWithAPI.runAllMethods();
       AsphalteneMultiMethodBenchmark.MethodResult fhWithAPI = benchWithAPI.getMethodResult("FloryHuggins");
       if (fhWithAPI != null && !Double.isNaN(fhWithAPI.onsetPressure)) {
-	onsetFoundWithAPI++;
+        onsetFoundWithAPI++;
       }
     }
 
@@ -427,7 +427,7 @@ class AsphalteneMultiMethodBenchmarkTest {
     // Light oil with high undersaturation should be more severe than heavy with low
     // undersaturation
     assertTrue(lightRisk.ordinal() >= heavyRisk.ordinal(),
-	"Light oil (dP=320, rho=700) should be >= risk of heavy oil (dP=100, rho=900)");
+        "Light oil (dP=320, rho=700) should be >= risk of heavy oil (dP=100, rho=900)");
 
     // Verify plot data generation works with quadratic boundaries
     double[][] plotData = lightScreen.generatePlotData(600.0, 950.0, 50);
@@ -438,7 +438,7 @@ class AsphalteneMultiMethodBenchmarkTest {
     // Boundaries should decrease with increasing density
     // (less risk at higher density for same undersaturation)
     assertTrue(plotData[3][0] < plotData[3][49],
-	"Severe boundary should be higher at higher density (quadratic shape)");
+        "Severe boundary should be higher at higher density (quadratic shape)");
   }
 
   @Test
@@ -455,8 +455,8 @@ class AsphalteneMultiMethodBenchmarkTest {
 
     // R/A = 0.25/0.05 = 5.0 > 3.0, so delta should decrease
     assertTrue(adjustedDelta < baseDelta,
-	"High R/A ratio should lower effective delta: " + adjustedDelta + " < " + baseDelta);
+        "High R/A ratio should lower effective delta: " + adjustedDelta + " < " + baseDelta);
     assertEquals(0.05, model.getAsphalteneWeightFraction(), 0.001,
-	"Asphaltene weight fraction should be set from SARA");
+        "Asphaltene weight fraction should be set from SARA");
   }
 }

@@ -175,13 +175,13 @@ public final class GasPseudoCriticalProperties {
     double fCO2J = yCO2 * (TC_CO2 / PC_CO2);
     double fN2J = yN2 * (TC_N2 / PC_N2);
     double j = 0.11582 - 0.45820 * fH2SJ - 0.90348 * fCO2J - 0.66026 * fN2J + 0.70729 * gammaGHC
-	- 0.099397 * gammaGHC * gammaGHC;
+        - 0.099397 * gammaGHC * gammaGHC;
 
     double fH2SK = yH2S * Math.sqrt(TC_H2S / PC_H2S);
     double fCO2K = yCO2 * Math.sqrt(TC_CO2 / PC_CO2);
     double fN2K = yN2 * Math.sqrt(TC_N2 / PC_N2);
     double k = 3.8216 - 0.06534 * fH2SK - 0.42113 * fCO2K - 0.91249 * fN2K + 17.438 * gammaGHC
-	- 3.2191 * gammaGHC * gammaGHC;
+        - 3.2191 * gammaGHC * gammaGHC;
 
     return new double[] { j, k };
   }

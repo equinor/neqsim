@@ -87,14 +87,14 @@ public class PhaseBWRSEos extends PhaseSrkEos {
       double rhocJ = 1.0 / Math.sqrt(comp.getGammaBWRS());
       rhocMix += xj * rhocJ;
       for (int k = 0; k < OP; k++) {
-	mixBP[k] += xj * comp.getBP(k);
-	mixBPdT[k] += xj * comp.getBPdT(k);
-	mixBPdTdT[k] += xj * comp.getBPdTdT(k);
+        mixBP[k] += xj * comp.getBP(k);
+        mixBPdT[k] += xj * comp.getBPdT(k);
+        mixBPdTdT[k] += xj * comp.getBPdTdT(k);
       }
       for (int k = 0; k < OE; k++) {
-	mixBE[k] += xj * comp.getBE(k);
-	mixBEdT[k] += xj * comp.getBEdT(k);
-	mixBEdTdT[k] += xj * comp.getBEdTdT(k);
+        mixBE[k] += xj * comp.getBE(k);
+        mixBEdT[k] += xj * comp.getBEdT(k);
+        mixBEdTdT[k] += xj * comp.getBEdTdT(k);
       }
     }
     mixGamma = 1.0 / (rhocMix * rhocMix);
@@ -182,7 +182,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
    */
   public double getGammadRho() {
     return 0.0; // -2.0/Math.pow(((ComponentBWRS)componentArray[0]).getRhoc(),3.0);
-		// //-1.0/(rhoc*rhoc);
+    // //-1.0/(rhoc*rhoc);
   }
 
   /**
@@ -237,7 +237,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
       temp2 += (i) * mixBP[i] / (i - 0.0) * Math.pow(getMolarDensity(), i - 1.0);
     }
     return numberOfMolesInPhase / (R * temperature) * temp * Math.pow(getdRhodV(), 2)
-	+ numberOfMolesInPhase / (R * temperature) * temp2 * getdRhodVdV();
+        + numberOfMolesInPhase / (R * temperature) * temp2 * getdRhodVdV();
   }
 
   /**
@@ -255,9 +255,9 @@ public class PhaseBWRSEos extends PhaseSrkEos {
       temp3 += (i) * mixBP[i] / (i - 0.0) * Math.pow(getMolarDensity(), i - 1);
     }
     return numberOfMolesInPhase / (R * temperature) * temp * Math.pow(getdRhodV(), 3)
-	+ 2 * numberOfMolesInPhase / (R * temperature) * temp2 * Math.pow(getdRhodV(), 1) * getdRhodVdV()
-	+ numberOfMolesInPhase / (R * temperature) * temp2 * Math.pow(getdRhodV(), 1) * getdRhodVdV()
-	+ numberOfMolesInPhase / (R * temperature) * temp3 * getdRhodVdVdV();
+        + 2 * numberOfMolesInPhase / (R * temperature) * temp2 * Math.pow(getdRhodV(), 1) * getdRhodVdV()
+        + numberOfMolesInPhase / (R * temperature) * temp2 * Math.pow(getdRhodV(), 1) * getdRhodVdV()
+        + numberOfMolesInPhase / (R * temperature) * temp3 * getdRhodVdVdV();
   }
 
   /**
@@ -273,7 +273,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
       temp2 += mixBPdT[i] / (i + 0.0) * Math.pow(getMolarDensity(), i);
     }
     return -numberOfMolesInPhase / (R * temperature * temperature) * temp
-	+ numberOfMolesInPhase / (R * temperature) * temp2;
+        + numberOfMolesInPhase / (R * temperature) * temp2;
   }
 
   /**
@@ -318,7 +318,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
       term3 += mixBPdTdT[i] / (i + 0.0) * rhoPow;
     }
     return numberOfMolesInPhase / R
-	* (2.0 * term1 / Math.pow(temperature, 3.0) - 2.0 * term2 / Math.pow(temperature, 2.0) + term3 / temperature);
+        * (2.0 * term1 / Math.pow(temperature, 3.0) - 2.0 * term2 / Math.pow(temperature, 2.0) + term3 / temperature);
   }
 
   /**
@@ -382,7 +382,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     temp += oldTemp;
     for (int i = 1; i < OE; i++) {
       oldTemp = -mixBE[i] / (2.0 * mixGamma)
-	  * (getEL() * Math.pow(getMolarDensity(), 2.0 * i) - (2.0 * i) / mixBE[i - 1] * oldTemp);
+          * (getEL() * Math.pow(getMolarDensity(), 2.0 * i) - (2.0 * i) / mixBE[i - 1] * oldTemp);
       temp += oldTemp;
     }
     return numberOfMolesInPhase / (R * temperature) * temp;
@@ -401,7 +401,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     for (int i = 1; i < OE; i++) {
       double prev = oldTemp;
       oldTemp = -mixBE[i] / (2.0 * gamma) * (getELdRho() * Math.pow(rho, 2 * i)
-	  + getEL() * (2.0 * i) * Math.pow(rho, 2 * i - 1) - (2.0 * i) / mixBE[i - 1] * prev);
+          + getEL() * (2.0 * i) * Math.pow(rho, 2 * i - 1) - (2.0 * i) / mixBE[i - 1] * prev);
       temp += oldTemp;
     }
     return numberOfMolesInPhase / (R * temperature) * temp;
@@ -420,8 +420,8 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     for (int i = 1; i < OE; i++) {
       double prev = oldTemp;
       oldTemp = -mixBE[i] / (2.0 * gamma)
-	  * (getELdRhodedRho() * Math.pow(rho, 2 * i) + 2.0 * getELdRho() * (2.0 * i) * Math.pow(rho, 2 * i - 1)
-	      + getEL() * (2.0 * i) * (2.0 * i - 1) * Math.pow(rho, 2 * i - 2) - (2.0 * i) / mixBE[i - 1] * prev);
+          * (getELdRhodedRho() * Math.pow(rho, 2 * i) + 2.0 * getELdRho() * (2.0 * i) * Math.pow(rho, 2 * i - 1)
+              + getEL() * (2.0 * i) * (2.0 * i - 1) * Math.pow(rho, 2 * i - 2) - (2.0 * i) / mixBE[i - 1] * prev);
       temp += oldTemp;
     }
     return numberOfMolesInPhase / (R * temperature) * temp;
@@ -440,11 +440,11 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     for (int i = 1; i < OE; i++) {
       double prev = oldTemp;
       oldTemp = -mixBE[i] / (2.0 * gamma)
-	  * (getELdRhodedRhodedRho() * Math.pow(rho, 2 * i)
-	      + 3.0 * getELdRhodedRho() * (2.0 * i) * Math.pow(rho, 2 * i - 1)
-	      + 3.0 * getELdRho() * (2.0 * i) * (2.0 * i - 1) * Math.pow(rho, 2 * i - 2)
-	      + getEL() * (2.0 * i) * (2.0 * i - 1) * (2.0 * i - 2) * Math.pow(rho, 2 * i - 3)
-	      - (2.0 * i) / mixBE[i - 1] * prev);
+          * (getELdRhodedRhodedRho() * Math.pow(rho, 2 * i)
+              + 3.0 * getELdRhodedRho() * (2.0 * i) * Math.pow(rho, 2 * i - 1)
+              + 3.0 * getELdRho() * (2.0 * i) * (2.0 * i - 1) * Math.pow(rho, 2 * i - 2)
+              + getEL() * (2.0 * i) * (2.0 * i - 1) * (2.0 * i - 2) * Math.pow(rho, 2 * i - 3)
+              - (2.0 * i) / mixBE[i - 1] * prev);
       temp += oldTemp;
     }
     return numberOfMolesInPhase / (R * temperature) * temp;
@@ -475,7 +475,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
    */
   public double getFexpdVdVdV() {
     return getFexpdRhodRhodRho() * Math.pow(getdRhodV(), 3.0) + 3.0 * getFexpdRhodRho() * getdRhodV() * getdRhodVdV()
-	+ getFexpdRho() * getdRhodVdVdV();
+        + getFexpdRho() * getdRhodVdVdV();
   }
 
   /**
@@ -494,12 +494,12 @@ public class PhaseBWRSEos extends PhaseSrkEos {
       double prev = oldTemp;
       double dprev = doldTemp;
       oldTemp = -mixBE[i] / (2.0 * gamma) * (getELdRho() * Math.pow(rho, 2 * i)
-	  + getEL() * (2.0 * i) * Math.pow(rho, 2 * i - 1) - (2.0 * i) / mixBE[i - 1] * prev);
+          + getEL() * (2.0 * i) * Math.pow(rho, 2 * i - 1) - (2.0 * i) / mixBE[i - 1] * prev);
       doldTemp = -mixBEdT[i] / (2.0 * gamma)
-	  * (getELdRho() * Math.pow(rho, 2 * i) + getEL() * (2.0 * i) * Math.pow(rho, 2 * i - 1)
-	      - (2.0 * i) / mixBE[i - 1] * prev)
-	  - mixBE[i] / (2.0 * gamma)
-	      * (-(2.0 * i) / Math.pow(mixBE[i - 1], 2.0) * mixBEdT[i - 1] * prev - (2.0 * i) / mixBE[i - 1] * dprev);
+          * (getELdRho() * Math.pow(rho, 2 * i) + getEL() * (2.0 * i) * Math.pow(rho, 2 * i - 1)
+              - (2.0 * i) / mixBE[i - 1] * prev)
+          - mixBE[i] / (2.0 * gamma)
+              * (-(2.0 * i) / Math.pow(mixBE[i - 1], 2.0) * mixBEdT[i - 1] * prev - (2.0 * i) / mixBE[i - 1] * dprev);
       temp += oldTemp;
       dtemp += doldTemp;
     }
@@ -529,18 +529,18 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     temp += oldTemp;
     for (int i = 1; i < OE; i++) {
       oldTemp = -mixBEdT[i] / (2.0 * mixGamma)
-	  * (getEL() * Math.pow(getMolarDensity(), 2.0 * i) - (2.0 * i) / mixBE[i - 1] * oldTemp2)
+          * (getEL() * Math.pow(getMolarDensity(), 2.0 * i) - (2.0 * i) / mixBE[i - 1] * oldTemp2)
 
-	  +
+          +
 
-	  -mixBE[i] / (2.0 * mixGamma) * ((2.0 * i) / Math.pow(mixBE[i - 1], 2.0) * oldTemp2) * mixBEdT[i - 1]
+          -mixBE[i] / (2.0 * mixGamma) * ((2.0 * i) / Math.pow(mixBE[i - 1], 2.0) * oldTemp2) * mixBEdT[i - 1]
 
-	  +
+          +
 
-	  mixBE[i] / (2.0 * mixGamma) * ((2.0 * i) / mixBE[i - 1] * oldTemp);
+          mixBE[i] / (2.0 * mixGamma) * ((2.0 * i) / mixBE[i - 1] * oldTemp);
 
       oldTemp2 = -mixBE[i] / (2.0 * mixGamma)
-	  * (getEL() * Math.pow(getMolarDensity(), 2.0 * i) - (2.0 * i) / mixBE[i - 1] * oldTemp2);
+          * (getEL() * Math.pow(getMolarDensity(), 2.0 * i) - (2.0 * i) / mixBE[i - 1] * oldTemp2);
 
       temp += oldTemp;
     }
@@ -566,31 +566,31 @@ public class PhaseBWRSEos extends PhaseSrkEos {
 
     for (int i = 1; i < OE; i++) {
       double term1 = -mixBEdT[i] / (2.0 * gamma)
-	  * (getEL() * Math.pow(rho, 2.0 * i) - (2.0 * i) / mixBE[i - 1] * oldTemp2);
+          * (getEL() * Math.pow(rho, 2.0 * i) - (2.0 * i) / mixBE[i - 1] * oldTemp2);
       double term2 = -mixBE[i] / (2.0 * gamma) * ((2.0 * i) / Math.pow(mixBE[i - 1], 2.0) * oldTemp2) * mixBEdT[i - 1];
       double term3 = mixBE[i] / (2.0 * gamma) * ((2.0 * i) / mixBE[i - 1] * oldTemp);
       oldTemp = term1 + term2 + term3;
 
       double dterm1 = -mixBEdTdT[i] / (2.0 * gamma)
-	  * (getEL() * Math.pow(rho, 2.0 * i) - (2.0 * i) / mixBE[i - 1] * oldTemp2)
-	  - mixBEdT[i] / (2.0 * gamma) * (-(2.0 * i) / mixBE[i - 1] * doldTemp2
-	      + (2.0 * i) / Math.pow(mixBE[i - 1], 2.0) * mixBEdT[i - 1] * oldTemp2);
+          * (getEL() * Math.pow(rho, 2.0 * i) - (2.0 * i) / mixBE[i - 1] * oldTemp2)
+          - mixBEdT[i] / (2.0 * gamma) * (-(2.0 * i) / mixBE[i - 1] * doldTemp2
+              + (2.0 * i) / Math.pow(mixBE[i - 1], 2.0) * mixBEdT[i - 1] * oldTemp2);
       double dterm2 = -(mixBEdT[i] / (2.0 * gamma))
-	  * ((2.0 * i) / Math.pow(mixBE[i - 1], 2.0) * oldTemp2 * mixBEdT[i - 1])
-	  - (mixBE[i] / (2.0 * gamma))
-	      * ((2.0 * i) * (-2.0) / Math.pow(mixBE[i - 1], 3.0) * mixBEdT[i - 1] * oldTemp2 * mixBEdT[i - 1]
-		  + (2.0 * i) / Math.pow(mixBE[i - 1], 2.0) * doldTemp2 * mixBEdT[i - 1]
-		  + (2.0 * i) / Math.pow(mixBE[i - 1], 2.0) * oldTemp2 * mixBEdTdT[i - 1]);
+          * ((2.0 * i) / Math.pow(mixBE[i - 1], 2.0) * oldTemp2 * mixBEdT[i - 1])
+          - (mixBE[i] / (2.0 * gamma))
+              * ((2.0 * i) * (-2.0) / Math.pow(mixBE[i - 1], 3.0) * mixBEdT[i - 1] * oldTemp2 * mixBEdT[i - 1]
+                  + (2.0 * i) / Math.pow(mixBE[i - 1], 2.0) * doldTemp2 * mixBEdT[i - 1]
+                  + (2.0 * i) / Math.pow(mixBE[i - 1], 2.0) * oldTemp2 * mixBEdTdT[i - 1]);
       double dterm3 = (mixBEdT[i] / (2.0 * gamma)) * ((2.0 * i) / mixBE[i - 1] * oldTemp) + (mixBE[i] / (2.0 * gamma))
-	  * ((2.0 * i) / mixBE[i - 1] * doldTemp - (2.0 * i) / Math.pow(mixBE[i - 1], 2.0) * mixBEdT[i - 1] * oldTemp);
+          * ((2.0 * i) / mixBE[i - 1] * doldTemp - (2.0 * i) / Math.pow(mixBE[i - 1], 2.0) * mixBEdT[i - 1] * oldTemp);
       doldTemp = dterm1 + dterm2 + dterm3;
 
       double termBase = -mixBE[i] / (2.0 * gamma)
-	  * (getEL() * Math.pow(rho, 2.0 * i) - (2.0 * i) / mixBE[i - 1] * oldTemp2);
+          * (getEL() * Math.pow(rho, 2.0 * i) - (2.0 * i) / mixBE[i - 1] * oldTemp2);
       double dtermBase = -(mixBEdT[i] / (2.0 * gamma))
-	  * (getEL() * Math.pow(rho, 2.0 * i) - (2.0 * i) / mixBE[i - 1] * oldTemp2)
-	  - (mixBE[i] / (2.0 * gamma)) * (-(2.0 * i) / mixBE[i - 1] * doldTemp2
-	      + (2.0 * i) / Math.pow(mixBE[i - 1], 2.0) * mixBEdT[i - 1] * oldTemp2);
+          * (getEL() * Math.pow(rho, 2.0 * i) - (2.0 * i) / mixBE[i - 1] * oldTemp2)
+          - (mixBE[i] / (2.0 * gamma)) * (-(2.0 * i) / mixBE[i - 1] * doldTemp2
+              + (2.0 * i) / Math.pow(mixBE[i - 1], 2.0) * mixBEdT[i - 1] * oldTemp2);
       oldTemp2 = termBase;
       doldTemp2 = dtermBase;
 
@@ -602,7 +602,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     double FexpdT = -Fexp / temperature + numberOfMolesInPhase / (R * temperature) * temp;
 
     return -FexpdT / temperature + Fexp / Math.pow(temperature, 2.0)
-	+ numberOfMolesInPhase / R * (-temp / Math.pow(temperature, 2.0) + dtemp / temperature);
+        + numberOfMolesInPhase / R * (-temp / Math.pow(temperature, 2.0) + dtemp / temperature);
   }
 
   /**
@@ -634,10 +634,10 @@ public class PhaseBWRSEos extends PhaseSrkEos {
       moldens[j] = 30 - j * 0.1;
       double temp = 0.0;
       for (int i = 0; i < OP; i++) {
-	temp += mixBP[i] * Math.pow(moldens[j], 1.0 + i);
+        temp += mixBP[i] * Math.pow(moldens[j], 1.0 + i);
       }
       for (int i = 0; i < OE; i++) {
-	temp += Math.exp(-mixGamma * Math.pow(moldens[j], 2.0)) * mixBE[i] * Math.pow(moldens[j], 3.0 + 2.0 * i);
+        temp += Math.exp(-mixGamma * Math.pow(moldens[j], 2.0)) * mixBE[i] * Math.pow(moldens[j], 3.0 + 2.0 * i);
       }
       pres[j] = temp / 100.0;
       logger.info("moldens " + moldens[j] * 16.01 + "  pres " + pres[j]);
@@ -856,7 +856,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   public double molarVolume2(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
     double BonV = pt == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-	: pressure * getB() / (numberOfMolesInPhase * temperature * R);
+        : pressure * getB() / (numberOfMolesInPhase * temperature * R);
     double Btemp = getB();
     setMolarVolume(1.0 / BonV * Btemp); // numberOfMolesInPhase;
     int iterations = 0;
@@ -867,7 +867,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
       iterations++;
       guesPres = -R * temperature * dFdV() + R * temperature / getMolarVolume();
       guesPresdV = -R * temperature * dFdVdV()
-	  - getNumberOfMolesInPhase() * R * temperature / Math.pow(getTotalVolume(), 2.0);
+          - getNumberOfMolesInPhase() * R * temperature / Math.pow(getTotalVolume(), 2.0);
       logger.info("gues pres " + guesPres);
       setMolarVolume(getMolarVolume() - 1.0 / (guesPresdV * getNumberOfMolesInPhase()) * (guesPres - pressure) / 50.0);
       Z = pressure * getMolarVolume() / (R * temperature);

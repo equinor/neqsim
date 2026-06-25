@@ -253,7 +253,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
     // First-order exponential filter: y(k) = alpha * x(k) + (1-alpha) * y(k-1)
     if (firstOrderTimeConstant > 0.0) {
       if (Double.isNaN(filteredPreviousValue)) {
-	filteredPreviousValue = noisyValue;
+        filteredPreviousValue = noisyValue;
       }
       // Use a default dt of 1.0 second for per-sample filtering
       double alpha = 1.0 - Math.exp(-1.0 / firstOrderTimeConstant);
@@ -434,15 +434,15 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
     case NOISE_BURST:
       Random r = random;
       if (r == null) {
-	r = new Random();
-	random = r;
+        r = new Random();
+        random = r;
       }
       return rawValue + r.nextGaussian() * faultParameter;
     case SATURATION:
       if (faultParameter >= 0) {
-	return Math.min(rawValue, faultParameter);
+        return Math.min(rawValue, faultParameter);
       } else {
-	return Math.max(rawValue, faultParameter);
+        return Math.max(rawValue, faultParameter);
       }
     case NONE:
     default:
@@ -504,7 +504,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
    */
   public void runConditionAnalysis() {
     if (Math.abs(
-	getMeasuredValue(onlineMeasurementValueUnit) - onlineMeasurementValue) < getConditionAnalysisMaxDeviation()) {
+        getMeasuredValue(onlineMeasurementValueUnit) - onlineMeasurementValue) < getConditionAnalysisMaxDeviation()) {
       conditionAnalysisMessage = "ok";
     } else {
       conditionAnalysisMessage = "fail";

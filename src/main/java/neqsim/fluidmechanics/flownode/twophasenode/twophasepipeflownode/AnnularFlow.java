@@ -47,7 +47,7 @@ public class AnnularFlow extends TwoPhaseFlowNode {
     this.flowNodeType = "annular";
     this.interphaseTransportCoefficient = new InterphaseAnnularFlow(this);
     this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-	this);
+        this);
   }
 
   /**
@@ -62,7 +62,7 @@ public class AnnularFlow extends TwoPhaseFlowNode {
     this.flowNodeType = "annular";
     this.interphaseTransportCoefficient = new InterphaseAnnularFlow(this);
     this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-	this);
+        this);
   }
 
   /** {@inheritDoc} */
@@ -113,7 +113,7 @@ public class AnnularFlow extends TwoPhaseFlowNode {
     if (diameter > 0 && alphaL > 0 && alphaL < 1) {
       double sqrtTerm = Math.sqrt(1.0 - alphaL);
       if (sqrtTerm < 1.0) {
-	return 4.0 / diameter / (1.0 - sqrtTerm);
+        return 4.0 / diameter / (1.0 - sqrtTerm);
       }
     }
     // Fall back to simple calculation
@@ -252,8 +252,8 @@ public class AnnularFlow extends TwoPhaseFlowNode {
       test.calcFluxes();
       test.update();
       if (i % 100 == 0) {
-	// test.display("testnode " + i);
-	test.getBulkSystem().prettyPrint();
+        // test.display("testnode " + i);
+        test.getBulkSystem().prettyPrint();
       }
       System.out.println("aqueous phase " + test.getBulkSystem().getPhaseFraction("oil", "wt"));
     }

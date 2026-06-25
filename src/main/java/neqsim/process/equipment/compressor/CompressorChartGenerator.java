@@ -221,8 +221,8 @@ public class CompressorChartGenerator {
       speeds[0] = refSpeed;
     } else {
       for (int i = 0; i < numberOfSpeeds; i++) {
-	double ratio = minSpeedRatio + (maxSpeedRatio - minSpeedRatio) * i / (numberOfSpeeds - 1);
-	speeds[i] = refSpeed * ratio;
+        double ratio = minSpeedRatio + (maxSpeedRatio - minSpeedRatio) * i / (numberOfSpeeds - 1);
+        speeds[i] = refSpeed * ratio;
       }
     }
 
@@ -308,14 +308,14 @@ public class CompressorChartGenerator {
     for (int i = 0; i < templateRatios.length; i++) {
       double diff = Math.abs(templateRatios[i] - refRatio);
       if (diff < minDiff) {
-	minDiff = diff;
-	refIndex = i;
+        minDiff = diff;
+        refIndex = i;
       }
     }
 
     // Scale the template to match design point, then use the specified speeds
     CompressorChartInterface baseChart = template.scaleToDesignPoint(designSpeed, designFlow, designHead,
-	targetSpeeds.length, chartType);
+        targetSpeeds.length, chartType);
 
     // If the number of speeds matches, return directly
     // Otherwise, generate new curves at specified speeds using fan laws from the base
@@ -391,7 +391,7 @@ public class CompressorChartGenerator {
     // Calculate reference Reynolds number
     double refTipSpeed = CompressorCurveCorrections.calculateTipSpeed(refSpeed, impellerDiameter);
     double refReynolds = CompressorCurveCorrections.calculateReynoldsNumber(refTipSpeed, impellerDiameter,
-	kinematicViscosity);
+        kinematicViscosity);
 
     // Calculate sonic velocity for Mach correction
     double sonicVelocity = CompressorCurveCorrections.calculateSonicVelocity(kappa, temperature, molarMass, zFactor);
@@ -421,70 +421,70 @@ public class CompressorChartGenerator {
       // Apply multistage surge correction if enabled
       double surgeFlowMultiplier = 0.70;
       if (useMultistageSurgeCorrection && numberOfStages > 1) {
-	double surgeFanLawFlow = scaledFlow * 0.70;
-	double correctedSurgeFlow = CompressorCurveCorrections.calculateMultistageSurgeCorrection(surgeFanLawFlow,
-	    speedRatio, numberOfStages);
-	surgeFlowMultiplier = correctedSurgeFlow / scaledFlow;
+        double surgeFanLawFlow = scaledFlow * 0.70;
+        double correctedSurgeFlow = CompressorCurveCorrections.calculateMultistageSurgeCorrection(surgeFanLawFlow,
+            speedRatio, numberOfStages);
+        surgeFlowMultiplier = correctedSurgeFlow / scaledFlow;
       }
 
       // Apply Mach correction to stonewall flow if enabled
       double stonewallFlowMultiplier = isNormalCurves ? 1.40 : 1.43;
       if (useMachCorrection && designMach > 0.1) {
-	double stonewallFlow = CompressorCurveCorrections.calculateStonewallFlow(scaledFlow, sonicVelocity, designMach);
-	stonewallFlowMultiplier = stonewallFlow / scaledFlow;
+        double stonewallFlow = CompressorCurveCorrections.calculateStonewallFlow(scaledFlow, sonicVelocity, designMach);
+        stonewallFlowMultiplier = stonewallFlow / scaledFlow;
       }
 
       // Calculate Reynolds correction for efficiency if enabled
       double reynoldsEfficiencyCorrection = 1.0;
       if (useReynoldsCorrection) {
-	double actualTipSpeed = CompressorCurveCorrections.calculateTipSpeed(speeds[i], impellerDiameter);
-	double actualReynolds = CompressorCurveCorrections.calculateReynoldsNumber(actualTipSpeed, impellerDiameter,
-	    kinematicViscosity);
-	reynoldsEfficiencyCorrection = CompressorCurveCorrections.calculateReynoldsEfficiencyCorrection(actualReynolds,
-	    refReynolds);
+        double actualTipSpeed = CompressorCurveCorrections.calculateTipSpeed(speeds[i], impellerDiameter);
+        double actualReynolds = CompressorCurveCorrections.calculateReynoldsNumber(actualTipSpeed, impellerDiameter,
+            kinematicViscosity);
+        reynoldsEfficiencyCorrection = CompressorCurveCorrections.calculateReynoldsEfficiencyCorrection(actualReynolds,
+            refReynolds);
       }
 
       if (isNormalCurves) {
-	// Generate 5 points per curve for normal curves
-	flow[i][0] = scaledFlow * surgeFlowMultiplier; // surge point
-	flow[i][1] = scaledFlow * 0.85;
-	flow[i][2] = scaledFlow; // design point
-	flow[i][3] = scaledFlow * 1.15;
-	flow[i][4] = scaledFlow * stonewallFlowMultiplier; // stonewall point
+        // Generate 5 points per curve for normal curves
+        flow[i][0] = scaledFlow * surgeFlowMultiplier; // surge point
+        flow[i][1] = scaledFlow * 0.85;
+        flow[i][2] = scaledFlow; // design point
+        flow[i][3] = scaledFlow * 1.15;
+        flow[i][4] = scaledFlow * stonewallFlowMultiplier; // stonewall point
 
-	// Apply multistage head correction at surge if enabled
-	double surgeHeadMultiplier = 1.10;
-	if (useMultistageSurgeCorrection && numberOfStages > 1) {
-	  double correctedSurgeHead = CompressorCurveCorrections
-	      .calculateMultistageSurgeHeadCorrection(scaledHead * 1.10, speedRatio, numberOfStages);
-	  surgeHeadMultiplier = correctedSurgeHead / scaledHead;
-	}
+        // Apply multistage head correction at surge if enabled
+        double surgeHeadMultiplier = 1.10;
+        if (useMultistageSurgeCorrection && numberOfStages > 1) {
+          double correctedSurgeHead = CompressorCurveCorrections
+              .calculateMultistageSurgeHeadCorrection(scaledHead * 1.10, speedRatio, numberOfStages);
+          surgeHeadMultiplier = correctedSurgeHead / scaledHead;
+        }
 
-	head[i][0] = scaledHead * surgeHeadMultiplier; // high head at surge
-	head[i][1] = scaledHead * 1.05;
-	head[i][2] = scaledHead; // design point
-	head[i][3] = scaledHead * 0.90;
-	head[i][4] = scaledHead * 0.70; // low head at stonewall
+        head[i][0] = scaledHead * surgeHeadMultiplier; // high head at surge
+        head[i][1] = scaledHead * 1.05;
+        head[i][2] = scaledHead; // design point
+        head[i][3] = scaledHead * 0.90;
+        head[i][4] = scaledHead * 0.70; // low head at stonewall
 
-	// Apply Reynolds correction to efficiency
-	polyEff[i][0] = refEfficiency * 100.0 * 0.88 * reynoldsEfficiencyCorrection;
-	polyEff[i][1] = refEfficiency * 100.0 * 0.96 * reynoldsEfficiencyCorrection;
-	polyEff[i][2] = refEfficiency * 100.0 * reynoldsEfficiencyCorrection; // max at design
-	polyEff[i][3] = refEfficiency * 100.0 * 0.95 * reynoldsEfficiencyCorrection;
-	polyEff[i][4] = refEfficiency * 100.0 * 0.85 * reynoldsEfficiencyCorrection;
+        // Apply Reynolds correction to efficiency
+        polyEff[i][0] = refEfficiency * 100.0 * 0.88 * reynoldsEfficiencyCorrection;
+        polyEff[i][1] = refEfficiency * 100.0 * 0.96 * reynoldsEfficiencyCorrection;
+        polyEff[i][2] = refEfficiency * 100.0 * reynoldsEfficiencyCorrection; // max at design
+        polyEff[i][3] = refEfficiency * 100.0 * 0.95 * reynoldsEfficiencyCorrection;
+        polyEff[i][4] = refEfficiency * 100.0 * 0.85 * reynoldsEfficiencyCorrection;
       } else {
-	// Generate 3 points per curve for alternative curves
-	flow[i][0] = scaledFlow * surgeFlowMultiplier;
-	flow[i][1] = scaledFlow;
-	flow[i][2] = scaledFlow * stonewallFlowMultiplier;
+        // Generate 3 points per curve for alternative curves
+        flow[i][0] = scaledFlow * surgeFlowMultiplier;
+        flow[i][1] = scaledFlow;
+        flow[i][2] = scaledFlow * stonewallFlowMultiplier;
 
-	head[i][0] = scaledHead * 1.20;
-	head[i][1] = scaledHead;
-	head[i][2] = scaledHead * 0.50;
+        head[i][0] = scaledHead * 1.20;
+        head[i][1] = scaledHead;
+        head[i][2] = scaledHead * 0.50;
 
-	polyEff[i][0] = refEfficiency * 100.0 * 0.90 * reynoldsEfficiencyCorrection;
-	polyEff[i][1] = refEfficiency * 100.0 * reynoldsEfficiencyCorrection;
-	polyEff[i][2] = refEfficiency * 100.0 * 0.85 * reynoldsEfficiencyCorrection;
+        polyEff[i][0] = refEfficiency * 100.0 * 0.90 * reynoldsEfficiencyCorrection;
+        polyEff[i][1] = refEfficiency * 100.0 * reynoldsEfficiencyCorrection;
+        polyEff[i][2] = refEfficiency * 100.0 * 0.85 * reynoldsEfficiencyCorrection;
       }
     }
 
@@ -515,7 +515,7 @@ public class CompressorChartGenerator {
     double minFlowForSurge = refFlow / 2.0;
     double maxFlowForSurge = refFlow * 2.0;
     SafeSplineSurgeCurve surgeCurve = createSurgeCurve(compChart, refFlow, refSpeed, minFlowForSurge, maxFlowForSurge,
-	minSpeedForSurge, maxSpeedForSurge, isNormalCurves);
+        minSpeedForSurge, maxSpeedForSurge, isNormalCurves);
     compChart.setSurgeCurve(surgeCurve);
 
     // Generate stonewall curve from the chart data
@@ -610,7 +610,7 @@ public class CompressorChartGenerator {
 
     SafeSplineSurgeCurve surgeCurve = new SafeSplineSurgeCurve();
     surgeCurve.setCurve(new double[3], new double[] { minSurgeFlow, refSurgeFlow, maxSurgeFlow },
-	new double[] { headSurgeMin, headSurgeRef, headSurgeMax });
+        new double[] { headSurgeMin, headSurgeRef, headSurgeMax });
     return surgeCurve;
   }
 }

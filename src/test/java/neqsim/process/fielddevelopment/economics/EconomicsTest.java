@@ -324,7 +324,7 @@ class EconomicsTest {
   @Tag("failing")
   void testReservoirCoupledProfileIsResourceCappedAndExportable() {
     ReservoirInput reservoir = ReservoirInput.leanGas().resourceUncertainty(8.0, 10.0, 12.0, "GSm3")
-	.recoveryFactor(0.50).build();
+        .recoveryFactor(0.50).build();
     ProductionProfileGenerator generator = new ProductionProfileGenerator();
 
     Map<Integer, Double> profile = generator.generateFromReservoirInput(reservoir, 3.0e6, true, 2026, 30);

@@ -40,9 +40,9 @@ public class ProcessLoader {
       Map<String, Object> properties = (Map<String, Object>) step.get("properties");
       ProcessEquipmentInterface unit = process.addUnit(unitType);
       if (properties != null) {
-	for (Map.Entry<String, Object> entry : properties.entrySet()) {
-	  setProperty(unit, entry.getKey(), entry.getValue());
-	}
+        for (Map.Entry<String, Object> entry : properties.entrySet()) {
+          setProperty(unit, entry.getKey(), entry.getValue());
+        }
       }
     }
   }
@@ -74,24 +74,24 @@ public class ProcessLoader {
       String setterName = "set" + Character.toUpperCase(property.charAt(0)) + property.substring(1);
 
       if (value instanceof List) {
-	List<?> list = (List<?>) value;
-	java.lang.reflect.Method method = unit.getClass().getMethod(setterName, double.class, String.class);
-	method.invoke(unit, ((Number) list.get(0)).doubleValue(), list.get(1));
+        List<?> list = (List<?>) value;
+        java.lang.reflect.Method method = unit.getClass().getMethod(setterName, double.class, String.class);
+        method.invoke(unit, ((Number) list.get(0)).doubleValue(), list.get(1));
       } else if (value instanceof Map) {
-	if (property.equalsIgnoreCase("fluid")) {
-	  // Assume user gives Map<String, Double> for fluid components
-	  SystemInterface fluid = new SystemSrkEos();
-	  Map<String, Double> components = (Map<String, Double>) value;
-	  for (Map.Entry<String, Double> comp : components.entrySet()) {
-	    fluid.addComponent(comp.getKey(), comp.getValue());
-	  }
-	  java.lang.reflect.Method method = unit.getClass().getMethod("setFluid", SystemInterface.class);
-	  method.invoke(unit, fluid);
-	}
+        if (property.equalsIgnoreCase("fluid")) {
+          // Assume user gives Map<String, Double> for fluid components
+          SystemInterface fluid = new SystemSrkEos();
+          Map<String, Double> components = (Map<String, Double>) value;
+          for (Map.Entry<String, Double> comp : components.entrySet()) {
+            fluid.addComponent(comp.getKey(), comp.getValue());
+          }
+          java.lang.reflect.Method method = unit.getClass().getMethod("setFluid", SystemInterface.class);
+          method.invoke(unit, fluid);
+        }
       }
     } catch (Exception e) {
       org.apache.logging.log4j.LogManager.getLogger(ProcessLoader.class)
-	  .error("Error setting property: " + e.getMessage(), e);
+          .error("Error setting property: " + e.getMessage(), e);
     }
   }
 }

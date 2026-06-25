@@ -134,13 +134,13 @@ public class AmineViscosity extends Viscosity {
     double wtFrac = 0.0;
     try {
       wtFrac += liquidPhase.getPhase().getComponent(amineName).getx()
-	  * liquidPhase.getPhase().getComponent(amineName).getMolarMass() / liquidPhase.getPhase().getMolarMass();
+          * liquidPhase.getPhase().getComponent(amineName).getMolarMass() / liquidPhase.getPhase().getMolarMass();
     } catch (Exception e) {
       // component not present
     }
     try {
       wtFrac += liquidPhase.getPhase().getComponent(ionName).getx()
-	  * liquidPhase.getPhase().getComponent(ionName).getMolarMass() / liquidPhase.getPhase().getMolarMass();
+          * liquidPhase.getPhase().getComponent(ionName).getMolarMass() / liquidPhase.getPhase().getMolarMass();
     } catch (Exception e) {
       // component not present
     }
@@ -275,13 +275,13 @@ public class AmineViscosity extends Viscosity {
     double wPZ = 0.0;
     try {
       wPZ = liquidPhase.getPhase().getComponent("Piperazine").getx()
-	  * liquidPhase.getPhase().getComponent("Piperazine").getMolarMass() / liquidPhase.getPhase().getMolarMass();
+          * liquidPhase.getPhase().getComponent("Piperazine").getMolarMass() / liquidPhase.getPhase().getMolarMass();
     } catch (Exception e) {
       // no piperazine
     }
     try {
       wPZ += liquidPhase.getPhase().getComponent("Piperazine+").getx()
-	  * liquidPhase.getPhase().getComponent("Piperazine+").getMolarMass() / liquidPhase.getPhase().getMolarMass();
+          * liquidPhase.getPhase().getComponent("Piperazine+").getMolarMass() / liquidPhase.getPhase().getMolarMass();
     } catch (Exception e) {
       // no Piperazine+
     }
@@ -324,7 +324,7 @@ public class AmineViscosity extends Viscosity {
       double xIon = liquidPhase.getPhase().getComponent(ionName).getx();
       double totalAmine = xAmine + xIon;
       if (totalAmine < 1.0e-20) {
-	return 0.0;
+        return 0.0;
       }
       return xIon / totalAmine;
     } catch (Exception e) {

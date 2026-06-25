@@ -119,13 +119,13 @@ public enum IsothermType {
     String upperName = name.toUpperCase().trim();
     for (IsothermType type : values()) {
       if (type.name().equals(upperName)) {
-	return type;
+        return type;
       }
     }
     // Check display names
     for (IsothermType type : values()) {
       if (type.getDisplayName().equalsIgnoreCase(name)) {
-	return type;
+        return type;
       }
     }
     return DRA;

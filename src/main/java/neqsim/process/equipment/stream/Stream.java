@@ -147,14 +147,14 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 
     try {
       if (solidName.equals("hydrate")) {
-	copySystem.setHydrateCheck(true);
-	ThermodynamicOperations thermoOps = new ThermodynamicOperations(copySystem);
-	thermoOps.hydrateFormationTemperature();
+        copySystem.setHydrateCheck(true);
+        ThermodynamicOperations thermoOps = new ThermodynamicOperations(copySystem);
+        thermoOps.hydrateFormationTemperature();
       } else {
-	copySystem.setSolidPhaseCheck(false);
-	copySystem.setSolidPhaseCheck(solidName);
-	ThermodynamicOperations thermoOps = new ThermodynamicOperations(copySystem);
-	thermoOps.freezingPointTemperatureFlash();
+        copySystem.setSolidPhaseCheck(false);
+        copySystem.setSolidPhaseCheck(solidName);
+        ThermodynamicOperations thermoOps = new ThermodynamicOperations(copySystem);
+        thermoOps.freezingPointTemperatureFlash();
       }
       return copySystem.getTemperature();
     } catch (Exception ex) {
@@ -236,16 +236,16 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   public void setThermoSystemFromPhase(SystemInterface thermoSystem, String phaseTypeName) {
     if (phaseTypeName.equals("liquid")) {
       if (thermoSystem.hasPhaseType("oil") && thermoSystem.hasPhaseType("aqueous")) {
-	this.thermoSystem = thermoSystem.phaseToSystem(thermoSystem.getPhaseNumberOfPhase("oil"),
-	    thermoSystem.getPhaseNumberOfPhase("aqueous"));
+        this.thermoSystem = thermoSystem.phaseToSystem(thermoSystem.getPhaseNumberOfPhase("oil"),
+            thermoSystem.getPhaseNumberOfPhase("aqueous"));
       } else if (thermoSystem.hasPhaseType("oil")) {
-	this.thermoSystem = thermoSystem.phaseToSystem(thermoSystem.getPhaseNumberOfPhase("oil"));
+        this.thermoSystem = thermoSystem.phaseToSystem(thermoSystem.getPhaseNumberOfPhase("oil"));
       } else if (thermoSystem.hasPhaseType("aqueous")) {
-	this.thermoSystem = thermoSystem.phaseToSystem(thermoSystem.getPhaseNumberOfPhase("aqueous"));
+        this.thermoSystem = thermoSystem.phaseToSystem(thermoSystem.getPhaseNumberOfPhase("aqueous"));
       } else {
-	logger.warn("no phase of type " + phaseTypeName);
-	logger.warn("...returning empty system ");
-	setEmptyThermoSystem(thermoSystem);
+        logger.warn("no phase of type " + phaseTypeName);
+        logger.warn("...returning empty system ");
+        setEmptyThermoSystem(thermoSystem);
       }
       return;
     }
@@ -310,7 +310,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     if (stream != null) {
       // If wrapping another stream, check if upstream needs recalculation first
       if (stream.needRecalculation()) {
-	return true;
+        return true;
       }
       thermoSystem = stream.getFluid();
     }
@@ -339,7 +339,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     }
     for (int i = 0; i < n; i++) {
       if (ph0.getComponent(i).getz() != lastComposition[i]) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -363,7 +363,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       lastSpecification = getSpecification();
 
       if (stream != null) {
-	stream.setFluid(thermoSystem);
+        stream.setFluid(thermoSystem);
       }
       // logger.info("number of phases: " + thermoSystem.getNumberOfPhases());
       // logger.info("beta: " + thermoSystem.getBeta());
@@ -380,46 +380,46 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       thermoOps.TPflash();
     } else if (getSpecification().equals("dewP")) {
       try {
-	thermoOps.dewPointTemperatureFlash();
+        thermoOps.dewPointTemperatureFlash();
       } catch (Exception ex) {
-	logger.error(ex.getMessage(), ex);
-	thermoOps.TPflash();
+        logger.error(ex.getMessage(), ex);
+        thermoOps.TPflash();
       }
     } else if (getSpecification().equals("dewT")) {
       try {
-	thermoOps.dewPointPressureFlash();
+        thermoOps.dewPointPressureFlash();
       } catch (Exception ex) {
-	logger.error(ex.getMessage(), ex);
-	thermoOps.TPflash();
+        logger.error(ex.getMessage(), ex);
+        thermoOps.TPflash();
       }
     } else if (getSpecification().equals("gas quality")) {
       try {
-	thermoSystem.setPressure(getPressure());
-	thermoOps.constantPhaseFractionTemperatureFlash(getGasQuality());
+        thermoSystem.setPressure(getPressure());
+        thermoOps.constantPhaseFractionTemperatureFlash(getGasQuality());
       } catch (Exception ex) {
-	logger.error(ex.getMessage(), ex);
-	thermoOps.TPflash();
+        logger.error(ex.getMessage(), ex);
+        thermoOps.TPflash();
       }
     } else if (getSpecification().equals("bubP")) {
       try {
-	thermoOps.bubblePointTemperatureFlash();
+        thermoOps.bubblePointTemperatureFlash();
       } catch (Exception ex) {
-	logger.error(ex.getMessage(), ex);
-	thermoOps.TPflash();
+        logger.error(ex.getMessage(), ex);
+        thermoOps.TPflash();
       }
     } else if (getSpecification().equals("bubT")) {
       try {
-	thermoOps.bubblePointPressureFlash(false);
+        thermoOps.bubblePointPressureFlash(false);
       } catch (Exception ex) {
-	logger.error(ex.getMessage(), ex);
-	thermoOps.TPflash();
+        logger.error(ex.getMessage(), ex);
+        thermoOps.TPflash();
       }
     } else if (getSpecification().equals("PH")) {
       try {
-	thermoOps.PHflash(thermoSystem.getEnthalpy(), 0);
+        thermoOps.PHflash(thermoSystem.getEnthalpy(), 0);
       } catch (Exception ex) {
-	logger.error(ex.getMessage(), ex);
-	thermoOps.TPflash();
+        logger.error(ex.getMessage(), ex);
+        thermoOps.TPflash();
       }
     } else {
       thermoOps.TPflash();
@@ -514,9 +514,9 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       return ops.get("cricondenbar")[1];
     } else {
       if (unit.equals("C")) {
-	return ops.get("cricondenbar")[0] - 273.15;
+        return ops.get("cricondenbar")[0] - 273.15;
       } else {
-	return ops.get("cricondenbar")[0];
+        return ops.get("cricondenbar")[0];
       }
     }
     // return ops.get
@@ -535,9 +535,9 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       return ops.get("cricondentherm")[1];
     } else {
       if (unit.equals("C")) {
-	return ops.get("cricondentherm")[0] - 273.15;
+        return ops.get("cricondentherm")[0] - 273.15;
       } else {
-	return ops.get("cricondentherm")[0];
+        return ops.get("cricondentherm")[0];
       }
     }
     // return ops.get
@@ -743,18 +743,18 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     ArrayList<String[]> report = new ArrayList<String[]>();
     report.add(phases.toArray(new String[0]));
     report.add(
-	new String[] { "temperature", Double.toString(getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
-	    neqsim.util.unit.Units.getSymbol("temperature") });
+        new String[] { "temperature", Double.toString(getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
+            neqsim.util.unit.Units.getSymbol("temperature") });
     report.add(new String[] { "pressure", Double.toString(getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
-	neqsim.util.unit.Units.getSymbol("pressure") });
+        neqsim.util.unit.Units.getSymbol("pressure") });
     report.add(new String[] { "mass flow", Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
-	neqsim.util.unit.Units.getSymbol("mass flow") });
+        neqsim.util.unit.Units.getSymbol("mass flow") });
     report
-	.add(new String[] { "molar flow", Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("molar flow"))),
-	    neqsim.util.unit.Units.getSymbol("molar flow") });
+        .add(new String[] { "molar flow", Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("molar flow"))),
+            neqsim.util.unit.Units.getSymbol("molar flow") });
     report.add(
-	new String[] { "volume flow", Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("volume flow"))),
-	    neqsim.util.unit.Units.getSymbol("volume flow") });
+        new String[] { "volume flow", Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("volume flow"))),
+            neqsim.util.unit.Units.getSymbol("volume flow") });
     return report;
   }
 
@@ -795,39 +795,39 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     // Check: Equipment has a valid name
     if (getName() == null || getName().trim().isEmpty()) {
       result.addError("equipment", "Stream has no name",
-	  "Set stream name in constructor: new Stream(\"MyStream\", thermoSystem)");
+          "Set stream name in constructor: new Stream(\"MyStream\", thermoSystem)");
     }
 
     // Check: Thermodynamic system is set
     SystemInterface fluid = getFluid();
     if (fluid == null) {
       result.addError("thermo", "Stream has no thermodynamic system",
-	  "Create stream with fluid: new Stream(\"name\", thermoSystem)");
+          "Create stream with fluid: new Stream(\"name\", thermoSystem)");
       return result; // Can't check further without fluid
     }
 
     // Check: Has components
     if (fluid.getNumberOfComponents() == 0) {
       result.addError("thermo", "Stream fluid has no components",
-	  "Add components: thermoSystem.addComponent(\"methane\", 1.0)");
+          "Add components: thermoSystem.addComponent(\"methane\", 1.0)");
     }
 
     // Check: Temperature is valid
     if (fluid.getTemperature() < 1.0) {
       result.addError("thermo", "Stream temperature too low: " + fluid.getTemperature() + " K",
-	  "Set temperature above 1 K: stream.setTemperature(298.15, \"K\")");
+          "Set temperature above 1 K: stream.setTemperature(298.15, \"K\")");
     }
 
     // Check: Pressure is valid
     if (fluid.getPressure() <= 0) {
       result.addError("thermo", "Stream pressure must be positive: " + fluid.getPressure() + " bar",
-	  "Set positive pressure: stream.setPressure(1.0, \"bar\")");
+          "Set positive pressure: stream.setPressure(1.0, \"bar\")");
     }
 
     // Check: Mixing rule for multi-component systems
     if (fluid.getNumberOfComponents() > 1 && fluid.getMixingRuleName() == null) {
       result.addWarning("thermo", "Mixing rule not set for multi-component stream",
-	  "Set mixing rule: thermoSystem.setMixingRule(\"classic\")");
+          "Set mixing rule: thermoSystem.setMixingRule(\"classic\")");
     }
 
     return result;

@@ -114,7 +114,7 @@ public class RecoveryFactorExtractor implements Serializable {
     nodeUnits = new ArrayList<>();
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       if (!isNodeUnit(unit)) {
-	continue;
+        continue;
       }
       nodeUnits.add(unit);
       collectComponents(safeInlets(unit));
@@ -132,14 +132,14 @@ public class RecoveryFactorExtractor implements Serializable {
     for (StreamInterface stream : streams) {
       SystemInterface fluid = stream.getFluid();
       if (fluid == null) {
-	continue;
+        continue;
       }
       for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
-	String name = fluid.getComponent(i).getComponentName();
-	if (!molarMass.containsKey(name)) {
-	  componentNames.add(name);
-	  molarMass.put(name, fluid.getComponent(i).getMolarMass());
-	}
+        String name = fluid.getComponent(i).getComponentName();
+        if (!molarMass.containsKey(name)) {
+          componentNames.add(name);
+          molarMass.put(name, fluid.getComponent(i).getMolarMass());
+        }
       }
     }
   }
@@ -156,32 +156,32 @@ public class RecoveryFactorExtractor implements Serializable {
 
       double[] inletFlow = new double[slate.length];
       for (int k = 0; k < slate.length; k++) {
-	double sum = 0.0;
-	for (StreamInterface in : inlets) {
-	  sum += componentFlow(in, slate[k]);
-	}
-	inletFlow[k] = sum;
+        double sum = 0.0;
+        for (StreamInterface in : inlets) {
+          sum += componentFlow(in, slate[k]);
+        }
+        inletFlow[k] = sum;
       }
 
       double[][] factors = new double[outlets.size()][slate.length];
       for (int k = 0; k < slate.length; k++) {
-	if (inletFlow[k] > 0.0) {
-	  for (int s = 0; s < outlets.size(); s++) {
-	    factors[s][k] = componentFlow(outlets.get(s), slate[k]) / inletFlow[k];
-	  }
-	} else if (outlets.size() == 1) {
-	  // No inlet of this component: a single-outlet pass-through is the identity map.
-	  factors[0][k] = 1.0;
-	} else {
-	  // No inlet flow and multiple outlets: nothing to route, leave factors at zero.
-	  for (int s = 0; s < outlets.size(); s++) {
-	    factors[s][k] = 0.0;
-	  }
-	}
+        if (inletFlow[k] > 0.0) {
+          for (int s = 0; s < outlets.size(); s++) {
+            factors[s][k] = componentFlow(outlets.get(s), slate[k]) / inletFlow[k];
+          }
+        } else if (outlets.size() == 1) {
+          // No inlet of this component: a single-outlet pass-through is the identity map.
+          factors[0][k] = 1.0;
+        } else {
+          // No inlet flow and multiple outlets: nothing to route, leave factors at zero.
+          for (int s = 0; s < outlets.size(); s++) {
+            factors[s][k] = 0.0;
+          }
+        }
       }
 
       UnitSplit split = new UnitSplit(unit.getName(), unit.getClass().getSimpleName(), inlets, outlets, slate, factors,
-	  inletFlow);
+          inletFlow);
       unitSplits.put(unit.getName(), split);
     }
   }
@@ -201,7 +201,7 @@ public class RecoveryFactorExtractor implements Serializable {
     }
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       if (fluid.getComponent(i).getComponentName().equals(componentName)) {
-	return fluid.getComponent(i).getTotalFlowRate(MOLAR_FLOW_UNIT);
+        return fluid.getComponent(i).getTotalFlowRate(MOLAR_FLOW_UNIT);
       }
     }
     return 0.0;

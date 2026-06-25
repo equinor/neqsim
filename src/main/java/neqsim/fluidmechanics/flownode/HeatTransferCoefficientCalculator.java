@@ -257,7 +257,7 @@ public class HeatTransferCoefficientCalculator {
       double cpL, double kL, double prL) {
     // Calculate liquid hydraulic diameter
     double dHL = 4.0 * liquidHoldup * Math.PI * diameter * diameter / 4.0
-	/ (Math.PI * diameter * liquidHoldup + diameter);
+        / (Math.PI * diameter * liquidHoldup + diameter);
 
     // Effective liquid velocity
     double uL = usl / Math.max(liquidHoldup, 0.01);
@@ -288,7 +288,7 @@ public class HeatTransferCoefficientCalculator {
       double cpG, double kG, double prG) {
     // Calculate gas hydraulic diameter
     double dHG = 4.0 * voidFraction * Math.PI * diameter * diameter / 4.0
-	/ (Math.PI * diameter * voidFraction + diameter);
+        / (Math.PI * diameter * voidFraction + diameter);
 
     // Gas Reynolds number
     double reG = rhoG * Math.abs(uG) * dHG / muG;

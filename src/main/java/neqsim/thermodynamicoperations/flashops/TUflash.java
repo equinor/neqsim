@@ -122,23 +122,23 @@ public class TUflash extends QfuncFlash {
       // Numerical derivative from previous iteration
       double dUdP_numerical = 0.0;
       if (iterations > 1 && Math.abs(pressureStep) > 1e-10) {
-	dUdP_numerical = (dU - olddU) / pressureStep;
+        dUdP_numerical = (dU - olddU) / pressureStep;
       }
 
       // Use analytical for first iterations, switch to numerical for stability
       double dUdP;
       if (iterations < 5 || Math.abs(dUdP_numerical) < 1e-10) {
-	dUdP = dUdP_analytical;
+        dUdP = dUdP_analytical;
       } else {
-	dUdP = dUdP_numerical;
+        dUdP = dUdP_numerical;
       }
 
       // Avoid division by zero
       if (Math.abs(dUdP) < 1.0) {
-	dUdP = Math.signum(dUdP) * 1.0;
-	if (dUdP == 0) {
-	  dUdP = -1.0;
-	}
+        dUdP = Math.signum(dUdP) * 1.0;
+        if (dUdP == 0) {
+          dUdP = -1.0;
+        }
       }
 
       // Newton step with damping
@@ -147,17 +147,17 @@ public class TUflash extends QfuncFlash {
 
       // Limit step size
       if (Math.abs(deltaP) > 0.5 * oldPres) {
-	deltaP = Math.signum(deltaP) * 0.5 * oldPres;
+        deltaP = Math.signum(deltaP) * 0.5 * oldPres;
       }
 
       nyPres = oldPres + deltaP;
 
       // Ensure pressure stays positive
       if (nyPres <= 0.01) {
-	nyPres = 0.01;
+        nyPres = 0.01;
       }
       if (nyPres > 10000.0) {
-	nyPres = 10000.0;
+        nyPres = 10000.0;
       }
 
       pressureStep = nyPres - oldPres;

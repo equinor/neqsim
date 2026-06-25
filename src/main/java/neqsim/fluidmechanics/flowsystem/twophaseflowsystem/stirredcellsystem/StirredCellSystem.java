@@ -31,7 +31,7 @@ public class StirredCellSystem extends neqsim.fluidmechanics.flowsystem.twophase
 
     flowNode = new neqsim.fluidmechanics.flownode.FlowNodeInterface[totalNumberOfNodes];
     flowNode[0] = new neqsim.fluidmechanics.flownode.twophasenode.twophasestirredcellnode.StirredCellNode(thermoSystem,
-	equipmentGeometry[0]);
+        equipmentGeometry[0]);
 
     flowNode[totalNumberOfNodes - 1] = flowNode[0].getNextNode();
 
@@ -48,13 +48,13 @@ public class StirredCellSystem extends neqsim.fluidmechanics.flowsystem.twophase
 
     for (int j = 0; j < getTotalNumberOfNodes(); j++) {
       for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
-	flowNode[j].setVelocityOut(phaseNum, this.flowNode[j].getVelocity(phaseNum));
+        flowNode[j].setVelocityOut(phaseNum, this.flowNode[j].getVelocity(phaseNum));
       }
     }
 
     for (int k = 1; k < getTotalNumberOfNodes(); k++) {
       for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
-	this.flowNode[k].setVelocityIn(phaseNum, this.flowNode[k - 1].getVelocityOut(phaseNum));
+        this.flowNode[k].setVelocityIn(phaseNum, this.flowNode[k - 1].getVelocityOut(phaseNum));
       }
     }
   }
@@ -64,7 +64,7 @@ public class StirredCellSystem extends neqsim.fluidmechanics.flowsystem.twophase
   public void solveSteadyState(int type, UUID id) {
     // TODO: double[] times = {0.0}; ?
     flowSolver = new neqsim.fluidmechanics.flowsolver.twophaseflowsolver.stirredcellsolver.StirredCellSolver(this,
-	getSystemLength(), getTotalNumberOfNodes(), false);
+        getSystemLength(), getTotalNumberOfNodes(), false);
     calcIdentifier = id;
     // TODO: getTimeSeries().init(this);
   }
@@ -74,7 +74,7 @@ public class StirredCellSystem extends neqsim.fluidmechanics.flowsystem.twophase
   public void solveTransient(int solverType, UUID id) {
     getTimeSeries().init(this);
     display = new neqsim.fluidmechanics.util.fluidmechanicsvisualization.flowsystemvisualization.twophaseflowvisualization.twophasepipeflowvisualization.TwoPhasePipeFlowVisualization(
-	this.getTotalNumberOfNodes(), getTimeSeries().getTime().length);
+        this.getTotalNumberOfNodes(), getTimeSeries().getTime().length);
     for (int i = 0; i < this.getTimeSeries().getTime().length; i++) {
       getNode(0).setBulkSystem(this.getTimeSeries().getThermoSystem()[i]);
       flowNode[0].initFlowCalc();

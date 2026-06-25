@@ -65,6 +65,6 @@ public class ControlValve extends ThrottlingValve {
   @Override
   public String toString() {
     return String.format("%s [Control Valve] - Opening: %.1f%%, Cv: %.1f", getName(), getPercentValveOpening(),
-	getCv());
+        getCv());
   }
 }

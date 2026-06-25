@@ -49,7 +49,7 @@ class CharacterizeToReferenceSharedSlateTest {
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       ComponentInterface c = fluid.getComponent(i);
       if (c.isIsTBPfraction() || c.isIsPlusFraction()) {
-	moles += c.getNumberOfmoles();
+        moles += c.getNumberOfmoles();
       }
     }
     return moles;
@@ -60,7 +60,7 @@ class CharacterizeToReferenceSharedSlateTest {
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       ComponentInterface c = fluid.getComponent(i);
       if (c.isIsTBPfraction() || c.isIsPlusFraction()) {
-	mass += c.getNumberOfmoles() * c.getMolarMass();
+        mass += c.getNumberOfmoles() * c.getMolarMass();
       }
     }
     return mass;
@@ -71,7 +71,7 @@ class CharacterizeToReferenceSharedSlateTest {
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       ComponentInterface c = fluid.getComponent(i);
       if ((c.isIsTBPfraction() || c.isIsPlusFraction()) && c.getNumberOfmoles() > 0.0) {
-	count++;
+        count++;
       }
     }
     return count;
@@ -93,15 +93,15 @@ class CharacterizeToReferenceSharedSlateTest {
     SystemInterface base = PseudoComponentCombiner.characterizeToReference(source, reference);
 
     CharacterizationOptions options = CharacterizationOptions.builder().inheritReferenceProperties(false)
-	.sharedImaginaryBoundaries(false).build();
+        .sharedImaginaryBoundaries(false).build();
     SystemInterface flagged = PseudoComponentCombiner.characterizeToReference(source, reference, options);
 
     assertEquals(validPseudoComponents(base), validPseudoComponents(flagged),
-	"flag off must not change the number of populated cuts");
+        "flag off must not change the number of populated cuts");
     assertEquals(pseudoMoles(base), pseudoMoles(flagged), pseudoMoles(base) * 1e-9,
-	"flag off must not change the total pseudo moles");
+        "flag off must not change the total pseudo moles");
     assertEquals(pseudoMass(base), pseudoMass(flagged), pseudoMass(base) * 1e-9,
-	"flag off must not change the total pseudo mass");
+        "flag off must not change the total pseudo mass");
   }
 
   @Test
@@ -114,7 +114,7 @@ class CharacterizeToReferenceSharedSlateTest {
     double srcMass = pseudoMass(source);
 
     CharacterizationOptions options = CharacterizationOptions.builder().inheritReferenceProperties(false)
-	.sharedImaginaryBoundaries(true).build();
+        .sharedImaginaryBoundaries(true).build();
     SystemInterface result = PseudoComponentCombiner.characterizeToReference(source, reference, options);
 
     assertEquals(srcMoles, pseudoMoles(result), srcMoles * 1e-6, "total pseudo moles conserved");
@@ -129,11 +129,11 @@ class CharacterizeToReferenceSharedSlateTest {
     SystemInterface source = referenceFluid(6);
 
     CharacterizationOptions options = CharacterizationOptions.builder().inheritReferenceProperties(true)
-	.sharedImaginaryBoundaries(true).build();
+        .sharedImaginaryBoundaries(true).build();
     SystemInterface result = PseudoComponentCombiner.characterizeToReference(source, reference, options);
 
     assertEquals(6, validPseudoComponents(result),
-	"every reference cut must remain populated (no cut collapses or doubles up)");
+        "every reference cut must remain populated (no cut collapses or doubles up)");
 
     // Each output pseudo-component must inherit the reference molar mass in carbon-number order,
     // proving the clamped equal-mass cuts kept each reference PC inside its own cut.
@@ -142,9 +142,9 @@ class CharacterizeToReferenceSharedSlateTest {
     for (int i = 0; i < result.getNumberOfComponents(); i++) {
       ComponentInterface c = result.getComponent(i);
       if ((c.isIsTBPfraction() || c.isIsPlusFraction()) && c.getNumberOfmoles() > 0.0) {
-	assertEquals(expectedMw[idx], c.getMolarMass(), 1e-9,
-	    "inherited molar mass must stay in carbon-number order at position " + idx);
-	idx++;
+        assertEquals(expectedMw[idx], c.getMolarMass(), 1e-9,
+            "inherited molar mass must stay in carbon-number order at position " + idx);
+        idx++;
       }
     }
   }
@@ -158,10 +158,10 @@ class CharacterizeToReferenceSharedSlateTest {
     SystemInterface base = PseudoComponentCombiner.characterizeToReference(source, reference);
 
     CharacterizationOptions options = CharacterizationOptions.builder().inheritReferenceProperties(false)
-	.sharedImaginaryBoundaries(true).delumpResolution(1).build();
+        .sharedImaginaryBoundaries(true).delumpResolution(1).build();
     SystemInterface fallback = PseudoComponentCombiner.characterizeToReference(source, reference, options);
 
     assertEquals(pseudoMoles(base), pseudoMoles(fallback), pseudoMoles(base) * 1e-9,
-	"resolution<=1 must reproduce the midpoint boundaries");
+        "resolution<=1 must reproduce the midpoint boundaries");
   }
 }

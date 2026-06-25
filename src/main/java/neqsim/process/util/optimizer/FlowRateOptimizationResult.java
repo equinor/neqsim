@@ -96,7 +96,7 @@ public class FlowRateOptimizationResult implements Serializable {
      * @param isHardViolation true if this is a hard constraint violation
      */
     public ConstraintViolation(String constraintName, String equipmentName, double currentValue, double limitValue,
-	String unit, boolean isHardViolation) {
+        String unit, boolean isHardViolation) {
       this.constraintName = constraintName;
       this.equipmentName = equipmentName;
       this.currentValue = currentValue;
@@ -162,7 +162,7 @@ public class FlowRateOptimizationResult implements Serializable {
     @Override
     public String toString() {
       return String.format("%s.%s: %.4f %s (limit: %.4f %s)%s", equipmentName, constraintName, currentValue, unit,
-	  limitValue, unit, isHardViolation ? " [HARD]" : "");
+          limitValue, unit, isHardViolation ? " [HARD]" : "");
     }
   }
 
@@ -249,7 +249,7 @@ public class FlowRateOptimizationResult implements Serializable {
     result.iterationCount = iterations;
     result.convergenceError = lastError;
     result.infeasibilityReason = String.format("Did not converge after %d iterations (error: %.6f)", iterations,
-	lastError);
+        lastError);
     return result;
   }
 
@@ -463,7 +463,7 @@ public class FlowRateOptimizationResult implements Serializable {
   public boolean hasHardViolations() {
     for (ConstraintViolation v : constraintViolations) {
       if (v.isHardViolation()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -540,7 +540,7 @@ public class FlowRateOptimizationResult implements Serializable {
     if (!constraintViolations.isEmpty()) {
       sb.append("  constraintViolations:\n");
       for (ConstraintViolation v : constraintViolations) {
-	sb.append(String.format("    - %s%n", v));
+        sb.append(String.format("    - %s%n", v));
       }
     }
 

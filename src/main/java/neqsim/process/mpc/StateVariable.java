@@ -147,13 +147,13 @@ public class StateVariable extends MPCVariable {
   private void updateBias() {
     if (hasMeasurement) {
       if (biasTfilt > 0) {
-	// Low-pass filtered bias
-	double alpha = 1.0 / (1.0 + biasTfilt);
-	double newBias = measuredValue - modelValue;
-	bias = alpha * newBias + (1.0 - alpha) * bias;
+        // Low-pass filtered bias
+        double alpha = 1.0 / (1.0 + biasTfilt);
+        double newBias = measuredValue - modelValue;
+        bias = alpha * newBias + (1.0 - alpha) * bias;
       } else {
-	// Unfiltered bias
-	bias = measuredValue - modelValue;
+        // Unfiltered bias
+        bias = measuredValue - modelValue;
       }
     }
   }
@@ -299,6 +299,6 @@ public class StateVariable extends MPCVariable {
   @Override
   public String toString() {
     return String.format("StateVariable[name=%s, model=%.4f, meas=%.4f, bias=%.4f, dtaIx=%s]", getName(), modelValue,
-	getMeasuredValue(), bias, dtaIx);
+        getMeasuredValue(), bias, dtaIx);
   }
 }

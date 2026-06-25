@@ -41,9 +41,9 @@ class FermentationReactorTest {
     Map<String, Object> results = reactor.getResults();
     assertNotNull(results, "Results should not be null");
     assertTrue(((Number) results.get("finalProductConc_g_per_L")).doubleValue() >= 0.0,
-	"Product concentration should be non-negative");
+        "Product concentration should be non-negative");
     assertTrue(1.0 / ((Number) results.get("residenceTime_hr")).doubleValue() > 0.0,
-	"Dilution rate should be positive");
+        "Dilution rate should be positive");
     assertNotNull(reactor.getLiquidOutStream(), "Liquid out stream should exist");
     assertNotNull(reactor.getGasOutStream(), "Gas out stream should exist");
   }

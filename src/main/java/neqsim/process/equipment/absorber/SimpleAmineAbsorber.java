@@ -690,26 +690,26 @@ public class SimpleAmineAbsorber extends SimpleAbsorber {
       SystemInterface richAmineSystem = leanAmineInStream.getThermoSystem().clone();
       // Acid gas picked up by amine appears in the rich amine
       if (sourGasInStream.getThermoSystem().hasComponent("CO2")) {
-	double co2Moles = sourGasInStream.getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfmoles();
-	double co2Removed = co2Moles * co2RemovalEfficiency;
-	if (richAmineSystem.hasComponent("CO2")) {
-	  richAmineSystem.addComponent("CO2", co2Removed);
-	}
+        double co2Moles = sourGasInStream.getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfmoles();
+        double co2Removed = co2Moles * co2RemovalEfficiency;
+        if (richAmineSystem.hasComponent("CO2")) {
+          richAmineSystem.addComponent("CO2", co2Removed);
+        }
       }
       if (sourGasInStream.getThermoSystem().hasComponent("H2S")) {
-	double h2sMoles = sourGasInStream.getThermoSystem().getPhase(0).getComponent("H2S").getNumberOfmoles();
-	double h2sRemoved = h2sMoles * h2sRemovalEfficiency;
-	if (richAmineSystem.hasComponent("H2S")) {
-	  richAmineSystem.addComponent("H2S", h2sRemoved);
-	}
+        double h2sMoles = sourGasInStream.getThermoSystem().getPhase(0).getComponent("H2S").getNumberOfmoles();
+        double h2sRemoved = h2sMoles * h2sRemovalEfficiency;
+        if (richAmineSystem.hasComponent("H2S")) {
+          richAmineSystem.addComponent("H2S", h2sRemoved);
+        }
       }
       richAmineSystem.init(0);
       ThermodynamicOperations richOps = new ThermodynamicOperations(richAmineSystem);
       try {
-	richOps.TPflash();
-	richAmineSystem.init(2);
+        richOps.TPflash();
+        richAmineSystem.init(2);
       } catch (Exception ex) {
-	logger.error("Flash failed for rich amine in amine absorber", ex);
+        logger.error("Flash failed for rich amine in amine absorber", ex);
       }
       richAmineOutStream.setThermoSystem(richAmineSystem);
       richAmineOutStream.setCalculationIdentifier(id);
@@ -732,31 +732,31 @@ public class SimpleAmineAbsorber extends SimpleAbsorber {
 
     // Check 1: Foaming margin applied
     checks.put("foaming_margin", new DesignCheck("Foaming design margin", foamingDesignMargin >= 0.10,
-	String.format("%.0f%% margin applied (minimum 10%% recommended)", foamingDesignMargin * 100.0)));
+        String.format("%.0f%% margin applied (minimum 10%% recommended)", foamingDesignMargin * 100.0)));
 
     // Check 2: Packing section height
     if (requiredPackingHeight > 0) {
       double heightPerSection = requiredPackingHeight / numberOfPackingSections;
       checks.put("packing_height",
-	  new DesignCheck("Packing height per section", heightPerSection <= maxPackingHeightPerSection,
-	      String.format("%.1f m per section (max %.1f m, %d sections)", heightPerSection,
-		  maxPackingHeightPerSection, numberOfPackingSections)));
+          new DesignCheck("Packing height per section", heightPerSection <= maxPackingHeightPerSection,
+              String.format("%.1f m per section (max %.1f m, %d sections)", heightPerSection,
+                  maxPackingHeightPerSection, numberOfPackingSections)));
     }
 
     // Check 3: Approach to equilibrium
     checks.put("approach_to_equilibrium",
-	new DesignCheck("Approach to equilibrium loading", approachToEquilibrium <= 0.80,
-	    String.format("%.0f%% of equilibrium (max 70-80%% recommended)", approachToEquilibrium * 100.0)));
+        new DesignCheck("Approach to equilibrium loading", approachToEquilibrium <= 0.80,
+            String.format("%.0f%% of equilibrium (max 70-80%% recommended)", approachToEquilibrium * 100.0)));
 
     // Check 4: Demister K-factor
     if (calculatedDemisterKFactor > 0) {
       checks.put("demister_kfactor", new DesignCheck("Demister K-factor", isDemisterWithinLimit(),
-	  String.format("%.4f m/s (max %.3f m/s)", calculatedDemisterKFactor, maxDemisterKFactor)));
+          String.format("%.4f m/s (max %.3f m/s)", calculatedDemisterKFactor, maxDemisterKFactor)));
     }
 
     // Check 5: Amine temperature margin
     checks.put("amine_temperature", new DesignCheck("Amine temperature margin", amineTemperatureAdequate,
-	String.format("Required margin: %.1f degC above gas feed", amineTemperatureMarginC)));
+        String.format("Required margin: %.1f degC above gas feed", amineTemperatureMarginC)));
 
     return checks;
   }
@@ -779,7 +779,7 @@ public class SimpleAmineAbsorber extends SimpleAbsorber {
     sb.append(String.format("Approach to equilibrium: %.0f%%\n", approachToEquilibrium * 100.0));
     sb.append(String.format("Required circulation rate: %.1f m3/h\n", requiredCirculationRate));
     sb.append(String.format("Required packing height: %.1f m in %d sections\n", requiredPackingHeight,
-	numberOfPackingSections));
+        numberOfPackingSections));
     sb.append(String.format("Gas carry-under: %.3f Am3/Am3\n", gasCarryUnder));
     sb.append(String.format("Demister K-factor: %.4f m/s (max %.3f)\n", calculatedDemisterKFactor, maxDemisterKFactor));
     return sb.toString();

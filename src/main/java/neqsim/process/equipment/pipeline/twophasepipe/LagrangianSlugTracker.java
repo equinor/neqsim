@@ -168,8 +168,8 @@ public class LagrangianSlugTracker implements Serializable {
     @Override
     public String toString() {
       return String.format("Slug#%d[pos=%.1fm, Ls=%.1fm, Lb=%.1fm, vf=%.2fm/s, H=%.2f, %s]", id, frontPosition,
-	  slugLength, bubbleLength, frontVelocity, slugHoldup,
-	  isGrowing ? "GROWING" : (isDecaying ? "DECAYING" : "STABLE"));
+          slugLength, bubbleLength, frontVelocity, slugHoldup,
+          isGrowing ? "GROWING" : (isDecaying ? "DECAYING" : "STABLE"));
     }
   }
 
@@ -614,12 +614,12 @@ public class LagrangianSlugTracker implements Serializable {
 
       // Only in stratified wavy regime
       if (section.getFlowRegime() != FlowRegime.STRATIFIED_WAVY) {
-	continue;
+        continue;
       }
 
       // Check if holdup is above threshold
       if (section.getLiquidHoldup() < initiationHoldupThreshold) {
-	continue;
+        continue;
       }
 
       // Kelvin-Helmholtz instability criterion
@@ -633,18 +633,18 @@ public class LagrangianSlugTracker implements Serializable {
       // Critical velocity difference for instability
       double sigma = 0.03; // Surface tension N/m (approximate)
       double deltaU_crit = Math
-	  .sqrt((rhoL - rhoG) * GRAVITY * h_L / (rhoG * rhoL / (rhoG + rhoL)) + sigma / (rhoG * h_L));
+          .sqrt((rhoL - rhoG) * GRAVITY * h_L / (rhoG * rhoL / (rhoG + rhoL)) + sigma / (rhoG * h_L));
 
       double deltaU = Math.abs(U_G - U_L);
 
       // Probability of initiation based on excess velocity
       if (deltaU > deltaU_crit) {
-	double excess = (deltaU - deltaU_crit) / deltaU_crit;
-	double probability = 0.01 * excess * dt; // Small probability per time step
+        double excess = (deltaU - deltaU_crit) / deltaU_crit;
+        double probability = 0.01 * excess * dt; // Small probability per time step
 
-	if (random.nextDouble() < probability) {
-	  generateInstabilitySlug(section, i, sections);
-	}
+        if (random.nextDouble() < probability) {
+          generateInstabilitySlug(section, i, sections);
+        }
       }
     }
   }
@@ -1080,15 +1080,15 @@ public class LagrangianSlugTracker implements Serializable {
       double wakeLength = wakeLengthDiameters * D;
 
       if (distance > 0 && distance < wakeLength) {
-	current.inWakeRegion = true;
+        current.inWakeRegion = true;
 
-	// Wake coefficient increases as slug gets closer
-	// Linear interpolation: 1.0 at wake edge, maxWakeAcceleration at zero distance
-	double normalizedDistance = distance / wakeLength;
-	current.wakeCoefficient = maxWakeAcceleration - (maxWakeAcceleration - 1.0) * normalizedDistance;
+        // Wake coefficient increases as slug gets closer
+        // Linear interpolation: 1.0 at wake edge, maxWakeAcceleration at zero distance
+        double normalizedDistance = distance / wakeLength;
+        current.wakeCoefficient = maxWakeAcceleration - (maxWakeAcceleration - 1.0) * normalizedDistance;
       } else {
-	current.inWakeRegion = false;
-	current.wakeCoefficient = 1.0;
+        current.inWakeRegion = false;
+        current.wakeCoefficient = 1.0;
       }
     }
   }
@@ -1116,10 +1116,10 @@ public class LagrangianSlugTracker implements Serializable {
       double gap = preceding.tailPosition - following.frontPosition;
 
       if (gap <= mergeDistanceThreshold) {
-	// Merge: following slug absorbs preceding slug
-	mergeSlugPair(following, preceding, sections);
-	toRemove.add(preceding);
-	totalSlugsMerged++;
+        // Merge: following slug absorbs preceding slug
+        mergeSlugPair(following, preceding, sections);
+        toRemove.add(preceding);
+        totalSlugsMerged++;
       }
     }
 
@@ -1152,7 +1152,7 @@ public class LagrangianSlugTracker implements Serializable {
     // Update holdup (weighted average)
     double totalLength = survivor.slugLength + absorbed.slugLength;
     survivor.slugHoldup = (survivor.slugHoldup * survivor.slugLength + absorbed.slugHoldup * absorbed.slugLength)
-	/ totalLength;
+        / totalLength;
 
     // Bubble length from absorbed slug
     survivor.bubbleLength = absorbed.bubbleLength;
@@ -1178,21 +1178,21 @@ public class LagrangianSlugTracker implements Serializable {
 
       // Check if slug has exited
       if (slug.tailPosition > pipeLength) {
-	slug.hasExited = true;
-	recordSlugAtOutlet(slug);
-	totalMassReturned += slug.slugLiquidMass;
-	totalSlugsExited++;
-	iter.remove();
-	continue;
+        slug.hasExited = true;
+        recordSlugAtOutlet(slug);
+        totalMassReturned += slug.slugLiquidMass;
+        totalSlugsExited++;
+        iter.remove();
+        continue;
       }
 
       // Check if slug has dissipated (too short after sufficient time)
       double minLength = minSlugLengthDiameters * slug.localDiameter;
       if (slug.slugLength < minLength && slug.age > 10.0) {
-	returnMassToEulerian(slug, sections);
-	totalMassReturned += slug.slugLiquidMass;
-	totalSlugsDissipated++;
-	iter.remove();
+        returnMassToEulerian(slug, sections);
+        totalMassReturned += slug.slugLiquidMass;
+        totalSlugsDissipated++;
+        iter.remove();
       }
     }
   }
@@ -1258,11 +1258,11 @@ public class LagrangianSlugTracker implements Serializable {
       double cellVolume = section.getArea() * section.getLength();
 
       if (rhoL > 0 && cellVolume > 0) {
-	double deltaHoldup = massToReturn / (rhoL * cellVolume);
-	double newHoldup = Math.min(1.0, section.getLiquidHoldup() + deltaHoldup);
-	section.setLiquidHoldup(newHoldup);
-	section.setGasHoldup(1.0 - newHoldup);
-	section.updateDerivedQuantities();
+        double deltaHoldup = massToReturn / (rhoL * cellVolume);
+        double newHoldup = Math.min(1.0, section.getLiquidHoldup() + deltaHoldup);
+        section.setLiquidHoldup(newHoldup);
+        section.setGasHoldup(1.0 - newHoldup);
+        section.updateDerivedQuantities();
       }
     }
   }
@@ -1290,22 +1290,22 @@ public class LagrangianSlugTracker implements Serializable {
   private void markSlugSections(PipeSection[] sections) {
     for (SlugBubbleUnit slug : slugs) {
       for (PipeSection section : sections) {
-	double secStart = section.getPosition();
-	double secEnd = secStart + section.getLength();
+        double secStart = section.getPosition();
+        double secEnd = secStart + section.getLength();
 
-	// Check overlap with slug body
-	if (secStart < slug.frontPosition && secEnd > slug.tailPosition) {
-	  section.setInSlugBody(true);
-	  section.setSlugHoldup(slug.slugHoldup);
-	}
+        // Check overlap with slug body
+        if (secStart < slug.frontPosition && secEnd > slug.tailPosition) {
+          section.setInSlugBody(true);
+          section.setSlugHoldup(slug.slugHoldup);
+        }
 
-	// Check overlap with bubble region (behind tail)
-	double bubbleStart = slug.tailPosition - slug.bubbleLength;
-	double bubbleEnd = slug.tailPosition;
-	if (secStart < bubbleEnd && secEnd > bubbleStart && !section.isInSlugBody()) {
-	  section.setInSlugBubble(true);
-	  section.setSlugHoldup(slug.filmHoldup);
-	}
+        // Check overlap with bubble region (behind tail)
+        double bubbleStart = slug.tailPosition - slug.bubbleLength;
+        double bubbleEnd = slug.tailPosition;
+        if (secStart < bubbleEnd && secEnd > bubbleStart && !section.isInSlugBody()) {
+          section.setInSlugBubble(true);
+          section.setSlugHoldup(slug.filmHoldup);
+        }
       }
     }
   }
@@ -1319,7 +1319,7 @@ public class LagrangianSlugTracker implements Serializable {
     Collections.sort(slugs, new Comparator<SlugBubbleUnit>() {
       @Override
       public int compare(SlugBubbleUnit a, SlugBubbleUnit b) {
-	return Double.compare(b.frontPosition, a.frontPosition);
+        return Double.compare(b.frontPosition, a.frontPosition);
       }
     });
   }
@@ -1336,7 +1336,7 @@ public class LagrangianSlugTracker implements Serializable {
       double start = sections[i].getPosition();
       double end = start + sections[i].getLength();
       if (position >= start && position <= end) {
-	return i;
+        return i;
       }
     }
     return -1;
@@ -1374,7 +1374,7 @@ public class LagrangianSlugTracker implements Serializable {
     for (SlugBubbleUnit slug : slugs) {
       sumLength += slug.slugLength;
       if (slug.slugLength > maxObservedSlugLength) {
-	maxObservedSlugLength = slug.slugLength;
+        maxObservedSlugLength = slug.slugLength;
       }
     }
 
@@ -1384,7 +1384,7 @@ public class LagrangianSlugTracker implements Serializable {
     if (outletInterArrivalTimes.size() > 0) {
       double sumTime = 0;
       for (Double t : outletInterArrivalTimes) {
-	sumTime += t;
+        sumTime += t;
       }
       double avgPeriod = sumTime / outletInterArrivalTimes.size();
       outletSlugFrequency = 1.0 / (avgPeriod + 1e-10);
@@ -1698,7 +1698,7 @@ public class LagrangianSlugTracker implements Serializable {
     sb.append(String.format("  - Merged: %d\n", totalSlugsMerged));
     sb.append(String.format("  - Dissipated: %d\n", totalSlugsDissipated));
     sb.append(String.format("Inlet frequency: %.4f Hz (period: %.1f s)\n", inletSlugFrequency,
-	1.0 / (inletSlugFrequency + 1e-10)));
+        1.0 / (inletSlugFrequency + 1e-10)));
     sb.append(String.format("Outlet frequency: %.4f Hz\n", outletSlugFrequency));
     sb.append(String.format("Average slug length: %.2f m\n", averageSlugLength));
     sb.append(String.format("Max slug length: %.2f m\n", maxObservedSlugLength));
@@ -1755,7 +1755,7 @@ public class LagrangianSlugTracker implements Serializable {
       sb.append(String.format("      \"inWakeRegion\": %b\n", slug.inWakeRegion));
       sb.append("    }");
       if (i < slugs.size() - 1) {
-	sb.append(",");
+        sb.append(",");
       }
       sb.append("\n");
     }

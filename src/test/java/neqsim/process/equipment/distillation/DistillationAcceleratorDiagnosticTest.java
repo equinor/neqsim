@@ -2,9 +2,9 @@ package neqsim.process.equipment.distillation;
 
 import java.lang.reflect.Method;
 import java.util.UUID;
-import org.junit.jupiter.api.Test;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -68,10 +68,10 @@ public class DistillationAcceleratorDiagnosticTest {
   @Test
   public void dumpAcceleratorPreFallbackState() {
     DistillationColumn.SolverType[] accelerators = { DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
-	DistillationColumn.SolverType.DAMPED_SUBSTITUTION, DistillationColumn.SolverType.INSIDE_OUT,
-	DistillationColumn.SolverType.MATRIX_INSIDE_OUT, DistillationColumn.SolverType.WEGSTEIN,
-	DistillationColumn.SolverType.SUM_RATES, DistillationColumn.SolverType.NEWTON,
-	DistillationColumn.SolverType.MESH_RESIDUAL, DistillationColumn.SolverType.NAPHTALI_SANDHOLM };
+        DistillationColumn.SolverType.DAMPED_SUBSTITUTION, DistillationColumn.SolverType.INSIDE_OUT,
+        DistillationColumn.SolverType.MATRIX_INSIDE_OUT, DistillationColumn.SolverType.WEGSTEIN,
+        DistillationColumn.SolverType.SUM_RATES, DistillationColumn.SolverType.NEWTON,
+        DistillationColumn.SolverType.MESH_RESIDUAL, DistillationColumn.SolverType.NAPHTALI_SANDHOLM };
 
     logger.info("=== Accelerator pre-fallback diagnostic (5-tray deethanizer) ===");
     for (DistillationColumn.SolverType type : accelerators) {
@@ -80,10 +80,10 @@ public class DistillationAcceleratorDiagnosticTest {
       // products and then call the inner solve method directly.
       UUID id = UUID.randomUUID();
       try {
-	callInnerSolver(column, type, id);
+        callInnerSolver(column, type, id);
       } catch (RuntimeException ex) {
-	logger.info(type.name() + ": EXCEPTION " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
-	continue;
+        logger.info(type.name() + ": EXCEPTION " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
+        continue;
       }
 
       logger.info("--- " + type.name() + " ---");
@@ -105,20 +105,20 @@ public class DistillationAcceleratorDiagnosticTest {
       logger.info("  liquidOut flow (kg/hr)         = " + column.getLiquidOutStream().getFlowRate("kg/hr"));
       // Direct tray reads — what the inner solver actually computed BEFORE fallback overwrite
       try {
-	double topTrayGas = column.getTray(column.getNumberOfTrays() - 1).getGasOutStream().getFlowRate("kg/hr");
-	double botTrayLiq = column.getTray(0).getLiquidOutStream().getFlowRate("kg/hr");
-	logger.info("  topTray gasOut    (kg/hr)      = " + topTrayGas);
-	logger.info("  botTray liquidOut (kg/hr)      = " + botTrayLiq);
-	// Bottom tray phase inventory
-	SystemInterface bot = column.getTray(0).getLiquidOutStream().getThermoSystem();
-	logger.info("  botTray hasPhase oil/liq/aq    = " + bot.hasPhaseType("oil") + "/" + bot.hasPhaseType("liquid")
-	    + "/" + bot.hasPhaseType("aqueous"));
-	logger.info("  botTray numberOfPhases         = " + bot.getNumberOfPhases());
-	if (bot.getNumberOfPhases() > 0) {
-	  logger.info("  botTray phase0 name            = " + bot.getPhase(0).getPhaseTypeName());
-	}
+        double topTrayGas = column.getTray(column.getNumberOfTrays() - 1).getGasOutStream().getFlowRate("kg/hr");
+        double botTrayLiq = column.getTray(0).getLiquidOutStream().getFlowRate("kg/hr");
+        logger.info("  topTray gasOut    (kg/hr)      = " + topTrayGas);
+        logger.info("  botTray liquidOut (kg/hr)      = " + botTrayLiq);
+        // Bottom tray phase inventory
+        SystemInterface bot = column.getTray(0).getLiquidOutStream().getThermoSystem();
+        logger.info("  botTray hasPhase oil/liq/aq    = " + bot.hasPhaseType("oil") + "/" + bot.hasPhaseType("liquid")
+            + "/" + bot.hasPhaseType("aqueous"));
+        logger.info("  botTray numberOfPhases         = " + bot.getNumberOfPhases());
+        if (bot.getNumberOfPhases() > 0) {
+          logger.info("  botTray phase0 name            = " + bot.getPhase(0).getPhaseTypeName());
+        }
       } catch (RuntimeException re) {
-	logger.info("  tray read failed: " + re.getMessage());
+        logger.info("  tray read failed: " + re.getMessage());
       }
       // Reflection probes for private gates
       probePrivate(column, "internalTrafficSatisfied");

@@ -136,6 +136,6 @@ public class InterfacialAreaCalculationTest {
     double areaSmallDroplets = node.calcInterfacialAreaPerVolume();
 
     assertTrue(areaSmallDroplets > areaLargeDroplets,
-	"Smaller droplets should have larger interfacial area per volume");
+        "Smaller droplets should have larger interfacial area per volume");
   }
 }

@@ -95,7 +95,7 @@ public class SafetyScreener {
 
     // Determine overall safety level
     SafetyReport.SafetyLevel level = determineSafetyLevel(builder, blowdownMinutes, minMetalTemp, h2sPpm, maxPressure,
-	manned);
+        manned);
     builder.overallLevel(level);
 
     // Add requirements based on findings
@@ -132,7 +132,7 @@ public class SafetyScreener {
     if (facilityConfig != null) {
       // Add inventory for compression
       if (facilityConfig.hasCompression()) {
-	baseInventory += facilityConfig.getTotalCompressionStages() * 15.0;
+        baseInventory += facilityConfig.getTotalCompressionStages() * 15.0;
       }
       // Add for separation stages
       baseInventory += facilityConfig.getBlockCount() * 5.0;
@@ -191,7 +191,7 @@ public class SafetyScreener {
     if (blowdownMinutes > BLOWDOWN_TARGET_MINUTES) {
       hasIssues = true;
       if (blowdownMinutes > BLOWDOWN_TARGET_MINUTES * 1.5) {
-	hasMajorIssues = true;
+        hasMajorIssues = true;
       }
     }
 
@@ -204,7 +204,7 @@ public class SafetyScreener {
     if (h2sPpm > H2S_TOXIC_THRESHOLD_PPM) {
       hasIssues = true;
       if (h2sPpm > 100) {
-	hasMajorIssues = true;
+        hasMajorIssues = true;
       }
     }
 
@@ -233,7 +233,7 @@ public class SafetyScreener {
       builder.addRequirement("h2s_detection", "H2S detection and alarm system required");
       builder.addRequirement("h2s_ppe", "H2S personal protective equipment");
       if (h2sPpm > 100) {
-	builder.addRequirement("h2s_escape", "Escape and rescue planning for H2S");
+        builder.addRequirement("h2s_escape", "Escape and rescue planning for H2S");
       }
     }
 
@@ -247,7 +247,7 @@ public class SafetyScreener {
 
     if (blowdownMinutes > BLOWDOWN_TARGET_MINUTES) {
       builder.addRequirement("blowdown_study",
-	  "Detailed blowdown study required - consider segmentation or larger BDV");
+          "Detailed blowdown study required - consider segmentation or larger BDV");
     }
 
     if (level == SafetyReport.SafetyLevel.HIGH) {

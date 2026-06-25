@@ -74,7 +74,7 @@ public class TegRegenerationEnergyBalanceTest {
 
     double hIn = teg.getFluid().getEnthalpy() + gas.getFluid().getEnthalpy();
     double hOut = column.getGasOutStream().getFluid().getEnthalpy()
-	+ column.getLiquidOutStream().getFluid().getEnthalpy();
+        + column.getLiquidOutStream().getFluid().getEnthalpy();
 
     // Reboiler duty must be physically correct (reference rig snapshot: 24.38 kW), not the
     // previously under-reported ~4-6 kW. Use a generous +/- band around the reference value.
@@ -85,6 +85,6 @@ public class TegRegenerationEnergyBalanceTest {
     double imbalance = (qReb + qCond) - (hOut - hIn);
     double relativeImbalance = Math.abs(imbalance) / Math.abs(hIn);
     assertTrue(relativeImbalance < 0.02,
-	"Column must conserve energy globally; relative imbalance was " + relativeImbalance);
+        "Column must conserve energy globally; relative imbalance was " + relativeImbalance);
   }
 }

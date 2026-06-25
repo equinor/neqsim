@@ -164,11 +164,11 @@ public class SpreadsheetBlock extends ProcessEquipmentBaseClass {
       String cellName = entry.getKey();
       CellDefinition def = entry.getValue();
       try {
-	double value = def.evaluate(cellValues);
-	cellValues.put(cellName, value);
+        double value = def.evaluate(cellValues);
+        cellValues.put(cellName, value);
       } catch (Exception ex) {
-	logger.error("Error evaluating cell '" + cellName + "'", ex);
-	cellValues.put(cellName, Double.NaN);
+        logger.error("Error evaluating cell '" + cellName + "'", ex);
+        cellValues.put(cellName, Double.NaN);
       }
     }
 
@@ -176,13 +176,13 @@ public class SpreadsheetBlock extends ProcessEquipmentBaseClass {
     for (ExportTarget export : exportTargets) {
       Double value = cellValues.get(export.cellName);
       if (value == null || Double.isNaN(value)) {
-	logger.warn("Skipping export of cell '" + export.cellName + "': value is NaN or missing");
-	continue;
+        logger.warn("Skipping export of cell '" + export.cellName + "': value is NaN or missing");
+        continue;
       }
       try {
-	export.writer.apply(export.target, value);
+        export.writer.apply(export.target, value);
       } catch (Exception ex) {
-	logger.error("Error exporting cell '" + export.cellName + "'", ex);
+        logger.error("Error exporting cell '" + export.cellName + "'", ex);
       }
     }
 

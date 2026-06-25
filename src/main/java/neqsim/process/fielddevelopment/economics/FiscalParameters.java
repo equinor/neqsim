@@ -426,7 +426,7 @@ public final class FiscalParameters implements Serializable {
   @Override
   public String toString() {
     return String.format("%s (%s) - Corporate: %.0f%%, Resource: %.0f%%, Total: %.0f%%", countryName, countryCode,
-	corporateTaxRate * 100, resourceTaxRate * 100, getTotalMarginalTaxRate() * 100);
+        corporateTaxRate * 100, resourceTaxRate * 100, getTotalMarginalTaxRate() * 100);
   }
 
   // ============================================================================

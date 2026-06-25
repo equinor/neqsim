@@ -2,14 +2,14 @@ package neqsim.thermo.util.leachman;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * @author victorigi99
@@ -164,23 +164,23 @@ public class LeachmanTest {
     gasstream_SKR.run();
 
     neqsim.process.equipment.compressor.Compressor compressor = new neqsim.process.equipment.compressor.Compressor(
-	"compressor 1", gasstream);
+        "compressor 1", gasstream);
     // compressor.setUseLeachman(true);
     compressor.setOutletPressure(20.0);
     compressor.setPolytropicMethod("schultz");
     compressor.run();
 
     neqsim.process.equipment.compressor.Compressor compressor_SRK = new neqsim.process.equipment.compressor.Compressor(
-	"compressor 2", gasstream_SKR);
+        "compressor 2", gasstream_SKR);
     compressor_SRK.setUseLeachman(true);
     compressor_SRK.setOutletPressure(20.0);
     compressor_SRK.run();
 
     assertEquals(compressor_SRK.getOutletStream().getTemperature("C"), compressor.getOutletStream().getTemperature("C"),
-	1e-5);
+        1e-5);
 
     neqsim.process.equipment.pipeline.PipeBeggsAndBrills pipeline = new neqsim.process.equipment.pipeline.PipeBeggsAndBrills(
-	"pipe 1", compressor.getOutletStream());
+        "pipe 1", compressor.getOutletStream());
     pipeline.setLength(5000.0);
     pipeline.setDiameter(0.2);
     pipeline.setElevation(0);
@@ -214,7 +214,7 @@ public class LeachmanTest {
     SRKfluid.getPhase("gas").getPhysicalProperties().setViscosityModel("PFCT");
 
     neqsim.process.equipment.stream.Stream Leachmanstream = new neqsim.process.equipment.stream.Stream("gas",
-	Leachmanfluid);
+        Leachmanfluid);
     Leachmanstream.setFlowRate(130.0, "MSm3/day");
     Leachmanstream.run();
 
@@ -223,20 +223,20 @@ public class LeachmanTest {
     SRKstream.run();
 
     neqsim.process.equipment.compressor.Compressor Leachmancompressor = new neqsim.process.equipment.compressor.Compressor(
-	"compressor 1", Leachmanstream);
+        "compressor 1", Leachmanstream);
     Leachmancompressor.setOutletPressure(20.0, "bara");
     Leachmancompressor.setPolytropicEfficiency(0.75);
     Leachmancompressor.run();
 
     neqsim.process.equipment.compressor.Compressor SRKcompressor = new neqsim.process.equipment.compressor.Compressor(
-	"compressor 2", SRKstream);
+        "compressor 2", SRKstream);
     SRKcompressor.setOutletPressure(20.0, "bara");
     SRKcompressor.setPolytropicEfficiency(0.75);
     SRKcompressor.setUseLeachman(true);
     SRKcompressor.run();
 
     assertEquals(Leachmancompressor.getOutletStream().getTemperature("C"),
-	SRKcompressor.getOutletStream().getTemperature("C"), 1e-5);
+        SRKcompressor.getOutletStream().getTemperature("C"), 1e-5);
     assertEquals(Leachmancompressor.getPower("MW"), SRKcompressor.getPower("MW"), 1e-8);
     assertEquals(Leachmancompressor.getPolytropicHead(), SRKcompressor.getPolytropicHead());
   }
@@ -257,18 +257,18 @@ public class LeachmanTest {
     Leachmanfluid.getPhase("gas").initPhysicalProperties();
 
     neqsim.process.equipment.stream.Stream gasstream_Leachman = new neqsim.process.equipment.stream.Stream("gas",
-	Leachmanfluid);
+        Leachmanfluid);
     gasstream_Leachman.setFlowRate(60.0, "MSm3/day");
     gasstream_Leachman.run();
 
     neqsim.process.equipment.compressor.Compressor compressor_Leachman = new neqsim.process.equipment.compressor.Compressor(
-	"compressor 1", gasstream_Leachman);
+        "compressor 1", gasstream_Leachman);
     compressor_Leachman.setOutletPressure(120.0);
     compressor_Leachman.setPolytropicEfficiency(0.77);
     compressor_Leachman.run();
 
     neqsim.process.equipment.compressor.Compressor compressor_Schultz = new neqsim.process.equipment.compressor.Compressor(
-	"compressor 2", gasstream_Leachman);
+        "compressor 2", gasstream_Leachman);
     compressor_Schultz.setOutletPressure(120.0);
     compressor_Schultz.setPolytropicEfficiency(0.77);
     compressor_Schultz.setUsePolytropicCalc(true);

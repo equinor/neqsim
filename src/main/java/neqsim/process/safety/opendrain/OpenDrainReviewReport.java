@@ -43,7 +43,7 @@ public class OpenDrainReviewReport implements Serializable {
     assumptions.add("If no area-specific process fire leak rate is supplied, 5 kg/s is used.");
     limitations.add("The review checks evidence and rule consistency; it is not a CFD or hydraulic transient model.");
     limitations
-	.add("Tagreader data is optional operational evidence and is not required for deterministic standards review.");
+        .add("Tagreader data is optional operational evidence and is not required for deterministic standards review.");
   }
 
   /**
@@ -105,9 +105,9 @@ public class OpenDrainReviewReport implements Serializable {
     int warningItems = 0;
     for (OpenDrainReviewResult result : results) {
       if ("FAIL".equals(result.getVerdict())) {
-	failedItems++;
+        failedItems++;
       } else if ("PASS_WITH_WARNINGS".equals(result.getVerdict())) {
-	warningItems++;
+        warningItems++;
       }
     }
     map.put("status", "success");

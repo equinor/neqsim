@@ -36,20 +36,20 @@ class CompressionDutyTest {
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-	new CompressionDuty(null, feed, 100.0);
+        new CompressionDuty(null, feed, 100.0);
       }
     });
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-	new CompressionDuty("X", null, 100.0);
+        new CompressionDuty("X", null, 100.0);
       }
     });
     // Discharge below feed pressure rejected.
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-	new CompressionDuty("X", feed, 5.0);
+        new CompressionDuty("X", feed, 5.0);
       }
     });
   }
@@ -115,10 +115,10 @@ class CompressionDutyTest {
     CompressionDuty duty = new CompressionDuty("Inj", feed, 50.0).setAfterCooler(false, 40.0);
     CompressionProposal p = new FlowsheetSynthesisEngine().proposeAndBuildCompression(duty);
     org.junit.jupiter.api.Assertions.assertNull(p.getProcessSystem().getUnit("Inj-AC"),
-	"after-cooler must not be built when disabled");
+        "after-cooler must not be built when disabled");
     for (String n : p.getStageNames()) {
       org.junit.jupiter.api.Assertions.assertFalse(n.endsWith("-AC"),
-	  "stage name list must not include after-cooler when disabled");
+          "stage name list must not include after-cooler when disabled");
     }
   }
 }

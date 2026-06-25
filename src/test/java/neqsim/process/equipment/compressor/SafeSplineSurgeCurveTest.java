@@ -2,9 +2,9 @@ package neqsim.process.equipment.compressor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import java.io.IOException;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.mixer.Mixer;
@@ -25,10 +25,10 @@ public class SafeSplineSurgeCurveTest {
   @Test
   public void testSurgeCurve10250() {
     double[] flow10250 = { 9758.49, 9578.11, 9397.9, 9248.64, 9006.93, 8749.97, 8508.5, 8179.81, 7799.81, 7111.75,
-	6480.26, 6007.91, 5607.45 };
+        6480.26, 6007.91, 5607.45 };
 
     double[] head10250 = { 112.65, 121.13, 127.56, 132.13, 137.29, 140.73, 142.98, 144.76, 146.14, 148.05, 148.83,
-	149.54, 150.0 };
+        149.54, 150.0 };
 
     // Initialize curve
     SafeSplineSurgeCurve curve = new SafeSplineSurgeCurve(flow10250, head10250);
@@ -110,17 +110,17 @@ public class SafeSplineSurgeCurveTest {
 
     Compressor firstStageCompressor = new Compressor("1st stage compressor", cooler.getOutletStream());
     firstStageCompressor.setPolytropicMethod("detailed"); // Use detailed for precise head
-							  // calculations
+    // calculations
     firstStageCompressor.setUsePolytropicCalc(true);
     firstStageCompressor.setPolytropicEfficiency(0.8);
     firstStageCompressor.setOutletPressure(12.0, "bara");
     firstStageCompressor.getCompressorChart().setHeadUnit("kJ/kg");
 
     double[] flow10250 = { 9758.49, 9578.11, 9397.9, 9248.64, 9006.93, 8749.97, 8508.5, 8179.81, 7799.81, 7111.75,
-	6480.26, 6007.91, 5607.45 };
+        6480.26, 6007.91, 5607.45 };
 
     double[] head10250 = { 112.65, 121.13, 127.56, 132.13, 137.29, 140.73, 142.98, 144.76, 146.14, 148.05, 148.83,
-	149.54, 150 };
+        149.54, 150 };
     firstStageCompressor.getCompressorChart().getSurgeCurve().setCurve(null, flow10250, head10250);
     firstStageCompressor.run();
     process1.add(firstStageCompressor);
@@ -241,23 +241,23 @@ public class SafeSplineSurgeCurveTest {
 
     Compressor firstStageCompressor = new Compressor("1st stage compressor", cooler.getOutletStream());
     firstStageCompressor.setPolytropicMethod("detailed"); // Use detailed for precise head
-							  // calculations
+    // calculations
     firstStageCompressor.setUsePolytropicCalc(true);
     firstStageCompressor.setPolytropicEfficiency(0.8);
     firstStageCompressor.setOutletPressure(12.0, "bara");
     firstStageCompressor.getCompressorChart().setHeadUnit("kJ/kg");
 
     double[] flow10250 = { 9758.49, 9578.11, 9397.9, 9248.64, 9006.93, 8749.97, 8508.5, 8179.81, 7799.81, 7111.75,
-	6480.26, 6007.91, 5607.45 };
+        6480.26, 6007.91, 5607.45 };
 
     double[] head10250 = { 112.65, 121.13, 127.56, 132.13, 137.29, 140.73, 142.98, 144.76, 146.14, 148.05, 148.83,
-	149.54, 150 };
+        149.54, 150 };
     firstStageCompressor.getCompressorChart().getSurgeCurve().setCurve(null, flow10250, head10250);
     firstStageCompressor.run();
     process1.add(firstStageCompressor);
 
     Splitter splitter1 = new neqsim.process.equipment.splitter.Splitter("1st stage anti surge splitter",
-	firstStageCompressor.getOutletStream());
+        firstStageCompressor.getOutletStream());
     splitter1.setFlowRates(new double[] { -1, 1.0 }, "kg/hr");
     splitter1.run();
     process1.add(splitter1);
@@ -440,9 +440,9 @@ public class SafeSplineSurgeCurveTest {
     double[] chartConditions = new double[] { 25.0, 50.0, 50.0, 20.0 };
     double[] speed = new double[] { 10250 };
     double[][] flow = new double[][] {
-	{ 5607.45, 6007.91, 6480.26, 7111.75, 7799.81, 8179.81, 8508.5, 8749.97, 9006.93, 9758.49 } };
+        { 5607.45, 6007.91, 6480.26, 7111.75, 7799.81, 8179.81, 8508.5, 8749.97, 9006.93, 9758.49 } };
     double[][] head = new double[][] {
-	{ 150.0, 149.54, 148.83, 148.05, 146.14, 144.76, 142.98, 140.73, 137.29, 112.65 } };
+        { 150.0, 149.54, 148.83, 148.05, 146.14, 144.76, 142.98, 140.73, 137.29, 112.65 } };
     double[][] polyEff = new double[][] { { 78.0, 79.0, 80.0, 80.5, 80.0, 79.5, 79.0, 78.0, 77.0, 70.0 } };
 
     comp.setSpeed(10250);
@@ -505,18 +505,18 @@ public class SafeSplineSurgeCurveTest {
 
     // Test isSurge with flow below surge point
     assertTrue(comp.getCompressorChart().getSurgeCurve().isSurge(150.0, 5000.0),
-	"Should be in surge when flow < surge flow");
+        "Should be in surge when flow < surge flow");
 
     // Test isStoneWall with flow above stone wall point
     assertTrue(comp.getCompressorChart().getStoneWallCurve().isStoneWall(112.65, 10000.0),
-	"Should be in stone wall when flow > stone wall flow");
+        "Should be in stone wall when flow > stone wall flow");
   }
 
   // @Test
   public void testSurgeCurve3() {
     try {
       ProcessModel processModel = (ProcessModel) NeqSimXtream.openNeqsim(
-	  "/workspaces/neqsim/src/test/java/neqsim/process/equipment/compressor/neqsim_model_base_2.neqsim");
+          "/workspaces/neqsim/src/test/java/neqsim/process/equipment/compressor/neqsim_model_base_2.neqsim");
       processModel.run();
       processModel.run();
       processModel.run();

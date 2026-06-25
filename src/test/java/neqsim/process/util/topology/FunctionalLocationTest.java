@@ -37,7 +37,7 @@ public class FunctionalLocationTest {
   @Test
   void testBuilder() {
     FunctionalLocation loc = FunctionalLocation.builder().installation("2540").type("VG").number("30001").train(null)
-	.description("HP Separator").build();
+        .description("HP Separator").build();
 
     assertEquals("2540-VG-30001", loc.getFullTag());
     assertEquals("Separator", loc.getEquipmentTypeDescription());

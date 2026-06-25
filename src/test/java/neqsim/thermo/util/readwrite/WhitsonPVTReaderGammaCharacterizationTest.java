@@ -6,12 +6,12 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for using WhitsonPVTReader with Whitson Gamma characterization model.
@@ -185,8 +185,8 @@ public class WhitsonPVTReaderGammaCharacterizationTest {
 
     // Use fluent API to set gamma parameters
     fluid.getCharacterization().setGammaShapeParameter(1.0) // alpha = 1.0 (exponential)
-	.setGammaMinMW(90.0) // eta = 90 g/mol (minimum MW)
-	.setGammaDensityModel("Soreide"); // Soreide density correlation
+        .setGammaMinMW(90.0) // eta = 90 g/mol (minimum MW)
+        .setGammaDensityModel("Soreide"); // Soreide density correlation
 
     // Configure for 7 lumped pseudo-components - must set lumping model first!
     fluid.getCharacterization().setLumpingModel("PVTlumpingModel");

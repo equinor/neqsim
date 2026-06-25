@@ -302,6 +302,6 @@ public class TransientLossStatistics implements Serializable {
   @Override
   public String toString() {
     return String.format("TransientLossStatistics[total=%.0f kg, transient=%.1f%%, events=%d]", totalLoss,
-	transientFraction * 100, totalEventCount);
+        transientFraction * 100, totalEventCount);
   }
 }

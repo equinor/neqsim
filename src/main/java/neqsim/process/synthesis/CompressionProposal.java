@@ -56,7 +56,7 @@ public final class CompressionProposal implements Serializable {
     this.perStagePressureRatio = perStagePressureRatio;
     this.rationale = rationale;
     this.stageNames = stageNames == null ? Collections.<String>emptyList()
-	: Collections.unmodifiableList(new ArrayList<String>(stageNames));
+        : Collections.unmodifiableList(new ArrayList<String>(stageNames));
   }
 
   /**

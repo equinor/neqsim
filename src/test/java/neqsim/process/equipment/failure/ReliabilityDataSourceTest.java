@@ -102,7 +102,7 @@ class ReliabilityDataSourceTest {
   @Test
   void testFailureModeDataConversion() {
     ReliabilityDataSource.FailureModeData data = new ReliabilityDataSource.FailureModeData("Compressor", "Seal Failure",
-	20.0);
+        20.0);
     data.setTypicalMttr(72);
     data.setSeverity("High");
 

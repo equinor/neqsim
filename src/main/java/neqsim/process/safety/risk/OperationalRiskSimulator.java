@@ -155,10 +155,10 @@ public class OperationalRiskSimulator implements Serializable {
     List<ProcessEquipmentInterface> units = processSystem.getUnitOperations();
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof StreamInterface) {
-	if (feedStreamName == null) {
-	  feedStreamName = unit.getName();
-	}
-	productStreamName = unit.getName();
+        if (feedStreamName == null) {
+          feedStreamName = unit.getName();
+        }
+        productStreamName = unit.getName();
       }
     }
   }
@@ -268,11 +268,11 @@ public class OperationalRiskSimulator implements Serializable {
     Map<String, Double> productionWithFailure = new HashMap<String, Double>();
     for (String equipName : equipmentReliability.keySet()) {
       try {
-	ProductionImpactResult impact = impactAnalyzer.analyzeFailureImpact(equipName);
-	productionWithFailure.put(equipName, impact.getProductionWithFailure());
+        ProductionImpactResult impact = impactAnalyzer.analyzeFailureImpact(equipName);
+        productionWithFailure.put(equipName, impact.getProductionWithFailure());
       } catch (Exception e) {
-	logger.warn("Could not analyze failure impact for {}: {}", equipName, e.getMessage());
-	productionWithFailure.put(equipName, 0.0);
+        logger.warn("Could not analyze failure impact for {}: {}", equipName, e.getMessage());
+        productionWithFailure.put(equipName, 0.0);
       }
     }
 
@@ -323,17 +323,17 @@ public class OperationalRiskSimulator implements Serializable {
       // Generate failure times using exponential distribution
       double time = 0.0;
       while (time < timeHorizonHours) {
-	// Time to next failure (exponential distribution)
-	double lambda = rel.getFailureRate() / HOURS_PER_YEAR; // failures per hour
-	if (lambda > 0) {
-	  double timeToFailure = -Math.log(1 - random.nextDouble()) / lambda;
-	  time += timeToFailure;
-	  if (time < timeHorizonHours) {
-	    events.add(new FailureEvent(equipName, time, rel.getMttr()));
-	  }
-	} else {
-	  break; // No failures
-	}
+        // Time to next failure (exponential distribution)
+        double lambda = rel.getFailureRate() / HOURS_PER_YEAR; // failures per hour
+        if (lambda > 0) {
+          double timeToFailure = -Math.log(1 - random.nextDouble()) / lambda;
+          time += timeToFailure;
+          if (time < timeHorizonHours) {
+            events.add(new FailureEvent(equipName, time, rel.getMttr()));
+          }
+        } else {
+          break; // No failures
+        }
       }
     }
 
@@ -345,14 +345,14 @@ public class OperationalRiskSimulator implements Serializable {
       // Production at baseline until failure
       double uptime = event.startTime - currentTime;
       if (uptime > 0) {
-	state.totalProduction += baselineProduction * uptime;
-	state.uptimeHours += uptime;
+        state.totalProduction += baselineProduction * uptime;
+        state.uptimeHours += uptime;
       }
 
       // Production during failure (at degraded rate)
       Double degradedRate = productionWithFailure.get(event.equipmentName);
       if (degradedRate == null) {
-	degradedRate = 0.0;
+        degradedRate = 0.0;
       }
       state.totalProduction += degradedRate * event.duration;
       state.downtimeHours += event.duration;
@@ -379,7 +379,7 @@ public class OperationalRiskSimulator implements Serializable {
     if (unit instanceof neqsim.process.equipment.TwoPortInterface) {
       StreamInterface outlet = ((neqsim.process.equipment.TwoPortInterface) unit).getOutletStream();
       if (outlet != null) {
-	return outlet.getFlowRate("kg/hr");
+        return outlet.getFlowRate("kg/hr");
       }
     }
     return 0.0;
@@ -399,7 +399,7 @@ public class OperationalRiskSimulator implements Serializable {
     for (int day = 1; day <= days; day++) {
       OperationalRiskResult result = runSimulation(iterations, day);
       forecast.addDataPoint(day, result.getMeanProduction(), result.getP10Production(), result.getP50Production(),
-	  result.getP90Production());
+          result.getP90Production());
     }
 
     return forecast;
@@ -459,9 +459,9 @@ public class OperationalRiskSimulator implements Serializable {
      */
     public ForecastPoint getPoint(int day) {
       for (ForecastPoint p : points) {
-	if (p.day == day) {
-	  return p;
-	}
+        if (p.day == day) {
+          return p;
+        }
       }
       return null;
     }

@@ -16,9 +16,9 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.AccelerationMethod;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.processmodel.lifecycle.ProcessModelState;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermo.ThermodynamicModelSettings;
 
 /**
  * Tests for ProcessModel large-model execution optimizations.
@@ -281,7 +281,7 @@ class ProcessModelExecutionOptimizationTest {
     model.run();
 
     assertEquals(removedRunsBeforeRemoval, removedProcess.getTotalRuns(),
-	"removed area should not run from a stale cached plan");
+        "removed area should not run from a stale cached plan");
   }
 
   /**
@@ -308,15 +308,15 @@ class ProcessModelExecutionOptimizationTest {
       /** {@inheritDoc} */
       @Override
       public void onBeforeProcessArea(String areaName, ProcessSystem process, int areaIndex, int totalAreas,
-	  int iterationNumber) {
-	events.add("before:" + areaName);
+          int iterationNumber) {
+        events.add("before:" + areaName);
       }
 
       /** {@inheritDoc} */
       @Override
       public void onProcessAreaComplete(String areaName, ProcessSystem process, int areaIndex, int totalAreas,
-	  int iterationNumber) {
-	events.add("after:" + areaName);
+          int iterationNumber) {
+        events.add("after:" + areaName);
       }
     });
 
@@ -367,15 +367,15 @@ class ProcessModelExecutionOptimizationTest {
       /** {@inheritDoc} */
       @Override
       public void onBeforeProcessArea(String areaName, ProcessSystem process, int areaIndex, int totalAreas,
-	  int iterationNumber) {
-	events.add("before:" + areaName);
+          int iterationNumber) {
+        events.add("before:" + areaName);
       }
 
       /** {@inheritDoc} */
       @Override
       public void onProcessAreaComplete(String areaName, ProcessSystem process, int areaIndex, int totalAreas,
-	  int iterationNumber) {
-	events.add("after:" + areaName);
+          int iterationNumber) {
+        events.add("after:" + areaName);
       }
     });
 
@@ -386,7 +386,7 @@ class ProcessModelExecutionOptimizationTest {
     assertTrue(afterUpstream >= 0, "upstream should complete");
     assertTrue(beforeDownstream >= 0, "downstream should start");
     assertTrue(beforeDownstream > afterUpstream,
-	"downstream should wait for upstream after inter-area link application");
+        "downstream should wait for upstream after inter-area link application");
   }
 
   /**
@@ -405,12 +405,12 @@ class ProcessModelExecutionOptimizationTest {
     assertEquals(1, updatedRecycles, "one recycle should be updated");
     assertTrue(model.isUseFastRecycleConvergence(), "fast recycle convergence should be enabled");
     assertTrue(model.isUseCoordinatedRecycleAcceleration(),
-	"coordinated recycle acceleration should be enabled in fast mode");
+        "coordinated recycle acceleration should be enabled in fast mode");
     assertTrue(process.isUseFlashWarmStart(), "warm-start should be enabled on existing area");
     assertTrue(process.isUseCoordinatedRecycleAcceleration(),
-	"coordinated acceleration should be enabled on existing area");
+        "coordinated acceleration should be enabled on existing area");
     assertEquals(AccelerationMethod.WEGSTEIN, recycle.getAccelerationMethod(),
-	"existing recycle should use Wegstein acceleration");
+        "existing recycle should use Wegstein acceleration");
 
     ProcessSystem laterProcess = new ProcessSystem("later");
     Recycle laterRecycle = new Recycle("laterRecycle");
@@ -420,7 +420,7 @@ class ProcessModelExecutionOptimizationTest {
     assertTrue(laterProcess.isUseFlashWarmStart(), "warm-start should apply to new area");
     assertTrue(laterProcess.isUseCoordinatedRecycleAcceleration(), "coordinated acceleration should apply to new area");
     assertEquals(AccelerationMethod.WEGSTEIN, laterRecycle.getAccelerationMethod(),
-	"new recycle should inherit Wegstein acceleration");
+        "new recycle should inherit Wegstein acceleration");
   }
 
   /**
@@ -448,11 +448,11 @@ class ProcessModelExecutionOptimizationTest {
     assertFalse(restored.isUseIncrementalAreaExecution(), "incremental execution flag should round-trip");
     assertTrue(restored.isUseFastRecycleConvergence(), "fast recycle convergence flag should round-trip");
     assertTrue(restored.isUseCoordinatedRecycleAcceleration(),
-	"coordinated recycle acceleration flag should round-trip");
+        "coordinated recycle acceleration flag should round-trip");
     assertTrue(restored.isUseFlashWarmStart(), "flash warm-start flag should round-trip");
     assertTrue(restored.get("area").isUseFlashWarmStart(), "flash warm-start should propagate to rebuilt areas");
     assertTrue(restored.get("area").isUseCoordinatedRecycleAcceleration(),
-	"coordinated acceleration should propagate to rebuilt areas");
+        "coordinated acceleration should propagate to rebuilt areas");
   }
 
   /**
@@ -492,6 +492,6 @@ class ProcessModelExecutionOptimizationTest {
     assertTrue(restored.isUseFlashWarmStart(), "flash warm-start flag should restore");
     assertTrue(restored.get("area").isUseFlashWarmStart(), "flash warm-start should propagate to restored areas");
     assertTrue(restored.get("area").isUseCoordinatedRecycleAcceleration(),
-	"coordinated acceleration should propagate to restored areas");
+        "coordinated acceleration should propagate to restored areas");
   }
 }

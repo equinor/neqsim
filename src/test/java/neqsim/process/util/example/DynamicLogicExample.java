@@ -1,5 +1,8 @@
 package neqsim.process.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
@@ -7,13 +10,10 @@ import neqsim.process.logic.LogicAction;
 import neqsim.process.logic.LogicCondition;
 import neqsim.process.logic.esd.ESDLogic;
 import neqsim.process.logic.startup.StartupLogic;
-import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Example demonstrating how to create process logic completely dynamically at runtime without any pre-compiled logic
@@ -117,26 +117,26 @@ public class DynamicLogicExample {
 
       @Override
       public void execute() {
-	if (!executed) {
-	  valve.setPercentValveOpening(75.0);
-	  logger.info("  Custom Action 1: Set valve to 75% opening");
-	  executed = true;
-	}
+        if (!executed) {
+          valve.setPercentValveOpening(75.0);
+          logger.info("  Custom Action 1: Set valve to 75% opening");
+          executed = true;
+        }
       }
 
       @Override
       public String getDescription() {
-	return "Custom throttle to 75%";
+        return "Custom throttle to 75%";
       }
 
       @Override
       public boolean isComplete() {
-	return executed && Math.abs(valve.getPercentValveOpening() - 75.0) < 1.0;
+        return executed && Math.abs(valve.getPercentValveOpening() - 75.0) < 1.0;
       }
 
       @Override
       public String getTargetName() {
-	return valve.getName();
+        return valve.getName();
       }
     };
 
@@ -147,31 +147,31 @@ public class DynamicLogicExample {
 
       @Override
       public void execute() {
-	if (!executed) {
-	  separator.setCalculateSteadyState(false); // Switch to transient
-	  startTime = System.currentTimeMillis() / 1000.0;
-	  logger.info("  Custom Action 2: Switch separator to transient mode");
-	  executed = true;
-	}
+        if (!executed) {
+          separator.setCalculateSteadyState(false); // Switch to transient
+          startTime = System.currentTimeMillis() / 1000.0;
+          logger.info("  Custom Action 2: Switch separator to transient mode");
+          executed = true;
+        }
       }
 
       @Override
       public String getDescription() {
-	return "Switch to transient calculation mode";
+        return "Switch to transient calculation mode";
       }
 
       @Override
       public boolean isComplete() {
-	if (!executed)
-	  return false;
-	// Consider complete after 2 seconds (simulating transient startup time)
-	double currentTime = System.currentTimeMillis() / 1000.0;
-	return (currentTime - startTime) > 2.0;
+        if (!executed)
+          return false;
+        // Consider complete after 2 seconds (simulating transient startup time)
+        double currentTime = System.currentTimeMillis() / 1000.0;
+        return (currentTime - startTime) > 2.0;
       }
 
       @Override
       public String getTargetName() {
-	return separator.getName();
+        return separator.getName();
       }
     };
 
@@ -196,28 +196,28 @@ public class DynamicLogicExample {
     LogicCondition customCondition1 = new LogicCondition() {
       @Override
       public boolean evaluate() {
-	double opening = valve.getPercentValveOpening();
-	return opening >= 70.0 && opening <= 80.0; // Valve in acceptable range
+        double opening = valve.getPercentValveOpening();
+        return opening >= 70.0 && opening <= 80.0; // Valve in acceptable range
       }
 
       @Override
       public String getDescription() {
-	return "Valve opening between 70-80%";
+        return "Valve opening between 70-80%";
       }
 
       @Override
       public ProcessEquipmentInterface getTargetEquipment() {
-	return valve;
+        return valve;
       }
 
       @Override
       public String getCurrentValue() {
-	return String.format("%.1f%%", valve.getPercentValveOpening());
+        return String.format("%.1f%%", valve.getPercentValveOpening());
       }
 
       @Override
       public String getExpectedValue() {
-	return "70-80%";
+        return "70-80%";
       }
     };
 
@@ -227,29 +227,29 @@ public class DynamicLogicExample {
 
       @Override
       public boolean evaluate() {
-	double currentTime = System.currentTimeMillis() / 1000.0;
-	return (currentTime - creationTime) > 5.0; // 5 seconds have passed
+        double currentTime = System.currentTimeMillis() / 1000.0;
+        return (currentTime - creationTime) > 5.0; // 5 seconds have passed
       }
 
       @Override
       public String getDescription() {
-	return "5 seconds elapsed since creation";
+        return "5 seconds elapsed since creation";
       }
 
       @Override
       public ProcessEquipmentInterface getTargetEquipment() {
-	return null; // Time-based, not equipment specific
+        return null; // Time-based, not equipment specific
       }
 
       @Override
       public String getCurrentValue() {
-	double elapsed = System.currentTimeMillis() / 1000.0 - creationTime;
-	return String.format("%.1fs", elapsed);
+        double elapsed = System.currentTimeMillis() / 1000.0 - creationTime;
+        return String.format("%.1fs", elapsed);
       }
 
       @Override
       public String getExpectedValue() {
-	return ">5.0s";
+        return ">5.0s";
       }
     };
 
@@ -285,31 +285,31 @@ public class DynamicLogicExample {
 
       // Add dynamic action based on scenario
       LogicAction dynamicAction = new LogicAction() {
-	private boolean executed = false;
+        private boolean executed = false;
 
-	@Override
-	public void execute() {
-	  if (!executed) {
-	    valve.setPercentValveOpening(setting);
-	    logger.info("    " + scenario + ": Set valve to " + setting + "%");
-	    executed = true;
-	  }
-	}
+        @Override
+        public void execute() {
+          if (!executed) {
+            valve.setPercentValveOpening(setting);
+            logger.info("    " + scenario + ": Set valve to " + setting + "%");
+            executed = true;
+          }
+        }
 
-	@Override
-	public String getDescription() {
-	  return scenario + " valve setting: " + setting + "%";
-	}
+        @Override
+        public String getDescription() {
+          return scenario + " valve setting: " + setting + "%";
+        }
 
-	@Override
-	public boolean isComplete() {
-	  return executed;
-	}
+        @Override
+        public boolean isComplete() {
+          return executed;
+        }
 
-	@Override
-	public String getTargetName() {
-	  return valve.getName();
-	}
+        @Override
+        public String getTargetName() {
+          return valve.getName();
+        }
       };
 
       dynamicLogic.addAction(dynamicAction, 0.0);
@@ -335,26 +335,26 @@ public class DynamicLogicExample {
 
       @Override
       public void execute() {
-	if (!executed) {
-	  valve.setPercentValveOpening(50.0);
-	  logger.info("    Initial: Set valve to 50%");
-	  executed = true;
-	}
+        if (!executed) {
+          valve.setPercentValveOpening(50.0);
+          logger.info("    Initial: Set valve to 50%");
+          executed = true;
+        }
       }
 
       @Override
       public String getDescription() {
-	return "Initial valve setting";
+        return "Initial valve setting";
       }
 
       @Override
       public boolean isComplete() {
-	return executed;
+        return executed;
       }
 
       @Override
       public String getTargetName() {
-	return valve.getName();
+        return valve.getName();
       }
     };
 
@@ -366,32 +366,32 @@ public class DynamicLogicExample {
 
     if (addEmergencyAction) {
       LogicAction emergencyAction = new LogicAction() {
-	private boolean executed = false;
+        private boolean executed = false;
 
-	@Override
-	public void execute() {
-	  if (!executed) {
-	    valve.setPercentValveOpening(5.0);
-	    separator.setCalculateSteadyState(false);
-	    logger.info("    Emergency: Valve to 5%, separator to transient");
-	    executed = true;
-	  }
-	}
+        @Override
+        public void execute() {
+          if (!executed) {
+            valve.setPercentValveOpening(5.0);
+            separator.setCalculateSteadyState(false);
+            logger.info("    Emergency: Valve to 5%, separator to transient");
+            executed = true;
+          }
+        }
 
-	@Override
-	public String getDescription() {
-	  return "Emergency shutdown sequence";
-	}
+        @Override
+        public String getDescription() {
+          return "Emergency shutdown sequence";
+        }
 
-	@Override
-	public boolean isComplete() {
-	  return executed;
-	}
+        @Override
+        public boolean isComplete() {
+          return executed;
+        }
 
-	@Override
-	public String getTargetName() {
-	  return valve.getName() + " & " + separator.getName();
-	}
+        @Override
+        public String getTargetName() {
+          return valve.getName() + " & " + separator.getName();
+        }
       };
 
       modifiableLogic.addAction(emergencyAction, 2.0);
@@ -463,30 +463,30 @@ public class DynamicLogicExample {
 
       @Override
       public void execute() {
-	if (!executed) {
-	  if (equipment instanceof ThrottlingValve && parameter >= 0) {
-	    ((ThrottlingValve) equipment).setPercentValveOpening(parameter);
-	  } else if (equipment instanceof Separator) {
-	    ((Separator) equipment).setCalculateSteadyState(false);
-	  }
-	  logger.info("    Adaptive Action: " + description);
-	  executed = true;
-	}
+        if (!executed) {
+          if (equipment instanceof ThrottlingValve && parameter >= 0) {
+            ((ThrottlingValve) equipment).setPercentValveOpening(parameter);
+          } else if (equipment instanceof Separator) {
+            ((Separator) equipment).setCalculateSteadyState(false);
+          }
+          logger.info("    Adaptive Action: " + description);
+          executed = true;
+        }
       }
 
       @Override
       public String getDescription() {
-	return description;
+        return description;
       }
 
       @Override
       public boolean isComplete() {
-	return executed;
+        return executed;
       }
 
       @Override
       public String getTargetName() {
-	return equipment.getName();
+        return equipment.getName();
       }
     };
   }

@@ -129,7 +129,7 @@ public class LiftCurveTable implements Serializable {
     // THP values line
     for (int j = 0; j < thpValues.length; j++) {
       if (j > 0) {
-	sb.append(" ");
+        sb.append(" ");
       }
       sb.append(formatNumber(thpValues[j]));
     }
@@ -139,12 +139,12 @@ public class LiftCurveTable implements Serializable {
     for (int i = 0; i < flowRates.length; i++) {
       sb.append(formatNumber(flowRates[i]));
       for (int j = 0; j < thpValues.length; j++) {
-	sb.append("  ");
-	if (Double.isNaN(bhpValues[i][j])) {
-	  sb.append("NaN");
-	} else {
-	  sb.append(formatNumber(bhpValues[i][j]));
-	}
+        sb.append("  ");
+        if (Double.isNaN(bhpValues[i][j])) {
+          sb.append("NaN");
+        } else {
+          sb.append(formatNumber(bhpValues[i][j]));
+        }
       }
       sb.append("\n");
     }
@@ -171,12 +171,12 @@ public class LiftCurveTable implements Serializable {
     for (int i = 0; i < flowRates.length; i++) {
       sb.append(formatNumber(flowRates[i]));
       for (int j = 0; j < thpValues.length; j++) {
-	sb.append(",");
-	if (Double.isNaN(bhpValues[i][j])) {
-	  sb.append("NaN");
-	} else {
-	  sb.append(formatNumber(bhpValues[i][j]));
-	}
+        sb.append(",");
+        if (Double.isNaN(bhpValues[i][j])) {
+          sb.append("NaN");
+        } else {
+          sb.append(formatNumber(bhpValues[i][j]));
+        }
       }
       sb.append("\n");
     }
@@ -200,7 +200,7 @@ public class LiftCurveTable implements Serializable {
     sb.append("  \"thpValues\": [");
     for (int j = 0; j < thpValues.length; j++) {
       if (j > 0) {
-	sb.append(", ");
+        sb.append(", ");
       }
       sb.append(formatNumber(thpValues[j]));
     }
@@ -210,7 +210,7 @@ public class LiftCurveTable implements Serializable {
     sb.append("  \"flowRates\": [");
     for (int i = 0; i < flowRates.length; i++) {
       if (i > 0) {
-	sb.append(", ");
+        sb.append(", ");
       }
       sb.append(formatNumber(flowRates[i]));
     }
@@ -221,18 +221,18 @@ public class LiftCurveTable implements Serializable {
     for (int i = 0; i < flowRates.length; i++) {
       sb.append("    [");
       for (int j = 0; j < thpValues.length; j++) {
-	if (j > 0) {
-	  sb.append(", ");
-	}
-	if (Double.isNaN(bhpValues[i][j])) {
-	  sb.append("null");
-	} else {
-	  sb.append(formatNumber(bhpValues[i][j]));
-	}
+        if (j > 0) {
+          sb.append(", ");
+        }
+        if (Double.isNaN(bhpValues[i][j])) {
+          sb.append("null");
+        } else {
+          sb.append(formatNumber(bhpValues[i][j]));
+        }
       }
       sb.append("]");
       if (i < flowRates.length - 1) {
-	sb.append(",");
+        sb.append(",");
       }
       sb.append("\n");
     }
@@ -274,7 +274,7 @@ public class LiftCurveTable implements Serializable {
     for (int i = 0; i < flowRates.length; i++) {
       data[i + 1][0] = flowRates[i];
       for (int j = 0; j < thpValues.length; j++) {
-	data[i + 1][j + 1] = bhpValues[i][j];
+        data[i + 1][j + 1] = bhpValues[i][j];
       }
     }
 
@@ -316,9 +316,9 @@ public class LiftCurveTable implements Serializable {
     int flowHighIdx = -1;
     for (int i = 0; i < flowRates.length - 1; i++) {
       if (flowRates[i] <= flowRate && flowRate <= flowRates[i + 1]) {
-	flowLowIdx = i;
-	flowHighIdx = i + 1;
-	break;
+        flowLowIdx = i;
+        flowHighIdx = i + 1;
+        break;
       }
     }
 
@@ -327,9 +327,9 @@ public class LiftCurveTable implements Serializable {
     int thpHighIdx = -1;
     for (int j = 0; j < thpValues.length - 1; j++) {
       if (thpValues[j] <= thp && thp <= thpValues[j + 1]) {
-	thpLowIdx = j;
-	thpHighIdx = j + 1;
-	break;
+        thpLowIdx = j;
+        thpHighIdx = j + 1;
+        break;
       }
     }
 
@@ -370,9 +370,9 @@ public class LiftCurveTable implements Serializable {
     int count = 0;
     for (int i = 0; i < flowRates.length; i++) {
       for (int j = 0; j < thpValues.length; j++) {
-	if (!Double.isNaN(bhpValues[i][j])) {
-	  count++;
-	}
+        if (!Double.isNaN(bhpValues[i][j])) {
+          count++;
+        }
       }
     }
     return count;
@@ -544,6 +544,6 @@ public class LiftCurveTable implements Serializable {
   @Override
   public String toString() {
     return String.format("LiftCurveTable[%s]: %d flow rates x %d THP values (%.1f%% feasible)", tableName,
-	flowRates.length, thpValues.length, getFeasibilityPercent());
+        flowRates.length, thpValues.length, getFeasibilityPercent());
   }
 }

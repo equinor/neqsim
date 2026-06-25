@@ -166,9 +166,9 @@ public class Condenser extends SimpleTray {
       prepareMixedStreamForRefluxFlash();
       ThermodynamicOperations testOps = new ThermodynamicOperations(mixedStream.getThermoSystem());
       try {
-	testOps.bubblePointTemperatureFlash();
+        testOps.bubblePointTemperatureFlash();
       } catch (Exception e) {
-	logger.error(e.getMessage());
+        logger.error(e.getMessage());
       }
       mixedStream.getThermoSystem().init(3);
       // mixedStream.getThermoSystem().prettyPrint();
@@ -187,8 +187,8 @@ public class Condenser extends SimpleTray {
       liquidstream.setName("temp liq stream");
       liquidstream.run();
       if (liquidstream.getFlowRate("kg/hr") < this.reflux_value) {
-	liquidstream.setFlowRate(this.reflux_value + 1, this.reflux_unit);
-	liquidstream.run();
+        liquidstream.setFlowRate(this.reflux_value + 1, this.reflux_unit);
+        liquidstream.run();
       }
       mixedStreamSplitter = new Splitter("splitter", liquidstream, 2);
       mixedStreamSplitter.setFlowRates(new double[] { this.reflux_value, -1 }, this.reflux_unit);

@@ -334,26 +334,26 @@ public class SafetyReliefValve extends ThrottlingValve {
     switch (openingLaw) {
     case SNAP:
       if (pUpBar >= pRel) {
-	frac = 1.0;
+        frac = 1.0;
       } else if (wasOpenLastStep && pUpBar > pReseat) {
-	// Ramp within band to reduce numerical jerk
-	frac = (pUpBar - setPressureBar) / Math.max(EPS, (pRel - setPressureBar));
-	frac = Math.max(frac, minStableOpenFrac);
+        // Ramp within band to reduce numerical jerk
+        frac = (pUpBar - setPressureBar) / Math.max(EPS, (pRel - setPressureBar));
+        frac = Math.max(frac, minStableOpenFrac);
       } else if (pUpBar <= pReseat) {
-	frac = 0.0;
+        frac = 0.0;
       } else {
-	frac = 0.0; // not previously open → stay closed until pRel
+        frac = 0.0; // not previously open → stay closed until pRel
       }
       break;
 
     case MODULATING:
     default:
       if (wasOpenLastStep && pUpBar <= pReseat)
-	return 0.0;
+        return 0.0;
       if (pUpBar <= setPressureBar)
-	return 0.0;
+        return 0.0;
       if (pUpBar >= pRel)
-	return 1.0;
+        return 1.0;
       frac = (pUpBar - setPressureBar) / Math.max(EPS, (pRel - setPressureBar));
       break;
     }
@@ -440,11 +440,11 @@ public class SafetyReliefValve extends ThrottlingValve {
     boolean currentlyOpen = (openFraction > 0.0);
     if (currentlyOpen) {
       if (timeSinceOpenSec < minOpenTimeSec) {
-	cmd = Math.max(cmd, Math.max(minStableOpenFrac, 1e-6));
+        cmd = Math.max(cmd, Math.max(minStableOpenFrac, 1e-6));
       }
     } else {
       if (timeSinceCloseSec < minCloseTimeSec) {
-	cmd = 0.0;
+        cmd = 0.0;
       }
     }
 
@@ -461,7 +461,7 @@ public class SafetyReliefValve extends ThrottlingValve {
       double maxDelta = maxLiftRatePerSec * dt;
       double delta = liftProposed - openFraction;
       if (Math.abs(delta) > maxDelta) {
-	liftProposed = openFraction + Math.copySign(maxDelta, delta);
+        liftProposed = openFraction + Math.copySign(maxDelta, delta);
       }
     }
 
@@ -479,12 +479,12 @@ public class SafetyReliefValve extends ThrottlingValve {
     if (newOpen) {
       timeSinceOpenSec += dt;
       if (!wasOpenLastStep)
-	timeSinceOpenSec = 0.0;
+        timeSinceOpenSec = 0.0;
       timeSinceCloseSec = 0.0;
     } else {
       timeSinceCloseSec += dt;
       if (wasOpenLastStep)
-	timeSinceCloseSec = 0.0;
+        timeSinceCloseSec = 0.0;
       timeSinceOpenSec = 0.0;
     }
     wasOpenLastStep = newOpen;

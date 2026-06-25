@@ -166,13 +166,13 @@ public class PSDValve extends ThrottlingValve {
     if (pressureTransmitter != null && tripEnabled && !hasTripped) {
       // Check if HIHI alarm is active
       if (pressureTransmitter.getAlarmState() != null && pressureTransmitter.getAlarmState().isActive()) {
-	AlarmLevel activeLevel = pressureTransmitter.getAlarmState().getActiveLevel();
-	if (activeLevel == AlarmLevel.HIHI) {
-	  // HIHI alarm detected - initiate trip
-	  hasTripped = true;
-	  // Command valve to close
-	  setPercentValveOpening(0.0);
-	}
+        AlarmLevel activeLevel = pressureTransmitter.getAlarmState().getActiveLevel();
+        if (activeLevel == AlarmLevel.HIHI) {
+          // HIHI alarm detected - initiate trip
+          hasTripped = true;
+          // Command valve to close
+          setPercentValveOpening(0.0);
+        }
       }
     }
 
@@ -222,6 +222,6 @@ public class PSDValve extends ThrottlingValve {
   @Override
   public String toString() {
     return getName() + " [PSD Valve] - Opening: " + String.format("%.1f", getPercentValveOpening()) + "%, Tripped: "
-	+ (hasTripped ? "YES" : "NO") + ", Trip Enabled: " + (tripEnabled ? "YES" : "NO");
+        + (hasTripped ? "YES" : "NO") + ", Trip Enabled: " + (tripEnabled ? "YES" : "NO");
   }
 }

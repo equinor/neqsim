@@ -110,15 +110,15 @@ public class MechanicalDesignUtilizationTest {
     int added = heater.applyMechanicalDesignCapacityConstraints();
     assertEquals(1, added, "one pressure-drop constraint should be registered");
     assertTrue(heater.getCapacityConstraints().containsKey("design pressure drop"),
-	"derived constraint should be present in the equipment constraint map");
+        "derived constraint should be present in the equipment constraint map");
     assertEquals(0.5, heater.getMaxUtilization(), 1.0e-6);
 
     // Idempotent: re-applying must not duplicate the constraint.
     int addedAgain = heater.applyMechanicalDesignCapacityConstraints();
     assertEquals(1, addedAgain, "re-applying should register the same single constraint");
     assertEquals(1L, heater.getCapacityConstraints().values().stream()
-	.filter(c -> "mechanicalDesign".equals(c.getDataSource())).count(),
-	"exactly one mechanical-design constraint should remain");
+        .filter(c -> "mechanicalDesign".equals(c.getDataSource())).count(),
+        "exactly one mechanical-design constraint should remain");
     assertFalse(heater.getCapacityConstraints().isEmpty());
   }
 
@@ -161,7 +161,7 @@ public class MechanicalDesignUtilizationTest {
     assertTrue(operatingVolFlow > 0.0, "operating volume flow should be positive");
     // Both the stored design flow and the gas-velocity-derived gas flow are now m3/hr and equal.
     assertEquals(designGasVolFlow, designVolFlow, designVolFlow * 1.0e-3,
-	"design volume flow (m3/hr) should match the gas design volume flow");
+        "design volume flow (m3/hr) should match the gas design volume flow");
 
     Map<String, Double> utilization = design.getDesignUtilization();
     assertTrue(utilization.containsKey("design volume flow"), "design volume flow utilization should be present");

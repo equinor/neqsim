@@ -73,7 +73,7 @@ public final class OperationalAction implements Serializable {
    */
   public static OperationalAction setVariable(String address, double value, String unit) {
     return new OperationalAction(ActionType.SET_VARIABLE, address, value, unit, 0.0, 0.0,
-	"Set " + address + " to " + value + " " + clean(unit));
+        "Set " + address + " to " + value + " " + clean(unit));
   }
 
   /**
@@ -85,7 +85,7 @@ public final class OperationalAction implements Serializable {
    */
   public static OperationalAction setValveOpening(String valveName, double percentOpen) {
     return new OperationalAction(ActionType.SET_VALVE_OPENING, valveName, percentOpen, "%", 0.0, 0.0,
-	"Set valve " + clean(valveName) + " opening to " + percentOpen + "%");
+        "Set valve " + clean(valveName) + " opening to " + percentOpen + "%");
   }
 
   /**
@@ -95,7 +95,7 @@ public final class OperationalAction implements Serializable {
    */
   public static OperationalAction applyFieldInputs() {
     return new OperationalAction(ActionType.APPLY_FIELD_INPUTS, "", Double.NaN, "", 0.0, 0.0,
-	"Apply field input measurements");
+        "Apply field input measurements");
   }
 
   /**
@@ -105,7 +105,7 @@ public final class OperationalAction implements Serializable {
    */
   public static OperationalAction runSteadyState() {
     return new OperationalAction(ActionType.RUN_STEADY_STATE, "", Double.NaN, "", 0.0, 0.0,
-	"Run steady-state calculation");
+        "Run steady-state calculation");
   }
 
   /**
@@ -117,7 +117,7 @@ public final class OperationalAction implements Serializable {
    */
   public static OperationalAction runTransient(double durationSeconds, double timeStepSeconds) {
     return new OperationalAction(ActionType.RUN_TRANSIENT, "", Double.NaN, "", durationSeconds, timeStepSeconds,
-	"Run transient simulation for " + durationSeconds + " s");
+        "Run transient simulation for " + durationSeconds + " s");
   }
 
   /**

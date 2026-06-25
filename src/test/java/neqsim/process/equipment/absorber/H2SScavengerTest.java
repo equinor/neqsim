@@ -2,11 +2,11 @@ package neqsim.process.equipment.absorber;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.absorber.H2SScavenger.ScavengerType;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
@@ -63,7 +63,7 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
 
     // Verify H2S was removed
     assertTrue(scavenger.getOutletH2SConcentration() < scavenger.getInletH2SConcentration(),
-	"Outlet H2S should be less than inlet");
+        "Outlet H2S should be less than inlet");
     assertTrue(scavenger.getH2SRemovalEfficiency() > 0, "Removal efficiency should be positive");
     assertTrue(scavenger.getH2SRemoved("kg/hr") > 0, "H2S removed should be positive");
   }
@@ -115,7 +115,7 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
 
     // Should achieve some removal (correlation is approximate)
     assertTrue(scavenger.getOutletH2SConcentration() < scavenger.getInletH2SConcentration(),
-	"Should achieve some removal");
+        "Should achieve some removal");
   }
 
   @Test
@@ -160,7 +160,7 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
       scavenger.run();
 
       logger.info(
-	  String.format("Contact Time: %.0f s -> Efficiency: %.1f%%", ct, scavenger.getH2SRemovalEfficiencyPercent()));
+          String.format("Contact Time: %.0f s -> Efficiency: %.1f%%", ct, scavenger.getH2SRemovalEfficiencyPercent()));
     }
   }
 
@@ -181,7 +181,7 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
       scavenger.run();
 
       logger.info(String.format("Mixing Efficiency: %.0f%% -> Removal: %.1f%%", me * 100,
-	  scavenger.getH2SRemovalEfficiencyPercent()));
+          scavenger.getH2SRemovalEfficiencyPercent()));
     }
   }
 

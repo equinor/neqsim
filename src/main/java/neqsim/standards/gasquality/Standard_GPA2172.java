@@ -102,7 +102,7 @@ public class Standard_GPA2172 extends neqsim.standards.Standard {
 
       // Real gas GHV = Ideal GHV / Z
       if (compressionFactor > 0.0) {
-	realGrossHV = idealGrossHV / compressionFactor;
+        realGrossHV = idealGrossHV / compressionFactor;
       }
 
       // Calculate GPM (gallons per Mcf = gallons per 1000 ft3)
@@ -114,17 +114,17 @@ public class Standard_GPA2172 extends neqsim.standards.Standard {
       gpmC3Plus = 0.0;
 
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
-	String name = thermoSystem.getPhase(0).getComponent(i).getName();
-	double xi = thermoSystem.getPhase(0).getComponent(i).getz();
-	double gpm = calculateComponentGPM(name, xi);
+        String name = thermoSystem.getPhase(0).getComponent(i).getName();
+        double xi = thermoSystem.getPhase(0).getComponent(i).getz();
+        double gpm = calculateComponentGPM(name, xi);
 
-	if ("ethane".equals(name)) {
-	  gpmC2Plus += gpm;
-	} else if ("propane".equals(name) || "i-butane".equals(name) || "n-butane".equals(name)
-	    || "i-pentane".equals(name) || "n-pentane".equals(name) || "n-hexane".equals(name)) {
-	  gpmC2Plus += gpm;
-	  gpmC3Plus += gpm;
-	}
+        if ("ethane".equals(name)) {
+          gpmC2Plus += gpm;
+        } else if ("propane".equals(name) || "i-butane".equals(name) || "n-butane".equals(name)
+            || "i-pentane".equals(name) || "n-pentane".equals(name) || "n-hexane".equals(name)) {
+          gpmC2Plus += gpm;
+          gpmC3Plus += gpm;
+        }
       }
     } catch (Exception ex) {
       logger.error("GPA 2172 calculation failed", ex);
@@ -178,7 +178,7 @@ public class Standard_GPA2172 extends neqsim.standards.Standard {
     double value = getValue(returnParameter);
     if ("idealGrossHV".equals(returnParameter) || "realGrossHV".equals(returnParameter)) {
       if ("MJ/m3".equals(returnUnit)) {
-	return value * 0.037316; // BTU/ft3 to MJ/m3
+        return value * 0.037316; // BTU/ft3 to MJ/m3
       }
     }
     return value;
@@ -215,11 +215,11 @@ public class Standard_GPA2172 extends neqsim.standards.Standard {
   @Override
   public String getUnit(String returnParameter) {
     if ("idealGrossHV".equals(returnParameter) || "GHV".equals(returnParameter)
-	|| "realGrossHV".equals(returnParameter)) {
+        || "realGrossHV".equals(returnParameter)) {
       return "BTU/ft3";
     }
     if ("relativeDensity".equals(returnParameter) || "specificGravity".equals(returnParameter)
-	|| "compressionFactor".equals(returnParameter) || "Z".equals(returnParameter)) {
+        || "compressionFactor".equals(returnParameter) || "Z".equals(returnParameter)) {
       return "-";
     }
     if ("molarMass".equals(returnParameter)) {

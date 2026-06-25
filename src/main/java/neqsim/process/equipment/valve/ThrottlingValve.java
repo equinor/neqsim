@@ -185,7 +185,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   public InadvertentValveOperationResult analyseInadvertentOperation(InadvertentValveOperationResult.ValveRole role,
       InadvertentValveOperationResult.IvoMode mode, double designPressureBara) {
     return new InadvertentValveOperationAnalyzer(this).setRole(role).setMode(mode)
-	.setDesignPressure(designPressureBara, "bara").analyze();
+        .setDesignPressure(designPressureBara, "bara").analyze();
   }
 
   /** {@inheritDoc} */
@@ -228,18 +228,18 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   @Override
   public boolean needRecalculation() {
     if (thermoSystem == null || getInletStream() == null || getInletStream().getThermoSystem() == null
-	|| lastInletComposition == null) {
+        || lastInletComposition == null) {
       return true;
     }
     SystemInterface inThermo = getInletStream().getThermoSystem();
     if (inThermo.getTemperature() != lastInletTemperature || inThermo.getPressure() != lastInletPressure
-	|| pressure != lastOutletPressure || Kv != lastKv || percentValveOpening != lastPercentValveOpening
-	|| requestedValveOpening != lastRequestedValveOpening || deltaPressure != lastDeltaPressure || Fp != lastFp
-	|| xt != lastXt || valveKvSet != lastValveKvSet || isoThermal != lastIsoThermal
-	|| acceptNegativeDP != lastAcceptNegativeDP || isCalcPressure != lastIsCalcPressure
-	|| allowChoked != lastAllowChoked || allowLaminar != lastAllowLaminar
-	|| !java.util.Objects.equals(pressureUnit, lastPressureUnit)
-	|| !java.util.Objects.equals(getSpecification(), lastSpecification)) {
+        || pressure != lastOutletPressure || Kv != lastKv || percentValveOpening != lastPercentValveOpening
+        || requestedValveOpening != lastRequestedValveOpening || deltaPressure != lastDeltaPressure || Fp != lastFp
+        || xt != lastXt || valveKvSet != lastValveKvSet || isoThermal != lastIsoThermal
+        || acceptNegativeDP != lastAcceptNegativeDP || isCalcPressure != lastIsCalcPressure
+        || allowChoked != lastAllowChoked || allowLaminar != lastAllowLaminar
+        || !java.util.Objects.equals(pressureUnit, lastPressureUnit)
+        || !java.util.Objects.equals(getSpecification(), lastSpecification)) {
       return true;
     }
     double flow = inThermo.getFlowRate("kg/hr");
@@ -253,7 +253,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     }
     for (int i = 0; i < numberOfComponents; i++) {
       if (phase.getComponent(i).getz() != lastInletComposition[i]) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -307,7 +307,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
    */
   public double calculateMolarFlow() {
     double flow_m3_sec = getMechanicalDesign().getValveSizingMethod()
-	.calculateFlowRateFromValveOpening(adjustKv(Kv, percentValveOpening), inStream, outStream);
+        .calculateFlowRateFromValveOpening(adjustKv(Kv, percentValveOpening), inStream, outStream);
 
     return flow_m3_sec * inStream.getFluid().getDensity("kg/m3") / inStream.getFluid().getMolarMass("kg/mol");
   }
@@ -392,7 +392,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
 
     if ((thermoSystem.getPressure(pressureUnit) - pressure) < 0) {
       if (isAcceptNegativeDP()) {
-	thermoSystem.setPressure(pressure, pressureUnit);
+        thermoSystem.setPressure(pressure, pressureUnit);
       }
     } else {
       thermoSystem.setPressure(pressure, pressureUnit);
@@ -404,7 +404,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
     if (isIsoThermal() || Math.abs(pressure - inStream.getThermoSystem().getPressure()) < 1e-6
-	|| thermoSystem.getTotalNumberOfMoles() < 1e-12 || pressure == 0) {
+        || thermoSystem.getTotalNumberOfMoles() < 1e-12 || pressure == 0) {
       thermoSystem.setPressure(outPres, pressureUnit);
       thermoOps.TPflash();
     } else {
@@ -434,25 +434,25 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     } catch (RuntimeException ex) {
       Throwable cause = ex.getCause();
       boolean isNaN = (ex.getMessage() != null && ex.getMessage().contains("NaN"))
-	  || (cause != null && cause.getMessage() != null && cause.getMessage().contains("NaN"));
+          || (cause != null && cause.getMessage() != null && cause.getMessage().contains("NaN"));
       if (!isNaN) {
-	throw ex;
+        throw ex;
       }
       logger.debug("PHflash (type 0) produced NaN; retrying with second-order solver (type 1)");
       try {
-	thermoSystem.setTemperature(preFlashTemperature);
-	thermoOps.PHflash(enthalpy, 1);
+        thermoSystem.setTemperature(preFlashTemperature);
+        thermoOps.PHflash(enthalpy, 1);
       } catch (RuntimeException ex2) {
-	logger.debug("Second-order PHflash also failed; retrying with multi-phase check disabled");
-	boolean savedMpc = thermoSystem.doMultiPhaseCheck();
-	thermoSystem.setMultiPhaseCheck(false);
-	try {
-	  thermoSystem.setTemperature(preFlashTemperature);
-	  thermoSystem.init(0);
-	  thermoOps.PHflash(enthalpy, 1);
-	} finally {
-	  thermoSystem.setMultiPhaseCheck(savedMpc);
-	}
+        logger.debug("Second-order PHflash also failed; retrying with multi-phase check disabled");
+        boolean savedMpc = thermoSystem.doMultiPhaseCheck();
+        thermoSystem.setMultiPhaseCheck(false);
+        try {
+          thermoSystem.setTemperature(preFlashTemperature);
+          thermoSystem.init(0);
+          thermoOps.PHflash(enthalpy, 1);
+        } finally {
+          thermoSystem.setMultiPhaseCheck(savedMpc);
+        }
       }
     }
   }
@@ -499,7 +499,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
 
     if ((thermoSystem.getPressure(pressureUnit) - outPres) < 0) {
       if (isAcceptNegativeDP()) {
-	thermoSystem.setPressure(outPres, pressureUnit);
+        thermoSystem.setPressure(outPres, pressureUnit);
       }
     } else {
       thermoSystem.setPressure(outPres, pressureUnit);
@@ -513,8 +513,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
       molarFlow = ensureValidMolarFlow(calculateMolarFlow());
 
       if (molarFlow > 0.0) {
-	inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
-	inStream.getThermoSystem().initProperties();
+        inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
+        inStream.getThermoSystem().initProperties();
       }
     }
     // update outlet pressure if required
@@ -537,8 +537,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     if (deltaP > 0.0) {
       molarFlow = ensureValidMolarFlow(calculateMolarFlow());
       if (molarFlow <= 0.0) {
-	applyZeroFlowState(id);
-	return;
+        applyZeroFlowState(id);
+        return;
       }
     } else {
       applyZeroFlowState(id);
@@ -565,7 +565,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   private double ensureValidMolarFlow(double flow) {
     if (Double.isFinite(flow)) {
       if (flow > minimumMolarFlow) {
-	return flow;
+        return flow;
       }
     }
     return 0.0;
@@ -580,9 +580,9 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     double targetPressure = pressure;
     if (!(targetPressure > 0.0)) {
       try {
-	targetPressure = getOutletStream().getThermoSystem().getPressure(pressureUnit);
+        targetPressure = getOutletStream().getThermoSystem().getPressure(pressureUnit);
       } catch (Exception ex) {
-	targetPressure = getInletStream().getThermoSystem().getPressure(pressureUnit);
+        targetPressure = getInletStream().getThermoSystem().getPressure(pressureUnit);
       }
     }
 
@@ -632,23 +632,23 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     // Step 2: Apply stiction — valve sticks until force exceeds stiction band
     if (valveStiction > 0.0) {
       if (Double.isNaN(stuckPosition)) {
-	stuckPosition = current;
-	isStuck = true;
+        stuckPosition = current;
+        isStuck = true;
       }
       if (isStuck) {
-	if (Math.abs(effectiveTarget - stuckPosition) >= valveStiction) {
-	  isStuck = false;
-	  // Valve breaks free — jump to target
-	} else {
-	  effectiveTarget = stuckPosition;
-	}
+        if (Math.abs(effectiveTarget - stuckPosition) >= valveStiction) {
+          isStuck = false;
+          // Valve breaks free — jump to target
+        } else {
+          effectiveTarget = stuckPosition;
+        }
       } else {
-	// Valve is moving — check if it should re-stick
-	if (Math.abs(effectiveTarget - current) < valveStiction * 0.1) {
-	  isStuck = true;
-	  stuckPosition = current;
-	  effectiveTarget = current;
-	}
+        // Valve is moving — check if it should re-stick
+        if (Math.abs(effectiveTarget - current) < valveStiction * 0.1) {
+          isStuck = true;
+          stuckPosition = current;
+          effectiveTarget = current;
+        }
       }
     }
 
@@ -656,8 +656,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     if (valveHysteresis > 0.0 && Math.abs(effectiveTarget - current) > 1e-12) {
       int direction = effectiveTarget > current ? 1 : -1;
       if (direction != lastMoveDirection && lastMoveDirection != 0) {
-	// Direction reversal — apply half hysteresis band as offset
-	effectiveTarget = effectiveTarget - direction * valveHysteresis / 2.0;
+        // Direction reversal — apply half hysteresis band as offset
+        effectiveTarget = effectiveTarget - direction * valveHysteresis / 2.0;
       }
       lastMoveDirection = direction;
     }
@@ -672,22 +672,22 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     case LINEAR_RATE_LIMIT:
       double delta = effectiveTarget - current;
       if (Math.abs(delta) < 1e-12 || effectiveDt <= 0.0) {
-	return effectiveTarget;
+        return effectiveTarget;
       }
       double travelTime = delta >= 0.0 ? getEffectiveOpeningTravelTime() : getEffectiveClosingTravelTime();
       if (travelTime <= 0.0) {
-	return effectiveTarget;
+        return effectiveTarget;
       }
       double maxRate = 100.0 / travelTime;
       double maxChange = maxRate * effectiveDt;
       if (Math.abs(delta) <= maxChange) {
-	return effectiveTarget;
+        return effectiveTarget;
       }
       return current + Math.copySign(maxChange, delta);
     case FIRST_ORDER_LAG:
       double tau = valveTimeConstantSec > 0.0 ? valveTimeConstantSec : valveTravelTimeSec;
       if (tau <= 0.0 || effectiveDt <= 0.0) {
-	return effectiveTarget;
+        return effectiveTarget;
       }
       double alpha = 1.0 - Math.exp(-effectiveDt / tau);
       return current + alpha * (effectiveTarget - current);
@@ -940,7 +940,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     StreamInterface out = getOutletStream();
     if (out != null) {
       state.put("temperature",
-	  ProcessEquipmentInterface.createStateEntry(out.getTemperature(temperatureUnit), temperatureUnit));
+          ProcessEquipmentInterface.createStateEntry(out.getTemperature(temperatureUnit), temperatureUnit));
       state.put("pressure", ProcessEquipmentInterface.createStateEntry(out.getPressure(pressureUnit), pressureUnit));
       state.put("flow", ProcessEquipmentInterface.createStateEntry(out.getFlowRate(flowUnit), flowUnit));
     }
@@ -1011,7 +1011,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     outStream.getThermoSystem().init(3);
     inStream.getThermoSystem().init(3);
     return outStream.getThermoSystem().getExergy(surroundingTemperature, unit)
-	- inStream.getThermoSystem().getExergy(surroundingTemperature, unit);
+        - inStream.getThermoSystem().getExergy(surroundingTemperature, unit);
   }
 
   /**
@@ -1289,30 +1289,30 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   protected void initializeCapacityConstraints() {
     // Cv utilization constraint (HARD limit) - disabled by default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("cvUtilization", "",
-	neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD)
-	.setDesignValue(getMechanicalDesign().maxDesignCv).setWarningThreshold(0.9)
-	.setDescription("Cv utilization vs design maximum").setValueSupplier(() -> getCv()).setEnabled(false));
+        neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD)
+        .setDesignValue(getMechanicalDesign().maxDesignCv).setWarningThreshold(0.9)
+        .setDescription("Cv utilization vs design maximum").setValueSupplier(() -> getCv()).setEnabled(false));
 
     // Volume flow constraint (DESIGN limit) - disabled by default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("volumeFlow", "m3/hr",
-	neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
-	.setDesignValue(getMechanicalDesign().maxDesignVolumeFlow).setWarningThreshold(0.9)
-	.setDescription("Volume flow vs design maximum")
-	.setValueSupplier(() -> getOutStream() != null ? getOutStream().getFlowRate("m3/hr") : 0.0).setEnabled(false));
+        neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
+        .setDesignValue(getMechanicalDesign().maxDesignVolumeFlow).setWarningThreshold(0.9)
+        .setDescription("Volume flow vs design maximum")
+        .setValueSupplier(() -> getOutStream() != null ? getOutStream().getFlowRate("m3/hr") : 0.0).setEnabled(false));
 
     // Valve opening constraint (SOFT limit) - disabled by default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("valveOpening", "%",
-	neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT).setDesignValue(maxValveOpening)
-	.setWarningThreshold(0.9).setDescription("Valve opening percentage").setValueSupplier(() -> percentValveOpening)
-	.setEnabled(false));
+        neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT).setDesignValue(maxValveOpening)
+        .setWarningThreshold(0.9).setDescription("Valve opening percentage").setValueSupplier(() -> percentValveOpening)
+        .setEnabled(false));
 
     // AIV (Acoustic-Induced Vibration) constraint - critical for control valves -
     // disabled by default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("AIV", "kW",
-	neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT).setDesignValue(maxDesignAIV)
-	.setMaxValue(50.0).setWarningThreshold(0.4)
-	.setDescription("AIV acoustic power (<1kW=low, 1-10kW=medium, >25kW=very high risk)")
-	.setValueSupplier(() -> calculateAIV()).setEnabled(false));
+        neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT).setDesignValue(maxDesignAIV)
+        .setMaxValue(50.0).setWarningThreshold(0.4)
+        .setDescription("AIV acoustic power (<1kW=low, 1-10kW=medium, >25kW=very high risk)")
+        .setValueSupplier(() -> calculateAIV()).setEnabled(false));
   }
 
   /** {@inheritDoc} */
@@ -1331,12 +1331,12 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     double maxUtil = 0.0;
     for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints().values()) {
       if (!c.isEnabled()) {
-	continue;
+        continue;
       }
       double util = c.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-	maxUtil = util;
-	bottleneck = c;
+        maxUtil = util;
+        bottleneck = c;
       }
     }
     return bottleneck;
@@ -1347,10 +1347,10 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   public boolean isCapacityExceeded() {
     for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints().values()) {
       if (!c.isEnabled()) {
-	continue;
+        continue;
       }
       if (c.isViolated()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -1361,10 +1361,10 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   public boolean isHardLimitExceeded() {
     for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints().values()) {
       if (!c.isEnabled()) {
-	continue;
+        continue;
       }
       if (c.isHardLimitExceeded()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -1376,11 +1376,11 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     double maxUtil = 0.0;
     for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints().values()) {
       if (!c.isEnabled()) {
-	continue;
+        continue;
       }
       double util = c.getUtilization();
       if (!Double.isNaN(util)) {
-	maxUtil = Math.max(maxUtil, util);
+        maxUtil = Math.max(maxUtil, util);
       }
     }
     return maxUtil;
@@ -1469,8 +1469,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
       double calculatedCv = getMechanicalDesign().getValveCvMax();
 
       if (calculatedCv <= 0 || Double.isNaN(calculatedCv)) {
-	// Fallback if calculation fails
-	calculatedCv = estimateCvFromFlow(flowRate);
+        // Fallback if calculation fails
+        calculatedCv = estimateCvFromFlow(flowRate);
       }
 
       // The calculated Cv is for 100% opening
@@ -1479,7 +1479,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
       // For equal-percentage characteristic: Cv_actual = Cv_100 * R^((opening-1))
       // Simplified: Cv needed at 100% ≈ Cv at design opening / opening factor
       double openingFactor = getMechanicalDesign().getValveCharacterizationMethod()
-	  .getOpeningFactor(designOpeningPercent);
+          .getOpeningFactor(designOpeningPercent);
 
       // designCv is the Cv at 100% opening such that at current flow,
       // the valve operates at designOpeningPercent
@@ -1489,7 +1489,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
       designCv = designCv * safetyFactor;
 
       logger.info("Valve {} auto-sized: flow={} kg/hr, Cv@100%={}, designOpening={}%, designCv={}", getName(), flowRate,
-	  calculatedCv, designOpeningPercent, designCv);
+          calculatedCv, designOpeningPercent, designCv);
     } else {
       // Zero flow valve - estimate based on connected equipment or use default
       designCv = estimateCvForZeroFlowValve(safetyFactor);
@@ -1514,7 +1514,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     if (getOutStream() != null) {
       double volumeFlow = getOutStream().getFlowRate("m3/hr");
       if (volumeFlow > 0) {
-	getMechanicalDesign().maxDesignVolumeFlow = volumeFlow * safetyFactor;
+        getMechanicalDesign().maxDesignVolumeFlow = volumeFlow * safetyFactor;
       }
     }
 
@@ -1577,18 +1577,18 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
       double dp = Math.abs(p1 - p2);
 
       if (dp > 0.1) {
-	// There's a pressure drop defined - estimate Cv for potential flow
-	// Use a conservative estimate based on typical design flow for the pipe size
-	// Assume the valve might need to pass up to 10% of typical process flow
-	// For now, use pressure-based scaling
-	if (isGasValve()) {
-	  // For gas, Cv roughly scales with sqrt(P1^2 - P2^2) / P1
-	  // Use conservative estimate: Cv = 10 * sqrt(dp) for small valves
-	  estimatedCv = 10.0 * Math.sqrt(dp);
-	} else {
-	  // For liquid, Cv roughly scales with sqrt(dp)
-	  estimatedCv = 5.0 * Math.sqrt(dp);
-	}
+        // There's a pressure drop defined - estimate Cv for potential flow
+        // Use a conservative estimate based on typical design flow for the pipe size
+        // Assume the valve might need to pass up to 10% of typical process flow
+        // For now, use pressure-based scaling
+        if (isGasValve()) {
+          // For gas, Cv roughly scales with sqrt(P1^2 - P2^2) / P1
+          // Use conservative estimate: Cv = 10 * sqrt(dp) for small valves
+          estimatedCv = 10.0 * Math.sqrt(dp);
+        } else {
+          // For liquid, Cv roughly scales with sqrt(dp)
+          estimatedCv = 5.0 * Math.sqrt(dp);
+        }
       }
     }
 

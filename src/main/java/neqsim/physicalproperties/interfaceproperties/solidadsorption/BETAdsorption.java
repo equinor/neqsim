@@ -100,34 +100,34 @@ public class BETAdsorption extends AbstractAdsorptionModel {
     for (int comp = 0; comp < numComp; comp++) {
       String componentName = system.getPhase(phaseNum).getComponent(comp).getComponentName();
       try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-	  java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM adsorptionparameters WHERE name='"
-	      + componentName + "' AND Solid='" + solidMaterial + "'")) {
+          java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM adsorptionparameters WHERE name='"
+              + componentName + "' AND Solid='" + solidMaterial + "'")) {
 
-	if (dataSet.next()) {
-	  try {
-	    // Try to read BET-specific parameters
-	    qMonolayer[comp] = Double.parseDouble(dataSet.getString("qmax"));
-	    cBET[comp] = Double.parseDouble(dataSet.getString("C_BET"));
-	  } catch (Exception ex) {
-	    // Estimate from DRA/Langmuir parameters
-	    double eps = Double.parseDouble(dataSet.getString("eps"));
-	    double z0 = Double.parseDouble(dataSet.getString("z0"));
+        if (dataSet.next()) {
+          try {
+            // Try to read BET-specific parameters
+            qMonolayer[comp] = Double.parseDouble(dataSet.getString("qmax"));
+            cBET[comp] = Double.parseDouble(dataSet.getString("C_BET"));
+          } catch (Exception ex) {
+            // Estimate from DRA/Langmuir parameters
+            double eps = Double.parseDouble(dataSet.getString("eps"));
+            double z0 = Double.parseDouble(dataSet.getString("z0"));
 
-	    // Estimate monolayer capacity from z0
-	    double molarMass = system.getPhase(phaseNum).getComponent(comp).getMolarMass();
-	    qMonolayer[comp] = z0 * 1000.0 / molarMass * 0.4;
+            // Estimate monolayer capacity from z0
+            double molarMass = system.getPhase(phaseNum).getComponent(comp).getMolarMass();
+            qMonolayer[comp] = z0 * 1000.0 / molarMass * 0.4;
 
-	    // Estimate BET constant from adsorption energy
-	    double temperature = system.getPhase(phaseNum).getTemperature();
-	    cBET[comp] = Math.exp(eps * 1000.0 / (R * temperature));
-	  }
-	  logger.info("BET parameters loaded for " + componentName + ": qm=" + qMonolayer[comp] + ", C=" + cBET[comp]);
-	} else {
-	  setDefaultParameters(comp, phaseNum);
-	}
+            // Estimate BET constant from adsorption energy
+            double temperature = system.getPhase(phaseNum).getTemperature();
+            cBET[comp] = Math.exp(eps * 1000.0 / (R * temperature));
+          }
+          logger.info("BET parameters loaded for " + componentName + ": qm=" + qMonolayer[comp] + ", C=" + cBET[comp]);
+        } else {
+          setDefaultParameters(comp, phaseNum);
+        }
       } catch (Exception ex) {
-	logger.info("Component not found in adsorption DB: " + componentName);
-	setDefaultParameters(comp, phaseNum);
+        logger.info("Component not found in adsorption DB: " + componentName);
+        setDefaultParameters(comp, phaseNum);
       }
     }
   }
@@ -169,31 +169,31 @@ public class BETAdsorption extends AbstractAdsorptionModel {
       double x = partialPressure / pSat[comp];
 
       if (x >= 1.0) {
-	// At or above saturation - maximum adsorption
-	surfaceExcess[comp] = qMonolayer[comp] * maxLayers;
+        // At or above saturation - maximum adsorption
+        surfaceExcess[comp] = qMonolayer[comp] * maxLayers;
       } else if (x <= 0) {
-	surfaceExcess[comp] = 0.0;
+        surfaceExcess[comp] = 0.0;
       } else {
-	// Standard BET equation
-	double c = cBET[comp];
-	double numerator = qMonolayer[comp] * c * x;
-	double denominator = (1.0 - x) * (1.0 - x + c * x);
+        // Standard BET equation
+        double c = cBET[comp];
+        double numerator = qMonolayer[comp] * c * x;
+        double denominator = (1.0 - x) * (1.0 - x + c * x);
 
-	if (maxLayers < Integer.MAX_VALUE) {
-	  // Modified BET for limited layers
-	  int n = maxLayers;
-	  double xn = Math.pow(x, n);
-	  double xn1 = Math.pow(x, n + 1);
-	  numerator = qMonolayer[comp] * c * x * (1.0 - (n + 1) * xn + n * xn1);
-	  denominator = (1.0 - x) * (1.0 + (c - 1) * x - c * xn1);
-	}
+        if (maxLayers < Integer.MAX_VALUE) {
+          // Modified BET for limited layers
+          int n = maxLayers;
+          double xn = Math.pow(x, n);
+          double xn1 = Math.pow(x, n + 1);
+          numerator = qMonolayer[comp] * c * x * (1.0 - (n + 1) * xn + n * xn1);
+          denominator = (1.0 - x) * (1.0 + (c - 1) * x - c * xn1);
+        }
 
-	surfaceExcess[comp] = numerator / denominator;
+        surfaceExcess[comp] = numerator / denominator;
 
-	// Ensure non-negative
-	if (surfaceExcess[comp] < 0) {
-	  surfaceExcess[comp] = 0.0;
-	}
+        // Ensure non-negative
+        if (surfaceExcess[comp] < 0) {
+          surfaceExcess[comp] = 0.0;
+        }
       }
     }
 

@@ -38,21 +38,21 @@ public class S001SecondaryPressureProtectionCriteria implements Serializable {
       return criteria;
     }
     criteria.setMaximumEventPressureBara(item.getDouble(Double.NaN, "maximumEventPressureBara", "eventPressureBara",
-	"protectedSystemMaximumPressureBara"));
+        "protectedSystemMaximumPressureBara"));
     criteria.setDesignPressureBara(
-	item.getDouble(Double.NaN, "designPressureBara", "protectedEquipmentDesignPressureBara"));
+        item.getDouble(Double.NaN, "designPressureBara", "protectedEquipmentDesignPressureBara"));
     criteria.setTestPressureBara(
-	item.getDouble(Double.NaN, "testPressureBara", "hydrotestPressureBara", "pressureTestBara"));
+        item.getDouble(Double.NaN, "testPressureBara", "hydrotestPressureBara", "pressureTestBara"));
     criteria.setDemandFrequencyPerYear(
-	item.getDouble(Double.NaN, "demandFrequencyPerYear", "annualDemandFrequency", "eventFrequencyPerYear"));
+        item.getDouble(Double.NaN, "demandFrequencyPerYear", "annualDemandFrequency", "eventFrequencyPerYear"));
     criteria.setTargetFrequencyPerYear(
-	item.getDouble(Double.NaN, "targetFrequencyPerYear", "maximumAllowedFrequencyPerYear"));
+        item.getDouble(Double.NaN, "targetFrequencyPerYear", "maximumAllowedFrequencyPerYear"));
     criteria.setReliefLeakageAssessed(
-	item.getBooleanObject("reliefLeakageAssessed", "psvLeakageAssessed", "reliefValveLeakageDocumented"));
+        item.getBooleanObject("reliefLeakageAssessed", "psvLeakageAssessed", "reliefValveLeakageDocumented"));
     criteria.setReliefLeakageToSafeLocation(
-	item.getBooleanObject("reliefLeakageToSafeLocation", "psvLeakageToSafeLocation", "leakageRoutedSafe"));
+        item.getBooleanObject("reliefLeakageToSafeLocation", "psvLeakageToSafeLocation", "leakageRoutedSafe"));
     criteria.setProofTestIntervalMonths(
-	item.getDouble(Double.NaN, "proofTestIntervalMonths", "testIntervalMonths", "proofTestMonths"));
+        item.getDouble(Double.NaN, "proofTestIntervalMonths", "testIntervalMonths", "proofTestMonths"));
     return criteria;
   }
 
@@ -160,9 +160,9 @@ public class S001SecondaryPressureProtectionCriteria implements Serializable {
    */
   public boolean isEmpty() {
     return !Double.isFinite(maximumEventPressureBara) && !Double.isFinite(designPressureBara)
-	&& !Double.isFinite(testPressureBara) && !Double.isFinite(demandFrequencyPerYear)
-	&& reliefLeakageAssessed == null && reliefLeakageToSafeLocation == null
-	&& !Double.isFinite(proofTestIntervalMonths);
+        && !Double.isFinite(testPressureBara) && !Double.isFinite(demandFrequencyPerYear)
+        && reliefLeakageAssessed == null && reliefLeakageToSafeLocation == null
+        && !Double.isFinite(proofTestIntervalMonths);
   }
 
   /**
@@ -172,22 +172,22 @@ public class S001SecondaryPressureProtectionCriteria implements Serializable {
    */
   public S001SecondaryPressureProtectionResult evaluate() {
     double resolvedTarget = Double.isFinite(targetFrequencyPerYear) ? targetFrequencyPerYear
-	: getDefaultTargetFrequencyPerYear(maximumEventPressureBara, designPressureBara, testPressureBara);
+        : getDefaultTargetFrequencyPerYear(maximumEventPressureBara, designPressureBara, testPressureBara);
     boolean pressureBasisComplete = hasPressureBasis();
     boolean testPressureValid = !pressureBasisComplete || testPressureBara >= designPressureBara;
     boolean pressureWithinTest = !pressureBasisComplete || maximumEventPressureBara <= testPressureBara;
     boolean frequencyConfigured = Double.isFinite(demandFrequencyPerYear) && demandFrequencyPerYear >= 0.0
-	&& Double.isFinite(resolvedTarget);
+        && Double.isFinite(resolvedTarget);
     boolean frequencyMet = !frequencyConfigured || demandFrequencyPerYear <= resolvedTarget;
     boolean leakageAssessed = Boolean.TRUE.equals(reliefLeakageAssessed);
     boolean leakageSafe = Boolean.TRUE.equals(reliefLeakageToSafeLocation);
     boolean proofTestConfigured = Double.isFinite(proofTestIntervalMonths);
     boolean proofTestMet = !proofTestConfigured || proofTestIntervalMonths <= 12.0;
     boolean acceptable = pressureBasisComplete && testPressureValid && pressureWithinTest && frequencyConfigured
-	&& frequencyMet && leakageAssessed && leakageSafe && proofTestMet;
+        && frequencyMet && leakageAssessed && leakageSafe && proofTestMet;
     return new S001SecondaryPressureProtectionResult(maximumEventPressureBara, designPressureBara, testPressureBara,
-	demandFrequencyPerYear, resolvedTarget, pressureBasisComplete, testPressureValid, pressureWithinTest,
-	frequencyConfigured, frequencyMet, leakageAssessed, leakageSafe, proofTestConfigured, proofTestMet, acceptable);
+        demandFrequencyPerYear, resolvedTarget, pressureBasisComplete, testPressureValid, pressureWithinTest,
+        frequencyConfigured, frequencyMet, leakageAssessed, leakageSafe, proofTestConfigured, proofTestMet, acceptable);
   }
 
   /**

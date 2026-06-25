@@ -62,8 +62,8 @@ public class SurfaceTension extends InterfaceProperties implements SurfaceTensio
     double boilPoint = 0;
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       if (system.getPhase(0).getComponent(i).getNormalBoilingPoint() > boilPoint) {
-	compNumb = i;
-	boilPoint = system.getPhase(0).getComponent(i).getNormalBoilingPoint();
+        compNumb = i;
+        boilPoint = system.getPhase(0).getComponent(i).getNormalBoilingPoint();
       }
     }
     return compNumb;

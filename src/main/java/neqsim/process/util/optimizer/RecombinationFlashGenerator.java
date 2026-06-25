@@ -92,7 +92,7 @@ public class RecombinationFlashGenerator implements Serializable {
   public RecombinationFlashGenerator(FluidMagicInput input) {
     if (!input.isReady()) {
       throw new IllegalArgumentException(
-	  "FluidMagicInput must have phases separated. Call separateToStandardConditions() first.");
+          "FluidMagicInput must have phases separated. Call separateToStandardConditions() first.");
     }
 
     this.gasPhase = input.getGasPhase();
@@ -175,7 +175,7 @@ public class RecombinationFlashGenerator implements Serializable {
     double gasRate = oilRate * targetGOR; // Sm3/hr gas
 
     logger.debug("Generating fluid: GOR={:.0f}, WC={:.1f}%, Oil={:.1f}, Gas={:.1f}, Water={:.1f}", targetGOR,
-	waterCut * 100, oilRate, gasRate, waterRate);
+        waterCut * 100, oilRate, gasRate, waterRate);
 
     // Create recombined fluid starting from gas phase composition
     SystemInterface recombined = createBaseFluid();
@@ -269,8 +269,8 @@ public class RecombinationFlashGenerator implements Serializable {
       double molesToAdd = source.getComponent(i).getNumberOfmoles() * factor;
 
       if (molesToAdd > 0) {
-	// addComponent will handle both existing and new components
-	target.addComponent(compName, molesToAdd);
+        // addComponent will handle both existing and new components
+        target.addComponent(compName, molesToAdd);
       }
     }
   }
@@ -299,8 +299,8 @@ public class RecombinationFlashGenerator implements Serializable {
     if (currentLiquidVolume > 0) {
       double scaleFactor = totalLiquidRate / currentLiquidVolume;
       for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
-	double moles = fluid.getComponent(i).getNumberOfmoles();
-	fluid.getComponent(i).setNumberOfmoles(moles * scaleFactor);
+        double moles = fluid.getComponent(i).getNumberOfmoles();
+        fluid.getComponent(i).setNumberOfmoles(moles * scaleFactor);
       }
     }
   }
@@ -392,7 +392,7 @@ public class RecombinationFlashGenerator implements Serializable {
     double relativeError = Math.abs(actualGOR - targetGOR) / targetGOR;
 
     logger.debug("GOR validation: target={:.1f}, actual={:.1f}, error={:.2f}%", targetGOR, actualGOR,
-	relativeError * 100);
+        relativeError * 100);
 
     return relativeError <= tolerance;
   }

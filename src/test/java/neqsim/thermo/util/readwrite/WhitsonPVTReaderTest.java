@@ -7,6 +7,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import neqsim.pvtsimulation.simulation.ConstantMassExpansion;
@@ -17,8 +19,6 @@ import neqsim.pvtsimulation.util.PVTReportGenerator;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Unit tests for WhitsonPVTReader.
@@ -185,10 +185,10 @@ public class WhitsonPVTReaderTest {
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       String name = fluid.getPhase(0).getComponent(i).getComponentName();
       if (name.contains("C7")) {
-	hasC7 = true;
+        hasC7 = true;
       }
       if (name.contains("C10")) {
-	hasC10 = true;
+        hasC10 = true;
       }
     }
     assertTrue(hasC7, "Should have C7 component");
@@ -211,7 +211,7 @@ public class WhitsonPVTReaderTest {
 
     // Create thermoOps and run flash calculation for proper initialization
     neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	fluid);
+        fluid);
     ops.TPflash();
 
     // Verify we can get properties after flash calculation
@@ -230,7 +230,7 @@ public class WhitsonPVTReaderTest {
   void testLBCParametersParsing() throws IOException {
     // Create a minimal file with just parameters
     String componentLine = "C1\t16.04300\t45.99000\t-82.59000\t0.011000\t-0.149960\t"
-	+ "0.286200\t0.09860\t0.09860\t0.286200\t71.00\t0.14609\t-161.593\t";
+        + "0.286200\t0.09860\t0.09860\t0.286200\t71.00\t0.14609\t-161.593\t";
 
     File tempFile = tempDir.resolve("test_lbc.txt").toFile();
     try (FileWriter writer = new FileWriter(tempFile)) {
@@ -260,7 +260,7 @@ public class WhitsonPVTReaderTest {
   @Test
   void testSRKEosType() throws IOException {
     String componentLine = "C1\t16.04300\t45.99000\t-82.59000\t0.011000\t-0.149960\t"
-	+ "0.286200\t0.09860\t0.09860\t0.286200\t71.00\t0.14609\t-161.593\t";
+        + "0.286200\t0.09860\t0.09860\t0.286200\t71.00\t0.14609\t-161.593\t";
 
     File tempFile = tempDir.resolve("test_srk.txt").toFile();
     try (FileWriter writer = new FileWriter(tempFile)) {
@@ -276,7 +276,7 @@ public class WhitsonPVTReaderTest {
   @Test
   void testGammaParameters() throws IOException {
     String componentLine = "C7\t97.63000\t32.19980\t278.01800\t0.266280\t-0.023030\t"
-	+ "0.266370\t0.37910\t0.37962\t0.266740\t269.31\t0.74464\t92.822\t94.99800";
+        + "0.266370\t0.37910\t0.37962\t0.266740\t269.31\t0.74464\t92.822\t94.99800";
 
     File tempFile = tempDir.resolve("test_gamma.txt").toFile();
     try (FileWriter writer = new FileWriter(tempFile)) {
@@ -449,7 +449,7 @@ public class WhitsonPVTReaderTest {
       ops.TPflash();
       fluid.initPhysicalProperties();
       if (fluid.hasPhaseType("gas")) {
-	gasDensity[i] = fluid.getPhase("gas").getDensity("kg/m3");
+        gasDensity[i] = fluid.getPhase("gas").getDensity("kg/m3");
       }
     }
     assertTrue(gasDensity[0] > 0, "Gas density should be positive");
@@ -473,12 +473,12 @@ public class WhitsonPVTReaderTest {
     // Generate PVT report with all simulations
     PVTReportGenerator report = new PVTReportGenerator(fluid);
     report.setProjectInfo("Whitson PVT Reader Test", "Test Gas Condensate")
-	.setReservoirConditions(300.0, reservoirTemperatureC).setSaturationPressure(psat, false) // Dew
-												 // point
-												 // for
-												 // gas
-												 // condensate
-	.addCCE(cce).addSeparatorTest(sepTest);
+        .setReservoirConditions(300.0, reservoirTemperatureC).setSaturationPressure(psat, false) // Dew
+        // point
+        // for
+        // gas
+        // condensate
+        .addCCE(cce).addSeparatorTest(sepTest);
 
     String markdown = report.generateMarkdownReport();
 
@@ -488,7 +488,7 @@ public class WhitsonPVTReaderTest {
     assertTrue(markdown.contains("Fluid Composition"), "Report should have composition");
     assertTrue(markdown.contains("CCE") || markdown.contains("Constant Composition"), "Report should have CCE section");
     assertTrue(markdown.contains("Separator") || markdown.contains("separator"),
-	"Report should have separator test section");
+        "Report should have separator test section");
 
     // Also test fluid's built-in JSON report
     String fluidJson = fluid.toJson();
@@ -515,13 +515,13 @@ public class WhitsonPVTReaderTest {
     for (int i = 0; i < viscPressures.length; i++) {
       // ViscositySim returns Pa·s, multiply by 1000 to convert to cP (mPa·s)
       logger.info("  P=" + String.format("%.1f", viscPressures[i]) + " bar, mu="
-	  + String.format("%.4f", gasViscosity[i] * 1000) + " cP");
+          + String.format("%.4f", gasViscosity[i] * 1000) + " cP");
     }
 
     logger.info("\n--- Gas Density ---");
     for (int i = 0; i < viscPressures.length; i++) {
       logger.info("  P=" + String.format("%.1f", viscPressures[i]) + " bar, rho=" + String.format("%.2f", gasDensity[i])
-	  + " kg/m3");
+          + " kg/m3");
     }
 
     logger.info("\n--- Separator Test Results ---");
@@ -558,9 +558,9 @@ public class WhitsonPVTReaderTest {
     logger.info("| Stage | P (bara) | T (°C) | Oil Density (kg/m³) | Oil Viscosity (cP) |");
     logger.info("|-------|----------|--------|---------------------|---------------------|");
     for (neqsim.pvtsimulation.simulation.MultiStageSeparatorTest.SeparatorStageResult stage : sepTest
-	.getStageResults()) {
+        .getStageResults()) {
       logger.info(String.format("| %s | %.1f | %.1f | %.2f | %.4f |", stage.getStageName(), stage.getPressure(),
-	  stage.getTemperature(), stage.getOilDensity(), stage.getOilViscosity()));
+          stage.getTemperature(), stage.getOilDensity(), stage.getOilViscosity()));
     }
 
     // Get oil viscosity from ViscositySim (if oil phase exists)
@@ -568,8 +568,8 @@ public class WhitsonPVTReaderTest {
     boolean hasOilViscosity = false;
     for (double v : oilViscosity) {
       if (v > 0) {
-	hasOilViscosity = true;
-	break;
+        hasOilViscosity = true;
+        break;
       }
     }
 
@@ -578,9 +578,9 @@ public class WhitsonPVTReaderTest {
       logger.info("| Pressure (bara) | Viscosity (cP) |");
       logger.info("|-----------------|----------------|");
       for (int i = 0; i < viscPressures.length; i++) {
-	if (oilViscosity[i] > 0) {
-	  System.out.println(String.format("| %.1f | %.4f |", viscPressures[i], oilViscosity[i] * 1000));
-	}
+        if (oilViscosity[i] > 0) {
+          System.out.println(String.format("| %.1f | %.4f |", viscPressures[i], oilViscosity[i] * 1000));
+        }
       }
     }
 
@@ -592,14 +592,14 @@ public class WhitsonPVTReaderTest {
       ops.TPflash();
       fluid.initPhysicalProperties();
       if (fluid.hasPhaseType("oil")) {
-	oilDensity[i] = fluid.getPhase("oil").getDensity("kg/m3");
+        oilDensity[i] = fluid.getPhase("oil").getDensity("kg/m3");
       }
     }
     boolean hasOilDensity = false;
     for (double d : oilDensity) {
       if (d > 0) {
-	hasOilDensity = true;
-	break;
+        hasOilDensity = true;
+        break;
       }
     }
 
@@ -608,9 +608,9 @@ public class WhitsonPVTReaderTest {
       logger.info("| Pressure (bara) | Density (kg/m³) |");
       logger.info("|-----------------|-----------------|");
       for (int i = 0; i < viscPressures.length; i++) {
-	if (oilDensity[i] > 0) {
-	  logger.info(String.format("| %.1f | %.2f |", viscPressures[i], oilDensity[i]));
-	}
+        if (oilDensity[i] > 0) {
+          logger.info(String.format("| %.1f | %.2f |", viscPressures[i], oilDensity[i]));
+        }
       }
     }
 

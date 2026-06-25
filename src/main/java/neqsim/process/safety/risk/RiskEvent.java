@@ -273,6 +273,6 @@ public class RiskEvent {
   @Override
   public String toString() {
     return String.format("RiskEvent[%s, %s, freq=%.2e/yr, P=%.3f, %s]", name, initiatingEvent.name(),
-	getAbsoluteFrequency(), conditionalProbability, consequenceCategory);
+        getAbsoluteFrequency(), conditionalProbability, consequenceCategory);
   }
 }

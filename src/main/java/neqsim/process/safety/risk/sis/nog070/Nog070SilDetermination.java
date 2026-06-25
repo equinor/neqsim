@@ -1,7 +1,7 @@
 package neqsim.process.safety.risk.sis.nog070;
 
-import com.google.gson.GsonBuilder;
 import java.io.Serializable;
+import com.google.gson.GsonBuilder;
 
 /**
  * Result of a NOG 070 SIL determination for a Safety Instrumented Function.
@@ -114,7 +114,7 @@ public class Nog070SilDetermination implements Serializable {
       msg = "Compliant: achieved SIL " + achieved + " >= NOG 070 minimum SIL " + minimumSil + " for " + sifType.name();
     } else {
       msg = "NOT compliant: achieved SIL " + achieved + " < NOG 070 minimum SIL " + minimumSil + " for "
-	  + sifType.name() + ". Reduce PFD by factor " + Math.pow(10.0, minimumSil - achieved) + " or revise SIF.";
+          + sifType.name() + ". Reduce PFD by factor " + Math.pow(10.0, minimumSil - achieved) + " or revise SIF.";
     }
     return new Nog070SilDetermination(sifType, pfdAvg, achieved, minimumSil, ok, msg);
   }

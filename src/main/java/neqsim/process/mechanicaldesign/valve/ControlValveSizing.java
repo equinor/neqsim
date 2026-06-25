@@ -171,7 +171,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
       boolean choked = x >= xChoked;
       double xEffective = x;
       if (choked && allowChoked) {
-	xEffective = xChoked; // Limit to choked condition
+        xEffective = xChoked; // Limit to choked condition
       }
 
       // Expansion factor Y (simplified)
@@ -180,9 +180,9 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
       // Gas Kv formula (IEC 60534 simplified) using standard volumetric flow
       // For choked flow, use xT*Fgamma instead of x
       if (choked && allowChoked) {
-	Kv = flowM3hr_std / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / (xT * Fgamma));
+        Kv = flowM3hr_std / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / (xT * Fgamma));
       } else {
-	Kv = flowM3hr_std / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / x);
+        Kv = flowM3hr_std / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / x);
       }
     }
 
@@ -251,9 +251,9 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
 
       double denominator;
       if (choked && allowChoked) {
-	denominator = Math.sqrt(MW * T * Z / (xT * Fgamma));
+        denominator = Math.sqrt(MW * T * Z / (xT * Fgamma));
       } else {
-	denominator = Math.sqrt(MW * T * Z / x);
+        denominator = Math.sqrt(MW * T * Z / x);
       }
 
       // IEC 60534 formula yields standard volumetric flow [m3/h at 273.15 K, 101.325 kPa]
@@ -310,9 +310,9 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
       percentOpening = (low + high) / 2.0;
       double factor = valveMechanicalDesign.getValveCharacterizationMethod().getOpeningFactor(percentOpening);
       if (factor < requiredOpeningFactor) {
-	low = percentOpening;
+        low = percentOpening;
       } else {
-	high = percentOpening;
+        high = percentOpening;
       }
     }
 
@@ -378,37 +378,37 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
       int maxIter = 100;
 
       for (int i = 0; i < maxIter; i++) {
-	P2_mid = (P2_low + P2_high) / 2.0;
+        P2_mid = (P2_low + P2_high) / 2.0;
 
-	// Calculate Kv at this P2 using IEC 60534 formula with standard flow
-	double P2_kPa = P2_mid * 100.0;
-	double dP_kPa = P1_kPa - P2_kPa;
-	double x = dP_kPa / P1_kPa;
-	double xChoked = Fgamma * xT;
+        // Calculate Kv at this P2 using IEC 60534 formula with standard flow
+        double P2_kPa = P2_mid * 100.0;
+        double dP_kPa = P1_kPa - P2_kPa;
+        double x = dP_kPa / P1_kPa;
+        double xChoked = Fgamma * xT;
 
-	boolean choked = x >= xChoked;
-	double xEffective = choked && allowChoked ? xChoked : x;
-	double Y = Math.max(1.0 - xEffective / (3.0 * Fgamma * xT), 2.0 / 3.0);
+        boolean choked = x >= xChoked;
+        double xEffective = choked && allowChoked ? xChoked : x;
+        double Y = Math.max(1.0 - xEffective / (3.0 * Fgamma * xT), 2.0 / 3.0);
 
-	double calcKv;
-	if (choked && allowChoked) {
-	  calcKv = Q_m3_hr_std / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / (xT * Fgamma));
-	} else {
-	  calcKv = Q_m3_hr_std / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / x);
-	}
+        double calcKv;
+        if (choked && allowChoked) {
+          calcKv = Q_m3_hr_std / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / (xT * Fgamma));
+        } else {
+          calcKv = Q_m3_hr_std / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / x);
+        }
 
-	if (Math.abs(calcKv - KvAdjusted) / KvAdjusted < tolerance) {
-	  break;
-	}
+        if (Math.abs(calcKv - KvAdjusted) / KvAdjusted < tolerance) {
+          break;
+        }
 
-	// If calculated Kv is too high, we need lower P2 (more pressure drop)
-	// Higher Kv means the valve is "too small" for current conditions
-	// If calculated Kv is too low, we need higher P2 (less pressure drop)
-	if (calcKv > KvAdjusted) {
-	  P2_high = P2_mid;
-	} else {
-	  P2_low = P2_mid;
-	}
+        // If calculated Kv is too high, we need lower P2 (more pressure drop)
+        // Higher Kv means the valve is "too small" for current conditions
+        // If calculated Kv is too low, we need higher P2 (less pressure drop)
+        if (calcKv > KvAdjusted) {
+          P2_high = P2_mid;
+        } else {
+          P2_low = P2_mid;
+        }
       }
 
       return P2_mid * 1e5; // Convert bara to Pa

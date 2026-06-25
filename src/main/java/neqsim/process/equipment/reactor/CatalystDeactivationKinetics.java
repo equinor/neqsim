@@ -57,8 +57,8 @@ public class CatalystDeactivationKinetics implements Serializable {
      * @param sinteringOnsetTemperatureK sintering onset temperature in K
      */
     CatalystFamily(String displayName, double sulfurCoefficientPerHourPerPpm, double chlorideCoefficientPerHourPerPpm,
-	double cokingCoefficientPerHour, double sinteringPreExponentialPerHour, double sinteringActivationEnergyJPerMol,
-	double sinteringOnsetTemperatureK) {
+        double cokingCoefficientPerHour, double sinteringPreExponentialPerHour, double sinteringActivationEnergyJPerMol,
+        double sinteringOnsetTemperatureK) {
       this.displayName = displayName;
       this.sulfurCoefficientPerHourPerPpm = sulfurCoefficientPerHourPerPpm;
       this.chlorideCoefficientPerHourPerPpm = chlorideCoefficientPerHourPerPpm;
@@ -230,7 +230,7 @@ public class CatalystDeactivationKinetics implements Serializable {
       return 0.0;
     }
     double arrhenius = catalystFamily.sinteringPreExponentialPerHour
-	* Math.exp(-catalystFamily.sinteringActivationEnergyJPerMol / (GAS_CONSTANT * temperatureK));
+        * Math.exp(-catalystFamily.sinteringActivationEnergyJPerMol / (GAS_CONSTANT * temperatureK));
     double severity = 1.0 + (temperatureK - catalystFamily.sinteringOnsetTemperatureK) / 100.0;
     return arrhenius * severity;
   }
@@ -242,7 +242,7 @@ public class CatalystDeactivationKinetics implements Serializable {
    */
   public double getTotalDeactivationRatePerHour() {
     return getSulfurPoisoningRatePerHour() + getChloridePoisoningRatePerHour() + getCokingRatePerHour()
-	+ getThermalSinteringRatePerHour();
+        + getThermalSinteringRatePerHour();
   }
 
   /**
@@ -299,8 +299,8 @@ public class CatalystDeactivationKinetics implements Serializable {
     double maxRate = 0.0;
     for (Map.Entry<String, Double> entry : rates.entrySet()) {
       if (entry.getValue() > maxRate) {
-	dominant = entry.getKey();
-	maxRate = entry.getValue();
+        dominant = entry.getKey();
+        maxRate = entry.getValue();
       }
     }
     return dominant;

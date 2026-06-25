@@ -89,8 +89,8 @@ public class PipingRouteBuilder implements Serializable {
     }
 
     RouteSegment segment = new RouteSegment(cleanSegmentId, requireText(fromNode, "fromNode"),
-	requireText(toNode, "toNode"), requirePositive(length, "length"), convertLengthToMeters(length, lengthUnit),
-	requirePositive(nominalDiameter, "nominalDiameter"), convertLengthToMeters(nominalDiameter, diameterUnit));
+        requireText(toNode, "toNode"), requirePositive(length, "length"), convertLengthToMeters(length, lengthUnit),
+        requirePositive(nominalDiameter, "nominalDiameter"), convertLengthToMeters(nominalDiameter, diameterUnit));
     segments.add(segment);
     return this;
   }
@@ -285,7 +285,7 @@ public class PipingRouteBuilder implements Serializable {
       PipeBeggsAndBrills pipe = createPipe(segment, currentStream);
       process.add(pipe);
       process.connect(currentEquipmentName, currentPortName, pipe.getName(), "inlet",
-	  ProcessConnection.ConnectionType.MATERIAL);
+          ProcessConnection.ConnectionType.MATERIAL);
       currentStream = pipe.getOutletStream();
       currentEquipmentName = pipe.getName();
       currentPortName = "outlet";
@@ -354,7 +354,7 @@ public class PipingRouteBuilder implements Serializable {
   private void recalculateMinorLossEquivalentLengths() {
     for (RouteSegment segment : segments) {
       for (MinorLoss minorLoss : segment.minorLosses) {
-	minorLoss.equivalentLengthRatio = minorLoss.kValue / minorLossFrictionFactor;
+        minorLoss.equivalentLengthRatio = minorLoss.kValue / minorLossFrictionFactor;
       }
     }
   }
@@ -387,8 +387,8 @@ public class PipingRouteBuilder implements Serializable {
     String reference = segmentId.trim();
     for (RouteSegment segment : segments) {
       if (segment.segmentId.equals(reference) || segment.getArrowReference().equals(reference)
-	  || segment.getTextReference().equals(reference)) {
-	return segment;
+          || segment.getTextReference().equals(reference)) {
+        return segment;
       }
     }
     return null;
@@ -491,20 +491,20 @@ public class PipingRouteBuilder implements Serializable {
   private static double convertLengthToMeters(double value, String unit) {
     String cleanUnit = requireText(unit, "unit").toLowerCase(Locale.ROOT);
     if ("m".equals(cleanUnit) || "meter".equals(cleanUnit) || "meters".equals(cleanUnit) || "metre".equals(cleanUnit)
-	|| "metres".equals(cleanUnit)) {
+        || "metres".equals(cleanUnit)) {
       return value;
     } else if ("km".equals(cleanUnit) || "kilometer".equals(cleanUnit) || "kilometers".equals(cleanUnit)
-	|| "kilometre".equals(cleanUnit) || "kilometres".equals(cleanUnit)) {
+        || "kilometre".equals(cleanUnit) || "kilometres".equals(cleanUnit)) {
       return value * 1000.0;
     } else if ("cm".equals(cleanUnit) || "centimeter".equals(cleanUnit) || "centimeters".equals(cleanUnit)
-	|| "centimetre".equals(cleanUnit) || "centimetres".equals(cleanUnit)) {
+        || "centimetre".equals(cleanUnit) || "centimetres".equals(cleanUnit)) {
       return value * 0.01;
     } else if ("mm".equals(cleanUnit) || "millimeter".equals(cleanUnit) || "millimeters".equals(cleanUnit)
-	|| "millimetre".equals(cleanUnit) || "millimetres".equals(cleanUnit)) {
+        || "millimetre".equals(cleanUnit) || "millimetres".equals(cleanUnit)) {
       return value * 1.0e-3;
     } else if ("um".equals(cleanUnit) || "micrometer".equals(cleanUnit) || "micrometers".equals(cleanUnit)
-	|| "micrometre".equals(cleanUnit) || "micrometres".equals(cleanUnit) || "micron".equals(cleanUnit)
-	|| "microns".equals(cleanUnit)) {
+        || "micrometre".equals(cleanUnit) || "micrometres".equals(cleanUnit) || "micron".equals(cleanUnit)
+        || "microns".equals(cleanUnit)) {
       return value * 1.0e-6;
     } else if ("in".equals(cleanUnit) || "inch".equals(cleanUnit) || "inches".equals(cleanUnit)) {
       return value * 0.0254;
@@ -548,7 +548,7 @@ public class PipingRouteBuilder implements Serializable {
      * @param nominalDiameterMeters converted hydraulic diameter in meters
      */
     private RouteSegment(String segmentId, String fromNode, String toNode, double sourceLength, double lengthMeters,
-	double sourceNominalDiameter, double nominalDiameterMeters) {
+        double sourceNominalDiameter, double nominalDiameterMeters) {
       this.segmentId = segmentId;
       this.fromNode = fromNode;
       this.toNode = toNode;
@@ -647,7 +647,7 @@ public class PipingRouteBuilder implements Serializable {
     public double getTotalKValue() {
       double totalKValue = 0.0;
       for (MinorLoss minorLoss : minorLosses) {
-	totalKValue += minorLoss.kValue;
+        totalKValue += minorLoss.kValue;
       }
       return totalKValue;
     }
@@ -660,7 +660,7 @@ public class PipingRouteBuilder implements Serializable {
     public double getTotalEquivalentLengthRatio() {
       double totalLengthRatio = 0.0;
       for (MinorLoss minorLoss : minorLosses) {
-	totalLengthRatio += minorLoss.equivalentLengthRatio;
+        totalLengthRatio += minorLoss.equivalentLengthRatio;
       }
       return totalLengthRatio;
     }
@@ -726,7 +726,7 @@ public class PipingRouteBuilder implements Serializable {
 
       List<Map<String, Object>> lossMaps = new ArrayList<Map<String, Object>>();
       for (MinorLoss minorLoss : minorLosses) {
-	lossMaps.add(minorLoss.toMap());
+        lossMaps.add(minorLoss.toMap());
       }
       map.put("minorLosses", lossMaps);
       return map;

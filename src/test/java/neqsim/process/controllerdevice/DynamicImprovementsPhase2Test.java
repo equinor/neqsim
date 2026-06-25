@@ -3,11 +3,11 @@ package neqsim.process.controllerdevice;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
-import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -119,21 +119,21 @@ class DynamicImprovementsPhase2Test {
     stepA.setEntryAction(new Runnable() {
       @Override
       public void run() {
-	stepActions[0] = true;
+        stepActions[0] = true;
       }
     });
     SequentialFunctionChart.SfcStep stepB = new SequentialFunctionChart.SfcStep("StepB");
     stepB.setEntryAction(new Runnable() {
       @Override
       public void run() {
-	stepActions[1] = true;
+        stepActions[1] = true;
       }
     });
     SequentialFunctionChart.SfcStep stepC = new SequentialFunctionChart.SfcStep("StepC");
     stepC.setEntryAction(new Runnable() {
       @Override
       public void run() {
-	stepActions[2] = true;
+        stepActions[2] = true;
       }
     });
 
@@ -145,7 +145,7 @@ class DynamicImprovementsPhase2Test {
     java.util.function.BooleanSupplier alwaysTrue = new java.util.function.BooleanSupplier() {
       @Override
       public boolean getAsBoolean() {
-	return true;
+        return true;
       }
     };
     sfc.addTransition("StepA", "StepB", alwaysTrue);
@@ -393,7 +393,7 @@ class DynamicImprovementsPhase2Test {
     double wallT = hx.getWallTemperature();
     Assertions.assertFalse(Double.isNaN(wallT), "Wall temperature should be initialized");
     Assertions.assertTrue(wallT > 273.15 + 20.0 && wallT < 273.15 + 80.0,
-	"Wall T should be between inlet temps, got " + (wallT - 273.15) + " C");
+        "Wall T should be between inlet temps, got " + (wallT - 273.15) + " C");
   }
 
   // ─── Integration Test: Semi-implicit with process ───

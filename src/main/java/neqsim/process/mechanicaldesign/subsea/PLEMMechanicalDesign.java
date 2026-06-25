@@ -175,7 +175,7 @@ public class PLEMMechanicalDesign extends MechanicalDesign {
 
     // Use PLET cost calculation with PLEM parameters
     costEstimator.calculatePLETCost(plem.getDryWeight(), plem.getHeaderSizeInches(), plem.getWaterDepth(),
-	plem.hasBranchIsolationValves(), plem.getNumberOfSlots() > 2);
+        plem.hasBranchIsolationValves(), plem.getNumberOfSlots() > 2);
 
     totalCostUSD = costEstimator.getTotalCost();
     equipmentCostUSD = costEstimator.getEquipmentCost();

@@ -143,6 +143,6 @@ public final class HostTieInPoint implements Serializable {
       return 0.0;
     }
     return load.getGasRateMSm3d() * gasToProcessRateFactor + load.getOilRateBopd() * oilToProcessRateFactor
-	+ load.getWaterRateM3d() * waterToProcessRateFactor + load.getTotalLiquidRateM3d() * liquidToProcessRateFactor;
+        + load.getWaterRateM3d() * waterToProcessRateFactor + load.getTotalLiquidRateM3d() * liquidToProcessRateFactor;
   }
 }

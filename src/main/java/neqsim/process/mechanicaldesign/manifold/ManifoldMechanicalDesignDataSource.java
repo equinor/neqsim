@@ -62,15 +62,15 @@ public class ManifoldMechanicalDesignDataSource implements Serializable {
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase()) {
       String sql = "SELECT SPECIFICATION, MINVALUE, MAXVALUE, UNIT " + "FROM TechnicalRequirements_Process "
-	  + "WHERE COMPANY = '" + company + "' AND EQUIPMENTTYPE = '" + equipmentType + "'";
+          + "WHERE COMPANY = '" + company + "' AND EQUIPMENTTYPE = '" + equipmentType + "'";
 
       try (ResultSet rs = database.getResultSet(sql)) {
-	while (rs.next()) {
-	  String specName = rs.getString("SPECIFICATION");
-	  double maxValue = rs.getDouble("MAXVALUE");
+        while (rs.next()) {
+          String specName = rs.getString("SPECIFICATION");
+          double maxValue = rs.getDouble("MAXVALUE");
 
-	  applyCompanyParameter(calc, specName, maxValue, null);
-	}
+          applyCompanyParameter(calc, specName, maxValue, null);
+        }
       }
     } catch (Exception ex) {
       logger.warn("Could not load company requirements for {}: {}", company, ex.getMessage());
@@ -106,16 +106,16 @@ public class ManifoldMechanicalDesignDataSource implements Serializable {
   public void loadASMEParameters(ManifoldMechanicalDesignCalculator calc, String equipmentType) {
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase()) {
       String sql = "SELECT SPECIFICATION, MINVALUE, MAXVALUE, UNIT, DESCRIPTION " + "FROM asme_standards "
-	  + "WHERE (EQUIPMENTTYPE = 'Manifold' OR EQUIPMENTTYPE = 'TopsidePiping')";
+          + "WHERE (EQUIPMENTTYPE = 'Manifold' OR EQUIPMENTTYPE = 'TopsidePiping')";
 
       try (ResultSet rs = database.getResultSet(sql)) {
-	while (rs.next()) {
-	  String spec = rs.getString("SPECIFICATION");
-	  double minVal = rs.getDouble("MINVALUE");
-	  double maxVal = rs.getDouble("MAXVALUE");
+        while (rs.next()) {
+          String spec = rs.getString("SPECIFICATION");
+          double minVal = rs.getDouble("MINVALUE");
+          double maxVal = rs.getDouble("MAXVALUE");
 
-	  applyASMEParameter(calc, spec, minVal, maxVal);
-	}
+          applyASMEParameter(calc, spec, minVal, maxVal);
+        }
       }
     } catch (Exception ex) {
       logger.warn("Could not load ASME parameters: {}", ex.getMessage());
@@ -131,17 +131,17 @@ public class ManifoldMechanicalDesignDataSource implements Serializable {
   public void loadDNVParameters(ManifoldMechanicalDesignCalculator calc, String equipmentType) {
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase()) {
       String sql = "SELECT SPECIFICATION, MINVALUE, MAXVALUE, UNIT, DESCRIPTION " + "FROM dnv_iso_en_standards "
-	  + "WHERE STANDARD_CODE = 'DNV-ST-F101' " + "AND (EQUIPMENTTYPE = 'Manifold' OR EQUIPMENTTYPE = 'Pipeline' "
-	  + "OR EQUIPMENTTYPE = 'SubseaEquipment')";
+          + "WHERE STANDARD_CODE = 'DNV-ST-F101' " + "AND (EQUIPMENTTYPE = 'Manifold' OR EQUIPMENTTYPE = 'Pipeline' "
+          + "OR EQUIPMENTTYPE = 'SubseaEquipment')";
 
       try (ResultSet rs = database.getResultSet(sql)) {
-	while (rs.next()) {
-	  String spec = rs.getString("SPECIFICATION");
-	  double minVal = rs.getDouble("MINVALUE");
-	  double maxVal = rs.getDouble("MAXVALUE");
+        while (rs.next()) {
+          String spec = rs.getString("SPECIFICATION");
+          double minVal = rs.getDouble("MINVALUE");
+          double maxVal = rs.getDouble("MAXVALUE");
 
-	  applyDNVParameter(calc, spec, minVal, maxVal);
-	}
+          applyDNVParameter(calc, spec, minVal, maxVal);
+        }
       }
     } catch (Exception ex) {
       logger.warn("Could not load DNV parameters: {}", ex.getMessage());

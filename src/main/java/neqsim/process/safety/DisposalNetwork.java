@@ -64,7 +64,7 @@ public class DisposalNetwork implements Serializable {
       String sourceId = entry.getKey();
       String unitName = sourceToDisposal.get(sourceId);
       if (unitName == null) {
-	continue; // source not mapped
+        continue; // source not mapped
       }
       AggregatedLoad load = aggregated.computeIfAbsent(unitName, k -> new AggregatedLoad());
       ReliefSourceLoad sourceLoad = entry.getValue();
@@ -72,15 +72,15 @@ public class DisposalNetwork implements Serializable {
       load.massRate += massRate;
       Double heatDuty = sourceLoad.getHeatDutyW();
       if (heatDuty != null) {
-	load.specifiedHeatDuty += heatDuty;
+        load.specifiedHeatDuty += heatDuty;
       } else {
-	load.massWithoutHeatDuty += massRate;
+        load.massWithoutHeatDuty += massRate;
       }
       Double molarRate = sourceLoad.getMolarRateMoleS();
       if (molarRate != null) {
-	load.specifiedMolarRate += molarRate;
+        load.specifiedMolarRate += molarRate;
       } else {
-	load.massWithoutMolarRate += massRate;
+        load.massWithoutMolarRate += massRate;
       }
     }
 
@@ -92,25 +92,25 @@ public class DisposalNetwork implements Serializable {
     for (Map.Entry<String, AggregatedLoad> entry : aggregated.entrySet()) {
       Flare flare = disposalUnits.get(entry.getKey());
       if (flare == null) {
-	continue;
+        continue;
       }
       AggregatedLoad load = entry.getValue();
       FlarePerformanceDTO basePerformance = flare.getPerformanceSummary();
       double heatDuty = load.specifiedHeatDuty;
       if (load.massWithoutHeatDuty > 0.0) {
-	heatDuty += safeRatio(basePerformance.getHeatDutyW(), basePerformance.getMassRateKgS())
-	    * load.massWithoutHeatDuty;
+        heatDuty += safeRatio(basePerformance.getHeatDutyW(), basePerformance.getMassRateKgS())
+            * load.massWithoutHeatDuty;
       }
       if (heatDuty <= 0.0) {
-	heatDuty = basePerformance.getHeatDutyW() * safeRatio(load.massRate, basePerformance.getMassRateKgS());
+        heatDuty = basePerformance.getHeatDutyW() * safeRatio(load.massRate, basePerformance.getMassRateKgS());
       }
       double molarRate = load.specifiedMolarRate;
       if (load.massWithoutMolarRate > 0.0) {
-	molarRate += safeRatio(basePerformance.getMolarRateMoleS(), basePerformance.getMassRateKgS())
-	    * load.massWithoutMolarRate;
+        molarRate += safeRatio(basePerformance.getMolarRateMoleS(), basePerformance.getMassRateKgS())
+            * load.massWithoutMolarRate;
       }
       if (molarRate <= 0.0) {
-	molarRate = basePerformance.getMolarRateMoleS() * safeRatio(load.massRate, basePerformance.getMassRateKgS());
+        molarRate = basePerformance.getMolarRateMoleS() * safeRatio(load.massRate, basePerformance.getMassRateKgS());
       }
 
       FlarePerformanceDTO dto = flare.getPerformanceSummary(loadCase.getName(), heatDuty, load.massRate, molarRate);
@@ -118,12 +118,12 @@ public class DisposalNetwork implements Serializable {
       totalHeatDutyW += dto.getHeatDutyW();
       maxRadiationDistance = Math.max(maxRadiationDistance, dto.getDistanceTo4kWm2());
       if (dto.isOverloaded()) {
-	alerts.add(new CapacityAlertDTO(loadCase.getName(), entry.getKey(), "Disposal unit capacity exceeded"));
+        alerts.add(new CapacityAlertDTO(loadCase.getName(), entry.getKey(), "Disposal unit capacity exceeded"));
       }
     }
 
     return new DisposalLoadCaseResultDTO(loadCase.getName(), performance, totalHeatDutyW * 1.0e-6, maxRadiationDistance,
-	alerts);
+        alerts);
   }
 
   private double safeRatio(double numerator, double denominator) {

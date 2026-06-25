@@ -1,6 +1,9 @@
 package neqsim.process.safety.risk;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.separator.Separator;
@@ -132,11 +135,11 @@ class PhysicsIntegrationTest {
 
     // Poor health should have higher failure rate
     assertTrue(poorMonitor.getAdjustedFailureRate() > goodMonitor.getAdjustedFailureRate(),
-	"Adjusted failure rate should increase with poor health");
+        "Adjusted failure rate should increase with poor health");
 
     // 24-hour failure probability should be higher for poor health
     assertTrue(poorMonitor.getFailureProbability(24) > goodMonitor.getFailureProbability(24),
-	"Failure probability should be higher with poor health");
+        "Failure probability should be higher with poor health");
   }
 
   @Test

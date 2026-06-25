@@ -57,13 +57,13 @@ public class ChungViscosityMethod extends Viscosity {
     for (int i = 0; i < gasPhase.getPhase().getNumberOfComponents(); i++) {
       tempVar = 0;
       for (int j = 0; j < gasPhase.getPhase().getNumberOfComponents(); j++) {
-	tempVar2 = Math
-	    .pow(1.0 + Math.sqrt(pureComponentViscosity[i] / pureComponentViscosity[j]) * Math.pow(
-		gasPhase.getPhase().getComponent(j).getMolarMass() / gasPhase.getPhase().getComponent(i).getMolarMass(),
-		0.25), 2.0)
-	    / Math.pow(8.0 * (1.0 + gasPhase.getPhase().getComponent(i).getMolarMass()
-		/ gasPhase.getPhase().getComponent(j).getMolarMass()), 0.5);
-	tempVar += gasPhase.getPhase().getComponent(j).getx() * tempVar2;
+        tempVar2 = Math
+            .pow(1.0 + Math.sqrt(pureComponentViscosity[i] / pureComponentViscosity[j]) * Math.pow(
+                gasPhase.getPhase().getComponent(j).getMolarMass() / gasPhase.getPhase().getComponent(i).getMolarMass(),
+                0.25), 2.0)
+            / Math.pow(8.0 * (1.0 + gasPhase.getPhase().getComponent(i).getMolarMass()
+                / gasPhase.getPhase().getComponent(j).getMolarMass()), 0.5);
+        tempVar += gasPhase.getPhase().getComponent(j).getx() * tempVar2;
       }
 
       viscosity += gasPhase.getPhase().getComponent(i).getx() * pureComponentViscosity[i] / tempVar;
@@ -99,17 +99,17 @@ public class ChungViscosityMethod extends Viscosity {
     for (int i = 0; i < gasPhase.getPhase().getNumberOfComponents(); i++) {
       // eq. 9-4.11 TPoLG
       relativeViscosity[i] = 131.3 * gasPhase.getPhase().getComponent(i).getDebyeDipoleMoment() / Math
-	  .sqrt(gasPhase.getPhase().getComponent(i).getCriticalVolume() * gasPhase.getPhase().getComponent(i).getTC());
+          .sqrt(gasPhase.getPhase().getComponent(i).getCriticalVolume() * gasPhase.getPhase().getComponent(i).getTC());
       // eq. 9-4.10 TPoLG
       Fc[i] = 1.0 - 0.2756 * gasPhase.getPhase().getComponent(i).getAcentricFactor()
-	  + 0.059035 * Math.pow(relativeViscosity[i], 4)
-	  + gasPhase.getPhase().getComponent(i).getViscosityCorrectionFactor();
+          + 0.059035 * Math.pow(relativeViscosity[i], 4)
+          + gasPhase.getPhase().getComponent(i).getViscosityCorrectionFactor();
 
       for (int j = 0; j < 10; j++) {
-	// Table 9-5 TPoLG
-	chungE[j] = chungHPcoefs[j][0] + chungHPcoefs[j][1] * gasPhase.getPhase().getComponent(i).getAcentricFactor()
-	    + chungHPcoefs[j][2] * Math.pow(relativeViscosity[i], 4)
-	    + chungHPcoefs[j][3] * gasPhase.getPhase().getComponent(i).getViscosityCorrectionFactor();
+        // Table 9-5 TPoLG
+        chungE[j] = chungHPcoefs[j][0] + chungHPcoefs[j][1] * gasPhase.getPhase().getComponent(i).getAcentricFactor()
+            + chungHPcoefs[j][2] * Math.pow(relativeViscosity[i], 4)
+            + chungHPcoefs[j][3] * gasPhase.getPhase().getComponent(i).getViscosityCorrectionFactor();
       }
 
       // eq. 9-4.8 TPoLG (The properties of Liquids and Gases)
@@ -118,24 +118,24 @@ public class ChungViscosityMethod extends Viscosity {
       omegaVisc[i] = A * Math.pow(tempVar, -B) + C * Math.exp(-D * tempVar) + E * Math.exp(-F * tempVar);
       // eq. 9-6.18 TPoLG
       chungy = 0.1 / (gasPhase.getPhase().getMolarVolume()) * gasPhase.getPhase().getComponent(i).getCriticalVolume()
-	  / 6.0;
+          / 6.0;
       // eq. 9-6.19 TPoLG
       chungG1 = (1.0 - 0.5 * chungy) / Math.pow((1.0 - chungy), 3.0);
       // eq. 9-6.20 TPoLG
       chungG2 = (chungE[0] * (((1.0 - Math.exp(-chungE[3] * chungy)) / chungy))
-	  + chungE[1] * chungG1 * Math.exp(chungE[4] * chungy) + chungE[2] * chungG1)
-	  / (chungE[0] * chungE[3] + chungE[1] + chungE[2]);
+          + chungE[1] * chungG1 * Math.exp(chungE[4] * chungy) + chungE[2] * chungG1)
+          / (chungE[0] * chungE[3] + chungE[1] + chungE[2]);
       // eq. 9-6.21 TPoLG
       chungviskstartstar = chungE[6] * chungy * chungy * chungG2
-	  * Math.exp(chungE[7] + chungE[8] / tempVar + chungE[9] * Math.pow(tempVar, -2.0));
+          * Math.exp(chungE[7] + chungE[8] / tempVar + chungE[9] * Math.pow(tempVar, -2.0));
       // eq. 9-6.17 TPoLG
       chungviskstar = Math.sqrt(tempVar) / omegaVisc[i] * (Fc[i] * (1.0 / chungG2 + chungE[5] * chungy))
-	  + chungviskstartstar;
+          + chungviskstartstar;
       pureComponentViscosity[i] = chungviskstar * 36.344
-	  * Math.pow(
-	      gasPhase.getPhase().getComponent(i).getMolarMass() * 1000.0 * gasPhase.getPhase().getComponent(i).getTC(),
-	      0.5)
-	  / (Math.pow(gasPhase.getPhase().getComponent(i).getCriticalVolume(), 2.0 / 3.0));
+          * Math.pow(
+              gasPhase.getPhase().getComponent(i).getMolarMass() * 1000.0 * gasPhase.getPhase().getComponent(i).getTC(),
+              0.5)
+          / (Math.pow(gasPhase.getPhase().getComponent(i).getCriticalVolume(), 2.0 / 3.0));
     }
   }
 }

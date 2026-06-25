@@ -99,7 +99,7 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
     liquidOutHeater.setOutTemperature(heatedOilTemperature);
 
     ThreePhaseSeparator firstStageSeparator = new ThreePhaseSeparator("1st stage separator",
-	liquidOutHeater.getOutletStream());
+        liquidOutHeater.getOutletStream());
 
     ThrottlingValve valve1 = new ThrottlingValve("1stTo2ndStageOilValve", firstStageSeparator.getOilOutStream());
     valve1.setOutletPressure(secondstagePressure);
@@ -107,11 +107,11 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
     ThreePhaseSeparator secondStageSeparator = new ThreePhaseSeparator("2nd stage Separator", valve1.getOutletStream());
 
     ThrottlingValve thirdStageValve = new ThrottlingValve("2-3stageOilValve",
-	secondStageSeparator.getLiquidOutStream());
+        secondStageSeparator.getLiquidOutStream());
     thirdStageValve.setOutletPressure(thirdstagePressure);
 
     ThreePhaseSeparator thirdStageSeparator = new ThreePhaseSeparator("3rd stage Separator",
-	thirdStageValve.getOutletStream());
+        thirdStageValve.getOutletStream());
 
     oilCooler = new Cooler("export oil cooler", thirdStageSeparator.getLiquidOutStream());
     oilCooler.setOutTemperature(exportOilTemperature);

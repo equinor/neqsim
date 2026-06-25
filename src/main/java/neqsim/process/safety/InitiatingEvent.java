@@ -113,7 +113,7 @@ public enum InitiatingEvent {
    */
   public boolean isReleaseEvent() {
     return this == LEAK_SMALL || this == LEAK_MEDIUM || this == LEAK_LARGE || this == FULL_BORE_RUPTURE
-	|| this == RUPTURE || this == PSV_LIFT || this == LOSS_OF_CONTAINMENT;
+        || this == RUPTURE || this == PSV_LIFT || this == LOSS_OF_CONTAINMENT;
   }
 
   /**

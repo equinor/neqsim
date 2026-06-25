@@ -70,7 +70,7 @@ public class EpisodeRunner implements Serializable {
      * @param finalObservation final observation
      */
     public EpisodeResult(double totalReward, int steps, boolean terminated, List<double[]> observations,
-	List<double[]> actions, List<Double> rewards, double[] finalObservation) {
+        List<double[]> actions, List<Double> rewards, double[] finalObservation) {
       this.totalReward = totalReward;
       this.steps = steps;
       this.terminated = terminated;
@@ -98,7 +98,7 @@ public class EpisodeRunner implements Serializable {
      */
     public double getObservation(int index, int featureIndex) {
       if (index < observations.size() && featureIndex < observations.get(index).length) {
-	return observations.get(index)[featureIndex];
+        return observations.get(index)[featureIndex];
       }
       return Double.NaN;
     }
@@ -112,7 +112,7 @@ public class EpisodeRunner implements Serializable {
     public double[] getFeatureTrajectory(int featureIndex) {
       double[] trajectory = new double[observations.size()];
       for (int i = 0; i < observations.size(); i++) {
-	trajectory[i] = featureIndex < observations.get(i).length ? observations.get(i)[featureIndex] : Double.NaN;
+        trajectory[i] = featureIndex < observations.get(i).length ? observations.get(i)[featureIndex] : Double.NaN;
       }
       return trajectory;
     }
@@ -154,7 +154,7 @@ public class EpisodeRunner implements Serializable {
      * @param maxReward max reward
      */
     public BenchmarkResult(String controllerName, int numEpisodes, double meanReward, double stdReward,
-	double meanLength, double successRate, double minReward, double maxReward) {
+        double meanLength, double successRate, double minReward, double maxReward) {
       this.controllerName = controllerName;
       this.numEpisodes = numEpisodes;
       this.meanReward = meanReward;
@@ -168,7 +168,7 @@ public class EpisodeRunner implements Serializable {
     @Override
     public String toString() {
       return String.format("%s: reward=%.2f±%.2f, length=%.1f, success=%.1f%%, range=[%.2f, %.2f]", controllerName,
-	  meanReward, stdReward, meanLength, successRate * 100, minReward, maxReward);
+          meanReward, stdReward, meanLength, successRate * 100, minReward, maxReward);
     }
   }
 
@@ -240,15 +240,15 @@ public class EpisodeRunner implements Serializable {
       steps++;
 
       if (verbose && steps % printInterval == 0) {
-	System.out.printf("Step %d: reward=%.3f, total=%.2f%n", steps, stepResult.reward, totalReward);
+        System.out.printf("Step %d: reward=%.3f, total=%.2f%n", steps, stepResult.reward, totalReward);
       }
 
       if (stepResult.terminated) {
-	terminated = true;
-	break;
+        terminated = true;
+        break;
       }
       if (stepResult.truncated) {
-	break;
+        break;
       }
     }
 
@@ -273,12 +273,12 @@ public class EpisodeRunner implements Serializable {
       rewards[i] = result.totalReward;
       lengths[i] = result.steps;
       if (!result.terminated) {
-	successes++;
+        successes++;
       }
 
       if (verbose) {
-	System.out.printf("Episode %d/%d: reward=%.2f, steps=%d, terminated=%b%n", i + 1, numEpisodes,
-	    result.totalReward, result.steps, result.terminated);
+        System.out.printf("Episode %d/%d: reward=%.2f, steps=%d, terminated=%b%n", i + 1, numEpisodes,
+            result.totalReward, result.steps, result.terminated);
       }
     }
 
@@ -291,7 +291,7 @@ public class EpisodeRunner implements Serializable {
     double maxReward = max(rewards);
 
     return new BenchmarkResult(controller.getName(), numEpisodes, meanReward, stdReward, meanLength, successRate,
-	minReward, maxReward);
+        minReward, maxReward);
   }
 
   /**
@@ -308,7 +308,7 @@ public class EpisodeRunner implements Serializable {
 
     for (Controller controller : controllers) {
       if (verbose) {
-	System.out.println("\n--- Testing: " + controller.getName() + " ---");
+        System.out.println("\n--- Testing: " + controller.getName() + " ---");
       }
       BenchmarkResult result = benchmark(controller, numEpisodes, maxStepsPerEpisode);
       results.add(result);
@@ -331,7 +331,7 @@ public class EpisodeRunner implements Serializable {
 
     for (BenchmarkResult r : results) {
       System.out.printf("%-20s %10.2f %10.2f %10.1f %10.1f%n", r.controllerName, r.meanReward, r.stdReward,
-	  r.successRate * 100, r.meanLength);
+          r.successRate * 100, r.meanLength);
     }
     System.out.println(repeatString("=", 80));
   }
@@ -373,7 +373,7 @@ public class EpisodeRunner implements Serializable {
     double m = arr[0];
     for (double v : arr) {
       if (v < m) {
-	m = v;
+        m = v;
       }
     }
     return m;
@@ -383,7 +383,7 @@ public class EpisodeRunner implements Serializable {
     double m = arr[0];
     for (double v : arr) {
       if (v > m) {
-	m = v;
+        m = v;
       }
     }
     return m;

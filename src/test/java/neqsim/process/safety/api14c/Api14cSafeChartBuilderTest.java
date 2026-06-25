@@ -3,7 +3,6 @@ package neqsim.process.safety.api14c;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.util.EnumSet;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.separator.Separator;
@@ -22,7 +21,7 @@ class Api14cSafeChartBuilderTest {
   @Test
   void pressureVesselRequiresStandardSet() {
     EnumSet<Api14cDeviceType> req = EnumSet
-	.copyOf(Api14cSafetyAnalysisTable.getRequiredDevices(Api14cEquipmentCategory.PRESSURE_VESSEL));
+        .copyOf(Api14cSafetyAnalysisTable.getRequiredDevices(Api14cEquipmentCategory.PRESSURE_VESSEL));
     assertTrue(req.contains(Api14cDeviceType.PSH));
     assertTrue(req.contains(Api14cDeviceType.PSL));
     assertTrue(req.contains(Api14cDeviceType.LSH));
@@ -35,7 +34,7 @@ class Api14cSafeChartBuilderTest {
     EnumSet<Api14cDeviceType> required = EnumSet.of(Api14cDeviceType.PSH, Api14cDeviceType.PSV);
     EnumSet<Api14cDeviceType> present = EnumSet.of(Api14cDeviceType.PSH);
     Api14cSafeChartItem it = new Api14cSafeChartItem("V-100", Api14cEquipmentCategory.PRESSURE_VESSEL, required,
-	present);
+        present);
     assertFalse(it.isComplete());
     assertEquals(1, it.getMissing().size());
     assertTrue(it.getMissing().contains(Api14cDeviceType.PSV));
@@ -67,8 +66,8 @@ class Api14cSafeChartBuilderTest {
     boolean found = false;
     for (Api14cSafeChartItem it : b.getItems()) {
       if ("HP separator".equals(it.getEquipmentName())) {
-	assertEquals(Api14cEquipmentCategory.PRESSURE_VESSEL, it.getCategory());
-	found = true;
+        assertEquals(Api14cEquipmentCategory.PRESSURE_VESSEL, it.getCategory());
+        found = true;
       }
     }
     assertTrue(found, "HP separator should be present in SAFE chart");
@@ -88,7 +87,7 @@ class Api14cSafeChartBuilderTest {
     p.run();
 
     Api14cSafeChartBuilder b = new Api14cSafeChartBuilder()
-	.declarePresent("HP separator", EnumSet.of(Api14cDeviceType.PSH, Api14cDeviceType.PSV)).build(p);
+        .declarePresent("HP separator", EnumSet.of(Api14cDeviceType.PSH, Api14cDeviceType.PSV)).build(p);
     assertFalse(b.isComplete());
     assertFalse(b.getGaps().isEmpty());
   }

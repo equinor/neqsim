@@ -61,7 +61,7 @@ public class ProcessCandidateEvaluator {
     }
     if (simulationResult.isError() || simulationResult.getProcessSystem() == null) {
       for (SimulationResult.ErrorDetail error : simulationResult.getErrors()) {
-	candidate.addError(error.toString());
+        candidate.addError(error.toString());
       }
       candidate.setFeasible(false);
       candidate.setScore(Double.NEGATIVE_INFINITY);
@@ -92,11 +92,11 @@ public class ProcessCandidateEvaluator {
     ProcessSimulationEvaluator evaluator = new ProcessSimulationEvaluator(process);
     for (ProcessResearchSpec.DecisionVariable variable : spec.getDecisionVariables()) {
       evaluator.addParameter(variable.getEquipmentName(), variable.getPropertyName(), variable.getLowerBound(),
-	  variable.getUpperBound(), variable.getUnit());
+          variable.getUpperBound(), variable.getUnit());
     }
     evaluator.addObjective("processResearchScore",
-	currentProcess -> scoreProcess(currentProcess, candidate, spec, false),
-	ProcessSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
+        currentProcess -> scoreProcess(currentProcess, candidate, spec, false),
+        ProcessSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
 
     List<double[]> grid = buildGrid(spec.getDecisionVariables(), spec.getMaxOptimizationCases());
     double bestScore = Double.NEGATIVE_INFINITY;
@@ -104,13 +104,13 @@ public class ProcessCandidateEvaluator {
     for (double[] point : grid) {
       ProcessSimulationEvaluator.EvaluationResult result = evaluator.evaluate(point);
       if (!result.isSimulationConverged()) {
-	continue;
+        continue;
       }
       double[] raw = result.getObjectivesRaw();
       double currentScore = raw != null && raw.length > 0 ? raw[0] : Double.NEGATIVE_INFINITY;
       if (currentScore > bestScore) {
-	bestScore = currentScore;
-	bestPoint = point.clone();
+        bestScore = currentScore;
+        bestPoint = point.clone();
       }
     }
     if (bestPoint != null) {
@@ -197,49 +197,49 @@ public class ProcessCandidateEvaluator {
       String reference = resolveTargetReference(candidate, target);
       StreamInterface stream = process.resolveStreamReference(reference);
       if (stream == null) {
-	if (recordMetrics) {
-	  candidate.addWarning("Could not resolve product stream reference: " + reference);
-	}
-	score -= 1.0e6;
-	continue;
+        if (recordMetrics) {
+          candidate.addWarning("Could not resolve product stream reference: " + reference);
+        }
+        score -= 1.0e6;
+        continue;
       }
       double flow = safeFlowRate(stream);
       double purity = safePurity(stream, target.getComponentName());
       metrics.add("productFlow_kg_hr", target.getWeight() * flow);
       if (recordMetrics) {
-	candidate.addObjectiveValue(target.getName() + ".flow_kg_hr", flow);
-	if (!Double.isNaN(purity)) {
-	  candidate.addObjectiveValue(target.getName() + ".purity", purity);
-	}
+        candidate.addObjectiveValue(target.getName() + ".flow_kg_hr", flow);
+        if (!Double.isNaN(purity)) {
+          candidate.addObjectiveValue(target.getName() + ".purity", purity);
+        }
       }
       score += spec.getScoringWeights().getProductFlowWeight() * target.getWeight() * flow;
       if (!Double.isNaN(purity)) {
-	metrics.add("productPurity_weighted", target.getWeight() * purity);
-	score += spec.getScoringWeights().getPurityWeight() * target.getWeight() * purity;
+        metrics.add("productPurity_weighted", target.getWeight() * purity);
+        score += spec.getScoringWeights().getPurityWeight() * target.getWeight() * purity;
       }
       if (flow < target.getMinFlowRate()) {
-	score -= 1.0e5 * (target.getMinFlowRate() - flow);
+        score -= 1.0e5 * (target.getMinFlowRate() - flow);
       }
       if (!Double.isNaN(purity) && purity < target.getMinPurity()) {
-	score -= 1.0e6 * (target.getMinPurity() - purity);
+        score -= 1.0e6 * (target.getMinPurity() - purity);
       }
     }
     score = applyProcessPenalties(score, metrics, spec);
     List<String> violations = findConstraintViolations(metrics, spec);
     if (!violations.isEmpty()) {
       if (recordMetrics) {
-	for (String violation : violations) {
-	  candidate.addError("Hard synthesis constraint violated: " + violation);
-	}
-	metrics.set("constraintViolationCount", violations.size());
-	metrics.set("compositeScore", Double.NEGATIVE_INFINITY);
-	recordMetrics(candidate, metrics);
+        for (String violation : violations) {
+          candidate.addError("Hard synthesis constraint violated: " + violation);
+        }
+        metrics.set("constraintViolationCount", violations.size());
+        metrics.set("compositeScore", Double.NEGATIVE_INFINITY);
+        recordMetrics(candidate, metrics);
       }
       return Double.NEGATIVE_INFINITY;
     }
     if (spec.getObjective() == ProcessResearchSpec.Objective.MINIMIZE_ENERGY) {
       score -= metrics.get("totalPower_kW", 0.0) + metrics.get("hotUtility_kW", 0.0)
-	  + metrics.get("coldUtility_kW", 0.0);
+          + metrics.get("coldUtility_kW", 0.0);
     }
     if (recordMetrics) {
       double robustnessDelta = evaluateRobustness(candidate, spec, score);
@@ -285,23 +285,23 @@ public class ProcessCandidateEvaluator {
       equipmentCount++;
       capitalCostProxy += spec.getEconomicAssumptions().getEquipmentCostProxyUsd(equipment.getClass().getSimpleName());
       if (equipment instanceof Compressor) {
-	totalPower += Math.abs(((Compressor) equipment).getPower("kW"));
+        totalPower += Math.abs(((Compressor) equipment).getPower("kW"));
       } else if (equipment instanceof Pump) {
-	totalPower += Math.abs(((Pump) equipment).getPower("kW"));
+        totalPower += Math.abs(((Pump) equipment).getPower("kW"));
       } else if (equipment instanceof Heater) {
-	double duty = ((Heater) equipment).getDuty("kW");
-	if (equipment instanceof Cooler || duty < 0.0) {
-	  coolingDuty += Math.abs(duty);
-	} else {
-	  heatingDuty += Math.abs(duty);
-	}
+        double duty = ((Heater) equipment).getDuty("kW");
+        if (equipment instanceof Cooler || duty < 0.0) {
+          coolingDuty += Math.abs(duty);
+        } else {
+          heatingDuty += Math.abs(duty);
+        }
       } else if (equipment instanceof HeatExchanger) {
-	double duty = ((HeatExchanger) equipment).getDuty() / 1000.0;
-	if (duty < 0.0) {
-	  coolingDuty += Math.abs(duty);
-	} else {
-	  heatingDuty += Math.abs(duty);
-	}
+        double duty = ((HeatExchanger) equipment).getDuty() / 1000.0;
+        if (duty < 0.0) {
+          coolingDuty += Math.abs(duty);
+        } else {
+          heatingDuty += Math.abs(duty);
+        }
       }
     }
     metrics.set("equipmentCount", equipmentCount);
@@ -344,7 +344,7 @@ public class ProcessCandidateEvaluator {
       metrics.set("pinchTemperature_C", pinch.getPinchTemperatureC());
     } catch (Exception e) {
       if (recordWarnings) {
-	candidate.addWarning("Heat integration metrics unavailable: " + e.getMessage());
+        candidate.addWarning("Heat integration metrics unavailable: " + e.getMessage());
       }
       metrics.set("hotUtility_kW", metrics.get("heatingDuty_kW", 0.0));
       metrics.set("coldUtility_kW", metrics.get("coolingDuty_kW", 0.0));
@@ -360,13 +360,13 @@ public class ProcessCandidateEvaluator {
   private void addOperatingCostMetrics(ProcessResearchSpec spec, ProcessResearchMetrics metrics) {
     double hours = spec.getEconomicAssumptions().getOperatingHoursPerYear();
     double electricCost = metrics.get("totalPower_kW", 0.0) * hours
-	* spec.getEconomicAssumptions().getElectricityCostUsdPerKWh();
+        * spec.getEconomicAssumptions().getElectricityCostUsdPerKWh();
     double hotUtilityCost = metrics.get("hotUtility_kW", metrics.get("heatingDuty_kW", 0.0)) * hours
-	* spec.getEconomicAssumptions().getHotUtilityCostUsdPerKWh();
+        * spec.getEconomicAssumptions().getHotUtilityCostUsdPerKWh();
     double coldUtilityCost = metrics.get("coldUtility_kW", metrics.get("coolingDuty_kW", 0.0)) * hours
-	* spec.getEconomicAssumptions().getColdUtilityCostUsdPerKWh();
+        * spec.getEconomicAssumptions().getColdUtilityCostUsdPerKWh();
     double carbonCost = metrics.get("emissions_kgCO2e_per_hr", 0.0) * hours / 1000.0
-	* spec.getEconomicAssumptions().getCarbonPriceUsdPerTonne();
+        * spec.getEconomicAssumptions().getCarbonPriceUsdPerTonne();
     metrics.set("annualElectricityCost_USD_per_yr", electricCost);
     metrics.set("annualHotUtilityCost_USD_per_yr", hotUtilityCost);
     metrics.set("annualColdUtilityCost_USD_per_yr", coldUtilityCost);
@@ -407,15 +407,15 @@ public class ProcessCandidateEvaluator {
     addViolation(violations, "equipmentCount", metrics.get("equipmentCount", 0.0), constraints.getMaxEquipmentCount());
     addViolation(violations, "totalPower_kW", metrics.get("totalPower_kW", 0.0), constraints.getMaxTotalPowerKW());
     addViolation(violations, "hotUtility_kW", metrics.get("hotUtility_kW", metrics.get("heatingDuty_kW", 0.0)),
-	constraints.getMaxHotUtilityKW());
+        constraints.getMaxHotUtilityKW());
     addViolation(violations, "coldUtility_kW", metrics.get("coldUtility_kW", metrics.get("coolingDuty_kW", 0.0)),
-	constraints.getMaxColdUtilityKW());
+        constraints.getMaxColdUtilityKW());
     addViolation(violations, "capitalCostProxy_USD", metrics.get("capitalCostProxy_USD", 0.0),
-	constraints.getMaxCapitalCostProxyUSD());
+        constraints.getMaxCapitalCostProxyUSD());
     addViolation(violations, "emissions_kgCO2e_per_hr", metrics.get("emissions_kgCO2e_per_hr", 0.0),
-	constraints.getMaxEmissionsKgCO2ePerHr());
+        constraints.getMaxEmissionsKgCO2ePerHr());
     addViolation(violations, "annualOperatingCostProxy_USD_per_yr",
-	metrics.get("annualOperatingCostProxy_USD_per_yr", 0.0), constraints.getMaxAnnualOperatingCostProxyUSDPerYr());
+        metrics.get("annualOperatingCostProxy_USD_per_yr", 0.0), constraints.getMaxAnnualOperatingCostProxyUSDPerYr());
     return violations;
   }
 
@@ -460,13 +460,13 @@ public class ProcessCandidateEvaluator {
       String scenarioJson = createScenarioJson(candidate.getJsonDefinition(), scenario);
       SimulationResult result = ProcessSystem.fromJsonAndRun(scenarioJson);
       if (result.isError() || result.getProcessSystem() == null) {
-	worstScore = Math.min(worstScore, -1.0e9);
-	continue;
+        worstScore = Math.min(worstScore, -1.0e9);
+        continue;
       }
       ProcessCandidate scenarioCandidate = new ProcessCandidate(candidate.getId() + "-" + scenario.getName(),
-	  candidate.getName(), candidate.getGenerationMethod());
+          candidate.getName(), candidate.getGenerationMethod());
       for (Map.Entry<String, String> entry : candidate.getProductStreamReferences().entrySet()) {
-	scenarioCandidate.addProductStreamReference(entry.getKey(), entry.getValue());
+        scenarioCandidate.addProductStreamReference(entry.getKey(), entry.getValue());
       }
       double scenarioScore = scoreProcess(result.getProcessSystem(), scenarioCandidate, spec, false);
       worstScore = Math.min(worstScore, scenarioScore);
@@ -486,23 +486,23 @@ public class ProcessCandidateEvaluator {
     JsonObject fluid = root.getAsJsonObject("fluid");
     if (fluid != null) {
       if (fluid.has("temperature")) {
-	fluid.addProperty("temperature", fluid.get("temperature").getAsDouble() + scenario.getFeedTemperatureOffsetK());
+        fluid.addProperty("temperature", fluid.get("temperature").getAsDouble() + scenario.getFeedTemperatureOffsetK());
       }
       if (fluid.has("pressure")) {
-	fluid.addProperty("pressure", fluid.get("pressure").getAsDouble() * scenario.getFeedPressureMultiplier());
+        fluid.addProperty("pressure", fluid.get("pressure").getAsDouble() * scenario.getFeedPressureMultiplier());
       }
     }
     JsonArray process = root.getAsJsonArray("process");
     if (process != null) {
       for (int i = 0; i < process.size(); i++) {
-	JsonObject unit = process.get(i).getAsJsonObject();
-	if (unit.has("name") && "feed".equals(unit.get("name").getAsString()) && unit.has("properties")) {
-	  JsonObject props = unit.getAsJsonObject("properties");
-	  if (props.has("flowRate") && props.get("flowRate").isJsonArray()) {
-	    JsonArray flow = props.getAsJsonArray("flowRate");
-	    flow.set(0, new JsonPrimitive(flow.get(0).getAsDouble() * scenario.getFeedFlowMultiplier()));
-	  }
-	}
+        JsonObject unit = process.get(i).getAsJsonObject();
+        if (unit.has("name") && "feed".equals(unit.get("name").getAsString()) && unit.has("properties")) {
+          JsonObject props = unit.getAsJsonObject("properties");
+          if (props.has("flowRate") && props.get("flowRate").isJsonArray()) {
+            JsonArray flow = props.getAsJsonArray("flowRate");
+            flow.set(0, new JsonPrimitive(flow.get(0).getAsDouble() * scenario.getFeedFlowMultiplier()));
+          }
+        }
       }
     }
     return gson.toJson(root);

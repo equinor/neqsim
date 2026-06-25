@@ -165,7 +165,7 @@ When working with AI on NeqSim features, include this context:
 
 ---
 
-**Status**: ✅ Complete and ready for use  
-**Created**: December 28, 2025  
-**For**: AI-assisted NeqSim development  
+**Status**: ✅ Complete and ready for use
+**Created**: December 28, 2025
+**For**: AI-assisted NeqSim development
 **Benefit**: Makes monorepo advantage explicit through concrete examples

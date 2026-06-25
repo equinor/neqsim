@@ -27,11 +27,11 @@ class AISchemaDiscoveryTest {
   // Sample class with AIExposable annotations for testing
   static class TestThermo {
     @AIExposable(description = "Add a chemical component", category = "composition", example = "addComponent(\"methane\", 0.9)", priority = 100, safe = false, tags = {
-	"fluid", "setup" })
+        "fluid", "setup" })
     public void addComponent(
-	@AIParameter(name = "name", description = "Component name", options = { "methane", "ethane",
-	    "propane" }) String name,
-	@AIParameter(name = "moles", description = "Mole fraction", minValue = 0.0, maxValue = 1.0) double moles) {
+        @AIParameter(name = "name", description = "Component name", options = { "methane", "ethane",
+            "propane" }) String name,
+        @AIParameter(name = "moles", description = "Mole fraction", minValue = 0.0, maxValue = 1.0) double moles) {
     }
 
     @AIExposable(description = "Get temperature", category = "properties", example = "getTemperature()", priority = 80, safe = true)
@@ -61,7 +61,7 @@ class AISchemaDiscoveryTest {
     List<AISchemaDiscovery.MethodSchema> methods = discovery.discoverMethods(TestThermo.class);
 
     AISchemaDiscovery.MethodSchema addComponent = methods.stream().filter(m -> m.getMethodName().equals("addComponent"))
-	.findFirst().orElse(null);
+        .findFirst().orElse(null);
 
     assertNotNull(addComponent);
     assertEquals("Add a chemical component", addComponent.getDescription());
@@ -75,7 +75,7 @@ class AISchemaDiscoveryTest {
     List<AISchemaDiscovery.MethodSchema> methods = discovery.discoverMethods(TestThermo.class);
 
     AISchemaDiscovery.MethodSchema addComponent = methods.stream().filter(m -> m.getMethodName().equals("addComponent"))
-	.findFirst().orElse(null);
+        .findFirst().orElse(null);
 
     assertNotNull(addComponent);
     assertEquals(2, addComponent.getParameters().size());
@@ -111,7 +111,7 @@ class AISchemaDiscoveryTest {
       // Should find common methods like run, setFlowRate, getFlowRate
       assertTrue(methods.stream().anyMatch(m -> m.getMethodName().equals("run")), "Should find run method");
       assertTrue(methods.stream().anyMatch(m -> m.getMethodName().equals("setFlowRate")),
-	  "Should find setFlowRate method");
+          "Should find setFlowRate method");
     } catch (ClassNotFoundException e) {
       // Skip test if class not on classpath
       logger.warn("Skipping test - Stream class not on classpath");
@@ -137,7 +137,7 @@ class AISchemaDiscoveryTest {
     List<AISchemaDiscovery.MethodSchema> methods = discovery.discoverMethods(TestThermo.class);
 
     AISchemaDiscovery.MethodSchema getTemp = methods.stream().filter(m -> m.getMethodName().equals("getTemperature"))
-	.findFirst().orElse(null);
+        .findFirst().orElse(null);
 
     assertNotNull(getTemp);
     String prompt = getTemp.toPromptText();
@@ -181,7 +181,7 @@ class AISchemaDiscoveryTest {
   @DisplayName("Parameter schema should handle min/max values")
   void testParameterMinMax() {
     AISchemaDiscovery.ParameterSchema param = new AISchemaDiscovery.ParameterSchema("pressure", "double",
-	"System pressure", "bar", 0.0, 1000.0, "1.0", true, new String[0]);
+        "System pressure", "bar", 0.0, 1000.0, "1.0", true, new String[0]);
 
     String text = param.toPromptText();
     assertTrue(text.contains("Range: [0.0, 1000.0]"));

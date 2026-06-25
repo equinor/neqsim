@@ -46,8 +46,8 @@ public class FlowRegimeDetectorTest {
     FlowRegime regime = FlowRegimeDetector.detectFlowRegime(testSystem, uSG, uSL, diameter, inclination);
 
     assertTrue(
-	regime == FlowRegime.STRATIFIED_SMOOTH || regime == FlowRegime.STRATIFIED_WAVY || regime == FlowRegime.SLUG,
-	"Low velocities in horizontal pipe should give stratified or slug flow, got: " + regime);
+        regime == FlowRegime.STRATIFIED_SMOOTH || regime == FlowRegime.STRATIFIED_WAVY || regime == FlowRegime.SLUG,
+        "Low velocities in horizontal pipe should give stratified or slug flow, got: " + regime);
   }
 
   @Test
@@ -61,7 +61,7 @@ public class FlowRegimeDetectorTest {
     FlowRegime regime = FlowRegimeDetector.detectFlowRegime(testSystem, uSG, uSL, diameter, inclination);
 
     assertTrue(regime == FlowRegime.ANNULAR || regime == FlowRegime.DROPLET,
-	"Very high gas velocity should give annular or droplet flow, got: " + regime);
+        "Very high gas velocity should give annular or droplet flow, got: " + regime);
   }
 
   @Test
@@ -106,7 +106,7 @@ public class FlowRegimeDetectorTest {
     double sigma = 0.02; // N/m
 
     FlowRegime regime = FlowRegimeDetector.detectFlowRegime(uSG, uSL, diameter, inclination, rhoG, rhoL, muG, muL,
-	sigma);
+        sigma);
 
     assertNotNull(regime);
   }
@@ -122,7 +122,7 @@ public class FlowRegimeDetectorTest {
     FlowRegime regime = FlowRegimeDetector.detectFlowRegime(testSystem, uSG, uSL, diameter, inclination);
 
     assertTrue(regime == FlowRegime.SLUG || regime == FlowRegime.ANNULAR,
-	"Uphill flow should give slug or annular, got: " + regime);
+        "Uphill flow should give slug or annular, got: " + regime);
   }
 
   @Test
@@ -152,9 +152,9 @@ public class FlowRegimeDetectorTest {
     assertTrue(patternName.length() > 0, "Pattern name should not be empty");
     // Pattern name should be one of the valid node types
     assertTrue(
-	patternName.equals("stratified") || patternName.equals("slug") || patternName.equals("annular")
-	    || patternName.equals("bubble") || patternName.equals("droplet"),
-	"Pattern name should be a valid flow node type, got: " + patternName);
+        patternName.equals("stratified") || patternName.equals("slug") || patternName.equals("annular")
+            || patternName.equals("bubble") || patternName.equals("droplet"),
+        "Pattern name should be a valid flow node type, got: " + patternName);
   }
 
   @Test

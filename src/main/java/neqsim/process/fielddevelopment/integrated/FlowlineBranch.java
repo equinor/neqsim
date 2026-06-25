@@ -137,7 +137,7 @@ public class FlowlineBranch implements NetworkBranch {
     double q;
     if (quadraticCoeff > 0.0) {
       q = (-linearCoeff + Math.sqrt(linearCoeff * linearCoeff + 4.0 * quadraticCoeff * driving))
-	  / (2.0 * quadraticCoeff);
+          / (2.0 * quadraticCoeff);
     } else if (linearCoeff > 0.0) {
       q = driving / linearCoeff;
     } else {

@@ -134,32 +134,32 @@ public class LiftCurveGenerator implements Serializable {
     // Calculate BHP for each flow rate and THP combination
     for (int i = 0; i < flowRates.length; i++) {
       for (int j = 0; j < thpValues.length; j++) {
-	double flowRate = flowRates[i];
-	double thp = thpValues[j];
+        double flowRate = flowRates[i];
+        double thp = thpValues[j];
 
-	try {
-	  // Use optimizer to find required inlet pressure
-	  FlowRateOptimizationResult result = optimizer.findInletPressure(flowRate, flowRateUnit, thp, pressureUnit);
+        try {
+          // Use optimizer to find required inlet pressure
+          FlowRateOptimizationResult result = optimizer.findInletPressure(flowRate, flowRateUnit, thp, pressureUnit);
 
-	  if (result.isFeasible()) {
-	    table.setBHP(i, j, result.getInletPressure());
-	    feasibleCount++;
-	    logger.debug("Flow={} {}, THP={} {} -> BHP={} {}", flowRate, flowRateUnit, thp, pressureUnit,
-		result.getInletPressure(), pressureUnit);
-	  } else {
-	    table.setBHP(i, j, Double.NaN);
-	    logger.debug("Flow={} {}, THP={} {} -> INFEASIBLE: {}", flowRate, flowRateUnit, thp, pressureUnit,
-		result.getInfeasibilityReason());
-	  }
-	} catch (Exception e) {
-	  logger.warn("Error calculating BHP for flow={}, THP={}: {}", flowRate, thp, e.getMessage());
-	  table.setBHP(i, j, Double.NaN);
-	}
+          if (result.isFeasible()) {
+            table.setBHP(i, j, result.getInletPressure());
+            feasibleCount++;
+            logger.debug("Flow={} {}, THP={} {} -> BHP={} {}", flowRate, flowRateUnit, thp, pressureUnit,
+                result.getInletPressure(), pressureUnit);
+          } else {
+            table.setBHP(i, j, Double.NaN);
+            logger.debug("Flow={} {}, THP={} {} -> INFEASIBLE: {}", flowRate, flowRateUnit, thp, pressureUnit,
+                result.getInfeasibilityReason());
+          }
+        } catch (Exception e) {
+          logger.warn("Error calculating BHP for flow={}, THP={}: {}", flowRate, thp, e.getMessage());
+          table.setBHP(i, j, Double.NaN);
+        }
       }
     }
 
     logger.info("Lift curve generation complete: {}/{} points feasible ({}%)", feasibleCount, totalCount,
-	String.format("%.1f", 100.0 * feasibleCount / totalCount));
+        String.format("%.1f", 100.0 * feasibleCount / totalCount));
 
     return table;
   }
@@ -198,39 +198,39 @@ public class LiftCurveGenerator implements Serializable {
     // Calculate flow rate for each BHP and THP combination
     for (int i = 0; i < bhpValues.length; i++) {
       for (int j = 0; j < thpValues.length; j++) {
-	double bhp = bhpValues[i];
-	double thp = thpValues[j];
+        double bhp = bhpValues[i];
+        double thp = thpValues[j];
 
-	// Skip if BHP <= THP (no positive flow possible)
-	if (bhp <= thp) {
-	  table.setBHP(i, j, Double.NaN);
-	  continue;
-	}
+        // Skip if BHP <= THP (no positive flow possible)
+        if (bhp <= thp) {
+          table.setBHP(i, j, Double.NaN);
+          continue;
+        }
 
-	try {
-	  // Use optimizer to find flow rate
-	  FlowRateOptimizationResult result = optimizer.findFlowRate(bhp, thp, pressureUnit);
+        try {
+          // Use optimizer to find flow rate
+          FlowRateOptimizationResult result = optimizer.findFlowRate(bhp, thp, pressureUnit);
 
-	  if (result.isFeasible()) {
-	    // Store flow rate in the BHP matrix (reusing the structure)
-	    table.setBHP(i, j, result.getFlowRate());
-	    feasibleCount++;
-	    logger.debug("BHP={} {}, THP={} {} -> Flow={} {}", bhp, pressureUnit, thp, pressureUnit,
-		result.getFlowRate(), result.getFlowRateUnit());
-	  } else {
-	    table.setBHP(i, j, Double.NaN);
-	    logger.debug("BHP={} {}, THP={} {} -> INFEASIBLE: {}", bhp, pressureUnit, thp, pressureUnit,
-		result.getInfeasibilityReason());
-	  }
-	} catch (Exception e) {
-	  logger.warn("Error calculating flow for BHP={}, THP={}: {}", bhp, thp, e.getMessage());
-	  table.setBHP(i, j, Double.NaN);
-	}
+          if (result.isFeasible()) {
+            // Store flow rate in the BHP matrix (reusing the structure)
+            table.setBHP(i, j, result.getFlowRate());
+            feasibleCount++;
+            logger.debug("BHP={} {}, THP={} {} -> Flow={} {}", bhp, pressureUnit, thp, pressureUnit,
+                result.getFlowRate(), result.getFlowRateUnit());
+          } else {
+            table.setBHP(i, j, Double.NaN);
+            logger.debug("BHP={} {}, THP={} {} -> INFEASIBLE: {}", bhp, pressureUnit, thp, pressureUnit,
+                result.getInfeasibilityReason());
+          }
+        } catch (Exception e) {
+          logger.warn("Error calculating flow for BHP={}, THP={}: {}", bhp, thp, e.getMessage());
+          table.setBHP(i, j, Double.NaN);
+        }
       }
     }
 
     logger.info("Flow rate table generation complete: {}/{} points feasible", feasibleCount,
-	bhpValues.length * thpValues.length);
+        bhpValues.length * thpValues.length);
 
     return table;
   }

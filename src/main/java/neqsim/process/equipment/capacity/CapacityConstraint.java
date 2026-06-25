@@ -364,7 +364,7 @@ public class CapacityConstraint implements Serializable {
     if (minValue > 0 && designValue == Double.MAX_VALUE) {
       // This is a minimum constraint (e.g., residence time)
       if (current <= 0) {
-	return MAX_UTILIZATION;
+        return MAX_UTILIZATION;
       }
       return Math.min(minValue / current, MAX_UTILIZATION);
     }

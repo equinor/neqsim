@@ -529,20 +529,20 @@ public class ManifoldMechanicalDesignCalculator implements Serializable {
       // For topside/onshore, use ASME B31.3
       double[] stresses = ASME_ALLOWABLE_STRESSES.get(materialGrade);
       if (stresses == null) {
-	stresses = ASME_ALLOWABLE_STRESSES.get("A106-B");
+        stresses = ASME_ALLOWABLE_STRESSES.get("A106-B");
       }
 
       double temp = designTemperature;
       if (temp <= 20) {
-	allowableStress = stresses[0];
+        allowableStress = stresses[0];
       } else if (temp <= 100) {
-	allowableStress = stresses[0] + (stresses[1] - stresses[0]) * (temp - 20) / 80;
+        allowableStress = stresses[0] + (stresses[1] - stresses[0]) * (temp - 20) / 80;
       } else if (temp <= 200) {
-	allowableStress = stresses[1] + (stresses[2] - stresses[1]) * (temp - 100) / 100;
+        allowableStress = stresses[1] + (stresses[2] - stresses[1]) * (temp - 100) / 100;
       } else if (temp <= 300) {
-	allowableStress = stresses[2] + (stresses[3] - stresses[2]) * (temp - 200) / 100;
+        allowableStress = stresses[2] + (stresses[3] - stresses[2]) * (temp - 200) / 100;
       } else {
-	allowableStress = stresses[3] + (stresses[4] - stresses[3]) * (temp - 300) / 100;
+        allowableStress = stresses[3] + (stresses[4] - stresses[3]) * (temp - 300) / 100;
       }
     }
 
@@ -583,13 +583,13 @@ public class ManifoldMechanicalDesignCalculator implements Serializable {
       double od = headerOuterDiameter;
 
       if (od <= 0.1143) {
-	supportSpacing = 2.7;
+        supportSpacing = 2.7;
       } else if (od <= 0.2191) {
-	supportSpacing = 3.7;
+        supportSpacing = 3.7;
       } else if (od <= 0.3239) {
-	supportSpacing = 4.3;
+        supportSpacing = 4.3;
       } else {
-	supportSpacing = 5.0;
+        supportSpacing = 5.0;
       }
 
       numberOfSupports = (int) Math.ceil(headerLength / supportSpacing) + 1;
@@ -682,7 +682,7 @@ public class ManifoldMechanicalDesignCalculator implements Serializable {
     if (reinforcementRequired) {
       int numBranches = numberOfInlets + numberOfOutlets;
       double padWeight = numBranches * Math.PI * branchOuterDiameter * reinforcementPadThickness * branchOuterDiameter
-	  * steelDensity;
+          * steelDensity;
       totalDryWeight += padWeight;
     }
 
@@ -726,7 +726,7 @@ public class ManifoldMechanicalDesignCalculator implements Serializable {
     calculateMinimumWallThickness();
     calculateBranchWallThickness();
     wallThicknessCheckPassed = headerWallThickness >= minHeaderWallThickness
-	&& branchWallThickness >= minBranchWallThickness;
+        && branchWallThickness >= minBranchWallThickness;
     allPassed = allPassed && wallThicknessCheckPassed;
 
     // Velocity check

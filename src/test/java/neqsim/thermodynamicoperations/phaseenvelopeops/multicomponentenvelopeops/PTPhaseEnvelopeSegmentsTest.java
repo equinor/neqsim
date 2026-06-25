@@ -45,16 +45,16 @@ class PTPhaseEnvelopeSegmentsTest {
       double[] P = s.getPressures();
       assertEquals(T.length, P.length, "T and P arrays must have equal length");
       for (int i = 0; i < T.length; i++) {
-	assertFalse(Double.isNaN(T[i]), "Segment temperatures must not contain NaN");
-	assertFalse(Double.isNaN(P[i]), "Segment pressures must not contain NaN");
-	assertTrue(T[i] > 50.0 && T[i] < 700.0, "Segment T out of range: " + T[i]);
-	assertTrue(P[i] > 0.0 && P[i] < 2000.0, "Segment P out of range: " + P[i]);
+        assertFalse(Double.isNaN(T[i]), "Segment temperatures must not contain NaN");
+        assertFalse(Double.isNaN(P[i]), "Segment pressures must not contain NaN");
+        assertTrue(T[i] > 50.0 && T[i] < 700.0, "Segment T out of range: " + T[i]);
+        assertTrue(P[i] > 0.0 && P[i] < 2000.0, "Segment P out of range: " + P[i]);
       }
       if (s.getPhaseType() == EnvelopeSegment.PhaseType.DEW) {
-	hasDew = true;
+        hasDew = true;
       }
       if (s.getPhaseType() == EnvelopeSegment.PhaseType.BUBBLE) {
-	hasBub = true;
+        hasBub = true;
       }
     }
     assertTrue(hasDew, "Envelope should have at least one DEW segment");
@@ -81,9 +81,9 @@ class PTPhaseEnvelopeSegmentsTest {
     int bubPointsFromSegments = 0;
     for (EnvelopeSegment s : ops.getEnvelopeSegments()) {
       if (s.getPhaseType() == EnvelopeSegment.PhaseType.DEW) {
-	dewPointsFromSegments += s.size();
+        dewPointsFromSegments += s.size();
       } else {
-	bubPointsFromSegments += s.size();
+        bubPointsFromSegments += s.size();
       }
     }
 
@@ -91,9 +91,9 @@ class PTPhaseEnvelopeSegmentsTest {
     int bubPointsFromFlat = countNonNaN(ops.get("bubT"));
 
     assertEquals(dewPointsFromFlat, dewPointsFromSegments,
-	"Sum of DEW segment sizes must equal non-NaN count in flat dewT array");
+        "Sum of DEW segment sizes must equal non-NaN count in flat dewT array");
     assertEquals(bubPointsFromFlat, bubPointsFromSegments,
-	"Sum of BUBBLE segment sizes must equal non-NaN count in flat bubT array");
+        "Sum of BUBBLE segment sizes must equal non-NaN count in flat bubT array");
   }
 
   /**
@@ -106,7 +106,7 @@ class PTPhaseEnvelopeSegmentsTest {
     int n = 0;
     for (double v : arr) {
       if (!Double.isNaN(v)) {
-	n++;
+        n++;
       }
     }
     return n;

@@ -98,8 +98,8 @@ public class Standard_ASTM_D611 extends neqsim.standards.Standard {
       meabpC = d86.getValue("MeABP", "C");
 
       if (Double.isNaN(watsonK) || Double.isNaN(meabpC)) {
-	logger.error("Aniline point inputs unavailable (Watson K / MeABP)");
-	return;
+        logger.error("Aniline point inputs unavailable (Watson K / MeABP)");
+        return;
       }
 
       anilinePointC = c0 + c1 * (watsonK - 12.0) + c2 * (meabpC - 190.0);
@@ -112,7 +112,7 @@ public class Standard_ASTM_D611 extends neqsim.standards.Standard {
   @Override
   public double getValue(String returnParameter, String returnUnit) {
     if ("anilinePoint".equalsIgnoreCase(returnParameter) || "AP".equalsIgnoreCase(returnParameter)
-	|| "MeABP".equalsIgnoreCase(returnParameter)) {
+        || "MeABP".equalsIgnoreCase(returnParameter)) {
       return convertTempFromC(getValue(returnParameter), returnUnit);
     }
     return getValue(returnParameter);
@@ -126,7 +126,7 @@ public class Standard_ASTM_D611 extends neqsim.standards.Standard {
     } else if ("MeABP".equalsIgnoreCase(returnParameter)) {
       return meabpC;
     } else if ("watsonK".equalsIgnoreCase(returnParameter)
-	|| "WatsonCharacterizationFactor".equalsIgnoreCase(returnParameter)) {
+        || "WatsonCharacterizationFactor".equalsIgnoreCase(returnParameter)) {
       return watsonK;
     } else {
       logger.error("returnParameter not supported: {}", returnParameter);
@@ -138,7 +138,7 @@ public class Standard_ASTM_D611 extends neqsim.standards.Standard {
   @Override
   public String getUnit(String returnParameter) {
     if ("watsonK".equalsIgnoreCase(returnParameter)
-	|| "WatsonCharacterizationFactor".equalsIgnoreCase(returnParameter)) {
+        || "WatsonCharacterizationFactor".equalsIgnoreCase(returnParameter)) {
       return "-";
     }
     return "C";

@@ -44,14 +44,14 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
       // System.out.println("aSRK " + a + " aCPA " + aCPA);
       // System.out.println("bSRK " + b + " bCPA " + bCPA);
       for (int j = 0; j < getNumberOfAssociationSites(); j++) {
-	setXsite(j, 1.0);
-	setXsiteOld(j, 1.0);
-	setXsitedV(j, 0.0);
-	setXsitedT(j, 0.0);
+        setXsite(j, 1.0);
+        setXsiteOld(j, 1.0);
+        setXsitedV(j, 0.0);
+        setXsitedT(j, 0.0);
       }
       if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
-	a = aCPA;
-	b = bCPA;
+        a = aCPA;
+        b = bCPA;
       }
       setAttractiveTerm(0);
     }
@@ -81,14 +81,14 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
     xsiteOld = new double[numberOfAssociationSites];
     if (numberOfAssociationSites != 0 && cpaon == 1) {
       for (int j = 0; j < getNumberOfAssociationSites(); j++) {
-	setXsite(j, 1.0);
-	setXsiteOld(j, 1.0);
-	setXsitedV(j, 0.0);
-	setXsitedT(j, 0.0);
+        setXsite(j, 1.0);
+        setXsiteOld(j, 1.0);
+        setXsitedV(j, 0.0);
+        setXsitedT(j, 0.0);
       }
       if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
-	a = aCPA;
-	b = bCPA;
+        a = aCPA;
+        b = bCPA;
       }
       setAttractiveTerm(0);
     }
@@ -194,7 +194,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
   public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     if (((PhaseCPAInterface) phase).getTotalNumberOfAccociationSites() > 0) {
       return super.dFdNdT(phase, numberOfComponents, temperature, pressure)
-	  + dFCPAdNdT(phase, numberOfComponents, temperature, pressure);
+          + dFCPAdNdT(phase, numberOfComponents, temperature, pressure);
     } else {
       return super.dFdNdT(phase, numberOfComponents, temperature, pressure);
     }
@@ -208,7 +208,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
     // temperature, pressure));
     if (((PhaseCPAInterface) phase).getTotalNumberOfAccociationSites() > 0) {
       return super.dFdNdV(phase, numberOfComponents, temperature, pressure)
-	  + dFCPAdNdV(phase, numberOfComponents, temperature, pressure);
+          + dFCPAdNdV(phase, numberOfComponents, temperature, pressure);
     } else {
       return super.dFdNdV(phase, numberOfComponents, temperature, pressure);
     }
@@ -225,7 +225,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
     // pressure)));
     if (((PhaseCPAInterface) phase).getTotalNumberOfAccociationSites() > 0) {
       return super.dFdNdN(j, phase, numberOfComponents, temperature, pressure)
-	  + dFCPAdNdN(j, phase, numberOfComponents, temperature, pressure);
+          + dFCPAdNdN(j, phase, numberOfComponents, temperature, pressure);
     } else {
       return super.dFdNdN(j, phase, numberOfComponents, temperature, pressure);
     }
@@ -257,8 +257,8 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
     double tot10 = 0.0;
     for (int kk = 0; kk < phase.getNumberOfComponents(); kk++) {
       for (int k = 0; k < phase.getComponent(kk).getNumberOfAssociationSites(); k++) {
-	tot10 += -phase.getComponent(kk).getNumberOfMolesInPhase()
-	    * ((ComponentSrkCPA) phase.getComponent(kk)).getXsitedni(k, j);
+        tot10 += -phase.getComponent(kk).getNumberOfMolesInPhase()
+            * ((ComponentSrkCPA) phase.getComponent(kk)).getXsitedni(k, j);
       }
     }
     double tot11 = tot10 / 2.0 * calc_lngi(phase);
@@ -337,7 +337,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
     for (int k = 0; k < phase.getNumberOfComponents(); k++) {
       tot2 = 0.0;
       for (int i = 0; i < phase.getComponent(k).getNumberOfAssociationSites(); i++) {
-	tot2 -= ((ComponentSrkCPA) phase.getComponent(k)).getXsitedT()[i];
+        tot2 -= ((ComponentSrkCPA) phase.getComponent(k)).getXsitedT()[i];
       }
       tot1 += tot2 * phase.getComponent(k).getNumberOfMolesInPhase();
     }
@@ -385,16 +385,16 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
       fact = 1.0;
     }
     return -getNumberOfMolesInPhase() / Math.pow(xsite[sitei], 2.0) * fact
-	- getNumberOfMolesInPhase() * phase.getComponent(compj).getNumberOfMolesInPhase()
-	    * ((PhaseCPAInterface) phase).getCpaMixingRule().calcDelta(sitei, sitej, componentNumber, compj, phase,
-		phase.getTemperature(), phase.getPressure(), phase.getNumberOfComponents());
+        - getNumberOfMolesInPhase() * phase.getComponent(compj).getNumberOfMolesInPhase()
+            * ((PhaseCPAInterface) phase).getCpaMixingRule().calcDelta(sitei, sitej, componentNumber, compj, phase,
+                phase.getTemperature(), phase.getPressure(), phase.getNumberOfComponents());
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFCPAdVdXi(int site, PhaseInterface phase) {
     return -1.0 / (2.0 * phase.getTotalVolume())
-	* (1.0 - phase.getTotalVolume() * ((PhaseCPAInterface) phase).getGcpav()) * getNumberOfMolesInPhase();
+        * (1.0 - phase.getTotalVolume() * ((PhaseCPAInterface) phase).getGcpav()) * getNumberOfMolesInPhase();
   }
 
   /** {@inheritDoc} */
@@ -428,7 +428,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
    */
   public double calc_lngi(PhaseInterface phase) {
     return 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB())
-	/ ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()));
+        / ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()));
   }
 
   /**
@@ -439,10 +439,10 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
    */
   public double calc_lngidV(PhaseInterface phase) {
     return 2.0 * getBi() * (10.0)
-	/ ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()))
-	- 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB())
-	    * (2.0 * 32.0 * phase.getTotalVolume() - 12.0 * phase.getB()) / Math.pow(
-		((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB())), 2.0);
+        / ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()))
+        - 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB())
+            * (2.0 * 32.0 * phase.getTotalVolume() - 12.0 * phase.getB()) / Math.pow(
+                ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB())), 2.0);
   }
 
   /**
@@ -592,7 +592,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
     if (xsitedni.length != numberOfAssociationSites || (xsitedni.length > 0 && xsitedni[0].length != numComp)) {
       double[][] newArr = new double[numberOfAssociationSites][numComp];
       for (int i = 0; i < Math.min(xsitedni.length, numberOfAssociationSites); i++) {
-	System.arraycopy(xsitedni[i], 0, newArr[i], 0, Math.min(xsitedni[i].length, numComp));
+        System.arraycopy(xsitedni[i], 0, newArr[i], 0, Math.min(xsitedni[i].length, numComp));
       }
       xsitedni = newArr;
     }

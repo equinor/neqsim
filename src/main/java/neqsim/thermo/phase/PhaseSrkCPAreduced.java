@@ -225,20 +225,20 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
     for (int t = 0; t < p; t++) {
       double val = xSiteFull[typeRepSite[t]];
       if (val <= 1.0e-15 || val >= 1.0 || Double.isNaN(val)) {
-	needsInit = true;
-	break;
+        needsInit = true;
+        break;
       }
       xType[t] = val;
     }
     if (needsInit) {
       for (int t = 0; t < p; t++) {
-	xType[t] = 0.5;
+        xType[t] = 0.5;
       }
       expandAndSetSiteFractions(xType, ns);
       solveX2(10);
       readXsiteFromComponents(xSiteFull, ns);
       for (int t = 0; t < p; t++) {
-	xType[t] = xSiteFull[typeRepSite[t]];
+        xType[t] = xSiteFull[typeRepSite[t]];
       }
     }
 
@@ -276,11 +276,11 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
       // --- Update g-function and delta ---
       gcpa = calc_g();
       if (gcpa < 0) {
-	setMolarVolume(Btemp / numberOfMolesInPhase);
-	gcpa = calc_g();
-	totalVol = getMolarVolume() * numberOfMolesInPhase;
-	zeta = Btemp / (numberOfMolesInPhase * getMolarVolume());
-	molarVol = getMolarVolume();
+        setMolarVolume(Btemp / numberOfMolesInPhase);
+        gcpa = calc_g();
+        totalVol = getMolarVolume() * numberOfMolesInPhase;
+        zeta = Btemp / (numberOfMolesInPhase * getMolarVolume());
+        molarVol = getMolarVolume();
       }
       gcpav = calc_lngV();
       gcpavv = calc_lngVV();
@@ -294,15 +294,15 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
       double sumFV = 0.0;
       double sumFVV = 0.0;
       for (int a = 0; a < p; a++) {
-	for (int b = a; b < p; b++) {
-	  double dab = delta[typeRepSite[a]][typeRepSite[b]];
-	  double kRed = tMoles[a] * tMoles[b] / totalVol * dab * typeMult[a] * typeMult[b];
-	  double xaxb = xType[a] * xType[b];
-	  double kx = kRed * xaxb;
-	  double sym = (a == b) ? 1.0 : 2.0;
-	  sumFV += sym * kx * gdv1;
-	  sumFVV += sym * kx * (gdv1 * gdv1 + gcpavv + 1.0 / totalVol2);
-	}
+        for (int b = a; b < p; b++) {
+          double dab = delta[typeRepSite[a]][typeRepSite[b]];
+          double kRed = tMoles[a] * tMoles[b] / totalVol * dab * typeMult[a] * typeMult[b];
+          double xaxb = xType[a] * xType[b];
+          double kx = kRed * xaxb;
+          double sym = (a == b) ? 1.0 : 2.0;
+          sumFV += sym * kx * gdv1;
+          sumFVV += sym * kx * (gdv1 * gdv1 + gcpavv + 1.0 / totalVol2);
+        }
       }
       dFCPAdV = -0.5 * sumFV;
       dFCPAdVdV = -0.5 * sumFVV;
@@ -310,145 +310,145 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
       // --- Build reduced residual ---
       double[] redSum = new double[p];
       for (int a = 0; a < p; a++) {
-	double s = 0.0;
-	for (int b = 0; b < p; b++) {
-	  s += typeMult[b] * tMoles[b] * delta[typeRepSite[a]][typeRepSite[b]] * xType[b];
-	}
-	redSum[a] = s;
-	residual[a] = xType[a] - 1.0 / (1.0 + redSum[a] / totalVol);
+        double s = 0.0;
+        for (int b = 0; b < p; b++) {
+          s += typeMult[b] * tMoles[b] * delta[typeRepSite[a]][typeRepSite[b]] * xType[b];
+        }
+        redSum[a] = s;
+        residual[a] = xType[a] - 1.0 / (1.0 + redSum[a] / totalVol);
       }
       double h = zeta - Btemp / numberOfMolesInPhase * dFdV()
-	  - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
+          - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
       residual[p] = h;
 
       // --- Check convergence ---
       double maxResidual = 0.0;
       for (int i = 0; i < dim; i++) {
-	maxResidual = Math.max(maxResidual, Math.abs(residual[i]));
+        maxResidual = Math.max(maxResidual, Math.abs(residual[i]));
       }
       if (maxResidual < CONVERGENCE_TOL && iterations > 1) {
-	converged = true;
-	break;
+        converged = true;
+        break;
       }
 
       // --- Newton or Broyden step ---
       if (!useBroyden || iterations <= MIN_NEWTON_STEPS || maxResidual > BROYDEN_SWITCH_TOL) {
-	buildReducedJacobian(jacobian, xType, tMoles, redSum, totalVol, gdv1, zeta, Btemp, dim, p);
-	boolean ok = invertMatrix(jacobian, invJac, dim);
-	if (!ok) {
-	  fallbackCount++;
-	  return super.molarVolume(pressure, temperature, A, B, pt);
-	}
-	jacobianEvals++;
-	if (maxResidual <= BROYDEN_SWITCH_TOL && iterations > MIN_NEWTON_STEPS) {
-	  useBroyden = true;
-	}
-	stallCount = 0;
+        buildReducedJacobian(jacobian, xType, tMoles, redSum, totalVol, gdv1, zeta, Btemp, dim, p);
+        boolean ok = invertMatrix(jacobian, invJac, dim);
+        if (!ok) {
+          fallbackCount++;
+          return super.molarVolume(pressure, temperature, A, B, pt);
+        }
+        jacobianEvals++;
+        if (maxResidual <= BROYDEN_SWITCH_TOL && iterations > MIN_NEWTON_STEPS) {
+          useBroyden = true;
+        }
+        stallCount = 0;
       } else {
-	// Broyden rank-1 update
-	for (int i = 0; i < dim; i++) {
-	  df[i] = residual[i] - residualOld[i];
-	}
-	double[] dxPrev = new double[dim];
-	for (int t = 0; t < p; t++) {
-	  dxPrev[t] = xType[t] - xOld[t];
-	}
-	dxPrev[p] = zeta - xOld[p];
+        // Broyden rank-1 update
+        for (int i = 0; i < dim; i++) {
+          df[i] = residual[i] - residualOld[i];
+        }
+        double[] dxPrev = new double[dim];
+        for (int t = 0; t < p; t++) {
+          dxPrev[t] = xType[t] - xOld[t];
+        }
+        dxPrev[p] = zeta - xOld[p];
 
-	broydenUpdate(invJac, dxPrev, df, dim);
-	broydenUpdates++;
+        broydenUpdate(invJac, dxPrev, df, dim);
+        broydenUpdates++;
 
-	if (maxResidual > prevResNorm) {
-	  buildReducedJacobian(jacobian, xType, tMoles, redSum, totalVol, gdv1, zeta, Btemp, dim, p);
-	  boolean ok = invertMatrix(jacobian, invJac, dim);
-	  if (!ok) {
-	    fallbackCount++;
-	    return super.molarVolume(pressure, temperature, A, B, pt);
-	  }
-	  jacobianEvals++;
-	  stallCount = 0;
-	} else if (maxResidual > prevResNorm * STALL_RATIO) {
-	  stallCount++;
-	  if (stallCount >= 2) {
-	    buildReducedJacobian(jacobian, xType, tMoles, redSum, totalVol, gdv1, zeta, Btemp, dim, p);
-	    boolean ok = invertMatrix(jacobian, invJac, dim);
-	    if (!ok) {
-	      fallbackCount++;
-	      return super.molarVolume(pressure, temperature, A, B, pt);
-	    }
-	    jacobianEvals++;
-	    stallCount = 0;
-	  }
-	} else {
-	  stallCount = 0;
-	}
+        if (maxResidual > prevResNorm) {
+          buildReducedJacobian(jacobian, xType, tMoles, redSum, totalVol, gdv1, zeta, Btemp, dim, p);
+          boolean ok = invertMatrix(jacobian, invJac, dim);
+          if (!ok) {
+            fallbackCount++;
+            return super.molarVolume(pressure, temperature, A, B, pt);
+          }
+          jacobianEvals++;
+          stallCount = 0;
+        } else if (maxResidual > prevResNorm * STALL_RATIO) {
+          stallCount++;
+          if (stallCount >= 2) {
+            buildReducedJacobian(jacobian, xType, tMoles, redSum, totalVol, gdv1, zeta, Btemp, dim, p);
+            boolean ok = invertMatrix(jacobian, invJac, dim);
+            if (!ok) {
+              fallbackCount++;
+              return super.molarVolume(pressure, temperature, A, B, pt);
+            }
+            jacobianEvals++;
+            stallCount = 0;
+          }
+        } else {
+          stallCount = 0;
+        }
       }
 
       prevResNorm = maxResidual;
 
       // Save state for Broyden update
       for (int t = 0; t < p; t++) {
-	xOld[t] = xType[t];
+        xOld[t] = xType[t];
       }
       xOld[p] = zeta;
       System.arraycopy(residual, 0, residualOld, 0, dim);
 
       // --- Compute step: dx = -H * R ---
       for (int i = 0; i < dim; i++) {
-	double s = 0.0;
-	for (int j = 0; j < dim; j++) {
-	  s += invJac[i][j] * residual[j];
-	}
-	dx[i] = -s;
+        double s = 0.0;
+        for (int j = 0; j < dim; j++) {
+          s += invJac[i][j] * residual[j];
+        }
+        dx[i] = -s;
       }
 
       // --- Step limiting ---
       double maxStep = 1.0;
       for (int t = 0; t < p; t++) {
-	double proposed = xType[t] + maxStep * dx[t];
-	if (proposed < 1.0e-15) {
-	  double limit = MAX_REL_STEP * xType[t] / Math.abs(dx[t]);
-	  maxStep = Math.min(maxStep, limit);
-	}
-	if (proposed > 1.0) {
-	  double limit = (1.0 - xType[t]) / dx[t];
-	  maxStep = Math.min(maxStep, Math.max(0.1, limit));
-	}
+        double proposed = xType[t] + maxStep * dx[t];
+        if (proposed < 1.0e-15) {
+          double limit = MAX_REL_STEP * xType[t] / Math.abs(dx[t]);
+          maxStep = Math.min(maxStep, limit);
+        }
+        if (proposed > 1.0) {
+          double limit = (1.0 - xType[t]) / dx[t];
+          maxStep = Math.min(maxStep, Math.max(0.1, limit));
+        }
       }
       double proposedZeta = zeta + maxStep * dx[p];
       if (proposedZeta < 1.0e-10) {
-	double limit = MAX_REL_STEP * zeta / Math.abs(dx[p]);
-	maxStep = Math.min(maxStep, limit);
+        double limit = MAX_REL_STEP * zeta / Math.abs(dx[p]);
+        maxStep = Math.min(maxStep, limit);
       }
       if (proposedZeta > 1.0 - 1.0e-10) {
-	double limit = (1.0 - 1.0e-10 - zeta) / dx[p];
-	maxStep = Math.min(maxStep, Math.max(0.1, limit));
+        double limit = (1.0 - 1.0e-10 - zeta) / dx[p];
+        maxStep = Math.min(maxStep, Math.max(0.1, limit));
       }
       if (Math.abs(dx[p]) / Math.max(zeta, 1.0e-10) > 0.3) {
-	maxStep = Math.min(maxStep, 0.3 * zeta / Math.abs(dx[p]));
+        maxStep = Math.min(maxStep, 0.3 * zeta / Math.abs(dx[p]));
       }
 
       // --- Apply update ---
       for (int t = 0; t < p; t++) {
-	xType[t] += maxStep * dx[t];
-	xType[t] = Math.max(1.0e-15, Math.min(1.0, xType[t]));
+        xType[t] += maxStep * dx[t];
+        xType[t] = Math.max(1.0e-15, Math.min(1.0, xType[t]));
       }
       zeta += maxStep * dx[p];
       zeta = Math.max(1.0e-10, Math.min(1.0 - 1.0e-10, zeta));
 
       // --- Restart criterion ---
       if (iterations > 20 && maxResidual > 0.1 && !restartTriggered) {
-	restartTriggered = true;
-	useBroyden = false;
-	if (pt == PhaseType.GAS) {
-	  zeta = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
-	} else {
-	  zeta = pressure * Btemp / (numberOfMolesInPhase * temperature * R);
-	}
-	zeta = Math.max(1.0e-8, Math.min(1.0 - 1.0e-8, zeta));
-	for (int t = 0; t < p; t++) {
-	  xType[t] = 0.5;
-	}
+        restartTriggered = true;
+        useBroyden = false;
+        if (pt == PhaseType.GAS) {
+          zeta = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+        } else {
+          zeta = pressure * Btemp / (numberOfMolesInPhase * temperature * R);
+        }
+        zeta = Math.max(1.0e-8, Math.min(1.0 - 1.0e-8, zeta));
+        for (int t = 0; t < p; t++) {
+          xType[t] = 0.5;
+        }
       }
 
     } while (iterations < MAX_ITERATIONS);
@@ -507,30 +507,30 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
     for (int i = 0; i < ns; i++) {
       boolean matched = false;
       for (int t = 0; t < numTypes; t++) {
-	if (moleculeNumber[i] != moleculeNumber[typeRepSite[t]]) {
-	  continue;
-	}
-	// Same component — check if deltaNog rows are identical
-	boolean identical = true;
-	for (int j = 0; j < ns; j++) {
-	  if (Math.abs(deltaNog[i][j] - deltaNog[typeRepSite[t]][j]) > 1.0e-30) {
-	    identical = false;
-	    break;
-	  }
-	}
-	if (identical) {
-	  siteToType[i] = t;
-	  typeMult[t]++;
-	  matched = true;
-	  break;
-	}
+        if (moleculeNumber[i] != moleculeNumber[typeRepSite[t]]) {
+          continue;
+        }
+        // Same component — check if deltaNog rows are identical
+        boolean identical = true;
+        for (int j = 0; j < ns; j++) {
+          if (Math.abs(deltaNog[i][j] - deltaNog[typeRepSite[t]][j]) > 1.0e-30) {
+            identical = false;
+            break;
+          }
+        }
+        if (identical) {
+          siteToType[i] = t;
+          typeMult[t]++;
+          matched = true;
+          break;
+        }
       }
       if (!matched) {
-	typeRepSite[numTypes] = i;
-	siteToType[i] = numTypes;
-	typeMult[numTypes] = 1;
-	typeCompIdx[numTypes] = moleculeNumber[i];
-	numTypes++;
+        typeRepSite[numTypes] = i;
+        siteToType[i] = numTypes;
+        typeMult[numTypes] = 1;
+        typeCompIdx[numTypes] = moleculeNumber[i];
+        numTypes++;
       }
     }
   }
@@ -545,9 +545,9 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
     int idx = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
-	int typeIdx = siteToType[idx];
-	((ComponentCPAInterface) componentArray[i]).setXsite(j, xType[typeIdx]);
-	idx++;
+        int typeIdx = siteToType[idx];
+        ((ComponentCPAInterface) componentArray[i]).setXsite(j, xType[typeIdx]);
+        idx++;
       }
     }
   }
@@ -562,8 +562,8 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
     int idx = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
-	xSite[idx] = ((ComponentSrkCPA) componentArray[i]).getXsite()[j];
-	idx++;
+        xSite[idx] = ((ComponentSrkCPA) componentArray[i]).getXsite()[j];
+        idx++;
       }
     }
   }
@@ -603,9 +603,9 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
     for (int a = 0; a < p; a++) {
       double xa2 = xType[a] * xType[a];
       for (int b = 0; b < p; b++) {
-	double dab = (a == b) ? 1.0 : 0.0;
-	double dlt = delta[typeRepSite[a]][typeRepSite[b]];
-	jac[a][b] = dab + xa2 * typeMult[b] * tMoles[b] * dlt / totalVol;
+        double dab = (a == b) ? 1.0 : 0.0;
+        double dlt = delta[typeRepSite[a]][typeRepSite[b]];
+        jac[a][b] = dab + xa2 * typeMult[b] * tMoles[b] * dlt / totalVol;
       }
     }
 
@@ -616,9 +616,9 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
       double xa2 = xType[a] * xType[a];
       double sumDeriv = 0.0;
       for (int b = 0; b < p; b++) {
-	double dlt = delta[typeRepSite[a]][typeRepSite[b]];
-	double dDeltadV = dlt * gcpav;
-	sumDeriv += typeMult[b] * tMoles[b] * xType[b] * (dDeltadV * totalVol - dlt) / totalVol2;
+        double dlt = delta[typeRepSite[a]][typeRepSite[b]];
+        double dDeltadV = dlt * gcpav;
+        sumDeriv += typeMult[b] * tMoles[b] * xType[b] * (dDeltadV * totalVol - dlt) / totalVol2;
       }
       jac[a][p] = xa2 * sumDeriv * dVdZeta;
     }
@@ -641,8 +641,8 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
   private void updateDeltaWithG(int ns) {
     for (int i = 0; i < ns; i++) {
       for (int j = i; j < ns; j++) {
-	delta[i][j] = deltaNog[i][j] * gcpa;
-	delta[j][i] = delta[i][j];
+        delta[i][j] = deltaNog[i][j] * gcpa;
+        delta[j][i] = delta[i][j];
       }
     }
   }
@@ -658,7 +658,7 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
   private static boolean invertMatrix(double[][] a, double[][] ainv, int n) {
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
-	ainv[i][j] = (i == j) ? 1.0 : 0.0;
+        ainv[i][j] = (i == j) ? 1.0 : 0.0;
       }
     }
     double[][] work = new double[n][n];
@@ -669,37 +669,37 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
       int maxRow = col;
       double maxVal = Math.abs(work[col][col]);
       for (int row = col + 1; row < n; row++) {
-	double val = Math.abs(work[row][col]);
-	if (val > maxVal) {
-	  maxVal = val;
-	  maxRow = row;
-	}
+        double val = Math.abs(work[row][col]);
+        if (val > maxVal) {
+          maxVal = val;
+          maxRow = row;
+        }
       }
       if (maxVal < 1.0e-30) {
-	return false;
+        return false;
       }
       if (maxRow != col) {
-	double[] tempRow = work[col];
-	work[col] = work[maxRow];
-	work[maxRow] = tempRow;
-	tempRow = ainv[col];
-	ainv[col] = ainv[maxRow];
-	ainv[maxRow] = tempRow;
+        double[] tempRow = work[col];
+        work[col] = work[maxRow];
+        work[maxRow] = tempRow;
+        tempRow = ainv[col];
+        ainv[col] = ainv[maxRow];
+        ainv[maxRow] = tempRow;
       }
       double pivot = work[col][col];
       for (int k = 0; k < n; k++) {
-	work[col][k] /= pivot;
-	ainv[col][k] /= pivot;
+        work[col][k] /= pivot;
+        ainv[col][k] /= pivot;
       }
       for (int row = 0; row < n; row++) {
-	if (row == col) {
-	  continue;
-	}
-	double factor = work[row][col];
-	for (int k = 0; k < n; k++) {
-	  work[row][k] -= factor * work[col][k];
-	  ainv[row][k] -= factor * ainv[col][k];
-	}
+        if (row == col) {
+          continue;
+        }
+        double factor = work[row][col];
+        for (int k = 0; k < n; k++) {
+          work[row][k] -= factor * work[col][k];
+          ainv[row][k] -= factor * ainv[col][k];
+        }
       }
     }
     return true;
@@ -722,7 +722,7 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
     for (int i = 0; i < n; i++) {
       double s = 0.0;
       for (int j = 0; j < n; j++) {
-	s += invJ[i][j] * dfVec[j];
+        s += invJ[i][j] * dfVec[j];
       }
       hdf[i] = s;
     }
@@ -730,7 +730,7 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
     for (int j = 0; j < n; j++) {
       double s = 0.0;
       for (int i = 0; i < n; i++) {
-	s += dxVec[i] * invJ[i][j];
+        s += dxVec[i] * invJ[i][j];
       }
       dxH[j] = s;
     }
@@ -749,7 +749,7 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
     for (int i = 0; i < n; i++) {
       double numI = numVec[i] * invDenom;
       for (int j = 0; j < n; j++) {
-	invJ[i][j] += numI * dxH[j];
+        invJ[i][j] += numI * dxH[j];
       }
     }
   }
@@ -840,9 +840,9 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
     for (int a = 0; a < p; a++) {
       double maInvV = typeMult[a] * workM[a] * invV;
       for (int b = a; b < p; b++) {
-	double k = maInvV * typeMult[b] * workM[b] * delta[typeRepSite[a]][typeRepSite[b]];
-	workKlk[a][b] = k;
-	workKlk[b][a] = k;
+        double k = maInvV * typeMult[b] * workM[b] * delta[typeRepSite[a]][typeRepSite[b]];
+        workKlk[a][b] = k;
+        workKlk[b][a] = k;
       }
     }
 
@@ -850,7 +850,7 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
     for (int a = 0; a < p; a++) {
       double s = 0.0;
       for (int b = 0; b < p; b++) {
-	s += workKlk[a][b] * workKsi[b];
+        s += workKlk[a][b] * workKsi[b];
       }
       workKlkKsi[a] = s;
     }
@@ -858,7 +858,7 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
     // Build reduced Hessian for XV linear system
     for (int a = 0; a < p; a++) {
       for (int b = 0; b < p; b++) {
-	workHess[a][b] = -workKlk[a][b];
+        workHess[a][b] = -workKlk[a][b];
       }
       workHess[a][a] -= typeMult[a] * workM[a] / (workKsi[a] * workKsi[a]);
     }
@@ -887,7 +887,7 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
     for (int a = 0; a < p; a++) {
       double s = 0.0;
       for (int b = 0; b < p; b++) {
-	s += workKlk[a][b] * workXV[b];
+        s += workKlk[a][b] * workXV[b];
       }
       dotXVKlkXV += workXV[a] * s;
     }
@@ -915,36 +915,36 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
       int maxRow = col;
       double maxVal = Math.abs(a[col][col]);
       for (int row = col + 1; row < n; row++) {
-	double val = Math.abs(a[row][col]);
-	if (val > maxVal) {
-	  maxVal = val;
-	  maxRow = row;
-	}
+        double val = Math.abs(a[row][col]);
+        if (val > maxVal) {
+          maxVal = val;
+          maxRow = row;
+        }
       }
       if (maxRow != col) {
-	double[] tmpRow = a[col];
-	a[col] = a[maxRow];
-	a[maxRow] = tmpRow;
-	double tmpVal = b[col];
-	b[col] = b[maxRow];
-	b[maxRow] = tmpVal;
+        double[] tmpRow = a[col];
+        a[col] = a[maxRow];
+        a[maxRow] = tmpRow;
+        double tmpVal = b[col];
+        b[col] = b[maxRow];
+        b[maxRow] = tmpVal;
       }
       double pivot = a[col][col];
       if (Math.abs(pivot) < 1.0e-30) {
-	continue;
+        continue;
       }
       for (int row = col + 1; row < n; row++) {
-	double factor = a[row][col] / pivot;
-	for (int k = col + 1; k < n; k++) {
-	  a[row][k] -= factor * a[col][k];
-	}
-	b[row] -= factor * b[col];
+        double factor = a[row][col] / pivot;
+        for (int k = col + 1; k < n; k++) {
+          a[row][k] -= factor * a[col][k];
+        }
+        b[row] -= factor * b[col];
       }
     }
     for (int row = n - 1; row >= 0; row--) {
       double s = b[row];
       for (int k = row + 1; k < n; k++) {
-	s -= a[row][k] * b[k];
+        s -= a[row][k] * b[k];
       }
       b[row] = (Math.abs(a[row][row]) > 1.0e-30) ? s / a[row][row] : 0.0;
     }

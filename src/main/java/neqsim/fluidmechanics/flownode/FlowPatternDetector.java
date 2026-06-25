@@ -127,7 +127,7 @@ public class FlowPatternDetector {
     // or very high void fraction with significant gas velocity
     if ((F > 1.0 && usg > 5.0) || (voidFraction > 0.95 && usg > 10.0)) {
       if (voidFraction > 0.9) {
-	return FlowPattern.DROPLET;
+        return FlowPattern.DROPLET;
       }
       return FlowPattern.ANNULAR;
     }
@@ -239,29 +239,29 @@ public class FlowPatternDetector {
     if (inclination > 0) {
       // Upward flow
       if (voidFraction < 0.25) {
-	return FlowPattern.BUBBLE;
+        return FlowPattern.BUBBLE;
       }
       if (voidFraction > 0.75) {
-	if (usg > 15.0) {
-	  return FlowPattern.DROPLET;
-	}
-	return FlowPattern.ANNULAR;
+        if (usg > 15.0) {
+          return FlowPattern.DROPLET;
+        }
+        return FlowPattern.ANNULAR;
       }
       // Check for churn flow in vertical
       if (Math.abs(inclination) > Math.PI / 4) { // More than 45 degrees
-	double frg = usg / Math.sqrt(G * diameter);
-	if (frg > 0.5 && frg < 3.0 && voidFraction > 0.4 && voidFraction < 0.7) {
-	  return FlowPattern.CHURN;
-	}
+        double frg = usg / Math.sqrt(G * diameter);
+        if (frg > 0.5 && frg < 3.0 && voidFraction > 0.4 && voidFraction < 0.7) {
+          return FlowPattern.CHURN;
+        }
       }
       return FlowPattern.SLUG;
     } else {
       // Downward flow - simplified
       if (voidFraction > 0.8) {
-	return FlowPattern.ANNULAR;
+        return FlowPattern.ANNULAR;
       }
       if (voidFraction < 0.2) {
-	return FlowPattern.BUBBLE;
+        return FlowPattern.BUBBLE;
       }
       return FlowPattern.SLUG;
     }

@@ -3,6 +3,8 @@ package neqsim.process.measurementdevice;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
@@ -11,8 +13,6 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Unit tests for the {@link FlowInducedVibrationAnalyser} class.
@@ -207,7 +207,7 @@ public class FlowInducedVibrationAnalyserTest {
 
     // Create analyzers for different segments
     FlowInducedVibrationAnalyser analyzerDefaultSegment = new FlowInducedVibrationAnalyser("Default segment analyzer",
-	pipe);
+        pipe);
     analyzerDefaultSegment.setMethod("LOF");
 
     FlowInducedVibrationAnalyser analyzerSegment5 = new FlowInducedVibrationAnalyser("Segment 5 analyzer", pipe);
@@ -266,7 +266,7 @@ public class FlowInducedVibrationAnalyserTest {
 
     IllegalStateException ex = assertThrows(IllegalStateException.class, () -> analyzer.getMeasuredValue("any"));
     assertTrue(ex.getMessage().contains("wall thickness"),
-	"Exception message should explain the missing wall thickness");
+        "Exception message should explain the missing wall thickness");
   }
 
   @Test
@@ -292,7 +292,7 @@ public class FlowInducedVibrationAnalyserTest {
 
     // Invalid categories are rejected with a helpful message
     IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-	() -> analyzer.setSupportArrangement("Very Stiff"));
+        () -> analyzer.setSupportArrangement("Very Stiff"));
     assertTrue(ex.getMessage().contains("Valid values"));
     assertThrows(IllegalArgumentException.class, () -> analyzer.setSupportArrangement(null));
 

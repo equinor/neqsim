@@ -1,10 +1,12 @@
 package neqsim.process.processmodel;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
-import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
+import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
@@ -13,8 +15,6 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class ParallelBenchmarkTest {
   private static final Logger logger = LogManager.getLogger(ParallelBenchmarkTest.class);
@@ -50,18 +50,18 @@ public class ParallelBenchmarkTest {
       seq.run();
       long t0 = System.nanoTime();
       for (int i = 0; i < RUNS; i++)
-	seq.run();
+        seq.run();
       double seqMs = (System.nanoTime() - t0) / (double) RUNS / 1e6;
 
       ProcessSystem opt = buildLinearChain(true);
       opt.run();
       t0 = System.nanoTime();
       for (int i = 0; i < RUNS; i++)
-	opt.run();
+        opt.run();
       double optMs = (System.nanoTime() - t0) / (double) RUNS / 1e6;
 
       logger.printf(org.apache.logging.log4j.Level.INFO,
-	  "  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs, optMs, seqMs / optMs);
+          "  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs, optMs, seqMs / optMs);
     }
 
     // ---- SCENARIO 2: Splitter -> 3 parallel compression trains -> Mixer ----
@@ -71,20 +71,20 @@ public class ParallelBenchmarkTest {
       seq.run();
       long t0 = System.nanoTime();
       for (int i = 0; i < RUNS; i++)
-	seq.run();
+        seq.run();
       double seqMs = (System.nanoTime() - t0) / (double) RUNS / 1e6;
 
       ProcessSystem opt = buildParallelCompressionTrains(true);
       opt.run();
       t0 = System.nanoTime();
       for (int i = 0; i < RUNS; i++)
-	opt.run();
+        opt.run();
       double optMs = (System.nanoTime() - t0) / (double) RUNS / 1e6;
 
       logger.printf(org.apache.logging.log4j.Level.INFO,
-	  "  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs, optMs, seqMs / optMs);
+          "  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs, optMs, seqMs / optMs);
       logger.printf(org.apache.logging.log4j.Level.INFO, "  hasMultiInputEquipment: %b  |  Max parallelism: %d%n",
-	  opt.hasMultiInputEquipment(), opt.getParallelPartition().getMaxParallelism());
+          opt.hasMultiInputEquipment(), opt.getParallelPartition().getMaxParallelism());
     }
 
     // ---- SCENARIO 3: 4 independent heavy trains ----
@@ -94,20 +94,20 @@ public class ParallelBenchmarkTest {
       seq.run();
       long t0 = System.nanoTime();
       for (int i = 0; i < RUNS; i++)
-	seq.run();
+        seq.run();
       double seqMs = (System.nanoTime() - t0) / (double) RUNS / 1e6;
 
       ProcessSystem opt = buildIndependentTrains(true, 4);
       opt.run();
       t0 = System.nanoTime();
       for (int i = 0; i < RUNS; i++)
-	opt.run();
+        opt.run();
       double optMs = (System.nanoTime() - t0) / (double) RUNS / 1e6;
 
       logger.printf(org.apache.logging.log4j.Level.INFO,
-	  "  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs, optMs, seqMs / optMs);
+          "  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs, optMs, seqMs / optMs);
       logger.printf(org.apache.logging.log4j.Level.INFO, "  Max parallelism: %d%n",
-	  opt.getParallelPartition().getMaxParallelism());
+          opt.getParallelPartition().getMaxParallelism());
     }
 
     // ---- SCENARIO 4: 8 independent heavy trains ----
@@ -117,20 +117,20 @@ public class ParallelBenchmarkTest {
       seq.run();
       long t0 = System.nanoTime();
       for (int i = 0; i < RUNS; i++)
-	seq.run();
+        seq.run();
       double seqMs = (System.nanoTime() - t0) / (double) RUNS / 1e6;
 
       ProcessSystem opt = buildIndependentTrains(true, 8);
       opt.run();
       t0 = System.nanoTime();
       for (int i = 0; i < RUNS; i++)
-	opt.run();
+        opt.run();
       double optMs = (System.nanoTime() - t0) / (double) RUNS / 1e6;
 
       logger.printf(org.apache.logging.log4j.Level.INFO,
-	  "  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs, optMs, seqMs / optMs);
+          "  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs, optMs, seqMs / optMs);
       logger.printf(org.apache.logging.log4j.Level.INFO, "  Max parallelism: %d%n",
-	  opt.getParallelPartition().getMaxParallelism());
+          opt.getParallelPartition().getMaxParallelism());
     }
 
     // ---- SCENARIO 5: HP/LP sep with HeatExchanger (previously forced sequential) ----
@@ -140,20 +140,20 @@ public class ParallelBenchmarkTest {
       seq.run();
       long t0 = System.nanoTime();
       for (int i = 0; i < RUNS; i++)
-	seq.run();
+        seq.run();
       double seqMs = (System.nanoTime() - t0) / (double) RUNS / 1e6;
 
       ProcessSystem opt = buildHPLPWithHX(true);
       opt.run();
       t0 = System.nanoTime();
       for (int i = 0; i < RUNS; i++)
-	opt.run();
+        opt.run();
       double optMs = (System.nanoTime() - t0) / (double) RUNS / 1e6;
 
       logger.printf(org.apache.logging.log4j.Level.INFO,
-	  "  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs, optMs, seqMs / optMs);
+          "  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs, optMs, seqMs / optMs);
       logger.printf(org.apache.logging.log4j.Level.INFO, "  hasMultiInputEquipment: %b  |  Max parallelism: %d%n",
-	  opt.hasMultiInputEquipment(), opt.getParallelPartition().getMaxParallelism());
+          opt.hasMultiInputEquipment(), opt.getParallelPartition().getMaxParallelism());
     }
 
     logger.info("\n===== BENCHMARK COMPLETE =====\n");

@@ -203,18 +203,18 @@ public class EnvironmentalReporter implements Serializable {
 
     for (ProcessEquipmentInterface equip : facility.getUnitOperations()) {
       if (equip instanceof Compressor) {
-	Compressor comp = (Compressor) equip;
-	totalPower += Math.abs(comp.getPower("kW"));
+        Compressor comp = (Compressor) equip;
+        totalPower += Math.abs(comp.getPower("kW"));
       } else if (equip instanceof Pump) {
-	Pump pump = (Pump) equip;
-	totalPower += Math.abs(pump.getPower("kW"));
+        Pump pump = (Pump) equip;
+        totalPower += Math.abs(pump.getPower("kW"));
       } else if (equip instanceof Heater) {
-	Heater heater = (Heater) equip;
-	// Only count fired heaters, not exchangers
-	double duty = heater.getDuty();
-	if (duty > 0) {
-	  totalPower += duty / 1000.0; // Convert W to kW
-	}
+        Heater heater = (Heater) equip;
+        // Only count fired heaters, not exchangers
+        double duty = heater.getDuty();
+        if (duty > 0) {
+          totalPower += duty / 1000.0; // Convert W to kW
+        }
       }
     }
 
@@ -243,10 +243,10 @@ public class EnvironmentalReporter implements Serializable {
 
     for (ProcessEquipmentInterface equip : facility.getUnitOperations()) {
       if (equip instanceof Flare) {
-	Flare flare = (Flare) equip;
-	// Use NeqSim's built-in CO2 calculation
-	double co2KgH = flare.getCO2Emission("kg/hr");
-	totalCO2 += co2KgH * operatingHoursPerYear / 1000.0; // tonnes/year
+        Flare flare = (Flare) equip;
+        // Use NeqSim's built-in CO2 calculation
+        double co2KgH = flare.getCO2Emission("kg/hr");
+        totalCO2 += co2KgH * operatingHoursPerYear / 1000.0; // tonnes/year
       }
     }
 
@@ -434,7 +434,7 @@ public class EnvironmentalReporter implements Serializable {
     @Override
     public String toString() {
       return String.format("EnvironmentalReport[CO2=%.0f t/yr, intensity=%.1f kg/boe, OIW=%.1f mg/L]",
-	  totalCO2TonnesYear, co2IntensityKgBoe, oiwMgL);
+          totalCO2TonnesYear, co2IntensityKgBoe, oiwMgL);
     }
   }
 }

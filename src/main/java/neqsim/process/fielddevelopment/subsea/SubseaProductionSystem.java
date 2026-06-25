@@ -480,49 +480,49 @@ public class SubseaProductionSystem implements Serializable {
 
       int wellsThisManifold = Math.min(wellsPerManifold, wellCount - wellIndex);
       for (int w = 0; w < wellsThisManifold; w++) {
-	String wellName = name + " Well " + (wellIndex + 1);
+        String wellName = name + " Well " + (wellIndex + 1);
 
-	// Create well stream
-	SystemInterface wellFluid = reservoirFluid.clone();
-	wellFluid.setTemperature(wellheadTemperatureC, "C");
-	wellFluid.setPressure(wellheadPressureBara, "bara");
+        // Create well stream
+        SystemInterface wellFluid = reservoirFluid.clone();
+        wellFluid.setTemperature(wellheadTemperatureC, "C");
+        wellFluid.setPressure(wellheadPressureBara, "bara");
 
-	Stream wellStream = new Stream(wellName + " stream", wellFluid);
-	wellStream.setFlowRate(ratePerWellSm3d, "Sm3/day");
+        Stream wellStream = new Stream(wellName + " stream", wellFluid);
+        wellStream.setFlowRate(ratePerWellSm3d, "Sm3/day");
 
-	// Create subsea well
-	SubseaWell well = new SubseaWell(wellName, wellStream);
-	configureTubing(well);
-	wells.add(well);
+        // Create subsea well
+        SubseaWell well = new SubseaWell(wellName, wellStream);
+        configureTubing(well);
+        wells.add(well);
 
-	// Create subsea choke
-	ThrottlingValve choke = new ThrottlingValve(wellName + " choke", well.getOutletStream());
-	choke.setOutletPressure(wellheadPressureBara - 5.0, "bara");
-	subseaChokes.add(choke);
+        // Create subsea choke
+        ThrottlingValve choke = new ThrottlingValve(wellName + " choke", well.getOutletStream());
+        choke.setOutletPressure(wellheadPressureBara - 5.0, "bara");
+        subseaChokes.add(choke);
 
-	// Short infield line to manifold (typically 500m - 2km)
-	double infieldLength = Math.min(2.0, tiebackDistanceKm * 0.1);
-	SimpleFlowLine infieldLine = new SimpleFlowLine(wellName + " infield", choke.getOutletStream());
-	configureFlowline(infieldLine, infieldLength);
+        // Short infield line to manifold (typically 500m - 2km)
+        double infieldLength = Math.min(2.0, tiebackDistanceKm * 0.1);
+        SimpleFlowLine infieldLine = new SimpleFlowLine(wellName + " infield", choke.getOutletStream());
+        configureFlowline(infieldLine, infieldLength);
 
-	manifoldInputs.add(infieldLine.getOutletStream());
+        manifoldInputs.add(infieldLine.getOutletStream());
 
-	subseaProcess.add(wellStream);
-	subseaProcess.add(well);
-	subseaProcess.add(choke);
-	subseaProcess.add(infieldLine);
+        subseaProcess.add(wellStream);
+        subseaProcess.add(well);
+        subseaProcess.add(choke);
+        subseaProcess.add(infieldLine);
 
-	wellIndex++;
+        wellIndex++;
       }
 
       // Create trunk flowline from manifold to host
       // For simplicity, use first input stream as basis (would be mixed at manifold)
       if (!manifoldInputs.isEmpty()) {
-	String trunkName = name + " Trunk M" + (m + 1);
-	SimpleFlowLine trunkLine = new SimpleFlowLine(trunkName, manifoldInputs.get(0));
-	configureFlowline(trunkLine, tiebackDistanceKm / manifoldCount);
-	flowlines.add(trunkLine);
-	subseaProcess.add(trunkLine);
+        String trunkName = name + " Trunk M" + (m + 1);
+        SimpleFlowLine trunkLine = new SimpleFlowLine(trunkName, manifoldInputs.get(0));
+        configureFlowline(trunkLine, tiebackDistanceKm / manifoldCount);
+        flowlines.add(trunkLine);
+        subseaProcess.add(trunkLine);
       }
     }
   }
@@ -563,10 +563,10 @@ public class SubseaProductionSystem implements Serializable {
 
       // Add flowline segment if not last well
       if (i < wellCount - 1) {
-	SimpleFlowLine segment = new SimpleFlowLine(wellName + " segment", choke.getOutletStream());
-	configureFlowline(segment, segmentLength);
-	subseaProcess.add(segment);
-	previousOutput = segment.getOutletStream();
+        SimpleFlowLine segment = new SimpleFlowLine(wellName + " segment", choke.getOutletStream());
+        configureFlowline(segment, segmentLength);
+        subseaProcess.add(segment);
+        previousOutput = segment.getOutletStream();
       }
     }
 
@@ -646,9 +646,9 @@ public class SubseaProductionSystem implements Serializable {
       SimpleFlowLine lastFlowline = flowlines.get(flowlines.size() - 1);
       StreamInterface outlet = lastFlowline.getOutletStream();
       if (outlet != null && outlet.getFluid() != null) {
-	result.arrivalPressureBara = outlet.getPressure("bara");
-	result.arrivalTemperatureC = outlet.getTemperature("C");
-	result.arrivalFlowrateSm3d = outlet.getFluid().getFlowRate("Sm3/day");
+        result.arrivalPressureBara = outlet.getPressure("bara");
+        result.arrivalTemperatureC = outlet.getTemperature("C");
+        result.arrivalFlowrateSm3d = outlet.getFluid().getFlowRate("Sm3/day");
       }
     }
 
@@ -657,14 +657,14 @@ public class SubseaProductionSystem implements Serializable {
     for (SubseaWell well : wells) {
       StreamInterface outlet = well.getOutletStream();
       if (outlet != null && outlet.getFluid() != null) {
-	result.totalProductionSm3d += outlet.getFluid().getFlowRate("Sm3/day");
+        result.totalProductionSm3d += outlet.getFluid().getFlowRate("Sm3/day");
       }
     }
 
     // Calculate pressure drops
     if (!wells.isEmpty() && !flowlines.isEmpty()) {
       double wellheadP = wells.get(0).getOutletStream() != null ? wells.get(0).getOutletStream().getPressure("bara")
-	  : wellheadPressureBara;
+          : wellheadPressureBara;
       result.totalPressureDropBara = wellheadP - result.arrivalPressureBara;
     }
 
@@ -695,7 +695,7 @@ public class SubseaProductionSystem implements Serializable {
     result.controlSystemCostMusd = wellCount * 3.0 + manifoldCount * 5.0;
 
     result.totalSubseaCapexMusd = result.subseaTreeCostMusd + result.manifoldCostMusd + result.pipelineCostMusd
-	+ result.umbilicalCostMusd + result.controlSystemCostMusd;
+        + result.umbilicalCostMusd + result.controlSystemCostMusd;
   }
 
   private double getPipelineCostPerKm() {

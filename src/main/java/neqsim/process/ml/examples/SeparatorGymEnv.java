@@ -223,14 +223,14 @@ public class SeparatorGymEnv extends GymEnvironment {
     if (fluid != null && fluid.getNumberOfPhases() > 0) {
       gasDensity = Math.min(1.0, fluid.getPhase(0).getDensity("kg/m3") / 100.0);
       if (fluid.getNumberOfPhases() > 1) {
-	liquidDensity = Math.min(1.0, fluid.getPhase(1).getDensity("kg/m3") / 800.0);
+        liquidDensity = Math.min(1.0, fluid.getPhase(1).getDensity("kg/m3") / 800.0);
       }
     }
 
     double levelError = (liquidLevel - levelSetpoint) / 0.5; // Normalized error
 
     return new double[] { liquidLevel, pressure, temperature, feedFlow, gasDensity, liquidDensity, levelError,
-	valvePosition };
+        valvePosition };
   }
 
   private double getLiquidOutflowRate() {
@@ -290,7 +290,7 @@ public class SeparatorGymEnv extends GymEnvironment {
    */
   public String[] getObservationNames() {
     return new String[] { "liquid_level", "pressure", "temperature", "feed_flow", "gas_density", "liquid_density",
-	"level_error", "valve_position" };
+        "level_error", "valve_position" };
   }
 
   /**

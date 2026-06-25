@@ -1,10 +1,10 @@
 package neqsim.process.mechanicaldesign.motor;
 
-import com.google.gson.GsonBuilder;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import com.google.gson.GsonBuilder;
 import neqsim.process.electricaldesign.ElectricalDesign;
 import neqsim.process.electricaldesign.components.ElectricalMotor;
 
@@ -569,7 +569,7 @@ public class MotorMechanicalDesign implements java.io.Serializable {
     // Check against IEEE 841 minimum (3 years = 26280 hours)
     if (bearingL10LifeHours < minBearingLifeHours) {
       designNotes.add("Bearing L10 life (" + (int) bearingL10LifeHours + " h) below IEEE 841 minimum ("
-	  + (int) minBearingLifeHours + " h)");
+          + (int) minBearingLifeHours + " h)");
     }
 
     // Re-greasing interval (rule of thumb)
@@ -659,24 +659,24 @@ public class MotorMechanicalDesign implements java.io.Serializable {
     if (shaftPowerKW <= 300) {
       // Group 2: 15-300 kW
       if (maxVibrationMmS <= VIB_GROUP2_ZONE_AB) {
-	vibrationZone = "A";
+        vibrationZone = "A";
       } else if (maxVibrationMmS <= VIB_GROUP2_ZONE_BC) {
-	vibrationZone = "B";
+        vibrationZone = "B";
       } else if (maxVibrationMmS <= VIB_GROUP2_ZONE_CD) {
-	vibrationZone = "C";
+        vibrationZone = "C";
       } else {
-	vibrationZone = "D";
+        vibrationZone = "D";
       }
     } else {
       // Group 1: above 300 kW
       if (maxVibrationMmS <= VIB_GROUP1_ZONE_AB) {
-	vibrationZone = "A";
+        vibrationZone = "A";
       } else if (maxVibrationMmS <= VIB_GROUP1_ZONE_BC) {
-	vibrationZone = "B";
+        vibrationZone = "B";
       } else if (maxVibrationMmS <= VIB_GROUP1_ZONE_CD) {
-	vibrationZone = "C";
+        vibrationZone = "C";
       } else {
-	vibrationZone = "D";
+        vibrationZone = "D";
       }
     }
 
@@ -691,8 +691,8 @@ public class MotorMechanicalDesign implements java.io.Serializable {
     noiseLimitDbA = 73.0;
     for (double[] entry : NOISE_LIMITS_4P_50HZ) {
       if (shaftPowerKW <= entry[0]) {
-	noiseLimitDbA = entry[1];
-	break;
+        noiseLimitDbA = entry[1];
+        break;
       }
     }
 
@@ -719,12 +719,12 @@ public class MotorMechanicalDesign implements java.io.Serializable {
 
     if (!noiseWithinNorsokLimit) {
       designNotes.add("Noise level (" + String.format("%.0f", soundPressureLevelAt1mDbA)
-	  + " dB(A) at 1m) exceeds NORSOK S-002 limit of 83 dB(A)");
+          + " dB(A) at 1m) exceeds NORSOK S-002 limit of 83 dB(A)");
     }
 
     if (hasVFD) {
       designNotes.add("VFD may increase motor noise by 3-8 dB(A) due to harmonic excitation "
-	  + "— consider output filter or dU/dt reactor");
+          + "— consider output filter or dU/dt reactor");
     }
   }
 

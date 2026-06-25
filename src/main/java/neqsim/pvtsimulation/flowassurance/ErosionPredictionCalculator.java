@@ -232,13 +232,13 @@ public class ErosionPredictionCalculator implements Serializable {
     case "bend":
       // GF depends on R/D ratio; lower R/D = higher erosion
       if (bendRadiusRatio <= 1.0) {
-	return 1.0;
+        return 1.0;
       } else if (bendRadiusRatio <= 1.5) {
-	return 0.8;
+        return 0.8;
       } else if (bendRadiusRatio <= 3.0) {
-	return 0.5;
+        return 0.5;
       } else {
-	return 0.3;
+        return 0.3;
       }
     case "tee":
       return 0.6;
@@ -299,7 +299,7 @@ public class ErosionPredictionCalculator implements Serializable {
     // Based on particle Stokes number
     double dpMetres = sandParticleDiameter / 1000.0;
     double stokesNumber = sandParticleDensity * dpMetres * dpMetres * mixtureVelocity
-	/ (18.0 * mixtureViscosity * pipeDiameter);
+        / (18.0 * mixtureViscosity * pipeDiameter);
 
     // Velocity ratio based on Stokes number
     double velocityRatioParticle;
@@ -360,7 +360,7 @@ public class ErosionPredictionCalculator implements Serializable {
       double fAlpha = impactAngleFunction(impactAngle);
 
       double erosionKgPerKg = k * fAlpha * Math.pow(vp, n) * Math.pow(dpActual / dpRef, 0.2) * gf
-	  * (sandParticleDensity / rhoRef);
+          * (sandParticleDensity / rhoRef);
 
       // Convert to mm/year:
       // E [mm/yr] = erosionKgPerKg * sandRate [kg/day] * 365.25 / (rho_wall * A_erode)
@@ -370,13 +370,13 @@ public class ErosionPredictionCalculator implements Serializable {
       double erodedArea = getErodedArea();
 
       if (erodedArea > 0 && materialDensity > 0) {
-	double sandRateKgPerYear = sandRate * 365.25;
-	// Mass loss per year in kg:
-	double massLossKgPerYear = erosionKgPerKg * sandRateKgPerYear;
-	// Volume loss per year in m3:
-	double volumeLossM3PerYear = massLossKgPerYear / materialDensity;
-	// Depth of erosion = volume / area, convert to mm:
-	erosionRateMmPerYear = (volumeLossM3PerYear / erodedArea) * 1000.0;
+        double sandRateKgPerYear = sandRate * 365.25;
+        // Mass loss per year in kg:
+        double massLossKgPerYear = erosionKgPerKg * sandRateKgPerYear;
+        // Volume loss per year in m3:
+        double volumeLossM3PerYear = massLossKgPerYear / materialDensity;
+        // Depth of erosion = volume / area, convert to mm:
+        erosionRateMmPerYear = (volumeLossM3PerYear / erodedArea) * 1000.0;
       }
     } else if (sandRate > 0) {
       // Straight pipe: much lower erosion, use empirical reduction

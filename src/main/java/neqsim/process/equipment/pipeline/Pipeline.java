@@ -395,7 +395,7 @@ public class Pipeline extends TwoPortEquipment
   public void setOuterTemperatures(double[] outerTemp) {
     if (outerTemp.length != this.numberOfLegs + 1) {
       logger.warn("Wrong number of outer temperatures specified. Expected {}, got {}", numberOfLegs + 1,
-	  outerTemp.length);
+          outerTemp.length);
       return;
     }
     outerTemperature = new double[outerTemp.length];
@@ -463,9 +463,9 @@ public class Pipeline extends TwoPortEquipment
     try {
       double d = (pipeDiameters != null && node < pipeDiameters.length) ? pipeDiameters[node] : diameter;
       return outStream.getThermoSystem().getPhase(phaseNum).getNumberOfMolesInPhase()
-	  * outStream.getThermoSystem().getPhase(phaseNum).getMolarMass()
-	  / outStream.getThermoSystem().getPhase(phaseNum).getPhysicalProperties().getDensity()
-	  / (Math.PI * d * d / 4.0);
+          * outStream.getThermoSystem().getPhase(phaseNum).getMolarMass()
+          / outStream.getThermoSystem().getPhase(phaseNum).getPhysicalProperties().getDensity()
+          / (Math.PI * d * d / 4.0);
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
@@ -754,16 +754,16 @@ public class Pipeline extends TwoPortEquipment
     // Wall conduction resistance: ln(ro/ri) / (2*pi*k) per unit length
     // Per inner area: ri * ln(ro/ri) / k
     double R_wall = (wallThickness > 0 && pipeWallConductivity > 0) ? ri * Math.log(ro / ri) / pipeWallConductivity
-	: 0.0;
+        : 0.0;
 
     // Coating conduction resistance
     double R_coating = (coatingThickness > 0 && coatingConductivity > 0) ? ri * Math.log(rc / ro) / coatingConductivity
-	: 0.0;
+        : 0.0;
 
     // Insulation conduction resistance
     double R_insulation = (insulationThickness > 0 && insulationConductivity > 0)
-	? ri * Math.log(rins / rc) / insulationConductivity
-	: 0.0;
+        ? ri * Math.log(rins / rc) / insulationConductivity
+        : 0.0;
 
     // Outer convection resistance (based on outer diameter)
     double R_outer = (outerHeatTransferCoefficient > 0) ? ri / (rins * outerHeatTransferCoefficient) : 0.0;
@@ -1131,7 +1131,7 @@ public class Pipeline extends TwoPortEquipment
       mechanicalDesignCalculator.setLocationClass(locationClass);
       mechanicalDesignCalculator.setCorrosionAllowance(corrosionAllowance);
       if (wallThickness > 0) {
-	mechanicalDesignCalculator.setNominalWallThickness(wallThickness);
+        mechanicalDesignCalculator.setNominalWallThickness(wallThickness);
       }
     }
     return mechanicalDesignCalculator;
@@ -1414,7 +1414,7 @@ public class Pipeline extends TwoPortEquipment
   public void setPipeOuterHeatTransferCoefficients(double[] heatCoefs) {
     if (heatCoefs.length != this.numberOfLegs + 1) {
       logger.warn("Wrong number of heat coefficients specified. Expected {}, got {}", numberOfLegs + 1,
-	  heatCoefs.length);
+          heatCoefs.length);
       return;
     }
     outerHeatTransferCoeffs = new double[heatCoefs.length];
@@ -1429,7 +1429,7 @@ public class Pipeline extends TwoPortEquipment
   public void setPipeWallHeatTransferCoefficients(double[] heatCoefs) {
     if (heatCoefs.length != this.numberOfLegs + 1) {
       logger.warn("Wrong number of heat coefficients specified. Expected {}, got {}", numberOfLegs + 1,
-	  heatCoefs.length);
+          heatCoefs.length);
       return;
     }
     wallHeatTransferCoeffs = new double[heatCoefs.length];
@@ -1541,7 +1541,7 @@ public class Pipeline extends TwoPortEquipment
   @Override
   public String toJson() {
     return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create()
-	.toJson(new neqsim.process.util.monitor.PipelineResponse(this));
+        .toJson(new neqsim.process.util.monitor.PipelineResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -1574,21 +1574,21 @@ public class Pipeline extends TwoPortEquipment
     // Velocity constraint (SOFT limit - erosional is a guideline) - disabled by
     // default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("velocity", "m/s",
-	neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
-	.setDesignValue(getMechanicalDesign().maxDesignVelocity > 0 ? getMechanicalDesign().maxDesignVelocity : 20.0)
-	.setWarningThreshold(0.9).setValueSupplier(() -> getVelocity()).setEnabled(false));
+        neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
+        .setDesignValue(getMechanicalDesign().maxDesignVelocity > 0 ? getMechanicalDesign().maxDesignVelocity : 20.0)
+        .setWarningThreshold(0.9).setValueSupplier(() -> getVelocity()).setEnabled(false));
 
     // Volume flow constraint (DESIGN limit) - disabled by default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("volumeFlow", "m3/hr",
-	neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
-	.setDesignValue(getMechanicalDesign().maxDesignVolumeFlow).setWarningThreshold(0.9)
-	.setValueSupplier(() -> outStream != null ? outStream.getFlowRate("m3/hr") : 0.0).setEnabled(false));
+        neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
+        .setDesignValue(getMechanicalDesign().maxDesignVolumeFlow).setWarningThreshold(0.9)
+        .setValueSupplier(() -> outStream != null ? outStream.getFlowRate("m3/hr") : 0.0).setEnabled(false));
 
     // Pressure drop constraint (DESIGN limit) - disabled by default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("pressureDrop", "bara",
-	neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
-	.setDesignValue(getMechanicalDesign().maxDesignPressureDrop).setWarningThreshold(0.9)
-	.setValueSupplier(() -> getPressureDrop()).setEnabled(false));
+        neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
+        .setDesignValue(getMechanicalDesign().maxDesignPressureDrop).setWarningThreshold(0.9)
+        .setValueSupplier(() -> getPressureDrop()).setEnabled(false));
   }
 
   /** {@inheritDoc} */
@@ -1607,12 +1607,12 @@ public class Pipeline extends TwoPortEquipment
     double maxUtil = 0.0;
     for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints().values()) {
       if (!c.isEnabled()) {
-	continue;
+        continue;
       }
       double util = c.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-	maxUtil = util;
-	bottleneck = c;
+        maxUtil = util;
+        bottleneck = c;
       }
     }
     return bottleneck;
@@ -1623,10 +1623,10 @@ public class Pipeline extends TwoPortEquipment
   public boolean isCapacityExceeded() {
     for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints().values()) {
       if (!c.isEnabled()) {
-	continue;
+        continue;
       }
       if (c.isViolated()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -1637,10 +1637,10 @@ public class Pipeline extends TwoPortEquipment
   public boolean isHardLimitExceeded() {
     for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints().values()) {
       if (!c.isEnabled()) {
-	continue;
+        continue;
       }
       if (c.isHardLimitExceeded()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -1652,11 +1652,11 @@ public class Pipeline extends TwoPortEquipment
     double maxUtil = 0.0;
     for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints().values()) {
       if (!c.isEnabled()) {
-	continue;
+        continue;
       }
       double util = c.getUtilization();
       if (!Double.isNaN(util)) {
-	maxUtil = Math.max(maxUtil, util);
+        maxUtil = Math.max(maxUtil, util);
       }
     }
     return maxUtil;

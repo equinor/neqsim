@@ -268,7 +268,7 @@ public class WellDesignCalculator implements Serializable {
     // ---- Tension ----
     // Weight in air
     double casingWeightKg = calculatePipeWeight(productionCasingOD, productionCasingWallThickness,
-	productionCasingDepth);
+        productionCasingDepth);
     double tensionLoad = casingWeightKg * 9.81 / 1000.0; // kN
 
     // Yield strength for tension = SMYS * cross-section area
@@ -287,7 +287,7 @@ public class WellDesignCalculator implements Serializable {
     double radialStress = -netBurstSurface * 0.1 / 2.0; // approximation
 
     double vmeStress = Math.sqrt(0.5 * (Math.pow(hoopStress - axialStress, 2) + Math.pow(axialStress - radialStress, 2)
-	+ Math.pow(radialStress - hoopStress, 2)));
+        + Math.pow(radialStress - hoopStress, 2)));
     productionCasingVME_DF = vmeStress > 0 ? derated / vmeStress : 99.0;
   }
 
@@ -360,7 +360,7 @@ public class WellDesignCalculator implements Serializable {
 
     // Conductor
     double conductorWeight = calculatePipeWeight(conductorOD, 25.4, conductorDepth); // 1" wall
-										     // typical
+    // typical
     totalCasingWeight += conductorWeight / 1000.0; // kg to tonnes
 
     // Surface casing
@@ -370,7 +370,7 @@ public class WellDesignCalculator implements Serializable {
     // Intermediate casing
     if (intermediateCasingDepth > 0) {
       double intWeight = calculatePipeWeight(intermediateCasingOD, intermediateCasingWallThickness,
-	  intermediateCasingDepth);
+          intermediateCasingDepth);
       totalCasingWeight += intWeight / 1000.0;
     }
 
@@ -382,8 +382,8 @@ public class WellDesignCalculator implements Serializable {
     if (productionLinerDepth > 0) {
       double linerLength = productionLinerDepth - productionCasingDepth;
       if (linerLength > 0) {
-	double linerWeight = calculatePipeWeight(productionLinerOD, 8.0, linerLength);
-	totalCasingWeight += linerWeight / 1000.0;
+        double linerWeight = calculatePipeWeight(productionLinerOD, 8.0, linerLength);
+        totalCasingWeight += linerWeight / 1000.0;
       }
     }
 
@@ -404,19 +404,19 @@ public class WellDesignCalculator implements Serializable {
 
     // Surface casing cement (full column, wellhead to shoe)
     totalCementVolume += calculateAnnularVolume(surfaceCasingOD, surfaceCasingWallThickness, conductorOD, 25.4,
-	surfaceCasingDepth);
+        surfaceCasingDepth);
 
     // Intermediate cement (typically from shoe up to overlap with surface casing)
     if (intermediateCasingDepth > 0) {
       double cementLength = intermediateCasingDepth - surfaceCasingDepth + 200; // 200m overlap
       totalCementVolume += calculateAnnularVolume(intermediateCasingOD, intermediateCasingWallThickness,
-	  surfaceCasingOD, surfaceCasingWallThickness, cementLength);
+          surfaceCasingOD, surfaceCasingWallThickness, cementLength);
     }
 
     // Production casing cement (shoe to 200m above previous shoe)
     double prodCementLength = productionCasingDepth - intermediateCasingDepth + 200;
     totalCementVolume += calculateAnnularVolume(productionCasingOD, productionCasingWallThickness, intermediateCasingOD,
-	intermediateCasingWallThickness, prodCementLength);
+        intermediateCasingWallThickness, prodCementLength);
 
     // Drill cuttings: total hole volume minus casing volume
     totalCuttingsVolume = calculateHoleVolume();
@@ -484,7 +484,7 @@ public class WellDesignCalculator implements Serializable {
     // Production section: ~12.25" hole
     double bit4 = 12.25 * 0.0254;
     volume += Math.PI / 4.0 * bit4 * bit4
-	* (productionCasingDepth - Math.max(intermediateCasingDepth, surfaceCasingDepth));
+        * (productionCasingDepth - Math.max(intermediateCasingDepth, surfaceCasingDepth));
 
     return volume;
   }
@@ -508,7 +508,7 @@ public class WellDesignCalculator implements Serializable {
       // Yield-strength collapse (API 5C3 simplified)
       double collapseRating = 2.0 * smysMPa * ((dt - 1.0) / (dt * dt));
       if (collapseRating >= collapsePressureMPa * minCollapseDF) {
-	return t;
+        return t;
       }
     }
     return odMm / 4.0; // Conservative fallback

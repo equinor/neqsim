@@ -2,6 +2,8 @@ package neqsim.process.equipment.pipeline.twophasepipe;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,8 +13,6 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Comparison tests between TransientPipe (drift-flux) and PipeBeggsAndBrills correlation.
@@ -247,7 +247,7 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
     // Get liquid holdup from Beggs & Brill
     double[] holdupProfileBB = pipeBB.getLiquidHoldupProfile();
     double avgHoldupBB = (holdupProfileBB == null || holdupProfileBB.length == 0) ? 0.0
-	: java.util.Arrays.stream(holdupProfileBB).average().orElse(0.0);
+        : java.util.Arrays.stream(holdupProfileBB).average().orElse(0.0);
 
     // Set up TransientPipe
     SystemInterface systemTP = createGasCondensateSystem(temperature, pressure);
@@ -277,7 +277,7 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
     double avgHoldupTP = 0.0;
     if (holdupProfileTP != null && holdupProfileTP.length > 0) {
       for (double h : holdupProfileTP) {
-	avgHoldupTP += h;
+        avgHoldupTP += h;
       }
       avgHoldupTP /= holdupProfileTP.length;
     }
@@ -430,8 +430,8 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
 
     // Document comparison results
     double relativeDiff = Math.abs(pressureDropBB) > 0.01
-	? Math.abs(pressureDropTP - pressureDropBB) / Math.abs(pressureDropBB) * 100
-	: 0;
+        ? Math.abs(pressureDropTP - pressureDropBB) / Math.abs(pressureDropBB) * 100
+        : 0;
     logger.info("\n=== Downhill Flow (-10 degrees) ===");
     logger.info("Beggs & Brill: Pressure drop = " + String.format("%.4f", pressureDropBB) + " bar");
     logger.info("TransientPipe: Pressure drop = " + String.format("%.4f", pressureDropTP) + " bar");
@@ -509,7 +509,7 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
     double avgGasVelTP = 0.0;
     if (gasVelTP != null && gasVelTP.length > 0) {
       for (double v : gasVelTP) {
-	avgGasVelTP += v;
+        avgGasVelTP += v;
       }
       avgGasVelTP /= gasVelTP.length;
     }
@@ -630,19 +630,19 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
     logger.info("\n=== Temperature Comparison: Cooling to Ambient ===");
     logger.info("Conditions:");
     logger.info("  Inlet temperature: " + String.format("%.2f", temperature) + " K ("
-	+ String.format("%.1f", temperature - 273.15) + " °C)");
+        + String.format("%.1f", temperature - 273.15) + " °C)");
     logger.info("  Ambient temperature: " + String.format("%.2f", ambientTemp) + " K ("
-	+ String.format("%.1f", ambientTemp - 273.15) + " °C)");
+        + String.format("%.1f", ambientTemp - 273.15) + " °C)");
     logger.info("  Heat transfer coeff: " + String.format("%.1f", heatTransferCoeff) + " W/(m²·K)");
     logger.info("  Pipe length: 5000 m");
     logger.info("\nResults:");
     logger.info("Beggs & Brill:");
     logger.info("  Outlet temperature: " + String.format("%.2f", outletTempBB) + " K ("
-	+ String.format("%.1f", outletTempBB - 273.15) + " °C)");
+        + String.format("%.1f", outletTempBB - 273.15) + " °C)");
     logger.info("  Temperature drop: " + String.format("%.2f", tempDropBB) + " K");
     logger.info("TransientPipe (Energy Equation):");
     logger.info("  Outlet temperature: " + String.format("%.2f", outletTempTP) + " K ("
-	+ String.format("%.1f", outletTempTP - 273.15) + " °C)");
+        + String.format("%.1f", outletTempTP - 273.15) + " °C)");
     logger.info("  Temperature drop: " + String.format("%.2f", tempDropTP) + " K");
 
     double relativeDiff = tempDropBB > 0.1 ? Math.abs(tempDropTP - tempDropBB) / tempDropBB * 100 : 0;
@@ -650,9 +650,9 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
 
     // Both models should show cooling (temperature drop)
     assertTrue(tempDropBB > 0 || Math.abs(tempDropBB) < 0.1,
-	"Beggs & Brill should show cooling or minimal temp change");
+        "Beggs & Brill should show cooling or minimal temp change");
     assertTrue(outletTempTP < inletTempTP + 1,
-	"TransientPipe should not show significant heating when cooling expected");
+        "TransientPipe should not show significant heating when cooling expected");
   }
 
   /**
@@ -731,19 +731,19 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
     logger.info("\n=== Temperature Comparison: Heating from Ambient ===");
     logger.info("Conditions:");
     logger.info("  Inlet temperature: " + String.format("%.2f", temperature) + " K ("
-	+ String.format("%.1f", temperature - 273.15) + " °C)");
+        + String.format("%.1f", temperature - 273.15) + " °C)");
     logger.info("  Ambient temperature: " + String.format("%.2f", ambientTemp) + " K ("
-	+ String.format("%.1f", ambientTemp - 273.15) + " °C)");
+        + String.format("%.1f", ambientTemp - 273.15) + " °C)");
     logger.info("  Heat transfer coeff: " + String.format("%.1f", heatTransferCoeff) + " W/(m²·K)");
     logger.info("  Pipe length: 2000 m");
     logger.info("\nResults:");
     logger.info("Beggs & Brill:");
     logger.info("  Outlet temperature: " + String.format("%.2f", outletTempBB) + " K ("
-	+ String.format("%.1f", outletTempBB - 273.15) + " °C)");
+        + String.format("%.1f", outletTempBB - 273.15) + " °C)");
     logger.info("  Temperature rise: " + String.format("%.2f", tempRiseBB) + " K");
     logger.info("TransientPipe (Energy Equation):");
     logger.info("  Outlet temperature: " + String.format("%.2f", outletTempTP) + " K ("
-	+ String.format("%.1f", outletTempTP - 273.15) + " °C)");
+        + String.format("%.1f", outletTempTP - 273.15) + " °C)");
     logger.info("  Temperature rise: " + String.format("%.2f", tempRiseTP) + " K");
 
     double relativeDiff = tempRiseBB > 0.1 ? Math.abs(tempRiseTP - tempRiseBB) / tempRiseBB * 100 : 0;
@@ -751,7 +751,7 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
 
     // Both models should show heating (temperature rise)
     assertTrue(tempRiseBB > 0 || Math.abs(tempRiseBB) < 0.1,
-	"Beggs & Brill should show heating or minimal temp change");
+        "Beggs & Brill should show heating or minimal temp change");
   }
 
   /**
@@ -943,11 +943,11 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
 
     // Print outlet
     logger.info(String.format("%12.0f | %8.2f | %18.2f", 3000.0, tempProfileBB[tempProfileBB.length - 1] - 273.15,
-	tempProfileTP[tempProfileTP.length - 1] - 273.15));
+        tempProfileTP[tempProfileTP.length - 1] - 273.15));
 
     // Both profiles should show temperature decreasing toward ambient
     assertTrue(tempProfileTP[0] > tempProfileTP[tempProfileTP.length - 1],
-	"TransientPipe temperature should decrease along pipe");
+        "TransientPipe temperature should decrease along pipe");
   }
 
   /**
@@ -1029,9 +1029,9 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
     logger.info("\n=== Enhanced Energy Equation: Joule-Thomson Effect ===");
     logger.info("Conditions:");
     logger.info("  Inlet temperature: " + String.format("%.2f", temperature) + " K ("
-	+ String.format("%.1f", temperature - 273.15) + " °C)");
+        + String.format("%.1f", temperature - 273.15) + " °C)");
     logger.info("  Ambient temperature: " + String.format("%.2f", ambientTemp) + " K ("
-	+ String.format("%.1f", ambientTemp - 273.15) + " °C)");
+        + String.format("%.1f", ambientTemp - 273.15) + " °C)");
     logger.info("  Pipe length: 8000 m");
     logger.info("  JT coefficient: 3e-6 K/Pa");
     logger.info("\nPressure Drop:");
@@ -1040,11 +1040,11 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
     logger.info("\nTemperature Results:");
     logger.info("Original B&B (LMTD only):");
     logger.info("  Outlet temperature: " + String.format("%.2f", outletTempOriginal) + " K ("
-	+ String.format("%.1f", outletTempOriginal - 273.15) + " °C)");
+        + String.format("%.1f", outletTempOriginal - 273.15) + " °C)");
     logger.info("  Temperature drop: " + String.format("%.2f", temperature - outletTempOriginal) + " K");
     logger.info("Enhanced B&B (LMTD + JT):");
     logger.info("  Outlet temperature: " + String.format("%.2f", outletTempEnhanced) + " K ("
-	+ String.format("%.1f", outletTempEnhanced - 273.15) + " °C)");
+        + String.format("%.1f", outletTempEnhanced - 273.15) + " °C)");
     logger.info("  Temperature drop: " + String.format("%.2f", temperature - outletTempEnhanced) + " K");
     System.out.println("  Expected JT contribution: " + String.format("%.2f", expectedJTCooling) + " K");
 
@@ -1056,9 +1056,9 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
 
     // Verify both temperatures are in reasonable range
     assertTrue(outletTempOriginal > 273.15 && outletTempOriginal < temperature,
-	"Original outlet temp should be between 0°C and inlet");
+        "Original outlet temp should be between 0°C and inlet");
     assertTrue(outletTempEnhanced > 273.15 && outletTempEnhanced < temperature,
-	"Enhanced outlet temp should be between 0°C and inlet");
+        "Enhanced outlet temp should be between 0°C and inlet");
   }
 
   /**
@@ -1135,19 +1135,19 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
     logger.info("\nTemperature Results:");
     logger.info("Original B&B (no friction heating):");
     logger.info("  Outlet temperature: " + String.format("%.2f", outletTempOriginal) + " K ("
-	+ String.format("%.1f", outletTempOriginal - 273.15) + " °C)");
+        + String.format("%.1f", outletTempOriginal - 273.15) + " °C)");
     logger.info("Enhanced B&B (with friction heating):");
     logger.info("  Outlet temperature: " + String.format("%.2f", outletTempEnhanced) + " K ("
-	+ String.format("%.1f", outletTempEnhanced - 273.15) + " °C)");
+        + String.format("%.1f", outletTempEnhanced - 273.15) + " °C)");
     logger.info("\nAnalysis:");
     logger.info("  Temperature difference: " + String.format("%.2f", outletTempEnhanced - outletTempOriginal) + " K");
     logger.info("  (Positive = friction heating effect)");
 
     // Both should produce valid temperatures
     assertTrue(outletTempOriginal > 250 && outletTempOriginal < 350,
-	"Original outlet temp should be in reasonable range");
+        "Original outlet temp should be in reasonable range");
     assertTrue(outletTempEnhanced > 250 && outletTempEnhanced < 350,
-	"Enhanced outlet temp should be in reasonable range");
+        "Enhanced outlet temp should be in reasonable range");
   }
 
   /**
@@ -1219,7 +1219,7 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
     logger.info("============================================================");
     logger.info("\nConditions:");
     logger.info(
-	"  Inlet: " + String.format("%.1f", temperature - 273.15) + " °C, " + String.format("%.0f", pressure) + " bar");
+        "  Inlet: " + String.format("%.1f", temperature - 273.15) + " °C, " + String.format("%.0f", pressure) + " bar");
     logger.info("  Ambient: " + String.format("%.1f", ambientTemp - 273.15) + " °C");
     logger.info("  Pipe: 5 km × 8\" diameter");
     logger.info("  Flow: 15000 kg/hr");
@@ -1229,22 +1229,22 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
     logger.info(String.format("%-30s %10s %10s", "Model", "Outlet (K)", "Drop (K)"));
     logger.info("----------------------------------------------------");
     logger.info(String.format("%-30s %10.2f %10.2f", "Original (LMTD only)", outletTempOriginal,
-	temperature - outletTempOriginal));
+        temperature - outletTempOriginal));
     logger.info(String.format("%-30s %10.2f %10.2f", "Enhanced (LMTD + JT + Friction)", outletTempEnhanced,
-	temperature - outletTempEnhanced));
+        temperature - outletTempEnhanced));
 
     logger.info("\n--- Energy Contributions ---");
     double jtContribution = 3.5e-6 * pressureDropTotal * 1e5;
     logger.info("  Expected JT cooling: ~" + String.format("%.1f", jtContribution) + " K");
     logger
-	.info("  Net effect on temperature: " + String.format("%.2f", outletTempEnhanced - outletTempOriginal) + " K");
+        .info("  Net effect on temperature: " + String.format("%.2f", outletTempEnhanced - outletTempOriginal) + " K");
     logger.info("  (Negative = additional cooling, Positive = less cooling)");
 
     // Verify results are physically reasonable
     assertTrue(outletTempOriginal > ambientTemp - 5 && outletTempOriginal < temperature,
-	"Original outlet temp should be between ambient and inlet");
+        "Original outlet temp should be between ambient and inlet");
     assertTrue(outletTempEnhanced > ambientTemp - 10 && outletTempEnhanced < temperature,
-	"Enhanced outlet temp should be between ambient and inlet");
+        "Enhanced outlet temp should be between ambient and inlet");
   }
 
   /**
@@ -1289,12 +1289,12 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
 
     logger.info("\n=== Auto JT Coefficient Calculation Test ===");
     logger
-	.info("Conditions: " + String.format("%.0f", temperature) + " K, " + String.format("%.0f", pressure) + " bar");
+        .info("Conditions: " + String.format("%.0f", temperature) + " K, " + String.format("%.0f", pressure) + " bar");
     System.out.println("Calculated JT coefficient: " + String.format("%.2e", effectiveJT) + " K/Pa");
 
     // JT coefficient should be in typical range for natural gas (1e-6 to 1e-5 K/Pa)
     assertTrue(effectiveJT > 1e-7 && effectiveJT < 1e-4,
-	"Auto-calculated JT should be in reasonable range for natural gas: " + effectiveJT);
+        "Auto-calculated JT should be in reasonable range for natural gas: " + effectiveJT);
   }
 
   /**
@@ -1350,9 +1350,9 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
 
     logger.info("\n=== JT Coefficient Comparison for Different Gases ===");
     logger
-	.info("Conditions: " + String.format("%.0f", temperature) + " K, " + String.format("%.0f", pressure) + " bar");
+        .info("Conditions: " + String.format("%.0f", temperature) + " K, " + String.format("%.0f", pressure) + " bar");
     logger.info("Methane JT: " + String.format("%.3e", methaneJT) + " K/Pa (" + String.format("%.2f", methaneJT * 1e5)
-	+ " K/bar)");
+        + " K/bar)");
     logger.info("CO2 JT: " + String.format("%.3e", co2JT) + " K/Pa (" + String.format("%.2f", co2JT * 1e5) + " K/bar)");
 
     // Both should be positive (cooling on expansion) for these conditions

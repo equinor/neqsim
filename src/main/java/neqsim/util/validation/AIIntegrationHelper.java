@@ -126,8 +126,8 @@ public class AIIntegrationHelper implements Serializable {
       validate();
     }
     return this.lastValidation.getIssues().stream()
-	.map(issue -> String.format("[%s] %s - %s", issue.getSeverity(), issue.getMessage(), issue.getRemediation()))
-	.toArray(String[]::new);
+        .map(issue -> String.format("[%s] %s - %s", issue.getSeverity(), issue.getMessage(), issue.getRemediation()))
+        .toArray(String[]::new);
   }
 
   /**
@@ -146,7 +146,7 @@ public class AIIntegrationHelper implements Serializable {
       process.run();
       ValidationResult postValidation = SimulationValidator.validateOutput(process);
       if (!postValidation.isValid()) {
-	return ExecutionResult.warning("Process ran but has output issues", postValidation);
+        return ExecutionResult.warning("Process ran but has output issues", postValidation);
       }
       return ExecutionResult.success(postValidation);
     } catch (Exception e) {
@@ -332,14 +332,14 @@ public class AIIntegrationHelper implements Serializable {
       sb.append("**Message:** ").append(message).append("\n\n");
 
       if (validation != null) {
-	sb.append("### Validation Details\n");
-	sb.append(validation.getReport());
+        sb.append("### Validation Details\n");
+        sb.append(validation.getReport());
       }
 
       if (exception != null) {
-	sb.append("### Exception\n");
-	sb.append("**Type:** ").append(exception.getClass().getSimpleName()).append("\n");
-	sb.append("**Message:** ").append(exception.getMessage()).append("\n");
+        sb.append("### Exception\n");
+        sb.append("**Type:** ").append(exception.getClass().getSimpleName()).append("\n");
+        sb.append("**Message:** ").append(exception.getMessage()).append("\n");
       }
 
       return sb.toString();

@@ -110,13 +110,13 @@ public class OperationalTagMap implements Serializable {
     for (OperationalTagBinding binding : bindings.values()) {
       Double value = findValue(binding, fieldData);
       if (value == null) {
-	continue;
+        continue;
       }
       if (binding.hasHistorianTag()) {
-	measurementFieldData.put(binding.getHistorianTag(), value);
+        measurementFieldData.put(binding.getHistorianTag(), value);
       }
       if (binding.getRole() == InstrumentTagRole.INPUT && binding.hasAutomationAddress()) {
-	automation.setVariableValue(binding.getAutomationAddress(), value, binding.getUnit());
+        automation.setVariableValue(binding.getAutomationAddress(), value, binding.getUnit());
       }
       applied.put(binding.getLogicalTag(), value);
     }
@@ -143,14 +143,14 @@ public class OperationalTagMap implements Serializable {
 
     for (OperationalTagBinding binding : bindings.values()) {
       if (binding.hasAutomationAddress()) {
-	values.put(binding.getLogicalTag(),
-	    automation.getVariableValue(binding.getAutomationAddress(), binding.getUnit()));
+        values.put(binding.getLogicalTag(),
+            automation.getVariableValue(binding.getAutomationAddress(), binding.getUnit()));
       } else if (binding.hasHistorianTag()) {
-	MeasurementDeviceInterface device = process.getMeasurementDeviceByTag(binding.getHistorianTag());
-	if (device != null) {
-	  String unit = binding.getUnit().isEmpty() ? device.getUnit() : binding.getUnit();
-	  values.put(binding.getLogicalTag(), device.getMeasuredValue(unit));
-	}
+        MeasurementDeviceInterface device = process.getMeasurementDeviceByTag(binding.getHistorianTag());
+        if (device != null) {
+          String unit = binding.getUnit().isEmpty() ? device.getUnit() : binding.getUnit();
+          values.put(binding.getLogicalTag(), device.getMeasuredValue(unit));
+        }
       }
     }
     return values;
@@ -170,7 +170,7 @@ public class OperationalTagMap implements Serializable {
     }
     if (bindings.isEmpty()) {
       result.addWarning("tag-map", "No operational tag bindings are configured.",
-	  "Add logical bindings before applying plant data or running scenarios.");
+          "Add logical bindings before applying plant data or running scenarios.");
       return result;
     }
 
@@ -212,37 +212,37 @@ public class OperationalTagMap implements Serializable {
       Set<String> historianTags, ValidationResult result) {
     if (!binding.hasHistorianTag() && !binding.hasAutomationAddress()) {
       result.addError("tag-map",
-	  "Binding " + binding.getLogicalTag() + " has neither historian tag nor automation address.",
-	  "Set a historian tag, automation address, or both.");
+          "Binding " + binding.getLogicalTag() + " has neither historian tag nor automation address.",
+          "Set a historian tag, automation address, or both.");
     }
 
     if (binding.hasHistorianTag()) {
       if (!historianTags.add(binding.getHistorianTag())) {
-	result.addWarning("tag-map",
-	    "Historian tag " + binding.getHistorianTag() + " is used by more than one logical binding.",
-	    "Check that duplicated tags are intentional aliases.");
+        result.addWarning("tag-map",
+            "Historian tag " + binding.getHistorianTag() + " is used by more than one logical binding.",
+            "Check that duplicated tags are intentional aliases.");
       }
       if (process.getMeasurementDeviceByTag(binding.getHistorianTag()) == null) {
-	result.addWarning("measurement", "No measurement device carries tag " + binding.getHistorianTag() + ".",
-	    "Attach the tag to a MeasurementDeviceInterface or use an automation address.");
+        result.addWarning("measurement", "No measurement device carries tag " + binding.getHistorianTag() + ".",
+            "Attach the tag to a MeasurementDeviceInterface or use an automation address.");
       }
     }
 
     if (binding.hasAutomationAddress()) {
       SimulationVariable variable = findAutomationVariable(automation, binding.getAutomationAddress());
       if (variable == null) {
-	result.addError("automation",
-	    "Automation address " + binding.getAutomationAddress() + " could not be resolved.",
-	    "Use process.getAutomation().getVariableList(unitName) to discover valid addresses.");
+        result.addError("automation",
+            "Automation address " + binding.getAutomationAddress() + " could not be resolved.",
+            "Use process.getAutomation().getVariableList(unitName) to discover valid addresses.");
       } else if (binding.getRole() == InstrumentTagRole.INPUT && variable.getType() != VariableType.INPUT) {
-	result.addError("automation", "Automation address " + binding.getAutomationAddress() + " is not writable.",
-	    "Bind INPUT tags to variables of type INPUT.");
+        result.addError("automation", "Automation address " + binding.getAutomationAddress() + " is not writable.",
+            "Bind INPUT tags to variables of type INPUT.");
       }
     }
 
     if (binding.getUnit().isEmpty()) {
       result.addWarning("unit", "Binding " + binding.getLogicalTag() + " has no unit.",
-	  "Set an explicit engineering unit to avoid ambiguous historian data.");
+          "Set an explicit engineering unit to avoid ambiguous historian data.");
     }
   }
 
@@ -261,9 +261,9 @@ public class OperationalTagMap implements Serializable {
     try {
       List<SimulationVariable> variables = automation.getVariableList(unitName);
       for (SimulationVariable variable : variables) {
-	if (address.equals(variable.getAddress())) {
-	  return variable;
-	}
+        if (address.equals(variable.getAddress())) {
+          return variable;
+        }
       }
       return null;
     } catch (IllegalArgumentException ex) {

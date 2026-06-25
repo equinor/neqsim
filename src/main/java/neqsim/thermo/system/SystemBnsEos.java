@@ -121,7 +121,7 @@ public class SystemBnsEos extends SystemEos {
   private void applyBnsBips() {
     for (int p = 0; p < getMaxNumberOfPhases(); p++) {
       if (phaseArray[p] instanceof PhaseBNS) {
-	((PhaseBNS) phaseArray[p]).setBnsBips(getTemperature());
+        ((PhaseBNS) phaseArray[p]).setBnsBips(getTemperature());
       }
     }
   }
@@ -278,10 +278,10 @@ public class SystemBnsEos extends SystemEos {
   private void updateHeatCapacityCoefficients() {
     // Base heat capacity coefficients for CO2, H2S, N2, H2, HC
     double[][] cp = { { 2.725473196, 0.004103751, 1.5602e-5, -4.19321e-8, 3.10542e-11 },
-	{ 4.446031265, -0.005296052, 2.0533e-5, -2.58993e-8, 1.25555e-11 },
-	{ 3.423811591, 0.001007461, -4.58491e-6, 8.4252e-9, -4.38083e-12 },
-	{ 1.421468418, 0.018192108, -6.04285e-5, 9.08033e-8, -5.18972e-11 },
-	{ 5.369051342, -0.014851371, 4.86358e-5, -3.70187e-8, 1.80641e-12 } };
+        { 4.446031265, -0.005296052, 2.0533e-5, -2.58993e-8, 1.25555e-11 },
+        { 3.423811591, 0.001007461, -4.58491e-6, 8.4252e-9, -4.38083e-12 },
+        { 1.421468418, 0.018192108, -6.04285e-5, 9.08033e-8, -5.18972e-11 },
+        { 5.369051342, -0.014851371, 4.86358e-5, -3.70187e-8, 1.80641e-12 } };
 
     // Apply scaling for hydrocarbon component based on molecular weight
     double hcMw = mws[4] * 1000.0;
@@ -297,7 +297,7 @@ public class SystemBnsEos extends SystemEos {
     double factor = ThermodynamicConstantsInterface.R;
     for (int i = 0; i < cp.length; i++) {
       for (int j = 0; j < cp[i].length; j++) {
-	cp[i][j] *= factor;
+        cp[i][j] *= factor;
       }
     }
     cpCoeffs = cp;
@@ -315,28 +315,28 @@ public class SystemBnsEos extends SystemEos {
     for (int j = 0; j < zf.length; j++) {
       String name = compName(j);
       if (((PhaseBNS) phaseArray[0]).componentArray[j] != null) {
-	getComponent(name).setNumberOfmoles(zf[j]);
-	for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-	  if (phaseArray[i] instanceof PhaseBNS) {
-	    ComponentBNS comp = (ComponentBNS) ((PhaseBNS) phaseArray[i]).componentArray[j];
-	    if (comp != null) {
-	      comp.setNumberOfMolesInPhase(zf[j]);
-	      comp.setCpA(cpCoeffs[j][0]);
-	      comp.setCpB(cpCoeffs[j][1]);
-	      comp.setCpC(cpCoeffs[j][2]);
-	      comp.setCpD(cpCoeffs[j][3]);
-	      comp.setCpE(cpCoeffs[j][4]);
-	      comp.setTC(tcs[j]);
-	      comp.setPC(pcs[j]);
-	      comp.setMolarMass(mws[j]);
-	      comp.setVolumeCorrectionConst(vshift[j]);
-	      comp.calca();
-	      comp.calcb();
-	    }
-	  }
-	}
+        getComponent(name).setNumberOfmoles(zf[j]);
+        for (int i = 0; i < getMaxNumberOfPhases(); i++) {
+          if (phaseArray[i] instanceof PhaseBNS) {
+            ComponentBNS comp = (ComponentBNS) ((PhaseBNS) phaseArray[i]).componentArray[j];
+            if (comp != null) {
+              comp.setNumberOfMolesInPhase(zf[j]);
+              comp.setCpA(cpCoeffs[j][0]);
+              comp.setCpB(cpCoeffs[j][1]);
+              comp.setCpC(cpCoeffs[j][2]);
+              comp.setCpD(cpCoeffs[j][3]);
+              comp.setCpE(cpCoeffs[j][4]);
+              comp.setTC(tcs[j]);
+              comp.setPC(pcs[j]);
+              comp.setMolarMass(mws[j]);
+              comp.setVolumeCorrectionConst(vshift[j]);
+              comp.calca();
+              comp.calcb();
+            }
+          }
+        }
       } else {
-	addBnsComponent(name, zf[j], j);
+        addBnsComponent(name, zf[j], j);
       }
     }
     setTotalNumberOfMoles(1.0);
@@ -354,14 +354,14 @@ public class SystemBnsEos extends SystemEos {
     }
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       if (phaseArray[i] != null) {
-	ComponentBNS comp = new ComponentBNS(name, moles, moles, compIndex, tcs[compIndex], pcs[compIndex],
-	    mws[compIndex], acfs[compIndex], omegaA[compIndex], omegaB[compIndex], vshift[compIndex]);
-	comp.setCpA(cpCoeffs[compIndex][0]);
-	comp.setCpB(cpCoeffs[compIndex][1]);
-	comp.setCpC(cpCoeffs[compIndex][2]);
-	comp.setCpD(cpCoeffs[compIndex][3]);
-	comp.setCpE(cpCoeffs[compIndex][4]);
-	((PhaseBNS) phaseArray[i]).componentArray[compIndex] = comp;
+        ComponentBNS comp = new ComponentBNS(name, moles, moles, compIndex, tcs[compIndex], pcs[compIndex],
+            mws[compIndex], acfs[compIndex], omegaA[compIndex], omegaB[compIndex], vshift[compIndex]);
+        comp.setCpA(cpCoeffs[compIndex][0]);
+        comp.setCpB(cpCoeffs[compIndex][1]);
+        comp.setCpC(cpCoeffs[compIndex][2]);
+        comp.setCpD(cpCoeffs[compIndex][3]);
+        comp.setCpE(cpCoeffs[compIndex][4]);
+        ((PhaseBNS) phaseArray[i]).componentArray[compIndex] = comp;
       }
     }
   }

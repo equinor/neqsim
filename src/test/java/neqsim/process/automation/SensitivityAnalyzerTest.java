@@ -60,9 +60,9 @@ class SensitivityAnalyzerTest {
     assertTrue(g.containsKey("Compressor.polytropicEfficiency"));
     // Both entries must be finite numbers.
     assertTrue(
-	!Double.isNaN(g.get("Compressor.outletPressure")) && !Double.isInfinite(g.get("Compressor.outletPressure")));
+        !Double.isNaN(g.get("Compressor.outletPressure")) && !Double.isInfinite(g.get("Compressor.outletPressure")));
     assertTrue(!Double.isNaN(g.get("Compressor.polytropicEfficiency"))
-	&& !Double.isInfinite(g.get("Compressor.polytropicEfficiency")));
+        && !Double.isInfinite(g.get("Compressor.polytropicEfficiency")));
   }
 
   @Test
@@ -108,7 +108,7 @@ class SensitivityAnalyzerTest {
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-	new SensitivityAnalyzer(null);
+        new SensitivityAnalyzer(null);
       }
     });
   }
@@ -120,13 +120,13 @@ class SensitivityAnalyzerTest {
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-	sens.setRelativeStep(0.0);
+        sens.setRelativeStep(0.0);
       }
     });
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-	sens.setAbsoluteStep(-1.0);
+        sens.setAbsoluteStep(-1.0);
       }
     });
   }

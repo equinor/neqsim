@@ -55,7 +55,7 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
   public boolean hasPlusFraction() {
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       if (system.getPhase(0).getComponent(i).isIsPlusFraction()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -69,20 +69,20 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
     int compNumber = 0;
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       try {
-	if (system.getPhase(0).getComponent(i).isIsTBPfraction()) {
-	  Integer firstPlusNumber = Integer.valueOf(0);
-	  if (system.getPhase(0).getComponent(i).getComponentName().substring(3, 4).equals("_")) {
-	    firstPlusNumber = Integer.valueOf(system.getPhase(0).getComponent(i).getComponentName().substring(1, 3));
-	  } else {
-	    firstPlusNumber = Integer.valueOf(system.getPhase(0).getComponent(i).getComponentName().substring(1, 2));
-	  }
-	  if (plusCompNumber < firstPlusNumber.intValue()) {
-	    plusCompNumber = firstPlusNumber.intValue();
-	    compNumber = i;
-	  }
-	}
+        if (system.getPhase(0).getComponent(i).isIsTBPfraction()) {
+          Integer firstPlusNumber = Integer.valueOf(0);
+          if (system.getPhase(0).getComponent(i).getComponentName().substring(3, 4).equals("_")) {
+            firstPlusNumber = Integer.valueOf(system.getPhase(0).getComponent(i).getComponentName().substring(1, 3));
+          } else {
+            firstPlusNumber = Integer.valueOf(system.getPhase(0).getComponent(i).getComponentName().substring(1, 2));
+          }
+          if (plusCompNumber < firstPlusNumber.intValue()) {
+            plusCompNumber = firstPlusNumber.intValue();
+            compNumber = i;
+          }
+        }
       } catch (Exception ex) {
-	logger.error(ex.getMessage(), ex);
+        logger.error(ex.getMessage(), ex);
       }
     }
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
@@ -102,19 +102,19 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
   public void solve() {
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       try {
-	if (system.getPhase(0).getComponent(i).isIsPlusFraction()) {
-	  Integer firstPlusNumber = Integer.valueOf(0);
-	  if (system.getPhase(0).getComponent(i).getComponentName().substring(3, 4).equals("_")) {
-	    firstPlusNumber = Integer.valueOf(system.getPhase(0).getComponent(i).getComponentName().substring(1, 3));
-	  } else {
-	    firstPlusNumber = Integer.valueOf(system.getPhase(0).getComponent(i).getComponentName().substring(1, 2));
-	  }
-	  if (firstPlusFractionNumber < firstPlusNumber.intValue()) {
-	    firstPlusFractionNumber = firstPlusNumber.intValue();
-	  }
-	}
+        if (system.getPhase(0).getComponent(i).isIsPlusFraction()) {
+          Integer firstPlusNumber = Integer.valueOf(0);
+          if (system.getPhase(0).getComponent(i).getComponentName().substring(3, 4).equals("_")) {
+            firstPlusNumber = Integer.valueOf(system.getPhase(0).getComponent(i).getComponentName().substring(1, 3));
+          } else {
+            firstPlusNumber = Integer.valueOf(system.getPhase(0).getComponent(i).getComponentName().substring(1, 2));
+          }
+          if (firstPlusFractionNumber < firstPlusNumber.intValue()) {
+            firstPlusFractionNumber = firstPlusNumber.intValue();
+          }
+        }
       } catch (Exception ex) {
-	logger.error(ex.getMessage(), ex);
+        logger.error(ex.getMessage(), ex);
       }
     }
     logger.info("first plus fraction number " + firstPlusFractionNumber);
@@ -147,15 +147,15 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
 
     if (firsttime) {
       if (coefs.length == 3) {
-	double Dtot = 0.0;
-	for (int i = getFirstPlusFractionNumber(); i < getLastPlusFractionNumber(); i++) {
-	  Dtot += (getDensPlus() - this.getCoef(2)) / Math.log(i); // (this.getCoef(2)+this.getCoef(3)*Math.log(i)-this.getCoef(2))/Math.log(i);
-	}
-	double lengthPlus = this.getLastPlusFractionNumber() - this.getFirstPlusFractionNumber();
-	logger.info("length plus " + lengthPlus);
-	Dtot /= lengthPlus;
-	logger.info("D " + Dtot);
-	this.coefs[3] = Dtot;
+        double Dtot = 0.0;
+        for (int i = getFirstPlusFractionNumber(); i < getLastPlusFractionNumber(); i++) {
+          Dtot += (getDensPlus() - this.getCoef(2)) / Math.log(i); // (this.getCoef(2)+this.getCoef(3)*Math.log(i)-this.getCoef(2))/Math.log(i);
+        }
+        double lengthPlus = this.getLastPlusFractionNumber() - this.getFirstPlusFractionNumber();
+        logger.info("length plus " + lengthPlus);
+        Dtot /= lengthPlus;
+        logger.info("D " + Dtot);
+        this.coefs[3] = Dtot;
       }
       firsttime = false;
     }
@@ -168,11 +168,11 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
       mSum = 0.0;
       densSum = 0.0;
       for (int i = this.getFirstPlusFractionNumber(); i < this.getLastPlusFractionNumber(); i++) {
-	double ztemp = Math.exp(this.getCoef(0) + this.getCoef(1) * (i));
-	double M = PVTsimMolarMass[i - 6] / 1000.0;
-	double dens = this.getCoef(2) + this.getCoef(3) * Math.log(i);
-	mSum += ztemp * M;
-	densSum += (ztemp * M / dens);
+        double ztemp = Math.exp(this.getCoef(0) + this.getCoef(1) * (i));
+        double M = PVTsimMolarMass[i - 6] / 1000.0;
+        double dens = this.getCoef(2) + this.getCoef(3) * Math.log(i);
+        mSum += ztemp * M;
+        densSum += (ztemp * M / dens);
       }
       densSum = mSum / densSum;
 
@@ -244,28 +244,28 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
       MPlus[k] += PVTsimMolarMass[i - 6] / 1000.0;
       denstemp1 += Math.exp(getCoef(0) + getCoef(1) * i) * PVTsimMolarMass[i - 6] / 1000.0;
       denstemp2 += Math.exp(getCoef(0) + getCoef(1) * i) * PVTsimMolarMass[i - 6] / 1000.0
-	  / (getCoef(2) + getCoef(3) * Math.log(i));
+          / (getCoef(2) + getCoef(3) * Math.log(i));
       // System.out.println("dens " + denstemp1/denstemp2);
       Maverage += Math.exp(getCoef(0) + getCoef(1) * i) * PVTsimMolarMass[i - 6] / 1000.0;
       weightFrac += Math.exp(getCoef(0) + getCoef(1) * i) * PVTsimMolarMass[i - 6] / 1000.0;
       // System.out.println("weigth " + weightFrac + " i" + i);
       if (weightFrac >= meanWeightFrac || !pseudocomponents || i == getLastPlusFractionNumber() - 1) {
-	String name = (i == firstPS) ? "PC" + Integer.toString(firstPS)
-	    : "PC" + Integer.toString(firstPS) + "-" + Integer.toString(i);
-	system.addTBPfraction(name, totalNumberOfMoles * zPlus[k], Maverage / zPlus[k], denstemp1 / denstemp2);
-	denstemp1 = 0.0;
-	denstemp2 = 0.0;
-	weightFrac = 0.0;
-	Maverage = 0.0;
-	k++;
-	firstPS = i + 1;
+        String name = (i == firstPS) ? "PC" + Integer.toString(firstPS)
+            : "PC" + Integer.toString(firstPS) + "-" + Integer.toString(i);
+        system.addTBPfraction(name, totalNumberOfMoles * zPlus[k], Maverage / zPlus[k], denstemp1 / denstemp2);
+        denstemp1 = 0.0;
+        denstemp2 = 0.0;
+        weightFrac = 0.0;
+        Maverage = 0.0;
+        k++;
+        firstPS = i + 1;
       }
     }
 
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       if (system.getPhase(0).getComponent(i).isIsPlusFraction()) {
-	system.removeComponent(system.getPhase(0).getComponent(i).getName());
-	break;
+        system.removeComponent(system.getPhase(0).getComponent(i).getName());
+        break;
       }
     }
   }
@@ -424,17 +424,17 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       double boilpoint = system.getPhase(0).getComponent(i).getNormalBoilingPoint();
       if (boilpoint >= 273.15 + 69.0) {
-	list.add(system.getPhase(0).getComponent(i).getName());
+        list.add(system.getPhase(0).getComponent(i).getName());
       }
     }
 
     for (int i = 0; i < list.size(); i++) {
       try {
-	system.removeComponent(list.get(i));
-	logger.info("removing " + list.get(i));
+        system.removeComponent(list.get(i));
+        logger.info("removing " + list.get(i));
       } catch (Exception ex) {
-	logger.error("not able to remove " + list.get(i), ex);
-	// return;
+        logger.error("not able to remove " + list.get(i), ex);
+        // return;
       }
     }
   }
@@ -463,9 +463,9 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
     system.init(0);
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       if (system.getPhase(0).getComponent(i).isIsPlusFraction()) {
-	MPlus = system.getPhase(0).getComponent(i).getMolarMass();
-	zPlus = system.getPhase(0).getComponent(i).getz();
-	densPlus = system.getPhase(0).getComponent(i).getNormalLiquidDensity();
+        MPlus = system.getPhase(0).getComponent(i).getMolarMass();
+        zPlus = system.getPhase(0).getComponent(i).getz();
+        densPlus = system.getPhase(0).getComponent(i).getNormalLiquidDensity();
       }
     }
 

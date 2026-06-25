@@ -178,7 +178,7 @@ public class PipingStressAnalysis implements Serializable {
     // Deflection-limited span: delta = 5*w*L^4 / (384*E*I)
     // L = (384*E*I*delta / (5*w))^0.25
     double deflLimitedSpan = Math
-	.pow(384.0 * E_STEEL_MPA * 1.0e6 * iM4 * (maxDeflectionMm / 1000.0) / (5.0 * totalWeightPerM), 0.25);
+        .pow(384.0 * E_STEEL_MPA * 1.0e6 * iM4 * (maxDeflectionMm / 1000.0) / (5.0 * totalWeightPerM), 0.25);
 
     // Stress-limited span: M = w*L^2/8, sigma = M/Z
     // L = sqrt(8 * sigma * Z / w)

@@ -47,7 +47,7 @@ class CDFTSurfaceTensionCalibrationTest {
   void sweepAttractiveRangeFactor() {
     logger.info("\n=== cDFT Kernel Range Calibration ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s | %-10s | %-10s | %-8s%n", "lambda", "AAD (%)",
-	"MaxDev(%)", "nOK");
+        "MaxDev(%)", "nOK");
     logger.info("---------|------------|------------|--------");
 
     double bestLambda = 0.5;
@@ -59,59 +59,59 @@ class CDFTSurfaceTensionCalibrationTest {
       int count = 0;
 
       for (Object[] row : DATA) {
-	String comp = (String) row[0];
-	String eos = (String) row[1];
-	double tempK = (Double) row[2];
-	double sigmaExp = (Double) row[3];
+        String comp = (String) row[0];
+        String eos = (String) row[1];
+        double tempK = (Double) row[2];
+        double sigmaExp = (Double) row[3];
 
-	try {
-	  SystemInterface sys;
-	  if ("SRK".equals(eos)) {
-	    sys = new SystemSrkEos(tempK, 1.0);
-	  } else {
-	    sys = new SystemPrEos(tempK, 1.0);
-	  }
-	  sys.addComponent(comp, 1.0);
-	  sys.setMixingRule("classic");
-	  sys.setMultiPhaseCheck(true);
+        try {
+          SystemInterface sys;
+          if ("SRK".equals(eos)) {
+            sys = new SystemSrkEos(tempK, 1.0);
+          } else {
+            sys = new SystemPrEos(tempK, 1.0);
+          }
+          sys.addComponent(comp, 1.0);
+          sys.setMixingRule("classic");
+          sys.setMultiPhaseCheck(true);
 
-	  ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-	  ops.bubblePointPressureFlash(false);
-	  sys.initProperties();
+          ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+          ops.bubblePointPressureFlash(false);
+          sys.initProperties();
 
-	  CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
-	  cdft.setAttractiveRangeFactor(lambda);
-	  double sigma = cdft.calcSurfaceTension(0, 1);
-	  double sigmaMNm = sigma * 1000.0;
+          CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
+          cdft.setAttractiveRangeFactor(lambda);
+          double sigma = cdft.calcSurfaceTension(0, 1);
+          double sigmaMNm = sigma * 1000.0;
 
-	  double absDev = Math.abs((sigmaMNm - sigmaExp) / sigmaExp) * 100.0;
-	  sumAbsDev += absDev;
-	  if (absDev > maxAbsDev) {
-	    maxAbsDev = absDev;
-	  }
-	  count++;
-	} catch (Exception ex) {
-	  // skip failed point
-	}
+          double absDev = Math.abs((sigmaMNm - sigmaExp) / sigmaExp) * 100.0;
+          sumAbsDev += absDev;
+          if (absDev > maxAbsDev) {
+            maxAbsDev = absDev;
+          }
+          count++;
+        } catch (Exception ex) {
+          // skip failed point
+        }
       }
 
       double aad = (count > 0) ? sumAbsDev / count : 999.0;
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.3f | %10.2f | %10.2f | %4d%n", lambda, aad, maxAbsDev,
-	  count);
+          count);
 
       if (aad < bestAAD) {
-	bestAAD = aad;
-	bestLambda = lambda;
+        bestAAD = aad;
+        bestLambda = lambda;
       }
     }
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Optimal lambda = %.3f with AAD = %.2f%%%n", bestLambda,
-	bestAAD);
+        bestAAD);
 
     // Print per-component results at optimal lambda
     logger.info("=== Per-component results at optimal lambda ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %-5s | %6s | %8s | %8s | %8s%n", "Component", "EOS",
-	"T (K)", "Exp", "cDFT", "Dev(%)");
+        "T (K)", "Exp", "cDFT", "Dev(%)");
     logger.info("-------------|-------|--------|----------|----------|--------");
 
     for (Object[] row : DATA) {
@@ -121,31 +121,31 @@ class CDFTSurfaceTensionCalibrationTest {
       double sigmaExp = (Double) row[3];
 
       try {
-	SystemInterface sys;
-	if ("SRK".equals(eos)) {
-	  sys = new SystemSrkEos(tempK, 1.0);
-	} else {
-	  sys = new SystemPrEos(tempK, 1.0);
-	}
-	sys.addComponent(comp, 1.0);
-	sys.setMixingRule("classic");
-	sys.setMultiPhaseCheck(true);
+        SystemInterface sys;
+        if ("SRK".equals(eos)) {
+          sys = new SystemSrkEos(tempK, 1.0);
+        } else {
+          sys = new SystemPrEos(tempK, 1.0);
+        }
+        sys.addComponent(comp, 1.0);
+        sys.setMixingRule("classic");
+        sys.setMultiPhaseCheck(true);
 
-	ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-	ops.bubblePointPressureFlash(false);
-	sys.initProperties();
+        ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+        ops.bubblePointPressureFlash(false);
+        sys.initProperties();
 
-	CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
-	cdft.setAttractiveRangeFactor(bestLambda);
-	double sigma = cdft.calcSurfaceTension(0, 1);
-	double sigmaMNm = sigma * 1000.0;
-	double dev = (sigmaMNm - sigmaExp) / sigmaExp * 100.0;
+        CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
+        cdft.setAttractiveRangeFactor(bestLambda);
+        double sigma = cdft.calcSurfaceTension(0, 1);
+        double sigmaMNm = sigma * 1000.0;
+        double dev = (sigmaMNm - sigmaExp) / sigmaExp * 100.0;
 
-	logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %-5s | %6.1f | %8.2f | %8.2f | %+7.1f%n", comp, eos,
-	    tempK, sigmaExp, sigmaMNm, dev);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %-5s | %6.1f | %8.2f | %8.2f | %+7.1f%n", comp, eos,
+            tempK, sigmaExp, sigmaMNm, dev);
       } catch (Exception ex) {
-	logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %-5s | %6.1f | %8.2f | %8s | %8s%n", comp, eos,
-	    tempK, sigmaExp, "FAIL", "N/A");
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %-5s | %6.1f | %8.2f | %8s | %8s%n", comp, eos,
+            tempK, sigmaExp, "FAIL", "N/A");
       }
     }
   }
@@ -167,47 +167,47 @@ class CDFTSurfaceTensionCalibrationTest {
       int cntSRK = 0;
 
       for (Object[] row : DATA) {
-	String comp = (String) row[0];
-	double tempK = (Double) row[2];
-	double sigmaExp = (Double) row[3];
+        String comp = (String) row[0];
+        double tempK = (Double) row[2];
+        double sigmaExp = (Double) row[3];
 
-	// PR run
-	try {
-	  SystemInterface sysPR = new SystemPrEos(tempK, 1.0);
-	  sysPR.addComponent(comp, 1.0);
-	  sysPR.setMixingRule("classic");
-	  sysPR.setMultiPhaseCheck(true);
-	  ThermodynamicOperations ops = new ThermodynamicOperations(sysPR);
-	  ops.bubblePointPressureFlash(false);
-	  sysPR.initProperties();
+        // PR run
+        try {
+          SystemInterface sysPR = new SystemPrEos(tempK, 1.0);
+          sysPR.addComponent(comp, 1.0);
+          sysPR.setMixingRule("classic");
+          sysPR.setMultiPhaseCheck(true);
+          ThermodynamicOperations ops = new ThermodynamicOperations(sysPR);
+          ops.bubblePointPressureFlash(false);
+          sysPR.initProperties();
 
-	  CDFTSurfaceTension cdft = new CDFTSurfaceTension(sysPR);
-	  cdft.setAttractiveRangeFactor(lambda);
-	  double sigma = cdft.calcSurfaceTension(0, 1) * 1000.0;
-	  sumDevPR += Math.abs((sigma - sigmaExp) / sigmaExp) * 100.0;
-	  cntPR++;
-	} catch (Exception ex) {
-	  // skip
-	}
+          CDFTSurfaceTension cdft = new CDFTSurfaceTension(sysPR);
+          cdft.setAttractiveRangeFactor(lambda);
+          double sigma = cdft.calcSurfaceTension(0, 1) * 1000.0;
+          sumDevPR += Math.abs((sigma - sigmaExp) / sigmaExp) * 100.0;
+          cntPR++;
+        } catch (Exception ex) {
+          // skip
+        }
 
-	// SRK run
-	try {
-	  SystemInterface sysSRK = new SystemSrkEos(tempK, 1.0);
-	  sysSRK.addComponent(comp, 1.0);
-	  sysSRK.setMixingRule("classic");
-	  sysSRK.setMultiPhaseCheck(true);
-	  ThermodynamicOperations ops = new ThermodynamicOperations(sysSRK);
-	  ops.bubblePointPressureFlash(false);
-	  sysSRK.initProperties();
+        // SRK run
+        try {
+          SystemInterface sysSRK = new SystemSrkEos(tempK, 1.0);
+          sysSRK.addComponent(comp, 1.0);
+          sysSRK.setMixingRule("classic");
+          sysSRK.setMultiPhaseCheck(true);
+          ThermodynamicOperations ops = new ThermodynamicOperations(sysSRK);
+          ops.bubblePointPressureFlash(false);
+          sysSRK.initProperties();
 
-	  CDFTSurfaceTension cdft = new CDFTSurfaceTension(sysSRK);
-	  cdft.setAttractiveRangeFactor(lambda);
-	  double sigma = cdft.calcSurfaceTension(0, 1) * 1000.0;
-	  sumDevSRK += Math.abs((sigma - sigmaExp) / sigmaExp) * 100.0;
-	  cntSRK++;
-	} catch (Exception ex) {
-	  // skip
-	}
+          CDFTSurfaceTension cdft = new CDFTSurfaceTension(sysSRK);
+          cdft.setAttractiveRangeFactor(lambda);
+          double sigma = cdft.calcSurfaceTension(0, 1) * 1000.0;
+          sumDevSRK += Math.abs((sigma - sigmaExp) / sigmaExp) * 100.0;
+          cntSRK++;
+        } catch (Exception ex) {
+          // skip
+        }
       }
 
       double aadPR = (cntPR > 0) ? sumDevPR / cntPR : 999.0;

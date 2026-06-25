@@ -247,7 +247,7 @@ class ModuleContractTest {
       // Check that remediation messages contain code hints
       String report = result.getReport();
       assertTrue(report.contains("addComponent") || report.contains("setTemperature") || report.contains("Temperature"),
-	  "Remediation should contain code hints: " + report);
+          "Remediation should contain code hints: " + report);
     }
   }
 }

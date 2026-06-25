@@ -145,7 +145,7 @@ public class EmissionsTracker implements Serializable {
       // Use the emission rates if available
       java.util.Map<String, Double> emissionRates = furnace.getEmissionRatesKgPerHr();
       if (emissionRates != null && emissionRates.containsKey("CO2")) {
-	emissions.directCO2eKgPerHr = emissionRates.get("CO2");
+        emissions.directCO2eKgPerHr = emissionRates.get("CO2");
       }
       emissions.category = EmissionCategory.COMBUSTION;
     }
@@ -162,7 +162,7 @@ public class EmissionsTracker implements Serializable {
       Compressor compressor = (Compressor) equipment;
       emissions.powerConsumptionKW = compressor.getPower("kW");
       if (includeIndirectEmissions) {
-	emissions.indirectCO2eKgPerHr = emissions.powerConsumptionKW * gridEmissionFactor;
+        emissions.indirectCO2eKgPerHr = emissions.powerConsumptionKW * gridEmissionFactor;
       }
       emissions.category = EmissionCategory.COMPRESSION;
     }
@@ -172,7 +172,7 @@ public class EmissionsTracker implements Serializable {
       Pump pump = (Pump) equipment;
       emissions.powerConsumptionKW = pump.getPower("kW");
       if (includeIndirectEmissions) {
-	emissions.indirectCO2eKgPerHr = emissions.powerConsumptionKW * gridEmissionFactor;
+        emissions.indirectCO2eKgPerHr = emissions.powerConsumptionKW * gridEmissionFactor;
       }
       emissions.category = EmissionCategory.PUMPING;
     }
@@ -183,7 +183,7 @@ public class EmissionsTracker implements Serializable {
       emissions.heatDutyKW = Math.abs(heater.getDuty() / 1000.0); // W to kW
       // Assume electric heater for indirect emissions
       if (includeIndirectEmissions) {
-	emissions.indirectCO2eKgPerHr = emissions.heatDutyKW * gridEmissionFactor;
+        emissions.indirectCO2eKgPerHr = emissions.heatDutyKW * gridEmissionFactor;
       }
       emissions.category = EmissionCategory.HEATING;
     }
@@ -195,7 +195,7 @@ public class EmissionsTracker implements Serializable {
       emissions.heatDutyKW = Math.abs(cooler.getDuty() / 1000.0);
       emissions.powerConsumptionKW = emissions.heatDutyKW * 0.02; // ~2% of duty for fans
       if (includeIndirectEmissions) {
-	emissions.indirectCO2eKgPerHr = emissions.powerConsumptionKW * gridEmissionFactor;
+        emissions.indirectCO2eKgPerHr = emissions.powerConsumptionKW * gridEmissionFactor;
       }
       emissions.category = EmissionCategory.COOLING;
     }
@@ -291,18 +291,18 @@ public class EmissionsTracker implements Serializable {
     public double getTotalCO2e(String unit) {
       switch (unit.toLowerCase()) {
       case "kg/hr":
-	return totalCO2eKgPerHr;
+        return totalCO2eKgPerHr;
       case "ton/hr":
       case "tonne/hr":
-	return totalCO2eKgPerHr / 1000.0;
+        return totalCO2eKgPerHr / 1000.0;
       case "ton/day":
       case "tonne/day":
-	return totalCO2eKgPerHr * 24.0 / 1000.0;
+        return totalCO2eKgPerHr * 24.0 / 1000.0;
       case "ton/yr":
       case "tonne/yr":
-	return totalCO2eKgPerHr * 24.0 * 365.0 / 1000.0;
+        return totalCO2eKgPerHr * 24.0 * 365.0 / 1000.0;
       default:
-	return totalCO2eKgPerHr;
+        return totalCO2eKgPerHr;
       }
     }
 
@@ -315,13 +315,13 @@ public class EmissionsTracker implements Serializable {
     public double getTotalPower(String unit) {
       switch (unit.toLowerCase()) {
       case "kw":
-	return totalPowerKW;
+        return totalPowerKW;
       case "mw":
-	return totalPowerKW / 1000.0;
+        return totalPowerKW / 1000.0;
       case "hp":
-	return totalPowerKW * 1.341;
+        return totalPowerKW * 1.341;
       default:
-	return totalPowerKW;
+        return totalPowerKW;
       }
     }
 
@@ -333,10 +333,10 @@ public class EmissionsTracker implements Serializable {
      */
     public double getFlaringCO2e(String unit) {
       double flaringKgPerHr = equipmentEmissions.values().stream().filter(e -> e.category == EmissionCategory.FLARING)
-	  .mapToDouble(e -> e.directCO2eKgPerHr).sum();
+          .mapToDouble(e -> e.directCO2eKgPerHr).sum();
 
       if (unit.toLowerCase().contains("ton")) {
-	return flaringKgPerHr / 1000.0;
+        return flaringKgPerHr / 1000.0;
       }
       return flaringKgPerHr;
     }
@@ -349,7 +349,7 @@ public class EmissionsTracker implements Serializable {
     public Map<EmissionCategory, Double> getEmissionsByCategory() {
       Map<EmissionCategory, Double> byCategory = new HashMap<>();
       for (EquipmentEmissions eq : equipmentEmissions.values()) {
-	byCategory.merge(eq.category, eq.getTotalCO2e(), Double::sum);
+        byCategory.merge(eq.category, eq.getTotalCO2e(), Double::sum);
       }
       return byCategory;
     }
@@ -365,16 +365,16 @@ public class EmissionsTracker implements Serializable {
       sb.append("Equipment,Type,Category,DirectCO2e_kg_hr,IndirectCO2e_kg_hr,TotalCO2e_kg_hr,Power_kW,HeatDuty_kW\n");
 
       for (EquipmentEmissions eq : equipmentEmissions.values()) {
-	sb.append(String.format(Locale.US, "%s,%s,%s,%.4f,%.4f,%.4f,%.4f,%.4f\n", eq.equipmentName, eq.equipmentType,
-	    eq.category, eq.directCO2eKgPerHr, eq.indirectCO2eKgPerHr, eq.getTotalCO2e(), eq.powerConsumptionKW,
-	    eq.heatDutyKW));
+        sb.append(String.format(Locale.US, "%s,%s,%s,%.4f,%.4f,%.4f,%.4f,%.4f\n", eq.equipmentName, eq.equipmentType,
+            eq.category, eq.directCO2eKgPerHr, eq.indirectCO2eKgPerHr, eq.getTotalCO2e(), eq.powerConsumptionKW,
+            eq.heatDutyKW));
       }
 
       sb.append(String.format(Locale.US, "\nTOTAL,,,%s,%s,%.4f,%.4f,%.4f\n", "", "", totalCO2eKgPerHr, totalPowerKW,
-	  totalHeatDutyKW));
+          totalHeatDutyKW));
 
       try (java.io.FileWriter writer = new java.io.FileWriter(filePath)) {
-	writer.write(sb.toString());
+        writer.write(sb.toString());
       }
     }
 
@@ -386,9 +386,9 @@ public class EmissionsTracker implements Serializable {
      */
     public void exportToJSON(String filePath) throws java.io.IOException {
       com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting()
-	  .serializeSpecialFloatingPointValues().create();
+          .serializeSpecialFloatingPointValues().create();
       try (java.io.FileWriter writer = new java.io.FileWriter(filePath)) {
-	gson.toJson(this, writer);
+        gson.toJson(this, writer);
       }
     }
 
@@ -399,7 +399,7 @@ public class EmissionsTracker implements Serializable {
      */
     public String toJson() {
       com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting()
-	  .serializeSpecialFloatingPointValues().create();
+          .serializeSpecialFloatingPointValues().create();
       return gson.toJson(this);
     }
 
@@ -413,12 +413,12 @@ public class EmissionsTracker implements Serializable {
       sb.append("=== Emissions Report: ").append(processName).append(" ===\n");
       sb.append("Timestamp: ").append(timestamp).append("\n\n");
       sb.append(String.format(Locale.US, "Total CO2e: %.2f kg/hr (%.2f tonne/yr)\n", totalCO2eKgPerHr,
-	  getTotalCO2e("ton/yr")));
+          getTotalCO2e("ton/yr")));
       sb.append(String.format(Locale.US, "Total Power: %.2f kW (%.2f MW)\n", totalPowerKW, getTotalPower("MW")));
       sb.append(String.format(Locale.US, "Total Heat Duty: %.2f kW\n", totalHeatDutyKW));
       sb.append("\nBreakdown by Category:\n");
       for (Map.Entry<EmissionCategory, Double> entry : getEmissionsByCategory().entrySet()) {
-	sb.append(String.format(Locale.US, "  %s: %.2f kg/hr\n", entry.getKey(), entry.getValue()));
+        sb.append(String.format(Locale.US, "  %s: %.2f kg/hr\n", entry.getKey(), entry.getValue()));
       }
       return sb.toString();
     }

@@ -263,8 +263,8 @@ public class PartialOxidationReactor extends TwoPortEquipment {
 
     refractoryTemperatureK = burnerZone.getFlameTemperature() * (1.0 - 0.5 * refractoryHeatLossFraction);
     refractoryWarning = refractoryTemperatureK > refractoryTemperatureLimitK
-	? "refractory hot-face temperature above screening limit"
-	: "ok";
+        ? "refractory hot-face temperature above screening limit"
+        : "ok";
 
     SystemInterface productSystem = burnerZone.getOutletStream().getThermoSystem().clone();
     if (quenchEnabled) {
@@ -308,7 +308,7 @@ public class PartialOxidationReactor extends TwoPortEquipment {
     }
     if (outStream != null && outStream.getThermoSystem() != null) {
       results.put("syngasComposition_molFrac",
-	  HydrogenProductionUtils.extractSyngasComposition(outStream.getThermoSystem()));
+          HydrogenProductionUtils.extractSyngasComposition(outStream.getThermoSystem()));
     }
     return results;
   }
@@ -364,7 +364,7 @@ public class PartialOxidationReactor extends TwoPortEquipment {
     double oxygenPenalty = oxygenToCarbonRatio < 0.48 ? (0.48 - oxygenToCarbonRatio) / 0.48 : 0.0;
     double steamCredit = Math.min(0.25, 0.25 * steamToCarbonRatio);
     double quenchPenalty = quenchEnabled && quenchSection != null && quenchSection.getQuenchSeverity() > 700.0 ? 0.0
-	: 0.25;
+        : 0.25;
     return HydrogenProductionUtils.clamp(oxygenPenalty + quenchPenalty - steamCredit, 0.0, 1.0);
   }
 

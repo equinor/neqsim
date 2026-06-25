@@ -411,12 +411,12 @@ public class ProcessBasis {
     public Builder setFeedFlowRate(double flowRate, String unit) {
       // Store as kg/hr
       if ("Sm3/day".equalsIgnoreCase(unit)) {
-	// Approximation - actual conversion depends on fluid
-	basis.feedFlowRate = flowRate * 0.8; // Rough estimate
+        // Approximation - actual conversion depends on fluid
+        basis.feedFlowRate = flowRate * 0.8; // Rough estimate
       } else if ("MSm3/day".equalsIgnoreCase(unit)) {
-	basis.feedFlowRate = flowRate * 800000.0; // Rough estimate
+        basis.feedFlowRate = flowRate * 800000.0; // Rough estimate
       } else {
-	basis.feedFlowRate = flowRate; // Assume kg/hr
+        basis.feedFlowRate = flowRate; // Assume kg/hr
       }
       return this;
     }
@@ -430,11 +430,11 @@ public class ProcessBasis {
      */
     public Builder setFeedPressure(double pressure, String unit) {
       if ("barg".equalsIgnoreCase(unit)) {
-	basis.feedPressure = pressure + 1.01325;
+        basis.feedPressure = pressure + 1.01325;
       } else if ("psia".equalsIgnoreCase(unit)) {
-	basis.feedPressure = pressure / 14.5038;
+        basis.feedPressure = pressure / 14.5038;
       } else {
-	basis.feedPressure = pressure; // Assume bara
+        basis.feedPressure = pressure; // Assume bara
       }
       return this;
     }
@@ -448,11 +448,11 @@ public class ProcessBasis {
      */
     public Builder setFeedTemperature(double temperature, String unit) {
       if ("C".equalsIgnoreCase(unit)) {
-	basis.feedTemperature = temperature + 273.15;
+        basis.feedTemperature = temperature + 273.15;
       } else if ("F".equalsIgnoreCase(unit)) {
-	basis.feedTemperature = (temperature - 32) * 5 / 9 + 273.15;
+        basis.feedTemperature = (temperature - 32) * 5 / 9 + 273.15;
       } else {
-	basis.feedTemperature = temperature; // Assume Kelvin
+        basis.feedTemperature = temperature; // Assume Kelvin
       }
       return this;
     }
@@ -468,7 +468,7 @@ public class ProcessBasis {
     public Builder addStagePressure(int stage, double pressure, String unit) {
       double pressureBara = pressure;
       if ("barg".equalsIgnoreCase(unit)) {
-	pressureBara = pressure + 1.01325;
+        pressureBara = pressure + 1.01325;
       }
       basis.stagePressures.put(stage, pressureBara);
       return this;
@@ -507,9 +507,9 @@ public class ProcessBasis {
      */
     public Builder setAmbientTemperature(double temperature, String unit) {
       if ("C".equalsIgnoreCase(unit)) {
-	basis.ambientTemperature = temperature + 273.15;
+        basis.ambientTemperature = temperature + 273.15;
       } else {
-	basis.ambientTemperature = temperature;
+        basis.ambientTemperature = temperature;
       }
       return this;
     }

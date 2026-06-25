@@ -81,7 +81,7 @@ public class ReservesClassificationTest {
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-	model.classify("   ");
+        model.classify("   ");
       }
     });
   }

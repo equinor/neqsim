@@ -145,32 +145,32 @@ public class LNGVaporSpaceModel implements Serializable {
 
       // Ideal gas pressure update: PV = nRT
       if (ullageVol > 0 && vaporMoles > 0) {
-	// Convert to Pa, then to bara
-	double pressurePa = vaporMoles * R_GAS * vaporTemperature / ullageVol;
-	this.tankPressure = pressurePa / 1.0e5;
+        // Convert to Pa, then to bara
+        double pressurePa = vaporMoles * R_GAS * vaporTemperature / ullageVol;
+        this.tankPressure = pressurePa / 1.0e5;
       }
 
       // Update vapor composition by accumulation
       if (bogMolesGenerated > 0) {
-	double totalVapMoles = vaporMoles;
-	if (totalVapMoles > 0) {
-	  for (Map.Entry<String, Double> entry : equilibriumVaporComp.entrySet()) {
-	    String comp = entry.getKey();
-	    double yNew = entry.getValue();
-	    double yOld = vaporComposition.containsKey(comp) ? vaporComposition.get(comp) : 0.0;
-	    double blended = (yOld * (totalVapMoles - bogMolesGenerated) + yNew * bogMolesGenerated) / totalVapMoles;
-	    vaporComposition.put(comp, Math.max(0, blended));
-	  }
-	}
+        double totalVapMoles = vaporMoles;
+        if (totalVapMoles > 0) {
+          for (Map.Entry<String, Double> entry : equilibriumVaporComp.entrySet()) {
+            String comp = entry.getKey();
+            double yNew = entry.getValue();
+            double yOld = vaporComposition.containsKey(comp) ? vaporComposition.get(comp) : 0.0;
+            double blended = (yOld * (totalVapMoles - bogMolesGenerated) + yNew * bogMolesGenerated) / totalVapMoles;
+            vaporComposition.put(comp, Math.max(0, blended));
+          }
+        }
       }
 
       // Clamp pressure to safety limits
       if (tankPressure > maxPressure) {
-	logger.warn(
-	    String.format("Tank pressure %.3f bara exceeds max %.3f bara — relief needed", tankPressure, maxPressure));
+        logger.warn(
+            String.format("Tank pressure %.3f bara exceeds max %.3f bara — relief needed", tankPressure, maxPressure));
       }
       if (tankPressure < minPressure) {
-	tankPressure = minPressure;
+        tankPressure = minPressure;
       }
     }
   }
@@ -450,26 +450,26 @@ public class LNGVaporSpaceModel implements Serializable {
 
       // Set composition from blended vapor (existing + new BOG)
       double newBOGFraction = (vaporMoles + bogMolesGenerated > 0)
-	  ? bogMolesGenerated / (vaporMoles + bogMolesGenerated)
-	  : 1.0;
+          ? bogMolesGenerated / (vaporMoles + bogMolesGenerated)
+          : 1.0;
       double oldFraction = 1.0 - newBOGFraction;
 
       vaporSystem.init(0);
       double currentMoles = vaporSystem.getTotalNumberOfMoles();
       double targetMoles = vaporMoles + bogMolesGenerated - bogMolesRemoved;
       if (targetMoles < 0) {
-	targetMoles = 0;
+        targetMoles = 0;
       }
 
       for (int i = 0; i < vaporSystem.getPhase(0).getNumberOfComponents(); i++) {
-	String name = vaporSystem.getPhase(0).getComponent(i).getComponentName();
-	double yOld = vaporComposition.containsKey(name) ? vaporComposition.get(name) : 0;
-	double yNew = equilibriumVaporComp.containsKey(name) ? equilibriumVaporComp.get(name) : 0;
-	double yBlend = oldFraction * yOld + newBOGFraction * yNew;
-	double molesNeeded = yBlend * targetMoles - vaporSystem.getPhase(0).getComponent(i).getz() * currentMoles;
-	if (Math.abs(molesNeeded) > 1e-20) {
-	  vaporSystem.addComponent(name, molesNeeded);
-	}
+        String name = vaporSystem.getPhase(0).getComponent(i).getComponentName();
+        double yOld = vaporComposition.containsKey(name) ? vaporComposition.get(name) : 0;
+        double yNew = equilibriumVaporComp.containsKey(name) ? equilibriumVaporComp.get(name) : 0;
+        double yBlend = oldFraction * yOld + newBOGFraction * yNew;
+        double molesNeeded = yBlend * targetMoles - vaporSystem.getPhase(0).getComponent(i).getz() * currentMoles;
+        if (Math.abs(molesNeeded) > 1e-20) {
+          vaporSystem.addComponent(name, molesNeeded);
+        }
       }
 
       // Run TP flash on the vapor system
@@ -480,27 +480,27 @@ public class LNGVaporSpaceModel implements Serializable {
 
       // Update vapor composition from flash result
       if (vaporSystem.hasPhaseType("gas")) {
-	vaporComposition.clear();
-	for (int i = 0; i < vaporSystem.getPhase("gas").getNumberOfComponents(); i++) {
-	  String name = vaporSystem.getPhase("gas").getComponent(i).getComponentName();
-	  double y = vaporSystem.getPhase("gas").getComponent(i).getx();
-	  vaporComposition.put(name, y);
-	}
-	this.vaporMoles = vaporSystem.getPhase("gas").getNumberOfMolesInPhase();
+        vaporComposition.clear();
+        for (int i = 0; i < vaporSystem.getPhase("gas").getNumberOfComponents(); i++) {
+          String name = vaporSystem.getPhase("gas").getComponent(i).getComponentName();
+          double y = vaporSystem.getPhase("gas").getComponent(i).getx();
+          vaporComposition.put(name, y);
+        }
+        this.vaporMoles = vaporSystem.getPhase("gas").getNumberOfMolesInPhase();
       }
 
       // Update pressure from real gas behavior
       if (ullageVol > 0 && vaporMoles > 0) {
-	double pressurePa = vaporMoles * R_GAS * vaporTemperature / ullageVol;
-	this.tankPressure = pressurePa / 1.0e5;
+        double pressurePa = vaporMoles * R_GAS * vaporTemperature / ullageVol;
+        this.tankPressure = pressurePa / 1.0e5;
       }
 
       // Clamp pressure
       if (tankPressure > maxPressure) {
-	logger.warn(String.format("Tank pressure %.3f bara exceeds max %.3f", tankPressure, maxPressure));
+        logger.warn(String.format("Tank pressure %.3f bara exceeds max %.3f", tankPressure, maxPressure));
       }
       if (tankPressure < minPressure) {
-	tankPressure = minPressure;
+        tankPressure = minPressure;
       }
     } catch (Exception ex) {
       logger.warn("Vapor space flash failed, falling back to simple model", ex);

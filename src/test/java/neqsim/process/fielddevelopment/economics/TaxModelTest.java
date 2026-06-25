@@ -430,8 +430,8 @@ public class TaxModelTest {
   void testCustomParameters() {
     // Create custom parameters
     FiscalParameters custom = FiscalParameters.builder("TEST-CUSTOM").countryName("Test Country")
-	.description("Custom test parameters").corporateTaxRate(0.25).resourceTaxRate(0.15).royaltyRate(0.12)
-	.depreciation(FiscalParameters.DepreciationMethod.STRAIGHT_LINE, 5).build();
+        .description("Custom test parameters").corporateTaxRate(0.25).resourceTaxRate(0.15).royaltyRate(0.12)
+        .depreciation(FiscalParameters.DepreciationMethod.STRAIGHT_LINE, 5).build();
 
     // Register
     TaxModelRegistry.register(custom);
@@ -470,11 +470,11 @@ public class TaxModelTest {
   @DisplayName("FiscalParameters builder creates valid object")
   void testFiscalParametersBuilder() {
     FiscalParameters params = FiscalParameters.builder("TEST-BUILD").countryName("Test Builder Country")
-	.description("Testing the builder pattern").validFromYear(2024)
-	.fiscalSystemType(FiscalParameters.FiscalSystemType.CONCESSIONARY).corporateTaxRate(0.30).resourceTaxRate(0.20)
-	.royaltyRate(0.05).depreciation(FiscalParameters.DepreciationMethod.STRAIGHT_LINE, 8).uplift(0.10, 3)
-	.lossCarryForward(5, 0.02).ringFenced(FiscalParameters.RingFenceLevel.LICENSE).investmentTaxCredit(0.10)
-	.build();
+        .description("Testing the builder pattern").validFromYear(2024)
+        .fiscalSystemType(FiscalParameters.FiscalSystemType.CONCESSIONARY).corporateTaxRate(0.30).resourceTaxRate(0.20)
+        .royaltyRate(0.05).depreciation(FiscalParameters.DepreciationMethod.STRAIGHT_LINE, 8).uplift(0.10, 3)
+        .lossCarryForward(5, 0.02).ringFenced(FiscalParameters.RingFenceLevel.LICENSE).investmentTaxCredit(0.10)
+        .build();
 
     assertEquals("TEST-BUILD", params.getCountryCode());
     assertEquals("Test Builder Country", params.getCountryName());
@@ -497,8 +497,8 @@ public class TaxModelTest {
   @DisplayName("PSC parameters builder")
   void testPSCParametersBuilder() {
     FiscalParameters params = FiscalParameters.builder("TEST-PSC").countryName("Test PSC Country")
-	.fiscalSystemType(FiscalParameters.FiscalSystemType.PSC).corporateTaxRate(0.25).costRecoveryLimit(0.60)
-	.profitSharing(0.70, 0.30).build();
+        .fiscalSystemType(FiscalParameters.FiscalSystemType.PSC).corporateTaxRate(0.25).costRecoveryLimit(0.60)
+        .profitSharing(0.70, 0.30).build();
 
     assertEquals(FiscalParameters.FiscalSystemType.PSC, params.getFiscalSystemType());
     assertEquals(0.60, params.getCostRecoveryLimit(), TOLERANCE);

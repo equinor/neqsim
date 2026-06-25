@@ -75,9 +75,9 @@ public class PHflashGERG2008 extends Flash {
     double minTemperature = 0.0;
     do {
       if (Math.abs(error) > Math.abs(errorOld) && factor > 0.1 && correctFactor) {
-	factor *= 0.5;
+        factor *= 0.5;
       } else if (Math.abs(error) < Math.abs(errorOld) && correctFactor) {
-	factor = iterations / (iterations + 1.0) * 1.0;
+        factor = iterations / (iterations + 1.0) * 1.0;
       }
       iterations++;
       oldTemp = nyTemp;
@@ -87,30 +87,30 @@ public class PHflashGERG2008 extends Flash {
       newCorr = factor * calcdQdT() / calcdQdTT();
       nyTemp = oldTemp - newCorr;
       if (Math.abs(system.getTemperature() - 1.0 / nyTemp) > 10.0) {
-	nyTemp = 1.0 / (system.getTemperature() - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
-	correctFactor = false;
+        nyTemp = 1.0 / (system.getTemperature() - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
+        correctFactor = false;
       } else if (nyTemp < 0) {
-	nyTemp = Math.abs(1.0 / (system.getTemperature() + 10.0));
-	correctFactor = false;
+        nyTemp = Math.abs(1.0 / (system.getTemperature() + 10.0));
+        correctFactor = false;
       } else if (Double.isNaN(nyTemp)) {
-	nyTemp = oldTemp + 0.1;
-	correctFactor = false;
+        nyTemp = oldTemp + 0.1;
+        correctFactor = false;
       } else {
-	correctFactor = true;
+        correctFactor = true;
       }
       system.setTemperature(1.0 / nyTemp);
       if (system.getTemperature() > maxTemperature) {
-	system.setTemperature(maxTemperature - 0.1);
+        system.setTemperature(maxTemperature - 0.1);
       } else if (system.getTemperature() < minTemperature) {
-	system.setTemperature(minTemperature + 0.1);
+        system.setTemperature(minTemperature + 0.1);
       }
       errorOld = error;
       error = calcdQdT();
 
       if (error > 0 && system.getTemperature() > maxTemperature) {
-	maxTemperature = system.getTemperature();
+        maxTemperature = system.getTemperature();
       } else if (error < 0 && system.getTemperature() < minTemperature) {
-	minTemperature = system.getTemperature();
+        minTemperature = system.getTemperature();
       }
 
       /*
@@ -145,30 +145,30 @@ public class PHflashGERG2008 extends Flash {
     // System.out.println("temp start " + system.getTemperature());
     do {
       if (error > errorOld && factor > 0.1 && correctFactor) {
-	factor *= 0.5;
+        factor *= 0.5;
       } else if (error < errorOld && correctFactor) {
-	factor = iterations / (iterations + 1.0) * 1.0;
+        factor = iterations / (iterations + 1.0) * 1.0;
       }
       iterations++;
       oldTemp = nyTemp;
       double[] gergProps = system.getPhase(0).getProperties_GERG2008();
       cP_GERG2008 = gergProps[10] * system.getPhase(0).getNumberOfMolesInPhase(); // J/mol K
       enthalpy_GERG2008 = gergProps[7] * system.getPhase(0).getNumberOfMolesInPhase(); // J/mol
-										       // K
+      // K
 
       newCorr = factor * calcdQdT() / calcdQdTT();
       nyTemp = oldTemp - newCorr;
       if (Math.abs(system.getTemperature() - 1.0 / nyTemp) > 10.0) {
-	nyTemp = 1.0 / (system.getTemperature() - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
-	correctFactor = false;
+        nyTemp = 1.0 / (system.getTemperature() - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
+        correctFactor = false;
       } else if (nyTemp < 0) {
-	nyTemp = Math.abs(1.0 / (system.getTemperature() + 10.0));
-	correctFactor = false;
+        nyTemp = Math.abs(1.0 / (system.getTemperature() + 10.0));
+        correctFactor = false;
       } else if (Double.isNaN(nyTemp)) {
-	nyTemp = oldTemp + 0.1;
-	correctFactor = false;
+        nyTemp = oldTemp + 0.1;
+        correctFactor = false;
       } else {
-	correctFactor = true;
+        correctFactor = true;
       }
       system.setTemperature(1.0 / nyTemp);
       errorOld = error;

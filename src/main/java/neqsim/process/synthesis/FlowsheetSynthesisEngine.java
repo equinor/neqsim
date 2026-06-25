@@ -82,7 +82,7 @@ public final class FlowsheetSynthesisEngine {
 
     SystemInterface flashSystem = duty.getFeed().getFluid().clone();
     double opP = Double.isNaN(duty.getOperatingPressureBara()) ? duty.getFeed().getPressure("bara")
-	: duty.getOperatingPressureBara();
+        : duty.getOperatingPressureBara();
     flashSystem.setPressure(opP, "bara");
     ThermodynamicOperations ops = new ThermodynamicOperations(flashSystem);
     try {
@@ -98,9 +98,9 @@ public final class FlowsheetSynthesisEngine {
     int nPhase = flashSystem.getNumberOfPhases();
     if (nPhase < 2) {
       alternatives.add("SINGLE_FLASH rejected: feed is single-phase at "
-	  + String.format("%.2f bara — pressure swing or distillation required", opP));
+          + String.format("%.2f bara — pressure swing or distillation required", opP));
       return buildDistillation(duty, flashSystem, opP, alternatives,
-	  "Feed is single-phase at operating pressure — escalating to distillation column.");
+          "Feed is single-phase at operating pressure — escalating to distillation column.");
     }
 
     // Predict single-flash compositions
@@ -111,8 +111,8 @@ public final class FlowsheetSynthesisEngine {
     if (specsMet) {
       ProcessSystem ps = buildSingleFlash(duty, opP);
       return new FlowsheetProposal(FlowsheetProposal.Strategy.SINGLE_FLASH,
-	  "Single-stage flash at " + fmt(opP) + " bara meets all duty specs.", ps, gasFracs, liqFracs, alternatives,
-	  true);
+          "Single-stage flash at " + fmt(opP) + " bara meets all duty specs.", ps, gasFracs, liqFracs, alternatives,
+          true);
     }
     alternatives.add("SINGLE_FLASH rejected: predicted compositions do not satisfy duty specs.");
 
@@ -122,24 +122,24 @@ public final class FlowsheetSynthesisEngine {
       // Cannot infer keys → return the single flash as best-effort with INFEASIBLE strategy
       ProcessSystem ps = buildSingleFlash(duty, opP);
       return new FlowsheetProposal(FlowsheetProposal.Strategy.INFEASIBLE,
-	  "Could not identify light/heavy keys from duty specs; returning single-stage flash as" + " best-effort.", ps,
-	  gasFracs, liqFracs, alternatives, false);
+          "Could not identify light/heavy keys from duty specs; returning single-stage flash as" + " best-effort.", ps,
+          gasFracs, liqFracs, alternatives, false);
     }
 
     if (keys.alpha < ALPHA_DISTILLATION_THRESHOLD) {
       alternatives.add("DISTILLATION rejected: relative volatility α=" + fmt(keys.alpha) + " (LK=" + keys.lk + ", HK="
-	  + keys.hk + ") is below 1.5 — distillation impractical;"
-	  + " consider extractive distillation, membranes, or adsorption.");
+          + keys.hk + ") is below 1.5 — distillation impractical;"
+          + " consider extractive distillation, membranes, or adsorption.");
       ProcessSystem ps = buildSingleFlash(duty, opP);
       return new FlowsheetProposal(FlowsheetProposal.Strategy.INFEASIBLE,
-	  "Relative volatility α=" + fmt(keys.alpha) + " between LK=" + keys.lk + " and HK=" + keys.hk
-	      + " is below 1.5. No standard distillation/flash structure will meet the"
-	      + " specs; an advanced separation is required.",
-	  ps, gasFracs, liqFracs, alternatives, false);
+          "Relative volatility α=" + fmt(keys.alpha) + " between LK=" + keys.lk + " and HK=" + keys.hk
+              + " is below 1.5. No standard distillation/flash structure will meet the"
+              + " specs; an advanced separation is required.",
+          ps, gasFracs, liqFracs, alternatives, false);
     }
 
     return buildDistillation(duty, flashSystem, opP, alternatives, "Relative volatility α=" + fmt(keys.alpha)
-	+ " between LK=" + keys.lk + " and HK=" + keys.hk + " supports a distillation column.");
+        + " between LK=" + keys.lk + " and HK=" + keys.hk + " supports a distillation column.");
   }
 
   // ---------------------------------------------------------------------------
@@ -173,11 +173,11 @@ public final class FlowsheetSynthesisEngine {
     for (String c : duty.getTopProductSpecs().keySet()) {
       double k = kValue(flashed, c);
       if (Double.isNaN(k)) {
-	continue;
+        continue;
       }
       if (k > lkK) {
-	lkK = k;
-	lk = c;
+        lkK = k;
+        lk = c;
       }
     }
     String hk = null;
@@ -185,24 +185,24 @@ public final class FlowsheetSynthesisEngine {
     for (String c : duty.getBottomProductSpecs().keySet()) {
       double k = kValue(flashed, c);
       if (Double.isNaN(k)) {
-	continue;
+        continue;
       }
       if (k < hkK) {
-	hkK = k;
-	hk = c;
+        hkK = k;
+        hk = c;
       }
     }
     if (lk == null && hk != null) {
       // Pick the heaviest non-HK component with the highest K
       lk = pickComplementKey(duty, flashed, hk, true);
       if (lk != null) {
-	lkK = kValue(flashed, lk);
+        lkK = kValue(flashed, lk);
       }
     }
     if (hk == null && lk != null) {
       hk = pickComplementKey(duty, flashed, lk, false);
       if (hk != null) {
-	hkK = kValue(flashed, hk);
+        hkK = kValue(flashed, hk);
       }
     }
     double alpha = (lk != null && hk != null && hkK > 0) ? (lkK / hkK) : Double.NaN;
@@ -215,15 +215,15 @@ public final class FlowsheetSynthesisEngine {
     for (int i = 0; i < flashed.getNumberOfComponents(); i++) {
       String name = flashed.getComponent(i).getName();
       if (name.equals(exclude)) {
-	continue;
+        continue;
       }
       double k = kValue(flashed, name);
       if (Double.isNaN(k)) {
-	continue;
+        continue;
       }
       if (wantHighestK ? (k > chosenK) : (k < chosenK)) {
-	chosenK = k;
-	chosen = name;
+        chosenK = k;
+        chosen = name;
       }
     }
     return chosen;
@@ -240,8 +240,8 @@ public final class FlowsheetSynthesisEngine {
     int idx = -1;
     for (int i = 0; i < sys.getNumberOfComponents(); i++) {
       if (sys.getComponent(i).getName().equals(componentName)) {
-	idx = i;
-	break;
+        idx = i;
+        break;
       }
     }
     if (idx < 0 || sys.getNumberOfPhases() < 2) {
@@ -285,13 +285,13 @@ public final class FlowsheetSynthesisEngine {
     for (Map.Entry<String, Double> e : duty.getTopProductSpecs().entrySet()) {
       Double v = gasFracs.get(e.getKey());
       if (v == null || v < e.getValue()) {
-	return false;
+        return false;
       }
     }
     for (Map.Entry<String, Double> e : duty.getBottomProductSpecs().entrySet()) {
       Double v = liqFracs.get(e.getKey());
       if (v == null || v < e.getValue()) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -339,14 +339,14 @@ public final class FlowsheetSynthesisEngine {
       Double xLkTop = duty.getTopProductSpecs().get(keys.lk);
       Double xHkBot = duty.getBottomProductSpecs().get(keys.hk);
       if (xLkTop != null && xHkBot != null && xLkTop > 0 && xLkTop < 1 && xHkBot > 0 && xHkBot < 1) {
-	double xHkTop = 1.0 - xLkTop;
-	double xLkBot = 1.0 - xHkBot;
-	double separation = (xLkTop / xHkTop) * (xHkBot / xLkBot);
-	if (separation > 1.0) {
-	  double nMin = Math.log(separation) / Math.log(keys.alpha);
-	  nTrays = (int) Math.round(2.0 * nMin);
-	  fenskeNote = "Fenske N_min=" + fmt(nMin) + " (α=" + fmt(keys.alpha) + "); using N=2·N_min.";
-	}
+        double xHkTop = 1.0 - xLkTop;
+        double xLkBot = 1.0 - xHkBot;
+        double separation = (xLkTop / xHkTop) * (xHkBot / xLkBot);
+        if (separation > 1.0) {
+          double nMin = Math.log(separation) / Math.log(keys.alpha);
+          nTrays = (int) Math.round(2.0 * nMin);
+          fenskeNote = "Fenske N_min=" + fmt(nMin) + " (α=" + fmt(keys.alpha) + "); using N=2·N_min.";
+        }
       }
     }
     if (nTrays < MIN_TRAYS) {
@@ -369,14 +369,14 @@ public final class FlowsheetSynthesisEngine {
     ps.add(col);
 
     String rationaleFull = rationale + " " + fenskeNote + " Column has " + totalTrays
-	+ " stages (incl. condenser + reboiler); feed enters at stage " + feedTray
-	+ " (mid-column). Operating pressure " + fmt(opP) + " bara.";
+        + " stages (incl. condenser + reboiler); feed enters at stage " + feedTray
+        + " (mid-column). Operating pressure " + fmt(opP) + " bara.";
 
     // For DISTILLATION we assume specs are met (column was sized to meet them).
     Map<String, Double> topPred = new LinkedHashMap<String, Double>(duty.getTopProductSpecs());
     Map<String, Double> botPred = new LinkedHashMap<String, Double>(duty.getBottomProductSpecs());
     return new FlowsheetProposal(FlowsheetProposal.Strategy.DISTILLATION, rationaleFull, ps, topPred, botPred,
-	alternatives, true);
+        alternatives, true);
   }
 
   /**
@@ -392,7 +392,7 @@ public final class FlowsheetSynthesisEngine {
     List<String> alts = new ArrayList<String>();
     alts.add(reason);
     return new FlowsheetProposal(FlowsheetProposal.Strategy.INFEASIBLE, "Synthesis fallback: " + reason, ps,
-	new LinkedHashMap<String, Double>(), new LinkedHashMap<String, Double>(), alts, false);
+        new LinkedHashMap<String, Double>(), new LinkedHashMap<String, Double>(), alts, false);
   }
 
   private static String fmt(double v) {
@@ -460,11 +460,11 @@ public final class FlowsheetSynthesisEngine {
       upstream = k.getOutletStream();
 
       if (idx < stages) {
-	String coolerName = duty.getName() + "-IC" + idx;
-	Cooler cooler = new Cooler(coolerName, upstream);
-	cooler.setOutletTemperature(duty.getInterstageCoolerTemperatureC(), "C");
-	ps.add(cooler);
-	upstream = cooler.getOutletStream();
+        String coolerName = duty.getName() + "-IC" + idx;
+        Cooler cooler = new Cooler(coolerName, upstream);
+        cooler.setOutletTemperature(duty.getInterstageCoolerTemperatureC(), "C");
+        ps.add(cooler);
+        upstream = cooler.getOutletStream();
       }
     }
 
@@ -476,11 +476,11 @@ public final class FlowsheetSynthesisEngine {
     }
 
     String rationale = "Selected " + stages + " stage" + (stages == 1 ? "" : "s") + " for overall pressure ratio "
-	+ fmt(overallRatio) + " (" + fmt(pIn) + " → " + fmt(pOut) + " bara); per-stage ratio " + fmt(perStageRatio)
-	+ " ≤ max " + fmt(duty.getMaxStageRatio()) + ". Polytropic efficiency " + fmt(duty.getPolytropicEfficiency())
-	+ ", inter-stage cooling to " + fmt(duty.getInterstageCoolerTemperatureC()) + " °C"
-	+ (duty.hasAfterCooler() ? ", after-cooler to " + fmt(duty.getFinalCoolerTemperatureC()) + " °C."
-	    : ", no after-cooler.");
+        + fmt(overallRatio) + " (" + fmt(pIn) + " → " + fmt(pOut) + " bara); per-stage ratio " + fmt(perStageRatio)
+        + " ≤ max " + fmt(duty.getMaxStageRatio()) + ". Polytropic efficiency " + fmt(duty.getPolytropicEfficiency())
+        + ", inter-stage cooling to " + fmt(duty.getInterstageCoolerTemperatureC()) + " °C"
+        + (duty.hasAfterCooler() ? ", after-cooler to " + fmt(duty.getFinalCoolerTemperatureC()) + " °C."
+            : ", no after-cooler.");
     return new CompressionProposal(ps, stages, perStageRatio, rationale, stageNames);
   }
 }

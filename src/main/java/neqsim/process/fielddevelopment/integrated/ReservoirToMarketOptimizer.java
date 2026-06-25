@@ -66,7 +66,7 @@ public class ReservoirToMarketOptimizer implements Serializable {
      * @param evaluations number of network solves performed
      */
     public OptimizationResult(boolean feasible, double objectiveValue, double fieldRate, double revenue,
-	Map<String, Double> chokeSettings, Map<String, Double> wellRates, int evaluations) {
+        Map<String, Double> chokeSettings, Map<String, Double> wellRates, int evaluations) {
       this.feasible = feasible;
       this.objectiveValue = objectiveValue;
       this.fieldRate = fieldRate;
@@ -168,10 +168,10 @@ public class ReservoirToMarketOptimizer implements Serializable {
     private void appendMap(StringBuilder sb, Map<String, Double> map) {
       int i = 0;
       for (Map.Entry<String, Double> e : map.entrySet()) {
-	if (i++ > 0) {
-	  sb.append(",");
-	}
-	sb.append("\"").append(e.getKey()).append("\":").append(num(e.getValue()));
+        if (i++ > 0) {
+          sb.append(",");
+        }
+        sb.append("\"").append(e.getKey()).append("\":").append(num(e.getValue()));
       }
     }
 
@@ -183,7 +183,7 @@ public class ReservoirToMarketOptimizer implements Serializable {
      */
     private String num(double v) {
       if (Double.isNaN(v) || Double.isInfinite(v)) {
-	return "null";
+        return "null";
       }
       return String.format(java.util.Locale.US, "%.6g", v);
     }
@@ -252,7 +252,7 @@ public class ReservoirToMarketOptimizer implements Serializable {
       return optimizeInternal();
     } catch (RuntimeException ex) {
       return new OptimizationResult(false, Double.NEGATIVE_INFINITY, 0.0, 0.0, new LinkedHashMap<String, Double>(),
-	  new LinkedHashMap<String, Double>(), 0);
+          new LinkedHashMap<String, Double>(), 0);
     }
   }
 
@@ -275,30 +275,30 @@ public class ReservoirToMarketOptimizer implements Serializable {
     for (int sweep = 0; sweep < maxIterations; sweep++) {
       boolean improved = false;
       for (int i = 0; i < n; i++) {
-	double current = choke[i];
-	double[] candidates = new double[] { clamp(current + step), clamp(current - step) };
-	for (int c = 0; c < candidates.length; c++) {
-	  double cand = candidates[c];
-	  if (cand == current) {
-	    continue;
-	  }
-	  wells.get(i).getWellBranch().setChokeFactor(cand);
-	  double s = score(evalCount);
-	  if (s > bestScore + 1.0e-9) {
-	    bestScore = s;
-	    choke[i] = cand;
-	    current = cand;
-	    improved = true;
-	  } else {
-	    wells.get(i).getWellBranch().setChokeFactor(current);
-	  }
-	}
+        double current = choke[i];
+        double[] candidates = new double[] { clamp(current + step), clamp(current - step) };
+        for (int c = 0; c < candidates.length; c++) {
+          double cand = candidates[c];
+          if (cand == current) {
+            continue;
+          }
+          wells.get(i).getWellBranch().setChokeFactor(cand);
+          double s = score(evalCount);
+          if (s > bestScore + 1.0e-9) {
+            bestScore = s;
+            choke[i] = cand;
+            current = cand;
+            improved = true;
+          } else {
+            wells.get(i).getWellBranch().setChokeFactor(current);
+          }
+        }
       }
       if (!improved) {
-	step *= 0.5;
-	if (step < 1.0e-3) {
-	  break;
-	}
+        step *= 0.5;
+        if (step < 1.0e-3) {
+          break;
+        }
       }
     }
     // Final evaluation at the best chokes.
@@ -313,7 +313,7 @@ public class ReservoirToMarketOptimizer implements Serializable {
     boolean feasible = res.getFieldRate() <= facilityCapacity * 1.0001;
     double objVal = objective == Objective.REVENUE ? res.getRevenue() : res.getFieldRate();
     return new OptimizationResult(feasible, objVal, res.getFieldRate(), res.getRevenue(), chokeMap, res.getWellRates(),
-	evalCount[0]);
+        evalCount[0]);
   }
 
   /**
@@ -339,7 +339,7 @@ public class ReservoirToMarketOptimizer implements Serializable {
       // Marginal objective value per unit field rate (revenue: price; rate: 1.0).
       double marginal = objective == Objective.REVENUE ? (fieldRate > 0.0 ? res.getRevenue() / fieldRate : 0.0) : 1.0;
       if (marginal <= 0.0) {
-	marginal = 1.0;
+        marginal = 1.0;
       }
       double overFraction = over / Math.max(1.0, facilityCapacity);
       base -= capacityPenaltyWeight * marginal * over + capacityPenaltyWeight * marginal * over * overFraction;

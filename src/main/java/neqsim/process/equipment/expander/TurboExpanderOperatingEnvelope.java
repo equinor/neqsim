@@ -3,9 +3,9 @@ package neqsim.process.equipment.expander;
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import com.google.gson.GsonBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -93,7 +93,7 @@ public class TurboExpanderOperatingEnvelope implements Serializable {
    */
   public void setGrid(double[] inletPressures, double[] flowRates) {
     this.inletPressures = inletPressures == null ? null
-	: java.util.Arrays.copyOf(inletPressures, inletPressures.length);
+        : java.util.Arrays.copyOf(inletPressures, inletPressures.length);
     this.flowRates = flowRates == null ? null : java.util.Arrays.copyOf(flowRates, flowRates.length);
   }
 
@@ -124,37 +124,37 @@ public class TurboExpanderOperatingEnvelope implements Serializable {
 
     for (int i = 0; i < nP; i++) {
       for (int j = 0; j < nF; j++) {
-	double pressure = inletPressures[i];
-	double flow = flowRates[j];
-	boolean feasible = false;
-	double margin = Double.NaN;
-	double coldT = Double.NaN;
-	double hydMargin = Double.NaN;
-	double speed = Double.NaN;
-	try {
-	  inlet.setPressure(pressure, "bara");
-	  inlet.setFlowRate(flow, "kg/hr");
-	  inlet.run();
-	  if (compFeed != null && compFeed != inlet) {
-	    compFeed.setPressure(compFeed.getPressure("bara"), "bara");
-	    compFeed.run();
-	  }
-	  machine.run();
-	  speed = machine.getSpeed();
-	  feasible = speed > minAllowableSpeed && speed < maxAllowableSpeed;
-	  double qnComp = machine.getQNratiocompressor();
-	  margin = (qnComp - surgeQnLimit) / surgeQnLimit;
-	  StreamInterface expOut = machine.getExpanderOutletStream();
-	  coldT = expOut.getTemperature("C");
-	  hydMargin = calcHydrateMargin(expOut);
-	} catch (Exception ex) {
-	  logger.debug("Envelope point P=" + pressure + " flow=" + flow + " failed", ex);
-	}
-	feasibility[i][j] = feasible;
-	surgeMargin[i][j] = margin;
-	coldEndTemperature[i][j] = coldT;
-	hydrateMargin[i][j] = hydMargin;
-	shaftSpeed[i][j] = speed;
+        double pressure = inletPressures[i];
+        double flow = flowRates[j];
+        boolean feasible = false;
+        double margin = Double.NaN;
+        double coldT = Double.NaN;
+        double hydMargin = Double.NaN;
+        double speed = Double.NaN;
+        try {
+          inlet.setPressure(pressure, "bara");
+          inlet.setFlowRate(flow, "kg/hr");
+          inlet.run();
+          if (compFeed != null && compFeed != inlet) {
+            compFeed.setPressure(compFeed.getPressure("bara"), "bara");
+            compFeed.run();
+          }
+          machine.run();
+          speed = machine.getSpeed();
+          feasible = speed > minAllowableSpeed && speed < maxAllowableSpeed;
+          double qnComp = machine.getQNratiocompressor();
+          margin = (qnComp - surgeQnLimit) / surgeQnLimit;
+          StreamInterface expOut = machine.getExpanderOutletStream();
+          coldT = expOut.getTemperature("C");
+          hydMargin = calcHydrateMargin(expOut);
+        } catch (Exception ex) {
+          logger.debug("Envelope point P=" + pressure + " flow=" + flow + " failed", ex);
+        }
+        feasibility[i][j] = feasible;
+        surgeMargin[i][j] = margin;
+        coldEndTemperature[i][j] = coldT;
+        hydrateMargin[i][j] = hydMargin;
+        shaftSpeed[i][j] = speed;
       }
     }
   }
@@ -170,7 +170,7 @@ public class TurboExpanderOperatingEnvelope implements Serializable {
     try {
       SystemInterface fluid = stream.getFluid().clone();
       if (!fluid.getPhase(0).hasComponent("water")) {
-	return Double.NaN;
+        return Double.NaN;
       }
       double streamTempC = stream.getTemperature("C");
       ThermodynamicOperations ops = new ThermodynamicOperations(fluid);

@@ -1,10 +1,10 @@
 package neqsim.process.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * process1 class.
@@ -24,7 +24,7 @@ public class process1 {
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 25.0),
-	50.00);
+        50.00);
     testSystem.addComponent("methane", 180.00);
     testSystem.addComponent("ethane", 10.00);
     testSystem.addComponent("propane", 1.00);
@@ -54,7 +54,7 @@ public class process1 {
     Stream stream_1 = new Stream("Stream1", testSystem);
 
     neqsim.process.equipment.compressor.Compressor compr = new neqsim.process.equipment.compressor.Compressor("compr",
-	stream_1);
+        stream_1);
     compr.setOutletPressure(80.0);
     compr.setOutTemperature(345.0);
     compr.setUsePolytropicCalc(true);

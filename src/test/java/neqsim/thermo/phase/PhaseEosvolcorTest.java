@@ -36,29 +36,29 @@ public class PhaseEosvolcorTest {
   @Test
   void prMolarVolumeMatchesExplicitTranslation() {
     assertMolarVolumeMatchesTranslation("methane", 300.0, 50.0, SystemPrEos::new, SystemPrEosvolcor::new,
-	component -> ((ComponentPRvolcor) component).calcc(), component -> ((ComponentPRvolcor) component).calccT());
+        component -> ((ComponentPRvolcor) component).calcc(), component -> ((ComponentPRvolcor) component).calccT());
     assertMolarVolumeMatchesTranslation("n-heptane", 300.0, 50.0, SystemPrEos::new, SystemPrEosvolcor::new,
-	component -> ((ComponentPRvolcor) component).calcc(), component -> ((ComponentPRvolcor) component).calccT());
+        component -> ((ComponentPRvolcor) component).calcc(), component -> ((ComponentPRvolcor) component).calccT());
   }
 
   @Test
   void prLiquidPhaseDensityMatchesTranslatedVolume() {
     assertLiquidDensityMatchesTranslation("n-heptane", 300.0, 1.0, SystemPrEos::new, SystemPrEosvolcor::new,
-	component -> ((ComponentPRvolcor) component).calcc(), component -> ((ComponentPRvolcor) component).calccT());
+        component -> ((ComponentPRvolcor) component).calcc(), component -> ((ComponentPRvolcor) component).calccT());
   }
 
   @Test
   void srkMolarVolumeMatchesExplicitTranslation() {
     assertMolarVolumeMatchesTranslation("methane", 300.0, 50.0, SystemSrkEos::new, SystemSrkEosvolcor::new,
-	component -> ((ComponentSrkvolcor) component).calcc(), component -> ((ComponentSrkvolcor) component).calccT());
+        component -> ((ComponentSrkvolcor) component).calcc(), component -> ((ComponentSrkvolcor) component).calccT());
     assertMolarVolumeMatchesTranslation("n-heptane", 300.0, 50.0, SystemSrkEos::new, SystemSrkEosvolcor::new,
-	component -> ((ComponentSrkvolcor) component).calcc(), component -> ((ComponentSrkvolcor) component).calccT());
+        component -> ((ComponentSrkvolcor) component).calcc(), component -> ((ComponentSrkvolcor) component).calccT());
   }
 
   @Test
   void srkLiquidPhaseDensityMatchesTranslatedVolume() {
     assertLiquidDensityMatchesTranslation("n-heptane", 300.0, 1.0, SystemSrkEos::new, SystemSrkEosvolcor::new,
-	component -> ((ComponentSrkvolcor) component).calcc(), component -> ((ComponentSrkvolcor) component).calccT());
+        component -> ((ComponentSrkvolcor) component).calcc(), component -> ((ComponentSrkvolcor) component).calccT());
   }
 
   @Test
@@ -86,10 +86,10 @@ public class PhaseEosvolcorTest {
     Assertions.assertEquals(translationDerivative, component.getcT(), 1e-12);
     Assertions.assertEquals(translationDerivative, phase.getCT(), 1e-12);
     Assertions.assertEquals(translationDerivative,
-	phase.calcCiT(0, phase, system.getTemperature(), system.getPressure(), phase.getNumberOfComponents()), 1e-12);
+        phase.calcCiT(0, phase, system.getTemperature(), system.getPressure(), phase.getNumberOfComponents()), 1e-12);
 
     component.Finit(phase, system.getTemperature(), system.getPressure(), system.getTotalNumberOfMoles(), 1.0,
-	phase.getNumberOfComponents(), 2);
+        phase.getNumberOfComponents(), 2);
     Assertions.assertEquals(translationDerivative, component.getCiT(), 1e-12);
   }
 
@@ -125,13 +125,13 @@ public class PhaseEosvolcorTest {
     SystemInterface translatedSystem = prepareSystem(translatedFactory, componentName, temperature, pressure, null);
 
     int translatedLiquidIndex = findPhaseIndexByType(translatedSystem,
-	baseSystem.getPhase(baseLiquidIndex).getPhaseTypeName());
+        baseSystem.getPhase(baseLiquidIndex).getPhaseTypeName());
     Assertions.assertTrue(translatedLiquidIndex >= 0,
-	"Expected translated system to contain a liquid phase of the same type");
+        "Expected translated system to contain a liquid phase of the same type");
 
     double translatedLiquidMolarVolume = translatedSystem.getPhase(translatedLiquidIndex).getMolarVolume();
     ComponentEosInterface component = (ComponentEosInterface) translatedSystem.getPhase(translatedLiquidIndex)
-	.getComponent(0);
+        .getComponent(0);
     double penelouxShift = component.getVolumeCorrection();
     Assertions.assertEquals(penelouxShift, translationCorrelation.apply(component), 1e-12);
     Assertions.assertEquals(component.getVolumeCorrectionT(), translationDerivative.apply(component), 1e-12);
@@ -141,7 +141,7 @@ public class PhaseEosvolcorTest {
     double baseLiquidMolarVolumeSI = baseSystem.getPhase(baseLiquidIndex).getMolarVolume("m3/mol");
     double translatedLiquidMolarVolumeSI = translatedSystem.getPhase(translatedLiquidIndex).getMolarVolume("m3/mol");
     double unitConversion = (baseLiquidMolarVolumeSI - translatedLiquidMolarVolumeSI)
-	/ (baseLiquidMolarVolume - translatedLiquidMolarVolume);
+        / (baseLiquidMolarVolume - translatedLiquidMolarVolume);
     double penelouxShiftSI = penelouxShift * unitConversion;
     Assertions.assertEquals(baseLiquidMolarVolumeSI - penelouxShiftSI, translatedLiquidMolarVolumeSI, 1e-16);
 
@@ -180,8 +180,8 @@ public class PhaseEosvolcorTest {
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
       double density = system.getPhase(phaseIndex).getDensity();
       if (density > densestDensity) {
-	densestDensity = density;
-	densestIndex = phaseIndex;
+        densestDensity = density;
+        densestIndex = phaseIndex;
       }
     }
     return densestIndex;
@@ -190,7 +190,7 @@ public class PhaseEosvolcorTest {
   private int findPhaseIndexByType(SystemInterface system, String phaseTypeName) {
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
       if (system.getPhase(phaseIndex).getPhaseTypeName().equals(phaseTypeName)) {
-	return phaseIndex;
+        return phaseIndex;
       }
     }
     return -1;

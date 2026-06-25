@@ -243,8 +243,8 @@ public class NetworkSolver implements Serializable {
   public NetworkSolver setWellEnabled(String wellName, boolean enabled) {
     for (WellNode node : wellNodes) {
       if (node.name.equals(wellName)) {
-	node.enabled = enabled;
-	break;
+        node.enabled = enabled;
+        break;
       }
     }
     return this;
@@ -260,8 +260,8 @@ public class NetworkSolver implements Serializable {
   public NetworkSolver setChokeOpening(String wellName, double opening) {
     for (WellNode node : wellNodes) {
       if (node.name.equals(wellName)) {
-	node.chokeOpening = Math.max(0, Math.min(1, opening));
-	break;
+        node.chokeOpening = Math.max(0, Math.min(1, opening));
+        break;
       }
     }
     return this;
@@ -323,34 +323,34 @@ public class NetworkSolver implements Serializable {
       double maxChange = 0;
 
       for (WellNode node : wellNodes) {
-	if (!node.enabled) {
-	  node.allocatedRate = 0;
-	  continue;
-	}
+        if (!node.enabled) {
+          node.allocatedRate = 0;
+          continue;
+        }
 
-	// Calculate wellhead pressure required to deliver to manifold
-	double whpRequired = manifoldPressure + estimateFlowlinePressureDrop(node);
+        // Calculate wellhead pressure required to deliver to manifold
+        double whpRequired = manifoldPressure + estimateFlowlinePressureDrop(node);
 
-	// Set wellhead pressure on well and solve
-	node.well.setWellheadPressure(whpRequired, "bara");
-	node.well.run();
+        // Set wellhead pressure on well and solve
+        node.well.setWellheadPressure(whpRequired, "bara");
+        node.well.run();
 
-	double newRate = node.well.getOperatingFlowRate("Sm3/day") * node.chokeOpening;
-	double change = Math.abs(newRate - node.allocatedRate) / Math.max(newRate, 1);
-	maxChange = Math.max(maxChange, change);
+        double newRate = node.well.getOperatingFlowRate("Sm3/day") * node.chokeOpening;
+        double change = Math.abs(newRate - node.allocatedRate) / Math.max(newRate, 1);
+        maxChange = Math.max(maxChange, change);
 
-	node.allocatedRate = node.allocatedRate * (1 - relaxationFactor) + newRate * relaxationFactor;
-	node.wellheadPressure = whpRequired;
-	node.flowlinePressureDrop = estimateFlowlinePressureDrop(node);
+        node.allocatedRate = node.allocatedRate * (1 - relaxationFactor) + newRate * relaxationFactor;
+        node.wellheadPressure = whpRequired;
+        node.flowlinePressureDrop = estimateFlowlinePressureDrop(node);
 
-	totalRate += node.allocatedRate;
+        totalRate += node.allocatedRate;
       }
 
       lastIterations = iter + 1;
       lastResidual = maxChange;
 
       if (maxChange < tolerance) {
-	break;
+        break;
       }
     }
 
@@ -360,7 +360,7 @@ public class NetworkSolver implements Serializable {
     if (totalRate > maxTotalRate) {
       double scaleFactor = maxTotalRate / totalRate;
       for (WellNode node : wellNodes) {
-	node.allocatedRate *= scaleFactor;
+        node.allocatedRate *= scaleFactor;
       }
     }
   }
@@ -385,14 +385,14 @@ public class NetworkSolver implements Serializable {
       lastIterations = iter + 1;
 
       if (Math.abs(error) < tolerance) {
-	break;
+        break;
       }
 
       // Bisection: higher manifold pressure = lower rate
       if (totalRate > targetTotalRate) {
-	pManifoldLow = pManifoldMid;
+        pManifoldLow = pManifoldMid;
       } else {
-	pManifoldHigh = pManifoldMid;
+        pManifoldHigh = pManifoldMid;
       }
     }
   }
@@ -410,7 +410,7 @@ public class NetworkSolver implements Serializable {
 
     for (WellNode node : wellNodes) {
       if (!node.enabled) {
-	continue;
+        continue;
       }
       node.well.setWellheadPressure(manifoldPressure + 10, "bara");
       node.well.run();
@@ -423,8 +423,8 @@ public class NetworkSolver implements Serializable {
     double targetRate = Math.min(totalPotential, maxTotalRate);
     for (WellNode node : wellNodes) {
       if (!node.enabled) {
-	node.allocatedRate = 0;
-	continue;
+        node.allocatedRate = 0;
+        continue;
       }
       double potential = potentials.getOrDefault(node, 0.0);
       node.allocatedRate = (potential / totalPotential) * targetRate;
@@ -433,7 +433,7 @@ public class NetworkSolver implements Serializable {
     // Recalculate wellhead pressures for allocated rates
     for (WellNode node : wellNodes) {
       if (!node.enabled || node.allocatedRate <= 0) {
-	continue;
+        continue;
       }
       // Find WHP that gives allocated rate
       node.wellheadPressure = findWHPForRate(node, node.allocatedRate);
@@ -490,14 +490,14 @@ public class NetworkSolver implements Serializable {
       double rate = node.well.getOperatingFlowRate("Sm3/day");
 
       if (Math.abs(rate - targetRate) / targetRate < 0.01) {
-	return whpMid;
+        return whpMid;
       }
 
       // Higher WHP = lower rate
       if (rate > targetRate) {
-	whpLow = whpMid;
+        whpLow = whpMid;
       } else {
-	whpHigh = whpMid;
+        whpHigh = whpMid;
       }
     }
 

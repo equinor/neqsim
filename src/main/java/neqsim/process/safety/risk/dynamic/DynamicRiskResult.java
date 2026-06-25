@@ -218,7 +218,7 @@ public class DynamicRiskResult extends OperationalRiskResult implements Serializ
 
     // Call parent to calculate base statistics
     super.calculateStatistics(totalProductions, availabilities, failureCounts, new double[totalProductions.length]); // downtime
-														     // placeholder
+    // placeholder
 
     // Store raw data
     this.transientLosses = transientLosses.clone();
@@ -336,7 +336,7 @@ public class DynamicRiskResult extends OperationalRiskResult implements Serializ
   @Override
   public String toString() {
     return String.format(
-	"DynamicRiskResult[availability=%.1f%%, totalLoss=%.0f kg, " + "transientFraction=%.1f%%, transients=%s]",
-	getMeanAvailability(), getTotalMeanLoss(), transientLossFraction * 100, simulateTransients);
+        "DynamicRiskResult[availability=%.1f%%, totalLoss=%.0f kg, " + "transientFraction=%.1f%%, transients=%s]",
+        getMeanAvailability(), getTotalMeanLoss(), transientLossFraction * 100, simulateTransients);
   }
 }

@@ -60,14 +60,14 @@ public class StreamContract implements ModuleContract<StreamInterface> {
     // Check: Has a name
     if (stream.getName() == null || stream.getName().isEmpty()) {
       result.addError("stream.name", "Stream has no name",
-	  "Set stream name in constructor: new Stream(\"feed\", system)");
+          "Set stream name in constructor: new Stream(\"feed\", system)");
     }
 
     // Check: Has fluid attached
     SystemInterface fluid = stream.getFluid();
     if (fluid == null) {
       result.addError("stream.fluid", "No fluid/thermodynamic system attached",
-	  "Create stream with fluid: new Stream(\"name\", system)");
+          "Create stream with fluid: new Stream(\"name\", system)");
       return result; // Can't check more without fluid
     }
 
@@ -76,9 +76,9 @@ public class StreamContract implements ModuleContract<StreamInterface> {
     ValidationResult thermoResult = thermoContract.checkPreconditions(fluid);
     for (ValidationResult.ValidationIssue issue : thermoResult.getIssues()) {
       if (issue.getSeverity() == ValidationResult.Severity.CRITICAL) {
-	result.addError("stream.fluid." + issue.getCategory(), issue.getMessage(), issue.getRemediation());
+        result.addError("stream.fluid." + issue.getCategory(), issue.getMessage(), issue.getRemediation());
       } else if (issue.getSeverity() == ValidationResult.Severity.MAJOR) {
-	result.addWarning("stream.fluid." + issue.getCategory(), issue.getMessage(), issue.getRemediation());
+        result.addWarning("stream.fluid." + issue.getCategory(), issue.getMessage(), issue.getRemediation());
       }
     }
 
@@ -86,7 +86,7 @@ public class StreamContract implements ModuleContract<StreamInterface> {
     double flowRate = fluid.getTotalNumberOfMoles();
     if (flowRate <= MIN_FLOW_RATE) {
       result.addWarning("stream.flowRate", "Flow rate is very low: " + flowRate + " mol/s",
-	  "Set flow rate: stream.setFlowRate(100.0, \"kg/hr\")");
+          "Set flow rate: stream.setFlowRate(100.0, \"kg/hr\")");
     }
 
     return result;
@@ -107,9 +107,9 @@ public class StreamContract implements ModuleContract<StreamInterface> {
     ValidationResult thermoResult = thermoContract.checkPostconditions(fluid);
     for (ValidationResult.ValidationIssue issue : thermoResult.getIssues()) {
       if (issue.getSeverity() == ValidationResult.Severity.CRITICAL) {
-	result.addError("stream.fluid." + issue.getCategory(), issue.getMessage(), issue.getRemediation());
+        result.addError("stream.fluid." + issue.getCategory(), issue.getMessage(), issue.getRemediation());
       } else if (issue.getSeverity() == ValidationResult.Severity.MAJOR) {
-	result.addWarning("stream.fluid." + issue.getCategory(), issue.getMessage(), issue.getRemediation());
+        result.addWarning("stream.fluid." + issue.getCategory(), issue.getMessage(), issue.getRemediation());
       }
     }
 
@@ -119,13 +119,13 @@ public class StreamContract implements ModuleContract<StreamInterface> {
   @Override
   public String getRequirementsDescription() {
     return "Stream Requirements:\n" + "- Valid name (non-empty string)\n" + "- Thermodynamic system attached\n"
-	+ "- Flow rate > 0 (via setFlowRate or component moles)\n" + "- Valid temperature and pressure in fluid";
+        + "- Flow rate > 0 (via setFlowRate or component moles)\n" + "- Valid temperature and pressure in fluid";
   }
 
   @Override
   public String getProvidesDescription() {
     return "Stream Provides (after run()):\n" + "- Outlet temperature and pressure\n" + "- Phase distribution\n"
-	+ "- Component mass/mole fractions\n" + "- Enthalpy, entropy, density\n"
-	+ "- Can connect to downstream equipment";
+        + "- Component mass/mole fractions\n" + "- Enthalpy, entropy, density\n"
+        + "- Can connect to downstream equipment";
   }
 }

@@ -1,12 +1,12 @@
 package neqsim.process.safety.rupture;
 
-import com.google.gson.GsonBuilder;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import com.google.gson.GsonBuilder;
 import neqsim.process.safety.barrier.SafetySystemCategory;
 import neqsim.process.safety.barrier.SafetySystemDemand;
 import neqsim.process.safety.release.LeakModel;
@@ -250,8 +250,8 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
    */
   public SafetySystemDemand toPassiveFireProtectionDemand(String demandId, double requiredEnduranceSeconds) {
     SafetySystemDemand demand = new SafetySystemDemand(demandId).setEquipmentTag(segmentId)
-	.setScenario("Trapped liquid fire rupture exposure").setCategory(SafetySystemCategory.PASSIVE_FIRE_PROTECTION)
-	.setDemandValue(requiredEnduranceSeconds).setDemandUnit("s").setCapacityValue(getMinimumFailureTimeSeconds());
+        .setScenario("Trapped liquid fire rupture exposure").setCategory(SafetySystemCategory.PASSIVE_FIRE_PROTECTION)
+        .setDemandValue(requiredEnduranceSeconds).setDemandUnit("s").setCapacityValue(getMinimumFailureTimeSeconds());
     if (Double.isFinite(getMinimumFailureTimeSeconds())) {
       demand.setRequiredResponseTimeSeconds(requiredEnduranceSeconds);
       demand.setActualResponseTimeSeconds(getMinimumFailureTimeSeconds());
@@ -284,9 +284,9 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
     sourceFluid.initProperties();
     ReleaseOrientation selectedOrientation = orientation == null ? ReleaseOrientation.HORIZONTAL : orientation;
     return LeakModel.builder().fluid(sourceFluid).holeDiameter(pipeInternalDiameterM).orientation(selectedOrientation)
-	.vesselVolume(inventoryVolumeM3).backPressure(1.01325, "bar")
-	.scenarioName("Full-bore rupture from " + segmentId).build()
-	.calculateSourceTerm(durationSeconds, timeStepSeconds);
+        .vesselVolume(inventoryVolumeM3).backPressure(1.01325, "bar")
+        .scenarioName("Full-bore rupture from " + segmentId).build()
+        .calculateSourceTerm(durationSeconds, timeStepSeconds);
   }
 
   /**
@@ -449,7 +449,7 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
      * @return this builder
      */
     Builder addPoint(double timeS, double pressureBar, double liquidTemperature, double innerWallTemperature,
-	double outerWallTemperature, double stressMpa, double allowableMpa, double flangeRatingBar) {
+        double outerWallTemperature, double stressMpa, double allowableMpa, double flangeRatingBar) {
       timeSeconds.add(timeS);
       pressureBara.add(pressureBar);
       liquidTemperatureK.add(liquidTemperature);
@@ -468,7 +468,7 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
      */
     void recordReliefSet(double timeS) {
       if (!Double.isFinite(timeToReliefSetSeconds)) {
-	timeToReliefSetSeconds = timeS;
+        timeToReliefSetSeconds = timeS;
       }
     }
 
@@ -479,7 +479,7 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
      */
     void recordVaporPocket(double timeS) {
       if (!Double.isFinite(timeToVaporPocketSeconds)) {
-	timeToVaporPocketSeconds = timeS;
+        timeToVaporPocketSeconds = timeS;
       }
     }
 
@@ -490,7 +490,7 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
      */
     void recordPipeRupture(double timeS) {
       if (!Double.isFinite(timeToPipeRuptureSeconds)) {
-	timeToPipeRuptureSeconds = timeS;
+        timeToPipeRuptureSeconds = timeS;
       }
     }
 
@@ -501,7 +501,7 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
      */
     void recordFlangeFailure(double timeS) {
       if (!Double.isFinite(timeToFlangeFailureSeconds)) {
-	timeToFlangeFailureSeconds = timeS;
+        timeToFlangeFailureSeconds = timeS;
       }
     }
 
@@ -551,18 +551,18 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
       double bestTime = Double.POSITIVE_INFINITY;
       FailureMode mode = FailureMode.NONE;
       if (Double.isFinite(timeToPipeRuptureSeconds) && timeToPipeRuptureSeconds < bestTime) {
-	bestTime = timeToPipeRuptureSeconds;
-	mode = FailureMode.PIPE_RUPTURE;
+        bestTime = timeToPipeRuptureSeconds;
+        mode = FailureMode.PIPE_RUPTURE;
       }
       if (Double.isFinite(timeToFlangeFailureSeconds) && timeToFlangeFailureSeconds < bestTime) {
-	bestTime = timeToFlangeFailureSeconds;
-	mode = FailureMode.FLANGE_FAILURE;
+        bestTime = timeToFlangeFailureSeconds;
+        mode = FailureMode.FLANGE_FAILURE;
       }
       if (mode == FailureMode.NONE && Double.isFinite(timeToReliefSetSeconds)) {
-	mode = FailureMode.RELIEF_SET_PRESSURE;
+        mode = FailureMode.RELIEF_SET_PRESSURE;
       }
       if (mode == FailureMode.NONE && Double.isFinite(timeToVaporPocketSeconds)) {
-	mode = FailureMode.VAPOR_POCKET;
+        mode = FailureMode.VAPOR_POCKET;
       }
       return mode;
     }

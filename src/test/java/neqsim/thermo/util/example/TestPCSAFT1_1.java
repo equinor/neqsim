@@ -36,23 +36,23 @@ public class TestPCSAFT1_1 {
     for (int p = 0; p < 1; p++) {
       pres += 5.0;
       for (int k = 0; k < 1; k++) {
-	testSystem = new SystemSrkEos(testSystem.getTemperature(), pres);
-	for (int i = 0; i < componentName.length; i++) {
-	  double newVar = cern.jet.random.Normal.staticNextDouble(compositions[i], uncertcompositions[i]);
-	  newVar = cern.jet.random.Normal.staticNextDouble(compositions[i], uncertcompositions[i]);
-	  runcompositions[i] = compositions[i] + newVar;
-	  testSystem.addComponent(componentName[i], runcompositions[i]);
-	}
-	// testSystem.createDatabase(true);
-	// testSystem.setMixingRule(1);
-	ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-	testSystem.init(0);
-	try {
-	  testOps.dewPointTemperatureFlash();
-	  logger.info("pressure " + testSystem.getPressure() + " dew point " + testSystem.getTemperature());
-	} catch (Exception ex) {
-	  logger.error(ex.getMessage(), ex);
-	}
+        testSystem = new SystemSrkEos(testSystem.getTemperature(), pres);
+        for (int i = 0; i < componentName.length; i++) {
+          double newVar = cern.jet.random.Normal.staticNextDouble(compositions[i], uncertcompositions[i]);
+          newVar = cern.jet.random.Normal.staticNextDouble(compositions[i], uncertcompositions[i]);
+          runcompositions[i] = compositions[i] + newVar;
+          testSystem.addComponent(componentName[i], runcompositions[i]);
+        }
+        // testSystem.createDatabase(true);
+        // testSystem.setMixingRule(1);
+        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+        testSystem.init(0);
+        try {
+          testOps.dewPointTemperatureFlash();
+          logger.info("pressure " + testSystem.getPressure() + " dew point " + testSystem.getTemperature());
+        } catch (Exception ex) {
+          logger.error(ex.getMessage(), ex);
+        }
       }
     }
   }

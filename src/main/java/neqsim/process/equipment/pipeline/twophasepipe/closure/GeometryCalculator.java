@@ -169,7 +169,7 @@ public class GeometryCalculator implements Serializable {
       // Error
       double error = area - targetArea;
       if (Math.abs(error) < 1e-12 * Math.PI * R * R) {
-	break;
+        break;
       }
 
       // Derivative dA/dh
@@ -177,12 +177,12 @@ public class GeometryCalculator implements Serializable {
       // where dθ/dh = 1 / (R * sin(θ))
       double sinTheta = Math.sin(theta);
       if (Math.abs(sinTheta) < 1e-10) {
-	// Near empty or full pipe, use linear approximation
-	h += (targetArea - area) / (2.0 * R);
+        // Near empty or full pipe, use linear approximation
+        h += (targetArea - area) / (2.0 * R);
       } else {
-	double dThetaDh = 1.0 / (R * sinTheta);
-	double dAdh = R * R * dThetaDh * (1.0 - Math.cos(2.0 * theta));
-	h -= error / dAdh;
+        double dThetaDh = 1.0 / (R * sinTheta);
+        double dAdh = R * R * dThetaDh * (1.0 - Math.cos(2.0 * theta));
+        h -= error / dAdh;
       }
     }
 

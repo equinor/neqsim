@@ -133,7 +133,7 @@ public class MembraneMechanicalDesign extends MechanicalDesign {
     if (membrane.getPermeateStream() != null && membrane.getPermeateStream().getThermoSystem() != null) {
       double permeateFlow = membrane.getPermeateStream().getFlowRate("mole/sec");
       if (feedFlowMoleSec > 0) {
-	stageCut = permeateFlow / feedFlowMoleSec;
+        stageCut = permeateFlow / feedFlowMoleSec;
       }
     }
 

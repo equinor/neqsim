@@ -94,10 +94,10 @@ public class VotingEvaluator<T> {
 
     for (VotingInput<T> input : inputs) {
       if (!input.faulty) {
-	validCount++;
-	if (input.value instanceof Boolean && (Boolean) input.value) {
-	  trueCount++;
-	}
+        validCount++;
+        if (input.value instanceof Boolean && (Boolean) input.value) {
+          trueCount++;
+        }
       }
     }
 
@@ -126,7 +126,7 @@ public class VotingEvaluator<T> {
 
     for (VotingInput<T> input : inputs) {
       if (!input.faulty && input.value instanceof Double) {
-	validValues.add((Double) input.value);
+        validValues.add((Double) input.value);
       }
     }
 
@@ -156,8 +156,8 @@ public class VotingEvaluator<T> {
 
     for (VotingInput<T> input : inputs) {
       if (!input.faulty && input.value instanceof Double) {
-	sum += (Double) input.value;
-	count++;
+        sum += (Double) input.value;
+        count++;
       }
     }
 
@@ -184,7 +184,7 @@ public class VotingEvaluator<T> {
 
     for (VotingInput<T> input : inputs) {
       if (!input.faulty && input.value instanceof Double) {
-	validValues.add((Double) input.value);
+        validValues.add((Double) input.value);
       }
     }
 
@@ -215,7 +215,7 @@ public class VotingEvaluator<T> {
     int count = 0;
     for (VotingInput<T> input : inputs) {
       if (!input.faulty) {
-	count++;
+        count++;
       }
     }
     return count;
@@ -230,7 +230,7 @@ public class VotingEvaluator<T> {
     int count = 0;
     for (VotingInput<T> input : inputs) {
       if (input.faulty) {
-	count++;
+        count++;
       }
     }
     return count;

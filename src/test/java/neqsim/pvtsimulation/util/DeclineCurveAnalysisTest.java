@@ -232,9 +232,9 @@ class DeclineCurveAnalysisTest {
   @Test
   void testEstimateExponentialDeclineValidation() {
     assertThrows(IllegalArgumentException.class,
-	() -> DeclineCurveAnalysis.estimateExponentialDecline(100, 0, 200, 365));
+        () -> DeclineCurveAnalysis.estimateExponentialDecline(100, 0, 200, 365));
     assertThrows(IllegalArgumentException.class,
-	() -> DeclineCurveAnalysis.estimateExponentialDecline(100, 365, 50, 0));
+        () -> DeclineCurveAnalysis.estimateExponentialDecline(100, 365, 50, 0));
   }
 
   @Test

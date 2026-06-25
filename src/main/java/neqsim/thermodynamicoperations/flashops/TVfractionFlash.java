@@ -74,7 +74,7 @@ public class TVfractionFlash extends Flash {
    */
   public double calcdQdVdP() {
     double dQdVP = 1.0 / system.getPhase(0).getdPdVTn() / system.getVolume()
-	+ system.getPhase(0).getVolume() / Math.pow(system.getVolume(), 2.0) * system.getdVdPtn();
+        + system.getPhase(0).getVolume() / Math.pow(system.getVolume(), 2.0) * system.getdVdPtn();
     return dQdVP;
   }
 
@@ -118,18 +118,18 @@ public class TVfractionFlash extends Flash {
 
       // Check for uncountable state after init
       if (stateHasUncountableNumbers(system)) {
-	consecutiveFailures++;
-	if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
-	  logger.debug("TVfractionFlash aborting after {} consecutive failures", consecutiveFailures);
-	  system.setPressure(lastValidPressure);
-	  converged = false;
-	  return lastValidPressure;
-	}
-	// Try recovering with a smaller pressure step
-	nyPres = lastValidPressure * 0.95;
-	system.setPressure(nyPres);
-	tpFlash.run();
-	continue;
+        consecutiveFailures++;
+        if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+          logger.debug("TVfractionFlash aborting after {} consecutive failures", consecutiveFailures);
+          system.setPressure(lastValidPressure);
+          converged = false;
+          return lastValidPressure;
+        }
+        // Try recovering with a smaller pressure step
+        nyPres = lastValidPressure * 0.95;
+        system.setPressure(nyPres);
+        tpFlash.run();
+        continue;
       }
 
       consecutiveFailures = 0;
@@ -141,15 +141,15 @@ public class TVfractionFlash extends Flash {
 
       // Validate derivatives - abort if calculations produce invalid values
       if (!Double.isFinite(dqdv) || !Double.isFinite(dqdvdp) || Math.abs(dqdvdp) < 1e-30) {
-	logger.debug("TVfractionFlash: invalid derivatives dqdv={} dqdvdp={}, aborting", dqdv, dqdvdp);
-	system.setPressure(lastValidPressure);
-	converged = false;
-	return lastValidPressure;
+        logger.debug("TVfractionFlash: invalid derivatives dqdv={} dqdvdp={}, aborting", dqdv, dqdvdp);
+        system.setPressure(lastValidPressure);
+        converged = false;
+        return lastValidPressure;
       }
 
       // Adaptive damping: reduce damping if converging well
       if (iterations > 3 && error < errorOld * 0.9) {
-	dampingFactor = Math.max(20.0, dampingFactor * 0.9);
+        dampingFactor = Math.max(20.0, dampingFactor * 0.9);
       }
 
       double stepFraction = iterations / (iterations + dampingFactor);
@@ -158,44 +158,44 @@ public class TVfractionFlash extends Flash {
 
       // Validate new pressure
       if (!Double.isFinite(nyPres)) {
-	logger.debug("TVfractionFlash: calculated pressure is not finite ({}), aborting", nyPres);
-	system.setPressure(lastValidPressure);
-	converged = false;
-	return lastValidPressure;
+        logger.debug("TVfractionFlash: calculated pressure is not finite ({}), aborting", nyPres);
+        system.setPressure(lastValidPressure);
+        converged = false;
+        return lastValidPressure;
       }
 
       // Prevent negative pressure
       if (nyPres <= 0.0) {
-	nyPres = oldPres * 0.9;
+        nyPres = oldPres * 0.9;
       }
 
       // Limit large pressure steps
       double maxStep = Math.min(10.0, Math.abs(oldPres) * 0.5);
       if (Math.abs(pressureStep) > maxStep) {
-	nyPres = oldPres + Math.signum(pressureStep) * maxStep;
-	pressureStep = nyPres - oldPres;
+        nyPres = oldPres + Math.signum(pressureStep) * maxStep;
+        pressureStep = nyPres - oldPres;
       }
 
       system.setPressure(nyPres);
       if (system.getPressure() < 5000) {
-	tpFlash.run();
+        tpFlash.run();
 
-	// Check state after flash
-	if (stateHasUncountableNumbers(system)) {
-	  consecutiveFailures++;
-	  if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
-	    logger.debug("TVfractionFlash aborting after {} consecutive flash failures", consecutiveFailures);
-	    system.setPressure(lastValidPressure);
-	    converged = false;
-	    return lastValidPressure;
-	  }
-	  continue;
-	}
+        // Check state after flash
+        if (stateHasUncountableNumbers(system)) {
+          consecutiveFailures++;
+          if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+            logger.debug("TVfractionFlash aborting after {} consecutive flash failures", consecutiveFailures);
+            system.setPressure(lastValidPressure);
+            converged = false;
+            return lastValidPressure;
+          }
+          continue;
+        }
       } else {
-	logger.debug("Too high pressure in TVfractionFlash ({} bar), stopping", system.getPressure());
-	system.setPressure(lastValidPressure);
-	converged = false;
-	return lastValidPressure;
+        logger.debug("Too high pressure in TVfractionFlash ({} bar), stopping", system.getPressure());
+        system.setPressure(lastValidPressure);
+        converged = false;
+        return lastValidPressure;
       }
 
       errorOld = error;
@@ -203,19 +203,19 @@ public class TVfractionFlash extends Flash {
 
       // Check for diverging error
       if (iterations > 10 && error > errorOld * 2.0) {
-	logger.debug("TVfractionFlash: error diverging ({}), aborting", error);
-	system.setPressure(lastValidPressure);
-	converged = false;
-	return lastValidPressure;
+        logger.debug("TVfractionFlash: error diverging ({}), aborting", error);
+        system.setPressure(lastValidPressure);
+        converged = false;
+        return lastValidPressure;
       }
 
       logger.trace("iter {} pressure {:.6f} error {:.3e} damping {:.1f}", iterations, nyPres, error, dampingFactor);
 
       // Convergence check with early exit
       if (error < 1e-8 && iterations > 3) {
-	logger.trace("Early convergence achieved at iteration {}", iterations);
-	converged = true;
-	break;
+        logger.trace("Early convergence achieved at iteration {}", iterations);
+        converged = true;
+        break;
       }
     } while ((error > 1e-6 && Math.abs(pressureStep) > 1e-6 && iterations < 200) || iterations < 6);
 
@@ -256,43 +256,43 @@ public class TVfractionFlash extends Flash {
 
       // Check for initial flash failure
       if (stateHasUncountableNumbers(system)) {
-	logger.debug("TVfractionFlash: initial flash produced invalid state, aborting");
-	system.setPressure(initialPressure);
-	return;
+        logger.debug("TVfractionFlash: initial flash produced invalid state, aborting");
+        system.setPressure(initialPressure);
+        return;
       }
 
       // Try to establish two-phase state if needed
       if (system.getNumberOfPhases() == 1 || !system.hasPhaseType("gas")) {
-	while (phaseSearchAttempts < MAX_PHASE_SEARCH_ATTEMPTS) {
-	  phaseSearchAttempts++;
-	  system.setPressure(system.getPressure() * 0.9);
+        while (phaseSearchAttempts < MAX_PHASE_SEARCH_ATTEMPTS) {
+          phaseSearchAttempts++;
+          system.setPressure(system.getPressure() * 0.9);
 
-	  // Check for pressure getting too low
-	  if (system.getPressure() < 1e-6) {
-	    logger.debug("TVfractionFlash: pressure too low during phase search, aborting");
-	    system.setPressure(initialPressure);
-	    return;
-	  }
+          // Check for pressure getting too low
+          if (system.getPressure() < 1e-6) {
+            logger.debug("TVfractionFlash: pressure too low during phase search, aborting");
+            system.setPressure(initialPressure);
+            return;
+          }
 
-	  tpFlash.run();
+          tpFlash.run();
 
-	  if (stateHasUncountableNumbers(system)) {
-	    logger.debug("TVfractionFlash: invalid state during phase search, aborting");
-	    system.setPressure(initialPressure);
-	    return;
-	  }
+          if (stateHasUncountableNumbers(system)) {
+            logger.debug("TVfractionFlash: invalid state during phase search, aborting");
+            system.setPressure(initialPressure);
+            return;
+          }
 
-	  if (system.getNumberOfPhases() > 1 && system.hasPhaseType("gas")) {
-	    break;
-	  }
-	}
+          if (system.getNumberOfPhases() > 1 && system.hasPhaseType("gas")) {
+            break;
+          }
+        }
 
-	if (phaseSearchAttempts >= MAX_PHASE_SEARCH_ATTEMPTS) {
-	  logger.debug("TVfractionFlash: could not establish two-phase state after {} attempts",
-	      MAX_PHASE_SEARCH_ATTEMPTS);
-	  system.setPressure(initialPressure);
-	  return;
-	}
+        if (phaseSearchAttempts >= MAX_PHASE_SEARCH_ATTEMPTS) {
+          logger.debug("TVfractionFlash: could not establish two-phase state after {} attempts",
+              MAX_PHASE_SEARCH_ATTEMPTS);
+          system.setPressure(initialPressure);
+          return;
+        }
       }
 
       solveQ();
@@ -311,33 +311,33 @@ public class TVfractionFlash extends Flash {
     for (int phaseIndex = 0; phaseIndex < sys.getNumberOfPhases(); phaseIndex++) {
       PhaseInterface phase = sys.getPhase(phaseIndex);
       if (phase == null) {
-	continue;
+        continue;
       }
       if (!Double.isFinite(phase.getBeta())) {
-	reportNonFinite("phase beta", phaseIndex, null, phase.getBeta());
-	return true;
+        reportNonFinite("phase beta", phaseIndex, null, phase.getBeta());
+        return true;
       }
       if (!Double.isFinite(phase.getZ())) {
-	reportNonFinite("phase Z", phaseIndex, null, phase.getZ());
-	return true;
+        reportNonFinite("phase Z", phaseIndex, null, phase.getZ());
+        return true;
       }
       for (int compIndex = 0; compIndex < phase.getNumberOfComponents(); compIndex++) {
-	ComponentInterface component = phase.getComponent(compIndex);
-	double x = component.getx();
-	if (!Double.isFinite(x) || x < 0.0) {
-	  reportNonFinite("component x", phaseIndex, component.getComponentName(), x);
-	  return true;
-	}
-	double logPhi = component.getLogFugacityCoefficient();
-	if (!Double.isFinite(logPhi)) {
-	  reportNonFinite("component logPhi", phaseIndex, component.getComponentName(), logPhi);
-	  return true;
-	}
-	double phi = component.getFugacityCoefficient();
-	if (!Double.isFinite(phi) || phi <= 0.0) {
-	  reportNonFinite("component phi", phaseIndex, component.getComponentName(), phi);
-	  return true;
-	}
+        ComponentInterface component = phase.getComponent(compIndex);
+        double x = component.getx();
+        if (!Double.isFinite(x) || x < 0.0) {
+          reportNonFinite("component x", phaseIndex, component.getComponentName(), x);
+          return true;
+        }
+        double logPhi = component.getLogFugacityCoefficient();
+        if (!Double.isFinite(logPhi)) {
+          reportNonFinite("component logPhi", phaseIndex, component.getComponentName(), logPhi);
+          return true;
+        }
+        double phi = component.getFugacityCoefficient();
+        if (!Double.isFinite(phi) || phi <= 0.0) {
+          reportNonFinite("component phi", phaseIndex, component.getComponentName(), phi);
+          return true;
+        }
       }
     }
     return false;
@@ -352,7 +352,7 @@ public class TVfractionFlash extends Flash {
 
     if (componentName != null) {
       logger.debug("Solution contains uncountable numbers: {} for component '{}' in phase {} (value={})", field,
-	  componentName, phaseIndex, value);
+          componentName, phaseIndex, value);
     } else {
       logger.debug("Solution contains uncountable numbers: {} in phase {} (value={})", field, phaseIndex, value);
     }

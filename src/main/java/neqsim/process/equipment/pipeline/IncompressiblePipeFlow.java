@@ -142,7 +142,7 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
 
     // Calculate Reynolds number and friction factor
     double reynoldsNumber = velocity * insideDiameter
-	/ system.getPhase(0).getPhysicalProperties().getKinematicViscosity();
+        / system.getPhase(0).getPhysicalProperties().getKinematicViscosity();
     double frictionFactor = calcWallFrictionFactor(reynoldsNumber);
 
     // Friction pressure drop using Darcy-Weisbach with effective length
@@ -151,7 +151,7 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
 
     // Elevation pressure change: ΔP = ρg(z_in - z_out)
     dp += (getInletElevation() - getOutletElevation()) * density
-	* neqsim.thermo.ThermodynamicConstantsInterface.gravity;
+        * neqsim.thermo.ThermodynamicConstantsInterface.gravity;
 
     return (system.getPressure() * 1e5 + dp) / 1.0e5;
   }

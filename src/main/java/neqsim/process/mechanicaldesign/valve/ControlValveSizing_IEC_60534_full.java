@@ -119,16 +119,16 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
 
     // --- Full Calculation with Iterations ---
     double nu = getValve().getInletStream().getThermoSystem().getViscosity("kg/msec") / rho; // Kinematic
-											     // viscosity
-											     // in
-											     // m^2/s
+    // viscosity
+    // in
+    // m^2/s
     double dmm = getD() * 1000.0;
     double D1mm = getD1() * 1000.0;
     double D2mm = getD2() * 1000.0;
 
     double kv = initialKv;
     double Rev = reynoldsValve(nu * 1e6, Qloc, D1mm, getFL(), getFd(), kv); // nu must be in m2/s
-									    // for python code
+    // for python code
     ans.put("Rev", Rev);
     ans.put("laminar", Rev <= 10000 && isAllowLaminar());
 
@@ -137,26 +137,26 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
       double FP = 1.0;
       double FLP = getFL();
       for (int i = 0; i < MAX_ITERATIONS; i++) {
-	double loss = lossCoefficientPiping(dmm, D1mm, D2mm);
-	FP = 1.0 / Math.sqrt(1 + loss / N2 * Math.pow(kv / (dmm * dmm), 2));
+        double loss = lossCoefficientPiping(dmm, D1mm, D2mm);
+        FP = 1.0 / Math.sqrt(1 + loss / N2 * Math.pow(kv / (dmm * dmm), 2));
 
-	double lossUpstream = (D1mm > 0) ? lossCoefficientPiping(dmm, D1mm, null) : 0;
-	FLP = getFL() / Math.sqrt(1 + Math.pow(getFL(), 2) / N2 * lossUpstream * Math.pow(kv / (dmm * dmm), 2));
+        double lossUpstream = (D1mm > 0) ? lossCoefficientPiping(dmm, D1mm, null) : 0;
+        FLP = getFL() / Math.sqrt(1 + Math.pow(getFL(), 2) / N2 * lossUpstream * Math.pow(kv / (dmm * dmm), 2));
 
-	boolean choked = isChokedTurbulentL(dP, locP1, locPsat, FF, FLP, FP);
+        boolean choked = isChokedTurbulentL(dP, locP1, locPsat, FF, FLP, FP);
 
-	double newKv;
-	if (choked && isAllowChoked()) {
-	  newKv = Qloc / (N1 * FLP) * Math.sqrt(rho / rho0 / (locP1 - FF * locPsat));
-	} else {
-	  newKv = Qloc / (N1 * FP) * Math.sqrt(rho / rho0 / dP);
-	}
+        double newKv;
+        if (choked && isAllowChoked()) {
+          newKv = Qloc / (N1 * FLP) * Math.sqrt(rho / rho0 / (locP1 - FF * locPsat));
+        } else {
+          newKv = Qloc / (N1 * FP) * Math.sqrt(rho / rho0 / dP);
+        }
 
-	if (Math.abs(newKv - kv) / newKv < CONVERGENCE_TOLERANCE) {
-	  kv = newKv;
-	  break;
-	}
-	kv = newKv;
+        if (Math.abs(newKv - kv) / newKv < CONVERGENCE_TOLERANCE) {
+          kv = newKv;
+          break;
+        }
+        kv = newKv;
       }
       ans.put("FP", FP);
       ans.put("FLP", FLP);
@@ -164,16 +164,16 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
       // Laminar or Transitional flow
       double FR = 1.0;
       for (int i = 0; i < MAX_ITERATIONS; i++) {
-	Rev = reynoldsValve(nu * 1e6, Qloc, D1mm, getFL(), getFd(), kv);
-	FR = reynoldsFactor(getFL(), kv, dmm, Rev, isFullTrim);
+        Rev = reynoldsValve(nu * 1e6, Qloc, D1mm, getFL(), getFd(), kv);
+        FR = reynoldsFactor(getFL(), kv, dmm, Rev, isFullTrim);
 
-	double newKv = initialKv / FR;
+        double newKv = initialKv / FR;
 
-	if (Math.abs(newKv - kv) / newKv < CONVERGENCE_TOLERANCE) {
-	  kv = newKv;
-	  break;
-	}
-	kv = newKv;
+        if (Math.abs(newKv - kv) / newKv < CONVERGENCE_TOLERANCE) {
+          kv = newKv;
+          break;
+        }
+        kv = newKv;
       }
       ans.put("Rev", Rev);
       ans.put("FR", FR);
@@ -254,26 +254,26 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
       double FP = 1.0;
       double xTP = getxT();
       for (int i = 0; i < MAX_ITERATIONS; i++) {
-	double loss = lossCoefficientPiping(dmm, D1mm, D2mm);
-	FP = 1.0 / Math.sqrt(1.0 + loss / N2 * Math.pow(kv / (dmm * dmm), 2));
+        double loss = lossCoefficientPiping(dmm, D1mm, D2mm);
+        FP = 1.0 / Math.sqrt(1.0 + loss / N2 * Math.pow(kv / (dmm * dmm), 2));
 
-	double lossUpstream = (D1mm > 0) ? lossCoefficientPiping(dmm, D1mm, null) : 0;
-	xTP = getxT() / (FP * FP) / (1 + getxT() * lossUpstream / N5 * Math.pow(kv / (dmm * dmm), 2));
+        double lossUpstream = (D1mm > 0) ? lossCoefficientPiping(dmm, D1mm, null) : 0;
+        xTP = getxT() / (FP * FP) / (1 + getxT() * lossUpstream / N5 * Math.pow(kv / (dmm * dmm), 2));
 
-	boolean choked = isChokedTurbulentG(x, Fgamma, xTP);
+        boolean choked = isChokedTurbulentG(x, Fgamma, xTP);
 
-	double newKv;
-	if (choked && isAllowChoked()) {
-	  newKv = Qloc_std / (N9 * FP * locP1 * Y) * Math.sqrt(MW * T * Z / (xTP * Fgamma));
-	} else {
-	  newKv = Qloc_std / (N9 * FP * locP1 * Y) * Math.sqrt(MW * T * Z / x);
-	}
+        double newKv;
+        if (choked && isAllowChoked()) {
+          newKv = Qloc_std / (N9 * FP * locP1 * Y) * Math.sqrt(MW * T * Z / (xTP * Fgamma));
+        } else {
+          newKv = Qloc_std / (N9 * FP * locP1 * Y) * Math.sqrt(MW * T * Z / x);
+        }
 
-	if (Math.abs(newKv - kv) / newKv < CONVERGENCE_TOLERANCE) {
-	  kv = newKv;
-	  break;
-	}
-	kv = newKv;
+        if (Math.abs(newKv - kv) / newKv < CONVERGENCE_TOLERANCE) {
+          kv = newKv;
+          break;
+        }
+        kv = newKv;
       }
       ans.put("FP", FP);
       ans.put("xTP", xTP);
@@ -281,16 +281,16 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
       // Laminar or Transitional flow
       double FR = 1.0;
       for (int i = 0; i < MAX_ITERATIONS; i++) {
-	Rev = reynoldsValve(nu * 1e6, Qloc, D1mm, getFL(), getFd(), kv);
-	FR = reynoldsFactor(getFL(), kv, dmm, Rev, isFullTrim);
+        Rev = reynoldsValve(nu * 1e6, Qloc, D1mm, getFL(), getFd(), kv);
+        FR = reynoldsFactor(getFL(), kv, dmm, Rev, isFullTrim);
 
-	double newKv = initialKv / FR;
+        double newKv = initialKv / FR;
 
-	if (Math.abs(newKv - kv) / newKv < CONVERGENCE_TOLERANCE) {
-	  kv = newKv;
-	  break;
-	}
-	kv = newKv;
+        if (Math.abs(newKv - kv) / newKv < CONVERGENCE_TOLERANCE) {
+          kv = newKv;
+          break;
+        }
+        kv = newKv;
       }
       ans.put("Rev", Rev);
       ans.put("FR", FR);
@@ -348,7 +348,7 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
     // nu in the formula is in centistokes (mm^2/s), so convert from m^2/s
     double nu_cSt = nu;
     return N4 * Fd * Q / nu_cSt / Math.sqrt(C * FL)
-	* Math.pow(Math.pow(FL, 2) * Math.pow(C, 2) / N2 * Math.pow(D1, -4.0) + 1.0, 0.25);
+        * Math.pow(Math.pow(FL, 2) * Math.pow(C, 2) / N2 * Math.pow(D1, -4.0) + 1.0, 0.25);
   }
 
   /**
@@ -491,23 +491,23 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
     for (int i = 0; i < MAX_ITERATIONS; i++) {
       Q_mid = 0.5 * (Q_low + Q_high);
       if (Q_mid < 1e-9) {
-	break;
+        break;
       }
 
       // For this guessed flow rate (Q_mid), what Kv would our full model require?
       Map<String, Object> result = sizeControlValveLiquid(rho, Psat, Pc, P1, P2, Q_mid,
-	  ((ValveInterface) getValveMechanicalDesign().getProcessEquipment()).getPercentValveOpening());
+          ((ValveInterface) getValveMechanicalDesign().getProcessEquipment()).getPercentValveOpening());
       double requiredKv = (double) result.get("Kv");
 
       if (requiredKv < effectiveKv) {
-	// Q_mid is too low for this Kv; the actual flow must be higher.
-	Q_low = Q_mid;
+        // Q_mid is too low for this Kv; the actual flow must be higher.
+        Q_low = Q_mid;
       } else {
-	// Q_mid is too high for this Kv; the actual flow must be lower.
-	Q_high = Q_mid;
+        // Q_mid is too high for this Kv; the actual flow must be lower.
+        Q_high = Q_mid;
       }
       if (Math.abs(Q_high - Q_low) < 1e-6) {
-	break;
+        break;
       }
     }
     return Q_mid;
@@ -544,23 +544,23 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
     for (int i = 0; i < MAX_ITERATIONS; i++) {
       Q_mid = 0.5 * (Q_low + Q_high);
       if (Q_mid < 1e-9) {
-	break;
+        break;
       }
 
       // For this guessed flow rate (Q_mid), what Kv would our full model require?
       Map<String, Object> result = sizeControlValveGas(T, MW, gamma, Z, P1, P2, Q_mid,
-	  ((ValveInterface) getValveMechanicalDesign().getProcessEquipment()).getPercentValveOpening());
+          ((ValveInterface) getValveMechanicalDesign().getProcessEquipment()).getPercentValveOpening());
       double requiredKv = (double) result.get("Kv");
 
       if (requiredKv < effectiveKv) {
-	// Q_mid is too low; actual flow must be higher.
-	Q_low = Q_mid;
+        // Q_mid is too low; actual flow must be higher.
+        Q_low = Q_mid;
       } else {
-	// Q_mid is too high; actual flow must be lower.
-	Q_high = Q_mid;
+        // Q_mid is too high; actual flow must be lower.
+        Q_high = Q_mid;
       }
       if (Math.abs(Q_high - Q_low) < 1e-6) {
-	break;
+        break;
       }
     }
     return Q_mid;

@@ -106,8 +106,8 @@ public class PVFflash extends Flash {
     while (betaLow > vaporFractionSpec && bracketAttempts < 20) {
       tempLow -= 10.0;
       if (tempLow < 50.0) {
-	tempLow = 50.0;
-	break;
+        tempLow = 50.0;
+        break;
       }
       betaLow = computeBeta(tempLow);
       bracketAttempts++;
@@ -116,8 +116,8 @@ public class PVFflash extends Flash {
     while (betaHigh < vaporFractionSpec && bracketAttempts < 20) {
       tempHigh += 10.0;
       if (tempHigh > 2000.0) {
-	tempHigh = 2000.0;
-	break;
+        tempHigh = 2000.0;
+        break;
       }
       betaHigh = computeBeta(tempHigh);
       bracketAttempts++;
@@ -134,35 +134,35 @@ public class PVFflash extends Flash {
 
       // Clamp to valid range
       if (tC < 50.0) {
-	tC = 50.0;
+        tC = 50.0;
       }
       if (tC > 2000.0) {
-	tC = 2000.0;
+        tC = 2000.0;
       }
 
       double fC = computeBeta(tC) - vaporFractionSpec;
 
       if (Math.abs(fC) < tolerance) {
-	// Converged — set final temperature
-	system.setTemperature(tC);
-	tpFlash.run();
-	system.init(2);
-	return;
+        // Converged — set final temperature
+        system.setTemperature(tC);
+        tpFlash.run();
+        system.init(2);
+        return;
       }
 
       if (fC * fB < 0.0) {
-	// Root is in [tC, tB]
-	tA = tC;
-	fA = fC;
+        // Root is in [tC, tB]
+        tA = tC;
+        fA = fC;
       } else {
-	// Root is in [tA, tC] — Illinois acceleration
-	tB = tC;
-	fB = fC;
-	fA *= 0.5;
+        // Root is in [tA, tC] — Illinois acceleration
+        tB = tC;
+        fB = fC;
+        fA *= 0.5;
       }
 
       if (Math.abs(tB - tA) < 1.0e-10) {
-	break;
+        break;
       }
     }
 
@@ -186,9 +186,9 @@ public class PVFflash extends Flash {
 
     if (system.getNumberOfPhases() == 1) {
       if (system.getPhase(0).getType() == neqsim.thermo.phase.PhaseType.GAS) {
-	return 1.0;
+        return 1.0;
       } else {
-	return 0.0;
+        return 0.0;
       }
     }
 
@@ -222,7 +222,7 @@ public class PVFflash extends Flash {
   private void runBubblePoint() {
     try {
       neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	  system);
+          system);
       ops.bubblePointTemperatureFlash();
     } catch (Exception ex) {
       logger.error("Bubble point flash failed", ex);
@@ -235,7 +235,7 @@ public class PVFflash extends Flash {
   private void runDewPoint() {
     try {
       neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	  system);
+          system);
       ops.dewPointTemperatureFlash();
     } catch (Exception ex) {
       logger.error("Dew point flash failed", ex);

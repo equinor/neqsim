@@ -184,14 +184,14 @@ public class FlowRegimeDetector implements Serializable {
     FlowRegime[] candidates;
     if (isNearHorizontal) {
       candidates = new FlowRegime[] { FlowRegime.STRATIFIED_SMOOTH, FlowRegime.STRATIFIED_WAVY, FlowRegime.SLUG,
-	  FlowRegime.ANNULAR, FlowRegime.DISPERSED_BUBBLE };
+          FlowRegime.ANNULAR, FlowRegime.DISPERSED_BUBBLE };
     } else if (isUpward) {
       candidates = new FlowRegime[] { FlowRegime.BUBBLE, FlowRegime.SLUG, FlowRegime.CHURN, FlowRegime.ANNULAR,
-	  FlowRegime.DISPERSED_BUBBLE };
+          FlowRegime.DISPERSED_BUBBLE };
     } else {
       // Downward flow
       candidates = new FlowRegime[] { FlowRegime.STRATIFIED_SMOOTH, FlowRegime.STRATIFIED_WAVY, FlowRegime.SLUG,
-	  FlowRegime.ANNULAR };
+          FlowRegime.ANNULAR };
     }
 
     FlowRegime bestRegime = candidates[0];
@@ -208,8 +208,8 @@ public class FlowRegimeDetector implements Serializable {
       double slipDeviation = Math.abs(params.slipRatio - 1.0);
 
       if (slipDeviation < minSlipDeviation) {
-	minSlipDeviation = slipDeviation;
-	bestRegime = regime;
+        minSlipDeviation = slipDeviation;
+        bestRegime = regime;
       }
     }
 
@@ -304,7 +304,7 @@ public class FlowRegimeDetector implements Serializable {
     // Check for annular/churn
     if (isAnnularFlow(U_SL, U_SG, D, rho_L, rho_G, sigma)) {
       if (isUpward && U_SL > 0.1) {
-	return FlowRegime.CHURN;
+        return FlowRegime.CHURN;
       }
       return FlowRegime.ANNULAR;
     }
@@ -318,7 +318,7 @@ public class FlowRegimeDetector implements Serializable {
 
       double alpha_G = U_SG / (U_SG + U_SL + U_bubble);
       if (alpha_G < alpha_G_crit) {
-	return FlowRegime.BUBBLE;
+        return FlowRegime.BUBBLE;
       }
 
       return FlowRegime.SLUG;
@@ -328,11 +328,11 @@ public class FlowRegimeDetector implements Serializable {
       double h_L = estimateStratifiedLiquidLevel(U_SL, U_SG, D, rho_L, rho_G, mu_L, theta);
 
       if (isKelvinHelmholtzUnstable(U_SG, h_L, D, rho_L, rho_G)) {
-	return FlowRegime.SLUG;
+        return FlowRegime.SLUG;
       }
 
       if (isWavyTransition(U_SG, h_L, D, rho_L, rho_G, mu_L)) {
-	return FlowRegime.STRATIFIED_WAVY;
+        return FlowRegime.STRATIFIED_WAVY;
       }
 
       return FlowRegime.STRATIFIED_SMOOTH;
@@ -538,7 +538,7 @@ public class FlowRegimeDetector implements Serializable {
       double S_i = D * Math.sin(beta / 2.0); // Interface width
 
       if (A_L < 1e-10 || A_G < 1e-10) {
-	break;
+        break;
       }
 
       double U_L = U_SL * PI * D * D / 4.0 / A_L;
@@ -572,7 +572,7 @@ public class FlowRegimeDetector implements Serializable {
       h_L = Math.max(0.01 * D, Math.min(0.99 * D, h_L));
 
       if (Math.abs(h_L - h_prev) < 1e-6 * D) {
-	break;
+        break;
       }
     }
 
@@ -676,21 +676,21 @@ public class FlowRegimeDetector implements Serializable {
 
     for (int i = 0; i < resolution; i++) {
       for (int j = 0; j < resolution; j++) {
-	double U_SL = (i + 0.5) * U_SL_max / resolution;
-	double U_SG = (j + 0.5) * U_SG_max / resolution;
+        double U_SL = (i + 0.5) * U_SL_max / resolution;
+        double U_SG = (j + 0.5) * U_SG_max / resolution;
 
-	double U_M = U_SL + U_SG;
-	if (U_M > 1e-6) {
-	  testSection.setLiquidHoldup(U_SL / U_M);
-	  testSection.setGasHoldup(U_SG / U_M);
-	  testSection.setLiquidVelocity(U_SL / Math.max(U_SL / U_M, 0.01));
-	  testSection.setGasVelocity(U_SG / Math.max(U_SG / U_M, 0.01));
-	  testSection.updateDerivedQuantities();
+        double U_M = U_SL + U_SG;
+        if (U_M > 1e-6) {
+          testSection.setLiquidHoldup(U_SL / U_M);
+          testSection.setGasHoldup(U_SG / U_M);
+          testSection.setLiquidVelocity(U_SL / Math.max(U_SL / U_M, 0.01));
+          testSection.setGasVelocity(U_SG / Math.max(U_SG / U_M, 0.01));
+          testSection.updateDerivedQuantities();
 
-	  map[i][j] = detectFlowRegime(testSection);
-	} else {
-	  map[i][j] = FlowRegime.SINGLE_PHASE_LIQUID;
-	}
+          map[i][j] = detectFlowRegime(testSection);
+        } else {
+          map[i][j] = FlowRegime.SINGLE_PHASE_LIQUID;
+        }
       }
     }
 

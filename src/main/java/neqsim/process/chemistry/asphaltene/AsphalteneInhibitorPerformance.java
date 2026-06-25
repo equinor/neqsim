@@ -151,7 +151,7 @@ public class AsphalteneInhibitorPerformance implements Serializable {
     stableAfterTreatment = inhibitedCii < 0.7;
     if (!stableAfterTreatment) {
       warnings
-	  .add("CII after treatment " + String.format("%.2f", inhibitedCii) + " still > 0.7 — fluid remains unstable");
+          .add("CII after treatment " + String.format("%.2f", inhibitedCii) + " still > 0.7 — fluid remains unstable");
     }
     if (efficacyFraction < 0.4) {
       warnings.add("Dose " + doseMgL + " mg/L is below 50% efficacy point");
@@ -238,9 +238,9 @@ public class AsphalteneInhibitorPerformance implements Serializable {
    */
   public List<Map<String, Object>> getStandardsApplied() {
     return StandardsRegistry.toMapList(
-	new StandardReference("ASTM D6560", "ASTM",
-	    "Determination of asphaltenes (heptane insolubles) in crude petroleum"),
-	new StandardReference("Yen-Mullins model", "Industrial", "Asphaltene aggregation reference framework"));
+        new StandardReference("ASTM D6560", "ASTM",
+            "Determination of asphaltenes (heptane insolubles) in crude petroleum"),
+        new StandardReference("Yen-Mullins model", "Industrial", "Asphaltene aggregation reference framework"));
   }
 
   /**

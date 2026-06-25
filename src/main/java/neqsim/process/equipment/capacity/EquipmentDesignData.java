@@ -1,11 +1,11 @@
 package neqsim.process.equipment.capacity;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -116,30 +116,30 @@ public final class EquipmentDesignData {
     for (Map.Entry<String, JsonElement> entry : designCapacities.entrySet()) {
       String equipName = entry.getKey();
       if (!entry.getValue().isJsonObject()) {
-	results.put(equipName, new ApplyResult(equipName, "skipped", "Value is not a JSON object"));
-	continue;
+        results.put(equipName, new ApplyResult(equipName, "skipped", "Value is not a JSON object"));
+        continue;
       }
 
       ProcessEquipmentInterface equipment = findEquipment(process, equipName);
       if (equipment == null) {
-	results.put(equipName, new ApplyResult(equipName, "not_found", "Equipment not found in process"));
-	continue;
+        results.put(equipName, new ApplyResult(equipName, "not_found", "Equipment not found in process"));
+        continue;
       }
 
       JsonObject props = entry.getValue().getAsJsonObject();
       ApplyResult result = new ApplyResult(equipName, "applied", "");
 
       if (equipment instanceof Separator) {
-	applySeparatorDesign((Separator) equipment, props, result);
+        applySeparatorDesign((Separator) equipment, props, result);
       } else if (equipment instanceof Compressor) {
-	applyCompressorDesign((Compressor) equipment, props, result);
+        applyCompressorDesign((Compressor) equipment, props, result);
       } else if (equipment instanceof Heater) {
-	applyHeaterDesign((Heater) equipment, props, result);
+        applyHeaterDesign((Heater) equipment, props, result);
       } else if (equipment instanceof Pump) {
-	applyPumpDesign((Pump) equipment, props, result);
+        applyPumpDesign((Pump) equipment, props, result);
       } else {
-	result.status = "unsupported";
-	result.message = "Equipment type not supported for design capacity: " + equipment.getClass().getSimpleName();
+        result.status = "unsupported";
+        result.message = "Equipment type not supported for design capacity: " + equipment.getClass().getSimpleName();
       }
 
       results.put(equipName, result);
@@ -166,7 +166,7 @@ public final class EquipmentDesignData {
     for (int i = 0; i < process.getUnitOperations().size(); i++) {
       ProcessEquipmentInterface equip = process.getUnitOperations().get(i);
       if (!(equip instanceof CapacityConstrainedEquipment)) {
-	continue;
+        continue;
       }
 
       CapacityConstrainedEquipment constrained = (CapacityConstrainedEquipment) equip;
@@ -174,15 +174,16 @@ public final class EquipmentDesignData {
       boolean hasDesignInput = designCapacities != null && designCapacities.has(equip.getName());
 
       for (CapacityConstraint constraint : constraints.values()) {
-	if ("not_set".equals(constraint.getDataSource())) {
-	  // Tag based on whether design data was provided and whether the constraint has a
-	  // meaningful design value
-	  if (hasDesignInput) {
-	    constraint.setDataSource(DATA_SOURCE_DESIGN_CAPACITIES);
-	  } else if (constraint.getDesignValue() > 0 && constraint.getDesignValue() < Double.MAX_VALUE) {
-	    constraint.setDataSource(DATA_SOURCE_EQUIPMENT);
-	  }
-	}
+        if ("not_set".equals(constraint.getDataSource())) {
+          // Tag based on whether design data was provided and whether the constraint has
+          // a
+          // meaningful design value
+          if (hasDesignInput) {
+            constraint.setDataSource(DATA_SOURCE_DESIGN_CAPACITIES);
+          } else if (constraint.getDesignValue() > 0 && constraint.getDesignValue() < Double.MAX_VALUE) {
+            constraint.setDataSource(DATA_SOURCE_EQUIPMENT);
+          }
+        }
       }
     }
   }
@@ -198,24 +199,24 @@ public final class EquipmentDesignData {
     if (props.has("internalDiameter")) {
       double value = props.get("internalDiameter").getAsDouble();
       if (value > 0) {
-	sep.setInternalDiameter(value);
-	result.addApplied("internalDiameter", value, "m");
+        sep.setInternalDiameter(value);
+        result.addApplied("internalDiameter", value, "m");
       }
     }
 
     if (props.has("separatorLength")) {
       double value = props.get("separatorLength").getAsDouble();
       if (value > 0) {
-	sep.setSeparatorLength(value);
-	result.addApplied("separatorLength", value, "m");
+        sep.setSeparatorLength(value);
+        result.addApplied("separatorLength", value, "m");
       }
     }
 
     if (props.has("designGasLoadFactor")) {
       double value = props.get("designGasLoadFactor").getAsDouble();
       if (value > 0) {
-	sep.setDesignGasLoadFactor(value);
-	result.addApplied("designGasLoadFactor", value, "m/s");
+        sep.setDesignGasLoadFactor(value);
+        result.addApplied("designGasLoadFactor", value, "m/s");
       }
     }
   }
@@ -231,21 +232,21 @@ public final class EquipmentDesignData {
     if (props.has("maxSpeed")) {
       double value = props.get("maxSpeed").getAsDouble();
       if (value > 0) {
-	comp.setMaximumSpeed(value);
-	result.addApplied("maxSpeed", value, "RPM");
+        comp.setMaximumSpeed(value);
+        result.addApplied("maxSpeed", value, "RPM");
       }
     }
 
     if (props.has("ratedPower")) {
       double value = props.get("ratedPower").getAsDouble();
       if (value > 0) {
-	// ratedPower in kW — set on driver or mechanical design
-	if (comp.getDriver() != null) {
-	  comp.getDriver().setRatedPower(value);
-	} else {
-	  comp.getMechanicalDesign().maxDesignPower = value;
-	}
-	result.addApplied("ratedPower", value, "kW");
+        // ratedPower in kW — set on driver or mechanical design
+        if (comp.getDriver() != null) {
+          comp.getDriver().setRatedPower(value);
+        } else {
+          comp.getMechanicalDesign().maxDesignPower = value;
+        }
+        result.addApplied("ratedPower", value, "kW");
       }
     }
   }
@@ -261,20 +262,20 @@ public final class EquipmentDesignData {
     if (props.has("maxDesignDutyMW")) {
       double valueMW = props.get("maxDesignDutyMW").getAsDouble();
       if (valueMW > 0) {
-	heater.setMaxDesignDuty(valueMW, "MW");
-	result.addApplied("maxDesignDuty", valueMW, "MW");
+        heater.setMaxDesignDuty(valueMW, "MW");
+        result.addApplied("maxDesignDuty", valueMW, "MW");
       }
     } else if (props.has("maxDesignDutyKW")) {
       double valueKW = props.get("maxDesignDutyKW").getAsDouble();
       if (valueKW > 0) {
-	heater.setMaxDesignDuty(valueKW, "kW");
-	result.addApplied("maxDesignDuty", valueKW, "kW");
+        heater.setMaxDesignDuty(valueKW, "kW");
+        result.addApplied("maxDesignDuty", valueKW, "kW");
       }
     } else if (props.has("maxDesignDuty")) {
       double valueW = props.get("maxDesignDuty").getAsDouble();
       if (valueW > 0) {
-	heater.setMaxDesignDuty(valueW);
-	result.addApplied("maxDesignDuty", valueW, "W");
+        heater.setMaxDesignDuty(valueW);
+        result.addApplied("maxDesignDuty", valueW, "W");
       }
     }
   }
@@ -290,16 +291,16 @@ public final class EquipmentDesignData {
     if (props.has("maxDesignPower")) {
       double value = props.get("maxDesignPower").getAsDouble();
       if (value > 0) {
-	pump.getMechanicalDesign().maxDesignPower = value * 1000.0; // kW to W
-	result.addApplied("maxDesignPower", value, "kW");
+        pump.getMechanicalDesign().maxDesignPower = value * 1000.0; // kW to W
+        result.addApplied("maxDesignPower", value, "kW");
       }
     }
 
     if (props.has("maxDesignVolumeFlow")) {
       double value = props.get("maxDesignVolumeFlow").getAsDouble();
       if (value > 0) {
-	pump.getMechanicalDesign().setMaxDesignVolumeFlow(value);
-	result.addApplied("maxDesignVolumeFlow", value, "m3/hr");
+        pump.getMechanicalDesign().setMaxDesignVolumeFlow(value);
+        result.addApplied("maxDesignVolumeFlow", value, "m3/hr");
       }
     }
   }
@@ -315,7 +316,7 @@ public final class EquipmentDesignData {
     for (int i = 0; i < process.getUnitOperations().size(); i++) {
       ProcessEquipmentInterface equip = process.getUnitOperations().get(i);
       if (name.equals(equip.getName())) {
-	return equip;
+        return equip;
       }
     }
     return null;
@@ -375,17 +376,17 @@ public final class EquipmentDesignData {
       json.addProperty("equipmentName", equipmentName);
       json.addProperty("status", status);
       if (message != null && !message.isEmpty()) {
-	json.addProperty("message", message);
+        json.addProperty("message", message);
       }
       if (!appliedProperties.isEmpty()) {
-	JsonObject applied = new JsonObject();
-	for (AppliedProperty prop : appliedProperties) {
-	  JsonObject propJson = new JsonObject();
-	  propJson.addProperty("value", prop.value);
-	  propJson.addProperty("unit", prop.unit);
-	  applied.add(prop.property, propJson);
-	}
-	json.add("appliedProperties", applied);
+        JsonObject applied = new JsonObject();
+        for (AppliedProperty prop : appliedProperties) {
+          JsonObject propJson = new JsonObject();
+          propJson.addProperty("value", prop.value);
+          propJson.addProperty("unit", prop.unit);
+          applied.add(prop.property, propJson);
+        }
+        json.add("appliedProperties", applied);
       }
       return json;
     }

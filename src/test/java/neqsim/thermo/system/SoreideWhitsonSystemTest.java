@@ -41,10 +41,10 @@ public class SoreideWhitsonSystemTest {
 
     for (int phaseIdx = 0; phaseIdx < 2; phaseIdx++) {
       for (int compIdx = 0; compIdx < componentNames.length; compIdx++) {
-	double moleFrac = testSystem.getPhase(phaseIdx).getComponent(compIdx).getx();
-	double expected = (phaseIdx == 0) ? expectedGasFractions[compIdx] : expectedAqueousFractions[compIdx];
-	org.junit.jupiter.api.Assertions.assertEquals(expected, moleFrac, tolerance,
-	    "Phase " + phaseIdx + " component " + componentNames[compIdx] + " mole fraction");
+        double moleFrac = testSystem.getPhase(phaseIdx).getComponent(compIdx).getx();
+        double expected = (phaseIdx == 0) ? expectedGasFractions[compIdx] : expectedAqueousFractions[compIdx];
+        org.junit.jupiter.api.Assertions.assertEquals(expected, moleFrac, tolerance,
+            "Phase " + phaseIdx + " component " + componentNames[compIdx] + " mole fraction");
       }
     }
   }
@@ -105,10 +105,10 @@ public class SoreideWhitsonSystemTest {
 
     for (int phaseIdx = 0; phaseIdx < 2; phaseIdx++) {
       for (int compIdx = 0; compIdx < componentNames.length; compIdx++) {
-	double moleFrac = testSystem.getPhase(phaseIdx).getComponent(compIdx).getx();
-	double expected = (phaseIdx == 0) ? expectedGasFractions[compIdx] : expectedAqueousFractions[compIdx];
-	org.junit.jupiter.api.Assertions.assertEquals(expected, moleFrac, tolerance,
-	    "Phase " + phaseIdx + " component " + componentNames[compIdx] + " mole fraction");
+        double moleFrac = testSystem.getPhase(phaseIdx).getComponent(compIdx).getx();
+        double expected = (phaseIdx == 0) ? expectedGasFractions[compIdx] : expectedAqueousFractions[compIdx];
+        org.junit.jupiter.api.Assertions.assertEquals(expected, moleFrac, tolerance,
+            "Phase " + phaseIdx + " component " + componentNames[compIdx] + " mole fraction");
       }
     }
 
@@ -116,7 +116,7 @@ public class SoreideWhitsonSystemTest {
     double expectedSalinity = 1.8877351154938637;
     double actualSalinity = ((PhaseSoreideWhitson) testSystem.getPhase(1)).getSalinityConcentration();
     org.junit.jupiter.api.Assertions.assertEquals(expectedSalinity, actualSalinity, 0.01,
-	"Aqueous phase salinity concentration");
+        "Aqueous phase salinity concentration");
   }
 
   @Test
@@ -158,7 +158,7 @@ public class SoreideWhitsonSystemTest {
     double mixedSalinity = ((PhaseSoreideWhitson) mixedSystem.getPhase(1)).getSalinityConcentration();
 
     org.junit.jupiter.api.Assertions.assertTrue(mixedSalinity > 0.96 && mixedSalinity < 0.97,
-	"Mixed salinity should be around 0.96 , but was: " + mixedSalinity);
+        "Mixed salinity should be around 0.96 , but was: " + mixedSalinity);
 
     Separator separator = new Separator("Stream Separator");
     separator.addStream(mixer.getOutletStream());

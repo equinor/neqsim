@@ -224,7 +224,7 @@ public class PipeWallHeatTransferTest {
     double depth = 1.5; // m
     double outerRadius = 0.15; // m
     PipeSurroundingEnvironment env = PipeSurroundingEnvironment.buriedPipe(283.0, depth, outerRadius,
-	PipeMaterial.SOIL_TYPICAL);
+        PipeMaterial.SOIL_TYPICAL);
 
     assertEquals(PipeSurroundingEnvironment.EnvironmentType.BURIED, env.getEnvironmentType());
     assertEquals(283.0, env.getTemperature(), 0.1);
@@ -278,7 +278,7 @@ public class PipeWallHeatTransferTest {
   @Test
   void testBuilderWithEnvironment() {
     PipeWallBuilder builder = PipeWallBuilder.carbonSteelPipe(0.20, 0.010).addMineralWoolInsulation(0.050)
-	.exposedToAir(293.0, 2.0);
+        .exposedToAir(293.0, 2.0);
 
     PipeWall wall = builder.build();
     PipeSurroundingEnvironment env = builder.buildEnvironment();
@@ -291,7 +291,7 @@ public class PipeWallHeatTransferTest {
   @Test
   void testBuilderOverallUValue() {
     PipeWallBuilder builder = PipeWallBuilder.carbonSteelPipe(0.20, 0.010).addMineralWoolInsulation(0.050)
-	.exposedToAir(293.0, 2.0);
+        .exposedToAir(293.0, 2.0);
 
     double innerFilmCoeff = 1000.0; // W/(m²·K) - typical for flowing liquid
     double overallU = builder.calcOverallUValue(innerFilmCoeff);
@@ -326,7 +326,7 @@ public class PipeWallHeatTransferTest {
   @Test
   void testPipeDataFromBuilder() {
     PipeData pipe = PipeData.createFromBuilder(
-	PipeWallBuilder.carbonSteelPipe(0.20, 0.010).addMineralWoolInsulation(0.050).exposedToAir(293.0, 2.0));
+        PipeWallBuilder.carbonSteelPipe(0.20, 0.010).addMineralWoolInsulation(0.050).exposedToAir(293.0, 2.0));
 
     assertEquals(0.20, pipe.getDiameter(), 1e-6);
     assertEquals(2, pipe.getPipeWall().getNumberOfLayers());

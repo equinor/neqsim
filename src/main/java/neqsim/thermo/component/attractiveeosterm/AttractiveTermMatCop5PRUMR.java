@@ -45,7 +45,7 @@ public class AttractiveTermMatCop5PRUMR extends AttractiveTermPr {
   public AttractiveTermMatCop5PRUMR(ComponentEosInterface component) {
     super(component);
     m = (0.37464 + 1.54226 * component.getAcentricFactor()
-	- 0.26992 * component.getAcentricFactor() * component.getAcentricFactor());
+        - 0.26992 * component.getAcentricFactor() * component.getAcentricFactor());
   }
 
   /**
@@ -93,7 +93,7 @@ public class AttractiveTermMatCop5PRUMR extends AttractiveTermPr {
   private boolean allCoefficientsZero() {
     for (int k = 0; k < mcParams.length; k++) {
       if (Math.abs(mcParams[k]) > 1e-20) {
-	return false;
+        return false;
       }
     }
     return true;

@@ -2,11 +2,10 @@ package neqsim.process.safety.depressurization;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
+import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.junit.jupiter.api.Test;
 
 /**
  * Regression tests for {@link DepressurizationSimulator}.
@@ -77,12 +76,12 @@ public class DepressurizationSimulatorTest {
     double initialTempK = res.temperatureK.get(0);
     assertTrue(res.minFluidTemperatureK < initialTempK, "blowdown should cool the fluid by Joule-Thomson expansion");
     assertTrue(res.minFluidTemperatureK > 100.0 && res.minFluidTemperatureK < 400.0,
-	"fluid temperature must stay physical, min was " + res.minFluidTemperatureK + " K");
+        "fluid temperature must stay physical, min was " + res.minFluidTemperatureK + " K");
 
     // Mass must be monotonically non-increasing (no mass creation).
     for (int i = 1; i < res.massKg.size(); i++) {
       assertTrue(res.massKg.get(i) <= res.massKg.get(i - 1) + 1.0e-6,
-	  "mass inventory must not increase during blowdown");
+          "mass inventory must not increase during blowdown");
     }
 
     // The 50% depressurisation criterion should be reachable for this orifice/volume.

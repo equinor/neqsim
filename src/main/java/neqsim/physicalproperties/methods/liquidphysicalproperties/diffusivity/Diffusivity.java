@@ -28,7 +28,7 @@ abstract class Diffusivity extends LiquidPhysicalPropertyMethod implements Diffu
   public Diffusivity(PhysicalProperties liquidPhase) {
     super(liquidPhase);
     binaryDiffusionCoefficients = new double[liquidPhase.getPhase().getNumberOfComponents()][liquidPhase.getPhase()
-	.getNumberOfComponents()];
+        .getNumberOfComponents()];
     effectiveDiffusionCoefficient = new double[liquidPhase.getPhase().getNumberOfComponents()];
   }
 
@@ -45,10 +45,10 @@ abstract class Diffusivity extends LiquidPhysicalPropertyMethod implements Diffu
     if (this.binaryDiffusionCoefficients != null && this.binaryDiffusionCoefficients.length > 0) {
       properties.binaryDiffusionCoefficients = this.binaryDiffusionCoefficients.clone();
       for (int i = 0; i < this.binaryDiffusionCoefficients.length; i++) {
-	if (this.binaryDiffusionCoefficients[i] != null && properties.binaryDiffusionCoefficients[i] != null) {
-	  System.arraycopy(this.binaryDiffusionCoefficients[i], 0, properties.binaryDiffusionCoefficients[i], 0,
-	      this.binaryDiffusionCoefficients[i].length);
-	}
+        if (this.binaryDiffusionCoefficients[i] != null && properties.binaryDiffusionCoefficients[i] != null) {
+          System.arraycopy(this.binaryDiffusionCoefficients[i], 0, properties.binaryDiffusionCoefficients[i], 0,
+              this.binaryDiffusionCoefficients[i].length);
+        }
       }
     }
     if (this.effectiveDiffusionCoefficient != null && this.effectiveDiffusionCoefficient.length > 0) {
@@ -62,19 +62,19 @@ abstract class Diffusivity extends LiquidPhysicalPropertyMethod implements Diffu
   public double[][] calcDiffusionCoefficients(int binaryDiffusionCoefficientMethod, int multicomponentDiffusionMethod) {
     for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
       for (int j = 0; j < liquidPhase.getPhase().getNumberOfComponents(); j++) {
-	binaryDiffusionCoefficients[i][j] = calcBinaryDiffusionCoefficient(i, j, binaryDiffusionCoefficientMethod);
+        binaryDiffusionCoefficients[i][j] = calcBinaryDiffusionCoefficient(i, j, binaryDiffusionCoefficientMethod);
       }
     }
 
     // Vignes correlation
     for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
       for (int j = 0; j < liquidPhase.getPhase().getNumberOfComponents(); j++) {
-	if (i != j) {
-	  binaryDiffusionCoefficients[i][j] = Math.pow(binaryDiffusionCoefficients[i][j],
-	      liquidPhase.getPhase().getComponent(j).getx())
-	      * Math.pow(binaryDiffusionCoefficients[j][i], liquidPhase.getPhase().getComponent(i).getx());
-	}
-	// System.out.println("diff liq " + binaryDiffusionCoefficients[i][j] );
+        if (i != j) {
+          binaryDiffusionCoefficients[i][j] = Math.pow(binaryDiffusionCoefficients[i][j],
+              liquidPhase.getPhase().getComponent(j).getx())
+              * Math.pow(binaryDiffusionCoefficients[j][i], liquidPhase.getPhase().getComponent(i).getx());
+        }
+        // System.out.println("diff liq " + binaryDiffusionCoefficients[i][j] );
       }
     }
     return binaryDiffusionCoefficients;
@@ -88,10 +88,10 @@ abstract class Diffusivity extends LiquidPhysicalPropertyMethod implements Diffu
     for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
       sum = 0;
       for (int j = 0; j < liquidPhase.getPhase().getNumberOfComponents(); j++) {
-	if (i == j) {
-	} else {
-	  sum += liquidPhase.getPhase().getComponent(j).getx() / binaryDiffusionCoefficients[i][j];
-	}
+        if (i == j) {
+        } else {
+          sum += liquidPhase.getPhase().getComponent(j).getx() / binaryDiffusionCoefficients[i][j];
+        }
       }
       effectiveDiffusionCoefficient[i] = (1.0 - liquidPhase.getPhase().getComponent(i).getx()) / sum;
     }
@@ -114,7 +114,7 @@ abstract class Diffusivity extends LiquidPhysicalPropertyMethod implements Diffu
   public double getFickBinaryDiffusionCoefficient(int i, int j) {
     double temp = (i == j) ? 1.0 : 0.0;
     double nonIdealCorrection = temp + liquidPhase.getPhase().getComponent(i).getx()
-	* liquidPhase.getPhase().getComponent(i).getdfugdn(j) * liquidPhase.getPhase().getNumberOfMolesInPhase();
+        * liquidPhase.getPhase().getComponent(i).getdfugdn(j) * liquidPhase.getPhase().getNumberOfMolesInPhase();
     if (Double.isNaN(nonIdealCorrection)) {
       nonIdealCorrection = 1.0;
     }

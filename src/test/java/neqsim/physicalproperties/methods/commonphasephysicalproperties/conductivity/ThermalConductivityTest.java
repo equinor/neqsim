@@ -182,9 +182,9 @@ public class ThermalConductivityTest {
     int liqIdx = -1;
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       if (system.getPhase(i).getType() == neqsim.thermo.phase.PhaseType.LIQUID
-	  || system.getPhase(i).getType() == neqsim.thermo.phase.PhaseType.OIL) {
-	liqIdx = i;
-	break;
+          || system.getPhase(i).getType() == neqsim.thermo.phase.PhaseType.OIL) {
+        liqIdx = i;
+        break;
       }
     }
 
@@ -251,11 +251,11 @@ public class ThermalConductivityTest {
       system.initProperties();
 
       for (String method : methods) {
-	switchAndRecalc(system, 0, method);
-	double lambda = system.getPhase(0).getPhysicalProperties().getConductivity();
+        switchAndRecalc(system, 0, method);
+        double lambda = system.getPhase(0).getPhysicalProperties().getConductivity();
 
-	assertTrue(lambda > 0.005, method + " at T=" + cond[0] + ",P=" + cond[1] + " too low: " + lambda);
-	assertTrue(lambda < 0.5, method + " at T=" + cond[0] + ",P=" + cond[1] + " too high: " + lambda);
+        assertTrue(lambda > 0.005, method + " at T=" + cond[0] + ",P=" + cond[1] + " too low: " + lambda);
+        assertTrue(lambda < 0.5, method + " at T=" + cond[0] + ",P=" + cond[1] + " too high: " + lambda);
       }
     }
   }
@@ -273,21 +273,21 @@ public class ThermalConductivityTest {
       double[] pressures = { 1.0, 50.0, 100.0, 200.0 };
 
       for (double p : pressures) {
-	SystemInterface system = new SystemSrkEos(300.0, p);
-	system.addComponent("methane", 1.0);
-	system.setMixingRule("classic");
-	ThermodynamicOperations ops = new ThermodynamicOperations(system);
-	ops.TPflash();
-	system.initProperties();
+        SystemInterface system = new SystemSrkEos(300.0, p);
+        system.addComponent("methane", 1.0);
+        system.setMixingRule("classic");
+        ThermodynamicOperations ops = new ThermodynamicOperations(system);
+        ops.TPflash();
+        system.initProperties();
 
-	switchAndRecalc(system, 0, method);
-	double lambda = system.getPhase(0).getPhysicalProperties().getConductivity();
+        switchAndRecalc(system, 0, method);
+        double lambda = system.getPhase(0).getPhysicalProperties().getConductivity();
 
-	if (p > 1.0) {
-	  assertTrue(lambda >= prevLambda * 0.95, method + ": conductivity should not decrease with pressure. P=" + p
-	      + " lambda=" + lambda + " prev=" + prevLambda);
-	}
-	prevLambda = lambda;
+        if (p > 1.0) {
+          assertTrue(lambda >= prevLambda * 0.95, method + ": conductivity should not decrease with pressure. P=" + p
+              + " lambda=" + lambda + " prev=" + prevLambda);
+        }
+        prevLambda = lambda;
       }
     }
   }
@@ -307,7 +307,7 @@ public class ThermalConductivityTest {
 
     double lambda = system.getPhase("oil").getPhysicalProperties().getConductivity();
     assertEquals(0.123, lambda, 0.020,
-	"n-Heptane liquid conductivity should be near NIST 0.123 W/(m*K), got " + lambda);
+        "n-Heptane liquid conductivity should be near NIST 0.123 W/(m*K), got " + lambda);
   }
 
   /**

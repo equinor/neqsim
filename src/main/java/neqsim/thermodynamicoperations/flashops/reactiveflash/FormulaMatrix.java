@@ -88,24 +88,24 @@ public class FormulaMatrix implements java.io.Serializable {
       componentNames[i] = comp.getComponentName();
       ionicCharges[i] = comp.getIonicCharge();
       if (ionicCharges[i] != 0.0) {
-	hasIonicSpecies = true;
+        hasIonicSpecies = true;
       }
 
       Map<String, Double> elemMap = new LinkedHashMap<String, Double>();
       neqsim.thermo.atomelement.Element elems = comp.getElements();
 
       if (elems != null && elems.getElementNames() != null && elems.getElementNames().length > 0) {
-	String[] names = elems.getElementNames();
-	double[] coefs = elems.getElementCoefs();
-	for (int k = 0; k < names.length; k++) {
-	  elementSet.add(names[k]);
-	  elemMap.put(names[k], coefs[k]);
-	}
+        String[] names = elems.getElementNames();
+        double[] coefs = elems.getElementCoefs();
+        for (int k = 0; k < names.length; k++) {
+          elementSet.add(names[k]);
+          elemMap.put(names[k], coefs[k]);
+        }
       } else {
-	// No element data: assign a unique pseudo-element for mass conservation
-	String pseudoElem = "Pseudo_" + componentNames[i];
-	elementSet.add(pseudoElem);
-	elemMap.put(pseudoElem, 1.0);
+        // No element data: assign a unique pseudo-element for mass conservation
+        String pseudoElem = "Pseudo_" + componentNames[i];
+        elementSet.add(pseudoElem);
+        elemMap.put(pseudoElem, 1.0);
       }
       componentElements.add(elemMap);
     }
@@ -124,10 +124,10 @@ public class FormulaMatrix implements java.io.Serializable {
     for (int i = 0; i < numComponents; i++) {
       Map<String, Double> elemMap = componentElements.get(i);
       for (int k = 0; k < baseElements; k++) {
-	Double coef = elemMap.get(elementNames[k]);
-	if (coef != null) {
-	  A[k][i] = coef;
-	}
+        Double coef = elemMap.get(elementNames[k]);
+        if (coef != null) {
+          A[k][i] = coef;
+        }
       }
     }
 
@@ -136,7 +136,7 @@ public class FormulaMatrix implements java.io.Serializable {
     if (hasIonicSpecies) {
       int chargeRow = numElements - 1;
       for (int i = 0; i < numComponents; i++) {
-	A[chargeRow][i] = ionicCharges[i];
+        A[chargeRow][i] = ionicCharges[i];
       }
     }
   }
@@ -156,7 +156,7 @@ public class FormulaMatrix implements java.io.Serializable {
     this.A = new double[numElements][numComponents];
     for (int k = 0; k < numElements; k++) {
       for (int i = 0; i < numComponents; i++) {
-	this.A[k][i] = A[k][i];
+        this.A[k][i] = A[k][i];
       }
     }
     // Detect if charge row is present (named "Charge")
@@ -164,11 +164,11 @@ public class FormulaMatrix implements java.io.Serializable {
     this.ionicCharges = new double[numComponents];
     for (int k = 0; k < numElements; k++) {
       if ("Charge".equals(elementNames[k])) {
-	this.hasIonicSpecies = true;
-	for (int i = 0; i < numComponents; i++) {
-	  this.ionicCharges[i] = A[k][i];
-	}
-	break;
+        this.hasIonicSpecies = true;
+        for (int i = 0; i < numComponents; i++) {
+          this.ionicCharges[i] = A[k][i];
+        }
+        break;
       }
     }
   }
@@ -187,7 +187,7 @@ public class FormulaMatrix implements java.io.Serializable {
     double[] b = new double[numElements];
     for (int k = 0; k < numElements; k++) {
       for (int i = 0; i < numComponents; i++) {
-	b[k] += A[k][i] * z[i];
+        b[k] += A[k][i] * z[i];
       }
     }
     return b;
@@ -264,7 +264,7 @@ public class FormulaMatrix implements java.io.Serializable {
     double[][] M = new double[numElements][numComponents];
     for (int k = 0; k < numElements; k++) {
       for (int i = 0; i < numComponents; i++) {
-	M[k][i] = A[k][i];
+        M[k][i] = A[k][i];
       }
     }
 
@@ -278,13 +278,13 @@ public class FormulaMatrix implements java.io.Serializable {
       int pivotRow = -1;
       double maxVal = 1e-12;
       for (int row = 0; row < rows; row++) {
-	if (!rowUsed[row] && Math.abs(M[row][col]) > maxVal) {
-	  maxVal = Math.abs(M[row][col]);
-	  pivotRow = row;
-	}
+        if (!rowUsed[row] && Math.abs(M[row][col]) > maxVal) {
+          maxVal = Math.abs(M[row][col]);
+          pivotRow = row;
+        }
       }
       if (pivotRow == -1) {
-	continue;
+        continue;
       }
       rowUsed[pivotRow] = true;
       rank++;
@@ -292,12 +292,12 @@ public class FormulaMatrix implements java.io.Serializable {
       // Eliminate
       double pivot = M[pivotRow][col];
       for (int row = 0; row < rows; row++) {
-	if (row != pivotRow && Math.abs(M[row][col]) > 1e-15) {
-	  double factor = M[row][col] / pivot;
-	  for (int c = col; c < cols; c++) {
-	    M[row][c] -= factor * M[pivotRow][c];
-	  }
-	}
+        if (row != pivotRow && Math.abs(M[row][col]) > 1e-15) {
+          double factor = M[row][col] / pivot;
+          for (int c = col; c < cols; c++) {
+            M[row][c] -= factor * M[pivotRow][c];
+          }
+        }
       }
     }
     return rank;
@@ -347,6 +347,6 @@ public class FormulaMatrix implements java.io.Serializable {
    */
   public boolean isIon(int componentIndex) {
     return ionicCharges != null && componentIndex >= 0 && componentIndex < numComponents
-	&& ionicCharges[componentIndex] != 0.0;
+        && ionicCharges[componentIndex] != 0.0;
   }
 }

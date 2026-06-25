@@ -85,9 +85,9 @@ public final class NeqSimThreadPool {
   public static ExecutorService getPool() {
     if (pool == null || pool.isShutdown()) {
       synchronized (LOCK) {
-	if (pool == null || pool.isShutdown()) {
-	  pool = createPool();
-	}
+        if (pool == null || pool.isShutdown()) {
+          pool = createPool();
+        }
       }
     }
     return pool;
@@ -106,7 +106,7 @@ public final class NeqSimThreadPool {
       t.setDaemon(true);
       t.setName("NeqSim-Worker-" + THREAD_COUNTER.getAndIncrement());
       t.setUncaughtExceptionHandler((th, ex) -> {
-	logger.error("Uncaught exception in thread " + th.getName(), ex);
+        logger.error("Uncaught exception in thread " + th.getName(), ex);
       });
       return t;
     };
@@ -116,16 +116,16 @@ public final class NeqSimThreadPool {
       // Bounded queue for extreme load scenarios (HPC)
       logger.info("Using bounded queue with capacity {}", maxQueueCapacity);
       RejectedExecutionHandler rejectionHandler = (runnable, ex) -> {
-	logger.warn("Task rejected due to queue overflow. Consider increasing queue capacity.");
-	throw new java.util.concurrent.RejectedExecutionException(
-	    "Task rejected: queue capacity exceeded (" + maxQueueCapacity + ")");
+        logger.warn("Task rejected due to queue overflow. Consider increasing queue capacity.");
+        throw new java.util.concurrent.RejectedExecutionException(
+            "Task rejected: queue capacity exceeded (" + maxQueueCapacity + ")");
       };
       executor = new ThreadPoolExecutor(poolSize, poolSize, keepAliveTimeSeconds, TimeUnit.SECONDS,
-	  new LinkedBlockingQueue<>(maxQueueCapacity), threadFactory, rejectionHandler);
+          new LinkedBlockingQueue<>(maxQueueCapacity), threadFactory, rejectionHandler);
     } else {
       // Unbounded queue (default behavior)
       executor = new ThreadPoolExecutor(poolSize, poolSize, keepAliveTimeSeconds, TimeUnit.SECONDS,
-	  new LinkedBlockingQueue<>(), threadFactory);
+          new LinkedBlockingQueue<>(), threadFactory);
     }
 
     // Allow core threads to timeout when idle (for memory efficiency in long-running processes)
@@ -222,10 +222,10 @@ public final class NeqSimThreadPool {
     synchronized (LOCK) {
       poolSize = size;
       if (pool != null && !pool.isShutdown()) {
-	// Shutdown existing pool gracefully and create new one
-	shutdownAndAwait(5, TimeUnit.SECONDS);
-	pool = createPool();
-	logger.info("NeqSim thread pool resized to {} threads", size);
+        // Shutdown existing pool gracefully and create new one
+        shutdownAndAwait(5, TimeUnit.SECONDS);
+        pool = createPool();
+        logger.info("NeqSim thread pool resized to {} threads", size);
       }
     }
   }
@@ -258,9 +258,9 @@ public final class NeqSimThreadPool {
     synchronized (LOCK) {
       maxQueueCapacity = capacity;
       if (pool != null && !pool.isShutdown()) {
-	shutdownAndAwait(5, TimeUnit.SECONDS);
-	pool = createPool();
-	logger.info("NeqSim thread pool queue capacity set to {}", capacity > 0 ? capacity : "unbounded");
+        shutdownAndAwait(5, TimeUnit.SECONDS);
+        pool = createPool();
+        logger.info("NeqSim thread pool queue capacity set to {}", capacity > 0 ? capacity : "unbounded");
       }
     }
   }
@@ -293,9 +293,9 @@ public final class NeqSimThreadPool {
     synchronized (LOCK) {
       allowCoreThreadTimeout = allow;
       if (pool != null && !pool.isShutdown()) {
-	shutdownAndAwait(5, TimeUnit.SECONDS);
-	pool = createPool();
-	logger.info("Core thread timeout {}", allow ? "enabled" : "disabled");
+        shutdownAndAwait(5, TimeUnit.SECONDS);
+        pool = createPool();
+        logger.info("Core thread timeout {}", allow ? "enabled" : "disabled");
       }
     }
   }
@@ -326,9 +326,9 @@ public final class NeqSimThreadPool {
     synchronized (LOCK) {
       keepAliveTimeSeconds = seconds;
       if (pool != null && !pool.isShutdown() && allowCoreThreadTimeout) {
-	shutdownAndAwait(5, TimeUnit.SECONDS);
-	pool = createPool();
-	logger.info("Keep-alive time set to {} seconds", seconds);
+        shutdownAndAwait(5, TimeUnit.SECONDS);
+        pool = createPool();
+        logger.info("Keep-alive time set to {} seconds", seconds);
       }
     }
   }
@@ -365,8 +365,8 @@ public final class NeqSimThreadPool {
   public static void shutdown() {
     synchronized (LOCK) {
       if (pool != null) {
-	pool.shutdown();
-	logger.debug("NeqSim thread pool shutdown initiated");
+        pool.shutdown();
+        logger.debug("NeqSim thread pool shutdown initiated");
       }
     }
   }
@@ -377,8 +377,8 @@ public final class NeqSimThreadPool {
   public static void shutdownNow() {
     synchronized (LOCK) {
       if (pool != null) {
-	pool.shutdownNow();
-	logger.debug("NeqSim thread pool immediate shutdown initiated");
+        pool.shutdownNow();
+        logger.debug("NeqSim thread pool immediate shutdown initiated");
       }
     }
   }
@@ -393,20 +393,20 @@ public final class NeqSimThreadPool {
   public static boolean shutdownAndAwait(long timeout, TimeUnit unit) {
     synchronized (LOCK) {
       if (pool != null) {
-	pool.shutdown();
-	try {
-	  boolean terminated = pool.awaitTermination(timeout, unit);
-	  if (!terminated) {
-	    pool.shutdownNow();
-	    logger.warn("NeqSim thread pool did not terminate gracefully, forcing shutdown");
-	  }
-	  return terminated;
-	} catch (InterruptedException e) {
-	  pool.shutdownNow();
-	  Thread.currentThread().interrupt();
-	  logger.warn("Thread interrupted while waiting for pool shutdown", e);
-	  return false;
-	}
+        pool.shutdown();
+        try {
+          boolean terminated = pool.awaitTermination(timeout, unit);
+          if (!terminated) {
+            pool.shutdownNow();
+            logger.warn("NeqSim thread pool did not terminate gracefully, forcing shutdown");
+          }
+          return terminated;
+        } catch (InterruptedException e) {
+          pool.shutdownNow();
+          Thread.currentThread().interrupt();
+          logger.warn("Thread interrupted while waiting for pool shutdown", e);
+          return false;
+        }
       }
       return true;
     }

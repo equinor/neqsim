@@ -39,7 +39,7 @@ public class PhaseHydrate extends Phase {
     if (fluidModel.isEmpty()) {
       hydrateModel = "PVTsimHydrateModel";
     } else if (fluidModel.equals("CPAs-SRK-EOS-statoil") || fluidModel.equals("CPAs-SRK-EOS")
-	|| fluidModel.equals("CPA-SRK-EOS") || fluidModel.equals("Electrolyte-CPA-EOS-statoil")) {
+        || fluidModel.equals("CPA-SRK-EOS") || fluidModel.equals("Electrolyte-CPA-EOS-statoil")) {
       hydrateModel = "CPAHydrateModel";
     } else {
       hydrateModel = "PVTsimHydrateModel";
@@ -67,8 +67,8 @@ public class PhaseHydrate extends Phase {
     int hydrateStructure = ((ComponentHydrate) getComponent(0)).getHydrateStructure();
     for (int j = 0; j < 2; j++) {
       for (int i = 0; i < numberOfComponents; i++) {
-	sum += ((ComponentHydrate) getComponent(i)).getCavprwat(hydrateStructure, j)
-	    * ((ComponentHydrate) getComponent(i)).calcYKI(hydrateStructure, j, this);
+        sum += ((ComponentHydrate) getComponent(i)).getCavprwat(hydrateStructure, j)
+            * ((ComponentHydrate) getComponent(i)).calcYKI(hydrateStructure, j, this);
       }
     }
     return sum / (((ComponentHydrate) getComponent(0)).getMolarVolumeHydrate(hydrateStructure, temperature));
@@ -142,7 +142,7 @@ public class PhaseHydrate extends Phase {
   public void setSolidRefFluidPhase(PhaseInterface refPhase) {
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getName().equals("water")) {
-	((ComponentHydrate) componentArray[i]).setSolidRefFluidPhase(refPhase);
+        ((ComponentHydrate) componentArray[i]).setSolidRefFluidPhase(refPhase);
       }
     }
   }
@@ -197,7 +197,7 @@ public class PhaseHydrate extends Phase {
     double totalOccupancy = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].isHydrateFormer()) {
-	totalOccupancy += ((ComponentHydrate) componentArray[i]).calcYKI(structure - 1, 0, this);
+        totalOccupancy += ((ComponentHydrate) componentArray[i]).calcYKI(structure - 1, 0, this);
       }
     }
     return totalOccupancy;
@@ -213,7 +213,7 @@ public class PhaseHydrate extends Phase {
     double totalOccupancy = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].isHydrateFormer()) {
-	totalOccupancy += ((ComponentHydrate) componentArray[i]).calcYKI(structure - 1, 1, this);
+        totalOccupancy += ((ComponentHydrate) componentArray[i]).calcYKI(structure - 1, 1, this);
       }
     }
     return totalOccupancy;

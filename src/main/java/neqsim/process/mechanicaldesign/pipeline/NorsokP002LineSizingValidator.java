@@ -1,10 +1,10 @@
 package neqsim.process.mechanicaldesign.pipeline;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.pipeline.PipeLineInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -131,7 +131,7 @@ public class NorsokP002LineSizingValidator implements Serializable {
     double densityKgPerM3 = getMixtureDensity(fluid);
     double pressureGradientPaPerM = getPressureGradientPaPerM(pipe);
     double erosionalVelocityMPerS = densityKgPerM3 > 0.0 ? erosionalVelocityConstant / Math.sqrt(densityKgPerM3)
-	: Double.NaN;
+        : Double.NaN;
     double allowedErosionalVelocityMPerS = erosionalVelocityMPerS * maximumErosionalVelocityFraction;
 
     double lowerVelocityLimit = getLowerVelocityLimit(serviceType);
@@ -139,14 +139,14 @@ public class NorsokP002LineSizingValidator implements Serializable {
     boolean velocityAboveMinimum = !Double.isFinite(lowerVelocityLimit) || velocityMPerS >= lowerVelocityLimit;
     boolean velocityBelowMaximum = !Double.isFinite(upperVelocityLimit) || velocityMPerS <= upperVelocityLimit;
     boolean pressureGradientOk = !Double.isFinite(pressureGradientPaPerM)
-	|| pressureGradientPaPerM <= maximumPressureGradientPaPerM;
+        || pressureGradientPaPerM <= maximumPressureGradientPaPerM;
     boolean erosionalVelocityOk = !Double.isFinite(allowedErosionalVelocityMPerS)
-	|| velocityMPerS <= allowedErosionalVelocityMPerS;
+        || velocityMPerS <= allowedErosionalVelocityMPerS;
 
     return new LineSizingResult(serviceType, velocityMPerS, lowerVelocityLimit, upperVelocityLimit,
-	pressureGradientPaPerM, maximumPressureGradientPaPerM, densityKgPerM3, erosionalVelocityMPerS,
-	allowedErosionalVelocityMPerS, velocityAboveMinimum, velocityBelowMaximum, pressureGradientOk,
-	erosionalVelocityOk);
+        pressureGradientPaPerM, maximumPressureGradientPaPerM, densityKgPerM3, erosionalVelocityMPerS,
+        allowedErosionalVelocityMPerS, velocityAboveMinimum, velocityBelowMaximum, pressureGradientOk,
+        erosionalVelocityOk);
   }
 
   /**
@@ -165,13 +165,13 @@ public class NorsokP002LineSizingValidator implements Serializable {
       boolean hasAqueous = fluid.hasPhaseType("aqueous");
       boolean hasLiquid = hasOil || hasAqueous;
       if (hasGas && hasLiquid) {
-	return ServiceType.TWO_PHASE;
+        return ServiceType.TWO_PHASE;
       }
       if (hasGas) {
-	return ServiceType.GAS;
+        return ServiceType.GAS;
       }
       if (hasLiquid) {
-	return ServiceType.LIQUID;
+        return ServiceType.LIQUID;
       }
     } catch (RuntimeException ex) {
       return ServiceType.UNKNOWN;
@@ -226,7 +226,7 @@ public class NorsokP002LineSizingValidator implements Serializable {
       double massFlowKgPerS = fluid.getFlowRate("kg/sec");
       double volumetricFlowM3PerS = getMixtureVolumetricFlowRate(fluid);
       if (volumetricFlowM3PerS > 0.0) {
-	return massFlowKgPerS / volumetricFlowM3PerS;
+        return massFlowKgPerS / volumetricFlowM3PerS;
       }
       return fluid.getDensity("kg/m3");
     } catch (RuntimeException ex) {
@@ -244,10 +244,10 @@ public class NorsokP002LineSizingValidator implements Serializable {
     try {
       double volumetricFlowM3PerS = 0.0;
       for (int phaseIndex = 0; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
-	volumetricFlowM3PerS += fluid.getPhase(phaseIndex).getFlowRate("m3/sec");
+        volumetricFlowM3PerS += fluid.getPhase(phaseIndex).getFlowRate("m3/sec");
       }
       if (volumetricFlowM3PerS > 0.0) {
-	return volumetricFlowM3PerS;
+        return volumetricFlowM3PerS;
       }
       return fluid.getFlowRate("m3/sec");
     } catch (RuntimeException ex) {
@@ -324,10 +324,10 @@ public class NorsokP002LineSizingValidator implements Serializable {
      * @param erosionalVelocityOk true when erosional velocity limit is acceptable
      */
     public LineSizingResult(ServiceType serviceType, double velocityMPerS, double lowerVelocityLimitMPerS,
-	double upperVelocityLimitMPerS, double pressureGradientPaPerM, double pressureGradientLimitPaPerM,
-	double densityKgPerM3, double erosionalVelocityMPerS, double allowedErosionalVelocityMPerS,
-	boolean velocityAboveMinimum, boolean velocityBelowMaximum, boolean pressureGradientOk,
-	boolean erosionalVelocityOk) {
+        double upperVelocityLimitMPerS, double pressureGradientPaPerM, double pressureGradientLimitPaPerM,
+        double densityKgPerM3, double erosionalVelocityMPerS, double allowedErosionalVelocityMPerS,
+        boolean velocityAboveMinimum, boolean velocityBelowMaximum, boolean pressureGradientOk,
+        boolean erosionalVelocityOk) {
       this.serviceType = serviceType;
       this.velocityMPerS = velocityMPerS;
       this.lowerVelocityLimitMPerS = lowerVelocityLimitMPerS;

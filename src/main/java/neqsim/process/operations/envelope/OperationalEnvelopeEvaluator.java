@@ -43,7 +43,7 @@ public final class OperationalEnvelopeEvaluator {
    */
   public static OperationalEnvelopeReport evaluate(ProcessSystem process) {
     return evaluate(process, Collections.<String, MarginTrendTracker>emptyMap(), DEFAULT_PREDICTION_HORIZON_SECONDS,
-	true);
+        true);
   }
 
   /**
@@ -63,7 +63,7 @@ public final class OperationalEnvelopeEvaluator {
     Map<String, MarginTrendTracker> trackers = copyHistory(history);
     List<TripPrediction> predictions = buildPredictions(margins, trackers, predictionHorizonSeconds, start / 1000.0);
     List<MitigationSuggestion> suggestions = includeMitigations ? buildMitigations(margins)
-	: new ArrayList<MitigationSuggestion>();
+        : new ArrayList<MitigationSuggestion>();
     double elapsed = (System.currentTimeMillis() - start) / 1000.0;
     return new OperationalEnvelopeReport(System.currentTimeMillis(), elapsed, margins, predictions, suggestions);
   }
@@ -82,9 +82,9 @@ public final class OperationalEnvelopeEvaluator {
     for (ProcessEquipmentInterface unit : units) {
       Map<String, CapacityConstraint> constraints = registry.getConstraints(unit);
       for (CapacityConstraint constraint : constraints.values()) {
-	if (constraint != null && constraint.isEnabled()) {
-	  margins.add(OperationalMargin.fromConstraint(unit.getName(), constraint));
-	}
+        if (constraint != null && constraint.isEnabled()) {
+          margins.add(OperationalMargin.fromConstraint(unit.getName(), constraint));
+        }
       }
     }
     Collections.sort(margins);
@@ -107,13 +107,13 @@ public final class OperationalEnvelopeEvaluator {
     for (OperationalMargin margin : margins) {
       MarginTrendTracker tracker = trackers.get(margin.getKey());
       if (tracker == null) {
-	continue;
+        continue;
       }
       tracker.addCurrentMargin(nextTimestampForTracker(tracker, currentTimestampSeconds), margin);
       double timeToLimit = tracker.estimateTimeToLimitSeconds();
       double confidence = tracker.estimateConfidence();
       if (!Double.isNaN(timeToLimit) && timeToLimit <= horizon && confidence >= DEFAULT_MIN_PREDICTION_CONFIDENCE) {
-	predictions.add(new TripPrediction(margin, timeToLimit, confidence, tracker.getTrendDescription()));
+        predictions.add(new TripPrediction(margin, timeToLimit, confidence, tracker.getTrendDescription()));
       }
     }
     Collections.sort(predictions);
@@ -130,7 +130,7 @@ public final class OperationalEnvelopeEvaluator {
     List<MitigationSuggestion> suggestions = new ArrayList<MitigationSuggestion>();
     for (OperationalMargin margin : margins) {
       if (margin.getStatus().getRank() >= OperationalMargin.Status.NARROWING.getRank()) {
-	suggestions.add(MitigationSuggestion.fromMargin(margin));
+        suggestions.add(MitigationSuggestion.fromMargin(margin));
       }
     }
     Collections.sort(suggestions);

@@ -536,7 +536,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * <p>
    * Gets value for heaviest phase.
-   * </p>
    *
    * @return Beta value
    */
@@ -731,7 +730,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     refFluid.setTemperature(refTemperature, tempUnit);
     refFluid.setPressure(refPressure, pressUnit);
     neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	refFluid);
+        refFluid);
     ops.TPflash();
     refFluid.initProperties();
     return refFluid.getDensity("kg/m3");
@@ -1568,7 +1567,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public default boolean hasIons() {
     for (int i = 0; i < getPhase(0).getNumberOfComponents(); i++) {
       if (getPhase(0).getComponent(i).getIonicCharge() != 0 || getPhase(0).getComponent(i).isIsIon()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -1607,7 +1606,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     }
     for (int i = 0; i < getNumberOfPhases(); i++) {
       if (getPhase(i).getType() == PhaseType.HYDRATE) {
-	return getBeta(i);
+        return getBeta(i);
       }
     }
     return 0.0;
@@ -1639,7 +1638,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     if (hasPhaseType("aqueous")) {
       PhaseInterface aq = getPhaseOfType("aqueous");
       if (aq != null) {
-	return aq.getpH();
+        return aq.getpH();
       }
     }
     return Double.NaN;
@@ -2412,7 +2411,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     if ("COSTALD".equalsIgnoreCase(model) || "Costald".equalsIgnoreCase(model)) {
       modelName = "Costald";
     } else if ("COSTALD-polar".equalsIgnoreCase(model) || "NASTALD".equalsIgnoreCase(model)
-	|| "Costald polar".equalsIgnoreCase(model)) {
+        || "Costald polar".equalsIgnoreCase(model)) {
       modelName = "Costald polar";
     } else if ("Rackett".equalsIgnoreCase(model)) {
       modelName = "Rackett";
@@ -2425,10 +2424,10 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     for (int i = 0; i < getNumberOfPhases(); i++) {
       neqsim.thermo.phase.PhaseType pt = getPhase(i).getType();
       if (pt == neqsim.thermo.phase.PhaseType.LIQUID || pt == neqsim.thermo.phase.PhaseType.OIL
-	  || pt == neqsim.thermo.phase.PhaseType.AQUEOUS) {
-	if (getPhase(i).getPhysicalProperties() != null) {
-	  getPhase(i).getPhysicalProperties().setDensityModel(modelName);
-	}
+          || pt == neqsim.thermo.phase.PhaseType.AQUEOUS) {
+        if (getPhase(i).getPhysicalProperties() != null) {
+          getPhase(i).getPhysicalProperties().setDensityModel(modelName);
+        }
       }
     }
   }
@@ -2459,7 +2458,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     if ("COSTALD".equalsIgnoreCase(model) || "Costald".equalsIgnoreCase(model)) {
       modelName = "Costald";
     } else if ("COSTALD-polar".equalsIgnoreCase(model) || "NASTALD".equalsIgnoreCase(model)
-	|| "Costald polar".equalsIgnoreCase(model)) {
+        || "Costald polar".equalsIgnoreCase(model)) {
       modelName = "Costald polar";
     } else if ("Rackett".equalsIgnoreCase(model)) {
       modelName = "Rackett";
@@ -2480,9 +2479,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
     for (int i = 0; i < getNumberOfPhases(); i++) {
       if (getPhase(i).getType() == targetType) {
-	if (getPhase(i).getPhysicalProperties() != null) {
-	  getPhase(i).getPhysicalProperties().setDensityModel(modelName);
-	}
+        if (getPhase(i).getPhysicalProperties() != null) {
+          getPhase(i).getPhysicalProperties().setDensityModel(modelName);
+        }
       }
     }
   }
@@ -2716,19 +2715,19 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     // Check: Temperature valid
     if (getTemperature() < 1.0) {
       result.addError("thermo", "Temperature too low: " + getTemperature() + " K",
-	  "Set temperature above 1 K: system.setTemperature(298.15)");
+          "Set temperature above 1 K: system.setTemperature(298.15)");
     }
 
     // Check: Pressure valid
     if (getPressure() <= 0) {
       result.addError("thermo", "Pressure must be positive: " + getPressure() + " bar",
-	  "Set positive pressure: system.setPressure(1.0)");
+          "Set positive pressure: system.setPressure(1.0)");
     }
 
     // Check: Mixing rule (warning only - some simple cases work without)
     if (getNumberOfComponents() > 1 && getMixingRuleName() == null) {
       result.addWarning("thermo", "Mixing rule not explicitly set for multi-component system",
-	  "Set mixing rule: system.setMixingRule(\"classic\") or system.setMixingRule(2)");
+          "Set mixing rule: system.setMixingRule(\"classic\") or system.setMixingRule(2)");
     }
 
     return result;

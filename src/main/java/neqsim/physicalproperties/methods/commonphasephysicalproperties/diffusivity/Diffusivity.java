@@ -30,9 +30,9 @@ public class Diffusivity extends CommonPhysicalPropertyMethod implements Diffusi
   public Diffusivity(PhysicalProperties phase) {
     super(phase);
     binaryDiffusionCoefficients = new double[phase.getPhase().getNumberOfComponents()][phase.getPhase()
-	.getNumberOfComponents()];
+        .getNumberOfComponents()];
     binaryLennardJonesOmega = new double[phase.getPhase().getNumberOfComponents()][phase.getPhase()
-	.getNumberOfComponents()];
+        .getNumberOfComponents()];
     effectiveDiffusionCoefficient = new double[phase.getPhase().getNumberOfComponents()];
   }
 
@@ -49,10 +49,10 @@ public class Diffusivity extends CommonPhysicalPropertyMethod implements Diffusi
     if (this.binaryDiffusionCoefficients != null && this.binaryDiffusionCoefficients.length > 0) {
       properties.binaryDiffusionCoefficients = this.binaryDiffusionCoefficients.clone();
       for (int i = 0; i < this.binaryDiffusionCoefficients.length; i++) {
-	if (this.binaryDiffusionCoefficients[i] != null && properties.binaryDiffusionCoefficients[i] != null) {
-	  System.arraycopy(this.binaryDiffusionCoefficients[i], 0, properties.binaryDiffusionCoefficients[i], 0,
-	      this.binaryDiffusionCoefficients[i].length);
-	}
+        if (this.binaryDiffusionCoefficients[i] != null && properties.binaryDiffusionCoefficients[i] != null) {
+          System.arraycopy(this.binaryDiffusionCoefficients[i], 0, properties.binaryDiffusionCoefficients[i], 0,
+              this.binaryDiffusionCoefficients[i].length);
+        }
       }
     }
     if (this.effectiveDiffusionCoefficient != null && this.effectiveDiffusionCoefficient.length > 0) {
@@ -72,8 +72,8 @@ public class Diffusivity extends CommonPhysicalPropertyMethod implements Diffusi
   public double[][] calcDiffusionCoefficients(int binaryDiffusionCoefficientMethod, int multicomponentDiffusionMethod) {
     for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
       for (int j = 0; j < phase.getPhase().getNumberOfComponents(); j++) {
-	binaryDiffusionCoefficients[i][j] = calcBinaryDiffusionCoefficient(i, j, binaryDiffusionCoefficientMethod);
-	// System.out.println("diff gas " + binaryDiffusionCoefficients[i][j]);
+        binaryDiffusionCoefficients[i][j] = calcBinaryDiffusionCoefficient(i, j, binaryDiffusionCoefficientMethod);
+        // System.out.println("diff gas " + binaryDiffusionCoefficients[i][j]);
       }
     }
 
@@ -93,11 +93,11 @@ public class Diffusivity extends CommonPhysicalPropertyMethod implements Diffusi
     for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
       sum = 0;
       for (int j = 0; j < phase.getPhase().getNumberOfComponents(); j++) {
-	if (i == j) {
-	  continue;
-	} else {
-	  sum += phase.getPhase().getComponent(j).getx() / binaryDiffusionCoefficients[i][j];
-	}
+        if (i == j) {
+          continue;
+        } else {
+          sum += phase.getPhase().getComponent(j).getx() / binaryDiffusionCoefficients[i][j];
+        }
       }
       effectiveDiffusionCoefficient[i] = (1.0 - phase.getPhase().getComponent(i).getx()) / sum;
     }

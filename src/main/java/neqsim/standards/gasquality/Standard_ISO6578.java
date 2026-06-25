@@ -62,8 +62,8 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
   transient BicubicInterpolatingFunction pcs2 = null;
   transient LinearInterpolator liearInterpol = new LinearInterpolator();
   double[] Vitemperatures = ISO6578temperatures; // {-180.0, -175.0, -170.0, -165.0, -160.0,
-						 // -155.0, -150.0, -145.0,
-						 // -140.0};
+  // -155.0, -150.0, -145.0,
+  // -140.0};
   double[] Vimethane = { 0.035771, 0.036315, 0.036891, 0.037500, 0.038149, 0.038839, 0.039580, 0.040375, 0.041237 };
   double[] Viethane = { 0.046324, 0.046716, 0.047116, 0.047524, 0.0479422, 0.048369, 0.048806, 0.049253, 0.049711 };
   double[] Vipropane = { 0.060731, 0.061164, 0.061602, 0.062046, 0.062497, 0.062953, 0.063417, 0.063887, 0.064364 };
@@ -117,64 +117,64 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
     for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
       // double a, b, c;
       if (thermoSystem.getPhase(0).getComponent(i).getName().equals("methane")) {
-	// a = 8.452e-7;
-	// b = -5.744e-5;
-	// c = 3.383e-2;
-	function = liearInterpol.interpolate(Vitemperatures, Vimethane);
+        // a = 8.452e-7;
+        // b = -5.744e-5;
+        // c = 3.383e-2;
+        function = liearInterpol.interpolate(Vitemperatures, Vimethane);
       } else if (thermoSystem.getPhase(0).getComponent(i).getName().equals("ethane")) {
-	// a = 1.905e-7;
-	// b = 4.133e-5;
-	// c = 4.083e-2;
-	function = liearInterpol.interpolate(Vitemperatures, Viethane);
+        // a = 1.905e-7;
+        // b = 4.133e-5;
+        // c = 4.083e-2;
+        function = liearInterpol.interpolate(Vitemperatures, Viethane);
       } else if (thermoSystem.getPhase(0).getComponent(i).getName().equals("propane")) {
-	// a = 1.310e-7;
-	// b = 6.102e-5;
-	// c = 5.391e-2;
-	function = liearInterpol.interpolate(Vitemperatures, Vipropane);
+        // a = 1.310e-7;
+        // b = 6.102e-5;
+        // c = 5.391e-2;
+        function = liearInterpol.interpolate(Vitemperatures, Vipropane);
       } else if (thermoSystem.getPhase(0).getComponent(i).getName().equals("i-butane")) {
-	// a = 1.25e-7;
-	// b = 7.257e-5;
-	// c = 6.854e-2;
-	function = liearInterpol.interpolate(Vitemperatures, ViiC4);
+        // a = 1.25e-7;
+        // b = 7.257e-5;
+        // c = 6.854e-2;
+        function = liearInterpol.interpolate(Vitemperatures, ViiC4);
       } else if (thermoSystem.getPhase(0).getComponent(i).getName().equals("n-butane")) {
-	// a = 1.101e-7;
-	// b = 7.114e-5;
-	// c = 6.742e-2;
-	function = liearInterpol.interpolate(Vitemperatures, VinC4);
+        // a = 1.101e-7;
+        // b = 7.114e-5;
+        // c = 6.742e-2;
+        function = liearInterpol.interpolate(Vitemperatures, VinC4);
       } else if (thermoSystem.getPhase(0).getComponent(i).getName().equals("i-pentane")
-	  || thermoSystem.getPhase(0).getComponent(i).getName().equals("iC5")) {
-	// a = 9.524e-8;
-	// b = 8.727e-5;
-	// c = 8.063e-2;
-	function = liearInterpol.interpolate(Vitemperatures, ViiC5);
+          || thermoSystem.getPhase(0).getComponent(i).getName().equals("iC5")) {
+        // a = 9.524e-8;
+        // b = 8.727e-5;
+        // c = 8.063e-2;
+        function = liearInterpol.interpolate(Vitemperatures, ViiC5);
       } else if (thermoSystem.getPhase(0).getComponent(i).getName().equals("n-pentane")) {
-	// a = 5.060e-8;
-	// b = 9.386e-5;
-	// c = 8.031e-2;
-	function = liearInterpol.interpolate(Vitemperatures, VinC5);
+        // a = 5.060e-8;
+        // b = 9.386e-5;
+        // c = 8.031e-2;
+        function = liearInterpol.interpolate(Vitemperatures, VinC5);
       } else if (thermoSystem.getPhase(0).getComponent(i).getName().equals("n-hexane")) {
-	// a = 5.060e-8;
-	// b = 9.386e-5;
-	// c = 8.031e-2;
-	function = liearInterpol.interpolate(Vitemperatures, VinC6);
+        // a = 5.060e-8;
+        // b = 9.386e-5;
+        // c = 8.031e-2;
+        function = liearInterpol.interpolate(Vitemperatures, VinC6);
       } else if (thermoSystem.getPhase(0).getComponent(i).getName().equals("nitrogen")) {
-	// a = 1.968e-5;
-	// b = -3.753e-3;
-	// c = 2.198e-1;
-	function = liearInterpol.interpolate(Vitemperatures, Vinitrogen);
+        // a = 1.968e-5;
+        // b = -3.753e-3;
+        // c = 2.198e-1;
+        function = liearInterpol.interpolate(Vitemperatures, Vinitrogen);
       } else {
-	Vi[i] = 0.036315;
+        Vi[i] = 0.036315;
       }
       // Vi[i] = c + a * Math.pow(thermoSystem.getTemperature(), 2.0) + b *
       // thermoSystem.getTemperature();
       try {
-	Vi[i] = function.value(thermoSystem.getTemperature());
+        Vi[i] = function.value(thermoSystem.getTemperature());
       } catch (Exception ex) {
-	// logger.error(ex.getMessage(), ex);
-	// System.out.println("volume "+
-	// (thermoSystem.getPhase(0).getMolarVolume())/10e4);
-	Vi[i] = thermoSystem.getPhase(1).getMolarVolume() / 100.0;
-	// Vi[i] = 0.036315;
+        // logger.error(ex.getMessage(), ex);
+        // System.out.println("volume "+
+        // (thermoSystem.getPhase(0).getMolarVolume())/10e4);
+        Vi[i] = thermoSystem.getPhase(1).getMolarVolume() / 100.0;
+        // Vi[i] = 0.036315;
       }
       // System.out.println("volume "+
       // (thermoSystem.getPhase(1).getMolarVolume())/100.0);

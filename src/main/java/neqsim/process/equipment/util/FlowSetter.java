@@ -240,18 +240,18 @@ public class FlowSetter extends TwoPortEquipment {
 
       double[] moleChange = new double[tempFluid.getNumberOfComponents()];
       for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {
-	moleChange[i] = referenceProcess.getUnit("gas").getFluid().getComponent(i).getNumberOfMolesInPhase()
-	    * (getGasFlowRate("Sm3/hr") / ((StreamInterface) referenceProcess.getUnit("gas")).getFlowRate("Sm3/hr"))
-	    - referenceProcess.getUnit("gas").getFluid().getComponent(i).getNumberOfMolesInPhase()
+        moleChange[i] = referenceProcess.getUnit("gas").getFluid().getComponent(i).getNumberOfMolesInPhase()
+            * (getGasFlowRate("Sm3/hr") / ((StreamInterface) referenceProcess.getUnit("gas")).getFlowRate("Sm3/hr"))
+            - referenceProcess.getUnit("gas").getFluid().getComponent(i).getNumberOfMolesInPhase()
 
-	    + referenceProcess.getUnit("oil").getFluid().getComponent(i).getNumberOfMolesInPhase()
-		* (getOilFlowRate("m3/hr") / ((StreamInterface) referenceProcess.getUnit("oil")).getFlowRate("m3/hr"))
-	    - referenceProcess.getUnit("oil").getFluid().getComponent(i).getNumberOfMolesInPhase();
-	error += Math.abs(moleChange[i]);
+            + referenceProcess.getUnit("oil").getFluid().getComponent(i).getNumberOfMolesInPhase()
+                * (getOilFlowRate("m3/hr") / ((StreamInterface) referenceProcess.getUnit("oil")).getFlowRate("m3/hr"))
+            - referenceProcess.getUnit("oil").getFluid().getComponent(i).getNumberOfMolesInPhase();
+        error += Math.abs(moleChange[i]);
       }
       tempFluid.init(0);
       for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {
-	tempFluid.addComponent(i, moleChange[i]);
+        tempFluid.addComponent(i, moleChange[i]);
       }
     } while (error > referenceProcess.getUnit("feed stream").getFluid().getTotalNumberOfMoles() / 1e6);
 
@@ -299,7 +299,7 @@ public class FlowSetter extends TwoPortEquipment {
 
     if (temperature.length == 0 || temperature == null) {
       throw new RuntimeException(
-	  new InvalidInputException(this, "getReferenceProcess", "temperature", "can not be null"));
+          new InvalidInputException(this, "getReferenceProcess", "temperature", "can not be null"));
     } else if (temperature.length == 1) {
       oilExport = new Stream("oil", separator1ststage.getOilOutStream());
     } else if (temperature.length == 2) {
@@ -309,7 +309,7 @@ public class FlowSetter extends TwoPortEquipment {
       referenceProcess.add(heater2ndstage);
 
       ThreePhaseSeparator separator2ndstage = new ThreePhaseSeparator("2nd stage separator",
-	  heater2ndstage.getOutletStream());
+          heater2ndstage.getOutletStream());
       referenceProcess.add(separator2ndstage);
 
       gasMixer.addStream(separator2ndstage.getGasOutStream());
@@ -321,7 +321,7 @@ public class FlowSetter extends TwoPortEquipment {
       referenceProcess.add(heater2ndstage);
 
       ThreePhaseSeparator separator2ndstage = new ThreePhaseSeparator("2nd stage separator",
-	  heater2ndstage.getOutletStream());
+          heater2ndstage.getOutletStream());
       referenceProcess.add(separator2ndstage);
 
       Heater heater3rdstage = new Heater("3rd stage heater", separator2ndstage.getOilOutStream());
@@ -330,7 +330,7 @@ public class FlowSetter extends TwoPortEquipment {
       referenceProcess.add(heater3rdstage);
 
       ThreePhaseSeparator separator3rdstage = new ThreePhaseSeparator("3rd stage separator",
-	  heater3rdstage.getOutletStream());
+          heater3rdstage.getOutletStream());
       referenceProcess.add(separator3rdstage);
 
       gasMixer.addStream(separator2ndstage.getGasOutStream());

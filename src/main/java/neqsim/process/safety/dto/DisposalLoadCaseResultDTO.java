@@ -22,7 +22,7 @@ public class DisposalLoadCaseResultDTO implements Serializable {
       double totalHeatDutyMW, double maxRadiationDistanceM, List<CapacityAlertDTO> alerts) {
     this.loadCaseName = loadCaseName;
     this.performanceByUnit = performanceByUnit == null ? Collections.emptyMap()
-	: Collections.unmodifiableMap(performanceByUnit);
+        : Collections.unmodifiableMap(performanceByUnit);
     this.totalHeatDutyMW = totalHeatDutyMW;
     this.maxRadiationDistanceM = maxRadiationDistanceM;
     this.alerts = alerts == null ? Collections.emptyList() : Collections.unmodifiableList(alerts);

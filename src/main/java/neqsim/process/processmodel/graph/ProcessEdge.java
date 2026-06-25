@@ -90,7 +90,7 @@ public class ProcessEdge implements Serializable {
    */
   public ProcessEdge(int index, ProcessNode source, ProcessNode target, StreamInterface stream) {
     this(index, source, target, stream, stream != null ? stream.getName() : null,
-	detectEdgeType(stream, source, target));
+        detectEdgeType(stream, source, target));
   }
 
   /**
@@ -253,23 +253,23 @@ public class ProcessEdge implements Serializable {
     // Stream properties (if available)
     if (stream != null) {
       try {
-	features[5] = Math.min(1.0, stream.getTemperature("K") / 1000.0);
+        features[5] = Math.min(1.0, stream.getTemperature("K") / 1000.0);
       } catch (Exception e) {
-	features[5] = 0.0;
+        features[5] = 0.0;
       }
 
       try {
-	features[6] = Math.min(1.0, stream.getPressure() / 100.0);
+        features[6] = Math.min(1.0, stream.getPressure() / 100.0);
       } catch (Exception e) {
-	features[6] = 0.0;
+        features[6] = 0.0;
       }
 
       try {
-	if (stream.getThermoSystem() != null) {
-	  features[7] = Math.min(1.0, stream.getThermoSystem().getFlowRate("kg/hr") / 100000.0);
-	}
+        if (stream.getThermoSystem() != null) {
+          features[7] = Math.min(1.0, stream.getThermoSystem().getFlowRate("kg/hr") / 100000.0);
+        }
       } catch (Exception e) {
-	features[7] = 0.0;
+        features[7] = 0.0;
       }
     }
 
@@ -291,7 +291,7 @@ public class ProcessEdge implements Serializable {
   @Override
   public String toString() {
     return String.format("ProcessEdge[%d: %s -> %s (%s)%s]", index, source.getName(), target.getName(), edgeType,
-	isBackEdge ? " BACK" : "");
+        isBackEdge ? " BACK" : "");
   }
 
   @Override

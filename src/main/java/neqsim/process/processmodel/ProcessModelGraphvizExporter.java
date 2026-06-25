@@ -116,7 +116,7 @@ public class ProcessModelGraphvizExporter implements Serializable {
     StringBuilder builder = new StringBuilder();
     builder.append("digraph \"").append(escapeDot(title)).append("\" {\n");
     builder.append("  graph [compound=true, rankdir=LR, fontname=\"Arial\", labelloc=t, label=\"")
-	.append(escapeDot(title)).append("\"];\n");
+        .append(escapeDot(title)).append("\"];\n");
     builder.append("  node [shape=box, style=filled, fillcolor=\"#e8f0fe\", fontname=\"Arial\"];\n");
     builder.append("  edge [fontname=\"Arial\", fontsize=10];\n\n");
 
@@ -138,7 +138,7 @@ public class ProcessModelGraphvizExporter implements Serializable {
     for (String areaName : model.getProcessSystemNames()) {
       ProcessSystem process = model.get(areaName);
       if (process != null) {
-	dots.put(areaName, process.toDOT());
+        dots.put(areaName, process.toDOT());
       }
     }
     return dots;
@@ -200,20 +200,20 @@ public class ProcessModelGraphvizExporter implements Serializable {
     for (String areaName : model.getProcessSystemNames()) {
       ProcessSystem process = model.get(areaName);
       if (process == null) {
-	continue;
+        continue;
       }
       List<UnitNode> nodes = new ArrayList<UnitNode>();
       Map<String, UnitNode> nodesByName = new LinkedHashMap<String, UnitNode>();
       for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
-	UnitNode node = new UnitNode(areaName, unit);
-	nodes.add(node);
-	nodesByName.put(unit.getName(), node);
+        UnitNode node = new UnitNode(areaName, unit);
+        nodes.add(node);
+        nodesByName.put(unit.getName(), node);
       }
       areaNodes.put(areaName, nodes);
       areaNodeByName.put(areaName, nodesByName);
 
       for (UnitNode node : nodes) {
-	collectStreamEndpoints(node, producers, consumers);
+        collectStreamEndpoints(node, producers, consumers);
       }
     }
   }
@@ -303,9 +303,9 @@ public class ProcessModelGraphvizExporter implements Serializable {
       builder.append("    style=\"rounded\";\n");
       builder.append("    color=\"#9aa5b1\";\n");
       for (UnitNode node : entry.getValue()) {
-	builder.append("    \"").append(escapeDot(node.nodeId)).append("\" [label=\"")
-	    .append(escapeDot(node.unit.getName())).append("\", shape=").append(getShapeForEquipment(node.unit))
-	    .append("];\n");
+        builder.append("    \"").append(escapeDot(node.nodeId)).append("\" [label=\"")
+            .append(escapeDot(node.unit.getName())).append("\", shape=").append(getShapeForEquipment(node.unit))
+            .append("];\n");
       }
       builder.append("  }\n\n");
       areaIndex++;
@@ -327,12 +327,12 @@ public class ProcessModelGraphvizExporter implements Serializable {
       List<UnitNode> sourceNodes = selectEffectiveSources(entry.getValue());
       List<UnitNode> sinkNodes = consumers.get(stream);
       if (sinkNodes == null || sinkNodes.isEmpty()) {
-	continue;
+        continue;
       }
       for (UnitNode source : sourceNodes) {
-	for (UnitNode sink : sinkNodes) {
-	  addStreamEdge(edgeLines, source, sink, stream);
-	}
+        for (UnitNode sink : sinkNodes) {
+          addStreamEdge(edgeLines, source, sink, stream);
+        }
       }
     }
     appendEdgeLines(builder, edgeLines);
@@ -348,7 +348,7 @@ public class ProcessModelGraphvizExporter implements Serializable {
     List<UnitNode> equipmentSources = new ArrayList<UnitNode>();
     for (UnitNode source : sourceNodes) {
       if (!(source.unit instanceof StreamInterface)) {
-	equipmentSources.add(source);
+        equipmentSources.add(source);
       }
     }
     return equipmentSources.isEmpty() ? sourceNodes : equipmentSources;
@@ -390,12 +390,12 @@ public class ProcessModelGraphvizExporter implements Serializable {
       ProcessSystem process = model.get(areaName);
       Map<String, UnitNode> nodesByName = areaNodeByName.get(areaName);
       if (process == null || nodesByName == null) {
-	continue;
+        continue;
       }
       for (ProcessConnection connection : process.getConnections()) {
-	UnitNode source = nodesByName.get(connection.getSourceEquipment());
-	UnitNode target = nodesByName.get(connection.getTargetEquipment());
-	addExplicitConnectionEdge(edgeLines, source, target, connection);
+        UnitNode source = nodesByName.get(connection.getSourceEquipment());
+        UnitNode target = nodesByName.get(connection.getTargetEquipment());
+        addExplicitConnectionEdge(edgeLines, source, target, connection);
       }
     }
     appendEdgeLines(builder, edgeLines);
@@ -470,7 +470,7 @@ public class ProcessModelGraphvizExporter implements Serializable {
     StringBuilder builder = new StringBuilder();
     for (int i = 0; i < attributes.size(); i++) {
       if (i > 0) {
-	builder.append(", ");
+        builder.append(", ");
       }
       builder.append(attributes.get(i));
     }

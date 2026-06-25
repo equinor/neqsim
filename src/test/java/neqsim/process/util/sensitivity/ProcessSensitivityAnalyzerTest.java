@@ -43,7 +43,7 @@ class ProcessSensitivityAnalyzerTest {
       ProcessSensitivityAnalyzer analyzer = new ProcessSensitivityAnalyzer(process);
 
       analyzer.withInput("feed", "temperature").withInput("feed", "pressure").withOutput("product", "temperature")
-	  .withOutput("product", "flowRate");
+          .withOutput("product", "flowRate");
 
       // No exception thrown means success
       assertNotNull(analyzer);
@@ -56,7 +56,7 @@ class ProcessSensitivityAnalyzerTest {
       ProcessSensitivityAnalyzer analyzer = new ProcessSensitivityAnalyzer(process);
 
       analyzer.withInput("feed", "temperature", "C").withInput("feed", "flowRate", "kg/hr").withOutput("product",
-	  "temperature", "K");
+          "temperature", "K");
 
       assertNotNull(analyzer);
     }
@@ -200,7 +200,7 @@ class ProcessSensitivityAnalyzerTest {
       // Analyze sensitivity
       ProcessSensitivityAnalyzer analyzer = new ProcessSensitivityAnalyzer(process);
       analyzer.withInput("feed", "temperature").withInput("feed", "pressure").withOutput("feed", "temperature")
-	  .withOutput("feed", "pressure");
+          .withOutput("feed", "pressure");
 
       SensitivityMatrix matrix = analyzer.compute();
 

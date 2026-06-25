@@ -18,8 +18,8 @@ class SessionRunnerTest {
   @Test
   void testCreateSession() {
     String json = "{\"action\": \"create\", \"fluid\": {"
-	+ "\"model\": \"SRK\", \"temperature\": 298.15, \"pressure\": 50.0,"
-	+ "\"components\": {\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05}," + "\"mixingRule\": \"classic\"}}";
+        + "\"model\": \"SRK\", \"temperature\": 298.15, \"pressure\": 50.0,"
+        + "\"components\": {\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05}," + "\"mixingRule\": \"classic\"}}";
 
     String result = SessionRunner.run(json);
     assertNotNull(result);
@@ -59,11 +59,11 @@ class SessionRunnerTest {
    */
   private static String createCompressorSession() {
     String createJson = "{\"action\": \"create\", \"processJson\": {" + "\"fluid\": {"
-	+ "  \"model\": \"SRK\", \"temperature\": 298.15, \"pressure\": 50.0," + "  \"mixingRule\": \"classic\","
-	+ "  \"components\": {\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05}}," + "\"process\": ["
-	+ "  {\"type\": \"Stream\", \"name\": \"feed\"," + "   \"properties\": {\"flowRate\": [10000.0, \"kg/hr\"]}},"
-	+ "  {\"type\": \"Compressor\", \"name\": \"Compressor\", \"inlet\": \"feed\","
-	+ "   \"properties\": {\"outletPressure\": [100.0, \"bara\"]}}]}}";
+        + "  \"model\": \"SRK\", \"temperature\": 298.15, \"pressure\": 50.0," + "  \"mixingRule\": \"classic\","
+        + "  \"components\": {\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05}}," + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"feed\"," + "   \"properties\": {\"flowRate\": [10000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"Compressor\", \"name\": \"Compressor\", \"inlet\": \"feed\","
+        + "   \"properties\": {\"outletPressure\": [100.0, \"bara\"]}}]}}";
     String createResult = SessionRunner.run(createJson);
     JsonObject obj = JsonParser.parseString(createResult).getAsJsonObject();
     assertEquals("success", obj.get("status").getAsString(), "Session create failed: " + createResult);
@@ -74,8 +74,8 @@ class SessionRunnerTest {
   void testSessionEvaluate() {
     String sessionId = createCompressorSession();
     String json = "{\"action\": \"evaluate\", \"sessionId\": \"" + sessionId + "\","
-	+ "\"setpoints\": {\"Compressor.outletPressure\": 120.0}," + "\"readbacks\": [\"Compressor.power\"],"
-	+ "\"setpointUnit\": \"bara\", \"readbackUnit\": \"kW\"}";
+        + "\"setpoints\": {\"Compressor.outletPressure\": 120.0}," + "\"readbacks\": [\"Compressor.power\"],"
+        + "\"setpointUnit\": \"bara\", \"readbackUnit\": \"kW\"}";
     String result = SessionRunner.run(json);
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
     assertEquals("success", obj.get("status").getAsString(), "evaluate failed: " + result);
@@ -89,7 +89,7 @@ class SessionRunnerTest {
   void testSessionGetValues() {
     String sessionId = createCompressorSession();
     String json = "{\"action\": \"getValues\", \"sessionId\": \"" + sessionId + "\","
-	+ "\"addresses\": [\"Compressor.outletPressure\"], \"unit\": \"bara\"}";
+        + "\"addresses\": [\"Compressor.outletPressure\"], \"unit\": \"bara\"}";
     String result = SessionRunner.run(json);
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
     assertEquals("success", obj.get("status").getAsString(), "getValues failed: " + result);
@@ -101,7 +101,7 @@ class SessionRunnerTest {
   void testSessionSetValues() {
     String sessionId = createCompressorSession();
     String json = "{\"action\": \"setValues\", \"sessionId\": \"" + sessionId + "\","
-	+ "\"updates\": {\"Compressor.outletPressure\": 115.0}, \"unit\": \"bara\"," + "\"runAfter\": true}";
+        + "\"updates\": {\"Compressor.outletPressure\": 115.0}, \"unit\": \"bara\"," + "\"runAfter\": true}";
     String result = SessionRunner.run(json);
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
     assertEquals("success", obj.get("status").getAsString(), "setValues failed: " + result);

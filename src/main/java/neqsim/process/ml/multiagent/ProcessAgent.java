@@ -105,8 +105,8 @@ public abstract class ProcessAgent implements Agent {
 
       double value = state.getValue(varName);
       if (!Double.isNaN(value) && !Double.isNaN(setpoint)) {
-	double error = value - setpoint;
-	reward -= weight * error * error;
+        double error = value - setpoint;
+        reward -= weight * error * error;
       }
     }
     return reward;

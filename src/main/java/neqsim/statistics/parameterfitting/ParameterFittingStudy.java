@@ -165,7 +165,7 @@ public class ParameterFittingStudy {
    */
   public ParameterFittingStudy setObjectiveFunctionType(ObjectiveFunctionType objectiveFunctionType) {
     this.objectiveFunctionType = objectiveFunctionType == null ? ObjectiveFunctionType.WEIGHTED_LEAST_SQUARES
-	: objectiveFunctionType;
+        : objectiveFunctionType;
     return this;
   }
 
@@ -242,11 +242,11 @@ public class ParameterFittingStudy {
   public ParameterFittingStudy setParameterUpdateAdapter(ParameterUpdateAdapter parameterUpdateAdapter) {
     this.parameterUpdateAdapter = parameterUpdateAdapter;
     if (parameterUpdateAdapter != null && parameterUpdateAdapter.getParameters() != null
-	&& parameterUpdateAdapter.getParameters().length > 0 && spec == null) {
+        && parameterUpdateAdapter.getParameters().length > 0 && spec == null) {
       ParameterFittingSpec adapterSpec = new ParameterFittingSpec("adapter fitting study");
       FittingParameter[] parameters = parameterUpdateAdapter.getParameters();
       for (int i = 0; i < parameters.length; i++) {
-	adapterSpec.addParameter(parameters[i]);
+        adapterSpec.addParameter(parameters[i]);
       }
       setSpec(adapterSpec);
     }
@@ -265,7 +265,7 @@ public class ParameterFittingStudy {
     }
     if (function.getFittingParams() == null || function.getFittingParams().length == 0) {
       if (spec == null) {
-	throw new IllegalStateException("setInitialGuess must be called before run");
+        throw new IllegalStateException("setInitialGuess must be called before run");
       }
       setInitialGuess(spec.getInitialGuess());
     }
@@ -283,7 +283,7 @@ public class ParameterFittingStudy {
       double[] initialGuess = start == 0 ? firstInitialGuess : createRandomInitialGuess(random);
       Result candidate = runSingleStart(fittingDataSet, validation, initialGuess);
       if (bestResult == null || candidate.getObjectiveValue() < bestResult.getObjectiveValue()) {
-	bestResult = candidate;
+        bestResult = candidate;
       }
     }
     setPhysicalParameters(bestResult.getFittedParameters());
@@ -389,7 +389,7 @@ public class ParameterFittingStudy {
       optimizer.solve();
       setPhysicalParameters(resolvePhysicalParameters(optimizationFunction));
       if (!objectiveFunctionType.isRobust()) {
-	break;
+        break;
       }
       double[] weights = calculateRobustWeights(fittingDataSet);
       sampleSet = createWeightedSampleSet(fittingDataSet, optimizationFunction, weights);
@@ -431,11 +431,11 @@ public class ParameterFittingStudy {
     Metrics validationMetrics = validation == null ? Metrics.notAvailable() : calculateMetrics(validation);
     double objectiveValue = calculateObjectiveValue(fittingDataSet, fittedParameters);
     return new Result(optimizerResult, fittedParameters, resolveParameterNames(), fittingMetrics.calculatedValues,
-	fittingMetrics.residuals, fittingMetrics.weightedResiduals, fittingMetrics.rootMeanSquareError,
-	fittingMetrics.meanAbsoluteError, fittingMetrics.weightedRootMeanSquareError, fittingMetrics.reducedChiSquare,
-	objectiveFunctionType, objectiveValue, robustPasses, validationMetrics.calculatedValues,
-	validationMetrics.residuals, validationMetrics.weightedResiduals, validationMetrics.rootMeanSquareError,
-	validationMetrics.meanAbsoluteError, validationMetrics.weightedRootMeanSquareError);
+        fittingMetrics.residuals, fittingMetrics.weightedResiduals, fittingMetrics.rootMeanSquareError,
+        fittingMetrics.meanAbsoluteError, fittingMetrics.weightedRootMeanSquareError, fittingMetrics.reducedChiSquare,
+        objectiveFunctionType, objectiveValue, robustPasses, validationMetrics.calculatedValues,
+        validationMetrics.residuals, validationMetrics.weightedResiduals, validationMetrics.rootMeanSquareError,
+        validationMetrics.meanAbsoluteError, validationMetrics.weightedRootMeanSquareError);
   }
 
   /**
@@ -466,7 +466,7 @@ public class ParameterFittingStudy {
     int degreesOfFreedom = Math.max(1, metricsDataSet.size() - currentPhysicalParameters().length);
     double reducedChiSquare = sumWeightedSquared / degreesOfFreedom;
     return new Metrics(calculatedValues, residuals, weightedResiduals, rootMeanSquareError, meanAbsoluteError,
-	weightedRootMeanSquareError, reducedChiSquare);
+        weightedRootMeanSquareError, reducedChiSquare);
   }
 
   /**
@@ -504,7 +504,7 @@ public class ParameterFittingStudy {
       return Math.max(NUMERICAL_EPSILON, 1.0 / (1.0 + scaled * scaled));
     } else if (objectiveFunctionType == ObjectiveFunctionType.TUKEY_BIWEIGHT) {
       if (absResidual >= c) {
-	return NUMERICAL_EPSILON;
+        return NUMERICAL_EPSILON;
       }
       double scaled = standardizedResidual / c;
       double factor = 1.0 - scaled * scaled;
@@ -527,9 +527,9 @@ public class ParameterFittingStudy {
     for (int i = 0; i < fittingDataSet.size(); i++) {
       ExperimentalDataPoint point = fittingDataSet.getPoint(i);
       double adjustedStandardDeviation = point.getStandardDeviation()
-	  / Math.sqrt(Math.max(NUMERICAL_EPSILON, weights[i]));
+          / Math.sqrt(Math.max(NUMERICAL_EPSILON, weights[i]));
       SampleValue sample = new SampleValue(point.getMeasuredValue(), adjustedStandardDeviation,
-	  point.getDependentValues());
+          point.getDependentValues());
       sample.setReference(point.getReference());
       sample.setDescription(point.getDescription());
       sample.setFunction(optimizationFunction);
@@ -555,12 +555,12 @@ public class ParameterFittingStudy {
     }
     if (spec != null) {
       for (int i = 0; i < spec.getParameters().size(); i++) {
-	FittingParameter parameter = spec.getParameters().get(i);
-	if (parameter.hasPrior()) {
-	  double standardized = (fittedParameters[i] - parameter.getPriorValue())
-	      / parameter.getPriorStandardDeviation();
-	  objectiveValue += standardized * standardized;
-	}
+        FittingParameter parameter = spec.getParameters().get(i);
+        if (parameter.hasPrior()) {
+          double standardized = (fittedParameters[i] - parameter.getPriorValue())
+              / parameter.getPriorStandardDeviation();
+          objectiveValue += standardized * standardized;
+        }
       }
     }
     return objectiveValue;
@@ -584,7 +584,7 @@ public class ParameterFittingStudy {
       return c * c * Math.log(1.0 + scaled * scaled);
     } else if (objectiveFunctionType == ObjectiveFunctionType.TUKEY_BIWEIGHT) {
       if (absResidual >= c) {
-	return c * c / 3.0;
+        return c * c / 3.0;
       }
       double scaled = standardizedResidual / c;
       double factor = 1.0 - scaled * scaled;
@@ -643,7 +643,7 @@ public class ParameterFittingStudy {
       function.setInitialGuess(copyArray(values));
     } else {
       for (int i = 0; i < values.length; i++) {
-	function.setFittingParams(i, values[i]);
+        function.setFittingParams(i, values[i]);
       }
     }
     applyParameterAdapter(values);
@@ -686,7 +686,7 @@ public class ParameterFittingStudy {
     }
     for (int i = 0; i < values.length; i++) {
       if (Double.isNaN(values[i]) || Double.isInfinite(values[i])) {
-	throw new IllegalArgumentException(name + "[" + i + "] must be finite");
+        throw new IllegalArgumentException(name + "[" + i + "] must be finite");
       }
     }
   }
@@ -706,14 +706,14 @@ public class ParameterFittingStudy {
     }
     for (int i = 0; i < bounds.length; i++) {
       if (bounds[i] == null || bounds[i].length != 2) {
-	throw new IllegalArgumentException("bounds[" + i + "] must contain lower and upper values");
+        throw new IllegalArgumentException("bounds[" + i + "] must contain lower and upper values");
       }
       if (Double.isNaN(bounds[i][0]) || Double.isInfinite(bounds[i][0]) || Double.isNaN(bounds[i][1])
-	  || Double.isInfinite(bounds[i][1])) {
-	throw new IllegalArgumentException("bounds[" + i + "] values must be finite");
+          || Double.isInfinite(bounds[i][1])) {
+        throw new IllegalArgumentException("bounds[" + i + "] values must be finite");
       }
       if (bounds[i][0] > bounds[i][1]) {
-	throw new IllegalArgumentException("bounds[" + i + "] lower value exceeds upper value");
+        throw new IllegalArgumentException("bounds[" + i + "] lower value exceeds upper value");
       }
     }
   }
@@ -797,8 +797,8 @@ public class ParameterFittingStudy {
      * @param reducedChiSquare reduced chi-square
      */
     private Metrics(double[] calculatedValues, double[] residuals, double[] weightedResiduals,
-	double rootMeanSquareError, double meanAbsoluteError, double weightedRootMeanSquareError,
-	double reducedChiSquare) {
+        double rootMeanSquareError, double meanAbsoluteError, double weightedRootMeanSquareError,
+        double reducedChiSquare) {
       this.calculatedValues = copyArray(calculatedValues);
       this.residuals = copyArray(residuals);
       this.weightedResiduals = copyArray(weightedResiduals);
@@ -882,10 +882,10 @@ public class ParameterFittingStudy {
     private void syncDelegate() {
       double[] physicalValues = getPhysicalParameters();
       for (int i = 0; i < physicalValues.length; i++) {
-	delegate.setFittingParams(i, physicalValues[i]);
+        delegate.setFittingParams(i, physicalValues[i]);
       }
       if (adapter != null) {
-	adapter.applyParameters(physicalValues);
+        adapter.applyParameters(physicalValues);
       }
     }
 
@@ -898,13 +898,13 @@ public class ParameterFittingStudy {
      */
     private static double[] toInternal(double[] values, ParameterFittingSpec spec) {
       if (values == null || values.length != spec.getParameters().size()) {
-	return spec.getInternalInitialGuess();
+        return spec.getInternalInitialGuess();
       }
       double[] internalValues = new double[values.length];
       for (int i = 0; i < values.length; i++) {
-	FittingParameter parameter = spec.getParameters().get(i);
-	internalValues[i] = parameter.getTransform().toInternal(values[i], parameter.getLowerBound(),
-	    parameter.getUpperBound());
+        FittingParameter parameter = spec.getParameters().get(i);
+        internalValues[i] = parameter.getTransform().toInternal(values[i], parameter.getLowerBound(),
+            parameter.getUpperBound());
       }
       return internalValues;
     }
@@ -961,12 +961,12 @@ public class ParameterFittingStudy {
      * @param validationWeightedRootMeanSquareError validation weighted root mean square error
      */
     private Result(LevenbergMarquardtResult optimizerResult, double[] fittedParameters, String[] parameterNames,
-	double[] calculatedValues, double[] residuals, double[] weightedResiduals, double rootMeanSquareError,
-	double meanAbsoluteError, double weightedRootMeanSquareError, double reducedChiSquare,
-	ObjectiveFunctionType objectiveFunctionType, double objectiveValue, int robustIterations,
-	double[] validationCalculatedValues, double[] validationResiduals, double[] validationWeightedResiduals,
-	double validationRootMeanSquareError, double validationMeanAbsoluteError,
-	double validationWeightedRootMeanSquareError) {
+        double[] calculatedValues, double[] residuals, double[] weightedResiduals, double rootMeanSquareError,
+        double meanAbsoluteError, double weightedRootMeanSquareError, double reducedChiSquare,
+        ObjectiveFunctionType objectiveFunctionType, double objectiveValue, int robustIterations,
+        double[] validationCalculatedValues, double[] validationResiduals, double[] validationWeightedResiduals,
+        double validationRootMeanSquareError, double validationMeanAbsoluteError,
+        double validationWeightedRootMeanSquareError) {
       this.optimizerResult = optimizerResult;
       this.fittedParameters = copyArray(fittedParameters);
       this.parameterNames = copyArray(parameterNames);
@@ -1035,9 +1035,9 @@ public class ParameterFittingStudy {
      */
     public double getFittedParameter(String parameterName) {
       for (int i = 0; i < parameterNames.length; i++) {
-	if (parameterNames[i].equals(parameterName)) {
-	  return fittedParameters[i];
-	}
+        if (parameterNames[i].equals(parameterName)) {
+          return fittedParameters[i];
+        }
       }
       throw new IllegalArgumentException("Unknown parameter name: " + parameterName);
     }

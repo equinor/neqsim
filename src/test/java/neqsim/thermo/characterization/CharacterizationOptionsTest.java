@@ -34,8 +34,8 @@ class CharacterizationOptionsTest {
   @DisplayName("CharacterizationOptions builder sets all options")
   void testOptionsBuilderSetsOptions() {
     CharacterizationOptions options = CharacterizationOptions.builder().transferBinaryInteractionParameters(true)
-	.normalizeComposition(true).namingScheme(CharacterizationOptions.NamingScheme.SEQUENTIAL)
-	.generateValidationReport(true).compositionTolerance(1e-6).build();
+        .normalizeComposition(true).namingScheme(CharacterizationOptions.NamingScheme.SEQUENTIAL)
+        .generateValidationReport(true).compositionTolerance(1e-6).build();
 
     assertEquals(true, options.isTransferBinaryInteractionParameters());
     assertEquals(true, options.isNormalizeComposition());
@@ -96,7 +96,7 @@ class CharacterizationOptionsTest {
     SystemInterface source = createSourceFluid();
 
     CharacterizationOptions options = CharacterizationOptions.builder().transferBinaryInteractionParameters(true)
-	.build();
+        .build();
 
     SystemInterface characterized = PseudoComponentCombiner.characterizeToReference(source, reference, options);
 
@@ -110,15 +110,15 @@ class CharacterizationOptionsTest {
 
     // Verify PC count matches reference
     List<ComponentInterface> characterizedPCs = Arrays.stream(characterized.getComponentNames())
-	.map(characterized::getComponent).filter(c -> c.isIsTBPfraction() || c.isIsPlusFraction())
-	.collect(Collectors.toList());
+        .map(characterized::getComponent).filter(c -> c.isIsTBPfraction() || c.isIsPlusFraction())
+        .collect(Collectors.toList());
 
     assertEquals(3, characterizedPCs.size());
 
     // Verify BIPs were transferred
     double kij = ((PhaseEos) characterized.getPhase(0)).getMixingRule().getBinaryInteractionParameter(
-	characterized.getComponent("methane").getComponentNumber(),
-	characterized.getComponent("C7_PC").getComponentNumber());
+        characterized.getComponent("methane").getComponentNumber(),
+        characterized.getComponent("C7_PC").getComponentNumber());
 
     assertEquals(0.05, kij, TOLERANCE);
   }
@@ -135,8 +135,8 @@ class CharacterizationOptionsTest {
 
     // Verify PC structure matches reference
     List<ComponentInterface> characterizedPCs = Arrays.stream(characterized.getComponentNames())
-	.map(characterized::getComponent).filter(c -> c.isIsTBPfraction() || c.isIsPlusFraction())
-	.collect(Collectors.toList());
+        .map(characterized::getComponent).filter(c -> c.isIsTBPfraction() || c.isIsPlusFraction())
+        .collect(Collectors.toList());
 
     assertEquals(3, characterizedPCs.size());
   }
@@ -168,8 +168,8 @@ class CharacterizationOptionsTest {
 
     // Verify BIP was transferred
     double kij = ((PhaseEos) characterized.getPhase(0)).getMixingRule().getBinaryInteractionParameter(
-	characterized.getComponent("methane").getComponentNumber(),
-	characterized.getComponent("C7_PC").getComponentNumber());
+        characterized.getComponent("methane").getComponentNumber(),
+        characterized.getComponent("C7_PC").getComponentNumber());
 
     assertEquals(0.05, kij, TOLERANCE);
   }
@@ -182,7 +182,7 @@ class CharacterizationOptionsTest {
     SystemInterface characterized = PseudoComponentCombiner.characterizeToReference(source, reference);
 
     CharacterizationValidationReport report = PseudoComponentCombiner.generateValidationReport(source, reference,
-	characterized);
+        characterized);
 
     assertNotNull(report);
     assertEquals(4, report.getSourcePseudoComponentCount());
@@ -205,7 +205,7 @@ class CharacterizationOptionsTest {
     SystemInterface characterized = PseudoComponentCombiner.characterizeToReference(source, reference);
 
     CharacterizationValidationReport report = CharacterizationValidationReport.generate(source, reference,
-	characterized);
+        characterized);
 
     // Mass should be conserved, so report should be valid
     assertTrue(report.getMassDifferencePercent() < 0.1);

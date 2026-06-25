@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
@@ -17,8 +19,6 @@ import neqsim.process.measurementdevice.LevelTransmitter;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Integration test for slug pipeline to separator with level control.
@@ -100,9 +100,9 @@ class SlugPipelineToSeparatorTest {
     for (int i = 0; i < 20; i++) {
       double x = (i + 1.0) / 20.0;
       if (x < 0.5) {
-	elevations[i] = -10.0 * x / 0.5; // Downhill to -10m
+        elevations[i] = -10.0 * x / 0.5; // Downhill to -10m
       } else {
-	elevations[i] = -10.0 + 30.0 * (x - 0.5) / 0.5; // Up to +20m
+        elevations[i] = -10.0 + 30.0 * (x - 0.5) / 0.5; // Up to +20m
       }
     }
     pipeline.setElevationProfile(elevations);
@@ -191,7 +191,7 @@ class SlugPipelineToSeparatorTest {
       double time = step * 2.0;
 
       if (step > 0) {
-	process.runTransient(2.0, simId);
+        process.runTransient(2.0, simId);
       }
 
       double pipeOutFlow = pipeline.getOutletStream().getFlowRate("kg/sec");
@@ -202,7 +202,7 @@ class SlugPipelineToSeparatorTest {
       flows.add(pipeOutFlow);
 
       if (step % 5 == 0) {
-	logger.info(String.format("%6.0f   %12.2f  %8.1f  %10.1f", time, pipeOutFlow, level * 100, sepP));
+        logger.info(String.format("%6.0f   %12.2f  %8.1f  %10.1f", time, pipeOutFlow, level * 100, sepP));
       }
     }
 
@@ -327,15 +327,15 @@ class SlugPipelineToSeparatorTest {
     for (int i = 0; i < 40; i++) {
       double x = (i + 1.0) / 40.0;
       if (x < 0.4) {
-	// Downhill to -30m
-	elevations[i] = -30.0 * x / 0.4;
+        // Downhill to -30m
+        elevations[i] = -30.0 * x / 0.4;
       } else if (x < 0.6) {
-	// Low point (liquid accumulation zone)
-	double dip = (x - 0.4) / 0.2;
-	elevations[i] = -30.0 - 10.0 * Math.sin(dip * Math.PI);
+        // Low point (liquid accumulation zone)
+        double dip = (x - 0.4) / 0.2;
+        elevations[i] = -30.0 - 10.0 * Math.sin(dip * Math.PI);
       } else {
-	// Riser to +40m
-	elevations[i] = -40.0 + 80.0 * (x - 0.6) / 0.4;
+        // Riser to +40m
+        elevations[i] = -40.0 + 80.0 * (x - 0.6) / 0.4;
       }
     }
     pipe.setElevationProfile(elevations);
@@ -366,7 +366,7 @@ class SlugPipelineToSeparatorTest {
       double time = step * dt;
 
       if (step > 0) {
-	pipe.runTransient(dt, simId);
+        pipe.runTransient(dt, simId);
       }
 
       // Get outlet mass flow
@@ -380,10 +380,10 @@ class SlugPipelineToSeparatorTest {
       double[] holdups = pipe.getLiquidHoldupProfile();
       double avgHoldup = 0;
       if (holdups != null && holdups.length > 0) {
-	for (double h : holdups) {
-	  avgHoldup += h;
-	}
-	avgHoldup /= holdups.length;
+        for (double h : holdups) {
+          avgHoldup += h;
+        }
+        avgHoldup /= holdups.length;
       }
 
       times.add(time);
@@ -393,7 +393,7 @@ class SlugPipelineToSeparatorTest {
 
       // Print every 10 seconds
       if (step % 10 == 0) {
-	logger.info(String.format("%6.0f    %10.3f   %12.2f   %10.4f", time, outFlow, outletP, avgHoldup));
+        logger.info(String.format("%6.0f    %10.3f   %12.2f   %10.4f", time, outFlow, outletP, avgHoldup));
       }
     }
 

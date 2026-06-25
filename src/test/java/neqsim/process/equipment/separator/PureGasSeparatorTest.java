@@ -41,11 +41,11 @@ class PureGasSeparatorTest extends neqsim.NeqSimTest {
 
     // Should have gas but no liquid
     org.junit.jupiter.api.Assertions.assertTrue(separator1.getGasOutStream().getFlowRate("kg/hr") > 0,
-	"Gas flow should be positive");
+        "Gas flow should be positive");
     org.junit.jupiter.api.Assertions.assertEquals(0.0, separator1.getLiquidOutStream().getFlowRate("kg/hr"), 1e-6,
-	"Liquid flow should be zero for pure gas");
+        "Liquid flow should be zero for pure gas");
     org.junit.jupiter.api.Assertions.assertEquals(0.0, separator1.getLiquidLevel(), 1e-6,
-	"Liquid level should be zero for pure gas");
+        "Liquid level should be zero for pure gas");
 
     // Verify mass balance
     double massBalance = separator1.getMassBalance("kg/hr");

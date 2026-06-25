@@ -14,9 +14,9 @@ import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductiv
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.WaterConductivityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.CO2ViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.PFCTViscosityMethodHeavyOil;
-import neqsim.thermo.phase.PhaseSpanWagnerEos;
 import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseSpanWagnerEos;
 
 /**
  * GasPhysicalProperties class.

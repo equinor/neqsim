@@ -80,7 +80,7 @@ public final class ExperimentalDataDownloader {
       byte[] buffer = new byte[BUFFER_SIZE];
       int read;
       while ((read = input.read(buffer)) >= 0) {
-	output.write(buffer, 0, read);
+        output.write(buffer, 0, read);
       }
     } finally {
       output.close();

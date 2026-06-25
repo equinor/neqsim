@@ -312,10 +312,10 @@ public class FloatingSubstructure extends ProcessEquipmentBaseClass {
       // Auto-calculate ballast to achieve target draft
       double targetDraft = columnHeight * 0.65; // 65% of column height submerged
       double requiredDisplacement = seawaterDensity * (numberOfColumns * colArea * targetDraft + pontoonVolume)
-	  / 1000.0; // tonnes
+          / 1000.0; // tonnes
       ballastMass = requiredDisplacement - lightshipMass;
       if (ballastMass < 0) {
-	ballastMass = 0;
+        ballastMass = 0;
       }
     }
 
@@ -363,7 +363,7 @@ public class FloatingSubstructure extends ProcessEquipmentBaseClass {
     double towerCog = draft + freeboard + (hubHeight / 2.0); // mid-tower
 
     centerOfGravity = (steelWeight * steelCog + ballastMass * ballastCog + turbineMass * turbineCog
-	+ towerMass * towerCog) / totalMass;
+        + towerMass * towerCog) / totalMass;
 
     // Metacentric radius (BM = I / V)
     metacentricRadius = waterplaneSecondMoment / displacedVolume;
@@ -397,7 +397,7 @@ public class FloatingSubstructure extends ProcessEquipmentBaseClass {
       double requiredDisplacement = seawaterDensity * colArea * targetDraft / 1000.0;
       ballastMass = requiredDisplacement - lightshipMass;
       if (ballastMass < 0) {
-	ballastMass = 0;
+        ballastMass = 0;
       }
     }
 
@@ -426,7 +426,7 @@ public class FloatingSubstructure extends ProcessEquipmentBaseClass {
     double towerCog = draft + freeboard + hubHeight / 2.0;
 
     centerOfGravity = (steelWeight * steelCog + ballastMass * ballastCog + turbineMass * turbineCog
-	+ towerMass * towerCog) / totalMass;
+        + towerMass * towerCog) / totalMass;
 
     // BM = I/V (very small for spar — stability from low KG)
     metacentricRadius = waterplaneSecondMoment / displacedVolume;
@@ -453,7 +453,7 @@ public class FloatingSubstructure extends ProcessEquipmentBaseClass {
       double requiredDisplacement = seawaterDensity * bargeLength * bargeWidth * targetDraft / 1000.0;
       ballastMass = requiredDisplacement - lightshipMass;
       if (ballastMass < 0) {
-	ballastMass = 0;
+        ballastMass = 0;
       }
     }
 
@@ -477,7 +477,7 @@ public class FloatingSubstructure extends ProcessEquipmentBaseClass {
     double towerCog = draft + freeboard + hubHeight / 2.0;
 
     centerOfGravity = (steelWeight * steelCog + ballastMass * ballastCog + turbineMass * turbineCog
-	+ towerMass * towerCog) / totalMass;
+        + towerMass * towerCog) / totalMass;
 
     metacentricRadius = waterplaneSecondMoment / displacedVolume;
     metacentricHeight = centerOfBuoyancy + metacentricRadius - centerOfGravity;

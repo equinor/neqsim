@@ -533,7 +533,7 @@ public class UnitCostEstimateBaseClass implements java.io.Serializable {
     }
     UnitCostEstimateBaseClass other = (UnitCostEstimateBaseClass) obj;
     return Double.doubleToLongBits(costPerWeightUnit) == Double.doubleToLongBits(other.costPerWeightUnit)
-	&& Objects.equals(mechanicalEquipment, other.mechanicalEquipment)
-	&& Objects.equals(equipmentType, other.equipmentType);
+        && Objects.equals(mechanicalEquipment, other.mechanicalEquipment)
+        && Objects.equals(equipmentType, other.equipmentType);
   }
 }

@@ -44,7 +44,7 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
   private Boolean calcSupportArrangement = false;
 
   private String supportArrangement = "Stiff"; // Consult with a mechanical engineer regarding
-					       // either the support distance or
+  // either the support distance or
   // natural frequency of vibrations, especially if measurements have been taken
 
   private String method = "LOF"; // Likelihood of failure
@@ -97,36 +97,36 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
     double GVF = gasVelocity / mixVelocity;
     if (method.equals("LOF")) {
       if (!(pipe.getThickness() > 0.0)) {
-	throw new IllegalStateException("FlowInducedVibrationAnalyser '" + getName()
-	    + "': the LOF correlation requires a positive pipe wall thickness, but pipe '" + pipe.getName()
-	    + "' has thickness " + pipe.getThickness() + " m. Set it with pipe.setThickness(wallThickness_m) "
-	    + "(e.g. (nominalOD - scheduleID)/2 from the line list) before measuring.");
+        throw new IllegalStateException("FlowInducedVibrationAnalyser '" + getName()
+            + "': the LOF correlation requires a positive pipe wall thickness, but pipe '" + pipe.getName()
+            + "' has thickness " + pipe.getThickness() + " m. Set it with pipe.setThickness(wallThickness_m) "
+            + "(e.g. (nominalOD - scheduleID)/2 from the line list) before measuring.");
       }
       double FVF = 1.0;
       if (GVF > 0.88) {
-	if (GVF > 0.99) {
-	  FVF = Math.sqrt(pipe.getSegmentMixtureViscosity(segment) / Math.sqrt(0.001));
-	} else {
-	  FVF = -27.882 * GVF * GVF + 45.545 * GVF - 17.495;
-	}
+        if (GVF > 0.99) {
+          FVF = Math.sqrt(pipe.getSegmentMixtureViscosity(segment) / Math.sqrt(0.001));
+        } else {
+          FVF = -27.882 * GVF * GVF + 45.545 * GVF - 17.495;
+        }
       } else if (GVF < 0.2) {
-	FVF = 0.2 + 4 * GVF;
+        FVF = 0.2 + 4 * GVF;
       }
       double externalDiamater = (pipe.getDiameter() + 2 * pipe.getThickness()) * 1000; // mm
       double alpha = 0.0;
       double betta = 0.0;
       if (supportArrangement.equals("Stiff")) {
-	alpha = 446187 + 646 * externalDiamater + 9.17E-4 * externalDiamater * externalDiamater * externalDiamater;
-	betta = 0.1 * Math.log(externalDiamater) - 1.3739;
+        alpha = 446187 + 646 * externalDiamater + 9.17E-4 * externalDiamater * externalDiamater * externalDiamater;
+        betta = 0.1 * Math.log(externalDiamater) - 1.3739;
       } else if (supportArrangement.equals("Medium stiff")) {
-	alpha = 283921 + 370 * externalDiamater;
-	betta = 0.1106 * Math.log(externalDiamater) - 1.501;
+        alpha = 283921 + 370 * externalDiamater;
+        betta = 0.1106 * Math.log(externalDiamater) - 1.501;
       } else if (supportArrangement.equals("Medium")) {
-	alpha = 150412 + 209 * externalDiamater;
-	betta = 0.0815 * Math.log(externalDiamater) - 1.3269;
+        alpha = 150412 + 209 * externalDiamater;
+        betta = 0.0815 * Math.log(externalDiamater) - 1.3269;
       } else {
-	alpha = 41.21 * Math.log(externalDiamater) + 49397;
-	betta = 0.0815 * Math.log(externalDiamater) - 1.3842;
+        alpha = 41.21 * Math.log(externalDiamater) + 49397;
+        betta = 0.0815 * Math.log(externalDiamater) - 1.3842;
       }
       double diameterOverThickness = externalDiamater / (1000 * pipe.getThickness());
       double Fv = alpha * Math.pow(diameterOverThickness, betta);
@@ -135,7 +135,7 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
     } else if (method.equals("FRMS")) {
       double C = Math.min(Math.min(1, 5 * (1 - GVF)), 5 * GVF) * FRMSConstant;
       return C * Math.pow(pipe.getDiameter(), 1.6) * Math.pow(pipe.getSegmentLiquidDensity(segment), 0.6)
-	  * Math.pow(mixVelocity, 1.2);
+          * Math.pow(mixVelocity, 1.2);
     }
     return Double.NaN;
   }
@@ -193,17 +193,17 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
   public void setSupportArrangement(String arrangement) {
     if (arrangement == null) {
       throw new IllegalArgumentException(
-	  "supportArrangement can not be null. Valid values: " + validArrangementsString());
+          "supportArrangement can not be null. Valid values: " + validArrangementsString());
     }
     String trimmed = arrangement.trim();
     for (int i = 0; i < VALID_SUPPORT_ARRANGEMENTS.length; i++) {
       if (VALID_SUPPORT_ARRANGEMENTS[i].equalsIgnoreCase(trimmed)) {
-	this.supportArrangement = VALID_SUPPORT_ARRANGEMENTS[i];
-	return;
+        this.supportArrangement = VALID_SUPPORT_ARRANGEMENTS[i];
+        return;
       }
     }
     throw new IllegalArgumentException(
-	"supportArrangement '" + arrangement + "' is not recognised. Valid values: " + validArrangementsString());
+        "supportArrangement '" + arrangement + "' is not recognised. Valid values: " + validArrangementsString());
   }
 
   /**
@@ -215,7 +215,7 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < VALID_SUPPORT_ARRANGEMENTS.length; i++) {
       if (i > 0) {
-	sb.append(", ");
+        sb.append(", ");
       }
       sb.append('"').append(VALID_SUPPORT_ARRANGEMENTS[i]).append('"');
     }

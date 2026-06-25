@@ -47,11 +47,11 @@ public final class ControllerTuningStudy {
     double outputSaturationFraction = saturationFraction(controllerOutput, outputMin, outputMax);
     boolean stableAtEnd = stableAtEnd(setPoint, processValue, settlingTolerance);
     String recommendation = recommendation(stableAtEnd, overshootPercent, settlingTimeSeconds,
-	outputSaturationFraction);
+        outputSaturationFraction);
 
     return new ControllerTuningResult(controllerName == null ? "" : controllerName, setPoint, meanAbsoluteError,
-	maxAbsoluteError, integralAbsoluteError, integralSquaredError, overshootPercent, settlingTimeSeconds,
-	outputSaturationFraction, stableAtEnd, recommendation);
+        maxAbsoluteError, integralAbsoluteError, integralSquaredError, overshootPercent, settlingTimeSeconds,
+        outputSaturationFraction, stableAtEnd, recommendation);
   }
 
   /**
@@ -84,7 +84,7 @@ public final class ControllerTuningStudy {
     }
     for (int i = 1; i < timeSeconds.length; i++) {
       if (timeSeconds[i] <= timeSeconds[i - 1]) {
-	throw new IllegalArgumentException("Time samples must be strictly increasing");
+        throw new IllegalArgumentException("Time samples must be strictly increasing");
       }
     }
   }
@@ -135,8 +135,8 @@ public final class ControllerTuningStudy {
       double e0 = Math.abs(setPoint - processValue[i - 1]);
       double e1 = Math.abs(setPoint - processValue[i]);
       if (squared) {
-	e0 *= e0;
-	e1 *= e1;
+        e0 *= e0;
+        e1 *= e1;
       }
       integral += 0.5 * (e0 + e1) * dt;
     }
@@ -157,11 +157,11 @@ public final class ControllerTuningStudy {
     double overshoot = 0.0;
     if (setPoint >= initial) {
       for (double value : processValue) {
-	overshoot = Math.max(overshoot, value - setPoint);
+        overshoot = Math.max(overshoot, value - setPoint);
       }
     } else {
       for (double value : processValue) {
-	overshoot = Math.max(overshoot, setPoint - value);
+        overshoot = Math.max(overshoot, setPoint - value);
       }
     }
     return Math.max(0.0, overshoot) / denominator * 100.0;
@@ -180,13 +180,13 @@ public final class ControllerTuningStudy {
     for (int i = 0; i < timeSeconds.length; i++) {
       boolean settled = true;
       for (int j = i; j < timeSeconds.length; j++) {
-	if (Math.abs(setPoint - processValue[j]) > tolerance) {
-	  settled = false;
-	  break;
-	}
+        if (Math.abs(setPoint - processValue[j]) > tolerance) {
+          settled = false;
+          break;
+        }
       }
       if (settled) {
-	return timeSeconds[i];
+        return timeSeconds[i];
       }
     }
     return Double.NaN;
@@ -205,7 +205,7 @@ public final class ControllerTuningStudy {
     int saturated = 0;
     for (double value : controllerOutput) {
       if (value <= outputMin + tolerance || value >= outputMax - tolerance) {
-	saturated++;
+        saturated++;
       }
     }
     return ((double) saturated) / controllerOutput.length;

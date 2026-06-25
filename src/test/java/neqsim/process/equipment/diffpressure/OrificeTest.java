@@ -27,7 +27,7 @@ public class OrificeTest {
     Orifice orif1 = new Orifice("orifice 1");
     orif1.setInletStream(stream1);
     orif1.setOrificeParameters(0.07366, 0.05, 0.61); // Diameter, outer diameter, and discharge
-						     // coefficient
+    // coefficient
 
     // Step 4: Define the output stream after the orifice
     Stream stream2 = new Stream("stream 2", orif1.getOutletStream());

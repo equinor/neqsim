@@ -264,9 +264,9 @@ public class MulticomponentNucleation {
     }
     if (liquidPhaseIndex < 0) {
       try {
-	liquidPhaseIndex = system.getPhaseNumberOfPhase("aqueous");
+        liquidPhaseIndex = system.getPhaseNumberOfPhase("aqueous");
       } catch (Exception e) {
-	return;
+        return;
       }
     }
 
@@ -284,19 +284,19 @@ public class MulticomponentNucleation {
       double xLiq = liquidPhase.getComponent(i).getx();
 
       if (xLiq > condensableThreshold) {
-	// Compute supersaturation from fugacity ratio
-	double fugGas = gasPhase.getFugacity(i);
-	double fugLiq = liquidPhase.getFugacity(i);
+        // Compute supersaturation from fugacity ratio
+        double fugGas = gasPhase.getFugacity(i);
+        double fugLiq = liquidPhase.getFugacity(i);
 
-	double supersaturation = 1.0;
-	if (fugLiq > 0.0 && fugGas > 0.0) {
-	  supersaturation = fugGas / fugLiq;
-	}
+        double supersaturation = 1.0;
+        if (fugLiq > 0.0 && fugGas > 0.0) {
+          supersaturation = fugGas / fugLiq;
+        }
 
-	condensableIndices.add(i);
-	condensableNames.add(gasPhase.getComponent(i).getComponentName());
-	componentSupersaturations.add(supersaturation);
-	totalLiquidFraction += xLiq;
+        condensableIndices.add(i);
+        condensableNames.add(gasPhase.getComponent(i).getComponentName());
+        componentSupersaturations.add(supersaturation);
+        totalLiquidFraction += xLiq;
       }
     }
 
@@ -305,9 +305,9 @@ public class MulticomponentNucleation {
       int i = condensableIndices.get(idx);
       double xLiq = liquidPhase.getComponent(i).getx();
       if (totalLiquidFraction > 0.0) {
-	componentCondensationFractions.add(xLiq / totalLiquidFraction);
+        componentCondensationFractions.add(xLiq / totalLiquidFraction);
       } else {
-	componentCondensationFractions.add(1.0 / condensableIndices.size());
+        componentCondensationFractions.add(1.0 / condensableIndices.size());
       }
     }
   }
@@ -354,7 +354,7 @@ public class MulticomponentNucleation {
       // Weighted supersaturation (geometric mean)
       double si = componentSupersaturations.get(idx);
       if (si > 1.0) {
-	effectiveSupersaturation += w * Math.log(si);
+        effectiveSupersaturation += w * Math.log(si);
       }
       totalWeight += w;
     }
@@ -368,7 +368,7 @@ public class MulticomponentNucleation {
     // Get surface tension from system interphase properties
     try {
       effectiveSurfaceTension = system.getInterphaseProperties().getSurfaceTension(system.getPhaseNumberOfPhase("gas"),
-	  liquidPhaseIndex);
+          liquidPhaseIndex);
     } catch (Exception e) {
       // Estimate from Eotvos
       effectiveSurfaceTension = 0.025; // Typical hydrocarbon value
@@ -387,11 +387,11 @@ public class MulticomponentNucleation {
       int gasIdx = system.getPhaseNumberOfPhase("gas");
       double gasVisc = system.getPhase(gasIdx).getViscosity("kg/msec");
       if (gasVisc > 0.0) {
-	pseudoCNT.setGasViscosity(gasVisc);
+        pseudoCNT.setGasViscosity(gasVisc);
       }
       double gasMw = system.getPhase(gasIdx).getMolarMass();
       if (gasMw > 0.0) {
-	pseudoCNT.setCarrierGasMolarMass(gasMw);
+        pseudoCNT.setCarrierGasMolarMass(gasMw);
       }
     } catch (Exception e) {
       // Use defaults
@@ -432,9 +432,9 @@ public class MulticomponentNucleation {
       ClassicalNucleationTheory cnt = ClassicalNucleationTheory.fromThermoSystem(system, condensableNames.get(idx));
 
       if (cnt == null) {
-	componentCNTs.add(null);
-	componentNucleationRates.add(0.0);
-	continue;
+        componentCNTs.add(null);
+        componentNucleationRates.add(0.0);
+        continue;
       }
 
       cnt.setResidenceTime(residenceTime);
@@ -442,12 +442,12 @@ public class MulticomponentNucleation {
       // Override supersaturation with component-specific value
       double si = componentSupersaturations.get(idx);
       if (si > 1.0) {
-	cnt.setSupersaturationRatio(si);
+        cnt.setSupersaturationRatio(si);
       }
 
       if (heterogeneous) {
-	cnt.setHeterogeneous(true);
-	cnt.setContactAngle(contactAngleDegrees);
+        cnt.setHeterogeneous(true);
+        cnt.setContactAngle(contactAngleDegrees);
       }
 
       cnt.calculate();
@@ -458,8 +458,8 @@ public class MulticomponentNucleation {
       totalNucleationRate += rate;
 
       if (rate > maxRate) {
-	maxRate = rate;
-	maxIdx = idx;
+        maxRate = rate;
+        maxIdx = idx;
       }
     }
 
@@ -480,8 +480,8 @@ public class MulticomponentNucleation {
     for (int idx = 0; idx < condensableNames.size(); idx++) {
       double si = componentSupersaturations.get(idx);
       if (si > maxS) {
-	maxS = si;
-	dominantComponent = condensableNames.get(idx);
+        maxS = si;
+        dominantComponent = condensableNames.get(idx);
       }
     }
   }
@@ -660,7 +660,7 @@ public class MulticomponentNucleation {
       comp.put("supersaturationRatio", componentSupersaturations.get(idx));
       comp.put("condensationFraction", componentCondensationFractions.get(idx));
       if (idx < componentNucleationRates.size()) {
-	comp.put("nucleationRate_per_m3_s", componentNucleationRates.get(idx));
+        comp.put("nucleationRate_per_m3_s", componentNucleationRates.get(idx));
       }
       compList.add(comp);
     }
@@ -702,6 +702,6 @@ public class MulticomponentNucleation {
       return "MulticomponentNucleation [not calculated]";
     }
     return String.format("MulticomponentNucleation[%s]: %d condensables, dominant=%s, J=%.2e /m3s, d=%.2f um",
-	mode.name(), condensableIndices.size(), dominantComponent, totalNucleationRate, meanParticleDiameter * 1e6);
+        mode.name(), condensableIndices.size(), dominantComponent, totalNucleationRate, meanParticleDiameter * 1e6);
   }
 }

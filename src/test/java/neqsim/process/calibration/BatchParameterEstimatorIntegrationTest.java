@@ -113,12 +113,12 @@ class BatchParameterEstimatorIntegrationTest extends neqsim.NeqSimTest {
 
     // Should recover the true efficiency within 5% tolerance
     assertEquals(trueEfficiency, estimatedEfficiency, 0.05, "Estimated efficiency should be close to true value. "
-	+ "True=" + trueEfficiency + " Estimated=" + estimatedEfficiency);
+        + "True=" + trueEfficiency + " Estimated=" + estimatedEfficiency);
 
     // R-squared should be high for synthetic noiseless data
     if (!Double.isNaN(result.getRSquared())) {
       assertTrue(result.getRSquared() > 0.90,
-	  "R-squared should be high for noiseless data, got: " + result.getRSquared());
+          "R-squared should be high for noiseless data, got: " + result.getRSquared());
     }
 
     result.printSummary();
@@ -149,7 +149,7 @@ class BatchParameterEstimatorIntegrationTest extends neqsim.NeqSimTest {
     feed1.setPressure(50.0, "bara");
 
     neqsim.process.equipment.heatexchanger.Heater heater1 = new neqsim.process.equipment.heatexchanger.Heater("heater1",
-	feed1);
+        feed1);
     heater1.setOutletTemperature(273.15 + 50.0); // 50 C in K
 
     Stream feed2 = new Stream("feed2", fluid.clone());
@@ -158,7 +158,7 @@ class BatchParameterEstimatorIntegrationTest extends neqsim.NeqSimTest {
     feed2.setPressure(50.0, "bara");
 
     neqsim.process.equipment.heatexchanger.Heater heater2 = new neqsim.process.equipment.heatexchanger.Heater("heater2",
-	feed2);
+        feed2);
     heater2.setOutletTemperature(273.15 + 70.0); // 70 C in K
 
     neqsim.process.equipment.mixer.Mixer mixer = new neqsim.process.equipment.mixer.Mixer("mixer");

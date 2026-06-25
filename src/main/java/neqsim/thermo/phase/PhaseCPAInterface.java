@@ -85,7 +85,7 @@ public interface PhaseCPAInterface extends PhaseEosInterface {
     for (int i = 0; i < getNumberOfComponents(); i++) {
       htot = 0.0;
       for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
-	htot += (1.0 - ((ComponentCPAInterface) getComponent(i)).getXsite()[j]);
+        htot += (1.0 - ((ComponentCPAInterface) getComponent(i)).getXsite()[j]);
       }
       tot += getComponent(i).getNumberOfMolesInPhase() * htot;
     }

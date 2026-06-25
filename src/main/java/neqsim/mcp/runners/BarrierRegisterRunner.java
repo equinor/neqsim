@@ -48,8 +48,8 @@ public final class BarrierRegisterRunner {
     try {
       JsonObject input = JsonParser.parseString(json).getAsJsonObject();
       JsonObject registerJson = input.has("register") && input.get("register").isJsonObject()
-	  ? input.getAsJsonObject("register")
-	  : input;
+          ? input.getAsJsonObject("register")
+          : input;
       ParsedRegister parsed = parseRegister(registerJson);
       JsonObject out = new JsonObject();
       out.addProperty("status", "success");
@@ -79,7 +79,7 @@ public final class BarrierRegisterRunner {
   static ParsedRegister parseRegister(JsonObject input) {
     ParsedRegister parsed = new ParsedRegister();
     parsed.register = new BarrierRegister(optString(input, "registerId", "BR-UNNAMED"))
-	.setName(optString(input, "name", ""));
+        .setName(optString(input, "name", ""));
 
     JsonArray evidence = optArray(input, "evidence");
     for (JsonElement element : evidence) {
@@ -107,7 +107,7 @@ public final class BarrierRegisterRunner {
       SafetyCriticalElement sce = parseSafetyCriticalElement(element.getAsJsonObject(), parsed);
       parsed.register.addSafetyCriticalElement(sce);
       for (SafetyBarrier barrier : sce.getBarriers()) {
-	parsed.barriersById.put(barrier.getId(), barrier);
+        parsed.barriersById.put(barrier.getId(), barrier);
       }
     }
     return parsed;
@@ -121,9 +121,9 @@ public final class BarrierRegisterRunner {
    */
   private static DocumentEvidence parseEvidence(JsonObject input) {
     return new DocumentEvidence(optString(input, "evidenceId", ""), optString(input, "documentId", ""),
-	optString(input, "documentTitle", ""), optString(input, "revision", ""), optString(input, "section", ""),
-	optInt(input, "page", 0), optString(input, "sourceReference", ""), optString(input, "excerpt", ""),
-	optDouble(input, "confidence", 0.0));
+        optString(input, "documentTitle", ""), optString(input, "revision", ""), optString(input, "section", ""),
+        optInt(input, "page", 0), optString(input, "sourceReference", ""), optString(input, "excerpt", ""),
+        optDouble(input, "confidence", 0.0));
   }
 
   /**
@@ -135,8 +135,8 @@ public final class BarrierRegisterRunner {
    */
   private static PerformanceStandard parsePerformanceStandard(JsonObject input, ParsedRegister parsed) {
     PerformanceStandard standard = new PerformanceStandard(optString(input, "id", ""))
-	.setTitle(optString(input, "title", "")).setSafetyFunction(optString(input, "safetyFunction", ""))
-	.setDemandMode(parseDemandMode(optString(input, "demandMode", "OTHER")));
+        .setTitle(optString(input, "title", "")).setSafetyFunction(optString(input, "safetyFunction", ""))
+        .setDemandMode(parseDemandMode(optString(input, "demandMode", "OTHER")));
     if (hasNumber(input, "targetPfd")) {
       standard.setTargetPfd(input.get("targetPfd").getAsDouble());
     }
@@ -166,10 +166,10 @@ public final class BarrierRegisterRunner {
    */
   private static SafetyBarrier parseBarrier(JsonObject input, ParsedRegister parsed) {
     SafetyBarrier barrier = new SafetyBarrier(optString(input, "id", "")).setName(optString(input, "name", ""))
-	.setDescription(optString(input, "description", ""))
-	.setType(parseBarrierType(optString(input, "type", "PREVENTION")))
-	.setStatus(parseBarrierStatus(optString(input, "status", "UNKNOWN")))
-	.setSafetyFunction(optString(input, "safetyFunction", "")).setOwner(optString(input, "owner", ""));
+        .setDescription(optString(input, "description", ""))
+        .setType(parseBarrierType(optString(input, "type", "PREVENTION")))
+        .setStatus(parseBarrierStatus(optString(input, "status", "UNKNOWN")))
+        .setSafetyFunction(optString(input, "safetyFunction", "")).setOwner(optString(input, "owner", ""));
     if (hasNumber(input, "pfd")) {
       barrier.setPfd(input.get("pfd").getAsDouble());
     }
@@ -179,25 +179,25 @@ public final class BarrierRegisterRunner {
     addStringArrayValues(input, "equipmentTags", new StringConsumer() {
       @Override
       public void accept(String value) {
-	barrier.addEquipmentTag(value);
+        barrier.addEquipmentTag(value);
       }
     });
     addStringArrayValues(input, "linkedEquipmentTags", new StringConsumer() {
       @Override
       public void accept(String value) {
-	barrier.addEquipmentTag(value);
+        barrier.addEquipmentTag(value);
       }
     });
     addStringArrayValues(input, "hazardIds", new StringConsumer() {
       @Override
       public void accept(String value) {
-	barrier.addHazardId(value);
+        barrier.addHazardId(value);
       }
     });
     addStringArrayValues(input, "linkedHazardIds", new StringConsumer() {
       @Override
       public void accept(String value) {
-	barrier.addHazardId(value);
+        barrier.addHazardId(value);
       }
     });
     linkPerformanceStandard(input, barrier, parsed);
@@ -214,22 +214,22 @@ public final class BarrierRegisterRunner {
    */
   private static SafetyCriticalElement parseSafetyCriticalElement(JsonObject input, ParsedRegister parsed) {
     final SafetyCriticalElement sce = new SafetyCriticalElement(optString(input, "id", ""))
-	.setTag(optString(input, "tag", "")).setName(optString(input, "name", ""))
-	.setType(parseElementType(optString(input, "type", "OTHER"))).setOwner(optString(input, "owner", ""));
+        .setTag(optString(input, "tag", "")).setName(optString(input, "name", ""))
+        .setType(parseElementType(optString(input, "type", "OTHER"))).setOwner(optString(input, "owner", ""));
     addStringArrayValues(input, "equipmentTags", new StringConsumer() {
       @Override
       public void accept(String value) {
-	sce.addEquipmentTag(value);
+        sce.addEquipmentTag(value);
       }
     });
     linkEvidenceToElement(input, sce, parsed);
     addStringArrayValues(input, "barrierRefs", new StringConsumer() {
       @Override
       public void accept(String value) {
-	SafetyBarrier barrier = parsed.barriersById.get(value);
-	if (barrier != null) {
-	  sce.addBarrier(barrier);
-	}
+        SafetyBarrier barrier = parsed.barriersById.get(value);
+        if (barrier != null) {
+          sce.addBarrier(barrier);
+        }
       }
     });
     JsonArray barriers = optArray(input, "barriers");
@@ -273,13 +273,13 @@ public final class BarrierRegisterRunner {
     addEvidenceRefs(input, parsed, new EvidenceConsumer() {
       @Override
       public void accept(DocumentEvidence evidence) {
-	standard.addEvidence(evidence);
+        standard.addEvidence(evidence);
       }
     });
     addEmbeddedEvidence(input, parsed, new EvidenceConsumer() {
       @Override
       public void accept(DocumentEvidence evidence) {
-	standard.addEvidence(evidence);
+        standard.addEvidence(evidence);
       }
     });
   }
@@ -295,13 +295,13 @@ public final class BarrierRegisterRunner {
     addEvidenceRefs(input, parsed, new EvidenceConsumer() {
       @Override
       public void accept(DocumentEvidence evidence) {
-	barrier.addEvidence(evidence);
+        barrier.addEvidence(evidence);
       }
     });
     addEmbeddedEvidence(input, parsed, new EvidenceConsumer() {
       @Override
       public void accept(DocumentEvidence evidence) {
-	barrier.addEvidence(evidence);
+        barrier.addEvidence(evidence);
       }
     });
   }
@@ -317,13 +317,13 @@ public final class BarrierRegisterRunner {
     addEvidenceRefs(input, parsed, new EvidenceConsumer() {
       @Override
       public void accept(DocumentEvidence evidence) {
-	element.addEvidence(evidence);
+        element.addEvidence(evidence);
       }
     });
     addEmbeddedEvidence(input, parsed, new EvidenceConsumer() {
       @Override
       public void accept(DocumentEvidence evidence) {
-	element.addEvidence(evidence);
+        element.addEvidence(evidence);
       }
     });
   }
@@ -340,7 +340,7 @@ public final class BarrierRegisterRunner {
     for (JsonElement ref : refs) {
       DocumentEvidence evidence = parsed.evidenceById.get(ref.getAsString());
       if (evidence != null) {
-	consumer.accept(evidence);
+        consumer.accept(evidence);
       }
     }
   }
@@ -358,7 +358,7 @@ public final class BarrierRegisterRunner {
       DocumentEvidence item = parseEvidence(element.getAsJsonObject());
       consumer.accept(item);
       if (!item.getEvidenceId().isEmpty()) {
-	parsed.evidenceById.put(item.getEvidenceId(), item);
+        parsed.evidenceById.put(item.getEvidenceId(), item);
       }
     }
   }
@@ -375,10 +375,10 @@ public final class BarrierRegisterRunner {
     int traceable = 0;
     for (SafetyBarrier barrier : parsed.register.getBarriers()) {
       if (barrier.isAvailable()) {
-	available++;
+        available++;
       }
       if (barrier.hasTraceableEvidence()) {
-	traceable++;
+        traceable++;
       }
     }
     summary.addProperty("registerId", parsed.register.getRegisterId());
@@ -446,17 +446,17 @@ public final class BarrierRegisterRunner {
     Map<String, JsonArray> map = new LinkedHashMap<String, JsonArray>();
     for (SafetyBarrier barrier : register.getBarriers()) {
       for (String tag : barrier.getLinkedEquipmentTags()) {
-	if (!map.containsKey(tag)) {
-	  map.put(tag, new JsonArray());
-	}
-	JsonObject row = new JsonObject();
-	row.addProperty("id", barrier.getId());
-	row.addProperty("name", barrier.getName());
-	row.addProperty("type", barrier.getType().name());
-	row.addProperty("status", barrier.getStatus().name());
-	row.addProperty("pfd", barrier.getPfd());
-	row.addProperty("canCredit", canCreditBarrier(barrier));
-	map.get(tag).add(row);
+        if (!map.containsKey(tag)) {
+          map.put(tag, new JsonArray());
+        }
+        JsonObject row = new JsonObject();
+        row.addProperty("id", barrier.getId());
+        row.addProperty("name", barrier.getName());
+        row.addProperty("type", barrier.getType().name());
+        row.addProperty("status", barrier.getStatus().name());
+        row.addProperty("pfd", barrier.getPfd());
+        row.addProperty("canCredit", canCreditBarrier(barrier));
+        map.get(tag).add(row);
       }
     }
     JsonObject out = new JsonObject();
@@ -478,21 +478,21 @@ public final class BarrierRegisterRunner {
     JsonArray excluded = new JsonArray();
     for (SafetyBarrier barrier : register.getBarriers()) {
       if (canCreditBarrier(barrier)) {
-	JsonObject layer = new JsonObject();
-	layer.addProperty("name", layerName(barrier));
-	layer.addProperty("pfd", barrier.getPfd());
-	layer.addProperty("rrf", barrier.getRiskReductionFactor());
-	layer.addProperty("barrierId", barrier.getId());
-	layer.addProperty("independenceNeedsReview", true);
-	layer.add("equipmentTags", toStringArray(barrier.getLinkedEquipmentTags()));
-	layer.add("evidence", evidenceSummary(barrier));
-	layers.add(layer);
+        JsonObject layer = new JsonObject();
+        layer.addProperty("name", layerName(barrier));
+        layer.addProperty("pfd", barrier.getPfd());
+        layer.addProperty("rrf", barrier.getRiskReductionFactor());
+        layer.addProperty("barrierId", barrier.getId());
+        layer.addProperty("independenceNeedsReview", true);
+        layer.add("equipmentTags", toStringArray(barrier.getLinkedEquipmentTags()));
+        layer.add("evidence", evidenceSummary(barrier));
+        layers.add(layer);
       } else {
-	JsonObject row = new JsonObject();
-	row.addProperty("barrierId", barrier.getId());
-	row.addProperty("name", barrier.getName());
-	row.addProperty("reason", exclusionReason(barrier));
-	excluded.add(row);
+        JsonObject row = new JsonObject();
+        row.addProperty("barrierId", barrier.getId());
+        row.addProperty("name", barrier.getName());
+        row.addProperty("reason", exclusionReason(barrier));
+        excluded.add(row);
       }
     }
     out.addProperty("scenarioField", "scenario");
@@ -515,7 +515,7 @@ public final class BarrierRegisterRunner {
     for (SafetyBarrier barrier : register.getBarriers()) {
       PerformanceStandard standard = barrier.getPerformanceStandard();
       if (standard == null && !isFiniteProbability(barrier.getPfd())) {
-	continue;
+        continue;
       }
       JsonObject row = new JsonObject();
       row.addProperty("name", layerName(barrier));
@@ -523,13 +523,13 @@ public final class BarrierRegisterRunner {
       row.addProperty("claimedPfd", barrier.getPfd());
       row.addProperty("achievedSIL", silFromPfd(barrier.getPfd()));
       if (standard != null) {
-	row.addProperty("performanceStandardId", standard.getId());
-	row.addProperty("demandMode", standard.getDemandMode().name());
-	row.addProperty("targetPfd", standard.getTargetPfd());
-	row.addProperty("targetMet", isFiniteProbability(barrier.getPfd())
-	    && isFiniteProbability(standard.getTargetPfd()) && barrier.getPfd() <= standard.getTargetPfd());
-	row.addProperty("proofTestInterval_hours", standard.getProofTestIntervalHours());
-	row.addProperty("responseTime_seconds", standard.getResponseTimeSeconds());
+        row.addProperty("performanceStandardId", standard.getId());
+        row.addProperty("demandMode", standard.getDemandMode().name());
+        row.addProperty("targetPfd", standard.getTargetPfd());
+        row.addProperty("targetMet", isFiniteProbability(barrier.getPfd())
+            && isFiniteProbability(standard.getTargetPfd()) && barrier.getPfd() <= standard.getTargetPfd());
+        row.addProperty("proofTestInterval_hours", standard.getProofTestIntervalHours());
+        row.addProperty("responseTime_seconds", standard.getResponseTimeSeconds());
       }
       row.add("equipmentTags", toStringArray(barrier.getLinkedEquipmentTags()));
       row.add("evidence", evidenceSummary(barrier));
@@ -575,10 +575,10 @@ public final class BarrierRegisterRunner {
     Map<String, HazardAdjustment> adjustments = new LinkedHashMap<String, HazardAdjustment>();
     for (SafetyBarrier barrier : register.getBarriers()) {
       for (String hazardId : barrier.getLinkedHazardIds()) {
-	if (!adjustments.containsKey(hazardId)) {
-	  adjustments.put(hazardId, new HazardAdjustment(hazardId));
-	}
-	adjustments.get(hazardId).add(barrier);
+        if (!adjustments.containsKey(hazardId)) {
+          adjustments.put(hazardId, new HazardAdjustment(hazardId));
+        }
+        adjustments.get(hazardId).add(barrier);
       }
     }
     JsonObject out = new JsonObject();
@@ -600,32 +600,32 @@ public final class BarrierRegisterRunner {
   static JsonObject buildDocumentExtractionTemplate() {
     JsonObject template = new JsonObject();
     template.add("sourceDocuments", toStringArray(new String[] { "P&ID", "C&E chart", "SRS", "SIL verification report",
-	"firewater datasheet", "detector layout", "PFP schedule", "inspection report", "vendor datasheet" }));
+        "firewater datasheet", "detector layout", "PFP schedule", "inspection report", "vendor datasheet" }));
     template.add("targetObjects", toStringArray(new String[] { "DocumentEvidence", "PerformanceStandard",
-	"SafetyBarrier", "SafetyCriticalElement", "BarrierRegister" }));
+        "SafetyBarrier", "SafetyCriticalElement", "BarrierRegister" }));
     template.add("minimumFields", toStringArray(new String[] { "documentId", "revision", "sourceReference", "excerpt",
-	"confidence", "equipmentTags", "pfd or effectiveness", "status", "performanceStandardId" }));
+        "confidence", "equipmentTags", "pfd or effectiveness", "status", "performanceStandardId" }));
     template.add("causeAndEffect",
-	buildExtractionSection("Cause-and-effect chart",
-	    new String[] { "causeId", "initiatingDetectorTag", "initiatingEvent", "votingLogic", "effectAction",
-		"finalElementTag", "delaySeconds", "resetRequirement", "bypassOrInhibitState", "evidenceRefs" }));
+        buildExtractionSection("Cause-and-effect chart",
+            new String[] { "causeId", "initiatingDetectorTag", "initiatingEvent", "votingLogic", "effectAction",
+                "finalElementTag", "delaySeconds", "resetRequirement", "bypassOrInhibitState", "evidenceRefs" }));
     template.add("safetyRequirementsSpecification",
-	buildExtractionSection("Safety requirements specification",
-	    new String[] { "sifId", "safetyFunction", "protectedEquipment", "safeState", "claimedSIL", "targetPfd",
-		"proofTestIntervalHours", "responseTimeSeconds", "architecture", "components", "evidenceRefs" }));
+        buildExtractionSection("Safety requirements specification",
+            new String[] { "sifId", "safetyFunction", "protectedEquipment", "safeState", "claimedSIL", "targetPfd",
+                "proofTestIntervalHours", "responseTimeSeconds", "architecture", "components", "evidenceRefs" }));
     template.add("firewaterDatasheet",
-	buildExtractionSection("Firewater and deluge datasheet",
-	    new String[] { "delugeZone", "protectedEquipment", "applicationRate", "rateUnit", "firewaterCapacity",
-		"capacityUnit", "minimumPressure", "responseTimeSeconds", "designBasisFire", "standardReference",
-		"evidenceRefs" }));
+        buildExtractionSection("Firewater and deluge datasheet",
+            new String[] { "delugeZone", "protectedEquipment", "applicationRate", "rateUnit", "firewaterCapacity",
+                "capacityUnit", "minimumPressure", "responseTimeSeconds", "designBasisFire", "standardReference",
+                "evidenceRefs" }));
     template.add("detectorLayout",
-	buildExtractionSection("Detector layout and F&G coverage",
-	    new String[] { "detectorTag", "detectorType", "gasSpecies", "location", "coverageZone", "setpoint",
-		"setpointUnit", "responseTimeSeconds", "votingGroup", "evidenceRefs" }));
+        buildExtractionSection("Detector layout and F&G coverage",
+            new String[] { "detectorTag", "detectorType", "gasSpecies", "location", "coverageZone", "setpoint",
+                "setpointUnit", "responseTimeSeconds", "votingGroup", "evidenceRefs" }));
     template.add("pfpSchedule",
-	buildExtractionSection("Passive fire protection schedule",
-	    new String[] { "protectedTag", "protectedArea", "fireRatingMinutes", "heatFluxRating", "ratingUnit",
-		"material", "thickness", "thicknessUnit", "inspectionStatus", "evidenceRefs" }));
+        buildExtractionSection("Passive fire protection schedule",
+            new String[] { "protectedTag", "protectedArea", "fireRatingMinutes", "heatFluxRating", "ratingUnit",
+                "material", "thickness", "thicknessUnit", "inspectionStatus", "evidenceRefs" }));
     return template;
   }
 
@@ -641,7 +641,7 @@ public final class BarrierRegisterRunner {
     section.addProperty("documentType", documentType);
     section.add("fields", toStringArray(fields));
     section.addProperty("evidenceRule",
-	"Each extracted row should include sourceReference, excerpt, confidence, and evidenceRefs.");
+        "Each extracted row should include sourceReference, excerpt, confidence, and evidenceRefs.");
     return section;
   }
 
@@ -793,7 +793,7 @@ public final class BarrierRegisterRunner {
    */
   private static boolean canCreditBarrier(SafetyBarrier barrier) {
     return barrier.isAvailable() && isFiniteProbability(barrier.getPfd()) && barrier.getPerformanceStandard() != null
-	&& barrier.hasTraceableEvidence();
+        && barrier.hasTraceableEvidence();
   }
 
   /**
@@ -920,7 +920,7 @@ public final class BarrierRegisterRunner {
     summary.addProperty("traceable", barrier.hasTraceableEvidence());
     summary.addProperty("directEvidenceCount", barrier.getEvidence().size());
     summary.addProperty("hasPerformanceStandardEvidence",
-	barrier.getPerformanceStandard() != null && barrier.getPerformanceStandard().hasTraceableEvidence());
+        barrier.getPerformanceStandard() != null && barrier.getPerformanceStandard().hasTraceableEvidence());
     return summary;
   }
 
@@ -999,21 +999,21 @@ public final class BarrierRegisterRunner {
       row.addProperty("status", barrier.getStatus().name());
       row.addProperty("credited", false);
       if (canCreditBarrier(barrier) && (barrier.getType() == SafetyBarrier.BarrierType.PREVENTION
-	  || barrier.getType() == SafetyBarrier.BarrierType.BOTH)) {
-	topEventFrequencyMultiplier *= barrier.getPfd();
-	row.addProperty("credited", true);
-	row.addProperty("creditType", "preventiveFrequencyMultiplier");
-	row.addProperty("multiplier", barrier.getPfd());
+          || barrier.getType() == SafetyBarrier.BarrierType.BOTH)) {
+        topEventFrequencyMultiplier *= barrier.getPfd();
+        row.addProperty("credited", true);
+        row.addProperty("creditType", "preventiveFrequencyMultiplier");
+        row.addProperty("multiplier", barrier.getPfd());
       }
       if (barrier.isAvailable() && barrier.hasTraceableEvidence()
-	  && (barrier.getType() == SafetyBarrier.BarrierType.MITIGATION
-	      || barrier.getType() == SafetyBarrier.BarrierType.BOTH)
-	  && isFiniteProbability(barrier.getEffectiveness())) {
-	double multiplier = 1.0 - barrier.getEffectiveness();
-	consequenceMultiplier *= Math.max(0.0, multiplier);
-	row.addProperty("credited", true);
-	row.addProperty("creditType", "mitigationConsequenceMultiplier");
-	row.addProperty("multiplier", Math.max(0.0, multiplier));
+          && (barrier.getType() == SafetyBarrier.BarrierType.MITIGATION
+              || barrier.getType() == SafetyBarrier.BarrierType.BOTH)
+          && isFiniteProbability(barrier.getEffectiveness())) {
+        double multiplier = 1.0 - barrier.getEffectiveness();
+        consequenceMultiplier *= Math.max(0.0, multiplier);
+        row.addProperty("credited", true);
+        row.addProperty("creditType", "mitigationConsequenceMultiplier");
+        row.addProperty("multiplier", Math.max(0.0, multiplier));
       }
       creditedBarriers.add(row);
     }

@@ -118,7 +118,7 @@ public class BowTieSvgExporter implements Serializable {
    */
   private String getSvgHeader() {
     return String.format("<?xml version=\"1.0\" encoding=\"UTF-8\"?>%n" + "<svg xmlns=\"http://www.w3.org/2000/svg\" "
-	+ "width=\"%d\" height=\"%d\" viewBox=\"0 0 %d %d\">%n", width, height, width, height);
+        + "width=\"%d\" height=\"%d\" viewBox=\"0 0 %d %d\">%n", width, height, width, height);
   }
 
   /**
@@ -137,17 +137,17 @@ public class BowTieSvgExporter implements Serializable {
    */
   private String getStyles() {
     return "<defs>\n" + "  <style>\n" + "    .title { font: bold 18px sans-serif; fill: " + COLOR_TEXT + "; }\n"
-	+ "    .subtitle { font: 12px sans-serif; fill: #666666; }\n" + "    .threat-box { fill: " + COLOR_THREAT
-	+ "; stroke: #cc5555; stroke-width: 2; }\n" + "    .hazard-box { fill: " + COLOR_HAZARD
-	+ "; stroke: #ccaa00; stroke-width: 3; }\n" + "    .consequence-box { fill: " + COLOR_CONSEQUENCE
-	+ "; stroke: #4a9f5a; stroke-width: 2; }\n" + "    .prevention-barrier { fill: " + COLOR_PREVENTION
-	+ "; stroke: #3a7acc; stroke-width: 1; }\n" + "    .mitigation-barrier { fill: " + COLOR_MITIGATION
-	+ "; stroke: #7a3ab0; stroke-width: 1; }\n"
-	+ "    .box-text { font: 11px sans-serif; fill: white; text-anchor: middle; }\n"
-	+ "    .barrier-text { font: 9px sans-serif; fill: white; text-anchor: middle; }\n"
-	+ "    .connector { stroke: " + COLOR_LINE + "; stroke-width: 2; fill: none; }\n"
-	+ "    .stats { font: 10px monospace; fill: #333333; }\n" + "    .legend-text { font: 10px sans-serif; fill: "
-	+ COLOR_TEXT + "; }\n" + "  </style>\n" + "</defs>\n";
+        + "    .subtitle { font: 12px sans-serif; fill: #666666; }\n" + "    .threat-box { fill: " + COLOR_THREAT
+        + "; stroke: #cc5555; stroke-width: 2; }\n" + "    .hazard-box { fill: " + COLOR_HAZARD
+        + "; stroke: #ccaa00; stroke-width: 3; }\n" + "    .consequence-box { fill: " + COLOR_CONSEQUENCE
+        + "; stroke: #4a9f5a; stroke-width: 2; }\n" + "    .prevention-barrier { fill: " + COLOR_PREVENTION
+        + "; stroke: #3a7acc; stroke-width: 1; }\n" + "    .mitigation-barrier { fill: " + COLOR_MITIGATION
+        + "; stroke: #7a3ab0; stroke-width: 1; }\n"
+        + "    .box-text { font: 11px sans-serif; fill: white; text-anchor: middle; }\n"
+        + "    .barrier-text { font: 9px sans-serif; fill: white; text-anchor: middle; }\n"
+        + "    .connector { stroke: " + COLOR_LINE + "; stroke-width: 2; fill: none; }\n"
+        + "    .stats { font: 10px monospace; fill: #333333; }\n" + "    .legend-text { font: 10px sans-serif; fill: "
+        + COLOR_TEXT + "; }\n" + "  </style>\n" + "</defs>\n";
   }
 
   /**
@@ -157,9 +157,9 @@ public class BowTieSvgExporter implements Serializable {
    */
   private String getTitle() {
     return String.format(
-	"<text x=\"%d\" y=\"30\" class=\"title\">Bow-Tie: %s</text>%n"
-	    + "<text x=\"%d\" y=\"50\" class=\"subtitle\">%s</text>%n",
-	width / 2, escapeXml(model.getHazardId()), width / 2, escapeXml(model.getHazardDescription()));
+        "<text x=\"%d\" y=\"30\" class=\"title\">Bow-Tie: %s</text>%n"
+            + "<text x=\"%d\" y=\"50\" class=\"subtitle\">%s</text>%n",
+        width / 2, escapeXml(model.getHazardId()), width / 2, escapeXml(model.getHazardDescription()));
   }
 
   /**
@@ -182,28 +182,28 @@ public class BowTieSvgExporter implements Serializable {
 
       // Threat box
       sb.append(String.format("<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" class=\"threat-box\" rx=\"5\"/>%n",
-	  THREAT_X, y, BOX_WIDTH, BOX_HEIGHT));
+          THREAT_X, y, BOX_WIDTH, BOX_HEIGHT));
       sb.append(String.format("<text x=\"%d\" y=\"%d\" class=\"box-text\">%s</text>%n", THREAT_X + BOX_WIDTH / 2,
-	  y + 20, truncate(threat.getDescription(), 15)));
+          y + 20, truncate(threat.getDescription(), 15)));
       sb.append(String.format("<text x=\"%d\" y=\"%d\" class=\"box-text\">%.2e /yr</text>%n", THREAT_X + BOX_WIDTH / 2,
-	  y + 35, freq));
+          y + 35, freq));
 
       // Prevention barriers linked to this threat
       List<BowTieModel.Barrier> barriers = getBarriersForThreat(threat);
       int barrierX = THREAT_X + BOX_WIDTH + 30;
       for (int j = 0; j < barriers.size() && j < 3; j++) {
-	BowTieModel.Barrier barrier = barriers.get(j);
-	double eff = barrier.getEffectiveness();
-	int bx = barrierX + j * (BARRIER_WIDTH + 10);
-	int by = y + (BOX_HEIGHT - BARRIER_HEIGHT) / 2;
+        BowTieModel.Barrier barrier = barriers.get(j);
+        double eff = barrier.getEffectiveness();
+        int bx = barrierX + j * (BARRIER_WIDTH + 10);
+        int by = y + (BOX_HEIGHT - BARRIER_HEIGHT) / 2;
 
-	sb.append(String.format(
-	    "<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" class=\"prevention-barrier\" rx=\"3\"/>%n", bx, by,
-	    BARRIER_WIDTH, BARRIER_HEIGHT));
-	sb.append(String.format("<text x=\"%d\" y=\"%d\" class=\"barrier-text\">%s</text>%n", bx + BARRIER_WIDTH / 2,
-	    by + 12, truncate(barrier.getDescription(), 12)));
-	sb.append(String.format("<text x=\"%d\" y=\"%d\" class=\"barrier-text\">%.0f%%</text>%n",
-	    bx + BARRIER_WIDTH / 2, by + 24, eff * 100));
+        sb.append(String.format(
+            "<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" class=\"prevention-barrier\" rx=\"3\"/>%n", bx, by,
+            BARRIER_WIDTH, BARRIER_HEIGHT));
+        sb.append(String.format("<text x=\"%d\" y=\"%d\" class=\"barrier-text\">%s</text>%n", bx + BARRIER_WIDTH / 2,
+            by + 12, truncate(barrier.getDescription(), 12)));
+        sb.append(String.format("<text x=\"%d\" y=\"%d\" class=\"barrier-text\">%.0f%%</text>%n",
+            bx + BARRIER_WIDTH / 2, by + 24, eff * 100));
       }
     }
 
@@ -221,8 +221,8 @@ public class BowTieSvgExporter implements Serializable {
     List<String> linkedIds = threat.getLinkedBarrierIds();
     for (BowTieModel.Barrier barrier : model.getBarriers()) {
       if (linkedIds.contains(barrier.getId()) && (barrier.getBarrierType() == BowTieModel.BarrierType.PREVENTION
-	  || barrier.getBarrierType() == BowTieModel.BarrierType.BOTH)) {
-	result.add(barrier);
+          || barrier.getBarrierType() == BowTieModel.BarrierType.BOTH)) {
+        result.add(barrier);
       }
     }
     return result;
@@ -239,8 +239,8 @@ public class BowTieSvgExporter implements Serializable {
     List<String> linkedIds = consequence.getLinkedBarrierIds();
     for (BowTieModel.Barrier barrier : model.getBarriers()) {
       if (linkedIds.contains(barrier.getId()) && (barrier.getBarrierType() == BowTieModel.BarrierType.MITIGATION
-	  || barrier.getBarrierType() == BowTieModel.BarrierType.BOTH)) {
-	result.add(barrier);
+          || barrier.getBarrierType() == BowTieModel.BarrierType.BOTH)) {
+        result.add(barrier);
       }
     }
     return result;
@@ -257,11 +257,11 @@ public class BowTieSvgExporter implements Serializable {
     int hazardHeight = 80;
 
     return String.format(
-	"<!-- Hazard -->%n" + "<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" class=\"hazard-box\" rx=\"10\"/>%n"
-	    + "<text x=\"%d\" y=\"%d\" class=\"title\" style=\"fill: #333;\">HAZARD</text>%n"
-	    + "<text x=\"%d\" y=\"%d\" class=\"box-text\" style=\"fill: #333;\">%s</text>%n",
-	HAZARD_X, hazardY, hazardWidth, hazardHeight, HAZARD_X + hazardWidth / 2, hazardY + 30,
-	HAZARD_X + hazardWidth / 2, hazardY + 55, truncate(model.getHazardDescription(), 20));
+        "<!-- Hazard -->%n" + "<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" class=\"hazard-box\" rx=\"10\"/>%n"
+            + "<text x=\"%d\" y=\"%d\" class=\"title\" style=\"fill: #333;\">HAZARD</text>%n"
+            + "<text x=\"%d\" y=\"%d\" class=\"box-text\" style=\"fill: #333;\">%s</text>%n",
+        HAZARD_X, hazardY, hazardWidth, hazardHeight, HAZARD_X + hazardWidth / 2, hazardY + 30,
+        HAZARD_X + hazardWidth / 2, hazardY + 55, truncate(model.getHazardDescription(), 20));
   }
 
   /**
@@ -286,29 +286,29 @@ public class BowTieSvgExporter implements Serializable {
       List<BowTieModel.Barrier> barriers = getBarriersForConsequence(consequence);
       int barrierX = CONSEQUENCE_X - (barriers.size() > 0 ? barriers.size() * (BARRIER_WIDTH + 10) : 0);
       for (int j = 0; j < barriers.size() && j < 3; j++) {
-	BowTieModel.Barrier barrier = barriers.get(j);
-	double eff = barrier.getEffectiveness();
-	int bx = barrierX + j * (BARRIER_WIDTH + 10);
-	int by = y + (BOX_HEIGHT - BARRIER_HEIGHT) / 2;
+        BowTieModel.Barrier barrier = barriers.get(j);
+        double eff = barrier.getEffectiveness();
+        int bx = barrierX + j * (BARRIER_WIDTH + 10);
+        int by = y + (BOX_HEIGHT - BARRIER_HEIGHT) / 2;
 
-	sb.append(String.format(
-	    "<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" class=\"mitigation-barrier\" rx=\"3\"/>%n", bx, by,
-	    BARRIER_WIDTH, BARRIER_HEIGHT));
-	sb.append(String.format("<text x=\"%d\" y=\"%d\" class=\"barrier-text\">%s</text>%n", bx + BARRIER_WIDTH / 2,
-	    by + 12, truncate(barrier.getDescription(), 12)));
-	sb.append(String.format("<text x=\"%d\" y=\"%d\" class=\"barrier-text\">%.0f%%</text>%n",
-	    bx + BARRIER_WIDTH / 2, by + 24, eff * 100));
+        sb.append(String.format(
+            "<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" class=\"mitigation-barrier\" rx=\"3\"/>%n", bx, by,
+            BARRIER_WIDTH, BARRIER_HEIGHT));
+        sb.append(String.format("<text x=\"%d\" y=\"%d\" class=\"barrier-text\">%s</text>%n", bx + BARRIER_WIDTH / 2,
+            by + 12, truncate(barrier.getDescription(), 12)));
+        sb.append(String.format("<text x=\"%d\" y=\"%d\" class=\"barrier-text\">%.0f%%</text>%n",
+            bx + BARRIER_WIDTH / 2, by + 24, eff * 100));
       }
 
       // Consequence box
       int consX = CONSEQUENCE_X + 50;
       sb.append(
-	  String.format("<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" class=\"consequence-box\" rx=\"5\"/>%n",
-	      consX, y, BOX_WIDTH, BOX_HEIGHT));
+          String.format("<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" class=\"consequence-box\" rx=\"5\"/>%n",
+              consX, y, BOX_WIDTH, BOX_HEIGHT));
       sb.append(String.format("<text x=\"%d\" y=\"%d\" class=\"box-text\">%s</text>%n", consX + BOX_WIDTH / 2, y + 20,
-	  truncate(consequence.getDescription(), 15)));
+          truncate(consequence.getDescription(), 15)));
       sb.append(String.format("<text x=\"%d\" y=\"%d\" class=\"box-text\">Sev: %d</text>%n", consX + BOX_WIDTH / 2,
-	  y + 35, severity));
+          y + 35, severity));
     }
 
     return sb.toString();
@@ -336,10 +336,10 @@ public class BowTieSvgExporter implements Serializable {
       int startX = THREAT_X + BOX_WIDTH;
       List<BowTieModel.Barrier> barriers = getBarriersForThreat(threats.get(i));
       if (!barriers.isEmpty()) {
-	startX = THREAT_X + BOX_WIDTH + 30 + Math.min(barriers.size(), 3) * (BARRIER_WIDTH + 10);
+        startX = THREAT_X + BOX_WIDTH + 30 + Math.min(barriers.size(), 3) * (BARRIER_WIDTH + 10);
       }
       sb.append(String.format("<path d=\"M %d %d Q %d %d %d %d\" class=\"connector\"/>%n", startX, y,
-	  (startX + hazardLeft) / 2, (y + hazardY) / 2, hazardLeft, hazardY));
+          (startX + hazardLeft) / 2, (y + hazardY) / 2, hazardLeft, hazardY));
     }
 
     // Connect hazard to consequences
@@ -349,10 +349,10 @@ public class BowTieSvgExporter implements Serializable {
       int endX = CONSEQUENCE_X + 50;
       List<BowTieModel.Barrier> barriers = getBarriersForConsequence(consequences.get(i));
       if (!barriers.isEmpty()) {
-	endX = CONSEQUENCE_X - Math.min(barriers.size(), 3) * (BARRIER_WIDTH + 10);
+        endX = CONSEQUENCE_X - Math.min(barriers.size(), 3) * (BARRIER_WIDTH + 10);
       }
       sb.append(String.format("<path d=\"M %d %d Q %d %d %d %d\" class=\"connector\"/>%n", hazardRight, hazardY,
-	  (hazardRight + endX) / 2, (hazardY + y) / 2, endX, y));
+          (hazardRight + endX) / 2, (hazardY + y) / 2, endX, y));
     }
 
     return sb.toString();
@@ -366,18 +366,18 @@ public class BowTieSvgExporter implements Serializable {
   private String getLegend() {
     int legendY = height - 80;
     return String.format(
-	"<!-- Legend -->%n" + "<rect x=\"20\" y=\"%d\" width=\"15\" height=\"15\" class=\"threat-box\"/>%n"
-	    + "<text x=\"40\" y=\"%d\" class=\"legend-text\">Threat</text>%n"
-	    + "<rect x=\"100\" y=\"%d\" width=\"15\" height=\"15\" class=\"prevention-barrier\"/>%n"
-	    + "<text x=\"120\" y=\"%d\" class=\"legend-text\">Prevention Barrier</text>%n"
-	    + "<rect x=\"240\" y=\"%d\" width=\"15\" height=\"15\" class=\"hazard-box\"/>%n"
-	    + "<text x=\"260\" y=\"%d\" class=\"legend-text\">Hazard</text>%n"
-	    + "<rect x=\"320\" y=\"%d\" width=\"15\" height=\"15\" class=\"mitigation-barrier\"/>%n"
-	    + "<text x=\"340\" y=\"%d\" class=\"legend-text\">Mitigation Barrier</text>%n"
-	    + "<rect x=\"470\" y=\"%d\" width=\"15\" height=\"15\" class=\"consequence-box\"/>%n"
-	    + "<text x=\"490\" y=\"%d\" class=\"legend-text\">Consequence</text>%n",
-	legendY, legendY + 12, legendY, legendY + 12, legendY, legendY + 12, legendY, legendY + 12, legendY,
-	legendY + 12);
+        "<!-- Legend -->%n" + "<rect x=\"20\" y=\"%d\" width=\"15\" height=\"15\" class=\"threat-box\"/>%n"
+            + "<text x=\"40\" y=\"%d\" class=\"legend-text\">Threat</text>%n"
+            + "<rect x=\"100\" y=\"%d\" width=\"15\" height=\"15\" class=\"prevention-barrier\"/>%n"
+            + "<text x=\"120\" y=\"%d\" class=\"legend-text\">Prevention Barrier</text>%n"
+            + "<rect x=\"240\" y=\"%d\" width=\"15\" height=\"15\" class=\"hazard-box\"/>%n"
+            + "<text x=\"260\" y=\"%d\" class=\"legend-text\">Hazard</text>%n"
+            + "<rect x=\"320\" y=\"%d\" width=\"15\" height=\"15\" class=\"mitigation-barrier\"/>%n"
+            + "<text x=\"340\" y=\"%d\" class=\"legend-text\">Mitigation Barrier</text>%n"
+            + "<rect x=\"470\" y=\"%d\" width=\"15\" height=\"15\" class=\"consequence-box\"/>%n"
+            + "<text x=\"490\" y=\"%d\" class=\"legend-text\">Consequence</text>%n",
+        legendY, legendY + 12, legendY, legendY + 12, legendY, legendY + 12, legendY, legendY + 12, legendY,
+        legendY + 12);
   }
 
   /**
@@ -391,9 +391,9 @@ public class BowTieSvgExporter implements Serializable {
     double mitigated = model.getMitigatedFrequency();
     double riskReduction = mitigated > 0 ? unmitigated / mitigated : 0;
     return String.format(
-	"<!-- Statistics -->%n" + "<text x=\"20\" y=\"%d\" class=\"stats\">Unmitigated Freq: %.4f /yr | "
-	    + "Mitigated Freq: %.6f /yr | " + "Risk Reduction: %.0fx</text>%n",
-	statsY, unmitigated, mitigated, riskReduction);
+        "<!-- Statistics -->%n" + "<text x=\"20\" y=\"%d\" class=\"stats\">Unmitigated Freq: %.4f /yr | "
+            + "Mitigated Freq: %.6f /yr | " + "Risk Reduction: %.0fx</text>%n",
+        statsY, unmitigated, mitigated, riskReduction);
   }
 
   /**
@@ -407,7 +407,7 @@ public class BowTieSvgExporter implements Serializable {
       return "";
     }
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'",
-	"&apos;");
+        "&apos;");
   }
 
   /**
@@ -436,12 +436,12 @@ public class BowTieSvgExporter implements Serializable {
   public String exportToHtml() {
     String svg = export();
     return "<!DOCTYPE html>\n" + "<html>\n" + "<head>\n" + "  <title>Bow-Tie: " + escapeXml(model.getHazardId())
-	+ "</title>\n" + "  <style>\n" + "    body { font-family: sans-serif; margin: 20px; }\n"
-	+ "    .container { max-width: 1200px; margin: 0 auto; }\n" + "    h1 { color: #333; }\n"
-	+ "    .svg-container { border: 1px solid #ccc; border-radius: 8px; padding: 10px; }\n" + "  </style>\n"
-	+ "</head>\n" + "<body>\n" + "  <div class=\"container\">\n" + "    <h1>Bow-Tie Analysis: "
-	+ escapeXml(model.getHazardId()) + "</h1>\n" + "    <div class=\"svg-container\">\n" + svg + "    </div>\n"
-	+ "  </div>\n" + "</body>\n" + "</html>\n";
+        + "</title>\n" + "  <style>\n" + "    body { font-family: sans-serif; margin: 20px; }\n"
+        + "    .container { max-width: 1200px; margin: 0 auto; }\n" + "    h1 { color: #333; }\n"
+        + "    .svg-container { border: 1px solid #ccc; border-radius: 8px; padding: 10px; }\n" + "  </style>\n"
+        + "</head>\n" + "<body>\n" + "  <div class=\"container\">\n" + "    <h1>Bow-Tie Analysis: "
+        + escapeXml(model.getHazardId()) + "</h1>\n" + "    <div class=\"svg-container\">\n" + svg + "    </div>\n"
+        + "  </div>\n" + "</body>\n" + "</html>\n";
   }
 
   /**

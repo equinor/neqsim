@@ -481,9 +481,9 @@ public class ThrottlingValveTest {
 
     // Now calculate what opening we need to get this flow rate
     ControlValveSizing_simple sizingMethod = (ControlValveSizing_simple) valve1.getMechanicalDesign()
-	.getValveSizingMethod();
+        .getValveSizingMethod();
     double calculatedOpening = sizingMethod.calculateValveOpeningFromFlowRate(flowRate, Kv, 100.0,
-	valve1.getInletStream(), valve1.getOutletStream());
+        valve1.getInletStream(), valve1.getOutletStream());
 
     // Should be approximately 100% since we used 100% opening to generate the flow
     assertEquals(100.0, calculatedOpening, 1.0);
@@ -491,7 +491,7 @@ public class ThrottlingValveTest {
     // Test with a reduced flow rate - calculate what opening is needed for half the flow
     double halfFlow = flowRate * 0.5;
     double calculatedOpeningHalfFlow = sizingMethod.calculateValveOpeningFromFlowRate(halfFlow, Kv, 100.0,
-	valve1.getInletStream(), valve1.getOutletStream());
+        valve1.getInletStream(), valve1.getOutletStream());
 
     // Should be approximately 50% for half the flow (linear relationship in simple model)
     assertEquals(50.0, calculatedOpeningHalfFlow, 5.0);

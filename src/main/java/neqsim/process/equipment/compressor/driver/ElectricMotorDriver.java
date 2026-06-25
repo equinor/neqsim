@@ -123,7 +123,7 @@ public class ElectricMotorDriver extends DriverCurveBase {
     if (!hasVFD) {
       // Fixed speed motor - only operates near rated speed
       if (Math.abs(speed - ratedSpeed) / ratedSpeed > 0.05) {
-	return 0.0;
+        return 0.0;
       }
       return ratedPower;
     }
@@ -150,7 +150,7 @@ public class ElectricMotorDriver extends DriverCurveBase {
     if (!hasVFD) {
       // Fixed speed motor
       if (Math.abs(speed - ratedSpeed) / ratedSpeed > 0.05) {
-	return 0.0;
+        return 0.0;
       }
       return super.getAvailableTorque(ratedSpeed);
     }

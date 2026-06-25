@@ -94,7 +94,7 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     String xml = out.toString(StandardCharsets.UTF_8.name());
 
     assertTrue(xml.contains("ComponentClass=\"CentrifugalCompressor\""),
-	"Should map Compressor to CentrifugalCompressor");
+        "Should map Compressor to CentrifugalCompressor");
   }
 
   /**
@@ -271,7 +271,7 @@ public class DexpiXmlWriterTest extends NeqSimTest {
   @Test
   public void testSizingAttributeExport() throws IOException {
     DexpiProcessUnit unit = new DexpiProcessUnit("HP-Sep", "Separator",
-	neqsim.process.equipment.EquipmentEnum.Separator, null, null);
+        neqsim.process.equipment.EquipmentEnum.Separator, null, null);
     unit.setSizingAttribute(DexpiMetadata.INSIDE_DIAMETER, "2.5");
     unit.setSizingAttribute(DexpiMetadata.TANGENT_TO_TANGENT_LENGTH, "8.0");
 
@@ -310,7 +310,7 @@ public class DexpiXmlWriterTest extends NeqSimTest {
 
     // After running, simulation results should be exported as GenericAttributes
     assertTrue(xml.contains("OperatingPressureValue") || xml.contains("OperatingTemperatureValue"),
-	"Should export simulation result attributes after process run");
+        "Should export simulation result attributes after process run");
   }
 
   /**
@@ -374,13 +374,13 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     String xml = out.toString(StandardCharsets.UTF_8.name());
 
     assertTrue(xml.contains("xmlns=\"http://sandbox.dexpi.org/xml\""),
-	"Standard export should include the DEXPI default namespace");
+        "Standard export should include the DEXPI default namespace");
     assertTrue(xml.contains("OriginatingSystem=\"NeqSim\""),
-	"PlantInformation should identify NeqSim as the originating system");
+        "PlantInformation should identify NeqSim as the originating system");
     assertTrue(xml.contains("OriginatingSystemVendor=\"Equinor / NeqSim\""),
-	"PlantInformation should identify the originating system vendor");
+        "PlantInformation should identify the originating system vendor");
     assertTrue(xml.contains("OriginatingSystemVersion="),
-	"PlantInformation should include originating system version metadata");
+        "PlantInformation should include originating system version metadata");
   }
 
   /**
@@ -398,7 +398,7 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     String xml = out.toString(StandardCharsets.UTF_8.name());
 
     assertFalse(xml.contains("xmlns=\"http://sandbox.dexpi.org/xml\""),
-	"pyDEXPI export should omit the DEXPI default namespace");
+        "pyDEXPI export should omit the DEXPI default namespace");
     assertFalse(xml.contains("xmlns:xsi="), "pyDEXPI export should omit namespace declarations");
     assertTrue(xml.contains("OriginatingSystem=\"NeqSim\""), "pyDEXPI export should keep originating system metadata");
     assertTrue(xml.contains("PlantInformation"), "pyDEXPI export should keep unqualified PlantInformation elements");
@@ -448,7 +448,7 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     // feed (Stream, not exported) = 0, sep = 3, comp = 2, valve PipingComponent = 2,
     // inline PipingComponent for sep->comp connection = 2 => total >= 9
     assertTrue(nozzleCount >= 7,
-	"Separator should produce 3 nozzles (inlet + gas out + liquid out)" + "; total nozzles=" + nozzleCount);
+        "Separator should produce 3 nozzles (inlet + gas out + liquid out)" + "; total nozzles=" + nozzleCount);
 
     // Connection system should contain connections
     assertTrue(xml.contains("Connection"), "Should contain Connection elements");
@@ -520,7 +520,7 @@ public class DexpiXmlWriterTest extends NeqSimTest {
 
     // Instrumentation function bubbles must be emitted even though the model defines none.
     assertTrue(xml.contains("ProcessInstrumentationFunction"),
-	"Synthesized instrumentation should produce ProcessInstrumentationFunction elements");
+        "Synthesized instrumentation should produce ProcessInstrumentationFunction elements");
     // Separator should get pressure, level and temperature transmitters.
     assertTrue(xml.contains("PT-2001"), "Separator should get a pressure transmitter");
     assertTrue(xml.contains("LT-2002"), "Separator should get a level transmitter");

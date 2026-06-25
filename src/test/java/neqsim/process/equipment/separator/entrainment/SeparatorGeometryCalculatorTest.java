@@ -126,7 +126,7 @@ class SeparatorGeometryCalculatorTest {
 
     double liquidSettlingHeight = calc.getEffectiveLiquidSettlingHeight();
     assertTrue(liquidSettlingHeight > 0 && liquidSettlingHeight < 2.0,
-	"Liquid settling height should be between 0 and diameter");
+        "Liquid settling height should be between 0 and diameter");
   }
 
   /**

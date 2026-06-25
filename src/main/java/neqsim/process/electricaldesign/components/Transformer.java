@@ -1,8 +1,8 @@
 package neqsim.process.electricaldesign.components;
 
-import com.google.gson.GsonBuilder;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import com.google.gson.GsonBuilder;
 
 /**
  * Model of a power transformer for process electrical systems.
@@ -107,7 +107,7 @@ public class Transformer implements java.io.Serializable {
   private double selectStandardRating(double requiredKVA) {
     for (double std : STANDARD_RATINGS_KVA) {
       if (std >= requiredKVA) {
-	return std;
+        return std;
       }
     }
     return Math.ceil(requiredKVA / 1000.0) * 1000.0;

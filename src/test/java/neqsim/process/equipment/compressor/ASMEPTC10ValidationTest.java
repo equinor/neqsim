@@ -94,11 +94,11 @@ public class ASMEPTC10ValidationTest extends neqsim.NeqSimTest {
     // PTC 10 expected values for this case (calculated using Schultz method)
     // Polytropic head for PR=2 at these conditions is approximately 90-100 kJ/kg
     assertTrue(polytropicHead > 50.0 && polytropicHead < 150.0,
-	"Polytropic head should be in expected range: " + polytropicHead + " kJ/kg");
+        "Polytropic head should be in expected range: " + polytropicHead + " kJ/kg");
 
     // Discharge temperature should be approximately 90-110°C
     assertTrue(dischargeTemp > 70.0 && dischargeTemp < 130.0,
-	"Discharge temperature should be in expected range: " + dischargeTemp + " °C");
+        "Discharge temperature should be in expected range: " + dischargeTemp + " °C");
 
     // Power should be positive and reasonable
     assertTrue(power > 0.5 && power < 3.0, "Power should be in expected range: " + power + " MW");
@@ -265,12 +265,12 @@ public class ASMEPTC10ValidationTest extends neqsim.NeqSimTest {
 
     // Polytropic exponent should be calculated and be reasonable (typically 1.1 to 1.6 for gases)
     assertTrue(polytropicExponent > 1.0 && polytropicExponent < 2.0,
-	"Polytropic exponent should be in reasonable range for gas compression: " + polytropicExponent);
+        "Polytropic exponent should be in reasonable range for gas compression: " + polytropicExponent);
 
     // Validate that the calculation completed successfully by checking other outputs
     double polytropicHead = compressor.getPolytropicHead("kJ/kg");
     assertTrue(polytropicHead > 30.0 && polytropicHead < 150.0,
-	"Polytropic head should be reasonable for PR=2: " + polytropicHead + " kJ/kg");
+        "Polytropic head should be reasonable for PR=2: " + polytropicHead + " kJ/kg");
 
     // Discharge temperature should be higher than inlet
     double dischargeTemp = compressor.getOutletStream().getTemperature("C");
@@ -322,7 +322,7 @@ public class ASMEPTC10ValidationTest extends neqsim.NeqSimTest {
     // efficiency is back-calculated from the results. Validate it's reasonable.
     // Note: isentropicEff can be >= polytropicEff depending on the calculation path
     assertTrue(isentropicEff > 0.5 && isentropicEff <= 1.0,
-	"Isentropic efficiency should be between 0.5 and 1.0: " + isentropicEff);
+        "Isentropic efficiency should be between 0.5 and 1.0: " + isentropicEff);
 
     // Verify the compression actually occurred
     double dischargeTemp = compressor.getOutletStream().getTemperature("C");
@@ -376,7 +376,7 @@ public class ASMEPTC10ValidationTest extends neqsim.NeqSimTest {
     // Power should be within 10% of expected (accounting for calculation method differences)
     double powerDiff = Math.abs(power - expectedPower) / expectedPower * 100.0;
     assertTrue(powerDiff < 15.0, "Power should be within 15% of expected: actual=" + power + " kW, expected="
-	+ expectedPower + " kW, diff=" + powerDiff + "%");
+        + expectedPower + " kW, diff=" + powerDiff + "%");
   }
 
   /**
@@ -519,7 +519,7 @@ public class ASMEPTC10ValidationTest extends neqsim.NeqSimTest {
     // Stage 2 inlet temperature should be cooler than stage 1 outlet
     double stage1OutTemp = stage1.getOutletStream().getTemperature("C");
     assertTrue(intercoolTemp < stage1OutTemp,
-	"Intercool temp (" + intercoolTemp + "°C) should be less than stage 1 outlet (" + stage1OutTemp + "°C)");
+        "Intercool temp (" + intercoolTemp + "°C) should be less than stage 1 outlet (" + stage1OutTemp + "°C)");
 
     // Final pressure should match target
     assertEquals(finalPressure, stage2.getOutletPressure(), 0.1, "Final pressure should match target");
@@ -565,7 +565,7 @@ public class ASMEPTC10ValidationTest extends neqsim.NeqSimTest {
     double expectedHeadMeter = headKJkg * 1000.0 / 9.81;
 
     assertEquals(expectedHeadMeter, headMeter, expectedHeadMeter * 0.01,
-	"Head in meters should match conversion from kJ/kg");
+        "Head in meters should match conversion from kJ/kg");
   }
 
   /**
@@ -617,7 +617,7 @@ public class ASMEPTC10ValidationTest extends neqsim.NeqSimTest {
     // Calculated efficiency should match the known efficiency within 5%
     double effDiff = Math.abs(calculatedEff - knownPolytropicEff) / knownPolytropicEff * 100.0;
     assertTrue(effDiff < 5.0, "Back-calculated efficiency (" + calculatedEff + ") should be within 5% of known ("
-	+ knownPolytropicEff + "): diff = " + effDiff + "%");
+        + knownPolytropicEff + "): diff = " + effDiff + "%");
   }
 
   /**

@@ -109,7 +109,7 @@ public class ChokeCollapseAnalyzer implements Serializable {
     SystemInterface inSys = inlet.getThermoSystem();
     double p1 = inSys.getPressure("bara");
     double p2 = Double.isNaN(downstreamPressureBara) ? outlet.getThermoSystem().getPressure("bara")
-	: downstreamPressureBara;
+        : downstreamPressureBara;
     double t1 = inSys.getTemperature();
     result.setInletPressureBara(p1);
     result.setOutletPressureBara(p2);
@@ -130,7 +130,7 @@ public class ChokeCollapseAnalyzer implements Serializable {
 
     boolean hasGas = inSys.hasPhaseType(PhaseType.GAS);
     boolean hasLiquid = inSys.hasPhaseType(PhaseType.OIL) || inSys.hasPhaseType(PhaseType.AQUEOUS)
-	|| inSys.hasPhaseType(PhaseType.LIQUID);
+        || inSys.hasPhaseType(PhaseType.LIQUID);
 
     if (hasGas && hasLiquid) {
       result.setFluidPhase("two-phase");
@@ -202,29 +202,29 @@ public class ChokeCollapseAnalyzer implements Serializable {
       result.setFlowRegime(ChokeCollapseResult.FlowRegime.CRITICAL);
       double relativeMargin = (rc - r) / rc;
       if (relativeMargin < marginThreshold) {
-	result.setCollapseMode(ChokeCollapseResult.CollapseMode.NEAR_COLLAPSE);
-	result.getRecommendations()
-	    .add(String.format("Operating within %.1f%% of critical pressure ratio (r=%.4f, rc=%.4f). "
-		+ "Small downstream pressure rise will collapse the choke.", marginThreshold * 100.0, r, rc));
+        result.setCollapseMode(ChokeCollapseResult.CollapseMode.NEAR_COLLAPSE);
+        result.getRecommendations()
+            .add(String.format("Operating within %.1f%% of critical pressure ratio (r=%.4f, rc=%.4f). "
+                + "Small downstream pressure rise will collapse the choke.", marginThreshold * 100.0, r, rc));
       } else {
-	result.setCollapseMode(ChokeCollapseResult.CollapseMode.NONE);
+        result.setCollapseMode(ChokeCollapseResult.CollapseMode.NONE);
       }
     } else {
       // r > rc: choke is subcritical
       result.setFlowRegime(ChokeCollapseResult.FlowRegime.SUBCRITICAL);
       double relativeOvershoot = (r - rc) / rc;
       if (relativeOvershoot < marginThreshold) {
-	// Just above critical — flag as TRANSITION
-	result.setFlowRegime(ChokeCollapseResult.FlowRegime.TRANSITION);
-	result.setCollapseMode(ChokeCollapseResult.CollapseMode.NEAR_COLLAPSE);
-	result.getRecommendations().add(String.format("Pressure ratio r=%.4f just above rc=%.4f — transition regime; "
-	    + "mass flow becomes sensitive to downstream pressure.", r, rc));
+        // Just above critical — flag as TRANSITION
+        result.setFlowRegime(ChokeCollapseResult.FlowRegime.TRANSITION);
+        result.setCollapseMode(ChokeCollapseResult.CollapseMode.NEAR_COLLAPSE);
+        result.getRecommendations().add(String.format("Pressure ratio r=%.4f just above rc=%.4f — transition regime; "
+            + "mass flow becomes sensitive to downstream pressure.", r, rc));
       } else {
-	result.setCollapseMode(ChokeCollapseResult.CollapseMode.COLLAPSED);
-	result.getRecommendations()
-	    .add(String.format("Choke has collapsed to subcritical flow (r=%.4f > rc=%.4f). "
-		+ "Downstream pressure now propagates upstream; expect rate transient and "
-		+ "possible severe-slugging coupling.", r, rc));
+        result.setCollapseMode(ChokeCollapseResult.CollapseMode.COLLAPSED);
+        result.getRecommendations()
+            .add(String.format("Choke has collapsed to subcritical flow (r=%.4f > rc=%.4f). "
+                + "Downstream pressure now propagates upstream; expect rate transient and "
+                + "possible severe-slugging coupling.", r, rc));
       }
     }
   }
@@ -251,8 +251,8 @@ public class ChokeCollapseAnalyzer implements Serializable {
       result.setCollapseMode(ChokeCollapseResult.CollapseMode.FLASHING);
       result.setFlashing(true);
       result.getRecommendations()
-	  .add(String.format("Outlet pressure %.3f bara below vapour pressure %.3f bara — liquid flashing. "
-	      + "Use anti-cavitation trim and verify downstream piping for two-phase flow.", p2, pv));
+          .add(String.format("Outlet pressure %.3f bara below vapour pressure %.3f bara — liquid flashing. "
+              + "Use anti-cavitation trim and verify downstream piping for two-phase flow.", p2, pv));
       return;
     }
 
@@ -264,10 +264,10 @@ public class ChokeCollapseAnalyzer implements Serializable {
       result.setFlowRegime(ChokeCollapseResult.FlowRegime.SUBCRITICAL);
       result.setCollapseMode(ChokeCollapseResult.CollapseMode.CAVITATION);
       result.getRecommendations()
-	  .add(String.format(
-	      "Cavitation index sigma=%.2f below threshold %.2f — incipient cavitation likely. "
-		  + "Increase backpressure, stage the let-down, or specify hardened/anti-cavitation trim.",
-	      sigma, cavitationThreshold));
+          .add(String.format(
+              "Cavitation index sigma=%.2f below threshold %.2f — incipient cavitation likely. "
+                  + "Increase backpressure, stage the let-down, or specify hardened/anti-cavitation trim.",
+              sigma, cavitationThreshold));
     } else {
       result.setFlowRegime(ChokeCollapseResult.FlowRegime.SUBCRITICAL);
       result.setCollapseMode(ChokeCollapseResult.CollapseMode.NONE);

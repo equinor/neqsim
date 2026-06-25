@@ -1,6 +1,11 @@
 package neqsim.integration;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -142,7 +147,7 @@ public class ValidationFramework {
 
     public List<ValidationError> getCriticalErrors() {
       return errors.stream().filter(e -> e.getSeverity() == ValidationError.Severity.CRITICAL)
-	  .collect(Collectors.toList());
+          .collect(Collectors.toList());
     }
 
     public long getValidationTimeMs() {
@@ -153,21 +158,21 @@ public class ValidationFramework {
       StringBuilder sb = new StringBuilder();
       sb.append("Validation failed for: ").append(validatedObject).append("\n");
       if (errors.isEmpty()) {
-	sb.append("No critical errors, but warnings exist:\n");
+        sb.append("No critical errors, but warnings exist:\n");
       }
       for (ValidationError error : errors) {
-	sb.append("  ").append(error).append("\n");
+        sb.append("  ").append(error).append("\n");
       }
       return sb.toString();
     }
 
     public String getWarningsSummary() {
       if (warnings.isEmpty()) {
-	return "No warnings.";
+        return "No warnings.";
       }
       StringBuilder sb = new StringBuilder();
       for (ValidationWarning warning : warnings) {
-	sb.append("  ").append(warning).append("\n");
+        sb.append("  ").append(warning).append("\n");
       }
       return sb.toString();
     }
@@ -175,7 +180,7 @@ public class ValidationFramework {
     @Override
     public String toString() {
       return String.format("ValidationResult{object=%s, ready=%s, errors=%d, warnings=%d, time=%dms}", validatedObject,
-	  isReady(), errors.size(), warnings.size(), validationTimeMs);
+          isReady(), errors.size(), warnings.size(), validationTimeMs);
     }
   }
 
@@ -275,23 +280,23 @@ public class ValidationFramework {
 
     public ValidationBuilder checkTrue(boolean condition, String errorMsg, String remediation) {
       if (!condition) {
-	result.addError(new ValidationError(ValidationError.Severity.CRITICAL, "validation", errorMsg, remediation));
+        result.addError(new ValidationError(ValidationError.Severity.CRITICAL, "validation", errorMsg, remediation));
       }
       return this;
     }
 
     public ValidationBuilder checkNotNull(Object obj, String fieldName) {
       if (obj == null) {
-	result.addError(new ValidationError(ValidationError.Severity.CRITICAL, "validation", fieldName + " is null",
-	    "Initialize " + fieldName + " before validation"));
+        result.addError(new ValidationError(ValidationError.Severity.CRITICAL, "validation", fieldName + " is null",
+            "Initialize " + fieldName + " before validation"));
       }
       return this;
     }
 
     public ValidationBuilder checkRange(double value, double min, double max, String fieldName) {
       if (value < min || value > max) {
-	result.addError(new ValidationError(ValidationError.Severity.MAJOR, "range",
-	    fieldName + " is out of range [" + min + ", " + max + "]", "Set " + fieldName + " within valid range"));
+        result.addError(new ValidationError(ValidationError.Severity.MAJOR, "range",
+            fieldName + " is out of range [" + min + ", " + max + "]", "Set " + fieldName + " within valid range"));
       }
       return this;
     }
@@ -332,13 +337,13 @@ public class ValidationFramework {
       ValidationResult composite = new ValidationResult(compositeId);
 
       for (Validatable obj : objects) {
-	ValidationResult result = obj.validate();
-	for (ValidationError error : result.getErrors()) {
-	  composite.addError(error);
-	}
-	for (ValidationWarning warning : result.getWarnings()) {
-	  composite.addWarning(warning);
-	}
+        ValidationResult result = obj.validate();
+        for (ValidationError error : result.getErrors()) {
+          composite.addError(error);
+        }
+        for (ValidationWarning warning : result.getWarnings()) {
+          composite.addWarning(warning);
+        }
       }
 
       return composite;
@@ -350,16 +355,16 @@ public class ValidationFramework {
 
       boolean anySucceeded = false;
       for (Validatable obj : objects) {
-	ValidationResult result = obj.validate();
-	if (result.isReady()) {
-	  anySucceeded = true;
-	  break;
-	}
+        ValidationResult result = obj.validate();
+        if (result.isReady()) {
+          anySucceeded = true;
+          break;
+        }
       }
 
       if (!anySucceeded) {
-	composite.addError(new ValidationError(ValidationError.Severity.CRITICAL, "composite",
-	    "No objects in the composite validation passed", "Fix errors in at least one object"));
+        composite.addError(new ValidationError(ValidationError.Severity.CRITICAL, "composite",
+            "No objects in the composite validation passed", "Fix errors in at least one object"));
       }
 
       return composite;

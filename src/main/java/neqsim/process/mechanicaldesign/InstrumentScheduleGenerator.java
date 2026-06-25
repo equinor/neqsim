@@ -236,17 +236,17 @@ public class InstrumentScheduleGenerator implements Serializable {
       ProcessEquipmentInterface equip = processSystem.getUnitOperations().get(i);
 
       if (equip instanceof Separator) {
-	instrumentSeparator((Separator) equip);
+        instrumentSeparator((Separator) equip);
       } else if (equip instanceof Compressor) {
-	instrumentCompressor((Compressor) equip);
+        instrumentCompressor((Compressor) equip);
       } else if (equip instanceof Heater) {
-	instrumentHeater((Heater) equip);
+        instrumentHeater((Heater) equip);
       } else if (equip instanceof Cooler) {
-	instrumentCooler((Cooler) equip);
+        instrumentCooler((Cooler) equip);
       } else if (equip instanceof ThrottlingValve) {
-	instrumentValve((ThrottlingValve) equip);
+        instrumentValve((ThrottlingValve) equip);
       } else if (equip instanceof Stream) {
-	instrumentStream((Stream) equip);
+        instrumentStream((Stream) equip);
       }
     }
 
@@ -267,16 +267,16 @@ public class InstrumentScheduleGenerator implements Serializable {
     if (gasOut != null && gasOut.getFluid() != null) {
       double opP = gasOut.getFluid().getPressure("bara");
       if (opP > 0) {
-	String tag = nextTag(MeasuredVariable.PRESSURE);
-	PressureTransmitter pt = new PressureTransmitter(tag, gasOut);
-	pt.setUnit("bara");
-	pt.setTag(tag);
-	pt.setMaximumValue(opP * 1.5);
-	pt.setMinimumValue(0.0);
-	configureAlarm(pt, opP * 0.85, opP * 0.80, opP * 1.05, opP * 1.10, "bara");
-	registerDevice(tag, pt);
-	entries.add(new InstrumentEntry(tag, equipTag, equipTag + " pressure", MeasuredVariable.PRESSURE, "bara", 0.0,
-	    opP * 1.5, opP, opP * 0.85, opP * 1.05, opP * 0.80, opP * 1.10, SilRating.SIL_2, pt));
+        String tag = nextTag(MeasuredVariable.PRESSURE);
+        PressureTransmitter pt = new PressureTransmitter(tag, gasOut);
+        pt.setUnit("bara");
+        pt.setTag(tag);
+        pt.setMaximumValue(opP * 1.5);
+        pt.setMinimumValue(0.0);
+        configureAlarm(pt, opP * 0.85, opP * 0.80, opP * 1.05, opP * 1.10, "bara");
+        registerDevice(tag, pt);
+        entries.add(new InstrumentEntry(tag, equipTag, equipTag + " pressure", MeasuredVariable.PRESSURE, "bara", 0.0,
+            opP * 1.5, opP, opP * 0.85, opP * 1.05, opP * 0.80, opP * 1.10, SilRating.SIL_2, pt));
       }
     }
 
@@ -292,7 +292,7 @@ public class InstrumentScheduleGenerator implements Serializable {
       configureAlarm(tt, opTC - 20.0, opTC - 40.0, opTC + 20.0, opTC + 40.0, "C");
       registerDevice(tag, tt);
       entries.add(new InstrumentEntry(tag, equipTag, equipTag + " temperature", MeasuredVariable.TEMPERATURE, "C",
-	  -50.0, opTC + 100.0, opTC, opTC - 20.0, opTC + 20.0, opTC - 40.0, opTC + 40.0, SilRating.NONE, tt));
+          -50.0, opTC + 100.0, opTC, opTC - 20.0, opTC + 20.0, opTC - 40.0, opTC + 40.0, SilRating.NONE, tt));
     }
 
     // Level transmitter on vessel
@@ -304,7 +304,7 @@ public class InstrumentScheduleGenerator implements Serializable {
     configureAlarm(lt, 0.25, 0.10, 0.75, 0.90, "frac");
     registerDevice(ltTag, lt);
     entries.add(new InstrumentEntry(ltTag, equipTag, equipTag + " liquid level", MeasuredVariable.LEVEL, "frac", 0.0,
-	1.0, 0.50, 0.25, 0.75, 0.10, 0.90, SilRating.SIL_2, lt));
+        1.0, 0.50, 0.25, 0.75, 0.10, 0.90, SilRating.SIL_2, lt));
 
     // Water level transmitter for three-phase separators
     if (sep instanceof ThreePhaseSeparator) {
@@ -313,7 +313,7 @@ public class InstrumentScheduleGenerator implements Serializable {
       wlt.setTag(wltTag);
       registerDevice(wltTag, wlt);
       entries.add(new InstrumentEntry(wltTag, equipTag, equipTag + " water level", MeasuredVariable.LEVEL, "frac", 0.0,
-	  1.0, 0.30, 0.15, 0.60, 0.05, 0.80, SilRating.SIL_1, wlt));
+          1.0, 0.30, 0.15, 0.60, 0.05, 0.80, SilRating.SIL_1, wlt));
     }
 
     // Flow transmitter on gas outlet
@@ -325,8 +325,8 @@ public class InstrumentScheduleGenerator implements Serializable {
       registerDevice(ftTag, ft);
       double flowRate = gasOut.getFlowRate("kg/hr");
       entries.add(new InstrumentEntry(ftTag, equipTag, equipTag + " gas outlet flow", MeasuredVariable.FLOW, "kg/hr",
-	  0.0, flowRate * 1.5, flowRate, flowRate * 0.70, flowRate * 1.10, flowRate * 0.50, flowRate * 1.20,
-	  SilRating.NONE, ft));
+          0.0, flowRate * 1.5, flowRate, flowRate * 0.70, flowRate * 1.10, flowRate * 0.50, flowRate * 1.20,
+          SilRating.NONE, ft));
     }
   }
 
@@ -342,15 +342,15 @@ public class InstrumentScheduleGenerator implements Serializable {
     if (comp.getInletStream() != null && comp.getInletStream().getFluid() != null) {
       double suctionP = comp.getInletStream().getFluid().getPressure("bara");
       if (suctionP > 0) {
-	String tag = nextTag(MeasuredVariable.PRESSURE);
-	PressureTransmitter pt = new PressureTransmitter(tag, comp.getInletStream());
-	pt.setUnit("bara");
-	pt.setTag(tag);
-	configureAlarm(pt, suctionP * 0.90, suctionP * 0.80, suctionP * 1.10, suctionP * 1.15, "bara");
-	registerDevice(tag, pt);
-	entries.add(new InstrumentEntry(tag, equipTag, equipTag + " suction pressure", MeasuredVariable.PRESSURE,
-	    "bara", 0.0, suctionP * 2.0, suctionP, suctionP * 0.90, suctionP * 1.10, suctionP * 0.80, suctionP * 1.15,
-	    SilRating.SIL_2, pt));
+        String tag = nextTag(MeasuredVariable.PRESSURE);
+        PressureTransmitter pt = new PressureTransmitter(tag, comp.getInletStream());
+        pt.setUnit("bara");
+        pt.setTag(tag);
+        configureAlarm(pt, suctionP * 0.90, suctionP * 0.80, suctionP * 1.10, suctionP * 1.15, "bara");
+        registerDevice(tag, pt);
+        entries.add(new InstrumentEntry(tag, equipTag, equipTag + " suction pressure", MeasuredVariable.PRESSURE,
+            "bara", 0.0, suctionP * 2.0, suctionP, suctionP * 0.90, suctionP * 1.10, suctionP * 0.80, suctionP * 1.15,
+            SilRating.SIL_2, pt));
       }
     }
 
@@ -358,15 +358,15 @@ public class InstrumentScheduleGenerator implements Serializable {
     if (comp.getOutletStream() != null && comp.getOutletStream().getFluid() != null) {
       double dischargeP = comp.getOutletStream().getFluid().getPressure("bara");
       if (dischargeP > 0) {
-	String tag = nextTag(MeasuredVariable.PRESSURE);
-	PressureTransmitter pt = new PressureTransmitter(tag, comp.getOutletStream());
-	pt.setUnit("bara");
-	pt.setTag(tag);
-	configureAlarm(pt, dischargeP * 0.85, dischargeP * 0.80, dischargeP * 1.05, dischargeP * 1.10, "bara");
-	registerDevice(tag, pt);
-	entries.add(new InstrumentEntry(tag, equipTag, equipTag + " discharge pressure", MeasuredVariable.PRESSURE,
-	    "bara", 0.0, dischargeP * 1.5, dischargeP, dischargeP * 0.85, dischargeP * 1.05, dischargeP * 0.80,
-	    dischargeP * 1.10, SilRating.SIL_2, pt));
+        String tag = nextTag(MeasuredVariable.PRESSURE);
+        PressureTransmitter pt = new PressureTransmitter(tag, comp.getOutletStream());
+        pt.setUnit("bara");
+        pt.setTag(tag);
+        configureAlarm(pt, dischargeP * 0.85, dischargeP * 0.80, dischargeP * 1.05, dischargeP * 1.10, "bara");
+        registerDevice(tag, pt);
+        entries.add(new InstrumentEntry(tag, equipTag, equipTag + " discharge pressure", MeasuredVariable.PRESSURE,
+            "bara", 0.0, dischargeP * 1.5, dischargeP, dischargeP * 0.85, dischargeP * 1.05, dischargeP * 0.80,
+            dischargeP * 1.10, SilRating.SIL_2, pt));
       }
     }
 
@@ -380,8 +380,8 @@ public class InstrumentScheduleGenerator implements Serializable {
       configureAlarm(tt, dischTC - 20.0, dischTC - 40.0, dischTC + 15.0, dischTC + 30.0, "C");
       registerDevice(tag, tt);
       entries.add(new InstrumentEntry(tag, equipTag, equipTag + " discharge temperature", MeasuredVariable.TEMPERATURE,
-	  "C", -50.0, dischTC + 100.0, dischTC, dischTC - 20.0, dischTC + 15.0, dischTC - 40.0, dischTC + 30.0,
-	  SilRating.SIL_1, tt));
+          "C", -50.0, dischTC + 100.0, dischTC, dischTC - 20.0, dischTC + 15.0, dischTC - 40.0, dischTC + 30.0,
+          SilRating.SIL_1, tt));
     }
   }
 
@@ -403,7 +403,7 @@ public class InstrumentScheduleGenerator implements Serializable {
     configureAlarm(tt, outTC - 10.0, outTC - 20.0, outTC + 10.0, outTC + 20.0, "C");
     registerDevice(tag, tt);
     entries.add(new InstrumentEntry(tag, equipTag, equipTag + " outlet temperature", MeasuredVariable.TEMPERATURE, "C",
-	-50.0, outTC + 100.0, outTC, outTC - 10.0, outTC + 10.0, outTC - 20.0, outTC + 20.0, SilRating.NONE, tt));
+        -50.0, outTC + 100.0, outTC, outTC - 10.0, outTC + 10.0, outTC - 20.0, outTC + 20.0, SilRating.NONE, tt));
   }
 
   /**
@@ -424,7 +424,7 @@ public class InstrumentScheduleGenerator implements Serializable {
     configureAlarm(tt, outTC - 10.0, outTC - 20.0, outTC + 10.0, outTC + 20.0, "C");
     registerDevice(tag, tt);
     entries.add(new InstrumentEntry(tag, equipTag, equipTag + " outlet temperature", MeasuredVariable.TEMPERATURE, "C",
-	-50.0, outTC + 100.0, outTC, outTC - 10.0, outTC + 10.0, outTC - 20.0, outTC + 20.0, SilRating.NONE, tt));
+        -50.0, outTC + 100.0, outTC, outTC - 10.0, outTC + 10.0, outTC - 20.0, outTC + 20.0, SilRating.NONE, tt));
   }
 
   /**
@@ -446,8 +446,8 @@ public class InstrumentScheduleGenerator implements Serializable {
       configureAlarm(pt, downstreamP * 0.85, downstreamP * 0.75, downstreamP * 1.10, downstreamP * 1.15, "bara");
       registerDevice(tag, pt);
       entries.add(new InstrumentEntry(tag, equipTag, equipTag + " downstream pressure", MeasuredVariable.PRESSURE,
-	  "bara", 0.0, downstreamP * 2.0, downstreamP, downstreamP * 0.85, downstreamP * 1.10, downstreamP * 0.75,
-	  downstreamP * 1.15, SilRating.NONE, pt));
+          "bara", 0.0, downstreamP * 2.0, downstreamP, downstreamP * 0.85, downstreamP * 1.10, downstreamP * 0.75,
+          downstreamP * 1.15, SilRating.NONE, pt));
     }
   }
 
@@ -471,7 +471,7 @@ public class InstrumentScheduleGenerator implements Serializable {
       pt.setTag(ptTag);
       registerDevice(ptTag, pt);
       entries.add(new InstrumentEntry(ptTag, equipTag, equipTag + " pressure", MeasuredVariable.PRESSURE, "bara", 0.0,
-	  opP * 1.5, opP, opP * 0.90, opP * 1.10, opP * 0.80, opP * 1.15, SilRating.NONE, pt));
+          opP * 1.5, opP, opP * 0.90, opP * 1.10, opP * 0.80, opP * 1.15, SilRating.NONE, pt));
     }
 
     // Temperature transmitter
@@ -482,7 +482,7 @@ public class InstrumentScheduleGenerator implements Serializable {
     tt.setTag(ttTag);
     registerDevice(ttTag, tt);
     entries.add(new InstrumentEntry(ttTag, equipTag, equipTag + " temperature", MeasuredVariable.TEMPERATURE, "C",
-	-50.0, opTC + 100.0, opTC, opTC - 15.0, opTC + 15.0, opTC - 30.0, opTC + 30.0, SilRating.NONE, tt));
+        -50.0, opTC + 100.0, opTC, opTC - 15.0, opTC + 15.0, opTC - 30.0, opTC + 30.0, SilRating.NONE, tt));
 
     // Flow transmitter
     String ftTag = nextTag(MeasuredVariable.FLOW);
@@ -492,8 +492,8 @@ public class InstrumentScheduleGenerator implements Serializable {
     registerDevice(ftTag, ft);
     double flowRate = stream.getFlowRate("kg/hr");
     entries.add(
-	new InstrumentEntry(ftTag, equipTag, equipTag + " flow", MeasuredVariable.FLOW, "kg/hr", 0.0, flowRate * 1.5,
-	    flowRate, flowRate * 0.80, flowRate * 1.10, flowRate * 0.60, flowRate * 1.20, SilRating.NONE, ft));
+        new InstrumentEntry(ftTag, equipTag, equipTag + " flow", MeasuredVariable.FLOW, "kg/hr", 0.0, flowRate * 1.5,
+            flowRate, flowRate * 0.80, flowRate * 1.10, flowRate * 0.60, flowRate * 1.20, SilRating.NONE, ft));
   }
 
   /**
@@ -530,7 +530,7 @@ public class InstrumentScheduleGenerator implements Serializable {
   private void configureAlarm(MeasurementDeviceInterface device, double lo, double lolo, double hi, double hihi,
       String unit) {
     AlarmConfig config = AlarmConfig.builder().lowLimit(lo).lowLowLimit(lolo).highLimit(hi).highHighLimit(hihi)
-	.unit(unit).deadband(0.5).delay(3.0).build();
+        .unit(unit).deadband(0.5).delay(3.0).build();
     device.setAlarmConfig(config);
   }
 
@@ -575,7 +575,7 @@ public class InstrumentScheduleGenerator implements Serializable {
     List<InstrumentEntry> filtered = new ArrayList<InstrumentEntry>();
     for (InstrumentEntry entry : entries) {
       if (entry.getEquipmentTag().equals(equipmentTag)) {
-	filtered.add(entry);
+        filtered.add(entry);
       }
     }
     return filtered;
@@ -591,7 +591,7 @@ public class InstrumentScheduleGenerator implements Serializable {
     List<InstrumentEntry> filtered = new ArrayList<InstrumentEntry>();
     for (InstrumentEntry entry : entries) {
       if (entry.getMeasuredVariable() == variable) {
-	filtered.add(entry);
+        filtered.add(entry);
       }
     }
     return filtered;
@@ -635,7 +635,7 @@ public class InstrumentScheduleGenerator implements Serializable {
     int count = 0;
     for (InstrumentEntry entry : entries) {
       if (entry.getMeasuredVariable() == variable) {
-	count++;
+        count++;
       }
     }
     return count;
@@ -661,7 +661,7 @@ public class InstrumentScheduleGenerator implements Serializable {
     int silCount = 0;
     for (InstrumentEntry e : entries) {
       if (e.getSilRating() != SilRating.NONE) {
-	silCount++;
+        silCount++;
       }
     }
     summary.addProperty("safetyInstruments", silCount);
@@ -675,11 +675,11 @@ public class InstrumentScheduleGenerator implements Serializable {
     for (InstrumentEntry e : entries) {
       String io = e.getMeasuredVariable().getIoType();
       if ("AI".equals(io)) {
-	ai++;
+        ai++;
       } else if ("AO".equals(io)) {
-	ao++;
+        ao++;
       } else if ("DI".equals(io)) {
-	di++;
+        di++;
       }
     }
     ioCount.addProperty("AI", ai);
@@ -732,10 +732,10 @@ public class InstrumentScheduleGenerator implements Serializable {
     for (InstrumentEntry entry : entries) {
       ProcessEquipmentInterface equip = processSystem.getUnit(entry.getEquipmentTag());
       if (equip != null) {
-	String refDes = equip.getReferenceDesignationString();
-	if (refDes != null && !refDes.trim().isEmpty()) {
-	  map.put(entry.getTagNumber(), refDes);
-	}
+        String refDes = equip.getReferenceDesignationString();
+        if (refDes != null && !refDes.trim().isEmpty()) {
+          map.put(entry.getTagNumber(), refDes);
+        }
       }
     }
     return Collections.unmodifiableMap(map);
@@ -784,9 +784,9 @@ public class InstrumentScheduleGenerator implements Serializable {
      * @param device the live measurement device (may be null)
      */
     public InstrumentEntry(String tagNumber, String equipmentTag, String serviceDescription,
-	MeasuredVariable measuredVariable, String unit, double rangeMin, double rangeMax, double normalValue,
-	double alarmLow, double alarmHigh, double tripLow, double tripHigh, SilRating silRating,
-	MeasurementDeviceInterface device) {
+        MeasuredVariable measuredVariable, String unit, double rangeMin, double rangeMax, double normalValue,
+        double alarmLow, double alarmHigh, double tripLow, double tripHigh, SilRating silRating,
+        MeasurementDeviceInterface device) {
       this.tagNumber = tagNumber;
       this.equipmentTag = equipmentTag;
       this.serviceDescription = serviceDescription;

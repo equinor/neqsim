@@ -112,23 +112,23 @@ public class THflash extends QfuncFlash {
       // Numerical derivative from previous iteration
       double dHdP_numerical = 0.0;
       if (iterations > 1 && Math.abs(pressureStep) > 1e-10) {
-	dHdP_numerical = (dH - olddH) / pressureStep;
+        dHdP_numerical = (dH - olddH) / pressureStep;
       }
 
       // Use analytical for first iterations, switch to numerical for stability
       double dHdP;
       if (iterations < 5 || Math.abs(dHdP_numerical) < 1e-10) {
-	dHdP = dHdP_analytical;
+        dHdP = dHdP_analytical;
       } else {
-	dHdP = dHdP_numerical;
+        dHdP = dHdP_numerical;
       }
 
       // Avoid division by zero
       if (Math.abs(dHdP) < 1.0) {
-	dHdP = Math.signum(dHdP) * 1.0;
-	if (dHdP == 0) {
-	  dHdP = 1.0;
-	}
+        dHdP = Math.signum(dHdP) * 1.0;
+        if (dHdP == 0) {
+          dHdP = 1.0;
+        }
       }
 
       // Newton step with damping
@@ -137,17 +137,17 @@ public class THflash extends QfuncFlash {
 
       // Limit step size
       if (Math.abs(deltaP) > 0.5 * oldPres) {
-	deltaP = Math.signum(deltaP) * 0.5 * oldPres;
+        deltaP = Math.signum(deltaP) * 0.5 * oldPres;
       }
 
       nyPres = oldPres + deltaP;
 
       // Ensure pressure stays positive
       if (nyPres <= 0.01) {
-	nyPres = 0.01;
+        nyPres = 0.01;
       }
       if (nyPres > 10000.0) {
-	nyPres = 10000.0;
+        nyPres = 10000.0;
       }
 
       pressureStep = nyPres - oldPres;

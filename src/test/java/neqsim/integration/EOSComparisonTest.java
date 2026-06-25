@@ -88,7 +88,7 @@ public class EOSComparisonTest extends neqsim.NeqSimTest {
 
     // Pure methane Z-factor should be similar between models
     assertTrue(Math.abs(srkResult.compressibilityFactor - prResult.compressibilityFactor) < 0.05,
-	"Z-factor deviation for pure CH4 should be small");
+        "Z-factor deviation for pure CH4 should be small");
   }
 
   @Test
@@ -106,7 +106,7 @@ public class EOSComparisonTest extends neqsim.NeqSimTest {
     int successCount = 0;
     for (EOSComparison.EOSResult r : result.getResults()) {
       if (r.isSuccessful()) {
-	successCount++;
+        successCount++;
       }
     }
     assertTrue(successCount >= 2, "At least 2 models should succeed");

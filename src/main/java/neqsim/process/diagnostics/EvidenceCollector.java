@@ -10,10 +10,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import neqsim.process.diagnostics.Hypothesis.ExpectedBehavior;
-import neqsim.process.diagnostics.Hypothesis.ExpectedSignal;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.diagnostics.Hypothesis.ExpectedBehavior;
+import neqsim.process.diagnostics.Hypothesis.ExpectedSignal;
 
 /**
  * Analyzes historian and STID data to collect evidence for or against each hypothesis.
@@ -97,45 +97,45 @@ public class EvidenceCollector implements Serializable {
    */
   public void loadFromCsv(String csvPath) throws IOException {
     BufferedReader reader = new BufferedReader(
-	new InputStreamReader(new FileInputStream(csvPath), StandardCharsets.UTF_8));
+        new InputStreamReader(new FileInputStream(csvPath), StandardCharsets.UTF_8));
     try {
       String headerLine = reader.readLine();
       if (headerLine == null) {
-	return;
+        return;
       }
 
       String[] headers = headerLine.split(",");
       List<double[]> rows = new ArrayList<>();
       String line;
       while ((line = reader.readLine()) != null) {
-	String[] parts = line.split(",");
-	double[] values = new double[parts.length];
-	for (int i = 0; i < parts.length; i++) {
-	  try {
-	    values[i] = Double.parseDouble(parts[i].trim());
-	  } catch (NumberFormatException e) {
-	    values[i] = Double.NaN;
-	  }
-	}
-	rows.add(values);
+        String[] parts = line.split(",");
+        double[] values = new double[parts.length];
+        for (int i = 0; i < parts.length; i++) {
+          try {
+            values[i] = Double.parseDouble(parts[i].trim());
+          } catch (NumberFormatException e) {
+            values[i] = Double.NaN;
+          }
+        }
+        rows.add(values);
       }
 
       if (rows.isEmpty()) {
-	return;
+        return;
       }
 
       int n = rows.size();
       this.timestamps = new double[n];
       for (int i = 0; i < n; i++) {
-	this.timestamps[i] = rows.get(i)[0];
+        this.timestamps[i] = rows.get(i)[0];
       }
 
       for (int col = 1; col < headers.length; col++) {
-	double[] values = new double[n];
-	for (int i = 0; i < n; i++) {
-	  values[i] = col < rows.get(i).length ? rows.get(i)[col] : Double.NaN;
-	}
-	historianData.put(headers[col].trim(), values);
+        double[] values = new double[n];
+        for (int i = 0; i < n; i++) {
+          values[i] = col < rows.get(i).length ? rows.get(i)[col] : Double.NaN;
+        }
+        historianData.put(headers[col].trim(), values);
       }
 
       logger.info("Loaded {} parameters, {} data points from CSV", headers.length - 1, n);
@@ -158,7 +158,7 @@ public class EvidenceCollector implements Serializable {
       double[] values = entry.getValue();
 
       if (values == null || values.length < 3) {
-	continue;
+        continue;
       }
 
       addIfNotNull(evidence, analyzeTrend(param, values, hypothesis));
@@ -272,12 +272,12 @@ public class EvidenceCollector implements Serializable {
     int validCount = 0;
     for (int i = 0; i < n; i++) {
       if (!Double.isNaN(values[i])) {
-	double x = regressionX(i);
-	sumX += x;
-	sumY += values[i];
-	sumXY += x * values[i];
-	sumX2 += x * x;
-	validCount++;
+        double x = regressionX(i);
+        sumX += x;
+        sumY += values[i];
+        sumXY += x * values[i];
+        sumX2 += x * x;
+        validCount++;
       }
     }
     if (validCount < 5) {
@@ -296,10 +296,10 @@ public class EvidenceCollector implements Serializable {
     double ssRes = 0.0;
     for (int i = 0; i < n; i++) {
       if (!Double.isNaN(values[i])) {
-	double x = regressionX(i);
-	double predicted = meanY + slope * (x - meanX);
-	ssTot += (values[i] - meanY) * (values[i] - meanY);
-	ssRes += (values[i] - predicted) * (values[i] - predicted);
+        double x = regressionX(i);
+        double predicted = meanY + slope * (x - meanX);
+        ssTot += (values[i] - meanY) * (values[i] - meanY);
+        ssRes += (values[i] - predicted) * (values[i] - predicted);
       }
     }
 
@@ -312,7 +312,7 @@ public class EvidenceCollector implements Serializable {
     double changePercent = meanY != 0.0 ? Math.abs(slope * xSpan / meanY) * 100.0 : 0.0;
     String direction = slope > 0.0 ? "increasing" : "decreasing";
     String observation = String.format("%s trend (slope=%.4g, R2=%.2f, ~%.1f%% change)", direction, slope, rSquared,
-	changePercent);
+        changePercent);
 
     Hypothesis.EvidenceStrength strength = trendStrength(rSquared, changePercent);
     ExpectedBehavior observed = slope > 0.0 ? ExpectedBehavior.INCREASE : ExpectedBehavior.DECREASE;
@@ -372,13 +372,13 @@ public class EvidenceCollector implements Serializable {
     int validCount = 0;
     for (double value : values) {
       if (!Double.isNaN(value)) {
-	validCount++;
-	if (!Double.isNaN(highLimit) && value > highLimit) {
-	  highCount++;
-	}
-	if (!Double.isNaN(lowLimit) && value < lowLimit) {
-	  lowCount++;
-	}
+        validCount++;
+        if (!Double.isNaN(highLimit) && value > highLimit) {
+          highCount++;
+        }
+        if (!Double.isNaN(lowLimit) && value < lowLimit) {
+          lowCount++;
+        }
       }
     }
     int exceedCount = highCount + lowCount;
@@ -390,7 +390,7 @@ public class EvidenceCollector implements Serializable {
     ExpectedBehavior observed = highCount >= lowCount ? ExpectedBehavior.HIGH_LIMIT : ExpectedBehavior.LOW_LIMIT;
     String limitType = observed == ExpectedBehavior.HIGH_LIMIT ? "high" : "low";
     String observation = String.format("%s design limit exceeded %d times (%.1f%% of data)", limitType, exceedCount,
-	exceedPct);
+        exceedPct);
 
     Hypothesis.EvidenceStrength strength;
     if (exceedPct > 20.0) {
@@ -412,7 +412,7 @@ public class EvidenceCollector implements Serializable {
   private double[] findLimitByAlias(String param) {
     for (Map.Entry<String, double[]> entry : designLimits.entrySet()) {
       if (matchesPattern(param, entry.getKey())) {
-	return entry.getValue();
+        return entry.getValue();
       }
     }
     return null;
@@ -439,14 +439,14 @@ public class EvidenceCollector implements Serializable {
     int diffCount = 0;
     for (int i = 1; i < n; i++) {
       if (!Double.isNaN(values[i]) && !Double.isNaN(values[i - 1])) {
-	double diff = Math.abs(values[i] - values[i - 1]);
-	if (diff > maxRate) {
-	  maxRate = diff;
-	  maxRateIndex = i;
-	}
-	sumDiff += diff;
-	sumDiffSq += diff * diff;
-	diffCount++;
+        double diff = Math.abs(values[i] - values[i - 1]);
+        if (diff > maxRate) {
+          maxRate = diff;
+          maxRateIndex = i;
+        }
+        sumDiff += diff;
+        sumDiffSq += diff * diff;
+        diffCount++;
       }
     }
     if (diffCount < 5) {
@@ -458,9 +458,9 @@ public class EvidenceCollector implements Serializable {
     double stdDiff = Math.sqrt(variance);
     if (stdDiff > 0.0 && maxRate > 3.0 * stdDiff + meanDiff) {
       String observation = String.format("Step change at index %d (rate=%.4g, mean_rate=%.4g, 3-sigma=%.4g)",
-	  maxRateIndex, maxRate, meanDiff, 3.0 * stdDiff);
+          maxRateIndex, maxRate, meanDiff, 3.0 * stdDiff);
       return createEvidenceForObservedBehavior(param, observation, Hypothesis.EvidenceStrength.STRONG, "historian-rate",
-	  ExpectedBehavior.STEP_CHANGE, hypothesis);
+          ExpectedBehavior.STEP_CHANGE, hypothesis);
     }
     return null;
   }
@@ -496,16 +496,16 @@ public class EvidenceCollector implements Serializable {
 
     for (int i = 0; i < n; i++) {
       if (!Double.isNaN(values[i])) {
-	sumAll += values[i];
-	sumAllSq += values[i] * values[i];
-	countAll++;
-	if (i < mid) {
-	  sumFirst += values[i];
-	  countFirst++;
-	} else {
-	  sumSecond += values[i];
-	  countSecond++;
-	}
+        sumAll += values[i];
+        sumAllSq += values[i] * values[i];
+        countAll++;
+        if (i < mid) {
+          sumFirst += values[i];
+          countFirst++;
+        } else {
+          sumSecond += values[i];
+          countSecond++;
+        }
       }
     }
 
@@ -527,13 +527,13 @@ public class EvidenceCollector implements Serializable {
     if (shiftMagnitude >= 2.0) {
       String direction = meanSecond > meanFirst ? "upward" : "downward";
       String observation = String.format(
-	  "Change point detected: %s shift of %.1f sigma (first-half mean=%.4g, second-half mean=%.4g)", direction,
-	  shiftMagnitude, meanFirst, meanSecond);
+          "Change point detected: %s shift of %.1f sigma (first-half mean=%.4g, second-half mean=%.4g)", direction,
+          shiftMagnitude, meanFirst, meanSecond);
       Hypothesis.EvidenceStrength strength = shiftMagnitude > 3.0 ? Hypothesis.EvidenceStrength.STRONG
-	  : Hypothesis.EvidenceStrength.MODERATE;
+          : Hypothesis.EvidenceStrength.MODERATE;
       ExpectedBehavior observed = meanSecond > meanFirst ? ExpectedBehavior.INCREASE : ExpectedBehavior.DECREASE;
       return createEvidenceForObservedBehavior(param, observation, strength, "historian-changepoint", observed,
-	  hypothesis);
+          hypothesis);
     }
     return null;
   }
@@ -571,13 +571,13 @@ public class EvidenceCollector implements Serializable {
     if (sameDirection && accelerationRatio > 2.0) {
       String direction = slopeSecond > 0 ? "increasing" : "decreasing";
       String observation = String.format(
-	  "Accelerating %s trend: second-half slope %.2fx first-half (slope1=%.4g, slope2=%.4g)", direction,
-	  accelerationRatio, slopeFirst, slopeSecond);
+          "Accelerating %s trend: second-half slope %.2fx first-half (slope1=%.4g, slope2=%.4g)", direction,
+          accelerationRatio, slopeFirst, slopeSecond);
       Hypothesis.EvidenceStrength strength = accelerationRatio > 3.0 ? Hypothesis.EvidenceStrength.STRONG
-	  : Hypothesis.EvidenceStrength.MODERATE;
+          : Hypothesis.EvidenceStrength.MODERATE;
       ExpectedBehavior observed = slopeSecond > 0 ? ExpectedBehavior.INCREASE : ExpectedBehavior.DECREASE;
       return createEvidenceForObservedBehavior(param, observation, strength, "historian-acceleration", observed,
-	  hypothesis);
+          hypothesis);
     }
     return null;
   }
@@ -598,12 +598,12 @@ public class EvidenceCollector implements Serializable {
     int count = 0;
     for (int i = from; i < to; i++) {
       if (!Double.isNaN(values[i])) {
-	double x = regressionX(i);
-	sumX += x;
-	sumY += values[i];
-	sumXY += x * values[i];
-	sumX2 += x * x;
-	count++;
+        double x = regressionX(i);
+        sumX += x;
+        sumY += values[i];
+        sumXY += x * values[i];
+        sumX2 += x * x;
+        count++;
       }
     }
     if (count < 3) {
@@ -627,17 +627,17 @@ public class EvidenceCollector implements Serializable {
 
     for (int i = 0; i < paramNames.size(); i++) {
       for (int j = i + 1; j < paramNames.size(); j++) {
-	double corr = pearsonCorrelation(historianData.get(paramNames.get(i)), historianData.get(paramNames.get(j)));
-	if (Math.abs(corr) > 0.7) {
-	  String observation = String.format("Correlated with %s (r=%.3f)", paramNames.get(j), corr);
-	  Hypothesis.EvidenceStrength strength = Math.abs(corr) > 0.9 ? Hypothesis.EvidenceStrength.STRONG
-	      : Hypothesis.EvidenceStrength.MODERATE;
-	  Hypothesis.Evidence item = createEvidenceForObservedBehavior(paramNames.get(i), observation, strength,
-	      "historian-correlation", ExpectedBehavior.CORRELATION, hypothesis);
-	  if (item != null) {
-	    evidence.add(item);
-	  }
-	}
+        double corr = pearsonCorrelation(historianData.get(paramNames.get(i)), historianData.get(paramNames.get(j)));
+        if (Math.abs(corr) > 0.7) {
+          String observation = String.format("Correlated with %s (r=%.3f)", paramNames.get(j), corr);
+          Hypothesis.EvidenceStrength strength = Math.abs(corr) > 0.9 ? Hypothesis.EvidenceStrength.STRONG
+              : Hypothesis.EvidenceStrength.MODERATE;
+          Hypothesis.Evidence item = createEvidenceForObservedBehavior(paramNames.get(i), observation, strength,
+              "historian-correlation", ExpectedBehavior.CORRELATION, hypothesis);
+          if (item != null) {
+            evidence.add(item);
+          }
+        }
       }
     }
     return evidence;
@@ -671,37 +671,37 @@ public class EvidenceCollector implements Serializable {
       String matchedParam = null;
       double[] matchedValues = null;
       for (Map.Entry<String, double[]> entry : historianData.entrySet()) {
-	if (matchesPattern(entry.getKey(), signal.getParameterPattern())) {
-	  matchedParam = entry.getKey();
-	  matchedValues = entry.getValue();
-	  break;
-	}
+        if (matchesPattern(entry.getKey(), signal.getParameterPattern())) {
+          matchedParam = entry.getKey();
+          matchedValues = entry.getValue();
+          break;
+        }
       }
 
       if (matchedValues == null || matchedValues.length < 5) {
-	continue;
+        continue;
       }
 
       checkedCount++;
       ExpectedBehavior observed = classifyBehavior(matchedValues);
       if (observed != null && (behaviorMatches(signal.getExpectedBehavior(), observed)
-	  || signal.getExpectedBehavior() == ExpectedBehavior.ANY_CHANGE)) {
-	matchCount++;
-	if (matchDetails.length() > 0) {
-	  matchDetails.append("; ");
-	}
-	matchDetails.append(matchedParam).append("=").append(observed.name());
+          || signal.getExpectedBehavior() == ExpectedBehavior.ANY_CHANGE)) {
+        matchCount++;
+        if (matchDetails.length() > 0) {
+          matchDetails.append("; ");
+        }
+        matchDetails.append(matchedParam).append("=").append(observed.name());
       }
     }
 
     if (checkedCount >= 2 && matchCount >= 2) {
       double matchPct = (double) matchCount / checkedCount * 100.0;
       Hypothesis.EvidenceStrength strength = matchPct > 80.0 ? Hypothesis.EvidenceStrength.STRONG
-	  : Hypothesis.EvidenceStrength.MODERATE;
+          : Hypothesis.EvidenceStrength.MODERATE;
       String observation = String.format("Multi-parameter fingerprint: %d/%d expected signals confirmed (%s)",
-	  matchCount, checkedCount, matchDetails.toString());
+          matchCount, checkedCount, matchDetails.toString());
       evidence.add(new Hypothesis.Evidence("multi-parameter", observation, strength, "historian-pattern", true, 3.0,
-	  "multi-param-correlation"));
+          "multi-param-correlation"));
     }
 
     return evidence;
@@ -722,10 +722,10 @@ public class EvidenceCollector implements Serializable {
     double lastValid = Double.NaN;
     for (int i = 0; i < n; i++) {
       if (!Double.isNaN(values[i])) {
-	if (Double.isNaN(firstValid)) {
-	  firstValid = values[i];
-	}
-	lastValid = values[i];
+        if (Double.isNaN(firstValid)) {
+          firstValid = values[i];
+        }
+        lastValid = values[i];
       }
     }
     if (Double.isNaN(firstValid) || Double.isNaN(lastValid) || Math.abs(firstValid) < 1e-12) {
@@ -752,30 +752,30 @@ public class EvidenceCollector implements Serializable {
       String param = entry.getKey();
       double[] values = findHistorianValues(param);
       if (values == null || values.length == 0) {
-	continue;
+        continue;
       }
       try {
-	double designValue = Double.parseDouble(entry.getValue());
-	double lastValue = latestValid(values);
-	if (Double.isNaN(lastValue) || Math.abs(designValue) < 1e-12) {
-	  continue;
-	}
-	double signedDeviation = (lastValue - designValue) / Math.abs(designValue) * 100.0;
-	double deviation = Math.abs(signedDeviation);
-	if (deviation > 10.0) {
-	  ExpectedBehavior observed = signedDeviation > 0.0 ? ExpectedBehavior.INCREASE : ExpectedBehavior.DECREASE;
-	  Hypothesis.EvidenceStrength strength = deviation > 20.0 ? Hypothesis.EvidenceStrength.STRONG
-	      : Hypothesis.EvidenceStrength.MODERATE;
-	  String observation = String.format("Current=%.3g vs STID design=%.3g (%.1f%% deviation)", lastValue,
-	      designValue, signedDeviation);
-	  Hypothesis.Evidence item = createEvidenceForObservedBehavior(param, observation, strength, "STID", observed,
-	      hypothesis);
-	  if (item != null) {
-	    evidence.add(item);
-	  }
-	}
+        double designValue = Double.parseDouble(entry.getValue());
+        double lastValue = latestValid(values);
+        if (Double.isNaN(lastValue) || Math.abs(designValue) < 1e-12) {
+          continue;
+        }
+        double signedDeviation = (lastValue - designValue) / Math.abs(designValue) * 100.0;
+        double deviation = Math.abs(signedDeviation);
+        if (deviation > 10.0) {
+          ExpectedBehavior observed = signedDeviation > 0.0 ? ExpectedBehavior.INCREASE : ExpectedBehavior.DECREASE;
+          Hypothesis.EvidenceStrength strength = deviation > 20.0 ? Hypothesis.EvidenceStrength.STRONG
+              : Hypothesis.EvidenceStrength.MODERATE;
+          String observation = String.format("Current=%.3g vs STID design=%.3g (%.1f%% deviation)", lastValue,
+              designValue, signedDeviation);
+          Hypothesis.Evidence item = createEvidenceForObservedBehavior(param, observation, strength, "STID", observed,
+              hypothesis);
+          if (item != null) {
+            evidence.add(item);
+          }
+        }
       } catch (NumberFormatException e) {
-	logger.debug("Skipping non-numeric STID value for {}: {}", param, entry.getValue());
+        logger.debug("Skipping non-numeric STID value for {}: {}", param, entry.getValue());
       }
     }
     return evidence;
@@ -794,7 +794,7 @@ public class EvidenceCollector implements Serializable {
     }
     for (Map.Entry<String, double[]> entry : historianData.entrySet()) {
       if (matchesPattern(entry.getKey(), parameter)) {
-	return entry.getValue();
+        return entry.getValue();
       }
     }
     return null;
@@ -809,7 +809,7 @@ public class EvidenceCollector implements Serializable {
   private double latestValid(double[] values) {
     for (int i = values.length - 1; i >= 0; i--) {
       if (!Double.isNaN(values[i])) {
-	return values[i];
+        return values[i];
       }
     }
     return Double.NaN;
@@ -845,9 +845,9 @@ public class EvidenceCollector implements Serializable {
 
     Hypothesis.EvidenceStrength finalStrength = supporting ? strength : Hypothesis.EvidenceStrength.CONTRADICTORY;
     String enrichedObservation = supporting ? observation
-	: observation + "; expected " + signal.getExpectedBehavior().name() + " because " + signal.getRationale();
+        : observation + "; expected " + signal.getExpectedBehavior().name() + " because " + signal.getRationale();
     return new Hypothesis.Evidence(param, enrichedObservation, finalStrength, source, supporting, signal.getWeight(),
-	"tag=" + param);
+        "tag=" + param);
   }
 
   /**
@@ -862,13 +862,13 @@ public class EvidenceCollector implements Serializable {
     ExpectedSignal fallback = null;
     for (ExpectedSignal signal : hypothesis.getExpectedSignals()) {
       if (matchesPattern(param, signal.getParameterPattern())) {
-	if (behaviorMatches(signal.getExpectedBehavior(), observedBehavior)
-	    || isContradictory(signal.getExpectedBehavior(), observedBehavior)) {
-	  return signal;
-	}
-	if (fallback == null) {
-	  fallback = signal;
-	}
+        if (behaviorMatches(signal.getExpectedBehavior(), observedBehavior)
+            || isContradictory(signal.getExpectedBehavior(), observedBehavior)) {
+          return signal;
+        }
+        if (fallback == null) {
+          fallback = signal;
+        }
       }
     }
     return fallback;
@@ -927,8 +927,8 @@ public class EvidenceCollector implements Serializable {
     for (String alias : aliases) {
       String normalizedAlias = normalize(alias);
       if (!normalizedAlias.isEmpty()
-	  && (normalizedParameter.contains(normalizedAlias) || normalizedAlias.contains(normalizedParameter))) {
-	return true;
+          && (normalizedParameter.contains(normalizedAlias) || normalizedAlias.contains(normalizedParameter))) {
+        return true;
       }
     }
     return false;
@@ -966,12 +966,12 @@ public class EvidenceCollector implements Serializable {
 
     for (int i = 0; i < n; i++) {
       if (!Double.isNaN(x[i]) && !Double.isNaN(y[i])) {
-	sumX += x[i];
-	sumY += y[i];
-	sumXY += x[i] * y[i];
-	sumX2 += x[i] * x[i];
-	sumY2 += y[i] * y[i];
-	count++;
+        sumX += x[i];
+        sumY += y[i];
+        sumXY += x[i] * y[i];
+        sumX2 += x[i] * x[i];
+        sumY2 += y[i] * y[i];
+        count++;
       }
     }
 

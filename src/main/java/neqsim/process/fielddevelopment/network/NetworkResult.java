@@ -154,7 +154,7 @@ public class NetworkResult implements Serializable {
       double dp = flowlinePressureDrops.getOrDefault(wellName, 0.0);
 
       sb.append(
-	  String.format("| %s | %s | %.2f | %.1f | %.1f |\n", wellName, enabled ? "ON" : "OFF", rate / 1e6, whp, dp));
+          String.format("| %s | %s | %.2f | %.1f | %.1f |\n", wellName, enabled ? "ON" : "OFF", rate / 1e6, whp, dp));
     }
 
     return sb.toString();
@@ -163,6 +163,6 @@ public class NetworkResult implements Serializable {
   @Override
   public String toString() {
     return String.format("NetworkResult[%s, rate=%.2f MSm3/d, pManifold=%.1f bar, converged=%s]", networkName,
-	totalRate / 1e6, manifoldPressure, converged);
+        totalRate / 1e6, manifoldPressure, converged);
   }
 }

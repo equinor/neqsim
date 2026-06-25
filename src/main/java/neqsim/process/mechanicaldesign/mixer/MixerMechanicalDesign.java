@@ -95,11 +95,11 @@ public class MixerMechanicalDesign extends MechanicalDesign {
     for (int i = 0; i < numberOfBranches; i++) {
       StreamInterface stream = mixer.getStream(i);
       if (stream != null && stream.getFluid() != null) {
-	double massFlow = stream.getFlowRate("kg/hr");
-	double volumeFlow = stream.getFlowRate("m3/hr");
-	totalMassFlow += massFlow;
-	totalVolumeFlow += volumeFlow;
-	maxBranchVolumeFlow = Math.max(maxBranchVolumeFlow, volumeFlow);
+        double massFlow = stream.getFlowRate("kg/hr");
+        double volumeFlow = stream.getFlowRate("m3/hr");
+        totalMassFlow += massFlow;
+        totalVolumeFlow += volumeFlow;
+        maxBranchVolumeFlow = Math.max(maxBranchVolumeFlow, volumeFlow);
       }
     }
 
@@ -164,31 +164,31 @@ public class MixerMechanicalDesign extends MechanicalDesign {
   private double roundToStandardPipeSize(double diameter) {
     // Standard pipe sizes in meters (NPS in inches converted)
     double[] standardSizes = { 0.0127, // 0.5"
-	0.0254, // 1"
-	0.0381, // 1.5"
-	0.0508, // 2"
-	0.0635, // 2.5"
-	0.0762, // 3"
-	0.1016, // 4"
-	0.1270, // 5"
-	0.1524, // 6"
-	0.2032, // 8"
-	0.2540, // 10"
-	0.3048, // 12"
-	0.3556, // 14"
-	0.4064, // 16"
-	0.4572, // 18"
-	0.5080, // 20"
-	0.6096, // 24"
-	0.7620, // 30"
-	0.9144, // 36"
-	1.0668, // 42"
-	1.2192 // 48"
+        0.0254, // 1"
+        0.0381, // 1.5"
+        0.0508, // 2"
+        0.0635, // 2.5"
+        0.0762, // 3"
+        0.1016, // 4"
+        0.1270, // 5"
+        0.1524, // 6"
+        0.2032, // 8"
+        0.2540, // 10"
+        0.3048, // 12"
+        0.3556, // 14"
+        0.4064, // 16"
+        0.4572, // 18"
+        0.5080, // 20"
+        0.6096, // 24"
+        0.7620, // 30"
+        0.9144, // 36"
+        1.0668, // 42"
+        1.2192 // 48"
     };
 
     for (double stdSize : standardSizes) {
       if (stdSize >= diameter) {
-	return stdSize;
+        return stdSize;
       }
     }
     return standardSizes[standardSizes.length - 1];

@@ -154,14 +154,14 @@ public class SafetyEnvelope {
     // Find bracketing points
     for (int i = 0; i < pressure.length - 1; i++) {
       if ((pressure[i] <= pressureBara && pressure[i + 1] >= pressureBara)
-	  || (pressure[i] >= pressureBara && pressure[i + 1] <= pressureBara)) {
-	// Linear interpolation
-	double dp = pressure[i + 1] - pressure[i];
-	if (Math.abs(dp) < 1e-10) {
-	  return temperature[i];
-	}
-	double fraction = (pressureBara - pressure[i]) / dp;
-	return temperature[i] + fraction * (temperature[i + 1] - temperature[i]);
+          || (pressure[i] >= pressureBara && pressure[i + 1] <= pressureBara)) {
+        // Linear interpolation
+        double dp = pressure[i + 1] - pressure[i];
+        if (Math.abs(dp) < 1e-10) {
+          return temperature[i];
+        }
+        double fraction = (pressureBara - pressure[i]) / dp;
+        return temperature[i] + fraction * (temperature[i + 1] - temperature[i]);
       }
     }
     return Double.NaN;
@@ -182,14 +182,14 @@ public class SafetyEnvelope {
     // Interpolate margin
     for (int i = 0; i < pressure.length - 1; i++) {
       if ((pressure[i] <= pressureBara && pressure[i + 1] >= pressureBara)
-	  || (pressure[i] >= pressureBara && pressure[i + 1] <= pressureBara)) {
-	double dp = pressure[i + 1] - pressure[i];
-	if (Math.abs(dp) < 1e-10) {
-	  return temp - margin[i];
-	}
-	double fraction = (pressureBara - pressure[i]) / dp;
-	double interpMargin = margin[i] + fraction * (margin[i + 1] - margin[i]);
-	return temp - interpMargin;
+          || (pressure[i] >= pressureBara && pressure[i + 1] <= pressureBara)) {
+        double dp = pressure[i + 1] - pressure[i];
+        if (Math.abs(dp) < 1e-10) {
+          return temp - margin[i];
+        }
+        double fraction = (pressureBara - pressure[i]) / dp;
+        double interpMargin = margin[i] + fraction * (margin[i + 1] - margin[i]);
+        return temp - interpMargin;
       }
     }
     return temp;
@@ -265,7 +265,7 @@ public class SafetyEnvelope {
       writer.println("Pressure_bara,Temperature_K,Temperature_C,Margin_K");
 
       for (int i = 0; i < pressure.length; i++) {
-	writer.printf("%.4f,%.4f,%.4f,%.4f%n", pressure[i], temperature[i], temperature[i] - 273.15, margin[i]);
+        writer.printf("%.4f,%.4f,%.4f,%.4f%n", pressure[i], temperature[i], temperature[i] - 273.15, margin[i]);
       }
     } catch (IOException e) {
       throw new RuntimeException("Failed to export safety envelope: " + e.getMessage(), e);
@@ -287,9 +287,9 @@ public class SafetyEnvelope {
       writer.println("  \"points\": [");
 
       for (int i = 0; i < pressure.length; i++) {
-	String comma = (i < pressure.length - 1) ? "," : "";
-	writer.printf("    {\"pressure\": %.4f, \"temperature\": %.4f, \"temperatureC\": %.4f, \"margin\": %.4f}%s%n",
-	    pressure[i], temperature[i], temperature[i] - 273.15, margin[i], comma);
+        String comma = (i < pressure.length - 1) ? "," : "";
+        writer.printf("    {\"pressure\": %.4f, \"temperature\": %.4f, \"temperatureC\": %.4f, \"margin\": %.4f}%s%n",
+            pressure[i], temperature[i], temperature[i] - 273.15, margin[i], comma);
       }
 
       writer.println("  ]");
@@ -313,8 +313,8 @@ public class SafetyEnvelope {
       writer.println();
 
       for (int i = 0; i < pressure.length; i++) {
-	String tag = String.format("%s_P%.0f_LIMIT", tagPrefix, pressure[i]);
-	writer.printf("%s,%.4f%n", tag, temperature[i] - 273.15); // Export in Celsius
+        String tag = String.format("%s_P%.0f_LIMIT", tagPrefix, pressure[i]);
+        writer.printf("%s,%.4f%n", tag, temperature[i] - 273.15); // Export in Celsius
       }
     } catch (IOException e) {
       throw new RuntimeException("Failed to export to PI format: " + e.getMessage(), e);
@@ -334,7 +334,7 @@ public class SafetyEnvelope {
       writer.println("Pressure (bara),Limit Temperature (°C),Safety Margin (K)");
 
       for (int i = 0; i < pressure.length; i++) {
-	writer.printf("%.4f,%.4f,%.4f%n", pressure[i], temperature[i] - 273.15, margin[i]);
+        writer.printf("%.4f,%.4f,%.4f%n", pressure[i], temperature[i] - 273.15, margin[i]);
       }
     } catch (IOException e) {
       throw new RuntimeException("Failed to export to Seeq format: " + e.getMessage(), e);
@@ -349,6 +349,6 @@ public class SafetyEnvelope {
     double maxT = Arrays.stream(temperature).max().orElse(0);
 
     return String.format("SafetyEnvelope[%s, %s, P=%.1f-%.1f bara, T=%.1f-%.1f K, %d points]", name,
-	type.getDisplayName(), minP, maxP, minT, maxT, pressure.length);
+        type.getDisplayName(), minP, maxP, minT, maxT, pressure.length);
   }
 }

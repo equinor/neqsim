@@ -125,7 +125,7 @@ public class ReactorMechanicalDesign extends MechanicalDesign {
 
     double operatingPressure = Math.max(inletStream.getPressure("bara"), getMaxOperationPressure());
     double operatingTemperatureC = Math.max(inletStream.getTemperature("C"),
-	getMaxOperationTemperature() > 0 ? getMaxOperationTemperature() - 273.15 : 0);
+        getMaxOperationTemperature() > 0 ? getMaxOperationTemperature() - 273.15 : 0);
     double feedFlowM3s = inletStream.getFlowRate("m3/hr") / 3600.0;
     double gasDensity = inletStream.getThermoSystem().getDensity("kg/m3");
     double gasViscosity = 1.5e-5; // Pa*s default
@@ -199,7 +199,7 @@ public class ReactorMechanicalDesign extends MechanicalDesign {
 
     // Internals: distribution plates, support grids
     double internalsWeight = numberOfBeds * Math.PI * vesselDiameter * vesselDiameter / 4.0
-	* (distributionPlateThickness / 1000.0) * steelDensity * 2.0; // top + bottom per bed
+        * (distributionPlateThickness / 1000.0) * steelDensity * 2.0; // top + bottom per bed
     double nozzleWeight = emptyVesselWeight * 0.10;
 
     totalEquippedWeight = emptyVesselWeight + catalystMass + internalsWeight + nozzleWeight;

@@ -127,16 +127,16 @@ public class SeparatorLevelControlEnv extends RLEnvironment {
 
     // Add constraints
     getConstraintManager().add(new Constraint("max_pressure", "Separator over-pressure protection",
-	Constraint.Type.HARD, Constraint.Category.SAFETY, "pressure", 0.0, 70.0, "bar"));
+        Constraint.Type.HARD, Constraint.Category.SAFETY, "pressure", 0.0, 70.0, "bar"));
 
     getConstraintManager().add(new Constraint("min_pressure", "Separator minimum pressure", Constraint.Type.SOFT,
-	Constraint.Category.OPERATIONAL, "pressure", 30.0, Double.POSITIVE_INFINITY, "bar"));
+        Constraint.Category.OPERATIONAL, "pressure", 30.0, Double.POSITIVE_INFINITY, "bar"));
 
     getConstraintManager().add(new Constraint("level_range", "Separator level operating range", Constraint.Type.SOFT,
-	Constraint.Category.OPERATIONAL, "liquid_level", 0.2, 0.8, "fraction"));
+        Constraint.Category.OPERATIONAL, "liquid_level", 0.2, 0.8, "fraction"));
 
     getConstraintManager().add(new Constraint("level_critical", "Critical level limits", Constraint.Type.HARD,
-	Constraint.Category.SAFETY, "liquid_level", 0.05, 0.95, "fraction"));
+        Constraint.Category.SAFETY, "liquid_level", 0.05, 0.95, "fraction"));
 
     // Set reward weights
     setRewardWeights(0.01, 10.0, 100.0, 0.1);
@@ -191,10 +191,10 @@ public class SeparatorLevelControlEnv extends RLEnvironment {
       temperature = separator.getTemperature();
 
       if (separator.getFluid().hasPhaseType("gas")) {
-	gasDensity = separator.getFluid().getPhase("gas").getDensity("kg/m3");
+        gasDensity = separator.getFluid().getPhase("gas").getDensity("kg/m3");
       }
       if (separator.getFluid().hasPhaseType("oil")) {
-	liquidDensity = separator.getFluid().getPhase("oil").getDensity("kg/m3");
+        liquidDensity = separator.getFluid().getPhase("oil").getDensity("kg/m3");
       }
     }
 
@@ -301,14 +301,14 @@ public class SeparatorLevelControlEnv extends RLEnvironment {
       RLEnvironment.StepResult result = env.step(action);
 
       System.out.printf("%nStep %d: action=%.2f, reward=%.2f, done=%s%n", i + 1, valveAction, result.reward,
-	  result.done);
+          result.done);
       System.out.printf("  Level: %.4f, Error: %.4f%n", result.observation.getValue("liquid_level"),
-	  result.observation.getValue("level_error"));
+          result.observation.getValue("level_error"));
       System.out.printf("  Constraint violations: %d%n", env.getConstraintManager().getViolations().size());
 
       if (result.done) {
-	System.out.println("  Episode ended: " + result.info.violationExplanation);
-	break;
+        System.out.println("  Episode ended: " + result.info.violationExplanation);
+        break;
       }
     }
 

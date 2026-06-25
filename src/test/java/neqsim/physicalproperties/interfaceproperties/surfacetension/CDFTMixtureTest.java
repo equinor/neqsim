@@ -48,8 +48,8 @@ class CDFTMixtureTest {
       sys.initProperties();
 
       if (sys.getNumberOfPhases() < 2) {
-	logger.info("CH4/C3 at 258K, 20bar: single phase (supercritical or subcooled)");
-	return;
+        logger.info("CH4/C3 at 258K, 20bar: single phase (supercritical or subcooled)");
+        return;
       }
 
       CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
@@ -58,7 +58,7 @@ class CDFTMixtureTest {
       double sigmaMNm = sigma * 1000.0;
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "CH4/C3 at %.0fK, %.0f bar: IFT = %.3f mN/m%n", temperature,
-	  pressure, sigmaMNm);
+          pressure, sigmaMNm);
 
       // Physical sanity: IFT should be positive and between 0 and pure-component propane value
       Assertions.assertTrue(sigmaMNm > 0.0, "IFT must be positive");
@@ -94,8 +94,8 @@ class CDFTMixtureTest {
       sys.initProperties();
 
       if (sys.getNumberOfPhases() < 2) {
-	logger.info("N2/CH4 at 95K, 2bar: single phase");
-	return;
+        logger.info("N2/CH4 at 95K, 2bar: single phase");
+        return;
       }
 
       CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
@@ -104,7 +104,7 @@ class CDFTMixtureTest {
       double sigmaMNm = sigma * 1000.0;
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "N2/CH4 at %.0fK, %.0f bar: IFT = %.3f mN/m%n", temperature,
-	  pressure, sigmaMNm);
+          pressure, sigmaMNm);
 
       // Physical sanity: expect positive IFT between 0 and pure CH4 value
       Assertions.assertTrue(sigmaMNm > 0.0, "IFT must be positive");
@@ -130,7 +130,7 @@ class CDFTMixtureTest {
 
     logger.info("\n=== CH4/C3 IFT vs Pressure (T=277.6K) ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s | %-10s | %-10s | %-10s%n", "P (bar)", "IFT(mN/m)",
-	"rhoL", "rhoV");
+        "rhoL", "rhoV");
     logger.info("-----------|------------|------------|----------");
 
     // Experimental: Weinaug & Katz (1943): at 277.6K (40F):
@@ -139,32 +139,32 @@ class CDFTMixtureTest {
 
     for (double p : pressures) {
       try {
-	SystemInterface sys = new SystemPrEos(temperature, p);
-	sys.addComponent("methane", 0.50);
-	sys.addComponent("propane", 0.50);
-	sys.setMixingRule("classic");
-	sys.setMultiPhaseCheck(true);
+        SystemInterface sys = new SystemPrEos(temperature, p);
+        sys.addComponent("methane", 0.50);
+        sys.addComponent("propane", 0.50);
+        sys.setMixingRule("classic");
+        sys.setMultiPhaseCheck(true);
 
-	ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-	ops.TPflash();
-	sys.initProperties();
+        ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+        ops.TPflash();
+        sys.initProperties();
 
-	if (sys.getNumberOfPhases() < 2) {
-	  logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.1f | %10s | %10s | %10s%n", p, "1-phase", "-", "-");
-	  continue;
-	}
+        if (sys.getNumberOfPhases() < 2) {
+          logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.1f | %10s | %10s | %10s%n", p, "1-phase", "-", "-");
+          continue;
+        }
 
-	double rhoL = 1.0 / (sys.getPhase(1).getMolarVolume() * 1.0e-5);
-	double rhoV = 1.0 / (sys.getPhase(0).getMolarVolume() * 1.0e-5);
+        double rhoL = 1.0 / (sys.getPhase(1).getMolarVolume() * 1.0e-5);
+        double rhoV = 1.0 / (sys.getPhase(0).getMolarVolume() * 1.0e-5);
 
-	CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
-	cdft.setAttractiveRangeFactor(lambda);
-	double sigma = cdft.calcSurfaceTension(0, 1) * 1000.0;
+        CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
+        cdft.setAttractiveRangeFactor(lambda);
+        double sigma = cdft.calcSurfaceTension(0, 1) * 1000.0;
 
-	logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.1f | %10.3f | %10.1f | %10.1f%n", p, sigma, rhoL,
-	    rhoV);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.1f | %10.3f | %10.1f | %10.1f%n", p, sigma, rhoL,
+            rhoV);
       } catch (Exception ex) {
-	logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.1f | %10s | %10s | %10s%n", p, "ERROR", "-", "-");
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.1f | %10s | %10s | %10s%n", p, "ERROR", "-", "-");
       }
     }
   }
@@ -199,7 +199,7 @@ class CDFTMixtureTest {
       cdftPure.setAttractiveRangeFactor(lambda);
       double sigmaPure = cdftPure.calcSurfaceTension(0, 1) * 1000.0;
       logger.printf(org.apache.logging.log4j.Level.INFO, "Pure propane at %.0fK: IFT = %.3f mN/m%n", temperature,
-	  sigmaPure);
+          sigmaPure);
 
       // Mixture with small methane fraction
       SystemInterface mix = new SystemPrEos(temperature, pressure);
@@ -212,16 +212,16 @@ class CDFTMixtureTest {
       mix.initProperties();
 
       if (mix.getNumberOfPhases() >= 2) {
-	CDFTSurfaceTension cdftMix = new CDFTSurfaceTension(mix);
-	cdftMix.setAttractiveRangeFactor(lambda);
-	double sigmaMix = cdftMix.calcSurfaceTension(0, 1) * 1000.0;
-	logger.printf(org.apache.logging.log4j.Level.INFO, "C3 + 1%% CH4 at %.0fK, %.0f bar: IFT = %.3f mN/m%n",
-	    temperature, pressure, sigmaMix);
-	// Mixture IFT should be within reasonable range of pure IFT
-	logger.printf(org.apache.logging.log4j.Level.INFO, "Ratio mix/pure = %.3f (should be close to 1.0)%n",
-	    sigmaMix / sigmaPure);
+        CDFTSurfaceTension cdftMix = new CDFTSurfaceTension(mix);
+        cdftMix.setAttractiveRangeFactor(lambda);
+        double sigmaMix = cdftMix.calcSurfaceTension(0, 1) * 1000.0;
+        logger.printf(org.apache.logging.log4j.Level.INFO, "C3 + 1%% CH4 at %.0fK, %.0f bar: IFT = %.3f mN/m%n",
+            temperature, pressure, sigmaMix);
+        // Mixture IFT should be within reasonable range of pure IFT
+        logger.printf(org.apache.logging.log4j.Level.INFO, "Ratio mix/pure = %.3f (should be close to 1.0)%n",
+            sigmaMix / sigmaPure);
       } else {
-	logger.info("Binary: single phase at these conditions");
+        logger.info("Binary: single phase at these conditions");
       }
     } catch (Exception ex) {
       logger.info("Consistency check failed: " + ex.getMessage());
@@ -250,19 +250,19 @@ class CDFTMixtureTest {
     // Weinaug & Katz (1943) Table II: CH4/C3 at 277.6 K (40 degF)
     // Pressure (bar), Experimental IFT (mN/m) - approximate from their Table
     double[][] expData = { { 13.8, 7.0 }, // ~200 psia
-	{ 20.7, 5.5 }, // ~300 psia
-	{ 27.6, 4.2 }, // ~400 psia
-	{ 34.5, 3.2 }, // ~500 psia
-	{ 41.4, 2.3 }, // ~600 psia
-	{ 48.3, 1.6 }, // ~700 psia
-	{ 55.2, 0.9 }, // ~800 psia
+        { 20.7, 5.5 }, // ~300 psia
+        { 27.6, 4.2 }, // ~400 psia
+        { 34.5, 3.2 }, // ~500 psia
+        { 41.4, 2.3 }, // ~600 psia
+        { 48.3, 1.6 }, // ~700 psia
+        { 55.2, 0.9 }, // ~800 psia
     };
     double temperature = 277.6; // K (40 degF)
     double lambda = 0.65; // ~average of CH4 (0.80) and C3 (0.55)
 
     logger.info("\n=== Mixture IFT vs Experimental: CH4/C3 at 277.6K ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s | %8s | %8s | %8s | %8s | %8s%n", "P(bar)", "Exp", "cDFT",
-	"Dev(%)", "Parachor", "GT");
+        "Dev(%)", "Parachor", "GT");
     logger.info("---------|----------|----------|----------|----------|----------");
 
     double sumAbsDev = 0;
@@ -277,68 +277,68 @@ class CDFTMixtureTest {
       double sigmaExp = point[1];
 
       try {
-	SystemInterface sys = new SystemPrEos(temperature, pressure);
-	sys.addComponent("methane", 0.50);
-	sys.addComponent("propane", 0.50);
-	sys.setMixingRule("classic");
-	sys.setMultiPhaseCheck(true);
+        SystemInterface sys = new SystemPrEos(temperature, pressure);
+        sys.addComponent("methane", 0.50);
+        sys.addComponent("propane", 0.50);
+        sys.setMixingRule("classic");
+        sys.setMultiPhaseCheck(true);
 
-	ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-	ops.TPflash();
-	sys.initProperties();
+        ThermodynamicOperations ops = new ThermodynamicOperations(sys);
+        ops.TPflash();
+        sys.initProperties();
 
-	if (sys.getNumberOfPhases() < 2) {
-	  logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.1f | %8.2f | %8s | %8s | %8s | %8s%n", pressure,
-	      sigmaExp, "1-ph", "-", "-", "-");
-	  continue;
-	}
+        if (sys.getNumberOfPhases() < 2) {
+          logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.1f | %8.2f | %8s | %8s | %8s | %8s%n", pressure,
+              sigmaExp, "1-ph", "-", "-", "-");
+          continue;
+        }
 
-	// cDFT prediction
-	String cdftStr = "FAIL";
-	String cdftDevStr = "-";
-	try {
-	  CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
-	  cdft.setAttractiveRangeFactor(lambda);
-	  double sigmaCDFT = cdft.calcSurfaceTension(0, 1) * 1000.0;
-	  double devCDFT = (sigmaCDFT - sigmaExp) / sigmaExp * 100.0;
-	  cdftStr = String.format("%.3f", sigmaCDFT);
-	  cdftDevStr = String.format("%+.1f", devCDFT);
-	  sumAbsDev += Math.abs(devCDFT);
-	  countCDFT++;
-	} catch (Exception ex) {
-	  // keep FAIL
-	}
+        // cDFT prediction
+        String cdftStr = "FAIL";
+        String cdftDevStr = "-";
+        try {
+          CDFTSurfaceTension cdft = new CDFTSurfaceTension(sys);
+          cdft.setAttractiveRangeFactor(lambda);
+          double sigmaCDFT = cdft.calcSurfaceTension(0, 1) * 1000.0;
+          double devCDFT = (sigmaCDFT - sigmaExp) / sigmaExp * 100.0;
+          cdftStr = String.format("%.3f", sigmaCDFT);
+          cdftDevStr = String.format("%+.1f", devCDFT);
+          sumAbsDev += Math.abs(devCDFT);
+          countCDFT++;
+        } catch (Exception ex) {
+          // keep FAIL
+        }
 
-	// Parachor prediction (from NeqSim built-in)
-	String parachorStr = "-";
-	try {
-	  double parachorIFT = sys.getInterphaseProperties().getSurfaceTension(0, 1) * 1000.0;
-	  parachorStr = String.format("%.3f", parachorIFT);
-	  double devP = (parachorIFT - sigmaExp) / sigmaExp * 100.0;
-	  sumAbsDevParachor += Math.abs(devP);
-	  countParachor++;
-	} catch (Exception ex) {
-	  // keep dash
-	}
+        // Parachor prediction (from NeqSim built-in)
+        String parachorStr = "-";
+        try {
+          double parachorIFT = sys.getInterphaseProperties().getSurfaceTension(0, 1) * 1000.0;
+          parachorStr = String.format("%.3f", parachorIFT);
+          double devP = (parachorIFT - sigmaExp) / sigmaExp * 100.0;
+          sumAbsDevParachor += Math.abs(devP);
+          countParachor++;
+        } catch (Exception ex) {
+          // keep dash
+        }
 
-	// GT prediction
-	String gtStr = "-";
-	try {
-	  double gtIFT = sys.getInterphaseProperties().getSurfaceTensionModel(1).calcSurfaceTension(0, 1) * 1000.0;
-	  gtStr = String.format("%.3f", gtIFT);
-	  double devGT = (gtIFT - sigmaExp) / sigmaExp * 100.0;
-	  sumAbsDevGT += Math.abs(devGT);
-	  countGT++;
-	} catch (Exception ex) {
-	  // keep dash
-	}
+        // GT prediction
+        String gtStr = "-";
+        try {
+          double gtIFT = sys.getInterphaseProperties().getSurfaceTensionModel(1).calcSurfaceTension(0, 1) * 1000.0;
+          gtStr = String.format("%.3f", gtIFT);
+          double devGT = (gtIFT - sigmaExp) / sigmaExp * 100.0;
+          sumAbsDevGT += Math.abs(devGT);
+          countGT++;
+        } catch (Exception ex) {
+          // keep dash
+        }
 
-	logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.1f | %8.2f | %8s | %8s | %8s | %8s%n", pressure,
-	    sigmaExp, cdftStr, cdftDevStr, parachorStr, gtStr);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.1f | %8.2f | %8s | %8s | %8s | %8s%n", pressure,
+            sigmaExp, cdftStr, cdftDevStr, parachorStr, gtStr);
 
       } catch (Exception ex) {
-	logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.1f | %8.2f | %8s | %8s | %8s | %8s%n", pressure,
-	    sigmaExp, "ERR", "-", "-", "-");
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.1f | %8.2f | %8s | %8s | %8s | %8s%n", pressure,
+            sigmaExp, "ERR", "-", "-", "-");
       }
     }
 
@@ -346,11 +346,11 @@ class CDFTMixtureTest {
     logger.info("---------|----------|----------|----------|----------|----------");
     if (countCDFT > 0) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "cDFT AAD = %.1f%% (n=%d)%n", sumAbsDev / countCDFT,
-	  countCDFT);
+          countCDFT);
     }
     if (countParachor > 0) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "Parachor AAD = %.1f%% (n=%d)%n",
-	  sumAbsDevParachor / countParachor, countParachor);
+          sumAbsDevParachor / countParachor, countParachor);
     }
     if (countGT > 0) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "GT AAD = %.1f%% (n=%d)%n", sumAbsDevGT / countGT, countGT);

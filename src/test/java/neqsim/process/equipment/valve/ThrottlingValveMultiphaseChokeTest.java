@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,8 +15,6 @@ import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Integration tests for multiphase choke models with ThrottlingValve.
@@ -76,9 +76,9 @@ public class ThrottlingValveMultiphaseChokeTest {
     logger.info("\n=== Sachdeva Model Results ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Inlet Pressure: %.1f bara\n", inletStream.getPressure("bara"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Outlet Pressure: %.1f bara\n",
-	choke.getOutletStream().getPressure("bara"));
+        choke.getOutletStream().getPressure("bara"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Flow Rate: %.1f kg/hr\n",
-	choke.getOutletStream().getFlowRate("kg/hr"));
+        choke.getOutletStream().getFlowRate("kg/hr"));
   }
 
   @Test
@@ -103,9 +103,9 @@ public class ThrottlingValveMultiphaseChokeTest {
     logger.info("\n=== Gilbert Model Results ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Inlet Pressure: %.1f bara\n", inletStream.getPressure("bara"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Outlet Pressure: %.1f bara\n",
-	choke.getOutletStream().getPressure("bara"));
+        choke.getOutletStream().getPressure("bara"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Flow Rate: %.1f kg/hr\n",
-	choke.getOutletStream().getFlowRate("kg/hr"));
+        choke.getOutletStream().getFlowRate("kg/hr"));
   }
 
   @Test
@@ -155,7 +155,7 @@ public class ThrottlingValveMultiphaseChokeTest {
 
       // Get the sizing method to calculate predicted flow
       ControlValveSizing_MultiphaseChoke chokeMethod = (ControlValveSizing_MultiphaseChoke) design
-	  .getValveSizingMethod();
+          .getValveSizingMethod();
 
       // Calculate predicted flow using the choke model directly
       Map<String, Object> results = chokeMethod.calcValveSize(100.0);
@@ -165,10 +165,10 @@ public class ThrottlingValveMultiphaseChokeTest {
       double ratio = previousCalculatedFlow > 0 ? calculatedFlowKgHr / previousCalculatedFlow : 0;
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "    %.2f      |   %.1f    |     %.2f\n", d,
-	  calculatedFlowKgHr, ratio);
+          calculatedFlowKgHr, ratio);
 
       assertTrue(calculatedFlowKgHr > previousCalculatedFlow || previousCalculatedFlow == 0,
-	  "Calculated flow should increase with larger diameter");
+          "Calculated flow should increase with larger diameter");
       previousCalculatedFlow = calculatedFlowKgHr;
     }
   }
@@ -199,13 +199,13 @@ public class ThrottlingValveMultiphaseChokeTest {
 
       // Determine if critical
       ControlValveSizing_MultiphaseChoke chokeMethod = (ControlValveSizing_MultiphaseChoke) design
-	  .getValveSizingMethod();
+          .getValveSizingMethod();
       double gasQuality = chokeMethod.getChokeModel().calculateGasQuality(inletStream.getThermoSystem());
       double criticalRatio = chokeMethod.getChokeModel().calculateCriticalPressureRatio(gasQuality, 1.3);
       String regime = (pOut / 100.0) < criticalRatio ? "CRITICAL" : "SUBCRITICAL";
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "   %.0f       |  %.0f   |   %.1f    | %s\n", pOut, deltaP,
-	  flowRate, regime);
+          flowRate, regime);
 
       assertTrue(flowRate >= previousFlow, "Flow should increase or stay constant with more pressure drop");
       previousFlow = flowRate;
@@ -249,7 +249,7 @@ public class ThrottlingValveMultiphaseChokeTest {
     design.setValveSizingStandard("Sachdeva");
 
     assertTrue(design.getValveSizingMethod() instanceof ControlValveSizing_MultiphaseChoke,
-	"Should be MultiphaseChoke sizing method");
+        "Should be MultiphaseChoke sizing method");
 
     ControlValveSizing_MultiphaseChoke chokeMethod = (ControlValveSizing_MultiphaseChoke) design.getValveSizingMethod();
     assertEquals("Sachdeva", chokeMethod.getModelType());
@@ -279,7 +279,7 @@ public class ThrottlingValveMultiphaseChokeTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "Critical Pressure Ratio: %.3f\n", criticalRatio);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Actual Pressure Ratio: %.3f\n", pressureRatio);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Flow is: %s\n",
-	pressureRatio < criticalRatio ? "CRITICAL" : "SUBCRITICAL");
+        pressureRatio < criticalRatio ? "CRITICAL" : "SUBCRITICAL");
 
     assertTrue(pressureRatio < criticalRatio || pressureRatio >= criticalRatio, "Should detect flow regime correctly");
   }
@@ -312,7 +312,7 @@ public class ThrottlingValveMultiphaseChokeTest {
     logger.info("\n=== Valve Opening from Flow Rate Test ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Test opening: %.1f%%\n", testOpening);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Mass flow at %.1f%% opening: %.4f kg/s\n", testOpening,
-	massFlow50);
+        massFlow50);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Volumetric flow: %.6f m3/s\n", volumetricFlow50);
 
     // Now reverse-calculate: given this flow, what opening do we need?
@@ -320,7 +320,7 @@ public class ThrottlingValveMultiphaseChokeTest {
     chokeMethod.setChokeDiameter(1.0, "in");
 
     double calculatedOpening = chokeMethod.calculateValveOpeningFromFlowRate(volumetricFlow50, 0.0, inletStream,
-	choke.getOutletStream());
+        choke.getOutletStream());
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Calculated opening for same flow: %.1f%%\n", calculatedOpening);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Error: %.2f%%\n", Math.abs(calculatedOpening - testOpening));
@@ -344,12 +344,12 @@ public class ThrottlingValveMultiphaseChokeTest {
       // Reverse calculate opening
       chokeMethod.setChokeDiameter(1.0, "in");
       double reverseOpening = chokeMethod.calculateValveOpeningFromFlowRate(volFlow, 0.0, inletStream,
-	  choke.getOutletStream());
+          choke.getOutletStream());
 
       double error = Math.abs(reverseOpening - opening);
       logger.printf(org.apache.logging.log4j.Level.INFO,
-	  "    %.1f%%       |     %.4f      |        %.1f%%         |  %.2f%%\n", opening, massFlow, reverseOpening,
-	  error);
+          "    %.1f%%       |     %.4f      |        %.1f%%         |  %.2f%%\n", opening, massFlow, reverseOpening,
+          error);
 
       assertTrue(error < 2.0, "Reverse calculation error should be < 2%");
     }
@@ -393,10 +393,10 @@ public class ThrottlingValveMultiphaseChokeTest {
     double outletFlow2 = choke2.getOutletStream().getFlowRate("kg/hr");
 
     logger.printf(org.apache.logging.log4j.Level.INFO,
-	"\nTransient mode (runTransient with setCalculateSteadyState=false):\n");
+        "\nTransient mode (runTransient with setCalculateSteadyState=false):\n");
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Inlet flow: %.1f kg/hr\n", inletFlow);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Outlet flow: %.1f kg/hr (calculated by choke model)\n",
-	outletFlow2);
+        outletFlow2);
 
     // The calculated flow should be positive
     assertTrue(outletFlow2 > 0, "Calculated flow should be positive");

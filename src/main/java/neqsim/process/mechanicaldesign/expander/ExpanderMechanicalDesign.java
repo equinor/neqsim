@@ -466,8 +466,8 @@ public class ExpanderMechanicalDesign extends MechanicalDesign {
     double casingOuterDiameter = outerDiameter;
     double casingInnerDiameter = innerDiameter;
     double casingVolumeM3 = Math.PI / 4.0
-	* (Math.pow(casingOuterDiameter / 1000.0, 2) - Math.pow(casingInnerDiameter / 1000.0, 2))
-	* (casingLength / 1000.0);
+        * (Math.pow(casingOuterDiameter / 1000.0, 2) - Math.pow(casingInnerDiameter / 1000.0, 2))
+        * (casingLength / 1000.0);
     casingWeight = casingVolumeM3 * STEEL_DENSITY * 1.5; // Factor for nozzles, flanges
 
     // Bundle weight
@@ -492,7 +492,7 @@ public class ExpanderMechanicalDesign extends MechanicalDesign {
     weightStructualSteel = structuralWeight + baseplateWeight;
 
     double totalWeight = equipmentWeight + lubeSystemWeight + sealSystemWeight + baseplateWeight + pipingWeight
-	+ electricalWeight + structuralWeight;
+        + electricalWeight + structuralWeight;
 
     setWeightTotal(totalWeight);
 
@@ -652,17 +652,17 @@ public class ExpanderMechanicalDesign extends MechanicalDesign {
 
     String[] columnNames = { "Parameter", "Value", "Unit" };
     String[][] data = { { "Expander Type", expanderType.toString(), "" }, { "Load Type", loadType.toString(), "" },
-	{ "Number of Stages", String.valueOf(numberOfStages), "" },
-	{ "Wheel Diameter", String.format("%.1f", wheelDiameter), "mm" },
-	{ "Rated Speed", String.format("%.0f", ratedSpeed), "rpm" },
-	{ "Tip Speed", String.format("%.1f", tipSpeed), "m/s" },
-	{ "Shaft Diameter", String.format("%.1f", shaftDiameter), "mm" },
-	{ "Recovered Power", String.format("%.1f", recoveredPower), "kW" },
-	{ "Isentropic Efficiency", String.format("%.1f", isentropicEfficiency * 100), "%" },
-	{ "Design Inlet Pressure", String.format("%.1f", designInletPressure), "bara" },
-	{ "Design Outlet Pressure", String.format("%.1f", designOutletPressure), "bara" },
-	{ "Bearing Type", bearingType, "" }, { "Seal Type", sealType, "" },
-	{ "Total Weight", String.format("%.0f", getWeightTotal()), "kg" } };
+        { "Number of Stages", String.valueOf(numberOfStages), "" },
+        { "Wheel Diameter", String.format("%.1f", wheelDiameter), "mm" },
+        { "Rated Speed", String.format("%.0f", ratedSpeed), "rpm" },
+        { "Tip Speed", String.format("%.1f", tipSpeed), "m/s" },
+        { "Shaft Diameter", String.format("%.1f", shaftDiameter), "mm" },
+        { "Recovered Power", String.format("%.1f", recoveredPower), "kW" },
+        { "Isentropic Efficiency", String.format("%.1f", isentropicEfficiency * 100), "%" },
+        { "Design Inlet Pressure", String.format("%.1f", designInletPressure), "bara" },
+        { "Design Outlet Pressure", String.format("%.1f", designOutletPressure), "bara" },
+        { "Bearing Type", bearingType, "" }, { "Seal Type", sealType, "" },
+        { "Total Weight", String.format("%.0f", getWeightTotal()), "kg" } };
 
     JTable table = new JTable(data, columnNames);
     JScrollPane scrollPane = new JScrollPane(table);

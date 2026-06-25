@@ -3,10 +3,10 @@ package neqsim.pvtsimulation.flowassurance;
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -405,10 +405,10 @@ public class SurfCooldownAnalyzer implements Serializable {
     }
     if (!Double.isNaN(requiredNoTouchTimeHours) && requiredNoTouchTimeHours > 0.0) {
       if (noTouchTimeHours >= requiredNoTouchTimeHours) {
-	return VERDICT_OK;
+        return VERDICT_OK;
       }
       if (noTouchTimeHours >= 0.75 * requiredNoTouchTimeHours) {
-	return VERDICT_MARGINAL;
+        return VERDICT_MARGINAL;
       }
       return VERDICT_CRITICAL;
     }
@@ -531,14 +531,14 @@ public class SurfCooldownAnalyzer implements Serializable {
     result.put("verdict", verdict);
     result.put("noTouchTime_hours", round2(noTouchTimeHours));
     result.put("requiredNoTouchTime_hours",
-	Double.isNaN(requiredNoTouchTimeHours) ? null : round2(requiredNoTouchTimeHours));
+        Double.isNaN(requiredNoTouchTimeHours) ? null : round2(requiredNoTouchTimeHours));
     result.put("initialFluidTemperature_C", round2(initialFluidTemperatureK - 273.15));
     result.put("hydrateEquilibriumTemperature_C",
-	Double.isNaN(hydrateEquilibriumTemperatureK) ? null : round2(hydrateEquilibriumTemperatureK - 273.15));
+        Double.isNaN(hydrateEquilibriumTemperatureK) ? null : round2(hydrateEquilibriumTemperatureK - 273.15));
     result.put("hydrateMargin_K", round2(hydrateMarginK));
     result.put("seabedTemperature_C", round2(seabedTemperatureK - 273.15));
     result.put("overallUValue_Wm2K",
-	Double.isNaN(overallUValue) ? round2(cooldown.getCalculatedUValue()) : round2(overallUValue));
+        Double.isNaN(overallUValue) ? round2(cooldown.getCalculatedUValue()) : round2(overallUValue));
     result.put("timeConstant_hours", round2(cooldown.getTimeConstantHours()));
     result.put("fluidDensity_kgm3", round2(fluidDensity));
     result.put("fluidSpecificHeat_JkgK", round2(fluidSpecificHeat));

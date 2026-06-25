@@ -273,7 +273,7 @@ class PopulationBalanceModelTest {
       // M = rho * V, so effective density should be reasonable
       double effectiveRho = totalM / totalV;
       assertTrue(effectiveRho > 100.0 && effectiveRho < 5000.0,
-	  "Effective density should be physically reasonable: " + effectiveRho);
+          "Effective density should be physically reasonable: " + effectiveRho);
     }
   }
 }

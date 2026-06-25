@@ -118,14 +118,14 @@ public class DataHandling {
     nf.applyPattern("#.####E0");
 
     try (DataOutputStream rt = new DataOutputStream(
-	new BufferedOutputStream(new FileOutputStream(new File("c:/temp/" + filename))))) {
+        new BufferedOutputStream(new FileOutputStream(new File("c:/temp/" + filename))))) {
       for (int i = 0; i < points.length; i++) {
-	for (int j = 0; j < points[i].length; j++) {
-	  rt.writeBytes(nf.format(points[i][j]) + "\t");
-	  if (j == (points[i].length - 1)) {
-	    rt.writeBytes("\n");
-	  }
-	}
+        for (int j = 0; j < points[i].length; j++) {
+          rt.writeBytes(nf.format(points[i][j]) + "\t");
+          if (j == (points[i].length - 1)) {
+            rt.writeBytes("\n");
+          }
+        }
       }
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);

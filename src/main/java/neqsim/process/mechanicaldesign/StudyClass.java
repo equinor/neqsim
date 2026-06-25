@@ -82,7 +82,7 @@ public enum StudyClass {
    */
   CLASS_B("Class B (Concept/Pre-FEED)",
       toSet(DeliverableType.PFD, DeliverableType.THERMAL_UTILITIES, DeliverableType.FIRE_SCENARIOS,
-	  DeliverableType.INSTRUMENT_SCHEDULE, DeliverableType.REFERENCE_DESIGNATION_SCHEDULE)),
+          DeliverableType.INSTRUMENT_SCHEDULE, DeliverableType.REFERENCE_DESIGNATION_SCHEDULE)),
 
   /**
    * Class C: Screening study. Minimal deliverable set.

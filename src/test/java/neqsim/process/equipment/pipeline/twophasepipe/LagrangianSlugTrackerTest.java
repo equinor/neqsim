@@ -146,8 +146,8 @@ class LagrangianSlugTrackerTest {
     SlugBubbleUnit updatedSlug = null;
     for (SlugBubbleUnit s : slugs) {
       if (s.id == slug.id) {
-	updatedSlug = s;
-	break;
+        updatedSlug = s;
+        break;
       }
     }
 
@@ -190,8 +190,8 @@ class LagrangianSlugTrackerTest {
     for (int i = 0; i < 50; i++) {
       tracker.advanceTimeStep(sections, dt);
       if (tracker.getTotalSlugsMerged() > mergeCount) {
-	mergeCount = tracker.getTotalSlugsMerged();
-	break;
+        mergeCount = tracker.getTotalSlugsMerged();
+        break;
       }
     }
 
@@ -233,8 +233,8 @@ class LagrangianSlugTrackerTest {
     boolean foundWakeSlug = false;
     for (SlugBubbleUnit slug : slugs) {
       if (slug.inWakeRegion) {
-	foundWakeSlug = true;
-	assertTrue(slug.wakeCoefficient >= 1.0, "Wake coefficient should be >= 1.0");
+        foundWakeSlug = true;
+        assertTrue(slug.wakeCoefficient >= 1.0, "Wake coefficient should be >= 1.0");
       }
     }
 

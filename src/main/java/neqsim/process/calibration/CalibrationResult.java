@@ -153,7 +153,7 @@ public class CalibrationResult implements Serializable {
   public String toString() {
     if (success) {
       return String.format("CalibrationResult[success, RMSE=%.4f, params=%d, samples=%d]", rmse,
-	  parameters != null ? parameters.size() : 0, samplesUsed);
+          parameters != null ? parameters.size() : 0, samplesUsed);
     } else {
       return String.format("CalibrationResult[failed: %s]", errorMessage);
     }

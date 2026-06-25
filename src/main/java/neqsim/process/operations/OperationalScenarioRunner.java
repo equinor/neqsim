@@ -62,23 +62,23 @@ public final class OperationalScenarioRunner {
       captureValue(process, observedAddress, action.getUnit(), true, result);
       switch (action.getType()) {
       case SET_VARIABLE:
-	process.getAutomation().setVariableValue(action.getTarget(), action.getValue(), action.getUnit());
-	break;
+        process.getAutomation().setVariableValue(action.getTarget(), action.getValue(), action.getUnit());
+        break;
       case SET_VALVE_OPENING:
-	executeValveOpening(process, action);
-	break;
+        executeValveOpening(process, action);
+        break;
       case APPLY_FIELD_INPUTS:
-	process.applyFieldInputs();
-	break;
+        process.applyFieldInputs();
+        break;
       case RUN_STEADY_STATE:
-	process.run();
-	break;
+        process.run();
+        break;
       case RUN_TRANSIENT:
-	runTransient(process, action);
-	break;
+        runTransient(process, action);
+        break;
       default:
-	result.addWarning("Unsupported action type: " + action.getType());
-	break;
+        result.addWarning("Unsupported action type: " + action.getType());
+        break;
       }
       captureValue(process, observedAddress, action.getUnit(), false, result);
       result.addActionLog(action.getDescription());

@@ -22,9 +22,9 @@ class SISIntegrationTest {
   void setUp() {
     // Create HIPPS (SIL 2) using builder pattern
     hipps = SafetyInstrumentedFunction.builder().id("SDV-001").name("Main HIPPS")
-	.description("High Integrity Pipeline Protection System").category(SafetyInstrumentedFunction.SIFCategory.HIPPS)
-	.sil(2).pfd(0.005).architecture("1oo2").testIntervalHours(8760.0)
-	.protectedEquipment(Arrays.asList("Export Pipeline", "Riser")).initiatingEvent("Overpressure").build();
+        .description("High Integrity Pipeline Protection System").category(SafetyInstrumentedFunction.SIFCategory.HIPPS)
+        .sil(2).pfd(0.005).architecture("1oo2").testIntervalHours(8760.0)
+        .protectedEquipment(Arrays.asList("Export Pipeline", "Riser")).initiatingEvent("Overpressure").build();
 
     // Create ESD (SIL 3) using simple constructor
     esd = new SafetyInstrumentedFunction("Emergency Shutdown", 3, 0.0005);
@@ -149,7 +149,7 @@ class SISIntegrationTest {
 
     // Create IPL using the proper constructor
     SISIntegratedRiskModel.IndependentProtectionLayer ipl = new SISIntegratedRiskModel.IndependentProtectionLayer(
-	"PSV-001", 0.01, SISIntegratedRiskModel.IndependentProtectionLayer.IPLType.MECHANICAL);
+        "PSV-001", 0.01, SISIntegratedRiskModel.IndependentProtectionLayer.IPLType.MECHANICAL);
     model.addIPL(ipl);
 
     assertEquals(1, model.getIPLs().size());
@@ -158,7 +158,7 @@ class SISIntegrationTest {
   @Test
   void testIPLCreation() {
     SISIntegratedRiskModel.IndependentProtectionLayer ipl = new SISIntegratedRiskModel.IndependentProtectionLayer(
-	"PSV-001", 0.01, SISIntegratedRiskModel.IndependentProtectionLayer.IPLType.MECHANICAL);
+        "PSV-001", 0.01, SISIntegratedRiskModel.IndependentProtectionLayer.IPLType.MECHANICAL);
 
     assertEquals("PSV-001", ipl.getName());
     assertEquals(0.01, ipl.getPfd(), 0.001);
@@ -169,7 +169,7 @@ class SISIntegrationTest {
   @Test
   void testIPLTypeEnum() {
     SISIntegratedRiskModel.IndependentProtectionLayer.IPLType[] types = SISIntegratedRiskModel.IndependentProtectionLayer.IPLType
-	.values();
+        .values();
     assertEquals(6, types.length);
   }
 

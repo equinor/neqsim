@@ -7,12 +7,12 @@ import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.GsonBuilder;
 import neqsim.process.design.AutoSizeable;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.stream.StreamInterface;
-import com.google.gson.GsonBuilder;
 
 /**
  * Combined-cycle power system integrating a gas turbine, HRSG, and steam turbine.
@@ -411,9 +411,9 @@ public class CombinedCycleSystem extends TwoPortEquipment implements CapacityCon
     capacityConstraints.clear();
     if (ratedTotalPowerW > 0) {
       addCapacityConstraint(new CapacityConstraint("totalPower", "kW", CapacityConstraint.ConstraintType.HARD)
-	  .setDesignValue(ratedTotalPowerW / 1000.0).setMaxValue(ratedTotalPowerW / 1000.0 * 1.1)
-	  .setWarningThreshold(0.9).setDescription("Combined-cycle total power output vs rated capacity")
-	  .setValueSupplier(() -> Math.abs(this.totalPower) / 1000.0));
+          .setDesignValue(ratedTotalPowerW / 1000.0).setMaxValue(ratedTotalPowerW / 1000.0 * 1.1)
+          .setWarningThreshold(0.9).setDescription("Combined-cycle total power output vs rated capacity")
+          .setValueSupplier(() -> Math.abs(this.totalPower) / 1000.0));
     }
   }
 
@@ -431,8 +431,8 @@ public class CombinedCycleSystem extends TwoPortEquipment implements CapacityCon
     for (CapacityConstraint c : capacityConstraints.values()) {
       double util = c.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-	maxUtil = util;
-	bottleneck = c;
+        maxUtil = util;
+        bottleneck = c;
       }
     }
     return bottleneck;
@@ -443,7 +443,7 @@ public class CombinedCycleSystem extends TwoPortEquipment implements CapacityCon
   public boolean isCapacityExceeded() {
     for (CapacityConstraint c : capacityConstraints.values()) {
       if (c.isViolated()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -454,7 +454,7 @@ public class CombinedCycleSystem extends TwoPortEquipment implements CapacityCon
   public boolean isHardLimitExceeded() {
     for (CapacityConstraint c : capacityConstraints.values()) {
       if (c.isHardLimitExceeded()) {
-	return true;
+        return true;
       }
     }
     return false;
@@ -467,7 +467,7 @@ public class CombinedCycleSystem extends TwoPortEquipment implements CapacityCon
     for (CapacityConstraint c : capacityConstraints.values()) {
       double util = c.getUtilization();
       if (!Double.isNaN(util)) {
-	maxUtil = Math.max(maxUtil, util);
+        maxUtil = Math.max(maxUtil, util);
       }
     }
     return maxUtil;
@@ -515,7 +515,7 @@ public class CombinedCycleSystem extends TwoPortEquipment implements CapacityCon
     if (ratedTotalPowerW > 0) {
       sb.append("Rated Total Power: ").append(String.format("%.2f kW", ratedTotalPowerW / 1000.0)).append("\n");
       sb.append("Utilization: ").append(String.format("%.1f%%", Math.abs(totalPower) / ratedTotalPowerW * 100))
-	  .append("\n");
+          .append("\n");
     }
     return sb.toString();
   }

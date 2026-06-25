@@ -71,13 +71,13 @@ public class EventTreeAnalyzer implements Serializable {
       double prob = 1.0;
       StringBuilder path = new StringBuilder();
       for (int b = 0; b < n; b++) {
-	boolean yes = ((i >> b) & 1) == 1;
-	Branch br = branches.get(b);
-	prob *= yes ? br.probabilityOfYes : (1.0 - br.probabilityOfYes);
-	path.append(br.name).append("=").append(yes ? "Y" : "N");
-	if (b < n - 1) {
-	  path.append("; ");
-	}
+        boolean yes = ((i >> b) & 1) == 1;
+        Branch br = branches.get(b);
+        prob *= yes ? br.probabilityOfYes : (1.0 - br.probabilityOfYes);
+        path.append(br.name).append("=").append(yes ? "Y" : "N");
+        if (b < n - 1) {
+          path.append("; ");
+        }
       }
       outcomes.add(new Outcome(path.toString(), prob, prob * initiatingFrequencyPerYear));
     }
@@ -92,7 +92,7 @@ public class EventTreeAnalyzer implements Serializable {
   public String report() {
     StringBuilder sb = new StringBuilder();
     sb.append("Event Tree: ").append(initiatingEventName).append("  (").append(initiatingFrequencyPerYear)
-	.append(" /yr)\n");
+        .append(" /yr)\n");
     for (Outcome o : evaluate()) {
       sb.append(String.format("  P=%.4e  F=%.4e /yr  | %s%n", o.probability, o.frequencyPerYear, o.path));
     }

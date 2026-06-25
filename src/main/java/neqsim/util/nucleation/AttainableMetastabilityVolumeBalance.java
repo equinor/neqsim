@@ -303,18 +303,18 @@ public class AttainableMetastabilityVolumeBalance {
     for (int i = 0; i <= numberOfSteps; i++) {
       double p = initialPressurePa - i * dpStep;
       if (p < minimumPressure) {
-	p = minimumPressure;
+        p = minimumPressure;
       }
 
       // Solve the metastable single-phase liquid temperature on the isentrope at this pressure.
       double t;
       try {
-	t = solveIsentropicLiquidTemperature(liquid, liquidOps, p, sRef, tGuess);
+        t = solveIsentropicLiquidTemperature(liquid, liquidOps, p, sRef, tGuess);
       } catch (Exception ex) {
-	// Liquid root no longer available (likely beyond the spinodal) - stop the search.
-	message = "Metastable liquid root lost near " + (p / 1e5) + " bara (spinodal reached).";
-	logger.debug(message, ex);
-	break;
+        // Liquid root no longer available (likely beyond the spinodal) - stop the search.
+        message = "Metastable liquid root lost near " + (p / 1e5) + " bara (spinodal reached).";
+        logger.debug(message, ex);
+        break;
       }
       tGuess = t;
 
@@ -325,8 +325,8 @@ public class AttainableMetastabilityVolumeBalance {
 
       // Integrate the rarefaction outflow speed (Riemann invariant of a simple wave).
       if (i > 0 && Double.isFinite(rhoPrev) && Double.isFinite(cPrev)) {
-	double dp = pPrev - p;
-	u = u - 2.0 * dp / (rho * c + rhoPrev * cPrev);
+        double dp = pPrev - p;
+        u = u - 2.0 * dp / (rho * c + rhoPrev * cPrev);
       }
 
       // Saturation temperature at the current pressure.
@@ -334,19 +334,19 @@ public class AttainableMetastabilityVolumeBalance {
       double dTsat = t - tSat;
 
       if (dTsat > 0.0) {
-	// Below saturation - the liquid is metastable. Compare the two volume rates.
-	double dvdtLost = -u * aPipe;
-	double dvdtEvap = bubbleGrowthVolumeRate(liquid, vapour, vapourOps, p, t, dTsat);
+        // Below saturation - the liquid is metastable. Compare the two volume rates.
+        double dvdtLost = -u * aPipe;
+        double dvdtEvap = bubbleGrowthVolumeRate(liquid, vapour, vapourOps, p, t, dTsat);
 
-	if (dvdtEvap >= dvdtLost && dvdtLost > 0.0) {
-	  limitFound = true;
-	  limitPressure = p;
-	  limitTemperature = t;
-	  limitSaturationTemperature = tSat;
-	  superheat = dTsat;
-	  message = "Metastability limit located.";
-	  break;
-	}
+        if (dvdtEvap >= dvdtLost && dvdtLost > 0.0) {
+          limitFound = true;
+          limitPressure = p;
+          limitTemperature = t;
+          limitSaturationTemperature = tSat;
+          superheat = dTsat;
+          message = "Metastability limit located.";
+          break;
+        }
       }
 
       pPrev = p;
@@ -355,13 +355,13 @@ public class AttainableMetastabilityVolumeBalance {
       cPrev = c;
 
       if (p <= minimumPressure) {
-	break;
+        break;
       }
     }
 
     if (!limitFound && message.equals("Not calculated.")) {
       message = "Metastability limit not found within the search range (pmin = " + (minimumPressure / 1e5)
-	  + " bara). Consider lowering the minimum pressure.";
+          + " bara). Consider lowering the minimum pressure.";
       logger.info(message);
     } else if (!limitFound) {
       // message already set above (spinodal reached etc.)
@@ -402,25 +402,25 @@ public class AttainableMetastabilityVolumeBalance {
       double f1 = liquid.getEntropy("J/molK") - entropyTarget;
 
       if (Math.abs(f1) < 1.0e-6) {
-	return t1;
+        return t1;
       }
       double denom = (f1 - f0);
       if (Math.abs(denom) < 1.0e-12) {
-	break;
+        break;
       }
       double tNext = t1 - f1 * (t1 - t0) / denom;
       // Keep the step bounded for robustness.
       if (!Double.isFinite(tNext)) {
-	break;
+        break;
       }
       if (tNext < 1.0) {
-	tNext = 1.0;
+        tNext = 1.0;
       }
       t0 = t1;
       f0 = f1;
       t1 = tNext;
       if (Math.abs(t1 - t0) < 1.0e-5) {
-	return t1;
+        return t1;
       }
     }
     return t1;
@@ -482,7 +482,7 @@ public class AttainableMetastabilityVolumeBalance {
 
       double hLg = hG - hL;
       if (hLg <= 0.0 || rhoG <= 0.0 || kL <= 0.0 || cpL <= 0.0 || rhoL <= 0.0) {
-	return 0.0;
+        return 0.0;
       }
 
       double alphaL = kL / (rhoL * cpL);

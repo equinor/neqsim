@@ -663,10 +663,10 @@ public class AntiSurge implements java.io.Serializable {
     }
     AntiSurge other = (AntiSurge) obj;
     return Double.doubleToLongBits(currentSurgeFraction) == Double.doubleToLongBits(other.currentSurgeFraction)
-	&& isActive == other.isActive && isSurge == other.isSurge
-	&& Double.doubleToLongBits(surgeControlFactor) == Double.doubleToLongBits(other.surgeControlFactor)
-	&& controlStrategy == other.controlStrategy
-	&& Double.doubleToLongBits(valvePosition) == Double.doubleToLongBits(other.valvePosition);
+        && isActive == other.isActive && isSurge == other.isSurge
+        && Double.doubleToLongBits(surgeControlFactor) == Double.doubleToLongBits(other.surgeControlFactor)
+        && controlStrategy == other.controlStrategy
+        && Double.doubleToLongBits(valvePosition) == Double.doubleToLongBits(other.valvePosition);
   }
 
   /**

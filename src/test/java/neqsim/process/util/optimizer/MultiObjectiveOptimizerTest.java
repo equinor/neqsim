@@ -3,6 +3,8 @@ package neqsim.process.util.optimizer;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
@@ -15,8 +17,6 @@ import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConfig;
 import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConstraint;
 import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Test cases for multi-objective optimization.
@@ -92,35 +92,35 @@ public class MultiObjectiveOptimizerTest {
 
     // Define objectives: maximize throughput, minimize power
     List<ObjectiveFunction> objectives = Arrays.asList(StandardObjective.MAXIMIZE_THROUGHPUT,
-	StandardObjective.MINIMIZE_POWER);
+        StandardObjective.MINIMIZE_POWER);
 
     // Configuration
     OptimizationConfig config = new OptimizationConfig(1000.0, 15000.0).rateUnit("kg/hr").tolerance(50.0)
-	.maxIterations(20).defaultUtilizationLimit(0.95).searchMode(SearchMode.BINARY_FEASIBILITY);
+        .maxIterations(20).defaultUtilizationLimit(0.95).searchMode(SearchMode.BINARY_FEASIBILITY);
 
     // Run multi-objective optimization with progress tracking
     final int[] successCount = { 0 };
     final int[] failCount = { 0 };
     final int[] feasibleCount = { 0 };
     MultiObjectiveOptimizer moo = new MultiObjectiveOptimizer().includeInfeasible(true) // Include
-											// all
-											// solutions
-											// for
-											// debugging
-	.onProgress((iteration, total, solution) -> {
-	  if (solution != null) {
-	    successCount[0]++;
-	    if (solution.isFeasible()) {
-	      feasibleCount[0]++;
-	    }
-	    logger.printf(org.apache.logging.log4j.Level.INFO,
-		"  Iteration %d/%d: Flow=%.0f, Power=%.1f, Feasible=%s%n", iteration, total, solution.getRawValue(0),
-		solution.getRawValue(1), solution.isFeasible());
-	  } else {
-	    failCount[0]++;
-	    logger.printf(org.apache.logging.log4j.Level.INFO, "  Iteration %d/%d: FAILED%n", iteration, total);
-	  }
-	});
+        // all
+        // solutions
+        // for
+        // debugging
+        .onProgress((iteration, total, solution) -> {
+          if (solution != null) {
+            successCount[0]++;
+            if (solution.isFeasible()) {
+              feasibleCount[0]++;
+            }
+            logger.printf(org.apache.logging.log4j.Level.INFO,
+                "  Iteration %d/%d: Flow=%.0f, Power=%.1f, Feasible=%s%n", iteration, total, solution.getRawValue(0),
+                solution.getRawValue(1), solution.isFeasible());
+          } else {
+            failCount[0]++;
+            logger.printf(org.apache.logging.log4j.Level.INFO, "  Iteration %d/%d: FAILED%n", iteration, total);
+          }
+        });
 
     ParetoFront front = moo.optimizeWeightedSum(process, feed, objectives, config, 10);
 
@@ -156,7 +156,7 @@ public class MultiObjectiveOptimizerTest {
     logger.info("=============================");
     for (ParetoSolution sol : front.getSolutionsSortedBy(0, true)) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "  Flow: %.0f kg/hr, Power: %.1f kW, Feasible: %s%n",
-	  sol.getRawValue(0), sol.getRawValue(1), sol.isFeasible());
+          sol.getRawValue(0), sol.getRawValue(1), sol.isFeasible());
     }
     logger.info("\nKnee Point: " + knee);
     logger.info("\nJSON Export:\n" + front.toJson());
@@ -173,7 +173,7 @@ public class MultiObjectiveOptimizerTest {
     List<ObjectiveFunction> constrainedObjs = Collections.singletonList(StandardObjective.MINIMIZE_POWER);
 
     OptimizationConfig config = new OptimizationConfig(1000.0, 15000.0).rateUnit("kg/hr").tolerance(50.0)
-	.maxIterations(20).defaultUtilizationLimit(1.0).searchMode(SearchMode.BINARY_FEASIBILITY);
+        .maxIterations(20).defaultUtilizationLimit(1.0).searchMode(SearchMode.BINARY_FEASIBILITY);
 
     // Run epsilon-constraint optimization
     MultiObjectiveOptimizer moo = new MultiObjectiveOptimizer();
@@ -186,7 +186,7 @@ public class MultiObjectiveOptimizerTest {
     logger.info("===================================");
     for (ParetoSolution sol : front.getSolutionsSortedBy(0, true)) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "  Flow: %.0f kg/hr, Power: %.1f kW%n", sol.getRawValue(0),
-	  sol.getRawValue(1));
+          sol.getRawValue(1));
     }
   }
 
@@ -197,27 +197,27 @@ public class MultiObjectiveOptimizerTest {
 
     // Define objectives: maximize throughput, minimize power
     List<ObjectiveFunction> objectives = Arrays.asList(StandardObjective.MAXIMIZE_THROUGHPUT,
-	StandardObjective.MINIMIZE_POWER);
+        StandardObjective.MINIMIZE_POWER);
 
     // Configuration with flow rate bounds
     OptimizationConfig config = new OptimizationConfig(1000.0, 20000.0).rateUnit("kg/hr").tolerance(50.0)
-	.defaultUtilizationLimit(0.95).maxIterations(20);
+        .defaultUtilizationLimit(0.95).maxIterations(20);
 
     // Run sampling-based Pareto generation
     final int[] sampleCount = { 0 };
     MultiObjectiveOptimizer moo = new MultiObjectiveOptimizer().includeInfeasible(true) // Include
-											// all for
-											// analysis
-	.onProgress((iteration, total, solution) -> {
-	  sampleCount[0]++;
-	  if (solution != null) {
-	    logger.printf(org.apache.logging.log4j.Level.INFO,
-		"  Sample %d/%d: Flow=%.0f, Power=%.1f kW, Feasible=%s%n", iteration, total, solution.getRawValue(0),
-		solution.getRawValue(1), solution.isFeasible());
-	  } else {
-	    logger.printf(org.apache.logging.log4j.Level.INFO, "  Sample %d/%d: FAILED%n", iteration, total);
-	  }
-	});
+        // all for
+        // analysis
+        .onProgress((iteration, total, solution) -> {
+          sampleCount[0]++;
+          if (solution != null) {
+            logger.printf(org.apache.logging.log4j.Level.INFO,
+                "  Sample %d/%d: Flow=%.0f, Power=%.1f kW, Feasible=%s%n", iteration, total, solution.getRawValue(0),
+                solution.getRawValue(1), solution.isFeasible());
+          } else {
+            logger.printf(org.apache.logging.log4j.Level.INFO, "  Sample %d/%d: FAILED%n", iteration, total);
+          }
+        });
 
     ParetoFront front = moo.sampleParetoFront(process, feed, objectives, config, 10);
 
@@ -244,7 +244,7 @@ public class MultiObjectiveOptimizerTest {
     logger.info("======================");
     for (ParetoSolution sol : front.getSolutionsSortedBy(0, true)) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "  Flow: %.0f kg/hr, Power: %.1f kW, Feasible: %s%n",
-	  sol.getRawValue(0), sol.getRawValue(1), sol.isFeasible());
+          sol.getRawValue(0), sol.getRawValue(1), sol.isFeasible());
     }
 
     // Check spacing (should be well-distributed)
@@ -266,27 +266,27 @@ public class MultiObjectiveOptimizerTest {
 
     // Objectives
     List<ObjectiveFunction> objectives = Arrays.asList(StandardObjective.MAXIMIZE_THROUGHPUT,
-	StandardObjective.MINIMIZE_POWER);
+        StandardObjective.MINIMIZE_POWER);
 
     // Add explicit constraint on compressor power
     OptimizationConstraint powerConstraint = OptimizationConstraint.lessThan("Max Compressor Power", proc -> {
       Compressor comp = (Compressor) proc.getUnit("Gas Compressor");
       return comp != null ? comp.getPower() : 0.0;
     }, 600.0, // kW limit (below the 800 kW design max)
-	ConstraintSeverity.HARD, 0.0, "Keep compressor power below 600 kW");
+        ConstraintSeverity.HARD, 0.0, "Keep compressor power below 600 kW");
 
     OptimizationConfig config = new OptimizationConfig(1000.0, 12000.0).rateUnit("kg/hr").tolerance(50.0)
-	.maxIterations(15).defaultUtilizationLimit(0.95);
+        .maxIterations(15).defaultUtilizationLimit(0.95);
 
     // Run optimization with constraints
     MultiObjectiveOptimizer moo = new MultiObjectiveOptimizer();
     ParetoFront front = moo.optimizeWeightedSum(process, feed, objectives, config, 12,
-	Collections.singletonList(powerConstraint));
+        Collections.singletonList(powerConstraint));
 
     // All solutions should respect power constraint
     for (ParetoSolution sol : front) {
       if (sol.isFeasible()) {
-	Assertions.assertTrue(sol.getRawValue(1) <= 650.0, "Power should be below constraint (with tolerance)");
+        Assertions.assertTrue(sol.getRawValue(1) <= 650.0, "Power should be below constraint (with tolerance)");
       }
     }
 
@@ -294,7 +294,7 @@ public class MultiObjectiveOptimizerTest {
     logger.info("===============================================");
     for (ParetoSolution sol : front.getSolutionsSortedBy(0, true)) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "  Flow: %.0f kg/hr, Power: %.1f kW, Feasible: %s%n",
-	  sol.getRawValue(0), sol.getRawValue(1), sol.isFeasible());
+          sol.getRawValue(0), sol.getRawValue(1), sol.isFeasible());
     }
   }
 
@@ -311,10 +311,10 @@ public class MultiObjectiveOptimizerTest {
     }, ObjectiveFunction.Direction.MAXIMIZE, "kg/kWh");
 
     List<ObjectiveFunction> objectives = Arrays.asList(StandardObjective.MAXIMIZE_THROUGHPUT,
-	StandardObjective.MINIMIZE_POWER, specificProduction);
+        StandardObjective.MINIMIZE_POWER, specificProduction);
 
     OptimizationConfig config = new OptimizationConfig(2000.0, 12000.0).rateUnit("kg/hr").tolerance(100.0)
-	.maxIterations(15).defaultUtilizationLimit(1.0);
+        .maxIterations(15).defaultUtilizationLimit(1.0);
 
     MultiObjectiveOptimizer moo = new MultiObjectiveOptimizer();
     ParetoFront front = moo.optimizeWeightedSum(process, feed, objectives, config, 8);
@@ -331,7 +331,7 @@ public class MultiObjectiveOptimizerTest {
     logger.info("============================");
     for (ParetoSolution sol : front) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "  Flow: %.0f kg/hr, Power: %.1f kW, Specific: %.1f kg/kWh%n",
-	  sol.getRawValue(0), sol.getRawValue(1), sol.getRawValue(2));
+          sol.getRawValue(0), sol.getRawValue(1), sol.getRawValue(2));
     }
   }
 
@@ -341,10 +341,10 @@ public class MultiObjectiveOptimizerTest {
     Stream feed = (Stream) process.getUnit("Feed");
 
     List<ObjectiveFunction> objectives = Arrays.asList(StandardObjective.MAXIMIZE_THROUGHPUT,
-	StandardObjective.MINIMIZE_POWER);
+        StandardObjective.MINIMIZE_POWER);
 
     OptimizationConfig config = new OptimizationConfig(1000.0, 12000.0).rateUnit("kg/hr").tolerance(50.0)
-	.maxIterations(15);
+        .maxIterations(15);
 
     MultiObjectiveOptimizer moo = new MultiObjectiveOptimizer();
     ParetoFront front = moo.optimizeWeightedSum(process, feed, objectives, config, 15);
@@ -362,17 +362,17 @@ public class MultiObjectiveOptimizerTest {
 
     if (maxThroughput != null) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "Max Throughput: %.0f kg/hr at %.1f kW%n",
-	  maxThroughput.getRawValue(0), maxThroughput.getRawValue(1));
+          maxThroughput.getRawValue(0), maxThroughput.getRawValue(1));
     }
     if (minPower != null) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "Min Power: %.1f kW at %.0f kg/hr%n", minPower.getRawValue(1),
-	  minPower.getRawValue(0));
+          minPower.getRawValue(0));
     }
 
     ParetoSolution knee = front.findKneePoint();
     if (knee != null) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "Knee Point: %.0f kg/hr at %.1f kW%n", knee.getRawValue(0),
-	  knee.getRawValue(1));
+          knee.getRawValue(1));
     }
 
     Assertions.assertTrue(spacing >= 0, "Spacing should be non-negative");
@@ -384,17 +384,17 @@ public class MultiObjectiveOptimizerTest {
     Stream feed = (Stream) process.getUnit("Feed");
 
     List<ObjectiveFunction> objectives = Arrays.asList(StandardObjective.MAXIMIZE_THROUGHPUT,
-	StandardObjective.MINIMIZE_POWER);
+        StandardObjective.MINIMIZE_POWER);
 
     OptimizationConfig config = new OptimizationConfig(2000.0, 10000.0).rateUnit("kg/hr").tolerance(100.0)
-	.maxIterations(10);
+        .maxIterations(10);
 
     // Track progress
     final int[] progressCalls = { 0 };
     MultiObjectiveOptimizer moo = new MultiObjectiveOptimizer().onProgress((iteration, total, solution) -> {
       progressCalls[0]++;
       logger.printf(org.apache.logging.log4j.Level.INFO, "Progress: %d/%d - %s%n", iteration, total,
-	  solution != null ? String.format("Flow=%.0f", solution.getRawValue(0)) : "N/A");
+          solution != null ? String.format("Flow=%.0f", solution.getRawValue(0)) : "N/A");
     });
 
     ParetoFront front = moo.optimizeWeightedSum(process, feed, objectives, config, 5);
@@ -446,10 +446,10 @@ public class MultiObjectiveOptimizerTest {
     Stream feed = (Stream) process.getUnit("Feed");
 
     List<ObjectiveFunction> objectives = Arrays.asList(StandardObjective.MAXIMIZE_THROUGHPUT,
-	StandardObjective.MINIMIZE_POWER);
+        StandardObjective.MINIMIZE_POWER);
 
     OptimizationConfig config = new OptimizationConfig(2000.0, 10000.0).rateUnit("kg/hr").tolerance(100.0)
-	.maxIterations(10).defaultUtilizationLimit(1.0);
+        .maxIterations(10).defaultUtilizationLimit(1.0);
 
     MultiObjectiveOptimizer moo = new MultiObjectiveOptimizer();
     ParetoFront front = moo.optimizeWeightedSum(process, feed, objectives, config, 5);
@@ -474,7 +474,7 @@ public class MultiObjectiveOptimizerTest {
     double waterFlowRate = 22.0; // Sm3/hr
 
     neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos((273.15 + 45),
-	neqsim.thermo.ThermodynamicConstantsInterface.referencePressure);
+        neqsim.thermo.ThermodynamicConstantsInterface.referencePressure);
     fluid.addComponent("nitrogen", 0.01);
     fluid.addComponent("methane", 0.75);
     fluid.addComponent("ethane", 0.10);
@@ -491,7 +491,7 @@ public class MultiObjectiveOptimizerTest {
     fluid.setMultiPhaseCheck(true);
 
     neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-	fluid);
+        fluid);
     ops.TPflash();
     fluid.initPhysicalProperties();
 
@@ -503,13 +503,13 @@ public class MultiObjectiveOptimizerTest {
 
     // Use FlowRateAdjuster like in the existing FIV test
     neqsim.process.equipment.util.FlowRateAdjuster flowRateAdj = new neqsim.process.equipment.util.FlowRateAdjuster(
-	"Flow Adjuster", feed);
+        "Flow Adjuster", feed);
     flowRateAdj.setAdjustedFlowRates(gasFlowRate, oilFlowRate, waterFlowRate, "Sm3/hr");
     process.add(flowRateAdj);
 
     // Pipeline
     neqsim.process.equipment.pipeline.PipeBeggsAndBrills pipe = new neqsim.process.equipment.pipeline.PipeBeggsAndBrills(
-	"Gas Pipeline", flowRateAdj.getOutletStream());
+        "Gas Pipeline", flowRateAdj.getOutletStream());
     pipe.setPipeWallRoughness(1e-6);
     pipe.setLength(25.0);
     pipe.setElevation(0.0);
@@ -519,13 +519,13 @@ public class MultiObjectiveOptimizerTest {
 
     // Add FIV analyzers
     neqsim.process.measurementdevice.FlowInducedVibrationAnalyser fivLOF = new neqsim.process.measurementdevice.FlowInducedVibrationAnalyser(
-	"FIV-LOF", pipe);
+        "FIV-LOF", pipe);
     fivLOF.setMethod("LOF");
     fivLOF.setSupportArrangement("Stiff");
     process.add(fivLOF);
 
     neqsim.process.measurementdevice.FlowInducedVibrationAnalyser fivFRMS = new neqsim.process.measurementdevice.FlowInducedVibrationAnalyser(
-	"FIV-FRMS", pipe);
+        "FIV-FRMS", pipe);
     fivFRMS.setMethod("FRMS");
     process.add(fivFRMS);
 
@@ -585,7 +585,7 @@ public class MultiObjectiveOptimizerTest {
 
     // Manifold
     neqsim.process.equipment.manifold.Manifold manifold = new neqsim.process.equipment.manifold.Manifold(
-	"Production Manifold");
+        "Production Manifold");
     manifold.addStream(inlet1);
     manifold.addStream(inlet2);
     manifold.setSplitFactors(new double[] { 0.5, 0.5 }); // Split to 2 outlets

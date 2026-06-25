@@ -93,7 +93,7 @@ public class CompressorTrainTest {
 
     assertTrue(train.getPower("kW") > 0, "Should produce positive power");
     assertTrue(train.getInletScrubber() == null || !train.getInternalEquipment().contains(train.getInletScrubber()),
-	"Scrubber should not be in internal equipment when disabled");
+        "Scrubber should not be in internal equipment when disabled");
   }
 
   /**
@@ -235,7 +235,7 @@ public class CompressorTrainTest {
 
     double powerAt6250 = driver.getMaxAvailablePowerAtSpeed(6250.0);
     assertTrue(powerAt6250 > 32000 && powerAt6250 < 37000,
-	"Power at 6250 RPM should be between 32000 and 37000 kW: " + powerAt6250);
+        "Power at 6250 RPM should be between 32000 and 37000 kW: " + powerAt6250);
   }
 
   /**
@@ -277,7 +277,7 @@ public class CompressorTrainTest {
 
     CompressorDriver driver = new CompressorDriver(DriverType.ELECTRIC_MOTOR, 25000.0);
     assertThrows(IllegalArgumentException.class, () -> driver.loadMaxPowerCurveFromCsv(csvFile.getAbsolutePath(), "kW"),
-	"Should throw for insufficient data points");
+        "Should throw for insufficient data points");
   }
 
   // --- Anti-Surge in Speed Solve Mode Test ---
@@ -363,8 +363,8 @@ public class CompressorTrainTest {
     boolean hasSurgeMargin = false;
     for (String key : constraints.keySet()) {
       if (key.contains("surge") || key.contains("SURGE")) {
-	hasSurgeMargin = true;
-	break;
+        hasSurgeMargin = true;
+        break;
       }
     }
     assertTrue(hasSurgeMargin, "Should have a surge margin constraint");
@@ -372,6 +372,6 @@ public class CompressorTrainTest {
     // Max utilization should be >= 0
     double maxUtil = comp.getMaxUtilization();
     assertTrue(maxUtil >= 0.0 && !Double.isNaN(maxUtil),
-	"Max utilization should be a valid non-negative number: " + maxUtil);
+        "Max utilization should be a valid non-negative number: " + maxUtil);
   }
 }

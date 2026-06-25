@@ -130,10 +130,10 @@ public class ThroughputCaseRow implements Serializable {
     double capacityMargin = designValue - currentValue;
     double utilization = bottleneck.getUtilization();
     return new ThroughputCaseRow(caseNumber, throughputMultiplier, producerMultipliers, objectiveValue,
-	evaluation.isFeasible(), evaluation.isSimulationConverged(), bottleneck.getAreaName(),
-	bottleneck.getEquipmentName(), bottleneck.getConstraintName(), utilization, currentValue, designValue,
-	capacityMargin, 1.0 - utilization, bottleneck.getUnit(), evaluation.getErrorMessage(),
-	evaluation.getEvaluationTimeMs());
+        evaluation.isFeasible(), evaluation.isSimulationConverged(), bottleneck.getAreaName(),
+        bottleneck.getEquipmentName(), bottleneck.getConstraintName(), utilization, currentValue, designValue,
+        capacityMargin, 1.0 - utilization, bottleneck.getUnit(), evaluation.getErrorMessage(),
+        evaluation.getEvaluationTimeMs());
   }
 
   /**

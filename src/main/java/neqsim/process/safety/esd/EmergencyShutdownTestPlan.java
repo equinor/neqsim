@@ -232,12 +232,12 @@ public final class EmergencyShutdownTestPlan implements Serializable {
     Set<String> tags = new LinkedHashSet<String>(builder.monitoredLogicalTags);
     if (builder.tagMap != null) {
       for (OperationalTagBinding binding : builder.tagMap.getBindings()) {
-	tags.add(binding.getLogicalTag());
+        tags.add(binding.getLogicalTag());
       }
     }
     for (EmergencyShutdownTestCriterion criterion : builder.criteria) {
       if (!criterion.getLogicalTag().isEmpty()) {
-	tags.add(criterion.getLogicalTag());
+        tags.add(criterion.getLogicalTag());
       }
     }
     return tags;
@@ -253,14 +253,14 @@ public final class EmergencyShutdownTestPlan implements Serializable {
     Map<String, String> units = new LinkedHashMap<String, String>(builder.monitoredUnits);
     if (builder.tagMap != null) {
       for (OperationalTagBinding binding : builder.tagMap.getBindings()) {
-	if (!binding.getUnit().isEmpty()) {
-	  units.put(binding.getLogicalTag(), binding.getUnit());
-	}
+        if (!binding.getUnit().isEmpty()) {
+          units.put(binding.getLogicalTag(), binding.getUnit());
+        }
       }
     }
     for (EmergencyShutdownTestCriterion criterion : builder.criteria) {
       if (!criterion.getLogicalTag().isEmpty() && !criterion.getUnit().isEmpty()) {
-	units.put(criterion.getLogicalTag(), criterion.getUnit());
+        units.put(criterion.getLogicalTag(), criterion.getUnit());
       }
     }
     return units;
@@ -398,7 +398,7 @@ public final class EmergencyShutdownTestPlan implements Serializable {
      */
     public Builder fieldData(String tag, double value) {
       if (tag != null && !tag.trim().isEmpty()) {
-	fieldData.put(tag.trim(), value);
+        fieldData.put(tag.trim(), value);
       }
       return this;
     }
@@ -411,11 +411,11 @@ public final class EmergencyShutdownTestPlan implements Serializable {
      */
     public Builder fieldData(Map<String, Double> values) {
       if (values != null) {
-	for (Map.Entry<String, Double> entry : values.entrySet()) {
-	  if (entry.getValue() != null) {
-	    fieldData(entry.getKey(), entry.getValue().doubleValue());
-	  }
-	}
+        for (Map.Entry<String, Double> entry : values.entrySet()) {
+          if (entry.getValue() != null) {
+            fieldData(entry.getKey(), entry.getValue().doubleValue());
+          }
+        }
       }
       return this;
     }
@@ -428,7 +428,7 @@ public final class EmergencyShutdownTestPlan implements Serializable {
      */
     public Builder criterion(EmergencyShutdownTestCriterion criterion) {
       if (criterion != null) {
-	criteria.add(criterion);
+        criteria.add(criterion);
       }
       return this;
     }
@@ -464,11 +464,11 @@ public final class EmergencyShutdownTestPlan implements Serializable {
      */
     public Builder monitor(String logicalTag, String unit) {
       if (logicalTag != null && !logicalTag.trim().isEmpty()) {
-	String key = logicalTag.trim();
-	monitoredLogicalTags.add(key);
-	if (unit != null && !unit.trim().isEmpty()) {
-	  monitoredUnits.put(key, unit.trim());
-	}
+        String key = logicalTag.trim();
+        monitoredLogicalTags.add(key);
+        if (unit != null && !unit.trim().isEmpty()) {
+          monitoredUnits.put(key, unit.trim());
+        }
       }
       return this;
     }
@@ -523,7 +523,7 @@ public final class EmergencyShutdownTestPlan implements Serializable {
      */
     private static void addText(List<String> target, String value) {
       if (value != null && !value.trim().isEmpty()) {
-	target.add(value.trim());
+        target.add(value.trim());
       }
     }
   }

@@ -272,8 +272,8 @@ public class PressureControlValve extends ControlValve {
   @Override
   public String toString() {
     return String.format(
-	"%s [Pressure Control Valve] - Mode: %s, SP: %.2f bara, PV: %.2f bara, Error: %.2f bara, Opening: %.1f%%",
-	getName(), autoMode ? "AUTO" : "MANUAL", pressureSetpoint, processVariable, controlError,
-	getPercentValveOpening());
+        "%s [Pressure Control Valve] - Mode: %s, SP: %.2f bara, PV: %.2f bara, Error: %.2f bara, Opening: %.1f%%",
+        getName(), autoMode ? "AUTO" : "MANUAL", pressureSetpoint, processVariable, controlError,
+        getPercentValveOpening());
   }
 }
