@@ -235,7 +235,7 @@ class WellFlowlineNetworkTest {
     // and the endpoint, so the endpoint sensitivity to manifold pressure is not 1.0. The secant
     // solver should still drive the facility outlet to the target.
     PipeBeggsAndBrills facilityLine = new PipeBeggsAndBrills("endpoint facility line",
-	network.getArrivalMixer().getOutletStream());
+        network.getArrivalMixer().getOutletStream());
     facilityLine.setLength(1500.0);
     facilityLine.setElevation(0.0);
     facilityLine.setDiameter(0.5);

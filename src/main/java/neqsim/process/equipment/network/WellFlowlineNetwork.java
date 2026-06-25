@@ -544,20 +544,20 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
 
       double nextGuess;
       if (haveSecantPoint) {
-	// Estimate the local endpoint sensitivity dP_endpoint/dP_manifold from the last two
-	// evaluations and take a secant (Newton-like) step. This converges far faster and more
-	// robustly than the unity-slope assumption when a facility pipeline with a flow-dependent
-	// pressure drop sits between the terminal manifold and the endpoint, where the true slope
-	// is not 1.0.
-	double slope = (achievedPressure - prevAchieved) / (manifoldGuess - prevGuess);
-	if (Double.isFinite(slope) && Math.abs(slope) > 1.0e-6) {
-	  nextGuess = manifoldGuess - error / slope;
-	} else {
-	  nextGuess = manifoldGuess - error;
-	}
+        // Estimate the local endpoint sensitivity dP_endpoint/dP_manifold from the last two
+        // evaluations and take a secant (Newton-like) step. This converges far faster and more
+        // robustly than the unity-slope assumption when a facility pipeline with a flow-dependent
+        // pressure drop sits between the terminal manifold and the endpoint, where the true slope
+        // is not 1.0.
+        double slope = (achievedPressure - prevAchieved) / (manifoldGuess - prevGuess);
+        if (Double.isFinite(slope) && Math.abs(slope) > 1.0e-6) {
+          nextGuess = manifoldGuess - error / slope;
+        } else {
+          nextGuess = manifoldGuess - error;
+        }
       } else {
-	// First correction: only one evaluation available, fall back to the unity-slope step.
-	nextGuess = manifoldGuess - error;
+        // First correction: only one evaluation available, fall back to the unity-slope step.
+        nextGuess = manifoldGuess - error;
       }
       nextGuess = Math.max(0.1, nextGuess);
 
