@@ -14,8 +14,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Regression tests for the dynamic compressor scenarios demonstrated in the public
- * {@code dynamiccompressor.ipynb} notebook.
+ * Regression tests for the dynamic compressor scenarios demonstrated in the public {@code dynamiccompressor.ipynb}
+ * notebook.
  *
  * @author NeqSim
  * @version 1.0
@@ -24,8 +24,7 @@ class DynamicCompressorNotebookRegressionTest {
   private static final double TIME_STEP_SECONDS = 1.0;
 
   /**
-   * A notebook-style speed increase should draw down the suction volume and pack the discharge
-   * volume.
+   * A notebook-style speed increase should draw down the suction volume and pack the discharge volume.
    */
   @Test
   void compressorSpeedUpDropsSuctionPressureAndRaisesDischargePressure() {
@@ -33,8 +32,7 @@ class DynamicCompressorNotebookRegressionTest {
     runTransientSteps(model.process, 20);
 
     double initialSuctionPressure = model.suctionSeparator.getGasOutStream().getPressure("bara");
-    double initialDischargePressure =
-        model.dischargeSeparator.getGasOutStream().getPressure("bara");
+    double initialDischargePressure = model.dischargeSeparator.getGasOutStream().getPressure("bara");
 
     model.compressor.setSpeed(11000.0);
     runTransientSteps(model.process, 80);
@@ -43,24 +41,24 @@ class DynamicCompressorNotebookRegressionTest {
     double finalDischargePressure = model.dischargeSeparator.getGasOutStream().getPressure("bara");
 
     assertTrue(finalSuctionPressure < initialSuctionPressure,
-        "suction pressure should drop after compressor speed-up: initial=" + initialSuctionPressure
-            + " bara, final=" + finalSuctionPressure + " bara");
+        "suction pressure should drop after compressor speed-up: initial=" + initialSuctionPressure + " bara, final="
+            + finalSuctionPressure + " bara");
     assertTrue(finalDischargePressure > initialDischargePressure,
-        "discharge pressure should rise after compressor speed-up: initial="
-            + initialDischargePressure + " bara, final=" + finalDischargePressure + " bara");
+        "discharge pressure should rise after compressor speed-up: initial=" + initialDischargePressure
+            + " bara, final=" + finalDischargePressure + " bara");
   }
 
   /**
-   * The pressure controller from the notebook scenario should move compressor speed so discharge
-   * pressure reaches the requested set point within a transient tolerance.
+   * The pressure controller from the notebook scenario should move compressor speed so discharge pressure reaches the
+   * requested set point within a transient tolerance.
    */
   @Test
   void pressureControllerReachesDischargePressureSetpoint() {
     DynamicCompressorProcess model = createNotebookStyleProcess(true);
     double pressureSetpoint = 22.0;
 
-    PressureTransmitter dischargePressureTransmitter =
-        new PressureTransmitter("PT discharge", model.dischargeSeparator.getGasOutStream());
+    PressureTransmitter dischargePressureTransmitter = new PressureTransmitter("PT discharge",
+        model.dischargeSeparator.getGasOutStream());
     ControllerDeviceBaseClass pressureController = new ControllerDeviceBaseClass("PC discharge");
     pressureController.setTransmitter(dischargePressureTransmitter);
     pressureController.setControllerSetPoint(pressureSetpoint, "bara");
@@ -73,13 +71,12 @@ class DynamicCompressorNotebookRegressionTest {
     double controlledPressure = model.dischargeSeparator.getGasOutStream().getPressure("bara");
 
     assertTrue(Math.abs(controlledPressure - pressureSetpoint) < 0.5,
-        "discharge pressure controller should reach setpoint: setpoint=" + pressureSetpoint
-            + " bara, final=" + controlledPressure + " bara, speed=" + model.compressor.getSpeed());
+        "discharge pressure controller should reach setpoint: setpoint=" + pressureSetpoint + " bara, final="
+            + controlledPressure + " bara, speed=" + model.compressor.getSpeed());
   }
 
   /**
-   * During the notebook flow-reduction disturbance the production anti-surge controller should open
-   * the recycle valve.
+   * During the notebook flow-reduction disturbance the production anti-surge controller should open the recycle valve.
    */
   @Test
   void antiSurgeOpensRecycleValveDuringFlowReduction() {
@@ -87,23 +84,20 @@ class DynamicCompressorNotebookRegressionTest {
     benchmark.run(true);
 
     assertTrue(benchmark.getMaximumValveOpening() > 5.0,
-        "anti-surge valve should open during flow reduction; max opening = "
-            + benchmark.getMaximumValveOpening());
+        "anti-surge valve should open during flow reduction; max opening = " + benchmark.getMaximumValveOpening());
     assertTrue(benchmark.isSurgeAvoided(),
         "anti-surge controller should keep the compressor out of surge; min margin = "
             + benchmark.getMinimumSurgeMargin());
   }
 
   /**
-   * Creates a compact dynamic compressor process with feed and discharge valves, suction and
-   * discharge separator inventories, and a generated compressor map.
+   * Creates a compact dynamic compressor process with feed and discharge valves, suction and discharge separator
+   * inventories, and a generated compressor map.
    *
-   * @param dynamicValvePressureCalculation true to calculate valve outlet pressures from Cv during
-   *        transient runs
+   * @param dynamicValvePressureCalculation true to calculate valve outlet pressures from Cv during transient runs
    * @return configured process model and key units
    */
-  private static DynamicCompressorProcess createNotebookStyleProcess(
-      boolean dynamicValvePressureCalculation) {
+  private static DynamicCompressorProcess createNotebookStyleProcess(boolean dynamicValvePressureCalculation) {
     SystemInterface gas = new SystemSrkEos(273.15 + 25.0, 35.0);
     gas.addComponent("methane", 0.90);
     gas.addComponent("ethane", 0.07);
@@ -125,8 +119,7 @@ class DynamicCompressorNotebookRegressionTest {
     suctionSeparator.setInternalDiameter(1.0);
     suctionSeparator.setSeparatorLength(2.0);
 
-    Compressor compressor =
-        new Compressor("dynamic compressor", suctionSeparator.getGasOutStream());
+    Compressor compressor = new Compressor("dynamic compressor", suctionSeparator.getGasOutStream());
     compressor.setCompressorChartType("interpolate and extrapolate");
     compressor.setUsePolytropicCalc(true);
     compressor.setPolytropicEfficiency(0.78);
@@ -135,13 +128,11 @@ class DynamicCompressorNotebookRegressionTest {
     compressor.setMinimumSpeed(8200.0);
     compressor.setMaximumSpeed(12500.0);
 
-    Separator dischargeSeparator =
-        new Separator("discharge separator", compressor.getOutletStream());
+    Separator dischargeSeparator = new Separator("discharge separator", compressor.getOutletStream());
     dischargeSeparator.setInternalDiameter(1.0);
     dischargeSeparator.setSeparatorLength(2.0);
 
-    ThrottlingValve dischargeValve =
-        new ThrottlingValve("discharge valve", dischargeSeparator.getGasOutStream());
+    ThrottlingValve dischargeValve = new ThrottlingValve("discharge valve", dischargeSeparator.getGasOutStream());
     dischargeValve.setOutletPressure(15.0, "bara");
     dischargeValve.setCv(dynamicValvePressureCalculation ? 2000.0 : 1200.0);
     dischargeValve.setPercentValveOpening(55.0);
@@ -201,8 +192,8 @@ class DynamicCompressorNotebookRegressionTest {
      * @param compressor dynamic compressor
      * @param dischargeSeparator discharge separator inventory
      */
-    private DynamicCompressorProcess(ProcessSystem process, Separator suctionSeparator,
-        Compressor compressor, Separator dischargeSeparator) {
+    private DynamicCompressorProcess(ProcessSystem process, Separator suctionSeparator, Compressor compressor,
+        Separator dischargeSeparator) {
       this.process = process;
       this.suctionSeparator = suctionSeparator;
       this.compressor = compressor;
