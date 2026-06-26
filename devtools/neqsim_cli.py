@@ -11,6 +11,7 @@ Usage:
     neqsim new-skill NAME    Scaffold a new AI skill
     neqsim skill CMD         Manage skills (list/search/install/remove/private-init)
     neqsim agent CMD         Manage agents (list/search/install/remove/validate/private-init)
+    neqsim paperlab CMD      Manage PaperLab VS Code agents and skills
 
 Run `neqsim <command> --help` for per-command options.
 """
@@ -54,6 +55,10 @@ COMMANDS = {
     "agent": {
         "module": "install_agent",
         "desc": "Manage agents (list/search/install/remove/validate/private-init)",
+    },
+    "paperlab": {
+        "module": "paperlab_install",
+        "desc": "Manage PaperLab VS Code agents and skills",
     },
     "install-skill": {
         "module": "install_skill",

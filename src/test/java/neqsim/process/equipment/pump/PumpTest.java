@@ -1,5 +1,6 @@
 package neqsim.process.equipment.pump;
 
+import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
@@ -274,5 +275,77 @@ public class PumpTest extends neqsim.NeqSimTest {
 
     double outTemp4_C = pump4.getOutletStream().getTemperature("C");
     Assertions.assertEquals(35.0, outTemp4_C, 0.5, "Deprecated setOutTemperature should still work");
+  }
+
+  @Test
+  void testDynamicSpeedAndPressureRamp() {
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 5.0);
+    fluid.addComponent("water", 1.0);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("dynamic feed", fluid);
+    feed.setFlowRate(10000.0, "kg/hr");
+    feed.setTemperature(25.0, "C");
+    feed.setPressure(5.0, "bara");
+    feed.run();
+
+    Pump pump = new Pump("dynamic pump", feed);
+    pump.setCalculateSteadyState(false);
+    pump.setOutletPressure(11.0, "bara");
+    pump.setDynamicOutletPressure(5.0);
+    pump.setOutletPressureRampRate(2.0);
+    pump.setSpeed(600.0);
+    pump.setDynamicSpeed(0.0);
+    pump.setSpeedRampRate(100.0);
+
+    pump.runTransient(1.0, UUID.randomUUID());
+
+    Assertions.assertEquals(100.0, pump.getDynamicSpeed(), 1.0e-9);
+    Assertions.assertEquals(7.0, pump.getDynamicOutletPressure(), 1.0e-9);
+    Assertions.assertEquals(7.0, pump.getOutletStream().getPressure("bara"), 1.0e-6);
+    Assertions.assertEquals(600.0, pump.getSpeed(), 1.0e-9, "Speed target should be preserved after transient run");
+
+    pump.runTransient(1.0, UUID.randomUUID());
+
+    Assertions.assertEquals(200.0, pump.getDynamicSpeed(), 1.0e-9);
+    Assertions.assertEquals(9.0, pump.getOutletStream().getPressure("bara"), 1.0e-6);
+    Assertions.assertTrue(pump.getDynamicPower("kW") >= 0.0);
+  }
+
+  @Test
+  void testDynamicTripCoastdownAndRestart() {
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 5.0);
+    fluid.addComponent("water", 1.0);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("trip feed", fluid);
+    feed.setFlowRate(10000.0, "kg/hr");
+    feed.setTemperature(25.0, "C");
+    feed.setPressure(5.0, "bara");
+    feed.run();
+
+    Pump pump = new Pump("trip pump", feed);
+    pump.setCalculateSteadyState(false);
+    pump.setOutletPressure(10.0, "bara");
+    pump.setDynamicOutletPressure(10.0);
+    pump.setSpeed(600.0);
+    pump.setDynamicSpeed(600.0);
+    pump.setTripCoastdownTimeConstant(2.0);
+
+    pump.trip();
+    pump.runTransient(1.0, UUID.randomUUID());
+
+    Assertions.assertTrue(pump.isTripped());
+    Assertions.assertTrue(pump.getDynamicSpeed() > 0.0);
+    Assertions.assertTrue(pump.getDynamicSpeed() < 600.0);
+
+    pump.restart();
+    pump.setSpeedRampRate(100.0);
+    double speedAfterTrip = pump.getDynamicSpeed();
+    pump.runTransient(1.0, UUID.randomUUID());
+
+    Assertions.assertFalse(pump.isTripped());
+    Assertions.assertTrue(pump.getDynamicSpeed() > speedAfterTrip);
+    Assertions.assertTrue(pump.getDynamicSpeed() <= speedAfterTrip + 100.0 + 1.0e-9);
   }
 }

@@ -129,6 +129,49 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
   private boolean lastUsePumpChart = false;
   private boolean lastCheckNPSH = false;
 
+  /** Dynamic shaft speed used by transient calculations, in rpm. */
+  private double dynamicSpeed = Double.NaN;
+
+  /**
+   * Dynamic outlet-pressure setpoint used by transient calculations, in the configured pressure unit.
+   */
+  private double dynamicOutletPressure = Double.NaN;
+
+  /** Dynamic shaft power after driver ramp limiting, in W. */
+  private double dynamicPower = 0.0;
+
+  /**
+   * Maximum speed increase/decrease rate in rpm/s. Non-positive or infinite values disable rate limiting.
+   */
+  private double speedRampRate = Double.POSITIVE_INFINITY;
+
+  /**
+   * First-order shaft-speed lag time constant in seconds. Non-positive values disable first-order lag.
+   */
+  private double speedTimeConstant = 0.0;
+
+  /** Maximum outlet-pressure setpoint slew rate in configured pressure units per second. */
+  private double outletPressureRampRate = Double.POSITIVE_INFINITY;
+
+  /**
+   * First-order outlet-pressure actuator lag time constant in seconds. Non-positive values disable first-order lag.
+   */
+  private double outletPressureTimeConstant = 0.0;
+
+  /**
+   * Maximum shaft-power increase/decrease rate in W/s. Non-positive or infinite values disable rate limiting.
+   */
+  private double powerRampRate = Double.POSITIVE_INFINITY;
+
+  /** Shaft-speed coastdown time constant in seconds used when the pump is tripped. */
+  private double tripCoastdownTimeConstant = 5.0;
+
+  /** Minimum speed treated as stopped in dynamic simulations, in rpm. */
+  private double stoppedSpeed = 1.0e-6;
+
+  /** Flag indicating that the pump driver is tripped and coasting down. */
+  private boolean tripped = false;
+
   /**
    * Constructor for Pump.
    *
@@ -223,6 +266,9 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
           ProcessEquipmentInterface.createStateEntry(out.getTemperature(temperatureUnit), temperatureUnit));
     }
     state.put("power", ProcessEquipmentInterface.createStateEntry(getPower("kW"), "kW"));
+    state.put("dynamicSpeed", ProcessEquipmentInterface.createStateEntry(getDynamicSpeed(), "rpm"));
+    state.put("dynamicPower", ProcessEquipmentInterface.createStateEntry(getDynamicPower("kW"), "kW"));
+    state.put("tripped", ProcessEquipmentInterface.createStateEntry(isTripped() ? 1.0 : 0.0, "-"));
     return state;
   }
 
@@ -303,6 +349,128 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
     updateRecalculationState();
     outStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Initializes transient state from the current steady-state setpoints and last calculated duty.
+   */
+  private void initializeDynamicState() {
+    if (!Double.isFinite(dynamicSpeed)) {
+      dynamicSpeed = speed;
+    }
+    if (!Double.isFinite(dynamicOutletPressure)) {
+      dynamicOutletPressure = pressure;
+    }
+    if (!Double.isFinite(dynamicPower)) {
+      dynamicPower = 0.0;
+    }
+  }
+
+  /**
+   * Advances a dynamic state toward a target with first-order lag and optional slew-rate limiting.
+   *
+   * @param current current state value
+   * @param target target value
+   * @param dt timestep in seconds
+   * @param timeConstant first-order time constant in seconds
+   * @param rampRate maximum absolute rate in state units per second
+   * @return updated state value
+   */
+  private double advanceDynamicValue(double current, double target, double dt, double timeConstant, double rampRate) {
+    if (!Double.isFinite(current)) {
+      current = target;
+    }
+    double candidate = target;
+    if (timeConstant > 0.0 && dt > 0.0) {
+      double alpha = 1.0 - Math.exp(-dt / timeConstant);
+      candidate = current + (target - current) * alpha;
+    }
+    if (Double.isFinite(rampRate) && rampRate > 0.0 && dt > 0.0) {
+      double maxChange = rampRate * dt;
+      double change = Math.max(-maxChange, Math.min(maxChange, candidate - current));
+      return current + change;
+    }
+    return candidate;
+  }
+
+  /**
+   * Updates the dynamic driver-load state toward the requested hydraulic duty.
+   *
+   * @param requestedPower requested shaft power in W
+   * @param dt timestep in seconds
+   */
+  private void updateDynamicPower(double requestedPower, double dt) {
+    dynamicPower = advanceDynamicValue(dynamicPower, requestedPower, dt, 0.0, powerRampRate);
+  }
+
+  /**
+   * Applies zero-speed pump state by propagating inlet conditions to the outlet without added head.
+   *
+   * @param id current calculation identifier
+   */
+  private void applyStoppedPumpState(UUID id) {
+    thermoSystem = inStream.getThermoSystem().clone();
+    thermoSystem.setPressure(inStream.getPressure(pressureUnit), pressureUnit);
+    thermoSystem.init(3);
+    dH = 0.0;
+    dynamicPower = 0.0;
+    outStream.setThermoSystem(thermoSystem);
+    finishRun(id);
+  }
+
+  /**
+   * Runs an attached controller against the pump speed target.
+   *
+   * @param dt timestep in seconds
+   * @param id current calculation identifier
+   */
+  public void runController(double dt, UUID id) {
+    if (hasController && getController().isActive()) {
+      getController().runTransient(this.speed, dt, id);
+      this.speed = Math.max(0.0, getController().getResponse());
+    }
+    setCalculationIdentifier(id);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void runTransient(double dt, UUID id) {
+    if (getCalculateSteadyState()) {
+      run(id);
+      increaseTime(dt);
+      return;
+    }
+
+    initializeDynamicState();
+    runController(dt, id);
+
+    double targetSpeed = tripped ? 0.0 : speed;
+    if (tripped) {
+      dynamicSpeed = advanceDynamicValue(dynamicSpeed, 0.0, dt, tripCoastdownTimeConstant, Double.POSITIVE_INFINITY);
+    } else {
+      dynamicSpeed = advanceDynamicValue(dynamicSpeed, targetSpeed, dt, speedTimeConstant, speedRampRate);
+    }
+    dynamicSpeed = Math.max(0.0, dynamicSpeed);
+
+    dynamicOutletPressure = advanceDynamicValue(dynamicOutletPressure, pressure, dt, outletPressureTimeConstant,
+        outletPressureRampRate);
+
+    double targetSpeedBackup = speed;
+    double targetPressureBackup = pressure;
+    speed = dynamicSpeed;
+    pressure = dynamicOutletPressure;
+    try {
+      if (dynamicSpeed <= stoppedSpeed) {
+        applyStoppedPumpState(id);
+      } else {
+        run(id);
+        updateDynamicPower(dH, dt);
+      }
+    } finally {
+      speed = targetSpeedBackup;
+      pressure = targetPressureBackup;
+    }
+    increaseTime(dt);
   }
 
   /** {@inheritDoc} */
@@ -717,6 +885,230 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
    */
   public double getSpeed() {
     return speed;
+  }
+
+  /**
+   * Gets the actual transient shaft speed used by {@link #runTransient(double, UUID)}.
+   *
+   * @return dynamic shaft speed in rpm
+   */
+  public double getDynamicSpeed() {
+    return Double.isFinite(dynamicSpeed) ? dynamicSpeed : speed;
+  }
+
+  /**
+   * Sets the actual transient shaft speed initial condition.
+   *
+   * @param dynamicSpeed dynamic shaft speed in rpm
+   */
+  public void setDynamicSpeed(double dynamicSpeed) {
+    this.dynamicSpeed = Math.max(0.0, dynamicSpeed);
+  }
+
+  /**
+   * Gets the actual transient outlet-pressure setpoint.
+   *
+   * @return dynamic outlet pressure in the configured pressure unit
+   */
+  public double getDynamicOutletPressure() {
+    return Double.isFinite(dynamicOutletPressure) ? dynamicOutletPressure : pressure;
+  }
+
+  /**
+   * Sets the actual transient outlet-pressure initial condition.
+   *
+   * @param dynamicOutletPressure dynamic outlet pressure in the configured pressure unit
+   */
+  public void setDynamicOutletPressure(double dynamicOutletPressure) {
+    this.dynamicOutletPressure = dynamicOutletPressure;
+  }
+
+  /**
+   * Gets the dynamic driver-load state.
+   *
+   * @return dynamic shaft power in W
+   */
+  public double getDynamicPower() {
+    return dynamicPower;
+  }
+
+  /**
+   * Gets the dynamic driver-load state in a requested unit.
+   *
+   * @param unit power unit string
+   * @return dynamic shaft power in the requested unit
+   */
+  public double getDynamicPower(String unit) {
+    neqsim.util.unit.PowerUnit powerUnit = new neqsim.util.unit.PowerUnit(dynamicPower, "W");
+    return powerUnit.getValue(unit);
+  }
+
+  /**
+   * Sets the dynamic driver-load initial condition.
+   *
+   * @param dynamicPower dynamic shaft power in W
+   */
+  public void setDynamicPower(double dynamicPower) {
+    this.dynamicPower = Math.max(0.0, dynamicPower);
+  }
+
+  /**
+   * Sets the maximum shaft-speed ramp rate.
+   *
+   * @param speedRampRate maximum speed change rate in rpm/s
+   */
+  public void setSpeedRampRate(double speedRampRate) {
+    this.speedRampRate = speedRampRate;
+  }
+
+  /**
+   * Gets the maximum shaft-speed ramp rate.
+   *
+   * @return maximum speed change rate in rpm/s
+   */
+  public double getSpeedRampRate() {
+    return speedRampRate;
+  }
+
+  /**
+   * Sets the shaft-speed first-order time constant.
+   *
+   * @param speedTimeConstant time constant in seconds
+   */
+  public void setSpeedTimeConstant(double speedTimeConstant) {
+    this.speedTimeConstant = Math.max(0.0, speedTimeConstant);
+  }
+
+  /**
+   * Gets the shaft-speed first-order time constant.
+   *
+   * @return time constant in seconds
+   */
+  public double getSpeedTimeConstant() {
+    return speedTimeConstant;
+  }
+
+  /**
+   * Sets the outlet-pressure setpoint ramp rate.
+   *
+   * @param outletPressureRampRate maximum pressure change rate in configured pressure units per second
+   */
+  public void setOutletPressureRampRate(double outletPressureRampRate) {
+    this.outletPressureRampRate = outletPressureRampRate;
+  }
+
+  /**
+   * Gets the outlet-pressure setpoint ramp rate.
+   *
+   * @return maximum pressure change rate in configured pressure units per second
+   */
+  public double getOutletPressureRampRate() {
+    return outletPressureRampRate;
+  }
+
+  /**
+   * Sets the outlet-pressure setpoint first-order time constant.
+   *
+   * @param outletPressureTimeConstant time constant in seconds
+   */
+  public void setOutletPressureTimeConstant(double outletPressureTimeConstant) {
+    this.outletPressureTimeConstant = Math.max(0.0, outletPressureTimeConstant);
+  }
+
+  /**
+   * Gets the outlet-pressure setpoint first-order time constant.
+   *
+   * @return time constant in seconds
+   */
+  public double getOutletPressureTimeConstant() {
+    return outletPressureTimeConstant;
+  }
+
+  /**
+   * Sets the dynamic driver-load ramp rate.
+   *
+   * @param powerRampRate maximum power change rate in W/s
+   */
+  public void setPowerRampRate(double powerRampRate) {
+    this.powerRampRate = powerRampRate;
+  }
+
+  /**
+   * Gets the dynamic driver-load ramp rate.
+   *
+   * @return maximum power change rate in W/s
+   */
+  public double getPowerRampRate() {
+    return powerRampRate;
+  }
+
+  /**
+   * Sets the trip coastdown time constant.
+   *
+   * @param tripCoastdownTimeConstant coastdown time constant in seconds
+   */
+  public void setTripCoastdownTimeConstant(double tripCoastdownTimeConstant) {
+    this.tripCoastdownTimeConstant = Math.max(0.0, tripCoastdownTimeConstant);
+  }
+
+  /**
+   * Gets the trip coastdown time constant.
+   *
+   * @return coastdown time constant in seconds
+   */
+  public double getTripCoastdownTimeConstant() {
+    return tripCoastdownTimeConstant;
+  }
+
+  /**
+   * Sets the minimum shaft speed treated as stopped.
+   *
+   * @param stoppedSpeed stopped-speed threshold in rpm
+   */
+  public void setStoppedSpeed(double stoppedSpeed) {
+    this.stoppedSpeed = Math.max(0.0, stoppedSpeed);
+  }
+
+  /**
+   * Gets the minimum shaft speed treated as stopped.
+   *
+   * @return stopped-speed threshold in rpm
+   */
+  public double getStoppedSpeed() {
+    return stoppedSpeed;
+  }
+
+  /**
+   * Trips the pump driver so transient calculations coast the shaft toward zero speed.
+   */
+  public void trip() {
+    tripped = true;
+  }
+
+  /**
+   * Restarts the pump driver so transient calculations ramp toward the configured speed target.
+   */
+  public void restart() {
+    tripped = false;
+  }
+
+  /**
+   * Checks whether the pump driver is tripped.
+   *
+   * @return true if the pump is tripped
+   */
+  public boolean isTripped() {
+    return tripped;
+  }
+
+  /**
+   * Resets transient state so the next transient run reinitializes from steady-state setpoints.
+   */
+  public void resetDynamicState() {
+    dynamicSpeed = Double.NaN;
+    dynamicOutletPressure = Double.NaN;
+    dynamicPower = 0.0;
+    tripped = false;
   }
 
   /**

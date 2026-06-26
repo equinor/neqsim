@@ -539,7 +539,7 @@ public class Compressor extends TwoPortEquipment
 
     double houtGuess = hinn + dH / polytropicEfficiency;
     thermoOps.PHflash(houtGuess, 0);
-    System.out.println("TEMPERATURE .." + getThermoSystem().getTemperature());
+    logger.debug("Compressor outlet temperature after PH flash: {}", getThermoSystem().getTemperature());
     return getThermoSystem().getPressure();
   }
 

@@ -385,6 +385,38 @@ class TestPaperRenderer:
             assert "abstract_words_max" in data, f"{profile_file.name} missing abstract_words_max"
 
 
+class TestPaperWorkflowDefinitions:
+    def test_new_paper_workflow_includes_professional_gates(self):
+        """The formal new-paper workflow includes the professional PaperLab gates."""
+        workflow_path = PAPERLAB_ROOT / "workflows" / "new_paper.yaml"
+        data = yaml.safe_load(workflow_path.read_text(encoding="utf-8"))
+        stages = data["stages"]
+        by_name = {stage["name"]: stage for stage in stages}
+
+        expected_agents = {
+            "opportunity_mining": "paper_opportunity_miner",
+            "journal_positioning": "journal_fit_strategist",
+            "hypothesis_benchmark_design": "hypothesis_benchmark_compiler",
+            "reference_data_curation": "dataset_and_reference_curator",
+            "derivation_verification": "mathematical_derivation_verifier",
+            "simulated_review": "reviewer_simulator_panel",
+            "replication_package": "replication_package_engineer",
+        }
+
+        for stage_name, agent_name in expected_agents.items():
+            assert stage_name in by_name
+            assert by_name[stage_name]["agent"] == agent_name
+            assert by_name[stage_name].get("outputs")
+            assert by_name[stage_name].get("validation")
+
+        stage_order = [stage["name"] for stage in stages]
+        assert stage_order.index("journal_positioning") < stage_order.index("plan")
+        assert stage_order.index("hypothesis_benchmark_design") < stage_order.index("benchmark")
+        assert stage_order.index("reference_data_curation") < stage_order.index("benchmark")
+        assert stage_order.index("simulated_review") < stage_order.index("format")
+        assert stage_order.index("replication_package") < stage_order.index("format")
+
+
 # ═══════════════════════════════════════════════════════════════════════
 # Test: status command
 # ═══════════════════════════════════════════════════════════════════════

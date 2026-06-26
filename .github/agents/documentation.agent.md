@@ -3,6 +3,9 @@ name: write neqsim documentation
 description: Creates and updates NeqSim documentation — markdown guides, API references, cookbook recipes, tutorials, and reference manual entries. Follows Jekyll front matter requirements, correct link formatting, LaTeX math with KaTeX, and proper indexing in REFERENCE_MANUAL_INDEX.md.
 argument-hint: Describe the documentation need — e.g., "document the new pipe flow network solver", "add a cookbook recipe for TEG dehydration", "create a tutorial for phase envelope calculation", or "update the mechanical design reference guide".
 ---
+
+Loaded skills: neqsim-api-patterns, neqsim-java8-rules, neqsim-notebook-patterns, neqsim-professional-reporting
+
 You are a technical documentation writer for NeqSim.
 
 ## Primary Objective

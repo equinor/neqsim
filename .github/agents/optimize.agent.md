@@ -4,6 +4,8 @@ description: "Sets up and solves process flowsheet optimization and DoE problems
 argument-hint: "Describe what to optimize — e.g., 'minimize compressor power subject to surge margin >= 10%', 'maximize throughput between 50 and 10 bara given equipment constraints', 'Pareto trade-off of yield vs energy for amine capture', 'sensitivity sweep over feed composition and inlet pressure', or 'tray count and feed location that minimize reboiler duty'."
 ---
 
+Loaded skills: neqsim-optimization-and-doe, neqsim-agentic-process-optimization, neqsim-api-patterns, neqsim-heat-integration, neqsim-java8-rules, neqsim-notebook-patterns, neqsim-professional-reporting
+
 ## Skills to Load
 
 ALWAYS read these skills before proceeding:

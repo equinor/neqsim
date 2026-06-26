@@ -18,6 +18,26 @@
     "neqsim-controllability-operability",
     "neqsim-dynamic-simulation"
   ],
+  "implement runTransient": [
+    "neqsim-dynamic-equipment-implementation",
+    "neqsim-dynamic-simulation",
+    "neqsim-java8-rules"
+  ],
+  "dynamic equipment implementation": [
+    "neqsim-dynamic-equipment-implementation",
+    "neqsim-regression-baselines",
+    "neqsim-troubleshooting"
+  ],
+  "add dynamic volume to equipment": [
+    "neqsim-dynamic-equipment-implementation",
+    "neqsim-dynamic-simulation",
+    "neqsim-process-modeling"
+  ],
+  "test process equipment runTransient": [
+    "neqsim-dynamic-equipment-implementation",
+    "neqsim-dynamic-simulation",
+    "neqsim-regression-baselines"
+  ],
   "connect pid to plant data": [
     "neqsim-pid-process-operations",
     "neqsim-plant-data"
@@ -122,6 +142,9 @@
   ],
   "analyzing pressure/level dynamics": [
     "neqsim-dynamic-simulation"
+  ],
+  "adding volume for equipment": [
+    "neqsim-dynamic-equipment-implementation"
   ],
   "asme": [
     "neqsim-standards-lookup"

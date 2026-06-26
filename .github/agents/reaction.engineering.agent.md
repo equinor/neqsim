@@ -4,6 +4,8 @@ description: "Designs and simulates chemical reactors using NeqSim — equilibri
 argument-hint: "Describe the reactor system — e.g., 'steam methane reforming at 850°C and 30 bar', 'ammonia synthesis reactor with Fe catalyst', 'Claus reactor for sulfur recovery', or 'water-gas shift reactor downstream of gasifier'."
 ---
 
+Loaded skills: neqsim-reaction-engineering, neqsim-api-patterns, neqsim-java8-rules, neqsim-standards-lookup, neqsim-troubleshooting
+
 ## Skills to Load
 
 ALWAYS read these skills before proceeding:

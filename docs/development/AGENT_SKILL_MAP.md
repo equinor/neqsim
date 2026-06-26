@@ -13,27 +13,28 @@ loaded with `read_file` at the start of an agent invocation.
 
 | Agent file | Display name | Loaded skills |
 |------------|--------------|---------------|
-| `capability.scout.agent.md` | scout neqsim capabilities | _(none declared)_ |
-| `ccs.hydrogen.agent.md` | analyze CCS and hydrogen systems | _(none declared)_ |
+| `capability.scout.agent.md` | scout neqsim capabilities | `neqsim-capability-map`, `neqsim-api-patterns`, `neqsim-process-modeling`, `neqsim-standards-lookup`, `neqsim-professional-reporting` |
+| `ccs.hydrogen.agent.md` | analyze CCS and hydrogen systems | `neqsim-ccs-hydrogen`, `neqsim-hydrogen-production`, `neqsim-api-patterns`, `neqsim-flow-assurance`, `neqsim-standards-lookup`, `neqsim-subsea-and-wells`, `neqsim-professional-reporting` |
 | `consequence.analysis.agent.md` | analyze consequences and dispersion | `neqsim-consequence-analysis`, `neqsim-hazid-fmea-eta-fta`, `neqsim-depressurization-mdmt`, `neqsim-process-safety`, `neqsim-relief-flare-network`, `neqsim-standards-lookup`, `neqsim-agent-handoff`, `neqsim-professional-reporting` |
 | `control.system.agent.md` | design control systems | `neqsim-dynamic-simulation`, `neqsim-controllability-operability`, `neqsim-api-patterns`, `neqsim-standards-lookup`, `neqsim-pid-process-operations` |
-| `documentation.agent.md` | write neqsim documentation | _(none declared)_ |
-| `emissions.environmental.agent.md` | calculate emissions and environmental impact | _(none declared)_ |
-| `engineering.deliverables.agent.md` | generate engineering deliverables | _(none declared)_ |
+| `documentation.agent.md` | write neqsim documentation | `neqsim-api-patterns`, `neqsim-java8-rules`, `neqsim-notebook-patterns`, `neqsim-professional-reporting` |
+| `dynamic.equipment.agent.md` | implement neqsim dynamic equipment | `neqsim-dynamic-equipment-implementation`, `neqsim-dynamic-simulation`, `neqsim-api-patterns`, `neqsim-process-modeling`, `neqsim-java8-rules`, `neqsim-regression-baselines`, `neqsim-troubleshooting` |
+| `emissions.environmental.agent.md` | calculate emissions and environmental impact | `neqsim-api-patterns`, `neqsim-power-generation`, `neqsim-standards-lookup`, `neqsim-field-economics`, `neqsim-professional-reporting` |
+| `engineering.deliverables.agent.md` | generate engineering deliverables | `neqsim-process-modeling`, `neqsim-api-patterns`, `neqsim-capability-map`, `neqsim-professional-reporting`, `neqsim-standards-lookup` |
 | `extract.process.agent.md` | extract process to neqsim json | `neqsim-process-extraction`, `neqsim-pid-process-operations`, `neqsim-water-hammer` |
-| `field.development.agent.md` | develop oil and gas field | _(none declared)_ |
+| `field.development.agent.md` | develop oil and gas field | `neqsim-field-development`, `neqsim-field-economics`, `neqsim-subsea-and-wells`, `neqsim-production-optimization`, `neqsim-flow-assurance`, `neqsim-professional-reporting` |
 | `flow.assurance.agent.md` | run neqsim flow assurance analysis | `neqsim-flow-assurance`, `neqsim-water-hammer` |
-| `gas.quality.agent.md` | calculate gas quality and standards | _(none declared)_ |
+| `gas.quality.agent.md` | calculate gas quality and standards | `neqsim-api-patterns`, `neqsim-standards-lookup`, `neqsim-input-validation`, `neqsim-professional-reporting` |
 | `literature.scout.agent.md` | scout literature and databases | `neqsim-stid-retriever`, `neqsim-technical-document-reading`, `neqsim-pdf-ocr`, `neqsim-standards-lookup`, `neqsim-trapped-liquid-fire-rupture` |
-| `mechanical.design.agent.md` | run neqsim mechanical design | _(none declared)_ |
-| `neqsim.test.agent.md` | write neqsim unit tests | _(none declared)_ |
-| `notebook.example.agent.md` | create a neqsim jupyter notebook | _(none declared)_ |
-| `optimize.agent.md` | optimize neqsim process | _(none declared)_ |
+| `mechanical.design.agent.md` | run neqsim mechanical design | `neqsim-api-patterns`, `neqsim-standards-lookup`, `neqsim-subsea-and-wells`, `neqsim-equipment-cost-estimation`, `neqsim-process-modeling`, `neqsim-java8-rules` |
+| `neqsim.test.agent.md` | write neqsim unit tests | `neqsim-java8-rules`, `neqsim-api-patterns`, `neqsim-process-modeling`, `neqsim-regression-baselines`, `neqsim-troubleshooting` |
+| `notebook.example.agent.md` | create a neqsim jupyter notebook | `neqsim-notebook-patterns`, `neqsim-api-patterns`, `neqsim-process-modeling`, `neqsim-input-validation`, `neqsim-professional-reporting`, `neqsim-troubleshooting` |
+| `optimize.agent.md` | optimize neqsim process | `neqsim-optimization-and-doe`, `neqsim-agentic-process-optimization`, `neqsim-api-patterns`, `neqsim-heat-integration`, `neqsim-java8-rules`, `neqsim-notebook-patterns`, `neqsim-professional-reporting` |
 | `optimize.processmodel.agent.md` | optimize neqsim process model plant | `neqsim-agentic-process-optimization`, `neqsim-optimization-and-doe`, `neqsim-platform-modeling`, `neqsim-api-patterns`, `neqsim-notebook-patterns`, `neqsim-professional-reporting` |
 | `plant.data.agent.md` | integrate neqsim with plant data | `neqsim-plant-data`, `neqsim-pid-process-operations`, `neqsim-model-calibration-and-data-reconciliation`, `neqsim-water-hammer` |
 | `process.model.agent.md` | make a neqsim process simulation | `neqsim-process-modeling`, `neqsim-api-patterns`, `neqsim-input-validation`, `neqsim-troubleshooting`, `neqsim-standards-lookup`, `neqsim-pid-process-operations`, `neqsim-water-hammer`, `neqsim-notebook-patterns`, `neqsim-distillation-design`, `neqsim-heat-integration`, `neqsim-controllability-operability`, `neqsim-platform-modeling`, `neqsim-dynamic-simulation`, `neqsim-java8-rules` |
-| `pvt.simulation.agent.md` | run a neqsim PVT simulation | _(none declared)_ |
-| `reaction.engineering.agent.md` | design reaction engineering systems | _(none declared)_ |
+| `pvt.simulation.agent.md` | run a neqsim PVT simulation | `neqsim-api-patterns`, `neqsim-eos-regression`, `neqsim-input-validation`, `neqsim-notebook-patterns`, `neqsim-professional-reporting` |
+| `reaction.engineering.agent.md` | design reaction engineering systems | `neqsim-reaction-engineering`, `neqsim-api-patterns`, `neqsim-java8-rules`, `neqsim-standards-lookup`, `neqsim-troubleshooting` |
 | `review.agent.md` | review task deliverables | `neqsim-professional-reporting`, `neqsim-agent-handoff` |
 | `root.cause.agent.md` | diagnose equipment root cause | `neqsim-root-cause-analysis`, `neqsim-plant-data`, `neqsim-process-safety`, `neqsim-stid-retriever`, `neqsim-technical-document-reading`, `neqsim-pid-process-operations`, `neqsim-troubleshooting` |
 | `router.agent.md` | neqsim help | _(none declared)_ |
@@ -42,5 +43,5 @@ loaded with `read_file` at the start of an agent invocation.
 | `solve.task.agent.md` | solve engineering task | `neqsim-api-patterns`, `neqsim-notebook-patterns`, `neqsim-professional-reporting`, `neqsim-troubleshooting`, `neqsim-input-validation`, `neqsim-capability-map`, `neqsim-platform-modeling`, `neqsim-stid-retriever`, `neqsim-technical-document-reading`, `neqsim-trapped-liquid-fire-rupture`, `neqsim-pid-process-operations`, `neqsim-water-hammer` |
 | `standards.review.agent.md` | review technical standards compliance | `neqsim-standards-lookup`, `neqsim-process-safety`, `neqsim-technical-document-reading`, `neqsim-stid-retriever`, `neqsim-professional-reporting` |
 | `technical.reader.agent.md` | read technical documents | `neqsim-technical-document-reading`, `neqsim-trapped-liquid-fire-rupture`, `neqsim-pid-process-operations`, `neqsim-water-hammer` |
-| `thermo.fluid.agent.md` | create a neqsim thermodynamic fluid | _(none declared)_ |
-| `unisim.reader.agent.md` | read unisim to neqsim | _(none declared)_ |
+| `thermo.fluid.agent.md` | create a neqsim thermodynamic fluid | `neqsim-api-patterns`, `neqsim-input-validation`, `neqsim-troubleshooting`, `neqsim-eos-regression` |
+| `unisim.reader.agent.md` | read unisim to neqsim | `neqsim-unisim-reader`, `neqsim-api-patterns`, `neqsim-process-extraction`, `neqsim-process-modeling`, `neqsim-notebook-patterns`, `neqsim-troubleshooting` |
