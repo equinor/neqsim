@@ -1,7 +1,12 @@
 package neqsim.process.equipment;
 
+import java.lang.reflect.Constructor;
 import java.util.Objects;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.absorber.SimpleAbsorber;
 import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
+import neqsim.process.equipment.absorber.WaterStripperColumn;
 import neqsim.process.equipment.battery.BatteryStorage;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.distillation.DistillationColumn;
@@ -9,6 +14,7 @@ import neqsim.process.equipment.ejector.Ejector;
 import neqsim.process.equipment.electrolyzer.CO2Electrolyzer;
 import neqsim.process.equipment.electrolyzer.Electrolyzer;
 import neqsim.process.equipment.expander.Expander;
+import neqsim.process.equipment.filter.Filter;
 import neqsim.process.equipment.flare.Flare;
 import neqsim.process.equipment.flare.FlareStack;
 import neqsim.process.equipment.heatexchanger.Cooler;
@@ -67,6 +73,30 @@ import neqsim.thermo.system.SystemInterface;
  * Factory for creating process equipment.
  */
 public final class EquipmentFactory {
+
+  /** Logger instance for the factory. */
+  private static final Logger logger = LogManager.getLogger(EquipmentFactory.class);
+
+  /**
+   * Equipment sub-packages probed by the reflection fallback when an equipment type is not handled by the curated
+   * {@link EquipmentEnum} switch. Searching these packages lets every concrete process equipment class that exposes a
+   * {@code (String name)} constructor be created by its class name, so all current and future equipment is reachable by
+   * name and through {@code JsonProcessBuilder} without a dedicated enum entry.
+   */
+  private static final String[] EQUIPMENT_PACKAGES = new String[] { "neqsim.process.equipment.absorber",
+      "neqsim.process.equipment.adsorber", "neqsim.process.equipment.battery", "neqsim.process.equipment.blackoil",
+      "neqsim.process.equipment.compressor", "neqsim.process.equipment.diffpressure",
+      "neqsim.process.equipment.distillation", "neqsim.process.equipment.ejector",
+      "neqsim.process.equipment.electrolyzer", "neqsim.process.equipment.expander", "neqsim.process.equipment.filter",
+      "neqsim.process.equipment.flare", "neqsim.process.equipment.heatexchanger", "neqsim.process.equipment.lng",
+      "neqsim.process.equipment.manifold", "neqsim.process.equipment.membrane", "neqsim.process.equipment.mixer",
+      "neqsim.process.equipment.network", "neqsim.process.equipment.pipeline",
+      "neqsim.process.equipment.pipeline.twophasepipe", "neqsim.process.equipment.powergeneration",
+      "neqsim.process.equipment.powergeneration.gasturbine", "neqsim.process.equipment.pump",
+      "neqsim.process.equipment.reactor", "neqsim.process.equipment.reservoir", "neqsim.process.equipment.separator",
+      "neqsim.process.equipment.splitter", "neqsim.process.equipment.stream", "neqsim.process.equipment.subsea",
+      "neqsim.process.equipment.tank", "neqsim.process.equipment.util", "neqsim.process.equipment.valve",
+      "neqsim.process.equipment.watertreatment", "neqsim.process.equipment.well" };
 
   private EquipmentFactory() {
   }
@@ -186,7 +216,14 @@ public final class EquipmentFactory {
       return createEquipment(name, EquipmentEnum.DistillationColumn);
     default:
       EquipmentEnum enumType = resolveEquipmentEnum(equipmentType);
-      return createEquipment(name, enumType);
+      if (enumType != null) {
+        return createEquipment(name, enumType);
+      }
+      ProcessEquipmentInterface reflected = createByClassName(name, equipmentType);
+      if (reflected != null) {
+        return reflected;
+      }
+      throw new IllegalArgumentException("Unknown equipment type: " + equipmentType);
     }
   }
 
@@ -268,6 +305,12 @@ public final class EquipmentFactory {
       return new Expander(name);
     case SimpleTEGAbsorber:
       return new SimpleTEGAbsorber(name);
+    case WaterStripperColumn:
+      return new WaterStripperColumn(name);
+    case SimpleAbsorber:
+      return new SimpleAbsorber(name);
+    case Filter:
+      return new Filter(name);
     case Tank:
       return new Tank(name);
     case ComponentSplitter:
@@ -321,13 +364,25 @@ public final class EquipmentFactory {
       return new WaterHammerPipe(name);
     case StreamSaturatorUtil:
       return new StreamSaturatorUtil(name);
+    case Column:
     case DistillationColumn:
       return new DistillationColumn(name, 5, true, true);
     default:
+      ProcessEquipmentInterface reflected = createByClassName(name, equipmentType.name());
+      if (reflected != null) {
+        return reflected;
+      }
       throw new IllegalArgumentException("Unsupported equipment type: " + equipmentType.name());
     }
   }
 
+  /**
+   * Resolves an {@link EquipmentEnum} from a free-form type string, ignoring case and any whitespace, underscore, or
+   * dash separators.
+   *
+   * @param equipmentType the equipment type identifier
+   * @return the matching {@link EquipmentEnum}, or {@code null} if no enum constant matches
+   */
   private static EquipmentEnum resolveEquipmentEnum(String equipmentType) {
     String sanitized = equipmentType.replaceAll("[\\s_-]", "");
     for (EquipmentEnum value : EquipmentEnum.values()) {
@@ -335,7 +390,62 @@ public final class EquipmentFactory {
         return value;
       }
     }
-    throw new IllegalArgumentException("Unknown equipment type: " + equipmentType);
+    return null;
+  }
+
+  /**
+   * Reflection fallback that creates any concrete process equipment class exposing a {@code (String name)} constructor,
+   * located by its class name within the known equipment sub-packages. This guarantees that every current and future
+   * equipment class is constructible by name (and therefore through {@code JsonProcessBuilder}) without an explicit
+   * {@link EquipmentEnum} entry. The simple class name is matched case-sensitively; whitespace, underscore, and dash
+   * separators are stripped before probing.
+   *
+   * @param name the name to assign to the created equipment
+   * @param equipmentType the equipment class name, e.g. {@code "ControlValve"}
+   * @return the created equipment, or {@code null} if no matching class with a {@code (String)} constructor was found
+   */
+  private static ProcessEquipmentInterface createByClassName(String name, String equipmentType) {
+    String trimmed = equipmentType.trim();
+    String sanitized = trimmed.replaceAll("[\\s_-]", "");
+    for (String pkg : EQUIPMENT_PACKAGES) {
+      ProcessEquipmentInterface eq = tryInstantiate(pkg + "." + trimmed, name);
+      if (eq != null) {
+        return eq;
+      }
+      if (!sanitized.equals(trimmed)) {
+        eq = tryInstantiate(pkg + "." + sanitized, name);
+        if (eq != null) {
+          return eq;
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Attempts to instantiate the named class through its {@code (String name)} constructor, provided it is a concrete
+   * {@link ProcessEquipmentInterface} implementation.
+   *
+   * @param className the fully qualified class name to instantiate
+   * @param name the name to pass to the {@code (String)} constructor
+   * @return the created equipment, or {@code null} if the class does not exist, is abstract, lacks a {@code (String)}
+   * constructor, or is not a {@link ProcessEquipmentInterface}
+   */
+  private static ProcessEquipmentInterface tryInstantiate(String className, String name) {
+    try {
+      Class<?> clazz = Class.forName(className);
+      if (!ProcessEquipmentInterface.class.isAssignableFrom(clazz)
+          || java.lang.reflect.Modifier.isAbstract(clazz.getModifiers())) {
+        return null;
+      }
+      Constructor<?> constructor = clazz.getConstructor(String.class);
+      return (ProcessEquipmentInterface) constructor.newInstance(name);
+    } catch (ClassNotFoundException | NoSuchMethodException e) {
+      return null;
+    } catch (ReflectiveOperationException e) {
+      logger.debug("Reflection instantiation failed for {}: {}", className, e.getMessage());
+      return null;
+    }
   }
 
   public static Ejector createEjector(String name, StreamInterface motiveStream, StreamInterface suctionStream) {

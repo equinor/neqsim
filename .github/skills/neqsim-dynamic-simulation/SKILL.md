@@ -136,6 +136,72 @@ gasValve.addController("PC-100", PC100);
 | Flow | 0.3-1.0 | 5-30 | 0 |
 | Temperature | 0.5-2.0 | 60-600 | 10-60 |
 
+### Anti-Surge Control (dynamic)
+
+`AntiSurgeController` (`neqsim.process.controllerdevice.AntiSurgeController`) is a
+purpose-built **reverse-acting PI** controller that reads the compressor
+`getDistanceToSurge()` and drives a recycle (spill-back) `ThrottlingValve` open
+when the margin falls below the set point, then closes it again on recovery.
+
+```java
+import neqsim.process.controllerdevice.AntiSurgeController;
+
+// distance to surge ~ (operating flow / surge flow - 1); only meaningful once a
+// compressor chart with an active surge curve exists.
+AntiSurgeController asc = new AntiSurgeController("anti-surge", compressor, recycleValve);
+asc.setSurgeMarginSetPoint(0.10);   // protect a 10% distance-to-surge margin
+asc.setProportionalGain(400.0);     // percent opening per unit margin error
+asc.setIntegralTime(20.0);          // s
+asc.setOpeningRange(0.0, 100.0);    // valve opening clamp (%) with anti-windup
+asc.setActive(true);
+recycleValve.addController("anti-surge", asc);
+```
+
+Control law each transient step: `error = setPoint - distanceToSurge`,
+`integral += Kp/Ti * error * dt`, `opening = clamp(Kp*error + integral)` with
+anti-windup; the controller applies the opening directly to the recycle valve.
+
+**Reproducible benchmark.** `AntiSurgeDynamicBenchmark`
+(`neqsim.process.util.scenario.AntiSurgeDynamicBenchmark`) drives the real
+controller against a transparent first-order gas-path surrogate
+`m_{k+1} = m_k - d*dt + a*(u/100)*dt` (m = distance to surge, d = disturbance
+rate, a = recycle authority, u = valve opening %). It is deterministic and
+always converges, so it is the preferred way to verify or tune the control law:
+
+```java
+import neqsim.process.util.scenario.AntiSurgeDynamicBenchmark;
+
+AntiSurgeDynamicBenchmark bench = new AntiSurgeDynamicBenchmark();
+bench.setInitialMargin(0.30);
+bench.setDisturbanceRate(0.020);   // flow loss erodes the margin (/s)
+bench.setRecycleAuthority(0.060);  // fully open recycle restores margin (/s)
+bench.setTimeStep(1.0);
+bench.setNumberOfSteps(120);
+bench.getController().setSurgeMarginSetPoint(0.10);
+bench.run(false);                   // open loop  -> surges (margin < 0)
+bench.run(true);                    // closed loop -> margin held at set point
+boolean safe = bench.isSurgeAvoided();
+```
+
+**Critical gotchas when wiring a full dynamic recycle flowsheet:**
+
+- A fixed-factor `Splitter` (`setSplitFactors([0.97, 0.03])`) **pins the recycle
+  fraction** in dynamic mode, so the anti-surge valve has no authority over the
+  actual recycle flow — the controller can hit 100% with no effect. Let the
+  recycle flow be set by the valve (`setCv`/resistance), or use the steady-state
+  anti-surge `Calculator` pattern instead.
+- Once the operating point crosses left of the surge line, `getDistanceToSurge()`
+  **clamps at -1.0 and the steady solver cannot climb back out**; a flowsheet
+  driven into deep surge will not self-heal even after the inlet is reopened.
+  Apply *gradual/ramped* disturbances and keep the machine off deep surge.
+- Aggressive proportional gain can slam the recycle valve to its minimum opening,
+  starve a stream, and trigger an SRK flash `NaN`
+  (`PhaseSrkEos:molarVolume ... NaN`). Keep gains moderate and the valve off hard
+  minimum.
+- To demonstrate or tune the control *law* cleanly, prefer
+  `AntiSurgeDynamicBenchmark` (or a transparent gas-path surrogate) over a full
+  recycle flowsheet that can stick in deep surge.
+
 ## Running Dynamic Simulation
 
 ```java
