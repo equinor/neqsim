@@ -740,7 +740,9 @@ public class JsonProcessBuilder {
       if (!fluidDef.has("e300FilePath") && fluidDef.has("components")) {
         JsonObject components = fluidDef.getAsJsonObject("components");
         for (Map.Entry<String, JsonElement> comp : components.entrySet()) {
-          fluid.addComponent(comp.getKey(), comp.getValue().getAsDouble());
+          // Clamp tiny negative mole fractions (numerical noise) to zero so addComponent does not
+          // reject the component with a negative-moles error.
+          fluid.addComponent(comp.getKey(), Math.max(0.0, comp.getValue().getAsDouble()));
         }
       }
 
@@ -780,7 +782,7 @@ public class JsonProcessBuilder {
       // Set mixing rule
       if (!fluidDef.has("e300FilePath")) {
         String mixingRule = fluidDef.has("mixingRule") ? fluidDef.get("mixingRule").getAsString() : "classic";
-        fluid.setMixingRule(mixingRule);
+        applyMixingRule(fluid, mixingRule);
       }
 
       if (fluidDef.has("useVolumeCorrection")) {
@@ -823,6 +825,39 @@ public class JsonProcessBuilder {
       errors.add(new SimulationResult.ErrorDetail("FLUID_ERROR", "Failed to create fluid: " + e.getMessage(), null,
           "Check component names and fluid parameters"));
       return null;
+    }
+  }
+
+  /**
+   * Applies the mixing rule to a fluid, tolerating several encodings.
+   *
+   * <p>
+   * Accepts an {@link neqsim.thermo.mixingrule.EosMixingRuleType} enum constant name (e.g. {@code "CLASSIC_TX_CPA"}), a
+   * numeric mixing-rule value (e.g. {@code "10"}), or a plain name such as {@code "classic"}. If the value cannot be
+   * resolved, a warning is recorded and the fluid falls back to the {@code "classic"} mixing rule so reconstruction can
+   * continue.
+   * </p>
+   *
+   * @param fluid the fluid to configure
+   * @param mixingRule the mixing-rule token from the JSON definition
+   */
+  private void applyMixingRule(SystemInterface fluid, String mixingRule) {
+    if (mixingRule == null || mixingRule.trim().isEmpty()) {
+      fluid.setMixingRule("classic");
+      return;
+    }
+    String token = mixingRule.trim();
+    try {
+      fluid.setMixingRule(Integer.parseInt(token));
+      return;
+    } catch (NumberFormatException nfe) {
+      // Not a numeric value — fall through to name-based resolution.
+    }
+    try {
+      fluid.setMixingRule(token);
+    } catch (RuntimeException ex) {
+      warnings.add("Unknown mixing rule '" + token + "', defaulting to classic: " + ex.getMessage());
+      fluid.setMixingRule("classic");
     }
   }
 

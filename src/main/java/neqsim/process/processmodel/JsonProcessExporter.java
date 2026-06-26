@@ -10,12 +10,16 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.absorber.SimpleAbsorber;
+import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
+import neqsim.process.equipment.absorber.WaterStripperColumn;
 import neqsim.process.equipment.compressor.AntiSurge;
 import neqsim.process.equipment.compressor.BoundaryCurve;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorChartInterface;
 import neqsim.process.equipment.compressor.CompressorDriver;
 import neqsim.process.equipment.expander.Expander;
+import neqsim.process.equipment.filter.Filter;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -36,7 +40,9 @@ import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.component.ComponentEos;
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.mixingrule.EosMixingRuleType;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
+import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -543,9 +549,12 @@ public class JsonProcessExporter {
     fluidJson.addProperty("temperature", fluid.getTemperature());
     fluidJson.addProperty("pressure", fluid.getPressure());
 
-    String mixingRule = fluid.getMixingRuleName();
-    if (mixingRule != null && !mixingRule.trim().isEmpty()) {
-      fluidJson.addProperty("mixingRule", mixingRule);
+    // Export the mixing rule as the EosMixingRuleType enum constant name (e.g. "CLASSIC_TX_CPA")
+    // so the builder can reconstruct it via setMixingRule(String). The display name returned by
+    // getMixingRuleName() (e.g. "classic-CPA") is not parseable by EosMixingRuleType.byName.
+    MixingRuleTypeInterface mixingRuleType = fluid.getMixingRule();
+    if (mixingRuleType != null) {
+      fluidJson.addProperty("mixingRule", EosMixingRuleType.byValue(mixingRuleType.getValue()).name());
     } else {
       fluidJson.addProperty("mixingRule", "classic");
     }
@@ -566,7 +575,9 @@ public class JsonProcessExporter {
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       ComponentInterface comp = fluid.getPhase(0).getComponent(i);
       String compName = comp.getComponentName();
-      double moleFraction = comp.getz();
+      // Clamp tiny negative mole fractions (numerical noise from a converged flash) to zero so the
+      // builder's addComponent does not reject the component with a negative-moles error.
+      double moleFraction = Math.max(0.0, comp.getz());
 
       if (comp.isIsTBPfraction() || comp.isIsPlusFraction()) {
         // Characterized fraction — export full properties for reconstruction
@@ -816,6 +827,20 @@ public class JsonProcessExporter {
     }
     if (unit instanceof ThreePhaseSeparator) {
       return "ThreePhaseSeparator";
+    }
+    // Separator subclasses must be checked before the Separator branch so they round-trip
+    // as their concrete type instead of being collapsed to a plain Separator.
+    if (unit instanceof SimpleTEGAbsorber) {
+      return "SimpleTEGAbsorber";
+    }
+    if (unit instanceof WaterStripperColumn) {
+      return "WaterStripperColumn";
+    }
+    if (unit instanceof SimpleAbsorber) {
+      return "SimpleAbsorber";
+    }
+    if (unit instanceof Filter) {
+      return "Filter";
     }
     if (unit instanceof Separator) {
       return "Separator";

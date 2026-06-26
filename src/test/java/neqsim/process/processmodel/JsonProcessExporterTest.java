@@ -7,10 +7,16 @@ import org.junit.jupiter.api.Test;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import neqsim.process.equipment.EquipmentFactory;
+import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.absorber.SimpleAbsorber;
+import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
+import neqsim.process.equipment.absorber.WaterStripperColumn;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorChartInterface;
 import neqsim.process.equipment.compressor.CompressorDriver;
 import neqsim.process.equipment.compressor.DriverType;
+import neqsim.process.equipment.filter.Filter;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -27,6 +33,7 @@ import neqsim.thermo.component.ComponentEos;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
@@ -938,5 +945,64 @@ class JsonProcessExporterTest {
     assertTrue(result.isSuccess(), "Heat exchanger process should rebuild: " + result.toJson());
     assertTrue(result.getWarnings().isEmpty(),
         "Heat exchanger round-trip should not produce warnings: " + result.getWarnings());
+  }
+
+  /**
+   * Verifies that the EquipmentFactory maps the JSON type-name tokens emitted by JsonProcessExporter back to the
+   * concrete equipment classes, so separator subclasses (TEG absorber, water stripper, simple absorber) and the filter
+   * unit do not collapse to a plain Separator on round-trip.
+   */
+  @Test
+  void testEquipmentTypeFidelityFromTypeName() {
+    ProcessEquipmentInterface tegAbsorber = EquipmentFactory.createEquipment("TEG absorber", "SimpleTEGAbsorber");
+    assertTrue(tegAbsorber instanceof SimpleTEGAbsorber,
+        "SimpleTEGAbsorber type token should rebuild a SimpleTEGAbsorber, got " + tegAbsorber.getClass().getName());
+
+    ProcessEquipmentInterface stripper = EquipmentFactory.createEquipment("water stripper", "WaterStripperColumn");
+    assertTrue(stripper instanceof WaterStripperColumn,
+        "WaterStripperColumn type token should rebuild a WaterStripperColumn, got " + stripper.getClass().getName());
+
+    ProcessEquipmentInterface absorber = EquipmentFactory.createEquipment("absorber", "SimpleAbsorber");
+    assertTrue(absorber instanceof SimpleAbsorber,
+        "SimpleAbsorber type token should rebuild a SimpleAbsorber, got " + absorber.getClass().getName());
+
+    ProcessEquipmentInterface filter = EquipmentFactory.createEquipment("gas filter", "Filter");
+    assertTrue(filter instanceof Filter,
+        "Filter type token should rebuild a Filter, got " + filter.getClass().getName());
+  }
+
+  /**
+   * Verifies that a CPA fluid using the classic-CPA mixing rule round-trips through JSON: the exporter must emit a
+   * re-importable mixing-rule token (enum name, not the display name "classic-CPA"), and zero-mole components (typical
+   * for a dry TEG/water make-up stream) must not cause the rebuild to throw a "negative moles" error.
+   */
+  @Test
+  void testCpaZeroMoleRoundTrip() {
+    SystemInterface fluid = new SystemSrkCPAstatoil(273.15 + 25.0, 60.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.08);
+    fluid.addComponent("water", 0.02);
+    fluid.addComponent("TEG", 0.0);
+    fluid.setMixingRule(10);
+
+    Stream feed = new Stream("cpa feed", fluid);
+    feed.setFlowRate(10000.0, "kg/hr");
+
+    Separator separator = new Separator("cpa separator", feed);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(separator);
+    process.run();
+
+    String json = process.toJson();
+    JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+    String mixingRule = root.getAsJsonObject("fluid").get("mixingRule").getAsString();
+    assertEquals("CLASSIC_TX_CPA", mixingRule,
+        "CPA mixing rule should export as a re-importable enum name, not the display name");
+
+    SimulationResult result = ProcessSystem.fromJsonAndRun(json);
+    assertTrue(result.isSuccess(),
+        "CPA process with zero-mole components should rebuild without error: " + result.toJson());
   }
 }

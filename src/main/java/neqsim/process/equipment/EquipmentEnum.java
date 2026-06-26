@@ -13,7 +13,8 @@ public enum EquipmentEnum {
   UnisimCalculator, Expander, SimpleTEGAbsorber, Tank, ComponentSplitter, ComponentCaptureUnit, ReservoirCVDsim,
   ReservoirDiffLibsim, VirtualStream, ReservoirTPsim, SimpleReservoir, Manifold, Flare, FlareStack, FuelCell,
   CO2Electrolyzer, Electrolyzer, WindTurbine, BatteryStorage, SolarPanel, WindFarm, OffshoreEnergySystem,
-  AmmoniaSynthesisReactor, SubseaPowerCable, AdiabaticPipe, PipeBeggsAndBrills, WaterHammerPipe, StreamSaturatorUtil;
+  AmmoniaSynthesisReactor, SubseaPowerCable, AdiabaticPipe, PipeBeggsAndBrills, WaterHammerPipe, StreamSaturatorUtil,
+  WaterStripperColumn, Filter, SimpleAbsorber;
 
   /** {@inheritDoc} */
   @Override
