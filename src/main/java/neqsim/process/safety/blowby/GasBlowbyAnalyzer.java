@@ -8,22 +8,19 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Screening calculator for HP-to-LP gas blowby through a failed-open restriction (for example a
- * level-control valve passing gas when its liquid seal is lost, or a high-pressure source bleeding
- * into a low-pressure system).
+ * Screening calculator for HP-to-LP gas blowby through a failed-open restriction (for example a level-control valve
+ * passing gas when its liquid seal is lost, or a high-pressure source bleeding into a low-pressure system).
  *
  * <p>
- * The calculator estimates the gas mass rate through the fully open restriction using the
- * isentropic nozzle relations (API 520 critical-flow form). If the downstream/upstream pressure
- * ratio is below the critical ratio the flow is choked; otherwise a subcritical relation is used.
- * The estimated blowby rate is compared against an optional downstream relief capacity to produce a
- * screening verdict that supports the "More Pressure" HAZOP cause.
+ * The calculator estimates the gas mass rate through the fully open restriction using the isentropic nozzle relations
+ * (API 520 critical-flow form). If the downstream/upstream pressure ratio is below the critical ratio the flow is
+ * choked; otherwise a subcritical relation is used. The estimated blowby rate is compared against an optional
+ * downstream relief capacity to produce a screening verdict that supports the "More Pressure" HAZOP cause.
  * </p>
  *
  * <p>
- * This is a screening tool: real valve trim, two-phase carry-over and transient inventory effects
- * are not modelled. The specific-heat ratio and molar mass may be supplied directly or derived from
- * a NeqSim fluid.
+ * This is a screening tool: real valve trim, two-phase carry-over and transient inventory effects are not modelled. The
+ * specific-heat ratio and molar mass may be supplied directly or derived from a NeqSim fluid.
  * </p>
  *
  * @author ESOL
@@ -68,7 +65,8 @@ public class GasBlowbyAnalyzer implements Serializable {
   /**
    * Creates an empty gas blowby analyzer with default discharge coefficient 0.85.
    */
-  public GasBlowbyAnalyzer() {}
+  public GasBlowbyAnalyzer() {
+  }
 
   /**
    * Sets the upstream (high-pressure source) pressure.
@@ -90,22 +88,20 @@ public class GasBlowbyAnalyzer implements Serializable {
    * @return this analyzer for chaining
    */
   public GasBlowbyAnalyzer setUpstreamTemperature(double temperature, String unit) {
-    this.upstreamTemperatureK =
-        new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
+    this.upstreamTemperatureK = new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
     return this;
   }
 
   /**
-   * Sets the downstream (low-pressure protected system) pressure, typically the design or relief
-   * set pressure. Used to determine whether the flow is choked.
+   * Sets the downstream (low-pressure protected system) pressure, typically the design or relief set pressure. Used to
+   * determine whether the flow is choked.
    *
    * @param pressure downstream pressure value; must be non-negative
    * @param unit pressure unit accepted by {@link neqsim.util.unit.PressureUnit}
    * @return this analyzer for chaining
    */
   public GasBlowbyAnalyzer setDownstreamPressure(double pressure, String unit) {
-    this.downstreamPressureBara =
-        new neqsim.util.unit.PressureUnit(pressure, unit).getValue("bara");
+    this.downstreamPressureBara = new neqsim.util.unit.PressureUnit(pressure, unit).getValue("bara");
     return this;
   }
 
@@ -122,8 +118,7 @@ public class GasBlowbyAnalyzer implements Serializable {
   }
 
   /**
-   * Sets the effective flow diameter of the fully open restriction. The area is computed as a
-   * circle.
+   * Sets the effective flow diameter of the fully open restriction. The area is computed as a circle.
    *
    * @param diameter diameter value; must be positive
    * @param unit length unit, one of "m", "cm", "mm" or "in"/"inch"
@@ -185,8 +180,7 @@ public class GasBlowbyAnalyzer implements Serializable {
   }
 
   /**
-   * Sets a NeqSim fluid from which the specific-heat ratio and molar mass are derived during
-   * {@link #analyze()}.
+   * Sets a NeqSim fluid from which the specific-heat ratio and molar mass are derived during {@link #analyze()}.
    *
    * @param gas the gas fluid; not null
    * @return this analyzer for chaining
@@ -247,9 +241,8 @@ public class GasBlowbyAnalyzer implements Serializable {
       double term = Math.pow(actualRatio, 2.0 / k) - Math.pow(actualRatio, (k + 1.0) / k);
       massRateKgPerS = dischargeCoefficient * restrictionAreaM2 * p1Pa
           * Math.sqrt(2.0 * m / (R_GAS * t1) * (k / (k - 1.0)) * term);
-      warnings.add("Subcritical (non-choked) flow: downstream pressure ratio "
-          + String.format("%.3f", actualRatio) + " exceeds critical ratio "
-          + String.format("%.3f", criticalRatio));
+      warnings.add("Subcritical (non-choked) flow: downstream pressure ratio " + String.format("%.3f", actualRatio)
+          + " exceeds critical ratio " + String.format("%.3f", criticalRatio));
     }
 
     double massRateKgPerHr = massRateKgPerS * 3600.0;
@@ -262,20 +255,17 @@ public class GasBlowbyAnalyzer implements Serializable {
     BlowbyVerdict verdict;
     if (!reliefDataProvided) {
       verdict = BlowbyVerdict.NO_RELIEF_DATA;
-      warnings
-          .add("No downstream relief capacity supplied; verdict limited to blowby rate estimate.");
+      warnings.add("No downstream relief capacity supplied; verdict limited to blowby rate estimate.");
     } else {
       margin = reliefCapacityKgPerHr - massRateKgPerHr;
       adequate = margin >= 0.0;
       verdict = adequate ? BlowbyVerdict.RELIEF_ADEQUATE : BlowbyVerdict.RELIEF_INADEQUATE;
     }
 
-    logger.info("Gas blowby screening: rate {} kg/hr, choked {}, verdict {}", massRateKgPerHr,
-        choked, verdict);
+    logger.info("Gas blowby screening: rate {} kg/hr, choked {}, verdict {}", massRateKgPerHr, choked, verdict);
 
-    return new GasBlowbyResult(choked, criticalRatio, actualRatio, massRateKgPerHr, stdVolSm3PerHr,
-        restrictionAreaM2, dischargeCoefficient, k, m, reliefCapacityKgPerHr, reliefDataProvided,
-        margin, adequate, verdict, warnings);
+    return new GasBlowbyResult(choked, criticalRatio, actualRatio, massRateKgPerHr, stdVolSm3PerHr, restrictionAreaM2,
+        dischargeCoefficient, k, m, reliefCapacityKgPerHr, reliefDataProvided, margin, adequate, verdict, warnings);
   }
 
   /**
@@ -294,8 +284,7 @@ public class GasBlowbyAnalyzer implements Serializable {
       throw new IllegalStateException("downstream pressure must be set and non-negative");
     }
     if (downstreamPressureBara >= upstreamPressureBara) {
-      throw new IllegalStateException(
-          "downstream pressure must be below upstream pressure for blowby");
+      throw new IllegalStateException("downstream pressure must be below upstream pressure for blowby");
     }
     if (Double.isNaN(restrictionAreaM2) || restrictionAreaM2 <= 0.0) {
       throw new IllegalStateException("restriction area or diameter must be set and positive");
@@ -307,8 +296,7 @@ public class GasBlowbyAnalyzer implements Serializable {
   }
 
   /**
-   * Resolves the specific-heat ratio, preferring an explicit value and falling back to a NeqSim
-   * fluid.
+   * Resolves the specific-heat ratio, preferring an explicit value and falling back to a NeqSim fluid.
    *
    * @param warnings list to append warnings to
    * @return the specific-heat ratio to use
@@ -330,8 +318,7 @@ public class GasBlowbyAnalyzer implements Serializable {
       }
       return k;
     } catch (Exception ex) {
-      warnings
-          .add("Failed to evaluate Cp/Cv from fluid (" + ex.getMessage() + "); using default 1.3");
+      warnings.add("Failed to evaluate Cp/Cv from fluid (" + ex.getMessage() + "); using default 1.3");
       return 1.3;
     }
   }
@@ -358,8 +345,7 @@ public class GasBlowbyAnalyzer implements Serializable {
       }
       return mm;
     } catch (Exception ex) {
-      warnings.add("Failed to evaluate molar mass from fluid (" + ex.getMessage()
-          + "); using default 0.018 kg/mol");
+      warnings.add("Failed to evaluate molar mass from fluid (" + ex.getMessage() + "); using default 0.018 kg/mol");
       return 0.018;
     }
   }

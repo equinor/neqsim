@@ -10,9 +10,9 @@ import neqsim.process.safety.settleout.SettleOutPressureAnalyzer.SettleOutVerdic
  * Result of a {@link SettleOutPressureAnalyzer} settle-out (gas-volume equalisation) screening.
  *
  * <p>
- * Summarises the common settle-out pressure reached after a compressor trip, the settle-out
- * temperature and compressibility used, the total inventory and volume, the margin to the protected
- * (low-pressure) system rating, the verdict, and the per-compartment inventory breakdown.
+ * Summarises the common settle-out pressure reached after a compressor trip, the settle-out temperature and
+ * compressibility used, the total inventory and volume, the margin to the protected (low-pressure) system rating, the
+ * verdict, and the per-compartment inventory breakdown.
  * </p>
  *
  * @author ESOL
@@ -48,19 +48,16 @@ public class SettleOutPressureResult implements Serializable {
    * @param minCompartmentPressureBara lowest initial compartment pressure in bara
    * @param protectedRatingBara protected-system design / relief set pressure in bara
    * @param ratingProvided true if the protected-system rating was supplied
-   * @param marginToRatingBar protected rating minus settle-out pressure in bar; NaN when no rating
-   *        supplied
+   * @param marginToRatingBar protected rating minus settle-out pressure in bar; NaN when no rating supplied
    * @param exceedsRating true if the settle-out pressure exceeds the protected rating
    * @param verdict the screening verdict
    * @param compartments per-compartment inventory breakdown
    * @param warnings list of warnings; never null
    */
-  public SettleOutPressureResult(double settleOutPressureBara, double settleOutTemperatureK,
-      double settleOutZFactor, double totalMoles, double totalVolumeM3,
-      double maxCompartmentPressureBara, double minCompartmentPressureBara,
-      double protectedRatingBara, boolean ratingProvided, double marginToRatingBar,
-      boolean exceedsRating, SettleOutVerdict verdict, List<CompartmentResult> compartments,
-      List<String> warnings) {
+  public SettleOutPressureResult(double settleOutPressureBara, double settleOutTemperatureK, double settleOutZFactor,
+      double totalMoles, double totalVolumeM3, double maxCompartmentPressureBara, double minCompartmentPressureBara,
+      double protectedRatingBara, boolean ratingProvided, double marginToRatingBar, boolean exceedsRating,
+      SettleOutVerdict verdict, List<CompartmentResult> compartments, List<String> warnings) {
     this.settleOutPressureBara = settleOutPressureBara;
     this.settleOutTemperatureK = settleOutTemperatureK;
     this.settleOutZFactor = settleOutZFactor;
@@ -209,8 +206,7 @@ public class SettleOutPressureResult implements Serializable {
    * @return JSON representation of this result
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(this);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(this);
   }
 
   /**
@@ -241,8 +237,8 @@ public class SettleOutPressureResult implements Serializable {
      * @param zFactor compressibility factor at the initial state
      * @param moles molar inventory in mol
      */
-    public CompartmentResult(String name, double volumeM3, double pressureBara, double temperatureK,
-        double zFactor, double moles) {
+    public CompartmentResult(String name, double volumeM3, double pressureBara, double temperatureK, double zFactor,
+        double moles) {
       this.name = name;
       this.volumeM3 = volumeM3;
       this.pressureBara = pressureBara;

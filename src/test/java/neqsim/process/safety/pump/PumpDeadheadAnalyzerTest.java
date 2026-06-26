@@ -17,14 +17,13 @@ import neqsim.thermo.system.SystemSrkEos;
 public class PumpDeadheadAnalyzerTest {
 
   /**
-   * A deadhead pressure above the protected rating should produce an EXCEEDS_RATING verdict with a
-   * negative margin.
+   * A deadhead pressure above the protected rating should produce an EXCEEDS_RATING verdict with a negative margin.
    */
   @Test
   void deadheadPressureExceedsRating() {
     PumpDeadheadResult result = new PumpDeadheadAnalyzer().setSuctionPressure(2.0, "bara")
-        .setNormalDischargePressure(12.0, "bara").setShutoffHeadRatio(1.2)
-        .setProtectedPressureRating(13.0, "bara").analyze();
+        .setNormalDischargePressure(12.0, "bara").setShutoffHeadRatio(1.2).setProtectedPressureRating(13.0, "bara")
+        .analyze();
 
     assertEquals(PumpDeadheadAnalyzer.DeadheadVerdict.EXCEEDS_RATING, result.getVerdict());
     assertTrue(result.isPressureRatingExceeded(), "rating should be exceeded");
@@ -33,14 +32,13 @@ public class PumpDeadheadAnalyzerTest {
   }
 
   /**
-   * A deadhead pressure within the protected rating should produce a WITHIN_RATING verdict with a
-   * positive margin.
+   * A deadhead pressure within the protected rating should produce a WITHIN_RATING verdict with a positive margin.
    */
   @Test
   void deadheadWithinRating() {
     PumpDeadheadResult result = new PumpDeadheadAnalyzer().setSuctionPressure(2.0, "bara")
-        .setNormalDischargePressure(12.0, "bara").setShutoffHeadRatio(1.2)
-        .setProtectedPressureRating(20.0, "bara").analyze();
+        .setNormalDischargePressure(12.0, "bara").setShutoffHeadRatio(1.2).setProtectedPressureRating(20.0, "bara")
+        .analyze();
 
     assertEquals(PumpDeadheadAnalyzer.DeadheadVerdict.WITHIN_RATING, result.getVerdict());
     assertFalse(result.isPressureRatingExceeded(), "rating should not be exceeded");
@@ -48,8 +46,8 @@ public class PumpDeadheadAnalyzerTest {
   }
 
   /**
-   * When no protected rating is supplied the verdict is NO_RATING, the margin is NaN and the result
-   * still serialises to JSON.
+   * When no protected rating is supplied the verdict is NO_RATING, the margin is NaN and the result still serialises to
+   * JSON.
    */
   @Test
   void noRatingSerialisesWithNaNMargin() {
@@ -63,27 +61,26 @@ public class PumpDeadheadAnalyzerTest {
   }
 
   /**
-   * Supplying liquid density and specific heat directly should produce a finite, positive
-   * recirculation temperature rise and a positive shut-off head.
+   * Supplying liquid density and specific heat directly should produce a finite, positive recirculation temperature
+   * rise and a positive shut-off head.
    */
   @Test
   void recirculationTempRiseFromDirectProperties() {
     PumpDeadheadResult result = new PumpDeadheadAnalyzer().setSuctionPressure(2.0, "bara")
-        .setNormalDischargePressure(12.0, "bara").setShutoffHeadRatio(1.2)
-        .setLiquidDensity(800.0, "kg/m3").setSpecificHeat(2000.0, "J/kgK")
-        .setMinimumFlowEfficiency(0.3).setMaxAllowableTemperatureRise(1.0, "K").analyze();
+        .setNormalDischargePressure(12.0, "bara").setShutoffHeadRatio(1.2).setLiquidDensity(800.0, "kg/m3")
+        .setSpecificHeat(2000.0, "J/kgK").setMinimumFlowEfficiency(0.3).setMaxAllowableTemperatureRise(1.0, "K")
+        .analyze();
 
     assertTrue(result.isTempRiseDataAvailable(), "temperature rise should be available");
     assertTrue(result.getRecirculationTempRiseK() > 0.0, "temperature rise should be positive");
-    assertTrue(Double.isFinite(result.getRecirculationTempRiseK()),
-        "temperature rise should be finite");
+    assertTrue(Double.isFinite(result.getRecirculationTempRiseK()), "temperature rise should be finite");
     assertTrue(result.getShutoffHeadM() > 0.0, "shut-off head should be positive");
     assertTrue(result.isTempRiseExceeded(), "1 K allowable should be exceeded by ~1.75 K rise");
   }
 
   /**
-   * A NeqSim fluid should yield liquid density and specific heat and a finite recirculation
-   * temperature rise when no properties are supplied directly.
+   * A NeqSim fluid should yield liquid density and specific heat and a finite recirculation temperature rise when no
+   * properties are supplied directly.
    */
   @Test
   void fluidDerivesPropertiesAndProducesTempRise() {
@@ -91,9 +88,8 @@ public class PumpDeadheadAnalyzerTest {
     water.addComponent("water", 1.0);
     water.setMixingRule("classic");
 
-    PumpDeadheadResult result =
-        new PumpDeadheadAnalyzer().setSuctionPressure(2.0, "bara").setSuctionTemperature(25.0, "C")
-            .setNormalDischargePressure(12.0, "bara").setFluid(water).analyze();
+    PumpDeadheadResult result = new PumpDeadheadAnalyzer().setSuctionPressure(2.0, "bara")
+        .setSuctionTemperature(25.0, "C").setNormalDischargePressure(12.0, "bara").setFluid(water).analyze();
 
     assertTrue(result.isTempRiseDataAvailable(), "temperature rise should be available from fluid");
     assertTrue(result.getLiquidDensityKgPerM3() > 0.0, "derived density should be positive");
@@ -106,8 +102,8 @@ public class PumpDeadheadAnalyzerTest {
    */
   @Test
   void rejectsDischargeBelowSuction() {
-    final PumpDeadheadAnalyzer analyzer = new PumpDeadheadAnalyzer()
-        .setSuctionPressure(10.0, "bara").setNormalDischargePressure(5.0, "bara");
+    final PumpDeadheadAnalyzer analyzer = new PumpDeadheadAnalyzer().setSuctionPressure(10.0, "bara")
+        .setNormalDischargePressure(5.0, "bara");
     assertThrows(IllegalStateException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {

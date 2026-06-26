@@ -8,22 +8,19 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Screening calculator for centrifugal-pump deadhead overpressure and minimum-flow recirculation
- * temperature rise.
+ * Screening calculator for centrifugal-pump deadhead overpressure and minimum-flow recirculation temperature rise.
  *
  * <p>
- * When a pump discharge is blocked in ("No Flow") the pump develops its shut-off head, which for a
- * centrifugal machine is typically 110-130% of the rated differential head. The resulting deadhead
- * discharge pressure is compared against the protected system or casing pressure rating. In
- * addition, when the pump runs against a closed or near-closed discharge, the absorbed power heats
- * the trapped or minimum-flow liquid; the recirculation temperature rise is estimated from the
- * shut-off head and an assumed low efficiency at minimum flow.
+ * When a pump discharge is blocked in ("No Flow") the pump develops its shut-off head, which for a centrifugal machine
+ * is typically 110-130% of the rated differential head. The resulting deadhead discharge pressure is compared against
+ * the protected system or casing pressure rating. In addition, when the pump runs against a closed or near-closed
+ * discharge, the absorbed power heats the trapped or minimum-flow liquid; the recirculation temperature rise is
+ * estimated from the shut-off head and an assumed low efficiency at minimum flow.
  * </p>
  *
  * <p>
- * This is a screening tool: pump curves, NPSH and detailed thermal inventory effects are not
- * modelled. Liquid density and specific heat may be supplied directly or derived from a NeqSim
- * fluid evaluated at the suction conditions.
+ * This is a screening tool: pump curves, NPSH and detailed thermal inventory effects are not modelled. Liquid density
+ * and specific heat may be supplied directly or derived from a NeqSim fluid evaluated at the suction conditions.
  * </p>
  *
  * @author ESOL
@@ -68,10 +65,11 @@ public class PumpDeadheadAnalyzer implements Serializable {
   private SystemInterface fluid = null;
 
   /**
-   * Creates an empty pump deadhead analyzer with default shut-off head ratio 1.20 and default
-   * minimum-flow efficiency 0.30.
+   * Creates an empty pump deadhead analyzer with default shut-off head ratio 1.20 and default minimum-flow efficiency
+   * 0.30.
    */
-  public PumpDeadheadAnalyzer() {}
+  public PumpDeadheadAnalyzer() {
+  }
 
   /**
    * Sets the pump suction pressure.
@@ -93,8 +91,7 @@ public class PumpDeadheadAnalyzer implements Serializable {
    * @return this analyzer for chaining
    */
   public PumpDeadheadAnalyzer setSuctionTemperature(double temperature, String unit) {
-    this.suctionTemperatureK =
-        new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
+    this.suctionTemperatureK = new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
     return this;
   }
 
@@ -106,16 +103,14 @@ public class PumpDeadheadAnalyzer implements Serializable {
    * @return this analyzer for chaining
    */
   public PumpDeadheadAnalyzer setNormalDischargePressure(double pressure, String unit) {
-    this.normalDischargePressureBara =
-        new neqsim.util.unit.PressureUnit(pressure, unit).getValue("bara");
+    this.normalDischargePressureBara = new neqsim.util.unit.PressureUnit(pressure, unit).getValue("bara");
     return this;
   }
 
   /**
    * Sets the shut-off head ratio (deadhead head divided by rated differential head).
    *
-   * @param ratio shut-off head ratio; must be at least 1.0 (typically 1.1-1.3 for centrifugal
-   *        pumps)
+   * @param ratio shut-off head ratio; must be at least 1.0 (typically 1.1-1.3 for centrifugal pumps)
    * @return this analyzer for chaining
    */
   public PumpDeadheadAnalyzer setShutoffHeadRatio(double ratio) {
@@ -184,8 +179,7 @@ public class PumpDeadheadAnalyzer implements Serializable {
   }
 
   /**
-   * Sets the pump efficiency assumed at minimum continuous flow used for the recirculation
-   * temperature rise.
+   * Sets the pump efficiency assumed at minimum continuous flow used for the recirculation temperature rise.
    *
    * @param efficiency minimum-flow efficiency; must be in the range (0,1]
    * @return this analyzer for chaining
@@ -219,8 +213,8 @@ public class PumpDeadheadAnalyzer implements Serializable {
   }
 
   /**
-   * Sets a NeqSim fluid from which liquid density and specific heat are derived at the suction
-   * conditions when they are not supplied directly.
+   * Sets a NeqSim fluid from which liquid density and specific heat are derived at the suction conditions when they are
+   * not supplied directly.
    *
    * @param fluid the pumped liquid; must not be null
    * @return this analyzer for chaining
@@ -252,8 +246,7 @@ public class PumpDeadheadAnalyzer implements Serializable {
     DeadheadVerdict verdict;
     if (!ratingDataProvided) {
       verdict = DeadheadVerdict.NO_RATING;
-      warnings.add(
-          "No protected pressure rating supplied; verdict limited to deadhead pressure estimate.");
+      warnings.add("No protected pressure rating supplied; verdict limited to deadhead pressure estimate.");
     } else {
       margin = protectedPressureRatingBara - deadheadPressureBara;
       exceeded = deadheadPressureBara > protectedPressureRatingBara;
@@ -269,13 +262,11 @@ public class PumpDeadheadAnalyzer implements Serializable {
     if (!Double.isNaN(density) && !Double.isNaN(cp)) {
       double shutoffDpPa = shutoffDifferentialBara * 1.0e5;
       shutoffHeadM = shutoffDpPa / (density * GRAVITY);
-      tempRiseK =
-          shutoffDpPa * (1.0 - minimumFlowEfficiency) / (density * minimumFlowEfficiency * cp);
+      tempRiseK = shutoffDpPa * (1.0 - minimumFlowEfficiency) / (density * minimumFlowEfficiency * cp);
       tempRiseAvailable = true;
     } else {
       warnings
-          .add("Liquid density and/or specific heat unavailable; recirculation temperature rise not"
-              + " evaluated.");
+          .add("Liquid density and/or specific heat unavailable; recirculation temperature rise not" + " evaluated.");
     }
 
     boolean tempRiseExceeded = false;
@@ -283,13 +274,13 @@ public class PumpDeadheadAnalyzer implements Serializable {
       tempRiseExceeded = tempRiseK > maxAllowableTempRiseK;
     }
 
-    logger.info("Pump deadhead screening: deadhead {} bara, verdict {}, temp rise {} K",
-        deadheadPressureBara, verdict, tempRiseK);
+    logger.info("Pump deadhead screening: deadhead {} bara, verdict {}, temp rise {} K", deadheadPressureBara, verdict,
+        tempRiseK);
 
-    return new PumpDeadheadResult(suctionPressureBara, normalDischargePressureBara,
-        shutoffHeadRatio, ratedDifferentialBara, deadheadPressureBara, protectedPressureRatingBara,
-        ratingDataProvided, margin, exceeded, shutoffHeadM, density, cp, minimumFlowEfficiency,
-        tempRiseK, tempRiseAvailable, maxAllowableTempRiseK, tempRiseExceeded, verdict, warnings);
+    return new PumpDeadheadResult(suctionPressureBara, normalDischargePressureBara, shutoffHeadRatio,
+        ratedDifferentialBara, deadheadPressureBara, protectedPressureRatingBara, ratingDataProvided, margin, exceeded,
+        shutoffHeadM, density, cp, minimumFlowEfficiency, tempRiseK, tempRiseAvailable, maxAllowableTempRiseK,
+        tempRiseExceeded, verdict, warnings);
   }
 
   /**
@@ -305,8 +296,7 @@ public class PumpDeadheadAnalyzer implements Serializable {
       throw new IllegalStateException("normal discharge pressure must be set");
     }
     if (normalDischargePressureBara <= suctionPressureBara) {
-      throw new IllegalStateException(
-          "normal discharge pressure must be above the suction pressure");
+      throw new IllegalStateException("normal discharge pressure must be above the suction pressure");
     }
   }
 
@@ -341,8 +331,7 @@ public class PumpDeadheadAnalyzer implements Serializable {
   }
 
   /**
-   * Resolves the liquid specific heat, preferring an explicit value and falling back to a NeqSim
-   * fluid.
+   * Resolves the liquid specific heat, preferring an explicit value and falling back to a NeqSim fluid.
    *
    * @param warnings list to append warnings to
    * @return the specific heat to use in J/(kg K), or NaN when it cannot be determined
@@ -361,8 +350,7 @@ public class PumpDeadheadAnalyzer implements Serializable {
     try {
       double cp = state.getCp("J/kgK");
       if (Double.isNaN(cp) || cp <= 0.0) {
-        warnings
-            .add("Fluid specific heat non-physical; recirculation temperature rise not evaluated.");
+        warnings.add("Fluid specific heat non-physical; recirculation temperature rise not evaluated.");
         return Double.NaN;
       }
       return cp;
@@ -376,8 +364,7 @@ public class PumpDeadheadAnalyzer implements Serializable {
    * Flashes a clone of the supplied fluid at the suction conditions.
    *
    * @param warnings list to append warnings to
-   * @return the flashed fluid clone, or null if the suction temperature is missing or the flash
-   *         fails
+   * @return the flashed fluid clone, or null if the suction temperature is missing or the flash fails
    */
   private SystemInterface evaluateFluid(List<String> warnings) {
     if (Double.isNaN(suctionTemperatureK) || suctionTemperatureK <= 0.0) {
