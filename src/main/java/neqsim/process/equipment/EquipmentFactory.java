@@ -78,33 +78,28 @@ public final class EquipmentFactory {
   private static final Logger logger = LogManager.getLogger(EquipmentFactory.class);
 
   /**
-   * Equipment sub-packages probed by the reflection fallback when an equipment type is not handled
-   * by the curated {@link EquipmentEnum} switch. Searching these packages lets every concrete
-   * process equipment class that exposes a {@code (String name)} constructor be created by its
-   * class name, so all current and future equipment is reachable by name and through
-   * {@code JsonProcessBuilder} without a dedicated enum entry.
+   * Equipment sub-packages probed by the reflection fallback when an equipment type is not handled by the curated
+   * {@link EquipmentEnum} switch. Searching these packages lets every concrete process equipment class that exposes a
+   * {@code (String name)} constructor be created by its class name, so all current and future equipment is reachable by
+   * name and through {@code JsonProcessBuilder} without a dedicated enum entry.
    */
-  private static final String[] EQUIPMENT_PACKAGES =
-      new String[] {"neqsim.process.equipment.absorber", "neqsim.process.equipment.adsorber",
-          "neqsim.process.equipment.battery", "neqsim.process.equipment.blackoil",
-          "neqsim.process.equipment.compressor", "neqsim.process.equipment.diffpressure",
-          "neqsim.process.equipment.distillation", "neqsim.process.equipment.ejector",
-          "neqsim.process.equipment.electrolyzer", "neqsim.process.equipment.expander",
-          "neqsim.process.equipment.filter", "neqsim.process.equipment.flare",
-          "neqsim.process.equipment.heatexchanger", "neqsim.process.equipment.lng",
-          "neqsim.process.equipment.manifold", "neqsim.process.equipment.membrane",
-          "neqsim.process.equipment.mixer", "neqsim.process.equipment.network",
-          "neqsim.process.equipment.pipeline", "neqsim.process.equipment.pipeline.twophasepipe",
-          "neqsim.process.equipment.powergeneration",
-          "neqsim.process.equipment.powergeneration.gasturbine", "neqsim.process.equipment.pump",
-          "neqsim.process.equipment.reactor", "neqsim.process.equipment.reservoir",
-          "neqsim.process.equipment.separator", "neqsim.process.equipment.splitter",
-          "neqsim.process.equipment.stream", "neqsim.process.equipment.subsea",
-          "neqsim.process.equipment.tank", "neqsim.process.equipment.util",
-          "neqsim.process.equipment.valve", "neqsim.process.equipment.watertreatment",
-          "neqsim.process.equipment.well"};
+  private static final String[] EQUIPMENT_PACKAGES = new String[] { "neqsim.process.equipment.absorber",
+      "neqsim.process.equipment.adsorber", "neqsim.process.equipment.battery", "neqsim.process.equipment.blackoil",
+      "neqsim.process.equipment.compressor", "neqsim.process.equipment.diffpressure",
+      "neqsim.process.equipment.distillation", "neqsim.process.equipment.ejector",
+      "neqsim.process.equipment.electrolyzer", "neqsim.process.equipment.expander", "neqsim.process.equipment.filter",
+      "neqsim.process.equipment.flare", "neqsim.process.equipment.heatexchanger", "neqsim.process.equipment.lng",
+      "neqsim.process.equipment.manifold", "neqsim.process.equipment.membrane", "neqsim.process.equipment.mixer",
+      "neqsim.process.equipment.network", "neqsim.process.equipment.pipeline",
+      "neqsim.process.equipment.pipeline.twophasepipe", "neqsim.process.equipment.powergeneration",
+      "neqsim.process.equipment.powergeneration.gasturbine", "neqsim.process.equipment.pump",
+      "neqsim.process.equipment.reactor", "neqsim.process.equipment.reservoir", "neqsim.process.equipment.separator",
+      "neqsim.process.equipment.splitter", "neqsim.process.equipment.stream", "neqsim.process.equipment.subsea",
+      "neqsim.process.equipment.tank", "neqsim.process.equipment.util", "neqsim.process.equipment.valve",
+      "neqsim.process.equipment.watertreatment", "neqsim.process.equipment.well" };
 
-  private EquipmentFactory() {}
+  private EquipmentFactory() {
+  }
 
   /**
    * Creates a piece of equipment based on the provided type.
@@ -120,115 +115,115 @@ public final class EquipmentFactory {
 
     String normalized = equipmentType.trim().toLowerCase();
     switch (normalized) {
-      case "valve":
-        return createEquipment(name, EquipmentEnum.ThrottlingValve);
-      case "separator_3phase":
-      case "separator3phase":
-      case "threephaseseparator":
-        return createEquipment(name, EquipmentEnum.ThreePhaseSeparator);
-      case "gasscrubber":
-      case "gas_scrubber":
-      case "scrubber":
-        return createEquipment(name, EquipmentEnum.GasScrubber);
-      case "co₂electrolyzer":
-      case "co2electrolyser":
-      case "co2electrolyzer":
-        return createEquipment(name, EquipmentEnum.CO2Electrolyzer);
-      case "windturbine":
-        return createEquipment(name, EquipmentEnum.WindTurbine);
-      case "batterystorage":
-        return createEquipment(name, EquipmentEnum.BatteryStorage);
-      case "solarpanel":
-        return createEquipment(name, EquipmentEnum.SolarPanel);
-      case "windfarm":
-        return createEquipment(name, EquipmentEnum.WindFarm);
-      case "offshoreenergysystem":
-        return createEquipment(name, EquipmentEnum.OffshoreEnergySystem);
-      case "ammoniasynthesisreactor":
-      case "haberbosch":
-        return createEquipment(name, EquipmentEnum.AmmoniaSynthesisReactor);
-      case "gibbsreactor":
-      case "equilibriumreactor":
-      case "reactor":
-        return createEquipment(name, EquipmentEnum.GibbsReactor);
-      case "plugflowreactor":
-      case "pfr":
-        return createEquipment(name, EquipmentEnum.PlugFlowReactor);
-      case "catalytictubereformer":
-      case "tubereformer":
-      case "smrtubereformer":
-        return createEquipment(name, EquipmentEnum.CatalyticTubeReformer);
-      case "reformerfurnace":
-      case "smrfurnace":
-      case "firedreformer":
-        return createEquipment(name, EquipmentEnum.ReformerFurnace);
-      case "syngasburnerzone":
-      case "poxburnerzone":
-      case "atrburnerzone":
-        return createEquipment(name, EquipmentEnum.SyngasBurnerZone);
-      case "autothermalreformer":
-      case "atr":
-        return createEquipment(name, EquipmentEnum.AutothermalReformer);
-      case "partialoxidationreactor":
-      case "pox":
-        return createEquipment(name, EquipmentEnum.PartialOxidationReactor);
-      case "quenchsection":
-      case "syngasquench":
-        return createEquipment(name, EquipmentEnum.QuenchSection);
-      case "watergasshiftreactor":
-      case "watergasshift":
-      case "wgsreactor":
-      case "wgs":
-        return createEquipment(name, EquipmentEnum.WaterGasShiftReactor);
-      case "componentcaptureunit":
-      case "componentcapture":
-      case "co2capture":
-      case "h2dryer":
-        return createEquipment(name, EquipmentEnum.ComponentCaptureUnit);
-      case "stirredtankreactor":
-      case "cstr":
-        return createEquipment(name, EquipmentEnum.StirredTankReactor);
-      case "subseapowercable":
-      case "powercable":
-        return createEquipment(name, EquipmentEnum.SubseaPowerCable);
-      case "adiabaticpipe":
-      case "pipe":
-      case "pipeline":
-        return createEquipment(name, EquipmentEnum.AdiabaticPipe);
-      case "pipebeggsandbrills":
-      case "beggsandbrills":
-        return createEquipment(name, EquipmentEnum.PipeBeggsAndBrills);
-      case "waterhammerpipe":
-      case "waterhammer":
-      case "liquidhammer":
-      case "hydraulictransientpipe":
-        return createEquipment(name, EquipmentEnum.WaterHammerPipe);
-      case "streamsaturatorutil":
-      case "saturator":
-        return createEquipment(name, EquipmentEnum.StreamSaturatorUtil);
-      case "spreadsheet":
-      case "spreadsheetblock":
-        return createEquipment(name, EquipmentEnum.SpreadsheetBlock);
-      case "unisimcalculator":
-      case "unisim_calculator":
-      case "unisimcalculatorblock":
-      case "virtualstreamop":
-      case "balanceop":
-      case "subflowsheet":
-        return createEquipment(name, EquipmentEnum.UnisimCalculator);
-      case "distillationcolumn":
-      case "column":
-        return createEquipment(name, EquipmentEnum.DistillationColumn);
-      default:
-        EquipmentEnum enumType = resolveEquipmentEnum(equipmentType);
-        if (enumType != null) {
-          return createEquipment(name, enumType);
-        }
-        ProcessEquipmentInterface reflected = createByClassName(name, equipmentType);
-        if (reflected != null) {
-          return reflected;
-        }
-        throw new IllegalArgumentException("Unknown equipment type: " + equipmentType);
+    case "valve":
+      return createEquipment(name, EquipmentEnum.ThrottlingValve);
+    case "separator_3phase":
+    case "separator3phase":
+    case "threephaseseparator":
+      return createEquipment(name, EquipmentEnum.ThreePhaseSeparator);
+    case "gasscrubber":
+    case "gas_scrubber":
+    case "scrubber":
+      return createEquipment(name, EquipmentEnum.GasScrubber);
+    case "co₂electrolyzer":
+    case "co2electrolyser":
+    case "co2electrolyzer":
+      return createEquipment(name, EquipmentEnum.CO2Electrolyzer);
+    case "windturbine":
+      return createEquipment(name, EquipmentEnum.WindTurbine);
+    case "batterystorage":
+      return createEquipment(name, EquipmentEnum.BatteryStorage);
+    case "solarpanel":
+      return createEquipment(name, EquipmentEnum.SolarPanel);
+    case "windfarm":
+      return createEquipment(name, EquipmentEnum.WindFarm);
+    case "offshoreenergysystem":
+      return createEquipment(name, EquipmentEnum.OffshoreEnergySystem);
+    case "ammoniasynthesisreactor":
+    case "haberbosch":
+      return createEquipment(name, EquipmentEnum.AmmoniaSynthesisReactor);
+    case "gibbsreactor":
+    case "equilibriumreactor":
+    case "reactor":
+      return createEquipment(name, EquipmentEnum.GibbsReactor);
+    case "plugflowreactor":
+    case "pfr":
+      return createEquipment(name, EquipmentEnum.PlugFlowReactor);
+    case "catalytictubereformer":
+    case "tubereformer":
+    case "smrtubereformer":
+      return createEquipment(name, EquipmentEnum.CatalyticTubeReformer);
+    case "reformerfurnace":
+    case "smrfurnace":
+    case "firedreformer":
+      return createEquipment(name, EquipmentEnum.ReformerFurnace);
+    case "syngasburnerzone":
+    case "poxburnerzone":
+    case "atrburnerzone":
+      return createEquipment(name, EquipmentEnum.SyngasBurnerZone);
+    case "autothermalreformer":
+    case "atr":
+      return createEquipment(name, EquipmentEnum.AutothermalReformer);
+    case "partialoxidationreactor":
+    case "pox":
+      return createEquipment(name, EquipmentEnum.PartialOxidationReactor);
+    case "quenchsection":
+    case "syngasquench":
+      return createEquipment(name, EquipmentEnum.QuenchSection);
+    case "watergasshiftreactor":
+    case "watergasshift":
+    case "wgsreactor":
+    case "wgs":
+      return createEquipment(name, EquipmentEnum.WaterGasShiftReactor);
+    case "componentcaptureunit":
+    case "componentcapture":
+    case "co2capture":
+    case "h2dryer":
+      return createEquipment(name, EquipmentEnum.ComponentCaptureUnit);
+    case "stirredtankreactor":
+    case "cstr":
+      return createEquipment(name, EquipmentEnum.StirredTankReactor);
+    case "subseapowercable":
+    case "powercable":
+      return createEquipment(name, EquipmentEnum.SubseaPowerCable);
+    case "adiabaticpipe":
+    case "pipe":
+    case "pipeline":
+      return createEquipment(name, EquipmentEnum.AdiabaticPipe);
+    case "pipebeggsandbrills":
+    case "beggsandbrills":
+      return createEquipment(name, EquipmentEnum.PipeBeggsAndBrills);
+    case "waterhammerpipe":
+    case "waterhammer":
+    case "liquidhammer":
+    case "hydraulictransientpipe":
+      return createEquipment(name, EquipmentEnum.WaterHammerPipe);
+    case "streamsaturatorutil":
+    case "saturator":
+      return createEquipment(name, EquipmentEnum.StreamSaturatorUtil);
+    case "spreadsheet":
+    case "spreadsheetblock":
+      return createEquipment(name, EquipmentEnum.SpreadsheetBlock);
+    case "unisimcalculator":
+    case "unisim_calculator":
+    case "unisimcalculatorblock":
+    case "virtualstreamop":
+    case "balanceop":
+    case "subflowsheet":
+      return createEquipment(name, EquipmentEnum.UnisimCalculator);
+    case "distillationcolumn":
+    case "column":
+      return createEquipment(name, EquipmentEnum.DistillationColumn);
+    default:
+      EquipmentEnum enumType = resolveEquipmentEnum(equipmentType);
+      if (enumType != null) {
+        return createEquipment(name, enumType);
+      }
+      ProcessEquipmentInterface reflected = createByClassName(name, equipmentType);
+      if (reflected != null) {
+        return reflected;
+      }
+      throw new IllegalArgumentException("Unknown equipment type: " + equipmentType);
     }
   }
 
@@ -239,154 +234,151 @@ public final class EquipmentFactory {
    * @param equipmentType {@link EquipmentEnum}
    * @return the created equipment
    */
-  public static ProcessEquipmentInterface createEquipment(String name,
-      EquipmentEnum equipmentType) {
+  public static ProcessEquipmentInterface createEquipment(String name, EquipmentEnum equipmentType) {
     Objects.requireNonNull(equipmentType, "equipmentType");
 
     switch (equipmentType) {
-      case ThrottlingValve:
-        return new ThrottlingValve(name);
-      case Stream:
-        return new Stream(name);
-      case Compressor:
-        return new Compressor(name);
-      case Pump:
-        return new Pump(name);
-      case Separator:
-        return new Separator(name);
-      case GasScrubber:
-        return new GasScrubber(name);
-      case HeatExchanger:
-        return new HeatExchanger(name);
-      case Mixer:
-        return new Mixer(name);
-      case Splitter:
-        return new Splitter(name);
-      case Reactor:
-      case GibbsReactor:
-        return new GibbsReactor(name);
-      case PlugFlowReactor:
-        return new PlugFlowReactor(name);
-      case CatalyticTubeReformer:
-        return new CatalyticTubeReformer(name);
-      case ReformerFurnace:
-        return new ReformerFurnace(name);
-      case SyngasBurnerZone:
-        return new SyngasBurnerZone(name);
-      case AutothermalReformer:
-        return new AutothermalReformer(name);
-      case PartialOxidationReactor:
-        return new PartialOxidationReactor(name);
-      case QuenchSection:
-        return new QuenchSection(name);
-      case WaterGasShiftReactor:
-        return new WaterGasShiftReactor(name);
-      case StirredTankReactor:
-        return new StirredTankReactor(name);
-      case Cooler:
-        return new Cooler(name);
-      case Heater:
-        return new Heater(name);
-      case Recycle:
-        return new Recycle(name);
-      case ThreePhaseSeparator:
-        return new ThreePhaseSeparator(name);
-      case Ejector:
-        throw new IllegalArgumentException(
-            "Ejector requires motive and suction streams. Use createEjector instead.");
-      case GORfitter:
-        throw new IllegalArgumentException(
-            "GORfitter requires an inlet stream. Use createGORfitter instead.");
-      case Adjuster:
-        return new Adjuster(name);
-      case SetPoint:
-        return new SetPoint(name);
-      case FlowRateAdjuster:
-        return new FlowRateAdjuster(name);
-      case Calculator:
-        return new Calculator(name);
-      case SpreadsheetBlock:
-        return new SpreadsheetBlock(name);
-      case UnisimCalculator:
-        return new UnisimCalculator(name);
-      case Expander:
-        return new Expander(name);
-      case SimpleTEGAbsorber:
-        return new SimpleTEGAbsorber(name);
-      case WaterStripperColumn:
-        return new WaterStripperColumn(name);
-      case SimpleAbsorber:
-        return new SimpleAbsorber(name);
-      case Filter:
-        return new Filter(name);
-      case Tank:
-        return new Tank(name);
-      case ComponentSplitter:
-        return new ComponentSplitter(name);
-      case ComponentCaptureUnit:
-        return new ComponentCaptureUnit(name);
-      case ReservoirCVDsim:
-        throw new IllegalArgumentException(
-            "ReservoirCVDsim requires a reservoir fluid. Use createReservoirCVDsim instead.");
-      case ReservoirDiffLibsim:
-        throw new IllegalArgumentException(
-            "ReservoirDiffLibsim requires a reservoir fluid. Use createReservoirDiffLibsim instead.");
-      case VirtualStream:
-        return new VirtualStream(name);
-      case ReservoirTPsim:
-        throw new IllegalArgumentException(
-            "ReservoirTPsim requires a reservoir fluid. Use createReservoirTPsim instead.");
-      case SimpleReservoir:
-        return new SimpleReservoir(name);
-      case Manifold:
-        return new Manifold(name);
-      case Flare:
-        return new Flare(name);
-      case FlareStack:
-        return new FlareStack(name);
-      case FuelCell:
-        return new FuelCell(name);
-      case CO2Electrolyzer:
-        return new CO2Electrolyzer(name);
-      case Electrolyzer:
-        return new Electrolyzer(name);
-      case WindTurbine:
-        return new WindTurbine(name);
-      case BatteryStorage:
-        return new BatteryStorage(name);
-      case SolarPanel:
-        return new SolarPanel(name);
-      case WindFarm:
-        return new WindFarm(name);
-      case OffshoreEnergySystem:
-        return new OffshoreEnergySystem(name);
-      case AmmoniaSynthesisReactor:
-        return new AmmoniaSynthesisReactor(name);
-      case SubseaPowerCable:
-        return new SubseaPowerCable(name);
-      case AdiabaticPipe:
-        return new AdiabaticPipe(name);
-      case PipeBeggsAndBrills:
-        return new PipeBeggsAndBrills(name);
-      case WaterHammerPipe:
-        return new WaterHammerPipe(name);
-      case StreamSaturatorUtil:
-        return new StreamSaturatorUtil(name);
-      case Column:
-      case DistillationColumn:
-        return new DistillationColumn(name, 5, true, true);
-      default:
-        ProcessEquipmentInterface reflected = createByClassName(name, equipmentType.name());
-        if (reflected != null) {
-          return reflected;
-        }
-        throw new IllegalArgumentException("Unsupported equipment type: " + equipmentType.name());
+    case ThrottlingValve:
+      return new ThrottlingValve(name);
+    case Stream:
+      return new Stream(name);
+    case Compressor:
+      return new Compressor(name);
+    case Pump:
+      return new Pump(name);
+    case Separator:
+      return new Separator(name);
+    case GasScrubber:
+      return new GasScrubber(name);
+    case HeatExchanger:
+      return new HeatExchanger(name);
+    case Mixer:
+      return new Mixer(name);
+    case Splitter:
+      return new Splitter(name);
+    case Reactor:
+    case GibbsReactor:
+      return new GibbsReactor(name);
+    case PlugFlowReactor:
+      return new PlugFlowReactor(name);
+    case CatalyticTubeReformer:
+      return new CatalyticTubeReformer(name);
+    case ReformerFurnace:
+      return new ReformerFurnace(name);
+    case SyngasBurnerZone:
+      return new SyngasBurnerZone(name);
+    case AutothermalReformer:
+      return new AutothermalReformer(name);
+    case PartialOxidationReactor:
+      return new PartialOxidationReactor(name);
+    case QuenchSection:
+      return new QuenchSection(name);
+    case WaterGasShiftReactor:
+      return new WaterGasShiftReactor(name);
+    case StirredTankReactor:
+      return new StirredTankReactor(name);
+    case Cooler:
+      return new Cooler(name);
+    case Heater:
+      return new Heater(name);
+    case Recycle:
+      return new Recycle(name);
+    case ThreePhaseSeparator:
+      return new ThreePhaseSeparator(name);
+    case Ejector:
+      throw new IllegalArgumentException("Ejector requires motive and suction streams. Use createEjector instead.");
+    case GORfitter:
+      throw new IllegalArgumentException("GORfitter requires an inlet stream. Use createGORfitter instead.");
+    case Adjuster:
+      return new Adjuster(name);
+    case SetPoint:
+      return new SetPoint(name);
+    case FlowRateAdjuster:
+      return new FlowRateAdjuster(name);
+    case Calculator:
+      return new Calculator(name);
+    case SpreadsheetBlock:
+      return new SpreadsheetBlock(name);
+    case UnisimCalculator:
+      return new UnisimCalculator(name);
+    case Expander:
+      return new Expander(name);
+    case SimpleTEGAbsorber:
+      return new SimpleTEGAbsorber(name);
+    case WaterStripperColumn:
+      return new WaterStripperColumn(name);
+    case SimpleAbsorber:
+      return new SimpleAbsorber(name);
+    case Filter:
+      return new Filter(name);
+    case Tank:
+      return new Tank(name);
+    case ComponentSplitter:
+      return new ComponentSplitter(name);
+    case ComponentCaptureUnit:
+      return new ComponentCaptureUnit(name);
+    case ReservoirCVDsim:
+      throw new IllegalArgumentException(
+          "ReservoirCVDsim requires a reservoir fluid. Use createReservoirCVDsim instead.");
+    case ReservoirDiffLibsim:
+      throw new IllegalArgumentException(
+          "ReservoirDiffLibsim requires a reservoir fluid. Use createReservoirDiffLibsim instead.");
+    case VirtualStream:
+      return new VirtualStream(name);
+    case ReservoirTPsim:
+      throw new IllegalArgumentException(
+          "ReservoirTPsim requires a reservoir fluid. Use createReservoirTPsim instead.");
+    case SimpleReservoir:
+      return new SimpleReservoir(name);
+    case Manifold:
+      return new Manifold(name);
+    case Flare:
+      return new Flare(name);
+    case FlareStack:
+      return new FlareStack(name);
+    case FuelCell:
+      return new FuelCell(name);
+    case CO2Electrolyzer:
+      return new CO2Electrolyzer(name);
+    case Electrolyzer:
+      return new Electrolyzer(name);
+    case WindTurbine:
+      return new WindTurbine(name);
+    case BatteryStorage:
+      return new BatteryStorage(name);
+    case SolarPanel:
+      return new SolarPanel(name);
+    case WindFarm:
+      return new WindFarm(name);
+    case OffshoreEnergySystem:
+      return new OffshoreEnergySystem(name);
+    case AmmoniaSynthesisReactor:
+      return new AmmoniaSynthesisReactor(name);
+    case SubseaPowerCable:
+      return new SubseaPowerCable(name);
+    case AdiabaticPipe:
+      return new AdiabaticPipe(name);
+    case PipeBeggsAndBrills:
+      return new PipeBeggsAndBrills(name);
+    case WaterHammerPipe:
+      return new WaterHammerPipe(name);
+    case StreamSaturatorUtil:
+      return new StreamSaturatorUtil(name);
+    case Column:
+    case DistillationColumn:
+      return new DistillationColumn(name, 5, true, true);
+    default:
+      ProcessEquipmentInterface reflected = createByClassName(name, equipmentType.name());
+      if (reflected != null) {
+        return reflected;
+      }
+      throw new IllegalArgumentException("Unsupported equipment type: " + equipmentType.name());
     }
   }
 
   /**
-   * Resolves an {@link EquipmentEnum} from a free-form type string, ignoring case and any
-   * whitespace, underscore, or dash separators.
+   * Resolves an {@link EquipmentEnum} from a free-form type string, ignoring case and any whitespace, underscore, or
+   * dash separators.
    *
    * @param equipmentType the equipment type identifier
    * @return the matching {@link EquipmentEnum}, or {@code null} if no enum constant matches
@@ -394,8 +386,7 @@ public final class EquipmentFactory {
   private static EquipmentEnum resolveEquipmentEnum(String equipmentType) {
     String sanitized = equipmentType.replaceAll("[\\s_-]", "");
     for (EquipmentEnum value : EquipmentEnum.values()) {
-      if (value.name().equalsIgnoreCase(equipmentType)
-          || value.name().equalsIgnoreCase(sanitized)) {
+      if (value.name().equalsIgnoreCase(equipmentType) || value.name().equalsIgnoreCase(sanitized)) {
         return value;
       }
     }
@@ -403,17 +394,15 @@ public final class EquipmentFactory {
   }
 
   /**
-   * Reflection fallback that creates any concrete process equipment class exposing a
-   * {@code (String name)} constructor, located by its class name within the known equipment
-   * sub-packages. This guarantees that every current and future equipment class is constructible by
-   * name (and therefore through {@code JsonProcessBuilder}) without an explicit
-   * {@link EquipmentEnum} entry. The simple class name is matched case-sensitively; whitespace,
-   * underscore, and dash separators are stripped before probing.
+   * Reflection fallback that creates any concrete process equipment class exposing a {@code (String name)} constructor,
+   * located by its class name within the known equipment sub-packages. This guarantees that every current and future
+   * equipment class is constructible by name (and therefore through {@code JsonProcessBuilder}) without an explicit
+   * {@link EquipmentEnum} entry. The simple class name is matched case-sensitively; whitespace, underscore, and dash
+   * separators are stripped before probing.
    *
    * @param name the name to assign to the created equipment
    * @param equipmentType the equipment class name, e.g. {@code "ControlValve"}
-   * @return the created equipment, or {@code null} if no matching class with a {@code (String)}
-   *         constructor was found
+   * @return the created equipment, or {@code null} if no matching class with a {@code (String)} constructor was found
    */
   private static ProcessEquipmentInterface createByClassName(String name, String equipmentType) {
     String trimmed = equipmentType.trim();
@@ -434,13 +423,13 @@ public final class EquipmentFactory {
   }
 
   /**
-   * Attempts to instantiate the named class through its {@code (String name)} constructor, provided
-   * it is a concrete {@link ProcessEquipmentInterface} implementation.
+   * Attempts to instantiate the named class through its {@code (String name)} constructor, provided it is a concrete
+   * {@link ProcessEquipmentInterface} implementation.
    *
    * @param className the fully qualified class name to instantiate
    * @param name the name to pass to the {@code (String)} constructor
-   * @return the created equipment, or {@code null} if the class does not exist, is abstract, lacks
-   *         a {@code (String)} constructor, or is not a {@link ProcessEquipmentInterface}
+   * @return the created equipment, or {@code null} if the class does not exist, is abstract, lacks a {@code (String)}
+   * constructor, or is not a {@link ProcessEquipmentInterface}
    */
   private static ProcessEquipmentInterface tryInstantiate(String className, String name) {
     try {
@@ -459,8 +448,7 @@ public final class EquipmentFactory {
     }
   }
 
-  public static Ejector createEjector(String name, StreamInterface motiveStream,
-      StreamInterface suctionStream) {
+  public static Ejector createEjector(String name, StreamInterface motiveStream, StreamInterface suctionStream) {
     if (motiveStream == null || suctionStream == null) {
       throw new IllegalArgumentException("Ejector requires both motive and suction streams");
     }
@@ -481,8 +469,7 @@ public final class EquipmentFactory {
     return new ReservoirCVDsim(name, reservoirFluid);
   }
 
-  public static ReservoirDiffLibsim createReservoirDiffLibsim(String name,
-      SystemInterface reservoirFluid) {
+  public static ReservoirDiffLibsim createReservoirDiffLibsim(String name, SystemInterface reservoirFluid) {
     if (reservoirFluid == null) {
       throw new IllegalArgumentException("ReservoirDiffLibsim requires a reservoir fluid");
     }
@@ -513,9 +500,8 @@ public final class EquipmentFactory {
    * @param temperatureUnit temperature unit, e.g. "C"
    * @return configured Stream
    */
-  public static Stream createStream(String name, SystemInterface fluid, double flowRate,
-      String flowUnit, double pressure, String pressureUnit, double temperature,
-      String temperatureUnit) {
+  public static Stream createStream(String name, SystemInterface fluid, double flowRate, String flowUnit,
+      double pressure, String pressureUnit, double temperature, String temperatureUnit) {
     Stream stream = new Stream(name, fluid);
     stream.setFlowRate(flowRate, flowUnit);
     stream.setPressure(pressure, pressureUnit);
@@ -532,8 +518,8 @@ public final class EquipmentFactory {
    * @param isentropicEfficiency isentropic efficiency (0.0 to 1.0)
    * @return configured Compressor
    */
-  public static Compressor createCompressor(String name, StreamInterface inletStream,
-      double outletPressure, double isentropicEfficiency) {
+  public static Compressor createCompressor(String name, StreamInterface inletStream, double outletPressure,
+      double isentropicEfficiency) {
     Compressor compressor = new Compressor(name, inletStream);
     compressor.setOutletPressure(outletPressure);
     compressor.setIsentropicEfficiency(isentropicEfficiency);
@@ -549,8 +535,8 @@ public final class EquipmentFactory {
    * @param temperatureUnit temperature unit, e.g. "C"
    * @return configured Cooler
    */
-  public static Cooler createCooler(String name, StreamInterface inletStream,
-      double outletTemperature, String temperatureUnit) {
+  public static Cooler createCooler(String name, StreamInterface inletStream, double outletTemperature,
+      String temperatureUnit) {
     Cooler cooler = new Cooler(name, inletStream);
     cooler.setOutTemperature(outletTemperature, temperatureUnit);
     return cooler;
@@ -565,8 +551,8 @@ public final class EquipmentFactory {
    * @param temperatureUnit temperature unit, e.g. "C"
    * @return configured Heater
    */
-  public static Heater createHeater(String name, StreamInterface inletStream,
-      double outletTemperature, String temperatureUnit) {
+  public static Heater createHeater(String name, StreamInterface inletStream, double outletTemperature,
+      String temperatureUnit) {
     Heater heater = new Heater(name, inletStream);
     heater.setOutTemperature(outletTemperature, temperatureUnit);
     return heater;
@@ -581,8 +567,8 @@ public final class EquipmentFactory {
    * @param percentValveOpening valve opening percentage (0-100)
    * @return configured ThrottlingValve
    */
-  public static ThrottlingValve createValve(String name, StreamInterface inletStream,
-      double outletPressure, double percentValveOpening) {
+  public static ThrottlingValve createValve(String name, StreamInterface inletStream, double outletPressure,
+      double percentValveOpening) {
     ThrottlingValve valve = new ThrottlingValve(name, inletStream);
     valve.setOutletPressure(outletPressure);
     valve.setPercentValveOpening(percentValveOpening);
@@ -621,8 +607,7 @@ public final class EquipmentFactory {
    * @param inletStream inlet stream
    * @return configured ThreePhaseSeparator
    */
-  public static ThreePhaseSeparator createThreePhaseSeparator(String name,
-      StreamInterface inletStream) {
+  public static ThreePhaseSeparator createThreePhaseSeparator(String name, StreamInterface inletStream) {
     return new ThreePhaseSeparator(name, inletStream);
   }
 
@@ -649,8 +634,7 @@ public final class EquipmentFactory {
    * @param outletPressure discharge pressure in bara
    * @return configured Expander
    */
-  public static Expander createExpander(String name, StreamInterface inletStream,
-      double outletPressure) {
+  public static Expander createExpander(String name, StreamInterface inletStream, double outletPressure) {
     Expander expander = new Expander(name, inletStream);
     expander.setOutletPressure(outletPressure);
     return expander;
