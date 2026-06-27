@@ -58,6 +58,19 @@ public class DCFCalculator implements Serializable {
   private double annualOpex = 0.0;
   private double[] opexByYear;
 
+  // Multi-product revenue streams (e.g. oil, gas, condensate). Each entry maps a
+  // product name to its annual production profile and unit price. When this map is
+  // non-empty it overrides the legacy single-product (annualProduction/productPrice)
+  // revenue model. The legacy fields remain fully functional when no products are added.
+  private final Map<String, double[]> productionByProduct = new LinkedHashMap<>();
+  private final Map<String, Double> priceByProduct = new LinkedHashMap<>();
+
+  // Volume-linked variable cost streams (e.g. produced-water handling, CO2 tax).
+  // Each entry maps a cost name to an annual volume profile and a unit cost. These are
+  // added to OPEX (before tax) in the year they occur.
+  private final Map<String, double[]> volumeByCost = new LinkedHashMap<>();
+  private final Map<String, Double> unitCostByCost = new LinkedHashMap<>();
+
   // Results
   private double npv = Double.NaN;
   private double irr = Double.NaN;
@@ -211,6 +224,74 @@ public class DCFCalculator implements Serializable {
   }
 
   /**
+   * Adds (or replaces) a priced revenue product, e.g. oil, gas, or condensate. When at least one product is added with
+   * this method, the multi-product revenue model is used and the legacy single-product fields
+   * ({@link #setAnnualProduction(double[])} and {@link #setProductPrice(double)}) are ignored.
+   *
+   * @param name unique product name (e.g. "oil", "gas", "condensate"); must be non-null
+   * @param annualProductionProfile array of annual production volumes by year (same volume unit as {@code unitPrice});
+   * must be non-null
+   * @param unitPrice revenue per unit volume for this product (consistent currency)
+   */
+  public void addProduct(String name, double[] annualProductionProfile, double unitPrice) {
+    if (name == null) {
+      throw new IllegalArgumentException("product name must not be null");
+    }
+    if (annualProductionProfile == null) {
+      throw new IllegalArgumentException("annualProductionProfile must not be null");
+    }
+    productionByProduct.put(name, Arrays.copyOf(annualProductionProfile, annualProductionProfile.length));
+    priceByProduct.put(name, unitPrice);
+    this.calculated = false;
+  }
+
+  /**
+   * Adds (or replaces) a volume-linked variable cost stream, e.g. produced-water handling or a CO2 tax that scales with
+   * a throughput volume. The cost is added to OPEX (before tax) in the year it occurs.
+   *
+   * @param name unique cost name (e.g. "waterHandling", "co2Tax"); must be non-null
+   * @param annualVolumeProfile array of annual volumes by year that drive the cost; must be non-null
+   * @param unitCost cost per unit volume (consistent currency)
+   */
+  public void addVariableCost(String name, double[] annualVolumeProfile, double unitCost) {
+    if (name == null) {
+      throw new IllegalArgumentException("cost name must not be null");
+    }
+    if (annualVolumeProfile == null) {
+      throw new IllegalArgumentException("annualVolumeProfile must not be null");
+    }
+    volumeByCost.put(name, Arrays.copyOf(annualVolumeProfile, annualVolumeProfile.length));
+    unitCostByCost.put(name, unitCost);
+    this.calculated = false;
+  }
+
+  /**
+   * Gets the names of all priced products registered via {@link #addProduct(String, double[], double)}.
+   *
+   * @return list of product names in insertion order (empty when the legacy single-product model is in use)
+   */
+  public List<String> getProductNames() {
+    return new ArrayList<>(productionByProduct.keySet());
+  }
+
+  /**
+   * Computes the gross revenue (before royalty) for a single year from a product. Used internally and exposed for
+   * reporting.
+   *
+   * @param name product name
+   * @param year the year index (0-based)
+   * @return revenue for that product in that year, or 0.0 if the product or year is undefined
+   */
+  public double getProductRevenue(String name, int year) {
+    double[] prod = productionByProduct.get(name);
+    Double price = priceByProduct.get(name);
+    if (prod == null || price == null || year < 0 || year >= prod.length) {
+      return 0.0;
+    }
+    return prod[year] * price;
+  }
+
+  /**
    * Runs the DCF calculation.
    */
   public void calculate() {
@@ -231,12 +312,42 @@ public class DCFCalculator implements Serializable {
 
     for (int year = 0; year < projectLifeYears; year++) {
       double capex = year < capexByYear.length ? capexByYear[year] : 0.0;
-      double production = year < annualProduction.length ? annualProduction[year] : 0.0;
       double inflationFactor = Math.pow(1.0 + inflationRate, year);
 
-      double revenue = production * productPrice;
+      // Revenue: multi-product model takes precedence when any product is registered;
+      // otherwise the legacy single-product (annualProduction x productPrice) model is used.
+      double revenue;
+      double production;
+      if (!productionByProduct.isEmpty()) {
+        double sum = 0.0;
+        for (Map.Entry<String, double[]> entry : productionByProduct.entrySet()) {
+          double[] prod = entry.getValue();
+          double price = priceByProduct.get(entry.getKey());
+          if (year < prod.length) {
+            sum += prod[year] * price;
+          }
+        }
+        revenue = sum;
+        // "production" drives OPEX activation and the legacy cash-flow table; use total revenue
+        // as the activity proxy so OPEX is incurred whenever any product is produced.
+        production = revenue;
+      } else {
+        production = year < annualProduction.length ? annualProduction[year] : 0.0;
+        revenue = production * productPrice;
+      }
+
       double royalty = revenue * royaltyRate;
       double revenueAfterRoyalty = revenue - royalty;
+
+      // Volume-linked variable costs (e.g. produced-water handling) added to OPEX.
+      double variableCost = 0.0;
+      for (Map.Entry<String, double[]> entry : volumeByCost.entrySet()) {
+        double[] vol = entry.getValue();
+        double unitCost = unitCostByCost.get(entry.getKey());
+        if (year < vol.length) {
+          variableCost += vol[year] * unitCost;
+        }
+      }
 
       double opex;
       if (opexByYear.length > 0 && year < opexByYear.length) {
@@ -244,6 +355,7 @@ public class DCFCalculator implements Serializable {
       } else {
         opex = (production > 0) ? annualOpex * inflationFactor : 0.0;
       }
+      opex += variableCost * inflationFactor;
 
       double depreciation = (year < deprecationYears && deprecationYears > 0) ? annualDepreciation : 0.0;
 
@@ -446,6 +558,13 @@ public class DCFCalculator implements Serializable {
     params.put("depreciationYears", deprecationYears);
     params.put("inflationRate", inflationRate);
     params.put("productPrice", productPrice);
+    if (!productionByProduct.isEmpty()) {
+      params.put("products", new ArrayList<>(productionByProduct.keySet()));
+      params.put("productPrices", new LinkedHashMap<>(priceByProduct));
+    }
+    if (!volumeByCost.isEmpty()) {
+      params.put("variableCosts", new ArrayList<>(volumeByCost.keySet()));
+    }
     result.put("parameters", params);
 
     Map<String, Object> results = new LinkedHashMap<>();
@@ -461,6 +580,13 @@ public class DCFCalculator implements Serializable {
       row.put("year", y);
       row.put("capex", y < capexByYear.length ? capexByYear[y] : 0.0);
       row.put("production", y < annualProduction.length ? annualProduction[y] : 0.0);
+      if (!productionByProduct.isEmpty()) {
+        double revenue = 0.0;
+        for (String name : productionByProduct.keySet()) {
+          revenue += getProductRevenue(name, y);
+        }
+        row.put("revenue", revenue);
+      }
       row.put("cashFlow", annualCashFlow[y]);
       row.put("cumulativeCashFlow", cumulativeCashFlow[y]);
       row.put("discountedCashFlow", discountedCashFlow[y]);

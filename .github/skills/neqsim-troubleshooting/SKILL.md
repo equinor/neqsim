@@ -22,6 +22,30 @@ Ranked recovery strategies for common failure modes. Try steps in order — stop
 | 6 | For mixtures with water + hydrocarbons, use CPA: `SystemSrkCPAstatoil` with mixing rule `10` | SRK/PR cannot model hydrogen bonding — water phase behavior is wrong |
 | 7 | Check component names against `src/main/resources/data/COMP.csv` | Misspelled component names silently fail or load wrong parameters |
 
+## NaN / Zero Enthalpy After Clone + Re-Flash
+
+**Symptom:** A reservoir/well stream flashes fine at source, but after passing
+through `WellFlow`, `PipeBeggsAndBrills`, or an isenthalpic choke (or after
+`clone()` + re-flash) it returns NaN enthalpy — often surfacing as NaN
+compressor power or a non-finite separator duty downstream.
+
+| Step | Action | Why It Helps |
+|------|--------|-------------|
+| 1 | Check `fluid.getEnthalpy()` is finite right after the source `TPflash()` + `initProperties()` | Confirms the problem appears only after re-flash, not at the source |
+| 2 | If the fluid uses hand-built `addTBPfraction` pseudo-components, rebuild it from a real PVTsim/E300 characterization (`EclipseFluidReadWrite.read`) and apply composition via `setMolarComposition()` | Degenerate ideal-gas Cp coefficients on hand-built fractions lose enthalpy on re-flash; characterized fractions carry full Cp data |
+| 3 | Enable `fluid.setMultiPhaseCheck(true)` before the choke | A trapped/undetected third phase at low pressure can yield a non-finite mix enthalpy |
+| 4 | For reservoirs, keep a clean clone of the source fluid for the well stream (bypass `SimpleReservoir` recombination, which can corrupt enthalpy) | Recombined reservoir fluids can carry inconsistent enthalpy state |
+
+> **Dynamic-depletion caveat:** `SimpleReservoir.runTransient()` rewrites each
+> producer stream's fluid in place (via `setMolarComposition` / `setPressure`)
+> with the depleted, recombination-corrected reservoir fluid. If a downstream
+> topside `ProcessModel` is re-run *after* a reservoir transient step, those
+> overwritten producer fluids can reintroduce NaN enthalpy through the inlet
+> choke. For lifetime studies, prefer holding a rigorous **steady** facility
+> snapshot at plateau for equipment loading and using an **analytical**
+> plateau+decline production profile for lifetime volumes/economics, rather than
+> re-running the topside off each transient depletion step.
+
 ## Recycle Non-Convergence
 
 **Symptom:** `process.run()` completes but recycle did not converge, or throws after max iterations.
