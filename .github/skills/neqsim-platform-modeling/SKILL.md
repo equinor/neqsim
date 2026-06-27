@@ -169,6 +169,33 @@ well_fluid_B.setMolarComposition([0.095, 2.100, 72.1, ...])  # FieldB compositio
 definitions). Use `setMolarComposition()` to set zero fractions for components
 not present in a particular well.
 
+**Prefer a shared E300 characterization for multi-reservoir mixing.** When two
+or more reservoirs (e.g. an oil and a gas-condensate field) feed a common
+topside, build BOTH fluids from a SINGLE PVTsim/E300 characterization file and
+apply different compositions via `setMolarComposition()`, rather than
+hand-building two separate `addTBPfraction` templates:
+
+```python
+e300 = jneqsim.thermo.util.readwrite.EclipseFluidReadWrite
+oil = e300.read("shared_characterization.e300")
+oil.setMolarComposition([...oil-heavy fractions...])   # same component order as the E300 CNAMES
+oil.setMixingRule(2); oil.setMultiPhaseCheck(True)
+
+gas = e300.read("shared_characterization.e300")
+gas.setMolarComposition([...condensate-light fractions...])
+gas.setMixingRule(2); gas.setMultiPhaseCheck(True)
+```
+
+Why this matters: well-defined pseudo-components from a real characterization
+carry full ideal-gas Cp coefficients, so they keep **finite enthalpy** after the
+`clone()` + re-flash that happens inside `WellFlow`/`PipeBeggsAndBrills` and
+isenthalpic chokes. Hand-built `addTBPfraction` pseudo-components can have
+degenerate Cp coefficients that lose enthalpy on re-flash and produce **NaN**
+downstream (e.g. NaN compressor power). A shared file also makes topside mixing
+consistent because every stream uses the same component basis. Set a nonzero
+water mole fraction directly in the composition (H2O is a CNAMES entry) instead
+of calling `addWater()`.
+
 ---
 
 ## 3. Process Building Patterns
