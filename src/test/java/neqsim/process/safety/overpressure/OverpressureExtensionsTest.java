@@ -186,4 +186,29 @@ public class OverpressureExtensionsTest {
     assertEquals(9.0, disposal.getPeakSingleKgPerS(), 1.0e-9);
     assertEquals("V-2", disposal.getGoverningContributor());
   }
+
+  /** The study, disposal and compliance results serialize to non-empty JSON for results.json reporting. */
+  @Test
+  public void resultsSerializeToJson() {
+    ProtectedItem item = new ProtectedItem("V-800", 100.0).setReliefSetPressureBara(100.0).setBackPressureBara(1.5);
+    ReliefScenario scenario = new ReliefScenario.Builder("Blocked outlet", ReliefCause.BLOCKED_OUTLET)
+        .phase(ReliefPhase.VAPOUR).reliefRateKgPerS(12.0).reliefTemperatureK(320.0).molarMassKgPerMol(0.019)
+        .compressibility(0.95).specificHeatRatio(1.28).build();
+    OverpressureStudyResult result = new OverpressureProtectionStudy(item).addScenario(scenario).evaluate();
+
+    String studyJson = result.toJson();
+    assertNotNull(studyJson);
+    assertTrue(studyJson.contains("V-800"));
+    assertTrue(studyJson.contains("governingScenario"));
+
+    ReliefDisposalResult disposal = new ReliefDisposalNetwork("Zone").addRelief(result, true).calculate();
+    String disposalJson = disposal.toJson();
+    assertNotNull(disposalJson);
+    assertTrue(disposalJson.contains("totalSimultaneousKgPerS"));
+
+    List<ComplianceFinding> findings = new TR3001ComplianceChecker().check(result);
+    String findingsJson = TR3001ComplianceChecker.findingsToJson(findings);
+    assertNotNull(findingsJson);
+    assertTrue(findingsJson.contains("PASS") || findingsJson.contains("status"));
+  }
 }

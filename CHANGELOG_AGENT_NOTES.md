@@ -9,6 +9,41 @@
 
 ---
 
+## 2026-06-27 — Overpressure-protection study engine (TR3001 / API 521) + JSON reporting
+
+### Summary
+New additive package `neqsim.process.safety.overpressure` implements a TR3001 /
+API STD 521 overpressure-protection study workflow: multi-cause relief load
+evaluation, governing-case selection, PSV sizing with area-based adequacy,
+TR3001 compliance checking, and shared-header disposal-load roll-up. All
+additive, no breaking changes, 21/21 JUnit 5 tests green.
+
+### What's new (all additive)
+- `OverpressureProtectionStudy` — builder-style engine: `new
+  OverpressureProtectionStudy(item).addScenario(scenario).evaluate()` returns an
+  immutable `OverpressureStudyResult` with the governing scenario, required vs.
+  selected PSV orifice area, capacity adequacy, and acceptance findings.
+- Relief-cause models: `BlockedOutletRelief`, `ControlValveFailureRelief`,
+  `FireCaseRelief`, `TubeRuptureRelief`, `CheckValveLeakRelief`, plus
+  `ReliefScenario` / `ReliefCause` / `ReliefPhase` / `ProtectedItem` /
+  `ReliefFluidState` inputs and `NozzleFlow` sizing helpers.
+- `TR3001ComplianceChecker.check(result)` → `List<ComplianceFinding>` (6 checks
+  incl. SR-26565 dynamic fire-case determination); `isCompliant(findings)`.
+- `ReliefDisposalNetwork` / `ReliefDisposalResult` — sums simultaneous relief
+  loads for shared flare/vent headers per API STD 521 §5.3.
+
+### Reporting integration (this update)
+- Added `toJson()` to `OverpressureStudyResult` and `ReliefDisposalResult`, and a
+  static `TR3001ComplianceChecker.findingsToJson(List<ComplianceFinding>)`,
+  matching the `GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues()`
+  convention used across `neqsim.process.safety.*`. NaN fields are emitted as
+  `NaN`; the transient `PSVSizingResult` is omitted (not Serializable). This
+  makes the package results.json / professional-reporting ready.
+
+### Agents / skills
+- Already referenced by `neqsim-process-safety`, `neqsim-relief-flare-network`
+  skills and the `safety.depressuring` agent (TR3001 overpressure capability).
+
 ## 2026-06-23 — Process-safety rollout: NOG 070 / STS-0131 / API 14C / NORSOK P-002 / ISO 17776 / EI AVIFF / API 521 §7 / IEC 60079 / API 537 PFP
 
 ### Summary

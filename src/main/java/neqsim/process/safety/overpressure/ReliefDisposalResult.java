@@ -3,6 +3,7 @@ package neqsim.process.safety.overpressure;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
+import com.google.gson.GsonBuilder;
 
 /**
  * Immutable result of a {@link ReliefDisposalNetwork} aggregation.

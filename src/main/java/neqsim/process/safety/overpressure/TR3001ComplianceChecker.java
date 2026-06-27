@@ -3,6 +3,7 @@ package neqsim.process.safety.overpressure;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import com.google.gson.GsonBuilder;
 
 /**
  * Evaluates an {@link OverpressureStudyResult} against the key TR3001 overpressure-protection requirements and the
@@ -53,6 +54,16 @@ public final class TR3001ComplianceChecker {
       }
     }
     return true;
+  }
+
+  /**
+   * Serializes a list of compliance findings to a human-readable JSON array for results.json reporting.
+   *
+   * @param findings the findings to serialize; not null
+   * @return JSON representation of the findings
+   */
+  public static String findingsToJson(List<ComplianceFinding> findings) {
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(findings);
   }
 
   /**
