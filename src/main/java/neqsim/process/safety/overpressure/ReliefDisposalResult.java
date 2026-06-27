@@ -108,4 +108,13 @@ public final class ReliefDisposalResult implements Serializable {
   public List<String> getWarnings() {
     return warnings;
   }
+
+  /**
+   * Serializes this relief disposal roll-up to a human-readable JSON string.
+   *
+   * @return JSON representation of this result
+   */
+  public String toJson() {
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(this);
+  }
 }

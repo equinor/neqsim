@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import com.google.gson.GsonBuilder;
 import neqsim.process.util.fire.ReliefValveSizing;
 
 /**
@@ -174,5 +175,15 @@ public final class OverpressureStudyResult implements Serializable {
    */
   public ReliefValveSizing.PSVSizingResult getSizingResult() {
     return sizingResult;
+  }
+
+  /**
+   * Serializes this overpressure study result to a human-readable JSON string. The transient PSV sizing result is
+   * omitted; NaN fields (when a quantity is not sized) are written as {@code NaN}.
+   *
+   * @return JSON representation of this result
+   */
+  public String toJson() {
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(this);
   }
 }

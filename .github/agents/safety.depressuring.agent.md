@@ -340,9 +340,9 @@ NoiseAssessment noise = new NoiseAssessment(process);
 ## Shared Skills
 - Java 8 rules: See `neqsim-java8-rules` skill for forbidden features and alternatives
 - API patterns: See `neqsim-api-patterns` skill for fluid/equipment usage
-- Process safety: See `neqsim-process-safety` skill for HAZOP, LOPA, SIL, bow-tie, and risk-matrix workflows
+- Process safety: See `neqsim-process-safety` skill for HAZOP, LOPA, SIL, bow-tie, risk-matrix, and TR3001 overpressure-protection studies
 - Depressurization/MDMT: See `neqsim-depressurization-mdmt` skill for blowdown curves, wall temperature, and minimum design metal temperature checks
-- Relief & flare: See `neqsim-relief-flare-network` skill for PSV sizing (API 520/521), flare load summation, and radiation analysis (API 537)
+- Relief & flare: See `neqsim-relief-flare-network` skill for PSV sizing (API 520/521), flare load summation, radiation analysis (API 537), and the integrated overpressure-study engine (`neqsim.process.safety.overpressure`)
 - Flow assurance: See `neqsim-flow-assurance` skill for hydrate/wax safety envelopes
 - Standards: See `neqsim-standards-lookup` skill for standards database queries
 - Dynamic simulation: See `neqsim-dynamic-simulation` skill for transient controller tuning
