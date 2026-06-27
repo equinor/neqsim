@@ -36,9 +36,14 @@ referenced output suitable for facility siting (API 752), HSE-case justification
 | QRA roll-up (frequency × ignition × fatality)         | `ConsequenceAnalysisEngine.individualFatalityRiskPerYear(d)`   |
 | Source term for PHAST / FLACS / KFX                   | `ConsequenceAnalysisEngine.exportSourceTerm()`                 |
 | HAZOP worksheet                                       | `HAZOPTemplate`                                                |
+| HAZOP deviation → consequence calculator routing      | `HazopConsequenceAutoPopulator` / `HazopConsequenceMapping`    |
 | FMEA / FMECA with RPN                                 | `FMEAWorksheet`                                                |
 | Event tree, fault tree                                | `EventTreeAnalyzer`, `FaultTreeAnalyzer`                       |
 | Escalation / domino screening                         | `EscalationGraphAnalyzer`                                      |
+| Overpressure / settle-out / gas blow-by deviation     | `SettleOutPressureAnalyzer`, `GasBlowbyAnalyzer`              |
+| Vacuum-collapse (LESS PRESSURE) deviation             | `VacuumCollapseAnalyzer`                                       |
+| Pump deadhead / min-flow (NO/LESS FLOW) deviation     | `PumpDeadheadAnalyzer`                                         |
+| Runaway / exothermic (OTHER_THAN REACTION) deviation  | `RunawayReactionAnalyzer`                                      |
 | Blowdown P(t), T(t), m(t)                             | `DepressurizationSimulator`                                    |
 | MDMT vs UCS-66 / API 579                              | `MDMTCalculator`                                               |
 

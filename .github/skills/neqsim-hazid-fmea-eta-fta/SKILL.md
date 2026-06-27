@@ -1,8 +1,8 @@
 ---
 name: neqsim-hazid-fmea-eta-fta
-version: "1.0.0"
-description: "Structured hazard-identification workflows — HAZOP worksheets with the seven IEC 61882 guidewords, FMEA failure-mode tables with RPN/criticality scoring, event-tree analysis (ETA) for outcome frequency, fault-tree analysis (FTA) with β-factor common-cause modelling and minimal cut sets, and escalation-graph (domino) screening. USE WHEN: a task requires systematic hazard identification, qualitative-to-quantitative scenario development, top-event decomposition, or escalation/domino analysis between adjacent equipment. Anchors on neqsim.process.safety.hazid, neqsim.process.safety.risk.eta, neqsim.process.safety.risk.fta, neqsim.process.safety.escalation."
-last_verified: "2026-06-23"
+version: "1.1.0"
+description: "Structured hazard-identification workflows — HAZOP worksheets with the seven IEC 61882 guidewords, deviation→calculation auto-population that maps each guideword/parameter deviation to the NeqSim calculator that quantifies its consequence (overpressure, vacuum collapse, deadhead, surge, backflow/water-hammer, low-temperature/MDMT, fire case, runaway reaction), FMEA failure-mode tables with RPN/criticality scoring, event-tree analysis (ETA) for outcome frequency, fault-tree analysis (FTA) with β-factor common-cause modelling and minimal cut sets, and escalation-graph (domino) screening. USE WHEN: a task requires systematic hazard identification, qualitative-to-quantitative scenario development, mapping HAZOP/HAZID deviations to quantitative process-safety calculations, top-event decomposition, or escalation/domino analysis between adjacent equipment. Anchors on neqsim.process.safety.hazid, neqsim.process.safety.risk.eta, neqsim.process.safety.risk.fta, neqsim.process.safety.escalation."
+last_verified: "2026-06-24"
 requires:
   java_packages:
     - neqsim.process.safety.hazid
@@ -10,6 +10,11 @@ requires:
     - neqsim.process.safety.risk.fta
     - neqsim.process.safety.escalation
     - neqsim.process.safety.vibration
+    - neqsim.process.safety.vacuum
+    - neqsim.process.safety.settleout
+    - neqsim.process.safety.blowby
+    - neqsim.process.safety.pump
+    - neqsim.process.safety.reaction
 ---
 
 # NeqSim HAZID / FMEA / ETA / FTA Skill
@@ -206,6 +211,58 @@ Likelihood bands: `LOW` (< 0.3), `MEDIUM` (0.3–0.5), `HIGH` (0.5–1.0),
 `VERY_HIGH` (≥ 1.0). High/very-high lines feed detailed AVIFF assessment or CFD.
 Verified by `PipingFivScreeningTest`.
 
+## Method 8 — Deviation → Calculation Auto-Population
+
+Turn an empty HAZOP grid into a simulation-backed worksheet: each guideword ×
+parameter deviation is mapped to the NeqSim calculator that quantifies its
+consequence, the governing standard, and a typical safeguard. This replaces the
+"TBD" placeholders produced by `generateGrid(...)` or `fromProcessSystem(...)`
+with engineered consequence and safeguard text.
+
+```java
+import neqsim.process.safety.hazid.HAZOPTemplate;
+import neqsim.process.safety.hazid.HazopConsequenceAutoPopulator;
+import neqsim.process.safety.hazid.HazopConsequenceMapping;
+
+// 1. Build a first-pass grid (or use HAZOPTemplate.fromProcessSystem(process))
+HAZOPTemplate node = new HAZOPTemplate("Node-1: V-100", "HP separator");
+node.generateGrid(HAZOPTemplate.Parameter.PRESSURE,
+    HAZOPTemplate.Parameter.FLOW, HAZOPTemplate.Parameter.TEMPERATURE);
+
+// 2. Auto-populate consequence / safeguard / recommendation columns
+HazopConsequenceAutoPopulator populator = new HazopConsequenceAutoPopulator();
+HAZOPTemplate populated = populator.populate(node);  // returns a NEW node
+String report = populated.report();
+
+// 3. Inspect a single mapping (e.g. for routing to the right calculator)
+HazopConsequenceMapping m = populator.mappingFor(
+    HAZOPTemplate.GuideWord.OTHER_THAN, HAZOPTemplate.Parameter.REACTION);
+m.getRecommendedCalculator();   // "RunawayReactionAnalyzer"
+m.getStandardReference();       // "DIERS / API 521"
+String catalogueJson = populator.catalogueToJson();
+```
+
+The `populate(...)` method preserves any already-filled (non-"TBD") cells and
+builds a new template (HAZOP deviation rows are immutable). The catalogue maps:
+
+| Deviation (guideword + parameter) | NeqSim calculator | Standard | Typical safeguard |
+|-----------------------------------|-------------------|----------|-------------------|
+| MORE PRESSURE (overpressure) | `ReliefValveSizing`, `SettleOutPressureAnalyzer`, `GasBlowbyAnalyzer` | API 520 / 521 | PSV / HIPPS |
+| LESS PRESSURE (vacuum collapse) | `VacuumCollapseAnalyzer` | API 521 / ASME | Vacuum breaker |
+| LESS TEMPERATURE (autorefrig./brittle) | `MDMTCalculator`, `DepressurizationSimulator` | ASME UCS-66 / API 521 | Low-temp trip, MDMT material |
+| MORE TEMPERATURE (fire case) | `TrappedLiquidFireRuptureStudy`, `PipeFireRuptureStudy`, `PfpDemandCalculator` | API 521 | TSV, PFP, blowdown |
+| NO / LESS FLOW (deadhead) | `PumpDeadheadAnalyzer` | API 610 | Min-flow recycle, low-flow trip |
+| MORE FLOW (surge / erosion) | `getUtilizationSnapshot` surge/velocity | API 14E / 617 | Anti-surge controller |
+| REVERSE FLOW (backflow / slam) | `WaterHammerStudy` | API 521 | Check valve, slow actuator |
+| AS_WELL_AS / PART_OF COMPOSITION | phase / hydrate / separator screening (`TPflash`) | API 521 | Composition monitoring, inhibitor |
+| OTHER_THAN REACTION (runaway) | `RunawayReactionAnalyzer` | DIERS / API 521 | Quench, two-phase relief, inhibitor |
+
+These closed the previously-flagged 🟡 partial gaps in HAZOP coverage: vacuum
+collapse (`VacuumCollapseAnalyzer`), pump deadhead / min-flow
+(`PumpDeadheadAnalyzer`), settle-out and gas blow-by
+(`SettleOutPressureAnalyzer`, `GasBlowbyAnalyzer`), and runaway reaction
+(`RunawayReactionAnalyzer`). Verified by `HazopConsequenceAutoPopulatorTest`.
+
 ## Workflow — From STID to Simulation-backed HAZOP
 
 1. Retrieve STID/P&ID, C&E, SRS, line-list, and operating-data documents into
@@ -247,7 +304,7 @@ A reference end-to-end workflow lives in the test class
 ## Verification Tests
 
 ```bash
-./mvnw test -Dtest=HAZOPFMEATest,EventTreeAnalyzerTest,FaultTreeAnalyzerTest,EscalationGraphAnalyzerTest,MahBowTieBuilderTest,PipingFivScreeningTest
+./mvnw test -Dtest=HAZOPFMEATest,EventTreeAnalyzerTest,FaultTreeAnalyzerTest,EscalationGraphAnalyzerTest,MahBowTieBuilderTest,PipingFivScreeningTest,HazopConsequenceAutoPopulatorTest,VacuumCollapseAnalyzerTest,SettleOutPressureAnalyzerTest,GasBlowbyAnalyzerTest,PumpDeadheadAnalyzerTest,RunawayReactionAnalyzerTest
 ```
 
 ## See Also

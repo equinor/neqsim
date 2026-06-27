@@ -21,6 +21,10 @@ neqsim doctor              # detailed environment health check
 
 See [VISION_AGENTS.md](VISION_AGENTS.md) for what belongs in the core repo vs. community contributions.
 
+**Not sure which repository a new agent or skill belongs in?** See the
+[Where Does This Go? placement guide](https://github.com/equinor/neqsim-community-skills/blob/main/docs/where-does-this-go.md)
+— one decision tree for core vs. community vs. enterprise, and skill vs. agent.
+
 ## Code Formatting (Spotless)
 
 Java code formatting is enforced by [Spotless](https://github.com/diffplug/spotless). **CI runs a

@@ -4,6 +4,10 @@
 > instructions) and what doesn't. It's a guardrail for contributors and
 > reviewers — not a law of physics. Strong user demand and strong technical
 > rationale can change any of these rules.
+>
+> For the cross-repository decision (core vs. the public `neqsim-community-*`
+> repos vs. the private `neqsim-enterprise-*` repos, and skill vs. agent), see
+> the [Where Does This Go? placement guide](https://github.com/equinor/neqsim-community-skills/blob/main/docs/where-does-this-go.md).
 
 ## What This Is
 
