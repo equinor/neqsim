@@ -36,6 +36,16 @@ compressor power or a non-finite separator duty downstream.
 | 3 | Enable `fluid.setMultiPhaseCheck(true)` before the choke | A trapped/undetected third phase at low pressure can yield a non-finite mix enthalpy |
 | 4 | For reservoirs, keep a clean clone of the source fluid for the well stream (bypass `SimpleReservoir` recombination, which can corrupt enthalpy) | Recombined reservoir fluids can carry inconsistent enthalpy state |
 
+> **Dynamic-depletion caveat:** `SimpleReservoir.runTransient()` rewrites each
+> producer stream's fluid in place (via `setMolarComposition` / `setPressure`)
+> with the depleted, recombination-corrected reservoir fluid. If a downstream
+> topside `ProcessModel` is re-run *after* a reservoir transient step, those
+> overwritten producer fluids can reintroduce NaN enthalpy through the inlet
+> choke. For lifetime studies, prefer holding a rigorous **steady** facility
+> snapshot at plateau for equipment loading and using an **analytical**
+> plateau+decline production profile for lifetime volumes/economics, rather than
+> re-running the topside off each transient depletion step.
+
 ## Recycle Non-Convergence
 
 **Symptom:** `process.run()` completes but recycle did not converge, or throws after max iterations.
