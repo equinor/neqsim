@@ -1,10 +1,10 @@
 ---
 name: neqsim-process-safety
 version: "1.0.0"
-description: "Process safety methodology — barrier management, PSFs/SCEs, HAZOP guidewords, LOPA worksheets, SIL determination per IEC 61511, bow-tie analysis, risk-matrix scoring, and trapped-liquid fire rupture screening. USE WHEN: a task requires barrier registers, hazard identification, layer-of-protection analysis, safety-integrity-level assignment for an SIF, trapped liquid rupture/PFP demand, or quantitative risk evaluation. Anchors on neqsim.process.safety.barrier, neqsim.process.safety.risk, and neqsim.process.safety.rupture classes."
-last_verified: "2026-06-23"
+description: "Process safety methodology — barrier management, PSFs/SCEs, HAZOP guidewords, LOPA worksheets, SIL determination per IEC 61511, bow-tie analysis, risk-matrix scoring, TR3001 overpressure-protection studies, and trapped-liquid fire rupture screening. USE WHEN: a task requires barrier registers, hazard identification, layer-of-protection analysis, safety-integrity-level assignment for an SIF, overpressure relief-cause / governing-case studies, trapped liquid rupture/PFP demand, or quantitative risk evaluation. Anchors on neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.overpressure, and neqsim.process.safety.rupture classes."
+last_verified: "2026-06-27"
 requires:
-  java_packages: [neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.rupture, neqsim.process.safety.risk.sis.nog070, neqsim.process.safety.esd, neqsim.process.safety.api14c, neqsim.process.safety.compliance]
+  java_packages: [neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.overpressure, neqsim.process.safety.rupture, neqsim.process.safety.risk.sis.nog070, neqsim.process.safety.esd, neqsim.process.safety.api14c, neqsim.process.safety.compliance]
 ---
 
 # NeqSim Process Safety Skill
@@ -24,8 +24,11 @@ sizing (`neqsim-relief-flare-network`).
 - ALARP / risk-matrix scoring (5×5)
 - Trapped-liquid fire rupture screening for blocked-in liquid-filled segments,
   including PFP demand and source-term handoff
+- Overpressure-protection study for a protected item — enumerate credible relief
+  contingencies, select the governing case, size the PSV, and check TR3001 / API
+  521 compliance
 
-Standards: **IEC 61508**, **IEC 61511**, **CCPS LOPA Guidelines**, **API 521 / ISO 23251**, **ASME B31.3/B31.4**, **ASME B16.5**, **API 754**, **NORSOK Z-013**.
+Standards: **IEC 61508**, **IEC 61511**, **CCPS LOPA Guidelines**, **API 521 / ISO 23251**, **API 520**, **TR3001**, **ASME VIII Div 1 (UG-125)**, **ASME B31.3/B31.4**, **ASME B16.5**, **API 754**, **NORSOK Z-013**.
 
 ## Method 0b — Trapped-Liquid Fire Rupture Screening
 
@@ -310,6 +313,70 @@ String json = gate.toJson();
 
 Verified by `Sts0131GateTest`.
 
+## Method 9 — Overpressure-Protection Study (TR3001 / API 521)
+
+Use `neqsim.process.safety.overpressure` for a structured overpressure study on a
+protected item: each cause calculator is fluent and returns an immutable
+`ReliefScenario`; the engine picks the maximum-rate **credible** scenario, sizes
+the PSV (vapour / liquid / two-phase), and checks acceptance against the ASME
+VIII Div 1 accumulation limits (1.10 single non-fire, 1.16 multiple, 1.21 fire).
+
+```java
+import neqsim.process.safety.overpressure.*;
+
+// 1. Cause scenarios (fluent → ReliefScenario)
+ReliefScenario blocked = new BlockedOutletRelief().setName("Blocked gas outlet")
+    .setInflowRateKgPerHr(36000.0).setReliefPressureBara(50.0)
+    .setReliefTemperatureC(20.0).setFluid(gas).calculate();
+ReliefScenario fire = new FireCaseRelief().setName("Pool fire")
+    .setVesselDiameterM(2.0).setWettedHeightM(3.0)     // or setWettedAreaM2(..)
+    .setHasDrainage(true).setHasFireFighting(true)
+    .setLatentHeatJPerKg(350000.0).setReliefPressureBara(60.0)
+    .setReliefTemperatureC(120.0).setFluid(gas).calculate();
+
+// 2. Engine: governing case + sizing + acceptance
+ProtectedItem item = new ProtectedItem("V-100", 100.0)   // tag, MAWP [bara]
+    .setReliefSetPressureBara(100.0).setBackPressureBara(1.5);
+OverpressureStudyResult result = new OverpressureProtectionStudy(item)
+    .addScenario(blocked).addScenario(fire).evaluate();
+
+result.getGoverningScenario().getName();   // worst credible case
+result.getRequiredAreaIn2();               // API 526 required orifice area
+result.getRecommendedOrifice();            // orifice letter
+result.isCapacityAdequate();               // area-based adequacy
+result.getAcceptance().getAccumulationFraction();
+
+// 3. TR3001 compliance findings (PASS / FAIL / NEEDS_REVIEW)
+List<ComplianceFinding> findings = new TR3001ComplianceChecker().check(result);
+boolean compliant = new TR3001ComplianceChecker().isCompliant(findings);
+
+// 4. Disposal-header roll-up (API 521 §5.3)
+ReliefDisposalResult disposal = new ReliefDisposalNetwork("Fire zone 1")
+    .addRelief(resultA, true).addRelief(resultB, true).calculate();
+disposal.getTotalSimultaneousKgPerS();
+disposal.getPeakSingleKgPerS();
+disposal.getGoverningContributor();
+```
+
+- Cause calculators: `BlockedOutletRelief`, `CheckValveLeakRelief`,
+  `ControlValveFailureRelief`, `TubeRuptureRelief`, `FireCaseRelief`.
+- Mark double-jeopardy cases non-credible with `.credible(false)` to exclude
+  them from governing-case selection.
+- `TR3001ComplianceChecker` emits six findings: credible scenarios (SR-26500),
+  governing case (SR-26503), capacity (SR-26506), acceptance (SR-26510), fire
+  basis (SR-26504), and dynamic determination (SR-26565); `isCompliant` is false
+  if any finding is `FAIL`.
+- Set `ReliefScenario` phase to `LIQUID` (`densityKgPerM3`/`viscosityPaS`) or
+  `TWO_PHASE` (`gasMassFraction`, `gasDensityKgPerM3`, `liquidDensityKgPerM3`,
+  `latentHeatJPerKg`, `liquidHeatCapacityJPerKgK`) to trigger the matching sizing
+  path; missing two-phase inputs are reported as warnings, not failures.
+- Adequacy is judged by **area** comparison (`selectedAreaIn2 ≥ requiredAreaIn2`),
+  not by re-plugging the selected area into the nozzle equation — API 520
+  empirical sizing and the nozzle capacity formula are not inverses.
+- Hand the disposal load off to `neqsim-relief-flare-network` for flare-tip and
+  header hydraulics. Verified by `OverpressureProtectionStudyTest` +
+  `OverpressureExtensionsTest`.
+
 ## Common Mistakes
 
 | Mistake                                              | Fix                                                                  |
@@ -334,7 +401,7 @@ Verified by `Sts0131GateTest`.
 ## Verification Tests
 
 ```bash
-./mvnw test -Dtest=Nog070SilCatalogueTest,Sts0131GateTest,Api14cSafeChartBuilderTest,NorsokP002ComplianceCheckerTest,EsdResponseTimeSimulatorTest
+./mvnw test -Dtest=Nog070SilCatalogueTest,Sts0131GateTest,Api14cSafeChartBuilderTest,NorsokP002ComplianceCheckerTest,EsdResponseTimeSimulatorTest,OverpressureProtectionStudyTest,OverpressureExtensionsTest
 ```
 
 ## Related Skills

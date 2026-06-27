@@ -1,10 +1,10 @@
 ---
 name: neqsim-relief-flare-network
 version: "1.0.0"
-description: "Relief and flare system design — PSV sizing per API 520 (gas/liquid/two-phase, fire case), API 521 fire heat input, flare load summation, flare-tip sizing, radiation contour (API 521 §6), header back-pressure & Mach. USE WHEN: a task involves PSV sizing, relief contingency analysis, thermal relief for trapped liquid, flare network hydraulics, flare radiation/dispersion, or PSV→flare integration. Anchors on neqsim.process.util.fire.ReliefValveSizing, neqsim.process.equipment.flare.{Flare, FlareStack}, neqsim.process.equipment.valve.SafetyValve."
-last_verified: "2026-04-26"
+description: "Relief and flare system design — PSV sizing per API 520 (gas/liquid/two-phase, fire case), API 521 fire heat input, flare load summation, flare-tip sizing, radiation contour (API 521 §6), header back-pressure & Mach, and the integrated TR3001 overpressure-protection study engine (multi-cause governing-case selection, fire-case relief, compliance check, disposal-load roll-up). USE WHEN: a task involves PSV sizing, relief contingency analysis, thermal relief for trapped liquid, flare network hydraulics, flare radiation/dispersion, PSV→flare integration, or a TR3001/API 521 overpressure study. Anchors on neqsim.process.util.fire.ReliefValveSizing, neqsim.process.safety.overpressure, neqsim.process.equipment.flare.{Flare, FlareStack}, neqsim.process.equipment.valve.SafetyValve."
+last_verified: "2026-06-27"
 requires:
-  java_packages: [neqsim.process.util.fire, neqsim.process.equipment.flare, neqsim.process.equipment.valve]
+  java_packages: [neqsim.process.util.fire, neqsim.process.safety.overpressure, neqsim.process.equipment.flare, neqsim.process.equipment.valve]
 ---
 
 # NeqSim Relief & Flare Network Skill
@@ -93,6 +93,65 @@ double area = ReliefValveSizing.calculateTwoPhaseReliefArea(
     massFlow_kgs, setP_barg, backP_barg, omega, rho_relief, Kd
 );
 ```
+
+## Pattern 4b — Integrated Overpressure Study (TR3001 / API 521)
+
+For a full overpressure-protection study on one protected item — enumerate
+credible relief contingencies, pick the governing case, size the PSV, and check
+acceptance — use `neqsim.process.safety.overpressure`. Each cause calculator is
+fluent and returns an immutable `ReliefScenario`; the engine selects the
+maximum-rate credible scenario and sizes accordingly (vapour via `ReliefValveSizing`
+API 520; liquid via the API 520 liquid method; two-phase via the omega method).
+
+```java
+import neqsim.process.safety.overpressure.*;
+
+// 1. Cause scenarios (fluent → ReliefScenario)
+ReliefScenario blocked = new BlockedOutletRelief().setName("Blocked gas outlet")
+    .setInflowRateKgPerHr(36000.0).setReliefPressureBara(50.0)
+    .setReliefTemperatureC(20.0).setFluid(gas).calculate();
+ReliefScenario fire = new FireCaseRelief().setName("Pool fire")
+    .setVesselDiameterM(2.0).setWettedHeightM(3.0)   // or setWettedAreaM2(..)
+    .setHasDrainage(true).setHasFireFighting(true)
+    .setLatentHeatJPerKg(350000.0).setReliefPressureBara(60.0)
+    .setReliefTemperatureC(120.0).setFluid(gas).calculate();
+
+// 2. Engine: governing case + sizing + acceptance
+ProtectedItem item = new ProtectedItem("V-100", 100.0)   // tag, MAWP [bara]
+    .setReliefSetPressureBara(100.0).setBackPressureBara(1.5);
+OverpressureStudyResult result = new OverpressureProtectionStudy(item)
+    .addScenario(blocked).addScenario(fire).evaluate();
+
+result.getGoverningScenario().getName();   // worst credible case
+result.getRequiredAreaIn2();               // API 526 required orifice area
+result.getRecommendedOrifice();            // orifice letter
+result.isCapacityAdequate();               // area-based adequacy
+result.getAcceptance().getAccumulationFraction();  // vs 1.10 / 1.16 / 1.21
+
+// 3. TR3001 compliance findings (PASS/FAIL/NEEDS_REVIEW)
+List<ComplianceFinding> findings = new TR3001ComplianceChecker().check(result);
+boolean compliant = new TR3001ComplianceChecker().isCompliant(findings);
+
+// 4. Roll relief loads up to a disposal header (API 521 §5.3)
+ReliefDisposalResult disposal = new ReliefDisposalNetwork("Fire zone 1")
+    .addRelief(resultA, true).addRelief(resultB, true).calculate();
+disposal.getTotalSimultaneousKgPerS();   // simultaneous header load
+disposal.getPeakSingleKgPerS();          // largest single contributor
+disposal.getGoverningContributor();
+```
+
+- Cause calculators: `BlockedOutletRelief`, `CheckValveLeakRelief`,
+  `ControlValveFailureRelief`, `TubeRuptureRelief`, `FireCaseRelief`.
+- Set `ReliefScenario` phase to `LIQUID` (with `densityKgPerM3`/`viscosityPaS`)
+  or `TWO_PHASE` (with `gasMassFraction`, `gasDensityKgPerM3`,
+  `liquidDensityKgPerM3`, `latentHeatJPerKg`, `liquidHeatCapacityJPerKgK`) to
+  trigger the matching sizing path; missing two-phase inputs are reported as warnings.
+- Accumulation limits: 1.10 single non-fire, 1.16 multiple, 1.21 fire (ASME VIII Div 1).
+- Verified by `OverpressureProtectionStudyTest` + `OverpressureExtensionsTest`.
+
+> **Adequacy is judged by AREA**, not by re-plugging the selected area into the
+> nozzle equation: `calculateRequiredArea` (API 520 empirical) and the nozzle
+> capacity formula use different coefficient bases and are not inverses.
 
 ## Pattern 5 — Flare Tip & Stack (API 537 + 521 §6)
 
