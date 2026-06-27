@@ -184,7 +184,7 @@ limitations, and unsupported conditions.
 
 ---
 
-## Tier 2 — Engineering Advanced (29 tools)
+## Tier 2 — Engineering Advanced (31 tools)
 
 Tested against literature and industry cases. Available in `DESKTOP_ENGINEER`
 and `STUDY_TEAM` modes. Blocked in `DIGITAL_TWIN` and `ENTERPRISE` by
@@ -206,6 +206,7 @@ code-level `enforceAccess()` — returns structured error JSON, not a silent ski
 | `runAgenticEngineering` | Plan engineering workflows, score result evidence, and rank candidate studies |
 | `runBatch` | Multi-point sensitivity sweep |
 | `sizeEquipment` | Quick equipment sizing (separator, compressor) |
+| `designUtilities` | Screening-level utility design (boiler, deaerator, refrigeration, nitrogen, steam network) |
 | `compareProcesses` | Compare process configurations side by side |
 | `generateReport` | Structured engineering report generation |
 | `generateVisualization` | Inline SVG/Mermaid/HTML visualization |
@@ -353,10 +354,10 @@ Verify: `java -version` should show 17 or higher.
 
 ## Capabilities Overview
 
-The server exposes 64 tools organized as 21 trusted-core, 29 engineering-advanced,
+The server exposes 67 tools organized as 22 trusted-core, 31 engineering-advanced,
 and 14 experimental tools, plus 9 guided-workflow prompts and 13 browsable resources.
 
-Discovery is intentionally machine-readable. `getCapabilities` describes all 64 tools with schema
+Discovery is intentionally machine-readable. `getCapabilities` describes all 67 tools with schema
 links, examples, setup templates, unit guidance, process JSON contracts, benchmark trust, lifecycle
 metadata, and safety-review policy. High-use tools have detailed schemas and runnable examples; the
 remaining tools have generic contract-level schemas and starter examples so agents can still detect
@@ -825,7 +826,7 @@ response schemas for all tools and browsable resources, see
 
 ## How the LLM Uses the Server (Typical Flow)
 
-1. **Discovery** — The LLM calls `tools/list` and finds the 64 available tools. It reads
+1. **Discovery** — The LLM calls `tools/list` and finds the 67 available tools. It reads
    the descriptions to understand what each tool does. Or it calls `getCapabilities`
    for a structured manifest of all NeqSim capabilities. It can also browse
   `neqsim://components`, `neqsim://models`, and `neqsim://setup-templates` to
@@ -878,7 +879,7 @@ neqsim-mcp-server/                        # Separate Maven project (Java 21+)
 ├── pom.xml                                # Quarkus 3.33.1 + quarkus-mcp-server 1.12.0
 ├── test_mcp_server.py                     # Comprehensive integration test suite
 └── src/main/java/neqsim/mcp/server/
-  ├── NeqSimTools.java                   # 64 @Tool-annotated MCP tools
+  ├── NeqSimTools.java                   # 67 @Tool-annotated MCP tools
     ├── NeqSimResources.java               # 7 @Resource + 6 @ResourceTemplate (13 endpoints)
     └── NeqSimPrompts.java                 # 9 @Prompt guided workflows
 
@@ -932,7 +933,7 @@ Delegates to runner layer in neqsim core (src/main/java/neqsim/mcp/):
 │   └── ResultProvenance.java              # Trust metadata (EOS, assumptions, limitations)
 └── catalog/
     ├── ExampleCatalog.java                # Examples for base categories and all MCP tools
-    └── SchemaCatalog.java                 # JSON Schema definitions for all 64 MCP tools
+    └── SchemaCatalog.java                 # JSON Schema definitions for all 67 MCP tools
 ```
 
 The MCP server is a **thin Quarkus wrapper** around the framework-agnostic
@@ -961,11 +962,11 @@ setup templates, and validation behavior:
 ### Integration Tests (MCP Server)
 
 The `test_mcp_server.py` script launches the server, communicates over STDIO,
-and validates all 64 tools across all three tiers:
+and validates all 67 tools across all three tiers:
 
 | Category | Checks | Description |
 |---|---|---|
-| Protocol | 9 | Tool/resource/template registration (64 tools, 7 resources, 6 templates) |
+| Protocol | 9 | Tool/resource/template registration (67 tools, 7 resources, 6 templates) |
 | Component search | 9 | Exact, partial, empty, no-match |
 | Examples & schemas | 10 | Catalog retrieval |
 | Flash calculations | 30 | SRK, PR, CPA; single/two-phase; density, Z, viscosity |

@@ -45,3 +45,4 @@ loaded with `read_file` at the start of an agent invocation.
 | `technical.reader.agent.md` | read technical documents | `neqsim-technical-document-reading`, `neqsim-trapped-liquid-fire-rupture`, `neqsim-pid-process-operations`, `neqsim-water-hammer` |
 | `thermo.fluid.agent.md` | create a neqsim thermodynamic fluid | `neqsim-api-patterns`, `neqsim-input-validation`, `neqsim-troubleshooting`, `neqsim-eos-regression` |
 | `unisim.reader.agent.md` | read unisim to neqsim | `neqsim-unisim-reader`, `neqsim-api-patterns`, `neqsim-process-extraction`, `neqsim-process-modeling`, `neqsim-notebook-patterns`, `neqsim-troubleshooting` |
+| `utility.design.agent.md` | design neqsim utility systems | `neqsim-utility-design`, `neqsim-utilities-specification`, `neqsim-heat-integration`, `neqsim-api-patterns`, `neqsim-java8-rules`, `neqsim-professional-reporting` |

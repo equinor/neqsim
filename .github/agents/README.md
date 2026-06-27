@@ -157,6 +157,22 @@ In VS Code Copilot Chat, type `@<agent-name>` followed by your request:
 
 ---
 
+### Utility Systems
+
+| Agent | Command | Purpose |
+|-------|---------|---------|
+| **utility.design** | `@utility.design <description>` | Screening-level utility sizing (boiler, deaerator, refrigeration, nitrogen, steam network) + agentic compression optimization |
+
+**Examples:**
+```
+@utility.design Size a fired boiler for an 8 MW reboiler duty
+@utility.design Propane chiller for 3 MW gas chilling at -35 C
+@utility.design Membrane N2 generator for 500 Nm3/h at 99.5%
+@utility.design Optimize interstage pressure of a two-stage instrument-air compressor
+```
+
+---
+
 ### Safety & Depressurization
 
 | Agent | Command | Purpose |
