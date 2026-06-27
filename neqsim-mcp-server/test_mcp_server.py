@@ -1,10 +1,10 @@
 """
 Comprehensive MCP Server Tests for NeqSim
 ==========================================
-Tests all 64 MCP tools through the real JSON-RPC protocol, verifying
+Tests all 67 MCP tools through the real JSON-RPC protocol, verifying
 correctness against known values from the NeqSim JUnit test suite.
 
-Tier 1 — Trusted Core (21 tools):
+Tier 1 — Trusted Core (22 tools):
   - TP flash (single phase, two-phase, multi-component)
   - Dew point / bubble point calculations
   - Different EOS models (SRK, PR, CPA)
@@ -16,7 +16,7 @@ Tier 1 — Trusted Core (21 tools):
   - Automation API (units, variables, state save/compare, diagnostics)
   - Industrial profile, benchmark trust, tool access
 
-Tier 2 — Engineering Advanced (29 tools):
+Tier 2 — Engineering Advanced (31 tools):
   - PVT laboratory experiments
   - Flow assurance (hydrate, corrosion, wax)
   - Standards calculations (ISO 6976, AGA)
@@ -66,6 +66,7 @@ JSON_TOOL_ARGS = {
     "runDynamic": "dynamicJson",
     "runBioprocess": "bioprocessJson",
     "sizeEquipment": "sizingJson",
+    "designUtilities": "utilityJson",
     "compareProcesses": "comparisonJson",
     "crossValidateModels": "crossValidationJson",
     "runParametricStudy": "studyJson",
@@ -256,7 +257,7 @@ def test_protocol():
     r = recv()
     tools = r.get("result", {}).get("tools", [])
     tool_names = sorted([t["name"] for t in tools])
-    check("66 tools registered", len(tools) == 66, f"got {len(tools)}: {tool_names}")
+    check("67 tools registered", len(tools) == 67, f"got {len(tools)}: {tool_names}")
 
     # Tier 1 — Trusted Core (22 tools)
     tier1 = ["runFlash", "runProcess", "validateInput", "searchComponents",
@@ -269,7 +270,7 @@ def test_protocol():
     for name in tier1:
         check(f"tier1 tool '{name}'", name in tool_names)
 
-    # Tier 2 — Engineering Advanced (30 tools)
+    # Tier 2 — Engineering Advanced (31 tools)
     tier2 = ["crossValidateModels", "runParametricStudy", "runPVT",
              "runFlowAssurance", "calculateStandard", "runPipeline",
              "runChemistry", "runMaterialsReview", "runOpenDrainReview",
@@ -280,7 +281,7 @@ def test_protocol():
              "runRelief", "runLOPA", "runSIL", "runRiskMatrix",
              "runFlareNetwork", "runHAZOP", "runBarrierRegister",
              "runSafetySystemPerformance", "runOperationalStudy",
-             "runRootCauseAnalysis", "runProcessLoop"]
+             "runRootCauseAnalysis", "runProcessLoop", "designUtilities"]
     for name in tier2:
         check(f"tier2 tool '{name}'", name in tool_names)
 
@@ -1527,6 +1528,56 @@ def test_size_compressor():
     check("size comp status=success", r.get("status") == "success", r.get("message", ""))
 
 
+# --- Utility design tools ---
+
+def test_design_utilities():
+    """Screening-level utility-system design for the five utility types."""
+    print("\n=== Utility Design ===")
+
+    r = call_tool("designUtilities", {
+        "utilityType": "boiler",
+        "name": "HP Boiler",
+        "boilerEfficiency": 0.85,
+        "duties": json.dumps([{"name": "Reboiler", "dutyKW": 5000.0}]),
+    })
+    check("boiler status=success", r.get("status") == "success", r.get("message", ""))
+
+    r = call_tool("designUtilities", {
+        "utilityType": "refrigeration",
+        "name": "Propane Chiller",
+        "evaporatorTempC": -35.0,
+        "condenserTempC": 35.0,
+        "duties": json.dumps([{"name": "Gas Chilling", "dutyKW": 3000.0}]),
+    })
+    check("refrigeration status=success", r.get("status") == "success", r.get("message", ""))
+
+    r = call_tool("designUtilities", {
+        "utilityType": "nitrogen",
+        "name": "N2 Generation",
+        "nitrogenDemandNm3h": 500.0,
+        "purityPercent": 99.5,
+        "generationMethod": "MEMBRANE",
+    })
+    check("nitrogen status=success", r.get("status") == "success", r.get("message", ""))
+
+    r = call_tool("designUtilities", {
+        "utilityType": "steamNetwork",
+        "name": "Steam System",
+        "levels": json.dumps([
+            {"name": "HP", "pressureBara": 42.0, "saturationTempC": 253.0},
+            {"name": "LP", "pressureBara": 4.5, "saturationTempC": 148.0},
+        ]),
+        "demands": json.dumps([
+            {"level": "HP", "demandKgh": 8000.0},
+            {"level": "LP", "demandKgh": 5000.0},
+        ]),
+        "localGeneration": json.dumps([
+            {"level": "LP", "generationKgh": 2000.0},
+        ]),
+    })
+    check("steamNetwork status=success", r.get("status") == "success", r.get("message", ""))
+
+
 # --- Process comparison tools ---
 
 def test_compare_processes():
@@ -2013,6 +2064,7 @@ if __name__ == "__main__":
         test_bioprocess_anaerobic_digester()
         test_size_separator()
         test_size_compressor()
+        test_design_utilities()
         test_compare_processes()
         test_validate_results()
         test_cross_validate_models()

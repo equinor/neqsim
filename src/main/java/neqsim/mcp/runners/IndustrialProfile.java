@@ -155,13 +155,13 @@ public final class IndustrialProfile {
    * Tier 2 — Engineering advanced. Tested against literature/industry cases, suitable for screening studies and
    * engineering workflows. Available in DESKTOP_ENGINEER and STUDY_TEAM.
    */
-  private static final Set<String> ENGINEERING_ADVANCED = Collections
-      .unmodifiableSet(new HashSet<>(Arrays.asList("runPVT", "runPipeline", "runWaterHammer", "runRootCauseAnalysis",
-          "runFlowAssurance", "runChemistry", "crossValidateModels", "runParametricStudy", "runBatch", "sizeEquipment",
-          "compareProcesses", "generateReport", "generateVisualization", "queryDataCatalog", "setSimulationVariable",
-          "saveSimulationState", "runMaterialsReview", "runOpenDrainReview", "runNorsokS001Clause10Review",
-          "runOperationalStudy", "runRelief", "runLOPA", "runSIL", "runRiskMatrix", "runFlareNetwork", "runHAZOP",
-          "runBarrierRegister", "runSafetySystemPerformance", "runAgenticEngineering", "runProcessLoop")));
+  private static final Set<String> ENGINEERING_ADVANCED = Collections.unmodifiableSet(
+      new HashSet<>(Arrays.asList("runPVT", "runPipeline", "runWaterHammer", "runRootCauseAnalysis", "runFlowAssurance",
+          "runChemistry", "crossValidateModels", "runParametricStudy", "runBatch", "sizeEquipment", "compareProcesses",
+          "generateReport", "generateVisualization", "queryDataCatalog", "setSimulationVariable", "saveSimulationState",
+          "runMaterialsReview", "runOpenDrainReview", "runNorsokS001Clause10Review", "runOperationalStudy", "runRelief",
+          "runLOPA", "runSIL", "runRiskMatrix", "runFlareNetwork", "runHAZOP", "runBarrierRegister",
+          "runSafetySystemPerformance", "runAgenticEngineering", "runProcessLoop", "designUtilities")));
 
   /**
    * Tier 3 — Experimental/research. Functional but limited validation, or high-autonomy tools that are difficult to
@@ -227,6 +227,7 @@ public final class IndustrialProfile {
     map.put("runAgenticEngineering", ToolCategory.CALCULATION);
     map.put("sizeEquipment", ToolCategory.CALCULATION);
     map.put("compareProcesses", ToolCategory.CALCULATION);
+    map.put("designUtilities", ToolCategory.CALCULATION);
     map.put("generateVisualization", ToolCategory.CALCULATION);
     // Process safety tools (API 520/521, IEC 61508/61511, ISO 31000)
     map.put("runRelief", ToolCategory.CALCULATION);
