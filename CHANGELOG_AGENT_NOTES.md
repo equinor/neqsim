@@ -9,6 +9,41 @@
 
 ---
 
+## 2026-07-?? — Kent-Eisenberg amine CO2 solubility (screening) + docs + demo notebook
+
+### Summary
+Validated screening-level Kent-Eisenberg model for CO2 solubility in aqueous
+MEA / DEA / MDEA / activated-MDEA solvents in package
+`neqsim.thermo.util.amines`. All additive, backed by a passing 8-test regression
+guard (`AmineCO2SolubilityTest`). New documentation page and a fully executed
+demonstration notebook.
+
+### What's new (all additive)
+- `AmineKentEisenberg` — static screening API. `AmineType{MEA,DEA,MDEA}`;
+  `amineMolarity(massFraction, amineMolarMass)`;
+  `partialPressureCO2Bara(type, temperatureK, amineMolarity, loading)` (bara;
+  returns 0 at loading 0; throws `IllegalArgumentException` on non-physical inputs).
+- `AmineSystem` — convenience wrapper. `AmineType{MEA,DEA,MDEA,AMDEA}` (AMDEA maps
+  to MDEA for screening); `setAmineConcentration(massFraction)`,
+  `setCO2Loading(loading)`, `getCO2PartialPressure()` (validated default).
+  `getCO2PartialPressureRigorous()` is EXPERIMENTAL / uncalibrated (may return NaN).
+- `AmineHeatOfAbsorption` — `AmineType{MEA,DEA,MDEA,AMDEA}`;
+  `calcHeatOfAbsorptionCO2()` returns kJ/mol CO2.
+- Accuracy: ~factor-of-2 on pCO2 in engineering loading windows (MEA/DEA 0.2-0.5,
+  MDEA/aMDEA 0.1-1.0 mol/mol). Use for screening, not custody-grade design.
+
+### Docs / examples
+- `docs/thermo/amine_co2_solubility.md` (wired into `docs/thermo/README.md` and
+  `docs/REFERENCE_MANUAL_INDEX.md`).
+- `examples/notebooks/amine_co2_solubility.ipynb` — executed; 3 figures
+  (isotherm MEA vs MDEA, temperature-swing stripping, heat of absorption).
+
+### Golden numbers (anchors)
+- 50 wt% MDEA molarity ~= 4.36 mol/L; 30 wt% MEA molarity ~= 5.03 mol/L.
+- MDEA pCO2 @40C: loading 0.10 ~= 0.0095 bara; loading 0.40 ~= 0.233 bara.
+
+---
+
 ## 2026-06-27 — Overpressure-protection study engine (TR3001 / API 521) + JSON reporting
 
 ### Summary

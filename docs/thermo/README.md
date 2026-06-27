@@ -62,6 +62,7 @@ thermo/
 
 - [H2S Distribution Guide](H2S_distribution_guide): **H2S phase distribution modeling** between gas, oil, and water using SRK, PR, CPA, and Electrolyte-CPA equations of state. Covers acid-base chemistry, pH effects, and salinity impacts.
 - [H2S Distribution Modeling (Detailed)](H2S_DISTRIBUTION_MODELING): **Comprehensive H2S modeling** including chemical reactions, model selection guidance, and validation examples.
+- [Amine CO2 Solubility (Kent-Eisenberg)](amine_co2_solubility): **Screening-level CO2 solubility** in aqueous MEA / DEA / MDEA / activated-MDEA solvents using the Kent-Eisenberg apparent-equilibrium-constant model. Covers the validated screening API, validation status, equations, and usage examples.
 
 ### Application Guides
 

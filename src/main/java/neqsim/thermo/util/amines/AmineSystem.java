@@ -120,6 +120,8 @@ public class AmineSystem implements java.io.Serializable {
   private double h2sMolFraction;
   private double waterMolFraction;
   private double piperazineMolFraction;
+  private double amineMassFraction;
+  private double co2Loading;
   private boolean hasH2S = false;
   private boolean initialized = false;
   private AmineHeatOfAbsorption heatCalc;
@@ -184,6 +186,8 @@ public class AmineSystem implements java.io.Serializable {
     double amineMW = getAmineMolarMass();
     double waterMW = 18.015;
 
+    this.amineMassFraction = massFraction;
+
     // For aMDEA, massFraction is the total amine mass fraction (MDEA + PZ)
     amineMolFraction = (massFraction / amineMW) / (massFraction / amineMW + (1.0 - massFraction) / waterMW);
     waterMolFraction = 1.0 - amineMolFraction;
@@ -197,6 +201,7 @@ public class AmineSystem implements java.io.Serializable {
    * @param loading CO2 loading (dimensionless, typically 0 to 0.5 for MEA/DEA, 0 to 1.0 for MDEA)
    */
   public void setCO2Loading(double loading) {
+    this.co2Loading = loading;
     this.co2MolFraction = loading * amineMolFraction;
     heatCalc.setCO2Loading(loading);
   }
@@ -280,6 +285,9 @@ public class AmineSystem implements java.io.Serializable {
       system.addComponent("HS-", 1.0e-20);
       system.addComponent("S--", 1.0e-20);
     }
+
+    // Load the component and reaction database (required for the chemical reactions to fire)
+    system.createDatabase(true);
 
     // Enable chemical reactions
     system.chemicalReactionInit();
@@ -369,13 +377,54 @@ public class AmineSystem implements java.io.Serializable {
    * Gets the CO2 equilibrium partial pressure over the loaded solution.
    *
    * <p>
-   * Runs a bubble point pressure flash and extracts the CO2 partial pressure from the vapor phase. This is the key
-   * quantity for amine absorber/stripper design.
+   * Uses the validated {@link AmineKentEisenberg} apparent-equilibrium-constant correlation, which is regression-tested
+   * against the Jou/Lee/Mather vapour-liquid-equilibrium datasets. This is the key quantity for amine absorber/stripper
+   * design and is the default, robust path. For a rigorous electrolyte equation-of-state estimate (experimental,
+   * requires calibration) use {@link #getCO2PartialPressureRigorous()}.
    * </p>
    *
    * @return CO2 partial pressure in bara
    */
   public double getCO2PartialPressure() {
+    AmineKentEisenberg.AmineType keType = mapToKentEisenbergType();
+    double amineMW = getAmineMolarMass();
+    double molarity = AmineKentEisenberg.amineMolarity(amineMassFraction, amineMW);
+    return AmineKentEisenberg.partialPressureCO2Bara(keType, temperature, molarity, co2Loading);
+  }
+
+  /**
+   * Maps the configured amine type to the {@link AmineKentEisenberg.AmineType} used by the solubility correlation.
+   * Activated MDEA is treated as MDEA for the purpose of the screening correlation (the piperazine kinetic enhancement
+   * does not alter the equilibrium solubility floor).
+   *
+   * @return the corresponding Kent-Eisenberg amine type
+   */
+  private AmineKentEisenberg.AmineType mapToKentEisenbergType() {
+    switch (amineType) {
+    case MEA:
+      return AmineKentEisenberg.AmineType.MEA;
+    case DEA:
+      return AmineKentEisenberg.AmineType.DEA;
+    case MDEA:
+    case AMDEA:
+    default:
+      return AmineKentEisenberg.AmineType.MDEA;
+    }
+  }
+
+  /**
+   * Gets the CO2 equilibrium partial pressure using the rigorous electrolyte-CPA equation of state.
+   *
+   * <p>
+   * This path builds the full speciated electrolyte system (with chemical reactions enabled and the reaction database
+   * loaded) and runs a bubble-point pressure flash. It is experimental: the underlying CO2 Henry's law and reaction
+   * equilibrium constants in the electrolyte model are not yet calibrated against amine VLE data and can be
+   * substantially off. Prefer {@link #getCO2PartialPressure()} for design work.
+   * </p>
+   *
+   * @return CO2 partial pressure in bara, or {@link Double#NaN} if the flash fails
+   */
+  public double getCO2PartialPressureRigorous() {
     if (!initialized || system == null) {
       createSystem();
     }
@@ -383,7 +432,7 @@ public class AmineSystem implements java.io.Serializable {
     try {
       ops.bubblePointPressureFlash(false);
     } catch (Exception ex) {
-      logger.error("Bubble point flash failed", ex);
+      logger.error("Rigorous bubble point flash failed", ex);
       return Double.NaN;
     }
     try {
