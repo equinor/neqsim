@@ -8064,8 +8064,11 @@ public class ProcessSystem extends SimulationBaseClass {
     if (equipment == null) {
       return null;
     }
-    equipment.initMechanicalDesign();
     neqsim.process.mechanicaldesign.MechanicalDesign mecDesign = equipment.getMechanicalDesign();
+    if (mecDesign == null) {
+      equipment.initMechanicalDesign();
+      mecDesign = equipment.getMechanicalDesign();
+    }
     if (mecDesign == null) {
       return null;
     }

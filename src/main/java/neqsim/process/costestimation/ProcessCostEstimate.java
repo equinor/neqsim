@@ -84,6 +84,12 @@ public class ProcessCostEstimate implements java.io.Serializable {
   /** Central cost calculator for process-level factors. */
   private transient CostEstimationCalculator costCalculator;
 
+  /** Optional process-level CEPCI override applied to each equipment estimator. */
+  private Double cepciOverride;
+
+  /** Optional process-level material override applied to each equipment estimator. */
+  private String materialOverride;
+
   // ============================================================================
   // Cost Totals
   // ============================================================================
@@ -399,6 +405,7 @@ public class ProcessCostEstimate implements java.io.Serializable {
       mecDesign.calcDesign();
 
       // Calculate cost estimate
+      applyProcessCostOverrides(mecDesign.getCostEstimate());
       mecDesign.calculateCostEstimate();
       UnitCostEstimateBaseClass costEst = mecDesign.getCostEstimate();
 
@@ -758,6 +765,7 @@ public class ProcessCostEstimate implements java.io.Serializable {
       costCalculator = new CostEstimationCalculator();
     }
     costCalculator.setCurrentCepci(cepci);
+    cepciOverride = Double.valueOf(cepci);
   }
 
   /**
@@ -770,6 +778,24 @@ public class ProcessCostEstimate implements java.io.Serializable {
       costCalculator = new CostEstimationCalculator();
     }
     costCalculator.setMaterialOfConstruction(material);
+    materialOverride = material;
+  }
+
+  /**
+   * Applies process-level cost settings that were explicitly requested by the caller to a unit cost estimator.
+   *
+   * @param costEst unit-level cost estimator to update
+   */
+  private void applyProcessCostOverrides(UnitCostEstimateBaseClass costEst) {
+    if (costEst == null) {
+      return;
+    }
+    if (cepciOverride != null) {
+      costEst.setCurrentCepci(cepciOverride.doubleValue());
+    }
+    if (materialOverride != null) {
+      costEst.setMaterialOfConstruction(materialOverride);
+    }
   }
 
   // ============================================================================
@@ -892,7 +918,7 @@ public class ProcessCostEstimate implements java.io.Serializable {
     result.put("processName", (processSystem != null) ? processSystem.getName() : "Unknown");
     result.put("reportType", "ProcessCostEstimate");
     result.put("generatedAt", java.time.Instant.now().toString());
-    result.put("cepciYear", costCalculator != null ? costCalculator.getCurrentCepci() : 0);
+    result.put("currentCepci", costCalculator != null ? costCalculator.getCurrentCepci() : 0);
 
     // Cost summary
     Map<String, Object> costSummary = new LinkedHashMap<String, Object>();

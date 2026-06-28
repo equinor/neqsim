@@ -881,7 +881,8 @@ public class FieldDevelopmentCostEstimator implements Serializable {
       }
 
       for (Map.Entry<String, Double> entry : topsidesDetailedEstimateResult.getCapitalCosts().entrySet()) {
-        if (!"directFieldCost".equals(entry.getKey()) && !"excludedNonTopsidesScope".equals(entry.getKey())) {
+        if (!"directFieldCost".equals(entry.getKey()) && !"excludedNonTopsidesScope".equals(entry.getKey())
+            && !entry.getKey().startsWith("module.")) {
           costByCategory.put("topsides." + entry.getKey(), entry.getValue());
         }
       }

@@ -107,6 +107,10 @@ class FieldDevelopmentCostEstimatorTest {
         "Report total weight should use the detailed topsides dry-weight basis");
     assertTrue(report.getCostByCategory().containsKey("topsides.processEquipmentModules"),
         "Top-level category breakdown should expose detailed topsides cost categories");
+    for (String category : report.getCostByCategory().keySet()) {
+      assertTrue(!category.startsWith("topsides.module."),
+          "Top-level category breakdown should not expose additive topsides module detail lines");
+    }
     assertTrue(report.getEquipmentCostByCategory().containsKey("Separator"),
         "Equipment-only category breakdown should remain available separately");
     assertTrue(report.toJson().contains("equipmentCostByCategory"),
