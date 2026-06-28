@@ -3,6 +3,7 @@ package neqsim.process.mechanicaldesign.splitter;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import neqsim.process.costestimation.splitter.SplitterCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -70,6 +71,7 @@ public class SplitterMechanicalDesign extends MechanicalDesign {
    */
   public SplitterMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
+    costEstimate = new SplitterCostEstimate(this);
   }
 
   /** {@inheritDoc} */
@@ -161,6 +163,7 @@ public class SplitterMechanicalDesign extends MechanicalDesign {
     outerDiameter = headerDiameter + 2.0 * headerWallThickness / 1000.0;
     innerDiameter = headerDiameter;
     setWallThickness(headerWallThickness);
+    calculateWeights();
   }
 
   /**

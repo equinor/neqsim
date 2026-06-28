@@ -46,7 +46,8 @@ documenting which standards were checked and their compliance status.
 3. **Build the fluid**: constructor takes `(T_kelvin, P_bara)` → `addComponent()` for each species → `setMixingRule()` (use `"classic"` for SRK/PR or numeric `10` for CPA) → optionally `setMultiPhaseCheck(true)`.
 4. **Assemble the flowsheet** using `ProcessSystem`: create a `Stream` from the fluid → add equipment in topological order → connect outlet streams to downstream equipment inlets.
 5. **Run** with `processSystem.run()`, then extract results (temperatures, pressures, flow rates, compositions, duties, powers).
-6. **Validate** results against engineering sense (mass/energy balance, expected phase splits, reasonable pressure drops).
+6. **Validate** results against engineering sense (energy balance, expected phase splits, reasonable pressure drops).
+7. **Mass-balance acceptance gate (MANDATORY)**: before accepting/returning any process-model solution, verify the overall mass balance closes — sum the `kg/hr` of all feed streams and all product/export streams; the closure error must be `< 0.1 %`. If it does not close, a stream was dropped (e.g. an unconnected scrubber liquid), a recycle did not converge, or a split fraction is wrong — fix the flowsheet and re-run. Never report results from an unbalanced model. For a multi-area `ProcessModel`, also confirm `plant.run()` converged. See `neqsim-platform-modeling` Section 8.3 for the check helper.
 
 ## Output Format
 - **Java**: runnable `main()` method, Java 8 compatible (NO `var`, `List.of()`, `String.repeat()`, or any Java 9+ syntax). All types explicitly declared.
@@ -57,6 +58,7 @@ documenting which standards were checked and their compliance status.
 - Equipment constructors: `new Separator("name", inletStream)` or `new Compressor("name", gasStream)`
 - Outlet streams: `separator.getGasOutStream()`, `separator.getLiquidOutStream()`, `compressor.getOutletStream()`
 - Recycles: create `Recycle("name")` → `addStream(outletStream)` → add to process after the equipment loop
+- Recompression default: when building a recompression/export-compression train, ALWAYS close each suction/export scrubber's `getLiquidOutStream()` back to the separator at the matching pressure (HP scrubber→stage-1, MP scrubber→stage-2, LP scrubber→stage-3) via a seed stream + TP-setter `Heater` + `Recycle`. Never leave scrubber liquid unconnected — it is silently dropped and under-counts condensate recovery. See `neqsim-platform-modeling` Section 4.
 - Adjusters: `Adjuster("name")` → `setAdjustedVariable(equipment, "methodName")` → `setTargetVariable(stream, "methodName", targetValue)`
 - Distillation: `DistillationColumn("name", numTrays, hasReboiler, hasCondenser)` → `addFeedStream(stream, trayNumber)`
 - Always call `process.run()` ONCE after adding all equipment

@@ -5,6 +5,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import com.google.gson.GsonBuilder;
+import neqsim.process.costestimation.CostEstimateBasis;
+import neqsim.process.costestimation.CostEstimateResult;
+import neqsim.process.costestimation.EstimateClass;
+import neqsim.process.costestimation.MaterialTakeOffItem;
 
 /**
  * SURF (Subsea, Umbilicals, Risers, Flowlines) CAPEX estimator for field development.
@@ -13,7 +17,7 @@ import com.google.gson.GsonBuilder;
  * Aggregates cost estimates for all major SURF equipment categories:
  * </p>
  * <ul>
- * <li><b>S</b> — Subsea infrastructure: Christmas trees, manifolds, PLETs, jumpers</li>
+ * <li><b>S</b> — Subsea infrastructure: Christmas trees, manifolds, PLETs, PLEMs, jumpers</li>
  * <li><b>U</b> — Umbilicals: control umbilicals from host platform to subsea field</li>
  * <li><b>R</b> — Risers: dynamic or rigid risers from seabed to host platform</li>
  * <li><b>F</b> — Flowlines: infield flowlines and export pipelines</li>
@@ -70,6 +74,15 @@ public class SURFCostEstimator {
 
   /** PLET hub size in inches. */
   private double pletHubSizeInches = 16.0;
+
+  /** Number of PLEMs. */
+  private int numberOfPLEMs = 0;
+
+  /** PLEM dry weight in tonnes. */
+  private double plemWeightTonnes = 45.0;
+
+  /** PLEM header size in inches. */
+  private double plemHeaderSizeInches = 16.0;
 
   /** Number of jumpers (well to manifold). */
   private int numberOfJumpers = 0;
@@ -157,7 +170,7 @@ public class SURFCostEstimator {
   private double contingencyPct = 0.15;
 
   // ============ Calculated Results ============
-  /** Total subsea infrastructure cost (trees + manifold + PLETs + jumpers) in USD. */
+  /** Total subsea infrastructure cost (trees + manifold + PLETs + PLEMs + jumpers) in USD. */
   private double subseaCostUSD = 0.0;
 
   /** Total umbilical cost in USD. */
@@ -174,6 +187,9 @@ public class SURFCostEstimator {
 
   /** Line-item cost breakdown. */
   private List<Map<String, Object>> lineItems = new ArrayList<Map<String, Object>>();
+
+  /** Estimate basis for detailed SURF cost reporting. */
+  private CostEstimateBasis estimateBasis;
 
   /**
    * Default constructor.
@@ -194,6 +210,57 @@ public class SURFCostEstimator {
     this.region = region;
     this.numberOfJumpers = numberOfWells;
     this.manifoldSlots = numberOfWells;
+  }
+
+  /**
+   * Gets the detailed estimate basis for this SURF estimate.
+   *
+   * @return estimate basis
+   */
+  public CostEstimateBasis getEstimateBasis() {
+    if (estimateBasis == null) {
+      estimateBasis = createDefaultEstimateBasis();
+    }
+    return estimateBasis;
+  }
+
+  /**
+   * Sets the detailed estimate basis for this SURF estimate.
+   *
+   * @param estimateBasis estimate basis; {@code null} resets to the default SURF basis
+   */
+  public void setEstimateBasis(CostEstimateBasis estimateBasis) {
+    this.estimateBasis = estimateBasis == null ? createDefaultEstimateBasis() : estimateBasis;
+  }
+
+  /**
+   * Gets the estimate class for this SURF estimate.
+   *
+   * @return estimate class
+   */
+  public EstimateClass getEstimateClass() {
+    return getEstimateBasis().getEstimateClass();
+  }
+
+  /**
+   * Sets the estimate class for this SURF estimate.
+   *
+   * @param estimateClass estimate class; {@code null} resets to Class 4
+   */
+  public void setEstimateClass(EstimateClass estimateClass) {
+    getEstimateBasis().setEstimateClass(estimateClass);
+  }
+
+  /**
+   * Creates the default SURF estimate basis for the current region.
+   *
+   * @return default SURF estimate basis
+   */
+  private CostEstimateBasis createDefaultEstimateBasis() {
+    return new CostEstimateBasis().setEstimateClass(EstimateClass.CLASS_4)
+        .setEstimatingMethod("SURF benchmark line-item estimate").setDataSource("subsea benchmark correlations")
+        .setLocationFactor(getRegionFactor()).setLocationBasis(region.name())
+        .setNotes("SURF estimate with line-item MTO for subsea infrastructure, umbilicals, risers and flowlines.");
   }
 
   /**
@@ -224,7 +291,7 @@ public class SURFCostEstimator {
   }
 
   /**
-   * Calculate Subsea infrastructure costs (trees, manifold, PLETs, jumpers).
+   * Calculate Subsea infrastructure costs (trees, manifold, PLETs, PLEMs, jumpers).
    */
   private void calculateSubseaInfrastructure() {
     SubseaCostEstimator est = new SubseaCostEstimator(region);
@@ -253,6 +320,16 @@ public class SURFCostEstimator {
       double totalPletCost = pletCost * numberOfPLETs;
       subseaCostUSD += totalPletCost;
       addLineItem("S", "PLETs", numberOfPLETs, "ea", pletCost, totalPletCost, est.getVesselDays() * numberOfPLETs);
+    }
+
+    // PLEMs
+    if (numberOfPLEMs > 0) {
+      est = new SubseaCostEstimator(region);
+      est.calculatePLETCost(plemWeightTonnes, plemHeaderSizeInches, waterDepthM, true, true);
+      double plemCost = est.getTotalCost();
+      double totalPlemCost = plemCost * numberOfPLEMs;
+      subseaCostUSD += totalPlemCost;
+      addLineItem("S", "PLEMs", numberOfPLEMs, "ea", plemCost, totalPlemCost, est.getVesselDays() * numberOfPLEMs);
     }
 
     // Jumpers (well to manifold)
@@ -410,10 +487,24 @@ public class SURFCostEstimator {
     }
     double vesselDays = lengthKm / layRateKmPerDay + 5; // Plus mob/demob
 
-    addLineItem("F",
+    Map<String, Object> lineItem = addLineItem("F",
         label + " " + String.format("%.0f", diameterInches) + "\" x " + String.format("%.1f", wallThicknessM * 1000)
             + "mm WT (" + String.format("%.0f", lengthKm) + " km, " + pipelineMaterialGrade + ")",
         1, "ea", totalCost, totalCost, vesselDays);
+    lineItem.put("length_km", lengthKm);
+    lineItem.put("diameter_inches", diameterInches);
+    lineItem.put("wallThickness_mm", wallThicknessM * 1000.0);
+    lineItem.put("materialGrade", pipelineMaterialGrade);
+    lineItem.put("steelWeight_kg", totalSteelWeight);
+    lineItem.put("steelCostUSD", steelCostUSD);
+    lineItem.put("coatingArea_m2", externalSurfaceM2);
+    lineItem.put("coatingCostUSD", coatingCostUSD);
+    lineItem.put("installationCostUSD", installCostUSD);
+    lineItem.put("fieldWelds", numberOfJoints);
+    lineItem.put("weldingCostUSD", weldingCostUSD);
+    lineItem.put("engineeringCostUSD", engineeringUSD);
+    lineItem.put("testingCostUSD", testingUSD);
+    lineItem.put("contingencyCostUSD", contingencyUSD);
 
     return totalCost;
   }
@@ -432,6 +523,7 @@ public class SURFCostEstimator {
     } else if ("X60".equals(grade)) {
       return 414.0;
     } else if ("X65".equals(grade)) {
+      return 448.0;
     } else if ("X70".equals(grade)) {
       return 483.0;
     } else if ("X80".equals(grade)) {
@@ -507,9 +599,10 @@ public class SURFCostEstimator {
    * @param unitCostUSD unit cost in USD
    * @param totalCostUSD total cost in USD
    * @param vesselDays vessel days required
+   * @return created mutable line-item map
    */
-  private void addLineItem(String category, String description, int quantity, String unit, double unitCostUSD,
-      double totalCostUSD, double vesselDays) {
+  private Map<String, Object> addLineItem(String category, String description, int quantity, String unit,
+      double unitCostUSD, double totalCostUSD, double vesselDays) {
     Map<String, Object> item = new LinkedHashMap<String, Object>();
     item.put("category", category);
     item.put("description", description);
@@ -519,6 +612,7 @@ public class SURFCostEstimator {
     item.put("totalCostUSD", totalCostUSD);
     item.put("vesselDays", vesselDays);
     lineItems.add(item);
+    return item;
   }
 
   /**
@@ -560,16 +654,129 @@ public class SURFCostEstimator {
     result.put("fieldConfiguration", config);
 
     // Total vessel days
-    double totalVesselDays = 0;
-    for (Map<String, Object> item : lineItems) {
-      Object vd = item.get("vesselDays");
-      if (vd instanceof Number) {
-        totalVesselDays += ((Number) vd).doubleValue();
-      }
-    }
-    result.put("totalVesselDays", totalVesselDays);
+    result.put("totalVesselDays", getTotalVesselDays());
 
     return result;
+  }
+
+  /**
+   * Builds a detailed, report-ready SURF cost estimate result.
+   *
+   * <p>
+   * The method maps the existing SURF benchmark line items into the common NeqSim cost-estimate contract. Rigid
+   * pipeline entries are decomposed into steel, coating, field weld, and installation material take-off lines when the
+   * quantities are available.
+   * </p>
+   *
+   * @return detailed SURF estimate result
+   */
+  public CostEstimateResult getDetailedEstimateResult() {
+    if (lineItems.isEmpty() && totalSURFCostUSD <= 0.0) {
+      calculate();
+    }
+
+    CostEstimateResult result = new CostEstimateResult().setIdentification("SURF", "SURF", "subsea-surf")
+        .setBasis(getEstimateBasis()).addCapitalCost("subseaInfrastructure", subseaCostUSD)
+        .addCapitalCost("umbilicals", umbilicalCostUSD).addCapitalCost("risers", riserCostUSD)
+        .addCapitalCost("flowlinesAndPipelines", flowlineCostUSD).addCapitalCostSummary("totalSURF", totalSURFCostUSD)
+        .addQuantityBasis("totalVesselDays", getTotalVesselDays(), "vessel-day");
+
+    for (Map<String, Object> item : lineItems) {
+      addLineItemToDetailedResult(result, item);
+    }
+    if (result.getMaterialTakeOff().isEmpty()) {
+      result.addQualityFlag("No SURF line items were available; run calculate() before reporting the estimate.");
+    }
+    return result;
+  }
+
+  /**
+   * Adds one SURF line item to a detailed estimate result.
+   *
+   * @param result target detailed estimate result
+   * @param item source SURF line-item map
+   */
+  private void addLineItemToDetailedResult(CostEstimateResult result, Map<String, Object> item) {
+    String description = getText(item.get("description"));
+    String category = getText(item.get("category"));
+    double totalCost = getNumber(item.get("totalCostUSD"));
+    double steelWeight = getNumber(item.get("steelWeight_kg"));
+
+    if (steelWeight > 0.0) {
+      String materialGrade = getText(item.get("materialGrade"));
+      result.addMaterialTakeOff(new MaterialTakeOffItem(description + " steel pipe", category, materialGrade,
+          steelWeight, "kg", steelWeight, getNumber(item.get("steelCostUSD")), "surf-pipeline-sizing"));
+      result.addMaterialTakeOff(new MaterialTakeOffItem(description + " external coating", category, "pipeline coating",
+          getNumber(item.get("coatingArea_m2")), "m2", Double.NaN, getNumber(item.get("coatingCostUSD")),
+          "surf-pipeline-sizing"));
+      result.addMaterialTakeOff(
+          new MaterialTakeOffItem(description + " field welds", category, "welding", getNumber(item.get("fieldWelds")),
+              "ea", Double.NaN, getNumber(item.get("weldingCostUSD")), "surf-pipeline-sizing"));
+      result.addMaterialTakeOff(new MaterialTakeOffItem(description + " installation", category, "lay vessel",
+          getNumber(item.get("length_km")), "km", Double.NaN, getNumber(item.get("installationCostUSD")),
+          "surf-pipeline-sizing"));
+      result.addProjectCost(description + " engineering", getNumber(item.get("engineeringCostUSD")));
+      result.addProjectCost(description + " testing", getNumber(item.get("testingCostUSD")));
+      result.addProjectCost(description + " contingency", getNumber(item.get("contingencyCostUSD")));
+    } else {
+      result.addMaterialTakeOff(new MaterialTakeOffItem(description, category, getCategoryMaterial(category),
+          getNumber(item.get("quantity")), getText(item.get("unit")), Double.NaN, totalCost, "surf-benchmark"));
+    }
+  }
+
+  /**
+   * Gets the total installation vessel days in the current SURF line items.
+   *
+   * @return total vessel days
+   */
+  private double getTotalVesselDays() {
+    double totalVesselDays = 0.0;
+    for (Map<String, Object> item : lineItems) {
+      totalVesselDays += getNumber(item.get("vesselDays"));
+    }
+    return totalVesselDays;
+  }
+
+  /**
+   * Converts a value to text for report fields.
+   *
+   * @param value source value
+   * @return value text, or an empty string for {@code null}
+   */
+  private String getText(Object value) {
+    return value == null ? "" : String.valueOf(value);
+  }
+
+  /**
+   * Converts a value to a double when it is numeric.
+   *
+   * @param value source value
+   * @return numeric value, or zero when unavailable
+   */
+  private double getNumber(Object value) {
+    if (value instanceof Number) {
+      return ((Number) value).doubleValue();
+    }
+    return 0.0;
+  }
+
+  /**
+   * Maps a SURF category code to a material or package basis label.
+   *
+   * @param category SURF category code
+   * @return material or package basis label
+   */
+  private String getCategoryMaterial(String category) {
+    if ("S".equals(category)) {
+      return "subsea package";
+    } else if ("U".equals(category)) {
+      return "umbilical package";
+    } else if ("R".equals(category)) {
+      return "riser package";
+    } else if ("F".equals(category)) {
+      return "flowline package";
+    }
+    return "package";
   }
 
   /**
@@ -604,8 +811,12 @@ public class SURFCostEstimator {
    * @return JSON string with complete SURF cost breakdown
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(getCostBreakdown());
+    if (lineItems.isEmpty() && totalSURFCostUSD <= 0.0) {
+      calculate();
+    }
+    Map<String, Object> result = new LinkedHashMap<String, Object>(getCostBreakdown());
+    result.put("detailedEstimateResult", getDetailedEstimateResult().toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(result);
   }
 
   // ============ Getters for cost results ============
@@ -622,7 +833,7 @@ public class SURFCostEstimator {
   /**
    * Get subsea infrastructure cost in USD.
    *
-   * @return subsea cost (trees + manifold + PLETs + jumpers) in USD
+   * @return subsea cost (trees + manifold + PLETs + PLEMs + jumpers) in USD
    */
   public double getSubseaCostUSD() {
     return subseaCostUSD;
@@ -781,6 +992,33 @@ public class SURFCostEstimator {
    */
   public void setPletHubSizeInches(double pletHubSizeInches) {
     this.pletHubSizeInches = pletHubSizeInches;
+  }
+
+  /**
+   * Set number of PLEMs.
+   *
+   * @param numberOfPLEMs number of PLEMs
+   */
+  public void setNumberOfPLEMs(int numberOfPLEMs) {
+    this.numberOfPLEMs = numberOfPLEMs;
+  }
+
+  /**
+   * Set PLEM weight.
+   *
+   * @param plemWeightTonnes dry weight in tonnes
+   */
+  public void setPlemWeightTonnes(double plemWeightTonnes) {
+    this.plemWeightTonnes = plemWeightTonnes;
+  }
+
+  /**
+   * Set PLEM header size.
+   *
+   * @param plemHeaderSizeInches header size in inches
+   */
+  public void setPlemHeaderSizeInches(double plemHeaderSizeInches) {
+    this.plemHeaderSizeInches = plemHeaderSizeInches;
   }
 
   /**

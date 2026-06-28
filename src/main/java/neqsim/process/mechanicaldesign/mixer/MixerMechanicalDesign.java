@@ -3,6 +3,7 @@ package neqsim.process.mechanicaldesign.mixer;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import neqsim.process.costestimation.mixer.MixerCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -67,6 +68,7 @@ public class MixerMechanicalDesign extends MechanicalDesign {
    */
   public MixerMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
+    costEstimate = new MixerCostEstimate(this);
   }
 
   /** {@inheritDoc} */
@@ -153,6 +155,7 @@ public class MixerMechanicalDesign extends MechanicalDesign {
     outerDiameter = headerDiameter + 2.0 * headerWallThickness / 1000.0;
     innerDiameter = headerDiameter;
     setWallThickness(headerWallThickness);
+    calculateWeights();
   }
 
   /**

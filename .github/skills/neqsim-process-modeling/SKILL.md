@@ -53,8 +53,19 @@ specialists such as mechanical design, safety, plant data, and reporting.
 - Branching streams use cloned fluids or well-defined equipment outlet streams.
 - Every equipment item has a unique name inside the process.
 - Recycles and adjusters are added after their connected equipment.
-- Results include mass balance, expected pressure ordering, and physically reasonable
-  phase splits.
+- Every suction/export scrubber in a recompression/export-compression train has its
+  liquid knock-out (`scrubber.getLiquidOutStream()`) closed back to the separator
+  operating at the matching pressure — never leave it unconnected (it is silently
+  dropped, under-counting oil/condensate recovery). See `neqsim-platform-modeling`
+  Section 4 for the seed + TP-setter + `Recycle` pattern.
+- **Overall mass balance MUST be verified before accepting any solution.** Sum the mass
+  flow (`kg/hr`) of all feed streams and all product/export streams; the closure error
+  must be `< 0.1 %` (`abs(sum_in - sum_out) / sum_in`). A larger imbalance means a stream
+  was dropped (e.g. an unconnected scrubber liquid), a recycle did not converge, or a
+  splitter fraction is wrong — fix the flowsheet and re-run; do NOT report results from an
+  unbalanced model. For multi-area `ProcessModel`s, also confirm `plant.run()` converged.
+- Results include the verified mass balance, expected pressure ordering, and physically
+  reasonable phase splits.
 - Compressor, pump, heat exchanger, separator, and pipeline cases identify applicable
   standards through `neqsim-standards-lookup`.
 

@@ -3,6 +3,7 @@ package neqsim.process.mechanicaldesign.manifold;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import neqsim.process.costestimation.manifold.ManifoldCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
@@ -76,6 +77,7 @@ public class ManifoldMechanicalDesign extends MechanicalDesign {
     super(equipment);
     this.calculator = new ManifoldMechanicalDesignCalculator();
     this.dataSource = new ManifoldMechanicalDesignDataSource();
+    costEstimate = new ManifoldCostEstimate(this);
   }
 
   /** {@inheritDoc} */

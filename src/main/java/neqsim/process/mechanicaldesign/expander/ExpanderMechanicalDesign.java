@@ -5,6 +5,7 @@ import java.awt.Container;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import neqsim.process.costestimation.expander.ExpanderCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.expander.Expander;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
@@ -178,6 +179,7 @@ public class ExpanderMechanicalDesign extends MechanicalDesign {
    */
   public ExpanderMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
+    costEstimate = new ExpanderCostEstimate(this);
   }
 
   /** {@inheritDoc} */

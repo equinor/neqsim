@@ -14,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 import org.ejml.simple.SimpleMatrix;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.mechanicaldesign.reactor.ReactorMechanicalDesign;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -311,6 +312,9 @@ public class GibbsReactor extends TwoPortEquipment {
 
   /** Pattern to identify ionic species (names ending with + or -). */
   private static final Pattern ION_NAME_PATTERN = Pattern.compile(".*[+\\-]+$");
+
+  /** Mechanical design for reactor vessel sizing and screening cost estimation. */
+  private ReactorMechanicalDesign mechanicalDesign;
 
   // ==================== Configuration Fields ====================
 
@@ -635,6 +639,7 @@ public class GibbsReactor extends TwoPortEquipment {
   public GibbsReactor(String name) {
     super(name);
     loadGibbsDatabase();
+    initMechanicalDesign();
   }
 
   /**
@@ -646,6 +651,19 @@ public class GibbsReactor extends TwoPortEquipment {
   public GibbsReactor(String name, StreamInterface stream) {
     super(name, stream);
     loadGibbsDatabase();
+    initMechanicalDesign();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ReactorMechanicalDesign getMechanicalDesign() {
+    return mechanicalDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initMechanicalDesign() {
+    mechanicalDesign = new ReactorMechanicalDesign(this);
   }
 
   /**

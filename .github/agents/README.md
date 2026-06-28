@@ -146,13 +146,14 @@ In VS Code Copilot Chat, type `@<agent-name>` followed by your request:
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **mechanical.design** | `@mechanical.design <description>` | ASME/API/DNV mechanical design (wall thickness, material selection, cost) |
+| **mechanical.design** | `@mechanical.design <description>` | ASME/API/DNV mechanical design plus reconciled equipment, process, topsides, SURF, subsea, and well CAPEX estimates |
 
 **Examples:**
 ```
 @mechanical.design 20-inch export pipeline per DNV-OS-F101
 @mechanical.design HP separator vessel per ASME VIII Div.1
 @mechanical.design Subsea well casing design with NORSOK D-010
+@mechanical.design Estimate total CAPEX for this process from well to market
 ```
 
 ---

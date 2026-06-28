@@ -273,6 +273,11 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
     calc.calculateMAOP();
     calc.calculateHoopStress(calc.getDesignPressure());
     calc.calculateVonMisesStress(calc.getDesignPressure(), 0, true);
+
+    // Calculate pipe steel weight so weight-based rough cost estimation is non-zero.
+    calc.setPipelineLength(pipelineLength);
+    calc.calculateWeightsAndAreas();
+    setWeightTotal(calc.getTotalPipelineWeight());
   }
 
   /**

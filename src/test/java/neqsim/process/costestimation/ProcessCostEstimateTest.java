@@ -1,6 +1,8 @@
 package neqsim.process.costestimation;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,6 +13,7 @@ import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.SystemMechanicalDesign;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
@@ -108,7 +111,7 @@ public class ProcessCostEstimateTest {
 
     // Print summary
     logger.info("\n=== Mechanical Design via ProcessSystem ===");
-    System.out.println("Total Weight: " + String.format("%,.0f", mecDesign.getTotalWeight()) + " kg");
+    logger.info("Total Weight: " + String.format("%,.0f", mecDesign.getTotalWeight()) + " kg");
     logger.info("Equipment Count: " + mecDesign.getEquipmentList().size());
     logger.info("Total Power: " + String.format("%,.1f", mecDesign.getTotalPowerRequired()) + " kW");
   }
@@ -145,6 +148,8 @@ public class ProcessCostEstimateTest {
     assertTrue(json.contains("costEstimateSummary"), "JSON should contain cost estimate summary");
     assertTrue(json.contains("purchasedEquipmentCost_USD"), "JSON should contain PEC");
     assertTrue(json.contains("grassRootsCost_USD"), "JSON should contain grass roots cost");
+    assertTrue(json.contains("estimateBasis"), "JSON should contain estimate basis metadata");
+    assertTrue(json.contains("projectCostBreakdown_USD"), "JSON should contain project cost stack");
 
     // Print first 2000 chars
     logger.info("\n=== Combined JSON (first 2000 chars) ===");
@@ -162,7 +167,7 @@ public class ProcessCostEstimateTest {
 
     logger.info("\n=== Compressor Cost Estimate ===");
     logger.info("Compressor PEC: $" + String.format("%,.0f", compressorCost.getPurchasedEquipmentCost()));
-    System.out.println("Compressor BMC: $" + String.format("%,.0f", compressorCost.getBareModuleCost()));
+    logger.info("Compressor BMC: $" + String.format("%,.0f", compressorCost.getBareModuleCost()));
   }
 
   @Test
@@ -213,6 +218,118 @@ public class ProcessCostEstimateTest {
     assertTrue(equipmentReport.contains("EQUIPMENT COST LIST"), "Should contain equipment cost list");
 
     logger.info(equipmentReport);
+  }
+
+  @Test
+  void testDetailedEstimateBasisAndProjectCostStack() {
+    ProcessCostEstimate costEst = process.getCostEstimate();
+    costEst.calculateAllCosts();
+
+    CostEstimateBasis basis = costEst.getEstimateBasis();
+    assertNotNull(basis, "Estimate basis should not be null");
+    assertTrue(basis.getEstimateClass() == EstimateClass.CLASS_4, "Default process estimate should be Class 4");
+
+    CostEstimateResult result = costEst.getDetailedEstimateResult();
+    assertNotNull(result, "Detailed estimate result should not be null");
+    assertTrue(result.getProjectCostSummary().get("totalProjectCost") > costEst.getTotalGrassRootsCost(),
+        "Total project cost should include owner cost and project contingency beyond grass-roots cost");
+    assertTrue(result.getQuantityBasis().get("totalInstallationManHours") == costEst.getTotalInstallationManHours(),
+        "Installation man-hours should be exposed as a non-cost quantity basis");
+    assertTrue(!result.getProjectCosts().containsKey("totalInstallationManHours"),
+        "Project cost map should not contain non-USD man-hour quantities");
+    assertTrue(result.getMaterialTakeOff().size() > 0, "Process result should include equipment weight MTO lines");
+    assertTrue(costEst.toJson().contains("CLASS_4"), "JSON should state the estimate class");
+  }
+
+  /**
+   * Verifies that process-level cost calculation does not replace a configured mechanical design.
+   */
+  @Test
+  void testProcessCostPreservesConfiguredMechanicalDesign() {
+    Compressor compressor = (Compressor) process.getUnit("MainCompressor");
+    neqsim.process.mechanicaldesign.MechanicalDesign configuredDesign = compressor.getMechanicalDesign();
+
+    ProcessCostEstimate costEst = process.getCostEstimate();
+    costEst.calculateAllCosts();
+
+    assertSame(configuredDesign, compressor.getMechanicalDesign(),
+        "Process cost rollup should not replace an already configured mechanical design");
+  }
+
+  /**
+   * Verifies that equipment-type cost breakdowns reconcile with location-adjusted totals.
+   */
+  @Test
+  void testEquipmentTypeBreakdownIncludesLocationFactor() {
+    ProcessCostEstimate costEst = process.getCostEstimate();
+    costEst.setLocationFactor(1.35);
+    costEst.calculateAllCosts();
+
+    double equipmentTypeTotal = 0.0;
+    for (Double cost : costEst.getCostByEquipmentType().values()) {
+      equipmentTypeTotal += cost.doubleValue();
+    }
+
+    assertEquals(costEst.getTotalPurchasedEquipmentCost(), equipmentTypeTotal,
+        costEst.getTotalPurchasedEquipmentCost() * 1.0e-10,
+        "Located equipment-type PEC should reconcile with located total PEC");
+    assertTrue(costEst.toJson().contains("basePurchasedEquipmentCost_USD"),
+        "JSON equipment rows should expose unlocated base costs separately");
+    assertTrue(costEst.toJson().contains("locationFactor"),
+        "JSON equipment rows should expose the line-item location factor");
+  }
+
+  /**
+   * Verifies that process-level material and CEPCI settings update each unit cost estimator.
+   */
+  @Test
+  void testProcessLevelMaterialAndCepciApplyToUnitEstimators() {
+    ProcessCostEstimate costEst = process.getCostEstimate();
+    costEst.calculateAllCosts();
+    double basePurchasedEquipmentCost = costEst.getTotalPurchasedEquipmentCost();
+
+    costEst.setMaterial("SS316");
+    costEst.calculateAllCosts();
+    double stainlessPurchasedEquipmentCost = costEst.getTotalPurchasedEquipmentCost();
+    assertTrue(stainlessPurchasedEquipmentCost > basePurchasedEquipmentCost,
+        "SS316 process material override should increase unit-derived purchased equipment cost");
+
+    costEst.setCepci(CostEstimationCalculator.CEPCI_2025 * 0.75);
+    costEst.calculateAllCosts();
+    assertTrue(costEst.getTotalPurchasedEquipmentCost() < stainlessPurchasedEquipmentCost,
+        "Lower process CEPCI override should reduce unit-derived purchased equipment cost");
+  }
+
+  /**
+   * Verifies that single-equipment cost lookup preserves an existing configured design object.
+   */
+  @Test
+  void testEquipmentCostEstimatePreservesConfiguredMechanicalDesign() {
+    Compressor compressor = (Compressor) process.getUnit("MainCompressor");
+    MechanicalDesign configuredDesign = compressor.getMechanicalDesign();
+    configuredDesign.setCostEstimateMaterial("SS316");
+
+    UnitCostEstimateBaseClass costEstimate = process.getEquipmentCostEstimate("MainCompressor");
+
+    assertNotNull(costEstimate, "Single-equipment cost estimate should be calculated");
+    assertSame(configuredDesign, compressor.getMechanicalDesign(),
+        "Single-equipment cost lookup should not replace a configured mechanical design");
+  }
+
+  /**
+   * Verifies that process cost JSON reports the CEPCI index with a non-year key.
+   */
+  @Test
+  void testProcessCostJsonUsesCurrentCepciKey() {
+    ProcessCostEstimate costEst = process.getCostEstimate();
+    costEst.setCepci(701.5);
+    costEst.calculateAllCosts();
+
+    String json = costEst.toJson();
+
+    assertTrue(json.contains("\"currentCepci\""), "JSON should expose the current CEPCI index");
+    assertTrue(json.contains("701.5"), "JSON should include the configured CEPCI index");
+    assertTrue(!json.contains("\"cepciYear\""), "JSON should not label a CEPCI index as a year");
   }
 
   @Test

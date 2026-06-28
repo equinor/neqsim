@@ -3,12 +3,17 @@ package neqsim.process.fielddevelopment.subsea;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.process.costestimation.CostEstimateResult;
+import neqsim.process.costestimation.EstimateClass;
+import neqsim.process.costestimation.MaterialTakeOffItem;
 import neqsim.process.fielddevelopment.subsea.SubseaProductionSystem.SubseaArchitecture;
 import neqsim.process.fielddevelopment.subsea.SubseaProductionSystem.SubseaSystemResult;
+import neqsim.process.mechanicaldesign.subsea.WellCostEstimator.WellLocationType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -69,7 +74,38 @@ public class SubseaProductionSystemTest {
 
     // Verify wells and flowlines were created
     assertEquals(4, subsea.getWells().size());
+    assertEquals(4, subsea.getTrees().size());
+    assertEquals(4, subsea.getJumpers().size());
+    assertEquals(1, subsea.getManifolds().size());
+    assertFalse(subsea.getPLETs().isEmpty());
+    assertEquals(1, subsea.getPLEMs().size());
+    assertEquals(1, subsea.getUmbilicals().size());
+    assertFalse(subsea.getRisers().isEmpty());
+    assertTrue(subsea.getSteelRisers().isEmpty());
     assertFalse(subsea.getFlowlines().isEmpty());
+
+    assertNotNull(subsea.getPLETs().get(0).getMechanicalDesign());
+    assertNotNull(subsea.getPLEMs().get(0).getMechanicalDesign());
+    assertNotNull(subsea.getUmbilicals().get(0).getMechanicalDesign());
+    assertNotNull(subsea.getRisers().get(0).getMechanicalDesign());
+  }
+
+  @Test
+  public void testSteelRiserCaseCreatesRigidRiserUnitOperations() {
+    SubseaProductionSystem subsea = new SubseaProductionSystem("Steel Riser Test");
+    subsea.setArchitecture(SubseaArchitecture.MANIFOLD_CLUSTER).setWaterDepthM(350.0).setTiebackDistanceKm(25.0)
+        .setWellCount(4).setFlowlineDiameterInches(12.0).setFlexibleRiser(false).setProductionRiserCount(2)
+        .setReservoirFluid(gasFluid);
+
+    subsea.build();
+    subsea.run();
+
+    assertTrue(subsea.getRisers().isEmpty());
+    assertEquals(2, subsea.getSteelRisers().size());
+    assertFalse(subsea.getPLETs().isEmpty());
+    assertEquals(1, subsea.getPLEMs().size());
+    assertTrue(subsea.getResult().getRiserCostMusd() > 0.0);
+    assertNotNull(subsea.getSteelRisers().get(0).getMechanicalDesign());
   }
 
   @Test
@@ -88,23 +124,57 @@ public class SubseaProductionSystemTest {
     // Verify cost components
     assertTrue(result.getSubseaTreeCostMusd() > 0, "Tree cost should be positive");
     assertTrue(result.getManifoldCostMusd() > 0, "Manifold cost should be positive");
+    assertTrue(result.getJumperAndPletCostMusd() > 0, "Jumper and PLET cost should be positive");
     assertTrue(result.getPipelineCostMusd() > 0, "Pipeline cost should be positive");
     assertTrue(result.getUmbilicalCostMusd() > 0, "Umbilical cost should be positive");
+    assertTrue(result.getRiserCostMusd() > 0, "Riser cost should be positive");
+    assertTrue(result.getWellCostMusd() > 0, "Well cost should be positive");
+    assertTrue(result.getReservoirCostMusd() > 0, "Reservoir cost should be positive");
 
     // Verify total is sum of components
     double expectedTotal = result.getSubseaTreeCostMusd() + result.getManifoldCostMusd() + result.getPipelineCostMusd()
-        + result.getUmbilicalCostMusd() + 4 * 3.0 + 1 * 5.0; // Control
-    // system
-    // cost
-    // approximation
+        + result.getUmbilicalCostMusd() + result.getJumperAndPletCostMusd() + result.getRiserCostMusd();
 
     assertEquals(expectedTotal, result.getTotalSubseaCapexMusd(), 5.0);
+    assertEquals(result.getTotalSubseaCapexMusd() + result.getWellCostMusd() + result.getReservoirCostMusd(),
+        result.getTotalDevelopmentCapexMusd(), 5.0);
 
     // Verify reasonable cost ranges (4 wells, 25km tieback)
-    assertEquals(100.0, result.getSubseaTreeCostMusd(), 10.0); // 4 × 25 MUSD
-    assertEquals(35.0, result.getManifoldCostMusd(), 10.0); // 1 × 35 MUSD
+    assertTrue(result.getSubseaTreeCostMusd() > 100.0); // depth-adjusted wet trees
+    assertTrue(result.getManifoldCostMusd() > 0.0); // 1 manifold
     assertTrue(result.getPipelineCostMusd() > 50.0); // 25km × ~2.5+ MUSD/km
     assertTrue(result.getTotalSubseaCapexMusd() > 200.0); // Total should be > 200 MUSD
+
+    CostEstimateResult surfResult = result.getSurfDetailedEstimateResult();
+    assertNotNull(surfResult, "Detailed SURF estimate should be exposed on the system result");
+    assertEquals(EstimateClass.CLASS_4, surfResult.getBasis().getEstimateClass());
+    assertEquals(result.getTotalSubseaCapexMusd() * 1.0e6, surfResult.getCapitalCostSummary().get("totalSURF"), 5.0e6);
+    assertFalse(surfResult.getMaterialTakeOff().isEmpty(), "Detailed SURF estimate should include MTO lines");
+
+    CostEstimateResult developmentResult = result.getDetailedDevelopmentEstimateResult();
+    assertNotNull(developmentResult, "Detailed development estimate should be available");
+    assertEquals(EstimateClass.CLASS_4, developmentResult.getBasis().getEstimateClass());
+    assertEquals(result.getTotalDevelopmentCapexMusd() * 1.0e6,
+        developmentResult.getCapitalCostSummary().get("totalDevelopment"), 5.0e6);
+    assertEquals(result.getWellCostMusd() * 1.0e6, developmentResult.getCapitalCosts().get("wells"), 1.0e6);
+    assertEquals(result.getTotalSubseaCapexMusd() * 1.0e6, developmentResult.getCapitalCostSummary().get("totalSURF"),
+        5.0e6);
+    assertFalse(developmentResult.getCapitalCosts().containsKey("totalDevelopment"),
+        "Development totals should not be in additive capital costs");
+    assertTrue(developmentResult.getMaterialTakeOff().size() >= surfResult.getMaterialTakeOff().size() + 2,
+        "Development estimate should include reservoir, well and SURF MTO lines");
+
+    boolean hasReservoirPlaceholder = false;
+    boolean hasWellPlaceholder = false;
+    boolean hasSurfPipelineMto = false;
+    for (MaterialTakeOffItem item : developmentResult.getMaterialTakeOff()) {
+      hasReservoirPlaceholder |= "reservoir".equals(item.getCategory());
+      hasWellPlaceholder |= "wells".equals(item.getCategory());
+      hasSurfPipelineMto |= "surf-pipeline-sizing".equals(item.getSource());
+    }
+    assertTrue(hasReservoirPlaceholder, "Development MTO should include reservoir/appraisal scope");
+    assertTrue(hasWellPlaceholder, "Development MTO should include drilling and completion scope");
+    assertTrue(hasSurfPipelineMto, "Development MTO should include detailed SURF pipeline quantities");
   }
 
   @Test
@@ -140,6 +210,36 @@ public class SubseaProductionSystemTest {
     // Deep water should have higher pipeline cost
     assertTrue(deep.getResult().getPipelineCostMusd() > shallow.getResult().getPipelineCostMusd(),
         "Deep water pipeline should cost more than shallow");
+  }
+
+  @Test
+  public void testDryTreeCaseExcludesWetSubseaSurfScope() {
+    SubseaProductionSystem wet = new SubseaProductionSystem("Wet Tree");
+    wet.setArchitecture(SubseaArchitecture.MANIFOLD_CLUSTER).setWaterDepthM(350.0).setTiebackDistanceKm(25.0)
+        .setWellCount(4).setFlowlineDiameterInches(12.0).setReservoirFluid(gasFluid)
+        .setWellLocationType(WellLocationType.SUBSEA_WET_TREE);
+    wet.build();
+    wet.run();
+
+    SubseaProductionSystem dry = new SubseaProductionSystem("Dry Tree");
+    dry.setArchitecture(SubseaArchitecture.MANIFOLD_CLUSTER).setWaterDepthM(350.0).setTiebackDistanceKm(25.0)
+        .setWellCount(4).setFlowlineDiameterInches(12.0).setReservoirFluid(gasFluid)
+        .setWellLocationType(WellLocationType.PLATFORM_DRY_TREE);
+    dry.build();
+    dry.run();
+
+    assertTrue(wet.getResult().getTotalSubseaCapexMusd() > 0.0);
+    assertEquals(0.0, dry.getResult().getTotalSubseaCapexMusd(), 1.0e-12);
+    assertTrue(wet.getResult().getWellCostMusd() > dry.getResult().getWellCostMusd());
+    assertTrue(wet.getResult().getTotalDevelopmentCapexMusd() > dry.getResult().getTotalDevelopmentCapexMusd());
+    assertEquals(WellLocationType.PLATFORM_DRY_TREE, dry.getResult().getWellLocationType());
+    assertNull(dry.getResult().getSurfDetailedEstimateResult());
+
+    CostEstimateResult dryDevelopmentResult = dry.getResult().getDetailedDevelopmentEstimateResult();
+    assertEquals(EstimateClass.CLASS_4, dryDevelopmentResult.getBasis().getEstimateClass());
+    assertEquals(dry.getResult().getTotalDevelopmentCapexMusd() * 1.0e6,
+        dryDevelopmentResult.getCapitalCostSummary().get("totalDevelopment"), 1.0e6);
+    assertTrue(dryDevelopmentResult.toJson().contains("No detailed SURF estimate"));
   }
 
   @Test

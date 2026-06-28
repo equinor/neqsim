@@ -360,7 +360,7 @@ public class WellMechanicalDesign extends MechanicalDesign {
 
     ce.calculateWellCost(well.getWellType().name(), well.getRigType().name(), well.getCompletionType().name(),
         well.getMeasuredDepth(), well.getWaterDepth(), well.getDrillingDays(), well.getCompletionDays(),
-        well.getRigDayRate(), well.hasDHSV(), well.getNumberOfCasingStrings());
+        well.getRigDayRate(), well.hasDHSV(), well.getNumberOfCasingStrings(), well.getWellLocationType());
 
     totalCostUSD = ce.getTotalCost();
     drillingCostUSD = ce.getDrillingCost();

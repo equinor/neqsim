@@ -1,5 +1,6 @@
 package neqsim.process.mechanicaldesign.ejector;
 
+import neqsim.process.costestimation.ejector.EjectorCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 
@@ -30,6 +31,7 @@ public class EjectorMechanicalDesign extends MechanicalDesign {
 
   public EjectorMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
+    costEstimate = new EjectorCostEstimate(this);
   }
 
   /** Reset stored results. */

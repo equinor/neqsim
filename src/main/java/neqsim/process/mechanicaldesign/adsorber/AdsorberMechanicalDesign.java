@@ -1,5 +1,6 @@
 package neqsim.process.mechanicaldesign.adsorber;
 
+import neqsim.process.costestimation.adsorber.PSACostEstimate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.adsorber.SimpleAdsorber;
 import neqsim.process.equipment.separator.Separator;
@@ -29,6 +30,7 @@ public class AdsorberMechanicalDesign extends MechanicalDesign {
    */
   public AdsorberMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
+    costEstimate = new PSACostEstimate(this);
   }
 
   /** {@inheritDoc} */

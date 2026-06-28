@@ -6,9 +6,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import com.google.gson.GsonBuilder;
+import neqsim.process.costestimation.CostEstimateBasis;
+import neqsim.process.costestimation.CostEstimateResult;
 import neqsim.process.costestimation.CostEstimationCalculator;
+import neqsim.process.costestimation.EstimateClass;
 import neqsim.process.costestimation.ProcessCostEstimate;
 import neqsim.process.costestimation.UnitCostEstimateBaseClass;
+import neqsim.process.costestimation.topsides.TopsidesFacilityCostEstimator;
+import neqsim.process.costestimation.topsides.TopsidesFacilityCostEstimator.FacilityType;
+import neqsim.process.costestimation.topsides.TopsidesFacilityCostEstimator.ProjectContext;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.subsea.WellCostEstimator;
@@ -81,14 +87,14 @@ import neqsim.process.processmodel.ProcessSystem;
  * // Run mechanical design and cost estimation
  * FieldDevelopmentCostReport report = costEstimator.estimateDevelopmentCosts();
  *
- * System.out.println("Total CAPEX: $" + report.getTotalCapex() / 1e6 + " M");
- * System.out.println("Facilities weight: " + report.getTotalWeight() / 1000 + " tonnes");
- * System.out.println("Installation man-hours: " + report.getTotalManHours());
+ * double totalCapexMUSD = report.getTotalCapex() / 1e6;
+ * double facilitiesWeightTonnes = report.getTotalWeight() / 1000.0;
+ * double installationManHours = report.getTotalManHours();
  *
  * // Use for NPV calculation
  * scheduler.setCapex(report.getTotalCapex() / 1e6, 2025);
  * ProductionSchedule schedule = scheduler.generateSchedule(startDate, 20.0, 30.0);
- * System.out.println("NPV: $" + schedule.getNPV() / 1e6 + "M");
+ * double npvMUSD = schedule.getNPV() / 1e6;
  * }</pre>
  *
  * <h2>Concept Comparison</h2>
@@ -344,14 +350,18 @@ public class FieldDevelopmentCostEstimator implements Serializable {
     processCost.setComplexityFactor(complexityFactor);
     processCost.calculateAllCosts();
 
+    CostEstimateResult topsidesDetailedEstimate = estimateTopsidesFacility(processCost);
+
     // Build cost report
     FieldDevelopmentCostReport report = new FieldDevelopmentCostReport();
     report.setConceptName(facility.getName());
     report.setFidelityLevel(fidelityLevel);
     report.setConceptType(conceptType);
+    report.setTopsidesDetailedEstimateResult(topsidesDetailedEstimate);
 
-    // Apply concept type factor
-    double facilityCostUSD = processCost.getTotalModuleCost() * conceptType.getCostFactor();
+    // Use detailed topsides result when available, with the old module-factor scalar as fallback.
+    double legacyFacilityCostUSD = processCost.getTotalModuleCost() * conceptType.getCostFactor();
+    double facilityCostUSD = resolveTopsidesCapex(topsidesDetailedEstimate, legacyFacilityCostUSD);
     report.setFacilitiesCapex(facilityCostUSD);
 
     // Equipment breakdown
@@ -372,10 +382,13 @@ public class FieldDevelopmentCostEstimator implements Serializable {
       }
     }
 
-    // Add subsea costs if applicable
+    // Add DRILEX and SURF costs if applicable. The legacy subsea bucket remains the sum.
     if (includeSubseaCosts) {
-      double subseaCost = estimateSubseaCosts();
-      report.setSubseaCapex(subseaCost);
+      double surfCost = estimateSurfCosts();
+      double drilexCost = estimateDrilexCosts();
+      report.setSurfCapex(surfCost);
+      report.setDrilexCapex(drilexCost);
+      report.setSubseaCapex(surfCost + drilexCost);
     }
 
     // Calculate totals
@@ -388,40 +401,154 @@ public class FieldDevelopmentCostEstimator implements Serializable {
   }
 
   /**
+   * Estimates detailed topsides facility cost from a process cost estimate.
+   *
+   * @param processCost process cost estimate backing the topsides scope
+   * @return detailed topsides estimate result
+   */
+  private CostEstimateResult estimateTopsidesFacility(ProcessCostEstimate processCost) {
+    TopsidesFacilityCostEstimator estimator = new TopsidesFacilityCostEstimator(processCost)
+        .setFacilityType(mapConceptToFacilityType(conceptType))
+        .setProjectContext(mapConceptToProjectContext(conceptType)).setEstimateBasis(createTopsidesEstimateBasis());
+    return estimator.estimate();
+  }
+
+  /**
+   * Creates the topsides estimate basis from field-development settings.
+   *
+   * @return topsides estimate basis
+   */
+  private CostEstimateBasis createTopsidesEstimateBasis() {
+    return new CostEstimateBasis().setEstimateClass(mapFidelityToEstimateClass(fidelityLevel))
+        .setCurrencyCode(currencyCode).setCostYear(referenceYear).setLocationFactor(locationFactor)
+        .setLocationBasis("field-development-location").setDataSource("field-development-topsides-factored-mto")
+        .setNotes(
+            "Topsides CAPEX from NeqSim equipment costs with module, bulk, installation, hook-up, and project allowances.");
+  }
+
+  /**
+   * Maps field-development fidelity to an AACE-style estimate class.
+   *
+   * @param level fidelity level
+   * @return estimate class
+   */
+  private EstimateClass mapFidelityToEstimateClass(FidelityLevel level) {
+    if (level == FidelityLevel.FEED) {
+      return EstimateClass.CLASS_3;
+    }
+    if (level == FidelityLevel.PRE_FEED) {
+      return EstimateClass.CLASS_4;
+    }
+    if (level == FidelityLevel.CONCEPTUAL) {
+      return EstimateClass.CLASS_4;
+    }
+    return EstimateClass.CLASS_5;
+  }
+
+  /**
+   * Maps development concept type to topsides facility type.
+   *
+   * @param type development concept type
+   * @return topsides facility type
+   */
+  private FacilityType mapConceptToFacilityType(ConceptType type) {
+    if (type == ConceptType.FPSO) {
+      return FacilityType.FPSO;
+    }
+    if (type == ConceptType.SEMI_SUBMERSIBLE || type == ConceptType.TLP) {
+      return FacilityType.SEMI_SUBMERSIBLE;
+    }
+    if (type == ConceptType.ONSHORE) {
+      return FacilityType.ONSHORE;
+    }
+    if (type == ConceptType.SUBSEA_TIEBACK) {
+      return FacilityType.BROWNFIELD_TIE_IN;
+    }
+    return FacilityType.FIXED_PLATFORM;
+  }
+
+  /**
+   * Maps development concept type to topsides project context.
+   *
+   * @param type development concept type
+   * @return topsides project context
+   */
+  private ProjectContext mapConceptToProjectContext(ConceptType type) {
+    if (type == ConceptType.SUBSEA_TIEBACK) {
+      return ProjectContext.HOST_TIE_IN;
+    }
+    return ProjectContext.GREENFIELD;
+  }
+
+  /**
+   * Resolves facility CAPEX from the detailed topsides estimate.
+   *
+   * @param topsidesDetailedEstimate detailed topsides estimate
+   * @param fallback fallback facility CAPEX in USD
+   * @return resolved facility CAPEX in USD
+   */
+  private double resolveTopsidesCapex(CostEstimateResult topsidesDetailedEstimate, double fallback) {
+    if (topsidesDetailedEstimate == null) {
+      return fallback;
+    }
+    Double totalTopsidesCapex = topsidesDetailedEstimate.getProjectCostSummary().get("totalTopsidesCapex");
+    if (totalTopsidesCapex != null && totalTopsidesCapex > 0.0) {
+      return totalTopsidesCapex;
+    }
+    return fallback;
+  }
+
+  /**
    * Estimate subsea infrastructure costs.
    *
    * @return subsea CAPEX in USD
    */
   private double estimateSubseaCosts() {
-    double totalSubseaCost = 0.0;
+    return estimateSurfCosts() + estimateDrilexCosts();
+  }
+
+  /**
+   * Estimate SURF infrastructure costs.
+   *
+   * @return SURF CAPEX in USD
+   */
+  private double estimateSurfCosts() {
+    double totalSurfCost = 0.0;
 
     // Flowline cost per km (increases with water depth)
     double depthFactor = 1.0 + (waterDepth - 100.0) / 500.0;
     double flowlineCostPerKm = 2.5e6 * depthFactor; // Base $2.5M/km
-    totalSubseaCost += subseaTiebackLength * flowlineCostPerKm;
+    totalSurfCost += subseaTiebackLength * flowlineCostPerKm;
 
     // Umbilical cost
     double umbilicalCostPerKm = 1.5e6 * depthFactor;
-    totalSubseaCost += subseaTiebackLength * umbilicalCostPerKm;
+    totalSurfCost += subseaTiebackLength * umbilicalCostPerKm;
 
     // Subsea manifold (if tieback > 10km)
     if (subseaTiebackLength > 10.0) {
-      totalSubseaCost += 30.0e6 * depthFactor; // Manifold
+      totalSurfCost += 30.0e6 * depthFactor; // Manifold
     }
 
     // Riser system
     double riserCost = waterDepth * 50000.0; // ~$50k per meter depth
-    totalSubseaCost += riserCost;
-
-    // Well costs using WellCostEstimator
-    if (numberOfWells > 0 || numberOfProducers > 0 || numberOfInjectors > 0) {
-      totalSubseaCost += estimateWellCosts();
-    }
+    totalSurfCost += riserCost;
 
     // Apply location factor
-    totalSubseaCost *= locationFactor;
+    totalSurfCost *= locationFactor;
 
-    return totalSubseaCost;
+    return totalSurfCost;
+  }
+
+  /**
+   * Estimate drilling and completion expenditure (DRILEX) costs.
+   *
+   * @return DRILEX CAPEX in USD
+   */
+  private double estimateDrilexCosts() {
+    if (numberOfWells > 0 || numberOfProducers > 0 || numberOfInjectors > 0) {
+      return estimateWellCosts() * locationFactor;
+    }
+    return 0.0;
   }
 
   /**
@@ -474,9 +601,17 @@ public class FieldDevelopmentCostEstimator implements Serializable {
       estimator.setConceptType(this.conceptType);
       estimator.setLocationFactor(this.locationFactor);
       estimator.setComplexityFactor(this.complexityFactor);
+      estimator.currencyCode = this.currencyCode;
+      estimator.referenceYear = this.referenceYear;
 
       if (this.includeSubseaCosts) {
-        estimator.setSubseaParameters(this.subseaTiebackLength, this.waterDepth);
+        estimator.includeSubseaCosts = true;
+        estimator.subseaTiebackLength = this.subseaTiebackLength;
+        estimator.waterDepth = this.waterDepth;
+        estimator.numberOfWells = this.numberOfWells;
+        estimator.numberOfProducers = this.numberOfProducers;
+        estimator.numberOfInjectors = this.numberOfInjectors;
+        estimator.averageWellDepth = this.averageWellDepth;
       }
 
       reports.add(estimator.estimateDevelopmentCosts());
@@ -538,14 +673,18 @@ public class FieldDevelopmentCostEstimator implements Serializable {
     private FidelityLevel fidelityLevel;
     private ConceptType conceptType;
     private double facilitiesCapex;
+    private double drilexCapex;
+    private double surfCapex;
     private double subseaCapex;
     private double totalCapex;
     private double totalWeight;
     private double totalManHours;
     private double footprintArea;
     private double accuracyBand;
+    private CostEstimateResult topsidesDetailedEstimateResult;
     private final List<EquipmentCostItem> equipmentItems = new ArrayList<EquipmentCostItem>();
     private final Map<String, Double> costByCategory = new LinkedHashMap<String, Double>();
+    private final Map<String, Double> equipmentCostByCategory = new LinkedHashMap<String, Double>();
 
     /**
      * Set concept name.
@@ -602,18 +741,54 @@ public class FieldDevelopmentCostEstimator implements Serializable {
     }
 
     /**
-     * Set subsea CAPEX.
+     * Set drilling and completion expenditure (DRILEX) CAPEX.
      *
-     * @param capex subsea CAPEX in USD
+     * @param capex DRILEX CAPEX in USD
+     */
+    public void setDrilexCapex(double capex) {
+      this.drilexCapex = capex;
+    }
+
+    /**
+     * Get drilling and completion expenditure (DRILEX) CAPEX.
+     *
+     * @return DRILEX CAPEX in USD
+     */
+    public double getDrilexCapex() {
+      return drilexCapex;
+    }
+
+    /**
+     * Set SURF CAPEX.
+     *
+     * @param capex SURF CAPEX in USD
+     */
+    public void setSurfCapex(double capex) {
+      this.surfCapex = capex;
+    }
+
+    /**
+     * Get SURF CAPEX.
+     *
+     * @return SURF CAPEX in USD
+     */
+    public double getSurfCapex() {
+      return surfCapex;
+    }
+
+    /**
+     * Set combined subsea CAPEX.
+     *
+     * @param capex combined SURF plus DRILEX CAPEX in USD
      */
     public void setSubseaCapex(double capex) {
       this.subseaCapex = capex;
     }
 
     /**
-     * Get subsea CAPEX.
+     * Get combined subsea CAPEX.
      *
-     * @return subsea CAPEX in USD
+     * @return combined SURF plus DRILEX CAPEX in USD
      */
     public double getSubseaCapex() {
       return subseaCapex;
@@ -674,6 +849,24 @@ public class FieldDevelopmentCostEstimator implements Serializable {
     }
 
     /**
+     * Sets the detailed topsides estimate result.
+     *
+     * @param topsidesDetailedEstimateResult detailed topsides estimate result
+     */
+    public void setTopsidesDetailedEstimateResult(CostEstimateResult topsidesDetailedEstimateResult) {
+      this.topsidesDetailedEstimateResult = topsidesDetailedEstimateResult;
+    }
+
+    /**
+     * Gets the detailed topsides estimate result.
+     *
+     * @return detailed topsides estimate result, or {@code null} when unavailable
+     */
+    public CostEstimateResult getTopsidesDetailedEstimateResult() {
+      return topsidesDetailedEstimateResult;
+    }
+
+    /**
      * Get low estimate (CAPEX - accuracy band).
      *
      * @return low estimate in USD
@@ -716,16 +909,65 @@ public class FieldDevelopmentCostEstimator implements Serializable {
       totalWeight = 0.0;
       totalManHours = 0.0;
       costByCategory.clear();
+      equipmentCostByCategory.clear();
 
       for (EquipmentCostItem item : equipmentItems) {
         totalWeight += item.getWeight();
         totalManHours += item.getManHours();
 
         String category = item.getType();
-        costByCategory.merge(category, item.getInstalledCost(), Double::sum);
+        equipmentCostByCategory.merge(category, item.getInstalledCost(), Double::sum);
+      }
+
+      if (!populateTopsidesCostByCategory()) {
+        costByCategory.putAll(equipmentCostByCategory);
+      }
+      applyTopsidesPhysicalBasis();
+
+      if (drilexCapex > 0.0) {
+        costByCategory.put("DRILEX", drilexCapex);
+      }
+      if (surfCapex > 0.0) {
+        costByCategory.put("SURF", surfCapex);
+      }
+      if (subseaCapex <= 0.0 && (drilexCapex > 0.0 || surfCapex > 0.0)) {
+        subseaCapex = drilexCapex + surfCapex;
       }
 
       totalCapex = facilitiesCapex + subseaCapex;
+    }
+
+    /**
+     * Populates the report category map from the detailed topsides CAPEX stack.
+     *
+     * @return true when detailed topsides categories were populated
+     */
+    private boolean populateTopsidesCostByCategory() {
+      if (topsidesDetailedEstimateResult == null) {
+        return false;
+      }
+
+      for (Map.Entry<String, Double> entry : topsidesDetailedEstimateResult.getCapitalCosts().entrySet()) {
+        costByCategory.put("topsides." + entry.getKey(), entry.getValue());
+      }
+      for (Map.Entry<String, Double> entry : topsidesDetailedEstimateResult.getProjectCosts().entrySet()) {
+        costByCategory.put("topsides." + entry.getKey(), entry.getValue());
+      }
+      return !costByCategory.isEmpty();
+    }
+
+    /**
+     * Applies topsides dry-weight basis when a detailed topsides result is available.
+     */
+    private void applyTopsidesPhysicalBasis() {
+      if (topsidesDetailedEstimateResult == null) {
+        return;
+      }
+      Double topsidesWeight = topsidesDetailedEstimateResult.getWeightBasis().get("totalEstimatedDryWeight");
+      if (topsidesWeight != null && !Double.isNaN(topsidesWeight.doubleValue())
+          && !Double.isInfinite(topsidesWeight.doubleValue()) && topsidesWeight.doubleValue() > 0.0) {
+        totalWeight = topsidesWeight.doubleValue();
+      }
     }
 
     /**
@@ -735,6 +977,15 @@ public class FieldDevelopmentCostEstimator implements Serializable {
      */
     public Map<String, Double> getCostByCategory() {
       return new LinkedHashMap<String, Double>(costByCategory);
+    }
+
+    /**
+     * Get equipment-only installed cost breakdown by equipment category.
+     *
+     * @return map of equipment category to equipment-only installed cost
+     */
+    public Map<String, Double> getEquipmentCostByCategory() {
+      return new LinkedHashMap<String, Double>(equipmentCostByCategory);
     }
 
     /**
@@ -750,12 +1001,18 @@ public class FieldDevelopmentCostEstimator implements Serializable {
       data.put("accuracyBand", String.format("±%.0f%%", accuracyBand * 100));
 
       Map<String, Object> capex = new LinkedHashMap<String, Object>();
+      capex.put("drilex_USD", drilexCapex);
+      capex.put("surf_USD", surfCapex);
       capex.put("facilities_USD", facilitiesCapex);
       capex.put("subsea_USD", subseaCapex);
       capex.put("total_USD", totalCapex);
       capex.put("lowEstimate_USD", getLowEstimate());
       capex.put("highEstimate_USD", getHighEstimate());
       data.put("capex", capex);
+
+      if (topsidesDetailedEstimateResult != null) {
+        data.put("topsidesDetailedEstimateResult", topsidesDetailedEstimateResult.toMap());
+      }
 
       Map<String, Object> physical = new LinkedHashMap<String, Object>();
       physical.put("totalWeight_kg", totalWeight);
@@ -764,6 +1021,7 @@ public class FieldDevelopmentCostEstimator implements Serializable {
       data.put("physicalProperties", physical);
 
       data.put("costByCategory", costByCategory);
+      data.put("equipmentCostByCategory", equipmentCostByCategory);
 
       List<Map<String, Object>> items = new ArrayList<Map<String, Object>>();
       for (EquipmentCostItem item : equipmentItems) {
@@ -792,8 +1050,14 @@ public class FieldDevelopmentCostEstimator implements Serializable {
       sb.append("## CAPEX Summary\n\n");
       sb.append("| Category | Cost (USD) | Cost (MUSD) |\n");
       sb.append("|----------|------------|-------------|\n");
+      if (drilexCapex > 0) {
+        sb.append(String.format("| DRILEX | $%,.0f | $%.1f M |\n", drilexCapex, drilexCapex / 1e6));
+      }
+      if (surfCapex > 0) {
+        sb.append(String.format("| SURF | $%,.0f | $%.1f M |\n", surfCapex, surfCapex / 1e6));
+      }
       sb.append(String.format("| Facilities | $%,.0f | $%.1f M |\n", facilitiesCapex, facilitiesCapex / 1e6));
-      if (subseaCapex > 0) {
+      if (subseaCapex > 0 && drilexCapex <= 0.0 && surfCapex <= 0.0) {
         sb.append(String.format("| Subsea | $%,.0f | $%.1f M |\n", subseaCapex, subseaCapex / 1e6));
       }
       sb.append(String.format("| **Total** | **$%,.0f** | **$%.1f M** |\n", totalCapex, totalCapex / 1e6));
@@ -801,13 +1065,33 @@ public class FieldDevelopmentCostEstimator implements Serializable {
       sb.append(String.format("| High Estimate | $%,.0f | $%.1f M |\n", getHighEstimate(), getHighEstimate() / 1e6));
       sb.append("\n");
 
+      if (topsidesDetailedEstimateResult != null
+          && topsidesDetailedEstimateResult.getProjectCostSummary().containsKey("totalTopsidesCapex")) {
+        sb.append("## Topsides Detail\n\n");
+        sb.append(String.format("- **Total topsides CAPEX:** $%,.0f\n",
+            topsidesDetailedEstimateResult.getProjectCostSummary().get("totalTopsidesCapex")));
+        sb.append(String.format("- **Direct field cost:** $%,.0f\n",
+            topsidesDetailedEstimateResult.getCapitalCostSummary().get("directFieldCost")));
+        sb.append("\n");
+      }
+
+      if (!costByCategory.isEmpty()) {
+        sb.append("## Cost Breakdown\n\n");
+        sb.append("| Category | Cost (USD) |\n");
+        sb.append("|----------|------------|\n");
+        for (Map.Entry<String, Double> entry : costByCategory.entrySet()) {
+          sb.append(String.format("| %s | $%,.0f |\n", entry.getKey(), entry.getValue()));
+        }
+        sb.append("\n");
+      }
+
       sb.append("## Physical Properties\n\n");
       sb.append(String.format("- **Total Weight:** %.1f tonnes\n", totalWeight / 1000.0));
       sb.append(String.format("- **Installation Man-Hours:** %.0f\n", totalManHours));
       sb.append("\n");
 
       if (!equipmentItems.isEmpty()) {
-        sb.append("## Equipment Breakdown\n\n");
+        sb.append("## Equipment-Only Breakdown\n\n");
         sb.append("| Equipment | Type | Weight (kg) | Cost (USD) |\n");
         sb.append("|-----------|------|-------------|------------|\n");
         for (EquipmentCostItem item : equipmentItems) {

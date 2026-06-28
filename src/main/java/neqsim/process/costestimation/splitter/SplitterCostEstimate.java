@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import neqsim.process.costestimation.UnitCostEstimateBaseClass;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.splitter.SplitterMechanicalDesign;
 
 /**
  * Cost estimation class for splitters.
@@ -143,6 +144,14 @@ public class SplitterCostEstimate extends UnitCostEstimateBaseClass {
   /** {@inheritDoc} */
   @Override
   protected double calcPurchasedEquipmentCost() {
+    if (mechanicalEquipment instanceof SplitterMechanicalDesign) {
+      SplitterMechanicalDesign splitterDesign = (SplitterMechanicalDesign) mechanicalEquipment;
+      double pipingHeaderCost = splitterDesign.calculateSplitterCost();
+      if (pipingHeaderCost > 0.0) {
+        return pipingHeaderCost * getMaterialFactor() * getPressureClassFactor();
+      }
+    }
+
     // Calculate base splitter cost based on type
     double baseCost;
     if ("header".equalsIgnoreCase(splitterType)) {

@@ -52,6 +52,7 @@ public class MercuryRemovalMechanicalDesign extends MechanicalDesign {
    */
   public MercuryRemovalMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
+    costEstimate = new MercuryRemovalCostEstimate(this);
   }
 
   /** {@inheritDoc} */

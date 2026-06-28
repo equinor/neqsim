@@ -4,6 +4,8 @@ import java.util.UUID;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.filter.FilterMechanicalDesign;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -32,6 +34,7 @@ public class Filter extends TwoPortEquipment {
   private double regenerationRemovalRate = 0.0;
   private boolean backwashActive = false;
   private boolean regenerationActive = false;
+  private FilterMechanicalDesign mechanicalDesign;
 
   /**
    * Constructor for Filter.
@@ -40,6 +43,7 @@ public class Filter extends TwoPortEquipment {
    */
   public Filter(String name) {
     super(name);
+    initMechanicalDesign();
   }
 
   /**
@@ -50,6 +54,19 @@ public class Filter extends TwoPortEquipment {
    */
   public Filter(String name, StreamInterface inStream) {
     super(name, inStream);
+    initMechanicalDesign();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public MechanicalDesign getMechanicalDesign() {
+    return mechanicalDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initMechanicalDesign() {
+    mechanicalDesign = new FilterMechanicalDesign(this);
   }
 
   /** {@inheritDoc} */

@@ -307,6 +307,23 @@ public class WellMechanicalDesignTest {
   }
 
   @Test
+  public void testPlatformDryTreeWellCostsLessThanSubseaWetTreeWell() {
+    WellCostEstimator wetTreeEst = new WellCostEstimator(SubseaCostEstimator.Region.NORWAY);
+    wetTreeEst.calculateWellCost("OIL_PRODUCER", "SEMI_SUBMERSIBLE", "CASED_PERFORATED", 3800.0, 350.0, 45.0, 25.0, 0.0,
+        true, 4, WellCostEstimator.WellLocationType.SUBSEA_WET_TREE);
+
+    WellCostEstimator dryTreeEst = new WellCostEstimator(SubseaCostEstimator.Region.NORWAY);
+    dryTreeEst.calculateWellCost("OIL_PRODUCER", "SEMI_SUBMERSIBLE", "CASED_PERFORATED", 3800.0, 350.0, 45.0, 25.0, 0.0,
+        true, 4, WellCostEstimator.WellLocationType.PLATFORM_DRY_TREE);
+
+    assertTrue(dryTreeEst.getTotalCost() < wetTreeEst.getTotalCost(),
+        "Platform dry-tree well should cost less than an equivalent subsea wet-tree well");
+    assertTrue(dryTreeEst.getWellheadCost() < wetTreeEst.getWellheadCost(),
+        "Dry-tree wellhead and tree cost should be lower than wet-tree cost");
+    assertEquals(WellCostEstimator.WellLocationType.PLATFORM_DRY_TREE, dryTreeEst.getWellLocationType());
+  }
+
+  @Test
   public void testCostEstimatorToJson() {
     WellCostEstimator estimator = new WellCostEstimator();
     estimator.calculateWellCost("OIL_PRODUCER", "SEMI_SUBMERSIBLE", "CASED_PERFORATED", 3800.0, 350.0, 45.0, 25.0, 0.0,
@@ -331,6 +348,18 @@ public class WellMechanicalDesignTest {
 
     assertTrue(complexEst.getCompletionCost() > simpleEst.getCompletionCost(),
         "Multi-zone completion should cost more than open hole");
+  }
+
+  @Test
+  public void testSubseaWellLocationTypeFeedsMechanicalDesignCost() {
+    well.setWellLocationType(WellCostEstimator.WellLocationType.PLATFORM_DRY_TREE);
+    well.initMechanicalDesign();
+    WellMechanicalDesign design = (WellMechanicalDesign) well.getMechanicalDesign();
+
+    design.calculateCostEstimate();
+
+    assertEquals(WellCostEstimator.WellLocationType.PLATFORM_DRY_TREE, design.getCostEstimator().getWellLocationType());
+    assertTrue(design.getTotalCostUSD() > 0, "Dry-tree well cost should be positive");
   }
 
   // ============ Integration Test ============

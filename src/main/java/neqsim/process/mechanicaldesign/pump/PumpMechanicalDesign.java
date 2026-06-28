@@ -5,6 +5,7 @@ import java.awt.Container;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import neqsim.process.costestimation.pump.PumpCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
@@ -249,6 +250,7 @@ public class PumpMechanicalDesign extends MechanicalDesign {
    */
   public PumpMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
+    costEstimate = new PumpCostEstimate(this);
   }
 
   /** {@inheritDoc} */

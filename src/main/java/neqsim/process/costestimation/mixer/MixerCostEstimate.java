@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import neqsim.process.costestimation.UnitCostEstimateBaseClass;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.mixer.MixerMechanicalDesign;
 
 /**
  * Cost estimation class for mixers.
@@ -119,6 +120,14 @@ public class MixerCostEstimate extends UnitCostEstimateBaseClass {
   /** {@inheritDoc} */
   @Override
   protected double calcPurchasedEquipmentCost() {
+    if (mechanicalEquipment instanceof MixerMechanicalDesign) {
+      MixerMechanicalDesign mixerDesign = (MixerMechanicalDesign) mechanicalEquipment;
+      double pipingHeaderCost = mixerDesign.calculateMixerCost();
+      if (pipingHeaderCost > 0.0) {
+        return pipingHeaderCost * getMaterialFactor() * getPressureClassFactor();
+      }
+    }
+
     // Calculate base mixer cost based on type
     double baseCost;
     if ("inline".equalsIgnoreCase(mixerType)) {

@@ -262,36 +262,11 @@ public class AbsorberCostEstimate extends UnitCostEstimateBaseClass {
    * @return shell cost in USD
    */
   private double calcColumnShellCost() {
-    // Estimate shell weight
-    double wallThickness = calcWallThickness();
-    double shellWeight = Math.PI * columnDiameter * columnHeight * wallThickness * 7850.0;
+    // Vessel internal volume (m3) is the correct Turton capacity basis for the
+    // vertical-vessel correlation (feeding shell weight over-estimates large columns).
+    double volume = Math.PI / 4.0 * columnDiameter * columnDiameter * columnHeight;
 
-    // Add heads weight (2 x 2:1 elliptical heads)
-    double headWeight = 2 * 0.9 * Math.PI / 4.0 * columnDiameter * columnDiameter * wallThickness * 7850.0;
-
-    double totalWeight = shellWeight + headWeight;
-
-    return getCostCalculator().calcVerticalVesselCost(totalWeight);
-  }
-
-  /**
-   * Calculate wall thickness based on pressure.
-   *
-   * @return wall thickness in meters
-   */
-  private double calcWallThickness() {
-    // Simplified wall thickness calculation (ASME)
-    // t = P*D / (2*S*E - 1.2*P) + CA
-    double p = designPressure * 0.1; // Convert barg to MPa
-    double d = columnDiameter * 1000; // Convert to mm
-    double s = 137.9; // Allowable stress for SA-516-70 at 100°C (MPa)
-    double e = 0.85; // Joint efficiency
-    double ca = 3.0; // Corrosion allowance (mm)
-
-    double t = p * d / (2 * s * e - 1.2 * p) + ca;
-    t = Math.max(t, 6.0); // Minimum 6mm
-
-    return t / 1000.0; // Convert to meters
+    return getCostCalculator().calcVerticalVesselCostByVolume(volume);
   }
 
   /**

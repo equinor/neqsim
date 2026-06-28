@@ -8,6 +8,9 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
+import neqsim.process.costestimation.CostEstimateResult;
+import neqsim.process.costestimation.EstimateClass;
+import neqsim.process.costestimation.MaterialTakeOffItem;
 
 /**
  * Tests for {@link SURFCostEstimator}.
@@ -91,9 +94,9 @@ class SURFCostEstimatorTest {
 
     logger.info("=== SURF Cost Estimate (NCS 6-well tieback) ===");
     logger.info("  S (Subsea) : " + String.format("%,.0f", est.getSubseaCostUSD()) + " USD");
-    System.out.println("  U (Umbilicals): " + String.format("%,.0f", est.getUmbilicalCostUSD()) + " USD");
-    System.out.println("  R (Risers)   : " + String.format("%,.0f", est.getRiserCostUSD()) + " USD");
-    System.out.println("  F (Flowlines): " + String.format("%,.0f", est.getFlowlineCostUSD()) + " USD");
+    logger.info("  U (Umbilicals): " + String.format("%,.0f", est.getUmbilicalCostUSD()) + " USD");
+    logger.info("  R (Risers)   : " + String.format("%,.0f", est.getRiserCostUSD()) + " USD");
+    logger.info("  F (Flowlines): " + String.format("%,.0f", est.getFlowlineCostUSD()) + " USD");
     logger.info("  TOTAL SURF   : " + String.format("%,.0f", totalUSD) + " USD");
     logger.info("  TOTAL NOK    : " + String.format("%,.0f", est.getTotalCostInCurrency(10.5)) + " NOK");
   }
@@ -144,6 +147,54 @@ class SURFCostEstimatorTest {
     // Check category filter
     List<Map<String, Object>> subseaItems = est.getCategoryLineItems("S");
     assertTrue(subseaItems.size() >= 2, "Should have trees + manifold at minimum");
+  }
+
+  /**
+   * Test detailed estimate result includes estimate basis and decomposed pipeline MTO.
+   */
+  @Test
+  void testDetailedEstimateResultIncludesPipelineMto() {
+    SURFCostEstimator est = new SURFCostEstimator(4, 300.0, SubseaCostEstimator.Region.NORWAY);
+    est.setNumberOfJumpers(4);
+    est.setNumberOfPLETs(2);
+    est.setInfieldFlowlineLengthKm(8.0);
+    est.setInfieldFlowlineDiameterInches(12.0);
+    est.setInfieldFlowlineFlexible(false);
+    est.setExportPipelineLengthKm(40.0);
+    est.setExportPipelineDiameterInches(18.0);
+    est.setPipelineMaterialGrade("X65");
+    est.setPipelineDesignPressureBar(165.0);
+
+    CostEstimateResult result = est.getDetailedEstimateResult();
+
+    assertEquals(EstimateClass.CLASS_4, result.getBasis().getEstimateClass());
+    assertTrue(result.getCapitalCostSummary().get("totalSURF") > 0.0,
+        "Total SURF cost should be in capital cost summary");
+    assertTrue(result.getQuantityBasis().get("totalVesselDays") > 0.0, "Vessel days should be in quantity basis");
+    assertTrue(!result.getProjectCosts().containsKey("totalVesselDays"),
+        "Project cost map should not contain non-USD vessel-day quantities");
+    assertTrue(result.getMaterialTakeOff().size() > est.getLineItems().size(),
+        "Detailed result should decompose rigid pipeline line items");
+
+    boolean hasPipelineSteel = false;
+    boolean hasPipelineCoating = false;
+    boolean hasPipelineWelds = false;
+    boolean hasPipelineInstallation = false;
+    for (MaterialTakeOffItem item : result.getMaterialTakeOff()) {
+      hasPipelineSteel |= item.getItem().contains("steel pipe") && item.getWeightKg() > 0.0;
+      hasPipelineCoating |= item.getItem().contains("external coating") && "m2".equals(item.getUnit());
+      hasPipelineWelds |= item.getItem().contains("field welds") && "ea".equals(item.getUnit());
+      hasPipelineInstallation |= item.getItem().contains("installation") && "km".equals(item.getUnit());
+    }
+
+    assertTrue(hasPipelineSteel, "Rigid pipeline MTO should include steel weight");
+    assertTrue(hasPipelineCoating, "Rigid pipeline MTO should include coating area");
+    assertTrue(hasPipelineWelds, "Rigid pipeline MTO should include field weld count");
+    assertTrue(hasPipelineInstallation, "Rigid pipeline MTO should include installation length");
+
+    String json = est.toJson();
+    assertTrue(json.contains("detailedEstimateResult"));
+    assertTrue(json.contains("steelWeight_kg"));
   }
 
   /**

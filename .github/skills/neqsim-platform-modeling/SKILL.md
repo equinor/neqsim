@@ -324,10 +324,37 @@ operations.add(scrubber)
 
 ## 4. Recycle Patterns
 
+> **DEFAULT (do this automatically for every recompression setup):** whenever you
+> build a recompression and/or export-compression train, you MUST close the
+> liquid recycle from **every** suction/export/injection scrubber back to a
+> separator — never leave a `scrubber.getLiquidOutStream()` unconnected. A
+> dropped scrubber-liquid stream silently discards knocked-out condensate, which
+> under-counts oil/condensate recovery and mis-states the compressor gas load.
+> Apply this without being asked; only deviate if the user explicitly says the
+> scrubber liquid is routed elsewhere (e.g. to a dedicated condensate handling
+> system).
+
+**Matching-pressure routing rule (default):** route each scrubber's liquid back
+to the separator whose operating pressure matches that scrubber's **suction**
+pressure, via a TP-setter `Heater` + `Recycle` tear. This mirrors real plants,
+where each knock-out drum drains to the stage operating at the same pressure:
+
+| Scrubber | Suction pressure | Return destination |
+|----------|------------------|--------------------|
+| Export / injection scrubber | HP / stage-1 header | Stage-1 (HP) separator inlet |
+| MP recompression scrubber | MP / stage-2 header | Stage-2 (MP) separator inlet |
+| LP recompression scrubber | LP / stage-3 header | Stage-3 (LP) separator inlet |
+
+Returning every scrubber to the MP separator (as some legacy models do) is only
+acceptable when all suction scrubbers share that pressure; otherwise use the
+matching-pressure mapping above so the recycled liquid re-flashes at the correct
+conditions.
+
 ### 4.1 Scrubber Liquid Recycle (Oil Recovery)
 
 Liquid knocked out in recompression scrubbers is recycled back to the
-separation train. The standard pattern creates clone seed streams:
+separation train at the matching pressure. The standard pattern creates clone
+seed streams:
 
 ```python
 # Pre-create seed streams (cloned from the separator liquid for same composition)
@@ -373,10 +400,39 @@ operations.add(recycle_oil_1)
 - Clone the composition from the appropriate location in the process
 - The Heater before the Recycle object acts as a T/P equalizer
 
+**Reusable helper (recommended):** wrap the tear logic so every scrubber is
+closed the same way. Pre-create one seed per separator stage, mix each seed into
+that stage's separator inlet, then call the helper for each scrubber:
+
+```python
+def close_scrubber_recycle(ops, scrubber, seed_stream, pressure, temperature_C, tag):
+    """Return scrubber liquid to the matching-pressure separator via a Recycle tear."""
+    tp_setter = Heater("%s scrubber liq TP set" % tag, scrubber.getLiquidOutStream())
+    tp_setter.setOutTemperature(temperature_C, "C")
+    tp_setter.setOutPressure(pressure, "bara")
+    ops.add(tp_setter)
+    recycle = Recycle("%s scrubber liq recycle" % tag)
+    recycle.addStream(tp_setter.getOutletStream())
+    recycle.setOutletStream(seed_stream)   # the pre-created seed mixed into the stage inlet
+    recycle.setTolerance(1.0e-4)
+    ops.add(recycle)
+    return recycle
+
+# Matching-pressure mapping (HP=stage1, MP=stage2, LP=stage3):
+close_scrubber_recycle(ops, lp_scrubber,     seed_stage3, lp_pressure, lp_temperature, "recomp LP")
+close_scrubber_recycle(ops, mp_scrubber,     seed_stage2, mp_pressure, mp_temperature, "recomp MP")
+close_scrubber_recycle(ops, export_scrubber, seed_stage1, hp_pressure, hp_temperature, "export")
+```
+
+
 ### 4.2 Export/Injection Scrubber Liquid Recycle
 
-Liquids from export and injection scrubbers are typically recycled back to
-the MP (second stage) separator via a shared mixer:
+By the matching-pressure routing rule above, export/injection scrubber liquids
+are returned to the **stage-1 (HP) separator** (their suction sits at the HP
+header). The shared-mixer-to-MP variant below is a legacy simplification — use
+it only when the export/injection scrubbers genuinely operate at the MP
+pressure. For the default behavior, point the TP-setter and the seed stream at
+the HP/stage-1 separator conditions instead of MP:
 
 ```python
 # Pre-create mixer for all high-pressure scrubber liquids
@@ -412,8 +468,9 @@ Typical NCS platform has 4-6 recycle loops:
 
 | Recycle | Source | Destination | Purpose |
 |---------|--------|-------------|---------|
-| LP scrubber liquids (×3) | R1/R2/R3 scrubber liquids | LP separator inlet | Oil recovery |
-| Export recycle | Export/injection/booster scrubber liquids | MP separator inlet | Oil recovery |
+| LP scrubber liquid | LP recompression scrubber liquid | LP (stage-3) separator inlet | Oil recovery (matching pressure) |
+| MP scrubber liquid | MP recompression scrubber liquid | MP (stage-2) separator inlet | Oil recovery (matching pressure) |
+| Export/injection recycle | Export/injection/booster scrubber liquid | HP (stage-1) separator inlet | Oil recovery (matching pressure) |
 | Anti-surge R1 | R1 compressor outlet | R1 compressor suction | Surge protection |
 | Anti-surge R2 | R2 compressor outlet | R2 compressor suction | Surge protection |
 | Anti-surge R3 | R3 compressor outlet | R3 compressor suction | Surge protection |
@@ -751,6 +808,44 @@ total_cooling_kW = sum(
 )
 ```
 
+### 8.3 Mass-Balance Acceptance Gate (MANDATORY)
+
+> **Never accept or report a platform-model solution until the overall mass balance
+> closes.** Sum the `kg/hr` of every feed entering the model and every product/export
+> stream leaving it; the closure error must be below 0.1 %. A larger imbalance almost
+> always means a stream was silently dropped (an unconnected scrubber liquid out-stream
+> is the most common cause — see Section 4), a `Recycle` tear did not converge, or a
+> `Splitter` fraction is wrong.
+
+```python
+def check_mass_balance(feeds, products, tol=1.0e-3):
+    """Verify overall mass balance before accepting the solution.
+
+    feeds, products: lists of StreamInterface (all model inlets / all model outlets).
+    Returns (ok, closure_error_fraction). Raises if the model is unbalanced.
+    """
+    m_in = sum(float(s.getFlowRate("kg/hr")) for s in feeds)
+    m_out = sum(float(s.getFlowRate("kg/hr")) for s in products)
+    closure = abs(m_in - m_out) / m_in if m_in > 0 else float("inf")
+    if closure > tol:
+        raise AssertionError(
+            "Mass balance not closed: in=%.3f out=%.3f kg/hr (%.3f%% error). "
+            "Check for dropped scrubber liquid, non-converged recycle, or bad split."
+            % (m_in, m_out, 100.0 * closure)
+        )
+    return True, closure
+
+# feeds = [well-stream(s) / reservoir feed(s)]
+# products = [oil export, gas export, gas injection, produced water, fuel/flare, ...]
+check_mass_balance(feeds, products)
+```
+
+For a multi-area `ProcessModel`, also confirm convergence before the balance check:
+
+```python
+assert plant.run() or plant.solved(), "ProcessModel did not converge"
+```
+
 ---
 
 ## 9. ProcessInput Configuration Pattern
@@ -839,7 +934,11 @@ When building a new platform model from design documents:
 - [ ] **Oil TV P measurement**: `stream.TVP(20.0, "C")` for true vapor pressure at 20°C
 - [ ] **Run iterations**: 25 `run_step()` calls or single threaded `runAsThread()` with timeout
 - [ ] **Extract results**: structured response helpers for every equipment type
-- [ ] **Validate**: mass balance, energy balance, hydrate temperatures above dewpoint
+- [ ] **Validate mass balance FIRST (acceptance gate)**: sum feed `kg/hr` vs all
+      product/export `kg/hr`; closure error must be `< 0.1 %` before accepting the
+      solution (see Section 8.3). An imbalance means a dropped stream, non-converged
+      recycle, or bad split — fix and re-run.
+- [ ] **Validate**: energy balance, hydrate temperatures above dewpoint
 
 ---
 

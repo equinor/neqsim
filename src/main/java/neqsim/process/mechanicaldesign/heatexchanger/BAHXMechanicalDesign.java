@@ -3,6 +3,7 @@ package neqsim.process.mechanicaldesign.heatexchanger;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import com.google.gson.GsonBuilder;
+import neqsim.process.costestimation.heatexchanger.BAHXCostEstimator;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.heatexchanger.LNGHeatExchanger;
 
@@ -148,6 +149,7 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
    */
   public BAHXMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
+    costEstimate = new BAHXCostEstimator(this);
     // BAHX defaults: no fouling, aluminium, cryogenic
     setJointEfficiency(BRAZED_JOINT_EFFICIENCY);
     setTemaClass("N/A");

@@ -1,7 +1,7 @@
 ---
 name: neqsim-subsea-and-wells
 description: "Subsea production systems, well design, SURF cost estimation, and tieback analysis with NeqSim. USE WHEN: designing subsea fields, sizing flowlines and umbilicals, estimating well costs, performing casing design, running tieback comparisons, or configuring subsea equipment (trees, manifolds, boosters, risers)."
-last_verified: "2026-07-04"
+last_verified: "2026-06-28"
 ---
 
 # NeqSim Subsea & Wells Skill
@@ -32,6 +32,7 @@ Reservoir → Wells → Subsea Trees → Jumpers → Manifold → Flowlines → 
 | Jumper | `SubseaJumper` | `process.equipment.subsea` |
 | Flowline | `SimpleFlowLine` | `process.equipment.subsea` |
 | Flexible riser | `FlexiblePipe` | `process.equipment.subsea` |
+| Steel/rigid riser | `SimpleFlowLine` | `process.equipment.subsea` |
 | Umbilical | `Umbilical` | `process.equipment.subsea` |
 | PLET | `PLET` | `process.equipment.subsea` |
 | PLEM | `PLEM` | `process.equipment.subsea` |
@@ -49,6 +50,7 @@ SubseaWell well = new SubseaWell("Producer-1", stream);
 well.setWellType(SubseaWell.WellType.OIL_PRODUCER);
 well.setCompletionType(SubseaWell.CompletionType.CASED_PERFORATED);
 well.setRigType(SubseaWell.RigType.SEMI_SUBMERSIBLE);
+well.setWellLocationType(WellCostEstimator.WellLocationType.SUBSEA_WET_TREE);
 
 // Geometry
 well.setMeasuredDepth(3800.0);
@@ -91,6 +93,20 @@ double totalCost = design.getTotalCostUSD();
 String json = design.toJson();
 ```
 
+### Dry vs Wet Wells
+
+Use `WellCostEstimator.WellLocationType` to distinguish subsea wet-tree wells
+from platform dry-tree wells. The same flag is carried by `SubseaWell` and fed
+into `WellMechanicalDesign.calculateCostEstimate()`.
+
+```java
+SubseaWell wetWell = new SubseaWell("Subsea producer", stream);
+wetWell.setWellLocationType(WellCostEstimator.WellLocationType.SUBSEA_WET_TREE);
+
+SubseaWell dryWell = new SubseaWell("Platform producer", stream);
+dryWell.setWellLocationType(WellCostEstimator.WellLocationType.PLATFORM_DRY_TREE);
+```
+
 ### API 5CT Casing Grades
 
 | Grade | SMYS (MPa) | Typical Use |
@@ -121,17 +137,34 @@ String json = design.toJson();
 SURFCostEstimator surf = new SURFCostEstimator();
 surf.setRegion(SubseaCostEstimator.Region.NORWAY);
 surf.setNumberOfWells(4);
-surf.setFlowlineLength(25.0);       // km
-surf.setUmbilicalLength(27.0);      // km
-surf.setWaterDepth(350.0);          // m
-surf.setTreeType("vertical");
-surf.setHasManifold(true);
-surf.setManifoldWells(4);
-surf.setHasRiser(true);
-surf.setRiserType("flexible");
+surf.setWaterDepthM(350.0);          // m
+surf.setTreePressureRatingPsi(10000);
+surf.setTreeBoreSizeInches(6.0);
+surf.setHorizontalTrees(true);
+surf.setManifoldSlots(4);
+surf.setNumberOfPLETs(2);
+surf.setNumberOfPLEMs(1);
+surf.setNumberOfJumpers(4);
+surf.setJumperLengthM(30.0);
+surf.setUmbilicalLengthKm(27.0);
+surf.setUmbilicalHydraulicLines(8);
+surf.setUmbilicalChemicalLines(2);
+surf.setUmbilicalElectricalCables(2);
+surf.setIncludeRisers(true);
+surf.setFlexibleRiser(true);
+surf.setRiserDiameterInches(12.0);
+surf.setRiserLengthM(525.0);
+surf.setInfieldFlowlineLengthKm(8.0);
+surf.setExportPipelineLengthKm(25.0);
+surf.setExportPipelineDiameterInches(12.0);
 
-double surfCapex = surf.estimate();  // USD
-String breakdown = surf.toJson();    // Detailed cost breakdown
+surf.calculate();
+double surfCapex = surf.getTotalSURFCostUSD();
+double subseaHardware = surf.getSubseaCostUSD();
+double umbilicals = surf.getUmbilicalCostUSD();
+double risers = surf.getRiserCostUSD();
+double flowlines = surf.getFlowlineCostUSD();
+List<Map<String, Object>> lineItems = surf.getLineItems();
 ```
 
 ### Regional Cost Factors
@@ -200,19 +233,50 @@ TiebackReport report = analyzer.analyze();
 
 ```java
 SubseaProductionSystem subseaSystem = new SubseaProductionSystem("Field Layout");
-subseaSystem.setNumberOfWells(6);
-subseaSystem.setWaterDepth(400.0);
-subseaSystem.setFlowlineLength(30.0);     // km to host
-subseaSystem.setUmbilicalLength(32.0);    // slightly longer routing
-subseaSystem.setRiserType("flexible");
-subseaSystem.setTreeType("horizontal");
-subseaSystem.setHasManifold(true);
-subseaSystem.setManifoldWells(3);          // 2 manifolds × 3 wells
-subseaSystem.setHasPigLoop(true);
-subseaSystem.setHasInLineTee(false);
-subseaSystem.setHasSubseaBooster(true);
-subseaSystem.setBoosterType("compressor"); // or "pump"
+subseaSystem.setArchitecture(SubseaProductionSystem.SubseaArchitecture.MANIFOLD_CLUSTER);
+subseaSystem.setWellCount(6);
+subseaSystem.setManifoldCount(2);          // 2 manifolds x 3 wells
+subseaSystem.setWaterDepthM(400.0);
+subseaSystem.setTiebackDistanceKm(30.0);   // km to host
+subseaSystem.setUmbilicalLengthKm(32.0);   // slightly longer routing
+subseaSystem.setFlowlineDiameterInches(12.0);
+subseaSystem.setTubingDiameterInches(6.0);
+subseaSystem.setCostRegion(SubseaCostEstimator.Region.NORWAY);
+subseaSystem.setWellLocationType(WellCostEstimator.WellLocationType.SUBSEA_WET_TREE);
+subseaSystem.setIncludeRisers(true);
+subseaSystem.setFlexibleRiser(true);
+subseaSystem.setProductionRiserCount(1);
+subseaSystem.setReservoirDevelopmentCostMusd(25.0);
+subseaSystem.setReservoirFluid(reservoirFluid);
+
+subseaSystem.build();
+subseaSystem.run();
+
+int treeCount = subseaSystem.getTrees().size();
+int jumperCount = subseaSystem.getJumpers().size();
+int manifoldCount = subseaSystem.getManifolds().size();
+int pletCount = subseaSystem.getPLETs().size();
+int plemCount = subseaSystem.getPLEMs().size();
+int umbilicalCount = subseaSystem.getUmbilicals().size();
+int flexibleRiserCount = subseaSystem.getRisers().size();
+int steelRiserCount = subseaSystem.getSteelRisers().size();
+
+SubseaProductionSystem.SubseaSystemResult result = subseaSystem.getResult();
+double surfCapexMusd = result.getTotalSubseaCapexMusd();
+double wellsMusd = result.getWellCostMusd();
+double reservoirMusd = result.getReservoirCostMusd();
+double developmentCapexMusd = result.getTotalDevelopmentCapexMusd();
 ```
+
+`SubseaProductionSystem.build()` creates the main process and design equipment:
+`SubseaWell`, `SubseaTree`, `SubseaJumper`, `SubseaManifold`, `PLET`, `PLEM`,
+`SimpleFlowLine`, `Umbilical`, and risers. With `setFlexibleRiser(true)` risers
+are generated as `FlexiblePipe`; with `setFlexibleRiser(false)` steel/rigid
+risers are generated as vertical `SimpleFlowLine` unit operations. All of these
+classes expose mechanical design objects, and `SURFCostEstimator` includes trees,
+manifolds, PLETs, PLEMs, jumpers, umbilicals, risers, flowlines, and pipelines in
+the SURF CAPEX. The result separates SURF, well, reservoir, and total development
+CAPEX.
 
 ---
 

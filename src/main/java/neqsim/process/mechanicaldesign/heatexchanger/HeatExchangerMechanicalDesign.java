@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import neqsim.process.costestimation.heatexchanger.HeatExchangerCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -178,6 +179,7 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
    */
   public HeatExchangerMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
+    costEstimate = new HeatExchangerCostEstimate(this);
   }
 
   /** {@inheritDoc} */

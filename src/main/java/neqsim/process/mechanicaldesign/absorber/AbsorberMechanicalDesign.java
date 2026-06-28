@@ -1,5 +1,6 @@
 package neqsim.process.mechanicaldesign.absorber;
 
+import neqsim.process.costestimation.absorber.AbsorberCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
 import neqsim.process.equipment.separator.Separator;
@@ -35,6 +36,7 @@ public class AbsorberMechanicalDesign extends SeparatorMechanicalDesign {
    */
   public AbsorberMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
+    costEstimate = new AbsorberCostEstimate(this);
   }
 
   /** {@inheritDoc} */

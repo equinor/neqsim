@@ -227,11 +227,11 @@ public class ColumnCostEstimate extends UnitCostEstimateBaseClass {
    * @return shell cost in USD
    */
   private double calcColumnShellCost() {
-    // Calculate shell weight for cost estimation
-    double shellWeight = calcColumnWeight();
+    // Vessel internal volume (m3) is the correct Turton capacity basis for the
+    // vertical-vessel correlation (feeding shell weight over-estimates large columns).
+    double volume = Math.PI / 4.0 * columnDiameter * columnDiameter * columnHeight;
 
-    // Use vertical vessel correlation
-    double shellCost = getCostCalculator().calcVerticalVesselCost(shellWeight);
+    double shellCost = getCostCalculator().calcVerticalVesselCostByVolume(volume);
 
     // Apply pressure factor
     shellCost *= getPressureFactor();

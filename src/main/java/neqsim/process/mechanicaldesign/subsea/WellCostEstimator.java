@@ -70,8 +70,21 @@ import neqsim.process.equipment.subsea.SubseaWell;
  */
 public class WellCostEstimator {
 
+  /**
+   * Well location and tree installation basis for screening cost estimates.
+   */
+  public enum WellLocationType {
+    /** Subsea well with wet tree installed at the seabed. */
+    SUBSEA_WET_TREE,
+    /** Platform or dry-tree well with tree and controls on the host facility. */
+    PLATFORM_DRY_TREE
+  }
+
   /** Region for cost adjustment — reuses SubseaCostEstimator.Region. */
   private SubseaCostEstimator.Region region = SubseaCostEstimator.Region.NORWAY;
+
+  /** Well location and tree installation basis. */
+  private WellLocationType wellLocationType = WellLocationType.SUBSEA_WET_TREE;
 
   // ============ Cost Components (USD) ============
   /** Drilling rig and services cost. */
@@ -225,10 +238,37 @@ public class WellCostEstimator {
       double waterDepth, double drillingDays, double completionDays, double rigDayRateOverride, boolean hasDHSV,
       int numberOfCasingStrings) {
 
+    calculateWellCost(wellType, rigType, completionType, measuredDepth, waterDepth, drillingDays, completionDays,
+        rigDayRateOverride, hasDHSV, numberOfCasingStrings, wellLocationType);
+  }
+
+  /**
+   * Calculate total well cost with explicit dry/wet tree location basis.
+   *
+   * @param wellType well type string (OIL_PRODUCER, GAS_PRODUCER, WATER_INJECTOR, etc.)
+   * @param rigType rig type string (SEMI_SUBMERSIBLE, DRILLSHIP, PLATFORM_RIG, etc.)
+   * @param completionType completion type string
+   * @param measuredDepth measured depth in meters
+   * @param waterDepth water depth in meters
+   * @param drillingDays planned drilling days
+   * @param completionDays planned completion days
+   * @param rigDayRateOverride rig day rate override in USD/day (0 to use default)
+   * @param hasDHSV whether well has downhole safety valve
+   * @param numberOfCasingStrings number of casing strings
+   * @param locationType well location and tree installation basis
+   */
+  public void calculateWellCost(String wellType, String rigType, String completionType, double measuredDepth,
+      double waterDepth, double drillingDays, double completionDays, double rigDayRateOverride, boolean hasDHSV,
+      int numberOfCasingStrings, WellLocationType locationType) {
+
+    WellLocationType effectiveLocation = locationType == null ? WellLocationType.SUBSEA_WET_TREE : locationType;
+    this.wellLocationType = effectiveLocation;
+
     double effectiveRigRate = rigDayRateOverride > 0 ? rigDayRateOverride : rigDayRate;
 
     // Adjust rig rate by type
     effectiveRigRate *= getRigTypeFactor(rigType);
+    effectiveRigRate *= getLocationRigFactor(effectiveLocation);
 
     // ---- Drilling Cost ----
     // Rig time + spread cost during drilling
@@ -257,22 +297,23 @@ public class WellCostEstimator {
 
     // Adjust for completion complexity
     completionBase *= getCompletionTypeFactor(completionType);
+    completionBase *= getLocationCompletionFactor(effectiveLocation);
 
     // Rig time during completion
     completionCost = completionBase + effectiveRigRate * completionDays;
 
     // ---- Wellhead and Tree ----
-    wellheadCost = wellheadBaseCost;
-    // Deep water premium
-    if (waterDepth > 500) {
+    wellheadCost = wellheadBaseCost * getTreeLocationFactor(effectiveLocation);
+    // Wet subsea trees carry water-depth installation and connector premiums.
+    if (effectiveLocation == WellLocationType.SUBSEA_WET_TREE && waterDepth > 500) {
       wellheadCost *= 1.15;
     }
-    if (waterDepth > 1500) {
+    if (effectiveLocation == WellLocationType.SUBSEA_WET_TREE && waterDepth > 1500) {
       wellheadCost *= 1.20;
     }
 
     // ---- Safety Valves ----
-    safetyValveCost = hasDHSV ? dhsvCost : 0.0;
+    safetyValveCost = hasDHSV ? dhsvCost * getLocationSafetyValveFactor(effectiveLocation) : 0.0;
 
     // ---- Logging and Testing ----
     double loggingDays = isProducer ? 5.0 : 3.0;
@@ -326,6 +367,58 @@ public class WellCostEstimator {
       return 1.45;
     } else if ("MULTI_ZONE".equals(completionType)) {
       return 1.80;
+    }
+    return 1.0;
+  }
+
+  /**
+   * Get rig logistics factor for well location.
+   *
+   * @param locationType well location type
+   * @return cost factor multiplier
+   */
+  private double getLocationRigFactor(WellLocationType locationType) {
+    if (locationType == WellLocationType.PLATFORM_DRY_TREE) {
+      return 0.85;
+    }
+    return 1.0;
+  }
+
+  /**
+   * Get completion equipment factor for well location.
+   *
+   * @param locationType well location type
+   * @return cost factor multiplier
+   */
+  private double getLocationCompletionFactor(WellLocationType locationType) {
+    if (locationType == WellLocationType.PLATFORM_DRY_TREE) {
+      return 0.90;
+    }
+    return 1.0;
+  }
+
+  /**
+   * Get tree and wellhead procurement factor for dry versus wet tree basis.
+   *
+   * @param locationType well location type
+   * @return cost factor multiplier
+   */
+  private double getTreeLocationFactor(WellLocationType locationType) {
+    if (locationType == WellLocationType.PLATFORM_DRY_TREE) {
+      return 0.55;
+    }
+    return 1.0;
+  }
+
+  /**
+   * Get safety valve factor for dry versus wet tree basis.
+   *
+   * @param locationType well location type
+   * @return cost factor multiplier
+   */
+  private double getLocationSafetyValveFactor(WellLocationType locationType) {
+    if (locationType == WellLocationType.PLATFORM_DRY_TREE) {
+      return 0.80;
     }
     return 1.0;
   }
@@ -401,6 +494,7 @@ public class WellCostEstimator {
     breakdown.put("totalCost", totalCost);
     breakdown.put("region", region.name());
     breakdown.put("regionFactor", regionFactor);
+    breakdown.put("wellLocationType", wellLocationType.name());
 
     return breakdown;
   }
@@ -586,6 +680,24 @@ public class WellCostEstimator {
    */
   public SubseaCostEstimator.Region getRegion() {
     return region;
+  }
+
+  /**
+   * Get well location and tree installation basis.
+   *
+   * @return well location type
+   */
+  public WellLocationType getWellLocationType() {
+    return wellLocationType;
+  }
+
+  /**
+   * Set well location and tree installation basis.
+   *
+   * @param wellLocationType well location type
+   */
+  public void setWellLocationType(WellLocationType wellLocationType) {
+    this.wellLocationType = wellLocationType == null ? WellLocationType.SUBSEA_WET_TREE : wellLocationType;
   }
 
   /**

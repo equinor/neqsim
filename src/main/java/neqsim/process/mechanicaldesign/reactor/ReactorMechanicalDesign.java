@@ -1,5 +1,6 @@
 package neqsim.process.mechanicaldesign.reactor;
 
+import neqsim.process.costestimation.reactor.ReactorCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortInterface;
 import neqsim.process.equipment.reactor.GibbsReactor;
@@ -105,6 +106,7 @@ public class ReactorMechanicalDesign extends MechanicalDesign {
    */
   public ReactorMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
+    costEstimate = new ReactorCostEstimate(this);
   }
 
   /** {@inheritDoc} */

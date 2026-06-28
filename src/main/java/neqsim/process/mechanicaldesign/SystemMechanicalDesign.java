@@ -475,6 +475,10 @@ public class SystemMechanicalDesign implements java.io.Serializable {
       return "Stream";
     } else if (className.contains("Pipeline") || className.contains("Pipe")) {
       return "Pipeline";
+    } else if (className.contains("Well")) {
+      return "Well";
+    } else if (className.contains("Reservoir")) {
+      return "Reservoir";
     } else {
       return "Other";
     }
@@ -1044,6 +1048,11 @@ public class SystemMechanicalDesign implements java.io.Serializable {
     costSummary.put("grassRootsCost_USD", costEst.getTotalGrassRootsCost());
     costSummary.put("installationManHours", costEst.getTotalInstallationManHours());
     combined.put("costSummary", costSummary);
+
+    // Estimate basis and project cost stack
+    combined.put("estimateBasis", costEst.getEstimateBasis().toMap());
+    combined.put("projectCostBreakdown_USD", costEst.getProjectCostBreakdown());
+    combined.put("detailedEstimateResult", costEst.getDetailedEstimateResult().toMap());
 
     // Breakdowns
     combined.put("weightByEquipmentType_kg", weightByEquipmentType);

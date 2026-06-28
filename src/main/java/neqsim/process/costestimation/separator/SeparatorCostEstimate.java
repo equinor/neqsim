@@ -37,19 +37,24 @@ public class SeparatorCostEstimate extends UnitCostEstimateBaseClass {
 
     SeparatorMechanicalDesign sepMecDesign = (SeparatorMechanicalDesign) mechanicalEquipment;
 
-    double shellWeight = sepMecDesign.getWeigthVesselShell();
-    if (shellWeight <= 0) {
-      // Use total weight as fallback
-      shellWeight = sepMecDesign.getWeightTotal();
+    // Use the vessel internal volume (m3) as the Turton capacity basis. Feeding shell
+    // weight (kg) into the vertical-vessel coefficients over-estimates large vessels by
+    // an order of magnitude, so derive the volume from the sized diameter and length.
+    double diameter = sepMecDesign.getInnerDiameter();
+    double length = sepMecDesign.getTantanLength();
+    double volume = 0.0;
+    if (diameter > 0 && length > 0) {
+      volume = Math.PI * Math.pow(diameter / 2.0, 2.0) * length;
     }
-
-    if (shellWeight <= 0) {
+    if (volume <= 0) {
+      volume = sepMecDesign.getVolumeTotal();
+    }
+    if (volume <= 0) {
       return 0.0;
     }
 
-    // Determine vessel orientation (assume horizontal for 2-phase, vertical for 3-phase)
-    // For now, use vertical vessel correlation as it's more common
-    return getCostCalculator().calcVerticalVesselCost(shellWeight);
+    // Vertical-vessel correlation is the common default for process separators.
+    return getCostCalculator().calcVerticalVesselCostByVolume(volume);
   }
 
   /** {@inheritDoc} */

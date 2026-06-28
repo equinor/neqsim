@@ -1624,6 +1624,15 @@ public class MechanicalDesign implements java.io.Serializable {
   }
 
   /**
+   * Setter for the field <code>volumeTotal</code>.
+   *
+   * @param volumeTotal the total equipment volume in m3 (must be non-negative)
+   */
+  public void setVolumeTotal(double volumeTotal) {
+    this.volumeTotal = volumeTotal;
+  }
+
+  /**
    * isHasSetCompanySpecificDesignStandards.
    *
    * @return the hasSetCompanySpecificDesignStandards
