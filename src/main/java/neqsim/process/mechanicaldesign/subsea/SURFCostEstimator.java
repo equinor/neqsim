@@ -13,7 +13,7 @@ import com.google.gson.GsonBuilder;
  * Aggregates cost estimates for all major SURF equipment categories:
  * </p>
  * <ul>
- * <li><b>S</b> — Subsea infrastructure: Christmas trees, manifolds, PLETs, jumpers</li>
+ * <li><b>S</b> — Subsea infrastructure: Christmas trees, manifolds, PLETs, PLEMs, jumpers</li>
  * <li><b>U</b> — Umbilicals: control umbilicals from host platform to subsea field</li>
  * <li><b>R</b> — Risers: dynamic or rigid risers from seabed to host platform</li>
  * <li><b>F</b> — Flowlines: infield flowlines and export pipelines</li>
@@ -70,6 +70,15 @@ public class SURFCostEstimator {
 
   /** PLET hub size in inches. */
   private double pletHubSizeInches = 16.0;
+
+  /** Number of PLEMs. */
+  private int numberOfPLEMs = 0;
+
+  /** PLEM dry weight in tonnes. */
+  private double plemWeightTonnes = 45.0;
+
+  /** PLEM header size in inches. */
+  private double plemHeaderSizeInches = 16.0;
 
   /** Number of jumpers (well to manifold). */
   private int numberOfJumpers = 0;
@@ -157,7 +166,7 @@ public class SURFCostEstimator {
   private double contingencyPct = 0.15;
 
   // ============ Calculated Results ============
-  /** Total subsea infrastructure cost (trees + manifold + PLETs + jumpers) in USD. */
+  /** Total subsea infrastructure cost (trees + manifold + PLETs + PLEMs + jumpers) in USD. */
   private double subseaCostUSD = 0.0;
 
   /** Total umbilical cost in USD. */
@@ -224,7 +233,7 @@ public class SURFCostEstimator {
   }
 
   /**
-   * Calculate Subsea infrastructure costs (trees, manifold, PLETs, jumpers).
+   * Calculate Subsea infrastructure costs (trees, manifold, PLETs, PLEMs, jumpers).
    */
   private void calculateSubseaInfrastructure() {
     SubseaCostEstimator est = new SubseaCostEstimator(region);
@@ -253,6 +262,16 @@ public class SURFCostEstimator {
       double totalPletCost = pletCost * numberOfPLETs;
       subseaCostUSD += totalPletCost;
       addLineItem("S", "PLETs", numberOfPLETs, "ea", pletCost, totalPletCost, est.getVesselDays() * numberOfPLETs);
+    }
+
+    // PLEMs
+    if (numberOfPLEMs > 0) {
+      est = new SubseaCostEstimator(region);
+      est.calculatePLETCost(plemWeightTonnes, plemHeaderSizeInches, waterDepthM, true, true);
+      double plemCost = est.getTotalCost();
+      double totalPlemCost = plemCost * numberOfPLEMs;
+      subseaCostUSD += totalPlemCost;
+      addLineItem("S", "PLEMs", numberOfPLEMs, "ea", plemCost, totalPlemCost, est.getVesselDays() * numberOfPLEMs);
     }
 
     // Jumpers (well to manifold)
@@ -622,7 +641,7 @@ public class SURFCostEstimator {
   /**
    * Get subsea infrastructure cost in USD.
    *
-   * @return subsea cost (trees + manifold + PLETs + jumpers) in USD
+   * @return subsea cost (trees + manifold + PLETs + PLEMs + jumpers) in USD
    */
   public double getSubseaCostUSD() {
     return subseaCostUSD;
@@ -781,6 +800,33 @@ public class SURFCostEstimator {
    */
   public void setPletHubSizeInches(double pletHubSizeInches) {
     this.pletHubSizeInches = pletHubSizeInches;
+  }
+
+  /**
+   * Set number of PLEMs.
+   *
+   * @param numberOfPLEMs number of PLEMs
+   */
+  public void setNumberOfPLEMs(int numberOfPLEMs) {
+    this.numberOfPLEMs = numberOfPLEMs;
+  }
+
+  /**
+   * Set PLEM weight.
+   *
+   * @param plemWeightTonnes dry weight in tonnes
+   */
+  public void setPlemWeightTonnes(double plemWeightTonnes) {
+    this.plemWeightTonnes = plemWeightTonnes;
+  }
+
+  /**
+   * Set PLEM header size.
+   *
+   * @param plemHeaderSizeInches header size in inches
+   */
+  public void setPlemHeaderSizeInches(double plemHeaderSizeInches) {
+    this.plemHeaderSizeInches = plemHeaderSizeInches;
   }
 
   /**

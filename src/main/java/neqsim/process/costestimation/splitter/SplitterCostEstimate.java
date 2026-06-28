@@ -4,13 +4,14 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import neqsim.process.costestimation.UnitCostEstimateBaseClass;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.splitter.SplitterMechanicalDesign;
 
 /**
  * Cost estimation class for splitters.
  *
  * <p>
- * This class provides splitter-specific cost estimation methods for flow dividers, manifolds, and headers used to split
- * process streams.
+ * This class provides splitter-specific cost estimation methods for flow dividers, manifolds, and
+ * headers used to split process streams.
  * </p>
  *
  * <p>
@@ -143,6 +144,14 @@ public class SplitterCostEstimate extends UnitCostEstimateBaseClass {
   /** {@inheritDoc} */
   @Override
   protected double calcPurchasedEquipmentCost() {
+    if (mechanicalEquipment instanceof SplitterMechanicalDesign) {
+      SplitterMechanicalDesign splitterDesign = (SplitterMechanicalDesign) mechanicalEquipment;
+      double pipingHeaderCost = splitterDesign.calculateSplitterCost();
+      if (pipingHeaderCost > 0.0) {
+        return pipingHeaderCost * getMaterialFactor() * getPressureClassFactor();
+      }
+    }
+
     // Calculate base splitter cost based on type
     double baseCost;
     if ("header".equalsIgnoreCase(splitterType)) {
@@ -295,7 +304,8 @@ public class SplitterCostEstimate extends UnitCostEstimateBaseClass {
       splitterCost = calcManifoldCost();
     }
 
-    breakdown.put("splitterBodyCost_USD", splitterCost * getMaterialFactor() * getPressureClassFactor());
+    breakdown.put("splitterBodyCost_USD",
+        splitterCost * getMaterialFactor() * getPressureClassFactor());
 
     if (includeControlValves) {
       breakdown.put("controlValvesCost_USD", calcControlValvesCost());

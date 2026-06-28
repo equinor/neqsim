@@ -4,6 +4,8 @@ import java.util.UUID;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.filter.FilterMechanicalDesign;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -32,6 +34,7 @@ public class Filter extends TwoPortEquipment {
   private double regenerationRemovalRate = 0.0;
   private boolean backwashActive = false;
   private boolean regenerationActive = false;
+  private FilterMechanicalDesign mechanicalDesign;
 
   /**
    * Constructor for Filter.
@@ -40,6 +43,7 @@ public class Filter extends TwoPortEquipment {
    */
   public Filter(String name) {
     super(name);
+    initMechanicalDesign();
   }
 
   /**
@@ -50,6 +54,19 @@ public class Filter extends TwoPortEquipment {
    */
   public Filter(String name, StreamInterface inStream) {
     super(name, inStream);
+    initMechanicalDesign();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public MechanicalDesign getMechanicalDesign() {
+    return mechanicalDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initMechanicalDesign() {
+    mechanicalDesign = new FilterMechanicalDesign(this);
   }
 
   /** {@inheritDoc} */
@@ -389,7 +406,8 @@ public class Filter extends TwoPortEquipment {
       return;
     }
     double volumetricFlowM3s = Math.max(0.0, inStream.getFlowRate("m3/hr") / 3600.0);
-    holdupResidenceTime = volumetricFlowM3s > 0.0 ? holdupVolume / volumetricFlowM3s : Double.POSITIVE_INFINITY;
+    holdupResidenceTime =
+        volumetricFlowM3s > 0.0 ? holdupVolume / volumetricFlowM3s : Double.POSITIVE_INFINITY;
   }
 
   /**
@@ -465,11 +483,14 @@ public class Filter extends TwoPortEquipment {
   /** {@inheritDoc} */
   @Override
   public String toJson(neqsim.process.util.report.ReportConfig cfg) {
-    if (cfg != null && cfg.getDetailLevel(getName()) == neqsim.process.util.report.ReportConfig.DetailLevel.HIDE) {
+    if (cfg != null && cfg
+        .getDetailLevel(getName()) == neqsim.process.util.report.ReportConfig.DetailLevel.HIDE) {
       return null;
     }
-    neqsim.process.util.monitor.FilterResponse res = new neqsim.process.util.monitor.FilterResponse(this);
+    neqsim.process.util.monitor.FilterResponse res =
+        new neqsim.process.util.monitor.FilterResponse(this);
     res.applyConfig(cfg);
-    return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
+    return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(res);
   }
 }

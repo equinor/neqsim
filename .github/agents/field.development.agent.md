@@ -39,13 +39,13 @@ You are an expert in these field development disciplines:
 - Drilling schedule optimization (`WellScheduler`)
 
 ### 3. Subsea Production Systems
-- Integrated field/SURF setup (`SubseaProductionSystem`) for wells, trees, jumpers, manifolds, flowlines, umbilicals, risers, reservoir cost and well cost
-- Subsea layout design (trees, manifolds, jumpers, PLETs, umbilicals)
+- Integrated field/SURF setup (`SubseaProductionSystem`) for wells, trees, jumpers, manifolds, PLETs, PLEMs, flowlines, umbilicals, flexible/steel risers, reservoir cost and well cost
+- Subsea layout design (trees, manifolds, jumpers, PLETs, PLEMs, umbilicals)
 - SURF cost estimation (`SURFCostEstimator`)
 - Tieback analysis and host selection (`TiebackAnalyzer`)
 - Subsea boosting (pumps, compressors) screening
 - Pipeline/flowline sizing and mechanical design
-- Riser selection (flexible, SCR, TTR)
+- Riser selection (flexible, steel/rigid, SCR, TTR)
 
 ### 4. Process Facility Design
 - Separation train design (HP/LP/test separators)

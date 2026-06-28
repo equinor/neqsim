@@ -22,9 +22,9 @@ import neqsim.process.equipment.subsea.SubseaWell;
  * </ul>
  *
  * <p>
- * Cost data is based on industry benchmarks and regional factors. Baseline costs are representative
- * of Norwegian Continental Shelf (NCS) development wells in the 2020-2024 timeframe, aligned with
- * data from actual field development plans (e.g., Ultima Thule concept study estimates).
+ * Cost data is based on industry benchmarks and regional factors. Baseline costs are representative of Norwegian
+ * Continental Shelf (NCS) development wells in the 2020-2024 timeframe, aligned with data from actual field development
+ * plans (e.g., Ultima Thule concept study estimates).
  * </p>
  *
  * <h2>Cost Breakdown Structure</h2>
@@ -182,30 +182,29 @@ public class WellCostEstimator {
    * Apply regional cost adjustment factor.
    *
    * <p>
-   * Regional factors reflect differences in rig markets, labor costs, logistics, and regulatory
-   * requirements.
+   * Regional factors reflect differences in rig markets, labor costs, logistics, and regulatory requirements.
    * </p>
    */
   private void applyRegionFactor() {
     switch (region) {
-      case NORWAY:
-        regionFactor = 1.35;
-        break;
-      case UK:
-        regionFactor = 1.20;
-        break;
-      case GOM:
-        regionFactor = 1.0;
-        break;
-      case BRAZIL:
-        regionFactor = 0.90;
-        break;
-      case WEST_AFRICA:
-        regionFactor = 1.10;
-        break;
-      default:
-        regionFactor = 1.0;
-        break;
+    case NORWAY:
+      regionFactor = 1.35;
+      break;
+    case UK:
+      regionFactor = 1.20;
+      break;
+    case GOM:
+      regionFactor = 1.0;
+      break;
+    case BRAZIL:
+      regionFactor = 0.90;
+      break;
+    case WEST_AFRICA:
+      regionFactor = 1.10;
+      break;
+    default:
+      regionFactor = 1.0;
+      break;
     }
 
     // Adjust base rates by region
@@ -235,12 +234,12 @@ public class WellCostEstimator {
    * @param hasDHSV whether well has downhole safety valve
    * @param numberOfCasingStrings number of casing strings
    */
-  public void calculateWellCost(String wellType, String rigType, String completionType,
-      double measuredDepth, double waterDepth, double drillingDays, double completionDays,
-      double rigDayRateOverride, boolean hasDHSV, int numberOfCasingStrings) {
+  public void calculateWellCost(String wellType, String rigType, String completionType, double measuredDepth,
+      double waterDepth, double drillingDays, double completionDays, double rigDayRateOverride, boolean hasDHSV,
+      int numberOfCasingStrings) {
 
-    calculateWellCost(wellType, rigType, completionType, measuredDepth, waterDepth, drillingDays,
-        completionDays, rigDayRateOverride, hasDHSV, numberOfCasingStrings, wellLocationType);
+    calculateWellCost(wellType, rigType, completionType, measuredDepth, waterDepth, drillingDays, completionDays,
+        rigDayRateOverride, hasDHSV, numberOfCasingStrings, wellLocationType);
   }
 
   /**
@@ -258,13 +257,11 @@ public class WellCostEstimator {
    * @param numberOfCasingStrings number of casing strings
    * @param locationType well location and tree installation basis
    */
-  public void calculateWellCost(String wellType, String rigType, String completionType,
-      double measuredDepth, double waterDepth, double drillingDays, double completionDays,
-      double rigDayRateOverride, boolean hasDHSV, int numberOfCasingStrings,
-      WellLocationType locationType) {
+  public void calculateWellCost(String wellType, String rigType, String completionType, double measuredDepth,
+      double waterDepth, double drillingDays, double completionDays, double rigDayRateOverride, boolean hasDHSV,
+      int numberOfCasingStrings, WellLocationType locationType) {
 
-    WellLocationType effectiveLocation =
-        locationType == null ? WellLocationType.SUBSEA_WET_TREE : locationType;
+    WellLocationType effectiveLocation = locationType == null ? WellLocationType.SUBSEA_WET_TREE : locationType;
     this.wellLocationType = effectiveLocation;
 
     double effectiveRigRate = rigDayRateOverride > 0 ? rigDayRateOverride : rigDayRate;
@@ -326,8 +323,8 @@ public class WellCostEstimator {
     wellTestCost = wellTestDayRate * wellTestDays;
 
     // ---- Contingency ----
-    double subtotal = drillingCost + casingMaterialCost + cementCost + mudCost + bitsCost
-        + completionCost + wellheadCost + safetyValveCost + loggingCost + wellTestCost;
+    double subtotal = drillingCost + casingMaterialCost + cementCost + mudCost + bitsCost + completionCost
+        + wellheadCost + safetyValveCost + loggingCost + wellTestCost;
     contingencyCost = subtotal * contingencyPct;
 
     // ---- Total ----
@@ -513,36 +510,34 @@ public class WellCostEstimator {
 
     // Conductor casing
     if (well.getConductorDepth() > 0) {
-      bom.add(createBOMItem("Conductor Casing",
-          String.format("%.0f\" conductor", well.getConductorOD()), "Casing - Conductor",
-          well.getConductorDepth(), "m"));
+      bom.add(createBOMItem("Conductor Casing", String.format("%.0f\" conductor", well.getConductorOD()),
+          "Casing - Conductor", well.getConductorDepth(), "m"));
     }
 
     // Surface casing
     if (well.getSurfaceCasingDepth() > 0) {
-      bom.add(createBOMItem("Surface Casing",
-          String.format("%.3f\" surface casing", well.getSurfaceCasingOD()), "Casing - Surface",
-          well.getSurfaceCasingDepth(), "m"));
+      bom.add(createBOMItem("Surface Casing", String.format("%.3f\" surface casing", well.getSurfaceCasingOD()),
+          "Casing - Surface", well.getSurfaceCasingDepth(), "m"));
     }
 
     // Intermediate casing
     if (well.getIntermediateCasingDepth() > 0) {
       bom.add(createBOMItem("Intermediate Casing",
-          String.format("%.3f\" intermediate casing", well.getIntermediateCasingOD()),
-          "Casing - Intermediate", well.getIntermediateCasingDepth(), "m"));
+          String.format("%.3f\" intermediate casing", well.getIntermediateCasingOD()), "Casing - Intermediate",
+          well.getIntermediateCasingDepth(), "m"));
     }
 
     // Production casing
     if (well.getProductionCasingDepth() > 0) {
-      bom.add(createBOMItem("Production Casing",
-          String.format("%.3f\" production casing", well.getProductionCasingOD()),
-          "Casing - Production", well.getProductionCasingDepth(), "m"));
+      bom.add(
+          createBOMItem("Production Casing", String.format("%.3f\" production casing", well.getProductionCasingOD()),
+              "Casing - Production", well.getProductionCasingDepth(), "m"));
     }
 
     // Tubing
-    bom.add(createBOMItem("Production Tubing",
-        String.format("%.1f\" %s tubing", well.getTubingOD(), well.getTubingGrade()), "Tubing",
-        well.getProductionCasingDepth(), "m"));
+    bom.add(
+        createBOMItem("Production Tubing", String.format("%.1f\" %s tubing", well.getTubingOD(), well.getTubingGrade()),
+            "Tubing", well.getProductionCasingDepth(), "m"));
 
     // Wellhead
     bom.add(createBOMItem("Subsea Wellhead", "18-3/4\" wellhead assembly", "Wellhead", 1, "ea"));
@@ -553,8 +548,7 @@ public class WellCostEstimator {
     }
 
     // Cement
-    bom.add(createBOMItem("Cement", "Class G cement + additives", "Consumables",
-        totalCementVolumeFrom(well), "m3"));
+    bom.add(createBOMItem("Cement", "Class G cement + additives", "Consumables", totalCementVolumeFrom(well), "m3"));
 
     return bom;
   }
@@ -569,8 +563,8 @@ public class WellCostEstimator {
    * @param unit unit of measure
    * @return map representing the BOM item
    */
-  private Map<String, Object> createBOMItem(String name, String description, String category,
-      double quantity, String unit) {
+  private Map<String, Object> createBOMItem(String name, String description, String category, double quantity,
+      String unit) {
     Map<String, Object> item = new LinkedHashMap<String, Object>();
     item.put("name", name);
     item.put("description", description);
@@ -703,8 +697,7 @@ public class WellCostEstimator {
    * @param wellLocationType well location type
    */
   public void setWellLocationType(WellLocationType wellLocationType) {
-    this.wellLocationType =
-        wellLocationType == null ? WellLocationType.SUBSEA_WET_TREE : wellLocationType;
+    this.wellLocationType = wellLocationType == null ? WellLocationType.SUBSEA_WET_TREE : wellLocationType;
   }
 
   /**

@@ -17,8 +17,8 @@ import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
  * Mechanical design class for subsea wells.
  *
  * <p>
- * Provides casing design, tubing stress analysis, well barrier verification, and cost estimation
- * for subsea wells per applicable standards:
+ * Provides casing design, tubing stress analysis, well barrier verification, and cost estimation for subsea wells per
+ * applicable standards:
  * </p>
  * <ul>
  * <li>NORSOK D-010 - Well Integrity in Drilling and Well Operations</li>
@@ -259,9 +259,8 @@ public class WellMechanicalDesign extends MechanicalDesign {
    * Verify well barriers per NORSOK D-010 using the barrier schematic model.
    *
    * <p>
-   * If a {@link WellBarrierSchematic} has been configured (via
-   * {@link #readDesignSpecifications()}), validation uses the schematic model with element-level
-   * checking. Otherwise falls back to the legacy count-based check.
+   * If a {@link WellBarrierSchematic} has been configured (via {@link #readDesignSpecifications()}), validation uses
+   * the schematic model with element-level checking. Otherwise falls back to the legacy count-based check.
    * </p>
    */
   private void verifyWellBarriers() {
@@ -291,8 +290,7 @@ public class WellMechanicalDesign extends MechanicalDesign {
         barrierIssueCount++;
       }
       if (!well.hasDHSV() && well.isProducer()) {
-        barrierNotes
-            .add("WARNING: DHSV (SSSV) required for subsea production wells (NORSOK D-010)");
+        barrierNotes.add("WARNING: DHSV (SSSV) required for subsea production wells (NORSOK D-010)");
         barrierIssueCount++;
       }
       barrierNotes.add("INFO: Annular pressure monitoring required per NORSOK D-010 Section 9");
@@ -312,8 +310,8 @@ public class WellMechanicalDesign extends MechanicalDesign {
    * Build default barrier elements from the SubseaWell configuration.
    *
    * <p>
-   * Populates the primary and secondary envelopes based on the well type and whether DHSV/ISV are
-   * present. This provides a default element set when barriers are not explicitly configured.
+   * Populates the primary and secondary envelopes based on the well type and whether DHSV/ISV are present. This
+   * provides a default element set when barriers are not explicitly configured.
    * </p>
    */
   private void buildDefaultBarrierElements() {
@@ -327,32 +325,26 @@ public class WellMechanicalDesign extends MechanicalDesign {
     }
     if (well.isInjector()) {
       // ISV required per NORSOK D-010 Table 36
-      primary
-          .addElement(new BarrierElement(BarrierElement.ElementType.ISV, "Injection Safety Valve"));
-      primary
-          .addElement(new BarrierElement(BarrierElement.ElementType.PACKER, "Production Packer"));
+      primary.addElement(new BarrierElement(BarrierElement.ElementType.ISV, "Injection Safety Valve"));
+      primary.addElement(new BarrierElement(BarrierElement.ElementType.PACKER, "Production Packer"));
     }
     primary.addElement(new BarrierElement(BarrierElement.ElementType.WELLHEAD, "Tubing Hanger"));
-    primary.addElement(
-        new BarrierElement(BarrierElement.ElementType.XMAS_TREE, "Xmas Tree / Master Valve"));
+    primary.addElement(new BarrierElement(BarrierElement.ElementType.XMAS_TREE, "Xmas Tree / Master Valve"));
 
     // Secondary envelope: casing, cement, wellhead
-    secondary
-        .addElement(new BarrierElement(BarrierElement.ElementType.CASING, "Production Casing"));
-    secondary
-        .addElement(new BarrierElement(BarrierElement.ElementType.CASING_CEMENT, "Casing Cement"));
+    secondary.addElement(new BarrierElement(BarrierElement.ElementType.CASING, "Production Casing"));
+    secondary.addElement(new BarrierElement(BarrierElement.ElementType.CASING_CEMENT, "Casing Cement"));
     secondary.addElement(new BarrierElement(BarrierElement.ElementType.WELLHEAD, "Casing Hanger"));
 
     // Add additional barrier elements from well configuration counts
     int extraPrimary = well.getPrimaryBarrierElements() - primary.getElementCount();
     for (int i = 0; i < extraPrimary; i++) {
-      primary.addElement(new BarrierElement(BarrierElement.ElementType.PLUG,
-          "Additional primary element " + (i + 1)));
+      primary.addElement(new BarrierElement(BarrierElement.ElementType.PLUG, "Additional primary element " + (i + 1)));
     }
     int extraSecondary = well.getSecondaryBarrierElements() - secondary.getElementCount();
     for (int i = 0; i < extraSecondary; i++) {
-      secondary.addElement(new BarrierElement(BarrierElement.ElementType.PLUG,
-          "Additional secondary element " + (i + 1)));
+      secondary
+          .addElement(new BarrierElement(BarrierElement.ElementType.PLUG, "Additional secondary element " + (i + 1)));
     }
 
     barrierSchematic.setPrimaryEnvelope(primary);
@@ -366,10 +358,9 @@ public class WellMechanicalDesign extends MechanicalDesign {
   public void calculateCostEstimate() {
     WellCostEstimator ce = getCostEstimator();
 
-    ce.calculateWellCost(well.getWellType().name(), well.getRigType().name(),
-        well.getCompletionType().name(), well.getMeasuredDepth(), well.getWaterDepth(),
-        well.getDrillingDays(), well.getCompletionDays(), well.getRigDayRate(), well.hasDHSV(),
-        well.getNumberOfCasingStrings(), well.getWellLocationType());
+    ce.calculateWellCost(well.getWellType().name(), well.getRigType().name(), well.getCompletionType().name(),
+        well.getMeasuredDepth(), well.getWaterDepth(), well.getDrillingDays(), well.getCompletionDays(),
+        well.getRigDayRate(), well.hasDHSV(), well.getNumberOfCasingStrings(), well.getWellLocationType());
 
     totalCostUSD = ce.getTotalCost();
     drillingCostUSD = ce.getDrillingCost();
@@ -576,12 +567,9 @@ public class WellMechanicalDesign extends MechanicalDesign {
 
     // Include schematic detail if available
     if (barrierSchematic != null) {
-      barriers.addProperty("primaryElementCount",
-          barrierSchematic.getPrimaryEnvelope().getElementCount());
-      barriers.addProperty("primaryFunctionalCount",
-          barrierSchematic.getPrimaryEnvelope().getFunctionalElementCount());
-      barriers.addProperty("secondaryElementCount",
-          barrierSchematic.getSecondaryEnvelope().getElementCount());
+      barriers.addProperty("primaryElementCount", barrierSchematic.getPrimaryEnvelope().getElementCount());
+      barriers.addProperty("primaryFunctionalCount", barrierSchematic.getPrimaryEnvelope().getFunctionalElementCount());
+      barriers.addProperty("secondaryElementCount", barrierSchematic.getSecondaryEnvelope().getElementCount());
       barriers.addProperty("secondaryFunctionalCount",
           barrierSchematic.getSecondaryEnvelope().getFunctionalElementCount());
     }
@@ -628,8 +616,7 @@ public class WellMechanicalDesign extends MechanicalDesign {
     schedule.addProperty("rigDayRateUSD", well.getRigDayRate());
     jsonObj.add("schedule", schedule);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(jsonObj);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(jsonObj);
   }
 
   // ============ Getters ============
@@ -813,8 +800,8 @@ public class WellMechanicalDesign extends MechanicalDesign {
    * Get API 5CT / API TR 5C3 temperature derating factor.
    *
    * <p>
-   * Factor of 1.0 means no derating (temperature &lt;= 100 degC). Lower values indicate SMYS
-   * reduction at elevated temperatures.
+   * Factor of 1.0 means no derating (temperature &lt;= 100 degC). Lower values indicate SMYS reduction at elevated
+   * temperatures.
    * </p>
    *
    * @return derating factor (0 to 1)

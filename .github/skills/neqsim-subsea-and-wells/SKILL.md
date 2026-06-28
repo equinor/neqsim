@@ -32,6 +32,7 @@ Reservoir → Wells → Subsea Trees → Jumpers → Manifold → Flowlines → 
 | Jumper | `SubseaJumper` | `process.equipment.subsea` |
 | Flowline | `SimpleFlowLine` | `process.equipment.subsea` |
 | Flexible riser | `FlexiblePipe` | `process.equipment.subsea` |
+| Steel/rigid riser | `SimpleFlowLine` | `process.equipment.subsea` |
 | Umbilical | `Umbilical` | `process.equipment.subsea` |
 | PLET | `PLET` | `process.equipment.subsea` |
 | PLEM | `PLEM` | `process.equipment.subsea` |
@@ -141,6 +142,8 @@ surf.setTreePressureRatingPsi(10000);
 surf.setTreeBoreSizeInches(6.0);
 surf.setHorizontalTrees(true);
 surf.setManifoldSlots(4);
+surf.setNumberOfPLETs(2);
+surf.setNumberOfPLEMs(1);
 surf.setNumberOfJumpers(4);
 surf.setJumperLengthM(30.0);
 surf.setUmbilicalLengthKm(27.0);
@@ -252,7 +255,11 @@ subseaSystem.run();
 int treeCount = subseaSystem.getTrees().size();
 int jumperCount = subseaSystem.getJumpers().size();
 int manifoldCount = subseaSystem.getManifolds().size();
+int pletCount = subseaSystem.getPLETs().size();
+int plemCount = subseaSystem.getPLEMs().size();
 int umbilicalCount = subseaSystem.getUmbilicals().size();
+int flexibleRiserCount = subseaSystem.getRisers().size();
+int steelRiserCount = subseaSystem.getSteelRisers().size();
 
 SubseaProductionSystem.SubseaSystemResult result = subseaSystem.getResult();
 double surfCapexMusd = result.getTotalSubseaCapexMusd();
@@ -262,9 +269,14 @@ double developmentCapexMusd = result.getTotalDevelopmentCapexMusd();
 ```
 
 `SubseaProductionSystem.build()` creates the main process and design equipment:
-`SubseaWell`, `SubseaTree`, `SubseaJumper`, `SubseaManifold`, `SimpleFlowLine`,
-`Umbilical`, and optional `FlexiblePipe` risers. Its result separates SURF,
-well, reservoir, and total development CAPEX.
+`SubseaWell`, `SubseaTree`, `SubseaJumper`, `SubseaManifold`, `PLET`, `PLEM`,
+`SimpleFlowLine`, `Umbilical`, and risers. With `setFlexibleRiser(true)` risers
+are generated as `FlexiblePipe`; with `setFlexibleRiser(false)` steel/rigid
+risers are generated as vertical `SimpleFlowLine` unit operations. All of these
+classes expose mechanical design objects, and `SURFCostEstimator` includes trees,
+manifolds, PLETs, PLEMs, jumpers, umbilicals, risers, flowlines, and pipelines in
+the SURF CAPEX. The result separates SURF, well, reservoir, and total development
+CAPEX.
 
 ---
 

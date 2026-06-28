@@ -10,6 +10,8 @@ import neqsim.process.equipment.pipeline.AdiabaticTwoPhasePipe;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.subsea.FlexiblePipe;
+import neqsim.process.equipment.subsea.PLEM;
+import neqsim.process.equipment.subsea.PLET;
 import neqsim.process.equipment.subsea.SimpleFlowLine;
 import neqsim.process.equipment.subsea.SubseaJumper;
 import neqsim.process.equipment.subsea.SubseaManifold;
@@ -31,8 +33,8 @@ import neqsim.thermo.system.SystemInterface;
  * Unified subsea production system for field development workflow integration.
  *
  * <p>
- * This class provides a high-level abstraction for modeling subsea production systems, integrating
- * multiple NeqSim components:
+ * This class provides a high-level abstraction for modeling subsea production systems, integrating multiple NeqSim
+ * components:
  * </p>
  * <ul>
  * <li>{@link SubseaWell} - Well tubing from reservoir to seabed</li>
@@ -172,8 +174,11 @@ public class SubseaProductionSystem implements Serializable {
   private transient List<SubseaTree> trees = new ArrayList<>();
   private transient List<SubseaJumper> jumpers = new ArrayList<>();
   private transient List<SubseaManifold> manifolds = new ArrayList<>();
+  private transient List<PLET> plets = new ArrayList<>();
+  private transient List<PLEM> plems = new ArrayList<>();
   private transient List<Umbilical> umbilicals = new ArrayList<>();
   private transient List<FlexiblePipe> risers = new ArrayList<>();
+  private transient List<SimpleFlowLine> steelRisers = new ArrayList<>();
   private transient List<ThrottlingValve> subseaChokes = new ArrayList<>();
   private transient List<SimpleFlowLine> flowlines = new ArrayList<>();
   private transient WellFlowlineNetwork network;
@@ -351,8 +356,7 @@ public class SubseaProductionSystem implements Serializable {
    * @return this for chaining
    */
   public SubseaProductionSystem setCompletionType(SubseaWell.CompletionType completionType) {
-    this.completionType =
-        completionType == null ? SubseaWell.CompletionType.CASED_PERFORATED : completionType;
+    this.completionType = completionType == null ? SubseaWell.CompletionType.CASED_PERFORATED : completionType;
     return this;
   }
 
@@ -507,8 +511,7 @@ public class SubseaProductionSystem implements Serializable {
    * Builds the subsea production system model.
    *
    * <p>
-   * Creates the process equipment (wells, flowlines, manifolds) based on the configured
-   * architecture and parameters.
+   * Creates the process equipment (wells, flowlines, manifolds) based on the configured architecture and parameters.
    * </p>
    *
    * @return this for chaining
@@ -521,24 +524,27 @@ public class SubseaProductionSystem implements Serializable {
     trees = new ArrayList<>();
     jumpers = new ArrayList<>();
     manifolds = new ArrayList<>();
+    plets = new ArrayList<>();
+    plems = new ArrayList<>();
     umbilicals = new ArrayList<>();
     risers = new ArrayList<>();
+    steelRisers = new ArrayList<>();
     subseaChokes = new ArrayList<>();
     flowlines = new ArrayList<>();
 
     switch (architecture) {
-      case DIRECT_TIEBACK:
-        buildDirectTieback();
-        break;
-      case MANIFOLD_CLUSTER:
-        buildManifoldCluster();
-        break;
-      case DAISY_CHAIN:
-        buildDaisyChain();
-        break;
-      case TEMPLATE:
-        buildTemplate();
-        break;
+    case DIRECT_TIEBACK:
+      buildDirectTieback();
+      break;
+    case MANIFOLD_CLUSTER:
+      buildManifoldCluster();
+      break;
+    case DAISY_CHAIN:
+      buildDaisyChain();
+      break;
+    case TEMPLATE:
+      buildTemplate();
+      break;
     }
 
     // Calculate umbilical length if not set
@@ -546,6 +552,7 @@ public class SubseaProductionSystem implements Serializable {
       umbilicalLengthKm = tiebackDistanceKm * 1.05; // 5% extra for routing
     }
 
+    buildTerminations();
     buildControlsAndRisers();
 
     return this;
@@ -593,8 +600,7 @@ public class SubseaProductionSystem implements Serializable {
       SubseaJumper jumper = createJumper(wellName + " jumper", choke.getOutletStream());
 
       // Create flowline to host
-      SimpleFlowLine flowline =
-          new SimpleFlowLine(wellName + " flowline", jumper.getOutletStream());
+      SimpleFlowLine flowline = new SimpleFlowLine(wellName + " flowline", jumper.getOutletStream());
       configureFlowline(flowline, tiebackDistanceKm);
       flowlines.add(flowline);
 
@@ -651,8 +657,7 @@ public class SubseaProductionSystem implements Serializable {
 
         // Short infield line to manifold (typically 500m - 2km)
         double infieldLength = Math.min(2.0, tiebackDistanceKm * 0.1);
-        SimpleFlowLine infieldLine =
-            new SimpleFlowLine(wellName + " infield", jumper.getOutletStream());
+        SimpleFlowLine infieldLine = new SimpleFlowLine(wellName + " infield", jumper.getOutletStream());
         configureFlowline(infieldLine, infieldLength);
 
         manifoldInputs.add(infieldLine.getOutletStream());
@@ -724,8 +729,7 @@ public class SubseaProductionSystem implements Serializable {
 
       // Add flowline segment if not last well
       if (i < wellCount - 1) {
-        SimpleFlowLine segment =
-            new SimpleFlowLine(wellName + " segment", jumper.getOutletStream());
+        SimpleFlowLine segment = new SimpleFlowLine(wellName + " segment", jumper.getOutletStream());
         configureFlowline(segment, segmentLength);
         subseaProcess.add(segment);
         previousOutput = segment.getOutletStream();
@@ -856,6 +860,71 @@ public class SubseaProductionSystem implements Serializable {
   }
 
   /**
+   * Adds pipeline end terminations and a host-side PLEM for generated export flowlines.
+   */
+  private void buildTerminations() {
+    if (wellLocationType != WellLocationType.SUBSEA_WET_TREE || flowlines.isEmpty()) {
+      return;
+    }
+
+    List<StreamInterface> terminationOutlets = new ArrayList<StreamInterface>();
+    for (int i = 0; i < flowlines.size(); i++) {
+      StreamInterface inlet = flowlines.get(i).getOutletStream();
+      if (inlet == null) {
+        continue;
+      }
+      PLET plet = new PLET(name + " PLET " + (i + 1), inlet);
+      configurePlet(plet);
+      plets.add(plet);
+      terminationOutlets.add(plet.getOutletStream());
+      subseaProcess.add(plet);
+    }
+
+    if (!terminationOutlets.isEmpty()) {
+      PLEM plem = new PLEM(name + " Export PLEM", Math.max(1, terminationOutlets.size()));
+      configurePlem(plem, terminationOutlets.size());
+      for (StreamInterface outlet : terminationOutlets) {
+        plem.addInletStream(outlet);
+      }
+      plems.add(plem);
+      subseaProcess.add(plem);
+    }
+  }
+
+  /**
+   * Configures a generated PLET.
+   *
+   * @param plet pipeline end termination to configure
+   */
+  private void configurePlet(PLET plet) {
+    plet.setWaterDepth(waterDepthM);
+    plet.setDesignPressure(Math.max(reservoirPressureBara, wellheadPressureBara));
+    plet.setDesignTemperature(reservoirTemperatureC);
+    plet.setNominalBoreInches(flowlineDiameterInches);
+    plet.setHasIsolationValve(true);
+    plet.setHasPiggingFacility(true);
+    plet.setHasFutureTieIn(true);
+  }
+
+  /**
+   * Configures a generated PLEM.
+   *
+   * @param plem pipeline end manifold to configure
+   * @param slotCount number of connected slots
+   */
+  private void configurePlem(PLEM plem, int slotCount) {
+    plem.setWaterDepth(waterDepthM);
+    plem.setDesignPressure(Math.max(reservoirPressureBara, wellheadPressureBara));
+    plem.setDesignTemperature(reservoirTemperatureC);
+    plem.setNumberOfSlots(Math.max(1, slotCount));
+    plem.setConfigurationType(slotCount > 1 ? PLEM.ConfigurationType.COMMINGLING : PLEM.ConfigurationType.THROUGH_FLOW);
+    plem.setHeaderSizeInches(flowlineDiameterInches);
+    plem.setBranchSizeInches(Math.max(4.0, tubingDiameterInches));
+    plem.setBranchIsolationValves(true);
+    plem.setHeaderIsolationValves(true);
+  }
+
+  /**
    * Adds typical wet-tree controls umbilical and production risers to the generated system.
    */
   private void buildControlsAndRisers() {
@@ -878,23 +947,59 @@ public class SubseaProductionSystem implements Serializable {
     if (includeRisers) {
       int riserCount = Math.max(1, productionRiserCount);
       double diameter = riserDiameterInches > 0 ? riserDiameterInches : flowlineDiameterInches;
-      StreamInterface riserInlet =
-          flowlines.isEmpty() ? null : flowlines.get(flowlines.size() - 1).getOutletStream();
+      StreamInterface riserInlet = getRiserInletStream();
       if (riserInlet == null) {
         return;
       }
       for (int i = 0; i < riserCount; i++) {
-        FlexiblePipe riser = FlexiblePipe.createDynamicRiser(name + " Flexible Riser " + (i + 1),
-            riserInlet, FlexiblePipe.RiserConfiguration.LAZY_WAVE);
-        riser.setInnerDiameterInches(diameter);
-        riser.setLength(waterDepthM * 1.5);
-        riser.setWaterDepth(waterDepthM);
-        riser.setDesignPressure(Math.max(reservoirPressureBara, wellheadPressureBara));
-        riser.setDesignTemperature(reservoirTemperatureC);
-        risers.add(riser);
-        subseaProcess.add(riser);
+        if (flexibleRiser) {
+          FlexiblePipe riser = FlexiblePipe.createDynamicRiser(name + " Flexible Riser " + (i + 1), riserInlet,
+              FlexiblePipe.RiserConfiguration.LAZY_WAVE);
+          riser.setInnerDiameterInches(diameter);
+          riser.setLength(waterDepthM * 1.5);
+          riser.setWaterDepth(waterDepthM);
+          riser.setDesignPressure(Math.max(reservoirPressureBara, wellheadPressureBara));
+          riser.setDesignTemperature(reservoirTemperatureC);
+          risers.add(riser);
+          subseaProcess.add(riser);
+        } else {
+          SimpleFlowLine steelRiser = new SimpleFlowLine(name + " Steel Riser " + (i + 1), riserInlet);
+          configureSteelRiser(steelRiser, waterDepthM * 1.1, diameter);
+          steelRisers.add(steelRiser);
+          subseaProcess.add(steelRiser);
+        }
       }
     }
+  }
+
+  /**
+   * Gets the outlet stream feeding generated risers.
+   *
+   * @return stream downstream of PLEM, PLET or final flowline
+   */
+  private StreamInterface getRiserInletStream() {
+    if (!plets.isEmpty()) {
+      return plets.get(plets.size() - 1).getOutletStream();
+    }
+    if (!plems.isEmpty()) {
+      return plems.get(plems.size() - 1).getOutletStream();
+    }
+    return flowlines.isEmpty() ? null : flowlines.get(flowlines.size() - 1).getOutletStream();
+  }
+
+  /**
+   * Configures a generated steel riser represented by a vertical SimpleFlowLine.
+   *
+   * @param steelRiser steel riser flowline equipment
+   * @param lengthM riser length in m
+   * @param diameterInches riser inner diameter in inches
+   */
+  private void configureSteelRiser(SimpleFlowLine steelRiser, double lengthM, double diameterInches) {
+    AdiabaticTwoPhasePipe pipe = steelRiser.getPipeline();
+    pipe.setDiameter(diameterInches * 0.0254);
+    pipe.setLength(lengthM);
+    pipe.setInletElevation(-waterDepthM);
+    pipe.setOutletElevation(0.0);
   }
 
   // ============================================================================
@@ -957,8 +1062,7 @@ public class SubseaProductionSystem implements Serializable {
 
     // Calculate pressure drops
     if (!wells.isEmpty() && !flowlines.isEmpty()) {
-      double wellheadP = wells.get(0).getOutletStream() != null
-          ? wells.get(0).getOutletStream().getPressure("bara")
+      double wellheadP = wells.get(0).getOutletStream() != null ? wells.get(0).getOutletStream().getPressure("bara")
           : wellheadPressureBara;
       result.totalPressureDropBara = wellheadP - result.arrivalPressureBara;
     }
@@ -1006,8 +1110,7 @@ public class SubseaProductionSystem implements Serializable {
     result.riserCostMusd = surfCostEstimator.getRiserCostUSD() / 1.0e6;
     result.controlSystemCostMusd = 0.0;
     result.totalSubseaCapexMusd = surfCostEstimator.getTotalSURFCostUSD() / 1.0e6;
-    result.totalDevelopmentCapexMusd =
-        result.reservoirCostMusd + result.wellCostMusd + result.totalSubseaCapexMusd;
+    result.totalDevelopmentCapexMusd = result.reservoirCostMusd + result.wellCostMusd + result.totalSubseaCapexMusd;
   }
 
   /**
@@ -1027,7 +1130,9 @@ public class SubseaProductionSystem implements Serializable {
     surf.setManifoldSlots(Math.max(wellCount, manifoldCount));
     surf.setManifoldWeightTonnes(Math.max(80.0, 80.0 + 10.0 * wellCount));
     surf.setManifoldHasTestHeader(true);
-    surf.setNumberOfPLETs(Math.max(2, manifoldCount * 2));
+    surf.setNumberOfPLETs(plets.isEmpty() ? Math.max(2, manifoldCount * 2) : plets.size());
+    surf.setNumberOfPLEMs(plems.size());
+    surf.setPlemHeaderSizeInches(flowlineDiameterInches);
     surf.setNumberOfJumpers(jumpers.size() > 0 ? jumpers.size() : wellCount);
     surf.setJumperLengthM(30.0);
     surf.setJumperDiameterInches(Math.max(4.0, tubingDiameterInches));
@@ -1040,8 +1145,7 @@ public class SubseaProductionSystem implements Serializable {
     surf.setIncludeRisers(includeRisers);
     surf.setFlexibleRiser(flexibleRiser);
     surf.setNumberOfProductionRisers(Math.max(1, productionRiserCount));
-    surf.setRiserDiameterInches(
-        riserDiameterInches > 0 ? riserDiameterInches : flowlineDiameterInches);
+    surf.setRiserDiameterInches(riserDiameterInches > 0 ? riserDiameterInches : flowlineDiameterInches);
     surf.setRiserLengthM(waterDepthM * 1.5);
     surf.setRiserHasBuoyancy(flexibleRiser);
     surf.setInfieldFlowlineLengthKm(getInfieldFlowlineLengthKm());
@@ -1060,8 +1164,7 @@ public class SubseaProductionSystem implements Serializable {
    * @return infield flowline length in km
    */
   private double getInfieldFlowlineLengthKm() {
-    if (architecture == SubseaArchitecture.MANIFOLD_CLUSTER
-        || architecture == SubseaArchitecture.TEMPLATE) {
+    if (architecture == SubseaArchitecture.MANIFOLD_CLUSTER || architecture == SubseaArchitecture.TEMPLATE) {
       return Math.min(2.0, tiebackDistanceKm * 0.1) * wellCount;
     } else if (architecture == SubseaArchitecture.DAISY_CHAIN) {
       return tiebackDistanceKm;
@@ -1083,8 +1186,7 @@ public class SubseaProductionSystem implements Serializable {
     for (Map<String, Object> item : surfCostEstimator.getLineItems()) {
       Object description = item.get("description");
       Object totalCost = item.get("totalCostUSD");
-      if (description != null && description.toString().contains(descriptionToken)
-          && totalCost instanceof Number) {
+      if (description != null && description.toString().contains(descriptionToken) && totalCost instanceof Number) {
         cost += ((Number) totalCost).doubleValue();
       }
     }
@@ -1114,8 +1216,7 @@ public class SubseaProductionSystem implements Serializable {
     for (int i = 0; i < count; i++) {
       SubseaWell well = wells.isEmpty() ? null : wells.get(i);
       WellCostEstimator estimator = new WellCostEstimator(costRegion);
-      String wellType =
-          well == null ? SubseaWell.WellType.OIL_PRODUCER.name() : well.getWellType().name();
+      String wellType = well == null ? SubseaWell.WellType.OIL_PRODUCER.name() : well.getWellType().name();
       String rig = well == null ? rigType.name() : well.getRigType().name();
       String completion = well == null ? completionType.name() : well.getCompletionType().name();
       double measuredDepth = well == null ? wellDepthM : well.getMeasuredDepth();
@@ -1125,8 +1226,8 @@ public class SubseaProductionSystem implements Serializable {
       double rigDayRate = well == null ? 0.0 : well.getRigDayRate();
       boolean hasDHSV = well == null || well.hasDHSV();
       int casingStrings = well == null ? 4 : well.getNumberOfCasingStrings();
-      estimator.calculateWellCost(wellType, rig, completion, measuredDepth, waterDepth,
-          drillingDays, completionDays, rigDayRate, hasDHSV, casingStrings, wellLocationType);
+      estimator.calculateWellCost(wellType, rig, completion, measuredDepth, waterDepth, drillingDays, completionDays,
+          rigDayRate, hasDHSV, casingStrings, wellLocationType);
       double cost = estimator.getTotalCost();
       if (wellLocationType == WellLocationType.SUBSEA_WET_TREE) {
         cost -= estimator.getWellheadCost() * (1.0 + estimator.getContingencyPct());
@@ -1225,6 +1326,24 @@ public class SubseaProductionSystem implements Serializable {
   }
 
   /**
+   * Gets the list of generated pipeline end terminations.
+   *
+   * @return list of PLET equipment
+   */
+  public List<PLET> getPLETs() {
+    return plets;
+  }
+
+  /**
+   * Gets the list of generated pipeline end manifolds.
+   *
+   * @return list of PLEM equipment
+   */
+  public List<PLEM> getPLEMs() {
+    return plems;
+  }
+
+  /**
    * Gets the list of generated umbilicals.
    *
    * @return list of umbilicals
@@ -1240,6 +1359,15 @@ public class SubseaProductionSystem implements Serializable {
    */
   public List<FlexiblePipe> getRisers() {
     return risers;
+  }
+
+  /**
+   * Gets the list of generated rigid or steel risers.
+   *
+   * @return list of steel riser flowline equipment
+   */
+  public List<SimpleFlowLine> getSteelRisers() {
+    return steelRisers;
   }
 
   /**

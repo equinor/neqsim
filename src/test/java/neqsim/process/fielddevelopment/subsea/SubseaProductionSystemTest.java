@@ -50,8 +50,8 @@ public class SubseaProductionSystemTest {
   @Test
   public void testFluentConfiguration() {
     SubseaProductionSystem subsea = new SubseaProductionSystem("Configured Subsea");
-    subsea.setArchitecture(SubseaArchitecture.DIRECT_TIEBACK).setWaterDepthM(450.0)
-        .setTiebackDistanceKm(30.0).setWellCount(6).setFlowlineDiameterInches(10.0);
+    subsea.setArchitecture(SubseaArchitecture.DIRECT_TIEBACK).setWaterDepthM(450.0).setTiebackDistanceKm(30.0)
+        .setWellCount(6).setFlowlineDiameterInches(10.0);
 
     assertEquals(SubseaArchitecture.DIRECT_TIEBACK, subsea.getArchitecture());
     assertEquals(450.0, subsea.getWaterDepthM(), 0.1);
@@ -63,9 +63,8 @@ public class SubseaProductionSystemTest {
   @Test
   public void testSubseaCapexEstimation() {
     SubseaProductionSystem subsea = new SubseaProductionSystem("CAPEX Test");
-    subsea.setArchitecture(SubseaArchitecture.MANIFOLD_CLUSTER).setWaterDepthM(350.0)
-        .setTiebackDistanceKm(25.0).setWellCount(4).setFlowlineDiameterInches(12.0)
-        .setReservoirFluid(gasFluid);
+    subsea.setArchitecture(SubseaArchitecture.MANIFOLD_CLUSTER).setWaterDepthM(350.0).setTiebackDistanceKm(25.0)
+        .setWellCount(4).setFlowlineDiameterInches(12.0).setReservoirFluid(gasFluid);
 
     subsea.build();
 
@@ -74,18 +73,43 @@ public class SubseaProductionSystemTest {
     assertEquals(4, subsea.getTrees().size());
     assertEquals(4, subsea.getJumpers().size());
     assertEquals(1, subsea.getManifolds().size());
+    assertFalse(subsea.getPLETs().isEmpty());
+    assertEquals(1, subsea.getPLEMs().size());
     assertEquals(1, subsea.getUmbilicals().size());
     assertFalse(subsea.getRisers().isEmpty());
+    assertTrue(subsea.getSteelRisers().isEmpty());
     assertFalse(subsea.getFlowlines().isEmpty());
+
+    assertNotNull(subsea.getPLETs().get(0).getMechanicalDesign());
+    assertNotNull(subsea.getPLEMs().get(0).getMechanicalDesign());
+    assertNotNull(subsea.getUmbilicals().get(0).getMechanicalDesign());
+    assertNotNull(subsea.getRisers().get(0).getMechanicalDesign());
+  }
+
+  @Test
+  public void testSteelRiserCaseCreatesRigidRiserUnitOperations() {
+    SubseaProductionSystem subsea = new SubseaProductionSystem("Steel Riser Test");
+    subsea.setArchitecture(SubseaArchitecture.MANIFOLD_CLUSTER).setWaterDepthM(350.0).setTiebackDistanceKm(25.0)
+        .setWellCount(4).setFlowlineDiameterInches(12.0).setFlexibleRiser(false).setProductionRiserCount(2)
+        .setReservoirFluid(gasFluid);
+
+    subsea.build();
+    subsea.run();
+
+    assertTrue(subsea.getRisers().isEmpty());
+    assertEquals(2, subsea.getSteelRisers().size());
+    assertFalse(subsea.getPLETs().isEmpty());
+    assertEquals(1, subsea.getPLEMs().size());
+    assertTrue(subsea.getResult().getRiserCostMusd() > 0.0);
+    assertNotNull(subsea.getSteelRisers().get(0).getMechanicalDesign());
   }
 
   @Test
   public void testSubseaSystemResultCostBreakdown() {
     SubseaProductionSystem subsea = new SubseaProductionSystem("Cost Test");
-    subsea.setArchitecture(SubseaArchitecture.MANIFOLD_CLUSTER).setWaterDepthM(350.0)
-        .setTiebackDistanceKm(25.0).setWellCount(4).setManifoldCount(1)
-        .setFlowlineDiameterInches(12.0).setRatePerWell(1.5e6).setWellheadConditions(180.0, 80.0)
-        .setReservoirFluid(gasFluid);
+    subsea.setArchitecture(SubseaArchitecture.MANIFOLD_CLUSTER).setWaterDepthM(350.0).setTiebackDistanceKm(25.0)
+        .setWellCount(4).setManifoldCount(1).setFlowlineDiameterInches(12.0).setRatePerWell(1.5e6)
+        .setWellheadConditions(180.0, 80.0).setReservoirFluid(gasFluid);
 
     subsea.build();
     subsea.run();
@@ -104,13 +128,11 @@ public class SubseaProductionSystemTest {
     assertTrue(result.getReservoirCostMusd() > 0, "Reservoir cost should be positive");
 
     // Verify total is sum of components
-    double expectedTotal = result.getSubseaTreeCostMusd() + result.getManifoldCostMusd()
-        + result.getPipelineCostMusd() + result.getUmbilicalCostMusd()
-        + result.getJumperAndPletCostMusd() + result.getRiserCostMusd();
+    double expectedTotal = result.getSubseaTreeCostMusd() + result.getManifoldCostMusd() + result.getPipelineCostMusd()
+        + result.getUmbilicalCostMusd() + result.getJumperAndPletCostMusd() + result.getRiserCostMusd();
 
     assertEquals(expectedTotal, result.getTotalSubseaCapexMusd(), 5.0);
-    assertEquals(
-        result.getTotalSubseaCapexMusd() + result.getWellCostMusd() + result.getReservoirCostMusd(),
+    assertEquals(result.getTotalSubseaCapexMusd() + result.getWellCostMusd() + result.getReservoirCostMusd(),
         result.getTotalDevelopmentCapexMusd(), 5.0);
 
     // Verify reasonable cost ranges (4 wells, 25km tieback)
@@ -138,15 +160,15 @@ public class SubseaProductionSystemTest {
   public void testDeepWaterCostFactor() {
     // Shallow water
     SubseaProductionSystem shallow = new SubseaProductionSystem("Shallow");
-    shallow.setWaterDepthM(200.0).setTiebackDistanceKm(25.0).setWellCount(4)
-        .setFlowlineDiameterInches(12.0).setReservoirFluid(gasFluid);
+    shallow.setWaterDepthM(200.0).setTiebackDistanceKm(25.0).setWellCount(4).setFlowlineDiameterInches(12.0)
+        .setReservoirFluid(gasFluid);
     shallow.build();
     shallow.run();
 
     // Deep water
     SubseaProductionSystem deep = new SubseaProductionSystem("Deep");
-    deep.setWaterDepthM(1200.0).setTiebackDistanceKm(25.0).setWellCount(4)
-        .setFlowlineDiameterInches(12.0).setReservoirFluid(gasFluid);
+    deep.setWaterDepthM(1200.0).setTiebackDistanceKm(25.0).setWellCount(4).setFlowlineDiameterInches(12.0)
+        .setReservoirFluid(gasFluid);
     deep.build();
     deep.run();
 
@@ -158,33 +180,31 @@ public class SubseaProductionSystemTest {
   @Test
   public void testDryTreeCaseExcludesWetSubseaSurfScope() {
     SubseaProductionSystem wet = new SubseaProductionSystem("Wet Tree");
-    wet.setArchitecture(SubseaArchitecture.MANIFOLD_CLUSTER).setWaterDepthM(350.0)
-        .setTiebackDistanceKm(25.0).setWellCount(4).setFlowlineDiameterInches(12.0)
-        .setReservoirFluid(gasFluid).setWellLocationType(WellLocationType.SUBSEA_WET_TREE);
+    wet.setArchitecture(SubseaArchitecture.MANIFOLD_CLUSTER).setWaterDepthM(350.0).setTiebackDistanceKm(25.0)
+        .setWellCount(4).setFlowlineDiameterInches(12.0).setReservoirFluid(gasFluid)
+        .setWellLocationType(WellLocationType.SUBSEA_WET_TREE);
     wet.build();
     wet.run();
 
     SubseaProductionSystem dry = new SubseaProductionSystem("Dry Tree");
-    dry.setArchitecture(SubseaArchitecture.MANIFOLD_CLUSTER).setWaterDepthM(350.0)
-        .setTiebackDistanceKm(25.0).setWellCount(4).setFlowlineDiameterInches(12.0)
-        .setReservoirFluid(gasFluid).setWellLocationType(WellLocationType.PLATFORM_DRY_TREE);
+    dry.setArchitecture(SubseaArchitecture.MANIFOLD_CLUSTER).setWaterDepthM(350.0).setTiebackDistanceKm(25.0)
+        .setWellCount(4).setFlowlineDiameterInches(12.0).setReservoirFluid(gasFluid)
+        .setWellLocationType(WellLocationType.PLATFORM_DRY_TREE);
     dry.build();
     dry.run();
 
     assertTrue(wet.getResult().getTotalSubseaCapexMusd() > 0.0);
     assertEquals(0.0, dry.getResult().getTotalSubseaCapexMusd(), 1.0e-12);
     assertTrue(wet.getResult().getWellCostMusd() > dry.getResult().getWellCostMusd());
-    assertTrue(wet.getResult().getTotalDevelopmentCapexMusd() > dry.getResult()
-        .getTotalDevelopmentCapexMusd());
+    assertTrue(wet.getResult().getTotalDevelopmentCapexMusd() > dry.getResult().getTotalDevelopmentCapexMusd());
     assertEquals(WellLocationType.PLATFORM_DRY_TREE, dry.getResult().getWellLocationType());
   }
 
   @Test
   public void testResultSummaryFormat() {
     SubseaProductionSystem subsea = new SubseaProductionSystem("Summary Test");
-    subsea.setArchitecture(SubseaArchitecture.MANIFOLD_CLUSTER).setWaterDepthM(350.0)
-        .setTiebackDistanceKm(25.0).setWellCount(4).setFlowlineDiameterInches(12.0)
-        .setReservoirFluid(gasFluid);
+    subsea.setArchitecture(SubseaArchitecture.MANIFOLD_CLUSTER).setWaterDepthM(350.0).setTiebackDistanceKm(25.0)
+        .setWellCount(4).setFlowlineDiameterInches(12.0).setReservoirFluid(gasFluid);
 
     subsea.build();
     subsea.run();

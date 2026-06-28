@@ -4,21 +4,29 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.filter.Filter;
+import neqsim.process.equipment.manifold.Manifold;
+import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
+import neqsim.process.equipment.reactor.GibbsReactor;
 import neqsim.process.equipment.reservoir.WellFlow;
 import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.manifold.ManifoldMechanicalDesign;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Regression tests guarding the reservoir-to-market weight and CAPEX coverage of the built-in NeqSim cost estimators.
+ * Regression tests guarding the reservoir-to-market weight and CAPEX coverage of the built-in
+ * NeqSim cost estimators.
  *
  * <p>
- * These tests verify that (1) process vessels report a finite, non-zero weight and a sane installed cost per kilogram
- * (guarding against the volume-vs-weight magnitude bug), (2) flowlines/pipelines report a non-zero steel weight, and
- * (3) wells contribute a rough all-in drilling-and-completion CAPEX that is not inflated by module factors.
+ * These tests verify that (1) process vessels report a finite, non-zero weight and a sane installed
+ * cost per kilogram (guarding against the volume-vs-weight magnitude bug), (2) flowlines/pipelines
+ * report a non-zero steel weight, and (3) wells contribute a rough all-in drilling-and-completion
+ * CAPEX that is not inflated by module factors.
  * </p>
  *
  * @author esol
@@ -67,7 +75,8 @@ public class CostWeightCoverageTest {
     // carbon-steel pressure vessel PEC is roughly $10-1500 per kg of shell weight.
     assertTrue(costPerKg < 2000.0,
         "Separator PEC per kg unrealistically high (" + costPerKg + " $/kg) - magnitude bug?");
-    assertTrue(costPerKg > 1.0, "Separator PEC per kg unrealistically low (" + costPerKg + " $/kg)");
+    assertTrue(costPerKg > 1.0,
+        "Separator PEC per kg unrealistically low (" + costPerKg + " $/kg)");
   }
 
   @Test
@@ -111,6 +120,129 @@ public class CostWeightCoverageTest {
 
     assertTrue(md.getWeightTotal() > 0.0,
         "Pipeline steel weight should be positive after wiring calculateWeightsAndAreas");
+  }
+
+  @Test
+  void testMixerHeaderReportsWeightAndCost() {
+    Stream feedA = new Stream("Feed A", makeGas());
+    feedA.setFlowRate(30000.0, "kg/hr");
+    feedA.setTemperature(25.0, "C");
+    feedA.setPressure(60.0, "bara");
+    feedA.run();
+
+    Stream feedB = new Stream("Feed B", makeGas());
+    feedB.setFlowRate(25000.0, "kg/hr");
+    feedB.setTemperature(25.0, "C");
+    feedB.setPressure(60.0, "bara");
+    feedB.run();
+
+    Mixer mixer = new Mixer("Topside Production Header");
+    mixer.addStream(feedA);
+    mixer.addStream(feedB);
+    mixer.run();
+
+    mixer.initMechanicalDesign();
+    MechanicalDesign md = mixer.getMechanicalDesign();
+    md.calcDesign();
+    md.calculateCostEstimate();
+
+    assertTrue(md.getWeightTotal() > 0.0, "Mixer/header steel weight should be positive");
+    assertTrue(md.getCostEstimate().getPurchasedEquipmentCost() > 0.0,
+        "Mixer/header purchased cost should be positive");
+  }
+
+  @Test
+  void testSplitterHeaderReportsWeightAndCost() {
+    Stream feed = new Stream("Feed", makeGas());
+    feed.setFlowRate(55000.0, "kg/hr");
+    feed.setTemperature(25.0, "C");
+    feed.setPressure(60.0, "bara");
+    feed.run();
+
+    Splitter splitter = new Splitter("Topside Distribution Header", feed, 3);
+    splitter.run();
+
+    splitter.initMechanicalDesign();
+    MechanicalDesign md = splitter.getMechanicalDesign();
+    md.calcDesign();
+    md.calculateCostEstimate();
+
+    assertTrue(md.getWeightTotal() > 0.0, "Splitter/header steel weight should be positive");
+    assertTrue(md.getCostEstimate().getPurchasedEquipmentCost() > 0.0,
+        "Splitter/header purchased cost should be positive");
+  }
+
+  @Test
+  void testFilterVesselReportsWeightAndCost() {
+    Stream feed = new Stream("Feed", makeGas());
+    feed.setFlowRate(30000.0, "kg/hr");
+    feed.setTemperature(25.0, "C");
+    feed.setPressure(60.0, "bara");
+    feed.run();
+
+    Filter filter = new Filter("Topside Coalescing Filter", feed);
+    filter.run();
+
+    filter.initMechanicalDesign();
+    MechanicalDesign md = filter.getMechanicalDesign();
+    md.calcDesign();
+    md.calculateCostEstimate();
+
+    assertTrue(md.getWeightTotal() > 0.0, "Filter vessel equipped weight should be positive");
+    assertTrue(md.getCostEstimate().getPurchasedEquipmentCost() > 0.0,
+        "Filter purchased equipment cost should be positive");
+  }
+
+  @Test
+  void testReactorVesselReportsWeightAndCost() {
+    Stream feed = new Stream("Feed", makeGas());
+    feed.setFlowRate(20000.0, "kg/hr");
+    feed.setTemperature(280.0, "C");
+    feed.setPressure(50.0, "bara");
+    feed.run();
+
+    GibbsReactor reactor = new GibbsReactor("Topside Reactor", feed);
+
+    reactor.initMechanicalDesign();
+    MechanicalDesign md = reactor.getMechanicalDesign();
+    md.calcDesign();
+    md.calculateCostEstimate();
+
+    assertTrue(md.getWeightTotal() > 0.0, "Reactor vessel equipped weight should be positive");
+    assertTrue(md.getCostEstimate().getPurchasedEquipmentCost() > 0.0,
+        "Reactor purchased equipment cost should be positive");
+  }
+
+  @Test
+  void testManifoldReportsWeightAndCost() {
+    Stream feedA = new Stream("Feed A", makeGas());
+    feedA.setFlowRate(30000.0, "kg/hr");
+    feedA.setTemperature(25.0, "C");
+    feedA.setPressure(60.0, "bara");
+    feedA.run();
+
+    Stream feedB = new Stream("Feed B", makeGas());
+    feedB.setFlowRate(20000.0, "kg/hr");
+    feedB.setTemperature(25.0, "C");
+    feedB.setPressure(60.0, "bara");
+    feedB.run();
+
+    Manifold manifold = new Manifold("Topside Production Manifold");
+    manifold.addStream(feedA);
+    manifold.addStream(feedB);
+    manifold.setSplitFactors(new double[] {0.4, 0.4, 0.2});
+    manifold.run();
+
+    manifold.initMechanicalDesign();
+    ManifoldMechanicalDesign md = manifold.getMechanicalDesign();
+    md.setNumberOfInlets(2);
+    md.setNumberOfOutlets(3);
+    md.calcDesign();
+    md.calculateCostEstimate();
+
+    assertTrue(md.getWeightTotal() > 0.0, "Manifold dry weight should be positive");
+    assertTrue(md.getCostEstimate().getPurchasedEquipmentCost() > 0.0,
+        "Manifold purchased equipment cost should be positive");
   }
 
   @Test

@@ -3,6 +3,7 @@ package neqsim.process.mechanicaldesign.heatexchanger;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import com.google.gson.GsonBuilder;
+import neqsim.process.costestimation.heatexchanger.BAHXCostEstimator;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.heatexchanger.LNGHeatExchanger;
 
@@ -22,8 +23,8 @@ import neqsim.process.equipment.heatexchanger.LNGHeatExchanger;
  * </ul>
  *
  * <p>
- * Standards implemented: ASME VIII Div.1, ALPEMA (Aluminium Plate-Fin Heat Exchanger Manufacturers' Association), API
- * 662 Part II.
+ * Standards implemented: ASME VIII Div.1, ALPEMA (Aluminium Plate-Fin Heat Exchanger Manufacturers'
+ * Association), API 662 Part II.
  * </p>
  *
  * @author NeqSim
@@ -148,6 +149,7 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
    */
   public BAHXMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
+    costEstimate = new BAHXCostEstimator(this);
     // BAHX defaults: no fouling, aluminium, cryogenic
     setJointEfficiency(BRAZED_JOINT_EFFICIENCY);
     setTemaClass("N/A");
@@ -192,12 +194,14 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
     // Treat as flat plate: t = d * sqrt(C * P / S)
     // C = 0.33 for simply supported
     double headerWidthMm = 200.0; // typical BAHX header port width
-    requiredHeaderThicknessMm = headerWidthMm * Math.sqrt(0.33 * pMPa / AL_5083_ALLOWABLE_STRESS_MPA);
+    requiredHeaderThicknessMm =
+        headerWidthMm * Math.sqrt(0.33 * pMPa / AL_5083_ALLOWABLE_STRESS_MPA);
     requiredHeaderThicknessMm = Math.max(requiredHeaderThicknessMm, 10.0);
 
     // ── Nozzle wall thickness (cylindrical) ──
     double nozzleRadiusMm = nozzleODMm / 2.0;
-    requiredNozzleThicknessMm = pMPa * nozzleRadiusMm / (AL_5083_ALLOWABLE_STRESS_MPA * 1.0 - 0.6 * pMPa);
+    requiredNozzleThicknessMm =
+        pMPa * nozzleRadiusMm / (AL_5083_ALLOWABLE_STRESS_MPA * 1.0 - 0.6 * pMPa);
     requiredNozzleThicknessMm = Math.max(requiredNozzleThicknessMm, 3.0);
 
     // ── Core geometry from LNGHeatExchanger or estimated ──
@@ -277,8 +281,8 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
    * Calculate thermal fatigue assessment per API 662 Part II.
    *
    * <p>
-   * Evaluates thermal stress from cyclic temperature gradients across the core. The allowable number of cycles is
-   * estimated from the alternating stress amplitude using aluminium S-N data.
+   * Evaluates thermal stress from cyclic temperature gradients across the core. The allowable
+   * number of cycles is estimated from the alternating stress amplitude using aluminium S-N data.
    * </p>
    */
   private void calcThermalFatigue() {
@@ -359,7 +363,8 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
 
     // Wall thickness results
     Map<String, Object> wallThickness = new LinkedHashMap<String, Object>();
-    wallThickness.put("requiredPartingSheetThickness_mm", round(requiredPartingSheetThicknessMm, 2));
+    wallThickness.put("requiredPartingSheetThickness_mm",
+        round(requiredPartingSheetThicknessMm, 2));
     wallThickness.put("requiredHeaderThickness_mm", round(requiredHeaderThicknessMm, 1));
     wallThickness.put("requiredNozzleThickness_mm", round(requiredNozzleThicknessMm, 1));
     wallThickness.put("nozzleOD_mm", nozzleODMm);
@@ -398,7 +403,8 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
     fatigue.put("fatiguePassed", fatiguePassed);
     report.put("thermalFatigue", fatigue);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(report);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
+        .toJson(report);
   }
 
   // ============================================================================
