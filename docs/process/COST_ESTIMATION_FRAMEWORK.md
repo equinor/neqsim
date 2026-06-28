@@ -506,6 +506,8 @@ The legacy `getSubseaCapex()` value remains available as `DRILEX + SURF` for
 older integrations.
 
 ```java
+import neqsim.process.util.fielddevelopment.FieldDevelopmentCostEstimator;
+
 FieldDevelopmentCostEstimator estimator = new FieldDevelopmentCostEstimator(process);
 estimator.setConceptType(FieldDevelopmentCostEstimator.ConceptType.SUBSEA_TIEBACK);
 estimator.setFidelityLevel(FieldDevelopmentCostEstimator.FidelityLevel.PRE_FEED);
