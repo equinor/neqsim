@@ -3,10 +3,14 @@ package neqsim.process.fielddevelopment.subsea;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.process.costestimation.CostEstimateResult;
+import neqsim.process.costestimation.EstimateClass;
+import neqsim.process.costestimation.MaterialTakeOffItem;
 import neqsim.process.fielddevelopment.subsea.SubseaProductionSystem.SubseaArchitecture;
 import neqsim.process.fielddevelopment.subsea.SubseaProductionSystem.SubseaSystemResult;
 import neqsim.process.mechanicaldesign.subsea.WellCostEstimator.WellLocationType;
@@ -140,6 +144,34 @@ public class SubseaProductionSystemTest {
     assertTrue(result.getManifoldCostMusd() > 0.0); // 1 manifold
     assertTrue(result.getPipelineCostMusd() > 50.0); // 25km × ~2.5+ MUSD/km
     assertTrue(result.getTotalSubseaCapexMusd() > 200.0); // Total should be > 200 MUSD
+
+    CostEstimateResult surfResult = result.getSurfDetailedEstimateResult();
+    assertNotNull(surfResult, "Detailed SURF estimate should be exposed on the system result");
+    assertEquals(EstimateClass.CLASS_4, surfResult.getBasis().getEstimateClass());
+    assertEquals(result.getTotalSubseaCapexMusd() * 1.0e6, surfResult.getCapitalCosts().get("totalSURF"), 5.0e6);
+    assertFalse(surfResult.getMaterialTakeOff().isEmpty(), "Detailed SURF estimate should include MTO lines");
+
+    CostEstimateResult developmentResult = result.getDetailedDevelopmentEstimateResult();
+    assertNotNull(developmentResult, "Detailed development estimate should be available");
+    assertEquals(EstimateClass.CLASS_4, developmentResult.getBasis().getEstimateClass());
+    assertEquals(result.getTotalDevelopmentCapexMusd() * 1.0e6,
+        developmentResult.getCapitalCosts().get("totalDevelopment"), 5.0e6);
+    assertEquals(result.getWellCostMusd() * 1.0e6, developmentResult.getCapitalCosts().get("wells"), 1.0e6);
+    assertEquals(result.getTotalSubseaCapexMusd() * 1.0e6, developmentResult.getCapitalCosts().get("totalSURF"), 5.0e6);
+    assertTrue(developmentResult.getMaterialTakeOff().size() >= surfResult.getMaterialTakeOff().size() + 2,
+        "Development estimate should include reservoir, well and SURF MTO lines");
+
+    boolean hasReservoirPlaceholder = false;
+    boolean hasWellPlaceholder = false;
+    boolean hasSurfPipelineMto = false;
+    for (MaterialTakeOffItem item : developmentResult.getMaterialTakeOff()) {
+      hasReservoirPlaceholder |= "reservoir".equals(item.getCategory());
+      hasWellPlaceholder |= "wells".equals(item.getCategory());
+      hasSurfPipelineMto |= "surf-pipeline-sizing".equals(item.getSource());
+    }
+    assertTrue(hasReservoirPlaceholder, "Development MTO should include reservoir/appraisal scope");
+    assertTrue(hasWellPlaceholder, "Development MTO should include drilling and completion scope");
+    assertTrue(hasSurfPipelineMto, "Development MTO should include detailed SURF pipeline quantities");
   }
 
   @Test
@@ -198,6 +230,13 @@ public class SubseaProductionSystemTest {
     assertTrue(wet.getResult().getWellCostMusd() > dry.getResult().getWellCostMusd());
     assertTrue(wet.getResult().getTotalDevelopmentCapexMusd() > dry.getResult().getTotalDevelopmentCapexMusd());
     assertEquals(WellLocationType.PLATFORM_DRY_TREE, dry.getResult().getWellLocationType());
+    assertNull(dry.getResult().getSurfDetailedEstimateResult());
+
+    CostEstimateResult dryDevelopmentResult = dry.getResult().getDetailedDevelopmentEstimateResult();
+    assertEquals(EstimateClass.CLASS_4, dryDevelopmentResult.getBasis().getEstimateClass());
+    assertEquals(dry.getResult().getTotalDevelopmentCapexMusd() * 1.0e6,
+        dryDevelopmentResult.getCapitalCosts().get("totalDevelopment"), 1.0e6);
+    assertTrue(dryDevelopmentResult.toJson().contains("No detailed SURF estimate"));
   }
 
   @Test

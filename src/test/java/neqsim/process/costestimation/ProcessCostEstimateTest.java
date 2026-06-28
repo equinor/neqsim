@@ -1,6 +1,8 @@
 package neqsim.process.costestimation;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -108,9 +110,10 @@ public class ProcessCostEstimateTest {
 
     // Print summary
     logger.info("\n=== Mechanical Design via ProcessSystem ===");
-    System.out.println("Total Weight: " + String.format("%,.0f", mecDesign.getTotalWeight()) + " kg");
+    logger.info("Total Weight: " + String.format("%,.0f", mecDesign.getTotalWeight()) + " kg");
     logger.info("Equipment Count: " + mecDesign.getEquipmentList().size());
-    logger.info("Total Power: " + String.format("%,.1f", mecDesign.getTotalPowerRequired()) + " kW");
+    logger
+        .info("Total Power: " + String.format("%,.1f", mecDesign.getTotalPowerRequired()) + " kW");
   }
 
   @Test
@@ -141,7 +144,8 @@ public class ProcessCostEstimateTest {
     String json = process.getMechanicalDesignAndCostEstimateJson();
     assertNotNull(json, "JSON should not be null");
     assertTrue(json.contains("processName"), "JSON should contain process name");
-    assertTrue(json.contains("mechanicalDesignSummary"), "JSON should contain mechanical design summary");
+    assertTrue(json.contains("mechanicalDesignSummary"),
+        "JSON should contain mechanical design summary");
     assertTrue(json.contains("costEstimateSummary"), "JSON should contain cost estimate summary");
     assertTrue(json.contains("purchasedEquipmentCost_USD"), "JSON should contain PEC");
     assertTrue(json.contains("grassRootsCost_USD"), "JSON should contain grass roots cost");
@@ -156,28 +160,31 @@ public class ProcessCostEstimateTest {
   @Test
   void testEquipmentSpecificCostEstimate() {
     // Get cost estimate for specific equipment
-    neqsim.process.costestimation.UnitCostEstimateBaseClass compressorCost = process
-        .getEquipmentCostEstimate("MainCompressor");
+    neqsim.process.costestimation.UnitCostEstimateBaseClass compressorCost =
+        process.getEquipmentCostEstimate("MainCompressor");
 
     assertNotNull(compressorCost, "Compressor cost estimate should not be null");
     assertTrue(compressorCost.getPurchasedEquipmentCost() > 0, "Compressor PEC should be positive");
 
     logger.info("\n=== Compressor Cost Estimate ===");
-    logger.info("Compressor PEC: $" + String.format("%,.0f", compressorCost.getPurchasedEquipmentCost()));
-    System.out.println("Compressor BMC: $" + String.format("%,.0f", compressorCost.getBareModuleCost()));
+    logger.info(
+        "Compressor PEC: $" + String.format("%,.0f", compressorCost.getPurchasedEquipmentCost()));
+    logger.info("Compressor BMC: $" + String.format("%,.0f", compressorCost.getBareModuleCost()));
   }
 
   @Test
   void testEquipmentSpecificMechanicalDesign() {
     // Get mechanical design for specific equipment
-    neqsim.process.mechanicaldesign.MechanicalDesign sepDesign = process.getEquipmentMechanicalDesign("InletSeparator");
+    neqsim.process.mechanicaldesign.MechanicalDesign sepDesign =
+        process.getEquipmentMechanicalDesign("InletSeparator");
 
     assertNotNull(sepDesign, "Separator mechanical design should not be null");
     assertTrue(sepDesign.getWeightTotal() > 0, "Separator weight should be positive");
 
     logger.info("\n=== Separator Mechanical Design ===");
     logger.info("Weight: " + String.format("%,.0f", sepDesign.getWeightTotal()) + " kg");
-    logger.info("Design Pressure: " + String.format("%,.1f", sepDesign.getMaxDesignPressure()) + " bara");
+    logger.info(
+        "Design Pressure: " + String.format("%,.1f", sepDesign.getMaxDesignPressure()) + " bara");
   }
 
   @Test
@@ -204,7 +211,8 @@ public class ProcessCostEstimateTest {
     // Generate summary report
     String summaryReport = costEst.generateSummaryReport();
     assertNotNull(summaryReport, "Summary report should not be null");
-    assertTrue(summaryReport.contains("CAPITAL COST SUMMARY"), "Should contain capital cost summary");
+    assertTrue(summaryReport.contains("CAPITAL COST SUMMARY"),
+        "Should contain capital cost summary");
 
     logger.info("\n=== Cost Summary Report ===");
     logger.info(summaryReport);
@@ -212,7 +220,8 @@ public class ProcessCostEstimateTest {
     // Generate equipment list report
     String equipmentReport = costEst.generateEquipmentListReport();
     assertNotNull(equipmentReport, "Equipment report should not be null");
-    assertTrue(equipmentReport.contains("EQUIPMENT COST LIST"), "Should contain equipment cost list");
+    assertTrue(equipmentReport.contains("EQUIPMENT COST LIST"),
+        "Should contain equipment cost list");
 
     logger.info(equipmentReport);
   }
@@ -224,14 +233,51 @@ public class ProcessCostEstimateTest {
 
     CostEstimateBasis basis = costEst.getEstimateBasis();
     assertNotNull(basis, "Estimate basis should not be null");
-    assertTrue(basis.getEstimateClass() == EstimateClass.CLASS_4, "Default process estimate should be Class 4");
+    assertTrue(basis.getEstimateClass() == EstimateClass.CLASS_4,
+        "Default process estimate should be Class 4");
 
     CostEstimateResult result = costEst.getDetailedEstimateResult();
     assertNotNull(result, "Detailed estimate result should not be null");
     assertTrue(result.getProjectCosts().get("totalProjectCost") > costEst.getTotalGrassRootsCost(),
         "Total project cost should include owner cost and project contingency beyond grass-roots cost");
-    assertTrue(result.getMaterialTakeOff().size() > 0, "Process result should include equipment weight MTO lines");
+    assertTrue(result.getMaterialTakeOff().size() > 0,
+        "Process result should include equipment weight MTO lines");
     assertTrue(costEst.toJson().contains("CLASS_4"), "JSON should state the estimate class");
+  }
+
+  /**
+   * Verifies that process-level cost calculation does not replace a configured mechanical design.
+   */
+  @Test
+  void testProcessCostPreservesConfiguredMechanicalDesign() {
+    Compressor compressor = (Compressor) process.getUnit("MainCompressor");
+    neqsim.process.mechanicaldesign.MechanicalDesign configuredDesign =
+        compressor.getMechanicalDesign();
+
+    ProcessCostEstimate costEst = process.getCostEstimate();
+    costEst.calculateAllCosts();
+
+    assertSame(configuredDesign, compressor.getMechanicalDesign(),
+        "Process cost rollup should not replace an already configured mechanical design");
+  }
+
+  /**
+   * Verifies that equipment-type cost breakdowns reconcile with location-adjusted totals.
+   */
+  @Test
+  void testEquipmentTypeBreakdownIncludesLocationFactor() {
+    ProcessCostEstimate costEst = process.getCostEstimate();
+    costEst.setLocationFactor(1.35);
+    costEst.calculateAllCosts();
+
+    double equipmentTypeTotal = 0.0;
+    for (Double cost : costEst.getCostByEquipmentType().values()) {
+      equipmentTypeTotal += cost.doubleValue();
+    }
+
+    assertEquals(costEst.getTotalPurchasedEquipmentCost(), equipmentTypeTotal,
+        costEst.getTotalPurchasedEquipmentCost() * 1.0e-10,
+        "Located equipment-type PEC should reconcile with located total PEC");
   }
 
   @Test

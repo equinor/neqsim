@@ -172,6 +172,15 @@ public class CostEstimateResult implements java.io.Serializable {
   }
 
   /**
+   * Gets the weight-basis map.
+   *
+   * @return copy of weight-basis values in kg
+   */
+  public Map<String, Double> getWeightBasis() {
+    return new LinkedHashMap<String, Double>(weightBasis);
+  }
+
+  /**
    * Gets the material take-off list.
    *
    * @return copy of material take-off lines

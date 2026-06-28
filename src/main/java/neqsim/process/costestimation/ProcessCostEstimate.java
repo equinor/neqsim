@@ -55,9 +55,9 @@ import neqsim.process.processmodel.ProcessSystem;
  * costEstimate.calculateAllCosts();
  *
  * // Get totals
- * System.out.println("Total PEC: $" + costEstimate.getTotalPurchasedEquipmentCost());
- * System.out.println("Total TMC: $" + costEstimate.getTotalModuleCost());
- * System.out.println("Grass Roots: $" + costEstimate.getTotalGrassRootsCost());
+ * double totalPurchasedEquipmentCost = costEstimate.getTotalPurchasedEquipmentCost();
+ * double totalModuleCost = costEstimate.getTotalModuleCost();
+ * double grassRootsCost = costEstimate.getTotalGrassRootsCost();
  *
  * // Export to JSON
  * String json = costEstimate.toJson();
@@ -384,9 +384,12 @@ public class ProcessCostEstimate implements java.io.Serializable {
         continue;
       }
 
-      // Initialize mechanical design if needed
-      equipment.initMechanicalDesign();
+      // Reuse configured mechanical designs so caller-specified basis is not discarded.
       MechanicalDesign mecDesign = equipment.getMechanicalDesign();
+      if (mecDesign == null) {
+        equipment.initMechanicalDesign();
+        mecDesign = equipment.getMechanicalDesign();
+      }
 
       if (mecDesign == null) {
         continue;
@@ -421,8 +424,8 @@ public class ProcessCostEstimate implements java.io.Serializable {
       totalModuleCost += costEst.getTotalModuleCost();
       totalInstallationManHours += costEst.getInstallationManHours();
 
-      // Accumulate by type
-      accumulateCostByType(equipType, costEst.getPurchasedEquipmentCost());
+      // Accumulate located PEC by type so the breakdown reconciles with the reported PEC total.
+      accumulateCostByType(equipType, costEst.getPurchasedEquipmentCost() * locationFactor);
     }
 
     // Apply location factor

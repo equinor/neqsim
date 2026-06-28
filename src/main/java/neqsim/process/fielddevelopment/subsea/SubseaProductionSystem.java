@@ -5,6 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import neqsim.process.costestimation.CostEstimateBasis;
+import neqsim.process.costestimation.CostEstimateResult;
+import neqsim.process.costestimation.EstimateClass;
+import neqsim.process.costestimation.MaterialTakeOffItem;
 import neqsim.process.equipment.network.WellFlowlineNetwork;
 import neqsim.process.equipment.pipeline.AdiabaticTwoPhasePipe;
 import neqsim.process.equipment.stream.Stream;
@@ -1096,11 +1100,13 @@ public class SubseaProductionSystem implements Serializable {
       result.controlSystemCostMusd = 0.0;
       result.totalSubseaCapexMusd = 0.0;
       result.totalDevelopmentCapexMusd = result.reservoirCostMusd + result.wellCostMusd;
+      result.surfDetailedEstimateResult = null;
       return;
     }
 
     surfCostEstimator = createSurfCostEstimator();
     surfCostEstimator.calculate();
+    result.surfDetailedEstimateResult = surfCostEstimator.getDetailedEstimateResult();
 
     result.subseaTreeCostMusd = sumSurfLineItemsMusd("Christmas Trees");
     result.manifoldCostMusd = sumSurfLineItemsMusd("Manifold");
@@ -1502,6 +1508,7 @@ public class SubseaProductionSystem implements Serializable {
     private double reservoirCostMusd;
     private double totalDevelopmentCapexMusd;
     private WellLocationType wellLocationType;
+    private CostEstimateResult surfDetailedEstimateResult;
 
     /**
      * Creates a new result.
@@ -1665,6 +1672,68 @@ public class SubseaProductionSystem implements Serializable {
      */
     public double getRiserCostMusd() {
       return riserCostMusd;
+    }
+
+    /**
+     * Gets the detailed SURF estimate result with basis and material take-off.
+     *
+     * @return detailed SURF estimate result, or {@code null} when the concept has no subsea wet-tree SURF scope
+     */
+    public CostEstimateResult getSurfDetailedEstimateResult() {
+      return surfDetailedEstimateResult;
+    }
+
+    /**
+     * Gets a detailed development CAPEX result covering reservoir, wells and SURF.
+     *
+     * <p>
+     * SURF material take-off lines are copied from the detailed SURF estimate when available. Reservoir and well lines
+     * are represented as screening-level scope placeholders until detailed drilling and completion material take-off is
+     * available.
+     * </p>
+     *
+     * @return detailed development CAPEX estimate result
+     */
+    public CostEstimateResult getDetailedDevelopmentEstimateResult() {
+      EstimateClass estimateClass = surfDetailedEstimateResult == null ? EstimateClass.CLASS_4
+          : surfDetailedEstimateResult.getBasis().getEstimateClass();
+      CostEstimateBasis basis = new CostEstimateBasis().setEstimateClass(estimateClass)
+          .setEstimatingMethod("field-development cost rollup")
+          .setDataSource("subsea production system screening correlations")
+          .setNotes("Development CAPEX rollup from reservoir/appraisal, drilling/completion wells and SURF estimates.");
+
+      CostEstimateResult result = new CostEstimateResult()
+          .setIdentification(systemName + " development", systemName, "subsea-development").setBasis(basis)
+          .addCapitalCost("reservoirAppraisal", reservoirCostMusd * 1.0e6).addCapitalCost("wells", wellCostMusd * 1.0e6)
+          .addCapitalCost("subseaTrees", subseaTreeCostMusd * 1.0e6)
+          .addCapitalCost("manifolds", manifoldCostMusd * 1.0e6)
+          .addCapitalCost("jumpersAndPLETs", jumperAndPletCostMusd * 1.0e6)
+          .addCapitalCost("pipelines", pipelineCostMusd * 1.0e6).addCapitalCost("umbilicals", umbilicalCostMusd * 1.0e6)
+          .addCapitalCost("risers", riserCostMusd * 1.0e6)
+          .addCapitalCost("controlSystems", controlSystemCostMusd * 1.0e6)
+          .addCapitalCost("totalSURF", totalSubseaCapexMusd * 1.0e6)
+          .addCapitalCost("totalDevelopment", totalDevelopmentCapexMusd * 1.0e6);
+
+      if (reservoirCostMusd > 0.0) {
+        result.addMaterialTakeOff(new MaterialTakeOffItem("Reservoir appraisal and management", "reservoir",
+            "study and appraisal", Math.max(1, wellCount), "well-basis", Double.NaN, reservoirCostMusd * 1.0e6,
+            "field-development-screening"));
+      }
+      if (wellCostMusd > 0.0) {
+        result.addMaterialTakeOff(new MaterialTakeOffItem("Drilling and completion wells", "wells",
+            wellLocationType == null ? "well" : wellLocationType.name(), Math.max(1, wellCount), "well", Double.NaN,
+            wellCostMusd * 1.0e6, "field-development-screening"));
+      }
+      if (surfDetailedEstimateResult == null) {
+        result.addQualityFlag("No detailed SURF estimate was available for this development concept.");
+      } else {
+        for (MaterialTakeOffItem item : surfDetailedEstimateResult.getMaterialTakeOff()) {
+          result.addMaterialTakeOff(item);
+        }
+      }
+      result.addQualityFlag(
+          "Reservoir and well material take-off lines are screening placeholders until detailed well mechanical MTO is available.");
+      return result;
     }
 
     /**
