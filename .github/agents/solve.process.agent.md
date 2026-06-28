@@ -18,7 +18,7 @@ Your job is to take an engineering problem, build the simulation, **run every ce
 2. **Create** the notebook file in `examples/notebooks/` with a descriptive filename.
 3. **Write all cells** following the notebook structure below.
 4. **Run every code cell** in order using the notebook tools — fix any errors immediately.
-5. **Verify results** are physically reasonable (mass balance closes, temperatures/pressures make sense, no NaN/Inf).
+5. **Verify results** are physically reasonable. The overall mass balance MUST close (sum feed `kg/hr` ≈ sum product/export `kg/hr` within `< 0.1 %`) before the solution is accepted — a larger imbalance means a dropped stream, a non-converged recycle, or a bad split fraction; fix and re-run. Also check temperatures/pressures make sense and there is no NaN/Inf.
 6. **Add a Colab badge** and dual-boot setup cell so the notebook works both locally and in Google Colab.
 
 ---

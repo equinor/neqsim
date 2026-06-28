@@ -130,6 +130,14 @@ requirements (see Skill Section 20):
 - Solvent regeneration loops
 - Reflux streams
 
+> **Recompression default:** in a recompression/export-compression train, ALWAYS
+> close each suction/export scrubber's liquid knock-out back to the separator at the
+> matching pressure (HP scrubber→stage-1, MP scrubber→stage-2, LP scrubber→stage-3),
+> even if the source document does not draw the line. Leaving `getLiquidOutStream()`
+> unconnected silently drops the condensate and under-counts liquid recovery. Use the
+> seed + TP-setter `Heater` + `Recycle` pattern from `neqsim-platform-modeling`
+> Section 4.
+
 **Anti-surge indicators** (flag compressors for anti-surge setup):
 - Document mentions "anti-surge", "surge control", "recycle valve", "minimum flow"
 - Compressor has turndown requirements (< 70% of design flow)
@@ -216,6 +224,25 @@ comp.setCompressorChartType("interpolate and extrapolate")
 # Add anti-surge loop: Clone -> Mixer -> Cooler -> [existing comp] -> Splitter
 # -> Calculator -> Valve -> Recycle -> back to Mixer
 # (see Skill Section 20 for complete code)
+```
+
+### Step 6.5: Verify Mass Balance (MANDATORY acceptance gate)
+
+Before reporting any results, confirm the overall mass balance closes. Sum the
+`kg/hr` of every feed stream entering the model and every product/export stream
+leaving it; the closure error must be `< 0.1 %`. A larger imbalance means a stream
+was dropped (e.g. an unconnected scrubber/knock-out liquid — see Step 5.5), a
+`Recycle` did not converge, or a `Splitter` fraction is wrong. Fix the flowsheet and
+re-run — never report results from an unbalanced model.
+
+```python
+m_in = sum(float(s.getFlowRate("kg/hr")) for s in feed_streams)
+m_out = sum(float(s.getFlowRate("kg/hr")) for s in product_streams)
+closure = abs(m_in - m_out) / m_in
+assert closure < 1.0e-3, (
+    f"Mass balance not closed: in={m_in:.3f} out={m_out:.3f} kg/hr "
+    f"({100 * closure:.3f}% error) — check for dropped streams or non-converged recycle"
+)
 ```
 
 ### Step 7: Report Results
