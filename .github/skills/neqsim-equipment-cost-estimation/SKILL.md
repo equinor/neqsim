@@ -1,7 +1,7 @@
 ---
 name: neqsim-equipment-cost-estimation
 version: "1.0.0"
-description: "Equipment-level CAPEX estimation — Turton/Peters/Ulrich/Seider correlations, CEPCI escalation, material/pressure factors, bare-module to grass-roots, AACE class 1-5, location factors, currency conversion, and mechanical-design-driven topside screening. USE WHEN: a task requires a +30%/-30% Class-3/4 cost estimate at the equipment level (vessels, columns, pumps, compressors, HX, piping, filters, reactors, mixers, splitters, manifolds). Anchors on neqsim.process.costestimation.CostEstimationCalculator."
+description: "Equipment and process CAPEX estimation — Turton/Peters/Ulrich/Seider correlations, CEPCI escalation, material/pressure factors, bare-module to grass-roots, AACE class 1-5, location factors, currency conversion, CostEstimateResult reconciliation, and mechanical-design-driven topsides/SURF/well rollups. USE WHEN: a task requires a +30%/-30% Class-3/4 estimate for equipment, a process flowsheet, topsides, SURF, wells, or reservoir-to-market CAPEX. Anchors on CostEstimationCalculator and ProcessCostEstimate."
 last_verified: "2026-06-28"
 requires:
   java_packages: [neqsim.process.costestimation]
@@ -10,9 +10,10 @@ requires:
 # NeqSim Equipment Cost Estimation Skill
 
 Class-3/4 (AACE 18R-97) order-of-magnitude to study estimates for individual
-process equipment - the bridge between sized equipment and a project economics
-model. Wraps Turton (5e), Peters–Timmerhaus, Ulrich, and Seider correlations
-with CEPCI escalation, material factors, pressure factors, and Lang/Hand factors.
+process equipment and early process/facility CAPEX rollups - the bridge between
+sized equipment and a project economics model. Wraps Turton (5e),
+Peters–Timmerhaus, Ulrich, and Seider correlations with CEPCI escalation,
+material factors, pressure factors, and Lang/Hand factors.
 The preferred NeqSim path is mechanical-design driven: call each unit's
 `initMechanicalDesign()`, `calcDesign()`, then
 `getMechanicalDesign().getCostEstimate().calculateCostEstimate()` or let
@@ -24,11 +25,13 @@ The preferred NeqSim path is mechanical-design driven: call each unit's
 - Build a **bare-module** → **total-module** → **grass-roots** stackup
 - Apply CEPCI to escalate published correlations to current year
 - Compare alternatives (e.g. centrifugal vs reciprocating compressor)
+- Produce a scope-safe `CostEstimateResult` for equipment, process, topsides, SURF, subsea, well, or field-development estimates
+- Reconcile located process totals against located equipment rows while retaining base equipment costs
 - Feed equipment cost into NPV / IRR via [`neqsim-field-economics`](../neqsim-field-economics/SKILL.md)
 
 > For project-level economics, asset valuation, or fiscal regimes, use
 > [`neqsim-field-economics`](../neqsim-field-economics/SKILL.md). This skill is
-> equipment-scoped only.
+> the CAPEX basis skill that feeds those economics workflows.
 
 ## AACE Cost Estimate Classes
 
@@ -167,6 +170,36 @@ unit operations for the major equipment. It initializes each unit's mechanical
 design, runs `calcDesign()`, calls the attached estimator, and aggregates the
 result by equipment category.
 
+## Pattern 10 — Result Schema and Reconciliation
+
+Use `CostEstimateResult` when handing estimates to reports, agents, or downstream
+economics. The map names encode whether rows are additive, summary totals, or
+non-cost quantities:
+
+| Map | Meaning | Reconciliation Rule |
+| --- | ------- | ------------------- |
+| `capitalCosts_USD` | Additive direct capital-cost lines | Sum only inside the same scope |
+| `capitalCostBreakdown_USD` | Supplementary detail behind a capital line | Do not add to the parent line |
+| `capitalCostSummary_USD` | Capital subtotals/totals | Show as totals; do not re-sum |
+| `projectCosts_USD` | Additive project-cost lines | Sum only inside the matching project scope |
+| `projectCostSummary_USD` | Project subtotals/totals | Show as totals; do not re-sum |
+| `quantityBasis` | Non-cost quantities with units | Never mix into USD totals |
+| `weightBasis_kg` and `materialTakeOff` | Physical basis and MTO traceability | Keep separate unless building a controlled MTO rollup |
+
+Examples of intended placement:
+
+- Unit estimators: `purchasedEquipmentCost` in `capitalCosts_USD`; `bareModuleCost`, `totalModuleCost`, and `grassRootsCost` in `capitalCostSummary_USD`; `installationManHours` in `quantityBasis`.
+- `ProcessCostEstimate`: process PEC/BMC/TMC/grass-roots in `capitalCostSummary_USD`; `totalProjectCost` in `projectCostSummary_USD`; `totalInstallationManHours` in `quantityBasis`.
+- Topsides facilities: direct field cost and excluded non-topsides scope in `capitalCostSummary_USD`; `totalTopsidesCapex` in `projectCostSummary_USD`; module detail in `capitalCostBreakdown_USD`.
+- SURF/development: `totalSURF` and `totalDevelopment` in `capitalCostSummary_USD`; vessel days in `quantityBasis`.
+
+`ProcessCostEstimate.toJson()` reports equipment rows with location-adjusted
+costs in the standard `*_USD` fields, because those rows must reconcile with the
+process totals and `costByEquipmentType_USD`. Base, unlocated rows remain under
+`basePurchasedEquipmentCost_USD`, `baseBareModuleCost_USD`,
+`baseTotalModuleCost_USD`, and `baseGrassRootsCost_USD`, with `locationFactor`
+shown explicitly.
+
 ## Common Mistakes
 
 | Mistake                                           | Fix                                                                 |
@@ -176,6 +209,9 @@ result by equipment category.
 | Missing pressure factor at high P                 | Use `getPressureFactor(P)` — silently × the cost at HP/HIPPS service |
 | Reporting Cp as "installed cost"                  | Cp is FOB only; installed = at minimum Cbm                          |
 | Mixing currencies                                 | Use `setCurrency(code, rate)` then read all costs through `convertFromUSD/convertToUSD` |
+| Adding `capitalCostSummary_USD` into `capitalCosts_USD` totals | Summary rows are already subtotals/totals; show them separately |
+| Treating `quantityBasis` rows as USD costs         | Quantity rows carry units like man-hour or vessel-day, not currency  |
+| Comparing located process totals to base equipment rows | Use located `*_USD` equipment fields for reconciliation, base fields for pre-location analysis |
 | Claiming Class-3 accuracy on capacity-factored    | Capacity factor (six-tenths) → Class 5; named in AACE 18R-97        |
 | Ignoring location                                 | `setLocationByRegion("Norway")` ≈ 1.3× US Gulf Coast for offshore   |
 | Adding a new mechanical design but leaving the base estimator | Assign the unit-specific `costEstimate` in the mechanical design constructor |
@@ -189,6 +225,8 @@ result by equipment category.
 - [ ] AACE class declared in report (5/4/3) with stated accuracy band
 - [ ] Stackup shown: Cp → Cbm → Ctm → Cgr with each multiplier
 - [ ] Currency and location factor stated
+- [ ] Additive cost rows, summary totals, supplementary breakdowns, and non-cost quantities are kept in separate `CostEstimateResult` maps
+- [ ] Process equipment rows reconcile on the same basis as totals: located-to-located or base-to-base
 - [ ] JSON saved via `cost.toJson()` to `results.json` under `capex` section
 - [ ] Sensitivity to ±20% on key drivers (compressor power, column trays) reported
 - [ ] Full-process screens include major reservoir-to-market equipment rather than only topside separators and compressors

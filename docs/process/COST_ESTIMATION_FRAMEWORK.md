@@ -27,12 +27,13 @@ This document provides comprehensive documentation for the NeqSim cost estimatio
    - [Column Cost](#column-cost)
    - [Pipe Cost](#pipe-cost)
 5. [Process-Level Cost Estimation](#process-level-cost-estimation)
-6. [Currency and Location Support](#currency-and-location-support)
-7. [Operating Cost (OPEX) Estimation](#operating-cost-opex-estimation)
-8. [Financial Metrics](#financial-metrics)
-9. [Usage Examples](#usage-examples)
-10. [Extending the Framework](#extending-the-framework)
-11. [References](#references)
+6. [Result Schema and Reconciliation](#result-schema-and-reconciliation)
+7. [Currency and Location Support](#currency-and-location-support)
+8. [Operating Cost (OPEX) Estimation](#operating-cost-opex-estimation)
+9. [Financial Metrics](#financial-metrics)
+10. [Usage Examples](#usage-examples)
+11. [Extending the Framework](#extending-the-framework)
+12. [References](#references)
 
 ---
 
@@ -501,6 +502,54 @@ Map<String, Double> byType = processCost.getCostByEquipmentType();
 Map<String, Double> byDiscipline = processCost.getCostByDiscipline();
 // Returns: {Process Equipment: 544382, Piping & Valves: 1867911, ...}
 ```
+
+---
+
+## Result Schema and Reconciliation
+
+`CostEstimateResult` is the report-ready schema used by unit, process,
+topsides, SURF, subsea, and development estimates. It separates additive cost
+lines, supplementary breakdown lines, subtotal/total lines, and non-cost
+quantities so reported totals can be reconciled without double-counting.
+
+| Map | Contents | Add These Rows Into Totals? |
+|-----|----------|-----------------------------|
+| `capitalCosts_USD` | Additive direct capital-cost lines, such as purchased equipment, flowlines, or topsides bulk categories | Yes, when the report scope matches the map scope |
+| `capitalCostBreakdown_USD` | Supplementary detail behind a capital line, such as `module.*` topsides detail | No, unless the report explicitly replaces the parent line with this detail |
+| `capitalCostSummary_USD` | Capital subtotals and totals, such as `bareModuleCost`, `grassRootsCost`, `directFieldCost`, `totalSURF`, or `totalDevelopment` | No, these are already totals or subtotals |
+| `projectCosts_USD` | Additive project-cost lines, such as engineering, construction management, owner cost, and annual operating cost | Yes, when building the matching project total |
+| `projectCostSummary_USD` | Project totals, such as `totalProjectCost` or `totalTopsidesCapex` | No, use as reported totals |
+| `quantityBasis` | Non-cost quantities with value and unit, such as `installationManHours` and `totalVesselDays` | No, these are not currency values |
+| `weightBasis_kg` | Weight basis used by the estimate | No, these are physical quantities |
+| `materialTakeOff` | Material take-off lines with quantities, weights, costs, and source labels | Usually no; use for traceability or to rebuild a controlled MTO total |
+
+### Scope-Safe Totals
+
+Use the summary maps as the authoritative totals for their scope:
+
+- Equipment estimates: `purchasedEquipmentCost` is additive in `capitalCosts_USD`; `bareModuleCost`, `totalModuleCost`, and `grassRootsCost` are in `capitalCostSummary_USD`.
+- Process estimates: process-level PEC/BMC/TMC/grass-roots totals are in `capitalCostSummary_USD`; `totalProjectCost` is in `projectCostSummary_USD`; total installation hours are in `quantityBasis`.
+- Topsides estimates: direct field cost and excluded non-topsides scope are in `capitalCostSummary_USD`; total topsides CAPEX is in `projectCostSummary_USD`; module detail is in `capitalCostBreakdown_USD`.
+- SURF and development estimates: `totalSURF` and `totalDevelopment` are capital summary values, while vessel days are in `quantityBasis`.
+
+### Located and Base Equipment Rows
+
+`ProcessCostEstimate.toJson()` reports equipment rows with location-adjusted
+costs under the standard `*_USD` fields so the equipment rows reconcile with
+process totals and `costByEquipmentType_USD`. The original unlocated equipment
+estimates remain available as `basePurchasedEquipmentCost_USD`,
+`baseBareModuleCost_USD`, `baseTotalModuleCost_USD`, and
+`baseGrassRootsCost_USD`, with the row-specific `locationFactor` stated
+explicitly.
+
+### Reporting Rule
+
+When producing a report, choose one basis per table:
+
+1. **Additive detail table:** sum only `capitalCosts_USD` or `projectCosts_USD` rows for the same scope.
+2. **Summary table:** show `capitalCostSummary_USD` and `projectCostSummary_USD` rows without re-adding them.
+3. **Basis table:** show `quantityBasis`, `weightBasis_kg`, and `materialTakeOff` separately from currency totals.
+4. **Location basis:** compare located totals to located equipment rows, or base totals to base rows, but do not mix them in one reconciliation.
 
 ---
 

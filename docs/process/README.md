@@ -152,17 +152,18 @@ This documentation is organized into the following sections:
 
 | Document | Description |
 |----------|-------------|
-| [COST_ESTIMATION_FRAMEWORK.md](COST_ESTIMATION_FRAMEWORK) | **Comprehensive capital and operating cost estimation** |
-| [COST_ESTIMATION_API_REFERENCE.md](COST_ESTIMATION_API_REFERENCE) | **Detailed API reference for cost estimation classes** |
+| [COST_ESTIMATION_FRAMEWORK.md](COST_ESTIMATION_FRAMEWORK) | **Comprehensive capital and operating cost estimation, including scope-safe result reconciliation** |
+| [COST_ESTIMATION_API_REFERENCE.md](COST_ESTIMATION_API_REFERENCE) | **Detailed API reference for cost estimation classes and CostEstimateResult output maps** |
 
 **Key Features:**
 - Equipment cost estimation using Turton et al. correlations
 - Support for 14+ equipment types (separators, compressors, heat exchangers, tanks, expanders, ejectors, absorbers, etc.)
+- Topsides, SURF, subsea, well, and process-level CAPEX rollups
 - Multi-currency support (USD, EUR, NOK, GBP, CNY, JPY)
 - Location factors for 11 global regions
 - Operating cost (OPEX) calculation with utility costs
 - Financial metrics (payback period, ROI, NPV)
-- Process-level cost aggregation with JSON export
+- Process-level cost aggregation with located/base equipment rows and report-ready `CostEstimateResult` JSON export
 
 ### Equipment Categories
 

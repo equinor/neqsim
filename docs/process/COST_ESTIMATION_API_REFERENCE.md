@@ -214,6 +214,7 @@ public ProcessCostEstimate(ProcessSystem process)
 | `printCostSummary()` | void | Print formatted report |
 | `toMap()` | Map<String, Object> | Get all data as map |
 | `toJson()` | String | Get JSON representation |
+| `getDetailedEstimateResult()` | CostEstimateResult | Get report-ready estimate data with separated additive costs, summary totals, quantities, MTO, and estimate basis |
 
 ---
 
@@ -452,6 +453,46 @@ public AbsorberCostEstimate(AbsorberMechanicalDesign mechanicalEquipment)
 
 ## Data Structures
 
+### CostEstimateResult
+
+`CostEstimateResult` is the shared detailed estimate object returned by unit,
+process, topsides, SURF, subsea, and development estimators. It is intended for
+report generation and cost reconciliation.
+
+**Package:** `neqsim.process.costestimation`
+
+#### Main Methods
+
+| Method | Return Type | Description |
+|--------|-------------|-------------|
+| `setIdentification(String estimateId, String equipmentName, String equipmentType)` | CostEstimateResult | Set result identifiers |
+| `setBasis(CostEstimateBasis basis)` | CostEstimateResult | Attach estimate class, currency, cost year, location factor, and method metadata |
+| `addCapitalCost(String name, double valueUSD)` | CostEstimateResult | Add an additive direct capital-cost row |
+| `addCapitalCostBreakdown(String name, double valueUSD)` | CostEstimateResult | Add supplementary capital detail that should not be summed with its parent line |
+| `addCapitalCostSummary(String name, double valueUSD)` | CostEstimateResult | Add a capital subtotal or total row |
+| `addProjectCost(String name, double valueUSD)` | CostEstimateResult | Add an additive project-cost row |
+| `addProjectCostSummary(String name, double valueUSD)` | CostEstimateResult | Add a project subtotal or total row |
+| `addQuantityBasis(String name, double value, String unit)` | CostEstimateResult | Add a non-cost quantity such as man-hours or vessel-days |
+| `addWeightBasis(String name, double weightKg)` | CostEstimateResult | Add a weight basis row in kg |
+| `addMaterialQuantity(String item, String material, double quantity, String unit, double costUSD)` | CostEstimateResult | Add a material take-off line |
+| `addQualityFlag(String flag)` | CostEstimateResult | Add a scope, quality, or completeness flag |
+| `toMap()` | Map<String, Object> | Export a JSON-friendly map |
+| `toJson()` | String | Export pretty JSON |
+
+#### Output Map Contract
+
+| Key | Description | Reconciliation Use |
+|-----|-------------|--------------------|
+| `capitalCosts_USD` | Additive direct capital costs | Sum only within the same scope |
+| `capitalCostBreakdown_USD` | Supplementary detail rows | Do not add to parent totals |
+| `capitalCostSummary_USD` | Capital subtotals and totals | Display as totals, do not re-sum |
+| `projectCosts_USD` | Additive project costs | Sum only within the matching project scope |
+| `projectCostSummary_USD` | Project subtotals and totals | Display as totals, do not re-sum |
+| `quantityBasis` | Non-cost quantities with `value` and `unit` | Keep separate from currency totals |
+| `weightBasis_kg` | Weight basis values | Keep separate from currency totals |
+| `materialTakeOff` | MTO lines with quantity, weight, cost, and source | Use for traceability or controlled MTO rollups |
+| `qualityFlags` | Scope and quality notes | Include in report assumptions/gaps |
+
 ### Cost Breakdown Map
 
 Returned by `getCostBreakdown()`:
@@ -486,6 +527,23 @@ Map<String, Object> summary = {
         "totalModuleCost_USD": 21875000.0,
         "grassRootsCost_USD": 25156250.0,
         "totalInstallationManHours": 450.0
+    },
+    "detailedEstimateResult": {
+        "capitalCostSummary_USD": {
+            "purchasedEquipmentCost": 5000000.0,
+            "bareModuleCost": 17500000.0,
+            "totalModuleCost": 21875000.0,
+            "grassRootsCost": 25156250.0
+        },
+        "projectCostSummary_USD": {
+            "totalProjectCost": 35123242.0
+        },
+        "quantityBasis": {
+            "totalInstallationManHours": {
+                "value": 450.0,
+                "unit": "man-hour"
+            }
+        }
     },
     "locationFactor": 1.35,
     "complexityFactor": 1.0,
