@@ -122,6 +122,9 @@ public class ProcessCostEstimate implements java.io.Serializable {
   /** Operating cost breakdown by category. */
   private Map<String, Double> operatingCostBreakdown = new LinkedHashMap<String, Double>();
 
+  /** Shared estimate basis metadata for the process estimate. */
+  private CostEstimateBasis estimateBasis = new CostEstimateBasis();
+
   // ============================================================================
   // Process-Level Factors
   // ============================================================================
@@ -156,8 +159,10 @@ public class ProcessCostEstimate implements java.io.Serializable {
     private double purchasedEquipmentCost;
     private double bareModuleCost;
     private double totalModuleCost;
+    private double grassRootsCost;
     private double installationManHours;
     private double weight;
+    private CostEstimateBasis estimateBasis = new CostEstimateBasis();
 
     /**
      * Constructor.
@@ -243,6 +248,24 @@ public class ProcessCostEstimate implements java.io.Serializable {
     }
 
     /**
+     * Get grass-roots cost.
+     *
+     * @return grass-roots cost in USD
+     */
+    public double getGrassRootsCost() {
+      return grassRootsCost;
+    }
+
+    /**
+     * Set grass-roots cost.
+     *
+     * @param cost grass-roots cost in USD
+     */
+    public void setGrassRootsCost(double cost) {
+      this.grassRootsCost = cost;
+    }
+
+    /**
      * Get installation hours.
      *
      * @return man-hours
@@ -276,6 +299,24 @@ public class ProcessCostEstimate implements java.io.Serializable {
      */
     public void setWeight(double weight) {
       this.weight = weight;
+    }
+
+    /**
+     * Get estimate basis metadata.
+     *
+     * @return estimate basis metadata
+     */
+    public CostEstimateBasis getEstimateBasis() {
+      return estimateBasis;
+    }
+
+    /**
+     * Set estimate basis metadata.
+     *
+     * @param estimateBasis estimate basis metadata; {@code null} resets to default
+     */
+    public void setEstimateBasis(CostEstimateBasis estimateBasis) {
+      this.estimateBasis = estimateBasis == null ? new CostEstimateBasis() : estimateBasis;
     }
   }
 
@@ -368,8 +409,10 @@ public class ProcessCostEstimate implements java.io.Serializable {
       summary.setPurchasedEquipmentCost(costEst.getPurchasedEquipmentCost());
       summary.setBareModuleCost(costEst.getBareModuleCost());
       summary.setTotalModuleCost(costEst.getTotalModuleCost());
+      summary.setGrassRootsCost(costEst.getGrassRootsCost());
       summary.setInstallationManHours(costEst.getInstallationManHours());
       summary.setWeight(mecDesign.getWeightTotal());
+      summary.setEstimateBasis(costEst.getEstimateBasis());
       equipmentCosts.add(summary);
 
       // Accumulate totals
@@ -557,6 +600,100 @@ public class ProcessCostEstimate implements java.io.Serializable {
    */
   public List<EquipmentCostSummary> getEquipmentCosts() {
     return new ArrayList<EquipmentCostSummary>(equipmentCosts);
+  }
+
+  /**
+   * Gets the estimate basis metadata.
+   *
+   * @return estimate basis metadata
+   */
+  public CostEstimateBasis getEstimateBasis() {
+    estimateBasis.setCurrencyCode(getCurrencyCode()).setLocationFactor(locationFactor);
+    return estimateBasis;
+  }
+
+  /**
+   * Sets the process-level estimate basis metadata.
+   *
+   * @param estimateBasis estimate basis metadata; {@code null} resets to the default Class 4 basis
+   */
+  public void setEstimateBasis(CostEstimateBasis estimateBasis) {
+    this.estimateBasis = estimateBasis == null ? new CostEstimateBasis() : estimateBasis;
+  }
+
+  /**
+   * Gets the process estimate class.
+   *
+   * @return estimate class
+   */
+  public EstimateClass getEstimateClass() {
+    return getEstimateBasis().getEstimateClass();
+  }
+
+  /**
+   * Sets the process estimate class.
+   *
+   * @param estimateClass estimate class; {@code null} resets to Class 4
+   */
+  public void setEstimateClass(EstimateClass estimateClass) {
+    getEstimateBasis().setEstimateClass(estimateClass);
+  }
+
+  /**
+   * Gets a project-level cost stack that separates direct, indirect, contingency, and owner costs.
+   *
+   * @return map of project cost lines in USD
+   */
+  public Map<String, Double> getProjectCostBreakdown() {
+    Map<String, Double> breakdown = new LinkedHashMap<String, Double>();
+    double directCost = totalModuleCost;
+    double indirectCost = Math.max(0.0, totalGrassRootsCost - totalModuleCost);
+    double contingencyCost = (directCost + indirectCost) * projectContingencyFactor;
+    double ownerCost = (directCost + indirectCost) * workingCapitalFactor;
+    double totalProjectCost = directCost + indirectCost + contingencyCost + ownerCost;
+    breakdown.put("directInstalledCost", directCost);
+    breakdown.put("indirectCost", indirectCost);
+    breakdown.put("projectContingency", contingencyCost);
+    breakdown.put("ownerCost", ownerCost);
+    breakdown.put("totalProjectCost", totalProjectCost);
+    return breakdown;
+  }
+
+  /**
+   * Gets the total project cost including owner cost and project contingency.
+   *
+   * @return total project cost in USD
+   */
+  public double getTotalProjectCost() {
+    Double total = getProjectCostBreakdown().get("totalProjectCost");
+    return total == null ? 0.0 : total.doubleValue();
+  }
+
+  /**
+   * Builds a detailed report-ready result for the process estimate.
+   *
+   * @return detailed estimate result
+   */
+  public CostEstimateResult getDetailedEstimateResult() {
+    String processName = processSystem != null ? processSystem.getName() : "Unknown";
+    CostEstimateResult result = new CostEstimateResult();
+    result.setIdentification(processName, processName, "ProcessSystem").setBasis(getEstimateBasis())
+        .addCapitalCost("purchasedEquipmentCost", totalPurchasedEquipmentCost)
+        .addCapitalCost("bareModuleCost", totalBareModuleCost).addCapitalCost("totalModuleCost", totalModuleCost)
+        .addCapitalCost("grassRootsCost", totalGrassRootsCost)
+        .addProjectCost("totalInstallationManHours", totalInstallationManHours)
+        .addProjectCost("annualOperatingCost", totalAnnualOperatingCost);
+    for (Map.Entry<String, Double> entry : getProjectCostBreakdown().entrySet()) {
+      result.addProjectCost(entry.getKey(), entry.getValue());
+    }
+    for (EquipmentCostSummary summary : equipmentCosts) {
+      result.addMaterialQuantity(summary.getName(), summary.getType(), summary.getWeight(), "kg",
+          summary.getPurchasedEquipmentCost());
+    }
+    if (equipmentCosts.isEmpty()) {
+      result.addQualityFlag("No equipment cost summaries were available. Run calculateAllCosts() first.");
+    }
+    return result;
   }
 
   // ============================================================================
@@ -771,6 +908,11 @@ public class ProcessCostEstimate implements java.io.Serializable {
     factors.put("projectContingencyFactor", projectContingencyFactor);
     result.put("factors", factors);
 
+    // Estimate basis and project cost stack
+    result.put("estimateBasis", getEstimateBasis().toMap());
+    result.put("projectCostBreakdown_USD", getProjectCostBreakdown());
+    result.put("detailedEstimateResult", getDetailedEstimateResult().toMap());
+
     // Cost by equipment type
     result.put("costByEquipmentType_USD", costByEquipmentType);
 
@@ -786,8 +928,10 @@ public class ProcessCostEstimate implements java.io.Serializable {
       equipMap.put("purchasedEquipmentCost_USD", eq.getPurchasedEquipmentCost());
       equipMap.put("bareModuleCost_USD", eq.getBareModuleCost());
       equipMap.put("totalModuleCost_USD", eq.getTotalModuleCost());
+      equipMap.put("grassRootsCost_USD", eq.getGrassRootsCost());
       equipMap.put("installationManHours", eq.getInstallationManHours());
       equipMap.put("weight_kg", eq.getWeight());
+      equipMap.put("estimateBasis", eq.getEstimateBasis().toMap());
       equipList.add(equipMap);
     }
     result.put("equipment", equipList);

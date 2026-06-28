@@ -8036,6 +8036,11 @@ public class ProcessSystem extends SimulationBaseClass {
     costSummary.put("installationManHours", costEst.getTotalInstallationManHours());
     combined.put("costEstimateSummary", costSummary);
 
+    // Add estimate quality basis and full project cost stack
+    combined.put("estimateBasis", costEst.getEstimateBasis().toMap());
+    combined.put("projectCostBreakdown_USD", costEst.getProjectCostBreakdown());
+    combined.put("detailedEstimateResult", costEst.getDetailedEstimateResult().toMap());
+
     // Add weight breakdown
     combined.put("weightByEquipmentType_kg", mecDesign.getWeightByEquipmentType());
     combined.put("weightByDiscipline_kg", mecDesign.getWeightByDiscipline());

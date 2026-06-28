@@ -145,6 +145,8 @@ public class ProcessCostEstimateTest {
     assertTrue(json.contains("costEstimateSummary"), "JSON should contain cost estimate summary");
     assertTrue(json.contains("purchasedEquipmentCost_USD"), "JSON should contain PEC");
     assertTrue(json.contains("grassRootsCost_USD"), "JSON should contain grass roots cost");
+    assertTrue(json.contains("estimateBasis"), "JSON should contain estimate basis metadata");
+    assertTrue(json.contains("projectCostBreakdown_USD"), "JSON should contain project cost stack");
 
     // Print first 2000 chars
     logger.info("\n=== Combined JSON (first 2000 chars) ===");
@@ -213,6 +215,23 @@ public class ProcessCostEstimateTest {
     assertTrue(equipmentReport.contains("EQUIPMENT COST LIST"), "Should contain equipment cost list");
 
     logger.info(equipmentReport);
+  }
+
+  @Test
+  void testDetailedEstimateBasisAndProjectCostStack() {
+    ProcessCostEstimate costEst = process.getCostEstimate();
+    costEst.calculateAllCosts();
+
+    CostEstimateBasis basis = costEst.getEstimateBasis();
+    assertNotNull(basis, "Estimate basis should not be null");
+    assertTrue(basis.getEstimateClass() == EstimateClass.CLASS_4, "Default process estimate should be Class 4");
+
+    CostEstimateResult result = costEst.getDetailedEstimateResult();
+    assertNotNull(result, "Detailed estimate result should not be null");
+    assertTrue(result.getProjectCosts().get("totalProjectCost") > costEst.getTotalGrassRootsCost(),
+        "Total project cost should include owner cost and project contingency beyond grass-roots cost");
+    assertTrue(result.getMaterialTakeOff().size() > 0, "Process result should include equipment weight MTO lines");
+    assertTrue(costEst.toJson().contains("CLASS_4"), "JSON should state the estimate class");
   }
 
   @Test

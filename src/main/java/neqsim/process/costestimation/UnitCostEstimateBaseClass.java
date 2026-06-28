@@ -75,6 +75,9 @@ public class UnitCostEstimateBaseClass implements java.io.Serializable {
   /** Equipment type identifier. */
   protected String equipmentType = "general";
 
+  /** Estimate basis metadata. */
+  private CostEstimateBasis estimateBasis = new CostEstimateBasis();
+
   // ============================================================================
   // Constructors
   // ============================================================================
@@ -386,6 +389,10 @@ public class UnitCostEstimateBaseClass implements java.io.Serializable {
     index.put("currencyCode", getCostCalculator().getCurrencyCode());
     result.put("costIndex", index);
 
+    // Estimate basis and detailed result contract
+    result.put("estimateBasis", getEstimateBasis().toMap());
+    result.put("detailedEstimateResult", getDetailedEstimateResult().toMap());
+
     return result;
   }
 
@@ -466,6 +473,96 @@ public class UnitCostEstimateBaseClass implements java.io.Serializable {
    */
   public void setEquipmentType(String type) {
     this.equipmentType = type;
+  }
+
+  /**
+   * Gets the estimate basis metadata.
+   *
+   * @return estimate basis metadata
+   */
+  public CostEstimateBasis getEstimateBasis() {
+    estimateBasis.setCurrencyCode(getCostCalculator().getCurrencyCode())
+        .setLocationFactor(getCostCalculator().getLocationFactor());
+    return estimateBasis;
+  }
+
+  /**
+   * Sets the estimate basis metadata.
+   *
+   * @param estimateBasis estimate basis metadata; {@code null} resets to the default Class 4 basis
+   */
+  public void setEstimateBasis(CostEstimateBasis estimateBasis) {
+    this.estimateBasis = estimateBasis == null ? new CostEstimateBasis() : estimateBasis;
+  }
+
+  /**
+   * Gets the estimate class.
+   *
+   * @return estimate class
+   */
+  public EstimateClass getEstimateClass() {
+    return getEstimateBasis().getEstimateClass();
+  }
+
+  /**
+   * Sets the estimate class.
+   *
+   * @param estimateClass estimate class; {@code null} resets to Class 4
+   */
+  public void setEstimateClass(EstimateClass estimateClass) {
+    getEstimateBasis().setEstimateClass(estimateClass);
+  }
+
+  /**
+   * Builds the common detailed estimate result for this unit.
+   *
+   * @return detailed estimate result
+   */
+  public CostEstimateResult getDetailedEstimateResult() {
+    CostEstimateResult result = new CostEstimateResult();
+    String equipmentName = mechanicalEquipment != null && mechanicalEquipment.getProcessEquipment() != null
+        ? mechanicalEquipment.getProcessEquipment().getName()
+        : "";
+    result.setIdentification(equipmentName, equipmentName, getEquipmentType()).setBasis(getEstimateBasis())
+        .addCapitalCost("purchasedEquipmentCost", getPurchasedEquipmentCost())
+        .addCapitalCost("bareModuleCost", getBareModuleCost()).addCapitalCost("totalModuleCost", getTotalModuleCost())
+        .addCapitalCost("grassRootsCost", getGrassRootsCost())
+        .addProjectCost("annualOperatingCost", annualOperatingCost)
+        .addProjectCost("installationManHours", getInstallationManHours());
+
+    if (mechanicalEquipment != null) {
+      result.addWeightBasis("totalWeight", mechanicalEquipment.getWeightTotal())
+          .addWeightBasis("vesselShellWeight", mechanicalEquipment.getWeigthVesselShell())
+          .addWeightBasis("internalsWeight", mechanicalEquipment.getWeigthInternals())
+          .addWeightBasis("pipingWeight", mechanicalEquipment.getWeightPiping())
+          .addWeightBasis("electroInstrumentationWeight", mechanicalEquipment.getWeightElectroInstrument())
+          .addWeightBasis("structuralSteelWeight", mechanicalEquipment.getWeightStructualSteel());
+    }
+
+    for (Map<String, Object> item : generateBillOfMaterials()) {
+      String itemName = String.valueOf(item.get("item"));
+      String material = item.containsKey("material") ? String.valueOf(item.get("material")) : "";
+      double quantity = getNumber(item.get("weight_kg"));
+      double cost = getNumber(item.get("unit_cost_USD"));
+      result.addMaterialQuantity(itemName, material, quantity, "kg", cost);
+    }
+    if (result.getMaterialTakeOff().isEmpty()) {
+      result.addQualityFlag("No material take-off quantities were available from the mechanical design.");
+    }
+    return result;
+  }
+
+  /**
+   * Converts an object to a double if it is numeric.
+   *
+   * @param value the object value
+   * @return numeric value, or zero when not numeric
+   */
+  private double getNumber(Object value) {
+    if (value instanceof Number) {
+      return ((Number) value).doubleValue();
+    }
+    return 0.0;
   }
 
   /**

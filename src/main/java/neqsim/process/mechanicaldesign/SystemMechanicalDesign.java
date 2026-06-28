@@ -1049,6 +1049,11 @@ public class SystemMechanicalDesign implements java.io.Serializable {
     costSummary.put("installationManHours", costEst.getTotalInstallationManHours());
     combined.put("costSummary", costSummary);
 
+    // Estimate basis and project cost stack
+    combined.put("estimateBasis", costEst.getEstimateBasis().toMap());
+    combined.put("projectCostBreakdown_USD", costEst.getProjectCostBreakdown());
+    combined.put("detailedEstimateResult", costEst.getDetailedEstimateResult().toMap());
+
     // Breakdowns
     combined.put("weightByEquipmentType_kg", weightByEquipmentType);
     combined.put("weightByDiscipline_kg", weightByDiscipline);
