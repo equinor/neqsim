@@ -299,7 +299,8 @@ public final class HazopConsequenceAutoPopulator implements Serializable {
    * The flowsheet must already have been run (for example via {@code process.run()}) so the outlet streams carry solved
    * conditions. Units with no thermodynamically quantifiable scenario produce no finding here; their catalogue text is
    * still available through {@link #populate(HAZOPTemplate)}. Any read or calculation that fails degrades to a
-   * {@link Verdict#NOT_EVALUATED} finding rather than throwing, mirroring the tolerant flowsheet walk used elsewhere.
+   * {@link HazopConsequenceFinding.Verdict#NOT_EVALUATED} finding rather than throwing, mirroring the tolerant
+   * flowsheet walk used elsewhere.
    * </p>
    *
    * @param process the run flowsheet to evaluate (must not be null)
@@ -348,12 +349,13 @@ public final class HazopConsequenceAutoPopulator implements Serializable {
     Double outletC = outletTemperatureCelsius(unit);
     if (outletC == null) {
       return new HazopConsequenceFinding(nodeId, name, GuideWord.MORE, Parameter.TEMPERATURE, Double.NaN, Double.NaN,
-          "C", Verdict.NOT_EVALUATED, calculator, standard,
+          "C", HazopConsequenceFinding.Verdict.NOT_EVALUATED, calculator, standard,
           "Discharge temperature could not be read; ensure the flowsheet has been run.");
     }
     double limit = limits.maxDischargeTemperatureC(name);
     boolean exceeds = outletC.doubleValue() > limit;
-    Verdict verdict = exceeds ? Verdict.EXCEEDS : Verdict.PASS;
+    HazopConsequenceFinding.Verdict verdict = exceeds ? HazopConsequenceFinding.Verdict.EXCEEDS
+        : HazopConsequenceFinding.Verdict.PASS;
     String message = String.format(Locale.ROOT, "Discharge temperature %.1f C %s maximum allowable %.1f C.",
         outletC.doubleValue(), exceeds ? "EXCEEDS" : "within", limit);
     return new HazopConsequenceFinding(nodeId, name, GuideWord.MORE, Parameter.TEMPERATURE, outletC.doubleValue(),
@@ -376,12 +378,13 @@ public final class HazopConsequenceAutoPopulator implements Serializable {
     Double outletC = outletTemperatureCelsius(unit);
     if (outletC == null) {
       return new HazopConsequenceFinding(nodeId, name, GuideWord.LESS, Parameter.TEMPERATURE, Double.NaN, Double.NaN,
-          "C", Verdict.NOT_EVALUATED, calculator, standard,
+          "C", HazopConsequenceFinding.Verdict.NOT_EVALUATED, calculator, standard,
           "Outlet temperature could not be read; ensure the flowsheet has been run.");
     }
     double limit = limits.minDesignMetalTemperatureC(name);
     boolean exceeds = outletC.doubleValue() < limit;
-    Verdict verdict = exceeds ? Verdict.EXCEEDS : Verdict.PASS;
+    HazopConsequenceFinding.Verdict verdict = exceeds ? HazopConsequenceFinding.Verdict.EXCEEDS
+        : HazopConsequenceFinding.Verdict.PASS;
     String message = String.format(Locale.ROOT,
         "Auto-refrigeration outlet temperature %.1f C %s minimum design metal temperature %.1f C.",
         outletC.doubleValue(), exceeds ? "is BELOW" : "stays at or above", limit);
