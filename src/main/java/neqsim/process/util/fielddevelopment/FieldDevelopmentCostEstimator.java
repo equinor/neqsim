@@ -382,10 +382,13 @@ public class FieldDevelopmentCostEstimator implements Serializable {
       }
     }
 
-    // Add subsea costs if applicable
+    // Add DRILEX and SURF costs if applicable. The legacy subsea bucket remains the sum.
     if (includeSubseaCosts) {
-      double subseaCost = estimateSubseaCosts();
-      report.setSubseaCapex(subseaCost);
+      double surfCost = estimateSurfCosts();
+      double drilexCost = estimateDrilexCosts();
+      report.setSurfCapex(surfCost);
+      report.setDrilexCapex(drilexCost);
+      report.setSubseaCapex(surfCost + drilexCost);
     }
 
     // Calculate totals
@@ -501,35 +504,51 @@ public class FieldDevelopmentCostEstimator implements Serializable {
    * @return subsea CAPEX in USD
    */
   private double estimateSubseaCosts() {
-    double totalSubseaCost = 0.0;
+    return estimateSurfCosts() + estimateDrilexCosts();
+  }
+
+  /**
+   * Estimate SURF infrastructure costs.
+   *
+   * @return SURF CAPEX in USD
+   */
+  private double estimateSurfCosts() {
+    double totalSurfCost = 0.0;
 
     // Flowline cost per km (increases with water depth)
     double depthFactor = 1.0 + (waterDepth - 100.0) / 500.0;
     double flowlineCostPerKm = 2.5e6 * depthFactor; // Base $2.5M/km
-    totalSubseaCost += subseaTiebackLength * flowlineCostPerKm;
+    totalSurfCost += subseaTiebackLength * flowlineCostPerKm;
 
     // Umbilical cost
     double umbilicalCostPerKm = 1.5e6 * depthFactor;
-    totalSubseaCost += subseaTiebackLength * umbilicalCostPerKm;
+    totalSurfCost += subseaTiebackLength * umbilicalCostPerKm;
 
     // Subsea manifold (if tieback > 10km)
     if (subseaTiebackLength > 10.0) {
-      totalSubseaCost += 30.0e6 * depthFactor; // Manifold
+      totalSurfCost += 30.0e6 * depthFactor; // Manifold
     }
 
     // Riser system
     double riserCost = waterDepth * 50000.0; // ~$50k per meter depth
-    totalSubseaCost += riserCost;
-
-    // Well costs using WellCostEstimator
-    if (numberOfWells > 0 || numberOfProducers > 0 || numberOfInjectors > 0) {
-      totalSubseaCost += estimateWellCosts();
-    }
+    totalSurfCost += riserCost;
 
     // Apply location factor
-    totalSubseaCost *= locationFactor;
+    totalSurfCost *= locationFactor;
 
-    return totalSubseaCost;
+    return totalSurfCost;
+  }
+
+  /**
+   * Estimate drilling and completion expenditure (DRILEX) costs.
+   *
+   * @return DRILEX CAPEX in USD
+   */
+  private double estimateDrilexCosts() {
+    if (numberOfWells > 0 || numberOfProducers > 0 || numberOfInjectors > 0) {
+      return estimateWellCosts() * locationFactor;
+    }
+    return 0.0;
   }
 
   /**
@@ -654,6 +673,8 @@ public class FieldDevelopmentCostEstimator implements Serializable {
     private FidelityLevel fidelityLevel;
     private ConceptType conceptType;
     private double facilitiesCapex;
+    private double drilexCapex;
+    private double surfCapex;
     private double subseaCapex;
     private double totalCapex;
     private double totalWeight;
@@ -720,18 +741,54 @@ public class FieldDevelopmentCostEstimator implements Serializable {
     }
 
     /**
-     * Set subsea CAPEX.
+     * Set drilling and completion expenditure (DRILEX) CAPEX.
      *
-     * @param capex subsea CAPEX in USD
+     * @param capex DRILEX CAPEX in USD
+     */
+    public void setDrilexCapex(double capex) {
+      this.drilexCapex = capex;
+    }
+
+    /**
+     * Get drilling and completion expenditure (DRILEX) CAPEX.
+     *
+     * @return DRILEX CAPEX in USD
+     */
+    public double getDrilexCapex() {
+      return drilexCapex;
+    }
+
+    /**
+     * Set SURF CAPEX.
+     *
+     * @param capex SURF CAPEX in USD
+     */
+    public void setSurfCapex(double capex) {
+      this.surfCapex = capex;
+    }
+
+    /**
+     * Get SURF CAPEX.
+     *
+     * @return SURF CAPEX in USD
+     */
+    public double getSurfCapex() {
+      return surfCapex;
+    }
+
+    /**
+     * Set combined subsea CAPEX.
+     *
+     * @param capex combined SURF plus DRILEX CAPEX in USD
      */
     public void setSubseaCapex(double capex) {
       this.subseaCapex = capex;
     }
 
     /**
-     * Get subsea CAPEX.
+     * Get combined subsea CAPEX.
      *
-     * @return subsea CAPEX in USD
+     * @return combined SURF plus DRILEX CAPEX in USD
      */
     public double getSubseaCapex() {
       return subseaCapex;
@@ -867,6 +924,16 @@ public class FieldDevelopmentCostEstimator implements Serializable {
       }
       applyTopsidesPhysicalBasis();
 
+      if (drilexCapex > 0.0) {
+        costByCategory.put("DRILEX", drilexCapex);
+      }
+      if (surfCapex > 0.0) {
+        costByCategory.put("SURF", surfCapex);
+      }
+      if (subseaCapex <= 0.0 && (drilexCapex > 0.0 || surfCapex > 0.0)) {
+        subseaCapex = drilexCapex + surfCapex;
+      }
+
       totalCapex = facilitiesCapex + subseaCapex;
     }
 
@@ -934,6 +1001,8 @@ public class FieldDevelopmentCostEstimator implements Serializable {
       data.put("accuracyBand", String.format("±%.0f%%", accuracyBand * 100));
 
       Map<String, Object> capex = new LinkedHashMap<String, Object>();
+      capex.put("drilex_USD", drilexCapex);
+      capex.put("surf_USD", surfCapex);
       capex.put("facilities_USD", facilitiesCapex);
       capex.put("subsea_USD", subseaCapex);
       capex.put("total_USD", totalCapex);
@@ -981,8 +1050,14 @@ public class FieldDevelopmentCostEstimator implements Serializable {
       sb.append("## CAPEX Summary\n\n");
       sb.append("| Category | Cost (USD) | Cost (MUSD) |\n");
       sb.append("|----------|------------|-------------|\n");
+      if (drilexCapex > 0) {
+        sb.append(String.format("| DRILEX | $%,.0f | $%.1f M |\n", drilexCapex, drilexCapex / 1e6));
+      }
+      if (surfCapex > 0) {
+        sb.append(String.format("| SURF | $%,.0f | $%.1f M |\n", surfCapex, surfCapex / 1e6));
+      }
       sb.append(String.format("| Facilities | $%,.0f | $%.1f M |\n", facilitiesCapex, facilitiesCapex / 1e6));
-      if (subseaCapex > 0) {
+      if (subseaCapex > 0 && drilexCapex <= 0.0 && surfCapex <= 0.0) {
         sb.append(String.format("| Subsea | $%,.0f | $%.1f M |\n", subseaCapex, subseaCapex / 1e6));
       }
       sb.append(String.format("| **Total** | **$%,.0f** | **$%.1f M** |\n", totalCapex, totalCapex / 1e6));

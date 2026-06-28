@@ -140,4 +140,31 @@ class FieldDevelopmentCostEstimatorTest {
     assertEquals(directReport.getSubseaCapex(), comparisonReport.getSubseaCapex(),
         directReport.getSubseaCapex() * 1.0e-10, "Concept comparison should preserve well parameters in subsea CAPEX");
   }
+
+  /**
+   * Verifies that field-development reports expose the normal DRILEX, SURF and Facilities CAPEX split.
+   */
+  @Test
+  void testDevelopmentReportSplitsDrilexSurfAndFacilities() {
+    FieldDevelopmentCostEstimator estimator = new FieldDevelopmentCostEstimator(buildFacility());
+    estimator.setConceptType(ConceptType.SUBSEA_TIEBACK);
+    estimator.setSubseaParameters(25.0, 350.0);
+    estimator.setWellParameters(4, 1, 4200.0);
+
+    FieldDevelopmentCostReport report = estimator.estimateDevelopmentCosts();
+
+    assertTrue(report.getDrilexCapex() > 0.0, "DRILEX CAPEX should be positive for wells");
+    assertTrue(report.getSurfCapex() > 0.0, "SURF CAPEX should be positive for subsea tieback scope");
+    assertTrue(report.getFacilitiesCapex() > 0.0, "Facilities CAPEX should be positive for process scope");
+    assertEquals(report.getDrilexCapex() + report.getSurfCapex(), report.getSubseaCapex(),
+        report.getSubseaCapex() * 1.0e-10, "Legacy subsea CAPEX should remain DRILEX plus SURF");
+    assertEquals(report.getDrilexCapex() + report.getSurfCapex() + report.getFacilitiesCapex(), report.getTotalCapex(),
+        report.getTotalCapex() * 1.0e-10, "Total CAPEX should be DRILEX plus SURF plus Facilities");
+    assertTrue(report.toJson().contains("drilex_USD"), "JSON should expose DRILEX CAPEX");
+    assertTrue(report.toJson().contains("surf_USD"), "JSON should expose SURF CAPEX");
+    assertTrue(report.toJson().contains("facilities_USD"), "JSON should expose Facilities CAPEX");
+    assertTrue(report.toMarkdownTable().contains("| DRILEX |"), "Markdown should expose DRILEX CAPEX");
+    assertTrue(report.toMarkdownTable().contains("| SURF |"), "Markdown should expose SURF CAPEX");
+    assertTrue(report.toMarkdownTable().contains("| Facilities |"), "Markdown should expose Facilities CAPEX");
+  }
 }

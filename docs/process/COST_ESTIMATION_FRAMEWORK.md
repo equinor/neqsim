@@ -493,6 +493,37 @@ double grc = processCost.getGrassRootsCost();
 processCost.printCostSummary();
 ```
 
+### Field-Development Split: DRILEX, SURF, Facilities
+
+For field-development screening, wrap the process simulation in
+`FieldDevelopmentCostEstimator`. The report keeps the normal project split:
+
+- `getDrilexCapex()` - drilling and completion expenditure for producers and injectors
+- `getSurfCapex()` - subsea, umbilicals, risers, and flowlines
+- `getFacilitiesCapex()` - topsides or host-facility CAPEX from the process simulation
+
+The legacy `getSubseaCapex()` value remains available as `DRILEX + SURF` for
+older integrations.
+
+```java
+FieldDevelopmentCostEstimator estimator = new FieldDevelopmentCostEstimator(process);
+estimator.setConceptType(FieldDevelopmentCostEstimator.ConceptType.SUBSEA_TIEBACK);
+estimator.setFidelityLevel(FieldDevelopmentCostEstimator.FidelityLevel.PRE_FEED);
+estimator.setSubseaParameters(25.0, 350.0);     // tieback length [km], water depth [m]
+estimator.setWellParameters(4, 1, 4200.0);      // producers, injectors, average MD [m]
+
+FieldDevelopmentCostEstimator.FieldDevelopmentCostReport report = estimator.estimateDevelopmentCosts();
+
+double drilexUsd = report.getDrilexCapex();
+double surfUsd = report.getSurfCapex();
+double facilitiesUsd = report.getFacilitiesCapex();
+double totalUsd = report.getTotalCapex();
+```
+
+The report JSON writes these buckets as `drilex_USD`, `surf_USD`,
+`facilities_USD`, and `total_USD`. Use `subsea_USD` only as the compatibility
+subtotal for DRILEX plus SURF.
+
 ### Cost Breakdown by Category
 
 ```java
