@@ -4,8 +4,12 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import com.google.gson.GsonBuilder;
+import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.safety.hazid.HAZOPTemplate.GuideWord;
 import neqsim.process.safety.hazid.HAZOPTemplate.HAZOPDeviation;
 import neqsim.process.safety.hazid.HAZOPTemplate.Parameter;
@@ -273,5 +277,146 @@ public final class HazopConsequenceAutoPopulator implements Serializable {
    */
   public String catalogueToJson() {
     return new GsonBuilder().setPrettyPrinting().create().toJson(catalogue());
+  }
+
+  /**
+   * Quantify the simulation-backed HAZOP consequences of a live flowsheet into deterministic PASS / EXCEEDS findings.
+   *
+   * <p>
+   * Where {@link #populate(HAZOPTemplate)} only states which calculator applies, this method actually evaluates the
+   * consequences that depend on the thermodynamic engine and that can be read directly from the post-run stream state,
+   * then compares each computed value against a design limit from {@code limits}:
+   * </p>
+   *
+   * <ul>
+   * <li><b>Compressors and expanders</b> &mdash; MORE TEMPERATURE: the discharge temperature (the result of polytropic
+   * compression plus a flash) is compared against the maximum allowable discharge temperature.</li>
+   * <li><b>Valves</b> &mdash; LESS TEMPERATURE: the outlet temperature (the result of an isenthalpic Joule-Thomson
+   * flash) is compared against the minimum design metal temperature, screening for low-temperature embrittlement.</li>
+   * </ul>
+   *
+   * <p>
+   * The flowsheet must already have been run (for example via {@code process.run()}) so the outlet streams carry solved
+   * conditions. Units with no thermodynamically quantifiable scenario produce no finding here; their catalogue text is
+   * still available through {@link #populate(HAZOPTemplate)}. Any read or calculation that fails degrades to a
+   * {@link HazopConsequenceFinding.Verdict#NOT_EVALUATED} finding rather than throwing, mirroring the tolerant
+   * flowsheet walk used elsewhere.
+   * </p>
+   *
+   * @param process the run flowsheet to evaluate (must not be null)
+   * @param limits the design limits to compare computed consequences against; defaults are used when null
+   * @return one finding per quantifiable deviation, in flowsheet order (possibly empty)
+   * @throws IllegalArgumentException if {@code process} is null
+   */
+  public List<HazopConsequenceFinding> quantify(ProcessSystem process, HazopQuantificationLimits limits) {
+    if (process == null) {
+      throw new IllegalArgumentException("process must not be null");
+    }
+    HazopQuantificationLimits effective = limits != null ? limits : new HazopQuantificationLimits();
+    List<HazopConsequenceFinding> findings = new ArrayList<HazopConsequenceFinding>();
+    int index = 1;
+    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (unit == null) {
+        continue;
+      }
+      String name = unit.getName();
+      String type = unit.getClass().getSimpleName();
+      String nodeId = String.format(Locale.ROOT, "Node-%02d: %s (%s)", index, name, type);
+      String lower = type == null ? "" : type.toLowerCase(Locale.ROOT);
+      if (lower.contains("compressor") || lower.contains("expander")) {
+        findings.add(evaluateDischargeTemperature(nodeId, unit, name, effective));
+      } else if (lower.contains("valve")) {
+        findings.add(evaluateAutoRefrigeration(nodeId, unit, name, effective));
+      }
+      index++;
+    }
+    return findings;
+  }
+
+  /**
+   * Evaluate the MORE TEMPERATURE consequence for a compressor or expander: discharge over-temperature.
+   *
+   * @param nodeId the HAZOP node identifier
+   * @param unit the compressor or expander unit
+   * @param name the unit name
+   * @param limits the resolved design limits
+   * @return a discharge-temperature finding, or a NOT_EVALUATED finding if the temperature cannot be read
+   */
+  private HazopConsequenceFinding evaluateDischargeTemperature(String nodeId, ProcessEquipmentInterface unit,
+      String name, HazopQuantificationLimits limits) {
+    String calculator = "Discharge temperature (polytropic compression + flash)";
+    String standard = "API 617 / API 521";
+    Double outletC = outletTemperatureCelsius(unit);
+    if (outletC == null) {
+      return new HazopConsequenceFinding(nodeId, name, GuideWord.MORE, Parameter.TEMPERATURE, Double.NaN, Double.NaN,
+          "C", HazopConsequenceFinding.Verdict.NOT_EVALUATED, calculator, standard,
+          "Discharge temperature could not be read; ensure the flowsheet has been run.");
+    }
+    double limit = limits.maxDischargeTemperatureC(name);
+    boolean exceeds = outletC.doubleValue() > limit;
+    HazopConsequenceFinding.Verdict verdict = exceeds ? HazopConsequenceFinding.Verdict.EXCEEDS
+        : HazopConsequenceFinding.Verdict.PASS;
+    String message = String.format(Locale.ROOT, "Discharge temperature %.1f C %s maximum allowable %.1f C.",
+        outletC.doubleValue(), exceeds ? "EXCEEDS" : "within", limit);
+    return new HazopConsequenceFinding(nodeId, name, GuideWord.MORE, Parameter.TEMPERATURE, outletC.doubleValue(),
+        limit, "C", verdict, calculator, standard, message);
+  }
+
+  /**
+   * Evaluate the LESS TEMPERATURE consequence for a valve: Joule-Thomson auto-refrigeration below the MDMT.
+   *
+   * @param nodeId the HAZOP node identifier
+   * @param unit the valve unit
+   * @param name the unit name
+   * @param limits the resolved design limits
+   * @return an auto-refrigeration finding, or a NOT_EVALUATED finding if the temperature cannot be read
+   */
+  private HazopConsequenceFinding evaluateAutoRefrigeration(String nodeId, ProcessEquipmentInterface unit, String name,
+      HazopQuantificationLimits limits) {
+    String calculator = "Outlet temperature (isenthalpic Joule-Thomson flash)";
+    String standard = "ASME UCS-66 / API 521";
+    Double outletC = outletTemperatureCelsius(unit);
+    if (outletC == null) {
+      return new HazopConsequenceFinding(nodeId, name, GuideWord.LESS, Parameter.TEMPERATURE, Double.NaN, Double.NaN,
+          "C", HazopConsequenceFinding.Verdict.NOT_EVALUATED, calculator, standard,
+          "Outlet temperature could not be read; ensure the flowsheet has been run.");
+    }
+    double limit = limits.minDesignMetalTemperatureC(name);
+    boolean exceeds = outletC.doubleValue() < limit;
+    HazopConsequenceFinding.Verdict verdict = exceeds ? HazopConsequenceFinding.Verdict.EXCEEDS
+        : HazopConsequenceFinding.Verdict.PASS;
+    String message = String.format(Locale.ROOT,
+        "Auto-refrigeration outlet temperature %.1f C %s minimum design metal temperature %.1f C.",
+        outletC.doubleValue(), exceeds ? "is BELOW" : "stays at or above", limit);
+    return new HazopConsequenceFinding(nodeId, name, GuideWord.LESS, Parameter.TEMPERATURE, outletC.doubleValue(),
+        limit, "C", verdict, calculator, standard, message);
+  }
+
+  /**
+   * Read the temperature of a unit's first outlet stream in degrees Celsius, tolerating equipment that throws.
+   *
+   * @param unit the unit operation
+   * @return the outlet temperature in degrees Celsius, or null if no outlet stream is available or the read fails
+   */
+  private Double outletTemperatureCelsius(ProcessEquipmentInterface unit) {
+    try {
+      List<StreamInterface> outlets = unit.getOutletStreams();
+      if (outlets == null) {
+        return null;
+      }
+      for (StreamInterface stream : outlets) {
+        if (stream == null) {
+          continue;
+        }
+        double temperature = stream.getTemperature("C");
+        if (Double.isNaN(temperature)) {
+          continue;
+        }
+        return Double.valueOf(temperature);
+      }
+      return null;
+    } catch (RuntimeException ex) {
+      return null;
+    }
   }
 }
