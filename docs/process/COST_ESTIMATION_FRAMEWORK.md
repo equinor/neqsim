@@ -715,7 +715,7 @@ tankCost.setTankVolume(50000.0);  // 50,000 m³
 tankCost.setIncludeFoundation(true);
 tankCost.calculateCostEstimate();
 
-System.out.println("Tank Cost: $" + 
+System.out.println("Tank Cost: $" +
     String.format("%,.0f", tankCost.getPurchasedEquipmentCost()));
 ```
 
@@ -746,21 +746,21 @@ Map<String, Object> data = processCost.toMap();
 package neqsim.process.costestimation.myequipment;
 
 public class MyEquipmentCostEstimate extends UnitCostEstimateBaseClass {
-    
+
     public MyEquipmentCostEstimate(MechanicalDesign mechanicalEquipment) {
         super(mechanicalEquipment);
         setEquipmentType("myequipment");
     }
-    
+
     @Override
     protected double calcPurchasedEquipmentCost() {
         // Implement cost correlation
         double size = getEquipmentSize();
         double baseCost = correlationFunction(size);
-        return baseCost * getMaterialFactor() * 
+        return baseCost * getMaterialFactor() *
                (getCostCalculator().getCurrentCepci() / 607.5);
     }
-    
+
     @Override
     public Map<String, Object> getCostBreakdown() {
         Map<String, Object> breakdown = new LinkedHashMap<>();
