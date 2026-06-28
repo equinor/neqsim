@@ -168,8 +168,11 @@ class SURFCostEstimatorTest {
     CostEstimateResult result = est.getDetailedEstimateResult();
 
     assertEquals(EstimateClass.CLASS_4, result.getBasis().getEstimateClass());
-    assertTrue(result.getCapitalCosts().get("totalSURF") > 0.0, "Total SURF cost should be in capital costs");
-    assertTrue(result.getProjectCosts().get("totalVesselDays") > 0.0, "Vessel days should be in project costs");
+    assertTrue(result.getCapitalCostSummary().get("totalSURF") > 0.0,
+        "Total SURF cost should be in capital cost summary");
+    assertTrue(result.getQuantityBasis().get("totalVesselDays") > 0.0, "Vessel days should be in quantity basis");
+    assertTrue(!result.getProjectCosts().containsKey("totalVesselDays"),
+        "Project cost map should not contain non-USD vessel-day quantities");
     assertTrue(result.getMaterialTakeOff().size() > est.getLineItems().size(),
         "Detailed result should decompose rigid pipeline line items");
 

@@ -231,8 +231,12 @@ public class ProcessCostEstimateTest {
 
     CostEstimateResult result = costEst.getDetailedEstimateResult();
     assertNotNull(result, "Detailed estimate result should not be null");
-    assertTrue(result.getProjectCosts().get("totalProjectCost") > costEst.getTotalGrassRootsCost(),
+    assertTrue(result.getProjectCostSummary().get("totalProjectCost") > costEst.getTotalGrassRootsCost(),
         "Total project cost should include owner cost and project contingency beyond grass-roots cost");
+    assertTrue(result.getQuantityBasis().get("totalInstallationManHours") == costEst.getTotalInstallationManHours(),
+        "Installation man-hours should be exposed as a non-cost quantity basis");
+    assertTrue(!result.getProjectCosts().containsKey("totalInstallationManHours"),
+        "Project cost map should not contain non-USD man-hour quantities");
     assertTrue(result.getMaterialTakeOff().size() > 0, "Process result should include equipment weight MTO lines");
     assertTrue(costEst.toJson().contains("CLASS_4"), "JSON should state the estimate class");
   }
@@ -269,6 +273,10 @@ public class ProcessCostEstimateTest {
     assertEquals(costEst.getTotalPurchasedEquipmentCost(), equipmentTypeTotal,
         costEst.getTotalPurchasedEquipmentCost() * 1.0e-10,
         "Located equipment-type PEC should reconcile with located total PEC");
+    assertTrue(costEst.toJson().contains("basePurchasedEquipmentCost_USD"),
+        "JSON equipment rows should expose unlocated base costs separately");
+    assertTrue(costEst.toJson().contains("locationFactor"),
+        "JSON equipment rows should expose the line-item location factor");
   }
 
   /**

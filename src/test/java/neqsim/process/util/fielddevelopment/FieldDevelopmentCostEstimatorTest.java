@@ -80,9 +80,9 @@ class FieldDevelopmentCostEstimatorTest {
     CostEstimateResult topsides = report.getTopsidesDetailedEstimateResult();
 
     assertNotNull(topsides, "Detailed topsides estimate should be available");
-    assertTrue(topsides.getProjectCosts().get("totalTopsidesCapex") > 0.0,
+    assertTrue(topsides.getProjectCostSummary().get("totalTopsidesCapex") > 0.0,
         "Detailed topsides CAPEX should be positive");
-    assertTrue(report.getFacilitiesCapex() == topsides.getProjectCosts().get("totalTopsidesCapex"),
+    assertTrue(report.getFacilitiesCapex() == topsides.getProjectCostSummary().get("totalTopsidesCapex"),
         "Facilities CAPEX should be driven by detailed topsides total");
     assertTrue(report.toJson().contains("topsidesDetailedEstimateResult"),
         "JSON should expose detailed topsides estimate");
@@ -111,6 +111,8 @@ class FieldDevelopmentCostEstimatorTest {
       assertTrue(!category.startsWith("topsides.module."),
           "Top-level category breakdown should not expose additive topsides module detail lines");
     }
+    assertTrue(!report.getCostByCategory().containsKey("topsides.directFieldCost"),
+        "Top-level category breakdown should not expose topsides subtotal rows");
     assertTrue(report.getEquipmentCostByCategory().containsKey("Separator"),
         "Equipment-only category breakdown should remain available separately");
     assertTrue(report.toJson().contains("equipmentCostByCategory"),

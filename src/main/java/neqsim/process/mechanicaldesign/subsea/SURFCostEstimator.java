@@ -678,9 +678,8 @@ public class SURFCostEstimator {
     CostEstimateResult result = new CostEstimateResult().setIdentification("SURF", "SURF", "subsea-surf")
         .setBasis(getEstimateBasis()).addCapitalCost("subseaInfrastructure", subseaCostUSD)
         .addCapitalCost("umbilicals", umbilicalCostUSD).addCapitalCost("risers", riserCostUSD)
-      .addCapitalCost("flowlinesAndPipelines", flowlineCostUSD)
-      .addCapitalCostSummary("totalSURF", totalSURFCostUSD)
-      .addQuantityBasis("totalVesselDays", getTotalVesselDays(), "vessel-day");
+        .addCapitalCost("flowlinesAndPipelines", flowlineCostUSD).addCapitalCostSummary("totalSURF", totalSURFCostUSD)
+        .addQuantityBasis("totalVesselDays", getTotalVesselDays(), "vessel-day");
 
     for (Map<String, Object> item : lineItems) {
       addLineItemToDetailedResult(result, item);

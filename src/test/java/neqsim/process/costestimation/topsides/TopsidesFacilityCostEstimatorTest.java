@@ -80,13 +80,21 @@ class TopsidesFacilityCostEstimatorTest {
 
     CostEstimateResult result = estimator.estimate();
     Map<String, Double> capitalCosts = result.getCapitalCosts();
+    Map<String, Double> capitalCostBreakdown = result.getCapitalCostBreakdown();
+    Map<String, Double> capitalCostSummary = result.getCapitalCostSummary();
     Map<String, Double> projectCosts = result.getProjectCosts();
+    Map<String, Double> projectCostSummary = result.getProjectCostSummary();
 
     assertTrue(capitalCosts.get("processEquipmentModules") > 0.0, "Process module cost should be positive");
     assertTrue(capitalCosts.get("structuralSteel") > 0.0, "Structural steel cost should be positive");
     assertTrue(capitalCosts.get("pipingBulk") > 0.0, "Piping bulk cost should be positive");
-    assertTrue(projectCosts.get("totalTopsidesCapex") > capitalCosts.get("directFieldCost"),
+    assertTrue(projectCostSummary.get("totalTopsidesCapex") > capitalCostSummary.get("directFieldCost"),
         "Total topsides CAPEX should include project costs beyond direct field cost");
+    assertTrue(projectCosts.get("engineeringProcurementProjectManagement") > 0.0,
+        "Project cost map should keep additive monetary project costs");
+    assertTrue(!capitalCosts.containsKey("directFieldCost"), "Capital-cost map should not contain subtotal rows");
+    assertTrue(capitalCostBreakdown.containsKey("module.separationAndTreatmentModules"),
+        "Module detail should be reported as supplementary breakdown");
     assertTrue(result.getMaterialTakeOff().size() >= 4, "Result should include equipment and bulk MTO lines");
     assertTrue(result.toJson().contains("module.separationAndTreatmentModules"),
         "JSON should include module-level cost lines");

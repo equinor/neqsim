@@ -10,9 +10,9 @@ import com.google.gson.GsonBuilder;
  * Detailed, report-ready cost estimate result for one unit or a whole process.
  *
  * <p>
- * The result carries a common capital-cost stack, estimate basis, material take-off quantities, and
- * quality flags. It is intentionally lightweight so existing equipment-specific estimators can
- * populate it without changing their sizing correlations.
+ * The result carries a common capital-cost stack, estimate basis, material take-off quantities, and quality flags. It
+ * is intentionally lightweight so existing equipment-specific estimators can populate it without changing their sizing
+ * correlations.
  * </p>
  *
  * @author esol
@@ -45,8 +45,7 @@ public class CostEstimateResult implements java.io.Serializable {
    * @param equipmentType equipment or process type
    * @return this result for chaining
    */
-  public CostEstimateResult setIdentification(String estimateId, String equipmentName,
-      String equipmentType) {
+  public CostEstimateResult setIdentification(String estimateId, String equipmentName, String equipmentType) {
     this.estimateId = estimateId == null ? "" : estimateId;
     this.equipmentName = equipmentName == null ? "" : equipmentName;
     this.equipmentType = equipmentType == null ? "" : equipmentType;
@@ -183,11 +182,11 @@ public class CostEstimateResult implements java.io.Serializable {
    * @param costUSD estimated cost in USD
    * @return this result for chaining
    */
-  public CostEstimateResult addMaterialQuantity(String item, String material, double quantity,
-      String unit, double costUSD) {
+  public CostEstimateResult addMaterialQuantity(String item, String material, double quantity, String unit,
+      double costUSD) {
     double weightKg = "kg".equalsIgnoreCase(unit) ? quantity : Double.NaN;
-    materialTakeOff.add(new MaterialTakeOffItem(item, "bulk", material, quantity, unit, weightKg,
-        costUSD, "mechanical-design"));
+    materialTakeOff
+        .add(new MaterialTakeOffItem(item, "bulk", material, quantity, unit, weightKg, costUSD, "mechanical-design"));
     return this;
   }
 
@@ -348,7 +347,6 @@ public class CostEstimateResult implements java.io.Serializable {
    * @return pretty-printed JSON string
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 }

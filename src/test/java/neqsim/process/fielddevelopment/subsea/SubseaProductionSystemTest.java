@@ -148,16 +148,19 @@ public class SubseaProductionSystemTest {
     CostEstimateResult surfResult = result.getSurfDetailedEstimateResult();
     assertNotNull(surfResult, "Detailed SURF estimate should be exposed on the system result");
     assertEquals(EstimateClass.CLASS_4, surfResult.getBasis().getEstimateClass());
-    assertEquals(result.getTotalSubseaCapexMusd() * 1.0e6, surfResult.getCapitalCosts().get("totalSURF"), 5.0e6);
+    assertEquals(result.getTotalSubseaCapexMusd() * 1.0e6, surfResult.getCapitalCostSummary().get("totalSURF"), 5.0e6);
     assertFalse(surfResult.getMaterialTakeOff().isEmpty(), "Detailed SURF estimate should include MTO lines");
 
     CostEstimateResult developmentResult = result.getDetailedDevelopmentEstimateResult();
     assertNotNull(developmentResult, "Detailed development estimate should be available");
     assertEquals(EstimateClass.CLASS_4, developmentResult.getBasis().getEstimateClass());
     assertEquals(result.getTotalDevelopmentCapexMusd() * 1.0e6,
-        developmentResult.getCapitalCosts().get("totalDevelopment"), 5.0e6);
+        developmentResult.getCapitalCostSummary().get("totalDevelopment"), 5.0e6);
     assertEquals(result.getWellCostMusd() * 1.0e6, developmentResult.getCapitalCosts().get("wells"), 1.0e6);
-    assertEquals(result.getTotalSubseaCapexMusd() * 1.0e6, developmentResult.getCapitalCosts().get("totalSURF"), 5.0e6);
+    assertEquals(result.getTotalSubseaCapexMusd() * 1.0e6, developmentResult.getCapitalCostSummary().get("totalSURF"),
+        5.0e6);
+    assertFalse(developmentResult.getCapitalCosts().containsKey("totalDevelopment"),
+        "Development totals should not be in additive capital costs");
     assertTrue(developmentResult.getMaterialTakeOff().size() >= surfResult.getMaterialTakeOff().size() + 2,
         "Development estimate should include reservoir, well and SURF MTO lines");
 
@@ -235,7 +238,7 @@ public class SubseaProductionSystemTest {
     CostEstimateResult dryDevelopmentResult = dry.getResult().getDetailedDevelopmentEstimateResult();
     assertEquals(EstimateClass.CLASS_4, dryDevelopmentResult.getBasis().getEstimateClass());
     assertEquals(dry.getResult().getTotalDevelopmentCapexMusd() * 1.0e6,
-        dryDevelopmentResult.getCapitalCosts().get("totalDevelopment"), 1.0e6);
+        dryDevelopmentResult.getCapitalCostSummary().get("totalDevelopment"), 1.0e6);
     assertTrue(dryDevelopmentResult.toJson().contains("No detailed SURF estimate"));
   }
 
