@@ -16,10 +16,10 @@ import neqsim.process.processmodel.ProcessSystem;
  * Offshore topsides facility cost estimator built on the standard NeqSim process cost rollup.
  *
  * <p>
- * The estimator keeps the existing equipment-specific correlations unchanged and adds a facility layer for topsides
- * modules, bulk materials, module integration, offshore installation, hook-up, commissioning, project costs, and scope
- * quality flags. The result is intended for Class 5 to Class 3 study and pre-FEED work unless replaced by vendor quotes
- * and detailed material take-off.
+ * The estimator keeps the existing equipment-specific correlations unchanged and adds a facility
+ * layer for topsides modules, bulk materials, module integration, offshore installation, hook-up,
+ * commissioning, project costs, and scope quality flags. The result is intended for Class 5 to
+ * Class 3 study and pre-FEED work unless replaced by vendor quotes and detailed material take-off.
  * </p>
  *
  * @author esol
@@ -63,8 +63,8 @@ public class TopsidesFacilityCostEstimator implements java.io.Serializable {
      * @param structuralWeightFactor structural steel weight fraction of equipment dry weight
      * @param utilityOffsiteFactor utility and offsite allowance fraction of process module cost
      */
-    FacilityType(String displayName, double moduleIntegrationFactor, double installationFactor, double hookUpFactor,
-        double structuralWeightFactor, double utilityOffsiteFactor) {
+    FacilityType(String displayName, double moduleIntegrationFactor, double installationFactor,
+        double hookUpFactor, double structuralWeightFactor, double utilityOffsiteFactor) {
       this.displayName = displayName;
       this.moduleIntegrationFactor = moduleIntegrationFactor;
       this.installationFactor = installationFactor;
@@ -176,8 +176,9 @@ public class TopsidesFacilityCostEstimator implements java.io.Serializable {
   private ProcessCostEstimate processCostEstimate;
   private FacilityType facilityType = FacilityType.FIXED_PLATFORM;
   private ProjectContext projectContext = ProjectContext.GREENFIELD;
-  private CostEstimateBasis estimateBasis = new CostEstimateBasis().setDataSource("topsides-factored-mto")
-      .setNotes("Topsides facility estimate derived from NeqSim equipment costs plus module and bulk allowances.");
+  private CostEstimateBasis estimateBasis =
+      new CostEstimateBasis().setDataSource("topsides-factored-mto").setNotes(
+          "Topsides facility estimate derived from NeqSim equipment costs plus module and bulk allowances.");
   private double pipingBulkFactor = 0.25;
   private double electricalInstrumentationFactor = 0.16;
   private double insulationPaintFireproofingFactor = 0.06;
@@ -191,8 +192,7 @@ public class TopsidesFacilityCostEstimator implements java.io.Serializable {
   /**
    * Creates an empty topsides estimator.
    */
-  public TopsidesFacilityCostEstimator() {
-  }
+  public TopsidesFacilityCostEstimator() {}
 
   /**
    * Creates a topsides estimator for a process system.
@@ -229,7 +229,8 @@ public class TopsidesFacilityCostEstimator implements java.io.Serializable {
    * @param processCostEstimate process cost estimate
    * @return this estimator for chaining
    */
-  public TopsidesFacilityCostEstimator setProcessCostEstimate(ProcessCostEstimate processCostEstimate) {
+  public TopsidesFacilityCostEstimator setProcessCostEstimate(
+      ProcessCostEstimate processCostEstimate) {
     this.processCostEstimate = processCostEstimate;
     return this;
   }
@@ -334,10 +335,12 @@ public class TopsidesFacilityCostEstimator implements java.io.Serializable {
   /**
    * Sets the electrical and instrumentation allowance factor.
    *
-   * @param electricalInstrumentationFactor electrical and instrumentation fraction of process module cost
+   * @param electricalInstrumentationFactor electrical and instrumentation fraction of process
+   *        module cost
    * @return this estimator for chaining
    */
-  public TopsidesFacilityCostEstimator setElectricalInstrumentationFactor(double electricalInstrumentationFactor) {
+  public TopsidesFacilityCostEstimator setElectricalInstrumentationFactor(
+      double electricalInstrumentationFactor) {
     this.electricalInstrumentationFactor = clampNonNegative(electricalInstrumentationFactor);
     return this;
   }
@@ -348,7 +351,8 @@ public class TopsidesFacilityCostEstimator implements java.io.Serializable {
    * @param includeUtilitiesAndOffsites true to include utility and offsite allowances
    * @return this estimator for chaining
    */
-  public TopsidesFacilityCostEstimator setIncludeUtilitiesAndOffsites(boolean includeUtilitiesAndOffsites) {
+  public TopsidesFacilityCostEstimator setIncludeUtilitiesAndOffsites(
+      boolean includeUtilitiesAndOffsites) {
     this.includeUtilitiesAndOffsites = includeUtilitiesAndOffsites;
     return this;
   }
@@ -361,11 +365,12 @@ public class TopsidesFacilityCostEstimator implements java.io.Serializable {
   public CostEstimateResult estimate() {
     ProcessCostEstimate processCost = resolveProcessCostEstimate();
     String name = resolveEstimateName(processCost);
-    CostEstimateResult result = new CostEstimateResult().setIdentification(name, name, "TopsidesFacility")
-        .setBasis(estimateBasis);
+    CostEstimateResult result = new CostEstimateResult()
+        .setIdentification(name, name, "TopsidesFacility").setBasis(estimateBasis);
 
     if (processCost == null) {
-      result.addQualityFlag("No ProcessSystem or ProcessCostEstimate was supplied for topsides costing.");
+      result.addQualityFlag(
+          "No ProcessSystem or ProcessCostEstimate was supplied for topsides costing.");
       return result;
     }
 
@@ -376,7 +381,8 @@ public class TopsidesFacilityCostEstimator implements java.io.Serializable {
     }
 
     if (equipment.isEmpty()) {
-      result.addQualityFlag("No equipment cost summaries were available after process cost calculation.");
+      result.addQualityFlag(
+          "No equipment cost summaries were available after process cost calculation.");
       return result;
     }
 
@@ -388,7 +394,8 @@ public class TopsidesFacilityCostEstimator implements java.io.Serializable {
     for (EquipmentCostSummary summary : equipment) {
       if (isExcludedFromTopsides(summary)) {
         excludedScopeCost += summary.getTotalModuleCost();
-        result.addQualityFlag("Excluded non-topsides item from topsides module build-up: " + summary.getName());
+        result.addQualityFlag(
+            "Excluded non-topsides item from topsides module build-up: " + summary.getName());
         continue;
       }
 
@@ -398,8 +405,9 @@ public class TopsidesFacilityCostEstimator implements java.io.Serializable {
       processModuleCost += locatedCost;
       equipmentWeight += Math.max(summary.getWeight(), 0.0);
 
-      result.addMaterialTakeOff(new MaterialTakeOffItem(summary.getName(), "equipment", summary.getType(),
-          summary.getWeight(), "kg", summary.getWeight(), locatedCost, "process-cost-estimate"));
+      result.addMaterialTakeOff(new MaterialTakeOffItem(summary.getName(), "equipment",
+          summary.getType(), summary.getWeight(), "kg", summary.getWeight(), locatedCost,
+          "process-cost-estimate"));
 
       if (summary.getWeight() <= 0.0 && summary.getTotalModuleCost() > 0.0) {
         result.addQualityFlag("Equipment cost has no positive weight basis: " + summary.getName());
@@ -415,8 +423,9 @@ public class TopsidesFacilityCostEstimator implements java.io.Serializable {
     double electricalInstrumentationCost = processModuleCost * electricalInstrumentationFactor;
     double insulationPaintFireproofingCost = processModuleCost * insulationPaintFireproofingFactor;
     double hvacTelecomSafetyCost = processModuleCost * hvacTelecomSafetyFactor;
-    double utilityOffsiteCost = includeUtilitiesAndOffsites ? processModuleCost * facilityType.getUtilityOffsiteFactor()
-        : 0.0;
+    double utilityOffsiteCost =
+        includeUtilitiesAndOffsites ? processModuleCost * facilityType.getUtilityOffsiteFactor()
+            : 0.0;
     double moduleIntegrationCost = processModuleCost * facilityType.getModuleIntegrationFactor();
     double bulkMaterialsCost = structuralSteelCost + pipingBulkCost + electricalInstrumentationCost
         + insulationPaintFireproofingCost + hvacTelecomSafetyCost + utilityOffsiteCost;
@@ -425,16 +434,18 @@ public class TopsidesFacilityCostEstimator implements java.io.Serializable {
         * projectContext.getCongestionFactor();
     double hookUpCommissioningCost = directFabricatedCost * facilityType.getHookUpFactor()
         * projectContext.getCongestionFactor();
-    double directFieldCost = directFabricatedCost + offshoreInstallationCost + hookUpCommissioningCost;
+    double directFieldCost =
+        directFabricatedCost + offshoreInstallationCost + hookUpCommissioningCost;
     double engineeringProcurementCost = directFieldCost * engineeringProcurementFactor;
     double constructionManagementCost = directFieldCost * constructionManagementFactor;
     double contingencyCost = directFieldCost * projectContingencyFactor;
     double ownerCost = directFieldCost * ownerCostFactor;
-    double totalTopsidesCapex = directFieldCost + engineeringProcurementCost + constructionManagementCost
-        + contingencyCost + ownerCost;
+    double totalTopsidesCapex = directFieldCost + engineeringProcurementCost
+        + constructionManagementCost + contingencyCost + ownerCost;
 
     result.addCapitalCost("processEquipmentModules", processModuleCost)
-        .addCapitalCost("structuralSteel", structuralSteelCost).addCapitalCost("pipingBulk", pipingBulkCost)
+        .addCapitalCost("structuralSteel", structuralSteelCost)
+        .addCapitalCost("pipingBulk", pipingBulkCost)
         .addCapitalCost("electricalAndInstrumentation", electricalInstrumentationCost)
         .addCapitalCost("insulationPaintFireproofing", insulationPaintFireproofingCost)
         .addCapitalCost("hvacTelecomAndSafetySystems", hvacTelecomSafetyCost)
@@ -442,26 +453,31 @@ public class TopsidesFacilityCostEstimator implements java.io.Serializable {
         .addCapitalCost("moduleFabricationAndIntegration", moduleIntegrationCost)
         .addCapitalCost("offshoreInstallation", offshoreInstallationCost)
         .addCapitalCost("hookUpAndCommissioning", hookUpCommissioningCost)
-        .addCapitalCost("directFieldCost", directFieldCost)
-        .addCapitalCost("excludedNonTopsidesScope", excludedScopeCost * estimateBasis.getLocationFactor());
+        .addCapitalCostSummary("directFieldCost", directFieldCost).addCapitalCostSummary(
+            "excludedNonTopsidesScope", excludedScopeCost * estimateBasis.getLocationFactor());
 
     result.addProjectCost("engineeringProcurementProjectManagement", engineeringProcurementCost)
         .addProjectCost("constructionManagement", constructionManagementCost)
-        .addProjectCost("projectContingency", contingencyCost).addProjectCost("ownerCost", ownerCost)
-        .addProjectCost("totalTopsidesCapex", totalTopsidesCapex);
+        .addProjectCost("projectContingency", contingencyCost)
+        .addProjectCost("ownerCost", ownerCost)
+        .addProjectCostSummary("totalTopsidesCapex", totalTopsidesCapex);
 
     result.addWeightBasis("equipmentDryWeight", equipmentWeight)
-        .addWeightBasis("structuralSteelWeight", structuralWeight).addWeightBasis("pipingBulkWeight", pipingWeight)
-        .addWeightBasis("totalEstimatedDryWeight", equipmentWeight + structuralWeight + pipingWeight);
-    result.addMaterialTakeOff(new MaterialTakeOffItem("Structural steel allowance", "structural", "Carbon Steel",
-        structuralWeight, "kg", structuralWeight, structuralSteelCost, "topsides-allowance"));
-    result.addMaterialTakeOff(new MaterialTakeOffItem("Piping bulk allowance", "piping", "Mixed piping classes",
-        pipingWeight, "kg", pipingWeight, pipingBulkCost, "topsides-allowance"));
+        .addWeightBasis("structuralSteelWeight", structuralWeight)
+        .addWeightBasis("pipingBulkWeight", pipingWeight).addWeightBasis("totalEstimatedDryWeight",
+            equipmentWeight + structuralWeight + pipingWeight);
     result.addMaterialTakeOff(
-        new MaterialTakeOffItem("Electrical and instrumentation allowance", "electrical", "Cable, trays, instruments",
-            1.0, "allowance", Double.NaN, electricalInstrumentationCost, "topsides-allowance"));
-    result.addMaterialTakeOff(new MaterialTakeOffItem("HVAC, telecom, fire and gas allowance", "safety-systems",
-        "Package allowance", 1.0, "allowance", Double.NaN, hvacTelecomSafetyCost, "topsides-allowance"));
+        new MaterialTakeOffItem("Structural steel allowance", "structural", "Carbon Steel",
+            structuralWeight, "kg", structuralWeight, structuralSteelCost, "topsides-allowance"));
+    result.addMaterialTakeOff(
+        new MaterialTakeOffItem("Piping bulk allowance", "piping", "Mixed piping classes",
+            pipingWeight, "kg", pipingWeight, pipingBulkCost, "topsides-allowance"));
+    result.addMaterialTakeOff(new MaterialTakeOffItem("Electrical and instrumentation allowance",
+        "electrical", "Cable, trays, instruments", 1.0, "allowance", Double.NaN,
+        electricalInstrumentationCost, "topsides-allowance"));
+    result.addMaterialTakeOff(new MaterialTakeOffItem("HVAC, telecom, fire and gas allowance",
+        "safety-systems", "Package allowance", 1.0, "allowance", Double.NaN, hvacTelecomSafetyCost,
+        "topsides-allowance"));
 
     addScopeQualityFlags(result, processModuleCost, equipmentWeight);
     return result;
@@ -492,7 +508,8 @@ public class TopsidesFacilityCostEstimator implements java.io.Serializable {
    * @return estimate name
    */
   private String resolveEstimateName(ProcessCostEstimate processCost) {
-    if (processSystem != null && processSystem.getName() != null && !processSystem.getName().trim().isEmpty()) {
+    if (processSystem != null && processSystem.getName() != null
+        && !processSystem.getName().trim().isEmpty()) {
       return processSystem.getName() + " Topsides";
     }
     if (processCost != null) {
@@ -509,7 +526,7 @@ public class TopsidesFacilityCostEstimator implements java.io.Serializable {
    */
   private void addModuleCapitalCosts(CostEstimateResult result, Map<String, Double> moduleCosts) {
     for (Map.Entry<String, Double> entry : moduleCosts.entrySet()) {
-      result.addCapitalCost("module." + normalizeKey(entry.getKey()), entry.getValue());
+      result.addCapitalCostBreakdown("module." + normalizeKey(entry.getKey()), entry.getValue());
     }
   }
 
@@ -520,25 +537,29 @@ public class TopsidesFacilityCostEstimator implements java.io.Serializable {
    * @param processModuleCost process module cost in USD
    * @param equipmentWeight equipment dry weight in kg
    */
-  private void addScopeQualityFlags(CostEstimateResult result, double processModuleCost, double equipmentWeight) {
+  private void addScopeQualityFlags(CostEstimateResult result, double processModuleCost,
+      double equipmentWeight) {
     result.addQualityFlag("Facility type factor set: " + facilityType.getDisplayName());
     result.addQualityFlag("Project context factor set: " + projectContext.getDisplayName());
     if (processModuleCost <= 0.0) {
       result.addQualityFlag("No positive topsides process module cost was calculated.");
     }
     if (equipmentWeight <= 0.0) {
-      result.addQualityFlag("No positive equipment dry weight was available; bulk MTO weights are allowance based.");
+      result.addQualityFlag(
+          "No positive equipment dry weight was available; bulk MTO weights are allowance based.");
     }
     if (includeUtilitiesAndOffsites) {
-      result
-          .addQualityFlag("Utilities and offsites are factor allowances unless explicit utility modules are included.");
+      result.addQualityFlag(
+          "Utilities and offsites are factor allowances unless explicit utility modules are included.");
     }
     if (!ProjectContext.GREENFIELD.equals(projectContext)) {
       result.addQualityFlag(
           "Brownfield or host tie-in congestion factor applied; verify with site-specific survey data.");
     }
-    if (estimateBasis.getEstimateClass().getClassNumber() > EstimateClass.CLASS_3.getClassNumber()) {
-      result.addQualityFlag("Estimate is not a detailed Class 1-3 vendor or firm-quantity estimate.");
+    if (estimateBasis.getEstimateClass().getClassNumber() > EstimateClass.CLASS_3
+        .getClassNumber()) {
+      result
+          .addQualityFlag("Estimate is not a detailed Class 1-3 vendor or firm-quantity estimate.");
     }
   }
 

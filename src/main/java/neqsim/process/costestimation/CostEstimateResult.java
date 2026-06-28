@@ -10,9 +10,9 @@ import com.google.gson.GsonBuilder;
  * Detailed, report-ready cost estimate result for one unit or a whole process.
  *
  * <p>
- * The result carries a common capital-cost stack, estimate basis, material take-off quantities, and quality flags. It
- * is intentionally lightweight so existing equipment-specific estimators can populate it without changing their sizing
- * correlations.
+ * The result carries a common capital-cost stack, estimate basis, material take-off quantities, and
+ * quality flags. It is intentionally lightweight so existing equipment-specific estimators can
+ * populate it without changing their sizing correlations.
  * </p>
  *
  * @author esol
@@ -27,7 +27,12 @@ public class CostEstimateResult implements java.io.Serializable {
   private String equipmentType = "";
   private CostEstimateBasis basis = new CostEstimateBasis();
   private Map<String, Double> capitalCosts = new LinkedHashMap<String, Double>();
+  private Map<String, Double> capitalCostBreakdown = new LinkedHashMap<String, Double>();
+  private Map<String, Double> capitalCostSummary = new LinkedHashMap<String, Double>();
   private Map<String, Double> projectCosts = new LinkedHashMap<String, Double>();
+  private Map<String, Double> projectCostSummary = new LinkedHashMap<String, Double>();
+  private Map<String, Double> quantityBasis = new LinkedHashMap<String, Double>();
+  private Map<String, String> quantityUnits = new LinkedHashMap<String, String>();
   private Map<String, Double> weightBasis = new LinkedHashMap<String, Double>();
   private List<MaterialTakeOffItem> materialTakeOff = new ArrayList<MaterialTakeOffItem>();
   private List<String> qualityFlags = new ArrayList<String>();
@@ -40,7 +45,8 @@ public class CostEstimateResult implements java.io.Serializable {
    * @param equipmentType equipment or process type
    * @return this result for chaining
    */
-  public CostEstimateResult setIdentification(String estimateId, String equipmentName, String equipmentType) {
+  public CostEstimateResult setIdentification(String estimateId, String equipmentName,
+      String equipmentType) {
     this.estimateId = estimateId == null ? "" : estimateId;
     this.equipmentName = equipmentName == null ? "" : equipmentName;
     this.equipmentType = equipmentType == null ? "" : equipmentType;
@@ -82,6 +88,34 @@ public class CostEstimateResult implements java.io.Serializable {
   }
 
   /**
+   * Adds or replaces a supplementary capital-cost breakdown line.
+   *
+   * @param name breakdown line name
+   * @param valueUSD cost value in USD
+   * @return this result for chaining
+   */
+  public CostEstimateResult addCapitalCostBreakdown(String name, double valueUSD) {
+    if (name != null && !name.trim().isEmpty()) {
+      capitalCostBreakdown.put(name, valueUSD);
+    }
+    return this;
+  }
+
+  /**
+   * Adds or replaces a capital-cost subtotal or total line.
+   *
+   * @param name summary line name
+   * @param valueUSD cost value in USD
+   * @return this result for chaining
+   */
+  public CostEstimateResult addCapitalCostSummary(String name, double valueUSD) {
+    if (name != null && !name.trim().isEmpty()) {
+      capitalCostSummary.put(name, valueUSD);
+    }
+    return this;
+  }
+
+  /**
    * Adds or replaces a project-cost line.
    *
    * @param name cost line name
@@ -91,6 +125,36 @@ public class CostEstimateResult implements java.io.Serializable {
   public CostEstimateResult addProjectCost(String name, double valueUSD) {
     if (name != null && !name.trim().isEmpty()) {
       projectCosts.put(name, valueUSD);
+    }
+    return this;
+  }
+
+  /**
+   * Adds or replaces a project-cost subtotal or total line.
+   *
+   * @param name summary line name
+   * @param valueUSD cost value in USD
+   * @return this result for chaining
+   */
+  public CostEstimateResult addProjectCostSummary(String name, double valueUSD) {
+    if (name != null && !name.trim().isEmpty()) {
+      projectCostSummary.put(name, valueUSD);
+    }
+    return this;
+  }
+
+  /**
+   * Adds or replaces a non-cost quantity basis line.
+   *
+   * @param name quantity line name
+   * @param value quantity value
+   * @param unit quantity unit
+   * @return this result for chaining
+   */
+  public CostEstimateResult addQuantityBasis(String name, double value, String unit) {
+    if (name != null && !name.trim().isEmpty()) {
+      quantityBasis.put(name, value);
+      quantityUnits.put(name, unit == null ? "" : unit);
     }
     return this;
   }
@@ -119,11 +183,11 @@ public class CostEstimateResult implements java.io.Serializable {
    * @param costUSD estimated cost in USD
    * @return this result for chaining
    */
-  public CostEstimateResult addMaterialQuantity(String item, String material, double quantity, String unit,
-      double costUSD) {
+  public CostEstimateResult addMaterialQuantity(String item, String material, double quantity,
+      String unit, double costUSD) {
     double weightKg = "kg".equalsIgnoreCase(unit) ? quantity : Double.NaN;
-    materialTakeOff
-        .add(new MaterialTakeOffItem(item, "bulk", material, quantity, unit, weightKg, costUSD, "mechanical-design"));
+    materialTakeOff.add(new MaterialTakeOffItem(item, "bulk", material, quantity, unit, weightKg,
+        costUSD, "mechanical-design"));
     return this;
   }
 
@@ -163,12 +227,57 @@ public class CostEstimateResult implements java.io.Serializable {
   }
 
   /**
+   * Gets the supplementary capital-cost breakdown map.
+   *
+   * @return copy of capital-cost breakdown lines
+   */
+  public Map<String, Double> getCapitalCostBreakdown() {
+    return new LinkedHashMap<String, Double>(capitalCostBreakdown);
+  }
+
+  /**
+   * Gets the capital-cost summary map.
+   *
+   * @return copy of capital-cost subtotal and total lines
+   */
+  public Map<String, Double> getCapitalCostSummary() {
+    return new LinkedHashMap<String, Double>(capitalCostSummary);
+  }
+
+  /**
    * Gets the project-cost map.
    *
    * @return copy of project costs
    */
   public Map<String, Double> getProjectCosts() {
     return new LinkedHashMap<String, Double>(projectCosts);
+  }
+
+  /**
+   * Gets the project-cost summary map.
+   *
+   * @return copy of project-cost subtotal and total lines
+   */
+  public Map<String, Double> getProjectCostSummary() {
+    return new LinkedHashMap<String, Double>(projectCostSummary);
+  }
+
+  /**
+   * Gets the non-cost quantity basis map.
+   *
+   * @return copy of quantity values
+   */
+  public Map<String, Double> getQuantityBasis() {
+    return new LinkedHashMap<String, Double>(quantityBasis);
+  }
+
+  /**
+   * Gets the non-cost quantity unit map.
+   *
+   * @return copy of quantity units keyed by quantity name
+   */
+  public Map<String, String> getQuantityUnits() {
+    return new LinkedHashMap<String, String>(quantityUnits);
   }
 
   /**
@@ -201,7 +310,11 @@ public class CostEstimateResult implements java.io.Serializable {
     result.put("equipmentType", equipmentType);
     result.put("estimateBasis", basis.toMap());
     result.put("capitalCosts_USD", new LinkedHashMap<String, Double>(capitalCosts));
+    result.put("capitalCostBreakdown_USD", new LinkedHashMap<String, Double>(capitalCostBreakdown));
+    result.put("capitalCostSummary_USD", new LinkedHashMap<String, Double>(capitalCostSummary));
     result.put("projectCosts_USD", new LinkedHashMap<String, Double>(projectCosts));
+    result.put("projectCostSummary_USD", new LinkedHashMap<String, Double>(projectCostSummary));
+    result.put("quantityBasis", buildQuantityBasisMap());
     result.put("weightBasis_kg", new LinkedHashMap<String, Double>(weightBasis));
 
     List<Map<String, Object>> materialMaps = new ArrayList<Map<String, Object>>();
@@ -214,11 +327,28 @@ public class CostEstimateResult implements java.io.Serializable {
   }
 
   /**
+   * Builds the JSON-friendly quantity basis map with values and units.
+   *
+   * @return quantity basis map keyed by quantity name
+   */
+  private Map<String, Map<String, Object>> buildQuantityBasisMap() {
+    Map<String, Map<String, Object>> result = new LinkedHashMap<String, Map<String, Object>>();
+    for (Map.Entry<String, Double> entry : quantityBasis.entrySet()) {
+      Map<String, Object> quantity = new LinkedHashMap<String, Object>();
+      quantity.put("value", entry.getValue());
+      quantity.put("unit", quantityUnits.get(entry.getKey()));
+      result.put(entry.getKey(), quantity);
+    }
+    return result;
+  }
+
+  /**
    * Converts the result to JSON.
    *
    * @return pretty-printed JSON string
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
+        .toJson(toMap());
   }
 }
