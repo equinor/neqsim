@@ -413,6 +413,10 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
 
     setWeigthInternals(internalsWeight);
 
+    // Vessel internal volume (m3) - used as the Turton capacity basis for cost estimation.
+    setVolumeTotal(
+        neqsim.thermo.ThermodynamicConstantsInterface.pi * Math.pow(innerDiameter / 2.0, 2.0) * tantanLength);
+
     setWallThickness(wallThickness);
 
     setModuleHeight(moduleHeight);

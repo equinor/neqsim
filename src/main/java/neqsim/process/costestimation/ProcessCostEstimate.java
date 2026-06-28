@@ -439,6 +439,10 @@ public class ProcessCostEstimate implements java.io.Serializable {
       return "Piping";
     } else if (className.contains("Pipeline") || className.contains("Pipe")) {
       return "Pipelines";
+    } else if (className.contains("Well")) {
+      return "Wells";
+    } else if (className.contains("Reservoir")) {
+      return "Reservoir";
     } else if (className.contains("Stream")) {
       return "Streams";
     } else {

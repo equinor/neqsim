@@ -1,0 +1,132 @@
+package neqsim.process.costestimation;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
+import neqsim.process.equipment.reservoir.WellFlow;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+
+/**
+ * Regression tests guarding the reservoir-to-market weight and CAPEX coverage of the built-in NeqSim cost estimators.
+ *
+ * <p>
+ * These tests verify that (1) process vessels report a finite, non-zero weight and a sane installed cost per kilogram
+ * (guarding against the volume-vs-weight magnitude bug), (2) flowlines/pipelines report a non-zero steel weight, and
+ * (3) wells contribute a rough all-in drilling-and-completion CAPEX that is not inflated by module factors.
+ * </p>
+ *
+ * @author esol
+ * @version 1.0
+ */
+public class CostWeightCoverageTest {
+
+  /**
+   * Build a small gas fluid for the test streams.
+   *
+   * @return a simple three-component SRK gas system
+   */
+  private SystemInterface makeGas() {
+    SystemInterface gas = new SystemSrkEos(288.15, 60.0);
+    gas.addComponent("methane", 0.85);
+    gas.addComponent("ethane", 0.10);
+    gas.addComponent("propane", 0.05);
+    gas.setMixingRule("classic");
+    return gas;
+  }
+
+  @Test
+  void testSeparatorWeightAndSaneCostPerKg() {
+    Stream feed = new Stream("Feed", makeGas());
+    feed.setFlowRate(50000.0, "kg/hr");
+    feed.setTemperature(25.0, "C");
+    feed.setPressure(60.0, "bara");
+    feed.run();
+
+    Separator sep = new Separator("HP Separator", feed);
+    sep.run();
+
+    sep.initMechanicalDesign();
+    MechanicalDesign md = sep.getMechanicalDesign();
+    md.calcDesign();
+    md.calculateCostEstimate();
+
+    double weight = md.getWeightTotal();
+    double pec = md.getCostEstimate().getPurchasedEquipmentCost();
+
+    assertTrue(weight > 0.0, "Separator shell weight should be positive");
+    assertTrue(pec > 0.0, "Separator purchased equipment cost should be positive");
+
+    double costPerKg = pec / weight;
+    // Guard against the volume-vs-weight magnitude bug (~$5000-6200/kg). A realistic
+    // carbon-steel pressure vessel PEC is roughly $10-1500 per kg of shell weight.
+    assertTrue(costPerKg < 2000.0,
+        "Separator PEC per kg unrealistically high (" + costPerKg + " $/kg) - magnitude bug?");
+    assertTrue(costPerKg > 1.0, "Separator PEC per kg unrealistically low (" + costPerKg + " $/kg)");
+  }
+
+  @Test
+  void testCompressorReportsWeightAndCost() {
+    Stream feed = new Stream("Feed", makeGas());
+    feed.setFlowRate(50000.0, "kg/hr");
+    feed.setTemperature(25.0, "C");
+    feed.setPressure(60.0, "bara");
+    feed.run();
+
+    Compressor comp = new Compressor("Export Compressor", feed);
+    comp.setOutletPressure(120.0);
+    comp.run();
+
+    comp.initMechanicalDesign();
+    MechanicalDesign md = comp.getMechanicalDesign();
+    md.calcDesign();
+    md.calculateCostEstimate();
+
+    assertTrue(md.getWeightTotal() > 0.0, "Compressor weight should be positive");
+    assertTrue(md.getCostEstimate().getTotalCost() > 0.0, "Compressor cost should be positive");
+  }
+
+  @Test
+  void testPipelineReportsSteelWeight() {
+    Stream feed = new Stream("Feed", makeGas());
+    feed.setFlowRate(80000.0, "kg/hr");
+    feed.setTemperature(25.0, "C");
+    feed.setPressure(80.0, "bara");
+    feed.run();
+
+    PipeBeggsAndBrills flowline = new PipeBeggsAndBrills("Flowline", feed);
+    flowline.setLength(5000.0);
+    flowline.setElevation(0.0);
+    flowline.setDiameter(0.3);
+    flowline.run();
+
+    flowline.initMechanicalDesign();
+    MechanicalDesign md = flowline.getMechanicalDesign();
+    md.calcDesign();
+
+    assertTrue(md.getWeightTotal() > 0.0,
+        "Pipeline steel weight should be positive after wiring calculateWeightsAndAreas");
+  }
+
+  @Test
+  void testWellRoughCapexIsAllInWithoutModuleInflation() {
+    WellFlow well = new WellFlow("Producer-1");
+    well.setWellCapex(80.0e6);
+
+    MechanicalDesign md = well.getMechanicalDesign();
+    md.calcDesign();
+    md.calculateCostEstimate();
+
+    double total = md.getCostEstimate().getTotalCost();
+    double tmc = md.getCostEstimate().getTotalModuleCost();
+
+    assertEquals(80.0e6, total, 1.0, "Well total cost should equal the all-in CAPEX");
+    assertEquals(80.0e6, tmc, 1.0, "Well CAPEX should not be inflated by module factors");
+    assertEquals(0.0, md.getWeightTotal(), 1.0e-9, "Well carries no shell weight");
+  }
+}

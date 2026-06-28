@@ -14,6 +14,7 @@ import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.mechanicaldesign.well.WellFlowMechanicalDesign;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -128,6 +129,9 @@ public class WellFlow extends TwoPortEquipment {
   String pressureUnit = "bara";
   boolean useWellProductionIndex = false;
   boolean calcpressure = true;
+
+  /** Mechanical design carrying the rough well CAPEX. */
+  private WellFlowMechanicalDesign wellFlowMechanicalDesign = null;
 
   // ----------------------------------------------------------------
   // Subsurface capacity-constraint support (drawdown / min BHP)
@@ -294,6 +298,39 @@ public class WellFlow extends TwoPortEquipment {
    */
   public WellFlow(String name) {
     super(name);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public WellFlowMechanicalDesign getMechanicalDesign() {
+    if (wellFlowMechanicalDesign == null) {
+      initMechanicalDesign();
+    }
+    return wellFlowMechanicalDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initMechanicalDesign() {
+    wellFlowMechanicalDesign = new WellFlowMechanicalDesign(this);
+  }
+
+  /**
+   * Set the rough all-in well CAPEX (drilling + completion + wellhead) used by the cost rollups.
+   *
+   * @param wellCapexUsd well CAPEX in USD
+   */
+  public void setWellCapex(double wellCapexUsd) {
+    getMechanicalDesign().setWellCapexUsd(wellCapexUsd);
+  }
+
+  /**
+   * Get the rough all-in well CAPEX (drilling + completion + wellhead).
+   *
+   * @return well CAPEX in USD
+   */
+  public double getWellCapex() {
+    return getMechanicalDesign().getWellCapexUsd();
   }
 
   /**
