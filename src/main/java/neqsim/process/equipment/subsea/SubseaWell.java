@@ -9,6 +9,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.Adjuster;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.subsea.WellCostEstimator.WellLocationType;
 import neqsim.process.mechanicaldesign.subsea.WellMechanicalDesign;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -17,9 +18,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Subsea well equipment class.
  *
  * <p>
- * Represents a subsea well including wellbore, casing, tubing and completion. The well uses an internal
- * {@link AdiabaticTwoPhasePipe} to model tubing flow performance (VLP), and provides well design properties for
- * mechanical design and cost estimation.
+ * Represents a subsea well including wellbore, casing, tubing and completion. The well uses an
+ * internal {@link AdiabaticTwoPhasePipe} to model tubing flow performance (VLP), and provides well
+ * design properties for mechanical design and cost estimation.
  * </p>
  *
  * <h2>Well Types</h2>
@@ -204,6 +205,9 @@ public class SubseaWell extends TwoPortEquipment {
 
   /** Rig type. */
   private RigType rigType = RigType.SEMI_SUBMERSIBLE;
+
+  /** Well location and tree installation basis for cost estimates. */
+  private WellLocationType wellLocationType = WellLocationType.SUBSEA_WET_TREE;
 
   // ============ Casing Program ============
   /** Conductor casing OD in inches. */
@@ -403,6 +407,25 @@ public class SubseaWell extends TwoPortEquipment {
    */
   public void setRigType(RigType rigType) {
     this.rigType = rigType;
+  }
+
+  /**
+   * Get well location and tree installation basis.
+   *
+   * @return well location type
+   */
+  public WellLocationType getWellLocationType() {
+    return wellLocationType;
+  }
+
+  /**
+   * Set well location and tree installation basis.
+   *
+   * @param wellLocationType well location type
+   */
+  public void setWellLocationType(WellLocationType wellLocationType) {
+    this.wellLocationType =
+        wellLocationType == null ? WellLocationType.SUBSEA_WET_TREE : wellLocationType;
   }
 
   /**
@@ -960,7 +983,8 @@ public class SubseaWell extends TwoPortEquipment {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
-    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 100.0), 250.00);
+    neqsim.thermo.system.SystemInterface testSystem =
+        new neqsim.thermo.system.SystemSrkEos((273.15 + 100.0), 250.00);
     testSystem.addComponent("nitrogen", 0.100);
     testSystem.addComponent("methane", 70.00);
     testSystem.addComponent("ethane", 1.0);
@@ -985,11 +1009,15 @@ public class SubseaWell extends TwoPortEquipment {
 
     reservoirOps.run();
 
-    System.out.println("water volume" + reservoirOps.getReservoirFluid().getPhase("aqueous").getVolume("m3") / 1.0e6);
-    System.out.println("oil production  total" + reservoirOps.getOilProductionTotal("Sm3") + " Sm3");
-    System.out.println("total produced  " + reservoirOps.getProductionTotal("MSm3 oe") + " MSm3 oe");
+    System.out.println("water volume"
+        + reservoirOps.getReservoirFluid().getPhase("aqueous").getVolume("m3") / 1.0e6);
+    System.out
+        .println("oil production  total" + reservoirOps.getOilProductionTotal("Sm3") + " Sm3");
+    System.out
+        .println("total produced  " + reservoirOps.getProductionTotal("MSm3 oe") + " MSm3 oe");
 
-    SubseaWell well1 = new SubseaWell("oilproducer_1", reservoirOps.getOilProducer("oilproducer_1").getStream());
+    SubseaWell well1 =
+        new SubseaWell("oilproducer_1", reservoirOps.getOilProducer("oilproducer_1").getStream());
     well1.getPipeline().setDiameter(0.3);
     well1.getPipeline().setLength(5500.0);
     well1.getPipeline().setInletElevation(-1000.0);
@@ -1023,8 +1051,8 @@ public class SubseaWell extends TwoPortEquipment {
     // do {
     reservoirOps.runTransient(60 * 60 * 24 * 1);
     ops.run();
-    res.add(new double[] { reservoirOps.getTime(), producedOilStream.getFluid().getFlowRate("kg/hr"),
-        reservoirOps.getOilProductionTotal("MSm3 oe") });
+    res.add(new double[] {reservoirOps.getTime(), producedOilStream.getFluid().getFlowRate("kg/hr"),
+        reservoirOps.getOilProductionTotal("MSm3 oe")});
     System.out.println("subsea choke DP " + subseaChoke.getDeltaPressure("bara"));
     System.out.println("topside  choke DP " + topsideChoke.getDeltaPressure("bara"));
     System.out.println("oil production " + producedOilStream.getFluid().getFlowRate("kg/hr"));
@@ -1032,15 +1060,16 @@ public class SubseaWell extends TwoPortEquipment {
     // while(producedOilStream.getFluid().getFlowRate("kg/hr")>1.0e5);
 
     ProcessSystem GasOilProcess = ProcessSystem.open("c:/temp/offshorePro.neqsim");
-    ((StreamInterface) GasOilProcess.getUnit("well stream")).setThermoSystem(topsideChoke.getOutletStream().getFluid());
+    ((StreamInterface) GasOilProcess.getUnit("well stream"))
+        .setThermoSystem(topsideChoke.getOutletStream().getFluid());
     ((StreamInterface) GasOilProcess.getUnit("well stream")).setPressure(70.0, "bara");
     ((StreamInterface) GasOilProcess.getUnit("well stream")).setTemperature(65.0, "C");
     GasOilProcess.run();
 
     System.out.println("power " + GasOilProcess.getPower("MW"));
     for (int i = 0; i < res.size(); i++) {
-      System.out.println(
-          "time " + res.get(i)[0] + " oil production " + res.get(i)[1] + " total production MSm3 oe " + res.get(i)[2]);
+      System.out.println("time " + res.get(i)[0] + " oil production " + res.get(i)[1]
+          + " total production MSm3 oe " + res.get(i)[2]);
     }
   }
 }

@@ -22,9 +22,9 @@ import neqsim.process.equipment.subsea.SubseaWell;
  * </ul>
  *
  * <p>
- * Cost data is based on industry benchmarks and regional factors. Baseline costs are representative of Norwegian
- * Continental Shelf (NCS) development wells in the 2020-2024 timeframe, aligned with data from actual field development
- * plans (e.g., Ultima Thule concept study estimates).
+ * Cost data is based on industry benchmarks and regional factors. Baseline costs are representative
+ * of Norwegian Continental Shelf (NCS) development wells in the 2020-2024 timeframe, aligned with
+ * data from actual field development plans (e.g., Ultima Thule concept study estimates).
  * </p>
  *
  * <h2>Cost Breakdown Structure</h2>
@@ -70,8 +70,21 @@ import neqsim.process.equipment.subsea.SubseaWell;
  */
 public class WellCostEstimator {
 
+  /**
+   * Well location and tree installation basis for screening cost estimates.
+   */
+  public enum WellLocationType {
+    /** Subsea well with wet tree installed at the seabed. */
+    SUBSEA_WET_TREE,
+    /** Platform or dry-tree well with tree and controls on the host facility. */
+    PLATFORM_DRY_TREE
+  }
+
   /** Region for cost adjustment — reuses SubseaCostEstimator.Region. */
   private SubseaCostEstimator.Region region = SubseaCostEstimator.Region.NORWAY;
+
+  /** Well location and tree installation basis. */
+  private WellLocationType wellLocationType = WellLocationType.SUBSEA_WET_TREE;
 
   // ============ Cost Components (USD) ============
   /** Drilling rig and services cost. */
@@ -169,29 +182,30 @@ public class WellCostEstimator {
    * Apply regional cost adjustment factor.
    *
    * <p>
-   * Regional factors reflect differences in rig markets, labor costs, logistics, and regulatory requirements.
+   * Regional factors reflect differences in rig markets, labor costs, logistics, and regulatory
+   * requirements.
    * </p>
    */
   private void applyRegionFactor() {
     switch (region) {
-    case NORWAY:
-      regionFactor = 1.35;
-      break;
-    case UK:
-      regionFactor = 1.20;
-      break;
-    case GOM:
-      regionFactor = 1.0;
-      break;
-    case BRAZIL:
-      regionFactor = 0.90;
-      break;
-    case WEST_AFRICA:
-      regionFactor = 1.10;
-      break;
-    default:
-      regionFactor = 1.0;
-      break;
+      case NORWAY:
+        regionFactor = 1.35;
+        break;
+      case UK:
+        regionFactor = 1.20;
+        break;
+      case GOM:
+        regionFactor = 1.0;
+        break;
+      case BRAZIL:
+        regionFactor = 0.90;
+        break;
+      case WEST_AFRICA:
+        regionFactor = 1.10;
+        break;
+      default:
+        regionFactor = 1.0;
+        break;
     }
 
     // Adjust base rates by region
@@ -221,14 +235,43 @@ public class WellCostEstimator {
    * @param hasDHSV whether well has downhole safety valve
    * @param numberOfCasingStrings number of casing strings
    */
-  public void calculateWellCost(String wellType, String rigType, String completionType, double measuredDepth,
-      double waterDepth, double drillingDays, double completionDays, double rigDayRateOverride, boolean hasDHSV,
-      int numberOfCasingStrings) {
+  public void calculateWellCost(String wellType, String rigType, String completionType,
+      double measuredDepth, double waterDepth, double drillingDays, double completionDays,
+      double rigDayRateOverride, boolean hasDHSV, int numberOfCasingStrings) {
+
+    calculateWellCost(wellType, rigType, completionType, measuredDepth, waterDepth, drillingDays,
+        completionDays, rigDayRateOverride, hasDHSV, numberOfCasingStrings, wellLocationType);
+  }
+
+  /**
+   * Calculate total well cost with explicit dry/wet tree location basis.
+   *
+   * @param wellType well type string (OIL_PRODUCER, GAS_PRODUCER, WATER_INJECTOR, etc.)
+   * @param rigType rig type string (SEMI_SUBMERSIBLE, DRILLSHIP, PLATFORM_RIG, etc.)
+   * @param completionType completion type string
+   * @param measuredDepth measured depth in meters
+   * @param waterDepth water depth in meters
+   * @param drillingDays planned drilling days
+   * @param completionDays planned completion days
+   * @param rigDayRateOverride rig day rate override in USD/day (0 to use default)
+   * @param hasDHSV whether well has downhole safety valve
+   * @param numberOfCasingStrings number of casing strings
+   * @param locationType well location and tree installation basis
+   */
+  public void calculateWellCost(String wellType, String rigType, String completionType,
+      double measuredDepth, double waterDepth, double drillingDays, double completionDays,
+      double rigDayRateOverride, boolean hasDHSV, int numberOfCasingStrings,
+      WellLocationType locationType) {
+
+    WellLocationType effectiveLocation =
+        locationType == null ? WellLocationType.SUBSEA_WET_TREE : locationType;
+    this.wellLocationType = effectiveLocation;
 
     double effectiveRigRate = rigDayRateOverride > 0 ? rigDayRateOverride : rigDayRate;
 
     // Adjust rig rate by type
     effectiveRigRate *= getRigTypeFactor(rigType);
+    effectiveRigRate *= getLocationRigFactor(effectiveLocation);
 
     // ---- Drilling Cost ----
     // Rig time + spread cost during drilling
@@ -257,22 +300,23 @@ public class WellCostEstimator {
 
     // Adjust for completion complexity
     completionBase *= getCompletionTypeFactor(completionType);
+    completionBase *= getLocationCompletionFactor(effectiveLocation);
 
     // Rig time during completion
     completionCost = completionBase + effectiveRigRate * completionDays;
 
     // ---- Wellhead and Tree ----
-    wellheadCost = wellheadBaseCost;
-    // Deep water premium
-    if (waterDepth > 500) {
+    wellheadCost = wellheadBaseCost * getTreeLocationFactor(effectiveLocation);
+    // Wet subsea trees carry water-depth installation and connector premiums.
+    if (effectiveLocation == WellLocationType.SUBSEA_WET_TREE && waterDepth > 500) {
       wellheadCost *= 1.15;
     }
-    if (waterDepth > 1500) {
+    if (effectiveLocation == WellLocationType.SUBSEA_WET_TREE && waterDepth > 1500) {
       wellheadCost *= 1.20;
     }
 
     // ---- Safety Valves ----
-    safetyValveCost = hasDHSV ? dhsvCost : 0.0;
+    safetyValveCost = hasDHSV ? dhsvCost * getLocationSafetyValveFactor(effectiveLocation) : 0.0;
 
     // ---- Logging and Testing ----
     double loggingDays = isProducer ? 5.0 : 3.0;
@@ -282,8 +326,8 @@ public class WellCostEstimator {
     wellTestCost = wellTestDayRate * wellTestDays;
 
     // ---- Contingency ----
-    double subtotal = drillingCost + casingMaterialCost + cementCost + mudCost + bitsCost + completionCost
-        + wellheadCost + safetyValveCost + loggingCost + wellTestCost;
+    double subtotal = drillingCost + casingMaterialCost + cementCost + mudCost + bitsCost
+        + completionCost + wellheadCost + safetyValveCost + loggingCost + wellTestCost;
     contingencyCost = subtotal * contingencyPct;
 
     // ---- Total ----
@@ -326,6 +370,58 @@ public class WellCostEstimator {
       return 1.45;
     } else if ("MULTI_ZONE".equals(completionType)) {
       return 1.80;
+    }
+    return 1.0;
+  }
+
+  /**
+   * Get rig logistics factor for well location.
+   *
+   * @param locationType well location type
+   * @return cost factor multiplier
+   */
+  private double getLocationRigFactor(WellLocationType locationType) {
+    if (locationType == WellLocationType.PLATFORM_DRY_TREE) {
+      return 0.85;
+    }
+    return 1.0;
+  }
+
+  /**
+   * Get completion equipment factor for well location.
+   *
+   * @param locationType well location type
+   * @return cost factor multiplier
+   */
+  private double getLocationCompletionFactor(WellLocationType locationType) {
+    if (locationType == WellLocationType.PLATFORM_DRY_TREE) {
+      return 0.90;
+    }
+    return 1.0;
+  }
+
+  /**
+   * Get tree and wellhead procurement factor for dry versus wet tree basis.
+   *
+   * @param locationType well location type
+   * @return cost factor multiplier
+   */
+  private double getTreeLocationFactor(WellLocationType locationType) {
+    if (locationType == WellLocationType.PLATFORM_DRY_TREE) {
+      return 0.55;
+    }
+    return 1.0;
+  }
+
+  /**
+   * Get safety valve factor for dry versus wet tree basis.
+   *
+   * @param locationType well location type
+   * @return cost factor multiplier
+   */
+  private double getLocationSafetyValveFactor(WellLocationType locationType) {
+    if (locationType == WellLocationType.PLATFORM_DRY_TREE) {
+      return 0.80;
     }
     return 1.0;
   }
@@ -401,6 +497,7 @@ public class WellCostEstimator {
     breakdown.put("totalCost", totalCost);
     breakdown.put("region", region.name());
     breakdown.put("regionFactor", regionFactor);
+    breakdown.put("wellLocationType", wellLocationType.name());
 
     return breakdown;
   }
@@ -416,34 +513,36 @@ public class WellCostEstimator {
 
     // Conductor casing
     if (well.getConductorDepth() > 0) {
-      bom.add(createBOMItem("Conductor Casing", String.format("%.0f\" conductor", well.getConductorOD()),
-          "Casing - Conductor", well.getConductorDepth(), "m"));
+      bom.add(createBOMItem("Conductor Casing",
+          String.format("%.0f\" conductor", well.getConductorOD()), "Casing - Conductor",
+          well.getConductorDepth(), "m"));
     }
 
     // Surface casing
     if (well.getSurfaceCasingDepth() > 0) {
-      bom.add(createBOMItem("Surface Casing", String.format("%.3f\" surface casing", well.getSurfaceCasingOD()),
-          "Casing - Surface", well.getSurfaceCasingDepth(), "m"));
+      bom.add(createBOMItem("Surface Casing",
+          String.format("%.3f\" surface casing", well.getSurfaceCasingOD()), "Casing - Surface",
+          well.getSurfaceCasingDepth(), "m"));
     }
 
     // Intermediate casing
     if (well.getIntermediateCasingDepth() > 0) {
       bom.add(createBOMItem("Intermediate Casing",
-          String.format("%.3f\" intermediate casing", well.getIntermediateCasingOD()), "Casing - Intermediate",
-          well.getIntermediateCasingDepth(), "m"));
+          String.format("%.3f\" intermediate casing", well.getIntermediateCasingOD()),
+          "Casing - Intermediate", well.getIntermediateCasingDepth(), "m"));
     }
 
     // Production casing
     if (well.getProductionCasingDepth() > 0) {
-      bom.add(
-          createBOMItem("Production Casing", String.format("%.3f\" production casing", well.getProductionCasingOD()),
-              "Casing - Production", well.getProductionCasingDepth(), "m"));
+      bom.add(createBOMItem("Production Casing",
+          String.format("%.3f\" production casing", well.getProductionCasingOD()),
+          "Casing - Production", well.getProductionCasingDepth(), "m"));
     }
 
     // Tubing
-    bom.add(
-        createBOMItem("Production Tubing", String.format("%.1f\" %s tubing", well.getTubingOD(), well.getTubingGrade()),
-            "Tubing", well.getProductionCasingDepth(), "m"));
+    bom.add(createBOMItem("Production Tubing",
+        String.format("%.1f\" %s tubing", well.getTubingOD(), well.getTubingGrade()), "Tubing",
+        well.getProductionCasingDepth(), "m"));
 
     // Wellhead
     bom.add(createBOMItem("Subsea Wellhead", "18-3/4\" wellhead assembly", "Wellhead", 1, "ea"));
@@ -454,7 +553,8 @@ public class WellCostEstimator {
     }
 
     // Cement
-    bom.add(createBOMItem("Cement", "Class G cement + additives", "Consumables", totalCementVolumeFrom(well), "m3"));
+    bom.add(createBOMItem("Cement", "Class G cement + additives", "Consumables",
+        totalCementVolumeFrom(well), "m3"));
 
     return bom;
   }
@@ -469,8 +569,8 @@ public class WellCostEstimator {
    * @param unit unit of measure
    * @return map representing the BOM item
    */
-  private Map<String, Object> createBOMItem(String name, String description, String category, double quantity,
-      String unit) {
+  private Map<String, Object> createBOMItem(String name, String description, String category,
+      double quantity, String unit) {
     Map<String, Object> item = new LinkedHashMap<String, Object>();
     item.put("name", name);
     item.put("description", description);
@@ -586,6 +686,25 @@ public class WellCostEstimator {
    */
   public SubseaCostEstimator.Region getRegion() {
     return region;
+  }
+
+  /**
+   * Get well location and tree installation basis.
+   *
+   * @return well location type
+   */
+  public WellLocationType getWellLocationType() {
+    return wellLocationType;
+  }
+
+  /**
+   * Set well location and tree installation basis.
+   *
+   * @param wellLocationType well location type
+   */
+  public void setWellLocationType(WellLocationType wellLocationType) {
+    this.wellLocationType =
+        wellLocationType == null ? WellLocationType.SUBSEA_WET_TREE : wellLocationType;
   }
 
   /**

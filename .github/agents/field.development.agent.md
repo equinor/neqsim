@@ -35,10 +35,11 @@ You are an expert in these field development disciplines:
 - Casing design per API 5C3 / NORSOK D-010 (`SubseaWell`, `WellMechanicalDesign`)
 - Well barrier verification (two-barrier principle)
 - Artificial lift selection (ESP, gas lift, rod pump, jet pump)
-- Well cost estimation (`WellCostEstimator`)
+- Well cost estimation (`WellCostEstimator`) with dry-tree vs wet-tree location basis
 - Drilling schedule optimization (`WellScheduler`)
 
 ### 3. Subsea Production Systems
+- Integrated field/SURF setup (`SubseaProductionSystem`) for wells, trees, jumpers, manifolds, flowlines, umbilicals, risers, reservoir cost and well cost
 - Subsea layout design (trees, manifolds, jumpers, PLETs, umbilicals)
 - SURF cost estimation (`SURFCostEstimator`)
 - Tieback analysis and host selection (`TiebackAnalyzer`)
